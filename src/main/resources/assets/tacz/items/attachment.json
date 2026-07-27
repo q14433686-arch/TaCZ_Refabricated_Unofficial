@@ -1,0 +1,11 @@
+{
+  "model": {
+    "type": "tacz:dynamic_item",
+    "base": "tacz:item/attachment"
+  },
+  "properties": {
+    "oversized_in_gui": true,
+    "hand_animation_on_swap": false,
+    "swap_animation_scale": 0.0
+  }
+}

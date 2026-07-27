@@ -1,0 +1,25 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 36
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 16
+    },
+    {
+      "item": "#c:gems/quartz",
+      "count": 8
+    },
+    {
+      "item": "#c:gems/diamond",
+      "count": 5
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:sniper_extended_mag_3"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

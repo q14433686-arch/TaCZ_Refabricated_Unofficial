@@ -1,0 +1,17 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 14
+    },
+    {
+      "item": "#c:dusts/redstone",
+      "count": 2
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:muzzle_silencer_ptilopsis"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

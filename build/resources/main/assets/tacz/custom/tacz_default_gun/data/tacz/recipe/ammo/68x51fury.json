@@ -1,0 +1,19 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/copper",
+      "count": 15
+    },
+    {
+      "item": "#c:gunpowders",
+      "count": 5
+    }
+  ],
+  "result": {
+    "type": "ammo",
+    "group": "ifp_rifle_cartridges",
+    "id": "tacz:68x51fury",
+    "count": 40
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

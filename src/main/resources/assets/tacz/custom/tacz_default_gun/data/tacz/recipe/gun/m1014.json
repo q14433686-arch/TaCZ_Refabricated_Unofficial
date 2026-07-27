@@ -1,0 +1,25 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 64
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 12
+    },
+    {
+      "item": "#c:gems/diamond",
+      "count": 1
+    },
+    {
+      "item": "#c:gems/lapis",
+      "count": 8
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:m1014"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

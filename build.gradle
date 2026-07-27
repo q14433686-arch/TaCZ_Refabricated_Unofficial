@@ -1,0 +1,310 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = "${archives_base_name}-${minecraft_version}"
+}
+
+fabricApi {
+    configureDataGeneration {
+        client = true
+    }
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/tacz.accesswidener")
+    // From Loom 1.17: mixin AP is no longer enabled by default.
+    // The legacy mixin AP requires mappings, which don't exist in 26.1+.
+    // We must disable it and handle mixins differently.
+    // mixin {
+    //     useLegacyMixinAp = true
+    //     defaultRefmapName = "tacz.refmap.json"
+    // }
+    runs {
+        client {
+            // The embedded default pack alone contains >80 MiB of textures, audio, and models.
+            // 384 MiB consistently OOMs during its first resource reload under 26.2.
+            vmArg "-Xmx768m"
+        }
+        server {
+            vmArg "-Xmx384m"
+        }
+        datagen {
+            property "fabric-api.datagen.modid", "tacz"
+        }
+    }
+}
+
+repositories {
+    maven {
+        // 阿里云镜像，方便国内开发
+        url = uri("https://maven.aliyun.com/repository/public/")
+        content {
+            includeGroup 'org.apache.commons'
+        }
+    }
+    maven {
+        name = "Jared's maven"
+        url = "https://maven.blamejared.com/"
+    }
+    maven {
+        name = "Mod Maven"
+        url = "https://modmaven.k-4u.nl"
+    }
+    maven {
+        url "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+    maven {
+        name = "Modrinth"
+        url "https://api.modrinth.com/maven"
+    }
+    maven { url "https://maven.shedaniel.me/" } // cloth config api
+    maven { url "https://dvs1.progwml6.com/files/maven/" }
+    maven { url "https://modmaven.dev" }
+    maven {
+        name = 'tterrag maven'
+        url = 'https://maven.tterrag.com/'
+    }
+    maven {
+        url = "https://maven.architectury.dev"
+        content {
+            includeGroup "dev.architectury"
+        }
+    }
+    maven {
+        url "https://maven.latvian.dev/releases"
+        content {
+            includeGroup "dev.latvian.mods"
+            includeGroup "dev.latvian.apps"
+        }
+    }
+    maven {
+        url 'https://jitpack.io'
+        content {
+            includeGroup "com.github.rtyley"
+            includeGroup "com.github.FiguraMC.luaj"
+        }
+    }
+    maven {
+        name "KosmX's maven"
+        url 'https://maven.kosmx.dev/'
+    }
+    maven {
+        name = "Ladysnake Mods"
+        url = 'https://maven.ladysnake.org/releases'
+    }
+    maven {
+        name = "Fuzs Mod Resources"
+        url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+    }
+    maven {
+        name = "Terraformers"
+        url = "https://maven.terraformersmc.com/"
+    }
+    maven {
+        name = "devOSSnapshots"
+        url = uri("https://mvn.devos.one/snapshots")
+    }
+    mavenCentral()
+    mavenLocal()
+    flatDir {
+        dir 'libs'
+    }
+}
+
+dependencies {
+    // ================================================================
+    // 从 26.1+: Minecraft 不再混淆，Loom 使用未混淆模式
+    // 因此不再需要 mappings 依赖
+    // modImplementation → implementation (因为不再需要 mod 重映射)
+    // modCompileOnly → compileOnly
+    // modRuntimeOnly → runtimeOnly
+    // modApi → api
+    // ================================================================
+
+    // Minecraft & Fabric
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    // No mappings needed — 26.1+ uses unobfuscated Minecraft
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    annotationProcessor 'com.google.code.findbugs:jsr305:3.0.2'
+
+    // ============================================================
+    // 以下依赖经 26.2 可用性核查后保留禁用；待上游发布 26.2 构建再恢复
+    // ============================================================
+
+    // simplebedrockmodel — 需要确认 26.2 兼容版本
+    // implementation(include("libs:simplebedrockmodel-fabric:2.3.0.1+mc1.20.1"))
+
+    // MAE (Math Expression Evaluator)
+    implementation("com.maydaymemory:mae:1.1.1") {
+        exclude group: 'com.google.code.findbugs', module: 'jsr305'
+        exclude group: 'it.unimi.dsi', module: 'fastutil'
+        exclude group: 'org.joml', module: 'joml'
+    }
+
+    // Apache Commons Math
+    implementation(include('org.apache.commons:commons-math3:3.6.1'))
+
+    // LuaJ
+    implementation(include('com.github.FiguraMC.luaj:luaj-core:3.0.8-figura')) {
+        exclude group: 'org.apache.commons', module: 'commons-lang3'
+    }
+    implementation(include('com.github.FiguraMC.luaj:luaj-jse:3.0.8-figura')) {
+        exclude group: 'org.apache.commons', module: 'commons-lang3'
+    }
+    implementation(include('org.apache.bcel:bcel:6.6.1')) {
+        exclude group: 'org.apache.commons', module: 'commons-lang3'
+    }
+
+    // ============================================================
+    // 以下为运行时/编译时 mod 依赖；无 26.2 构建的项保持注释
+    // ============================================================
+
+    // JEI — 26.2 (Modrinth 30.13.0.80, compile against full fabric jar which includes API)
+    compileOnly "maven.modrinth:jei:${jei_version}"
+
+    // Cloth Config — 26.2
+    implementation "me.shedaniel.cloth:cloth-config-fabric:${cloth_config_fabric}"
+
+    // Embeddium
+    // compileOnly "curse.maven:embeddium-908741:${embeddedt_id}"
+
+    // Carry On
+    // compileOnly "curse.maven:carry-on-274259:${carry_on_id}"
+
+    // Player Animation Lib — 26.2：KosmX(dev.kosmx.playerAnim) 无 26.2 构建；modrinth 的
+    // player-animation-library 是 zigythebird 的不兼容分支。compat/playeranimator 暂排除，待迁移到可用 API。
+    // PAL is optional at runtime, but compile its 26.2 API for the isolated compat implementation.
+    compileOnly "maven.modrinth:player-animation-library:${player_animation_lib}"
+
+    // KubeJS
+    // compileOnly "dev.latvian.mods:kubejs-fabric:${kubejs_version}"
+    // compileOnly "dev.latvian.mods:rhino-fabric:${rhino_version}"
+    // compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
+
+    // CCA (Cardinal Components API) - 26.2: 移除，与 Mojang 映射不兼容
+    // implementation(include("dev.onyxstudios.cardinal-components-api:cardinal-components-base:5.2.3"))
+    // implementation(include("dev.onyxstudios.cardinal-components-api:cardinal-components-entity:5.2.3"))
+
+    // MKB (Modern Keybinding)
+    // implementation(include("maven.modrinth:modernkeybinding:1.20.X-1.2.0"))
+
+    // Forge Config API Port - 26.2 compatible (ForgeConfigSpec + ForgeConfigRegistry)
+    // 26.2.1 Fabric: https://github.com/Fuzss/forge-config-api-port (branch 26.2.x)
+    implementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.2.1"
+    // 备用 (如果上面 maven 仓库不可用): curse.maven:forge-config-api-port-547434:8292030
+
+    // ModMenu — 26.2 (via Modrinth maven)
+    implementation "maven.modrinth:modmenu:${modmenu_version}"
+
+    // Zoomify
+    // Zoomify — 26.2 (Modrinth 2.16.1+26.2)
+    compileOnly "maven.modrinth:zoomify:${zoomify_version}"
+
+    // ImmediatelyFast
+    // compileOnly "maven.modrinth:immediatelyfast:1.5.1+1.20.4-fabric"
+
+    // REI — 26.2
+    compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
+
+    // Spark
+    // runtimeOnly "curse.maven:spark-361579:4738953"
+
+    // Accelerated Rendering
+    // implementation "maven.modrinth:accrelatedrendering-refabricated:1.0.8-1.20.1-alpha-fabric.1"
+}
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "minecraft_version", project.minecraft_version
+    inputs.property "loader_version", project.loader_version
+    filteringCharset "UTF-8"
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version,
+                "minecraft_version": project.minecraft_version,
+                "loader_version": project.loader_version
+    }
+}
+
+def targetJavaVersion = 25
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        it.options.release.set(targetJavaVersion)
+        it.options.compilerArgs << "-Xmaxerrs" << "5000"
+    }
+}
+
+// 26.2 兼容模块回补：原 sourceSets exclude 块已移除（违反"禁止 exclude 业务源码"约束）。
+// 所有 compat 模块现重新纳入编译，逐模块正向修复。见 AUDIT_REPORT_verified.md §7。
+//
+// 【已审批的临时排除】以下模块的目标 mod 在 26.2 Fabric 暂无构建（经 Modrinth 核实），
+// 其 API 类不存在、无法编译。用户已批准临时排除，待上游 26.2 移植后回补。
+// 受影响：Accelerated Rendering、Controllable、Carry On、KubeJS、Modern Keybinding(随 controllable)、Optifine。
+// 注意：iris/sulkan 兼容按用户要求"两者都要兼容"，不在此排除清单内。
+sourceSets {
+    main {
+        java {
+            // AR(Accelerated Rendering)：仅排除硬依赖 argon4w 的 IMPL，保留 ARCompat/BeamRenderContext 门面（改为禁用态）
+            exclude 'com/tacz/guns/compat/ar/ARCompatImpl.java'
+            exclude 'com/tacz/guns/compat/ar/AcceleratedBeamRenderer.java'
+            // Controllable：仅排除硬依赖 mrcrayfish 的 IMPL，保留 ControllableCompat 门面
+            exclude 'com/tacz/guns/compat/controllable/ControllableInner.java'
+            // KubeJS：dev.latvian.kubejs 无 26.2 Fabric 构建，核心 KubeJSGunEventPoster/GunMod 改为禁用态门面
+            exclude 'com/tacz/guns/compat/kubejs/**'
+            // Player Animator(KosmX dev.kosmx.playerAnim)：无 26.2 构建；保留门面 PlayerAnimatorCompat/AnimationName/PlayerAnimatorLoader
+            exclude 'com/tacz/guns/compat/playeranimator/animation/**'
+            exclude 'com/tacz/guns/compat/playeranimator/PlayerAnimatorAssetManager.java'
+            // Optifine：非 Fabric，待评估永久废弃
+            exclude 'com/tacz/guns/compat/optifine/**'
+            // Carry On：无 26.2 构建
+            exclude 'com/tacz/guns/compat/carryon/**'
+            exclude 'cn/sh1rocu/tacz/mixin/compat/carryon/**'
+            // Accelerated Rendering mixin：随 AR 模块禁用
+            exclude 'com/tacz/guns/mixin/client/ar/**'
+        }
+    }
+}
+
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+    withSourcesJar()
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${base.archivesName.get()}" }
+    }
+}
+
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            artifactId = "${archives_base_name}-${minecraft_version}"
+            from components.java
+        }
+    }
+
+    repositories {
+        maven {
+            url "file:///D:/github_maven/Sh1roCu_MCRepo/repository"
+        }
+    }
+}

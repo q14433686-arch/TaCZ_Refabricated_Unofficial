@@ -1,0 +1,17 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 8
+    },
+    {
+      "item": "#c:gems/amethyst",
+      "count": 1
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:scope_retro_2x"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

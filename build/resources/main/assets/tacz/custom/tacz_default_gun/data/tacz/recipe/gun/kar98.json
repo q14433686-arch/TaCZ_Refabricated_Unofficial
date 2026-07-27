@@ -1,0 +1,25 @@
+{
+  "materials": [
+    {
+      "item": "#minecraft:logs",
+      "count": 40
+    },
+    {
+      "item": "#c:ingots/iron",
+      "count": 28
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 4
+    },
+    {
+      "item": "#c:gems/lapis",
+      "count": 12
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:kar98"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

@@ -1,0 +1,17 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 10
+    },
+    {
+      "item": "#c:leathers",
+      "count": 6
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:grip_cobra"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

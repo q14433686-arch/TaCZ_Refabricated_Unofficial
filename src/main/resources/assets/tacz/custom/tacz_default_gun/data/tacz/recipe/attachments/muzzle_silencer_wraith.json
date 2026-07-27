@@ -1,0 +1,21 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 10
+    },
+    {
+      "item": "#c:leathers",
+      "count": 4
+    },
+    {
+      "item": "#minecraft:wool",
+      "count": 2
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:muzzle_silencer_wraith"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

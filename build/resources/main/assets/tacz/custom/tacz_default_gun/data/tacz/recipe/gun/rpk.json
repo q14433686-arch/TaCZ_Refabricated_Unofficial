@@ -1,0 +1,28 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 56
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 8
+    },
+    {
+      "item": "#c:gems/quartz",
+      "count": 8
+    },
+    {
+      "item": "#minecraft:logs",
+      "count": 12
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:rpk",
+    "attachments": {
+      "stock": "tacz:oem_stock_heavy"
+    }
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

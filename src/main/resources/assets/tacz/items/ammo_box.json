@@ -1,0 +1,153 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "tacz:ammo_statue",
+    "cases": [
+      {
+        "when": [
+          0
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "tacz:item/ammo_box/iron_ammo_box_open",
+          "tints": [
+            {
+              "type": "minecraft:dye",
+              "default": -9274005
+            }
+          ]
+        }
+      },
+      {
+        "when": [
+          1
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "tacz:item/ammo_box/iron_ammo_box_close",
+          "tints": [
+            {
+              "type": "minecraft:dye",
+              "default": -9274005
+            }
+          ]
+        }
+      },
+      {
+        "when": [
+          2
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "tacz:item/ammo_box/gold_ammo_box_open",
+          "tints": [
+            {
+              "type": "minecraft:dye",
+              "default": -9274005
+            }
+          ]
+        }
+      },
+      {
+        "when": [
+          3
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "tacz:item/ammo_box/gold_ammo_box_close",
+          "tints": [
+            {
+              "type": "minecraft:dye",
+              "default": -9274005
+            }
+          ]
+        }
+      },
+      {
+        "when": [
+          4
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "tacz:item/ammo_box/diamond_ammo_box_open",
+          "tints": [
+            {
+              "type": "minecraft:dye",
+              "default": -9274005
+            }
+          ]
+        }
+      },
+      {
+        "when": [
+          5
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "tacz:item/ammo_box/diamond_ammo_box_close",
+          "tints": [
+            {
+              "type": "minecraft:dye",
+              "default": -9274005
+            }
+          ]
+        }
+      },
+      {
+        "when": [
+          6
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "tacz:item/ammo_box/creative_ammo_box_open",
+          "tints": [
+            {
+              "type": "minecraft:dye",
+              "default": -9274005
+            }
+          ]
+        }
+      },
+      {
+        "when": [
+          7
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "tacz:item/ammo_box/creative_ammo_box_close",
+          "tints": [
+            {
+              "type": "minecraft:dye",
+              "default": -9274005
+            }
+          ]
+        }
+      },
+      {
+        "when": [
+          8
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "tacz:item/ammo_box/all_type_creative_ammo_box",
+          "tints": [
+            {
+              "type": "minecraft:dye",
+              "default": -9274005
+            }
+          ]
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "tacz:item/ammo_box/iron_ammo_box_close",
+      "tints": [
+        {
+          "type": "minecraft:dye",
+          "default": -9274005
+        }
+      ]
+    }
+  }
+}

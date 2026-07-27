@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "result": {
+    "id": "tacz:workbench_c",
+    "components": {
+      "minecraft:custom_data": {
+        "BlockId": "tacz:attachment_workbench"
+      }
+    }
+  },
+  "pattern": [
+    "GCG",
+    "G G",
+    "IBI"
+  ],
+  "key": {
+    "G": "#c:glass_blocks",
+    "I": "#c:ingots/iron",
+    "C": "minecraft:redstone_torch",
+    "B": "minecraft:chest"
+  }
+}

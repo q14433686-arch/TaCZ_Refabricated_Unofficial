@@ -1,0 +1,17 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 16
+    },
+    {
+      "item": "#c:leathers",
+      "count": 5
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:stock_militech_b5"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

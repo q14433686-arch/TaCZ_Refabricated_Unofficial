@@ -1,0 +1,1884 @@
+tiny	2	0	official
+c	net/minecraft/commands/Commands$CommandSelection
+	c	Access widened by fabric-command-api-v2 to accessible\n
+	f	Z	includeDedicated
+		c	Access widened by fabric-command-api-v2 to accessible
+	f	Z	includeIntegrated
+		c	Access widened by fabric-command-api-v2 to accessible
+c	net/minecraft/world/item/CreativeModeTabs
+	c	Access widened by fabric-creative-tab-api-v1 to accessible\n\n\n\n\n\n\n\n\n\n\n\n\n
+	f	Lnet/minecraft/resources/ResourceKey;	BUILDING_BLOCKS
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	COLORED_BLOCKS
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	NATURAL_BLOCKS
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	FUNCTIONAL_BLOCKS
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	REDSTONE_BLOCKS
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	HOTBAR
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	SEARCH
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	TOOLS_AND_UTILITIES
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	COMBAT
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	FOOD_AND_DRINKS
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	INGREDIENTS
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	SPAWN_EGGS
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	OP_BLOCKS
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	INVENTORY
+		c	Access widened by fabric-creative-tab-api-v1 to accessible
+c	net/minecraft/world/item/CreativeModeTab$TabVisibility
+	c	Access widened by fabric-creative-tab-api-v1 to accessible
+c	net/minecraft/world/item/CreativeModeTab$Output
+	c	Access widened by fabric-creative-tab-api-v1 to accessible
+c	net/minecraft/data/recipes/RecipeProvider$Runner
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	(Lnet/minecraft/data/CachedOutput;)Ljava/util/concurrent/CompletableFuture;	run
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/loot/EntityLootSubProvider
+	c	Access widened by fabric-data-generation-api-v1 to accessible\n
+	m	(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/storage/loot/LootTable$Builder;)V	add
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/level/storage/loot/LootTable$Builder;)V	add
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+c	net/minecraft/data/BlockFamilies
+	c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/data/BlockFamily$Builder;	familyBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+c	net/minecraft/client/data/models/BlockModelGenerators
+	c	Access widened by fabric-data-generation-api-v1 to accessible\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+	f	Ljava/util/function/Consumer;	blockStateOutput
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	f	Ljava/util/function/BiConsumer;	modelOutput
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	f	Lnet/minecraft/client/data/models/ItemModelOutput;	itemModelOutput
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/block/dispatch/Variant;	plainModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/block/dispatch/Variant;)Lnet/minecraft/client/data/models/MultiVariant;	variant
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	([Lnet/minecraft/client/renderer/block/dispatch/Variant;)Lnet/minecraft/client/data/models/MultiVariant;	variants
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/data/models/MultiVariant;	plainVariant
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	()Lnet/minecraft/client/data/models/blockstates/ConditionBuilder;	condition
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/properties/EnumProperty;Ljava/lang/Enum;[Ljava/lang/Enum;)Lnet/minecraft/client/data/models/blockstates/ConditionBuilder;	condition
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/properties/BooleanProperty;Z)Lnet/minecraft/client/data/models/blockstates/ConditionBuilder;	condition
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	([Lnet/minecraft/client/data/models/blockstates/ConditionBuilder;)Lnet/minecraft/client/renderer/block/dispatch/multipart/Condition;	or
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	([Lnet/minecraft/client/data/models/blockstates/ConditionBuilder;)Lnet/minecraft/client/renderer/block/dispatch/multipart/Condition;	and
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/renderer/block/dispatch/Variant;Lnet/minecraft/client/data/models/model/TextureMapping;Ljava/util/function/BiConsumer;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createMirroredCubeGenerator
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/renderer/block/dispatch/Variant;Lnet/minecraft/client/data/models/model/TextureMapping;Ljava/util/function/BiConsumer;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createNorthWestMirroredCubeGenerator
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/renderer/block/dispatch/Variant;Lnet/minecraft/client/data/models/model/TextureMapping;Ljava/util/function/BiConsumer;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createMirroredColumnGenerator
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/resources/Identifier;)V	registerSimpleItemModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/resources/Identifier;)V	registerSimpleItemModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/color/item/ItemTintSource;)V	registerSimpleTintedItemModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)Lnet/minecraft/resources/Identifier;	createFlatItemModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/resources/Identifier;	createFlatItemModelWithBlockTexture
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/world/level/block/Block;Ljava/lang/String;)Lnet/minecraft/resources/Identifier;	createFlatItemModelWithBlockTexture
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/world/level/block/Block;Ljava/lang/String;)Lnet/minecraft/resources/Identifier;	createFlatItemModelWithBlockTextureAndOverlay
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	registerSimpleFlatItemModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	registerSimpleFlatItemModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Ljava/lang/String;)V	registerSimpleFlatItemModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Ljava/lang/String;)V	registerTwoLayerFlatItemModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/block/dispatch/Variant;)Lnet/minecraft/client/data/models/MultiVariant;	createRotatedVariants
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/block/dispatch/Variant;Lnet/minecraft/client/renderer/block/dispatch/Variant;)Lnet/minecraft/client/data/models/MultiVariant;	createRotatedVariants
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/properties/BooleanProperty;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/PropertyDispatch;	createBooleanModelDispatch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createRotatedMirroredVariantBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createRotatedVariantBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createBrushableBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createButton
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createDoor
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createCustomFence
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createFence
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createWall
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Z)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createFenceGate
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createStairs
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createOrientableTrapdoor
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createTrapdoor
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createBed
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createSign
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createHangingSign
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/MultiVariantGenerator;	createSimpleBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	()Lnet/minecraft/client/data/models/blockstates/PropertyDispatch;	createRotatedPillar
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/model/TextureMapping;Ljava/util/function/BiConsumer;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createPillarBlockUVLocked
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createAxisAlignedPillarBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;)V	createAxisAlignedPillarBlockCustomModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/model/TexturedModel$Provider;)V	createAxisAlignedPillarBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/model/TexturedModel$Provider;)V	createHorizontallyRotatedBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createRotatedPillarWithHorizontalVariant
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/model/TexturedModel$Provider;Lnet/minecraft/client/data/models/model/TexturedModel$Provider;)V	createRotatedPillarWithHorizontalVariant
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createCreakingHeart
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/client/data/models/model/TexturedModel$Provider;Lnet/minecraft/world/level/block/Block;Ljava/lang/String;)Lnet/minecraft/resources/Identifier;	createCreakingHeartModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Ljava/lang/String;Lnet/minecraft/client/data/models/model/ModelTemplate;Ljava/util/function/Function;)Lnet/minecraft/resources/Identifier;	createSuffixedVariant
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createPressurePlate
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createSlab
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createTrivialCube
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/model/TexturedModel$Provider;)V	createTrivialBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createItemWithGrassTint
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/client/data/models/BlockModelGenerators$BlockFamilyProvider;	family
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createDoor
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	copyDoorModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createOrientableTrapdoor
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createTrapdoor
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	copyTrapdoorModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/client/data/models/BlockModelGenerators$WoodProvider;	woodProvider
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createNonTemplateModelBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createNonTemplateModelBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/BlockModelGenerators$PlantType;)V	createCrossBlockWithDefaultItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/BlockModelGenerators$PlantType;Lnet/minecraft/client/data/models/model/TextureMapping;)V	createCrossBlockWithDefaultItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/BlockModelGenerators$PlantType;)V	createCrossBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/BlockModelGenerators$PlantType;Lnet/minecraft/client/data/models/model/TextureMapping;)V	createCrossBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/BlockModelGenerators$PlantType;Lnet/minecraft/world/level/block/state/properties/Property;[I)V	createCrossBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/BlockModelGenerators$PlantType;)V	createPlantWithDefaultItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/BlockModelGenerators$PlantType;)V	createPlant
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createCoralFans
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createStems
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createCoral
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/BlockModelGenerators$PlantType;)V	createDoublePlant
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/BlockModelGenerators$PlantType;)V	createDoublePlantWithDefaultItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createTintedDoublePlant
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)V	createDoubleBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createPassiveRail
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createActiveRail
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/item/Item;)V	createAirLikeBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/resources/model/sprite/Material;)V	createAirLikeBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/client/data/models/MultiVariant;	createParticleOnlyBlockModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createParticleOnlyBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createFullAndCarpetBlocks
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createLeafLitter
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createFlowerBed
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Ljava/util/function/Function;Lnet/minecraft/client/data/models/MultiVariant;Ljava/util/function/Function;Lnet/minecraft/client/data/models/MultiVariant;Ljava/util/function/Function;Lnet/minecraft/client/data/models/MultiVariant;Ljava/util/function/Function;)V	createSegmentedBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/client/data/models/model/TexturedModel$Provider;Ljava/util/List;)V	createColoredBlockWithRandomRotations
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/client/data/models/model/TexturedModel$Provider;Ljava/util/List;)V	createColoredBlockWithStateRotations
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createGlassBlocks
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createCommandBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createAnvil
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(I)Lnet/minecraft/client/data/models/MultiVariant;	createBambooModels
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/PropertyDispatch;	createEmptyOrFullDispatch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Ljava/util/function/Function;)V	createBeeNest
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/state/properties/Property;[I)V	createCropBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/model/TexturedModel$Provider;)V	createFurnace
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	([Lnet/minecraft/world/level/block/Block;)V	createCampfires
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createAzalea
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createPottedAzalea
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createMushroomBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Ljava/util/function/BiFunction;)V	createCraftingTableLike
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/model/TextureMapping;)V	createPumpkinVariant
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createDispenserBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createCopperBulb
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)Lnet/minecraft/client/data/models/blockstates/BlockModelDefinitionGenerator;	createCopperBulb
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	copyCopperBulbModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createAmethystCluster
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createSpeleothem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/core/Direction;Lnet/minecraft/world/level/block/state/properties/SpeleothemThickness;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/client/data/models/MultiVariant;	createSpeleothemVariant
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createNyliumBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createRotatableColumn
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createLightningRod
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/client/data/models/MultiVariant;	createFloorFireModels
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/client/data/models/MultiVariant;	createSideFireModels
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/client/data/models/MultiVariant;	createTopFireModels
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createLantern
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createCopperLantern
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createCopperChain
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/MultiVariant;)V	createGrassLikeBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createWeightedPressurePlate
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	copyModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createBarsAndItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createBarsAndItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/resources/Identifier;Lnet/minecraft/resources/Identifier;Lnet/minecraft/resources/Identifier;Lnet/minecraft/resources/Identifier;Lnet/minecraft/resources/Identifier;Lnet/minecraft/resources/Identifier;)V	createBars
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createNonTemplateHorizontalBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/MultiVariant;Lnet/minecraft/client/data/models/model/TextureMapping;)V	createPistonVariant
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createNormalTorch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(ILjava/lang/String;Lnet/minecraft/client/data/models/model/TextureMapping;)Lnet/minecraft/client/renderer/block/dispatch/Variant;	createTurtleEggModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(II)Lnet/minecraft/client/renderer/block/dispatch/Variant;	createTurtleEggModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createMultiface
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/item/Item;)V	createMultiface
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/StateHolder;Ljava/util/function/Function;)Ljava/util/Map;	selectMultifaceProperties
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createMultifaceBlockStates
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createMossyCarpet
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	createHangingMoss
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createShelf
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/model/TextureMapping;Lnet/minecraft/client/data/models/blockstates/MultiPartGenerator;Lnet/minecraft/client/data/models/model/ModelTemplate;Ljava/lang/Boolean;Lnet/minecraft/world/level/block/state/properties/SideChainPart;)V	addShelfPart
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Ljava/util/function/BiConsumer;)V	forEachHorizontalDirection
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/core/Direction;Ljava/lang/Boolean;Lnet/minecraft/world/level/block/state/properties/SideChainPart;)Lnet/minecraft/client/renderer/block/dispatch/multipart/Condition;	shelfCondition
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/client/data/models/blockstates/MultiPartGenerator;Lnet/minecraft/client/renderer/block/dispatch/multipart/Condition;Lnet/minecraft/client/renderer/block/dispatch/VariantMutator;)V	addSlotStateAndRotationVariants
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/client/data/models/blockstates/MultiPartGenerator;Lnet/minecraft/client/renderer/block/dispatch/multipart/Condition;Lnet/minecraft/client/renderer/block/dispatch/VariantMutator;Lnet/minecraft/world/level/block/state/properties/BooleanProperty;Lnet/minecraft/client/data/models/model/ModelTemplate;Z)V	addBookSlotModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/item/DyeColor;)V	createShulkerBox
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/data/models/BlockModelGenerators$PlantType;)V	createGrowingPlant
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createNetherRoots
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/core/FrontAndTop;)Lnet/minecraft/client/renderer/block/dispatch/VariantMutator;	applyRotation
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/SkullBlock$Type;Lnet/minecraft/resources/Identifier;)V	createHead
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;)V	createCopperGolemStatue
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/DyeColor;)V	createBanner
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/resources/Identifier;Z)V	createChest
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/client/renderer/MultiblockChestResources;Z)V	createChest
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/DyeColor;)V	createBed
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Ljava/util/Optional;Lnet/minecraft/client/renderer/special/SpecialModelRenderer$Unbaked;)V	generateSimpleSpecialItemModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/Item;)V	createCopperChainItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createCandleAndCandleCake
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+c	net/minecraft/client/data/models/ItemModelGenerators
+	c	Access widened by fabric-data-generation-api-v1 to accessible\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+	f	Lnet/minecraft/client/data/models/ItemModelOutput;	itemModelOutput
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	f	Ljava/util/function/BiConsumer;	modelOutput
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	declareCustomModelItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/client/data/models/model/ModelTemplate;)Lnet/minecraft/resources/Identifier;	createFlatItemModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/client/data/models/model/ModelTemplate;)V	generateFlatItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Ljava/lang/String;Lnet/minecraft/client/data/models/model/ModelTemplate;)Lnet/minecraft/resources/Identifier;	createFlatItemModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/Item;Lnet/minecraft/client/data/models/model/ModelTemplate;)Lnet/minecraft/resources/Identifier;	createFlatItemModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/Item;Lnet/minecraft/client/data/models/model/ModelTemplate;)V	generateFlatItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/client/color/item/ItemTintSource;)V	generateItemWithTintedOverlay
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Ljava/lang/String;Lnet/minecraft/client/color/item/ItemTintSource;)V	generateItemWithTintedOverlay
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;I)V	generateItemWithTintedBaseLayer
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)Ljava/util/List;	createCompassModels
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateStandardCompassItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateRecoveryCompassItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateClockItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/client/resources/model/sprite/Material;Lnet/minecraft/client/resources/model/sprite/Material;)Lnet/minecraft/resources/Identifier;	generateLayeredItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/resources/model/sprite/Material;Lnet/minecraft/client/resources/model/sprite/Material;)Lnet/minecraft/resources/Identifier;	generateLayeredItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/resources/model/sprite/Material;Lnet/minecraft/client/resources/model/sprite/Material;Lnet/minecraft/client/resources/model/sprite/Material;)V	generateLayeredItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/Identifier;Z)V	generateTrimmableItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateBundleModels
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/client/data/models/model/ModelTemplate;Ljava/lang/String;)Lnet/minecraft/resources/Identifier;	generateBundleCoverModel
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateBow
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateCrossbow
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/client/renderer/item/properties/conditional/ConditionalItemModelProperty;Lnet/minecraft/client/renderer/item/ItemModel$Unbaked;Lnet/minecraft/client/renderer/item/ItemModel$Unbaked;)V	generateBooleanDispatch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateElytra
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateBrush
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateFishingRod
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateGoatHorn
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateShield
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/item/ItemModel$Unbaked;Lnet/minecraft/client/renderer/item/ItemModel$Unbaked;)Lnet/minecraft/client/renderer/item/ItemModel$Unbaked;	createFlatModelDispatch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateSpyglass
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateTrident
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateSpear
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/resources/Identifier;)V	addPotionTint
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generatePotion
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateTippedArrow
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;I)V	generateDyedItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;)V	generateTwoLayerDyedItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+c	net/minecraft/client/data/models/model/TextureSlot
+	c	Access widened by fabric-data-generation-api-v1 to accessible\n
+	m	(Ljava/lang/String;)Lnet/minecraft/client/data/models/model/TextureSlot;	create
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Ljava/lang/String;Lnet/minecraft/client/data/models/model/TextureSlot;)Lnet/minecraft/client/data/models/model/TextureSlot;	create
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+c	net/minecraft/client/data/models/model/TexturedModel
+	c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Ljava/util/function/Function;Lnet/minecraft/client/data/models/model/ModelTemplate;)Lnet/minecraft/client/data/models/model/TexturedModel$Provider;	createDefault
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+c	net/minecraft/client/data/models/BlockModelGenerators$BlockFamilyProvider
+	c	Access widened by fabric-data-generation-api-v1 to accessible
+c	net/minecraft/client/data/models/BlockModelGenerators$WoodProvider
+	c	Access widened by fabric-data-generation-api-v1 to accessible
+c	net/minecraft/client/data/models/BlockModelGenerators$PlantType
+	c	Access widened by fabric-data-generation-api-v1 to accessible
+c	net/minecraft/data/recipes/RecipeProvider
+	c	Access widened by fabric-data-generation-api-v1 to accessible\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+	m	()V	buildRecipes
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/flag/FeatureFlagSet;)V	generateForEnabledBlockFamilies
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;Ljava/lang/String;)V	oneToOneConversionRecipe
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;Ljava/lang/String;I)V	oneToOneConversionRecipe
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Ljava/util/List;Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/item/crafting/CookingBookCategory;Lnet/minecraft/world/level/ItemLike;FILjava/lang/String;)V	oreSmelting
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Ljava/util/List;Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/item/crafting/CookingBookCategory;Lnet/minecraft/world/level/ItemLike;FILjava/lang/String;)V	oreBlasting
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/crafting/AbstractCookingRecipe$Factory;Ljava/util/List;Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/item/crafting/CookingBookCategory;Lnet/minecraft/world/level/ItemLike;FILjava/lang/String;Ljava/lang/String;)V	oreCooking
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/item/Item;)V	netheriteSmithing
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/ResourceKey;)V	trimSmithing
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	twoByTwoPacker
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;Ljava/lang/String;)V	threeByThreePacker
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	threeByThreePacker
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/tags/TagKey;I)V	planksFromLog
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/tags/TagKey;I)V	planksFromLogs
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	woodFromLogs
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	woodenBoat
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	chestBoat
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	buttonBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	doorBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	fenceBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	fenceGateBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	pressurePlate
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	pressurePlateBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	slab
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	shelf
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	slabBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	stairBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	trapdoorBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	signBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	hangingSignBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Ljava/util/List;Ljava/util/List;Ljava/lang/String;Lnet/minecraft/data/recipes/RecipeCategory;)V	colorItemWithDye
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Ljava/util/List;Ljava/util/List;Lnet/minecraft/world/item/Item;Ljava/lang/String;Lnet/minecraft/data/recipes/RecipeCategory;)V	colorWithDye
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	carpet
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	bedFromPlanksAndWool
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	banner
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	stainedGlassFromGlassAndDye
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;)V	dryGhast
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	harness
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	stainedGlassPaneFromStainedGlass
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	stainedGlassPaneFromGlassPaneAndDye
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	coloredTerracottaFromTerracottaAndDye
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	concretePowder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	candle
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	wall
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	wallBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	bricksBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	tilesBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	pillarBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	polished
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/RecipeBuilder;	polishedBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	cut
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/ShapedRecipeBuilder;	cutBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	chiseled
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	mosaicBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)Lnet/minecraft/data/recipes/ShapedRecipeBuilder;	chiseledBuilder
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	stonecutterResultFromBase
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;I)V	stonecutterResultFromBase
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	smeltingResultFromBase
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;)V	nineBlockStorageRecipes
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Ljava/lang/String;Ljava/lang/String;)V	nineBlockStorageRecipesWithCustomPacking
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Ljava/lang/String;Ljava/lang/String;)V	nineBlockStorageRecipesRecipesWithCustomUnpacking
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V	nineBlockStorageRecipes
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)V	copySmithingTemplate
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/item/crafting/Ingredient;)V	copySmithingTemplate
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Ljava/lang/String;Lnet/minecraft/world/item/crafting/AbstractCookingRecipe$Factory;I)V	cookRecipes
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Ljava/lang/String;Lnet/minecraft/world/item/crafting/AbstractCookingRecipe$Factory;ILnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;F)V	simpleCookingRecipe
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/flag/FeatureFlagSet;)V	waxRecipes
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	grate
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	copperBulb
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	waxedChiseled
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/world/level/block/SuspiciousEffectHolder;)V	suspiciousStew
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Ljava/lang/String;)V	dyedItem
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/Item;)V	dyedShulkerBoxRecipe
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/Item;)V	dyedBundleRecipe
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/BlockFamily;Lnet/minecraft/world/flag/FeatureFlagSet;)V	generateRecipes
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/BlockFamily;Lnet/minecraft/data/BlockFamily$Variant;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/ItemLike;)V	generateCraftingRecipe
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/BlockFamily$Variant;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/ItemLike;)V	generateSmeltingRecipe
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/BlockFamily;Lnet/minecraft/data/BlockFamily$Variant;Lnet/minecraft/world/level/block/Block;)V	generateStonecutterRecipe
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/BlockFamily;Lnet/minecraft/data/BlockFamily$Variant;)Lnet/minecraft/world/level/block/Block;	getBaseBlockForCrafting
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/BlockFamily;Lnet/minecraft/data/BlockFamily$Variant;Lnet/minecraft/world/level/ItemLike;)Ljava/lang/String;	getCraftingCriterionName
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/advancements/triggers/Criterion;	insideOf
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	()Lnet/minecraft/advancements/triggers/Criterion;	bredAnimal
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/advancements/predicates/MinMaxBounds$Ints;Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/advancements/triggers/Criterion;	has
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/advancements/triggers/Criterion;	has
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/tags/TagKey;)Lnet/minecraft/advancements/triggers/Criterion;	has
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	([Lnet/minecraft/advancements/predicates/ItemPredicate$Builder;)Lnet/minecraft/advancements/triggers/Criterion;	inventoryTrigger
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	([Lnet/minecraft/advancements/predicates/ItemPredicate;)Lnet/minecraft/advancements/triggers/Criterion;	inventoryTrigger
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;)Ljava/lang/String;	getHasName
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;)Ljava/lang/String;	getItemName
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;)Ljava/lang/String;	getSimpleRecipeName
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/ItemLike;)Ljava/lang/String;	getConversionRecipeName
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;)Ljava/lang/String;	getSmeltingRecipeName
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;)Ljava/lang/String;	getBlastingRecipeName
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/tags/TagKey;)Lnet/minecraft/world/item/crafting/Ingredient;	tag
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/data/recipes/ShapedRecipeBuilder;	shaped
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;I)Lnet/minecraft/data/recipes/ShapedRecipeBuilder;	shaped
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/item/ItemStackTemplate;)Lnet/minecraft/data/recipes/ShapelessRecipeBuilder;	shapeless
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/data/recipes/ShapelessRecipeBuilder;	shapeless
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/data/recipes/RecipeCategory;Lnet/minecraft/world/level/ItemLike;I)Lnet/minecraft/data/recipes/ShapelessRecipeBuilder;	shapeless
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+c	net/minecraft/data/loot/BlockLootSubProvider
+	c	Access widened by fabric-data-generation-api-v1 to accessible\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+	m	()Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition$Builder;	hasSilkTouch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	()Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition$Builder;	doesNotHaveSilkTouch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	()Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition$Builder;	hasShears
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	()Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition$Builder;	hasShearsOrSilkTouch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	()Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition$Builder;	doesNotHaveShearsOrSilkTouch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/storage/loot/functions/FunctionUserBuilder;)Lnet/minecraft/world/level/storage/loot/functions/FunctionUserBuilder;	applyExplosionDecay
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/storage/loot/predicates/ConditionUserBuilder;)Lnet/minecraft/world/level/storage/loot/predicates/ConditionUserBuilder;	applyExplosionCondition
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition$Builder;Lnet/minecraft/world/level/storage/loot/entries/LootPoolEntryContainer$Builder;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createSelfDropDispatchTable
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/storage/loot/entries/LootPoolEntryContainer$Builder;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createSilkTouchDispatchTable
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/storage/loot/entries/LootPoolEntryContainer$Builder;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createShearsDispatchTable
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/storage/loot/entries/LootPoolEntryContainer$Builder;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createSilkTouchOrShearsDispatchTable
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createSingleItemTableWithSilkTouch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createSingleItemTable
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/ItemLike;Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createSingleItemTableWithSilkTouch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createSilkTouchOnlyTable
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createPotFlowerItemTable
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createSlabItemTable
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createSinglePropConditionTable
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createNameableBlockEntityTable
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createShulkerBoxDrop
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createCopperOreDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createLapisOreDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createRedstoneOreDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createBannerDrop
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createBeeNestDrop
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createBeeHiveDrop
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createCaveVinesDrop
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createCopperGolemStatueBlock
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/item/Item;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createOreDrop
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createMushroomBlockDrop
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createGrassDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createShearsOnlyDrop
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createShearsOrSilkTouchOnlyDrop
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition$Builder;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createMultifaceBlockDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createMultifaceBlockDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createMossyCarpetBlockDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;[F)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createLeavesDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;[F)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createOakLeavesDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createMangroveLeavesDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/Item;Lnet/minecraft/world/level/storage/loot/predicates/LootItemCondition$Builder;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createCropDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createDoublePlantShearsDrop
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createDoublePlantWithSeedDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createCandleDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createCandleCakeDrops
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	()V	generate
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	addNetherVinesDropTable
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/storage/loot/LootTable$Builder;	createDoorTable
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	dropPottedContents
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	otherWhenSilkTouch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/ItemLike;)V	dropOther
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	dropWhenSilkTouch
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;)V	dropSelf
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Ljava/util/function/Function;)V	add
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/storage/loot/LootTable$Builder;)V	add
+		c	Access widened by fabric-data-generation-api-v1 to accessible
+c	net/minecraft/client/data/models/ModelProvider
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/advancements/AdvancementProvider
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/info/BiomeParametersDumpReport
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/info/BlockListReport
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/info/CommandsReport
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/info/RegistryComponentsReport
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/info/RegistryDumpReport
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/loot/LootTableProvider
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/metadata/PackMetadataGenerator
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/registries/RegistriesDatapackGenerator
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/structures/NbtToSnbt
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/structures/SnbtToNbt
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/data/tags/TagsProvider
+	c	Access widened by fabric-data-generation-api-v1 to extendable
+	m	()Ljava/lang/String;	getName
+		c	Access widened by fabric-data-generation-api-v1 to extendable
+c	net/minecraft/client/renderer/block/FluidRenderer
+	c	Access widened by fabric-rendering-fluids-v1 to accessible
+	f	Lnet/minecraft/client/renderer/block/FluidStateModelSet;	fluidModels
+		c	Access widened by fabric-rendering-fluids-v1 to accessible
+c	net/minecraft/world/inventory/MenuType$MenuSupplier
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/inventory/MenuType
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/inventory/MenuType$MenuSupplier;Lnet/minecraft/world/flag/FeatureFlagSet;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/gui/screens/MenuScreens$ScreenConstructor
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/gui/screens/MenuScreens
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/inventory/MenuType;Lnet/minecraft/client/gui/screens/MenuScreens$ScreenConstructor;)V	register
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/storage/loot/LootPool
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n\n
+	f	Ljava/util/List;	entries
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Ljava/util/List;	conditions
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Ljava/util/List;	functions
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;	rolls
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/world/level/storage/loot/providers/number/NumberProvider;	bonusRolls
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/entity/SpawnPlacements
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/entity/SpawnPlacementType;Lnet/minecraft/world/level/levelgen/Heightmap$Types;Lnet/minecraft/world/entity/SpawnPlacements$SpawnPredicate;)V	register
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/item/context/UseOnContext
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/phys/BlockHitResult;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/item/context/BlockPlaceContext
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/phys/BlockHitResult;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/scores/criteria/ObjectiveCriteria
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n
+	m	(Ljava/lang/String;ZLnet/minecraft/world/scores/criteria/ObjectiveCriteria$RenderType;)Lnet/minecraft/world/scores/criteria/ObjectiveCriteria;	registerCustom
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Ljava/lang/String;)Lnet/minecraft/world/scores/criteria/ObjectiveCriteria;	registerCustom
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/model/geom/ModelPart$Vertex
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/model/geom/ModelPart$Polygon
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/gui/GuiGraphicsExtractor
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n
+	f	Lnet/minecraft/client/renderer/state/gui/GuiRenderState;	guiRenderState
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/client/gui/GuiGraphicsExtractor$ScissorStack;	scissorStack
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/gui/GuiGraphicsExtractor$ScissorStack
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/blockentity/BlockEntityRenderers
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/client/renderer/blockentity/BlockEntityRendererProvider;)V	register
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/entity/EntityRenderers
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/client/renderer/entity/EntityRendererProvider;)V	register
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/item/ItemModels
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;	ID_MAPPER
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/color/item/ItemTintSources
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;	ID_MAPPER
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/item/properties/conditional/ConditionalItemModelProperties
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;	ID_MAPPER
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/item/properties/numeric/RangeSelectItemModelProperties
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;	ID_MAPPER
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/item/properties/select/SelectItemModelProperties
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;	ID_MAPPER
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/special/SpecialModelRenderers
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;	ID_MAPPER
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/entity/ai/sensing/SensorType
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Ljava/util/function/Supplier;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/entity/schedule/Activity
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Ljava/lang/String;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/entity/LivingEntity
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n<p>Interface {@link cn.sh1rocu.tacz.api.mixin.ItemHandlerCapability} injected by mod tacz</p>
+	m	(Lnet/minecraft/world/damagesource/DamageSource;F)V	hurtArmor
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/damagesource/DamageSource;F)V	hurtHelmet
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/entity/projectile/Projectile
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/entity/projectile/FishingHook
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;II)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/server/level/ServerLevel
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/server/level/ServerPlayer;ZDDDLnet/minecraft/network/protocol/Packet;)Z	sendParticles
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/network/chat/TextColor
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Ljava/lang/String;	formatValue
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/network/chat/contents/TranslatableContents
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(I)Lnet/minecraft/network/chat/FormattedText;	getArgument
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/entity/npc/villager/VillagerType
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Ljava/util/Map;	BY_BIOME
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/SimpleContainer
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/core/NonNullList;	items
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/sounds/SoundEvent
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n
+	m	(Lnet/minecraft/resources/Identifier;F)Lnet/minecraft/sounds/SoundEvent;	createFixedRangeEvent
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/sounds/SoundEvent;	createVariableRangeEvent
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/levelgen/feature/stateproviders/BlockStateProviderType
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lcom/mojang/serialization/MapCodec;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/data/worldgen/biome/OverworldBiomes
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n\n\n
+	m	(F)I	calculateSkyColor
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(FF)Lnet/minecraft/world/level/biome/Biome$BiomeBuilder;	baseBiome
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/biome/BiomeGenerationSettings$Builder;)V	globalOverworldGeneration
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;Lnet/minecraft/core/HolderGetter;FZZZ)Lnet/minecraft/world/level/biome/Biome$BiomeBuilder;	baseJungle
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/world/level/biome/Biome$BiomeBuilder;	baseOcean
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;Lnet/minecraft/core/HolderGetter;)Lnet/minecraft/world/level/biome/BiomeGenerationSettings$Builder;	baseOceanGeneration
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/data/worldgen/ProcessorLists
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	EMPTY
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/levelgen/feature/foliageplacers/FoliagePlacerType
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lcom/mojang/serialization/MapCodec;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/levelgen/feature/treedecorators/TreeDecoratorType
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lcom/mojang/serialization/MapCodec;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/levelgen/feature/trunkplacers/TrunkPlacerType
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lcom/mojang/serialization/MapCodec;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/levelgen/feature/rootplacers/RootPlacerType
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lcom/mojang/serialization/MapCodec;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/damagesource/DamageSources
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n
+	f	Lnet/minecraft/core/Registry;	damageTypes
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/damagesource/DamageSource;	source
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/damagesource/DamageSource;	source
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/damagesource/DamageSource;	source
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/Minecraft
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	I	missTime
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/Blocks
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n\n\n\n\n\n\n\n\n\n
+	m	(Lnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/material/MapColor;Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;	logProperties
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;	netherStemProperties
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;	leavesProperties
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;	buttonProperties
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;	flowerPotProperties
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z	always
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/EntityType;)Ljava/lang/Boolean;	always
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/EntityType;)Ljava/lang/Boolean;	ocelotOrParrot
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(I)Ljava/util/function/ToIntFunction;	litBlockEmission
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z	never
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/EntityType;)Ljava/lang/Boolean;	never
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;	register
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;	register
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/gui/components/debug/DebugScreenEntries
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntry;)Lnet/minecraft/resources/Identifier;	register
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/rendertype/RenderType
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Ljava/lang/String;Lnet/minecraft/client/renderer/rendertype/RenderSetup;)Lnet/minecraft/client/renderer/rendertype/RenderType;	create
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/item/equipment/ArmorMaterials
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(IIIII)Ljava/util/Map;	makeDefense
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/item/Item$Properties
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/resources/ResourceKey;	itemIdOrThrow
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/data/worldgen/biome/EndBiomes
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/biome/BiomeGenerationSettings$Builder;)Lnet/minecraft/world/level/biome/Biome;	baseEndBiome
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/data/worldgen/biome/NetherBiomes
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/world/level/biome/Biome$BiomeBuilder;	baseBiome
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/AttachedStemBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/tags/TagKey;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/AzaleaBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/BarrierBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/BaseCoralFanBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/BaseCoralPlantBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/BaseCoralWallFanBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/BigDripleafBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/BigDripleafStemBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/BlastFurnaceBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/BushBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/ButtonBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/properties/BlockSetType;ILnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/CactusBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/CakeBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/CandleCakeBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/CartographyTableBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/CarvedPumpkinBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/ChestBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Ljava/util/function/Supplier;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/ChorusFlowerBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/ChorusPlantBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/CoralFanBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/CoralPlantBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/CoralWallFanBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/CraftingTableBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/CreakingHeartBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/CropBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/DecoratedPotBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/DirtPathBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/DispenserBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/DoorBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/DryVegetationBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/EnchantingTableBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/EndGatewayBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/EndPortalBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/EndRodBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/EnderChestBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/FarmlandBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/FlowerBedBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/FurnaceBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/GrindstoneBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/HalfTransparentBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/HangingRootsBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/IronBarsBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/JigsawBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/JukeboxBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/KelpBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/KelpPlantBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/LadderBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/LecternBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/LeverBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/LilyPadBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/LiquidBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/material/FlowingFluid;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/LoomBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/MangroveRootsBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/NetherFungusBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/tags/TagKey;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/NetherRootsBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/tags/TagKey;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/NetherWartBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/NyliumBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/PlayerHeadBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/PlayerWallHeadBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/PoweredRailBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/PressurePlateBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/PumpkinBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/RailBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/RedstoneTorchBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/RedstoneWallTorchBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/RepeaterBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/SaplingBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/grower/TreeGrower;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/ScaffoldingBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/SeaPickleBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/SeagrassBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/ShortDryGrassBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/SkullBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/SkullBlock$Type;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/SmithingTableBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/SmokerBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/SnowLayerBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/SnowyBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/SpawnerBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/SpongeBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/StairBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/StemBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/tags/TagKey;Lnet/minecraft/tags/TagKey;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/StructureBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/StructureVoidBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/SugarCaneBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/TallDryGrassBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/TallGrassBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/TorchBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/particles/SimpleParticleType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/TransparentBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/TrapDoorBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WallSkullBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/SkullBlock$Type;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WallTorchBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/particles/SimpleParticleType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WaterloggedTransparentBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WeatheringCopperBarsBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WeatheringCopperChainBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WeatheringCopperDoorBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WeatheringCopperGrateBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WeatheringCopperTrapDoorBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WeatheringLanternBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WeatheringLightningRodBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WeightedPressurePlateBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(ILnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WetSpongeBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WitherSkullBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WitherWallSkullBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WoolCarpetBlock
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/item/DyeColor;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/entity/Display
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+	m	(Lcom/mojang/math/Transformation;)V	setTransformation
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(I)V	setTransformationInterpolationDuration
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()I	getTransformationInterpolationDuration
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(I)V	setTransformationInterpolationDelay
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()I	getTransformationInterpolationDelay
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(I)V	setPosRotInterpolationDuration
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()I	getPosRotInterpolationDuration
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/entity/Display$BillboardConstraints;)V	setBillboardConstraints
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/world/entity/Display$BillboardConstraints;	getBillboardConstraints
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/util/Brightness;)V	setBrightnessOverride
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/util/Brightness;	getBrightnessOverride
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()I	getPackedBrightnessOverride
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(F)V	setViewRange
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()F	getViewRange
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(F)V	setShadowRadius
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()F	getShadowRadius
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(F)V	setShadowStrength
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()F	getShadowStrength
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(F)V	setWidth
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()F	getWidth
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(F)V	setHeight
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()I	getGlowColorOverride
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(I)V	setGlowColorOverride
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()F	getHeight
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/entity/Display$ItemDisplay
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n
+	m	()Lnet/minecraft/world/item/ItemStack;	getItemStack
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/item/ItemStack;)V	setItemStack
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/item/ItemDisplayContext;)V	setItemTransform
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/world/item/ItemDisplayContext;	getItemTransform
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/entity/Display$BlockDisplay
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n
+	m	()Lnet/minecraft/world/level/block/state/BlockState;	getBlockState
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/BlockState;)V	setBlockState
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/entity/Display$TextDisplay
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n\n\n\n\n\n\n
+	m	()Lnet/minecraft/network/chat/Component;	getText
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/network/chat/Component;)V	setText
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()I	getLineWidth
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(I)V	setLineWidth
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()B	getTextOpacity
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(B)V	setTextOpacity
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()I	getBackgroundColor
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(I)V	setBackgroundColor
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()B	getFlags
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(B)V	setFlags
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/entity/Interaction
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n\n\n
+	m	(F)V	setWidth
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()F	getWidth
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(F)V	setHeight
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()F	getHeight
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Z)V	setResponse
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Z	getResponse
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/item/enchantment/EnchantmentHelper
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n
+	m	(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/core/component/DataComponentType;	getComponentType
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/enchantment/EnchantmentHelper$EnchantmentVisitor;)V	runIterationOnItem
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/EquipmentSlot;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/enchantment/EnchantmentHelper$EnchantmentInSlotVisitor;)V	runIterationOnItem
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/enchantment/EnchantmentHelper$EnchantmentInSlotVisitor;)V	runIterationOnEquipment
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/item/enchantment/Enchantment
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n\n\n\n\n\n
+	m	(Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemInstance;Lorg/apache/commons/lang3/mutable/MutableFloat;)V	modifyItemFilteredCount
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lorg/apache/commons/lang3/mutable/MutableFloat;)V	modifyEntityFilteredValue
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lorg/apache/commons/lang3/mutable/MutableFloat;)V	modifyDamageFilteredValue
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/item/ItemInstance;)Lnet/minecraft/world/level/storage/loot/LootContext;	itemContext
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/entity/Entity;Z)Lnet/minecraft/world/level/storage/loot/LootContext;	locationContext
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/level/storage/loot/LootContext;	entityContext
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/server/level/ServerLevel;ILnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/storage/loot/LootContext;	blockHitContext
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Ljava/util/List;Lnet/minecraft/world/level/storage/loot/LootContext;Lnet/minecraft/world/item/enchantment/Enchantment$GenericAction;)V	applyEffects
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Ljava/util/List;Lnet/minecraft/world/level/storage/loot/LootContext;Lorg/apache/commons/lang3/mutable/MutableFloat;Lnet/minecraft/world/item/enchantment/Enchantment$FloatAction;)V	applyEffects
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/item/enchantment/EnchantmentHelper$EnchantmentVisitor
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/item/enchantment/EnchantmentHelper$EnchantmentInSlotVisitor
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/item/enchantment/Enchantment$GenericAction
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/item/enchantment/Enchantment$FloatAction
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/levelgen/NoiseRouterData
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+	f	F	ORE_THICKNESS
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	D	VEININESS_FREQUENCY
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	D	NOODLE_SPACING_AND_STRAIGHTNESS
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	D	SURFACE_DENSITY_THRESHOLD
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	D	CHEESE_NOISE_TARGET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	I	DENSITY_Y_ANCHOR_BOTTOM
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	I	DENSITY_Y_ANCHOR_TOP
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	D	DENSITY_Y_BOTTOM
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	D	DENSITY_Y_TOP
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	I	OVERWORLD_BOTTOM_SLIDE_HEIGHT
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	D	BASE_DENSITY_MULTIPLIER
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/world/level/levelgen/DensityFunction;	BLENDING_FACTOR
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/world/level/levelgen/DensityFunction;	BLENDING_JAGGEDNESS
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	ZERO
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	Y
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	SHIFT_X
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	SHIFT_Z
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	BASE_3D_NOISE_OVERWORLD
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	BASE_3D_NOISE_NETHER
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	BASE_3D_NOISE_END
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	SLOPED_CHEESE
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	OFFSET_LARGE
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	FACTOR_LARGE
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	JAGGEDNESS_LARGE
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	DEPTH_LARGE
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	SLOPED_CHEESE_LARGE
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	OFFSET_AMPLIFIED
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	FACTOR_AMPLIFIED
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	JAGGEDNESS_AMPLIFIED
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	DEPTH_AMPLIFIED
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	SLOPED_CHEESE_AMPLIFIED
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	SLOPED_CHEESE_END
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	SPAGHETTI_ROUGHNESS_FUNCTION
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	ENTRANCES
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	NOODLE
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	PILLARS
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	SPAGHETTI_2D_THICKNESS_MODULATOR
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lnet/minecraft/resources/ResourceKey;	SPAGHETTI_2D
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/data/worldgen/BootstrapContext;Lnet/minecraft/core/HolderGetter;Lnet/minecraft/world/level/levelgen/DensityFunction;Lnet/minecraft/world/level/levelgen/DensityFunction;Lnet/minecraft/world/level/levelgen/DensityFunction;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/ResourceKey;Z)V	registerTerrainNoises
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/levelgen/DensityFunction;)Lnet/minecraft/world/level/levelgen/DensityFunction;	offsetToDepth
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/data/worldgen/BootstrapContext;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/level/levelgen/DensityFunction;)Lnet/minecraft/world/level/levelgen/DensityFunction;	registerAndWrap
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/level/levelgen/DensityFunction;	getFunction
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/levelgen/DensityFunction;)Lnet/minecraft/world/level/levelgen/DensityFunction;	peaksAndValleys
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;)Lnet/minecraft/world/level/levelgen/DensityFunction;	spaghettiRoughnessFunction
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;Lnet/minecraft/core/HolderGetter;)Lnet/minecraft/world/level/levelgen/DensityFunction;	entrances
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;Lnet/minecraft/core/HolderGetter;)Lnet/minecraft/world/level/levelgen/DensityFunction;	noodle
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;)Lnet/minecraft/world/level/levelgen/DensityFunction;	pillars
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;Lnet/minecraft/core/HolderGetter;)Lnet/minecraft/world/level/levelgen/DensityFunction;	spaghetti2D
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;Lnet/minecraft/core/HolderGetter;Lnet/minecraft/world/level/levelgen/DensityFunction;)Lnet/minecraft/world/level/levelgen/DensityFunction;	underground
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/levelgen/DensityFunction;)Lnet/minecraft/world/level/levelgen/DensityFunction;	postProcess
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/levelgen/DensityFunction;DDDD)Lnet/minecraft/world/level/levelgen/DensityFunction;	remap
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;Lnet/minecraft/core/HolderGetter;ZZ)Lnet/minecraft/world/level/levelgen/NoiseRouter;	overworld
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(ZLnet/minecraft/world/level/levelgen/DensityFunction;)Lnet/minecraft/world/level/levelgen/DensityFunction;	slideOverworld
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;II)Lnet/minecraft/world/level/levelgen/DensityFunction;	slideNetherLike
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/levelgen/DensityFunction;II)Lnet/minecraft/world/level/levelgen/DensityFunction;	slideEndLike
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;Lnet/minecraft/core/HolderGetter;)Lnet/minecraft/world/level/levelgen/NoiseRouter;	nether
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;)Lnet/minecraft/world/level/levelgen/NoiseRouter;	caves
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;Lnet/minecraft/core/HolderGetter;)Lnet/minecraft/world/level/levelgen/NoiseRouter;	floatingIslands
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/levelgen/DensityFunction;)Lnet/minecraft/world/level/levelgen/DensityFunction;	slideEnd
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/core/HolderGetter;)Lnet/minecraft/world/level/levelgen/NoiseRouter;	end
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/levelgen/DensityFunction;)Lnet/minecraft/world/level/levelgen/NoiseRouter;	simpleRouter
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/levelgen/DensityFunction;Lnet/minecraft/world/level/levelgen/DensityFunction;)Lnet/minecraft/world/level/levelgen/DensityFunction;	splineWithBlending
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/levelgen/DensityFunction;Lnet/minecraft/world/level/levelgen/DensityFunction;)Lnet/minecraft/world/level/levelgen/DensityFunction;	noiseGradientDensity
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/levelgen/DensityFunction;Lnet/minecraft/world/level/levelgen/DensityFunction;Z)Lnet/minecraft/world/level/levelgen/DensityFunction;	preliminarySurfaceLevel
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/levelgen/DensityFunction;Lnet/minecraft/world/level/levelgen/DensityFunction;III)Lnet/minecraft/world/level/levelgen/DensityFunction;	yLimitedInterpolatable
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/levelgen/DensityFunction;IIIIDIID)Lnet/minecraft/world/level/levelgen/DensityFunction;	slide
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/RenderPipelines
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	GLOBALS_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	MATRICES_FOG_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	MATRICES_FOG_LIGHT_DIR_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	GENERIC_BLOCKS_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	TERRAIN_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	BLOCK_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	ENTITY_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	ENTITY_EMISSIVE_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	BEACON_BEAM_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	ITEM_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	TEXT_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	WORLD_TEXT_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	END_PORTAL_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	CLOUDS_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	LINES_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	DEBUG_FILLED_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	PARTICLE_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	WEATHER_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	GUI_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	GUI_TEXTURED_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	GUI_TEXT_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	f	Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;	OUTLINE_SNIPPET
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lcom/mojang/blaze3d/pipeline/RenderPipeline;)Lcom/mojang/blaze3d/pipeline/RenderPipeline;	register
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/block/BuiltInBlockModels
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+	m	(Lnet/minecraft/client/renderer/block/BuiltInBlockModels$Builder;)V	addDefaults
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/block/BuiltInBlockModels$Builder;Lnet/minecraft/world/level/block/Block;)V	createAir
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/special/SpecialModelRenderer$Unbaked;)Lnet/minecraft/client/renderer/block/model/BlockModel$Unbaked;	special
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/special/SpecialModelRenderer$Unbaked;Lcom/mojang/math/Transformation;)Lnet/minecraft/client/renderer/block/model/BlockModel$Unbaked;	special
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/SkullBlock$Types;)Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createMobHead
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/SkullBlock$Types;)Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createMobWallHead
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/block/BuiltInBlockModels$Builder;Lnet/minecraft/world/level/block/SkullBlock$Types;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	createMobHeads
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createPlayerHead
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createPlayerWallHead
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/item/DyeColor;)Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createBanner
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/item/DyeColor;)Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createWallBanner
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createShulkerBox
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/item/DyeColor;)Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createDyedShulkerBox
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/resources/Identifier;Lnet/minecraft/world/level/block/state/properties/ChestType;Lnet/minecraft/core/Direction;)Lnet/minecraft/client/renderer/block/model/BlockModel$Unbaked;	createChest
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createSingletonChest
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/MultiblockChestResources;)Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createChest
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/MultiblockChestResources;)Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createXmasChest
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;)Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createCopperGolem
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	createDecoratedPot
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/client/color/block/BlockColors;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/block/model/BlockStateModelWrapper$Unbaked;	createBlockStateModelWrapper
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/block/model/BlockModel$Unbaked;Lnet/minecraft/client/color/block/BlockColors;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/block/model/CompositeBlockModel$Unbaked;	combineSpecialAndBlockModels
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/client/color/block/BlockColors;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/block/SelectBlockModel$Unbaked;	createFlowerBedModel
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	()Lnet/minecraft/client/renderer/block/model/BlockModel$Unbaked;	createEnchantingTable
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/util/function/Function;)Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	specialModelWithPropertyDispatch
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/world/level/block/state/properties/Property;Lnet/minecraft/world/level/block/state/properties/Property;Ljava/util/function/BiFunction;)Lnet/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory;	specialModelWithPropertyDispatch
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/block/BuiltInBlockModels$Builder
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible\n\n\n\n
+	m	(Lnet/minecraft/client/color/block/BlockColors;)V	<init>
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/block/BuiltInBlockModels$ModelFactory;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V	put
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/block/model/BlockModel$Unbaked;Lnet/minecraft/world/level/block/Block;)V	put
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+	m	(Lnet/minecraft/client/renderer/block/BuiltInBlockModels$ModelFactory;Lnet/minecraft/world/level/block/Block;)V	put
+		c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/block/BuiltInBlockModels$ModelFactory
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/client/renderer/block/BuiltInBlockModels$SpecialModelFactory
+	c	Access widened by fabric-transitive-access-wideners-v1 to accessible
+c	net/minecraft/world/level/block/WeatheringCopper
+	c	@see net.fabricmc.fabric.api.registry.OxidizableBlocksRegistry registry for modded oxidizable blocks
+c	net/minecraft/world/level/block/entity/DecoratedPotPatterns
+c	com/mojang/blaze3d/pipeline/RenderTarget
+	c	<p>Interface {@link cn.sh1rocu.tacz.api.mixin.RenderTargetStencil} injected by mod tacz</p>

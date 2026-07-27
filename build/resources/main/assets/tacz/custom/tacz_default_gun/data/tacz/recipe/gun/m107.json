@@ -1,0 +1,32 @@
+{
+  "materials": [
+    {
+      "item": "#c:gems/diamond",
+      "count": 18
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 64
+    },
+    {
+      "item": "#c:ingots/netherite",
+      "count": 3
+    },
+    {
+      "item": "#c:ingots/iron",
+      "count": 320
+    },
+    {
+      "item": "#c:rods/blaze",
+      "count": 5
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:m107",
+    "attachments": {
+      "scope": "tacz:scope_contender"
+    }
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

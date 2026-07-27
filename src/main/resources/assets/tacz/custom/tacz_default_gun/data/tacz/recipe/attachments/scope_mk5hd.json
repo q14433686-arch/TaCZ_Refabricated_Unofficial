@@ -1,0 +1,25 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 24
+    },
+    {
+      "item": "#c:gems/amethyst",
+      "count": 10
+    },
+    {
+      "item": "#c:dusts/glowstone",
+      "count": 8
+    },
+    {
+      "item": "#c:dusts/redstone",
+      "count": 8
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:scope_mk5hd"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

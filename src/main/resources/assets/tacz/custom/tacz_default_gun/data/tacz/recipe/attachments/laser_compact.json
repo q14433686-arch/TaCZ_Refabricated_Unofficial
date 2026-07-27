@@ -1,0 +1,17 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 6
+    },
+    {
+      "item": "#c:dusts/redstone",
+      "count": 4
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:laser_compact"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

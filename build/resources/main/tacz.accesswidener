@@ -1,0 +1,7 @@
+accessWidener v2 official
+
+# Confirmed against the Minecraft 26.2 development jar by compileJava.
+# Keep entries minimal; the remaining 1.21.1 targets must be individually revalidated.
+accessible field net/minecraft/world/entity/LivingEntity jumping Z
+accessible method net/minecraft/client/multiplayer/MultiPlayerGameMode ensureHasSentCarriedItem ()V
+accessible method net/minecraft/client/Minecraft startUseItem ()V

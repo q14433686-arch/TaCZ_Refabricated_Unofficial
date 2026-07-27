@@ -1,0 +1,17 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 36
+    },
+    {
+      "item": "#c:gems/lapis",
+      "count": 4
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:hk_mp5a5"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

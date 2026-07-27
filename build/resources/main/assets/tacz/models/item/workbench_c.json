@@ -1,0 +1,6 @@
+{
+  "_comment": "26.2 alignment: upstream used builtin/entity (identity transforms). See modern_kinetic_gun.json.",
+  "textures": {
+    "particle": "minecraft:item/barrier"
+  }
+}

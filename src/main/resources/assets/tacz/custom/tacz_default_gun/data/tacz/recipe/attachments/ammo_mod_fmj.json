@@ -1,0 +1,17 @@
+{
+  "materials": [
+    {
+      "item": "minecraft:crying_obsidian",
+      "count": 2
+    },
+    {
+      "item": "#c:gems/diamond",
+      "count": 5
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:ammo_mod_fmj"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

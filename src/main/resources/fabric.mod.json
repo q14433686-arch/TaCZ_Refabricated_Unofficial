@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "tacz",
+  "version": "${version}",
+  "name": "[UNOFFICIAL] TaCZ Refabricated (26.2 Test Build)",
+  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. TEST BUILD for Minecraft 26.2 - not affiliated with or endorsed by the TACZ Dev Team. The version number reports as 1.1.8 (with '+fabric.26.2.rN' build metadata) so that gun packs declaring a 'tacz' version requirement continue to load; the port/test-build status is indicated here rather than in the version string.",
+  "authors": [
+    "Sh1roCu"
+  ],
+  "contact": {},
+  "license": "GPL3 / CC BY-NC-ND 4.0",
+  "icon": "icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "cn.sh1rocu.tacz.client.TaCZFabricClient"
+    ],
+    "main": [
+      "cn.sh1rocu.tacz.TaCZFabric"
+    ],
+    "modmenu": [
+      "cn.sh1rocu.tacz.compat.modmenu.ModMenuApiImpl"
+    ],
+    "jei_mod_plugin": [
+      "com.tacz.guns.compat.jei.GunModPlugin"
+    ],
+    "rei_client": [
+      "cn.sh1rocu.tacz.compat.rei.REIClientPlugin"
+    ],
+    "rei_common": [
+      "cn.sh1rocu.tacz.compat.rei.REIPlugin"
+    ]
+  },
+  "custom": {
+    "loom:injected_interfaces": {
+      "net/minecraft/world/entity/LivingEntity": [
+        "cn/sh1rocu/tacz/api/mixin/ItemHandlerCapability"
+      ]
+    }
+  },
+  "mixins": [
+    "tacz.mixins.json",
+    "tacz.fabric.mixins.json"
+  ],
+  "accessWidener": "tacz.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "fabric-api": "*",
+    "minecraft": "26.2",
+    "java": ">=25",
+    "forgeconfigapiport": ">=26.2.0"
+  }
+}

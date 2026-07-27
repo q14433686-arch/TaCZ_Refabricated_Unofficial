@@ -1,0 +1,25 @@
+{
+  "materials": [
+    {
+      "item": "#c:gems/diamond",
+      "count": 6
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 30
+    },
+    {
+      "item": "#c:ingots/iron",
+      "count": 145
+    },
+    {
+      "item": "#c:rods/blaze",
+      "count": 5
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:fn_evolys"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

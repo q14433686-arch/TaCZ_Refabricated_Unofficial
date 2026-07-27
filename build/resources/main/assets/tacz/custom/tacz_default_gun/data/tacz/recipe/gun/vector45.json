@@ -1,0 +1,25 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 60
+    },
+    {
+      "item": "#c:gems/lapis",
+      "count": 8
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 12
+    },
+    {
+      "item": "#c:gems/diamond",
+      "count": 10
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:vector45"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

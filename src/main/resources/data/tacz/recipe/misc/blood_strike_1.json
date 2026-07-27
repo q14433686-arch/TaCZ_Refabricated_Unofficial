@@ -1,0 +1,19 @@
+{
+  "materials": [
+    {
+      "item": "minecraft:stick",
+      "count": 8
+    },
+    {
+      "item": "#minecraft:wool",
+      "count": 1
+    }
+  ],
+  "result": {
+    "type": "custom",
+    "group": "tacz:misc",
+    "id": "minecraft:painting",
+    "count": 1
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

@@ -1,0 +1,17 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 14
+    },
+    {
+      "item": "#c:leathers",
+      "count": 5
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:grip_vertical_military"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

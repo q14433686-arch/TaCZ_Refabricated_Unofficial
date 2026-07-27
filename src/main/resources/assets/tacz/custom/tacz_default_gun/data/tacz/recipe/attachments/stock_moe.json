@@ -1,0 +1,17 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 12
+    },
+    {
+      "item": "#c:leathers",
+      "count": 5
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:stock_moe"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}
