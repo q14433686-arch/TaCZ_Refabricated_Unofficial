@@ -79,7 +79,10 @@ public final class GunSmithTableSerializer {
                               Map<String, Identifier> attachments) {
         private static final Codec<ResultSpec> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.fieldOf("type").forGetter(ResultSpec::type),
-                Identifier.CODEC.fieldOf("id").forGetter(ResultSpec::id),
+                // CUSTOM recipes store the actual stack under result.item and historically have no top-level id.
+                // Vanilla RecipeManager still parses our custom recipe serializer, so this field must be optional
+                // even though TACZ's own Gson/network path reads the real custom stack elsewhere.
+                Identifier.CODEC.optionalFieldOf("id", Identifier.withDefaultNamespace("air")).forGetter(ResultSpec::id),
                 Codec.INT.optionalFieldOf("count", 1).forGetter(ResultSpec::count),
                 Codec.INT.optionalFieldOf("ammo_count", 0).forGetter(ResultSpec::ammoCount),
                 GROUP_CODEC.optionalFieldOf("group").forGetter(ResultSpec::group),

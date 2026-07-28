@@ -66,6 +66,14 @@ public class TaCZFabric implements ModInitializer {
         ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.CLIENT, ClientConfig.init());
 
         GunMod.setup();
+
+        // 附属模块 LRTactical（非官方 26.2 移植）的注册入口。
+        //
+        // 必须显式调用：Fabric 无 DeferredRegister 自动注册机制，
+        // 注册动作写在各 ModXxx 的静态字段里，而 Java 类加载是惰性的 ——
+        // 没有调用方，这些类永不加载，物品/实体也就永不注册。
+        me.xjqsh.lrtactical.EquipmentMod.init();
+
         CommandRegistry.onServerStaring();
         CompatRegistry.onEnqueue();
         // 注册 Forge 遗留的自定义 Ingredient 类型。

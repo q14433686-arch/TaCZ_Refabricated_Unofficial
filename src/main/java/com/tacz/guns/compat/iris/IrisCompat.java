@@ -1,5 +1,7 @@
 package com.tacz.guns.compat.iris;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.legacy.IrisCompatLegacy;
 import com.tacz.guns.compat.iris.newly.IrisCompatNewly;
 import com.tacz.guns.init.CompatRegistry;
@@ -32,6 +34,9 @@ public final class IrisCompat {
     }
 
     private static Supplier<Boolean> IS_RENDER_SHADOW_SUPPER = () -> false;
+    private static boolean scopePipelinesAssigned = false;
+    private static int scopePipelineAssignSuccesses = 0;
+    private static boolean loggedScopePipelineAssign = false;
 
     public static void initCompat() {
         // Iris 检测 (OpenGL only) - 26.2 下通常不会加载
@@ -68,18 +73,101 @@ public final class IrisCompat {
             try {
                 Class<?> irisApiClass = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
                 Object instance = irisApiClass.getMethod("getInstance").invoke(null);
-                Boolean inUse = (Boolean) instance.getClass().getMethod("isShaderPackInUse").invoke(instance);
+                Boolean inUse = (Boolean) irisApiClass.getMethod("isShaderPackInUse").invoke(instance);
                 return inUse;
             } catch (Exception e) {
                 return false;
             }
         }
-        // Sulkan 检查 - TODO
+        // Sulkan/Vulkan shader path: 目前没有稳定公开 API 可查询“是否已启用具体光影包”。
+        // 但只要 Sulkan 存在，scope 的离屏 mask + 自定义 pipeline 与其 pass 调度就有兼容风险；
+        // 先按“存在即启用安全回退”处理，宁可失去镜内裁剪，也不要镜身/雾效/自发光层缺失。
         if (FabricLoader.getInstance().isModLoaded("sulkan")) {
-            // 假设 Sulkan API: SulkanApi.isShaderEnabled() - 待确认
-            return false;
+            return true;
         }
         return false;
+    }
+
+    /**
+     * 把 TACZ 自定义 scope pipeline 显式归类到 Iris 的 hand program。
+     *
+     * <p>26.x Iris 的 {@code IrisPipelines} 只内置映射 vanilla {@code RenderPipelines.*}。
+     * 我们的 {@code scope_body_clipped}/{@code scope_reticle_clipped} 是自建
+     * {@link RenderPipeline}；若不调用 Iris API 的 {@code assignPipeline}，Iris 不知道它属于
+     * hand/entity 哪个 gbuffer program，光影下就可能出现镜身不画、雾效/发光层不进入预期 pass。
+     * 这里使用反射避免对 Iris 硬依赖。</p>
+     */
+    public static boolean assignScopePipelineToHand(RenderPipeline pipeline, String debugName) {
+        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
+            return false;
+        }
+        try {
+            Class<?> irisApiClass = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+            Object instance = irisApiClass.getMethod("getInstance").invoke(null);
+            int minor = (Integer) irisApiClass.getMethod("getMinorApiRevision").invoke(instance);
+            if (minor < 3) {
+                if (!loggedScopePipelineAssign) {
+                    loggedScopePipelineAssign = true;
+                    GunMod.LOGGER.warn("[TACZ Scope] Iris API revision {} has no assignPipeline support; scope mask will fall back under shaders.", minor);
+                }
+                return false;
+            }
+            Class<?> irisProgramClass = Class.forName("net.irisshaders.iris.api.v0.IrisProgram");
+            @SuppressWarnings({"unchecked", "rawtypes"})
+            Object handProgram = Enum.valueOf((Class<? extends Enum>) irisProgramClass.asSubclass(Enum.class), "HAND");
+            irisApiClass.getMethod("assignPipeline", RenderPipeline.class, irisProgramClass)
+                    .invoke(instance, pipeline, handProgram);
+            scopePipelineAssignSuccesses++;
+            scopePipelinesAssigned = scopePipelineAssignSuccesses >= 2;
+            if (!loggedScopePipelineAssign) {
+                loggedScopePipelineAssign = true;
+                GunMod.LOGGER.info("[TACZ Scope] Assigned custom scope pipelines to Iris HAND program (latest: {}).", debugName);
+            }
+            return true;
+        } catch (Throwable t) {
+            if (!loggedScopePipelineAssign) {
+                loggedScopePipelineAssign = true;
+                GunMod.LOGGER.warn("[TACZ Scope] Failed to assign custom scope pipelines to Iris; scope mask will fall back under shaders.", t);
+            }
+            return false;
+        }
+    }
+
+    public static boolean shouldDisableScopeMaskUnderShaderPack() {
+        // 实测结论：Iris 的 assignPipeline 会把我们的自定义 scope_body.fsh 替换/归类为
+        // HAND_CUTOUT（日志：Found perfect program match ... HAND_CUTOUT），结果 SCOPE_MASK discard
+        // 不再执行，表现为“准星/遮光板还在，但裁切不存在”。
+        // 因此在真正实现 Iris 专用的裁剪 shader 之前，光影包启用时一律回退普通瞄具几何。
+        if (FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS) && isUsingRenderPack()) {
+            return true;
+        }
+        // Sulkan 暂无公开等价 API；同样保守回退。
+        return FabricLoader.getInstance().isModLoaded("sulkan");
+    }
+
+    /**
+     * @return 当前是否正在 Iris 自己的第一人称手部渲染通道内。
+     *
+     * <p>26.x Iris 开启 shader pack 后不会只走 vanilla {@code GameRenderer#renderItemInHand}。
+     * 它会在 {@code HandRenderer#renderSolid/renderTranslucent} 中直接调用
+     * {@code ItemInHandRenderer#renderHandsWithItems}，并在这个期间把
+     * {@code HandRenderer.ACTIVE} 置为 true。TACZ 原先只靠
+     * {@code GameRendererMixin#renderItemInHand HEAD/RETURN} 判断“手部 pass”，
+     * 因此 Iris hand pass 里会把 {@code bobView} 当成世界 bob，而不是手持物 bob，
+     * 导致持枪/ADS 的自定义走路动画又叠了一层 vanilla view bob —— 表现为光影开启时
+     * 瞄准移动幅度异常变大。</p>
+     */
+    public static boolean isHandRendererActive() {
+        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS) || !isUsingRenderPack()) {
+            return false;
+        }
+        try {
+            Class<?> handRendererClass = Class.forName("net.irisshaders.iris.pathways.HandRenderer");
+            Object instance = handRendererClass.getField("INSTANCE").get(null);
+            return (Boolean) handRendererClass.getMethod("isActive").invoke(instance);
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     // 旧 API - MultiBufferSource 已在 26.2 移除，保留兼容但返回 false

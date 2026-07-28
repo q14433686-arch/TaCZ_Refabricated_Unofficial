@@ -85,6 +85,36 @@ unzip -l minecraft-merged-*.jar | grep -oE 'data/minecraft/tags/[a-z_]+/' | sort
 
 ---
 
+## 2.5 LRTactical 内置附属的边界
+
+本仓库当前把 LRTactical（LesRaisins Tactical Equipements）的**部分 GPL-3.0 代码**移植并内置在
+`tacz` 测试构建中，而不是拆成一个单独 Fabric mod。这样做的原因是：它强依赖 TACZ 的 Bedrock
+模型、Lua 状态机、网络/事件垫片；在 26.2 移植期拆仓库会让同一套 API 垫片维护两份。
+
+边界必须写清楚：
+
+- `fabric.mod.json` 通过 `provides: ["lrtactical"]` 让内容包依赖检查能识别该附属；
+- 内置的是运行框架和少量测试数据，不包含原作 All Rights Reserved 的美术资源；
+- 近战武器的伤害/攻速来自数据包 `attributes`，并兼容旧写法
+  `generic.attack_damage` / `minecraft:generic.movement_speed` → 26.2 的
+  `minecraft:attack_damage` / `minecraft:movement_speed`；
+- 挖掘能力不是硬编码的“所有刀都是斧/铲”。`data/<ns>/index/melee/*.json` 可选写
+  `tool.mineable_tags` 声明具体工具行为；未声明时写入一个 `default_mining_speed=0` 的
+  `Tool` 组件，表示普通刀不作为工具挖掘。
+
+示例：
+
+```jsonc
+"tool": {
+  "mineable_tags": ["minecraft:mineable/axe"],
+  "speed": 6.0,
+  "damage_per_block": 1,
+  "correct_for_drops": true
+}
+```
+
+---
+
 ## 3. 渲染层：26.2 的硬约束
 
 ### 3.1 模板缓冲（stencil）彻底没有了
@@ -290,6 +320,27 @@ poseStack.translate(0, -aabb.minY() * ... + 0.0625F, 0);
 | `SharedConstants` | `getCurrentVersion().name()`（不是 `getName()`） |
 | 实体碰撞箱调试 | `Minecraft.debugEntries` + `DebugScreenEntryList#isCurrentlyEnabled(Identifier)` |
 | `AvatarRenderer` | 在 `client.renderer.entity.player`，**不在** `entity` 下 |
+
+### 5.1 客户端粒子系统整体重组
+
+移植任何自定义粒子都会撞上，**基类直接没了**：
+
+| 1.21.1 | 26.2 |
+|---|---|
+| `extends TextureSheetParticle` | **该类已删除** → `extends SingleQuadParticle` |
+| `getRenderType()` 一个方法 | **拆成两个**：`getGroup()` 返回 `ParticleRenderType`，`getLayer()` 返回 `SingleQuadParticle.Layer` |
+| `ParticleRenderType.PARTICLE_SHEET_LIT` | 该常量已无 → `SINGLE_QUADS` + `Layer.TRANSLUCENT` |
+| `ParticleProvider#createParticle(..., double zSpeed)` | 末尾**新增 `RandomSource` 参数** |
+| `render(VertexConsumer, Camera, float)` | → `extract(QuadParticleRenderState, Camera, float)` |
+
+`Layer` 可选值：`OPAQUE` / `TRANSLUCENT` / `OPAQUE_TERRAIN` /
+`TRANSLUCENT_TERRAIN` / `OPAQUE_ITEMS` / `TRANSLUCENT_ITEMS`。
+
+另注意 **`Level#addParticle` 是两个 boolean**：
+`(options, overrideLimiter, alwaysShow, x,y,z, xd,yd,zd)` —— 1.21.1 只有一个。
+
+> 本仓库 `com.tacz.guns.client.particle.BulletHoleParticle` 是已适配好的
+> `SingleQuadParticle` 子类范例，**照抄它比照抄上游可靠**。
 
 ---
 
@@ -532,7 +583,7 @@ VersionPredicate.parse(version).test(mod.getMetadata().getVersion())
 `"tacz": ">=1.0.4"`，**必然不满足**，于是被静默拒绝
 （日志 `Mod version mismatch`）。
 
-**已解决**：版本号改为 `1.1.8+fabric.26.2.rN`（见下）。
+**已解决**：版本号改为 `1.1.8+fabric.26.2.alpha.N`（见下）。
 
 ### 版本号怎么起：`+` 与 `-` 的天壤之别
 
@@ -550,7 +601,7 @@ VersionPredicate.parse(version).test(mod.getMetadata().getVersion())
 
 | 版本号 | vs `1.1.8` | 满足 `>=1.1.8` |
 |---|---|---|
-| `1.1.8+fabric.26.2.r1` | `0` | ✅ |
+| `1.1.8+fabric.26.2.alpha.1` | `0` | ✅ |
 | `1.1.8-fabric.1` | `-1` | ❌ |
 
 两者对 `>=1.0.4` 都成立，**差别只在要求 `>=1.1.8` 的枪包上暴露** ——
@@ -562,7 +613,18 @@ VersionPredicate.parse(version).test(mod.getMetadata().getVersion())
 > 那里是纯展示字段，玩家在 Mod 列表看得到，且不参与任何版本比较。
 
 顺带一提，`+` 在 Gradle 版本号里完全合法，本项目依赖的 Fabric API
-自身就是 `0.155.2+26.2` 这种写法。
+自身就是 `0.155.2+26.2` 这种写法。Fabric 官方 `fabric.mod.json` 文档也明确写明：
+Fabric 使用 Semantic Versioning 的超集；`+` 后的 build metadata 在版本比较中会被忽略，
+例如 `0.154+26.3` 与 `0.154+26.2` 在比较上等价。
+
+> 发布时不要为了“Alpha 1”把版本写成 `1.1.8-alpha.1` 或
+> `1.1.8-fabric.26.2.alpha.1`。那会变成 prerelease，低于 `1.1.8`，导致要求
+> `>=1.1.8` 的枪包失配。当前采用 `1.1.8+fabric.26.2.alpha.1`，Alpha 信息在
+> build metadata 与 `fabric.mod.json` 展示文本中表达。
+
+另一个容易踩的 Fabric 端细节：官方文档提到 Loader 0.19.3 对超过 3 段版本的 `.x`
+通配符有 bug。因此本项目 `fabric.mod.json` 里 Minecraft 版本固定写 `"26.2"`，
+不要写类似 `26.2.x` 的范围来“图省事”。
 
 ### 【无解】依赖 TacZ:Arcana 的加密枪包
 
@@ -654,6 +716,296 @@ TACZ 本体不含该实现 —— 全仓 grep `taczpack` / `recursion` / `expans
 后来改成按**上游的分类维度**（目镜序号）重构，一次性解决，
 且能证明「33 个瞄具里只有 1 个分类发生变化」。
 
+### 9.1 【最高频】「方法没了」比「方法改名」危险得多
+
+改名会**编译期报错**，你一定会发现。真正的杀手是**方法整个消失**，
+而它原本承担的职责**没有任何人接手** —— 编译照过，功能静默失效。
+
+两个已发生的实例，根因**完全相同**：
+
+| 消失的方法 | 原职责 | 后果 | 接手方案 |
+|---|---|---|---|
+| `Item#getMaxStackSize(ItemStack)` | 同物品不同 NBT 各有堆叠上限 | 全部停在 `stacksTo(1)`，**不能堆叠** | 写 `DataComponents.MAX_STACK_SIZE` 组件 |
+| `Item#getDescriptionId(ItemStack)` | 同物品不同 NBT 各有名字 | 全都显示同一个通用名 | 覆写 `getName(ItemStack)` |
+
+> **检查项**：移植时每删掉一个「26.2 已不存在」的覆写，
+> 必须当场回答「**这个方法原本在干什么？现在谁来干？**」。
+> 答不上来就是埋了一个静默 bug。TACZ 的子弹（第 34 轮）与
+> LRTactical 的手雷（本轮）**踩的是同一个坑**，隔了几十轮又踩一次。
+
+配套结论（两次都验证过）：`stacksTo(n)` 的实现就是
+`component(MAX_STACK_SIZE, n)`，写的是**物品级默认组件(prototype)**。
+把它设成 1 还有第二重危害 —— `PatchedDataComponentMap#equals`
+**同时比较 prototype 与 patch**，于是「写过组件的」和「没写过的」
+两堆看起来一样的物品 `isSameItemSameComponents` 为 false，**永不合并**。
+正确做法是把物品级默认值抬到 99（`Item.ABSOLUTE_MAX_STACK_SIZE`），
+精确上限再逐个写进组件。
+
+### 9.2 【易漏】Forge/NeoForge 的「自动订阅」在 Fabric 上会整类蒸发
+
+`@EventBusSubscriber` 标注的类，Forge/NeoForge 会**自动扫描并注册**，
+类本身没有任何显式调用方。移植到 Fabric 时，这类文件极易被整个漏掉 ——
+它在源码树里看起来就像一个「没人用的类」。
+
+已发生：LRTactical 的 `capability/TickHandler`（每 tick 驱动冷却计时器）
+移植时漏掉，导致 `CustomItemCoolDowns#tickCount` 永远是 0、
+`isOnCooldown` **恒为 true**，表现为「一局游戏里手雷只能用一次，
+小退才能再用一次」。这与 Fabric 无 `DeferredRegister`（注册类必须显式 `init()`）
+是**同一类问题的两个面**：
+
+> **Fabric 上没有任何东西是自动发生的。**
+> 注册要显式调用，事件订阅也要显式 `register`。
+
+**检查项**：对照上游逐一列出所有 `@EventBusSubscriber` /
+`@SubscribeEvent` 类，确认每一个都在 Fabric 侧有对应的显式注册。
+
+### 9.3 `Entity#equals` 是按网络 id 比较的 —— 别拿实体直接当 map key
+
+字节码确认：`Entity#equals` 实现是 `this.getId() == other.getId()`，
+`hashCode()` 直接返回 `getId()`。
+
+因此 `WeakHashMap<Player, X>` 这类「按实体挂数据」的写法，
+在**单人游戏**里会让客户端玩家与服务端玩家（两个不同对象、网络 id 相同）
+**撞进同一个条目**，被两端各 tick 一次。
+
+解法（本仓库采用）：**按端分成两张表**，用 `player.level().isClientSide()` 选表。
+比「包一层 identity key」更简单且无生命周期陷阱 ——
+弱引用包装对象若无人强引用会立刻被回收，强引用又会钉住实体，两头不对。
+
+#### 9.3.1 更狠的后果：**死亡重生会复用网络 id**
+
+按端分表只解决了「两端互撞」，还有第二个坑 —— **同一端内部的新旧玩家也会撞**。
+
+字节码确认 `PlayerList#respawn`：
+
+```java
+ServerPlayer newPlayer = new ServerPlayer(...);   // 全新对象
+newPlayer.setId(oldPlayer.getId());               // 沿用旧的网络 id  ← 关键
+```
+
+客户端 `ClientPacketListener#handleRespawn` 同样是
+`createPlayer(...)` 之后 `setId(旧 id)`。
+
+于是重生后新玩家去查 `WeakHashMap<Player, X>`，**`computeIfAbsent` 会命中旧条目**
+（id 相同 → `equals` 判定为同一 key），拿回的状态对象内部还持有**已死亡的旧玩家引用**。
+若该状态里有计时器，就会**永远停在死亡那一刻**。
+
+本项目的实际症状：**死后近战整局无法攻击，小退恢复，再死再犯**。
+根因是 `coolDownTick` 不再递减 → `preAttack` 的 `if (coolDownTick > 0) return false` 恒真。
+
+> **检查项**：凡是「按玩家对象挂载状态」且状态内部**持有玩家引用**或**含计时器**的，
+> 都必须在重生时清理。
+> - 服务端：`ServerPlayerEvents.AFTER_RESPAWN`
+>   （其 javadoc 原文就是 "for reference clean up on the old player"）；
+> - 客户端：**没有可用事件** —— `ClientPlayerNetworkEvent.CLONE` 在 26.2 永不触发
+>   （原 mixin 依赖的 `ClientLevel#addPlayer` 已不存在）。
+>   只能每 tick 比对 `Minecraft#player` 引用，见 `RefreshClonePlayerDataEvent`。
+
+### 9.4 【血泪】会回调用户代码的引擎方法，必须查它的**内部调用序列**
+
+9.1 说的是「只查方法名不查完整签名」。这一条是它的**升级版**，
+代价是一次线上 StackOverflow。
+
+事发经过：为了统一「提前结束使用物品」的行为，把 `ThrowableItem#onUseTick`
+里的 `entity.stopUsingItem()` 换成了 `entity.releaseUsingItem()`。
+换之前**确实比对过**两者的字段效果 —— 都会清空 `useItem` 与 `useItemRemaining`，
+看起来完全可以互换。结果一按住手雷就爆栈。
+
+真正的问题在**中间那一步回调**（字节码逐帧确认）：
+
+```
+onUseTick
+  -> releaseUsingItem()
+       -> ItemStack#releaseUsing        (offset 48)
+       -> updatingUsingItem()           (offset 62)  ← 祸根
+            -> updateUsingItem(stack)
+                 -> ItemStack#onUseTick
+                      -> 回到起点，且 useItem 尚未清空、
+                         isUsingItem() 仍为 true -> 无限递归
+       -> stopUsingItem()               (offset 66)  ← 永远走不到
+```
+
+两个致命细节，光看签名和字段副作用**一个都发现不了**：
+
+1. `releaseUsingItem()` 在真正 `stopUsingItem()`（offset 66）**之前**，
+   先调了一次 `updatingUsingItem()`（offset 62），而后者会**回调 `onUseTick`**；
+2. `releaseUsingItem()` 自身**没有任何防重入门禁** —— offset 0 起直接取
+   `useItem`，全程无 `isUsingItem` 检查。
+
+（对比之下 `updatingUsingItem` 在 offset 1 就有 `isUsingItem` 门禁，
+`startUsingItem` 在 offset 14 也有 —— 有没有门禁**因方法而异，必须逐个查**。）
+
+> **检查项**：当你在一个**会被引擎回调的方法**（`onUseTick` / `inventoryTick` /
+> `tick` 等）里调用引擎 API 时，必须反汇编那个 API，
+> 确认它的调用序列里**不会绕回自己**。
+> 只比对「两个方法的最终字段效果相同」是**不充分**的。
+
+**修法**：调换顺序，`stopUsingItem()` 先于业务逻辑执行。
+停用后 `isUsingItem()` 为 false，`updatingUsingItem` 的门禁直接拦下，
+递归从根上断开。
+
+**连带坑**：一旦先停用，`getTicksUsingItem()` 就会返回 0
+（其 offset 1-4 是 `if (!isUsingItem()) return 0`）。
+若业务逻辑内部还在现取这个值，会被静默算成 0。
+本例中「预燃时长」正是如此，最终改为**由调用方在停用前取好、显式传参**。
+这类「顺序调整引发的连锁失效」同样不报错，只能靠通读数据流发现。
+
+---
+
+### 9.5 【实测翻车】只查「类」不查「Builder / Properties 链式方法」
+
+一次真实的编译失败：`MeleeItem` 里照抄上游写了
+
+```java
+super(properties.stacksTo(1).setNoRepair());   // 26.2 无 setNoRepair
+```
+
+移植前**确实核对过** `Item`、`ItemStack`、`DataComponents` 等一大批类，
+唯独漏了 `Item.Properties` 这个**内部类**上的链式方法。
+
+> **教训**：`XxxBuilder` / `Xxx.Properties` 这类**流式 API** 最容易漏 ——
+> 因为它们不出现在「主类」的方法列表里，而人工核对时习惯只查主类。
+> **凡是 `a().b().c()` 形式的链式调用，每一环都要单独核对。**
+
+顺带记录 26.2 的语义反转（这也是 `setNoRepair` 消失的原因）：
+
+| | 1.20 / 1.21 | 26.2 |
+|---|---|---|
+| 默认能否铁砧修复 | **能**，要禁止得显式 `setNoRepair()` | **不能** |
+| 如何声明可修复 | 无（靠材料匹配） | 写 `DataComponents.REPAIRABLE` 组件（白名单） |
+
+因此上游的 `setNoRepair()` 在 26.2 是**多余的**，直接删掉即为正确移植 ——
+职责由「不写 REPAIRABLE 组件」这一默认行为承担，不属于 9.1 说的静默失效。
+
+**已把该检查自动化**：`/tmp/inst.py` 会沿着变量声明 → 链式调用的返回类型
+逐环反查字节码。写这类工具时**必须先用已知 bug 做自检**，
+本次自检就暴露了三个会导致漏报的缺陷：
+
+1. 正则只匹配首个 `.method(`，**链式的后续环节完全没扫到**；
+2. 内部类 `Properties` 未映射到 `Item$Properties`；
+3. **最隐蔽**：`has()` 沿继承链递归时，只要遇到 jar 外的类型
+   （`java.lang.Object`、Fabric 注入的 `FabricItem$Properties`）就返回
+   `None`（无法判定），把「确定缺失」误吞成「不确定」而不报错。
+
+> 第 3 点值得单独记住：**「无法判定」与「不存在」必须分开处理**，
+> 否则工具会安静地放过真 bug。修法是给 jar 外但可从源码核实的接口
+> 建立成员白名单，并把 `java.lang.Object` 视为「已查完」。
+
+**没有通过自检的检查工具，其「0 问题」结论毫无意义。**
+
+### 9.6 核对 API 时，「存在」不等于「能用」—— 必须连 access flags 一起看
+
+移植烟雾弹时一次编译失败暴露两个盲点，**都是核对做了一半**：
+
+| 我查了什么 | 漏了什么 | 后果 |
+|---|---|---|
+| `SimpleParticleType(boolean)` 构造器**存在**、参数类型对 | **没查 access flags** —— 它是 `protected` | `new` 不出来 |
+| `SingleQuadParticle` 的构造、`getLayer`/`getGroup` | `getLightColor` **想当然照抄了上游** | 26.2 已改名 `getLightCoords` |
+
+两条具体结论：
+
+1. **`SimpleParticleType` 的构造器是 protected**，模组不能直接 `new`。
+   用 Fabric 官方工厂 `FabricParticleTypes.simple(boolean)` ——
+   它内部是 `new SimpleParticleType(alwaysSpawn) { }`（匿名子类绕开限制），
+   是为此专门提供的公开入口。
+2. **`Particle#getLightColor` → `getLightCoords(float)`**，且是 `protected`。
+
+> **检查项**：用 `javatools` 查 API 时，除了方法名与描述符，
+> **必须同时打印 `is_public()/is_protected()`**。
+> 「方法存在」和「你调得到」是两件事 —— 私有/保护成员、
+> 以及第 9.1 节说的「方法整个消失」，都只有编译期才暴露。
+
+**已把该检查自动化**：`/tmp/ovr.py` 校验所有 `@Override` 方法在 26.2
+父类链上真实存在（现有工具都覆盖不到这一类）。
+同样按 9.5 的规矩先用已知 bug 自检，并修掉两个误报：
+一个文件多个 class 时的父类张冠李戴、以及嵌套类闭合后方法应归属外层类。
+
+### 9.7 Mojang 会**修正拼写**——只差一个字母的改名最容易照抄翻车
+
+移植效果云时遇到：
+
+| 1.21.1 | 26.2 |
+|---|---|
+| `MobEffect#isInstant**e**neous()` | `isInstant**a**neous()` |
+| `applyInstant**e**neousEffect(...)` | `applyInstant**a**neousEffect(...)`，且**新增 `ServerLevel` 首参** |
+
+`e` → `a` 一个字母之差。这类改动的危险在于：**肉眼扫过去觉得"名字对上了"**，
+不像 `getNormal` → `getUnitVec3i` 那样一眼看出不同。
+
+> **检查项**：核对 API 时不要用「看着差不多」判断，
+> 一律以 `grep` 出的**完整方法名字符串**比对。
+> 拼写修正类改名往往还**顺带改签名**（本例加了 `ServerLevel`），
+> 两个变更叠在一起，只对其中一个更容易漏。
+
+同类已记录的还有 9.1 的「方法整个消失」与 9.6 的「access flags」——
+三者的共同点是：**编译期才暴露，且报错信息不会告诉你新名字是什么**。
+
+### 9.8 【最危险】签名没变、**语义变成空实现**——编译通过，什么都不画
+
+补完 LRTactical 动画层时遇到的最阴的一个坑。
+
+`BedrockModel#render(PoseStack, ItemDisplayContext, RenderType, int, int)`
+在 1.21.1 与 26.2 上**签名完全一致**，照抄上游代码可以正常编译、正常运行、
+不报任何错 —— 但**屏幕上什么都没有**。
+
+原因是本仓库 26.2 移植时把它改成了这样：
+
+```java
+@Deprecated
+public void render(PoseStack matrixStack, ItemDisplayContext transformType,
+                   RenderType renderType, int light, int overlay, ...) {
+    // 26.2: Minecraft.renderBuffers() removed. Use submit() or renderInto() instead.
+    // Fallback: no-op for deprecated path. Callers should migrate to submit().
+}
+```
+
+**方法体是空的**。真正干活的是新增的
+`submit(PoseStack, ItemDisplayContext, SubmitNodeCollector, RenderType, int, int)`。
+
+这比 9.1（方法消失）和 9.7（拼写修正）都更难发现：
+那两类**至少会编译失败**，而这一类**一路绿灯**，
+只在实机测试时表现为「模型不显示」，而排查方向会被引向
+「是不是资源没加载」「是不是 display 没解析」等完全无关的地方。
+
+> **检查项**：移植渲染 / 事件 / 回调类代码时，凡是「上游调了、26.2 也存在」的方法，
+> **必须打开本仓库的实现看一眼方法体**，确认它不是：
+> - 空实现 / 只有一行注释；
+> - 标了 `@Deprecated` 且注释里写着 "use X instead"；
+> - 直接 `return` 默认值的 stub。
+>
+> `grep -n "方法名" -A5` 看五行就够，成本极低。
+> 本次若省了这一步，交付的就是一个「编译通过但整个动画层不工作」的版本。
+
+### 9.9 【实测翻车】字段被私有化，但**同名 getter 还在**
+
+动画层第一次 `gradlew build` 的**唯一**一个编译错误：
+
+```
+BaseAnimationStateContext.java:69: 错误: 找不到符号
+        Entity entity = Minecraft.getInstance().cameraEntity;
+  符号:   变量 cameraEntity
+  位置: 类 Minecraft
+```
+
+| 1.21.1 | 26.2 |
+|---|---|
+| `public Entity cameraEntity;`（公开字段） | 字段不可访问，改用 `getCameraEntity()` |
+
+字节码确认：`Minecraft` 上公开字段只剩 `crosshairPickEntity`，
+取相机实体只有 `getCameraEntity()` / `setCameraEntity(Entity)`。
+
+**真正该反省的不是这个 API，而是流程**：本仓库
+`GunAnimationStateContext#processCameraEntity` **早就写成 `getCameraEntity()` 了**，
+一模一样的方法名、一模一样的用途。这是「**没先 grep 仓库既有解法，直接照抄上游**」——
+用户已多次强调过的那条，又犯了一次。
+
+> **检查项（新增自检脚本 `fieldchk.py`）**：
+> 移植时对所有 `obj.field` 形式的**字段访问**（区别于 `obj.method()`），
+> 按变量声明类型去字节码里确认该字段真实存在。
+> 字段与方法在 Java 里是两个命名空间，**`getXxx()` 存在完全不能推出 `xxx` 字段可访问**。
+> 脚本本身必须先自检：故意注入 `cameraEntity` 确认能报出来，修好后确认归零 ——
+> 否则「0 问题」毫无意义（见 9.5）。
+
 ---
 
 ## 10. 沙盒/无 JDK 环境下的验证手法
@@ -671,6 +1023,21 @@ unzip -l minecraft-merged-*.jar | grep -oE 'data/minecraft/tags/[a-z_]+/' | sort
 
 # 3. 括号平衡检查（剔除注释与字符串后）代替语法检查
 ```
+
+**目前一共 7 个自建校验脚本，缺一不可**（每轮交付前全部跑一遍）：
+
+| 脚本 | 作用 | 对应踩过的坑 |
+|---|---|---|
+| `q.py <类> [过滤]` | 列 fields/methods 的**完整描述符** | 9.6 access flags |
+| `dis.py <类> <方法>` | 反汇编，看内部调用序列 | 9.4 引擎回调顺序 |
+| `bal.py <文件...>` | 括号平衡（剔注释/字符串） | 语法 |
+| `missing.py` | 缺失 import | — |
+| `inst.py` | **链式调用逐环反查** | 9.5 只查首环 |
+| `ovr.py` | `@Override` 在父类链上是否真实存在 | 9.1 方法消失 |
+| `fieldchk.py` | **字段式访问**是否真实存在（区别于方法） | 9.9 字段私有化 |
+
+> **每个脚本自己也必须先自检**：故意注入一个已知错误，确认它报得出来，
+> 修好后确认归零。**没通过自检的检查工具，它给出的「0 问题」毫无意义**（见 9.5）。
 
 > `javatools` 的 `get_descriptor()` **会擦除泛型**，
 > 要看泛型签名得用 `get_signature()`。

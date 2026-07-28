@@ -1,0 +1,28 @@
+{
+  "type": "tacz:gun_smith_table_crafting",
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 1
+    },
+    {
+      "item": "#c:gunpowders",
+      "count": 2
+    },
+    {
+      "item": "minecraft:white_dye",
+      "count": 1
+    }
+  ],
+  "result": {
+    "type": "custom",
+    "group": "lrtactical:throwable",
+    "item": {
+      "item": "lrtactical:throwable",
+      "count": 2,
+      "nbt": {
+        "ThrowableId": "lrtactical:test_smoke_grenade"
+      }
+    }
+  }
+}

@@ -113,18 +113,31 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
                 renderStack = kept;
             }
         }
-        if (com.tacz.guns.api.item.IGun.getIGunOrNull(renderStack) == null) {
-            return;
-        }
-
-        // 上游语义：主手持枪时副手不走常规渲染（副手枪由 HumanoidOffhandRender 背挂显示）。
-        if (hand == net.minecraft.world.InteractionHand.OFF_HAND) {
-            ci.cancel();
-            return;
-        }
-
         var renderer = cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry.INSTANCE.get(renderStack.getItem());
         if (!(renderer instanceof com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer<?, ?> geoRenderer)) {
+            return;
+        }
+
+        // 【附属模块接入点】原先这里写死 IGun.getIGunOrNull(renderStack) == null 就 return，
+        // 于是 LRTactical 的近战/投掷物即便注册了 AnimateGeoItemRenderer 也永远走不进
+        // 第一人称渲染 —— 表现为「第三人称有 Bedrock 模型和动画，第一人称却是原版方块状物品」。
+        //
+        // 改为按【是否真的有可渲染的 Bedrock 模型】判定，理由：
+        //   1. 这正是本方法接下来要做的事所需要的前提，比「是不是枪」更贴切；
+        //   2. 对枪械完全等价 —— 枪的渲染器是 GunItemRendererWrapper，
+        //      其 getModel 就是 GunDisplayInstance#getGunModel；
+        //   3. 【关键】必须判 null 而不能只判「渲染器类型对不对」：
+        //      本移植不打包美术资源，没装内容包时 LRTactical 的 getModel 返回 null。
+        //      若此时仍然接管，renderFirstPerson 会直接 return，
+        //      而下面的 ci.cancel() 已经把 vanilla 的渲染取消掉了 ——
+        //      结果是【第一人称手里空无一物】，比不接管还糟。
+        if (geoRenderer.getModel(renderStack) == null) {
+            return;
+        }
+
+        // 上游语义：主手持动画物品时副手不走常规渲染（副手枪由 HumanoidOffhandRender 背挂显示）。
+        if (hand == net.minecraft.world.InteractionHand.OFF_HAND) {
+            ci.cancel();
             return;
         }
 

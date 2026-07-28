@@ -1,5 +1,7 @@
 package com.tacz.guns.crafting.result;
 
+import cn.sh1rocu.tacz.util.forge.CraftingHelper;
+import com.google.gson.JsonObject;
 import com.tacz.guns.GunMod;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -18,12 +20,20 @@ public class GunSmithTableResult {
 
     @Nullable
     private RawGunTableResult raw = null;
+    @Nullable
+    private JsonObject rawCustomItem = null;
 
     public GunSmithTableResult(ItemStack result, @Nullable Identifier group) {
         this.result = result;
         this.group = group == null ? EMPTY_GROUP : group;
     }
 
+    public GunSmithTableResult(@NotNull JsonObject rawCustomItem, @Nullable Identifier group) {
+        // CUSTOM result must be parsed lazily. During resource reload, 26.2 item components may not be
+        // bound yet; constructing ItemStack immediately can throw "Components not bound yet".
+        this.rawCustomItem = rawCustomItem;
+        this.group = group == null ? EMPTY_GROUP : group;
+    }
 
     public GunSmithTableResult(@NotNull RawGunTableResult raw) {
         this.raw = raw;
@@ -42,6 +52,10 @@ public class GunSmithTableResult {
                 this.group = result.getGroup();
             }
             this.raw = null;
+        }
+        if (rawCustomItem != null) {
+            this.result = CraftingHelper.getItemStack(rawCustomItem, true);
+            this.rawCustomItem = null;
         }
     }
 

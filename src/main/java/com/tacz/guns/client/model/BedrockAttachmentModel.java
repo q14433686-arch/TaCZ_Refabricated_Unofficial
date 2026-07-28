@@ -10,6 +10,7 @@ import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
 import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
 import com.tacz.guns.client.render.scope.ScopeMaskGeometry;
 import com.tacz.guns.client.render.scope.ScopeMaskTextureHandle;
+import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.client.render.scope.ScopeNodeSet;
 import com.tacz.guns.client.model.functional.TextShowRender;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
@@ -553,8 +554,17 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         boolean maskable = transformType != null && transformType.firstPerson()
                 && !ocularParts.isEmpty()
                 && currentAimingProgress() > AIM_CLIP_START;
-        if (maskable) {
+        // 光影开启时禁用 26.2 的离屏掩码裁剪，退回普通瞄具几何。
+        //
+        // 现象：Iris/Sulkan 类光影包会接管主世界的若干 pass（发光实体、天气/雾、后处理等），
+        // 而我们的 scope mask/clip 是一套独立的自定义 RenderPipeline + 离屏 target。
+        // 两者同时启用时，镜内会缺失经验球、蜘蛛/末影人眼睛等自发光层与雾效，甚至镜身本身被裁没。
+        // 这不是崩溃类问题，但比“镜内见到镜筒内壁”的降级更糟，所以有光影时先走安全回退。
+        boolean shaderMaskUnsafe = IrisCompat.shouldDisableScopeMaskUnderShaderPack();
+        if (maskable && !shaderMaskUnsafe) {
             registerOcularMaskGeometry(poseStack);
+        } else if (shaderMaskUnsafe) {
+            maskable = false;
         }
 
         // 目镜（ocular*）参与 super.submit 时，要按上游规则决定<b>画不画黑片</b>。

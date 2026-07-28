@@ -103,6 +103,12 @@ public final class VersionChecker {
 
     private static boolean modVersionMatch(String modId, String version) throws VersionParsingException {
         VersionPredicate versionRange = VersionPredicate.parse(version);
+        if ("lrtactical".equals(modId)) {
+            // LRTactical is bundled into this 26.2 test build, not shipped as a separate Fabric mod jar.
+            // Old-format packs may still declare a dependency on mod id "lrtactical"; satisfy that
+            // check with the upstream LRTactical version this port is based on.
+            return versionRange.test(Version.parse("0.3.0"));
+        }
         return FabricLoader.getInstance().getModContainer(modId).map(mod -> {
             Version modVersion = mod.getMetadata().getVersion();
             return versionRange.test(modVersion);

@@ -1,0 +1,34 @@
+{
+  "_comment": "Built-in SAMPLE flashbang. Blind requires line of sight AND facing within max_angle; deafen only depends on distance. No custom art needed.",
+  "name": "item.lrtactical.test_flashbang",
+  "type": "lrtactical:stun",
+  "base_item": "lrtactical:throwable",
+  "data": {
+    "prepare_time": 4,
+    "cookable": true,
+    "initial_speed": 1.6,
+    "cooldown": 20,
+    "cooldown_category": "lrtactical:grenade",
+    "stack_size": 16,
+    "entity": {
+      "life_time": 40,
+      "gravity": 0.07,
+      "should_bounce": true,
+      "bounce_factor": 0.5,
+      "hit_damage": 0.0
+    },
+    "stun": {
+      "radius": 20.0,
+      "blind": {
+        "max_duration": 160,
+        "min_duration": 20,
+        "max_angle": 85,
+        "view_angle_factor": 0.5
+      },
+      "deafened": {
+        "max_duration": 220,
+        "min_duration": 40
+      }
+    }
+  }
+}

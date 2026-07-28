@@ -43,6 +43,11 @@ public class TaCZFabricClient implements ClientModInitializer {
     public void onInitializeClient() {
         // 26.2 client item JSONs use the custom tacz:dynamic_item ItemModel type.
         TaczDynamicItemModel.registerType();
+        // 附属模块 LRTactical 的客户端物品模型类型（lrtactical:dynamic_item）与
+        // 条件属性（lrtactical:has_custom_display）。
+        // 必须与上面一行并排、在任何客户端物品 JSON 解码之前完成注册，
+        // 否则解码 items/*.json 时会因未知类型而报错，物品将完全没有模型。
+        me.xjqsh.lrtactical.client.init.ModEntitiesRender.registerItemModels();
         // 弹药盒外观变体属性（tacz:ammo_statue），供 items/ammo_box.json 的 select 使用。
         // 必须在客户端物品 JSON 解码之前注册，否则 select 会因为找不到属性类型而报错。
         SelectItemModelProperties.ID_MAPPER.put(AmmoBoxStatueProperty.ID, AmmoBoxStatueProperty.TYPE);
@@ -50,6 +55,31 @@ public class TaCZFabricClient implements ClientModInitializer {
         ClientSetupEvent.init();
         ModContainerScreen.registerScreens();
         ModEntitiesRender.registerEntityRenderers();
+        // 附属模块 LRTactical 的实体渲染器。
+        // 必须注册：实体类型有了但没渲染器时，客户端会在
+        // EntityRenderDispatcher#shouldRender 抛 NPE 直接崩溃，而非静默不画。
+        me.xjqsh.lrtactical.client.init.ModEntitiesRender.registerEntityRenderers();
+        // 附属模块 LRTactical 的 S2C 接收器。
+        // 必须注册：索引只在服务端加载，联机时客机靠这个包才能拿到，
+        // 否则创造栏里找不到手雷、名字也只显示通用名「投掷物」。
+        me.xjqsh.lrtactical.client.init.ModEntitiesRender.registerParticles();
+        // 致盲遮罩（闪光弹的实际效果所在）
+        me.xjqsh.lrtactical.client.init.ModEntitiesRender.registerHudOverlays();
+        // 附属模块 LRTactical 的 display 资源加载器（assets/lrtactical/display/**）。
+        // 注意它内部声明了「必须排在 TACZ 的模型/动画/脚本之后」，
+        // 而这种依赖只在【同一个 ResourceManagerHelper】内生效 ——
+        // TACZ 侧的注册在 ClientSetupEvent.init() -> onClientResourceReload()，
+        // 用的同样是 ResourceManagerHelper.get(PackType.CLIENT_RESOURCES)。
+        me.xjqsh.lrtactical.client.init.ModEntitiesRender.registerReloadListeners();
+        // 耳鸣声的播放驱动（效果消失时由音效实例自行 stop）
+        ClientTickEvents.END_CLIENT_TICK.register(
+                me.xjqsh.lrtactical.client.audio.DeafenState::tick);
+        me.xjqsh.lrtactical.network.LrNetworkHandler.registerS2CPackets();
+        // 附属模块 LRTactical 的近战按键监听。
+        // 直接复用原版左右键（不新建 KeyMapping，避免与原版冲突），
+        // 挥空也会发包 -> 解决「AOE 必须先命中一个」与「右键没反应」。
+        InputEvent.MouseButton.Post.EVENT.register(
+                me.xjqsh.lrtactical.client.input.MeleeAttackKeys::onMousePress);
         ParticleFactories.registerParticles();
         // All three blocks return RenderShape.INVISIBLE, so registration is mandatory:
         // without these renderers, placed tables/targets/statues are functional but invisible.
@@ -114,6 +144,28 @@ public class TaCZFabricClient implements ClientModInitializer {
         //   注入点 ClientLevel#addPlayer 已不存在）。
         // 重生/换维度后的配件缓存刷新改由下面这个 tick 回调内部检测玩家实例变化来触发。
         ClientTickEvents.START_CLIENT_TICK.register(RefreshClonePlayerDataEvent::onClientTick);
+        // 附属模块 LRTactical：客户端重生/换维度后丢弃陈旧的近战与冷却状态。
+        // 客户端没有可用的重生事件（CLONE 在 26.2 永不触发，见 RefreshClonePlayerDataEvent），
+        // 故照抄其「每 tick 比对 Minecraft#player 引用」的手法。
+        ClientTickEvents.START_CLIENT_TICK.register(
+                client -> me.xjqsh.lrtactical.init.ModCapabilities.onClientPlayerTick(client.player));
+
+        // 附属模块 LRTactical：动画状态机的 idle/walk/run 推进。
+        //
+        // 【必须单独注册，不能指望 TACZ 的 TickAnimationEvent 顺带处理】——
+        // 后者的入口写死了 TimelessAPI.getGunDisplay(...)，只认枪械 display。
+        // 缺了这一步，近战/投掷物的动画会永远停在 draw 结束的那一帧
+        // （模型和动画其实都加载成功了，看起来却像卡住）。
+        //
+        // 与 TACZ 一致地在 START 与 END 各注册一次：状态机的 trigger 是幂等的
+        // （同一状态重复 trigger 不会重启动画），两端各调一次可减少输入延迟。
+        ClientTickEvents.START_CLIENT_TICK.register(
+                me.xjqsh.lrtactical.client.event.LrTickAnimationEvent::tickAnimation);
+        ClientTickEvents.END_CLIENT_TICK.register(
+                me.xjqsh.lrtactical.client.event.LrTickAnimationEvent::tickAnimation);
+        // 第三人称的动画推进与音效（第一人称由 ItemInHandRendererMixin 每帧驱动）
+        RenderTickEvent.EVENT.register(
+                me.xjqsh.lrtactical.client.event.LrTickAnimationEvent::tickAnimation);
 
         TextureStitchEvent.POST.register(ReloadResourceEvent::onTextureStitchEventPost);
 

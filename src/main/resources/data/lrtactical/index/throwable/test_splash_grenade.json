@@ -1,0 +1,30 @@
+{
+  "_comment": "Built-in SAMPLE: one-shot splash (area_cloud=false), like a splash potion. Demonstrates the non-cloud branch of lrtactical:effect_cloud.",
+  "name": "item.lrtactical.test_splash_grenade",
+  "type": "lrtactical:effect_cloud",
+  "base_item": "lrtactical:throwable",
+  "data": {
+    "prepare_time": 4,
+    "cookable": false,
+    "initial_speed": 1.6,
+    "cooldown": 20,
+    "cooldown_category": "lrtactical:grenade",
+    "stack_size": 16,
+    "entity": {
+      "life_time": 40,
+      "gravity": 0.07,
+      "should_bounce": false,
+      "broke_on_ground": true,
+      "hit_damage": 0.0
+    },
+    "cloud": {
+      "area_cloud": false,
+      "radius": 4.0,
+      "ignite": false,
+      "effects": [
+        { "type": "minecraft:blindness", "duration": 80, "amplifier": 0 },
+        { "type": "minecraft:weakness", "duration": 160, "amplifier": 0 }
+      ]
+    }
+  }
+}

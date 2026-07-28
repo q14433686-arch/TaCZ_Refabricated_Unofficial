@@ -57,8 +57,10 @@ public class GunSmithTableResultSerializer implements JsonDeserializer<GunSmithT
                 }
                 case GunSmithTableResult.CUSTOM -> {
                     JsonObject resultObject = GsonHelper.getAsJsonObject(jsonObject, "item");
-                    ItemStack itemStack = CraftingHelper.getItemStack(resultObject, true);
-                    result = new GunSmithTableResult(itemStack, tabOverride);
+                    // 26.2: custom items must be constructed lazily. During reload, component binding is not
+                    // guaranteed yet; ItemStack(item) can throw "Components not bound yet" for newly registered
+                    // LRTactical items. GunSmithTableResult#init runs later, when recipes are actually used.
+                    result = new GunSmithTableResult(resultObject.deepCopy(), tabOverride);
                 }
                 default -> {
                     return new GunSmithTableResult(ItemStack.EMPTY, TabConfig.TAB_EMPTY);

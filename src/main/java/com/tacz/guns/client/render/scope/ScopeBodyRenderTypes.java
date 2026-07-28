@@ -3,6 +3,7 @@ package com.tacz.guns.client.render.scope;
 import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.compat.iris.IrisCompat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.BindGroupLayouts;
@@ -96,6 +97,23 @@ public final class ScopeBodyRenderTypes {
     /** 准星：只在目镜<b>盖到</b>处绘制。 */
     private static final RenderPipeline RETICLE_PIPELINE =
             buildPipeline("scope_reticle_clipped", true);
+
+    private static boolean irisAssignmentAttempted = false;
+
+    /**
+     * 让 Iris 知道这两个自定义 pipeline 属于第一人称手部渲染。
+     *
+     * <p>调用方会在判断 shader fallback 之前先调用这里。静态初始化时也可以直接尝试，
+     * 但显式方法能保证未来若 class 加载时机变化，仍可在第一次使用前补做 assignment。</p>
+     */
+    public static void ensureIrisCompatibility() {
+        if (irisAssignmentAttempted) {
+            return;
+        }
+        irisAssignmentAttempted = true;
+        IrisCompat.assignScopePipelineToHand(CLIPPED_PIPELINE, "scope_body_clipped");
+        IrisCompat.assignScopePipelineToHand(RETICLE_PIPELINE, "scope_reticle_clipped");
+    }
 
     /**
      * 按贴图缓存。

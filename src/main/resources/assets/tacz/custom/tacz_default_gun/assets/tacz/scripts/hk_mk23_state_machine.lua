@@ -474,11 +474,15 @@ function movement_track_states.walk.update(this, context)
             state.mode = 0
             context:runAnimation("idle", track, true, LOOP, 0.6)
         end
-    elseif (context:getAimingProgress() > 0.5) then
-        -- 如果正在喵准，则需要播放 walk_aiming 动画
+    elseif (context:isAiming() or context:getAimingProgress() > 0.05) then
+        -- 如果正在瞄准/正处在瞄准过渡，则需要播放 walk_aiming 动画。
+        -- 旧逻辑等 aimingProgress > 0.5 才切换；抬枪前半段仍沿用普通持枪移动，
+        -- 视觉上会像“开镜移动幅度还是 hip-fire”。直接用 isAiming() 做门禁，
+        -- 并在切入时重新锚定 walkDist，保证 ADS 移动从专用小幅动画开始。
         if (state.mode ~= 1) then
             state.mode = 1
             context:runAnimation("walk_aiming", track, true, LOOP, 0.3)
+            context:anchorWalkDist()
         end
     elseif (context:isInputUp()) then
         -- 如果正在向前走，则需要播放 walk_forward 动画

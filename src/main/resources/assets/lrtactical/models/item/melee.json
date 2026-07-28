@@ -1,0 +1,7 @@
+{
+  "_comment": "Placeholder model. This port does not ship the original mod's art assets (Art Assets: All Rights Reserved), so a vanilla texture is reused purely so the item is visible and testable. Content packs are expected to supply real models via the data-driven index system.",
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "minecraft:item/iron_sword"
+  }
+}

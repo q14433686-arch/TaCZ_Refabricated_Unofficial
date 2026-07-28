@@ -1,0 +1,28 @@
+{
+  "type": "tacz:gun_smith_table_crafting",
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 2
+    },
+    {
+      "item": "#c:leathers",
+      "count": 1
+    },
+    {
+      "item": "minecraft:stick",
+      "count": 1
+    }
+  ],
+  "result": {
+    "type": "custom",
+    "group": "lrtactical:melee",
+    "item": {
+      "item": "lrtactical:melee",
+      "count": 1,
+      "nbt": {
+        "MeleeWeaponId": "lrtactical:test_knife"
+      }
+    }
+  }
+}

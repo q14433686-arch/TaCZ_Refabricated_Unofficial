@@ -266,6 +266,12 @@ public enum GunPackLoader implements RepositorySource {
 
     private static boolean modVersionMatch(String modId, String version) throws VersionParsingException {
         VersionPredicate versionRange = VersionPredicate.parse(version);
+        if ("lrtactical".equals(modId)) {
+            // LRTactical is bundled into this 26.2 test build, not shipped as a separate Fabric mod jar.
+            // Gun packs copied from the original add-on still declare a dependency on mod id "lrtactical";
+            // satisfy that check with the upstream LRTactical version we ported from.
+            return versionRange.test(Version.parse("0.3.0"));
+        }
         return FabricLoader.getInstance().getModContainer(modId).map(mod -> {
             Version modVersion = mod.getMetadata().getVersion();
             return versionRange.test(modVersion);

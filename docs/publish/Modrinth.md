@@ -111,7 +111,7 @@ a recompile:
 
 ## Before you download — important
 
-**This is a test build. It is playable, but expect bugs.**
+**This is an Alpha 1 test build. It is playable, but expect bugs.**
 
 Requirements: **Fabric**, **Fabric API**, **Forge Config API Port**, and
 **Java 25+**. Exact game and dependency versions are listed per file.
@@ -186,9 +186,9 @@ world corruption, crashes, data loss and mod conflicts. Non-commercial project.
 
 | 字段 | 填什么 |
 |---|---|
-| **Version name** | `1.1.8+fabric.26.2.r1` |
-| **Version number** | `1.1.8+fabric.26.2.r1` |
-| **Release channel** | **Beta** |
+| **Version name** | `1.1.8+fabric.26.2.alpha.1` |
+| **Version number** | `1.1.8+fabric.26.2.alpha.1` |
+| **Release channel** | **Alpha** |
 | **Loaders** | `Fabric` |
 | **Game versions** | `26.2` |
 
@@ -204,20 +204,22 @@ world corruption, crashes, data loss and mod conflicts. Non-commercial project.
 ## ⑤ Changelog
 
 ```markdown
-First public test build of this Fabric port.
+Alpha 1 public test build of this Fabric port.
 
 Ported from the upstream Fabric project (`Sh1roCu/TACZ-Refabricated`),
 based on TACZ `1.1.8-hotfix`.
 
 ### Notes
-- Test build — playable, but expect bugs.
+- Alpha 1 test build — playable, but expect bugs.
 - Scope rendering was rewritten because the stencil buffer no longer exists on
   this game version. Some visuals differ from the original.
 - Requires Java 25 and Forge Config API Port.
 - Gun packs requiring TacZ:Arcana (encrypted assets) will show missing textures.
 
 ### Known issues
-- [[ 列出你实测中仍存在的问题；若暂无，删掉本节 ]]
+- Iris/shader-pack scope rendering is currently degraded: in-scope clipping is disabled under shader packs to avoid missing scope body, fog, and emissive entity layers.
+- PIP / second-world scope rendering is not enabled by default and remains experimental.
+- LRTactical is partially integrated; flash shield and some advanced add-on systems are not complete yet.
 ```
 
 ---

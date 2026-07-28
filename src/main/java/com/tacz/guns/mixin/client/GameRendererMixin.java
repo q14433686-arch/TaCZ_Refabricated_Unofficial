@@ -6,6 +6,7 @@ import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
+import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -49,6 +50,14 @@ public abstract class GameRendererMixin {
         ScopeMaskRenderer.setInHandPass(false);
     }
 
+    @Unique
+    private boolean tacz$isItemInHandBobPass() {
+        // Vanilla path: GameRenderer#renderItemInHand toggles tacz$renderingItemInHand.
+        // Iris shader path: HandRenderer bypasses that method and calls ItemInHandRenderer directly,
+        // so we must query Iris' own hand-pass flag via reflection.
+        return this.tacz$renderingItemInHand || IrisCompat.isHandRendererActive();
+    }
+
     @Inject(method = "bobHurt", at = @At("HEAD"), cancellable = true)
     private void tacz$bobHurt(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
         if (minecraft.getCameraEntity() instanceof LocalPlayer player && !player.isDeadOrDying()) {
@@ -59,7 +68,7 @@ public abstract class GameRendererMixin {
             }
         }
 
-        if (this.tacz$renderingItemInHand) {
+        if (this.tacz$isItemInHandBobPass()) {
             RenderItemInHandBobEvent.BobHurt event = new RenderItemInHandBobEvent.BobHurt();
             RenderItemInHandBobEvent.HURT.invoker().post(event);
             if (event.isCanceled()) {
@@ -76,7 +85,7 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
     private void tacz$bobView(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
-        if (this.tacz$renderingItemInHand) {
+        if (this.tacz$isItemInHandBobPass()) {
             RenderItemInHandBobEvent.BobView event = new RenderItemInHandBobEvent.BobView();
             RenderItemInHandBobEvent.VIEW.invoker().post(event);
             if (event.isCanceled()) {

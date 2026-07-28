@@ -138,16 +138,21 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                     // 摄像机可直接从 Minecraft.gameRenderer.getMainCamera() 取得（与上游一致）。
                     // 26.2: GameRenderer#getMainCamera() -> mainCamera()，Camera#getXRot/getYRot -> xRot()/yRot()
                     Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
-                    Vector3f offset = bullet.getFirstPersonRenderOffset();
-                    if (offset == null) {
-                        offset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
-                        // 记录开火瞬间的摄像机朝向，之后整条弹道都沿用，避免转视角时曳光弹跟着甩
+                    if (bullet.getFirstPersonRenderOffset() == null) {
+                        // 只记录开火瞬间的摄像机朝向，之后整条弹道都沿用，避免转视角时曳光弹跟着甩。
+                        // 注意：不要把 muzzleRenderOffset 也永久缓存到 bullet 上。这个 offset 来自当前帧
+                        // 第一人称枪口视觉位置；ADS 横移时它会被 walk_aiming / 约束推到一侧。
+                        // 若在开火瞬间把它锁死，就会出现“停止移动后偏移不再变大、但也不会回正”的现象。
                         bullet.setCameraXRot(camera.xRot());
                         bullet.setCameraYRot(camera.yRot());
-                        bullet.setFirstPersonRenderOffset(offset);
+                        bullet.setFirstPersonRenderOffset(new Vector3f());
                     }
-                    // 按照生存时间减少曳光弹的偏移，避免渲染位置距离落点太远
-                    double offsetReducer = Math.max(0, (50 - disToEye)) / 50;
+                    Vector3f offset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
+                    // 按照距离快速削减第一人称枪口视觉偏移，避免远处曳光仍被大幅拉向开火瞬间的枪口侧。
+                    // 旧曲线是 50 格线性衰减，ADS 横移时偏移量过高、持续太久；这里改为 12 格二次衰减
+                    // 并整体压到 65%，只在枪口附近保留“从枪口出来”的视觉感，随后快速贴回真实弹道。
+                    double offsetT = Math.max(0, (12.0 - disToEye)) / 12.0;
+                    double offsetReducer = offsetT * offsetT * 0.65;
                     // 摄像机旋转（仅 Iris 需要，见上）
                     // 上游用的是 IrisCompat.isPackInUseQuick()；本移植版对应的方法名为 isUsingRenderPack()，
                     // 内部同样是反射查询 IrisApi#isShaderPackInUse，无硬依赖。
