@@ -1,5 +1,10 @@
 # TaCZ_Refabricated_Unofficial 移植到 Minecraft 26.1.2 技术报告与实施总结
 
+> **渲染结论更正（2026-07-30）**：本文第 5 节把“在顶点提交回调中启用 stencil，并动态挂
+> `GL_DEPTH24_STENCIL8`”判断为已修复，结论不成立。26.1.2 的 Feature Rendering 会把真实 draw
+> 延后到 `endBatch()`，旧状态覆盖不到 draw；旧助手还会替换 Iris/vanilla 深度附件并泄漏
+> renderbuffer。当前结论与实现见 `docs/RENDER_PIPELINE_SCOPE_AUDIT_26_1_2.md`。
+
 本报告记录了将 **TaCZ_Refabricated_Unofficial** 从 Minecraft 26.2 移植/降级到 **26.1.2** (Tiny Takeover hotfix) 的技术分析、实施步骤以及最终编译成功的结果。
 
 ---

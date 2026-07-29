@@ -28,7 +28,7 @@ loom {
     runs {
         client {
             // The embedded default pack alone contains >80 MiB of textures, audio, and models.
-            // 384 MiB consistently OOMs during its first resource reload under 26.2.
+            // 384 MiB consistently OOMs during its first resource reload under 26.1.2.
             vmArg "-Xmx768m"
         }
         server {
@@ -136,14 +136,21 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
+    // Opt-in compatibility run. Iris 1.11.2 + Sodium 0.9.1 are the current 26.1.2 pair.
+    // Keep them out of the distributable and normal server/client runs; enable with -PwithIris.
+    if (project.hasProperty("withIris")) {
+        runtimeOnly "curse.maven:irisshaders-455508:${project.iris_curse_file}"
+        runtimeOnly "curse.maven:sodium-394468:${project.sodium_curse_file}"
+    }
+
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     annotationProcessor 'com.google.code.findbugs:jsr305:3.0.2'
 
     // ============================================================
-    // 以下依赖经 26.2 可用性核查后保留禁用；待上游发布 26.2 构建再恢复
+    // 以下依赖经 26.1.2 可用性核查后保留禁用；待上游发布 26.1.2 构建再恢复
     // ============================================================
 
-    // simplebedrockmodel — 需要确认 26.2 兼容版本
+    // simplebedrockmodel — 需要确认 26.1.2 兼容版本
     // implementation(include("libs:simplebedrockmodel-fabric:2.3.0.1+mc1.20.1"))
 
     // MAE (Math Expression Evaluator)
@@ -168,13 +175,13 @@ dependencies {
     }
 
     // ============================================================
-    // 以下为运行时/编译时 mod 依赖；无 26.2 构建的项保持注释
+    // 以下为运行时/编译时 mod 依赖；无 26.1.2 构建的项保持注释
     // ============================================================
 
-    // JEI — 26.2 (Modrinth 30.13.0.80, compile against full fabric jar which includes API)
+    // JEI — verified 26.1.2 Fabric release (kept on the previously compiled API line)
     compileOnly "maven.modrinth:jei:${jei_version}"
 
-    // Cloth Config — 26.2
+    // Cloth Config — 26.1.x
     implementation "me.shedaniel.cloth:cloth-config-fabric:${cloth_config_fabric}"
 
     // Embeddium
@@ -183,9 +190,9 @@ dependencies {
     // Carry On
     // compileOnly "curse.maven:carry-on-274259:${carry_on_id}"
 
-    // Player Animation Lib — 26.2：KosmX(dev.kosmx.playerAnim) 无 26.2 构建；modrinth 的
+    // Player Animation Lib — 26.1.2：KosmX(dev.kosmx.playerAnim) 无 26.1.2 构建；modrinth 的
     // player-animation-library 是 zigythebird 的不兼容分支。compat/playeranimator 暂排除，待迁移到可用 API。
-    // PAL is optional at runtime, but compile its 26.2 API for the isolated compat implementation.
+    // PAL is optional at runtime, but compile its 26.1.2 API for the isolated compat implementation.
     compileOnly "maven.modrinth:player-animation-library:${player_animation_lib}"
 
     // KubeJS
@@ -193,7 +200,7 @@ dependencies {
     // compileOnly "dev.latvian.mods:rhino-fabric:${rhino_version}"
     // compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
 
-    // CCA (Cardinal Components API) - 26.2: 移除，与 Mojang 映射不兼容
+    // CCA (Cardinal Components API) - 26.1.2: 移除，与 Mojang 映射不兼容
     // implementation(include("dev.onyxstudios.cardinal-components-api:cardinal-components-base:5.2.3"))
     // implementation(include("dev.onyxstudios.cardinal-components-api:cardinal-components-entity:5.2.3"))
 
@@ -205,17 +212,16 @@ dependencies {
     implementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.1.5"
     // 备用 (如果上面 maven 仓库不可用): curse.maven:forge-config-api-port-547434:8292030
 
-    // ModMenu — 26.2 (via Modrinth maven)
+    // ModMenu — 18.0.0-alpha.8 is the published 26.1–26.1.2 build.
     implementation "maven.modrinth:modmenu:${modmenu_version}"
 
-    // Zoomify
-    // Zoomify — 26.2 (Modrinth 2.16.1+26.2)
+    // Zoomify — 2.16.0+26.1 supports 26.1–26.1.2.
     compileOnly "maven.modrinth:zoomify:${zoomify_version}"
 
     // ImmediatelyFast
     // compileOnly "maven.modrinth:immediatelyfast:1.5.1+1.20.4-fabric"
 
-    // REI — 26.2
+    // REI — 26.1.2
     compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
     compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
     compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
@@ -227,8 +233,25 @@ dependencies {
     // implementation "maven.modrinth:accrelatedrendering-refabricated:1.0.8-1.20.1-alpha-fabric.1"
 }
 
+// The initial 26.1.2 checkout only retained the full resource tree inside its tracked sources JAR.
+// Keep that compressed, immutable bundle as the fallback resource source instead of checking ~80 MiB and
+// thousands of generated/default-pack files into src/main/resources a second time. Explicit source resources
+// win for metadata and future hand-edited files.
+def bundledSourcesAndResources = file("resources/tacz-26.1.2-source-and-resource-bundle.jar")
+
 processResources {
     inputs.property "version", project.version
+    inputs.file bundledSourcesAndResources
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from(zipTree(bundledSourcesAndResources)) {
+        exclude "META-INF/**"
+        exclude "**/*.java"
+        exclude "fabric.mod.json"
+        exclude "*.mixins.json"
+        exclude "tacz.accesswidener"
+        exclude "shouldersurfing_plugin.json"
+    }
     inputs.property "minecraft_version", project.minecraft_version
     inputs.property "loader_version", project.loader_version
     filteringCharset "UTF-8"
@@ -249,13 +272,9 @@ tasks.withType(JavaCompile).configureEach {
     }
 }
 
-// 26.2 兼容模块回补：原 sourceSets exclude 块已移除（违反"禁止 exclude 业务源码"约束）。
-// 所有 compat 模块现重新纳入编译，逐模块正向修复。见 AUDIT_REPORT_verified.md §7。
-//
-// 【已审批的临时排除】以下模块的目标 mod 在 26.2 Fabric 暂无构建（经 Modrinth 核实），
-// 其 API 类不存在、无法编译。用户已批准临时排除，待上游 26.2 移植后回补。
-// 受影响：Accelerated Rendering、Controllable、Carry On、KubeJS、Modern Keybinding(随 controllable)、Optifine。
-// 注意：iris/sulkan 兼容按用户要求"两者都要兼容"，不在此排除清单内。
+// 26.1.2 的可选兼容实现：目标 API 缺失或与原 KosmX/Forge API 不兼容的模块暂不编译。
+// 门面类尽量保留，待各目标模组提供 26.1.2 API 或完成独立迁移后再恢复实现。
+// Iris 不在排除清单内；它通过公开 API + vanilla GlCommandEncoder 边界进行可选兼容。
 sourceSets {
     main {
         java {
@@ -264,14 +283,14 @@ sourceSets {
             exclude 'com/tacz/guns/compat/ar/AcceleratedBeamRenderer.java'
             // Controllable：仅排除硬依赖 mrcrayfish 的 IMPL，保留 ControllableCompat 门面
             exclude 'com/tacz/guns/compat/controllable/ControllableInner.java'
-            // KubeJS：dev.latvian.kubejs 无 26.2 Fabric 构建，核心 KubeJSGunEventPoster/GunMod 改为禁用态门面
+            // KubeJS：dev.latvian.kubejs 无 26.1.2 Fabric 构建，核心 KubeJSGunEventPoster/GunMod 改为禁用态门面
             exclude 'com/tacz/guns/compat/kubejs/**'
-            // Player Animator(KosmX dev.kosmx.playerAnim)：无 26.2 构建；保留门面 PlayerAnimatorCompat/AnimationName/PlayerAnimatorLoader
+            // Player Animator(KosmX dev.kosmx.playerAnim)：无 26.1.2 构建；保留门面 PlayerAnimatorCompat/AnimationName/PlayerAnimatorLoader
             exclude 'com/tacz/guns/compat/playeranimator/animation/**'
             exclude 'com/tacz/guns/compat/playeranimator/PlayerAnimatorAssetManager.java'
             // Optifine：非 Fabric，待评估永久废弃
             exclude 'com/tacz/guns/compat/optifine/**'
-            // Carry On：无 26.2 构建
+            // Carry On：无 26.1.2 构建
             exclude 'com/tacz/guns/compat/carryon/**'
             exclude 'cn/sh1rocu/tacz/mixin/compat/carryon/**'
             // Accelerated Rendering mixin：随 AR 模块禁用

@@ -1,0 +1,45 @@
+package com.tacz.guns.network.message;
+
+import com.tacz.guns.GunMod;
+import com.tacz.guns.api.entity.IGunOperator;
+import com.tacz.guns.entity.shooter.ShooterDataHolder;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+
+public class ClientMessageSyncBaseTimestamp implements CustomPacketPayload {
+    public static final Identifier PACKET_ID = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "c2s_sync_base_timestamp");
+    public static final CustomPacketPayload.Type<ClientMessageSyncBaseTimestamp> TYPE = new CustomPacketPayload.Type<>(PACKET_ID);
+    public static final StreamCodec<FriendlyByteBuf, ClientMessageSyncBaseTimestamp> CODEC = StreamCodec.ofMember(ClientMessageSyncBaseTimestamp::write, ClientMessageSyncBaseTimestamp::new);
+
+    private static final Marker MARKER = MarkerFactory.getMarker("SYNC_BASE_TIMESTAMP");
+
+    public ClientMessageSyncBaseTimestamp(FriendlyByteBuf buf) {
+        this();
+    }
+
+    public ClientMessageSyncBaseTimestamp() {
+
+    }
+
+        public void write(FriendlyByteBuf buf) {
+
+    }
+
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+
+    public void handle(ServerPlayer player, PacketSender responseSender) {
+        long timestamp = System.currentTimeMillis();
+        ShooterDataHolder dataHolder = IGunOperator.fromLivingEntity(player).getDataHolder();
+        dataHolder.baseTimestamp = timestamp;
+        GunMod.LOGGER.debug(MARKER, "Update server base timestamp: {}", dataHolder.baseTimestamp);
+    }
+}

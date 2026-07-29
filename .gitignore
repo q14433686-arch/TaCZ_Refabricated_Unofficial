@@ -1,0 +1,25 @@
+# Gradle / Loom
+.gradle/
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Minecraft development runs and logs
+run/
+runs/
+runClient*.log
+runServer*.log
+logs/
+crash-reports/
+
+# Local Java/tooling
+.java-version
+*.hprof
+
+# OS
+.DS_Store
+Thumbs.db
