@@ -130,6 +130,8 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
     private int explosionDelayCount = Integer.MAX_VALUE;
     private boolean explosionKnockback = false;
     private boolean explosionDestroyBlock = false;
+    /** 一次性诊断计数（每进程至多 3 条）：定位「爆炸无伤害」断点。 */
+    private static int loggedExplosionEval;
     private float damageModifier = 1;
     // 穿透数
     private int pierce = 1;
@@ -212,6 +214,15 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
             // 配置文件关闭爆炸后忽略脚本对爆炸是否破坏方块的修改
             this.explosionDestroyBlock = AmmoConfig.EXPLOSIVE_AMMO_DESTROYS_BLOCK.get() && modifyProperty(EXPLOSION_DESTROYS_BLOCK, Boolean.class, explosionData.isDestroyBlock());
             this.explosionDelayCount = Math.max(delayTickCount, 1);
+        }
+        // 一次性诊断（每进程至多 3 条）：子弹爆炸链在「枪包数据 → 缓存 → 实体字段」这一段是否仍完好
+        if (loggedExplosionEval < 3) {
+            loggedExplosionEval++;
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ Explosion] bullet eval#{}: gun={} ammo={} cacheExplode={} finalExplode={} radius={} damage={} delayTicks={} destroy={}",
+                    loggedExplosionEval, gunId, ammoId, explosionData.isExplode(), this.explosion,
+                    this.explosion ? this.explosionRadius : 0f, this.explosion ? this.explosionDamage : 0f,
+                    this.explosion ? this.explosionDelayCount : 0, this.explosionDestroyBlock);
         }
         // 子弹初始位置重置
         double posX = throwerIn.xOld + (throwerIn.getX() - throwerIn.xOld) / 2.0;
