@@ -205,12 +205,11 @@ Arcana 没有 Fabric / 26.1.2 版本，且其格式与密钥未公开。
 
 ## 8. 已知差异与限制
 
-- **镜内渲染是按 26.1.2 调度重写的**：OpenGL 仍支持 stencil，但 vanilla/Iris 的目标 FBO
-  不保证自带 stencil attachment，而且 `SubmitNodeCollector` 只收集顶点、实际 draw 延后到
-  `endBatch()`。本移植优先挂接独立 `GL_STENCIL_INDEX8`；若驱动拒绝 DEPTH32 + STENCIL8，
-  则在本次第一人称 hand batch 内临时挂共享 packed depth-stencil，让镜体、枪体和准星共用深度；
-  `renderHandsWithItems` 完成全部 draw 后恢复原 attachment。不永久改写 vanilla/Iris 深度纹理。
-  客户端配置 `[render]` 下应存在 `ScopeMaskEnable = true`；旧的 PIP/离屏调试注释已移除。
+- **镜内渲染是按 26.1.2 调度重写的**：实机证明 AMD 驱动拒绝在 DEPTH32 FBO 上追加
+  standalone STENCIL8，而替换 depth attachment 又会破坏 Iris 的 hand 合成。当前实现不再修改 FBO：
+  活动 ocular 先以“只写深度、不写颜色”的管线绘制，后方镜身自然无法通过深度测试，世界颜色从
+  孔中保留；小型发光准星使用不受 ocular depth 遮挡的专用 HAND_TRANSLUCENT 管线。
+  客户端配置 `[render]` 下应存在 `ScopeMaskEnable = true`；纯蚀刻 division 暂时安全跳过。
 - **枪身/手臂不做镜内排除**：上游同样不做，非移植缺陷。
 - 三个工作台（`workbench_a/b/c`）的名称取自枪包数据，上下游均未提供内置译名。
 

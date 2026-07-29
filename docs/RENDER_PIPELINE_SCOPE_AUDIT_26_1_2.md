@@ -186,10 +186,8 @@ body draw 仍会再画一遍不透明黑色目镜，从而完全覆盖镜内。�
 2. resize 可能重建 storage 或复用 FBO ID，旧 stencil attachment 的 `objectType != NONE` 并不代表
    framebuffer 仍 complete。
 
-因此不再永久修改外部 depth texture。packed renderbuffer 只覆盖一次完整的第一人称 hand batch：
-scope writer 激活后，后续枪体、准星和手臂 draw 都挂同一 depth storage；`renderHandsWithItems` RETURN
-再按原 object type/name/level 恢复所有 FBO。已存在的 stencil 也必须先通过
-`glCheckFramebufferStatus`。
+因此第二次尝试不再永久修改 texture，而把 packed renderbuffer 延长到完整第一人称 hand batch，
+并计划在 `renderHandsWithItems` RETURN 统一恢复。下一节的实机结果继续否定了该方向。
 
 ### 5.8 每个 scope draw 后立即恢复 depth 会拆开枪体与镜体
 
@@ -197,56 +195,60 @@ scope writer 激活后，后续枪体、准星和手臂 draw 都挂同一 depth 
 原因是 scope body 在临时 packed depth 上绘制后立即恢复，而主枪体随后在原 depth 上绘制：两者颜色
 进入同一 hand target，却不共享深度历史，Iris 合成与后续枪体 draw 会把它们当成不同层。
 
-修正后的 packed session 从 mask writer 一直保持到 `ItemInHandRenderer#renderHandsWithItems` RETURN；
-`GlCommandEncoder` 对期间所有普通 RenderType 也挂同一 packed depth，等 `endBatch()` 完整结束后再
-集中恢复。这样 scope、gun、reticle 与 arm 使用同一深度层。
+随后尝试把 packed session 延长到完整 `renderHandsWithItems`，结果同类半透明/远近变化扩散到
+整只手臂、枪体、镜体和准星。这反而确认：只要替换 Iris hand FBO 的 depth attachment，无论范围
+是单个 scope draw 还是整个 hand batch，都会破坏 Iris 对该 pass 的深度与合成假设。
+
+### 5.9 最终方向：不再修改 FBO，以 ocular 深度制造孔
+
+既然目标 FBO 不能追加独立 stencil，而替换 depth 又必然干扰 Iris，当前实现彻底移除
+`GlCommandEncoder` raw-GL attachment 修改。活动 ocular 用只写深度、不写颜色的 pipeline 先绘制：
+它不会盖住世界颜色，却会让后方 scope-body fragment 无法通过普通 depth test。枪体随后仍在同一
+Iris/vanilla depth attachment 中绘制，因此不存在跨层截断或基于场景距离的透明合成差异。
+
+发光点/十字通常是小型独立节点，改用 `depthTest=ALWAYS, writeDepth=false` 的
+`HAND_TRANSLUCENT` pipeline；包含大面积 blackout panel 的纯蚀刻 division 在没有 inside mask 时
+继续安全跳过。这个降级少了上游的蚀刻分划和渐进圆孔，但不再碰 FBO 生命周期。
 
 ## 6. 当前修复架构
 
-### 6.1 三个独立批次
+### 6.1 三个有序批次
 
 `BedrockAttachmentModel` 提交：
 
-- `WRITE_MASK`：活动 ocular 快照；
-- `DRAW_OUTSIDE`：移除了活动 ocular 的 body 快照；
-- `DRAW_INSIDE`：etched / illuminated reticle。
+- order `-2`：活动 ocular 的 invisible depth aperture；
+- order `-1`：移除了活动 ocular 的普通 attachment body；
+- order `1`：小型 illuminated reticle（纯 etched division 安全跳过）。
 
-`ScopeStencilRenderType` 包装原 RenderType，以不同对象身份阻止批次合并；三阶段分别提交到
-order `-2 / -1 / 1`，利用 `SubmitNodeStorage` 的有序键保证先写 mask、再画 body、最后画 reticle，
-不依赖 `HashMap` 的偶然迭代顺序。
+使用 `SubmitNodeCollector.order(int)` 是必要的，因为 custom geometry 在单个 order 内按
+`HashMap<RenderType, ...>` 分组，不能依赖其偶然迭代顺序。
 
-### 6.2 mask pipeline 不写颜色和深度
+### 6.2 depth-aperture pipeline
 
-mask 使用从 vanilla `RenderPipelines.ENTITY_CUTOUT` 克隆的 pipeline：
+`ScopeRenderTypes` 从 vanilla `ENTITY_CUTOUT` 克隆 pipeline，并只修改：
 
-- shader、defines、sampler、uniform、顶点格式、cull 与原 pipeline 一致；
-- `ColorTargetState.WRITE_NONE`；
-- 保留 depth test，但 `writeDepth=false`；
-- Iris 存在时经公开 API 指派到 `IrisProgram.HAND`。
+- `ColorTargetState.WRITE_NONE`：ocular 不写任何颜色；
+- `writeDepth=true`：保留实际目镜投影深度；
+- 轻微负 depth bias：避免与 scope body 共面时漏出黑片；
+- Iris 通过公开 API 归类到 `IrisProgram.HAND`。
 
-这比在 lambda 中调用 `glColorMask(false...)` 可靠，因为 vanilla 和 Iris 都会在实际 draw 前重放
-pipeline color/depth state。`TaCZFabricClient#onInitializeClient` 会提前强制注册该 pipeline，保证
-首次 `ShaderManager` 资源重载已经编译它；不能等到玩家第一次开镜才惰性注册。
+body 使用原始 RenderType 与原始 FBO/depth attachment。被 invisible ocular 覆盖的后方像素自然
+失败，其他镜框/枪体仍按正常深度关系绘制。
 
-### 6.3 在最终 FBO 上挂 stencil，并提供 packed 兼容路径
+### 6.3 visible-reticle pipeline
 
-`GlCommandEncoderScopeStencilMixin` 注入 `drawFromBuffers` HEAD。此时：
+发光准星从 `ENTITY_TRANSLUCENT_EMISSIVE` 克隆，并设置：
 
-- `createRenderPass` 已选定 vanilla 目标；
-- Iris `trySetup` 已绑定其实际 shader FBO；
-- 下一步就是 `glDraw*`。
+- `depthTest=ALWAYS_PASS`；
+- `writeDepth=false`；
+- Iris 归类到 `HAND_TRANSLUCENT`。
 
-`ScopeStencilState` 对当前 FBO：
+这让小型发光节点不被 ocular depth writer 挡住。`EtchedReticleRenderer` 收到
+`maskActive=false`，因此不会提交可能含 32×32/96×34 blackout panel 的 division 子树。
 
-- 若已有 stencil，直接复用；
-- 否则先把共享 `GL_STENCIL_INDEX8` 挂到 `GL_STENCIL_ATTACHMENT`，不触碰 depth；
-- 实机 AMD 日志证明 DEPTH32 + 独立 STENCIL8 可能返回 `GL_FRAMEBUFFER_UNSUPPORTED (0x8CDD)`；
-- 首轮曾沿用上游 OptiFine 方案，原地把 DEPTH32 texture 提升为 `GL_DEPTH24_STENCIL8`；
-  实机证明这会污染 Iris/vanilla 持有的长期资源，在 pipeline reload 后留下白色手部虚影；
-- 当前兼容路径在完整的 `renderHandsWithItems` hand batch 内共享临时 packed renderbuffer；
-- scope、枪体、准星和手臂全部 flush 后，RETURN 注入再精确恢复所有原 depth attachment；
-- 每次使用已有 stencil 前都会重新检查 FBO completeness，避免 resize 后误信失效的旧 attachment；
-- 两种附件均失败时取消 mask writer 与 inside-only reticle，仅允许普通 body fallback。
+两条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册，确保 ShaderManager 首次
+reload 已经编译；没有 `GlCommandEncoder` mixin、没有 stencil attachment、没有 depth texture
+重定义，也没有 shader reload/resize 清理状态。
 
 ## 7. 依赖版本审计（2026-07-30）
 

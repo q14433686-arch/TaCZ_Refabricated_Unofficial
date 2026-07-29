@@ -67,15 +67,10 @@ public final class IrisCompat {
         }
     }
 
-    /**
-     * Classifies TACZ's stencil-only mask pipeline as Iris' HAND program.
-     *
-     * <p>Iris 1.11.2 replaces a pipeline's vanilla shader in
-     * {@code MixinShaderManager_Overrides}. A custom pipeline has no built-in classification, so without this
-     * public API call the mask writer may use a fallback program or a different framebuffer from the body it
-     * clips. Reflection keeps Iris optional at runtime.</p>
-     */
-    public static synchronized boolean assignScopePipelineToHand(RenderPipeline pipeline, String debugName) {
+    /** Classifies a TACZ custom pipeline through Iris' public API while keeping Iris optional. */
+    public static synchronized boolean assignPipelineToIris(RenderPipeline pipeline,
+                                                            String irisProgramName,
+                                                            String debugName) {
         if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
             return false;
         }
@@ -87,17 +82,19 @@ public final class IrisCompat {
             Class<?> programClass = Class.forName("net.irisshaders.iris.api.v0.IrisProgram");
             Object api = apiClass.getMethod("getInstance").invoke(null);
             @SuppressWarnings({"unchecked", "rawtypes"})
-            Object hand = Enum.valueOf((Class<? extends Enum>) programClass.asSubclass(Enum.class), "HAND");
+            Object irisProgram = Enum.valueOf(
+                    (Class<? extends Enum>) programClass.asSubclass(Enum.class), irisProgramName);
             apiClass.getMethod("assignPipeline", RenderPipeline.class, programClass)
-                    .invoke(api, pipeline, hand);
+                    .invoke(api, pipeline, irisProgram);
             ASSIGNED_SCOPE_PIPELINES.add(pipeline);
-            GunMod.LOGGER.info("[TACZ Scope] Assigned {} to the Iris HAND program.", debugName);
+            GunMod.LOGGER.info("[TACZ Scope] Assigned {} to the Iris {} program.",
+                    debugName, irisProgramName);
             return true;
         } catch (Throwable t) {
             if (!loggedScopePipelineFailure) {
                 loggedScopePipelineFailure = true;
-                GunMod.LOGGER.warn("[TACZ Scope] Iris cannot classify the scope mask pipeline; "
-                        + "transparent-ocular fallback will remain available.", t);
+                GunMod.LOGGER.warn("[TACZ Scope] Iris cannot classify custom scope pipeline {} as {}; "
+                        + "vanilla pipeline behavior will be used.", debugName, irisProgramName, t);
             }
             return false;
         }

@@ -1,0 +1,139 @@
+package com.tacz.guns.client.render.scope;
+
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.CompareOp;
+import com.tacz.guns.GunMod;
+import com.tacz.guns.compat.iris.IrisCompat;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+/** Render types for the depth-aperture scope fallback used on Minecraft 26.1.2. */
+public final class ScopeRenderTypes {
+    private static final Map<Identifier, RenderType> DEPTH_APERTURES = new HashMap<>();
+    private static final Map<Identifier, RenderType> VISIBLE_RETICLES = new HashMap<>();
+
+    /**
+     * Writes ocular geometry to the existing hand depth attachment without touching color.
+     * Scope-body fragments behind that geometry fail their ordinary depth test, leaving world color visible.
+     */
+    private static final RenderPipeline DEPTH_APERTURE_PIPELINE = createDepthAperturePipeline();
+
+    /** Small illuminated reticles are safe to draw without the old division/blackout geometry. */
+    private static final RenderPipeline VISIBLE_RETICLE_PIPELINE = createVisibleReticlePipeline();
+
+    private ScopeRenderTypes() {
+    }
+
+    /** Forces registration before ShaderManager's initial resource reload. */
+    public static void init() {
+    }
+
+    public static RenderType depthAperture(Identifier texture) {
+        return DEPTH_APERTURES.computeIfAbsent(texture, ScopeRenderTypes::createDepthApertureType);
+    }
+
+    public static RenderType visibleReticle(Identifier texture) {
+        return VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createVisibleReticleType);
+    }
+
+    private static RenderType createDepthApertureType(Identifier texture) {
+        RenderSetup setup = RenderSetup.builder(DEPTH_APERTURE_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .useLightmap()
+                .useOverlay()
+                .createRenderSetup();
+        return RenderType.create("tacz_scope_depth_aperture", setup);
+    }
+
+    private static RenderType createVisibleReticleType(Identifier texture) {
+        RenderSetup setup = RenderSetup.builder(VISIBLE_RETICLE_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .useOverlay()
+                .affectsCrumbling()
+                .sortOnUpload()
+                .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
+                .createRenderSetup();
+        return RenderType.create("tacz_scope_visible_reticle", setup);
+    }
+
+    private static RenderPipeline createDepthAperturePipeline() {
+        RenderPipeline source = RenderPipelines.ENTITY_CUTOUT;
+        RenderPipeline.Builder builder = clonePipeline(source,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_depth_aperture"));
+
+        ColorTargetState sourceColor = source.getColorTargetState();
+        builder.withColorTargetState(new ColorTargetState(
+                sourceColor.blendFunction(),
+                ColorTargetState.WRITE_NONE
+        ));
+        DepthStencilState sourceDepth = source.getDepthStencilState();
+        CompareOp depthTest = sourceDepth == null ? CompareOp.LESS_THAN_OR_EQUAL : sourceDepth.depthTest();
+        // Pull the invisible ocular very slightly toward the camera to avoid coplanar scope-body leakage.
+        builder.withDepthStencilState(new DepthStencilState(depthTest, true, -1.0F, -1.0F));
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        IrisCompat.assignPipelineToIris(pipeline, "HAND", "scope_depth_aperture");
+        return pipeline;
+    }
+
+    private static RenderPipeline createVisibleReticlePipeline() {
+        RenderPipeline source = RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE;
+        RenderPipeline.Builder builder = clonePipeline(source,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_visible_reticle"));
+        // The ocular depth writer must not hide the small dot/cross geometry placed behind the lens.
+        builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false));
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_visible_reticle");
+        return pipeline;
+    }
+
+    private static RenderPipeline.Builder clonePipeline(RenderPipeline source, Identifier location) {
+        RenderPipeline.Builder builder = RenderPipeline.builder()
+                .withLocation(location)
+                .withVertexShader(source.getVertexShader())
+                .withFragmentShader(source.getFragmentShader())
+                .withPolygonMode(source.getPolygonMode())
+                .withCull(source.isCull())
+                .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode());
+
+        source.getShaderDefines().flags().forEach(builder::withShaderDefine);
+        source.getShaderDefines().values().forEach((name, value) -> copyDefine(builder, name, value));
+        source.getSamplers().forEach(builder::withSampler);
+        source.getUniforms().forEach(uniform -> {
+            if (uniform.textureFormat() == null) {
+                builder.withUniform(uniform.name(), uniform.type());
+            } else {
+                builder.withUniform(uniform.name(), uniform.type(), uniform.textureFormat());
+            }
+        });
+        builder.withColorTargetState(source.getColorTargetState());
+        DepthStencilState sourceDepth = source.getDepthStencilState();
+        if (sourceDepth == null) {
+            builder.withDepthStencilState(Optional.empty());
+        } else {
+            builder.withDepthStencilState(sourceDepth);
+        }
+        return builder;
+    }
+
+    private static void copyDefine(RenderPipeline.Builder builder, String name, String value) {
+        try {
+            if (value.indexOf('.') >= 0 || value.indexOf('e') >= 0 || value.indexOf('E') >= 0) {
+                builder.withShaderDefine(name, Float.parseFloat(value));
+            } else {
+                builder.withShaderDefine(name, Integer.parseInt(value));
+            }
+        } catch (NumberFormatException ignored) {
+            builder.withShaderDefine(name);
+        }
+    }
+}

@@ -13,7 +13,6 @@
     "client.AbstractButtonMixin",
     "client.CameraMixin",
     "client.GameRendererMixin",
-    "client.GlCommandEncoderScopeStencilMixin",
     "client.ItemInHandLayerMixin",
     "client.ItemInHandRendererMixin",
     "client.LanguageMixin",

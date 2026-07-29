@@ -21,7 +21,7 @@ import com.tacz.guns.client.renderer.block.StatueRenderer;
 import com.tacz.guns.client.renderer.block.TargetRenderer;
 import com.tacz.guns.client.renderer.item.AmmoBoxStatueProperty;
 import com.tacz.guns.client.renderer.item.TaczDynamicItemModel;
-import com.tacz.guns.client.render.scope.ScopeStencilRenderType;
+import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import net.minecraft.client.renderer.item.properties.select.SelectItemModelProperties;
 import com.tacz.guns.client.input.*;
 import com.tacz.guns.client.sound.SoundPlayManager;
@@ -42,7 +42,7 @@ public class TaCZFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         // RenderPipelines must be registered before the first ShaderManager resource reload.
-        ScopeStencilRenderType.init();
+        ScopeRenderTypes.init();
         // 26.1.2 client item JSONs use the custom tacz:dynamic_item ItemModel type.
         TaczDynamicItemModel.registerType();
         // 附属模块 LRTactical 的客户端物品模型类型（lrtactical:dynamic_item）与

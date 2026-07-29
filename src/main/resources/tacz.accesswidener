@@ -5,8 +5,6 @@ accessWidener v2 official
 accessible field net/minecraft/world/entity/LivingEntity jumping Z
 accessible method net/minecraft/client/multiplayer/MultiPlayerGameMode ensureHasSentCarriedItem ()V
 accessible method net/minecraft/client/Minecraft startUseItem ()V
-# ScopeStencilRenderType delegates draw-time state while preserving the wrapped RenderType semantics.
-accessible method net/minecraft/client/renderer/rendertype/RenderType <init> (Ljava/lang/String;Lnet/minecraft/client/renderer/rendertype/RenderSetup;)V
 # LRTactical 近战暴击判定：Player#canCriticalAttack 在 26.1.2 是【包级私有】
 # （字节码确认 access flags 无 public/protected）。它封装了原版全部暴击条件
 # （fallDistance>0 && !onGround && !onClimbable && !isInWater

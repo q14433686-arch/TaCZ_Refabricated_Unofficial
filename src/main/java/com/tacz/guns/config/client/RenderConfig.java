@@ -49,7 +49,7 @@ public class RenderConfig {
         builder.comment("Whether or not to display the head shot's hitbox");
         HEAD_SHOT_DEBUG_HITBOX = builder.define("HeadShotDebugHitbox", false);
         SCOPE_MASK_ENABLE = builder
-                .comment("Whether to clip the scope body and reticle against the ocular stencil.")
+                .comment("Whether to open the first-person scope body with the ocular depth aperture.")
                 .define("ScopeMaskEnable", true);
 
         builder.comment("Whether or not to display the gun's HUD");

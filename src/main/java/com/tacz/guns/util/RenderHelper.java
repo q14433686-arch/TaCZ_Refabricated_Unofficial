@@ -20,8 +20,8 @@ public final class RenderHelper {
 
     /**
      * @deprecated Feature rendering is delayed in 26.1.2. Enabling stencil while a
-     * {@code CustomGeometryRenderer} emits vertices cannot affect the later GPU draw. Scope rendering now uses
-     * {@code ScopeStencilRenderType} and configures the real draw from GlCommandEncoder.
+     * {@code CustomGeometryRenderer} emits vertices cannot affect the later GPU draw. Current scope rendering
+     * uses an ordinary colorless depth-aperture pipeline and never calls this helper.
      */
     @Deprecated
     public static void enableItemEntityStencilTest() {

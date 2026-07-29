@@ -8,7 +8,7 @@ import com.tacz.guns.client.model.functional.BeamRenderer;
 import com.tacz.guns.client.render.scope.IReticleRenderer;
 import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
 import com.tacz.guns.client.render.scope.ScopeNodeSet;
-import com.tacz.guns.client.render.scope.ScopeStencilRenderType;
+import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.model.functional.TextShowRender;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
@@ -54,8 +54,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
 
     // SubmitNodeStorage renders order keys in ascending order (Int2ObjectAVLTreeMap). Custom geometry inside
     // one order is grouped by HashMap<RenderType, ...>, so distinct RenderTypes alone do NOT guarantee
-    // mask -> body -> reticle order. Keep each stencil phase in its own ordered collection.
-    private static final int SCOPE_MASK_ORDER = -2;
+    // aperture -> body -> reticle order. Keep each phase in its own ordered collection.
+    private static final int SCOPE_APERTURE_ORDER = -2;
     private static final int SCOPE_BODY_ORDER = -1;
     private static final int SCOPE_RETICLE_ORDER = 1;
 
@@ -74,7 +74,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private static final Pattern RETICLE_ILLUMINATED_PATTERN = Pattern.compile(
             "^(.*_)?(division|divisions|dot|cross|crosshair|reticle|red)(_\\d+)?_illuminated\\d*$");
 
-    /** 蚀刻分划节点（不发光），由 EtchedReticleRenderer 在 inside-only stencil phase 绘制。 */
+    /** 蚀刻分划节点（不发光）；没有安全 inside mask 时由 EtchedReticleRenderer 主动跳过。 */
     private static final Pattern RETICLE_ETCHED_PATTERN = Pattern.compile(
             "^(division|divisions)(_(\\d+))?$");
 
@@ -122,7 +122,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     protected final java.util.NavigableMap<Integer, BedrockPart> divisionByIndex = new java.util.TreeMap<>();
     /**
      * 目镜节点。未开镜时可作为镜片绘制；开镜后活动节点从 body 快照移出，
-     * 单独作为 stencil writer 几何 —— 它的屏幕投影就是上游裁剪区域的来源。
+     * 单独作为 invisible depth-aperture 几何。它的屏幕投影决定镜身被深度挡掉的区域。
      */
     protected final List<BedrockPart> ocularParts = new ArrayList<>();
     protected @Nullable List<List<BedrockPart>> laserBeamPaths;
@@ -145,7 +145,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             path = getPath(modelMap.get(SCOPE_VIEW_NODE + '_' + i++));
         }
         // 收集目镜几何和激光束。目镜在未开镜时仍可作为黑色镜片显示；开镜后，
-        // 活动目镜会从 body 快照中移除并单独进入 stencil mask 批次。不能在这里永久
+        // 活动目镜会从 body 快照中移除并单独进入 invisible depth-aperture 批次。不能在这里永久
         // visible=false，因为 BedrockPart 是跨帧、跨显示上下文共享的。
         // 三种命名都要收：ocular / ocular_sight / ocular_scope（组合镜两组各一个）。
         Pattern ocularPattern = Pattern.compile(
@@ -358,8 +358,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     /**
      * 当前开镜进度（0 = 未开镜，1 = 完全开镜）。
      *
-     * <p>高于 {@link #AIM_CLIP_START} 后，活动 ocular 从可见 body 中移到 stencil writer；
-     * 目标 FBO 不支持 stencil 时，它仍保持隐藏，作为避免黑色镜片糊屏的降级策略。</p>
+     * <p>高于 {@link #AIM_CLIP_START} 后，活动 ocular 从可见 body 中移到 invisible depth writer；
+     * 其深度负责阻止后方镜身像素写入，而世界颜色保持不变。</p>
      */
     private static float currentAimingProgress() {
         LocalPlayer player = Minecraft.getInstance().player;
@@ -405,7 +405,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * <h2>为什么这里要判断开镜进度</h2>
      * 瞄具上的文字（如 MK5HD 的弹药计数与 "AMMO" 标签）走
      * {@code SubmitNodeCollector#submitText} 的 <b>vanilla 字体管线</b>，不是本类可包装的
-     * custom-geometry RenderType，因此不会进入 inside-only stencil phase。
+     * custom-geometry RenderType，因此不会进入瞄具的专用几何阶段。
      *
      * <p>实测 MK5HD 的两个文字节点位于世界坐标 {@code y=22.375}，
      * 而其筒镜目镜 {@code ocular_scope_2} 在 {@code y=21.875} ——
@@ -466,7 +466,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     }
 
     /**
-     * Collector path with draw-time stencil phases for first-person scopes.
+     * Collector path with an invisible depth aperture for first-person scopes.
      *
      * @param texture 该瞄具的贴图。
      *                传 {@code null} 表示调用方不关心裁剪，一律走原始 RenderType。
@@ -484,14 +484,14 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         this.attachmentItem = attachmentItem;
 
         boolean scopeMaskEnabled = RenderConfig.SCOPE_MASK_ENABLE == null || RenderConfig.SCOPE_MASK_ENABLE.get();
-        boolean maskable = scopeMaskEnabled
+        boolean apertureActive = scopeMaskEnabled
                 && transformType != null && transformType.firstPerson()
                 && !ocularParts.isEmpty()
                 && currentAimingProgress() > AIM_CLIP_START;
 
-        // Capture ocular snapshots for stencil writing
+        // Capture ocular snapshots for invisible depth writing
         List<com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot> ocularSnapshots = new ArrayList<>();
-        if (maskable) {
+        if (apertureActive) {
             for (BedrockPart ocular : ocularParts) {
                 if (ocular.visible && isOcularInActiveGroup(ocular)) {
                     PoseStack ocularPose = new PoseStack();
@@ -505,9 +505,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                         p.translateAndRotateAndScale(ocularPose);
                     }
                     // captureSubtree assumes rootPose already contains the root part's own transform.
-                    // Applying only the parents writes the stencil at the parent origin: the visible ocular is
-                    // then removed from bodySnapshot, but the scope body is not clipped and the correctly
-                    // positioned reticle fails the inside test. This exactly produces a transparent red-dot
+                    // Applying only the parents writes the aperture at the parent origin: the visible ocular is
+                    // then removed from bodySnapshot, but the scope body is not blocked and the correctly
+                    // positioned reticle no longer aligns with the lens. This exactly produces a transparent red-dot
                     // window with no dot and a fully black magnified scope.
                     ocular.translateAndRotateAndScale(ocularPose);
                     ocularSnapshots.add(com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(
@@ -517,16 +517,14 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             }
         }
 
-        // The active ocular is mask geometry, not body geometry. Keeping it in bodySnapshot would draw the
-        // opaque lens again after the stencil writer and completely cover the aperture (the medium/high-power
-        // scope regression). If stencil cannot be attached, hiding it also provides a safe transparent-ocular
-        // fallback instead of leaving the player with a black screen.
+        // The active ocular is depth-aperture geometry, not visible body geometry. Keeping it in bodySnapshot
+        // would draw the opaque lens after the invisible writer and cover the opening again.
         List<BedrockPart> hiddenOculars = new ArrayList<>();
         if (transformType != null && transformType.firstPerson()) {
             for (BedrockPart ocular : ocularParts) {
-                boolean hideForMask = maskable && isOcularInActiveGroup(ocular);
+                boolean hideForAperture = apertureActive && isOcularInActiveGroup(ocular);
                 boolean hideByNormalVisibilityRule = !shouldDrawOcularBlackout(ocular);
-                if (ocular.visible && (hideForMask || hideByNormalVisibilityRule)) {
+                if (ocular.visible && (hideForAperture || hideByNormalVisibilityRule)) {
                     ocular.visible = false;
                     hiddenOculars.add(ocular);
                 }
@@ -543,21 +541,21 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             }
         }
 
-        // Submit three distinct batches. Stencil state is applied later, from RenderType.draw / GlCommandEncoder,
-        // because this callback only writes CPU vertices; OpenGL calls here would end before endBatch issues the
-        // actual draw and therefore cannot clip anything.
-        if (maskable && texture != null && !ocularSnapshots.isEmpty() && !bodySnapshot.isEmpty()) {
+        // Submit ordered aperture/body/reticle batches. The aperture uses an ordinary RenderPipeline depth
+        // state, so it remains inside vanilla/Iris scheduling and does not alter framebuffer attachments.
+        if (apertureActive && texture != null && !ocularSnapshots.isEmpty() && !bodySnapshot.isEmpty()) {
             PoseStack identity = new PoseStack();
-            RenderType maskWriter = ScopeStencilRenderType.maskWriter(texture);
-            OrderedSubmitNodeCollector maskCollector = collector.order(SCOPE_MASK_ORDER);
-            maskCollector.submitCustomGeometry(identity, maskWriter, (entryPose, consumer) -> {
+            RenderType apertureWriter = ScopeRenderTypes.depthAperture(texture);
+            OrderedSubmitNodeCollector apertureCollector = collector.order(SCOPE_APERTURE_ORDER);
+            apertureCollector.submitCustomGeometry(identity, apertureWriter, (entryPose, consumer) -> {
                 for (com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
                     ocularSnap.write(consumer);
                 }
             });
 
-            RenderType clippedBody = ScopeStencilRenderType.outside(renderType);
-            collector.order(SCOPE_BODY_ORDER).submitCustomGeometry(identity, clippedBody,
+            // The invisible ocular has already written a nearer depth value. Ordinary scope-body fragments
+            // behind it now fail their normal depth test without stencil or framebuffer attachment changes.
+            collector.order(SCOPE_BODY_ORDER).submitCustomGeometry(identity, renderType,
                     (entryPose, consumer) -> bodySnapshot.write(consumer));
         } else if (!bodySnapshot.isEmpty()) {
             PoseStack identity = new PoseStack();
@@ -571,17 +569,17 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
             if (reticle != null && !active.isEmpty()) {
                 RenderType baseReticleType = renderType;
-                RenderType baseIlluminatedType = resolveIlluminatedReticleRenderType(renderType, texture);
-                boolean maskActive = maskable && texture != null && !ocularSnapshots.isEmpty();
-                if (maskActive) {
-                    baseReticleType = ScopeStencilRenderType.inside(baseReticleType);
-                    baseIlluminatedType = ScopeStencilRenderType.inside(baseIlluminatedType);
-                }
+                RenderType baseIlluminatedType = texture == null
+                        ? renderType
+                        : ScopeRenderTypes.visibleReticle(texture);
 
+                // There is no inside-only stencil in the depth-aperture path. Illuminated nodes are small and
+                // use an always-visible pipeline; EtchedReticleRenderer sees maskActive=false and safely skips
+                // division trees that may contain large blackout panels.
                 reticle.submitReticle(new IReticleRenderer.Context(
                         poseStack, collector.order(SCOPE_RETICLE_ORDER), transformType,
                         baseReticleType, baseIlluminatedType,
-                        light, overlay, currentAimingProgress(), maskActive), active);
+                        light, overlay, currentAimingProgress(), false), active);
             }
         }
 
@@ -590,13 +588,6 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 BeamRenderer.renderLaserBeam(attachmentItem, poseStack, transformType, entry, collector);
             }
         }
-    }
-
-    private RenderType resolveIlluminatedReticleRenderType(RenderType original, @Nullable Identifier texture) {
-        if (texture == null) {
-            return original;
-        }
-        return net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(texture);
     }
 
     private boolean isOcularInActiveGroup(BedrockPart ocular) {
