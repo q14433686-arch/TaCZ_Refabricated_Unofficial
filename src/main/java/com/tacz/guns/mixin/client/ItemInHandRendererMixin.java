@@ -3,6 +3,7 @@ package com.tacz.guns.mixin.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.BeforeRenderHandEvent;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
+import com.tacz.guns.client.render.scope.ScopeStencilState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
@@ -36,6 +37,21 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
     @Inject(method = "renderHandsWithItems", at = @At("HEAD"))
     public void beforeHandRender(float pPartialTicks, PoseStack pMatrixStack, net.minecraft.client.renderer.SubmitNodeCollector pCollector, LocalPlayer pPlayerEntity, int pCombinedLight, CallbackInfo ci) {
         BeforeRenderHandEvent.CALLBACK.invoker().post(new BeforeRenderHandEvent(pMatrixStack));
+    }
+
+    /**
+     * The scope compatibility path may temporarily redirect depth for several RenderTypes. The method return is
+     * after FeatureRenderDispatcher and BufferSource.endBatch, so every gun/arm draw has completed and all FBOs
+     * can now be restored without splitting the scope and gun into different depth layers.
+     */
+    @Inject(method = "renderHandsWithItems", at = @At("RETURN"))
+    private void tacz$finishScopeStencilHandFrame(float partialTicks,
+                                                   PoseStack poseStack,
+                                                   net.minecraft.client.renderer.SubmitNodeCollector collector,
+                                                   LocalPlayer player,
+                                                   int combinedLight,
+                                                   CallbackInfo ci) {
+        ScopeStencilState.endHandFrame();
     }
 
     /**

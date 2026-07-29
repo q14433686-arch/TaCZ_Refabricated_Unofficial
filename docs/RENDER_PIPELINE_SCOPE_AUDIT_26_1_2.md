@@ -186,8 +186,20 @@ body draw 仍会再画一遍不透明黑色目镜，从而完全覆盖镜内。�
 2. resize 可能重建 storage 或复用 FBO ID，旧 stencil attachment 的 `objectType != NONE` 并不代表
    framebuffer 仍 complete。
 
-因此不再永久修改外部 depth texture。packed renderbuffer 只在单次 scope draw 内挂接，结束后按
-原 object type/name/level 恢复；已存在的 stencil 也必须先通过 `glCheckFramebufferStatus`。
+因此不再永久修改外部 depth texture。packed renderbuffer 只覆盖一次完整的第一人称 hand batch：
+scope writer 激活后，后续枪体、准星和手臂 draw 都挂同一 depth storage；`renderHandsWithItems` RETURN
+再按原 object type/name/level 恢复所有 FBO。已存在的 stencil 也必须先通过
+`glCheckFramebufferStatus`。
+
+### 5.8 每个 scope draw 后立即恢复 depth 会拆开枪体与镜体
+
+第三轮实机中，永久 texture 污染消失，但镜体/准星随观察距离呈半透明变化，且枪体会截断镜体。
+原因是 scope body 在临时 packed depth 上绘制后立即恢复，而主枪体随后在原 depth 上绘制：两者颜色
+进入同一 hand target，却不共享深度历史，Iris 合成与后续枪体 draw 会把它们当成不同层。
+
+修正后的 packed session 从 mask writer 一直保持到 `ItemInHandRenderer#renderHandsWithItems` RETURN；
+`GlCommandEncoder` 对期间所有普通 RenderType 也挂同一 packed depth，等 `endBatch()` 完整结束后再
+集中恢复。这样 scope、gun、reticle 与 arm 使用同一深度层。
 
 ## 6. 当前修复架构
 
@@ -231,7 +243,8 @@ pipeline color/depth state。`TaCZFabricClient#onInitializeClient` 会提前强�
 - 实机 AMD 日志证明 DEPTH32 + 独立 STENCIL8 可能返回 `GL_FRAMEBUFFER_UNSUPPORTED (0x8CDD)`；
 - 首轮曾沿用上游 OptiFine 方案，原地把 DEPTH32 texture 提升为 `GL_DEPTH24_STENCIL8`；
   实机证明这会污染 Iris/vanilla 持有的长期资源，在 pipeline reload 后留下白色手部虚影；
-- 当前兼容路径只临时挂共享 packed renderbuffer，并在每个 draw 后精确恢复原 depth attachment；
+- 当前兼容路径在完整的 `renderHandsWithItems` hand batch 内共享临时 packed renderbuffer；
+- scope、枪体、准星和手臂全部 flush 后，RETURN 注入再精确恢复所有原 depth attachment；
 - 每次使用已有 stencil 前都会重新检查 FBO completeness，避免 resize 后误信失效的旧 attachment；
 - 两种附件均失败时取消 mask writer 与 inside-only reticle，仅允许普通 body fallback。
 

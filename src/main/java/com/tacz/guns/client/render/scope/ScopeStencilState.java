@@ -6,6 +6,9 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL32;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * OpenGL stencil state used by the first-person scope render types.
  *
@@ -17,10 +20,10 @@ import org.lwjgl.opengl.GL32;
  *
  * <p>The preferred path attaches a shared {@code GL_STENCIL_INDEX8} renderbuffer without touching depth.
  * AMD's OpenGL driver can reject DEPTH32 + standalone STENCIL8 with {@code GL_FRAMEBUFFER_UNSUPPORTED}; the
- * compatibility path therefore attaches a shared packed {@code GL_DEPTH24_STENCIL8} renderbuffer only for the
- * scope draw, then restores the exact original depth attachment. Unlike redefining the depth texture in place,
- * this does not mutate resources owned by vanilla or Iris and remains valid across shader reloads and window
- * resizes.</p>
+ * compatibility path therefore attaches a shared packed {@code GL_DEPTH24_STENCIL8} renderbuffer for the
+ * complete first-person hand batch. Scope, gun, reticle and arm draws share one depth history; the exact original
+ * attachments are restored after {@code renderHandsWithItems} finishes. No vanilla/Iris texture storage is
+ * mutated, so shader reloads and window resizes remain safe.</p>
  */
 public final class ScopeStencilState {
     public enum Phase {
@@ -40,8 +43,9 @@ public final class ScopeStencilState {
     private static int sharedPackedWidth;
     private static int sharedPackedHeight;
 
-    /** Non-null only while the packed compatibility attachment is installed for the current draw. */
-    private static DepthAttachmentRestore activeDepthRestore;
+    /** Original depth attachments for every FBO temporarily redirected during this hand render. */
+    private static final Map<Integer, DepthAttachmentRestore> SESSION_DEPTH_ATTACHMENTS = new LinkedHashMap<>();
+    private static boolean packedHandSessionActive;
 
     private static boolean currentDrawPrepared;
     private static boolean currentDrawAllowed = true;
@@ -56,7 +60,6 @@ public final class ScopeStencilState {
         CURRENT_PHASE.set(phase);
         currentDrawPrepared = false;
         currentDrawAllowed = true;
-        activeDepthRestore = null;
     }
 
     /**
@@ -70,7 +73,10 @@ public final class ScopeStencilState {
         RenderSystem.assertOnRenderThread();
         Phase phase = CURRENT_PHASE.get();
         if (phase == Phase.NONE) {
-            return true;
+            // Once the scope writer selected the packed compatibility path, every remaining first-person
+            // draw must share that depth storage. Otherwise the gun returns to the original depth target and
+            // can overwrite/cut the scope as if they belonged to different layers.
+            return !packedHandSessionActive || ensurePackedAttachmentForCurrentDraw();
         }
         if (currentDrawPrepared) {
             return currentDrawAllowed;
@@ -91,7 +97,7 @@ public final class ScopeStencilState {
             case WRITE_MASK -> {
                 GL11.glStencilMask(0xFF);
                 GL11.glClearStencil(0);
-                if (activeDepthRestore != null) {
+                if (packedHandSessionActive) {
                     // The temporary packed target has no world depth. Initialise it once for the sequence;
                     // body and reticle draws reuse both its depth and stencil contents.
                     GL11.glDepthMask(true);
@@ -125,8 +131,39 @@ public final class ScopeStencilState {
         GL11.glStencilFunc(GL11.GL_ALWAYS, 0, 0xFF);
         GL11.glDisable(GL11.GL_STENCIL_TEST);
 
-        restoreOriginalDepthAttachment();
+        // Do not restore packed depth here. Other gun/hand RenderTypes are flushed after the scope batch and
+        // must use the same depth storage. ItemInHandRendererMixin calls endHandFrame after endBatch finishes.
+        currentDrawPrepared = false;
+        currentDrawAllowed = true;
+        CURRENT_PHASE.set(Phase.NONE);
+    }
 
+    /** Restores every FBO redirected during the completed first-person hand batch. */
+    public static void endHandFrame() {
+        RenderSystem.assertOnRenderThread();
+        GL11.glStencilMask(0xFF);
+        GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
+        GL11.glStencilFunc(GL11.GL_ALWAYS, 0, 0xFF);
+        GL11.glDisable(GL11.GL_STENCIL_TEST);
+
+        if (!SESSION_DEPTH_ATTACHMENTS.isEmpty()) {
+            int previousFbo = GL11.glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
+            for (DepthAttachmentRestore restore : SESSION_DEPTH_ATTACHMENTS.values()) {
+                if (GL30.glIsFramebuffer(restore.fbo())) {
+                    GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, restore.fbo());
+                    restoreDepthAttachment(restore);
+                    int status = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
+                    if (status != GL30.GL_FRAMEBUFFER_COMPLETE) {
+                        logUnavailable("failed to restore framebuffer " + restore.fbo()
+                                + " after first-person hand batch (0x" + Integer.toHexString(status) + ")");
+                    }
+                }
+            }
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, previousFbo);
+            SESSION_DEPTH_ATTACHMENTS.clear();
+        }
+
+        packedHandSessionActive = false;
         currentDrawPrepared = false;
         currentDrawAllowed = true;
         CURRENT_PHASE.set(Phase.NONE);
@@ -203,9 +240,44 @@ public final class ScopeStencilState {
         return GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
     }
 
-    /** @return status after replacing depth+stencil only for the current scope draw. */
+    /** Ensures ordinary gun/hand draws share the packed depth selected by the scope writer. */
+    private static boolean ensurePackedAttachmentForCurrentDraw() {
+        int fbo = GL11.glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
+        if (fbo == 0) {
+            return true;
+        }
+
+        int depthType = attachmentParameter(
+                GL30.GL_DEPTH_ATTACHMENT,
+                GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE
+        );
+        int depthName = depthType == GL11.GL_NONE ? 0 : attachmentParameter(
+                GL30.GL_DEPTH_ATTACHMENT,
+                GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME
+        );
+        if (depthType == GL30.GL_RENDERBUFFER && depthName == sharedPackedRenderbuffer
+                && GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER) == GL30.GL_FRAMEBUFFER_COMPLETE) {
+            return true;
+        }
+
+        int[] viewport = new int[4];
+        GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);
+        int width = Math.max(1, viewport[2]);
+        int height = Math.max(1, viewport[3]);
+        int status = tryAttachTemporaryPackedDepthStencil(fbo, width, height);
+        if (status != GL30.GL_FRAMEBUFFER_COMPLETE) {
+            logUnavailable("could not extend packed scope depth to hand framebuffer " + fbo + " (0x"
+                    + Integer.toHexString(status) + ")");
+            // The helper already restored this FBO. Never cancel an ordinary gun/arm draw just because it
+            // cannot join the shared packed depth session.
+            return true;
+        }
+        return true;
+    }
+
+    /** @return status after replacing depth+stencil for the active first-person hand batch. */
     private static int tryAttachTemporaryPackedDepthStencil(int fbo, int width, int height) {
-        DepthAttachmentRestore originalDepth = captureDepthAttachment(fbo);
+        SESSION_DEPTH_ATTACHMENTS.computeIfAbsent(fbo, ignored -> captureDepthAttachment(fbo));
 
         if (sharedPackedRenderbuffer == 0 || !GL30.glIsRenderbuffer(sharedPackedRenderbuffer)) {
             sharedPackedRenderbuffer = GL30.glGenRenderbuffers();
@@ -230,12 +302,14 @@ public final class ScopeStencilState {
 
         int status = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
         if (status == GL30.GL_FRAMEBUFFER_COMPLETE) {
-            activeDepthRestore = originalDepth;
+            packedHandSessionActive = true;
             return status;
         }
 
-        restoreDepthAttachment(originalDepth);
-        activeDepthRestore = null;
+        DepthAttachmentRestore originalDepth = SESSION_DEPTH_ATTACHMENTS.remove(fbo);
+        if (originalDepth != null) {
+            restoreDepthAttachment(originalDepth);
+        }
         return status;
     }
 
@@ -266,28 +340,6 @@ public final class ScopeStencilState {
                 GL30.GL_RENDERBUFFER,
                 0
         );
-    }
-
-    private static void restoreOriginalDepthAttachment() {
-        DepthAttachmentRestore restore = activeDepthRestore;
-        if (restore == null) {
-            return;
-        }
-
-        int previousFbo = GL11.glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
-        if (previousFbo != restore.fbo()) {
-            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, restore.fbo());
-        }
-        restoreDepthAttachment(restore);
-        int restoreStatus = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
-        if (restoreStatus != GL30.GL_FRAMEBUFFER_COMPLETE) {
-            logUnavailable("failed to restore framebuffer " + restore.fbo() + " after packed scope draw (0x"
-                    + Integer.toHexString(restoreStatus) + ")");
-        }
-        if (previousFbo != restore.fbo()) {
-            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, previousFbo);
-        }
-        activeDepthRestore = null;
     }
 
     private static void restoreDepthAttachment(DepthAttachmentRestore restore) {
