@@ -13,7 +13,7 @@
 2. 镜身只画在目镜区域之外；
 3. 分划板只画在目镜区域之内；
 4. vanilla 和 Iris shader pack 两条调度路径行为一致；
-5. 不能替换或破坏主画面 / Iris 的深度附件；
+5. 不能永久替换或破坏主画面 / Iris 的深度附件；兼容路径必须在每次 draw 后原样恢复；
 6. 目标 FBO 不支持 stencil 时必须安全降级，不能留下整块黑色遮罩。
 
 原始仓库状态还存在一个工程问题：`src/main/java` 和大部分运行资源没有入库，只有
@@ -161,6 +161,21 @@ body draw 仍会再画一遍不透明黑色目镜，从而完全覆盖镜内。�
 `stencil == 1`。实机表现正是“红点镜片透明但没有点，中高倍镜仍是整块黑色”。当前捕获路径会在
 父级链之后显式执行 `ocular.translateAndRotateAndScale(ocularPose)`。
 
+### 5.6 远端实机日志推翻了“独立 stencil 一定可挂”的假设
+
+远端 `latest.log` 明确记录：
+
+```text
+[TACZ Scope] Stencil clipping unavailable: framebuffer 4 is incomplete after adding stencil
+(status=0x8cdd)
+```
+
+`0x8CDD` 是 `GL_FRAMEBUFFER_UNSUPPORTED`。这发生在 Iris 已加载但 shader pack 尚未启用时，
+因此不是某个光影包单独造成；环境为 AMD OpenGL、Iris 1.10.9、Sodium 0.8.12。首版 fallback
+主动隐藏所有活动 ocular 并取消 inside reticle，才会表现出“所有目镜都消失、不同模型结果却不同”。
+修复方向不能继续依赖删除节点，而必须恢复上游的真实 stencil 语义，并为拒绝独立 stencil 的驱动
+提供临时 packed depth-stencil 路径。
+
 ## 6. 当前修复架构
 
 ### 6.1 三个独立批次
@@ -188,7 +203,7 @@ mask 使用从 vanilla `RenderPipelines.ENTITY_CUTOUT` 克隆的 pipeline：
 pipeline color/depth state。`TaCZFabricClient#onInitializeClient` 会提前强制注册该 pipeline，保证
 首次 `ShaderManager` 资源重载已经编译它；不能等到玩家第一次开镜才惰性注册。
 
-### 6.3 在最终 FBO 上挂独立 stencil
+### 6.3 在最终 FBO 上挂 stencil，并提供 packed 兼容路径
 
 `GlCommandEncoderScopeStencilMixin` 注入 `drawFromBuffers` HEAD。此时：
 
@@ -199,11 +214,12 @@ pipeline color/depth state。`TaCZFabricClient#onInitializeClient` 会提前强�
 `ScopeStencilState` 对当前 FBO：
 
 - 若已有 stencil，直接复用；
-- 否则把一个共享的 `GL_STENCIL_INDEX8` 挂到 `GL_STENCIL_ATTACHMENT`；
-- 不修改已有 depth attachment；
-- 共享 renderbuffer 按 viewport 变化 resize，并可同时挂到 Iris 的 mask/body FBO；
-- 检查 framebuffer completeness；失败时取消 mask writer 与 inside-only reticle draw，只让已移除
-  活动 ocular 的 body 正常绘制，形成不会黑屏的透明目镜降级。
+- 否则先把共享 `GL_STENCIL_INDEX8` 挂到 `GL_STENCIL_ATTACHMENT`，不触碰 depth；
+- 实机 AMD 日志证明 DEPTH32 + 独立 STENCIL8 可能返回 `GL_FRAMEBUFFER_UNSUPPORTED (0x8CDD)`；
+- 此时优先沿用上游 OptiFine 方案：把 mutable DEPTH32 texture 原地提升为
+  `GL_DEPTH24_STENCIL8`，保留 texture object ID，再挂到 `GL_DEPTH_STENCIL_ATTACHMENT`；
+- 若 depth target 不是可提升的 texture，才临时挂共享 packed renderbuffer，并在 draw 后恢复原 depth；
+- 三种附件均失败时取消 mask writer 与 inside-only reticle，仅允许普通 body fallback。
 
 ## 7. 依赖版本审计（2026-07-30）
 
@@ -214,8 +230,8 @@ pipeline color/depth state。`TaCZFabricClient#onInitializeClient` 会提前强�
 | Fabric Loader | 0.19.3 | 当前版本，正确 |
 | Fabric API | 0.155.2+26.1.2 | 已从 0.151.0 更新；当前 26.1.2 发布线 |
 | Fabric Loom | 1.17-SNAPSHOT | 本地既有构建解析为 1.17.17；适配未混淆 26.1.x |
-| Iris | 1.11.2 / 26.1.2 | 当前兼容目标；仅可选运行测试，不打进产物 |
-| Sodium | 0.9.1+mc26.1.2 | Iris 1.11.2 对照版本 |
+| Iris | 1.11.2 / 26.1.2 | 推荐验证目标；远端 1.10.9 也确认公开 `assignPipeline` 可用 |
+| Sodium | 0.9.1+mc26.1.2 | 推荐对照版本；远端日志使用 0.8.12 |
 | Mod Menu | 18.0.0-alpha.8 | 26.1–26.1.2 发布版本；原 `18.0.0` 坐标不准确 |
 | Cloth Config | 26.1.154 | 支持 26.1–26.1.2，正确 |
 | JEI | 29.5.0.26 | 明确支持 26.1–26.1.2，且是本移植已编译过的 API 线；不盲目追更 |
