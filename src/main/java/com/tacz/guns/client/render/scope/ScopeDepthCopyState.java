@@ -10,35 +10,66 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL32;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Saves world depth before the ocular aperture and exposes that copy to the ordered cleanup geometry.
- * The cleanup fragment writes the sampled value to gl_FragDepth only where ocular geometry rasterizes.
+ * Implements the true ocular screen-space mask around the ordered scope batches:
+ *
+ * <pre>
+ * 1. BACKUP        save the original world depth
+ * 2. (ocular draw) the invisible ocular writes near depth into the attachment
+ * 3. APERTURE_COPY at the scope-body draw boundary, copy the resulting depth:
+ *                  it differs from the world backup only where the ocular rasterized
+ * 4. (body draw)   the scope body draws normally; pixels behind the aperture fail depth
+ * 5. RESTORE       cleanup geometry writes the original world depth back
+ * 6. MASK          reticle draws sample BOTH depths at gl_FragCoord:
+ *                  the original world depth and the ocular aperture depth
+ * 7.               only pixels where ocularDepth &lt; worldDepth - epsilon may draw
+ * 8.               every other pixel discards
+ * </pre>
+ *
+ * The mask needs no stencil attachment and never replaces FBO attachments: the aperture copy
+ * is a private sampleable depth texture, and the reticle fragment performs the comparison.
  */
 public final class ScopeDepthCopyState {
     public enum Operation {
         NONE,
         BACKUP,
-        RESTORE
+        APERTURE_COPY,
+        RESTORE,
+        MASK
     }
 
     public static final String MODE_UNIFORM = "tacz_DepthRestoreMode";
     public static final String SAMPLER_UNIFORM = "tacz_DepthBackupSampler";
     public static final String IRIS_WORLD_DEPTH_UNIFORM = "depthtex2";
 
+    /** Enables the reticle screen-space mask branch. 0 keeps every ordinary shader dormant. */
+    public static final String MASK_MODE_UNIFORM = "tacz_ScopeMaskMode";
+    /** Vanilla mask shaders read the pre-ocular world-depth backup from this sampler. */
+    public static final String MASK_WORLD_SAMPLER_UNIFORM = "tacz_WorldDepthSampler";
+    /** All mask implementations read the post-ocular aperture depth from this sampler. */
+    public static final String APERTURE_SAMPLER_UNIFORM = "tacz_ApertureDepthSampler";
+
     private static final ThreadLocal<Operation> CURRENT = ThreadLocal.withInitial(() -> Operation.NONE);
 
-    private static int backupFramebuffer;
-    private static int backupTexture;
-    private static int backupWidth;
-    private static int backupHeight;
-    private static int backupInternalFormat;
+    /** Exact pre-ocular world depth (steps 1/5); unused when Iris offers depthtex2 instead. */
+    private static final DepthTextureTarget WORLD_TARGET = new DepthTextureTarget();
+    /** Depth copied at the body boundary: world depth plus only the ocular differences (step 3). */
+    private static final DepthTextureTarget APERTURE_TARGET = new DepthTextureTarget();
+
     private static int backupSourceFbo;
     private static boolean backupValid;
+    private static boolean maskValid;
+    /** Whether a usable world-depth source exists for the mask (Iris depthtex2 or the vanilla copy). */
+    private static boolean maskWorldValid;
     private static boolean useIrisPreHandDepth;
     private static boolean loggedIrisPreHandDepth;
+    private static boolean loggedApertureActive;
+    private static boolean loggedMaskActive;
 
-    private static int overriddenTextureUnit = -1;
-    private static int previousTextureBinding;
+    private static final List<OverriddenUnit> OVERRIDDEN_UNITS = new ArrayList<>(2);
     private static boolean loggedActive;
     private static String lastFailure = "";
 
@@ -56,58 +87,104 @@ public final class ScopeDepthCopyState {
         int program = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM);
         return switch (CURRENT.get()) {
             case BACKUP -> {
-                disableRestoreMode(program);
+                disableScopeBranches(program);
+                maskValid = false;
+                maskWorldValid = false;
                 if (program > 0
                         && GL20.glGetUniformLocation(program, MODE_UNIFORM) >= 0
                         && GL20.glGetUniformLocation(program, IRIS_WORLD_DEPTH_UNIFORM) >= 0) {
                     // Iris copies exact world depth before HAND_SOLID into depthtex2.
                     useIrisPreHandDepth = true;
                     backupValid = true;
+                    maskWorldValid = true;
                     if (!loggedIrisPreHandDepth) {
                         loggedIrisPreHandDepth = true;
                         GunMod.LOGGER.info("[TACZ Scope] Using Iris depthtex2 as exact pre-hand depth backup.");
                     }
                 } else {
                     useIrisPreHandDepth = false;
-                    backupCurrentDepth();
+                    maskWorldValid = backupCurrentDepth();
                 }
                 yield true;
             }
+            case APERTURE_COPY -> {
+                // Step 3 runs at the body draw boundary: nothing but the ocular draw at order -3 has
+                // written depth since the world backup, so this copy isolates the ocular footprint.
+                disableScopeBranches(program);
+                maskValid = copyApertureDepth() && maskWorldValid;
+                yield true;
+            }
             case RESTORE -> prepareRestoreDraw(program);
+            case MASK -> prepareMaskDraw(program);
             case NONE -> {
-                disableRestoreMode(program);
+                disableScopeBranches(program);
                 yield true;
             }
         };
     }
 
     public static void end() {
-        if (overriddenTextureUnit >= 0) {
+        for (int i = OVERRIDDEN_UNITS.size() - 1; i >= 0; i--) {
+            OverriddenUnit unit = OVERRIDDEN_UNITS.get(i);
             int previousActiveTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
-            GL13.glActiveTexture(GL13.GL_TEXTURE0 + overriddenTextureUnit);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTextureBinding);
+            GL13.glActiveTexture(GL13.GL_TEXTURE0 + unit.unit());
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, unit.previousBinding());
             GL13.glActiveTexture(previousActiveTexture);
-            overriddenTextureUnit = -1;
         }
+        OVERRIDDEN_UNITS.clear();
         CURRENT.set(Operation.NONE);
     }
 
-    private static void disableRestoreMode(int program) {
+    private static void disableScopeBranches(int program) {
         if (program <= 0) {
             return;
         }
-        int modeLocation = GL20.glGetUniformLocation(program, MODE_UNIFORM);
-        if (modeLocation >= 0) {
-            GL20.glUniform1i(modeLocation, 0);
+        zeroUniform(program, MODE_UNIFORM);
+        zeroUniform(program, MASK_MODE_UNIFORM);
+    }
+
+    private static void zeroUniform(int program, String name) {
+        int location = GL20.glGetUniformLocation(program, name);
+        if (location >= 0) {
+            GL20.glUniform1i(location, 0);
         }
     }
 
     private static boolean backupCurrentDepth() {
+        backupValid = copyCurrentDepth(WORLD_TARGET, "world depth backup");
+        if (backupValid && !loggedActive) {
+            loggedActive = true;
+            DepthTextureTarget target = WORLD_TARGET;
+            GunMod.LOGGER.info("[TACZ Scope] Exact ocular depth backup active (fbo={}, size={}x{}, format=0x{}).",
+                    backupSourceFbo, target.width(), target.height(), Integer.toHexString(target.internalFormat()));
+        }
+        return backupValid;
+    }
+
+    private static boolean copyApertureDepth() {
+        if (!backupValid) {
+            logFailure("ocular aperture copy skipped: no valid world-depth backup in this cycle");
+            return false;
+        }
+        int sourceFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+        if (sourceFbo != backupSourceFbo) {
+            logFailure("ocular aperture copy source fbo " + sourceFbo
+                    + " does not match the backed-up hand target " + backupSourceFbo);
+            return false;
+        }
+        boolean copied = copyCurrentDepth(APERTURE_TARGET, "ocular aperture depth");
+        if (copied && !loggedApertureActive) {
+            loggedApertureActive = true;
+            GunMod.LOGGER.info("[TACZ Scope] Ocular aperture screen-space mask active.");
+        }
+        return copied;
+    }
+
+    private static boolean copyCurrentDepth(DepthTextureTarget target, String debugName) {
         int sourceFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
         DepthInfo depth = inspectDepthAttachment();
-        if (sourceFbo == 0 || depth == null || depth.samples() != 0 || !ensureBackupTarget(depth)) {
-            backupValid = false;
-            logFailure("cannot prepare sampleable depth backup for fbo=" + sourceFbo);
+        if (sourceFbo == 0 || depth == null || depth.samples() != 0 || !target.ensure(depth)) {
+            logFailure("cannot prepare sampleable " + debugName + " for fbo=" + sourceFbo);
             return false;
         }
 
@@ -115,7 +192,7 @@ public final class ScopeDepthCopyState {
         int previousRead = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
         int previousDraw = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
         GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, sourceFbo);
-        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, backupFramebuffer);
+        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, target.framebuffer());
         GL30.glBlitFramebuffer(
                 0, 0, depth.width(), depth.height(),
                 0, 0, depth.width(), depth.height(),
@@ -126,16 +203,12 @@ public final class ScopeDepthCopyState {
         GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, previousRead);
         GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, previousDraw);
 
-        backupValid = error == GL11.GL_NO_ERROR;
-        backupSourceFbo = backupValid ? sourceFbo : 0;
-        if (!backupValid) {
-            logFailure("depth backup blit failed with GL error 0x" + Integer.toHexString(error));
-        } else if (!loggedActive) {
-            loggedActive = true;
-            GunMod.LOGGER.info("[TACZ Scope] Exact ocular depth backup active (fbo={}, size={}x{}, format=0x{}).",
-                    sourceFbo, depth.width(), depth.height(), Integer.toHexString(depth.internalFormat()));
+        boolean copied = error == GL11.GL_NO_ERROR;
+        backupSourceFbo = copied ? sourceFbo : 0;
+        if (!copied) {
+            logFailure(debugName + " blit failed with GL error 0x" + Integer.toHexString(error));
         }
-        return backupValid;
+        return copied;
     }
 
     private static boolean prepareRestoreDraw(int program) {
@@ -144,6 +217,9 @@ public final class ScopeDepthCopyState {
         }
 
         int modeLocation = GL20.glGetUniformLocation(program, MODE_UNIFORM);
+        // Under Iris the cleanup program is the shared HAND shader: a mask flag left over from a
+        // reticle draw must never survive into the restore draw (and vice versa below).
+        zeroUniform(program, MASK_MODE_UNIFORM);
         if (useIrisPreHandDepth) {
             int irisDepthLocation = GL20.glGetUniformLocation(program, IRIS_WORLD_DEPTH_UNIFORM);
             if (modeLocation < 0 || irisDepthLocation < 0) {
@@ -159,9 +235,9 @@ public final class ScopeDepthCopyState {
         int destinationFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
         DepthInfo destination = inspectDepthAttachment();
         if (destinationFbo != backupSourceFbo || destination == null
-                || destination.width() != backupWidth
-                || destination.height() != backupHeight
-                || destination.internalFormat() != backupInternalFormat) {
+                || destination.width() != WORLD_TARGET.width()
+                || destination.height() != WORLD_TARGET.height()
+                || destination.internalFormat() != WORLD_TARGET.internalFormat()) {
             backupValid = false;
             logFailure("depth restore target does not match the backed-up hand target");
             return false;
@@ -173,13 +249,7 @@ public final class ScopeDepthCopyState {
             return false;
         }
 
-        int textureUnit = Math.max(3, GL11.glGetInteger(GL20.GL_MAX_TEXTURE_IMAGE_UNITS) - 1);
-        int previousActiveTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
-        GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureUnit);
-        previousTextureBinding = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, backupTexture);
-        GL13.glActiveTexture(previousActiveTexture);
-        overriddenTextureUnit = textureUnit;
+        int textureUnit = bindDepthTexture(1, WORLD_TARGET.texture());
 
         GL20.glUniform1i(samplerLocation, textureUnit);
         GL20.glUniform1i(modeLocation, 1);
@@ -187,67 +257,88 @@ public final class ScopeDepthCopyState {
         return true;
     }
 
-    private static boolean ensureBackupTarget(DepthInfo depth) {
-        if (backupFramebuffer == 0 || !GL30.glIsFramebuffer(backupFramebuffer)) {
-            backupFramebuffer = GL30.glGenFramebuffers();
+    /**
+     * Steps 6-8: bind the world-depth backup and the ocular aperture copy, then enable the mask
+     * branch. When anything is missing the draw falls back to the previous unmasked behavior
+     * (mode stays 0), which never produces stale or garbage masking.
+     */
+    private static boolean prepareMaskDraw(int program) {
+        if (program <= 0) {
+            return true;
         }
-        if (backupTexture == 0 || !GL11.glIsTexture(backupTexture)) {
-            backupTexture = GL11.glGenTextures();
-            backupWidth = 0;
-            backupHeight = 0;
-            backupInternalFormat = 0;
+        int maskLocation = GL20.glGetUniformLocation(program, MASK_MODE_UNIFORM);
+        if (maskLocation < 0) {
+            // The active program has no mask branch (not a reticle shader); draw it untouched.
+            return true;
         }
-
-        int previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, backupTexture);
-        if (backupWidth != depth.width()
-                || backupHeight != depth.height()
-                || backupInternalFormat != depth.internalFormat()) {
-            TextureAllocation allocation = textureAllocation(depth.internalFormat());
-            if (allocation == null) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTexture);
-                return false;
-            }
-            GL11.glTexImage2D(
-                    GL11.GL_TEXTURE_2D,
-                    0,
-                    depth.internalFormat(),
-                    depth.width(),
-                    depth.height(),
-                    0,
-                    allocation.externalFormat(),
-                    allocation.type(),
-                    (java.nio.ByteBuffer) null
-            );
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_COMPARE_MODE, GL11.GL_NONE);
-            backupWidth = depth.width();
-            backupHeight = depth.height();
-            backupInternalFormat = depth.internalFormat();
+        // The mask and restore branches share Iris' HAND shader; never let the restore flag bleed
+        // into the reticle draw.
+        zeroUniform(program, MODE_UNIFORM);
+        if (!maskValid) {
+            GL20.glUniform1i(maskLocation, 0);
+            return true;
         }
 
-        int previousRead = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
-        int previousDraw = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, backupFramebuffer);
-        GL32.glFramebufferTexture(
-                GL30.GL_FRAMEBUFFER,
-                isPackedDepthStencil(depth.internalFormat())
-                        ? GL30.GL_DEPTH_STENCIL_ATTACHMENT
-                        : GL30.GL_DEPTH_ATTACHMENT,
-                backupTexture,
-                0
-        );
-        GL11.glDrawBuffer(GL11.GL_NONE);
-        GL11.glReadBuffer(GL11.GL_NONE);
-        int status = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
+        DepthInfo destination = inspectDepthAttachment();
+        if (destination == null
+                || destination.width() != APERTURE_TARGET.width()
+                || destination.height() != APERTURE_TARGET.height()
+                || destination.internalFormat() != APERTURE_TARGET.internalFormat()) {
+            GL20.glUniform1i(maskLocation, 0);
+            logFailure("scope mask target does not match the aperture copy surface");
+            return true;
+        }
 
-        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, previousRead);
-        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, previousDraw);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTexture);
-        return status == GL30.GL_FRAMEBUFFER_COMPLETE;
+        int apertureLocation = GL20.glGetUniformLocation(program, APERTURE_SAMPLER_UNIFORM);
+        int irisWorldLocation = GL20.glGetUniformLocation(program, IRIS_WORLD_DEPTH_UNIFORM);
+        int worldLocation = GL20.glGetUniformLocation(program, MASK_WORLD_SAMPLER_UNIFORM);
+
+        if (apertureLocation < 0) {
+            GL20.glUniform1i(maskLocation, 0);
+            logFailure("reticle shader has no ocular aperture sampler");
+            return true;
+        }
+        boolean irisWorld = useIrisPreHandDepth && irisWorldLocation >= 0;
+        // The vanilla branch may only bind a world-depth sampler when this cycle actually blitted
+        // the backup; otherwise texture 0 would discard every reticle pixel.
+        if (!irisWorld && (worldLocation < 0 || WORLD_TARGET.texture() == 0)) {
+            GL20.glUniform1i(maskLocation, 0);
+            logFailure("reticle shader has no usable world-depth source for the ocular mask");
+            return true;
+        }
+
+        // The ocular copy occupies the highest unit; the vanilla world backup sits one below it.
+        // Iris mask shaders sample its depthtex2 instead of the second unit.
+        int apertureUnit = bindDepthTexture(1, APERTURE_TARGET.texture());
+        GL20.glUniform1i(apertureLocation, apertureUnit);
+        if (!irisWorld) {
+            int worldUnit = bindDepthTexture(2, WORLD_TARGET.texture());
+            GL20.glUniform1i(worldLocation, worldUnit);
+        }
+        GL20.glUniform1i(maskLocation, 1);
+        if (!loggedMaskActive) {
+            loggedMaskActive = true;
+            GunMod.LOGGER.info("[TACZ Scope] Reticle draws now masked by the ocular aperture depth"
+                    + (irisWorld ? " (Iris depthtex2 world source)." : " (vanilla world-depth backup)."));
+        }
+        return true;
+    }
+
+    /**
+     * Binds a depth texture to a high texture unit that vanilla/Iris sampler setup does not use,
+     * records the previous binding for {@link #end()}, and returns the unit index.
+     *
+     * @param fromTop 1 selects {@code GL_MAX_TEXTURE_IMAGE_UNITS - 1}, 2 selects the unit below it
+     */
+    private static int bindDepthTexture(int fromTop, int texture) {
+        int textureUnit = Math.max(3, GL11.glGetInteger(GL20.GL_MAX_TEXTURE_IMAGE_UNITS) - fromTop);
+        int previousActiveTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
+        GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureUnit);
+        int previousBinding = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+        GL13.glActiveTexture(previousActiveTexture);
+        OVERRIDDEN_UNITS.add(new OverriddenUnit(textureUnit, previousBinding));
+        return textureUnit;
     }
 
     private static DepthInfo inspectDepthAttachment() {
@@ -337,5 +428,100 @@ public final class ScopeDepthCopyState {
     }
 
     private record TextureAllocation(int externalFormat, int type) {
+    }
+
+    private record OverriddenUnit(int unit, int previousBinding) {
+    }
+
+    /** A private sampleable depth texture plus the depth-only FBO wrapped around it. */
+    private static final class DepthTextureTarget {
+        private int framebuffer;
+        private int texture;
+        private int width;
+        private int height;
+        private int internalFormat;
+
+        int framebuffer() {
+            return this.framebuffer;
+        }
+
+        int texture() {
+            return this.texture;
+        }
+
+        int width() {
+            return this.width;
+        }
+
+        int height() {
+            return this.height;
+        }
+
+        int internalFormat() {
+            return this.internalFormat;
+        }
+
+        boolean ensure(DepthInfo depth) {
+            if (this.framebuffer == 0 || !GL30.glIsFramebuffer(this.framebuffer)) {
+                this.framebuffer = GL30.glGenFramebuffers();
+            }
+            if (this.texture == 0 || !GL11.glIsTexture(this.texture)) {
+                this.texture = GL11.glGenTextures();
+                this.width = 0;
+                this.height = 0;
+                this.internalFormat = 0;
+            }
+
+            int previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.texture);
+            if (this.width != depth.width()
+                    || this.height != depth.height()
+                    || this.internalFormat != depth.internalFormat()) {
+                TextureAllocation allocation = textureAllocation(depth.internalFormat());
+                if (allocation == null) {
+                    GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTexture);
+                    return false;
+                }
+                GL11.glTexImage2D(
+                        GL11.GL_TEXTURE_2D,
+                        0,
+                        depth.internalFormat(),
+                        depth.width(),
+                        depth.height(),
+                        0,
+                        allocation.externalFormat(),
+                        allocation.type(),
+                        (java.nio.ByteBuffer) null
+                );
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_COMPARE_MODE, GL11.GL_NONE);
+                this.width = depth.width();
+                this.height = depth.height();
+                this.internalFormat = depth.internalFormat();
+            }
+
+            int previousRead = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
+            int previousDraw = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.framebuffer);
+            GL32.glFramebufferTexture(
+                    GL30.GL_FRAMEBUFFER,
+                    isPackedDepthStencil(depth.internalFormat())
+                            ? GL30.GL_DEPTH_STENCIL_ATTACHMENT
+                            : GL30.GL_DEPTH_ATTACHMENT,
+                    this.texture,
+                    0
+            );
+            GL11.glDrawBuffer(GL11.GL_NONE);
+            GL11.glReadBuffer(GL11.GL_NONE);
+            int status = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
+
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, previousRead);
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, previousDraw);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTexture);
+            return status == GL30.GL_FRAMEBUFFER_COMPLETE;
+        }
     }
 }

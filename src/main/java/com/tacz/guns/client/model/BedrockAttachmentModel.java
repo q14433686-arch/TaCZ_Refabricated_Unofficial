@@ -554,9 +554,13 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 }
             });
 
-            // The invisible ocular has already written a nearer depth value. Ordinary scope-body fragments
-            // behind it now fail their normal depth test without stencil or framebuffer attachment changes.
-            collector.order(SCOPE_BODY_ORDER).submitCustomGeometry(identity, renderType,
+            // Step 3 of the ocular screen-space mask happens at this draw boundary: the wrapped
+            // body type first copies the aperture depth (world depth plus only the ocular
+            // differences) into the mask texture, and only then does the ordinary scope body draw.
+            // Body fragments behind the invisible ocular still fail their normal depth test, so
+            // neither stencil nor framebuffer attachment changes are involved.
+            RenderType bodyWithApertureCopy = ScopeRenderTypes.apertureCopy(renderType);
+            collector.order(SCOPE_BODY_ORDER).submitCustomGeometry(identity, bodyWithApertureCopy,
                     (entryPose, consumer) -> bodySnapshot.write(consumer));
 
             // Restore the aperture pixels from the exact pre-ocular world-depth backup. Iris renders water,
@@ -588,8 +592,10 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                         : ScopeRenderTypes.visibleReticle(texture);
 
                 // Pure etched trees are CPU-filtered to retain thin marks and discard large blackout panels.
-                // Both etched and illuminated reticles render after exact world-depth restore and write their own
-                // hand depth, preventing later water/fog/particle passes from covering them.
+                // Both etched and illuminated reticles render after the exact world-depth restore, sample the
+                // world-depth backup and the ocular aperture copy per pixel, and only keep fragments where
+                // ocularDepth < worldDepth - epsilon — the true screen-space ocular mask. Surviving pixels
+                // still write near hand depth so later water/fog/particle passes cannot cover them.
                 reticle.submitReticle(new IReticleRenderer.Context(
                         poseStack, collector.order(SCOPE_RETICLE_ORDER),
                         transformType, baseReticleType, baseIlluminatedType,

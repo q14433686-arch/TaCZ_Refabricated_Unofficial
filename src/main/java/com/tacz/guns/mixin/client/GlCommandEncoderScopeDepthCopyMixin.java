@@ -8,7 +8,10 @@ import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Runs scope depth backup/restore after vanilla/Iris bind the real destination FBO and before glDraw*. */
+/**
+ * Runs the scope depth backup, ocular aperture copy, world-depth restore and reticle mask binding
+ * after vanilla/Iris bind the real destination FBO and before glDraw*.
+ */
 @Mixin(targets = "com.mojang.blaze3d.opengl.GlCommandEncoder")
 public abstract class GlCommandEncoderScopeDepthCopyMixin {
     @Inject(method = "drawFromBuffers", at = @At("HEAD"), cancellable = true, require = 1)

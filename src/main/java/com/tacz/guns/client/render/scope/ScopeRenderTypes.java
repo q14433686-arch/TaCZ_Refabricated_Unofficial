@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -23,6 +24,7 @@ public final class ScopeRenderTypes {
     private static final RenderSetup FAKE_SETUP = RenderSetup.builder(RenderPipelines.GUI_TEXTURED)
             .createRenderSetup();
 
+    private static final Map<RenderType, RenderType> APERTURE_COPY_BODIES = new IdentityHashMap<>();
     private static final Map<Identifier, RenderType> DEPTH_APERTURES = new HashMap<>();
     private static final Map<Identifier, RenderType> DEPTH_CLEANUPS = new HashMap<>();
     private static final Map<Identifier, RenderType> ETCHED_RETICLES = new HashMap<>();
@@ -37,10 +39,16 @@ public final class ScopeRenderTypes {
     /** Restores the aperture region from the exact world-depth backup before later translucent world passes. */
     private static final RenderPipeline DEPTH_CLEANUP_PIPELINE = createDepthCleanupPipeline();
 
-    /** Draws pure etched division trees only where the ocular depth is already present. */
+    /**
+     * Etched reticles sample the world-depth backup and the ocular aperture depth per pixel
+     * and only survive where ocularDepth &lt; worldDepth - epsilon.
+     */
     private static final RenderPipeline ETCHED_RETICLE_PIPELINE = createEtchedReticlePipeline();
 
-    /** Small illuminated reticles remain visible and protect their own pixels from later world translucency. */
+    /**
+     * Small illuminated reticles use the same screen-space ocular mask and still write near hand
+     * depth to protect their surviving pixels from later world translucency.
+     */
     private static final RenderPipeline VISIBLE_RETICLE_PIPELINE = createVisibleReticlePipeline();
 
     private ScopeRenderTypes() {
@@ -48,6 +56,14 @@ public final class ScopeRenderTypes {
 
     /** Forces registration before ShaderManager's initial resource reload. */
     public static void init() {
+    }
+
+    /**
+     * Wraps the plain scope-body type so its draw boundary first copies the aperture depth
+     * (world depth plus only the ocular differences) into the mask texture, then draws the body.
+     */
+    public static RenderType apertureCopy(RenderType base) {
+        return APERTURE_COPY_BODIES.computeIfAbsent(base, ScopeRenderTypes::createApertureCopyType);
     }
 
     public static RenderType depthAperture(Identifier texture) {
@@ -64,6 +80,14 @@ public final class ScopeRenderTypes {
 
     public static RenderType visibleReticle(Identifier texture) {
         return VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createVisibleReticleType);
+    }
+
+    private static RenderType createApertureCopyType(RenderType base) {
+        return new DepthCopyRenderType(
+                "tacz_scope_body_aperture_copy",
+                base,
+                ScopeDepthCopyState.Operation.APERTURE_COPY
+        );
     }
 
     private static RenderType createDepthApertureType(Identifier texture) {
@@ -99,21 +123,38 @@ public final class ScopeRenderTypes {
     private static RenderType createEtchedReticleType(Identifier texture) {
         RenderSetup setup = RenderSetup.builder(ETCHED_RETICLE_PIPELINE)
                 .withTexture("Sampler0", texture)
+                // Placeholder bindings satisfy RenderPass validation; ScopeDepthCopyState rebinds
+                // both samplers to the live world/aperture depth copies when the mask draw runs.
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
                 .useLightmap()
                 .useOverlay()
                 .createRenderSetup();
-        return RenderType.create("tacz_scope_etched_reticle", setup);
+        RenderType base = RenderType.create("tacz_scope_etched_reticle_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_etched_reticle",
+                base,
+                ScopeDepthCopyState.Operation.MASK
+        );
     }
 
     private static RenderType createVisibleReticleType(Identifier texture) {
         RenderSetup setup = RenderSetup.builder(VISIBLE_RETICLE_PIPELINE)
                 .withTexture("Sampler0", texture)
+                // See createEtchedReticleType: placeholders replaced with live depth at draw time.
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
                 .useOverlay()
                 .affectsCrumbling()
                 .sortOnUpload()
                 .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
                 .createRenderSetup();
-        return RenderType.create("tacz_scope_visible_reticle", setup);
+        RenderType base = RenderType.create("tacz_scope_visible_reticle_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_visible_reticle",
+                base,
+                ScopeDepthCopyState.Operation.MASK
+        );
     }
 
     private static RenderPipeline createDepthAperturePipeline() {
@@ -161,8 +202,13 @@ public final class ScopeRenderTypes {
         RenderPipeline source = RenderPipelines.ENTITY_CUTOUT;
         RenderPipeline.Builder builder = clonePipeline(source,
                 Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_etched_reticle"));
-        // Large blackout panels are removed on the CPU; the retained thin marks render after exact depth restore
-        // and protect their own pixels from later translucent world passes.
+        // entity.fsh clone plus the ocular screen-space mask branch at the top of main().
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_reticle_mask"));
+        builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+        // Large blackout panels are still removed on the CPU; the retained thin marks render after
+        // the exact depth restore and the mask clips them to the ocular footprint.
         builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true));
 
         RenderPipeline pipeline = RenderPipelines.register(builder.build());
@@ -174,6 +220,11 @@ public final class ScopeRenderTypes {
         RenderPipeline source = RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE;
         RenderPipeline.Builder builder = clonePipeline(source,
                 Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_visible_reticle"));
+        // Same entity.fsh clone plus ocular mask; under Iris the equivalent branch is injected.
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_reticle_mask"));
+        builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
         // The ocular depth writer must not hide the small dot/cross geometry placed behind the lens.
         builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true));
 

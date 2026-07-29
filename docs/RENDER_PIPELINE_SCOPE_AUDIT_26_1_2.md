@@ -225,14 +225,16 @@ Iris 已在 `beginHand()` 把准确的 pre-hand 世界深度复制到 `depthtex2
 
 ## 6. 当前修复架构
 
-### 6.1 三个有序批次
+### 6.1 有序批次
 
 `BedrockAttachmentModel` 提交：
 
-- order `-3`：活动 ocular 的 invisible depth aperture；
-- order `-2`：移除了活动 ocular 的普通 attachment body；
+- order `-3`：活动 ocular 的 invisible depth aperture（draw 前先 BACKUP 世界深度）；
+- order `-2`：aperture-copy 包装后的 attachment body（draw 边界先复制 ocular aperture
+  depth，再正常绘制移除了活动 ocular 的镜身）；
 - order `-1`：同一 ocular 的 exact world-depth cleanup；
-- order `1`：illuminated reticle 与 CPU 过滤后的纯 etched reticle。
+- order `1`：illuminated reticle 与 CPU 过滤后的纯 etched reticle（两者都经
+  ocular 屏幕空间 mask 裁剪）。
 
 使用 `SubmitNodeCollector.order(int)` 是必要的，因为 custom geometry 在单个 order 内按
 `HashMap<RenderType, ...>` 分组，不能依赖其偶然迭代顺序。
@@ -271,9 +273,47 @@ attachment 替换、texture 重定义、整张 depth 覆盖或近似 far depth�
 覆盖。纯 etched division 先按 cube 尺寸过滤：32×32/96×34 等面板被丢弃，细线与刻度保留；其
 pipeline 同样使用 `ALWAYS_PASS, writeDepth=true`。
 
+### 6.5 真正的 ocular 屏幕空间 mask（reticle 逐像素裁剪）
+
+此前 reticle 只靠 `ALWAYS_PASS` 直接叠画，镜孔之外的溢出像素没有任何裁剪依据。本轮把
+8 步规格落地为真实 mask，不需要 stencil，也不替换任何 FBO attachment：
+
+```text
+1. BACKUP：画 ocular 之前备份原始世界深度（Iris 直接用 depthtex2，vanilla blit 到自建
+   depth texture）；
+2. ocular 以 WRITE_NONE 写入不可见近深度（轻微 polygon offset）；
+3. APERTURE_COPY：在 body draw 的边界再复制一份深度 —— 它与第 1 步的世界备份只在
+   ocular 光栅化过的像素上有差异，即“只包含 ocular 差异”的 aperture depth；
+4. scope body 正常绘制（孔后像素照旧深度测试失败，镜内透明）；
+5. RESTORE：cleanup 几何把原始世界深度写回 ocular 足迹；
+6. MASK：reticle draw 同时绑定两份深度 —— vanilla 走自建 world backup + aperture copy，
+   Iris 走 depthtex2 + aperture copy；
+7. fragment 里只有 `ocularDepth < worldDepth - epsilon(1e-6)` 的像素保留；
+8. 其余像素 `discard`。
+```
+
+实现要点：
+
+- body 的 `RenderType` 被 `ScopeRenderTypes.apertureCopy(base)` 包装成第二个
+  `DepthCopyRenderType`（`Operation.APERTURE_COPY`），复制动作挂在 `GlCommandEncoder`
+  draw 边界 —— 与 BACKUP/RESTORE 同一个注入点，不新增 mixin；
+- 两个 reticle pipeline 改用 `core/scope_reticle_mask.fsh` —— 逐字克隆 26.1.2
+  `entity.fsh` 后在 `main()` 顶部插入 mask 分支，define 驱动（EMISSIVE/ALPHA_CUTOUT 等）
+  与原 pipeline 完全一致，非 mask 行为零差异；
+- vanilla 下 `tacz_WorldDepthSampler`/`tacz_ApertureDepthSampler` 由
+  `ScopeDepthCopyState` 绑到最高两个空闲 texture unit 并在 draw 后原样恢复；
+- Iris 下 `IrisDepthRestoreShaderMixin` 注入第二个 dormant 分支
+  （`tacz_ScopeMaskMode`），世界深度改用 Iris 官方 `depthtex2`；RESTORE 与 MASK
+  两个 mode 在各自 draw 前互相显式清零，杜绝共享 HAND shader 上的 uniform 泄漏；
+- 任一环节失败（FBO 不完整、blit 报错、目标尺寸/格式漂移）都退化为 mode=0 的原样
+  绘制，绝不使用过期深度纹理；
+- CPU 尺寸过滤 etched 面板的规则保留 —— 遮光板反正会被 mask 整块 discard，
+  提前剔除省掉顶点写入与光栅化。
+
 三条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
-`GlCommandEncoder` mixin 负责 backup 与 cleanup sampler 绑定；可选 Iris mixin 只补 dormant fragment
-branch。RenderType 构造器通过 Access Widener 开放，用于同步标记 BACKUP/RESTORE 操作。
+`GlCommandEncoder` mixin 负责 backup/aperture-copy/cleanup/mask 的 sampler 绑定；可选 Iris mixin
+补两条 dormant fragment branch。RenderType 构造器通过 Access Widener 开放，用于同步标记
+BACKUP/APERTURE_COPY/RESTORE/MASK 操作。
 
 ## 7. 依赖版本审计（2026-07-30）
 
