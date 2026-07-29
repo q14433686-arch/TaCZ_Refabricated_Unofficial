@@ -20,7 +20,18 @@ public final class RenderHelper {
 
     public static void enableItemEntityStencilTest() {
         RenderSystem.assertOnRenderThread();
-        Minecraft.getInstance().getMainRenderTarget().enableStencil();
+        int stencilAttached = org.lwjgl.opengl.GL30.glGetFramebufferAttachmentParameteri(org.lwjgl.opengl.GL30.GL_FRAMEBUFFER, org.lwjgl.opengl.GL30.GL_STENCIL_ATTACHMENT, org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE);
+        if (stencilAttached == org.lwjgl.opengl.GL11.GL_NONE) {
+            int fbo = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_BINDING);
+            if (fbo > 0) {
+                int rbo = org.lwjgl.opengl.GL30.glGenRenderbuffers();
+                org.lwjgl.opengl.GL30.glBindRenderbuffer(org.lwjgl.opengl.GL30.GL_RENDERBUFFER, rbo);
+                int[] viewport = new int[4];
+                org.lwjgl.opengl.GL11.glGetIntegerv(org.lwjgl.opengl.GL11.GL_VIEWPORT, viewport);
+                org.lwjgl.opengl.GL30.glRenderbufferStorage(org.lwjgl.opengl.GL30.GL_RENDERBUFFER, org.lwjgl.opengl.GL30.GL_DEPTH24_STENCIL8, viewport[2], viewport[3]);
+                org.lwjgl.opengl.GL30.glFramebufferRenderbuffer(org.lwjgl.opengl.GL30.GL_FRAMEBUFFER, org.lwjgl.opengl.GL30.GL_DEPTH_STENCIL_ATTACHMENT, org.lwjgl.opengl.GL30.GL_RENDERBUFFER, rbo);
+            }
+        }
         org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
     }
 

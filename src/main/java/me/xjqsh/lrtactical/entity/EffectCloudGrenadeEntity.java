@@ -160,10 +160,10 @@ public class EffectCloudGrenadeEntity extends ThrowableItemEntity {
                                  double factor, Entity source, EffectCloudThrowableData.CloudData data) {
         for (MobEffectInstance effect : effects) {
             Holder<MobEffect> holder = effect.getEffect();
-            // 26.1.2: isInstanteneous (with 'e')
-            if (holder.value().isInstanteneous()) {
-                // 26.1.2: applyInstanteneousEffect does not take ServerLevel parameter (with 'e')
-                holder.value().applyInstanteneousEffect(
+            // 26.1.2: isInstantenous (historical spelling)
+            if (holder.value().isInstantenous()) {
+                // 26.1.2: applyInstantenousEffect (historical spelling)
+                holder.value().applyInstantenousEffect(
                         this, this.getOwner(), target, effect.getAmplifier(), factor);
             } else {
                 int duration = effect.mapDuration(d -> (int) (factor * d + 0.5D));

@@ -565,15 +565,15 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 org.lwjgl.opengl.GL11.glClear(org.lwjgl.opengl.GL11.GL_STENCIL_BUFFER_BIT);
                 org.lwjgl.opengl.GL11.glStencilOp(org.lwjgl.opengl.GL11.GL_KEEP, org.lwjgl.opengl.GL11.GL_KEEP, org.lwjgl.opengl.GL11.GL_REPLACE);
                 org.lwjgl.opengl.GL11.glStencilFunc(org.lwjgl.opengl.GL11.GL_ALWAYS, 1, 0xFF);
-                com.mojang.blaze3d.systems.RenderSystem.colorMask(false, false, false, false);
-                com.mojang.blaze3d.systems.RenderSystem.depthMask(false);
+                org.lwjgl.opengl.GL11.glColorMask(false, false, false, false);
+                org.lwjgl.opengl.GL11.glDepthMask(false);
                 
                 for (com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
                     ocularSnap.write(consumer);
                 }
                 
-                com.mojang.blaze3d.systems.RenderSystem.colorMask(true, true, true, true);
-                com.mojang.blaze3d.systems.RenderSystem.depthMask(true);
+                org.lwjgl.opengl.GL11.glColorMask(true, true, true, true);
+                org.lwjgl.opengl.GL11.glDepthMask(true);
                 org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
             });
 
@@ -602,27 +602,54 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 RenderType baseIlluminatedType = resolveIlluminatedReticleRenderType(renderType, texture, false);
                 
                 boolean maskActive = maskable;
-                SubmitNodeCollector wrappedCollector = new SubmitNodeCollector() {
+                java.lang.reflect.InvocationHandler handler = new java.lang.reflect.InvocationHandler() {
                     @Override
-                    public net.minecraft.client.renderer.OrderedSubmitNodeCollector order(int value) {
-                        return collector.order(value);
-                    }
-
-                    @Override
-                    public void submitCustomGeometry(PoseStack pose, RenderType type, SubmitNodeCollector.CustomGeometry customGeometry) {
-                        collector.submitCustomGeometry(pose, type, (entryPose, consumer) -> {
-                            if (maskActive) {
-                                org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
-                                org.lwjgl.opengl.GL11.glStencilFunc(org.lwjgl.opengl.GL11.GL_EQUAL, 1, 0xFF);
-                            }
-                            customGeometry.draw(entryPose, consumer);
-                            if (maskActive) {
-                                org.lwjgl.opengl.GL11.glStencilFunc(org.lwjgl.opengl.GL11.GL_ALWAYS, 0, 0xFF);
-                                org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
-                            }
-                        });
+                    public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) throws Throwable {
+                        if ("submitCustomGeometry".equals(method.getName()) && args.length == 3) {
+                            PoseStack pose = (PoseStack) args[0];
+                            RenderType type = (RenderType) args[1];
+                            Object customGeometry = args[2];
+                            
+                            collector.submitCustomGeometry(pose, type, (entryPose, consumer) -> {
+                                if (maskActive) {
+                                    org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+                                    org.lwjgl.opengl.GL11.glStencilFunc(org.lwjgl.opengl.GL11.GL_EQUAL, 1, 0xFF);
+                                }
+                                try {
+                                    java.lang.reflect.Method drawMethod = customGeometry.getClass().getMethod("draw", com.mojang.blaze3d.vertex.PoseStack.Pose.class, com.mojang.blaze3d.vertex.VertexConsumer.class);
+                                    drawMethod.invoke(customGeometry, entryPose, consumer);
+                                } catch (Exception e) {
+                                    boolean invoked = false;
+                                    for (java.lang.reflect.Method m : customGeometry.getClass().getMethods()) {
+                                        if (m.getParameterCount() == 2 && m.getParameterTypes()[0].isAssignableFrom(com.mojang.blaze3d.vertex.PoseStack.Pose.class)) {
+                                            m.invoke(customGeometry, entryPose, consumer);
+                                            invoked = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!invoked) {
+                                        throw e;
+                                    }
+                                }
+                                if (maskActive) {
+                                    org.lwjgl.opengl.GL11.glStencilFunc(org.lwjgl.opengl.GL11.GL_ALWAYS, 0, 0xFF);
+                                    org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+                                }
+                            });
+                            return null;
+                        }
+                        try {
+                            return method.invoke(collector, args);
+                        } catch (java.lang.reflect.InvocationTargetException e) {
+                            throw e.getCause();
+                        }
                     }
                 };
+                SubmitNodeCollector wrappedCollector = (SubmitNodeCollector) java.lang.reflect.Proxy.newProxyInstance(
+                        SubmitNodeCollector.class.getClassLoader(),
+                        new Class[]{SubmitNodeCollector.class},
+                        handler
+                );
 
                 reticle.submitReticle(new IReticleRenderer.Context(
                         poseStack, wrappedCollector, transformType, baseReticleType, baseIlluminatedType,
