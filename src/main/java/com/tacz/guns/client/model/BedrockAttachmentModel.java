@@ -616,20 +616,24 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                                     org.lwjgl.opengl.GL11.glStencilFunc(org.lwjgl.opengl.GL11.GL_EQUAL, 1, 0xFF);
                                 }
                                 try {
-                                    java.lang.reflect.Method drawMethod = customGeometry.getClass().getMethod("draw", com.mojang.blaze3d.vertex.PoseStack.Pose.class, com.mojang.blaze3d.vertex.VertexConsumer.class);
-                                    drawMethod.invoke(customGeometry, entryPose, consumer);
-                                } catch (Exception e) {
-                                    boolean invoked = false;
-                                    for (java.lang.reflect.Method m : customGeometry.getClass().getMethods()) {
-                                        if (m.getParameterCount() == 2 && m.getParameterTypes()[0].isAssignableFrom(com.mojang.blaze3d.vertex.PoseStack.Pose.class)) {
-                                            m.invoke(customGeometry, entryPose, consumer);
-                                            invoked = true;
-                                            break;
+                                    try {
+                                        java.lang.reflect.Method drawMethod = customGeometry.getClass().getMethod("draw", com.mojang.blaze3d.vertex.PoseStack.Pose.class, com.mojang.blaze3d.vertex.VertexConsumer.class);
+                                        drawMethod.invoke(customGeometry, entryPose, consumer);
+                                    } catch (Exception e) {
+                                        boolean invoked = false;
+                                        for (java.lang.reflect.Method m : customGeometry.getClass().getMethods()) {
+                                            if (m.getParameterCount() == 2 && m.getParameterTypes()[0].isAssignableFrom(com.mojang.blaze3d.vertex.PoseStack.Pose.class)) {
+                                                m.invoke(customGeometry, entryPose, consumer);
+                                                invoked = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!invoked) {
+                                            throw e;
                                         }
                                     }
-                                    if (!invoked) {
-                                        throw e;
-                                    }
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
                                 }
                                 if (maskActive) {
                                     org.lwjgl.opengl.GL11.glStencilFunc(org.lwjgl.opengl.GL11.GL_ALWAYS, 0, 0xFF);

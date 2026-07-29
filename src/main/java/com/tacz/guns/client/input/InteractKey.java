@@ -27,13 +27,13 @@ public class InteractKey {
             TaCZKeyCategory.TACZ);
 
     public static void onInteractKeyPress(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(event.getKey(), event.getScanCode())) {
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(new net.minecraft.client.input.InputWithModifiers.KeyEvent(event.getKey(), event.getScanCode(), event.getModifiers()))) {
             doInteractLogic();
         }
     }
 
     public static void onInteractMousePress(InputEvent.MouseButton.Post event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matchesMouse(event.getButton())) {
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matchesMouse(new net.minecraft.client.input.InputWithModifiers.MouseButtonEvent(event.getButton(), event.getModifiers()))) {
             doInteractLogic();
         }
     }

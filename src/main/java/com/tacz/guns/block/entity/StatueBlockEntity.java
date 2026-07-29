@@ -22,7 +22,7 @@ import java.util.Set;
 import static com.tacz.guns.block.StatueBlock.FACING;
 
 public class StatueBlockEntity extends BlockEntity {
-    public static final BlockEntityType<StatueBlockEntity> TYPE = new BlockEntityType<>(StatueBlockEntity::new, ModBlocks.STATUE);
+    public static final BlockEntityType<StatueBlockEntity> TYPE = BlockEntityType.Builder.create(StatueBlockEntity::new, ModBlocks.STATUE).build();
     private static final String ITEM_TAG = "Item";
     private ItemStack gunItem = ItemStack.EMPTY;
 

@@ -23,7 +23,7 @@ public class CrawlKey {
             TaCZKeyCategory.TACZ);
 
     public static void onCrawlPress(InputEvent.Key event) {
-        if (isInGame() && CRAWL_KEY.matches(event.getKey(), event.getScanCode())) {
+        if (isInGame() && CRAWL_KEY.matches(new net.minecraft.client.input.InputWithModifiers.KeyEvent(event.getKey(), event.getScanCode(), event.getModifiers()))) {
             if (!SyncConfig.ENABLE_CRAWL.get()) {
                 return;
             }

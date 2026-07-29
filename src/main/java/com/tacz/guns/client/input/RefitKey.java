@@ -21,7 +21,7 @@ public class RefitKey {
             TaCZKeyCategory.TACZ);
 
     public static void onRefitPress(InputEvent.Key event) {
-        if (event.getAction() == GLFW.GLFW_PRESS && REFIT_KEY.matches(event.getKey(), event.getScanCode())) {
+        if (event.getAction() == GLFW.GLFW_PRESS && REFIT_KEY.matches(new net.minecraft.client.input.InputWithModifiers.KeyEvent(event.getKey(), event.getScanCode(), event.getModifiers()))) {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player == null || player.isSpectator()) {
                 return;

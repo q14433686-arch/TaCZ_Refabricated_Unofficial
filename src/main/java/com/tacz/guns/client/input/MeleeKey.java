@@ -20,13 +20,13 @@ public class MeleeKey {
             TaCZKeyCategory.TACZ);
 
     public static void onMeleeKeyPress(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && MELEE_KEY.matches(event.getKey(), event.getScanCode())) {
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && MELEE_KEY.matches(new net.minecraft.client.input.InputWithModifiers.KeyEvent(event.getKey(), event.getScanCode(), event.getModifiers()))) {
             doMeleeLogic();
         }
     }
 
     public static void onMeleeMousePress(InputEvent.MouseButton.Post event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && MELEE_KEY.matchesMouse(event.getButton())) {
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && MELEE_KEY.matchesMouse(new net.minecraft.client.input.InputWithModifiers.MouseButtonEvent(event.getButton(), event.getModifiers()))) {
             doMeleeLogic();
         }
     }

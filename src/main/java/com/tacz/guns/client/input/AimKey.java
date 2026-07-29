@@ -23,7 +23,7 @@ public class AimKey {
             TaCZKeyCategory.TACZ);
 
     public static void onAimPress(InputEvent.MouseButton.Post event) {
-        if (isInGame() && AIM_KEY.matchesMouse(event.getButton())) {
+        if (isInGame() && AIM_KEY.matchesMouse(new net.minecraft.client.input.InputWithModifiers.MouseButtonEvent(event.getButton(), event.getModifiers()))) {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player == null || player.isSpectator()) {
                 return;

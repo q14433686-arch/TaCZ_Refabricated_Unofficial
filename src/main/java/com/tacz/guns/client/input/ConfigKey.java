@@ -30,7 +30,7 @@ public class ConfigKey {
 
     public static void onOpenConfig(InputEvent.Key event) {
         if (isInGame() && event.getAction() == GLFW.GLFW_PRESS
-                && OPEN_CONFIG_KEY.matches(event.getKey(), event.getScanCode())) {
+                && OPEN_CONFIG_KEY.matches(new net.minecraft.client.input.InputWithModifiers.KeyEvent(event.getKey(), event.getScanCode(), event.getModifiers()))) {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player == null || player.isSpectator()) {
                 return;

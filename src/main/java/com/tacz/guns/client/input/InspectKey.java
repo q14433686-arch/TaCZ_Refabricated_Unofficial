@@ -20,7 +20,7 @@ public class InspectKey {
             TaCZKeyCategory.TACZ);
 
     public static void onInspectPress(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INSPECT_KEY.matches(event.getKey(), event.getScanCode())) {
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INSPECT_KEY.matches(new net.minecraft.client.input.InputWithModifiers.KeyEvent(event.getKey(), event.getScanCode(), event.getModifiers()))) {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player == null || player.isSpectator()) {
                 return;

@@ -162,9 +162,11 @@ public class EffectCloudGrenadeEntity extends ThrowableItemEntity {
             Holder<MobEffect> holder = effect.getEffect();
             // 26.1.2: isInstantenous (historical spelling)
             if (holder.value().isInstantenous()) {
-                // 26.1.2: applyInstantenousEffect (historical spelling)
-                holder.value().applyInstantenousEffect(
-                        this, this.getOwner(), target, effect.getAmplifier(), factor);
+                if (this.level() instanceof ServerLevel serverLevel) {
+                    // 26.1.2: applyInstantenousEffect requires ServerLevel as first parameter (historical spelling)
+                    holder.value().applyInstantenousEffect(
+                            serverLevel, this, this.getOwner(), target, effect.getAmplifier(), factor);
+                }
             } else {
                 int duration = effect.mapDuration(d -> (int) (factor * d + 0.5D));
                 MobEffectInstance scaled = new MobEffectInstance(
