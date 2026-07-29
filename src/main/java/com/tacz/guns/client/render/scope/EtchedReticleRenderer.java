@@ -1,7 +1,6 @@
 package com.tacz.guns.client.render.scope;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.tacz.guns.client.model.bedrock.BedrockCube;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
 
@@ -125,79 +124,10 @@ public final class EtchedReticleRenderer implements IReticleRenderer {
             PoseStack identity = new PoseStack();
             ctx.collector().submitCustomGeometry(
                     identity, ctx.baseRenderType(),
+                    // 遮光板剔除的规则与阈值见 ReticleMarkFilter —— 与发光准星共用同一把尺，
+                    // 避免任何一条路径在 mask 降级时把大面外露。
                     (entryPose, consumer) -> snapshot.writeFiltered(
-                            consumer, EtchedReticleRenderer::isSafeEtchedCube));
+                            consumer, ReticleMarkFilter::isThinMark));
         }
-    }
-
-    /**
-     * Division trees mix thin reticle marks with huge screen blackout panels. Keep lines/rings whose
-     * second-largest model-space extent is at most four units; panels such as 32x32 and 96x34 are rejected.
-     *
-     * <p>Degenerate placeholder faces must not be measured: a cube whose {@code uv} names only some
-     * faces (e.g. just {@code south}) gets {@code EMPTY_VERTEX} polygons whose vertices all sit at
-     * {@code (0,0,0)}. For unrotated cubes that point equals the <b>bone pivot</b>, which may be far
-     * away from the geometry (scope_1873_6x's division keeps its pivot at the model origin while the
-     * crosshair floats at z=-111), so including it inflated the box to 32x10.97x111 and wrongly
-     * rejected the horizontal crosshair line. The rotated vertical twin survived only because its
-     * cube-own pivot lands inside its own span — the exact "竖线在、横线没" asymmetry seen in-game.
-     */
-    private static boolean isSafeEtchedCube(BedrockCube cube) {
-        float minX = Float.POSITIVE_INFINITY;
-        float minY = Float.POSITIVE_INFINITY;
-        float minZ = Float.POSITIVE_INFINITY;
-        float maxX = Float.NEGATIVE_INFINITY;
-        float maxY = Float.NEGATIVE_INFINITY;
-        float maxZ = Float.NEGATIVE_INFINITY;
-        boolean foundVertex = false;
-
-        for (var polygon : cube.getPolygons()) {
-            if (polygon == null || isDegenerateEmptyFace(polygon)) {
-                continue;
-            }
-            for (var vertex : polygon.vertices) {
-                if (vertex == null) {
-                    continue;
-                }
-                foundVertex = true;
-                minX = Math.min(minX, vertex.pos.x());
-                minY = Math.min(minY, vertex.pos.y());
-                minZ = Math.min(minZ, vertex.pos.z());
-                maxX = Math.max(maxX, vertex.pos.x());
-                maxY = Math.max(maxY, vertex.pos.y());
-                maxZ = Math.max(maxZ, vertex.pos.z());
-            }
-        }
-        if (!foundVertex) {
-            return false;
-        }
-
-        float x = maxX - minX;
-        float y = maxY - minY;
-        float z = maxZ - minZ;
-        float largest = Math.max(x, Math.max(y, z));
-        float smallest = Math.min(x, Math.min(y, z));
-        float middle = x + y + z - largest - smallest;
-        return middle <= 4.0F;
-    }
-
-    /**
-     * A real face can span several units, but a placeholder face for an unmapped UV side has all
-     * four vertices pinned at the exact origin. Such a polygon has zero area and never rasterizes,
-     * so it must not participate in extent measurement.
-     */
-    private static boolean isDegenerateEmptyFace(com.tacz.guns.client.model.bedrock.BedrockPolygon polygon) {
-        if (polygon.vertices == null || polygon.vertices.length == 0) {
-            return true;
-        }
-        for (var vertex : polygon.vertices) {
-            if (vertex == null) {
-                continue;
-            }
-            if (vertex.pos.x() != 0.0F || vertex.pos.y() != 0.0F || vertex.pos.z() != 0.0F) {
-                return false;
-            }
-        }
-        return true;
     }
 }

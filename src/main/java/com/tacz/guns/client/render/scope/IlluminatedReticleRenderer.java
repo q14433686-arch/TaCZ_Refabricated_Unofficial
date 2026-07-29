@@ -16,15 +16,18 @@ import java.util.List;
  * —— 也就是默认枪包 33 个瞄具里的 31 个。纯蚀刻镜（{@code scope_98k}、
  * {@code scope_retro_2x}）由后续 P2 的蚀刻策略接手。</p>
  *
- * <h2>为什么 P1 只画发光层是安全的</h2>
+ * <h2>发光层也不是免检区：vudu 把遮光板塞进了 {@code division_illuminated}</h2>
  * {@code division} 节点里混着<b>遮光板</b>：例如 {@code scope_1873_6x} 的
  * {@code division} 有 10 个 cube，其中两块是 32×32 的大面
  * （{@code origin=[-14.0625,-37.1875,-111] size=[32,32,0]}）。
  * 上游靠 stencil 把它们裁在圆外，我们没有 stencil，无差别绘制就会复现
  * <b>第 9 轮那块糊屏的黑方块</b>（第 10 轮撤销过一次）。
  *
- * <p>而 {@code *_illuminated} 节点全是小几何（红点、细线），
- * 不可能是遮光板，所以 P1 不需要任何尺寸启发式即可安全落地。</p>
+ * <p>早年假定「{@code *_illuminated} 全是小几何（红点、细线），不可能是遮光板」，
+ * 被 {@code scope_vudu} 实测推翻：它的 {@code division_illuminated} 共 6 个 cube，
+ * 其中 5 块是 {@code [50,50,0] / [50,100,0]×2 / [100,250,0]×2} 的整版遮光面，只有
+ * 第 6 块 {@code [0.25,0.25,0]} 才是真正的准星点。因此这里与蚀刻路径共用
+ * {@link ReticleMarkFilter} 的同一把尺寸尺，逐 cube 过滤后再提交。</p>
  *
  * <h2>关于「视差」：r44 已移除自造的近似</h2>
  * 早前这里有一个 {@code applyParallax()}，按开镜进度把准星沿镜轴前推 0.75 单位，
@@ -136,13 +139,15 @@ public final class IlluminatedReticleRenderer implements IReticleRenderer {
         }
 
         // 与 BedrockModel#submit 保持同一套提交惯例：
-        // 快照里的矩阵已经包含完整的入参 pose，因此必须从【单位矩阵】提交，
-        // 否则根变换会被叠加两次。
+        // 快照里的矩阵已含完整入参 pose，因此必须从【单位矩阵】提交，否则根变换会被叠加两次。
         if (!snapshot.isEmpty()) {
             PoseStack identity = new PoseStack();
             ctx.collector().submitCustomGeometry(
                     identity, ctx.illuminatedRenderType(),
-                    (entryPose, consumer) -> snapshot.write(consumer));
+                    // 发光子树照样可能藏遮光板（scope_vudu 的 division_illuminated 实测含
+                    // 100x250 整版），与蚀刻路径共用 ReticleMarkFilter 逐 cube 剔除。
+                    (entryPose, consumer) -> snapshot.writeFiltered(
+                            consumer, ReticleMarkFilter::isThinMark));
         }
     }
 }

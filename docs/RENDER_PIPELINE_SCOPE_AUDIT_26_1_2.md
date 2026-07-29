@@ -333,8 +333,40 @@ pipeline 同样使用 `ALWAYS_PASS, writeDepth=true`。
    修复：测量时跳过全零顶点的退化面。离线模拟确认修复后全部细线/刻度/弧段
    KEEP、全部遮光板 REJECT（1873/AUG/98k/QKM 逐项验证）。
 
-巫毒（scope_vudu）随（1）一并恢复 —— 它的高倍组准星走 `HAND_TRANSLUCENT`，
-与其他镜共用同一条 mask 链路，失效根因相同。
+巫毒（scope_vudu）随（1）一并恢复框定 —— 它的高倍组准星走 `HAND_TRANSLUCENT`，
+与其他镜共用同一条 mask 链路，失效根因相同。但它另有一处独立缺陷，见 §6.7。
+
+### 6.7 第三轮回归：四块黑条的定性 + 发光遮光板过滤（vudu）
+
+**「黑条」的身份定论：不是遮光板，是分划环架自身。** 以 AUG 截图为例，
+镜体四周悬浮的四块长条与 `division` 里被 CPU 过滤器**按设计保留**的
+4 根环架条逐一对上（`[2,7.45584,0]`×2 左右、`[7.45584,2,0]`×2 上下，
+均 middle=2.0 ≤ 阈值 KEEP）；而 4 块真遮光板（`[16,36,0]`、`[16,9,0]`
+middle ≥ 9）在新旧过滤下从来都是 REJECT，从未进入任何绘制批次。
+它们之所以会悬浮在镜外，原因只有一个：那一帧 mask 没生效。
+时间线佐证：实机日志进程 04:01:52 启动（加载的是修复前的构建），
+04:02:15/04:02:39 两次打出 §6.6（1）的 mismatch WARN、日志于 04:04
+由 GitHub 网页上传，截图 04:34 —— 修复 commit 04:26 才落库，
+运行中的进程不可能换上新代码。因此截图反映的仍是旧构建的 mask 失效。
+重建重启后，该现象应由 §6.6（1）的修复消除。
+
+**vudu 的发光遮光板（本轮新修的独立 bug）。** 旧
+`IlluminatedReticleRenderer` 假定「`*_illuminated` 全是小几何」、对发光
+子树整树 `snapshot.write` 无尺寸过滤；实测 `scope_vudu` 的
+`division_illuminated` 6 个 cube 里 5 块是
+`[50,50,0] / [50,100,0]×2 / [100,250,0]×2` 的整版遮光面（发光、满亮度），
+仅第 6 块 `[0.25,0.25,0]` 是真正的准星点 —— 高倍组（view 2）激活
+`division_2` 子树时整版外露，正是「唯一组合镜有同样问题」的实锤。
+修复：把尺寸过滤抽成公共的 `ReticleMarkFilter`（蚀刻/发光同尺，
+`writeFiltered` 逐 cube），发光路径同规则提交。
+全包 73 个准星 cube 的分类验证：合法标线 middle ≤ 5.804 全 KEEP、
+遮光板 middle ≥ 8.8 全 REJECT。
+
+**阈值 4.0 → 6.0 的数据依据。** 全包分布存在干净分界：
+最大的合法标线 `middle=5.804`（QKM 圆环弧段 `[3.40021,4.80769,0]`，
+旧阈值把它误杀、圆环缺段），最小的遮光板 `middle=8.8`
+（98k `[9.218,8.8,0.044]`）。6.0 落在 (5.804, 8.8) 区间内，
+恢复 QKM 环段且不放过任何面板。
 
 三条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
 `GlCommandEncoder` mixin 负责 backup/aperture-copy/cleanup/mask 的 sampler 绑定；可选 Iris mixin
