@@ -323,6 +323,10 @@ pipeline 同样使用 `ALWAYS_PASS, writeDepth=true`。
    正常”。修复：`BACKUP` 时无条件记录 `ocularSourceFbo`（ocular 即将写入的
    目标，Iris/vanilla 同一点），aperture copy 只与它比对。
 
+   > **注（§6.8 修正）**：该修复只走到一半 —— 新日志证明 Iris 会在我们的
+   > 有序批次之间**换绑另一块共享同一深度纹理的 FBO**，FBO-id 判据依旧全部
+   > 误杀。最终判据是「深度附件身份」，见 §6.8。
+
 2. **蚀刻过滤被 `EMPTY_VERTEX` 占位面污染，细线被骨骼 pivot 位置误杀**。
    基岩模型里只声明部分面 UV 的 cube（默认枪包大量只有 `south` 面）给其余面
    生成全零顶点的退化 polygon。`isSafeEtchedCube` 的旧实现把它们计入 AABB：
@@ -367,6 +371,39 @@ middle ≥ 9）在新旧过滤下从来都是 REJECT，从未进入任何绘制�
 旧阈值把它误杀、圆环缺段），最小的遮光板 `middle=8.8`
 （98k `[9.218,8.8,0.044]`）。6.0 落在 (5.804, 8.8) 区间内，
 恢复 QKM 环段且不放过任何面板。
+
+### 6.8 第三轮日志的真根因：Iris 的孪生 FBO 与「深度附件身份」判据
+
+04:30 会话（含 §6.6 修复的构建）里，每次开光影瞄准仍打出
+`ocular aperture copy source fbo 94 does not match the ocular render target 90`
+（另有 93≠89、95≠91，成对、每次稳定差 +4），Iris 期间从未打出
+mask-active —— 即**光圈拷贝在我们 order(-3) 与 order(-2) 两个批次之间
+被全部拒绝**，mask 依旧整体失效，与 04:34 截图（BSL 开启，环架条外露）
+互证。
+
+源码侧铁证（Iris 26.1 分支）：
+
+- `HandRenderer` 持有**自己的** `SubmitNodeStorage`/`FeatureRenderDispatcher`，
+  手部的两类提交延迟到 `endRender()` 统一执行；
+- 每个 Iris gbuffer program（`ExtendedShader`）都持有
+  **`writingToBeforeTranslucent` / `writingToAfterTranslucent` 两块
+  GlFramebuffer 对象**，按 `parent.isBeforeTranslucent` 在
+  `iris$setupState()` 里择一绑定 —— 同一 program 在一帧的
+  不同阶段绑定的是**不同的 FBO 对象**；
+- 但 `RenderTargets#createGbufferFramebuffer` 给所有 gbuffer FBO 一律
+  `addDepthAttachment(currentDepthTexture)`，而 `currentDepthTexture`
+  就是主渲染目标的深度纹理 —— **主 FBO、Iris 全部 gbuffer FBO
+  共享同一块深度纹理**。ocular 写入的近深度在换绑后的孪生 FBO 上
+  完全可读，FBO-id 判据因此把合法路径整体误杀。
+
+修复：三个闸口（aperture copy / world-restore / reticle mask 的目标面）
+一律改用**深度附件身份** `GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE +
+OBJECT_NAME` 比对：`BACKUP` 记录 ocular 写入面的身份，`APERTURE_COPY`
+与 `RESTORE`（vanilla 分支）只接受同一块深度附件；`MASK` 的目标面
+必须与光圈拷贝同源。共享深度纹理的孪生 FBO 放行，真正没有深度附件或
+换了别的深度面的目标（轮廓线/GUI 离屏 FBO）照旧安全降级。
+另把失败日志的去重从「仅与上一条比较」换成「按原因集合去重（32 条封顶）」，
+避免降级周期在两个原因间交替时刷日志。
 
 三条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
 `GlCommandEncoder` mixin 负责 backup/aperture-copy/cleanup/mask 的 sampler 绑定；可选 Iris mixin

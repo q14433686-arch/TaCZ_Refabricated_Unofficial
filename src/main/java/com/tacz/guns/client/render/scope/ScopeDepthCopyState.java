@@ -60,8 +60,27 @@ public final class ScopeDepthCopyState {
     private static final DepthTextureTarget APERTURE_TARGET = new DepthTextureTarget();
 
     private static int backupSourceFbo;
-    /** FBO bound while the ocular aperture drew; the aperture copy must come from the same surface. */
+    /** FBO bound while the ocular aperture drew; retained for diagnostics only. */
     private static int ocularSourceFbo;
+    /**
+     * Identity of the depth attachment the ocular wrote near depth into (recorded at BACKUP).
+     *
+     * <p><b>为什么用「深度附件身份」而不是 FBO id 做比对</b>：Iris 会把 LEVEL 渲染在其自建的
+     * gbuffer FBO 上执行，并且同一 program 会因为 {@code before/afterTranslucent} 切换
+     * 绑定<b>另一块 GlFramebuffer 对象</b>（在我们的 order(-3) 与 order(-2) 两个批次之间实测
+     * 发生：fbo 90→94 / 89→93 / 91→95）。但这些 FBO 的深度附件是<b>同一块</b>
+     * {@code currentDepthTexture}（Iris {@code RenderTargets#createGbufferFramebuffer} 对每个
+     * gbuffer FBO 一律 {@code addDepthAttachment(currentDepthTexture)}，而 currentDepthTexture
+     * 就是主渲染目标的深度纹理）。所以「ocular 写入的深度」在换绑后的 FBO 上同样可读，
+     * 只看 FBO id 相等会把合法路径整体误杀（4:31/4:33 实测：Iris 下 mask 每次都被拒、
+     * reticle 无裁剪外露）。反之，真正的「写错目标」（独立深度的轮廓线/GUI 离屏 FBO 等）
+     * 由附件身份准确拦下。</p>
+     */
+    private static @javax.annotation.Nullable DepthIdentity ocularDepthIdentity;
+    /** Identity of the depth attachment the vanilla world backup was blitted from. */
+    private static @javax.annotation.Nullable DepthIdentity worldDepthIdentity;
+    /** Identity of the depth attachment the aperture copy was taken from (recorded at step 3). */
+    private static @javax.annotation.Nullable DepthIdentity apertureDepthIdentity;
     private static boolean backupValid;
     private static boolean maskValid;
     /** Whether a usable world-depth source exists for the mask (Iris depthtex2 or the vanilla copy). */
@@ -69,11 +88,17 @@ public final class ScopeDepthCopyState {
     private static boolean useIrisPreHandDepth;
     private static boolean loggedIrisPreHandDepth;
     private static boolean loggedApertureActive;
-    private static boolean loggedMaskActive;
+    private static boolean loggedMaskActiveIris;
+    private static boolean loggedMaskActiveVanilla;
 
     private static final List<OverriddenUnit> OVERRIDDEN_UNITS = new ArrayList<>(2);
     private static boolean loggedActive;
-    private static String lastFailure = "";
+    /**
+     * Reasons already logged. A strict "last reason only" dedup floods the log when a degraded
+     * cycle alternates between two reasons (e.g. Iris' twin framebuffers), so dedup per reason
+     * with a bounded vocabulary instead.
+     */
+    private static final java.util.Set<String> LOGGED_FAILURES = new java.util.HashSet<>();
 
     private ScopeDepthCopyState() {
     }
@@ -94,9 +119,11 @@ public final class ScopeDepthCopyState {
                 maskWorldValid = false;
                 // Recorded on BOTH the Iris and vanilla paths: this is the surface the ocular draw
                 // is about to write near depth into, and step 3 must copy exactly this surface.
-                // backupSourceFbo alone cannot serve here because the Iris path never blits and
-                // would leave it stale (observed: fbo 94 vs 0 / fbo 96 vs 4 after pack toggles).
+                // Note the depth attachment identity is the durable key — Iris rebinds a different
+                // GlFramebuffer (sharing the same depth texture) between our ordered batches, so
+                // comparing FBO ids would veto every valid Iris cycle (observed fbo 90->94/89->93/91->95).
                 ocularSourceFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+                ocularDepthIdentity = captureDepthIdentity();
                 if (program > 0
                         && GL20.glGetUniformLocation(program, MODE_UNIFORM) >= 0
                         && GL20.glGetUniformLocation(program, IRIS_WORLD_DEPTH_UNIFORM) >= 0) {
@@ -159,6 +186,7 @@ public final class ScopeDepthCopyState {
 
     private static boolean backupCurrentDepth() {
         backupValid = copyCurrentDepth(WORLD_TARGET, "world depth backup");
+        worldDepthIdentity = backupValid ? captureDepthIdentity() : null;
         if (backupValid && !loggedActive) {
             loggedActive = true;
             DepthTextureTarget target = WORLD_TARGET;
@@ -174,12 +202,17 @@ public final class ScopeDepthCopyState {
             return false;
         }
         int sourceFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-        if (ocularSourceFbo <= 0 || sourceFbo != ocularSourceFbo) {
-            logFailure("ocular aperture copy source fbo " + sourceFbo
-                    + " does not match the ocular render target " + ocularSourceFbo);
+        DepthIdentity currentDepth = captureDepthIdentity();
+        if (ocularDepthIdentity == null || !ocularDepthIdentity.equals(currentDepth)) {
+            logFailure("ocular aperture copy depth attachment " + currentDepth
+                    + " (fbo " + sourceFbo + ") does not match the ocular-written depth "
+                    + ocularDepthIdentity + " (fbo " + ocularSourceFbo + ")");
             return false;
         }
         boolean copied = copyCurrentDepth(APERTURE_TARGET, "ocular aperture depth");
+        if (copied) {
+            apertureDepthIdentity = currentDepth;
+        }
         if (copied && !loggedApertureActive) {
             loggedApertureActive = true;
             GunMod.LOGGER.info("[TACZ Scope] Ocular aperture screen-space mask active.");
@@ -241,12 +274,17 @@ public final class ScopeDepthCopyState {
 
         int destinationFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
         DepthInfo destination = inspectDepthAttachment();
-        if (destinationFbo != backupSourceFbo || destination == null
+        // Same shared-depth rule as the aperture copy: Iris may be on a twin framebuffer, its
+        // depth attachment identity must match the surface the world backup was blitted from.
+        DepthIdentity currentDepth = captureDepthIdentity();
+        if (worldDepthIdentity == null || !worldDepthIdentity.equals(currentDepth)
+                || destination == null
                 || destination.width() != WORLD_TARGET.width()
                 || destination.height() != WORLD_TARGET.height()
                 || destination.internalFormat() != WORLD_TARGET.internalFormat()) {
             backupValid = false;
-            logFailure("depth restore target does not match the backed-up hand target");
+            logFailure("depth restore target does not match the backed-up hand depth attachment (fbo "
+                    + destinationFbo + ", backup fbo " + backupSourceFbo + ")");
             return false;
         }
 
@@ -287,12 +325,15 @@ public final class ScopeDepthCopyState {
         }
 
         DepthInfo destination = inspectDepthAttachment();
+        DepthIdentity currentDepth = captureDepthIdentity();
         if (destination == null
                 || destination.width() != APERTURE_TARGET.width()
                 || destination.height() != APERTURE_TARGET.height()
-                || destination.internalFormat() != APERTURE_TARGET.internalFormat()) {
+                || destination.internalFormat() != APERTURE_TARGET.internalFormat()
+                || apertureDepthIdentity == null || !apertureDepthIdentity.equals(currentDepth)) {
             GL20.glUniform1i(maskLocation, 0);
-            logFailure("scope mask target does not match the aperture copy surface");
+            logFailure("scope mask target does not match the aperture copy surface (depth "
+                    + currentDepth + " vs copied " + apertureDepthIdentity + ")");
             return true;
         }
 
@@ -323,8 +364,14 @@ public final class ScopeDepthCopyState {
             GL20.glUniform1i(worldLocation, worldUnit);
         }
         GL20.glUniform1i(maskLocation, 1);
-        if (!loggedMaskActive) {
-            loggedMaskActive = true;
+        // Log each mask flavour once: toggling a shader pack switches between them mid-session,
+        // and a single boolean would hide the Iris path ever becoming active.
+        if (irisWorld ? !loggedMaskActiveIris : !loggedMaskActiveVanilla) {
+            if (irisWorld) {
+                loggedMaskActiveIris = true;
+            } else {
+                loggedMaskActiveVanilla = true;
+            }
             GunMod.LOGGER.info("[TACZ Scope] Reticle draws now masked by the ocular aperture depth"
                     + (irisWorld ? " (Iris depthtex2 world source)." : " (vanilla world-depth backup)."));
         }
@@ -346,6 +393,32 @@ public final class ScopeDepthCopyState {
         GL13.glActiveTexture(previousActiveTexture);
         OVERRIDDEN_UNITS.add(new OverriddenUnit(textureUnit, previousBinding));
         return textureUnit;
+    }
+
+    /**
+     * Captures the identity of the depth attachment of the currently bound framebuffer, as
+     * {@code (objectType, objectName)}. Two framebuffers sharing one depth texture strip (e.g.
+     * Iris' before/after-translucent twins) report equal identities; a genuinely different
+     * depth surface (outline targets, GUI offscreen buffers, missing attachment) does not.
+     */
+    private static @javax.annotation.Nullable DepthIdentity captureDepthIdentity() {
+        int type = GL30.glGetFramebufferAttachmentParameteri(
+                GL30.GL_FRAMEBUFFER,
+                GL30.GL_DEPTH_ATTACHMENT,
+                GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE
+        );
+        if (type == GL11.GL_NONE) {
+            return null;
+        }
+        int name = GL30.glGetFramebufferAttachmentParameteri(
+                GL30.GL_FRAMEBUFFER,
+                GL30.GL_DEPTH_ATTACHMENT,
+                GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME
+        );
+        if (name == 0) {
+            return null;
+        }
+        return new DepthIdentity(type, name);
     }
 
     private static DepthInfo inspectDepthAttachment() {
@@ -425,13 +498,19 @@ public final class ScopeDepthCopyState {
     }
 
     private static void logFailure(String reason) {
-        if (!reason.equals(lastFailure)) {
-            lastFailure = reason;
+        if (LOGGED_FAILURES.size() > 32) {
+            LOGGED_FAILURES.clear();
+        }
+        if (LOGGED_FAILURES.add(reason)) {
             GunMod.LOGGER.warn("[TACZ Scope] {}", reason);
         }
     }
 
     private record DepthInfo(int width, int height, int internalFormat, int samples) {
+    }
+
+    /** GL object identity of a framebuffer's depth attachment: {@code OBJECT_TYPE + OBJECT_NAME}. */
+    private record DepthIdentity(int objectType, int objectName) {
     }
 
     private record TextureAllocation(int externalFormat, int type) {
