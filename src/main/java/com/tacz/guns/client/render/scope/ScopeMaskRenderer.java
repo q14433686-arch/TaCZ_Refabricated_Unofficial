@@ -258,10 +258,12 @@ public final class ScopeMaskRenderer {
                     RenderSystem.bindDefaultUniforms(pass);
                     pass.setUniform("DynamicTransforms",
                             RenderSystem.getDynamicUniforms().writeTransform(
-                                    // 与 RenderType#prepare 取同一个矩阵源：
-                                    // 顶点在登记时已乘过完整模型矩阵，这里再乘相机 ModelView，
-                                    // 与主渲染路径完全一致，掩码才会与画面严丝合缝。
-                                    RenderSystem.getModelViewMatrixCopy(),
+                                    // ScopeMaskGeometry entries are captured with the submit-time ModelView already
+                                    // baked into their pose. Do not multiply the phase-boundary ModelView again here:
+                                    // under Iris that matrix can represent a stale/world-facing hand state, which pins
+                                    // the mask to north. Using identity makes the mask pass consume the exact clip-space
+                                    // basis captured when the scope geometry was submitted.
+                                    new Matrix4f(),
                                     // R = 1：被目镜盖到的像素，红通道恒为 1（掩码本体）。
                                     // G = 开镜进度：镜身/准星 shader 用它做屏幕空间的渐进收缩。
                                     //

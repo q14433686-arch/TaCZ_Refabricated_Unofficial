@@ -78,6 +78,7 @@ public interface IReticleRenderer {
                    SubmitNodeCollector collector,
                    ItemDisplayContext displayContext,
                    RenderType baseRenderType,
+                   RenderType illuminatedRenderType,
                    int light,
                    int overlay,
                    float aimingProgress,

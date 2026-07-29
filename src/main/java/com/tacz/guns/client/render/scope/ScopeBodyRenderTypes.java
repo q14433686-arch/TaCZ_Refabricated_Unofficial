@@ -70,33 +70,48 @@ public final class ScopeBodyRenderTypes {
     private static final BindGroupLayout MASK_SAMPLER_LAYOUT =
             BindGroupLayout.builder().withSampler(MASK_SAMPLER).build();
 
-    private static RenderPipeline buildPipeline(String name, boolean invert) {
+    private static RenderPipeline buildPipeline(String name, boolean mask, boolean invert, boolean emissive) {
         var builder = RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
                 .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/" + name))
                 .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
                 .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
-                // 以下四项与 vanilla ENTITY_CUTOUT 完全一致，缺一不可
                 .withShaderDefine("ALPHA_CUTOUT", 0.1F)
-                .withShaderDefine("PER_FACE_LIGHTING")
                 .withBindGroupLayout(BindGroupLayouts.SAMPLER1)
-                .withCull(false)
-                // 本特性专属：打开裁剪分支 + 声明掩码采样器
-                .withShaderDefine("SCOPE_MASK")
-                .withBindGroupLayout(MASK_SAMPLER_LAYOUT);
-        if (invert) {
-            // 准星版：只保留镜内（上游 stencilFunc(EQUAL, i+1)）
-            builder = builder.withShaderDefine("SCOPE_MASK_INVERT");
+                .withCull(false);
+        if (emissive) {
+            // 发光准星不应受面法线/方向光影响；否则会随玩家朝向变亮变暗。
+            builder = builder.withShaderDefine("EMISSIVE")
+                    .withShaderDefine("NO_CARDINAL_LIGHTING");
+        } else {
+            // 以下与 vanilla ENTITY_CUTOUT 一致，用于镜身和蚀刻分划。
+            builder = builder.withShaderDefine("PER_FACE_LIGHTING");
+        }
+        if (mask) {
+            builder = builder.withShaderDefine("SCOPE_MASK")
+                    .withBindGroupLayout(MASK_SAMPLER_LAYOUT);
+            if (invert) {
+                // 准星版：只保留镜内（上游 stencilFunc(EQUAL, i+1)）
+                builder = builder.withShaderDefine("SCOPE_MASK_INVERT");
+            }
         }
         return builder.build();
     }
 
     /** 镜身：只在目镜<b>没盖到</b>处绘制。 */
     private static final RenderPipeline CLIPPED_PIPELINE =
-            buildPipeline("scope_body_clipped", false);
+            buildPipeline("scope_body_clipped", true, false, false);
 
-    /** 准星：只在目镜<b>盖到</b>处绘制。 */
+    /** 蚀刻准星：只在目镜<b>盖到</b>处绘制，保留受光。 */
     private static final RenderPipeline RETICLE_PIPELINE =
-            buildPipeline("scope_reticle_clipped", true);
+            buildPipeline("scope_reticle_clipped", true, true, false);
+
+    /** 发光准星：只在目镜<b>盖到</b>处绘制，满亮且不受方向光影响。 */
+    private static final RenderPipeline RETICLE_EMISSIVE_PIPELINE =
+            buildPipeline("scope_reticle_emissive_clipped", true, true, true);
+
+    /** 发光准星无掩码回退：满亮且不受方向光影响。 */
+    private static final RenderPipeline EMISSIVE_PIPELINE =
+            buildPipeline("scope_reticle_emissive", false, false, true);
 
     private static boolean irisAssignmentAttempted = false;
 
@@ -113,6 +128,8 @@ public final class ScopeBodyRenderTypes {
         irisAssignmentAttempted = true;
         IrisCompat.assignScopePipelineToHand(CLIPPED_PIPELINE, "scope_body_clipped");
         IrisCompat.assignScopePipelineToHand(RETICLE_PIPELINE, "scope_reticle_clipped");
+        IrisCompat.assignScopePipelineToHand(RETICLE_EMISSIVE_PIPELINE, "scope_reticle_emissive_clipped");
+        IrisCompat.assignScopePipelineToHand(EMISSIVE_PIPELINE, "scope_reticle_emissive");
     }
 
     /**
@@ -124,6 +141,8 @@ public final class ScopeBodyRenderTypes {
      */
     private static final Map<Identifier, RenderType> BODY_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> RETICLE_CACHE = new HashMap<>();
+    private static final Map<Identifier, RenderType> RETICLE_EMISSIVE_CACHE = new HashMap<>();
+    private static final Map<Identifier, RenderType> EMISSIVE_CACHE = new HashMap<>();
 
     private ScopeBodyRenderTypes() {
     }
@@ -134,8 +153,9 @@ public final class ScopeBodyRenderTypes {
      * <p>等价于上游 {@code scope_body: stencilFunc(GL_EQUAL, 0)}。
      */
     public static RenderType clipped(Identifier texture) {
+        ensureIrisCompatibility();
         return BODY_CACHE.computeIfAbsent(texture,
-                tex -> create("tacz_scope_body_clipped", CLIPPED_PIPELINE, tex));
+                tex -> create("tacz_scope_body_clipped", CLIPPED_PIPELINE, tex, true));
     }
 
     /**
@@ -145,19 +165,37 @@ public final class ScopeBodyRenderTypes {
      * 准星被约束在目镜投影内，不会溢出镜筒贴到屏幕上。
      */
     public static RenderType reticle(Identifier texture) {
+        ensureIrisCompatibility();
         return RETICLE_CACHE.computeIfAbsent(texture,
-                tex -> create("tacz_scope_reticle_clipped", RETICLE_PIPELINE, tex));
+                tex -> create("tacz_scope_reticle_clipped", RETICLE_PIPELINE, tex, true));
     }
 
-    private static RenderType create(String name, RenderPipeline pipeline, Identifier tex) {
+    /** 发光准星：反向裁剪 + 满亮/无方向光。 */
+    public static RenderType reticleEmissive(Identifier texture) {
+        ensureIrisCompatibility();
+        return RETICLE_EMISSIVE_CACHE.computeIfAbsent(texture,
+                tex -> create("tacz_scope_reticle_emissive_clipped", RETICLE_EMISSIVE_PIPELINE, tex, true));
+    }
+
+    /** 发光准星：无裁剪回退 + 满亮/无方向光。 */
+    public static RenderType emissive(Identifier texture) {
+        ensureIrisCompatibility();
+        return EMISSIVE_CACHE.computeIfAbsent(texture,
+                tex -> create("tacz_scope_reticle_emissive", EMISSIVE_PIPELINE, tex, false));
+    }
+
+    private static RenderType create(String name, RenderPipeline pipeline, Identifier tex, boolean bindMask) {
+        var builder = RenderSetup.builder(pipeline)
+                // Sampler0 = 瞄具自身贴图。r52 教训：管线声明的每个 sampler
+                // 都必须在这里绑定，少一个就在 drawIndexed 时抛 Missing sampler。
+                .withTexture("Sampler0", tex);
+        if (bindMask) {
+            // 掩码采样器 = 目镜掩码。指向 ScopeMaskTextureHandle 注册的那张，
+            // 它每帧被刷新为当前掩码 target 的 view。
+            builder = builder.withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID);
+        }
         return RenderType.create(name,
-                RenderSetup.builder(pipeline)
-                        // Sampler0 = 瞄具自身贴图。r52 教训：管线声明的每个 sampler
-                        // 都必须在这里绑定，少一个就在 drawIndexed 时抛 Missing sampler。
-                        .withTexture("Sampler0", tex)
-                        // 掩码采样器 = 目镜掩码。指向 ScopeMaskTextureHandle 注册的那张，
-                        // 它每帧被刷新为当前掩码 target 的 view。
-                        .withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
+                builder
                         // useLightmap/useOverlay 提供 Sampler2/Sampler1，
                         // 与 vanilla entityCutout 的 RenderSetup 一致。
                         .useLightmap()

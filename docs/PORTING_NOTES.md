@@ -601,7 +601,7 @@ VersionPredicate.parse(version).test(mod.getMetadata().getVersion())
 
 | 版本号 | vs `1.1.8` | 满足 `>=1.1.8` |
 |---|---|---|
-| `1.1.8+fabric.26.2.alpha.1` | `0` | ✅ |
+| `1.1.8+fabric.26.2.alpha.N` | `0` | ✅ |
 | `1.1.8-fabric.1` | `-1` | ❌ |
 
 两者对 `>=1.0.4` 都成立，**差别只在要求 `>=1.1.8` 的枪包上暴露** ——
@@ -617,9 +617,9 @@ VersionPredicate.parse(version).test(mod.getMetadata().getVersion())
 Fabric 使用 Semantic Versioning 的超集；`+` 后的 build metadata 在版本比较中会被忽略，
 例如 `0.154+26.3` 与 `0.154+26.2` 在比较上等价。
 
-> 发布时不要为了“Alpha 1”把版本写成 `1.1.8-alpha.1` 或
-> `1.1.8-fabric.26.2.alpha.1`。那会变成 prerelease，低于 `1.1.8`，导致要求
-> `>=1.1.8` 的枪包失配。当前采用 `1.1.8+fabric.26.2.alpha.1`，Alpha 信息在
+> 发布时不要为了“Alpha N”把版本写成 `1.1.8-alpha.N` 或
+> `1.1.8-fabric.26.2.alpha.N`。那会变成 prerelease，低于 `1.1.8`，导致要求
+> `>=1.1.8` 的枪包失配。当前采用 `1.1.8+fabric.26.2.alpha.N`，Alpha 信息在
 > build metadata 与 `fabric.mod.json` 展示文本中表达。
 
 另一个容易踩的 Fabric 端细节：官方文档提到 Loader 0.19.3 对超过 3 段版本的 `.x`

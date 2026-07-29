@@ -1,0 +1,573 @@
+[10:35:43] [main/INFO]: Loading Minecraft 26.2 with Fabric Loader 0.19.3
+[10:35:43] [main/INFO]: Mappings not present!
+[10:35:43] [main/WARN]: Warnings were found!
+ - 模组 'Reese's Sodium Options' (reeses-sodium-options) 2.2.3+mc26.2 建议安装 sodium-extra 的 0.4.2 及以上版本，但没有安装它！
+	 - 为了最佳体验，您应该安装 sodium-extra 的 0.4.2 及以上版本。
+[10:35:43] [main/INFO]: Loading 68 mods:
+	- cloth-config 26.2.155
+	   \-- cloth-basic-math 0.6.1
+	- fabric-api 0.155.2+26.2
+	   |-- fabric-api-base 2.0.4+ece063239e
+	   |-- fabric-api-lookup-api-v1 2.0.17+11e1c9a39e
+	   |-- fabric-biome-api-v1 18.0.6+c7bd5b8e9e
+	   |-- fabric-block-api-v1 3.0.3+ec56b6019e
+	   |-- fabric-block-getter-api-v2 2.0.7+ec56b6019e
+	   |-- fabric-command-api-v2 3.1.0+00cb03469e
+	   |-- fabric-content-registries-v0 11.3.0+d0a699d09e
+	   |-- fabric-convention-tags-v2 4.7.0+1f023a9e9e
+	   |-- fabric-crash-report-info-v1 1.0.5+086d547a9e
+	   |-- fabric-creative-tab-api-v1 5.0.14+d871b99e9e
+	   |-- fabric-data-attachment-api-v1 2.2.17+aa0fd6fe9e
+	   |-- fabric-data-generation-api-v1 25.4.5+b190d6f59e
+	   |-- fabric-debug-api-v1 1.0.2+c792624d9e
+	   |-- fabric-dimensions-v1 5.1.10+5ed499069e
+	   |-- fabric-entity-events-v1 5.0.5+06488ac19e
+	   |-- fabric-events-interaction-v0 5.2.6+8f57f7ee9e
+	   |-- fabric-game-rule-api-v1 4.0.8+46a6d00c9e
+	   |-- fabric-item-api-v1 14.3.0+583e0a5f9e
+	   |-- fabric-key-mapping-api-v1 2.0.5+e2bdee789e
+	   |-- fabric-lifecycle-events-v1 4.1.3+4575b05f9e
+	   |-- fabric-loot-api-v3 3.0.17+06488ac19e
+	   |-- fabric-menu-api-v1 2.0.16+086d547a9e
+	   |-- fabric-message-api-v1 7.0.7+086d547a9e
+	   |-- fabric-model-loading-api-v1 8.0.15+c80601bb9e
+	   |-- fabric-networking-api-v1 6.3.3+72073ef09e
+	   |-- fabric-object-builder-api-v1 24.1.0+6fcd5f039e
+	   |-- fabric-particles-v1 5.0.18+d1756aa99e
+	   |-- fabric-permission-api-v1 1.0.3+b7020ca29e
+	   |-- fabric-recipe-api-v1 9.0.20+11e1c9a39e
+	   |-- fabric-registry-sync-v0 7.1.0+c7bd5b8e9e
+	   |-- fabric-renderer-api-v1 14.1.2+2b0d8a229e
+	   |-- fabric-renderer-indigo 9.1.2+2b0d8a229e
+	   |-- fabric-rendering-fluids-v1 6.0.4+06488ac19e
+	   |-- fabric-rendering-v1 25.3.1+6988455e9e
+	   |-- fabric-resource-conditions-api-v1 6.1.0+10e9a28b9e
+	   |-- fabric-resource-loader-v0 3.3.20+4fc5413f9e
+	   |-- fabric-resource-loader-v1 2.0.13+9edec1269e
+	   |-- fabric-screen-api-v1 5.1.0+48e3c0b09e
+	   |-- fabric-serialization-api-v1 2.0.4+11a26f319e
+	   |-- fabric-sound-api-v1 2.0.5+11a26f319e
+	   |-- fabric-tag-api-v1 2.1.3+794df31d9e
+	   |-- fabric-transfer-api-v1 8.0.11+39b5a3929e
+	   \-- fabric-transitive-access-wideners-v1 8.1.4+67c847259e
+	- fabricloader 0.19.3
+	   \-- mixinextras 0.5.4
+	- forgeconfigapiport 26.2.1
+	   |-- com_electronwill_night-config_core 3.8.4
+	   \-- com_electronwill_night-config_toml 3.8.4
+	- iris 1.11.2+mc26.2
+	   |-- io_github_douira_glsl-transformer 3.0.0-pre3
+	   |-- org_anarres_jcpp 1.4.14
+	   \-- org_antlr_antlr4-runtime 4.13.1
+	- java 25
+	- jei 30.13.0.84
+	- minecraft 26.2
+	- modmenu 20.0.1
+	   \-- fabric-api-base 2.0.4+ece063239e
+	- mousetweaks 2.31
+	- placeholder-api 3.1.0-beta.1+26.2
+	- reeses-sodium-options 2.2.3+mc26.2
+	- sodium 0.9.1+mc26.2
+	- tacz 1.1.8+fabric.26.2.alpha.1
+	   |-- com_github_figuramc_luaj_luaj-core 3.0.8-figura
+	   |-- com_github_figuramc_luaj_luaj-jse 3.0.8-figura
+	   |-- org_apache_bcel_bcel 6.6.1
+	   \-- org_apache_commons_commons-math3 3.6.1
+[10:35:44] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/D:/DOWLOD/.minecraft/libraries/net/fabricmc/sponge-mixin/0.17.3+mixin.0.8.7/sponge-mixin-0.17.3+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[10:35:44] [main/INFO]: Compatibility level set to JAVA_25
+[10:35:44] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.json could not be read. If this is a development environment you can ignore this message
+[10:35:44] [main/WARN]: Reference map 'iris-fabric.refmap.json' for mixins.iris.fabric.json could not be read. If this is a development environment you can ignore this message
+[10:35:44] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.vertexformat.json could not be read. If this is a development environment you can ignore this message
+[10:35:44] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.bettermipmaps.json could not be read. If this is a development environment you can ignore this message
+[10:35:44] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.compat.sodium.json could not be read. If this is a development environment you can ignore this message
+[10:35:44] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.fixes.maxfpscrash.json could not be read. If this is a development environment you can ignore this message
+[10:35:44] [main/WARN]: Reference map 'reeses-sodium-options.refmap.json' for reeses-sodium-options.mixins.json could not be read. If this is a development environment you can ignore this message
+[10:35:44] [main/INFO]: Loaded configuration file for Sodium: 36 options available, 1 override(s) found
+[10:35:44] [main/INFO]: [TACZ Scope] Iris compat mixin config loaded: package=com.tacz.guns.mixin.client.iris, irisLoaded=true
+[10:35:45] [main/WARN]: Error loading class: de/siphalor/amecs/key_modifiers/impl/AmecsKeyModifiersEarlyInit (java.lang.ClassNotFoundException: de/siphalor/amecs/key_modifiers/impl/AmecsKeyModifiersEarlyInit)
+[10:35:45] [main/WARN]: @Mixin target de.siphalor.amecs.key_modifiers.impl.AmecsKeyModifiersEarlyInit was not found jei.mixins.json:AmecsKeyModifiersEarlyInitMixin from mod jei
+[10:35:45] [main/WARN]: Force-disabling mixin 'features.render.world.sky.LevelRendererMixin' as rule 'mixin.features.render.world.sky' (added by mods [iris]) disables it and children
+[10:35:45] [main/INFO]: [TACZ Scope] Iris compat mixin decision: apply=true, firstMixin=com.tacz.guns.mixin.client.iris.IrisShaderCreatorMixin, firstTarget=net.irisshaders.iris.pipeline.programs.ShaderCreator
+[10:35:45] [main/INFO]: Searching for graphics cards...
+[10:35:45] [main/INFO]: Found graphics adapter: AdapterInfo{vendor=AMD, description='AMD  Radeon RX 7800 XT', adapterType=0x0000230B, openglIcdFilePath='C:\Windows\System32\DriverStore\FileRepository\u0202643.inf_amd64_8835e06f359414be\B026283\atig6pxx.dll', openglIcdVersion=32.0.31035.1003}
+[10:35:45] [main/INFO]: Found graphics adapter: AdapterInfo{vendor=AMD, description='AMD Radeon(TM) Graphics', adapterType=0x00002303, openglIcdFilePath='C:\Windows\System32\DriverStore\FileRepository\u0202642.inf_amd64_870f6b155aa057ce\B026261\atig6pxx.dll', openglIcdVersion=32.0.21045.1000}
+[10:35:45] [main/WARN]: Sodium has applied one or more workarounds to prevent crashes or other issues on your system: [AMD_GAME_OPTIMIZATION_BROKEN]
+[10:35:45] [main/WARN]: This is not necessarily an issue, but it may result in certain features or optimizations being disabled. You can sometimes fix these issues by upgrading your graphics driver.
+[10:35:45] [main/INFO]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.4).
+[10:35:46] [Datafixer Bootstrap #0/INFO]: 295 Datafixer optimizations took 203 milliseconds
+[10:35:46] [main/WARN]: Invalid registry value type detected for PerfOS counters. Should be REG_DWORD. Ignoring: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PerfOS\Performance\Disable Performance Counters.
+[10:35:50] [Render thread/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[10:35:50] [Render thread/INFO]: Setting user: GOOSTL
+[10:35:50] [Render thread/INFO]: Registered synced data key tacz:shoot_cool_down for minecraft:living_entity
+[10:35:50] [Render thread/INFO]: Registered synced data key tacz:melee_cool_down for minecraft:living_entity
+[10:35:50] [Render thread/INFO]: Registered synced data key tacz:reload_state for minecraft:living_entity
+[10:35:50] [Render thread/INFO]: Registered synced data key tacz:aiming_progress for minecraft:living_entity
+[10:35:50] [Render thread/INFO]: Registered synced data key tacz:draw_cool_down for minecraft:living_entity
+[10:35:50] [Render thread/INFO]: Registered synced data key tacz:is_aiming for minecraft:living_entity
+[10:35:50] [Render thread/INFO]: Registered synced data key tacz:sprint_time for minecraft:living_entity
+[10:35:50] [Render thread/INFO]: Registered synced data key tacz:is_bolting for minecraft:living_entity
+[10:35:50] [Render thread/INFO]: Registered synced data key tacz:throwable_using for minecraft:living_entity
+[10:35:50] [Render thread/INFO]: LRTactical (unofficial 26.2 port) initialized
+[10:35:50] [Render thread/INFO]: [Indigo] Different rendering plugin detected; not applying Indigo.
+[10:35:51] [Render thread/INFO]: Sending ConfigManager...
+[10:35:51] [Render thread/INFO]: Sending ConfigManager took 835.5 microseconds
+[10:35:51] [Render thread/INFO]: Checking mod updates...
+[10:35:51] [Render thread/INFO]: [STDOUT]: [Mouse Tweaks] Main.initialize()
+[10:35:51] [Render thread/INFO]: [STDOUT]: [Mouse Tweaks] Initialized.
+[10:35:51] [Render thread/INFO]: [TACZ] Registering FeatureRenderers for 26.2...
+[10:35:51] [Render thread/INFO]: [TACZ] FeatureRenderers registered.
+[10:35:51] [Render thread/INFO]: Backend library: LWJGL version 3.4.1-snapshot
+[10:35:51] [Render thread/INFO]: Modifying process environment to apply workarounds for the AMD graphics driver...
+[10:35:51] [Download-3/INFO]: Update available for 'fabric-api@0.155.2+26.2', (-> 0.156.0+26.2)
+[10:35:52] [Render thread/INFO]: Debug functionality is disabled.
+[10:35:52] [Render thread/INFO]: ARB_direct_state_access detected, enabling DSA.
+[10:35:52] [Render thread/INFO]: Profile: HIGH (+0 options changed by user)
+[10:35:52] [ForkJoinPool.commonPool-worker-1/WARN]: [Iris Update Check] This version doesn't have an update index, skipping.
+[10:35:52] [Render thread/INFO]: Using shaderpack: ComplementaryReimagined_r5.8.1.zip
+[10:35:52] [Render thread/INFO]: Using graphics backend OpenGL, using drivers: 3.3.0 Core Profile Context 26.7.1.260716
+[10:35:52] [Render thread/INFO]: Using graphics device: AMD  Radeon RX 7800 XT (ATI Technologies Inc.)
+[10:35:52] [Render thread/INFO]: Using graphics device extensions: GL_ARB_multi_draw_indirect, GL_ARB_buffer_storage, GL_ARB_shader_draw_parameters, GL_ARB_base_instance, GL_KHR_debug, GL_ARB_draw_indirect, GL_ARB_clip_control, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+[10:35:52] [Render thread/INFO]: Start scanning for gun packs in D:\DOWLOD\.minecraft\versions\26.2-Fabric 0.19.3\tacz
+[10:35:52] [Render thread/INFO]: - CS2 Knifes Pack v1.0.1.zip, Main namespace: cs2_wt
+[10:35:52] [Render thread/INFO]: - tacz_default_gun, Main namespace: tacz
+[10:35:52] [Render thread/INFO]: Found 2 possible gunpack(s) and added them to resource set.
+[10:35:53] [Render thread/INFO]: Hardware information:
+[10:35:53] [Render thread/INFO]: CPU: 16x AMD Ryzen 7 7700 8-Core Processor 
+[10:35:53] [Render thread/INFO]: GPU: AMD  Radeon RX 7800 XT (Supports OpenGL 3.3.0 Core Profile Context 26.7.1.260716)
+[10:35:53] [Render thread/INFO]: OS: Windows 11 (10.0)
+[10:35:53] [Render thread/INFO]: Reloading ResourceManager: tacz_resources, vanilla, cloth-config, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, forgeconfigapiport, iris, jei, modmenu, org_apache_commons_commons-math3, placeholder-api, reeses-sodium-options, sodium, tacz
+[10:35:53] [Render thread/INFO]: Thread[#3,Render thread,10,main]
+[10:35:53] [Render thread/INFO]: OpenGL Vendor: ATI Technologies Inc.
+[10:35:53] [Render thread/INFO]: OpenGL Renderer: AMD  Radeon RX 7800 XT
+[10:35:53] [Render thread/INFO]: OpenGL Version: 3.3.0 Core Profile Context 26.7.1.260716
+[10:35:53] [Worker-Main-15/INFO]: Found unifont_pua-17.0.01.hex, loading
+[10:35:53] [Worker-Main-4/INFO]: Found unifont_all_no_pua-17.0.01.hex, loading
+[10:35:53] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_bounce_1.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.bounce
+[10:35:53] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_bounce_2.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.bounce
+[10:35:53] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_bounce_3.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.bounce
+[10:35:53] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_bounce_4.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.bounce
+[10:35:53] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_exp_flash.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.flash.explode
+[10:35:53] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_exp_m67.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.m67.explode
+[10:35:53] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_exp_rgn.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.rgn.explode
+[10:35:53] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_exp_smoke_start.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.smoke.start
+[10:35:53] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_exp_smoke_loop.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.smoke.loop
+[10:35:53] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_exp_smoke_end.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.smoke.end
+[10:35:53] [Worker-Main-7/WARN]: File lrtactical:sounds/player/ring.ogg does not exist, cannot add it to event cs2_wt:player.ring
+[10:35:53] [Worker-Main-7/WARN]: Invalid sounds.json in resourcepack: 'tacz'
+com.google.gson.JsonSyntaxException: Expected entry to be a JsonObject, was "Sou...e."
+	at knot//net.minecraft.util.GsonHelper.convertToJsonObject(GsonHelper.java:415)
+	at knot//net.minecraft.client.resources.sounds.SoundEventRegistrationSerializer.deserialize(SoundEventRegistrationSerializer.java:25)
+	at knot//net.minecraft.client.resources.sounds.SoundEventRegistrationSerializer.deserialize(SoundEventRegistrationSerializer.java:20)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper.read(TypeAdapterRuntimeTypeWrapper.java:40)
+	at knot//com.google.gson.internal.bind.MapTypeAdapterFactory$Adapter.read(MapTypeAdapterFactory.java:203)
+	at knot//com.google.gson.internal.bind.MapTypeAdapterFactory$Adapter.read(MapTypeAdapterFactory.java:161)
+	at knot//net.minecraft.util.GsonHelper.fromNullableJson(GsonHelper.java:530)
+	at knot//net.minecraft.util.GsonHelper.fromJson(GsonHelper.java:537)
+	at knot//net.minecraft.client.sounds.SoundManager.prepare(SoundManager.java:80)
+	at knot//net.minecraft.client.sounds.SoundManager.prepare(SoundManager.java:41)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$0(SimplePreparableReloadListener.java:13)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1789)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$1(SimpleReloadInstance.java:51)
+	at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1753)
+	at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1745)
+	at java.base/java.util.concurrent.ForkJoinTask$InterruptibleTask.exec(ForkJoinTask.java:1662)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)
+[10:35:53] [Worker-Main-2/INFO]: Found unifont_jp_patch-17.0.01.hex, loading
+[10:35:54] [Render thread/INFO]: OpenAL initialized on device OpenAL Soft on 耳机 (High Definition Audio Device)
+[10:35:54] [Render thread/INFO]: Sound engine started
+[10:35:54] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 2048x1024x0 minecraft:textures/atlas/armor_trims.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
+[10:35:54] [Render thread/INFO]: Created: 256x256x0 jei:textures/atlas/gui.png-atlas
+[10:35:55] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[10:35:56] [Render thread/INFO]: [TACZ Scope] Injecting dormant scope-mask branch into Iris linked fragment shaders.
+[10:36:32] [Render thread/INFO]: Start scanning for gun packs in D:\DOWLOD\.minecraft\versions\26.2-Fabric 0.19.3\tacz
+[10:36:32] [Render thread/INFO]: - CS2 Knifes Pack v1.0.1.zip, Main namespace: cs2_wt
+[10:36:32] [Render thread/INFO]: - tacz_default_gun, Main namespace: tacz
+[10:36:32] [Render thread/INFO]: Found 2 possible gunpack(s) and added them to resource set.
+[10:36:32] [Worker-Main-3/ERROR]: Couldn't load tag tacz:interact_key/whitelist as it is missing following references: minecraft:boat (from tacz), minecraft:chest_boat (from tacz)
+[10:36:32] [Worker-Main-6/ERROR]: Couldn't parse data file 'tacz:blocks/workbench_a' from 'tacz:loot_table/blocks/workbench_a.json': DataResult.Error['Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:loot_function_type]: minecraft:copy_nbt; Second: Not a json array: {"function":"minecraft:copy_nbt","ops":[{"op":"replace","source":"BlockId","target":"BlockId"}],"source":{"type":"context","target":"block_entity"}}': net.minecraft.world.level.storage.loot.LootTable@320a7d8]
+[10:36:32] [Worker-Main-6/ERROR]: Couldn't parse data file 'tacz:blocks/workbench_b' from 'tacz:loot_table/blocks/workbench_b.json': DataResult.Error['Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:loot_function_type]: minecraft:copy_nbt; Second: Not a json array: {"function":"minecraft:copy_nbt","ops":[{"op":"replace","source":"BlockId","target":"BlockId"}],"source":{"type":"context","target":"block_entity"}}': net.minecraft.world.level.storage.loot.LootTable@3340fcec]
+[10:36:32] [Worker-Main-6/ERROR]: Couldn't parse data file 'tacz:blocks/workbench_c' from 'tacz:loot_table/blocks/workbench_c.json': DataResult.Error['Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:loot_function_type]: minecraft:copy_nbt; Second: Not a json array: {"function":"minecraft:copy_nbt","ops":[{"op":"replace","source":"BlockId","target":"BlockId"}],"source":{"type":"context","target":"block_entity"}}': net.minecraft.world.level.storage.loot.LootTable@4c0b93a9]
+[10:36:32] [Render thread/INFO]: Loaded 1777 recipes
+[10:36:32] [Render thread/INFO]: Loaded 1688 advancements
+[10:36:32] [Render thread/INFO]: Loaded 7 throwable index(es)
+[10:36:32] [Render thread/INFO]: Loaded 11 melee index(es)
+[10:36:32] [Render thread/INFO]: Loaded 1 consumable index(es)
+[10:36:32] [Render thread/ERROR]: Failed to load data file tacz:misc/blood_strike_1
+com.google.gson.JsonSyntaxException: Missing item, expected to find a JsonObject
+	at knot//net.minecraft.util.GsonHelper.getAsJsonObject(GsonHelper.java:423)
+	at knot//com.tacz.guns.resource.serialize.GunSmithTableResultSerializer.deserialize(GunSmithTableResultSerializer.java:59)
+	at knot//com.tacz.guns.resource.serialize.GunSmithTableResultSerializer.deserialize(GunSmithTableResultSerializer.java:19)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$2.readIntoField(ReflectiveTypeAdapterFactory.java:271)
+	at knot//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$FieldReflectionAdapter.readField(ReflectiveTypeAdapterFactory.java:559)
+	at knot//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:517)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1193)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1137)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.parseJson(JsonDataManager.java:76)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.apply(JsonDataManager.java:65)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:42)
+	at knot//com.tacz.guns.resource.manager.TableRecipeManager.apply(TableRecipeManager.java:134)
+	at knot//com.tacz.guns.resource.manager.TableRecipeManager.apply(TableRecipeManager.java:53)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:156)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:209)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:154)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:424)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:379)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/12g can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/22wmr can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/308 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/30_06 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/338 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/357mag can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/40mm can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/45_70 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/45acp can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/46x30 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/500mag can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/50ae can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/50bmg can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/545x39 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/556x45 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/57x28 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/58x42 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/68x51fury can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/762x25 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/762x39 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/762x54 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/792x57 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/9mm can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:ammo/rpg_rocket can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/ammo_mod_fmj can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/ammo_mod_he can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/ammo_mod_hp can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/ammo_mod_i can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/ammo_mod_slug can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/bayonet_6h3 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/bayonet_m9 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/deagle_golden_long_barrel can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/extended_mag_1 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/extended_mag_2 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/extended_mag_3 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/grip_cobra can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/grip_magpul_afg_2 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/grip_osovets_black can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/grip_rk0 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/grip_rk1_b25u can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/grip_rk6 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/grip_se_5 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/grip_td can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/grip_vertical_military can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/grip_vertical_ranger can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/grip_vertical_talon can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/laser_compact can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/laser_lopro can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/laser_nightstick can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/laser_peq6 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/light_extended_mag_1 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/light_extended_mag_2 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/light_extended_mag_3 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_brake_cthulhu can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_brake_cyclone_d2 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_brake_mastiff_sg can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_brake_pioneer can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_brake_timeless50 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_brake_trex can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_choke_sg can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_compensator_trident can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_knight_qd can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_mirage can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_phantom_s1 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_ptilopsis can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_sg can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_ursus can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_vulture can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_wraith can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/oem_stock_heavy can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/oem_stock_light can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/oem_stock_tactical can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/scope_1873_6x can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/scope_98k can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/scope_acog_ta31 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/scope_contender can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/scope_elcan_4x can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/scope_hamr can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/scope_lpvo_1_6 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/scope_mk5hd can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/scope_qmk152 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/scope_retro_2x can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/scope_standard_8x can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/scope_vudu can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/shotgun_extended_mag_1 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/shotgun_extended_mag_2 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/shotgun_extended_mag_3 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_552 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_acro_pistol can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_acro_rifle can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_coyote can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_deltapoint_pistol can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_deltapoint_rifle can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_exp3 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_fastfire_pistol can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_fastfire_rifle can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_okp7 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_pk06_pistol can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_pk06_rifle can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_rmr_dot can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_sro_dot can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_srs_02 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_t1 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_t2 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sight_uh1 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sniper_extended_mag_1 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sniper_extended_mag_2 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/sniper_extended_mag_3 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/stock_ak12 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/stock_carbon_bone_c5 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/stock_heavy_spas_12 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/stock_hk_slim_line can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/stock_m4ss can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/stock_militech_b5 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/stock_moe can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/stock_ripstock can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/stock_sba3 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/stock_tactical_ar can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:attachments/stock_tactical_spas_12 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe lrtactical:consumable/test_medkit can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/aa12 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/ai_awp can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/ak47 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/aug can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/b93r can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/cz75 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/db_long can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/db_short can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/deagle can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/deagle_golden can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/fn_evolys can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/fn_fal can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/g36k can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/glock_17 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/hk416d can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/hk_g3 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/hk_mk23 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/hk_mp5a5 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/kar98 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/lonetrail can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/m1014 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/m107 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/m16a1 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/m16a4 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/m1911 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/m249 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/m320 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/m4a1 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/m700 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/m870 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/m95 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/m9a4 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/minigun can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/mk14 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/p320 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/p90 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/qbz_191 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/qbz_95 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/rhino357 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/rpg7 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/rpk can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/scar_h can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/scar_l can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/sks_tactical can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/spas_12 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/spr15hb can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/springfield1873 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/taurus500 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/timeless50 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/type_81 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/ump45 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/uzi can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:gun/vector45 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe lrtactical:melee/test_knife can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe tacz:misc/blood_strike_1 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe lrtactical:throwable/test_c4 can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe lrtactical:throwable/test_flashbang can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe lrtactical:throwable/test_gas_grenade can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe lrtactical:throwable/test_grenade can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe lrtactical:throwable/test_smoke_grenade can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe lrtactical:throwable/test_splash_grenade can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/WARN]: Recipe lrtactical:throwable/test_sticky_grenade can't be placed due to empty ingredients and will be ignored
+[10:36:33] [Render thread/INFO]: Applied 0 biome modifications to 0 of 66 new biomes in 1.063 ms
+[10:36:33] [Server thread/INFO]: Starting integrated minecraft server version 26.2
+[10:36:33] [Server thread/INFO]: Generating keypair
+[10:36:33] [Server thread/INFO]: Loading 0 persistent chunks...
+[10:36:33] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:overworld
+[10:36:33] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_end
+[10:36:33] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_nether
+[10:36:33] [Server thread/INFO]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[10:36:33] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[10:36:33] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[10:36:33] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved
+[10:36:33] [Server thread/INFO]: Loading 49 chunks for player spawn...
+[10:36:33] [Server thread/INFO]: 准备生成区域中：16%
+[10:36:34] [Server thread/INFO]: 准备生成区域中：16%
+[10:36:34] [Server thread/INFO]: Time elapsed: 817 ms
+[10:36:34] [Server thread/INFO]: GOOSTL[local:E:71073703] logged in with entity id 60 at (71.9052901644663, 71.0, 182.74546152923014)
+[10:36:34] [Server thread/INFO]: GOOSTL加入了游戏
+[10:36:34] [Render thread/INFO]: Started 10 worker threads
+[10:36:34] [Server thread/INFO]: Changing view distance to 12, from 10
+[10:36:34] [Server thread/INFO]: Changing simulation distance to 12, from 0
+[10:36:34] [Render thread/WARN]: Failed to parse data from network for RECIPES with id tacz:misc/blood_strike_1
+com.google.gson.JsonSyntaxException: Missing item, expected to find a JsonObject
+	at knot//net.minecraft.util.GsonHelper.getAsJsonObject(GsonHelper.java:423)
+	at knot//com.tacz.guns.resource.serialize.GunSmithTableResultSerializer.deserialize(GunSmithTableResultSerializer.java:59)
+	at knot//com.tacz.guns.resource.serialize.GunSmithTableResultSerializer.deserialize(GunSmithTableResultSerializer.java:19)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$2.readIntoField(ReflectiveTypeAdapterFactory.java:271)
+	at knot//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$FieldReflectionAdapter.readField(ReflectiveTypeAdapterFactory.java:559)
+	at knot//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:517)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:981)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:891)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:828)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.parse(CommonNetworkCache.java:175)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:231)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:166)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.doSync(ServerMessageSyncGunPack.java:61)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.handle(ServerMessageSyncGunPack.java:48)
+	at knot//com.tacz.guns.network.NetworkHandler.lambda$registerS2CPackets$10(NetworkHandler.java:115)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:77)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:39)
+	at knot//net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon.handle(AbstractChanneledNetworkAddon.java:102)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handler$zkd000$fabric-networking-api-v1$onCustomPayload(ClientCommonPacketListenerImpl.java:1057)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handleCustomPayload(ClientCommonPacketListenerImpl.java)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:49)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:19)
+	at knot//net.minecraft.network.PacketProcessor$ListenerAndPacket.handle(PacketProcessor.java:55)
+	at knot//net.minecraft.network.PacketProcessor.processQueuedPackets(PacketProcessor.java:38)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1233)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[10:36:34] [Render thread/INFO]: Starting JEI...
+[10:36:34] [Render thread/INFO]: Registering item subtypes...
+[10:36:34] [Render thread/INFO]: Registering item subtypes took 2.603 milliseconds
+[10:36:34] [Render thread/INFO]: Registering fluid subtypes...
+[10:36:34] [Render thread/INFO]: Registering fluid subtypes took 132.9 microseconds
+[10:36:34] [Render thread/INFO]: Registering ingredients...
+[10:36:34] [Render thread/INFO]: Registering ingredients: jei:minecraft took 103.5 milliseconds
+[10:36:34] [Render thread/INFO]: Registering ingredients took 104.1 milliseconds
+[10:36:34] [Render thread/INFO]: Registering extra ingredients...
+[10:36:34] [Render thread/INFO]: Registering extra ingredients took 170.9 microseconds
+[10:36:34] [Render thread/INFO]: Registering search ingredient aliases...
+[10:36:34] [Render thread/INFO]: Registering search ingredient aliases took 96.30 microseconds
+[10:36:34] [Render thread/INFO]: Registering Mod Info...
+[10:36:34] [Render thread/INFO]: Registering Mod Info took 227.5 microseconds
+[10:36:34] [Render thread/INFO]: Registering advanced search...
+[10:36:34] [Render thread/INFO]: Registering advanced search took 189.2 microseconds
+[10:36:34] [Render thread/INFO]: Registering categories...
+[10:36:34] [Render thread/INFO]: Registering categories took 7.303 milliseconds
+[10:36:34] [Render thread/INFO]: Registering vanilla category extensions...
+[10:36:34] [Render thread/INFO]: Registering vanilla category extensions took 1.209 milliseconds
+[10:36:34] [Render thread/INFO]: Registering recipe catalysts...
+[10:36:34] [Render thread/INFO]: Registering recipe catalysts took 546.0 microseconds
+[10:36:34] [Render thread/INFO]: Building recipe registry...
+[10:36:34] [Render thread/INFO]: Building recipe registry took 14.27 milliseconds
+[10:36:34] [Render thread/INFO]: Registering advanced plugins...
+[10:36:34] [Render thread/INFO]: Registering advanced plugins took 214.3 microseconds
+[10:36:34] [Render thread/INFO]: Registering recipes...
+[10:36:34] [Render thread/INFO]: Registering recipes: jei:minecraft took 169.0 milliseconds
+[10:36:34] [Render thread/INFO]: Registering recipes: tacz:jei took 48.89 milliseconds
+[10:36:34] [Render thread/INFO]: Registering recipes took 218.7 milliseconds
+[10:36:34] [Render thread/INFO]: Registering recipes transfer handlers...
+[10:36:34] [Render thread/INFO]: Registering recipes transfer handlers took 1.741 milliseconds
+[10:36:34] [Render thread/INFO]: Building runtime...
+[10:36:34] [Render thread/INFO]: Registering gui handlers...
+[10:36:34] [Render thread/INFO]: Registering gui handlers took 7.883 milliseconds
+[10:36:34] [Render thread/INFO]: Registering Runtime...
+[10:36:34] [Render thread/INFO]: Starting JEI GUI
+[10:36:34] [Render thread/INFO]: Building ingredient list...
+[10:36:34] [Render thread/INFO]: Building ingredient list took 15.61 milliseconds
+[10:36:34] [Render thread/INFO]: Building ingredient filter...
+[10:36:34] [Render thread/INFO]: Adding 2085 ingredients
+[10:36:34] [Render thread/INFO]: Added 2085 ingredients
+[10:36:34] [Render thread/INFO]: Building ingredient filter took 76.93 milliseconds
+[10:36:34] [Render thread/INFO]: Registering Runtime: jei:fabric_gui took 136.5 milliseconds
+[10:36:34] [Render thread/INFO]: Registering Runtime took 136.9 milliseconds
+[10:36:34] [Render thread/INFO]: Building runtime took 149.8 milliseconds
+[10:36:34] [Render thread/INFO]: Sending Runtime...
+[10:36:34] [Render thread/INFO]: Sending Runtime took 132.0 microseconds
+[10:36:34] [Render thread/INFO]: Starting JEI took 546.9 milliseconds
+[10:36:34] [Render thread/INFO]: Loaded 59 advancements
+[10:36:35] [Render thread/INFO]: Stopping worker threads
+[10:36:35] [Render thread/INFO]: Started 10 worker threads
+[10:36:35] [Render thread/WARN]: Error while parsing the block ID map entry for "block.10104":
+[10:36:35] [Render thread/WARN]: - The block minecraft:stone_slab has no property with the name variant, ignoring!
+[10:36:35] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 2 reached during a single frame. New capacity will be 4.
+[10:36:35] [Render thread/WARN]: [TACZ Scope] Mask enabled but no ocular geometry was registered this frame. Either no scope is equipped/aimed, or ocular collection is broken.
+[10:36:35] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 4 reached during a single frame. New capacity will be 8.
+[10:36:35] [Render thread/INFO]: Stopping worker threads
+[10:36:35] [Render thread/INFO]: Started 10 worker threads
+[10:36:35] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 8 reached during a single frame. New capacity will be 16.
+[10:36:35] [Render thread/WARN]: [TACZ Sound] Missing gun sound resource, skipped. sound=minecraft:ar_akilo_drop, path=minecraft:tacz_sounds/ar_akilo_drop.ogg
+[10:36:35] [Render thread/WARN]: [TACZ Sound] Missing gun sound resource, skipped. sound=minecraft:ar_akilo_raise_shoulder, path=minecraft:tacz_sounds/ar_akilo_raise_shoulder.ogg
+[10:36:39] [Render thread/INFO]: [TACZ Scope] Ocular mask drawn: 288 indices from 7 batches.
+[10:36:39] [Render thread/WARN]: Found perfect program match for tacz:pipeline/scope_body_clipped: HAND_CUTOUT
+[10:36:39] [Render thread/INFO]: [TACZ Scope] Assigned custom scope pipelines to Iris HAND program (latest: scope_body_clipped).
+[10:36:39] [Render thread/WARN]: Found perfect program match for tacz:pipeline/scope_reticle_clipped: HAND_CUTOUT
+[10:36:39] [Render thread/INFO]: [TACZ Scope] Iris scope-mask bridge active (mode=1, textureUnit=31).
+[10:36:45] [Render thread/INFO]: Destroying pipeline minecraft:overworld
+[10:36:45] [Render thread/INFO]: Shaders are disabled because enableShaders is set to false in iris.properties
+[10:36:45] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[10:36:45] [Render thread/INFO]: [System] [CHAT] 光影包已禁用！
+[10:36:45] [Render thread/INFO]: Stopping worker threads
+[10:36:45] [Render thread/INFO]: Started 10 worker threads
+[10:36:51] [Render thread/INFO]: Destroying pipeline minecraft:overworld
+[10:36:51] [Render thread/INFO]: Profile: HIGH (+0 options changed by user)
+[10:36:51] [Render thread/INFO]: Using shaderpack: ComplementaryReimagined_r5.8.1.zip
+[10:36:51] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[10:36:52] [Render thread/INFO]: [System] [CHAT] 光影包已切换到 ComplementaryReimagined_r5.8.1.zip！
+[10:36:52] [Render thread/INFO]: Stopping worker threads
+[10:36:52] [Render thread/INFO]: Started 10 worker threads
+[10:36:52] [Render thread/WARN]: Error while parsing the block ID map entry for "block.10104":
+[10:36:52] [Render thread/WARN]: - The block minecraft:stone_slab has no property with the name variant, ignoring!
+[10:36:52] [Render thread/INFO]: Stopping worker threads
+[10:36:52] [Render thread/INFO]: Started 10 worker threads
+[10:37:21] [Server thread/INFO]: Saving and pausing game...
+[10:37:21] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:overworld
+[10:37:21] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_end
+[10:37:21] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_nether

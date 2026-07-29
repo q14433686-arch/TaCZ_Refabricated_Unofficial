@@ -141,7 +141,7 @@ public final class IlluminatedReticleRenderer implements IReticleRenderer {
         if (!snapshot.isEmpty()) {
             PoseStack identity = new PoseStack();
             ctx.collector().submitCustomGeometry(
-                    identity, ctx.baseRenderType(),
+                    identity, ctx.illuminatedRenderType(),
                     (entryPose, consumer) -> snapshot.write(consumer));
         }
     }

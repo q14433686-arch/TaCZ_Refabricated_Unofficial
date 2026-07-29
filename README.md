@@ -12,7 +12,7 @@
 | | 说明 |
 |---|---|
 | **是** | 上游 [TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)（1.21.1 分支）的 26.2 移植 |
-| **是** | **Alpha 1** 测试构建：已可游玩、可公开测试，但仍不保证无 bug |
+| **是** | **Alpha 2** 测试构建：已可游玩、可公开测试，但仍不保证无 bug |
 | **不是** | TACZ 官方版本，也不隶属于 TACZ Dev Team |
 | **不是** | 内容扩展 —— 除移植必需的改动外，不新增枪械/玩法 |
 
@@ -32,20 +32,29 @@
 
 ---
 
-## 2. Alpha 1 状态与已知限制
+## 2. Alpha 2 状态与已知限制
 
-Alpha 1 的目标是先提供一个**可安装、可游玩、可收集反馈**的 26.2 Fabric 测试版本，
-而不是宣称与上游完全等价。
+Alpha 2 在 Alpha 1 可游玩基线之上，重点补齐 Iris/光影下的瞄准镜兼容，并继续完善
+LRTactical 基础闭环。它仍然是测试构建，不保证与上游完全等价。
+
+Alpha 2 主要新增 / 修复：
+
+- **Iris shader pack 下的瞄准镜镜内裁剪基本可用**：在 Iris HAND shader 路径内注入 TACZ
+  的 scope mask 分支，避免此前光影下镜身、准星、雾效/自发光层互相冲突的问题；普通非光影路径保持可用。
+- **发光准星修复为真正自发光**：`*_illuminated` 准星改用专用 emissive/no-cardinal-lighting
+  渲染类型，避免随玩家朝向在 vanilla/Iris 下反向变亮变暗。
+- **LRTactical 继续作为内置兼容层**：throwable、melee、detonator/C4、consumable 基础流程保留；
+  Fabric 元数据继续通过 `provides: ["lrtactical"]` 提供依赖标识。
+- **曳光弹显示做了阶段性修复**：恢复上游 `energySwirl` 渲染类型、满亮 block light，并让
+  第一人称枪口视觉偏移按每发子弹缓存。弹道/命中本身未改。
 
 当前已知重点限制：
 
-- **Iris / 光影下瞄准镜镜内裁剪会降级**：26.2 已无上游依赖的 stencil，当前的离屏 mask
-  与 Iris/Sulkan 的 hand/entity/fog/emissive pass 仍存在架构级兼容问题。Alpha 1 在光影下优先走
-  安全回退，避免镜身、雾效、自发光实体层缺失；完整光影兼容留给后续实验分支。
+- **曳光弹仍可能存在视觉偏移差异**：目前观察到弹道/最终交汇点基本正确，问题集中在挂在
+  子弹实体上的曳光几何显示；它不影响命中判定，后续仍需继续细查。
 - **PIP / 二次世界渲染不默认启用**：此前验证显示 26.2 地形渲染、RenderTarget 与光影 pass
-  耦合很深，贸然启用会有明显风险。
-- **LRTactical 为部分内置移植**：当前覆盖 throwable、melee、detonator/C4、consumable 基础闭环；
-  flash shield 等上游模块仍未完整移植。
+  耦合很深，已暂停作为主线方案。
+- **LRTactical 仍是部分内置移植**：flash shield 等上游模块仍未完整移植。
 - **需要 TacZ:Arcana 解密能力的加密枪包不支持**，见下文专节。
 
 ---

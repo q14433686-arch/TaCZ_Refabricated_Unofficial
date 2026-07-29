@@ -134,15 +134,15 @@ public final class IrisCompat {
     }
 
     public static boolean shouldDisableScopeMaskUnderShaderPack() {
-        // 实测结论：Iris 的 assignPipeline 会把我们的自定义 scope_body.fsh 替换/归类为
-        // HAND_CUTOUT（日志：Found perfect program match ... HAND_CUTOUT），结果 SCOPE_MASK discard
-        // 不再执行，表现为“准星/遮光板还在，但裁切不存在”。
-        // 因此在真正实现 Iris 专用的裁剪 shader 之前，光影包启用时一律回退普通瞄具几何。
-        if (FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS) && isUsingRenderPack()) {
+        // Sulkan 暂无公开等价 API；同样保守回退。
+        if (FabricLoader.getInstance().isModLoaded("sulkan")) {
             return true;
         }
-        // Sulkan 暂无公开等价 API；同样保守回退。
-        return FabricLoader.getInstance().isModLoaded("sulkan");
+        // Iris 深度兼容实验：不再在 shader pack 下直接关闭 scope mask。
+        // 路线是 assignPipeline -> Iris HAND program，同时由 tacz.iris.mixins.json 给 Iris
+        // HAND shader 注入默认关闭的 tacz_ScopeMaskMode 分支；只有当前 draw 携带
+        // ScopeMaskSampler 且 pipeline 是 tacz:pipeline/scope_* 时才启用裁切。
+        return false;
     }
 
     /**

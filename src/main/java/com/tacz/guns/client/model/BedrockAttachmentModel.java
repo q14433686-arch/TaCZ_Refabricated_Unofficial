@@ -1,5 +1,6 @@
 package com.tacz.guns.client.model;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
@@ -24,6 +25,8 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+
+import org.joml.Matrix4f;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -615,11 +618,12 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 // 注意方向别搞反：镜身是「盖到就 discard」，准星是「没盖到才 discard」。
                 // 两者共用同一张掩码、同一份 shader，靠 SCOPE_MASK_INVERT 区分。
                 RenderType reticleType = resolveReticleRenderType(renderType, texture, maskable);
+                RenderType illuminatedReticleType = resolveIlluminatedReticleRenderType(renderType, texture, maskable);
                 // maskActive：本帧准星是否真的走了反向裁剪。
                 // EtchedReticleRenderer 依赖它决定敢不敢画 division（内含大块遮光板）。
                 boolean maskActive = reticleType != renderType;
                 reticle.submitReticle(new IReticleRenderer.Context(
-                        poseStack, collector, transformType, reticleType,
+                        poseStack, collector, transformType, reticleType, illuminatedReticleType,
                         light, overlay, currentAimingProgress(), maskActive), active);
             }
         }
@@ -747,6 +751,22 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         return ScopeBodyRenderTypes.reticle(texture);
     }
 
+    /** 发光准星使用不受方向光影响的专用 RenderType，避免随玩家朝向变亮/变暗。 */
+    private RenderType resolveIlluminatedReticleRenderType(RenderType original,
+                                                          @Nullable Identifier texture,
+                                                          boolean maskable) {
+        if (texture == null) {
+            return original;
+        }
+        if (!maskable || !RenderConfig.SCOPE_MASK_ENABLE.get()) {
+            return ScopeBodyRenderTypes.emissive(texture);
+        }
+        if (!ScopeMaskTextureHandle.syncToMaskTarget()) {
+            return ScopeBodyRenderTypes.emissive(texture);
+        }
+        return ScopeBodyRenderTypes.reticleEmissive(texture);
+    }
+
     /**
      * 该目镜是否属于<b>当前激活</b>的镜组。
      *
@@ -867,7 +887,14 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             if (!part.cubes.isEmpty()) {
                 // Entry 的构造函数会拷贝矩阵 —— 必须如此：
                 // poseStack 马上就 popPose 了，而这份数据要活到阶段边界才被消费。
-                ScopeMaskGeometry.add(poseStack.last().pose(), part.cubes);
+                //
+                // 关键：把“提交手持物这一刻”的 RenderSystem ModelView 烘焙进掩码矩阵。
+                // 实际瞄具几何在延迟绘制时等价于 Projection * ModelView(submit) * itemPose * vertex；
+                // 若掩码 pass 到阶段边界后再取当前 ModelView，Iris hand path 下会拿到与提交时
+                // 不一致的矩阵，表现为裁剪区域固定在 world north。这里提前合成，mask pass 里
+                // 使用 identity ModelView，保证采样区域跟随提交时的第一人称瞄具。
+                Matrix4f bakedPose = new Matrix4f(RenderSystem.getModelViewMatrixCopy()).mul(poseStack.last().pose());
+                ScopeMaskGeometry.add(bakedPose, part.cubes);
             }
             for (BedrockPart child : part.children) {
                 collectMaskGeometry(child, poseStack);

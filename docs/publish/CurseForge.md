@@ -101,7 +101,7 @@ reworked a number of APIs, so substantial internal rework was required:
 - **Gun pack loading fixes** so that existing third-party gun packs — including
   ones written for older versions — continue to work.
 
-## Status: Alpha 1 test build
+## Status: Alpha 2 test build
 
 **Playable, but under active testing. Expect bugs.**
 
@@ -207,7 +207,7 @@ world corruption, crashes, data loss, and mod conflicts. Non-commercial project.
 
 | 字段 | 填什么 |
 |---|---|
-| **Display Name** | `TACZ-Refabricated-26.2-1.1.8+fabric.26.2.alpha.1` |
+| **Display Name** | `TACZ-Refabricated-26.2-1.1.8+fabric.26.2.alpha.2` |
 | **Release Type** | **Alpha** |
 | **Game Version** | `26.2` |
 | **Modloader** | `Fabric` |
@@ -225,26 +225,37 @@ world corruption, crashes, data loss, and mod conflicts. Non-commercial project.
 
 ---
 
-## ⑤ Changelog（首个版本）
+## ⑤ Changelog
 
 ```markdown
-Alpha 1 public test build of this Fabric port.
+Alpha 2 public test build of this Fabric port.
 
 Ported from the upstream Fabric project (`Sh1roCu/TACZ-Refabricated`),
 based on TACZ `1.1.8-hotfix`.
 
+### Highlights
+- Iris/shader-pack scope compatibility improved: in-scope mask clipping now runs
+  through an Iris HAND shader bridge instead of falling back to a broken mask path.
+- Illuminated reticles are now rendered as emissive/no-cardinal-lighting geometry,
+  fixing direction-dependent brightness under both vanilla and Iris.
+- Tracer rendering was moved closer to upstream behavior (`energySwirl`, full block
+  light, per-bullet first-person muzzle offset caching). Ballistics/hit detection
+  are unchanged.
+- LRTactical partial integration remains included via `provides: ["lrtactical"]`.
+
 ### Notes
-- Alpha 1 test build — playable, but expect bugs.
-- The scope rendering path was rewritten because the stencil buffer no longer
-  exists on this game version. Some visuals differ from the original.
+- Alpha 2 test build — playable, but expect bugs.
 - Requires Java 25 and Forge Config API Port.
-- Gun packs that require TacZ:Arcana (encrypted assets) will show missing
-  textures. See the project description.
+- Gun packs requiring TacZ:Arcana (encrypted assets) will show missing textures.
 
 ### Known issues
-- Iris/shader-pack scope rendering is currently degraded: in-scope clipping is disabled under shader packs to avoid missing scope body, fog, and emissive entity layers.
-- PIP / second-world scope rendering is not enabled by default and remains experimental.
-- LRTactical is partially integrated; flash shield and some advanced add-on systems are not complete yet.
+- Tracer visuals may still have display offset differences; current evidence points
+  to rendering geometry/offset only, not ballistic or hit-detection errors.
+- PIP / second-world scope rendering is not enabled by default and remains paused
+  as a mainline approach.
+- LRTactical is partially integrated; flash shield and some advanced add-on systems
+  are not complete yet.
+
 ```
 
 ---
