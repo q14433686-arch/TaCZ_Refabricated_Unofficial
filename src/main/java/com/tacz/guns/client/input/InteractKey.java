@@ -27,13 +27,13 @@ public class InteractKey {
             TaCZKeyCategory.TACZ);
 
     public static void onInteractKeyPress(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(event.getKey(), event.getScanCode())) {
             doInteractLogic();
         }
     }
 
     public static void onInteractMousePress(InputEvent.MouseButton.Post event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matchesMouse(event.getButton())) {
             doInteractLogic();
         }
     }

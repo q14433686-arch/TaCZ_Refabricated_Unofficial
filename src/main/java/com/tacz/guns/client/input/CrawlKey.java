@@ -23,7 +23,7 @@ public class CrawlKey {
             TaCZKeyCategory.TACZ);
 
     public static void onCrawlPress(InputEvent.Key event) {
-        if (isInGame() && CRAWL_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+        if (isInGame() && CRAWL_KEY.matches(event.getKey(), event.getScanCode())) {
             if (!SyncConfig.ENABLE_CRAWL.get()) {
                 return;
             }

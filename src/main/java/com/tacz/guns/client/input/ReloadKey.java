@@ -26,7 +26,7 @@ public class ReloadKey {
             TaCZKeyCategory.TACZ);
 
     public static void onReloadPress(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && RELOAD_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && RELOAD_KEY.matches(event.getKey(), event.getScanCode())) {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player == null || player.isSpectator()) {
                 return;

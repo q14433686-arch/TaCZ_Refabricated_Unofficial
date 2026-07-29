@@ -7,7 +7,7 @@ import com.tacz.guns.compat.immediatelyfast.ImmediatelyFastCompat;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.Hud;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Mixin(Hud.class)
+@Mixin(Gui.class)
 public class GuiMixin {
     @Inject(method = "extractSlot", at = @At("HEAD"))
     private void tacz$renderHotbarItemPre(GuiGraphicsExtractor context, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack stack, int seed, CallbackInfo ci) {

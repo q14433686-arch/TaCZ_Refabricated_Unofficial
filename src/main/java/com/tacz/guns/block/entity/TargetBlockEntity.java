@@ -30,7 +30,7 @@ import static com.tacz.guns.block.TargetBlock.OUTPUT_POWER;
 import static com.tacz.guns.block.TargetBlock.STAND;
 
 public class TargetBlockEntity extends BlockEntity implements Nameable {
-    public static final BlockEntityType<TargetBlockEntity> TYPE = new BlockEntityType<>(TargetBlockEntity::new, Set.of(ModBlocks.TARGET));
+    public static final BlockEntityType<TargetBlockEntity> TYPE = BlockEntityType.Builder.of(TargetBlockEntity::new, ModBlocks.TARGET).build(null);
     /**
      * 标靶复位时间，暂定为 5 秒
      */

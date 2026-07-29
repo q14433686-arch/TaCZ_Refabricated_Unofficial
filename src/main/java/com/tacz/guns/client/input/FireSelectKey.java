@@ -21,13 +21,13 @@ public class FireSelectKey {
             TaCZKeyCategory.TACZ);
 
     public static void onFireSelectKeyPress(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && FIRE_SELECT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && FIRE_SELECT_KEY.matches(event.getKey(), event.getScanCode())) {
             doFireSelectLogic();
         }
     }
 
     public static void onFireSelectMousePress(InputEvent.MouseButton.Post event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && FIRE_SELECT_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && FIRE_SELECT_KEY.matchesMouse(event.getButton())) {
             doFireSelectLogic();
         }
     }

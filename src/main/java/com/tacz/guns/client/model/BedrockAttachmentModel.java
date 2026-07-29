@@ -8,9 +8,6 @@ import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.BeamRenderer;
 import com.tacz.guns.client.render.scope.IReticleRenderer;
 import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
-import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
-import com.tacz.guns.client.render.scope.ScopeMaskGeometry;
-import com.tacz.guns.client.render.scope.ScopeMaskTextureHandle;
 import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.client.render.scope.ScopeNodeSet;
 import com.tacz.guns.client.model.functional.TextShowRender;
@@ -607,7 +604,12 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 boolean maskActive = maskable;
                 SubmitNodeCollector wrappedCollector = new SubmitNodeCollector() {
                     @Override
-                    public void submitCustomGeometry(PoseStack pose, RenderType type, CustomGeometry customGeometry) {
+                    public net.minecraft.client.renderer.OrderedSubmitNodeCollector order(int value) {
+                        return collector.order(value);
+                    }
+
+                    @Override
+                    public void submitCustomGeometry(PoseStack pose, RenderType type, SubmitNodeCollector.CustomGeometry customGeometry) {
                         collector.submitCustomGeometry(pose, type, (entryPose, consumer) -> {
                             if (maskActive) {
                                 org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);

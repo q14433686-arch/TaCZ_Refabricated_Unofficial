@@ -136,7 +136,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                     //
                     // 摄像机可直接从 Minecraft.gameRenderer.getMainCamera() 取得（与上游一致）。
                     // 26.2: GameRenderer#getMainCamera() -> mainCamera()，Camera#getXRot/getYRot -> xRot()/yRot()
-                    Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
+                    Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
                     Vector3f offset = bullet.getFirstPersonRenderOffset();
                     if (offset == null) {
                         // 记录这发子弹第一次渲染时的摄像机朝向与枪口视觉偏移，之后整条曳光都沿用。

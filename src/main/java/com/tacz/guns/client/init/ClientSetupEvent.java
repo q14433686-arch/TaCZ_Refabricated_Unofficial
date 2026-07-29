@@ -6,7 +6,7 @@ import com.tacz.guns.client.gui.overlay.GunHudOverlay;
 import com.tacz.guns.client.gui.overlay.HeatBarOverlay;
 import com.tacz.guns.client.gui.overlay.InteractKeyTextOverlay;
 import com.tacz.guns.client.gui.overlay.KillAmountOverlay;
-import com.tacz.guns.client.gui.overlay.ScopeMaskDebugOverlay;
+
 import com.tacz.guns.client.input.*;
 import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.tooltip.ClientAmmoBoxTooltip;
@@ -83,8 +83,6 @@ public class ClientSetupEvent {
         HudElementRegistry.addLast(id("heat_bar"), (graphics, deltaTracker) -> HeatBarOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         HudElementRegistry.addLast(id("interact_key_text"), (graphics, deltaTracker) -> InteractKeyTextOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         HudElementRegistry.addLast(id("kill_amount"), (graphics, deltaTracker) -> KillAmountOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
-        // 【Step 1 调试】瞄具掩码预览，由 RenderConfig.SCOPE_MASK_DEBUG 控制，默认关闭。
-        HudElementRegistry.addLast(id("scope_mask_debug"), (graphics, deltaTracker) -> ScopeMaskDebugOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
     }
 
     private static Identifier id(String path) {

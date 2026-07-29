@@ -19,7 +19,6 @@ import com.tacz.guns.client.init.ParticleFactories;
 import com.tacz.guns.client.renderer.block.GunSmithTableRenderer;
 import com.tacz.guns.client.renderer.block.StatueRenderer;
 import com.tacz.guns.client.renderer.block.TargetRenderer;
-import com.tacz.guns.client.renderer.feature.TaczFeatureRenderers;
 import com.tacz.guns.client.renderer.item.AmmoBoxStatueProperty;
 import com.tacz.guns.client.renderer.item.TaczDynamicItemModel;
 import net.minecraft.client.renderer.item.properties.select.SelectItemModelProperties;
@@ -95,8 +94,6 @@ public class TaCZFabricClient implements ClientModInitializer {
                 BuiltinItemRendererRegistry.INSTANCE.register(clientEx, renderer);
             }
         });
-        // 26.2 Feature Rendering: 注册 TACZ 自定义 FeatureRenderers
-        TaczFeatureRenderers.register();
         subscribeEvents();
     }
 

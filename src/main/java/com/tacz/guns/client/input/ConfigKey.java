@@ -30,7 +30,7 @@ public class ConfigKey {
 
     public static void onOpenConfig(InputEvent.Key event) {
         if (isInGame() && event.getAction() == GLFW.GLFW_PRESS
-                && OPEN_CONFIG_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                && OPEN_CONFIG_KEY.matches(event.getKey(), event.getScanCode())) {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player == null || player.isSpectator()) {
                 return;
@@ -42,7 +42,7 @@ public class ConfigKey {
                         style.withColor(0x5555FF).withUnderlined(true).withClickEvent(clickEvent).withHoverEvent(hoverEvent));
                 player.sendSystemMessage(component);
             } else {
-                CompatRegistry.checkModLoad(CompatRegistry.CLOTH_CONFIG, () -> Minecraft.getInstance().gui.setScreen(MenuIntegration.getConfigScreen(null)));
+                CompatRegistry.checkModLoad(CompatRegistry.CLOTH_CONFIG, () -> Minecraft.getInstance().setScreen(MenuIntegration.getConfigScreen(null)));
             }
         }
     }

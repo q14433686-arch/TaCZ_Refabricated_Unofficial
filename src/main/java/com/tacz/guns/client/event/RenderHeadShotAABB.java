@@ -46,7 +46,10 @@ public class RenderHeadShotAABB {
         }
         AABB finalAabb = aabb;
         event.getSubmitNodeCollector().submitCustomGeometry(event.getPoseStack(), RenderTypes.lines(), (entryPose, consumer) -> {
-            net.minecraft.client.renderer.LevelRenderer.renderLineBox(entryPose, consumer, finalAabb, 1.0F, 1.0F, 0.0F, 1.0F);
+            com.mojang.blaze3d.vertex.PoseStack tempPose = new com.mojang.blaze3d.vertex.PoseStack();
+            tempPose.last().pose().set(entryPose.pose());
+            tempPose.last().normal().set(entryPose.normal());
+            net.minecraft.client.renderer.LevelRenderer.renderLineBox(tempPose, consumer, finalAabb, 1.0F, 1.0F, 0.0F, 1.0F);
         });
     }
 }
