@@ -16,19 +16,6 @@ import net.minecraft.world.phys.AABB;
 public class RenderHeadShotAABB {
     public static void onRenderEntity(RenderLivingEvent.Post<?, ?, ?> event) {
         // 【第 35 轮修复】补回 F3+B 门禁。
-        //
-        // 上游第一行就是：
-        //     if (!Minecraft.getInstance().getEntityRenderDispatcher().shouldRenderHitBoxes()) return;
-        // 移植时整条丢了，于是爆头线只受配置项控制 —— 一旦在配置里打开，
-        // 就<b>再也关不掉</b>（关 F3、关碰撞箱显示都没用），只能回配置文件改。
-        // 这正是用户实测反馈的现象。
-        //
-        // 26.2 的 shouldRenderHitBoxes() 已不存在（全 net.minecraft 字节码 grep 无此方法）。
-        // 碰撞箱开关改由<b>调试屏条目系统</b>接管：
-        //     Minecraft.debugEntries : DebugScreenEntryList   (public final 字段，无需 AW)
-        //     DebugScreenEntryList#isCurrentlyEnabled(Identifier) : boolean
-        //     DebugScreenEntries.ENTITY_HITBOXES : Identifier  (public static)
-        // 三者均已对 26.2 字节码逐个确认。
         if (!Minecraft.getInstance().debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES)) {
             return;
         }
@@ -49,7 +36,46 @@ public class RenderHeadShotAABB {
             com.mojang.blaze3d.vertex.PoseStack tempPose = new com.mojang.blaze3d.vertex.PoseStack();
             tempPose.last().pose().set(entryPose.pose());
             tempPose.last().normal().set(entryPose.normal());
-            net.minecraft.client.renderer.LevelRenderer.renderLineBox(tempPose, consumer, finalAabb, 1.0F, 1.0F, 0.0F, 1.0F);
+            drawLineBox(tempPose, consumer, finalAabb, 1.0F, 1.0F, 0.0F, 1.0F);
         });
+    }
+
+    private static void drawLineBox(com.mojang.blaze3d.vertex.PoseStack poseStack, com.mojang.blaze3d.vertex.VertexConsumer consumer, AABB aabb, float r, float g, float b, float a) {
+        double minX = aabb.minX;
+        double minY = aabb.minY;
+        double minZ = aabb.minZ;
+        double maxX = aabb.maxX;
+        double maxY = aabb.maxY;
+        double maxZ = aabb.maxZ;
+        
+        com.mojang.blaze3d.vertex.PoseStack.Pose pose = poseStack.last();
+        org.joml.Matrix4f matrix = pose.pose();
+        org.joml.Matrix3f normal = pose.normal();
+        
+        drawEdge(matrix, normal, consumer, minX, minY, minZ, maxX, minY, minZ, r, g, b, a);
+        drawEdge(matrix, normal, consumer, minX, minY, minZ, minX, maxY, minZ, r, g, b, a);
+        drawEdge(matrix, normal, consumer, minX, minY, minZ, minX, minY, maxZ, r, g, b, a);
+        
+        drawEdge(matrix, normal, consumer, maxX, maxY, maxZ, minX, maxY, maxZ, r, g, b, a);
+        drawEdge(matrix, normal, consumer, maxX, maxY, maxZ, maxX, minY, maxZ, r, g, b, a);
+        drawEdge(matrix, normal, consumer, maxX, maxY, maxZ, maxX, maxY, minZ, r, g, b, a);
+        
+        drawEdge(matrix, normal, consumer, minX, maxY, minZ, maxX, maxY, minZ, r, g, b, a);
+        drawEdge(matrix, normal, consumer, minX, maxY, minZ, minX, maxY, maxZ, r, g, b, a);
+        
+        drawEdge(matrix, normal, consumer, maxX, minY, minZ, maxX, maxY, minZ, r, g, b, a);
+        drawEdge(matrix, normal, consumer, maxX, minY, minZ, maxX, minY, maxZ, r, g, b, a);
+        
+        drawEdge(matrix, normal, consumer, minX, minY, maxZ, maxX, minY, maxZ, r, g, b, a);
+        drawEdge(matrix, normal, consumer, minX, minY, maxZ, minX, maxY, maxZ, r, g, b, a);
+    }
+
+    private static void drawEdge(org.joml.Matrix4f matrix, org.joml.Matrix3f normal, com.mojang.blaze3d.vertex.VertexConsumer consumer, double x1, double y1, double z1, double x2, double y2, double z2, float r, float g, float b, float a) {
+        org.joml.Vector4f pos = new org.joml.Vector4f((float) x1, (float) y1, (float) z1, 1.0f).mul(matrix);
+        org.joml.Vector3f norm = new org.joml.Vector3f((float) (x2 - x1), (float) (y2 - y1), (float) (z2 - z1)).normalize().mul(normal);
+        consumer.addVertex(pos.x(), pos.y(), pos.z()).setColor(r, g, b, a).setNormal(norm.x(), norm.y(), norm.z());
+        
+        pos = new org.joml.Vector4f((float) x2, (float) y2, (float) z2, 1.0f).mul(matrix);
+        consumer.addVertex(pos.x(), pos.y(), pos.z()).setColor(r, g, b, a).setNormal(norm.x(), norm.y(), norm.z());
     }
 }
