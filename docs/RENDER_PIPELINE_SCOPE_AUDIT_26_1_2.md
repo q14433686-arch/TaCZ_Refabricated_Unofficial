@@ -176,6 +176,19 @@ body draw 仍会再画一遍不透明黑色目镜，从而完全覆盖镜内。�
 修复方向不能继续依赖删除节点，而必须恢复上游的真实 stencil 语义，并为拒绝独立 stencil 的驱动
 提供临时 packed depth-stencil 路径。
 
+### 5.7 永久提升 depth texture 会污染 Iris 生命周期
+
+第二轮实机确认 packed texture 路径能正确裁切，但在 Iris shader pipeline 加载/重载后，屏幕会残留
+白色的上一帧枪械/瞄具虚影；切换窗口分辨率后又回到未裁切状态。原因有两层：
+
+1. 原地 `glTexImage2D` 改写了 Iris/vanilla 长期持有的 depth texture，pipeline 销毁/重建时资源元数据
+   仍声明 DEPTH32，而 OpenGL storage 已变成 DEPTH24_STENCIL8；
+2. resize 可能重建 storage 或复用 FBO ID，旧 stencil attachment 的 `objectType != NONE` 并不代表
+   framebuffer 仍 complete。
+
+因此不再永久修改外部 depth texture。packed renderbuffer 只在单次 scope draw 内挂接，结束后按
+原 object type/name/level 恢复；已存在的 stencil 也必须先通过 `glCheckFramebufferStatus`。
+
 ## 6. 当前修复架构
 
 ### 6.1 三个独立批次
@@ -216,10 +229,11 @@ pipeline color/depth state。`TaCZFabricClient#onInitializeClient` 会提前强�
 - 若已有 stencil，直接复用；
 - 否则先把共享 `GL_STENCIL_INDEX8` 挂到 `GL_STENCIL_ATTACHMENT`，不触碰 depth；
 - 实机 AMD 日志证明 DEPTH32 + 独立 STENCIL8 可能返回 `GL_FRAMEBUFFER_UNSUPPORTED (0x8CDD)`；
-- 此时优先沿用上游 OptiFine 方案：把 mutable DEPTH32 texture 原地提升为
-  `GL_DEPTH24_STENCIL8`，保留 texture object ID，再挂到 `GL_DEPTH_STENCIL_ATTACHMENT`；
-- 若 depth target 不是可提升的 texture，才临时挂共享 packed renderbuffer，并在 draw 后恢复原 depth；
-- 三种附件均失败时取消 mask writer 与 inside-only reticle，仅允许普通 body fallback。
+- 首轮曾沿用上游 OptiFine 方案，原地把 DEPTH32 texture 提升为 `GL_DEPTH24_STENCIL8`；
+  实机证明这会污染 Iris/vanilla 持有的长期资源，在 pipeline reload 后留下白色手部虚影；
+- 当前兼容路径只临时挂共享 packed renderbuffer，并在每个 draw 后精确恢复原 depth attachment；
+- 每次使用已有 stencil 前都会重新检查 FBO completeness，避免 resize 后误信失效的旧 attachment；
+- 两种附件均失败时取消 mask writer 与 inside-only reticle，仅允许普通 body fallback。
 
 ## 7. 依赖版本审计（2026-07-30）
 
