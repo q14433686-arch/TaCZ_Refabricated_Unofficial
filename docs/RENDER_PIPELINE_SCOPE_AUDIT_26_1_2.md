@@ -310,6 +310,32 @@ pipeline 同样使用 `ALWAYS_PASS, writeDepth=true`。
 - CPU 尺寸过滤 etched 面板的规则保留 —— 遮光板反正会被 mask 整块 discard，
   提前剔除省掉顶点写入与光栅化。
 
+### 6.6 实机回归修复（开启光影不框定 + 春田横线缺失）
+
+远端日志实锤了 mask 链路的两处缺陷，均已修复：
+
+1. **Iris 路径下 `backupSourceFbo` 从未赋值，导致 aperture copy 全部被拒**。
+   `BACKUP` 走 Iris 分支时不执行 blit，`backupSourceFbo` 残留为 0 或上一个
+   vanilla 阶段的旧值；而 `copyApertureDepth()` 恰恰要求 body draw 的 FBO
+   与它相等。日志里的 `fbo 94 does not match ... 0` 与 `fbo 96 ... 4`
+   （切换光影包前后）都是这个错。结果是 `maskValid=false`，**Iris 下所有**
+   **reticle 退回无裁剪** —— ACOG 之类只是因为准星小、溢出不可见才“看起来
+   正常”。修复：`BACKUP` 时无条件记录 `ocularSourceFbo`（ocular 即将写入的
+   目标，Iris/vanilla 同一点），aperture copy 只与它比对。
+
+2. **蚀刻过滤被 `EMPTY_VERTEX` 占位面污染，细线被骨骼 pivot 位置误杀**。
+   基岩模型里只声明部分面 UV 的 cube（默认枪包大量只有 `south` 面）给其余面
+   生成全零顶点的退化 polygon。`isSafeEtchedCube` 的旧实现把它们计入 AABB：
+   未旋转 cube 的顶点是骨骼局部坐标，(0,0,0) 落在<b>骨骼 pivot</b> 上 ——
+   pivot 若离 cube 很远（1873 的 division pivot 在模型原点，十字线在 z=-111），
+   bbox 就被拉成 32×10.97×111 而误判为遮光板。1873 的旋转竖线（cube 自带
+   pivot 恰在自身范围内）存活、未旋转横线被杀，正是实机「竖线在、横线没」。
+   修复：测量时跳过全零顶点的退化面。离线模拟确认修复后全部细线/刻度/弧段
+   KEEP、全部遮光板 REJECT（1873/AUG/98k/QKM 逐项验证）。
+
+巫毒（scope_vudu）随（1）一并恢复 —— 它的高倍组准星走 `HAND_TRANSLUCENT`，
+与其他镜共用同一条 mask 链路，失效根因相同。
+
 三条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
 `GlCommandEncoder` mixin 负责 backup/aperture-copy/cleanup/mask 的 sampler 绑定；可选 Iris mixin
 补两条 dormant fragment branch。RenderType 构造器通过 Access Widener 开放，用于同步标记

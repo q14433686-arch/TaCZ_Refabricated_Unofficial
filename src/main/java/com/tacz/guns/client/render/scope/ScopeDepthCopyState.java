@@ -60,6 +60,8 @@ public final class ScopeDepthCopyState {
     private static final DepthTextureTarget APERTURE_TARGET = new DepthTextureTarget();
 
     private static int backupSourceFbo;
+    /** FBO bound while the ocular aperture drew; the aperture copy must come from the same surface. */
+    private static int ocularSourceFbo;
     private static boolean backupValid;
     private static boolean maskValid;
     /** Whether a usable world-depth source exists for the mask (Iris depthtex2 or the vanilla copy). */
@@ -90,6 +92,11 @@ public final class ScopeDepthCopyState {
                 disableScopeBranches(program);
                 maskValid = false;
                 maskWorldValid = false;
+                // Recorded on BOTH the Iris and vanilla paths: this is the surface the ocular draw
+                // is about to write near depth into, and step 3 must copy exactly this surface.
+                // backupSourceFbo alone cannot serve here because the Iris path never blits and
+                // would leave it stale (observed: fbo 94 vs 0 / fbo 96 vs 4 after pack toggles).
+                ocularSourceFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
                 if (program > 0
                         && GL20.glGetUniformLocation(program, MODE_UNIFORM) >= 0
                         && GL20.glGetUniformLocation(program, IRIS_WORLD_DEPTH_UNIFORM) >= 0) {
@@ -167,9 +174,9 @@ public final class ScopeDepthCopyState {
             return false;
         }
         int sourceFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-        if (sourceFbo != backupSourceFbo) {
+        if (ocularSourceFbo <= 0 || sourceFbo != ocularSourceFbo) {
             logFailure("ocular aperture copy source fbo " + sourceFbo
-                    + " does not match the backed-up hand target " + backupSourceFbo);
+                    + " does not match the ocular render target " + ocularSourceFbo);
             return false;
         }
         boolean copied = copyCurrentDepth(APERTURE_TARGET, "ocular aperture depth");
