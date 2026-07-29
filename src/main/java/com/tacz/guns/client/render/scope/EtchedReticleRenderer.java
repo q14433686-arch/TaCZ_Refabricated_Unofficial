@@ -1,6 +1,7 @@
 package com.tacz.guns.client.render.scope;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.tacz.guns.client.model.bedrock.BedrockCube;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
 
@@ -30,16 +31,9 @@ import java.util.List;
  * {@code scope_1873_6x} 有 96×34 的），第 9 轮无差别绘制过一次，
  * 结果是一大块黑色糊住屏幕，第 10 轮撤销。
  *
- * <p>上游能直接整根画是因为它有 stencil 兜底
- * （{@code renderDivisionOnly: stencilFunc(GL_EQUAL, i+1)} 把一切裁在目镜圆内）。
- * <b>现在我们也有等价物了</b> —— 反向裁剪的 RenderType。
- * 已逐个核对：这些遮光板的 XY 范围<b>全部落在目镜投影之外</b>
- * （如 {@code scope_retro_2x} 目镜 X∈[-0.75,0.75]，而遮光板 X∈[-32,-8]），
- * 因此会被反向裁剪整块丢弃，不会重演第 9 轮的糊屏。
- *
- * <p>换句话说：这个策略<b>依赖掩码才成立</b>。若掩码不可用（配置关闭等），
- * 调用方传进来的就是未裁剪的 RenderType，此时遮光板会露出来 ——
- * 所以 {@link #submitReticle} 里加了兜底，掩码没生效时不画。
+ * <p>上游能直接整根画是因为 stencil 会把一切裁在目镜圆内。当前 depth-aperture 路径没有
+ * inside stencil，因此提交时按 cube 的三轴尺寸过滤：至少两个方向都很大的面板被丢弃，细线、
+ * 刻度和环段保留。调用方用 {@code maskActive} 表示该安全过滤路径已启用；否则仍然不画。
  */
 public final class EtchedReticleRenderer implements IReticleRenderer {
 
@@ -64,10 +58,7 @@ public final class EtchedReticleRenderer implements IReticleRenderer {
     @Override
     public void submitReticle(Context ctx, ScopeNodeSet nodes) {
         if (!ctx.maskActive()) {
-            // 【安全兜底】掩码没生效时绝不绘制。
-            // division 里的遮光板尺寸极大（scope_qmk152 单块面积 6486），
-            // 没有反向裁剪就会整块糊在屏幕上 —— 第 9 轮踩过、第 10 轮撤销过。
-            // 宁可这几个瞄具暂时没准星（= 修复前的现状），也不能糊屏。
+            // Without the caller-selected filtered pipeline, never risk submitting the full division tree.
             return;
         }
         float progress = ctx.aimingProgress();
@@ -131,7 +122,51 @@ public final class EtchedReticleRenderer implements IReticleRenderer {
             PoseStack identity = new PoseStack();
             ctx.collector().submitCustomGeometry(
                     identity, ctx.baseRenderType(),
-                    (entryPose, consumer) -> snapshot.write(consumer));
+                    (entryPose, consumer) -> snapshot.writeFiltered(
+                            consumer, EtchedReticleRenderer::isSafeEtchedCube));
         }
+    }
+
+    /**
+     * Division trees mix thin reticle marks with huge screen blackout panels. Keep lines/rings whose
+     * second-largest model-space extent is at most four units; panels such as 32x32 and 96x34 are rejected.
+     */
+    private static boolean isSafeEtchedCube(BedrockCube cube) {
+        float minX = Float.POSITIVE_INFINITY;
+        float minY = Float.POSITIVE_INFINITY;
+        float minZ = Float.POSITIVE_INFINITY;
+        float maxX = Float.NEGATIVE_INFINITY;
+        float maxY = Float.NEGATIVE_INFINITY;
+        float maxZ = Float.NEGATIVE_INFINITY;
+        boolean foundVertex = false;
+
+        for (var polygon : cube.getPolygons()) {
+            if (polygon == null) {
+                continue;
+            }
+            for (var vertex : polygon.vertices) {
+                if (vertex == null) {
+                    continue;
+                }
+                foundVertex = true;
+                minX = Math.min(minX, vertex.pos.x());
+                minY = Math.min(minY, vertex.pos.y());
+                minZ = Math.min(minZ, vertex.pos.z());
+                maxX = Math.max(maxX, vertex.pos.x());
+                maxY = Math.max(maxY, vertex.pos.y());
+                maxZ = Math.max(maxZ, vertex.pos.z());
+            }
+        }
+        if (!foundVertex) {
+            return false;
+        }
+
+        float x = maxX - minX;
+        float y = maxY - minY;
+        float z = maxZ - minZ;
+        float largest = Math.max(x, Math.max(y, z));
+        float smallest = Math.min(x, Math.min(y, z));
+        float middle = x + y + z - largest - smallest;
+        return middle <= 4.0F;
     }
 }

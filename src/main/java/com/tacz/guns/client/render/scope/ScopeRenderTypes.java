@@ -25,6 +25,7 @@ public final class ScopeRenderTypes {
 
     private static final Map<Identifier, RenderType> DEPTH_APERTURES = new HashMap<>();
     private static final Map<Identifier, RenderType> DEPTH_CLEANUPS = new HashMap<>();
+    private static final Map<Identifier, RenderType> ETCHED_RETICLES = new HashMap<>();
     private static final Map<Identifier, RenderType> VISIBLE_RETICLES = new HashMap<>();
 
     /**
@@ -36,7 +37,10 @@ public final class ScopeRenderTypes {
     /** Restores the aperture region from the exact world-depth backup before later translucent world passes. */
     private static final RenderPipeline DEPTH_CLEANUP_PIPELINE = createDepthCleanupPipeline();
 
-    /** Small illuminated reticles are safe to draw without the old division/blackout geometry. */
+    /** Draws pure etched division trees only where the ocular depth is already present. */
+    private static final RenderPipeline ETCHED_RETICLE_PIPELINE = createEtchedReticlePipeline();
+
+    /** Small illuminated reticles remain visible and protect their own pixels from later world translucency. */
     private static final RenderPipeline VISIBLE_RETICLE_PIPELINE = createVisibleReticlePipeline();
 
     private ScopeRenderTypes() {
@@ -52,6 +56,10 @@ public final class ScopeRenderTypes {
 
     public static RenderType depthCleanup(Identifier texture) {
         return DEPTH_CLEANUPS.computeIfAbsent(texture, ScopeRenderTypes::createDepthCleanupType);
+    }
+
+    public static RenderType etchedReticle(Identifier texture) {
+        return ETCHED_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createEtchedReticleType);
     }
 
     public static RenderType visibleReticle(Identifier texture) {
@@ -86,6 +94,15 @@ public final class ScopeRenderTypes {
                 base,
                 ScopeDepthCopyState.Operation.RESTORE
         );
+    }
+
+    private static RenderType createEtchedReticleType(Identifier texture) {
+        RenderSetup setup = RenderSetup.builder(ETCHED_RETICLE_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .useLightmap()
+                .useOverlay()
+                .createRenderSetup();
+        return RenderType.create("tacz_scope_etched_reticle", setup);
     }
 
     private static RenderType createVisibleReticleType(Identifier texture) {
@@ -132,10 +149,24 @@ public final class ScopeRenderTypes {
                 sourceColor.blendFunction(),
                 ColorTargetState.WRITE_NONE
         ));
+        // Cleanup geometry rasterizes only the ocular footprint and writes exact sampled world depth.
         builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true));
 
         RenderPipeline pipeline = RenderPipelines.register(builder.build());
         IrisCompat.assignPipelineToIris(pipeline, "HAND", "scope_depth_cleanup");
+        return pipeline;
+    }
+
+    private static RenderPipeline createEtchedReticlePipeline() {
+        RenderPipeline source = RenderPipelines.ENTITY_CUTOUT;
+        RenderPipeline.Builder builder = clonePipeline(source,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_etched_reticle"));
+        // Large blackout panels are removed on the CPU; the retained thin marks render after exact depth restore
+        // and protect their own pixels from later translucent world passes.
+        builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true));
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        IrisCompat.assignPipelineToIris(pipeline, "HAND", "scope_etched_reticle");
         return pipeline;
     }
 
@@ -144,7 +175,7 @@ public final class ScopeRenderTypes {
         RenderPipeline.Builder builder = clonePipeline(source,
                 Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_visible_reticle"));
         // The ocular depth writer must not hide the small dot/cross geometry placed behind the lens.
-        builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false));
+        builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true));
 
         RenderPipeline pipeline = RenderPipelines.register(builder.build());
         IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_visible_reticle");

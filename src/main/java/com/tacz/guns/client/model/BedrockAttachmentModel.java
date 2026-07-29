@@ -54,7 +54,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
 
     // SubmitNodeStorage renders order keys in ascending order (Int2ObjectAVLTreeMap). Custom geometry inside
     // one order is grouped by HashMap<RenderType, ...>, so distinct RenderTypes alone do NOT guarantee
-    // aperture -> body -> depth cleanup -> gun(default 0) -> reticle order.
+    // aperture -> body -> exact depth restore -> gun(default 0) -> filtered reticle.
     private static final int SCOPE_APERTURE_ORDER = -3;
     private static final int SCOPE_BODY_ORDER = -2;
     private static final int SCOPE_DEPTH_CLEANUP_ORDER = -1;
@@ -559,8 +559,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             collector.order(SCOPE_BODY_ORDER).submitCustomGeometry(identity, renderType,
                     (entryPose, consumer) -> bodySnapshot.write(consumer));
 
-            // Restore only the aperture pixels to far depth. Iris renders water, fog, particles and volumetric
-            // clouds after its solid-hand pass; leaving the near ocular depth would incorrectly suppress them.
+            // Restore the aperture pixels from the exact pre-ocular world-depth backup. Iris renders water,
+            // fog, particles and volumetric clouds after its solid-hand pass and needs the original depth.
             RenderType depthCleanup = ScopeRenderTypes.depthCleanup(texture);
             collector.order(SCOPE_DEPTH_CLEANUP_ORDER).submitCustomGeometry(identity, depthCleanup,
                     (entryPose, consumer) -> {
@@ -579,18 +579,21 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             ScopeNodeSet active = filterReticleByActiveView(reticleNodes);
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
             if (reticle != null && !active.isEmpty()) {
-                RenderType baseReticleType = renderType;
+                boolean etchedOnly = active.hasEtched() && !active.hasIlluminated() && texture != null;
+                RenderType baseReticleType = etchedOnly
+                        ? ScopeRenderTypes.etchedReticle(texture)
+                        : renderType;
                 RenderType baseIlluminatedType = texture == null
                         ? renderType
                         : ScopeRenderTypes.visibleReticle(texture);
 
-                // There is no inside-only stencil in the depth-aperture path. Illuminated nodes are small and
-                // use an always-visible pipeline; EtchedReticleRenderer sees maskActive=false and safely skips
-                // division trees that may contain large blackout panels.
+                // Pure etched trees are CPU-filtered to retain thin marks and discard large blackout panels.
+                // Both etched and illuminated reticles render after exact world-depth restore and write their own
+                // hand depth, preventing later water/fog/particle passes from covering them.
                 reticle.submitReticle(new IReticleRenderer.Context(
-                        poseStack, collector.order(SCOPE_RETICLE_ORDER), transformType,
-                        baseReticleType, baseIlluminatedType,
-                        light, overlay, currentAimingProgress(), false), active);
+                        poseStack, collector.order(SCOPE_RETICLE_ORDER),
+                        transformType, baseReticleType, baseIlluminatedType,
+                        light, overlay, currentAimingProgress(), etchedOnly), active);
             }
         }
 

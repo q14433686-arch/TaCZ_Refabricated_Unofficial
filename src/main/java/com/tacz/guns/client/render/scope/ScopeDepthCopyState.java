@@ -23,6 +23,7 @@ public final class ScopeDepthCopyState {
 
     public static final String MODE_UNIFORM = "tacz_DepthRestoreMode";
     public static final String SAMPLER_UNIFORM = "tacz_DepthBackupSampler";
+    public static final String IRIS_WORLD_DEPTH_UNIFORM = "depthtex2";
 
     private static final ThreadLocal<Operation> CURRENT = ThreadLocal.withInitial(() -> Operation.NONE);
 
@@ -33,6 +34,8 @@ public final class ScopeDepthCopyState {
     private static int backupInternalFormat;
     private static int backupSourceFbo;
     private static boolean backupValid;
+    private static boolean useIrisPreHandDepth;
+    private static boolean loggedIrisPreHandDepth;
 
     private static int overriddenTextureUnit = -1;
     private static int previousTextureBinding;
@@ -54,7 +57,20 @@ public final class ScopeDepthCopyState {
         return switch (CURRENT.get()) {
             case BACKUP -> {
                 disableRestoreMode(program);
-                backupCurrentDepth();
+                if (program > 0
+                        && GL20.glGetUniformLocation(program, MODE_UNIFORM) >= 0
+                        && GL20.glGetUniformLocation(program, IRIS_WORLD_DEPTH_UNIFORM) >= 0) {
+                    // Iris copies exact world depth before HAND_SOLID into depthtex2.
+                    useIrisPreHandDepth = true;
+                    backupValid = true;
+                    if (!loggedIrisPreHandDepth) {
+                        loggedIrisPreHandDepth = true;
+                        GunMod.LOGGER.info("[TACZ Scope] Using Iris depthtex2 as exact pre-hand depth backup.");
+                    }
+                } else {
+                    useIrisPreHandDepth = false;
+                    backupCurrentDepth();
+                }
                 yield true;
             }
             case RESTORE -> prepareRestoreDraw(program);
@@ -127,6 +143,19 @@ public final class ScopeDepthCopyState {
             return false;
         }
 
+        int modeLocation = GL20.glGetUniformLocation(program, MODE_UNIFORM);
+        if (useIrisPreHandDepth) {
+            int irisDepthLocation = GL20.glGetUniformLocation(program, IRIS_WORLD_DEPTH_UNIFORM);
+            if (modeLocation < 0 || irisDepthLocation < 0) {
+                logFailure("Iris cleanup shader has no depthtex2 restore branch");
+                return false;
+            }
+            // Iris' ProgramSamplers has already bound depthtex2 to the pre-hand depth copy.
+            GL20.glUniform1i(modeLocation, 1);
+            backupValid = false;
+            return true;
+        }
+
         int destinationFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
         DepthInfo destination = inspectDepthAttachment();
         if (destinationFbo != backupSourceFbo || destination == null
@@ -138,7 +167,6 @@ public final class ScopeDepthCopyState {
             return false;
         }
 
-        int modeLocation = GL20.glGetUniformLocation(program, MODE_UNIFORM);
         int samplerLocation = GL20.glGetUniformLocation(program, SAMPLER_UNIFORM);
         if (modeLocation < 0 || samplerLocation < 0) {
             logFailure("active cleanup shader has no depth-restore uniforms");

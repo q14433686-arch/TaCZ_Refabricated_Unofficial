@@ -16,6 +16,7 @@ import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Immutable per-submit snapshot of a mutable BedrockModel.
@@ -96,14 +97,21 @@ public final class BedrockRenderSnapshot {
     }
 
     public void write(VertexConsumer consumer) {
+        writeFiltered(consumer, cube -> true);
+    }
+
+    /** Writes only geometry accepted by {@code cubeFilter}; used to remove large division blackout panels. */
+    public void writeFiltered(VertexConsumer consumer, Predicate<BedrockCube> cubeFilter) {
         PoseStack poseStack = new PoseStack();
         for (DrawCommand command : this.drawCommands) {
             PoseStack.Pose pose = poseStack.last();
             pose.pose().set(command.pose());
             pose.normal().set(command.normal());
             for (BedrockCube cube : command.cubes()) {
-                cube.compile(pose, consumer, command.light(), command.overlay(),
-                        command.red(), command.green(), command.blue(), command.alpha());
+                if (cubeFilter.test(cube)) {
+                    cube.compile(pose, consumer, command.light(), command.overlay(),
+                            command.red(), command.green(), command.blue(), command.alpha());
+                }
             }
         }
     }

@@ -37,13 +37,18 @@ public abstract class IrisDepthRestoreShaderMixin {
                 declarationPos = lineEnd + 1;
             }
         }
+        // Iris copies world depth immediately before HAND_SOLID and publishes it as depthtex2. Reuse that
+        // canonical sampler rather than copying the currently-bound hand FBO, whose depth can start cleared.
+        String depthtex2Declaration = source.contains("depthtex2")
+                ? ""
+                : "uniform sampler2D depthtex2;\n";
         String declarations = "\n// TACZ ocular depth restore; dormant for every ordinary draw\n"
                 + "uniform int tacz_DepthRestoreMode;\n"
-                + "uniform sampler2D tacz_DepthBackupSampler;\n";
+                + depthtex2Declaration;
         String branch = "\n    if (tacz_DepthRestoreMode != 0) {\n"
-                + "        vec2 tacz_depthSize = max(vec2(textureSize(tacz_DepthBackupSampler, 0)), vec2(1.0));\n"
+                + "        vec2 tacz_depthSize = max(vec2(textureSize(depthtex2, 0)), vec2(1.0));\n"
                 + "        vec2 tacz_depthUv = gl_FragCoord.xy / tacz_depthSize;\n"
-                + "        gl_FragDepth = texture(tacz_DepthBackupSampler, tacz_depthUv).r;\n"
+                + "        gl_FragDepth = texture(depthtex2, tacz_depthUv).r;\n"
                 + "        return;\n"
                 + "    }\n";
 

@@ -210,17 +210,18 @@ Iris/vanilla depth attachment 中绘制，因此不存在跨层截断或基于�
 粒子和体积云都会被近处 ocular depth 拒绝。
 
 发光点/十字通常是小型独立节点，改用 `depthTest=ALWAYS, writeDepth=false` 的
-`HAND_TRANSLUCENT` pipeline；包含大面积 blackout panel 的纯蚀刻 division 在没有 inside mask 时
-继续安全跳过。该降级少了上游的蚀刻分划，但不再碰目标 FBO 的 attachment 生命周期。
+`HAND_TRANSLUCENT` pipeline。纯蚀刻 division 后续通过 CPU 尺寸过滤恢复，避免重新提交大面积
+blackout panel；整个方案不碰目标 FBO 的 attachment 生命周期。
 
 ### 5.10 far depth 不是原始世界 depth
 
 第四轮先把孔区写到 far plane，水和云虽然恢复，却会无视前方实体/地形叠加在所有物体上。far 只
 表示“没有遮挡”，无法表达备份前该像素的真实 terrain/entity depth。
 
-当前在 aperture writer 真正 draw 前，把目标 FBO 的 depth blit 到同格式、可采样的 backup depth
-texture；body 完成后只重绘 ocular cleanup 几何，其 fragment 从 backup 按 `gl_FragCoord` 采样并写
-`gl_FragDepth`。因此只恢复镜孔像素，不会抹掉已绘制镜框的深度。
+Iris 已在 `beginHand()` 把准确的 pre-hand 世界深度复制到 `depthtex2`，因此 Iris cleanup 直接采样
+该官方来源；vanilla 才在 aperture writer 前把当前 depth blit 到同格式 backup texture。body 完成后
+只重绘 ocular cleanup 几何，fragment 按 `gl_FragCoord` 采样并写 `gl_FragDepth`。因此只恢复镜孔
+像素，不会抹掉已绘制镜框的深度。
 
 ## 6. 当前修复架构
 
@@ -230,8 +231,8 @@ texture；body 完成后只重绘 ocular cleanup 几何，其 fragment 从 backu
 
 - order `-3`：活动 ocular 的 invisible depth aperture；
 - order `-2`：移除了活动 ocular 的普通 attachment body；
-- order `-1`：同一 ocular 的 far-depth cleanup；
-- order `1`：小型 illuminated reticle（纯 etched division 安全跳过）。
+- order `-1`：同一 ocular 的 exact world-depth cleanup；
+- order `1`：illuminated reticle 与 CPU 过滤后的纯 etched reticle。
 
 使用 `SubmitNodeCollector.order(int)` 是必要的，因为 custom geometry 在单个 order 内按
 `HashMap<RenderType, ...>` 分组，不能依赖其偶然迭代顺序。
@@ -250,24 +251,25 @@ body 使用原始 RenderType 与原始 FBO/depth attachment。被 invisible ocul
 
 ### 6.3 精确 depth backup / restore
 
-aperture RenderType 的同步 draw 由 `ScopeDepthCopyState.Operation.BACKUP` 标记；
-`GlCommandEncoder#drawFromBuffers` HEAD 此时已经位于 Iris 实际 FBO，代码读取 depth attachment 的
-internal format/尺寸，创建完全同格式的 sampleable depth texture 和 depth-only FBO，再执行 blit。
+aperture RenderType 的同步 draw 由 `ScopeDepthCopyState.Operation.BACKUP` 标记。Iris shader 若暴露
+`tacz_DepthRestoreMode + depthtex2`，直接采用 Iris 在 `beginHand()` 生成的 pre-hand depth；否则
+（vanilla）读取当前 attachment 的 internal format/尺寸，创建同格式 sampleable depth texture 并 blit。
 
-body 后的 cleanup geometry 由 `Operation.RESTORE` 标记。vanilla cleanup fragment 直接写备份深度；
-Iris 的 `ShaderCreator` 只注入一个默认关闭的同等分支，GlCommandEncoder 仅在 cleanup draw 把 raw
-sampler/uniform 打开。没有 attachment 替换、texture 重定义、整张 depth 覆盖或近似 far depth。
+body 后的 cleanup geometry 由 `Operation.RESTORE` 标记。vanilla cleanup fragment 写本地备份；Iris
+`ShaderCreator` 注入默认关闭的 `depthtex2` 分支，仅在 cleanup draw 打开 mode uniform。没有
+attachment 替换、texture 重定义、整张 depth 覆盖或近似 far depth。
 
-### 6.4 visible-reticle pipeline
+### 6.4 illuminated / filtered-etched reticle pipeline
 
 发光准星从 `ENTITY_TRANSLUCENT_EMISSIVE` 克隆，并设置：
 
 - `depthTest=ALWAYS_PASS`；
-- `writeDepth=false`；
+- `writeDepth=true`，保护准星像素不被后续水/雾/粒子覆盖；
 - Iris 归类到 `HAND_TRANSLUCENT`。
 
-这让小型发光节点不被 ocular depth writer 挡住。`EtchedReticleRenderer` 收到
-`maskActive=false`，因此不会提交可能含 32×32/96×34 blackout panel 的 division 子树。
+这让小型发光节点不被 ocular depth writer 挡住，并写入近处 hand depth，避免随后透明世界效果
+覆盖。纯 etched division 先按 cube 尺寸过滤：32×32/96×34 等面板被丢弃，细线与刻度保留；其
+pipeline 同样使用 `ALWAYS_PASS, writeDepth=true`。
 
 三条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
 `GlCommandEncoder` mixin 负责 backup 与 cleanup sampler 绑定；可选 Iris mixin 只补 dormant fragment
