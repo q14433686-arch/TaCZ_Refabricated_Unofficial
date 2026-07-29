@@ -13,8 +13,6 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue HEAD_SHOT_DEBUG_HITBOX;
     /** 瞄准镜镜内裁剪（目镜掩码）总开关。默认<b>开启</b>。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_ENABLE;
-    /** 【调试】把瞄具目镜掩码贴图画到屏幕左上角，用于排查离屏渲染链路。默认关闭。 */
-    public static ForgeConfigSpec.BooleanValue SCOPE_MASK_DEBUG;
     public static ForgeConfigSpec.BooleanValue GUN_HUD_ENABLE;
     public static ForgeConfigSpec.BooleanValue KILL_AMOUNT_ENABLE;
     public static ForgeConfigSpec.DoubleValue KILL_AMOUNT_DURATION_SECOND;
@@ -26,7 +24,6 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue DISABLE_MOVEMENT_ATTRIBUTE_FOV;
     public static ForgeConfigSpec.BooleanValue ENABLE_TACZ_ID_IN_TOOLTIP;
     public static ForgeConfigSpec.BooleanValue BLOCK_ENTITY_TRANSLUCENT;
-    /** 第 18 轮：PIP 镜内渲染 P1 验证开关，默认关闭。 */
 
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
@@ -51,15 +48,9 @@ public class RenderConfig {
 
         builder.comment("Whether or not to display the head shot's hitbox");
         HEAD_SHOT_DEBUG_HITBOX = builder.define("HeadShotDebugHitbox", false);
-        // 特性与调试分离：
-        // 早前两者共用 ScopeMaskDebug 一个开关，导致「关掉左上角预览」会连镜内裁剪
-        // 一起关掉。现在拆开——功能默认开，预览默认关。
         SCOPE_MASK_ENABLE = builder
-                .comment("Whether to clip the scope body/reticle inside the ocular (see-through scope).")
+                .comment("Whether to clip the scope body and reticle against the ocular stencil.")
                 .define("ScopeMaskEnable", true);
-        SCOPE_MASK_DEBUG = builder
-                .comment("Debug: draw the scope ocular mask texture at the top-left corner.")
-                .define("ScopeMaskDebug", false);
 
         builder.comment("Whether or not to display the gun's HUD");
         GUN_HUD_ENABLE = builder.define("GunHUDEnable", true);
@@ -81,10 +72,6 @@ public class RenderConfig {
 
         builder.comment("Whether or not to automatically select the gun smith table's held item filter when opening it with a gun, attachment or ammo in main hand");
         AUTO_SELECT_GUN_SMITH_TABLE_FILTER = builder.define("AutoSelectGunSmithTableFilter", true);
-
-        builder.comment("[DEBUG] Enable the scope picture-in-picture (PIP) stage-1 verification. "
-                + "Only creates an off-screen render target and verifies output redirection works; "
-                + "does not yet render the world inside the scope. Default off.");
 
         builder.comment("Max time the damage counter will reset");
         DAMAGE_COUNTER_RESET_TIME = builder.defineInRange("DamageCounterResetTime", 2000, 10, Integer.MAX_VALUE);

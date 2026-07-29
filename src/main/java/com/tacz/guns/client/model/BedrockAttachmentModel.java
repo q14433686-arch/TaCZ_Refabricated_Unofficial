@@ -504,6 +504,12 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     for (BedrockPart p : path) {
                         p.translateAndRotateAndScale(ocularPose);
                     }
+                    // captureSubtree assumes rootPose already contains the root part's own transform.
+                    // Applying only the parents writes the stencil at the parent origin: the visible ocular is
+                    // then removed from bodySnapshot, but the scope body is not clipped and the correctly
+                    // positioned reticle fails the inside test. This exactly produces a transparent red-dot
+                    // window with no dot and a fully black magnified scope.
+                    ocular.translateAndRotateAndScale(ocularPose);
                     ocularSnapshots.add(com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(
                             ocular, ocularPose, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F
                     ));

@@ -209,6 +209,7 @@ Arcana 没有 Fabric / 26.1.2 版本，且其格式与密钥未公开。
   不保证自带 stencil attachment，而且 `SubmitNodeCollector` 只收集顶点、实际 draw 延后到
   `endBatch()`。本移植在实际 draw 边界挂接独立 `GL_STENCIL_INDEX8`，不替换原深度附件；
   若目标 FBO 不允许挂接，则退化为隐藏不透明目镜的透明孔，避免黑色遮罩糊住镜内。
+  客户端配置 `[render]` 下应存在 `ScopeMaskEnable = true`；旧的 PIP/离屏调试注释已移除。
 - **枪身/手臂不做镜内排除**：上游同样不做，非移植缺陷。
 - 三个工作台（`workbench_a/b/c`）的名称取自枪包数据，上下游均未提供内置译名。
 

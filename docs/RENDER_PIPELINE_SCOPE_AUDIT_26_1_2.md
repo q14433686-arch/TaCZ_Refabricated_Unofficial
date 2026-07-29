@@ -153,6 +153,14 @@ body draw 仍会再画一遍不透明黑色目镜，从而完全覆盖镜内。�
 `ScopeMaskRenderer`、没有绑定 `ScopeMaskSampler` 的 RenderSetup，也没有实际使用
 `scope_*_clipped` pipeline。Iris mixin 注入的 mode 恒为 0。这条链路不能证明当前裁剪可用。
 
+### 5.5 ocular 快照必须包含根节点自身变换
+
+`BedrockRenderSnapshot.captureSubtree(root, rootPose, ...)` 的契约是：`rootPose` 已包含父级链和
+`root` 自身的变换。首版 draw-time stencil 只应用了 ocular 的父级，导致 mask 写在父节点原点；
+活动 ocular 虽从 body 中移除，镜身却没有在真实目镜位置被裁掉，正确位置的准星也无法通过
+`stencil == 1`。实机表现正是“红点镜片透明但没有点，中高倍镜仍是整块黑色”。当前捕获路径会在
+父级链之后显式执行 `ocular.translateAndRotateAndScale(ocularPose)`。
+
 ## 6. 当前修复架构
 
 ### 6.1 三个独立批次
