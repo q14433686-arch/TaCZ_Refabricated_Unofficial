@@ -78,8 +78,6 @@ public class GrenadeEntity extends ThrowableItemEntity {
     private boolean remoteDetonation = false;
     /** 防止爆炸连锁时自己把自己再次引爆。 */
     private boolean exploded = false;
-    /** 一次性诊断计数（每进程至多 3 条）。 */
-    private static int loggedOnDeath;
 
     public GrenadeEntity(EntityType<? extends GrenadeEntity> type, LivingEntity owner, Level level, int lifeTime) {
         super(type, owner, level, lifeTime);
@@ -109,14 +107,6 @@ public class GrenadeEntity extends ThrowableItemEntity {
         this.exploded = true;
         Vec3 pos = hitResult == null ? this.position() : this.position().lerp(hitResult.getLocation(), 0.8);
         if (this.level() instanceof ServerLevel serverLevel) {
-            if (loggedOnDeath < 3) {
-                loggedOnDeath++;
-                me.xjqsh.lrtactical.EquipmentMod.LOGGER.info(
-                        "[LRTactical Explosion] Grenade onDeath#{}: damage={} radius={} destroyBlocks={} owner={} pos=({}, {}, {})",
-                        loggedOnDeath, this.damage, this.radius, this.destroyBlocks,
-                        this.getOwner() == null ? "null" : String.valueOf(this.getOwner().getType()),
-                        pos.x(), pos.y(), pos.z());
-            }
             // 见类注释第 1 点：走本仓库已验证的 ExplodeUtil，而非上游的 CustomExplosion。
             me.xjqsh.lrtactical.util.ExplodeUtil.createExplosion(
                     this.getOwner(), this,

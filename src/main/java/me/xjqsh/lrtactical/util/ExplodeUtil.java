@@ -39,23 +39,11 @@ public final class ExplodeUtil {
      * @param destroy 是否破坏方块
      * @param hitPos  爆炸中心
      */
-    /** 一次性诊断计数（每进程至多 3 条）：与 TACZ 侧的埋点配套，区分断点位置。 */
-    private static int loggedCalls;
-
     public static void createExplosion(@Nullable Entity owner, Entity exploder,
                                        float damage, float radius, boolean destroy, Vec3 hitPos) {
         // 只在服务端执行
         if (!(exploder.level() instanceof ServerLevel level)) {
             return;
-        }
-        boolean diagnose = loggedCalls < 3;
-        if (diagnose) {
-            loggedCalls++;
-            me.xjqsh.lrtactical.EquipmentMod.LOGGER.info(
-                    "[LRTactical Explosion] createExplosion#{}: exploder={} owner={} damage={} radius={} destroy={} pos=({}, {}, {})",
-                    loggedCalls, String.valueOf(exploder.getType()),
-                    owner == null ? "null" : String.valueOf(owner.getType()),
-                    damage, radius, destroy, hitPos.x(), hitPos.y(), hitPos.z());
         }
 
         Level.ExplosionInteraction interaction =
@@ -63,9 +51,6 @@ public final class ExplodeUtil {
         level.explode(exploder, hitPos.x(), hitPos.y(), hitPos.z(), radius, false, interaction);
 
         if (damage <= 0) {
-            if (diagnose) {
-                me.xjqsh.lrtactical.EquipmentMod.LOGGER.info("[LRTactical Explosion] skipped custom damage: damage <= 0");
-            }
             return;
         }
 
@@ -75,11 +60,7 @@ public final class ExplodeUtil {
                 hitPos.x() - reach, hitPos.y() - reach, hitPos.z() - reach,
                 hitPos.x() + reach, hitPos.y() + reach, hitPos.z() + reach);
 
-        java.util.List<Entity> entities = level.getEntities(exploder, area);
-        int candidates = 0;
-        int hurtApplied = 0;
-        int hurtRejected = 0;
-        for (Entity entity : entities) {
+        for (Entity entity : level.getEntities(exploder, area)) {
             if (entity == exploder) {
                 continue;
             }
@@ -92,21 +73,10 @@ public final class ExplodeUtil {
             if (impact <= 0) {
                 continue;
             }
-            candidates++;
             // 清无敌帧，确保自定义伤害不被原版爆炸伤害的无敌帧吃掉
             // （与 TACZ 侧同一手法）
             entity.invulnerableTime = 0;
-            // 26.1.2: Entity#hurt 返回 void，服务端判定入口是 hurtServer -> boolean
-            if (entity.hurtServer(level, source, damage * impact)) {
-                hurtApplied++;
-            } else {
-                hurtRejected++;
-            }
-        }
-        if (diagnose) {
-            me.xjqsh.lrtactical.EquipmentMod.LOGGER.info(
-                    "[LRTactical Explosion] area hits: found={} candidates={} hurtApplied={} hurtRejected={}",
-                    entities.size(), candidates, hurtApplied, hurtRejected);
+            entity.hurt(source, damage * impact);
         }
     }
 }
