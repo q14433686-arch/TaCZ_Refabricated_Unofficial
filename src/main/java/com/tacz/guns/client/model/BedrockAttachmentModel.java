@@ -497,7 +497,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * Backend-neutral collector path. Advanced scope stencil behavior intentionally degrades to
      * normal model geometry until the dedicated scope/PIP milestone.
      *
-     * @param texture 该瞄具的贴图。传入后镜身才可能启用「目镜掩码裁剪」；
+     * @param texture 该瞄具的贴图。
      *                传 {@code null} 表示调用方不关心裁剪，一律走原始 RenderType。
      */
     public void submit(@Nullable ItemStack attachmentItem,
@@ -512,78 +512,33 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         this.currentGunItem = currentGunItem;
         this.attachmentItem = attachmentItem;
 
-        // 【第 45 轮重构】此前这里有两段「靠切 visible 模拟 stencil」的逻辑，已整体移除：
-        //   ① 目镜遮罩（shouldDrawOcularMask）—— 按开镜进度决定 ocular 画不画
-        //   ② 镜身剔除（cullScopeBody）—— 开镜时把整根 scope_body 隐藏
-        //
-        // 移除依据（逐行核对上游 1.21.1 后确认，见 SCOPE_UPSTREAM_TRUTH_2026-07-27.md）：
-        //
-        // <b>上游从来没有「画一块黑色目镜」这回事。</b>
-        // renderOcularStencil 的第一行就是 colorMask(false,false,false,false) ——
-        // 目镜<b>只写模板值、完全不写颜色</b>。我们当年把 colorMask 注释掉之后，
-        // 那块本该隐形的几何被实打实画成了黑片，于是又反过来加一个「遮罩开关」去补救；
-        // 补救本身建立在对上游的误读上。
-        //
-        // <b>「镜身剔除」同理，是被 stencil 语义误导出来的概念。</b>
-        // 上游 renderScope 第 4 步 stencilFunc(EQUAL,0) 的含义是
-        // 「镜身只在目镜圆【之外】绘制」—— 这是一次<b>屏幕空间的区域二分</b>，
-        // 不是「把镜身整根删掉」。我们没有 stencil，就退化成了全局布尔开关，
-        // 结果连累红点/组合镜（r34、r35 两轮都在给这个错误概念打补丁）。
-        //
-        // 既然这两段的共同前提（stencil 区域裁剪）在 26.2 不存在，
-        // 正确做法就不是继续调参，而是<b>让它们消失</b>：
-        // 所有几何都按模型原样提交，交给 super.submit 统一处理。
-        //
-        // 代价与收益：
-        //   - 代价：镜内会看到镜筒内壁（无区域裁剪能力，这是 26.2 的硬约束）；
-        //   - 收益：不再有任何「按形态分类的可见性开关」，红点/筒镜/组合镜
-        //           走<b>完全相同</b>的一条路径，自带瞄具出问题时无旁路可藏。
-        //
-        // 真正的解法是屏幕空间圆形裁剪（shader discard），参数已在
-        // SCOPE_UPSTREAM_TRUTH §6.3 列出，但需先单独验证圆心坐标算法 —— 未做。
-
-        // 【Step 2】登记目镜几何，供阶段边界的掩码 pass 使用。
-        //
-        // 只在第一人称登记：镜内裁剪只对开镜的本人有意义，
-        // 第三人称看别人的枪不需要（也没有「镜内」可言）。
-        //
-        // 【顺序要求】必须在 super.submit 之【前】——
-        // 下面选 RenderType 时要看「本帧有没有登记到目镜」来决定用不用裁剪版。
-        //
-        // 【开镜门禁】只在真正开镜时裁剪。不开镜时镜身必须完整 ——
-        // 否则腰射状态下瞄具中间就是个洞，这不是上游的行为。
-        // 上游同样把裁剪半径乘上 aimingProgress（renderOcularAndDivision:
-        // `rad *= getClientAimingProgress(...)`），进度为 0 时半径归零 = 不裁剪。
         boolean maskable = transformType != null && transformType.firstPerson()
                 && !ocularParts.isEmpty()
                 && currentAimingProgress() > AIM_CLIP_START;
-        // 光影开启时禁用 26.2 的离屏掩码裁剪，退回普通瞄具几何。
-        //
-        // 现象：Iris/Sulkan 类光影包会接管主世界的若干 pass（发光实体、天气/雾、后处理等），
-        // 而我们的 scope mask/clip 是一套独立的自定义 RenderPipeline + 离屏 target。
-        // 两者同时启用时，镜内会缺失经验球、蜘蛛/末影人眼睛等自发光层与雾效，甚至镜身本身被裁没。
-        // 这不是崩溃类问题，但比“镜内见到镜筒内壁”的降级更糟，所以有光影时先走安全回退。
-        boolean shaderMaskUnsafe = IrisCompat.shouldDisableScopeMaskUnderShaderPack();
-        if (maskable && !shaderMaskUnsafe) {
-            registerOcularMaskGeometry(poseStack);
-        } else if (shaderMaskUnsafe) {
-            maskable = false;
+
+        // Capture ocular snapshots for stencil writing
+        List<com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot> ocularSnapshots = new ArrayList<>();
+        if (maskable) {
+            for (BedrockPart ocular : ocularParts) {
+                if (ocular.visible && isOcularInActiveGroup(ocular)) {
+                    PoseStack ocularPose = new PoseStack();
+                    ocularPose.last().pose().set(poseStack.last().pose());
+                    ocularPose.last().normal().set(poseStack.last().normal());
+                    List<BedrockPart> path = new ArrayList<>();
+                    for (BedrockPart p = ocular.getParent(); p != null; p = p.getParent()) {
+                        path.add(0, p);
+                    }
+                    for (BedrockPart p : path) {
+                        p.translateAndRotateAndScale(ocularPose);
+                    }
+                    ocularSnapshots.add(com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(
+                            ocular, ocularPose, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F
+                    ));
+                }
+            }
         }
 
-        // 目镜（ocular*）参与 super.submit 时，要按上游规则决定<b>画不画黑片</b>。
-        //
-        // 上游只在 renderOcularAndDivision 里画目镜，而纯红点镜（renderSight）
-        // 压根不调用它、组合镜（selective=true）也只给筒镜组画。
-        // 详见 shouldDrawOcularBlackout 的注释。
-        //
-        // 实现方式是临时把不该画的目镜 visible=false，submit 完在 finally 里还原 ——
-        // BedrockPart 是跨帧共享对象，不还原会污染第三人称与物品栏预览。
-        //
-        // 【Step 3】镜身改用「会被目镜掩码裁剪」的 RenderType，
-        // 复刻上游 scope_body 的 stencilFunc(GL_EQUAL, 0)：只在目镜没盖到处画镜身。
-        //
-        // 任何一环不满足就原样退回 renderType（= RenderTypes.entityCutout），
-        // 也就是当前已 PASS 的行为。最坏情况只是「镜内仍见镜筒内壁」，不会更糟。
+        // Capture body snapshot (hide non-blackout oculars first)
         List<BedrockPart> hiddenOculars = new ArrayList<>();
         if (transformType != null && transformType.firstPerson()) {
             for (BedrockPart ocular : ocularParts) {
@@ -593,37 +548,82 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 }
             }
         }
+        com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot bodySnapshot;
         try {
-            super.submit(poseStack, transformType, collector,
-                    resolveBodyRenderType(renderType, texture, maskable), light, overlay);
+            bodySnapshot = com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.capture(
+                    this, poseStack, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F
+            );
         } finally {
             for (BedrockPart ocular : hiddenOculars) {
                 ocular.visible = true;
             }
         }
 
+        // Render Ocular + Body using Stencil
+        if (maskable && !ocularSnapshots.isEmpty() && !bodySnapshot.isEmpty()) {
+            PoseStack identity = new PoseStack();
+            // 1. Submit Ocular to write stencil
+            collector.submitCustomGeometry(identity, renderType, (entryPose, consumer) -> {
+                org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+                org.lwjgl.opengl.GL11.glClear(org.lwjgl.opengl.GL11.GL_STENCIL_BUFFER_BIT);
+                org.lwjgl.opengl.GL11.glStencilOp(org.lwjgl.opengl.GL11.GL_KEEP, org.lwjgl.opengl.GL11.GL_KEEP, org.lwjgl.opengl.GL11.GL_REPLACE);
+                org.lwjgl.opengl.GL11.glStencilFunc(org.lwjgl.opengl.GL11.GL_ALWAYS, 1, 0xFF);
+                com.mojang.blaze3d.systems.RenderSystem.colorMask(false, false, false, false);
+                com.mojang.blaze3d.systems.RenderSystem.depthMask(false);
+                
+                for (com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
+                    ocularSnap.write(consumer);
+                }
+                
+                com.mojang.blaze3d.systems.RenderSystem.colorMask(true, true, true, true);
+                com.mojang.blaze3d.systems.RenderSystem.depthMask(true);
+                org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+            });
+
+            // 2. Submit Body (drawn only outside ocular)
+            collector.submitCustomGeometry(identity, renderType, (entryPose, consumer) -> {
+                org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+                org.lwjgl.opengl.GL11.glStencilFunc(org.lwjgl.opengl.GL11.GL_EQUAL, 0, 0xFF);
+                bodySnapshot.write(consumer);
+                org.lwjgl.opengl.GL11.glStencilFunc(org.lwjgl.opengl.GL11.GL_ALWAYS, 0, 0xFF);
+                org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+            });
+        } else {
+            // Unmaskable: normal rendering via custom geometry
+            if (!bodySnapshot.isEmpty()) {
+                PoseStack identity = new PoseStack();
+                collector.submitCustomGeometry(identity, renderType, (entryPose, consumer) -> bodySnapshot.write(consumer));
+            }
+        }
+
+        // Render Reticle
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
             ScopeNodeSet active = filterReticleByActiveView(reticleNodes);
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
             if (reticle != null && !active.isEmpty()) {
-                // 准星用【反向裁剪】版：只在目镜盖到处绘制。
-                //
-                // 这是上游 renderDivisionOnly 的等价物：
-                //     stencilFunc(GL_EQUAL, i + 1)   // 模板值 i+1 = 第 i 个目镜的投影区
-                // 也就是说准星【被约束在目镜投影内】。
-                //
-                // 少了这层约束，准星就会溢出镜筒、像贴纸一样固定在屏幕上，
-                // 不随镜框缩放 —— 正是用户实测到的第 2 个问题。
-                //
-                // 注意方向别搞反：镜身是「盖到就 discard」，准星是「没盖到才 discard」。
-                // 两者共用同一张掩码、同一份 shader，靠 SCOPE_MASK_INVERT 区分。
-                RenderType reticleType = resolveReticleRenderType(renderType, texture, maskable);
-                RenderType illuminatedReticleType = resolveIlluminatedReticleRenderType(renderType, texture, maskable);
-                // maskActive：本帧准星是否真的走了反向裁剪。
-                // EtchedReticleRenderer 依赖它决定敢不敢画 division（内含大块遮光板）。
-                boolean maskActive = reticleType != renderType;
+                RenderType baseReticleType = resolveReticleRenderType(renderType, texture, false);
+                RenderType baseIlluminatedType = resolveIlluminatedReticleRenderType(renderType, texture, false);
+                
+                boolean maskActive = maskable;
+                SubmitNodeCollector wrappedCollector = new SubmitNodeCollector() {
+                    @Override
+                    public void submitCustomGeometry(PoseStack pose, RenderType type, CustomGeometry customGeometry) {
+                        collector.submitCustomGeometry(pose, type, (entryPose, consumer) -> {
+                            if (maskActive) {
+                                org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+                                org.lwjgl.opengl.GL11.glStencilFunc(org.lwjgl.opengl.GL11.GL_EQUAL, 1, 0xFF);
+                            }
+                            customGeometry.draw(entryPose, consumer);
+                            if (maskActive) {
+                                org.lwjgl.opengl.GL11.glStencilFunc(org.lwjgl.opengl.GL11.GL_ALWAYS, 0, 0xFF);
+                                org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+                            }
+                        });
+                    }
+                };
+
                 reticle.submitReticle(new IReticleRenderer.Context(
-                        poseStack, collector, transformType, reticleType, illuminatedReticleType,
+                        poseStack, wrappedCollector, transformType, baseReticleType, baseIlluminatedType,
                         light, overlay, currentAimingProgress(), maskActive), active);
             }
         }
@@ -635,272 +635,44 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         }
     }
 
-    /**
-     * 把目镜几何登记进 {@link ScopeMaskGeometry}，供阶段边界的掩码 pass 绘制。
-     *
-     * <h2>为什么必须自己走一遍父级链</h2>
-     * 目镜在构造时被置为 {@code visible = false}，主渲染路径根本不会遍历到它，
-     * 所以拿不到现成的矩阵。这里复刻
-     * {@code BedrockRenderSnapshot#captureSubtree} 的调用约定：
-     * 自底向上收集祖先链 → 自顶向下逐个 {@code translateAndRotateAndScale}，
-     * 得到与主渲染<b>完全一致</b>的模型矩阵。
-     *
-     * <p>与 {@code IlluminatedReticleRenderer#submitOne} 同构 —— 那条路径已被
-     * 多轮实测验证过（准星位置正确），这里沿用同一套写法，不另起炉灶。
-     *
-     * <h2>为什么不用改 visible</h2>
-     * 准星那边要临时打开 {@code visible} 是因为它走
-     * {@code captureSubtree}，而遍历器遇 {@code visible=false} 会直接 return。
-     * 这里<b>不走遍历器</b>，直接取 {@code part.cubes}，
-     * 因此不必碰 {@code visible} —— 少一处跨帧共享状态的改动，就少一个隐患。
-     */
-    private void registerOcularMaskGeometry(PoseStack poseStack) {
-        for (BedrockPart ocular : ocularParts) {
-            if (!isOcularInActiveGroup(ocular)) {
-                // 组合镜：只有【当前正在用的】那一组目镜参与掩码。
-                // 否则另一组的镜片也会把镜身挖穿 —— 用低倍红点时，
-                // 高倍筒镜那一圈会莫名变透明（用户实测到的第 3 个问题）。
-                continue;
-            }
-            java.util.Deque<BedrockPart> chain = new java.util.ArrayDeque<>();
-            for (BedrockPart p = ocular; p != null; p = p.getParent()) {
-                chain.push(p);
-            }
-            poseStack.pushPose();
-            try {
-                // 先套用祖先链（不含 ocular 自身），再交给递归 —— 递归会对每个
-                // 节点（含 ocular）自己套一次变换，与 BedrockPart#render 的结构一致。
-                for (BedrockPart p : chain) {
-                    if (p != ocular) {
-                        p.translateAndRotateAndScale(poseStack);
-                    }
-                }
-                // 【不在这里做开镜过渡】——
-                // 掩码几何始终按目镜的真实姿态登记，过渡在【屏幕空间】完成
-                // （见 ScopeMaskRenderer 的 maskProgress 与 scope_body.fsh）。
-                //
-                // 早前这里按进度缩放过 3D 几何，实测效果是镜内区域从画面外
-                // 「飞」进来，而不是原地由小变大。原因：透视投影下，缩放 3D 物体
-                // 会同时改变它的投影【位置】，不只是大小。
-                //
-                // 上游不是这么做的 —— 它的圆心固定在目镜投影中心，只让半径随进度长：
-                //     centerX/centerY = getBedrockPartCenter(...)   // 固定
-                //     rad = 80 * modifier * aimingProgress          // 只有半径在变
-                // 那是纯粹的二维操作。我们对应的二维操作就是在 shader 里
-                // 按屏幕距离收缩掩码，几何本身不动。
-                collectMaskGeometry(ocular, poseStack);
-            } finally {
-                poseStack.popPose();
-            }
-        }
+    private RenderType resolveBodyRenderType(RenderType original, @Nullable Identifier texture, boolean maskable) {
+        return original;
     }
 
-    /**
-     * 决定镜身用哪个 RenderType：带掩码裁剪的，还是原样。
-     *
-     * <h2>为什么要这么多前置条件</h2>
-     * 这条路径上任何一环出问题，最坏也只能退回「镜内看得见镜筒内壁」——
-     * 那是<b>已经验证 PASS 的状态</b>。绝不能因为裁剪特性坏掉就让瞄具整个不可用。
-     * 所以每个条件都是「不满足就退回」，而不是抛异常。
-     *
-     * @param original 调用方给的原始 RenderType（{@code RenderTypes.entityCutout(贴图)}）
-     * @param texture  该瞄具的贴图；为 {@code null} 时无法构造等价的裁剪版，直接退回
-     * @param maskable 本帧是否登记了目镜几何（第一人称 + 该瞄具确实有目镜）
-     */
-    private RenderType resolveBodyRenderType(RenderType original,
-                                             @Nullable Identifier texture,
-                                             boolean maskable) {
-        if (!maskable) {
-            // 第三人称，或这个配件压根没有目镜（如握把、消音器）—— 不需要裁剪。
-            return original;
-        }
-        if (texture == null) {
-            // 拿不到贴图就没法建等价的裁剪版 RenderType。宁可不裁剪，也不能画错贴图。
-            return original;
-        }
-        if (!RenderConfig.SCOPE_MASK_ENABLE.get()) {
-            // 特性总开关。Step 3 期间仍挂在调试开关下，默认关闭：
-            // 万一有兼容问题，玩家关掉开关就能回到已知可用的状态，无需回滚版本。
-            return original;
-        }
-        // 把掩码 target 的纹理挂到 TextureManager 上，供 shader 采样。
-        // 掩码没画成（target 建不出来 / 绘制失败）时返回 false，此时必须退回，
-        // 否则 shader 会采样到一张陈旧甚至无效的纹理。
-        if (!ScopeMaskTextureHandle.syncToMaskTarget()) {
-            return original;
-        }
-        return ScopeBodyRenderTypes.clipped(texture);
+    private RenderType resolveReticleRenderType(RenderType original, @Nullable Identifier texture, boolean maskable) {
+        return original;
     }
 
-    /**
-     * 决定准星用哪个 RenderType：被约束在镜内的，还是原样。
-     *
-     * <p>前置条件与 {@link #resolveBodyRenderType} <b>完全相同</b>，只是最终
-     * 换成反向裁剪的那一版。两者必须同进同退：若镜身裁了而准星没裁，
-     * 准星会飘在镜外；若准星裁了而镜身没裁，镜内又会被镜身糊住。
-     */
-    private RenderType resolveReticleRenderType(RenderType original,
-                                                @Nullable Identifier texture,
-                                                boolean maskable) {
-        if (!maskable || texture == null || !RenderConfig.SCOPE_MASK_ENABLE.get()) {
-            return original;
-        }
-        if (!ScopeMaskTextureHandle.syncToMaskTarget()) {
-            return original;
-        }
-        return ScopeBodyRenderTypes.reticle(texture);
-    }
-
-    /** 发光准星使用不受方向光影响的专用 RenderType，避免随玩家朝向变亮/变暗。 */
-    private RenderType resolveIlluminatedReticleRenderType(RenderType original,
-                                                          @Nullable Identifier texture,
-                                                          boolean maskable) {
+    private RenderType resolveIlluminatedReticleRenderType(RenderType original, @Nullable Identifier texture, boolean maskable) {
         if (texture == null) {
             return original;
         }
-        if (!maskable || !RenderConfig.SCOPE_MASK_ENABLE.get()) {
-            return ScopeBodyRenderTypes.emissive(texture);
-        }
-        if (!ScopeMaskTextureHandle.syncToMaskTarget()) {
-            return ScopeBodyRenderTypes.emissive(texture);
-        }
-        return ScopeBodyRenderTypes.reticleEmissive(texture);
+        return net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(texture);
     }
 
-    /**
-     * 该目镜是否属于<b>当前激活</b>的镜组。
-     *
-     * <h2>为什么需要它</h2>
-     * 组合镜（如 {@code scope_hamr}、{@code scope_mk5hd}）同时有两个目镜：
-     * {@code ocular_sight}（红点分系统）与 {@code ocular_scope}（筒镜分系统）。
-     * 但玩家一次只用其中一组。
-     *
-     * <p>若两组目镜都写进掩码，没在用的那组也会把镜身挖穿 ——
-     * 表现为「某些瞄具的部分效果缺失」（用户实测：低倍红点状态下，
-     * 高倍筒镜那一圈镜身莫名变透明）。
-     *
-     * <h2>判据可靠性</h2>
-     * 实测默认枪包 4 个组合镜的目镜命名<b>全部</b>带前缀：
-     * <pre>
-     * scope_hamr         ocular_sight / ocular_scope_2
-     * scope_mk5hd        ocular_sight / ocular_scope_2
-     * scope_standard_8x  ocular_sight_2 / ocular_scope
-     * scope_vudu         ocular_sight / ocular_scope_2
-     * </pre>
-     * 这一点比准星那边可靠得多 —— 准星有 {@code scope_vudu} 这种无前缀命名
-     * （{@code division_illuminated}），只能退回全集；目镜没有这个问题。
-     *
-     * <p>{@code views[]} 的取值约定（{@code FirstPersonRenderGunEvent} 写入）：
-     * {@code 1} = 红点组、{@code 2} = 筒镜组，与 {@code sight}/{@code scope}
-     * 前缀一一对应（display json 实测：hamr/vudu 均为 {@code views=[2,1]}）。
-     */
     private boolean isOcularInActiveGroup(BedrockPart ocular) {
         if (activeViewGroup == 0 || !(isScope && isSight)) {
-            // 非组合镜（单一形态），不存在分组问题 —— 全都算数。
             return true;
         }
         Integer activeIndex = activeOcularIndex();
         if (activeIndex == null) {
-            // 该模型的目镜没有分组信息 —— 无从判断，保留。
-            // 与准星过滤同一原则：宁可多画，也不要误删成空掩码。
             return true;
         }
         return ocularByIndex.get(activeIndex) == ocular;
     }
 
-    /**
-     * 当前是否应当把目镜画成<b>不透明黑色镜片</b>。
-     *
-     * <h2>上游的规则（逐行核对 renderSight / renderScope / renderBoth）</h2>
-     * 「画黑片」这一步<b>只存在于 {@code renderOcularAndDivision} 里</b>，
-     * 而三条渲染路径对它的调用情况是：
-     * <pre>
-     * renderScope (纯筒镜)   -> renderOcularAndDivision(selective=false)  画黑片
-     * renderBoth  (组合镜)   -> renderOcularAndDivision(selective=true)   仅【筒镜组】画黑片
-     * renderSight (纯红点)   -> 【根本不调用】                            从不画黑片
-     * </pre>
-     * {@code selective=true} 分支里那段 if/else 说得很清楚：
-     * <pre>
-     * if (selective &amp;&amp; !isScopeOcular.get(i)) {
-     *     // 非筒镜组：只画分划，【跳过目镜黑片】
-     *     renderTempPart(... divisionNodePaths.get(i));
-     * } else {
-     *     // 渲染目镜黑色遮罩
-     *     renderTempPart(... ocularNodePaths.get(i));
-     *     ...
-     * }
-     * </pre>
-     *
-     * <h2>为什么这正是用户报的第 3 个问题</h2>
-     * 现实中红点/全息镜的镜片是<b>透光</b>的，本就不该有黑底；
-     * 只有高倍筒镜因为光路封闭，未对准光轴时才是一片黑。
-     * 我们此前无差别地把所有 {@code ocular*} 都交给 {@code super.submit} 正常渲染，
-     * 于是低倍红点镜（{@code sight_*}）和组合镜的红点组在<b>未开镜</b>时
-     * 都糊着一层本不该有的黑色遮罩。
-     *
-     * <p>注意判据是<b>该目镜是否属于筒镜分系统</b>，而不是「瞄具整体是不是 scope」：
-     * 组合镜的两个目镜要分别判断，红点那个永远不画黑片。
-     */
     private boolean shouldDrawOcularBlackout(BedrockPart ocular) {
         if (isSight && !isScope) {
-            // 纯红点/全息镜：上游 renderSight 从不画黑片。
             return false;
         }
         if (!(isScope && isSight)) {
-            // 纯筒镜：renderScope 用 selective=false，全部画黑片。
             return true;
         }
-        // 组合镜：只有筒镜分系统的那个目镜画黑片。
         for (Map.Entry<Integer, BedrockPart> entry : ocularByIndex.entrySet()) {
             if (entry.getValue() == ocular) {
                 return Boolean.TRUE.equals(ocularIsScopeByIndex.get(entry.getKey()));
             }
         }
         return true;
-    }
-
-    /**
-     * 递归采集一个节点及其<b>所有子节点</b>的立方体。
-     *
-     * <h2>为什么必须递归（第一版就栽在这）</h2>
-     * {@code BedrockModel#loadNewModel} 里有一条容易被忽略的分支：
-     * <b>带 {@code rotation} 的 cube 不会进 {@code bone.cubes}</b>，
-     * 而是被包进一个新建的 {@code BedrockPart} 作为<b>子节点</b>挂上去
-     * （因为单个 cube 的自转必须有自己的变换原点）。
-     *
-     * <p>实测默认枪包：161 个目镜立方体里 <b>101 个带 rotation</b>（63%）。
-     * 第一版只读 {@code ocular.cubes}，等于把这 63% 全漏了 ——
-     * 再叠加 {@code instanceof BedrockCubeBox} 把剩下 37% 也滤光，
-     * 最终一个顶点都没登记，掩码自然全黑、日志也不会打印任何东西
-     * （因为 {@code isEmpty()} 提前 return 了）。
-     *
-     * <p>这里的遍历结构刻意与 {@link BedrockPart#render} 对齐：
-     * 每个节点先 {@code translateAndRotateAndScale}，再收自己的 cubes，
-     * 然后递归子节点。<b>不检查 {@code visible}</b> ——
-     * 目镜自身就是 {@code visible=false}（主画面不画它），
-     * 若按可见性过滤就又会一个都收不到。
-     */
-    private void collectMaskGeometry(BedrockPart part, PoseStack poseStack) {
-        poseStack.pushPose();
-        try {
-            part.translateAndRotateAndScale(poseStack);
-            if (!part.cubes.isEmpty()) {
-                // Entry 的构造函数会拷贝矩阵 —— 必须如此：
-                // poseStack 马上就 popPose 了，而这份数据要活到阶段边界才被消费。
-                //
-                // 关键：把“提交手持物这一刻”的 RenderSystem ModelView 烘焙进掩码矩阵。
-                // 实际瞄具几何在延迟绘制时等价于 Projection * ModelView(submit) * itemPose * vertex；
-                // 若掩码 pass 到阶段边界后再取当前 ModelView，Iris hand path 下会拿到与提交时
-                // 不一致的矩阵，表现为裁剪区域固定在 world north。这里提前合成，mask pass 里
-                // 使用 identity ModelView，保证采样区域跟随提交时的第一人称瞄具。
-                Matrix4f bakedPose = new Matrix4f(RenderSystem.getModelViewMatrixCopy()).mul(poseStack.last().pose());
-                ScopeMaskGeometry.add(bakedPose, part.cubes);
-            }
-            for (BedrockPart child : part.children) {
-                collectMaskGeometry(child, poseStack);
-            }
-        } finally {
-            poseStack.popPose();
-        }
     }
 }

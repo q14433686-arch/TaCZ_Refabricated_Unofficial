@@ -4,7 +4,6 @@ import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
-import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.DeltaTracker;
@@ -35,10 +34,6 @@ public abstract class GameRendererMixin {
                                     Matrix4fc projection,
                                     CallbackInfo ci) {
         this.tacz$renderingItemInHand = true;
-        // renderAllFeatures 每帧被调用多次（世界一次、手持一次），
-        // 瞄具只存在于手持那次。掩码必须只在那次绘制，否则世界那次会先把
-        // target 清空，把手持那次的结果冲掉。
-        ScopeMaskRenderer.setInHandPass(true);
     }
 
     @Inject(method = "renderItemInHand", at = @At("RETURN"))
@@ -47,7 +42,6 @@ public abstract class GameRendererMixin {
                                   Matrix4fc projection,
                                   CallbackInfo ci) {
         this.tacz$renderingItemInHand = false;
-        ScopeMaskRenderer.setInHandPass(false);
     }
 
     @Unique
