@@ -1,0 +1,13 @@
+{
+  "asset_id": "tacz:blood_strike_1",
+  "author": {
+    "color": "gray",
+    "translate": "painting.tacz.blood_strike_1.author"
+  },
+  "height": 2,
+  "title": {
+    "color": "yellow",
+    "translate": "painting.tacz.blood_strike_1.title"
+  },
+  "width": 2
+}

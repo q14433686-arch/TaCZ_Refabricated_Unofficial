@@ -1,0 +1,10 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "lrtactical:item/consumable"
+  },
+  "properties": {
+    "hand_animation_on_swap": false,
+    "swap_animation_scale": 0.0
+  }
+}
