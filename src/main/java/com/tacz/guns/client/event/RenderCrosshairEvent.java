@@ -93,7 +93,7 @@ public class RenderCrosshairEvent {
 
     public static void onRenderTick(RenderTickEvent event) {
         // 奇迹的是，RenderGameOverlayEvent.PreLayer 事件中，screen 还未被赋值...
-        isRefitScreen = Minecraft.getInstance().gui.screen() instanceof GunRefitScreen;
+        isRefitScreen = Minecraft.getInstance().screen instanceof GunRefitScreen;
     }
 
     private static void renderCrosshair(GuiGraphicsExtractor graphics, Window window) {

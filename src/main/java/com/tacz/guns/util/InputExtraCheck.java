@@ -9,11 +9,11 @@ public final class InputExtraCheck {
     public static boolean isInGame() {
         Minecraft mc = Minecraft.getInstance();
         // 不能是加载界面
-        if (mc.gui.overlay() != null) {
+        if (mc.getOverlay() != null) {
             return false;
         }
-        // 不能打开任何 GUI - 26.2 GUI重组: screen -> gui.screen()
-        if (mc.gui.screen() != null) {
+        // 不能打开任何 GUI
+        if (mc.screen != null) {
             return false;
         }
         // 当前窗口捕获鼠标操作

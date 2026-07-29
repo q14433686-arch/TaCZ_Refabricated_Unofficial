@@ -45,7 +45,7 @@ public class ServerMessageCraft implements CustomPacketPayload {
     @Environment(EnvType.CLIENT)
     private static void updateScreen(int containerId) {
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null && player.containerMenu.containerId == containerId && Minecraft.getInstance().gui.screen() instanceof GunSmithTableScreen screen) {
+        if (player != null && player.containerMenu.containerId == containerId && Minecraft.getInstance().screen instanceof GunSmithTableScreen screen) {
             screen.updateIngredientCount();
         }
     }

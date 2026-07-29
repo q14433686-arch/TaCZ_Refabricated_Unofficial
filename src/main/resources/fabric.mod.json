@@ -5,8 +5,8 @@
     "lrtactical"
   ],
   "version": "${version}",
-  "name": "[UNOFFICIAL] TaCZ Refabricated (26.2 Alpha 2)",
-  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. ALPHA 2 build for Minecraft 26.2 - not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.2.alpha.N' build metadata so gun packs declaring a 'tacz' version requirement continue to load.",
+  "name": "[UNOFFICIAL] TaCZ Refabricated (26.1.2 Alpha 1)",
+  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. ALPHA 1 build for Minecraft 26.1.2 - not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.1.2.alpha.N' build metadata so gun packs declaring a 'tacz' version requirement continue to load.",
   "authors": [
     "Sh1roCu"
   ],
@@ -51,8 +51,8 @@
   "depends": {
     "fabricloader": ">=0.19.3",
     "fabric-api": "*",
-    "minecraft": "26.2",
+    "minecraft": "26.1.2",
     "java": ">=25",
-    "forgeconfigapiport": ">=26.2.0"
+    "forgeconfigapiport": ">=26.1.0"
   }
 }

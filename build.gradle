@@ -200,9 +200,9 @@ dependencies {
     // MKB (Modern Keybinding)
     // implementation(include("maven.modrinth:modernkeybinding:1.20.X-1.2.0"))
 
-    // Forge Config API Port - 26.2 compatible (ForgeConfigSpec + ForgeConfigRegistry)
-    // 26.2.1 Fabric: https://github.com/Fuzss/forge-config-api-port (branch 26.2.x)
-    implementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.2.1"
+    // Forge Config API Port - 26.1.2 compatible (ForgeConfigSpec + ForgeConfigRegistry)
+    // 26.1.5 Fabric: https://github.com/Fuzss/forge-config-api-port (branch 26.1.x)
+    implementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.1.5"
     // 备用 (如果上面 maven 仓库不可用): curse.maven:forge-config-api-port-547434:8292030
 
     // ModMenu — 26.2 (via Modrinth maven)

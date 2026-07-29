@@ -44,7 +44,9 @@ public class RenderHeadShotAABB {
             // 扩张 0.01，避免和原版显示重合
             aabb = new AABB(-width / 2, eyeHeight - 0.25, -width / 2, width / 2, eyeHeight + 0.25, width / 2).inflate(0.01);
         }
-        event.getSubmitNodeCollector().submitShapeOutline(event.getPoseStack(), net.minecraft.world.phys.shapes.Shapes.create(aabb),
-                RenderTypes.lines(), 0xFFFFFF00, 1.0F, false);
+        AABB finalAabb = aabb;
+        event.getSubmitNodeCollector().submitCustomGeometry(event.getPoseStack(), RenderTypes.lines(), (entryPose, consumer) -> {
+            net.minecraft.client.renderer.LevelRenderer.renderLineBox(entryPose, consumer, finalAabb, 1.0F, 1.0F, 0.0F, 1.0F);
+        });
     }
 }

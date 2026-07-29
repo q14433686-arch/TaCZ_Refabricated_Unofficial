@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class PreventsHotbarEvent {
     public static void onRenderHotbarEvent(AtomicBoolean cancelled) {
         // todo 需要测试行为
-        Screen screen = Minecraft.getInstance().gui.screen();
+        Screen screen = Minecraft.getInstance().screen;
         // 枪械合成台界面关闭背景
         if (screen instanceof GunSmithTableScreen) {
             cancelled.set(true);

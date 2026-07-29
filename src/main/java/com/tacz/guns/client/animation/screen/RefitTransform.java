@@ -62,7 +62,7 @@ public class RefitTransform {
         if (refitScreenOpeningTimestamp == -1) {
             refitScreenOpeningTimestamp = System.currentTimeMillis();
         }
-        if (Minecraft.getInstance().gui.screen() instanceof GunRefitScreen) {
+        if (Minecraft.getInstance().screen instanceof GunRefitScreen) {
             refitScreenOpeningProgress += (System.currentTimeMillis() - refitScreenOpeningTimestamp) / (REFIT_SCREEN_TRANSFORM_TIMES * 1000);
             if (refitScreenOpeningProgress > 1) {
                 refitScreenOpeningProgress = 1;

@@ -23,7 +23,7 @@ final class PalRotationAdjustment implements Function<String, Optional<Adjustmen
     @Override
     public Optional<AdjustmentModifier.PartModifier> apply(String partName) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (avatar == minecraft.player && minecraft.gui.screen() != null) {
+        if (avatar == minecraft.player && minecraft.screen != null) {
             return Optional.empty();
         }
         if (avatar.getVehicle() != null && "body".equals(partName)) {

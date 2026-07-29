@@ -30,10 +30,10 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
     private long tacz$KeepTimestamp;
 
     /**
-     * 26.2 迁移: renderHandsWithItems → submitHandsWithItems
-     * 新签名 (26.2): submitHandsWithItems(float, PoseStack, SubmitNodeCollector, LocalPlayer, int)
+     * 26.1.2 兼容: renderHandsWithItems 在 26.2 被重命名为 submitHandsWithItems
+     * 新签名 (26.1.2): renderHandsWithItems(float, PoseStack, SubmitNodeCollector, LocalPlayer, int)
      */
-    @Inject(method = "submitHandsWithItems", at = @At("HEAD"))
+    @Inject(method = "renderHandsWithItems", at = @At("HEAD"))
     public void beforeHandRender(float pPartialTicks, PoseStack pMatrixStack, net.minecraft.client.renderer.SubmitNodeCollector pCollector, LocalPlayer pPlayerEntity, int pCombinedLight, CallbackInfo ci) {
         BeforeRenderHandEvent.CALLBACK.invoker().post(new BeforeRenderHandEvent(pMatrixStack));
     }
@@ -46,10 +46,10 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
      * <p>上游 1.21.1 依赖 SimpleBedrockModel 的 {@code RenderHandEvent}，而 SBM 的 mixin
      * （已核对 {@code Sh1roCu/SimpleBedrockModel-Fabric} 源码）注入在
      * {@code ItemInHandRenderer#renderArmWithItem} 的 <b>HEAD</b> 并 {@code ci.cancel()}，
-     * 也就是说 TACZ 拿到的 PoseStack 是<b>只经过 submitHandsWithItems 的视角回摆</b>、
+     * 也就是说 TACZ 拿到的 PoseStack 是<b>只经过 renderHandsWithItems 的视角回摆</b>、
      * <b>尚未经过任何手臂变换</b>的干净矩阵。</p>
      *
-     * <p>26.2 移植时改走客户端 ItemModel（{@code tacz:dynamic_item}）路径，
+     * <p>26.1.2 移植时改走客户端 ItemModel（{@code tacz:dynamic_item}）路径，
      * 渲染发生在 {@code renderItem(...)} 内部 —— 那时 vanilla 已经额外施加了：</p>
      * <ol>
      *   <li>{@code applyItemArmTransform}：{@code translate(±0.56, -0.52 + 装备高度*-0.6, -0.72)}
@@ -59,16 +59,16 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
      *   <li>装备切换的 {@code inverseArmHeight} 抬手动画 —— 同样与 TACZ 的收放枪动画打架。</li>
      * </ol>
      *
-     * <p><b>修复</b>：在 {@code submitArmWithItem} 的 HEAD 拦截并取消，改为在这里直接调用
+     * <p><b>修复</b>：在 {@code renderArmWithItem} 的 HEAD 拦截并取消，改为在这里直接调用
      * TACZ 的第一人称渲染 —— 与 SBM 的注入点、取消语义完全一致，从而拿到与 1.21.1
      * 相同语义的干净 PoseStack。</p>
      *
-     * <p>注意：{@code submitHandsWithItems} 里的
+     * <p>注意：{@code renderHandsWithItems} 里的
      * {@code mulPose(XP(viewXRot - xBob) * 0.1)} / {@code mulPose(YP(viewYRot - yBob) * 0.1)}
      * 视角回摆<b>仍然保留</b>（它在本方法之前执行），这正是
      * {@code GunItemRendererWrapper#renderFirstPerson} 开头那段"逆转原版延滞效果"所预期的输入。</p>
      */
-    @Inject(method = "submitArmWithItem", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderArmWithItem", at = @At("HEAD"), cancellable = true)
     private void tacz$submitArmWithGun(net.minecraft.client.player.AbstractClientPlayer player,
                                        float frameInterp,
                                        float xRot,

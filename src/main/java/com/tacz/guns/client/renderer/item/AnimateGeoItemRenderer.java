@@ -56,11 +56,11 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         // 第一人称<b>不</b>在这里处理。
         //
         // 该方法由 ItemModel(tacz:dynamic_item) 的 SpecialModelRenderer 调用，此时 vanilla 的
-        // ItemInHandRenderer#submitArmWithItem 已经施加了 applyItemArmTransform（±0.56/-0.52/-0.72）、
+        // ItemInHandRenderer#renderArmWithItem 已经施加了 applyItemArmTransform（±0.56/-0.52/-0.72）、
         // 挥动动画和装备抬手动画，PoseStack 不再是上游 1.21.1 所预期的干净矩阵 ——
         // 会导致枪相对摄像机位置/缩放错误，且移动时与 TACZ 动画叠加产生抖动。
         //
-        // 正确入口是 ItemInHandRendererMixin#tacz$submitArmWithGun，它在 submitArmWithItem 的 HEAD
+        // 正确入口是 ItemInHandRendererMixin#tacz$submitArmWithGun，它在 renderArmWithItem 的 HEAD
         // 拦截并取消，语义与 SimpleBedrockModel 的 RenderHandEvent 注入点一致。详见该 mixin 注释。
         //
         // 这里仍需处理 firstPerson 分支的兜底：正常情况下走不到（mixin 已 cancel），
