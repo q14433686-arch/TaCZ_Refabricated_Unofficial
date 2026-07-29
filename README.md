@@ -207,9 +207,9 @@ Arcana 没有 Fabric / 26.1.2 版本，且其格式与密钥未公开。
 
 - **镜内渲染是按 26.1.2 调度重写的**：实机证明 AMD 驱动拒绝在 DEPTH32 FBO 上追加
   standalone STENCIL8，而替换 depth attachment 又会破坏 Iris 的 hand 合成。当前实现不再修改 FBO：
-  活动 ocular 先以“只写深度、不写颜色”的管线绘制，后方镜身自然无法通过深度测试；镜身完成后
-  同一 ocular 以 far depth 清理孔区，避免挡掉随后绘制的水、雾、粒子和体积云。小型发光准星使用
-  不受 ocular depth 遮挡的专用 HAND_TRANSLUCENT 管线。
+  写入 ocular depth 前先备份 Iris/vanilla 原始世界深度；镜身完成后通过 depth-only FBO blit 精确
+  恢复，而不是写 far depth。这样水、云、雾和粒子既不会被目镜挡掉，也不会无视地形叠在前景上。
+  小型发光准星使用不受 ocular depth 遮挡的专用 HAND_TRANSLUCENT 管线。
   客户端配置 `[render]` 下应存在 `ScopeMaskEnable = true`；纯蚀刻 division 暂时安全跳过。
 - **枪身/手臂不做镜内排除**：上游同样不做，非移植缺陷。
 - 三个工作台（`workbench_a/b/c`）的名称取自枪包数据，上下游均未提供内置译名。

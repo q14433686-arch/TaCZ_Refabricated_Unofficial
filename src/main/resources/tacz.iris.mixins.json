@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.tacz.guns.mixin.client.iris",
+  "compatibilityLevel": "JAVA_17",
+  "plugin": "com.tacz.guns.mixin.client.iris.IrisCompatMixinPlugin",
+  "client": [
+    "IrisDepthRestoreShaderMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

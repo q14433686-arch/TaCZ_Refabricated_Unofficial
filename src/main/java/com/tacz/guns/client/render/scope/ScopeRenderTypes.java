@@ -13,7 +13,6 @@ import net.minecraft.client.renderer.rendertype.OutputTarget;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.opengl.GL11;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +33,7 @@ public final class ScopeRenderTypes {
      */
     private static final RenderPipeline DEPTH_APERTURE_PIPELINE = createDepthAperturePipeline();
 
-    /** Restores the aperture region to far depth before Iris renders water/fog/particles/clouds. */
+    /** Restores the aperture region from the exact world-depth backup before later translucent world passes. */
     private static final RenderPipeline DEPTH_CLEANUP_PIPELINE = createDepthCleanupPipeline();
 
     /** Small illuminated reticles are safe to draw without the old division/blackout geometry. */
@@ -65,17 +64,28 @@ public final class ScopeRenderTypes {
                 .useLightmap()
                 .useOverlay()
                 .createRenderSetup();
-        return RenderType.create("tacz_scope_depth_aperture", setup);
+        RenderType base = RenderType.create("tacz_scope_depth_aperture_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_depth_aperture",
+                base,
+                ScopeDepthCopyState.Operation.BACKUP
+        );
     }
 
     private static RenderType createDepthCleanupType(Identifier texture) {
         RenderSetup setup = RenderSetup.builder(DEPTH_CLEANUP_PIPELINE)
                 .withTexture("Sampler0", texture)
+                // Satisfy RenderPass validation; ScopeDepthCopyState replaces this binding with backup depth.
+                .withTexture(ScopeDepthCopyState.SAMPLER_UNIFORM, texture)
                 .useLightmap()
                 .useOverlay()
                 .createRenderSetup();
         RenderType base = RenderType.create("tacz_scope_depth_cleanup_base", setup);
-        return new FarDepthRenderType(base);
+        return new DepthCopyRenderType(
+                "tacz_scope_depth_cleanup",
+                base,
+                ScopeDepthCopyState.Operation.RESTORE
+        );
     }
 
     private static RenderType createVisibleReticleType(Identifier texture) {
@@ -113,6 +123,9 @@ public final class ScopeRenderTypes {
         RenderPipeline source = RenderPipelines.ENTITY_CUTOUT;
         RenderPipeline.Builder builder = clonePipeline(source,
                 Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_depth_cleanup"));
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_depth_cleanup"));
+        builder.withSampler(ScopeDepthCopyState.SAMPLER_UNIFORM);
 
         ColorTargetState sourceColor = source.getColorTargetState();
         builder.withColorTargetState(new ColorTargetState(
@@ -179,22 +192,26 @@ public final class ScopeRenderTypes {
         }
     }
 
-    /** RenderPipeline does not manage depth range, so it is safe to bracket the synchronous delegated draw. */
-    private static final class FarDepthRenderType extends RenderType {
+    /** Marks the synchronous delegated draw so GlCommandEncoder can back up or restore the active depth FBO. */
+    private static final class DepthCopyRenderType extends RenderType {
         private final RenderType wrapped;
+        private final ScopeDepthCopyState.Operation operation;
 
-        private FarDepthRenderType(RenderType wrapped) {
-            super("tacz_scope_far_depth_cleanup", FAKE_SETUP);
+        private DepthCopyRenderType(String name,
+                                    RenderType wrapped,
+                                    ScopeDepthCopyState.Operation operation) {
+            super(name, FAKE_SETUP);
             this.wrapped = wrapped;
+            this.operation = operation;
         }
 
         @Override
         public void draw(MeshData meshData) {
-            GL11.glDepthRange(1.0D, 1.0D);
+            ScopeDepthCopyState.begin(this.operation);
             try {
                 this.wrapped.draw(meshData);
             } finally {
-                GL11.glDepthRange(0.0D, 1.0D);
+                ScopeDepthCopyState.end();
             }
         }
 

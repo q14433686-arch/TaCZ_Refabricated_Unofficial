@@ -206,12 +206,21 @@ body draw 仍会再画一遍不透明黑色目镜，从而完全覆盖镜内。�
 它不会盖住世界颜色，却会让后方 scope-body fragment 无法通过普通 depth test。枪体随后仍在同一
 Iris/vanilla depth attachment 中绘制，因此不存在跨层截断或基于场景距离的透明合成差异。
 
-镜身完成后，再以同一 ocular 几何和 `glDepthRange(1,1)` 把孔区恢复为 far depth；否则 Iris 在
-solid-hand 之后绘制的水面、水体后处理、雾、粒子和体积云都会被近处 ocular depth 拒绝。
+镜身完成后必须恢复原始世界 depth；否则 Iris 在 solid-hand 之后绘制的水面、水体后处理、雾、
+粒子和体积云都会被近处 ocular depth 拒绝。
 
 发光点/十字通常是小型独立节点，改用 `depthTest=ALWAYS, writeDepth=false` 的
 `HAND_TRANSLUCENT` pipeline；包含大面积 blackout panel 的纯蚀刻 division 在没有 inside mask 时
-继续安全跳过。这个降级少了上游的蚀刻分划和精确世界 depth 恢复，但不再碰 FBO 生命周期。
+继续安全跳过。该降级少了上游的蚀刻分划，但不再碰目标 FBO 的 attachment 生命周期。
+
+### 5.10 far depth 不是原始世界 depth
+
+第四轮先把孔区写到 far plane，水和云虽然恢复，却会无视前方实体/地形叠加在所有物体上。far 只
+表示“没有遮挡”，无法表达备份前该像素的真实 terrain/entity depth。
+
+当前在 aperture writer 真正 draw 前，把目标 FBO 的 depth blit 到同格式、可采样的 backup depth
+texture；body 完成后只重绘 ocular cleanup 几何，其 fragment 从 backup 按 `gl_FragCoord` 采样并写
+`gl_FragDepth`。因此只恢复镜孔像素，不会抹掉已绘制镜框的深度。
 
 ## 6. 当前修复架构
 
@@ -239,12 +248,15 @@ solid-hand 之后绘制的水面、水体后处理、雾、粒子和体积云都
 body 使用原始 RenderType 与原始 FBO/depth attachment。被 invisible ocular 覆盖的后方像素自然
 失败，其他镜框/枪体仍按正常深度关系绘制。
 
-### 6.3 far-depth cleanup
+### 6.3 精确 depth backup / restore
 
-body 完成后，同一 ocular 快照通过 `ColorTargetState.WRITE_NONE`、`depthTest=ALWAYS_PASS`、
-`writeDepth=true` 再绘制一次。专用 RenderType 在同步 draw 外围临时设置 `glDepthRange(1,1)`，因此
-只把孔区深度写回 far plane；finally 立即恢复 `[0,1]`。该状态不属于 RenderPipeline，也不修改
-任何 FBO/texture。这样 Iris 后续 translucent world pass 不会把 ocular 当成近处实体。
+aperture RenderType 的同步 draw 由 `ScopeDepthCopyState.Operation.BACKUP` 标记；
+`GlCommandEncoder#drawFromBuffers` HEAD 此时已经位于 Iris 实际 FBO，代码读取 depth attachment 的
+internal format/尺寸，创建完全同格式的 sampleable depth texture 和 depth-only FBO，再执行 blit。
+
+body 后的 cleanup geometry 由 `Operation.RESTORE` 标记。vanilla cleanup fragment 直接写备份深度；
+Iris 的 `ShaderCreator` 只注入一个默认关闭的同等分支，GlCommandEncoder 仅在 cleanup draw 把 raw
+sampler/uniform 打开。没有 attachment 替换、texture 重定义、整张 depth 覆盖或近似 far depth。
 
 ### 6.4 visible-reticle pipeline
 
@@ -257,10 +269,9 @@ body 完成后，同一 ocular 快照通过 `ColorTargetState.WRITE_NONE`、`dep
 这让小型发光节点不被 ocular depth writer 挡住。`EtchedReticleRenderer` 收到
 `maskActive=false`，因此不会提交可能含 32×32/96×34 blackout panel 的 division 子树。
 
-三条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册，确保 ShaderManager 首次
-reload 已经编译；没有 `GlCommandEncoder` mixin、没有 stencil attachment、没有 depth texture
-重定义，也没有 shader reload/resize 清理状态。cleanup 的 RenderType 构造器通过最小 Access Widener
-开放，仅用于同步包裹 `glDepthRange`。
+三条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
+`GlCommandEncoder` mixin 负责 backup 与 cleanup sampler 绑定；可选 Iris mixin 只补 dormant fragment
+branch。RenderType 构造器通过 Access Widener 开放，用于同步标记 BACKUP/RESTORE 操作。
 
 ## 7. 依赖版本审计（2026-07-30）
 
