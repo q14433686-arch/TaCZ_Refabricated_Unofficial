@@ -292,16 +292,6 @@ public final class ScopeDepthCopyState {
                 || internalFormat == GL32.GL_DEPTH32F_STENCIL8;
     }
 
-    private static void disableRestoreMode(int program) {
-        if (program <= 0) {
-            return;
-        }
-        int modeLocation = GL20.glGetUniformLocation(program, MODE_UNIFORM);
-        if (modeLocation >= 0) {
-            GL20.glUniform1i(modeLocation, 0);
-        }
-    }
-
     private static void clearGlErrors() {
         while (GL11.glGetError() != GL11.GL_NO_ERROR) {
             // drain stale errors so blit diagnostics are attributable
