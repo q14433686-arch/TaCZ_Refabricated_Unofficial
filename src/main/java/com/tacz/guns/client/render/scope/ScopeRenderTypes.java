@@ -4,12 +4,16 @@ import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.CompareOp;
+import com.mojang.blaze3d.vertex.MeshData;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.rendertype.OutputTarget;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
+import org.lwjgl.opengl.GL11;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +21,11 @@ import java.util.Optional;
 
 /** Render types for the depth-aperture scope fallback used on Minecraft 26.1.2. */
 public final class ScopeRenderTypes {
+    private static final RenderSetup FAKE_SETUP = RenderSetup.builder(RenderPipelines.GUI_TEXTURED)
+            .createRenderSetup();
+
     private static final Map<Identifier, RenderType> DEPTH_APERTURES = new HashMap<>();
+    private static final Map<Identifier, RenderType> DEPTH_CLEANUPS = new HashMap<>();
     private static final Map<Identifier, RenderType> VISIBLE_RETICLES = new HashMap<>();
 
     /**
@@ -25,6 +33,9 @@ public final class ScopeRenderTypes {
      * Scope-body fragments behind that geometry fail their ordinary depth test, leaving world color visible.
      */
     private static final RenderPipeline DEPTH_APERTURE_PIPELINE = createDepthAperturePipeline();
+
+    /** Restores the aperture region to far depth before Iris renders water/fog/particles/clouds. */
+    private static final RenderPipeline DEPTH_CLEANUP_PIPELINE = createDepthCleanupPipeline();
 
     /** Small illuminated reticles are safe to draw without the old division/blackout geometry. */
     private static final RenderPipeline VISIBLE_RETICLE_PIPELINE = createVisibleReticlePipeline();
@@ -40,6 +51,10 @@ public final class ScopeRenderTypes {
         return DEPTH_APERTURES.computeIfAbsent(texture, ScopeRenderTypes::createDepthApertureType);
     }
 
+    public static RenderType depthCleanup(Identifier texture) {
+        return DEPTH_CLEANUPS.computeIfAbsent(texture, ScopeRenderTypes::createDepthCleanupType);
+    }
+
     public static RenderType visibleReticle(Identifier texture) {
         return VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createVisibleReticleType);
     }
@@ -51,6 +66,16 @@ public final class ScopeRenderTypes {
                 .useOverlay()
                 .createRenderSetup();
         return RenderType.create("tacz_scope_depth_aperture", setup);
+    }
+
+    private static RenderType createDepthCleanupType(Identifier texture) {
+        RenderSetup setup = RenderSetup.builder(DEPTH_CLEANUP_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .useLightmap()
+                .useOverlay()
+                .createRenderSetup();
+        RenderType base = RenderType.create("tacz_scope_depth_cleanup_base", setup);
+        return new FarDepthRenderType(base);
     }
 
     private static RenderType createVisibleReticleType(Identifier texture) {
@@ -81,6 +106,23 @@ public final class ScopeRenderTypes {
 
         RenderPipeline pipeline = RenderPipelines.register(builder.build());
         IrisCompat.assignPipelineToIris(pipeline, "HAND", "scope_depth_aperture");
+        return pipeline;
+    }
+
+    private static RenderPipeline createDepthCleanupPipeline() {
+        RenderPipeline source = RenderPipelines.ENTITY_CUTOUT;
+        RenderPipeline.Builder builder = clonePipeline(source,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_depth_cleanup"));
+
+        ColorTargetState sourceColor = source.getColorTargetState();
+        builder.withColorTargetState(new ColorTargetState(
+                sourceColor.blendFunction(),
+                ColorTargetState.WRITE_NONE
+        ));
+        builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true));
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        IrisCompat.assignPipelineToIris(pipeline, "HAND", "scope_depth_cleanup");
         return pipeline;
     }
 
@@ -134,6 +176,81 @@ public final class ScopeRenderTypes {
             }
         } catch (NumberFormatException ignored) {
             builder.withShaderDefine(name);
+        }
+    }
+
+    /** RenderPipeline does not manage depth range, so it is safe to bracket the synchronous delegated draw. */
+    private static final class FarDepthRenderType extends RenderType {
+        private final RenderType wrapped;
+
+        private FarDepthRenderType(RenderType wrapped) {
+            super("tacz_scope_far_depth_cleanup", FAKE_SETUP);
+            this.wrapped = wrapped;
+        }
+
+        @Override
+        public void draw(MeshData meshData) {
+            GL11.glDepthRange(1.0D, 1.0D);
+            try {
+                this.wrapped.draw(meshData);
+            } finally {
+                GL11.glDepthRange(0.0D, 1.0D);
+            }
+        }
+
+        @Override
+        public boolean hasBlending() {
+            return this.wrapped.hasBlending();
+        }
+
+        @Override
+        public OutputTarget outputTarget() {
+            return this.wrapped.outputTarget();
+        }
+
+        @Override
+        public int bufferSize() {
+            return this.wrapped.bufferSize();
+        }
+
+        @Override
+        public VertexFormat format() {
+            return this.wrapped.format();
+        }
+
+        @Override
+        public VertexFormat.Mode mode() {
+            return this.wrapped.mode();
+        }
+
+        @Override
+        public Optional<RenderType> outline() {
+            return this.wrapped.outline();
+        }
+
+        @Override
+        public boolean isOutline() {
+            return this.wrapped.isOutline();
+        }
+
+        @Override
+        public RenderPipeline pipeline() {
+            return this.wrapped.pipeline();
+        }
+
+        @Override
+        public boolean affectsCrumbling() {
+            return this.wrapped.affectsCrumbling();
+        }
+
+        @Override
+        public boolean canConsolidateConsecutiveGeometry() {
+            return this.wrapped.canConsolidateConsecutiveGeometry();
+        }
+
+        @Override
+        public boolean sortOnUpload() {
+            return this.wrapped.sortOnUpload();
         }
     }
 }

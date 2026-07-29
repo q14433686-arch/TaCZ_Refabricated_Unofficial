@@ -54,9 +54,10 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
 
     // SubmitNodeStorage renders order keys in ascending order (Int2ObjectAVLTreeMap). Custom geometry inside
     // one order is grouped by HashMap<RenderType, ...>, so distinct RenderTypes alone do NOT guarantee
-    // aperture -> body -> reticle order. Keep each phase in its own ordered collection.
-    private static final int SCOPE_APERTURE_ORDER = -2;
-    private static final int SCOPE_BODY_ORDER = -1;
+    // aperture -> body -> depth cleanup -> gun(default 0) -> reticle order.
+    private static final int SCOPE_APERTURE_ORDER = -3;
+    private static final int SCOPE_BODY_ORDER = -2;
+    private static final int SCOPE_DEPTH_CLEANUP_ORDER = -1;
     private static final int SCOPE_RETICLE_ORDER = 1;
 
     /**
@@ -557,6 +558,16 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             // behind it now fail their normal depth test without stencil or framebuffer attachment changes.
             collector.order(SCOPE_BODY_ORDER).submitCustomGeometry(identity, renderType,
                     (entryPose, consumer) -> bodySnapshot.write(consumer));
+
+            // Restore only the aperture pixels to far depth. Iris renders water, fog, particles and volumetric
+            // clouds after its solid-hand pass; leaving the near ocular depth would incorrectly suppress them.
+            RenderType depthCleanup = ScopeRenderTypes.depthCleanup(texture);
+            collector.order(SCOPE_DEPTH_CLEANUP_ORDER).submitCustomGeometry(identity, depthCleanup,
+                    (entryPose, consumer) -> {
+                        for (com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
+                            ocularSnap.write(consumer);
+                        }
+                    });
         } else if (!bodySnapshot.isEmpty()) {
             PoseStack identity = new PoseStack();
             collector.submitCustomGeometry(identity, renderType,

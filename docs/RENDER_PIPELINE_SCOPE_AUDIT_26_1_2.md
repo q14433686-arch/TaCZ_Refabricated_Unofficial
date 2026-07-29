@@ -206,9 +206,12 @@ body draw 仍会再画一遍不透明黑色目镜，从而完全覆盖镜内。�
 它不会盖住世界颜色，却会让后方 scope-body fragment 无法通过普通 depth test。枪体随后仍在同一
 Iris/vanilla depth attachment 中绘制，因此不存在跨层截断或基于场景距离的透明合成差异。
 
+镜身完成后，再以同一 ocular 几何和 `glDepthRange(1,1)` 把孔区恢复为 far depth；否则 Iris 在
+solid-hand 之后绘制的水面、水体后处理、雾、粒子和体积云都会被近处 ocular depth 拒绝。
+
 发光点/十字通常是小型独立节点，改用 `depthTest=ALWAYS, writeDepth=false` 的
 `HAND_TRANSLUCENT` pipeline；包含大面积 blackout panel 的纯蚀刻 division 在没有 inside mask 时
-继续安全跳过。这个降级少了上游的蚀刻分划和渐进圆孔，但不再碰 FBO 生命周期。
+继续安全跳过。这个降级少了上游的蚀刻分划和精确世界 depth 恢复，但不再碰 FBO 生命周期。
 
 ## 6. 当前修复架构
 
@@ -216,8 +219,9 @@ Iris/vanilla depth attachment 中绘制，因此不存在跨层截断或基于�
 
 `BedrockAttachmentModel` 提交：
 
-- order `-2`：活动 ocular 的 invisible depth aperture；
-- order `-1`：移除了活动 ocular 的普通 attachment body；
+- order `-3`：活动 ocular 的 invisible depth aperture；
+- order `-2`：移除了活动 ocular 的普通 attachment body；
+- order `-1`：同一 ocular 的 far-depth cleanup；
 - order `1`：小型 illuminated reticle（纯 etched division 安全跳过）。
 
 使用 `SubmitNodeCollector.order(int)` 是必要的，因为 custom geometry 在单个 order 内按
@@ -235,7 +239,14 @@ Iris/vanilla depth attachment 中绘制，因此不存在跨层截断或基于�
 body 使用原始 RenderType 与原始 FBO/depth attachment。被 invisible ocular 覆盖的后方像素自然
 失败，其他镜框/枪体仍按正常深度关系绘制。
 
-### 6.3 visible-reticle pipeline
+### 6.3 far-depth cleanup
+
+body 完成后，同一 ocular 快照通过 `ColorTargetState.WRITE_NONE`、`depthTest=ALWAYS_PASS`、
+`writeDepth=true` 再绘制一次。专用 RenderType 在同步 draw 外围临时设置 `glDepthRange(1,1)`，因此
+只把孔区深度写回 far plane；finally 立即恢复 `[0,1]`。该状态不属于 RenderPipeline，也不修改
+任何 FBO/texture。这样 Iris 后续 translucent world pass 不会把 ocular 当成近处实体。
+
+### 6.4 visible-reticle pipeline
 
 发光准星从 `ENTITY_TRANSLUCENT_EMISSIVE` 克隆，并设置：
 
@@ -246,9 +257,10 @@ body 使用原始 RenderType 与原始 FBO/depth attachment。被 invisible ocul
 这让小型发光节点不被 ocular depth writer 挡住。`EtchedReticleRenderer` 收到
 `maskActive=false`，因此不会提交可能含 32×32/96×34 blackout panel 的 division 子树。
 
-两条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册，确保 ShaderManager 首次
+三条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册，确保 ShaderManager 首次
 reload 已经编译；没有 `GlCommandEncoder` mixin、没有 stencil attachment、没有 depth texture
-重定义，也没有 shader reload/resize 清理状态。
+重定义，也没有 shader reload/resize 清理状态。cleanup 的 RenderType 构造器通过最小 Access Widener
+开放，仅用于同步包裹 `glDepthRange`。
 
 ## 7. 依赖版本审计（2026-07-30）
 
