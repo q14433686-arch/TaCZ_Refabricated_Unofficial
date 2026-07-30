@@ -83,8 +83,54 @@ public class PathPackResources extends AbstractPackResources {
 
     @Override
     public void listResources(PackType type, String namespace, String path, ResourceOutput resourceOutput) {
-        FileUtil.decomposePath(path).result().ifPresent(parts ->
-                net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), parts, resourceOutput));
+        if (type == PackType.SERVER_DATA && "recipe".equals(path)) {
+            // 正常 recipe/，带转换
+            ResourceOutput transformingOutput = (location, supplier) -> {
+                var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, supplier);
+                resourceOutput.accept(location, wrapped);
+            };
+            FileUtil.decomposePath(path).result().ifPresent(parts ->
+                    net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), parts, transformingOutput));
+
+            // 旧目录 recipes/ 映射为 recipe/
+            FileUtil.decomposePath("recipes").result().ifPresent(legacyParts -> {
+                ResourceOutput legacyOutput = (location, supplier) -> {
+                    var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
+                    try {
+                        try (var in = supplier.get().get()) {
+                            byte[] bytes = in.readAllBytes();
+                            String txt = new String(bytes, java.nio.charset.StandardCharsets.UTF_8).trim();
+                            if (!txt.isEmpty()) {
+                                try {
+                                    var je = com.google.gson.JsonParser.parseString(txt);
+                                    if (je.isJsonObject()) {
+                                        var obj = je.getAsJsonObject();
+                                        if (!cn.sh1rocu.tacz.util.RecipeCompat.isVanillaRecipeType(obj)) {
+                                            return;
+                                        }
+                                    }
+                                } catch (Exception ignore) {}
+                            }
+                            var fixedSupplier = net.minecraft.server.packs.resources.IoSupplier.create(() -> {
+                                try (var in2 = supplier.get().get()) {
+                                    return cn.sh1rocu.tacz.util.RecipeCompat.transformStreamIfNeeded(in2);
+                                }
+                            });
+                            resourceOutput.accept(remapped, fixedSupplier);
+                        }
+                    } catch (Exception e) {
+                        var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(remapped, supplier);
+                        resourceOutput.accept(remapped, wrapped);
+                    }
+                };
+                try {
+                    net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), legacyParts, legacyOutput);
+                } catch (Exception ignored) {}
+            });
+        } else {
+            FileUtil.decomposePath(path).result().ifPresent(parts ->
+                    net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), parts, resourceOutput));
+        }
     }
 
     @Override
@@ -117,7 +163,16 @@ public class PathPackResources extends AbstractPackResources {
 
     @Override
     public IoSupplier<InputStream> getResource(PackType type, Identifier location) {
-        return this.getRootResource(getPathFromLocation(location.getPath().startsWith("lang/") ? PackType.CLIENT_RESOURCES : type, location));
+        IoSupplier<InputStream> sup = this.getRootResource(getPathFromLocation(location.getPath().startsWith("lang/") ? PackType.CLIENT_RESOURCES : type, location));
+        if (sup == null && type == PackType.SERVER_DATA && location.getPath().startsWith("recipe/")) {
+            // 回退到旧目录 recipes/
+            Identifier legacy = cn.sh1rocu.tacz.util.RecipeCompat.remapCurrentToLegacy(location);
+            sup = this.getRootResource(getPathFromLocation(type, legacy));
+        }
+        if (sup != null && type == PackType.SERVER_DATA && cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(location)) {
+            return cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, sup);
+        }
+        return sup;
     }
 
     private static String[] getPathFromLocation(PackType type, Identifier location) {
