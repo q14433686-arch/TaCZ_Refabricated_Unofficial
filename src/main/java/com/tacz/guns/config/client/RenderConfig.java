@@ -20,6 +20,9 @@ public class RenderConfig {
     public static ForgeConfigSpec.DoubleValue KILL_AMOUNT_DURATION_SECOND;
     public static ForgeConfigSpec.IntValue TARGET_RENDER_DISTANCE;
     public static ForgeConfigSpec.BooleanValue FIRST_PERSON_BULLET_TRACER_ENABLE;
+    public static ForgeConfigSpec.BooleanValue SHELL_EJECTION_DEBUG;
+    public static ForgeConfigSpec.ConfigValue<String> SHELL_EJECTION_DEBUG_GUN;
+    public static ForgeConfigSpec.IntValue SHELL_EJECTION_DEBUG_INTERVAL_MS;
     public static ForgeConfigSpec.BooleanValue DISABLE_INTERACT_HUD_TEXT;
     public static ForgeConfigSpec.BooleanValue AUTO_SELECT_GUN_SMITH_TABLE_FILTER;
     public static ForgeConfigSpec.IntValue DAMAGE_COUNTER_RESET_TIME;
@@ -75,6 +78,16 @@ public class RenderConfig {
 
         builder.comment("Whether or not to render first person bullet trail");
         FIRST_PERSON_BULLET_TRACER_ENABLE = builder.define("FirstPersonBulletTracerEnable", true);
+
+        SHELL_EJECTION_DEBUG = builder
+                .comment("[DEBUG] Log first-person shell ejection capture/submit diagnostics. Useful for shader hand-pass issues. Default off.")
+                .define("ShellEjectionDebug", false);
+        SHELL_EJECTION_DEBUG_GUN = builder
+                .comment("[DEBUG] Optional gun id filter for ShellEjectionDebug. Empty = all guns; accepts full id such as hamster:mp18 or path only such as mp18.")
+                .define("ShellEjectionDebugGun", "");
+        SHELL_EJECTION_DEBUG_INTERVAL_MS = builder
+                .comment("[DEBUG] Minimum interval between shell ejection debug log lines, in milliseconds.")
+                .defineInRange("ShellEjectionDebugIntervalMs", 250, 50, 10000);
 
         builder.comment("Disable the interact hud text in center of the screen");
         DISABLE_INTERACT_HUD_TEXT = builder.define("DisableInteractHudText", false);

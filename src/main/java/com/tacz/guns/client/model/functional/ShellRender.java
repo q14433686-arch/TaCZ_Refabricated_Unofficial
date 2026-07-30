@@ -3,6 +3,7 @@ package com.tacz.guns.client.model.functional;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.model.BedrockAmmoModel;
@@ -12,7 +13,9 @@ import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.client.resource.pojo.display.gun.ShellEjection;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
@@ -28,11 +31,20 @@ public class ShellRender implements IFunctionalSubmitter {
     // 抛壳队列
     private final ConcurrentLinkedDeque<Data> SHELL_QUEUE = new ConcurrentLinkedDeque<>();
     public static boolean isSelf = false;
+    private static long lastDebugLogTime = 0L;
 
     private final BedrockGunModel bedrockGunModel;
+    private final String shellNodeName;
+    private final int shellNodeIndex;
 
     public ShellRender(BedrockGunModel bedrockGunModel) {
+        this(bedrockGunModel, "shell", 0);
+    }
+
+    public ShellRender(BedrockGunModel bedrockGunModel, String shellNodeName, int shellNodeIndex) {
         this.bedrockGunModel = bedrockGunModel;
+        this.shellNodeName = shellNodeName;
+        this.shellNodeIndex = shellNodeIndex;
     }
 
     public void addShell(Vector3f randomVelocity) {
@@ -153,7 +165,8 @@ public class ShellRender implements IFunctionalSubmitter {
         if (iGun == null) {
             return;
         }
-        GunData gunData = TimelessAPI.getClientGunIndex(iGun.getGunId(currentGunItem))
+        Identifier gunId = iGun.getGunId(currentGunItem);
+        GunData gunData = TimelessAPI.getClientGunIndex(gunId)
                 .map(ClientGunIndex::getGunData).orElse(null);
         GunDisplayInstance display = TimelessAPI.getGunDisplay(currentGunItem).orElse(null);
         if (gunData == null || display == null || display.getShellEjection() == null) {
@@ -177,11 +190,16 @@ public class ShellRender implements IFunctionalSubmitter {
         ItemDisplayContext displayContext = context.displayContext();
         int light = context.light();
         int overlay = context.overlay();
+        boolean debug = shellDebugEnabled(gunId);
 
         for (Data data : SHELL_QUEUE) {
             if (data.normal == null || data.pose == null) {
                 data.normal = new Matrix3f(origin.last().normal());
                 data.pose = new Matrix4f(origin.last().pose());
+                data.capturePitch = currentPitch();
+                data.captureYaw = currentYaw();
+                debugShell(gunId, "capture", displayContext, data, origin, 0, 0, 0,
+                        initialVelocity, acceleration, angularVelocity, texture, debug);
             }
             long ageMs = System.currentTimeMillis() - data.timeStamp;
             double time = ageMs / 1000.0;
@@ -198,6 +216,8 @@ public class ShellRender implements IFunctionalSubmitter {
             frozenShellPose.mulPose(Axis.YN.rotationDegrees((float) (time * angularVelocity.y())));
             frozenShellPose.mulPose(Axis.ZP.rotationDegrees((float) (time * angularVelocity.z())));
             frozenShellPose.translate(0, -1.5, 0);
+            debugShell(gunId, "submit", displayContext, data, frozenShellPose, x, y, z,
+                    initialVelocity, acceleration, angularVelocity, texture, debug);
 
             context.add(collector -> {
                 PoseStack taskPose = new PoseStack();
@@ -206,6 +226,97 @@ public class ShellRender implements IFunctionalSubmitter {
                 model.submit(taskPose, displayContext, collector, shellRenderType(displayContext, texture), light, overlay);
             });
         }
+    }
+
+    private boolean shellDebugEnabled(Identifier gunId) {
+        try {
+            if (RenderConfig.SHELL_EJECTION_DEBUG == null || !RenderConfig.SHELL_EJECTION_DEBUG.get()) {
+                return false;
+            }
+            String filter = RenderConfig.SHELL_EJECTION_DEBUG_GUN == null ? "" : RenderConfig.SHELL_EJECTION_DEBUG_GUN.get();
+            if (filter == null || filter.isBlank()) {
+                return true;
+            }
+            filter = filter.trim();
+            return filter.equalsIgnoreCase(gunId.toString()) || filter.equalsIgnoreCase(gunId.getPath());
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private static int shellDebugIntervalMs() {
+        try {
+            return RenderConfig.SHELL_EJECTION_DEBUG_INTERVAL_MS == null
+                    ? 250
+                    : RenderConfig.SHELL_EJECTION_DEBUG_INTERVAL_MS.get();
+        } catch (Throwable ignored) {
+            return 250;
+        }
+    }
+
+    private void debugShell(Identifier gunId,
+                            String phase,
+                            ItemDisplayContext displayContext,
+                            Data data,
+                            PoseStack poseStack,
+                            double x,
+                            double y,
+                            double z,
+                            Vector3f initialVelocity,
+                            Vector3f acceleration,
+                            Vector3f angularVelocity,
+                            Identifier texture,
+                            boolean enabled) {
+        if (!enabled) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        int interval = shellDebugIntervalMs();
+        if (now - lastDebugLogTime < interval) {
+            return;
+        }
+        lastDebugLogTime = now;
+
+        Matrix4f pose = poseStack.last().pose();
+        Matrix4f captured = data.pose;
+        GunMod.LOGGER.info("[TACZ ShellDebug] gun={} node={}#{} phase={} ctx={} irisHand={} shader={} pitch={} yaw={} capturePitch={} captureYaw={} ageMs={} offset=({},{},{}) poseT=({},{},{}) captureT=({},{},{}) random={} initial={} accel={} angular={} texture={} queue={}",
+                gunId,
+                shellNodeName,
+                shellNodeIndex,
+                phase,
+                displayContext,
+                IrisCompat.isHandRendererActive(),
+                IrisCompat.isUsingRenderPack(),
+                currentPitch(),
+                currentYaw(),
+                data.capturePitch,
+                data.captureYaw,
+                now - data.timeStamp,
+                trim(x), trim(y), trim(z),
+                trim(pose.m30()), trim(pose.m31()), trim(pose.m32()),
+                captured == null ? "null" : trim(captured.m30()),
+                captured == null ? "null" : trim(captured.m31()),
+                captured == null ? "null" : trim(captured.m32()),
+                data.randomOffset,
+                initialVelocity,
+                acceleration,
+                angularVelocity,
+                texture,
+                SHELL_QUEUE.size());
+    }
+
+    private static float currentPitch() {
+        var player = Minecraft.getInstance().player;
+        return player == null ? Float.NaN : player.getXRot();
+    }
+
+    private static float currentYaw() {
+        var player = Minecraft.getInstance().player;
+        return player == null ? Float.NaN : player.getYRot();
+    }
+
+    private static String trim(double value) {
+        return String.format(java.util.Locale.ROOT, "%.4f", value);
     }
 
     @Override
@@ -237,6 +348,8 @@ public class ShellRender implements IFunctionalSubmitter {
 
         public Matrix3f normal = null;
         public Matrix4f pose = null;
+        public float capturePitch = Float.NaN;
+        public float captureYaw = Float.NaN;
 
         public Data(long timeStamp, Vector3f randomOffset) {
             this.timeStamp = timeStamp;
