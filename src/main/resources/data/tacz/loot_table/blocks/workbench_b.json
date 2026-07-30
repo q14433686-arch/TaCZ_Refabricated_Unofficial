@@ -18,9 +18,7 @@
               "target": "BlockId"
             }
           ],
-          "source": {
-            "type": "minecraft:block_entity"
-          }
+          "source": "block_entity"
         }
       ],
       "entries": [

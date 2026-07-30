@@ -38,6 +38,7 @@ public class GunSmithTableBlockEntity extends BlockEntity implements ExtendedMen
 
     public void setId(Identifier id) {
         this.id = id;
+        this.setChanged();
     }
 
     @Nullable

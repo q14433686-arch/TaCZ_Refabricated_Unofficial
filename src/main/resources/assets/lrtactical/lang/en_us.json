@@ -20,5 +20,11 @@
   "item.lrtactical.detonator": "Remote Detonator",
   "item.lrtactical.test_c4": "Test C4",
   "item.lrtactical.consumable": "Consumable",
-  "item.lrtactical.test_medkit": "Test Medkit"
+  "item.lrtactical.test_medkit": "Test Medkit",
+  "lrtactical.block.smith_table.name": "LesRaisins Tactical Smithing Table",
+  "lrtactical.block.smith_table.desc": "Crafts LRTactical melee weapons, throwables, and consumables",
+  "lrtactical.type.melee.name": "Melee Weapons",
+  "lrtactical.type.throwable.name": "Throwables",
+  "lrtactical.type.consumable.name": "Consumables",
+  "lrtactical.type.misc.name": "Misc"
 }
