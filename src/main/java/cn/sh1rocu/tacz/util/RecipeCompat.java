@@ -247,22 +247,16 @@ public final class RecipeCompat {
     public static JsonElement transformIngredient(JsonElement el) {
         if (el == null || el.isJsonNull()) return el;
         if (el.isJsonPrimitive()) {
-            String s = el.getAsString();
-            // forge: -> c: 兼容
-            if (s.startsWith("forge:")) {
-                s = "c:" + s.substring("forge:".length());
-                return new JsonPrimitive(s);
-            }
+            // 已经是新格式字符串，直接保留（包括 #forge: 或 #c: 或 原版）
             return el;
         }
         if (el.isJsonObject()) {
             JsonObject obj = el.getAsJsonObject();
             if (obj.has("tag")) {
                 String tag = obj.get("tag").getAsString();
-                if (tag.startsWith("forge:")) {
-                    tag = "c:" + tag.substring("forge:".length());
-                }
-                // 新格式要求 "#tag"
+                // 保留原命名空间（forge: 或 c: 或 minecraft:），仅补 # 前缀
+                // 之前曾把 forge: 转成 c:，但实测 forge: 标签在 data/forge/tags/ 下存在，
+                // 而对应的 c: 标签不一定存在（如 forge:sand/colorless），转了反而失效
                 if (!tag.startsWith("#")) {
                     tag = "#" + tag;
                 }
@@ -270,12 +264,8 @@ public final class RecipeCompat {
             }
             if (obj.has("item")) {
                 String item = obj.get("item").getAsString();
-                if (item.startsWith("forge:")) {
-                    item = "c:" + item.substring("forge:".length());
-                }
                 return new JsonPrimitive(item);
             }
-            // 未知对象，尝试保留（可能包含 count 等），但 Ingredient.CODEC 不接受对象，返回原样让上层报错
             return obj;
         }
         if (el.isJsonArray()) {
