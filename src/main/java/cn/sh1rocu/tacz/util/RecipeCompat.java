@@ -34,11 +34,77 @@ import java.util.Map;
 public final class RecipeCompat {
     private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().create();
 
+    // 26.2 单数化映射：旧 -> 新
+    private static final java.util.Map<String, String> LEGACY_TO_CURRENT = java.util.Map.of(
+            "recipes/", "recipe/",
+            "loot_tables/", "loot_table/",
+            "tags/blocks/", "tags/block/",
+            "tags/items/", "tags/item/",
+            "tags/entity_types/", "tags/entity_type/",
+            "tags/fluids/", "tags/fluid/",
+            "tags/game_events/", "tags/game_event/",
+            "advancements/", "advancement/"
+    );
+    private static final java.util.Map<String, String> CURRENT_TO_LEGACY = new java.util.HashMap<>();
+    static {
+        LEGACY_TO_CURRENT.forEach((k, v) -> CURRENT_TO_LEGACY.put(v, k));
+    }
+
     private RecipeCompat() {}
 
     public static boolean isRecipePath(Identifier location) {
         String p = location.getPath();
         return p.startsWith("recipe/") || p.startsWith("recipes/");
+    }
+
+    public static boolean isDataPathNeedCompat(String path) {
+        // path 是 FileToIdConverter 查询的目录名，如 "recipe", "loot_table", "tags/block" 等
+        return CURRENT_TO_LEGACY.containsKey(path + "/") || LEGACY_TO_CURRENT.containsKey(path + "/")
+                || path.equals("recipe") || path.equals("loot_table")
+                || path.startsWith("tags/");
+    }
+
+    public static String getLegacyForCurrent(String currentPath) {
+        // currentPath 如 "recipe" 或 "recipe/xxx" 或 "tags/block"
+        // 返回对应的 legacy 目录名，如 "recipes"
+        String withSlash = currentPath.endsWith("/") ? currentPath : currentPath + "/";
+        for (var e : CURRENT_TO_LEGACY.entrySet()) {
+            if (withSlash.startsWith(e.getKey())) {
+                return e.getValue().substring(0, e.getValue().length() - 1); // 去掉尾斜杠
+            }
+        }
+        // 精确匹配
+        if (currentPath.equals("recipe")) return "recipes";
+        if (currentPath.equals("loot_table")) return "loot_tables";
+        if (currentPath.equals("tags/block")) return "tags/blocks";
+        if (currentPath.equals("tags/item")) return "tags/items";
+        if (currentPath.equals("tags/entity_type")) return "tags/entity_types";
+        if (currentPath.equals("tags/fluid")) return "tags/fluids";
+        if (currentPath.equals("tags/game_event")) return "tags/game_events";
+        if (currentPath.equals("advancement")) return "advancements";
+        return null;
+    }
+
+    public static Identifier remapLegacyToCurrent(Identifier legacy) {
+        String path = legacy.getPath();
+        for (var e : LEGACY_TO_CURRENT.entrySet()) {
+            if (path.startsWith(e.getKey())) {
+                String newPath = e.getValue() + path.substring(e.getKey().length());
+                return Identifier.fromNamespaceAndPath(legacy.getNamespace(), newPath);
+            }
+        }
+        return legacy;
+    }
+
+    public static Identifier remapCurrentToLegacy(Identifier current) {
+        String path = current.getPath();
+        for (var e : CURRENT_TO_LEGACY.entrySet()) {
+            if (path.startsWith(e.getKey())) {
+                String legacyPath = e.getValue() + path.substring(e.getKey().length());
+                return Identifier.fromNamespaceAndPath(current.getNamespace(), legacyPath);
+            }
+        }
+        return current;
     }
 
     public static boolean isVanillaRecipeType(JsonObject obj) {
@@ -276,21 +342,4 @@ public final class RecipeCompat {
         };
     }
 
-    public static Identifier remapLegacyToCurrent(Identifier legacy) {
-        String path = legacy.getPath();
-        if (path.startsWith("recipes/")) {
-            String newPath = "recipe/" + path.substring("recipes/".length());
-            return Identifier.fromNamespaceAndPath(legacy.getNamespace(), newPath);
-        }
-        return legacy;
-    }
-
-    public static Identifier remapCurrentToLegacy(Identifier current) {
-        String path = current.getPath();
-        if (path.startsWith("recipe/")) {
-            String legacyPath = "recipes/" + path.substring("recipe/".length());
-            return Identifier.fromNamespaceAndPath(current.getNamespace(), legacyPath);
-        }
-        return current;
-    }
 }
