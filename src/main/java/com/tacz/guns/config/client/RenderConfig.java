@@ -20,6 +20,10 @@ public class RenderConfig {
     public static ForgeConfigSpec.DoubleValue KILL_AMOUNT_DURATION_SECOND;
     public static ForgeConfigSpec.IntValue TARGET_RENDER_DISTANCE;
     public static ForgeConfigSpec.BooleanValue FIRST_PERSON_BULLET_TRACER_ENABLE;
+    public static ForgeConfigSpec.BooleanValue TRACER_DEBUG;
+    public static ForgeConfigSpec.ConfigValue<String> TRACER_DEBUG_GUN;
+    public static ForgeConfigSpec.IntValue TRACER_DEBUG_INTERVAL_MS;
+    public static ForgeConfigSpec.IntValue TRACER_DEBUG_FIRST_TICKS;
     public static ForgeConfigSpec.BooleanValue SHELL_EJECTION_DEBUG;
     public static ForgeConfigSpec.ConfigValue<String> SHELL_EJECTION_DEBUG_GUN;
     public static ForgeConfigSpec.IntValue SHELL_EJECTION_DEBUG_INTERVAL_MS;
@@ -78,6 +82,19 @@ public class RenderConfig {
 
         builder.comment("Whether or not to render first person bullet trail");
         FIRST_PERSON_BULLET_TRACER_ENABLE = builder.define("FirstPersonBulletTracerEnable", true);
+
+        TRACER_DEBUG = builder
+                .comment("[DEBUG] Log first-person tracer/bullet trail origin diagnostics. Default off.")
+                .define("TracerDebug", false);
+        TRACER_DEBUG_GUN = builder
+                .comment("[DEBUG] Optional gun id filter for TracerDebug. Empty = all guns; accepts full id such as hamster:mp18 or path only such as mp18.")
+                .define("TracerDebugGun", "");
+        TRACER_DEBUG_INTERVAL_MS = builder
+                .comment("[DEBUG] Minimum interval between tracer debug log lines after the first few bullet ticks, in milliseconds.")
+                .defineInRange("TracerDebugIntervalMs", 500, 50, 10000);
+        TRACER_DEBUG_FIRST_TICKS = builder
+                .comment("[DEBUG] Always log at most once per bullet tick for the first N ticks. Set 0 to use only TracerDebugIntervalMs.")
+                .defineInRange("TracerDebugFirstTicks", 3, 0, 20);
 
         SHELL_EJECTION_DEBUG = builder
                 .comment("[DEBUG] Log first-person shell ejection capture/submit diagnostics. Useful for shader hand-pass issues. Default off.")

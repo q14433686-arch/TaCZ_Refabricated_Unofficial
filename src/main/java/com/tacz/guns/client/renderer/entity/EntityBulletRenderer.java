@@ -2,6 +2,7 @@ package com.tacz.guns.client.renderer.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.client.model.BedrockAmmoModel;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
@@ -31,12 +32,18 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, EntityBulletRenderer.BulletRenderState> {
+    private static final Map<Integer, Integer> TRACER_DEBUG_LAST_TICK = new HashMap<>();
+    private static long tracerDebugLastIntervalLogTime = 0L;
 
     public static class BulletRenderState extends EntityRenderState {
         public EntityKineticBullet bullet;
@@ -117,9 +124,22 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             {
                 float width = 0.005f;
                 Vec3 bulletPosition = bullet.getPosition(partialTicks);
-                double trailLength = 0.85 * bullet.getDeltaMovement().length();
-                double disToEye = bulletPosition.distanceTo(shooter.getEyePosition(partialTicks));
-                trailLength = Math.min(trailLength, disToEye * 0.8);
+                Vec3 eyePosition = shooter.getEyePosition(partialTicks);
+                Vec3 deltaMovement = bullet.getDeltaMovement();
+                double rawTrailLength = 0.85 * deltaMovement.length();
+                double disToEye = bulletPosition.distanceTo(eyePosition);
+                double trailLength = Math.min(rawTrailLength, disToEye * 0.8);
+                boolean debug = tracerDebugEnabled(bullet);
+                boolean offsetInitialized = false;
+                double offsetReducer = 0.0;
+                Vector3f globalMuzzleOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
+                Vector3f firstPersonOffsetBefore = bullet.getFirstPersonRenderOffset() == null
+                        ? null
+                        : new Vector3f(bullet.getFirstPersonRenderOffset());
+                Vector3f firstPersonOffsetAfter = firstPersonOffsetBefore == null ? null : new Vector3f(firstPersonOffsetBefore);
+                Matrix4f poseBeforeOffset = new Matrix4f(poseStack.last().pose());
+                Matrix4f poseAfterOffset = null;
+                Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
 
                 if (isFirstPerson) {
                     // 【曳光弹位置修复 - 回退到上游原始逻辑】
@@ -131,15 +151,16 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                     //   非 Iris：直接平移（实体已在视图空间）
                     // 26.2 移植曾硬编码相机为 0，又尝试 camera.rotation() 预烘焙，仍漂移。
                     // 本轮回退到上游原始 YN/XN 方案，并保留 26.2 API：mainCamera()/xRot()/yRot()
-                    Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
                     Vector3f offset = bullet.getFirstPersonRenderOffset();
                     if (offset == null) {
-                        offset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
+                        offset = new Vector3f(globalMuzzleOffset);
                         bullet.setCameraXRot(camera.xRot());
                         bullet.setCameraYRot(camera.yRot());
                         bullet.setFirstPersonRenderOffset(offset);
+                        offsetInitialized = true;
                     }
-                    double offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
+                    firstPersonOffsetAfter = new Vector3f(offset);
+                    offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
 
                     if (IrisCompat.isUsingRenderPack()) {
                         poseStack.mulPose(Axis.YN.rotationDegrees(bullet.getCameraYRot() + 180f));
@@ -150,6 +171,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                         poseStack.mulPose(Axis.XP.rotationDegrees(bullet.getCameraXRot()));
                         poseStack.mulPose(Axis.YP.rotationDegrees(bullet.getCameraYRot() + 180f));
                     }
+                    poseAfterOffset = new Matrix4f(poseStack.last().pose());
                 }
                 width *= bullet.getTracerSizeOverride();
                 width *= (float) Math.max(1.0, disToEye / 3.5);
@@ -158,6 +180,11 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 poseStack.translate(0, isFirstPerson ? 0 : -0.2, trailLength / 2.0);
                 poseStack.scale(width, width, (float) trailLength);
                 double bulletDistance = bulletPosition.distanceTo(shooter.getEyePosition());
+                debugTracer(bullet, isFirstPerson, partialTicks, bulletPosition, eyePosition, deltaMovement,
+                        rawTrailLength, trailLength, disToEye, bulletDistance, width, offsetReducer,
+                        globalMuzzleOffset, firstPersonOffsetBefore, firstPersonOffsetAfter,
+                        offsetInitialized, camera, poseBeforeOffset, poseAfterOffset,
+                        new Matrix4f(poseStack.last().pose()), debug);
                 if (bullet.tickCount >= 5 || bulletDistance > 2) {
                     RenderType type = RenderTypes.energySwirl(InternalAssetLoader.DEFAULT_BULLET_TEXTURE, 15, 15);
                     model.submit(poseStack, ItemDisplayContext.NONE, collector, type, packedLight, OverlayTexture.NO_OVERLAY,
@@ -166,6 +193,139 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             }
             poseStack.popPose();
         });
+    }
+
+    private static boolean tracerDebugEnabled(EntityKineticBullet bullet) {
+        try {
+            if (RenderConfig.TRACER_DEBUG == null || !RenderConfig.TRACER_DEBUG.get()) {
+                return false;
+            }
+            String filter = RenderConfig.TRACER_DEBUG_GUN == null ? "" : RenderConfig.TRACER_DEBUG_GUN.get();
+            if (filter == null || filter.isBlank()) {
+                return true;
+            }
+            filter = filter.trim();
+            Identifier gunId = bullet.getGunId();
+            return filter.equalsIgnoreCase(gunId.toString()) || filter.equalsIgnoreCase(gunId.getPath());
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private static int tracerDebugIntervalMs() {
+        try {
+            return RenderConfig.TRACER_DEBUG_INTERVAL_MS == null ? 500 : RenderConfig.TRACER_DEBUG_INTERVAL_MS.get();
+        } catch (Throwable ignored) {
+            return 500;
+        }
+    }
+
+    private static int tracerDebugFirstTicks() {
+        try {
+            return RenderConfig.TRACER_DEBUG_FIRST_TICKS == null ? 3 : RenderConfig.TRACER_DEBUG_FIRST_TICKS.get();
+        } catch (Throwable ignored) {
+            return 3;
+        }
+    }
+
+    private static boolean shouldLogTracer(EntityKineticBullet bullet, boolean enabled) {
+        if (!enabled) {
+            return false;
+        }
+        int firstTicks = tracerDebugFirstTicks();
+        if (bullet.tickCount <= firstTicks) {
+            Integer lastTick = TRACER_DEBUG_LAST_TICK.put(bullet.getId(), bullet.tickCount);
+            if (TRACER_DEBUG_LAST_TICK.size() > 1024) {
+                TRACER_DEBUG_LAST_TICK.clear();
+            }
+            return lastTick == null || lastTick != bullet.tickCount;
+        }
+        long now = System.currentTimeMillis();
+        if (now - tracerDebugLastIntervalLogTime >= tracerDebugIntervalMs()) {
+            tracerDebugLastIntervalLogTime = now;
+            return true;
+        }
+        return false;
+    }
+
+    private static void debugTracer(EntityKineticBullet bullet,
+                                    boolean isFirstPerson,
+                                    float partialTicks,
+                                    Vec3 bulletPosition,
+                                    Vec3 eyePosition,
+                                    Vec3 deltaMovement,
+                                    double rawTrailLength,
+                                    double trailLength,
+                                    double disToEye,
+                                    double bulletDistance,
+                                    float width,
+                                    double offsetReducer,
+                                    Vector3f globalMuzzleOffset,
+                                    @Nullable Vector3f firstPersonOffsetBefore,
+                                    @Nullable Vector3f firstPersonOffsetAfter,
+                                    boolean offsetInitialized,
+                                    Camera camera,
+                                    Matrix4f poseBeforeOffset,
+                                    @Nullable Matrix4f poseAfterOffset,
+                                    Matrix4f finalPose,
+                                    boolean enabled) {
+        if (!shouldLogTracer(bullet, enabled)) {
+            return;
+        }
+        GunMod.LOGGER.info("[TACZ TracerDebug] bullet={} gun={} display={} ammo={} tick={} partial={} firstPerson={} shader={} irisHand={} tracer={} camera=({},{}) cachedCamera=({},{}) offsetInit={} offsetReducer={} bulletPos={} eye={} delta={} disToEye={} bulletDistance={} rawTrail={} trail={} width={} globalMuzzle={} fpOffsetBefore={} fpOffsetAfter={} poseBefore={} poseAfterOffset={} finalPose={}",
+                bullet.getId(),
+                bullet.getGunId(),
+                bullet.getGunDisplayId(),
+                bullet.getAmmoId(),
+                bullet.tickCount,
+                trim(partialTicks),
+                isFirstPerson,
+                IrisCompat.isUsingRenderPack(),
+                IrisCompat.isHandRendererActive(),
+                bullet.isTracerAmmo(),
+                trim(camera.xRot()), trim(camera.yRot()),
+                trim(bullet.getCameraXRot()), trim(bullet.getCameraYRot()),
+                offsetInitialized,
+                trim(offsetReducer),
+                vec(bulletPosition),
+                vec(eyePosition),
+                vec(deltaMovement),
+                trim(disToEye),
+                trim(bulletDistance),
+                trim(rawTrailLength),
+                trim(trailLength),
+                trim(width),
+                vec(globalMuzzleOffset),
+                vec(firstPersonOffsetBefore),
+                vec(firstPersonOffsetAfter),
+                translation(poseBeforeOffset),
+                translation(poseAfterOffset),
+                translation(finalPose));
+    }
+
+    private static String vec(@Nullable Vec3 vec) {
+        if (vec == null) {
+            return "null";
+        }
+        return "(" + trim(vec.x) + "," + trim(vec.y) + "," + trim(vec.z) + ")";
+    }
+
+    private static String vec(@Nullable Vector3f vec) {
+        if (vec == null) {
+            return "null";
+        }
+        return "(" + trim(vec.x()) + "," + trim(vec.y()) + "," + trim(vec.z()) + ")";
+    }
+
+    private static String translation(@Nullable Matrix4f matrix) {
+        if (matrix == null) {
+            return "null";
+        }
+        return "(" + trim(matrix.m30()) + "," + trim(matrix.m31()) + "," + trim(matrix.m32()) + ")";
+    }
+
+    private static String trim(double value) {
+        return String.format(Locale.ROOT, "%.4f", value);
     }
 
     @Override
