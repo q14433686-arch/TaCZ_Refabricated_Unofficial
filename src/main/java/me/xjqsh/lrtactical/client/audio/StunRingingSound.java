@@ -48,7 +48,7 @@ public class StunRingingSound extends AbstractTickableSoundInstance {
     private static final float FADE_START_TICKS = 60f;
 
     public StunRingingSound() {
-        super(RINGING, SoundSource.PLAYERS, RandomSource.create());
+        super(RINGING, SoundSource.MASTER, RandomSource.create());
         this.looping = true;
         this.delay = 0;
         this.volume = 1.0F;

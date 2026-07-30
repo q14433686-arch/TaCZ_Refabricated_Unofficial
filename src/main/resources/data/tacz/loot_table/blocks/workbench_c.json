@@ -10,7 +10,7 @@
       ],
       "functions": [
         {
-          "function": "minecraft:copy_nbt",
+          "function": "minecraft:copy_custom_data",
           "ops": [
             {
               "op": "replace",
@@ -19,8 +19,7 @@
             }
           ],
           "source": {
-            "type": "context",
-            "target": "block_entity"
+            "type": "minecraft:block_entity"
           }
         }
       ],

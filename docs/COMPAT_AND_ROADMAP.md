@@ -80,28 +80,31 @@ vanilla `Recipe.CODEC` 解析不了，**每条报一次错**。
 要加门禁就得在 `listResources` 阶段逐文件读内容判 `type`，
 意味着每次资源重载都要多读一遍全部文件 —— **为 1 条配方付这个代价不划算。**
 
-### 1.5 建议
+### 1.5 建议（2026-07-30 已实现代码兼容层）
 
-**推荐：不改代码，改为「文档 + 工具」路线。**
+**旧结论（已过时）：** 曾推荐“不改代码，改为文档+工具”路线，理由是占比低、代码方案有污染。
 
-理由：
-1. 实测占比极低 —— 68 条里只有 1 条（1.5%），且该包 67 条主力配方**已经全部可用**；
-2. 三种代码方案要么高风险（A）、要么有污染（B）、要么成本不匹配（C）；
-3. 这本质是**枪包侧的版本适配问题**，正确的修法在枪包，不在 mod。
+**新实现（本仓库已落地）：**
 
-具体做法（按优先级）：
+针对用户反馈“附属包原版配方不可用，工作台合成道具不可识别”，已在资源包层实现兼容：
 
-- **首选**：在 `README` 的枪包适配章节里，把 1.2 那张差异表和 1.3 的目标形态写进去，
-  让枪包作者/用户能自己改。**改一个文件、五分钟的事。**
-- **其次**：若这类包变多，再考虑给 `PackConvertor` 加一条「原版格式配方」转换规则
-  （它本来就是干这个的），只处理 `type` 以 `minecraft:` 开头的配方，
-  转换 `item→id`、`nbt→components`、对象式 Ingredient → 字符串，并输出到 `recipe/`。
-  **这条路没有 B 的污染问题**，因为转换是一次性的、产物是合规文件。
-- **不建议**：A（mixin 全局配方加载）。
+- 新增 `cn.sh1rocu.tacz.util.RecipeCompat`，自动完成：
+  - `result.item` → `result.id`
+  - `result.nbt` → `result.components.minecraft:custom_data`
+  - `key: {"tag":"minecraft:logs"}` → `"#minecraft:logs"`
+  - `key: {"item":"minecraft:stick"}` → `"minecraft:stick"`
+  - `forge:` 前缀 → `c:` 前缀兼容
+  - 仅对 `type: minecraft:*` 的原版配方生效，`tacz:gun_smith_table_crafting` 等自定义类型保持原样
+- 在 `PathPackResources` 与 `DelegatingPackResources` 两层拦截：
+  - `getResource`：若请求 `recipe/xxx` 不存在，自动回退到 `recipes/xxx`（旧目录），并对旧格式做即时转换
+  - `listResources`：当查询 `recipe` 时，额外把 `recipes/` 旧目录的内容映射为 `recipe/`，同时过滤掉非原版配方，避免污染 vanilla `RecipeManager`（此前文档所述 B 方案污染问题的根因）
+- 这样既解决了目录单复数问题，又解决了格式问题，且：
+  - 不影响 `TableRecipeManager` 对自定义工作台配方的已有兼容（它本身已同时扫描 `recipe/` 与 `recipes/`）
+  - 对 vanilla `RecipeManager`，自定义配方会被过滤掉（通过预读 JSON 判断 `type`），不会刷屏报错
 
-> ⚠️ 但 `PackConvertor` 有个已知限制：它**只处理旧版布局**（靠 `pack.json` 识别）。
-> hamster 这类**新布局包**（自带 `gunpack.meta.json`）根本不经过它。
-> 所以「其次」方案要先解决「让新布局包也能走一遍转换」这个前置问题。
+> **效果**：`GunpowderRevolution v1.2.7` 的 `oldworkbench.json` 等单个原版配方现在可被识别，无需手动改包；旧布局包（`recipes/`）中的原版配方也会被自动映射到 `recipe/`。
+
+> **仍建议文档**：在 `README` 的枪包适配章节保留 1.2 差异表，引导新包直接使用新格式，避免长期依赖兼容层。
 
 ---
 
@@ -748,3 +751,25 @@ sf.write(out, seg/peak*0.707, sr, format='OGG', subtype='VORBIS')
 为此把注入点从 `calculateVolume(float, SoundSource)` 换到
 `calculateVolume(SoundInstance)` —— 后者能拿到实例以判断是否豁免，
 且**仍是同一个收敛点**（前者就是被后者转调的）。
+
+---
+
+## 九、曳光弹位置问题（2026-07-30 修复验证）
+
+**症状**：第一人称下曳光弹起点不从枪口射出，而是固定在世界某一处，或与枪口有明显偏移；转视角后仍偏。
+
+**根因梳理**（已逐轮核对上游 1.21.1 `EntityBulletRenderer`）：
+
+1. **第 9 轮**：摄像机旋转被硬编码为 0，导致“旋转->平移->反旋转”退化为未旋转坐标系平移，起点固定。已修为 `Minecraft.getInstance().gameRenderer.mainCamera()`。
+2. **第 10 轮后**：仍有偏移。排查发现 `muzzleRenderOffset` 本是摄像机局部坐标，上游在非 Iris 下直接平移（实体已在视图空间），Iris 下才做 YN/XN 旋转。移植版曾尝试用 `Camera#rotation()` 预烘焙为世界坐标，实测引入新的漂移（quaternion 与 Euler 顺序/符号不一致，且 26.2 实体仍在视图空间）。
+3. **渲染时序**：`LevelRenderer` 先渲染实体、后渲染手部（`ItemInHandRenderer`），子弹第一帧读到的 `muzzleRenderOffset` 是上一帧的枪口位置，会有 1 帧延迟。但该延迟在 50 格线性衰减下影响有限。
+
+**本轮修复**（`EntityBulletRenderer.java`）：
+
+- 回退到上游原始逻辑：缓存原始 `muzzleRenderOffset`（不做 `rotate(camera.rotation())`），缓存开火时刻的 `camera.xRot()/yRot()`，`offsetReducer = (50 - disToEye)/50` 线性。
+- Iris/Sulkan 均走旋转分支：`YN(y+180) + XN(x) -> translate -> XP(x) + YP(y+180)`，与上游一致；非光影直接平移。
+- 保留 `energySwirl` 渲染类型与满亮 block light（Alpha 2 已修复）。
+
+> **实测建议**：静止连续开火，观察起点是否始终偏同一处（坐标系问题）或仅第一发偏（时序问题）。若 ADS 横移时偏移过高，可把 50 改为 35~40 线性，而非 12 二次（后者起点虽对，但快速贴回弹道，主观上仍感觉“从胸口出来”）。
+
+**已知限制**：子弹实体生成位置仍在眼睛下方 0.1（上游设计，弹道需与准星一致），视觉上从枪口出来仅是第一人称的偏移补偿，第三人称无补偿（上游原生表现）。

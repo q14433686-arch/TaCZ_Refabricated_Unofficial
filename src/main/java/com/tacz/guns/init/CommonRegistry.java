@@ -25,6 +25,11 @@ public final class CommonRegistry {
     }
 
     public static void onAddPackFinders(AddPackFindersEvent event) {
+        // 修复：之前 GunPackLoader.packType 仅按环境类型（CLIENT/SERVER）设定一次，
+        // 导致在单机环境中，SERVER_DATA 的 repository 也拿到 CLIENT_RESOURCES 的 Pack，
+        // 使得 gunpack 的 data/（配方、index）与 assets/（模型、display）不能同时被两端看到。
+        // 现在改为按当前 event 的 packType 动态设定，保证客户端与服务端各拿对应类型的包。
+        GunPackLoader.INSTANCE.packType = event.getPackType();
         event.addRepositorySource(GunPackLoader.INSTANCE);
     }
 }
