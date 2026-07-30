@@ -97,9 +97,37 @@ public final class DeafenState {
      * <p><b>必须豁免</b>：耳鸣声正是在 {@code DEAFENED} 期间播放的，
      * 若被 {@code SoundEngineMixin} 一并压低，就会变成「什么都听不见」
      * 而不是「耳朵在响」—— 效果完全走样。
+     *
+     * <p>旧实现仅靠 {@code instanceof}，在某些 Mixin/加载器环境下可能因类加载器不同或
+     * 经过包装而失效，导致耳鸣被消声压到 1% 音量而“听不见”。本实现增加基于 Identifier
+     * 与 toString 的多重回退判断，保证豁免始终生效。
      */
     public static boolean isRingingSound(@org.jetbrains.annotations.Nullable
                                          net.minecraft.client.resources.sounds.SoundInstance sound) {
-        return sound instanceof StunRingingSound;
+        if (sound == null) return false;
+        if (sound instanceof StunRingingSound) {
+            return true;
+        }
+        try {
+            // 尝试通过 getLocation() 取得 SoundEvent 的 Identifier（26.2 仍有此方法）
+            var locMethod = sound.getClass().getMethod(\"getLocation\");
+            Object loc = locMethod.invoke(sound);
+            if (loc != null) {
+                String s = loc.toString();
+                if (s.contains(\"ringing\") || s.contains(\"stun_grenade\")) {
+                    return true;
+                }
+            }
+        } catch (Throwable ignored) {}
+        try {
+            // 回退：toString 往往包含 SoundEvent 的 id
+            String ts = sound.toString();
+            if (ts != null && (ts.contains(\"ringing\") || ts.contains(\"stun_grenade.ringing\"))) {
+                return true;
+            }
+        } catch (Throwable ignored) {}
+        // 类名回退
+        String cn = sound.getClass().getName();
+        return cn.contains(\"StunRinging\") || cn.contains(\"Ringing\");
     }
 }

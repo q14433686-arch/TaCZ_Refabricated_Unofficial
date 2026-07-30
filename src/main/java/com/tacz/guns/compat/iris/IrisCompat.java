@@ -133,6 +133,40 @@ public final class IrisCompat {
         }
     }
 
+    /**
+     * 抛壳/枪口火光在光影开启的第一人称手部 pass 中不渲染或位置错乱的兼容修复。
+     * <p>根因：TACZ 的抛壳/火光使用 vanilla {@code ENTITY_CUTOUT}/{@code ENTITY_TRANSLUCENT}/{@code ENERGY_SWIRL}
+     * 等管线，通过 {@code SubmitNodeCollector} 在 hand pass 中提交。Iris 26.x 的
+     * {@code IrisPipelines} 虽然内置了这些 vanilla 管线的映射，但 hand solid/translucent
+     * 两个 program 默认只包含部分管线，自定义提交的实体管线可能被分到 entity program 而非 hand，
+     * 导致在 hand pass 中不渲染或坐标系错乱（第三人称走 entity program 正常，复现为“光影+第一人称有问题，第三人称正常”）。
+     * <p>做法：当检测到正在 Iris hand pass 中时，显式把常用实体管线也归到 HAND，类似 scope 的处理。
+     */
+    public static void assignCommonEntityPipelinesToHandIfNeeded() {
+        if (!isHandRendererActive()) {
+            return;
+        }
+        try {
+            // 反射获取 RenderPipelines 的常用管线，避免硬依赖
+            Class<?> pipelinesClass = Class.forName("net.minecraft.client.renderer.RenderPipelines");
+            assignPipelineByName(pipelinesClass, "ENTITY_CUTOUT", "shell_entity_cutout_hand");
+            assignPipelineByName(pipelinesClass, "ENTITY_TRANSLUCENT", "shell_entity_translucent_hand");
+            assignPipelineByName(pipelinesClass, "ENTITY_TRANSLUCENT_CULL", "shell_entity_translucent_cull_hand");
+            // 能量漩涡（曳光、枪口发光）也常在手部使用
+            assignPipelineByName(pipelinesClass, "ENERGY_SWIRL", "shell_energy_swirl_hand");
+        } catch (Throwable ignored) {}
+    }
+
+    private static void assignPipelineByName(Class<?> pipelinesClass, String fieldName, String debugName) {
+        try {
+            var field = pipelinesClass.getField(fieldName);
+            Object pipelineObj = field.get(null);
+            if (pipelineObj instanceof com.mojang.blaze3d.pipeline.RenderPipeline rp) {
+                assignScopePipelineToHand(rp, debugName);
+            }
+        } catch (Throwable ignored) {}
+    }
+
     public static boolean shouldDisableScopeMaskUnderShaderPack() {
         // Sulkan 暂无公开等价 API；同样保守回退。
         if (FabricLoader.getInstance().isModLoaded("sulkan")) {

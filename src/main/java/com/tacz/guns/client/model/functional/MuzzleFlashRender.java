@@ -82,6 +82,9 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         if (IrisCompat.isRenderShadow() || !isSelf) {
             return;
         }
+        if (IrisCompat.isHandRendererActive()) {
+            IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
+        }
         long time = System.currentTimeMillis() - shootTimeStamp;
         if (time < 0 || time > TIME_RANGE) {
             return;

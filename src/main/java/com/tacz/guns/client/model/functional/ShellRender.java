@@ -134,6 +134,10 @@ public class ShellRender implements IFunctionalSubmitter {
         if (IrisCompat.isRenderShadow() || !isSelf) {
             return;
         }
+        // 光影手部兼容：把实体管线显式归到 HAND，避免在 Iris hand pass 中不渲染/位置错
+        if (IrisCompat.isHandRendererActive()) {
+            IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
+        }
         ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();
         IGun iGun = IGun.getIGunOrNull(currentGunItem);
         if (iGun == null) {
