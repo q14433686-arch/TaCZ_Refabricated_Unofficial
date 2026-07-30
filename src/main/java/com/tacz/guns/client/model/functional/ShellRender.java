@@ -153,7 +153,7 @@ public class ShellRender implements IFunctionalSubmitter {
 
     @Override
     public void extract(ExtractionContext context) {
-        if (IrisCompat.isRenderShadow() || !isSelf) {
+        if (IrisCompat.isRenderShadow() || !isSelf || !shellContextMatchesCamera(context.displayContext())) {
             return;
         }
         // 光影手部兼容：把实体管线显式归到 HAND，避免在 Iris hand pass 中不渲染/位置错
@@ -226,6 +226,11 @@ public class ShellRender implements IFunctionalSubmitter {
                 model.submit(taskPose, displayContext, collector, shellRenderType(displayContext, texture), light, overlay);
             });
         }
+    }
+
+    private static boolean shellContextMatchesCamera(ItemDisplayContext displayContext) {
+        boolean cameraFirstPerson = Minecraft.getInstance().options.getCameraType().isFirstPerson();
+        return cameraFirstPerson == displayContext.firstPerson();
     }
 
     private boolean shellDebugEnabled(Identifier gunId) {
@@ -324,7 +329,7 @@ public class ShellRender implements IFunctionalSubmitter {
         if (IrisCompat.isRenderShadow()) {
             return;
         }
-        if (!isSelf) {
+        if (!isSelf || !shellContextMatchesCamera(transformType)) {
             return;
         }
         ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();
