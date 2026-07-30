@@ -38,6 +38,7 @@ public final class IrisCompat {
     private static int scopePipelineAssignSuccesses = 0;
     private static boolean loggedScopePipelineAssign = false;
     private static boolean commonEntityPipelinesAssigned = false;
+    private static boolean commonEntityPipelinesAssignAttempted = false;
 
     public static void initCompat() {
         // Iris 检测 (OpenGL only) - 26.2 下通常不会加载
@@ -144,12 +145,15 @@ public final class IrisCompat {
      * <p>做法：当检测到正在 Iris hand pass 中时，显式把常用实体管线也归到 HAND，类似 scope 的处理。
      */
     public static void assignCommonEntityPipelinesToHandIfNeeded() {
-        if (commonEntityPipelinesAssigned) {
+        if (commonEntityPipelinesAssigned || commonEntityPipelinesAssignAttempted) {
             return;
         }
         if (!isHandRendererActive()) {
             return;
         }
+        // assignPipeline may itself emit diagnostics from Iris.  Do not retry every rendered shell:
+        // one failed/partial attempt is enough, otherwise logs can grow by megabytes per minute.
+        commonEntityPipelinesAssignAttempted = true;
         try {
             // 反射获取 RenderPipelines 的常用管线，避免硬依赖
             Class<?> pipelinesClass = Class.forName("net.minecraft.client.renderer.RenderPipelines");
@@ -163,9 +167,7 @@ public final class IrisCompat {
             ok &= assignPipelineByName(pipelinesClass, "ITEM_TRANSLUCENT", "shell_item_translucent_hand");
             // 能量漩涡（曳光、枪口发光）也常在手部使用
             ok &= assignPipelineByName(pipelinesClass, "ENERGY_SWIRL", "shell_energy_swirl_hand");
-            if (ok) {
-                commonEntityPipelinesAssigned = true;
-            }
+            commonEntityPipelinesAssigned = ok;
         } catch (Throwable ignored) {}
     }
 
