@@ -164,7 +164,7 @@ public enum LrClientAssetsManager {
      * 精确 id 查询，就会找不到 display，进而回退到内置测试/占位表现。
      *
      * <p>这里仅在“同一路径全资源集中唯一”时回退，避免多个枪包都定义
-     * {@code */m67} 这类常见名称时串包。
+     * 类似 {@code m67} 这类常见路径名称时串包。
      */
     @Nullable
     private ThrowableDisplayInstance findUniqueThrowableDisplayByPath(Identifier id) {
