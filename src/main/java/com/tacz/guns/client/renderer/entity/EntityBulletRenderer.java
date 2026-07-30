@@ -142,15 +142,13 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
 
                 if (isFirstPerson) {
-                    // 【曳光弹位置修复 - 回退到上游原始逻辑】
-                    // 上游 1.21.1 已逐行核对：
-                    //   offset = muzzleRenderOffset（摄像机局部，未旋转）
-                    //   首次渲染缓存 offset + camera X/Y
-                    //   reducer = (50 - dis)/50 线性
-                    //   Iris：旋转 poseStack -> 平移 -> 反旋转
-                    //   非 Iris：直接平移（实体已在视图空间）
-                    // 26.2 移植曾硬编码相机为 0，又尝试 camera.rotation() 预烘焙，仍漂移。
-                    // 本轮回退到上游原始 YN/XN 方案，并保留 26.2 API：mainCamera()/xRot()/yRot()
+                    // 26.2: entity render extraction already gives us a camera/view-space pose here,
+                    // even when Iris/Sulkan shaders are active.  Older TaCZ/Iris code rotated this
+                    // offset by the cached camera yaw/pitch before translating, then un-rotated it.
+                    // In the current pipeline that double-applies camera pitch/yaw: looking up turns
+                    // the muzzle offset into an upward/rightward world-space displacement, which is
+                    // exactly the "tracer starts from the sky" symptom.  Keep the cached camera values
+                    // for diagnostics, but apply the muzzle offset directly in view space for all paths.
                     Vector3f offset = bullet.getFirstPersonRenderOffset();
                     if (offset == null) {
                         offset = new Vector3f(globalMuzzleOffset);
@@ -162,15 +160,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                     firstPersonOffsetAfter = new Vector3f(offset);
                     offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
 
-                    if (IrisCompat.isUsingRenderPack()) {
-                        poseStack.mulPose(Axis.YN.rotationDegrees(bullet.getCameraYRot() + 180f));
-                        poseStack.mulPose(Axis.XN.rotationDegrees(bullet.getCameraXRot()));
-                    }
                     poseStack.translate(offset.x * offsetReducer, offset.y * offsetReducer, offset.z * offsetReducer);
-                    if (IrisCompat.isUsingRenderPack()) {
-                        poseStack.mulPose(Axis.XP.rotationDegrees(bullet.getCameraXRot()));
-                        poseStack.mulPose(Axis.YP.rotationDegrees(bullet.getCameraYRot() + 180f));
-                    }
                     poseAfterOffset = new Matrix4f(poseStack.last().pose());
                 }
                 width *= bullet.getTracerSizeOverride();
