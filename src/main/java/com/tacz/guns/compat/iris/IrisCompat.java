@@ -37,6 +37,7 @@ public final class IrisCompat {
     private static boolean scopePipelinesAssigned = false;
     private static int scopePipelineAssignSuccesses = 0;
     private static boolean loggedScopePipelineAssign = false;
+    private static boolean commonEntityPipelinesAssigned = false;
 
     public static void initCompat() {
         // Iris 检测 (OpenGL only) - 26.2 下通常不会加载
@@ -143,29 +144,38 @@ public final class IrisCompat {
      * <p>做法：当检测到正在 Iris hand pass 中时，显式把常用实体管线也归到 HAND，类似 scope 的处理。
      */
     public static void assignCommonEntityPipelinesToHandIfNeeded() {
+        if (commonEntityPipelinesAssigned) {
+            return;
+        }
         if (!isHandRendererActive()) {
             return;
         }
         try {
             // 反射获取 RenderPipelines 的常用管线，避免硬依赖
             Class<?> pipelinesClass = Class.forName("net.minecraft.client.renderer.RenderPipelines");
-            assignPipelineByName(pipelinesClass, "ENTITY_CUTOUT", "shell_entity_cutout_hand");
-            assignPipelineByName(pipelinesClass, "ENTITY_TRANSLUCENT", "shell_entity_translucent_hand");
-            assignPipelineByName(pipelinesClass, "ENTITY_TRANSLUCENT_CULL", "shell_entity_translucent_cull_hand");
+            boolean ok = true;
+            ok &= assignPipelineByName(pipelinesClass, "ENTITY_CUTOUT", "shell_entity_cutout_hand");
+            ok &= assignPipelineByName(pipelinesClass, "ENTITY_TRANSLUCENT", "shell_entity_translucent_hand");
+            ok &= assignPipelineByName(pipelinesClass, "ENTITY_TRANSLUCENT_CULL", "shell_entity_translucent_cull_hand");
             // 能量漩涡（曳光、枪口发光）也常在手部使用
-            assignPipelineByName(pipelinesClass, "ENERGY_SWIRL", "shell_energy_swirl_hand");
+            ok &= assignPipelineByName(pipelinesClass, "ENERGY_SWIRL", "shell_energy_swirl_hand");
+            if (ok) {
+                commonEntityPipelinesAssigned = true;
+            }
         } catch (Throwable ignored) {}
     }
 
-    private static void assignPipelineByName(Class<?> pipelinesClass, String fieldName, String debugName) {
+    private static boolean assignPipelineByName(Class<?> pipelinesClass, String fieldName, String debugName) {
         try {
             var field = pipelinesClass.getField(fieldName);
             Object pipelineObj = field.get(null);
             if (pipelineObj instanceof com.mojang.blaze3d.pipeline.RenderPipeline rp) {
-                assignScopePipelineToHand(rp, debugName);
+                return assignScopePipelineToHand(rp, debugName);
             }
         } catch (Throwable ignored) {}
+        return false;
     }
+
 
     public static boolean shouldDisableScopeMaskUnderShaderPack() {
         // Sulkan 暂无公开等价 API；同样保守回退。
