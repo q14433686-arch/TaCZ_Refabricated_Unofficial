@@ -116,7 +116,17 @@ public class ShellRender implements IFunctionalSubmitter {
         poseStack2.mulPose(Axis.ZP.rotationDegrees((float) zw));
         poseStack2.translate(0, -1.5, 0);
 
-        model.render(poseStack2, transformType1, RenderTypes.entityCutout(location), light, overlay);
+        model.render(poseStack2, transformType1, shellRenderType(transformType1, location), light, overlay);
+    }
+
+    private static RenderType shellRenderType(ItemDisplayContext displayContext, Identifier texture) {
+        // In Iris/Sulkan first-person hand passes, vanilla ENTITY_* pipelines may be assigned to
+        // the world/entity program instead of the hand program.  Shells are visually part of the
+        // held item in first person, so use the ITEM_CUTOUT pipeline there; third-person/world
+        // rendering keeps the entity pipeline for vanilla parity.
+        return displayContext.firstPerson()
+                ? RenderTypes.itemCutout(texture)
+                : RenderTypes.entityCutout(texture);
     }
 
     private void checkShellQueue(long lifeTime) {
@@ -193,7 +203,7 @@ public class ShellRender implements IFunctionalSubmitter {
                 PoseStack taskPose = new PoseStack();
                 taskPose.last().pose().set(frozenShellPose.last().pose());
                 taskPose.last().normal().set(frozenShellPose.last().normal());
-                model.submit(taskPose, displayContext, collector, RenderTypes.entityCutout(texture), light, overlay);
+                model.submit(taskPose, displayContext, collector, shellRenderType(displayContext, texture), light, overlay);
             });
         }
     }

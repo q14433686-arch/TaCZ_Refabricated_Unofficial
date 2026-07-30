@@ -157,6 +157,10 @@ public final class IrisCompat {
             ok &= assignPipelineByName(pipelinesClass, "ENTITY_CUTOUT", "shell_entity_cutout_hand");
             ok &= assignPipelineByName(pipelinesClass, "ENTITY_TRANSLUCENT", "shell_entity_translucent_hand");
             ok &= assignPipelineByName(pipelinesClass, "ENTITY_TRANSLUCENT_CULL", "shell_entity_translucent_cull_hand");
+            // ShellRender now uses ITEM_CUTOUT in first person to stay in the held-item pipeline,
+            // but explicitly assigning item pipelines as HAND keeps older/cached render paths safe.
+            ok &= assignPipelineByName(pipelinesClass, "ITEM_CUTOUT", "shell_item_cutout_hand");
+            ok &= assignPipelineByName(pipelinesClass, "ITEM_TRANSLUCENT", "shell_item_translucent_hand");
             // 能量漩涡（曳光、枪口发光）也常在手部使用
             ok &= assignPipelineByName(pipelinesClass, "ENERGY_SWIRL", "shell_energy_swirl_hand");
             if (ok) {
