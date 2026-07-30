@@ -1,0 +1,1426 @@
+[06:52:42] [main/INFO]: Loading Minecraft 26.2 with Fabric Loader 0.19.3
+[06:52:42] [main/INFO]: Mappings not present!
+[06:52:43] [main/WARN]: Warnings were found!
+ - 模组 'Reese's Sodium Options' (reeses-sodium-options) 2.2.3+mc26.2 建议安装 sodium-extra 的 0.4.2 及以上版本，但没有安装它！
+	 - 为了最佳体验，您应该安装 sodium-extra 的 0.4.2 及以上版本。
+[06:52:43] [main/INFO]: Loading 69 mods:
+	- cloth-config 26.2.155
+	   \-- cloth-basic-math 0.6.1
+	- fabric-api 0.155.2+26.2
+	   |-- fabric-api-base 2.0.4+ece063239e
+	   |-- fabric-api-lookup-api-v1 2.0.17+11e1c9a39e
+	   |-- fabric-biome-api-v1 18.0.6+c7bd5b8e9e
+	   |-- fabric-block-api-v1 3.0.3+ec56b6019e
+	   |-- fabric-block-getter-api-v2 2.0.7+ec56b6019e
+	   |-- fabric-command-api-v2 3.1.0+00cb03469e
+	   |-- fabric-content-registries-v0 11.3.0+d0a699d09e
+	   |-- fabric-convention-tags-v2 4.7.0+1f023a9e9e
+	   |-- fabric-crash-report-info-v1 1.0.5+086d547a9e
+	   |-- fabric-creative-tab-api-v1 5.0.14+d871b99e9e
+	   |-- fabric-data-attachment-api-v1 2.2.17+aa0fd6fe9e
+	   |-- fabric-data-generation-api-v1 25.4.5+b190d6f59e
+	   |-- fabric-debug-api-v1 1.0.2+c792624d9e
+	   |-- fabric-dimensions-v1 5.1.10+5ed499069e
+	   |-- fabric-entity-events-v1 5.0.5+06488ac19e
+	   |-- fabric-events-interaction-v0 5.2.6+8f57f7ee9e
+	   |-- fabric-game-rule-api-v1 4.0.8+46a6d00c9e
+	   |-- fabric-item-api-v1 14.3.0+583e0a5f9e
+	   |-- fabric-key-mapping-api-v1 2.0.5+e2bdee789e
+	   |-- fabric-lifecycle-events-v1 4.1.3+4575b05f9e
+	   |-- fabric-loot-api-v3 3.0.17+06488ac19e
+	   |-- fabric-menu-api-v1 2.0.16+086d547a9e
+	   |-- fabric-message-api-v1 7.0.7+086d547a9e
+	   |-- fabric-model-loading-api-v1 8.0.15+c80601bb9e
+	   |-- fabric-networking-api-v1 6.3.3+72073ef09e
+	   |-- fabric-object-builder-api-v1 24.1.0+6fcd5f039e
+	   |-- fabric-particles-v1 5.0.18+d1756aa99e
+	   |-- fabric-permission-api-v1 1.0.3+b7020ca29e
+	   |-- fabric-recipe-api-v1 9.0.20+11e1c9a39e
+	   |-- fabric-registry-sync-v0 7.1.0+c7bd5b8e9e
+	   |-- fabric-renderer-api-v1 14.1.2+2b0d8a229e
+	   |-- fabric-renderer-indigo 9.1.2+2b0d8a229e
+	   |-- fabric-rendering-fluids-v1 6.0.4+06488ac19e
+	   |-- fabric-rendering-v1 25.3.1+6988455e9e
+	   |-- fabric-resource-conditions-api-v1 6.1.0+10e9a28b9e
+	   |-- fabric-resource-loader-v0 3.3.20+4fc5413f9e
+	   |-- fabric-resource-loader-v1 2.0.13+9edec1269e
+	   |-- fabric-screen-api-v1 5.1.0+48e3c0b09e
+	   |-- fabric-serialization-api-v1 2.0.4+11a26f319e
+	   |-- fabric-sound-api-v1 2.0.5+11a26f319e
+	   |-- fabric-tag-api-v1 2.1.3+794df31d9e
+	   |-- fabric-transfer-api-v1 8.0.11+39b5a3929e
+	   \-- fabric-transitive-access-wideners-v1 8.1.4+67c847259e
+	- fabricloader 0.19.3
+	   \-- mixinextras 0.5.4
+	- forgeconfigapiport 26.2.1
+	   |-- com_electronwill_night-config_core 3.8.4
+	   \-- com_electronwill_night-config_toml 3.8.4
+	- iris 1.11.2+mc26.2
+	   |-- io_github_douira_glsl-transformer 3.0.0-pre3
+	   |-- org_anarres_jcpp 1.4.14
+	   \-- org_antlr_antlr4-runtime 4.13.1
+	- java 25
+	- jei 30.13.0.84
+	- minecraft 26.2
+	- modmenu 20.0.1
+	   \-- fabric-api-base 2.0.4+ece063239e
+	- mousetweaks 2.31
+	- placeholder-api 3.1.0-beta.1+26.2
+	- reeses-sodium-options 2.2.3+mc26.2
+	- sodium 0.9.1+mc26.2
+	- tacz 1.1.8+fabric.26.2.alpha.2
+	   |-- com_github_figuramc_luaj_luaj-core 3.0.8-figura
+	   |-- com_github_figuramc_luaj_luaj-jse 3.0.8-figura
+	   |-- org_apache_bcel_bcel 6.6.1
+	   \-- org_apache_commons_commons-math3 3.6.1
+	- touhou_little_maid 1.0.0-neo2.0.0+mc26.2
+[06:52:43] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/D:/DOWLOD/.minecraft/libraries/net/fabricmc/sponge-mixin/0.17.3+mixin.0.8.7/sponge-mixin-0.17.3+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[06:52:43] [main/INFO]: Compatibility level set to JAVA_25
+[06:52:43] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.json could not be read. If this is a development environment you can ignore this message
+[06:52:43] [main/WARN]: Reference map 'iris-fabric.refmap.json' for mixins.iris.fabric.json could not be read. If this is a development environment you can ignore this message
+[06:52:43] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.vertexformat.json could not be read. If this is a development environment you can ignore this message
+[06:52:43] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.bettermipmaps.json could not be read. If this is a development environment you can ignore this message
+[06:52:43] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.compat.sodium.json could not be read. If this is a development environment you can ignore this message
+[06:52:43] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.fixes.maxfpscrash.json could not be read. If this is a development environment you can ignore this message
+[06:52:43] [main/WARN]: Reference map 'reeses-sodium-options.refmap.json' for reeses-sodium-options.mixins.json could not be read. If this is a development environment you can ignore this message
+[06:52:43] [main/INFO]: Loaded configuration file for Sodium: 36 options available, 1 override(s) found
+[06:52:43] [main/INFO]: [TACZ Scope] Iris compat mixin config loaded: package=com.tacz.guns.mixin.client.iris, irisLoaded=true
+[06:52:43] [main/WARN]: Reference map 'touhou_little_maid.refmap.json' for touhou_little_maid.mixins.json could not be read. If this is a development environment you can ignore this message
+[06:52:43] [main/WARN]: Reference map 'touhou_little_maid.refmap.json' for touhou_little_maid_fabric.mixins.json could not be read. If this is a development environment you can ignore this message
+[06:52:44] [main/WARN]: Error loading class: de/siphalor/amecs/key_modifiers/impl/AmecsKeyModifiersEarlyInit (java.lang.ClassNotFoundException: de/siphalor/amecs/key_modifiers/impl/AmecsKeyModifiersEarlyInit)
+[06:52:44] [main/WARN]: @Mixin target de.siphalor.amecs.key_modifiers.impl.AmecsKeyModifiersEarlyInit was not found jei.mixins.json:AmecsKeyModifiersEarlyInitMixin from mod jei
+[06:52:44] [main/WARN]: Force-disabling mixin 'features.render.world.sky.LevelRendererMixin' as rule 'mixin.features.render.world.sky' (added by mods [iris]) disables it and children
+[06:52:44] [main/INFO]: [TACZ Scope] Iris compat mixin decision: apply=true, firstMixin=com.tacz.guns.mixin.client.iris.IrisShaderCreatorMixin, firstTarget=net.irisshaders.iris.pipeline.programs.ShaderCreator
+[06:52:44] [main/INFO]: Searching for graphics cards...
+[06:52:44] [main/INFO]: Found graphics adapter: AdapterInfo{vendor=AMD, description='AMD Radeon(TM) Graphics', adapterType=0x00002303, openglIcdFilePath='C:\Windows\System32\DriverStore\FileRepository\u0202642.inf_amd64_870f6b155aa057ce\B026261\atig6pxx.dll', openglIcdVersion=32.0.21045.1000}
+[06:52:44] [main/INFO]: Found graphics adapter: AdapterInfo{vendor=AMD, description='AMD  Radeon RX 7800 XT', adapterType=0x0000230B, openglIcdFilePath='C:\Windows\System32\DriverStore\FileRepository\u0202643.inf_amd64_8835e06f359414be\B026283\atig6pxx.dll', openglIcdVersion=32.0.31035.1003}
+[06:52:44] [main/WARN]: Sodium has applied one or more workarounds to prevent crashes or other issues on your system: [AMD_GAME_OPTIMIZATION_BROKEN]
+[06:52:44] [main/WARN]: This is not necessarily an issue, but it may result in certain features or optimizations being disabled. You can sometimes fix these issues by upgrading your graphics driver.
+[06:52:45] [main/INFO]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.4).
+[06:52:46] [Datafixer Bootstrap #0/INFO]: 295 Datafixer optimizations took 256 milliseconds
+[06:52:46] [main/WARN]: Invalid registry value type detected for PerfOS counters. Should be REG_DWORD. Ignoring: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PerfOS\Performance\Disable Performance Counters.
+[06:52:50] [Render thread/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[06:52:50] [Render thread/INFO]: Setting user: GOOSTL
+[06:52:51] [Render thread/INFO]: Registered synced data key tacz:shoot_cool_down for minecraft:living_entity
+[06:52:51] [Render thread/INFO]: Registered synced data key tacz:melee_cool_down for minecraft:living_entity
+[06:52:51] [Render thread/INFO]: Registered synced data key tacz:reload_state for minecraft:living_entity
+[06:52:51] [Render thread/INFO]: Registered synced data key tacz:aiming_progress for minecraft:living_entity
+[06:52:51] [Render thread/INFO]: Registered synced data key tacz:draw_cool_down for minecraft:living_entity
+[06:52:51] [Render thread/INFO]: Registered synced data key tacz:is_aiming for minecraft:living_entity
+[06:52:51] [Render thread/INFO]: Registered synced data key tacz:sprint_time for minecraft:living_entity
+[06:52:51] [Render thread/INFO]: Registered synced data key tacz:is_bolting for minecraft:living_entity
+[06:52:51] [Render thread/INFO]: Registered synced data key tacz:throwable_using for minecraft:living_entity
+[06:52:51] [Render thread/INFO]: LRTactical (unofficial 26.2 port) initialized
+[06:52:51] [Render thread/INFO]: common default pack init start...
+[06:52:53] [Render thread/INFO]: common default pack init finished, cost time: 1541.547 ms
+[06:52:53] [Render thread/INFO]: [Indigo] Different rendering plugin detected; not applying Indigo.
+[06:52:53] [Render thread/INFO]: Sending ConfigManager...
+[06:52:53] [Render thread/INFO]: Sending ConfigManager took 983.6 microseconds
+[06:52:53] [Render thread/INFO]: Checking mod updates...
+[06:52:53] [Render thread/INFO]: [STDOUT]: [Mouse Tweaks] Main.initialize()
+[06:52:53] [Render thread/INFO]: [STDOUT]: [Mouse Tweaks] Initialized.
+[06:52:53] [Render thread/INFO]: [TACZ] Registering FeatureRenderers for 26.2...
+[06:52:53] [Render thread/INFO]: [TACZ] FeatureRenderers registered.
+[06:52:53] [TLM Downloader 0/INFO]: The download info file was successfully updated and loaded
+[06:52:53] [Render thread/INFO]: Backend library: LWJGL version 3.4.1-snapshot
+[06:52:54] [Download-2/INFO]: Update available for 'fabric-api@0.155.2+26.2', (-> 0.156.0+26.2)
+[06:52:54] [Render thread/INFO]: Modifying process environment to apply workarounds for the AMD graphics driver...
+[06:52:54] [ForkJoinPool.commonPool-worker-1/WARN]: [Iris Update Check] This version doesn't have an update index, skipping.
+[06:52:55] [Render thread/INFO]: Debug functionality is disabled.
+[06:52:55] [Render thread/INFO]: ARB_direct_state_access detected, enabling DSA.
+[06:52:55] [Render thread/INFO]: Shaders are disabled because enableShaders is set to false in iris.properties
+[06:52:55] [Render thread/INFO]: Using graphics backend OpenGL, using drivers: 3.3.0 Core Profile Context 26.7.1.260716
+[06:52:55] [Render thread/INFO]: Using graphics device: AMD  Radeon RX 7800 XT (ATI Technologies Inc.)
+[06:52:55] [Render thread/INFO]: Using graphics device extensions: GL_ARB_multi_draw_indirect, GL_ARB_buffer_storage, GL_ARB_shader_draw_parameters, GL_ARB_base_instance, GL_KHR_debug, GL_ARB_draw_indirect, GL_ARB_clip_control, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+[06:52:55] [Render thread/INFO]: Start scanning for gun packs in D:\DOWLOD\.minecraft\versions\26.2-Fabric 0.19.3\tacz
+[06:52:55] [Render thread/INFO]: - CS2 Knifes Pack v1.0.1.zip, Main namespace: cs2_wt
+[06:52:55] [Render thread/INFO]: - GunpowderRevolution_gunpack v1.2.7.zip, Main namespace: hamster
+[06:52:55] [Render thread/INFO]: - KhanPowder_v0.8.99_hotfix.zip, Main namespace: murasamet
+[06:52:55] [Render thread/INFO]: - Suffuse-GunSmoke-Pack1.0.7--hotfix.zip, Main namespace: suffuse
+[06:52:55] [Render thread/INFO]: - tacz_default_gun, Main namespace: tacz
+[06:52:55] [Render thread/INFO]: - [Tacz1.1.7+]CIBR_GunsPack_v0.3_1.1.7.zip, Main namespace: cib
+[06:52:55] [Render thread/INFO]: - [TACZ1.1.8+Arcana]ClassicRCCRP 1.1.6_release_hotfix2.zip, Main namespace: ccrp
+[06:52:55] [Render thread/INFO]: - [TaCZ] Enlisted Gun Pack v1.2.1.3.zip, Main namespace: ww
+[06:52:55] [Render thread/INFO]: Found 8 possible gunpack(s) and added them to resource set.
+[06:52:55] [Render thread/INFO]: Hardware information:
+[06:52:55] [Render thread/INFO]: CPU: 16x AMD Ryzen 7 7700 8-Core Processor 
+[06:52:55] [Render thread/INFO]: GPU: AMD  Radeon RX 7800 XT (Supports OpenGL 3.3.0 Core Profile Context 26.7.1.260716)
+[06:52:55] [Render thread/INFO]: OS: Windows 11 (10.0)
+[06:52:55] [Render thread/INFO]: Reloading ResourceManager: tacz_resources, vanilla, cloth-config, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, forgeconfigapiport, iris, jei, modmenu, org_apache_commons_commons-math3, placeholder-api, reeses-sodium-options, sodium, tacz, touhou_little_maid
+[06:52:56] [Worker-Main-5/INFO]: Found unifont_pua-17.0.01.hex, loading
+[06:52:56] [Worker-Main-1/INFO]: Found unifont_all_no_pua-17.0.01.hex, loading
+[06:52:56] [Render thread/INFO]: Thread[#3,Render thread,10,main]
+[06:52:56] [Render thread/INFO]: OpenGL Vendor: ATI Technologies Inc.
+[06:52:56] [Render thread/INFO]: OpenGL Renderer: AMD  Radeon RX 7800 XT
+[06:52:56] [Render thread/INFO]: OpenGL Version: 3.3.0 Core Profile Context 26.7.1.260716
+[06:52:56] [Worker-Main-4/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/entity/tombstone.json
+[06:52:56] [Worker-Main-4/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/entity/cake_box.json
+[06:52:56] [Worker-Main-4/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/entity/backpack/middle_backpack.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/shrine.json
+[06:52:56] [Worker-Main-4/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/entity/new_maid_fairy.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/altar.json
+[06:52:56] [Worker-Main-4/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/entity/backpack/big_backpack.json
+[06:52:56] [Worker-Main-4/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/entity/maid_fairy.json
+[06:52:56] [Worker-Main-4/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/entity/backpack/small_backpack.json
+[06:52:56] [Worker-Main-4/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/entity/broom.json
+[06:52:56] [Worker-Main-4/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/entity/baby_maid_fairy.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/gomoku_piece.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/bookshelf.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/maid_bed/blue.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/keyboard.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/picnic_mat.json
+[06:52:56] [Worker-Main-1/INFO]: Found unifont_jp_patch-17.0.01.hex, loading
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/snack_cabinet.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/statue_base.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/wchess.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/cchess_pieces.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/maid_bed/black.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/maid_bed/purple.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/cchess.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/maid_bed/pink.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/gomoku.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/maid_bed/green.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/wchess_pieces.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/maid_banner.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/maid_bed/yellow.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/computer.json
+[06:52:56] [Worker-Main-6/INFO]: Loading bedrock model file: touhou_little_maid:models/bedrock/block/maid_bed/white.json
+[06:52:56] [Worker-Main-7/WARN]: Invalid path in datapack: suffuse:tacz_sounds/shared/magpouch (1).ogg, ignoring
+[06:52:56] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_bounce_1.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.bounce
+[06:52:56] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_bounce_2.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.bounce
+[06:52:56] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_bounce_3.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.bounce
+[06:52:56] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_bounce_4.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.bounce
+[06:52:56] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_exp_flash.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.flash.explode
+[06:52:56] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_exp_m67.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.m67.explode
+[06:52:56] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_exp_rgn.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.rgn.explode
+[06:52:56] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_exp_smoke_start.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.smoke.start
+[06:52:56] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_exp_smoke_loop.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.smoke.loop
+[06:52:56] [Worker-Main-7/WARN]: File lrtactical:sounds/entity/grenade_exp_smoke_end.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.smoke.end
+[06:52:56] [Worker-Main-7/WARN]: File lrtactical:sounds/player/ring.ogg does not exist, cannot add it to event cs2_wt:player.ring
+[06:52:56] [Worker-Main-7/WARN]: Invalid sounds.json in resourcepack: 'tacz'
+com.google.gson.JsonSyntaxException: Expected entry to be a JsonObject, was "Sou...e."
+	at knot//net.minecraft.util.GsonHelper.convertToJsonObject(GsonHelper.java:415)
+	at knot//net.minecraft.client.resources.sounds.SoundEventRegistrationSerializer.deserialize(SoundEventRegistrationSerializer.java:25)
+	at knot//net.minecraft.client.resources.sounds.SoundEventRegistrationSerializer.deserialize(SoundEventRegistrationSerializer.java:20)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper.read(TypeAdapterRuntimeTypeWrapper.java:40)
+	at knot//com.google.gson.internal.bind.MapTypeAdapterFactory$Adapter.read(MapTypeAdapterFactory.java:203)
+	at knot//com.google.gson.internal.bind.MapTypeAdapterFactory$Adapter.read(MapTypeAdapterFactory.java:161)
+	at knot//net.minecraft.util.GsonHelper.fromNullableJson(GsonHelper.java:530)
+	at knot//net.minecraft.util.GsonHelper.fromJson(GsonHelper.java:537)
+	at knot//net.minecraft.client.sounds.SoundManager.prepare(SoundManager.java:80)
+	at knot//net.minecraft.client.sounds.SoundManager.prepare(SoundManager.java:41)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$0(SimplePreparableReloadListener.java:13)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1789)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$1(SimpleReloadInstance.java:51)
+	at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1753)
+	at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1745)
+	at java.base/java.util.concurrent.ForkJoinTask$InterruptibleTask.exec(ForkJoinTask.java:1662)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)
+[06:52:56] [Worker-Main-12/WARN]: Missing block model: minecraft:builtin/entity
+[06:52:57] [Worker-Main-11/WARN]: Missing texture references in model touhou_little_maid:item/picnic_basket_in_hand:
+    particle
+[06:52:57] [Worker-Main-11/WARN]: Missing texture references in model touhou_little_maid:item/snack_cabinet_in_hand:
+    particle
+[06:52:57] [Render thread/WARN]: Skipped language file: ww:lang/en_us.json (com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Unterminated object at line 8 column 4 path $.ww.gun.p38.desc
+See https://github.com/google/gson/blob/main/Troubleshooting.md#malformed-json)
+[06:52:57] [Render thread/INFO]: OpenAL initialized on device OpenAL Soft on 耳机 (High Definition Audio Device)
+[06:52:57] [Render thread/INFO]: Sound engine started
+[06:52:57] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 2048x1024x0 minecraft:textures/atlas/armor_trims.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 4096x2048x4 minecraft:textures/atlas/blocks.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
+[06:52:57] [Render thread/INFO]: Created: 256x256x0 jei:textures/atlas/gui.png-atlas
+[06:53:00] [Render thread/INFO]: Custom pack loading time: 2412.046 ms
+[06:53:01] [Render thread/WARN]: Failed to read script file: ccrp:underbarrel_m16a3_state_machine
+[06:53:01] [Render thread/WARN]: Failed to read script file: ccrp:underbarrel_mk17_state_machine
+[06:53:01] [Render thread/WARN]: Failed to read script file: ccrp:underbarrel_scar_17s_state_machine
+[06:53:01] [Render thread/WARN]: Failed to read script file: ccrp:underbarrel_scar_sc_state_machine
+[06:53:01] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[06:53:06] [Render thread/INFO]: Start scanning for gun packs in D:\DOWLOD\.minecraft\versions\26.2-Fabric 0.19.3\tacz
+[06:53:06] [Render thread/INFO]: - CS2 Knifes Pack v1.0.1.zip, Main namespace: cs2_wt
+[06:53:06] [Render thread/INFO]: - GunpowderRevolution_gunpack v1.2.7.zip, Main namespace: hamster
+[06:53:06] [Render thread/INFO]: - KhanPowder_v0.8.99_hotfix.zip, Main namespace: murasamet
+[06:53:06] [Render thread/INFO]: - Suffuse-GunSmoke-Pack1.0.7--hotfix.zip, Main namespace: suffuse
+[06:53:06] [Render thread/INFO]: - tacz_default_gun, Main namespace: tacz
+[06:53:06] [Render thread/INFO]: - [Tacz1.1.7+]CIBR_GunsPack_v0.3_1.1.7.zip, Main namespace: cib
+[06:53:06] [Render thread/INFO]: - [TACZ1.1.8+Arcana]ClassicRCCRP 1.1.6_release_hotfix2.zip, Main namespace: ccrp
+[06:53:06] [Render thread/INFO]: - [TaCZ] Enlisted Gun Pack v1.2.1.3.zip, Main namespace: ww
+[06:53:06] [Render thread/INFO]: Found 8 possible gunpack(s) and added them to resource set.
+[06:53:07] [Worker-Main-10/ERROR]: Couldn't load tag tacz:interact_key/whitelist as it is missing following references: minecraft:boat (from tacz), minecraft:chest_boat (from tacz)
+[06:53:08] [Worker-Main-4/WARN]: Invalid path in datapack: ww:recipes/bayonet_m1930 - Copy.json, ignoring
+[06:53:08] [Worker-Main-10/WARN]: Invalid path in datapack: ww:recipes/bayonet_m1930 - Copy.json, ignoring
+[06:53:08] [Worker-Main-9/ERROR]: Couldn't parse data file ww:allow_attachments/m1928a1 from ww:tacz_tags/attachments/allow_attachments/m1928a1.json
+com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Unterminated array at line 3 column 4 path $[1]
+See https://github.com/google/gson/blob/main/Troubleshooting.md#malformed-json
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1106)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1025)
+	at knot//com.tacz.guns.util.ResourceScanner.parseLenient(ResourceScanner.java:99)
+	at knot//com.tacz.guns.util.ResourceScanner.scanDirectoryAll(ResourceScanner.java:85)
+	at knot//com.tacz.guns.resource.manager.AttachmentsTagManager.prepare(AttachmentsTagManager.java:45)
+	at knot//com.tacz.guns.resource.manager.AttachmentsTagManager.prepare(AttachmentsTagManager.java:26)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$0(SimplePreparableReloadListener.java:13)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1789)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$1(SimpleReloadInstance.java:51)
+	at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1753)
+	at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1745)
+	at java.base/java.util.concurrent.ForkJoinTask$InterruptibleTask.exec(ForkJoinTask.java:1662)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)
+Caused by: com.google.gson.stream.MalformedJsonException: Unterminated array at line 3 column 4 path $[1]
+See https://github.com/google/gson/blob/main/Troubleshooting.md#malformed-json
+	at knot//com.google.gson.stream.JsonReader.syntaxError(JsonReader.java:1817)
+	at knot//com.google.gson.stream.JsonReader.doPeek(JsonReader.java:598)
+	at knot//com.google.gson.stream.JsonReader.hasNext(JsonReader.java:536)
+	at knot//com.google.gson.internal.bind.JsonElementTypeAdapter.read(JsonElementTypeAdapter.java:95)
+	at knot//com.google.gson.internal.bind.JsonElementTypeAdapter.read(JsonElementTypeAdapter.java:35)
+	at knot//com.google.gson.internal.bind.TypeAdapters$33$1.read(TypeAdapters.java:1060)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	... 15 more
+[06:53:08] [Worker-Main-9/ERROR]: Couldn't parse data file ww:allow_attachments/m28s from ww:tacz_tags/attachments/allow_attachments/m28s.json
+com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Unterminated array at line 3 column 4 path $[1]
+See https://github.com/google/gson/blob/main/Troubleshooting.md#malformed-json
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1106)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1025)
+	at knot//com.tacz.guns.util.ResourceScanner.parseLenient(ResourceScanner.java:99)
+	at knot//com.tacz.guns.util.ResourceScanner.scanDirectoryAll(ResourceScanner.java:85)
+	at knot//com.tacz.guns.resource.manager.AttachmentsTagManager.prepare(AttachmentsTagManager.java:45)
+	at knot//com.tacz.guns.resource.manager.AttachmentsTagManager.prepare(AttachmentsTagManager.java:26)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$0(SimplePreparableReloadListener.java:13)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1789)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$1(SimpleReloadInstance.java:51)
+	at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1753)
+	at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1745)
+	at java.base/java.util.concurrent.ForkJoinTask$InterruptibleTask.exec(ForkJoinTask.java:1662)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)
+Caused by: com.google.gson.stream.MalformedJsonException: Unterminated array at line 3 column 4 path $[1]
+See https://github.com/google/gson/blob/main/Troubleshooting.md#malformed-json
+	at knot//com.google.gson.stream.JsonReader.syntaxError(JsonReader.java:1817)
+	at knot//com.google.gson.stream.JsonReader.doPeek(JsonReader.java:598)
+	at knot//com.google.gson.stream.JsonReader.hasNext(JsonReader.java:536)
+	at knot//com.google.gson.internal.bind.JsonElementTypeAdapter.read(JsonElementTypeAdapter.java:95)
+	at knot//com.google.gson.internal.bind.JsonElementTypeAdapter.read(JsonElementTypeAdapter.java:35)
+	at knot//com.google.gson.internal.bind.TypeAdapters$33$1.read(TypeAdapters.java:1060)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	... 15 more
+[06:53:08] [Worker-Main-10/WARN]: Invalid path in datapack: ww:recipes/bayonet_m1930 - Copy.json, ignoring
+[06:53:08] [Worker-Main-10/INFO]: Found 735 recipe file(s) in legacy 'recipes/' directory (old gun pack layout), 1853 in 'recipe/'.
+[06:53:09] [Render thread/INFO]: Loaded 1853 recipes
+[06:53:09] [Render thread/INFO]: Loaded 1745 advancements
+[06:53:09] [Render thread/INFO]: Loaded 9 throwable index(es)
+[06:53:09] [Render thread/INFO]: Loaded 16 melee index(es)
+[06:53:09] [Render thread/INFO]: Loaded 1 consumable index(es)
+[06:53:09] [Render thread/WARN]: Failed to read script file: murasamet:blunderbuss_gun_logic
+[06:53:09] [Render thread/ERROR]: Failed to parse data file tacz:muzzle_glock_grip_not_standard
+com.google.gson.JsonParseException: Null value found in JSON data
+	at knot//com.tacz.guns.resource.manager.AttachmentsTagManager.apply(AttachmentsTagManager.java:63)
+	at knot//com.tacz.guns.resource.manager.AttachmentsTagManager.apply(AttachmentsTagManager.java:26)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:156)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:209)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:154)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:424)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:379)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:09] [Render thread/ERROR]: Failed to load data file hamster:lebel1886_07c
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1193)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1137)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.parseJson(JsonDataManager.java:76)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.apply(JsonDataManager.java:65)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:42)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:22)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:156)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:209)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:154)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:424)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:379)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:09] [Render thread/ERROR]: Failed to load data file hamster:m1887_hc
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1193)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1137)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.parseJson(JsonDataManager.java:76)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.apply(JsonDataManager.java:65)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:42)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:22)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:156)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:209)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:154)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:424)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:379)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:09] [Render thread/ERROR]: Failed to load data file ww:i37
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1193)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1137)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.parseJson(JsonDataManager.java:76)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.apply(JsonDataManager.java:65)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:42)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:22)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:156)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:209)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:154)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:424)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:379)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:09] [Render thread/ERROR]: Failed to load data file hamster:uppercut
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1193)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1137)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.parseJson(JsonDataManager.java:76)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.apply(JsonDataManager.java:65)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:42)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:22)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:156)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:209)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:154)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:424)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:379)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:09] [Render thread/ERROR]: Failed to load data file hamster:coltm1851_chain
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1193)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1137)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.parseJson(JsonDataManager.java:76)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.apply(JsonDataManager.java:65)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:42)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:22)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:156)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:209)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:154)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:424)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:379)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:09] [Render thread/ERROR]: Failed to load data file hamster:lugerp08_artillerie
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1193)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1137)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.parseJson(JsonDataManager.java:76)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.apply(JsonDataManager.java:65)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:42)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:22)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:156)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:209)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:154)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:424)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:379)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:09] [Render thread/ERROR]: Failed to load data file hamster:colt1873_lb
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1193)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1137)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.parseJson(JsonDataManager.java:76)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.apply(JsonDataManager.java:65)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:42)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:22)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:156)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:209)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:154)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:424)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:379)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:09] [Render thread/ERROR]: Failed to load data file suffuse:knife
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1193)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1137)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.parseJson(JsonDataManager.java:76)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.apply(JsonDataManager.java:65)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:42)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:22)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:156)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:209)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:154)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:424)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:379)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:09] [Render thread/ERROR]: Failed to load data file ccrp:m14_bipod
+com.google.gson.JsonParseException: attachment type must be nonnull.
+	at knot//com.tacz.guns.resource.serialize.CommonAttachmentIndexSerializer.deserialize(CommonAttachmentIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonAttachmentIndexSerializer.deserialize(CommonAttachmentIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1193)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1137)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.parseJson(JsonDataManager.java:76)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.apply(JsonDataManager.java:65)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:42)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:22)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:156)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:209)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:154)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:424)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:379)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:09] [Render thread/ERROR]: Failed to load data file tacz:misc/blood_strike_1
+com.google.gson.JsonSyntaxException: Missing item, expected to find a JsonObject
+	at knot//net.minecraft.util.GsonHelper.getAsJsonObject(GsonHelper.java:423)
+	at knot//com.tacz.guns.resource.serialize.GunSmithTableResultSerializer.deserialize(GunSmithTableResultSerializer.java:59)
+	at knot//com.tacz.guns.resource.serialize.GunSmithTableResultSerializer.deserialize(GunSmithTableResultSerializer.java:19)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$2.readIntoField(ReflectiveTypeAdapterFactory.java:271)
+	at knot//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$FieldReflectionAdapter.readField(ReflectiveTypeAdapterFactory.java:559)
+	at knot//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:517)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1193)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1137)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.parseJson(JsonDataManager.java:76)
+	at knot//com.tacz.guns.resource.manager.JsonDataManager.apply(JsonDataManager.java:65)
+	at knot//com.tacz.guns.resource.manager.CommonDataManager.apply(CommonDataManager.java:42)
+	at knot//com.tacz.guns.resource.manager.TableRecipeManager.apply(TableRecipeManager.java:134)
+	at knot//com.tacz.guns.resource.manager.TableRecipeManager.apply(TableRecipeManager.java:53)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:156)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:209)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:154)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:424)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:379)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/12g can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/22wmr can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/308 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/30_06 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/338 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/357mag can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/40mm can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/45_70 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/45acp can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/46x30 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/500mag can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/50ae can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/50bmg can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/545x39 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/556x45 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/57x28 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/58x42 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/68x51fury can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/762x25 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/762x39 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/762x54 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/792x57 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/9mm can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:ammo/rpg_rocket can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/ammo_mod_fmj can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/ammo_mod_he can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/ammo_mod_hp can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/ammo_mod_i can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/ammo_mod_slug can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/bayonet_6h3 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/bayonet_m9 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/deagle_golden_long_barrel can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/extended_mag_1 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/extended_mag_2 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/extended_mag_3 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/grip_cobra can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/grip_magpul_afg_2 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/grip_osovets_black can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/grip_rk0 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/grip_rk1_b25u can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/grip_rk6 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/grip_se_5 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/grip_td can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/grip_vertical_military can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/grip_vertical_ranger can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/grip_vertical_talon can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/laser_compact can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/laser_lopro can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/laser_nightstick can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/laser_peq6 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/light_extended_mag_1 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/light_extended_mag_2 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/light_extended_mag_3 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_brake_cthulhu can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_brake_cyclone_d2 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_brake_mastiff_sg can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_brake_pioneer can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_brake_timeless50 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_brake_trex can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_choke_sg can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_compensator_trident can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_knight_qd can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_mirage can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_phantom_s1 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_ptilopsis can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_sg can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_ursus can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_vulture can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/muzzle_silencer_wraith can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/oem_stock_heavy can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/oem_stock_light can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/oem_stock_tactical can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/scope_1873_6x can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/scope_98k can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/scope_acog_ta31 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/scope_contender can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/scope_elcan_4x can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/scope_hamr can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/scope_lpvo_1_6 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/scope_mk5hd can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/scope_qmk152 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/scope_retro_2x can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/scope_standard_8x can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/scope_vudu can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/shotgun_extended_mag_1 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/shotgun_extended_mag_2 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/shotgun_extended_mag_3 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_552 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_acro_pistol can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_acro_rifle can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_coyote can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_deltapoint_pistol can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_deltapoint_rifle can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_exp3 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_fastfire_pistol can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_fastfire_rifle can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_okp7 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_pk06_pistol can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_pk06_rifle can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_rmr_dot can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_sro_dot can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_srs_02 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_t1 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_t2 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sight_uh1 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sniper_extended_mag_1 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sniper_extended_mag_2 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/sniper_extended_mag_3 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/stock_ak12 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/stock_carbon_bone_c5 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/stock_heavy_spas_12 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/stock_hk_slim_line can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/stock_m4ss can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/stock_militech_b5 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/stock_moe can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/stock_ripstock can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/stock_sba3 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/stock_tactical_ar can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:attachments/stock_tactical_spas_12 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe lrtactical:consumable/test_medkit can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/aa12 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/ai_awp can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/ak47 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/aug can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/b93r can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/cz75 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/db_long can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/db_short can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/deagle can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/deagle_golden can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/fn_evolys can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/fn_fal can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/g36k can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/glock_17 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/hk416d can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/hk_g3 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/hk_mk23 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/hk_mp5a5 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/kar98 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/lonetrail can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/m1014 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/m107 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/m16a1 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/m16a4 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/m1911 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/m249 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/m320 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/m4a1 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/m700 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/m870 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/m95 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/m9a4 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/minigun can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/mk14 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/p320 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/p90 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/qbz_191 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/qbz_95 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/rhino357 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/rpg7 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/rpk can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/scar_h can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/scar_l can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/sks_tactical can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/spas_12 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/spr15hb can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/springfield1873 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/taurus500 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/timeless50 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/type_81 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/ump45 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/uzi can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:gun/vector45 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe lrtactical:melee/test_knife can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe tacz:misc/blood_strike_1 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe lrtactical:throwable/test_c4 can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe lrtactical:throwable/test_flashbang can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe lrtactical:throwable/test_gas_grenade can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe lrtactical:throwable/test_grenade can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe lrtactical:throwable/test_smoke_grenade can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe lrtactical:throwable/test_splash_grenade can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/WARN]: Recipe lrtactical:throwable/test_sticky_grenade can't be placed due to empty ingredients and will be ignored
+[06:53:09] [Render thread/INFO]: Applied 0 biome modifications to 0 of 66 new biomes in 931.1 μs
+[06:53:09] [Server thread/INFO]: Starting integrated minecraft server version 26.2
+[06:53:09] [Server thread/INFO]: Generating keypair
+[06:53:10] [Server thread/INFO]: Loading 0 persistent chunks...
+[06:53:10] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:overworld
+[06:53:10] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_end
+[06:53:10] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_nether
+[06:53:10] [Server thread/INFO]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[06:53:10] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[06:53:10] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[06:53:10] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved
+[06:53:10] [Server thread/INFO]: Loading 49 chunks for player spawn...
+[06:53:10] [Server thread/INFO]: 准备生成区域中：16%
+[06:53:10] [Server thread/INFO]: 准备生成区域中：59%
+[06:53:10] [Server thread/INFO]: Time elapsed: 590 ms
+[06:53:10] [Server thread/INFO]: GOOSTL[local:E:20eddd31] logged in with entity id 1 at (88.914230501164, -60.0, -2.1893681392719797)
+[06:53:10] [Server thread/INFO]: GOOSTL加入了游戏
+[06:53:10] [Render thread/INFO]: Started 10 worker threads
+[06:53:11] [Server thread/INFO]: Changing view distance to 12, from 10
+[06:53:11] [Server thread/INFO]: Changing simulation distance to 12, from 0
+[06:53:11] [Render thread/WARN]: Failed to parse data from network for RECIPES with id tacz:misc/blood_strike_1
+com.google.gson.JsonSyntaxException: Missing item, expected to find a JsonObject
+	at knot//net.minecraft.util.GsonHelper.getAsJsonObject(GsonHelper.java:423)
+	at knot//com.tacz.guns.resource.serialize.GunSmithTableResultSerializer.deserialize(GunSmithTableResultSerializer.java:59)
+	at knot//com.tacz.guns.resource.serialize.GunSmithTableResultSerializer.deserialize(GunSmithTableResultSerializer.java:19)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$2.readIntoField(ReflectiveTypeAdapterFactory.java:271)
+	at knot//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$FieldReflectionAdapter.readField(ReflectiveTypeAdapterFactory.java:559)
+	at knot//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:517)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:981)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:891)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:828)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.parse(CommonNetworkCache.java:175)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:231)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:166)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.doSync(ServerMessageSyncGunPack.java:61)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.handle(ServerMessageSyncGunPack.java:48)
+	at knot//com.tacz.guns.network.NetworkHandler.lambda$registerS2CPackets$10(NetworkHandler.java:115)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:77)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:39)
+	at knot//net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon.handle(AbstractChanneledNetworkAddon.java:102)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handler$zkd000$fabric-networking-api-v1$onCustomPayload(ClientCommonPacketListenerImpl.java:1057)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handleCustomPayload(ClientCommonPacketListenerImpl.java)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:49)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:19)
+	at knot//net.minecraft.network.PacketProcessor$ListenerAndPacket.handle(PacketProcessor.java:55)
+	at knot//net.minecraft.network.PacketProcessor.processQueuedPackets(PacketProcessor.java:38)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1233)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:11] [Render thread/WARN]: Failed to parse data from network for GUN_INDEX with id hamster:lebel1886_07c
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:981)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:891)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:828)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.parse(CommonNetworkCache.java:175)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:222)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:170)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.doSync(ServerMessageSyncGunPack.java:61)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.handle(ServerMessageSyncGunPack.java:48)
+	at knot//com.tacz.guns.network.NetworkHandler.lambda$registerS2CPackets$10(NetworkHandler.java:115)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:77)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:39)
+	at knot//net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon.handle(AbstractChanneledNetworkAddon.java:102)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handler$zkd000$fabric-networking-api-v1$onCustomPayload(ClientCommonPacketListenerImpl.java:1057)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handleCustomPayload(ClientCommonPacketListenerImpl.java)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:49)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:19)
+	at knot//net.minecraft.network.PacketProcessor$ListenerAndPacket.handle(PacketProcessor.java:55)
+	at knot//net.minecraft.network.PacketProcessor.processQueuedPackets(PacketProcessor.java:38)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1233)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:11] [Render thread/WARN]: Failed to parse data from network for GUN_INDEX with id hamster:m1887_hc
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:981)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:891)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:828)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.parse(CommonNetworkCache.java:175)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:222)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:170)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.doSync(ServerMessageSyncGunPack.java:61)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.handle(ServerMessageSyncGunPack.java:48)
+	at knot//com.tacz.guns.network.NetworkHandler.lambda$registerS2CPackets$10(NetworkHandler.java:115)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:77)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:39)
+	at knot//net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon.handle(AbstractChanneledNetworkAddon.java:102)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handler$zkd000$fabric-networking-api-v1$onCustomPayload(ClientCommonPacketListenerImpl.java:1057)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handleCustomPayload(ClientCommonPacketListenerImpl.java)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:49)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:19)
+	at knot//net.minecraft.network.PacketProcessor$ListenerAndPacket.handle(PacketProcessor.java:55)
+	at knot//net.minecraft.network.PacketProcessor.processQueuedPackets(PacketProcessor.java:38)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1233)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:11] [Render thread/WARN]: Failed to parse data from network for GUN_INDEX with id ww:i37
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:981)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:891)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:828)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.parse(CommonNetworkCache.java:175)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:222)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:170)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.doSync(ServerMessageSyncGunPack.java:61)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.handle(ServerMessageSyncGunPack.java:48)
+	at knot//com.tacz.guns.network.NetworkHandler.lambda$registerS2CPackets$10(NetworkHandler.java:115)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:77)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:39)
+	at knot//net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon.handle(AbstractChanneledNetworkAddon.java:102)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handler$zkd000$fabric-networking-api-v1$onCustomPayload(ClientCommonPacketListenerImpl.java:1057)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handleCustomPayload(ClientCommonPacketListenerImpl.java)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:49)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:19)
+	at knot//net.minecraft.network.PacketProcessor$ListenerAndPacket.handle(PacketProcessor.java:55)
+	at knot//net.minecraft.network.PacketProcessor.processQueuedPackets(PacketProcessor.java:38)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1233)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:11] [Render thread/WARN]: Failed to parse data from network for GUN_INDEX with id hamster:uppercut
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:981)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:891)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:828)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.parse(CommonNetworkCache.java:175)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:222)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:170)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.doSync(ServerMessageSyncGunPack.java:61)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.handle(ServerMessageSyncGunPack.java:48)
+	at knot//com.tacz.guns.network.NetworkHandler.lambda$registerS2CPackets$10(NetworkHandler.java:115)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:77)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:39)
+	at knot//net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon.handle(AbstractChanneledNetworkAddon.java:102)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handler$zkd000$fabric-networking-api-v1$onCustomPayload(ClientCommonPacketListenerImpl.java:1057)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handleCustomPayload(ClientCommonPacketListenerImpl.java)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:49)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:19)
+	at knot//net.minecraft.network.PacketProcessor$ListenerAndPacket.handle(PacketProcessor.java:55)
+	at knot//net.minecraft.network.PacketProcessor.processQueuedPackets(PacketProcessor.java:38)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1233)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:11] [Render thread/WARN]: Failed to parse data from network for GUN_INDEX with id hamster:coltm1851_chain
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:981)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:891)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:828)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.parse(CommonNetworkCache.java:175)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:222)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:170)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.doSync(ServerMessageSyncGunPack.java:61)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.handle(ServerMessageSyncGunPack.java:48)
+	at knot//com.tacz.guns.network.NetworkHandler.lambda$registerS2CPackets$10(NetworkHandler.java:115)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:77)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:39)
+	at knot//net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon.handle(AbstractChanneledNetworkAddon.java:102)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handler$zkd000$fabric-networking-api-v1$onCustomPayload(ClientCommonPacketListenerImpl.java:1057)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handleCustomPayload(ClientCommonPacketListenerImpl.java)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:49)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:19)
+	at knot//net.minecraft.network.PacketProcessor$ListenerAndPacket.handle(PacketProcessor.java:55)
+	at knot//net.minecraft.network.PacketProcessor.processQueuedPackets(PacketProcessor.java:38)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1233)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:11] [Render thread/WARN]: Failed to parse data from network for GUN_INDEX with id hamster:lugerp08_artillerie
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:981)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:891)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:828)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.parse(CommonNetworkCache.java:175)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:222)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:170)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.doSync(ServerMessageSyncGunPack.java:61)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.handle(ServerMessageSyncGunPack.java:48)
+	at knot//com.tacz.guns.network.NetworkHandler.lambda$registerS2CPackets$10(NetworkHandler.java:115)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:77)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:39)
+	at knot//net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon.handle(AbstractChanneledNetworkAddon.java:102)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handler$zkd000$fabric-networking-api-v1$onCustomPayload(ClientCommonPacketListenerImpl.java:1057)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handleCustomPayload(ClientCommonPacketListenerImpl.java)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:49)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:19)
+	at knot//net.minecraft.network.PacketProcessor$ListenerAndPacket.handle(PacketProcessor.java:55)
+	at knot//net.minecraft.network.PacketProcessor.processQueuedPackets(PacketProcessor.java:38)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1233)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:11] [Render thread/WARN]: Failed to parse data from network for GUN_INDEX with id hamster:colt1873_lb
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:981)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:891)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:828)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.parse(CommonNetworkCache.java:175)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:222)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:170)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.doSync(ServerMessageSyncGunPack.java:61)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.handle(ServerMessageSyncGunPack.java:48)
+	at knot//com.tacz.guns.network.NetworkHandler.lambda$registerS2CPackets$10(NetworkHandler.java:115)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:77)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:39)
+	at knot//net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon.handle(AbstractChanneledNetworkAddon.java:102)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handler$zkd000$fabric-networking-api-v1$onCustomPayload(ClientCommonPacketListenerImpl.java:1057)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handleCustomPayload(ClientCommonPacketListenerImpl.java)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:49)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:19)
+	at knot//net.minecraft.network.PacketProcessor$ListenerAndPacket.handle(PacketProcessor.java:55)
+	at knot//net.minecraft.network.PacketProcessor.processQueuedPackets(PacketProcessor.java:38)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1233)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:11] [Render thread/WARN]: Failed to parse data from network for GUN_INDEX with id suffuse:knife
+com.google.gson.JsonParseException: there is no corresponding data file
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonGunIndexSerializer.deserialize(CommonGunIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:981)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:891)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:828)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.parse(CommonNetworkCache.java:175)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:222)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:170)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.doSync(ServerMessageSyncGunPack.java:61)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.handle(ServerMessageSyncGunPack.java:48)
+	at knot//com.tacz.guns.network.NetworkHandler.lambda$registerS2CPackets$10(NetworkHandler.java:115)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:77)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:39)
+	at knot//net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon.handle(AbstractChanneledNetworkAddon.java:102)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handler$zkd000$fabric-networking-api-v1$onCustomPayload(ClientCommonPacketListenerImpl.java:1057)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handleCustomPayload(ClientCommonPacketListenerImpl.java)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:49)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:19)
+	at knot//net.minecraft.network.PacketProcessor$ListenerAndPacket.handle(PacketProcessor.java:55)
+	at knot//net.minecraft.network.PacketProcessor.processQueuedPackets(PacketProcessor.java:38)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1233)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:11] [Render thread/WARN]: Failed to parse data from network for ATTACHMENT_INDEX with id ccrp:m14_bipod
+com.google.gson.JsonParseException: attachment type must be nonnull.
+	at knot//com.tacz.guns.resource.serialize.CommonAttachmentIndexSerializer.deserialize(CommonAttachmentIndexSerializer.java:19)
+	at knot//com.tacz.guns.resource.serialize.CommonAttachmentIndexSerializer.deserialize(CommonAttachmentIndexSerializer.java:12)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:1080)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:981)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:891)
+	at knot//com.google.gson.Gson.fromJson(Gson.java:828)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.parse(CommonNetworkCache.java:175)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:226)
+	at knot//com.tacz.guns.resource.network.CommonNetworkCache.fromNetwork(CommonNetworkCache.java:170)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.doSync(ServerMessageSyncGunPack.java:61)
+	at knot//com.tacz.guns.network.message.ServerMessageSyncGunPack.handle(ServerMessageSyncGunPack.java:48)
+	at knot//com.tacz.guns.network.NetworkHandler.lambda$registerS2CPackets$10(NetworkHandler.java:115)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:77)
+	at knot//net.fabricmc.fabric.impl.networking.client.ClientPlayNetworkAddon.receive(ClientPlayNetworkAddon.java:39)
+	at knot//net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon.handle(AbstractChanneledNetworkAddon.java:102)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handler$zkd000$fabric-networking-api-v1$onCustomPayload(ClientCommonPacketListenerImpl.java:1057)
+	at knot//net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl.handleCustomPayload(ClientCommonPacketListenerImpl.java)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:49)
+	at knot//net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.handle(ClientboundCustomPayloadPacket.java:19)
+	at knot//net.minecraft.network.PacketProcessor$ListenerAndPacket.handle(PacketProcessor.java:55)
+	at knot//net.minecraft.network.PacketProcessor.processQueuedPackets(PacketProcessor.java:38)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1233)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:53:11] [Render thread/INFO]: Starting JEI...
+[06:53:11] [Render thread/INFO]: Registering item subtypes...
+[06:53:11] [Render thread/INFO]: Registering item subtypes took 2.018 milliseconds
+[06:53:11] [Render thread/INFO]: Registering fluid subtypes...
+[06:53:11] [Render thread/INFO]: Registering fluid subtypes took 116.4 microseconds
+[06:53:11] [Render thread/INFO]: Registering ingredients...
+[06:53:11] [Render thread/INFO]: Registering ingredients: jei:minecraft took 103.1 milliseconds
+[06:53:11] [Render thread/INFO]: Registering ingredients took 103.5 milliseconds
+[06:53:11] [Render thread/INFO]: Registering extra ingredients...
+[06:53:11] [Render thread/INFO]: Registering extra ingredients took 162.0 microseconds
+[06:53:11] [Render thread/INFO]: Registering search ingredient aliases...
+[06:53:11] [Render thread/INFO]: Registering search ingredient aliases took 100.8 microseconds
+[06:53:11] [Render thread/INFO]: Registering Mod Info...
+[06:53:11] [Render thread/INFO]: Registering Mod Info took 167.9 microseconds
+[06:53:11] [Render thread/INFO]: Registering advanced search...
+[06:53:11] [Render thread/INFO]: Registering advanced search took 186.7 microseconds
+[06:53:11] [Render thread/INFO]: Registering categories...
+[06:53:11] [Render thread/INFO]: Registering categories took 7.687 milliseconds
+[06:53:11] [Render thread/INFO]: Registering vanilla category extensions...
+[06:53:11] [Render thread/INFO]: Registering vanilla category extensions took 929.1 microseconds
+[06:53:11] [Render thread/INFO]: Registering recipe catalysts...
+[06:53:11] [Render thread/INFO]: Registering recipe catalysts took 555.7 microseconds
+[06:53:11] [Render thread/INFO]: Building recipe registry...
+[06:53:11] [Render thread/INFO]: Building recipe registry took 12.51 milliseconds
+[06:53:11] [Render thread/INFO]: Registering advanced plugins...
+[06:53:11] [Render thread/INFO]: Registering advanced plugins took 208.9 microseconds
+[06:53:11] [Render thread/INFO]: Registering recipes...
+[06:53:11] [Render thread/INFO]: Registering recipes: jei:minecraft took 155.8 milliseconds
+[06:53:12] [Render thread/INFO]: Registering recipes: tacz:jei took 1.080 seconds
+[06:53:12] [Render thread/INFO]: Registering recipes took 1.240 seconds
+[06:53:12] [Render thread/INFO]: Registering recipes transfer handlers...
+[06:53:12] [Render thread/INFO]: Registering recipes transfer handlers took 1.499 milliseconds
+[06:53:12] [Render thread/INFO]: Building runtime...
+[06:53:12] [Render thread/INFO]: Registering gui handlers...
+[06:53:12] [Render thread/INFO]: Registering gui handlers took 5.175 milliseconds
+[06:53:12] [Render thread/INFO]: Registering Runtime...
+[06:53:12] [Render thread/INFO]: Starting JEI GUI
+[06:53:12] [Render thread/INFO]: Building ingredient list...
+[06:53:12] [Render thread/INFO]: Building ingredient list took 18.09 milliseconds
+[06:53:12] [Render thread/INFO]: Building ingredient filter...
+[06:53:12] [Render thread/INFO]: Adding 2859 ingredients
+[06:53:13] [Render thread/INFO]: Added 2859 ingredients
+[06:53:13] [Render thread/INFO]: Building ingredient filter took 91.32 milliseconds
+[06:53:13] [Render thread/INFO]: Registering Runtime: jei:fabric_gui took 156.6 milliseconds
+[06:53:13] [Render thread/INFO]: Registering Runtime took 157.0 milliseconds
+[06:53:13] [Render thread/INFO]: Building runtime took 165.3 milliseconds
+[06:53:13] [Render thread/INFO]: Sending Runtime...
+[06:53:13] [Render thread/INFO]: Sending Runtime took 145.8 microseconds
+[06:53:13] [Render thread/INFO]: Starting JEI took 1.571 seconds
+[06:53:13] [Render thread/INFO]: [System] [CHAT] [车万女仆] 点击这里安装帕秋莉手册模组来获取手册
+[06:53:13] [Render thread/INFO]: Loaded 132 advancements
+[06:53:13] [Render thread/INFO]: Stopping worker threads
+[06:53:13] [Render thread/INFO]: Started 10 worker threads
+[06:53:13] [Render thread/WARN]: [TACZ Scope] Mask enabled but no ocular geometry was registered this frame. Either no scope is equipped/aimed, or ocular collection is broken.
+[06:53:13] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 2 reached during a single frame. New capacity will be 4.
+[06:53:13] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 4 reached during a single frame. New capacity will be 8.
+[06:53:15] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 8 reached during a single frame. New capacity will be 16.
+[06:53:25] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=capture ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-8.615016 yaw=151.30847 capturePitch=-8.615016 captureYaw=151.30847 ageMs=3 offset=(0.0000,0.0000,0.0000) poseT=(-0.3977,-0.0451,-1.1760) captureT=(-0.3977,-0.0451,-1.1760) random=( 1.026E+0  1.990E+0  7.415E-2) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=1
+[06:53:25] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-0.1039813 yaw=150.4584 capturePitch=-8.615016 captureYaw=151.30847 ageMs=507 offset=(3.0551,-0.0405,0.5446) poseT=(3.5063,-1.0684,-1.8711) captureT=(-0.3977,-0.0451,-1.1760) random=( 1.026E+0  1.990E+0  7.415E-2) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=1
+[06:53:26] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=capture ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-1.8225044 yaw=149.20644 capturePitch=-1.8225044 captureYaw=149.20644 ageMs=1 offset=(0.0000,0.0000,0.0000) poseT=(-0.4342,-0.2210,-1.1194) captureT=(-0.4342,-0.2210,-1.1194) random=( 1.278E+0  4.765E-1  1.858E-2) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=1
+[06:53:27] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-7.447998 yaw=147.44746 capturePitch=-1.8225044 captureYaw=149.20644 ageMs=504 offset=(3.1642,-0.7880,0.5134) poseT=(3.6152,-1.6589,-2.1301) captureT=(-0.4342,-0.2210,-1.1194) random=( 1.278E+0  4.765E-1  1.858E-2) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=5
+[06:53:27] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-12.871645 yaw=146.67432 capturePitch=-3.1205854 captureYaw=149.3114 ageMs=883 offset=(5.5774,-4.9674,1.0503) poseT=(5.1998,-5.0718,-5.2323) captureT=(-0.4164,-0.2165,-1.0925) random=( 1.316E+0  2.044E-1  1.895E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:28] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-18.283903 yaw=147.29332 capturePitch=-8.3124695 captureYaw=147.09003 ageMs=899 offset=(6.5134,-5.3067,1.0881) poseT=(6.0629,-5.0320,-5.9639) captureT=(-0.4386,-0.1046,-1.0661) random=( 2.245E+0  8.709E-2  2.103E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:28] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-23.652323 yaw=146.57346 capturePitch=-13.501831 captureYaw=146.98106 ageMs=916 offset=(4.5833,-3.9402,0.9621) poseT=(4.5360,-3.4138,-4.9356) captureT=(-0.4314,0.0663,-1.0625) random=( 3.645E-3  1.858E+0  5.032E-2) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:29] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-27.410704 yaw=147.5275 capturePitch=-18.694149 captureYaw=147.46188 ageMs=927 offset=(5.4855,-4.0263,1.1182) poseT=(5.3947,-3.2819,-5.3640) captureT=(-0.4289,0.1718,-1.0492) random=( 9.175E-1  1.927E+0  2.062E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=7
+[06:53:29] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-27.083426 yaw=147.1263 capturePitch=-23.883396 captureYaw=146.57214 ageMs=941 offset=(6.0347,-5.4543,1.1042) poseT=(5.6046,-4.4532,-6.1826) captureT=(-0.4333,0.2717,-1.0265) random=( 1.413E+0  6.137E-1  1.735E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=3
+[06:53:30] [Render thread/INFO]: Destroying pipeline minecraft:overworld
+[06:53:30] [Render thread/INFO]: Profile: HIGH (+0 options changed by user)
+[06:53:30] [Render thread/INFO]: Using shaderpack: ComplementaryReimagined_r5.8.1.zip
+[06:53:30] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[06:53:31] [Render thread/INFO]: [TACZ Scope] Injecting dormant scope-mask branch into Iris linked fragment shaders.
+[06:53:32] [Render thread/INFO]: [System] [CHAT] 光影包已切换到 ComplementaryReimagined_r5.8.1.zip！
+[06:53:32] [Render thread/INFO]: Stopping worker threads
+[06:53:32] [Render thread/INFO]: Started 10 worker threads
+[06:53:32] [Render thread/WARN]: Error while parsing the block ID map entry for "block.10104":
+[06:53:32] [Render thread/WARN]: - The block minecraft:stone_slab has no property with the name variant, ignoring!
+[06:53:32] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/entity_cutout: HAND_CUTOUT
+[06:53:32] [Render thread/WARN]: [TACZ Scope] Failed to assign custom scope pipelines to Iris; scope mask will fall back under shaders.
+java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:119)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at knot//com.tacz.guns.compat.iris.IrisCompat.assignScopePipelineToHand(IrisCompat.java:121)
+	at knot//com.tacz.guns.compat.iris.IrisCompat.assignPipelineByName(IrisCompat.java:179)
+	at knot//com.tacz.guns.compat.iris.IrisCompat.assignCommonEntityPipelinesToHandIfNeeded(IrisCompat.java:161)
+	at knot//com.tacz.guns.client.model.functional.ShellRender.extract(ShellRender.java:161)
+	at knot//com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot$Builder.capturePart(BedrockRenderSnapshot.java:196)
+	at knot//com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot$Builder.capturePart(BedrockRenderSnapshot.java:241)
+	at knot//com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot$Builder.capturePart(BedrockRenderSnapshot.java:241)
+	at knot//com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.capture(BedrockRenderSnapshot.java:54)
+	at knot//com.tacz.guns.client.model.bedrock.BedrockModel.submit(BedrockModel.java:372)
+	at knot//com.tacz.guns.client.model.bedrock.BedrockModel.submit(BedrockModel.java:389)
+	at knot//com.tacz.guns.client.model.BedrockGunModel.submit(BedrockGunModel.java:318)
+	at knot//com.tacz.guns.client.renderer.item.GunItemRendererWrapper.lambda$renderFirstPerson$0(GunItemRendererWrapper.java:225)
+	at java.base/java.util.Optional.ifPresent(Optional.java:178)
+	at knot//com.tacz.guns.client.renderer.item.GunItemRendererWrapper.renderFirstPerson(GunItemRendererWrapper.java:174)
+	at knot//net.minecraft.client.renderer.ItemInHandRenderer.handler$bpn000$tacz$submitArmWithGun(ItemInHandRenderer.java:1908)
+	at knot//net.minecraft.client.renderer.ItemInHandRenderer.submitArmWithItem(ItemInHandRenderer.java)
+	at knot//net.minecraft.client.renderer.ItemInHandRenderer.submitHandsWithItems(ItemInHandRenderer.java:415)
+	at knot//net.minecraft.client.renderer.ItemInHandRenderer.iris$renderHandsWithCustomRenderer(ItemInHandRenderer.java:1299)
+	at knot//net.irisshaders.iris.pathways.HandRenderer.renderSolid(HandRenderer.java:118)
+	at knot//net.minecraft.client.renderer.LevelRenderer.handler$bfb000$iris$beginTranslucents(LevelRenderer.java:3763)
+	at knot//net.minecraft.client.renderer.LevelRenderer.lambda$addMainPass$0(LevelRenderer.java:440)
+	at knot//com.mojang.blaze3d.framegraph.FrameGraphBuilder.execute(FrameGraphBuilder.java:67)
+	at knot//net.minecraft.client.renderer.LevelRenderer.render(LevelRenderer.java:240)
+	at knot//net.minecraft.client.renderer.GameRenderer.mixinextras$bridge$render$85(GameRenderer.java)
+	at knot//net.minecraft.client.renderer.GameRenderer.wrapOperation$bfi000$iris$renderLevel(GameRenderer.java:2382)
+	at knot//net.minecraft.client.renderer.GameRenderer.wrapOperation$bfi000$iris$renderLevel$mixinextras$bridge$74(GameRenderer.java)
+	at knot//net.minecraft.client.renderer.GameRenderer.renderLevel(GameRenderer.java:588)
+	at knot//net.minecraft.client.renderer.GameRenderer.render(GameRenderer.java:428)
+	at knot//net.minecraft.client.Minecraft.renderFrame(Minecraft.java:1374)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1269)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+Caused by: java.lang.IllegalStateException: Shader already assigned: minecraft:pipeline/entity_cutout: HAND_CUTOUT
+	at knot//net.irisshaders.iris.pipeline.IrisPipelines.assignPipeline(IrisPipelines.java:242)
+	at knot//net.irisshaders.iris.apiimpl.IrisApiV0Impl.assignPipeline(IrisApiV0Impl.java:80)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	... 36 more
+[06:53:32] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/entity_translucent: HAND_CUTOUT
+[06:53:32] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/entity_translucent_cull: HAND_CUTOUT
+[06:53:32] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/item_cutout: HAND_CUTOUT
+[06:53:32] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/item_translucent: HAND_CUTOUT
+[06:53:32] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/energy_swirl: HAND_CUTOUT
+[06:53:32] [Render thread/INFO]: Stopping worker threads
+[06:53:32] [Render thread/INFO]: Started 10 worker threads
+[06:53:33] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=capture ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-14.635242 yaw=343.17627 capturePitch=-14.635242 captureYaw=343.17627 ageMs=1 offset=(0.0000,0.0000,0.0000) poseT=(-1.2846,0.7007,-2.1289) captureT=(-1.2846,0.7007,-2.1289) random=( 9.671E-1  3.220E-1  1.633E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=1
+[06:53:34] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=true shader=true pitch=-15.211559 yaw=343.60873 capturePitch=-14.635242 captureYaw=343.17627 ageMs=501 offset=(2.9895,-0.8457,0.5828) poseT=(-3.4727,0.1616,-1.2732) captureT=(-1.2846,0.7007,-2.1289) random=( 9.671E-1  3.220E-1  1.633E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=5
+[06:53:34] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-2.518136 yaw=362.14413 capturePitch=-15.50409 captureYaw=343.3065 ageMs=882 offset=(5.9839,-4.4469,1.0884) poseT=(-4.2679,-2.3510,-0.7169) captureT=(-0.2230,0.1400,-1.3398) random=( 1.784E+0  7.782E-1  2.340E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:35] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=1.6205505 yaw=305.1089 capturePitch=-16.174223 captureYaw=344.11487 ageMs=900 offset=(6.0896,-5.2247,0.9593) poseT=(-6.4952,-2.4763,-0.4794) captureT=(-2.1335,0.1553,-1.2513) random=( 1.766E+0  1.948E-1  6.590E-2) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=6
+[06:53:35] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=2.4221706 yaw=300.32166 capturePitch=-2.615719 captureYaw=362.32104 ageMs=915 offset=(6.0978,-4.9934,0.9601) poseT=(-6.7634,-0.5212,0.5767) captureT=(-2.0620,0.1529,-1.2734) random=( 1.664E+0  6.927E-1  4.927E-2) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=2
+[06:53:39] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=capture ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=1.4745568 yaw=205.97191 capturePitch=1.4745568 captureYaw=205.97191 ageMs=1 offset=(0.0000,0.0000,0.0000) poseT=(-0.6537,0.0300,-1.7379) captureT=(-0.6537,0.0300,-1.7379) random=( 1.228E+0  1.743E+0  1.492E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=1
+[06:53:39] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-4.1179943 yaw=215.47226 capturePitch=1.4745568 captureYaw=205.97191 ageMs=501 offset=(3.1203,-0.1335,0.5758) poseT=(0.5679,-1.2062,-3.2811) captureT=(-0.6537,0.0300,-1.7379) random=( 1.228E+0  1.743E+0  1.492E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=5
+[06:53:40] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-2.0729558 yaw=135.05351 capturePitch=0.026972787 captureYaw=212.8747 ageMs=885 offset=(5.6159,-4.2448,1.0121) poseT=(-0.1316,-0.7420,-7.0763) captureT=(-1.2362,0.4444,-2.8047) random=( 1.346E+0  1.054E+0  1.436E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:40] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-5.95895 yaw=200.93965 capturePitch=-2.334114 captureYaw=205.57378 ageMs=900 offset=(5.5942,-3.6714,1.1226) poseT=(0.6648,-0.0069,-5.5993) captureT=(-0.5979,1.4168,-1.5932) random=( 1.216E+0  1.921E+0  2.474E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:41] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-6.1942368 yaw=311.35895 capturePitch=-2.5531673 captureYaw=113.324776 ageMs=914 offset=(5.0804,-5.4650,1.0574) poseT=(-3.8260,3.7231,-4.5016) captureT=(-2.9365,0.1679,-1.3898) random=( 5.584E-1  1.608E-1  1.568E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:42] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-10.780099 yaw=223.2658 capturePitch=-6.395335 captureYaw=223.74706 ageMs=926 offset=(4.7881,-5.1580,1.1117) poseT=(-0.8281,0.9217,-6.2864) captureT=(-1.3985,2.2075,-1.9387) random=( 1.708E-1  6.898E-1  2.006E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:42] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-14.710532 yaw=202.54138 capturePitch=-5.9080276 captureYaw=309.1138 ageMs=939 offset=(6.0936,-5.1443,0.9994) poseT=(-3.8481,-2.6910,-2.4873) captureT=(-0.5548,1.2393,-2.8375) random=( 1.490E+0  9.115E-1  6.431E-2) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:42] [Render thread/INFO]: Destroying pipeline minecraft:overworld
+[06:53:42] [Render thread/INFO]: Shaders are disabled because enableShaders is set to false in iris.properties
+[06:53:42] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[06:53:42] [Render thread/INFO]: [System] [CHAT] 光影包已禁用！
+[06:53:42] [Render thread/INFO]: Stopping worker threads
+[06:53:42] [Render thread/INFO]: Started 10 worker threads
+[06:53:43] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-11.512395 yaw=223.23463 capturePitch=-10.77845 captureYaw=213.9464 ageMs=954 offset=(5.3137,-6.0662,0.9567) poseT=(-0.3893,-0.3952,-5.9203) captureT=(-0.5637,2.3694,-1.6638) random=( 5.699E-1  1.813E-1  2.858E-3) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=5
+[06:53:43] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-0.3743815 yaw=234.73854 capturePitch=-14.770836 captureYaw=202.51399 ageMs=971 offset=(5.2765,-6.2453,0.9994) poseT=(0.4459,2.0791,-6.7838) captureT=(-0.2463,3.3435,-1.8861) random=( 4.341E-1  2.782E-1  2.920E-2) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=5
+[06:53:44] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=6.2514515 yaw=210.75537 capturePitch=-11.71253 captureYaw=223.38922 ageMs=962 offset=(5.3355,-5.0102,1.0723) poseT=(5.7097,-4.4373,4.5094) captureT=(0.9782,0.0282,-0.7566) random=( 5.463E-1  1.412E+0  1.147E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=5
+[06:53:44] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=25.103168 yaw=199.58777 capturePitch=-0.55424106 captureYaw=237.73901 ageMs=981 offset=(5.4296,-6.0856,1.0525) poseT=(3.1172,-5.5703,6.5056) captureT=(1.0478,-0.1619,-0.4241) random=( 5.347E-1  6.065E-1  7.285E-2) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=1
+[06:53:50] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=capture ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-9.868892 yaw=76.58785 capturePitch=-9.868892 captureYaw=76.58785 ageMs=1 offset=(0.0000,0.0000,0.0000) poseT=(-1.2336,-0.0451,0.0700) captureT=(-1.2336,-0.0451,0.0700) random=( 1.880E+0  1.797E+0  1.833E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=1
+[06:53:50] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=-4.95464 yaw=135.98274 capturePitch=-9.868892 captureYaw=76.58785 ageMs=502 offset=(3.4536,-0.1121,0.5940) poseT=(-0.8184,-1.2262,-4.1912) captureT=(-1.2336,-0.0451,0.0700) random=( 1.880E+0  1.797E+0  1.833E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=5
+[06:53:51] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=false shader=false pitch=5.029863 yaw=334.66925 capturePitch=-11.167003 captureYaw=77.40922 ageMs=881 offset=(4.6573,-3.7997,1.0320) poseT=(-3.4283,-3.7074,-5.4809) captureT=(-1.1891,-0.0034,0.0710) random=( 2.864E-1  1.497E+0  1.714E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:51] [Render thread/INFO]: Destroying pipeline minecraft:overworld
+[06:53:51] [Render thread/INFO]: Profile: HIGH (+0 options changed by user)
+[06:53:51] [Render thread/INFO]: Using shaderpack: ComplementaryReimagined_r5.8.1.zip
+[06:53:51] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[06:53:51] [Render thread/INFO]: [System] [CHAT] 光影包已切换到 ComplementaryReimagined_r5.8.1.zip！
+[06:53:51] [Render thread/INFO]: Stopping worker threads
+[06:53:51] [Render thread/INFO]: Started 10 worker threads
+[06:53:51] [Render thread/WARN]: Error while parsing the block ID map entry for "block.10104":
+[06:53:51] [Render thread/WARN]: - The block minecraft:stone_slab has no property with the name variant, ignoring!
+[06:53:51] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=true shader=true pitch=6.6561365 yaw=467.07437 capturePitch=5.247759 captureYaw=315.4886 ageMs=908 offset=(6.6767,-4.0578,1.1084) poseT=(-5.8654,-3.8131,6.0725) captureT=(0.6390,-0.2825,0.9020) random=( 2.353E+0  1.611E+0  2.207E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=5
+[06:53:51] [Render thread/INFO]: Stopping worker threads
+[06:53:51] [Render thread/INFO]: Started 10 worker threads
+[06:53:52] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-10.182487 yaw=356.595 capturePitch=6.355885 captureYaw=463.4075 ageMs=926 offset=(6.1412,-5.6286,1.1439) poseT=(2.0170,-5.1737,-7.9425) captureT=(-1.0104,-0.3172,-0.4266) random=( 1.632E+0  1.816E-1  2.353E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=5
+[06:53:52] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-0.49234593 yaw=508.39706 capturePitch=-0.5955645 captureYaw=455.98376 ageMs=924 offset=(5.2012,-4.9019,1.1009) poseT=(-4.0079,7.2347,-1.0971) captureT=(-2.4755,3.1194,0.4748) random=( 6.290E-1  9.349E-1  1.915E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:53] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-0.36093774 yaw=351.82513 capturePitch=-10.414866 captureYaw=356.62366 ageMs=945 offset=(5.2060,-4.6204,1.0026) poseT=(-5.0875,0.8957,0.6791) captureT=(-0.9997,1.5924,-1.2159) random=( 5.090E-1  1.561E+0  6.091E-2) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:53] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=FIRST_PERSON_RIGHT_HAND irisHand=true shader=true pitch=3.2714982 yaw=466.25507 capturePitch=-2.1281855 captureYaw=498.58832 ageMs=961 offset=(6.2870,-5.5933,0.9621) poseT=(-1.0980,6.3577,-4.4576) captureT=(-2.0836,3.5538,-0.0311) random=( 1.542E+0  7.897E-1  1.130E-3) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=8
+[06:53:54] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-8.088741 yaw=435.4704 capturePitch=1.5526364 captureYaw=347.38828 ageMs=977 offset=(6.2423,-5.2805,1.1045) poseT=(-6.0044,0.6902,1.5205) captureT=(-1.4628,0.4259,-0.9764) random=( 1.389E+0  1.365E+0  1.305E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=7
+[06:53:54] [Render thread/INFO]: [TACZ ShellDebug] gun=hamster:mp18 node=shell#0 phase=submit ctx=THIRD_PERSON_RIGHT_HAND irisHand=false shader=true pitch=-5.184464 yaw=415.71262 capturePitch=5.361201 captureYaw=469.53384 ageMs=993 offset=(6.3855,-6.4450,1.2330) poseT=(-2.7999,7.0397,-3.4414) captureT=(-1.7194,2.2982,-0.6369) random=( 1.431E+0  4.396E-1  2.416E-1) initial=( 5.000E+0  3.000E+0  1.000E+0) accel=( 0.000E+0 -2.000E+1  0.000E+0) angular=( 3.600E+2 -9.600E+2  9.000E+1) texture=tacz:textures/shell/9mm_shell.png queue=3
+[06:53:58] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 16 reached during a single frame. New capacity will be 32.
+[06:54:00] [Render thread/INFO]: Destroying pipeline minecraft:overworld
+[06:54:00] [Render thread/INFO]: Shaders are disabled because enableShaders is set to false in iris.properties
+[06:54:00] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[06:54:00] [Render thread/INFO]: [System] [CHAT] 光影包已禁用！
+[06:54:00] [Render thread/INFO]: Stopping worker threads
+[06:54:00] [Render thread/INFO]: Started 10 worker threads
+[06:54:02] [Render thread/INFO]: Destroying pipeline minecraft:overworld
+[06:54:02] [Render thread/INFO]: Profile: HIGH (+0 options changed by user)
+[06:54:02] [Render thread/INFO]: Using shaderpack: ComplementaryReimagined_r5.8.1.zip
+[06:54:02] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[06:54:02] [Render thread/INFO]: [System] [CHAT] 光影包已切换到 ComplementaryReimagined_r5.8.1.zip！
+[06:54:02] [Render thread/INFO]: Stopping worker threads
+[06:54:02] [Render thread/INFO]: Started 10 worker threads
+[06:54:02] [Render thread/WARN]: Error while parsing the block ID map entry for "block.10104":
+[06:54:02] [Render thread/WARN]: - The block minecraft:stone_slab has no property with the name variant, ignoring!
+[06:54:02] [Render thread/INFO]: Stopping worker threads
+[06:54:02] [Render thread/INFO]: Started 10 worker threads
+[06:54:07] [Render thread/INFO]: Destroying pipeline minecraft:overworld
+[06:54:07] [Render thread/INFO]: Shaders are disabled because enableShaders is set to false in iris.properties
+[06:54:07] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[06:54:07] [Render thread/INFO]: [System] [CHAT] 光影包已禁用！
+[06:54:07] [Render thread/INFO]: Stopping worker threads
+[06:54:07] [Render thread/INFO]: Started 10 worker threads
+[06:54:09] [Server thread/INFO]: Saving and pausing game...
+[06:54:09] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:overworld
+[06:54:09] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_end
+[06:54:09] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_nether
+[06:54:09] [Server thread/INFO]: Stopping server
+[06:54:09] [Server thread/INFO]: Saving players
+[06:54:09] [Server thread/INFO]: GOOSTL lost connection: 连接中断
+[06:54:09] [Server thread/INFO]: GOOSTL退出了游戏
+[06:54:09] [Server thread/INFO]: Stopping singleplayer server as player logged out
+[06:54:09] [Server thread/INFO]: Saving worlds
+[06:54:09] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:overworld
+[06:54:09] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_end
+[06:54:09] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_nether
+[06:54:09] [Server thread/INFO]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[06:54:09] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[06:54:09] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[06:54:09] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved
+[06:54:09] [Render thread/INFO]: Stopping JEI
+[06:54:09] [Render thread/INFO]: Stopping JEI
+[06:54:09] [Render thread/INFO]: Sending Runtime Unavailable...
+[06:54:09] [Render thread/INFO]: Stopping JEI GUI
+[06:54:09] [Render thread/INFO]: Sending Runtime Unavailable took 294.7 microseconds
+[06:54:09] [Render thread/INFO]: Stopping worker threads
+[06:54:10] [Render thread/INFO]: Stopping!
