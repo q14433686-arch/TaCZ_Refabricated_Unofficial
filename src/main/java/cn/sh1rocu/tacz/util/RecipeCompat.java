@@ -269,11 +269,11 @@ public final class RecipeCompat {
         if (!isRecipePath(requestedLocation)) {
             return original;
         }
-        return IoSupplier.create(() -> {
-            try (InputStream in = original.get().get()) {
+        return () -> {
+            try (InputStream in = original.get()) {
                 return transformStreamIfNeeded(in);
             }
-        });
+        };
     }
 
     public static Identifier remapLegacyToCurrent(Identifier legacy) {
