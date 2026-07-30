@@ -1,0 +1,8 @@
+{
+  "name": "tacz.block.tactical_table.name",
+  "display": "tacz:gun_smith_table",
+  "data": "tacz:tactical_table",
+  "tooltip": "tacz.block.tactical_table.desc",
+  "id": "tacz:tactical_table",
+  "sort": 10
+}

@@ -29,6 +29,10 @@ public class ModBlocks {
     public static Block WORKBENCH_211 = registerBlock("workbench_b", new GunSmithTableBlockB(woodProps("workbench_b")));
     public static Block WORKBENCH_121 = registerBlock("workbench_c", new GunSmithTableBlockC(woodProps("workbench_c")));
 
+    // LRTactical 专用合成台（移植 LesRaisins Tactical Equipements 的 Smithing Table）
+    // 用于 melee / throwable / consumable 合成，拥有独立的 tab 过滤
+    public static Block LRT_SMITH_TABLE = registerBlock("tactical_table", new GunSmithTableBlockA(woodProps("tactical_table")));
+
     public static Block TARGET = registerBlock("target", new TargetBlock(woodProps("target")));
     public static Block STATUE = registerBlock("statue", new StatueBlock(BlockBehaviour.Properties.of().setId(blockKey("statue")).sound(SoundType.STONE).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.DESTROY)));
 

@@ -25,8 +25,12 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public abstract class AbstractGunSmithTableBlock extends BaseEntityBlock {
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -78,6 +82,21 @@ public abstract class AbstractGunSmithTableBlock extends BaseEntityBlock {
                 }
             }
         }
+    }
+
+    @Override
+    public List<ItemStack> getDrops(BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder builder) {
+        // 只有 root 部分掉落，防止多方块重复掉落
+        if (!isRoot(state)) {
+            return java.util.List.of();
+        }
+        // 强制返回带正确 BlockId 的物品（兼容生存模式掉落 + copy_custom_data 可能不生效的情况）
+        BlockPos rootPos = getRootPos(BlockPos.containing(builder.getParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN)), state);
+        net.minecraft.world.level.block.entity.BlockEntity be = builder.getLevel().getBlockEntity(rootPos);
+        if (be instanceof GunSmithTableBlockEntity e && e.getId() != null) {
+            return java.util.List.of(com.tacz.guns.api.item.builder.BlockItemBuilder.create(this).setId(e.getId()).build());
+        }
+        return java.util.List.of(new ItemStack(this));
     }
 
     @Override

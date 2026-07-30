@@ -28,6 +28,9 @@ public class ModItems {
     public static GunSmithTableItem WORKBENCH_211 = register("workbench_b", new GunSmithTableItem(ModBlocks.WORKBENCH_211, blockItemProps("workbench_b")));
     public static GunSmithTableItem WORKBENCH_121 = register("workbench_c", new GunSmithTableItem(ModBlocks.WORKBENCH_121, blockItemProps("workbench_c")));
 
+    // LRTactical 专用合成台物品（移植 LesRaisins Tactical Equipements 的 Smithing Table）
+    public static GunSmithTableItem LRT_SMITH_TABLE = register("tactical_table", new GunSmithTableItem(ModBlocks.LRT_SMITH_TABLE, blockItemProps("tactical_table")));
+
 
     public static Item TARGET = register("target", new BlockItem(ModBlocks.TARGET, blockItemProps("target")));
     public static Item STATUE = register("statue", new BlockItem(ModBlocks.STATUE, blockItemProps("statue")));

@@ -25,7 +25,7 @@ import java.util.Set;
 
 public class GunSmithTableBlockEntity extends BlockEntity implements ExtendedMenuProvider<Identifier> {
     public static final BlockEntityType<GunSmithTableBlockEntity> TYPE = new BlockEntityType<>(GunSmithTableBlockEntity::new,
-            Set.of(ModBlocks.GUN_SMITH_TABLE, ModBlocks.WORKBENCH_111, ModBlocks.WORKBENCH_121, ModBlocks.WORKBENCH_211));
+            Set.of(ModBlocks.GUN_SMITH_TABLE, ModBlocks.WORKBENCH_111, ModBlocks.WORKBENCH_121, ModBlocks.WORKBENCH_211, ModBlocks.LRT_SMITH_TABLE));
 
     private static final String ID_TAG = "BlockId";
 
