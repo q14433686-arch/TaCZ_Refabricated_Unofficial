@@ -42,7 +42,7 @@ public class GunSmithTableBlockEntity extends BlockEntity implements ExtendedMen
 
     @Nullable
     public Identifier getId() {
-        return id;
+        return id == null ? DefaultAssets.DEFAULT_BLOCK_ID : id;
     }
 
     @Nullable
@@ -81,9 +81,7 @@ public class GunSmithTableBlockEntity extends BlockEntity implements ExtendedMen
 
     @Override
     protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
-                if (id != null) {
-            output.putString(ID_TAG, id.toString());
-        }
+        output.putString(ID_TAG, getId().toString());
     }
 
     @Override

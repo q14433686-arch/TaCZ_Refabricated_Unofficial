@@ -1,6 +1,10 @@
 {
   "item.lrtactical.throwable": "投掷物",
   "itemGroup.lrtactical.throwable": "战术装备：投掷物",
+  "itemGroup.lrtactical.melee": "战术装备：近战武器",
+  "itemGroup.lrtactical.consumable": "战术装备：消耗品",
+  "lrtactical.block.tactical_smithing_table.name": "LRT战术装备装配台",
+  "lrtactical.block.tactical_smithing_table.desc": "工欲善其事，必先利其器",
   "entity.lrtactical.explode_grenade": "手雷",
   "item.lrtactical.test_grenade": "测试手雷",
   "item.lrtactical.melee": "近战武器",

@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "B": {
+      "item": "minecraft:iron_block"
+    },
+    "C": {
+      "item": "minecraft:copper_ingot"
+    }
+  },
+  "pattern": [
+    "III",
+    "ICI",
+    "BBB"
+  ],
+  "result": {
+    "count": 1,
+    "id": "tacz:workbench_a",
+    "components": {
+      "minecraft:custom_data": {
+        "BlockId": "lrtactical:tactical_smithing_table"
+      }
+    }
+  }
+}

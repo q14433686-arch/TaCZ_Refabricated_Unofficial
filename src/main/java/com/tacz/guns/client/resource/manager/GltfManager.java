@@ -17,7 +17,7 @@ public class GltfManager extends LazyJsonDataManager<AnimationStructure> {
 
     public GltfManager() {
         super(AnimationStructure.class, ClientAssetsManager.GSON, FILE_TO_ID_CONVERTER, "GltfAnimationLoader",
-                id -> GunMod.MOD_ID.equals(id.getNamespace()));
+                id -> true);
     }
 
     @Override

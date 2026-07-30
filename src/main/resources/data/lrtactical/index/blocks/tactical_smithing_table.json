@@ -1,0 +1,8 @@
+{
+  "name": "lrtactical.block.tactical_smithing_table.name",
+  "display": "tacz:attachment_workbench",
+  "data": "lrtactical:tactical_smithing_table",
+  "tooltip": "lrtactical.block.tactical_smithing_table.desc",
+  "id": "tacz:workbench_a",
+  "sort": 4
+}

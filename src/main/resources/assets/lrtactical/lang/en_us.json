@@ -1,6 +1,10 @@
 {
   "item.lrtactical.throwable": "Throwable",
   "itemGroup.lrtactical.throwable": "LRTactical: Throwables",
+  "itemGroup.lrtactical.melee": "LRTactical: Melee Weapons",
+  "itemGroup.lrtactical.consumable": "LRTactical: Consumables",
+  "lrtactical.block.tactical_smithing_table.name": "LRT Tactical Smithing Table",
+  "lrtactical.block.tactical_smithing_table.desc": "A dedicated workbench for crafting tactical equipment.",
   "entity.lrtactical.explode_grenade": "Grenade",
   "item.lrtactical.test_grenade": "Test Grenade",
   "item.lrtactical.melee": "Melee Weapon",

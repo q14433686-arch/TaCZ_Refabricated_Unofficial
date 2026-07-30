@@ -101,9 +101,9 @@ public enum ClientAssetsManager {
             blockDisplay = register(new DisplayManager<>(BlockDisplay.class, GSON, "display/blocks", "BlockDisplayLoader"));
 
             bedrockModel = register(new LazyJsonDataManager<>(BedrockModelPOJO.class, GSON, "geo_models", "BedrockModelLoader",
-                    id -> GunMod.MOD_ID.equals(id.getNamespace())));
+                    id -> true));
             bedrockAnimation = register(new LazyJsonDataManager<>(BedrockAnimationFile.class, GSON, new FileToIdConverter("animations", ".animation.json"),
-                    "BedrockAnimationLoader", id -> GunMod.MOD_ID.equals(id.getNamespace())));
+                    "BedrockAnimationLoader", id -> true));
             gltfAnimation = register(new GltfManager());
             scriptManager = register(new ScriptManager(new FileToIdConverter("scripts", ".lua"), libList));
             packInfo = register(new PackInfoManager());

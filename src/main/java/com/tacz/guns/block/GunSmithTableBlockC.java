@@ -84,15 +84,18 @@ public class GunSmithTableBlockC extends AbstractGunSmithTableBlock {
 
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState blockState, Player player) {
-        // 用于抑制创造模式下摧毁upper方块时lower的掉落
-        if (!level.isClientSide() && player.isCreative()) {
+        if (!level.isClientSide()) {
             DoubleBlockHalf half = blockState.getValue(HALF);
             if (half == DoubleBlockHalf.UPPER) {
                 BlockPos blockpos = pos.below();
                 BlockState blockstate = level.getBlockState(blockpos);
                 if (blockstate.is(this) && blockstate.getValue(HALF) == DoubleBlockHalf.LOWER) {
-                    level.setBlock(blockpos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
-                    level.levelEvent(player, LevelEvent.PARTICLES_DESTROY_BLOCK, blockpos, Block.getId(blockstate));
+                    if (player.isCreative()) {
+                        level.setBlock(blockpos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
+                        level.levelEvent(player, LevelEvent.PARTICLES_DESTROY_BLOCK, blockpos, Block.getId(blockstate));
+                    } else {
+                        level.destroyBlock(blockpos, true, player);
+                    }
                 }
             }
         }

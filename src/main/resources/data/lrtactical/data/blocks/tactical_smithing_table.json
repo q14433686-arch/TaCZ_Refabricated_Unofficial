@@ -1,0 +1,35 @@
+{
+  "filter": "tacz:default",
+  "tabs": [
+    {
+      "id": "lrtactical:melee",
+      "name": "itemGroup.lrtactical.melee",
+      "icon": {
+        "item": "lrtactical:melee",
+        "nbt": {
+          "MeleeWeaponId": "lrtactical:test_knife"
+        }
+      }
+    },
+    {
+      "id": "lrtactical:throwable",
+      "name": "itemGroup.lrtactical.throwable",
+      "icon": {
+        "item": "lrtactical:throwable",
+        "nbt": {
+          "ThrowableId": "lrtactical:test_grenade"
+        }
+      }
+    },
+    {
+      "id": "lrtactical:consumable",
+      "name": "itemGroup.lrtactical.consumable",
+      "icon": {
+        "item": "lrtactical:consumable",
+        "nbt": {
+          "ConsumableId": "lrtactical:test_medkit"
+        }
+      }
+    }
+  ]
+}
