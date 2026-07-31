@@ -207,7 +207,7 @@ world corruption, crashes, data loss, and mod conflicts. Non-commercial project.
 
 | 字段 | 填什么 |
 |---|---|
-| **Display Name** | `TACZ-Refabricated-26.2-1.1.8+fabric.26.2.alpha.2` |
+| **Display Name** | `TACZ-Refabricated-26.2-1.1.8+fabric.26.2.Beta-1` |
 | **Release Type** | **Alpha** |
 | **Game Version** | `26.2` |
 | **Modloader** | `Fabric` |
