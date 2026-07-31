@@ -123,7 +123,12 @@
 | `corrosive_primer` | boolean | false | 腐蚀性独立于结构 |
 | `charge_deviation` | float | 0 | +超装/-欠装；≤-0.45=Squib 风险档 |
 
-## 17.7.3 FeedSystemType → 数据形状实况（class:`cn.sh1rocu.tacz.industry.api.feed.device`）
+## 17.7.3 FeedSystemType → 数据形状实况（class:`cn.sh1rocu.tacz.industry.api.feed`，六机构与密封接口同包）
+
+> ⚠️ 编译落地修订（2026-08-01 Q-21 首轮 javac）：六机构原设计在 `api.feed.device` 子包，但 Java 在
+> 无名模块下要求 **sealed 类型的 permits 子类必须同包**（`cannot extend a sealed class in a
+> different package`），已整体并入 `cn.sh1rocu.tacz.industry.api.feed`。老文档中出现
+> `api.feed.device` 路径一律以此为准。
 
 | 枚举(序列化名) | record | 独有字段 |
 |---|---|---|

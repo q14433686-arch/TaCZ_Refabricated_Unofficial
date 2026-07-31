@@ -87,8 +87,29 @@
 6. **逻辑沙盒**：按最终代码语义复刻六机构算法跑断言——LIFO/FIFO/转轮三态与对齐前进/弹链对接四门校验/桥夹一次性/漏夹强制弹出+废夹拒装，**7 组断言全过**。
 
 ## 4. 遗留 TODO（进看板）
-- [ ] Q-21：有网环境执行 `./gradlew compileJava` 完成编译级验收（可能触发少量 26.2 API 微调）
+- [x] Q-21：CI 编译闭环已建成并逐层修通（2026-08-01）；首轮 javac 真实错误已修复（见 §5）
+- [ ] 复验一轮：六机构 `RecordCodecBuilder.group()/::new` 报错是否在 sealed 修复后连带自愈
 - [ ] 物品层（后置计划）：弹匣/桥夹/漏夹/弹链物品注册时必须走 `FeedItemRules.requireUnstackable`
 - [ ] `springFatigue/feedLipDamage` 写入点（I 章耐久系统 P3）——当前数据轨已备好
 - [ ] 枪内固定仓类机构（管仓/内仓/漏夹装入枪后）的持有者机制（Q-12，P2 状态机落地时配套）
 - [ ] 平衡值进 JSON：LoadedRound.SQUIB_RISK_DEVIATION 等语义常量待挪入数据包（P3）
+- [ ] 代码瑕疵备查：`FeedItemRules.requireUnstackable` 目前实际行为是"强制覆盖为不可堆叠"而非 Javadoc 所说的"断言并抛异常"（Item.Properties 无法读回配置做真断言）——要么改文档措辞，要么在物品注册处补校验钩子
+
+## 5. 首轮实机编译错误与修复（2026-08-01，CI 回推 gradle-raw.log 实证）
+
+首轮真实 javac 产生 4 类错误（66 条含重复打印），**其中只有 2 类是独立真错**，2 类是连带：
+
+| 错误 | 性质 | 修复 |
+|---|---|---|
+| `class FeedDeviceData in unnamed module cannot extend a sealed class in a different package`（×6 连带打印） | **独立真错**：Java language rule——无名模块下 sealed 类型的 permits 子类必须与 sealed 类型同包。设计稿把六机构放在 `api.feed.device` 子包，接口在 `api.feed` → 编译决裂 | 六机构全部并入 `api.feed` 同包（`git mv`，`device/` 目录废除）。**包结构最终态以代码为准**，17.7 修订注记之 |
+| `rebuild(Map) is not public / cannot be applied`（CartridgeRegistry + BulletRegistry） | **独立真错**：registry 包私有方法被 loader 包调用 | 两处改 `public` |
+| 六机构 `no suitable method found for group(...)` ×6 | 疑似连带的错误（sealed 决裂毒化继承树的方法解析） | 待本轮复验——理论上随 sealed 修复自愈 |
+| `incompatible types: invalid method reference`（各机构 `::new`）×6 | 同上 | 同上 |
+
+**事中纠偏**：设计阶段的符号/字节码/DFU 源码三层审计全部有效（没有任何一条抽象层签名是错的），
+漏网的是两条 **Java 语言规则级** 问题（sealed 同包规则、包私有可见性）——它们不体现在 API 签名里，
+符号级审计天然盲区。结论：**高风险 API 继续坚持三层审计；Java 语言规则（sealed/模块/可见性）
+纳入新增审计项**，且 CI 编译闭环已常驻（每次 push 自动复验），同类问题的发现成本已降到一轮以内。
+
+本次事件期间遭遇的外部环境故障（如实记录）：GitHub App 令牌在攻坚中段到期（401），
+推动本地先沉淀修复；CI 闭环恢复后需重新推送触发验证。

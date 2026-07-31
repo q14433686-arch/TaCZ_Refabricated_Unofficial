@@ -24,6 +24,6 @@
 | Q-18 | 服务器侧模拟测试框架：headless 射击循环 10 万发的可运行单元（P2/P3 DoD 依赖） | 全局 | 搭 JUnit+FakePlayer harness | 是(P2 前) | ☐ |
 | Q-19 | 弹壳/漏夹等拾取物模型与渲染成本（床岩实体或 ItemEntity） | B/N-1 | 渲染压测 | 否 | ☐ |
 | Q-20 | 与既有社区"Create×TaCZ 配方包"（调研 0.1）的版本共存策略：我们的硬核电是否与其配方冲突 | M | 社区兼容说明文档 | 否 | ☐ |
-| Q-21 | 沙箱无 JVM/Gradle 发行版与 Maven 源不可达：完整 `./gradlew compileJava` 编译级验收需在可联网环境补执行（本轮已用符号/字节码签名/逻辑沙盒三层替代验证，见 impl-log） | 全局 | 联网环境跑一次编译并回写结果 | 是(下一次代码合并前) | ☐ 已建 JDK25(jdk4py,JRE only) 可复用 |
+| Q-21 | 沙箱无 JVM/Gradle：建立 CI 编译验收闭环（GitHub Actions + build-reports 回推） | 全局 | compileJava BUILD SUCCESSFUL 并回写结果 | 是 | 🔨 闭环已打通（2026-08-01 深夜）：日志经 probes/watcher/gradlew 前台钩子三层回推成功；首轮 javac 错误已定位修复（sealed 跨包×6、rebuild 可见性×2、registry 包私有），**待 token 恢复后推送验证一轮**；连带错误（RecordCodecBuilder group/methodref）如未自愈再修。教训全文：docs/ci/README-编译验证闭环.md |
 | Q-12(更新) | 枪内固定仓机构（管仓/内仓/漏夹装入枪后）的持有者机制：`GunStateData` 已预留扩展位；权威口径=FeedDeviceData 副本进"枪内 feed 槽"（P2 状态机落地时定稿） | N-1 | P2 实现时验证 | 是(P2) | 部分结论（2026-08-01） |
 | Q-16(更新) | 弹链队列体积：loaded_round 单发 codec 字段实测 7 键（~80B JSON 等价）；250 发链≈20KB 未压缩，CompoundTag 内 varint/枚举名优化后 <8KB，可接受 | B-9 | items 阶段复估 | 否 | 初步结论：可行（2026-08-01） |

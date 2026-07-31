@@ -42,7 +42,44 @@ scripts\ci-proxy-build.bat
 
 三条里任意一条都远比"网页建一个 workflow 文件"或者"跑一个脚本"麻烦。
 
-## 实测踩坑记录（2026-08-01，v1→v3 三轮 run 总结）
+## 实测踩坑记录（2026-08-01，v1→v3 + Gradle 侧攻坚全链条）
+
+**攻坚全链条（按发现顺序）：每一层修完都露出下一层，总计 8 个真实成因叠加。**
+
+0. **v2 workflow 末步 0 秒暴毙真凶 = `.gitignore`**：`build-reports/` 因本地构建卫生留在
+   .gitignore 里；CI 中 `git add build-reports/compile-java.log` 立即 exit 1，
+   `bash -e` 下步骤秒死。沙盒复现实证：裸 add=exit1、`add -A`=exit1、`add -f`=成功。
+   **凡 CI 向被忽略目录提交一律 `git add -f`**（v3 模板与所有探针/钩子均已切）。
+1. **后台推送哨兵必死**：GitHub Actions runner 在 step 结束时 TERM/KILL 整棵进程树；
+   `nohup ... &` + `disown` 只防 SIGHUP，挡不住树杀——哨兵实证只送达第一档就被腰斩，
+   被腰斩的 git 还可能留下 `.git/index.lock` 与半途 rebase 状态，反过来毒死后续推送。
+   **推送窗口必须在 step 前台进程内**（gradlew 验尸钩子是最终答案：本进程不退出 step 不结束）。
+2. **gradle.properties 的 `org.gradle.jvmargs` 会强制 fork single-use daemon**：
+   daemon↔launcher 输出链在 CI 上不可靠（多轮实测 daemon 阶段 stdout 丢失）。
+   钩子内 `sed` 注释该行 + `JAVA_OPTS=-Xmx3G` 顶格 → 获得最可调试的单 JVM 拓扑。
+   （副作用：sed 造成脏树会让 `git rebase` 拒绝——推送前先 `git checkout -- gradle.properties`。）
+3. **Gradle 9.5.1 Groovy 脚本编译对「带静态类型参数的闭包」NPE**：
+   `BUG! exception in phase 'semantic analysis' in source unit '_BuildScript_' ...
+   GradleResolveVisitor.visitClass ... "source" is null`，死在 `> Configure project :`。
+   实证触发源：build.gradle 里 `def runGit = { List<String> args, boolean ignoreFail -> ... }`。
+   settings.gradle 的单参类型化闭包却可以过（同版本已实证）——触发粒度与参数个数/复合类型相关。
+   **铁律：build.gradle 里禁写类型化闭包参数、解构赋值、反斜杠续行三元、嵌套引号 GString**；
+   全部改用实证安全的保守写法（动态参闭包 + ProcessBuilder 式 `([...]).execute()`）。
+4. **信号不能用眼睛等，要用探针阵列自证**：settings 探针（settings 配置）→ buildscript 探针
+   （build 配置末期）→ taczindCiRelay（compileJava finalizer，任务期快照）→ gradlew 钩子
+   （终态+尸检+前台推送）。四档落地情况直接定位 gradle 死在哪个阶段——本次攻坚就是靠
+   「settings 探针落地 + buildscript 探针缺席」锁定配置期死亡，再用单 JVM+raw 日志逼出 NPE 全文。
+5. **setup-gradle 的 javac problem-matcher 抓不到错误**：loom 链路的编译失败不会在
+   check-run annotations 里留下 `error:` 条目（annotations 只有 generic exit code 1），
+   不能指望 annotations 通道省事。
+6. **OOM 不是元凶**：尸检 free -m 余 12GB、cgroup memory.events 无 oom_kill——
+   排除了最先怀疑的守护进程内存击杀。
+
+**最终拓扑**（settings.gradle 哨兵已退役进历史，当前生效的四层）：settings 探针 → buildscript
+探针 → taczindCiRelay（任务期快照）→ gradlew 钩子（单JVM+gradle-raw.log 直写+终态前台推送）。
+任一[层存活即可带出该阶段日志；gradlew 钩子保证"无论如何都有终态"。
+
+## 早期踩坑记录（v1→v3 三轮 run 总结）
 
 1. **日志 blob 域不可达**：Actions 步骤正文日志走 `results-receiver.actions.githubusercontent.com`
    重定向到 `*.blob.core.windows.net`，沙箱白名单均不含 → 只能靠"日志回推 git 提交"或"commit 评论"带回。

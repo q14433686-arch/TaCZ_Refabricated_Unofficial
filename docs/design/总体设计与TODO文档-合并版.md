@@ -1638,7 +1638,12 @@ P0 基础设施(数据层/平衡JSON/看板)
 | `corrosive_primer` | boolean | false | 腐蚀性独立于结构 |
 | `charge_deviation` | float | 0 | +超装/-欠装；≤-0.45=Squib 风险档 |
 
-## 17.7.3 FeedSystemType → 数据形状实况（class:`cn.sh1rocu.tacz.industry.api.feed.device`）
+## 17.7.3 FeedSystemType → 数据形状实况（class:`cn.sh1rocu.tacz.industry.api.feed`，六机构与密封接口同包）
+
+> ⚠️ 编译落地修订（2026-08-01 Q-21 首轮 javac）：六机构原设计在 `api.feed.device` 子包，但 Java 在
+> 无名模块下要求 **sealed 类型的 permits 子类必须同包**（`cannot extend a sealed class in a
+> different package`），已整体并入 `cn.sh1rocu.tacz.industry.api.feed`。老文档中出现
+> `api.feed.device` 路径一律以此为准。
 
 | 枚举(序列化名) | record | 独有字段 |
 |---|---|---|
@@ -1698,7 +1703,7 @@ P0 基础设施(数据层/平衡JSON/看板)
 | Q-18 | 服务器侧模拟测试框架：headless 射击循环 10 万发的可运行单元（P2/P3 DoD 依赖） | 全局 | 搭 JUnit+FakePlayer harness | 是(P2 前) | ☐ |
 | Q-19 | 弹壳/漏夹等拾取物模型与渲染成本（床岩实体或 ItemEntity） | B/N-1 | 渲染压测 | 否 | ☐ |
 | Q-20 | 与既有社区"Create×TaCZ 配方包"（调研 0.1）的版本共存策略：我们的硬核电是否与其配方冲突 | M | 社区兼容说明文档 | 否 | ☐ |
-| Q-21 | 沙箱无 JVM/Gradle 发行版与 Maven 源不可达：完整 `./gradlew compileJava` 编译级验收需在可联网环境补执行（本轮已用符号/字节码签名/逻辑沙盒三层替代验证，见 impl-log） | 全局 | 联网环境跑一次编译并回写结果 | 是(下一次代码合并前) | ☐ 已建 JDK25(jdk4py,JRE only) 可复用 |
+| Q-21 | 沙箱无 JVM/Gradle：建立 CI 编译验收闭环（GitHub Actions + build-reports 回推） | 全局 | compileJava BUILD SUCCESSFUL 并回写结果 | 是 | 🔨 闭环已打通（2026-08-01 深夜）：日志经 probes/watcher/gradlew 前台钩子三层回推成功；首轮 javac 错误已定位修复（sealed 跨包×6、rebuild 可见性×2、registry 包私有），**待 token 恢复后推送验证一轮**；连带错误（RecordCodecBuilder group/methodref）如未自愈再修。教训全文：docs/ci/README-编译验证闭环.md |
 | Q-12(更新) | 枪内固定仓机构（管仓/内仓/漏夹装入枪后）的持有者机制：`GunStateData` 已预留扩展位；权威口径=FeedDeviceData 副本进"枪内 feed 槽"（P2 状态机落地时定稿） | N-1 | P2 实现时验证 | 是(P2) | 部分结论（2026-08-01） |
 | Q-16(更新) | 弹链队列体积：loaded_round 单发 codec 字段实测 7 键（~80B JSON 等价）；250 发链≈20KB 未压缩，CompoundTag 内 varint/枚举名优化后 <8KB，可接受 | B-9 | items 阶段复估 | 否 | 初步结论：可行（2026-08-01） |
 # 第 19 章 · 进度看板（持续维护）
@@ -1731,7 +1736,7 @@ P0 基础设施(数据层/平衡JSON/看板)
 | L | 后勤仓储携行 | 13-L | P4 | 未开始 | — | | 依赖 Q-14 |
 | M | Create 联动 | 14-M | P5 | 未开始 | — | | 依赖 Q-02 |
 | N-1 | 供弹具机构 | 15-N | P4 | 🔨开发中 | — | 2026-08-01 | **数据层已完成**（六机构+规则层+组件注册，见 impl-log/P0-feed-device-data-system）；物品层后置 |
-| P0-补 | 供弹具数据系统 | 17.7 | P0 | ✅完成 | — | 2026-08-01 | CartridgeType/BulletType/LoadedRound/GunStateData + 注册表 + loader；编译级验收待 Q-21 |
+| P0-补 | 供弹具数据系统 | 17.7 | P0 | 🔨编译修错 | — | 2026-08-01 | 数据层代码+实机编译首轮：修复 sealed 跨包（六机构并入 api.feed 同包）、registry.rebuild 改 public；六机构 group()/methodref 错误待复验是否连带自愈。包结构最终态以代码为准 |
 | N-2~N-7 | 扳机/履历/训练/拆解等 | 15-N | P6 | 未开始 | — | | |
 
 ## 里程碑
