@@ -2,3 +2,4 @@
 # 上传用于分析的第三方参考包/源码（体积大，且含他人 All Rights Reserved 美术资源，
 # 不应进入本仓库的提交历史）
 /*.zip
+build-reports/
