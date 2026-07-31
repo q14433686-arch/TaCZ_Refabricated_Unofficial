@@ -145,13 +145,18 @@ eval "set -- $(
     )" '"$@"'
 
 # ============ TACZ-INDUSTRIAL CI 验尸钩子（仅 GitHub Actions 生效，本地零影响） ============
-# 症状（Q-21 实测）：runner 上 gradle 输出在 "Daemon will be stopped" 后完全静默、
-# step exit 1 无任何错误文本——疑似 daemon 遭 OOM 静默击杀，launcher 未及报告。
-# 此处将 exec 改为普通调用，捕获退出码并直接写尸检文件到 build-reports/
-# （绕过 stdout 管道，管道已不可信），由 settings 哨兵推送回分支。
+# Q-21 症状：runner 上 gradle 输出在 "Daemon will be stopped" 后完全静默、
+# step exit 1 无错误文本；已排除 OOM（尸检 free -m 余 12GB）。
+# 怀疑 daemon↔launcher IPC 断裂。对策（CI 三件套）：
+#   1) 剥离 org.gradle.jvmargs → 单 JVM 拓扑（无 daemon 可断）
+#   2) stdout/stderr 直写 build-reports/gradle-raw.log，绕开失效管道
+#   3) 前台同步推送（本进程不退出 step 不结束）—— 唯一实测可靠窗口
 if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
     mkdir -p build-reports
-    "$JAVACMD" "$@"
+    sed -i 's/^org\.gradle\.jvmargs=/#CI-CUT# org.gradle.jvmargs=/' gradle.properties
+    export JAVA_OPTS="-Xmx3G -Dfile.encoding=UTF-8 ${JAVA_OPTS:-}"
+    echo "=== CI 模式：单 JVM + 直写 raw 日志，JAVA_OPTS=$JAVA_OPTS ===" > build-reports/gradle-raw.log
+    "$JAVACMD" "$@" >> build-reports/gradle-raw.log 2>&1
     GRADLE_EC=$?
     {
         echo "gradlew exit_code=$GRADLE_EC"
@@ -166,14 +171,19 @@ if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
         sudo -n dmesg 2>/dev/null | grep -i -E "oom|killed process|out of memory" | tail -10 || dmesg 2>/dev/null | tail -10 || echo "dmesg 无权限"
         echo "--- 退出时内存 top5 进程 ---"
         ps aux --sort=-rss 2>/dev/null | head -6
+        echo "--- gradle-raw.log 尾部 120 行 ---"
+        tail -120 build-reports/gradle-raw.log 2>/dev/null || echo "(raw 日志缺失)"
     } > build-reports/gradlew-postmortem.txt 2>&1
 
-    # ---- 就地回推（Q-21 实测闭环的命门） ----
-    # runner 在 step 结束时会杀掉整棵进程树，后台哨兵活不到下一步；
-    # 但本钩子是 step 的前台进程——我们不退出，step 就不结束。
-    # 所以推送必须在这里同步完成：这是唯一 100% 可靠的送达窗口。
+    # ---- 就地回推（唯一实测可靠窗口：本进程不退出，step 不结束） ----
+    # runner 在 step 结束时会 TERM/KILL 整棵进程树；被腰斩的后台 git 可能遗留
+    # index.lock / 半途 rebase 状态——推送前必须先清创。
     BRANCH="${GITHUB_REF_NAME:-}"
     if [ -n "$BRANCH" ]; then
+        rm -f .git/index.lock
+        git rebase --abort >/dev/null 2>&1
+        # 恢复 sed 改过的 gradle.properties（wrapper 已读取完毕，使命完成；脏树会致 rebase 拒绝）
+        git checkout -- gradle.properties 2>/dev/null
         git config user.name "taczind-ci-gradlew[bot]"
         git config user.email "taczind-ci-gradlew@users.noreply.github.com"
         git add -f -A build-reports >> build-reports/gradlew-postmortem.txt 2>&1
