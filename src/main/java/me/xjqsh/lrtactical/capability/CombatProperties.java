@@ -10,7 +10,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 近战状态机 —— 冷却、切枪、攻击前摇与位移。
@@ -47,6 +49,7 @@ public class CombatProperties {
     private int lastMaxTick = 0;
     private int lastSelected = 0;
     private int drawingTick = 0;
+    private final Map<MeleeAction, Integer> actionCounts = new EnumMap<>(MeleeAction.class);
 
     public CombatProperties(Player entity) {
         this.entity = entity;
@@ -113,6 +116,12 @@ public class CombatProperties {
         lastMaxTick = newCoolDown;
         drawingTick = newCoolDown;
         delayedActions.clear();
+        actionCounts.clear();
+    }
+
+    /** 某类近战动作已连续执行的次数，用于内容包 Lua 选择连击动画。 */
+    public int getActionCount(MeleeAction action) {
+        return actionCounts.getOrDefault(action, 0);
     }
 
     /**
@@ -131,6 +140,9 @@ public class CombatProperties {
         if (coolDownTick > 0 || !weapon.canAttack(stack, action)) {
             return false;
         }
+
+        int actionCount = actionCounts.getOrDefault(action, 0);
+        actionCounts.put(action, actionCount + 1);
 
         coolDownTick = weapon.getAttackCoolDown(stack, action);
         lastMaxTick = coolDownTick;

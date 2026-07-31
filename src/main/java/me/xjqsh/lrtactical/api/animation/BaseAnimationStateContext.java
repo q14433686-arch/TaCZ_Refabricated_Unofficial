@@ -3,6 +3,8 @@ package me.xjqsh.lrtactical.api.animation;
 import cn.sh1rocu.tacz.api.extension.IMoveDistTracker;
 import com.tacz.guns.client.animation.statemachine.ItemAnimationStateContext;
 import me.xjqsh.lrtactical.api.item.IThrowable;
+import me.xjqsh.lrtactical.api.melee.MeleeAction;
+import me.xjqsh.lrtactical.init.ModCapabilities;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.Entity;
@@ -127,6 +129,28 @@ public class BaseAnimationStateContext extends ItemAnimationStateContext {
     public boolean isInputJumping() {
         return Optional.ofNullable(Minecraft.getInstance().player)
                 .map(player -> player.input.keyPresses.jump()).orElse(false);
+    }
+
+
+    /**
+     * 某个近战攻击动作已连续进行的次数。上游默认近战 Lua 用它在 attack_left_1/2/3
+     * 等连击动画之间取模切换；不是近战动作或没有玩家上下文时返回 0。
+     */
+    public int getActionCount(String action) {
+        MeleeAction meleeAction = switch (action) {
+            case "attack_left" -> MeleeAction.LEFT;
+            case "attack_right" -> MeleeAction.RIGHT;
+            default -> null;
+        };
+        if (meleeAction == null) {
+            return 0;
+        }
+        return processCameraEntity(entity -> {
+            if (entity instanceof net.minecraft.world.entity.player.Player player) {
+                return ModCapabilities.combatProperties(player).getActionCount(meleeAction);
+            }
+            return 0;
+        }).orElse(0);
     }
 
     /**

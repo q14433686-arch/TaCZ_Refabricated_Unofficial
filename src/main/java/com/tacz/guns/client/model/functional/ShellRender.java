@@ -13,6 +13,7 @@ import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.client.resource.pojo.display.gun.ShellEjection;
 import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
@@ -33,6 +34,17 @@ public class ShellRender implements IFunctionalSubmitter {
 
     public ShellRender(BedrockGunModel bedrockGunModel) {
         this.bedrockGunModel = bedrockGunModel;
+    }
+
+    private static boolean shellContextMatchesCamera(ItemDisplayContext displayContext) {
+        boolean cameraFirstPerson = Minecraft.getInstance().options.getCameraType().isFirstPerson();
+        return cameraFirstPerson == displayContext.firstPerson();
+    }
+
+    private static RenderType shellRenderType(ItemDisplayContext displayContext, Identifier texture) {
+        return displayContext.firstPerson()
+                ? RenderTypes.itemCutout(texture)
+                : RenderTypes.entityCutout(texture);
     }
 
     public void addShell(Vector3f randomVelocity) {
@@ -116,7 +128,7 @@ public class ShellRender implements IFunctionalSubmitter {
         poseStack2.mulPose(Axis.ZP.rotationDegrees((float) zw));
         poseStack2.translate(0, -1.5, 0);
 
-        model.render(poseStack2, transformType1, RenderTypes.entityCutout(location), light, overlay);
+        model.render(poseStack2, transformType1, shellRenderType(transformType1, location), light, overlay);
     }
 
     private void checkShellQueue(long lifeTime) {
@@ -131,7 +143,8 @@ public class ShellRender implements IFunctionalSubmitter {
 
     @Override
     public void extract(ExtractionContext context) {
-        if (IrisCompat.isRenderShadow() || !isSelf) {
+        ItemDisplayContext displayContext = context.displayContext();
+        if (IrisCompat.isRenderShadow() || !isSelf || !shellContextMatchesCamera(displayContext)) {
             return;
         }
         ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();
@@ -160,7 +173,6 @@ public class ShellRender implements IFunctionalSubmitter {
         Vector3f acceleration = shellEjection.getAcceleration();
         Vector3f angularVelocity = shellEjection.getAngularVelocity();
         PoseStack origin = context.poseStack();
-        ItemDisplayContext displayContext = context.displayContext();
         int light = context.light();
         int overlay = context.overlay();
 
@@ -189,7 +201,7 @@ public class ShellRender implements IFunctionalSubmitter {
                 PoseStack taskPose = new PoseStack();
                 taskPose.last().pose().set(frozenShellPose.last().pose());
                 taskPose.last().normal().set(frozenShellPose.last().normal());
-                model.submit(taskPose, displayContext, collector, RenderTypes.entityCutout(texture), light, overlay);
+                model.submit(taskPose, displayContext, collector, shellRenderType(displayContext, texture), light, overlay);
             });
         }
     }
@@ -199,7 +211,7 @@ public class ShellRender implements IFunctionalSubmitter {
         if (IrisCompat.isRenderShadow()) {
             return;
         }
-        if (!isSelf) {
+        if (!isSelf || !shellContextMatchesCamera(transformType)) {
             return;
         }
         ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();

@@ -10,8 +10,6 @@ import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.InternalAssetLoader;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
-import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -121,34 +119,15 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 trailLength = Math.min(trailLength, disToEye * 0.8);
 
                 if (isFirstPerson) {
-                    // 第一人称渲染自己的曳光弹的时候需要应用偏移（偏移量 = 枪口相对摄像机的位置）
-                    //
-                    // 【第 9 轮修复】曳光弹不从枪口射出、而是固定从某个位置射出。
-                    //
-                    // 移植版这里有两处偏差：
-                    //   1) 摄像机旋转被硬编码成 0（原注释写"无法获取相机旋转，暂时设置默认值"）。
-                    //      于是下面的"旋转 -> 平移 -> 反旋转"退化成在<b>未旋转坐标系</b>里做平移，
-                    //      muzzleRenderOffset 被当成世界轴偏移 —— 无论朝哪个方向开枪，
-                    //      曳光弹起点都固定在同一处。
-                    //   2) 上游那对"旋转/反旋转"<b>只在 Iris 光影启用时</b>才需要
-                    //      （1.21.1+ 的渲染坐标空间已不需要手动转换，但 Iris 仍是老样子）。
-                    //      移植版无条件执行，即使拿到正确角度也会引入多余变换。
-                    //
-                    // 摄像机可直接从 Minecraft.gameRenderer.getMainCamera() 取得（与上游一致）。
-                    // 26.2: GameRenderer#getMainCamera() -> mainCamera()，Camera#getXRot/getYRot -> xRot()/yRot()
-                    Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+                    // 第一人称渲染自己的曳光弹时应用枪口视觉偏移（偏移量 = 枪口相对摄像机的位置）。
                     Vector3f offset = bullet.getFirstPersonRenderOffset();
                     if (offset == null) {
-                        // 记录这发子弹第一次渲染时的摄像机朝向与枪口视觉偏移，之后整条曳光都沿用。
-                        //
-                        // GunItemRendererWrapper.muzzleRenderOffset 是摄像机局部坐标。不要后续再靠手写
-                        // yaw/pitch 旋转反复换空间；直接在同一时刻用 Camera#rotation() 把它烘焙成
-                        // 实体渲染使用的世界/相机相对坐标。否则抬头/低头时很容易因旋转顺序/符号不一致
-                        // 让视觉枪口相对真实弹道上下漂移。
+                        // 26.x entity render extraction already gives a camera/view-space pose.
+                        // Do not rotate/unrotate the muzzle offset under shader packs: applying
+                        // camera yaw/pitch here double-applies the view transform, so looking up can
+                        // fling the tracer start upward/rightward into the sky. Keep the cached
+                        // muzzleRenderOffset in view-space and translate directly below.
                         offset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
-                        offset.rotate(camera.rotation());
-                        bullet.setCameraXRot(camera.xRot());
-                        bullet.setCameraYRot(camera.yRot());
                         bullet.setFirstPersonRenderOffset(offset);
                     }
                     // 按照距离快速削减第一人称枪口视觉偏移，避免远处曳光仍被大幅拉向开火瞬间的枪口侧。

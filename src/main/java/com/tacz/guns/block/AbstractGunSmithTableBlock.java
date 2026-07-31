@@ -93,6 +93,20 @@ public abstract class AbstractGunSmithTableBlock extends BaseEntityBlock {
         return super.getCloneItemStack(level, pos, state, false);
     }
 
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        // 多方块工作台只有 root 方块实体保存 BlockId。生存模式破坏 head/upper
+        // 等非 root 部分时，原版 loot table 只能看到被破坏方块，无法从 root
+        // 方块实体复制自定义工作台 id；这里手动按 root 方块实体构造掉落物。
+        if (!level.isClientSide() && !player.isCreative() && !isRoot(state)) {
+            ItemStack drop = getCloneItemStack(level, pos, state, true);
+            if (!drop.isEmpty()) {
+                popResource(level, pos, drop);
+            }
+        }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
     public abstract boolean isRoot(BlockState blockState);
 
     public float parseRotation(Direction direction) {
