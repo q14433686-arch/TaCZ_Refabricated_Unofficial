@@ -1,3 +1,3 @@
-settings-probe ok @ Fri Jul 31 19:59:09 UTC 2026
+settings-probe ok @ Fri Jul 31 20:17:30 UTC 2026
 branch=arena/019fb90c-tacz-refabricated-unofficial
-sha=28c5be99aba4704f809c0a9304eca3e4eefa4ec2
+sha=288fe48e5615b26c7d832ec889ee2d93d875f935
