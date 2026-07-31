@@ -36,7 +36,12 @@ public record BoxMagazineData(
         float feedLipDamage
 ) implements FeedDeviceData {
 
-    public static final MapCodec<BoxMagazineData> CODEC = RecordCodecBuilder.mapCodec(
+    // Q-21 编译教训（javac 死证）：绝不能写成 mapCodec(...).validate(...) 单链——
+    // 链中段的泛型方法调用失去赋值目标类型流入（非 poly expression），
+    // instance 的类型变量 O 将被推断为 Object，group(App<Mu<Object>,...>)
+    // 与 RecordCodecBuilder<BoxMagazineData,...> 实参全系不匹配。
+    // 原版惯例两步走：先单独语句直接赋值（O 由目标类型锚定），再链 validate。
+    private static final MapCodec<BoxMagazineData> SHAPE_CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                     IndustryCodecs.IDENTIFIER.fieldOf("cartridge").forGetter(BoxMagazineData::cartridge),
                     Codec.INT.fieldOf("capacity").forGetter(BoxMagazineData::capacity),
@@ -44,7 +49,9 @@ public record BoxMagazineData(
                     Codec.FLOAT.optionalFieldOf("spring_fatigue", 0f).forGetter(BoxMagazineData::springFatigue),
                     Codec.FLOAT.optionalFieldOf("feed_lip_damage", 0f).forGetter(BoxMagazineData::feedLipDamage)
             ).apply(instance, BoxMagazineData::new)
-    ).validate(BoxMagazineData::validateShape);
+    );
+
+    public static final MapCodec<BoxMagazineData> CODEC = SHAPE_CODEC.validate(BoxMagazineData::validateShape);
 
     public BoxMagazineData {
         rounds = List.copyOf(rounds);

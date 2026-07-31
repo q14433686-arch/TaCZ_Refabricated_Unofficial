@@ -34,14 +34,21 @@ public record EnBlocClipData(
         boolean ejected
 ) implements FeedDeviceData {
 
-    public static final MapCodec<EnBlocClipData> CODEC = RecordCodecBuilder.mapCodec(
+    // Q-21 编译教训（javac 死证）：绝不能写成 mapCodec(...).validate(...) 单链——
+    // 链中段的泛型方法调用失去赋值目标类型流入（非 poly expression），
+    // instance 的类型变量 O 将被推断为 Object，group(App<Mu<Object>,...>)
+    // 与 RecordCodecBuilder<EnBlocClipData,...> 实参全系不匹配。
+    // 原版惯例两步走：先单独语句直接赋值（O 由目标类型锚定），再链 validate。
+    private static final MapCodec<EnBlocClipData> SHAPE_CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                     IndustryCodecs.IDENTIFIER.fieldOf("cartridge").forGetter(EnBlocClipData::cartridge),
                     Codec.INT.fieldOf("capacity").forGetter(EnBlocClipData::capacity),
                     LoadedRound.CODEC.listOf().optionalFieldOf("rounds", List.of()).forGetter(EnBlocClipData::rounds),
                     Codec.BOOL.optionalFieldOf("ejected", false).forGetter(EnBlocClipData::ejected)
             ).apply(instance, EnBlocClipData::new)
-    ).validate(EnBlocClipData::validateShape);
+    );
+
+    public static final MapCodec<EnBlocClipData> CODEC = SHAPE_CODEC.validate(EnBlocClipData::validateShape);
 
     public EnBlocClipData {
         rounds = List.copyOf(rounds);

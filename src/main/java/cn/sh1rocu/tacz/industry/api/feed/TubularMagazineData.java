@@ -33,14 +33,21 @@ public record TubularMagazineData(
         float springFatigue
 ) implements FeedDeviceData {
 
-    public static final MapCodec<TubularMagazineData> CODEC = RecordCodecBuilder.mapCodec(
+    // Q-21 编译教训（javac 死证）：绝不能写成 mapCodec(...).validate(...) 单链——
+    // 链中段的泛型方法调用失去赋值目标类型流入（非 poly expression），
+    // instance 的类型变量 O 将被推断为 Object，group(App<Mu<Object>,...>)
+    // 与 RecordCodecBuilder<TubularMagazineData,...> 实参全系不匹配。
+    // 原版惯例两步走：先单独语句直接赋值（O 由目标类型锚定），再链 validate。
+    private static final MapCodec<TubularMagazineData> SHAPE_CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                     IndustryCodecs.IDENTIFIER.fieldOf("cartridge").forGetter(TubularMagazineData::cartridge),
                     Codec.INT.fieldOf("capacity").forGetter(TubularMagazineData::capacity),
                     LoadedRound.CODEC.listOf().optionalFieldOf("rounds", List.of()).forGetter(TubularMagazineData::rounds),
                     Codec.FLOAT.optionalFieldOf("spring_fatigue", 0f).forGetter(TubularMagazineData::springFatigue)
             ).apply(instance, TubularMagazineData::new)
-    ).validate(TubularMagazineData::validateShape);
+    );
+
+    public static final MapCodec<TubularMagazineData> CODEC = SHAPE_CODEC.validate(TubularMagazineData::validateShape);
 
     public TubularMagazineData {
         rounds = List.copyOf(rounds);

@@ -80,13 +80,20 @@ public record CylinderData(
         }
     }
 
-    public static final MapCodec<CylinderData> CODEC = RecordCodecBuilder.mapCodec(
+    // Q-21 编译教训（javac 死证）：绝不能写成 mapCodec(...).validate(...) 单链——
+    // 链中段的泛型方法调用失去赋值目标类型流入（非 poly expression），
+    // instance 的类型变量 O 将被推断为 Object，group(App<Mu<Object>,...>)
+    // 与 RecordCodecBuilder<CylinderData,...> 实参全系不匹配。
+    // 原版惯例两步走：先单独语句直接赋值（O 由目标类型锚定），再链 validate。
+    private static final MapCodec<CylinderData> SHAPE_CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                     IndustryCodecs.IDENTIFIER.fieldOf("cartridge").forGetter(CylinderData::cartridge),
                     CylinderSlot.CODEC.listOf().fieldOf("slots").forGetter(CylinderData::slots),
                     Codec.INT.optionalFieldOf("aligned_index", 0).forGetter(CylinderData::alignedIndex)
             ).apply(instance, CylinderData::new)
-    ).validate(CylinderData::validateShape);
+    );
+
+    public static final MapCodec<CylinderData> CODEC = SHAPE_CODEC.validate(CylinderData::validateShape);
 
     public CylinderData {
         slots = List.copyOf(slots);
