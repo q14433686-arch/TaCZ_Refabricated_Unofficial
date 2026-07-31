@@ -40,6 +40,7 @@
 | 日期 | 记录 | 范围 |
 |---|---|---|
 | 2026-08-01 | [../impl-log/P0-feed-device-data-system.md](../impl-log/P0-feed-device-data-system.md) | P0 补充：供弹具数据系统（27 类/六机构/规则层/组件注册） |
+| 2026-08-01 | [../impl-log/P1-manufacturing-foundation-data-layer.md](../impl-log/P1-manufacturing-foundation-data-layer.md) | P1 数据层+规则层：A-1 材料树/A-2 热度条工序/A-8 公差系统（17 类/43 JSON/实机编译绿） |
 
 ## 子系统章节统一模板（A–N 每章均含五节）
 

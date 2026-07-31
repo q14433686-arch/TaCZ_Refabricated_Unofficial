@@ -40,6 +40,7 @@
 | 日期 | 记录 | 范围 |
 |---|---|---|
 | 2026-08-01 | [../impl-log/P0-feed-device-data-system.md](../impl-log/P0-feed-device-data-system.md) | P0 补充：供弹具数据系统（27 类/六机构/规则层/组件注册） |
+| 2026-08-01 | [../impl-log/P1-manufacturing-foundation-data-layer.md](../impl-log/P1-manufacturing-foundation-data-layer.md) | P1 数据层+规则层：A-1 材料树/A-2 热度条工序/A-8 公差系统（17 类/43 JSON/实机编译绿） |
 
 ## 子系统章节统一模板（A–N 每章均含五节）
 
@@ -1666,17 +1667,69 @@ P0 基础设施(数据层/平衡JSON/看板)
 
 > 注：设计稿曾计划 `taczind` 顶层嵌套对象；实现期改为**扁平双键**，理由：gson POJO 纯字段追加零侵入、与 TACZ 现有键风格一致、无需嵌套适配器。判定函数在规则层 `FeedCompatibility`（canChamber/acceptsFeedDeviceTag/canLoadFromDevice）。
 
-## 17.7.5 数据驱动注册表（loader：IndustryDataLoader）
+## 17.7.5 数据驱动注册表（loader：IndustryDataLoader，P1 重构为 SPECS 通用多目录）
 
-| 注册表 | JSON 路径 | 来源优先级 |
-|---|---|---|
-| CartridgeRegistry | `data/<ns>/cartridge/<name>.json` | 代码默认(12条) ← 数据包覆盖 |
-| BulletRegistry | `data/<ns>/bullet/<name>.json` | 代码默认(6条) ← 数据包覆盖 |
+| 注册表 | JSON 路径 | 来源优先级 | 批次 |
+|---|---|---|---|
+| CartridgeRegistry | `data/<ns>/cartridge/<name>.json` | 代码默认(12条) ← 数据包覆盖 | P0 |
+| BulletRegistry | `data/<ns>/bullet/<name>.json` | 代码默认(6条) ← 数据包覆盖 | P0 |
+| MaterialRegistry | `data/<ns>/material/<name>.json` | 纯数据包（本模组内置=默认） | P1 |
+| WorkProcessRegistry | `data/<ns>/process/<name>.json` | 纯数据包 | P1 |
+| CoolingCurveRegistry | `data/<ns>/cooling_curve/<name>.json` | 纯数据包 + 代码 air 安全网兜底 | P1 |
+| ToleranceTables.machines | `data/<ns>/tolerance/machine_ts/<name>.json` | 纯数据包 | P1 |
+| ToleranceTables.grades | `data/<ns>/tolerance/grade_band/<name>.json` | 纯数据包 + 失包硬兜底 Crude 语义档 | P1 |
+| ToleranceTables.weights | `data/<ns>/tolerance/weights/<name>.json` | 纯数据包（缺失=装配显式拒绝） | P1 |
 
 ## 17.7.6 镜像一致性写入规范（GunStateData ↔ TACZ HasBulletInBarrel）
 
 权威=`taczind:gun_state_data.chambered_round`；`HasBulletInBarrel` 仅作显示/动画镜像。
 **任何 chambered 变更必须双写**；读一律读组件。后续刘状枪膛状态（E 章）在此组件上扩展字段，不回头加布尔。
+
+---
+
+## 17.8 P1 制造地基落地登记（实现权威，2026-08-01）
+
+> 对应实现记录：`docs/impl-log/P1-manufacturing-foundation-data-layer.md`。本节为已编码字段的**最终权威**；设计节如与本节冲突，以本节为准。
+
+### 17.8.1 MaterialType 字段实况（record，JSON 手工解析）
+
+| JSON 键 | 类型 | 缺省 | 说明 |
+|---|---|---|---|
+| `category` | enum | `metallurgy` | ore/metallurgy/chemical（大小写连字符包容） |
+| `tier` | int | 1 | 科技阶段 0–5，越界拒载单条 |
+| `tolerance_bonus` | float | 0 | A-8b 材料加成，进 partTs |
+| `work_tags` | string[] | [] | 可加工自由标签（forgeable/castable/machinable/pressable/heat_treatable/mixing_dangerous…） |
+| `upstream` | Identifier[] | [] | 材料树的边（允许指向原版物） |
+| `item_hint` | Identifier? | null | 物品化预留（悬空合法） |
+
+### 17.8.2 HeatWorkData 工件组件实况（`taczind:workpiece`，CODEC 两步式）
+
+| JSON 键 | 类型 | 缺省 | 说明 |
+|---|---|---|---|
+| `heat` | int | 20 | 炉温单位 0–1000（HeatUnits.clamp 强制） |
+| `process_id` | Identifier? | empty | 进行中工序 → WorkProcessRegistry |
+| `progress` | float | 0 | 完成度 0–1（clamp；≥1 可收锤） |
+| `quality_seed` | long | 0 | 收锤质量防刷种子；0=无种子确定性回归 |
+| `material` | Identifier | （必填） | 当前材料形态 → MaterialRegistry |
+
+### 17.8.3 WorkProcessType 工序实况（JSON 手工解析）
+
+| JSON 键 | 类型 | 缺省 | 说明 |
+|---|---|---|---|
+| `station` | enum | `anvil` | anvil/crucible/quench_tank/hand_tool（anvil 强制 strikes>0） |
+| `input_material` / `output` | Identifier | （必填） | 入料必须已注册（装载期悬空只告警）；产出零件允许悬空待物品化 |
+| `heat_band` | object | （必填） | `{work_min,work_max,ideal_min,ideal_max}` 理想带必须落在工作带内 |
+| `strikes_required` / `heat_per_strike` | int | 0 | 锤击型参数（坩埚型 strikes=0） |
+| `process_ticks` | long | 0 | 非锤击工序盛放时长 |
+| `quality_jitter` / `ideal_finish_bonus` | float | 0.05/0.0 | 收锤质量抖动幅度与理想带加成 |
+
+### 17.8.4 A-8 三表实况
+
+- **machine_ts**：`{min_ts,max_ts,stability_kind(skill_minigame/power_stability/none)}`——窗口内按零件 seed 均匀抽样为"机器基础 TS"
+- **grade_band**：`{min_ts,max_ts,display_key, inaccuracy_mult, malfunction_mult, durability_mult, velocity_deviation}`——半开区间 [min,max)，masterwork 档 max_ts=101 封顶 100
+- **weights**：`{"weights":{"barrel":0.35,...}}` 运行时归一化（和不恰为 1 不掀表）
+- 公式（`ToleranceRules.partTs`）：`clamp(机器基础 + 材料加成 + 稳定性×10 + (模具TS-50)/10 + N(0,σ), 0, 100)`，σ 为代码常量分级（5/3.5/2.5/1.5/1.0）——平衡基石防魔改，是数据驱动承诺的明示例外
+- 冷却曲线：`{"ambient":20,"steps":[{"above":600,"loss_per_tick":2.0},...]}` 降序档表；`HeatRules.cool` 任意 ticks 一次结算 O(档数)
 # 第 18 章 · 开放问题清单（实现前必须调研/验证）
 
 > 约定：Q-xx 在 P0 Spike 阶段逐一回答并回写"结论"列。阻断型=不回答不允许进 P1/P2。
@@ -1715,14 +1768,14 @@ P0 基础设施(数据层/平衡JSON/看板)
 
 | # | 系统 | 文档章节 | 路线图 | 状态 | 负责人 | 最近更新 | 备注 |
 |---|---|---|---|---|---|---|---|
-| A-1 | 材料树 | 02-A | P1 | ✅设计中 | — | 2026-07-31 | 阶段一设计完成 |
-| A-2 | 手工阶段(热度条锻打) | 02-A | P1 | 设计中 | — | 2026-07-31 | |
-| A-3 | 小作坊机器 | 02-A | P1 | 设计中 | — | 2026-07-31 | |
+| A-1 | 材料树 | 02-A | P1 | ✅数据层完成 | — | 2026-08-01 | MaterialType+24 JSON+Registry；实机编译绿 @f189908 |
+| A-2 | 手工阶段(热度条锻打) | 02-A | P1 | ✅数据层完成 | — | 2026-08-01 | HeatBand/HeatWorkData组件/3冷却曲线/4工序/规则层；方块与GUI后置 |
+| A-3 | 小作坊机器 | 02-A | P1 | ⏳待物品层批次 | — | 2026-07-31 | mold/barrel_part 组件设计已定型，待物品开门 |
 | A-4 | 初级工业动力机 | 02-A | P5 | 未开始 | — | | 依赖 Q-02 |
 | A-5 | 中级工业化学线 | 02-A | P5 | 未开始 | — | | |
 | A-6 | 重度自动化双路线 | 02-A | P5 | 未开始 | — | | |
 | A-7 | 蓝图/图纸 | 02-A | P5(前置字段 P1) | 设计中 | — | | 依赖 Q-03 |
-| A-8 | 公差系统 | 02-A | P1 | 设计中 | — | | 依赖 Q-04 |
+| A-8 | 公差系统 | 02-A | P1 | ✅数据层完成 | — | 2026-08-01 | 三表 JSON+ToleranceRules 全公式（含事故报告明细）;Q-04 关联待 C 注入 |
 | B | 弹药四要素+复装 | 03-B | P1 | 设计中 | — | | 依赖 Q-06 |
 | C | 弹道与精度 | 04-C | P1 最小 + P2 全量 | 设计中 | — | | 依赖 Q-08 |
 | D | 后坐力与人机 | 05-D | P2 | 未开始 | — | | 依赖 Q-09 |
@@ -1757,6 +1810,8 @@ P0 基础设施(数据层/平衡JSON/看板)
 |---|---|
 | 2026-07-31 | 阶段一文档首版建立（v1.0） |
 | 2026-08-01 | P0 补充：供弹具数据系统落地（27 个新类；抽象层/规则层/嵌套规则层完成，物品层按计划后置；GunData 增 2 增量字段；实现记录 docs/impl-log/P0-feed-device-data-system.md） |
+| 2026-08-01 | Q-21 关闭：CI 编译闭环建成（四层日志回推），三轮实机排错（66→42→0）compileJava BUILD SUCCESSFUL；Gradle 9.5.1 Groovy 类型化闭包 NPE 等 8 层成因入档 |
+| 2026-08-01 | P1 数据层+规则层落地（17 新类 + 43 数据 JSON）：A-1 材料树（24 材料）、A-2 热度条（HeatBand/workpiece 组件/冷却曲线×3/T1 工序×4/HeatRules/ProcessRules/QualityRules）、A-8 公差系统（机器 TS×6/分级带×5/装配权重/ToleranceRules 含事故报告明细）；loader 重构通用多目录；实机编译绿 @f189908（实现记录 docs/impl-log/P1-manufacturing-foundation-data-layer.md）。后续批次：B 弹药四要素 → C 注入最小闭环（前置 Q-06 最高优先级 Spike）→ 机器物品层 |
 # 第 20 章 · 术语表（中英对照，实现期键名统一来源）
 
 > 用途：语言文件 key、JSON 字段、代码命名的统一词库，避免"同物三名"。按系统分组。
