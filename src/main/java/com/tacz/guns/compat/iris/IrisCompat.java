@@ -8,6 +8,7 @@ import com.tacz.guns.init.CompatRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 
 import java.util.HashSet;
@@ -29,6 +30,8 @@ public final class IrisCompat {
     private static Supplier<Boolean> isRenderingShadow = () -> false;
     private static final Set<RenderPipeline> ASSIGNED_SCOPE_PIPELINES = new HashSet<>();
     private static boolean loggedScopePipelineFailure;
+    private static boolean commonEntityPipelinesAssigned = false;
+    private static boolean commonEntityPipelinesAssignAttempted = false;
 
     private IrisCompat() {
     }
@@ -71,33 +74,77 @@ public final class IrisCompat {
     public static synchronized boolean assignPipelineToIris(RenderPipeline pipeline,
                                                             String irisProgramName,
                                                             String debugName) {
+        return assignPipelineToIrisAny(pipeline, new String[]{irisProgramName}, debugName);
+    }
+
+    private static boolean assignPipelineToIrisAny(RenderPipeline pipeline, String[] irisProgramNames, String debugName) {
         if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
             return false;
         }
         if (ASSIGNED_SCOPE_PIPELINES.contains(pipeline)) {
             return true;
         }
-        try {
-            Class<?> apiClass = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
-            Class<?> programClass = Class.forName("net.irisshaders.iris.api.v0.IrisProgram");
-            Object api = apiClass.getMethod("getInstance").invoke(null);
-            @SuppressWarnings({"unchecked", "rawtypes"})
-            Object irisProgram = Enum.valueOf(
-                    (Class<? extends Enum>) programClass.asSubclass(Enum.class), irisProgramName);
-            apiClass.getMethod("assignPipeline", RenderPipeline.class, programClass)
-                    .invoke(api, pipeline, irisProgram);
-            ASSIGNED_SCOPE_PIPELINES.add(pipeline);
-            GunMod.LOGGER.info("[TACZ Scope] Assigned {} to the Iris {} program.",
-                    debugName, irisProgramName);
-            return true;
-        } catch (Throwable t) {
-            if (!loggedScopePipelineFailure) {
-                loggedScopePipelineFailure = true;
-                GunMod.LOGGER.warn("[TACZ Scope] Iris cannot classify custom scope pipeline {} as {}; "
-                        + "vanilla pipeline behavior will be used.", debugName, irisProgramName, t);
+
+        Throwable lastFailure = null;
+        for (String irisProgramName : irisProgramNames) {
+            try {
+                Class<?> apiClass = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+                Class<?> programClass = Class.forName("net.irisshaders.iris.api.v0.IrisProgram");
+                Object api = apiClass.getMethod("getInstance").invoke(null);
+                @SuppressWarnings({"unchecked", "rawtypes"})
+                Object irisProgram = Enum.valueOf(
+                        (Class<? extends Enum>) programClass.asSubclass(Enum.class), irisProgramName);
+                apiClass.getMethod("assignPipeline", RenderPipeline.class, programClass)
+                        .invoke(api, pipeline, irisProgram);
+                ASSIGNED_SCOPE_PIPELINES.add(pipeline);
+                GunMod.LOGGER.info("[TACZ Iris] Assigned {} to the Iris {} program.",
+                        debugName, irisProgramName);
+                return true;
+            } catch (Throwable t) {
+                lastFailure = t;
             }
-            return false;
         }
+
+        if (!loggedScopePipelineFailure) {
+            loggedScopePipelineFailure = true;
+            GunMod.LOGGER.warn("[TACZ Iris] Iris cannot classify render pipeline {} as {}; "
+                            + "vanilla pipeline behavior will be used.",
+                    debugName, String.join("/", irisProgramNames), lastFailure);
+        }
+        return false;
+    }
+
+    /**
+     * Assign vanilla entity/item pipelines used inside the first-person hand pass to Iris' hand
+     * programs. Some Iris versions otherwise rediscover the same "perfect program match" every
+     * frame. Try this once per client session only, even if a subset fails.
+     */
+    public static synchronized void assignCommonEntityPipelinesToHandIfNeeded() {
+        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
+            return;
+        }
+        if (commonEntityPipelinesAssigned || commonEntityPipelinesAssignAttempted) {
+            return;
+        }
+        commonEntityPipelinesAssignAttempted = true;
+
+        boolean ok = true;
+        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT,
+                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout");
+        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT_CULL,
+                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout_cull");
+        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT,
+                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent");
+        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_CULL,
+                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_cull");
+        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE,
+                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_emissive");
+        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_CUTOUT,
+                new String[]{"HAND_CUTOUT", "HAND"}, "item_cutout");
+        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_TRANSLUCENT,
+                new String[]{"HAND_TRANSLUCENT"}, "item_translucent");
+
+        commonEntityPipelinesAssigned = ok;
     }
 
     /**

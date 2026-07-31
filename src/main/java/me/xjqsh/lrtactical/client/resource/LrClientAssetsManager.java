@@ -132,12 +132,63 @@ public enum LrClientAssetsManager {
 
     @Nullable
     public ThrowableDisplayInstance getThrowableDisplay(Identifier id) {
-        return throwableDisplay == null ? null : throwableDisplay.getData(id);
+        if (throwableDisplay == null) {
+            return null;
+        }
+        ThrowableDisplayInstance exact = throwableDisplay.getData(id);
+        return exact != null ? exact : findUniqueThrowableDisplayByPath(id);
     }
 
     @Nullable
     public MeleeDisplayInstance getMeleeDisplay(Identifier id) {
-        return meleeDisplay == null ? null : meleeDisplay.getData(id);
+        if (meleeDisplay == null) {
+            return null;
+        }
+        MeleeDisplayInstance exact = meleeDisplay.getData(id);
+        return exact != null ? exact : findUniqueMeleeDisplayByPath(id);
+    }
+
+    /**
+     * 有些组合枪包的服务端 index id 与客户端 display id 只在命名空间上不同
+     * （例如 {@code data/<pack_ns>/index/throwable/foo.json} 对应
+     * {@code assets/<other_ns>/display/throwable/foo.json}）。精确 id 查不到时，
+     * 只在 path 全局唯一的情况下回退，避免多个包都叫 m67/dagger 时串资源。
+     */
+    @Nullable
+    private ThrowableDisplayInstance findUniqueThrowableDisplayByPath(Identifier id) {
+        if (throwableDisplay == null) {
+            return null;
+        }
+        ThrowableDisplayInstance match = null;
+        for (var entry : throwableDisplay.getAllData().entrySet()) {
+            if (!entry.getKey().getPath().equals(id.getPath())) {
+                continue;
+            }
+            if (match != null) {
+                return null;
+            }
+            match = entry.getValue();
+        }
+        return match;
+    }
+
+    /** 近战 display 的 path-only 唯一匹配回退，规则同投掷物。 */
+    @Nullable
+    private MeleeDisplayInstance findUniqueMeleeDisplayByPath(Identifier id) {
+        if (meleeDisplay == null) {
+            return null;
+        }
+        MeleeDisplayInstance match = null;
+        for (var entry : meleeDisplay.getAllData().entrySet()) {
+            if (!entry.getKey().getPath().equals(id.getPath())) {
+                continue;
+            }
+            if (match != null) {
+                return null;
+            }
+            match = entry.getValue();
+        }
+        return match;
     }
 
     /**

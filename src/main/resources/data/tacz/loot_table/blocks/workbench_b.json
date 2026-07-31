@@ -10,23 +10,21 @@
       ],
       "functions": [
         {
-          "function": "minecraft:copy_nbt",
+          "function": "minecraft:copy_custom_data",
+          "source": "block_entity",
           "ops": [
             {
               "op": "replace",
               "source": "BlockId",
               "target": "BlockId"
             }
-          ],
-          "source": {
-            "type": "context",
-            "target": "block_entity"
-          }
+          ]
         }
       ],
       "entries": [
         {
           "type": "minecraft:item",
+          "name": "tacz:workbench_b",
           "conditions": [
             {
               "condition": "minecraft:block_state_property",
@@ -35,8 +33,7 @@
                 "part": "foot"
               }
             }
-          ],
-          "name": "tacz:workbench_b"
+          ]
         }
       ],
       "rolls": 1

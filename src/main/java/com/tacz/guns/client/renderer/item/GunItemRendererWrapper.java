@@ -22,6 +22,7 @@ import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.model.functional.ShellRender;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.TransformScale;
+import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.util.RenderDistance;
 import com.tacz.guns.util.math.MathUtil;
 import net.minecraft.client.Minecraft;
@@ -218,6 +219,9 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             if (RefitTransform.getOpeningProgress() != 0) {
                 gunModel.setRenderHand(false);
             }
+            // 第一人称手部 pass 下，预先让 Iris 把 vanilla entity/item 管线归到 hand program。
+            // 方法内部只尝试一次，避免 shader 下每帧重复匹配刷日志。
+            IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
             // 调用枪械模型渲染
             RenderType renderType = display.enablesTransparency()
                     ? RenderTypes.entityTranslucent(display.getModelTexture())
