@@ -1,4 +1,4 @@
-commit: 97ed053460227291e8b1b0ffb60c2cec91c343d6
+commit: c8597361f79c31165707073f443b2594eef2d960
 Fetching distribution.
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
@@ -18,3 +18,4 @@ For more details see https://docs.gradle.org/9.5.1/release-notes.html
 
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
+[taczind-ci:settings] git config user.name taczind-ci-probe[bot] -> 0 
