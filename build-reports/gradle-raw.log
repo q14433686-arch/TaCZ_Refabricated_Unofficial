@@ -49,3 +49,19 @@ Fabric Loom: 1.17.17
 [taczind-ci:buildscript] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0
 [taczind-ci:buildscript] git rebase FETCH_HEAD -> 1
 [taczind-ci:buildscript] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0
+
+> Task :compileJava
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/industry/loader/IndustryDataLoader.java:103: error: cannot infer type arguments for ParsedDir<>
+                        parsed.add(new ParsedDir<>(spec, parseDir(rm, spec)));
+                                   ^
+  reason: inference variable T has incompatible equality constraints CAP#1,CAP#2
+  where T is a type-variable:
+    T extends Object declared in method <T>parseDir(ResourceManager,DirSpec<T>)
+  where CAP#1,CAP#2 are fresh type-variables:
+    CAP#1 extends Object from capture of ?
+    CAP#2 extends Object from capture of ?
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+1 error
