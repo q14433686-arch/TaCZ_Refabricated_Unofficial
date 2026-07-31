@@ -18,3 +18,24 @@ For more details see https://docs.gradle.org/9.5.1/release-notes.html
 
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
+[taczind-ci:settings] git config user.name taczind-ci-probe[bot] -> 0 
+[taczind-ci:settings] git config user.email taczind-ci-probe@users.noreply.github.com -> 0 
+[taczind-ci:settings] git add -f -A build-reports -> 0 
+[taczind-ci:settings] git commit -m ci-probe: settings/config ok -> 0 
+[taczind-ci:settings] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0 From https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
+ * branch            arena/019fb90c-tacz-refabricated-unofficial -> FETCH_HEAD
+[taczind-ci:settings] git rebase FETCH_HEAD -> 1 error: cannot rebase: You have unstaged changes.
+error: Please commit or stash them.
+[taczind-ci:settings] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0 To https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
+   9eb96ee..4a66a21  HEAD -> arena/019fb90c-tacz-refabricated-unofficial
+[taczind-ci:settings] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0 From https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
+ * branch            arena/019fb90c-tacz-refabricated-unofficial -> FETCH_HEAD
+[taczind-ci:settings] git rebase FETCH_HEAD -> 1 error: cannot rebase: You have unstaged changes.
+error: Please commit or stash them.
+[taczind-ci:settings] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0 Everything up-to-date
+[taczind-ci:settings] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0 From https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
+ * branch            arena/019fb90c-tacz-refabricated-unofficial -> FETCH_HEAD
+[taczind-ci:settings] git rebase FETCH_HEAD -> 1 error: cannot rebase: You have unstaged changes.
+error: Please commit or stash them.
+[taczind-ci:settings] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0 Everything up-to-date
+[taczind-ci:settings] 潜伏推送哨兵已派生
