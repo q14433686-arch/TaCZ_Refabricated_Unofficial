@@ -1254,3 +1254,9 @@ Fabric Loom: 1.17.17
     ).validate(EnBlocClipData::validateShape);
                ^
     incompatible types: Object cannot be converted to EnBlocClipData
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+20 errors
