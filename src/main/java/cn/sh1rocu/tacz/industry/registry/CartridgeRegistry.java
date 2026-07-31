@@ -75,8 +75,9 @@ public final class CartridgeRegistry {
 
     /**
      * 数据包重载时整体重建：默认打底 + JSON 覆盖。
+     * （Q-21 编译教训：本方法由 industry.loader 包调用，包私有跨包不可达——必须 public）
      */
-    static synchronized void rebuild(Map<Identifier, CartridgeType> datapackEntries) {
+    public static synchronized void rebuild(Map<Identifier, CartridgeType> datapackEntries) {
         REGISTRY.clear();
         REGISTRY.putAll(DEFAULTS);
         REGISTRY.putAll(datapackEntries);

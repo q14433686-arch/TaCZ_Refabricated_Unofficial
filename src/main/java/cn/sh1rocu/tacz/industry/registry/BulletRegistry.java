@@ -48,7 +48,7 @@ public final class BulletRegistry {
         DEFAULTS.put(type.id(), type);
     }
 
-    static synchronized void rebuild(Map<Identifier, BulletType> datapackEntries) {
+    public static synchronized void rebuild(Map<Identifier, BulletType> datapackEntries) {
         REGISTRY.clear();
         REGISTRY.putAll(DEFAULTS);
         REGISTRY.putAll(datapackEntries);

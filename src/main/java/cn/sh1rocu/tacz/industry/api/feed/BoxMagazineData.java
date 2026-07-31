@@ -1,4 +1,4 @@
-package cn.sh1rocu.tacz.industry.api.feed.device;
+package cn.sh1rocu.tacz.industry.api.feed;
 
 import cn.sh1rocu.tacz.industry.api.ammo.LoadedRound;
 import cn.sh1rocu.tacz.industry.api.feed.FeedDeviceData;

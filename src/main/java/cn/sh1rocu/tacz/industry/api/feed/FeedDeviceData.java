@@ -1,12 +1,6 @@
 package cn.sh1rocu.tacz.industry.api.feed;
 
 import cn.sh1rocu.tacz.industry.api.ammo.LoadedRound;
-import cn.sh1rocu.tacz.industry.api.feed.device.BeltData;
-import cn.sh1rocu.tacz.industry.api.feed.device.BoxMagazineData;
-import cn.sh1rocu.tacz.industry.api.feed.device.CylinderData;
-import cn.sh1rocu.tacz.industry.api.feed.device.EnBlocClipData;
-import cn.sh1rocu.tacz.industry.api.feed.device.StripperClipData;
-import cn.sh1rocu.tacz.industry.api.feed.device.TubularMagazineData;
 import com.mojang.serialization.Codec;
 import net.minecraft.resources.Identifier;
 
