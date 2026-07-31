@@ -1703,7 +1703,7 @@ P0 基础设施(数据层/平衡JSON/看板)
 | Q-18 | 服务器侧模拟测试框架：headless 射击循环 10 万发的可运行单元（P2/P3 DoD 依赖） | 全局 | 搭 JUnit+FakePlayer harness | 是(P2 前) | ☐ |
 | Q-19 | 弹壳/漏夹等拾取物模型与渲染成本（床岩实体或 ItemEntity） | B/N-1 | 渲染压测 | 否 | ☐ |
 | Q-20 | 与既有社区"Create×TaCZ 配方包"（调研 0.1）的版本共存策略：我们的硬核电是否与其配方冲突 | M | 社区兼容说明文档 | 否 | ☐ |
-| Q-21 | 沙箱无 JVM/Gradle：建立 CI 编译验收闭环（GitHub Actions + build-reports 回推） | 全局 | compileJava BUILD SUCCESSFUL 并回写结果 | 是 | 🔨 闭环已打通（2026-08-01 深夜）：日志经 probes/watcher/gradlew 前台钩子三层回推成功；首轮 javac 错误已定位修复（sealed 跨包×6、rebuild 可见性×2、registry 包私有），**待 token 恢复后推送验证一轮**；连带错误（RecordCodecBuilder group/methodref）如未自愈再修。教训全文：docs/ci/README-编译验证闭环.md |
+| Q-21 | 沙箱无 JVM/Gradle：建立 CI 编译验收闭环（GitHub Actions + build-reports 回推） | 全局 | compileJava BUILD SUCCESSFUL | ✅已关闭 | **2026-08-01 关闭**：CI 闭环四层探针/钩子打通，三轮实机编译迭代修复三轮真实错误（sealed 跨包×6+rebuild 可见性×2 → 两轮 Codec 泛型推断陷阱×42），最终 `compileJava BUILD SUCCESSFUL in 1m 8s`、`gradlew exit_code=0`（commit cf974bd 实证回推）。每 push 自动复验常驻 |
 | Q-12(更新) | 枪内固定仓机构（管仓/内仓/漏夹装入枪后）的持有者机制：`GunStateData` 已预留扩展位；权威口径=FeedDeviceData 副本进"枪内 feed 槽"（P2 状态机落地时定稿） | N-1 | P2 实现时验证 | 是(P2) | 部分结论（2026-08-01） |
 | Q-16(更新) | 弹链队列体积：loaded_round 单发 codec 字段实测 7 键（~80B JSON 等价）；250 发链≈20KB 未压缩，CompoundTag 内 varint/枚举名优化后 <8KB，可接受 | B-9 | items 阶段复估 | 否 | 初步结论：可行（2026-08-01） |
 # 第 19 章 · 进度看板（持续维护）
@@ -1736,7 +1736,7 @@ P0 基础设施(数据层/平衡JSON/看板)
 | L | 后勤仓储携行 | 13-L | P4 | 未开始 | — | | 依赖 Q-14 |
 | M | Create 联动 | 14-M | P5 | 未开始 | — | | 依赖 Q-02 |
 | N-1 | 供弹具机构 | 15-N | P4 | 🔨开发中 | — | 2026-08-01 | **数据层已完成**（六机构+规则层+组件注册，见 impl-log/P0-feed-device-data-system）；物品层后置 |
-| P0-补 | 供弹具数据系统 | 17.7 | P0 | 🔨编译修错 | — | 2026-08-01 | 数据层代码+实机编译首轮：修复 sealed 跨包（六机构并入 api.feed 同包）、registry.rebuild 改 public；六机构 group()/methodref 错误待复验是否连带自愈。包结构最终态以代码为准 |
+| P0-补 | 供弹具数据系统 | 17.7 | P0 | ✅完成 | — | 2026-08-01 | 数据层+实机编译全绿（BUILD SUCCESSFUL@cf974bd）。包结构最终版：六机构与 FeedDeviceData 同包 api.feed；Codec 原版两步式。Q-21 关闭，PR #9 开放 review |
 | N-2~N-7 | 扳机/履历/训练/拆解等 | 15-N | P6 | 未开始 | — | | |
 
 ## 里程碑

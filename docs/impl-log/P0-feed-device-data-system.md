@@ -88,7 +88,7 @@
 
 ## 4. 遗留 TODO（进看板）
 - [x] Q-21：CI 编译闭环已建成并逐层修通（2026-08-01）；首轮 javac 真实错误已修复（见 §5）
-- [ ] 复验一轮：六机构 `RecordCodecBuilder.group()/::new` 报错是否在 sealed 修复后连带自愈
+- [x] 复验一轮：`group()/::new` 错误**并非** sealed 连带（修正当时推断）——真因是 `mapCodec(...).validate(...)` 单链导致 O 泛型推断坠入 Object（javac 候选提示 "equality constraints: Object" 实锤）。六机构统一改原版两步式后，`compileJava BUILD SUCCESSFUL in 1m 8s`、`gradlew exit_code=0`（cf974bd）
 - [ ] 物品层（后置计划）：弹匣/桥夹/漏夹/弹链物品注册时必须走 `FeedItemRules.requireUnstackable`
 - [ ] `springFatigue/feedLipDamage` 写入点（I 章耐久系统 P3）——当前数据轨已备好
 - [ ] 枪内固定仓类机构（管仓/内仓/漏夹装入枪后）的持有者机制（Q-12，P2 状态机落地时配套）
@@ -112,4 +112,17 @@
 纳入新增审计项**，且 CI 编译闭环已常驻（每次 push 自动复验），同类问题的发现成本已降到一轮以内。
 
 本次事件期间遭遇的外部环境故障（如实记录）：GitHub App 令牌在攻坚中段到期（401），
-推动本地先沉淀修复；CI 闭环恢复后需重新推送触发验证。
+推动本地先沉淀修复；令牌恢复后完成推送、复验与 PR #9 创建。
+
+## 6. 实机编译三轮全谱系（Q-21 关闭定案，2026-08-01）
+
+| 轮 | commit | 错误数（权威回推） | 独立真错 | 结局 |
+|---|---|---|---|---|
+| 1 | 9eb96ee | 66 | sealed 跨包×6（`cannot extend a sealed class in a different package`）、`rebuild` 包私有跨包×2 | 修复：六机构并入 `api.feed` 同包；registry 两方法改 public |
+| 2 | 4f4afe6 | 42 | `mapCodec(...).validate(...)` 单链 → O 推断坠入 Object → 24 group + 18 methodref（**先前几轮推测的"连带"被推翻，诚实更正**） | 修复：六机构统一原版两步式 `SHAPE_CODEC` 直接赋值 + `CODEC=SHAPE_CODEC.validate(...)` |
+| 3 | cf974bd | **0** | — | **BUILD SUCCESSFUL in 1m 8s，gradlew exit_code=0** |
+
+**方法论沉淀（进审计清单的永久条目）**：
+1. Java 语言规则纳入静态审计：sealed 同包/模块名、跨包可见性——这类约束不进符号表，符号级审计天然盲区。
+2. 泛型方法链式调用断目标类型推断：`generic(...).chain()` 的链中段不享受赋值目标多态（poly expression）——DFU Codec 一律照原版两步式写法。
+3. CI 编译闭环常驻：每 push 自动复验 + 四层日志回推——同类问题的发现成本已恒定为 ≤1 轮 push。
