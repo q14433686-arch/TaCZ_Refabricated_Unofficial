@@ -1,8 +1,8 @@
-gradlew exit_code=1
-timestamp_utc=2026-07-31T19:47:57Z
+gradlew exit_code=0
+timestamp_utc=2026-07-31T19:56:16Z
 --- free -m ---
                total        used        free      shared  buff/cache   available
-Mem:           15988        2005       10839          46        3530       13982
+Mem:           15989        2019       10786          46        3573       13969
 Swap:           3071           0        3071
 --- cgroup v2 memory.events ---
 (无 cgroup v2 memory.events)
@@ -10,123 +10,81 @@ Swap:           3071           0        3071
 --- dmesg OOM 线索（若有权限） ---
 --- 退出时内存 top5 进程 ---
 USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-root        2191  1.0  0.8 1431116 144308 ?      Sl   19:46   0:00 /tmp/provjobd2075622711
-runner      2245  3.8  0.8 274566852 143556 ?    Sl   19:46   0:03 /home/runner/actions-runner/cached/2.336.0/bin/Runner.Worker spawnclient 142 145
-runner      2224  1.3  0.5 274346360 98044 ?     Sl   19:46   0:01 /home/runner/actions-runner/cached/2.336.0/bin/Runner.Listener run
-root        1297  0.1  0.4 2045416 72224 ?       Ssl  19:46   0:00 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
-root         980  0.1  0.3 295272 51784 ?        Ss   19:46   0:00 php-fpm: master process (/etc/php/8.3/fpm/php-fpm.conf)
+runner      2312  229  6.6 3577036 1091468 ?     Ssl  19:55   2:24 /usr/lib/jvm/temurin-25-jdk-amd64/bin/java --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens=java.base/java.nio.charset=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.xml/javax.xml.namespace=ALL-UNNAMED --add-opens=java.base/java.time=ALL-UNNAMED --enable-native-access=ALL-UNNAMED -XX:MaxMetaspaceSize=384m -XX:+HeapDumpOnOutOfMemoryError -Xms256m -Xmx512m -Dfile.encoding=UTF-8 -Duser.country -Duser.language=en -Duser.variant -cp /home/runner/.gradle/wrapper/dists/gradle-9.5.1-bin/iq79hdu3mqx29lgffhp8bfmx/gradle-9.5.1/lib/gradle-daemon-main-9.5.1.jar -javaagent:/home/runner/.gradle/wrapper/dists/gradle-9.5.1-bin/iq79hdu3mqx29lgffhp8bfmx/gradle-9.5.1/lib/agents/gradle-instrumentation-agent-9.5.1.jar org.gradle.launcher.daemon.bootstrap.GradleDaemon 9.5.1
+runner      2016  5.2  0.8 274417456 146620 ?    Sl   19:54   0:04 /home/runner/actions-runner/cached/2.336.0/bin/Runner.Worker spawnclient 142 145
+root        1963  1.3  0.7 1431116 125376 ?      Sl   19:54   0:01 /tmp/provjobd4196324749
+runner      1996  1.5  0.5 274345468 96552 ?     Sl   19:54   0:01 /home/runner/actions-runner/cached/2.336.0/bin/Runner.Listener run
+root        1270  0.2  0.4 2045416 71956 ?       Ssl  19:54   0:00 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
 --- gradle-raw.log 尾部 120 行 ---
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler.execute(CompileJavaBuildOperationReportingCompiler.java:48)
-	at org.gradle.api.tasks.compile.JavaCompile.performCompilation(JavaCompile.java:224)
-	at org.gradle.api.tasks.compile.JavaCompile.performIncrementalCompilation(JavaCompile.java:165)
-	at org.gradle.api.tasks.compile.JavaCompile.compile(JavaCompile.java:150)
-	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
-	at org.gradle.api.internal.project.taskfactory.IncrementalTaskAction.doExecute(IncrementalTaskAction.java:45)
-	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)
-	at org.gradle.api.internal.project.taskfactory.IncrementalTaskAction.execute(IncrementalTaskAction.java:26)
-	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)
-	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:259)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:244)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:227)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:210)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:176)
-	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:167)
-	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:47)
-	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:137)
-	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:134)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:134)
-	at org.gradle.internal.execution.steps.ExecuteStep$Mutable.execute(ExecuteStep.java:80)
-	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
-	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
-	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
-	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)
-	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)
-	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:67)
-	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:39)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)
-	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)
-	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
-	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
-	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:39)
-	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:28)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
-	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:76)
-	at org.gradle.internal.Either$Right.fold(Either.java:176)
-	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
-	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)
-	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)
-	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:46)
-	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:35)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
-	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:70)
-	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:32)
-	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
-	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
-	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
-	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)
-	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)
-	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:99)
-	at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)
-	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)
-	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)
-	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)
-	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)
-	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:90)
-	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
-	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
-	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)
-	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)
-	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)
-	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)
-	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
-	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
-	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
-	... 30 more
+=== CI 模式：单 JVM + 直写 raw 日志，JAVA_OPTS=-Xmx3G -Dfile.encoding=UTF-8  ===
+Fetching distribution.
+Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
+.............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/home/runner/.gradle/wrapper/dists/gradle-9.5.1-bin/iq79hdu3mqx29lgffhp8bfmx/gradle-9.5.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
 
+
+Welcome to Gradle 9.5.1!
+
+Here are the highlights of this release:
+ - Task provenance in reports and failure messages
+ - Type-safe accessors for precompiled Kotlin Settings plugins
+
+For more details see https://docs.gradle.org/9.5.1/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+[taczind-ci:settings] git config user.name taczind-ci-probe[bot] -> 0 
+[taczind-ci:settings] git config user.email taczind-ci-probe@users.noreply.github.com -> 0 
+[taczind-ci:settings] git add -f -A build-reports -> 0 
+[taczind-ci:settings] git commit -m ci-probe: settings/config ok -> 0 
+[taczind-ci:settings] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0 From https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
+ * branch            arena/019fb90c-tacz-refabricated-unofficial -> FETCH_HEAD
+[taczind-ci:settings] git rebase FETCH_HEAD -> 1 error: cannot rebase: You have unstaged changes.
+error: Please commit or stash them.
+[taczind-ci:settings] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0 To https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
+   cf974bd..06b8bbf  HEAD -> arena/019fb90c-tacz-refabricated-unofficial
+[taczind-ci:settings] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0 From https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
+ * branch            arena/019fb90c-tacz-refabricated-unofficial -> FETCH_HEAD
+[taczind-ci:settings] git rebase FETCH_HEAD -> 1 error: cannot rebase: You have unstaged changes.
+error: Please commit or stash them.
+[taczind-ci:settings] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0 Everything up-to-date
+[taczind-ci:settings] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0 From https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
+ * branch            arena/019fb90c-tacz-refabricated-unofficial -> FETCH_HEAD
+[taczind-ci:settings] git rebase FETCH_HEAD -> 1 error: cannot rebase: You have unstaged changes.
+error: Please commit or stash them.
+[taczind-ci:settings] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0 Everything up-to-date
+[taczind-ci:settings] 潜伏推送哨兵已派生
+
+> Configure project :
+Fabric Loom: 1.17.17
+[taczind-ci:buildscript] git config user.name taczind-ci-probe[bot] -> 0
+[taczind-ci:buildscript] git config user.email taczind-ci-probe@users.noreply.github.com -> 0
+[taczind-ci:buildscript] git add -f -A build-reports -> 0
+[taczind-ci:buildscript] git commit -m ci-probe: buildscript config ok -> 0
+[taczind-ci:buildscript] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0
+[taczind-ci:buildscript] git rebase FETCH_HEAD -> 1
+[taczind-ci:buildscript] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0
+
+> Task :compileJava
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :taczindCiRelay
+[taczind-ci:relay] git config user.name taczind-ci-relay[bot] -> 0
+[taczind-ci:relay] git config user.email taczind-ci-relay@users.noreply.github.com -> 0
+[taczind-ci:relay] git add -f -A build-reports -> 0
+[taczind-ci:relay] git commit -m ci-relay: 任务期快照 -> 0
+[taczind-ci:relay] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0
+[taczind-ci:relay] git rebase FETCH_HEAD -> 1
+[taczind-ci:relay] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1785527719593.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
 
@@ -134,5 +92,5 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 1m 13s
+BUILD SUCCESSFUL in 1m 8s
 2 actionable tasks: 2 executed

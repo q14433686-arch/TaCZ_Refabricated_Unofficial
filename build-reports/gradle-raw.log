@@ -55,3 +55,24 @@ Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
+
+> Task :taczindCiRelay
+[taczind-ci:relay] git config user.name taczind-ci-relay[bot] -> 0
+[taczind-ci:relay] git config user.email taczind-ci-relay@users.noreply.github.com -> 0
+[taczind-ci:relay] git add -f -A build-reports -> 0
+[taczind-ci:relay] git commit -m ci-relay: 任务期快照 -> 0
+[taczind-ci:relay] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0
+[taczind-ci:relay] git rebase FETCH_HEAD -> 1
+[taczind-ci:relay] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1785527719593.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 1m 8s
+2 actionable tasks: 2 executed
