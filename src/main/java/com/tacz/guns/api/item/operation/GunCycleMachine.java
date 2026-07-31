@@ -2,8 +2,8 @@ package com.tacz.guns.api.item.operation;
 
 import com.tacz.guns.api.item.component.FeedDeviceData;
 import com.tacz.guns.api.item.component.GunStateData;
+import com.tacz.guns.api.item.component.GunWearData;
 import com.tacz.guns.api.item.component.LoadedRound;
-import com.tacz.guns.api.item.enums.ActionType;
 import com.tacz.guns.api.item.enums.GunCycleState;
 import com.tacz.guns.api.item.enums.MalfunctionType;
 import org.jetbrains.annotations.Nullable;
@@ -11,18 +11,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * 枪机循环状态机。
  * <p>
- * 状态机的每次转移，就是按顺序调用供弹原语：
- * <pre>
- * "拉栓上膛" = extractFromChamber (如果膛里有壳先抽出)
- *           → ejectCase (抛出去)
- *           → stripNextRound (从弹匣取下一发)
- *           → chamberRound (推进膛)
- *           → 状态变为 READY
- * </pre>
- * <p>
- * 每一步都可能失败 → 失败就转移到对应的 MalfunctionType 状态。
- * <p>
- * 对应设计文档：E.2.1 完整枪机循环状态机 & P1 验收标准
+ * P1 收尾：完整集成模块化耐久系统。
+ * <ul>
+ *   <li>每次射击循环按文档 I.2.1 磨损速率表独立扣减7个部件的耐久</li>
+ *   <li>overall_reliability 乘以 (2.0 - overall_reliability) 放大系数接入卡壳判定</li>
+ *   <li>overall_accuracy 供后续精度修正使用</li>
+ *   <li>弹簧疲劳与耐久系统共用同一套加权公式，无双重计算</li>
+ * </ul>
  */
 public final class GunCycleMachine {
 
@@ -32,191 +27,187 @@ public final class GunCycleMachine {
      * 执行一次完整的射击循环（自装填枪械）。
      * <p>
      * 循环：FIRING → UNLOCKING → EXTRACTING → EJECTING → FEEDING → LOCKING → READY
-     * <p>
-     * 每个状态转换由对应的供弹原语驱动。原语失败时进入 MALFUNCTION 状态。
      *
-     * @param state              当前枪械状态
-     * @param feedDevice         供弹具数据（可以为 null 表示内置弹仓）
-     * @param reliabilityModifier 综合可靠性修正
-     * @return 循环后的新状态
+     * @param state      当前枪械状态
+     * @param feedDevice 供弹具数据（可以为 null）
+     * @param wearData   模块化耐久数据
+     * @return 循环后的新状态（含更新后的 GunWearData）
      */
     public static CycleResult fireAutoCycle(GunStateData state, @Nullable FeedDeviceData feedDevice,
-                                            float reliabilityModifier) {
-        // 前置检查：必须处于 READY 状态
+                                            GunWearData wearData) {
+        // 前置检查
         if (state.cycleState() != GunCycleState.READY) {
             return CycleResult.fail("Cannot fire: not in READY state");
         }
-        // 前置检查：膛内必须有弹
         if (!state.hasChamberedRound()) {
             return CycleResult.fail("Cannot fire: no chambered round");
         }
+
+        // 从耐久系统计算加权可靠性/精度
+        float overallReliability = wearData.calculateOverallReliability();
+        float overallAccuracy = wearData.calculateOverallAccuracy();
+
+        // 将 overall_reliability 放大为卡壳概率系数
+        // reliability = 1.0 → 放大系数 = 1.0 (无额外影响)
+        // reliability = 0.5 → 放大系数 = 1.5 (卡壳概率增加 50%)
+        // reliability = 0.1 → 放大系数 = 1.9 (卡壳概率接近翻倍)
+        // reliability = 0.0 → 放大系数 = 2.0 (卡壳概率翻倍)
+        float malfunctionAmplifier = 2.0f - overallReliability;
+
+        // 传入原始 reliabilityModifier（来自公差/保养等），结合耐久系统
+        float effectiveReliability = overallReliability;
 
         GunStateData currentState = state.withCycleState(GunCycleState.FIRING);
 
         // === FIRING: 击发 ===
         LoadedRound chamberedRound = currentState.chamberedRound();
-        // 击发判定：瞎火/哑弹概率
-        float misfireChance = calculateMisfireChance(chamberedRound, currentState, reliabilityModifier);
+
+        // 哑弹/不发火概率
+        float misfireChance = calculateMisfireChance(chamberedRound, currentState, effectiveReliability) * malfunctionAmplifier;
         if (Math.random() < misfireChance) {
-            // 不发火
-            return CycleResult.malfunction(currentState, MalfunctionType.MISFIRE);
+            // 扣减扳机组磨损（扣了扳机但没击发）
+            GunWearData updatedWear = wearData.withShootWear(false, false);
+            return CycleResult.malfunction(currentState, MalfunctionType.MISFIRE, updatedWear);
         }
 
-        // 装药过量 → 炸膛风险评估
+        // 炸膛风险评估
         float catastrophicRisk = currentState.getCatastrophicRiskAssessment();
         if (chamberedRound.isOvercharged() && Math.random() < catastrophicRisk) {
-            // 炸膛！
-            return CycleResult.malfunction(currentState, MalfunctionType.SQUIB);
+            GunWearData updatedWear = wearData.withShootWear(true, chamberedRound.isCorrosive());
+            return CycleResult.malfunction(currentState, MalfunctionType.SQUIB, updatedWear);
         }
 
-        // 减装药 → Squib 弹头卡管风险
-        if (chamberedRound.isUndercharged() && Math.random() < 0.3f) {
+        // 减装药 → Squib
+        if (chamberedRound.isUndercharged() && Math.random() < 0.3f * malfunctionAmplifier) {
+            GunWearData updatedWear = wearData.withShootWear(false, chamberedRound.isCorrosive());
             return CycleResult.malfunction(
                     currentState.withSquib(true).withChamberedRoundFired(),
-                    MalfunctionType.SQUIB);
+                    MalfunctionType.SQUIB, updatedWear);
         }
 
         // 击发成功，清空枪膛
         currentState = currentState.withChamberedRoundFired();
 
+        // === 射击耐久消耗（文档 I.2.1） ===
+        GunWearData currentWear = wearData.withShootWear(
+                chamberedRound.isOvercharged(), chamberedRound.isCorrosive());
+
         // === UNLOCKING → EXTRACTING: 抽壳 ===
         currentState = currentState.withCycleState(GunCycleState.UNLOCKING);
         currentState = currentState.withCycleState(GunCycleState.EXTRACTING);
 
-        FeedResult.ExtractResult extractResult = FeedOperation.extractFromChamber(currentState, reliabilityModifier);
-        // 注意：此时 chamberedRound 已经被清空了，但 extractFromChamber 需要检查 chamberedRound
-        // 实际上在击发后 chamberedRound 已经清空，所以抽壳操作需要特殊处理
-        // 修正：击发后弹壳应该留在"待抽壳"状态，我们在 GunStateData 中用一个临时字段来跟踪
-        // 但为了简化，我们直接用 extractedCase 来跟踪
-
-        LoadedRound spentCase = chamberedRound; // 击发后的弹壳就是刚才 chamberedRound 的弹壳
-        // 抽壳失败判定（基于弹壳状态）
-        float extractFailChance = calculateExtractFailChance(chamberedRound, reliabilityModifier);
+        LoadedRound spentCase = chamberedRound;
+        float extractFailChance = calculateExtractFailChance(chamberedRound, effectiveReliability) * malfunctionAmplifier;
         if (Math.random() < extractFailChance) {
-            return CycleResult.malfunction(currentState, MalfunctionType.FAILURE_TO_EXTRACT);
+            return CycleResult.malfunction(currentState, MalfunctionType.FAILURE_TO_EXTRACT, currentWear);
         }
 
         // === EJECTING: 抛壳 ===
         currentState = currentState.withCycleState(GunCycleState.EJECTING);
 
-        FeedResult.EjectResult ejectResult = FeedOperation.ejectCase(spentCase, reliabilityModifier);
+        FeedResult.EjectResult ejectResult = FeedOperation.ejectCase(spentCase, effectiveReliability);
         if (!ejectResult.isSuccess()) {
-            return CycleResult.malfunction(currentState, ejectResult.malfunctionType());
+            return CycleResult.malfunction(currentState, ejectResult.malfunctionType(), currentWear);
         }
 
         // === FEEDING: 从供弹具取弹 ===
         currentState = currentState.withCycleState(GunCycleState.FEEDING);
 
         if (feedDevice == null || feedDevice.isEmpty()) {
-            // 弹匣空，进入 EMPTY 状态
-            return CycleResult.ok(currentState.withCycleState(GunCycleState.EMPTY), null, ejectResult.ejectedCase());
+            return CycleResult.ok(currentState.withCycleState(GunCycleState.EMPTY), null, currentWear, ejectResult.ejectedCase());
         }
 
-        FeedResult.StripResult stripResult = FeedOperation.stripNextRound(feedDevice, reliabilityModifier);
+        FeedResult.StripResult stripResult = FeedOperation.stripNextRound(feedDevice, effectiveReliability);
         if (!stripResult.isSuccess()) {
             if (stripResult.malfunctionType() == null) {
-                // 供弹具为空，不是故障
-                return CycleResult.ok(currentState.withCycleState(GunCycleState.EMPTY), null, ejectResult.ejectedCase());
+                return CycleResult.ok(currentState.withCycleState(GunCycleState.EMPTY), null, currentWear, ejectResult.ejectedCase());
             }
-            return CycleResult.malfunction(currentState, stripResult.malfunctionType());
+            return CycleResult.malfunction(currentState, stripResult.malfunctionType(), currentWear);
         }
 
         // 推弹入膛
         LoadedRound nextRound = stripResult.strippedRound();
         FeedResult.ChamberResult chamberResult = FeedOperation.chamberRound(currentState, nextRound);
         if (!chamberResult.isSuccess()) {
-            return CycleResult.malfunction(currentState, MalfunctionType.FAILURE_TO_FEED);
+            return CycleResult.malfunction(currentState, MalfunctionType.FAILURE_TO_FEED, currentWear);
         }
         currentState = chamberResult.updatedState();
         FeedDeviceData updatedDevice = stripResult.updatedDevice();
 
+        // 供弹循环消耗弹匣弹簧
+        currentWear = currentWear.withMagazineSpringWear();
+
         // === LOCKING → READY ===
         currentState = currentState.withCycleState(GunCycleState.LOCKING);
         currentState = currentState.withCycleState(GunCycleState.READY);
 
-        return CycleResult.ok(currentState, updatedDevice, ejectResult.ejectedCase());
+        return CycleResult.ok(currentState, updatedDevice, currentWear, ejectResult.ejectedCase());
     }
 
     /**
      * 执行手动拉栓循环（栓动枪/泵动枪）。
-     * <p>
-     * 循环：当前状态 → BOLT_OPEN → FEEDING → LOCKING → READY
-     * <p>
-     * 如果膛内有弹壳，先抽壳抛壳，再从供弹具取弹入膛。
-     *
-     * @param state              当前枪械状态
-     * @param feedDevice         供弹具数据
-     * @param reliabilityModifier 综合可靠性修正
-     * @return 循环后的新状态
      */
     public static CycleResult manualBoltCycle(GunStateData state, @Nullable FeedDeviceData feedDevice,
-                                              float reliabilityModifier) {
+                                              GunWearData wearData) {
         GunStateData currentState = state;
         LoadedRound ejectedCase = null;
+        float overallReliability = wearData.calculateOverallReliability();
+        float malfunctionAmplifier = 2.0f - overallReliability;
 
-        // 验证转换合法性
         if (!GunCycleTransition.isTransitionValid(currentState.cycleState(), GunCycleState.BOLT_OPEN)) {
             return CycleResult.fail("Cannot bolt from state: " + currentState.cycleState());
         }
 
-        // === BOLT_OPEN: 拉栓 ===
         currentState = currentState.withCycleState(GunCycleState.BOLT_OPEN);
 
         // 如果膛内有弹壳，先抽壳抛壳
         if (currentState.hasChamberedRound()) {
-            // 抽壳
-            float extractFailChance = calculateExtractFailChance(currentState.chamberedRound(), reliabilityModifier);
+            float extractFailChance = calculateExtractFailChance(currentState.chamberedRound(), overallReliability) * malfunctionAmplifier;
             if (Math.random() < extractFailChance) {
-                return CycleResult.malfunction(currentState, MalfunctionType.FAILURE_TO_EXTRACT);
+                return CycleResult.malfunction(currentState, MalfunctionType.FAILURE_TO_EXTRACT, wearData);
             }
             ejectedCase = currentState.chamberedRound();
             currentState = currentState.withChamberedRoundFired();
 
-            // 抛壳
-            FeedResult.EjectResult ejectResult = FeedOperation.ejectCase(ejectedCase, reliabilityModifier);
+            FeedResult.EjectResult ejectResult = FeedOperation.ejectCase(ejectedCase, overallReliability);
             if (!ejectResult.isSuccess()) {
-                return CycleResult.malfunction(currentState, ejectResult.malfunctionType());
+                return CycleResult.malfunction(currentState, ejectResult.malfunctionType(), wearData);
             }
             ejectedCase = ejectResult.ejectedCase();
         }
 
-        // === FEEDING: 从供弹具取弹 ===
+        // === FEEDING ===
         currentState = currentState.withCycleState(GunCycleState.FEEDING);
 
         if (feedDevice == null || feedDevice.isEmpty()) {
-            // 弹匣空，进入 EMPTY
-            return CycleResult.ok(currentState.withCycleState(GunCycleState.EMPTY), null, ejectedCase);
+            return CycleResult.ok(currentState.withCycleState(GunCycleState.EMPTY), null, wearData, ejectedCase);
         }
 
-        FeedResult.StripResult stripResult = FeedOperation.stripNextRound(feedDevice, reliabilityModifier);
+        FeedResult.StripResult stripResult = FeedOperation.stripNextRound(feedDevice, overallReliability);
         if (!stripResult.isSuccess()) {
             if (stripResult.malfunctionType() == null) {
-                return CycleResult.ok(currentState.withCycleState(GunCycleState.EMPTY), null, ejectedCase);
+                return CycleResult.ok(currentState.withCycleState(GunCycleState.EMPTY), null, wearData, ejectedCase);
             }
-            return CycleResult.malfunction(currentState, stripResult.malfunctionType());
+            return CycleResult.malfunction(currentState, stripResult.malfunctionType(), wearData);
         }
 
-        // 推弹入膛
         FeedResult.ChamberResult chamberResult = FeedOperation.chamberRound(currentState, stripResult.strippedRound());
         if (!chamberResult.isSuccess()) {
-            return CycleResult.malfunction(currentState, MalfunctionType.FAILURE_TO_FEED);
+            return CycleResult.malfunction(currentState, MalfunctionType.FAILURE_TO_FEED, wearData);
         }
         currentState = chamberResult.updatedState();
 
-        // === LOCKING → READY ===
+        // 供弹循环消耗弹匣弹簧
+        GunWearData currentWear = wearData.withMagazineSpringWear();
+
         currentState = currentState.withCycleState(GunCycleState.LOCKING);
         currentState = currentState.withCycleState(GunCycleState.READY);
 
-        return CycleResult.ok(currentState, stripResult.updatedDevice(), ejectedCase);
+        return CycleResult.ok(currentState, stripResult.updatedDevice(), currentWear, ejectedCase);
     }
 
     /**
      * 清除故障。
-     * <p>
-     * MALFUNCTION → EMPTY
-     *
-     * @param state 当前枪械状态
-     * @return 清除后的新状态
      */
     public static GunStateData clearMalfunction(GunStateData state) {
         if (state.cycleState() != GunCycleState.MALFUNCTION) {
@@ -227,44 +218,28 @@ public final class GunCycleMachine {
 
     // ====== 概率计算 ======
 
-    /**
-     * 计算哑弹/不发火概率。
-     * <p>
-     * 受以下因素影响：
-     * - 底火类型（Berdan 底火更可靠）
-     * - 弹壳状态（变形/锈蚀影响底火对齐）
-     * - 撞针磨损
-     * - 装药量（减装药可能不点火）
-     */
     private static float calculateMisfireChance(LoadedRound round, GunStateData state, float reliabilityModifier) {
         float chance = 0.001f; // 基础 0.1%
 
-        // 撞针磨损
         chance += state.getFiringPinHangfireBonus();
 
-        // 弹壳状态影响底火对齐
         if (round.caseCondition() == com.tacz.guns.api.item.enums.CaseCondition.DEPORMED) {
             chance += 0.05f;
         } else if (round.caseCondition() == com.tacz.guns.api.item.enums.CaseCondition.CORRODED) {
             chance += 0.03f;
         }
 
-        // 减装药可能不点火
         if (round.isUndercharged()) {
             chance += 0.10f;
         }
 
-        // 可靠性修正
         chance *= (1.0f - reliabilityModifier * 0.5f);
 
         return chance;
     }
 
-    /**
-     * 计算抽壳失败概率。
-     */
     private static float calculateExtractFailChance(LoadedRound round, float reliabilityModifier) {
-        float chance = 0.005f; // 基础 0.5%
+        float chance = 0.005f;
 
         if (round.caseCondition() == com.tacz.guns.api.item.enums.CaseCondition.CRACKED) {
             chance += 0.15f;
@@ -286,37 +261,32 @@ public final class GunCycleMachine {
     // ====== 循环结果 ======
 
     /**
-     * 射击循环结果。
-     *
-     * @param success        是否成功
-     * @param state          更新后的枪械状态
-     * @param updatedDevice  更新后的供弹具数据（可能为 null）
-     * @param ejectedCase    抛出的弹壳（可生成掉落物，可能为 null）
-     * @param malfunctionType 故障类型（成功时为 null）
-     * @param failureReason  失败原因（成功时为 null）
+     * 射击循环结果（P1 收尾：携带 GunWearData）。
      */
     public record CycleResult(
             boolean success,
             @Nullable GunStateData state,
             @Nullable FeedDeviceData updatedDevice,
+            @Nullable GunWearData updatedWear,
             @Nullable LoadedRound ejectedCase,
             @Nullable MalfunctionType malfunctionType,
             @Nullable String failureReason
     ) {
         /** 成功 */
         public static CycleResult ok(GunStateData state, @Nullable FeedDeviceData updatedDevice,
-                                     @Nullable LoadedRound ejectedCase) {
-            return new CycleResult(true, state, updatedDevice, ejectedCase, null, null);
+                                     @Nullable GunWearData updatedWear, @Nullable LoadedRound ejectedCase) {
+            return new CycleResult(true, state, updatedDevice, updatedWear, ejectedCase, null, null);
         }
 
         /** 故障 */
-        public static CycleResult malfunction(GunStateData state, MalfunctionType type) {
-            return new CycleResult(false, state.withMalfunction(type), null, null, type, null);
+        public static CycleResult malfunction(GunStateData state, MalfunctionType type,
+                                              @Nullable GunWearData updatedWear) {
+            return new CycleResult(false, state.withMalfunction(type), null, updatedWear, null, type, null);
         }
 
         /** 失败（前置条件不满足） */
         public static CycleResult fail(String reason) {
-            return new CycleResult(false, null, null, null, null, reason);
+            return new CycleResult(false, null, null, null, null, null, reason);
         }
     }
 }
