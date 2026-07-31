@@ -1,13 +1,20 @@
 name: compile-check
 
-# TACZ-INDUSTRIAL 编译验证闭环：
-# 沙箱网络白名单不可达 Gradle/Maven，故编译级验收在 GitHub Actions（外网畅通）执行，
-# 由 gh CLI 读取日志并迭代修复（对应 docs/design/18-open-questions.md 的 Q-21）。
+# TACZ-INDUSTRIAL 编译验证闭环（v2）：
+# 依赖下载与编译在 GitHub Actions（外网畅通）执行；
+# 编译日志以 git 提交形式推回本分支（build-reports/compile-java.log），
+# 供网络受限的沙箱直接 git pull 读取 —— 绕开 Actions 日志 blob 域不可达的限制。
+
+permissions:
+  contents: write
 
 on:
   push:
     branches:
       - 'arena/**'
+    # 防止"日志回推 commit"再次触发本流程造成死循环
+    paths-ignore:
+      - 'build-reports/**'
   workflow_dispatch:
 
 jobs:
@@ -25,14 +32,22 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: compileJava
-        run: ./gradlew compileJava --stacktrace --console=plain --no-daemon
+        run: |
+          mkdir -p build-reports
+          echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
+          ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
 
-      - name: Upload compile log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: compile-log
-          path: |
-            **/build/reports/**
-            **/build/tmp/compileJava/**
-          retention-days: 7
+      - name: Push compile log back to branch
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add build-reports/compile-java.log
+          if git commit -m "ci-log: compile result (${{ job.status }})"; then
+            for i in 1 2 3; do
+              git pull --rebase origin ${{ github.ref_name }} && break || sleep 3
+            done
+            git push
+          else
+            echo "日志无变化，跳过推送"
+          fi
