@@ -160,7 +160,17 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                     firstPersonOffsetAfter = new Vector3f(offset);
                     offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
 
+                    // Un-rotate camera (convert view space back to world space alignment)
+                    poseStack.mulPose(Axis.YN.rotationDegrees(camera.yRot() + 180.0F));
+                    poseStack.mulPose(Axis.XN.rotationDegrees(camera.xRot()));
+
+                    // Translate by muzzle offset in view space
                     poseStack.translate(offset.x * offsetReducer, offset.y * offsetReducer, offset.z * offsetReducer);
+
+                    // Re-rotate camera (convert back to view space)
+                    poseStack.mulPose(Axis.XP.rotationDegrees(camera.xRot()));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(camera.yRot() + 180.0F));
+
                     poseAfterOffset = new Matrix4f(poseStack.last().pose());
                 }
                 width *= bullet.getTracerSizeOverride();
