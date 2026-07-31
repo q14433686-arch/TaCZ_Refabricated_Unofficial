@@ -1,0 +1,35 @@
+{
+  "filter": "lrtactical:default",
+  "tabs": [
+    {
+      "id": "lrtactical:melee",
+      "name": "lrtactical.type.melee.name",
+      "icon": {
+        "item": "lrtactical:melee",
+        "nbt": {
+          "MeleeWeaponId": "lrtactical:test_knife"
+        }
+      }
+    },
+    {
+      "id": "lrtactical:throwable",
+      "name": "lrtactical.type.throwable.name",
+      "icon": {
+        "item": "lrtactical:throwable",
+        "nbt": {
+          "ThrowableId": "lrtactical:test_flashbang"
+        }
+      }
+    },
+    {
+      "id": "lrtactical:consumable",
+      "name": "lrtactical.type.consumable.name",
+      "icon": {
+        "item": "lrtactical:consumable",
+        "nbt": {
+          "ConsumableId": "lrtactical:test_medkit"
+        }
+      }
+    }
+  ]
+}

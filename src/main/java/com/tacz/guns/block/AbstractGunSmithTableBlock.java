@@ -81,6 +81,21 @@ public abstract class AbstractGunSmithTableBlock extends BaseEntityBlock {
     }
 
     @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        // Multi-block workbenches keep the custom BlockId on the root block entity only.
+        // Vanilla loot tables can only copy data from the block being broken, so breaking the
+        // secondary half (head/upper) would otherwise remove the structure without dropping the
+        // custom workbench item.  Drop the root's clone stack manually for survival players.
+        if (!level.isClientSide() && !player.isCreative() && !isRoot(state)) {
+            ItemStack drop = getCloneItemStack(level, pos, state, true);
+            if (!drop.isEmpty()) {
+                popResource(level, pos, drop);
+            }
+        }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
+    @Override
     protected ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeEntity) {
         BlockPos blockPos = getRootPos(pos, state);
         BlockEntity blockentity = level.getBlockEntity(blockPos);

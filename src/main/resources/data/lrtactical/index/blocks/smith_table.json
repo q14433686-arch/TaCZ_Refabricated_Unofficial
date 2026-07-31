@@ -1,0 +1,8 @@
+{
+  "name": "lrtactical.block.smith_table.name",
+  "display": "lrtactical:smith_table",
+  "data": "lrtactical:smith_table",
+  "tooltip": "lrtactical.block.smith_table.desc",
+  "id": "tacz:workbench_b",
+  "sort": 200
+}

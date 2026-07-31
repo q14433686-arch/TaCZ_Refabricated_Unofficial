@@ -20,5 +20,11 @@
   "item.lrtactical.detonator": "遥控起爆器",
   "item.lrtactical.test_c4": "测试 C4",
   "item.lrtactical.consumable": "消耗品",
-  "item.lrtactical.test_medkit": "测试医疗包"
+  "item.lrtactical.test_medkit": "测试医疗包",
+  "lrtactical.block.smith_table.name": "LesRaisins 战术锻造台",
+  "lrtactical.block.smith_table.desc": "用于制作 LRTactical 近战武器、投掷物与消耗品",
+  "lrtactical.type.melee.name": "近战武器",
+  "lrtactical.type.throwable.name": "投掷物",
+  "lrtactical.type.consumable.name": "消耗品",
+  "lrtactical.type.misc.name": "杂项"
 }

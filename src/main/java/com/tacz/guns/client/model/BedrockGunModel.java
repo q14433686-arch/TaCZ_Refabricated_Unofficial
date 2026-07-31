@@ -140,8 +140,9 @@ public class BedrockGunModel extends BedrockAnimatedModel {
         ModelRendererWrapper rendererWrapper = modelMap.get(SHELL_ORIGIN_NODE);
         int i = 1;
         while (rendererWrapper != null) {
-            ShellRender shellRender = new ShellRender(this);
-            this.setFunctionalRenderer(rendererWrapper.getModelRenderer().name, bedrockPart -> shellRender);
+            String shellNodeName = rendererWrapper.getModelRenderer().name;
+            ShellRender shellRender = new ShellRender(this, shellNodeName, shellRenderList.size());
+            this.setFunctionalRenderer(shellNodeName, bedrockPart -> shellRender);
             shellRenderList.add(shellRender);
             rendererWrapper = modelMap.get(SHELL_ORIGIN_NODE_PREFIX + i);
             i++;

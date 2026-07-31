@@ -132,12 +132,68 @@ public enum LrClientAssetsManager {
 
     @Nullable
     public ThrowableDisplayInstance getThrowableDisplay(Identifier id) {
-        return throwableDisplay == null ? null : throwableDisplay.getData(id);
+        if (throwableDisplay == null) {
+            return null;
+        }
+        ThrowableDisplayInstance exact = throwableDisplay.getData(id);
+        if (exact != null) {
+            return exact;
+        }
+        return findUniqueThrowableDisplayByPath(id);
     }
 
     @Nullable
     public MeleeDisplayInstance getMeleeDisplay(Identifier id) {
-        return meleeDisplay == null ? null : meleeDisplay.getData(id);
+        if (meleeDisplay == null) {
+            return null;
+        }
+        MeleeDisplayInstance exact = meleeDisplay.getData(id);
+        if (exact != null) {
+            return exact;
+        }
+        return findUniqueMeleeDisplayByPath(id);
+    }
+
+    /**
+     * 兼容部分组合枪包把 LRTactical 的 data 与 assets 放在不同命名空间的旧打包方式。
+     *
+     * <p>纯 LRTactical 内容包通常保持 {@code data/<ns>/index/...} 与
+     * {@code assets/<ns>/display/...} 同命名空间；但一些“枪包 + 少量刀/投掷物”的组合包
+     * 会把服务端索引挂在枪包主命名空间下，却仍沿用原 LRTactical 资源路径，或反过来。
+     * 旧版 NeoForge 环境下这些包常靠 {@code DisplayId} 或资源覆盖顺序碰巧工作；移植后若只做
+     * 精确 id 查询，就会找不到 display，进而回退到内置测试/占位表现。
+     *
+     * <p>这里仅在“同一路径全资源集中唯一”时回退，避免多个枪包都定义
+     * 类似 {@code m67} 这类常见路径名称时串包。
+     */
+    @Nullable
+    private ThrowableDisplayInstance findUniqueThrowableDisplayByPath(Identifier id) {
+        ThrowableDisplayInstance match = null;
+        for (var entry : throwableDisplay.getAllData().entrySet()) {
+            if (!entry.getKey().getPath().equals(id.getPath())) {
+                continue;
+            }
+            if (match != null) {
+                return null;
+            }
+            match = entry.getValue();
+        }
+        return match;
+    }
+
+    @Nullable
+    private MeleeDisplayInstance findUniqueMeleeDisplayByPath(Identifier id) {
+        MeleeDisplayInstance match = null;
+        for (var entry : meleeDisplay.getAllData().entrySet()) {
+            if (!entry.getKey().getPath().equals(id.getPath())) {
+                continue;
+            }
+            if (match != null) {
+                return null;
+            }
+            match = entry.getValue();
+        }
+        return match;
     }
 
     /**
