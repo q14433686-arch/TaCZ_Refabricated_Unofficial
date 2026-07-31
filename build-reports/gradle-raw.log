@@ -49,3 +49,9 @@ Fabric Loom: 1.17.17
 [taczind-ci:buildscript] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0
 [taczind-ci:buildscript] git rebase FETCH_HEAD -> 1
 [taczind-ci:buildscript] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0
+
+> Task :compileJava
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
