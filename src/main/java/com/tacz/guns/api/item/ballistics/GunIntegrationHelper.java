@@ -2,11 +2,20 @@ package com.tacz.guns.api.item.ballistics;
 
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.component.BeltData;
+import com.tacz.guns.api.item.component.BoxMagazineData;
+import com.tacz.guns.api.item.component.CylinderChamber;
+import com.tacz.guns.api.item.component.CylinderData;
+import com.tacz.guns.api.item.component.DrumMagazineData;
+import com.tacz.guns.api.item.component.EnBlocClipData;
 import com.tacz.guns.api.item.component.FeedDeviceData;
 import com.tacz.guns.api.item.component.GunMaintenanceData;
 import com.tacz.guns.api.item.component.GunStateData;
 import com.tacz.guns.api.item.component.GunWearData;
 import com.tacz.guns.api.item.component.LoadedRound;
+import com.tacz.guns.api.item.component.StripperClipData;
+import com.tacz.guns.api.item.component.TubularMagazineData;
+import com.tacz.guns.api.item.enums.ChamberState;
 import com.tacz.guns.api.item.enums.GunCycleState;
 import com.tacz.guns.api.item.enums.MalfunctionType;
 import com.tacz.guns.api.item.operation.GunCycleMachine;
@@ -316,6 +325,9 @@ public final class GunIntegrationHelper {
         }
 
         gunItem.set(ModDataComponents.GUN_STATE_DATA, stateData);
+
+        // 同步旧系统弹药计数到 FeedDeviceData（如果存在）
+        syncLegacyToFeedDevice(gunItem);
     }
 
     // ====== 内部辅助方法 ======
@@ -323,13 +335,15 @@ public final class GunIntegrationHelper {
     /**
      * 同步 TACZ 旧系统的弹药状态。
      * <p>
-     * 从 GunStateData 的状态推算 TACZ 旧系统需要的：
+     * 从 GunStateData 和 FeedDeviceData 的状态推算 TACZ 旧系统需要的：
      * <ul>
      *   <li>hasBulletInBarrel（是否膛内有弹）</li>
+     *   <li>GunCurrentAmmoCount（弹匣内弹药数）</li>
      * </ul>
      * <p>
-     * 注意：ammoCount 不在此处同步，因为 TACZ 的弹匣计数逻辑
-     * 已在 reduceAmmoOnce / putAmmoInMagazine 中正确维护。
+     * 当 FeedDeviceData 存在时，以 FeedDeviceData 的弹药数为准同步到旧系统。
+     * 当 FeedDeviceData 不存在时，旧系统的弹药计数由 TACZ 原有逻辑
+     * （reduceAmmoOnce / putAmmoInMagazine）维护，无需额外同步。
      *
      * @param gunItem 枪械物品
      * @param gunData 枪械数据
@@ -350,6 +364,224 @@ public final class GunIntegrationHelper {
         if (shouldHaveBulletInBarrel != currentHasBulletInBarrel) {
             iGun.setBulletInBarrel(gunItem, shouldHaveBulletInBarrel);
         }
+
+        // 同步弹匣弹药计数：如果 FeedDeviceData 存在，以它为准
+        FeedDeviceData feedDevice = gunItem.get(ModDataComponents.FEED_DEVICE_DATA);
+        if (feedDevice != null) {
+            int feedDeviceAmmoCount = feedDevice.getCurrentRoundCount();
+            int legacyAmmoCount = iGun.getCurrentAmmoCount(gunItem);
+            if (feedDeviceAmmoCount != legacyAmmoCount) {
+                iGun.setCurrentAmmoCount(gunItem, feedDeviceAmmoCount);
+            }
+        }
+    }
+
+    /**
+     * 将旧系统弹药计数同步到 FeedDeviceData。
+     * <p>
+     * 在换弹完成后调用：TACZ 的换弹逻辑会更新旧系统的 ammoCount，
+     * 此方法将变更同步到 FeedDeviceData（如果存在）。
+     * <p>
+     * 注意：当 FeedDeviceData 不存在时，此方法不做任何操作。
+     * FeedDeviceData 的创建由 P4 制造链负责。
+     *
+     * @param gunItem 枪械物品
+     */
+    public static void syncLegacyToFeedDevice(ItemStack gunItem) {
+        FeedDeviceData feedDevice = gunItem.get(ModDataComponents.FEED_DEVICE_DATA);
+        if (feedDevice == null) {
+            return; // 无 FeedDeviceData，无需同步
+        }
+
+        IGun iGun = IGun.getIGunOrNull(gunItem);
+        if (iGun == null) return;
+
+        int legacyAmmoCount = iGun.getCurrentAmmoCount(gunItem);
+        int feedDeviceAmmoCount = feedDevice.getCurrentRoundCount();
+
+        // 仅在旧系统弹药数 > FeedDeviceData 弹药数时填充
+        // （换弹会增加弹药，不会减少）
+        if (legacyAmmoCount > feedDeviceAmmoCount) {
+            int roundsToAdd = legacyAmmoCount - feedDeviceAmmoCount;
+            FeedDeviceData updated = addDefaultRounds(feedDevice, roundsToAdd);
+            if (updated != null) {
+                gunItem.set(ModDataComponents.FEED_DEVICE_DATA, updated);
+            }
+        } else if (legacyAmmoCount < feedDeviceAmmoCount) {
+            // 旧系统弹药数 < FeedDeviceData 弹药数（不应该发生，但防御性处理）
+            FeedDeviceData updated = removeRounds(feedDevice, feedDeviceAmmoCount - legacyAmmoCount);
+            if (updated != null) {
+                gunItem.set(ModDataComponents.FEED_DEVICE_DATA, updated);
+            }
+        }
+    }
+
+    /**
+     * 向 FeedDeviceData 添加默认弹药。
+     * <p>
+     * 使用 LoadedRound.createDefault() 创建弹药，
+     * 适用于换弹时旧系统只提供计数而无具体弹药数据的场景。
+     * <p>
+     * 各类型使用对应的 loadRound / loadNextEmpty 方法，
+     * 遵循各供弹具的物理约束（LIFO/FIFO/弹膛索引等）。
+     *
+     * @param feedDevice 供弹具数据
+     * @param count 要添加的弹药数量
+     * @return 更新后的供弹具数据，如果不支持则返回 null
+     */
+    private static @Nullable FeedDeviceData addDefaultRounds(FeedDeviceData feedDevice, int count) {
+        return switch (feedDevice) {
+            case BoxMagazineData box -> {
+                BoxMagazineData updated = box;
+                for (int i = 0; i < count && !updated.isFull(); i++) {
+                    updated = updated.loadRound(LoadedRound.createDefault());
+                }
+                yield updated;
+            }
+            case TubularMagazineData tubular -> {
+                TubularMagazineData updated = tubular;
+                for (int i = 0; i < count && !updated.isFull(); i++) {
+                    updated = updated.loadRound(LoadedRound.createDefault());
+                }
+                yield updated;
+            }
+            case DrumMagazineData drum -> {
+                DrumMagazineData updated = drum;
+                for (int i = 0; i < count && !updated.isFull(); i++) {
+                    updated = updated.loadRound(LoadedRound.createDefault());
+                }
+                yield updated;
+            }
+            case CylinderData cylinder -> {
+                // 转轮弹巢：使用 loadNextEmpty 逐发装入下一个空弹膛
+                CylinderData updated = cylinder;
+                for (int i = 0; i < count && !updated.isFull(); i++) {
+                    updated = updated.loadNextEmpty(LoadedRound.createDefault());
+                }
+                yield updated;
+            }
+            case BeltData belt -> {
+                BeltData updated = belt;
+                for (int i = 0; i < count && !updated.isFull(); i++) {
+                    updated = updated.loadRound(LoadedRound.createDefault());
+                }
+                yield updated;
+            }
+            case StripperClipData clip -> {
+                StripperClipData updated = clip;
+                for (int i = 0; i < count && !updated.isFull(); i++) {
+                    updated = updated.loadRound(LoadedRound.createDefault());
+                }
+                yield updated;
+            }
+            case EnBlocClipData enBloc -> {
+                EnBlocClipData updated = enBloc;
+                for (int i = 0; i < count && !updated.isFull(); i++) {
+                    updated = updated.loadRound(LoadedRound.createDefault());
+                }
+                yield updated;
+            }
+        };
+    }
+
+    /**
+     * 从 FeedDeviceData 移除指定数量的弹药。
+     * <p>
+     * 使用各供弹具的 feedRound() 方法进行移除。
+     * 此为防御性处理，正常情况下不应出现旧系统弹药数 &lt; FeedDeviceData 弹药数。
+     *
+     * @param feedDevice 供弹具数据
+     * @param count 要移除的弹药数量
+     * @return 更新后的供弹具数据，如果无法移除则返回 null
+     */
+    private static @Nullable FeedDeviceData removeRounds(FeedDeviceData feedDevice, int count) {
+        return switch (feedDevice) {
+            case BoxMagazineData box -> {
+                // BoxMagazineData.feedRound() 会修改内部列表，需要重建
+                List<LoadedRound> newRounds = new java.util.ArrayList<>(box.rounds());
+                int toRemove = Math.min(count, newRounds.size());
+                for (int i = 0; i < toRemove; i++) {
+                    if (!newRounds.isEmpty()) {
+                        newRounds.remove(newRounds.size() - 1); // LIFO: 移除末尾
+                    }
+                }
+                yield new BoxMagazineData(newRounds, box.springFatigue(),
+                        box.feedLipDamage(), box.maxCapacity(), box.cartridgeType());
+            }
+            case TubularMagazineData tubular -> {
+                // FIFO: 从头部移除
+                List<LoadedRound> newRounds = new java.util.ArrayList<>(tubular.rounds());
+                int toRemove = Math.min(count, newRounds.size());
+                for (int i = 0; i < toRemove; i++) {
+                    if (!newRounds.isEmpty()) {
+                        newRounds.remove(0);
+                    }
+                }
+                yield new TubularMagazineData(newRounds, tubular.maxCapacity(), tubular.cartridgeType());
+            }
+            case DrumMagazineData drum -> {
+                // LIFO: 从末尾移除
+                List<LoadedRound> newRounds = new java.util.ArrayList<>(drum.rounds());
+                int toRemove = Math.min(count, newRounds.size());
+                for (int i = 0; i < toRemove; i++) {
+                    if (!newRounds.isEmpty()) {
+                        newRounds.remove(newRounds.size() - 1);
+                    }
+                }
+                yield new DrumMagazineData(newRounds, drum.springFatigue(),
+                        drum.feedLipDamage(), drum.windingTension(), drum.maxCapacity(), drum.cartridgeType());
+            }
+            case CylinderData cylinder -> {
+                // 转轮弹巢：从已装填的弹膛中逐个清空
+                // 此处使用 ejectAllSpent + 逐个清空的方式
+                CylinderData updated = cylinder;
+                int removed = 0;
+                for (int i = 0; i < updated.chambers().size() && removed < count; i++) {
+                    CylinderChamber chamber = updated.chambers().get(i);
+                    if (chamber.state() == ChamberState.LOADED) {
+                        List<CylinderChamber> newChambers = new java.util.ArrayList<>(updated.chambers());
+                        newChambers.set(i, CylinderChamber.empty());
+                        updated = new CylinderData(newChambers, updated.alignedChamberIndex(),
+                                updated.maxCapacity(), updated.cartridgeType());
+                        removed++;
+                    }
+                }
+                yield updated;
+            }
+            case BeltData belt -> {
+                // FIFO: 从头部移除
+                List<LoadedRound> newRounds = new java.util.ArrayList<>(belt.rounds());
+                int toRemove = Math.min(count, newRounds.size());
+                for (int i = 0; i < toRemove; i++) {
+                    if (!newRounds.isEmpty()) {
+                        newRounds.remove(0);
+                    }
+                }
+                yield new BeltData(newRounds, belt.linkType(), belt.canChain(), belt.maxCapacity(), belt.cartridgeType());
+            }
+            case StripperClipData clip -> {
+                // 从头部移除
+                List<LoadedRound> newRounds = new java.util.ArrayList<>(clip.rounds());
+                int toRemove = Math.min(count, newRounds.size());
+                for (int i = 0; i < toRemove; i++) {
+                    if (!newRounds.isEmpty()) {
+                        newRounds.remove(0);
+                    }
+                }
+                yield new StripperClipData(newRounds, clip.maxCapacity(), clip.isConsumed(), clip.cartridgeType());
+            }
+            case EnBlocClipData enBloc -> {
+                // 从头部移除
+                List<LoadedRound> newRounds = new java.util.ArrayList<>(enBloc.rounds());
+                int toRemove = Math.min(count, newRounds.size());
+                for (int i = 0; i < toRemove; i++) {
+                    if (!newRounds.isEmpty()) {
+                        newRounds.remove(0);
+                    }
+                }
+                yield new EnBlocClipData(newRounds, enBloc.maxCapacity(), enBloc.autoEject(), enBloc.cartridgeType());
+            }
+        };
     }
 
     /**

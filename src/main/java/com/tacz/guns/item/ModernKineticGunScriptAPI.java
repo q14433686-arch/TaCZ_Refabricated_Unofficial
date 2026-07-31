@@ -10,7 +10,6 @@ import com.tacz.guns.api.event.common.GunFireEvent;
 import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.api.item.attachment.AttachmentType;
-import com.tacz.guns.api.item.ballistics.BallisticCalculator;
 import com.tacz.guns.api.item.ballistics.CasingDropHelper;
 import com.tacz.guns.api.item.ballistics.CatastrophicFailureSystem;
 import com.tacz.guns.api.item.ballistics.GunIntegrationHelper;
@@ -22,9 +21,6 @@ import com.tacz.guns.api.item.component.GunStateData;
 import com.tacz.guns.api.item.component.GunWearData;
 import com.tacz.guns.api.item.component.LoadedRound;
 import com.tacz.guns.api.item.component.ToleranceData;
-import com.tacz.guns.api.item.cartridge.CartridgeTypeManager;
-import com.tacz.guns.api.item.component.GunStateData;
-import com.tacz.guns.api.item.component.LoadedRound;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.api.util.LuaEntityAccessor;
@@ -134,7 +130,7 @@ public class ModernKineticGunScriptAPI {
             return;
         }
 
-        //Handle Heat Data
+        //Handle Heat Data — 使用原始 TACZ 热量精度（含 modifyProperty 修正）
         float heatInaccuracy = 1f;
         if (hasHeatData()) {
             GunHeatData heatData = Objects.requireNonNull(gunIndex.getGunData().getHeatData());
@@ -142,6 +138,12 @@ public class ModernKineticGunScriptAPI {
             float heatPercentage = (getHeatAmount() / heatMax);
             heatInaccuracy *= Mth.lerp(heatPercentage, heatData.getMinInaccuracy(), heatData.getMaxInaccuracy());
         }
+
+        // P3集成：在 TACZ 原始热量精度基础上叠加综合精度修正
+        // （过热扩展+耐久+保养+烧蚀），不使用 lerpInaccuracy() 直接替换，
+        // 因为 lerpInaccuracy() 内部用原始 heatMax 重新计算，会丢失
+        // modifyProperty(RuntimeOnly.MAX_HEAT) 的配件修正效果。
+        heatInaccuracy = GunIntegrationHelper.getComprehensiveInaccuracy(itemStack, heatInaccuracy);
 
         // 散射影响
         InaccuracyType inaccuracyType = InaccuracyType.getInaccuracyType(shooter);
