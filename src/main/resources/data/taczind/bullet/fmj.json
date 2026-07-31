@@ -1,0 +1,9 @@
+{
+  "mass_class": "std",
+  "damage_multiplier": 1.0,
+  "armor_ignore_bonus": 0.0,
+  "pen_class_bonus": 0,
+  "tracer_interval": 0,
+  "subsonic": false,
+  "expansion_damage_bonus": 0.0
+}

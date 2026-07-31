@@ -123,6 +123,38 @@ public class GunData {
     @SerializedName("charging")
     private EnumMap<FireMode, ChargeData> chargeData = null;
 
+    // ============ TACZ-INDUSTRIAL 扩展字段（taczind） ============
+    // 以下两个字段属于"供弹具数据系统"（docs/design 总表 17.4 增量对象约定）。
+    // 设计约束：GunData 保持纯 POJO，一切判定逻辑在
+    // cn.sh1rocu.tacz.industry.api.feed.rule.FeedCompatibility，勿把规则写进本类。
+
+    /**
+     * 膛内口径规格（CartridgeRegistry 注册名，如 tacz:762x39）。
+     * 缺省 = null → FeedCompatibility.resolveChamberCartridge 回退使用 ammoId，
+     * 保证旧枪包零迁移。
+     */
+    @SerializedName("taczind_chambered_cartridge")
+    @Nullable
+    private Identifier chamberedCartridge = null;
+
+    /**
+     * 兼容供弹具的型号标签（如 taczind:ak_magazine）。供弹具物品携带同 id 型号标签
+     * 才能挂上本枪；null = 全兼容（旧枪包语义）。物品阶段配合 tag 解析判定。
+     */
+    @SerializedName("taczind_compatible_feed_device_tag")
+    @Nullable
+    private Identifier compatibleFeedDeviceTag = null;
+
+    @Nullable
+    public Identifier getChamberedCartridge() {
+        return chamberedCartridge;
+    }
+
+    @Nullable
+    public Identifier getCompatibleFeedDeviceTag() {
+        return compatibleFeedDeviceTag;
+    }
+
     public ChargeData getChargeData(FireMode fireMode) {
         if (chargeData != null) {
             return chargeData.get(fireMode);

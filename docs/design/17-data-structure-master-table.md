@@ -96,3 +96,64 @@
 | `NoiseEventPacket` | S2C | pos+radius+signature | 击发 |
 | `ZeroAdjustC2S` | C2S | zero_m | 调零键 |
 | `ClearJamC2S / InspectBarrelC2S / ChangeBarrelC2S` | C2S | 动作+手持槽 | E/G 交互键 |
+
+---
+
+# 17.7 【2026-08-01 落地修订】P0 供弹具数据系统（已实现部分以本节为准）
+
+> 对应实现记录：`docs/impl-log/P0-feed-device-data-system.md`。本节为已编码字段的**最终权威**；上方设计节如与本节冲突，以本节为准。
+
+## 17.7.1 已注册 DataComponent 实况（`IndustryComponents`，命名空间 taczind）
+
+| 组件 | 类型 | Codec 键/字段 |
+|---|---|---|
+| `taczind:feed_device_data` | `FeedDeviceData`（密封多态） | `"feed_system"` 分派六机构 |
+| `taczind:gun_state_data` | `GunStateData` | `chambered_round:Optional<LoadedRound>`、`barrel_obstruction:bool`、`obstruction_known:bool` |
+| `taczind:loaded_round` | `LoadedRound` | 单发个体完整数据（下详） |
+
+## 17.7.2 LoadedRound 字段实况（record，Codec=RecordCodecBuilder）
+
+| JSON 键 | Java 类型 | 默认 | 说明 |
+|---|---|---|---|
+| `cartridge` | Identifier | （必填） | →CartridgeRegistry |
+| `bullet_type` | Identifier | `taczind:fmj` | →BulletRegistry |
+| `case_material` | enum | `brass` | brass/steel/aluminum |
+| `case_state` | enum | `factory_new` | factory_new/fired_spent/inspected_ok/cracked/deformed |
+| `primer_type` | enum | `boxer` | boxer/berdan |
+| `corrosive_primer` | boolean | false | 腐蚀性独立于结构 |
+| `charge_deviation` | float | 0 | +超装/-欠装；≤-0.45=Squib 风险档 |
+
+## 17.7.3 FeedSystemType → 数据形状实况（class:`cn.sh1rocu.tacz.industry.api.feed.device`）
+
+| 枚举(序列化名) | record | 独有字段 |
+|---|---|---|
+| `box_magazine` | BoxMagazineData | rounds:LIFO(栈顶=末位)、spring_fatigue、feed_lip_damage |
+| `tubular` | TubularMagazineData | rounds:严格FIFO、spring_fatigue |
+| `cylinder` | CylinderData | slots:固定槽位数组【嵌套 CylinderSlot{state:empty/loaded/spent, round?}】、aligned_index |
+| `belt` | BeltData | rounds:FIFO、link_type(disintegrating/non_disintegrating)、has_link_tail |
+| `stripper_clip` | StripperClipData | rounds、consumed(一次性) |
+| `en_bloc` | EnBlocClipData | rounds、ejected(强制整体弹出) |
+
+公共字段（接口层）：`cartridge:Identifier`、`capacity:int`；公共行为：`peekNext/ejectNext/tryLoad`。
+**物品规则：承载 feed_device_data 的物品必须 stacksTo(1)（FeedItemRules 断言）。**
+
+## 17.7.4 GunData 增量字段实况（gson POJO，键名已定型）
+
+| JSON 键 | 类型 | 缺省行为 |
+|---|---|---|
+| `taczind_chambered_cartridge` | Identifier? | null→回退 ammoId（FeedCompatibility.resolveChamberCartridge） |
+| `taczind_compatible_feed_device_tag` | Identifier? | null→全兼容（旧枪包语义） |
+
+> 注：设计稿曾计划 `taczind` 顶层嵌套对象；实现期改为**扁平双键**，理由：gson POJO 纯字段追加零侵入、与 TACZ 现有键风格一致、无需嵌套适配器。判定函数在规则层 `FeedCompatibility`（canChamber/acceptsFeedDeviceTag/canLoadFromDevice）。
+
+## 17.7.5 数据驱动注册表（loader：IndustryDataLoader）
+
+| 注册表 | JSON 路径 | 来源优先级 |
+|---|---|---|
+| CartridgeRegistry | `data/<ns>/cartridge/<name>.json` | 代码默认(12条) ← 数据包覆盖 |
+| BulletRegistry | `data/<ns>/bullet/<name>.json` | 代码默认(6条) ← 数据包覆盖 |
+
+## 17.7.6 镜像一致性写入规范（GunStateData ↔ TACZ HasBulletInBarrel）
+
+权威=`taczind:gun_state_data.chambered_round`；`HasBulletInBarrel` 仅作显示/动画镜像。
+**任何 chambered 变更必须双写**；读一律读组件。后续刘状枪膛状态（E 章）在此组件上扩展字段，不回头加布尔。

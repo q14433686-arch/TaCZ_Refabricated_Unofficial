@@ -35,6 +35,12 @@
 | 21 | [21-performance-engineering.md](21-performance-engineering.md) | **性能预算与工程规范**（tick 预算/网络/测试 DoD） |
 | 22 | [22-weapon-lineage-journey.md](22-weapon-lineage-journey.md) | **五阶段枪线谱系 + 玩家旅程验证 + UI/键位总表** |
 
+## 实现记录（阶段二持续追加）
+
+| 日期 | 记录 | 范围 |
+|---|---|---|
+| 2026-08-01 | [../impl-log/P0-feed-device-data-system.md](../impl-log/P0-feed-device-data-system.md) | P0 补充：供弹具数据系统（27 类/六机构/规则层/组件注册） |
+
 ## 子系统章节统一模板（A–N 每章均含五节）
 
 1. **现实原理简述**（游戏化抽象的依据；不含任何现实武器制造工艺细节）
@@ -1605,6 +1611,67 @@ P0 基础设施(数据层/平衡JSON/看板)
 | `NoiseEventPacket` | S2C | pos+radius+signature | 击发 |
 | `ZeroAdjustC2S` | C2S | zero_m | 调零键 |
 | `ClearJamC2S / InspectBarrelC2S / ChangeBarrelC2S` | C2S | 动作+手持槽 | E/G 交互键 |
+
+---
+
+# 17.7 【2026-08-01 落地修订】P0 供弹具数据系统（已实现部分以本节为准）
+
+> 对应实现记录：`docs/impl-log/P0-feed-device-data-system.md`。本节为已编码字段的**最终权威**；上方设计节如与本节冲突，以本节为准。
+
+## 17.7.1 已注册 DataComponent 实况（`IndustryComponents`，命名空间 taczind）
+
+| 组件 | 类型 | Codec 键/字段 |
+|---|---|---|
+| `taczind:feed_device_data` | `FeedDeviceData`（密封多态） | `"feed_system"` 分派六机构 |
+| `taczind:gun_state_data` | `GunStateData` | `chambered_round:Optional<LoadedRound>`、`barrel_obstruction:bool`、`obstruction_known:bool` |
+| `taczind:loaded_round` | `LoadedRound` | 单发个体完整数据（下详） |
+
+## 17.7.2 LoadedRound 字段实况（record，Codec=RecordCodecBuilder）
+
+| JSON 键 | Java 类型 | 默认 | 说明 |
+|---|---|---|---|
+| `cartridge` | Identifier | （必填） | →CartridgeRegistry |
+| `bullet_type` | Identifier | `taczind:fmj` | →BulletRegistry |
+| `case_material` | enum | `brass` | brass/steel/aluminum |
+| `case_state` | enum | `factory_new` | factory_new/fired_spent/inspected_ok/cracked/deformed |
+| `primer_type` | enum | `boxer` | boxer/berdan |
+| `corrosive_primer` | boolean | false | 腐蚀性独立于结构 |
+| `charge_deviation` | float | 0 | +超装/-欠装；≤-0.45=Squib 风险档 |
+
+## 17.7.3 FeedSystemType → 数据形状实况（class:`cn.sh1rocu.tacz.industry.api.feed.device`）
+
+| 枚举(序列化名) | record | 独有字段 |
+|---|---|---|
+| `box_magazine` | BoxMagazineData | rounds:LIFO(栈顶=末位)、spring_fatigue、feed_lip_damage |
+| `tubular` | TubularMagazineData | rounds:严格FIFO、spring_fatigue |
+| `cylinder` | CylinderData | slots:固定槽位数组【嵌套 CylinderSlot{state:empty/loaded/spent, round?}】、aligned_index |
+| `belt` | BeltData | rounds:FIFO、link_type(disintegrating/non_disintegrating)、has_link_tail |
+| `stripper_clip` | StripperClipData | rounds、consumed(一次性) |
+| `en_bloc` | EnBlocClipData | rounds、ejected(强制整体弹出) |
+
+公共字段（接口层）：`cartridge:Identifier`、`capacity:int`；公共行为：`peekNext/ejectNext/tryLoad`。
+**物品规则：承载 feed_device_data 的物品必须 stacksTo(1)（FeedItemRules 断言）。**
+
+## 17.7.4 GunData 增量字段实况（gson POJO，键名已定型）
+
+| JSON 键 | 类型 | 缺省行为 |
+|---|---|---|
+| `taczind_chambered_cartridge` | Identifier? | null→回退 ammoId（FeedCompatibility.resolveChamberCartridge） |
+| `taczind_compatible_feed_device_tag` | Identifier? | null→全兼容（旧枪包语义） |
+
+> 注：设计稿曾计划 `taczind` 顶层嵌套对象；实现期改为**扁平双键**，理由：gson POJO 纯字段追加零侵入、与 TACZ 现有键风格一致、无需嵌套适配器。判定函数在规则层 `FeedCompatibility`（canChamber/acceptsFeedDeviceTag/canLoadFromDevice）。
+
+## 17.7.5 数据驱动注册表（loader：IndustryDataLoader）
+
+| 注册表 | JSON 路径 | 来源优先级 |
+|---|---|---|
+| CartridgeRegistry | `data/<ns>/cartridge/<name>.json` | 代码默认(12条) ← 数据包覆盖 |
+| BulletRegistry | `data/<ns>/bullet/<name>.json` | 代码默认(6条) ← 数据包覆盖 |
+
+## 17.7.6 镜像一致性写入规范（GunStateData ↔ TACZ HasBulletInBarrel）
+
+权威=`taczind:gun_state_data.chambered_round`；`HasBulletInBarrel` 仅作显示/动画镜像。
+**任何 chambered 变更必须双写**；读一律读组件。后续刘状枪膛状态（E 章）在此组件上扩展字段，不回头加布尔。
 # 第 18 章 · 开放问题清单（实现前必须调研/验证）
 
 > 约定：Q-xx 在 P0 Spike 阶段逐一回答并回写"结论"列。阻断型=不回答不允许进 P1/P2。
@@ -1631,6 +1698,9 @@ P0 基础设施(数据层/平衡JSON/看板)
 | Q-18 | 服务器侧模拟测试框架：headless 射击循环 10 万发的可运行单元（P2/P3 DoD 依赖） | 全局 | 搭 JUnit+FakePlayer harness | 是(P2 前) | ☐ |
 | Q-19 | 弹壳/漏夹等拾取物模型与渲染成本（床岩实体或 ItemEntity） | B/N-1 | 渲染压测 | 否 | ☐ |
 | Q-20 | 与既有社区"Create×TaCZ 配方包"（调研 0.1）的版本共存策略：我们的硬核电是否与其配方冲突 | M | 社区兼容说明文档 | 否 | ☐ |
+| Q-21 | 沙箱无 JVM/Gradle 发行版与 Maven 源不可达：完整 `./gradlew compileJava` 编译级验收需在可联网环境补执行（本轮已用符号/字节码签名/逻辑沙盒三层替代验证，见 impl-log） | 全局 | 联网环境跑一次编译并回写结果 | 是(下一次代码合并前) | ☐ 已建 JDK25(jdk4py,JRE only) 可复用 |
+| Q-12(更新) | 枪内固定仓机构（管仓/内仓/漏夹装入枪后）的持有者机制：`GunStateData` 已预留扩展位；权威口径=FeedDeviceData 副本进"枪内 feed 槽"（P2 状态机落地时定稿） | N-1 | P2 实现时验证 | 是(P2) | 部分结论（2026-08-01） |
+| Q-16(更新) | 弹链队列体积：loaded_round 单发 codec 字段实测 7 键（~80B JSON 等价）；250 发链≈20KB 未压缩，CompoundTag 内 varint/枚举名优化后 <8KB，可接受 | B-9 | items 阶段复估 | 否 | 初步结论：可行（2026-08-01） |
 # 第 19 章 · 进度看板（持续维护）
 
 > 状态枚举：`未开始 / 设计中 / 开发中 / 测试中 / 完成 / 阻塞(原因)`
@@ -1660,7 +1730,8 @@ P0 基础设施(数据层/平衡JSON/看板)
 | K | 声学隐蔽 | 12-K | P4 | 未开始 | — | | 依赖 Q-13 |
 | L | 后勤仓储携行 | 13-L | P4 | 未开始 | — | | 依赖 Q-14 |
 | M | Create 联动 | 14-M | P5 | 未开始 | — | | 依赖 Q-02 |
-| N-1 | 供弹具机构 | 15-N | P4 | 设计中 | — | | 依赖 Q-12/16 |
+| N-1 | 供弹具机构 | 15-N | P4 | 🔨开发中 | — | 2026-08-01 | **数据层已完成**（六机构+规则层+组件注册，见 impl-log/P0-feed-device-data-system）；物品层后置 |
+| P0-补 | 供弹具数据系统 | 17.7 | P0 | ✅完成 | — | 2026-08-01 | CartridgeType/BulletType/LoadedRound/GunStateData + 注册表 + loader；编译级验收待 Q-21 |
 | N-2~N-7 | 扳机/履历/训练/拆解等 | 15-N | P6 | 未开始 | — | | |
 
 ## 里程碑
@@ -1680,6 +1751,7 @@ P0 基础设施(数据层/平衡JSON/看板)
 | 日期 | 变更 |
 |---|---|
 | 2026-07-31 | 阶段一文档首版建立（v1.0） |
+| 2026-08-01 | P0 补充：供弹具数据系统落地（27 个新类；抽象层/规则层/嵌套规则层完成，物品层按计划后置；GunData 增 2 增量字段；实现记录 docs/impl-log/P0-feed-device-data-system.md） |
 # 第 20 章 · 术语表（中英对照，实现期键名统一来源）
 
 > 用途：语言文件 key、JSON 字段、代码命名的统一词库，避免"同物三名"。按系统分组。

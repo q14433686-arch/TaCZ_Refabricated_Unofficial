@@ -67,6 +67,12 @@ public class TaCZFabric implements ModInitializer {
 
         GunMod.setup();
 
+        // TACZ-INDUSTRIAL 子系统（工业化重构，docs/design）注册入口。
+        // 与下方 LRTactical 同理：Fabric 无自动注册扫描，静态字段惰性加载，必须显式 init。
+        // 当前覆盖：P0 数据层——CartridgeType/BulletType 注册表、FeedDeviceData 六机构
+        // 数据形状、GunStateData、DataComponent 注册、数据包重载 loader。
+        cn.sh1rocu.tacz.industry.IndustryModule.init();
+
         // 附属模块 LRTactical（非官方 26.2 移植）的注册入口。
         //
         // 必须显式调用：Fabric 无 DeferredRegister 自动注册机制，

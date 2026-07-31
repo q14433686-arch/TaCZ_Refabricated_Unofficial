@@ -1,0 +1,9 @@
+{
+  "mass_class": "heavy",
+  "damage_multiplier": 0.85,
+  "armor_ignore_bonus": -0.1,
+  "pen_class_bonus": 0,
+  "tracer_interval": 0,
+  "subsonic": true,
+  "expansion_damage_bonus": 0.0
+}

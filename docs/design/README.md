@@ -35,6 +35,12 @@
 | 21 | [21-performance-engineering.md](21-performance-engineering.md) | **性能预算与工程规范**（tick 预算/网络/测试 DoD） |
 | 22 | [22-weapon-lineage-journey.md](22-weapon-lineage-journey.md) | **五阶段枪线谱系 + 玩家旅程验证 + UI/键位总表** |
 
+## 实现记录（阶段二持续追加）
+
+| 日期 | 记录 | 范围 |
+|---|---|---|
+| 2026-08-01 | [../impl-log/P0-feed-device-data-system.md](../impl-log/P0-feed-device-data-system.md) | P0 补充：供弹具数据系统（27 类/六机构/规则层/组件注册） |
+
 ## 子系统章节统一模板（A–N 每章均含五节）
 
 1. **现实原理简述**（游戏化抽象的依据；不含任何现实武器制造工艺细节）
