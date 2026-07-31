@@ -39,3 +39,6 @@ error: Please commit or stash them.
 error: Please commit or stash them.
 [taczind-ci:settings] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0 Everything up-to-date
 [taczind-ci:settings] 潜伏推送哨兵已派生
+
+> Configure project :
+Fabric Loom: 1.17.17
