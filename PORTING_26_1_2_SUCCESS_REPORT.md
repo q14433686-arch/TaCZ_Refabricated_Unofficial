@@ -35,7 +35,7 @@
 修改 `gradle.properties`，完成 26.1.2 平台对齐：
 - `minecraft_version=26.1.2`
 - `fabric_version=0.151.0+26.1.2`
-- `mod_version=1.1.8+fabric.26.1.2.alpha.1`（采用 `+` 构建元数据表示移植测试版，保证不破坏枪包 `>=1.1.8` 的 SemVer 版本依赖解析）。
+- `mod_version=1.1.8+fabric.26.1.2.Beta-1`（采用 `+` 构建元数据表示移植测试版，保证不破坏枪包 `>=1.1.8` 的 SemVer 版本依赖解析）。
 
 在 `fabric.mod.json` 中，确保约束条件对齐至 `26.1.2` 及 Java 25 运行时。
 
@@ -98,8 +98,8 @@
 ### 最终产物信息
 
 编译生成的 Mod 安装包（JAR）位于 `build/libs/` 路径：
-- **混淆后可运行 JAR**: `build/libs/TACZ-Refabricated-26.1.2-1.1.8+fabric.26.1.2.alpha.1.jar` (~55 MB)
-- **源码包 (Sources)**: `build/libs/TACZ-Refabricated-26.1.2-1.1.8+fabric.26.1.2.alpha.1-sources.jar` (~52 MB)
+- **混淆后可运行 JAR**: `build/libs/TACZ-Refabricated-26.1.2-1.1.8+fabric.26.1.2.Beta-1.jar` (~55 MB)
+- **源码包 (Sources)**: `build/libs/TACZ-Refabricated-26.1.2-1.1.8+fabric.26.1.2.Beta-1-sources.jar` (~52 MB)
 
 ---
 
