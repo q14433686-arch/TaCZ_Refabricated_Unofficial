@@ -1,0 +1,10 @@
+{
+  "category": "chemical",
+  "tier": 2,
+  "tolerance_bonus": 0.0,
+  "work_tags": [],
+  "upstream": [
+    "taczind:ore_sulfur"
+  ],
+  "item_hint": "taczind:dust_sulfur"
+}

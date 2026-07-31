@@ -1,0 +1,5 @@
+{
+  "min_ts": 80,
+  "max_ts": 95,
+  "stability_kind": "power_stability"
+}

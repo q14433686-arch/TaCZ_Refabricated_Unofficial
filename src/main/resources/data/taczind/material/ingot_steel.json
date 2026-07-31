@@ -1,0 +1,14 @@
+{
+  "category": "metallurgy",
+  "tier": 2,
+  "tolerance_bonus": 5.0,
+  "work_tags": [
+    "forgeable",
+    "machinable",
+    "heat_treatable"
+  ],
+  "upstream": [
+    "taczind:ingot_pig_iron"
+  ],
+  "item_hint": "taczind:ingot_steel"
+}

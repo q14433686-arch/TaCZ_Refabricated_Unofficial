@@ -1,0 +1,14 @@
+{
+  "category": "chemical",
+  "tier": 1,
+  "tolerance_bonus": 0.0,
+  "work_tags": [
+    "mixing_dangerous"
+  ],
+  "upstream": [
+    "taczind:dust_sulfur",
+    "taczind:dust_niter",
+    "minecraft:charcoal"
+  ],
+  "item_hint": "taczind:black_powder"
+}

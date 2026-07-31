@@ -1,0 +1,12 @@
+{
+  "category": "metallurgy",
+  "tier": 3,
+  "tolerance_bonus": 8.0,
+  "work_tags": [
+    "pressable"
+  ],
+  "upstream": [
+    "taczind:ingot_steel"
+  ],
+  "item_hint": "taczind:plate_steel"
+}

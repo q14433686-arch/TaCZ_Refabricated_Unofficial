@@ -1,0 +1,13 @@
+{
+  "category": "metallurgy",
+  "tier": 2,
+  "tolerance_bonus": 2.0,
+  "work_tags": [
+    "castable"
+  ],
+  "upstream": [
+    "taczind:ingot_lead",
+    "taczind:ingot_tin"
+  ],
+  "item_hint": "taczind:ingot_lead_alloy"
+}

@@ -1,0 +1,12 @@
+{
+  "category": "chemical",
+  "tier": 4,
+  "tolerance_bonus": 0.0,
+  "work_tags": [
+    "mixing_dangerous"
+  ],
+  "upstream": [
+    "taczind:nitrocotton"
+  ],
+  "item_hint": "taczind:smokeless_powder"
+}

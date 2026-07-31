@@ -1,0 +1,17 @@
+{
+  "ambient": 20,
+  "steps": [
+    {
+      "above": 600,
+      "loss_per_tick": 2.0
+    },
+    {
+      "above": 300,
+      "loss_per_tick": 1.0
+    },
+    {
+      "above": 0,
+      "loss_per_tick": 0.5
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "min_ts": 30,
+  "max_ts": 55,
+  "display_key": "serviceable",
+  "inaccuracy_mult": 1.25,
+  "malfunction_mult": 2.0,
+  "durability_mult": 0.85,
+  "velocity_deviation": 0.03
+}

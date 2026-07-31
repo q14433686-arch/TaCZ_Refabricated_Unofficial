@@ -1,0 +1,15 @@
+{
+  "station": "crucible",
+  "input_material": "taczind:ingot_pig_iron",
+  "output": "taczind:ingot_steel",
+  "heat_band": {
+    "work_min": 850,
+    "work_max": 1000,
+    "ideal_min": 900,
+    "ideal_max": 1000
+  },
+  "strikes_required": 0,
+  "process_ticks": 1200,
+  "quality_jitter": 0.08,
+  "ideal_finish_bonus": 0.1
+}

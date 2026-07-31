@@ -1,0 +1,9 @@
+{
+  "weights": {
+    "barrel": 0.35,
+    "bolt": 0.25,
+    "receiver": 0.15,
+    "spring": 0.1,
+    "other": 0.15
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "category": "chemical",
+  "tier": 2,
+  "tolerance_bonus": 0.0,
+  "work_tags": [
+    "mixing_dangerous"
+  ],
+  "upstream": [
+    "taczind:dust_niter",
+    "taczind:dust_sulfur"
+  ],
+  "item_hint": "taczind:primer_compound"
+}

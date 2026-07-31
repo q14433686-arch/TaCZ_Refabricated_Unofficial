@@ -3,6 +3,7 @@ package cn.sh1rocu.tacz.industry.registry;
 import cn.sh1rocu.tacz.industry.api.ammo.LoadedRound;
 import cn.sh1rocu.tacz.industry.api.feed.FeedDeviceData;
 import cn.sh1rocu.tacz.industry.api.gun.GunStateData;
+import cn.sh1rocu.tacz.industry.api.heat.HeatWorkData;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
@@ -39,6 +40,13 @@ public final class IndustryComponents {
      */
     public static final DataComponentType<LoadedRound> LOADED_ROUND =
             register("loaded_round", LoadedRound.CODEC);
+
+    /**
+     * 工件数据（A-2）：热加工半成品物品上的"热+工序进度+材料形态"运行时组件。
+     * 工件物品同样必须不可堆叠（同供弹具原则）。
+     */
+    public static final DataComponentType<HeatWorkData> WORKPIECE =
+            register("workpiece", HeatWorkData.CODEC);
 
     private static <T> DataComponentType<T> register(String name, Codec<T> codec) {
         return Registry.register(

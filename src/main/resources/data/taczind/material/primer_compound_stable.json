@@ -1,0 +1,13 @@
+{
+  "category": "chemical",
+  "tier": 4,
+  "tolerance_bonus": 0.0,
+  "work_tags": [
+    "mixing_dangerous"
+  ],
+  "upstream": [
+    "taczind:acid_sulfuric",
+    "taczind:acid_nitric"
+  ],
+  "item_hint": "taczind:primer_compound_stable"
+}

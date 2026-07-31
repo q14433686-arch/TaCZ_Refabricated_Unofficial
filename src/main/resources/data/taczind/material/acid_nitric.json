@@ -1,0 +1,12 @@
+{
+  "category": "chemical",
+  "tier": 4,
+  "tolerance_bonus": 0.0,
+  "work_tags": [
+    "fluid_chemical"
+  ],
+  "upstream": [
+    "taczind:dust_niter"
+  ],
+  "item_hint": "taczind:acid_nitric_bucket"
+}

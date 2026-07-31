@@ -1,0 +1,10 @@
+{
+  "category": "ore",
+  "tier": 0,
+  "tolerance_bonus": 0.0,
+  "work_tags": [
+    "minable"
+  ],
+  "upstream": [],
+  "item_hint": "taczind:ore_sulfur"
+}

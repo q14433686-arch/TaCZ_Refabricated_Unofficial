@@ -1,0 +1,13 @@
+{
+  "category": "metallurgy",
+  "tier": 3,
+  "tolerance_bonus": 10.0,
+  "work_tags": [
+    "machinable",
+    "pressable"
+  ],
+  "upstream": [
+    "taczind:bauxite"
+  ],
+  "item_hint": "taczind:ingot_aluminum"
+}

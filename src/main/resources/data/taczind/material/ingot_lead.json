@@ -1,0 +1,13 @@
+{
+  "category": "metallurgy",
+  "tier": 1,
+  "tolerance_bonus": 0.0,
+  "work_tags": [
+    "smeltable",
+    "castable"
+  ],
+  "upstream": [
+    "taczind:ore_lead"
+  ],
+  "item_hint": "taczind:ingot_lead"
+}

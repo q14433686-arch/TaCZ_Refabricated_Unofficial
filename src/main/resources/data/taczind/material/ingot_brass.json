@@ -1,0 +1,15 @@
+{
+  "category": "metallurgy",
+  "tier": 2,
+  "tolerance_bonus": 6.0,
+  "work_tags": [
+    "castable",
+    "pressable",
+    "machinable"
+  ],
+  "upstream": [
+    "minecraft:copper_ingot",
+    "taczind:ingot_zinc"
+  ],
+  "item_hint": "taczind:ingot_brass"
+}

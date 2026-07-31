@@ -1,0 +1,15 @@
+{
+  "station": "anvil",
+  "input_material": "taczind:ingot_steel",
+  "output": "taczind:part_lock_blank",
+  "heat_band": {
+    "work_min": 680,
+    "work_max": 920,
+    "ideal_min": 740,
+    "ideal_max": 850
+  },
+  "strikes_required": 10,
+  "heat_per_strike": 20,
+  "quality_jitter": 0.1,
+  "ideal_finish_bonus": 0.08
+}

@@ -1,0 +1,13 @@
+{
+  "category": "metallurgy",
+  "tier": 1,
+  "tolerance_bonus": -5.0,
+  "work_tags": [
+    "castable",
+    "smeltable"
+  ],
+  "upstream": [
+    "minecraft:raw_iron"
+  ],
+  "item_hint": "taczind:ingot_pig_iron"
+}

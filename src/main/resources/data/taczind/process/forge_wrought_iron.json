@@ -1,0 +1,15 @@
+{
+  "station": "anvil",
+  "input_material": "taczind:ingot_pig_iron",
+  "output": "taczind:ingot_wrought_iron",
+  "heat_band": {
+    "work_min": 650,
+    "work_max": 900,
+    "ideal_min": 700,
+    "ideal_max": 820
+  },
+  "strikes_required": 8,
+  "heat_per_strike": 25,
+  "quality_jitter": 0.1,
+  "ideal_finish_bonus": 0.05
+}
