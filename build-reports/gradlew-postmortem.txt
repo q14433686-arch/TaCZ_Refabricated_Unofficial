@@ -1,8 +1,8 @@
 gradlew exit_code=0
-timestamp_utc=2026-07-31T19:56:16Z
+timestamp_utc=2026-07-31T20:00:17Z
 --- free -m ---
                total        used        free      shared  buff/cache   available
-Mem:           15989        2019       10786          46        3573       13969
+Mem:           15988        1000       11801          46        3576       14988
 Swap:           3071           0        3071
 --- cgroup v2 memory.events ---
 (无 cgroup v2 memory.events)
@@ -10,11 +10,11 @@ Swap:           3071           0        3071
 --- dmesg OOM 线索（若有权限） ---
 --- 退出时内存 top5 进程 ---
 USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-runner      2312  229  6.6 3577036 1091468 ?     Ssl  19:55   2:24 /usr/lib/jvm/temurin-25-jdk-amd64/bin/java --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens=java.base/java.nio.charset=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.xml/javax.xml.namespace=ALL-UNNAMED --add-opens=java.base/java.time=ALL-UNNAMED --enable-native-access=ALL-UNNAMED -XX:MaxMetaspaceSize=384m -XX:+HeapDumpOnOutOfMemoryError -Xms256m -Xmx512m -Dfile.encoding=UTF-8 -Duser.country -Duser.language=en -Duser.variant -cp /home/runner/.gradle/wrapper/dists/gradle-9.5.1-bin/iq79hdu3mqx29lgffhp8bfmx/gradle-9.5.1/lib/gradle-daemon-main-9.5.1.jar -javaagent:/home/runner/.gradle/wrapper/dists/gradle-9.5.1-bin/iq79hdu3mqx29lgffhp8bfmx/gradle-9.5.1/lib/agents/gradle-instrumentation-agent-9.5.1.jar org.gradle.launcher.daemon.bootstrap.GradleDaemon 9.5.1
-runner      2016  5.2  0.8 274417456 146620 ?    Sl   19:54   0:04 /home/runner/actions-runner/cached/2.336.0/bin/Runner.Worker spawnclient 142 145
-root        1963  1.3  0.7 1431116 125376 ?      Sl   19:54   0:01 /tmp/provjobd4196324749
-runner      1996  1.5  0.5 274345468 96552 ?     Sl   19:54   0:01 /home/runner/actions-runner/cached/2.336.0/bin/Runner.Listener run
-root        1270  0.2  0.4 2045416 71956 ?       Ssl  19:54   0:00 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+runner      2028  3.5  0.9 274550436 149024 ?    Sl   19:58   0:03 /home/runner/actions-runner/cached/2.336.0/bin/Runner.Worker spawnclient 142 145
+root        1967  0.6  0.7 1430860 130880 ?      Sl   19:57   0:00 /tmp/provjobd2959774785
+runner      2008  1.2  0.5 274346344 98064 ?     Sl   19:58   0:01 /home/runner/actions-runner/cached/2.336.0/bin/Runner.Listener run
+root        1212  0.1  0.4 2045416 72068 ?       Ssl  19:57   0:00 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+root         914  0.0  0.3 295272 52052 ?        Ss   19:57   0:00 php-fpm: master process (/etc/php/8.3/fpm/php-fpm.conf)
 --- gradle-raw.log 尾部 120 行 ---
 === CI 模式：单 JVM + 直写 raw 日志，JAVA_OPTS=-Xmx3G -Dfile.encoding=UTF-8  ===
 Fetching distribution.
@@ -45,7 +45,7 @@ Daemon will be stopped at the end of the build
 [taczind-ci:settings] git rebase FETCH_HEAD -> 1 error: cannot rebase: You have unstaged changes.
 error: Please commit or stash them.
 [taczind-ci:settings] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0 To https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
-   cf974bd..06b8bbf  HEAD -> arena/019fb90c-tacz-refabricated-unofficial
+   28c5be9..9b79e03  HEAD -> arena/019fb90c-tacz-refabricated-unofficial
 [taczind-ci:settings] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0 From https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
  * branch            arena/019fb90c-tacz-refabricated-unofficial -> FETCH_HEAD
 [taczind-ci:settings] git rebase FETCH_HEAD -> 1 error: cannot rebase: You have unstaged changes.
@@ -82,7 +82,7 @@ Note: Recompile with -Xlint:unchecked for details.
 [taczind-ci:relay] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0
 [taczind-ci:relay] git rebase FETCH_HEAD -> 1
 [taczind-ci:relay] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1785527719593.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1785527947910.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -92,5 +92,5 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 8s
+BUILD SUCCESSFUL in 1m 19s
 2 actionable tasks: 2 executed
