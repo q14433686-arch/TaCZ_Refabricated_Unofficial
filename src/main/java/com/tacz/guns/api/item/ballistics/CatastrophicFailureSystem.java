@@ -6,6 +6,7 @@ import com.tacz.guns.api.item.component.GunWearData;
 import com.tacz.guns.api.item.component.LoadedRound;
 import com.tacz.guns.api.item.component.ToleranceData;
 import com.tacz.guns.resource.pojo.data.gun.GunHeatData;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -156,11 +157,48 @@ public final class CatastrophicFailureSystem {
             // 对射手造成伤害
             DamageSource damageSource = shooter.damageSources().generic();
             shooter.hurt(damageSource, damageToShooter);
-            // 播放爆炸音效
-            if (shooter.level() instanceof ServerLevel serverLevel) {
-                serverLevel.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(),
-                        SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0f, 1.2f);
+        }
+
+        // 炸膛视觉特效：粒子 + 音效
+        if (shooter != null && shooter.level() instanceof ServerLevel serverLevel) {
+            double x = shooter.getX();
+            double y = shooter.getY() + shooter.getEyeHeight() * 0.7;
+            double z = shooter.getZ();
+
+            // 根据严重度播放不同级别的粒子效果
+            int particleCount = switch (severity) {
+                case 1 -> 10;  // 轻微：少量烟雾
+                case 2 -> 30;  // 中等：大量烟雾+火花
+                case 3 -> 60;  // 严重：爆炸效果
+                default -> 10;
+            };
+
+            // 烟雾粒子（所有级别）
+            serverLevel.sendParticles(ParticleTypes.SMOKE, x, y, z,
+                    particleCount, 0.3, 0.3, 0.3, 0.05);
+
+            // 火花粒子（中等及以上）
+            if (severity >= 2) {
+                serverLevel.sendParticles(ParticleTypes.FLAME, x, y, z,
+                        particleCount / 2, 0.2, 0.2, 0.2, 0.1);
             }
+
+            // 爆炸粒子（严重）
+            if (severity >= 3) {
+                serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER, x, y, z,
+                        3, 0.1, 0.1, 0.1, 0.0);
+            }
+
+            // 音效
+            float volume = switch (severity) {
+                case 1 -> 0.5f;
+                case 2 -> 1.0f;
+                case 3 -> 1.5f;
+                default -> 1.0f;
+            };
+            float pitch = 1.0f + (3 - severity) * 0.2f; // 轻微更尖锐，严重更低沉
+            serverLevel.playSound(null, x, y, z,
+                    SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, volume, pitch);
         }
 
         return new CatastrophicResult(severity, updatedState, updatedWear, damageToShooter);

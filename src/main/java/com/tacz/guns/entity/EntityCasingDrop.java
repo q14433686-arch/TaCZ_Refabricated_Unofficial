@@ -56,6 +56,9 @@ public class EntityCasingDrop extends Entity {
     /** 口径类型标识符 */
     @Nullable
     private Identifier cartridgeType;
+    /** 弹药ID（对应枪包的 ammo index，用于查找 shell 模型） */
+    @Nullable
+    private Identifier ammoId;
     /** 弹壳材质 */
     private CaseMaterial caseMaterial = CaseMaterial.BRASS;
     /** 弹壳状态（击发后状态） */
@@ -69,11 +72,13 @@ public class EntityCasingDrop extends Entity {
 
     public EntityCasingDrop(Level level, double x, double y, double z,
                             @Nullable Identifier cartridgeType,
+                            @Nullable Identifier ammoId,
                             CaseMaterial caseMaterial,
                             String caseCondition) {
         this(TYPE, level);
         this.setPos(x, y, z);
         this.cartridgeType = cartridgeType;
+        this.ammoId = ammoId;
         this.caseMaterial = caseMaterial;
         this.caseCondition = caseCondition;
     }
@@ -154,6 +159,9 @@ public class EntityCasingDrop extends Entity {
         if (tag.contains("CartridgeType")) {
             this.cartridgeType = Identifier.parse(tag.getString("CartridgeType"));
         }
+        if (tag.contains("AmmoId")) {
+            this.ammoId = Identifier.parse(tag.getString("AmmoId"));
+        }
         if (tag.contains("CaseMaterial")) {
             try {
                 this.caseMaterial = CaseMaterial.valueOf(tag.getString("CaseMaterial"));
@@ -172,6 +180,9 @@ public class EntityCasingDrop extends Entity {
         if (this.cartridgeType != null) {
             tag.putString("CartridgeType", this.cartridgeType.toString());
         }
+        if (this.ammoId != null) {
+            tag.putString("AmmoId", this.ammoId.toString());
+        }
         tag.putString("CaseMaterial", this.caseMaterial.name());
         tag.putString("CaseCondition", this.caseCondition);
         tag.putInt("Age", this.age);
@@ -182,6 +193,11 @@ public class EntityCasingDrop extends Entity {
     @Nullable
     public Identifier getCartridgeType() {
         return cartridgeType;
+    }
+
+    @Nullable
+    public Identifier getAmmoId() {
+        return ammoId;
     }
 
     public CaseMaterial getCaseMaterial() {

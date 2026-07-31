@@ -297,5 +297,44 @@
   "tooltip.tacz.page.previous": "上一页",
   "tooltip.tacz.refit.unload": "卸载",
   "tooltip.tacz.attachment.laser.color": "镭射颜色: %s",
-  "tacz.resources.modresources": "永恒枪械工坊：Zero 枪包资源集"
+  "tacz.resources.modresources": "永恒枪械工坊：Zero 枪包资源集",
+
+  "component.tacz.ammo_data": "弹药数据",
+  "component.tacz.gun_wear_data": "枪械磨损",
+  "component.tacz.gun_maintenance_data": "保养状态",
+  "component.tacz.tolerance_data": "公差评分",
+  "component.tacz.gun_state_data": "枪械状态",
+  "component.tacz.feed_device_data": "供弹具数据",
+
+  "shoot_result.tacz.malfunction": "故障：%s",
+  "malfunction.tacz.misfire": "哑弹",
+  "malfunction.tacz.failure_to_eject": "抛壳失败",
+  "malfunction.tacz.failure_to_extract": "抽壳失败",
+  "malfunction.tacz.failure_to_feed": "供弹失败",
+  "malfunction.tacz.squib": "弹头卡管",
+  "malfunction.tacz.double_feed": "双进弹",
+  "malfunction.tacz.rim_lock": "底缘锁死",
+
+  "gun_state.tacz.cookoff": "自燃！",
+  "gun_state.tacz.catastrophic_failure": "炸膛！",
+  "gun_state.tacz.overheat_warning": "过热警告",
+  "gun_state.tacz.squib_warning": "弹头卡管！禁止射击！",
+
+  "wear.tacz.barrel": "枪管",
+  "wear.tacz.receiver": "机匣",
+  "wear.tacz.bolt": "枪机",
+  "wear.tacz.recoil_spring": "复进簧",
+  "wear.tacz.magazine_spring": "弹匣弹簧",
+  "wear.tacz.trigger_group": "扳机组",
+  "wear.tacz.muzzle_device": "枪口装置",
+
+  "maintenance.tacz.carbon_fouling": "积碳",
+  "maintenance.tacz.corrosion": "锈蚀",
+  "maintenance.tacz.lubrication": "润滑",
+  "maintenance.tacz.contamination": "异物",
+
+  "casing.tacz.brass": "黄铜弹壳",
+  "casing.tacz.steel": "钢制弹壳",
+  "casing.tacz.aluminum": "铝制弹壳",
+  "casing.tacz.polymer": "聚合物弹壳"
 }

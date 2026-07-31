@@ -315,6 +315,17 @@ public record GunWearData(
     }
 
     /**
+     * 强制更换多个部件（不受磨损限制，用于炸膛等极端后果）。
+     */
+    public GunWearData forceReplace(ComponentType... types) {
+        GunWearData result = this;
+        for (ComponentType type : types) {
+            result = result.withComponentDurability(type, getMax(type));
+        }
+        return result;
+    }
+
+    /**
      * 获取指定部件的当前耐久值。
      */
     public int getCurrent(ComponentType type) {

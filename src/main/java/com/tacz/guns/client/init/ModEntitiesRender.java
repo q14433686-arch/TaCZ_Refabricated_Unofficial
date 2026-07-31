@@ -7,7 +7,9 @@ import com.tacz.guns.client.renderer.block.GunSmithTableRenderer;
 import com.tacz.guns.client.renderer.block.StatueRenderer;
 import com.tacz.guns.client.renderer.block.TargetRenderer;
 import com.tacz.guns.client.renderer.entity.EntityBulletRenderer;
+import com.tacz.guns.client.renderer.entity.EntityCasingDropRenderer;
 import com.tacz.guns.client.renderer.entity.TargetMinecartRenderer;
+import com.tacz.guns.entity.EntityCasingDrop;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.TargetMinecart;
 import net.fabricmc.api.EnvType;
@@ -19,6 +21,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 public class ModEntitiesRender {
     public static void registerEntityRenderers() {
         EntityRendererRegistry.register(EntityKineticBullet.TYPE, EntityBulletRenderer::new);
+        EntityRendererRegistry.register(EntityCasingDrop.TYPE, EntityCasingDropRenderer::new);
         EntityRendererRegistry.register(TargetMinecart.TYPE, TargetMinecartRenderer::new);
         BlockEntityRenderers.register(GunSmithTableBlockEntity.TYPE, GunSmithTableRenderer::new);
         BlockEntityRenderers.register(TargetBlockEntity.TYPE, TargetRenderer::new);

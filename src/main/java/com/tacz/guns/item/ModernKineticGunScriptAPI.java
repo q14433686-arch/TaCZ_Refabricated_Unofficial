@@ -229,7 +229,7 @@ public class ModernKineticGunScriptAPI {
                 }
                 // P2弹道扩展：弹壳掉落（仅在服务端执行）
                 if (world instanceof net.minecraft.server.level.ServerLevel serverLevel && chamberedRound != null) {
-                    CasingDropHelper.spawnCasing(serverLevel, shooter, chamberedRound);
+                    CasingDropHelper.spawnCasing(serverLevel, shooter, chamberedRound, ammoId);
                 }
                 // P1集成：射击后执行枪机循环状态机
                 // 更新 GunStateData（枪机循环状态、故障、供弹具数据）和 GunWearData（磨损消耗）

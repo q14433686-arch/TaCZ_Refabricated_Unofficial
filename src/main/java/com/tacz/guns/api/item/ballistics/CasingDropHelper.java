@@ -28,6 +28,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class CasingDropHelper {
 
+    /**
+     * 在射击者位置生成弹壳实体（不指定 ammoId，使用 cartridgeType 作为备选）。
+     */
+    public static void spawnCasing(ServerLevel level, LivingEntity shooter,
+                                    @Nullable LoadedRound loadedRound) {
+        spawnCasing(level, shooter, loadedRound, null);
+    }
+
     /** 默认抛壳速度 */
     private static final float DEFAULT_EJECT_SPEED = 0.3f;
 
@@ -45,9 +53,11 @@ public final class CasingDropHelper {
      * @param level       服务器世界
      * @param shooter     射击者
      * @param loadedRound 已击发的弹药数据
+     * @param ammoId      弹药ID（对应枪包的 ammo index，用于查找 shell 模型）
      */
     public static void spawnCasing(ServerLevel level, LivingEntity shooter,
-                                    @Nullable LoadedRound loadedRound) {
+                                    @Nullable LoadedRound loadedRound,
+                                    @Nullable Identifier ammoId) {
         if (loadedRound == null) return;
 
         // 计算弹壳击发后的状态
@@ -69,6 +79,7 @@ public final class CasingDropHelper {
         EntityCasingDrop casing = new EntityCasingDrop(
                 level, x, y, z,
                 cartridgeType,
+                ammoId,
                 caseMaterial,
                 postFireCondition.name().toLowerCase()
         );

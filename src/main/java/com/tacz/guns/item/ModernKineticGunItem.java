@@ -255,10 +255,33 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
                                 .map(index -> index.getGunData().getBolt()).orElse(Bolt.OPEN_BOLT);
                         if (CookOffSystem.checkCookOff(gunStateData, heatPercentage, heatData, boltType)) {
                             // Cook-off发生：膛内弹药自燃
-                            // TODO: 触发Cook-off射击（自动发射，无射手控制，精度极差）
-                            // 目前简化为：清空枪膛，消耗弹药
                             GunStateData updatedState = gunStateData.withChamberedRoundFired();
                             gunItem.set(com.tacz.guns.init.ModDataComponents.GUN_STATE_DATA, updatedState);
+                            // 同步旧系统
+                            iGun.setBulletInBarrel(gunItem, false);
+
+                            // Cook-off触发实际射击：创建一个精度极差的子弹实体
+                            if (shooter != null && !shooter.level().isClientSide() &&
+                                shooter.level() instanceof ServerLevel serverLevel) {
+                                Identifier gunId = iGun.getGunId(gunItem);
+                                Identifier ammoId = TimelessAPI.getCommonGunIndex(gunId)
+                                        .map(idx -> idx.getGunData().getAmmoId()).orElse(null);
+                                if (ammoId != null) {
+                                    // 创建子弹实体
+                                    EntityKineticBullet bullet = new EntityKineticBullet(
+                                            serverLevel, shooter, gunItem, ammoId, gunId,
+                                            iGun.getGunDisplayId(gunItem), false,
+                                            TimelessAPI.getCommonGunIndex(gunId)
+                                                    .map(idx -> idx.getGunData()).orElse(null),
+                                            TimelessAPI.getCommonGunIndex(gunId)
+                                                    .map(idx -> idx.getBulletData()).orElse(null));
+                                    // Cook-off特征：无射手控制，散布极大（5倍），方向随机偏差
+                                    float randomPitch = shooter.getXRot() + (float)(Math.random() * 30 - 15);
+                                    float randomYaw = shooter.getYRot() + (float)(Math.random() * 30 - 15);
+                                    bullet.shootFromRotation(shooter, randomPitch, randomYaw, 0.0F, 2.0F, 5.0f);
+                                    serverLevel.addFreshEntity(bullet);
+                                }
+                            }
                         }
                     }
 

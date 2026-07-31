@@ -296,5 +296,44 @@
   "config.tacz.client.render.enable_tooltip_id.desc": "Display the gun/ammo/attachment id in item tooltip when advanced tooltip(F3+H) is on.",
   "tooltip.tacz.attachment.laser.color": "Laser Color: %s",
   "config.tacz.client.render.laser_fadeout": "Laser Fadeout Effect",
-  "config.tacz.client.render.laser_fadeout.desc": "Whether or not apply fadeout effect on the laser beam. Close this may improve laser performance under some shaders."
+  "config.tacz.client.render.laser_fadeout.desc": "Whether or not apply fadeout effect on the laser beam. Close this may improve laser performance under some shaders.",
+
+  "component.tacz.ammo_data": "Ammo Data",
+  "component.tacz.gun_wear_data": "Gun Wear",
+  "component.tacz.gun_maintenance_data": "Maintenance",
+  "component.tacz.tolerance_data": "Tolerance",
+  "component.tacz.gun_state_data": "Gun State",
+  "component.tacz.feed_device_data": "Feed Device",
+
+  "shoot_result.tacz.malfunction": "Malfunction: %s",
+  "malfunction.tacz.misfire": "Misfire",
+  "malfunction.tacz.failure_to_eject": "Failure to Eject",
+  "malfunction.tacz.failure_to_extract": "Failure to Extract",
+  "malfunction.tacz.failure_to_feed": "Failure to Feed",
+  "malfunction.tacz.squib": "Squib",
+  "malfunction.tacz.double_feed": "Double Feed",
+  "malfunction.tacz.rim_lock": "Rim Lock",
+
+  "gun_state.tacz.cookoff": "Cook-off!",
+  "gun_state.tacz.catastrophic_failure": "Catastrophic Failure!",
+  "gun_state.tacz.overheat_warning": "Overheat Warning",
+  "gun_state.tacz.squib_warning": "Squib in Barrel! DO NOT FIRE!",
+
+  "wear.tacz.barrel": "Barrel",
+  "wear.tacz.receiver": "Receiver",
+  "wear.tacz.bolt": "Bolt",
+  "wear.tacz.recoil_spring": "Recoil Spring",
+  "wear.tacz.magazine_spring": "Magazine Spring",
+  "wear.tacz.trigger_group": "Trigger Group",
+  "wear.tacz.muzzle_device": "Muzzle Device",
+
+  "maintenance.tacz.carbon_fouling": "Carbon Fouling",
+  "maintenance.tacz.corrosion": "Corrosion",
+  "maintenance.tacz.lubrication": "Lubrication",
+  "maintenance.tacz.contamination": "Contamination",
+
+  "casing.tacz.brass": "Brass Casing",
+  "casing.tacz.steel": "Steel Casing",
+  "casing.tacz.aluminum": "Aluminum Casing",
+  "casing.tacz.polymer": "Polymer Casing"
 }
