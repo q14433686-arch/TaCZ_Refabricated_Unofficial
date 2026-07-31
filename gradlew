@@ -144,4 +144,30 @@ eval "set -- $(
         tr '\n' ' '
     )" '"$@"'
 
+# ============ TACZ-INDUSTRIAL CI 验尸钩子（仅 GitHub Actions 生效，本地零影响） ============
+# 症状（Q-21 实测）：runner 上 gradle 输出在 "Daemon will be stopped" 后完全静默、
+# step exit 1 无任何错误文本——疑似 daemon 遭 OOM 静默击杀，launcher 未及报告。
+# 此处将 exec 改为普通调用，捕获退出码并直接写尸检文件到 build-reports/
+# （绕过 stdout 管道，管道已不可信），由 settings 哨兵推送回分支。
+if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    mkdir -p build-reports
+    "$JAVACMD" "$@"
+    GRADLE_EC=$?
+    {
+        echo "gradlew exit_code=$GRADLE_EC"
+        echo "timestamp_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        echo "--- free -m ---"
+        free -m
+        echo "--- cgroup v2 memory.events ---"
+        cat /sys/fs/cgroup/memory.events 2>/dev/null || echo "(无 cgroup v2 memory.events)"
+        echo "--- cgroup v2 memory.max / memory.current ---"
+        cat /sys/fs/cgroup/memory.max 2>/dev/null; cat /sys/fs/cgroup/memory.current 2>/dev/null
+        echo "--- dmesg OOM 线索（若有权限） ---"
+        sudo -n dmesg 2>/dev/null | grep -i -E "oom|killed process|out of memory" | tail -10 || dmesg 2>/dev/null | tail -10 || echo "dmesg 无权限"
+        echo "--- 退出时内存 top5 进程 ---"
+        ps aux --sort=-rss 2>/dev/null | head -6
+    } > build-reports/gradlew-postmortem.txt 2>&1
+    exit $GRADLE_EC
+fi
+
 exec "$JAVACMD" "$@"
