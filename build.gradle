@@ -308,3 +308,78 @@ publishing {
         }
     }
 }
+
+// ============================================================================
+// TACZ-INDUSTRIAL CI 日志接力任务（taczindCiRelay）
+// ----------------------------------------------------------------------------
+// 背景（docs/ci/README-编译验证闭环.md）：开发沙箱网络白名单不含 Gradle/Maven/
+// Actions 日志 blob 域，无法在本地编译，也拉不到 GitHub Actions 的步骤日志。
+// Actions workflow（.github/workflows/compile-check.yml）由用户网页端维护，
+// 一旦它的"日志回推"步骤失效（v2 实测：actions/checkout 的 detached HEAD 使
+// 裸 git push 必然失败），整个编译闭环就断了。
+//
+// 本任务是"构建侧 hedge"，与 workflow 解耦：
+//   - 仅在 GitHub Actions runner 上激活（GITHUB_ACTIONS=true），本地构建零影响
+//   - 挂为 compileJava 的 finalizer —— 编译失败也会执行
+//   - 复用 actions/checkout 留下的持久化 git 凭据，显式 refspec 推送
+//     （HEAD:refs/heads/<branch>，detached HEAD 安全，这是 v2 栽过的坑）
+//   - 推送内容由 workflow 的 shell 重定向写入的 build-reports/compile-java.log
+//     （javac 错误会在任务失败时就地打印，finalizer 执行时已落盘）
+//
+// 隐私面：仅推送 Runner 上仓库内的 build-reports/ 目录，不读取/外发任何其他文件。
+// ============================================================================
+if (System.getenv("GITHUB_ACTIONS") == "true") {
+    def taczindCiRelay = tasks.register("taczindCiRelay") {
+        description = "TACZ-INDUSTRIAL: 在 GitHub Actions 上把 build-reports/ 推送回分支（编译日志闭环 hedge）"
+        group = "taczind-ci"
+        doLast {
+            def branch = System.getenv("GITHUB_REF_NAME") ?: ""
+            def sha = System.getenv("GITHUB_SHA") ?: "unknown"
+            def relayLog = new File(project.layout.buildDirectory.asFile.get().parentFile, "build-reports/ci-relay.txt")
+            def reportsDir = relayLog.parentFile
+            reportsDir.mkdirs()
+            relayLog.text = """taczindCiRelay executed
+time_utc=${new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone('UTC'))}
+branch=${branch}
+sha=${sha}
+job=${System.getenv("GITHUB_JOB") ?: "?"}
+"""
+            if (branch.isEmpty()) {
+                println "[taczind-ci] GITHUB_REF_NAME 缺失，跳过推送"
+                return
+            }
+            def runGit = { List<String> args, boolean ignoreFail ->
+                def out = new ByteArrayOutputStream()
+                def err = new ByteArrayOutputStream()
+                def res = project.exec {
+                    commandLine(["git"] + args)
+                    standardOutput = out
+                    errorOutput = err
+                    ignoreExitValue = ignoreFail
+                }
+                println "[taczind-ci] git ${args.join(' ')} -> exit ${res.exitValue}"
+                def errText = err.toString().trim()
+                if (errText) println "[taczind-ci]   stderr: ${errText.take(500)}"
+                return [res.exitValue, out.toString().trim()]
+            }
+            runGit(["config", "user.name", "taczind-ci-relay[bot]"], false)
+            runGit(["config", "user.email", "taczind-ci-relay@users.noreply.github.com"], false)
+            runGit(["add", "-A", "build-reports"], false)
+            def (diffExit, _) = runGit(["diff", "--cached", "--quiet"], true)
+            if (diffExit == 0) {
+                println "[taczind-ci] build-reports 无变更，跳过提交"
+                return
+            }
+            runGit(["commit", "-m", "ci-relay: build-reports snapshot @ ${sha.take(7)} (taczindCiRelay)"], true)
+            // 防并发接力撞车：先 rebase 到远端分支头再推；失败不致命（workflow 推送步/v3 评论兜底）
+            runGit(["pull", "--rebase", "origin", branch], true)
+            def (pushExit, _) = runGit(["push", "origin", "HEAD:refs/heads/${branch}"], true)
+            println pushExit == 0 \
+                ? "[taczind-ci] 推送成功：build-reports/ 已回到 ${branch}" \
+                : "[taczind-ci] 推送失败（exit ${pushExit}），由 workflow 推送步或评论兜底"
+        }
+    }
+    tasks.named("compileJava") {
+        finalizedBy(taczindCiRelay)
+    }
+}
