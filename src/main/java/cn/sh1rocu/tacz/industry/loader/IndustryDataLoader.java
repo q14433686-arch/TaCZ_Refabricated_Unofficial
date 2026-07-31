@@ -100,7 +100,9 @@ public class IndustryDataLoader implements IdentifiableResourceReloadListener {
                     ResourceManager rm = sharedState.resourceManager();
                     List<ParsedDir<?>> parsed = new ArrayList<>(SPECS.size());
                     for (DirSpec<?> spec : SPECS) {
-                        parsed.add(new ParsedDir<>(spec, parseDir(rm, spec)));
+                        // 必须经由本泛型助手：直接 new ParsedDir<>(spec, ...) 在方法实参语境是
+                        // 钻石推断黑洞（通配符捕获无法在实参位置参与）；泛型方法让捕获自然流入。
+                        parsed.add(parseSpec(rm, spec));
                     }
                     return parsed;
                 }, backgroundExecutor)
@@ -110,6 +112,10 @@ public class IndustryDataLoader implements IdentifiableResourceReloadListener {
                         p.apply();
                     }
                 }, gameExecutor);
+    }
+
+    private static <T> ParsedDir<T> parseSpec(ResourceManager rm, DirSpec<T> spec) {
+        return new ParsedDir<>(spec, parseDir(rm, spec));
     }
 
     private record ParsedDir<T>(DirSpec<T> spec, Map<Identifier, T> entries) {
