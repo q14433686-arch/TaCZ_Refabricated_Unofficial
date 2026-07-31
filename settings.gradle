@@ -14,3 +14,45 @@ pluginManagement {
 }
 
 rootProject.name = 'TACZ-Refabricated'
+
+// ============================================================================
+// TACZ-INDUSTRIAL CI 探针：settings 配置阶段（最早可执行点）
+// ----------------------------------------------------------------------------
+// 用途：在 GitHub Actions 上标记"Gradle 已走到 settings 配置"，并把探针记录
+// 推回分支（git add -f + 显式 refspec，绕开 .gitignore 与 detached HEAD 两个
+// 实测踩过的坑）。与 build.gradle 尾部探针、taczindCiRelay 任务互为参照系：
+//   settings 探针落地 + build 探针缺失 → 配置死在 build.gradle
+//   两者都落地 + relay 缺失            → 任务图未执行/relay 自身问题
+//   三个全灭                           → git 推送通道本身死（权限/网络）
+// 本地构建（无 GITHUB_ACTIONS）完全零影响。
+// ============================================================================
+if (System.getenv("GITHUB_ACTIONS") == "true") {
+    try {
+        def probeDir = new File(settingsDir, "build-reports")
+        probeDir.mkdirs()
+        def branch = System.getenv("GITHUB_REF_NAME") ?: ""
+        new File(probeDir, "ci-probe-settings.txt").text =
+            "settings-probe ok @ ${new Date()}\nbranch=${branch}\nsha=${System.getenv('GITHUB_SHA')}\n"
+        def git = { List<String> args ->
+            def p = (["git"] + args).execute(null, settingsDir)
+            def out = p.inputStream.text
+            def err = p.errorStream.text
+            p.waitFor()
+            println "[taczind-ci:settings] git ${args.join(' ')} -> ${p.exitValue()} ${err?.trim()?.take(300) ?: ''}"
+            return p.exitValue()
+        }
+        if (branch) {
+            git(["config", "user.name", "taczind-ci-probe[bot]"])
+            git(["config", "user.email", "taczind-ci-probe@users.noreply.github.com"])
+            git(["add", "-f", "-A", "build-reports"])
+            git(["commit", "-m", "ci-probe: settings/config ok"])
+            3.times {
+                git(["fetch", "origin", branch])
+                git(["rebase", "FETCH_HEAD"])
+                if (git(["push", "origin", "HEAD:refs/heads/${branch}"]) == 0) return
+            }
+        }
+    } catch (Throwable t) {
+        println "[taczind-ci:settings] probe 异常（不影响构建）: ${t}"
+    }
+}

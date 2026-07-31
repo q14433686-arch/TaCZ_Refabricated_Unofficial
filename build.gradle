@@ -388,3 +388,36 @@ job=${System.getenv("GITHUB_JOB") ?: "?"}
         finalizedBy(taczindCiRelay)
     }
 }
+
+// ============================================================================
+// TACZ-INDUSTRIAL CI 探针：build.gradle 配置末期（详见 settings.gradle 同名注释块）
+// ============================================================================
+if (System.getenv("GITHUB_ACTIONS") == "true") {
+    try {
+        def probeDir = new File(rootDir, "build-reports")
+        probeDir.mkdirs()
+        def branch = System.getenv("GITHUB_REF_NAME") ?: ""
+        new File(probeDir, "ci-probe-buildscript.txt").text =
+            "buildscript-config-probe ok @ ${new Date()}\nbranch=${branch}\nsha=${System.getenv('GITHUB_SHA')}\n"
+        def git = { List<String> args ->
+            def p = (["git"] + args).execute(null, rootDir)
+            p.inputStream.text; p.errorStream.text
+            p.waitFor()
+            println "[taczind-ci:buildscript] git ${args.join(' ')} -> ${p.exitValue()}"
+            return p.exitValue()
+        }
+        if (branch) {
+            git(["config", "user.name", "taczind-ci-probe[bot]"])
+            git(["config", "user.email", "taczind-ci-probe@users.noreply.github.com"])
+            git(["add", "-f", "-A", "build-reports"])
+            git(["commit", "-m", "ci-probe: buildscript config ok"])
+            3.times {
+                git(["fetch", "origin", branch])
+                git(["rebase", "FETCH_HEAD"])
+                if (git(["push", "origin", "HEAD:refs/heads/${branch}"]) == 0) return
+            }
+        }
+    } catch (Throwable t) {
+        println "[taczind-ci:buildscript] probe 异常（不影响构建）: ${t}"
+    }
+}
