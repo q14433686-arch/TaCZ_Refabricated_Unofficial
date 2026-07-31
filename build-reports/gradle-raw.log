@@ -48,3 +48,4 @@ Fabric Loom: 1.17.17
 [taczind-ci:buildscript] git commit -m ci-probe: buildscript config ok -> 0
 [taczind-ci:buildscript] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0
 [taczind-ci:buildscript] git rebase FETCH_HEAD -> 1
+[taczind-ci:buildscript] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0
