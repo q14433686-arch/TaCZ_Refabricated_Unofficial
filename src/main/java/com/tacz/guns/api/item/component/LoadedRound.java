@@ -109,6 +109,22 @@ public record LoadedRound(
         );
     }
 
+    /**
+     * 创建默认的膛内弹药（用于从旧系统迁移时填充）。
+     * <p>
+     * 使用标准无烟火药、黄铜弹壳、Boxer底火、FMJ弹头、完好弹壳状态。
+     * 当从 TACZ 旧系统（hasBulletInBarrel=true）迁移到新系统时，
+     * 由于旧系统没有具体的弹药数据，因此使用默认值。
+     */
+    public static LoadedRound createDefault() {
+        return new LoadedRound(
+                net.minecraft.resources.Identifier.fromNamespaceAndPath("tacz", "default"),
+                BulletType.FMJ, CaseMaterial.BRASS, CaseCondition.PRISTINE,
+                PrimerType.BOXER, PowderType.SMOKELESS,
+                1.0f, 0.0f, 0
+        );
+    }
+
     /** 默认9mm FMJ弹 */
     public static LoadedRound defaultNineMm() {
         return new LoadedRound(

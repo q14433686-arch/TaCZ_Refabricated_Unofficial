@@ -10,6 +10,21 @@ import com.tacz.guns.api.event.common.GunFireEvent;
 import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.api.item.ballistics.BallisticCalculator;
+import com.tacz.guns.api.item.ballistics.CasingDropHelper;
+import com.tacz.guns.api.item.ballistics.CatastrophicFailureSystem;
+import com.tacz.guns.api.item.ballistics.GunIntegrationHelper;
+import com.tacz.guns.api.item.ballistics.OverheatExpansion;
+import com.tacz.guns.api.item.cartridge.CartridgeType;
+import com.tacz.guns.api.item.cartridge.CartridgeTypeManager;
+import com.tacz.guns.api.item.component.GunMaintenanceData;
+import com.tacz.guns.api.item.component.GunStateData;
+import com.tacz.guns.api.item.component.GunWearData;
+import com.tacz.guns.api.item.component.LoadedRound;
+import com.tacz.guns.api.item.component.ToleranceData;
+import com.tacz.guns.api.item.cartridge.CartridgeTypeManager;
+import com.tacz.guns.api.item.component.GunStateData;
+import com.tacz.guns.api.item.component.LoadedRound;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.api.util.LuaEntityAccessor;
@@ -18,6 +33,7 @@ import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.config.common.AmmoConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
+import com.tacz.guns.init.ModDataComponents;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunFire;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -103,6 +119,9 @@ public class ModernKineticGunScriptAPI {
      * @param consumeAmmo 本次射击是否消耗弹药
      */
     public void shootOnce(boolean consumeAmmo) {
+        // P1集成：确保 GunStateData 存在（从旧系统状态初始化）
+        GunIntegrationHelper.ensureGunStateDataExists(itemStack);
+
         GunData gunData = gunIndex.getGunData();
         BulletData bulletData = gunIndex.getBulletData();
         IGunOperator gunOperator = IGunOperator.fromLivingEntity(shooter);
@@ -184,16 +203,37 @@ public class ModernKineticGunScriptAPI {
                 // 生成子弹
                 Level world = shooter.level();
                 Identifier ammoId = gunData.getAmmoId();
+                // P2弹道扩展：读取枪膛内弹药数据
+                GunStateData gunStateData = itemStack.get(ModDataComponents.GUN_STATE_DATA);
+                LoadedRound chamberedRound = gunStateData != null ? gunStateData.chamberedRound() : null;
+                Identifier chamberedCartridge = gunData.getChamberedCartridge();
+                CartridgeType cartridgeType = chamberedCartridge != null
+                        ? CartridgeTypeManager.getCartridgeType(chamberedCartridge).orElse(null)
+                        : null;
+                int barrelLength = gunData.getBarrelLength();
+                int twistRate = gunData.getTwistRate();
+                float bulletLength = bulletData.getBulletLength();
                 for (int i = 0; i < bulletAmount; i++) {
                     boolean isTracer = bulletData.hasTracerAmmo() && gunOperator.nextBulletIsTracer(bulletData.getTracerCountInterval());
                     EntityKineticBullet bullet = new EntityKineticBullet(world, shooter, itemStack, ammoId, gunId,
                             gunDisplayId, isTracer, gunData, bulletData);
                     bullet.applyShotgunDamageSpread(bulletAmount);
                     bullet.setShotDamageMultiplier(shotDamageMultiplier);
+                    // P2弹道扩展：应用弹道计算结果到子弹实体
+                    if (chamberedRound != null) {
+                        bullet.applyBallistics(chamberedRound, cartridgeType, barrelLength, twistRate, bulletLength, gunData);
+                    }
                     abstractGunItem.doBulletSpread(dataHolder, itemStack, shooter, bullet, i, processedSpeed,
                             inaccuracy, pitch, yaw);
                     world.addFreshEntity(bullet);
                 }
+                // P2弹道扩展：弹壳掉落（仅在服务端执行）
+                if (world instanceof net.minecraft.server.level.ServerLevel serverLevel && chamberedRound != null) {
+                    CasingDropHelper.spawnCasing(serverLevel, shooter, chamberedRound);
+                }
+                // P1集成：射击后执行枪机循环状态机
+                // 更新 GunStateData（枪机循环状态、故障、供弹具数据）和 GunWearData（磨损消耗）
+                GunIntegrationHelper.postShootCycle(itemStack, gunData, shooter);
                 // 播放枪声
                 if (soundDistance > 0) {
                     String soundId = useSilenceSound ? SoundManager.SILENCE_3P_SOUND : SoundManager.SHOOT_3P_SOUND;
@@ -220,10 +260,54 @@ public class ModernKineticGunScriptAPI {
         if (heatData == null) {
             return;
         }
-        float newHeat = Math.min(abstractGunItem.getHeatAmount(itemStack) + heatData.getHeatPerShot(), heatData.getHeatMax());
+
+        // P3扩展：使用发射药类型和口径修正的热量增量
+        GunStateData gunStateData = itemStack.get(ModDataComponents.GUN_STATE_DATA);
+        LoadedRound loadedRound = gunStateData != null ? gunStateData.chamberedRound() : null;
+        float shotHeat = OverheatExpansion.calculateShotHeat(
+                heatData.getHeatPerShot(),
+                loadedRound,
+                heatData.getCaliberHeatModifier()
+        );
+
+        float newHeat = Math.min(abstractGunItem.getHeatAmount(itemStack) + shotHeat, heatData.getHeatMax());
         abstractGunItem.setHeatAmount(itemStack, newHeat);
         if (newHeat >= heatData.getHeatMax()) {
             abstractGunItem.setOverheatLocked(itemStack, true);
+        }
+
+        // P3扩展：烧蚀累积
+        if (gunStateData != null) {
+            float heatPercentage = newHeat / heatData.getHeatMax();
+            GunStateData updatedState = gunStateData.withErosionFromShot(
+                    heatData.getErosionPerShot(), heatPercentage);
+            itemStack.set(ModDataComponents.GUN_STATE_DATA, updatedState);
+        }
+
+        // P3扩展：积碳累积
+        GunMaintenanceData maintenanceData = itemStack.get(ModDataComponents.GUN_MAINTENANCE_DATA);
+        if (maintenanceData != null && loadedRound != null) {
+            maintenanceData = maintenanceData.withCarbonFromShot(loadedRound.powderType().getCarbonFoulingRate());
+            itemStack.set(ModDataComponents.GUN_MAINTENANCE_DATA, maintenanceData);
+        }
+
+        // P3扩展：炸膛判定
+        if (gunStateData != null && maintenanceData != null) {
+            float heatPercentage = newHeat / heatData.getHeatMax();
+            ToleranceData toleranceData = itemStack.get(ModDataComponents.TOLERANCE_DATA);
+            GunWearData wearData = itemStack.get(ModDataComponents.GUN_WEAR_DATA);
+            if (wearData != null) {
+                CatastrophicFailureSystem.CatastrophicResult result = CatastrophicFailureSystem.checkAndApply(
+                        gunStateData, maintenanceData, heatPercentage, heatData,
+                        toleranceData, wearData, itemStack, shooter
+                );
+                if (result != null) {
+                    // 炸膛发生！应用后果
+                    itemStack.set(ModDataComponents.GUN_STATE_DATA, result.updatedGunStateData());
+                    itemStack.set(ModDataComponents.GUN_WEAR_DATA, result.updatedWearData());
+                    // TODO: 触发炸膛动画/音效
+                }
+            }
         }
     }
 
@@ -255,6 +339,11 @@ public class ModernKineticGunScriptAPI {
             }
             // 没有弹匣内的子弹则消耗枪膛内的子弹
             abstractGunItem.setBulletInBarrel(itemStack, false);
+            // P1集成：同步 GunStateData - 清空膛内弹药
+            GunStateData stateData = itemStack.get(ModDataComponents.GUN_STATE_DATA);
+            if (stateData != null && stateData.hasChamberedRound()) {
+                itemStack.set(ModDataComponents.GUN_STATE_DATA, stateData.withChamberedRoundFired());
+            }
             return true;
         }
         // 闭膛逻辑
@@ -275,6 +364,11 @@ public class ModernKineticGunScriptAPI {
             }
             // 没有弹匣内的子弹则消耗枪膛内的子弹
             abstractGunItem.setBulletInBarrel(itemStack, false);
+            // P1集成：同步 GunStateData - 清空膛内弹药
+            GunStateData stateData = itemStack.get(ModDataComponents.GUN_STATE_DATA);
+            if (stateData != null && stateData.hasChamberedRound()) {
+                itemStack.set(ModDataComponents.GUN_STATE_DATA, stateData.withChamberedRoundFired());
+            }
             return true;
         }
         // 开膛逻辑

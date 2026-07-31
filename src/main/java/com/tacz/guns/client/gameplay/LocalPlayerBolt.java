@@ -4,10 +4,13 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.ballistics.GunIntegrationHelper;
+import com.tacz.guns.api.item.component.GunStateData;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.client.sound.SoundPlayManager;
 import com.tacz.guns.network.message.ClientMessagePlayerBoltGun;
+import com.tacz.guns.init.ModDataComponents;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -54,6 +57,21 @@ public class LocalPlayerBolt {
             boolean noAmmo = useInventoryAmmo && !hasInventoryAmmo ||
                     !useInventoryAmmo && iGun.getCurrentAmmoCount(mainHandItem) < 1;
             if (boltType != Bolt.MANUAL_ACTION) {
+                return;
+            }
+            // P1集成：检查是否有故障需要清除（拉栓可以清除故障）
+            GunStateData stateData = mainHandItem.get(ModDataComponents.GUN_STATE_DATA);
+            if (stateData != null && stateData.hasMalfunction()) {
+                // 允许拉栓清除故障：锁上状态锁，触发拉栓动画
+                // 服务端在处理拉栓逻辑时会调用 GunCycleMachine.clearMalfunction()
+                data.lockState(IGunOperator::getSynIsBolting);
+                data.isBolting = true;
+                ClientPlayNetworking.send(new ClientMessagePlayerBoltGun());
+                AnimationStateMachine<?> animationStateMachine = display.getAnimationStateMachine();
+                if (animationStateMachine != null) {
+                    SoundPlayManager.playBoltSound(player, display);
+                    animationStateMachine.trigger(GunAnimationConstant.INPUT_BOLT);
+                }
                 return;
             }
             // 检查是否有弹药在枪膛内

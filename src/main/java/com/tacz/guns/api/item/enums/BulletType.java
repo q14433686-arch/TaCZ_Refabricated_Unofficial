@@ -48,7 +48,15 @@ public enum BulletType {
      * 配合消音器隐蔽使用，初速降低
      */
     @SerializedName("subsonic")
-    SUBSONIC;
+    SUBSONIC,
+
+    /**
+     * 燃烧弹 (Incendiary)
+     * 弹头内含燃烧剂，击中目标后点燃
+     * 对无甲目标伤害高，穿透力低
+     */
+    @SerializedName("incendiary")
+    INCENDIARY;
 
     public static final Codec<BulletType> CODEC = Codec.STRING.xmap(BulletType::valueOf, BulletType::name);
     public static final IntFunction<BulletType> BY_ID = ByIdMap.continuous(Enum::ordinal, values(), ByIdMap.OutOfBoundsStrategy.ZERO);
@@ -64,6 +72,7 @@ public enum BulletType {
             case AP -> 0.8f;
             case TRACER -> 1.0f;
             case SUBSONIC -> 0.7f;
+            case INCENDIARY -> 1.1f;
         };
     }
 
@@ -77,6 +86,7 @@ public enum BulletType {
             case AP -> 1.5f;
             case TRACER -> 1.0f;
             case SUBSONIC -> 0.8f;
+            case INCENDIARY -> 0.5f;
         };
     }
 
@@ -90,6 +100,7 @@ public enum BulletType {
             case AP -> 1.5f;
             case TRACER -> 1.1f;
             case SUBSONIC -> 1.3f;
+            case INCENDIARY -> 1.4f;
         };
     }
 
@@ -105,5 +116,55 @@ public enum BulletType {
      */
     public boolean isSubsonic() {
         return this == SUBSONIC;
+    }
+
+    /**
+     * 是否为燃烧弹
+     */
+    public boolean isIncendiary() {
+        return this == INCENDIARY;
+    }
+
+    /**
+     * 弹头长度修正系数（相对于同口径FMJ）
+     * 影响缠距匹配计算：AP弹头更长（含硬质核心），HP弹头更短
+     */
+    public float getBulletLengthModifier() {
+        return switch (this) {
+            case FMJ -> 1.0f;
+            case HP -> 0.85f;
+            case AP -> 1.2f;
+            case TRACER -> 1.05f;
+            case SUBSONIC -> 1.0f;
+            case INCENDIARY -> 1.1f;
+        };
+    }
+
+    /**
+     * 弹头质量修正系数（相对于同口径标准弹头质量）
+     */
+    public float getMassModifier() {
+        return switch (this) {
+            case FMJ -> 1.0f;
+            case HP -> 0.9f;
+            case AP -> 1.15f;
+            case TRACER -> 1.0f;
+            case SUBSONIC -> 1.1f;
+            case INCENDIARY -> 0.95f;
+        };
+    }
+
+    /**
+     * 所需最低科技阶段
+     */
+    public int getMinTechLevel() {
+        return switch (this) {
+            case FMJ -> 0;
+            case HP -> 1;
+            case AP -> 2;
+            case TRACER -> 2;
+            case SUBSONIC -> 2;
+            case INCENDIARY -> 3;
+        };
     }
 }

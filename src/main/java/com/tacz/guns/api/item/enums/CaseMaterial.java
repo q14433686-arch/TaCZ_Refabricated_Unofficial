@@ -31,7 +31,14 @@ public enum CaseMaterial {
      * 铝制弹壳：轻量不可复装
      */
     @SerializedName("aluminum")
-    ALUMINUM;
+    ALUMINUM,
+
+    /**
+     * 聚合物弹壳：最轻量不可复装，耐腐蚀
+     * T3+阶段使用，现代弹药（如PCP聚合物弹壳）
+     */
+    @SerializedName("polymer")
+    POLYMER;
 
     public static final Codec<CaseMaterial> CODEC = Codec.STRING.xmap(CaseMaterial::valueOf, CaseMaterial::name);
     public static final IntFunction<CaseMaterial> BY_ID = ByIdMap.continuous(Enum::ordinal, values(), ByIdMap.OutOfBoundsStrategy.ZERO);
@@ -45,6 +52,7 @@ public enum CaseMaterial {
             case BRASS -> 5;
             case STEEL -> 0;
             case ALUMINUM -> 0;
+            case POLYMER -> 0;
         };
     }
 
@@ -63,6 +71,7 @@ public enum CaseMaterial {
             case BRASS -> 1.0f;
             case STEEL -> 1.2f;
             case ALUMINUM -> 0.6f;
+            case POLYMER -> 0.5f;
         };
     }
 
@@ -74,6 +83,44 @@ public enum CaseMaterial {
             case BRASS -> 0.0f;
             case STEEL -> 0.02f;
             case ALUMINUM -> 0.0f;
+            case POLYMER -> 0.0f;
+        };
+    }
+
+    /**
+     * 弹壳强度系数（影响膛压承受能力和抽壳可靠性）
+     */
+    public float getStrengthModifier() {
+        return switch (this) {
+            case BRASS -> 1.0f;
+            case STEEL -> 1.3f;
+            case ALUMINUM -> 0.7f;
+            case POLYMER -> 0.6f;
+        };
+    }
+
+    /**
+     * 抽壳摩擦系数（影响抽壳可靠性）
+     * 黄铜弹性好，抽壳顺畅；钢/铝摩擦大
+     */
+    public float getExtractionFriction() {
+        return switch (this) {
+            case BRASS -> 1.0f;
+            case STEEL -> 1.4f;
+            case ALUMINUM -> 1.2f;
+            case POLYMER -> 0.8f;
+        };
+    }
+
+    /**
+     * 所需最低科技阶段
+     */
+    public int getMinTechLevel() {
+        return switch (this) {
+            case BRASS -> 1;   // T1+
+            case STEEL -> 1;   // T1+
+            case ALUMINUM -> 3; // T3+
+            case POLYMER -> 3;  // T3+
         };
     }
 }

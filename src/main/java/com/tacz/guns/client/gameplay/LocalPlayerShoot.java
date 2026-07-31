@@ -10,6 +10,7 @@ import com.tacz.guns.api.entity.ShootResult;
 import com.tacz.guns.api.event.common.GunFireEvent;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.ballistics.GunIntegrationHelper;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.resource.GunDisplayInstance;
@@ -188,6 +189,15 @@ public class LocalPlayerShoot {
             return ShootResult.COOL_DOWN;
         }
 
+        // P1集成：检查枪械故障状态（Squib/卡壳/哑弹等）
+        String malfunctionReason = GunIntegrationHelper.checkCanFire(mainHandItem);
+        if (malfunctionReason != null) {
+            if (playDrySound) {
+                SoundPlayManager.playDryFireSound(player, display);
+            }
+            return ShootResult.MALFUNCTION;
+        }
+
         // 检查是否正在换弹
         if (gunOperator.getSynReloadState().getStateType().isReloading()) {
             return ShootResult.IS_RELOADING;
@@ -266,6 +276,13 @@ public class LocalPlayerShoot {
                     future.cancel(false); // 取消当前任务
                     return;
                 }
+            }
+            // P1集成：连发中也检查故障状态
+            String malfunctionReason = GunIntegrationHelper.checkCanFire(mainHandItem);
+            if (malfunctionReason != null) {
+                ScheduledFuture<?> future = (ScheduledFuture<?>) Thread.currentThread();
+                future.cancel(false); // 故障中断连发
+                return;
             }
             // 如果达到最大连发次数，或者玩家已经死亡，取消任务
             if (count.get() >= maxCount || player.isDeadOrDying()) {

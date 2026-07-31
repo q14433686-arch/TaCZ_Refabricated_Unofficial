@@ -4,6 +4,7 @@ import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.ballistics.GunIntegrationHelper;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
 import com.tacz.guns.api.item.gun.FireMode;
@@ -486,11 +487,13 @@ public interface GunItemDataAccessor extends IGun {
 
     @Override
     default float lerpInaccuracy(ItemStack gun) {
-        return TimelessAPI.getCommonGunIndex(getGunId(gun))
+        float baseInaccuracy = TimelessAPI.getCommonGunIndex(getGunId(gun))
                 .map(index -> index.getGunData().getHeatData())
                 .map(heatData -> {
                     float heatPercentage = (getHeatAmount(gun) / heatData.getHeatMax());
                     return Mth.lerp(heatPercentage, heatData.getMinInaccuracy(), heatData.getMaxInaccuracy());
                 }).orElse(1f);
+        // P3集成：综合精度修正（过热扩展+耐久+保养+烧蚀）
+        return GunIntegrationHelper.getComprehensiveInaccuracy(gun, baseInaccuracy);
     }
 }

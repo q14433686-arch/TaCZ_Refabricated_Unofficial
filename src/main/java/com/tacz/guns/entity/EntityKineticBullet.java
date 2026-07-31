@@ -28,6 +28,14 @@ import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
 import com.tacz.guns.resource.modifier.custom.DamageModifier;
 import com.tacz.guns.resource.modifier.custom.ExplosionModifier;
 import com.tacz.guns.resource.modifier.custom.IgniteModifier;
+import com.tacz.guns.api.item.ballistics.BallisticCalculator;
+import com.tacz.guns.api.item.ballistics.BallisticsConfig;
+import com.tacz.guns.api.item.ballistics.StabilityCalculator;
+import com.tacz.guns.api.item.ballistics.TerminalBallistics;
+import com.tacz.guns.api.item.cartridge.CartridgeType;
+import com.tacz.guns.api.item.cartridge.CartridgeTypeManager;
+import com.tacz.guns.api.item.component.LoadedRound;
+import com.tacz.guns.api.item.enums.BulletType;
 import com.tacz.guns.resource.pojo.data.gun.BulletData;
 import com.tacz.guns.resource.pojo.data.gun.ExplosionData;
 import com.tacz.guns.resource.pojo.data.gun.ExtraDamage.DistanceDamagePair;
@@ -149,6 +157,24 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
     private float headShot;
     private float shotDamageMultiplier = 1f;
 
+    // ====== P2弹道扩展字段 ======
+
+    /** P2弹道扩展：当前弹药的完整数据（用于终端弹道计算） */
+    @Nullable
+    private LoadedRound loadedRound;
+
+    /** P2弹道扩展：弹头稳定性因子（Sg），用于精度修正 */
+    private float stabilityFactor = StabilityCalculator.STABLE_THRESHOLD;
+
+    /** P2弹道扩展：弹道系数（影响空气阻力） */
+    private float ballisticCoefficient = 0.3f;
+
+    /** P2弹道扩展：精度修正系数（来自稳定性/发射药/磨损等） */
+    private float ballisticsInaccuracyModifier = 1.0f;
+
+    /** P2弹道扩展：是否为燃烧弹 */
+    private boolean isIncendiary = false;
+
     public EntityKineticBullet(EntityType<? extends Projectile> type, Level worldIn) {
         super(type, worldIn);
     }
@@ -236,6 +262,107 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         this.shotDamageMultiplier = Math.max(multiplier, 0f);
     }
 
+    /**
+     * P2弹道扩展：应用弹道计算结果到子弹实体。
+     * <p>
+     * 在 {@link com.tacz.guns.item.ModernKineticGunScriptAPI#shootOnce(boolean)} 中，
+     * 子弹创建后调用此方法，将弹道计算结果应用到子弹的飞行参数。
+     * <p>
+     * 如果 loadedRound 为 null，则使用旧逻辑（不修改弹道）。
+     *
+     * @param loadedRound       当前弹药的完整数据
+     * @param cartridgeType     口径规格（可为null）
+     * @param barrelLength      枪管长度（mm）
+     * @param twistRate         缠距（英寸/转）
+     * @param bulletLength      弹头长度（英寸）
+     * @param gunData           枪械数据（用于获取枪管材质等）
+     */
+    public void applyBallistics(@Nullable LoadedRound loadedRound,
+                                 @Nullable CartridgeType cartridgeType,
+                                 int barrelLength,
+                                 int twistRate,
+                                 float bulletLength,
+                                 @Nullable GunData gunData) {
+        if (loadedRound == null) {
+            return; // 旧逻辑兼容：无弹药数据时不修改弹道
+        }
+
+        this.loadedRound = loadedRound;
+
+        // 计算综合弹道结果
+        BallisticCalculator.BallisticResult result = BallisticCalculator.calculate(
+                null, // bulletData 已在构造函数中处理
+                cartridgeType,
+                loadedRound,
+                barrelLength,
+                twistRate,
+                bulletLength
+        );
+
+        // 1. 应用初速修正（枪管材质修正）
+        if (gunData != null) {
+            float materialModifier = gunData.getBarrelMaterialModifier();
+            Vec3 currentMovement = this.getDeltaMovement();
+            this.setDeltaMovement(currentMovement.scale(materialModifier));
+        }
+
+        // 2. 应用稳定性修正
+        this.stabilityFactor = result.stabilityFactor();
+        this.ballisticsInaccuracyModifier = result.inaccuracyModifier();
+
+        // 3. 应用弹道系数（影响空气阻力）
+        if (cartridgeType != null) {
+            this.ballisticCoefficient = cartridgeType.caseCapacity() > 0 ? 0.3f : 0.3f;
+        }
+
+        // 4. 燃烧弹标记
+        this.isIncendiary = loadedRound.bulletType() == BulletType.INCENDIARY;
+
+        // 5. 应用重力修正（P2扩展：使用更真实的重力模型）
+        // 当前TACZ的gravity字段已由BulletData设置，这里不需要覆盖
+        // 但可以基于弹道系数调整friction
+        if (this.ballisticCoefficient > 0.3f) {
+            // 弹道系数越高，空气阻力越小
+            this.friction *= (0.3f / this.ballisticCoefficient);
+        }
+
+        // 6. 曳光弹标记处理（P2扩展：燃烧弹也产生曳光效果）
+        if (this.isIncendiary && !this.isTracerAmmo) {
+            // 燃烧弹不是曳光弹，但可以产生火焰粒子效果
+        }
+    }
+
+    /**
+     * P2弹道扩展：获取当前弹药的完整数据。
+     * <p>
+     * 用于终端弹道计算（穿透/跳弹/伤害修正）。
+     */
+    @Nullable
+    public LoadedRound getLoadedRound() {
+        return loadedRound;
+    }
+
+    /**
+     * P2弹道扩展：获取弹头稳定性因子。
+     */
+    public float getStabilityFactor() {
+        return stabilityFactor;
+    }
+
+    /**
+     * P2弹道扩展：获取弹道精度修正系数。
+     */
+    public float getBallisticsInaccuracyModifier() {
+        return ballisticsInaccuracyModifier;
+    }
+
+    /**
+     * P2弹道扩展：是否为燃烧弹。
+     */
+    public boolean isIncendiaryRound() {
+        return isIncendiary;
+    }
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
     }
@@ -282,6 +409,14 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
             gravity *= 0.6F;
         }
         // 重力与阻力更新速度状态
+        float friction = this.friction;
+        float gravity = this.gravity;
+        // P2弹道扩展：基于弹道系数调整阻力
+        // 弹道系数越高（弹头越流线型/越重），空气阻力影响越小
+        if (this.ballisticCoefficient > 0.01f) {
+            // 弹道系数影响：BC越高，friction的有效值越低
+            friction = this.friction * (0.3f / Math.max(0.01f, this.ballisticCoefficient));
+        }
         this.setDeltaMovement(this.getDeltaMovement().scale(1 - friction));
         this.setDeltaMovement(this.getDeltaMovement().add(0, -gravity, 0));
         // 子弹生命结束
@@ -436,6 +571,13 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
                 serverLevel.sendParticles(ParticleTypes.LAVA, entity.getX(), entity.getY() + entity.getEyeHeight(), entity.getZ(), 1, 0, 0, 0, 0);
             }
         }
+        // P2弹道扩展：燃烧弹额外点燃效果
+        if (this.isIncendiary && AmmoConfig.IGNITE_ENTITY.get()) {
+            entity.igniteForSeconds(this.igniteEntityTime + 4); // 燃烧弹额外4秒点燃
+            if (this.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(ParticleTypes.FLAME, entity.getX(), entity.getY() + entity.getEyeHeight(), entity.getZ(), 5, 0.2, 0.2, 0.2, 0.02);
+            }
+        }
         // TODO 暴击判定（不是爆头）暴击判定内部逻辑，需要输出一个是否暴击的 flag
         if (headshot) {
             // 默认爆头伤害是 1x
@@ -535,7 +677,9 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         }
         // 让脚本修改枪械伤害
         float modifiedDamage = modifyProperty(GunProperties.DAMAGE, Float.class, base);
-        return Math.max(modifiedDamage * this.shotDamageMultiplier, 0F);
+        // P2弹道扩展：应用稳定性伤害修正（翻滚弹头增加杀伤，失稳弹头过早解体减少伤害）
+        float stabilityDamageModifier = StabilityCalculator.getDamageModifier(this.stabilityFactor);
+        return Math.max(modifiedDamage * this.shotDamageMultiplier * stabilityDamageModifier, 0F);
     }
 
     /**
@@ -623,6 +767,15 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         buffer.writeBoolean(this.isTracerAmmo);
         buffer.writeIdentifier(this.gunId);
         buffer.writeIdentifier(this.gunDisplayId);
+        // P2弹道扩展：序列化新字段
+        buffer.writeFloat(this.stabilityFactor);
+        buffer.writeFloat(this.ballisticCoefficient);
+        buffer.writeFloat(this.ballisticsInaccuracyModifier);
+        buffer.writeBoolean(this.isIncendiary);
+        buffer.writeBoolean(this.loadedRound != null);
+        if (this.loadedRound != null) {
+            LoadedRound.STREAM_CODEC.encode(buffer, this.loadedRound);
+        }
     }
 
     @Override
@@ -648,6 +801,15 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         this.isTracerAmmo = additionalData.readBoolean();
         this.gunId = additionalData.readIdentifier();
         this.gunDisplayId = additionalData.readIdentifier();
+        // P2弹道扩展：反序列化新字段
+        this.stabilityFactor = additionalData.readFloat();
+        this.ballisticCoefficient = additionalData.readFloat();
+        this.ballisticsInaccuracyModifier = additionalData.readFloat();
+        this.isIncendiary = additionalData.readBoolean();
+        boolean hasLoadedRound = additionalData.readBoolean();
+        if (hasLoadedRound) {
+            this.loadedRound = LoadedRound.STREAM_CODEC.decode(additionalData);
+        }
     }
 
     public Identifier getAmmoId() {

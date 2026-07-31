@@ -6,6 +6,7 @@ import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ShootResult;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.ballistics.GunIntegrationHelper;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.config.sync.SyncConfig;
@@ -120,6 +121,11 @@ public class LivingEntityShoot {
                 !useInventoryAmmo && ammoCount < 1;
         if (noAmmo) {
             return ShootResult.NO_AMMO;
+        }
+        // P1集成：检查枪械故障状态（Squib/卡壳/哑弹等）
+        String malfunctionReason = GunIntegrationHelper.checkCanFire(currentGunItem);
+        if (malfunctionReason != null) {
+            return ShootResult.MALFUNCTION;
         }
         //Handle Heat Data
         if (gunIndex.getGunData().hasHeatData()) {

@@ -136,4 +136,158 @@ public record GunMaintenanceData(
                 carbonFoulingLevel, corrosionLevel, lubricationLevel, type, lastMaintenanceTimestamp
         );
     }
+
+    // ====== P3过热/炸膛/保养扩展方法 ======
+
+    /**
+     * P3扩展：射击后积碳累积。
+     * <p>
+     * 使用 PowderType.getCarbonFoulingRate() 作为 carbonRate。
+     * <ul>
+     *   <li>黑火药：0.5/发（10发后需清洁）</li>
+     *   <li>无烟火药：0.05/发（100发后需清洁）</li>
+     *   <li>双基药：0.04/发</li>
+     *   <li>三基药：0.02/发</li>
+     * </ul>
+     *
+     * @param carbonRate 积碳速率（来自 PowderType.getCarbonFoulingRate()）
+     * @return 更新后的 GunMaintenanceData
+     */
+    public GunMaintenanceData withCarbonFromShot(float carbonRate) {
+        return new GunMaintenanceData(
+                Math.min(100.0f, carbonFoulingLevel + carbonRate),
+                corrosionLevel, lubricationLevel, contaminationType, lastMaintenanceTimestamp
+        );
+    }
+
+    /**
+     * P3扩展：每tick润滑衰减。
+     * <p>
+     * 润滑油在枪械使用过程中逐渐消耗，衰减速率约 -0.001/tick。
+     * 干涩状态（lubrication < 20）会导致循环速度降低20%。
+     *
+     * @return 更新后的 GunMaintenanceData
+     */
+    public GunMaintenanceData withLubricationTickDecay() {
+        return new GunMaintenanceData(
+                carbonFoulingLevel, corrosionLevel,
+                Math.max(0.0f, lubricationLevel - 0.001f),
+                contaminationType, lastMaintenanceTimestamp
+        );
+    }
+
+    /**
+     * P3扩展：环境锈蚀累积。
+     * <p>
+     * 锈蚀速率取决于环境条件和润滑状态：
+     * <ul>
+     *   <li>正常环境：0.00002/tick（约0.0004/秒）</li>
+     *   <li>暴露雨中：0.0002/tick（约0.004/秒）</li>
+     *   <li>水中：0.001/tick（约0.02/秒）</li>
+     *   <li>涂油状态：×0.1（大幅减缓）</li>
+     *   <li>钢制弹壳使用后：×2.0（额外加速）</li>
+     * </ul>
+     *
+     * @param isRaining  是否在雨中
+     * @param isInWater  是否在水中
+     * @param isOiled    是否有润滑（lubricationLevel > 30）
+     * @param isCorrosiveAmmoUsed 是否使用过腐蚀性弹药
+     * @return 更新后的 GunMaintenanceData
+     */
+    public GunMaintenanceData withCorrosionFromEnvironment(boolean isRaining, boolean isInWater,
+                                                           boolean isOiled, boolean isCorrosiveAmmoUsed) {
+        float rate = getCorrosionRate(isRaining, isInWater, isOiled, isCorrosiveAmmoUsed);
+        return new GunMaintenanceData(
+                carbonFoulingLevel, Math.min(100.0f, corrosionLevel + rate),
+                lubricationLevel, contaminationType, lastMaintenanceTimestamp
+        );
+    }
+
+    /**
+     * P3扩展：计算当前环境下的锈蚀速率（每tick）。
+     *
+     * @param isRaining  是否在雨中
+     * @param isInWater  是否在水中
+     * @param isOiled    是否有润滑
+     * @param isCorrosiveAmmoUsed 是否使用过腐蚀性弹药
+     * @return 锈蚀速率（每tick）
+     */
+    public float getCorrosionRate(boolean isRaining, boolean isInWater, boolean isOiled, boolean isCorrosiveAmmoUsed) {
+        float baseRate;
+        if (isInWater) {
+            baseRate = 0.001f;
+        } else if (isRaining) {
+            baseRate = 0.0002f;
+        } else {
+            baseRate = 0.00002f;
+        }
+
+        // 润滑减缓
+        if (isOiled) {
+            baseRate *= 0.1f;
+        }
+
+        // 腐蚀性弹药加速
+        if (isCorrosiveAmmoUsed) {
+            baseRate *= 2.0f;
+        }
+
+        return baseRate;
+    }
+
+    /**
+     * P3扩展：积碳+锈蚀的精度惩罚。
+     * <p>
+     * 综合积碳和锈蚀对精度的负面影响：
+     * <ul>
+     *   <li>积碳 > 60: -5%</li>
+     *   <li>积碳 > 80: -15%</li>
+     *   <li>锈蚀 > 25: -5%</li>
+     *   <li>锈蚀 > 50: -15%</li>
+     *   <li>锈蚀 > 75: -30%</li>
+     * </ul>
+     *
+     * @return 精度修正系数（1.0=无惩罚，<1.0=精度下降）
+     */
+    public float getAccuracyPenalty() {
+        float penalty = 1.0f;
+
+        // 积碳影响
+        if (carbonFoulingLevel > 80) penalty *= 0.85f;
+        else if (carbonFoulingLevel > 60) penalty *= 0.95f;
+
+        // 锈蚀影响
+        if (corrosionLevel > 75) penalty *= 0.70f;
+        else if (corrosionLevel > 50) penalty *= 0.85f;
+        else if (corrosionLevel > 25) penalty *= 0.95f;
+
+        return penalty;
+    }
+
+    /**
+     * P3扩展：积碳+锈蚀的卡壳概率额外贡献。
+     * <p>
+     * 综合积碳和锈蚀对卡壳概率的影响：
+     * <ul>
+     *   <li>积碳 > 30: +0.1%</li>
+     *   <li>积碳 > 60: +0.5%</li>
+     *   <li>积碳 > 80: +2.0%</li>
+     *   <li>锈蚀 > 25: +0.5%</li>
+     *   <li>锈蚀 > 50: +2.0%</li>
+     *   <li>锈蚀 > 75: +5.0%</li>
+     * </ul>
+     *
+     * @return 卡壳概率额外贡献（0.0~0.07）
+     */
+    public float getMalfunctionBonus() {
+        float bonus = 0.0f;
+
+        // 积碳影响
+        bonus += getCarbonMalfunctionBonus();
+
+        // 锈蚀影响
+        bonus += getCorrosionMalfunctionBonus();
+
+        return bonus;
+    }
 }

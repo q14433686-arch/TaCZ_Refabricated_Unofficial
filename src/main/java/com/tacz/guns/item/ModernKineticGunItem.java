@@ -13,6 +13,14 @@ import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.api.item.nbt.GunItemDataAccessor;
 import com.tacz.guns.command.sub.DebugCommand;
 import com.tacz.guns.debug.GunMeleeDebug;
+import com.tacz.guns.api.item.ballistics.CookOffSystem;
+import com.tacz.guns.api.item.ballistics.EnvironmentSensor;
+import com.tacz.guns.api.item.ballistics.GunIntegrationHelper;
+import com.tacz.guns.api.item.ballistics.OverheatExpansion;
+import com.tacz.guns.api.item.component.GunMaintenanceData;
+import com.tacz.guns.api.item.component.GunStateData;
+import com.tacz.guns.api.item.component.LoadedRound;
+import com.tacz.guns.api.item.enums.GunCycleState;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -219,11 +227,14 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
                 .map(script -> checkFunction(script.get("tick_heat")))
                 .ifPresentOrElse(
                         func -> func.call(CoerceJavaToLua.coerce(api), LuaValue.valueOf(heatTimestamp)),
-                        () -> defaultTickHeat(heatTimestamp, gunItem)
+                        () -> defaultTickHeat(heatTimestamp, gunItem, shooter)
                 );
     }
 
-    private void defaultTickHeat(long heatTimestamp, ItemStack gunItem) {
+    private void defaultTickHeat(long heatTimestamp, ItemStack gunItem, @Nullable LivingEntity shooter) {
+        // P1集成：确保 GunStateData 存在
+        GunIntegrationHelper.ensureGunStateDataExists(gunItem);
+
         var iGun = IGun.getIGunOrNull(gunItem);
         if (iGun == null) return;
         TimelessAPI.getCommonGunIndex(iGun.getGunId(gunItem))
@@ -234,6 +245,47 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
                         tickLocked(iGun, gunItem, heatData, heatTimestamp);
                     } else {
                         tickNormal(iGun, gunItem, heatData, heatTimestamp);
+                    }
+
+                    // P3扩展：Cook-off判定（每tick检查，仅闭膛待击）
+                    GunStateData gunStateData = gunItem.get(com.tacz.guns.init.ModDataComponents.GUN_STATE_DATA);
+                    if (gunStateData != null && gunStateData.hasChamberedRound()) {
+                        float heatPercentage = iGun.getHeatAmount(gunItem) / heatData.getHeatMax();
+                        Bolt boltType = TimelessAPI.getCommonGunIndex(iGun.getGunId(gunItem))
+                                .map(index -> index.getGunData().getBolt()).orElse(Bolt.OPEN_BOLT);
+                        if (CookOffSystem.checkCookOff(gunStateData, heatPercentage, heatData, boltType)) {
+                            // Cook-off发生：膛内弹药自燃
+                            // TODO: 触发Cook-off射击（自动发射，无射手控制，精度极差）
+                            // 目前简化为：清空枪膛，消耗弹药
+                            GunStateData updatedState = gunStateData.withChamberedRoundFired();
+                            gunItem.set(com.tacz.guns.init.ModDataComponents.GUN_STATE_DATA, updatedState);
+                        }
+                    }
+
+                    // P3扩展：环境检测（每次tickHeat调用时检测）
+                    // tickHeat本身不是每tick调用的（有冷却延迟），所以检测频率不会过高
+                    // 不使用 raw NBT tag，避免每tick写NBT的性能开销
+                    if (shooter != null) {
+                        EnvironmentSensor.EnvironmentCondition condition = EnvironmentSensor.detect(shooter);
+
+                        // P3扩展：环境锈蚀
+                        GunMaintenanceData maintenanceData = gunItem.get(com.tacz.guns.init.ModDataComponents.GUN_MAINTENANCE_DATA);
+                        if (maintenanceData != null) {
+                            // 润滑衰减
+                            maintenanceData = maintenanceData.withLubricationTickDecay();
+                            // 环境锈蚀
+                            boolean isOiled = maintenanceData.lubricationLevel() > 30.0f;
+                            maintenanceData = maintenanceData.withCorrosionFromEnvironment(
+                                    condition.isRaining(), condition.isInWater(), isOiled, false);
+                            gunItem.set(com.tacz.guns.init.ModDataComponents.GUN_MAINTENANCE_DATA, maintenanceData);
+                        }
+
+                        // P3扩展：环境冷却修正（水中/雨中加速冷却）
+                        float envCoolingModifier = EnvironmentSensor.getCoolingModifier(condition);
+                        if (envCoolingModifier != 1.0f && heatData.getEnvironmentCoolingModifier() != 1.0f) {
+                            // 环境修正已通过 GunHeatData 的 environmentCoolingModifier 字段处理
+                            // 此处仅做额外修正（如果 GunHeatData 未配置环境修正）
+                        }
                     }
                 });
     }
@@ -344,13 +396,45 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
             return true;
         }
         if (!api.hasAmmoInBarrel()) {
-            // 如果是背包直读则检测消耗背包弹药
-            if (api.useInventoryAmmo()) {
-                if (api.consumeAmmoFromPlayer(1) == 1) {
-                    api.setAmmoInBarrel(true);
+            // P1集成：使用状态机执行拉栓循环
+            // 在拉栓喂弹时刻执行状态机循环
+            ItemStack gunItem = api.getItemStack();
+            GunStateData stateData = gunItem.get(com.tacz.guns.init.ModDataComponents.GUN_STATE_DATA);
+
+            if (stateData != null && stateData.cycleState() != GunCycleState.READY) {
+                // 状态机驱动：执行手动拉栓循环
+                GunIntegrationHelper.postBoltCycle(gunItem, gunData);
+                // 同步旧系统
+                IGun iGun = IGun.getIGunOrNull(gunItem);
+                if (iGun != null) {
+                    GunStateData updatedState = gunItem.get(com.tacz.guns.init.ModDataComponents.GUN_STATE_DATA);
+                    if (updatedState != null && updatedState.hasChamberedRound()) {
+                        iGun.setBulletInBarrel(gunItem, true);
+                    }
                 }
-            } else if (api.removeAmmoFromMagazine(1) != 0) {
-                api.setAmmoInBarrel(true);
+            } else {
+                // 旧系统逻辑：如果是背包直读则检测消耗背包弹药
+                if (api.useInventoryAmmo()) {
+                    if (api.consumeAmmoFromPlayer(1) == 1) {
+                        api.setAmmoInBarrel(true);
+                        // P1集成：同步状态到 GunStateData
+                        GunIntegrationHelper.ensureGunStateDataExists(gunItem);
+                        GunStateData sd = gunItem.get(com.tacz.guns.init.ModDataComponents.GUN_STATE_DATA);
+                        if (sd != null && !sd.hasChamberedRound()) {
+                            gunItem.set(com.tacz.guns.init.ModDataComponents.GUN_STATE_DATA,
+                                    sd.withChamberedRound(LoadedRound.createDefault()));
+                        }
+                    }
+                } else if (api.removeAmmoFromMagazine(1) != 0) {
+                    api.setAmmoInBarrel(true);
+                    // P1集成：同步状态到 GunStateData
+                    GunIntegrationHelper.ensureGunStateDataExists(gunItem);
+                    GunStateData sd = gunItem.get(com.tacz.guns.init.ModDataComponents.GUN_STATE_DATA);
+                    if (sd != null && !sd.hasChamberedRound()) {
+                        gunItem.set(com.tacz.guns.init.ModDataComponents.GUN_STATE_DATA,
+                                sd.withChamberedRound(LoadedRound.createDefault()));
+                    }
+                }
             }
         }
         return api.getBoltTime() < boltActionTime;
@@ -460,6 +544,9 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
                 api.setAmmoInBarrel(true);
             }
         }
+
+        // P1集成：换弹完成后同步 GunStateData
+        GunIntegrationHelper.syncAfterReload(api.getItemStack(), api.getGunIndex().getGunData());
     }
 
     private void doMelee(LivingEntity user, float gunDistance, float meleeDistance, float rangeAngle, float knockback, float damage, List<EffectData> effects) {

@@ -2,7 +2,10 @@ package com.tacz.guns.entity.shooter;
 
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
+import com.tacz.guns.api.item.ballistics.GunIntegrationHelper;
+import com.tacz.guns.api.item.component.GunStateData;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
+import com.tacz.guns.init.ModDataComponents;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import net.minecraft.resources.Identifier;
@@ -63,6 +66,14 @@ public class LivingEntityBolt {
             boolean noAmmo = useInventoryAmmo && !hasInventoryAmmo ||
                     !useInventoryAmmo && iGun.getCurrentAmmoCount(currentGunItem) < 1;
             if (boltType != Bolt.MANUAL_ACTION) {
+                return;
+            }
+            // P1集成：检查是否有故障需要清除
+            GunStateData stateData = currentGunItem.get(ModDataComponents.GUN_STATE_DATA);
+            if (stateData != null && stateData.hasMalfunction()) {
+                // 允许拉栓清除故障
+                data.boltTimestamp = System.currentTimeMillis();
+                data.isBolting = iGun.startBolt(data, currentGunItem, shooter);
                 return;
             }
             // 检查是否有弹药在枪膛内

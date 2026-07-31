@@ -159,11 +159,132 @@ public class GunData {
     @SerializedName("charging")
     private EnumMap<FireMode, ChargeData> chargeData = null;
 
+    // ====== P2弹道扩展字段 ======
+
+    /**
+     * P2弹道扩展：枪管长度（mm）。
+     * <p>
+     * 影响初速计算和膛压曲线。
+     * <ul>
+     *   <li>短枪管：初速降低，膛压峰值偏高</li>
+     *   <li>长枪管：初速提高（上限1.1倍），膛压峰值偏低</li>
+     * </ul>
+     * <p>
+     * 如果为0，则使用旧逻辑（不参与弹道修正）。
+     */
+    @SerializedName("barrel_length")
+    private int barrelLength = 0;
+
+    /**
+     * P2弹道扩展：膛线缠距（英寸/转）。
+     * <p>
+     * 影响弹头稳定性判定（Greenhill公式）。
+     * <ul>
+     *   <li>快缠距（如1:7）= 小数字 → 适合重弹头</li>
+     *   <li>慢缠距（如1:12）= 大数字 → 适合轻弹头</li>
+     * </ul>
+     * <p>
+     * 如果为0，则使用Greenhill推荐缠距（完全稳定）。
+     */
+    @SerializedName("twist_rate")
+    private int twistRate = 0;
+
+    /**
+     * P2弹道扩展：枪管材质。
+     * <p>
+     * 影响初速修正和枪管磨损速率。
+     * <ul>
+     *   <li>"wrought_iron"：熟铁（T0-T1），初速×0.85，磨损快</li>
+     *   <li>"carbon_steel"：碳钢（T2），初速×0.95</li>
+     *   <li>"alloy_steel"：合金钢（T3+），初速×1.0，基准</li>
+     *   <li>"ordnance_steel"：枪械级钢（T4），初速×1.0，磨损慢</li>
+     * </ul>
+     */
+    @SerializedName("barrel_material")
+    @Nullable
+    private String barrelMaterial = null;
+
     public ChargeData getChargeData(FireMode fireMode) {
         if (chargeData != null) {
             return chargeData.get(fireMode);
         }
         return null;
+    }
+
+    /**
+     * 获取枪管长度（mm）。
+     * <p>
+     * P2弹道扩展：影响初速计算和膛压曲线。
+     * 如果为0，则使用旧逻辑（不参与弹道修正）。
+     */
+    public int getBarrelLength() {
+        return barrelLength;
+    }
+
+    /**
+     * 获取膛线缠距（英寸/转）。
+     * <p>
+     * P2弹道扩展：影响弹头稳定性判定（Greenhill公式）。
+     * 如果为0，则使用Greenhill推荐缠距。
+     */
+    public int getTwistRate() {
+        return twistRate;
+    }
+
+    /**
+     * 获取枪管材质。
+     * <p>
+     * P2弹道扩展：影响初速修正和枪管磨损速率。
+     * 如果为null，则使用旧逻辑。
+     */
+    @Nullable
+    public String getBarrelMaterial() {
+        return barrelMaterial;
+    }
+
+    /**
+     * 获取枪管材质修正系数。
+     * <p>
+     * P2弹道扩展：不同材质的初速修正。
+     * <ul>
+     *   <li>熟铁(wrought_iron)：0.85</li>
+     *   <li>碳钢(carbon_steel)：0.95</li>
+     *   <li>合金钢(alloy_steel)：1.0</li>
+     *   <li>枪械级钢(ordnance_steel)：1.0</li>
+     * </ul>
+     * 如果未指定材质，默认1.0。
+     */
+    public float getBarrelMaterialModifier() {
+        if (barrelMaterial == null) return 1.0f;
+        return switch (barrelMaterial) {
+            case "wrought_iron" -> 0.85f;
+            case "carbon_steel" -> 0.95f;
+            case "alloy_steel" -> 1.0f;
+            case "ordnance_steel" -> 1.0f;
+            default -> 1.0f;
+        };
+    }
+
+    /**
+     * 获取枪管材质磨损速率修正。
+     * <p>
+     * P2弹道扩展：不同材质的磨损速率。
+     * <ul>
+     *   <li>熟铁：1.5×（磨损快）</li>
+     *   <li>碳钢：1.2×</li>
+     *   <li>合金钢：1.0×（基准）</li>
+     *   <li>枪械级钢：0.7×（磨损慢）</li>
+     * </ul>
+     */
+    public float getBarrelMaterialWearModifier() {
+        if (barrelMaterial == null) return 1.0f;
+        return switch (barrelMaterial) {
+            case "wrought_iron" -> 1.5f;
+            case "carbon_steel" -> 1.2f;
+            case "alloy_steel" -> 1.0f;
+            case "ordnance_steel" -> 0.7f;
+            default -> 1.0f;
+        };
     }
 
     public Identifier getAmmoId() {

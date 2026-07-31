@@ -64,5 +64,9 @@ public enum ShootResult {
     /**
      * 武器过热
      */
-    OVERHEATED
+    OVERHEATED,
+    /**
+     * 武器处于故障状态（卡壳/哑弹/Squib等）
+     */
+    MALFUNCTION
 }
