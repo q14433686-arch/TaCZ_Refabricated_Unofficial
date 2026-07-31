@@ -94,3 +94,9 @@ For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/comman
 
 BUILD SUCCESSFUL in 1m 12s
 2 actionable tasks: 2 executed
+[arena/019fb90c-tacz-refabricated-unofficial 75b1c55] ci-gradlew: 终态日志+尸检 @ f18990849393eb1bb0f28acc80b3069782a6255b
+ 2 files changed, 98 insertions(+), 119 deletions(-)
+From https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
+ * branch            arena/019fb90c-tacz-refabricated-unofficial -> FETCH_HEAD
+error: cannot rebase: You have unstaged changes.
+error: Please commit or stash them.
