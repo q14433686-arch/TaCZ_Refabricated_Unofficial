@@ -1,0 +1,17 @@
+gradlew exit_code=1
+timestamp_utc=2026-07-31T19:17:53Z
+--- free -m ---
+               total        used        free      shared  buff/cache   available
+Mem:           15989        1016       12230          46        3124       14973
+Swap:           3071           0        3071
+--- cgroup v2 memory.events ---
+(无 cgroup v2 memory.events)
+--- cgroup v2 memory.max / memory.current ---
+--- dmesg OOM 线索（若有权限） ---
+--- 退出时内存 top5 进程 ---
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+runner      2220  8.7  0.8 274581728 146052 ?    Sl   19:17   0:03 /home/runner/actions-runner/cached/2.336.0/bin/Runner.Worker spawnclient 142 145
+root        2163  2.4  0.7 1431180 129992 ?      Sl   19:17   0:00 /tmp/provjobd2414687380
+runner      2199  3.1  0.5 274263556 94984 ?     Sl   19:17   0:01 /home/runner/actions-runner/cached/2.336.0/bin/Runner.Listener run
+root        1354  0.3  0.4 2045416 72704 ?       Ssl  19:16   0:00 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+root         976  0.2  0.3 295272 51484 ?        Ss   19:16   0:00 php-fpm: master process (/etc/php/8.3/fpm/php-fpm.conf)
