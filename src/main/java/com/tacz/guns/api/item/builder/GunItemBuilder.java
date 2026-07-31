@@ -21,6 +21,8 @@ public final class GunItemBuilder {
     private FireMode fireMode = FireMode.UNKNOWN;
     private boolean bulletInBarrel = false;
     private EnumMap<AttachmentType, Identifier> attachments = Maps.newEnumMap(AttachmentType.class);
+    private int techLevel = 0;
+    private float toleranceScore = -1; // -1 = 不设置（使用默认）
 
     private GunItemBuilder() {
     }
@@ -70,6 +72,22 @@ public final class GunItemBuilder {
     }
 
     /**
+     * 设置制造科技阶段（影响公差评分默认值）
+     */
+    public GunItemBuilder setTechLevel(int techLevel) {
+        this.techLevel = Math.clamp(techLevel, 0, 4);
+        return this;
+    }
+
+    /**
+     * 设置公差评分（0~100，覆盖默认值）
+     */
+    public GunItemBuilder setToleranceScore(float score) {
+        this.toleranceScore = Math.clamp(score, 0, 100);
+        return this;
+    }
+
+    /**
      * 强行以默认的枪支Item构建一个物品，不进行index检查<br/>
      * 可能会返回功能不完整的物品
      */
@@ -110,6 +128,20 @@ public final class GunItemBuilder {
                 ItemStack attachmentStack = AttachmentItemBuilder.create().setId(id).build();
                 iGun.installAttachment(gun, attachmentStack);
             });
+            // P0扩展：初始化新DataComponent
+            if (heatData) iGun.setHeatAmount(gun, 0f);
+            // 初始化公差评分
+            com.tacz.guns.api.item.component.ToleranceData toleranceData =
+                    toleranceScore >= 0 ? new com.tacz.guns.api.item.component.ToleranceData(
+                            toleranceScore, techLevel, new java.util.UUID(0, 0), System.currentTimeMillis())
+                            : com.tacz.guns.api.item.component.ToleranceData.createDefault(techLevel);
+            iGun.setToleranceData(gun, toleranceData);
+            // 初始化模块化耐久
+            iGun.setGunWearData(gun, com.tacz.guns.api.item.component.GunWearData.createDefault());
+            // 初始化保养状态
+            iGun.setGunMaintenanceData(gun, com.tacz.guns.api.item.component.GunMaintenanceData.createDefault());
+            // 初始化运行状态
+            iGun.setGunStateData(gun, com.tacz.guns.api.item.component.GunStateData.createDefault());
         }
         return gun;
     }

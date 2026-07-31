@@ -1,6 +1,7 @@
 package com.tacz.guns;
 
 import com.tacz.guns.api.resource.ResourceManager;
+import com.tacz.guns.api.item.cartridge.CartridgeTypeManager;
 import com.tacz.guns.init.*;
 import com.tacz.guns.resource.GunPackLoader;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
@@ -24,6 +25,8 @@ public class GunMod {
 
         CommonRegistry.onSetupEvent();
 
+        ModDataComponents.init();
+        CartridgeTypeManager.init();
         ModBlocks.init();
         ModItems.init();
         ModCreativeTabs.init();

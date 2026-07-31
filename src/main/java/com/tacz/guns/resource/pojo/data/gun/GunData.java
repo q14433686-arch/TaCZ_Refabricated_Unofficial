@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.google.gson.annotations.SerializedName;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.enums.ActionType;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
@@ -40,6 +41,41 @@ public class GunData {
 
     @SerializedName("bolt")
     private Bolt bolt = Bolt.OPEN_BOLT;
+
+    /**
+     * P0扩展：自动原理类型。
+     * 如果JSON中指定了action_type，则使用此字段替代bolt字段。
+     * 向后兼容：如果未指定action_type，则从bolt字段自动映射。
+     */
+    @SerializedName("action_type")
+    @Nullable
+    private com.tacz.guns.api.item.enums.ActionType actionType = null;
+
+    /**
+     * P0补充：枪膛口径规格。
+     * <p>
+     * 引用 {@link com.tacz.guns.api.item.cartridge.CartridgeTypeManager} 中注册的口径类型 ID。
+     * 决定此枪可以接受哪些口径的弹药。
+     * <p>
+     * 例如：tacz:9mm、tacz:556_nato、tacz:762x39 等。
+     * 如果为 null，则使用旧逻辑（通过 ammoId 匹配）。
+     */
+    @SerializedName("chambered_cartridge")
+    @Nullable
+    private Identifier chamberedCartridge = null;
+
+    /**
+     * P0补充：兼容的供弹具型号标签。
+     * <p>
+     * 用于标识哪些供弹具（弹匣/弹链/弹鼓等）可以装在此枪上。
+     * 供弹具物品通过此标签进行匹配。
+     * <p>
+     * 例如：tacz:ak47_compatible_feeds、tacz:ar15_compatible_feeds 等。
+     * 如果为 null，则使用旧逻辑（通过 ammoId 匹配）。
+     */
+    @SerializedName("compatible_feed_device_tag")
+    @Nullable
+    private Identifier compatibleFeedDeviceTag = null;
 
     @SerializedName("rpm")
     private int roundsPerMinute = 300;
@@ -152,6 +188,92 @@ public class GunData {
 
     public Bolt getBolt() {
         return bolt;
+    }
+
+    /**
+     * 获取自动原理类型。
+     * 如果JSON中指定了action_type，则使用它；否则从bolt字段自动映射。
+     */
+    public ActionType getActionType() {
+        if (actionType != null) {
+            return actionType;
+        }
+        return ActionType.fromBolt(bolt);
+    }
+
+    /**
+     * 获取枪膛口径规格。
+     * <p>
+     * P0补充：用于口径兼容性判定。
+     * 如果为 null，则使用旧逻辑（通过 ammoId 匹配）。
+     */
+    @Nullable
+    public Identifier getChamberedCartridge() {
+        return chamberedCartridge;
+    }
+
+    /**
+     * 获取兼容的供弹具型号标签。
+     * <p>
+     * P0补充：用于供弹具兼容性判定。
+     * 如果为 null，则使用旧逻辑（通过 ammoId 匹配）。
+     */
+    @Nullable
+    public Identifier getCompatibleFeedDeviceTag() {
+        return compatibleFeedDeviceTag;
+    }
+
+    /**
+     * 判断指定口径是否与枪膛兼容。
+     * <p>
+     * P0补充：口径/型号兼容性判定函数。
+     * <ol>
+     *   <li>如果枪未指定 chamberedCartridge，使用旧逻辑（直接返回 true）</li>
+     *   <li>如果枪指定了 chamberedCartridge，使用 {@link com.tacz.guns.api.item.cartridge.CartridgeTypeManager#isCompatible}
+     *       判断口径兼容性</li>
+     * </ol>
+     *
+     * @param cartridgeType 弹药口径标识符
+     * @return 是否兼容
+     */
+    public boolean isCartridgeCompatible(@Nullable Identifier cartridgeType) {
+        if (cartridgeType == null) return false;
+        if (chamberedCartridge == null) return true;  // 旧逻辑兼容
+        return com.tacz.guns.api.item.cartridge.CartridgeTypeManager.isCompatible(chamberedCartridge, cartridgeType);
+    }
+
+    /**
+     * 判断指定供弹具是否与枪兼容。
+     * <p>
+     * P0补充：供弹具兼容性判定函数。
+     * <ol>
+     *   <li>如果枪未指定 compatibleFeedDeviceTag，使用旧逻辑（直接返回 true）</li>
+     *   <li>如果枪指定了 compatibleFeedDeviceTag，需要供弹具的标签匹配</li>
+     * </ol>
+     * <p>
+     * 注意：此方法仅检查标签匹配，还需配合 {@link #isCartridgeCompatible(Identifier)}
+     * 检查口径匹配。
+     *
+     * @param feedDeviceTag 供弹具的型号标签
+     * @return 是否兼容
+     */
+    public boolean isFeedDeviceCompatible(@Nullable Identifier feedDeviceTag) {
+        if (compatibleFeedDeviceTag == null) return true;  // 旧逻辑兼容
+        if (feedDeviceTag == null) return false;
+        return compatibleFeedDeviceTag.equals(feedDeviceTag);
+    }
+
+    /**
+     * 综合判定：弹药口径 + 供弹具型号是否都与枪兼容。
+     * <p>
+     * P0补充：作为后续"装弹"交互逻辑的判定基础。
+     *
+     * @param cartridgeType 弹药口径标识符
+     * @param feedDeviceTag 供弹具型号标签
+     * @return 是否全部兼容
+     */
+    public boolean isFullyCompatible(@Nullable Identifier cartridgeType, @Nullable Identifier feedDeviceTag) {
+        return isCartridgeCompatible(cartridgeType) && isFeedDeviceCompatible(feedDeviceTag);
     }
 
     @ApiStatus.Internal

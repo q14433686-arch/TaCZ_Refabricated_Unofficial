@@ -41,4 +41,24 @@ public interface IAmmo {
      * @return 是否属于这把枪
      */
     boolean isAmmoOfGun(ItemStack gun, ItemStack ammo);
+
+    // ====== 扩展：P0 基础架构新增方法 ======
+
+    /**
+     * 获取弹药扩展数据组件。
+     * <p>
+     * 包含弹壳材质、底火类型、发射药类型、弹头类型、装药量、复装次数、弹壳状态。
+     * 如果不存在，返回默认弹药数据。
+     */
+    default com.tacz.guns.api.item.component.AmmoData getAmmoData(ItemStack ammo) {
+        com.tacz.guns.api.item.component.AmmoData data = ammo.get(com.tacz.guns.init.ModDataComponents.AMMO_DATA);
+        return data != null ? data : com.tacz.guns.api.item.component.AmmoData.DEFAULT;
+    }
+
+    /**
+     * 设置弹药扩展数据组件
+     */
+    default void setAmmoData(ItemStack ammo, com.tacz.guns.api.item.component.AmmoData data) {
+        ammo.set(com.tacz.guns.init.ModDataComponents.AMMO_DATA, data);
+    }
 }

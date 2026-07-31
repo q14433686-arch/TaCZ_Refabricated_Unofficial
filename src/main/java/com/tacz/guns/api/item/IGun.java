@@ -407,4 +407,138 @@ public interface IGun {
     float lerpInaccuracy(ItemStack gun);
 
     float getHeatAmount(ItemStack gun);
+
+    // ====== 扩展：P0 基础架构新增方法 ======
+
+    /**
+     * 获取枪械运行状态数据组件。
+     * <p>
+     * 包含枪机循环状态、故障类型、烧蚀、枪管损伤、异物、撞针磨损、保险状态。
+     * 如果不存在，返回默认数据。
+     */
+    default com.tacz.guns.api.item.component.GunStateData getGunStateData(ItemStack gun) {
+        com.tacz.guns.api.item.component.GunStateData data = gun.get(com.tacz.guns.init.ModDataComponents.GUN_STATE_DATA);
+        return data != null ? data : com.tacz.guns.api.item.component.GunStateData.createDefault();
+    }
+
+    /**
+     * 设置枪械运行状态数据组件
+     */
+    default void setGunStateData(ItemStack gun, com.tacz.guns.api.item.component.GunStateData data) {
+        gun.set(com.tacz.guns.init.ModDataComponents.GUN_STATE_DATA, data);
+    }
+
+    /**
+     * 获取枪械模块化耐久数据组件。
+     * <p>
+     * 包含7个部件的独立耐久值。
+     * 如果不存在，返回默认满耐久数据。
+     */
+    default com.tacz.guns.api.item.component.GunWearData getGunWearData(ItemStack gun) {
+        com.tacz.guns.api.item.component.GunWearData data = gun.get(com.tacz.guns.init.ModDataComponents.GUN_WEAR_DATA);
+        return data != null ? data : com.tacz.guns.api.item.component.GunWearData.createDefault();
+    }
+
+    /**
+     * 设置枪械模块化耐久数据组件
+     */
+    default void setGunWearData(ItemStack gun, com.tacz.guns.api.item.component.GunWearData data) {
+        gun.set(com.tacz.guns.init.ModDataComponents.GUN_WEAR_DATA, data);
+    }
+
+    /**
+     * 获取枪械保养状态数据组件。
+     * <p>
+     * 包含积碳、锈蚀、润滑、枪管异物等状态。
+     * 如果不存在，返回默认保养数据。
+     */
+    default com.tacz.guns.api.item.component.GunMaintenanceData getGunMaintenanceData(ItemStack gun) {
+        com.tacz.guns.api.item.component.GunMaintenanceData data = gun.get(com.tacz.guns.init.ModDataComponents.GUN_MAINTENANCE_DATA);
+        return data != null ? data : com.tacz.guns.api.item.component.GunMaintenanceData.createDefault();
+    }
+
+    /**
+     * 设置枪械保养状态数据组件
+     */
+    default void setGunMaintenanceData(ItemStack gun, com.tacz.guns.api.item.component.GunMaintenanceData data) {
+        gun.set(com.tacz.guns.init.ModDataComponents.GUN_MAINTENANCE_DATA, data);
+    }
+
+    /**
+     * 获取枪械公差评分数据组件。
+     * <p>
+     * 如果不存在，返回基于科技阶段的默认公差数据。
+     */
+    default com.tacz.guns.api.item.component.ToleranceData getToleranceData(ItemStack gun) {
+        com.tacz.guns.api.item.component.ToleranceData data = gun.get(com.tacz.guns.init.ModDataComponents.TOLERANCE_DATA);
+        return data != null ? data : com.tacz.guns.api.item.component.ToleranceData.createDefault(0);
+    }
+
+    /**
+     * 设置枪械公差评分数据组件
+     */
+    default void setToleranceData(ItemStack gun, com.tacz.guns.api.item.component.ToleranceData data) {
+        gun.set(com.tacz.guns.init.ModDataComponents.TOLERANCE_DATA, data);
+    }
+
+    // ====== 扩展：P0 补充 供弹具数据系统 ======
+
+    /**
+     * 获取供弹具数据组件。
+     * <p>
+     * 如果枪上安装了可拆卸供弹具（弹匣/弹鼓），返回其内部数据。
+     * 如果不存在，返回 null。
+     * <p>
+     * 注意：此方法获取的是枪上已安装的供弹具数据。
+     * 独立存在于背包中的供弹具物品，其数据通过 ItemStack 的 DataComponent 直接获取。
+     */
+    default com.tacz.guns.api.item.component.FeedDeviceData getFeedDeviceData(ItemStack gun) {
+        return gun.get(com.tacz.guns.init.ModDataComponents.FEED_DEVICE_DATA);
+    }
+
+    /**
+     * 设置供弹具数据组件。
+     * <p>
+     * 当供弹具安装到枪上或从枪上取下时调用。
+     */
+    default void setFeedDeviceData(ItemStack gun, com.tacz.guns.api.item.component.FeedDeviceData data) {
+        gun.set(com.tacz.guns.init.ModDataComponents.FEED_DEVICE_DATA, data);
+    }
+
+    /**
+     * 检查枪上是否安装了供弹具。
+     */
+    default boolean hasFeedDevice(ItemStack gun) {
+        return getFeedDeviceData(gun) != null;
+    }
+
+    /**
+     * 获取枪膛内弹药（从 GunStateData 中获取）。
+     * <p>
+     * P0补充：替代原有的 {@link #hasBulletInBarrel(ItemStack)} 简单布尔值，
+     * 现在可以追溯到具体这一发子弹的完整数据。
+     */
+    default com.tacz.guns.api.item.component.LoadedRound getChamberedRound(ItemStack gun) {
+        com.tacz.guns.api.item.component.GunStateData stateData = getGunStateData(gun);
+        return stateData.chamberedRound();
+    }
+
+    /**
+     * 设置枪膛内弹药。
+     */
+    default void setChamberedRound(ItemStack gun, com.tacz.guns.api.item.component.LoadedRound round) {
+        com.tacz.guns.api.item.component.GunStateData stateData = getGunStateData(gun);
+        setGunStateData(gun, stateData.withChamberedRound(round));
+    }
+
+    /**
+     * 检查枪膛内是否有弹。
+     * <p>
+     * 兼容旧接口 {@link #hasBulletInBarrel(ItemStack)}，
+     * 现在基于 GunStateData 的 chamberedRound 判定。
+     */
+    default boolean hasChamberedRound(ItemStack gun) {
+        com.tacz.guns.api.item.component.GunStateData stateData = getGunStateData(gun);
+        return stateData.hasChamberedRound();
+    }
 }

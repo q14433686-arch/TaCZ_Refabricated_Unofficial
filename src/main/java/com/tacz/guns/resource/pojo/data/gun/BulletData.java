@@ -43,6 +43,36 @@ public class BulletData {
     @SerializedName("explosion")
     private @Nullable ExplosionData explosionData;
 
+    // ====== P0扩展：弹道系统字段 ======
+
+    /**
+     * 弹头长度（游戏单位，用于缠距匹配计算）
+     * 默认值0表示使用旧逻辑（不参与缠距匹配）
+     */
+    @SerializedName("bullet_length")
+    private float bulletLength = 0;
+
+    /**
+     * 弹头直径/口径（游戏单位）
+     * 默认值0表示使用旧逻辑
+     */
+    @SerializedName("bullet_diameter")
+    private float bulletDiameter = 0;
+
+    /**
+     * 最佳枪管长度（mm）
+     * 影响初速计算：实际枪管长度偏离最佳值时初速按比例降低
+     */
+    @SerializedName("optimal_barrel_length")
+    private int optimalBarrelLength = 0;
+
+    /**
+     * 弹道系数（综合弹头形状/质量/截面积）
+     * 影响空气阻力计算，值越大阻力越小
+     */
+    @SerializedName("ballistic_coefficient")
+    private float ballisticCoefficient = 0.3f;
+
     public float getLifeSecond() {
         return lifeSecond;
     }
@@ -99,5 +129,23 @@ public class BulletData {
     @Nullable
     public ExplosionData getExplosionData() {
         return explosionData;
+    }
+
+    // P0扩展：弹道系统getter
+
+    public float getBulletLength() {
+        return bulletLength;
+    }
+
+    public float getBulletDiameter() {
+        return bulletDiameter;
+    }
+
+    public int getOptimalBarrelLength() {
+        return optimalBarrelLength;
+    }
+
+    public float getBallisticCoefficient() {
+        return ballisticCoefficient;
     }
 }
