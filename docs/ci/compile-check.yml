@@ -1,9 +1,17 @@
 name: compile-check
 
-# TACZ-INDUSTRIAL 编译验证闭环（v2）：
-# 依赖下载与编译在 GitHub Actions（外网畅通）执行；
-# 编译日志以 git 提交形式推回本分支（build-reports/compile-java.log），
-# 供网络受限的沙箱直接 git pull 读取 —— 绕开 Actions 日志 blob 域不可达的限制。
+# TACZ-INDUSTRIAL 编译验证闭环（v3）：依赖下载与编译在 GitHub Actions（外网畅通）执行；
+# 编译日志双通道回传：
+#   1) 首选：以 git 提交推回本分支 build-reports/compile-java.log（沙箱 git pull 直接读）
+#   2) 回退：push 失败（如 GITHUB_TOKEN 权限不足）时，对触发 commit 发评论附日志尾部 60KB
+#      —— 评论走 api.github.com，沙箱网络白名单可达，即使 push 全灭也能拿到错误清单。
+#
+# v2 → v3 修复的坑（全部实测）：
+#   a) actions/checkout@v4 默认 detached HEAD，裸 `git push` 报
+#      fatal: You are not currently on a branch → 改用 git push origin HEAD:<branch>
+#   b) paths-ignore 下「空提交」不会改变任何文件 → GitHub 静默跳过触发，
+#      以后重触发必须做一次真实文件变更（如追加 .ci-trigger）
+#   c) gh workflow run 手动派发需要 actions:write，App 令牌没有 → 不可用作沙箱侧触发
 
 permissions:
   contents: write
@@ -37,17 +45,28 @@ jobs:
           echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
           ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
 
-      - name: Push compile log back to branch
+      - name: Return compile log (push, else comment fallback)
         if: always()
+        env:
+          # 显式注入 GITHUB_TOKEN 供 gh CLI 使用（评论回退通道）
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add build-reports/compile-java.log
-          if git commit -m "ci-log: compile result (${{ job.status }})"; then
-            for i in 1 2 3; do
-              git pull --rebase origin ${{ github.ref_name }} && break || sleep 3
-            done
-            git push
+          if git commit -m "ci-log: compile-check 结果"; then
+            echo "=== 通道1：推送日志 commit 回分支 ==="
+            if git pull --rebase origin "${{ github.ref_name }}" && \
+               git push origin "HEAD:${{ github.ref_name }}"; then
+              echo "OK：日志已推送到 build-reports/compile-java.log"
+            else
+              echo "=== 通道2：push 失败，回退为 commit 评论（尾部 60KB）==="
+              tail -c 60000 build-reports/compile-java.log > /tmp/log-tail.txt
+              gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+                -F body=@/tmp/log-tail.txt \
+                -f path="build-reports/compile-java.log" \
+              || echo "评论通道也失败：请复查 Settings→Actions→General→Workflow permissions 是否为 Read and write permissions"
+            fi
           else
-            echo "日志无变化，跳过推送"
+            echo "日志无变化（与上次结果一致），跳过推送"
           fi
