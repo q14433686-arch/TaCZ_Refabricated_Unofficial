@@ -364,15 +364,20 @@ job=${System.getenv("GITHUB_JOB") ?: "?"}
             }
             runGit(["config", "user.name", "taczind-ci-relay[bot]"], false)
             runGit(["config", "user.email", "taczind-ci-relay@users.noreply.github.com"], false)
-            runGit(["add", "-A", "build-reports"], false)
+            // 关键坑（v2 实测翻车两次）：build-reports/ 在 .gitignore 里（本地构建卫生需要），
+            // 裸 git add 直接 exit 1 秒死、add -A 也不 stage —— 必须 -f 强制添加。
+            runGit(["add", "-f", "-A", "build-reports"], true)
             def (diffExit, _) = runGit(["diff", "--cached", "--quiet"], true)
             if (diffExit == 0) {
-                println "[taczind-ci] build-reports 无变更，跳过提交"
+                // 兜底：即使报告全空也要留下"接力已执行"的信号（本文件的 timestamp 一定有变化）
+                println "[taczind-ci] build-reports 无可提交变更（异常：连 ci-relay.txt 都没落盘？）"
                 return
             }
             runGit(["commit", "-m", "ci-relay: build-reports snapshot @ ${sha.take(7)} (taczindCiRelay)"], true)
-            // 防并发接力撞车：先 rebase 到远端分支头再推；失败不致命（workflow 推送步/v3 评论兜底）
-            runGit(["pull", "--rebase", "origin", branch], true)
+            // 防并发接力撞车：fetch 后 rebase 到 FETCH_HEAD（detached HEAD 下 rebase 可用，
+            // pull 不可用——"You are not currently on a branch"，v2 已实测）；失败不致命
+            runGit(["fetch", "origin", branch], true)
+            runGit(["rebase", "FETCH_HEAD"], true)
             def (pushExit, _) = runGit(["push", "origin", "HEAD:refs/heads/${branch}"], true)
             println pushExit == 0 \
                 ? "[taczind-ci] 推送成功：build-reports/ 已回到 ${branch}" \

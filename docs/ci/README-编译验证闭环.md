@@ -62,7 +62,12 @@ scripts\ci-proxy-build.bat
    （权限未生效等）回退为对触发 commit 发评论附日志尾部 60KB（编译错误集中在末尾，60KB 足够；
    评论走 api.github.com，白名单可达）。两通道全灭才会看不到日志——此时评论步自身输出会给出
    明确提示。
-7. **构建侧 hedge：`taczindCiRelay` Gradle 任务**（build.gradle 尾块，2026-08-01 新增）——
+7. **`.gitignore` 会杀死日志回推通道（v2 两轮实测真凶）**：`build-reports/` 因本地构建卫生
+   需要保留在 .gitignore 中，但 CI 的 `git add build-reports/compile-java.log` 会立即
+   `exit 1`（"paths are ignored" hint）——run 步 `bash -e` 下 0 秒暴毙，连 push 都到不了。
+   本地沙盒复现实证：裸 add=exit1、`add -A`=exit1、`add -f`=成功。
+   **修复：凡 CI 里向被忽略目录提交，一律 `git add -f`**（workflow v3 模板与 relay 均已切）。
+8. **构建侧 hedge：`taczindCiRelay` Gradle 任务**（build.gradle 尾块，2026-08-01 新增）——
    因为 workflow 文件属于用户网页端外置依赖（沙箱 App 令牌无 workflows 权限，改 workflow 必须
    人工一轮），v3 修好之前的真空期里，编译闭环不能干等。该任务只在 runner 上激活
    （`GITHUB_ACTIONS=true`），挂为 `compileJava` 的 finalizer（编译失败同样执行），复用

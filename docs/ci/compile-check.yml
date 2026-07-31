@@ -53,7 +53,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add build-reports/compile-java.log
+          # 关键坑（v2 实测）：build-reports/ 在 .gitignore 里，裸 git add 立即 exit 1 —— 必须 -f
+          git add -f build-reports/compile-java.log
           if git commit -m "ci-log: compile-check 结果"; then
             echo "=== 通道1：推送日志 commit 回分支 ==="
             if git pull --rebase origin "${{ github.ref_name }}" && \
