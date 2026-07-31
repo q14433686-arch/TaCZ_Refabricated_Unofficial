@@ -55,4 +55,37 @@ if (System.getenv("GITHUB_ACTIONS") == "true") {
     } catch (Throwable t) {
         println "[taczind-ci:settings] probe 异常（不影响构建）: ${t}"
     }
+    // ========================================================================
+    // 静默潜伏推送哨兵（detached watcher）：
+    // gradle 配置阶段一旦失败，后续任务/探针/relay 全都不会执行；
+    // 但错误全文已由 workflow 的 shell 重定向持续写入 build-reports/compile-java.log。
+    // 此处在 settings 阶段（全仓库首个必然执行点）后台派生一个哨兵循环：
+    // 每 20s 检查一次 build-reports 变更并推送（最多 10 分钟），
+    // 无论本次构建死在哪个阶段，最终日志都能回到分支。
+    // ========================================================================
+    try {
+        def watcher = '''for i in $(seq 1 30); do
+  sleep 20
+  cd "REPO_ROOT_PLACEHOLDER" || exit 0
+  git add -f -A build-reports >/dev/null 2>&1
+  if ! git diff --cached --quiet >/dev/null 2>&1; then
+    git commit -m "ci-watch: log snapshot $i" >/dev/null 2>&1
+    git fetch origin "$GITHUB_REF_NAME" >/dev/null 2>&1
+    git rebase --abort >/dev/null 2>&1
+    git rebase FETCH_HEAD >/dev/null 2>&1
+    git push origin "HEAD:refs/heads/$GITHUB_REF_NAME" >/dev/null 2>&1
+  fi
+done
+'''
+        watcher = watcher.replace("REPO_ROOT_PLACEHOLDER", settingsDir.absolutePath)
+        // 哨兵脚本只含双引号、无单引号，直接单引号包裹传递（bash 单引号内换行合法）。
+        // 不用 String.inspect()：它把换行转为字面 \n，bash 单引号不解释，脚本会断。
+        def innerNoSingleQuotes = !watcher.contains("'")
+        if (innerNoSingleQuotes) {
+            ["bash", "-c", "nohup bash -c '" + watcher + "' >/dev/null 2>&1 < /dev/null &"].execute(null, settingsDir)
+        }
+        println "[taczind-ci:settings] 潜伏推送哨兵已派生"
+    } catch (Throwable t) {
+        println "[taczind-ci:settings] 哨兵派生失败（不影响构建）: ${t}"
+    }
 }
