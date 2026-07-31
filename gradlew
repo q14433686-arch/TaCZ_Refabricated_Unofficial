@@ -167,6 +167,22 @@ if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
         echo "--- 退出时内存 top5 进程 ---"
         ps aux --sort=-rss 2>/dev/null | head -6
     } > build-reports/gradlew-postmortem.txt 2>&1
+
+    # ---- 就地回推（Q-21 实测闭环的命门） ----
+    # runner 在 step 结束时会杀掉整棵进程树，后台哨兵活不到下一步；
+    # 但本钩子是 step 的前台进程——我们不退出，step 就不结束。
+    # 所以推送必须在这里同步完成：这是唯一 100% 可靠的送达窗口。
+    BRANCH="${GITHUB_REF_NAME:-}"
+    if [ -n "$BRANCH" ]; then
+        git config user.name "taczind-ci-gradlew[bot]"
+        git config user.email "taczind-ci-gradlew@users.noreply.github.com"
+        git add -f -A build-reports >> build-reports/gradlew-postmortem.txt 2>&1
+        git commit -m "ci-gradlew: 终态日志+尸检 @ ${GITHUB_SHA:-unknown}" >> build-reports/gradlew-postmortem.txt 2>&1
+        git fetch origin "$BRANCH" >> build-reports/gradlew-postmortem.txt 2>&1
+        git rebase FETCH_HEAD >> build-reports/gradlew-postmortem.txt 2>&1
+        git push origin "HEAD:refs/heads/$BRANCH" >> build-reports/gradlew-postmortem.txt 2>&1
+        echo "gradlew_hook_push_exit=$?" >> build-reports/gradlew-postmortem.txt
+    fi
     exit $GRADLE_EC
 fi
 

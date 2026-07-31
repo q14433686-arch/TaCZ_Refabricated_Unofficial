@@ -64,8 +64,8 @@ if (System.getenv("GITHUB_ACTIONS") == "true") {
     // 无论本次构建死在哪个阶段，最终日志都能回到分支。
     // ========================================================================
     try {
-        def watcher = '''for i in $(seq 1 30); do
-  sleep 20
+        def watcher = '''for i in $(seq 1 100); do
+  sleep 5
   cd "REPO_ROOT_PLACEHOLDER" || exit 0
   git add -f -A build-reports >/dev/null 2>&1
   if ! git diff --cached --quiet >/dev/null 2>&1; then
