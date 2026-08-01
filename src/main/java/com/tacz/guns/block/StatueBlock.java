@@ -72,27 +72,52 @@ public class StatueBlock extends BaseEntityBlock {
     protected InteractionResult useItemOn(ItemStack stack, BlockState pState, Level level, BlockPos pos, Player player, InteractionHand pHand, BlockHitResult pHit) {
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
-        } else {
-            if (pState.getValue(HALF) == DoubleBlockHalf.UPPER) {
-                pos = pos.below();
-            }
-
-            BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (blockEntity instanceof StatueBlockEntity statueBlockEntity) {
-                ItemStack handStack = player.getItemInHand(pHand);
-                if (handStack.getItem() instanceof IGun) {
-                    statueBlockEntity.setGun(handStack);
-                    handStack.shrink(1);
-                    return InteractionResult.SUCCESS;
-                }
-
-                if (handStack.isEmpty()) {
-                    statueBlockEntity.dropItem();
-                    return InteractionResult.SUCCESS;
-                }
-            }
-            return InteractionResult.CONSUME;
         }
+        return useStatue(stack, pState, level, pos);
+    }
+
+    /**
+     * 空手交互（取回雕像上的枪）。
+     *
+     * <p>原 mod 的 {@code use} 在 1.20.1 同时处理「持物品」与「空手」，之后原版把
+     * 交互拆成了 {@code useItemOn} / {@code useWithoutItem} 两个回调。本移植原本只覆写了
+     * {@code useItemOn}，若所在版本对空手点击不再回退调用 {@code useItemOn}，
+     * 「空手取枪」分支就会变成死代码 —— 这里显式补上，确保与上游语义一致。</p>
+     *
+     * <p>注意守卫：手持任何物品时必须放行（返回 {@code PASS}），否则在
+     * 「先调 useWithoutItem」的调度顺序下会抢在 {@code useItemOn}（放枪）之前触发取枪。</p>
+     */
+    @Override
+    protected InteractionResult useWithoutItem(BlockState pState, Level level, BlockPos pos, Player player, BlockHitResult pHit) {
+        if (!player.getMainHandItem().isEmpty()) {
+            return InteractionResult.PASS;
+        }
+        if (level.isClientSide()) {
+            return InteractionResult.SUCCESS;
+        }
+        return useStatue(ItemStack.EMPTY, pState, level, pos);
+    }
+
+    /** 上游 1.20.1 {@code use} 的完整逻辑：放枪 / 空手取枪 */
+    private static InteractionResult useStatue(ItemStack handStack, BlockState pState, Level level, BlockPos pos) {
+        if (pState.getValue(HALF) == DoubleBlockHalf.UPPER) {
+            pos = pos.below();
+        }
+
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity instanceof StatueBlockEntity statueBlockEntity) {
+            if (handStack.getItem() instanceof IGun) {
+                statueBlockEntity.setGun(handStack);
+                handStack.shrink(1);
+                return InteractionResult.SUCCESS;
+            }
+
+            if (handStack.isEmpty()) {
+                statueBlockEntity.dropItem();
+                return InteractionResult.SUCCESS;
+            }
+        }
+        return InteractionResult.CONSUME;
     }
 
     @Override
