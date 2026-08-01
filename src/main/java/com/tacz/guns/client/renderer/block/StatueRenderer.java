@@ -2,7 +2,7 @@ package com.tacz.guns.client.renderer.block;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.tacz.guns.block.TargetBlock;
+import com.tacz.guns.block.StatueBlock;
 import com.tacz.guns.block.entity.StatueBlockEntity;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.resource.InternalAssetLoader;
@@ -10,6 +10,7 @@ import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -21,6 +22,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -35,6 +37,11 @@ public class StatueRenderer implements BlockEntityRenderer<StatueBlockEntity, St
     public static class StatueRenderState extends BlockEntityRenderState {
         public Direction facing = Direction.NORTH;
         public ItemStack gunItem = ItemStack.EMPTY;
+        /**
+         * 与 {@code ThrowableEntityRenderer} 同一手法：物品模型在 extract 阶段
+         * 解析好存进快照，submit 阶段只负责提交，不再触碰世界状态。
+         */
+        public final ItemStackRenderState gunRenderState = new ItemStackRenderState();
     }
 
     @Override
@@ -50,8 +57,26 @@ public class StatueRenderer implements BlockEntityRenderer<StatueBlockEntity, St
     public void extractRenderState(StatueBlockEntity blockEntity, StatueRenderState state, float partialTick, Vec3 cameraPos, net.minecraft.client.renderer.feature.ModelFeatureRenderer.CrumblingOverlay crumblingOverlay) {
         BlockEntityRenderState.extractBase(blockEntity, state, crumblingOverlay);
         BlockState blockState = blockEntity.getBlockState();
-        state.facing = blockState.getValue(TargetBlock.FACING);
+        state.facing = blockState.getValue(StatueBlock.FACING);
         state.gunItem = blockEntity.getGunItem();
+        // 在这里解析物品模型，而不是 submit 阶段：
+        // 1. 修复崩溃 —— 旧实现调用 ItemModelResolver#updateForNonLiving(..., null)。
+        //    该方法是给物品展示框/掉落物这类「非生物实体」用的，内部第一行就解引用
+        //    entity.level()，传 null 必定 NPE（雕像一旦放入枪，每帧渲染都崩）。
+        // 2. 符合 26.2 extract→submit 管线语义：extract 阶段才允许读世界状态。
+        //    updateForTopItem 接受 (level, @Nullable LivingEntity, seed)，Level 从
+        //    方块实体取，生物传 null，与 ThrowableEntityRenderer 的用法一致。
+        state.gunRenderState.clear();
+        if (!state.gunItem.isEmpty()) {
+            ItemModelResolver resolver = Minecraft.getInstance().getItemModelResolver();
+            Level level = blockEntity.getLevel();
+            if (resolver != null && level != null) {
+                // ItemDisplayContext.FIXED + 全亮 + seed 0：与上游 1.20.1 的
+                // renderStatic(stack, FIXED, 15728880, ..., null, 0) 逐参数等价
+                resolver.updateForTopItem(state.gunRenderState, state.gunItem,
+                        ItemDisplayContext.FIXED, level, null, 0);
+            }
+        }
     }
 
     @Override
@@ -77,12 +102,9 @@ public class StatueRenderer implements BlockEntityRenderer<StatueBlockEntity, St
             double offset = Math.sin(Util.getMillis() / 500.0) * 0.1;
             poseStack.translate(0, offset, 0);
 
-            // Render gun item using ItemStackRenderState
+            // 直接提交 extract 阶段解析好的物品渲染状态全亮渲染，与旧行为一致
             if (!state.gunItem.isEmpty()) {
-                ItemStackRenderState itemRenderState = new ItemStackRenderState();
-                Minecraft.getInstance().getItemModelResolver().updateForNonLiving(
-                        itemRenderState, state.gunItem, ItemDisplayContext.FIXED, null);
-                itemRenderState.submit(poseStack, collector, 15728880, OverlayTexture.NO_OVERLAY, 0);
+                state.gunRenderState.submit(poseStack, collector, 15728880, OverlayTexture.NO_OVERLAY, 0);
             }
 
             poseStack.popPose();
