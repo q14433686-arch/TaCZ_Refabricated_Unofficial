@@ -186,8 +186,8 @@ world corruption, crashes, data loss and mod conflicts. Non-commercial project.
 
 | 字段 | 填什么 |
 |---|---|
-| **Version name** | `1.1.8+fabric.26.2.Beta-1` |
-| **Version number** | `1.1.8+fabric.26.2.Beta-1` |
+| **Version name** | `1.1.8+fabric.26.2.Beta-2` |
+| **Version number** | `1.1.8+fabric.26.2.Beta-2` |
 | **Release channel** | **Alpha** |
 | **Loaders** | `Fabric` |
 | **Game versions** | `26.2` |
