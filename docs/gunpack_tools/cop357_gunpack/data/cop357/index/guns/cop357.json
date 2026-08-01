@@ -1,0 +1,8 @@
+{
+  "name": "cop357.gun.cop357.name",
+  "display": "cop357:cop357_display",
+  "data": "cop357:cop357_data",
+  "tooltip": "cop357.gun.cop357.desc",
+  "type": "pistol",
+  "sort": 6
+}

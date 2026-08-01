@@ -1,0 +1,81 @@
+{
+  "model": "cop357:gun/cop357_geo",
+  "texture": "cop357:gun/uv/cop357",
+  "slot": "cop357:gun/slot/cop357",
+  "use_default_animation": "pistol",
+  "player_animator_3rd": "tacz:pistol_default.player_animation",
+  "transform": {
+    "scale": {
+      "thirdperson": [
+        0.8,
+        0.8,
+        0.8
+      ],
+      "ground": [
+        0.8,
+        0.8,
+        0.8
+      ],
+      "fixed": [
+        1.2,
+        1.2,
+        1.2
+      ]
+    }
+  },
+  "muzzle_flash": {
+    "texture": "tacz:flash/common_muzzle_flash",
+    "scale": 0.45
+  },
+  "iron_zoom": 1.35,
+  "zoom_model_fov": 55,
+  "ammo_count_style": "normal",
+  "sounds": {
+    "draw": "tacz:m1911/m1911_draw",
+    "put_away": "tacz:m1911/m1911_put_away",
+    "shoot": "tacz:m1911/m1911_shoot",
+    "shoot_3p": "tacz:m1911/m1911_shoot_3p",
+    "silence": "tacz:m1911/m1911_silence",
+    "silence_3p": "tacz:m1911/m1911_silence_3p",
+    "dry_fire": "tacz:dry_fire",
+    "head_hit": "tacz:head_hit",
+    "flesh_hit": "tacz:flesh_hit",
+    "kill": "tacz:kill"
+  },
+  "offhand_show": {
+    "pos": [
+      4,
+      13,
+      -1
+    ],
+    "rotate": [
+      -90,
+      -35,
+      90
+    ],
+    "scale": [
+      0.5,
+      0.5,
+      0.5
+    ]
+  },
+  "hotbar_show": {
+    "0": {
+      "pos": [
+        -5,
+        13,
+        -1
+      ],
+      "rotate": [
+        -90,
+        -35,
+        90
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    }
+  }
+}
