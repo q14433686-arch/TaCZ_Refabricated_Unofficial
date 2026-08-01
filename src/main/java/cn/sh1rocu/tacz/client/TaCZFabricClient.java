@@ -97,6 +97,12 @@ public class TaCZFabricClient implements ClientModInitializer {
         });
         // 26.2 Feature Rendering: 注册 TACZ 自定义 FeatureRenderers
         TaczFeatureRenderers.register();
+        // 枪械工作台左侧「旋转预览模型」的 PIP 渲染器。
+        // 26.2 的 GUI 是 extract→绘制两段式，1.21.1 那套直接改 RenderSystem 模型视图矩阵
+        // 再 renderStatic 的做法已不存在；带自定义变换的 GUI 3D 绘制只能走 PictureInPictureRenderer。
+        // 不注册的话，GunSmithTableScreen 提交的 GunPreviewRenderState 找不到渲染器 -> 预览框空白。
+        net.fabricmc.fabric.api.client.rendering.v1.PictureInPictureRendererRegistry.register(
+                ctx -> new com.tacz.guns.client.gui.preview.GunPreviewRenderer());
         subscribeEvents();
     }
 

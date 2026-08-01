@@ -37,12 +37,16 @@ public class GunPackProgressScreen extends Screen implements ProgressListener {
             this.minecraft.gui.setScreen(null);
         } else {
             this.extractBackground(gui, mouseX, mouseY, partialTick);
+            // 【本轮修复：枪包加载进度界面的文字不显示】
+            // 16777215 = 0x00FFFFFF，alpha 为 0；26.2 的 GuiGraphicsExtractor#text 开头即
+            //     if (ARGB.alpha(color) == 0) return;
+            // 直接整段跳过绘制（见 docs/PORTING_NOTES.md §1）。1.21.1 无此短路故上游正常。
             if (this.header != null) {
-                gui.centeredText(this.font, this.header, this.width / 2, 70, 16777215);
+                gui.centeredText(this.font, this.header, this.width / 2, 70, 0xFFFFFFFF);
             }
             if (this.stage != null && this.progress > 0) {
                 Component text = this.stage.copy().append(" " + this.progress + "%");
-                gui.centeredText(this.font, text, this.width / 2, 90, 16777215);
+                gui.centeredText(this.font, text, this.width / 2, 90, 0xFFFFFFFF);
             }
             super.extractRenderState(gui, mouseX, mouseY, partialTick);
         }

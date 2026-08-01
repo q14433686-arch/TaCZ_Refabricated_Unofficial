@@ -13,6 +13,7 @@ import com.tacz.guns.client.gui.components.FlatColorButton;
 import com.tacz.guns.client.gui.components.GunPackList;
 import com.tacz.guns.client.gui.components.smith.ResultButton;
 import com.tacz.guns.client.gui.components.smith.TypeButton;
+import com.tacz.guns.client.gui.preview.GunPreviewRenderState;
 import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
@@ -36,9 +37,13 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
@@ -667,28 +672,74 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         }
     }
 
+    /**
+     * 左侧「旋转预览模型」。
+     *
+     * <h2>本轮修复：缩放/旋转按钮此前完全无效</h2>
+     *
+     * <p>旧实现只有一句 {@code graphics.item(result, x, y)} —— 画的是 16×16 的<b>物品栏图标</b>，
+     * 既不旋转也不缩放；{@code scale} 字段与 {@code +/-/R} 三个按钮从头到尾没有被读过。
+     * 这正是玩家反馈的「工作台里的模型没法缩放」。</p>
+     *
+     * <p>26.2 的 GUI 是「extract → 统一绘制」两段式，1.21.1 那套
+     * {@code RenderSystem.getModelViewStack()} + {@code renderStatic} + {@code endBatch}
+     * 已全部不存在。唯一能在 GUI 内做带自定义变换的 3D 绘制的官方通道是
+     * {@code PictureInPictureRenderer}（vanilla 的实体预览、超框物品都走它），
+     * 因此这里改为提交一个 {@link GunPreviewRenderState}，
+     * 由 {@link com.tacz.guns.client.gui.preview.GunPreviewRenderer} 渲染到离屏纹理再合回。</p>
+     *
+     * <p>几何参数逐项照抄上游（{@code renderLeftModel}）：预览框
+     * {@code (leftPos+3, topPos+16) 128×99}、自转周期 8 秒、俯角 15°、
+     * 缩放基准 70（{@code +/-} 步进 20，范围 10..200）。
+     * 上游用 {@code RenderSystem.enableScissor} 限定的可视框，
+     * 在 26.2 里由 PIP 的 {@code scissorArea} 承担。</p>
+     *
+     * <p>用 {@code updateForTopItem} 而非 {@code updateForLiving}：后者会把
+     * {@code displayContext.ordinal()} 混进 seed，而这里要的是与上游一致的
+     * {@code FIXED} 上下文 + 固定 seed 0。</p>
+     */
     private void renderLeftModel(GuiGraphicsExtractor graphics, GunSmithTableRecipe recipe) {
-        // 26.2 - Updated 3D item rendering in GUI using new render pipeline
-        // Using the new render system with proper matrix stack management
-        if (recipe != null) {
-            ItemStack result = recipe.getOutput();
-            if (!result.isEmpty()) {
-                int posX = leftPos + 6;
-                int posY = topPos + 16;
-                int width = 96;
-                int height = 96;
-                
-                // Calculate scale to fit the item in the display area
-                float scaleX = (float) width / 100.0f;
-                float scaleY = (float) height / 100.0f;
-                float modelScale = Math.min(scaleX, scaleY) * this.scale / 10.0f;
-                
-                // 26.2 GUI extractor owns item extraction; scaled custom GUI item rendering requires a full
-                // submit-state rewrite, so keep the item visible at the computed center.
-                graphics.item(result, (int) (posX + width / 2 - 8), (int) (posY + height / 2 - 8));
-            }
-        }
+        // 先标记一下，渲染高模（与上游同序：LOD 判定依赖它）
         RenderDistance.markGuiRenderTimestamp();
+        if (recipe == null) {
+            return;
+        }
+        ItemStack result = recipe.getOutput();
+        if (result.isEmpty()) {
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        ItemModelResolver resolver = mc.getItemModelResolver();
+        if (resolver == null) {
+            return;
+        }
+
+        final float rotationPeriodMs = 8000f;
+        final float rotPitch = 15f;
+        int startX = leftPos + 3;
+        int startY = topPos + 16;
+        int width = 128;
+        int height = 99;
+
+        float yaw = (System.currentTimeMillis() % (long) rotationPeriodMs) * (360f / rotationPeriodMs);
+
+        ItemStackRenderState renderState = new ItemStackRenderState();
+        resolver.updateForTopItem(renderState, result, ItemDisplayContext.FIXED, mc.level, mc.player, 0);
+
+        // 上游用 RenderSystem.enableScissor 把预览限制在面板可视框内；26.2 交给 PIP 的 scissorArea。
+        // 若外层已有 scissor（例如被别的容器裁剪），取交集，语义与 vanilla 一致。
+        ScreenRectangle preview = new ScreenRectangle(startX, startY, width, height);
+        ScreenRectangle outer = graphics.scissorStack.peek();
+        ScreenRectangle scissor = outer == null ? preview : preview.intersection(outer);
+
+        graphics.guiRenderState.addPicturesInPictureState(new GunPreviewRenderState(
+                renderState,
+                startX, startY, startX + width, startY + height,
+                this.scale, rotPitch, yaw,
+                // 上游模型原点 (leftPos+60+8, topPos+50+8) 相对预览框中心 (leftPos+67, topPos+65.5) 的偏移
+                1.0f, -7.5f,
+                scissor
+        ));
     }
 
     @Override
