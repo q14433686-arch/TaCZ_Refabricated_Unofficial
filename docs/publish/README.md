@@ -39,7 +39,7 @@
 —— 前者含版本号与游戏名，后者含版本号与 filler data，**都会被驳回**。
 
 > 这同时解决了「以后移植到别的 MC 版本会很尴尬」的问题：
-> 项目名长期稳定，版本信息由**文件名**（`TACZ-Refabricated-26.2-1.1.8+fabric.26.2.Beta-1.jar`）
+> 项目名长期稳定，版本信息由**文件名**（`TACZ-Refabricated-26.2-1.1.8+fabric.26.2.Beta-2.jar`）
 > 和**版本号字段**承载 —— 这正是 CurseForge 规则里说的
 > "belongs in ... relevant **file tagging**"。
 
@@ -121,7 +121,7 @@
 
 | 项 | 值 |
 |---|---|
-| 模组版本号 | `1.1.8+fabric.26.2.Beta-1` |
+| 模组版本号 | `1.1.8+fabric.26.2.Beta-2` |
 | Minecraft | `26.2` |
 | Fabric Loader | `>=0.19.3` |
 | Fabric API | `0.155.2+26.2` |
