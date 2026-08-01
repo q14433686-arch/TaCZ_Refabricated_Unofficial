@@ -1,8 +1,8 @@
 gradlew exit_code=0
-timestamp_utc=2026-07-31T20:27:15Z
+timestamp_utc=2026-08-01T03:01:19Z
 --- free -m ---
                total        used        free      shared  buff/cache   available
-Mem:           15989        1966       11049          47        3361       14023
+Mem:           15989        1992       10805          46        3581       13996
 Swap:           3071           0        3071
 --- cgroup v2 memory.events ---
 (无 cgroup v2 memory.events)
@@ -10,11 +10,11 @@ Swap:           3071           0        3071
 --- dmesg OOM 线索（若有权限） ---
 --- 退出时内存 top5 进程 ---
 USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-root        2018  1.0  0.8 1430604 135836 ?      Sl   20:25   0:01 /tmp/provjobd1343371135
-runner      2111  3.2  0.8 274483368 132808 ?    Sl   20:25   0:03 /home/runner/actions-runner/extracted/bin/Runner.Worker spawnclient 142 145
-runner      2096  1.1  0.6 274345488 98324 ?     Sl   20:25   0:01 /home/runner/actions-runner/extracted/bin/Runner.Listener run
-root        1177  0.1  0.4 2127340 71128 ?       Ssl  20:25   0:00 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
-root         962  0.0  0.3 295272 51868 ?        Ss   20:25   0:00 php-fpm: master process (/etc/php/8.3/fpm/php-fpm.conf)
+runner      2111  4.4  0.8 274499056 145348 ?    Sl   03:00   0:03 /home/runner/actions-runner/cached/2.336.0/bin/Runner.Worker spawnclient 142 145
+root        2052  1.0  0.8 1365252 145308 ?      Sl   02:59   0:01 /tmp/provjobd2349107525
+runner      2090  1.4  0.5 274345408 96568 ?     Sl   02:59   0:01 /home/runner/actions-runner/cached/2.336.0/bin/Runner.Listener run
+root        1226  0.2  0.4 2045416 72036 ?       Ssl  02:59   0:00 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+root         984  0.1  0.3 295272 51472 ?        Ss   02:59   0:00 php-fpm: master process (/etc/php/8.3/fpm/php-fpm.conf)
 --- gradle-raw.log 尾部 120 行 ---
 === CI 模式：单 JVM + 直写 raw 日志，JAVA_OPTS=-Xmx3G -Dfile.encoding=UTF-8  ===
 Fetching distribution.
@@ -45,7 +45,7 @@ Daemon will be stopped at the end of the build
 [taczind-ci:settings] git rebase FETCH_HEAD -> 1 error: cannot rebase: You have unstaged changes.
 error: Please commit or stash them.
 [taczind-ci:settings] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0 To https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
-   5e1809a..2915b25  HEAD -> arena/019fb90c-tacz-refabricated-unofficial
+   5820aa4..ef71482  HEAD -> arena/019fb90c-tacz-refabricated-unofficial
 [taczind-ci:settings] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0 From https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
  * branch            arena/019fb90c-tacz-refabricated-unofficial -> FETCH_HEAD
 [taczind-ci:settings] git rebase FETCH_HEAD -> 1 error: cannot rebase: You have unstaged changes.
@@ -82,7 +82,7 @@ Note: Recompile with -Xlint:unchecked for details.
 [taczind-ci:relay] git fetch origin arena/019fb90c-tacz-refabricated-unofficial -> 0
 [taczind-ci:relay] git rebase FETCH_HEAD -> 1
 [taczind-ci:relay] git push origin HEAD:refs/heads/arena/019fb90c-tacz-refabricated-unofficial -> 0
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1785529543937.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1785553222360.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -92,11 +92,5 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 41s
+BUILD SUCCESSFUL in 1m 9s
 2 actionable tasks: 2 executed
-[arena/019fb90c-tacz-refabricated-unofficial 4206ca1] ci-gradlew: 终态日志+尸检 @ 5e1809a239aaf9144bac22abb799968fbd03de2d
- 2 files changed, 31 insertions(+), 16 deletions(-)
-From https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial
- * branch            arena/019fb90c-tacz-refabricated-unofficial -> FETCH_HEAD
-error: cannot rebase: You have unstaged changes.
-error: Please commit or stash them.
