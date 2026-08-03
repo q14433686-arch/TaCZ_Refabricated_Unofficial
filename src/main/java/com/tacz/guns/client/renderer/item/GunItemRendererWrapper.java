@@ -57,6 +57,19 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
     private static BedrockGunModel lastModel = null;
     public static final Vector3f muzzleRenderOffset = new Vector3f();
 
+    /**
+     * 「当前这次 THIRD_PERSON_*_HAND 提交对应的是<b>主手</b>」。
+     *
+     * <p>由 {@code ItemInHandLayerMixin#submitArmWithItem} 在 HEAD 置位、TAIL 清除。
+     * 用于把「左手」与「副手」区分开 —— 左利手玩家的主手就是左手，
+     * 不能像上游那样用 {@code arm == LEFT} 代替「副手」判定，否则他的主手枪不渲染。</p>
+     *
+     * <p>渲染线程单线程，且 {@code ItemStackRenderState#submit} 是同步直调
+     * {@code SpecialModelRenderer#submit}（字节码确认），因此普通 static 字段即可，
+     * 不需要 ThreadLocal，也不会跨帧残留。</p>
+     */
+    public static boolean IS_MAIN_HAND_SUBMIT = false;
+
     public static final Supplier<GunItemRendererWrapper> INSTANCE = Suppliers.memoize(GunItemRendererWrapper::new);
 
     public GunItemRendererWrapper() {
@@ -269,8 +282,25 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             if (transformType == FIRST_PERSON_LEFT_HAND || transformType == FIRST_PERSON_RIGHT_HAND) {
                 return;
             }
-            // 第三人称副手也不渲染了
-            if (transformType == THIRD_PERSON_LEFT_HAND) {
+            // 第三人称「副手」不渲染 —— 副手枪改由 HumanoidOffhandRender 以背挂姿态绘制。
+            //
+            // 【本轮修复：左利手玩家第三人称看不到主手枪】
+            //
+            // 上游 1.21.1 这里写的是「transformType == THIRD_PERSON_LEFT_HAND 就 return」，
+            // 配合它的 mixin「arm == LEFT 就 cancel」，两处都<b>把「左手」等同于「副手」</b>。
+            // 对左利手玩家（getMainArm() == LEFT）这个等式不成立：他的主手就是左手，
+            // 于是主手那把枪要么被 mixin 取消、要么走到这里被 return —— 两条路都画不出来。
+            // 这是上游就有的缺陷，不是移植引入的。
+            //
+            // 26.2 的 ArmedEntityRenderState 明确带了 mainArm 字段（字节码确认），
+            // 因此可以严格按「是不是副手」判定，而不是按「是不是左手」。
+            // ItemInHandLayerMixin 在放行主手那一侧时会置位 IS_MAIN_HAND_SUBMIT，
+            // 这里据此区分「左手＝主手」与「左手＝副手」两种情况。
+            //
+            // 该标志的读写严格同步：ItemStackRenderState#submit 内部是<b>直接</b>调用
+            // SpecialModelRenderer#submit（字节码确认，无延迟队列），
+            // 也就是本方法就在 mixin 的 HEAD/TAIL 之间执行，不存在跨帧残留。
+            if (transformType == THIRD_PERSON_LEFT_HAND && !IS_MAIN_HAND_SUBMIT) {
                 return;
             }
             // GUI 特殊渲染

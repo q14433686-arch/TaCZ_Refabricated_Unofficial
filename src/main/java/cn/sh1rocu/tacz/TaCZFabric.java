@@ -139,6 +139,13 @@ public class TaCZFabric implements ModInitializer {
         ServerPlayerEvents.COPY_FROM.register(SyncedEntityDataEvent::onPlayerClone);
         ServerTickEvents.END_SERVER_TICK.register(SyncedEntityDataEvent::onServerTick);
 
+        // 非玩家生物跨维度（持枪僵尸等）。
         ServerEntityLevelChangeEvents.AFTER_ENTITY_CHANGE_LEVEL.register(TravelToDimensionEvent::onTravelToDimension);
+        // 玩家跨维度。【必须单独注册】上面那个事件的 javadoc 明写
+        // "does not apply to the ServerPlayer"，玩家是被物理移动过去的，
+        // 从不触发 AFTER_ENTITY_CHANGE_LEVEL。缺了这一行，
+        // 服务端的枪械状态在跨维度后永远不会复位，
+        // 表现为「换弹动作连贯但子弹不变」。详见 TravelToDimensionEvent 的类注释。
+        ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register(TravelToDimensionEvent::onPlayerTravelToDimension);
     }
 }
