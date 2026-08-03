@@ -144,51 +144,75 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
 
                 if (isFirstPerson) {
-                    // 【第 24 轮修复：曳光弹起点"绝对存在、但玩家转头时会相对运动"】
+                    // 【第 25 轮修复：第一人称曳光弹起点不在枪口，随朝向呈东南西北规律漂移】
                     //
-                    // <h2>muzzleRenderOffset 早就是世界空间的了，不需要再转一次</h2>
+                    // <h2>结论先行：muzzleRenderOffset 是【视图空间】的，必须旋转到世界再平移</h2>
                     //
-                    // 上一轮以为它是视图空间偏移，于是补了一次
-                    // {@code rotate(camera.rotation())} —— 那是<b>多转了一次</b>。
-                    // 实测日志（1000 行 TracerDebug）把这件事钉死了：
+                    // 上一轮（第 24 轮）断定它「已经是世界向量、直接相加即可」，
+                    // <b>那个结论是错的</b>。本轮用同一份 latest.log 重新统计将其推翻。
                     //
-                    // <b>① globalMuzzle 随玩家朝向变化。</b> 若它真是视图空间常量，
-                    // 同一把枪应当恒定不变；实际 qbz_95 的 x 在 [-1.93, +1.73] 之间扫，
-                    // minigun 更是三个分量全在 ±2.4 内乱跑。
+                    // <h3>证据一：globalMuzzle 在 307° 偏航跨度上几乎是常量</h3>
+                    // 86 个 TracerDebug 样本，yaw 覆盖 13 个 15° 桶、跨度 307°。
+                    // 若它是世界向量，x/z 应当随朝向在 ±1.8 之间整周摆动；实测却是：
+                    //   gx ∈ [+0.064, +0.195]   gz ∈ [-1.948, -1.727]
+                    //   mean (+0.162, -0.188, -1.835)   std (0.019, 0.026, 0.043)
+                    // 按 45° 分八桶后各桶均值几乎重合（gz 全部落在 -1.77 ~ -1.89）。
+                    // 这是一个稳定的<b>视图空间</b>常量：「正前方约 1.84 格、略偏右下」，
+                    // 与枪口的实际位置吻合。
                     //
-                    // <b>② 它与相机的世界前向高度相关。</b>
-                    // corr(muzzle.x, sin(yaw)) = -0.95、corr(muzzle.z, cos(yaw)) = +0.97，
-                    // 逐帧比对夹角只差约 13°（正是枪口相对视线中心的固有偏移）。
+                    // <h3>证据二：与 yaw 的相关性接近于零</h3>
+                    //   corr(gx, sin yaw) = +0.27     corr(gz, cos yaw) = -0.20
+                    // 若是世界向量，这两个值应接近 ±1.0。
+                    // （第 24 轮引用的 -0.95/+0.97 来自更早的日志，那时旧代码正在对
+                    //   offset 做旋转，测到的是「旋转之后」的量；用它推断「旋转之前」
+                    //   的空间归属，把因果搞反了。）
                     //
-                    // <b>③ 反解可得一个稳定的视图空间常量。</b>
-                    // 对 globalMuzzle 施加相机旋转的<b>逆</b>，qbz_95 得到
-                    // (+0.135, -0.347, -1.817)，标准差仅 0.02~0.11 —— 即"正前方约 1.8 格、
-                    // 略偏下"，是合理的枪口位置。这说明
-                    // {@code globalMuzzle == R_camera · (视图空间枪口)}，它<b>已经</b>是世界向量。
+                    // <h3>证据三：采集端链路里根本没有相机旋转</h3>
+                    // muzzleRenderOffset 取自 renderFirstPerson 的 poseStack，其上游是
+                    // ItemInHandRenderer#submitHandsWithItems。对该方法反汇编，从入口到
+                    // submitArmWithItem 之间【只有两条 mulPose】：
+                    //   mulPose(XP, (getViewXRot - xBob) * 0.1)
+                    //   mulPose(YP, (getViewYRot - yBob) * 0.1)
+                    // 系数是 <b>0.1</b> —— 这是视角延滞(bob)，只有真实视角的十分之一，
+                    // <b>不是</b>把手部变换到世界空间的相机旋转。而
+                    // GunItemRendererWrapper#renderFirstPerson 开头正是用
+                    //   mulPose(XP, xRot * -0.1) / mulPose(YP, yRot * -0.1)
+                    // 把这两条<b>逆转抵消</b>。故 poseStack 始终停留在【视图空间】。
                     //
-                    // 根因在采集端：{@code cacheMuzzlePosition} 读的是第一人称手部渲染的
-                    // poseStack，而 26.2 的 {@code GameRenderer#renderItemInHand} 开头就是
-                    //   {@code poseStack.mulPose(projection.invert())}
-                    // 之后才叠 bobHurt/bobView 与视角回摆。这条链路里已经含了相机朝向，
-                    // 所以取出来的 m30/m31/m32 天然是世界轴向量。
-                    // 而实体 poseStack 同样是世界轴（日志验证：poseBefore ≡ bulletPos - eye，
-                    // 400 行最大误差 0.0002）—— <b>两者本来就同一个空间，直接相加即可。</b>
+                    // <h2>为什么症状呈「东南西北」规律</h2>
+                    // 把视图空间向量（前方为 -Z）当成世界向量直接平移，它就恒定指向
+                    // 世界 -Z（正北）。于是：
+                    //   面北 → 世界 -Z 与视图前方同向，起点看着还在前方
+                    //   面南 → 世界 -Z 成了身后，起点跑到视野后方
+                    //   面东 → 世界 -Z 在左手边，起点偏左
+                    //   面西 → 世界 -Z 在右手边，起点偏右
+                    // 与实测的四方位描述逐条对应。俯仰同理：gy 恒为世界竖直分量，
+                    // 抬头/低头时起点固定上/下偏，并与偏航叠加成「上偏左」「下偏右」等组合。
+                    // 这也解释了「方向没错、只有起点错」—— 错的仅仅是这一次平移。
                     //
-                    // 多转一次的代价：tick-0 样本 277 个，起点平均偏离真实枪口 2.98 格、
-                    // 最大 4.03 格。这就是"起点绝对存在、但方向不对"的来源。
+                    // <h2>为什么实体 poseStack 是世界轴（决定了修法是 rotate 而非 conjugate）</h2>
+                    // 同一份日志验证：poseBefore ≡ bulletPos - eye，86 样本中 81 个逐轴
+                    // 误差 < 0.0001。（5 个离群全是子弹已飞远的样本，差值模长约 2.0 格，
+                    // 来自 getEyePosition(partialTicks) 与相机插值不在同一帧，与空间归属无关。）
+                    // 字节码亦确认：LevelRenderer#submitFeatures 用 new PoseStack()（单位阵），
+                    // submitEntities 只做 translate(entity.pos - camera.pos)，
+                    // EntityRenderDispatcher#submit 只 pushPose/translate，全程无 mulPose。
                     //
-                    // <h2>用户观察到的"转头时起点相对运动"是另一半</h2>
+                    // <h2>修法</h2>
+                    // camera.rotation() 是【视图→世界】：Camera#setRotation 用
+                    // rotationYXZ(PI - yRot*DEG, -xRot*DEG, 0) 构造，随后
+                    // FORWARDS(0,0,-1).rotate(rotation) 得到世界前向。
+                    // 正是这里需要的方向，<b>直接 rotate，不要 conjugate</b>。
                     //
-                    // offset 只在子弹<b>首次渲染</b>时缓存一次，此后固定不变；
-                    // 而它是<b>世界</b>向量，玩家转头后这个世界方向就不再指向新的枪口了。
-                    // 日志里 bullet=395 在飞行途中相机 yaw 转了 99.7°，
-                    // 缓存值与当帧实时 globalMuzzle 的差从 0.006 一路涨到 1.83 格；
-                    // bullet=489 转 90° 时同样涨到 1.86 格。
-                    // 这正是"绝对的出发点在玩家转视角时相对运动"的实测证据。
-                    //
-                    // 因此改用<b>当帧实时</b>的 globalMuzzle：枪械模型渲染与本次实体提交发生在
-                    // 同一帧、同一相机下，起点自然始终贴合枪口。缓存值仅保留供调试对照
+                    // 另：改用【当帧实时】的 globalMuzzle 而非首帧缓存值。缓存值在玩家转头后
+                    // 会失效（日志中 bullet=395 转 99.7° 时缓存值与实时值相差 1.83 格），
+                    // 那是「起点随转头相对运动」的来源。枪械模型渲染与本次实体提交在同一帧、
+                    // 同一相机下完成，实时取用即可始终贴合枪口。缓存值仅留作调试对照
                     // （fpOffsetBefore/After），不再参与定位。
+                    //
+                    // FOV 因子（tan(itemFov/2)/tan(levelFov/2)，在 cacheMuzzlePosition 里施加于 z）
+                    // <b>必须保留</b>：applyScopeMagnification 与 applyGunModelFovModifying
+                    // 驱动两套独立的 FOV dynamics，开镜时二者分离，去掉会导致开镜后起点前后错位。
                     Vector3f offset = bullet.getFirstPersonRenderOffset();
                     if (offset == null) {
                         offset = new Vector3f(globalMuzzleOffset);
@@ -200,8 +224,8 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                     firstPersonOffsetAfter = new Vector3f(offset);
                     offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
 
-                    // 已是世界轴向量，与实体 poseStack 同空间，直接平移。
-                    Vector3f worldOffset = new Vector3f(globalMuzzleOffset);
+                    // 视图空间 -> 世界空间：camera.rotation() 即视图→世界，直接 rotate。
+                    Vector3f worldOffset = new Vector3f(globalMuzzleOffset).rotate(camera.rotation());
                     firstPersonWorldOffset = new Vector3f(worldOffset);
                     poseStack.translate(worldOffset.x() * offsetReducer,
                             worldOffset.y() * offsetReducer,
