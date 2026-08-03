@@ -294,7 +294,14 @@ public class CommonAssetsManager implements ICommonResourceProvider {
                         .map(GunSmithTableRecipe.class::cast)
                         .toList();
                 for (GunSmithTableRecipe recipe : recipes) {
-                    recipe.init();
+                    try {
+                        recipe.init();
+                    } catch (RuntimeException ex) {
+                        // 单条配方 init 失败（例如 CUSTOM result 结构异常）只记录日志，
+                        // 不要让它打断整个循环——否则后面的 GUN_SMITH_TABLE_CRAFTING 配方
+                        // 全部不会被 init，服务端侧的 result 永远停在 EMPTY。
+                        GunMod.LOGGER.warn("Failed to init gun smith table recipe, skipping", ex);
+                    }
                 }
             }
         }

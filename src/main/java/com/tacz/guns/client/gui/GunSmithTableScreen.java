@@ -152,7 +152,18 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             // 少了这一步，getResult() 恒为 EMPTY、getGroup() 为 null，
             // 所有配方都会在下面的 recipeKeys.containsKey(groupName) 处被过滤掉
             // —— 这就是第 12 轮"所有配方都看不见"的原因。
-            recipe.init();
+            try {
+                recipe.init();
+            } catch (RuntimeException ex) {
+                // 单条配方 init 失败（例如 CUSTOM result 结构异常）时，
+                // 只记录日志并跳过该条；绝不能让异常冒泡导致 classifyRecipes
+                // 被打断 —— 否则整个工作台界面会出现"页签在、配方列表空"。
+                GunMod.LOGGER.warn("Failed to init gun smith table recipe {}, skipping", id, ex);
+                continue;
+            }
+            if (recipe.getResult() == null || recipe.getResult().getResult().isEmpty()) {
+                continue;
+            }
             if (!isSuitableForMainHand(recipe)) {
                 continue;
             }

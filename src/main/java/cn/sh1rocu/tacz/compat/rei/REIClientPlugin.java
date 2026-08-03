@@ -62,10 +62,21 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
         // 会在下面的 tabs 匹配处被全部过滤掉（第 13 轮踩过的坑）。init() 幂等。
         List<GunSmithTableRecipe> recipes = new java.util.ArrayList<>();
         for (var e : com.tacz.guns.resource.CommonAssetsManager.get().getAllTableRecipes()) {
-            if (e.getValue() != null && e.getValue().getResult() != null) {
+            if (e.getValue() == null || e.getValue().getResult() == null) {
+                continue;
+            }
+            try {
                 GunSmithTableRecipe r = new GunSmithTableRecipe(e.getKey(), e.getValue());
                 r.init();
+                if (r.getResult() == null || r.getResult().getResult().isEmpty()) {
+                    com.tacz.guns.GunMod.LOGGER.warn("[REI] Gun smith table recipe {} has empty result after init(), skipping", e.getKey());
+                    continue;
+                }
                 recipes.add(r);
+            } catch (RuntimeException ex) {
+                // 单条配方 init 失败只记录、不打断整个 REI 注册。
+                // 与 JEI 侧对称，避免 CUSTOM result 格式异常一类的问题清空整个 REI 分类。
+                com.tacz.guns.GunMod.LOGGER.warn("[REI] Failed to init gun smith table recipe {}, skipping", e.getKey(), ex);
             }
         }
 
