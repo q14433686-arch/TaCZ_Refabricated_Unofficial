@@ -146,7 +146,7 @@ public final class GunSmithTableSerializer {
                         ingredients.add(new GunSmithTableIngredient(
                                 Ingredient.CONTENTS_STREAM_CODEC.decode(buffer), buffer.readInt()));
                     }
-                    ItemStack resultItem = ItemStack.STREAM_CODEC.decode(buffer);
+                    ItemStack resultItem = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
                     Identifier group = buffer.readIdentifier();
                     return new GunSmithTableRecipe(recipeId, new GunSmithTableResult(resultItem, group), ingredients);
                 }
@@ -159,7 +159,7 @@ public final class GunSmithTableSerializer {
                         Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, ingredient.getIngredientOrThrow());
                         buffer.writeInt(ingredient.getCount());
                     }
-                    ItemStack.STREAM_CODEC.encode(buffer, recipe.getResult().getResult());
+                    ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, recipe.getResult().getResult());
                     buffer.writeIdentifier(recipe.getResult().getGroup());
                 }
             };
