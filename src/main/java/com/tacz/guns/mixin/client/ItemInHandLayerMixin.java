@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.model.functional.ShellRender;
+import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.renderer.other.HumanoidOffhandRender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -63,13 +64,30 @@ public class ItemInHandLayerMixin {
         // 注意必须用 mainArm 判定副手，不能硬编码 LEFT（左利手玩家主手即为 LEFT）。
         ItemStack mainHand = state.getMainHandItemStack();
         if (mainHand != null && IGun.getIGunOrNull(mainHand) != null && arm != state.mainArm) {
+            GunItemRendererWrapper.IS_MAIN_HAND_SUBMIT = false;
             ci.cancel();
+            return;
         }
+
+        // 【本轮修复：左利手玩家第三人称主手枪不渲染】
+        //
+        // 26.2 的 extractArmedEntityRenderState 是按<b>左右手</b>而不是按主副手填 display context 的
+        // （字节码确认：右手固定 THIRD_PERSON_RIGHT_HAND、左手固定 THIRD_PERSON_LEFT_HAND）。
+        // 而 GunItemRendererWrapper#renderByItem 沿用上游写法，见到 THIRD_PERSON_LEFT_HAND
+        // 就当作「副手」直接 return。对左利手玩家，主手就是左手 ——
+        // 上面的取消分支不会触发（arm == mainArm），可枪走到 renderByItem 又被 return 掉，
+        // 于是<b>主手那把枪彻底不渲染</b>。
+        //
+        // 这里把「本次提交是不是主手」透传下去，让 renderByItem 用主副手而不是左右手判定。
+        // 读写都在本方法的 HEAD/TAIL 之间同步完成（ItemStackRenderState#submit 是直调
+        // SpecialModelRenderer#submit，无延迟队列），因此不会跨帧残留。
+        GunItemRendererWrapper.IS_MAIN_HAND_SUBMIT = arm == state.mainArm;
     }
 
     @Inject(method = "submitArmWithItem", at = @At(value = "TAIL"))
     private void submitArmWithItemTail(ArmedEntityRenderState state, ItemStackRenderState itemState, ItemStack itemStack, HumanoidArm arm, PoseStack poseStack, SubmitNodeCollector collector, int packedLight, CallbackInfo ci) {
         MuzzleFlashRender.isSelf = false;
         ShellRender.isSelf = false;
+        GunItemRendererWrapper.IS_MAIN_HAND_SUBMIT = false;
     }
 }

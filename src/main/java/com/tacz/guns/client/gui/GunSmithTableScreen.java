@@ -11,8 +11,10 @@ import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.gui.components.FlatColorButton;
 import com.tacz.guns.client.gui.components.GunPackList;
+import com.tacz.guns.client.gui.components.TaczImageButton;
 import com.tacz.guns.client.gui.components.smith.ResultButton;
 import com.tacz.guns.client.gui.components.smith.TypeButton;
+import com.tacz.guns.client.gui.preview.GunPreviewRenderState;
 import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
@@ -36,9 +38,13 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
@@ -343,8 +349,23 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         this.addCraftButton();
     }
 
+    /**
+     * 「制造」按钮。
+     *
+     * <p>【本轮还原】改回上游的贴图按钮（UV 138,164，48×18）。</p>
+     *
+     * <p>顺带说明第 15 轮那条注释所描述的「Cmilaft 叠字」是怎么回事：
+     * 上游的按钮<b>贴图里就画着「制造」字样</b>，所以它在 {@code render} 里
+     * <b>额外</b>用 {@code drawModCenteredString} 画一遍本地化文本是为了盖在贴图上。
+     * 移植时把贴图按钮换成了带标签的原版 Button，于是「Button 自己的标签」
+     * 和「手动画的那一遍」重叠 —— 才有了叠字。
+     * 第 15 轮的处置是删掉手动画的那一遍，属于对症不对因：
+     * 叠字没了，但按钮外观依然不是上游的样子。
+     * 现在恢复贴图按钮（{@code CommonComponents.EMPTY} 标签，自身不画字），
+     * 手动绘制那一行也一并按上游补回，两者不再冲突。</p>
+     */
     private void addCraftButton() {
-        this.addRenderableWidget(Button.builder(Component.translatable("gui.tacz.gun_smith_table.craft"), b -> {
+        this.addRenderableWidget(new TaczImageButton(leftPos + 289, topPos + 162, 48, 18, 138, 164, 18, TEXTURE, b -> {
             if (this.selectedRecipe != null && playerIngredientCount != null) {
                 List<GunSmithTableIngredient> inputs = selectedRecipe.getInputs();
                 int size = inputs.size();
@@ -361,11 +382,12 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                 }
                 ClientPlayNetworking.send(new ClientMessageCraft(this.selectedRecipe.getId(), this.menu.containerId));
             }
-        }).bounds(leftPos + 289, topPos + 162, 48, 18).build());
+        }));
     }
 
+    /** 枪包主页链接。【本轮还原】改回上游贴图按钮（UV 149,211，18×18）。 */
     private void addUrlButton() {
-        this.addRenderableWidget(Button.builder(Component.literal("URL"), b -> {
+        this.addRenderableWidget(new TaczImageButton(leftPos + 112, topPos + 164, 18, 18, 149, 211, 18, TEXTURE, b -> {
             if (this.selectedRecipe != null) {
                 ItemStack output = selectedRecipe.getOutput();
                 Item item = output.getItem();
@@ -394,7 +416,7 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                     }, url, false));
                 }
             }
-        }).bounds(leftPos + 112, topPos + 164, 18, 18).build());
+        }));
     }
 
     private void addIndexButtons() {
@@ -452,14 +474,20 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         }
     }
 
+    /**
+     * 配方列表的上下翻页条。
+     *
+     * <p>【本轮还原】改回上游的贴图按钮。原先是原版灰底 Button + "^" / "v" 字符，
+     * 与面板整体风格完全不搭 —— 贴图里本来就画好了这两条翻页条（UV 40,166 / 40,186）。</p>
+     */
     private void addIndexPageButtons() {
-        this.addRenderableWidget(Button.builder(Component.literal("^"), b -> {
+        this.addRenderableWidget(new TaczImageButton(leftPos + 143, topPos + 56, 96, 6, 40, 166, 6, TEXTURE, b -> {
             if (this.indexPage > 0) {
                 this.indexPage--;
                 this.init();
             }
-        }).bounds(leftPos + 143, topPos + 56, 96, 6).build());
-        this.addRenderableWidget(Button.builder(Component.literal("v"), b -> {
+        }));
+        this.addRenderableWidget(new TaczImageButton(leftPos + 143, topPos + 171, 96, 6, 40, 186, 6, TEXTURE, b -> {
             if (selectedRecipeList != null && !selectedRecipeList.isEmpty()) {
                 int maxIndexPage = (selectedRecipeList.size() - 1) / 6;
                 if (this.indexPage < maxIndexPage) {
@@ -467,35 +495,34 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                     this.init();
                 }
             }
-        }).bounds(leftPos + 143, topPos + 171, 96, 6).build());
+        }));
     }
 
+    /** 分类页签的左右翻页箭头。【本轮还原】改回上游贴图按钮（UV 0,162 / 20,162）。 */
     private void addTypePageButtons() {
-        this.addRenderableWidget(Button.builder(Component.literal("<"), b -> {
+        this.addRenderableWidget(new TaczImageButton(leftPos + 136, topPos + 4, 18, 20, 0, 162, 20, TEXTURE, b -> {
             if (this.typePage > 0) {
                 this.typePage--;
                 this.init();
             }
-        }).bounds(leftPos + 136, topPos + 4, 18, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal(">"), b -> {
+        }));
+        this.addRenderableWidget(new TaczImageButton(leftPos + 327, topPos + 4, 18, 20, 20, 162, 20, TEXTURE, b -> {
             int maxIndexPage = (recipes.size() - 1) / 7;
             if (this.typePage < maxIndexPage) {
                 this.typePage++;
                 this.init();
             }
-        }).bounds(leftPos + 327, topPos + 4, 18, 20).build());
+        }));
     }
 
+    /** 预览模型的放大 / 缩小 / 复位。【本轮还原】改回上游贴图按钮（UV 188/200/212,173）。 */
     private void addScaleButtons() {
-        this.addRenderableWidget(Button.builder(Component.literal("+"), b -> {
-            this.scale = Math.min(this.scale + 20, 200);
-        }).bounds(leftPos + 5, topPos + 5, 10, 10).build());
-        this.addRenderableWidget(Button.builder(Component.literal("-"), b -> {
-            this.scale = Math.max(this.scale - 20, 10);
-        }).bounds(leftPos + 17, topPos + 5, 10, 10).build());
-        this.addRenderableWidget(Button.builder(Component.literal("R"), b -> {
-            this.scale = 70;
-        }).bounds(leftPos + 29, topPos + 5, 10, 10).build());
+        this.addRenderableWidget(new TaczImageButton(leftPos + 5, topPos + 5, 10, 10, 188, 173, 10, TEXTURE,
+                b -> this.scale = Math.min(this.scale + 20, 200)));
+        this.addRenderableWidget(new TaczImageButton(leftPos + 17, topPos + 5, 10, 10, 200, 173, 10, TEXTURE,
+                b -> this.scale = Math.max(this.scale - 20, 10)));
+        this.addRenderableWidget(new TaczImageButton(leftPos + 29, topPos + 5, 10, 10, 212, 173, 10, TEXTURE,
+                b -> this.scale = 70));
     }
 
     @Override
@@ -524,10 +551,15 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             }
         }
         graphics.text(font, Component.translatable("gui.tacz.gun_smith_table.ingredient"), leftPos + 254, topPos + 50, 0xFF555555, false);
-        // 第 15 轮修复：这里原本又手动画了一遍 "制造"，而下方 addCraftButton() 创建的
-        // Button 自身也会绘制自己的标签，两者位置几乎重合 -> 文字叠印成乱码
-        // （截图里的 "Cmilaft" 就是 "Craft" 和 "制造" 叠在一起）。
-        // 正确做法是让 Button 用本地化文本，这里不再重复绘制。
+        // 「制造」——【本轮还原】按上游补回这一行。
+        //
+        // 第 15 轮曾把它删掉，理由是与按钮自带标签叠印成乱码（"Cmilaft"）。
+        // 但那个叠印的真因是：移植时把上游的<b>贴图</b>按钮换成了带标签的原版 Button。
+        // 上游的贴图按钮标签是 CommonComponents.EMPTY，自身根本不画字，
+        // 面板上的「制造」二字一直都由这一行负责。
+        // 现在 addCraftButton() 已恢复为贴图按钮（TaczImageButton），
+        // 不再有第二处绘制，把这一行补回来才是上游的样子。
+        drawModCenteredString(graphics, font, Component.translatable("gui.tacz.gun_smith_table.craft"), leftPos + 312, topPos + 167, 0xFFFFFFFF);
         if (!this.filterEnabled && this.selectedRecipe != null) {
             this.renderLeftModel(graphics, this.selectedRecipe);
             this.renderPackInfo(graphics, this.selectedRecipe);
@@ -667,28 +699,74 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         }
     }
 
+    /**
+     * 左侧「旋转预览模型」。
+     *
+     * <h2>本轮修复：缩放/旋转按钮此前完全无效</h2>
+     *
+     * <p>旧实现只有一句 {@code graphics.item(result, x, y)} —— 画的是 16×16 的<b>物品栏图标</b>，
+     * 既不旋转也不缩放；{@code scale} 字段与 {@code +/-/R} 三个按钮从头到尾没有被读过。
+     * 这正是玩家反馈的「工作台里的模型没法缩放」。</p>
+     *
+     * <p>26.2 的 GUI 是「extract → 统一绘制」两段式，1.21.1 那套
+     * {@code RenderSystem.getModelViewStack()} + {@code renderStatic} + {@code endBatch}
+     * 已全部不存在。唯一能在 GUI 内做带自定义变换的 3D 绘制的官方通道是
+     * {@code PictureInPictureRenderer}（vanilla 的实体预览、超框物品都走它），
+     * 因此这里改为提交一个 {@link GunPreviewRenderState}，
+     * 由 {@link com.tacz.guns.client.gui.preview.GunPreviewRenderer} 渲染到离屏纹理再合回。</p>
+     *
+     * <p>几何参数逐项照抄上游（{@code renderLeftModel}）：预览框
+     * {@code (leftPos+3, topPos+16) 128×99}、自转周期 8 秒、俯角 15°、
+     * 缩放基准 70（{@code +/-} 步进 20，范围 10..200）。
+     * 上游用 {@code RenderSystem.enableScissor} 限定的可视框，
+     * 在 26.2 里由 PIP 的 {@code scissorArea} 承担。</p>
+     *
+     * <p>用 {@code updateForTopItem} 而非 {@code updateForLiving}：后者会把
+     * {@code displayContext.ordinal()} 混进 seed，而这里要的是与上游一致的
+     * {@code FIXED} 上下文 + 固定 seed 0。</p>
+     */
     private void renderLeftModel(GuiGraphicsExtractor graphics, GunSmithTableRecipe recipe) {
-        // 26.2 - Updated 3D item rendering in GUI using new render pipeline
-        // Using the new render system with proper matrix stack management
-        if (recipe != null) {
-            ItemStack result = recipe.getOutput();
-            if (!result.isEmpty()) {
-                int posX = leftPos + 6;
-                int posY = topPos + 16;
-                int width = 96;
-                int height = 96;
-                
-                // Calculate scale to fit the item in the display area
-                float scaleX = (float) width / 100.0f;
-                float scaleY = (float) height / 100.0f;
-                float modelScale = Math.min(scaleX, scaleY) * this.scale / 10.0f;
-                
-                // 26.2 GUI extractor owns item extraction; scaled custom GUI item rendering requires a full
-                // submit-state rewrite, so keep the item visible at the computed center.
-                graphics.item(result, (int) (posX + width / 2 - 8), (int) (posY + height / 2 - 8));
-            }
-        }
+        // 先标记一下，渲染高模（与上游同序：LOD 判定依赖它）
         RenderDistance.markGuiRenderTimestamp();
+        if (recipe == null) {
+            return;
+        }
+        ItemStack result = recipe.getOutput();
+        if (result.isEmpty()) {
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        ItemModelResolver resolver = mc.getItemModelResolver();
+        if (resolver == null) {
+            return;
+        }
+
+        final float rotationPeriodMs = 8000f;
+        final float rotPitch = 15f;
+        int startX = leftPos + 3;
+        int startY = topPos + 16;
+        int width = 128;
+        int height = 99;
+
+        float yaw = (System.currentTimeMillis() % (long) rotationPeriodMs) * (360f / rotationPeriodMs);
+
+        ItemStackRenderState renderState = new ItemStackRenderState();
+        resolver.updateForTopItem(renderState, result, ItemDisplayContext.FIXED, mc.level, mc.player, 0);
+
+        // 上游用 RenderSystem.enableScissor 把预览限制在面板可视框内；26.2 交给 PIP 的 scissorArea。
+        // 若外层已有 scissor（例如被别的容器裁剪），取交集，语义与 vanilla 一致。
+        ScreenRectangle preview = new ScreenRectangle(startX, startY, width, height);
+        ScreenRectangle outer = graphics.scissorStack.peek();
+        ScreenRectangle scissor = outer == null ? preview : preview.intersection(outer);
+
+        graphics.guiRenderState.addPicturesInPictureState(new GunPreviewRenderState(
+                renderState,
+                startX, startY, startX + width, startY + height,
+                this.scale, rotPitch, yaw,
+                // 上游模型原点 (leftPos+60+8, topPos+50+8) 相对预览框中心 (leftPos+67, topPos+65.5) 的偏移
+                1.0f, -7.5f,
+                scissor
+        ));
     }
 
     @Override
