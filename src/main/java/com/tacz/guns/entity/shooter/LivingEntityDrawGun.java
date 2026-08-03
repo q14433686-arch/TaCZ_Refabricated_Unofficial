@@ -55,6 +55,36 @@ public class LivingEntityDrawGun {
         updatePutAwayTime();
     }
 
+    /**
+     * 切枪冷却。<b>服务端的 shoot / reload 都以 {@code != 0} 为门禁</b>
+     * （{@code LivingEntityShoot#shoot} L93、{@code LivingEntityReload#reload} L52）。
+     *
+     * <h2>【排查记录】跨维度后 2-4 秒不能开枪/换弹，真因在这里</h2>
+     *
+     * <p>用户实测：跨维度后短时间内<b>换弹完全按不动、开枪打了没效果</b>；
+     * 该现象早于本移植的任何改动就存在（已确认）。日志（5 次切换）显示
+     * 切换后首发子弹延迟 2~4 秒，且弹号跳变 285~514
+     * —— 即服务端确实在生成实体、客户端却没渲染。</p>
+     *
+     * <p>两个返回值都会让上面那个 {@code != 0} 成立，从而静默拒绝一切操作：</p>
+     * <ul>
+     *   <li><b>返回 -1</b>：{@code getCommonGunIndex} 查不到索引时（{@code orElse(-1L)}）。
+     *       跨维度瞬间若索引尚未就绪即命中。注意 {@code != 0} 对 -1 成立，
+     *       这与「冷却剩余 -1 毫秒＝已结束」的直觉相反。</li>
+     *   <li><b>返回正数</b>：{@code draw()} 会把 {@code drawTimestamp} 推到
+     *       {@code now + putAwayTime}，于是本值 = {@code drawTime + putAwayTime}
+     *       （默认枪包中位数 0.33+0.30≈0.6 秒）。跨维度时客户端换新
+     *       {@code LocalPlayer}，{@code InventoryEvent} 里
+     *       {@code ItemStack.matches(oldHotbarSelectItem, currentItem)} 因
+     *       比较的是<b>跨实例的两个 ItemStack</b> 而可能不成立，
+     *       从而触发一次多余的 draw。</li>
+     * </ul>
+     *
+     * <p><b>尚未修复。</b>动手前需要先实测确认命中的是哪一条
+     * （加日志打印本方法的返回值与 {@code data.currentGunItem} 是否为 null），
+     * 不要凭推理直接改 —— 此处已有过两次基于错误前提的修改，
+     * 均引入了新的回归。</p>
+     */
     public long getDrawCoolDown() {
         if (data.currentGunItem == null) {
             return 0;
