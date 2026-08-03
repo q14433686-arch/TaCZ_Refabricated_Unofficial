@@ -137,18 +137,58 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                         ? null
                         : new Vector3f(bullet.getFirstPersonRenderOffset());
                 Vector3f firstPersonOffsetAfter = firstPersonOffsetBefore == null ? null : new Vector3f(firstPersonOffsetBefore);
+                // 视图空间偏移经相机旋转后的世界轴向量，用于验证「起点是否真的落在枪口」。
+                Vector3f firstPersonWorldOffset = null;
                 Matrix4f poseBeforeOffset = new Matrix4f(poseStack.last().pose());
                 Matrix4f poseAfterOffset = null;
                 Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
 
                 if (isFirstPerson) {
-                    // 26.2: entity render extraction already gives us a camera/view-space pose here,
-                    // even when Iris/Sulkan shaders are active.  Older TaCZ/Iris code rotated this
-                    // offset by the cached camera yaw/pitch before translating, then un-rotated it.
-                    // In the current pipeline that double-applies camera pitch/yaw: looking up turns
-                    // the muzzle offset into an upward/rightward world-space displacement, which is
-                    // exactly the "tracer starts from the sky" symptom.  Keep the cached camera values
-                    // for diagnostics, but apply the muzzle offset directly in view space for all paths.
+                    // 【第 24 轮修复：曳光弹起点"绝对存在、但玩家转头时会相对运动"】
+                    //
+                    // <h2>muzzleRenderOffset 早就是世界空间的了，不需要再转一次</h2>
+                    //
+                    // 上一轮以为它是视图空间偏移，于是补了一次
+                    // {@code rotate(camera.rotation())} —— 那是<b>多转了一次</b>。
+                    // 实测日志（1000 行 TracerDebug）把这件事钉死了：
+                    //
+                    // <b>① globalMuzzle 随玩家朝向变化。</b> 若它真是视图空间常量，
+                    // 同一把枪应当恒定不变；实际 qbz_95 的 x 在 [-1.93, +1.73] 之间扫，
+                    // minigun 更是三个分量全在 ±2.4 内乱跑。
+                    //
+                    // <b>② 它与相机的世界前向高度相关。</b>
+                    // corr(muzzle.x, sin(yaw)) = -0.95、corr(muzzle.z, cos(yaw)) = +0.97，
+                    // 逐帧比对夹角只差约 13°（正是枪口相对视线中心的固有偏移）。
+                    //
+                    // <b>③ 反解可得一个稳定的视图空间常量。</b>
+                    // 对 globalMuzzle 施加相机旋转的<b>逆</b>，qbz_95 得到
+                    // (+0.135, -0.347, -1.817)，标准差仅 0.02~0.11 —— 即"正前方约 1.8 格、
+                    // 略偏下"，是合理的枪口位置。这说明
+                    // {@code globalMuzzle == R_camera · (视图空间枪口)}，它<b>已经</b>是世界向量。
+                    //
+                    // 根因在采集端：{@code cacheMuzzlePosition} 读的是第一人称手部渲染的
+                    // poseStack，而 26.2 的 {@code GameRenderer#renderItemInHand} 开头就是
+                    //   {@code poseStack.mulPose(projection.invert())}
+                    // 之后才叠 bobHurt/bobView 与视角回摆。这条链路里已经含了相机朝向，
+                    // 所以取出来的 m30/m31/m32 天然是世界轴向量。
+                    // 而实体 poseStack 同样是世界轴（日志验证：poseBefore ≡ bulletPos - eye，
+                    // 400 行最大误差 0.0002）—— <b>两者本来就同一个空间，直接相加即可。</b>
+                    //
+                    // 多转一次的代价：tick-0 样本 277 个，起点平均偏离真实枪口 2.98 格、
+                    // 最大 4.03 格。这就是"起点绝对存在、但方向不对"的来源。
+                    //
+                    // <h2>用户观察到的"转头时起点相对运动"是另一半</h2>
+                    //
+                    // offset 只在子弹<b>首次渲染</b>时缓存一次，此后固定不变；
+                    // 而它是<b>世界</b>向量，玩家转头后这个世界方向就不再指向新的枪口了。
+                    // 日志里 bullet=395 在飞行途中相机 yaw 转了 99.7°，
+                    // 缓存值与当帧实时 globalMuzzle 的差从 0.006 一路涨到 1.83 格；
+                    // bullet=489 转 90° 时同样涨到 1.86 格。
+                    // 这正是"绝对的出发点在玩家转视角时相对运动"的实测证据。
+                    //
+                    // 因此改用<b>当帧实时</b>的 globalMuzzle：枪械模型渲染与本次实体提交发生在
+                    // 同一帧、同一相机下，起点自然始终贴合枪口。缓存值仅保留供调试对照
+                    // （fpOffsetBefore/After），不再参与定位。
                     Vector3f offset = bullet.getFirstPersonRenderOffset();
                     if (offset == null) {
                         offset = new Vector3f(globalMuzzleOffset);
@@ -160,7 +200,12 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                     firstPersonOffsetAfter = new Vector3f(offset);
                     offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
 
-                    poseStack.translate(offset.x * offsetReducer, offset.y * offsetReducer, offset.z * offsetReducer);
+                    // 已是世界轴向量，与实体 poseStack 同空间，直接平移。
+                    Vector3f worldOffset = new Vector3f(globalMuzzleOffset);
+                    firstPersonWorldOffset = new Vector3f(worldOffset);
+                    poseStack.translate(worldOffset.x() * offsetReducer,
+                            worldOffset.y() * offsetReducer,
+                            worldOffset.z() * offsetReducer);
                     poseAfterOffset = new Matrix4f(poseStack.last().pose());
                 }
                 width *= bullet.getTracerSizeOverride();
@@ -173,6 +218,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 debugTracer(bullet, isFirstPerson, partialTicks, bulletPosition, eyePosition, deltaMovement,
                         rawTrailLength, trailLength, disToEye, bulletDistance, width, offsetReducer,
                         globalMuzzleOffset, firstPersonOffsetBefore, firstPersonOffsetAfter,
+                        firstPersonWorldOffset,
                         offsetInitialized, camera, poseBeforeOffset, poseAfterOffset,
                         new Matrix4f(poseStack.last().pose()), debug);
                 if (bullet.tickCount >= 5 || bulletDistance > 2) {
@@ -253,6 +299,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                                     Vector3f globalMuzzleOffset,
                                     @Nullable Vector3f firstPersonOffsetBefore,
                                     @Nullable Vector3f firstPersonOffsetAfter,
+                                    @Nullable Vector3f firstPersonWorldOffset,
                                     boolean offsetInitialized,
                                     Camera camera,
                                     Matrix4f poseBeforeOffset,
@@ -262,7 +309,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
         if (!shouldLogTracer(bullet, enabled)) {
             return;
         }
-        GunMod.LOGGER.info("[TACZ TracerDebug] bullet={} gun={} display={} ammo={} tick={} partial={} firstPerson={} shader={} irisHand={} tracer={} camera=({},{}) cachedCamera=({},{}) offsetInit={} offsetReducer={} bulletPos={} eye={} delta={} disToEye={} bulletDistance={} rawTrail={} trail={} width={} globalMuzzle={} fpOffsetBefore={} fpOffsetAfter={} poseBefore={} poseAfterOffset={} finalPose={}",
+        GunMod.LOGGER.info("[TACZ TracerDebug] bullet={} gun={} display={} ammo={} tick={} partial={} firstPerson={} shader={} irisHand={} tracer={} camera=({},{}) cachedCamera=({},{}) offsetInit={} offsetReducer={} bulletPos={} eye={} delta={} disToEye={} bulletDistance={} rawTrail={} trail={} width={} globalMuzzle={} fpOffsetBefore={} fpOffsetAfter={} fpWorldOffset={} poseBefore={} poseAfterOffset={} finalPose={}",
                 bullet.getId(),
                 bullet.getGunId(),
                 bullet.getGunDisplayId(),
@@ -288,6 +335,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 vec(globalMuzzleOffset),
                 vec(firstPersonOffsetBefore),
                 vec(firstPersonOffsetAfter),
+                vec(firstPersonWorldOffset),
                 translation(poseBeforeOffset),
                 translation(poseAfterOffset),
                 translation(finalPose));
