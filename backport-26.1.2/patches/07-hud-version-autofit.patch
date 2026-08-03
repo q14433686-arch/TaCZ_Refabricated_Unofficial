@@ -1,0 +1,44 @@
+diff --git a/src/main/java/com/tacz/guns/client/gui/overlay/GunHudOverlay.java b/src/main/java/com/tacz/guns/client/gui/overlay/GunHudOverlay.java
+index 4b3092f..c34738a 100644
+--- a/src/main/java/com/tacz/guns/client/gui/overlay/GunHudOverlay.java
++++ b/src/main/java/com/tacz/guns/client/gui/overlay/GunHudOverlay.java
+@@ -139,11 +139,35 @@ public class GunHudOverlay {
+                 (int) ((height - 43) / 0.8f), inventoryAmmoCountColor, false);
+         poseStack.popMatrix();
+ 
+-        // 版本信息 (0.5 倍字号)
++        // 版本信息。
++        //
++        // 【本轮修复：防溢出】上游写死 0.5 倍字号并从 x = width-70 起画，
++        // 因为它的串是 "1.21.1-1.1.8"（≈56 字体像素 → 屏上 28px），70px 的余量绰绰有余。
++        //
++        // 本移植的版本号带构建元数据，形如 "26.2-1.1.8+fabric.26.2.Beta-2"
++        // ≈146 字体像素 → 0.5 倍下仍有 73px，比 70px 的可用宽度还长 ——
++        // 直接画会顶出屏幕右边缘（且枪包/附属自带的更长版本号会更糟）。
++        //
++        // 这里不截断（版本号被截掉反而不利于反馈问题），改为按可用宽度自适应缩小字号：
++        // 以 0.5 为上限，必要时等比缩小，下限 0.25 以免小到看不清。
++        // 可用宽度取 70 - 2 的安全边距，与竖线/弹药数那一列的左边界对齐。
++        String versionLine = versionText();
++        final int versionAvailable = 70 - 2;
++        int versionRawWidth = font.width(versionLine);
++        float versionScale = 0.5f;
++        if (versionRawWidth * versionScale > versionAvailable) {
++            versionScale = Math.max(0.25f, versionAvailable / (float) versionRawWidth);
++            // 缩到下限仍放不下（枪包/附属自定义了超长版本号）时才截断，
++            // 保证无论如何都不会画出屏幕。
++            if (versionRawWidth * versionScale > versionAvailable) {
++                int budget = (int) (versionAvailable / versionScale);
++                versionLine = font.plainSubstrByWidth(versionLine, budget - font.width("...")) + "...";
++            }
++        }
+         poseStack.pushMatrix();
+-        poseStack.scale(0.5f, 0.5f);
+-        graphics.text(font, versionText(),
+-                (int) ((width - 70) / 0.5f), (int) ((height - 29f) / 0.5f), 0xFFAAAAAA, false);
++        poseStack.scale(versionScale, versionScale);
++        graphics.text(font, versionLine,
++                (int) ((width - 70) / versionScale), (int) ((height - 29f) / versionScale), 0xFFAAAAAA, false);
+         poseStack.popMatrix();
+ 
+         // 枪械图标。弹尽/过热时若有专用空仓图标就换图, 否则染红。
