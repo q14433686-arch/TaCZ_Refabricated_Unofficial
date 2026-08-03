@@ -64,8 +64,44 @@ public abstract class MinecraftMixin {
         AddPackFindersEvent.CALLBACK.invoker().onAddPackFinders(event);
     }
 
+    /**
+     * 退出路径之一：被服务器踢出 / 连接断开。
+     *
+     * <p>由 {@code ClientPacketListener} 调到 {@code Minecraft#clearClientLevel}。</p>
+     */
     @Inject(method = "clearClientLevel(Lnet/minecraft/client/gui/screens/Screen;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;resetData()V"))
     private void tacz$disconnect(Screen screen, CallbackInfo ci) {
+        ClientHooks.firePlayerLogout(this.gameMode, this.player);
+    }
+
+    /**
+     * 退出路径之二：<b>玩家主动退出到标题画面</b>。
+     *
+     * <h2>为什么必须单独注入</h2>
+     * 26.2 的退出有两条互不相干的路径（字节码逐条确认）：
+     * <ol>
+     *   <li>被踢/断线 → {@code ClientPacketListener} → {@code clearClientLevel}；</li>
+     *   <li>主动退出 → {@code Minecraft#disconnect(Screen,boolean,boolean)}，
+     *       它自己完成收尾（{@code GameRenderer#resetData} → {@code gameMode=null}
+     *       → {@code level=null} → {@code player=null}），
+     *       <b>整个过程不经过 {@code clearClientLevel}</b>。</li>
+     * </ol>
+     * 也就是说此前只挂在路径 1 上的登出事件，在玩家最常用的「退出到标题」时
+     * <b>从来没有被触发过</b>，导致所有依赖它做清理的静态状态跨存档残留。
+     *
+     * <p>具体造成的可见 bug：{@code InventoryEvent} 的 {@code oldHotbarSelected}
+     * 不被复位，于是「退出后再进同一个存档」时切枪检测判定为「槽位没变」，
+     * 首次 draw 包永远不发；服务端 {@code ShooterDataHolder#currentGunItem}
+     * 恒为 null，{@code LivingEntityShoot#shoot} 直接返回 {@code NOT_DRAW}——
+     * 表现为能扣扳机但子弹不减、无伤害、无曳光弹。
+     * 而「首次进入」或「交叉进入不同存档」因为槽位/物品恰好不同，反而正常。
+     *
+     * <p>注入点选 {@code GameRenderer#resetData()}：此刻 {@code player} 与
+     * {@code gameMode} 都还没被置空（置空发生在其后），事件能拿到有效引用，
+     * 与路径 1 的时机语义保持一致。</p>
+     */
+    @Inject(method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;ZZ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;resetData()V"))
+    private void tacz$disconnectToTitle(Screen screen, boolean keepResourcePacks, boolean showSavingScreen, CallbackInfo ci) {
         ClientHooks.firePlayerLogout(this.gameMode, this.player);
     }
 
