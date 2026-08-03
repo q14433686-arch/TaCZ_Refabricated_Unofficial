@@ -146,7 +146,9 @@ public final class GunSmithTableSerializer {
                         ingredients.add(new GunSmithTableIngredient(
                                 Ingredient.CONTENTS_STREAM_CODEC.decode(buffer), buffer.readInt()));
                     }
-                    ItemStack resultItem = ItemStack.STREAM_CODEC.decode(buffer);
+                    // Recipe results may be empty when a third-party resource pack has malformed data.
+                    // The mandatory codec rejects such stacks and aborts the entire recipe sync.
+                    ItemStack resultItem = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
                     Identifier group = buffer.readIdentifier();
                     return new GunSmithTableRecipe(recipeId, new GunSmithTableResult(resultItem, group), ingredients);
                 }
@@ -159,7 +161,8 @@ public final class GunSmithTableSerializer {
                         Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, ingredient.getIngredientOrThrow());
                         buffer.writeInt(ingredient.getCount());
                     }
-                    ItemStack.STREAM_CODEC.encode(buffer, recipe.getResult().getResult());
+                    // Keep this paired with decode: OPTIONAL_STREAM_CODEC represents ItemStack.EMPTY on the wire.
+                    ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, recipe.getResult().getResult());
                     buffer.writeIdentifier(recipe.getResult().getGroup());
                 }
             };
