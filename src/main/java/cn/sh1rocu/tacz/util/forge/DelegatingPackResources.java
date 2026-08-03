@@ -66,34 +66,15 @@ public class DelegatingPackResources extends AbstractPackResources {
                 } catch (Exception ignored) {}
             }
             if (legacyPath != null) {
+                // 列出 legacy recipes/ 下的所有配方文件（包括 tacz:gun_smith_table_crafting 等自定义类型）。
+                // 绝不能在 listing 阶段按 type 丢弃非 minecraft: 配方——否则旧枪包的枪械工作台配方
+                // 不会出现在 FileToIdConverter 的结果里，TableRecipeManager 扫不到，
+                // 网络同步包缺数据，JEI/REI 的「枪械工作台」分类就空了。
+                // 字段格式转换由 wrapSupplierForRecipe 惰性处理：内部对非 minecraft: 类型直接透传原字节。
                 ResourceOutput legacyOutput = (location, supplier) -> {
                     var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
-                    try {
-                        try (var in = supplier.get()) {
-                            byte[] bytes = in.readAllBytes();
-                            String txt = new String(bytes, java.nio.charset.StandardCharsets.UTF_8).trim();
-                            if (!txt.isEmpty()) {
-                                try {
-                                    var je = com.google.gson.JsonParser.parseString(txt);
-                                    if (je.isJsonObject()) {
-                                        var obj = je.getAsJsonObject();
-                                        if (!cn.sh1rocu.tacz.util.RecipeCompat.isVanillaRecipeType(obj)) {
-                                            return;
-                                        }
-                                    }
-                                } catch (Exception ignoreParse) {}
-                            }
-                            IoSupplier<InputStream> fixedSupplier = () -> {
-                                try (var in2 = supplier.get()) {
-                                    return cn.sh1rocu.tacz.util.RecipeCompat.transformStreamIfNeeded(in2);
-                                }
-                            };
-                            resourceOutput.accept(remapped, fixedSupplier);
-                        }
-                    } catch (Exception e) {
-                        var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(remapped, supplier);
-                        resourceOutput.accept(remapped, wrapped);
-                    }
+                    var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(remapped, supplier);
+                    resourceOutput.accept(remapped, wrapped);
                 };
                 for (PackResources delegate : this.delegates) {
                     try {

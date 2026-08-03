@@ -70,33 +70,22 @@ public class PathPackResources extends AbstractPackResources {
                         net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), parts, transformingOutput));
                 if (legacy != null) {
                     FileUtil.decomposePath(legacy).result().ifPresent(legacyParts -> {
+                        // 列出 legacy recipes/ 下的所有配方文件（包括自定义类型如 tacz:gun_smith_table_crafting）。
+                        // 严禁在这里按 type 过滤非 minecraft: 配方——上一轮在这里加了 isVanillaRecipeType 判断，
+                        // 导致旧枪包的枪械工作台配方直接被丢弃，TableRecipeManager 扫不到，
+                        // 同步包缺数据，最终 JEI/REI 里「枪械工作台」分类空无一物。
+                        // 字段格式转换仅对 minecraft: 类型生效（transformStreamIfNeeded 内部已做 isVanillaRecipeType 判断），
+                        // 自定义配方会原样返回字节流，不会被破坏。
                         ResourceOutput legacyOutput = (location, supplier) -> {
                             var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
                             try {
-                                try (var in = supplier.get()) {
-                                    byte[] bytes = in.readAllBytes();
-                                    String txt = new String(bytes, java.nio.charset.StandardCharsets.UTF_8).trim();
-                                    if (!txt.isEmpty()) {
-                                        try {
-                                            var je = com.google.gson.JsonParser.parseString(txt);
-                                            if (je.isJsonObject()) {
-                                                var obj = je.getAsJsonObject();
-                                                if (!cn.sh1rocu.tacz.util.RecipeCompat.isVanillaRecipeType(obj)) {
-                                                    return;
-                                                }
-                                            }
-                                        } catch (Exception ignore) {}
-                                    }
-                                    IoSupplier<InputStream> fixedSupplier = () -> {
-                                        try (var in2 = supplier.get()) {
-                                            return cn.sh1rocu.tacz.util.RecipeCompat.transformStreamIfNeeded(in2);
-                                        }
-                                    };
-                                    resourceOutput.accept(remapped, fixedSupplier);
-                                }
-                            } catch (Exception e) {
+                                // 预先读取一次以捕获 IO 错误并走降级路径；但不要在这里丢弃非原版配方。
+                                // wrapSupplierForRecipe 是惰性的：只有真正打开 InputStream 时才解析 JSON，
+                                // 对自定义配方会直接透传原字节，不影响 TableRecipeManager 按 type 过滤的逻辑。
                                 var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(remapped, supplier);
                                 resourceOutput.accept(remapped, wrapped);
+                            } catch (Exception e) {
+                                resourceOutput.accept(remapped, supplier);
                             }
                         };
                         try {
