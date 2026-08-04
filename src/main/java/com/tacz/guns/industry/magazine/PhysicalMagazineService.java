@@ -1,6 +1,5 @@
 package com.tacz.guns.industry.magazine;
 
-import cn.sh1rocu.tacz.util.itemhandler.IItemHandler;
 import cn.sh1rocu.tacz.util.itemhandler.ItemHandlerHelper;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
@@ -265,15 +264,22 @@ public final class PhysicalMagazineService {
         if (definition == null) {
             return null;
         }
-        return player.tacz$getItemHandler(null).map(handler -> findBestMagazine(handler, definition)).orElse(null);
-    }
 
-    @Nullable
-    private static MagazineSelection findBestMagazine(IItemHandler handler, GunFeedDefinition definition) {
+        /*
+         * Do not use LivingEntity#tacz$getItemHandler here.  That capability is
+         * server-owned in this port and its LazyOptional has no client value;
+         * querying it from LocalPlayerReload produced Optional.of(null) and
+         * aborted the client before it could send the reload packet.  The
+         * regular player inventory is available and authoritative enough for a
+         * client-side precheck, and the same slot order is used by the server
+         * transaction below.
+         */
+        var inventory = player.getInventory();
         MagazineSelection best = null;
         int bestRounds = -1;
-        for (int slot = 0; slot < handler.getSlots(); slot++) {
-            ItemStack candidate = handler.getStackInSlot(slot);
+        int mainInventorySlots = inventory.getNonEquipmentItems().size();
+        for (int slot = 0; slot < mainInventorySlots; slot++) {
+            ItemStack candidate = inventory.getItem(slot);
             if (!isCompatible(definition, candidate) || !(candidate.getItem() instanceof IMagazine magazine)) {
                 continue;
             }
@@ -293,18 +299,22 @@ public final class PhysicalMagazineService {
 
     private static ItemStack extractSelectedMagazine(Player player, MagazineSelection selection,
                                                       GunFeedDefinition definition) {
-        return player.tacz$getItemHandler(null).map(handler -> {
-            ItemStack extracted = handler.extractItem(selection.slot(), 1, false);
-            // Revalidate after extraction.  This keeps the transaction safe if
-            // another inventory action changed the slot between selection and feed.
-            if (isCompatible(definition, extracted)) {
-                return extracted;
-            }
-            if (!extracted.isEmpty()) {
-                ItemHandlerHelper.giveItemToPlayer(player, extracted);
-            }
-            return ItemStack.EMPTY;
-        }).orElse(ItemStack.EMPTY);
+        var inventory = player.getInventory();
+        // The slot was selected from getNonEquipmentItems(), which is the same
+        // index space used by Inventory#getItem/removeItem in 26.2.
+        ItemStack extracted = inventory.removeItem(selection.slot(), 1);
+        inventory.setChanged();
+
+        // Revalidate after extraction. This is normally redundant on the
+        // server thread, but prevents item loss if another inventory operation
+        // altered the slot between selection and the feed animation boundary.
+        if (isCompatible(definition, extracted)) {
+            return extracted;
+        }
+        if (!extracted.isEmpty()) {
+            ItemHandlerHelper.giveItemToPlayer(player, extracted);
+        }
+        return ItemStack.EMPTY;
     }
 
     /**
