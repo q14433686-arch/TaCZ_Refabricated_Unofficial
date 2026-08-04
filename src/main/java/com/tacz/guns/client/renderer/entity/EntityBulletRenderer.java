@@ -139,13 +139,21 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
 
             if (isFirstPerson) {
                 Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
-                // The vanilla and Iris pipelines submit the hand at different points in the frame.
-                // muzzleRenderOffset is deliberately kept in view space, so even when vanilla is
-                // using the previous hand submission we rotate it by the *current* camera here.
-                // Freezing a world-space point per bullet made that point visibly slide away from
-                // the gun whenever the player turned without shaders.
-                Vector3f viewOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
-                Vector3f worldOffset = viewOffset.rotate(camera.rotation());
+                // Vanilla and Iris do not feed the hand model the same pose basis. With Iris' hand
+                // renderer the cached muzzle translation is view-space; in the vanilla pipeline it
+                // can already contain the camera rotation and therefore be world-axis relative.
+                // Blindly rotating in both cases double-rotated the vanilla muzzle: the growing
+                // streak started at the side of the screen and snapped back when it detached.
+                Vector3f cachedOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
+                Vector3f rotatedOffset = new Vector3f(cachedOffset).rotate(camera.rotation());
+                Vector3f cameraForward = new Vector3f(0, 0, -1).rotate(camera.rotation());
+
+                // The muzzle is in front of the camera. Select the interpretation whose forward
+                // projection is greater, making this independent of submission order/backend while
+                // still allowing the model's small horizontal and vertical offsets.
+                Vector3f worldOffset = rotatedOffset.dot(cameraForward) >= cachedOffset.dot(cameraForward)
+                        ? rotatedOffset
+                        : cachedOffset;
                 muzzlePosition = camera.position().add(worldOffset.x(), worldOffset.y(), worldOffset.z());
 
                 Vec3 muzzleToBullet = bulletPosition.subtract(muzzlePosition);
