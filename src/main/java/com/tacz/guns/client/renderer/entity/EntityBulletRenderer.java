@@ -139,30 +139,28 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
 
             if (isFirstPerson) {
                 Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
-                muzzlePosition = bullet.getFirstPersonMuzzlePosition();
-                if (muzzlePosition == null) {
-                    // cacheMuzzlePosition and the muzzle-flash functional renderer both evaluate the
-                    // same animated muzzle_flash bone. Convert that exact view-space point once and
-                    // freeze it: a projectile must not remain attached when the gun recoils or the
-                    // player turns after firing.
-                    Vector3f viewOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
-                    Vector3f worldOffset = viewOffset.rotate(camera.rotation());
-                    muzzlePosition = camera.position().add(worldOffset.x(), worldOffset.y(), worldOffset.z());
-                    bullet.setFirstPersonMuzzlePosition(muzzlePosition);
-                }
+                // The vanilla and Iris pipelines submit the hand at different points in the frame.
+                // muzzleRenderOffset is deliberately kept in view space, so even when vanilla is
+                // using the previous hand submission we rotate it by the *current* camera here.
+                // Freezing a world-space point per bullet made that point visibly slide away from
+                // the gun whenever the player turned without shaders.
+                Vector3f viewOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
+                Vector3f worldOffset = viewOffset.rotate(camera.rotation());
+                muzzlePosition = camera.position().add(worldOffset.x(), worldOffset.y(), worldOffset.z());
 
                 Vec3 muzzleToBullet = bulletPosition.subtract(muzzlePosition);
                 double distanceFromMuzzle = muzzleToBullet.length();
-                if (distanceFromMuzzle > 1.0E-6) {
+                if (distanceFromMuzzle <= normalTrailLength && distanceFromMuzzle > 1.0E-6) {
+                    // While the streak is still shorter than its normal length, keep its tail on the
+                    // live muzzle. This is the same animated bone used by the muzzle flash.
                     segmentDirection = muzzleToBullet.scale(1.0 / distanceFromMuzzle);
-                    // The streak grows from the muzzle. Once it reaches its configured length, its
-                    // tail naturally detaches and follows the projectile. At no point is the whole
-                    // projectile model translated along a parallel, artificial path.
-                    trailLength = Math.min(normalTrailLength, distanceFromMuzzle);
-                    segmentTail = bulletPosition.subtract(segmentDirection.scale(trailLength));
-                } else {
+                    trailLength = distanceFromMuzzle;
+                    segmentTail = muzzlePosition;
+                } else if (distanceFromMuzzle <= 1.0E-6) {
                     trailLength = 0.0;
                 }
+                // Once full length is reached, retain the velocity-based direction/tail calculated
+                // above. The tracer is then detached and cannot be dragged by later camera motion.
             }
 
             if (trailLength < 1.0E-4) {
