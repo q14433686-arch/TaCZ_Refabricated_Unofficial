@@ -59,7 +59,15 @@ public class GunModPlugin implements IModPlugin {
         for (var e : com.tacz.guns.resource.CommonAssetsManager.get().getAllTableRecipes()) {
             if (e.getValue() != null && e.getValue().getResult() != null) {
                 GunSmithTableRecipe r = new GunSmithTableRecipe(e.getKey(), e.getValue());
-                r.init();   // 解析 raw result，否则 getResult() 恒为 EMPTY
+                try {
+                    r.init();   // 解析 raw result，否则 getResult() 恒为 EMPTY
+                } catch (RuntimeException ex) {
+                    // 单条坏配方绝不能中断整个注册:否则后面一条 addRecipes 都执行不到,
+                    // JEI 里所有工作台配方一起消失。init() 已对 custom 结果降级,
+                    // 这里再兜一层,杜绝其它解析路径(如第三方包触发)复发。
+                    GunMod.LOGGER.error("Failed to init gun smith table recipe {} for JEI, skipping it", e.getKey(), ex);
+                    continue;
+                }
                 recipes.add(r);
             }
         }
