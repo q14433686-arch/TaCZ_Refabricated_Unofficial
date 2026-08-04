@@ -13,7 +13,7 @@
     "type": "custom",
     "group": "tacz:misc",
     "item": {
-      "id": "minecraft:painting",
+      "item": "minecraft:painting",
       "count": 1
     }
   },

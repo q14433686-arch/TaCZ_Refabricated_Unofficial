@@ -64,7 +64,13 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
         for (var e : com.tacz.guns.resource.CommonAssetsManager.get().getAllTableRecipes()) {
             if (e.getValue() != null && e.getValue().getResult() != null) {
                 GunSmithTableRecipe r = new GunSmithTableRecipe(e.getKey(), e.getValue());
-                r.init();
+                try {
+                    r.init();
+                } catch (RuntimeException ex) {
+                    // 一条坏配方绝不能中断整个循环 —— 否则全部工作台配方都会从 REI 消失。
+                    GunMod.LOGGER.error("Failed to init gun smith table recipe {} for REI, skipping it", e.getKey(), ex);
+                    continue;
+                }
                 recipes.add(r);
             }
         }

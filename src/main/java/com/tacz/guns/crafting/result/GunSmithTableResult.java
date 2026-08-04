@@ -54,7 +54,19 @@ public class GunSmithTableResult {
             this.raw = null;
         }
         if (rawCustomItem != null) {
-            this.result = CraftingHelper.getItemStack(rawCustomItem, true);
+            // 容错边界：本方法会在「收集全部配方 → 逐条 init()」的循环里被调用
+            // （JEI GunModPlugin、REI REIClientPlugin、GunSmithTableScreen、GunSmithTableMenu）。
+            // 若此处因 JSON 格式错误抛出（例如内层键误写成 "id" 而非 "item"），
+            // 一条坏配方就会中断整个循环，导致全部工作台配方从 JEI/REI 消失。
+            // raw 路径（RawGunTableResult.init）对坏数据一向降级为 EMPTY + 空页签而非抛出，
+            // 这里对齐同样语义：归入 EMPTY_GROUP 后，各处的页签过滤会自然剔除本条配方。
+            try {
+                this.result = CraftingHelper.getItemStack(rawCustomItem, true);
+            } catch (RuntimeException e) {
+                GunMod.LOGGER.error("Failed to parse custom gun smith table result item: {}", rawCustomItem, e);
+                this.result = ItemStack.EMPTY;
+                this.group = EMPTY_GROUP;
+            }
             this.rawCustomItem = null;
         }
     }
