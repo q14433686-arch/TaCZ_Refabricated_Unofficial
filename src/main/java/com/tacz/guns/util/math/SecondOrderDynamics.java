@@ -1,31 +1,24 @@
 package com.tacz.guns.util.math;
 
-import com.tacz.guns.util.TaczThreads;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
+/**
+ * A small second-order response used to smooth first-person animation values.
+ *
+ * <p>The simulation is advanced lazily by the render thread. Older versions created one
+ * permanently-running scheduled-executor task per instance. Besides waking several threads every
+ * six milliseconds while a gun was held, changing perspective kept creating additional tasks and
+ * caused steadily worsening frame times. Those tasks also remained visible during client shutdown.
+ * Keeping the integrator here makes its cost proportional to frames that actually consume it and
+ * leaves no background lifecycle to clean up.</p>
+ */
 public class SecondOrderDynamics {
-    /**
-     * 每个实例占用一个线程跑 {@link #update()} 死循环，所以池容量必须 >= 实例数。
-     *
-     * <p><b>必须是 daemon 池</b>：{@code update()} 是 {@code while (!stop)} 死循环，
-     * 而 {@code stop()} 全仓从未被调用；同时有 5 个常驻实例。
-     * 原先用的 {@code Thread::new} 会<b>继承创建者线程</b>的 daemon 属性
-     * —— 静态初始化块由谁先触发就随谁，等于把「关闭游戏会不会崩」交给运气。
-     * 一旦摊上非 daemon，这 5 个线程就会卡住 JVM 退出，
-     * 15 秒后 {@code ClientShutdownWatchdog} 发一份崩溃报告。
-     * 详见 {@link TaczThreads}。
-     */
-    public static final ScheduledExecutorService executorService =
-            Executors.newScheduledThreadPool(15, TaczThreads.daemonFactory("tacz-dynamics"));
+    private static final long STEP_NANOS = 6_000_000L;
+    private static final float INTEGRATION_STEP = 0.05f;
 
-    static {
-        for (int i = 0; i < 15; i++) {
-            executorService.execute(() -> {
-            });
-        }
-    }
+    /**
+     * Do not replay an unbounded number of simulation steps after pausing, minimizing, or a
+     * breakpoint. A long catch-up would itself cause a visible frame spike.
+     */
+    private static final int MAX_CATCH_UP_STEPS = 32;
 
     private final float k1;
     private final float k2;
@@ -34,16 +27,15 @@ public class SecondOrderDynamics {
     private float py;
     private float pyd;
     private float px;
-
     private float target;
-
-    private boolean stop = false;
+    private long lastUpdateNanos;
+    private boolean stopped;
 
     /**
-     * @param f  Natural frequency
-     * @param z  Damping coefficient
-     * @param r  Initial velocity
-     * @param x0 Initial position
+     * @param f  natural frequency
+     * @param z  damping coefficient
+     * @param r  initial velocity response
+     * @param x0 initial position
      */
     public SecondOrderDynamics(float f, float z, float r, float x0) {
         k1 = (float) (z / (Math.PI * f));
@@ -52,58 +44,84 @@ public class SecondOrderDynamics {
 
         py = px = x0;
         pyd = 0;
-
         target = x0;
-
-        executorService.execute(this::update);
+        lastUpdateNanos = System.nanoTime();
     }
 
     /**
-     * @return processed y value
+     * Changes the target and returns the current smoothed value.
      */
-    public float update(float x) {
+    public synchronized float update(float x) {
+        // Account for the time since the previous frame using the target that was active during
+        // that interval. The new target will be integrated from this point onward.
+        advance(System.nanoTime());
         target = x;
-        return get();
+        return value();
     }
 
-    public float get() {
-        // 修正罕见的 NAN 错误
+    public synchronized float get() {
+        advance(System.nanoTime());
+        return value();
+    }
+
+    /**
+     * Freezes this response. Retained for source compatibility with callers of the old worker-based
+     * implementation; no executor or thread needs to be shut down anymore.
+     */
+    public synchronized void stop() {
+        stopped = true;
+    }
+
+    private void advance(long nowNanos) {
+        if (stopped) {
+            lastUpdateNanos = nowNanos;
+            return;
+        }
+
+        long elapsed = nowNanos - lastUpdateNanos;
+        if (elapsed < STEP_NANOS) {
+            // Also handles a theoretical nanoTime wraparound without running backwards.
+            if (elapsed < 0) {
+                lastUpdateNanos = nowNanos;
+            }
+            return;
+        }
+
+        int steps = (int) Math.min(elapsed / STEP_NANOS, MAX_CATCH_UP_STEPS);
+        // Preserve the sub-step remainder during normal rendering, but discard a large backlog.
+        if (elapsed / STEP_NANOS > MAX_CATCH_UP_STEPS) {
+            lastUpdateNanos = nowNanos;
+        } else {
+            lastUpdateNanos += steps * STEP_NANOS;
+        }
+
+        for (int i = 0; i < steps; i++) {
+            step();
+        }
+    }
+
+    private void step() {
+        sanitize();
+
+        float xd = (target - px) / INTEGRATION_STEP;
+        float y = py + INTEGRATION_STEP * pyd;
+        pyd = pyd + INTEGRATION_STEP * (px + k3 * xd - py - k1 * pyd) / k2;
+        px = target;
+        py = y;
+    }
+
+    private float value() {
+        sanitize();
+        return py + INTEGRATION_STEP * pyd;
+    }
+
+    private void sanitize() {
+        // Preserve the original protection against malformed animation data poisoning the state.
         if (Float.isNaN(py)) {
             py = 0;
         }
         if (Float.isNaN(pyd)) {
             pyd = 0;
-        }
-        return py + 0.05f * pyd;
-    }
-
-    public void stop() {
-        this.stop = true;
-    }
-
-    private void update() {
-        while (!stop) {
-            // 修正罕见的 NAN 错误
-            if (Float.isNaN(py)) {
-                py = 0;
-            }
-            if (Float.isNaN(pyd)) {
-                pyd = 0;
-            }
-
-            float t = 0.05f;
-            float xd = (target - px) / t;
-            float y = py + t * pyd;
-
-            pyd = pyd + t * (px + k3 * xd - py - k1 * pyd) / k2;
-            px = target;
-            py = y;
-
-            try {
-                Thread.sleep(6);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
         }
     }
 }

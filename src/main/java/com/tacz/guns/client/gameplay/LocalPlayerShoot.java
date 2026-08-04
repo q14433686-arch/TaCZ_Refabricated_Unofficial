@@ -35,7 +35,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 public class LocalPlayerShoot {
@@ -252,25 +254,30 @@ public class LocalPlayerShoot {
         final int maxCount = Math.min(ammoCount, fireMode == FireMode.BURST ? gunData.getBurstData().getCount() : 1);
         // 连发计数器
         AtomicInteger count = new AtomicInteger(0);
+        AtomicReference<ScheduledFuture<?>> taskFuture = new AtomicReference<>();
+        AtomicBoolean taskFinished = new AtomicBoolean(false);
+        Runnable cancelTask = () -> {
+            taskFinished.set(true);
+            ScheduledFuture<?> future = taskFuture.get();
+            if (future != null) {
+                future.cancel(false);
+            }
+        };
 
-        LocalPlayerDataHolder.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(() -> {
+        ScheduledFuture<?> scheduledFuture = LocalPlayerDataHolder.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(() -> {
 
             if (count.get() == 0) {
                 // 转换 isRecord 状态，允许下一个tick的开火检测。
                 data.isShootRecorded = true;
             }
             //Handle Heat Data
-            if (gunData.hasHeatData()) {
-                if (iGun.isOverheatLocked(mainHandItem)) {
-                    ScheduledFuture<?> future = (ScheduledFuture<?>) Thread.currentThread();
-                    future.cancel(false); // 取消当前任务
-                    return;
-                }
+            if (gunData.hasHeatData() && iGun.isOverheatLocked(mainHandItem)) {
+                cancelTask.run();
+                return;
             }
             // 如果达到最大连发次数，或者玩家已经死亡，取消任务
             if (count.get() >= maxCount || player.isDeadOrDying()) {
-                ScheduledFuture<?> future = (ScheduledFuture<?>) Thread.currentThread();
-                future.cancel(false); // 取消当前任务
+                cancelTask.run();
                 return;
             }
 
@@ -314,6 +321,11 @@ public class LocalPlayerShoot {
 
             count.getAndIncrement();
         }, delay, period, TimeUnit.MILLISECONDS);
+        taskFuture.set(scheduledFuture);
+        // A zero-delay task may finish before scheduleAtFixedRate returns and publishes its future.
+        if (taskFinished.get()) {
+            scheduledFuture.cancel(false);
+        }
     }
 
     private boolean useSilenceSound() {
