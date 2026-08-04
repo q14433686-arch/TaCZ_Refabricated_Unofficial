@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "m1911_45acp",
+  "magazine_capacity": 7,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.m1911"
+}

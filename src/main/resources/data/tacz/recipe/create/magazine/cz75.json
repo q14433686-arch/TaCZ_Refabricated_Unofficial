@@ -1,0 +1,30 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "#c:ingots/iron",
+    "#c:ingots/iron",
+    "#c:ingots/copper"
+  ],
+  "results": [
+    {
+      "id": "tacz:magazine",
+      "components": {
+        "minecraft:custom_data": {
+          "MagazineFamily": "cz75_9x19",
+          "MagazineAmmoId": "tacz:9mm",
+          "MagazineCapacity": 16,
+          "MagazineAmmoCount": 0,
+          "MagazineDisplayName": "item.tacz.magazine.cz75"
+        }
+      }
+    }
+  ]
+}

@@ -8,9 +8,11 @@ import com.tacz.guns.api.event.common.GunReloadEvent;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunReload;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 public class LivingEntityReload {
@@ -54,6 +56,14 @@ public class LivingEntityReload {
             }
             // 检查是否在拉栓
             if (data.isBolting) {
+                return;
+            }
+            // Sneak + reload is the explicit magazine-eject action. It follows
+            // the same state gates as a normal reload but does not start an
+            // animation or consume loose ammunition.
+            if (shooter instanceof Player && shooter.isShiftKeyDown()
+                    && PhysicalMagazineService.usesPhysicalMagazine(currentGunItem)) {
+                PhysicalMagazineService.ejectMagazine(shooter, currentGunItem);
                 return;
             }
             // 检查弹药

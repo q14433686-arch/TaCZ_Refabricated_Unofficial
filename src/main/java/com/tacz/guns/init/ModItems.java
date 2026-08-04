@@ -21,6 +21,8 @@ public class ModItems {
 //    public static ThrowableItem M67 = register("m67", new ThrowableItem());
 
     public static Item AMMO = register("ammo", new AmmoItem(itemProps("ammo")));
+    /** A configured, non-stackable physical detachable magazine. */
+    public static Item MAGAZINE = register("magazine", new MagazineItem(itemProps("magazine")));
     public static AttachmentItem ATTACHMENT = register("attachment", new AttachmentItem(itemProps("attachment")));
 
     public static GunSmithTableItem GUN_SMITH_TABLE = register("gun_smith_table", new DefaultTableItem(ModBlocks.GUN_SMITH_TABLE, blockItemProps("gun_smith_table")));

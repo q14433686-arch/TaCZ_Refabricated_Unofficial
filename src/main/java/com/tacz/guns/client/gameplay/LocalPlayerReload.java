@@ -11,6 +11,7 @@ import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.client.sound.SoundPlayManager;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.network.message.ClientMessagePlayerCancelReload;
 import com.tacz.guns.network.message.ClientMessagePlayerReloadGun;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
@@ -60,6 +61,7 @@ public class LocalPlayerReload {
         if (gunData == null) {
             return;
         }
+
         TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> {
             // 检查是否为背包直读
             if (gunItem.useInventoryAmmo(mainHandItem)) {
@@ -70,6 +72,13 @@ public class LocalPlayerReload {
                 return;
             }
             if (System.currentTimeMillis() - data.clientShootTimestamp < 100) {
+                return;
+            }
+            // Match the server-side sneak + reload eject path without playing a
+            // reload animation client-side. The server owns the inventory
+            // transaction and will synchronise the changed gun stack normally.
+            if (player.isShiftKeyDown() && PhysicalMagazineService.usesPhysicalMagazine(mainHandItem)) {
+                ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
                 return;
             }
             // 弹药简单检查

@@ -7,6 +7,7 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
 import com.tacz.guns.api.item.gun.FireMode;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -26,6 +27,8 @@ public interface GunItemDataAccessor extends IGun {
     String GUN_FIRE_MODE_TAG = "GunFireMode";
     String GUN_HAS_BULLET_IN_BARREL = "HasBulletInBarrel";
     String GUN_CURRENT_AMMO_COUNT_TAG = "GunCurrentAmmoCount";
+    /** Serialized ItemStack of the physically inserted detachable magazine. */
+    String GUN_INSTALLED_MAGAZINE_TAG = "InstalledMagazine";
     String GUN_ATTACHMENT_BASE = "Attachment";
     /**
      * 第 16 轮：26.2 的 ItemStack NBT 布局为 {@code {id, count, components:{...}}}。
@@ -208,26 +211,88 @@ public interface GunItemDataAccessor extends IGun {
         });
     }
 
+    /**
+     * The legacy integer is retained as a compatibility mirror for HUDs, Lua
+     * scripts and non-updated integrations.  Physical magazines become the
+     * authoritative source only while the CREATE_FLY profile is active and a
+     * valid magazine is actually inserted.
+     */
     @Override
     default int getCurrentAmmoCount(ItemStack gun) {
-        CompoundTag nbt = ItemNbtUtils.getTag(gun);
-        if (nbt.contains(GUN_CURRENT_AMMO_COUNT_TAG)) {
-            return nbt.getIntOr(GUN_CURRENT_AMMO_COUNT_TAG, 0);
+        if (PhysicalMagazineService.hasActiveInstalledMagazine(gun)) {
+            return PhysicalMagazineService.getInstalledAmmoCount(gun);
         }
-        return 0;
+        return getLegacyAmmoCount(gun);
+    }
+
+    /** Read the old integer directly, without consulting the physical magazine. */
+    default int getLegacyAmmoCount(ItemStack gun) {
+        CompoundTag nbt = ItemNbtUtils.getTag(gun);
+        return Math.max(0, nbt.getIntOr(GUN_CURRENT_AMMO_COUNT_TAG, 0));
+    }
+
+    /** Write the old compatibility mirror directly, without mutating an inserted magazine. */
+    default void setLegacyAmmoCount(ItemStack gun, int ammoCount) {
+        ItemNbtUtils.updateTag(gun, nbt -> nbt.putInt(GUN_CURRENT_AMMO_COUNT_TAG, Math.max(ammoCount, 0)));
     }
 
     @Override
     default void setCurrentAmmoCount(ItemStack gun, int ammoCount) {
-        ItemNbtUtils.updateTag(gun, nbt -> nbt.putInt(GUN_CURRENT_AMMO_COUNT_TAG, Math.max(ammoCount, 0)));
+        if (PhysicalMagazineService.hasActiveInstalledMagazine(gun)) {
+            PhysicalMagazineService.setInstalledAmmoCount(gun, ammoCount);
+            return;
+        }
+        // A server may temporarily select LEGACY to recover a world. Keep an
+        // already-stored magazine mirrored even while it is not authoritative,
+        // otherwise re-enabling CREATE_FLY would resurrect stale round counts.
+        if (PhysicalMagazineService.hasStoredInstalledMagazine(gun)) {
+            PhysicalMagazineService.setStoredInstalledAmmoCount(gun, ammoCount);
+            return;
+        }
+        setLegacyAmmoCount(gun, ammoCount);
     }
 
     @Override
     default void reduceCurrentAmmoCount(ItemStack gun) {
         // 只在不使用背包直读的情况下减少 AmmoCount
-        if (!useInventoryAmmo(gun)) {
-            setCurrentAmmoCount(gun, getCurrentAmmoCount(gun) - 1);
+        if (useInventoryAmmo(gun)) {
+            return;
         }
+        if (PhysicalMagazineService.hasActiveInstalledMagazine(gun)) {
+            PhysicalMagazineService.removeInstalledRounds(gun, 1);
+            return;
+        }
+        if (PhysicalMagazineService.hasStoredInstalledMagazine(gun)) {
+            PhysicalMagazineService.setStoredInstalledAmmoCount(gun, getLegacyAmmoCount(gun) - 1);
+            return;
+        }
+        setLegacyAmmoCount(gun, getLegacyAmmoCount(gun) - 1);
+    }
+
+    @Override
+    default ItemStack getInstalledMagazine(ItemStack gun) {
+        CompoundTag nbt = ItemNbtUtils.getTag(gun);
+        if (!nbt.contains(GUN_INSTALLED_MAGAZINE_TAG)) {
+            return ItemStack.EMPTY;
+        }
+        return ItemNbtUtils.loadItemStack(nbt.getCompoundOrEmpty(GUN_INSTALLED_MAGAZINE_TAG));
+    }
+
+    @Override
+    default void setInstalledMagazine(ItemStack gun, ItemStack magazine) {
+        ItemStack safeMagazine = magazine == null ? ItemStack.EMPTY : magazine.copy();
+        ItemNbtUtils.updateTag(gun, nbt -> {
+            if (safeMagazine.isEmpty()) {
+                nbt.remove(GUN_INSTALLED_MAGAZINE_TAG);
+            } else {
+                nbt.put(GUN_INSTALLED_MAGAZINE_TAG, ItemNbtUtils.saveItemStack(safeMagazine));
+            }
+        });
+    }
+
+    @Override
+    default boolean hasInstalledMagazine(ItemStack gun) {
+        return !getInstalledMagazine(gun).isEmpty();
     }
 
     @Override

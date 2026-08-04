@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "p320_45acp",
+  "magazine_capacity": 12,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.p320"
+}

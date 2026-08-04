@@ -15,4 +15,10 @@ public enum DataType {
     ALLOW_ATTACHMENT_TAGS,
     BLOCK_DATA,
     BLOCK_INDEX,
+
+    /**
+     * Per-gun physical-feed declarations.  Kept separate from GunData so a
+     * gun pack can opt in without changing its original data file or licence.
+     */
+    GUN_FEED,
 }

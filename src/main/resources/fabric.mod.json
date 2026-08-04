@@ -54,5 +54,8 @@
     "minecraft": "26.2",
     "java": ">=25",
     "forgeconfigapiport": ">=26.2.1"
+  },
+  "suggests": {
+    "create": "*"
   }
 }

@@ -13,6 +13,7 @@ import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.pojo.data.gun.FeedType;
@@ -130,6 +131,13 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
         CommonGunIndex gunIndex = TimelessAPI.getCommonGunIndex(gunId).orElse(null);
         if (gunIndex == null) {
             return false;
+        }
+
+        // A detachable magazine is a real ItemStack in the industrial profile.
+        // Do this before the old "already full" check: a receiver may accept a
+        // larger compatible magazine even when its currently inserted one is full.
+        if (shooter instanceof Player && PhysicalMagazineService.usesPhysicalMagazine(gunItem)) {
+            return PhysicalMagazineService.canReload(shooter, gunItem);
         }
 
         int currentAmmoCount = getCurrentAmmoCount(gunItem);

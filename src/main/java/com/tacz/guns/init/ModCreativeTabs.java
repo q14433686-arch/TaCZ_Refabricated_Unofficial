@@ -12,6 +12,7 @@ import com.tacz.guns.item.AmmoBoxItem;
 import com.tacz.guns.item.AmmoItem;
 import com.tacz.guns.item.AttachmentItem;
 import com.tacz.guns.item.GunSmithTableItem;
+import com.tacz.guns.item.MagazineItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -38,7 +39,10 @@ public class ModCreativeTabs {
     public static CreativeModeTab AMMO_TAB = regiser("ammo", CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
             .title(Component.translatable("itemGroup.tab.tacz.ammo"))
             .icon(() -> AmmoItemBuilder.create().setId(DefaultAssets.DEFAULT_AMMO_ID).build())
-            .displayItems((parameters, output) -> output.acceptAll(AmmoItem.fillItemCategory())).build());
+            .displayItems((parameters, output) -> {
+                output.acceptAll(AmmoItem.fillItemCategory());
+                MagazineItem.fillItemCategory(output);
+            }).build());
 
     public static CreativeModeTab ATTACHMENT_SCOPE_TAB = regiser("scope", CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
             .title(Component.translatable("tacz.type.scope.name"))

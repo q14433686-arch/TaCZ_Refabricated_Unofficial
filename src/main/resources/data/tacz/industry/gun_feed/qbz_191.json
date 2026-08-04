@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "qbz_58x42",
+  "magazine_capacity": 30,
+  "ammo": "tacz:58x42",
+  "display_name": "item.tacz.magazine.qbz_58"
+}

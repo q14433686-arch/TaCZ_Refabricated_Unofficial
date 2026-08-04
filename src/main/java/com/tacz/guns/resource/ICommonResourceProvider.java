@@ -9,6 +9,7 @@ import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import com.tacz.guns.resource.pojo.data.block.BlockData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
+import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.luaj.vm2.LuaTable;
@@ -43,6 +44,14 @@ public interface ICommonResourceProvider {
     Set<Map.Entry<Identifier, CommonAttachmentIndex>> getAllAttachments();
 
     Set<Map.Entry<Identifier, CommonBlockIndex>> getAllBlocks();
+
+    /**
+     * Optional physical-feed declaration for a gun.  Missing data means
+     * legacy integer-ammo behaviour, not an error.
+     */
+    @Nullable GunFeedDefinition getGunFeedDefinition(Identifier gunId);
+
+    Set<Map.Entry<Identifier, GunFeedDefinition>> getAllGunFeedDefinitions();
 
     Set<String> getAttachmentTags(Identifier registryName);
 

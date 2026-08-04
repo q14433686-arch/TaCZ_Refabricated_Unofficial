@@ -8,6 +8,7 @@ import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.api.item.gun.GunItemManager;
 import com.tacz.guns.init.ModItems;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
@@ -80,6 +81,9 @@ public final class GunItemBuilder {
             iGun.setFireMode(gun, this.fireMode);
             iGun.setCurrentAmmoCount(gun, this.ammoCount);
             iGun.setBulletInBarrel(gun, this.bulletInBarrel);
+            if (this.ammoCount > 0) {
+                PhysicalMagazineService.migrateLegacyIntoInstalledMagazine(gun);
+            }
             if (heatData) iGun.setHeatAmount(gun, 0f);
             this.attachments.forEach((type, id) -> {
                 ItemStack attachmentStack = AttachmentItemBuilder.create().setId(id).build();
@@ -106,6 +110,9 @@ public final class GunItemBuilder {
             iGun.setFireMode(gun, this.fireMode);
             iGun.setCurrentAmmoCount(gun, this.ammoCount);
             iGun.setBulletInBarrel(gun, this.bulletInBarrel);
+            if (this.ammoCount > 0) {
+                PhysicalMagazineService.migrateLegacyIntoInstalledMagazine(gun);
+            }
             this.attachments.forEach((type, id) -> {
                 ItemStack attachmentStack = AttachmentItemBuilder.create().setId(id).build();
                 iGun.installAttachment(gun, attachmentStack);

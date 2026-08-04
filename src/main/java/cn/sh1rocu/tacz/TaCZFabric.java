@@ -18,6 +18,7 @@ import com.tacz.guns.init.CapabilityRegistry;
 import com.tacz.guns.init.CommandRegistry;
 import com.tacz.guns.init.CommonRegistry;
 import com.tacz.guns.init.CompatRegistry;
+import com.tacz.guns.industry.IndustryProfileManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
 import fuzs.forgeconfigapiport.fabric.api.v5.ModConfigEvents;
@@ -109,7 +110,10 @@ public class TaCZFabric implements ModInitializer {
         ServerLifecycleEvents.SERVER_STOPPED.register(CommonAssetsManager::onServerStopped);
         ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS.register(CommonAssetsManager::OnDatapackSync);
 
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> CommonRegistry.onLoadComplete());
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            CommonRegistry.onLoadComplete();
+            IndustryProfileManager.validateServerProfile(server);
+        });
 
         AmmoHitBlockEvent.CALLBACK.register(BellRing::onAmmoHitBlock);
 

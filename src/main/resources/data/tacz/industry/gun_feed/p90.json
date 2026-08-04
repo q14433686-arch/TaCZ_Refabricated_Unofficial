@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "p90_57x28",
+  "magazine_capacity": 50,
+  "ammo": "tacz:57x28",
+  "display_name": "item.tacz.magazine.p90_57"
+}

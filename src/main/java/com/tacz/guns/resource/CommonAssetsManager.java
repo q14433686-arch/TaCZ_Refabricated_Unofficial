@@ -28,6 +28,7 @@ import com.tacz.guns.resource.pojo.data.block.TabConfig;
 import com.tacz.guns.resource.pojo.data.gun.ExtraDamage;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.gun.Ignite;
+import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.resource.pojo.data.loot.LootTableInjection;
 import com.tacz.guns.resource.serialize.*;
 import com.tacz.guns.util.AllowAttachmentTagMatcher;
@@ -77,6 +78,12 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     private CommonDataManager<CommonBlockIndex> blockIndex;
     /** 第 12 轮：枪械工作台配方，需同步到客户端供 GunSmithTableScreen 使用。 */
     private CommonDataManager<TableRecipe> tableRecipe;
+    /**
+     * Data-driven real-feed declarations.  They intentionally sit outside the
+     * original gun pack's GunData files so the ND-licensed default pack is not
+     * modified and third-party packs can opt in independently.
+     */
+    private CommonDataManager<GunFeedDefinition> gunFeed;
     private RecipeFilterManager recipeFilterManager;
     private LootInjectionManager lootInjectionManager;
 
@@ -87,6 +94,8 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     public void reloadAndRegister(Consumer<PreparableReloadListener> register) {
         // 这里会顺序重载，所以需要把index这种依赖data的放在后面
         gunData = register(new CommonDataManager<>(DataType.GUN_DATA, GunData.class, GSON, "data/guns", "GunDataLoader"));
+        gunFeed = register(new CommonDataManager<>(DataType.GUN_FEED, GunFeedDefinition.class, GSON,
+                "industry/gun_feed", "GunFeedLoader"));
         attachmentData = register(new AttachmentDataManager());
         attachmentsTagManager = register(new AttachmentsTagManager());
         recipeFilterManager = register(new RecipeFilterManager());
@@ -229,6 +238,17 @@ public class CommonAssetsManager implements ICommonResourceProvider {
 
     public Set<Map.Entry<Identifier, CommonBlockIndex>> getAllBlocks() {
         return blockIndex.getAllData().entrySet();
+    }
+
+    @Override
+    @Nullable
+    public GunFeedDefinition getGunFeedDefinition(Identifier gunId) {
+        return gunFeed == null ? null : gunFeed.getData(gunId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, GunFeedDefinition>> getAllGunFeedDefinitions() {
+        return gunFeed == null ? Collections.emptySet() : gunFeed.getAllData().entrySet();
     }
 
     @Override

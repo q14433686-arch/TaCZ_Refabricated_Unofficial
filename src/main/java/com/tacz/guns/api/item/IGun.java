@@ -227,6 +227,23 @@ public interface IGun {
     void reduceCurrentAmmoCount(ItemStack gun);
 
     /**
+     * Physical magazine currently inserted into this gun.  Implementations that
+     * do not support the industry extension return {@link ItemStack#EMPTY} so
+     * old third-party gun item types remain source-compatible.
+     */
+    default ItemStack getInstalledMagazine(ItemStack gun) {
+        return ItemStack.EMPTY;
+    }
+
+    /** Persist the full physical magazine stack inserted into this gun. */
+    default void setInstalledMagazine(ItemStack gun, ItemStack magazine) {
+    }
+
+    default boolean hasInstalledMagazine(ItemStack gun) {
+        return !getInstalledMagazine(gun).isEmpty();
+    }
+
+    /**
      * 动态修改枪械的属性。
      * 注意：对于某些复杂属性来说，{@code GunProperty} 的类型可能会和值的类型不一样。
      * 比如伤害和精准度这样的复杂属性，GunProperty 的类型是复杂的数据结构，传入和返回的值就只是简单的浮点数。

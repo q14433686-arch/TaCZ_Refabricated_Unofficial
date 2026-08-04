@@ -1,6 +1,7 @@
 package com.tacz.guns.config.sync;
 
 import com.google.common.collect.Lists;
+import com.tacz.guns.industry.IndustryProfile;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import java.util.List;
@@ -14,6 +15,11 @@ public class SyncConfig {
     public static ForgeConfigSpec.BooleanValue ENABLE_TABLE_FILTER;
     public static ForgeConfigSpec.BooleanValue SERVER_SHOOT_NETWORK_V;
     public static ForgeConfigSpec.BooleanValue SERVER_SHOOT_COOLDOWN_V;
+
+    /** Server-selected industrial ruleset. Defaults to the Create Fly path. */
+    public static ForgeConfigSpec.EnumValue<IndustryProfile> INDUSTRY_PROFILE;
+    /** Enables physical detachable magazines for gun-feed declarations in the active industrial profile. */
+    public static ForgeConfigSpec.BooleanValue PHYSICAL_MAGAZINES;
 
     // 三个全局系数，用于客户端枪械文本提示，需要同步
     public static ForgeConfigSpec.DoubleValue DAMAGE_BASE_MULTIPLIER;
@@ -90,6 +96,12 @@ public class SyncConfig {
 
         builder.comment("Enable the recipe limit of default gunsmith table or not");
         ENABLE_TABLE_FILTER = builder.define("EnableDefaultGunSmithTableFilter", true);
+
+        builder.comment("Manufacturing ruleset. CREATE_FLY requires Create Fly (mod id 'create') on server and clients; LEGACY preserves original TACZ recipes.");
+        INDUSTRY_PROFILE = builder.defineEnum("IndustryProfile", IndustryProfile.CREATE_FLY);
+
+        builder.comment("Use real ItemStack-backed detachable magazines for guns that declare an industry/gun_feed definition. Requires an active CREATE_FLY profile.");
+        PHYSICAL_MAGAZINES = builder.define("PhysicalMagazines", true);
 
         builder.comment("[Debug Option] Do server-side network check while shooting or not");
         SERVER_SHOOT_NETWORK_V = builder.define("ServerShootNetworkCheck", true);
