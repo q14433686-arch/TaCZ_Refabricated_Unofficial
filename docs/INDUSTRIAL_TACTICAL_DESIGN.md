@@ -9,33 +9,35 @@
 
 ## 1. 先给结论
 
-### 不应把 Create 作为 26.2 Fabric 版的硬前置
+### 官方 Create Fabric 不能直接用，但 Create Fly 是可行的 26.2 替代
 
-截至本草案日期，官方/主流的 **Create Fabric** 发布页只列到 Minecraft 1.20.1；没有可用于本项目 Minecraft 26.2 的 Fabric 构建。因此把 `create` 写进 `fabric.mod.json` 的硬依赖会让当前项目无法正常安装，也会把 TACZ 的版本可用性绑死在 Create 的移植节奏上。
+官方/主流的 **Create Fabric** 发布页只列到 Minecraft 1.20.1，因此它本身不能作为本项目 26.2 Fabric 的前置。
 
-- Create Fabric 项目页：<https://modrinth.com/mod/create-fabric>
-- Create Fabric 26.2 查询结果（空）：<https://api.modrinth.com/v2/project/create-fabric/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%2226.2%22%5D>
+- 官方 Create Fabric 项目页：<https://modrinth.com/mod/create-fabric>
+- 官方 Create Fabric 的 26.2 查询结果（空）：<https://api.modrinth.com/v2/project/create-fabric/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%2226.2%22%5D>
 
-**推荐策略：不硬依赖 Create；做一个无外部科技模组也能玩完整闭环的 `TACTICAL` 配置档，再提供可选的科技模组适配。**
+但是，用户指出的 **Create Fly** 是一个独立的高版本 Fabric 分支。已核实其 Modrinth 记录把 `26.2-rc-2-6.0.9-1` 标为 Fabric 26.2 可用，模组 ID 仍为标准的 `create`，并实现了本方案真正需要的 `create:milling`、`create:pressing`、`create:mixing`、`create:compacting`、`create:sequenced_assembly` 等配方类型。
 
-### 26.2 上最合适的可选机械前置是 PolyFactory，而不是硬塞 Create
+- Create Fly：<https://modrinth.com/mod/create-fly>
+- Create Fly 26.2 发行记录：<https://api.modrinth.com/v2/project/dKvj0eNn/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%2226.2%22%5D>
+- 26.2 源码分支：<https://github.com/ZurrTum/Create-Fly/tree/26.2>
 
-PolyFactory 已有 Fabric 26.2 发布（`0.12.1+26.2`，2026-08-02），并且其已有内容恰好覆盖本方案需要的机械语义：研磨机、机械压力机、工业冶炼、传送带/漏斗、风车/蒸汽/柴油动力。该版本还新增了硫粉，以及以硫粉、煤粉、木粉制作火药的机械配方。
+它让“机械动力作为工业制造前置”成为可实施方案，且能大幅减少 TACZ 自己重写研磨、冲压、转动动力和流水线的工作量。
 
-- PolyFactory：<https://modrinth.com/mod/polyfactory>
-- 26.2 版本记录：<https://api.modrinth.com/v2/project/polyfactory/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%2226.2%22%5D>
-- Polymer（PolyFactory 所需库）：<https://modrinth.com/mod/polymer>
+### 已选策略：Create Fly 是工业档的必需前置，但不是 TACZ 全局硬依赖
 
-但它依赖 Polymer，并带有服务端资源包/指南生态；把它变成 TACZ 的**必装**依赖会改变本模组的安装和服务器部署模型。因此建议：
+用户已选择“**默认工业化 + 可回退**”和 Create Fly 替代方案。落地为：
 
 | 模式 | 外部前置 | 适用场景 | 行为 |
 |---|---:|---|---|
-| `LEGACY` | 无 | 原 TACZ 服务器、内容包兼容 | 保留当前配方和整数备弹 |
-| `TACTICAL` | 无 | 本模组默认的工业化玩法 | TACZ 自己提供轻量材料、工位、弹匣和配方 |
-| `POLYFACTORY` | PolyFactory + Polymer | 追求机械流水线的整合包 | 复用研磨/冲压/工业冶炼等机器；没有该模组时不能启用此档 |
+| `LEGACY` | 无 | 原 TACZ 服务器、老存档、第三方枪包 | 保留当前配方和整数备弹 |
+| `CREATE_FLY`（默认工业档） | Create Fly，客户端与服务端同版本 | 本项目的目标工业玩法 | 使用研磨、冲压、加热搅拌/鼓风炉、机械装配和物理弹匣 |
 
-Fabric API 已是项目依赖；库存/物流兼容优先使用其 Transfer API，不需要再引入 Porting Lib。Porting Lib 通常由使用它的模组内嵌，单独依赖容易制造版本冲突。
+这里**不**把 `create` 写成 TACZ 的全局 `fabric.mod.json` 硬依赖：否则管理员即使选择 `LEGACY` 也不能启动原版 TACZ。取而代之的是服务器加载 `CREATE_FLY` 档时强校验 `FabricLoader.isModLoaded("create")`；缺失时拒绝转换默认配方并给出可读报错，绝不静默降级或生成无来源材料。这样 Create Fly 对工业玩法是实质前置，同时保留用户要求的回退通道。
 
+Create Fly 是社区分支而非官方 Create 发行，且其 README 明确提示不要沿用旧存档、数据加载变更可能造成数据丢失，并把“兼容其他 Mod”列为待办。因此第一期只依赖稳定的数据配方面，不在 TACZ 代码中直接调用其内部 Java API；所有 Create Fly 配方以数据 JSON 和 `create` 模组存在检查接入。这既减少编译耦合，也使将来替换兼容层可控。
+
+Fabric API 已是项目依赖；库存/物流兼容优先使用其 Transfer API，不需要引入 Porting Lib。Create Fly 自身也不要求 Fabric API，但两者可共存。
 ---
 
 ## 2. 现有实现审计：为什么必须重构，而不只是把铁锭数量乘十
@@ -76,7 +78,7 @@ Fabric API 已是项目依赖；库存/物流兼容优先使用其 Transfer API�
 |---|---|---|---|
 | 矿物 | 铁、铜、煤、原木、石灰岩/方解石 | 原版采集 | 初期原料 |
 | 新矿物 | 硫矿、铅矿、锌矿 | 小规模世界生成；硫偏下界、铅/锌偏地下 | 防止所有枪械只围绕铁铜转 |
-| 粉料 | 碳粉、硫粉、铅粉、石灰粉 | 研磨；无 PolyFactory 时由 TACZ 研磨工位处理 | 火药、合金和弹头的输入 |
+| 粉料 | 碳粉、硫粉、铅粉、石灰粉 | Create Fly 研磨机/粉碎轮 | 火药、合金和弹头的输入 |
 | 化工中间件 | 硝盐、工业火药、底火组件 | 浸取/混配/压制的批量配方 | 让弹药具备独立的持续供应链 |
 
 **平衡规则：**
@@ -100,16 +102,16 @@ Fabric API 已是项目依赖；库存/物流兼容优先使用其 Transfer API�
 
 ### 4.3 工位与自动化
 
-| 工位 | `TACTICAL` 无前置版本 | `POLYFACTORY` 适配版本 | 产物 |
-|---|---|---|---|
-| 研磨 | TACZ 研磨工位 | Grinder | 各类粉末 |
-| 鼓风炉 | TACZ 鼓风炉（燃料、温度/批次） | Industrial Smeltery | 生铁、钢、黄铜 |
-| 冲压台 | TACZ 冲压/装配台 | Mechanical Press | 弹壳、钢板、机匣坯、弹匣壳 |
-| 枪械装配台 | TACZ 高级装配台 | Blueprint Workbench + 适配配方 | 枪械零件与整枪 |
-| 装弹台 | TACZ 装弹台 | Press/Workbench + 适配配方 | 成批弹药、装填器 |
-| 拆解台 | TACZ 拆解台 | 可选机械拆解 | 回收旧枪/旧弹匣的部分零件 |
+| 工位 | Create Fly 对应机制 | TACZ 产物 |
+|---|---|---|
+| 研磨 | Millstone / Crushing Wheels | 各类粉末 |
+| 鼓风炉 | Basin + Mechanical Mixer + Blaze Burner 的加热/超热工艺 | 生铁、钢、黄铜 |
+| 冲压台 | Mechanical Press | 弹壳、钢板、机匣坯、弹匣壳 |
+| 枪械装配台 | Sequenced Assembly / Mechanical Crafting | 枪械零件与整枪 |
+| 装弹台 | Mechanical Press + Basin + Deploying | 成批弹药、装填器 |
+| 拆解台 | 后续单独实现的 TACZ 回收配方 | 回收旧枪/旧弹匣的部分零件 |
 
-`TACTICAL` 只需少量可视化方块和一个统一、数据驱动的加工菜单，不应再造一整套通用工业科技模组。`POLYFACTORY` 负责“把这条链做成转动的流水线”，而不是让 TACZ 复制它的动力网络。
+Create Fly 就是本档的动力与机器层；TACZ 只提供枪械工业专用材料、工艺配方、平台零件和最终装配语义，不复制 Create 的动力网络。玩家把加热 Basin + Blaze Burner 视为“鼓风炉单元”，从而得到真正需要热源、搅拌与物流的冶炼流程，而不必让 TACZ 再造一套同类机器。
 
 ---
 
@@ -240,19 +242,21 @@ HasBulletInBarrel    继续独立保存膛内一发
 默认枪包资源不能修改。实施时采用：
 
 1. 在 TACZ GPL 代码中增加 `IndustryProfile` 与 `IndustrialRecipeTransformer`；
-2. 仅在 `TACTICAL` / `POLYFACTORY` 档，转换受本项目维护的默认枪配方 ID；
+2. 仅在 `CREATE_FLY` 档且确认 `create` 已加载时，转换受本项目维护的默认枪配方 ID；
 3. `TableRecipeManager` 转换后的配方仍走现有同步通道，因此服务端、枪械工作台 GUI、JEI 和 REI 看见的是同一份材料表；
 4. 其他命名空间、未知第三方包、用户数据包默认不转换；它们可通过新增 schema 自愿声明工业零件和物理弹匣；
 5. `LEGACY` 下完全不变。
 
 这也规避了当前枪包加载器内多个包同路径覆盖顺序不稳定的问题。
 
-### 8.2 不需要的前置
+### 8.2 依赖边界
 
-- **不引入 Create / Porting Lib 硬依赖**；
-- **不引入 KubeJS**：本仓库已经标注其 26.2 Fabric 不可用，且关键安全逻辑不该依赖脚本；
-- **不引入通用能源 API**：首版只需要明确的加工工位，PolyFactory 模式由其自身动力网络负责；
-- **不复制 PolyFactory 内容**：只以可选适配和公共标签互通。
+- **Create Fly 是 `CREATE_FLY` 档的必需前置**，但不成为 `LEGACY` 的全局强制依赖；
+- **不引入 Porting Lib**：Create Fly 已自行实现其迁移层，TACZ 没有理由再把另一套 Porting Lib 引入类路径；
+- **不引入 KubeJS**：本仓库已标注其 26.2 Fabric 不可用，且关键安全逻辑不该依赖脚本；
+- **不引入通用能源 API**：动力、应力、热源和传输由 Create Fly 负责；
+- **不复制 Create Fly 内容**：TACZ 仅提供 `data/tacz/recipe/create/**` 的工业配方和最小的存在检查；
+- **不直接调用 Create Fly 内部 Java 类**：第一期只用其稳定的 `create:*` recipe JSON 类型，避免把社区分支内部 API 固化到 TACZ。
 
 ### 8.3 需要新增的代码面
 
@@ -262,7 +266,7 @@ HasBulletInBarrel    继续独立保存膛内一发
 | 物品 | `MagazineItem`、`MagazineDataAccessor`、蓝图/模具、工业中间件 |
 | 数据 | `MagazineDefinition`、`GunFeedDefinition`、平台族/口径 schema |
 | 换弹 | `MagazineService`；接入 `LivingEntityReload`、`LivingEntityShoot`、`LivingEntityBolt`、`ModernKineticGunScriptAPI` |
-| 工位 | 统一的加工 recipe/type 与轻量 block entity；PolyFactory 适配层独立隔离 |
+| 工艺适配 | `CREATE_FLY` 模组存在检查、研磨/冲压/混合/序列装配 JSON、REI/JEI 展示回归 |
 | 配方 | 默认配方转换器、工业配方数据、公共材料 tags |
 | 体验 | 物品 Tooltip、HUD 的弹匣/膛内显示、REI/JEI 展示、中文/英文文本 |
 | 测试 | 单机/专服换弹事务、满背包退匣、断线同步、旧存档迁移、第三方包回退 |
@@ -273,7 +277,7 @@ HasBulletInBarrel    继续独立保存膛内一发
 
 ### Phase 0 — 配置与数据契约
 
-- 加入 `LEGACY` / `TACTICAL` / `POLYFACTORY` 档位；
+- 加入 `LEGACY` / `CREATE_FLY` 档位，并在工业档启动时校验 `create`；
 - 写出 `feed_mechanism`、`magazine_family`、`magazine_capacity` 的枪包 schema；
 - 先为少量代表性枪（Glock 17、AK-47、M4A1、RPK）提供数据；
 - 不改变默认玩法，确保第三方包不受影响。
@@ -288,10 +292,10 @@ HasBulletInBarrel    继续独立保存膛内一发
 
 > 先做这一步的原因：枪械零件与最终配方的“包含一只弹匣”只有在弹匣真的存在时才有价值。
 
-### Phase 2 — 生产材料与批量装弹
+### Phase 2 — Create Fly 生产材料与批量装弹
 
 - 添加硫粉、碳粉、生铁、高碳钢、黄铜、弹壳、底火、弹头坯；
-- 添加鼓风炉/冲压/装弹所需最小工位；
+- 添加 Create Fly 研磨、冲压、加热 Basin（鼓风炉单元）与装弹工艺 JSON；
 - 将 9 mm、5.56、7.62×39、12G 四条弹药链做成平衡样本；
 - 配方查看器与 GUI 先完整呈现，再扩大覆盖面。
 
@@ -302,10 +306,10 @@ HasBulletInBarrel    继续独立保存膛内一发
 - 实现拆解回收；
 - 用资源等价物、制造时间和实测游玩时长校准成本。
 
-### Phase 4 — 全枪包覆盖与可选 PolyFactory
+### Phase 4 — 全枪包覆盖与 Create Fly 生产线回归
 
 - 为余下默认枪按平台归类；
-- 实现 PolyFactory 工艺适配、公共 tag 和缺失前置检测；
+- 完成 Create Fly 工艺、公共 tag、缺失前置检测和机械装配展示；
 - 完整回归第三方包、JEI/REI、多人服务器与存档迁移。
 
 ---
@@ -329,7 +333,7 @@ HasBulletInBarrel    继续独立保存膛内一发
 - [ ] 连续战斗的主要成本是批量弹药而不是反复重造枪；
 - [ ] 自动化能显著提升吞吐，但手动工位不是无法游玩；
 - [ ] `LEGACY` 档与未声明工业数据的第三方枪包保持原行为；
-- [ ] `POLYFACTORY` 档在缺少 PolyFactory 时明确拒绝启用并给出可读提示。
+- [ ] `CREATE_FLY` 档在缺少 Create Fly 时明确拒绝启用并给出可读提示。
 
 ---
 
