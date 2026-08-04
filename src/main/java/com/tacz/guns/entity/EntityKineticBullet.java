@@ -141,6 +141,8 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
     private float cameraXRot;
     private float cameraYRot;
     private Vector3f firstPersonRenderOffset;
+    /** Frozen world-space muzzle position used only by the local first-person tracer renderer. */
+    private Vec3 firstPersonMuzzlePosition;
     // 发射的枪械 ID
     private Identifier gunId = DefaultAssets.EMPTY_GUN_ID;
     // 枪械display ID
@@ -692,6 +694,15 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
 
     public void setFirstPersonRenderOffset(Vector3f originRenderOffset) {
         this.firstPersonRenderOffset = originRenderOffset;
+    }
+
+    @Nullable
+    public Vec3 getFirstPersonMuzzlePosition() {
+        return firstPersonMuzzlePosition;
+    }
+
+    public void setFirstPersonMuzzlePosition(Vec3 firstPersonMuzzlePosition) {
+        this.firstPersonMuzzlePosition = firstPersonMuzzlePosition;
     }
 
     public Optional<float[]> getTracerColorOverride() {
