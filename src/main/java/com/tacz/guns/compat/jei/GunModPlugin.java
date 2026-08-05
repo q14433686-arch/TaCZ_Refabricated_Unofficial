@@ -100,6 +100,9 @@ public class GunModPlugin implements IModPlugin {
         registration.registerSubtypeInterpreter(ModItems.AMMO, GunModSubtype.getAmmoSubtype());
         registration.registerSubtypeInterpreter(ModItems.ATTACHMENT, GunModSubtype.getAttachmentSubtype());
         registration.registerSubtypeInterpreter(ModItems.AMMO_BOX, GunModSubtype.getAmmoBoxSubtype());
+        registration.registerSubtypeInterpreter(ModItems.MAGAZINE, GunModSubtype.getMagazineSubtype());
+        registration.registerSubtypeInterpreter(ModItems.GUN_COMPONENT, GunModSubtype.getIndustrySubtype());
+        registration.registerSubtypeInterpreter(ModItems.GUN_BLUEPRINT, GunModSubtype.getIndustrySubtype());
         registration.registerSubtypeInterpreter(ModItems.WORKBENCH_111, GunModSubtype.getTableSubType());
         registration.registerSubtypeInterpreter(ModItems.WORKBENCH_121, GunModSubtype.getTableSubType());
         registration.registerSubtypeInterpreter(ModItems.WORKBENCH_211, GunModSubtype.getTableSubType());

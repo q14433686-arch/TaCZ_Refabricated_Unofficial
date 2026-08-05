@@ -29,7 +29,8 @@ public final class GunSmithTableSerializer {
     private static final Codec<GunSmithTableIngredient> INGREDIENT_CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
                     Ingredient.CODEC.fieldOf("item").forGetter(GunSmithTableIngredient::getIngredientOrThrow),
-                    Codec.INT.optionalFieldOf("count", 1).forGetter(GunSmithTableIngredient::getCount)
+                    Codec.INT.optionalFieldOf("count", 1).forGetter(GunSmithTableIngredient::getCount),
+                    Codec.BOOL.optionalFieldOf("consume", true).forGetter(GunSmithTableIngredient::isConsumed)
             ).apply(instance, GunSmithTableIngredient::new)
     );
 
@@ -144,7 +145,7 @@ public final class GunSmithTableSerializer {
                     List<GunSmithTableIngredient> ingredients = new ArrayList<>();
                     for (int i = 0; i < size; i++) {
                         ingredients.add(new GunSmithTableIngredient(
-                                Ingredient.CONTENTS_STREAM_CODEC.decode(buffer), buffer.readInt()));
+                                Ingredient.CONTENTS_STREAM_CODEC.decode(buffer), buffer.readInt(), buffer.readBoolean()));
                     }
                     ItemStack resultItem = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
                     Identifier group = buffer.readIdentifier();
@@ -158,6 +159,7 @@ public final class GunSmithTableSerializer {
                     for (GunSmithTableIngredient ingredient : recipe.getInputs()) {
                         Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, ingredient.getIngredientOrThrow());
                         buffer.writeInt(ingredient.getCount());
+                        buffer.writeBoolean(ingredient.isConsumed());
                     }
                     ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, recipe.getResult().getResult());
                     buffer.writeIdentifier(recipe.getResult().getGroup());

@@ -1,0 +1,26 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:mixing",
+  "ingredients": [
+    "minecraft:iron_ingot",
+    "minecraft:iron_ingot",
+    "tacz:carbon_dust",
+    "tacz:carbon_dust",
+    "minecraft:calcite"
+  ],
+  "results": [
+    {
+      "id": "tacz:pig_iron_ingot",
+      "count": 2
+    }
+  ],
+  "processing_time": 250,
+  "heat_requirement": "heated"
+}

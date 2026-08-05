@@ -1,0 +1,30 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "tacz:high_carbon_steel_ingot",
+    "tacz:high_carbon_steel_ingot",
+    "tacz:high_carbon_steel_ingot",
+    "create:brass_nugget"
+  ],
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ar",
+          "IndustryPartKind": "barrel",
+          "IndustryDisplayName": "item.tacz.gun_component.ar_barrel"
+        }
+      }
+    }
+  ],
+  "heat_requirement": "heated"
+}

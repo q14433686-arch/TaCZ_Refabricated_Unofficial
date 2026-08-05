@@ -54,6 +54,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GunSmithTableIngredient {
     private final int count;
+    /** Whether successful crafting consumes this material. Blueprints/tooling are checked but retained. */
+    private final boolean consume;
 
     @Nullable
     private Ingredient ingredient;
@@ -64,14 +66,24 @@ public class GunSmithTableIngredient {
     private boolean loggedFailure;
 
     public GunSmithTableIngredient(Ingredient ingredient, int count) {
+        this(ingredient, count, true);
+    }
+
+    public GunSmithTableIngredient(Ingredient ingredient, int count, boolean consume) {
         this.ingredient = ingredient;
         this.count = count;
+        this.consume = consume;
     }
 
     /** 延迟解析用的构造器，见类注释。 */
     public GunSmithTableIngredient(JsonElement rawItem, int count) {
+        this(rawItem, count, true);
+    }
+
+    public GunSmithTableIngredient(JsonElement rawItem, int count, boolean consume) {
         this.rawItem = rawItem;
         this.count = count;
+        this.consume = consume;
     }
 
     /**
@@ -255,5 +267,10 @@ public class GunSmithTableIngredient {
 
     public int getCount() {
         return count;
+    }
+
+    /** True when this ingredient is consumed after all materials validate. */
+    public boolean isConsumed() {
+        return consume;
     }
 }

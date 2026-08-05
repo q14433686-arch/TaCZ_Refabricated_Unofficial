@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.init.ModRecipe;
+import com.tacz.guns.industry.recipe.IndustrialRecipeTransformer;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.network.DataType;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
@@ -130,8 +131,13 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         }
         GunMod.LOGGER.debug(getMarker(), "Gun smith table recipes: {} accepted, {} foreign recipe files skipped",
                 ours.size(), pObject.size() - ours.size());
+        // The industrial profile transforms only the built-in TACZ terminal
+        // recipes. The resulting map is used for both the local data map and
+        // network cache, so server validation and every client recipe viewer
+        // agree on the same assembly requirements.
+        Map<Identifier, JsonElement> profileRecipes = IndustrialRecipeTransformer.transform(ours);
         // 父类会用这一份（且仅这一份）同时构建 dataMap 与 networkCache。
-        super.apply(ours, pResourceManager, pProfiler);
+        super.apply(profileRecipes, pResourceManager, pProfiler);
     }
 
     private static boolean isGunSmithTableRecipe(JsonElement element) {

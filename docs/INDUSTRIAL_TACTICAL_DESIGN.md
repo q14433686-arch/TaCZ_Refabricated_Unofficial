@@ -337,8 +337,26 @@ HasBulletInBarrel    继续独立保存膛内一发
 
 ---
 
-## 11. 当前阻塞项
+## 11. 当前实现状态
 
-本沙箱缺少 `java` / `javac`（`bash ./gradlew compileJava --no-daemon` 在 Gradle 启动前报 `JAVA_HOME is not set and no 'java' command could be found in PATH`）。在具备 Java 25 的构建环境前，不应把未经编译验证的大型游戏逻辑直接并入主分支。
+### 已落地：实体弹匣与集中换弹事务
 
-设计、数据契约和小范围代码可先完成；物理弹匣 Phase 1 开始时必须先恢复可执行的 `compileJava`，随后增加专服和单机回归测试。
+- `tacz:magazine` 已作为真实 `ItemStack` 保存平台族、弹种、容量与余弹；
+- 服务端在换弹开始时预留一只具体弹匣，并只在既有动画状态机的 `FEEDING → FINISHING` 点完成交换；
+- 默认 Java 换弹与 `xmag_reload_logic` 等 Lua 脚本的散装弹药 API 调用在物理会话期间被抑制，旧脚本只提供动画时间；
+- 潜行退匣、满背包掉落、旧存档整数备弹迁移与 LEGACY 镜像回退已接入；
+- 目前覆盖 24 个默认的可拆卸弹匣枪条目，管式/转轮/弹链仍保持旧逻辑。
+
+### 已落地：Create Fly 工业纵切
+
+- 新增碳粉、硫粉、生铁、高碳钢、高碳钢板、工业推进药、弹壳坯、底火组件、弹头坯；
+- 新增 Create Fly 研磨、粉碎、加热/炽热搅拌、冲压、压实配方；
+- 9 mm、5.56×45、7.62×39、12G 已改为批量工业弹药输出；
+- AK / AR / Glock 的模板、机匣、枪机、枪管、击发组、复进组件已作为数据驱动 NBT 部件生产；
+- `CREATE_FLY` 档会移除上述四种旧工作台散装弹配方，并将 AK-47、M4A1、Glock 17 的终端合成替换为平台件装配；模板会校验但不消耗。
+
+其余默认枪、更多弹药、专用供弹结构与拆解回收仍按 Phase 4 继续扩展。
+
+## 12. 验证边界
+
+此环境没有可执行 Java 25 工具链；变更已做 JSON、资源 ID、数据契约、26.2/ Create Fly 源码 API 与结构性静态检查。实际 `compileJava`、Create Fly 工艺加载、单机/专服换弹与最终装配回归由外部 Java 25 环境执行。

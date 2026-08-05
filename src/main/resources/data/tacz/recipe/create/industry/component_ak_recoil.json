@@ -1,0 +1,28 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "tacz:high_carbon_steel_ingot",
+    "create:brass_nugget"
+  ],
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ak",
+          "IndustryPartKind": "recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.ak_recoil"
+        }
+      }
+    }
+  ],
+  "heat_requirement": "heated"
+}

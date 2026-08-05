@@ -1,6 +1,8 @@
 package cn.sh1rocu.tacz.compat.rei;
 
 import com.tacz.guns.api.item.*;
+import com.tacz.guns.industry.item.IndustryItemDataAccessor;
+import com.tacz.guns.industry.magazine.IMagazine;
 import me.shedaniel.rei.api.common.entry.comparison.EntryComparator;
 import net.minecraft.world.item.ItemStack;
 
@@ -41,6 +43,24 @@ public class REISubtype {
         };
     }
 
+    public static EntryComparator<ItemStack> getMagazineSubtype() {
+        return (context, stack) -> {
+            if (stack.getItem() instanceof IMagazine magazine) {
+                return java.util.Objects.hash(magazine.getMagazineFamily(stack), magazine.getAmmoId(stack),
+                        magazine.getCapacity(stack), magazine.getAmmoCount(stack));
+            }
+            return 0;
+        };
+    }
+
+    public static EntryComparator<ItemStack> getIndustrySubtype() {
+        return (context, stack) -> {
+            if (stack.getItem() instanceof IndustryItemDataAccessor part) {
+                return java.util.Objects.hash(part.getPlatform(stack), part.getPartKind(stack));
+            }
+            return 0;
+        };
+    }
 
     public static EntryComparator<ItemStack> getAmmoBoxSubtype() {
         return (context, stack) -> {

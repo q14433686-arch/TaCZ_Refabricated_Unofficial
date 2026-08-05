@@ -13,6 +13,7 @@ import com.tacz.guns.item.AmmoItem;
 import com.tacz.guns.item.AttachmentItem;
 import com.tacz.guns.item.GunSmithTableItem;
 import com.tacz.guns.item.MagazineItem;
+import com.tacz.guns.industry.item.IndustryItemBuilder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -34,6 +35,23 @@ public class ModCreativeTabs {
                 output.accept(ModItems.STATUE);
                 output.accept(ModItems.TARGET_MINECART);
                 AmmoBoxItem.fillItemCategory(output);
+                output.accept(ModItems.CARBON_DUST);
+                output.accept(ModItems.SULFUR_DUST);
+                output.accept(ModItems.PIG_IRON_INGOT);
+                output.accept(ModItems.HIGH_CARBON_STEEL_INGOT);
+                output.accept(ModItems.HIGH_CARBON_STEEL_PLATE);
+                output.accept(ModItems.INDUSTRIAL_PROPELLANT);
+                output.accept(ModItems.CARTRIDGE_CASE);
+                output.accept(ModItems.PRIMER);
+                output.accept(ModItems.PROJECTILE_CORE);
+                // Representative samples make the generic NBT-backed items
+                // discoverable in creative without exposing every platform.
+                output.accept(IndustryItemBuilder.blueprint()
+                        .platform("ak").kind("blueprint")
+                        .displayNameKey("item.tacz.gun_blueprint.ak").build());
+                output.accept(IndustryItemBuilder.component()
+                        .platform("ak").kind("receiver")
+                        .displayNameKey("item.tacz.gun_component.ak_receiver").build());
             }).build());
 
     public static CreativeModeTab AMMO_TAB = regiser("ammo", CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)

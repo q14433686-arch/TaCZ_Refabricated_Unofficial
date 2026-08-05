@@ -3,6 +3,7 @@ package com.tacz.guns.init;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.item.gun.GunItemManager;
 import com.tacz.guns.item.*;
+import com.tacz.guns.industry.item.IndustryTaggedItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -23,6 +24,24 @@ public class ModItems {
     public static Item AMMO = register("ammo", new AmmoItem(itemProps("ammo")));
     /** A configured, non-stackable physical detachable magazine. */
     public static Item MAGAZINE = register("magazine", new MagazineItem(itemProps("magazine")));
+
+    // Create Fly industrial-chain intermediates. These are deliberately native
+    // TACZ items, while their processing recipes live in data/tacz/recipe/create.
+    public static Item CARBON_DUST = register("carbon_dust", new Item(itemProps("carbon_dust")));
+    public static Item SULFUR_DUST = register("sulfur_dust", new Item(itemProps("sulfur_dust")));
+    public static Item PIG_IRON_INGOT = register("pig_iron_ingot", new Item(itemProps("pig_iron_ingot")));
+    public static Item HIGH_CARBON_STEEL_INGOT = register("high_carbon_steel_ingot", new Item(itemProps("high_carbon_steel_ingot")));
+    public static Item HIGH_CARBON_STEEL_PLATE = register("high_carbon_steel_plate", new Item(itemProps("high_carbon_steel_plate")));
+    public static Item INDUSTRIAL_PROPELLANT = register("industrial_propellant", new Item(itemProps("industrial_propellant")));
+    public static Item CARTRIDGE_CASE = register("cartridge_case", new Item(itemProps("cartridge_case")));
+    public static Item PRIMER = register("primer", new Item(itemProps("primer")));
+    public static Item PROJECTILE_CORE = register("projectile_core", new Item(itemProps("projectile_core")));
+
+    /** Platform/kind are stored in custom data so one registry item serves all gun packs. */
+    public static Item GUN_COMPONENT = register("gun_component", new IndustryTaggedItem(itemProps("gun_component").stacksTo(16)));
+    /** Blueprint ingredients are checked but not consumed by industrial gun-smith recipes. */
+    public static Item GUN_BLUEPRINT = register("gun_blueprint", new IndustryTaggedItem(itemProps("gun_blueprint").stacksTo(1)));
+
     public static AttachmentItem ATTACHMENT = register("attachment", new AttachmentItem(itemProps("attachment")));
 
     public static GunSmithTableItem GUN_SMITH_TABLE = register("gun_smith_table", new DefaultTableItem(ModBlocks.GUN_SMITH_TABLE, blockItemProps("gun_smith_table")));

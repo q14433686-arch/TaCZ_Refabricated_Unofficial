@@ -30,8 +30,11 @@ public class GunSmithTableIngredientSerializer implements JsonDeserializer<GunSm
             if (jsonObject.has("count")) {
                 count = Math.max(GsonHelper.getAsInt(jsonObject, "count"), 1);
             }
+            // Default true preserves every existing gun pack. Industrial
+            // blueprints opt out explicitly with "consume": false.
+            boolean consume = GsonHelper.getAsBoolean(jsonObject, "consume", true);
             // 延迟解析：此刻 tag 尚未绑定，存原文即可。
-            return new GunSmithTableIngredient(jsonObject.get("item"), count);
+            return new GunSmithTableIngredient(jsonObject.get("item"), count, consume);
         } else {
             throw new JsonSyntaxException("Expected " + json + " to be a Pair because it's not an object");
         }

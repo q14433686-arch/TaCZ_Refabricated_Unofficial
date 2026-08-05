@@ -1,0 +1,19 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:milling",
+  "ingredient": "minecraft:coal",
+  "processing_time": 120,
+  "results": [
+    {
+      "id": "tacz:carbon_dust",
+      "count": 4
+    }
+  ]
+}

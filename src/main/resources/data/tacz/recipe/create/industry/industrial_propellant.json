@@ -1,0 +1,26 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:mixing",
+  "ingredients": [
+    "tacz:carbon_dust",
+    "tacz:carbon_dust",
+    "tacz:sulfur_dust",
+    "tacz:sulfur_dust",
+    "minecraft:redstone"
+  ],
+  "results": [
+    {
+      "id": "tacz:industrial_propellant",
+      "count": 8
+    }
+  ],
+  "processing_time": 200,
+  "heat_requirement": "heated"
+}

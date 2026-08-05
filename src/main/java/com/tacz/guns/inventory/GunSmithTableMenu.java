@@ -143,14 +143,21 @@ public class GunSmithTableMenu extends AbstractContainerMenu {
                         int stackCount = stack.getCount();
                         if (!stack.isEmpty() && resolved.test(stack)) {
                             count = count + stackCount;
-                            // 记录扣除的 slot 和数量
-                            if (count <= ingredient.getCount()) {
-                                // 如果数量不足，全扣
-                                recordCount.put(slotIndex, stackCount);
-                            } else {
-                                //  数量够了，只扣需要的数量
-                                int remaining = count - ingredient.getCount();
-                                recordCount.put(slotIndex, stackCount - remaining);
+                            // Blueprints/tooling still have to be present, but
+                            // are deliberately excluded from the extraction
+                            // record after validation succeeds.
+                            if (ingredient.isConsumed()) {
+                                // 记录扣除的 slot 和数量
+                                if (count <= ingredient.getCount()) {
+                                    // 如果数量不足，全扣
+                                    recordCount.put(slotIndex, stackCount);
+                                } else {
+                                    // 数量够了，只扣需要的数量
+                                    int remaining = count - ingredient.getCount();
+                                    recordCount.put(slotIndex, stackCount - remaining);
+                                    break;
+                                }
+                            } else if (count >= ingredient.getCount()) {
                                 break;
                             }
                         }

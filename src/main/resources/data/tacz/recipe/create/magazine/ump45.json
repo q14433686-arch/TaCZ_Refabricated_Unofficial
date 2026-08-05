@@ -9,10 +9,10 @@
   ],
   "type": "create:compacting",
   "ingredients": [
-    "#c:ingots/iron",
-    "#c:ingots/iron",
-    "#c:ingots/iron",
-    "#c:ingots/copper"
+    "tacz:high_carbon_steel_plate",
+    "tacz:high_carbon_steel_plate",
+    "tacz:high_carbon_steel_plate",
+    "create:brass_sheet"
   ],
   "results": [
     {

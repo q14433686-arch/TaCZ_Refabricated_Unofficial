@@ -1,6 +1,8 @@
 package com.tacz.guns.compat.jei;
 
 import com.tacz.guns.api.item.*;
+import com.tacz.guns.industry.item.IndustryItemDataAccessor;
+import com.tacz.guns.industry.magazine.IMagazine;
 import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
 import net.minecraft.world.item.ItemStack;
 
@@ -41,6 +43,24 @@ public class GunModSubtype {
         };
     }
 
+    public static ISubtypeInterpreter<ItemStack> getMagazineSubtype() {
+        return (stack, context) -> {
+            if (stack.getItem() instanceof IMagazine magazine) {
+                return magazine.getMagazineFamily(stack) + "|" + magazine.getAmmoId(stack)
+                        + "|" + magazine.getCapacity(stack) + "|" + magazine.getAmmoCount(stack);
+            }
+            return null;
+        };
+    }
+
+    public static ISubtypeInterpreter<ItemStack> getIndustrySubtype() {
+        return (stack, context) -> {
+            if (stack.getItem() instanceof IndustryItemDataAccessor part) {
+                return part.getPlatform(stack) + "|" + part.getPartKind(stack);
+            }
+            return null;
+        };
+    }
 
     public static ISubtypeInterpreter<ItemStack> getAmmoBoxSubtype() {
         return (stack, context) -> {

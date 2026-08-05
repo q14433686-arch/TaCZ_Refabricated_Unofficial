@@ -1,0 +1,35 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "tacz:cartridge_case",
+    "tacz:cartridge_case",
+    "tacz:cartridge_case",
+    "tacz:cartridge_case",
+    "tacz:projectile_core",
+    "tacz:projectile_core",
+    "tacz:projectile_core",
+    "tacz:projectile_core",
+    "tacz:primer",
+    "tacz:industrial_propellant"
+  ],
+  "results": [
+    {
+      "id": "tacz:ammo",
+      "count": 32,
+      "components": {
+        "minecraft:custom_data": {
+          "AmmoId": "tacz:9mm"
+        }
+      }
+    }
+  ],
+  "heat_requirement": "heated"
+}

@@ -1,0 +1,22 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "create:brass_nugget",
+    "minecraft:redstone",
+    "tacz:sulfur_dust"
+  ],
+  "results": [
+    {
+      "id": "tacz:primer",
+      "count": 4
+    }
+  ]
+}

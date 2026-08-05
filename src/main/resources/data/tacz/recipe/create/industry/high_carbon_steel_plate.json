@@ -1,0 +1,17 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:pressing",
+  "ingredient": "tacz:high_carbon_steel_ingot",
+  "results": [
+    {
+      "id": "tacz:high_carbon_steel_plate"
+    }
+  ]
+}

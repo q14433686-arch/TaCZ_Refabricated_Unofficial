@@ -1,0 +1,29 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "tacz:high_carbon_steel_plate",
+    "tacz:high_carbon_steel_plate",
+    "create:brass_sheet"
+  ],
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "glock",
+          "IndustryPartKind": "frame",
+          "IndustryDisplayName": "item.tacz.gun_component.glock_frame"
+        }
+      }
+    }
+  ],
+  "heat_requirement": "heated"
+}
