@@ -247,13 +247,13 @@ processResources {
 def industryPython = System.getProperty("os.name").toLowerCase().contains("windows") ? "py" : "python3"
 tasks.register("generateIndustryContent", Exec) {
     group = "build setup"
-    description = "Generate managed TACZ industry recipes, language keys and texture assets."
+    description = "Generate managed TACZ industry recipes, language keys, texture assets and icon-mapping catalog."
     workingDir projectDir
     commandLine industryPython, "tools/generate_industry_content.py", "--write"
 }
 tasks.register("verifyIndustryContent", Exec) {
     group = "verification"
-    description = "Fail if checked-in TACZ industry resources differ from source manifests."
+    description = "Fail if checked-in TACZ industry resources or icon-mapping catalog differ from source manifests."
     workingDir projectDir
     commandLine industryPython, "tools/generate_industry_content.py", "--check"
 }

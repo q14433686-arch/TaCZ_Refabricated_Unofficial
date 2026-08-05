@@ -1,6 +1,6 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "tacz:item/gun_blueprint"
+    "type": "tacz:dynamic_item",
+    "base": "tacz:item/gun_blueprint"
   }
 }

@@ -1,6 +1,11 @@
 package com.tacz.guns.industry.item;
 
+import cn.sh1rocu.tacz.api.extension.IItem;
+import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
+import com.tacz.guns.client.industry.icon.IndustryIconRenderer;
 import com.tacz.guns.industry.ammo.CartridgeStackLimitService;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -17,9 +22,15 @@ import java.util.function.Consumer;
 /**
  * Generic rendered item for a platform-specific component or reusable blueprint.
  */
-public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor {
+public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor, IItem {
     public IndustryTaggedItem(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    @Environment(EnvType.CLIENT)
+    public BuiltinItemRendererRegistry.DynamicItemRenderer getCustomRenderer() {
+        return IndustryIconRenderer.INSTANCE.get();
     }
 
     /** Normalize pre-existing configured cases/projectiles after a world update. */

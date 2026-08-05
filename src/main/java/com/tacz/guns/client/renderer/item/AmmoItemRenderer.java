@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAmmo;
+import com.tacz.guns.client.industry.icon.IndustryIconManager;
 import com.tacz.guns.client.model.BedrockAmmoModel;
 import com.tacz.guns.client.model.SlotModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
@@ -72,11 +73,16 @@ public class AmmoItemRenderer implements BuiltinItemRendererRegistry.DynamicItem
             // 先获取 3D 模型，如果为空，统一使用 GUI 渲染
             BedrockAmmoModel ammoModel = ammoIndex.getAmmoModel();
             Identifier modelTexture = ammoIndex.getModelTextureLocation();
+            // The normal TACZ slot icon remains the fallback. A client resource
+            // pack can replace only the NBT identity -> texture mapping without
+            // touching the gun pack's ballistic/index data or its 3D model.
+            Identifier slotTexture = IndustryIconManager.INSTANCE.resolveTexture(stack)
+                    .orElse(ammoIndex.getSlotTextureLocation());
             // GUI 特殊渲染
             if (transformType == GUI || ammoModel == null || modelTexture == null) {
                 poseStack.translate(0.5, 1.5, 0.5);
                 poseStack.mulPose(Axis.ZN.rotationDegrees(180));
-                collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucent(ammoIndex.getSlotTextureLocation()), (pose, buffer) -> {
+                collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucent(slotTexture), (pose, buffer) -> {
                     // 26.2: 必须使用回调参数 pose（= 提交那一刻 poseStack.last().copy() 的快照），
                     // 而不是外层 poseStack —— 回调执行时它早已被 popPose/复用，
                     // 结果就是图标被画到错误位置（物品栏一片空白）。

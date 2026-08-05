@@ -1,12 +1,17 @@
 package com.tacz.guns.item;
 
+import cn.sh1rocu.tacz.api.extension.IItem;
+import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import com.tacz.guns.api.DefaultAssets;
+import com.tacz.guns.client.industry.icon.IndustryIconRenderer;
 import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.magazine.MagazineItemBuilder;
 import com.tacz.guns.industry.magazine.MagazineItemDataAccessor;
 import com.tacz.guns.resource.CommonAssetsManager;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -34,9 +39,15 @@ import java.util.function.Consumer;
  * slot to take out a normal stack of rounds.  This mirrors the existing TACZ
  * ammo-box interaction without adding another screen for a simple operation.</p>
  */
-public class MagazineItem extends Item implements MagazineItemDataAccessor {
+public class MagazineItem extends Item implements MagazineItemDataAccessor, IItem {
     public MagazineItem(Properties properties) {
         super(properties.stacksTo(1));
+    }
+
+    @Override
+    @Environment(EnvType.CLIENT)
+    public BuiltinItemRendererRegistry.DynamicItemRenderer getCustomRenderer() {
+        return IndustryIconRenderer.INSTANCE.get();
     }
 
     @Override

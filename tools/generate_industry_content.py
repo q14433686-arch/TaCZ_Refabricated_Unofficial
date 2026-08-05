@@ -12,9 +12,10 @@ import json
 import re
 import struct
 import sys
+import zipfile
 import zlib
-from collections import Counter
-from pathlib import Path
+from collections import Counter, defaultdict
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 REPO = Path(__file__).resolve().parents[1]
@@ -24,6 +25,11 @@ CARTRIDGE_MANIFEST = REPO / "tools/industry/cartridges.json"
 DEFAULT_GUN_POLICY = REPO / "tools/industry/default_gun_policy.json"
 MACHINE_MANIFEST = REPO / "tools/industry/machines.json"
 BLUEPRINT_ACQUISITION_MANIFEST = REPO / "tools/industry/blueprint_acquisition.json"
+ICON_MAPPING_MANIFEST = REPO / "tools/industry/icon_mapping.json"
+FIXED_ICON_PACK = REPO / "extras/icon_packs/TACZ_icons_pack_fixed.zip"
+ICON_RUNTIME_MAPPING = RESOURCE_ROOT / "assets/tacz/industry_icons/default.json"
+ICON_CATALOG = REPO / "extras/icon_packs/TACZ_industry_icon_catalog.json"
+ICON_COVERAGE_DOCUMENT = REPO / "docs/INDUSTRY_ICON_COVERAGE.md"
 DEFAULT_AMMO_RECIPE_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/ammo"
 DEFAULT_AMMO_INDEX_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/index/ammo"
 DEFAULT_GUN_DATA_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/data/guns"
@@ -1222,6 +1228,546 @@ def generated_machine_files() -> dict[Path, bytes | Any]:
     return result
 
 
+# ---------------------------------------------------------------------------
+# Client icon mapping and exact artwork coverage catalog
+# ---------------------------------------------------------------------------
+
+ICON_SELECTOR_KEYS = (
+    "ammo_id",
+    "magazine_family",
+    "magazine_ammo_id",
+    "magazine_capacity",
+    "cartridge_caliber",
+    "projectile_type",
+    "industry_part_kind",
+    "industry_platform",
+    "die_target_kind",
+)
+ICON_COVERAGE_VALUES = {"exact", "family", "placeholder"}
+ICON_IDENTIFIER = re.compile(r"^[a-z0-9_.-]+:[a-z0-9_./-]+$")
+
+
+def load_icon_mapping() -> dict[str, Any]:
+    """Load the authoring source for the client-only NBT icon resolver."""
+    mapping = read_json(ICON_MAPPING_MANIFEST)
+    if not isinstance(mapping, dict) or mapping.get("schema_version") != 1:
+        raise ValueError(f"{ICON_MAPPING_MANIFEST}: schema_version must be 1")
+    entries = mapping.get("entries")
+    if not isinstance(entries, list) or not entries:
+        raise ValueError(f"{ICON_MAPPING_MANIFEST}: entries must be a non-empty list")
+
+    seen_ids: set[str] = set()
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            raise ValueError(f"{ICON_MAPPING_MANIFEST}: entries[{index}] must be an object")
+        entry_id = entry.get("id")
+        item = entry.get("item")
+        texture = entry.get("texture")
+        if not isinstance(entry_id, str) or not entry_id or entry_id in seen_ids:
+            raise ValueError(f"{ICON_MAPPING_MANIFEST}: entries[{index}] needs a unique non-empty id")
+        seen_ids.add(entry_id)
+        if not isinstance(item, str) or not ICON_IDENTIFIER.fullmatch(item):
+            raise ValueError(f"{ICON_MAPPING_MANIFEST}: {entry_id} has invalid item id")
+        if not isinstance(texture, str) or not ICON_IDENTIFIER.fullmatch(texture):
+            raise ValueError(f"{ICON_MAPPING_MANIFEST}: {entry_id} has invalid texture id")
+        priority = entry.get("priority", 0)
+        if not isinstance(priority, int):
+            raise ValueError(f"{ICON_MAPPING_MANIFEST}: {entry_id}.priority must be an integer")
+        coverage = entry.get("coverage", "exact")
+        if coverage not in ICON_COVERAGE_VALUES:
+            raise ValueError(
+                f"{ICON_MAPPING_MANIFEST}: {entry_id}.coverage must be one of {sorted(ICON_COVERAGE_VALUES)}"
+            )
+        match = entry.get("match", {})
+        if not isinstance(match, dict):
+            raise ValueError(f"{ICON_MAPPING_MANIFEST}: {entry_id}.match must be an object")
+        unknown = set(match) - set(ICON_SELECTOR_KEYS)
+        if unknown:
+            raise ValueError(f"{ICON_MAPPING_MANIFEST}: {entry_id}.match has unknown selector(s) {sorted(unknown)}")
+        for key, value in match.items():
+            if key == "magazine_capacity":
+                if not isinstance(value, int) or value < 1:
+                    raise ValueError(f"{ICON_MAPPING_MANIFEST}: {entry_id}.match.magazine_capacity must be a positive integer")
+            elif not isinstance(value, str) or not value:
+                raise ValueError(f"{ICON_MAPPING_MANIFEST}: {entry_id}.match.{key} must be a non-empty string")
+    return mapping
+
+
+def embedded_icon_pack_files() -> dict[Path, bytes]:
+    """Mirror the repaired user-supplied namespace into the mod's built-in assets.
+
+    The standalone ZIP remains useful as a drop-in pack, but the runtime mapping
+    must also work when players install only the mod.  All copied files are
+    byte-for-byte checked against the fixed archive by ``--check``.
+    """
+    if not FIXED_ICON_PACK.exists():
+        raise ValueError(f"Missing repaired icon archive {FIXED_ICON_PACK}")
+    files: dict[Path, bytes] = {}
+    with zipfile.ZipFile(FIXED_ICON_PACK) as archive:
+        for name in archive.namelist():
+            if not name.startswith("assets/tacz_extra/") or name.endswith("/"):
+                continue
+            relative = PurePosixPath(name)
+            if ".." in relative.parts:
+                raise ValueError(f"Unsafe path in {FIXED_ICON_PACK}: {name}")
+            files[RESOURCE_ROOT / Path(*relative.parts)] = archive.read(name)
+    if not files:
+        raise ValueError(f"{FIXED_ICON_PACK}: no assets/tacz_extra files found")
+    return files
+
+
+def texture_file_candidates(texture: str) -> list[Path]:
+    namespace, path = texture.split(":", 1)
+    return [
+        RESOURCE_ROOT / "assets" / namespace / "textures" / f"{path}.png",
+        # The bundled default gun pack is an independent, license-preserved
+        # resource archive. Referencing one of its existing slot textures is
+        # allowed; this generator never writes inside it.
+        RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/assets" / namespace / "textures" / f"{path}.png",
+    ]
+
+
+def validate_icon_texture_references(mapping: dict[str, Any], embedded: dict[Path, bytes]) -> None:
+    for entry in mapping["entries"]:
+        texture = entry["texture"]
+        candidates = texture_file_candidates(texture)
+        if not any(candidate.exists() or candidate in embedded for candidate in candidates):
+            raise ValueError(
+                f"{ICON_MAPPING_MANIFEST}: icon entry {entry['id']} references missing texture {texture}"
+            )
+
+
+def mapping_matches(entry: dict[str, Any], item: str, selectors: dict[str, Any]) -> bool:
+    if entry.get("item") != item:
+        return False
+    match = entry.get("match", {})
+    return all(selectors.get(key, "") == value for key, value in match.items())
+
+
+def mapping_specificity(entry: dict[str, Any]) -> int:
+    match = entry.get("match", {})
+    return len(match) if isinstance(match, dict) else 0
+
+
+def resolve_icon_mapping(entries: list[dict[str, Any]], item: str, selectors: dict[str, Any]) -> dict[str, Any] | None:
+    candidates = [entry for entry in entries if mapping_matches(entry, item, selectors)]
+    if not candidates:
+        return None
+    # This is intentionally identical to IndustryIconManager's runtime order:
+    # explicit priority, then selector specificity, then deterministic id.
+    return sorted(
+        candidates,
+        key=lambda entry: (-entry.get("priority", 0), -mapping_specificity(entry), entry["id"]),
+    )[0]
+
+
+def selector_text(item: str, selectors: dict[str, Any]) -> str:
+    pieces = [item]
+    pieces.extend(f"{key}={selectors[key]}" for key in ICON_SELECTOR_KEYS if selectors.get(key))
+    return " ; ".join(pieces)
+
+
+def build_icon_identity(category: str, identity: str, item: str, selectors: dict[str, Any],
+                        label: str, accepted_coverage: tuple[str, ...], asset_key: str,
+                        asset_strategy: str = "individual", mapping_eligible: bool = True) -> dict[str, Any]:
+    return {
+        "category": category,
+        "identity": identity,
+        "item": item,
+        "selectors": {key: value for key, value in selectors.items() if value},
+        "selector": selector_text(item, selectors),
+        "label": label,
+        "accepted_coverage": list(accepted_coverage),
+        "asset_key": asset_key,
+        "asset_strategy": asset_strategy,
+        "mapping_eligible": mapping_eligible,
+    }
+
+
+def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Enumerate every current runtime visual identity, not broad item classes.
+
+    This deliberately emits the 53 platform blueprints, 265 components, 265
+    component dies, and all calibre variants separately.  A later artwork pass
+    may decide that several identities share one family texture, but the list
+    never hides those concrete identities behind a vague category name.
+    """
+    identities: list[dict[str, Any]] = []
+
+    # Loose finished ammo uses AmmoId, while cases/projectiles use the explicit
+    # cartridge identity written by IndustryItemBuilder and recipe components.
+    for cartridge in sorted(cartridges, key=lambda value: value["id"]):
+        caliber = cartridge["id"]
+        ammo = cartridge["ammo"]
+        projectile_type = cartridge["projectile_type"]
+        identities.append(build_icon_identity(
+            "loose_ammo", f"ammo:{ammo}", "tacz:ammo", {"ammo_id": ammo}, ammo,
+            ("exact",), f"ammo:{caliber}", "individual"
+        ))
+        if cartridge["eject_case"]:
+            case_selectors = {"industry_part_kind": "case", "cartridge_caliber": caliber}
+            identities.append(build_icon_identity(
+                "fresh_cartridge_case", f"case:{caliber}", "tacz:cartridge_case", case_selectors,
+                cartridge["case_name_en"], ("exact", "family"), f"fresh_case:{caliber}", "family"
+            ))
+            spent_selectors = {"industry_part_kind": "spent_case", "cartridge_caliber": caliber}
+            identities.append(build_icon_identity(
+                "spent_cartridge_case", f"spent_case:{caliber}", "tacz:cartridge_case", spent_selectors,
+                cartridge["spent_case_name_en"], ("exact",), f"spent_case:{caliber}", "family_or_individual"
+            ))
+        identities.append(build_icon_identity(
+            "projectile_core", f"projectile:{caliber}:{projectile_type}", "tacz:projectile_core",
+            {
+                "industry_part_kind": "projectile",
+                "cartridge_caliber": caliber,
+                "projectile_type": projectile_type,
+            },
+            cartridge["projectile_name_en"], ("exact", "family"),
+            f"projectile:{caliber}:{projectile_type}", "family_or_individual"
+        ))
+
+        # The RPG/40 mm production path deliberately creates real, visible
+        # intermediate stacks. They therefore need separate entries and cannot
+        # be dismissed as a sequenced-assembly transient.
+        payloads = cartridge.get("projectile_payloads", [])
+        if payloads:
+            identities.append(build_icon_identity(
+                "visible_projectile_intermediate", f"projectile_body:{caliber}", "tacz:projectile_blank",
+                {"industry_part_kind": f"projectile_body_{caliber}", "cartridge_caliber": caliber},
+                cartridge["projectile_body_name_en"], ("exact",), f"projectile_body:{caliber}"
+            ))
+            payload_index = 0
+            for payload in payloads:
+                for _ in range(payload["count"]):
+                    payload_index += 1
+                    identities.append(build_icon_identity(
+                        "visible_projectile_intermediate",
+                        f"projectile_payload:{caliber}:{payload_index}", "tacz:projectile_blank",
+                        {
+                            "industry_part_kind": f"projectile_payload_{caliber}_{payload_index}",
+                            "cartridge_caliber": caliber,
+                        },
+                        cartridge["projectile_payload_names_en"][payload_index - 1], ("exact",),
+                        f"projectile_payload:{caliber}:{payload_index}"
+                    ))
+
+        identities.append(build_icon_identity(
+            "cartridge_case_die", f"case_die:{caliber}", "tacz:press_die",
+            {"industry_part_kind": "case_die", "cartridge_caliber": caliber},
+            cartridge["case_die_name_en"], ("exact",), f"case_die:{caliber}"
+        ))
+        identities.append(build_icon_identity(
+            "cartridge_projectile_die", f"projectile_die:{caliber}:{projectile_type}", "tacz:press_die",
+            {
+                "industry_part_kind": "projectile_die",
+                "cartridge_caliber": caliber,
+                "projectile_type": projectile_type,
+            },
+            cartridge["projectile_die_name_en"], ("exact",), f"projectile_die:{caliber}:{projectile_type}"
+        ))
+        gauge = cartridge.get("calibration_gauge")
+        if isinstance(gauge, dict):
+            identities.append(build_icon_identity(
+                "cartridge_gauge", f"cartridge_gauge:{caliber}", "tacz:press_die",
+                {"industry_part_kind": "cartridge_gauge", "cartridge_caliber": caliber},
+                gauge["name_en"], ("exact",), f"cartridge_gauge:{caliber}"
+            ))
+
+    # Shared physical blanks are real stacks and need listed visual identities
+    # even though their eventual calibre/platform is intentionally not known yet.
+    for kind, item, label in (
+        ("case_blank", "tacz:cartridge_case_blank", "Neutral Cartridge Case Blank"),
+        ("projectile_blank", "tacz:projectile_blank", "Neutral Projectile Blank"),
+        ("case_die_blank", "tacz:press_die", "Blank Case Die"),
+        ("projectile_die_blank", "tacz:press_die", "Blank Projectile Die"),
+    ):
+        identities.append(build_icon_identity(
+            "shared_ammunition_intermediate", f"ammunition:{kind}", item,
+            {"industry_platform": "ammunition", "industry_part_kind": kind}, label,
+            ("exact",), f"ammunition:{kind}"
+        ))
+
+    for kind, label in (
+        ("receiver_blank", "Neutral Receiver Blank"),
+        ("bolt_blank", "Neutral Bolt Blank"),
+        ("barrel_blank", "Neutral Barrel Blank"),
+        ("trigger_blank", "Neutral Fire-Control Blank"),
+        ("recoil_blank", "Neutral Recoil Blank"),
+        ("furniture_blank", "Neutral Exterior / Furniture Blank"),
+    ):
+        identities.append(build_icon_identity(
+            "shared_gun_intermediate", f"machining:{kind}", "tacz:gun_component_blank",
+            {"industry_platform": "machining", "industry_part_kind": kind}, label,
+            ("exact",), f"machining:{kind}"
+        ))
+
+    for platform in sorted(platforms, key=lambda value: value["platform"]):
+        platform_id = platform["platform"]
+        blueprint = platform["blueprint"]
+        identities.append(build_icon_identity(
+            "platform_blueprint", f"blueprint:{platform_id}", "tacz:gun_blueprint",
+            {"industry_platform": platform_id, "industry_part_kind": "blueprint"},
+            blueprint["name_en"], ("exact",), f"blueprint:{platform_id}"
+        ))
+        for part in platform["parts"]:
+            kind = part["kind"]
+            structural = part["structural"]
+            identities.append(build_icon_identity(
+                "platform_component", f"component:{platform_id}:{kind}", "tacz:gun_component",
+                {"industry_platform": platform_id, "industry_part_kind": kind},
+                part["name_en"], ("exact",), f"component:{platform_id}:{kind}"
+            ))
+            identities.append(build_icon_identity(
+                "platform_component_die", f"component_die:{platform_id}:{kind}", "tacz:press_die",
+                {
+                    "industry_platform": platform_id,
+                    "industry_part_kind": "component_die",
+                    "die_target_kind": kind,
+                },
+                part.get("die_name_en", f"{part['name_en']} Die"), ("exact",),
+                f"component_die:{platform_id}:{kind}"
+            ))
+            # `structural` is intentionally not a selector on the final die;
+            # it is included in the label to expose the actual blank route.
+            identities[-1]["source_structural_blank"] = structural
+        if platform["materials"]:
+            label = f"{platform_display_label(platform, 'en_us')} Exterior Kit"
+            identities.append(build_icon_identity(
+                "platform_furniture_kit", f"furniture_kit:{platform_id}", "tacz:gun_component",
+                {"industry_platform": platform_id, "industry_part_kind": "furniture_kit"},
+                label, ("exact",), f"furniture_kit:{platform_id}"
+            ))
+
+    # Current physical external feed definitions. Internal/tube/revolver feeds
+    # intentionally do not fabricate a tacz:magazine stack, so they are not
+    # falsely counted as missing magazine icons here.
+    feed_root = RESOURCE_ROOT / "data/tacz/industry/gun_feed"
+    feeds_by_identity: dict[tuple[str, str, int], dict[str, Any]] = {}
+    for path in sorted(feed_root.glob("*.json")):
+        feed = read_json(path)
+        if feed.get("mechanism") not in {"detachable_magazine", "belt"}:
+            continue
+        key = (feed["magazine_family"], feed["ammo"], feed["magazine_capacity"])
+        # Several guns deliberately share one physical carrier identity (for
+        # example a 30-round STANAG). Do not collapse different capacities:
+        # AK 30-round and RPK 40-round stacks have the same family but need
+        # different visual identities and atlas keys.
+        feeds_by_identity.setdefault(key, {**feed, "_source": path.stem})
+    for (family, ammo, capacity), feed in sorted(feeds_by_identity.items()):
+        identity_suffix = f"{family}:{capacity}:{ammo}"
+        identities.append(build_icon_identity(
+            "physical_magazine", f"magazine:{identity_suffix}", "tacz:magazine",
+            {
+                "magazine_family": family,
+                "magazine_ammo_id": ammo,
+                "magazine_capacity": capacity,
+            },
+            feed["display_name"], ("exact",), f"magazine:{identity_suffix}"
+        ))
+
+    # These are static registry-item models rather than NBT-generic stacks.
+    # They belong in the coverage audit, but adding a mapping JSON cannot change
+    # them until a separate custom item renderer/model selector is warranted.
+    for item, label in (
+        ("tacz:magazine_blank", "Neutral Magazine Blank"),
+        ("tacz:cartridge_assembly_machine", "Cartridge Assembly Machine"),
+        ("tacz:industrial_salvage_station", "Industrial Salvage Station"),
+        ("tacz:magazine_pouch", "Magazine Pouch"),
+        ("tacz:magazine_loader", "Magazine Loader"),
+    ):
+        identities.append(build_icon_identity(
+            "static_industrial_item", f"static:{item}", item, {}, label,
+            ("exact",), f"static:{item}", "individual", False
+        ))
+
+    return sorted(identities, key=lambda value: (value["category"], value["identity"]))
+
+
+def embedded_icon_texture_inventory(embedded: dict[Path, bytes], mapping_entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    referenced: dict[str, list[str]] = defaultdict(list)
+    for entry in mapping_entries:
+        texture = entry["texture"]
+        if texture.startswith("tacz_extra:"):
+            referenced[texture].append(entry["id"])
+    inventory: list[dict[str, Any]] = []
+    prefix = RESOURCE_ROOT / "assets/tacz_extra/textures/"
+    for path in sorted(embedded):
+        if path.suffix != ".png" or prefix not in path.parents:
+            continue
+        relative = path.relative_to(prefix).with_suffix("")
+        texture = f"tacz_extra:{relative.as_posix()}"
+        inventory.append({
+            "texture": texture,
+            "bound_by": sorted(referenced.get(texture, [])),
+            "status": "bound" if texture in referenced else "available_unbound",
+        })
+    return inventory
+
+
+def build_icon_catalog(platforms: list[dict[str, Any]], cartridges: list[dict[str, Any]],
+                       mapping: dict[str, Any], embedded: dict[Path, bytes]) -> dict[str, Any]:
+    entries = mapping["entries"]
+    identities = generated_icon_identities(platforms, cartridges)
+    category_summary: dict[str, Counter[str]] = defaultdict(Counter)
+    missing_groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+
+    for identity in identities:
+        mapping_entry = resolve_icon_mapping(entries, identity["item"], identity["selectors"])
+        coverage = mapping_entry.get("coverage", "exact") if mapping_entry else "runtime_fallback"
+        accepted = set(identity["accepted_coverage"])
+        covered = coverage in accepted
+        identity["mapping"] = None if mapping_entry is None else mapping_entry["id"]
+        identity["texture"] = None if mapping_entry is None else mapping_entry["texture"]
+        identity["current_coverage"] = coverage
+        identity["covered"] = covered
+        identity["needs_art"] = not covered
+        category_summary[identity["category"]]["total"] += 1
+        category_summary[identity["category"]][coverage] += 1
+        category_summary[identity["category"]]["covered" if covered else "needs_art"] += 1
+        if not covered:
+            asset_key = identity["asset_key"]
+            # Existing fresh-case family art is intentionally accepted. Fired
+            # cases use that same texture only as a placeholder, so group their
+            # future dark/dented artwork by its current case-family texture.
+            if identity["category"] == "spent_cartridge_case" and identity["texture"]:
+                asset_key = "spent_variant:" + identity["texture"].rsplit("/", 1)[-1]
+                identity["asset_key"] = asset_key
+            missing_groups[asset_key].append(identity)
+
+    missing_art = []
+    for asset_key, members in sorted(missing_groups.items()):
+        missing_art.append({
+            "asset_key": asset_key,
+            "identity_count": len(members),
+            "categories": sorted({member["category"] for member in members}),
+            "asset_strategy": sorted({member["asset_strategy"] for member in members}),
+            "identities": [member["identity"] for member in members],
+        })
+
+    summary = {
+        category: dict(sorted(counts.items()))
+        for category, counts in sorted(category_summary.items())
+    }
+    return {
+        "schema_version": 1,
+        "description": (
+            "Exact runtime visual-identity audit generated from the industrial manifests and the client icon mapping. "
+            "This file lists concrete NBT selectors; it does not collapse missing work into broad classes."
+        ),
+        "sources": {
+            "icon_mapping": str(ICON_MAPPING_MANIFEST.relative_to(REPO)),
+            "fixed_icon_pack": str(FIXED_ICON_PACK.relative_to(REPO)),
+            "platform_manifest_count": len(platforms),
+            "cartridge_manifest_count": len(cartridges),
+        },
+        "summary": summary,
+        "provided_icon_textures": embedded_icon_texture_inventory(embedded, entries),
+        "entries": identities,
+        "missing_art": missing_art,
+        "planned_not_currently_mappable": [
+            {
+                "asset_key": "rpg_motor_housing",
+                "reason": (
+                    "The current RPG route has a warhead body, explosive-charge body, shaped-charge preform, "
+                    "and final HEAT core, but no separate motor-housing ItemStack/NBT stage. Add that real stage "
+                    "before attempting to bind an icon."
+                ),
+            },
+            {
+                "asset_key": "internal_feed_carriers",
+                "reason": (
+                    "Tube, revolver, double-barrel, and internal-box guns currently store rounds in gun data, not "
+                    "in a physical tacz:magazine ItemStack. Their gun/feed UI needs a separate renderer contract; "
+                    "they are deliberately not mislabeled as missing MagazineFamily icons."
+                ),
+            },
+        ],
+    }
+
+
+def render_icon_coverage_document(catalog: dict[str, Any]) -> str:
+    """Create a human-readable companion to the canonical machine-readable catalog."""
+    lines = [
+        "# 工业图标覆盖清单（精确身份）",
+        "",
+        "此文件由 `tools/generate_industry_content.py` 生成。它不是按“弹药/弹匣/工业物品”",
+        "这种宽泛类别罗列，而是逐个列出当前运行时实际可出现的 `item + NBT selector` 身份。",
+        "完整可供程序处理的源数据是 `extras/icon_packs/TACZ_industry_icon_catalog.json`。",
+        "",
+        "## 判定规则",
+        "",
+        "- **exact**：已有该具体身份的图；",
+        "- **family**：已有有意复用的同工艺视觉族（例如新鲜黄铜手枪壳）；",
+        "- **placeholder**：暂时能画出来，但不能冒充完成品（例如已击发弹壳仍借用新壳图）；",
+        "- **runtime_fallback**：没有映射条目，运行时退回原有 TACZ 图；",
+        "- `needs_art = true` 的每一行都是仍需补图的具体身份。",
+        "",
+        "## 汇总",
+        "",
+        "| 类别 | 总身份数 | 已满足 | 仍需补图 | exact | family | placeholder | runtime fallback |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    for category, counts in catalog["summary"].items():
+        lines.append(
+            f"| {category} | {counts.get('total', 0)} | {counts.get('covered', 0)} | "
+            f"{counts.get('needs_art', 0)} | {counts.get('exact', 0)} | {counts.get('family', 0)} | "
+            f"{counts.get('placeholder', 0)} | {counts.get('runtime_fallback', 0)} |"
+        )
+
+    lines.extend([
+        "",
+        "## 仍缺失的精确视觉身份",
+        "",
+        "下表每一行都可以直接变成 `assets/<namespace>/industry_icons/*.json` 中的一条映射；",
+        "`需要的图键` 相同表示一张有意共享的视觉族图可以覆盖多个身份。",
+        "",
+        "| 类别 | 精确身份 | 运行时 selector | 当前状态 | 需要的图键 |",
+        "| --- | --- | --- | --- | --- |",
+    ])
+    missing = [entry for entry in catalog["entries"] if entry["needs_art"]]
+    for entry in missing:
+        selector = entry["selector"].replace("|", "\\|")
+        lines.append(
+            f"| {entry['category']} | `{entry['identity']}` | `{selector}` | "
+            f"{entry['current_coverage']} | `{entry['asset_key']}` |"
+        )
+
+    lines.extend([
+        "",
+        "## 已提供但尚未绑定的图",
+        "",
+        "这些 PNG 已嵌入运行时 `tacz_extra` 命名空间，但当前默认工业数据没有对应的实际身份。",
+        "它们保留给以后新增物理供弹器或第三方映射，未被强行套到不匹配的枪械上。",
+        "",
+        "| 纹理 |",
+        "| --- |",
+    ])
+    for asset in catalog["provided_icon_textures"]:
+        if asset["status"] == "available_unbound":
+            lines.append(f"| `{asset['texture']}` |")
+
+    lines.extend([
+        "",
+        "## 尚不存在可绑定身份的设计项",
+        "",
+    ])
+    for entry in catalog["planned_not_currently_mappable"]:
+        lines.append(f"- `{entry['asset_key']}`：{entry['reason']}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def generated_icon_mapping_files(platforms: list[dict[str, Any]], cartridges: list[dict[str, Any]]) -> dict[Path, bytes | Any]:
+    mapping = load_icon_mapping()
+    embedded = embedded_icon_pack_files()
+    validate_icon_texture_references(mapping, embedded)
+    catalog = build_icon_catalog(platforms, cartridges, mapping, embedded)
+    files: dict[Path, bytes | Any] = dict(embedded)
+    files[ICON_RUNTIME_MAPPING] = mapping
+    files[ICON_CATALOG] = catalog
+    files[ICON_COVERAGE_DOCUMENT] = render_icon_coverage_document(catalog)
+    return files
+
 def existing_json_matches(path: Path, expected: Any) -> bool:
     try:
         return canonical(read_json(path)) == canonical(expected)
@@ -1265,11 +1811,17 @@ def run(write: bool) -> int:
     expected.update(generated_blueprint_acquisition_files(platforms, blueprint_acquisition))
     expected.update(generated_magazine_files({cartridge["ammo"] for cartridge in cartridges}))
     expected.update(generated_machine_files())
+    # The repaired user-supplied tacz_extra namespace is embedded so the
+    # client mapping works without requiring players to install a second ZIP.
+    # The same pass emits the exact missing-art catalog from live manifests.
+    expected.update(generated_icon_mapping_files(platforms, cartridges))
 
     stale: list[str] = []
     for path, value in sorted(expected.items(), key=lambda pair: str(pair[0])):
         if isinstance(value, bytes):
             matches = path.exists() and path.read_bytes() == value
+        elif isinstance(value, str):
+            matches = path.exists() and path.read_text(encoding="utf-8") == value
         else:
             matches = existing_json_matches(path, value)
         if not matches:
@@ -1278,6 +1830,9 @@ def run(write: bool) -> int:
                 if isinstance(value, bytes):
                     path.parent.mkdir(parents=True, exist_ok=True)
                     path.write_bytes(value)
+                elif isinstance(value, str):
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(value, encoding="utf-8")
                 else:
                     write_json(path, value)
 

@@ -6,6 +6,7 @@ import com.mojang.math.Transformation;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.industry.icon.IndustryIconManager;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.item.ItemModel;
@@ -193,10 +194,15 @@ public final class TaczDynamicItemModel implements ItemModel {
         } else if (item instanceof com.tacz.guns.api.item.nbt.BlockItemDataAccessor accessor) {
             contentId = accessor.getBlockId(stack);
         }
+        // Generic industrial items and physical magazines share one registry
+        // item but select their texture from NBT. Include exactly the stable
+        // selector fields in the atlas key; omitting them would make two
+        // different cases/magazines incorrectly reuse the first rendered icon.
         return java.util.List.of(
                 item,
                 displayContext,
-                contentId == null ? "" : contentId
+                contentId == null ? "" : contentId,
+                IndustryIconManager.visualIdentity(stack)
         );
     }
 

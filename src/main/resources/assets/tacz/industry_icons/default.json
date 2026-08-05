@@ -1,0 +1,902 @@
+{
+  "schema_version": 1,
+  "description": "Authoring source for the runtime client-resource NBT identity -> icon mapping. Generated copy: assets/tacz/industry_icons/default.json.",
+  "entries": [
+    {
+      "id": "ammo_12g",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_12gauge",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:12g"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_22wmr",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_22wmr",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:22wmr"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_30_06",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_3006",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:30_06"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_308",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_308win",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:308"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_338",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_338lm",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:338"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_357mag",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_357mag",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:357mag"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_40mm",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_40mm",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:40mm"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_45_70",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_4570",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:45_70"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_45acp",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_45acp",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:45acp"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_46x30",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_46x30",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:46x30"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_50ae",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_50ae",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:50ae"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_50bmg",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_50bmg",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:50bmg"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_556x45",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_556x45",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:556x45"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_58x42",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_58x42",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:58x42"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_762x25",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_762x25",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:762x25"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_762x39",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_762x39",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:762x39"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_762x54",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_762x54r",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:762x54"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_9mm",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_9mm",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:9mm"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "ammo_rpg_rocket",
+      "item": "tacz:ammo",
+      "texture": "tacz_extra:item/ammo_rpg7",
+      "priority": 300,
+      "match": {
+        "ammo_id": "tacz:rpg_rocket"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_ak_762x39",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_akm",
+      "priority": 300,
+      "match": {
+        "magazine_family": "ak_762x39"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_ak_762x39_rpk_40",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_rpk_drum",
+      "priority": 320,
+      "match": {
+        "magazine_family": "ak_762x39",
+        "magazine_ammo_id": "tacz:762x39",
+        "magazine_capacity": 40
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_cz75_9x19",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_cz75",
+      "priority": 300,
+      "match": {
+        "magazine_family": "cz75_9x19"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_glock_9x19",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_glock17",
+      "priority": 300,
+      "match": {
+        "magazine_family": "glock_9x19"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_stanag_556",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_stanag",
+      "priority": 300,
+      "match": {
+        "magazine_family": "stanag_556"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_g3_308",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_g3",
+      "priority": 300,
+      "match": {
+        "magazine_family": "g3_308"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_m1911_45acp",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_m1911",
+      "priority": 300,
+      "match": {
+        "magazine_family": "m1911_45acp"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_m249_556_belt",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_m249_box",
+      "priority": 300,
+      "match": {
+        "magazine_family": "m249_556_belt"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_p320_45acp",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_p320",
+      "priority": 300,
+      "match": {
+        "magazine_family": "p320_45acp"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_p90_57x28",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_p90",
+      "priority": 300,
+      "match": {
+        "magazine_family": "p90_57x28"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_qbz_58x42",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_qbz95",
+      "priority": 300,
+      "match": {
+        "magazine_family": "qbz_58x42"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_ump_45acp",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_ump45",
+      "priority": 300,
+      "match": {
+        "magazine_family": "ump_45acp"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_uzi_9x19",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_uzi",
+      "priority": 300,
+      "match": {
+        "magazine_family": "uzi_9x19"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "magazine_vector_45acp",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_vector",
+      "priority": 300,
+      "match": {
+        "magazine_family": "vector_45acp"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "case_9mm",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_pistol_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "9mm"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_9mm",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_pistol_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "9mm"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_22wmr",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rimfire",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "22wmr"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_22wmr",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rimfire",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "22wmr"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_556x45",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "556x45"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_556x45",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "556x45"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_762x39",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_steel",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "762x39"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_762x39",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_steel",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "762x39"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_12g",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_shotgun",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "12g"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_12g",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_shotgun",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "12g"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_45acp",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_pistol_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "45acp"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_45acp",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_pistol_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "45acp"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_308",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "308"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_308",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "308"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_57x28",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_bottleneck",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "57x28"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_57x28",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_bottleneck",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "57x28"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_58x42",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_steel",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "58x42"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_58x42",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_steel",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "58x42"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_30_06",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "30_06"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_30_06",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "30_06"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_338",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "338"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_338",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "338"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_357mag",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_pistol_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "357mag"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_357mag",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_pistol_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "357mag"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_40mm",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_bigbore",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "40mm"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary big-bore substitute; a true 40 mm grenade casing icon remains required."
+    },
+    {
+      "id": "spent_case_40mm",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_bigbore",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "40mm"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_45_70",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_bigbore",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "45_70"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_45_70",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_bigbore",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "45_70"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_46x30",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_bottleneck",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "46x30"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_46x30",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_bottleneck",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "46x30"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_500mag",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_bigbore",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "500mag"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_500mag",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_bigbore",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "500mag"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_50ae",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_pistol_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "50ae"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_50ae",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_pistol_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "50ae"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_50bmg",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_50bmg",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "50bmg"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_50bmg",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_50bmg",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "50bmg"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_545x39",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_steel",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "545x39"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_545x39",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_steel",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "545x39"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_68x51fury",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "68x51fury"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_68x51fury",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "68x51fury"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_762x25",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_pistol_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "762x25"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_762x25",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_pistol_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "762x25"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_762x54",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_steel",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "762x54"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_762x54",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_steel",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "762x54"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "case_792x57",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "case",
+        "cartridge_caliber": "792x57"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "spent_case_792x57",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 200,
+      "match": {
+        "industry_part_kind": "spent_case",
+        "cartridge_caliber": "792x57"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary family substitute; a visibly fired/dented family variant is still required."
+    },
+    {
+      "id": "projectile_50bmg",
+      "item": "tacz:projectile_core",
+      "texture": "tacz_extra:item/bullet_50cal",
+      "priority": 250,
+      "match": {
+        "industry_part_kind": "projectile",
+        "cartridge_caliber": "50bmg"
+      },
+      "coverage": "exact"
+    },
+    {
+      "id": "projectile_fmj",
+      "item": "tacz:projectile_core",
+      "texture": "tacz_extra:item/bullet_fmj",
+      "priority": 100,
+      "match": {
+        "industry_part_kind": "projectile",
+        "projectile_type": "fmj"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "projectile_12g_shot_placeholder",
+      "item": "tacz:projectile_core",
+      "texture": "tacz_extra:item/bullet_softlead",
+      "priority": 100,
+      "match": {
+        "industry_part_kind": "projectile",
+        "projectile_type": "shot"
+      },
+      "coverage": "placeholder",
+      "note": "Temporary substitute only; a 12G shot/payload icon remains required."
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import com.tacz.guns.api.client.animation.gltf.AnimationStructure;
 import com.tacz.guns.api.vmlib.LuaAnimationConstant;
 import com.tacz.guns.api.vmlib.LuaGunAnimationConstant;
 import com.tacz.guns.api.vmlib.LuaLibrary;
+import com.tacz.guns.client.industry.icon.IndustryIconManager;
 import com.tacz.guns.client.resource.manager.DisplayManager;
 import com.tacz.guns.client.resource.manager.GltfManager;
 import com.tacz.guns.client.resource.manager.PackInfoManager;
@@ -107,6 +108,10 @@ public enum ClientAssetsManager {
             gltfAnimation = register(new GltfManager());
             scriptManager = register(new ScriptManager(new FileToIdConverter("scripts", ".lua"), libList));
             packInfo = register(new PackInfoManager());
+            // Client-resource-only NBT identity -> icon texture mapping. It is
+            // registered before the post-reload index rebuild so item models
+            // and the GUI atlas always observe one completed mapping snapshot.
+            register(IndustryIconManager.INSTANCE);
             register(new IdentifiableResourceReloadListener() {
                 static final Identifier ID = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "client_index_manager_reload");
 

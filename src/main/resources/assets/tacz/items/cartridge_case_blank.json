@@ -1,6 +1,6 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "tacz:item/cartridge_case_blank"
+    "type": "tacz:dynamic_item",
+    "base": "tacz:item/cartridge_case_blank"
   }
 }
