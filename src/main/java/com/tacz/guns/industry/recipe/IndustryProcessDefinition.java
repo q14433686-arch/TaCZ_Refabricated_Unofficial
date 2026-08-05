@@ -91,6 +91,9 @@ public final class IndustryProcessDefinition {
         if ("create:sequenced_assembly".equals(type)) {
             return fromSequencedAssembly(recipe);
         }
+        if ("create:mechanical_crafting".equals(type)) {
+            return fromMechanicalCrafting(recipe);
+        }
 
         IndustryProcessMachine machine = IndustryProcessMachine.fromCreateRecipe(type, string(recipe, "heat_requirement"));
         if (machine == null) {
@@ -131,6 +134,47 @@ public final class IndustryProcessDefinition {
         }
         return new IndustryProcessDefinition(machine, compressInputs(inputs), outputs,
                 integer(recipe, "processing_time", 0), bool(recipe, "keep_held_item", false), reusable, false);
+    }
+
+    /**
+     * Mechanical crafters are a genuine multi-slot mechanism.  Parse their
+     * key/pattern pair rather than flattening it into a fictitious Depot
+     * recipe, so REI can show the calibrated-gauge routes used by default ammo
+     * families that have no bundled firearm chamber reference.
+     */
+    private static IndustryProcessDefinition fromMechanicalCrafting(JsonObject recipe) {
+        if (!recipe.has("key") || !recipe.get("key").isJsonObject()
+                || !recipe.has("pattern") || !recipe.get("pattern").isJsonArray()) {
+            return null;
+        }
+        JsonObject key = recipe.getAsJsonObject("key");
+        List<IndustryStackDefinition> inputs = new ArrayList<>();
+        for (JsonElement rawRow : recipe.getAsJsonArray("pattern")) {
+            if (rawRow == null || !rawRow.isJsonPrimitive() || !rawRow.getAsJsonPrimitive().isString()) {
+                return null;
+            }
+            String row = rawRow.getAsString();
+            for (int index = 0; index < row.length(); index++) {
+                char symbol = row.charAt(index);
+                if (symbol == ' ') {
+                    continue;
+                }
+                JsonElement rawIngredient = key.get(String.valueOf(symbol));
+                IndustryStackDefinition ingredient = parseInput(rawIngredient);
+                if (ingredient == null) {
+                    return null;
+                }
+                inputs.add(ingredient);
+            }
+        }
+        IndustryStackDefinition result = parseOutput(recipe.get("result"));
+        if (inputs.isEmpty() || result == null) {
+            return null;
+        }
+        return new IndustryProcessDefinition(
+                IndustryProcessMachine.MECHANICAL_CRAFTING,
+                compressInputs(inputs), List.of(result), integer(recipe, "processing_time", 0), false
+        );
     }
 
     /**

@@ -23,6 +23,8 @@ PLATFORM_ROOT = REPO / "tools/industry/platforms"
 CARTRIDGE_MANIFEST = REPO / "tools/industry/cartridges.json"
 DEFAULT_GUN_POLICY = REPO / "tools/industry/default_gun_policy.json"
 MACHINE_MANIFEST = REPO / "tools/industry/machines.json"
+DEFAULT_AMMO_RECIPE_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/ammo"
+DEFAULT_GUN_DATA_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/data/guns"
 
 CREATE_CONDITIONS = [{"condition": "fabric:all_mods_loaded", "values": ["create"]}]
 STRUCTURAL_ORDER = ("receiver", "bolt", "barrel", "trigger", "recoil")
@@ -253,29 +255,118 @@ def discover_default_platforms(explicit_slugs: set[str]) -> list[dict[str, Any]]
     return platforms
 
 
+def default_ammo_recipe_ids() -> set[str]:
+    """Return every real default-pack loose-ammo result id.
+
+    The default gun pack is read only as an authoring/CI input.  Keeping this
+    check here prevents a future bundled cartridge from quietly falling back to
+    the generic gun-table material gate instead of receiving a dedicated
+    four-slot assembly route.
+    """
+    ids: set[str] = set()
+    for path in sorted(DEFAULT_AMMO_RECIPE_ROOT.glob("*.json")):
+        recipe = read_json(path)
+        result = recipe.get("result") if isinstance(recipe, dict) else None
+        if not isinstance(result, dict) or result.get("type") != "ammo":
+            continue
+        ammo = result.get("id")
+        if not isinstance(ammo, str) or not ammo:
+            raise ValueError(f"{path}: default ammo result has no id")
+        ids.add(ammo)
+    if not ids:
+        raise ValueError(f"{DEFAULT_AMMO_RECIPE_ROOT}: no default ammo recipe ids found")
+    return ids
+
+
+def validate_master_gun(caliber: dict[str, Any]) -> None:
+    """Ensure a gun used as a physical chamber gauge actually fires this ammo."""
+    master = caliber.get("master_gun")
+    if not isinstance(master, str) or not master:
+        return
+    slug = master.split(":", 1)[-1]
+    path = DEFAULT_GUN_DATA_ROOT / f"{slug}_data.json"
+    if not path.exists():
+        raise ValueError(f"{CARTRIDGE_MANIFEST}: master_gun '{master}' has no bundled gun data")
+    data = read_json5(path)
+    if not isinstance(data, dict) or data.get("ammo") != caliber["ammo"]:
+        raise ValueError(
+            f"{CARTRIDGE_MANIFEST}: master_gun '{master}' is not chambered for '{caliber['ammo']}'"
+        )
+
+
 def load_cartridges() -> list[dict[str, Any]]:
     manifest = read_json(CARTRIDGE_MANIFEST)
     entries = manifest.get("calibers") if isinstance(manifest, dict) else None
     if not isinstance(entries, list) or not entries:
         raise ValueError(f"{CARTRIDGE_MANIFEST}: 'calibers' must be a non-empty list")
     required = (
-        "id", "ammo", "master_gun", "projectile_type",
+        "id", "ammo", "projectile_type", "eject_case",
         "case_name_en", "case_name_zh", "projectile_name_en", "projectile_name_zh",
         "case_die_name_en", "case_die_name_zh", "projectile_die_name_en", "projectile_die_name_zh",
     )
     seen_ids: set[str] = set()
     seen_ammo: set[str] = set()
+    seen_gauge_datums: set[str] = set()
     for entry in entries:
         if not isinstance(entry, dict):
             raise ValueError(f"{CARTRIDGE_MANIFEST}: each caliber must be an object")
         for key in required:
             value = entry.get(key)
-            if not isinstance(value, str) or not value:
+            if key == "eject_case":
+                if not isinstance(value, bool):
+                    raise ValueError(f"{CARTRIDGE_MANIFEST}: caliber '{entry.get('id', '?')}' must declare boolean eject_case")
+            elif not isinstance(value, str) or not value:
                 raise ValueError(f"{CARTRIDGE_MANIFEST}: caliber missing '{key}'")
         if entry["id"] in seen_ids or entry["ammo"] in seen_ammo:
             raise ValueError(f"{CARTRIDGE_MANIFEST}: duplicate caliber id or ammo id")
         seen_ids.add(entry["id"])
         seen_ammo.add(entry["ammo"])
+
+        master_gun = entry.get("master_gun")
+        gauge = entry.get("calibration_gauge")
+        has_master = isinstance(master_gun, str) and bool(master_gun)
+        has_gauge = isinstance(gauge, dict)
+        if has_master == has_gauge:
+            raise ValueError(
+                f"{CARTRIDGE_MANIFEST}: caliber '{entry['id']}' needs exactly one physical calibration source "
+                "(master_gun or calibration_gauge)"
+            )
+        if has_master:
+            validate_master_gun(entry)
+        else:
+            assert isinstance(gauge, dict)
+            for key in ("datum", "name_en", "name_zh"):
+                value = gauge.get(key)
+                if not isinstance(value, str) or not value:
+                    raise ValueError(f"{CARTRIDGE_MANIFEST}: calibration_gauge for '{entry['id']}' missing '{key}'")
+            datum = gauge["datum"]
+            if datum in seen_gauge_datums:
+                raise ValueError(f"{CARTRIDGE_MANIFEST}: duplicate physical calibration datum '{datum}'")
+            seen_gauge_datums.add(datum)
+
+        if entry["eject_case"]:
+            for key in ("spent_case_name_en", "spent_case_name_zh"):
+                value = entry.get(key)
+                if not isinstance(value, str) or not value:
+                    raise ValueError(f"{CARTRIDGE_MANIFEST}: ejecting caliber '{entry['id']}' missing '{key}'")
+
+        payloads = entry.get("projectile_payloads", [])
+        if not isinstance(payloads, list):
+            raise ValueError(f"{CARTRIDGE_MANIFEST}: projectile_payloads for '{entry['id']}' must be a list")
+        for payload in payloads:
+            if not isinstance(payload, dict) or not isinstance(payload.get("item"), str) or not payload["item"] \
+                    or not isinstance(payload.get("count"), int) or payload["count"] < 1:
+                raise ValueError(f"{CARTRIDGE_MANIFEST}: invalid projectile payload for '{entry['id']}'")
+    expected_default_ammo = default_ammo_recipe_ids()
+    missing = expected_default_ammo - seen_ammo
+    unexpected = seen_ammo - expected_default_ammo
+    if missing or unexpected:
+        details: list[str] = []
+        if missing:
+            details.append("missing default ammo: " + ", ".join(sorted(missing)))
+        if unexpected:
+            details.append("non-default ammo: " + ", ".join(sorted(unexpected)))
+        raise ValueError(f"{CARTRIDGE_MANIFEST}: full default-pack cartridge coverage failed ({'; '.join(details)})")
     return entries
 
 
@@ -409,7 +500,6 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
 def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
     caliber_id = caliber["id"]
     projectile_type = caliber["projectile_type"]
-    master = partial("tacz:modern_kinetic_gun", {"GunId": caliber["master_gun"]})
     case_blank_die = partial("tacz:press_die", {
         "IndustryPlatform": "ammunition",
         "IndustryPartKind": "case_die_blank",
@@ -439,6 +529,13 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
         "IndustryDisplayName": f"item.tacz.cartridge_case.{caliber_id}",
         "CartridgeCaliber": caliber_id,
     }
+    spent_case = {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "spent_case",
+        "IndustryDisplayName": f"item.tacz.cartridge_case.spent_{caliber_id}",
+        "CartridgeCaliber": caliber_id,
+        "SpentCartridgeCase": True,
+    }
     projectile = {
         "IndustryPlatform": "ammunition",
         "IndustryPartKind": "projectile",
@@ -457,19 +554,93 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
         "IndustryDisplayName": "item.tacz.projectile_blank",
     })
     files: dict[Path, Any] = {}
+
+    master_gun = caliber.get("master_gun")
+    if isinstance(master_gun, str) and master_gun:
+        calibration_tool = partial("tacz:modern_kinetic_gun", {"GunId": master_gun})
+    else:
+        gauge = caliber["calibration_gauge"]
+        gauge_tag = {
+            "IndustryPlatform": "ammunition",
+            "IndustryPartKind": "cartridge_gauge",
+            "IndustryDisplayName": f"item.tacz.press_die.gauge_{caliber_id}",
+            "CartridgeCaliber": caliber_id,
+        }
+        calibration_tool = partial("tacz:press_die", gauge_tag)
+        # Some bundled loose-ammo ids intentionally have no firearm in the
+        # default pack.  A real multi-slot Mechanical Crafter forms their
+        # named hardened calibre gauge; this is an explicit datum, never an
+        # unrelated gun pretending to be the chamber reference.
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/caliber_gauge_{caliber_id}.json"] = {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:mechanical_crafting",
+            "key": {
+                "B": "create:brass_sheet",
+                "D": gauge["datum"],
+                "S": "tacz:high_carbon_steel_plate",
+            },
+            "pattern": [
+                " S ",
+                "BDB",
+                " S ",
+            ],
+            "result": output("tacz:press_die", gauge_tag),
+        }
+
     files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_case_die_{caliber_id}.json"] = deploying(
-        case_blank_die, master, output("tacz:press_die", case_die)
+        case_blank_die, calibration_tool, output("tacz:press_die", case_die)
     )
     files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_projectile_die_{caliber_id}.json"] = deploying(
-        projectile_blank_die, master, output("tacz:press_die", projectile_die)
+        projectile_blank_die, calibration_tool, output("tacz:press_die", projectile_die)
     )
     files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_case_{caliber_id}.json"] = deploying(
         case_stock, partial("tacz:press_die", case_die), output("tacz:cartridge_case", case)
     )
-    files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json"] = deploying(
-        projectile_stock, partial("tacz:press_die", projectile_die), output("tacz:projectile_core", projectile)
-    )
-    files[RESOURCE_ROOT / f"data/tacz/industry/cartridge_assembly/{caliber_id}.json"] = {
+
+    payloads = caliber.get("projectile_payloads", [])
+    if payloads:
+        incomplete_key = f"item.tacz.projectile_blank.incomplete_{caliber_id}"
+        sequence: list[dict[str, Any]] = []
+        for payload in payloads:
+            for _ in range(payload["count"]):
+                sequence.append({
+                    "type": "create:deploying",
+                    "target": "$ingredient",
+                    "ingredient": payload["item"],
+                    "results": ["$result"],
+                })
+        sequence.append({
+            "type": "create:deploying",
+            "target": "$ingredient",
+            "ingredient": partial("tacz:press_die", projectile_die),
+            "results": ["$result"],
+            "keep_held_item": True,
+        })
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json"] = {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:sequenced_assembly",
+            "ingredient": projectile_stock,
+            "transitional_item": output("tacz:projectile_blank", {
+                "IndustryPlatform": "ammunition",
+                "IndustryPartKind": f"incomplete_projectile_{caliber_id}",
+                "IndustryDisplayName": incomplete_key,
+                "CartridgeCaliber": caliber_id,
+            }),
+            "result": output("tacz:projectile_core", projectile),
+            "sequence": sequence,
+        }
+    else:
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json"] = deploying(
+            projectile_stock, partial("tacz:press_die", projectile_die), output("tacz:projectile_core", projectile)
+        )
+
+    if caliber["eject_case"]:
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/recondition_case_{caliber_id}.json"] = deploying(
+            partial("tacz:cartridge_case", spent_case), partial("tacz:press_die", case_die),
+            output("tacz:cartridge_case", case)
+        )
+
+    definition: dict[str, Any] = {
         "case_item": "tacz:cartridge_case",
         "case_caliber": caliber_id,
         "case_display_name": f"item.tacz.cartridge_case.{caliber_id}",
@@ -481,7 +652,11 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
         "propellant_item": "tacz:industrial_propellant",
         "ammo": caliber["ammo"],
         "count": 1,
+        "eject_case": caliber["eject_case"],
     }
+    if caliber["eject_case"]:
+        definition["spent_case_display_name"] = f"item.tacz.cartridge_case.spent_{caliber_id}"
+    files[RESOURCE_ROOT / f"data/tacz/industry/cartridge_assembly/{caliber_id}.json"] = definition
     files[RESOURCE_ROOT / f"data/tacz/industry/ammo/{caliber_id}.json"] = {
         "legacy_recipe": f"tacz:ammo/{caliber_id}"
     }
@@ -492,12 +667,23 @@ def cartridge_language_entries(caliber: dict[str, Any], language: str) -> dict[s
     suffix = "zh" if language == "zh_cn" else "en"
     caliber_id = caliber["id"]
     projectile_type = caliber["projectile_type"]
-    return {
+    entries = {
         f"item.tacz.cartridge_case.{caliber_id}": caliber[f"case_name_{suffix}"],
         f"item.tacz.projectile_core.{caliber_id}_{projectile_type}": caliber[f"projectile_name_{suffix}"],
         f"item.tacz.press_die.case_{caliber_id}": caliber[f"case_die_name_{suffix}"],
         f"item.tacz.press_die.projectile_{caliber_id}_{projectile_type}": caliber[f"projectile_die_name_{suffix}"],
     }
+    if caliber["eject_case"]:
+        entries[f"item.tacz.cartridge_case.spent_{caliber_id}"] = caliber[f"spent_case_name_{suffix}"]
+    if caliber.get("projectile_payloads"):
+        name = caliber[f"projectile_name_{suffix}"]
+        entries[f"item.tacz.projectile_blank.incomplete_{caliber_id}"] = (
+            f"未完成的{name}" if suffix == "zh" else f"Incomplete {name}"
+        )
+    gauge = caliber.get("calibration_gauge")
+    if isinstance(gauge, dict):
+        entries[f"item.tacz.press_die.gauge_{caliber_id}"] = gauge[f"name_{suffix}"]
+    return entries
 
 
 def generated_magazine_files(cartridge_ammo_ids: set[str]) -> dict[Path, Any]:

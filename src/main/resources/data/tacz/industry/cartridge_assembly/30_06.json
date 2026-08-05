@@ -1,0 +1,15 @@
+{
+  "case_item": "tacz:cartridge_case",
+  "case_caliber": "30_06",
+  "case_display_name": "item.tacz.cartridge_case.30_06",
+  "projectile_item": "tacz:projectile_core",
+  "projectile_caliber": "30_06",
+  "projectile_type": "fmj",
+  "projectile_display_name": "item.tacz.projectile_core.30_06_fmj",
+  "primer_item": "tacz:primer",
+  "propellant_item": "tacz:industrial_propellant",
+  "ammo": "tacz:30_06",
+  "count": 1,
+  "eject_case": true,
+  "spent_case_display_name": "item.tacz.cartridge_case.spent_30_06"
+}

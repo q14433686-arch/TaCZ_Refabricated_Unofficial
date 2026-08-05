@@ -1,0 +1,32 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:mechanical_crafting",
+  "key": {
+    "B": "create:brass_sheet",
+    "D": "minecraft:ghast_tear",
+    "S": "tacz:high_carbon_steel_plate"
+  },
+  "pattern": [
+    " S ",
+    "BDB",
+    " S "
+  ],
+  "result": {
+    "id": "tacz:press_die",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "cartridge_gauge",
+        "IndustryDisplayName": "item.tacz.press_die.gauge_762x25",
+        "CartridgeCaliber": "762x25"
+      }
+    }
+  }
+}

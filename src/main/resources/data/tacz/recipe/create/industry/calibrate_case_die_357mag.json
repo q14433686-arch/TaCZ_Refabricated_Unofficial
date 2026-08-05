@@ -1,0 +1,45 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "case_die_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.case"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:modern_kinetic_gun"
+    ],
+    "nbt": {
+      "GunId": "tacz:rhino357"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "case_die",
+          "IndustryDisplayName": "item.tacz.press_die.case_357mag",
+          "CartridgeCaliber": "357mag"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

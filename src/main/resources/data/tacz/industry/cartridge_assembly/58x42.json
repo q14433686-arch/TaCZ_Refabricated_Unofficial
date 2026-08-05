@@ -9,5 +9,7 @@
   "primer_item": "tacz:primer",
   "propellant_item": "tacz:industrial_propellant",
   "ammo": "tacz:58x42",
-  "count": 1
+  "count": 1,
+  "eject_case": true,
+  "spent_case_display_name": "item.tacz.cartridge_case.spent_58x42"
 }

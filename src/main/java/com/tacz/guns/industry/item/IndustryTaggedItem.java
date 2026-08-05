@@ -30,13 +30,22 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
                     .withStyle(style -> style.withColor(0xFF5555)));
             return;
         }
-        if ("blueprint".equals(getPartKind(stack))) {
+        String partKind = getPartKind(stack);
+        if ("blueprint".equals(partKind)) {
             adder.accept(Component.translatable("tooltip.tacz.gun_smith_table.non_consumed")
                     .withStyle(style -> style.withColor(0x55FFFF)));
         }
-        if (getPartKind(stack).endsWith("_die")) {
+        if (partKind.endsWith("_die")) {
             adder.accept(Component.translatable("tooltip.tacz.industry.reusable_die")
                     .withStyle(style -> style.withColor(0x55FFFF)));
+        }
+        if ("cartridge_gauge".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.cartridge_gauge")
+                    .withStyle(style -> style.withColor(0x55FFFF)));
+        }
+        if ("spent_case".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.spent_case")
+                    .withStyle(style -> style.withColor(0xFFCC66)));
         }
         if (!getCartridgeCaliber(stack).isBlank()) {
             adder.accept(Component.translatable("tooltip.tacz.industry.caliber", getCartridgeCaliber(stack))

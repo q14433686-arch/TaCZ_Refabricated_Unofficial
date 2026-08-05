@@ -43,12 +43,18 @@ public final class CartridgeAssemblyDefinition {
     private Identifier propellantItem;
     private Identifier ammo;
     private int count = 1;
+    /** Explicit opt-in: a fired round may produce a recoverable case item. */
+    @SerializedName("eject_case")
+    private boolean ejectCase;
+    @SerializedName("spent_case_display_name")
+    private String spentCaseDisplayName;
 
     public boolean isValid() {
         return valid(caseItem) && !blank(caseCaliber)
                 && valid(projectileItem) && !blank(projectileCaliber) && !blank(projectileType)
                 && valid(primerItem) && valid(propellantItem) && ammo != null
-                && count > 0 && count <= 99;
+                && count > 0 && count <= 99
+                && (!ejectCase || !blank(spentCaseDisplayName));
     }
 
     public boolean matches(ItemStack caseStack, ItemStack projectileStack, ItemStack primerStack, ItemStack propellantStack) {
@@ -87,6 +93,30 @@ public final class CartridgeAssemblyDefinition {
 
     public ItemStack createResult() {
         return AmmoItemBuilder.create().setId(ammo).setCount(count).build();
+    }
+
+    /**
+     * Builds the physical item that is spawned after one successfully consumed
+     * round.  It deliberately has a different part kind from a ready case, so
+     * it cannot bypass the matching-die reconditioning step before returning
+     * to the dedicated four-slot loading machine.
+     */
+    public ItemStack createSpentCase() {
+        if (!ejectsCase()) {
+            return ItemStack.EMPTY;
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putString("IndustryPlatform", "ammunition");
+        tag.putString("IndustryPartKind", "spent_case");
+        tag.putString("IndustryDisplayName", spentCaseDisplayName);
+        tag.putString("CartridgeCaliber", caseCaliber);
+        tag.putBoolean("SpentCartridgeCase", true);
+        return configuredPreview(caseItem, tag);
+    }
+
+    /** True only for a definition that explicitly declares a recoverable case. */
+    public boolean ejectsCase() {
+        return isValid() && ejectCase && valid(caseItem) && !blank(spentCaseDisplayName);
     }
 
     public ItemStack createCasePreview() {

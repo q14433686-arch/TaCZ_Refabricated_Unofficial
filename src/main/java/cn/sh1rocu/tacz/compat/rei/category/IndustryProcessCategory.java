@@ -90,6 +90,8 @@ public final class IndustryProcessCategory implements DisplayCategory<IndustryPr
                 footer = Component.translatable("rei.tacz.industry.deploying.one_workpiece");
             } else if (machine == IndustryProcessMachine.COMPACTING) {
                 footer = Component.translatable("rei.tacz.industry.compacting.basin");
+            } else if (machine == IndustryProcessMachine.MECHANICAL_CRAFTING) {
+                footer = Component.translatable("rei.tacz.industry.mechanical_crafting.multislot");
             }
             if (footer != null) {
                 graphics.text(font, footer, bounds.x + 8, bounds.y + 70, 0xFFAAAAAA, false);

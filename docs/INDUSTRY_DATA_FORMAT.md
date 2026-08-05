@@ -56,7 +56,7 @@ data/<namespace>/recipe/create/<任意路径>.json
 
 因此，任何需要把“弹壳 + 弹头 + 底火”或“五种枪械组件”**同时堆在置物台上**的方案都是无效设计。多输入应改用工作盆；多部件装枪应改用下面的顺序装配，或另行使用有独立格位的机械合成器。
 
-TACZ 会读取该目录中的支持工艺，向客户端同步一份工艺投影，并在 REI 中注册研磨、粉碎、加热搅拌、工作盆压实、单件冲压、部署器成型和顺序枪械装配类别。
+TACZ 会读取该目录中的支持工艺，向客户端同步一份工艺投影，并在 REI 中注册研磨、粉碎、加热搅拌、工作盆压实、单件冲压、部署器成型、真实多槽机械合成器和顺序枪械装配类别。
 
 这条同步通道存在的原因是 Create Fly 当前 26.2 构建在其 `build.gradle` 中排除了 REI source set；JEI 能显示 Create 工艺而 REI 没有原生类别。TACZ 的桥接层不调用 Create 内部 Java API，只从实际配方 JSON 构建 REI 的输入/输出树。
 
@@ -173,9 +173,9 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 
 弹药同样不靠材料数量区分：单输入动力冲压机只负责产出中性的 `tacz:cartridge_case_blank` 与 `tacz:projectile_blank`。之后由 Create 部署器持有一枚 NBT 标识的可复用 `tacz:press_die`，通过带 `keep_held_item: true` 的 `create:deploying` 工艺真正压制出指定身份。
 
-压实阶段也不能让多条相同材料表直接各自产出不同口径模具。现在先压实**中性弹壳模具体**或**中性弹头模具体**；再由部署器持有一把对应口径的完整枪械作为不消耗的膛室/口径量规，校准成 9 mm、5.56×45、7.62×39、12G、.45 ACP、.308、5.7×28 或 5.8×42 的最终模具。枪在部署器手持栏，模具体是置物台/传送带上的唯一目标，因此既是实际的物理选择，也不违反置物台单工件约束。
+压实阶段也不能让多条相同材料表直接各自产出不同口径模具。现在先压实**中性弹壳模具体**或**中性弹头模具体**；有对应默认枪的口径再由部署器持同口径完整枪作为不消耗的膛室/口径量规。默认包虽然提供散装弹、但没有任何对应枪械的 4.6×30、5.45×39、6.8×51 Fury、7.62×25、7.62×54R，则先由真正的 Create **机械合成器**多槽配方制造带精确 `CartridgeCaliber` 的淬硬口径量规；绝不使用不相干的枪冒充量规，也不使用同输入/改数量的 Basin 分支伪造口径。
 
-成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。
+成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。40 mm HE 与 RPG-7 HEAT 弹头还在成型前以顺序部署器工位装入 TNT 战斗部；这仍是一个过渡工件按站流动，不会把多件物料堆到置物台上。
 
 最终装弹不再交给 `create:compacting` 的 Basin，也不再把四种物料伪装成传送带上的单一工件。它由 TACZ 的**弹药装配机**完成：GUI 中有独立的弹壳、弹头、底火、推进药四个输入槽与一个成品槽；按钮请求只发到服务端，服务端按数据定义验证 NBT、扣除四件材料并输出弹药。
 
@@ -197,13 +197,28 @@ data/<namespace>/industry/cartridge_assembly/<任意名称>.json
   "primer_item": "yourmod:primer",
   "propellant_item": "yourmod:propellant",
   "ammo": "yourmod:556x45",
-  "count": 1
+  "count": 1,
+  "eject_case": true,
+  "spent_case_display_name": "item.yourmod.cartridge_case.spent_556x45"
 }
 ```
 
 这不是“配方显示出来就算能做”的工作盆推断：四个 GUI 槽位分别验证，错口径弹壳、错弹头类型、错误底火或推进药会被服务端拒绝。定义会同步到客户端供 JEI/REI 显示弹药装配机配方；整枪和实体弹匣仍走各自既有的工业路线。
 
 装配机也可接入物流：顶部与四个侧面均可输入物品，机器会按数据定义把弹壳、弹头、底火、推进药路由到各自唯一的槽位；**底面只允许取出成品**。给予红石信号后，机器每 40 tick 自动完成一次有效装配；无红石时仍可通过 GUI 手动点击“装配”。输入改变、配方不匹配或成品槽无法容纳时进度会重置且绝不扣料。
+
+### 真实抛壳与再整形
+
+若定义设置 `eject_case: true`，服务端只会在一次 `reduceAmmoOnce()` **实际成功消耗**后生成一个原生 `ItemEntity`：
+
+```text
+tacz:cartridge_case
+  IndustryPartKind: "spent_case"
+  CartridgeCaliber: "<精确口径>"
+  SpentCartridgeCase: true
+```
+
+它不是客户端抛壳动画、也不会按霰弹的 pellet 数重复生成；会像普通掉落物一样受物理、合并、漏斗和玩家拾取处理。客户端会让旧的纯视觉抛壳为这枚同步实体让位，避免看见两枚壳。该物品与可装填的 `IndustryPartKind: "case"` 不同，不能直接放回装配机：必须让**匹配口径**的弹壳模具由部署器持有，将它经 `recondition_case_<caliber>` 整形为未装填弹壳，之后仍需消耗新底火、推进药和弹头。RPG-7 在默认定义中明确不抛壳，因为火箭本体已被发射和消耗。
 
 `PartialNBTIngredient` / `StrictNBTIngredient` 仍定义了语义相等性，供内容包确实需要在 Basin 中重复同类 NBT 输入时使用，但内置最终装弹不再把这项内部行为当作能否制造的前提。
 

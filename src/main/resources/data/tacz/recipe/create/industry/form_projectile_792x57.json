@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:projectile_blank"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "projectile_blank",
+      "IndustryDisplayName": "item.tacz.projectile_blank"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "projectile_die",
+      "IndustryDisplayName": "item.tacz.press_die.projectile_792x57_fmj",
+      "CartridgeCaliber": "792x57",
+      "ProjectileType": "fmj"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:projectile_core",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "projectile",
+          "IndustryDisplayName": "item.tacz.projectile_core.792x57_fmj",
+          "CartridgeCaliber": "792x57",
+          "ProjectileType": "fmj"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

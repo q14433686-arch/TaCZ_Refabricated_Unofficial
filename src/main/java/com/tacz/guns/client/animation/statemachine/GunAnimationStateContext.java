@@ -15,6 +15,7 @@ import com.tacz.guns.api.util.LuaNbtAccessor;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.functional.ShellRender;
 import com.tacz.guns.client.resource.GunDisplayInstance;
+import com.tacz.guns.industry.ammo.SpentCartridgeService;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
@@ -469,6 +470,12 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @param index 抛壳窗序号
      */
     public void popShellFrom(int index) {
+        // Industrial cartridges use a synchronised server ItemEntity instead
+        // of a second, non-recoverable client-only shell.  If the server later
+        // rejects the shot, no fake shell is shown either.
+        if (gunData != null && SpentCartridgeService.hasRecoverableCase(gunData.getAmmoId())) {
+            return;
+        }
         if (display.getShellEjection() != null) {
             BedrockGunModel gunModel = display.getGunModel();
             if (gunModel != null) {

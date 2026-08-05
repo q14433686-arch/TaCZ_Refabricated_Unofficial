@@ -18,6 +18,7 @@ import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.config.common.AmmoConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
+import com.tacz.guns.industry.ammo.SpentCartridgeService;
 import com.tacz.guns.industry.magazine.InternalFeedService;
 import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.network.NetworkHandler;
@@ -170,6 +171,10 @@ public class ModernKineticGunScriptAPI {
                     if (!this.reduceAmmoOnce()) {
                         return false;
                     }
+                    // The client shell model is only cosmetic.  Once a real
+                    // round has been consumed, emit the data-declared case on
+                    // the server so it can be picked up and reconditioned.
+                    SpentCartridgeService.ejectAfterFiring(shooter, gunData.getAmmoId());
                 }
                 //Handle Heat Data
                 if (gunIndex.getGunData().hasHeatData()) {

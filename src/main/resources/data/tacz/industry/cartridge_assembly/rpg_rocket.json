@@ -1,0 +1,14 @@
+{
+  "case_item": "tacz:cartridge_case",
+  "case_caliber": "rpg_rocket",
+  "case_display_name": "item.tacz.cartridge_case.rpg_rocket",
+  "projectile_item": "tacz:projectile_core",
+  "projectile_caliber": "rpg_rocket",
+  "projectile_type": "heat",
+  "projectile_display_name": "item.tacz.projectile_core.rpg_rocket_heat",
+  "primer_item": "tacz:primer",
+  "propellant_item": "tacz:industrial_propellant",
+  "ammo": "tacz:rpg_rocket",
+  "count": 1,
+  "eject_case": false
+}
