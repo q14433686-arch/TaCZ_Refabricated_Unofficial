@@ -240,6 +240,24 @@ processResources {
     }
 }
 
+// Industrial platform resources are generated at authoring time, not at game
+// runtime. Keep these tasks opt-in so a normal player build never gains a
+// Python dependency; maintainers/CI can explicitly regenerate or verify the
+// checked-in Create recipes, language keys and deterministic machine texture.
+def industryPython = System.getProperty("os.name").toLowerCase().contains("windows") ? "py" : "python3"
+tasks.register("generateIndustryContent", Exec) {
+    group = "build setup"
+    description = "Generate managed TACZ industry recipes, language keys and texture assets."
+    workingDir projectDir
+    commandLine industryPython, "tools/generate_industry_content.py", "--write"
+}
+tasks.register("verifyIndustryContent", Exec) {
+    group = "verification"
+    description = "Fail if checked-in TACZ industry resources differ from source manifests."
+    workingDir projectDir
+    commandLine industryPython, "tools/generate_industry_content.py", "--check"
+}
+
 def targetJavaVersion = 25
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"

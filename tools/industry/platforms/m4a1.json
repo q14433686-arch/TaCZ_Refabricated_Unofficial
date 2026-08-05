@@ -1,0 +1,73 @@
+{
+  "slug": "m4a1",
+  "platform": "ar",
+  "gun_id": "tacz:m4a1",
+  "fire_mode": "AUTO",
+  "blueprint": {
+    "display_name": "item.tacz.gun_blueprint.ar",
+    "ingredients": [
+      "minecraft:paper",
+      "minecraft:paper",
+      "create:brass_sheet",
+      "minecraft:quartz"
+    ],
+    "name_en": "AR Platform Assembly Blueprint",
+    "name_zh": "AR 平台装配模板"
+  },
+  "parts": [
+    {
+      "structural": "receiver",
+      "kind": "receiver",
+      "name_en": "AR Upper/Lower Receiver Set",
+      "name_zh": "AR 上下机匣组",
+      "die_name_en": "AR Receiver Die",
+      "die_name_zh": "AR 机匣模具"
+    },
+    {
+      "structural": "bolt",
+      "kind": "bolt",
+      "name_en": "AR Bolt Carrier Group",
+      "name_zh": "AR 枪机组",
+      "die_name_en": "AR Bolt Group Die",
+      "die_name_zh": "AR 枪机组模具"
+    },
+    {
+      "structural": "barrel",
+      "kind": "barrel",
+      "name_en": "AR 5.56 Barrel",
+      "name_zh": "AR 5.56 枪管",
+      "die_name_en": "AR Barrel Die",
+      "die_name_zh": "AR 枪管模具"
+    },
+    {
+      "structural": "trigger",
+      "kind": "trigger",
+      "name_en": "AR Fire-Control Group",
+      "name_zh": "AR 击发组",
+      "die_name_en": "AR Fire-Control Die",
+      "die_name_zh": "AR 击发组模具"
+    },
+    {
+      "structural": "recoil",
+      "kind": "recoil",
+      "name_en": "AR Buffer/Recoil Assembly",
+      "name_zh": "AR 缓冲复进组件",
+      "die_name_en": "AR Buffer Die",
+      "die_name_zh": "AR 缓冲组件模具"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:oak_planks",
+      "count": 2
+    },
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ],
+  "incomplete": {
+    "name_en": "Incomplete M4A1 Assembly",
+    "name_zh": "未完成的 M4A1 总成"
+  }
+}

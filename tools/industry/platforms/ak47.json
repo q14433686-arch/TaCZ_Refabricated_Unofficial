@@ -1,0 +1,69 @@
+{
+  "slug": "ak47",
+  "platform": "ak",
+  "gun_id": "tacz:ak47",
+  "fire_mode": "AUTO",
+  "blueprint": {
+    "display_name": "item.tacz.gun_blueprint.ak",
+    "ingredients": [
+      "minecraft:paper",
+      "minecraft:paper",
+      "create:brass_sheet",
+      "minecraft:redstone"
+    ],
+    "name_en": "AK Platform Assembly Blueprint",
+    "name_zh": "AK 平台装配模板"
+  },
+  "parts": [
+    {
+      "structural": "receiver",
+      "kind": "receiver",
+      "name_en": "AK Receiver",
+      "name_zh": "AK 机匣",
+      "die_name_en": "AK Receiver Die",
+      "die_name_zh": "AK 机匣模具"
+    },
+    {
+      "structural": "bolt",
+      "kind": "bolt",
+      "name_en": "AK Bolt Group",
+      "name_zh": "AK 枪机组",
+      "die_name_en": "AK Bolt Group Die",
+      "die_name_zh": "AK 枪机组模具"
+    },
+    {
+      "structural": "barrel",
+      "kind": "barrel",
+      "name_en": "AK 7.62 Barrel",
+      "name_zh": "AK 7.62 枪管",
+      "die_name_en": "AK Barrel Die",
+      "die_name_zh": "AK 枪管模具"
+    },
+    {
+      "structural": "trigger",
+      "kind": "trigger",
+      "name_en": "AK Fire-Control Group",
+      "name_zh": "AK 击发组",
+      "die_name_en": "AK Fire-Control Die",
+      "die_name_zh": "AK 击发组模具"
+    },
+    {
+      "structural": "recoil",
+      "kind": "recoil",
+      "name_en": "AK Recoil Assembly",
+      "name_zh": "AK 复进组件",
+      "die_name_en": "AK Recoil Die",
+      "die_name_zh": "AK 复进组件模具"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:oak_planks",
+      "count": 4
+    }
+  ],
+  "incomplete": {
+    "name_en": "Incomplete AK-47 Assembly",
+    "name_zh": "未完成的 AK-47 总成"
+  }
+}

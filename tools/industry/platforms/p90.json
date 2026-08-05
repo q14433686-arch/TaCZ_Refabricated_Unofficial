@@ -1,0 +1,63 @@
+{
+  "slug": "p90",
+  "platform": "p90",
+  "gun_id": "tacz:p90",
+  "fire_mode": "AUTO",
+  "blueprint": {
+    "display_name": "item.tacz.gun_blueprint.p90",
+    "ingredients": [
+      "minecraft:paper",
+      "minecraft:paper",
+      "create:brass_sheet",
+      "minecraft:glowstone_dust"
+    ],
+    "name_en": "P90 Platform Assembly Blueprint",
+    "name_zh": "P90 平台装配模板"
+  },
+  "parts": [
+    {
+      "structural": "receiver",
+      "kind": "receiver",
+      "name_en": "P90 Receiver",
+      "name_zh": "P90 机匣"
+    },
+    {
+      "structural": "bolt",
+      "kind": "bolt",
+      "name_en": "P90 Bolt Group",
+      "name_zh": "P90 枪机组"
+    },
+    {
+      "structural": "barrel",
+      "kind": "barrel",
+      "name_en": "P90 5.7 Barrel",
+      "name_zh": "P90 5.7 枪管"
+    },
+    {
+      "structural": "trigger",
+      "kind": "trigger",
+      "name_en": "P90 Fire-Control Group",
+      "name_zh": "P90 击发组"
+    },
+    {
+      "structural": "recoil",
+      "kind": "recoil",
+      "name_en": "P90 Recoil Assembly",
+      "name_zh": "P90 复进组件"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 4
+    },
+    {
+      "item": "minecraft:glass_pane",
+      "count": 2
+    }
+  ],
+  "incomplete": {
+    "name_en": "Incomplete P90 Assembly",
+    "name_zh": "未完成的 P90 总成"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "slug": "ump45",
+  "platform": "ump",
+  "gun_id": "tacz:ump45",
+  "fire_mode": "AUTO",
+  "blueprint": {
+    "display_name": "item.tacz.gun_blueprint.ump",
+    "ingredients": [
+      "minecraft:paper",
+      "minecraft:paper",
+      "create:brass_sheet",
+      "minecraft:flint"
+    ],
+    "name_en": "UMP45 Platform Assembly Blueprint",
+    "name_zh": "UMP45 平台装配模板"
+  },
+  "parts": [
+    {
+      "structural": "receiver",
+      "kind": "receiver",
+      "name_en": "UMP45 Receiver",
+      "name_zh": "UMP45 机匣"
+    },
+    {
+      "structural": "bolt",
+      "kind": "bolt",
+      "name_en": "UMP45 Bolt Group",
+      "name_zh": "UMP45 枪机组"
+    },
+    {
+      "structural": "barrel",
+      "kind": "barrel",
+      "name_en": "UMP45 .45 Barrel",
+      "name_zh": "UMP45 .45 枪管"
+    },
+    {
+      "structural": "trigger",
+      "kind": "trigger",
+      "name_en": "UMP45 Fire-Control Group",
+      "name_zh": "UMP45 击发组"
+    },
+    {
+      "structural": "recoil",
+      "kind": "recoil",
+      "name_en": "UMP45 Recoil Assembly",
+      "name_zh": "UMP45 复进组件"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 3
+    },
+    {
+      "item": "create:brass_sheet",
+      "count": 1
+    }
+  ],
+  "incomplete": {
+    "name_en": "Incomplete UMP45 Assembly",
+    "name_zh": "未完成的 UMP45 总成"
+  }
+}

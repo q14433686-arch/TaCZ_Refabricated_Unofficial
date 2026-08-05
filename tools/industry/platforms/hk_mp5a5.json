@@ -1,0 +1,63 @@
+{
+  "slug": "hk_mp5a5",
+  "platform": "mp5",
+  "gun_id": "tacz:hk_mp5a5",
+  "fire_mode": "AUTO",
+  "blueprint": {
+    "display_name": "item.tacz.gun_blueprint.mp5",
+    "ingredients": [
+      "minecraft:paper",
+      "minecraft:paper",
+      "create:brass_sheet",
+      "minecraft:amethyst_shard"
+    ],
+    "name_en": "MP5 Platform Assembly Blueprint",
+    "name_zh": "MP5 平台装配模板"
+  },
+  "parts": [
+    {
+      "structural": "receiver",
+      "kind": "receiver",
+      "name_en": "MP5 Receiver",
+      "name_zh": "MP5 机匣"
+    },
+    {
+      "structural": "bolt",
+      "kind": "bolt",
+      "name_en": "MP5 Bolt Group",
+      "name_zh": "MP5 枪机组"
+    },
+    {
+      "structural": "barrel",
+      "kind": "barrel",
+      "name_en": "MP5 Barrel",
+      "name_zh": "MP5 枪管"
+    },
+    {
+      "structural": "trigger",
+      "kind": "trigger",
+      "name_en": "MP5 Fire-Control Group",
+      "name_zh": "MP5 击发组"
+    },
+    {
+      "structural": "recoil",
+      "kind": "recoil",
+      "name_en": "MP5 Recoil Assembly",
+      "name_zh": "MP5 复进组件"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    },
+    {
+      "item": "create:brass_sheet",
+      "count": 1
+    }
+  ],
+  "incomplete": {
+    "name_en": "Incomplete MP5 Assembly",
+    "name_zh": "未完成的 MP5 总成"
+  }
+}

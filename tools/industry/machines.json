@@ -1,0 +1,14 @@
+{
+  "machines": [
+    {
+      "id": "cartridge_assembly_machine",
+      "palette": {
+        "base": "#38454e",
+        "shadow": "#1a2228",
+        "brass": "#c78731",
+        "slot": "#202a30",
+        "indicator": "#df9a32"
+      }
+    }
+  ]
+}

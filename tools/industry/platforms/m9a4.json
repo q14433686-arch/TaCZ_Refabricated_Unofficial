@@ -1,0 +1,63 @@
+{
+  "slug": "m9a4",
+  "platform": "m9",
+  "gun_id": "tacz:m9a4",
+  "fire_mode": "SEMI",
+  "blueprint": {
+    "display_name": "item.tacz.gun_blueprint.m9",
+    "ingredients": [
+      "minecraft:paper",
+      "minecraft:paper",
+      "create:brass_sheet",
+      "minecraft:iron_nugget"
+    ],
+    "name_en": "M9A4 Platform Assembly Blueprint",
+    "name_zh": "M9A4 平台装配模板"
+  },
+  "parts": [
+    {
+      "structural": "receiver",
+      "kind": "frame",
+      "name_en": "M9A4 Frame",
+      "name_zh": "M9A4 枪身"
+    },
+    {
+      "structural": "bolt",
+      "kind": "slide",
+      "name_en": "M9A4 Slide",
+      "name_zh": "M9A4 套筒"
+    },
+    {
+      "structural": "barrel",
+      "kind": "barrel",
+      "name_en": "M9A4 9 mm Barrel",
+      "name_zh": "M9A4 9 mm 枪管"
+    },
+    {
+      "structural": "trigger",
+      "kind": "trigger",
+      "name_en": "M9A4 Fire-Control Group",
+      "name_zh": "M9A4 击发组"
+    },
+    {
+      "structural": "recoil",
+      "kind": "recoil",
+      "name_en": "M9A4 Recoil Assembly",
+      "name_zh": "M9A4 复进簧组件"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    },
+    {
+      "item": "create:brass_sheet",
+      "count": 1
+    }
+  ],
+  "incomplete": {
+    "name_en": "Incomplete M9A4 Assembly",
+    "name_zh": "未完成的 M9A4 总成"
+  }
+}

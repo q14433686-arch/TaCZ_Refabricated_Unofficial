@@ -1,0 +1,59 @@
+{
+  "slug": "m1911",
+  "platform": "m1911",
+  "gun_id": "tacz:m1911",
+  "fire_mode": "SEMI",
+  "blueprint": {
+    "display_name": "item.tacz.gun_blueprint.m1911",
+    "ingredients": [
+      "minecraft:paper",
+      "minecraft:paper",
+      "create:brass_sheet",
+      "minecraft:gold_nugget"
+    ],
+    "name_en": "M1911 Platform Assembly Blueprint",
+    "name_zh": "M1911 平台装配模板"
+  },
+  "parts": [
+    {
+      "structural": "receiver",
+      "kind": "frame",
+      "name_en": "M1911 Frame",
+      "name_zh": "M1911 枪身"
+    },
+    {
+      "structural": "bolt",
+      "kind": "slide",
+      "name_en": "M1911 Slide",
+      "name_zh": "M1911 套筒"
+    },
+    {
+      "structural": "barrel",
+      "kind": "barrel",
+      "name_en": "M1911 .45 Barrel",
+      "name_zh": "M1911 .45 枪管"
+    },
+    {
+      "structural": "trigger",
+      "kind": "trigger",
+      "name_en": "M1911 Fire-Control Group",
+      "name_zh": "M1911 击发组"
+    },
+    {
+      "structural": "recoil",
+      "kind": "recoil",
+      "name_en": "M1911 Recoil Assembly",
+      "name_zh": "M1911 复进簧组件"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ],
+  "incomplete": {
+    "name_en": "Incomplete M1911 Assembly",
+    "name_zh": "未完成的 M1911 总成"
+  }
+}

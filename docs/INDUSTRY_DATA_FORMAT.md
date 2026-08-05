@@ -4,6 +4,8 @@
 
 所有 JSON 都可由内容包在自己的命名空间下提供；默认枪包不需要被修改。
 
+内置平台的重复资源由作者工具生成，源定义、命令和碰撞验证规则见 [`INDUSTRY_GENERATION.md`](INDUSTRY_GENERATION.md)。第三方内容包仍可直接提供普通 JSON，不需要运行生成器。
+
 ---
 
 ## 1. Create Fly 工艺与 REI
