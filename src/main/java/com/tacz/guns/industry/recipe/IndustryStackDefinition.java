@@ -59,8 +59,8 @@ public final class IndustryStackDefinition {
         if (tag) {
             return ItemStack.EMPTY;
         }
-        Item item = BuiltInRegistries.ITEM.get(itemId);
-        if (item == Items.AIR) {
+        Item item = BuiltInRegistries.ITEM.getValue(itemId);
+        if (item == null || item == Items.AIR) {
             return ItemStack.EMPTY;
         }
 

@@ -40,8 +40,8 @@ public enum IndustryProcessMachine {
     }
 
     public ItemStack workstationStack() {
-        Item item = BuiltInRegistries.ITEM.get(workstationId);
-        if (item == Items.AIR) {
+        Item item = BuiltInRegistries.ITEM.getValue(workstationId);
+        if (item == null || item == Items.AIR) {
             item = fallbackIcon;
         }
         return new ItemStack(item);
