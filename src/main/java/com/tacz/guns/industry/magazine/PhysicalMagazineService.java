@@ -2,9 +2,11 @@ package com.tacz.guns.industry.magazine;
 
 import cn.sh1rocu.tacz.util.itemhandler.ItemHandlerHelper;
 import com.tacz.guns.api.entity.IGunOperator;
+import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.nbt.GunItemDataAccessor;
 import com.tacz.guns.config.sync.SyncConfig;
+import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.industry.IndustryProfileManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
@@ -132,7 +134,7 @@ public final class PhysicalMagazineService {
             // reload scripts have an explicit physical-magazine implementation.
             return false;
         }
-        if (!shouldConsumeMagazine(player)) {
+        if (!shouldConsumeMagazine(player) || isInfiniteReload(gun)) {
             return true;
         }
         MagazineSelection selection = findBestMagazine(player, gun);
@@ -141,20 +143,95 @@ public final class PhysicalMagazineService {
     }
 
     /**
-     * Perform the feed-stage transaction of a reload animation.
-     *
-     * <p>Extraction happens before the old magazine is returned, so a full
-     * inventory can never overwrite a candidate.  Returning the old magazine
-     * uses {@link ItemHandlerHelper#giveItemToPlayer}; if no slot is free the
-     * exact stack is dropped at the player rather than silently deleted.</p>
-     *
-     * @param tactical true when the old chamber state is retained
-     * @param consumeMagazine true for survival / configurations that consume
-     *                        reload resources; false creates a creative full mag
+     * Reserve a concrete magazine at reload start.  No inventory mutation
+     * happens yet; the actual extraction is delayed to the animation feed
+     * transition in {@link #onReloadStateTransition}.
      */
-    public static boolean finishReload(LivingEntity shooter, ItemStack gun, boolean tactical, boolean consumeMagazine) {
+    @Nullable
+    public static PhysicalMagazineReloadPlan beginReload(ShooterDataHolder data, LivingEntity shooter,
+                                                          ItemStack gun, boolean tactical) {
         if (!usesPhysicalMagazine(gun) || !(shooter instanceof Player player)
                 || !(gun.getItem() instanceof IGun iGun)) {
+            return null;
+        }
+        GunFeedDefinition definition = getDefinition(gun);
+        if (definition == null) {
+            return null;
+        }
+
+        boolean consumeMagazine = shouldConsumeMagazine(player) && !isInfiniteReload(gun);
+        if (!consumeMagazine) {
+            PhysicalMagazineReloadPlan plan = new PhysicalMagazineReloadPlan(
+                    iGun.getGunId(gun), tactical, false, -1, ItemStack.EMPTY
+            );
+            data.physicalMagazineReload = plan;
+            return plan;
+        }
+
+        MagazineSelection selection = findBestMagazine(player, gun);
+        if (selection == null || !(selection.preview().getItem() instanceof IMagazine magazine)
+                || magazine.getAmmoCount(selection.preview()) <= getEffectiveAmmoCount(gun)) {
+            return null;
+        }
+
+        PhysicalMagazineReloadPlan plan = new PhysicalMagazineReloadPlan(
+                iGun.getGunId(gun), tactical, true, selection.slot(), selection.preview()
+        );
+        data.physicalMagazineReload = plan;
+        return plan;
+    }
+
+    /**
+     * True while the old TACZ reload state machine is only being used for
+     * timing/animation and all ammunition mutations must be suppressed.
+     */
+    public static boolean isReloadManaged(ShooterDataHolder data, ItemStack gun) {
+        PhysicalMagazineReloadPlan plan = data.physicalMagazineReload;
+        return plan != null
+                && gun.getItem() instanceof IGun iGun
+                && plan.getGunId().equals(iGun.getGunId(gun));
+    }
+
+    /** Clear a stale plan when a reload cannot start or its gun changes. */
+    public static void clearReloadPlan(ShooterDataHolder data) {
+        data.physicalMagazineReload = null;
+    }
+
+    /**
+     * Central physical-magazine hook for the legacy/scripted reload state
+     * machine.  Both default Java reloads and xmag_reload_logic scripts expose
+     * the same FEEDING -> FINISHING transition, so this is the only point that
+     * performs the physical swap.
+     */
+    public static void onReloadStateTransition(ShooterDataHolder data, LivingEntity shooter, ItemStack gun,
+                                               ReloadState.StateType previous, ReloadState.StateType next) {
+        PhysicalMagazineReloadPlan plan = data.physicalMagazineReload;
+        if (plan == null) {
+            return;
+        }
+        if (!isReloadManaged(data, gun)) {
+            clearReloadPlan(data);
+            return;
+        }
+
+        boolean enteringFinishing = !previous.isReloadFinishing() && next.isReloadFinishing();
+        if (!plan.isFeedHandled() && enteringFinishing) {
+            plan.markFeedHandled();
+            finishReservedReload(shooter, gun, plan);
+        }
+
+        if (!next.isReloading()) {
+            clearReloadPlan(data);
+        }
+    }
+
+    /**
+     * Perform a single reserved feed-stage transaction.  It never scans loose
+     * ammunition and never falls back to the legacy integer mechanism.
+     */
+    private static boolean finishReservedReload(LivingEntity shooter, ItemStack gun,
+                                                PhysicalMagazineReloadPlan plan) {
+        if (!(shooter instanceof Player player) || !(gun.getItem() instanceof IGun iGun)) {
             return false;
         }
         GunFeedDefinition definition = getDefinition(gun);
@@ -163,16 +240,12 @@ public final class PhysicalMagazineService {
         }
 
         ItemStack incoming;
-        if (!consumeMagazine) {
+        if (!plan.consumesMagazine()) {
             // Creative/non-consuming reloads get a full, valid magazine without
             // cloning an arbitrary player-owned ItemStack.
             incoming = createMagazine(definition, definition.getMagazineCapacity());
         } else {
-            MagazineSelection selection = findBestMagazine(player, gun);
-            if (selection == null) {
-                return false;
-            }
-            incoming = extractSelectedMagazine(player, selection, definition);
+            incoming = extractReservedMagazine(player, plan, definition);
             if (incoming.isEmpty()) {
                 return false;
             }
@@ -185,11 +258,11 @@ public final class PhysicalMagazineService {
         // In creative mode the old stack is intentionally not copied back into
         // inventory; creative players can create a new magazine at will and the
         // rule avoids a reload-key duplication path.
-        if (consumeMagazine && !outgoing.isEmpty()) {
+        if (plan.consumesMagazine() && !outgoing.isEmpty()) {
             ItemHandlerHelper.giveItemToPlayer(player, outgoing);
         }
 
-        if (!tactical) {
+        if (!plan.isTactical()) {
             chamberRoundAfterEmptyReload(gun);
         }
         player.inventoryMenu.broadcastFullState();
@@ -258,6 +331,15 @@ public final class PhysicalMagazineService {
         return IGunOperator.fromLivingEntity(player).needCheckAmmo();
     }
 
+    private static boolean isInfiniteReload(ItemStack gun) {
+        if (!(gun.getItem() instanceof IGun iGun)) {
+            return false;
+        }
+        return com.tacz.guns.api.TimelessAPI.getCommonGunIndex(iGun.getGunId(gun))
+                .map(index -> index.getGunData().getReloadData().isInfinite())
+                .orElse(false);
+    }
+
     @Nullable
     private static MagazineSelection findBestMagazine(Player player, ItemStack gun) {
         GunFeedDefinition definition = getDefinition(gun);
@@ -297,17 +379,25 @@ public final class PhysicalMagazineService {
         return best;
     }
 
-    private static ItemStack extractSelectedMagazine(Player player, MagazineSelection selection,
-                                                      GunFeedDefinition definition) {
+    private static ItemStack extractReservedMagazine(Player player, PhysicalMagazineReloadPlan plan,
+                                                     GunFeedDefinition definition) {
+        if (plan.getSourceSlot() < 0) {
+            return ItemStack.EMPTY;
+        }
         var inventory = player.getInventory();
         // The slot was selected from getNonEquipmentItems(), which is the same
         // index space used by Inventory#getItem/removeItem in 26.2.
-        ItemStack extracted = inventory.removeItem(selection.slot(), 1);
-        inventory.setChanged();
+        ItemStack current = inventory.getItem(plan.getSourceSlot());
+        ItemStack expected = plan.getExpectedMagazine();
+        if (!ItemStack.isSameItemSameComponents(current, expected) || !isCompatible(definition, current)) {
+            // The player moved/replaced the reserved stack during the animation.
+            // Fail closed: do not pick another magazine and never reload from
+            // loose rounds as a fallback.
+            return ItemStack.EMPTY;
+        }
 
-        // Revalidate after extraction. This is normally redundant on the
-        // server thread, but prevents item loss if another inventory operation
-        // altered the slot between selection and the feed animation boundary.
+        ItemStack extracted = inventory.removeItem(plan.getSourceSlot(), 1);
+        inventory.setChanged();
         if (isCompatible(definition, extracted)) {
             return extracted;
         }

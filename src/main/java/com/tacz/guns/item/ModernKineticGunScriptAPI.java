@@ -18,6 +18,7 @@ import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.config.common.AmmoConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunFire;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -536,12 +537,28 @@ public class ModernKineticGunScriptAPI {
     }
 
     /**
+     * True while a server-side physical magazine plan owns reload mutations.
+     * Lua reload scripts may still calculate timing/state normally, but their
+     * old loose-ammo calls become harmless no-ops until the central feed hook
+     * swaps the reserved ItemStack.
+     */
+    public boolean isPhysicalMagazineReloadManaged() {
+        return dataHolder != null && itemStack != null
+                && PhysicalMagazineService.isReloadManaged(dataHolder, itemStack);
+    }
+
+    /**
      * 尽可能多地从玩家身上 (或者虚拟备弹) 消耗掉弹药，返回消耗的数量
      *
      * @param neededAmount 需要的弹药数量
-     * @return 实际消耗的弹药数量
+     * @return 实际消耗的数量
      */
     public int consumeAmmoFromPlayer(int neededAmount) {
+        if (isPhysicalMagazineReloadManaged()) {
+            // xmag_reload_logic and bespoke Lua scripts call this at their feed
+            // point. The central physical plan owns that transaction instead.
+            return 0;
+        }
         // 如果处于背包直读并且创造模式不消耗的情况
         if (useInventoryAmmo() && !isReloadingNeedConsumeAmmo()) {
             return neededAmount;
@@ -562,6 +579,11 @@ public class ModernKineticGunScriptAPI {
      * @return 玩家身上（或者虚拟备弹）是否有弹药可以消耗
      */
     public boolean hasAmmoToConsume() {
+        if (isPhysicalMagazineReloadManaged()) {
+            // A matching magazine was reserved at reload start; loose rounds
+            // must not terminate a physical reload loop.
+            return true;
+        }
         if (!isReloadingNeedConsumeAmmo()) {
             return true;
         }
@@ -590,6 +612,11 @@ public class ModernKineticGunScriptAPI {
      * @return 多余的子弹
      */
     public int putAmmoInMagazine(int amount) {
+        if (isPhysicalMagazineReloadManaged()) {
+            // Report no overflow so legacy Lua scripts continue their timing
+            // path, while central reload code performs the actual swap.
+            return 0;
+        }
         if (amount < 0) {
             return 0;
         }
@@ -612,6 +639,11 @@ public class ModernKineticGunScriptAPI {
      * @return 成功移除的数量
      */
     public int removeAmmoFromMagazine(int amount) {
+        if (isPhysicalMagazineReloadManaged()) {
+            // Do not let a Lua script create a free chambered round before the
+            // physical magazine has been installed at the central feed point.
+            return 0;
+        }
         if (amount < 0) {
             return 0;
         }
@@ -648,6 +680,11 @@ public class ModernKineticGunScriptAPI {
      * 设置枪膛内是否有子弹
      */
     public void setAmmoInBarrel(boolean ammoInBarrel) {
+        if (isPhysicalMagazineReloadManaged()) {
+            // Central feed handling transfers exactly one round only for a
+            // non-tactical closed/manual reload.
+            return;
+        }
         abstractGunItem.setBulletInBarrel(itemStack, ammoInBarrel);
     }
 

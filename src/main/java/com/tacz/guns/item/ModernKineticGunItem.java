@@ -15,7 +15,6 @@ import com.tacz.guns.command.sub.DebugCommand;
 import com.tacz.guns.debug.GunMeleeDebug;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
-import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.pojo.data.attachment.EffectData;
 import com.tacz.guns.resource.pojo.data.attachment.MeleeData;
@@ -412,24 +411,15 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
     }
 
     private void defaultReloadFinishing(ModernKineticGunScriptAPI api, boolean isTactical) {
-        GunData data = api.getGunIndex().getGunData();
-        boolean infinite = data.getReloadData().isInfinite();
-
-        // A physical detachable magazine is swapped exactly at the existing
-        // feed -> finishing animation boundary.  The service also preserves the
-        // old magazine (or drops it when inventory is full) and handles the
-        // closed-bolt/manual-action chamber transfer for an empty reload.
-        if (data.getReloadData().getType() == FeedType.MAGAZINE
-                && PhysicalMagazineService.usesPhysicalMagazine(api.getItemStack())
-                && api.getShooter() instanceof Player) {
-            // Do not fall back to consuming loose rounds if the selected
-            // physical magazine vanished during the animation. A failed swap
-            // is preferable to silently bypassing the magazine economy.
-            PhysicalMagazineService.finishReload(api.getShooter(), api.getItemStack(), isTactical,
-                    api.isReloadingNeedConsumeAmmo() && !infinite);
+        // The entity-level physical reload plan owns all mutations. Default
+        // Java reloads and Lua xmag reloads now share the same central feed
+        // transition, so no loose ammunition may be consumed here.
+        if (api.isPhysicalMagazineReloadManaged()) {
             return;
         }
 
+        GunData data = api.getGunIndex().getGunData();
+        boolean infinite = data.getReloadData().isInfinite();
         int needAmmoCount = api.getNeededAmmoAmount();
         boolean needConsumeAmmo = api.isReloadingNeedConsumeAmmo();
         needConsumeAmmo = needConsumeAmmo && !infinite;

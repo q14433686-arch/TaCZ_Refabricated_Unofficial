@@ -66,20 +66,37 @@ public class LivingEntityReload {
                 PhysicalMagazineService.ejectMagazine(shooter, currentGunItem);
                 return;
             }
-            // 检查弹药
-            if (IGunOperator.fromLivingEntity(shooter).needCheckAmmo() && !gunItem.canReload(shooter, currentGunItem)) {
+            boolean physicalReload = shooter instanceof Player
+                    && PhysicalMagazineService.usesPhysicalMagazine(currentGunItem);
+
+            // Physical guns reserve an actual magazine here and never ask the
+            // legacy loose-ammo path whether they can reload.  This is the
+            // ownership boundary: after it, the old gun/script state machine
+            // supplies animation timing only.
+            if (!physicalReload
+                    && IGunOperator.fromLivingEntity(shooter).needCheckAmmo()
+                    && !gunItem.canReload(shooter, currentGunItem)) {
                 return;
             }
+
             // 触发装弹事件
             GunReloadEvent gunReloadEvent = new GunReloadEvent(shooter, currentGunItem, LogicalSide.SERVER);
             GunReloadEvent.CALLBACK.invoker().post(gunReloadEvent);
             if (gunReloadEvent.isCanceled()) {
                 return;
             }
-            NetworkHandler.sendToTrackingEntity(new ServerMessageGunReload(shooter.getId(), currentGunItem), shooter);
+
             Bolt boltType = gunIndex.getGunData().getBolt();
-            int ammoCount = gunItem.getCurrentAmmoCount(currentGunItem) + (gunItem.hasBulletInBarrel(currentGunItem) && boltType != Bolt.OPEN_BOLT ? 1 : 0);
-            if (ammoCount <= 0) {
+            int ammoCount = gunItem.getCurrentAmmoCount(currentGunItem)
+                    + (gunItem.hasBulletInBarrel(currentGunItem) && boltType != Bolt.OPEN_BOLT ? 1 : 0);
+            boolean tactical = ammoCount > 0;
+            if (physicalReload
+                    && PhysicalMagazineService.beginReload(data, shooter, currentGunItem, tactical) == null) {
+                return;
+            }
+
+            NetworkHandler.sendToTrackingEntity(new ServerMessageGunReload(shooter.getId(), currentGunItem), shooter);
+            if (!tactical) {
                 // 初始化空仓换弹的 tick 的状态
                 data.reloadStateType = ReloadState.StateType.EMPTY_RELOAD_FEEDING;
             } else {
@@ -91,6 +108,7 @@ public class LivingEntityReload {
             if (!gunItem.startReload(data, currentGunItem, shooter)) {
                 data.reloadStateType = ReloadState.StateType.NOT_RELOADING;
                 data.reloadTimestamp = -1;
+                PhysicalMagazineService.clearReloadPlan(data);
             }
         });
     }
@@ -114,19 +132,34 @@ public class LivingEntityReload {
         ReloadState result = new ReloadState();
         // 如果没有在换弹，直接返回
         if (data.reloadTimestamp == -1) {
+            PhysicalMagazineService.clearReloadPlan(data);
             return result;
         }
-        // 调用枪械逻辑
+
+        ReloadState.StateType previousState = data.reloadStateType;
+        ItemStack currentGunItem = ItemStack.EMPTY;
+        // 调用枪械逻辑。它仍然负责动画时间点和 Lua 状态机，但物理
+        // 弹匣的库存/子弹变更统一在下面的 transition hook 完成。
         if (data.currentGunItem != null) {
-            ItemStack currentGunItem = data.currentGunItem.get();
-            if (currentGunItem != null && currentGunItem.getItem() instanceof AbstractGunItem abstractGunItem) {
+            currentGunItem = data.currentGunItem.get();
+            if (!currentGunItem.isEmpty() && currentGunItem.getItem() instanceof AbstractGunItem abstractGunItem) {
                 result = abstractGunItem.tickReload(data, currentGunItem, shooter);
             }
         }
+
+        if (!currentGunItem.isEmpty()) {
+            PhysicalMagazineService.onReloadStateTransition(
+                    data, shooter, currentGunItem, previousState, result.getStateType()
+            );
+        } else {
+            PhysicalMagazineService.clearReloadPlan(data);
+        }
+
         // 将 tick 的结果保存到 data holder
         data.reloadStateType = result.getStateType();
         if (!result.getStateType().isReloading()) {
             data.reloadTimestamp = -1;
+            PhysicalMagazineService.clearReloadPlan(data);
         }
         return result;
     }

@@ -43,7 +43,8 @@ PhysicalMagazines = true
    - 动画的 feed 结束点才完成物品交换；
    - 闭膛/栓动枪会从新弹匣转移一发到枪膛；
    - HUD 的数字等于“弹匣余量 + 枪膛一发”；
-   - 子弹射击时实际减少的是 `InstalledMagazine` 中的 `MagazineAmmoCount`。
+   - 子弹射击时实际减少的是 `InstalledMagazine` 中的 `MagazineAmmoCount`；
+   - 即使枪使用 `xmag_reload_logic` 等 Lua 换弹脚本，脚本也只能提供时间点，不能再调用旧的散装子弹消耗路径。
 
 ## 3. 战术换弹、回收与退匣
 

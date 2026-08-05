@@ -3,6 +3,7 @@ package com.tacz.guns.event;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.config.common.GunConfig;
 import com.tacz.guns.item.ModernKineticGunScriptAPI;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.resource.pojo.data.gun.FeedType;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -13,6 +14,12 @@ public class PlayerRespawnEvent {
 
         newPlayer.getInventory().getNonEquipmentItems().forEach(itemStack -> {
             if (!(itemStack.getItem() instanceof IGun)) return;
+
+            // AutoReloadWhenRespawn predates physical magazines and refills a
+            // gun by consuming loose rounds. Never let that administrative
+            // convenience bypass the detachable-magazine economy; a later
+            // phase may choose a loaded magazine explicitly instead.
+            if (PhysicalMagazineService.usesPhysicalMagazine(itemStack)) return;
 
             var api = new ModernKineticGunScriptAPI();
             api.setItemStack(itemStack);

@@ -1,6 +1,7 @@
 package com.tacz.guns.entity.shooter;
 
 import com.tacz.guns.api.entity.ReloadState;
+import com.tacz.guns.industry.magazine.PhysicalMagazineReloadPlan;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
 import net.minecraft.world.item.ItemStack;
 import org.luaj.vm2.LuaValue;
@@ -67,6 +68,12 @@ public class ShooterDataHolder {
     @Nonnull
     public ReloadState.StateType reloadStateType = ReloadState.StateType.NOT_RELOADING;
     /**
+     * Server-only reservation for a detachable physical-magazine reload. It is
+     * intentionally not synced: only the resulting ItemStack swap is networked.
+     */
+    @Nullable
+    public PhysicalMagazineReloadPlan physicalMagazineReload = null;
+    /**
      * 当前操作的枪械物品的 Supplier。在切枪时 (draw 方法) 更新。
      */
     @Nullable
@@ -116,6 +123,7 @@ public class ShooterDataHolder {
         aimingProgress = 0;
         reloadTimestamp = -1;
         reloadStateType = ReloadState.StateType.NOT_RELOADING;
+        physicalMagazineReload = null;
         sprintTimestamp = -1;
         sprintTimeS = 0;
         boltTimestamp = -1;

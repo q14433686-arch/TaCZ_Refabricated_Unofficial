@@ -186,6 +186,14 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
         if (useInventoryAmmo(gunItem)) {
             return;
         }
+        // Physical reloads never unpack an inserted magazine into loose rounds
+        // merely because the player changes an attachment. Eject the complete
+        // ItemStack instead; its remaining rounds, family and capacity stay
+        // intact and the chambered round remains untouched as before.
+        if (PhysicalMagazineService.usesPhysicalMagazine(gunItem)) {
+            PhysicalMagazineService.ejectMagazine(player, gunItem);
+            return;
+        }
         // 操作对象已从 Player 改为 LivingEntity，以支持非玩家实体
         // 此外，现在也处理枪膛内的子弹
         int ammoCount = getCurrentAmmoCount(gunItem);
