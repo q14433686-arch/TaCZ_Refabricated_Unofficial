@@ -1,6 +1,6 @@
 # Industry content generator
 
-The platform manifests in `tools/industry/platforms/` are the source of truth for the repeated Create industrial resources.
+The explicit platform manifests in `tools/industry/platforms/` are the source of truth for curated platform resources. The remaining bundled default-gun recipes are discovered through `tools/industry/default_gun_policy.json`, so all default guns receive generated high-fidelity platform resources without one manifest per gun.
 
 ```bash
 # Rewrite managed recipes, assembly declarations, language keys, and machine texture/model assets

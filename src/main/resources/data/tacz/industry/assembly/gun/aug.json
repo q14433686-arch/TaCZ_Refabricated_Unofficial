@@ -1,0 +1,37 @@
+{
+  "platform": "default_aug",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_aug",
+  "terminal_process": "tacz:create/industry/assemble_aug",
+  "components": [
+    {
+      "kind": "receiver",
+      "display_name": "item.tacz.gun_component.default_aug_receiver"
+    },
+    {
+      "kind": "bolt",
+      "display_name": "item.tacz.gun_component.default_aug_bolt"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_aug_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_aug_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_aug_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:oak_planks",
+      "count": 4
+    },
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ]
+}

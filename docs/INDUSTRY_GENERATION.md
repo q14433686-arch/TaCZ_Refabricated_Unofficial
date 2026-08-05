@@ -31,11 +31,13 @@ py tools\generate_industry_content.py --check
 
 ## 平台源定义
 
-每个平台一份文件：
+已校准平台每个平台一份文件：
 
 ```text
 tools/industry/platforms/<gun recipe slug>.json
 ```
+
+默认枪包中未显式列出的枪会由 `tools/industry/default_gun_policy.json` 在生成时自动发现：读取其原始枪配方、枪索引和首个射击模式，分配唯一蓝图种子与独立 NBT 平台。这样默认枪包全部 53 把枪都获得高保真组件、模具和总装资源，而不是退回到运行时通用门槛。
 
 一个源定义描述：
 

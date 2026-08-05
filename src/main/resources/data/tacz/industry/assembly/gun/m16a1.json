@@ -1,0 +1,37 @@
+{
+  "platform": "default_m16a1",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_m16a1",
+  "terminal_process": "tacz:create/industry/assemble_m16a1",
+  "components": [
+    {
+      "kind": "receiver",
+      "display_name": "item.tacz.gun_component.default_m16a1_receiver"
+    },
+    {
+      "kind": "bolt",
+      "display_name": "item.tacz.gun_component.default_m16a1_bolt"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_m16a1_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_m16a1_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_m16a1_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:oak_planks",
+      "count": 4
+    },
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ]
+}

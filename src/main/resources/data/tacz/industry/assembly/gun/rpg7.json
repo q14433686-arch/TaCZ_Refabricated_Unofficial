@@ -1,0 +1,37 @@
+{
+  "platform": "default_rpg7",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_rpg7",
+  "terminal_process": "tacz:create/industry/assemble_rpg7",
+  "components": [
+    {
+      "kind": "receiver",
+      "display_name": "item.tacz.gun_component.default_rpg7_receiver"
+    },
+    {
+      "kind": "bolt",
+      "display_name": "item.tacz.gun_component.default_rpg7_bolt"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_rpg7_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_rpg7_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_rpg7_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:oak_planks",
+      "count": 2
+    },
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ]
+}

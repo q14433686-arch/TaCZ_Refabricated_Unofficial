@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import struct
 import sys
 import zlib
@@ -20,6 +21,7 @@ REPO = Path(__file__).resolve().parents[1]
 RESOURCE_ROOT = REPO / "src/main/resources"
 PLATFORM_ROOT = REPO / "tools/industry/platforms"
 CARTRIDGE_MANIFEST = REPO / "tools/industry/cartridges.json"
+DEFAULT_GUN_POLICY = REPO / "tools/industry/default_gun_policy.json"
 MACHINE_MANIFEST = REPO / "tools/industry/machines.json"
 
 CREATE_CONDITIONS = [{"condition": "fabric:all_mods_loaded", "values": ["create"]}]
@@ -33,6 +35,43 @@ def read_json(path: Path) -> Any:
 def write_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def read_json5(path: Path) -> Any:
+    """Small JSON5 reader for the bundled gun-pack data files (comments/trailing commas only)."""
+    text = path.read_text(encoding="utf-8")
+    out: list[str] = []
+    i = 0
+    in_string = False
+    escaped = False
+    while i < len(text):
+        char = text[i]
+        next_char = text[i + 1] if i + 1 < len(text) else ""
+        if in_string:
+            out.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            i += 1
+            continue
+        if char == '"':
+            in_string = True
+            out.append(char)
+            i += 1
+        elif char == "/" and next_char == "/":
+            i = text.find("\n", i)
+            if i < 0:
+                break
+        elif char == "/" and next_char == "*":
+            end = text.find("*/", i + 2)
+            i = len(text) if end < 0 else end + 2
+        else:
+            out.append(char)
+            i += 1
+    return json.loads(re.sub(r",\s*([}\]])", r"\1", "".join(out)))
 
 
 def partial(item: str, nbt: dict[str, Any]) -> dict[str, Any]:
@@ -126,6 +165,90 @@ def load_platforms() -> list[dict[str, Any]]:
         platforms.append(data)
     if not platforms:
         raise ValueError("No platform manifests found")
+    return platforms
+
+
+def humanize_slug(slug: str) -> str:
+    return slug.replace("_", " ").upper()
+
+
+def first_fire_mode(data_path: Path) -> str:
+    if not data_path.exists():
+        return "SEMI"
+    try:
+        data = read_json5(data_path)
+        modes = data.get("fire_mode", []) if isinstance(data, dict) else []
+        if isinstance(modes, list) and modes and isinstance(modes[0], str):
+            mode = modes[0].upper()
+            return mode if mode in {"AUTO", "SEMI", "BURST"} else "SEMI"
+    except (OSError, ValueError, json.JSONDecodeError):
+        pass
+    return "SEMI"
+
+
+def discover_default_platforms(explicit_slugs: set[str]) -> list[dict[str, Any]]:
+    """Create high-fidelity generic platforms for every remaining bundled gun.
+
+    This reads the bundled default gun-pack at authoring time only. Players get
+    the committed ordinary generated recipes and never run this script.
+    """
+    policy = read_json(DEFAULT_GUN_POLICY)
+    recipe_root = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/gun"
+    index_root = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/index/guns"
+    data_root = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/data/guns"
+    base_ingredients = policy["base_blueprint_ingredients"]
+    reserved = set(policy["reserved_blueprint_seeds"])
+    seeds = [seed for seed in policy["blueprint_seed_items"] if seed not in reserved]
+    missing: list[tuple[str, dict[str, Any], dict[str, Any]]] = []
+    for recipe_path in sorted(recipe_root.glob("*.json")):
+        slug = recipe_path.stem
+        if slug in explicit_slugs:
+            continue
+        recipe = read_json(recipe_path)
+        result = recipe.get("result", {})
+        if not isinstance(result, dict) or result.get("type") != "gun" or not isinstance(result.get("id"), str):
+            continue
+        index_path = index_root / f"{slug}.json"
+        index = read_json5(index_path) if index_path.exists() else {}
+        missing.append((slug, recipe, index if isinstance(index, dict) else {}))
+    if len(missing) > len(seeds):
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: not enough unique blueprint seed items")
+
+    platforms: list[dict[str, Any]] = []
+    for (slug, recipe, index), seed in zip(missing, seeds):
+        gun_type = index.get("type") if isinstance(index.get("type"), str) else "default"
+        data_id = index.get("data") if isinstance(index.get("data"), str) else f"tacz:{slug}_data"
+        data_path = data_root / f"{data_id.split(':', 1)[-1]}.json"
+        display = humanize_slug(slug)
+        handgun = gun_type == "pistol"
+        parts = [
+            {"structural": "receiver", "kind": "frame" if handgun else "receiver",
+             "name_en": f"{display} {'Frame' if handgun else 'Receiver'}",
+             "name_zh": f"{display} {'枪身' if handgun else '机匣'}"},
+            {"structural": "bolt", "kind": "slide" if handgun else "bolt",
+             "name_en": f"{display} {'Slide' if handgun else 'Bolt Group'}",
+             "name_zh": f"{display} {'套筒' if handgun else '枪机组'}"},
+            {"structural": "barrel", "kind": "barrel", "name_en": f"{display} Barrel", "name_zh": f"{display} 枪管"},
+            {"structural": "trigger", "kind": "trigger", "name_en": f"{display} Fire-Control Group", "name_zh": f"{display} 击发组"},
+            {"structural": "recoil", "kind": "recoil", "name_en": f"{display} Recoil Assembly", "name_zh": f"{display} 复进组件"},
+        ]
+        materials = policy["materials_by_gun_type"].get(gun_type, policy["materials_by_gun_type"]["default"])
+        platform = f"default_{slug}"
+        platforms.append({
+            "slug": slug,
+            "platform": platform,
+            "gun_id": result["id"],
+            "fire_mode": first_fire_mode(data_path),
+            "blueprint": {
+                "display_name": f"item.tacz.gun_blueprint.{platform}",
+                "ingredients": [*base_ingredients, seed],
+                "name_en": f"{display} Industrial Blueprint",
+                "name_zh": f"{display} 工业装配模板",
+            },
+            "parts": parts,
+            "materials": materials,
+            "incomplete": {"name_en": f"Incomplete {display} Assembly", "name_zh": f"未完成的 {display} 总成"},
+        })
     return platforms
 
 
@@ -493,7 +616,15 @@ def update_language(path: Path, entries: dict[str, str], write: bool) -> list[st
 
 
 def run(write: bool) -> int:
-    platforms = load_platforms()
+    explicit_platforms = load_platforms()
+    auto_platforms = discover_default_platforms({platform["slug"] for platform in explicit_platforms})
+    platforms = [*explicit_platforms, *auto_platforms]
+    signatures = {canonical(sorted(platform["blueprint"]["ingredients"])) for platform in explicit_platforms}
+    for platform in auto_platforms:
+        signature = canonical(sorted(platform["blueprint"]["ingredients"]))
+        if signature in signatures:
+            raise ValueError(f"{DEFAULT_GUN_POLICY}: auto blueprint signature collision for {platform['slug']}")
+        signatures.add(signature)
     cartridges = load_cartridges()
     expected: dict[Path, Any] = {}
     english: dict[str, str] = {}

@@ -1,0 +1,48 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "machining",
+      "IndustryPartKind": "die_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.trigger",
+      "DieTargetKind": "trigger"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_m16a1",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m16a1"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_m16a1",
+          "IndustryPartKind": "component_die",
+          "IndustryDisplayName": "item.tacz.press_die.component_default_m16a1_trigger",
+          "DieTargetKind": "trigger"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

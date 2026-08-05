@@ -1,0 +1,152 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_b93r",
+      "IndustryPartKind": "frame",
+      "IndustryDisplayName": "item.tacz.gun_component.default_b93r_frame"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_b93r",
+        "IndustryPartKind": "incomplete_b93r",
+        "IndustryDisplayName": "item.tacz.gun_component.incomplete_b93r"
+      }
+    }
+  },
+  "result": {
+    "id": "tacz:modern_kinetic_gun",
+    "components": {
+      "minecraft:custom_data": {
+        "GunId": "tacz:vector45",
+        "GunFireMode": "BURST",
+        "GunCurrentAmmoCount": 0,
+        "HasBulletInBarrel": false
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_blueprint"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_b93r",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_blueprint.default_b93r"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_b93r",
+          "IndustryPartKind": "slide",
+          "IndustryDisplayName": "item.tacz.gun_component.default_b93r_slide"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_b93r",
+          "IndustryPartKind": "barrel",
+          "IndustryDisplayName": "item.tacz.gun_component.default_b93r_barrel"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_b93r",
+          "IndustryPartKind": "trigger",
+          "IndustryDisplayName": "item.tacz.gun_component.default_b93r_trigger"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_b93r",
+          "IndustryPartKind": "recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.default_b93r_recoil"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "minecraft:leather",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "minecraft:leather",
+      "results": [
+        "$result"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "platform": "default_p320",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_p320",
+  "terminal_process": "tacz:create/industry/assemble_p320",
+  "components": [
+    {
+      "kind": "frame",
+      "display_name": "item.tacz.gun_component.default_p320_frame"
+    },
+    {
+      "kind": "slide",
+      "display_name": "item.tacz.gun_component.default_p320_slide"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_p320_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_p320_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_p320_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ]
+}

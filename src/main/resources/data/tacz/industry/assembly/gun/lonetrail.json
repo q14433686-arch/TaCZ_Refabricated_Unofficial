@@ -1,0 +1,33 @@
+{
+  "platform": "default_lonetrail",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_lonetrail",
+  "terminal_process": "tacz:create/industry/assemble_lonetrail",
+  "components": [
+    {
+      "kind": "frame",
+      "display_name": "item.tacz.gun_component.default_lonetrail_frame"
+    },
+    {
+      "kind": "slide",
+      "display_name": "item.tacz.gun_component.default_lonetrail_slide"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_lonetrail_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_lonetrail_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_lonetrail_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ]
+}

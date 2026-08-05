@@ -1,0 +1,37 @@
+{
+  "platform": "default_uzi",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_uzi",
+  "terminal_process": "tacz:create/industry/assemble_uzi",
+  "components": [
+    {
+      "kind": "receiver",
+      "display_name": "item.tacz.gun_component.default_uzi_receiver"
+    },
+    {
+      "kind": "bolt",
+      "display_name": "item.tacz.gun_component.default_uzi_bolt"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_uzi_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_uzi_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_uzi_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 3
+    },
+    {
+      "item": "create:brass_sheet",
+      "count": 1
+    }
+  ]
+}

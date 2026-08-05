@@ -1,0 +1,33 @@
+{
+  "platform": "default_b93r",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_b93r",
+  "terminal_process": "tacz:create/industry/assemble_b93r",
+  "components": [
+    {
+      "kind": "frame",
+      "display_name": "item.tacz.gun_component.default_b93r_frame"
+    },
+    {
+      "kind": "slide",
+      "display_name": "item.tacz.gun_component.default_b93r_slide"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_b93r_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_b93r_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_b93r_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ]
+}

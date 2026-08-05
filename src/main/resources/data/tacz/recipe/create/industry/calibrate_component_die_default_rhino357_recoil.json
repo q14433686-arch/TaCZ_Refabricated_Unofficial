@@ -1,0 +1,48 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "machining",
+      "IndustryPartKind": "die_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.recoil",
+      "DieTargetKind": "recoil"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_rhino357",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_rhino357"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_rhino357",
+          "IndustryPartKind": "component_die",
+          "IndustryDisplayName": "item.tacz.press_die.component_default_rhino357_recoil",
+          "DieTargetKind": "recoil"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

@@ -1,0 +1,37 @@
+{
+  "platform": "default_m249",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_m249",
+  "terminal_process": "tacz:create/industry/assemble_m249",
+  "components": [
+    {
+      "kind": "receiver",
+      "display_name": "item.tacz.gun_component.default_m249_receiver"
+    },
+    {
+      "kind": "bolt",
+      "display_name": "item.tacz.gun_component.default_m249_bolt"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_m249_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_m249_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_m249_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:oak_planks",
+      "count": 6
+    },
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ]
+}

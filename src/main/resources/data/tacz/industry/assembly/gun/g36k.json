@@ -1,0 +1,37 @@
+{
+  "platform": "default_g36k",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_g36k",
+  "terminal_process": "tacz:create/industry/assemble_g36k",
+  "components": [
+    {
+      "kind": "receiver",
+      "display_name": "item.tacz.gun_component.default_g36k_receiver"
+    },
+    {
+      "kind": "bolt",
+      "display_name": "item.tacz.gun_component.default_g36k_bolt"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_g36k_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_g36k_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_g36k_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:oak_planks",
+      "count": 4
+    },
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ]
+}

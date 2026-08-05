@@ -1,0 +1,33 @@
+{
+  "platform": "default_cz75",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_cz75",
+  "terminal_process": "tacz:create/industry/assemble_cz75",
+  "components": [
+    {
+      "kind": "frame",
+      "display_name": "item.tacz.gun_component.default_cz75_frame"
+    },
+    {
+      "kind": "slide",
+      "display_name": "item.tacz.gun_component.default_cz75_slide"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_cz75_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_cz75_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_cz75_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "platform": "default_scar_h",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_scar_h",
+  "terminal_process": "tacz:create/industry/assemble_scar_h",
+  "components": [
+    {
+      "kind": "receiver",
+      "display_name": "item.tacz.gun_component.default_scar_h_receiver"
+    },
+    {
+      "kind": "bolt",
+      "display_name": "item.tacz.gun_component.default_scar_h_bolt"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_scar_h_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_scar_h_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_scar_h_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:oak_planks",
+      "count": 4
+    },
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ]
+}

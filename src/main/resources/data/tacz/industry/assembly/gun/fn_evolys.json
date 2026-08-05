@@ -1,0 +1,37 @@
+{
+  "platform": "default_fn_evolys",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_fn_evolys",
+  "terminal_process": "tacz:create/industry/assemble_fn_evolys",
+  "components": [
+    {
+      "kind": "receiver",
+      "display_name": "item.tacz.gun_component.default_fn_evolys_receiver"
+    },
+    {
+      "kind": "bolt",
+      "display_name": "item.tacz.gun_component.default_fn_evolys_bolt"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_fn_evolys_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_fn_evolys_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_fn_evolys_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:oak_planks",
+      "count": 6
+    },
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ]
+}

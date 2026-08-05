@@ -1,0 +1,37 @@
+{
+  "platform": "default_vector45",
+  "blueprint_display_name": "item.tacz.gun_blueprint.default_vector45",
+  "terminal_process": "tacz:create/industry/assemble_vector45",
+  "components": [
+    {
+      "kind": "receiver",
+      "display_name": "item.tacz.gun_component.default_vector45_receiver"
+    },
+    {
+      "kind": "bolt",
+      "display_name": "item.tacz.gun_component.default_vector45_bolt"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.default_vector45_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.default_vector45_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.default_vector45_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 3
+    },
+    {
+      "item": "create:brass_sheet",
+      "count": 1
+    }
+  ]
+}

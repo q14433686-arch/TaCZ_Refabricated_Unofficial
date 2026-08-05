@@ -1,0 +1,192 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_kar98",
+      "IndustryPartKind": "receiver",
+      "IndustryDisplayName": "item.tacz.gun_component.default_kar98_receiver"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_kar98",
+        "IndustryPartKind": "incomplete_kar98",
+        "IndustryDisplayName": "item.tacz.gun_component.incomplete_kar98"
+      }
+    }
+  },
+  "result": {
+    "id": "tacz:modern_kinetic_gun",
+    "components": {
+      "minecraft:custom_data": {
+        "GunId": "tacz:vector45",
+        "GunFireMode": "SEMI",
+        "GunCurrentAmmoCount": 0,
+        "HasBulletInBarrel": false
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_blueprint"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_kar98",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_blueprint.default_kar98"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_kar98",
+          "IndustryPartKind": "bolt",
+          "IndustryDisplayName": "item.tacz.gun_component.default_kar98_bolt"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_kar98",
+          "IndustryPartKind": "barrel",
+          "IndustryDisplayName": "item.tacz.gun_component.default_kar98_barrel"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_kar98",
+          "IndustryPartKind": "trigger",
+          "IndustryDisplayName": "item.tacz.gun_component.default_kar98_trigger"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_kar98",
+          "IndustryPartKind": "recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.default_kar98_recoil"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "minecraft:oak_planks",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "minecraft:oak_planks",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "minecraft:oak_planks",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "minecraft:oak_planks",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "minecraft:oak_planks",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "minecraft:leather",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "minecraft:leather",
+      "results": [
+        "$result"
+      ]
+    }
+  ]
+}

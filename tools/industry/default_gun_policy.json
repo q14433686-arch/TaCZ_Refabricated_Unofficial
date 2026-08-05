@@ -1,0 +1,45 @@
+{
+  "base_blueprint_ingredients": [
+    "minecraft:paper",
+    "minecraft:paper",
+    "create:brass_sheet"
+  ],
+  "reserved_blueprint_seeds": [
+    "minecraft:redstone",
+    "minecraft:quartz",
+    "minecraft:lapis_lazuli",
+    "minecraft:gold_nugget",
+    "minecraft:iron_nugget",
+    "minecraft:amethyst_shard",
+    "minecraft:flint",
+    "minecraft:glowstone_dust",
+    "minecraft:blaze_powder"
+  ],
+  "blueprint_seed_items": [
+    "minecraft:apple", "minecraft:carrot", "minecraft:potato", "minecraft:beetroot",
+    "minecraft:melon_slice", "minecraft:sweet_berries", "minecraft:glow_berries", "minecraft:chorus_fruit",
+    "minecraft:cocoa_beans", "minecraft:bone", "minecraft:feather", "minecraft:leather",
+    "minecraft:slime_ball", "minecraft:magma_cream", "minecraft:ender_pearl", "minecraft:ghast_tear",
+    "minecraft:prismarine_shard", "minecraft:prismarine_crystals", "minecraft:nautilus_shell", "minecraft:heart_of_the_sea",
+    "minecraft:echo_shard", "minecraft:disc_fragment_5", "minecraft:nether_star", "minecraft:fire_charge",
+    "minecraft:charcoal", "minecraft:clay_ball", "minecraft:brick", "minecraft:nether_brick",
+    "minecraft:obsidian", "minecraft:crying_obsidian", "minecraft:calcite", "minecraft:dripstone_block",
+    "minecraft:sculk", "minecraft:sculk_catalyst", "minecraft:sculk_shrieker", "minecraft:sculk_sensor",
+    "minecraft:blue_dye", "minecraft:cyan_dye", "minecraft:green_dye", "minecraft:lime_dye",
+    "minecraft:yellow_dye", "minecraft:orange_dye", "minecraft:red_dye", "minecraft:pink_dye",
+    "minecraft:purple_dye", "minecraft:magenta_dye", "minecraft:white_dye", "minecraft:black_dye",
+    "minecraft:copper_ingot", "minecraft:raw_copper", "minecraft:raw_gold", "minecraft:raw_iron",
+    "minecraft:diamond", "minecraft:emerald", "minecraft:netherite_scrap", "minecraft:phantom_membrane",
+    "minecraft:rabbit_foot", "minecraft:turtle_scute", "minecraft:shulker_shell", "minecraft:blaze_rod"
+  ],
+  "materials_by_gun_type": {
+    "pistol": [{"item": "minecraft:leather", "count": 2}],
+    "smg": [{"item": "minecraft:leather", "count": 3}, {"item": "create:brass_sheet", "count": 1}],
+    "rifle": [{"item": "minecraft:oak_planks", "count": 4}, {"item": "minecraft:leather", "count": 2}],
+    "shotgun": [{"item": "minecraft:oak_planks", "count": 5}, {"item": "minecraft:leather", "count": 1}],
+    "sniper": [{"item": "minecraft:oak_planks", "count": 5}, {"item": "minecraft:leather", "count": 2}],
+    "mg": [{"item": "minecraft:oak_planks", "count": 6}, {"item": "minecraft:leather", "count": 2}],
+    "rpg": [{"item": "minecraft:oak_planks", "count": 2}, {"item": "minecraft:leather", "count": 2}],
+    "default": [{"item": "minecraft:leather", "count": 2}, {"item": "create:brass_sheet", "count": 1}]
+  }
+}

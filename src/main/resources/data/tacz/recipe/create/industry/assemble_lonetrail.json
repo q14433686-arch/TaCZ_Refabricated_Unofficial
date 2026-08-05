@@ -1,0 +1,152 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_lonetrail",
+      "IndustryPartKind": "frame",
+      "IndustryDisplayName": "item.tacz.gun_component.default_lonetrail_frame"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_lonetrail",
+        "IndustryPartKind": "incomplete_lonetrail",
+        "IndustryDisplayName": "item.tacz.gun_component.incomplete_lonetrail"
+      }
+    }
+  },
+  "result": {
+    "id": "tacz:modern_kinetic_gun",
+    "components": {
+      "minecraft:custom_data": {
+        "GunId": "tacz:vector45",
+        "GunFireMode": "SEMI",
+        "GunCurrentAmmoCount": 0,
+        "HasBulletInBarrel": false
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_blueprint"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_lonetrail",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_blueprint.default_lonetrail"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_lonetrail",
+          "IndustryPartKind": "slide",
+          "IndustryDisplayName": "item.tacz.gun_component.default_lonetrail_slide"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_lonetrail",
+          "IndustryPartKind": "barrel",
+          "IndustryDisplayName": "item.tacz.gun_component.default_lonetrail_barrel"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_lonetrail",
+          "IndustryPartKind": "trigger",
+          "IndustryDisplayName": "item.tacz.gun_component.default_lonetrail_trigger"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_lonetrail",
+          "IndustryPartKind": "recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.default_lonetrail_recoil"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "minecraft:leather",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "minecraft:leather",
+      "results": [
+        "$result"
+      ]
+    }
+  ]
+}

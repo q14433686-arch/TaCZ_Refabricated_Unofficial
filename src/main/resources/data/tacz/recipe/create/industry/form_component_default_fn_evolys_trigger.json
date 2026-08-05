@@ -1,0 +1,47 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component_blank"
+    ],
+    "nbt": {
+      "IndustryPlatform": "machining",
+      "IndustryPartKind": "trigger_blank",
+      "IndustryDisplayName": "item.tacz.gun_component_blank"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_fn_evolys",
+      "IndustryPartKind": "component_die",
+      "IndustryDisplayName": "item.tacz.press_die.component_default_fn_evolys_trigger",
+      "DieTargetKind": "trigger"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_fn_evolys",
+          "IndustryPartKind": "trigger",
+          "IndustryDisplayName": "item.tacz.gun_component.default_fn_evolys_trigger"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}
