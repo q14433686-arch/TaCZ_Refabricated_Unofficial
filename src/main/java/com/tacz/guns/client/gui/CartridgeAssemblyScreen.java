@@ -1,5 +1,6 @@
 package com.tacz.guns.client.gui;
 
+import com.tacz.guns.block.entity.CartridgeAssemblyMachineBlockEntity;
 import com.tacz.guns.inventory.CartridgeAssemblyMenu;
 import com.tacz.guns.network.message.ClientMessageAssembleCartridge;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -37,6 +38,12 @@ public final class CartridgeAssemblyScreen extends AbstractContainerScreen<Cartr
         slotFrame(gui, leftPos + 25, topPos + 61);
         slotFrame(gui, leftPos + 61, topPos + 61);
         slotFrame(gui, leftPos + 131, topPos + 47);
+
+        int autoProgress = menu.getAutoProgress();
+        int autoWidth = 32 * Math.clamp(autoProgress, 0, CartridgeAssemblyMachineBlockEntity.AUTO_PROCESS_TICKS)
+                / CartridgeAssemblyMachineBlockEntity.AUTO_PROCESS_TICKS;
+        gui.fill(leftPos + 92, topPos + 62, leftPos + 124, topPos + 67, 0xFF11171B);
+        gui.fill(leftPos + 92, topPos + 62, leftPos + 92 + autoWidth, topPos + 67, 0xFFDF9A32);
 
         gui.text(font, title, leftPos + 8, topPos + 8, 0xFFFFFFFF, false);
         gui.text(font, Component.translatable("gui.tacz.cartridge_assembly.case"), leftPos + 18, topPos + 23, 0xFFB9C6D0, false);

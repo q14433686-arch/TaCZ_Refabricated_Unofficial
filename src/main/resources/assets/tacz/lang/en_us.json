@@ -68,6 +68,7 @@
   "gui.tacz.cartridge_assembly.propellant": "Propellant",
   "gui.tacz.cartridge_assembly.output": "Output",
   "gui.tacz.cartridge_assembly.inventory": "Inventory",
+  "gui.tacz.cartridge_assembly.redstone_auto": "Redstone auto",
   "message.tacz.cartridge_assembly.invalid": "§cInsert a matching case, projectile, primer, and propellant.",
   "message.tacz.cartridge_assembly.output_blocked": "§cClear the output slot first.",
   "item.tacz.ammo_box.iron": "Iron Ammo Box",

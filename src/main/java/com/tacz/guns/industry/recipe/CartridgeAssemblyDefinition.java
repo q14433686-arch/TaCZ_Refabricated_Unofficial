@@ -52,22 +52,37 @@ public final class CartridgeAssemblyDefinition {
     }
 
     public boolean matches(ItemStack caseStack, ItemStack projectileStack, ItemStack primerStack, ItemStack propellantStack) {
-        if (!isValid()) {
+        return matchesCase(caseStack) && matchesProjectile(projectileStack)
+                && matchesPrimer(primerStack) && matchesPropellant(propellantStack);
+    }
+
+    public boolean matchesCase(ItemStack stack) {
+        if (!isValid() || !matchesItem(stack, caseItem)) {
             return false;
         }
-        if (!matchesItem(caseStack, caseItem) || !matchesItem(projectileStack, projectileItem)
-                || !matchesItem(primerStack, primerItem) || !matchesItem(propellantStack, propellantItem)) {
+        CompoundTag tag = ItemNbtUtils.getTag(stack);
+        return "ammunition".equals(tag.getStringOr("IndustryPlatform", ""))
+                && "case".equals(tag.getStringOr("IndustryPartKind", ""))
+                && caseCaliber.equals(tag.getStringOr("CartridgeCaliber", ""));
+    }
+
+    public boolean matchesProjectile(ItemStack stack) {
+        if (!isValid() || !matchesItem(stack, projectileItem)) {
             return false;
         }
-        CompoundTag caseTag = ItemNbtUtils.getTag(caseStack);
-        CompoundTag projectileTag = ItemNbtUtils.getTag(projectileStack);
-        return "ammunition".equals(caseTag.getStringOr("IndustryPlatform", ""))
-                && "case".equals(caseTag.getStringOr("IndustryPartKind", ""))
-                && caseCaliber.equals(caseTag.getStringOr("CartridgeCaliber", ""))
-                && "ammunition".equals(projectileTag.getStringOr("IndustryPlatform", ""))
-                && "projectile".equals(projectileTag.getStringOr("IndustryPartKind", ""))
-                && projectileCaliber.equals(projectileTag.getStringOr("CartridgeCaliber", ""))
-                && projectileType.equals(projectileTag.getStringOr("ProjectileType", ""));
+        CompoundTag tag = ItemNbtUtils.getTag(stack);
+        return "ammunition".equals(tag.getStringOr("IndustryPlatform", ""))
+                && "projectile".equals(tag.getStringOr("IndustryPartKind", ""))
+                && projectileCaliber.equals(tag.getStringOr("CartridgeCaliber", ""))
+                && projectileType.equals(tag.getStringOr("ProjectileType", ""));
+    }
+
+    public boolean matchesPrimer(ItemStack stack) {
+        return isValid() && matchesItem(stack, primerItem);
+    }
+
+    public boolean matchesPropellant(ItemStack stack) {
+        return isValid() && matchesItem(stack, propellantItem);
     }
 
     public ItemStack createResult() {

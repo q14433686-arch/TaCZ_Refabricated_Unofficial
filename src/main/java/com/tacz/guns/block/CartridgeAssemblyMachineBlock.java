@@ -2,6 +2,7 @@ package com.tacz.guns.block;
 
 import com.mojang.serialization.MapCodec;
 import com.tacz.guns.block.entity.CartridgeAssemblyMachineBlockEntity;
+import com.tacz.guns.init.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -15,6 +16,8 @@ import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +58,15 @@ public final class CartridgeAssemblyMachineBlock extends BaseEntityBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new CartridgeAssemblyMachineBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return !level.isClientSide()
+                ? createTickerHelper(blockEntityType, ModBlocks.CARTRIDGE_ASSEMBLY_MACHINE_BE,
+                CartridgeAssemblyMachineBlockEntity::serverTick)
+                : null;
     }
 
     @Override

@@ -10,6 +10,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -22,6 +23,7 @@ public final class CartridgeAssemblyMenu extends AbstractContainerMenu {
 
     private final Container machineInventory;
     private final BlockPos machinePos;
+    private int clientAutoProgress;
 
     /** Client constructor: slot data is synchronized by the vanilla menu protocol. */
     public CartridgeAssemblyMenu(int containerId, Inventory playerInventory, BlockPos machinePos) {
@@ -45,6 +47,18 @@ public final class CartridgeAssemblyMenu extends AbstractContainerMenu {
             }
         });
 
+        addDataSlot(new DataSlot() {
+            @Override
+            public int get() {
+                return machineInventory instanceof CartridgeAssemblyMachineBlockEntity machine
+                        ? machine.getAutoProgress() : clientAutoProgress;
+            }
+
+            @Override
+            public void set(int value) {
+                clientAutoProgress = value;
+            }
+        });
         addPlayerInventory(playerInventory);
     }
 
@@ -63,6 +77,11 @@ public final class CartridgeAssemblyMenu extends AbstractContainerMenu {
         if (machineInventory instanceof CartridgeAssemblyMachineBlockEntity machine) {
             machine.assemble(player);
         }
+    }
+
+    public int getAutoProgress() {
+        return machineInventory instanceof CartridgeAssemblyMachineBlockEntity machine
+                ? machine.getAutoProgress() : clientAutoProgress;
     }
 
     @Override

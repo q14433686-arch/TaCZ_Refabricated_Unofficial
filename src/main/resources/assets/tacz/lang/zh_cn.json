@@ -10,6 +10,7 @@
   "gui.tacz.cartridge_assembly.propellant": "推进药",
   "gui.tacz.cartridge_assembly.output": "成品",
   "gui.tacz.cartridge_assembly.inventory": "背包",
+  "gui.tacz.cartridge_assembly.redstone_auto": "红石自动装配",
   "message.tacz.cartridge_assembly.invalid": "§c请放入匹配的弹壳、弹头、底火和推进药。",
   "message.tacz.cartridge_assembly.output_blocked": "§c请先清空成品槽。",
   "commands.tacz.reload.backup": "§a§l●§r You can find the overwritten files in the §c§nconfig/tacz/backup§r folder",
