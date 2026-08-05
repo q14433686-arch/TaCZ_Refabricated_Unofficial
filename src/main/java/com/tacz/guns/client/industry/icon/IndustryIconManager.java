@@ -32,8 +32,9 @@ import java.util.Optional;
 /**
  * Client-resource mapping from one NBT-identified TACZ stack to a flat icon texture.
  *
- * <p>The mapping deliberately lives under {@code assets/*/industry_icons/*.json},
- * rather than in Java or in generated item registrations.  A resource pack may add
+ * <p>The mapping deliberately lives under
+ * {@code assets/<namespace>/industry_icons/<path>.json}, rather than in Java
+ * or in generated item registrations. A resource pack may add
  * a mapping file in its own namespace for a third-party gun pack; gameplay and
  * registries stay unchanged.  See {@code docs/INDUSTRY_ICON_MAPPING.md} for the
  * schema and precedence rules.</p>
