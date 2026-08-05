@@ -1,0 +1,321 @@
+{
+  "source": "TACZ_icons_pack.zip",
+  "source_sha256": "80d11db082c8d2639914337099ecaca9330e3d2f73c1740b3025860f3d2480c9",
+  "texture_count": 61,
+  "pack_format": {
+    "from": 15,
+    "to": 88
+  },
+  "textures": {
+    "ammo_12gauge.png": {
+      "canvas_removed": 432,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_22wmr.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 31,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_3006.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_308win.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 2
+    },
+    "ammo_338lm.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_357mag.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 31,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_40mm.png": {
+      "canvas_removed": 395,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_4570.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 3
+    },
+    "ammo_45acp.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_46x30.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_50ae.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_50bmg.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_556x45.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 1
+    },
+    "ammo_58x42.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 2
+    },
+    "ammo_762x25.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 30,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_762x39.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 5
+    },
+    "ammo_762x54r.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_9mm.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 32,
+      "enclosed_pixels_restored": 0
+    },
+    "ammo_rpg7.png": {
+      "canvas_removed": 553,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 1
+    },
+    "bullet_50cal.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "bullet_ap.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "bullet_fmj.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "bullet_hp.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "bullet_lead.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "bullet_rimfire.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 13
+    },
+    "bullet_softlead.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "bullet_tracer.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "casing_50bmg.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "casing_bigbore.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "casing_bottleneck.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "casing_pistol_brass.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "casing_rifle_brass.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "casing_rifle_steel.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 9
+    },
+    "casing_rimfire.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 1
+    },
+    "casing_shotgun.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_akm.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_awm.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_cz75.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 4
+    },
+    "mag_deagle357gold.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_deagle50.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_eternal50z.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_g3.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_glock17.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_hk416.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_lonestar3006.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_m134_belt.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 3
+    },
+    "mag_m1911.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_m249_box.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 2
+    },
+    "mag_m700.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_m95.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_p320.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_p90.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_qbz95.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_rpk_drum.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_speedloader22.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_springfield1873.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_stanag.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_type81.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_ump45.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_uzi.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    },
+    "mag_vector.png": {
+      "canvas_removed": 0,
+      "border_artifacts_removed": 0,
+      "enclosed_pixels_restored": 0
+    }
+  },
+  "totals": {
+    "canvas_removed": 1380,
+    "border_artifacts_removed": 124,
+    "enclosed_pixels_restored": 46
+  }
+}
