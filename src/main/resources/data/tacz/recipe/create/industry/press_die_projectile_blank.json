@@ -10,17 +10,17 @@
   "type": "create:compacting",
   "ingredients": [
     "tacz:high_carbon_steel_plate",
-    "create:brass_nugget"
+    "create:brass_nugget",
+    "minecraft:quartz"
   ],
   "results": [
     {
       "id": "tacz:press_die",
       "components": {
         "minecraft:custom_data": {
-          "IndustryPlatform": "machining",
-          "IndustryPartKind": "die_blank",
-          "IndustryDisplayName": "item.tacz.press_die_blank.bolt",
-          "DieTargetKind": "bolt"
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "projectile_die_blank",
+          "IndustryDisplayName": "item.tacz.press_die_blank.projectile"
         }
       }
     }

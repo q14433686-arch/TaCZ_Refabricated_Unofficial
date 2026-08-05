@@ -1,0 +1,23 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "tacz:high_carbon_steel_plate",
+    "tacz:high_carbon_steel_plate",
+    "tacz:high_carbon_steel_plate",
+    "create:brass_sheet",
+    "create:brass_nugget"
+  ],
+  "results": [
+    {
+      "id": "tacz:magazine_blank"
+    }
+  ]
+}

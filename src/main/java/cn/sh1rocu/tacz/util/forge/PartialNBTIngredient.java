@@ -99,6 +99,30 @@ public class PartialNBTIngredient implements CustomIngredient {
         return true;
     }
 
+    /**
+     * This is functional recipe identity, not merely a convenience for maps.
+     * Create Fly's Basin {@code SizedIngredient.of(...)} coalesces repeated
+     * ingredients only through {@link Object#equals(Object)}. Without this,
+     * four equal NBT case requirements decode as four distinct objects; large
+     * ammunition batches then exceed Create's nine-ingredient Basin limit even
+     * though they are only two ingredient kinds with different counts.
+     */
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof PartialNBTIngredient other)) {
+            return false;
+        }
+        return items.equals(other.items) && nbt.equals(other.nbt);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(items, nbt);
+    }
+
     @Override
     public CustomIngredientSerializer<?> getSerializer() {
         return Serializer.INSTANCE;

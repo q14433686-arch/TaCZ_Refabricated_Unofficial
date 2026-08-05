@@ -43,6 +43,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.HIGH_CARBON_STEEL_PLATE);
                 output.accept(ModItems.INDUSTRIAL_PROPELLANT);
                 output.accept(ModItems.PRIMER);
+                output.accept(ModItems.MAGAZINE_BLANK);
                 // Representative samples make the generic NBT-backed items
                 // discoverable in creative without exposing every platform.
                 output.accept(IndustryItemBuilder.cartridgeCaseBlank()

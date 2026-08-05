@@ -7,11 +7,18 @@
       ]
     }
   ],
-  "type": "create:compacting",
-  "ingredients": [
-    "tacz:high_carbon_steel_plate",
-    "create:brass_sheet"
-  ],
+  "type": "create:deploying",
+  "keep_held_item": true,
+  "target": "tacz:magazine_blank",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:modern_kinetic_gun"
+    ],
+    "nbt": {
+      "GunId": "tacz:hk_mk23"
+    }
+  },
   "results": [
     {
       "id": "tacz:magazine",

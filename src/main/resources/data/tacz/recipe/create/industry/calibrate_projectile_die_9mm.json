@@ -7,12 +7,28 @@
       ]
     }
   ],
-  "type": "create:compacting",
-  "ingredients": [
-    "tacz:high_carbon_steel_plate",
-    "create:brass_nugget",
-    "minecraft:quartz"
-  ],
+  "type": "create:deploying",
+  "keep_held_item": true,
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "projectile_die_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.projectile"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:modern_kinetic_gun"
+    ],
+    "nbt": {
+      "GunId": "tacz:glock_17"
+    }
+  },
   "results": [
     {
       "id": "tacz:press_die",

@@ -11,6 +11,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -46,6 +47,24 @@ public class StrictNBTIngredient implements CustomIngredient {
     @Override
     public boolean requiresTesting() {
         return true;
+    }
+
+    /** Keep strict custom ingredients mergeable in Create Basin recipes. */
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        return object instanceof StrictNBTIngredient other
+                && ItemStack.isSameItemSameComponents(stack, other.stack);
+    }
+
+    @Override
+    public int hashCode() {
+        // Count is deliberately excluded: Ingredient semantics match a stack's
+        // item/components, while Basin SizedIngredient stores the required
+        // amount separately.
+        return Objects.hash(stack.getItem(), stack.getComponents());
     }
 
     @Override

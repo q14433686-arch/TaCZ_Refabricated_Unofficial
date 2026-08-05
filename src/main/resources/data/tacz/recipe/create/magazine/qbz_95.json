@@ -16,7 +16,7 @@
       "tacz:modern_kinetic_gun"
     ],
     "nbt": {
-      "GunId": "tacz:hk_g3"
+      "GunId": "tacz:qbz_95"
     }
   },
   "results": [
@@ -24,11 +24,11 @@
       "id": "tacz:magazine",
       "components": {
         "minecraft:custom_data": {
-          "MagazineFamily": "g3_308",
-          "MagazineAmmoId": "tacz:308",
-          "MagazineCapacity": 20,
+          "MagazineFamily": "qbz_58x42",
+          "MagazineAmmoId": "tacz:58x42",
+          "MagazineCapacity": 30,
           "MagazineAmmoCount": 0,
-          "MagazineDisplayName": "item.tacz.magazine.g3_308"
+          "MagazineDisplayName": "item.tacz.magazine.qbz_58"
         }
       }
     }

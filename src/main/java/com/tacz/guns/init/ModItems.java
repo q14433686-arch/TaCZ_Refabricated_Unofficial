@@ -24,6 +24,8 @@ public class ModItems {
     public static Item AMMO = register("ammo", new AmmoItem(itemProps("ammo")));
     /** A configured, non-stackable physical detachable magazine. */
     public static Item MAGAZINE = register("magazine", new MagazineItem(itemProps("magazine")));
+    /** Neutral Basin-formed shell; a matching firearm held by a Deployer calibrates its final magazine family. */
+    public static Item MAGAZINE_BLANK = register("magazine_blank", new Item(itemProps("magazine_blank").stacksTo(16)));
 
     // Create Fly industrial-chain intermediates. These are deliberately native
     // TACZ items, while their processing recipes live in data/tacz/recipe/create.

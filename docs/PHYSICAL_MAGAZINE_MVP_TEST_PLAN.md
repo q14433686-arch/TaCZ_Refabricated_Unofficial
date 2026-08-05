@@ -21,14 +21,15 @@ PhysicalMagazines = true
 
 ## 1. 获取和装填弹匣
 
-1. 在 Create Fly 的 Basin 中执行相应 `create:compacting` 弹匣配方；所有配方仅在 `create` 已加载时由 Fabric resource condition 放行。
-2. 将所得空弹匣拿在鼠标上，右键点击匹配的 TACZ 散装子弹堆。
-3. 预期：
+1. 在 Create Fly 的 Basin 中执行唯一的 `tacz:magazine_blank` 压实配方，得到中性的弹匣壳体毛坯；所有配方仅在 `create` 已加载时由 Fabric resource condition 放行。
+2. 将**对应成枪**放入部署器手持栏，把弹匣壳体毛坯送入该部署器的置物台/传送带。`create:deploying` 会保留成枪（`keep_held_item: true`），并将毛坯校准为该枪的确切 `MagazineFamily`、弹种和容量；例如 Glock 17 只能校准 Glock 17 弹匣，AK-47 只能校准 AK 30 发弹匣。
+3. 将所得空弹匣拿在鼠标上，右键点击匹配的 TACZ 散装子弹堆。
+4. 预期：
    - 鼠标上的弹匣增加 `MagazineAmmoCount`；
    - 被点击的散装子弹减少；
    - Tooltip 显示 `装填：当前 / 容量` 与弹种；
    - 不匹配口径的子弹不能装入。
-4. 右键点击空槽位。
+5. 右键点击空槽位。
    - 预期：弹匣吐出一正常堆叠的散装子弹，余弹减少；
    - 重复直到弹匣为空，不能复制或丢失子弹。
 

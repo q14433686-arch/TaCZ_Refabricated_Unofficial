@@ -10,18 +10,16 @@
   "type": "create:compacting",
   "ingredients": [
     "tacz:high_carbon_steel_plate",
-    "create:brass_sheet",
-    "tacz:cinnabar_dust"
+    "create:brass_nugget"
   ],
   "results": [
     {
       "id": "tacz:press_die",
       "components": {
         "minecraft:custom_data": {
-          "IndustryPlatform": "ammunition",
-          "IndustryPartKind": "case_die",
-          "IndustryDisplayName": "item.tacz.press_die.case_12g",
-          "CartridgeCaliber": "12g"
+          "IndustryPlatform": "machining",
+          "IndustryPartKind": "die_blank",
+          "IndustryDisplayName": "item.tacz.press_die_blank.generic"
         }
       }
     }

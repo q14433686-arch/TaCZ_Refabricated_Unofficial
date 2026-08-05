@@ -147,7 +147,9 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 
 当前内置 AK-47、M4A1、Glock 17 已使用此路径。它们的组件、模板、成枪结果都通过 `forge:partial_nbt` / `minecraft:custom_data` 确认身份：AK 机匣不能代替 AR 机匣，Glock 枪身不能代替 AR 机匣；模板保留，组件与辅料按工位消耗。
 
-枪械组件的前段仍遵循“结构毛坯 → 模具毛坯 → 部署器持模板校准模具 → 部署器持模具成型组件”。同样地，每个 `create:deploying` 步骤都只有一个置物台目标与一个部署器手持物。
+枪械组件的前段遵循“结构毛坯 → **中性组件模具体** → 部署器持对应结构毛坯选定几何 → 部署器持平台模板校准平台模具 → 部署器持模具成型组件”。这里的中性组件模具体只有一条工作盆压实来源；机匣/枪机/枪管/击发组/复进组件毛坯作为部署器中不消耗的实体量规，明确选择 `DieTargetKind`。这样不会再出现“五条相同 Basin 输入、却期望产出五种模具体”的不可合成配方。
+
+同样地，每个 `create:deploying` 步骤都只有一个置物台目标与一个部署器手持物。
 
 ---
 
@@ -155,9 +157,13 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 
 弹药同样不靠材料数量区分：单输入动力冲压机只负责产出中性的 `tacz:cartridge_case_blank` 与 `tacz:projectile_blank`。之后由 Create 部署器持有一枚 NBT 标识的可复用 `tacz:press_die`，通过带 `keep_held_item: true` 的 `create:deploying` 工艺真正压制出指定身份。
 
+压实阶段也不能让四条相同材料表直接各自产出四种口径模具。现在先压实**中性弹壳模具体**或**中性弹头模具体**；再由部署器持有一把对应口径的完整枪械作为不消耗的膛室/口径量规，校准成 9 mm、5.56×45、7.62×39 或 12G 的最终模具。枪在部署器手持栏，模具体是置物台/传送带上的唯一目标，因此既是实际的物理选择，也不违反置物台单工件约束。
+
 成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。
 
-最终批量装弹需要多种部件，因此使用 `create:compacting` 的**工作盆**输入，而不是部署器/置物台。若某种弹药已交给 Create 工艺生产，可在：
+最终批量装弹需要多种部件，因此使用 `create:compacting` 的**工作盆**输入，而不是部署器/置物台。重复的 `forge:partial_nbt` 输入会按其物品集合和 NBT 语义合并成带数量的 Create `SizedIngredient`；这使一批多发弹药不会因为 JSON 中重复列出同一种 NBT 部件而超过 Create Fly 的九种 Basin 输入上限。
+
+若某种弹药已交给 Create 工艺生产，可在：
 
 ```text
 data/<namespace>/industry/ammo/<任意名称>.json
@@ -172,6 +178,29 @@ data/<namespace>/industry/ammo/<任意名称>.json
 ```
 
 只有 `CREATE_FLY` 档会移除它；`LEGACY` 保持所有旧配方。
+
+### 弹匣壳体与枪械量规校准
+
+同一组钢板/黄铜片不能可靠地让 Basin 在 Glock、AK、G36、FAL、MP5 等多个弹匣结果间作选择；Create 会在同优先级匹配中只选中其中一个。因此内置流程是：
+
+```text
+高碳钢板 + 黄铜片 + 黄铜粒 --工作盆压实--> tacz:magazine_blank
+对应成枪（部署器持有，不消耗） + magazine_blank --部署器--> 精确平台/容量实体弹匣
+```
+
+每个 `data/<namespace>/recipe/create/magazine/<gun-id>.json` 都是一个部署器校准配方：
+
+- `target` 为中性的 `tacz:magazine_blank`；
+- `ingredient` 是带精确 `GunId` 的 `tacz:modern_kinetic_gun`，并设 `keep_held_item: true`；
+- `results` 才写入 `MagazineFamily`、`MagazineAmmoId`、`MagazineCapacity` 和显示名。
+
+成枪在这里是可复用的实际弹匣量规，不是材料数量暗号；错误枪不能把毛坯校准成其他枪的平台弹匣。内容包可以按同一模式增加新的枪械量规配方。
+
+### 压实冲突检查
+
+TACZ 在 `CREATE_FLY` 资源重载时会扫描 `recipe/create/` 内的 `create:compacting` 工艺。若多条配方具有完全相同的无序物品/流体输入定义（包括相同 tag 或相同 partial-NBT 输入），或某条配方的最小输入能同时满足另一条**相同输入种类数**的配方（例如 3 钢 + 生铁与 2 钢 + 生铁），会记录错误。Create 的 Basin 优先级只看输入**种类数**，不看同种材料的总数；这类配方会依赖加载顺序，至少有一条无法可靠制造。热量也不能充当可靠选择器：在更高温度下低热量要求仍会匹配。
+
+这是对“REI 能显示多条配方”与“机器真的能执行多条配方”的显式区分。要表达最终身份，使用中性毛坯 + 部署器中的非消耗量规/模具，而不是复制一组 Basin 输入、仅改变材料数量或更换结果。
 
 ---
 
