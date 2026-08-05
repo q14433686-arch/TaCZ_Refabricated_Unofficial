@@ -24,8 +24,13 @@ import java.util.Map;
  */
 public final class IndustryProcessManager extends CommonDataManager<IndustryProcessDefinition> {
     public IndustryProcessManager() {
+        // Scan the stable top-level recipe directory, then filter ids beginning
+        // with create/.  FileToIdConverter cannot safely scan recipe/create
+        // directly because TACZ's legacy recipes -> recipe compatibility layer
+        // may remap a root recipes/foo.json to recipe/foo.json, which does not
+        // share the nested create/ prefix and crashes fileToId().
         super(DataType.INDUSTRY_PROCESS, IndustryProcessDefinition.class, CommonAssetsManager.GSON,
-                "recipe/create", "IndustryProcessLoader");
+                "recipe", "IndustryProcessLoader");
     }
 
     @Override
@@ -47,6 +52,9 @@ public final class IndustryProcessManager extends CommonDataManager<IndustryProc
             // recipe/create is an explicit opt-in directory. Any gun-pack
             // namespace may use it, allowing third-party industrial recipes to
             // appear in the TACZ REI bridge without Java registration.
+            if (!entry.getKey().getPath().startsWith("create/")) {
+                continue;
+            }
             JsonObject object = entry.getValue().getAsJsonObject();
             JsonElement type = object.get("type");
             if (type != null && type.isJsonPrimitive() && type.getAsJsonPrimitive().isString()
