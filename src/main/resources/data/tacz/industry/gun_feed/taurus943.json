@@ -1,0 +1,7 @@
+{
+  "mechanism": "revolver",
+  "magazine_capacity": 8,
+  "reload_batch": 1,
+  "ammo": "tacz:22wmr",
+  "display_name": "item.tacz.internal_feed.taurus943"
+}

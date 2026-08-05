@@ -1,0 +1,7 @@
+{
+  "mechanism": "single_shot",
+  "magazine_capacity": 2,
+  "reload_batch": 1,
+  "ammo": "tacz:12g",
+  "display_name": "item.tacz.internal_feed.db_long"
+}

@@ -43,7 +43,7 @@ public final class PhysicalMagazineService {
         }
         Identifier gunId = iGun.getGunId(gun);
         GunFeedDefinition definition = CommonAssetsManager.get().getGunFeedDefinition(gunId);
-        return definition != null && definition.isValidDetachableDefinition() ? definition : null;
+        return definition != null && definition.isValidExternalCarrierDefinition() ? definition : null;
     }
 
     public static boolean usesPhysicalMagazine(ItemStack gun) {
@@ -315,7 +315,7 @@ public final class PhysicalMagazineService {
     }
 
     public static boolean isCompatible(GunFeedDefinition definition, ItemStack magazine) {
-        if (!definition.isValidDetachableDefinition() || !(magazine.getItem() instanceof IMagazine item)
+        if (!definition.isValidExternalCarrierDefinition() || !(magazine.getItem() instanceof IMagazine item)
                 || !item.isConfigured(magazine)) {
             return false;
         }

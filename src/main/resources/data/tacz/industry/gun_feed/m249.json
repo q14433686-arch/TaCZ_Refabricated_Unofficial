@@ -1,0 +1,7 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "m249_556_belt",
+  "magazine_capacity": 75,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.m249_belt"
+}

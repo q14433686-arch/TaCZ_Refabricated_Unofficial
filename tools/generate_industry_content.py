@@ -504,7 +504,7 @@ def generated_magazine_files(cartridge_ammo_ids: set[str]) -> dict[Path, Any]:
     feed_root = RESOURCE_ROOT / "data/tacz/industry/gun_feed"
     for path in sorted(feed_root.glob("*.json")):
         feed = read_json(path)
-        if feed.get("mechanism") != "detachable_magazine":
+        if feed.get("mechanism") not in {"detachable_magazine", "belt"}:
             continue
         ammo = feed.get("ammo")
         if ammo not in cartridge_ammo_ids:

@@ -266,4 +266,15 @@ data/<namespace>/industry/gun_feed/<枪 ID 路径>.json
 }
 ```
 
-没有此文件的枪保持旧供弹行为；管式、转轮、弹链和单发枪不应伪造为 detachable magazine。
+没有此文件的枪保持旧供弹行为。供弹机制可为：
+
+```text
+detachable_magazine  外部实体弹匣
+belt                 外部实体弹链箱（复用实体供弹器 ItemStack）
+internal_box         内置弹仓
+tube                 管式弹仓
+revolver             转轮
+single_shot          单发后膛
+```
+
+`internal_box`、`tube`、`revolver`、`single_shot` 的余弹保存为枪 NBT 中受服务端控制的内置供弹状态，而不是伪造可退卸弹匣；`reload_batch` 可指定一次中央换弹事务填入的发数，未指定时管式/转轮/单发为一发，其余内置供弹填满剩余容量。`belt` 则使用带容量和余弹的外部实体弹链箱。

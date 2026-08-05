@@ -31,6 +31,14 @@ public class GunFeedDefinition {
     @SerializedName("display_name")
     private String displayName = "";
 
+    /**
+     * How many loose rounds one central reload transaction inserts for an
+     * internal feed. Omitted definitions use one round for tube/revolver/
+     * single-shot feeds and fill the remaining capacity for internal boxes.
+     */
+    @SerializedName("reload_batch")
+    private int reloadBatch = 0;
+
     public FeedMechanism getMechanism() {
         return mechanism == null ? FeedMechanism.LEGACY : mechanism;
     }
@@ -51,10 +59,36 @@ public class GunFeedDefinition {
         return displayName == null ? "" : displayName;
     }
 
+    public int getReloadBatch() {
+        if (reloadBatch > 0) {
+            return Math.min(reloadBatch, Math.max(1, getMagazineCapacity()));
+        }
+        return switch (getMechanism()) {
+            case TUBE, REVOLVER, SINGLE_SHOT -> 1;
+            default -> Math.max(1, getMagazineCapacity());
+        };
+    }
+
+    /** External carrier: detachable magazine or physical belt/ammo-box item. */
+    public boolean isValidExternalCarrierDefinition() {
+        return (getMechanism().usesDetachableMagazine() || getMechanism() == FeedMechanism.BELT)
+                && !getMagazineFamily().isBlank()
+                && getMagazineCapacity() > 0
+                && getAmmoId() != null;
+    }
+
     public boolean isValidDetachableDefinition() {
         return getMechanism().usesDetachableMagazine()
                 && !getMagazineFamily().isBlank()
                 && getMagazineCapacity() > 0
                 && getAmmoId() != null;
+    }
+
+    /** Tube, cylinder, internal box and single-shot feeds store real rounds in gun NBT. */
+    public boolean isValidInternalDefinition() {
+        return switch (getMechanism()) {
+            case INTERNAL_BOX, TUBE, REVOLVER, SINGLE_SHOT -> getMagazineCapacity() > 0 && getAmmoId() != null;
+            default -> false;
+        };
     }
 }

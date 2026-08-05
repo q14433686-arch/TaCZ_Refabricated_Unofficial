@@ -1,0 +1,7 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "evolys_308_belt",
+  "magazine_capacity": 75,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.fn_evolys_belt"
+}

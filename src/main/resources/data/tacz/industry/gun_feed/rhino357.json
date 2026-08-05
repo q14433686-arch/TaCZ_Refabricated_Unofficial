@@ -1,0 +1,7 @@
+{
+  "mechanism": "revolver",
+  "magazine_capacity": 6,
+  "reload_batch": 1,
+  "ammo": "tacz:357mag",
+  "display_name": "item.tacz.internal_feed.rhino357"
+}

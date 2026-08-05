@@ -1,0 +1,7 @@
+{
+  "mechanism": "single_shot",
+  "magazine_capacity": 1,
+  "reload_batch": 1,
+  "ammo": "tacz:rpg_rocket",
+  "display_name": "item.tacz.internal_feed.rpg7"
+}

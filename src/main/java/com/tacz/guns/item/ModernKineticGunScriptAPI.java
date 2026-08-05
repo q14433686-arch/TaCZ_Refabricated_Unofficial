@@ -18,6 +18,7 @@ import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.config.common.AmmoConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
+import com.tacz.guns.industry.magazine.InternalFeedService;
 import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunFire;
@@ -544,7 +545,8 @@ public class ModernKineticGunScriptAPI {
      */
     public boolean isPhysicalMagazineReloadManaged() {
         return dataHolder != null && itemStack != null
-                && PhysicalMagazineService.isReloadManaged(dataHolder, itemStack);
+                && (PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)
+                || InternalFeedService.isReloadManaged(dataHolder, itemStack));
     }
 
     /**

@@ -14,10 +14,11 @@ PhysicalMagazines = true
 
 - `CREATE_FLY` 但未安装 Create Fly 时，服务器启动会记录明确错误，实体弹匣逻辑不会启用；
 - `LEGACY` 时所有枪维持旧的 `GunCurrentAmmoCount` 行为；
-- 首期只处理 `industry/gun_feed/*.json` 内标记为 `detachable_magazine` 的枪；
-- 管式霰弹枪、转轮、单发、弹链枪暂不进入这个分支。
+- `detachable_magazine` 使用可退卸实体弹匣；
+- `belt` 使用可退卸实体弹链箱；
+- `tube`、`revolver`、`internal_box`、`single_shot` 使用服务端控制的枪内供弹状态，绝不伪造为 detachable magazine。
 
-当前内置 MVP 涵盖 Glock/CZ/M9/M1911/MK23/P320、AK/RPK、AR/STANAG、G36、FAL/G3/M14、P90、MP5/UMP/Uzi/Vector、QBZ 等 24 个默认枪条目。每条定义都已按默认枪包的 `ammo` 与 `ammo_amount` 核对。
+当前内置外部供弹覆盖 Glock/CZ/M9/M1911/MK23/P320、AK/RPK、AR/STANAG、G36、FAL/G3/M14、P90、MP5/UMP/Uzi/Vector、QBZ，以及 M249/FN Evolys 弹链箱。M870/SPAS-12/M1014 管式、Rhino/Taurus 转轮、RPG-7/M320/双管单发和若干内置弹仓枪也有独立数据定义。每条定义都按默认枪包的 `ammo` 与 `ammo_amount` 核对。
 
 ## 1. 获取和装填弹匣
 
@@ -55,7 +56,16 @@ PhysicalMagazines = true
 4. 将背包塞满后重复：旧弹匣应掉在玩家脚边，绝不能消失；
 5. 按住潜行键再按换弹键：应只退出现有弹匣，不播放换弹动画，不影响膛内一发。
 
-## 4. 存档迁移和模式回退
+## 4. 特殊供弹机制
+
+- M870、SPAS-12、M1014：每次中央换弹事务只填入一发，余弹保存于枪内管式供弹状态；不能出现可退卸弹匣；
+- Rhino 357、Taurus 500、Taurus 943：余弹保存为枪内转轮状态，单次换弹填入一发；
+- RPG-7、M320、双管枪：单发/双管后膛状态不接受实体弹匣；
+- AI AWP、Kar98、M700、M95、SKS、M107、SPR15HB、AA-12：内置弹仓状态按定义容量填充；
+- M249、FN Evolys：使用带容量和余弹的实体弹链箱，按普通外部供弹器事务换入/取出；
+- 对所有上述机制测试：错误弹种不消耗、红石/客户端伪造不能增加余弹、射击实际减少受控供弹状态。
+
+## 5. 存档迁移和模式回退
 
 1. 用旧版本/旧 NBT 的带 `GunCurrentAmmoCount` 枪进入 `CREATE_FLY` 档；
 2. 放入一只新弹匣并换弹，或潜行退匣；
@@ -63,7 +73,7 @@ PhysicalMagazines = true
 4. 退出后把 `IndustryProfile` 改为 `LEGACY`，确认枪仍以镜像整数正常射击/换弹；
 5. 再改回 `CREATE_FLY`：已插入弹匣的余弹不得回退为旧值。
 
-## 5. 多人与安全性
+## 6. 多人与安全性
 
 - 客户端和服务端安装完全相同的 Create Fly 与 TACZ；
 - 旁观者在玩家换弹/退匣时不应崩溃；
@@ -71,7 +81,7 @@ PhysicalMagazines = true
 - 断线重连后检查 `InstalledMagazine`、`MagazineAmmoCount`、`GunCurrentAmmoCount` 镜像一致；
 - 用 NBT 编辑器篡改客户端物品不能让服务端增加弹药——所有抽取/退还发生在服务端 `PhysicalMagazineService`。
 
-## 6. 当前明确未完成项
+## 7. 当前明确未完成项
 
 - 生铁、高碳钢、硫粉、底火、弹壳、枪身/枪机/枪管等完整产业链的全枪包覆盖（当前仅首批平台纵切）；
 - 余下默认枪械从直接铁锭配方转换为单工件顺序平台装配；

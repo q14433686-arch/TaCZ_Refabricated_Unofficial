@@ -1,0 +1,6 @@
+{
+  "mechanism": "internal_box",
+  "magazine_capacity": 15,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.internal_feed.spr15hb"
+}

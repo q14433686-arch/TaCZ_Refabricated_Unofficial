@@ -7,6 +7,7 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
 import com.tacz.guns.api.item.gun.FireMode;
+import com.tacz.guns.industry.magazine.InternalFeedService;
 import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
@@ -222,6 +223,9 @@ public interface GunItemDataAccessor extends IGun {
         if (PhysicalMagazineService.hasActiveInstalledMagazine(gun)) {
             return PhysicalMagazineService.getInstalledAmmoCount(gun);
         }
+        if (InternalFeedService.usesInternalFeed(gun)) {
+            return InternalFeedService.getAmmoCount(gun);
+        }
         return getLegacyAmmoCount(gun);
     }
 
@@ -242,6 +246,10 @@ public interface GunItemDataAccessor extends IGun {
             PhysicalMagazineService.setInstalledAmmoCount(gun, ammoCount);
             return;
         }
+        if (InternalFeedService.usesInternalFeed(gun)) {
+            InternalFeedService.setAmmoCount(gun, ammoCount);
+            return;
+        }
         // A server may temporarily select LEGACY to recover a world. Keep an
         // already-stored magazine mirrored even while it is not authoritative,
         // otherwise re-enabling CREATE_FLY would resurrect stale round counts.
@@ -260,6 +268,10 @@ public interface GunItemDataAccessor extends IGun {
         }
         if (PhysicalMagazineService.hasActiveInstalledMagazine(gun)) {
             PhysicalMagazineService.removeInstalledRounds(gun, 1);
+            return;
+        }
+        if (InternalFeedService.usesInternalFeed(gun)) {
+            InternalFeedService.removeRounds(gun, 1);
             return;
         }
         if (PhysicalMagazineService.hasStoredInstalledMagazine(gun)) {

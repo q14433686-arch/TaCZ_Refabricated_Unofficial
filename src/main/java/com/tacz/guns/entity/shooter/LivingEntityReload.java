@@ -8,6 +8,7 @@ import com.tacz.guns.api.event.common.GunReloadEvent;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunReload;
+import com.tacz.guns.industry.magazine.InternalFeedService;
 import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import net.minecraft.resources.Identifier;
@@ -68,12 +69,13 @@ public class LivingEntityReload {
             }
             boolean physicalReload = shooter instanceof Player
                     && PhysicalMagazineService.usesPhysicalMagazine(currentGunItem);
+            boolean internalReload = shooter instanceof Player
+                    && InternalFeedService.usesInternalFeed(currentGunItem);
+            boolean managedIndustryReload = physicalReload || internalReload;
 
-            // Physical guns reserve an actual magazine here and never ask the
-            // legacy loose-ammo path whether they can reload.  This is the
-            // ownership boundary: after it, the old gun/script state machine
-            // supplies animation timing only.
-            if (!physicalReload
+            // External carriers and physical internal feeds reserve their own
+            // transaction here. Legacy Java/Lua logic supplies animation only.
+            if (!managedIndustryReload
                     && IGunOperator.fromLivingEntity(shooter).needCheckAmmo()
                     && !gunItem.canReload(shooter, currentGunItem)) {
                 return;
@@ -94,6 +96,10 @@ public class LivingEntityReload {
                     && PhysicalMagazineService.beginReload(data, shooter, currentGunItem, tactical) == null) {
                 return;
             }
+            if (internalReload
+                    && InternalFeedService.beginReload(data, shooter, currentGunItem, tactical) == null) {
+                return;
+            }
 
             NetworkHandler.sendToTrackingEntity(new ServerMessageGunReload(shooter.getId(), currentGunItem), shooter);
             if (!tactical) {
@@ -109,6 +115,7 @@ public class LivingEntityReload {
                 data.reloadStateType = ReloadState.StateType.NOT_RELOADING;
                 data.reloadTimestamp = -1;
                 PhysicalMagazineService.clearReloadPlan(data);
+                InternalFeedService.clearReloadPlan(data);
             }
         });
     }
@@ -133,6 +140,7 @@ public class LivingEntityReload {
         // 如果没有在换弹，直接返回
         if (data.reloadTimestamp == -1) {
             PhysicalMagazineService.clearReloadPlan(data);
+            InternalFeedService.clearReloadPlan(data);
             return result;
         }
 
@@ -151,8 +159,12 @@ public class LivingEntityReload {
             PhysicalMagazineService.onReloadStateTransition(
                     data, shooter, currentGunItem, previousState, result.getStateType()
             );
+            InternalFeedService.onReloadStateTransition(
+                    data, shooter, currentGunItem, previousState, result.getStateType()
+            );
         } else {
             PhysicalMagazineService.clearReloadPlan(data);
+            InternalFeedService.clearReloadPlan(data);
         }
 
         // 将 tick 的结果保存到 data holder
@@ -160,6 +172,7 @@ public class LivingEntityReload {
         if (!result.getStateType().isReloading()) {
             data.reloadTimestamp = -1;
             PhysicalMagazineService.clearReloadPlan(data);
+            InternalFeedService.clearReloadPlan(data);
         }
         return result;
     }

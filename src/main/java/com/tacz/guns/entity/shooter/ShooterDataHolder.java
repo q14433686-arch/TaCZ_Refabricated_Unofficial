@@ -1,6 +1,7 @@
 package com.tacz.guns.entity.shooter;
 
 import com.tacz.guns.api.entity.ReloadState;
+import com.tacz.guns.industry.magazine.InternalFeedReloadPlan;
 import com.tacz.guns.industry.magazine.PhysicalMagazineReloadPlan;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
 import net.minecraft.world.item.ItemStack;
@@ -73,6 +74,9 @@ public class ShooterDataHolder {
      */
     @Nullable
     public PhysicalMagazineReloadPlan physicalMagazineReload = null;
+    /** Server-only reservation for tube/cylinder/internal/single-shot feeds. */
+    @Nullable
+    public InternalFeedReloadPlan internalFeedReload = null;
     /**
      * 当前操作的枪械物品的 Supplier。在切枪时 (draw 方法) 更新。
      */
@@ -124,6 +128,7 @@ public class ShooterDataHolder {
         reloadTimestamp = -1;
         reloadStateType = ReloadState.StateType.NOT_RELOADING;
         physicalMagazineReload = null;
+        internalFeedReload = null;
         sprintTimestamp = -1;
         sprintTimeS = 0;
         boltTimestamp = -1;

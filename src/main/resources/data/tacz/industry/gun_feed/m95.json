@@ -1,0 +1,6 @@
+{
+  "mechanism": "internal_box",
+  "magazine_capacity": 5,
+  "ammo": "tacz:50bmg",
+  "display_name": "item.tacz.internal_feed.m95"
+}

@@ -18,7 +18,7 @@ public class SyncConfig {
 
     /** Server-selected industrial ruleset. Defaults to the Create Fly path. */
     public static ForgeConfigSpec.EnumValue<IndustryProfile> INDUSTRY_PROFILE;
-    /** Enables physical detachable magazines for gun-feed declarations in the active industrial profile. */
+    /** Enables physical external and internal feed ownership for gun-feed declarations in the active industrial profile. */
     public static ForgeConfigSpec.BooleanValue PHYSICAL_MAGAZINES;
     /** Scan uncurated gun-pack table recipes at reload and synthesize safe industrial fallback replacements. */
     public static ForgeConfigSpec.BooleanValue AUTO_DISCOVER_INDUSTRY_REPLACEMENTS;
@@ -102,7 +102,7 @@ public class SyncConfig {
         builder.comment("Manufacturing ruleset. CREATE_FLY requires Create Fly (mod id 'create') on server and clients; LEGACY preserves original TACZ recipes.");
         INDUSTRY_PROFILE = builder.defineEnum("IndustryProfile", IndustryProfile.CREATE_FLY);
 
-        builder.comment("Use real ItemStack-backed detachable magazines for guns that declare an industry/gun_feed definition. Requires an active CREATE_FLY profile.");
+        builder.comment("Use real external carriers and internal-feed ownership for guns that declare an industry/gun_feed definition. Requires an active CREATE_FLY profile.");
         PHYSICAL_MAGAZINES = builder.define("PhysicalMagazines", true);
 
         builder.comment("Automatically scan uncurated gun-pack table recipes and add an in-game industrial fallback material gate. Curated platform declarations always take priority.");

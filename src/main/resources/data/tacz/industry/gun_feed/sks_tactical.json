@@ -1,0 +1,6 @@
+{
+  "mechanism": "internal_box",
+  "magazine_capacity": 10,
+  "ammo": "tacz:762x39",
+  "display_name": "item.tacz.internal_feed.sks_tactical"
+}

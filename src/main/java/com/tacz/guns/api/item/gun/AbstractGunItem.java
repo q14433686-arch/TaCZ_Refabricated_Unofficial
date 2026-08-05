@@ -13,6 +13,7 @@ import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
+import com.tacz.guns.industry.magazine.InternalFeedService;
 import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -138,6 +139,9 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
         // larger compatible magazine even when its currently inserted one is full.
         if (shooter instanceof Player && PhysicalMagazineService.usesPhysicalMagazine(gunItem)) {
             return PhysicalMagazineService.canReload(shooter, gunItem);
+        }
+        if (shooter instanceof Player && InternalFeedService.usesInternalFeed(gunItem)) {
+            return InternalFeedService.canReload(shooter, gunItem);
         }
 
         int currentAmmoCount = getCurrentAmmoCount(gunItem);
