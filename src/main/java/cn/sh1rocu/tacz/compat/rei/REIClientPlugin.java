@@ -2,13 +2,16 @@ package cn.sh1rocu.tacz.compat.rei;
 
 import cn.sh1rocu.tacz.compat.rei.category.AttachmentQueryCategory;
 import cn.sh1rocu.tacz.compat.rei.category.GunSmithTableCategory;
+import cn.sh1rocu.tacz.compat.rei.category.IndustryProcessCategory;
 import cn.sh1rocu.tacz.compat.rei.display.AttachmentQueryDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.GunSmithTableDisplay;
+import cn.sh1rocu.tacz.compat.rei.display.IndustryProcessDisplay;
 import cn.sh1rocu.tacz.compat.rei.entry.AttachmentQueryEntry;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.builder.BlockItemBuilder;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
+import com.tacz.guns.industry.recipe.IndustryProcessMachine;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
@@ -19,6 +22,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +32,18 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
     public static final CategoryIdentifier<AttachmentQueryDisplay> ATTACHMENT_QUERY = CategoryIdentifier.of(GunMod.MOD_ID, "plugins/attachment_query");
 
     public static final Map<Identifier, CategoryIdentifier<GunSmithTableDisplay>> displays = new HashMap<>();
+    private static final Map<IndustryProcessMachine, CategoryIdentifier<IndustryProcessDisplay>> INDUSTRY_CATEGORIES =
+            new EnumMap<>(IndustryProcessMachine.class);
+
+    static {
+        for (IndustryProcessMachine machine : IndustryProcessMachine.values()) {
+            INDUSTRY_CATEGORIES.put(machine, CategoryIdentifier.of(GunMod.MOD_ID, "industry/" + machine.id()));
+        }
+    }
+
+    public static CategoryIdentifier<IndustryProcessDisplay> getIndustryCategory(IndustryProcessMachine machine) {
+        return INDUSTRY_CATEGORIES.get(machine);
+    }
 
     @Override
     public void registerCategories(CategoryRegistry registry) {
@@ -42,6 +58,11 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
             registry.addWorkstations(id, EntryStacks.of(icon));
         }
         registry.add(new AttachmentQueryCategory());
+        for (IndustryProcessMachine machine : IndustryProcessMachine.values()) {
+            CategoryIdentifier<IndustryProcessDisplay> id = getIndustryCategory(machine);
+            registry.add(new IndustryProcessCategory(machine, id));
+            registry.addWorkstations(id, EntryStacks.of(machine.workstationStack()));
+        }
     }
 
     @Override
@@ -86,5 +107,15 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
 
         AttachmentQueryEntry.getAllAttachmentQueryEntries().forEach(entry ->
                 registry.add(new AttachmentQueryDisplay(entry)));
+
+        // Create Fly's published 26.2 build excludes its REI source set. The
+        // industry-process cache is a synchronized projection of our actual
+        // create:* JSON, so these displays restore REI's input/output tree
+        // without linking TACZ against Create implementation classes.
+        for (var entry : com.tacz.guns.resource.CommonAssetsManager.get().getAllIndustryProcesses()) {
+            if (entry.getValue() != null && getIndustryCategory(entry.getValue().getMachine()) != null) {
+                registry.add(new IndustryProcessDisplay(entry.getKey(), entry.getValue()));
+            }
+        }
     }
 }

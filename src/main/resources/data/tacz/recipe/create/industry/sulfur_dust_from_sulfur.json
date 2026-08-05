@@ -1,0 +1,11 @@
+{
+  "fabric:load_conditions": [
+    {"condition": "fabric:all_mods_loaded", "values": ["create"]}
+  ],
+  "type": "create:crushing",
+  "ingredient": "minecraft:sulfur",
+  "processing_time": 180,
+  "results": [
+    {"id": "tacz:sulfur_dust", "count": 2}
+  ]
+}

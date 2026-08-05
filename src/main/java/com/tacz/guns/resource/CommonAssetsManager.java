@@ -29,6 +29,8 @@ import com.tacz.guns.resource.pojo.data.gun.ExtraDamage;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.gun.Ignite;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
+import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
+import com.tacz.guns.industry.recipe.IndustryProcessManager;
 import com.tacz.guns.resource.pojo.data.loot.LootTableInjection;
 import com.tacz.guns.resource.serialize.*;
 import com.tacz.guns.util.AllowAttachmentTagMatcher;
@@ -66,6 +68,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
             .registerTypeAdapter(CommonAttachmentIndex.class, new CommonAttachmentIndexSerializer())
             .registerTypeAdapter(CommonBlockIndex.class, new CommonBlockIndexSerializer())
             .registerTypeAdapter(TabConfig.class, new TabConfig.Deserializer())
+            .registerTypeAdapter(IndustryProcessDefinition.class, new IndustryProcessDefinition.Deserializer())
             .create();
 
     private final List<INetworkCacheReloadListener> listeners = new ArrayList<>();
@@ -84,6 +87,8 @@ public class CommonAssetsManager implements ICommonResourceProvider {
      * modified and third-party packs can opt in independently.
      */
     private CommonDataManager<GunFeedDefinition> gunFeed;
+    /** Create recipe projection synchronised for the built-in REI bridge. */
+    private CommonDataManager<IndustryProcessDefinition> industryProcess;
     private RecipeFilterManager recipeFilterManager;
     private LootInjectionManager lootInjectionManager;
 
@@ -115,6 +120,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         // 与其他模组的配方（实测原版 1585 条），不按 "type" 过滤会全部灌进
         // TableRecipe 的解析器刷屏，并被原样打进同步包。详见该类的注释。
         tableRecipe = register(new TableRecipeManager());
+        industryProcess = register(new IndustryProcessManager());
 
         listeners.forEach(register);
         register.accept((sharedState, backgroundExecutor, barrier, gameExecutor) -> {
@@ -249,6 +255,17 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     @Override
     public Set<Map.Entry<Identifier, GunFeedDefinition>> getAllGunFeedDefinitions() {
         return gunFeed == null ? Collections.emptySet() : gunFeed.getAllData().entrySet();
+    }
+
+    @Override
+    @Nullable
+    public IndustryProcessDefinition getIndustryProcess(Identifier processId) {
+        return industryProcess == null ? null : industryProcess.getData(processId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, IndustryProcessDefinition>> getAllIndustryProcesses() {
+        return industryProcess == null ? Collections.emptySet() : industryProcess.getAllData().entrySet();
     }
 
     @Override

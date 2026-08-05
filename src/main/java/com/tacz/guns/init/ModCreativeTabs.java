@@ -37,6 +37,7 @@ public class ModCreativeTabs {
                 AmmoBoxItem.fillItemCategory(output);
                 output.accept(ModItems.CARBON_DUST);
                 output.accept(ModItems.SULFUR_DUST);
+                output.accept(ModItems.CINNABAR_DUST);
                 output.accept(ModItems.PIG_IRON_INGOT);
                 output.accept(ModItems.HIGH_CARBON_STEEL_INGOT);
                 output.accept(ModItems.HIGH_CARBON_STEEL_PLATE);

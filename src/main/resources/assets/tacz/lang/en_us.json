@@ -360,5 +360,13 @@
   "tooltip.tacz.industry.unconfigured": "Unconfigured industrial component",
   "tooltip.tacz.industry.platform": "Platform: %s",
   "tooltip.tacz.industry.part": "Part: %s",
-  "tooltip.tacz.gun_smith_table.non_consumed": "Tooling (not consumed)"
+  "tooltip.tacz.gun_smith_table.non_consumed": "Tooling (not consumed)",
+  "item.tacz.cinnabar_dust": "Cinnabar Dust",
+  "rei.tacz.industry.milling": "Industrial Milling",
+  "rei.tacz.industry.crushing": "Industrial Crushing",
+  "rei.tacz.industry.heated_mixing": "Heated Blast-Furnace Mixing",
+  "rei.tacz.industry.superheated_mixing": "Superheated Blast-Furnace Mixing",
+  "rei.tacz.industry.pressing": "Mechanical Pressing",
+  "rei.tacz.industry.compacting": "Compacting Assembly",
+  "rei.tacz.industry.processing_time": "%s ticks"
 }

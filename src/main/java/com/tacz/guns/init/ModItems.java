@@ -29,6 +29,7 @@ public class ModItems {
     // TACZ items, while their processing recipes live in data/tacz/recipe/create.
     public static Item CARBON_DUST = register("carbon_dust", new Item(itemProps("carbon_dust")));
     public static Item SULFUR_DUST = register("sulfur_dust", new Item(itemProps("sulfur_dust")));
+    public static Item CINNABAR_DUST = register("cinnabar_dust", new Item(itemProps("cinnabar_dust")));
     public static Item PIG_IRON_INGOT = register("pig_iron_ingot", new Item(itemProps("pig_iron_ingot")));
     public static Item HIGH_CARBON_STEEL_INGOT = register("high_carbon_steel_ingot", new Item(itemProps("high_carbon_steel_ingot")));
     public static Item HIGH_CARBON_STEEL_PLATE = register("high_carbon_steel_plate", new Item(itemProps("high_carbon_steel_plate")));

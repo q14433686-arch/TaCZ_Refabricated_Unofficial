@@ -10,6 +10,7 @@ import com.tacz.guns.resource.pojo.data.block.BlockData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
+import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.luaj.vm2.LuaTable;
@@ -52,6 +53,10 @@ public interface ICommonResourceProvider {
     @Nullable GunFeedDefinition getGunFeedDefinition(Identifier gunId);
 
     Set<Map.Entry<Identifier, GunFeedDefinition>> getAllGunFeedDefinitions();
+
+    @Nullable IndustryProcessDefinition getIndustryProcess(Identifier processId);
+
+    Set<Map.Entry<Identifier, IndustryProcessDefinition>> getAllIndustryProcesses();
 
     Set<String> getAttachmentTags(Identifier registryName);
 

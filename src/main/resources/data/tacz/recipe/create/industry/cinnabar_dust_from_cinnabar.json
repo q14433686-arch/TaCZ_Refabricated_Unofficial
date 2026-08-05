@@ -1,0 +1,11 @@
+{
+  "fabric:load_conditions": [
+    {"condition": "fabric:all_mods_loaded", "values": ["create"]}
+  ],
+  "type": "create:milling",
+  "ingredient": "minecraft:cinnabar",
+  "processing_time": 160,
+  "results": [
+    {"id": "tacz:cinnabar_dust", "count": 2}
+  ]
+}

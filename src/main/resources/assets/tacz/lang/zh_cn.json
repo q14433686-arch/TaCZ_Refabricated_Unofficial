@@ -361,5 +361,13 @@
   "tooltip.tacz.industry.unconfigured": "未配置的工业组件",
   "tooltip.tacz.industry.platform": "平台：%s",
   "tooltip.tacz.industry.part": "部件：%s",
-  "tooltip.tacz.gun_smith_table.non_consumed": "工装（不消耗）"
+  "tooltip.tacz.gun_smith_table.non_consumed": "工装（不消耗）",
+  "item.tacz.cinnabar_dust": "朱砂粉",
+  "rei.tacz.industry.milling": "工业研磨",
+  "rei.tacz.industry.crushing": "工业粉碎",
+  "rei.tacz.industry.heated_mixing": "加热鼓风炉搅拌",
+  "rei.tacz.industry.superheated_mixing": "炽热鼓风炉搅拌",
+  "rei.tacz.industry.pressing": "机械冲压",
+  "rei.tacz.industry.compacting": "压实装配",
+  "rei.tacz.industry.processing_time": "%s tick"
 }

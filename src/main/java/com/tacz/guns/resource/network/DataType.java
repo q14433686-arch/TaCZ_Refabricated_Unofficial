@@ -21,4 +21,7 @@ public enum DataType {
      * gun pack can opt in without changing its original data file or licence.
      */
     GUN_FEED,
+
+    /** Data-driven projection of TACZ Create Fly processes for client recipe viewers. */
+    INDUSTRY_PROCESS,
 }

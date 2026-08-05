@@ -76,6 +76,13 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
     /** 旧目录的扫描器。与父类那个 {@code recipe} 扫描器<b>并列</b>使用，不是替代。 */
     private static final FileToIdConverter LEGACY_CONVERTER = FileToIdConverter.json(LEGACY_RECIPE_DIRECTORY);
 
+    /** Data-driven terminal assembly declarations, keyed directly by gun id. */
+    private static final FileToIdConverter INDUSTRY_ASSEMBLY_CONVERTER = FileToIdConverter.json("industry/assembly");
+    /** Maps Create batch-ammo recipes to legacy gun-table recipe ids to remove in CREATE_FLY. */
+    private static final FileToIdConverter INDUSTRY_AMMO_CONVERTER = FileToIdConverter.json("industry/ammo");
+    private Map<Identifier, JsonElement> industryAssemblies = Map.of();
+    private Map<Identifier, JsonElement> industryAmmoReplacements = Map.of();
+
     public TableRecipeManager() {
         // 目录与原版数据包配方一致（data/<ns>/recipe），这是上游的既定布局，不能改。
         // 旧枪包的 data/<ns>/recipes（复数）由下面的 prepare() 覆写额外扫描。
@@ -100,6 +107,11 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
     @NotNull
     @Override
     protected Map<Identifier, JsonElement> prepare(ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+        // Assembly definitions are intentionally separate from recipe/ so they
+        // never enter vanilla RecipeManager or the table-recipe candidate map.
+        // Their id is the target recipe id (industry/assembly/gun/ak47 -> tacz:gun/ak47).
+        industryAssemblies = ResourceScanner.scanDirectory(pResourceManager, INDUSTRY_ASSEMBLY_CONVERTER, CommonAssetsManager.GSON);
+        industryAmmoReplacements = ResourceScanner.scanDirectory(pResourceManager, INDUSTRY_AMMO_CONVERTER, CommonAssetsManager.GSON);
         Map<Identifier, JsonElement> legacy =
                 ResourceScanner.scanDirectory(pResourceManager, LEGACY_CONVERTER, CommonAssetsManager.GSON);
         Map<Identifier, JsonElement> current = super.prepare(pResourceManager, pProfiler);
@@ -135,7 +147,9 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         // recipes. The resulting map is used for both the local data map and
         // network cache, so server validation and every client recipe viewer
         // agree on the same assembly requirements.
-        Map<Identifier, JsonElement> profileRecipes = IndustrialRecipeTransformer.transform(ours);
+        Map<Identifier, JsonElement> profileRecipes = IndustrialRecipeTransformer.transform(
+                ours, industryAssemblies, industryAmmoReplacements
+        );
         // 父类会用这一份（且仅这一份）同时构建 dataMap 与 networkCache。
         super.apply(profileRecipes, pResourceManager, pProfiler);
     }

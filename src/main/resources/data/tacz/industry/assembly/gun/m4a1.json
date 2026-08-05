@@ -1,0 +1,15 @@
+{
+  "platform": "ar",
+  "blueprint_display_name": "item.tacz.gun_blueprint.ar",
+  "components": [
+    {"kind": "receiver", "display_name": "item.tacz.gun_component.ar_receiver"},
+    {"kind": "bolt", "display_name": "item.tacz.gun_component.ar_bolt"},
+    {"kind": "barrel", "display_name": "item.tacz.gun_component.ar_barrel"},
+    {"kind": "trigger", "display_name": "item.tacz.gun_component.ar_trigger"},
+    {"kind": "recoil", "display_name": "item.tacz.gun_component.ar_recoil"}
+  ],
+  "materials": [
+    {"item": "minecraft:oak_planks", "count": 2},
+    {"item": "minecraft:leather", "count": 2}
+  ]
+}

@@ -10,8 +10,9 @@
   "type": "create:compacting",
   "ingredients": [
     "create:brass_nugget",
-    "minecraft:redstone",
-    "tacz:sulfur_dust"
+    "tacz:cinnabar_dust",
+    "tacz:sulfur_dust",
+    "minecraft:redstone"
   ],
   "results": [
     {

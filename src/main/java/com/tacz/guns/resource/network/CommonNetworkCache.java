@@ -19,6 +19,7 @@ import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import com.tacz.guns.resource.pojo.data.block.BlockData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
+import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
 import com.tacz.guns.util.AllowAttachmentTagMatcher;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,8 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     public Map<Identifier, CommonBlockIndex> blockIndex = new HashMap<>();
     /** Per-gun physical-feed declarations synchronised with gun-pack data. */
     public Map<Identifier, GunFeedDefinition> gunFeed = new HashMap<>();
+    /** TACZ-owned Create Fly process graph for REI when Create Fly lacks its own REI plugin. */
+    public Map<Identifier, IndustryProcessDefinition> industryProcess = new HashMap<>();
     public Map<Identifier, Set<String>> attachmentTags = new HashMap<>();
     public Map<Identifier, Set<String>> allowAttachmentTags = new HashMap<>();
 
@@ -138,6 +141,16 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     }
 
     @Override
+    public @Nullable IndustryProcessDefinition getIndustryProcess(Identifier processId) {
+        return industryProcess.get(processId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, IndustryProcessDefinition>> getAllIndustryProcesses() {
+        return industryProcess.entrySet();
+    }
+
+    @Override
     public Set<String> getAttachmentTags(Identifier registryName) {
         return attachmentTags.get(registryName);
     }
@@ -155,6 +168,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
         attachmentIndex.clear();
         blockIndex.clear();
         gunFeed.clear();
+        industryProcess.clear();
         recipeFilter.clear();
         tableRecipe.clear();
         blockData.clear();
@@ -245,6 +259,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                     case RECIPES -> tableRecipe.put(entry.getKey(), parse(entry.getValue(), TableRecipe.class));
                     case BLOCK_DATA -> blockData.put(entry.getKey(), parse(entry.getValue(), BlockData.class));
                     case GUN_FEED -> gunFeed.put(entry.getKey(), parse(entry.getValue(), GunFeedDefinition.class));
+                    case INDUSTRY_PROCESS -> industryProcess.put(entry.getKey(), parse(entry.getValue(), IndustryProcessDefinition.class));
                 }
             } catch (IllegalArgumentException | JsonParseException exception) {
                 GunMod.LOGGER.warn("Failed to parse data from network for {} with id {}", type, entry.getKey(), exception);
