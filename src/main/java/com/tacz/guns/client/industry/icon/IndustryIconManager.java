@@ -53,6 +53,8 @@ public final class IndustryIconManager extends SimplePreparableReloadListener<Li
 
     private static final Identifier RELOAD_ID = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "industry_icon_manager");
     private static final FileToIdConverter ICON_FILES = FileToIdConverter.json("industry_icons");
+    /** Mapping JSON stores model-style ids such as {@code tacz_extra:item/ammo_9mm}. */
+    private static final FileToIdConverter TEXTURE_FILES = new FileToIdConverter("textures", ".png");
 
     /** Entries are sorted once at reload time, so render-time lookup is deterministic and allocation-free. */
     private volatile List<LoadedEntry> entries = List.of();
@@ -120,6 +122,16 @@ public final class IndustryIconManager extends SimplePreparableReloadListener<Li
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Convert a model-style icon id to the direct PNG path required by
+     * {@code RenderTypes.entityTranslucent}. Vanilla item models perform this
+     * conversion through their texture atlas; our flat special renderer bypasses
+     * that model path and must do it explicitly.
+     */
+    static Identifier toTextureFile(Identifier iconTextureId) {
+        return TEXTURE_FILES.idToFile(iconTextureId);
     }
 
     /**
@@ -304,23 +316,24 @@ public final class IndustryIconManager extends SimplePreparableReloadListener<Li
                 return null;
             }
             Identifier item = Identifier.tryParse(source.item);
-            Identifier texture = Identifier.tryParse(source.texture);
-            if (item == null || texture == null) {
+            Identifier logicalTexture = Identifier.tryParse(source.texture);
+            if (item == null || logicalTexture == null) {
                 GunMod.LOGGER.warn("Ignoring industry icon entry {} in {}: invalid item or texture id", source.id, file);
                 return null;
             }
-            Identifier textureFile = Identifier.fromNamespaceAndPath(
-                    texture.getNamespace(), "textures/" + texture.getPath() + ".png"
-            );
+            Identifier textureFile = toTextureFile(logicalTexture);
             if (manager.getResource(textureFile).isEmpty()) {
                 // Ignore a bad external reference so the renderer reaches its
                 // normal TACZ fallback instead of submitting a missing texture.
-                GunMod.LOGGER.warn("Ignoring industry icon entry {} in {}: texture {} is absent", source.id, file, texture);
+                GunMod.LOGGER.warn("Ignoring industry icon entry {} in {}: texture {} ({}) is absent",
+                        source.id, file, logicalTexture, textureFile);
                 return null;
             }
             IconMatch match = source.match == null ? new IconMatch() : source.match;
             String stableId = source.id + "@" + file + "#" + packLayer + ":" + index;
-            return new LoadedEntry(stableId, item, texture, source.priority, match, match.specificity());
+            // RenderTypes consumes a direct resource path (textures/...png),
+            // not the concise model-style id stored in the mapping JSON.
+            return new LoadedEntry(stableId, item, textureFile, source.priority, match, match.specificity());
         }
 
         private boolean matches(IconIdentity identity) {

@@ -65,7 +65,9 @@ public final class IndustryIconRenderer implements BuiltinItemRendererRegistry.D
     private static Identifier fallbackTexture(ItemStack stack) {
         Identifier itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
         if (itemId != null && GunMod.MOD_ID.equals(itemId.getNamespace())) {
-            return Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "item/" + itemId.getPath());
+            return IndustryIconManager.toTextureFile(
+                    Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "item/" + itemId.getPath())
+            );
         }
         return MissingTextureAtlasSprite.getLocation();
     }

@@ -10,6 +10,7 @@
   "mixins": [
     "common.AbstractMinecartMixin",
     "common.BundlePacketMixin",
+    "compat.create.IngredientTextContentMixin",
     "common.EntityMixin",
     "common.LivingEntityMixin",
     "common.LootTableMixin",
