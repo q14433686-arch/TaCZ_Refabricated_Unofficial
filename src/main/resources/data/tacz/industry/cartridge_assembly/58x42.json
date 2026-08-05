@@ -1,0 +1,13 @@
+{
+  "case_item": "tacz:cartridge_case",
+  "case_caliber": "58x42",
+  "case_display_name": "item.tacz.cartridge_case.58x42",
+  "projectile_item": "tacz:projectile_core",
+  "projectile_caliber": "58x42",
+  "projectile_type": "fmj",
+  "projectile_display_name": "item.tacz.projectile_core.58x42_fmj",
+  "primer_item": "tacz:primer",
+  "propellant_item": "tacz:industrial_propellant",
+  "ammo": "tacz:58x42",
+  "count": 1
+}
