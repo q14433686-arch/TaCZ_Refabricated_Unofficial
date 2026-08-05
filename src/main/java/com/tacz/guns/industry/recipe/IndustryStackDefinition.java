@@ -106,22 +106,17 @@ public final class IndustryStackDefinition {
         } else if (item == ModItems.MODERN_KINETIC_GUN) {
             // A Create sequenced-assembly result is a real configured TACZ
             // gun, not merely the generic registry item with a GunId string.
-            // Rebuild the same initialized empty state the gun table uses so
-            // REI renders the correct model/name and never advertises an
-            // UNKNOWN fire mode representative.
+            // forceBuild is intentional here: this branch already knows the
+            // result item is MODERN_KINETIC_GUN, while REI can register before
+            // the synchronized gun index is ready. It still writes the same
+            // empty-gun data components that the normal builder would write.
             Identifier gunId = Identifier.tryParse(string(custom, "GunId"));
             stack = GunItemBuilder.create()
                     .setId(gunId)
                     .setFireMode(fireMode(custom))
                     .setAmmoCount(integer(custom, "GunCurrentAmmoCount", 0))
                     .setAmmoInBarrel(bool(custom, "HasBulletInBarrel", false))
-                    .build();
-            if (stack.isEmpty()) {
-                // During a very early client reload the gun index may not be
-                // available yet. Retain a truthful fallback icon rather than
-                // dropping the output slot entirely.
-                stack = new ItemStack(item, count);
-            }
+                    .forceBuild();
         } else {
             stack = new ItemStack(item, count);
         }
