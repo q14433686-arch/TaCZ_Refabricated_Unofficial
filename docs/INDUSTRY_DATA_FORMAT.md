@@ -161,7 +161,9 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 
 成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。
 
-最终批量装弹需要多种部件，因此使用 `create:compacting` 的**工作盆**输入，而不是部署器/置物台。重复的 `forge:partial_nbt` 输入会按其物品集合和 NBT 语义合并成带数量的 Create `SizedIngredient`；这使一批多发弹药不会因为 JSON 中重复列出同一种 NBT 部件而超过 Create Fly 的九种 Basin 输入上限。
+最终装弹需要多种部件，因此使用 `create:compacting` 的**工作盆**输入，而不是部署器/置物台。当前内置四条弹药线采用“**一循环一发**”：一枚 NBT 弹壳、一枚 NBT 弹头、一枚底火和一份推进药，只写四种输入并输出一发弹药。这样不依赖 Create 对重复 custom ingredient 的内部聚合行为，也不会撞到九种 Basin 输入上限；自动化吞吐由持续投料和连续循环获得。
+
+`PartialNBTIngredient` / `StrictNBTIngredient` 仍定义了语义相等性，使内容包确实需要重复同类 NBT 输入时可以被 Create 合并为 `SizedIngredient` 数量；但内置最终装弹不再把这项内部行为当作配方能否加载的前提。
 
 若某种弹药已交给 Create 工艺生产，可在：
 

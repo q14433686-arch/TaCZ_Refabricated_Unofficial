@@ -103,9 +103,9 @@ public class PartialNBTIngredient implements CustomIngredient {
      * This is functional recipe identity, not merely a convenience for maps.
      * Create Fly's Basin {@code SizedIngredient.of(...)} coalesces repeated
      * ingredients only through {@link Object#equals(Object)}. Without this,
-     * four equal NBT case requirements decode as four distinct objects; large
-     * ammunition batches then exceed Create's nine-ingredient Basin limit even
-     * though they are only two ingredient kinds with different counts.
+     * equal NBT requirements decode as distinct objects, so any content pack
+     * that repeats a component can exceed Create's nine-ingredient Basin limit
+     * despite using only a few semantic ingredient kinds.
      */
     @Override
     public boolean equals(Object object) {

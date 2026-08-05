@@ -24,81 +24,6 @@
     {
       "fabric:type": "forge:partial_nbt",
       "items": [
-        "tacz:cartridge_case"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.9mm",
-        "CartridgeCaliber": "9mm"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:cartridge_case"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.9mm",
-        "CartridgeCaliber": "9mm"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:cartridge_case"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.9mm",
-        "CartridgeCaliber": "9mm"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.9mm_fmj",
-        "CartridgeCaliber": "9mm",
-        "ProjectileType": "fmj"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.9mm_fmj",
-        "CartridgeCaliber": "9mm",
-        "ProjectileType": "fmj"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.9mm_fmj",
-        "CartridgeCaliber": "9mm",
-        "ProjectileType": "fmj"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
         "tacz:projectile_core"
       ],
       "nbt": {
@@ -116,7 +41,6 @@
   "results": [
     {
       "id": "tacz:ammo",
-      "count": 32,
       "components": {
         "minecraft:custom_data": {
           "AmmoId": "tacz:9mm"

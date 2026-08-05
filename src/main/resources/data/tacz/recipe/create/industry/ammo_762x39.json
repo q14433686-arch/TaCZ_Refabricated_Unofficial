@@ -24,131 +24,6 @@
     {
       "fabric:type": "forge:partial_nbt",
       "items": [
-        "tacz:cartridge_case"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.762x39",
-        "CartridgeCaliber": "762x39"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:cartridge_case"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.762x39",
-        "CartridgeCaliber": "762x39"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:cartridge_case"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.762x39",
-        "CartridgeCaliber": "762x39"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:cartridge_case"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.762x39",
-        "CartridgeCaliber": "762x39"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:cartridge_case"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.762x39",
-        "CartridgeCaliber": "762x39"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.762x39_fmj",
-        "CartridgeCaliber": "762x39",
-        "ProjectileType": "fmj"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.762x39_fmj",
-        "CartridgeCaliber": "762x39",
-        "ProjectileType": "fmj"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.762x39_fmj",
-        "CartridgeCaliber": "762x39",
-        "ProjectileType": "fmj"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.762x39_fmj",
-        "CartridgeCaliber": "762x39",
-        "ProjectileType": "fmj"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.762x39_fmj",
-        "CartridgeCaliber": "762x39",
-        "ProjectileType": "fmj"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
         "tacz:projectile_core"
       ],
       "nbt": {
@@ -166,7 +41,6 @@
   "results": [
     {
       "id": "tacz:ammo",
-      "count": 20,
       "components": {
         "minecraft:custom_data": {
           "AmmoId": "tacz:762x39"

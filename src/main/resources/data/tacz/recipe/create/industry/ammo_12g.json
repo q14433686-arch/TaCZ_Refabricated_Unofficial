@@ -24,133 +24,6 @@
     {
       "fabric:type": "forge:partial_nbt",
       "items": [
-        "tacz:cartridge_case"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.12g",
-        "CartridgeCaliber": "12g"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:cartridge_case"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.12g",
-        "CartridgeCaliber": "12g"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:cartridge_case"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.12g",
-        "CartridgeCaliber": "12g"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.12g_shot",
-        "CartridgeCaliber": "12g",
-        "ProjectileType": "shot"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.12g_shot",
-        "CartridgeCaliber": "12g",
-        "ProjectileType": "shot"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.12g_shot",
-        "CartridgeCaliber": "12g",
-        "ProjectileType": "shot"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.12g_shot",
-        "CartridgeCaliber": "12g",
-        "ProjectileType": "shot"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.12g_shot",
-        "CartridgeCaliber": "12g",
-        "ProjectileType": "shot"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.12g_shot",
-        "CartridgeCaliber": "12g",
-        "ProjectileType": "shot"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.12g_shot",
-        "CartridgeCaliber": "12g",
-        "ProjectileType": "shot"
-      }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
         "tacz:projectile_core"
       ],
       "nbt": {
@@ -162,14 +35,12 @@
       }
     },
     "tacz:primer",
-    "tacz:industrial_propellant",
     "tacz:industrial_propellant"
   ],
   "heat_requirement": "heated",
   "results": [
     {
       "id": "tacz:ammo",
-      "count": 12,
       "components": {
         "minecraft:custom_data": {
           "AmmoId": "tacz:12g"
