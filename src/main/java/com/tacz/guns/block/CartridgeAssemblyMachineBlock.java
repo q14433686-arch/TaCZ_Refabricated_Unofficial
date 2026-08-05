@@ -10,6 +10,7 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -61,14 +62,20 @@ public final class CartridgeAssemblyMachineBlock extends BaseEntityBlock {
         return RenderShape.MODEL;
     }
 
+    /**
+     * 26.2 removed the old {@code onRemove(..., newState, movedByPiston)}
+     * hook. {@link Block#destroy(LevelAccessor, BlockPos, BlockState)} is the
+     * lifecycle point invoked while the old block entity still exists, so use
+     * it to preserve machine contents on any block destruction path.
+     */
     @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!level.isClientSide() && !state.is(newState.getBlock())) {
-            BlockEntity blockEntity = level.getBlockEntity(pos);
+    public void destroy(LevelAccessor level, BlockPos pos, BlockState state) {
+        if (level instanceof Level actualLevel && !actualLevel.isClientSide()) {
+            BlockEntity blockEntity = actualLevel.getBlockEntity(pos);
             if (blockEntity instanceof CartridgeAssemblyMachineBlockEntity machine) {
-                Containers.dropContents(level, pos, machine);
+                Containers.dropContents(actualLevel, pos, machine);
             }
         }
-        super.onRemove(state, level, pos, newState, movedByPiston);
+        super.destroy(level, pos, state);
     }
 }
