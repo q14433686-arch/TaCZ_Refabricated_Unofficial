@@ -47,6 +47,14 @@ public final class IndustryStackDefinition {
         return components.deepCopy();
     }
 
+    public IndustryStackDefinition withCount(int newCount) {
+        return new IndustryStackDefinition(itemId, tag, newCount, components);
+    }
+
+    public String identityKey() {
+        return (tag ? "#" : "") + itemId + "|" + components;
+    }
+
     public ItemStack createStack() {
         if (tag) {
             return ItemStack.EMPTY;
@@ -59,11 +67,17 @@ public final class IndustryStackDefinition {
         JsonObject custom = components.has("minecraft:custom_data") && components.get("minecraft:custom_data").isJsonObject()
                 ? components.getAsJsonObject("minecraft:custom_data") : new JsonObject();
         ItemStack stack;
-        if (item == ModItems.GUN_COMPONENT || item == ModItems.GUN_BLUEPRINT) {
-            stack = (item == ModItems.GUN_COMPONENT ? IndustryItemBuilder.component() : IndustryItemBuilder.blueprint())
-                    .platform(string(custom, "IndustryPlatform"))
+        if (item == ModItems.GUN_COMPONENT || item == ModItems.GUN_BLUEPRINT
+                || item == ModItems.CARTRIDGE_CASE || item == ModItems.PROJECTILE_CORE) {
+            IndustryItemBuilder builder = item == ModItems.GUN_COMPONENT ? IndustryItemBuilder.component()
+                    : item == ModItems.GUN_BLUEPRINT ? IndustryItemBuilder.blueprint()
+                    : item == ModItems.CARTRIDGE_CASE ? IndustryItemBuilder.cartridgeCase()
+                    : IndustryItemBuilder.projectileCore();
+            stack = builder.platform(string(custom, "IndustryPlatform"))
                     .kind(string(custom, "IndustryPartKind"))
                     .displayNameKey(string(custom, "IndustryDisplayName"))
+                    .caliber(string(custom, "CartridgeCaliber"))
+                    .projectileType(string(custom, "ProjectileType"))
                     .build();
         } else if (item == ModItems.AMMO) {
             stack = AmmoItemBuilder.create()

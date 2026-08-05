@@ -368,5 +368,15 @@
   "rei.tacz.industry.superheated_mixing": "Superheated Blast-Furnace Mixing",
   "rei.tacz.industry.pressing": "Mechanical Pressing",
   "rei.tacz.industry.compacting": "Compacting Assembly",
-  "rei.tacz.industry.processing_time": "%s ticks"
+  "rei.tacz.industry.processing_time": "%s ticks",
+  "item.tacz.cartridge_case.9mm": "9 mm Cartridge Case Blank",
+  "item.tacz.cartridge_case.556x45": "5.56×45 Cartridge Case Blank",
+  "item.tacz.cartridge_case.762x39": "7.62×39 Cartridge Case Blank",
+  "item.tacz.cartridge_case.12g": "12G Hull Blank",
+  "item.tacz.projectile_core.9mm_fmj": "9 mm FMJ Projectile Core",
+  "item.tacz.projectile_core.556x45_fmj": "5.56×45 FMJ Projectile Core",
+  "item.tacz.projectile_core.762x39_fmj": "7.62×39 FMJ Projectile Core",
+  "item.tacz.projectile_core.12g_shot": "12G Shot Payload Blank",
+  "tooltip.tacz.industry.caliber": "Calibre: %s",
+  "tooltip.tacz.industry.projectile_type": "Projectile Type: %s"
 }

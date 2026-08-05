@@ -10,6 +10,8 @@ public final class IndustryItemBuilder {
     private String platform = "";
     private String kind = "";
     private String displayName = "";
+    private String caliber = "";
+    private String projectileType = "";
 
     private IndustryItemBuilder(Item item) {
         this.item = item;
@@ -21,6 +23,14 @@ public final class IndustryItemBuilder {
 
     public static IndustryItemBuilder blueprint() {
         return new IndustryItemBuilder(ModItems.GUN_BLUEPRINT);
+    }
+
+    public static IndustryItemBuilder cartridgeCase() {
+        return new IndustryItemBuilder(ModItems.CARTRIDGE_CASE);
+    }
+
+    public static IndustryItemBuilder projectileCore() {
+        return new IndustryItemBuilder(ModItems.PROJECTILE_CORE);
     }
 
     public IndustryItemBuilder platform(String platform) {
@@ -38,12 +48,24 @@ public final class IndustryItemBuilder {
         return this;
     }
 
+    public IndustryItemBuilder caliber(String caliber) {
+        this.caliber = caliber == null ? "" : caliber;
+        return this;
+    }
+
+    public IndustryItemBuilder projectileType(String projectileType) {
+        this.projectileType = projectileType == null ? "" : projectileType;
+        return this;
+    }
+
     public ItemStack build() {
         ItemStack stack = new ItemStack(item);
         if (stack.getItem() instanceof IndustryItemDataAccessor accessor) {
             accessor.setPlatform(stack, platform);
             accessor.setPartKind(stack, kind);
             accessor.setDisplayNameKey(stack, displayName);
+            accessor.setCartridgeCaliber(stack, caliber);
+            accessor.setProjectileType(stack, projectileType);
         }
         return stack;
     }

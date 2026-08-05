@@ -56,7 +56,8 @@ public class REISubtype {
     public static EntryComparator<ItemStack> getIndustrySubtype() {
         return (context, stack) -> {
             if (stack.getItem() instanceof IndustryItemDataAccessor part) {
-                return java.util.Objects.hash(part.getPlatform(stack), part.getPartKind(stack));
+                return java.util.Objects.hash(part.getPlatform(stack), part.getPartKind(stack),
+                        part.getCartridgeCaliber(stack), part.getProjectileType(stack));
             }
             return 0;
         };

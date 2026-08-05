@@ -369,5 +369,15 @@
   "rei.tacz.industry.superheated_mixing": "炽热鼓风炉搅拌",
   "rei.tacz.industry.pressing": "机械冲压",
   "rei.tacz.industry.compacting": "压实装配",
-  "rei.tacz.industry.processing_time": "%s tick"
+  "rei.tacz.industry.processing_time": "%s tick",
+  "item.tacz.cartridge_case.9mm": "9 mm 弹壳坯",
+  "item.tacz.cartridge_case.556x45": "5.56×45 弹壳坯",
+  "item.tacz.cartridge_case.762x39": "7.62×39 弹壳坯",
+  "item.tacz.cartridge_case.12g": "12G 弹壳坯",
+  "item.tacz.projectile_core.9mm_fmj": "9 mm FMJ 弹头坯",
+  "item.tacz.projectile_core.556x45_fmj": "5.56×45 FMJ 弹头坯",
+  "item.tacz.projectile_core.762x39_fmj": "7.62×39 FMJ 弹头坯",
+  "item.tacz.projectile_core.12g_shot": "12G 铅丸装药坯",
+  "tooltip.tacz.industry.caliber": "口径：%s",
+  "tooltip.tacz.industry.projectile_type": "弹头类型：%s"
 }

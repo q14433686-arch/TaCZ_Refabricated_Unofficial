@@ -1,0 +1,26 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:pressing",
+  "ingredient": "create:brass_ingot",
+  "results": [
+    {
+      "id": "tacz:cartridge_case",
+      "count": 4,
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "case",
+          "IndustryDisplayName": "item.tacz.cartridge_case.762x39",
+          "CartridgeCaliber": "762x39"
+        }
+      }
+    }
+  ]
+}

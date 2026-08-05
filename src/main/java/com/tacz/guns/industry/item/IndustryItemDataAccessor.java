@@ -17,6 +17,10 @@ public interface IndustryItemDataAccessor {
     String PLATFORM_TAG = "IndustryPlatform";
     String PART_KIND_TAG = "IndustryPartKind";
     String DISPLAY_NAME_TAG = "IndustryDisplayName";
+    /** A case fixes the cartridge family/calibre used by the final loading recipe. */
+    String CARTRIDGE_CALIBER_TAG = "CartridgeCaliber";
+    /** A projectile core fixes construction/type (FMJ, shot, etc.) independently of count. */
+    String PROJECTILE_TYPE_TAG = "ProjectileType";
 
     default String getPlatform(ItemStack stack) {
         return ItemNbtUtils.getTag(stack).getStringOr(PLATFORM_TAG, "");
@@ -40,6 +44,22 @@ public interface IndustryItemDataAccessor {
 
     default void setDisplayNameKey(ItemStack stack, String key) {
         ItemNbtUtils.updateTag(stack, tag -> tag.putString(DISPLAY_NAME_TAG, key == null ? "" : key));
+    }
+
+    default String getCartridgeCaliber(ItemStack stack) {
+        return ItemNbtUtils.getTag(stack).getStringOr(CARTRIDGE_CALIBER_TAG, "");
+    }
+
+    default void setCartridgeCaliber(ItemStack stack, String caliber) {
+        ItemNbtUtils.updateTag(stack, tag -> tag.putString(CARTRIDGE_CALIBER_TAG, caliber == null ? "" : caliber));
+    }
+
+    default String getProjectileType(ItemStack stack) {
+        return ItemNbtUtils.getTag(stack).getStringOr(PROJECTILE_TYPE_TAG, "");
+    }
+
+    default void setProjectileType(ItemStack stack, String projectileType) {
+        ItemNbtUtils.updateTag(stack, tag -> tag.putString(PROJECTILE_TYPE_TAG, projectileType == null ? "" : projectileType));
     }
 
     default boolean isConfiguredIndustryPart(ItemStack stack) {

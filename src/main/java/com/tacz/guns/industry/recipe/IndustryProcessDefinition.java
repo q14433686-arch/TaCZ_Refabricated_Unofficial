@@ -87,16 +87,44 @@ public final class IndustryProcessDefinition {
         if (inputs.isEmpty() || outputs.isEmpty()) {
             return null;
         }
-        return new IndustryProcessDefinition(machine, inputs, outputs, integer(recipe, "processing_time", 0));
+        return new IndustryProcessDefinition(machine, compressInputs(inputs), outputs, integer(recipe, "processing_time", 0));
+    }
+
+    private static List<IndustryStackDefinition> compressInputs(List<IndustryStackDefinition> inputs) {
+        java.util.LinkedHashMap<String, IndustryStackDefinition> compressed = new java.util.LinkedHashMap<>();
+        for (IndustryStackDefinition input : inputs) {
+            IndustryStackDefinition previous = compressed.get(input.identityKey());
+            compressed.put(input.identityKey(), previous == null ? input : previous.withCount(previous.getCount() + input.getCount()));
+        }
+        return List.copyOf(compressed.values());
     }
 
     private static IndustryStackDefinition parseInput(JsonElement input) {
         if (input.isJsonPrimitive() && input.getAsJsonPrimitive().isString()) {
             return IndustryStackDefinition.fromInput(input.getAsString());
         }
-        // Object/custom ingredients require a semantic adapter. They are left
-        // to the native Create viewer, while direct ids and #item_tag strings
-        // are represented losslessly by the TACZ REI bridge.
+        if (input.isJsonObject()) {
+            JsonObject object = input.getAsJsonObject();
+            // Direct Fabric form of TACZ's registered forge:partial_nbt
+            // ingredient. It is exactly what the calibre/type-specific ammo
+            // loading recipes use, and can be rendered faithfully in REI.
+            if ("forge:partial_nbt".equals(string(object, "fabric:type"))
+                    && object.has("items") && object.get("items").isJsonArray()
+                    && object.getAsJsonArray("items").size() > 0) {
+                JsonElement first = object.getAsJsonArray("items").get(0);
+                if (first.isJsonPrimitive() && first.getAsJsonPrimitive().isString()) {
+                    com.google.gson.JsonObject components = new com.google.gson.JsonObject();
+                    if (object.has("nbt") && object.get("nbt").isJsonObject()) {
+                        components.add("minecraft:custom_data", object.getAsJsonObject("nbt").deepCopy());
+                    }
+                    net.minecraft.resources.Identifier id = net.minecraft.resources.Identifier.tryParse(first.getAsString());
+                    return id == null ? null : new IndustryStackDefinition(id, false, 1, components);
+                }
+            }
+        }
+        // Object/custom ingredients not explicitly understood here are left to
+        // the native Create viewer; showing a wrong representative is worse
+        // than omitting an unsupported bridge entry.
         return null;
     }
 

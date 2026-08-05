@@ -42,11 +42,16 @@ public class ModCreativeTabs {
                 output.accept(ModItems.HIGH_CARBON_STEEL_INGOT);
                 output.accept(ModItems.HIGH_CARBON_STEEL_PLATE);
                 output.accept(ModItems.INDUSTRIAL_PROPELLANT);
-                output.accept(ModItems.CARTRIDGE_CASE);
                 output.accept(ModItems.PRIMER);
-                output.accept(ModItems.PROJECTILE_CORE);
                 // Representative samples make the generic NBT-backed items
                 // discoverable in creative without exposing every platform.
+                output.accept(IndustryItemBuilder.cartridgeCase()
+                        .platform("ammunition").kind("case")
+                        .displayNameKey("item.tacz.cartridge_case.9mm").caliber("9mm").build());
+                output.accept(IndustryItemBuilder.projectileCore()
+                        .platform("ammunition").kind("projectile")
+                        .displayNameKey("item.tacz.projectile_core.9mm_fmj")
+                        .caliber("9mm").projectileType("fmj").build());
                 output.accept(IndustryItemBuilder.blueprint()
                         .platform("ak").kind("blueprint")
                         .displayNameKey("item.tacz.gun_blueprint.ak").build());

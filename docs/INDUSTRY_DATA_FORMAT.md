@@ -31,8 +31,8 @@ TACZ 会读取该目录中的 `create:*` 配方，向客户端同步一份工艺
 
 这条同步通道存在的原因是 Create Fly 当前 26.2 构建在其 `build.gradle` 中排除了 REI source set；JEI 能显示 Create 工艺而 REI 没有原生类别。TACZ 的桥接层不调用 Create 内部 Java API，只从实际配方 JSON 构建 REI 的输入/输出树。
 
-- 直接物品 ID 与 `#item_tag` 都可显示；
-- 复杂 Create 自定义 ingredient 仍建议由内容包同时提供一个直接物品显示入口；
+- 直接物品 ID、`#item_tag` 与 TACZ 注册的 `forge:partial_nbt` 都可显示；
+- 其他复杂 Create 自定义 ingredient 仍建议由内容包同时提供一个直接物品显示入口；
 - `fabric:load_conditions` 必须保留，避免没有 Create Fly 时让原版 RecipeManager 解析未知 `create:*` 类型。
 
 ---
@@ -77,6 +77,8 @@ data/tacz/industry/assembly/gun/ak47.json
 3. JSON 声明的额外材料。
 
 这依赖现有的 `forge:partial_nbt` Fabric 兼容实现，因此不是“只看数量”的配方：AK 机匣、AR 机匣和 Glock 枪身即使使用同一个注册物品 ID，也会按 custom data 严格区分。
+
+弹药同样如此：`tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方，不需要再在 Java 里加口径分支。
 
 ---
 

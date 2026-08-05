@@ -34,9 +34,11 @@ public class ModItems {
     public static Item HIGH_CARBON_STEEL_INGOT = register("high_carbon_steel_ingot", new Item(itemProps("high_carbon_steel_ingot")));
     public static Item HIGH_CARBON_STEEL_PLATE = register("high_carbon_steel_plate", new Item(itemProps("high_carbon_steel_plate")));
     public static Item INDUSTRIAL_PROPELLANT = register("industrial_propellant", new Item(itemProps("industrial_propellant")));
-    public static Item CARTRIDGE_CASE = register("cartridge_case", new Item(itemProps("cartridge_case")));
+    /** Calibre-bearing case; custom data defines exactly which cartridge family it can become. */
+    public static Item CARTRIDGE_CASE = register("cartridge_case", new IndustryTaggedItem(itemProps("cartridge_case").stacksTo(16)));
     public static Item PRIMER = register("primer", new Item(itemProps("primer")));
-    public static Item PROJECTILE_CORE = register("projectile_core", new Item(itemProps("projectile_core")));
+    /** Projectile type and calibre are explicit custom data, not inferred from material count. */
+    public static Item PROJECTILE_CORE = register("projectile_core", new IndustryTaggedItem(itemProps("projectile_core").stacksTo(16)));
 
     /** Platform/kind are stored in custom data so one registry item serves all gun packs. */
     public static Item GUN_COMPONENT = register("gun_component", new IndustryTaggedItem(itemProps("gun_component").stacksTo(16)));

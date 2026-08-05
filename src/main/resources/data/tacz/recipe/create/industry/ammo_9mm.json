@@ -9,17 +9,110 @@
   ],
   "type": "create:compacting",
   "ingredients": [
-    "tacz:cartridge_case",
-    "tacz:cartridge_case",
-    "tacz:cartridge_case",
-    "tacz:cartridge_case",
-    "tacz:projectile_core",
-    "tacz:projectile_core",
-    "tacz:projectile_core",
-    "tacz:projectile_core",
+    {
+      "fabric:type": "forge:partial_nbt",
+      "items": [
+        "tacz:cartridge_case"
+      ],
+      "nbt": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "case",
+        "IndustryDisplayName": "item.tacz.cartridge_case.9mm",
+        "CartridgeCaliber": "9mm"
+      }
+    },
+    {
+      "fabric:type": "forge:partial_nbt",
+      "items": [
+        "tacz:cartridge_case"
+      ],
+      "nbt": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "case",
+        "IndustryDisplayName": "item.tacz.cartridge_case.9mm",
+        "CartridgeCaliber": "9mm"
+      }
+    },
+    {
+      "fabric:type": "forge:partial_nbt",
+      "items": [
+        "tacz:cartridge_case"
+      ],
+      "nbt": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "case",
+        "IndustryDisplayName": "item.tacz.cartridge_case.9mm",
+        "CartridgeCaliber": "9mm"
+      }
+    },
+    {
+      "fabric:type": "forge:partial_nbt",
+      "items": [
+        "tacz:cartridge_case"
+      ],
+      "nbt": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "case",
+        "IndustryDisplayName": "item.tacz.cartridge_case.9mm",
+        "CartridgeCaliber": "9mm"
+      }
+    },
+    {
+      "fabric:type": "forge:partial_nbt",
+      "items": [
+        "tacz:projectile_core"
+      ],
+      "nbt": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "projectile",
+        "IndustryDisplayName": "item.tacz.projectile_core.9mm_fmj",
+        "CartridgeCaliber": "9mm",
+        "ProjectileType": "fmj"
+      }
+    },
+    {
+      "fabric:type": "forge:partial_nbt",
+      "items": [
+        "tacz:projectile_core"
+      ],
+      "nbt": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "projectile",
+        "IndustryDisplayName": "item.tacz.projectile_core.9mm_fmj",
+        "CartridgeCaliber": "9mm",
+        "ProjectileType": "fmj"
+      }
+    },
+    {
+      "fabric:type": "forge:partial_nbt",
+      "items": [
+        "tacz:projectile_core"
+      ],
+      "nbt": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "projectile",
+        "IndustryDisplayName": "item.tacz.projectile_core.9mm_fmj",
+        "CartridgeCaliber": "9mm",
+        "ProjectileType": "fmj"
+      }
+    },
+    {
+      "fabric:type": "forge:partial_nbt",
+      "items": [
+        "tacz:projectile_core"
+      ],
+      "nbt": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "projectile",
+        "IndustryDisplayName": "item.tacz.projectile_core.9mm_fmj",
+        "CartridgeCaliber": "9mm",
+        "ProjectileType": "fmj"
+      }
+    },
     "tacz:primer",
     "tacz:industrial_propellant"
   ],
+  "heat_requirement": "heated",
   "results": [
     {
       "id": "tacz:ammo",
@@ -30,6 +123,5 @@
         }
       }
     }
-  ],
-  "heat_requirement": "heated"
+  ]
 }
