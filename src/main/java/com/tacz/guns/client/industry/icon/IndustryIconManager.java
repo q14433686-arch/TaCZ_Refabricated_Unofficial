@@ -257,8 +257,45 @@ public final class IndustryIconManager extends SimplePreparableReloadListener<Li
         }
     }
 
-    private record LoadedEntry(String stableId, Identifier item, Identifier texture, int priority, IconMatch match,
-                               int specificity) {
+    /**
+     * Public only because this type appears in the generic superclass signature.
+     * Its constructor and all state remain private implementation details; icon
+     * mappings are exposed through {@link IndustryIconManager#resolveTexture(ItemStack)} instead.
+     */
+    public static final class LoadedEntry {
+        private final String stableId;
+        private final Identifier item;
+        private final Identifier texture;
+        private final int priority;
+        private final IconMatch match;
+        private final int specificity;
+
+        private LoadedEntry(String stableId, Identifier item, Identifier texture, int priority, IconMatch match,
+                            int specificity) {
+            this.stableId = stableId;
+            this.item = item;
+            this.texture = texture;
+            this.priority = priority;
+            this.match = match;
+            this.specificity = specificity;
+        }
+
+        private String stableId() {
+            return stableId;
+        }
+
+        private Identifier texture() {
+            return texture;
+        }
+
+        private int priority() {
+            return priority;
+        }
+
+        private int specificity() {
+            return specificity;
+        }
+
         @Nullable
         private static LoadedEntry create(@Nullable IconEntry source, Identifier file, int packLayer, int index,
                                           ResourceManager manager) {
