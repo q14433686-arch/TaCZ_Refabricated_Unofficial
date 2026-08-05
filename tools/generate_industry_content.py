@@ -506,6 +506,82 @@ def load_cartridges() -> list[dict[str, Any]]:
     return entries
 
 
+def furniture_blank_tag() -> dict[str, Any]:
+    return {
+        "IndustryPlatform": "machining",
+        "IndustryPartKind": "furniture_blank",
+        "IndustryDisplayName": "item.tacz.gun_component_blank.furniture",
+    }
+
+
+def normalized_materials(materials: list[dict[str, Any]]) -> list[tuple[str, int]]:
+    counts: dict[str, int] = {}
+    for material in materials:
+        counts[material["item"]] = counts.get(material["item"], 0) + material["count"]
+    return sorted(counts.items())
+
+
+def furniture_signature(materials: list[dict[str, Any]]) -> str:
+    return "__".join(f"{item.replace(':', '_').replace('/', '_')}_{count}" for item, count in normalized_materials(materials))
+
+
+def furniture_kit_tag(platform: dict[str, Any]) -> dict[str, Any]:
+    name = platform["platform"]
+    return {
+        "IndustryPlatform": name,
+        "IndustryPartKind": "furniture_kit",
+        "IndustryDisplayName": f"item.tacz.gun_component.{name}_furniture_kit",
+    }
+
+
+def platform_display_label(platform: dict[str, Any], language: str) -> str:
+    name = platform["blueprint"]["name_zh" if language == "zh_cn" else "name_en"]
+    suffixes = (" 工业装配模板", " 平台装配模板") if language == "zh_cn" else (
+        " Industrial Blueprint", " Platform Assembly Blueprint"
+    )
+    for suffix in suffixes:
+        if name.endswith(suffix):
+            return name[:-len(suffix)]
+    return humanize_slug(platform["slug"])
+
+
+def generated_furniture_blank_files(platforms: list[dict[str, Any]]) -> dict[Path, Any]:
+    """Material-only multi-slot fabrication of neutral exterior/furniture blanks.
+
+    Identical raw material signatures deliberately share one neutral result.
+    A separate blueprint-held Deployer calibration below chooses the actual
+    firearm exterior kit, so no duplicate mechanical-crafting inputs claim
+    different platform outputs.
+    """
+    files: dict[Path, Any] = {}
+    for platform in platforms:
+        materials = platform["materials"]
+        if not materials:
+            continue
+        signature = furniture_signature(materials)
+        path = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_furniture_blank_{signature}.json"
+        if path in files:
+            continue
+        ordered = normalized_materials(materials)
+        expanded = [item for item, count in ordered for _ in range(count)]
+        if len(expanded) > 9:
+            raise ValueError(f"{platform['slug']}: furniture material grid exceeds mechanical-crafter 3×3 capacity")
+        symbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        symbol_by_item = {item: symbols[index] for index, (item, _) in enumerate(ordered)}
+        slots = [symbol_by_item[item] for item in expanded]
+        rows = ["".join((slots + [" "] * 9)[index:index + 3]) for index in range(0, 9, 3)]
+        while rows and rows[-1].strip() == "":
+            rows.pop()
+        files[path] = {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:mechanical_crafting",
+            "key": {symbol_by_item[item]: item for item, _ in ordered},
+            "pattern": rows,
+            "result": output("tacz:gun_component_blank", furniture_blank_tag()),
+        }
+    return files
+
+
 def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
     slug = platform["slug"]
     name = platform["platform"]
@@ -568,6 +644,17 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
         )
         component_entries.append({"structural": structural, "kind": final_kind, "display_name": component_key})
 
+    if materials:
+        furniture_blank = partial("tacz:gun_component_blank", furniture_blank_tag())
+        held_blueprint = partial("tacz:gun_blueprint", {
+            "IndustryPlatform": name,
+            "IndustryPartKind": "blueprint",
+            "IndustryDisplayName": blueprint_key,
+        })
+        result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_furniture_{name}.json"] = deploying(
+            furniture_blank, held_blueprint, output("tacz:gun_component", furniture_kit_tag(platform))
+        )
+
     result[RESOURCE_ROOT / f"data/tacz/industry/assembly/gun/{slug}.json"] = {
         "platform": name,
         "blueprint_display_name": blueprint_key,
@@ -614,16 +701,18 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             "results": ["$result"],
         })
         sequence.append(press_fit_step())
-    # Furniture/polymer/external materials are supplied by their own Deployer
-    # stations, then one final press performs the retained final fit.
-    for material in materials:
-        for _ in range(material["count"]):
-            sequence.append({
-                "type": "create:deploying",
-                "target": "$ingredient",
-                "ingredient": material["item"],
-                "results": ["$result"],
-            })
+    # Raw wood/leather/glass/brass is intentionally *not* deployed into a
+    # finished receiver one item at a time. It first becomes a neutral
+    # furniture blank in a Mechanical Crafter, then this named kit is
+    # blueprint-calibrated and installed as one meaningful subassembly.
+    if materials:
+        furniture = furniture_kit_tag(platform)
+        sequence.append({
+            "type": "create:deploying",
+            "target": "$ingredient",
+            "ingredient": partial("tacz:gun_component", furniture),
+            "results": ["$result"],
+        })
     sequence.append(press_fit_step())
 
     result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/assemble_{slug}.json"] = {
@@ -1016,6 +1105,11 @@ def language_entries(platform: dict[str, Any], language: str) -> dict[str, str]:
         die_label = part.get("die_name_zh" if chinese else "die_name_en")
         entries[component_key] = label
         entries[die_key] = die_label if die_label else (f"{label}模具" if chinese else f"{label} Die")
+    if platform["materials"]:
+        label = platform_display_label(platform, language)
+        entries[f"item.tacz.gun_component.{name}_furniture_kit"] = (
+            f"{label} 外装套件" if chinese else f"{label} Exterior Kit"
+        )
     entries[f"item.tacz.gun_component.incomplete_{platform['slug']}"] = platform["incomplete"]["name_zh" if chinese else "name_en"]
     return entries
 
@@ -1105,8 +1199,9 @@ def run(write: bool) -> int:
     cartridges = load_cartridges()
     blueprint_acquisition = load_blueprint_acquisition()
     expected: dict[Path, Any] = {}
-    english: dict[str, str] = {}
-    chinese: dict[str, str] = {}
+    english: dict[str, str] = {"item.tacz.gun_component_blank.furniture": "Neutral Exterior / Furniture Blank"}
+    chinese: dict[str, str] = {"item.tacz.gun_component_blank.furniture": "中性外装套件毛坯"}
+    expected.update(generated_furniture_blank_files(platforms))
     for platform in platforms:
         expected.update(generated_platform_files(platform))
         english.update(language_entries(platform, "en_us"))

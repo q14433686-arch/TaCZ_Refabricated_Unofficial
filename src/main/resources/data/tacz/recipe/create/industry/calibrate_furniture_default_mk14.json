@@ -1,0 +1,46 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component_blank"
+    ],
+    "nbt": {
+      "IndustryPlatform": "machining",
+      "IndustryPartKind": "furniture_blank",
+      "IndustryDisplayName": "item.tacz.gun_component_blank.furniture"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_mk14",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_mk14"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_mk14",
+          "IndustryPartKind": "furniture_kit",
+          "IndustryDisplayName": "item.tacz.gun_component.default_mk14_furniture_kit"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

@@ -172,31 +172,17 @@
     {
       "type": "create:deploying",
       "target": "$ingredient",
-      "ingredient": "minecraft:leather",
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": "minecraft:leather",
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": "minecraft:leather",
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": "create:brass_sheet",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_vector45",
+          "IndustryPartKind": "furniture_kit",
+          "IndustryDisplayName": "item.tacz.gun_component.default_vector45_furniture_kit"
+        }
+      },
       "results": [
         "$result"
       ]

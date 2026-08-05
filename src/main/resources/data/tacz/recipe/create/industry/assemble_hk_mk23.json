@@ -172,15 +172,17 @@
     {
       "type": "create:deploying",
       "target": "$ingredient",
-      "ingredient": "minecraft:leather",
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": "minecraft:leather",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_hk_mk23",
+          "IndustryPartKind": "furniture_kit",
+          "IndustryDisplayName": "item.tacz.gun_component.default_hk_mk23_furniture_kit"
+        }
+      },
       "results": [
         "$result"
       ]

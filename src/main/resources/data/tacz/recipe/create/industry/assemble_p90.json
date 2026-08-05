@@ -172,47 +172,17 @@
     {
       "type": "create:deploying",
       "target": "$ingredient",
-      "ingredient": "minecraft:leather",
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": "minecraft:leather",
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": "minecraft:leather",
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": "minecraft:leather",
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": "minecraft:glass_pane",
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": "minecraft:glass_pane",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component"
+        ],
+        "nbt": {
+          "IndustryPlatform": "p90",
+          "IndustryPartKind": "furniture_kit",
+          "IndustryDisplayName": "item.tacz.gun_component.p90_furniture_kit"
+        }
+      },
       "results": [
         "$result"
       ]

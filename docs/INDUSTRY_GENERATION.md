@@ -56,11 +56,15 @@ tools/industry/platforms/<gun recipe slug>.json
 data/tacz/recipe/create/industry/blueprint_<platform>.json
 data/tacz/recipe/create/industry/calibrate_component_die_<platform>_*.json
 data/tacz/recipe/create/industry/form_component_<platform>_*.json
+data/tacz/recipe/create/industry/form_furniture_blank_<material signature>.json
+data/tacz/recipe/create/industry/calibrate_furniture_<platform>.json
 data/tacz/recipe/create/industry/assemble_<slug>.json
 data/tacz/industry/assembly/gun/<slug>.json
 assets/tacz/lang/en_us.json
 assets/tacz/lang/zh_cn.json
 ```
+
+原始木料/皮革/黄铜/玻璃不会再逐件出现在终端枪线里。生成器按材料签名只生成一次真正的机械合成器“中性外装毛坯”工艺；同平台蓝图由部署器保留地把它校准为命名外装套件，最终总装只安装该套件并冲压压合。相同原料输入永远只产同一种中性毛坯，平台差异来自真实蓝图，避免“安装石头”式无语义步骤和相同输入产出不同平台件的碰撞。
 
 终端成枪结果还会写入 `IndustryAssemblyPlatform` 与 `IndustryAssemblyRecipe` 来源标记；工业回收站只接受这种实际终端产物，避免把旧工作台/战利品枪的同名 `GunId` 变成工业零件捷径。每个 assembly 声明同时保存五个结构毛坯类别，供回收站以固定 3/5 回收率返还可再次成型的毛坯。
 
