@@ -23,6 +23,7 @@ PLATFORM_ROOT = REPO / "tools/industry/platforms"
 CARTRIDGE_MANIFEST = REPO / "tools/industry/cartridges.json"
 DEFAULT_GUN_POLICY = REPO / "tools/industry/default_gun_policy.json"
 MACHINE_MANIFEST = REPO / "tools/industry/machines.json"
+BLUEPRINT_ACQUISITION_MANIFEST = REPO / "tools/industry/blueprint_acquisition.json"
 DEFAULT_AMMO_RECIPE_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/ammo"
 DEFAULT_AMMO_INDEX_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/index/ammo"
 DEFAULT_GUN_DATA_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/data/guns"
@@ -31,6 +32,23 @@ CREATE_CONDITIONS = [{"condition": "fabric:all_mods_loaded", "values": ["create"
 STRUCTURAL_ORDER = ("receiver", "bolt", "barrel", "trigger", "recoil")
 # 26.2 serialises minecraft:max_stack_size in the inclusive [1, 99] range.
 MAX_ITEM_STACK_SIZE = 99
+# (minimum neutral case/projectile blank mass, minimum industrial propellant)
+# Curated from the bundled cartridge's ballistic role; the legacy material
+# recipe is checked separately as a per-round regression floor.
+BALANCE_TIER_MINIMUMS = {
+    "rimfire": (1, 1),
+    "pistol": (1, 2),
+    "personal_defense": (1, 2),
+    "intermediate_rifle": (1, 3),
+    "full_rifle": (2, 4),
+    "lever_magnum": (2, 5),
+    "magnum_handgun": (2, 3),
+    "magnum_rifle": (3, 6),
+    "anti_material": (4, 8),
+    "shotgun": (2, 3),
+    "explosive": (3, 2),
+    "rocket": (4, 6),
+}
 
 
 def read_json(path: Path) -> Any:
@@ -176,6 +194,32 @@ def load_platforms() -> list[dict[str, Any]]:
     return platforms
 
 
+def load_blueprint_acquisition() -> dict[str, Any]:
+    """Validate independent blueprint discovery sources.
+
+    Trade files use the new 26.2 ``villager_trade`` registry and are attached
+    to the vanilla weaponsmith level-5 trade tag. Chest distribution uses the
+    existing TACZ loot-injection layer, keeping default gun-pack art untouched.
+    """
+    data = read_json(BLUEPRINT_ACQUISITION_MANIFEST)
+    if not isinstance(data, dict):
+        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: expected object")
+    trade = data.get("weaponsmith")
+    cache = data.get("world_cache")
+    if not isinstance(trade, dict) or not isinstance(cache, dict):
+        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: missing weaponsmith/world_cache object")
+    for key in ("emerald_base", "emerald_per_material", "max_uses", "xp"):
+        if not isinstance(trade.get(key), int) or trade[key] < 1:
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: weaponsmith.{key} must be a positive int")
+    chance = cache.get("chance")
+    tables = cache.get("loot_tables")
+    if not isinstance(chance, (int, float)) or not 0 < float(chance) <= 1:
+        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: world_cache.chance must be in (0, 1]")
+    if not isinstance(tables, list) or not tables or not all(isinstance(value, str) and value for value in tables):
+        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: world_cache.loot_tables must be non-empty ids")
+    return data
+
+
 def humanize_slug(slug: str) -> str:
     return slug.replace("_", " ").upper()
 
@@ -284,6 +328,29 @@ def default_ammo_recipe_ids() -> set[str]:
     return ids
 
 
+def default_ammo_recipe_stats() -> dict[str, dict[str, int]]:
+    """Read legacy batch size and powder demand as a balance regression floor."""
+    stats: dict[str, dict[str, int]] = {}
+    for recipe_path in sorted(DEFAULT_AMMO_RECIPE_ROOT.glob("*.json")):
+        recipe = read_json(recipe_path)
+        result = recipe.get("result") if isinstance(recipe, dict) else None
+        if not isinstance(result, dict) or result.get("type") != "ammo":
+            continue
+        ammo = result.get("id")
+        output_count = result.get("count", 1)
+        if not isinstance(ammo, str) or not ammo or not isinstance(output_count, int) or output_count < 1:
+            raise ValueError(f"{recipe_path}: invalid default ammo result")
+        gunpowder = 0
+        materials = recipe.get("materials", [])
+        if isinstance(materials, list):
+            for material in materials:
+                if isinstance(material, dict) and material.get("item") == "#c:gunpowders":
+                    count = material.get("count", 1)
+                    gunpowder += count if isinstance(count, int) and count > 0 else 1
+        stats[ammo] = {"legacy_output_count": output_count, "legacy_gunpowder": gunpowder}
+    return stats
+
+
 def default_ammo_stack_limits() -> dict[str, int]:
     """Read the effective 26.2 stack cap for each bundled loose-ammo output.
 
@@ -333,7 +400,8 @@ def load_cartridges() -> list[dict[str, Any]]:
     if not isinstance(entries, list) or not entries:
         raise ValueError(f"{CARTRIDGE_MANIFEST}: 'calibers' must be a non-empty list")
     required = (
-        "id", "ammo", "projectile_type", "eject_case",
+        "id", "ammo", "projectile_type", "eject_case", "balance_tier",
+        "batch_count", "propellant_count", "case_blank_count", "projectile_blank_count",
         "case_name_en", "case_name_zh", "projectile_name_en", "projectile_name_zh",
         "case_die_name_en", "case_die_name_zh", "projectile_die_name_en", "projectile_die_name_zh",
     )
@@ -348,8 +416,13 @@ def load_cartridges() -> list[dict[str, Any]]:
             if key == "eject_case":
                 if not isinstance(value, bool):
                     raise ValueError(f"{CARTRIDGE_MANIFEST}: caliber '{entry.get('id', '?')}' must declare boolean eject_case")
+            elif key in {"batch_count", "propellant_count", "case_blank_count", "projectile_blank_count"}:
+                if not isinstance(value, int) or not 1 <= value <= MAX_ITEM_STACK_SIZE:
+                    raise ValueError(f"{CARTRIDGE_MANIFEST}: caliber '{entry.get('id', '?')}' needs {key} in [1, {MAX_ITEM_STACK_SIZE}]")
             elif not isinstance(value, str) or not value:
                 raise ValueError(f"{CARTRIDGE_MANIFEST}: caliber missing '{key}'")
+        if entry["balance_tier"] not in BALANCE_TIER_MINIMUMS:
+            raise ValueError(f"{CARTRIDGE_MANIFEST}: unknown balance_tier '{entry['balance_tier']}'")
         if entry["id"] in seen_ids or entry["ammo"] in seen_ammo:
             raise ValueError(f"{CARTRIDGE_MANIFEST}: duplicate caliber id or ammo id")
         seen_ids.add(entry["id"])
@@ -401,12 +474,35 @@ def load_cartridges() -> list[dict[str, Any]]:
             details.append("non-default ammo: " + ", ".join(sorted(unexpected)))
         raise ValueError(f"{CARTRIDGE_MANIFEST}: full default-pack cartridge coverage failed ({'; '.join(details)})")
     stack_limits = default_ammo_stack_limits()
-    if set(stack_limits) != seen_ammo:
-        raise ValueError(f"{CARTRIDGE_MANIFEST}: default ammo stack-limit index coverage failed")
+    recipe_stats = default_ammo_recipe_stats()
+    if set(stack_limits) != seen_ammo or set(recipe_stats) != seen_ammo:
+        raise ValueError(f"{CARTRIDGE_MANIFEST}: default ammo stack-limit/legacy-stat coverage failed")
     # Derived authoring metadata: it is emitted to the actual case/projectile
     # ItemStack components, never written back into the source manifest.
     for entry in entries:
-        entry["_product_stack_limit"] = stack_limits[entry["ammo"]]
+        ammo = entry["ammo"]
+        batch = entry["batch_count"]
+        cap = stack_limits[ammo]
+        stats = recipe_stats[ammo]
+        mass_minimum, tier_propellant_minimum = BALANCE_TIER_MINIMUMS[entry["balance_tier"]]
+        if entry["case_blank_count"] < mass_minimum or entry["projectile_blank_count"] < mass_minimum:
+            raise ValueError(f"{CARTRIDGE_MANIFEST}: {entry['id']} blank mass is below its ballistic tier")
+        if entry["propellant_count"] < tier_propellant_minimum:
+            raise ValueError(f"{CARTRIDGE_MANIFEST}: {entry['id']} propellant is below its ballistic tier")
+        if batch > cap:
+            raise ValueError(f"{CARTRIDGE_MANIFEST}: {entry['id']} batch exceeds final ammo stack cap")
+        if batch > stats["legacy_output_count"]:
+            raise ValueError(f"{CARTRIDGE_MANIFEST}: {entry['id']} batch exceeds its legacy material batch")
+        # Retain at least the old per-round gunpowder burden. Higher tier
+        # cartridges deliberately exceed this floor; they never become cheaper
+        # merely because final assembly is now industrial and batched.
+        minimum_propellant = max(1, -(-batch * stats["legacy_gunpowder"] // stats["legacy_output_count"]))
+        if entry["propellant_count"] < minimum_propellant:
+            raise ValueError(
+                f"{CARTRIDGE_MANIFEST}: {entry['id']} propellant_count is below legacy per-round floor "
+                f"({entry['propellant_count']} < {minimum_propellant})"
+            )
+        entry["_product_stack_limit"] = cap
     return entries
 
 
@@ -482,6 +578,16 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
 
     initial = parts[0]
     initial_component_key = f"item.tacz.gun_component.{name}_{initial['kind']}"
+    def press_fit_step() -> dict[str, Any]:
+        # A real Mechanical Press station: no second workpiece is introduced,
+        # but the current receiver assembly must physically pass under a press
+        # before the next Deployer can continue the sequential recipe.
+        return {
+            "type": "create:pressing",
+            "ingredient": "$ingredient",
+            "results": ["$result"],
+        }
+
     sequence: list[dict[str, Any]] = [{
         "type": "create:deploying",
         "target": "$ingredient",
@@ -492,7 +598,10 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
         }),
         "results": ["$result"],
         "keep_held_item": True,
-    }]
+    }, press_fit_step()]
+    # Every major receiver/bolt/barrel/fire-control/recoil joint is both fed by
+    # a Deployer and mechanically press-fit. This makes the displayed sequence
+    # an actual belt line of alternating stations instead of a row of hands.
     for part in parts[1:]:
         sequence.append({
             "type": "create:deploying",
@@ -504,6 +613,9 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             }),
             "results": ["$result"],
         })
+        sequence.append(press_fit_step())
+    # Furniture/polymer/external materials are supplied by their own Deployer
+    # stations, then one final press performs the retained final fit.
     for material in materials:
         for _ in range(material["count"]):
             sequence.append({
@@ -512,6 +624,7 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
                 "ingredient": material["item"],
                 "results": ["$result"],
             })
+    sequence.append(press_fit_step())
 
     result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/assemble_{slug}.json"] = {
         "fabric:load_conditions": CREATE_CONDITIONS,
@@ -539,6 +652,75 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
         "sequence": sequence,
     }
     return result
+
+
+def blueprint_custom_data(platform: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "IndustryPlatform": platform["platform"],
+        "IndustryPartKind": "blueprint",
+        "IndustryDisplayName": platform["blueprint"]["display_name"],
+    }
+
+
+def snbt_compound(values: dict[str, Any]) -> str:
+    """Small deterministic SNBT writer for blueprint custom-data strings."""
+    parts: list[str] = []
+    for key, value in values.items():
+        if not isinstance(value, str):
+            raise ValueError(f"SNBT blueprint custom data expects strings, got {key}")
+        parts.append(f"{key}:{json.dumps(value, ensure_ascii=False)}")
+    return "{" + ",".join(parts) + "}"
+
+
+def generated_blueprint_acquisition_files(platforms: list[dict[str, Any]], acquisition: dict[str, Any]) -> dict[Path, Any]:
+    """Generate chest-cache and new data-driven weaponsmith blueprint routes."""
+    files: dict[Path, Any] = {}
+    trade = acquisition["weaponsmith"]
+    cache = acquisition["world_cache"]
+    trade_ids: list[str] = []
+    loot_entries: list[dict[str, Any]] = []
+    for platform in platforms:
+        name = platform["platform"]
+        custom = blueprint_custom_data(platform)
+        material_weight = sum(material["count"] for material in platform["materials"])
+        emerald_cost = min(64, trade["emerald_base"] + material_weight * trade["emerald_per_material"])
+        trade_id = f"tacz:weaponsmith/5/blueprint_{name}"
+        trade_ids.append(trade_id)
+        files[RESOURCE_ROOT / f"data/tacz/villager_trade/weaponsmith/5/blueprint_{name}.json"] = {
+            "wants": {"id": "minecraft:emerald", "count": float(emerald_cost)},
+            "additional_wants": {"id": "minecraft:book"},
+            "gives": output("tacz:gun_blueprint", custom),
+            "max_uses": float(trade["max_uses"]),
+            "reputation_discount": 0.05,
+            "xp": float(trade["xp"]),
+        }
+        loot_entries.append({
+            "type": "minecraft:item",
+            "name": "tacz:gun_blueprint",
+            "functions": [{
+                # The TACZ loot-injection compatibility layer maps this old
+                # spelling to 26.2 set_custom_data before direct-codec parse.
+                "function": "minecraft:set_nbt",
+                "tag": snbt_compound(custom),
+            }],
+        })
+
+    # 26.2 selects a bounded random subset from this tag using vanilla's
+    # data-driven weaponsmith level-5 trade_set. Appending is deliberate: it
+    # preserves all vanilla master trades instead of replacing a profession.
+    files[RESOURCE_ROOT / "data/minecraft/tags/villager_trade/weaponsmith/level_5.json"] = {
+        "replace": False,
+        "values": trade_ids,
+    }
+    files[RESOURCE_ROOT / "data/tacz/tacz_loot_injectors/industrial_blueprint_cache.json"] = {
+        "loot_tables": cache["loot_tables"],
+        "pools": [{
+            "rolls": 1,
+            "conditions": [{"condition": "minecraft:random_chance", "chance": cache["chance"]}],
+            "entries": loot_entries,
+        }],
+    }
+    return files
 
 
 def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
@@ -642,29 +824,78 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
     files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_projectile_die_{caliber_id}.json"] = deploying(
         projectile_blank_die, calibration_tool, output("tacz:press_die", projectile_die)
     )
-    files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_case_{caliber_id}.json"] = deploying(
-        case_stock, partial("tacz:press_die", case_die), output("tacz:cartridge_case", case, stack_limit)
-    )
-
-    payloads = caliber.get("projectile_payloads", [])
-    if payloads:
-        incomplete_key = f"item.tacz.projectile_blank.incomplete_{caliber_id}"
-        sequence: list[dict[str, Any]] = []
-        for payload in payloads:
-            for _ in range(payload["count"]):
-                sequence.append({
-                    "type": "create:deploying",
-                    "target": "$ingredient",
-                    "ingredient": payload["item"],
-                    "results": ["$result"],
-                })
-        sequence.append({
+    case_blank_count = caliber["case_blank_count"]
+    projectile_blank_count = caliber["projectile_blank_count"]
+    if case_blank_count == 1:
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_case_{caliber_id}.json"] = deploying(
+            case_stock, partial("tacz:press_die", case_die), output("tacz:cartridge_case", case, stack_limit)
+        )
+    else:
+        incomplete_case_key = f"item.tacz.cartridge_case_blank.incomplete_{caliber_id}"
+        case_sequence: list[dict[str, Any]] = []
+        # A heavy/long case physically consumes additional neutral brass
+        # blanks through separate Deployer stations before final die forming.
+        for _ in range(case_blank_count - 1):
+            case_sequence.append({
+                "type": "create:deploying",
+                "target": "$ingredient",
+                "ingredient": case_stock,
+                "results": ["$result"],
+            })
+        case_sequence.append({
             "type": "create:deploying",
             "target": "$ingredient",
-            "ingredient": partial("tacz:press_die", projectile_die),
+            "ingredient": partial("tacz:press_die", case_die),
             "results": ["$result"],
             "keep_held_item": True,
         })
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_case_{caliber_id}.json"] = {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:sequenced_assembly",
+            "ingredient": case_stock,
+            "transitional_item": output("tacz:cartridge_case_blank", {
+                "IndustryPlatform": "ammunition",
+                "IndustryPartKind": f"incomplete_case_{caliber_id}",
+                "IndustryDisplayName": incomplete_case_key,
+                "CartridgeCaliber": caliber_id,
+                "CartridgeAmmoId": ammo_id,
+            }, stack_limit),
+            "result": output("tacz:cartridge_case", case, stack_limit),
+            "sequence": case_sequence,
+        }
+
+    payloads = caliber.get("projectile_payloads", [])
+    projectile_sequence: list[dict[str, Any]] = []
+    # Projectile mass follows the ballistic tier too. The initial blank is the
+    # sole moving workpiece; extra blanks are inserted one at a time.
+    for _ in range(projectile_blank_count - 1):
+        projectile_sequence.append({
+            "type": "create:deploying",
+            "target": "$ingredient",
+            "ingredient": projectile_stock,
+            "results": ["$result"],
+        })
+    for payload in payloads:
+        for _ in range(payload["count"]):
+            projectile_sequence.append({
+                "type": "create:deploying",
+                "target": "$ingredient",
+                "ingredient": payload["item"],
+                "results": ["$result"],
+            })
+    projectile_sequence.append({
+        "type": "create:deploying",
+        "target": "$ingredient",
+        "ingredient": partial("tacz:press_die", projectile_die),
+        "results": ["$result"],
+        "keep_held_item": True,
+    })
+    if len(projectile_sequence) == 1:
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json"] = deploying(
+            projectile_stock, partial("tacz:press_die", projectile_die), output("tacz:projectile_core", projectile, stack_limit)
+        )
+    else:
+        incomplete_key = f"item.tacz.projectile_blank.incomplete_{caliber_id}"
         files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json"] = {
             "fabric:load_conditions": CREATE_CONDITIONS,
             "type": "create:sequenced_assembly",
@@ -677,12 +908,8 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
                 "CartridgeAmmoId": ammo_id,
             }, stack_limit),
             "result": output("tacz:projectile_core", projectile, stack_limit),
-            "sequence": sequence,
+            "sequence": projectile_sequence,
         }
-    else:
-        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json"] = deploying(
-            projectile_stock, partial("tacz:press_die", projectile_die), output("tacz:projectile_core", projectile, stack_limit)
-        )
 
     if caliber["eject_case"]:
         # CartridgeAmmoId is emitted on newly fired cases for stack-limit
@@ -705,7 +932,11 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
         "primer_item": "tacz:primer",
         "propellant_item": "tacz:industrial_propellant",
         "ammo": caliber["ammo"],
-        "count": 1,
+        "count": caliber["batch_count"],
+        "case_count": caliber["batch_count"],
+        "projectile_count": caliber["batch_count"],
+        "primer_count": caliber["batch_count"],
+        "propellant_count": caliber["propellant_count"],
         "eject_case": caliber["eject_case"],
     }
     if caliber["eject_case"]:
@@ -729,7 +960,12 @@ def cartridge_language_entries(caliber: dict[str, Any], language: str) -> dict[s
     }
     if caliber["eject_case"]:
         entries[f"item.tacz.cartridge_case.spent_{caliber_id}"] = caliber[f"spent_case_name_{suffix}"]
-    if caliber.get("projectile_payloads"):
+    if caliber["case_blank_count"] > 1:
+        name = caliber[f"case_name_{suffix}"]
+        entries[f"item.tacz.cartridge_case_blank.incomplete_{caliber_id}"] = (
+            f"未完成的{name}" if suffix == "zh" else f"Incomplete {name}"
+        )
+    if caliber.get("projectile_payloads") or caliber["projectile_blank_count"] > 1:
         name = caliber[f"projectile_name_{suffix}"]
         entries[f"item.tacz.projectile_blank.incomplete_{caliber_id}"] = (
             f"未完成的{name}" if suffix == "zh" else f"Incomplete {name}"
@@ -867,6 +1103,7 @@ def run(write: bool) -> int:
             raise ValueError(f"{DEFAULT_GUN_POLICY}: auto blueprint signature collision for {platform['slug']}")
         signatures.add(signature)
     cartridges = load_cartridges()
+    blueprint_acquisition = load_blueprint_acquisition()
     expected: dict[Path, Any] = {}
     english: dict[str, str] = {}
     chinese: dict[str, str] = {}
@@ -878,6 +1115,7 @@ def run(write: bool) -> int:
         expected.update(generated_cartridge_files(cartridge))
         english.update(cartridge_language_entries(cartridge, "en_us"))
         chinese.update(cartridge_language_entries(cartridge, "zh_cn"))
+    expected.update(generated_blueprint_acquisition_files(platforms, blueprint_acquisition))
     expected.update(generated_magazine_files({cartridge["ammo"] for cartridge in cartridges}))
     expected.update(generated_machine_files())
 

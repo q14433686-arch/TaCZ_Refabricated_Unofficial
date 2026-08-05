@@ -83,10 +83,20 @@ public final class IndustryProcessCategory implements DisplayCategory<IndustryPr
                         bounds.x + ARROW_X - 12, bounds.y + 48, 0xFFAAAAAA, false);
             }
 
-            Component footer = null;
             if (display.getProcess().isSequencedAssembly()) {
-                footer = Component.translatable("rei.tacz.industry.sequenced_assembly.one_workpiece");
-            } else if (machine == IndustryProcessMachine.DEPLOYING) {
+                // The old bridge only showed a Deployer icon, which made a
+                // real alternating Deployer/Press line look like one vague
+                // "mechanical arm" operation. Show the actual station order.
+                graphics.text(font, Component.translatable("rei.tacz.industry.sequenced_assembly.station_legend"),
+                        bounds.x + 8, bounds.y + 66, 0xFFAAAAAA, false);
+                graphics.text(font, Component.literal(display.getProcess().getStationPattern()),
+                        bounds.x + 8, bounds.y + 76, 0xFFDF9A32, false);
+                graphics.text(font, Component.translatable("rei.tacz.industry.sequenced_assembly.one_workpiece"),
+                        bounds.x + 8, bounds.y + 88, 0xFFAAAAAA, false);
+                return;
+            }
+            Component footer = null;
+            if (machine == IndustryProcessMachine.DEPLOYING) {
                 footer = Component.translatable("rei.tacz.industry.deploying.one_workpiece");
             } else if (machine == IndustryProcessMachine.COMPACTING) {
                 footer = Component.translatable("rei.tacz.industry.compacting.basin");
@@ -117,9 +127,9 @@ public final class IndustryProcessCategory implements DisplayCategory<IndustryPr
 
     @Override
     public int getDisplayHeight() {
-        // Three rows cover the current 15-input 12G loading line. The footer
-        // below them makes Depot-vs-Basin semantics visible in every recipe.
-        return 84;
+        // Three rows cover the current 15-input 12G loading line. Sequenced
+        // assembly additionally shows its actual D/P/F station legend/order.
+        return 104;
     }
 
     @Override

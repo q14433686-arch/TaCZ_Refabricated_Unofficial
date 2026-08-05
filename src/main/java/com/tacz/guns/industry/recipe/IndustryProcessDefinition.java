@@ -25,15 +25,18 @@ public final class IndustryProcessDefinition {
     private final Set<String> reusableInputIdentityKeys;
     /** True when inputs are consumed serially by one flowing transitional workpiece. */
     private final boolean sequencedAssembly;
+    /** Actual nested station order for a sequenced assembly (Deployer, Press, …). */
+    private final List<IndustryProcessMachine> stationSequence;
 
     public IndustryProcessDefinition(IndustryProcessMachine machine, List<IndustryStackDefinition> inputs,
                                      List<IndustryStackDefinition> outputs, int processingTime, boolean keepHeldItem) {
-        this(machine, inputs, outputs, processingTime, keepHeldItem, Set.of(), false);
+        this(machine, inputs, outputs, processingTime, keepHeldItem, Set.of(), false, List.of());
     }
 
     private IndustryProcessDefinition(IndustryProcessMachine machine, List<IndustryStackDefinition> inputs,
                                       List<IndustryStackDefinition> outputs, int processingTime, boolean keepHeldItem,
-                                      Set<String> reusableInputIdentityKeys, boolean sequencedAssembly) {
+                                      Set<String> reusableInputIdentityKeys, boolean sequencedAssembly,
+                                      List<IndustryProcessMachine> stationSequence) {
         this.machine = machine;
         this.inputs = List.copyOf(inputs);
         this.outputs = List.copyOf(outputs);
@@ -41,6 +44,7 @@ public final class IndustryProcessDefinition {
         this.keepHeldItem = keepHeldItem;
         this.reusableInputIdentityKeys = Set.copyOf(reusableInputIdentityKeys);
         this.sequencedAssembly = sequencedAssembly;
+        this.stationSequence = List.copyOf(stationSequence);
     }
 
     public IndustryProcessMachine getMachine() {
@@ -76,6 +80,32 @@ public final class IndustryProcessDefinition {
      */
     public boolean isSequencedAssembly() {
         return sequencedAssembly;
+    }
+
+    /** Ordered physical stations required along the belt/Depot line. */
+    public List<IndustryProcessMachine> getStationSequence() {
+        return stationSequence;
+    }
+
+    /** Compact REI legend: D = Deployer, P = Mechanical Press, F = Spout. */
+    public String getStationPattern() {
+        StringBuilder pattern = new StringBuilder();
+        for (int index = 0; index < stationSequence.size(); index++) {
+            if (index > 0) {
+                pattern.append('→');
+            }
+            pattern.append(switch (stationSequence.get(index)) {
+                case DEPLOYING -> 'D';
+                case PRESSING -> 'P';
+                case FILLING -> 'F';
+                default -> '?';
+            });
+            if (pattern.length() > 42 && index + 1 < stationSequence.size()) {
+                pattern.append("…");
+                break;
+            }
+        }
+        return pattern.toString();
     }
 
     /**
@@ -133,7 +163,7 @@ public final class IndustryProcessDefinition {
             return null;
         }
         return new IndustryProcessDefinition(machine, compressInputs(inputs), outputs,
-                integer(recipe, "processing_time", 0), bool(recipe, "keep_held_item", false), reusable, false);
+                integer(recipe, "processing_time", 0), bool(recipe, "keep_held_item", false), reusable, false, List.of());
     }
 
     /**
@@ -179,10 +209,12 @@ public final class IndustryProcessDefinition {
 
     /**
      * Project one actual Create sequenced-assembly recipe into REI. The first
-     * input is the sole workpiece placed on a Depot/belt; each following input
-     * is read from one nested station's held ingredient. Repeated consumables
-     * are compressed into a count, while a {@code keep_held_item} blueprint is
-     * retained and marked with infinity by the category renderer.
+     * input is the sole workpiece placed on a Depot/belt; Deployer stations add
+     * their held input while Press/Spout stations process that same workpiece.
+     * Repeated consumables are compressed into a count, while a
+     * {@code keep_held_item} blueprint is retained and marked with infinity by
+     * the category renderer. The ordered station list remains visible so the
+     * bridge never mislabels an alternating press line as "just deployers".
      */
     private static IndustryProcessDefinition fromSequencedAssembly(JsonObject recipe) {
         IndustryStackDefinition workpiece = parseInput(recipe.get("ingredient"));
@@ -197,6 +229,7 @@ public final class IndustryProcessDefinition {
         List<IndustryStackDefinition> inputs = new ArrayList<>();
         inputs.add(workpiece);
         Set<String> reusable = new LinkedHashSet<>();
+        List<IndustryProcessMachine> stations = new ArrayList<>();
         for (JsonElement rawStep : sequence) {
             if (!rawStep.isJsonObject()) {
                 return null;
@@ -215,15 +248,22 @@ public final class IndustryProcessDefinition {
                     return null;
                 }
                 inputs.add(held);
+                stations.add(IndustryProcessMachine.DEPLOYING);
                 if (bool(step, "keep_held_item", false)) {
                     reusable.add(held.identityKey());
                 }
-            } else if ("create:pressing".equals(type) || "create:filling".equals(type)) {
-                // These are still one-workpiece operations. They add no held
-                // item to the ingredient list.
+            } else if ("create:pressing".equals(type)) {
+                // The Mechanical Press processes the one transitional workpiece
+                // after a component has been physically seated by a Deployer.
                 if (!isIngredientPlaceholder(step.get("ingredient")) || step.has("target")) {
                     return null;
                 }
+                stations.add(IndustryProcessMachine.PRESSING);
+            } else if ("create:filling".equals(type)) {
+                if (!isIngredientPlaceholder(step.get("ingredient")) || step.has("target")) {
+                    return null;
+                }
+                stations.add(IndustryProcessMachine.FILLING);
             } else {
                 // Do not show a partial/incorrect tree for sequence step types
                 // the bridge cannot describe faithfully yet.
@@ -238,7 +278,7 @@ public final class IndustryProcessDefinition {
         return new IndustryProcessDefinition(
                 IndustryProcessMachine.SEQUENCED_ASSEMBLY,
                 compressInputs(inputs), List.of(output), integer(recipe, "processing_time", 0),
-                !reusable.isEmpty(), reusable, true
+                !reusable.isEmpty(), reusable, true, stations
         );
     }
 

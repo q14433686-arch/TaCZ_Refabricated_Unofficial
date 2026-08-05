@@ -10,5 +10,9 @@
   "propellant_item": "tacz:industrial_propellant",
   "ammo": "tacz:rpg_rocket",
   "count": 1,
+  "case_count": 1,
+  "projectile_count": 1,
+  "primer_count": 1,
+  "propellant_count": 6,
   "eject_case": false
 }

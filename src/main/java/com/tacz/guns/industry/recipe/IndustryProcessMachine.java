@@ -21,6 +21,8 @@ public enum IndustryProcessMachine {
     COMPACTING("compacting", "rei.tacz.industry.compacting", "create:basin", Items.CAULDRON),
     /** One target workpiece plus one item held by a Deployer. */
     DEPLOYING("deploying", "rei.tacz.industry.deploying", "create:deployer", Items.DISPENSER),
+    /** One workpiece receives fluid through a Create Spout. */
+    FILLING("filling", "rei.tacz.industry.filling", "create:spout", Items.WATER_BUCKET),
     /** A real multi-slot Create mechanical-crafter layout, used for calibrated gauge tooling. */
     MECHANICAL_CRAFTING("mechanical_crafting", "rei.tacz.industry.mechanical_crafting", "create:mechanical_crafter", Items.CRAFTING_TABLE),
     /** One transitional workpiece travels through multiple single-input stations. */
@@ -61,6 +63,7 @@ public enum IndustryProcessMachine {
             case "create:pressing" -> PRESSING;
             case "create:compacting" -> COMPACTING;
             case "create:deploying" -> DEPLOYING;
+            case "create:filling" -> FILLING;
             case "create:mechanical_crafting" -> MECHANICAL_CRAFTING;
             case "create:sequenced_assembly" -> SEQUENCED_ASSEMBLY;
             case "create:mixing" -> "superheated".equals(heatRequirement)

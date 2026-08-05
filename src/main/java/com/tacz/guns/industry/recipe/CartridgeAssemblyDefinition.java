@@ -18,8 +18,10 @@ import net.minecraft.world.item.component.CustomData;
  * operation.
  *
  * <p>The dedicated machine deliberately owns the final four-input operation:
- * case, projectile, primer and propellant each have an explicit GUI slot. It
- * is not a Create Basin recipe and therefore cannot be invalidated by Basin
+ * case, projectile, primer and propellant each have an explicit GUI slot.
+ * Definitions may atomically consume/output balanced batches rather than
+ * pretending every calibre has identical one-round material cost. It is not a
+ * Create Basin recipe and therefore cannot be invalidated by Basin
  * recipe-trie selection or Depot's one-workpiece limitation. New calibres and
  * projectile types are supplied as data files rather than Java branches.</p>
  */
@@ -43,7 +45,16 @@ public final class CartridgeAssemblyDefinition {
     @SerializedName("propellant_item")
     private Identifier propellantItem;
     private Identifier ammo;
+    /** Finished loose-ammo rounds produced by one explicit machine operation. */
     private int count = 1;
+    @SerializedName("case_count")
+    private int caseCount = 1;
+    @SerializedName("projectile_count")
+    private int projectileCount = 1;
+    @SerializedName("primer_count")
+    private int primerCount = 1;
+    @SerializedName("propellant_count")
+    private int propellantCount = 1;
     /** Explicit opt-in: a fired round may produce a recoverable case item. */
     @SerializedName("eject_case")
     private boolean ejectCase;
@@ -54,13 +65,18 @@ public final class CartridgeAssemblyDefinition {
         return valid(caseItem) && !blank(caseCaliber)
                 && valid(projectileItem) && !blank(projectileCaliber) && !blank(projectileType)
                 && valid(primerItem) && valid(propellantItem) && ammo != null
-                && count > 0 && count <= 99
+                && positive(count) && positive(caseCount) && positive(projectileCount)
+                && positive(primerCount) && positive(propellantCount)
                 && (!ejectCase || !blank(spentCaseDisplayName));
     }
 
     public boolean matches(ItemStack caseStack, ItemStack projectileStack, ItemStack primerStack, ItemStack propellantStack) {
         return matchesCase(caseStack) && matchesProjectile(projectileStack)
-                && matchesPrimer(primerStack) && matchesPropellant(propellantStack);
+                && matchesPrimer(primerStack) && matchesPropellant(propellantStack)
+                && caseStack.getCount() >= caseCount
+                && projectileStack.getCount() >= projectileCount
+                && primerStack.getCount() >= primerCount
+                && propellantStack.getCount() >= propellantCount;
     }
 
     public boolean matchesCase(ItemStack stack) {
@@ -145,19 +161,35 @@ public final class CartridgeAssemblyDefinition {
     }
 
     public ItemStack createCasePreview() {
-        return applyProductStackLimit(configuredPreview(caseItem, caseTag()));
+        return withCount(applyProductStackLimit(configuredPreview(caseItem, caseTag())), caseCount);
     }
 
     public ItemStack createProjectilePreview() {
-        return applyProductStackLimit(configuredPreview(projectileItem, projectileTag()));
+        return withCount(applyProductStackLimit(configuredPreview(projectileItem, projectileTag())), projectileCount);
     }
 
     public ItemStack createPrimerPreview() {
-        return plainPreview(primerItem);
+        return withCount(plainPreview(primerItem), primerCount);
     }
 
     public ItemStack createPropellantPreview() {
-        return plainPreview(propellantItem);
+        return withCount(plainPreview(propellantItem), propellantCount);
+    }
+
+    public int getCaseCount() {
+        return caseCount;
+    }
+
+    public int getProjectileCount() {
+        return projectileCount;
+    }
+
+    public int getPrimerCount() {
+        return primerCount;
+    }
+
+    public int getPropellantCount() {
+        return propellantCount;
     }
 
     public Identifier getAmmo() {
@@ -213,6 +245,13 @@ public final class CartridgeAssemblyDefinition {
         return stack;
     }
 
+    private static ItemStack withCount(ItemStack stack, int count) {
+        if (!stack.isEmpty()) {
+            stack.setCount(Math.min(Math.max(count, 1), stack.getMaxStackSize()));
+        }
+        return stack;
+    }
+
     private static ItemStack plainPreview(Identifier id) {
         Item item = valid(id) ? BuiltInRegistries.ITEM.getValue(id) : null;
         return item == null || item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item);
@@ -225,6 +264,10 @@ public final class CartridgeAssemblyDefinition {
 
     private static boolean valid(Identifier id) {
         return id != null && BuiltInRegistries.ITEM.getValue(id) != null && BuiltInRegistries.ITEM.getValue(id) != Items.AIR;
+    }
+
+    private static boolean positive(int value) {
+        return value > 0 && value <= Item.ABSOLUTE_MAX_STACK_SIZE;
     }
 
     private static boolean blank(String value) {

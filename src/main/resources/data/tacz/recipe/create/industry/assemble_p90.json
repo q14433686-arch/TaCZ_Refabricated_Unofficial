@@ -63,6 +63,13 @@
       "keep_held_item": true
     },
     {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
       "type": "create:deploying",
       "target": "$ingredient",
       "ingredient": {
@@ -76,6 +83,13 @@
           "IndustryDisplayName": "item.tacz.gun_component.p90_bolt"
         }
       },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
       "results": [
         "$result"
       ]
@@ -99,6 +113,13 @@
       ]
     },
     {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
       "type": "create:deploying",
       "target": "$ingredient",
       "ingredient": {
@@ -112,6 +133,13 @@
           "IndustryDisplayName": "item.tacz.gun_component.p90_trigger"
         }
       },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
       "results": [
         "$result"
       ]
@@ -135,6 +163,13 @@
       ]
     },
     {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
       "type": "create:deploying",
       "target": "$ingredient",
       "ingredient": "minecraft:leather",
@@ -178,6 +213,13 @@
       "type": "create:deploying",
       "target": "$ingredient",
       "ingredient": "minecraft:glass_pane",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
       "results": [
         "$result"
       ]

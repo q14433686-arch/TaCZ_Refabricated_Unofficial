@@ -50,6 +50,60 @@
     {
       "type": "create:deploying",
       "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:projectile_blank"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "projectile_blank",
+          "IndustryDisplayName": "item.tacz.projectile_blank"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:projectile_blank"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "projectile_blank",
+          "IndustryDisplayName": "item.tacz.projectile_blank"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:projectile_blank"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "projectile_blank",
+          "IndustryDisplayName": "item.tacz.projectile_blank"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
       "ingredient": "minecraft:tnt",
       "results": [
         "$result"

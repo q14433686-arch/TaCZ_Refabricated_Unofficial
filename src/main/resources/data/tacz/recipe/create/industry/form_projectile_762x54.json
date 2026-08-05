@@ -7,8 +7,8 @@
       ]
     }
   ],
-  "type": "create:deploying",
-  "target": {
+  "type": "create:sequenced_assembly",
+  "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
       "tacz:projectile_blank"
@@ -19,34 +19,72 @@
       "IndustryDisplayName": "item.tacz.projectile_blank"
     }
   },
-  "ingredient": {
-    "fabric:type": "forge:partial_nbt",
-    "items": [
-      "tacz:press_die"
-    ],
-    "nbt": {
-      "IndustryPlatform": "ammunition",
-      "IndustryPartKind": "projectile_die",
-      "IndustryDisplayName": "item.tacz.press_die.projectile_762x54_fmj",
-      "CartridgeCaliber": "762x54",
-      "ProjectileType": "fmj"
+  "transitional_item": {
+    "id": "tacz:projectile_blank",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "incomplete_projectile_762x54",
+        "IndustryDisplayName": "item.tacz.projectile_blank.incomplete_762x54",
+        "CartridgeCaliber": "762x54",
+        "CartridgeAmmoId": "tacz:762x54"
+      },
+      "minecraft:max_stack_size": 60
     }
   },
-  "results": [
-    {
-      "id": "tacz:projectile_core",
-      "components": {
-        "minecraft:custom_data": {
-          "IndustryPlatform": "ammunition",
-          "IndustryPartKind": "projectile",
-          "IndustryDisplayName": "item.tacz.projectile_core.762x54_fmj",
-          "CartridgeCaliber": "762x54",
-          "CartridgeAmmoId": "tacz:762x54",
-          "ProjectileType": "fmj"
-        },
-        "minecraft:max_stack_size": 60
-      }
+  "result": {
+    "id": "tacz:projectile_core",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "projectile",
+        "IndustryDisplayName": "item.tacz.projectile_core.762x54_fmj",
+        "CartridgeCaliber": "762x54",
+        "CartridgeAmmoId": "tacz:762x54",
+        "ProjectileType": "fmj"
+      },
+      "minecraft:max_stack_size": 60
     }
-  ],
-  "keep_held_item": true
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:projectile_blank"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "projectile_blank",
+          "IndustryDisplayName": "item.tacz.projectile_blank"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "projectile_die",
+          "IndustryDisplayName": "item.tacz.press_die.projectile_762x54_fmj",
+          "CartridgeCaliber": "762x54",
+          "ProjectileType": "fmj"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    }
+  ]
 }

@@ -64,6 +64,16 @@ assets/tacz/lang/zh_cn.json
 
 终端成枪结果还会写入 `IndustryAssemblyPlatform` 与 `IndustryAssemblyRecipe` 来源标记；工业回收站只接受这种实际终端产物，避免把旧工作台/战利品枪的同名 `GunId` 变成工业零件捷径。每个 assembly 声明同时保存五个结构毛坯类别，供回收站以固定 3/5 回收率返还可再次成型的毛坯。
 
+每个平台还会生成两份**独立模板来源**，源策略在 `tools/industry/blueprint_acquisition.json`：
+
+```text
+data/tacz/villager_trade/weaponsmith/5/blueprint_<platform>.json
+data/minecraft/tags/villager_trade/weaponsmith/level_5.json
+data/tacz/tacz_loot_injectors/industrial_blueprint_cache.json
+```
+
+前两项采用 26.2 原版新的 `villager_trade` registry 和 `villager_trade` tag，只追加到大师武器匠的候选池，绝不覆盖原版 `trade_set` 或原版交易。第三项由已有 TACZ 战利品注入层向指定结构箱子放入随机模板。旧的蓝图压实配方仍保留；这两条新来源是替代“用成枪反推模板”的正常探索/交易路线，而不是要求玩家运行生成器。
+
 ## 弹药与弹匣源定义
 
 `tools/industry/cartridges.json` 是默认枪包全部 **24** 种散装弹药的口径源定义。每条口径声明 `AmmoId`、弹头类型、是否会抛出可回收弹壳、双语名称，以及一种真实的模具校准来源：
@@ -87,6 +97,8 @@ industry/ammo/<caliber>.json
 
 `industry/ammo` 会移除同一 `AmmoId` 的旧工作台捷径；最终每发仍只由专用四槽弹药装配机装配。生成器还从默认包 `index/ammo/<caliber>.json` 的 `stack_size` 读取最终散装弹上限（按 26.2 的 99 上限夹取），并把相同 `minecraft:max_stack_size` 写到该口径的弹壳、弹头、爆炸弹过渡件和整形弹壳输出中。抛壳后的 `tacz:cartridge_case` 带 `IndustryPartKind: "spent_case"`、精确 `CartridgeCaliber` 与 `CartridgeAmmoId`，只能经对应 `recondition_case` 部署器工序整形，不能直接绕过底火/推进药重新装弹。
 
+每条清单还显式声明 `balance_tier`、`batch_count`、`propellant_count`、`case_blank_count` 与 `projectile_blank_count`。`balance_tier` 对应内置的弹道角色最低毛坯质量/推进药下限；最终定义将 `case_count`、`projectile_count`、`primer_count` 设为批量输出数，确保一枚物理件绝不复制成一批弹；推进药按弹种等级单独增加，而大口径壳/弹头会在成型顺序线上实际消耗额外中性毛坯。`--check` 同时核对批量不超过成品堆叠/旧配方批量，且推进药不少于弹道等级与旧枪包按每发折算的火药下限。
+
 生成器还读取运行时的 `data/tacz/industry/gun_feed/*.json`，自动生成全部实体弹匣的“中性弹匣壳体 + 保留成枪量规”部署器配方；若某个供弹定义的 `ammo` 没有口径源定义，`--check` 会失败。
 
 ## 自动验证
@@ -97,6 +109,8 @@ industry/ammo/<caliber>.json
 - 相同的工作盆蓝图压实输入签名；
 - 缺失/顺序错误的五个结构件；
 - 默认枪包任何散装弹没有专用口径定义，或量规枪并非真正使用该弹种；
+- 任一弹药批量超过最终堆叠/旧配方批量，或推进药低于旧配方每发火药下限；
+- 缺失任一默认平台的村民/世界箱模板来源；
 - 生成资源与已提交 JSON 不一致；
 - 生成语言键与已提交语言文件不一致；
 - 固定机器纹理或模型不是由其视觉源定义生成。

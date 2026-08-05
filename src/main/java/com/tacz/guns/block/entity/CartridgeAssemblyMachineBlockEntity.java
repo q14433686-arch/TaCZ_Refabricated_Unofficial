@@ -37,7 +37,8 @@ import java.util.Set;
  * <p>Manual assembly remains available through the GUI. A redstone signal also
  * starts a timed automatic cycle, allowing hoppers and Create logistics to feed
  * the four independently validated bays without asking a Depot/Basin to infer a
- * multi-NBT recipe.</p>
+ * multi-NBT recipe. A successful cycle consumes exactly the data-declared
+ * batch quantities and either outputs the full batch or consumes nothing.</p>
  */
 public final class CartridgeAssemblyMachineBlockEntity extends BlockEntity
         implements Container, WorldlyContainer, ExtendedMenuProvider<BlockPos> {
@@ -130,7 +131,7 @@ public final class CartridgeAssemblyMachineBlockEntity extends BlockEntity
         if (!canAcceptOutput(result)) {
             return AssemblyResult.OUTPUT_BLOCKED;
         }
-        complete(new AssemblyPlan(result));
+        complete(new AssemblyPlan(definition, result));
         autoProgress = 0;
         return AssemblyResult.SUCCESS;
     }
@@ -145,7 +146,7 @@ public final class CartridgeAssemblyMachineBlockEntity extends BlockEntity
         if (result.isEmpty() || !canAcceptOutput(result)) {
             return null;
         }
-        return new AssemblyPlan(result);
+        return new AssemblyPlan(definition, result);
     }
 
     @Nullable
@@ -166,10 +167,10 @@ public final class CartridgeAssemblyMachineBlockEntity extends BlockEntity
     }
 
     private void complete(AssemblyPlan plan) {
-        consumeOne(CASE_SLOT);
-        consumeOne(PROJECTILE_SLOT);
-        consumeOne(PRIMER_SLOT);
-        consumeOne(PROPELLANT_SLOT);
+        consume(CASE_SLOT, plan.definition().getCaseCount());
+        consume(PROJECTILE_SLOT, plan.definition().getProjectileCount());
+        consume(PRIMER_SLOT, plan.definition().getPrimerCount());
+        consume(PROPELLANT_SLOT, plan.definition().getPropellantCount());
         ItemStack output = getItem(OUTPUT_SLOT);
         if (output.isEmpty()) {
             setItem(OUTPUT_SLOT, plan.result().copy());
@@ -179,9 +180,9 @@ public final class CartridgeAssemblyMachineBlockEntity extends BlockEntity
         setChanged();
     }
 
-    private void consumeOne(int slot) {
+    private void consume(int slot, int amount) {
         ItemStack stack = getItem(slot);
-        stack.shrink(1);
+        stack.shrink(amount);
         if (stack.isEmpty()) {
             setItem(slot, ItemStack.EMPTY);
         }
@@ -324,6 +325,6 @@ public final class CartridgeAssemblyMachineBlockEntity extends BlockEntity
         PROFILE_DISABLED
     }
 
-    private record AssemblyPlan(ItemStack result) {
+    private record AssemblyPlan(CartridgeAssemblyDefinition definition, ItemStack result) {
     }
 }

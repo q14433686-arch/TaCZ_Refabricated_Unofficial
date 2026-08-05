@@ -14,7 +14,7 @@
   "key": {
     "L": "minecraft:leather",
     "S": "minecraft:string",
-    "P": "tacz:high_carbon_steel_plate"
+    "P": "create:copper_sheet"
   },
   "result": {
     "id": "tacz:magazine_pouch"

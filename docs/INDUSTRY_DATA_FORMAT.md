@@ -136,9 +136,19 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
       "results": ["$result"]
     },
     {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": ["$result"]
+    },
+    {
       "type": "create:deploying",
       "target": "$ingredient",
       "ingredient": { "fabric:type": "forge:partial_nbt", "items": ["yourmod:component"], "nbt": {"IndustryPartKind": "bolt"} },
+      "results": ["$result"]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
       "results": ["$result"]
     }
   ]
@@ -148,10 +158,13 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 语义必须严格是：
 
 1. 首个机匣/枪身进入传送带或置物台，成为**唯一**流动的过渡工件；
-2. 第一台部署器持蓝图，`keep_held_item: true`，蓝图不消耗；
-3. 后续每台部署器分别持枪机、枪管、击发组、复进组件、木料等**一种**供料；各站消耗自己的物品；
-4. 工件按顺序经过工位，最终才变为带完整 `GunId`、首个有效射击模式、空膛/空备弹状态的 TACZ 枪；
-5. 置物台上从头到尾没有、也不需要同时放入多个物品。
+2. 第一台**部署器**（不是机械臂）持蓝图，`keep_held_item: true`，蓝图不消耗；随后工件必须经过一台**动力冲压机**完成首次压合；
+3. 后续每个主要组件都按“部署器供入一种组件 → 动力冲压机压合”的真实交替站点推进：枪机、枪管、击发组、复进组件不能只被机械手一碰就完成；
+4. 木料、皮革、黄铜等外装材料仍由各自部署器一件一件送入，全部送完后还要经过最终动力冲压机；
+5. 工件按顺序经过工位，最终才变为带完整 `GunId`、首个有效射击模式、空膛/空备弹状态的 TACZ 枪；
+6. 置物台上从头到尾没有、也不需要同时放入多个物品。
+
+实际搭线时，把首件放上**传送带或置物台**，然后按 REI 顺序装配页底部的 `D→P→…` 图例沿线布置：`D` 是持有对应模板/组件的部署器，`P` 是动力冲压机，`F` 预留给液体喷嘴。工件通过一个站才会变成下一阶段的未完成总成，因此可以用一条直线传送带完成，或用回环生产线便于集中供料；不需要机械臂，也不能把所有输入堆到一个置物台。
 
 `CREATE_FLY` 档只有在下列条件都满足时才移除旧工作台成枪配方：
 
@@ -162,6 +175,15 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 声明丢失、ID 写错或工艺形状不合法时，TACZ 会记录警告并**保留旧工作台配方**，不会把成枪变成不可获得物品。
 
 默认枪包全部 53 把枪都已使用此路径：已校准平台保留专用组件命名，其余默认枪由内置平台策略自动生成独立 NBT 平台。所有组件、模板、成枪结果都通过 `forge:partial_nbt` / `minecraft:custom_data` 确认身份；不同枪的平台件不能互相替代，模板保留，组件与辅料按工位消耗。
+
+### 模板不再必须由对应成枪反推
+
+原有的工作盆/压实模板制造路线**保留**，作为愿意自己制图的保底路线；但默认玩法不再要求“先有这把枪，才能得到制造它的模板”。生成器现在为全部 53 种模板同时生成两条独立来源：
+
+- **26.2 数据驱动村民贸易**：`data/tacz/villager_trade/weaponsmith/5/blueprint_<platform>.json` 定义模板商品，并通过 `data/minecraft/tags/villager_trade/weaponsmith/level_5.json` 追加到大师武器匠的原版 trade tag。26.2 原版 `trade_set` 会从该 tag 的候选中随机抽取有限商品，因此每位**新生成/新升级**的大师武器匠提供的是可刷新的蓝图选项，而不是 53 页固定报价；
+- **世界箱子**：`data/tacz/tacz_loot_injectors/industrial_blueprint_cache.json` 由 TACZ 既有战利品注入层处理，在武器匠/工具匠村庄箱、废弃矿井、要塞、掠夺者前哨、林地府邸、古城与试炼密室稀有奖励箱中按概率放入一张随机模板。
+
+两条来源输出的都是同一枚带 `IndustryPlatform` / `IndustryPartKind=blueprint` 的真实模板物品，可直接被部署器持有；没有通过把成枪当作模板材料来伪造关联。数据包作者可覆盖这些 trade/loot 资源调整价格、箱子池或完全关闭其中一条来源。
 
 枪械组件的前段遵循“结构毛坯 → **中性组件模具体** → 部署器持对应结构毛坯选定几何 → 部署器持平台模板校准平台模具 → 部署器持模具成型组件”。这里的中性组件模具体只有一条工作盆压实来源；机匣/枪机/枪管/击发组/复进组件毛坯作为部署器中不消耗的实体量规，明确选择 `DieTargetKind`。这样不会再出现“五条相同 Basin 输入、却期望产出五种模具体”的不可合成配方。
 
@@ -197,7 +219,11 @@ data/<namespace>/industry/cartridge_assembly/<任意名称>.json
   "primer_item": "yourmod:primer",
   "propellant_item": "yourmod:propellant",
   "ammo": "yourmod:556x45",
-  "count": 1,
+  "count": 16,
+  "case_count": 16,
+  "projectile_count": 16,
+  "primer_count": 16,
+  "propellant_count": 3,
   "eject_case": true,
   "spent_case_display_name": "item.yourmod.cartridge_case.spent_556x45"
 }
@@ -205,7 +231,21 @@ data/<namespace>/industry/cartridge_assembly/<任意名称>.json
 
 这不是“配方显示出来就算能做”的工作盆推断：四个 GUI 槽位分别验证，错口径弹壳、错弹头类型、错误底火或推进药会被服务端拒绝。定义会同步到客户端供 JEI/REI 显示弹药装配机配方；整枪和实体弹匣仍走各自既有的工业路线。
 
-装配机也可接入物流：顶部与四个侧面均可输入物品，机器会按数据定义把弹壳、弹头、底火、推进药路由到各自唯一的槽位；**底面只允许取出成品**。给予红石信号后，机器每 40 tick 自动完成一次有效装配；无红石时仍可通过 GUI 手动点击“装配”。输入改变、配方不匹配或成品槽无法容纳时进度会重置且绝不扣料。
+### 批量装配与弹药平衡
+
+`count` 是一次完成后输出的散装弹数量；`case_count`、`projectile_count`、`primer_count` 是实际扣除的对应物理件数量，默认内置路线均等于 `count`，不会把一枚壳或一枚弹头凭空复制为整批弹药。`propellant_count` 则按弹种功率单独确定。清单中的 `case_blank_count` / `projectile_blank_count` 还规定每个最终壳/弹头需要的中性黄铜壳坯/弹头坯质量：普通手枪与中间威力为 1，常规全威力步枪为 2，马格南为 3，.50 BMG 与 RPG 壳体为 4。大口径成型会实际多经过若干部署器供料站，不是只把相同的一枚毛坯改个显示名。默认 24 种弹的平衡数据在 `tools/industry/cartridges.json`：
+
+| 等级 | 典型弹种 | 每次输出 | 推进药 |
+|---|---|---:|---:|
+| rimfire / 手枪 / PDW | .22 WMR、9 mm、.45 ACP、4.6×30、5.7×28 | 20–32 | 1–2 |
+| 中间威力 | 5.45、5.56、5.8、7.62×39 | 16 | 3 |
+| 全威力步枪 | .308、.30-06、7.62×54R、7.92×57、6.8 Fury | 10–12 | 4 |
+| 马格南 / 大口径 | .338、.45-70、.50 AE、.500、.50 BMG | 4–8 | 4–8 |
+| 霰弹 / 爆炸物 | 12G、40 mm、RPG-7 | 8 / 1 / 1 | 3 / 2 / 6 |
+
+生成器同时读取默认枪包旧弹药配方的“每发火药”比例；任何新清单若把 `propellant_count` 降到旧比例以下，或让 `batch_count` 超过成品堆叠上限/旧配方批量，`--check` 会拒绝。HE/HEAT 弹头此前还已单独消耗 TNT 战斗部，因此爆炸弹不会只靠普通推进药获得爆炸威力。
+
+装配机也可接入物流：顶部与四个侧面均可输入物品，机器会按数据定义把弹壳、弹头、底火、推进药路由到各自唯一的槽位；**底面只允许取出成品**。给予红石信号后，机器每 40 tick 自动完成一次有效装配；无红石时仍可通过 GUI 手动点击“装配”。输入改变、配方不匹配、任一输入数量不足或成品槽无法容纳整批输出时进度会重置且绝不扣料。
 
 ### 真实抛壳与再整形
 

@@ -63,6 +63,13 @@
       "keep_held_item": true
     },
     {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
       "type": "create:deploying",
       "target": "$ingredient",
       "ingredient": {
@@ -76,6 +83,13 @@
           "IndustryDisplayName": "item.tacz.gun_component.default_m320_bolt"
         }
       },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
       "results": [
         "$result"
       ]
@@ -99,6 +113,13 @@
       ]
     },
     {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
       "type": "create:deploying",
       "target": "$ingredient",
       "ingredient": {
@@ -112,6 +133,13 @@
           "IndustryDisplayName": "item.tacz.gun_component.default_m320_trigger"
         }
       },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
       "results": [
         "$result"
       ]
@@ -135,6 +163,13 @@
       ]
     },
     {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
       "type": "create:deploying",
       "target": "$ingredient",
       "ingredient": "minecraft:oak_planks",
@@ -162,6 +197,13 @@
       "type": "create:deploying",
       "target": "$ingredient",
       "ingredient": "minecraft:leather",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
       "results": [
         "$result"
       ]

@@ -1,0 +1,22 @@
+{
+  "wants": {
+    "id": "minecraft:emerald",
+    "count": 32.0
+  },
+  "additional_wants": {
+    "id": "minecraft:book"
+  },
+  "gives": {
+    "id": "tacz:gun_blueprint",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ak",
+        "IndustryPartKind": "blueprint",
+        "IndustryDisplayName": "item.tacz.gun_blueprint.ak"
+      }
+    }
+  },
+  "max_uses": 1.0,
+  "reputation_discount": 0.05,
+  "xp": 30.0
+}

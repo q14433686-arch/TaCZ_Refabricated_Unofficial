@@ -7,8 +7,8 @@
       ]
     }
   ],
-  "type": "create:deploying",
-  "target": {
+  "type": "create:sequenced_assembly",
+  "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
       "tacz:cartridge_case_blank"
@@ -19,32 +19,88 @@
       "IndustryDisplayName": "item.tacz.cartridge_case_blank"
     }
   },
-  "ingredient": {
-    "fabric:type": "forge:partial_nbt",
-    "items": [
-      "tacz:press_die"
-    ],
-    "nbt": {
-      "IndustryPlatform": "ammunition",
-      "IndustryPartKind": "case_die",
-      "IndustryDisplayName": "item.tacz.press_die.case_500mag",
-      "CartridgeCaliber": "500mag"
+  "transitional_item": {
+    "id": "tacz:cartridge_case_blank",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "incomplete_case_500mag",
+        "IndustryDisplayName": "item.tacz.cartridge_case_blank.incomplete_500mag",
+        "CartridgeCaliber": "500mag",
+        "CartridgeAmmoId": "tacz:500mag"
+      },
+      "minecraft:max_stack_size": 42
     }
   },
-  "results": [
-    {
-      "id": "tacz:cartridge_case",
-      "components": {
-        "minecraft:custom_data": {
-          "IndustryPlatform": "ammunition",
-          "IndustryPartKind": "case",
-          "IndustryDisplayName": "item.tacz.cartridge_case.500mag",
-          "CartridgeCaliber": "500mag",
-          "CartridgeAmmoId": "tacz:500mag"
-        },
-        "minecraft:max_stack_size": 42
-      }
+  "result": {
+    "id": "tacz:cartridge_case",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "case",
+        "IndustryDisplayName": "item.tacz.cartridge_case.500mag",
+        "CartridgeCaliber": "500mag",
+        "CartridgeAmmoId": "tacz:500mag"
+      },
+      "minecraft:max_stack_size": 42
     }
-  ],
-  "keep_held_item": true
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:cartridge_case_blank"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "case_blank",
+          "IndustryDisplayName": "item.tacz.cartridge_case_blank"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:cartridge_case_blank"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "case_blank",
+          "IndustryDisplayName": "item.tacz.cartridge_case_blank"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "case_die",
+          "IndustryDisplayName": "item.tacz.press_die.case_500mag",
+          "CartridgeCaliber": "500mag"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    }
+  ]
 }
