@@ -281,6 +281,14 @@
           "count": 1
         }
       ],
+      "projectile_body_name_en": "40 mm Grenade Body",
+      "projectile_body_name_zh": "40 mm 榴弹弹体",
+      "projectile_payload_names_en": [
+        "40 mm HE-Filled Grenade Body"
+      ],
+      "projectile_payload_names_zh": [
+        "40 mm 高爆装药榴弹体"
+      ],
       "case_name_en": "40 mm Grenade Cartridge Case",
       "case_name_zh": "40 mm 榴弹弹壳",
       "spent_case_name_en": "Fired 40 mm Grenade Cartridge Case",
@@ -548,6 +556,16 @@
           "item": "minecraft:tnt",
           "count": 2
         }
+      ],
+      "projectile_body_name_en": "RPG-7 Warhead Body",
+      "projectile_body_name_zh": "RPG-7 战斗部弹体",
+      "projectile_payload_names_en": [
+        "RPG-7 Explosive Charge Body",
+        "RPG-7 Shaped-Charge Preform"
+      ],
+      "projectile_payload_names_zh": [
+        "RPG-7 装药战斗部",
+        "RPG-7 聚能破甲战斗部预制件"
       ],
       "case_name_en": "RPG-7 Rocket Motor Housing",
       "case_name_zh": "RPG-7 火箭发动机壳体",

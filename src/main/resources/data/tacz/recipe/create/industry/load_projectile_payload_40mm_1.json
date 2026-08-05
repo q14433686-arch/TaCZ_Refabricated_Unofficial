@@ -1,0 +1,40 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:projectile_blank"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "projectile_body_40mm",
+      "IndustryDisplayName": "item.tacz.projectile_blank.body_40mm",
+      "CartridgeCaliber": "40mm",
+      "CartridgeAmmoId": "tacz:40mm"
+    }
+  },
+  "ingredient": "minecraft:tnt",
+  "results": [
+    {
+      "id": "tacz:projectile_blank",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "projectile_payload_40mm_1",
+          "IndustryDisplayName": "item.tacz.projectile_blank.payload_40mm_1",
+          "CartridgeCaliber": "40mm",
+          "CartridgeAmmoId": "tacz:40mm"
+        },
+        "minecraft:max_stack_size": 6
+      }
+    }
+  ]
+}

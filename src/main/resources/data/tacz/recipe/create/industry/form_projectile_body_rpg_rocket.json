@@ -1,0 +1,41 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:mechanical_crafting",
+  "key": {
+    "B": {
+      "fabric:type": "forge:partial_nbt",
+      "items": [
+        "tacz:projectile_blank"
+      ],
+      "nbt": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "projectile_blank",
+        "IndustryDisplayName": "item.tacz.projectile_blank"
+      }
+    }
+  },
+  "pattern": [
+    "BBB",
+    "B  "
+  ],
+  "result": {
+    "id": "tacz:projectile_blank",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "projectile_body_rpg_rocket",
+        "IndustryDisplayName": "item.tacz.projectile_blank.body_rpg_rocket",
+        "CartridgeCaliber": "rpg_rocket",
+        "CartridgeAmmoId": "tacz:rpg_rocket"
+      },
+      "minecraft:max_stack_size": 6
+    }
+  }
+}

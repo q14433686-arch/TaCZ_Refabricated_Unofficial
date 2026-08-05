@@ -7,110 +7,48 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
-  "ingredient": {
+  "type": "create:deploying",
+  "target": {
     "fabric:type": "forge:partial_nbt",
     "items": [
       "tacz:projectile_blank"
     ],
     "nbt": {
       "IndustryPlatform": "ammunition",
-      "IndustryPartKind": "projectile_blank",
-      "IndustryDisplayName": "item.tacz.projectile_blank"
+      "IndustryPartKind": "projectile_payload_40mm_1",
+      "IndustryDisplayName": "item.tacz.projectile_blank.payload_40mm_1",
+      "CartridgeCaliber": "40mm",
+      "CartridgeAmmoId": "tacz:40mm"
     }
   },
-  "transitional_item": {
-    "id": "tacz:projectile_blank",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "incomplete_projectile_40mm",
-        "IndustryDisplayName": "item.tacz.projectile_blank.incomplete_40mm",
-        "CartridgeCaliber": "40mm",
-        "CartridgeAmmoId": "tacz:40mm"
-      },
-      "minecraft:max_stack_size": 6
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "projectile_die",
+      "IndustryDisplayName": "item.tacz.press_die.projectile_40mm_he",
+      "CartridgeCaliber": "40mm",
+      "ProjectileType": "he"
     }
   },
-  "result": {
-    "id": "tacz:projectile_core",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.40mm_he",
-        "CartridgeCaliber": "40mm",
-        "CartridgeAmmoId": "tacz:40mm",
-        "ProjectileType": "he"
-      },
-      "minecraft:max_stack_size": 6
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:projectile_blank"
-        ],
-        "nbt": {
+      "id": "tacz:projectile_core",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "ammunition",
-          "IndustryPartKind": "projectile_blank",
-          "IndustryDisplayName": "item.tacz.projectile_blank"
-        }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:projectile_blank"
-        ],
-        "nbt": {
-          "IndustryPlatform": "ammunition",
-          "IndustryPartKind": "projectile_blank",
-          "IndustryDisplayName": "item.tacz.projectile_blank"
-        }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": "minecraft:tnt",
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "ammunition",
-          "IndustryPartKind": "projectile_die",
-          "IndustryDisplayName": "item.tacz.press_die.projectile_40mm_he",
+          "IndustryPartKind": "projectile",
+          "IndustryDisplayName": "item.tacz.projectile_core.40mm_he",
           "CartridgeCaliber": "40mm",
+          "CartridgeAmmoId": "tacz:40mm",
           "ProjectileType": "he"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
+        },
+        "minecraft:max_stack_size": 6
+      }
     }
-  ]
+  ],
+  "keep_held_item": true
 }

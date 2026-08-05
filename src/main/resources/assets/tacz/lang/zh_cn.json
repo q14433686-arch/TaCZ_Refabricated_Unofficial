@@ -1275,5 +1275,10 @@
   "item.tacz.gun_component.default_timeless50_furniture_kit": "TIMELESS50 外装套件",
   "item.tacz.gun_component.default_type_81_furniture_kit": "TYPE 81 外装套件",
   "item.tacz.gun_component.default_uzi_furniture_kit": "UZI 外装套件",
-  "item.tacz.gun_component.default_vector45_furniture_kit": "VECTOR45 外装套件"
+  "item.tacz.gun_component.default_vector45_furniture_kit": "VECTOR45 外装套件",
+  "item.tacz.projectile_blank.body_40mm": "40 mm 榴弹弹体",
+  "item.tacz.projectile_blank.payload_40mm_1": "40 mm 高爆装药榴弹体",
+  "item.tacz.projectile_blank.body_rpg_rocket": "RPG-7 战斗部弹体",
+  "item.tacz.projectile_blank.payload_rpg_rocket_1": "RPG-7 装药战斗部",
+  "item.tacz.projectile_blank.payload_rpg_rocket_2": "RPG-7 聚能破甲战斗部预制件"
 }

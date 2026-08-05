@@ -463,6 +463,16 @@ def load_cartridges() -> list[dict[str, Any]]:
             if not isinstance(payload, dict) or not isinstance(payload.get("item"), str) or not payload["item"] \
                     or not isinstance(payload.get("count"), int) or payload["count"] < 1:
                 raise ValueError(f"{CARTRIDGE_MANIFEST}: invalid projectile payload for '{entry['id']}'")
+        if payloads:
+            for key in ("projectile_body_name_en", "projectile_body_name_zh", "projectile_payload_names_en", "projectile_payload_names_zh"):
+                value = entry.get(key)
+                if key.startswith("projectile_payload_names"):
+                    expected_stages = sum(payload["count"] for payload in payloads)
+                    if not isinstance(value, list) or len(value) != expected_stages \
+                            or not all(isinstance(name, str) and name for name in value):
+                        raise ValueError(f"{CARTRIDGE_MANIFEST}: {key} for '{entry['id']}' must name every payload stage")
+                elif not isinstance(value, str) or not value:
+                    raise ValueError(f"{CARTRIDGE_MANIFEST}: {key} for '{entry['id']}' must be non-empty")
     expected_default_ammo = default_ammo_recipe_ids()
     missing = expected_default_ammo - seen_ammo
     unexpected = seen_ammo - expected_default_ammo
@@ -954,51 +964,89 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
         }
 
     payloads = caliber.get("projectile_payloads", [])
-    projectile_sequence: list[dict[str, Any]] = []
-    # Projectile mass follows the ballistic tier too. The initial blank is the
-    # sole moving workpiece; extra blanks are inserted one at a time.
-    for _ in range(projectile_blank_count - 1):
-        projectile_sequence.append({
-            "type": "create:deploying",
-            "target": "$ingredient",
-            "ingredient": projectile_stock,
-            "results": ["$result"],
-        })
-    for payload in payloads:
-        for _ in range(payload["count"]):
+    if payloads:
+        # Explosive warheads must not hide every physical stage inside Create's
+        # ephemeral transitional_item. Their body, loaded charge and shaped
+        # charge are actual NBT stacks that players can see, store and feed to
+        # the next station; this is particularly important for RPG-7 HEAT.
+        body_key = f"item.tacz.projectile_blank.body_{caliber_id}"
+        body_tag = {
+            "IndustryPlatform": "ammunition",
+            "IndustryPartKind": f"projectile_body_{caliber_id}",
+            "IndustryDisplayName": body_key,
+            "CartridgeCaliber": caliber_id,
+            "CartridgeAmmoId": ammo_id,
+        }
+        blank_slots = ["B"] * projectile_blank_count
+        body_pattern = ["".join(blank_slots[index:index + 3]).ljust(3) for index in range(0, projectile_blank_count, 3)]
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_body_{caliber_id}.json"] = {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:mechanical_crafting",
+            "key": {"B": projectile_stock},
+            "pattern": body_pattern,
+            "result": output("tacz:projectile_blank", body_tag, stack_limit),
+        }
+        current_tag = body_tag
+        payload_index = 0
+        for payload in payloads:
+            for _ in range(payload["count"]):
+                payload_index += 1
+                stage_key = f"item.tacz.projectile_blank.payload_{caliber_id}_{payload_index}"
+                stage_tag = {
+                    "IndustryPlatform": "ammunition",
+                    "IndustryPartKind": f"projectile_payload_{caliber_id}_{payload_index}",
+                    "IndustryDisplayName": stage_key,
+                    "CartridgeCaliber": caliber_id,
+                    "CartridgeAmmoId": ammo_id,
+                }
+                files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/load_projectile_payload_{caliber_id}_{payload_index}.json"] = deploying(
+                    partial("tacz:projectile_blank", current_tag), payload["item"],
+                    output("tacz:projectile_blank", stage_tag, stack_limit), keep=False
+                )
+                current_tag = stage_tag
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json"] = deploying(
+            partial("tacz:projectile_blank", current_tag), partial("tacz:press_die", projectile_die),
+            output("tacz:projectile_core", projectile, stack_limit)
+        )
+    else:
+        projectile_sequence: list[dict[str, Any]] = []
+        # Conventional projectile mass follows the ballistic tier. The initial
+        # blank is the sole moving workpiece; extra blanks are inserted one at
+        # a time before the reusable die forms the final core.
+        for _ in range(projectile_blank_count - 1):
             projectile_sequence.append({
                 "type": "create:deploying",
                 "target": "$ingredient",
-                "ingredient": payload["item"],
+                "ingredient": projectile_stock,
                 "results": ["$result"],
             })
-    projectile_sequence.append({
-        "type": "create:deploying",
-        "target": "$ingredient",
-        "ingredient": partial("tacz:press_die", projectile_die),
-        "results": ["$result"],
-        "keep_held_item": True,
-    })
-    if len(projectile_sequence) == 1:
-        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json"] = deploying(
-            projectile_stock, partial("tacz:press_die", projectile_die), output("tacz:projectile_core", projectile, stack_limit)
-        )
-    else:
-        incomplete_key = f"item.tacz.projectile_blank.incomplete_{caliber_id}"
-        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json"] = {
-            "fabric:load_conditions": CREATE_CONDITIONS,
-            "type": "create:sequenced_assembly",
-            "ingredient": projectile_stock,
-            "transitional_item": output("tacz:projectile_blank", {
-                "IndustryPlatform": "ammunition",
-                "IndustryPartKind": f"incomplete_projectile_{caliber_id}",
-                "IndustryDisplayName": incomplete_key,
-                "CartridgeCaliber": caliber_id,
-                "CartridgeAmmoId": ammo_id,
-            }, stack_limit),
-            "result": output("tacz:projectile_core", projectile, stack_limit),
-            "sequence": projectile_sequence,
-        }
+        projectile_sequence.append({
+            "type": "create:deploying",
+            "target": "$ingredient",
+            "ingredient": partial("tacz:press_die", projectile_die),
+            "results": ["$result"],
+            "keep_held_item": True,
+        })
+        if len(projectile_sequence) == 1:
+            files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json"] = deploying(
+                projectile_stock, partial("tacz:press_die", projectile_die), output("tacz:projectile_core", projectile, stack_limit)
+            )
+        else:
+            incomplete_key = f"item.tacz.projectile_blank.incomplete_{caliber_id}"
+            files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json"] = {
+                "fabric:load_conditions": CREATE_CONDITIONS,
+                "type": "create:sequenced_assembly",
+                "ingredient": projectile_stock,
+                "transitional_item": output("tacz:projectile_blank", {
+                    "IndustryPlatform": "ammunition",
+                    "IndustryPartKind": f"incomplete_projectile_{caliber_id}",
+                    "IndustryDisplayName": incomplete_key,
+                    "CartridgeCaliber": caliber_id,
+                    "CartridgeAmmoId": ammo_id,
+                }, stack_limit),
+                "result": output("tacz:projectile_core", projectile, stack_limit),
+                "sequence": projectile_sequence,
+            }
 
     if caliber["eject_case"]:
         # CartridgeAmmoId is emitted on newly fired cases for stack-limit
@@ -1054,7 +1102,11 @@ def cartridge_language_entries(caliber: dict[str, Any], language: str) -> dict[s
         entries[f"item.tacz.cartridge_case_blank.incomplete_{caliber_id}"] = (
             f"未完成的{name}" if suffix == "zh" else f"Incomplete {name}"
         )
-    if caliber.get("projectile_payloads") or caliber["projectile_blank_count"] > 1:
+    if caliber.get("projectile_payloads"):
+        entries[f"item.tacz.projectile_blank.body_{caliber_id}"] = caliber[f"projectile_body_name_{suffix}"]
+        for index, name in enumerate(caliber[f"projectile_payload_names_{suffix}"], start=1):
+            entries[f"item.tacz.projectile_blank.payload_{caliber_id}_{index}"] = name
+    elif caliber["projectile_blank_count"] > 1:
         name = caliber[f"projectile_name_{suffix}"]
         entries[f"item.tacz.projectile_blank.incomplete_{caliber_id}"] = (
             f"未完成的{name}" if suffix == "zh" else f"Incomplete {name}"

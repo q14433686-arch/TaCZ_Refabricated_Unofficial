@@ -200,7 +200,18 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 
 压实阶段也不能让多条相同材料表直接各自产出不同口径模具。现在先压实**中性弹壳模具体**或**中性弹头模具体**；有对应默认枪的口径再由部署器持同口径完整枪作为不消耗的膛室/口径量规。默认包虽然提供散装弹、但没有任何对应枪械的 4.6×30、5.45×39、6.8×51 Fury、7.62×25、7.62×54R，则先由真正的 Create **机械合成器**多槽配方制造带精确 `CartridgeCaliber` 的淬硬口径量规；绝不使用不相干的枪冒充量规，也不使用同输入/改数量的 Basin 分支伪造口径。
 
-成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。40 mm HE 与 RPG-7 HEAT 弹头还在成型前以顺序部署器工位装入 TNT 战斗部；这仍是一个过渡工件按站流动，不会把多件物料堆到置物台上。
+成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。
+
+40 mm HE 与 RPG-7 HEAT 不再把 TNT 和毛坯藏在一个不可见的顺序临时态里。它们的战斗部有实际可存放/可查看的中间物品：
+
+```text
+RPG-7：4 弹头毛坯 --机械合成器--> RPG-7 战斗部弹体
+      --部署 TNT--> RPG-7 装药战斗部
+      --部署 TNT--> RPG-7 聚能破甲战斗部预制件
+      --部署器持 HEAT 模具--> RPG-7 聚能破甲战斗部芯
+```
+
+40 mm 同样先形成“40 mm 榴弹弹体”，再部署 TNT 形成“40 mm 高爆装药榴弹体”，最后持 HE 模具成型。每一步都是独立真实输出，失败、断线或物流中断时不会凭空丢失“中间态”。
 
 最终装弹不再交给 `create:compacting` 的 Basin，也不再把四种物料伪装成传送带上的单一工件。它由 TACZ 的**弹药装配机**完成：GUI 中有独立的弹壳、弹头、底火、推进药四个输入槽与一个成品槽；按钮请求只发到服务端，服务端按数据定义验证 NBT、扣除四件材料并输出弹药。
 
