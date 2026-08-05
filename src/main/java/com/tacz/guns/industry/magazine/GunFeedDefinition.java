@@ -32,9 +32,10 @@ public class GunFeedDefinition {
     private String displayName = "";
 
     /**
-     * How many loose rounds one central reload transaction inserts for an
-     * internal feed. Omitted definitions use one round for tube/revolver/
-     * single-shot feeds and fill the remaining capacity for internal boxes.
+     * Maximum loose rounds one complete scripted reload action may insert for
+     * an internal feed. Tube/cylinder/double-barrel scripts may visually feed
+     * several rounds before FINISHING, so their default is full remaining
+     * capacity rather than one silently reserved round.
      */
     @SerializedName("reload_batch")
     private int reloadBatch = 0;
@@ -63,10 +64,12 @@ public class GunFeedDefinition {
         if (reloadBatch > 0) {
             return Math.min(reloadBatch, Math.max(1, getMagazineCapacity()));
         }
-        return switch (getMechanism()) {
-            case TUBE, REVOLVER, SINGLE_SHOT -> 1;
-            default -> Math.max(1, getMagazineCapacity());
-        };
+        // A reload action owns one complete scripted reload cycle. Tube and
+        // cylinder scripts commonly feed several visible rounds during that
+        // cycle; defaulting them to one silently desynchronises actual loose
+        // ammo extraction from the animation. Capacity is therefore the safe
+        // data-driven default; packs may still declare a smaller explicit cap.
+        return Math.max(1, getMagazineCapacity());
     }
 
     /** External carrier: detachable magazine or physical belt/ammo-box item. */

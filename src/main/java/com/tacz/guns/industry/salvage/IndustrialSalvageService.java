@@ -33,7 +33,7 @@ import java.util.List;
 public final class IndustrialSalvageService {
     private static final String ASSEMBLY_PLATFORM_TAG = "IndustryAssemblyPlatform";
     private static final List<String> STRUCTURAL_ORDER = List.of("receiver", "bolt", "barrel", "trigger", "recoil");
-    private static final int DEFAULT_GUN_COMPONENT_RECOVERY = 3;
+    private static final float DEFAULT_GUN_WEIGHT = 3.0F;
 
     private IndustrialSalvageService() {
     }
@@ -121,7 +121,16 @@ public final class IndustrialSalvageService {
             return Plan.failure(Failure.GUN_AMMO_UNKNOWN);
         }
         outputs.addAll(storedAmmo);
-        int recoveryCount = Math.min(DEFAULT_GUN_COMPONENT_RECOVERY, components.size());
+        // Recovery is now differentiated by actual GunData weight rather than
+        // returning the same three blanks for a pocket pistol and a 15 kg
+        // minigun. Light sidearms recover three structural blanks; ordinary
+        // long guns four; heavy precision/MG platforms all five.
+        float weight = TimelessAPI.getCommonGunIndex(gun.getGunId(input))
+                .map(index -> index.getGunData().getWeight())
+                .orElse(DEFAULT_GUN_WEIGHT);
+        int recoveryCount = Math.min(components.size(), Math.clamp(
+                3 + (int) Math.floor((Math.max(weight, 0.0F) + 1.0F) / 3.0F), 3, 5
+        ));
         int offset = Math.floorMod(assembly.getPlatform().hashCode(), components.size());
         for (int recovered = 0; recovered < recoveryCount; recovered++) {
             int index = (offset + recovered) % components.size();
@@ -136,10 +145,28 @@ public final class IndustrialSalvageService {
                     .displayNameKey("item.tacz.gun_component_blank")
                     .build());
         }
-        // Remaining structural material is recovered only as one plate;
-        // furniture, polymer and external fittings are intentionally lost.
-        outputs.add(new ItemStack(ModItems.HIGH_CARBON_STEEL_PLATE));
+        int steelPlates = Math.clamp((int) Math.ceil(Math.max(weight, 0.0F) / 3.0F), 1, 4);
+        outputs.add(new ItemStack(ModItems.HIGH_CARBON_STEEL_PLATE, steelPlates));
+        appendExteriorMaterialRecovery(outputs, assembly);
         return Plan.success(outputs);
+    }
+
+    /**
+     * Return 60% (rounded up) of the explicitly declared exterior materials.
+     * These were consumed to make the calibrated furniture kit, so dropping
+     * all of them would erase platform differentiation and make every rifle
+     * salvage look identical.
+     */
+    private static void appendExteriorMaterialRecovery(List<ItemStack> outputs, IndustryAssemblyDefinition assembly) {
+        for (IndustryAssemblyDefinition.Material material : assembly.getMaterials()) {
+            Identifier id = Identifier.tryParse(material.itemId());
+            Item item = id == null ? null : BuiltInRegistries.ITEM.getValue(id);
+            if (item == null || item == Items.AIR) {
+                continue;
+            }
+            int recovered = Math.max(1, (int) Math.ceil(material.count() * 0.60D));
+            outputs.add(new ItemStack(item, recovered));
+        }
     }
 
     /**

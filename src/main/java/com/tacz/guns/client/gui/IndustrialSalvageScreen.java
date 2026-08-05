@@ -34,9 +34,9 @@ public final class IndustrialSalvageScreen extends AbstractContainerScreen<Indus
         gui.fill(leftPos + 3, topPos + 96, leftPos + imageWidth - 3, topPos + imageHeight - 3, 0xCC20272D);
 
         slotFrame(gui, leftPos + 28, topPos + 42);
-        for (int row = 0; row < 2; row++) {
+        for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 3; column++) {
-                slotFrame(gui, leftPos + 99 + column * 18, topPos + 27 + row * 18);
+                slotFrame(gui, leftPos + 99 + column * 18, topPos + 18 + row * 18);
             }
         }
         int progress = menu.getAutoProgress();

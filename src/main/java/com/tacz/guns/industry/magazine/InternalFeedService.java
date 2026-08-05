@@ -133,6 +133,14 @@ public final class InternalFeedService {
         return plan != null && gun.getItem() instanceof IGun iGun && plan.getGunId().equals(iGun.getGunId(gun));
     }
 
+    /** Number of real loose rounds reserved for the current scripted reload cycle. */
+    public static int getPlannedReloadRounds(ShooterDataHolder data, ItemStack gun) {
+        if (!isReloadManaged(data, gun)) {
+            return -1;
+        }
+        return Math.max(0, data.internalFeedReload.getRounds());
+    }
+
     public static void clearReloadPlan(ShooterDataHolder data) {
         data.internalFeedReload = null;
     }

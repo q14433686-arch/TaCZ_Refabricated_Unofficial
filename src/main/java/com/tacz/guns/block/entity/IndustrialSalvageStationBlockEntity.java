@@ -40,12 +40,13 @@ public final class IndustrialSalvageStationBlockEntity extends BlockEntity
         implements Container, WorldlyContainer, ExtendedMenuProvider<BlockPos> {
     public static final int INPUT_SLOT = 0;
     public static final int OUTPUT_START = 1;
-    public static final int OUTPUT_COUNT = 6;
+    /** 3×3 outputs accommodate differentiated heavy-gun/material recovery. */
+    public static final int OUTPUT_COUNT = 9;
     public static final int SLOT_COUNT = OUTPUT_START + OUTPUT_COUNT;
     public static final int AUTO_PROCESS_TICKS = 40;
 
     private static final int[] INPUT_SLOTS = {INPUT_SLOT};
-    private static final int[] OUTPUT_SLOTS = {1, 2, 3, 4, 5, 6};
+    private static final int[] OUTPUT_SLOTS = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
     public static final BlockEntityType<IndustrialSalvageStationBlockEntity> TYPE = new BlockEntityType<>(
             IndustrialSalvageStationBlockEntity::new, Set.of(ModBlocks.INDUSTRIAL_SALVAGE_STATION)

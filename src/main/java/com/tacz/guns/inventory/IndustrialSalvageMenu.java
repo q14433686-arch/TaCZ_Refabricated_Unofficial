@@ -35,10 +35,10 @@ public final class IndustrialSalvageMenu extends AbstractContainerMenu {
         this.stationPos = stationPos;
 
         addSlot(new Slot(stationInventory, IndustrialSalvageStationBlockEntity.INPUT_SLOT, 29, 43));
-        for (int row = 0; row < 2; row++) {
+        for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 3; column++) {
                 int output = IndustrialSalvageStationBlockEntity.OUTPUT_START + column + row * 3;
-                addSlot(new Slot(stationInventory, output, 100 + column * 18, 28 + row * 18) {
+                addSlot(new Slot(stationInventory, output, 100 + column * 18, 19 + row * 18) {
                     @Override
                     public boolean mayPlace(ItemStack stack) {
                         return false;

@@ -6,6 +6,6 @@
   "ingredient": "minecraft:potent_sulfur",
   "processing_time": 220,
   "results": [
-    {"id": "tacz:sulfur_dust", "count": 4}
+    {"id": "tacz:sulfur_dust", "count": 32}
   ]
 }

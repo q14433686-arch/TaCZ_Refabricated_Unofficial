@@ -510,6 +510,16 @@ public class ModernKineticGunScriptAPI {
      * @return 当前枪械需要的弹药数量
      */
     public int getNeededAmmoAmount() {
+        // Tube/cylinder/double-barrel scripts cache this value at reload
+        // start. When the server reserved fewer real loose rounds than the
+        // physical capacity, expose the reservation so their animation loop
+        // cannot visually feed five shells while the authoritative transaction
+        // is allowed to consume only one or two.
+        int plannedInternalRounds = dataHolder == null || itemStack == null
+                ? -1 : InternalFeedService.getPlannedReloadRounds(dataHolder, itemStack);
+        if (plannedInternalRounds >= 0) {
+            return plannedInternalRounds;
+        }
         int maxAmmoCount = AttachmentDataUtils.getAmmoCountWithAttachment(itemStack, gunIndex.getGunData());
         int currentAmmoCount = abstractGunItem.getCurrentAmmoCount(itemStack);
         return maxAmmoCount - currentAmmoCount;
