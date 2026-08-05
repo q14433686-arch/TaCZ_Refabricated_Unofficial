@@ -338,6 +338,8 @@
   "tooltip.tacz.magazine.usage.unload": "- Hold the magazine and right-click an empty slot to remove rounds",
   "config.tacz.server.industry_profile": "Industrial Manufacturing Profile",
   "config.tacz.server.industry_profile.desc": "CREATE_FLY requires Create Fly; LEGACY keeps original TACZ recipes and integer ammunition.",
+  "config.tacz.server.auto_discover_industry_replacements": "Auto-discover industrial fallback recipes",
+  "config.tacz.server.auto_discover_industry_replacements.desc": "On reload, scan uncurated gun-pack gun, ammo, and attachment table recipes and add deterministic industrial material gates. Curated platform routes take priority.",
   "config.tacz.server.physical_magazines": "Enable Physical Magazines",
   "config.tacz.server.physical_magazines.desc": "Use loadable, ejectable ItemStack-backed magazines for guns declaring detachable_magazine; only active in CREATE_FLY.",
   "item.tacz.carbon_dust": "Carbon Dust",

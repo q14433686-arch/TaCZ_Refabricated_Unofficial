@@ -339,6 +339,8 @@
   "tooltip.tacz.magazine.usage.unload": "- 手持弹匣右击空槽位以取出子弹",
   "config.tacz.server.industry_profile": "工业制造档位",
   "config.tacz.server.industry_profile.desc": "CREATE_FLY 需要安装 Create Fly；LEGACY 保留原 TACZ 合成与整数备弹。",
+  "config.tacz.server.auto_discover_industry_replacements": "自动识别工业替代配方",
+  "config.tacz.server.auto_discover_industry_replacements.desc": "重载时扫描未手工声明的枪包枪械、弹药和配件工作台配方，自动加入确定性的工业材料门槛；已校准平台优先。",
   "config.tacz.server.physical_magazines": "启用真实弹匣",
   "config.tacz.server.physical_magazines.desc": "让声明 detachable_magazine 的枪使用可装填、可退换的实体弹匣；仅在 CREATE_FLY 档有效。",
   "item.tacz.carbon_dust": "碳粉",

@@ -20,6 +20,8 @@ public class SyncConfig {
     public static ForgeConfigSpec.EnumValue<IndustryProfile> INDUSTRY_PROFILE;
     /** Enables physical detachable magazines for gun-feed declarations in the active industrial profile. */
     public static ForgeConfigSpec.BooleanValue PHYSICAL_MAGAZINES;
+    /** Scan uncurated gun-pack table recipes at reload and synthesize safe industrial fallback replacements. */
+    public static ForgeConfigSpec.BooleanValue AUTO_DISCOVER_INDUSTRY_REPLACEMENTS;
 
     // 三个全局系数，用于客户端枪械文本提示，需要同步
     public static ForgeConfigSpec.DoubleValue DAMAGE_BASE_MULTIPLIER;
@@ -102,6 +104,9 @@ public class SyncConfig {
 
         builder.comment("Use real ItemStack-backed detachable magazines for guns that declare an industry/gun_feed definition. Requires an active CREATE_FLY profile.");
         PHYSICAL_MAGAZINES = builder.define("PhysicalMagazines", true);
+
+        builder.comment("Automatically scan uncurated gun-pack table recipes and add an in-game industrial fallback material gate. Curated platform declarations always take priority.");
+        AUTO_DISCOVER_INDUSTRY_REPLACEMENTS = builder.define("AutoDiscoverIndustryReplacements", true);
 
         builder.comment("[Debug Option] Do server-side network check while shooting or not");
         SERVER_SHOOT_NETWORK_V = builder.define("ServerShootNetworkCheck", true);

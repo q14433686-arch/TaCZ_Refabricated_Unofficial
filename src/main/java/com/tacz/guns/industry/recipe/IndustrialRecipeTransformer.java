@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.industry.IndustryProfileManager;
 import net.minecraft.resources.Identifier;
 
@@ -21,8 +22,9 @@ import java.util.Set;
  * a time; every deployment step supplies one separate held item. Therefore,
  * once the named process has been found and shape-validated, this transformer
  * removes the corresponding legacy gun-table recipe instead of rebuilding it
- * as a GUI/inventory shortcut. Unknown or malformed declarations deliberately
- * leave the legacy recipe intact.</p>
+ * as a GUI/inventory shortcut. Unknown declared assemblies deliberately leave
+ * their legacy recipe intact; uncurated recipes without a declaration can be
+ * given the separate runtime industrial fallback gate.</p>
  */
 public final class IndustrialRecipeTransformer {
     private IndustrialRecipeTransformer() {
@@ -50,6 +52,10 @@ public final class IndustrialRecipeTransformer {
         replacedAmmoRecipes.forEach(transformed::remove);
 
         int removedGunTableRecipes = 0;
+        // A declared platform is never silently downgraded to the generic
+        // auto-discovery path: a broken declared sequence deliberately retains
+        // its legacy route so its author can see and correct the declaration.
+        Set<Identifier> declaredAssemblyRecipes = new HashSet<>(rawAssemblies.keySet());
         for (Map.Entry<Identifier, JsonElement> entry : rawAssemblies.entrySet()) {
             if (!transformed.containsKey(entry.getKey())) {
                 continue;
@@ -71,10 +77,147 @@ public final class IndustrialRecipeTransformer {
             removedGunTableRecipes++;
         }
 
+        AutoFallbackStats autoFallbacks = autoDiscoverFallbacks(transformed, declaredAssemblyRecipes);
         GunMod.LOGGER.info(
-                "CREATE_FLY industry profile removed {} legacy gun-table terminal recipe(s) in favour of validated sequential assembly and removed {} legacy ammo table recipe(s).",
-                removedGunTableRecipes, replacedAmmoRecipes.size());
+                "CREATE_FLY industry profile removed {} legacy gun-table terminal recipe(s) in favour of validated sequential assembly, removed {} legacy ammo table recipe(s), and synthesized {} gun / {} ammo / {} attachment fallback replacement(s).",
+                removedGunTableRecipes, replacedAmmoRecipes.size(), autoFallbacks.guns(), autoFallbacks.ammo(), autoFallbacks.attachments());
         return transformed;
+    }
+
+    /**
+     * Runtime fallback for every recognised but uncurated gun-pack table
+     * recipe. This is intentionally a material-gate replacement, not a fake
+     * attempt to infer a real receiver/bolt geometry from arbitrary JSON.
+     * Curated platform declarations retain the high-fidelity component path;
+     * unknown third-party guns, ammo and attachments remain craftable but gain
+     * deterministic industrial intermediates without requiring their author or
+     * a player to run an external generator.
+     */
+    private static AutoFallbackStats autoDiscoverFallbacks(Map<Identifier, JsonElement> recipes,
+                                                           Set<Identifier> declaredAssemblyRecipes) {
+        if (SyncConfig.AUTO_DISCOVER_INDUSTRY_REPLACEMENTS == null
+                || !SyncConfig.AUTO_DISCOVER_INDUSTRY_REPLACEMENTS.get()) {
+            return AutoFallbackStats.EMPTY;
+        }
+        int guns = 0;
+        int ammo = 0;
+        int attachments = 0;
+        for (Map.Entry<Identifier, JsonElement> entry : recipes.entrySet()) {
+            if (declaredAssemblyRecipes.contains(entry.getKey()) || !entry.getValue().isJsonObject()) {
+                continue;
+            }
+            JsonObject recipe = entry.getValue().getAsJsonObject();
+            JsonObject result = object(recipe, "result");
+            if (result == null) {
+                continue;
+            }
+            String type = string(result, "type");
+            int materialWeight = materialWeight(recipe);
+            int resultCount = resultCount(result);
+            boolean changed = switch (type) {
+                case "gun" -> {
+                    appendMaterial(recipe, "tacz:high_carbon_steel_plate", clamp(1, 6, (materialWeight + 23) / 24));
+                    appendMaterial(recipe, "tacz:gun_component_blank", clamp(1, 4, (materialWeight + 39) / 40));
+                    appendMaterial(recipe, "create:brass_sheet", 1);
+                    guns++;
+                    yield true;
+                }
+                case "ammo" -> {
+                    // Legacy gun packs commonly output a stack/batch. The
+                    // fallback must charge one industrial cartridge set per
+                    // result item rather than turn a single blank into 18+ rounds.
+                    appendMaterial(recipe, "tacz:cartridge_case_blank", resultCount);
+                    appendMaterial(recipe, "tacz:projectile_blank", resultCount);
+                    appendMaterial(recipe, "tacz:primer", resultCount);
+                    appendMaterial(recipe, "tacz:industrial_propellant", resultCount);
+                    ammo++;
+                    yield true;
+                }
+                case "attachment" -> {
+                    appendMaterial(recipe, "tacz:high_carbon_steel_plate", clamp(1, 3, (materialWeight + 31) / 32));
+                    appendMaterial(recipe, "create:brass_sheet", 1);
+                    attachments++;
+                    yield true;
+                }
+                default -> false;
+            };
+            if (changed) {
+                recipe.addProperty("industry_auto_fallback", true);
+            }
+        }
+        return new AutoFallbackStats(guns, ammo, attachments);
+    }
+
+    private static int materialWeight(JsonObject recipe) {
+        JsonArray materials = recipe.has("materials") && recipe.get("materials").isJsonArray()
+                ? recipe.getAsJsonArray("materials") : new JsonArray();
+        int weight = 0;
+        for (JsonElement raw : materials) {
+            if (!raw.isJsonObject()) {
+                continue;
+            }
+            JsonObject material = raw.getAsJsonObject();
+            try {
+                weight += material.has("count") ? Math.max(1, material.get("count").getAsInt()) : 1;
+            } catch (RuntimeException ignored) {
+                weight++;
+            }
+        }
+        return Math.max(1, weight);
+    }
+
+    private static int resultCount(JsonObject result) {
+        try {
+            return result.has("count") ? clamp(result.get("count").getAsInt(), 1, 99) : 1;
+        } catch (RuntimeException ignored) {
+            return 1;
+        }
+    }
+
+    private static void appendMaterial(JsonObject recipe, String itemId, int count) {
+        JsonArray materials;
+        if (recipe.has("materials") && recipe.get("materials").isJsonArray()) {
+            materials = recipe.getAsJsonArray("materials");
+        } else {
+            materials = new JsonArray();
+            recipe.add("materials", materials);
+        }
+        // Reusing a direct material id means increase its amount instead of
+        // creating a duplicate row in the gun-smith table UI.
+        for (JsonElement raw : materials) {
+            if (!raw.isJsonObject()) {
+                continue;
+            }
+            JsonObject material = raw.getAsJsonObject();
+            JsonElement item = material.get("item");
+            if (item != null && item.isJsonPrimitive() && item.getAsJsonPrimitive().isString()
+                    && itemId.equals(item.getAsString())) {
+                int old = 1;
+                try {
+                    old = material.has("count") ? material.get("count").getAsInt() : 1;
+                } catch (RuntimeException ignored) {
+                    // Replace malformed count with the generated safe value.
+                }
+                material.addProperty("count", Math.max(1, old) + Math.max(1, count));
+                return;
+            }
+        }
+        JsonObject material = new JsonObject();
+        material.addProperty("item", itemId);
+        material.addProperty("count", Math.max(1, count));
+        materials.add(material);
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private static JsonObject object(JsonObject parent, String key) {
+        return parent.has(key) && parent.get(key).isJsonObject() ? parent.getAsJsonObject(key) : null;
+    }
+
+    private record AutoFallbackStats(int guns, int ammo, int attachments) {
+        private static final AutoFallbackStats EMPTY = new AutoFallbackStats(0, 0, 0);
     }
 
     private static Set<Identifier> legacyAmmoRecipeIds(Map<Identifier, JsonElement> rawAmmoReplacements) {
