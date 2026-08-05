@@ -33,7 +33,7 @@
     "id": "tacz:modern_kinetic_gun",
     "components": {
       "minecraft:custom_data": {
-        "GunId": "tacz:vector45",
+        "GunId": "tacz:rpk",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false

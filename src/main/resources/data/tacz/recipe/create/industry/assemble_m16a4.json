@@ -33,7 +33,7 @@
     "id": "tacz:modern_kinetic_gun",
     "components": {
       "minecraft:custom_data": {
-        "GunId": "tacz:vector45",
+        "GunId": "tacz:m16a4",
         "GunFireMode": "BURST",
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false

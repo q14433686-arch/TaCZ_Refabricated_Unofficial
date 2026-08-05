@@ -216,6 +216,7 @@ def discover_default_platforms(explicit_slugs: set[str]) -> list[dict[str, Any]]
 
     platforms: list[dict[str, Any]] = []
     for (slug, recipe, index), seed in zip(missing, seeds):
+        result = recipe["result"]
         gun_type = index.get("type") if isinstance(index.get("type"), str) else "default"
         data_id = index.get("data") if isinstance(index.get("data"), str) else f"tacz:{slug}_data"
         data_path = data_root / f"{data_id.split(':', 1)[-1]}.json"
