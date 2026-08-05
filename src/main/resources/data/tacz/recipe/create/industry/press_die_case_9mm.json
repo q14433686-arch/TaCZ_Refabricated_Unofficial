@@ -1,0 +1,29 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "tacz:high_carbon_steel_plate",
+    "create:brass_sheet",
+    "tacz:cinnabar_dust"
+  ],
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "case_die",
+          "IndustryDisplayName": "item.tacz.press_die.case_9mm",
+          "CartridgeCaliber": "9mm"
+        }
+      }
+    }
+  ]
+}

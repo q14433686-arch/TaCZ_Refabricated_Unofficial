@@ -34,12 +34,20 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
             adder.accept(Component.translatable("tooltip.tacz.gun_smith_table.non_consumed")
                     .withStyle(style -> style.withColor(0x55FFFF)));
         }
+        if (getPartKind(stack).endsWith("_die")) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.reusable_die")
+                    .withStyle(style -> style.withColor(0x55FFFF)));
+        }
         if (!getCartridgeCaliber(stack).isBlank()) {
             adder.accept(Component.translatable("tooltip.tacz.industry.caliber", getCartridgeCaliber(stack))
                     .withStyle(style -> style.withColor(0xAAAAAA)));
         }
         if (!getProjectileType(stack).isBlank()) {
             adder.accept(Component.translatable("tooltip.tacz.industry.projectile_type", getProjectileType(stack))
+                    .withStyle(style -> style.withColor(0xAAAAAA)));
+        }
+        if (!getDieTargetKind(stack).isBlank()) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.die_target", getDieTargetKind(stack))
                     .withStyle(style -> style.withColor(0xAAAAAA)));
         }
         if (advanced.isAdvanced()) {

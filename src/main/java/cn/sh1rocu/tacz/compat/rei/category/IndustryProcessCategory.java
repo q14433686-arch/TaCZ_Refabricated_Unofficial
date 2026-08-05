@@ -56,6 +56,11 @@ public final class IndustryProcessCategory implements DisplayCategory<IndustryPr
                 graphics.text(font, Component.translatable("rei.tacz.industry.processing_time", ticks),
                         bounds.x + 61, bounds.y + 48, 0xFFAAAAAA, false);
             }
+            if (display.getProcess().keepsHeldItem() && inputs.size() > 1) {
+                // In deploying recipes the second input is the Deployer-held
+                // die/template. Keep-held is gameplay-critical, not cosmetic.
+                graphics.text(font, "∞", bounds.x + 28, bounds.y + 4, 0xFF55FFFF, false);
+            }
         }));
 
         List<EntryIngredient> outputs = display.getOutputEntries();

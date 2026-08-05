@@ -21,6 +21,8 @@ public interface IndustryItemDataAccessor {
     String CARTRIDGE_CALIBER_TAG = "CartridgeCaliber";
     /** A projectile core fixes construction/type (FMJ, shot, etc.) independently of count. */
     String PROJECTILE_TYPE_TAG = "ProjectileType";
+    /** Component dies declare the exact output component kind they can form. */
+    String DIE_TARGET_KIND_TAG = "DieTargetKind";
 
     default String getPlatform(ItemStack stack) {
         return ItemNbtUtils.getTag(stack).getStringOr(PLATFORM_TAG, "");
@@ -60,6 +62,14 @@ public interface IndustryItemDataAccessor {
 
     default void setProjectileType(ItemStack stack, String projectileType) {
         ItemNbtUtils.updateTag(stack, tag -> tag.putString(PROJECTILE_TYPE_TAG, projectileType == null ? "" : projectileType));
+    }
+
+    default String getDieTargetKind(ItemStack stack) {
+        return ItemNbtUtils.getTag(stack).getStringOr(DIE_TARGET_KIND_TAG, "");
+    }
+
+    default void setDieTargetKind(ItemStack stack, String targetKind) {
+        ItemNbtUtils.updateTag(stack, tag -> tag.putString(DIE_TARGET_KIND_TAG, targetKind == null ? "" : targetKind));
     }
 
     default boolean isConfiguredIndustryPart(ItemStack stack) {

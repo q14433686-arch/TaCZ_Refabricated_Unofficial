@@ -1,0 +1,30 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "tacz:high_carbon_steel_plate",
+    "create:brass_nugget",
+    "minecraft:quartz"
+  ],
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "projectile_die",
+          "IndustryDisplayName": "item.tacz.press_die.projectile_762x39_fmj",
+          "CartridgeCaliber": "762x39",
+          "ProjectileType": "fmj"
+        }
+      }
+    }
+  ]
+}

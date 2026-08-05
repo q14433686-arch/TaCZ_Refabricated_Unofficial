@@ -1,0 +1,29 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "tacz:high_carbon_steel_ingot",
+    "tacz:high_carbon_steel_ingot",
+    "tacz:pig_iron_ingot"
+  ],
+  "heat_requirement": "heated",
+  "results": [
+    {
+      "id": "tacz:gun_component_blank",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "machining",
+          "IndustryPartKind": "bolt_blank",
+          "IndustryDisplayName": "item.tacz.gun_component_blank"
+        }
+      }
+    }
+  ]
+}

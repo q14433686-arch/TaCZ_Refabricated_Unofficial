@@ -17,13 +17,15 @@ public final class IndustryProcessDefinition {
     private final List<IndustryStackDefinition> inputs;
     private final List<IndustryStackDefinition> outputs;
     private final int processingTime;
+    private final boolean keepHeldItem;
 
     public IndustryProcessDefinition(IndustryProcessMachine machine, List<IndustryStackDefinition> inputs,
-                                     List<IndustryStackDefinition> outputs, int processingTime) {
+                                     List<IndustryStackDefinition> outputs, int processingTime, boolean keepHeldItem) {
         this.machine = machine;
         this.inputs = List.copyOf(inputs);
         this.outputs = List.copyOf(outputs);
         this.processingTime = Math.max(0, processingTime);
+        this.keepHeldItem = keepHeldItem;
     }
 
     public IndustryProcessMachine getMachine() {
@@ -42,6 +44,10 @@ public final class IndustryProcessDefinition {
         return processingTime;
     }
 
+    public boolean keepsHeldItem() {
+        return keepHeldItem;
+    }
+
     /**
      * Reads the subset of Create recipe JSON used by TACZ's industrial recipes.
      * Unsupported recipe types return null instead of polluting the REI bridge.
@@ -58,6 +64,12 @@ public final class IndustryProcessDefinition {
         }
 
         List<IndustryStackDefinition> inputs = new ArrayList<>();
+        if (recipe.has("target")) {
+            IndustryStackDefinition input = parseInput(recipe.get("target"));
+            if (input != null) {
+                inputs.add(input);
+            }
+        }
         if (recipe.has("ingredient")) {
             IndustryStackDefinition input = parseInput(recipe.get("ingredient"));
             if (input != null) {
@@ -87,7 +99,8 @@ public final class IndustryProcessDefinition {
         if (inputs.isEmpty() || outputs.isEmpty()) {
             return null;
         }
-        return new IndustryProcessDefinition(machine, compressInputs(inputs), outputs, integer(recipe, "processing_time", 0));
+        return new IndustryProcessDefinition(machine, compressInputs(inputs), outputs,
+                integer(recipe, "processing_time", 0), bool(recipe, "keep_held_item", false));
     }
 
     private static List<IndustryStackDefinition> compressInputs(List<IndustryStackDefinition> inputs) {
@@ -136,6 +149,14 @@ public final class IndustryProcessDefinition {
         try {
             return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsInt() : fallback;
         } catch (NumberFormatException ignored) {
+            return fallback;
+        }
+    }
+
+    private static boolean bool(JsonObject object, String key, boolean fallback) {
+        try {
+            return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsBoolean() : fallback;
+        } catch (RuntimeException ignored) {
             return fallback;
         }
     }

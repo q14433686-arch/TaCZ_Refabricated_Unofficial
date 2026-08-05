@@ -34,12 +34,20 @@ public class ModItems {
     public static Item HIGH_CARBON_STEEL_INGOT = register("high_carbon_steel_ingot", new Item(itemProps("high_carbon_steel_ingot")));
     public static Item HIGH_CARBON_STEEL_PLATE = register("high_carbon_steel_plate", new Item(itemProps("high_carbon_steel_plate")));
     public static Item INDUSTRIAL_PROPELLANT = register("industrial_propellant", new Item(itemProps("industrial_propellant")));
+    /** First-stage single-item mechanical-press output. A die assigns its actual caliber later. */
+    public static Item CARTRIDGE_CASE_BLANK = register("cartridge_case_blank", new IndustryTaggedItem(itemProps("cartridge_case_blank").stacksTo(16)));
     /** Calibre-bearing case; custom data defines exactly which cartridge family it can become. */
     public static Item CARTRIDGE_CASE = register("cartridge_case", new IndustryTaggedItem(itemProps("cartridge_case").stacksTo(16)));
     public static Item PRIMER = register("primer", new Item(itemProps("primer")));
+    /** First-stage single-item mechanical-press output. A projectile die assigns its behavior later. */
+    public static Item PROJECTILE_BLANK = register("projectile_blank", new IndustryTaggedItem(itemProps("projectile_blank").stacksTo(16)));
     /** Projectile type and calibre are explicit custom data, not inferred from material count. */
     public static Item PROJECTILE_CORE = register("projectile_core", new IndustryTaggedItem(itemProps("projectile_core").stacksTo(16)));
+    /** Reusable die held by a Create Deployer; keep_held_item makes the calibration physical. */
+    public static Item PRESS_DIE = register("press_die", new IndustryTaggedItem(itemProps("press_die").stacksTo(1)));
 
+    /** Neutral blank with a structural class; a reusable platform die forms its final identity. */
+    public static Item GUN_COMPONENT_BLANK = register("gun_component_blank", new IndustryTaggedItem(itemProps("gun_component_blank").stacksTo(16)));
     /** Platform/kind are stored in custom data so one registry item serves all gun packs. */
     public static Item GUN_COMPONENT = register("gun_component", new IndustryTaggedItem(itemProps("gun_component").stacksTo(16)));
     /** Blueprint ingredients are checked but not consumed by industrial gun-smith recipes. */

@@ -70,7 +70,9 @@ data/tacz/industry/assembly/gun/ak47.json
 }
 ```
 
-在 `CREATE_FLY` 档，TACZ 会把原工作台配方材料替换为：
+在 `CREATE_FLY` 档，组件的实际生产遵循“结构毛坯 → 模具毛坯 → 部署器持模板校准模具 → 部署器持模具成型组件”的过程；两个 `create:deploying` 步骤都用 `keep_held_item: true` 保留模板/模具。
+
+TACZ 会把原工作台配方材料替换为：
 
 1. 带同一 `platform` 的 `tacz:gun_blueprint`，`consume: false`；
 2. 带同一 `platform + kind` 的 `tacz:gun_component`，会被消耗；
@@ -78,7 +80,9 @@ data/tacz/industry/assembly/gun/ak47.json
 
 这依赖现有的 `forge:partial_nbt` Fabric 兼容实现，因此不是“只看数量”的配方：AK 机匣、AR 机匣和 Glock 枪身即使使用同一个注册物品 ID，也会按 custom data 严格区分。
 
-弹药同样如此：`tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方，不需要再在 Java 里加口径分支。
+弹药同样如此：单输入的动力冲压机只负责产出中性的 `tacz:cartridge_case_blank` 与 `tacz:projectile_blank`。之后由 Create 部署器持有一枚 NBT 标识的可复用 `tacz:press_die`，通过带 `keep_held_item: true` 的 `create:deploying` 工艺真正压制出指定身份。
+
+成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。
 
 ---
 

@@ -1,0 +1,28 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "tacz:high_carbon_steel_plate",
+    "create:brass_nugget"
+  ],
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "machining",
+          "IndustryPartKind": "die_blank",
+          "IndustryDisplayName": "item.tacz.press_die_blank.bolt",
+          "DieTargetKind": "bolt"
+        }
+      }
+    }
+  ]
+}

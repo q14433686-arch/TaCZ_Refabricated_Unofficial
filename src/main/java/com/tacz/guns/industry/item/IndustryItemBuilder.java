@@ -12,9 +12,14 @@ public final class IndustryItemBuilder {
     private String displayName = "";
     private String caliber = "";
     private String projectileType = "";
+    private String dieTargetKind = "";
 
     private IndustryItemBuilder(Item item) {
         this.item = item;
+    }
+
+    public static IndustryItemBuilder componentBlank() {
+        return new IndustryItemBuilder(ModItems.GUN_COMPONENT_BLANK);
     }
 
     public static IndustryItemBuilder component() {
@@ -25,12 +30,24 @@ public final class IndustryItemBuilder {
         return new IndustryItemBuilder(ModItems.GUN_BLUEPRINT);
     }
 
+    public static IndustryItemBuilder cartridgeCaseBlank() {
+        return new IndustryItemBuilder(ModItems.CARTRIDGE_CASE_BLANK);
+    }
+
     public static IndustryItemBuilder cartridgeCase() {
         return new IndustryItemBuilder(ModItems.CARTRIDGE_CASE);
     }
 
+    public static IndustryItemBuilder projectileBlank() {
+        return new IndustryItemBuilder(ModItems.PROJECTILE_BLANK);
+    }
+
     public static IndustryItemBuilder projectileCore() {
         return new IndustryItemBuilder(ModItems.PROJECTILE_CORE);
+    }
+
+    public static IndustryItemBuilder pressDie() {
+        return new IndustryItemBuilder(ModItems.PRESS_DIE);
     }
 
     public IndustryItemBuilder platform(String platform) {
@@ -58,6 +75,11 @@ public final class IndustryItemBuilder {
         return this;
     }
 
+    public IndustryItemBuilder dieTargetKind(String targetKind) {
+        this.dieTargetKind = targetKind == null ? "" : targetKind;
+        return this;
+    }
+
     public ItemStack build() {
         ItemStack stack = new ItemStack(item);
         if (stack.getItem() instanceof IndustryItemDataAccessor accessor) {
@@ -66,6 +88,7 @@ public final class IndustryItemBuilder {
             accessor.setDisplayNameKey(stack, displayName);
             accessor.setCartridgeCaliber(stack, caliber);
             accessor.setProjectileType(stack, projectileType);
+            accessor.setDieTargetKind(stack, dieTargetKind);
         }
         return stack;
     }
