@@ -7,45 +7,81 @@
       ]
     }
   ],
-  "type": "create:compacting",
-  "ingredients": [
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:cartridge_case"
-      ],
-      "nbt": {
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:cartridge_case"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "case",
+      "IndustryDisplayName": "item.tacz.cartridge_case.762x39",
+      "CartridgeCaliber": "762x39"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:cartridge_case",
+    "components": {
+      "minecraft:custom_data": {
         "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.762x39",
+        "IndustryPartKind": "loading_762x39",
+        "IndustryDisplayName": "item.tacz.cartridge_case.loading_762x39",
         "CartridgeCaliber": "762x39"
       }
-    },
-    {
-      "fabric:type": "forge:partial_nbt",
-      "items": [
-        "tacz:projectile_core"
-      ],
-      "nbt": {
-        "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "projectile",
-        "IndustryDisplayName": "item.tacz.projectile_core.762x39_fmj",
-        "CartridgeCaliber": "762x39",
-        "ProjectileType": "fmj"
+    }
+  },
+  "result": {
+    "id": "tacz:ammo",
+    "components": {
+      "minecraft:custom_data": {
+        "AmmoId": "tacz:762x39"
       }
-    },
-    "tacz:primer",
-    "tacz:industrial_propellant"
-  ],
-  "heat_requirement": "heated",
-  "results": [
+    }
+  },
+  "sequence": [
     {
-      "id": "tacz:ammo",
-      "components": {
-        "minecraft:custom_data": {
-          "AmmoId": "tacz:762x39"
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:projectile_core"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "projectile",
+          "IndustryDisplayName": "item.tacz.projectile_core.762x39_fmj",
+          "CartridgeCaliber": "762x39",
+          "ProjectileType": "fmj"
         }
-      }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "tacz:primer",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "tacz:industrial_propellant",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
     }
   ]
 }
