@@ -82,6 +82,8 @@ TACZ 会把原工作台配方材料替换为：
 
 弹药同样如此：单输入的动力冲压机只负责产出中性的 `tacz:cartridge_case_blank` 与 `tacz:projectile_blank`。之后由 Create 部署器持有一枚 NBT 标识的可复用 `tacz:press_die`，通过带 `keep_held_item: true` 的 `create:deploying` 工艺真正压制出指定身份。
 
+枪械组件也走同一原则：结构毛坯和模具毛坯先由压实工序生产；部署器持装配模板校准出带 `DieTargetKind` 的平台模具；再由部署器持该模具把对应毛坯成型为最终机匣、枪机、枪管、击发组或复进组件。
+
 成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。
 
 ---
