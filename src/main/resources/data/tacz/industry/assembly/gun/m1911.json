@@ -1,0 +1,33 @@
+{
+  "platform": "m1911",
+  "blueprint_display_name": "item.tacz.gun_blueprint.m1911",
+  "terminal_process": "tacz:create/industry/assemble_m1911",
+  "components": [
+    {
+      "kind": "frame",
+      "display_name": "item.tacz.gun_component.m1911_frame"
+    },
+    {
+      "kind": "slide",
+      "display_name": "item.tacz.gun_component.m1911_slide"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.m1911_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.m1911_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.m1911_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
+  ]
+}

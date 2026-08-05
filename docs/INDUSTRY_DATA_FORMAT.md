@@ -145,7 +145,7 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 
 声明丢失、ID 写错或工艺形状不合法时，TACZ 会记录警告并**保留旧工作台配方**，不会把成枪变成不可获得物品。
 
-当前内置 AK-47、M4A1、Glock 17 已使用此路径。它们的组件、模板、成枪结果都通过 `forge:partial_nbt` / `minecraft:custom_data` 确认身份：AK 机匣不能代替 AR 机匣，Glock 枪身不能代替 AR 机匣；模板保留，组件与辅料按工位消耗。
+当前内置 AK-47、M4A1、Glock 17、M1911、M9A4、MP5A5、UMP45、P90、FAL 已使用此路径。它们的组件、模板、成枪结果都通过 `forge:partial_nbt` / `minecraft:custom_data` 确认身份：AK 机匣不能代替 AR 机匣，Glock/M1911/M9 枪身不能代替冲锋枪或步枪机匣；模板保留，组件与辅料按工位消耗。
 
 枪械组件的前段遵循“结构毛坯 → **中性组件模具体** → 部署器持对应结构毛坯选定几何 → 部署器持平台模板校准平台模具 → 部署器持模具成型组件”。这里的中性组件模具体只有一条工作盆压实来源；机匣/枪机/枪管/击发组/复进组件毛坯作为部署器中不消耗的实体量规，明确选择 `DieTargetKind`。这样不会再出现“五条相同 Basin 输入、却期望产出五种模具体”的不可合成配方。
 
@@ -157,7 +157,7 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 
 弹药同样不靠材料数量区分：单输入动力冲压机只负责产出中性的 `tacz:cartridge_case_blank` 与 `tacz:projectile_blank`。之后由 Create 部署器持有一枚 NBT 标识的可复用 `tacz:press_die`，通过带 `keep_held_item: true` 的 `create:deploying` 工艺真正压制出指定身份。
 
-压实阶段也不能让四条相同材料表直接各自产出四种口径模具。现在先压实**中性弹壳模具体**或**中性弹头模具体**；再由部署器持有一把对应口径的完整枪械作为不消耗的膛室/口径量规，校准成 9 mm、5.56×45、7.62×39 或 12G 的最终模具。枪在部署器手持栏，模具体是置物台/传送带上的唯一目标，因此既是实际的物理选择，也不违反置物台单工件约束。
+压实阶段也不能让多条相同材料表直接各自产出不同口径模具。现在先压实**中性弹壳模具体**或**中性弹头模具体**；再由部署器持有一把对应口径的完整枪械作为不消耗的膛室/口径量规，校准成 9 mm、5.56×45、7.62×39、12G、.45 ACP、.308、5.7×28 或 5.8×42 的最终模具。枪在部署器手持栏，模具体是置物台/传送带上的唯一目标，因此既是实际的物理选择，也不违反置物台单工件约束。
 
 成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。
 

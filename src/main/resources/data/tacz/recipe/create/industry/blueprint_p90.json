@@ -1,0 +1,29 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "minecraft:paper",
+    "minecraft:paper",
+    "create:brass_sheet",
+    "minecraft:glowstone_dust"
+  ],
+  "results": [
+    {
+      "id": "tacz:gun_blueprint",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "p90",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_blueprint.p90"
+        }
+      }
+    }
+  ]
+}

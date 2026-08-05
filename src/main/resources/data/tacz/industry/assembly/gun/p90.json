@@ -1,0 +1,37 @@
+{
+  "platform": "p90",
+  "blueprint_display_name": "item.tacz.gun_blueprint.p90",
+  "terminal_process": "tacz:create/industry/assemble_p90",
+  "components": [
+    {
+      "kind": "receiver",
+      "display_name": "item.tacz.gun_component.p90_receiver"
+    },
+    {
+      "kind": "bolt",
+      "display_name": "item.tacz.gun_component.p90_bolt"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.p90_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.p90_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.p90_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 4
+    },
+    {
+      "item": "minecraft:glass_pane",
+      "count": 2
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "platform": "m9",
+  "blueprint_display_name": "item.tacz.gun_blueprint.m9",
+  "terminal_process": "tacz:create/industry/assemble_m9a4",
+  "components": [
+    {
+      "kind": "frame",
+      "display_name": "item.tacz.gun_component.m9_frame"
+    },
+    {
+      "kind": "slide",
+      "display_name": "item.tacz.gun_component.m9_slide"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.m9_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.m9_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.m9_recoil"
+    }
+  ],
+  "materials": [
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    },
+    {
+      "item": "create:brass_sheet",
+      "count": 1
+    }
+  ]
+}
