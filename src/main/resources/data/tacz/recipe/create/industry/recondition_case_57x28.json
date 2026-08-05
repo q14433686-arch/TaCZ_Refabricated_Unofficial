@@ -41,8 +41,10 @@
           "IndustryPlatform": "ammunition",
           "IndustryPartKind": "case",
           "IndustryDisplayName": "item.tacz.cartridge_case.57x28",
-          "CartridgeCaliber": "57x28"
-        }
+          "CartridgeCaliber": "57x28",
+          "CartridgeAmmoId": "tacz:57x28"
+        },
+        "minecraft:max_stack_size": 60
       }
     }
   ],

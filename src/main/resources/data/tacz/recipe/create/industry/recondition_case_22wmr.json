@@ -41,8 +41,10 @@
           "IndustryPlatform": "ammunition",
           "IndustryPartKind": "case",
           "IndustryDisplayName": "item.tacz.cartridge_case.22wmr",
-          "CartridgeCaliber": "22wmr"
-        }
+          "CartridgeCaliber": "22wmr",
+          "CartridgeAmmoId": "tacz:22wmr"
+        },
+        "minecraft:max_stack_size": 64
       }
     }
   ],

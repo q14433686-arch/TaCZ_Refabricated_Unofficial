@@ -36,7 +36,9 @@
         "GunId": "tacz:aa12",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_aa12",
+        "IndustryAssemblyRecipe": "tacz:gun/aa12"
       }
     }
   },

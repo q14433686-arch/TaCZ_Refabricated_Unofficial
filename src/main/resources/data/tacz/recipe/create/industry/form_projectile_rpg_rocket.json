@@ -26,8 +26,10 @@
         "IndustryPlatform": "ammunition",
         "IndustryPartKind": "incomplete_projectile_rpg_rocket",
         "IndustryDisplayName": "item.tacz.projectile_blank.incomplete_rpg_rocket",
-        "CartridgeCaliber": "rpg_rocket"
-      }
+        "CartridgeCaliber": "rpg_rocket",
+        "CartridgeAmmoId": "tacz:rpg_rocket"
+      },
+      "minecraft:max_stack_size": 6
     }
   },
   "result": {
@@ -38,8 +40,10 @@
         "IndustryPartKind": "projectile",
         "IndustryDisplayName": "item.tacz.projectile_core.rpg_rocket_heat",
         "CartridgeCaliber": "rpg_rocket",
+        "CartridgeAmmoId": "tacz:rpg_rocket",
         "ProjectileType": "heat"
-      }
+      },
+      "minecraft:max_stack_size": 6
     }
   },
   "sequence": [

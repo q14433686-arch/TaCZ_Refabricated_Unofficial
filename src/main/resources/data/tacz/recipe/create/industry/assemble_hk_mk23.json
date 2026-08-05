@@ -36,7 +36,9 @@
         "GunId": "tacz:hk_mk23",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_hk_mk23",
+        "IndustryAssemblyRecipe": "tacz:gun/hk_mk23"
       }
     }
   },

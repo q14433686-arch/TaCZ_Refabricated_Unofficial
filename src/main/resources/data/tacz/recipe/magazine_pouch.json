@@ -1,0 +1,22 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": ["create"]
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "LSL",
+    "LPL",
+    " L "
+  ],
+  "key": {
+    "L": "minecraft:leather",
+    "S": "minecraft:string",
+    "P": "tacz:high_carbon_steel_plate"
+  },
+  "result": {
+    "id": "tacz:magazine_pouch"
+  }
+}

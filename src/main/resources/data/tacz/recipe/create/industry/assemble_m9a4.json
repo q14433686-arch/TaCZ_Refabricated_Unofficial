@@ -36,7 +36,9 @@
         "GunId": "tacz:m9a4",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "m9",
+        "IndustryAssemblyRecipe": "tacz:gun/m9a4"
       }
     }
   },

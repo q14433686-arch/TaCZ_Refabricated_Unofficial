@@ -36,7 +36,9 @@
         "GunId": "tacz:ump45",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "ump",
+        "IndustryAssemblyRecipe": "tacz:gun/ump45"
       }
     }
   },

@@ -36,7 +36,9 @@
         "GunId": "tacz:type_81",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_type_81",
+        "IndustryAssemblyRecipe": "tacz:gun/type_81"
       }
     }
   },

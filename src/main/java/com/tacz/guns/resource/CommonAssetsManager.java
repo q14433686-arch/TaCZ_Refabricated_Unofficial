@@ -31,6 +31,7 @@ import com.tacz.guns.resource.pojo.data.gun.Ignite;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyRecipeManager;
+import com.tacz.guns.industry.recipe.IndustryAssemblyDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessManager;
 import com.tacz.guns.resource.pojo.data.loot.LootTableInjection;
@@ -82,7 +83,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     private CommonDataManager<CommonAttachmentIndex> attachmentIndex;
     private CommonDataManager<CommonBlockIndex> blockIndex;
     /** 第 12 轮：枪械工作台配方，需同步到客户端供 GunSmithTableScreen 使用。 */
-    private CommonDataManager<TableRecipe> tableRecipe;
+    private TableRecipeManager tableRecipe;
     /**
      * Data-driven real-feed declarations.  They intentionally sit outside the
      * original gun pack's GunData files so the ND-licensed default pack is not
@@ -245,6 +246,12 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     @Override
     public Set<Map.Entry<Identifier, TableRecipe>> getAllTableRecipes() {
         return tableRecipe == null ? java.util.Collections.emptySet() : tableRecipe.getAllData().entrySet();
+    }
+
+    /** Server-side high-fidelity terminal declaration used by the salvage station. */
+    @Nullable
+    public IndustryAssemblyDefinition getIndustryAssemblyForGun(Identifier gunId) {
+        return tableRecipe == null ? null : tableRecipe.getIndustryAssemblyForGun(gunId);
     }
 
     public Set<Map.Entry<Identifier, CommonBlockIndex>> getAllBlocks() {

@@ -57,7 +57,8 @@ public class REISubtype {
         return (context, stack) -> {
             if (stack.getItem() instanceof IndustryItemDataAccessor part) {
                 return java.util.Objects.hash(part.getPlatform(stack), part.getPartKind(stack),
-                        part.getCartridgeCaliber(stack), part.getProjectileType(stack), part.getDieTargetKind(stack));
+                        part.getCartridgeCaliber(stack), part.getCartridgeAmmoId(stack),
+                        part.getProjectileType(stack), part.getDieTargetKind(stack));
             }
             return 0;
         };

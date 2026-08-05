@@ -56,7 +56,10 @@ public final class SpentCartridgeService {
         }
 
         Vec3 forward = shooter.getLookAngle();
-        Vec3 right = new Vec3(forward.z, 0.0, -forward.x);
+        // Minecraft's +X axis points east.  Looking south (+Z), a shooter's
+        // physical right is west (-X), hence the negative-Z / positive-X
+        // perpendicular here; the previous sign was the left-hand side.
+        Vec3 right = new Vec3(-forward.z, 0.0, forward.x);
         if (right.lengthSqr() < 1.0E-6) {
             right = new Vec3(1.0, 0.0, 0.0);
         } else {

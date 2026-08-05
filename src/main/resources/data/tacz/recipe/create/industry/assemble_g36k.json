@@ -36,7 +36,9 @@
         "GunId": "tacz:g36k",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_g36k",
+        "IndustryAssemblyRecipe": "tacz:gun/g36k"
       }
     }
   },

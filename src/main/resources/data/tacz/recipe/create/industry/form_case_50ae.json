@@ -39,8 +39,10 @@
           "IndustryPlatform": "ammunition",
           "IndustryPartKind": "case",
           "IndustryDisplayName": "item.tacz.cartridge_case.50ae",
-          "CartridgeCaliber": "50ae"
-        }
+          "CartridgeCaliber": "50ae",
+          "CartridgeAmmoId": "tacz:50ae"
+        },
+        "minecraft:max_stack_size": 48
       }
     }
   ],

@@ -38,13 +38,24 @@ public class ModItems {
     public static Item INDUSTRIAL_PROPELLANT = register("industrial_propellant", new Item(itemProps("industrial_propellant")));
     /** First-stage single-item mechanical-press output. A die assigns its actual caliber later. */
     public static Item CARTRIDGE_CASE_BLANK = register("cartridge_case_blank", new IndustryTaggedItem(itemProps("cartridge_case_blank").stacksTo(16)));
-    /** Calibre-bearing case; custom data defines exactly which cartridge family it can become. */
-    public static Item CARTRIDGE_CASE = register("cartridge_case", new IndustryTaggedItem(itemProps("cartridge_case").stacksTo(16)));
+    /**
+     * Calibre-bearing case; each configured stack receives the exact final
+     * ammo-family max_stack_size component, while 99 is the safe 26.2 fallback
+     * for old/unconfigured stacks.
+     */
+    public static Item CARTRIDGE_CASE = register("cartridge_case", new IndustryTaggedItem(
+            itemProps("cartridge_case").stacksTo(Item.ABSOLUTE_MAX_STACK_SIZE)
+    ));
     public static Item PRIMER = register("primer", new Item(itemProps("primer")));
     /** First-stage single-item mechanical-press output. A projectile die assigns its behavior later. */
     public static Item PROJECTILE_BLANK = register("projectile_blank", new IndustryTaggedItem(itemProps("projectile_blank").stacksTo(16)));
-    /** Projectile type and calibre are explicit custom data, not inferred from material count. */
-    public static Item PROJECTILE_CORE = register("projectile_core", new IndustryTaggedItem(itemProps("projectile_core").stacksTo(16)));
+    /**
+     * Projectile type and calibre are explicit custom data, not inferred from
+     * material count. Configured stacks use the corresponding final ammo cap.
+     */
+    public static Item PROJECTILE_CORE = register("projectile_core", new IndustryTaggedItem(
+            itemProps("projectile_core").stacksTo(Item.ABSOLUTE_MAX_STACK_SIZE)
+    ));
     /** Reusable die held by a Create Deployer; keep_held_item makes the calibration physical. */
     public static Item PRESS_DIE = register("press_die", new IndustryTaggedItem(itemProps("press_die").stacksTo(1)));
 
@@ -64,6 +75,13 @@ public class ModItems {
     /** Dedicated GUI block for final cartridge assembly; it is intentionally not a Create Depot recipe. */
     public static Item CARTRIDGE_ASSEMBLY_MACHINE = register("cartridge_assembly_machine",
             new BlockItem(ModBlocks.CARTRIDGE_ASSEMBLY_MACHINE, blockItemProps("cartridge_assembly_machine")));
+    /** Safe one-input recovery machine for stripped industrial equipment. */
+    public static Item INDUSTRIAL_SALVAGE_STATION = register("industrial_salvage_station",
+            new BlockItem(ModBlocks.INDUSTRIAL_SALVAGE_STATION, blockItemProps("industrial_salvage_station")));
+    /** Stores up to four complete physical magazine stacks, including their remaining rounds. */
+    public static Item MAGAZINE_POUCH = register("magazine_pouch", new MagazinePouchItem(itemProps("magazine_pouch")));
+    /** Reusable cursor tool that batch-loads a physical magazine from loose ammunition. */
+    public static Item MAGAZINE_LOADER = register("magazine_loader", new MagazineLoaderItem(itemProps("magazine_loader")));
 
 
     public static Item TARGET = register("target", new BlockItem(ModBlocks.TARGET, blockItemProps("target")));

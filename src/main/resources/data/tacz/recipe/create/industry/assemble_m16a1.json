@@ -36,7 +36,9 @@
         "GunId": "tacz:m16a1",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_m16a1",
+        "IndustryAssemblyRecipe": "tacz:gun/m16a1"
       }
     }
   },

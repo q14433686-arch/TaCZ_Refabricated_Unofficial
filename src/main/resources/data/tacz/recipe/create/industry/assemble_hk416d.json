@@ -36,7 +36,9 @@
         "GunId": "tacz:hk416d",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_hk416d",
+        "IndustryAssemblyRecipe": "tacz:gun/hk416d"
       }
     }
   },

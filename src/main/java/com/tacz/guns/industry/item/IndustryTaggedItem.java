@@ -1,11 +1,17 @@
 package com.tacz.guns.industry.item;
 
+import com.tacz.guns.industry.ammo.CartridgeStackLimitService;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
+import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nonnull;
 import java.util.function.Consumer;
 
 /**
@@ -14,6 +20,14 @@ import java.util.function.Consumer;
 public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor {
     public IndustryTaggedItem(Properties properties) {
         super(properties);
+    }
+
+    /** Normalize pre-existing configured cases/projectiles after a world update. */
+    @Override
+    public void inventoryTick(@Nonnull ItemStack stack, @Nonnull ServerLevel level,
+                              @Nonnull Entity entity, @Nullable EquipmentSlot slot) {
+        super.inventoryTick(stack, level, entity, slot);
+        CartridgeStackLimitService.normalize(stack);
     }
 
     @Override
@@ -50,6 +64,10 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
         if (!getCartridgeCaliber(stack).isBlank()) {
             adder.accept(Component.translatable("tooltip.tacz.industry.caliber", getCartridgeCaliber(stack))
                     .withStyle(style -> style.withColor(0xAAAAAA)));
+        }
+        if ("case".equals(partKind) || "spent_case".equals(partKind) || "projectile".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.stack_limit", stack.getMaxStackSize())
+                    .withStyle(style -> style.withColor(0x777777)));
         }
         if (!getProjectileType(stack).isBlank()) {
             adder.accept(Component.translatable("tooltip.tacz.industry.projectile_type", getProjectileType(stack))

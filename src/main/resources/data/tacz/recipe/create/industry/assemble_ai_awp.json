@@ -36,7 +36,9 @@
         "GunId": "tacz:ai_awp",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_ai_awp",
+        "IndustryAssemblyRecipe": "tacz:gun/ai_awp"
       }
     }
   },

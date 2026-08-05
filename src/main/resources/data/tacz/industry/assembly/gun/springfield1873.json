@@ -4,22 +4,27 @@
   "terminal_process": "tacz:create/industry/assemble_springfield1873",
   "components": [
     {
+      "structural": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_springfield1873_receiver"
     },
     {
+      "structural": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_springfield1873_bolt"
     },
     {
+      "structural": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_springfield1873_barrel"
     },
     {
+      "structural": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_springfield1873_trigger"
     },
     {
+      "structural": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_springfield1873_recoil"
     }

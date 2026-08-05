@@ -24,10 +24,13 @@ CARTRIDGE_MANIFEST = REPO / "tools/industry/cartridges.json"
 DEFAULT_GUN_POLICY = REPO / "tools/industry/default_gun_policy.json"
 MACHINE_MANIFEST = REPO / "tools/industry/machines.json"
 DEFAULT_AMMO_RECIPE_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/ammo"
+DEFAULT_AMMO_INDEX_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/index/ammo"
 DEFAULT_GUN_DATA_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/data/guns"
 
 CREATE_CONDITIONS = [{"condition": "fabric:all_mods_loaded", "values": ["create"]}]
 STRUCTURAL_ORDER = ("receiver", "bolt", "barrel", "trigger", "recoil")
+# 26.2 serialises minecraft:max_stack_size in the inclusive [1, 99] range.
+MAX_ITEM_STACK_SIZE = 99
 
 
 def read_json(path: Path) -> Any:
@@ -80,8 +83,11 @@ def partial(item: str, nbt: dict[str, Any]) -> dict[str, Any]:
     return {"fabric:type": "forge:partial_nbt", "items": [item], "nbt": nbt}
 
 
-def output(item: str, nbt: dict[str, Any]) -> dict[str, Any]:
-    return {"id": item, "components": {"minecraft:custom_data": nbt}}
+def output(item: str, nbt: dict[str, Any], max_stack_size: int | None = None) -> dict[str, Any]:
+    components: dict[str, Any] = {"minecraft:custom_data": nbt}
+    if max_stack_size is not None:
+        components["minecraft:max_stack_size"] = max(1, min(MAX_ITEM_STACK_SIZE, max_stack_size))
+    return {"id": item, "components": components}
 
 
 def deploying(target: Any, held: Any, result: dict[str, Any], keep: bool = True) -> dict[str, Any]:
@@ -278,6 +284,33 @@ def default_ammo_recipe_ids() -> set[str]:
     return ids
 
 
+def default_ammo_stack_limits() -> dict[str, int]:
+    """Read the effective 26.2 stack cap for each bundled loose-ammo output.
+
+    The ammo item's own builder clamps gun-pack ``stack_size`` to 99 before
+    writing ``minecraft:max_stack_size``.  Case/projectile outputs must use the
+    same effective cap, not the old generic intermediary limit of 16.
+    """
+    limits: dict[str, int] = {}
+    for recipe_path in sorted(DEFAULT_AMMO_RECIPE_ROOT.glob("*.json")):
+        recipe = read_json(recipe_path)
+        result = recipe.get("result") if isinstance(recipe, dict) else None
+        if not isinstance(result, dict) or result.get("type") != "ammo":
+            continue
+        ammo = result.get("id")
+        if not isinstance(ammo, str) or not ammo:
+            continue
+        index_path = DEFAULT_AMMO_INDEX_ROOT / recipe_path.name
+        if not index_path.exists():
+            raise ValueError(f"{recipe_path}: no matching default ammo index for stack limit")
+        index = read_json5(index_path)
+        raw_limit = index.get("stack_size") if isinstance(index, dict) else None
+        if not isinstance(raw_limit, int) or raw_limit < 1:
+            raise ValueError(f"{index_path}: missing positive stack_size")
+        limits[ammo] = max(1, min(MAX_ITEM_STACK_SIZE, raw_limit))
+    return limits
+
+
 def validate_master_gun(caliber: dict[str, Any]) -> None:
     """Ensure a gun used as a physical chamber gauge actually fires this ammo."""
     master = caliber.get("master_gun")
@@ -367,6 +400,13 @@ def load_cartridges() -> list[dict[str, Any]]:
         if unexpected:
             details.append("non-default ammo: " + ", ".join(sorted(unexpected)))
         raise ValueError(f"{CARTRIDGE_MANIFEST}: full default-pack cartridge coverage failed ({'; '.join(details)})")
+    stack_limits = default_ammo_stack_limits()
+    if set(stack_limits) != seen_ammo:
+        raise ValueError(f"{CARTRIDGE_MANIFEST}: default ammo stack-limit index coverage failed")
+    # Derived authoring metadata: it is emitted to the actual case/projectile
+    # ItemStack components, never written back into the source manifest.
+    for entry in entries:
+        entry["_product_stack_limit"] = stack_limits[entry["ammo"]]
     return entries
 
 
@@ -430,7 +470,7 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
         result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_component_{name}_{structural}.json"] = deploying(
             structural_blank, partial("tacz:press_die", calibrated_die), output("tacz:gun_component", component)
         )
-        component_entries.append({"kind": final_kind, "display_name": component_key})
+        component_entries.append({"structural": structural, "kind": final_kind, "display_name": component_key})
 
     result[RESOURCE_ROOT / f"data/tacz/industry/assembly/gun/{slug}.json"] = {
         "platform": name,
@@ -491,6 +531,10 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             "GunFireMode": platform["fire_mode"],
             "GunCurrentAmmoCount": 0,
             "HasBulletInBarrel": False,
+            # Salvage accepts only an actual industrial terminal output, not a
+            # legacy/loot gun that happens to share a GunId.
+            "IndustryAssemblyPlatform": name,
+            "IndustryAssemblyRecipe": f"tacz:gun/{slug}",
         }),
         "sequence": sequence,
     }
@@ -500,6 +544,8 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
 def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
     caliber_id = caliber["id"]
     projectile_type = caliber["projectile_type"]
+    stack_limit = caliber["_product_stack_limit"]
+    ammo_id = caliber["ammo"]
     case_blank_die = partial("tacz:press_die", {
         "IndustryPlatform": "ammunition",
         "IndustryPartKind": "case_die_blank",
@@ -528,12 +574,14 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
         "IndustryPartKind": "case",
         "IndustryDisplayName": f"item.tacz.cartridge_case.{caliber_id}",
         "CartridgeCaliber": caliber_id,
+        "CartridgeAmmoId": ammo_id,
     }
     spent_case = {
         "IndustryPlatform": "ammunition",
         "IndustryPartKind": "spent_case",
         "IndustryDisplayName": f"item.tacz.cartridge_case.spent_{caliber_id}",
         "CartridgeCaliber": caliber_id,
+        "CartridgeAmmoId": ammo_id,
         "SpentCartridgeCase": True,
     }
     projectile = {
@@ -541,6 +589,7 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
         "IndustryPartKind": "projectile",
         "IndustryDisplayName": f"item.tacz.projectile_core.{caliber_id}_{projectile_type}",
         "CartridgeCaliber": caliber_id,
+        "CartridgeAmmoId": ammo_id,
         "ProjectileType": projectile_type,
     }
     case_stock = partial("tacz:cartridge_case_blank", {
@@ -594,7 +643,7 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
         projectile_blank_die, calibration_tool, output("tacz:press_die", projectile_die)
     )
     files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_case_{caliber_id}.json"] = deploying(
-        case_stock, partial("tacz:press_die", case_die), output("tacz:cartridge_case", case)
+        case_stock, partial("tacz:press_die", case_die), output("tacz:cartridge_case", case, stack_limit)
     )
 
     payloads = caliber.get("projectile_payloads", [])
@@ -625,19 +674,24 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
                 "IndustryPartKind": f"incomplete_projectile_{caliber_id}",
                 "IndustryDisplayName": incomplete_key,
                 "CartridgeCaliber": caliber_id,
-            }),
-            "result": output("tacz:projectile_core", projectile),
+                "CartridgeAmmoId": ammo_id,
+            }, stack_limit),
+            "result": output("tacz:projectile_core", projectile, stack_limit),
             "sequence": sequence,
         }
     else:
         files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json"] = deploying(
-            projectile_stock, partial("tacz:press_die", projectile_die), output("tacz:projectile_core", projectile)
+            projectile_stock, partial("tacz:press_die", projectile_die), output("tacz:projectile_core", projectile, stack_limit)
         )
 
     if caliber["eject_case"]:
+        # CartridgeAmmoId is emitted on newly fired cases for stack-limit
+        # normalization, but it is not a mandatory reconditioning ingredient:
+        # pre-update spent cases with the same exact calibre remain recoverable.
+        spent_case_match = {key: value for key, value in spent_case.items() if key != "CartridgeAmmoId"}
         files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/recondition_case_{caliber_id}.json"] = deploying(
-            partial("tacz:cartridge_case", spent_case), partial("tacz:press_die", case_die),
-            output("tacz:cartridge_case", case)
+            partial("tacz:cartridge_case", spent_case_match), partial("tacz:press_die", case_die),
+            output("tacz:cartridge_case", case, stack_limit)
         )
 
     definition: dict[str, Any] = {

@@ -36,7 +36,9 @@
         "GunId": "tacz:fn_fal",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "fal",
+        "IndustryAssemblyRecipe": "tacz:gun/fn_fal"
       }
     }
   },

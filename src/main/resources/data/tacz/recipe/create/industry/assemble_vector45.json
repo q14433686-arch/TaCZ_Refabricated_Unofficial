@@ -36,7 +36,9 @@
         "GunId": "tacz:vector45",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_vector45",
+        "IndustryAssemblyRecipe": "tacz:gun/vector45"
       }
     }
   },

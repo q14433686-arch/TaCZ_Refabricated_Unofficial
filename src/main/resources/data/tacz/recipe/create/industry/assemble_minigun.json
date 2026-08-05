@@ -36,7 +36,9 @@
         "GunId": "tacz:minigun",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_minigun",
+        "IndustryAssemblyRecipe": "tacz:gun/minigun"
       }
     }
   },

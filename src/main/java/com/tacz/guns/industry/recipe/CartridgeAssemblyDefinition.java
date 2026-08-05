@@ -1,6 +1,7 @@
 package com.tacz.guns.industry.recipe;
 
 import com.google.gson.annotations.SerializedName;
+import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.util.ItemNbtUtils;
 import net.minecraft.core.component.DataComponents;
@@ -110,8 +111,11 @@ public final class CartridgeAssemblyDefinition {
         tag.putString("IndustryPartKind", "spent_case");
         tag.putString("IndustryDisplayName", spentCaseDisplayName);
         tag.putString("CartridgeCaliber", caseCaliber);
+        if (ammo != null) {
+            tag.putString("CartridgeAmmoId", ammo.toString());
+        }
         tag.putBoolean("SpentCartridgeCase", true);
-        return configuredPreview(caseItem, tag);
+        return applyProductStackLimit(configuredPreview(caseItem, tag));
     }
 
     /** True only for a definition that explicitly declares a recoverable case. */
@@ -119,12 +123,33 @@ public final class CartridgeAssemblyDefinition {
         return isValid() && ejectCase && valid(caseItem) && !blank(spentCaseDisplayName);
     }
 
+    /**
+     * The configured case/projectile is one physical part per final cartridge,
+     * so its slot capacity follows the actual loose-ammo product cap rather
+     * than the generic registry item's old intermediary cap.
+     */
+    public int getProductStackLimit() {
+        if (ammo == null) {
+            return Item.ABSOLUTE_MAX_STACK_SIZE;
+        }
+        return TimelessAPI.getCommonAmmoIndex(ammo)
+                .map(index -> Math.clamp(index.getStackSize(), 1, Item.ABSOLUTE_MAX_STACK_SIZE))
+                .orElse(Item.ABSOLUTE_MAX_STACK_SIZE);
+    }
+
+    public ItemStack applyProductStackLimit(ItemStack stack) {
+        if (!stack.isEmpty()) {
+            stack.set(DataComponents.MAX_STACK_SIZE, getProductStackLimit());
+        }
+        return stack;
+    }
+
     public ItemStack createCasePreview() {
-        return configuredPreview(caseItem, caseTag());
+        return applyProductStackLimit(configuredPreview(caseItem, caseTag()));
     }
 
     public ItemStack createProjectilePreview() {
-        return configuredPreview(projectileItem, projectileTag());
+        return applyProductStackLimit(configuredPreview(projectileItem, projectileTag()));
     }
 
     public ItemStack createPrimerPreview() {
@@ -139,11 +164,26 @@ public final class CartridgeAssemblyDefinition {
         return ammo;
     }
 
+    public String getCaseCaliber() {
+        return caseCaliber == null ? "" : caseCaliber;
+    }
+
+    public String getProjectileCaliber() {
+        return projectileCaliber == null ? "" : projectileCaliber;
+    }
+
+    public String getProjectileType() {
+        return projectileType == null ? "" : projectileType;
+    }
+
     private CompoundTag caseTag() {
         CompoundTag tag = new CompoundTag();
         tag.putString("IndustryPlatform", "ammunition");
         tag.putString("IndustryPartKind", "case");
         tag.putString("CartridgeCaliber", caseCaliber);
+        if (ammo != null) {
+            tag.putString("CartridgeAmmoId", ammo.toString());
+        }
         if (!blank(caseDisplayName)) {
             tag.putString("IndustryDisplayName", caseDisplayName);
         }
@@ -155,6 +195,9 @@ public final class CartridgeAssemblyDefinition {
         tag.putString("IndustryPlatform", "ammunition");
         tag.putString("IndustryPartKind", "projectile");
         tag.putString("CartridgeCaliber", projectileCaliber);
+        if (ammo != null) {
+            tag.putString("CartridgeAmmoId", ammo.toString());
+        }
         tag.putString("ProjectileType", projectileType);
         if (!blank(projectileDisplayName)) {
             tag.putString("IndustryDisplayName", projectileDisplayName);

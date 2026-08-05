@@ -36,7 +36,9 @@
         "GunId": "tacz:b93r",
         "GunFireMode": "BURST",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_b93r",
+        "IndustryAssemblyRecipe": "tacz:gun/b93r"
       }
     }
   },

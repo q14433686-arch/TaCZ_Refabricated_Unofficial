@@ -7,6 +7,7 @@ import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.industry.item.IndustryItemBuilder;
 import com.tacz.guns.industry.magazine.MagazineItemBuilder;
 import com.tacz.guns.init.ModItems;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
@@ -85,6 +86,7 @@ public final class IndustryStackDefinition {
                     .kind(string(custom, "IndustryPartKind"))
                     .displayNameKey(string(custom, "IndustryDisplayName"))
                     .caliber(string(custom, "CartridgeCaliber"))
+                    .cartridgeAmmoId(string(custom, "CartridgeAmmoId"))
                     .projectileType(string(custom, "ProjectileType"))
                     .dieTargetKind(string(custom, "DieTargetKind"))
                     .build();
@@ -119,6 +121,10 @@ public final class IndustryStackDefinition {
                     .forceBuild();
         } else {
             stack = new ItemStack(item, count);
+        }
+        int configuredStackLimit = integer(components, "minecraft:max_stack_size", 0);
+        if (!stack.isEmpty() && configuredStackLimit > 0) {
+            stack.set(DataComponents.MAX_STACK_SIZE, Math.clamp(configuredStackLimit, 1, Item.ABSOLUTE_MAX_STACK_SIZE));
         }
         if (!stack.isEmpty() && item != ModItems.MAGAZINE) {
             stack.setCount(Math.min(count, stack.getMaxStackSize()));

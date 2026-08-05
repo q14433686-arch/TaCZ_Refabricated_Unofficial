@@ -36,7 +36,9 @@
         "GunId": "tacz:hk_g3",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_hk_g3",
+        "IndustryAssemblyRecipe": "tacz:gun/hk_g3"
       }
     }
   },

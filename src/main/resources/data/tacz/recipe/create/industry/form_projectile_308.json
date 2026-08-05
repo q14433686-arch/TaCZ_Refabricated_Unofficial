@@ -8,7 +8,6 @@
     }
   ],
   "type": "create:deploying",
-  "keep_held_item": true,
   "target": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -42,9 +41,12 @@
           "IndustryPartKind": "projectile",
           "IndustryDisplayName": "item.tacz.projectile_core.308_fmj",
           "CartridgeCaliber": "308",
+          "CartridgeAmmoId": "tacz:308",
           "ProjectileType": "fmj"
-        }
+        },
+        "minecraft:max_stack_size": 48
       }
     }
-  ]
+  ],
+  "keep_held_item": true
 }

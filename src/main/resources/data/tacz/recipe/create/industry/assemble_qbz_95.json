@@ -36,7 +36,9 @@
         "GunId": "tacz:qbz_95",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_qbz_95",
+        "IndustryAssemblyRecipe": "tacz:gun/qbz_95"
       }
     }
   },

@@ -4,22 +4,27 @@
   "terminal_process": "tacz:create/industry/assemble_qbz_95",
   "components": [
     {
+      "structural": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_qbz_95_receiver"
     },
     {
+      "structural": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_qbz_95_bolt"
     },
     {
+      "structural": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_qbz_95_barrel"
     },
     {
+      "structural": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_qbz_95_trigger"
     },
     {
+      "structural": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_qbz_95_recoil"
     }

@@ -1,0 +1,24 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": ["create"]
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SBS",
+    "WHW",
+    "SPS"
+  ],
+  "key": {
+    "S": "tacz:high_carbon_steel_plate",
+    "B": "create:brass_sheet",
+    "W": "create:andesite_alloy",
+    "H": "minecraft:hopper",
+    "P": "minecraft:piston"
+  },
+  "result": {
+    "id": "tacz:industrial_salvage_station"
+  }
+}

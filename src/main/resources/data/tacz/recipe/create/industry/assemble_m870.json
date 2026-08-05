@@ -36,7 +36,9 @@
         "GunId": "tacz:m870",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_m870",
+        "IndustryAssemblyRecipe": "tacz:gun/m870"
       }
     }
   },

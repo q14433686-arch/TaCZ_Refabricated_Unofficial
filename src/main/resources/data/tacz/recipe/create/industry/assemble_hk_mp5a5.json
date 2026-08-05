@@ -36,7 +36,9 @@
         "GunId": "tacz:hk_mp5a5",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "mp5",
+        "IndustryAssemblyRecipe": "tacz:gun/hk_mp5a5"
       }
     }
   },

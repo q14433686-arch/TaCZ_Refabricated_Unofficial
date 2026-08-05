@@ -36,7 +36,9 @@
         "GunId": "tacz:sks_tactical",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_sks_tactical",
+        "IndustryAssemblyRecipe": "tacz:gun/sks_tactical"
       }
     }
   },

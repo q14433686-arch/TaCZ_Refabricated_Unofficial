@@ -4,22 +4,27 @@
   "terminal_process": "tacz:create/industry/assemble_timeless50",
   "components": [
     {
+      "structural": "receiver",
       "kind": "frame",
       "display_name": "item.tacz.gun_component.default_timeless50_frame"
     },
     {
+      "structural": "bolt",
       "kind": "slide",
       "display_name": "item.tacz.gun_component.default_timeless50_slide"
     },
     {
+      "structural": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_timeless50_barrel"
     },
     {
+      "structural": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_timeless50_trigger"
     },
     {
+      "structural": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_timeless50_recoil"
     }

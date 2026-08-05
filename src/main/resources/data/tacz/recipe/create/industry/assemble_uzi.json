@@ -36,7 +36,9 @@
         "GunId": "tacz:uzi",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_uzi",
+        "IndustryAssemblyRecipe": "tacz:gun/uzi"
       }
     }
   },

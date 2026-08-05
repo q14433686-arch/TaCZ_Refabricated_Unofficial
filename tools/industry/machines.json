@@ -9,6 +9,16 @@
         "slot": "#202a30",
         "indicator": "#df9a32"
       }
+    },
+    {
+      "id": "industrial_salvage_station",
+      "palette": {
+        "base": "#4a4140",
+        "shadow": "#241e20",
+        "brass": "#b67b39",
+        "slot": "#30272a",
+        "indicator": "#d55f39"
+      }
     }
   ]
 }

@@ -36,7 +36,9 @@
         "GunId": "tacz:mk14",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_mk14",
+        "IndustryAssemblyRecipe": "tacz:gun/mk14"
       }
     }
   },

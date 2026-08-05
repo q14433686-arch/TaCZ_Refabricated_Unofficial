@@ -36,7 +36,9 @@
         "GunId": "tacz:rpg7",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_rpg7",
+        "IndustryAssemblyRecipe": "tacz:gun/rpg7"
       }
     }
   },

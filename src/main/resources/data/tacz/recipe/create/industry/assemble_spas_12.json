@@ -36,7 +36,9 @@
         "GunId": "tacz:spas_12",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_spas_12",
+        "IndustryAssemblyRecipe": "tacz:gun/spas_12"
       }
     }
   },

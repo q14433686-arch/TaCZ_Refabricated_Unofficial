@@ -36,7 +36,9 @@
         "GunId": "tacz:glock_17",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "glock",
+        "IndustryAssemblyRecipe": "tacz:gun/glock_17"
       }
     }
   },

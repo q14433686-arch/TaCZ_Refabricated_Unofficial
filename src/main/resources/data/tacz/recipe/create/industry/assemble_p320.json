@@ -36,7 +36,9 @@
         "GunId": "tacz:p320",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_p320",
+        "IndustryAssemblyRecipe": "tacz:gun/p320"
       }
     }
   },

@@ -39,8 +39,10 @@
           "IndustryPlatform": "ammunition",
           "IndustryPartKind": "case",
           "IndustryDisplayName": "item.tacz.cartridge_case.357mag",
-          "CartridgeCaliber": "357mag"
-        }
+          "CartridgeCaliber": "357mag",
+          "CartridgeAmmoId": "tacz:357mag"
+        },
+        "minecraft:max_stack_size": 48
       }
     }
   ],

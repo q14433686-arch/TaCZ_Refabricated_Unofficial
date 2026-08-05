@@ -36,7 +36,9 @@
         "GunId": "tacz:m249",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_m249",
+        "IndustryAssemblyRecipe": "tacz:gun/m249"
       }
     }
   },

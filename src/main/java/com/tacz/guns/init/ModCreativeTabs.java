@@ -34,6 +34,9 @@ public class ModCreativeTabs {
                 output.accept(ModItems.TARGET);
                 output.accept(ModItems.STATUE);
                 output.accept(ModItems.CARTRIDGE_ASSEMBLY_MACHINE);
+                output.accept(ModItems.INDUSTRIAL_SALVAGE_STATION);
+                output.accept(ModItems.MAGAZINE_POUCH);
+                output.accept(ModItems.MAGAZINE_LOADER);
                 output.accept(ModItems.TARGET_MINECART);
                 AmmoBoxItem.fillItemCategory(output);
                 output.accept(ModItems.CARBON_DUST);
@@ -55,7 +58,8 @@ public class ModCreativeTabs {
                         .displayNameKey("item.tacz.press_die.case_9mm").caliber("9mm").build());
                 output.accept(IndustryItemBuilder.cartridgeCase()
                         .platform("ammunition").kind("case")
-                        .displayNameKey("item.tacz.cartridge_case.9mm").caliber("9mm").build());
+                        .displayNameKey("item.tacz.cartridge_case.9mm").caliber("9mm")
+                        .cartridgeAmmoId("tacz:9mm").build());
                 output.accept(IndustryItemBuilder.projectileBlank()
                         .platform("ammunition").kind("projectile_blank")
                         .displayNameKey("item.tacz.projectile_blank").build());
@@ -66,7 +70,7 @@ public class ModCreativeTabs {
                 output.accept(IndustryItemBuilder.projectileCore()
                         .platform("ammunition").kind("projectile")
                         .displayNameKey("item.tacz.projectile_core.9mm_fmj")
-                        .caliber("9mm").projectileType("fmj").build());
+                        .caliber("9mm").cartridgeAmmoId("tacz:9mm").projectileType("fmj").build());
                 output.accept(IndustryItemBuilder.componentBlank()
                         .platform("machining").kind("receiver_blank")
                         .displayNameKey("item.tacz.gun_component_blank").build());

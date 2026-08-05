@@ -36,7 +36,9 @@
         "GunId": "tacz:aug",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_aug",
+        "IndustryAssemblyRecipe": "tacz:gun/aug"
       }
     }
   },

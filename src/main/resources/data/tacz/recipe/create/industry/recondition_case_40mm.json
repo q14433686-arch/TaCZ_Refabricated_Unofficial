@@ -41,8 +41,10 @@
           "IndustryPlatform": "ammunition",
           "IndustryPartKind": "case",
           "IndustryDisplayName": "item.tacz.cartridge_case.40mm",
-          "CartridgeCaliber": "40mm"
-        }
+          "CartridgeCaliber": "40mm",
+          "CartridgeAmmoId": "tacz:40mm"
+        },
+        "minecraft:max_stack_size": 6
       }
     }
   ],

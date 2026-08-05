@@ -36,7 +36,9 @@
         "GunId": "tacz:m4a1",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "ar",
+        "IndustryAssemblyRecipe": "tacz:gun/m4a1"
       }
     }
   },

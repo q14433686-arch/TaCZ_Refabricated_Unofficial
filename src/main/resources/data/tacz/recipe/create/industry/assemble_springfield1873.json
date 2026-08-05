@@ -36,7 +36,9 @@
         "GunId": "tacz:springfield1873",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_springfield1873",
+        "IndustryAssemblyRecipe": "tacz:gun/springfield1873"
       }
     }
   },

@@ -36,7 +36,9 @@
         "GunId": "tacz:taurus500",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_taurus500",
+        "IndustryAssemblyRecipe": "tacz:gun/taurus500"
       }
     }
   },

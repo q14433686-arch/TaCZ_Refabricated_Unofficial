@@ -36,7 +36,9 @@
         "GunId": "tacz:m16a4",
         "GunFireMode": "BURST",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_m16a4",
+        "IndustryAssemblyRecipe": "tacz:gun/m16a4"
       }
     }
   },

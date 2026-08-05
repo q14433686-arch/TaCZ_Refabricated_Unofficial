@@ -36,7 +36,9 @@
         "GunId": "tacz:db_long",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_db_long",
+        "IndustryAssemblyRecipe": "tacz:gun/db_long"
       }
     }
   },

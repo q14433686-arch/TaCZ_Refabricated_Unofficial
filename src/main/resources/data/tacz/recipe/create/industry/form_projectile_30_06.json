@@ -41,8 +41,10 @@
           "IndustryPartKind": "projectile",
           "IndustryDisplayName": "item.tacz.projectile_core.30_06_fmj",
           "CartridgeCaliber": "30_06",
+          "CartridgeAmmoId": "tacz:30_06",
           "ProjectileType": "fmj"
-        }
+        },
+        "minecraft:max_stack_size": 36
       }
     }
   ],

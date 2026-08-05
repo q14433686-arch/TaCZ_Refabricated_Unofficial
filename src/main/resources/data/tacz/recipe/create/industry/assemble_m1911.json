@@ -36,7 +36,9 @@
         "GunId": "tacz:m1911",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "m1911",
+        "IndustryAssemblyRecipe": "tacz:gun/m1911"
       }
     }
   },

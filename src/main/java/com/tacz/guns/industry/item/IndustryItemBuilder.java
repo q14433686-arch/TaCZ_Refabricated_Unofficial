@@ -1,6 +1,9 @@
 package com.tacz.guns.industry.item;
 
+import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.init.ModItems;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -11,6 +14,7 @@ public final class IndustryItemBuilder {
     private String kind = "";
     private String displayName = "";
     private String caliber = "";
+    private String cartridgeAmmoId = "";
     private String projectileType = "";
     private String dieTargetKind = "";
 
@@ -70,6 +74,11 @@ public final class IndustryItemBuilder {
         return this;
     }
 
+    public IndustryItemBuilder cartridgeAmmoId(String ammoId) {
+        this.cartridgeAmmoId = ammoId == null ? "" : ammoId;
+        return this;
+    }
+
     public IndustryItemBuilder projectileType(String projectileType) {
         this.projectileType = projectileType == null ? "" : projectileType;
         return this;
@@ -87,8 +96,18 @@ public final class IndustryItemBuilder {
             accessor.setPartKind(stack, kind);
             accessor.setDisplayNameKey(stack, displayName);
             accessor.setCartridgeCaliber(stack, caliber);
+            accessor.setCartridgeAmmoId(stack, cartridgeAmmoId);
             accessor.setProjectileType(stack, projectileType);
             accessor.setDieTargetKind(stack, dieTargetKind);
+        }
+        // Recipe JSON writes this component directly. Builders are also used
+        // for creative/REI samples, so give those configured samples the same
+        // per-ammo slot limit whenever the synchronized index is available.
+        Identifier ammoId = Identifier.tryParse(cartridgeAmmoId);
+        if (ammoId != null && (item == ModItems.CARTRIDGE_CASE || item == ModItems.PROJECTILE_CORE)) {
+            TimelessAPI.getCommonAmmoIndex(ammoId)
+                    .ifPresent(index -> stack.set(DataComponents.MAX_STACK_SIZE,
+                            Math.clamp(index.getStackSize(), 1, Item.ABSOLUTE_MAX_STACK_SIZE)));
         }
         return stack;
     }

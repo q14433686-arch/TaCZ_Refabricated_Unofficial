@@ -62,6 +62,8 @@ assets/tacz/lang/en_us.json
 assets/tacz/lang/zh_cn.json
 ```
 
+终端成枪结果还会写入 `IndustryAssemblyPlatform` 与 `IndustryAssemblyRecipe` 来源标记；工业回收站只接受这种实际终端产物，避免把旧工作台/战利品枪的同名 `GunId` 变成工业零件捷径。每个 assembly 声明同时保存五个结构毛坯类别，供回收站以固定 3/5 回收率返还可再次成型的毛坯。
+
 ## 弹药与弹匣源定义
 
 `tools/industry/cartridges.json` 是默认枪包全部 **24** 种散装弹药的口径源定义。每条口径声明 `AmmoId`、弹头类型、是否会抛出可回收弹壳、双语名称，以及一种真实的模具校准来源：
@@ -83,7 +85,7 @@ industry/cartridge_assembly/<caliber>.json
 industry/ammo/<caliber>.json
 ```
 
-`industry/ammo` 会移除同一 `AmmoId` 的旧工作台捷径；最终每发仍只由专用四槽弹药装配机装配。抛壳后的 `tacz:cartridge_case` 带 `IndustryPartKind: "spent_case"` 与精确 `CartridgeCaliber`，只能经对应 `recondition_case` 部署器工序整形，不能直接绕过底火/推进药重新装弹。
+`industry/ammo` 会移除同一 `AmmoId` 的旧工作台捷径；最终每发仍只由专用四槽弹药装配机装配。生成器还从默认包 `index/ammo/<caliber>.json` 的 `stack_size` 读取最终散装弹上限（按 26.2 的 99 上限夹取），并把相同 `minecraft:max_stack_size` 写到该口径的弹壳、弹头、爆炸弹过渡件和整形弹壳输出中。抛壳后的 `tacz:cartridge_case` 带 `IndustryPartKind: "spent_case"`、精确 `CartridgeCaliber` 与 `CartridgeAmmoId`，只能经对应 `recondition_case` 部署器工序整形，不能直接绕过底火/推进药重新装弹。
 
 生成器还读取运行时的 `data/tacz/industry/gun_feed/*.json`，自动生成全部实体弹匣的“中性弹匣壳体 + 保留成枪量规”部署器配方；若某个供弹定义的 `ammo` 没有口径源定义，`--check` 会失败。
 
@@ -105,4 +107,4 @@ industry/ammo/<caliber>.json
 
 平台差异不是靠复制 PNG 实现。`gun_component`、`press_die`、`cartridge_case`、`projectile_core`、`gun_blueprint` 都是 NBT 泛型物品，故意共用基础纹理；平台、口径、类型和显示名由 custom data 决定。
 
-只有真正新增注册物品/方块才生成固定视觉资源。`tools/industry/machines.json` 当前描述弹药装配机的配色，生成器据此输出其 16×16 方块纹理和模型引用。生成器绝不触碰 `tacz_default_gun` 默认枪包中的受限许可美术资源。
+只有真正新增注册物品/方块才生成固定视觉资源。`tools/industry/machines.json` 当前描述弹药装配机与工业回收站的配色，生成器据此输出其 16×16 方块纹理和模型引用。生成器绝不触碰 `tacz_default_gun` 默认枪包中的受限许可美术资源。

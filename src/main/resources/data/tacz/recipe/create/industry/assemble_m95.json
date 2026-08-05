@@ -36,7 +36,9 @@
         "GunId": "tacz:m95",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_m95",
+        "IndustryAssemblyRecipe": "tacz:gun/m95"
       }
     }
   },

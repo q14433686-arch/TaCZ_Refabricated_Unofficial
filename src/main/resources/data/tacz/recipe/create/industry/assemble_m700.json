@@ -36,7 +36,9 @@
         "GunId": "tacz:m700",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_m700",
+        "IndustryAssemblyRecipe": "tacz:gun/m700"
       }
     }
   },

@@ -36,7 +36,9 @@
         "GunId": "tacz:cz75",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_cz75",
+        "IndustryAssemblyRecipe": "tacz:gun/cz75"
       }
     }
   },

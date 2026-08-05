@@ -72,10 +72,11 @@ public final class IndustryAssemblyDefinition {
             for (JsonElement entry : object.getAsJsonArray("components")) {
                 if (!entry.isJsonObject()) continue;
                 JsonObject component = entry.getAsJsonObject();
+                String structural = string(component, "structural");
                 String kind = string(component, "kind");
                 String display = string(component, "display_name");
                 if (!kind.isBlank() && !display.isBlank()) {
-                    components.add(new Component(kind, display));
+                    components.add(new Component(structural, kind, display));
                 }
             }
         }
@@ -109,7 +110,13 @@ public final class IndustryAssemblyDefinition {
         }
     }
 
-    public record Component(String kind, String displayName) {
+    /**
+     * {@code structural} is the neutral blank class (receiver, bolt, barrel,
+     * trigger or recoil); {@code kind} is the platform-specific finished part.
+     * Older third-party declarations may omit structural and remain readable,
+     * but cannot claim a particular blank during safe industrial salvage.
+     */
+    public record Component(String structural, String kind, String displayName) {
     }
 
     public record Material(String itemId, int count) {

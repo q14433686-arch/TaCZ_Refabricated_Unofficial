@@ -36,7 +36,9 @@
         "GunId": "tacz:deagle",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_deagle",
+        "IndustryAssemblyRecipe": "tacz:gun/deagle"
       }
     }
   },

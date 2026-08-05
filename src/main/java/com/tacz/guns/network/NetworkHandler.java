@@ -41,6 +41,7 @@ public class NetworkHandler {
         PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerDrawGun.TYPE, ClientMessagePlayerDrawGun.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageCraft.TYPE, ClientMessageCraft.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageAssembleCartridge.TYPE, ClientMessageAssembleCartridge.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(ClientMessageSalvageIndustry.TYPE, ClientMessageSalvageIndustry.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerZoom.TYPE, ClientMessagePlayerZoom.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageRefitGun.TYPE, ClientMessageRefitGun.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageUnloadAttachment.TYPE, ClientMessageUnloadAttachment.CODEC);
@@ -81,6 +82,7 @@ public class NetworkHandler {
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerDrawGun.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageCraft.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageAssembleCartridge.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
+        ServerPlayNetworking.registerGlobalReceiver(ClientMessageSalvageIndustry.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerZoom.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageRefitGun.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageUnloadAttachment.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));

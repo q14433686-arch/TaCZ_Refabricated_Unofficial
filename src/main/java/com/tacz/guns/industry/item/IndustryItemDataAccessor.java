@@ -19,6 +19,8 @@ public interface IndustryItemDataAccessor {
     String DISPLAY_NAME_TAG = "IndustryDisplayName";
     /** A case fixes the cartridge family/calibre used by the final loading recipe. */
     String CARTRIDGE_CALIBER_TAG = "CartridgeCaliber";
+    /** Links a configured case/projectile to the loose-ammo stack limit it must use. */
+    String CARTRIDGE_AMMO_ID_TAG = "CartridgeAmmoId";
     /** A projectile core fixes construction/type (FMJ, shot, etc.) independently of count. */
     String PROJECTILE_TYPE_TAG = "ProjectileType";
     /** Component dies declare the exact output component kind they can form. */
@@ -54,6 +56,14 @@ public interface IndustryItemDataAccessor {
 
     default void setCartridgeCaliber(ItemStack stack, String caliber) {
         ItemNbtUtils.updateTag(stack, tag -> tag.putString(CARTRIDGE_CALIBER_TAG, caliber == null ? "" : caliber));
+    }
+
+    default String getCartridgeAmmoId(ItemStack stack) {
+        return ItemNbtUtils.getTag(stack).getStringOr(CARTRIDGE_AMMO_ID_TAG, "");
+    }
+
+    default void setCartridgeAmmoId(ItemStack stack, String ammoId) {
+        ItemNbtUtils.updateTag(stack, tag -> tag.putString(CARTRIDGE_AMMO_ID_TAG, ammoId == null ? "" : ammoId));
     }
 
     default String getProjectileType(ItemStack stack) {

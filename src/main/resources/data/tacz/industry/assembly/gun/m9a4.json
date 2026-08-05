@@ -4,22 +4,27 @@
   "terminal_process": "tacz:create/industry/assemble_m9a4",
   "components": [
     {
+      "structural": "receiver",
       "kind": "frame",
       "display_name": "item.tacz.gun_component.m9_frame"
     },
     {
+      "structural": "bolt",
       "kind": "slide",
       "display_name": "item.tacz.gun_component.m9_slide"
     },
     {
+      "structural": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.m9_barrel"
     },
     {
+      "structural": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.m9_trigger"
     },
     {
+      "structural": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.m9_recoil"
     }

@@ -41,8 +41,10 @@
           "IndustryPartKind": "projectile",
           "IndustryDisplayName": "item.tacz.projectile_core.46x30_fmj",
           "CartridgeCaliber": "46x30",
+          "CartridgeAmmoId": "tacz:46x30",
           "ProjectileType": "fmj"
-        }
+        },
+        "minecraft:max_stack_size": 60
       }
     }
   ],

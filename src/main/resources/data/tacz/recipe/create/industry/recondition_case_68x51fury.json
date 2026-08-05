@@ -41,8 +41,10 @@
           "IndustryPlatform": "ammunition",
           "IndustryPartKind": "case",
           "IndustryDisplayName": "item.tacz.cartridge_case.68x51fury",
-          "CartridgeCaliber": "68x51fury"
-        }
+          "CartridgeCaliber": "68x51fury",
+          "CartridgeAmmoId": "tacz:68x51fury"
+        },
+        "minecraft:max_stack_size": 60
       }
     }
   ],

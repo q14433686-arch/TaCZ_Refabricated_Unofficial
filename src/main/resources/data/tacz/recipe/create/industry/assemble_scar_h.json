@@ -36,7 +36,9 @@
         "GunId": "tacz:scar_h",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_scar_h",
+        "IndustryAssemblyRecipe": "tacz:gun/scar_h"
       }
     }
   },

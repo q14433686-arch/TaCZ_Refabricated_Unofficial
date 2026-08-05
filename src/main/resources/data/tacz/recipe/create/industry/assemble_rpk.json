@@ -36,7 +36,9 @@
         "GunId": "tacz:rpk",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_rpk",
+        "IndustryAssemblyRecipe": "tacz:gun/rpk"
       }
     }
   },

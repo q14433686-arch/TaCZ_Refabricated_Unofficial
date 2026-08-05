@@ -36,7 +36,9 @@
         "GunId": "tacz:rhino357",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_rhino357",
+        "IndustryAssemblyRecipe": "tacz:gun/rhino357"
       }
     }
   },

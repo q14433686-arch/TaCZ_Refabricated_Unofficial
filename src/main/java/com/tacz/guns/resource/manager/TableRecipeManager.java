@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.init.ModRecipe;
 import com.tacz.guns.industry.recipe.IndustrialRecipeTransformer;
+import com.tacz.guns.industry.recipe.IndustryAssemblyDefinition;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.network.DataType;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
@@ -15,9 +16,12 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 枪械工作台配方加载器。
@@ -82,6 +86,8 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
     private static final FileToIdConverter INDUSTRY_AMMO_CONVERTER = FileToIdConverter.json("industry/ammo");
     private Map<Identifier, JsonElement> industryAssemblies = Map.of();
     private Map<Identifier, JsonElement> industryAmmoReplacements = Map.of();
+    /** Server-side lookup used by the guarded industrial recovery station. */
+    private Map<Identifier, IndustryAssemblyDefinition> industryAssembliesByGun = Map.of();
 
     public TableRecipeManager() {
         // 目录与原版数据包配方一致（data/<ns>/recipe），这是上游的既定布局，不能改。
@@ -143,6 +149,7 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         }
         GunMod.LOGGER.debug(getMarker(), "Gun smith table recipes: {} accepted, {} foreign recipe files skipped",
                 ours.size(), pObject.size() - ours.size());
+        industryAssembliesByGun = resolveIndustryAssembliesByGun(ours, industryAssemblies);
         // The industrial profile removes only terminals that have a real,
         // validated one-workpiece Create sequenced-assembly process. Pass the
         // unfiltered recipe map as proof that the named process resource is
@@ -155,6 +162,61 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         );
         // 父类会用这一份（且仅这一份）同时构建 dataMap 与 networkCache。
         super.apply(profileRecipes, pResourceManager, pProfiler);
+    }
+
+    /**
+     * Resolve a high-fidelity terminal declaration by its produced gun id.
+     * This remains server-side implementation data: it is deliberately not
+     * exposed as a loose client recipe shortcut.
+     */
+    @Nullable
+    public IndustryAssemblyDefinition getIndustryAssemblyForGun(Identifier gunId) {
+        return gunId == null ? null : industryAssembliesByGun.get(gunId);
+    }
+
+    private static Map<Identifier, IndustryAssemblyDefinition> resolveIndustryAssembliesByGun(
+            Map<Identifier, JsonElement> tableRecipes, Map<Identifier, JsonElement> rawAssemblies) {
+        Map<Identifier, IndustryAssemblyDefinition> resolved = new LinkedHashMap<>();
+        Set<Identifier> ambiguous = new HashSet<>();
+        for (Map.Entry<Identifier, JsonElement> entry : rawAssemblies.entrySet()) {
+            IndustryAssemblyDefinition definition = IndustryAssemblyDefinition.fromJson(entry.getValue());
+            JsonElement rawRecipe = tableRecipes.get(entry.getKey());
+            Identifier gunId = gunResultId(rawRecipe);
+            if (definition == null || gunId == null) {
+                continue;
+            }
+            // Two declarations for the same output cannot safely decide which
+            // structural blanks to recover. Fail closed rather than recover
+            // components from an arbitrary map iteration order.
+            if (ambiguous.contains(gunId)) {
+                continue;
+            }
+            if (resolved.containsKey(gunId)) {
+                resolved.remove(gunId);
+                ambiguous.add(gunId);
+                continue;
+            }
+            resolved.put(gunId, definition);
+        }
+        return Map.copyOf(resolved);
+    }
+
+    @Nullable
+    private static Identifier gunResultId(JsonElement rawRecipe) {
+        if (rawRecipe == null || !rawRecipe.isJsonObject()) {
+            return null;
+        }
+        JsonObject recipe = rawRecipe.getAsJsonObject();
+        if (!recipe.has("result") || !recipe.get("result").isJsonObject()) {
+            return null;
+        }
+        JsonObject result = recipe.getAsJsonObject("result");
+        if (!"gun".equals(result.has("type") && result.get("type").isJsonPrimitive()
+                ? result.get("type").getAsString() : "")) {
+            return null;
+        }
+        return result.has("id") && result.get("id").isJsonPrimitive()
+                ? Identifier.tryParse(result.get("id").getAsString()) : null;
     }
 
     private static boolean isGunSmithTableRecipe(JsonElement element) {

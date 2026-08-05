@@ -36,7 +36,9 @@
         "GunId": "tacz:db_short",
         "GunFireMode": "BURST",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_db_short",
+        "IndustryAssemblyRecipe": "tacz:gun/db_short"
       }
     }
   },

@@ -3,6 +3,7 @@ package com.tacz.guns.init;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.block.*;
 import com.tacz.guns.block.entity.CartridgeAssemblyMachineBlockEntity;
+import com.tacz.guns.block.entity.IndustrialSalvageStationBlockEntity;
 import com.tacz.guns.block.entity.GunSmithTableBlockEntity;
 import com.tacz.guns.block.entity.StatueBlockEntity;
 import com.tacz.guns.block.entity.TargetBlockEntity;
@@ -32,6 +33,9 @@ public class ModBlocks {
     /** Dedicated GUI machine for the final case/projectile/primer/propellant assembly. */
     public static Block CARTRIDGE_ASSEMBLY_MACHINE = registerBlock("cartridge_assembly_machine",
             new CartridgeAssemblyMachineBlock(metalProps("cartridge_assembly_machine")));
+    /** One-input recovery station for stripped guns, empty magazines and obsolete dies. */
+    public static Block INDUSTRIAL_SALVAGE_STATION = registerBlock("industrial_salvage_station",
+            new IndustrialSalvageStationBlock(metalProps("industrial_salvage_station")));
 
     public static Block TARGET = registerBlock("target", new TargetBlock(woodProps("target")));
     public static Block STATUE = registerBlock("statue", new StatueBlock(BlockBehaviour.Properties.of().setId(blockKey("statue")).sound(SoundType.STONE).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.DESTROY)));
@@ -39,6 +43,9 @@ public class ModBlocks {
     public static BlockEntityType<GunSmithTableBlockEntity> GUN_SMITH_TABLE_BE = registerBlockEntity("gun_smith_table", GunSmithTableBlockEntity.TYPE);
     public static BlockEntityType<CartridgeAssemblyMachineBlockEntity> CARTRIDGE_ASSEMBLY_MACHINE_BE = registerBlockEntity(
             "cartridge_assembly_machine", CartridgeAssemblyMachineBlockEntity.TYPE
+    );
+    public static BlockEntityType<IndustrialSalvageStationBlockEntity> INDUSTRIAL_SALVAGE_STATION_BE = registerBlockEntity(
+            "industrial_salvage_station", IndustrialSalvageStationBlockEntity.TYPE
     );
     public static BlockEntityType<TargetBlockEntity> TARGET_BE = registerBlockEntity("target", TargetBlockEntity.TYPE);
     public static BlockEntityType<StatueBlockEntity> STATUE_BE = registerBlockEntity("statue", StatueBlockEntity.TYPE);

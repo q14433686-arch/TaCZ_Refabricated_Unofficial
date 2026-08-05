@@ -36,7 +36,9 @@
         "GunId": "tacz:spr15hb",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_spr15hb",
+        "IndustryAssemblyRecipe": "tacz:gun/spr15hb"
       }
     }
   },

@@ -36,7 +36,9 @@
         "GunId": "tacz:timeless50",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_timeless50",
+        "IndustryAssemblyRecipe": "tacz:gun/timeless50"
       }
     }
   },

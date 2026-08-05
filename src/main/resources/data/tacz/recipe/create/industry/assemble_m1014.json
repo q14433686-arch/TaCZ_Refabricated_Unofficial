@@ -36,7 +36,9 @@
         "GunId": "tacz:m1014",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_m1014",
+        "IndustryAssemblyRecipe": "tacz:gun/m1014"
       }
     }
   },

@@ -36,7 +36,9 @@
         "GunId": "tacz:fn_evolys",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_fn_evolys",
+        "IndustryAssemblyRecipe": "tacz:gun/fn_evolys"
       }
     }
   },

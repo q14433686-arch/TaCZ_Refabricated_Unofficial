@@ -36,7 +36,9 @@
         "GunId": "tacz:lonetrail",
         "GunFireMode": "SEMI",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "default_lonetrail",
+        "IndustryAssemblyRecipe": "tacz:gun/lonetrail"
       }
     }
   },

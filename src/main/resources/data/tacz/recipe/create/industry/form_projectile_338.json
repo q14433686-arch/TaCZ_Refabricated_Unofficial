@@ -41,8 +41,10 @@
           "IndustryPartKind": "projectile",
           "IndustryDisplayName": "item.tacz.projectile_core.338_fmj",
           "CartridgeCaliber": "338",
+          "CartridgeAmmoId": "tacz:338",
           "ProjectileType": "fmj"
-        }
+        },
+        "minecraft:max_stack_size": 30
       }
     }
   ],

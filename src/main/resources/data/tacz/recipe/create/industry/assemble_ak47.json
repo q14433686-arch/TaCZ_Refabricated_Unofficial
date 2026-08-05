@@ -36,7 +36,9 @@
         "GunId": "tacz:ak47",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "ak",
+        "IndustryAssemblyRecipe": "tacz:gun/ak47"
       }
     }
   },

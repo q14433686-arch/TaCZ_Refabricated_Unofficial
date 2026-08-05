@@ -36,7 +36,9 @@
         "GunId": "tacz:p90",
         "GunFireMode": "AUTO",
         "GunCurrentAmmoCount": 0,
-        "HasBulletInBarrel": false
+        "HasBulletInBarrel": false,
+        "IndustryAssemblyPlatform": "p90",
+        "IndustryAssemblyRecipe": "tacz:gun/p90"
       }
     }
   },

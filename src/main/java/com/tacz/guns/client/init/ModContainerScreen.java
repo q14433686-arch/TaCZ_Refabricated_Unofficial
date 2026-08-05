@@ -2,8 +2,10 @@ package com.tacz.guns.client.init;
 
 import com.tacz.guns.client.gui.CartridgeAssemblyScreen;
 import com.tacz.guns.client.gui.GunSmithTableScreen;
+import com.tacz.guns.client.gui.IndustrialSalvageScreen;
 import com.tacz.guns.inventory.CartridgeAssemblyMenu;
 import com.tacz.guns.inventory.GunSmithTableMenu;
+import com.tacz.guns.inventory.IndustrialSalvageMenu;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -13,5 +15,6 @@ public class ModContainerScreen {
     public static void registerScreens() {
         MenuScreens.register(GunSmithTableMenu.TYPE, GunSmithTableScreen::new);
         MenuScreens.register(CartridgeAssemblyMenu.TYPE, CartridgeAssemblyScreen::new);
+        MenuScreens.register(IndustrialSalvageMenu.TYPE, IndustrialSalvageScreen::new);
     }
 }
