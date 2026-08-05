@@ -1,30 +1,35 @@
 package com.tacz.guns.industry.recipe;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Data declaration for one built-in gun's industrial terminal assembly.
+ * Data declaration which replaces one legacy gun-table terminal recipe with a
+ * real, single-workpiece Create sequenced-assembly process.
  *
- * <p>Files map directly to gun ids under
- * {@code data/<namespace>/industry/assembly/<gun-path>.json}. They are read by
- * {@link com.tacz.guns.resource.manager.TableRecipeManager}; the resulting
- * rewritten table recipe is what gets synchronised to every client.</p>
+ * <p>Files map directly to legacy gun-table recipe ids under
+ * {@code data/<namespace>/industry/assembly/<gun-path>.json}. The declaration
+ * deliberately names its actual {@code create:sequenced_assembly} recipe: the
+ * table recipe is hidden only after that process is present and passes the
+ * one-workpiece validation in {@link IndustrialRecipeTransformer}. This keeps
+ * a malformed/forgotten data-pack process from making a gun unobtainable.</p>
  */
 public final class IndustryAssemblyDefinition {
     private final String platform;
     private final String blueprintDisplayName;
+    private final Identifier terminalProcess;
     private final List<Component> components;
     private final List<Material> materials;
 
-    private IndustryAssemblyDefinition(String platform, String blueprintDisplayName,
+    private IndustryAssemblyDefinition(String platform, String blueprintDisplayName, Identifier terminalProcess,
                                        List<Component> components, List<Material> materials) {
         this.platform = platform;
         this.blueprintDisplayName = blueprintDisplayName;
+        this.terminalProcess = terminalProcess;
         this.components = List.copyOf(components);
         this.materials = List.copyOf(materials);
     }
@@ -37,6 +42,11 @@ public final class IndustryAssemblyDefinition {
         return blueprintDisplayName;
     }
 
+    /** Actual Create recipe id, e.g. {@code tacz:create/industry/assemble_ak47}. */
+    public Identifier getTerminalProcess() {
+        return terminalProcess;
+    }
+
     public List<Component> getComponents() {
         return components;
     }
@@ -46,7 +56,7 @@ public final class IndustryAssemblyDefinition {
     }
 
     public boolean isValid() {
-        return !platform.isBlank() && !blueprintDisplayName.isBlank() && !components.isEmpty();
+        return !platform.isBlank() && !blueprintDisplayName.isBlank() && terminalProcess != null && !components.isEmpty();
     }
 
     public static IndustryAssemblyDefinition fromJson(JsonElement raw) {
@@ -56,6 +66,7 @@ public final class IndustryAssemblyDefinition {
         JsonObject object = raw.getAsJsonObject();
         String platform = string(object, "platform");
         String blueprint = string(object, "blueprint_display_name");
+        Identifier terminalProcess = Identifier.tryParse(string(object, "terminal_process"));
         List<Component> components = new ArrayList<>();
         if (object.has("components") && object.get("components").isJsonArray()) {
             for (JsonElement entry : object.getAsJsonArray("components")) {
@@ -80,7 +91,9 @@ public final class IndustryAssemblyDefinition {
                 }
             }
         }
-        IndustryAssemblyDefinition definition = new IndustryAssemblyDefinition(platform, blueprint, components, materials);
+        IndustryAssemblyDefinition definition = new IndustryAssemblyDefinition(
+                platform, blueprint, terminalProcess, components, materials
+        );
         return definition.isValid() ? definition : null;
     }
 

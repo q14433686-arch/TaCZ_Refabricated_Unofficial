@@ -1,14 +1,33 @@
 {
   "platform": "ak",
   "blueprint_display_name": "item.tacz.gun_blueprint.ak",
+  "terminal_process": "tacz:create/industry/assemble_ak47",
   "components": [
-    {"kind": "receiver", "display_name": "item.tacz.gun_component.ak_receiver"},
-    {"kind": "bolt", "display_name": "item.tacz.gun_component.ak_bolt"},
-    {"kind": "barrel", "display_name": "item.tacz.gun_component.ak_barrel"},
-    {"kind": "trigger", "display_name": "item.tacz.gun_component.ak_trigger"},
-    {"kind": "recoil", "display_name": "item.tacz.gun_component.ak_recoil"}
+    {
+      "kind": "receiver",
+      "display_name": "item.tacz.gun_component.ak_receiver"
+    },
+    {
+      "kind": "bolt",
+      "display_name": "item.tacz.gun_component.ak_bolt"
+    },
+    {
+      "kind": "barrel",
+      "display_name": "item.tacz.gun_component.ak_barrel"
+    },
+    {
+      "kind": "trigger",
+      "display_name": "item.tacz.gun_component.ak_trigger"
+    },
+    {
+      "kind": "recoil",
+      "display_name": "item.tacz.gun_component.ak_recoil"
+    }
   ],
   "materials": [
-    {"item": "minecraft:oak_planks", "count": 4}
+    {
+      "item": "minecraft:oak_planks",
+      "count": 4
+    }
   ]
 }

@@ -2,6 +2,8 @@ package com.tacz.guns.industry.recipe;
 
 import com.google.gson.JsonObject;
 import com.tacz.guns.api.item.builder.AmmoItemBuilder;
+import com.tacz.guns.api.item.builder.GunItemBuilder;
+import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.industry.item.IndustryItemBuilder;
 import com.tacz.guns.industry.magazine.MagazineItemBuilder;
 import com.tacz.guns.init.ModItems;
@@ -101,6 +103,25 @@ public final class IndustryStackDefinition {
                     .setAmmoCount(integer(custom, "MagazineAmmoCount", 0))
                     .setDisplayNameKey(string(custom, "MagazineDisplayName"))
                     .build();
+        } else if (item == ModItems.MODERN_KINETIC_GUN) {
+            // A Create sequenced-assembly result is a real configured TACZ
+            // gun, not merely the generic registry item with a GunId string.
+            // Rebuild the same initialized empty state the gun table uses so
+            // REI renders the correct model/name and never advertises an
+            // UNKNOWN fire mode representative.
+            Identifier gunId = Identifier.tryParse(string(custom, "GunId"));
+            stack = GunItemBuilder.create()
+                    .setId(gunId)
+                    .setFireMode(fireMode(custom))
+                    .setAmmoCount(integer(custom, "GunCurrentAmmoCount", 0))
+                    .setAmmoInBarrel(bool(custom, "HasBulletInBarrel", false))
+                    .build();
+            if (stack.isEmpty()) {
+                // During a very early client reload the gun index may not be
+                // available yet. Retain a truthful fallback icon rather than
+                // dropping the output slot entirely.
+                stack = new ItemStack(item, count);
+            }
         } else {
             stack = new ItemStack(item, count);
         }
@@ -136,6 +157,22 @@ public final class IndustryStackDefinition {
             return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsInt() : fallback;
         } catch (NumberFormatException ignored) {
             return fallback;
+        }
+    }
+
+    private static boolean bool(JsonObject object, String key, boolean fallback) {
+        try {
+            return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsBoolean() : fallback;
+        } catch (RuntimeException ignored) {
+            return fallback;
+        }
+    }
+
+    private static FireMode fireMode(JsonObject object) {
+        try {
+            return FireMode.valueOf(string(object, "GunFireMode"));
+        } catch (IllegalArgumentException ignored) {
+            return FireMode.UNKNOWN;
         }
     }
 }

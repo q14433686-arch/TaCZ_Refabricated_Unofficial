@@ -143,12 +143,15 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         }
         GunMod.LOGGER.debug(getMarker(), "Gun smith table recipes: {} accepted, {} foreign recipe files skipped",
                 ours.size(), pObject.size() - ours.size());
-        // The industrial profile transforms only the built-in TACZ terminal
-        // recipes. The resulting map is used for both the local data map and
-        // network cache, so server validation and every client recipe viewer
-        // agree on the same assembly requirements.
+        // The industrial profile removes only terminals that have a real,
+        // validated one-workpiece Create sequenced-assembly process. Pass the
+        // unfiltered recipe map as proof that the named process resource is
+        // present; a broken data pack must retain its legacy table route rather
+        // than making a gun unobtainable. The resulting map is used for both
+        // the local data map and network cache, so server validation and every
+        // client recipe viewer agree on which shortcuts are disabled.
         Map<Identifier, JsonElement> profileRecipes = IndustrialRecipeTransformer.transform(
-                ours, industryAssemblies, industryAmmoReplacements
+                ours, industryAssemblies, industryAmmoReplacements, pObject
         );
         // 父类会用这一份（且仅这一份）同时构建 dataMap 与 networkCache。
         super.apply(profileRecipes, pResourceManager, pProfiler);

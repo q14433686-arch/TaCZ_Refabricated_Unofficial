@@ -106,12 +106,23 @@ Fabric API 已是项目依赖；库存/物流兼容优先使用其 Transfer API�
 |---|---|---|
 | 研磨 | Millstone / Crushing Wheels | 各类粉末 |
 | 鼓风炉 | Basin + Mechanical Mixer + Blaze Burner 的加热/超热工艺 | 生铁、钢、黄铜 |
-| 冲压台 | Mechanical Press | 弹壳、钢板、机匣坯、弹匣壳 |
-| 枪械装配台 | Sequenced Assembly / Mechanical Crafting | 枪械零件与整枪 |
+| 冲压台 | Mechanical Press（置物台/传送带上单一输入） | 弹壳、钢板、机匣坯、弹匣壳 |
+| 枪械装配台 | Sequenced Assembly（单一过渡工件 + 多个部署工位） | 枪械零件与整枪 |
 | 装弹台 | Mechanical Press + Basin + Deploying | 成批弹药、装填器 |
 | 拆解台 | 后续单独实现的 TACZ 回收配方 | 回收旧枪/旧弹匣的部分零件 |
 
 Create Fly 就是本档的动力与机器层；TACZ 只提供枪械工业专用材料、工艺配方、平台零件和最终装配语义，不复制 Create 的动力网络。玩家把加热 Basin + Blaze Burner 视为“鼓风炉单元”，从而得到真正需要热源、搅拌与物流的冶炼流程，而不必让 TACZ 再造一套同类机器。
+
+### 4.4 置物台的单工件约束
+
+Create 的**置物台（Depot）不是多格装配台**：同一时刻只能承载一种物品堆。由此产生的工艺边界必须写进配方，而不是只画在 REI 图标上：
+
+- `create:pressing` 只能把一个输入堆冲压成一个中性毛坯；不同口径/部件身份必须在后续由模具或其他工位赋予；
+- `create:deploying` 的置物台/传送带上只有一个目标工件，第二个物品是**部署器手持栏**中的模具、模板或待装配零件；
+- 需要多种物料同时混合的弹药、冶金、弹匣壳配方只能用 **Basin** 的 `create:mixing` / `create:compacting`；
+- 整枪的多个部件不能一起摆到置物台。它们必须由 `create:sequenced_assembly` 的多个部署工位按顺序加入同一枚过渡工件，或改用具有独立格位的机械合成器。
+
+因此“多种输入都列在配方 JSON 中”不等于“它们可同时放到置物台”。每条配方必须明确属于工作盆多输入，还是单工件的部署/顺序装配。
 
 ---
 
@@ -242,10 +253,11 @@ HasBulletInBarrel    继续独立保存膛内一发
 默认枪包资源不能修改。实施时采用：
 
 1. 在 TACZ GPL 代码中增加 `IndustryProfile` 与 `IndustrialRecipeTransformer`；
-2. 仅在 `CREATE_FLY` 档且确认 `create` 已加载时，转换受本项目维护的默认枪配方 ID；
-3. `TableRecipeManager` 转换后的配方仍走现有同步通道，因此服务端、枪械工作台 GUI、JEI 和 REI 看见的是同一份材料表；
-4. 其他命名空间、未知第三方包、用户数据包默认不转换；它们可通过新增 schema 自愿声明工业零件和物理弹匣；
-5. `LEGACY` 下完全不变。
+2. 仅在 `CREATE_FLY` 档且确认 `create` 已加载时，读取受维护枪的终端装配声明；
+3. 只有声明所指向的真实 `create:sequenced_assembly` 资源存在、且每一步都通过“置物台单工件”形状校验时，才移除对应的旧枪械工作台成枪配方；否则保留旧配方作为安全回退；
+4. 最终枪由 Create 生产线产出，JEI 使用 Create Fly 原生展示，REI 从同步的实际 `recipe/create/` JSON 展示同一工艺树；
+5. 其他命名空间、未知第三方包、用户数据包默认不转换；它们可通过新增 schema 自愿声明工业零件、终端顺序装配和物理弹匣；
+6. `LEGACY` 下完全不变。
 
 这也规避了当前枪包加载器内多个包同路径覆盖顺序不稳定的问题。
 
@@ -354,8 +366,9 @@ HasBulletInBarrel    继续独立保存膛内一发
 - 新增 Create Fly 研磨、粉碎、加热/炽热搅拌、冲压、压实配方；
 - 9 mm、5.56×45、7.62×39、12G 已改为批量工业弹药输出；
 - AK / AR / Glock 的模板、机匣、枪机、枪管、击发组、复进组件已作为数据驱动 NBT 部件生产；
-- `CREATE_FLY` 档会移除上述四种旧工作台散装弹配方，并将 AK-47、M4A1、Glock 17 的终端合成替换为平台件装配；模板会校验但不消耗。
-- Create Fly 当前 26.2 构建没有打包其 REI source set，TACZ 因此从真实 `recipe/create/` JSON 同步工艺投影，在 REI 中补出完整输入/输出树；JEI 保持使用 Create Fly 自己的原生展示。
+- `CREATE_FLY` 档会移除上述四种旧工作台散装弹配方；AK-47、M4A1、Glock 17 的旧工作台成枪配方只有在对应的单工件 `create:sequenced_assembly` 工艺存在并通过校验后才会移除。
+- 三把枪均以机匣/枪身为唯一流动过渡工件：蓝图部署器以 `keep_held_item: true` 保留模板，枪机、枪管、击发组、复进组件与外装材料由后续部署器逐站加入；没有任何步骤要求在置物台上同时放多个物品。
+- Create Fly 当前 26.2 构建没有打包其 REI source set，TACZ 因此从真实 `recipe/create/` JSON 同步工艺投影，在 REI 中补出完整输入/输出树，并为工作盆多输入与置物台单工件顺序装配明确标注边界；JEI 保持使用 Create Fly 自己的原生展示。
 - 终端装配、旧弹药替换和工艺显示均有数据目录约定，详见 `docs/INDUSTRY_DATA_FORMAT.md`；第三方包可以在自己的命名空间声明，而不需要改 Java 硬编码。
 
 其余默认枪、更多弹药、专用供弹结构与拆解回收仍按 Phase 4 继续扩展。

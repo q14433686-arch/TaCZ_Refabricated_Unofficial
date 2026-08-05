@@ -17,8 +17,12 @@ public enum IndustryProcessMachine {
     HEATED_MIXING("heated_mixing", "rei.tacz.industry.heated_mixing", "create:mechanical_mixer", Items.BLAZE_POWDER),
     SUPERHEATED_MIXING("superheated_mixing", "rei.tacz.industry.superheated_mixing", "create:mechanical_mixer", Items.BLAZE_ROD),
     PRESSING("pressing", "rei.tacz.industry.pressing", "create:mechanical_press", Items.ANVIL),
-    COMPACTING("compacting", "rei.tacz.industry.compacting", "create:mechanical_press", Items.IRON_BLOCK),
-    DEPLOYING("deploying", "rei.tacz.industry.deploying", "create:deployer", Items.DISPENSER);
+    /** Multi-input compacting is performed in a Basin, never on a Depot. */
+    COMPACTING("compacting", "rei.tacz.industry.compacting", "create:basin", Items.CAULDRON),
+    /** One target workpiece plus one item held by a Deployer. */
+    DEPLOYING("deploying", "rei.tacz.industry.deploying", "create:deployer", Items.DISPENSER),
+    /** One transitional workpiece travels through multiple single-input stations. */
+    SEQUENCED_ASSEMBLY("sequenced_assembly", "rei.tacz.industry.sequenced_assembly", "create:deployer", Items.DISPENSER);
 
     private final String id;
     private final String translationKey;
@@ -55,6 +59,7 @@ public enum IndustryProcessMachine {
             case "create:pressing" -> PRESSING;
             case "create:compacting" -> COMPACTING;
             case "create:deploying" -> DEPLOYING;
+            case "create:sequenced_assembly" -> SEQUENCED_ASSEMBLY;
             case "create:mixing" -> "superheated".equals(heatRequirement)
                     ? SUPERHEATED_MIXING
                     : "heated".equals(heatRequirement) ? HEATED_MIXING : HEATED_MIXING;

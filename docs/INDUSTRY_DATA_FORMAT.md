@@ -1,8 +1,8 @@
 # 工业制造数据格式
 
-工业化不应靠 Java 里堆材料数量。`CREATE_FLY` 档的扩展点分为三层：**真实 Create 配方、终端装配声明、供弹声明**。
+工业化不应靠 Java 里堆材料数量。`CREATE_FLY` 档的扩展点分为三层：**真实 Create 工艺、终端顺序装配声明、供弹声明**。
 
-所有 JSON 都可由内容包在自己的命名空间下提供；默认包不需要被修改。
+所有 JSON 都可由内容包在自己的命名空间下提供；默认枪包不需要被修改。
 
 ---
 
@@ -14,7 +14,7 @@
 data/<namespace>/recipe/create/<任意路径>.json
 ```
 
-例如：
+例如，多种材料的批量装弹属于 **工作盆（Basin）压实**，不是置物台：
 
 ```json
 {
@@ -27,25 +27,45 @@ data/<namespace>/recipe/create/<任意路径>.json
 }
 ```
 
-TACZ 会读取该目录中的 `create:*` 配方，向客户端同步一份工艺投影，并在 REI 中注册研磨、粉碎、加热搅拌、炽热搅拌、冲压、压实类别。
+### 置物台/工作盆的硬边界
+
+这不是文案约定，而是 Create 的实际容器约束：
+
+| 工艺 | 物理位置 | 可同时参与的物品 |
+|---|---|---|
+| `create:pressing` | 置物台或传送带 | **一个**输入堆；动力冲压机不接受多输入伪配方 |
+| `create:deploying` | 置物台/传送带上的目标工件 + 部署器手持栏 | 置物台上始终只有**一个目标工件**；部署器只持有**一种**工具/零件 |
+| `create:mixing` / `create:compacting` | 工作盆（Basin） | 可以由漏斗/传送带送入多种输入；这里才允许 `ingredients` 数组 |
+| `create:sequenced_assembly` | 传送带/置物台上的过渡工件 | 始终只有**一个**过渡工件；每个后续工位依序部署一种零件/工具 |
+
+因此，任何需要把“弹壳 + 弹头 + 底火”或“五种枪械组件”**同时堆在置物台上**的方案都是无效设计。多输入应改用工作盆；多部件装枪应改用下面的顺序装配，或另行使用有独立格位的机械合成器。
+
+TACZ 会读取该目录中的支持工艺，向客户端同步一份工艺投影，并在 REI 中注册研磨、粉碎、加热搅拌、工作盆压实、单件冲压、部署器成型和顺序枪械装配类别。
 
 这条同步通道存在的原因是 Create Fly 当前 26.2 构建在其 `build.gradle` 中排除了 REI source set；JEI 能显示 Create 工艺而 REI 没有原生类别。TACZ 的桥接层不调用 Create 内部 Java API，只从实际配方 JSON 构建 REI 的输入/输出树。
 
 - 直接物品 ID、`#item_tag` 与 TACZ 注册的 `forge:partial_nbt` 都可显示；
+- `create:sequenced_assembly` 会把首个工件和各部署工位的供料汇总显示；`∞` 标记表示部署器保留其手持模板/模具；
+- REI 的顺序装配页会明确标注“置物台/传送带始终只有一个工件”；列表中的其余输入是**按站依序**供给的，不是同时放到置物台；
 - 其他复杂 Create 自定义 ingredient 仍建议由内容包同时提供一个直接物品显示入口；
 - `fabric:load_conditions` 必须保留，避免没有 Create Fly 时让原版 RecipeManager 解析未知 `create:*` 类型。
 
 ---
 
-## 2. 终端枪械装配
+## 2. 终端枪械顺序装配
 
-把一把枪的工业化终端要求放在：
+一把枪有两份互相引用的数据：
+
+1. 一个终端声明，用来关闭同 ID 的旧 TACZ 枪械工作台捷径；
+2. 一个真正的 `create:sequenced_assembly` 配方，用来在 Create 生产线上产出成枪。
+
+声明放在：
 
 ```text
-data/<namespace>/industry/assembly/<枪械工作台配方路径>.json
+data/<namespace>/industry/assembly/<原枪械工作台配方路径>.json
 ```
 
-配方路径必须与原 TACZ 工作台配方 ID 一致。例如默认 AK 的原配方 ID 是 `tacz:gun/ak47`，文件应为：
+路径必须与原 TACZ 工作台配方 ID 一致。例如默认 AK 的旧配方 ID 是 `tacz:gun/ak47`，声明应为：
 
 ```text
 data/tacz/industry/assembly/gun/ak47.json
@@ -57,6 +77,7 @@ data/tacz/industry/assembly/gun/ak47.json
 {
   "platform": "ak",
   "blueprint_display_name": "item.yourmod.gun_blueprint.ak",
+  "terminal_process": "yourmod:create/industry/assemble_ak47",
   "components": [
     { "kind": "receiver", "display_name": "item.yourmod.component.ak_receiver" },
     { "kind": "bolt", "display_name": "item.yourmod.component.ak_bolt" },
@@ -70,27 +91,73 @@ data/tacz/industry/assembly/gun/ak47.json
 }
 ```
 
-在 `CREATE_FLY` 档，组件的实际生产遵循“结构毛坯 → 模具毛坯 → 部署器持模板校准模具 → 部署器持模具成型组件”的过程；两个 `create:deploying` 步骤都用 `keep_held_item: true` 保留模板/模具。
+其中 `terminal_process` 是实际资源 ID；上例必须对应：
 
-TACZ 会把原工作台配方材料替换为：
+```text
+data/yourmod/recipe/create/industry/assemble_ak47.json
+```
 
-1. 带同一 `platform` 的 `tacz:gun_blueprint`，`consume: false`；
-2. 带同一 `platform + kind` 的 `tacz:gun_component`，会被消耗；
-3. JSON 声明的额外材料。
+其核心形状如下（示意，省略完整 NBT）：
 
-这依赖现有的 `forge:partial_nbt` Fabric 兼容实现，因此不是“只看数量”的配方：AK 机匣、AR 机匣和 Glock 枪身即使使用同一个注册物品 ID，也会按 custom data 严格区分。
+```json
+{
+  "type": "create:sequenced_assembly",
+  "ingredient": { "fabric:type": "forge:partial_nbt", "items": ["yourmod:component"], "nbt": {"IndustryPartKind": "receiver"} },
+  "transitional_item": {
+    "id": "yourmod:component",
+    "components": { "minecraft:custom_data": {"IndustryPartKind": "incomplete_ak47"} }
+  },
+  "result": {
+    "id": "tacz:modern_kinetic_gun",
+    "components": { "minecraft:custom_data": {"GunId": "yourmod:ak47", "GunFireMode": "AUTO", "GunCurrentAmmoCount": 0, "HasBulletInBarrel": false} }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": { "fabric:type": "forge:partial_nbt", "items": ["yourmod:gun_blueprint"], "nbt": {"IndustryPartKind": "blueprint"} },
+      "keep_held_item": true,
+      "results": ["$result"]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": { "fabric:type": "forge:partial_nbt", "items": ["yourmod:component"], "nbt": {"IndustryPartKind": "bolt"} },
+      "results": ["$result"]
+    }
+  ]
+}
+```
 
-弹药同样如此：单输入的动力冲压机只负责产出中性的 `tacz:cartridge_case_blank` 与 `tacz:projectile_blank`。之后由 Create 部署器持有一枚 NBT 标识的可复用 `tacz:press_die`，通过带 `keep_held_item: true` 的 `create:deploying` 工艺真正压制出指定身份。
+语义必须严格是：
 
-枪械组件也走同一原则：结构毛坯和模具毛坯先由压实工序生产；部署器持装配模板校准出带 `DieTargetKind` 的平台模具；再由部署器持该模具把对应毛坯成型为最终机匣、枪机、枪管、击发组或复进组件。
+1. 首个机匣/枪身进入传送带或置物台，成为**唯一**流动的过渡工件；
+2. 第一台部署器持蓝图，`keep_held_item: true`，蓝图不消耗；
+3. 后续每台部署器分别持枪机、枪管、击发组、复进组件、木料等**一种**供料；各站消耗自己的物品；
+4. 工件按顺序经过工位，最终才变为带完整 `GunId`、首个有效射击模式、空膛/空备弹状态的 TACZ 枪；
+5. 置物台上从头到尾没有、也不需要同时放入多个物品。
 
-成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。
+`CREATE_FLY` 档只有在下列条件都满足时才移除旧工作台成枪配方：
+
+- `terminal_process` 指向的配方资源存在；
+- 类型为 `create:sequenced_assembly`；
+- 每个序列步骤都是单工件部署、单工件冲压或单工件灌装，且没有 `ingredients` 多输入数组。
+
+声明丢失、ID 写错或工艺形状不合法时，TACZ 会记录警告并**保留旧工作台配方**，不会把成枪变成不可获得物品。
+
+当前内置 AK-47、M4A1、Glock 17 已使用此路径。它们的组件、模板、成枪结果都通过 `forge:partial_nbt` / `minecraft:custom_data` 确认身份：AK 机匣不能代替 AR 机匣，Glock 枪身不能代替 AR 机匣；模板保留，组件与辅料按工位消耗。
+
+枪械组件的前段仍遵循“结构毛坯 → 模具毛坯 → 部署器持模板校准模具 → 部署器持模具成型组件”。同样地，每个 `create:deploying` 步骤都只有一个置物台目标与一个部署器手持物。
 
 ---
 
-## 3. 替换旧工作台弹药配方
+## 3. 弹药身份与旧工作台弹药替换
 
-若某种弹药已交给 Create 工艺生产，可在：
+弹药同样不靠材料数量区分：单输入动力冲压机只负责产出中性的 `tacz:cartridge_case_blank` 与 `tacz:projectile_blank`。之后由 Create 部署器持有一枚 NBT 标识的可复用 `tacz:press_die`，通过带 `keep_held_item: true` 的 `create:deploying` 工艺真正压制出指定身份。
+
+成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。
+
+最终批量装弹需要多种部件，因此使用 `create:compacting` 的**工作盆**输入，而不是部署器/置物台。若某种弹药已交给 Create 工艺生产，可在：
 
 ```text
 data/<namespace>/industry/ammo/<任意名称>.json

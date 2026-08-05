@@ -13,28 +13,34 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Rewrites only TACZ's built-in terminal recipes when CREATE_FLY is active.
+ * Activates data-declared Create Fly terminal assembly without editing the
+ * CC-BY-NC default gun pack.
  *
- * <p>The default gun pack is CC BY-NC-ND, so this transformation deliberately
- * happens after pack loading in GPL code rather than editing its JSON files.
- * Third-party namespaces and unknown default recipe ids are untouched.  The
- * transformed map is also the map synchronised to clients, keeping the table,
- * JEI and REI on the same source of truth.</p>
+ * <p>A real Create terminal assembly is a {@code create:sequenced_assembly},
+ * not a fake multi-item Depot recipe. The Depot/belt carries one workpiece at
+ * a time; every deployment step supplies one separate held item. Therefore,
+ * once the named process has been found and shape-validated, this transformer
+ * removes the corresponding legacy gun-table recipe instead of rebuilding it
+ * as a GUI/inventory shortcut. Unknown or malformed declarations deliberately
+ * leave the legacy recipe intact.</p>
  */
 public final class IndustrialRecipeTransformer {
-    private static final String COMPONENT_ITEM = "tacz:gun_component";
-    private static final String BLUEPRINT_ITEM = "tacz:gun_blueprint";
-
     private IndustrialRecipeTransformer() {
     }
 
     /**
-     * Return a new map only when the industrial profile is active.  This makes
+     * Return a new map only when the industrial profile is active. This makes
      * LEGACY byte-for-byte preserve existing loaded recipe elements.
+     *
+     * @param source                  accepted TACZ gun-table recipes
+     * @param rawAssemblies           terminal declaration files, keyed by legacy table-recipe id
+     * @param rawAmmoReplacements     old table-ammo declarations
+     * @param allRawRecipes           unfiltered {@code recipe/**} data used to verify named Create processes
      */
     public static Map<Identifier, JsonElement> transform(Map<Identifier, JsonElement> source,
                                                           Map<Identifier, JsonElement> rawAssemblies,
-                                                          Map<Identifier, JsonElement> rawAmmoReplacements) {
+                                                          Map<Identifier, JsonElement> rawAmmoReplacements,
+                                                          Map<Identifier, JsonElement> allRawRecipes) {
         if (!IndustryProfileManager.isCreateFlyProfileActive()) {
             return source;
         }
@@ -43,21 +49,31 @@ public final class IndustrialRecipeTransformer {
         Set<Identifier> replacedAmmoRecipes = legacyAmmoRecipeIds(rawAmmoReplacements);
         replacedAmmoRecipes.forEach(transformed::remove);
 
-        int rewritten = 0;
+        int removedGunTableRecipes = 0;
         for (Map.Entry<Identifier, JsonElement> entry : rawAssemblies.entrySet()) {
-            JsonElement rawRecipe = transformed.get(entry.getKey());
-            IndustryAssemblyDefinition assembly = IndustryAssemblyDefinition.fromJson(entry.getValue());
-            if (rawRecipe == null || !rawRecipe.isJsonObject() || assembly == null) {
+            if (!transformed.containsKey(entry.getKey())) {
                 continue;
             }
-            JsonObject recipe = rawRecipe.getAsJsonObject().deepCopy();
-            recipe.add("materials", assemblyMaterials(assembly));
-            transformed.put(entry.getKey(), recipe);
-            rewritten++;
+            IndustryAssemblyDefinition assembly = IndustryAssemblyDefinition.fromJson(entry.getValue());
+            if (assembly == null) {
+                GunMod.LOGGER.warn("Ignoring invalid industry assembly declaration {} and retaining legacy table recipe.",
+                        entry.getKey());
+                continue;
+            }
+            JsonElement rawProcess = allRawRecipes.get(assembly.getTerminalProcess());
+            if (!isSingleWorkpieceSequencedAssembly(rawProcess)) {
+                GunMod.LOGGER.warn(
+                        "Industry assembly {} names {}, but it is missing or is not a one-workpiece Create sequenced assembly; retaining legacy table recipe.",
+                        entry.getKey(), assembly.getTerminalProcess());
+                continue;
+            }
+            transformed.remove(entry.getKey());
+            removedGunTableRecipes++;
         }
 
-        GunMod.LOGGER.info("CREATE_FLY industry profile replaced {} built-in gun assembly recipe(s) and removed {} legacy ammo table recipe(s).",
-                rewritten, replacedAmmoRecipes.size());
+        GunMod.LOGGER.info(
+                "CREATE_FLY industry profile removed {} legacy gun-table terminal recipe(s) in favour of validated sequential assembly and removed {} legacy ammo table recipe(s).",
+                removedGunTableRecipes, replacedAmmoRecipes.size());
         return transformed;
     }
 
@@ -79,42 +95,74 @@ public final class IndustrialRecipeTransformer {
         return ids;
     }
 
-    private static JsonArray assemblyMaterials(IndustryAssemblyDefinition assembly) {
-        JsonArray materials = new JsonArray();
-        // The blueprint is checked by partial NBT but deliberately retained.
-        materials.add(material(partialNbt(BLUEPRINT_ITEM, assembly.getPlatform(), "blueprint", assembly.getBlueprintDisplayName()), 1, false));
-        for (IndustryAssemblyDefinition.Component part : assembly.getComponents()) {
-            materials.add(material(partialNbt(COMPONENT_ITEM, assembly.getPlatform(), part.kind(), part.displayName()), 1, true));
+    /**
+     * Validate the physical invariant which matters for a Create Depot/belt:
+     * every nested step handles exactly one flowing workpiece. A Deployer may
+     * hold one separate ingredient, but no step may declare an {@code ingredients}
+     * array that implies putting several distinct stacks on the Depot.
+     *
+     * <p>Pressing/filling steps are allowed for future content packs because
+     * they still process only the transitional workpiece. Current built-ins use
+     * deploying steps exclusively so their components and reusable blueprints
+     * remain observable physical inputs.</p>
+     */
+    private static boolean isSingleWorkpieceSequencedAssembly(JsonElement raw) {
+        if (raw == null || !raw.isJsonObject()) {
+            return false;
         }
-        for (IndustryAssemblyDefinition.Material material : assembly.getMaterials()) {
-            materials.add(material(material.itemId(), material.count(), true));
+        JsonObject process = raw.getAsJsonObject();
+        if (!"create:sequenced_assembly".equals(string(process, "type"))
+                || !process.has("ingredient")
+                || !process.has("transitional_item")
+                || !process.has("result")
+                || !process.has("sequence")
+                || !process.get("sequence").isJsonArray()) {
+            return false;
         }
-        return materials;
+        JsonArray sequence = process.getAsJsonArray("sequence");
+        // Create Fly itself rejects a sequence whose expanded size is <= 1.
+        if (sequence.size() < 2) {
+            return false;
+        }
+        for (JsonElement rawStep : sequence) {
+            if (!rawStep.isJsonObject()) {
+                return false;
+            }
+            JsonObject step = rawStep.getAsJsonObject();
+            // A multi-input Basin operation belongs outside the Depot sequence.
+            if (step.has("ingredients")) {
+                return false;
+            }
+            String type = string(step, "type");
+            if ("create:deploying".equals(type)) {
+                // The moving stack is target; the single Deployer-held material
+                // is ingredient. They are never two stacks on the Depot.
+                if (!isPlaceholder(step.get("target"))
+                        || !step.has("ingredient")
+                        || isPlaceholder(step.get("ingredient"))) {
+                    return false;
+                }
+            } else if ("create:pressing".equals(type) || "create:filling".equals(type)) {
+                // These nested operations use ingredient as the one moving
+                // transitional workpiece and add no second Depot input.
+                if (!isPlaceholder(step.get("ingredient")) || step.has("target")) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 
-    private static JsonObject partialNbt(String itemId, String platform, String kind, String displayName) {
-        JsonObject ingredient = new JsonObject();
-        ingredient.addProperty("type", "forge:partial_nbt");
-        ingredient.addProperty("item", itemId);
-        JsonObject nbt = new JsonObject();
-        nbt.addProperty("IndustryPlatform", platform);
-        nbt.addProperty("IndustryPartKind", kind);
-        nbt.addProperty("IndustryDisplayName", displayName);
-        ingredient.add("nbt", nbt);
-        return ingredient;
+    private static boolean isPlaceholder(JsonElement element) {
+        return element != null && element.isJsonPrimitive()
+                && element.getAsJsonPrimitive().isString()
+                && "$ingredient".equals(element.getAsString());
     }
 
-    private static JsonObject material(JsonElement item, int count, boolean consume) {
-        JsonObject material = new JsonObject();
-        material.add("item", item);
-        material.addProperty("count", Math.max(1, count));
-        if (!consume) {
-            material.addProperty("consume", false);
-        }
-        return material;
-    }
-
-    private static JsonObject material(String itemId, int count, boolean consume) {
-        return material(new com.google.gson.JsonPrimitive(itemId), count, consume);
+    private static String string(JsonObject object, String key) {
+        return object.has(key) && object.get(key).isJsonPrimitive() && object.get(key).getAsJsonPrimitive().isString()
+                ? object.get(key).getAsString() : "";
     }
 }
