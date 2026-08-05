@@ -10,6 +10,7 @@ import com.tacz.guns.resource.pojo.data.block.BlockData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
+import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +58,10 @@ public interface ICommonResourceProvider {
     @Nullable IndustryProcessDefinition getIndustryProcess(Identifier processId);
 
     Set<Map.Entry<Identifier, IndustryProcessDefinition>> getAllIndustryProcesses();
+
+    @Nullable CartridgeAssemblyDefinition getCartridgeAssemblyRecipe(Identifier recipeId);
+
+    Set<Map.Entry<Identifier, CartridgeAssemblyDefinition>> getAllCartridgeAssemblyRecipes();
 
     Set<String> getAttachmentTags(Identifier registryName);
 

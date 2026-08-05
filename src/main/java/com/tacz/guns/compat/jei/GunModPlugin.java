@@ -5,6 +5,7 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.builder.BlockItemBuilder;
 import com.tacz.guns.api.item.gun.GunItemManager;
 import com.tacz.guns.compat.jei.category.AttachmentQueryCategory;
+import com.tacz.guns.compat.jei.category.CartridgeAssemblyCategory;
 import com.tacz.guns.compat.jei.category.GunSmithTableCategory;
 import com.tacz.guns.compat.jei.entry.AttachmentQueryEntry;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
@@ -47,6 +48,7 @@ public class GunModPlugin implements IModPlugin {
             recipeTypeMap.put(entry.getKey(), type);
         }
         registration.addRecipeCategories(new AttachmentQueryCategory(registration.getJeiHelpers().getGuiHelper()));
+        registration.addRecipeCategories(new CartridgeAssemblyCategory(registration.getJeiHelpers().getGuiHelper()));
     }
 
     @Override
@@ -81,6 +83,11 @@ public class GunModPlugin implements IModPlugin {
         }
 
         registration.addRecipes(AttachmentQueryCategory.ATTACHMENT_QUERY, AttachmentQueryEntry.getAllAttachmentQueryEntries());
+        registration.addRecipes(CartridgeAssemblyCategory.TYPE,
+                com.tacz.guns.resource.CommonAssetsManager.get().getAllCartridgeAssemblyRecipes().stream()
+                        .map(java.util.Map.Entry::getValue)
+                        .filter(java.util.Objects::nonNull)
+                        .toList());
     }
 
     @Override
@@ -92,6 +99,7 @@ public class GunModPlugin implements IModPlugin {
             });
 
         }
+        registration.addCraftingStation(CartridgeAssemblyCategory.TYPE, ModItems.CARTRIDGE_ASSEMBLY_MACHINE.getDefaultInstance());
 
     }
 
@@ -102,7 +110,13 @@ public class GunModPlugin implements IModPlugin {
         registration.registerSubtypeInterpreter(ModItems.AMMO_BOX, GunModSubtype.getAmmoBoxSubtype());
         registration.registerSubtypeInterpreter(ModItems.MAGAZINE, GunModSubtype.getMagazineSubtype());
         registration.registerSubtypeInterpreter(ModItems.GUN_COMPONENT, GunModSubtype.getIndustrySubtype());
+        registration.registerSubtypeInterpreter(ModItems.GUN_COMPONENT_BLANK, GunModSubtype.getIndustrySubtype());
         registration.registerSubtypeInterpreter(ModItems.GUN_BLUEPRINT, GunModSubtype.getIndustrySubtype());
+        registration.registerSubtypeInterpreter(ModItems.CARTRIDGE_CASE_BLANK, GunModSubtype.getIndustrySubtype());
+        registration.registerSubtypeInterpreter(ModItems.CARTRIDGE_CASE, GunModSubtype.getIndustrySubtype());
+        registration.registerSubtypeInterpreter(ModItems.PROJECTILE_BLANK, GunModSubtype.getIndustrySubtype());
+        registration.registerSubtypeInterpreter(ModItems.PROJECTILE_CORE, GunModSubtype.getIndustrySubtype());
+        registration.registerSubtypeInterpreter(ModItems.PRESS_DIE, GunModSubtype.getIndustrySubtype());
         registration.registerSubtypeInterpreter(ModItems.WORKBENCH_111, GunModSubtype.getTableSubType());
         registration.registerSubtypeInterpreter(ModItems.WORKBENCH_121, GunModSubtype.getTableSubType());
         registration.registerSubtypeInterpreter(ModItems.WORKBENCH_211, GunModSubtype.getTableSubType());

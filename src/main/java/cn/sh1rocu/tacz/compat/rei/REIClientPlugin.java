@@ -1,9 +1,11 @@
 package cn.sh1rocu.tacz.compat.rei;
 
 import cn.sh1rocu.tacz.compat.rei.category.AttachmentQueryCategory;
+import cn.sh1rocu.tacz.compat.rei.category.CartridgeAssemblyCategory;
 import cn.sh1rocu.tacz.compat.rei.category.GunSmithTableCategory;
 import cn.sh1rocu.tacz.compat.rei.category.IndustryProcessCategory;
 import cn.sh1rocu.tacz.compat.rei.display.AttachmentQueryDisplay;
+import cn.sh1rocu.tacz.compat.rei.display.CartridgeAssemblyDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.GunSmithTableDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.IndustryProcessDisplay;
 import cn.sh1rocu.tacz.compat.rei.entry.AttachmentQueryEntry;
@@ -12,6 +14,7 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.builder.BlockItemBuilder;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.industry.recipe.IndustryProcessMachine;
+import com.tacz.guns.init.ModItems;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
@@ -30,6 +33,8 @@ import java.util.Objects;
 
 public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIClientPlugin {
     public static final CategoryIdentifier<AttachmentQueryDisplay> ATTACHMENT_QUERY = CategoryIdentifier.of(GunMod.MOD_ID, "plugins/attachment_query");
+    public static final CategoryIdentifier<CartridgeAssemblyDisplay> CARTRIDGE_ASSEMBLY =
+            CategoryIdentifier.of(GunMod.MOD_ID, "industry/cartridge_assembly_machine");
 
     public static final Map<Identifier, CategoryIdentifier<GunSmithTableDisplay>> displays = new HashMap<>();
     private static final Map<IndustryProcessMachine, CategoryIdentifier<IndustryProcessDisplay>> INDUSTRY_CATEGORIES =
@@ -58,6 +63,8 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
             registry.addWorkstations(id, EntryStacks.of(icon));
         }
         registry.add(new AttachmentQueryCategory());
+        registry.add(new CartridgeAssemblyCategory());
+        registry.addWorkstations(CARTRIDGE_ASSEMBLY, EntryStacks.of(ModItems.CARTRIDGE_ASSEMBLY_MACHINE.getDefaultInstance()));
         for (IndustryProcessMachine machine : IndustryProcessMachine.values()) {
             CategoryIdentifier<IndustryProcessDisplay> id = getIndustryCategory(machine);
             registry.add(new IndustryProcessCategory(machine, id));
@@ -115,6 +122,12 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
         for (var entry : com.tacz.guns.resource.CommonAssetsManager.get().getAllIndustryProcesses()) {
             if (entry.getValue() != null && getIndustryCategory(entry.getValue().getMachine()) != null) {
                 registry.add(new IndustryProcessDisplay(entry.getKey(), entry.getValue()));
+            }
+        }
+
+        for (var entry : com.tacz.guns.resource.CommonAssetsManager.get().getAllCartridgeAssemblyRecipes()) {
+            if (entry.getValue() != null) {
+                registry.add(new CartridgeAssemblyDisplay(entry.getKey(), entry.getValue()));
             }
         }
     }

@@ -19,6 +19,7 @@ import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import com.tacz.guns.resource.pojo.data.block.BlockData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
+import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
 import com.tacz.guns.util.AllowAttachmentTagMatcher;
 import net.minecraft.resources.Identifier;
@@ -48,6 +49,8 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     public Map<Identifier, GunFeedDefinition> gunFeed = new HashMap<>();
     /** TACZ-owned Create Fly process graph for REI when Create Fly lacks its own REI plugin. */
     public Map<Identifier, IndustryProcessDefinition> industryProcess = new HashMap<>();
+    /** Definitions shown by the dedicated cartridge assembly-machine GUI and REI category. */
+    public Map<Identifier, CartridgeAssemblyDefinition> cartridgeAssembly = new HashMap<>();
     public Map<Identifier, Set<String>> attachmentTags = new HashMap<>();
     public Map<Identifier, Set<String>> allowAttachmentTags = new HashMap<>();
 
@@ -151,6 +154,16 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     }
 
     @Override
+    public @Nullable CartridgeAssemblyDefinition getCartridgeAssemblyRecipe(Identifier recipeId) {
+        return cartridgeAssembly.get(recipeId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, CartridgeAssemblyDefinition>> getAllCartridgeAssemblyRecipes() {
+        return cartridgeAssembly.entrySet();
+    }
+
+    @Override
     public Set<String> getAttachmentTags(Identifier registryName) {
         return attachmentTags.get(registryName);
     }
@@ -169,6 +182,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
         blockIndex.clear();
         gunFeed.clear();
         industryProcess.clear();
+        cartridgeAssembly.clear();
         recipeFilter.clear();
         tableRecipe.clear();
         blockData.clear();
@@ -188,6 +202,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                 case AMMO_INDEX:
                 case ATTACHMENT_INDEX:
                 case BLOCK_INDEX:
+                case CARTRIDGE_ASSEMBLY:
                     delayed.put(entry.getKey(), entry.getValue());
                     break;
                 default:
@@ -260,6 +275,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                     case BLOCK_DATA -> blockData.put(entry.getKey(), parse(entry.getValue(), BlockData.class));
                     case GUN_FEED -> gunFeed.put(entry.getKey(), parse(entry.getValue(), GunFeedDefinition.class));
                     case INDUSTRY_PROCESS -> industryProcess.put(entry.getKey(), parse(entry.getValue(), IndustryProcessDefinition.class));
+                    case CARTRIDGE_ASSEMBLY -> cartridgeAssembly.put(entry.getKey(), parse(entry.getValue(), CartridgeAssemblyDefinition.class));
                 }
             } catch (IllegalArgumentException | JsonParseException exception) {
                 GunMod.LOGGER.warn("Failed to parse data from network for {} with id {}", type, entry.getKey(), exception);

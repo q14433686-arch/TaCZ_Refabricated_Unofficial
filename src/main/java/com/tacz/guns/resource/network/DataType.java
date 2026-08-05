@@ -24,4 +24,7 @@ public enum DataType {
 
     /** Data-driven projection of TACZ Create Fly processes for client recipe viewers. */
     INDUSTRY_PROCESS,
+
+    /** Dedicated four-slot cartridge assembly definitions, synchronized for GUI/REI display. */
+    CARTRIDGE_ASSEMBLY,
 }

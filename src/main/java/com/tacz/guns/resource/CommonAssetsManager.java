@@ -29,6 +29,8 @@ import com.tacz.guns.resource.pojo.data.gun.ExtraDamage;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.gun.Ignite;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
+import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
+import com.tacz.guns.industry.recipe.CartridgeAssemblyRecipeManager;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessManager;
 import com.tacz.guns.resource.pojo.data.loot.LootTableInjection;
@@ -89,6 +91,8 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     private CommonDataManager<GunFeedDefinition> gunFeed;
     /** Create recipe projection synchronised for the built-in REI bridge. */
     private CommonDataManager<IndustryProcessDefinition> industryProcess;
+    /** Server-authoritative dedicated cartridge-assembly definitions, synced for UI/REI. */
+    private CommonDataManager<CartridgeAssemblyDefinition> cartridgeAssembly;
     private RecipeFilterManager recipeFilterManager;
     private LootInjectionManager lootInjectionManager;
 
@@ -121,6 +125,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         // TableRecipe 的解析器刷屏，并被原样打进同步包。详见该类的注释。
         tableRecipe = register(new TableRecipeManager());
         industryProcess = register(new IndustryProcessManager());
+        cartridgeAssembly = register(new CartridgeAssemblyRecipeManager());
 
         listeners.forEach(register);
         register.accept((sharedState, backgroundExecutor, barrier, gameExecutor) -> {
@@ -266,6 +271,17 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     @Override
     public Set<Map.Entry<Identifier, IndustryProcessDefinition>> getAllIndustryProcesses() {
         return industryProcess == null ? Collections.emptySet() : industryProcess.getAllData().entrySet();
+    }
+
+    @Override
+    @Nullable
+    public CartridgeAssemblyDefinition getCartridgeAssemblyRecipe(Identifier recipeId) {
+        return cartridgeAssembly == null ? null : cartridgeAssembly.getData(recipeId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, CartridgeAssemblyDefinition>> getAllCartridgeAssemblyRecipes() {
+        return cartridgeAssembly == null ? Collections.emptySet() : cartridgeAssembly.getAllData().entrySet();
     }
 
     @Override

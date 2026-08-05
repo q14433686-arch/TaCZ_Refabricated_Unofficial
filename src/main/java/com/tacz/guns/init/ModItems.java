@@ -61,6 +61,9 @@ public class ModItems {
     public static GunSmithTableItem WORKBENCH_111 = register("workbench_a", new GunSmithTableItem(ModBlocks.WORKBENCH_111, blockItemProps("workbench_a")));
     public static GunSmithTableItem WORKBENCH_211 = register("workbench_b", new GunSmithTableItem(ModBlocks.WORKBENCH_211, blockItemProps("workbench_b")));
     public static GunSmithTableItem WORKBENCH_121 = register("workbench_c", new GunSmithTableItem(ModBlocks.WORKBENCH_121, blockItemProps("workbench_c")));
+    /** Dedicated GUI block for final cartridge assembly; it is intentionally not a Create Depot recipe. */
+    public static Item CARTRIDGE_ASSEMBLY_MACHINE = register("cartridge_assembly_machine",
+            new BlockItem(ModBlocks.CARTRIDGE_ASSEMBLY_MACHINE, blockItemProps("cartridge_assembly_machine")));
 
 
     public static Item TARGET = register("target", new BlockItem(ModBlocks.TARGET, blockItemProps("target")));

@@ -161,9 +161,33 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 
 成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。
 
-最终装弹的四种 NBT 物件不再交给 `create:compacting` 的 Basin 一次匹配。当前内置四条弹药线使用 `create:sequenced_assembly`：一枚指定口径弹壳是传送带/置物台上唯一的过渡工件，依序由部署器加入指定口径/类型弹头、底火和推进药，最后经过动力冲压机完成卷口并输出一发弹药。
+最终装弹不再交给 `create:compacting` 的 Basin，也不再把四种物料伪装成传送带上的单一工件。它由 TACZ 的**弹药装配机**完成：GUI 中有独立的弹壳、弹头、底火、推进药四个输入槽与一个成品槽；按钮请求只发到服务端，服务端按数据定义验证 NBT、扣除四件材料并输出弹药。
 
-这条路径复用已验证可工作的单目标部署语义，避免 Basin 的 custom-ingredient 匹配、输入种类上限与配方选择问题；自动化吞吐由持续投料和连续工位获得。`PartialNBTIngredient` / `StrictNBTIngredient` 仍定义了语义相等性，供内容包确实需要在 Basin 中重复同类 NBT 输入时使用，但内置最终装弹不再把这项内部行为当作能否制造的前提。
+定义放在：
+
+```text
+data/<namespace>/industry/cartridge_assembly/<任意名称>.json
+```
+
+```json
+{
+  "case_item": "yourmod:cartridge_case",
+  "case_caliber": "556x45",
+  "case_display_name": "item.yourmod.cartridge_case.556x45",
+  "projectile_item": "yourmod:projectile_core",
+  "projectile_caliber": "556x45",
+  "projectile_type": "fmj",
+  "projectile_display_name": "item.yourmod.projectile.556x45_fmj",
+  "primer_item": "yourmod:primer",
+  "propellant_item": "yourmod:propellant",
+  "ammo": "yourmod:556x45",
+  "count": 1
+}
+```
+
+这不是“配方显示出来就算能做”的工作盆推断：四个 GUI 槽位分别验证，错口径弹壳、错弹头类型、错误底火或推进药会被服务端拒绝。定义会同步到客户端供 JEI/REI 显示弹药装配机配方；整枪和实体弹匣仍走各自既有的工业路线。
+
+`PartialNBTIngredient` / `StrictNBTIngredient` 仍定义了语义相等性，供内容包确实需要在 Basin 中重复同类 NBT 输入时使用，但内置最终装弹不再把这项内部行为当作能否制造的前提。
 
 若某种弹药已交给 Create 工艺生产，可在：
 
