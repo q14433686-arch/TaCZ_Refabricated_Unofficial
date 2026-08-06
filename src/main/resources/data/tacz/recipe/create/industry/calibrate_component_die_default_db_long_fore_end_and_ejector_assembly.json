@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_db_long",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_db_long_recoil",
-          "DieTargetKind": "recoil",
-          "IndustryActionProfile": "break_action",
-          "IndustryToolingScope": "family_jig"
+          "DieTargetKind": "recoil"
         }
       }
     }

@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_scar_l",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_scar_l_bolt",
-          "DieTargetKind": "bolt",
-          "IndustryActionProfile": "gas_rifle",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "bolt"
         }
       }
     }

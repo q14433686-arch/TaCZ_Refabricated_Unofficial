@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_rhino357",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_rhino357_trigger",
-          "DieTargetKind": "trigger",
-          "IndustryActionProfile": "revolver",
-          "IndustryToolingScope": "critical_gauge"
+          "DieTargetKind": "trigger"
         }
       }
     }

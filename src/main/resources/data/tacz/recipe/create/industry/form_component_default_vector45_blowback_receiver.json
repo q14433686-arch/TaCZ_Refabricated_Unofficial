@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_vector45",
           "IndustryPartKind": "receiver",
-          "IndustryDisplayName": "item.tacz.gun_component.default_vector45_receiver",
-          "IndustryActionProfile": "blowback_smg"
+          "IndustryDisplayName": "item.tacz.gun_component.default_vector45_receiver"
         }
       }
     }

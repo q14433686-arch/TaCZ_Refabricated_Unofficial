@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_deagle",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_deagle_frame",
-          "DieTargetKind": "frame",
-          "IndustryActionProfile": "locked_breech_pistol",
-          "IndustryToolingScope": "critical_gauge"
+          "DieTargetKind": "frame"
         }
       }
     }

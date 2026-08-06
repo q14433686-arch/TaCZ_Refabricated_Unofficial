@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_fn_evolys",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_fn_evolys_barrel",
-          "DieTargetKind": "barrel",
-          "IndustryActionProfile": "belt_fed",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "barrel"
         }
       }
     }

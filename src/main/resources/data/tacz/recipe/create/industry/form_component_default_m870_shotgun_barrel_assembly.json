@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_m870",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.default_m870_barrel",
-          "IndustryActionProfile": "pump_action"
+          "IndustryDisplayName": "item.tacz.gun_component.default_m870_barrel"
         }
       }
     }

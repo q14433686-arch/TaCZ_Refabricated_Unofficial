@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_hk416d",
           "IndustryPartKind": "receiver",
-          "IndustryDisplayName": "item.tacz.gun_component.default_hk416d_receiver",
-          "IndustryActionProfile": "gas_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.default_hk416d_receiver"
         }
       }
     }

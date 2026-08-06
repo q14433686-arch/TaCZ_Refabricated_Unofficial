@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_scar_h",
           "IndustryPartKind": "trigger",
-          "IndustryDisplayName": "item.tacz.gun_component.default_scar_h_trigger",
-          "IndustryActionProfile": "gas_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.default_scar_h_trigger"
         }
       }
     }

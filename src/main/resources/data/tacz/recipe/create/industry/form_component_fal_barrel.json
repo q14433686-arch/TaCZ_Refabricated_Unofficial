@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "fal",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.fal_barrel",
-          "IndustryActionProfile": "gas_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.fal_barrel"
         }
       }
     }

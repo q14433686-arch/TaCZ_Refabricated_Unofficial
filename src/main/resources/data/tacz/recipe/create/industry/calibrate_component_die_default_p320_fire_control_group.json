@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_p320",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_p320_trigger",
-          "DieTargetKind": "trigger",
-          "IndustryActionProfile": "locked_breech_pistol",
-          "IndustryToolingScope": "critical_gauge"
+          "DieTargetKind": "trigger"
         }
       }
     }

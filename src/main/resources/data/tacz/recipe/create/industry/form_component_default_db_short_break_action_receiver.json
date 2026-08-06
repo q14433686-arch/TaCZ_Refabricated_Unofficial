@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_db_short",
           "IndustryPartKind": "receiver",
-          "IndustryDisplayName": "item.tacz.gun_component.default_db_short_receiver",
-          "IndustryActionProfile": "break_action"
+          "IndustryDisplayName": "item.tacz.gun_component.default_db_short_receiver"
         }
       }
     }

@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "m1911",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.m1911_barrel",
-          "IndustryActionProfile": "locked_breech_pistol"
+          "IndustryDisplayName": "item.tacz.gun_component.m1911_barrel"
         }
       }
     }

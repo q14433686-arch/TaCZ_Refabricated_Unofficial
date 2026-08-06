@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_mk14",
           "IndustryPartKind": "trigger",
-          "IndustryDisplayName": "item.tacz.gun_component.default_mk14_trigger",
-          "IndustryActionProfile": "gas_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.default_mk14_trigger"
         }
       }
     }

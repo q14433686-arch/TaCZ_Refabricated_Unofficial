@@ -56,11 +56,17 @@ public class REISubtype {
     public static EntryComparator<ItemStack> getIndustrySubtype() {
         return (context, stack) -> {
             if (stack.getItem() instanceof IndustryItemDataAccessor part) {
-                return java.util.Objects.hash(part.getPlatform(stack), part.getPartKind(stack),
+                String partKind = part.getPartKind(stack);
+                // Keep this exactly aligned with JEI: action profile/scope are
+                // descriptive provenance, while a blueprint's tier/role are
+                // actual document identity. This lets a legacy die/component
+                // and its current recipe representation share one REI edge.
+                boolean blueprint = "blueprint".equals(partKind);
+                return java.util.Objects.hash(part.getPlatform(stack), partKind,
                         part.getCartridgeCaliber(stack), part.getCartridgeAmmoId(stack),
                         part.getProjectileType(stack), part.getDieTargetKind(stack),
-                        part.getBlueprintTier(stack), part.getBlueprintRole(stack),
-                        part.getActionProfile(stack), part.getToolingScope(stack));
+                        blueprint ? part.getBlueprintTier(stack) : "",
+                        blueprint ? part.getBlueprintRole(stack) : "");
             }
             return 0;
         };

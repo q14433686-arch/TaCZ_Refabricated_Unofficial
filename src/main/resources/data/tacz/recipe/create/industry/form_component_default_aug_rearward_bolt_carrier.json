@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_aug",
           "IndustryPartKind": "bolt",
-          "IndustryDisplayName": "item.tacz.gun_component.default_aug_bolt",
-          "IndustryActionProfile": "bullpup_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.default_aug_bolt"
         }
       }
     }

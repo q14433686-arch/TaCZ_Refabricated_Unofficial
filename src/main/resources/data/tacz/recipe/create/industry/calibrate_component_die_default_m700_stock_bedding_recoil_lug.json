@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_m700",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_m700_recoil",
-          "DieTargetKind": "recoil",
-          "IndustryActionProfile": "bolt_action",
-          "IndustryToolingScope": "critical_gauge"
+          "DieTargetKind": "recoil"
         }
       }
     }

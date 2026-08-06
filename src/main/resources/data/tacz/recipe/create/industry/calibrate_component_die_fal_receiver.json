@@ -43,9 +43,7 @@
           "IndustryPlatform": "fal",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_fal_receiver",
-          "DieTargetKind": "receiver",
-          "IndustryActionProfile": "gas_rifle",
-          "IndustryToolingScope": "platform_tooling"
+          "DieTargetKind": "receiver"
         }
       }
     }

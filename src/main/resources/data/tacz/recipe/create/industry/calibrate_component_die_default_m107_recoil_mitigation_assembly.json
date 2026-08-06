@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_m107",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_m107_recoil",
-          "DieTargetKind": "recoil",
-          "IndustryActionProfile": "anti_material_bolt",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "recoil"
         }
       }
     }

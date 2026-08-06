@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "mp5",
           "IndustryPartKind": "bolt",
-          "IndustryDisplayName": "item.tacz.gun_component.mp5_bolt",
-          "IndustryActionProfile": "roller_delayed_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.mp5_bolt"
         }
       }
     }

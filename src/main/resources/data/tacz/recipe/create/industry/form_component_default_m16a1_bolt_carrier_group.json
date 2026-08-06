@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_m16a1",
           "IndustryPartKind": "bolt",
-          "IndustryDisplayName": "item.tacz.gun_component.default_m16a1_bolt",
-          "IndustryActionProfile": "gas_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.default_m16a1_bolt"
         }
       }
     }

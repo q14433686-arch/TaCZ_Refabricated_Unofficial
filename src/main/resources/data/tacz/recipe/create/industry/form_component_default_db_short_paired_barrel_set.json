@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_db_short",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.default_db_short_barrel",
-          "IndustryActionProfile": "break_action"
+          "IndustryDisplayName": "item.tacz.gun_component.default_db_short_barrel"
         }
       }
     }

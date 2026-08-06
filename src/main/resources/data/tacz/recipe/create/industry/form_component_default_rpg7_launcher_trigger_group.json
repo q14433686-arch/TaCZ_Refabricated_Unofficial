@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_rpg7",
           "IndustryPartKind": "trigger",
-          "IndustryDisplayName": "item.tacz.gun_component.default_rpg7_trigger",
-          "IndustryActionProfile": "launcher"
+          "IndustryDisplayName": "item.tacz.gun_component.default_rpg7_trigger"
         }
       }
     }

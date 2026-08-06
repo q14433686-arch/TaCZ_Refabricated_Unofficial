@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_qbz_191",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_qbz_191_trigger",
-          "DieTargetKind": "trigger",
-          "IndustryActionProfile": "bullpup_rifle",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "trigger"
         }
       }
     }

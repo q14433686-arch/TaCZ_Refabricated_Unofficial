@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_fn_evolys",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.default_fn_evolys_barrel",
-          "IndustryActionProfile": "belt_fed"
+          "IndustryDisplayName": "item.tacz.gun_component.default_fn_evolys_barrel"
         }
       }
     }

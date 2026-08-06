@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_hk_g3",
           "IndustryPartKind": "receiver",
-          "IndustryDisplayName": "item.tacz.gun_component.default_hk_g3_receiver",
-          "IndustryActionProfile": "roller_delayed_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.default_hk_g3_receiver"
         }
       }
     }

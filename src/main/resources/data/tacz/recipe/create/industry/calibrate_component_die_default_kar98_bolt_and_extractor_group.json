@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_kar98",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_kar98_bolt",
-          "DieTargetKind": "bolt",
-          "IndustryActionProfile": "bolt_action",
-          "IndustryToolingScope": "critical_gauge"
+          "DieTargetKind": "bolt"
         }
       }
     }

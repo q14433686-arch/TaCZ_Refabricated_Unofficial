@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_g36k",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_g36k_trigger",
-          "DieTargetKind": "trigger",
-          "IndustryActionProfile": "gas_rifle",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "trigger"
         }
       }
     }

@@ -111,6 +111,8 @@ IndustryDisplayName = item.tacz.gun_blueprint.<platform>
 - **REI** 使用实时 display generator，在玩家查看某个具体 NBT 模具／组件的“配方”或“用途”时才读取已同步缓存，因此不会因 REI 插件早于服务器同步初始化而得到永久空列表；
 - 组件模 → 组件、样枪 → 原始档案、档案 → 模板、模板 → 模具／量规都应能从任意一端反查。
 
+组件模和组件的 `IndustryPlatform + IndustryPartKind + IndustryDisplayName + DieTargetKind` 是稳定物理身份；`IndustryActionProfile` / `IndustryToolingScope` 是模板、量规和总装声明上的来源元数据，不再额外写入组件模或组件成品。否则“校准模具输出”与“成型配方输入”为兼容旧存档而使用不同 NBT，会在 JEI/REI 中被误认成两件不同物品，造成链条断裂。
+
 如果查看器仍没有显示，请先确认服务端日志存在类似：
 
 ```text

@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_spr15hb",
           "IndustryPartKind": "recoil",
-          "IndustryDisplayName": "item.tacz.gun_component.default_spr15hb_recoil",
-          "IndustryActionProfile": "gas_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.default_spr15hb_recoil"
         }
       }
     }

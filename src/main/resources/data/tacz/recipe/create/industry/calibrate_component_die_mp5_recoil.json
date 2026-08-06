@@ -43,9 +43,7 @@
           "IndustryPlatform": "mp5",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_mp5_recoil",
-          "DieTargetKind": "recoil",
-          "IndustryActionProfile": "roller_delayed_rifle",
-          "IndustryToolingScope": "platform_tooling"
+          "DieTargetKind": "recoil"
         }
       }
     }

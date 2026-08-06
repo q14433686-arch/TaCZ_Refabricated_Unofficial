@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_springfield1873",
           "IndustryPartKind": "bolt",
-          "IndustryDisplayName": "item.tacz.gun_component.default_springfield1873_bolt",
-          "IndustryActionProfile": "lever_action"
+          "IndustryDisplayName": "item.tacz.gun_component.default_springfield1873_bolt"
         }
       }
     }

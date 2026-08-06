@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_hk_mk23",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_hk_mk23_recoil",
-          "DieTargetKind": "recoil",
-          "IndustryActionProfile": "locked_breech_pistol",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "recoil"
         }
       }
     }

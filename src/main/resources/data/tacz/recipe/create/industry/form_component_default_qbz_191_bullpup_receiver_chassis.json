@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_qbz_191",
           "IndustryPartKind": "receiver",
-          "IndustryDisplayName": "item.tacz.gun_component.default_qbz_191_receiver",
-          "IndustryActionProfile": "bullpup_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.default_qbz_191_receiver"
         }
       }
     }

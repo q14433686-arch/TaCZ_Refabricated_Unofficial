@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_deagle_golden",
           "IndustryPartKind": "slide",
-          "IndustryDisplayName": "item.tacz.gun_component.default_deagle_golden_slide",
-          "IndustryActionProfile": "locked_breech_pistol"
+          "IndustryDisplayName": "item.tacz.gun_component.default_deagle_golden_slide"
         }
       }
     }

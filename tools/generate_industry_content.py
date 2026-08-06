@@ -1021,13 +1021,15 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             "IndustryDisplayName": f"item.tacz.press_die_blank.{blank_class}",
             "DieTargetKind": blank_class,
         })
+        # A component die's platform/kind/display/target are its stable physical
+        # identity. Do not stamp action-profile/scope provenance onto this stack:
+        # old-world dies intentionally match the same forming recipe, and JEI/
+        # REI must see the calibration output as the exact input of that route.
         calibrated_die = {
             "IndustryPlatform": name,
             "IndustryPartKind": "component_die",
             "IndustryDisplayName": die_key,
             "DieTargetKind": final_kind,
-            "IndustryActionProfile": profile,
-            "IndustryToolingScope": scope,
         }
         # A production template is the normal hard gate. Saved-world blueprints
         # first pass through restore_template_<platform>, which yields this same
@@ -1040,21 +1042,20 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             "IndustryPartKind": f"{blank_class}_blank",
             "IndustryDisplayName": "item.tacz.gun_component_blank",
         })
+        # Like dies, components keep only their stable assembly identity. The
+        # action profile lives on the platform/template/assembly declaration;
+        # adding it here would disconnect a form-recipe output from the terminal
+        # recipe's backward-compatible partial-NBT input in JEI/REI.
         component = {
             "IndustryPlatform": name,
             "IndustryPartKind": final_kind,
             "IndustryDisplayName": component_key,
-            "IndustryActionProfile": profile,
         }
-        # Profile/scope are provenance/tooltips on new dies. The forming
-        # ingredient deliberately matches only the historical stable identity,
-        # so pre-update calibrated dies in an existing world keep working.
-        calibrated_die_match = {
-            key: value for key, value in calibrated_die.items()
-            if key not in {"IndustryActionProfile", "IndustryToolingScope"}
-        }
+        # The die tag is intentionally identical on calibration output and
+        # forming input. That preserves old-world compatibility and gives both
+        # recipe viewers a continuous die → component graph.
         result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_component_{name}_{structural}.json"] = deploying(
-            structural_blank, partial("tacz:press_die", calibrated_die_match), output("tacz:gun_component", component)
+            structural_blank, partial("tacz:press_die", calibrated_die), output("tacz:gun_component", component)
         )
         component_entries.append({
             "structural": structural,
@@ -3393,6 +3394,92 @@ def validate_platform_tooling_semantics(platforms: list[dict[str, Any]], expecte
                 raise ValueError(f"{name}: {scope} gauge blank must be selected by its action fixture upstream")
 
 
+def _recipe_result_custom_data(recipe: dict[str, Any]) -> dict[str, Any] | None:
+    results = recipe.get("results")
+    if not isinstance(results, list) or not results or not isinstance(results[0], dict):
+        return None
+    components = results[0].get("components")
+    if not isinstance(components, dict):
+        return None
+    custom = components.get("minecraft:custom_data")
+    return custom if isinstance(custom, dict) else None
+
+
+def _viewer_identity(custom: dict[str, Any]) -> dict[str, Any]:
+    """Identity shared by JEI/REI recipe lookup, excluding provenance-only fields."""
+    return {
+        key: value for key, value in custom.items()
+        if key not in {"IndustryActionProfile", "IndustryToolingScope"}
+    }
+
+
+def validate_viewer_continuity(platforms: list[dict[str, Any]], expected: dict[Path, Any]) -> None:
+    """Assert every visible die/component/gauge edge uses one viewer identity.
+
+    Gameplay partial-NBT matching deliberately permits old stacks that lack
+    action-profile provenance. Recipe viewers must use the same stable identity
+    or a calibrated die looks like a different item from the die accepted by
+    the forming recipe, breaking the visible production tree.
+    """
+    for platform in platforms:
+        name = platform["platform"]
+        assembly_path = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/assemble_{platform['slug']}.json"
+        assembly = expected.get(assembly_path)
+        if not isinstance(assembly, dict):
+            raise ValueError(f"{name}: missing assembly for viewer continuity")
+        terminal_inputs: list[dict[str, Any]] = []
+        outer_input = assembly.get("ingredient")
+        if isinstance(outer_input, dict) and isinstance(outer_input.get("nbt"), dict):
+            terminal_inputs.append(outer_input["nbt"])
+        for step in assembly.get("sequence", []):
+            if not isinstance(step, dict) or not isinstance(step.get("ingredient"), dict):
+                continue
+            nbt = step["ingredient"].get("nbt")
+            if isinstance(nbt, dict):
+                terminal_inputs.append(nbt)
+
+        for part in platform["parts"]:
+            structural = part["structural"]
+            die_path = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_component_die_{name}_{structural}.json"
+            form_path = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_component_{name}_{structural}.json"
+            die_recipe = expected.get(die_path)
+            form_recipe = expected.get(form_path)
+            if not isinstance(die_recipe, dict) or not isinstance(form_recipe, dict):
+                raise ValueError(f"{name}: missing die/form route for {structural}")
+            die_output = _recipe_result_custom_data(die_recipe)
+            form_input = form_recipe.get("ingredient", {}).get("nbt")
+            component_output = _recipe_result_custom_data(form_recipe)
+            if not isinstance(die_output, dict) or not isinstance(form_input, dict) \
+                    or _viewer_identity(die_output) != _viewer_identity(form_input):
+                raise ValueError(f"{name}: viewer-disconnected component die → form edge for {structural}")
+            if not isinstance(component_output, dict) or not any(
+                    _viewer_identity(component_output) == _viewer_identity(input_tag)
+                    for input_tag in terminal_inputs
+            ):
+                raise ValueError(f"{name}: viewer-disconnected component → terminal edge for {structural}")
+
+        if platform["materials"]:
+            furniture_recipe = expected.get(
+                RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_furniture_{name}.json"
+            )
+            furniture_output = _recipe_result_custom_data(furniture_recipe) if isinstance(furniture_recipe, dict) else None
+            if not isinstance(furniture_output, dict) or not any(
+                    _viewer_identity(furniture_output) == _viewer_identity(input_tag)
+                    for input_tag in terminal_inputs
+            ):
+                raise ValueError(f"{name}: viewer-disconnected furniture kit → terminal edge")
+
+        scope = tooling_scope(platform)
+        if scope in {"critical_gauge", "final_acceptance"}:
+            gauge_recipe = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_{scope}_{name}.json")
+            gauge_output = _recipe_result_custom_data(gauge_recipe) if isinstance(gauge_recipe, dict) else None
+            if not isinstance(gauge_output, dict) or not any(
+                    _viewer_identity(gauge_output) == _viewer_identity(input_tag)
+                    for input_tag in terminal_inputs
+            ):
+                raise ValueError(f"{name}: viewer-disconnected platform gauge → terminal edge")
+
+
 def existing_json_matches(path: Path, expected: Any) -> bool:
     try:
         return canonical(read_json(path)) == canonical(expected)
@@ -3504,6 +3591,7 @@ def run(write: bool) -> int:
     obsolete_acquisition_paths = obsolete_blueprint_acquisition_files(expected)
     validate_effective_create_recipe_collisions(expected, obsolete_platform_paths | obsolete_template_paths)
     validate_platform_tooling_semantics(platforms, expected)
+    validate_viewer_continuity(platforms, expected)
 
     stale: list[str] = []
     for path, value in sorted(expected.items(), key=lambda pair: str(pair[0])):

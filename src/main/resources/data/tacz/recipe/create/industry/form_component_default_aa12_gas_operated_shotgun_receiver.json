@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_aa12",
           "IndustryPartKind": "receiver",
-          "IndustryDisplayName": "item.tacz.gun_component.default_aa12_receiver",
-          "IndustryActionProfile": "gas_operated_shotgun"
+          "IndustryDisplayName": "item.tacz.gun_component.default_aa12_receiver"
         }
       }
     }

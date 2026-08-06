@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "glock",
           "IndustryPartKind": "trigger",
-          "IndustryDisplayName": "item.tacz.gun_component.glock_trigger",
-          "IndustryActionProfile": "locked_breech_pistol"
+          "IndustryDisplayName": "item.tacz.gun_component.glock_trigger"
         }
       }
     }

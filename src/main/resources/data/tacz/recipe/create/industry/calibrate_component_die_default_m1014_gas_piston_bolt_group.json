@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_m1014",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_m1014_bolt",
-          "DieTargetKind": "bolt",
-          "IndustryActionProfile": "gas_operated_shotgun",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "bolt"
         }
       }
     }

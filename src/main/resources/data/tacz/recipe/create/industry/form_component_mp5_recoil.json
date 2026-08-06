@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "mp5",
           "IndustryPartKind": "recoil",
-          "IndustryDisplayName": "item.tacz.gun_component.mp5_recoil",
-          "IndustryActionProfile": "roller_delayed_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.mp5_recoil"
         }
       }
     }

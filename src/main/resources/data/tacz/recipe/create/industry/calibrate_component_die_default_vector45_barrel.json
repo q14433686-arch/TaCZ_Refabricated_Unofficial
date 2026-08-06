@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_vector45",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_vector45_barrel",
-          "DieTargetKind": "barrel",
-          "IndustryActionProfile": "blowback_smg",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "barrel"
         }
       }
     }

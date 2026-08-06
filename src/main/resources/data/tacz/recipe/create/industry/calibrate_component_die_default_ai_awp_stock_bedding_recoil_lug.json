@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_ai_awp",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_ai_awp_recoil",
-          "DieTargetKind": "recoil",
-          "IndustryActionProfile": "bolt_action",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "recoil"
         }
       }
     }

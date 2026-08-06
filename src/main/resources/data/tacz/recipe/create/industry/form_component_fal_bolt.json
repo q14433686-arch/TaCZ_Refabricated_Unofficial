@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "fal",
           "IndustryPartKind": "bolt",
-          "IndustryDisplayName": "item.tacz.gun_component.fal_bolt",
-          "IndustryActionProfile": "gas_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.fal_bolt"
         }
       }
     }

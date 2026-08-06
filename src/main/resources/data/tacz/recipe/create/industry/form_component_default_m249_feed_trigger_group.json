@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_m249",
           "IndustryPartKind": "trigger",
-          "IndustryDisplayName": "item.tacz.gun_component.default_m249_trigger",
-          "IndustryActionProfile": "belt_fed"
+          "IndustryDisplayName": "item.tacz.gun_component.default_m249_trigger"
         }
       }
     }

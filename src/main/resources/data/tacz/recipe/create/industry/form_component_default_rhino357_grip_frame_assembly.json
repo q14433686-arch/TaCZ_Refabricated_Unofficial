@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_rhino357",
           "IndustryPartKind": "recoil",
-          "IndustryDisplayName": "item.tacz.gun_component.default_rhino357_recoil",
-          "IndustryActionProfile": "revolver"
+          "IndustryDisplayName": "item.tacz.gun_component.default_rhino357_recoil"
         }
       }
     }

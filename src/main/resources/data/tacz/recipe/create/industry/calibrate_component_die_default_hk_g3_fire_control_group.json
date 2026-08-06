@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_hk_g3",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_hk_g3_trigger",
-          "DieTargetKind": "trigger",
-          "IndustryActionProfile": "roller_delayed_rifle",
-          "IndustryToolingScope": "platform_tooling"
+          "DieTargetKind": "trigger"
         }
       }
     }

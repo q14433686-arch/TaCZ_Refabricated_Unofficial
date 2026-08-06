@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_qbz_95",
           "IndustryPartKind": "trigger",
-          "IndustryDisplayName": "item.tacz.gun_component.default_qbz_95_trigger",
-          "IndustryActionProfile": "bullpup_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.default_qbz_95_trigger"
         }
       }
     }

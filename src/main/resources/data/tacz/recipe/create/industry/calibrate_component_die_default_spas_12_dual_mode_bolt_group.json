@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_spas_12",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_spas_12_bolt",
-          "DieTargetKind": "bolt",
-          "IndustryActionProfile": "hybrid_shotgun",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "bolt"
         }
       }
     }

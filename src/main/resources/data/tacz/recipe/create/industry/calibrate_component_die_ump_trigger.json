@@ -43,9 +43,7 @@
           "IndustryPlatform": "ump",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_ump_trigger",
-          "DieTargetKind": "trigger",
-          "IndustryActionProfile": "blowback_smg",
-          "IndustryToolingScope": "platform_tooling"
+          "DieTargetKind": "trigger"
         }
       }
     }

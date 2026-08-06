@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_minigun",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_minigun_barrel",
-          "DieTargetKind": "barrel",
-          "IndustryActionProfile": "rotary",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "barrel"
         }
       }
     }

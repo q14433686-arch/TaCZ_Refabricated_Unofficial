@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_springfield1873",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_springfield1873_trigger",
-          "DieTargetKind": "trigger",
-          "IndustryActionProfile": "lever_action",
-          "IndustryToolingScope": "family_jig"
+          "DieTargetKind": "trigger"
         }
       }
     }

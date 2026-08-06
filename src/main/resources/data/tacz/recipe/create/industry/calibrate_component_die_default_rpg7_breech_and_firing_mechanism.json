@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_rpg7",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_rpg7_bolt",
-          "DieTargetKind": "bolt",
-          "IndustryActionProfile": "launcher",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "bolt"
         }
       }
     }

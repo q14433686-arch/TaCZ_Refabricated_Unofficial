@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_m320",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.default_m320_barrel",
-          "IndustryActionProfile": "launcher"
+          "IndustryDisplayName": "item.tacz.gun_component.default_m320_barrel"
         }
       }
     }

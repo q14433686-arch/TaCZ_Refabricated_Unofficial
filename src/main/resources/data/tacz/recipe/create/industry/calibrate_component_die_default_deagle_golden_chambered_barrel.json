@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_deagle_golden",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_deagle_golden_barrel",
-          "DieTargetKind": "barrel",
-          "IndustryActionProfile": "locked_breech_pistol",
-          "IndustryToolingScope": "critical_gauge"
+          "DieTargetKind": "barrel"
         }
       }
     }

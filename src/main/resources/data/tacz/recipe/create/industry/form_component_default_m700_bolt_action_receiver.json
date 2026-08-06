@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_m700",
           "IndustryPartKind": "receiver",
-          "IndustryDisplayName": "item.tacz.gun_component.default_m700_receiver",
-          "IndustryActionProfile": "bolt_action"
+          "IndustryDisplayName": "item.tacz.gun_component.default_m700_receiver"
         }
       }
     }

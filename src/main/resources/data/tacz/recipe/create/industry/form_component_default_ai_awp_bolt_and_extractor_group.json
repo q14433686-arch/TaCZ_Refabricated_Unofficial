@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_ai_awp",
           "IndustryPartKind": "bolt",
-          "IndustryDisplayName": "item.tacz.gun_component.default_ai_awp_bolt",
-          "IndustryActionProfile": "bolt_action"
+          "IndustryDisplayName": "item.tacz.gun_component.default_ai_awp_bolt"
         }
       }
     }

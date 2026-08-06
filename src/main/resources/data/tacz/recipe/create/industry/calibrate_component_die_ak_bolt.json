@@ -43,9 +43,7 @@
           "IndustryPlatform": "ak",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_ak_bolt",
-          "DieTargetKind": "bolt",
-          "IndustryActionProfile": "gas_rifle",
-          "IndustryToolingScope": "platform_tooling"
+          "DieTargetKind": "bolt"
         }
       }
     }

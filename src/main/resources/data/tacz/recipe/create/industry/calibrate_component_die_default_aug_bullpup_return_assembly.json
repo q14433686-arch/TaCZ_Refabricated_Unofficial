@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_aug",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_aug_recoil",
-          "DieTargetKind": "recoil",
-          "IndustryActionProfile": "bullpup_rifle",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "recoil"
         }
       }
     }

@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_timeless50",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.default_timeless50_barrel",
-          "IndustryActionProfile": "locked_breech_pistol"
+          "IndustryDisplayName": "item.tacz.gun_component.default_timeless50_barrel"
         }
       }
     }

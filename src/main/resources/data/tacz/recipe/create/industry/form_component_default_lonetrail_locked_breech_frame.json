@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_lonetrail",
           "IndustryPartKind": "frame",
-          "IndustryDisplayName": "item.tacz.gun_component.default_lonetrail_frame",
-          "IndustryActionProfile": "locked_breech_pistol"
+          "IndustryDisplayName": "item.tacz.gun_component.default_lonetrail_frame"
         }
       }
     }

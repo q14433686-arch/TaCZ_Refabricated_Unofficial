@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_m320",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_m320_barrel",
-          "DieTargetKind": "barrel",
-          "IndustryActionProfile": "launcher",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "barrel"
         }
       }
     }

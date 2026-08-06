@@ -43,9 +43,7 @@
           "IndustryPlatform": "fal",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_fal_trigger",
-          "DieTargetKind": "trigger",
-          "IndustryActionProfile": "gas_rifle",
-          "IndustryToolingScope": "platform_tooling"
+          "DieTargetKind": "trigger"
         }
       }
     }

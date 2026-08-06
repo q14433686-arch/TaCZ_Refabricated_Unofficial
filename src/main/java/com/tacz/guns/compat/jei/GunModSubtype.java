@@ -56,11 +56,20 @@ public class GunModSubtype {
     public static ISubtypeInterpreter<ItemStack> getIndustrySubtype() {
         return (stack, context) -> {
             if (stack.getItem() instanceof IndustryItemDataAccessor part) {
-                return part.getPlatform(stack) + "|" + part.getPartKind(stack)
+                String partKind = part.getPartKind(stack);
+                // Action profile/scope are provenance and tooltip metadata, not
+                // a physical ingredient identity. Forming recipes deliberately
+                // accept pre-update dies/components that lack them; including
+                // them here would split one real die → component edge into two
+                // unrelated JEI subtypes. Blueprint role/tier remain identity
+                // fields because master and production documents are distinct.
+                String blueprintIdentity = "blueprint".equals(partKind)
+                        ? part.getBlueprintTier(stack) + "|" + part.getBlueprintRole(stack)
+                        : "";
+                return part.getPlatform(stack) + "|" + partKind
                         + "|" + part.getCartridgeCaliber(stack) + "|" + part.getCartridgeAmmoId(stack)
                         + "|" + part.getProjectileType(stack) + "|" + part.getDieTargetKind(stack)
-                        + "|" + part.getBlueprintTier(stack) + "|" + part.getBlueprintRole(stack)
-                        + "|" + part.getActionProfile(stack) + "|" + part.getToolingScope(stack);
+                        + "|" + blueprintIdentity;
             }
             return null;
         };

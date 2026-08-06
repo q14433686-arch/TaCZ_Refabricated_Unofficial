@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "ump",
           "IndustryPartKind": "bolt",
-          "IndustryDisplayName": "item.tacz.gun_component.ump_bolt",
-          "IndustryActionProfile": "blowback_smg"
+          "IndustryDisplayName": "item.tacz.gun_component.ump_bolt"
         }
       }
     }

@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_db_short",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_db_short_bolt",
-          "DieTargetKind": "bolt",
-          "IndustryActionProfile": "break_action",
-          "IndustryToolingScope": "family_jig"
+          "DieTargetKind": "bolt"
         }
       }
     }

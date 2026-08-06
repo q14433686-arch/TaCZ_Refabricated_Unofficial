@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_aa12",
           "IndustryPartKind": "bolt",
-          "IndustryDisplayName": "item.tacz.gun_component.default_aa12_bolt",
-          "IndustryActionProfile": "gas_operated_shotgun"
+          "IndustryDisplayName": "item.tacz.gun_component.default_aa12_bolt"
         }
       }
     }

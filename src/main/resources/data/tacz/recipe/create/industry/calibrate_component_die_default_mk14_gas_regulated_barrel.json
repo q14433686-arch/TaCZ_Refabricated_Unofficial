@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_mk14",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_mk14_barrel",
-          "DieTargetKind": "barrel",
-          "IndustryActionProfile": "gas_rifle",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "barrel"
         }
       }
     }

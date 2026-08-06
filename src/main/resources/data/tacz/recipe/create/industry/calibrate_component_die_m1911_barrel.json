@@ -43,9 +43,7 @@
           "IndustryPlatform": "m1911",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_m1911_barrel",
-          "DieTargetKind": "barrel",
-          "IndustryActionProfile": "locked_breech_pistol",
-          "IndustryToolingScope": "critical_gauge"
+          "DieTargetKind": "barrel"
         }
       }
     }

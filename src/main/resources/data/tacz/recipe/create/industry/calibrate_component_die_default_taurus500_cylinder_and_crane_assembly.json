@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_taurus500",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_taurus500_slide",
-          "DieTargetKind": "slide",
-          "IndustryActionProfile": "revolver",
-          "IndustryToolingScope": "critical_gauge"
+          "DieTargetKind": "slide"
         }
       }
     }

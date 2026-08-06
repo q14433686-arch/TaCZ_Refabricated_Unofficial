@@ -43,9 +43,7 @@
           "IndustryPlatform": "ar",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_ar_bolt",
-          "DieTargetKind": "bolt",
-          "IndustryActionProfile": "gas_rifle",
-          "IndustryToolingScope": "final_acceptance"
+          "DieTargetKind": "bolt"
         }
       }
     }

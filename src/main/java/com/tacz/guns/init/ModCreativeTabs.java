@@ -77,8 +77,7 @@ public class ModCreativeTabs {
                 output.accept(IndustryItemBuilder.pressDie()
                         .platform("ak").kind("component_die")
                         .displayNameKey("item.tacz.press_die.component_ak_receiver")
-                        .dieTargetKind("receiver").actionProfile("gas_rifle")
-                        .toolingScope("platform_tooling").build());
+                        .dieTargetKind("receiver").build());
                 output.accept(IndustryItemBuilder.blueprint()
                         .platform("tooling").kind("template_blank")
                         .displayNameKey("item.tacz.gun_blueprint.blank").blueprintRole("blank").build());

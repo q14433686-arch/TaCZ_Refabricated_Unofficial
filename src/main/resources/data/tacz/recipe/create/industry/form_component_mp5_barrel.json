@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "mp5",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.mp5_barrel",
-          "IndustryActionProfile": "roller_delayed_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.mp5_barrel"
         }
       }
     }

@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_minigun",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.default_minigun_barrel",
-          "IndustryActionProfile": "rotary"
+          "IndustryDisplayName": "item.tacz.gun_component.default_minigun_barrel"
         }
       }
     }

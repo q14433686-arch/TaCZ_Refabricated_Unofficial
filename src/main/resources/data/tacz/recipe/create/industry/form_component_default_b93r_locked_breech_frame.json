@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_b93r",
           "IndustryPartKind": "frame",
-          "IndustryDisplayName": "item.tacz.gun_component.default_b93r_frame",
-          "IndustryActionProfile": "locked_breech_pistol"
+          "IndustryDisplayName": "item.tacz.gun_component.default_b93r_frame"
         }
       }
     }

@@ -43,9 +43,7 @@
           "IndustryPlatform": "m9",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_m9_slide",
-          "DieTargetKind": "slide",
-          "IndustryActionProfile": "locked_breech_pistol",
-          "IndustryToolingScope": "critical_gauge"
+          "DieTargetKind": "slide"
         }
       }
     }

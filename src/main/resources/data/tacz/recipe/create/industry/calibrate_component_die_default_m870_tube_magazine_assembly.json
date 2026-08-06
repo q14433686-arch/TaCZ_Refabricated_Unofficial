@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_m870",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_m870_recoil",
-          "DieTargetKind": "recoil",
-          "IndustryActionProfile": "pump_action",
-          "IndustryToolingScope": "critical_gauge"
+          "DieTargetKind": "recoil"
         }
       }
     }

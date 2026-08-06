@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "fal",
           "IndustryPartKind": "recoil",
-          "IndustryDisplayName": "item.tacz.gun_component.fal_recoil",
-          "IndustryActionProfile": "gas_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.fal_recoil"
         }
       }
     }

@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_kar98",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.default_kar98_barrel",
-          "IndustryActionProfile": "bolt_action"
+          "IndustryDisplayName": "item.tacz.gun_component.default_kar98_barrel"
         }
       }
     }

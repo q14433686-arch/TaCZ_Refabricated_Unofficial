@@ -43,9 +43,7 @@
           "IndustryPlatform": "default_timeless50",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_timeless50_barrel",
-          "DieTargetKind": "barrel",
-          "IndustryActionProfile": "locked_breech_pistol",
-          "IndustryToolingScope": "critical_gauge"
+          "DieTargetKind": "barrel"
         }
       }
     }

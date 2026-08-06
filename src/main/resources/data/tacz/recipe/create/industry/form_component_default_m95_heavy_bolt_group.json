@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_m95",
           "IndustryPartKind": "bolt",
-          "IndustryDisplayName": "item.tacz.gun_component.default_m95_bolt",
-          "IndustryActionProfile": "anti_material_bolt"
+          "IndustryDisplayName": "item.tacz.gun_component.default_m95_bolt"
         }
       }
     }

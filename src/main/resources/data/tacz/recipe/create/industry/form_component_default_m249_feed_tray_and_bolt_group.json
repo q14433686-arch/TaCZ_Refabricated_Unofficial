@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_m249",
           "IndustryPartKind": "bolt",
-          "IndustryDisplayName": "item.tacz.gun_component.default_m249_bolt",
-          "IndustryActionProfile": "belt_fed"
+          "IndustryDisplayName": "item.tacz.gun_component.default_m249_bolt"
         }
       }
     }

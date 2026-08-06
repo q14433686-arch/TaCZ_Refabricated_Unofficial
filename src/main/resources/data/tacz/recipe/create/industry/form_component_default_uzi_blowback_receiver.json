@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_uzi",
           "IndustryPartKind": "receiver",
-          "IndustryDisplayName": "item.tacz.gun_component.default_uzi_receiver",
-          "IndustryActionProfile": "blowback_smg"
+          "IndustryDisplayName": "item.tacz.gun_component.default_uzi_receiver"
         }
       }
     }

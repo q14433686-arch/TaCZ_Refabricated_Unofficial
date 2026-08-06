@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_spas_12",
           "IndustryPartKind": "trigger",
-          "IndustryDisplayName": "item.tacz.gun_component.default_spas_12_trigger",
-          "IndustryActionProfile": "hybrid_shotgun"
+          "IndustryDisplayName": "item.tacz.gun_component.default_spas_12_trigger"
         }
       }
     }

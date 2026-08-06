@@ -38,8 +38,7 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "ak",
           "IndustryPartKind": "receiver",
-          "IndustryDisplayName": "item.tacz.gun_component.ak_receiver",
-          "IndustryActionProfile": "gas_rifle"
+          "IndustryDisplayName": "item.tacz.gun_component.ak_receiver"
         }
       }
     }
