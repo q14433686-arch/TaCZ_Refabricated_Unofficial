@@ -1,0 +1,49 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "cartridge_gauge_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.cartridge_gauge"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:cartridge_case"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "spent_case",
+      "IndustryDisplayName": "item.tacz.cartridge_case.spent_68x51fury",
+      "CartridgeCaliber": "68x51fury",
+      "CartridgeAmmoId": "tacz:68x51fury",
+      "SpentCartridgeCase": true
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "case_datum_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.case_gauge_68x51fury",
+          "CartridgeCaliber": "68x51fury"
+        }
+      }
+    }
+  ]
+}

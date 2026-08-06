@@ -116,9 +116,21 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
             adder.accept(Component.translatable("tooltip.tacz.industry.cartridge_gauge")
                     .withStyle(style -> style.withColor(0x55FFFF)));
         }
+        if ("case_datum_gauge".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.case_datum_gauge")
+                    .withStyle(style -> style.withColor(0x55FFFF)));
+        }
+        if ("projectile_datum_gauge".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.projectile_datum_gauge")
+                    .withStyle(style -> style.withColor(0x55FFFF)));
+        }
         if ("cartridge_gauge_blank".equals(partKind)) {
             adder.accept(Component.translatable("tooltip.tacz.industry.cartridge_gauge_blank")
                     .withStyle(style -> style.withColor(0xAAAAAA)));
+        }
+        if (partKind.startsWith("dossier_archive_")) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.dossier_archive")
+                    .withStyle(style -> style.withColor(0xD4A85A)));
         }
         if ("spent_case".equals(partKind)) {
             adder.accept(Component.translatable("tooltip.tacz.industry.spent_case")

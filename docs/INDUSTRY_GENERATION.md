@@ -94,6 +94,12 @@ calibrate_projectile_die_<caliber>.json       # 口径基准量规 → 弹头模
 form_case_<caliber>.json
 form_projectile_<caliber>.json
 recondition_case_<caliber>.json              # 已击发弹壳 + 对应弹壳模具 -> 可装填弹壳
+reverse_case_gauge_<caliber>.json             # 新弹壳样本 -> 仅弹壳尺寸量规
+reverse_spent_case_gauge_<caliber>.json       # 已击发壳样本 -> 仅弹壳尺寸量规（无抛壳口径除外）
+reverse_projectile_gauge_<caliber>.json       # 弹头芯样本 -> 仅弹头外形量规
+reverse_cartridge_gauge_<caliber>.json        # 一发完整散装弹样本 -> 完整口径量规
+calibrate_case_die_from_case_gauge_<caliber>.json
+calibrate_projectile_die_from_projectile_gauge_<caliber>.json
 industry/cartridge_assembly/<caliber>.json
 industry/ammo/<caliber>.json
 ```
@@ -103,6 +109,17 @@ industry/ammo/<caliber>.json
 每条清单还显式声明 `balance_tier`、`batch_count`、`propellant_count`、`case_blank_count` 与 `projectile_blank_count`。`balance_tier` 对应内置的弹道角色最低毛坯质量/推进药下限；最终定义将 `case_count`、`projectile_count`、`primer_count` 设为批量输出数，确保一枚物理件绝不复制成一批弹；推进药按弹种等级单独增加，而大口径壳/弹头会在成型顺序线上实际消耗额外中性毛坯。`--check` 同时核对批量不超过成品堆叠/旧配方批量，且推进药不少于弹道等级与旧枪包按每发折算的火药下限。
 
 生成器还读取运行时的 `data/tacz/industry/gun_feed/*.json`，自动生成全部实体弹匣的“中性弹匣壳体 + 保留成枪量规”部署器配方；若某个供弹定义的 `ammo` 没有口径源定义，`--check` 会失败。
+
+## 稳定工艺档案委托
+
+`tools/industry/blueprint_acquisition.json` 的每个 tier 还声明一个 `stable_archive`。生成器把它写成 Basin 或机械合成器档案包配方，并为全部默认平台生成：
+
+```text
+data/tacz/recipe/create/industry/form_dossier_archive_<tier>.json
+data/tacz/recipe/industry/dossier_commission_<platform>.json
+```
+
+后者是默认枪械工作台杂项页中的显式 GUI 委托：消耗对应层级档案包和空白工装页，检查但不消耗对应动作夹具，输出玩家选定的 `master` 原始档案。它不是多个同输入 Create 物理配方竞争不同输出；型号由工作台中玩家明确选择的委托条目决定。随机村民、箱子和样枪测绘仍是捷径。
 
 ## 自动验证
 

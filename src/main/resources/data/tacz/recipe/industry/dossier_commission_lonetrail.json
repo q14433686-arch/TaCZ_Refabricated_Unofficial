@@ -1,0 +1,72 @@
+{
+  "type": "tacz:gun_smith_table_crafting",
+  "industry_dossier_commission": true,
+  "materials": [
+    {
+      "item": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component_blank"
+        ],
+        "nbt": {
+          "IndustryPlatform": "archive",
+          "IndustryPartKind": "dossier_archive_service",
+          "IndustryDisplayName": "item.tacz.dossier_archive.service",
+          "IndustryBlueprintTier": "service"
+        }
+      },
+      "count": 1,
+      "consume": true
+    },
+    {
+      "item": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_blueprint"
+        ],
+        "nbt": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "template_blank",
+          "IndustryDisplayName": "item.tacz.gun_blueprint.blank",
+          "IndustryBlueprintRole": "blank"
+        }
+      },
+      "count": 1,
+      "consume": true
+    },
+    {
+      "item": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "action_jig",
+          "IndustryDisplayName": "item.tacz.press_die.action_jig.locked_breech_pistol",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "DieTargetKind": "locked_breech_pistol"
+        }
+      },
+      "count": 1,
+      "consume": false
+    }
+  ],
+  "result": {
+    "type": "custom",
+    "group": "tacz:misc",
+    "item": {
+      "item": "tacz:gun_blueprint",
+      "count": 1,
+      "nbt": {
+        "IndustryPlatform": "default_lonetrail",
+        "IndustryPartKind": "blueprint",
+        "IndustryDisplayName": "item.tacz.gun_dossier.default_lonetrail",
+        "IndustryBlueprintTier": "service",
+        "IndustryBlueprintRole": "master",
+        "IndustryActionProfile": "locked_breech_pistol",
+        "IndustryToolingScope": "critical_gauge"
+      }
+    }
+  }
+}

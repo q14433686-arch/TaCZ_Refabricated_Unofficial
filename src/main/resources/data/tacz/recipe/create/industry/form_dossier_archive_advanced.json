@@ -1,0 +1,34 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:mechanical_crafting",
+  "key": {
+    "P": "minecraft:paper",
+    "B": "create:brass_sheet",
+    "S": "tacz:high_carbon_steel_plate",
+    "R": "minecraft:redstone",
+    "A": "minecraft:amethyst_shard"
+  },
+  "pattern": [
+    "PBP",
+    "SRS",
+    " A "
+  ],
+  "result": {
+    "id": "tacz:gun_component_blank",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "archive",
+        "IndustryPartKind": "dossier_archive_advanced",
+        "IndustryDisplayName": "item.tacz.dossier_archive.advanced",
+        "IndustryBlueprintTier": "advanced"
+      }
+    }
+  }
+}

@@ -202,6 +202,8 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 
 成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。
 
+这些精确身份也构成逆向证据：新／已击发弹壳只可消耗性地生成 `case_datum_gauge` 并校准对应弹壳模；弹头芯只可生成 `projectile_datum_gauge` 并校准对应弹头模；一发完整 `tacz:ammo` 样本才可生成同时服务两枚模具的完整 `cartridge_gauge`。因此不会把“捡到一个壳”误报为掌握完整弹头工艺。
+
 40 mm HE 与 RPG-7 HEAT 不再把 TNT 和毛坯藏在一个不可见的顺序临时态里。它们的战斗部有实际可存放/可查看的中间物品：
 
 ```text

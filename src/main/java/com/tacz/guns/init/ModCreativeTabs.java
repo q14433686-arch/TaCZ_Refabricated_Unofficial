@@ -60,6 +60,13 @@ public class ModCreativeTabs {
                         .platform("ammunition").kind("cartridge_gauge")
                         .displayNameKey("item.tacz.press_die.gauge_9mm").caliber("9mm").build());
                 output.accept(IndustryItemBuilder.pressDie()
+                        .platform("ammunition").kind("case_datum_gauge")
+                        .displayNameKey("item.tacz.press_die.case_gauge_9mm").caliber("9mm").build());
+                output.accept(IndustryItemBuilder.pressDie()
+                        .platform("ammunition").kind("projectile_datum_gauge")
+                        .displayNameKey("item.tacz.press_die.projectile_gauge_9mm_fmj")
+                        .caliber("9mm").projectileType("fmj").build());
+                output.accept(IndustryItemBuilder.pressDie()
                         .platform("ammunition").kind("case_die")
                         .displayNameKey("item.tacz.press_die.case_9mm").caliber("9mm").build());
                 output.accept(IndustryItemBuilder.cartridgeCase()
@@ -80,6 +87,18 @@ public class ModCreativeTabs {
                 output.accept(IndustryItemBuilder.componentBlank()
                         .platform("machining").kind("receiver_blank")
                         .displayNameKey("item.tacz.gun_component_blank").build());
+                output.accept(IndustryItemBuilder.componentBlank()
+                        .platform("archive").kind("dossier_archive_legacy")
+                        .displayNameKey("item.tacz.dossier_archive.legacy").blueprintTier("legacy").build());
+                output.accept(IndustryItemBuilder.componentBlank()
+                        .platform("archive").kind("dossier_archive_service")
+                        .displayNameKey("item.tacz.dossier_archive.service").blueprintTier("service").build());
+                output.accept(IndustryItemBuilder.componentBlank()
+                        .platform("archive").kind("dossier_archive_advanced")
+                        .displayNameKey("item.tacz.dossier_archive.advanced").blueprintTier("advanced").build());
+                output.accept(IndustryItemBuilder.componentBlank()
+                        .platform("archive").kind("dossier_archive_precision")
+                        .displayNameKey("item.tacz.dossier_archive.precision").blueprintTier("precision").build());
                 output.accept(IndustryItemBuilder.pressDie()
                         .platform("ak").kind("component_die")
                         .displayNameKey("item.tacz.press_die.component_ak_receiver")

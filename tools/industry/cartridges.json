@@ -22,7 +22,11 @@
       "projectile_die_name_en": "9 mm FMJ Projectile Die",
       "projectile_die_name_zh": "9 mm FMJ 弹头模具",
       "gauge_name_en": "9 mm Chamber Datum Gauge",
-      "gauge_name_zh": "9 mm 膛室基准量规"
+      "gauge_name_zh": "9 mm 膛室基准量规",
+      "case_gauge_name_en": "9 mm Case-Dimension Gauge",
+      "case_gauge_name_zh": "9 mm 弹壳尺寸量规",
+      "projectile_gauge_name_en": "9 mm FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": "9 mm FMJ 弹头外形量规"
     },
     {
       "id": "22wmr",
@@ -46,7 +50,11 @@
       "projectile_die_name_en": ".22 WMR FMJ Projectile Die",
       "projectile_die_name_zh": ".22 WMR FMJ 弹头模具",
       "gauge_name_en": ".22 WMR Chamber Datum Gauge",
-      "gauge_name_zh": ".22 WMR 膛室基准量规"
+      "gauge_name_zh": ".22 WMR 膛室基准量规",
+      "case_gauge_name_en": ".22 WMR Case-Dimension Gauge",
+      "case_gauge_name_zh": ".22 WMR 弹壳尺寸量规",
+      "projectile_gauge_name_en": ".22 WMR FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": ".22 WMR FMJ 弹头外形量规"
     },
     {
       "id": "556x45",
@@ -70,7 +78,11 @@
       "projectile_die_name_en": "5.56×45 FMJ Projectile Die",
       "projectile_die_name_zh": "5.56×45 FMJ 弹头模具",
       "gauge_name_en": "5.56×45 Chamber Datum Gauge",
-      "gauge_name_zh": "5.56×45 膛室基准量规"
+      "gauge_name_zh": "5.56×45 膛室基准量规",
+      "case_gauge_name_en": "5.56×45 Case-Dimension Gauge",
+      "case_gauge_name_zh": "5.56×45 弹壳尺寸量规",
+      "projectile_gauge_name_en": "5.56×45 FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": "5.56×45 FMJ 弹头外形量规"
     },
     {
       "id": "762x39",
@@ -94,7 +106,11 @@
       "projectile_die_name_en": "7.62×39 FMJ Projectile Die",
       "projectile_die_name_zh": "7.62×39 FMJ 弹头模具",
       "gauge_name_en": "7.62×39 Chamber Datum Gauge",
-      "gauge_name_zh": "7.62×39 膛室基准量规"
+      "gauge_name_zh": "7.62×39 膛室基准量规",
+      "case_gauge_name_en": "7.62×39 Case-Dimension Gauge",
+      "case_gauge_name_zh": "7.62×39 弹壳尺寸量规",
+      "projectile_gauge_name_en": "7.62×39 FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": "7.62×39 FMJ 弹头外形量规"
     },
     {
       "id": "12g",
@@ -118,7 +134,11 @@
       "projectile_die_name_en": "12G Shot Die",
       "projectile_die_name_zh": "12G 铅丸模具",
       "gauge_name_en": "12 Gauge Chamber Datum Gauge",
-      "gauge_name_zh": "12G 膛室基准量规"
+      "gauge_name_zh": "12G 膛室基准量规",
+      "case_gauge_name_en": "12 Gauge Case-Dimension Gauge",
+      "case_gauge_name_zh": "12G 弹壳尺寸量规",
+      "projectile_gauge_name_en": "12 Gauge Shot-Payload Form Gauge",
+      "projectile_gauge_name_zh": "12G 铅丸装药外形量规"
     },
     {
       "id": "45acp",
@@ -142,7 +162,11 @@
       "projectile_die_name_en": ".45 ACP FMJ Projectile Die",
       "projectile_die_name_zh": ".45 ACP FMJ 弹头模具",
       "gauge_name_en": ".45 ACP Chamber Datum Gauge",
-      "gauge_name_zh": ".45 ACP 膛室基准量规"
+      "gauge_name_zh": ".45 ACP 膛室基准量规",
+      "case_gauge_name_en": ".45 ACP Case-Dimension Gauge",
+      "case_gauge_name_zh": ".45 ACP 弹壳尺寸量规",
+      "projectile_gauge_name_en": ".45 ACP FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": ".45 ACP FMJ 弹头外形量规"
     },
     {
       "id": "308",
@@ -166,7 +190,11 @@
       "projectile_die_name_en": ".308 FMJ Projectile Die",
       "projectile_die_name_zh": ".308 FMJ 弹头模具",
       "gauge_name_en": ".308 Chamber Datum Gauge",
-      "gauge_name_zh": ".308 膛室基准量规"
+      "gauge_name_zh": ".308 膛室基准量规",
+      "case_gauge_name_en": ".308 Case-Dimension Gauge",
+      "case_gauge_name_zh": ".308 弹壳尺寸量规",
+      "projectile_gauge_name_en": ".308 FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": ".308 FMJ 弹头外形量规"
     },
     {
       "id": "57x28",
@@ -190,7 +218,11 @@
       "projectile_die_name_en": "5.7×28 FMJ Projectile Die",
       "projectile_die_name_zh": "5.7×28 FMJ 弹头模具",
       "gauge_name_en": "5.7×28 Chamber Datum Gauge",
-      "gauge_name_zh": "5.7×28 膛室基准量规"
+      "gauge_name_zh": "5.7×28 膛室基准量规",
+      "case_gauge_name_en": "5.7×28 Case-Dimension Gauge",
+      "case_gauge_name_zh": "5.7×28 弹壳尺寸量规",
+      "projectile_gauge_name_en": "5.7×28 FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": "5.7×28 FMJ 弹头外形量规"
     },
     {
       "id": "58x42",
@@ -214,7 +246,11 @@
       "projectile_die_name_en": "5.8×42 FMJ Projectile Die",
       "projectile_die_name_zh": "5.8×42 FMJ 弹头模具",
       "gauge_name_en": "5.8×42 Chamber Datum Gauge",
-      "gauge_name_zh": "5.8×42 膛室基准量规"
+      "gauge_name_zh": "5.8×42 膛室基准量规",
+      "case_gauge_name_en": "5.8×42 Case-Dimension Gauge",
+      "case_gauge_name_zh": "5.8×42 弹壳尺寸量规",
+      "projectile_gauge_name_en": "5.8×42 FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": "5.8×42 FMJ 弹头外形量规"
     },
     {
       "id": "30_06",
@@ -238,7 +274,11 @@
       "projectile_die_name_en": ".30-06 FMJ Projectile Die",
       "projectile_die_name_zh": ".30-06 FMJ 弹头模具",
       "gauge_name_en": ".30-06 Chamber Datum Gauge",
-      "gauge_name_zh": ".30-06 膛室基准量规"
+      "gauge_name_zh": ".30-06 膛室基准量规",
+      "case_gauge_name_en": ".30-06 Case-Dimension Gauge",
+      "case_gauge_name_zh": ".30-06 弹壳尺寸量规",
+      "projectile_gauge_name_en": ".30-06 FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": ".30-06 FMJ 弹头外形量规"
     },
     {
       "id": "338",
@@ -262,7 +302,11 @@
       "projectile_die_name_en": ".338 FMJ Projectile Die",
       "projectile_die_name_zh": ".338 FMJ 弹头模具",
       "gauge_name_en": ".338 Chamber Datum Gauge",
-      "gauge_name_zh": ".338 膛室基准量规"
+      "gauge_name_zh": ".338 膛室基准量规",
+      "case_gauge_name_en": ".338 Case-Dimension Gauge",
+      "case_gauge_name_zh": ".338 弹壳尺寸量规",
+      "projectile_gauge_name_en": ".338 FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": ".338 FMJ 弹头外形量规"
     },
     {
       "id": "357mag",
@@ -286,7 +330,11 @@
       "projectile_die_name_en": ".357 Magnum FMJ Projectile Die",
       "projectile_die_name_zh": ".357 Magnum FMJ 弹头模具",
       "gauge_name_en": ".357 Magnum Chamber Datum Gauge",
-      "gauge_name_zh": ".357 Magnum 膛室基准量规"
+      "gauge_name_zh": ".357 Magnum 膛室基准量规",
+      "case_gauge_name_en": ".357 Magnum Case-Dimension Gauge",
+      "case_gauge_name_zh": ".357 Magnum 弹壳尺寸量规",
+      "projectile_gauge_name_en": ".357 Magnum FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": ".357 Magnum FMJ 弹头外形量规"
     },
     {
       "id": "40mm",
@@ -324,7 +372,11 @@
       "projectile_die_name_en": "40 mm HE Projectile Die",
       "projectile_die_name_zh": "40 mm 高爆弹头模具",
       "gauge_name_en": "40 mm Chamber Datum Gauge",
-      "gauge_name_zh": "40 mm 膛室基准量规"
+      "gauge_name_zh": "40 mm 膛室基准量规",
+      "case_gauge_name_en": "40 mm Grenade-Case Gauge",
+      "case_gauge_name_zh": "40 mm 榴弹壳尺寸量规",
+      "projectile_gauge_name_en": "40 mm HE Projectile-Form Gauge",
+      "projectile_gauge_name_zh": "40 mm 高爆弹头外形量规"
     },
     {
       "id": "45_70",
@@ -348,7 +400,11 @@
       "projectile_die_name_en": ".45-70 FMJ Projectile Die",
       "projectile_die_name_zh": ".45-70 FMJ 弹头模具",
       "gauge_name_en": ".45-70 Chamber Datum Gauge",
-      "gauge_name_zh": ".45-70 膛室基准量规"
+      "gauge_name_zh": ".45-70 膛室基准量规",
+      "case_gauge_name_en": ".45-70 Case-Dimension Gauge",
+      "case_gauge_name_zh": ".45-70 弹壳尺寸量规",
+      "projectile_gauge_name_en": ".45-70 FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": ".45-70 FMJ 弹头外形量规"
     },
     {
       "id": "46x30",
@@ -376,7 +432,11 @@
       "projectile_die_name_en": "4.6×30 FMJ Projectile Die",
       "projectile_die_name_zh": "4.6×30 FMJ 弹头模具",
       "gauge_name_en": "4.6×30 Hardened Calibre Gauge",
-      "gauge_name_zh": "4.6×30 淬硬口径量规"
+      "gauge_name_zh": "4.6×30 淬硬口径量规",
+      "case_gauge_name_en": "4.6×30 Case-Dimension Gauge",
+      "case_gauge_name_zh": "4.6×30 弹壳尺寸量规",
+      "projectile_gauge_name_en": "4.6×30 FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": "4.6×30 FMJ 弹头外形量规"
     },
     {
       "id": "500mag",
@@ -400,7 +460,11 @@
       "projectile_die_name_en": ".500 Magnum FMJ Projectile Die",
       "projectile_die_name_zh": ".500 Magnum FMJ 弹头模具",
       "gauge_name_en": ".500 Magnum Chamber Datum Gauge",
-      "gauge_name_zh": ".500 Magnum 膛室基准量规"
+      "gauge_name_zh": ".500 Magnum 膛室基准量规",
+      "case_gauge_name_en": ".500 Magnum Case-Dimension Gauge",
+      "case_gauge_name_zh": ".500 Magnum 弹壳尺寸量规",
+      "projectile_gauge_name_en": ".500 Magnum FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": ".500 Magnum FMJ 弹头外形量规"
     },
     {
       "id": "50ae",
@@ -424,7 +488,11 @@
       "projectile_die_name_en": ".50 AE FMJ Projectile Die",
       "projectile_die_name_zh": ".50 AE FMJ 弹头模具",
       "gauge_name_en": ".50 AE Chamber Datum Gauge",
-      "gauge_name_zh": ".50 AE 膛室基准量规"
+      "gauge_name_zh": ".50 AE 膛室基准量规",
+      "case_gauge_name_en": ".50 AE Case-Dimension Gauge",
+      "case_gauge_name_zh": ".50 AE 弹壳尺寸量规",
+      "projectile_gauge_name_en": ".50 AE FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": ".50 AE FMJ 弹头外形量规"
     },
     {
       "id": "50bmg",
@@ -448,7 +516,11 @@
       "projectile_die_name_en": ".50 BMG FMJ Projectile Die",
       "projectile_die_name_zh": ".50 BMG FMJ 弹头模具",
       "gauge_name_en": ".50 BMG Chamber Datum Gauge",
-      "gauge_name_zh": ".50 BMG 膛室基准量规"
+      "gauge_name_zh": ".50 BMG 膛室基准量规",
+      "case_gauge_name_en": ".50 BMG Case-Dimension Gauge",
+      "case_gauge_name_zh": ".50 BMG 弹壳尺寸量规",
+      "projectile_gauge_name_en": ".50 BMG FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": ".50 BMG FMJ 弹头外形量规"
     },
     {
       "id": "545x39",
@@ -476,7 +548,11 @@
       "projectile_die_name_en": "5.45×39 FMJ Projectile Die",
       "projectile_die_name_zh": "5.45×39 FMJ 弹头模具",
       "gauge_name_en": "5.45×39 Hardened Calibre Gauge",
-      "gauge_name_zh": "5.45×39 淬硬口径量规"
+      "gauge_name_zh": "5.45×39 淬硬口径量规",
+      "case_gauge_name_en": "5.45×39 Case-Dimension Gauge",
+      "case_gauge_name_zh": "5.45×39 弹壳尺寸量规",
+      "projectile_gauge_name_en": "5.45×39 FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": "5.45×39 FMJ 弹头外形量规"
     },
     {
       "id": "68x51fury",
@@ -504,7 +580,11 @@
       "projectile_die_name_en": "6.8×51 Fury FMJ Projectile Die",
       "projectile_die_name_zh": "6.8×51 Fury FMJ 弹头模具",
       "gauge_name_en": "6.8×51 Fury Hardened Calibre Gauge",
-      "gauge_name_zh": "6.8×51 Fury 淬硬口径量规"
+      "gauge_name_zh": "6.8×51 Fury 淬硬口径量规",
+      "case_gauge_name_en": "6.8×51 Fury Case-Dimension Gauge",
+      "case_gauge_name_zh": "6.8×51 Fury 弹壳尺寸量规",
+      "projectile_gauge_name_en": "6.8×51 Fury FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": "6.8×51 Fury FMJ 弹头外形量规"
     },
     {
       "id": "762x25",
@@ -532,7 +612,11 @@
       "projectile_die_name_en": "7.62×25 FMJ Projectile Die",
       "projectile_die_name_zh": "7.62×25 FMJ 弹头模具",
       "gauge_name_en": "7.62×25 Hardened Calibre Gauge",
-      "gauge_name_zh": "7.62×25 淬硬口径量规"
+      "gauge_name_zh": "7.62×25 淬硬口径量规",
+      "case_gauge_name_en": "7.62×25 Case-Dimension Gauge",
+      "case_gauge_name_zh": "7.62×25 弹壳尺寸量规",
+      "projectile_gauge_name_en": "7.62×25 FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": "7.62×25 FMJ 弹头外形量规"
     },
     {
       "id": "762x54",
@@ -560,7 +644,11 @@
       "projectile_die_name_en": "7.62×54R FMJ Projectile Die",
       "projectile_die_name_zh": "7.62×54R FMJ 弹头模具",
       "gauge_name_en": "7.62×54R Hardened Calibre Gauge",
-      "gauge_name_zh": "7.62×54R 淬硬口径量规"
+      "gauge_name_zh": "7.62×54R 淬硬口径量规",
+      "case_gauge_name_en": "7.62×54R Case-Dimension Gauge",
+      "case_gauge_name_zh": "7.62×54R 弹壳尺寸量规",
+      "projectile_gauge_name_en": "7.62×54R FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": "7.62×54R FMJ 弹头外形量规"
     },
     {
       "id": "792x57",
@@ -584,7 +672,11 @@
       "projectile_die_name_en": "7.92×57 FMJ Projectile Die",
       "projectile_die_name_zh": "7.92×57 FMJ 弹头模具",
       "gauge_name_en": "7.92×57 Chamber Datum Gauge",
-      "gauge_name_zh": "7.92×57 膛室基准量规"
+      "gauge_name_zh": "7.92×57 膛室基准量规",
+      "case_gauge_name_en": "7.92×57 Case-Dimension Gauge",
+      "case_gauge_name_zh": "7.92×57 弹壳尺寸量规",
+      "projectile_gauge_name_en": "7.92×57 FMJ Projectile-Form Gauge",
+      "projectile_gauge_name_zh": "7.92×57 FMJ 弹头外形量规"
     },
     {
       "id": "rpg_rocket",
@@ -622,7 +714,11 @@
       "projectile_die_name_en": "RPG-7 HEAT Warhead Die",
       "projectile_die_name_zh": "RPG-7 聚能破甲战斗部模具",
       "gauge_name_en": "RPG-7 Launch-Tube Datum Gauge",
-      "gauge_name_zh": "RPG-7 发射管基准量规"
+      "gauge_name_zh": "RPG-7 发射管基准量规",
+      "case_gauge_name_en": "RPG-7 Motor-Housing Gauge",
+      "case_gauge_name_zh": "RPG-7 发动机壳体尺寸量规",
+      "projectile_gauge_name_en": "RPG-7 HEAT Warhead-Form Gauge",
+      "projectile_gauge_name_zh": "RPG-7 聚能战斗部外形量规"
     }
   ]
 }

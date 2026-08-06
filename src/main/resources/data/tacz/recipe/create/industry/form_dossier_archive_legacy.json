@@ -1,0 +1,30 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "minecraft:paper",
+    "minecraft:paper",
+    "minecraft:charcoal",
+    "minecraft:iron_ingot"
+  ],
+  "results": [
+    {
+      "id": "tacz:gun_component_blank",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "archive",
+          "IndustryPartKind": "dossier_archive_legacy",
+          "IndustryDisplayName": "item.tacz.dossier_archive.legacy",
+          "IndustryBlueprintTier": "legacy"
+        }
+      }
+    }
+  ]
+}

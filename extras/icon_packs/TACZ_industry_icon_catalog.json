@@ -30,6 +30,16 @@
       "exact": 24,
       "total": 24
     },
+    "cartridge_reverse_gauge": {
+      "covered": 48,
+      "family": 48,
+      "total": 48
+    },
+    "dossier_archive": {
+      "covered": 4,
+      "family": 4,
+      "total": 4
+    },
     "fresh_cartridge_case": {
       "covered": 23,
       "exact": 1,
@@ -361,6 +371,8 @@
         "ammunition_cartridge_gauge_family_792x57",
         "ammunition_cartridge_gauge_family_9mm",
         "ammunition_cartridge_gauge_family_rpg_rocket",
+        "ammunition_case_datum_gauge_family",
+        "ammunition_projectile_datum_gauge_family",
         "tooling_acceptance_gauge",
         "tooling_critical_fit_gauge"
       ],
@@ -5311,8 +5323,13 @@
     },
     {
       "texture": "tacz_extra:item/generic_blueprint",
-      "bound_by": [],
-      "status": "available_unbound"
+      "bound_by": [
+        "dossier_archive_advanced",
+        "dossier_archive_legacy",
+        "dossier_archive_precision",
+        "dossier_archive_service"
+      ],
+      "status": "bound"
     },
     {
       "texture": "tacz_extra:item/generic_bolt",
@@ -8315,6 +8332,1174 @@
       "mapping": "complete_projectile_die_rpg_rocket_heat_81a53fde70",
       "texture": "tacz_extra:item/projectile_die_rpg_rocket_heat",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:12g",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "12g"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=12g ; industry_part_kind=case_datum_gauge",
+      "label": "12 Gauge Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:12g",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:22wmr",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "22wmr"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=22wmr ; industry_part_kind=case_datum_gauge",
+      "label": ".22 WMR Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:22wmr",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:308",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "308"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=308 ; industry_part_kind=case_datum_gauge",
+      "label": ".308 Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:308",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:30_06",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "30_06"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=30_06 ; industry_part_kind=case_datum_gauge",
+      "label": ".30-06 Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:30_06",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:338",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "338"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=338 ; industry_part_kind=case_datum_gauge",
+      "label": ".338 Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:338",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:357mag",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "357mag"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=357mag ; industry_part_kind=case_datum_gauge",
+      "label": ".357 Magnum Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:357mag",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:40mm",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "40mm"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=40mm ; industry_part_kind=case_datum_gauge",
+      "label": "40 mm Grenade-Case Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:40mm",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:45_70",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "45_70"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=45_70 ; industry_part_kind=case_datum_gauge",
+      "label": ".45-70 Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:45_70",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:45acp",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "45acp"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=45acp ; industry_part_kind=case_datum_gauge",
+      "label": ".45 ACP Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:45acp",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:46x30",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "46x30"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=46x30 ; industry_part_kind=case_datum_gauge",
+      "label": "4.6×30 Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:46x30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:500mag",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "500mag"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=500mag ; industry_part_kind=case_datum_gauge",
+      "label": ".500 Magnum Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:500mag",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:50ae",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "50ae"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=50ae ; industry_part_kind=case_datum_gauge",
+      "label": ".50 AE Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:50ae",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:50bmg",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "50bmg"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=50bmg ; industry_part_kind=case_datum_gauge",
+      "label": ".50 BMG Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:50bmg",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:545x39",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "545x39"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=545x39 ; industry_part_kind=case_datum_gauge",
+      "label": "5.45×39 Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:545x39",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:556x45",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "556x45"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=556x45 ; industry_part_kind=case_datum_gauge",
+      "label": "5.56×45 Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:556x45",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:57x28",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "57x28"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=57x28 ; industry_part_kind=case_datum_gauge",
+      "label": "5.7×28 Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:57x28",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:58x42",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "58x42"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=58x42 ; industry_part_kind=case_datum_gauge",
+      "label": "5.8×42 Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:58x42",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:68x51fury",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "68x51fury"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=68x51fury ; industry_part_kind=case_datum_gauge",
+      "label": "6.8×51 Fury Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:68x51fury",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:762x25",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "762x25"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=762x25 ; industry_part_kind=case_datum_gauge",
+      "label": "7.62×25 Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:762x25",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:762x39",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "762x39"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=762x39 ; industry_part_kind=case_datum_gauge",
+      "label": "7.62×39 Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:762x39",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:762x54",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "762x54"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=762x54 ; industry_part_kind=case_datum_gauge",
+      "label": "7.62×54R Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:762x54",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:792x57",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "792x57"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=792x57 ; industry_part_kind=case_datum_gauge",
+      "label": "7.92×57 Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:792x57",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:9mm",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "9mm"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=9mm ; industry_part_kind=case_datum_gauge",
+      "label": "9 mm Case-Dimension Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:9mm",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "case_gauge:rpg_rocket",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "case_datum_gauge",
+        "cartridge_caliber": "rpg_rocket"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=rpg_rocket ; industry_part_kind=case_datum_gauge",
+      "label": "RPG-7 Motor-Housing Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "case_gauge:rpg_rocket",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_case_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:12g:shot",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "12g",
+        "projectile_type": "shot"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=12g ; projectile_type=shot ; industry_part_kind=projectile_datum_gauge",
+      "label": "12 Gauge Shot-Payload Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:12g:shot",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:22wmr:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "22wmr",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=22wmr ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": ".22 WMR FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:22wmr:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:308:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "308",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=308 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": ".308 FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:308:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:30_06:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "30_06",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=30_06 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": ".30-06 FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:30_06:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:338:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "338",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=338 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": ".338 FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:338:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:357mag:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "357mag",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=357mag ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": ".357 Magnum FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:357mag:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:40mm:he",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "40mm",
+        "projectile_type": "he"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=40mm ; projectile_type=he ; industry_part_kind=projectile_datum_gauge",
+      "label": "40 mm HE Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:40mm:he",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:45_70:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "45_70",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=45_70 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": ".45-70 FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:45_70:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:45acp:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "45acp",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=45acp ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": ".45 ACP FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:45acp:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:46x30:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "46x30",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=46x30 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": "4.6×30 FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:46x30:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:500mag:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "500mag",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=500mag ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": ".500 Magnum FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:500mag:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:50ae:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "50ae",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=50ae ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": ".50 AE FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:50ae:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:50bmg:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "50bmg",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=50bmg ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": ".50 BMG FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:50bmg:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:545x39:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "545x39",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=545x39 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": "5.45×39 FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:545x39:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:556x45:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "556x45",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=556x45 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": "5.56×45 FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:556x45:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:57x28:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "57x28",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=57x28 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": "5.7×28 FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:57x28:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:58x42:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "58x42",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=58x42 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": "5.8×42 FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:58x42:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:68x51fury:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "68x51fury",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=68x51fury ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": "6.8×51 Fury FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:68x51fury:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:762x25:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "762x25",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=762x25 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": "7.62×25 FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:762x25:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:762x39:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "762x39",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=762x39 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": "7.62×39 FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:762x39:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:762x54:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "762x54",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=762x54 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": "7.62×54R FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:762x54:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:792x57:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "792x57",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=792x57 ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": "7.92×57 FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:792x57:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:9mm:fmj",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "9mm",
+        "projectile_type": "fmj"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=9mm ; projectile_type=fmj ; industry_part_kind=projectile_datum_gauge",
+      "label": "9 mm FMJ Projectile-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:9mm:fmj",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_reverse_gauge",
+      "identity": "projectile_gauge:rpg_rocket:heat",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "projectile_datum_gauge",
+        "cartridge_caliber": "rpg_rocket",
+        "projectile_type": "heat"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=rpg_rocket ; projectile_type=heat ; industry_part_kind=projectile_datum_gauge",
+      "label": "RPG-7 HEAT Warhead-Form Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "projectile_gauge:rpg_rocket:heat",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_projectile_datum_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "dossier_archive",
+      "identity": "dossier_archive:advanced",
+      "item": "tacz:gun_component_blank",
+      "selectors": {
+        "industry_platform": "archive",
+        "industry_part_kind": "dossier_archive_advanced"
+      },
+      "selector": "tacz:gun_component_blank ; industry_part_kind=dossier_archive_advanced ; industry_platform=archive",
+      "label": "advanced Dossier Archive",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "dossier_archive:advanced",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "dossier_archive_advanced",
+      "texture": "tacz_extra:item/generic_blueprint",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "dossier_archive",
+      "identity": "dossier_archive:legacy",
+      "item": "tacz:gun_component_blank",
+      "selectors": {
+        "industry_platform": "archive",
+        "industry_part_kind": "dossier_archive_legacy"
+      },
+      "selector": "tacz:gun_component_blank ; industry_part_kind=dossier_archive_legacy ; industry_platform=archive",
+      "label": "legacy Dossier Archive",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "dossier_archive:legacy",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "dossier_archive_legacy",
+      "texture": "tacz_extra:item/generic_blueprint",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "dossier_archive",
+      "identity": "dossier_archive:precision",
+      "item": "tacz:gun_component_blank",
+      "selectors": {
+        "industry_platform": "archive",
+        "industry_part_kind": "dossier_archive_precision"
+      },
+      "selector": "tacz:gun_component_blank ; industry_part_kind=dossier_archive_precision ; industry_platform=archive",
+      "label": "precision Dossier Archive",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "dossier_archive:precision",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "dossier_archive_precision",
+      "texture": "tacz_extra:item/generic_blueprint",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "dossier_archive",
+      "identity": "dossier_archive:service",
+      "item": "tacz:gun_component_blank",
+      "selectors": {
+        "industry_platform": "archive",
+        "industry_part_kind": "dossier_archive_service"
+      },
+      "selector": "tacz:gun_component_blank ; industry_part_kind=dossier_archive_service ; industry_platform=archive",
+      "label": "service Dossier Archive",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "dossier_archive:service",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "dossier_archive_service",
+      "texture": "tacz_extra:item/generic_blueprint",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },

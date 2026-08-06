@@ -340,6 +340,8 @@ def load_blueprint_acquisition() -> dict[str, Any]:
     if set(tiers) != set(MANUFACTURING_TIER_IDS):
         raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: tiers must be exactly {MANUFACTURING_TIER_IDS}")
     ranks: set[int] = set()
+    archive_kinds: set[str] = set()
+    archive_recipe_signatures: set[str] = set()
     for tier_id in MANUFACTURING_TIER_IDS:
         tier = tiers[tier_id]
         if not isinstance(tier, dict):
@@ -369,6 +371,31 @@ def load_blueprint_acquisition() -> dict[str, Any]:
             for key in ("emerald_base", "emerald_per_material", "max_uses", "xp"):
                 if not isinstance(trade.get(key), int) or trade[key] < 1:
                     raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {tier_id}.weaponsmith.{key} must be a positive int")
+
+        archive = tier.get("stable_archive")
+        if not isinstance(archive, dict):
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {tier_id}.stable_archive must be an object")
+        for key in ("kind", "name_en", "name_zh"):
+            require_string(archive, key, BLUEPRINT_ACQUISITION_MANIFEST)
+        if archive["kind"] in archive_kinds:
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: duplicate stable archive kind {archive['kind']}")
+        archive_kinds.add(archive["kind"])
+        archive_recipe = archive.get("recipe")
+        if not isinstance(archive_recipe, dict):
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {tier_id}.stable_archive.recipe must be an object")
+        archive_type = archive_recipe.get("type")
+        if archive_type == "create:compacting":
+            _require_item_id_list(archive_recipe.get("ingredients"), BLUEPRINT_ACQUISITION_MANIFEST,
+                                  f"{tier_id}.stable_archive.recipe.ingredients", minimum=2)
+            signature = canonical((archive_type, sorted(archive_recipe["ingredients"])))
+        elif archive_type == "create:mechanical_crafting":
+            _validate_mechanical_layout(archive_recipe, BLUEPRINT_ACQUISITION_MANIFEST, f"stable_archive.{tier_id}")
+            signature = canonical((archive_type, archive_recipe["key"], archive_recipe["pattern"]))
+        else:
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {tier_id}.stable_archive.recipe has unsupported type")
+        if signature in archive_recipe_signatures:
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: stable archive recipe collision for {tier_id}")
+        archive_recipe_signatures.add(signature)
     return data
 
 
@@ -577,7 +604,8 @@ def load_cartridges() -> list[dict[str, Any]]:
         "id", "ammo", "projectile_type", "eject_case", "balance_tier",
         "batch_count", "propellant_count", "case_blank_count", "projectile_blank_count",
         "case_name_en", "case_name_zh", "projectile_name_en", "projectile_name_zh",
-        "gauge_name_en", "gauge_name_zh",
+        "gauge_name_en", "gauge_name_zh", "case_gauge_name_en", "case_gauge_name_zh",
+        "projectile_gauge_name_en", "projectile_gauge_name_zh",
         "case_die_name_en", "case_die_name_zh", "projectile_die_name_en", "projectile_die_name_zh",
     )
     seen_ids: set[str] = set()
@@ -820,6 +848,89 @@ def master_blueprint_tag(platform: dict[str, Any]) -> dict[str, Any]:
         "IndustryActionProfile": action_profile(platform),
         "IndustryToolingScope": tooling_scope(platform),
     }
+
+
+def dossier_archive_tag(tier_id: str, acquisition: dict[str, Any]) -> dict[str, Any]:
+    archive = acquisition["tiers"][tier_id]["stable_archive"]
+    return {
+        "IndustryPlatform": "archive",
+        "IndustryPartKind": archive["kind"],
+        "IndustryDisplayName": f"item.tacz.dossier_archive.{tier_id}",
+        "IndustryBlueprintTier": tier_id,
+    }
+
+
+def dossier_commission_material(item: str, nbt: dict[str, Any], consume: bool) -> dict[str, Any]:
+    return {
+        "item": partial(item, nbt),
+        "count": 1,
+        "consume": consume,
+    }
+
+
+def generated_stable_dossier_files(platforms: list[dict[str, Any]], acquisition: dict[str, Any]) -> dict[Path, Any]:
+    """Emit deterministic archive packets plus explicit Gunsmith dossier commissions.
+
+    A commission is a real GUI-selected operation, not competing Basin/Depot
+    recipes with identical physical inputs and arbitrary platform outputs. The
+    archive packet is consumed, while the action fixture is verified and kept.
+    """
+    files: dict[Path, Any] = {}
+    for tier_id in MANUFACTURING_TIER_IDS:
+        archive = acquisition["tiers"][tier_id]["stable_archive"]
+        archive_tag = dossier_archive_tag(tier_id, acquisition)
+        archive_recipe = archive["recipe"]
+        path = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_dossier_archive_{tier_id}.json"
+        if archive_recipe["type"] == "create:compacting":
+            files[path] = {
+                "fabric:load_conditions": CREATE_CONDITIONS,
+                "type": "create:compacting",
+                "ingredients": archive_recipe["ingredients"],
+                "results": [output("tacz:gun_component_blank", archive_tag)],
+            }
+        else:
+            files[path] = {
+                "fabric:load_conditions": CREATE_CONDITIONS,
+                "type": "create:mechanical_crafting",
+                "key": archive_recipe["key"],
+                "pattern": archive_recipe["pattern"],
+                "result": output("tacz:gun_component_blank", archive_tag),
+            }
+
+    for platform in platforms:
+        tier_id = manufacturing_tier(platform)
+        files[RESOURCE_ROOT / f"data/tacz/recipe/industry/dossier_commission_{platform['slug']}.json"] = {
+            "type": "tacz:gun_smith_table_crafting",
+            # Existing default Gunsmith Table has a real misc tab. This is an
+            # explicit commission catalogue selection, so multiple platforms
+            # may legitimately share an archive/action evidence bill of goods
+            # without becoming ambiguous physical machine recipes.
+            "industry_dossier_commission": True,
+            "materials": [
+                dossier_commission_material("tacz:gun_component_blank", dossier_archive_tag(tier_id, acquisition), True),
+                dossier_commission_material("tacz:gun_blueprint", template_blank_tag(), True),
+                dossier_commission_material("tacz:press_die", action_jig_tag(action_profile(platform)), False),
+            ],
+            "result": {
+                "type": "custom",
+                "group": "tacz:misc",
+                "item": {
+                    "item": "tacz:gun_blueprint",
+                    "count": 1,
+                    "nbt": master_blueprint_tag(platform),
+                },
+            },
+        }
+    return files
+
+
+def stable_dossier_language_entries(acquisition: dict[str, Any], language: str) -> dict[str, str]:
+    chinese = language == "zh_cn"
+    entries: dict[str, str] = {}
+    for tier_id in MANUFACTURING_TIER_IDS:
+        archive = acquisition["tiers"][tier_id]["stable_archive"]
+        entries[f"item.tacz.dossier_archive.{tier_id}"] = archive["name_zh" if chinese else "name_en"]
+    return entries
 
 
 def legacy_blueprint_match_tag(platform: dict[str, Any]) -> dict[str, Any]:
@@ -1290,6 +1401,14 @@ def generated_blueprint_acquisition_files(platforms: list[dict[str, Any]], acqui
     return files
 
 
+def obsolete_dossier_commission_files(expected: dict[Path, Any]) -> set[Path]:
+    """Remove generated archive-commission table recipes that no longer have a platform source."""
+    root = RESOURCE_ROOT / "data/tacz/recipe/industry"
+    if not root.exists():
+        return set()
+    return {path for path in root.glob("dossier_commission_*.json") if path not in expected}
+
+
 def obsolete_generated_platform_files(expected: dict[Path, Any], platforms: list[dict[str, Any]]) -> set[Path]:
     """Remove renamed per-platform component recipes after action-profile migration.
 
@@ -1371,6 +1490,25 @@ def cartridge_gauge_tag(caliber: dict[str, Any]) -> dict[str, Any]:
         "IndustryPartKind": "cartridge_gauge",
         "IndustryDisplayName": f"item.tacz.press_die.gauge_{caliber['id']}",
         "CartridgeCaliber": caliber["id"],
+    }
+
+
+def case_datum_gauge_tag(caliber: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "case_datum_gauge",
+        "IndustryDisplayName": f"item.tacz.press_die.case_gauge_{caliber['id']}",
+        "CartridgeCaliber": caliber["id"],
+    }
+
+
+def projectile_datum_gauge_tag(caliber: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "projectile_datum_gauge",
+        "IndustryDisplayName": f"item.tacz.press_die.projectile_gauge_{caliber['id']}_{caliber['projectile_type']}",
+        "CartridgeCaliber": caliber["id"],
+        "ProjectileType": caliber["projectile_type"],
     }
 
 
@@ -1488,14 +1626,48 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
             "result": output("tacz:press_die", gauge_tag),
         }
 
-    # All 24 calibres now share the same visible datum → two-die branch.
+    # Reverse-engineering routes use real evidence, not arbitrary per-calibre
+    # seed items. A complete loose round describes both sides of a cartridge;
+    # an empty/fired case only proves case geometry, while a projectile core
+    # only proves projectile calibre/type. Evidence is consumed destructively.
+    case_gauge = case_datum_gauge_tag(caliber)
+    projectile_gauge = projectile_datum_gauge_tag(caliber)
+    # Reverse recipes carry the complete current stack identity so JEI/REI can
+    # follow case/projectile output into the evidence branch. Unlike ordinary
+    # forming, this is a new optional acquisition route, so it deliberately
+    # avoids overlapping "legacy" partial recipes that would duplicate the
+    # same Create deployment for current stacks.
+    gauge_blank = partial("tacz:press_die", cartridge_gauge_blank_tag())
+    files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_case_gauge_{caliber_id}.json"] = deploying(
+        gauge_blank, partial("tacz:cartridge_case", case), output("tacz:press_die", case_gauge), keep=False
+    )
+    if caliber["eject_case"]:
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_spent_case_gauge_{caliber_id}.json"] = deploying(
+            gauge_blank, partial("tacz:cartridge_case", spent_case), output("tacz:press_die", case_gauge), keep=False
+        )
+    files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_projectile_gauge_{caliber_id}.json"] = deploying(
+        gauge_blank, partial("tacz:projectile_core", projectile), output("tacz:press_die", projectile_gauge), keep=False
+    )
+    files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_cartridge_gauge_{caliber_id}.json"] = deploying(
+        gauge_blank, partial("tacz:ammo", {"AmmoId": ammo_id}), output("tacz:press_die", gauge_tag), keep=False
+    )
+
+    # All 24 calibres share a visible datum → two-die branch. A sample gun,
+    # declared no-gun datum, or a complete reverse-engineered round yields the
+    # full gauge; case/projectile evidence can recover only its matching die.
     # The final four-slot cartridge machine, batch balance, casing recovery and
     # projectile construction remain unchanged.
     files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_case_die_{caliber_id}.json"] = deploying(
         case_blank_die, calibration_tool, output("tacz:press_die", case_die)
     )
+    files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_case_die_from_case_gauge_{caliber_id}.json"] = deploying(
+        case_blank_die, partial("tacz:press_die", case_gauge), output("tacz:press_die", case_die)
+    )
     files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_projectile_die_{caliber_id}.json"] = deploying(
         projectile_blank_die, calibration_tool, output("tacz:press_die", projectile_die)
+    )
+    files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_projectile_die_from_projectile_gauge_{caliber_id}.json"] = deploying(
+        projectile_blank_die, partial("tacz:press_die", projectile_gauge), output("tacz:press_die", projectile_die)
     )
     case_blank_count = caliber["case_blank_count"]
     projectile_blank_count = caliber["projectile_blank_count"]
@@ -1667,6 +1839,8 @@ def cartridge_language_entries(caliber: dict[str, Any], language: str) -> dict[s
         f"item.tacz.cartridge_case.{caliber_id}": caliber[f"case_name_{suffix}"],
         f"item.tacz.projectile_core.{caliber_id}_{projectile_type}": caliber[f"projectile_name_{suffix}"],
         f"item.tacz.press_die.gauge_{caliber_id}": caliber[f"gauge_name_{suffix}"],
+        f"item.tacz.press_die.case_gauge_{caliber_id}": caliber[f"case_gauge_name_{suffix}"],
+        f"item.tacz.press_die.projectile_gauge_{caliber_id}_{projectile_type}": caliber[f"projectile_gauge_name_{suffix}"],
         f"item.tacz.press_die.case_{caliber_id}": caliber[f"case_die_name_{suffix}"],
         f"item.tacz.press_die.projectile_{caliber_id}_{projectile_type}": caliber[f"projectile_die_name_{suffix}"],
     }
@@ -2841,6 +3015,21 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
             {"industry_part_kind": "cartridge_gauge", "cartridge_caliber": caliber},
             cartridge["gauge_name_en"], ("exact", "family"), f"cartridge_gauge:{caliber}", "family"
         ))
+        identities.append(build_icon_identity(
+            "cartridge_reverse_gauge", f"case_gauge:{caliber}", "tacz:press_die",
+            {"industry_part_kind": "case_datum_gauge", "cartridge_caliber": caliber},
+            cartridge["case_gauge_name_en"], ("family",), f"case_gauge:{caliber}", "family"
+        ))
+        identities.append(build_icon_identity(
+            "cartridge_reverse_gauge", f"projectile_gauge:{caliber}:{projectile_type}", "tacz:press_die",
+            {
+                "industry_part_kind": "projectile_datum_gauge",
+                "cartridge_caliber": caliber,
+                "projectile_type": projectile_type,
+            },
+            cartridge["projectile_gauge_name_en"], ("family",),
+            f"projectile_gauge:{caliber}:{projectile_type}", "family"
+        ))
 
     # Shared physical blanks are real stacks and need listed visual identities
     # even though their eventual calibre/platform is intentionally not known yet.
@@ -2870,6 +3059,13 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
             "shared_gun_intermediate", f"machining:{kind}", "tacz:gun_component_blank",
             {"industry_platform": "machining", "industry_part_kind": kind}, label,
             ("exact",), f"machining:{kind}"
+        ))
+
+    for tier_id in MANUFACTURING_TIER_IDS:
+        identities.append(build_icon_identity(
+            "dossier_archive", f"dossier_archive:{tier_id}", "tacz:gun_component_blank",
+            {"industry_platform": "archive", "industry_part_kind": f"dossier_archive_{tier_id}"},
+            f"{tier_id} Dossier Archive", ("family",), f"dossier_archive:{tier_id}", "family"
         ))
 
     # A template blank is a real one-slot workpiece. Its visual family is
@@ -3567,6 +3763,7 @@ def validate_cartridge_tooling_continuity(cartridges: list[dict[str, Any]], expe
             if not isinstance(gauge_recipe, dict) or _recipe_result_custom_data(gauge_recipe) != gauge_tag:
                 raise ValueError(f"{caliber_id}: declared no-gun datum must create its reusable gauge")
 
+        calibration_outputs: dict[str, dict[str, Any]] = {}
         for die_kind, form_name in (("case", "form_case"), ("projectile", "form_projectile")):
             calibration = expected.get(
                 RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_{die_kind}_die_{caliber_id}.json"
@@ -3580,6 +3777,87 @@ def validate_cartridge_tooling_continuity(cartridges: list[dict[str, Any]], expe
                     for tag in _recipe_partial_nbt_values(form)
             ):
                 raise ValueError(f"{caliber_id}: viewer-disconnected datum die → {form_name} edge")
+            calibration_outputs[die_kind] = die_output
+
+        case_gauge = case_datum_gauge_tag(caliber)
+        projectile_gauge = projectile_datum_gauge_tag(caliber)
+        case_form = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_case_{caliber_id}.json")
+        projectile_form = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json")
+        case_output = _recipe_result_custom_data(case_form) if isinstance(case_form, dict) else None
+        projectile_output = _recipe_result_custom_data(projectile_form) if isinstance(projectile_form, dict) else None
+        case_reverse = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_case_gauge_{caliber_id}.json")
+        projectile_reverse = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_projectile_gauge_{caliber_id}.json")
+        ammo_reverse = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_cartridge_gauge_{caliber_id}.json")
+        case_alternative = expected.get(
+            RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_case_die_from_case_gauge_{caliber_id}.json"
+        )
+        projectile_alternative = expected.get(
+            RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_projectile_die_from_projectile_gauge_{caliber_id}.json"
+        )
+        if not all(isinstance(recipe, dict) for recipe in (
+                case_reverse, projectile_reverse, ammo_reverse, case_alternative, projectile_alternative
+        )):
+            raise ValueError(f"{caliber_id}: missing reverse-engineering gauge branch")
+        if _recipe_result_custom_data(case_reverse) != case_gauge \
+                or _recipe_result_custom_data(projectile_reverse) != projectile_gauge \
+                or _recipe_result_custom_data(ammo_reverse) != gauge_tag:
+            raise ValueError(f"{caliber_id}: reverse evidence does not produce the declared gauges")
+        if case_alternative.get("ingredient", {}).get("nbt") != case_gauge \
+                or _recipe_result_custom_data(case_alternative) != calibration_outputs["case"]:
+            raise ValueError(f"{caliber_id}: case evidence gauge cannot recover the canonical case die")
+        if projectile_alternative.get("ingredient", {}).get("nbt") != projectile_gauge \
+                or _recipe_result_custom_data(projectile_alternative) != calibration_outputs["projectile"]:
+            raise ValueError(f"{caliber_id}: projectile evidence gauge cannot recover the canonical projectile die")
+        if not isinstance(case_output, dict) or not isinstance(projectile_output, dict):
+            raise ValueError(f"{caliber_id}: reverse evidence lacks physical case/projectile source")
+        if not any(_viewer_identity(case_output) == _viewer_identity(tag) for tag in _recipe_partial_nbt_values(case_reverse)):
+            raise ValueError(f"{caliber_id}: case reverse branch is viewer-disconnected")
+        if not any(_viewer_identity(projectile_output) == _viewer_identity(tag) for tag in _recipe_partial_nbt_values(projectile_reverse)):
+            raise ValueError(f"{caliber_id}: projectile reverse branch is viewer-disconnected")
+        if ammo_reverse.get("ingredient", {}).get("nbt") != {"AmmoId": caliber["ammo"]}:
+            raise ValueError(f"{caliber_id}: complete-round reverse route must consume its exact loose ammo sample")
+        if caliber["eject_case"]:
+            spent_reverse = expected.get(
+                RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_spent_case_gauge_{caliber_id}.json"
+            )
+            if not isinstance(spent_reverse, dict) or _recipe_result_custom_data(spent_reverse) != case_gauge:
+                raise ValueError(f"{caliber_id}: spent-case reverse route is missing")
+
+
+def validate_stable_dossier_commissions(platforms: list[dict[str, Any]], acquisition: dict[str, Any],
+                                        expected: dict[Path, Any]) -> None:
+    """Validate deterministic archive commissions without treating a GUI choice as a machine collision."""
+    for tier_id in MANUFACTURING_TIER_IDS:
+        archive_path = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_dossier_archive_{tier_id}.json"
+        archive_recipe = expected.get(archive_path)
+        if not isinstance(archive_recipe, dict) \
+                or _recipe_result_custom_data(archive_recipe) != dossier_archive_tag(tier_id, acquisition):
+            raise ValueError(f"{tier_id}: missing stable dossier archive route")
+
+    for platform in platforms:
+        path = RESOURCE_ROOT / f"data/tacz/recipe/industry/dossier_commission_{platform['slug']}.json"
+        recipe = expected.get(path)
+        if not isinstance(recipe, dict) or recipe.get("type") != "tacz:gun_smith_table_crafting":
+            raise ValueError(f"{platform['slug']}: missing dossier commission")
+        result = recipe.get("result", {})
+        item = result.get("item", {}) if isinstance(result, dict) else {}
+        if not isinstance(result, dict) or result.get("type") != "custom" \
+                or result.get("group") != "tacz:misc" \
+                or not isinstance(item, dict) or item.get("item") != "tacz:gun_blueprint" \
+                or item.get("nbt") != master_blueprint_tag(platform):
+            raise ValueError(f"{platform['slug']}: dossier commission result is not the exact master dossier")
+        materials = recipe.get("materials")
+        if not isinstance(materials, list) or len(materials) != 3:
+            raise ValueError(f"{platform['slug']}: dossier commission needs archive, blank sheet and action fixture")
+        expected_materials = (
+            (dossier_archive_tag(manufacturing_tier(platform), acquisition), True),
+            (template_blank_tag(), True),
+            (action_jig_tag(action_profile(platform)), False),
+        )
+        for material, (tag, consumes) in zip(materials, expected_materials):
+            if not isinstance(material, dict) or material.get("consume") is not consumes \
+                    or material.get("item", {}).get("nbt") != tag:
+                raise ValueError(f"{platform['slug']}: dossier commission has invalid evidence material")
 
 
 def existing_json_matches(path: Path, expected: Any) -> bool:
@@ -3626,6 +3904,9 @@ def run(write: bool) -> int:
         "tooltip.tacz.industry.tooling_scope.platform_tooling": "Platform dies during tooling setup",
         "tooltip.tacz.industry.tooling_scope.final_acceptance": "Platform final-acceptance gauge",
         "tooltip.tacz.industry.cartridge_gauge_blank": "Neutral datum-gauge blank — calibrate it with a sample firearm or declared datum",
+        "tooltip.tacz.industry.case_datum_gauge": "Reverse-engineered case datum — calibrates only the matching case die",
+        "tooltip.tacz.industry.projectile_datum_gauge": "Reverse-engineered projectile datum — calibrates only the matching projectile die",
+        "tooltip.tacz.industry.dossier_archive": "Tier archive packet — consumed by a Gunsmith dossier commission",
         "tooltip.tacz.blueprint.tier.legacy": "Legacy Field Pattern — low tooling complexity",
         "tooltip.tacz.blueprint.tier.service": "Service Schematic — standardized production",
         "tooltip.tacz.blueprint.tier.advanced": "Modern Technical Package — advanced tooling required",
@@ -3656,6 +3937,9 @@ def run(write: bool) -> int:
         "tooltip.tacz.industry.tooling_scope.platform_tooling": "建线时校准平台模具",
         "tooltip.tacz.industry.tooling_scope.final_acceptance": "平台最终验收检具",
         "tooltip.tacz.industry.cartridge_gauge_blank": "中性基准量规毛坯——用样枪或已声明基准校准",
+        "tooltip.tacz.industry.case_datum_gauge": "逆向弹壳基准——只能校准对应弹壳模具",
+        "tooltip.tacz.industry.projectile_datum_gauge": "逆向弹头基准——只能校准对应弹头模具",
+        "tooltip.tacz.industry.dossier_archive": "层级档案包——在枪械工作台档案委托中消耗",
         "tooltip.tacz.blueprint.tier.legacy": "野战图样 — 低工具复杂度",
         "tooltip.tacz.blueprint.tier.service": "制式图纸 — 标准化生产",
         "tooltip.tacz.blueprint.tier.advanced": "现代技术包 — 需要高级工装",
@@ -3670,7 +3954,10 @@ def run(write: bool) -> int:
     expected.update(generated_furniture_blank_files(platforms))
     expected.update(generated_template_blank_file(policy))
     expected.update(generated_action_jig_files(platforms, policy))
+    expected.update(generated_stable_dossier_files(platforms, blueprint_acquisition))
     english.update(action_tooling_language_entries(platforms, policy, "en_us"))
+    english.update(stable_dossier_language_entries(blueprint_acquisition, "en_us"))
+    chinese.update(stable_dossier_language_entries(blueprint_acquisition, "zh_cn"))
     chinese.update(action_tooling_language_entries(platforms, policy, "zh_cn"))
     for platform in platforms:
         expected.update(generated_platform_files(platform))
@@ -3696,10 +3983,12 @@ def run(write: bool) -> int:
     obsolete_platform_paths = obsolete_generated_platform_files(expected, platforms)
     obsolete_template_paths = obsolete_template_compatibility_files(expected)
     obsolete_acquisition_paths = obsolete_blueprint_acquisition_files(expected)
+    obsolete_dossier_paths = obsolete_dossier_commission_files(expected)
     validate_effective_create_recipe_collisions(expected, obsolete_platform_paths | obsolete_template_paths)
     validate_platform_tooling_semantics(platforms, expected)
     validate_viewer_continuity(platforms, expected)
     validate_cartridge_tooling_continuity(cartridges, expected)
+    validate_stable_dossier_commissions(platforms, blueprint_acquisition, expected)
 
     stale: list[str] = []
     for path, value in sorted(expected.items(), key=lambda pair: str(pair[0])):
@@ -3741,6 +4030,13 @@ def run(write: bool) -> int:
     # calibration recipe per die. One explicit restore route is clearer and
     # preserves every old template without duplicate JEI/REI entries.
     for path in sorted(obsolete_template_paths):
+        stale.append(str(path.relative_to(REPO)))
+        if write:
+            path.unlink()
+
+    # Generated dossier commissions live in the ordinary Gunsmith recipe tree.
+    # Remove only our named commission files when their platform source changes.
+    for path in sorted(obsolete_dossier_paths):
         stale.append(str(path.relative_to(REPO)))
         if write:
             path.unlink()

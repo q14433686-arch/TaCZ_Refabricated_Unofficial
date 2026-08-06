@@ -19,6 +19,20 @@
           "minecraft:chests/abandoned_mineshaft",
           "minecraft:chests/pillager_outpost"
         ]
+      },
+      "stable_archive": {
+        "kind": "dossier_archive_legacy",
+        "name_en": "Field Archive Packet",
+        "name_zh": "野战档案包",
+        "recipe": {
+          "type": "create:compacting",
+          "ingredients": [
+            "minecraft:paper",
+            "minecraft:paper",
+            "minecraft:charcoal",
+            "minecraft:iron_ingot"
+          ]
+        }
       }
     },
     "service": {
@@ -41,6 +55,25 @@
           "minecraft:chests/pillager_outpost",
           "minecraft:chests/woodland_mansion"
         ]
+      },
+      "stable_archive": {
+        "kind": "dossier_archive_service",
+        "name_en": "Service Archive Packet",
+        "name_zh": "制式档案包",
+        "recipe": {
+          "type": "create:mechanical_crafting",
+          "key": {
+            "P": "minecraft:paper",
+            "B": "create:brass_sheet",
+            "S": "tacz:high_carbon_steel_plate",
+            "I": "minecraft:iron_ingot"
+          },
+          "pattern": [
+            "PSP",
+            " B ",
+            " I "
+          ]
+        }
       }
     },
     "advanced": {
@@ -55,6 +88,26 @@
           "minecraft:chests/trial_chambers/reward_rare",
           "minecraft:chests/ancient_city"
         ]
+      },
+      "stable_archive": {
+        "kind": "dossier_archive_advanced",
+        "name_en": "Modern Technical Archive",
+        "name_zh": "现代技术档案包",
+        "recipe": {
+          "type": "create:mechanical_crafting",
+          "key": {
+            "P": "minecraft:paper",
+            "B": "create:brass_sheet",
+            "S": "tacz:high_carbon_steel_plate",
+            "R": "minecraft:redstone",
+            "A": "minecraft:amethyst_shard"
+          },
+          "pattern": [
+            "PBP",
+            "SRS",
+            " A "
+          ]
+        }
       }
     },
     "precision": {
@@ -68,6 +121,26 @@
           "minecraft:chests/ancient_city",
           "minecraft:chests/woodland_mansion"
         ]
+      },
+      "stable_archive": {
+        "kind": "dossier_archive_precision",
+        "name_en": "Restricted Precision Archive",
+        "name_zh": "受限精密档案包",
+        "recipe": {
+          "type": "create:mechanical_crafting",
+          "key": {
+            "P": "minecraft:paper",
+            "B": "create:brass_sheet",
+            "S": "tacz:high_carbon_steel_plate",
+            "D": "minecraft:diamond",
+            "E": "minecraft:echo_shard"
+          },
+          "pattern": [
+            "PDP",
+            "SBS",
+            " E "
+          ]
+        }
       }
     }
   }

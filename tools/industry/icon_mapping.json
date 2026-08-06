@@ -1192,6 +1192,70 @@
         "cartridge_caliber": "rpg_rocket"
       },
       "coverage": "family"
+    },
+    {
+      "id": "ammunition_case_datum_gauge_family",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 160,
+      "match": {
+        "industry_part_kind": "case_datum_gauge"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_projectile_datum_gauge_family",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 160,
+      "match": {
+        "industry_part_kind": "projectile_datum_gauge"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "dossier_archive_legacy",
+      "item": "tacz:gun_component_blank",
+      "texture": "tacz_extra:item/generic_blueprint",
+      "priority": 500,
+      "match": {
+        "industry_platform": "archive",
+        "industry_part_kind": "dossier_archive_legacy"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "dossier_archive_service",
+      "item": "tacz:gun_component_blank",
+      "texture": "tacz_extra:item/generic_blueprint",
+      "priority": 500,
+      "match": {
+        "industry_platform": "archive",
+        "industry_part_kind": "dossier_archive_service"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "dossier_archive_advanced",
+      "item": "tacz:gun_component_blank",
+      "texture": "tacz_extra:item/generic_blueprint",
+      "priority": 500,
+      "match": {
+        "industry_platform": "archive",
+        "industry_part_kind": "dossier_archive_advanced"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "dossier_archive_precision",
+      "item": "tacz:gun_component_blank",
+      "texture": "tacz_extra:item/generic_blueprint",
+      "priority": 500,
+      "match": {
+        "industry_platform": "archive",
+        "industry_part_kind": "dossier_archive_precision"
+      },
+      "coverage": "family"
     }
   ]
 }

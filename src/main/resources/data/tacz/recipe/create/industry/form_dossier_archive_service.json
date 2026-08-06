@@ -1,0 +1,33 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:mechanical_crafting",
+  "key": {
+    "P": "minecraft:paper",
+    "B": "create:brass_sheet",
+    "S": "tacz:high_carbon_steel_plate",
+    "I": "minecraft:iron_ingot"
+  },
+  "pattern": [
+    "PSP",
+    " B ",
+    " I "
+  ],
+  "result": {
+    "id": "tacz:gun_component_blank",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "archive",
+        "IndustryPartKind": "dossier_archive_service",
+        "IndustryDisplayName": "item.tacz.dossier_archive.service",
+        "IndustryBlueprintTier": "service"
+      }
+    }
+  }
+}

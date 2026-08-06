@@ -23,6 +23,7 @@ import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.crafting.GunSmithTableIngredient;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
+import com.tacz.guns.industry.item.IndustryItemDataAccessor;
 import com.tacz.guns.init.ModRecipe;
 import com.tacz.guns.inventory.GunSmithTableMenu;
 import com.tacz.guns.network.message.ClientMessageCraft;
@@ -217,6 +218,14 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
     private boolean isSuitableForMainHand(GunSmithTableRecipe recipe) {
         if (filterList != null && filterList.isByHandSelected()) {
             ItemStack result = recipe.getResult().getResult();
+            // Archive commissions are deliberate research/catalogue choices,
+            // not a gun attachment or a compatible loaded round. Keep master
+            // dossiers visible when the normal Gunsmith screen auto-filters by
+            // the gun currently held by the player.
+            if (result.getItem() instanceof IndustryItemDataAccessor industry
+                    && "blueprint".equals(industry.getPartKind(result))) {
+                return true;
+            }
 
             Minecraft minecraft = Minecraft.getInstance();
             ItemStack stack = minecraft.player != null ? minecraft.player.getMainHandItem() : ItemStack.EMPTY;

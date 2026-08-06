@@ -21,6 +21,8 @@
 | cartridge_case_die | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
 | cartridge_gauge | 24 | 24 | 0 | 5 | 19 | 0 | 0 | 0 |
 | cartridge_projectile_die | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
+| cartridge_reverse_gauge | 48 | 48 | 0 | 0 | 48 | 0 | 0 | 0 |
+| dossier_archive | 4 | 4 | 0 | 0 | 4 | 0 | 0 | 0 |
 | fresh_cartridge_case | 23 | 23 | 0 | 1 | 22 | 0 | 0 | 0 |
 | loose_ammo | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
 | physical_magazine | 22 | 22 | 0 | 22 | 0 | 0 | 0 | 0 |
@@ -88,7 +90,6 @@
 | `tacz_extra:item/carbon_dust` |
 | `tacz_extra:item/cinnabar_dust` |
 | `tacz_extra:item/generic_barrel` |
-| `tacz_extra:item/generic_blueprint` |
 | `tacz_extra:item/generic_bolt` |
 | `tacz_extra:item/generic_component_die` |
 | `tacz_extra:item/generic_frame` |
