@@ -1,5 +1,6 @@
 {
   "platform": "default_m16a1",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_m16a1",
   "terminal_process": "tacz:create/industry/assemble_m16a1",
   "components": [

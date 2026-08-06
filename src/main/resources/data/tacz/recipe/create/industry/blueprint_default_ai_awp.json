@@ -7,23 +7,29 @@
       ]
     }
   ],
-  "type": "create:compacting",
-  "ingredients": [
-    "minecraft:paper",
-    "minecraft:paper",
-    "create:brass_sheet",
-    "minecraft:carrot"
+  "type": "create:mechanical_crafting",
+  "key": {
+    "P": "minecraft:paper",
+    "B": "create:brass_sheet",
+    "S": "tacz:high_carbon_steel_plate",
+    "D": "minecraft:diamond",
+    "E": "minecraft:echo_shard",
+    "K": "minecraft:carrot"
+  },
+  "pattern": [
+    "PDP",
+    "SKS",
+    "BEB"
   ],
-  "results": [
-    {
-      "id": "tacz:gun_blueprint",
-      "components": {
-        "minecraft:custom_data": {
-          "IndustryPlatform": "default_ai_awp",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_ai_awp"
-        }
+  "result": {
+    "id": "tacz:gun_blueprint",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_ai_awp",
+        "IndustryPartKind": "blueprint",
+        "IndustryDisplayName": "item.tacz.gun_blueprint.default_ai_awp",
+        "IndustryBlueprintTier": "precision"
       }
     }
-  ]
+  }
 }

@@ -1,5 +1,6 @@
 {
   "platform": "default_taurus500",
+  "manufacturing_tier": "legacy",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_taurus500",
   "terminal_process": "tacz:create/industry/assemble_taurus500",
   "components": [

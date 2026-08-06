@@ -1,5 +1,6 @@
 {
   "platform": "default_db_long",
+  "manufacturing_tier": "legacy",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_db_long",
   "terminal_process": "tacz:create/industry/assemble_db_long",
   "components": [

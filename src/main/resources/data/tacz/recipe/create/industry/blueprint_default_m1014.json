@@ -7,23 +7,28 @@
       ]
     }
   ],
-  "type": "create:compacting",
-  "ingredients": [
-    "minecraft:paper",
-    "minecraft:paper",
-    "create:brass_sheet",
-    "minecraft:prismarine_shard"
+  "type": "create:mechanical_crafting",
+  "key": {
+    "P": "minecraft:paper",
+    "B": "create:brass_sheet",
+    "S": "tacz:high_carbon_steel_plate",
+    "R": "minecraft:redstone",
+    "K": "minecraft:prismarine_shard"
+  },
+  "pattern": [
+    "PBP",
+    "SKS",
+    " R "
   ],
-  "results": [
-    {
-      "id": "tacz:gun_blueprint",
-      "components": {
-        "minecraft:custom_data": {
-          "IndustryPlatform": "default_m1014",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_m1014"
-        }
+  "result": {
+    "id": "tacz:gun_blueprint",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_m1014",
+        "IndustryPartKind": "blueprint",
+        "IndustryDisplayName": "item.tacz.gun_blueprint.default_m1014",
+        "IndustryBlueprintTier": "advanced"
       }
     }
-  ]
+  }
 }

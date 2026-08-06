@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "ak",
-        "IndustryAssemblyRecipe": "tacz:gun/ak47"
+        "IndustryAssemblyRecipe": "tacz:gun/ak47",
+        "IndustryAssemblyTier": "service"
       }
     }
   },

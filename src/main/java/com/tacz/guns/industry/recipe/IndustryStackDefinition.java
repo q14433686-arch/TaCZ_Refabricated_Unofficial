@@ -89,6 +89,7 @@ public final class IndustryStackDefinition {
                     .cartridgeAmmoId(string(custom, "CartridgeAmmoId"))
                     .projectileType(string(custom, "ProjectileType"))
                     .dieTargetKind(string(custom, "DieTargetKind"))
+                    .blueprintTier(string(custom, "IndustryBlueprintTier"))
                     .build();
         } else if (item == ModItems.AMMO) {
             stack = AmmoItemBuilder.create()

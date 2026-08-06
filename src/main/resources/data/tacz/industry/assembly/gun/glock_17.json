@@ -1,5 +1,6 @@
 {
   "platform": "glock",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.glock",
   "terminal_process": "tacz:create/industry/assemble_glock_17",
   "components": [

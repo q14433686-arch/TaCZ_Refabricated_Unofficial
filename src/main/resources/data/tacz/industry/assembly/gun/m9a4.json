@@ -1,5 +1,6 @@
 {
   "platform": "m9",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.m9",
   "terminal_process": "tacz:create/industry/assemble_m9a4",
   "components": [

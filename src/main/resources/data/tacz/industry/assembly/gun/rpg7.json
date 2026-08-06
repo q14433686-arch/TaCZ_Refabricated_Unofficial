@@ -1,5 +1,6 @@
 {
   "platform": "default_rpg7",
+  "manufacturing_tier": "precision",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_rpg7",
   "terminal_process": "tacz:create/industry/assemble_rpg7",
   "components": [

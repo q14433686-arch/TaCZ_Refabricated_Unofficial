@@ -1,5 +1,6 @@
 {
   "platform": "ak",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.ak",
   "terminal_process": "tacz:create/industry/assemble_ak47",
   "components": [

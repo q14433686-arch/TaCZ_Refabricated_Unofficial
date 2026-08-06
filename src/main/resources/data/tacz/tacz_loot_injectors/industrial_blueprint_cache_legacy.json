@@ -1,0 +1,101 @@
+{
+  "loot_tables": [
+    "minecraft:chests/village/village_weaponsmith",
+    "minecraft:chests/village/village_toolsmith",
+    "minecraft:chests/abandoned_mineshaft",
+    "minecraft:chests/pillager_outpost"
+  ],
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.48
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_db_long\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_db_long\",IndustryBlueprintTier:\"legacy\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_db_short\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_db_short\",IndustryBlueprintTier:\"legacy\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_kar98\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_kar98\",IndustryBlueprintTier:\"legacy\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_m870\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m870\",IndustryBlueprintTier:\"legacy\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_rhino357\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_rhino357\",IndustryBlueprintTier:\"legacy\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_springfield1873\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_springfield1873\",IndustryBlueprintTier:\"legacy\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_taurus500\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_taurus500\",IndustryBlueprintTier:\"legacy\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"m1911\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.m1911\",IndustryBlueprintTier:\"legacy\"}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

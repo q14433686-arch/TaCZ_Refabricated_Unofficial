@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_m700",
-        "IndustryAssemblyRecipe": "tacz:gun/m700"
+        "IndustryAssemblyRecipe": "tacz:gun/m700",
+        "IndustryAssemblyTier": "service"
       }
     }
   },

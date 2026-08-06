@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_db_long",
-        "IndustryAssemblyRecipe": "tacz:gun/db_long"
+        "IndustryAssemblyRecipe": "tacz:gun/db_long",
+        "IndustryAssemblyTier": "legacy"
       }
     }
   },

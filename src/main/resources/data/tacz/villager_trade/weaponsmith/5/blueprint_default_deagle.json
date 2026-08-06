@@ -12,11 +12,12 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_deagle",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_deagle"
+        "IndustryDisplayName": "item.tacz.gun_blueprint.default_deagle",
+        "IndustryBlueprintTier": "service"
       }
     }
   },
   "max_uses": 1.0,
   "reputation_discount": 0.05,
-  "xp": 30.0
+  "xp": 20.0
 }

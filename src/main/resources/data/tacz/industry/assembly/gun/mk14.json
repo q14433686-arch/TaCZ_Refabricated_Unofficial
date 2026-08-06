@@ -1,5 +1,6 @@
 {
   "platform": "default_mk14",
+  "manufacturing_tier": "precision",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_mk14",
   "terminal_process": "tacz:create/industry/assemble_mk14",
   "components": [

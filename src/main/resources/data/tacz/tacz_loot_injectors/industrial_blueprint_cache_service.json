@@ -1,0 +1,222 @@
+{
+  "loot_tables": [
+    "minecraft:chests/village/village_weaponsmith",
+    "minecraft:chests/abandoned_mineshaft",
+    "minecraft:chests/stronghold_corridor",
+    "minecraft:chests/pillager_outpost",
+    "minecraft:chests/woodland_mansion"
+  ],
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.26
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"ak\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ak\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_b93r\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_b93r\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_cz75\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_cz75\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_deagle\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_deagle\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_deagle_golden\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_deagle_golden\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_hk_g3\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_hk_g3\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_lonetrail\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_lonetrail\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_m16a1\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m16a1\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_m16a4\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m16a4\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_m700\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m700\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_p320\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_p320\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_sks_tactical\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_sks_tactical\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_timeless50\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_timeless50\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_type_81\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_type_81\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_uzi\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_uzi\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"fal\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.fal\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"glock\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.glock\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"m9\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.m9\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"mp5\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.mp5\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"ump\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ump\",IndustryBlueprintTier:\"service\"}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

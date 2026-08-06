@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "fal",
-        "IndustryAssemblyRecipe": "tacz:gun/fn_fal"
+        "IndustryAssemblyRecipe": "tacz:gun/fn_fal",
+        "IndustryAssemblyTier": "service"
       }
     }
   },

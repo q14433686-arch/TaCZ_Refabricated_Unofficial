@@ -1,5 +1,6 @@
 {
   "platform": "default_p320",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_p320",
   "terminal_process": "tacz:create/industry/assemble_p320",
   "components": [

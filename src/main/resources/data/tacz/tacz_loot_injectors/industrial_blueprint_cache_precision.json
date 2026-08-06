@@ -1,0 +1,100 @@
+{
+  "loot_tables": [
+    "minecraft:chests/trial_chambers/reward_rare",
+    "minecraft:chests/ancient_city",
+    "minecraft:chests/woodland_mansion"
+  ],
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.08
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_ai_awp\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_ai_awp\",IndustryBlueprintTier:\"precision\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_fn_evolys\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_fn_evolys\",IndustryBlueprintTier:\"precision\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_m107\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m107\",IndustryBlueprintTier:\"precision\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_m249\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m249\",IndustryBlueprintTier:\"precision\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_m95\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m95\",IndustryBlueprintTier:\"precision\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_minigun\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_minigun\",IndustryBlueprintTier:\"precision\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_mk14\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_mk14\",IndustryBlueprintTier:\"precision\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"default_rpg7\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_rpg7\",IndustryBlueprintTier:\"precision\"}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

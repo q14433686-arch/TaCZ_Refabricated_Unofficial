@@ -1,5 +1,6 @@
 {
   "platform": "default_m1014",
+  "manufacturing_tier": "advanced",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_m1014",
   "terminal_process": "tacz:create/industry/assemble_m1014",
   "components": [

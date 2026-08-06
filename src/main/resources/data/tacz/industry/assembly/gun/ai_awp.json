@@ -1,5 +1,6 @@
 {
   "platform": "default_ai_awp",
+  "manufacturing_tier": "precision",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_ai_awp",
   "terminal_process": "tacz:create/industry/assemble_ai_awp",
   "components": [

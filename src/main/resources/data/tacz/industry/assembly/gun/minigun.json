@@ -1,5 +1,6 @@
 {
   "platform": "default_minigun",
+  "manufacturing_tier": "precision",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_minigun",
   "terminal_process": "tacz:create/industry/assemble_minigun",
   "components": [

@@ -7,23 +7,26 @@
       ]
     }
   ],
-  "type": "create:compacting",
-  "ingredients": [
-    "minecraft:paper",
-    "minecraft:paper",
-    "create:brass_sheet",
-    "minecraft:ghast_tear"
+  "type": "create:mechanical_crafting",
+  "key": {
+    "P": "minecraft:paper",
+    "B": "create:brass_sheet",
+    "S": "tacz:high_carbon_steel_plate",
+    "K": "minecraft:ghast_tear"
+  },
+  "pattern": [
+    "PBP",
+    "SK "
   ],
-  "results": [
-    {
-      "id": "tacz:gun_blueprint",
-      "components": {
-        "minecraft:custom_data": {
-          "IndustryPlatform": "default_lonetrail",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_lonetrail"
-        }
+  "result": {
+    "id": "tacz:gun_blueprint",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_lonetrail",
+        "IndustryPartKind": "blueprint",
+        "IndustryDisplayName": "item.tacz.gun_blueprint.default_lonetrail",
+        "IndustryBlueprintTier": "service"
       }
     }
-  ]
+  }
 }

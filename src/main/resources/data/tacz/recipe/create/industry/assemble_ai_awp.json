@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_ai_awp",
-        "IndustryAssemblyRecipe": "tacz:gun/ai_awp"
+        "IndustryAssemblyRecipe": "tacz:gun/ai_awp",
+        "IndustryAssemblyTier": "precision"
       }
     }
   },

@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "ar",
-        "IndustryAssemblyRecipe": "tacz:gun/m4a1"
+        "IndustryAssemblyRecipe": "tacz:gun/m4a1",
+        "IndustryAssemblyTier": "advanced"
       }
     }
   },

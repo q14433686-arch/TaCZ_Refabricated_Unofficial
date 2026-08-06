@@ -1,5 +1,6 @@
 {
   "platform": "default_b93r",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_b93r",
   "terminal_process": "tacz:create/industry/assemble_b93r",
   "components": [

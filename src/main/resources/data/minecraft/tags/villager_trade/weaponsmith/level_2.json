@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "tacz:weaponsmith/2/blueprint_default_db_long",
+    "tacz:weaponsmith/2/blueprint_default_db_short",
+    "tacz:weaponsmith/2/blueprint_default_kar98",
+    "tacz:weaponsmith/2/blueprint_default_m870",
+    "tacz:weaponsmith/2/blueprint_default_rhino357",
+    "tacz:weaponsmith/2/blueprint_default_springfield1873",
+    "tacz:weaponsmith/2/blueprint_default_taurus500",
+    "tacz:weaponsmith/2/blueprint_m1911"
+  ]
+}

@@ -1,5 +1,6 @@
 {
   "platform": "default_spr15hb",
+  "manufacturing_tier": "advanced",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_spr15hb",
   "terminal_process": "tacz:create/industry/assemble_spr15hb",
   "components": [

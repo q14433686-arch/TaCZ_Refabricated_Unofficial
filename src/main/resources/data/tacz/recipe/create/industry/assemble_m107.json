@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_m107",
-        "IndustryAssemblyRecipe": "tacz:gun/m107"
+        "IndustryAssemblyRecipe": "tacz:gun/m107",
+        "IndustryAssemblyTier": "precision"
       }
     }
   },

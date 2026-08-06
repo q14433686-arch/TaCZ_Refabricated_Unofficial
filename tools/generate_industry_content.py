@@ -52,6 +52,8 @@ MAX_ITEM_STACK_SIZE = 99
 # (minimum neutral case/projectile blank mass, minimum industrial propellant)
 # Curated from the bundled cartridge's ballistic role; the legacy material
 # recipe is checked separately as a per-round regression floor.
+MANUFACTURING_TIER_IDS = ("legacy", "service", "advanced", "precision")
+
 BALANCE_TIER_MINIMUMS = {
     "rimfire": (1, 1),
     "pistol": (1, 2),
@@ -164,6 +166,9 @@ def load_platforms() -> list[dict[str, Any]]:
             seen[key].add(value)
         if require_string(data, "fire_mode", path) not in {"AUTO", "SEMI", "BURST"}:
             raise ValueError(f"{path}: unsupported fire_mode")
+        tier = require_string(data, "manufacturing_tier", path)
+        if tier not in MANUFACTURING_TIER_IDS:
+            raise ValueError(f"{path}: unsupported manufacturing_tier '{tier}'")
 
         blueprint = data.get("blueprint")
         if not isinstance(blueprint, dict):
@@ -212,28 +217,49 @@ def load_platforms() -> list[dict[str, Any]]:
 
 
 def load_blueprint_acquisition() -> dict[str, Any]:
-    """Validate independent blueprint discovery sources.
+    """Validate tiered blueprint access rather than one flat master-trade pool.
 
-    Trade files use the new 26.2 ``villager_trade`` registry and are attached
-    to the vanilla weaponsmith level-5 trade tag. Chest distribution uses the
-    existing TACZ loot-injection layer, keeping default gun-pack art untouched.
+    Legacy patterns are reproducible field documentation; service schematics are
+    licensed weaponsmith stock; advanced and precision dossiers are expedition
+    finds. Every tier still has a deterministic industrial blueprint recipe so
+    random loot enriches progression but never makes a platform unobtainable.
     """
     data = read_json(BLUEPRINT_ACQUISITION_MANIFEST)
-    if not isinstance(data, dict):
-        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: expected object")
-    trade = data.get("weaponsmith")
-    cache = data.get("world_cache")
-    if not isinstance(trade, dict) or not isinstance(cache, dict):
-        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: missing weaponsmith/world_cache object")
-    for key in ("emerald_base", "emerald_per_material", "max_uses", "xp"):
-        if not isinstance(trade.get(key), int) or trade[key] < 1:
-            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: weaponsmith.{key} must be a positive int")
-    chance = cache.get("chance")
-    tables = cache.get("loot_tables")
-    if not isinstance(chance, (int, float)) or not 0 < float(chance) <= 1:
-        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: world_cache.chance must be in (0, 1]")
-    if not isinstance(tables, list) or not tables or not all(isinstance(value, str) and value for value in tables):
-        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: world_cache.loot_tables must be non-empty ids")
+    if not isinstance(data, dict) or not isinstance(data.get("tiers"), dict):
+        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: expected tiers object")
+    tiers = data["tiers"]
+    if set(tiers) != set(MANUFACTURING_TIER_IDS):
+        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: tiers must be exactly {MANUFACTURING_TIER_IDS}")
+    ranks: set[int] = set()
+    for tier_id in MANUFACTURING_TIER_IDS:
+        tier = tiers[tier_id]
+        if not isinstance(tier, dict):
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {tier_id} must be an object")
+        rank = tier.get("rank")
+        if not isinstance(rank, int) or rank < 1 or rank in ranks:
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {tier_id}.rank must be a unique positive int")
+        ranks.add(rank)
+        for key in ("label_en", "label_zh"):
+            require_string(tier, key, BLUEPRINT_ACQUISITION_MANIFEST)
+        cache = tier.get("world_cache")
+        if not isinstance(cache, dict):
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {tier_id}.world_cache must be an object")
+        chance = cache.get("chance")
+        tables = cache.get("loot_tables")
+        if not isinstance(chance, (int, float)) or not 0 < float(chance) <= 1:
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {tier_id}.world_cache.chance must be in (0, 1]")
+        if not isinstance(tables, list) or not tables or not all(isinstance(value, str) and value for value in tables):
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {tier_id}.world_cache.loot_tables must be non-empty ids")
+        trade = tier.get("weaponsmith")
+        if trade is not None:
+            if not isinstance(trade, dict):
+                raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {tier_id}.weaponsmith must be an object or absent")
+            level = trade.get("level")
+            if not isinstance(level, int) or not 1 <= level <= 5:
+                raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {tier_id}.weaponsmith.level must be in [1,5]")
+            for key in ("emerald_base", "emerald_per_material", "max_uses", "xp"):
+                if not isinstance(trade.get(key), int) or trade[key] < 1:
+                    raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {tier_id}.weaponsmith.{key} must be a positive int")
     return data
 
 
@@ -268,6 +294,13 @@ def discover_default_platforms(explicit_slugs: set[str]) -> list[dict[str, Any]]
     base_ingredients = policy["base_blueprint_ingredients"]
     reserved = set(policy["reserved_blueprint_seeds"])
     seeds = [seed for seed in policy["blueprint_seed_items"] if seed not in reserved]
+    tier_by_type = policy.get("tier_by_gun_type")
+    tier_overrides = policy.get("tier_overrides")
+    if not isinstance(tier_by_type, dict) or not isinstance(tier_overrides, dict):
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: tier_by_gun_type and tier_overrides are required objects")
+    if any(value not in MANUFACTURING_TIER_IDS for value in tier_by_type.values()) \
+            or any(value not in MANUFACTURING_TIER_IDS for value in tier_overrides.values()):
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: unknown manufacturing tier")
     missing: list[tuple[str, dict[str, Any], dict[str, Any]]] = []
     for recipe_path in sorted(recipe_root.glob("*.json")):
         slug = recipe_path.stem
@@ -303,11 +336,15 @@ def discover_default_platforms(explicit_slugs: set[str]) -> list[dict[str, Any]]
             {"structural": "recoil", "kind": "recoil", "name_en": f"{display} Recoil Assembly", "name_zh": f"{display} 复进组件"},
         ]
         materials = policy["materials_by_gun_type"].get(gun_type, policy["materials_by_gun_type"]["default"])
+        tier = tier_overrides.get(slug, tier_by_type.get(gun_type, tier_by_type.get("default")))
+        if tier not in MANUFACTURING_TIER_IDS:
+            raise ValueError(f"{DEFAULT_GUN_POLICY}: no manufacturing tier for {slug}")
         platform = f"default_{slug}"
         platforms.append({
             "slug": slug,
             "platform": platform,
             "gun_id": result["id"],
+            "manufacturing_tier": tier,
             "fire_mode": first_fire_mode(data_path),
             "blueprint": {
                 "display_name": f"item.tacz.gun_blueprint.{platform}",
@@ -609,6 +646,85 @@ def generated_furniture_blank_files(platforms: list[dict[str, Any]]) -> dict[Pat
     return files
 
 
+
+def manufacturing_tier(platform: dict[str, Any]) -> str:
+    tier = platform.get("manufacturing_tier")
+    if tier not in MANUFACTURING_TIER_IDS:
+        raise ValueError(f"{platform.get('slug', '?')}: missing valid manufacturing_tier")
+    return tier
+
+
+def blueprint_tag(platform: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "IndustryPlatform": platform["platform"],
+        "IndustryPartKind": "blueprint",
+        "IndustryDisplayName": platform["blueprint"]["display_name"],
+        "IndustryBlueprintTier": manufacturing_tier(platform),
+    }
+
+
+def blueprint_match_tag(platform: dict[str, Any]) -> dict[str, Any]:
+    """Tier is provenance/display metadata; old platform blueprints remain usable."""
+    tag = blueprint_tag(platform)
+    tag.pop("IndustryBlueprintTier")
+    return tag
+
+
+def blueprint_seed(platform: dict[str, Any]) -> str:
+    ingredients = platform["blueprint"]["ingredients"]
+    if not ingredients:
+        raise ValueError(f"{platform['slug']}: blueprint has no seed ingredient")
+    return ingredients[-1]
+
+
+def generated_tier_blueprint_recipe(platform: dict[str, Any]) -> dict[str, Any]:
+    """Emit a materially distinct, deterministic blueprint route by tech tier."""
+    tier = manufacturing_tier(platform)
+    seed = blueprint_seed(platform)
+    result = output("tacz:gun_blueprint", blueprint_tag(platform))
+    if tier == "legacy":
+        # A field manual: two sheets and a recognisable local datum. It is
+        # intentionally Basin/press accessible and does not require a modern
+        # tooling license.
+        return {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:compacting",
+            "ingredients": ["minecraft:paper", "minecraft:paper", seed],
+            "results": [result],
+        }
+
+    if tier == "service":
+        key = {"P": "minecraft:paper", "B": "create:brass_sheet", "S": "tacz:high_carbon_steel_plate", "K": seed}
+        pattern = ["PBP", "SK "]
+    elif tier == "advanced":
+        key = {
+            "P": "minecraft:paper",
+            "B": "create:brass_sheet",
+            "S": "tacz:high_carbon_steel_plate",
+            "R": "minecraft:redstone",
+            "K": seed,
+        }
+        pattern = ["PBP", "SKS", " R "]
+    elif tier == "precision":
+        key = {
+            "P": "minecraft:paper",
+            "B": "create:brass_sheet",
+            "S": "tacz:high_carbon_steel_plate",
+            "D": "minecraft:diamond",
+            "E": "minecraft:echo_shard",
+            "K": seed,
+        }
+        pattern = ["PDP", "SKS", "BEB"]
+    else:
+        raise ValueError(f"Unexpected manufacturing tier {tier}")
+    return {
+        "fabric:load_conditions": CREATE_CONDITIONS,
+        "type": "create:mechanical_crafting",
+        "key": key,
+        "pattern": pattern,
+        "result": result,
+    }
+
 def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
     slug = platform["slug"]
     name = platform["platform"]
@@ -619,16 +735,7 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
     blueprint_key = blueprint["display_name"]
     result: dict[Path, Any] = {}
 
-    result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/blueprint_{name}.json"] = {
-        "fabric:load_conditions": CREATE_CONDITIONS,
-        "type": "create:compacting",
-        "ingredients": blueprint["ingredients"],
-        "results": [output("tacz:gun_blueprint", {
-            "IndustryPlatform": name,
-            "IndustryPartKind": "blueprint",
-            "IndustryDisplayName": blueprint_key,
-        })],
-    }
+    result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/blueprint_{name}.json"] = generated_tier_blueprint_recipe(platform)
 
     component_entries: list[dict[str, str]] = []
     for part in parts:
@@ -642,11 +749,7 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             "IndustryDisplayName": f"item.tacz.press_die_blank.{structural}",
             "DieTargetKind": structural,
         })
-        held_blueprint = partial("tacz:gun_blueprint", {
-            "IndustryPlatform": name,
-            "IndustryPartKind": "blueprint",
-            "IndustryDisplayName": blueprint_key,
-        })
+        held_blueprint = partial("tacz:gun_blueprint", blueprint_match_tag(platform))
         calibrated_die = {
             "IndustryPlatform": name,
             "IndustryPartKind": "component_die",
@@ -673,17 +776,14 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
 
     if materials:
         furniture_blank = partial("tacz:gun_component_blank", furniture_blank_tag())
-        held_blueprint = partial("tacz:gun_blueprint", {
-            "IndustryPlatform": name,
-            "IndustryPartKind": "blueprint",
-            "IndustryDisplayName": blueprint_key,
-        })
+        held_blueprint = partial("tacz:gun_blueprint", blueprint_match_tag(platform))
         result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_furniture_{name}.json"] = deploying(
             furniture_blank, held_blueprint, output("tacz:gun_component", furniture_kit_tag(platform))
         )
 
     result[RESOURCE_ROOT / f"data/tacz/industry/assembly/gun/{slug}.json"] = {
         "platform": name,
+        "manufacturing_tier": manufacturing_tier(platform),
         "blueprint_display_name": blueprint_key,
         "terminal_process": f"tacz:create/industry/assemble_{slug}",
         "components": component_entries,
@@ -705,11 +805,7 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
     sequence: list[dict[str, Any]] = [{
         "type": "create:deploying",
         "target": "$ingredient",
-        "ingredient": partial("tacz:gun_blueprint", {
-            "IndustryPlatform": name,
-            "IndustryPartKind": "blueprint",
-            "IndustryDisplayName": blueprint_key,
-        }),
+        "ingredient": partial("tacz:gun_blueprint", blueprint_match_tag(platform)),
         "results": ["$result"],
         "keep_held_item": True,
     }, press_fit_step()]
@@ -764,6 +860,7 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             # legacy/loot gun that happens to share a GunId.
             "IndustryAssemblyPlatform": name,
             "IndustryAssemblyRecipe": f"tacz:gun/{slug}",
+            "IndustryAssemblyTier": manufacturing_tier(platform),
         }),
         "sequence": sequence,
     }
@@ -771,11 +868,7 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
 
 
 def blueprint_custom_data(platform: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "IndustryPlatform": platform["platform"],
-        "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": platform["blueprint"]["display_name"],
-    }
+    return blueprint_tag(platform)
 
 
 def snbt_compound(values: dict[str, Any]) -> str:
@@ -788,55 +881,103 @@ def snbt_compound(values: dict[str, Any]) -> str:
     return "{" + ",".join(parts) + "}"
 
 
-def generated_blueprint_acquisition_files(platforms: list[dict[str, Any]], acquisition: dict[str, Any]) -> dict[Path, Any]:
-    """Generate chest-cache and new data-driven weaponsmith blueprint routes."""
-    files: dict[Path, Any] = {}
-    trade = acquisition["weaponsmith"]
-    cache = acquisition["world_cache"]
-    trade_ids: list[str] = []
-    loot_entries: list[dict[str, Any]] = []
-    for platform in platforms:
-        name = platform["platform"]
-        custom = blueprint_custom_data(platform)
-        material_weight = sum(material["count"] for material in platform["materials"])
-        emerald_cost = min(64, trade["emerald_base"] + material_weight * trade["emerald_per_material"])
-        trade_id = f"tacz:weaponsmith/5/blueprint_{name}"
-        trade_ids.append(trade_id)
-        files[RESOURCE_ROOT / f"data/tacz/villager_trade/weaponsmith/5/blueprint_{name}.json"] = {
-            "wants": {"id": "minecraft:emerald", "count": float(emerald_cost)},
-            "additional_wants": {"id": "minecraft:book"},
-            "gives": output("tacz:gun_blueprint", custom),
-            "max_uses": float(trade["max_uses"]),
-            "reputation_discount": 0.05,
-            "xp": float(trade["xp"]),
-        }
-        loot_entries.append({
-            "type": "minecraft:item",
-            "name": "tacz:gun_blueprint",
-            "functions": [{
-                # The TACZ loot-injection compatibility layer maps this old
-                # spelling to 26.2 set_custom_data before direct-codec parse.
-                "function": "minecraft:set_nbt",
-                "tag": snbt_compound(custom),
-            }],
-        })
 
-    # 26.2 selects a bounded random subset from this tag using vanilla's
-    # data-driven weaponsmith level-5 trade_set. Appending is deliberate: it
-    # preserves all vanilla master trades instead of replacing a profession.
-    files[RESOURCE_ROOT / "data/minecraft/tags/villager_trade/weaponsmith/level_5.json"] = {
-        "replace": False,
-        "values": trade_ids,
+def generated_blueprint_acquisition_files(platforms: list[dict[str, Any]], acquisition: dict[str, Any]) -> dict[Path, Any]:
+    """Generate tiered blueprint sources instead of a 53-entry master trade lottery.
+
+    Direct tier recipes remain deterministic. Villager stock now supplements
+    legacy/service access at appropriate career levels, while advanced/precision
+    dossiers are expedition finds rather than random master-trade clutter.
+    """
+    files: dict[Path, Any] = {}
+    tier_platforms: dict[str, list[dict[str, Any]]] = {
+        tier: [] for tier in MANUFACTURING_TIER_IDS
     }
-    files[RESOURCE_ROOT / "data/tacz/tacz_loot_injectors/industrial_blueprint_cache.json"] = {
-        "loot_tables": cache["loot_tables"],
-        "pools": [{
-            "rolls": 1,
-            "conditions": [{"condition": "minecraft:random_chance", "chance": cache["chance"]}],
-            "entries": loot_entries,
-        }],
-    }
+    for platform in platforms:
+        tier_platforms[manufacturing_tier(platform)].append(platform)
+
+    tags_by_level: dict[int, list[str]] = {}
+    for tier_id in MANUFACTURING_TIER_IDS:
+        tier = acquisition["tiers"][tier_id]
+        members = sorted(tier_platforms[tier_id], key=lambda value: value["platform"])
+        if not members:
+            continue
+        cache = tier["world_cache"]
+        loot_entries: list[dict[str, Any]] = []
+        for platform in members:
+            custom = blueprint_custom_data(platform)
+            loot_entries.append({
+                "type": "minecraft:item",
+                "name": "tacz:gun_blueprint",
+                "functions": [{
+                    # LootTableInjection.LegacyLootCompat translates this to
+                    # set_custom_data before the 26.2 direct codec parses it.
+                    "function": "minecraft:set_nbt",
+                    "tag": snbt_compound(custom),
+                }],
+            })
+        files[RESOURCE_ROOT / f"data/tacz/tacz_loot_injectors/industrial_blueprint_cache_{tier_id}.json"] = {
+            "loot_tables": cache["loot_tables"],
+            "pools": [{
+                "rolls": 1,
+                "conditions": [{"condition": "minecraft:random_chance", "chance": cache["chance"]}],
+                "entries": loot_entries,
+            }],
+        }
+
+        trade = tier.get("weaponsmith")
+        if not isinstance(trade, dict):
+            continue
+        level = trade["level"]
+        trade_ids = tags_by_level.setdefault(level, [])
+        for platform in members:
+            name = platform["platform"]
+            custom = blueprint_custom_data(platform)
+            material_weight = sum(material["count"] for material in platform["materials"])
+            emerald_cost = min(
+                64,
+                trade["emerald_base"] + material_weight * trade["emerald_per_material"] + tier["rank"] * 2,
+            )
+            trade_id = f"tacz:weaponsmith/{level}/blueprint_{name}"
+            trade_ids.append(trade_id)
+            files[RESOURCE_ROOT / f"data/tacz/villager_trade/weaponsmith/{level}/blueprint_{name}.json"] = {
+                "wants": {"id": "minecraft:emerald", "count": float(emerald_cost)},
+                "additional_wants": {"id": "minecraft:book"},
+                "gives": output("tacz:gun_blueprint", custom),
+                "max_uses": float(trade["max_uses"]),
+                "reputation_discount": 0.05,
+                "xp": float(trade["xp"]),
+            }
+
+    for level, trade_ids in sorted(tags_by_level.items()):
+        files[RESOURCE_ROOT / f"data/minecraft/tags/villager_trade/weaponsmith/level_{level}.json"] = {
+            "replace": False,
+            "values": trade_ids,
+        }
     return files
+
+
+def obsolete_blueprint_acquisition_files(expected: dict[Path, Any]) -> set[Path]:
+    """Remove old flat level-5 trade/cache files when tiered acquisition regenerates."""
+    stale: set[Path] = set()
+    trade_root = RESOURCE_ROOT / "data/tacz/villager_trade/weaponsmith"
+    if trade_root.exists():
+        for path in trade_root.rglob("blueprint_*.json"):
+            if path not in expected:
+                stale.add(path)
+    loot_root = RESOURCE_ROOT / "data/tacz/tacz_loot_injectors"
+    if loot_root.exists():
+        for path in loot_root.glob("industrial_blueprint_cache*.json"):
+            if path not in expected:
+                stale.add(path)
+    tag_root = RESOURCE_ROOT / "data/minecraft/tags/villager_trade/weaponsmith"
+    if tag_root.exists():
+        for path in tag_root.glob("level_*.json"):
+            # Only clean tags managed by this blueprint system. Existing
+            # vanilla tags are in the game jar, not the project resource tree.
+            if path.name in {"level_2.json", "level_5.json"} and path not in expected:
+                stale.add(path)
+    return stale
 
 
 def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
@@ -1738,6 +1879,50 @@ def render_complete_icon_geometry_document(report: dict[str, Any]) -> str:
         "",
     ])
     return "\n".join(lines)
+
+
+def industrial_console_texture(accent: tuple[int, int, int]) -> bytes:
+    """Generate a crisp 256×256 technical-console background without external art tooling."""
+    width = height = 256
+    rows = [bytearray(width * 4) for _ in range(height)]
+
+    def fill(x0: int, y0: int, x1: int, y1: int, color: tuple[int, int, int, int]) -> None:
+        for y in range(max(0, y0), min(height, y1)):
+            row = rows[y]
+            for x in range(max(0, x0), min(width, x1)):
+                index = x * 4
+                row[index:index + 4] = bytes(color)
+
+    outer = (14, 18, 21, 255)
+    panel = (31, 40, 47, 255)
+    recess = (17, 24, 29, 255)
+    line = (81, 98, 108, 255)
+    accent_rgba = (*accent, 255)
+    accent_dim = tuple(max(0, int(channel * 0.45)) for channel in accent) + (255,)
+    fill(0, 0, width, height, outer)
+    fill(2, 2, width - 2, height - 2, panel)
+    fill(5, 5, width - 5, 28, recess)
+    fill(5, 28, width - 5, 30, accent_rgba)
+    fill(8, 34, width - 8, 121, recess)
+    fill(8, 124, width - 8, height - 8, (24, 31, 36, 255))
+    # Console rivets / grid; intentionally subdued so slots and icons dominate.
+    for x in range(12, width - 12, 16):
+        for y in range(38, 117, 16):
+            fill(x, y, x + 2, y + 2, line)
+    for x in range(10, width - 10, 20):
+        fill(x, 119, x + 10, 120, accent_dim)
+    # Inventory divider and lower ledger lines.
+    fill(8, 128, width - 8, 130, line)
+    for y in (166, 190, 214):
+        fill(12, y, width - 12, y + 1, (49, 61, 68, 255))
+    return encode_rgba_png(width, height, rows)
+
+
+def generated_industrial_gui_files() -> dict[Path, bytes]:
+    return {
+        RESOURCE_ROOT / "assets/tacz/textures/gui/cartridge_assembly_console.png": industrial_console_texture((223, 154, 50)),
+        RESOURCE_ROOT / "assets/tacz/textures/gui/industrial_salvage_console.png": industrial_console_texture((211, 109, 50)),
+    }
 
 def validate_industry_block_assets(machine_assets: list[dict[str, str]], embedded: dict[Path, bytes]) -> list[dict[str, Any]]:
     """Validate the supplied Blockbench files before binding game models to them."""
@@ -2673,8 +2858,32 @@ def run(write: bool) -> int:
     machine_assets = load_machine_assets()
     blueprint_acquisition = load_blueprint_acquisition()
     expected: dict[Path, Any] = {}
-    english: dict[str, str] = {"item.tacz.gun_component_blank.furniture": "Neutral Exterior / Furniture Blank"}
-    chinese: dict[str, str] = {"item.tacz.gun_component_blank.furniture": "中性外装套件毛坯"}
+    english: dict[str, str] = {
+        "item.tacz.gun_component_blank.furniture": "Neutral Exterior / Furniture Blank",
+        "tooltip.tacz.blueprint.tier.legacy": "Legacy Field Pattern — low tooling complexity",
+        "tooltip.tacz.blueprint.tier.service": "Service Schematic — standardized production",
+        "tooltip.tacz.blueprint.tier.advanced": "Modern Technical Package — advanced tooling required",
+        "tooltip.tacz.blueprint.tier.precision": "Restricted Precision Dossier — rare tooling required",
+        "gui.tacz.cartridge_assembly.bays": "MATERIAL BAYS",
+        "gui.tacz.cartridge_assembly.status": "CRIMP / LOAD STATUS",
+        "gui.tacz.cartridge_assembly.assemble_hint": "Validate the four bays, then assemble one declared cartridge batch.",
+        "gui.tacz.industrial_salvage.inspect": "INSPECTION / CUTTER LINE",
+        "gui.tacz.industrial_salvage.status": "RECOVERY STATUS",
+        "gui.tacz.industrial_salvage.salvage_hint": "Inspect the input and recover only items with an industrial provenance tag.",
+    }
+    chinese: dict[str, str] = {
+        "item.tacz.gun_component_blank.furniture": "中性外装套件毛坯",
+        "tooltip.tacz.blueprint.tier.legacy": "野战图样 — 低工具复杂度",
+        "tooltip.tacz.blueprint.tier.service": "制式图纸 — 标准化生产",
+        "tooltip.tacz.blueprint.tier.advanced": "现代技术包 — 需要高级工装",
+        "tooltip.tacz.blueprint.tier.precision": "受限精密档案 — 需要稀有工装",
+        "gui.tacz.cartridge_assembly.bays": "材料工位",
+        "gui.tacz.cartridge_assembly.status": "压接 / 装填状态",
+        "gui.tacz.cartridge_assembly.assemble_hint": "核对四个材料工位后，装配一批已声明弹药。",
+        "gui.tacz.industrial_salvage.inspect": "检验 / 切割工位",
+        "gui.tacz.industrial_salvage.status": "回收状态",
+        "gui.tacz.industrial_salvage.salvage_hint": "检验输入物，只回收带有工业来源标记的物品。",
+    }
     expected.update(generated_furniture_blank_files(platforms))
     for platform in platforms:
         expected.update(generated_platform_files(platform))
@@ -2687,6 +2896,7 @@ def run(write: bool) -> int:
     expected.update(generated_blueprint_acquisition_files(platforms, blueprint_acquisition))
     expected.update(generated_magazine_files({cartridge["ammo"] for cartridge in cartridges}))
     expected.update(generated_machine_files(machine_assets))
+    expected.update(generated_industrial_gui_files())
     # The repaired icon library and the supplied high-detail machine pack are
     # embedded so players do not need to install either ZIP separately. The
     # same pass emits exact icon and block-asset coverage reports.
@@ -2724,6 +2934,14 @@ def run(write: bool) -> int:
             stale.append(str(path.relative_to(REPO)))
             if write:
                 path.unlink()
+
+    # Tiered acquisition supersedes the old monolithic level-5 cache/trade
+    # set. Keep authored vanilla data untouched; remove only our blueprint_* /
+    # industrial_blueprint_cache* generated files.
+    for path in sorted(obsolete_blueprint_acquisition_files(expected)):
+        stale.append(str(path.relative_to(REPO)))
+        if write:
+            path.unlink()
 
     # The complete source archive carries authoring-only bare maps under the
     # tacz_extra namespace. If they leak into the mod they are scanned as

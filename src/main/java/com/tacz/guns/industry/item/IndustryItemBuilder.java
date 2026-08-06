@@ -17,6 +17,7 @@ public final class IndustryItemBuilder {
     private String cartridgeAmmoId = "";
     private String projectileType = "";
     private String dieTargetKind = "";
+    private String blueprintTier = "";
 
     private IndustryItemBuilder(Item item) {
         this.item = item;
@@ -89,6 +90,11 @@ public final class IndustryItemBuilder {
         return this;
     }
 
+    public IndustryItemBuilder blueprintTier(String tier) {
+        this.blueprintTier = tier == null ? "" : tier;
+        return this;
+    }
+
     public ItemStack build() {
         ItemStack stack = new ItemStack(item);
         if (stack.getItem() instanceof IndustryItemDataAccessor accessor) {
@@ -99,6 +105,7 @@ public final class IndustryItemBuilder {
             accessor.setCartridgeAmmoId(stack, cartridgeAmmoId);
             accessor.setProjectileType(stack, projectileType);
             accessor.setDieTargetKind(stack, dieTargetKind);
+            accessor.setBlueprintTier(stack, blueprintTier);
         }
         // Recipe JSON writes this component directly. Builders are also used
         // for creative/REI samples, so give those configured samples the same

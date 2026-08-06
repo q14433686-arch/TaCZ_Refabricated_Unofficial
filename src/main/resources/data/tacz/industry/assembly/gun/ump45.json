@@ -1,5 +1,6 @@
 {
   "platform": "ump",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.ump",
   "terminal_process": "tacz:create/industry/assemble_ump45",
   "components": [

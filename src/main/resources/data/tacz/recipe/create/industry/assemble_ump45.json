@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "ump",
-        "IndustryAssemblyRecipe": "tacz:gun/ump45"
+        "IndustryAssemblyRecipe": "tacz:gun/ump45",
+        "IndustryAssemblyTier": "service"
       }
     }
   },

@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_taurus500",
-        "IndustryAssemblyRecipe": "tacz:gun/taurus500"
+        "IndustryAssemblyRecipe": "tacz:gun/taurus500",
+        "IndustryAssemblyTier": "legacy"
       }
     }
   },

@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_deagle_golden",
-        "IndustryAssemblyRecipe": "tacz:gun/deagle_golden"
+        "IndustryAssemblyRecipe": "tacz:gun/deagle_golden",
+        "IndustryAssemblyTier": "service"
       }
     }
   },

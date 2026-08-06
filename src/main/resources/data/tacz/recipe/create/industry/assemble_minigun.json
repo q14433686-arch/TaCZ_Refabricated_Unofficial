@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_minigun",
-        "IndustryAssemblyRecipe": "tacz:gun/minigun"
+        "IndustryAssemblyRecipe": "tacz:gun/minigun",
+        "IndustryAssemblyTier": "precision"
       }
     }
   },

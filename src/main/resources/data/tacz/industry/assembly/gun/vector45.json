@@ -1,5 +1,6 @@
 {
   "platform": "default_vector45",
+  "manufacturing_tier": "advanced",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_vector45",
   "terminal_process": "tacz:create/industry/assemble_vector45",
   "components": [

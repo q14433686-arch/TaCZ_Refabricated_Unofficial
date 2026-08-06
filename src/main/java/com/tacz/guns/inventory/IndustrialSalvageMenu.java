@@ -34,11 +34,11 @@ public final class IndustrialSalvageMenu extends AbstractContainerMenu {
         this.stationInventory = stationInventory;
         this.stationPos = stationPos;
 
-        addSlot(new Slot(stationInventory, IndustrialSalvageStationBlockEntity.INPUT_SLOT, 29, 43));
+        addSlot(new Slot(stationInventory, IndustrialSalvageStationBlockEntity.INPUT_SLOT, 34, 55));
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 3; column++) {
                 int output = IndustrialSalvageStationBlockEntity.OUTPUT_START + column + row * 3;
-                addSlot(new Slot(stationInventory, output, 100 + column * 18, 19 + row * 18) {
+                addSlot(new Slot(stationInventory, output, 151 + column * 18, 37 + row * 18) {
                     @Override
                     public boolean mayPlace(ItemStack stack) {
                         return false;
@@ -65,11 +65,11 @@ public final class IndustrialSalvageMenu extends AbstractContainerMenu {
     private void addPlayerInventory(Inventory inventory) {
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 9; column++) {
-                addSlot(new Slot(inventory, column + row * 9 + 9, 8 + column * 18, 104 + row * 18));
+                addSlot(new Slot(inventory, column + row * 9 + 9, 24 + column * 18, 137 + row * 18));
             }
         }
         for (int column = 0; column < 9; column++) {
-            addSlot(new Slot(inventory, column, 8 + column * 18, 162));
+            addSlot(new Slot(inventory, column, 24 + column * 18, 195));
         }
     }
 

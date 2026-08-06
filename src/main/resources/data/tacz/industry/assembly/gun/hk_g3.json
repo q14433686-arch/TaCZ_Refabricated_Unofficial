@@ -1,5 +1,6 @@
 {
   "platform": "default_hk_g3",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_hk_g3",
   "terminal_process": "tacz:create/industry/assemble_hk_g3",
   "components": [

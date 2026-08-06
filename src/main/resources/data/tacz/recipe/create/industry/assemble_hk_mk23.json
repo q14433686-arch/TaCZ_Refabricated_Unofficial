@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_hk_mk23",
-        "IndustryAssemblyRecipe": "tacz:gun/hk_mk23"
+        "IndustryAssemblyRecipe": "tacz:gun/hk_mk23",
+        "IndustryAssemblyTier": "advanced"
       }
     }
   },

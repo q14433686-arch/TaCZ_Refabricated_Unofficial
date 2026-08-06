@@ -1,7 +1,7 @@
 {
   "wants": {
     "id": "minecraft:emerald",
-    "count": 24.0
+    "count": 13.0
   },
   "additional_wants": {
     "id": "minecraft:book"
@@ -10,13 +10,14 @@
     "id": "tacz:gun_blueprint",
     "components": {
       "minecraft:custom_data": {
-        "IndustryPlatform": "default_taurus500",
+        "IndustryPlatform": "default_springfield1873",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_taurus500"
+        "IndustryDisplayName": "item.tacz.gun_blueprint.default_springfield1873",
+        "IndustryBlueprintTier": "legacy"
       }
     }
   },
-  "max_uses": 1.0,
+  "max_uses": 3.0,
   "reputation_discount": 0.05,
-  "xp": 30.0
+  "xp": 5.0
 }

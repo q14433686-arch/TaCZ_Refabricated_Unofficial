@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_mk14",
-        "IndustryAssemblyRecipe": "tacz:gun/mk14"
+        "IndustryAssemblyRecipe": "tacz:gun/mk14",
+        "IndustryAssemblyTier": "precision"
       }
     }
   },

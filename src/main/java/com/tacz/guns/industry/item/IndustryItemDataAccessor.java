@@ -25,6 +25,8 @@ public interface IndustryItemDataAccessor {
     String PROJECTILE_TYPE_TAG = "ProjectileType";
     /** Component dies declare the exact output component kind they can form. */
     String DIE_TARGET_KIND_TAG = "DieTargetKind";
+    /** Manufacturing tier carried by a platform blueprint (legacy/service/advanced/precision). */
+    String BLUEPRINT_TIER_TAG = "IndustryBlueprintTier";
 
     default String getPlatform(ItemStack stack) {
         return ItemNbtUtils.getTag(stack).getStringOr(PLATFORM_TAG, "");
@@ -80,6 +82,14 @@ public interface IndustryItemDataAccessor {
 
     default void setDieTargetKind(ItemStack stack, String targetKind) {
         ItemNbtUtils.updateTag(stack, tag -> tag.putString(DIE_TARGET_KIND_TAG, targetKind == null ? "" : targetKind));
+    }
+
+    default String getBlueprintTier(ItemStack stack) {
+        return ItemNbtUtils.getTag(stack).getStringOr(BLUEPRINT_TIER_TAG, "");
+    }
+
+    default void setBlueprintTier(ItemStack stack, String tier) {
+        ItemNbtUtils.updateTag(stack, tag -> tag.putString(BLUEPRINT_TIER_TAG, tier == null ? "" : tier));
     }
 
     default boolean isConfiguredIndustryPart(ItemStack stack) {

@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "mp5",
-        "IndustryAssemblyRecipe": "tacz:gun/hk_mp5a5"
+        "IndustryAssemblyRecipe": "tacz:gun/hk_mp5a5",
+        "IndustryAssemblyTier": "service"
       }
     }
   },

@@ -59,5 +59,6 @@
   "incomplete": {
     "name_en": "Incomplete M9A4 Assembly",
     "name_zh": "未完成的 M9A4 总成"
-  }
+  },
+  "manufacturing_tier": "service"
 }

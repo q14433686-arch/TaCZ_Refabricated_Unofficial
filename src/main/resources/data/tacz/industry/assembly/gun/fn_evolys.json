@@ -1,5 +1,6 @@
 {
   "platform": "default_fn_evolys",
+  "manufacturing_tier": "precision",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_fn_evolys",
   "terminal_process": "tacz:create/industry/assemble_fn_evolys",
   "components": [

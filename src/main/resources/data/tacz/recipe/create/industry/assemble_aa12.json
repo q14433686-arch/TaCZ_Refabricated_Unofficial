@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_aa12",
-        "IndustryAssemblyRecipe": "tacz:gun/aa12"
+        "IndustryAssemblyRecipe": "tacz:gun/aa12",
+        "IndustryAssemblyTier": "advanced"
       }
     }
   },

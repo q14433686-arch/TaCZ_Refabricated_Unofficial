@@ -1,5 +1,6 @@
 {
   "platform": "default_uzi",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_uzi",
   "terminal_process": "tacz:create/industry/assemble_uzi",
   "components": [

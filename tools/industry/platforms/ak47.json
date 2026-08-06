@@ -65,5 +65,6 @@
   "incomplete": {
     "name_en": "Incomplete AK-47 Assembly",
     "name_zh": "未完成的 AK-47 总成"
-  }
+  },
+  "manufacturing_tier": "service"
 }

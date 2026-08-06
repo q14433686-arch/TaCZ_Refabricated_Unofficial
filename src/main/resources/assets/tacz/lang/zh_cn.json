@@ -1280,5 +1280,15 @@
   "item.tacz.projectile_blank.payload_40mm_1": "40 mm 高爆装药榴弹体",
   "item.tacz.projectile_blank.body_rpg_rocket": "RPG-7 战斗部弹体",
   "item.tacz.projectile_blank.payload_rpg_rocket_1": "RPG-7 装药战斗部",
-  "item.tacz.projectile_blank.payload_rpg_rocket_2": "RPG-7 聚能破甲战斗部预制件"
+  "item.tacz.projectile_blank.payload_rpg_rocket_2": "RPG-7 聚能破甲战斗部预制件",
+  "tooltip.tacz.blueprint.tier.legacy": "野战图样 — 低工具复杂度",
+  "tooltip.tacz.blueprint.tier.service": "制式图纸 — 标准化生产",
+  "tooltip.tacz.blueprint.tier.advanced": "现代技术包 — 需要高级工装",
+  "tooltip.tacz.blueprint.tier.precision": "受限精密档案 — 需要稀有工装",
+  "gui.tacz.cartridge_assembly.bays": "材料工位",
+  "gui.tacz.cartridge_assembly.status": "压接 / 装填状态",
+  "gui.tacz.cartridge_assembly.assemble_hint": "核对四个材料工位后，装配一批已声明弹药。",
+  "gui.tacz.industrial_salvage.inspect": "检验 / 切割工位",
+  "gui.tacz.industrial_salvage.status": "回收状态",
+  "gui.tacz.industrial_salvage.salvage_hint": "检验输入物，只回收带有工业来源标记的物品。"
 }

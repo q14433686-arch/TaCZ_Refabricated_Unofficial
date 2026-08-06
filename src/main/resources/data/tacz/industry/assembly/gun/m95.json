@@ -1,5 +1,6 @@
 {
   "platform": "default_m95",
+  "manufacturing_tier": "precision",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_m95",
   "terminal_process": "tacz:create/industry/assemble_m95",
   "components": [

@@ -1,5 +1,6 @@
 {
   "platform": "default_g36k",
+  "manufacturing_tier": "advanced",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_g36k",
   "terminal_process": "tacz:create/industry/assemble_g36k",
   "components": [

@@ -65,5 +65,6 @@
   "incomplete": {
     "name_en": "Incomplete Glock 17 Assembly",
     "name_zh": "未完成的 Glock 17 总成"
-  }
+  },
+  "manufacturing_tier": "service"
 }

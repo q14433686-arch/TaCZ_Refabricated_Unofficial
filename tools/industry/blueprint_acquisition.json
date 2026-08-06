@@ -1,22 +1,74 @@
 {
-  "weaponsmith": {
-    "emerald_base": 16,
-    "emerald_per_material": 4,
-    "max_uses": 1,
-    "xp": 30
-  },
-  "world_cache": {
-    "chance": 0.35,
-    "loot_tables": [
-      "minecraft:chests/village/village_weaponsmith",
-      "minecraft:chests/village/village_toolsmith",
-      "minecraft:chests/abandoned_mineshaft",
-      "minecraft:chests/stronghold_library",
-      "minecraft:chests/stronghold_corridor",
-      "minecraft:chests/pillager_outpost",
-      "minecraft:chests/woodland_mansion",
-      "minecraft:chests/ancient_city",
-      "minecraft:chests/trial_chambers/reward_rare"
-    ]
+  "tiers": {
+    "legacy": {
+      "rank": 1,
+      "label_en": "Field Pattern",
+      "label_zh": "野战图样",
+      "weaponsmith": {
+        "level": 2,
+        "emerald_base": 4,
+        "emerald_per_material": 1,
+        "max_uses": 3,
+        "xp": 5
+      },
+      "world_cache": {
+        "chance": 0.48,
+        "loot_tables": [
+          "minecraft:chests/village/village_weaponsmith",
+          "minecraft:chests/village/village_toolsmith",
+          "minecraft:chests/abandoned_mineshaft",
+          "minecraft:chests/pillager_outpost"
+        ]
+      }
+    },
+    "service": {
+      "rank": 2,
+      "label_en": "Service Production Schematic",
+      "label_zh": "制式生产图纸",
+      "weaponsmith": {
+        "level": 5,
+        "emerald_base": 14,
+        "emerald_per_material": 3,
+        "max_uses": 1,
+        "xp": 20
+      },
+      "world_cache": {
+        "chance": 0.26,
+        "loot_tables": [
+          "minecraft:chests/village/village_weaponsmith",
+          "minecraft:chests/abandoned_mineshaft",
+          "minecraft:chests/stronghold_corridor",
+          "minecraft:chests/pillager_outpost",
+          "minecraft:chests/woodland_mansion"
+        ]
+      }
+    },
+    "advanced": {
+      "rank": 3,
+      "label_en": "Modern Technical Package",
+      "label_zh": "现代技术包",
+      "world_cache": {
+        "chance": 0.16,
+        "loot_tables": [
+          "minecraft:chests/stronghold_library",
+          "minecraft:chests/woodland_mansion",
+          "minecraft:chests/trial_chambers/reward_rare",
+          "minecraft:chests/ancient_city"
+        ]
+      }
+    },
+    "precision": {
+      "rank": 4,
+      "label_en": "Restricted Precision Dossier",
+      "label_zh": "受限精密档案",
+      "world_cache": {
+        "chance": 0.08,
+        "loot_tables": [
+          "minecraft:chests/trial_chambers/reward_rare",
+          "minecraft:chests/ancient_city",
+          "minecraft:chests/woodland_mansion"
+        ]
+      }
+    }
   }
 }

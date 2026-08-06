@@ -1,5 +1,6 @@
 {
   "platform": "default_hk_mk23",
+  "manufacturing_tier": "advanced",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_hk_mk23",
   "terminal_process": "tacz:create/industry/assemble_hk_mk23",
   "components": [

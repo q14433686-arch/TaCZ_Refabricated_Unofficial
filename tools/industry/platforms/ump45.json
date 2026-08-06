@@ -59,5 +59,6 @@
   "incomplete": {
     "name_en": "Incomplete UMP45 Assembly",
     "name_zh": "未完成的 UMP45 总成"
-  }
+  },
+  "manufacturing_tier": "service"
 }

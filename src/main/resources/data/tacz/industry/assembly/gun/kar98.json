@@ -1,5 +1,6 @@
 {
   "platform": "default_kar98",
+  "manufacturing_tier": "legacy",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_kar98",
   "terminal_process": "tacz:create/industry/assemble_kar98",
   "components": [

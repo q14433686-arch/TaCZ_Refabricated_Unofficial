@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_scar_l",
-        "IndustryAssemblyRecipe": "tacz:gun/scar_l"
+        "IndustryAssemblyRecipe": "tacz:gun/scar_l",
+        "IndustryAssemblyTier": "advanced"
       }
     }
   },

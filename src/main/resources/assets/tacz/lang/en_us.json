@@ -1280,5 +1280,15 @@
   "item.tacz.projectile_blank.payload_40mm_1": "40 mm HE-Filled Grenade Body",
   "item.tacz.projectile_blank.body_rpg_rocket": "RPG-7 Warhead Body",
   "item.tacz.projectile_blank.payload_rpg_rocket_1": "RPG-7 Explosive Charge Body",
-  "item.tacz.projectile_blank.payload_rpg_rocket_2": "RPG-7 Shaped-Charge Preform"
+  "item.tacz.projectile_blank.payload_rpg_rocket_2": "RPG-7 Shaped-Charge Preform",
+  "tooltip.tacz.blueprint.tier.legacy": "Legacy Field Pattern — low tooling complexity",
+  "tooltip.tacz.blueprint.tier.service": "Service Schematic — standardized production",
+  "tooltip.tacz.blueprint.tier.advanced": "Modern Technical Package — advanced tooling required",
+  "tooltip.tacz.blueprint.tier.precision": "Restricted Precision Dossier — rare tooling required",
+  "gui.tacz.cartridge_assembly.bays": "MATERIAL BAYS",
+  "gui.tacz.cartridge_assembly.status": "CRIMP / LOAD STATUS",
+  "gui.tacz.cartridge_assembly.assemble_hint": "Validate the four bays, then assemble one declared cartridge batch.",
+  "gui.tacz.industrial_salvage.inspect": "INSPECTION / CUTTER LINE",
+  "gui.tacz.industrial_salvage.status": "RECOVERY STATUS",
+  "gui.tacz.industrial_salvage.salvage_hint": "Inspect the input and recover only items with an industrial provenance tag."
 }

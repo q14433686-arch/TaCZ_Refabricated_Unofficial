@@ -12,11 +12,12 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_b93r",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_b93r"
+        "IndustryDisplayName": "item.tacz.gun_blueprint.default_b93r",
+        "IndustryBlueprintTier": "service"
       }
     }
   },
   "max_uses": 1.0,
   "reputation_discount": 0.05,
-  "xp": 30.0
+  "xp": 20.0
 }

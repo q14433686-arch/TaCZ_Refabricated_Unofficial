@@ -55,5 +55,6 @@
   "incomplete": {
     "name_en": "Incomplete M1911 Assembly",
     "name_zh": "未完成的 M1911 总成"
-  }
+  },
+  "manufacturing_tier": "legacy"
 }

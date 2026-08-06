@@ -36,11 +36,11 @@ public final class CartridgeAssemblyMenu extends AbstractContainerMenu {
         this.machineInventory = machineInventory;
         this.machinePos = machinePos;
 
-        addSlot(new Slot(machineInventory, CartridgeAssemblyMachineBlockEntity.CASE_SLOT, 26, 35));
-        addSlot(new Slot(machineInventory, CartridgeAssemblyMachineBlockEntity.PROJECTILE_SLOT, 62, 35));
-        addSlot(new Slot(machineInventory, CartridgeAssemblyMachineBlockEntity.PRIMER_SLOT, 26, 62));
-        addSlot(new Slot(machineInventory, CartridgeAssemblyMachineBlockEntity.PROPELLANT_SLOT, 62, 62));
-        addSlot(new Slot(machineInventory, CartridgeAssemblyMachineBlockEntity.OUTPUT_SLOT, 132, 48) {
+        addSlot(new Slot(machineInventory, CartridgeAssemblyMachineBlockEntity.CASE_SLOT, 32, 53));
+        addSlot(new Slot(machineInventory, CartridgeAssemblyMachineBlockEntity.PROJECTILE_SLOT, 68, 53));
+        addSlot(new Slot(machineInventory, CartridgeAssemblyMachineBlockEntity.PRIMER_SLOT, 32, 89));
+        addSlot(new Slot(machineInventory, CartridgeAssemblyMachineBlockEntity.PROPELLANT_SLOT, 68, 89));
+        addSlot(new Slot(machineInventory, CartridgeAssemblyMachineBlockEntity.OUTPUT_SLOT, 185, 65) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;
@@ -65,11 +65,11 @@ public final class CartridgeAssemblyMenu extends AbstractContainerMenu {
     private void addPlayerInventory(Inventory inventory) {
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 9; column++) {
-                addSlot(new Slot(inventory, column + row * 9 + 9, 8 + column * 18, 104 + row * 18));
+                addSlot(new Slot(inventory, column + row * 9 + 9, 24 + column * 18, 137 + row * 18));
             }
         }
         for (int column = 0; column < 9; column++) {
-            addSlot(new Slot(inventory, column, 8 + column * 18, 162));
+            addSlot(new Slot(inventory, column, 24 + column * 18, 195));
         }
     }
 

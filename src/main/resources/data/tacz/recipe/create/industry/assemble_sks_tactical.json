@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_sks_tactical",
-        "IndustryAssemblyRecipe": "tacz:gun/sks_tactical"
+        "IndustryAssemblyRecipe": "tacz:gun/sks_tactical",
+        "IndustryAssemblyTier": "service"
       }
     }
   },

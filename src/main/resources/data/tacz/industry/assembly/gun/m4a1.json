@@ -1,5 +1,6 @@
 {
   "platform": "ar",
+  "manufacturing_tier": "advanced",
   "blueprint_display_name": "item.tacz.gun_blueprint.ar",
   "terminal_process": "tacz:create/industry/assemble_m4a1",
   "components": [

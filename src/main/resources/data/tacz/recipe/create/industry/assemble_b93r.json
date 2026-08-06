@@ -38,7 +38,8 @@
         "GunCurrentAmmoCount": 0,
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_b93r",
-        "IndustryAssemblyRecipe": "tacz:gun/b93r"
+        "IndustryAssemblyRecipe": "tacz:gun/b93r",
+        "IndustryAssemblyTier": "service"
       }
     }
   },

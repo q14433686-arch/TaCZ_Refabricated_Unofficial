@@ -32,10 +32,10 @@ public class ModBlocks {
     public static Block WORKBENCH_121 = registerBlock("workbench_c", new GunSmithTableBlockC(woodProps("workbench_c")));
     /** Dedicated GUI machine for the final case/projectile/primer/propellant assembly. */
     public static Block CARTRIDGE_ASSEMBLY_MACHINE = registerBlock("cartridge_assembly_machine",
-            new CartridgeAssemblyMachineBlock(metalProps("cartridge_assembly_machine")));
+            new CartridgeAssemblyMachineBlock(detailedMachineProps("cartridge_assembly_machine")));
     /** One-input recovery station for stripped guns, empty magazines and obsolete dies. */
     public static Block INDUSTRIAL_SALVAGE_STATION = registerBlock("industrial_salvage_station",
-            new IndustrialSalvageStationBlock(metalProps("industrial_salvage_station")));
+            new IndustrialSalvageStationBlock(detailedMachineProps("industrial_salvage_station")));
 
     public static Block TARGET = registerBlock("target", new TargetBlock(woodProps("target")));
     public static Block STATUE = registerBlock("statue", new StatueBlock(BlockBehaviour.Properties.of().setId(blockKey("statue")).sound(SoundType.STONE).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.DESTROY)));
@@ -62,6 +62,17 @@ public class ModBlocks {
 
     private static BlockBehaviour.Properties metalProps(String name) {
         return BlockBehaviour.Properties.of().setId(blockKey(name)).sound(SoundType.METAL).strength(4.0F, 6.0F).pushReaction(PushReaction.BLOCK);
+    }
+
+    /**
+     * The detailed Blockbench machines have real gaps and geometry extending
+     * beyond the unit cube. Declaring them as full visual occluders makes an
+     * adjacent block cull its own face, leaving a side-view "x-ray" void
+     * through the machine gaps. Keep collision/strength metal-like but disable
+     * visual occlusion so neighbouring terrain renders behind the open frame.
+     */
+    private static BlockBehaviour.Properties detailedMachineProps(String name) {
+        return metalProps(name).noOcclusion();
     }
 
     private static Block registerBlock(String name, Block block) {

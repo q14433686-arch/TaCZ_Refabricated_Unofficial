@@ -1,5 +1,6 @@
 {
   "platform": "default_rpk",
+  "manufacturing_tier": "advanced",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_rpk",
   "terminal_process": "tacz:create/industry/assemble_rpk",
   "components": [

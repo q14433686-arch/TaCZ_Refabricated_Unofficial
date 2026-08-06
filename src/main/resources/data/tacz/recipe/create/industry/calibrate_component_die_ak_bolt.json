@@ -8,7 +8,6 @@
     }
   ],
   "type": "create:deploying",
-  "keep_held_item": true,
   "target": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -44,5 +43,6 @@
         }
       }
     }
-  ]
+  ],
+  "keep_held_item": true
 }

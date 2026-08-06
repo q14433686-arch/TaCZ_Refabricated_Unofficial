@@ -1,5 +1,6 @@
 {
   "platform": "m1911",
+  "manufacturing_tier": "legacy",
   "blueprint_display_name": "item.tacz.gun_blueprint.m1911",
   "terminal_process": "tacz:create/industry/assemble_m1911",
   "components": [

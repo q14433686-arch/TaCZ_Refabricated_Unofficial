@@ -1,5 +1,6 @@
 {
   "platform": "default_aug",
+  "manufacturing_tier": "advanced",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_aug",
   "terminal_process": "tacz:create/industry/assemble_aug",
   "components": [

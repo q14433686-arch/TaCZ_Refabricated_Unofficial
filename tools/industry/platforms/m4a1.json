@@ -69,5 +69,6 @@
   "incomplete": {
     "name_en": "Incomplete M4A1 Assembly",
     "name_zh": "未完成的 M4A1 总成"
-  }
+  },
+  "manufacturing_tier": "advanced"
 }

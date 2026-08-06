@@ -1,5 +1,6 @@
 {
   "platform": "default_type_81",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_type_81",
   "terminal_process": "tacz:create/industry/assemble_type_81",
   "components": [

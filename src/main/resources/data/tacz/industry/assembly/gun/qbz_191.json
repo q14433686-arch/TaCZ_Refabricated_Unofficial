@@ -1,5 +1,6 @@
 {
   "platform": "default_qbz_191",
+  "manufacturing_tier": "advanced",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_qbz_191",
   "terminal_process": "tacz:create/industry/assemble_qbz_191",
   "components": [

@@ -1,5 +1,6 @@
 {
   "platform": "default_rhino357",
+  "manufacturing_tier": "legacy",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_rhino357",
   "terminal_process": "tacz:create/industry/assemble_rhino357",
   "components": [

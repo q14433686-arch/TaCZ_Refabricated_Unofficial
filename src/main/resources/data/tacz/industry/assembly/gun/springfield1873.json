@@ -1,5 +1,6 @@
 {
   "platform": "default_springfield1873",
+  "manufacturing_tier": "legacy",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_springfield1873",
   "terminal_process": "tacz:create/industry/assemble_springfield1873",
   "components": [

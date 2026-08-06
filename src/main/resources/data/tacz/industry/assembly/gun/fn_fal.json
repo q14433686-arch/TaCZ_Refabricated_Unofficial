@@ -1,5 +1,6 @@
 {
   "platform": "fal",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.fal",
   "terminal_process": "tacz:create/industry/assemble_fn_fal",
   "components": [

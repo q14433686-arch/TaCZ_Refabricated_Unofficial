@@ -1,5 +1,6 @@
 {
   "platform": "default_m870",
+  "manufacturing_tier": "legacy",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_m870",
   "terminal_process": "tacz:create/industry/assemble_m870",
   "components": [

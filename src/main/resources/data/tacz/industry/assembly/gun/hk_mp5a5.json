@@ -1,5 +1,6 @@
 {
   "platform": "mp5",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.mp5",
   "terminal_process": "tacz:create/industry/assemble_hk_mp5a5",
   "components": [

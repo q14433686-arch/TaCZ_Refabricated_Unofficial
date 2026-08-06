@@ -1,5 +1,6 @@
 {
   "platform": "default_scar_h",
+  "manufacturing_tier": "advanced",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_scar_h",
   "terminal_process": "tacz:create/industry/assemble_scar_h",
   "components": [

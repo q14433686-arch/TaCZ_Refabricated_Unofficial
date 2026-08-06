@@ -1,7 +1,7 @@
 {
   "wants": {
     "id": "minecraft:emerald",
-    "count": 28.0
+    "count": 27.0
   },
   "additional_wants": {
     "id": "minecraft:book"
@@ -12,11 +12,12 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "mp5",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.mp5"
+        "IndustryDisplayName": "item.tacz.gun_blueprint.mp5",
+        "IndustryBlueprintTier": "service"
       }
     }
   },
   "max_uses": 1.0,
   "reputation_discount": 0.05,
-  "xp": 30.0
+  "xp": 20.0
 }

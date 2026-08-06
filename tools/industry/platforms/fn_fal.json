@@ -59,5 +59,6 @@
   "incomplete": {
     "name_en": "Incomplete FAL Assembly",
     "name_zh": "未完成的 FAL 总成"
-  }
+  },
+  "manufacturing_tier": "service"
 }

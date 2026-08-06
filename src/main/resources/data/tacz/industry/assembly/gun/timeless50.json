@@ -1,5 +1,6 @@
 {
   "platform": "default_timeless50",
+  "manufacturing_tier": "service",
   "blueprint_display_name": "item.tacz.gun_blueprint.default_timeless50",
   "terminal_process": "tacz:create/industry/assemble_timeless50",
   "components": [

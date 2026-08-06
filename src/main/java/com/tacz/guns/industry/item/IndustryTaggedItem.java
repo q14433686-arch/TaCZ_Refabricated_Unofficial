@@ -47,6 +47,16 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
         return key.isBlank() ? super.getName(stack) : Component.translatable(key);
     }
 
+    private static int blueprintTierColor(String tier) {
+        return switch (tier) {
+            case "legacy" -> 0xB8C7A0;
+            case "service" -> 0x7FC6E8;
+            case "advanced" -> 0xD4A85A;
+            case "precision" -> 0xD07CEB;
+            default -> 0xAAAAAA;
+        };
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
                                 Consumer<Component> adder, TooltipFlag advanced) {
@@ -59,6 +69,11 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
         if ("blueprint".equals(partKind)) {
             adder.accept(Component.translatable("tooltip.tacz.gun_smith_table.non_consumed")
                     .withStyle(style -> style.withColor(0x55FFFF)));
+            String tier = getBlueprintTier(stack);
+            if (!tier.isBlank()) {
+                adder.accept(Component.translatable("tooltip.tacz.blueprint.tier." + tier)
+                        .withStyle(style -> style.withColor(blueprintTierColor(tier))));
+            }
         }
         if (partKind.endsWith("_die")) {
             adder.accept(Component.translatable("tooltip.tacz.industry.reusable_die")
