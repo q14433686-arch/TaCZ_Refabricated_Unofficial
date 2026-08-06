@@ -103,6 +103,22 @@ IndustryDisplayName = item.tacz.gun_blueprint.<platform>
 
 它们不会失效。玩家用一张新的空白工装页，将旧版蓝图放在部署工位，即可通过 `restore_template_<platform>` 转成新的生产工装模板。之后所有新模具／量规配方使用新模板。已存在的旧组件模具仍可继续冲压：组件成型配方故意只匹配其稳定的平台、部件和显示身份，不要求新加的动作档案元数据。
 
+## JEI / REI 配方树
+
+组件毛坯、已校准模具、最终组件、工装页、档案、模板、动作夹具和量规都不是只写入 JSON 后依赖查看器“碰巧识别”。`IndustryProcessManager` 将实际 `data/*/recipe/create/**` 配方投影为同步的工业工艺数据：
+
+- **JEI** 注册每种 Create 工位的 `tacz:industry/<machine>` 分类，并在服务器枪包数据同步到客户端后补充对应的工艺定义；
+- **REI** 使用实时 display generator，在玩家查看某个具体 NBT 模具／组件的“配方”或“用途”时才读取已同步缓存，因此不会因 REI 插件早于服务器同步初始化而得到永久空列表；
+- 组件模 → 组件、样枪 → 原始档案、档案 → 模板、模板 → 模具／量规都应能从任意一端反查。
+
+如果查看器仍没有显示，请先确认服务端日志存在类似：
+
+```text
+Loaded <n> TACZ Create process(es) for JEI/REI recipe-viewer synchronization.
+```
+
+`<n> = 0` 通常表示服务器没有启用 `CREATE_FLY` 工业档，或 Create Fly 没有实际加载；这不是缺少某一张组件配方。
+
 ## 数据驱动入口
 
 - `tools/industry/default_gun_policy.json`

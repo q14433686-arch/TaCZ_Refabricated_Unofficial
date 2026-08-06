@@ -1,6 +1,7 @@
 package com.tacz.guns.network.message;
 
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.compat.RecipeViewerSyncBridge;
 import com.tacz.guns.client.resource.ClientIndexManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.network.CommonNetworkCache;
@@ -61,5 +62,9 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
         CommonNetworkCache.INSTANCE.fromNetwork(message.cache);
         // 通知客户端重新构建ClientIndex
         ClientIndexManager.reload();
+        // The cache arrives after JEI/REI plugin bootstrap on remote clients.
+        // REI reads it through a live generator; JEI receives a queued runtime
+        // addition through this optional bridge after all client indexes exist.
+        RecipeViewerSyncBridge.onCommonDataSynchronized();
     }
 }

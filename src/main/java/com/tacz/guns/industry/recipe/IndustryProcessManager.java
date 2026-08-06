@@ -47,6 +47,7 @@ public final class IndustryProcessManager extends CommonDataManager<IndustryProc
     @Override
     protected void apply(Map<Identifier, JsonElement> objects, ResourceManager resourceManager, ProfilerFiller profiler) {
         if (!IndustryProfileManager.isCreateFlyProfileActive()) {
+            GunMod.LOGGER.info("Skipping TACZ industry recipe-viewer cache because CREATE_FLY profile is inactive.");
             super.apply(Map.<Identifier, JsonElement>of(), resourceManager, profiler);
             return;
         }
@@ -70,6 +71,7 @@ public final class IndustryProcessManager extends CommonDataManager<IndustryProc
             }
         }
         reportAmbiguousCompactingRecipes(ours);
+        GunMod.LOGGER.info("Loaded {} TACZ Create process(es) for JEI/REI recipe-viewer synchronization.", ours.size());
         super.apply(ours, resourceManager, profiler);
     }
 

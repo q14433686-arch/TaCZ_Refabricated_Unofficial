@@ -8,6 +8,7 @@ import cn.sh1rocu.tacz.compat.rei.display.AttachmentQueryDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.CartridgeAssemblyDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.GunSmithTableDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.IndustryProcessDisplay;
+import cn.sh1rocu.tacz.compat.rei.display.IndustryProcessDisplayGenerator;
 import cn.sh1rocu.tacz.compat.rei.entry.AttachmentQueryEntry;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
@@ -74,6 +75,15 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
 
     @Override
     public void registerDisplays(DisplayRegistry registry) {
+        // REI initializes plugins before a remote server has synchronized the
+        // TACZ common-data cache. These live generators deliberately register
+        // before the level guard and resolve the cache only when a player asks
+        // for a recipe/usage, so molds and components never become a one-time
+        // empty snapshot at the title screen.
+        for (IndustryProcessMachine machine : IndustryProcessMachine.values()) {
+            CategoryIdentifier<IndustryProcessDisplay> id = getIndustryCategory(machine);
+            registry.registerDisplayGenerator(id, new IndustryProcessDisplayGenerator(machine, id));
+        }
         if (Minecraft.getInstance().level == null) return;
         // 第 20 轮修复：本类此前一直沿用 CommonAssetsManager.getInstance() + RecipeManager，
         // 那是**纯服务端**路径（recipeManager 只在 AddReloadListenerEvent 里由
@@ -115,15 +125,8 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
         AttachmentQueryEntry.getAllAttachmentQueryEntries().forEach(entry ->
                 registry.add(new AttachmentQueryDisplay(entry)));
 
-        // Create Fly's published 26.2 build excludes its REI source set. The
-        // industry-process cache is a synchronized projection of our actual
-        // create:* JSON, so these displays restore REI's input/output tree
-        // without linking TACZ against Create implementation classes.
-        for (var entry : com.tacz.guns.resource.CommonAssetsManager.get().getAllIndustryProcesses()) {
-            if (entry.getValue() != null && getIndustryCategory(entry.getValue().getMachine()) != null) {
-                registry.add(new IndustryProcessDisplay(entry.getKey(), entry.getValue()));
-            }
-        }
+        // IndustryProcessDisplayGenerator supplies Create process displays live
+        // above. It intentionally replaces a one-time static cache snapshot.
 
         for (var entry : com.tacz.guns.resource.CommonAssetsManager.get().getAllCartridgeAssemblyRecipes()) {
             if (entry.getValue() != null) {
