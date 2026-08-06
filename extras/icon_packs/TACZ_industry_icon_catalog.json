@@ -863,6 +863,11 @@
       "status": "available_unbound"
     },
     {
+      "texture": "tacz_extra:item/carbon_dust",
+      "bound_by": [],
+      "status": "available_unbound"
+    },
+    {
       "texture": "tacz_extra:item/cartridge_gauge_46x30",
       "bound_by": [
         "complete_cartridge_gauge_46x30_a39ef4a61e"
@@ -1158,6 +1163,11 @@
         "spent_case_12g"
       ],
       "status": "bound"
+    },
+    {
+      "texture": "tacz_extra:item/cinnabar_dust",
+      "bound_by": [],
+      "status": "available_unbound"
     },
     {
       "texture": "tacz_extra:item/component_ak_barrel",
@@ -5298,6 +5308,21 @@
       "status": "available_unbound"
     },
     {
+      "texture": "tacz_extra:item/high_carbon_steel_ingot",
+      "bound_by": [],
+      "status": "available_unbound"
+    },
+    {
+      "texture": "tacz_extra:item/high_carbon_steel_plate",
+      "bound_by": [],
+      "status": "available_unbound"
+    },
+    {
+      "texture": "tacz_extra:item/industrial_propellant",
+      "bound_by": [],
+      "status": "available_unbound"
+    },
+    {
       "texture": "tacz_extra:item/machining_barrel_blank",
       "bound_by": [
         "complete_machining_barrel_blank_4d1616892e"
@@ -5545,6 +5570,16 @@
         "complete_magazine_mp5_9x19_30_tacz_9mm_9b91acdc66"
       ],
       "status": "bound"
+    },
+    {
+      "texture": "tacz_extra:item/pig_iron_ingot",
+      "bound_by": [],
+      "status": "available_unbound"
+    },
+    {
+      "texture": "tacz_extra:item/primer",
+      "bound_by": [],
+      "status": "available_unbound"
     },
     {
       "texture": "tacz_extra:item/projectile_12g_shot",
@@ -5861,6 +5896,11 @@
         "complete_static_tacz_magazine_pouch_749c05bb1f"
       ],
       "status": "bound"
+    },
+    {
+      "texture": "tacz_extra:item/sulfur_dust",
+      "bound_by": [],
+      "status": "available_unbound"
     }
   ],
   "entries": [

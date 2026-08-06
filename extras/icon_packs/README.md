@@ -5,7 +5,7 @@
 | 文件 | 用途 |
 | --- | --- |
 | `TACZ_icons_pack_fixed.zip` | 第一批 61 张图标的可验证像素修复结果；其修复报告仍见 `TACZ_icons_pack_repair_report.json`。 |
-| `TACZ_extra_COMPLETE.zip` | 当前完整高保真图源：833 张 32×32 RGBA 物品 PNG、835 个物品模型、两台工业机器模型，以及 746 条精确视觉身份映射。 |
+| `TACZ_extra_COMPLETE.zip` | 当前完整高保真图源：841 张 32×32 RGBA 物品 PNG、843 个物品模型、两台工业机器模型，以及 746 条精确视觉身份映射。 |
 
 ## 第一批修复记录
 
@@ -45,7 +45,9 @@ assets/tacz/industry_icons/complete.json  # 完整包转换出的 746 条精确 
 
 ```text
 TACZ_extra_COMPLETE_compatibility_report.json
+TACZ_extra_COMPLETE_geometry_report.json
 docs/TACZ_EXTRA_COMPLETE_COMPATIBILITY.md
+docs/TACZ_EXTRA_COMPLETE_GEOMETRY_AUDIT.md
 ```
 
 ## 当前游戏内覆盖
@@ -60,6 +62,8 @@ tacz:magazine_loader
 tacz:magazine_pouch
 ```
 
+- 新增的 `raw_material_map.json` 已适配为 8 个静态原料模型：碳粉、朱砂粉、硫粉、生铁锭、高碳钢锭、高碳钢板、底火、工业推进药；
+- 对 841 个 32×32 图标完成 alpha/连通组件/重心审计；移除了 `.22 WMR` 的一个离散像素，并无裁切地校正了 4.6×30、5.7×28 与通用扳机图的中心位置；
 - 两台实体机器模型/贴图由
   [`extras/industry_packs/`](../industry_packs/README.md) 单独管理；
 - 玩家不需要运行 Python，也不需要额外安装这些 ZIP：资源已嵌入模组；
@@ -72,6 +76,7 @@ tacz:magazine_pouch
 extras/icon_packs/TACZ_industry_icon_catalog.json
 docs/INDUSTRY_ICON_COVERAGE.md
 docs/INDUSTRY_BLOCK_ASSET_COVERAGE.md
+docs/TACZ_EXTRA_COMPLETE_GEOMETRY_AUDIT.md
 ```
 
 `RPG motor housing` 仍没有真实 ItemStack/NBT 中间态；它不是“缺图”，而是尚未存在可绑定的生产阶段。

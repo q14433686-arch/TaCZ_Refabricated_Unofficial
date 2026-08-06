@@ -2,7 +2,7 @@
   "schema_version": 1,
   "source": {
     "archive": "extras/icon_packs/TACZ_extra_COMPLETE.zip",
-    "sha256": "3c15ffa0a0fa331008042a378c861290ac0dba0e733ae2031f9c36c1a11ffe34",
+    "sha256": "e9e0ce54070cf689e4b42c0fc68e812638a88afff9171d4e4cabf2c7bc48f150",
     "declared_pack_format": 15
   },
   "compatibility": {
@@ -13,27 +13,38 @@
     "raw_mapping_files_embedded": false
   },
   "art_validation": {
-    "complete_item_texture_count": 833,
-    "complete_item_model_count": 835,
-    "generated_item_model_count": 833,
+    "complete_item_texture_count": 841,
+    "complete_item_model_count": 843,
+    "generated_item_model_count": 841,
     "block_parent_item_model_count": 2,
+    "custom_display_item_model_count": 0,
     "texture_dimensions": {
-      "32x32": 833
+      "32x32": 841
     },
     "raw_exact_entry_count": 746,
+    "raw_material_entry_count": 8,
     "raw_rule_platform_count": 60,
     "raw_example_platform_count": 5
   },
   "generated_mapping_entry_count": 746,
-  "generated_static_item_model_count": 3,
+  "generated_static_item_model_count": 11,
   "static_item_models": {
-    "tacz:magazine_blank": "static_tacz_magazine_blank",
-    "tacz:magazine_loader": "static_tacz_magazine_loader",
-    "tacz:magazine_pouch": "static_tacz_magazine_pouch"
+    "tacz:magazine_blank": "tacz_extra:item/static_tacz_magazine_blank",
+    "tacz:magazine_loader": "tacz_extra:item/static_tacz_magazine_loader",
+    "tacz:magazine_pouch": "tacz_extra:item/static_tacz_magazine_pouch",
+    "tacz:carbon_dust": "tacz_extra:item/carbon_dust",
+    "tacz:cinnabar_dust": "tacz_extra:item/cinnabar_dust",
+    "tacz:sulfur_dust": "tacz_extra:item/sulfur_dust",
+    "tacz:pig_iron_ingot": "tacz_extra:item/pig_iron_ingot",
+    "tacz:high_carbon_steel_ingot": "tacz_extra:item/high_carbon_steel_ingot",
+    "tacz:high_carbon_steel_plate": "tacz_extra:item/high_carbon_steel_plate",
+    "tacz:primer": "tacz_extra:item/primer",
+    "tacz:industrial_propellant": "tacz_extra:item/industrial_propellant"
   },
   "notes": [
     "The complete pack's bare identity->texture map is correct authoring data, but IndustryIconManager requires item/NBT selector entries; complete.json is the generated adapter.",
     "industry_icon_rules.json contains family/tint authoring rules. The current runtime does not execute that custom rule language, so it is preserved only in the source archive and is not copied into assets/tacz_extra/industry_icons.",
-    "The complete pack's pack_format 15 is not standalone-compatible with Minecraft 26.2 resource format 88. Its assets are embedded under the mod's own current pack metadata instead."
+    "The complete pack's pack_format 15 is not standalone-compatible with Minecraft 26.2 resource format 88. Its assets are embedded under the mod's own current pack metadata instead.",
+    "The original 61-icon zh_cn language keys and the complete pack's raw-material zh_cn keys are merged rather than allowing the shorter later file to erase earlier names."
   ]
 }

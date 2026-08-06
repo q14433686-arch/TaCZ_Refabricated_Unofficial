@@ -5,12 +5,13 @@
 
 ## 资源核对
 
-- 原 ZIP SHA-256：`3c15ffa0a0fa331008042a378c861290ac0dba0e733ae2031f9c36c1a11ffe34`；
-- 物品 PNG：833，尺寸分布：{'32x32': 833}；
-- 物品模型：835（generated：833，方块父模型：2）；
+- 原 ZIP SHA-256：`e9e0ce54070cf689e4b42c0fc68e812638a88afff9171d4e4cabf2c7bc48f150`；
+- 物品 PNG：841，尺寸分布：{'32x32': 841}；
+- 物品模型：843（generated：841，方块父模型：2，自定义 display：0）；
 - 用户 exact 身份映射：746；与当前精确缺图身份一一对应；
+- 原料静态物品映射：8；
 - 生成的运行时 NBT 映射：746 条；
-- 额外静态物品模型包装：3 条。
+- 额外静态物品模型包装：11 条。
 
 ## 原写法在本环境中的结论
 
@@ -21,9 +22,17 @@
 
 ## 已覆盖的静态物品
 
+- `tacz:carbon_dust` → `tacz_extra:item/carbon_dust`
+- `tacz:cinnabar_dust` → `tacz_extra:item/cinnabar_dust`
+- `tacz:high_carbon_steel_ingot` → `tacz_extra:item/high_carbon_steel_ingot`
+- `tacz:high_carbon_steel_plate` → `tacz_extra:item/high_carbon_steel_plate`
+- `tacz:industrial_propellant` → `tacz_extra:item/industrial_propellant`
 - `tacz:magazine_blank` → `tacz_extra:item/static_tacz_magazine_blank`
 - `tacz:magazine_loader` → `tacz_extra:item/static_tacz_magazine_loader`
 - `tacz:magazine_pouch` → `tacz_extra:item/static_tacz_magazine_pouch`
+- `tacz:pig_iron_ingot` → `tacz_extra:item/pig_iron_ingot`
+- `tacz:primer` → `tacz_extra:item/primer`
+- `tacz:sulfur_dust` → `tacz_extra:item/sulfur_dust`
 
 完整 source/report 见：
 - `extras/icon_packs/TACZ_extra_COMPLETE.zip`

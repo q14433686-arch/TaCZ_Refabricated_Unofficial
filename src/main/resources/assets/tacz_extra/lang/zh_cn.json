@@ -59,5 +59,13 @@
   "item.tacz_extra.mag_type81": "81-1式 弹匣",
   "item.tacz_extra.mag_ump45": "UMP45 弹匣",
   "item.tacz_extra.mag_uzi": "乌兹 弹匣",
-  "item.tacz_extra.mag_vector": "维克托 弹匣"
+  "item.tacz_extra.mag_vector": "维克托 弹匣",
+  "item.tacz.carbon_dust": "碳粉",
+  "item.tacz.cinnabar_dust": "朱砂粉",
+  "item.tacz.sulfur_dust": "硫粉",
+  "item.tacz.pig_iron_ingot": "生铁锭",
+  "item.tacz.high_carbon_steel_ingot": "高碳钢锭",
+  "item.tacz.high_carbon_steel_plate": "高碳钢板",
+  "item.tacz.primer": "底火组件",
+  "item.tacz.industrial_propellant": "工业推进药"
 }

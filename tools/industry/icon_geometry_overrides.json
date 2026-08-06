@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "canvas": [32, 32],
+  "centroid_threshold": 3.5,
+  "overrides": {
+    "ammo_22wmr": {
+      "remove_pixels": [[26, 10]],
+      "reason": "Remove the single disconnected opaque pixel outside the .22 WMR cartridge silhouette."
+    },
+    "ammo_46x30": {
+      "translate": [0, -4],
+      "reason": "The compact 4.6×30 cartridge was vertically low by 4.77 pixels on the 32×32 canvas; lift it without clipping."
+    },
+    "ammo_57x28": {
+      "translate": [0, -4],
+      "reason": "The compact 5.7×28 cartridge was vertically low by 4.30 pixels on the 32×32 canvas; lift it without clipping."
+    },
+    "base_trigger": {
+      "translate": [4, 0],
+      "reason": "The generic trigger assembly had a -4.36 pixel horizontal alpha centroid offset; shift it right without clipping."
+    }
+  }
+}

@@ -11,8 +11,10 @@ import argparse
 import hashlib
 import json
 import re
+import struct
 import sys
 import zipfile
+import zlib
 from collections import Counter, defaultdict
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -34,6 +36,9 @@ ICON_CATALOG = REPO / "extras/icon_packs/TACZ_industry_icon_catalog.json"
 ICON_COVERAGE_DOCUMENT = REPO / "docs/INDUSTRY_ICON_COVERAGE.md"
 COMPLETE_PACK_REPORT = REPO / "extras/icon_packs/TACZ_extra_COMPLETE_compatibility_report.json"
 COMPLETE_PACK_COVERAGE_DOCUMENT = REPO / "docs/TACZ_EXTRA_COMPLETE_COMPATIBILITY.md"
+ICON_GEOMETRY_MANIFEST = REPO / "tools/industry/icon_geometry_overrides.json"
+ICON_GEOMETRY_REPORT = REPO / "extras/icon_packs/TACZ_extra_COMPLETE_geometry_report.json"
+ICON_GEOMETRY_DOCUMENT = REPO / "docs/TACZ_EXTRA_COMPLETE_GEOMETRY_AUDIT.md"
 INDUSTRY_BLOCK_ASSET_REPORT = REPO / "extras/industry_packs/TACZ_industry_blocks_asset_report.json"
 INDUSTRY_BLOCK_COVERAGE_DOCUMENT = REPO / "docs/INDUSTRY_BLOCK_ASSET_COVERAGE.md"
 DEFAULT_AMMO_RECIPE_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/ammo"
@@ -1367,12 +1372,26 @@ def embedded_industry_block_pack_files() -> dict[Path, bytes]:
 
 def overlay_assets(target: dict[Path, bytes], files: dict[Path, bytes], label: str,
                    require_equal: bool = False) -> None:
-    """Merge one explicitly ordered visual source into the embedded namespace."""
+    """Merge one explicitly ordered visual source into the embedded namespace.
+
+    Complete-pack art intentionally replaces same-named pixel/model files. Language
+    files are the exception: the later pack adds raw-material names but omits the
+    original icon-library keys, so JSON objects are unioned with the later source
+    winning only colliding keys.
+    """
     for path, value in files.items():
         old = target.get(path)
         if require_equal and old is not None and old != value:
             raise ValueError(f"Conflicting tacz_extra asset {path} while reading {label}")
-        target[path] = value
+        if old is not None and not require_equal and path.suffix == ".json" and "/lang/" in path.as_posix():
+            try:
+                merged_lang = json.loads(old.decode("utf-8"))
+                merged_lang.update(json.loads(value.decode("utf-8")))
+            except (UnicodeDecodeError, json.JSONDecodeError, AttributeError) as exception:
+                raise ValueError(f"Invalid tacz_extra language merge source {path} while reading {label}") from exception
+            target[path] = (json.dumps(merged_lang, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+        else:
+            target[path] = value
 
 
 def merged_tacz_extra_files() -> dict[Path, bytes]:
@@ -1427,6 +1446,298 @@ def png_dimensions(data: bytes, source: Path) -> tuple[int, int]:
         raise ValueError(f"{source}: expected a PNG with IHDR")
     return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
 
+
+
+def decode_rgba_png(data: bytes, source: Path) -> tuple[int, int, list[bytearray]]:
+    """Decode the constrained 8-bit RGBA/non-interlaced PNGs supplied by the complete pack."""
+    if len(data) < 33 or data[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ValueError(f"{source}: invalid PNG signature")
+    position = 8
+    width = height = bit_depth = color_type = interlace = None
+    compressed: list[bytes] = []
+    while position + 12 <= len(data):
+        length = struct.unpack_from(">I", data, position)[0]
+        kind = data[position + 4:position + 8]
+        payload_start = position + 8
+        payload_end = payload_start + length
+        if payload_end + 4 > len(data):
+            raise ValueError(f"{source}: truncated PNG chunk")
+        payload = data[payload_start:payload_end]
+        position = payload_end + 4
+        if kind == b"IHDR":
+            width, height, bit_depth, color_type, _, _, interlace = struct.unpack(">IIBBBBB", payload)
+        elif kind == b"IDAT":
+            compressed.append(payload)
+        elif kind == b"IEND":
+            break
+    if width is None or height is None or bit_depth != 8 or color_type != 6 or interlace != 0:
+        raise ValueError(f"{source}: expected non-interlaced 8-bit RGBA PNG")
+    try:
+        raw = zlib.decompress(b"".join(compressed))
+    except zlib.error as exception:
+        raise ValueError(f"{source}: invalid PNG IDAT stream") from exception
+    stride = width * 4
+    if len(raw) != height * (stride + 1):
+        raise ValueError(f"{source}: unexpected RGBA row length")
+
+    def paeth(left: int, above: int, upper_left: int) -> int:
+        prediction = left + above - upper_left
+        distance_left = abs(prediction - left)
+        distance_above = abs(prediction - above)
+        distance_upper_left = abs(prediction - upper_left)
+        return left if distance_left <= distance_above and distance_left <= distance_upper_left \
+            else above if distance_above <= distance_upper_left else upper_left
+
+    rows: list[bytearray] = []
+    previous = bytearray(stride)
+    offset = 0
+    for _ in range(height):
+        filter_type = raw[offset]
+        offset += 1
+        current = bytearray(raw[offset:offset + stride])
+        offset += stride
+        for index in range(stride):
+            left = current[index - 4] if index >= 4 else 0
+            above = previous[index]
+            upper_left = previous[index - 4] if index >= 4 else 0
+            if filter_type == 1:
+                current[index] = (current[index] + left) & 0xFF
+            elif filter_type == 2:
+                current[index] = (current[index] + above) & 0xFF
+            elif filter_type == 3:
+                current[index] = (current[index] + ((left + above) // 2)) & 0xFF
+            elif filter_type == 4:
+                current[index] = (current[index] + paeth(left, above, upper_left)) & 0xFF
+            elif filter_type != 0:
+                raise ValueError(f"{source}: unsupported PNG filter {filter_type}")
+        rows.append(current)
+        previous = current
+    return width, height, rows
+
+
+def encode_rgba_png(width: int, height: int, rows: list[bytearray]) -> bytes:
+    """Write deterministic RGBA PNG bytes; geometry overrides never resample pixels."""
+    raw = b"".join(b"\x00" + bytes(row) for row in rows)
+
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return struct.pack(">I", len(payload)) + kind + payload + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)) \
+        + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b"")
+
+
+def alpha_geometry(width: int, height: int, rows: list[bytearray], name: str) -> dict[str, Any]:
+    """Return non-destructive alpha-mask diagnostics for one icon."""
+    pixels: list[tuple[int, int, int]] = []
+    for y, row in enumerate(rows):
+        for x in range(width):
+            alpha = row[x * 4 + 3]
+            if alpha:
+                pixels.append((x, y, alpha))
+    if not pixels:
+        raise ValueError(f"{name}: fully transparent icon")
+    min_x = min(x for x, _, _ in pixels)
+    max_x = max(x for x, _, _ in pixels)
+    min_y = min(y for _, y, _ in pixels)
+    max_y = max(y for _, y, _ in pixels)
+    total_alpha = sum(alpha for _, _, alpha in pixels)
+    center_x = sum(x * alpha for x, _, alpha in pixels) / total_alpha
+    center_y = sum(y * alpha for _, y, alpha in pixels) / total_alpha
+    mask = {(x, y) for x, y, _ in pixels}
+    components: list[int] = []
+    while mask:
+        seed = mask.pop()
+        frontier = [seed]
+        size = 1
+        while frontier:
+            x, y = frontier.pop()
+            for neighbor in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                if neighbor in mask:
+                    mask.remove(neighbor)
+                    frontier.append(neighbor)
+                    size += 1
+        components.append(size)
+    components.sort(reverse=True)
+    opaque = sum(1 for _, _, alpha in pixels if alpha == 255)
+    enclosed_holes = 0
+    alpha_mask = {(x, y) for x, y, _ in pixels}
+    for y in range(1, height - 1):
+        for x in range(1, width - 1):
+            if (x, y) not in alpha_mask and all(neighbor in alpha_mask for neighbor in (
+                    (x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1))):
+                enclosed_holes += 1
+    return {
+        "name": name,
+        "bbox": [min_x, min_y, max_x, max_y],
+        "bbox_size": [max_x - min_x + 1, max_y - min_y + 1],
+        "bbox_center_offset": [round((min_x + max_x) / 2 - (width - 1) / 2, 3), round((min_y + max_y) / 2 - (height - 1) / 2, 3)],
+        "alpha_centroid": [round(center_x, 3), round(center_y, 3)],
+        "centroid_offset": [round(center_x - (width - 1) / 2, 3), round(center_y - (height - 1) / 2, 3)],
+        "opaque_pixel_count": opaque,
+        "partial_alpha_pixel_count": len(pixels) - opaque,
+        "component_count": len(components),
+        "component_sizes": components[:8],
+        "border_pixel_count": sum(1 for x, y, _ in pixels if x in (0, width - 1) or y in (0, height - 1)),
+        "enclosed_hole_pixel_count": enclosed_holes,
+    }
+
+
+def load_icon_geometry_overrides() -> dict[str, Any]:
+    manifest = read_json(ICON_GEOMETRY_MANIFEST)
+    if not isinstance(manifest, dict) or manifest.get("schema_version") != 1:
+        raise ValueError(f"{ICON_GEOMETRY_MANIFEST}: schema_version must be 1")
+    canvas = manifest.get("canvas")
+    overrides = manifest.get("overrides")
+    if canvas != [32, 32] or not isinstance(overrides, dict):
+        raise ValueError(f"{ICON_GEOMETRY_MANIFEST}: expected 32x32 canvas and overrides object")
+    for name, override in overrides.items():
+        if not isinstance(name, str) or not re.fullmatch(r"[a-z0-9_./-]+", name) or not isinstance(override, dict):
+            raise ValueError(f"{ICON_GEOMETRY_MANIFEST}: invalid override {name!r}")
+        shift = override.get("translate")
+        removals = override.get("remove_pixels", [])
+        if shift is not None and (not isinstance(shift, list) or len(shift) != 2
+                                  or not all(isinstance(value, int) for value in shift)):
+            raise ValueError(f"{ICON_GEOMETRY_MANIFEST}: invalid translate for {name!r}")
+        if not isinstance(removals, list) or any(not isinstance(pixel, list) or len(pixel) != 2
+                                                 or not all(isinstance(value, int) for value in pixel)
+                                                 for pixel in removals):
+            raise ValueError(f"{ICON_GEOMETRY_MANIFEST}: invalid remove_pixels for {name!r}")
+        if shift is None and not removals:
+            raise ValueError(f"{ICON_GEOMETRY_MANIFEST}: {name!r} has no geometry action")
+    return manifest
+
+
+def translate_icon_rows(width: int, height: int, rows: list[bytearray], dx: int, dy: int, source: str) -> list[bytearray]:
+    output = [bytearray(width * 4) for _ in range(height)]
+    for y, row in enumerate(rows):
+        for x in range(width):
+            index = x * 4
+            pixel = row[index:index + 4]
+            if pixel[3] == 0:
+                continue
+            target_x = x + dx
+            target_y = y + dy
+            if not 0 <= target_x < width or not 0 <= target_y < height:
+                raise ValueError(f"{source}: geometry translation {dx},{dy} would clip opaque pixels")
+            target = target_x * 4
+            output[target_y][target:target + 4] = pixel
+    return output
+
+
+def apply_complete_icon_geometry_overrides(embedded: dict[Path, bytes]) -> dict[str, Any]:
+    """Audit every complete item icon and apply only manifest-approved integer translations."""
+    manifest = load_icon_geometry_overrides()
+    threshold = manifest.get("centroid_threshold", 3.5)
+    if not isinstance(threshold, (int, float)) or threshold <= 0:
+        raise ValueError(f"{ICON_GEOMETRY_MANIFEST}: centroid_threshold must be positive")
+    texture_root = RESOURCE_ROOT / "assets/tacz_extra/textures/item"
+    texture_paths = sorted(path for path in embedded if texture_root in path.parents and path.suffix == ".png")
+    pre: dict[str, dict[str, Any]] = {}
+    post: dict[str, dict[str, Any]] = {}
+    for path in texture_paths:
+        name = path.stem
+        width, height, rows = decode_rgba_png(embedded[path], path)
+        if (width, height) != (32, 32):
+            raise ValueError(f"{path}: complete item icon must be 32x32")
+        pre[name] = alpha_geometry(width, height, rows, name)
+        override = manifest["overrides"].get(name)
+        if override is not None:
+            if "translate" in override:
+                dx, dy = override["translate"]
+                rows = translate_icon_rows(width, height, rows, dx, dy, name)
+            for x, y in override.get("remove_pixels", []):
+                if not 0 <= x < width or not 0 <= y < height:
+                    raise ValueError(f"{name}: remove_pixels coordinate {x},{y} is outside the canvas")
+                index = x * 4
+                if rows[y][index + 3] == 0:
+                    raise ValueError(f"{name}: remove_pixels coordinate {x},{y} is already transparent")
+                rows[y][index:index + 4] = b"\x00\x00\x00\x00"
+            embedded[path] = encode_rgba_png(width, height, rows)
+        post[name] = alpha_geometry(width, height, rows, name)
+
+    missing_override_assets = sorted(set(manifest["overrides"]) - set(pre))
+    if missing_override_assets:
+        raise ValueError(f"{ICON_GEOMETRY_MANIFEST}: override targets missing textures {missing_override_assets}")
+    pre_outliers = [entry for entry in pre.values()
+                    if max(abs(value) for value in entry["centroid_offset"]) > threshold]
+    post_outliers = [entry for entry in post.values()
+                     if max(abs(value) for value in entry["centroid_offset"]) > threshold]
+    pre_bbox_outliers = [entry for entry in pre.values()
+                         if max(abs(value) for value in entry["bbox_center_offset"]) > threshold]
+    post_bbox_outliers = [entry for entry in post.values()
+                          if max(abs(value) for value in entry["bbox_center_offset"]) > threshold]
+    return {
+        "schema_version": 1,
+        "source": {
+            "archive": str(COMPLETE_EXTRA_PACK.relative_to(REPO)),
+            "geometry_manifest": str(ICON_GEOMETRY_MANIFEST.relative_to(REPO)),
+        },
+        "canvas": [32, 32],
+        "icon_count": len(texture_paths),
+        "centroid_threshold": threshold,
+        "pre_override_outliers": sorted(pre_outliers, key=lambda item: item["name"]),
+        "post_override_outliers": sorted(post_outliers, key=lambda item: item["name"]),
+        "pre_bbox_outliers": sorted(pre_bbox_outliers, key=lambda item: item["name"]),
+        "post_bbox_outliers": sorted(post_bbox_outliers, key=lambda item: item["name"]),
+        "applied_overrides": [
+            {
+                "name": name,
+                "translate": manifest["overrides"][name].get("translate", [0, 0]),
+                "remove_pixels": manifest["overrides"][name].get("remove_pixels", []),
+                "reason": manifest["overrides"][name].get("reason", ""),
+                "before": pre[name],
+                "after": post[name],
+            }
+            for name in sorted(manifest["overrides"])
+        ],
+        "component_histogram": dict(sorted(Counter(item["component_count"] for item in post.values()).items())),
+        "partial_alpha_icon_count": sum(1 for item in post.values() if item["partial_alpha_pixel_count"] > 0),
+        "enclosed_hole_pixel_count": sum(item["enclosed_hole_pixel_count"] for item in post.values()),
+        "border_touch_icon_count": sum(1 for item in post.values() if item["border_pixel_count"] > 0),
+        "icons": [post[name] for name in sorted(post)],
+    }
+
+
+def render_complete_icon_geometry_document(report: dict[str, Any]) -> str:
+    lines = [
+        "# TACZ Extra Complete 图标几何与 alpha 审计",
+        "",
+        "审计对象是完整包的所有 32×32 RGBA 物品 PNG。它检查 canvas、alpha、连通组件、边界接触、",
+        "alpha 重心，并只对清单明确批准的图做整数像素平移；不会缩放、旋转、模糊或 AI 重绘。",
+        "",
+        "## 结果",
+        "",
+        f"- 图标数：{report['icon_count']}；",
+        f"- 部分 alpha 图标：{report['partial_alpha_icon_count']}（当前完整包应为 0，使用二值 cutout）；",
+        f"- 单像素四邻封闭透明孔：{report['enclosed_hole_pixel_count']}（包括重复的扳机开孔等有意几何，不自动填补）；",
+        f"- 连通组件分布：{report['component_histogram']}；",
+        f"- 接触画布边缘的图标：{report['border_touch_icon_count']}（大模具/大板件可合理接触边缘，不自动裁切）；",
+        f"- 平移前重心越界（>{report['centroid_threshold']} px）：{len(report['pre_override_outliers'])}；",
+        f"- 平移后重心越界：{len(report['post_override_outliers'])}；",
+        f"- 包围盒中心越界：调整前 {len(report['pre_bbox_outliers'])}，调整后 {len(report['post_bbox_outliers'])}。",
+        "",
+        "## 已执行的安全调整",
+        "",
+        "| 图标 | 平移 | 删除离散像素 | 调整前重心偏移 | 调整后重心偏移 |",
+        "| --- | ---: | --- | --- | --- |",
+    ]
+    for override in report["applied_overrides"]:
+        lines.append(
+            f"| `{override['name']}` | `{override['translate']}` | `{override['remove_pixels']}` | "
+            f"{override['before']['centroid_offset']} | {override['after']['centroid_offset']} |"
+        )
+    lines.extend([
+        "",
+        "## 形态/掉落物约束",
+        "",
+        "- NBT 工业件走 `TaczDynamicItemModel` 的 1×1 extents（X/Z ±0.5，Y 0..1），不会因完整包 PNG 变成 oversized GUI 或额外浮高的掉落物；",
+        "- 静态原料/袋/装弹器模型均为 `item/generated`，使用原版 1×1 物品 bounds；完整包没有额外 `display` 变换，避免了单独图标歪放/缩放不一致；",
+        "- 两台机器是方块模型，属于真实方块物品而非此处 32×32 平面图标，单独由其 Blockbench display/model 处理。",
+        "",
+        "完整逐图数据在 `TACZ_extra_COMPLETE_geometry_report.json`。",
+        "",
+    ])
+    return "\n".join(lines)
 
 def validate_industry_block_assets(machine_assets: list[dict[str, str]], embedded: dict[Path, bytes]) -> list[dict[str, Any]]:
     """Validate the supplied Blockbench files before binding game models to them."""
@@ -1539,8 +1850,11 @@ def validate_complete_pack_art(exact: dict[str, str], embedded: dict[Path, bytes
 
     generated_models = 0
     block_parent_models = 0
+    custom_display_model_count = 0
     for model_path in item_models:
         model = json.loads(complete_all[model_path].decode("utf-8"))
+        if "display" in model:
+            custom_display_model_count += 1
         textures = model.get("textures")
         if isinstance(textures, dict) and isinstance(textures.get("layer0"), str):
             generated_models += 1
@@ -1563,6 +1877,7 @@ def validate_complete_pack_art(exact: dict[str, str], embedded: dict[Path, bytes
 
     rules = read_complete_pack_json("assets/tacz_extra/industry_icons/industry_icon_rules.json")
     example = read_complete_pack_json("assets/tacz_extra/industry_icons/example_platform_family.json")
+    raw_materials = load_complete_raw_material_models(embedded)
     if not isinstance(rules, dict) or rules.get("version") != 1 or not isinstance(rules.get("platform_rules"), list):
         raise ValueError(f"{COMPLETE_EXTRA_PACK}: industry_icon_rules.json has unsupported authoring schema")
     if not isinstance(example, dict):
@@ -1573,12 +1888,36 @@ def validate_complete_pack_art(exact: dict[str, str], embedded: dict[Path, bytes
         "complete_item_model_count": len(item_models),
         "generated_item_model_count": generated_models,
         "block_parent_item_model_count": block_parent_models,
+        "custom_display_item_model_count": custom_display_model_count,
         "texture_dimensions": {f"{width}x{height}": count for (width, height), count in sorted(dimensions.items())},
         "raw_exact_entry_count": len(exact),
+        "raw_material_entry_count": len(raw_materials),
         "raw_rule_platform_count": len(rules["platform_rules"]),
         "raw_example_platform_count": len(example),
     }
 
+
+
+def load_complete_raw_material_models(embedded: dict[Path, bytes]) -> dict[str, str]:
+    """Adapt the complete pack's static raw-material map to vanilla parent models."""
+    raw_map = read_complete_pack_json("assets/tacz_extra/industry_icons/raw_material_map.json")
+    if not isinstance(raw_map, dict) or not raw_map:
+        raise ValueError(f"{COMPLETE_EXTRA_PACK}: raw_material_map.json must be a non-empty object")
+    result: dict[str, str] = {}
+    for item_id, texture_id in raw_map.items():
+        if not isinstance(item_id, str) or not re.fullmatch(r"tacz:[a-z0-9_./-]+", item_id):
+            raise ValueError(f"{COMPLETE_EXTRA_PACK}: invalid raw material item id {item_id!r}")
+        if not isinstance(texture_id, str) or not re.fullmatch(r"tacz_extra:item/[a-z0-9_./-]+", texture_id):
+            raise ValueError(f"{COMPLETE_EXTRA_PACK}: invalid raw material texture {texture_id!r}")
+        texture_path = resource_asset_path(texture_id, "textures", ".png")
+        model_path = resource_asset_path(texture_id, "models", ".json")
+        if texture_path not in embedded or model_path not in embedded:
+            raise ValueError(f"{COMPLETE_EXTRA_PACK}: raw material {item_id} lacks embedded texture/model")
+        model = json.loads(embedded[model_path].decode("utf-8"))
+        if model.get("textures", {}).get("layer0") != texture_id:
+            raise ValueError(f"{model_path}: raw material layer0 does not match {texture_id}")
+        result[item_id] = texture_id
+    return result
 
 def complete_mapping_entry_id(identity: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "_", identity.lower()).strip("_")[:72]
@@ -1627,7 +1966,13 @@ def generated_complete_icon_mapping(platforms: list[dict[str, Any]], cartridges:
         }
         entries.append(entry)
         if source["category"] == "static_industrial_item":
-            static_item_models[source["item"]] = texture_name
+            static_item_models[source["item"]] = complete_texture_identifier(texture_name)
+
+    for item_id, texture_id in load_complete_raw_material_models(embedded).items():
+        old = static_item_models.get(item_id)
+        if old is not None and old != texture_id:
+            raise ValueError(f"{COMPLETE_EXTRA_PACK}: conflicting static visual source for {item_id}")
+        static_item_models[item_id] = texture_id
 
     return {
         "schema_version": 1,
@@ -1639,12 +1984,12 @@ def generated_complete_icon_mapping(platforms: list[dict[str, Any]], cartridges:
 def generated_complete_static_item_models(static_item_models: dict[str, str]) -> dict[Path, Any]:
     """Point vanilla static item models at complete-pack art; dynamic NBT items use complete.json."""
     files: dict[Path, Any] = {}
-    for item_id, texture_name in sorted(static_item_models.items()):
+    for item_id, texture_id in sorted(static_item_models.items()):
         namespace, path = item_id.split(":", 1)
         if namespace != "tacz":
             raise ValueError(f"Complete static art currently supports tacz registry items only: {item_id}")
         files[RESOURCE_ROOT / f"assets/tacz/models/item/{path}.json"] = {
-            "parent": complete_texture_identifier(texture_name)
+            "parent": texture_id
         }
     return files
 
@@ -1675,6 +2020,7 @@ def build_complete_pack_compatibility_report(art_validation: dict[str, Any], com
             "The complete pack's bare identity->texture map is correct authoring data, but IndustryIconManager requires item/NBT selector entries; complete.json is the generated adapter.",
             "industry_icon_rules.json contains family/tint authoring rules. The current runtime does not execute that custom rule language, so it is preserved only in the source archive and is not copied into assets/tacz_extra/industry_icons.",
             "The complete pack's pack_format 15 is not standalone-compatible with Minecraft 26.2 resource format 88. Its assets are embedded under the mod's own current pack metadata instead.",
+            "The original 61-icon zh_cn language keys and the complete pack's raw-material zh_cn keys are merged rather than allowing the shorter later file to erase earlier names.",
         ],
     }
 
@@ -1692,8 +2038,9 @@ def render_complete_pack_compatibility_document(report: dict[str, Any]) -> str:
         "",
         f"- 原 ZIP SHA-256：`{report['source']['sha256']}`；",
         f"- 物品 PNG：{validation['complete_item_texture_count']}，尺寸分布：{validation['texture_dimensions']}；",
-        f"- 物品模型：{validation['complete_item_model_count']}（generated：{validation['generated_item_model_count']}，方块父模型：{validation['block_parent_item_model_count']}）；",
+        f"- 物品模型：{validation['complete_item_model_count']}（generated：{validation['generated_item_model_count']}，方块父模型：{validation['block_parent_item_model_count']}，自定义 display：{validation['custom_display_item_model_count']}）；",
         f"- 用户 exact 身份映射：{validation['raw_exact_entry_count']}；与当前精确缺图身份一一对应；",
+        f"- 原料静态物品映射：{validation['raw_material_entry_count']}；",
         f"- 生成的运行时 NBT 映射：{report['generated_mapping_entry_count']} 条；",
         f"- 额外静态物品模型包装：{report['generated_static_item_model_count']} 条。",
         "",
@@ -1708,7 +2055,7 @@ def render_complete_pack_compatibility_document(report: dict[str, Any]) -> str:
         "",
     ]
     for item_id, texture in sorted(report["static_item_models"].items()):
-        lines.append(f"- `{item_id}` → `tacz_extra:item/{texture}`")
+        lines.append(f"- `{item_id}` → `{texture}`")
     lines.extend([
         "",
         "完整 source/report 见：",
@@ -2162,6 +2509,7 @@ def generated_icon_mapping_files(platforms: list[dict[str, Any]], cartridges: li
                                  machine_assets: list[dict[str, str]]) -> dict[Path, bytes | Any]:
     base_mapping = load_icon_mapping()
     embedded = merged_tacz_extra_files()
+    geometry_report = apply_complete_icon_geometry_overrides(embedded)
     validate_icon_texture_references(base_mapping, embedded)
     validate_industry_block_assets(machine_assets, embedded)
 
@@ -2186,6 +2534,8 @@ def generated_icon_mapping_files(platforms: list[dict[str, Any]], cartridges: li
     files[ICON_COVERAGE_DOCUMENT] = render_icon_coverage_document(catalog)
     files[COMPLETE_PACK_REPORT] = compatibility
     files[COMPLETE_PACK_COVERAGE_DOCUMENT] = render_complete_pack_compatibility_document(compatibility)
+    files[ICON_GEOMETRY_REPORT] = geometry_report
+    files[ICON_GEOMETRY_DOCUMENT] = render_complete_icon_geometry_document(geometry_report)
     return files
 
 

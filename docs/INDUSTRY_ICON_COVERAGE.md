@@ -85,6 +85,8 @@
 | `tacz_extra:item/bullet_lead` |
 | `tacz_extra:item/bullet_rimfire` |
 | `tacz_extra:item/bullet_tracer` |
+| `tacz_extra:item/carbon_dust` |
+| `tacz_extra:item/cinnabar_dust` |
 | `tacz_extra:item/generic_barrel` |
 | `tacz_extra:item/generic_blueprint` |
 | `tacz_extra:item/generic_bolt` |
@@ -95,6 +97,9 @@
 | `tacz_extra:item/generic_recoil` |
 | `tacz_extra:item/generic_slide` |
 | `tacz_extra:item/generic_trigger` |
+| `tacz_extra:item/high_carbon_steel_ingot` |
+| `tacz_extra:item/high_carbon_steel_plate` |
+| `tacz_extra:item/industrial_propellant` |
 | `tacz_extra:item/mag_awm` |
 | `tacz_extra:item/mag_deagle357gold` |
 | `tacz_extra:item/mag_deagle50` |
@@ -107,6 +112,9 @@
 | `tacz_extra:item/mag_speedloader22` |
 | `tacz_extra:item/mag_springfield1873` |
 | `tacz_extra:item/mag_type81` |
+| `tacz_extra:item/pig_iron_ingot` |
+| `tacz_extra:item/primer` |
+| `tacz_extra:item/sulfur_dust` |
 
 ## 尚不存在可绑定身份的设计项
 
