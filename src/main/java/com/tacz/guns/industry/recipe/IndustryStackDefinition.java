@@ -93,6 +93,9 @@ public final class IndustryStackDefinition {
                     .blueprintRole(string(custom, "IndustryBlueprintRole"))
                     .actionProfile(string(custom, "IndustryActionProfile"))
                     .toolingScope(string(custom, "IndustryToolingScope"))
+                    .magazineFamily(string(custom, "MagazineFamily"))
+                    .magazineAmmoId(string(custom, "MagazineAmmoId"))
+                    .magazineCapacity(integer(custom, "MagazineCapacity", 0))
                     .build();
         } else if (item == ModItems.AMMO) {
             stack = AmmoItemBuilder.create()

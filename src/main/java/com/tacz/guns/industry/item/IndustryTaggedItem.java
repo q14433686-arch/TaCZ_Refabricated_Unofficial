@@ -4,8 +4,11 @@ import cn.sh1rocu.tacz.api.extension.IItem;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import com.tacz.guns.client.industry.icon.IndustryIconRenderer;
 import com.tacz.guns.industry.ammo.CartridgeStackLimitService;
+import com.tacz.guns.industry.magazine.MagazineItemDataAccessor;
+import com.tacz.guns.util.ItemNbtUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -20,7 +23,7 @@ import javax.annotation.Nonnull;
 import java.util.function.Consumer;
 
 /**
- * Generic rendered item for a platform-specific component or reusable blueprint.
+ * Generic rendered item for a platform-specific component, removable-carrier subassembly, or reusable blueprint.
  */
 public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor, IItem {
     public IndustryTaggedItem(Properties properties) {
@@ -127,6 +130,28 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
         if ("cartridge_gauge_blank".equals(partKind)) {
             adder.accept(Component.translatable("tooltip.tacz.industry.cartridge_gauge_blank")
                     .withStyle(style -> style.withColor(0xAAAAAA)));
+        }
+        if ("carrier_gauge_blank".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.carrier_gauge_blank")
+                    .withStyle(style -> style.withColor(0xAAAAAA)));
+        }
+        if ("carrier_gauge".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.carrier_gauge")
+                    .withStyle(style -> style.withColor(0x55FFFF)));
+        }
+        if ("carrier_body".equals(partKind) || "carrier_feed_kit".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.carrier_component")
+                    .withStyle(style -> style.withColor(0x8FD6C6)));
+        }
+        if (partKind.startsWith("carrier_")) {
+            CompoundTag tag = ItemNbtUtils.getTag(stack);
+            String family = tag.getStringOr(MagazineItemDataAccessor.MAGAZINE_FAMILY_TAG, "");
+            String ammo = tag.getStringOr(MagazineItemDataAccessor.MAGAZINE_AMMO_ID_TAG, "");
+            int capacity = Math.max(0, tag.getIntOr(MagazineItemDataAccessor.MAGAZINE_CAPACITY_TAG, 0));
+            if (!family.isBlank() && !ammo.isBlank() && capacity > 0) {
+                adder.accept(Component.translatable("tooltip.tacz.industry.carrier_spec", family, ammo, capacity)
+                        .withStyle(style -> style.withColor(0xAAAAAA)));
+            }
         }
         if (partKind.startsWith("dossier_archive_")) {
             adder.accept(Component.translatable("tooltip.tacz.industry.dossier_archive")

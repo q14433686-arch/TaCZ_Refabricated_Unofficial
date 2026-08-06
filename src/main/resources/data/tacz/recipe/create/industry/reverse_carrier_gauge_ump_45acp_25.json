@@ -1,0 +1,52 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_gauge_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.carrier_gauge",
+      "DieTargetKind": "carrier"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:magazine"
+    ],
+    "nbt": {
+      "MagazineFamily": "ump_45acp",
+      "MagazineAmmoId": "tacz:45acp",
+      "MagazineCapacity": 25,
+      "MagazineAmmoCount": 0,
+      "MagazineDisplayName": "item.tacz.magazine.ump_45"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "feeding",
+          "IndustryPartKind": "carrier_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.ump_45acp_25",
+          "DieTargetKind": "ump_45acp_25",
+          "MagazineFamily": "ump_45acp",
+          "MagazineAmmoId": "tacz:45acp",
+          "MagazineCapacity": 25
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_body",
+      "IndustryDisplayName": "item.tacz.gun_component.carrier_body.qbz_58x42_30",
+      "DieTargetKind": "qbz_58x42_30",
+      "MagazineFamily": "qbz_58x42",
+      "MagazineAmmoId": "tacz:58x42",
+      "MagazineCapacity": 30
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_feed_kit",
+      "IndustryDisplayName": "item.tacz.gun_component.carrier_feed_kit.qbz_58x42_30",
+      "DieTargetKind": "qbz_58x42_30",
+      "MagazineFamily": "qbz_58x42",
+      "MagazineAmmoId": "tacz:58x42",
+      "MagazineCapacity": 30
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:magazine",
+      "components": {
+        "minecraft:custom_data": {
+          "MagazineFamily": "qbz_58x42",
+          "MagazineAmmoId": "tacz:58x42",
+          "MagazineCapacity": 30,
+          "MagazineAmmoCount": 0,
+          "MagazineDisplayName": "item.tacz.magazine.qbz_58"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_gauge_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.carrier_gauge",
+      "DieTargetKind": "carrier"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:magazine"
+    ],
+    "nbt": {
+      "MagazineFamily": "m14_308",
+      "MagazineAmmoId": "tacz:308",
+      "MagazineCapacity": 10,
+      "MagazineAmmoCount": 0,
+      "MagazineDisplayName": "item.tacz.magazine.m14_308"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "feeding",
+          "IndustryPartKind": "carrier_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.m14_308_10",
+          "DieTargetKind": "m14_308_10",
+          "MagazineFamily": "m14_308",
+          "MagazineAmmoId": "tacz:308",
+          "MagazineCapacity": 10
+        }
+      }
+    }
+  ]
+}

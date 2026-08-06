@@ -48,6 +48,31 @@ public class ModCreativeTabs {
                 output.accept(ModItems.INDUSTRIAL_PROPELLANT);
                 output.accept(ModItems.PRIMER);
                 output.accept(ModItems.MAGAZINE_BLANK);
+                // Representative carrier-tooling samples make the new
+                // body/feed-component chain inspectable without exposing all
+                // 22 removable-carrier identities in this general-purpose tab.
+                output.accept(IndustryItemBuilder.pressDie()
+                        .platform("feeding").kind("carrier_gauge_blank")
+                        .displayNameKey("item.tacz.press_die_blank.carrier_gauge")
+                        .dieTargetKind("carrier").build());
+                output.accept(IndustryItemBuilder.componentBlank()
+                        .platform("feeding").kind("carrier_feed_kit_blank")
+                        .displayNameKey("item.tacz.gun_component_blank.carrier_feed_kit").build());
+                output.accept(IndustryItemBuilder.pressDie()
+                        .platform("feeding").kind("carrier_gauge")
+                        .displayNameKey("item.tacz.press_die.carrier_gauge.ak_762x39_30")
+                        .dieTargetKind("ak_762x39_30")
+                        .magazineFamily("ak_762x39").magazineAmmoId("tacz:762x39").magazineCapacity(30).build());
+                output.accept(IndustryItemBuilder.component()
+                        .platform("feeding").kind("carrier_body")
+                        .displayNameKey("item.tacz.gun_component.carrier_body.ak_762x39_30")
+                        .dieTargetKind("ak_762x39_30")
+                        .magazineFamily("ak_762x39").magazineAmmoId("tacz:762x39").magazineCapacity(30).build());
+                output.accept(IndustryItemBuilder.component()
+                        .platform("feeding").kind("carrier_feed_kit")
+                        .displayNameKey("item.tacz.gun_component.carrier_feed_kit.ak_762x39_30")
+                        .dieTargetKind("ak_762x39_30")
+                        .magazineFamily("ak_762x39").magazineAmmoId("tacz:762x39").magazineCapacity(30).build());
                 // Representative samples make the generic NBT-backed items
                 // discoverable in creative without exposing every platform.
                 output.accept(IndustryItemBuilder.cartridgeCaseBlank()

@@ -67,8 +67,10 @@ public final class IndustrialSalvageService {
         if (magazine.getAmmoCount(input) > 0) {
             return Plan.failure(Failure.MAGAZINE_LOADED);
         }
-        // A recovered empty shell returns to the existing gun-held Deployer
-        // calibration route; it never materialises a different magazine family.
+        // A recovered empty shell returns as neutral body stock. The current
+        // carrier line requires a separately calibrated specification gauge and
+        // a named feed kit; it never stamps a finished carrier from a complete
+        // gun or materialises a different compatibility family.
         return Plan.success(List.of(new ItemStack(ModItems.MAGAZINE_BLANK)));
     }
 

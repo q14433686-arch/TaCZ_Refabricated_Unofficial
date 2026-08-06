@@ -18,6 +18,8 @@
 | 类别 | 总身份数 | 已满足 | 仍需补图 | exact | family | placeholder | supplied block model | runtime fallback |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | action_fixture | 32 | 32 | 0 | 0 | 32 | 0 | 0 | 0 |
+| carrier_component | 45 | 45 | 0 | 0 | 45 | 0 | 0 | 0 |
+| carrier_tooling | 23 | 23 | 0 | 0 | 23 | 0 | 0 | 0 |
 | cartridge_case_die | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
 | cartridge_gauge | 24 | 24 | 0 | 5 | 19 | 0 | 0 | 0 |
 | cartridge_projectile_die | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
@@ -56,7 +58,6 @@
 | --- |
 | `tacz_extra:item/base_barrel` |
 | `tacz_extra:item/base_barrel_blank` |
-| `tacz_extra:item/base_billet` |
 | `tacz_extra:item/base_bolt` |
 | `tacz_extra:item/base_bolt_blank` |
 | `tacz_extra:item/base_case_blank` |
@@ -64,8 +65,6 @@
 | `tacz_extra:item/base_frame` |
 | `tacz_extra:item/base_furniture_blank` |
 | `tacz_extra:item/base_furniture_kit` |
-| `tacz_extra:item/base_m_assembly` |
-| `tacz_extra:item/base_m_loader` |
 | `tacz_extra:item/base_m_salvage` |
 | `tacz_extra:item/base_magazine_blank` |
 | `tacz_extra:item/base_magazine_pouch` |

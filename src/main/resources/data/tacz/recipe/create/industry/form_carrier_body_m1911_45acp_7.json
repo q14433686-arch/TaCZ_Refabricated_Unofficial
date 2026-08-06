@@ -1,0 +1,44 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": "tacz:magazine_blank",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_gauge",
+      "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.m1911_45acp_7",
+      "DieTargetKind": "m1911_45acp_7",
+      "MagazineFamily": "m1911_45acp",
+      "MagazineAmmoId": "tacz:45acp",
+      "MagazineCapacity": 7
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "feeding",
+          "IndustryPartKind": "carrier_body",
+          "IndustryDisplayName": "item.tacz.gun_component.carrier_body.m1911_45acp_7",
+          "DieTargetKind": "m1911_45acp_7",
+          "MagazineFamily": "m1911_45acp",
+          "MagazineAmmoId": "tacz:45acp",
+          "MagazineCapacity": 7
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

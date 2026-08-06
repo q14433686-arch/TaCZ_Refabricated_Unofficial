@@ -1,13 +1,15 @@
 package com.tacz.guns.industry.item;
 
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.industry.magazine.MagazineItemDataAccessor;
 import com.tacz.guns.init.ModItems;
+import com.tacz.guns.util.ItemNbtUtils;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-/** Factory for NBT-identified gun components and reusable blueprints. */
+/** Factory for NBT-identified industrial components, carrier tooling, and reusable blueprints. */
 public final class IndustryItemBuilder {
     private final Item item;
     private String platform = "";
@@ -21,6 +23,11 @@ public final class IndustryItemBuilder {
     private String blueprintRole = "";
     private String actionProfile = "";
     private String toolingScope = "";
+    // Carrier tooling/components reuse the magazine compatibility contract so
+    // their real family/ammo/capacity identity survives recipe-viewer samples.
+    private String magazineFamily = "";
+    private String magazineAmmoId = "";
+    private int magazineCapacity;
 
     private IndustryItemBuilder(Item item) {
         this.item = item;
@@ -113,6 +120,26 @@ public final class IndustryItemBuilder {
         return this;
     }
 
+    /**
+     * Preserve the physical carrier specification on a generic industry stack.
+     * This is not a second magazine implementation: it is the same stable
+     * compatibility data later copied onto the finished {@code tacz:magazine}.
+     */
+    public IndustryItemBuilder magazineFamily(String family) {
+        this.magazineFamily = family == null ? "" : family;
+        return this;
+    }
+
+    public IndustryItemBuilder magazineAmmoId(String ammoId) {
+        this.magazineAmmoId = ammoId == null ? "" : ammoId;
+        return this;
+    }
+
+    public IndustryItemBuilder magazineCapacity(int capacity) {
+        this.magazineCapacity = Math.max(0, capacity);
+        return this;
+    }
+
     public ItemStack build() {
         ItemStack stack = new ItemStack(item);
         if (stack.getItem() instanceof IndustryItemDataAccessor accessor) {
@@ -127,6 +154,13 @@ public final class IndustryItemBuilder {
             accessor.setBlueprintRole(stack, blueprintRole);
             accessor.setActionProfile(stack, actionProfile);
             accessor.setToolingScope(stack, toolingScope);
+        }
+        if (!magazineFamily.isBlank() || !magazineAmmoId.isBlank() || magazineCapacity > 0) {
+            ItemNbtUtils.updateTag(stack, tag -> {
+                tag.putString(MagazineItemDataAccessor.MAGAZINE_FAMILY_TAG, magazineFamily);
+                tag.putString(MagazineItemDataAccessor.MAGAZINE_AMMO_ID_TAG, magazineAmmoId);
+                tag.putInt(MagazineItemDataAccessor.MAGAZINE_CAPACITY_TAG, magazineCapacity);
+            });
         }
         // Recipe JSON writes this component directly. Builders are also used
         // for creative/REI samples, so give those configured samples the same

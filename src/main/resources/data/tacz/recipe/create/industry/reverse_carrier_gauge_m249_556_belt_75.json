@@ -1,0 +1,52 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_gauge_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.carrier_gauge",
+      "DieTargetKind": "carrier"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:magazine"
+    ],
+    "nbt": {
+      "MagazineFamily": "m249_556_belt",
+      "MagazineAmmoId": "tacz:556x45",
+      "MagazineCapacity": 75,
+      "MagazineAmmoCount": 0,
+      "MagazineDisplayName": "item.tacz.magazine.m249_belt"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "feeding",
+          "IndustryPartKind": "carrier_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.m249_556_belt_75",
+          "DieTargetKind": "m249_556_belt_75",
+          "MagazineFamily": "m249_556_belt",
+          "MagazineAmmoId": "tacz:556x45",
+          "MagazineCapacity": 75
+        }
+      }
+    }
+  ]
+}

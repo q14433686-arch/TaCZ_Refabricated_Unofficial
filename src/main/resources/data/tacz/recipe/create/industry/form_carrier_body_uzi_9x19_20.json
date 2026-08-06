@@ -1,0 +1,62 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": "tacz:magazine_blank",
+  "transitional_item": {
+    "id": "tacz:magazine_blank"
+  },
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "feeding",
+        "IndustryPartKind": "carrier_body",
+        "IndustryDisplayName": "item.tacz.gun_component.carrier_body.uzi_9x19_20",
+        "DieTargetKind": "uzi_9x19_20",
+        "MagazineFamily": "uzi_9x19",
+        "MagazineAmmoId": "tacz:9mm",
+        "MagazineCapacity": 20
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": "tacz:magazine_blank",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "feeding",
+          "IndustryPartKind": "carrier_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.uzi_9x19_20",
+          "DieTargetKind": "uzi_9x19_20",
+          "MagazineFamily": "uzi_9x19",
+          "MagazineAmmoId": "tacz:9mm",
+          "MagazineCapacity": 20
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    }
+  ]
+}

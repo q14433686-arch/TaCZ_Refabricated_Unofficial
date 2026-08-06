@@ -1,0 +1,55 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_gauge_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.carrier_gauge",
+      "DieTargetKind": "carrier"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_m16a1",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_template.default_m16a1",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "platform_tooling"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "feeding",
+          "IndustryPartKind": "carrier_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.stanag_556_20",
+          "DieTargetKind": "stanag_556_20",
+          "MagazineFamily": "stanag_556",
+          "MagazineAmmoId": "tacz:556x45",
+          "MagazineCapacity": 20
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

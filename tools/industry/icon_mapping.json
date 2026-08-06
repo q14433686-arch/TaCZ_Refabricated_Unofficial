@@ -1256,6 +1256,66 @@
         "industry_part_kind": "dossier_archive_precision"
       },
       "coverage": "family"
+    },
+    {
+      "id": "carrier_gauge_blank_family",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_die_blank",
+      "priority": 540,
+      "match": {
+        "industry_platform": "feeding",
+        "industry_part_kind": "carrier_gauge_blank"
+      },
+      "coverage": "family",
+      "note": "Neutral removable-carrier metrology stock; exact carrier identity is established only after calibration."
+    },
+    {
+      "id": "carrier_gauge_family",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 540,
+      "match": {
+        "industry_platform": "feeding",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "coverage": "family",
+      "note": "Shared tooling-family visual for calibrated magazine and belt-box gauges."
+    },
+    {
+      "id": "carrier_feed_kit_blank_family",
+      "item": "tacz:gun_component_blank",
+      "texture": "tacz_extra:item/base_billet",
+      "priority": 540,
+      "match": {
+        "industry_platform": "feeding",
+        "industry_part_kind": "carrier_feed_kit_blank"
+      },
+      "coverage": "family",
+      "note": "Neutral follower/spring/belt-link stock before gauge forming."
+    },
+    {
+      "id": "carrier_body_family",
+      "item": "tacz:gun_component",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "priority": 540,
+      "match": {
+        "industry_platform": "feeding",
+        "industry_part_kind": "carrier_body"
+      },
+      "coverage": "family",
+      "note": "Shared carrier-body assembly visual; no unprovided texture is claimed to be an exact magazine shell."
+    },
+    {
+      "id": "carrier_feed_kit_family",
+      "item": "tacz:gun_component",
+      "texture": "tacz_extra:item/base_m_loader",
+      "priority": 540,
+      "match": {
+        "industry_platform": "feeding",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "coverage": "family",
+      "note": "Shared carrier feed-component visual for named follower/spring or belt-link kits."
     }
   ]
 }

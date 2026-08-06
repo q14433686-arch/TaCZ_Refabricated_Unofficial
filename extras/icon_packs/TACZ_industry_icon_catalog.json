@@ -14,6 +14,16 @@
       "family": 32,
       "total": 32
     },
+    "carrier_component": {
+      "covered": 45,
+      "family": 45,
+      "total": 45
+    },
+    "carrier_tooling": {
+      "covered": 23,
+      "family": 23,
+      "total": 23
+    },
     "cartridge_case_die": {
       "covered": 24,
       "exact": 24,
@@ -329,8 +339,10 @@
     },
     {
       "texture": "tacz_extra:item/base_billet",
-      "bound_by": [],
-      "status": "available_unbound"
+      "bound_by": [
+        "carrier_feed_kit_blank_family"
+      ],
+      "status": "bound"
     },
     {
       "texture": "tacz_extra:item/base_blueprint",
@@ -373,6 +385,7 @@
         "ammunition_cartridge_gauge_family_rpg_rocket",
         "ammunition_case_datum_gauge_family",
         "ammunition_projectile_datum_gauge_family",
+        "carrier_gauge_family",
         "tooling_acceptance_gauge",
         "tooling_critical_fit_gauge"
       ],
@@ -392,6 +405,7 @@
       "texture": "tacz_extra:item/base_die_blank",
       "bound_by": [
         "ammunition_cartridge_gauge_blank",
+        "carrier_gauge_blank_family",
         "tooling_acceptance_gauge_blank",
         "tooling_acceptance_gauge_stock",
         "tooling_action_jig",
@@ -416,13 +430,17 @@
     },
     {
       "texture": "tacz_extra:item/base_m_assembly",
-      "bound_by": [],
-      "status": "available_unbound"
+      "bound_by": [
+        "carrier_body_family"
+      ],
+      "status": "bound"
     },
     {
       "texture": "tacz_extra:item/base_m_loader",
-      "bound_by": [],
-      "status": "available_unbound"
+      "bound_by": [
+        "carrier_feed_kit_family"
+      ],
+      "status": "bound"
     },
     {
       "texture": "tacz_extra:item/base_m_salvage",
@@ -6699,6 +6717,1568 @@
       "mapping_eligible": true,
       "mapping": "tooling_acceptance_gauge_stock",
       "texture": "tacz_extra:item/base_die_blank",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier:feed_kit_blank",
+      "item": "tacz:gun_component_blank",
+      "selectors": {
+        "industry_platform": "feeding",
+        "industry_part_kind": "carrier_feed_kit_blank"
+      },
+      "selector": "tacz:gun_component_blank ; industry_part_kind=carrier_feed_kit_blank ; industry_platform=feeding",
+      "label": "Neutral Carrier Feed-Kit Blank",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier:feed_kit_blank",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_blank_family",
+      "texture": "tacz_extra:item/base_billet",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:ak_762x39_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "ak_762x39_30",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=ak_762x39_30",
+      "label": "AK 7.62×39 30-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:ak_762x39_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:ak_762x39_40",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "ak_762x39_40",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=ak_762x39_40",
+      "label": "RPK 7.62×39 40-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:ak_762x39_40",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:cz75_9x19_16",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "cz75_9x19_16",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=cz75_9x19_16",
+      "label": "CZ 75 16-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:cz75_9x19_16",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:evolys_308_belt_75",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "evolys_308_belt_75",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=evolys_308_belt_75",
+      "label": "FN Evolys .308 75-round Belt Box Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:evolys_308_belt_75",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:fal_308_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "fal_308_20",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=fal_308_20",
+      "label": "FAL .308 20-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:fal_308_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:g36_556_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "g36_556_30",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=g36_556_30",
+      "label": "G36 5.56×45 30-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:g36_556_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:g3_308_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "g3_308_20",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=g3_308_20",
+      "label": "G3 .308 20-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:g3_308_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:glock_9x19_17",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "glock_9x19_17",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=glock_9x19_17",
+      "label": "Glock 17 17-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:glock_9x19_17",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:m14_308_10",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m14_308_10",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=m14_308_10",
+      "label": "M14 .308 10-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:m14_308_10",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:m1911_45acp_7",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m1911_45acp_7",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=m1911_45acp_7",
+      "label": "M1911 .45 ACP 7-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:m1911_45acp_7",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:m249_556_belt_75",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m249_556_belt_75",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=m249_556_belt_75",
+      "label": "M249 5.56 75-round Belt Box Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:m249_556_belt_75",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:m9_9x19_17",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m9_9x19_17",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=m9_9x19_17",
+      "label": "M9 17-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:m9_9x19_17",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:mk23_45acp_12",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "mk23_45acp_12",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=mk23_45acp_12",
+      "label": "MK23 .45 ACP 12-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:mk23_45acp_12",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:mp5_9x19_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "mp5_9x19_30",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=mp5_9x19_30",
+      "label": "MP5 9 mm 30-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:mp5_9x19_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:p320_45acp_12",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "p320_45acp_12",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=p320_45acp_12",
+      "label": "P320 .45 ACP 12-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:p320_45acp_12",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:p90_57x28_50",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "p90_57x28_50",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=p90_57x28_50",
+      "label": "P90 5.7×28 50-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:p90_57x28_50",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:qbz_58x42_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "qbz_58x42_30",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=qbz_58x42_30",
+      "label": "QBZ 5.8×42 30-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:qbz_58x42_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:stanag_556_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "stanag_556_20",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=stanag_556_20",
+      "label": "STANAG 5.56×45 20-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:stanag_556_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:stanag_556_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "stanag_556_30",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=stanag_556_30",
+      "label": "STANAG 5.56×45 30-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:stanag_556_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:ump_45acp_25",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "ump_45acp_25",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=ump_45acp_25",
+      "label": "UMP .45 ACP 25-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:ump_45acp_25",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:uzi_9x19_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "uzi_9x19_20",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=uzi_9x19_20",
+      "label": "Uzi 9 mm 20-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:uzi_9x19_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:vector_45acp_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "vector_45acp_20",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=vector_45acp_20",
+      "label": "Vector .45 ACP 20-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:vector_45acp_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:ak_762x39_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "ak_762x39_30",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=ak_762x39_30",
+      "label": "AK 7.62×39 30-round Magazine Rifle Double-Column Feed Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:ak_762x39_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:ak_762x39_40",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "ak_762x39_40",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=ak_762x39_40",
+      "label": "RPK 7.62×39 40-round Magazine Extended Rifle Feed Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:ak_762x39_40",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:cz75_9x19_16",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "cz75_9x19_16",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=cz75_9x19_16",
+      "label": "CZ 75 16-round Magazine Double-Column Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:cz75_9x19_16",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:evolys_308_belt_75",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "evolys_308_belt_75",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=evolys_308_belt_75",
+      "label": "FN Evolys .308 75-round Belt Box Belt Link and Feed Tray Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:evolys_308_belt_75",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:fal_308_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "fal_308_20",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=fal_308_20",
+      "label": "FAL .308 20-round Magazine Full-Rifle Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:fal_308_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:g36_556_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "g36_556_30",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=g36_556_30",
+      "label": "G36 5.56×45 30-round Magazine Rifle Double-Column Feed Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:g36_556_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:g3_308_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "g3_308_20",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=g3_308_20",
+      "label": "G3 .308 20-round Magazine Full-Rifle Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:g3_308_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:glock_9x19_17",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "glock_9x19_17",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=glock_9x19_17",
+      "label": "Glock 17 17-round Magazine Double-Column Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:glock_9x19_17",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:m14_308_10",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m14_308_10",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=m14_308_10",
+      "label": "M14 .308 10-round Magazine Rifle Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:m14_308_10",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:m1911_45acp_7",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m1911_45acp_7",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=m1911_45acp_7",
+      "label": "M1911 .45 ACP 7-round Magazine Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:m1911_45acp_7",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:m249_556_belt_75",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m249_556_belt_75",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=m249_556_belt_75",
+      "label": "M249 5.56 75-round Belt Box Belt Link and Feed Tray Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:m249_556_belt_75",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:m9_9x19_17",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m9_9x19_17",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=m9_9x19_17",
+      "label": "M9 17-round Magazine Double-Column Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:m9_9x19_17",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:mk23_45acp_12",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "mk23_45acp_12",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=mk23_45acp_12",
+      "label": "MK23 .45 ACP 12-round Magazine Extended Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:mk23_45acp_12",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:mp5_9x19_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "mp5_9x19_30",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=mp5_9x19_30",
+      "label": "MP5 9 mm 30-round Magazine SMG Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:mp5_9x19_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:p320_45acp_12",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "p320_45acp_12",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=p320_45acp_12",
+      "label": "P320 .45 ACP 12-round Magazine Extended Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:p320_45acp_12",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:p90_57x28_50",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "p90_57x28_50",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=p90_57x28_50",
+      "label": "P90 5.7×28 50-round Magazine Rotary Top-Feed Pack",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:p90_57x28_50",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:qbz_58x42_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "qbz_58x42_30",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=qbz_58x42_30",
+      "label": "QBZ 5.8×42 30-round Magazine Rifle Double-Column Feed Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:qbz_58x42_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:stanag_556_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "stanag_556_20",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=stanag_556_20",
+      "label": "STANAG 5.56×45 20-round Magazine Rifle Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:stanag_556_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:stanag_556_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "stanag_556_30",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=stanag_556_30",
+      "label": "STANAG 5.56×45 30-round Magazine Rifle Double-Column Feed Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:stanag_556_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:ump_45acp_25",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "ump_45acp_25",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=ump_45acp_25",
+      "label": "UMP .45 ACP 25-round Magazine SMG Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:ump_45acp_25",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:uzi_9x19_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "uzi_9x19_20",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=uzi_9x19_20",
+      "label": "Uzi 9 mm 20-round Magazine SMG Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:uzi_9x19_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:vector_45acp_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "vector_45acp_20",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=vector_45acp_20",
+      "label": "Vector .45 ACP 20-round Magazine SMG Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:vector_45acp_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier:gauge_blank",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "industry_part_kind": "carrier_gauge_blank"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge_blank ; industry_platform=feeding",
+      "label": "Neutral Carrier Specification Gauge Blank",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier:gauge_blank",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_blank_family",
+      "texture": "tacz_extra:item/base_die_blank",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:ak_762x39_30",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "ak_762x39_30",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=ak_762x39_30",
+      "label": "AK 7.62×39 30-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:ak_762x39_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:ak_762x39_40",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "ak_762x39_40",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=ak_762x39_40",
+      "label": "RPK 7.62×39 40-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:ak_762x39_40",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:cz75_9x19_16",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "cz75_9x19_16",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=cz75_9x19_16",
+      "label": "CZ 75 16-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:cz75_9x19_16",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:evolys_308_belt_75",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "evolys_308_belt_75",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=evolys_308_belt_75",
+      "label": "FN Evolys .308 75-round Belt Box Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:evolys_308_belt_75",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:fal_308_20",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "fal_308_20",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=fal_308_20",
+      "label": "FAL .308 20-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:fal_308_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:g36_556_30",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "g36_556_30",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=g36_556_30",
+      "label": "G36 5.56×45 30-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:g36_556_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:g3_308_20",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "g3_308_20",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=g3_308_20",
+      "label": "G3 .308 20-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:g3_308_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:glock_9x19_17",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "glock_9x19_17",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=glock_9x19_17",
+      "label": "Glock 17 17-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:glock_9x19_17",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:m14_308_10",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m14_308_10",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=m14_308_10",
+      "label": "M14 .308 10-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:m14_308_10",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:m1911_45acp_7",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m1911_45acp_7",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=m1911_45acp_7",
+      "label": "M1911 .45 ACP 7-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:m1911_45acp_7",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:m249_556_belt_75",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m249_556_belt_75",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=m249_556_belt_75",
+      "label": "M249 5.56 75-round Belt Box Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:m249_556_belt_75",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:m9_9x19_17",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m9_9x19_17",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=m9_9x19_17",
+      "label": "M9 17-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:m9_9x19_17",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:mk23_45acp_12",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "mk23_45acp_12",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=mk23_45acp_12",
+      "label": "MK23 .45 ACP 12-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:mk23_45acp_12",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:mp5_9x19_30",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "mp5_9x19_30",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=mp5_9x19_30",
+      "label": "MP5 9 mm 30-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:mp5_9x19_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:p320_45acp_12",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "p320_45acp_12",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=p320_45acp_12",
+      "label": "P320 .45 ACP 12-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:p320_45acp_12",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:p90_57x28_50",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "p90_57x28_50",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=p90_57x28_50",
+      "label": "P90 5.7×28 50-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:p90_57x28_50",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:qbz_58x42_30",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "qbz_58x42_30",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=qbz_58x42_30",
+      "label": "QBZ 5.8×42 30-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:qbz_58x42_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:stanag_556_20",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "stanag_556_20",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=stanag_556_20",
+      "label": "STANAG 5.56×45 20-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:stanag_556_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:stanag_556_30",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "stanag_556_30",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=stanag_556_30",
+      "label": "STANAG 5.56×45 30-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:stanag_556_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:ump_45acp_25",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "ump_45acp_25",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=ump_45acp_25",
+      "label": "UMP .45 ACP 25-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:ump_45acp_25",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:uzi_9x19_20",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "uzi_9x19_20",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=uzi_9x19_20",
+      "label": "Uzi 9 mm 20-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:uzi_9x19_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:vector_45acp_20",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "vector_45acp_20",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=vector_45acp_20",
+      "label": "Vector .45 ACP 20-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:vector_45acp_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
       "current_coverage": "family",
       "covered": true,
       "needs_art": false

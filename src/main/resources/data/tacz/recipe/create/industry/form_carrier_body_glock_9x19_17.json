@@ -1,0 +1,44 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": "tacz:magazine_blank",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_gauge",
+      "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.glock_9x19_17",
+      "DieTargetKind": "glock_9x19_17",
+      "MagazineFamily": "glock_9x19",
+      "MagazineAmmoId": "tacz:9mm",
+      "MagazineCapacity": 17
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "feeding",
+          "IndustryPartKind": "carrier_body",
+          "IndustryDisplayName": "item.tacz.gun_component.carrier_body.glock_9x19_17",
+          "DieTargetKind": "glock_9x19_17",
+          "MagazineFamily": "glock_9x19",
+          "MagazineAmmoId": "tacz:9mm",
+          "MagazineCapacity": 17
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

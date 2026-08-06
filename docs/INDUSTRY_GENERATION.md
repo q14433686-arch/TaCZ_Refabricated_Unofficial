@@ -108,7 +108,7 @@ industry/ammo/<caliber>.json
 
 每条清单还显式声明 `balance_tier`、`batch_count`、`propellant_count`、`case_blank_count` 与 `projectile_blank_count`。`balance_tier` 对应内置的弹道角色最低毛坯质量/推进药下限；最终定义将 `case_count`、`projectile_count`、`primer_count` 设为批量输出数，确保一枚物理件绝不复制成一批弹；推进药按弹种等级单独增加，而大口径壳/弹头会在成型顺序线上实际消耗额外中性毛坯。`--check` 同时核对批量不超过成品堆叠/旧配方批量，且推进药不少于弹道等级与旧枪包按每发折算的火药下限。
 
-生成器还读取运行时的 `data/tacz/industry/gun_feed/*.json`，自动生成全部实体弹匣的“中性弹匣壳体 + 保留成枪量规”部署器配方；若某个供弹定义的 `ammo` 没有口径源定义，`--check` 会失败。
+`tools/industry/magazine_carriers.json` 与运行时的 `data/tacz/industry/gun_feed/*.json` 双向校验全部默认可拆卸弹匣/弹链箱。生成器为每个族／弹种／容量身份输出：中性壳体、供弹组件和规格量规毛坯的 Basin 工艺；生产模板（保留）或空成品样本（消耗）→规格量规；规格量规→命名壳体与命名托弹/弹链组件；以及单工件最终总装。它明确删除旧的“中性壳体 + 完整成枪 → 成品弹匣”捷径。若某个可拆卸供弹定义没有清单身份、缺少对应平台、缺少弹药源，或任一顺序线超过 Create Fly 的 7 个原生 JEI 阶段，`--check` 会失败。
 
 ## 稳定工艺档案委托
 

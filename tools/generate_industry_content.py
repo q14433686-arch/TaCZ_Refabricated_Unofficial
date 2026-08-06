@@ -23,6 +23,7 @@ REPO = Path(__file__).resolve().parents[1]
 RESOURCE_ROOT = REPO / "src/main/resources"
 PLATFORM_ROOT = REPO / "tools/industry/platforms"
 CARTRIDGE_MANIFEST = REPO / "tools/industry/cartridges.json"
+MAGAZINE_CARRIER_MANIFEST = REPO / "tools/industry/magazine_carriers.json"
 DEFAULT_GUN_POLICY = REPO / "tools/industry/default_gun_policy.json"
 MACHINE_MANIFEST = REPO / "tools/industry/machines.json"
 BLUEPRINT_ACQUISITION_MANIFEST = REPO / "tools/industry/blueprint_acquisition.json"
@@ -717,6 +718,118 @@ def load_cartridges() -> list[dict[str, Any]]:
             )
         entry["_product_stack_limit"] = cap
     return entries
+
+
+def load_magazine_carriers(cartridge_ammo_ids: set[str]) -> list[dict[str, Any]]:
+    """Load every removable carrier as an explicit physical specification.
+
+    ``gun_feed`` owns the runtime compatibility contract; this manifest owns
+    manufacturing mass, feed complexity and human-readable tooling names.  The
+    two sources are checked bidirectionally so a new default detachable feed
+    can never silently keep the former "blank + finished gun" shortcut.
+    Internal/tube/revolver/single-shot feeds are deliberately excluded: they
+    are gun-integrated assemblies, not removable ``tacz:magazine`` stacks.
+    """
+    manifest = read_json(MAGAZINE_CARRIER_MANIFEST)
+    if not isinstance(manifest, dict) or manifest.get("schema_version") != 1:
+        raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: expected schema_version 1 object")
+    profiles = manifest.get("profiles")
+    carriers = manifest.get("carriers")
+    if not isinstance(profiles, dict) or not profiles:
+        raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: profiles must be a non-empty object")
+    if not isinstance(carriers, list) or not carriers:
+        raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: carriers must be a non-empty list")
+
+    for profile_id, profile in profiles.items():
+        if not isinstance(profile_id, str) or not re.fullmatch(r"[a-z0-9_]+", profile_id) \
+                or not isinstance(profile, dict):
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: invalid carrier profile {profile_id!r}")
+        for key in ("body_blank_count", "feed_kit_blank_count"):
+            count = profile.get(key)
+            if not isinstance(count, int) or not 1 <= count <= MAX_SEQUENCED_ASSEMBLY_STEPS:
+                raise ValueError(
+                    f"{MAGAZINE_CARRIER_MANIFEST}: {profile_id}.{key} must fit Create Fly's "
+                    f"1..{MAX_SEQUENCED_ASSEMBLY_STEPS}-stage viewer limit"
+                )
+        for key in ("feed_name_en", "feed_name_zh"):
+            require_string(profile, key, MAGAZINE_CARRIER_MANIFEST)
+
+    feed_root = RESOURCE_ROOT / "data/tacz/industry/gun_feed"
+    feeds_by_identity: dict[tuple[str, str, int], list[tuple[str, dict[str, Any]]]] = defaultdict(list)
+    for path in sorted(feed_root.glob("*.json")):
+        feed = read_json(path)
+        mechanism = feed.get("mechanism")
+        if mechanism not in {"detachable_magazine", "belt"}:
+            continue
+        family = feed.get("magazine_family")
+        ammo = feed.get("ammo")
+        capacity = feed.get("magazine_capacity")
+        display_name = feed.get("display_name")
+        if not isinstance(family, str) or not family or not isinstance(ammo, str) or ammo not in cartridge_ammo_ids \
+                or not isinstance(capacity, int) or not 1 <= capacity <= 512 \
+                or not isinstance(display_name, str) or not display_name:
+            raise ValueError(f"{path}: invalid removable carrier declaration")
+        feeds_by_identity[(family, ammo, capacity)].append((path.stem, feed))
+
+    seen_ids: set[str] = set()
+    seen_identities: set[tuple[str, str, int]] = set()
+    result: list[dict[str, Any]] = []
+    for carrier in carriers:
+        if not isinstance(carrier, dict):
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: carrier entries must be objects")
+        for key in ("id", "family", "ammo", "mechanism", "profile", "name_en", "name_zh"):
+            require_string(carrier, key, MAGAZINE_CARRIER_MANIFEST)
+        carrier_id = carrier["id"]
+        if not re.fullmatch(r"[a-z0-9_]+", carrier_id) or carrier_id in seen_ids:
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: carrier id must be unique [a-z0-9_]+: {carrier_id!r}")
+        seen_ids.add(carrier_id)
+        capacity = carrier.get("capacity")
+        if not isinstance(capacity, int) or not 1 <= capacity <= 512:
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id}.capacity must be in [1, 512]")
+        if carrier["ammo"] not in cartridge_ammo_ids:
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id} references undeclared cartridge {carrier['ammo']}")
+        if carrier["mechanism"] not in {"detachable_magazine", "belt"}:
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id}.mechanism must be detachable_magazine or belt")
+        profile_id = carrier["profile"]
+        if profile_id not in profiles:
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id} references unknown profile {profile_id}")
+        source_guns = carrier.get("source_guns")
+        if not isinstance(source_guns, list) or not source_guns \
+                or not all(isinstance(value, str) and re.fullmatch(r"[a-z0-9_]+", value) for value in source_guns) \
+                or len(set(source_guns)) != len(source_guns):
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id}.source_guns must be unique gun-feed file stems")
+
+        identity = (carrier["family"], carrier["ammo"], capacity)
+        if identity in seen_identities:
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: duplicate physical carrier identity {identity}")
+        seen_identities.add(identity)
+        feeds = feeds_by_identity.get(identity)
+        if not feeds:
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id} has no matching gun_feed identity {identity}")
+        mechanisms = {feed["mechanism"] for _, feed in feeds}
+        display_names = {feed["display_name"] for _, feed in feeds}
+        actual_sources = {source for source, _ in feeds}
+        if mechanisms != {carrier["mechanism"]}:
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id} mechanism disagrees with gun_feed")
+        if actual_sources != set(source_guns):
+            raise ValueError(
+                f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id}.source_guns must exactly match gun_feed "
+                f"({sorted(actual_sources)} != {sorted(source_guns)})"
+            )
+        if len(display_names) != 1:
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id} sources disagree on MagazineDisplayName")
+        result.append({
+            **carrier,
+            "_profile": profiles[profile_id],
+            "_display_name": next(iter(display_names)),
+        })
+
+    missing = set(feeds_by_identity) - seen_identities
+    if missing:
+        raise ValueError(
+            f"{MAGAZINE_CARRIER_MANIFEST}: missing removable gun_feed identity declarations: {sorted(missing)}"
+        )
+    return sorted(result, key=lambda value: value["id"])
 
 
 def furniture_blank_tag() -> dict[str, Any]:
@@ -1863,32 +1976,277 @@ def cartridge_language_entries(caliber: dict[str, Any], language: str) -> dict[s
     return entries
 
 
-def generated_magazine_files(cartridge_ammo_ids: set[str]) -> dict[Path, Any]:
-    files: dict[Path, Any] = {}
-    feed_root = RESOURCE_ROOT / "data/tacz/industry/gun_feed"
-    for path in sorted(feed_root.glob("*.json")):
-        feed = read_json(path)
-        if feed.get("mechanism") not in {"detachable_magazine", "belt"}:
-            continue
-        ammo = feed.get("ammo")
-        if ammo not in cartridge_ammo_ids:
-            raise ValueError(f"{path}: physical magazine ammo '{ammo}' has no cartridge source manifest")
-        gun_id = f"tacz:{path.stem}"
-        files[RESOURCE_ROOT / f"data/tacz/recipe/create/magazine/{path.stem}.json"] = {
-            "fabric:load_conditions": CREATE_CONDITIONS,
+def carrier_gauge_blank_tag() -> dict[str, Any]:
+    """Neutral hardened stock; it has no calibre/family identity until measured."""
+    return {
+        "IndustryPlatform": "feeding",
+        "IndustryPartKind": "carrier_gauge_blank",
+        "IndustryDisplayName": "item.tacz.press_die_blank.carrier_gauge",
+        "DieTargetKind": "carrier",
+    }
+
+
+def carrier_feed_kit_blank_tag() -> dict[str, Any]:
+    """Neutral spring/follower/link stock formed in a real multi-input Basin."""
+    return {
+        "IndustryPlatform": "feeding",
+        "IndustryPartKind": "carrier_feed_kit_blank",
+        "IndustryDisplayName": "item.tacz.gun_component_blank.carrier_feed_kit",
+    }
+
+
+def carrier_spec_tag(carrier: dict[str, Any], kind: str, display_key: str) -> dict[str, Any]:
+    """Stable physical identity shared by gauge, body and feed subassemblies."""
+    return {
+        "IndustryPlatform": "feeding",
+        "IndustryPartKind": kind,
+        "IndustryDisplayName": display_key,
+        "DieTargetKind": carrier["id"],
+        "MagazineFamily": carrier["family"],
+        "MagazineAmmoId": carrier["ammo"],
+        "MagazineCapacity": carrier["capacity"],
+    }
+
+
+def carrier_gauge_tag(carrier: dict[str, Any]) -> dict[str, Any]:
+    return carrier_spec_tag(carrier, "carrier_gauge", f"item.tacz.press_die.carrier_gauge.{carrier['id']}")
+
+
+def carrier_body_tag(carrier: dict[str, Any]) -> dict[str, Any]:
+    return carrier_spec_tag(carrier, "carrier_body", f"item.tacz.gun_component.carrier_body.{carrier['id']}")
+
+
+def carrier_feed_kit_tag(carrier: dict[str, Any]) -> dict[str, Any]:
+    return carrier_spec_tag(carrier, "carrier_feed_kit", f"item.tacz.gun_component.carrier_feed_kit.{carrier['id']}")
+
+
+def carrier_magazine_tag(carrier: dict[str, Any]) -> dict[str, Any]:
+    """The actual configured removable stack; no incomplete magazine is usable."""
+    return {
+        "MagazineFamily": carrier["family"],
+        "MagazineAmmoId": carrier["ammo"],
+        "MagazineCapacity": carrier["capacity"],
+        "MagazineAmmoCount": 0,
+        "MagazineDisplayName": carrier["_display_name"],
+    }
+
+
+def carrier_forming_recipe(stock: Any, stock_count: int, gauge: dict[str, Any], result: dict[str, Any],
+                            transitional: dict[str, Any]) -> dict[str, Any]:
+    """Form one named carrier subassembly while one workpiece moves on the line.
+
+    Additional neutral blanks are supplied one by one by a Deployer; they are
+    real material mass/length, never simultaneous Depot inputs.  The final
+    retained gauge is the only station that assigns family/ammo/capacity.
+    """
+    gauge_input = partial("tacz:press_die", gauge)
+    if stock_count == 1:
+        return deploying(stock, gauge_input, result)
+    sequence: list[dict[str, Any]] = []
+    for _ in range(stock_count - 1):
+        sequence.append({
             "type": "create:deploying",
-            "keep_held_item": True,
-            "target": "tacz:magazine_blank",
-            "ingredient": partial("tacz:modern_kinetic_gun", {"GunId": gun_id}),
-            "results": [output("tacz:magazine", {
-                "MagazineFamily": feed["magazine_family"],
-                "MagazineAmmoId": ammo,
-                "MagazineCapacity": feed["magazine_capacity"],
-                "MagazineAmmoCount": 0,
-                "MagazineDisplayName": feed["display_name"],
-            })],
-        }
+            "target": "$ingredient",
+            "ingredient": stock,
+            "results": ["$result"],
+        })
+    sequence.append({
+        "type": "create:deploying",
+        "target": "$ingredient",
+        "ingredient": gauge_input,
+        "results": ["$result"],
+        "keep_held_item": True,
+    })
+    if len(sequence) > MAX_SEQUENCED_ASSEMBLY_STEPS:
+        raise ValueError("carrier forming sequence exceeds Create Fly's native seven-stage viewer limit")
+    return {
+        "fabric:load_conditions": CREATE_CONDITIONS,
+        "type": "create:sequenced_assembly",
+        "ingredient": stock,
+        "transitional_item": transitional,
+        "result": result,
+        "sequence": sequence,
+    }
+
+
+def generated_magazine_files(carriers: list[dict[str, Any]], platforms: list[dict[str, Any]]) -> dict[Path, Any]:
+    """Generate a real carrier-tooling chain for every removable default feed.
+
+    The former route held a complete firearm over a generic shell and output a
+    finished magazine in one deployment.  Here production templates establish
+    reusable carrier gauges upstream; a shell body and a feed mechanism are
+    independent industrial components and are only joined at the final single-
+    workpiece station.  An empty carrier can also be consumed as reverse
+    metrology evidence to recover its gauge.
+    """
+    files: dict[Path, Any] = {
+        # Keep the existing neutral shell item/recipe identity for old-world
+        # salvage and stockpiles. It remains deliberately nameless until a
+        # calibrated carrier gauge forms the actual body.
+        RESOURCE_ROOT / "data/tacz/recipe/create/industry/magazine_blank.json": {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:compacting",
+            "ingredients": [
+                "tacz:high_carbon_steel_plate",
+                "tacz:high_carbon_steel_plate",
+                "tacz:high_carbon_steel_plate",
+                "create:brass_sheet",
+                "create:brass_nugget",
+            ],
+            "results": [{"id": "tacz:magazine_blank"}],
+        },
+        # Springs/followers/belt-link stock is a real Basin operation. It is a
+        # separate physical item from the carrier shell, so the final line has
+        # exactly one moving body and one held supply component.
+        RESOURCE_ROOT / "data/tacz/recipe/create/industry/form_carrier_feed_kit_blank.json": {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:compacting",
+            "ingredients": [
+                "tacz:high_carbon_steel_ingot",
+                "tacz:high_carbon_steel_plate",
+                "create:brass_nugget",
+                "minecraft:iron_nugget",
+            ],
+            "results": [output("tacz:gun_component_blank", carrier_feed_kit_blank_tag())],
+        },
+        # This blank is intentionally separate from a cartridge datum gauge:
+        # carrier latch/feed geometry is not inferred from a chamber calibre.
+        RESOURCE_ROOT / "data/tacz/recipe/create/industry/press_die_carrier_gauge_blank.json": {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:compacting",
+            "ingredients": [
+                "tacz:high_carbon_steel_plate",
+                "create:brass_sheet",
+                "minecraft:quartz",
+                "minecraft:iron_nugget",
+            ],
+            "results": [output("tacz:press_die", carrier_gauge_blank_tag())],
+        },
+    }
+    platform_by_slug = {platform["slug"]: platform for platform in platforms}
+    if len(platform_by_slug) != len(platforms):
+        raise ValueError("duplicate platform slug while generating carrier tooling")
+
+    for carrier in carriers:
+        carrier_id = carrier["id"]
+        profile = carrier["_profile"]
+        gauge = carrier_gauge_tag(carrier)
+        body = carrier_body_tag(carrier)
+        feed_kit = carrier_feed_kit_tag(carrier)
+        magazine = carrier_magazine_tag(carrier)
+
+        # Any declared gun that accepts this exact physical carrier may donate
+        # its production template to establish the same reusable gauge. This
+        # lets STANAG/QBZ-compatible platforms share a real carrier standard
+        # without choosing an arbitrary "owner" gun or consuming a complete one.
+        for source_slug in carrier["source_guns"]:
+            platform = platform_by_slug.get(source_slug)
+            if platform is None:
+                raise ValueError(
+                    f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id} source {source_slug} has no generated gun platform"
+                )
+            files[RESOURCE_ROOT / (
+                f"data/tacz/recipe/create/industry/calibrate_carrier_gauge_{carrier_id}_{source_slug}.json"
+            )] = deploying(
+                partial("tacz:press_die", carrier_gauge_blank_tag()),
+                partial("tacz:gun_blueprint", production_blueprint_tag(platform)),
+                output("tacz:press_die", gauge),
+            )
+
+        # Destructive reverse engineering is deliberately an alternative to a
+        # production template, not a duplicate loose-NBT recipe. A loaded mag
+        # fails the exact zero-round evidence match and must be unloaded first.
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_carrier_gauge_{carrier_id}.json"] = deploying(
+            partial("tacz:press_die", carrier_gauge_blank_tag()),
+            partial("tacz:magazine", magazine),
+            output("tacz:press_die", gauge),
+            keep=False,
+        )
+
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_carrier_body_{carrier_id}.json"] = (
+            carrier_forming_recipe(
+                "tacz:magazine_blank",
+                profile["body_blank_count"],
+                gauge,
+                output("tacz:gun_component", body),
+                {"id": "tacz:magazine_blank"},
+            )
+        )
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_carrier_feed_kit_{carrier_id}.json"] = (
+            carrier_forming_recipe(
+                partial("tacz:gun_component_blank", carrier_feed_kit_blank_tag()),
+                profile["feed_kit_blank_count"],
+                gauge,
+                output("tacz:gun_component", feed_kit),
+                output("tacz:gun_component_blank", carrier_feed_kit_blank_tag()),
+            )
+        )
+        # The carrier body is the sole target/workpiece. The named feed kit is
+        # held and consumed by the supply/deployment station; it is never
+        # represented as a second item sitting on the Depot or belt.
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/assemble_carrier_{carrier_id}.json"] = deploying(
+            partial("tacz:gun_component", body),
+            partial("tacz:gun_component", feed_kit),
+            output("tacz:magazine", magazine),
+            keep=False,
+        )
     return files
+
+
+def magazine_language_entries(carriers: list[dict[str, Any]], language: str) -> dict[str, str]:
+    chinese = language == "zh_cn"
+    entries = {
+        "item.tacz.magazine_blank": "中性弹匣壳体毛坯" if chinese else "Neutral Magazine Body Blank",
+        "item.tacz.press_die_blank.carrier_gauge": "中性供弹器规格量规毛坯" if chinese else "Neutral Carrier Specification Gauge Blank",
+        "item.tacz.gun_component_blank.carrier_feed_kit": "中性供弹组件毛坯" if chinese else "Neutral Carrier Feed-Kit Blank",
+    }
+    for carrier in carriers:
+        suffix = "zh" if chinese else "en"
+        name = carrier[f"name_{suffix}"]
+        profile = carrier["_profile"]
+        feed_name = profile[f"feed_name_{suffix}"]
+        entries[f"item.tacz.press_die.carrier_gauge.{carrier['id']}"] = (
+            f"{name}规格量规" if chinese else f"{name} Specification Gauge"
+        )
+        entries[f"item.tacz.gun_component.carrier_body.{carrier['id']}"] = (
+            f"{name}壳体" if chinese else f"{name} Body"
+        )
+        entries[f"item.tacz.gun_component.carrier_feed_kit.{carrier['id']}"] = (
+            f"{name}{feed_name}" if chinese else f"{name} {feed_name}"
+        )
+    return entries
+
+
+def obsolete_generated_carrier_files(expected: dict[Path, Any]) -> set[Path]:
+    """Remove renamed/retired generator-owned carrier routes without touching datapack extension paths."""
+    root = RESOURCE_ROOT / "data/tacz/recipe/create/industry"
+    if not root.exists():
+        return set()
+    managed: set[Path] = set()
+    for pattern in (
+        "assemble_carrier_*.json",
+        "calibrate_carrier_gauge_*.json",
+        "reverse_carrier_gauge_*.json",
+        "form_carrier_body_*.json",
+        "form_carrier_feed_kit_*.json",
+    ):
+        managed.update(root.glob(pattern))
+    managed.update({
+        root / "form_carrier_feed_kit_blank.json",
+        root / "press_die_carrier_gauge_blank.json",
+    })
+    return {path for path in managed if path.exists() and path not in expected}
+
+
+
+def obsolete_legacy_magazine_files(carriers: list[dict[str, Any]]) -> set[Path]:
+    """Remove only prior generator-owned finished-gun stamping recipes."""
+    root = RESOURCE_ROOT / "data/tacz/recipe/create/magazine"
+    paths = {
+        root / f"{source}.json"
+        for carrier in carriers for source in carrier["source_guns"]
+    }
+    return {path for path in paths if path.exists()}
 
 
 def language_entries(platform: dict[str, Any], language: str) -> dict[str, str]:
@@ -3142,6 +3500,43 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
                 label, ("exact",), f"furniture_kit:{platform_id}"
             ))
 
+    # Removable carriers now have their own industrial tooling and two named
+    # subassemblies. The supplied complete pack has no exact art for these new
+    # identities, so they deliberately use declared family visuals instead of
+    # pretending that a generic component PNG is exact carrier-specific art.
+    magazine_carriers = load_magazine_carriers({cartridge["ammo"] for cartridge in cartridges})
+    identities.append(build_icon_identity(
+        "carrier_tooling", "carrier:gauge_blank", "tacz:press_die",
+        {"industry_platform": "feeding", "industry_part_kind": "carrier_gauge_blank"},
+        "Neutral Carrier Specification Gauge Blank", ("family",), "carrier:gauge_blank", "family"
+    ))
+    identities.append(build_icon_identity(
+        "carrier_component", "carrier:feed_kit_blank", "tacz:gun_component_blank",
+        {"industry_platform": "feeding", "industry_part_kind": "carrier_feed_kit_blank"},
+        "Neutral Carrier Feed-Kit Blank", ("family",), "carrier:feed_kit_blank", "family"
+    ))
+    for carrier in magazine_carriers:
+        carrier_id = carrier["id"]
+        selectors = {"industry_platform": "feeding", "die_target_kind": carrier_id}
+        identities.append(build_icon_identity(
+            "carrier_tooling", f"carrier_gauge:{carrier_id}", "tacz:press_die",
+            {**selectors, "industry_part_kind": "carrier_gauge"},
+            f"{carrier['name_en']} Specification Gauge", ("family",),
+            f"carrier_gauge:{carrier_id}", "family"
+        ))
+        identities.append(build_icon_identity(
+            "carrier_component", f"carrier_body:{carrier_id}", "tacz:gun_component",
+            {**selectors, "industry_part_kind": "carrier_body"},
+            f"{carrier['name_en']} Body", ("family",),
+            f"carrier_body:{carrier_id}", "family"
+        ))
+        identities.append(build_icon_identity(
+            "carrier_component", f"carrier_feed_kit:{carrier_id}", "tacz:gun_component",
+            {**selectors, "industry_part_kind": "carrier_feed_kit"},
+            f"{carrier['name_en']} {carrier['_profile']['feed_name_en']}", ("family",),
+            f"carrier_feed_kit:{carrier_id}", "family"
+        ))
+
     # Current physical external feed definitions. Internal/tube/revolver feeds
     # intentionally do not fabricate a tacz:magazine stack, so they are not
     # falsely counted as missing magazine icons here.
@@ -3860,6 +4255,98 @@ def validate_stable_dossier_commissions(platforms: list[dict[str, Any]], acquisi
                 raise ValueError(f"{platform['slug']}: dossier commission has invalid evidence material")
 
 
+
+def _carrier_recipe_stack_count(recipe: dict[str, Any], stack: Any) -> int:
+    """Count one exact workpiece/supply identity in a generated carrier route."""
+    count = (1 if recipe.get("ingredient") == stack else 0) + (1 if recipe.get("target") == stack else 0)
+    for step in recipe.get("sequence", []):
+        if isinstance(step, dict) and step.get("ingredient") == stack:
+            count += 1
+    return count
+
+
+def validate_magazine_tooling_continuity(carriers: list[dict[str, Any]], platforms: list[dict[str, Any]],
+                                         expected: dict[Path, Any]) -> None:
+    """Prove every removable carrier has a real template/reverse → components → final chain."""
+    blank_recipe = expected.get(RESOURCE_ROOT / "data/tacz/recipe/create/industry/press_die_carrier_gauge_blank.json")
+    feed_blank_recipe = expected.get(RESOURCE_ROOT / "data/tacz/recipe/create/industry/form_carrier_feed_kit_blank.json")
+    shell_recipe = expected.get(RESOURCE_ROOT / "data/tacz/recipe/create/industry/magazine_blank.json")
+    if not isinstance(blank_recipe, dict) or _recipe_result_custom_data(blank_recipe) != carrier_gauge_blank_tag():
+        raise ValueError("Missing neutral carrier-gauge blank Basin route")
+    if not isinstance(feed_blank_recipe, dict) \
+            or _recipe_result_custom_data(feed_blank_recipe) != carrier_feed_kit_blank_tag():
+        raise ValueError("Missing neutral carrier feed-kit blank Basin route")
+    if not isinstance(shell_recipe, dict) or shell_recipe.get("type") != "create:compacting" \
+            or shell_recipe.get("results") != [{"id": "tacz:magazine_blank"}]:
+        raise ValueError("Missing neutral magazine shell Basin route")
+
+    platform_by_slug = {platform["slug"]: platform for platform in platforms}
+    for carrier in carriers:
+        carrier_id = carrier["id"]
+        gauge = carrier_gauge_tag(carrier)
+        body = carrier_body_tag(carrier)
+        feed_kit = carrier_feed_kit_tag(carrier)
+        magazine = carrier_magazine_tag(carrier)
+        profile = carrier["_profile"]
+
+        for source_slug in carrier["source_guns"]:
+            path = RESOURCE_ROOT / (
+                f"data/tacz/recipe/create/industry/calibrate_carrier_gauge_{carrier_id}_{source_slug}.json"
+            )
+            recipe = expected.get(path)
+            platform = platform_by_slug.get(source_slug)
+            if not isinstance(recipe, dict) or platform is None \
+                    or recipe.get("target", {}).get("nbt") != carrier_gauge_blank_tag() \
+                    or recipe.get("ingredient", {}).get("nbt") != production_blueprint_tag(platform) \
+                    or _recipe_result_custom_data(recipe) != gauge \
+                    or not recipe.get("keep_held_item"):
+                raise ValueError(f"{carrier_id}: source template {source_slug} cannot calibrate its retained gauge")
+
+        reverse = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_carrier_gauge_{carrier_id}.json")
+        if not isinstance(reverse, dict) \
+                or reverse.get("target", {}).get("nbt") != carrier_gauge_blank_tag() \
+                or reverse.get("ingredient", {}).get("nbt") != magazine \
+                or _recipe_result_custom_data(reverse) != gauge \
+                or reverse.get("keep_held_item"):
+            raise ValueError(f"{carrier_id}: empty carrier reverse evidence must be destructive and exact")
+
+        body_recipe = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_carrier_body_{carrier_id}.json")
+        if not isinstance(body_recipe, dict) or _recipe_result_custom_data(body_recipe) != body \
+                or _carrier_recipe_stack_count(body_recipe, "tacz:magazine_blank") != profile["body_blank_count"] \
+                or not any(_viewer_identity(gauge) == _viewer_identity(tag)
+                           for tag in _recipe_partial_nbt_values(body_recipe)):
+            raise ValueError(f"{carrier_id}: body must consume the declared neutral shell mass and retained gauge")
+
+        feed_recipe = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_carrier_feed_kit_{carrier_id}.json")
+        feed_blank = partial("tacz:gun_component_blank", carrier_feed_kit_blank_tag())
+        if not isinstance(feed_recipe, dict) or _recipe_result_custom_data(feed_recipe) != feed_kit \
+                or _carrier_recipe_stack_count(feed_recipe, feed_blank) != profile["feed_kit_blank_count"] \
+                or not any(_viewer_identity(gauge) == _viewer_identity(tag)
+                           for tag in _recipe_partial_nbt_values(feed_recipe)):
+            raise ValueError(f"{carrier_id}: feed kit must consume its declared neutral stock and retained gauge")
+
+        for label, recipe in (("body", body_recipe), ("feed", feed_recipe)):
+            if not isinstance(recipe, dict):
+                continue
+            if recipe.get("type") == "create:sequenced_assembly" \
+                    and len(recipe.get("sequence", [])) > MAX_SEQUENCED_ASSEMBLY_STEPS:
+                raise ValueError(f"{carrier_id}: {label} route exceeds Create Fly's native JEI stage limit")
+            if "tacz:modern_kinetic_gun" in canonical(recipe):
+                raise ValueError(f"{carrier_id}: carrier manufacturing must not use a complete gun as tooling")
+
+        assembly = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/assemble_carrier_{carrier_id}.json")
+        if not isinstance(assembly, dict) \
+                or assembly.get("target", {}).get("nbt") != body \
+                or assembly.get("ingredient", {}).get("nbt") != feed_kit \
+                or _recipe_result_custom_data(assembly) != magazine \
+                or assembly.get("keep_held_item"):
+            raise ValueError(f"{carrier_id}: final carrier assembly must consume body + named feed kit")
+        # The exact final stack is the reverse-evidence input, while the two
+        # named components are the exact final assembly inputs in recipe viewers.
+        if reverse.get("ingredient", {}).get("nbt") != magazine:
+            raise ValueError(f"{carrier_id}: final carrier → reverse-gauge viewer edge is disconnected")
+
+
 def existing_json_matches(path: Path, expected: Any) -> bool:
     try:
         return canonical(read_json(path)) == canonical(expected)
@@ -3882,6 +4369,7 @@ def run(write: bool) -> int:
     auto_platforms = discover_default_platforms({platform["slug"] for platform in explicit_platforms}, policy)
     platforms = [*explicit_platforms, *auto_platforms]
     cartridges = load_cartridges()
+    magazine_carriers = load_magazine_carriers({cartridge["ammo"] for cartridge in cartridges})
     machine_assets = load_machine_assets()
     blueprint_acquisition = load_blueprint_acquisition()
     expected: dict[Path, Any] = {}
@@ -3904,6 +4392,10 @@ def run(write: bool) -> int:
         "tooltip.tacz.industry.tooling_scope.platform_tooling": "Platform dies during tooling setup",
         "tooltip.tacz.industry.tooling_scope.final_acceptance": "Platform final-acceptance gauge",
         "tooltip.tacz.industry.cartridge_gauge_blank": "Neutral datum-gauge blank — calibrate it with a sample firearm or declared datum",
+        "tooltip.tacz.industry.carrier_gauge_blank": "Neutral carrier-gauge stock — calibrate it with a production template or an empty carrier sample",
+        "tooltip.tacz.industry.carrier_gauge": "Reusable carrier specification gauge — forms the matching body and feed component",
+        "tooltip.tacz.industry.carrier_component": "Named removable-carrier subassembly — install it at the final carrier station",
+        "tooltip.tacz.industry.carrier_spec": "Carrier specification: %s / %s / %s rounds",
         "tooltip.tacz.industry.case_datum_gauge": "Reverse-engineered case datum — calibrates only the matching case die",
         "tooltip.tacz.industry.projectile_datum_gauge": "Reverse-engineered projectile datum — calibrates only the matching projectile die",
         "tooltip.tacz.industry.dossier_archive": "Tier archive packet — consumed by a Gunsmith dossier commission",
@@ -3937,6 +4429,10 @@ def run(write: bool) -> int:
         "tooltip.tacz.industry.tooling_scope.platform_tooling": "建线时校准平台模具",
         "tooltip.tacz.industry.tooling_scope.final_acceptance": "平台最终验收检具",
         "tooltip.tacz.industry.cartridge_gauge_blank": "中性基准量规毛坯——用样枪或已声明基准校准",
+        "tooltip.tacz.industry.carrier_gauge_blank": "中性供弹器量规料坯——用生产模板或空供弹器样本校准",
+        "tooltip.tacz.industry.carrier_gauge": "可复用供弹器规格量规——成型对应壳体与供弹组件",
+        "tooltip.tacz.industry.carrier_component": "命名的可拆卸供弹器子总成——在最终供弹器工位装配",
+        "tooltip.tacz.industry.carrier_spec": "供弹器规格：%s / %s / %s 发",
         "tooltip.tacz.industry.case_datum_gauge": "逆向弹壳基准——只能校准对应弹壳模具",
         "tooltip.tacz.industry.projectile_datum_gauge": "逆向弹头基准——只能校准对应弹头模具",
         "tooltip.tacz.industry.dossier_archive": "层级档案包——在枪械工作台档案委托中消耗",
@@ -3969,7 +4465,9 @@ def run(write: bool) -> int:
         english.update(cartridge_language_entries(cartridge, "en_us"))
         chinese.update(cartridge_language_entries(cartridge, "zh_cn"))
     expected.update(generated_blueprint_acquisition_files(platforms, blueprint_acquisition))
-    expected.update(generated_magazine_files({cartridge["ammo"] for cartridge in cartridges}))
+    expected.update(generated_magazine_files(magazine_carriers, platforms))
+    english.update(magazine_language_entries(magazine_carriers, "en_us"))
+    chinese.update(magazine_language_entries(magazine_carriers, "zh_cn"))
     expected.update(generated_machine_files(machine_assets))
     expected.update(generated_industrial_gui_files())
     # The repaired icon library and the supplied high-detail machine pack are
@@ -3984,10 +4482,15 @@ def run(write: bool) -> int:
     obsolete_template_paths = obsolete_template_compatibility_files(expected)
     obsolete_acquisition_paths = obsolete_blueprint_acquisition_files(expected)
     obsolete_dossier_paths = obsolete_dossier_commission_files(expected)
-    validate_effective_create_recipe_collisions(expected, obsolete_platform_paths | obsolete_template_paths)
+    obsolete_magazine_paths = obsolete_legacy_magazine_files(magazine_carriers)
+    obsolete_carrier_paths = obsolete_generated_carrier_files(expected)
+    validate_effective_create_recipe_collisions(
+        expected, obsolete_platform_paths | obsolete_template_paths | obsolete_magazine_paths | obsolete_carrier_paths
+    )
     validate_platform_tooling_semantics(platforms, expected)
     validate_viewer_continuity(platforms, expected)
     validate_cartridge_tooling_continuity(cartridges, expected)
+    validate_magazine_tooling_continuity(magazine_carriers, platforms, expected)
     validate_stable_dossier_commissions(platforms, blueprint_acquisition, expected)
 
     stale: list[str] = []
@@ -4034,6 +4537,21 @@ def run(write: bool) -> int:
         if write:
             path.unlink()
 
+    # If a carrier identity is retired/renamed, remove only the named generated
+    # carrier route family so it cannot remain as a stale alternate output.
+    for path in sorted(obsolete_carrier_paths):
+        stale.append(str(path.relative_to(REPO)))
+        if write:
+            path.unlink()
+
+    # The first physical-magazine pass stamped a generic shell with a complete
+    # firearm. Replace only those former generator-owned per-gun routes; the
+    # new gauge/body/feed-kit chain lives under recipe/create/industry.
+    for path in sorted(obsolete_magazine_paths):
+        stale.append(str(path.relative_to(REPO)))
+        if write:
+            path.unlink()
+
     # Generated dossier commissions live in the ordinary Gunsmith recipe tree.
     # Remove only our named commission files when their platform source changes.
     for path in sorted(obsolete_dossier_paths):
@@ -4068,7 +4586,11 @@ def run(write: bool) -> int:
         for entry in stale:
             print(f"  {entry}")
         return 0 if write else 1
-    print(f"Industry generator {mode}: {len(platforms)} platform manifest(s), {len(cartridges)} cartridge manifest(s), all managed outputs current.")
+    print(
+        f"Industry generator {mode}: {len(platforms)} platform manifest(s), "
+        f"{len(cartridges)} cartridge manifest(s), {len(magazine_carriers)} removable-carrier manifest(s), "
+        "all managed outputs current."
+    )
     return 0
 
 
