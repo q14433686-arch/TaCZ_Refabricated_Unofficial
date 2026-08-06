@@ -1,0 +1,30 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "minecraft:paper",
+    "minecraft:paper",
+    "tacz:high_carbon_steel_plate",
+    "create:brass_sheet",
+    "minecraft:redstone"
+  ],
+  "results": [
+    {
+      "id": "tacz:gun_component_blank",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "surveying",
+          "IndustryPartKind": "survey_archive",
+          "IndustryDisplayName": "item.tacz.survey_archive"
+        }
+      }
+    }
+  ]
+}

@@ -47,7 +47,14 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
     @Override
     public Component getName(ItemStack stack) {
         String key = getDisplayNameKey(stack);
-        return key.isBlank() ? super.getName(stack) : Component.translatable(key);
+        Component base = key.isBlank() ? super.getName(stack) : Component.translatable(key);
+        // Runtime-generated surveyed dossier/template/kit stacks intentionally
+        // share one localized generic display key. Append their exact GunId so
+        // a Gunsmith Table list can be searched/selected without pretending
+        // that TACZ has supplied a translated real-world part name.
+        String surveyedGun = ItemNbtUtils.getTag(stack).getStringOr("IndustrySurveyGunId", "");
+        return surveyedGun.isBlank() ? base : base.copy().append(Component.literal(" [" + surveyedGun + "]")
+                .withStyle(style -> style.withColor(0x777777)));
     }
 
     private static int blueprintTierColor(String tier) {
@@ -152,6 +159,24 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
                 adder.accept(Component.translatable("tooltip.tacz.industry.carrier_spec", family, ammo, capacity)
                         .withStyle(style -> style.withColor(0xAAAAAA)));
             }
+        }
+        if ("survey_archive".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.survey_archive")
+                    .withStyle(style -> style.withColor(0xD4A85A)));
+        }
+        if ("survey_fixture".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.survey_fixture")
+                    .withStyle(style -> style.withColor(0x55FFFF)));
+        }
+        if ("surveyed_platform_kit".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.surveyed_platform_kit")
+                    .withStyle(style -> style.withColor(0x8FD6C6)));
+        }
+        CompoundTag surveyTag = ItemNbtUtils.getTag(stack);
+        String surveyedGun = surveyTag.getStringOr("IndustrySurveyGunId", "");
+        if (!surveyedGun.isBlank()) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.surveyed_target", surveyedGun)
+                    .withStyle(style -> style.withColor(0xAAAAAA)));
         }
         if (partKind.startsWith("dossier_archive_")) {
             adder.accept(Component.translatable("tooltip.tacz.industry.dossier_archive")

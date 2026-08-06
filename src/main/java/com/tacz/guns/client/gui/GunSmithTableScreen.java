@@ -218,12 +218,13 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
     private boolean isSuitableForMainHand(GunSmithTableRecipe recipe) {
         if (filterList != null && filterList.isByHandSelected()) {
             ItemStack result = recipe.getResult().getResult();
-            // Archive commissions are deliberate research/catalogue choices,
-            // not a gun attachment or a compatible loaded round. Keep master
-            // dossiers visible when the normal Gunsmith screen auto-filters by
-            // the gun currently held by the player.
+            // Archive commissions and surveyed platform kits are deliberate
+            // research/catalogue choices, not gun attachments or compatible
+            // loaded rounds. Keep them visible when the normal Gunsmith screen
+            // auto-filters by the gun currently held by the player.
             if (result.getItem() instanceof IndustryItemDataAccessor industry
-                    && "blueprint".equals(industry.getPartKind(result))) {
+                    && ("blueprint".equals(industry.getPartKind(result))
+                    || "surveyed_platform_kit".equals(industry.getPartKind(result)))) {
                 return true;
             }
 

@@ -159,9 +159,9 @@ TACZ industry runtime audit:
 
 ## 第三方作者最小接入层级
 
-1. **零文件**：原配方保持可用；只有已解析结果才获得保守工业材料门槛；未知供弹保持 legacy。
-2. **仅 ReferenceProfile**：运行时了解真实结构和供弹事实，可进入测绘工业候选队列，但不自动猜出未实现的 clip/fuel 行为。
-3. **ReferenceProfile + id_aliases**：修复旧包错误 ID，得到稳定身份。
-4. **再提供 `industry/gun_feed` / 高保真 Create 声明**：启用实体弹匣、弹链箱或完整专用组件线。
+1. **零文件但结果身份已解析**：`CREATE_FLY` 会生成明确标注的测绘 fallback：测绘档案包 + 空白工装页 + 测绘夹具 → master dossier → production template；五种中性结构毛坯 + template + fixture → 测绘平台结构套件；原枪包的真实材料表再加 kit/template/fixture，仍在 Gunsmith Table 这个真实多槽 GUI 中完成终端制造。未知供弹保持 `legacy`。
+2. **仅 ReferenceProfile**：测绘流程会显示真实动作、供弹和弹药事实，但不会自动猜出尚未实现的 clip/fuel 行为。
+3. **ReferenceProfile + id_aliases**：修复旧包错误 ID，得到稳定身份与受事实守卫的测绘工艺。
+4. **再提供 `industry/gun_feed` / 高保真 Create 声明**：启用实体弹匣、弹链箱或完整专用组件线；手工高保真声明优先，测绘 GUI fallback 不会覆盖它。
 
-默认包手工高保真工艺永远优先于测绘通用路线。未来的运行时生成层只会对“身份已解析且无手工声明”的枪/弹药工作，避免覆盖作者明确提供的工艺。
+测绘 fallback 故意不声称知道第三方模型的真实闭锁块/供弹盘几何：它只称“测绘平台结构套件”，并保留原材料账单。动态 dossier/template/kit 的显示名会追加 `[namespace:gun]`，可以在 Gunsmith Table 搜索中按实际 GunId 区分，不需要伪造一个未经证实的部件名。后续内存生成的 Create 终端只会消费“身份已解析且有足够结构证据”的枪，避免覆盖作者明确提供的工艺。

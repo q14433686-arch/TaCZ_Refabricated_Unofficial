@@ -939,6 +939,81 @@ def template_blank_tag() -> dict[str, Any]:
     }
 
 
+
+def survey_archive_tag() -> dict[str, Any]:
+    """Neutral archive packet consumed by a runtime-generated surveyed dossier commission."""
+    return {
+        "IndustryPlatform": "surveying",
+        "IndustryPartKind": "survey_archive",
+        "IndustryDisplayName": "item.tacz.survey_archive",
+    }
+
+
+def survey_fixture_tag() -> dict[str, Any]:
+    """Reusable neutral fixture; it proves tooling setup without claiming a gun geometry."""
+    return {
+        "IndustryPlatform": "surveying",
+        "IndustryPartKind": "survey_fixture",
+        "IndustryDisplayName": "item.tacz.press_die.survey_fixture",
+        "DieTargetKind": "surveyed",
+    }
+
+
+def generated_surveying_files() -> dict[Path, Any]:
+    """Create sources for the runtime surveyed-platform fallback path.
+
+    The third-party dossier/template/kit recipes are synthesized in the
+    Gunsmith Table at reload because their exact GunId does not exist until the
+    server reads installed packs. These two neutral industrial inputs remain
+    ordinary static Create recipes: true Basin / Mechanical Crafter operations,
+    not fake multi-item Depot steps.
+    """
+    return {
+        RESOURCE_ROOT / "data/tacz/recipe/create/industry/form_survey_archive.json": {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:compacting",
+            "ingredients": [
+                "minecraft:paper",
+                "minecraft:paper",
+                "tacz:high_carbon_steel_plate",
+                "create:brass_sheet",
+                "minecraft:redstone",
+            ],
+            "results": [output("tacz:gun_component_blank", survey_archive_tag())],
+        },
+        RESOURCE_ROOT / "data/tacz/recipe/create/industry/form_survey_fixture.json": {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:mechanical_crafting",
+            "key": {
+                "S": "tacz:high_carbon_steel_plate",
+                "B": "create:brass_sheet",
+                "Q": "minecraft:quartz",
+                "R": "minecraft:redstone",
+            },
+            "pattern": ["SBS", "QR ", "SBS"],
+            "result": output("tacz:press_die", survey_fixture_tag()),
+        },
+    }
+
+
+def surveying_language_entries(language: str) -> dict[str, str]:
+    chinese = language == "zh_cn"
+    return {
+        "item.tacz.survey_archive": "测绘档案包" if chinese else "Survey Archive Packet",
+        "item.tacz.press_die.survey_fixture": "测绘基准夹具" if chinese else "Survey Reference Fixture",
+        "item.tacz.gun_dossier.surveyed": "测绘平台原始档案" if chinese else "Surveyed Platform Master Dossier",
+        "item.tacz.gun_template.surveyed": "测绘平台生产工装" if chinese else "Surveyed Platform Production Template",
+        "item.tacz.gun_component.surveyed_platform_kit": "测绘平台结构套件" if chinese else "Surveyed Platform Structural Kit",
+        "tooltip.tacz.industry.survey_archive": "在枪械工作台中消耗，以委托一份已审计枪械的测绘档案" if chinese else "Consumed by a Gunsmith Table commission for one audited surveyed dossier",
+        "tooltip.tacz.industry.survey_fixture": "测绘平台操作的可复用基准夹具（不消耗）" if chinese else "Reusable reference fixture for surveyed-platform operations (not consumed)",
+        "tooltip.tacz.industry.surveyed_platform_kit": "由五种中性结构毛坯和生产工装组成；用于对应测绘枪的平台终端" if chinese else "Built from five neutral structural blanks and a production template; required by its surveyed gun terminal",
+        "tooltip.tacz.industry.surveyed_target": "测绘目标：%s" if chinese else "Surveyed target: %s",
+        "tooltip.tacz.blueprint.tier.surveyed": "已审计测绘档案 — 未声明真实结构前使用通用工业线" if chinese else "Audited Survey Dossier — generic industrial line pending an explicit structure profile",
+        "tooltip.tacz.industry.action_profile.surveyed": "测绘通用结构" if chinese else "Surveyed Generic Structure",
+        "tooltip.tacz.industry.tooling_scope.surveyed": "测绘夹具和测绘平台结构套件" if chinese else "Survey fixture and surveyed platform structural kit",
+    }
+
+
 def production_blueprint_tag(platform: dict[str, Any]) -> dict[str, Any]:
     return {
         "IndustryPlatform": platform["platform"],
@@ -3676,6 +3751,26 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
             f"carrier_feed_kit:{carrier_id}", "family"
         ))
 
+    # Runtime-generated third-party surveyed operations use stable generic
+    # identities. Individual GunId variants are intentionally not claimed as
+    # exact art: their unique platform NBT is visible in tooltips/recipes while
+    # one declared family visual represents the honest generic kit.
+    identities.append(build_icon_identity(
+        "surveying_tooling", "survey:archive", "tacz:gun_component_blank",
+        {"industry_platform": "surveying", "industry_part_kind": "survey_archive"},
+        "Survey Archive Packet", ("family",), "survey:archive", "family"
+    ))
+    identities.append(build_icon_identity(
+        "surveying_tooling", "survey:fixture", "tacz:press_die",
+        {"industry_platform": "surveying", "industry_part_kind": "survey_fixture"},
+        "Survey Reference Fixture", ("family",), "survey:fixture", "family"
+    ))
+    identities.append(build_icon_identity(
+        "surveying_component", "survey:platform_kit", "tacz:gun_component",
+        {"industry_part_kind": "surveyed_platform_kit"},
+        "Surveyed Platform Structural Kit", ("family",), "survey:platform_kit", "family"
+    ))
+
     # Current physical external feed definitions. Internal/tube/revolver feeds
     # intentionally do not fabricate a tacz:magazine stack, so they are not
     # falsely counted as missing magazine icons here.
@@ -4606,8 +4701,11 @@ def run(write: bool) -> int:
     }
     expected.update(generated_furniture_blank_files(platforms))
     expected.update(generated_template_blank_file(policy))
+    expected.update(generated_surveying_files())
     expected.update(generated_action_jig_files(platforms, policy))
     expected.update(generated_stable_dossier_files(platforms, blueprint_acquisition))
+    english.update(surveying_language_entries("en_us"))
+    chinese.update(surveying_language_entries("zh_cn"))
     english.update(action_tooling_language_entries(platforms, policy, "en_us"))
     english.update(stable_dossier_language_entries(blueprint_acquisition, "en_us"))
     chinese.update(stable_dossier_language_entries(blueprint_acquisition, "zh_cn"))

@@ -113,6 +113,12 @@ public class ModCreativeTabs {
                         .platform("machining").kind("receiver_blank")
                         .displayNameKey("item.tacz.gun_component_blank").build());
                 output.accept(IndustryItemBuilder.componentBlank()
+                        .platform("surveying").kind("survey_archive")
+                        .displayNameKey("item.tacz.survey_archive").build());
+                output.accept(IndustryItemBuilder.pressDie()
+                        .platform("surveying").kind("survey_fixture")
+                        .displayNameKey("item.tacz.press_die.survey_fixture").dieTargetKind("surveyed").build());
+                output.accept(IndustryItemBuilder.componentBlank()
                         .platform("archive").kind("dossier_archive_legacy")
                         .displayNameKey("item.tacz.dossier_archive.legacy").blueprintTier("legacy").build());
                 output.accept(IndustryItemBuilder.componentBlank()

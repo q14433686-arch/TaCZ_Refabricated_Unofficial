@@ -1655,5 +1655,17 @@
   "commands.tacz.industry.reference_action": "Action: %s; manufacturing profile: %s; tier: %s",
   "commands.tacz.industry.reference_feed": "Feed: device=%s, runtime=%s, carrier=%s, family=%s, capacity=%s",
   "commands.tacz.industry.reference_ammo": "Ammunition: class=%s, nominal=%s, expected=%s",
-  "commands.tacz.industry.reference_evidence": "Evidence: %s"
+  "commands.tacz.industry.reference_evidence": "Evidence: %s",
+  "item.tacz.survey_archive": "Survey Archive Packet",
+  "item.tacz.press_die.survey_fixture": "Survey Reference Fixture",
+  "item.tacz.gun_dossier.surveyed": "Surveyed Platform Master Dossier",
+  "item.tacz.gun_template.surveyed": "Surveyed Platform Production Template",
+  "item.tacz.gun_component.surveyed_platform_kit": "Surveyed Platform Structural Kit",
+  "tooltip.tacz.industry.survey_archive": "Consumed by a Gunsmith Table commission for one audited surveyed dossier",
+  "tooltip.tacz.industry.survey_fixture": "Reusable reference fixture for surveyed-platform operations (not consumed)",
+  "tooltip.tacz.industry.surveyed_platform_kit": "Built from five neutral structural blanks and a production template; required by its surveyed gun terminal",
+  "tooltip.tacz.industry.surveyed_target": "Surveyed target: %s",
+  "tooltip.tacz.blueprint.tier.surveyed": "Audited Survey Dossier — generic industrial line pending an explicit structure profile",
+  "tooltip.tacz.industry.action_profile.surveyed": "Surveyed Generic Structure",
+  "tooltip.tacz.industry.tooling_scope.surveyed": "Survey fixture and surveyed platform structural kit"
 }

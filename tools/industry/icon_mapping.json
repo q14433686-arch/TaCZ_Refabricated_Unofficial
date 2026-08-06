@@ -1316,6 +1316,41 @@
       },
       "coverage": "family",
       "note": "Shared carrier feed-component visual for named follower/spring or belt-link kits."
+    },
+    {
+      "id": "survey_archive_family",
+      "item": "tacz:gun_component_blank",
+      "texture": "tacz_extra:item/generic_blueprint",
+      "priority": 560,
+      "match": {
+        "industry_platform": "surveying",
+        "industry_part_kind": "survey_archive"
+      },
+      "coverage": "family",
+      "note": "Survey archive packet is an intentionally generic dossier medium."
+    },
+    {
+      "id": "survey_fixture_family",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_die_blank",
+      "priority": 560,
+      "match": {
+        "industry_platform": "surveying",
+        "industry_part_kind": "survey_fixture"
+      },
+      "coverage": "family",
+      "note": "Reusable generic survey fixture; no specific firearm geometry is claimed."
+    },
+    {
+      "id": "surveyed_platform_kit_family",
+      "item": "tacz:gun_component",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "priority": 560,
+      "match": {
+        "industry_part_kind": "surveyed_platform_kit"
+      },
+      "coverage": "family",
+      "note": "Family visual for runtime-generated audited third-party platform kits."
     }
   ]
 }

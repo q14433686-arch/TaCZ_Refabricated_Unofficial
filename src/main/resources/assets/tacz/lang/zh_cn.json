@@ -1655,5 +1655,17 @@
   "commands.tacz.industry.reference_action": "动作：%s；制造档案：%s；层级：%s",
   "commands.tacz.industry.reference_feed": "供弹：设备=%s，运行时=%s，载具行为=%s，兼容族=%s，容量=%s",
   "commands.tacz.industry.reference_ammo": "弹药：类别=%s，标称=%s，预期=%s",
-  "commands.tacz.industry.reference_evidence": "依据：%s"
+  "commands.tacz.industry.reference_evidence": "依据：%s",
+  "item.tacz.survey_archive": "测绘档案包",
+  "item.tacz.press_die.survey_fixture": "测绘基准夹具",
+  "item.tacz.gun_dossier.surveyed": "测绘平台原始档案",
+  "item.tacz.gun_template.surveyed": "测绘平台生产工装",
+  "item.tacz.gun_component.surveyed_platform_kit": "测绘平台结构套件",
+  "tooltip.tacz.industry.survey_archive": "在枪械工作台中消耗，以委托一份已审计枪械的测绘档案",
+  "tooltip.tacz.industry.survey_fixture": "测绘平台操作的可复用基准夹具（不消耗）",
+  "tooltip.tacz.industry.surveyed_platform_kit": "由五种中性结构毛坯和生产工装组成；用于对应测绘枪的平台终端",
+  "tooltip.tacz.industry.surveyed_target": "测绘目标：%s",
+  "tooltip.tacz.blueprint.tier.surveyed": "已审计测绘档案 — 未声明真实结构前使用通用工业线",
+  "tooltip.tacz.industry.action_profile.surveyed": "测绘通用结构",
+  "tooltip.tacz.industry.tooling_scope.surveyed": "测绘夹具和测绘平台结构套件"
 }

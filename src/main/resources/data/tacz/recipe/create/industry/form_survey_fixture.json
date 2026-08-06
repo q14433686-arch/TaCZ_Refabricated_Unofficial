@@ -1,0 +1,33 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:mechanical_crafting",
+  "key": {
+    "S": "tacz:high_carbon_steel_plate",
+    "B": "create:brass_sheet",
+    "Q": "minecraft:quartz",
+    "R": "minecraft:redstone"
+  },
+  "pattern": [
+    "SBS",
+    "QR ",
+    "SBS"
+  ],
+  "result": {
+    "id": "tacz:press_die",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "surveying",
+        "IndustryPartKind": "survey_fixture",
+        "IndustryDisplayName": "item.tacz.press_die.survey_fixture",
+        "DieTargetKind": "surveyed"
+      }
+    }
+  }
+}

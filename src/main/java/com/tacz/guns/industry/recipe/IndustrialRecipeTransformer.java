@@ -110,6 +110,13 @@ public final class IndustrialRecipeTransformer {
                 continue;
             }
             JsonObject recipe = entry.getValue().getAsJsonObject();
+            // Surveyed fallbacks already add a real platform kit, production
+            // template and retained survey fixture to the original material
+            // bill. Do not dilute that contract by appending the old generic
+            // raw-material gate a second time.
+            if (recipe.has("industry_surveyed_fallback")) {
+                continue;
+            }
             JsonObject result = object(recipe, "result");
             if (result == null) {
                 continue;

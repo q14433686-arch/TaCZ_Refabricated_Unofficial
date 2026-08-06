@@ -15,6 +15,7 @@
 2. 执行 `/tacz industry reference tacz:ak47`、`/tacz industry reference tacz:m870`、`/tacz industry reference tacz:m249`、`/tacz industry reference tacz:rpg7`：依次确认动作、供弹设备、运行时机制、容量、弹药类别和 tier；M870 必须是 `tube`，M249 必须是 `belt`，RPG-7 必须是 `single_shot`，不能都显示成 detachable magazine；
 3. 安装第三方包后，审计只能把有有效 Index/Data 的枪标记为 `surveyed` 候选；没有 `industry/reference` / `industry/gun_feed` 的第三方枪必须保持 `legacy` 供弹，不能因为其旧 `reload.type = magazine` 被自动变为实体弹匣；
 4. 对输出 ID 错误的第三方工作台配方，先观察审计的 `unresolved` 行；只有添加带 `expected_ammo` / `expected_capacity` 的显式 `industry/id_aliases` 条目后才允许其进入自动工业门槛。不要用文件名猜测直接修复。
+5. 对一把已审计但没有 `industry/assembly` 高保真声明的第三方枪：先在 Basin 制作测绘档案包、在机械合成器制作测绘夹具；在 Gunsmith Table 杂项页委托其测绘 master dossier，再转印生产工装；用五种中性结构毛坯、生产工装和夹具制作“测绘平台结构套件”。原枪包成枪配方应保留原材料表，但额外要求该 kit、生产工装和夹具；默认高保真枪不得被改成这条 GUI fallback。
 
 ## 1. 配方查看器桥接
 

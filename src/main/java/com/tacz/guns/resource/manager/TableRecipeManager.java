@@ -6,6 +6,7 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.init.ModRecipe;
 import com.tacz.guns.industry.recipe.IndustrialRecipeTransformer;
 import com.tacz.guns.industry.recipe.IndustryAssemblyDefinition;
+import com.tacz.guns.industry.reference.SurveyedIndustryRecipeFactory;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.network.DataType;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
@@ -158,6 +159,10 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         var aliases = CommonAssetsManager.getInstance() == null ? null
                 : CommonAssetsManager.getInstance().getIndustryIdentityAliasManager();
         Map<Identifier, JsonElement> effectiveRecipes = aliases == null ? ours : aliases.applyAliases(ours);
+        SurveyedIndustryRecipeFactory.Result surveyed = SurveyedIndustryRecipeFactory.apply(
+                effectiveRecipes, new HashSet<>(industryAssemblies.keySet()), CommonAssetsManager.get()
+        );
+        effectiveRecipes = surveyed.recipes();
         industryAssembliesByGun = resolveIndustryAssembliesByGun(effectiveRecipes, industryAssemblies);
         // The industrial profile removes only terminals that have a real,
         // validated one-workpiece Create sequenced-assembly process. Pass the

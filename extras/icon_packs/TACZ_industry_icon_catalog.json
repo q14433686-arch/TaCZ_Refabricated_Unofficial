@@ -119,6 +119,16 @@
       "supplied_block_model": 2,
       "total": 5
     },
+    "surveying_component": {
+      "covered": 1,
+      "family": 1,
+      "total": 1
+    },
+    "surveying_tooling": {
+      "covered": 2,
+      "family": 2,
+      "total": 2
+    },
     "tooling_template_blank": {
       "covered": 1,
       "family": 1,
@@ -406,6 +416,7 @@
       "bound_by": [
         "ammunition_cartridge_gauge_blank",
         "carrier_gauge_blank_family",
+        "survey_fixture_family",
         "tooling_acceptance_gauge_blank",
         "tooling_acceptance_gauge_stock",
         "tooling_action_jig",
@@ -431,7 +442,8 @@
     {
       "texture": "tacz_extra:item/base_m_assembly",
       "bound_by": [
-        "carrier_body_family"
+        "carrier_body_family",
+        "surveyed_platform_kit_family"
       ],
       "status": "bound"
     },
@@ -5345,7 +5357,8 @@
         "dossier_archive_advanced",
         "dossier_archive_legacy",
         "dossier_archive_precision",
-        "dossier_archive_service"
+        "dossier_archive_service",
+        "survey_archive_family"
       ],
       "status": "bound"
     },
@@ -29445,6 +29458,71 @@
       "mapping": "complete_static_tacz_magazine_pouch_749c05bb1f",
       "texture": "tacz_extra:item/static_tacz_magazine_pouch",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "surveying_component",
+      "identity": "survey:platform_kit",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_part_kind": "surveyed_platform_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=surveyed_platform_kit",
+      "label": "Surveyed Platform Structural Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "survey:platform_kit",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "surveyed_platform_kit_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "surveying_tooling",
+      "identity": "survey:archive",
+      "item": "tacz:gun_component_blank",
+      "selectors": {
+        "industry_platform": "surveying",
+        "industry_part_kind": "survey_archive"
+      },
+      "selector": "tacz:gun_component_blank ; industry_part_kind=survey_archive ; industry_platform=surveying",
+      "label": "Survey Archive Packet",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "survey:archive",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "survey_archive_family",
+      "texture": "tacz_extra:item/generic_blueprint",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "surveying_tooling",
+      "identity": "survey:fixture",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "surveying",
+        "industry_part_kind": "survey_fixture"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=survey_fixture ; industry_platform=surveying",
+      "label": "Survey Reference Fixture",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "survey:fixture",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "survey_fixture_family",
+      "texture": "tacz_extra:item/base_die_blank",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
