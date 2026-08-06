@@ -57,16 +57,14 @@ public final class IndustrialSalvageScreen extends AbstractContainerScreen<Indus
         int width = 60 * progress / IndustrialSalvageStationBlockEntity.AUTO_PROCESS_TICKS;
         gui.fill(leftPos + 16, topPos + 64, leftPos + 76, topPos + 68, 0xFF071014);
         gui.fill(leftPos + 17, topPos + 65, leftPos + 17 + width, topPos + 67, progress > 0 ? GREEN : 0xFF4F3A2C);
+        // The warning chevrons and input rim already communicate the destructive
+        // action. Use one lamp rather than a sentence in the cramped cutter bay.
+        gui.fill(leftPos + 76, topPos + 63, leftPos + 82, topPos + 69, 0xFF071014);
+        gui.fill(leftPos + 77, topPos + 64, leftPos + 81, topPos + 68, progress > 0 ? GREEN : ORANGE);
 
         gui.text(font, title, leftPos + 12, topPos + 10, 0xFFF0F5EE, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_console.feed_bays"), leftPos + 17, topPos + 23, 0xFF91A9A9, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_console.recovery_tray"), leftPos + 96, topPos + 10, 0xFF91A9A9, false);
-        gui.text(font, Component.translatable(progress > 0
-                        ? "gui.tacz.industrial_console.auto_cycle"
-                        : "gui.tacz.industrial_console.manual_ready"),
-                leftPos + 17, topPos + 54, progress > 0 ? GREEN : 0xFFD5AE7A, false);
-        gui.text(font, Component.translatable("gui.tacz.industrial_console.remove_before_recovery"),
-                leftPos + 16, topPos + 96, 0xFFC9966C, false);
         gui.text(font, Component.translatable("gui.tacz.cartridge_assembly.inventory"), leftPos + 12, topPos + 112, 0xFF91A9A9, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_console.redstone_hint"), leftPos + 12, topPos + 176, 0xFF718687, false);
     }

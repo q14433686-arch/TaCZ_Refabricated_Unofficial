@@ -1282,7 +1282,7 @@
   "item.tacz.projectile_blank.payload_rpg_rocket_1": "RPG-7 装药战斗部",
   "item.tacz.projectile_blank.payload_rpg_rocket_2": "RPG-7 聚能破甲战斗部预制件",
   "gui.tacz.industrial_console.feed_bays": "物料仓",
-  "gui.tacz.industrial_console.secured_output": "锁定成品仓",
+  "gui.tacz.industrial_console.secured_output": "成品仓",
   "gui.tacz.industrial_console.recovery_tray": "回收托盘",
   "gui.tacz.industrial_console.manual_ready": "手动控制就绪",
   "gui.tacz.industrial_console.auto_cycle": "自动处理循环",

@@ -61,10 +61,11 @@ public final class CartridgeAssemblyScreen extends AbstractContainerScreen<Cartr
         int progressWidth = 46 * progress / CartridgeAssemblyMachineBlockEntity.AUTO_PROCESS_TICKS;
         gui.fill(leftPos + 92, topPos + 55, leftPos + 138, topPos + 59, 0xFF071014);
         gui.fill(leftPos + 93, topPos + 56, leftPos + 93 + progressWidth, topPos + 58, progress > 0 ? GREEN : 0xFF314047);
-        gui.text(font, Component.translatable(progress > 0
-                        ? "gui.tacz.industrial_console.auto_cycle"
-                        : "gui.tacz.industrial_console.manual_ready"),
-                leftPos + 92, topPos + 45, progress > 0 ? GREEN : 0xFFB5C5C4, false);
+        // A status lamp keeps the narrow control bay readable in every language.
+        // Green means a redstone-driven cycle is currently running; amber means
+        // the station is waiting for a manual action or a redstone edge.
+        gui.fill(leftPos + 146, topPos + 54, leftPos + 152, topPos + 60, 0xFF071014);
+        gui.fill(leftPos + 147, topPos + 55, leftPos + 151, topPos + 59, progress > 0 ? GREEN : AMBER);
 
         gui.text(font, title, leftPos + 12, topPos + 10, 0xFFF0F5EE, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_console.feed_bays"), leftPos + 13, topPos + 23, 0xFF91A9A9, false);
