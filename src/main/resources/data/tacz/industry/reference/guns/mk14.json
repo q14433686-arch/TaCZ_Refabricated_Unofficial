@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/mk14",
+  "display_name": "MK14",
+  "action": "gas_rifle",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "m14_308",
+    "capacity": 10,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "308",
+    "expected_ammo": "tacz:308"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "precision"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_feed"
+  ]
+}

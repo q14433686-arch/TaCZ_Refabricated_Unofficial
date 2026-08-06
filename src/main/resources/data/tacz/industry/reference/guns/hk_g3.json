@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/hk_g3",
+  "display_name": "HK G3",
+  "action": "roller_delayed_rifle",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "g3_308",
+    "capacity": 20,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "308",
+    "expected_ammo": "tacz:308"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "service"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_feed"
+  ]
+}

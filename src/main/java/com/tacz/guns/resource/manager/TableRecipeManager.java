@@ -86,6 +86,8 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
     private static final FileToIdConverter INDUSTRY_AMMO_CONVERTER = FileToIdConverter.json("industry/ammo");
     private Map<Identifier, JsonElement> industryAssemblies = Map.of();
     private Map<Identifier, JsonElement> industryAmmoReplacements = Map.of();
+    /** Immutable pre-alias/pre-transform source used by the runtime compatibility audit. */
+    private Map<Identifier, JsonElement> rawTableRecipeDefinitions = Map.of();
     /** Server-side lookup used by the guarded industrial recovery station. */
     private Map<Identifier, IndustryAssemblyDefinition> industryAssembliesByGun = Map.of();
 
@@ -149,7 +151,14 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         }
         GunMod.LOGGER.debug(getMarker(), "Gun smith table recipes: {} accepted, {} foreign recipe files skipped",
                 ours.size(), pObject.size() - ours.size());
-        industryAssembliesByGun = resolveIndustryAssembliesByGun(ours, industryAssemblies);
+        // Keep upstream ids for audit even if a later explicit alias repairs
+        // the effective table output. IndustrialRecipeTransformer mutates its
+        // input material lists, hence the required deep copy here.
+        rawTableRecipeDefinitions = copyJsonMap(ours);
+        var aliases = CommonAssetsManager.getInstance() == null ? null
+                : CommonAssetsManager.getInstance().getIndustryIdentityAliasManager();
+        Map<Identifier, JsonElement> effectiveRecipes = aliases == null ? ours : aliases.applyAliases(ours);
+        industryAssembliesByGun = resolveIndustryAssembliesByGun(effectiveRecipes, industryAssemblies);
         // The industrial profile removes only terminals that have a real,
         // validated one-workpiece Create sequenced-assembly process. Pass the
         // unfiltered recipe map as proof that the named process resource is
@@ -158,7 +167,7 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         // the local data map and network cache, so server validation and every
         // client recipe viewer agree on which shortcuts are disabled.
         Map<Identifier, JsonElement> profileRecipes = IndustrialRecipeTransformer.transform(
-                ours, industryAssemblies, industryAmmoReplacements, pObject
+                effectiveRecipes, industryAssemblies, industryAmmoReplacements, pObject
         );
         // 父类会用这一份（且仅这一份）同时构建 dataMap 与 networkCache。
         super.apply(profileRecipes, pResourceManager, pProfiler);
@@ -172,6 +181,25 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
     @Nullable
     public IndustryAssemblyDefinition getIndustryAssemblyForGun(Identifier gunId) {
         return gunId == null ? null : industryAssembliesByGun.get(gunId);
+    }
+
+    /**
+     * Pre-alias, pre-transform table recipe JSON keyed by the canonical legacy
+     * or current recipe id. Returned elements are deep copies so diagnostic
+     * consumers cannot mutate the production recipe map.
+     */
+    public Map<Identifier, JsonElement> getRawTableRecipeDefinitions() {
+        return copyJsonMap(rawTableRecipeDefinitions);
+    }
+
+    private static Map<Identifier, JsonElement> copyJsonMap(Map<Identifier, JsonElement> source) {
+        Map<Identifier, JsonElement> copy = new LinkedHashMap<>();
+        source.forEach((id, element) -> {
+            if (id != null && element != null) {
+                copy.put(id, element.deepCopy());
+            }
+        });
+        return Map.copyOf(copy);
     }
 
     private static Map<Identifier, IndustryAssemblyDefinition> resolveIndustryAssembliesByGun(

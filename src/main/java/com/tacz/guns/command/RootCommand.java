@@ -21,6 +21,7 @@ public class RootCommand {
         root.then(HideTooltipPartCommand.get());
         root.then(ConvertCommand.get());
         root.then(ConfigCommand.get());
+        root.then(IndustryReferenceCommand.get());
         dispatcher.register(root);
     }
 }

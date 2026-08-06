@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/sks_tactical",
+  "display_name": "SKS TACTICAL",
+  "action": "gas_rifle",
+  "feed": {
+    "device": "internal_box",
+    "runtime_mechanism": "internal_box",
+    "carrier_behavior": "internal",
+    "family": "",
+    "capacity": 10,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "762x39",
+    "expected_ammo": "tacz:762x39"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "service"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_feed"
+  ]
+}

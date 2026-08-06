@@ -1646,5 +1646,14 @@
   "item.tacz.gun_component.carrier_feed_kit.uzi_9x19_20": "Uzi 9 mm 20-round Magazine SMG Follower and Spring Kit",
   "item.tacz.press_die.carrier_gauge.vector_45acp_20": "Vector .45 ACP 20-round Magazine Specification Gauge",
   "item.tacz.gun_component.carrier_body.vector_45acp_20": "Vector .45 ACP 20-round Magazine Body",
-  "item.tacz.gun_component.carrier_feed_kit.vector_45acp_20": "Vector .45 ACP 20-round Magazine SMG Follower and Spring Kit"
+  "item.tacz.gun_component.carrier_feed_kit.vector_45acp_20": "Vector .45 ACP 20-round Magazine SMG Follower and Spring Kit",
+  "commands.tacz.industry.unavailable": "§cTACZ industry reference data is not available on this side.",
+  "commands.tacz.industry.invalid_id": "§cInvalid gun identifier.",
+  "commands.tacz.industry.audit": "§bIndustry audit§r — gun: %s, ammo: %s, attachment: %s; direct: %s, alias: %s, unresolved: %s; curated: %s, surveyed: %s",
+  "commands.tacz.industry.reference_missing": "§eNo industry reference profile is available for %s.",
+  "commands.tacz.industry.reference_header": "§bIndustry reference§r %s — model: %s, confidence: %s",
+  "commands.tacz.industry.reference_action": "Action: %s; manufacturing profile: %s; tier: %s",
+  "commands.tacz.industry.reference_feed": "Feed: device=%s, runtime=%s, carrier=%s, family=%s, capacity=%s",
+  "commands.tacz.industry.reference_ammo": "Ammunition: class=%s, nominal=%s, expected=%s",
+  "commands.tacz.industry.reference_evidence": "Evidence: %s"
 }

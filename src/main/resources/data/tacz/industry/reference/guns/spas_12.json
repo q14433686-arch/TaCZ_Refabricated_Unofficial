@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/spas_12",
+  "display_name": "SPAS 12",
+  "action": "hybrid_shotgun",
+  "feed": {
+    "device": "tube",
+    "runtime_mechanism": "tube",
+    "carrier_behavior": "internal",
+    "family": "",
+    "capacity": 5,
+    "reload_batch": 5
+  },
+  "ammunition": {
+    "class": "shot_shell",
+    "nominal": "12g",
+    "expected_ammo": "tacz:12g"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "advanced"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_feed"
+  ]
+}

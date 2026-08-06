@@ -21,6 +21,8 @@ import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
+import com.tacz.guns.industry.reference.IndustryIdentityAlias;
+import com.tacz.guns.industry.reference.IndustryReferenceProfile;
 import com.tacz.guns.util.AllowAttachmentTagMatcher;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +53,10 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     public Map<Identifier, IndustryProcessDefinition> industryProcess = new HashMap<>();
     /** Definitions shown by the dedicated cartridge assembly-machine GUI and REI category. */
     public Map<Identifier, CartridgeAssemblyDefinition> cartridgeAssembly = new HashMap<>();
+    /** Factual gun-id → action/feed/ammunition profiles. */
+    public Map<Identifier, IndustryReferenceProfile> industryReference = new HashMap<>();
+    /** Explicit aliases are stored by their logical TableRecipe id, not source-file id. */
+    public Map<Identifier, IndustryIdentityAlias> industryIdentityAlias = new HashMap<>();
     public Map<Identifier, Set<String>> attachmentTags = new HashMap<>();
     public Map<Identifier, Set<String>> allowAttachmentTags = new HashMap<>();
 
@@ -144,6 +150,26 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     }
 
     @Override
+    public @Nullable IndustryReferenceProfile getIndustryReferenceProfile(Identifier gunId) {
+        return industryReference.get(gunId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, IndustryReferenceProfile>> getAllIndustryReferenceProfiles() {
+        return industryReference.entrySet();
+    }
+
+    @Override
+    public @Nullable IndustryIdentityAlias getIndustryIdentityAlias(Identifier recipeId) {
+        return industryIdentityAlias.get(recipeId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, IndustryIdentityAlias>> getAllIndustryIdentityAliases() {
+        return industryIdentityAlias.entrySet();
+    }
+
+    @Override
     public @Nullable IndustryProcessDefinition getIndustryProcess(Identifier processId) {
         return industryProcess.get(processId);
     }
@@ -183,6 +209,8 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
         gunFeed.clear();
         industryProcess.clear();
         cartridgeAssembly.clear();
+        industryReference.clear();
+        industryIdentityAlias.clear();
         recipeFilter.clear();
         tableRecipe.clear();
         blockData.clear();
@@ -203,6 +231,8 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                 case ATTACHMENT_INDEX:
                 case BLOCK_INDEX:
                 case CARTRIDGE_ASSEMBLY:
+                case INDUSTRY_REFERENCE:
+                case INDUSTRY_ID_ALIAS:
                     delayed.put(entry.getKey(), entry.getValue());
                     break;
                 default:
@@ -276,6 +306,13 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                     case GUN_FEED -> gunFeed.put(entry.getKey(), parse(entry.getValue(), GunFeedDefinition.class));
                     case INDUSTRY_PROCESS -> industryProcess.put(entry.getKey(), parse(entry.getValue(), IndustryProcessDefinition.class));
                     case CARTRIDGE_ASSEMBLY -> cartridgeAssembly.put(entry.getKey(), parse(entry.getValue(), CartridgeAssemblyDefinition.class));
+                    case INDUSTRY_REFERENCE -> industryReference.put(entry.getKey(), parse(entry.getValue(), IndustryReferenceProfile.class));
+                    case INDUSTRY_ID_ALIAS -> {
+                        IndustryIdentityAlias alias = parse(entry.getValue(), IndustryIdentityAlias.class);
+                        if (alias != null && alias.getRecipe() != null) {
+                            industryIdentityAlias.put(alias.getRecipe(), alias);
+                        }
+                    }
                 }
             } catch (IllegalArgumentException | JsonParseException exception) {
                 GunMod.LOGGER.warn("Failed to parse data from network for {} with id {}", type, entry.getKey(), exception);

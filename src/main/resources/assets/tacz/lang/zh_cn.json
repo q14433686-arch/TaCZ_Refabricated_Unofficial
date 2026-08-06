@@ -1646,5 +1646,14 @@
   "item.tacz.gun_component.carrier_feed_kit.uzi_9x19_20": "Uzi 9 mm 20 发弹匣冲锋枪托弹板与弹簧组件",
   "item.tacz.press_die.carrier_gauge.vector_45acp_20": "Vector .45 ACP 20 发弹匣规格量规",
   "item.tacz.gun_component.carrier_body.vector_45acp_20": "Vector .45 ACP 20 发弹匣壳体",
-  "item.tacz.gun_component.carrier_feed_kit.vector_45acp_20": "Vector .45 ACP 20 发弹匣冲锋枪托弹板与弹簧组件"
+  "item.tacz.gun_component.carrier_feed_kit.vector_45acp_20": "Vector .45 ACP 20 发弹匣冲锋枪托弹板与弹簧组件",
+  "commands.tacz.industry.unavailable": "§c当前端没有可用的 TACZ 工业参考数据。",
+  "commands.tacz.industry.invalid_id": "§c无效的枪械标识符。",
+  "commands.tacz.industry.audit": "§b工业审计§r — 枪：%s，弹药：%s，配件：%s；直接：%s，别名：%s，未解析：%s；已校验：%s，测绘候选：%s",
+  "commands.tacz.industry.reference_missing": "§e%s 没有可用的工业参考档案。",
+  "commands.tacz.industry.reference_header": "§b工业参考§r %s — 型号键：%s，置信度：%s",
+  "commands.tacz.industry.reference_action": "动作：%s；制造档案：%s；层级：%s",
+  "commands.tacz.industry.reference_feed": "供弹：设备=%s，运行时=%s，载具行为=%s，兼容族=%s，容量=%s",
+  "commands.tacz.industry.reference_ammo": "弹药：类别=%s，标称=%s，预期=%s",
+  "commands.tacz.industry.reference_evidence": "依据：%s"
 }

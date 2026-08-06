@@ -1,0 +1,8 @@
+{
+  "recipe": "ww:765",
+  "kind": "ammo",
+  "target": "ww:765",
+  "expected_stack_size": 60,
+  "confidence": "curated",
+  "reason": "Enlisted v1.2.1.3 7.65x21 recipe incorrectly outputs ww:763; the matching loaded ammo index is ww:765."
+}

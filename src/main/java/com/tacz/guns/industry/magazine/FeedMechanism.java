@@ -41,4 +41,17 @@ public enum FeedMechanism {
     public boolean usesDetachableMagazine() {
         return this == DETACHABLE_MAGAZINE;
     }
+
+    /**
+     * Reference profiles store the serialized data value instead of a Java enum
+     * name so datapacks remain readable across versions. Unknown future device
+     * types must keep {@code runtime_mechanism = legacy} until gameplay support
+     * exists; this helper validates only mechanisms currently executable here.
+     */
+    public static boolean isKnownSerializedName(String value) {
+        return switch (value == null ? "" : value) {
+            case "legacy", "detachable_magazine", "internal_box", "tube", "revolver", "belt", "single_shot" -> true;
+            default -> false;
+        };
+    }
 }

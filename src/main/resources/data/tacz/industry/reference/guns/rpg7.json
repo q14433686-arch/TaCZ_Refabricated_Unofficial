@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/rpg7",
+  "display_name": "RPG7",
+  "action": "launcher",
+  "feed": {
+    "device": "single_shot",
+    "runtime_mechanism": "single_shot",
+    "carrier_behavior": "internal",
+    "family": "",
+    "capacity": 1,
+    "reload_batch": 1
+  },
+  "ammunition": {
+    "class": "rocket",
+    "nominal": "rpg_rocket",
+    "expected_ammo": "tacz:rpg_rocket"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "precision"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_feed"
+  ]
+}

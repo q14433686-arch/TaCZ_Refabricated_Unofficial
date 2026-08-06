@@ -1,0 +1,9 @@
+{
+  "recipe": "rainforest:gun/spg1",
+  "kind": "gun",
+  "target": "rainforest:hk_spg1",
+  "expected_ammo": "tacz:308",
+  "expected_capacity": 5,
+  "confidence": "curated",
+  "reason": "Cold War v0.51 recipe shortens the loaded HK SPG1 id to rainforest:spg1."
+}

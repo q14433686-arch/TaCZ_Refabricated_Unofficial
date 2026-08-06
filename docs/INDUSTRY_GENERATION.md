@@ -75,6 +75,8 @@ assets/tacz/lang/zh_cn.json
 
 每个平台生成的是**原始工艺档案**来源，源策略在 `tools/industry/blueprint_acquisition.json`：legacy 档案进入 2 级武器匠与早期箱子，service 档案进入 5 级武器匠，advanced/precision 档案主要来自高阶探索箱。档案不是直接成枪模板；它要转印到 Basin 形成的空白工装页上，才得到可复制的生产工装模板。实际样枪也可经 `survey_dossier_<platform>` 测绘为同一份档案。旧存档蓝图则经 `restore_template_<platform>` 转换，不能报废。
 
+同时，生成器为全部默认平台写出 `data/tacz/industry/reference/guns/<gun>.json`。这不是额外配方，而是运行时 `IndustryReferenceProfileManager` 使用的动作、供弹、弹药类别、制造 tier 对照表；它会把档案与实际默认 `gun_feed` / GunData 交叉校验。第三方包通过相同 schema 或显式 `industry/id_aliases` 接入，详见 `docs/INDUSTRY_REFERENCE_PROFILE.md`。
+
 ## 弹药与弹匣源定义
 
 `tools/industry/cartridges.json` 是默认枪包全部 **24** 种散装弹药的口径源定义。每条口径声明 `AmmoId`、弹头类型、是否会抛出可回收弹壳、双语名称，以及一种真实的模具校准来源：

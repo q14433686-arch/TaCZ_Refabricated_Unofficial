@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/timeless50",
+  "display_name": "TIMELESS50",
+  "action": "locked_breech_pistol",
+  "feed": {
+    "device": "unknown",
+    "runtime_mechanism": "legacy",
+    "carrier_behavior": "unknown",
+    "family": "",
+    "capacity": 0,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "50ae",
+    "expected_ammo": "tacz:50ae"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "service"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_data"
+  ]
+}

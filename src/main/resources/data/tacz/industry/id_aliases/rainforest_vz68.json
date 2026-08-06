@@ -1,0 +1,9 @@
+{
+  "recipe": "rainforest:gun/vz68",
+  "kind": "gun",
+  "target": "rainforest:vz68",
+  "expected_ammo": "tacz:9mm",
+  "expected_capacity": 10,
+  "confidence": "curated",
+  "reason": "Cold War v0.51 recipe outputs rainforest:vz61 while the loaded index/data identity is rainforest:vz68."
+}

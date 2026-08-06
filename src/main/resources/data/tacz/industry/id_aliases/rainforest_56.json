@@ -1,0 +1,9 @@
+{
+  "recipe": "rainforest:gun/56",
+  "kind": "gun",
+  "target": "rainforest:56",
+  "expected_ammo": "tacz:762x39",
+  "expected_capacity": 10,
+  "confidence": "curated",
+  "reason": "Cold War v0.51 recipe retained the legacy lol141 namespace for Type 56."
+}

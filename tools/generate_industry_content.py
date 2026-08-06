@@ -2285,6 +2285,145 @@ def language_entries(platform: dict[str, Any], language: str) -> dict[str, str]:
     return entries
 
 
+
+def default_gun_ammo_for_reference(platform: dict[str, Any]) -> str:
+    """Read only bundled default-gun data for a generated curated reference row."""
+    path = DEFAULT_GUN_DATA_ROOT / f"{platform['slug']}_data.json"
+    if not path.exists():
+        return ""
+    try:
+        data = read_json5(path)
+    except (OSError, ValueError, json.JSONDecodeError):
+        return ""
+    ammo = data.get("ammo") if isinstance(data, dict) else ""
+    return ammo if isinstance(ammo, str) else ""
+
+
+def reference_ammunition_class(ammo: str) -> str:
+    """Curated default-pack categorisation; third-party profiles must declare their own class."""
+    path = ammo.split(":", 1)[-1]
+    if path == "12g":
+        return "shot_shell"
+    if path == "40mm":
+        return "grenade"
+    if path == "rpg_rocket":
+        return "rocket"
+    return "cartridge" if path else "unknown"
+
+
+def generated_reference_profile_files(platforms: list[dict[str, Any]]) -> dict[Path, Any]:
+    """Emit a systematic factual baseline for every bundled default gun.
+
+    These profiles are an independent GPL data layer, not edits to the licensed
+    default gun pack. They give the runtime reference manager a complete,
+    inspectable example of action/feed/ammunition facts and the same schema
+    third-party compatibility packs use at resource reload.
+    """
+    files: dict[Path, Any] = {}
+    feed_root = RESOURCE_ROOT / "data/tacz/industry/gun_feed"
+    carrier_behaviour = {
+        "detachable_magazine": "inserted_retained",
+        "belt": "inserted_retained",
+        "internal_box": "internal",
+        "tube": "internal",
+        "revolver": "internal",
+        "single_shot": "internal",
+    }
+    for platform in platforms:
+        gun_id = platform["gun_id"]
+        namespace, gun_path = gun_id.split(":", 1)
+        feed_path = feed_root / f"{platform['slug']}.json"
+        feed = read_json(feed_path) if feed_path.exists() else {}
+        mechanism = feed.get("mechanism") if isinstance(feed.get("mechanism"), str) else "legacy"
+        supported_mechanisms = {"detachable_magazine", "belt", "internal_box", "tube", "revolver", "single_shot"}
+        runtime_mechanism = mechanism if mechanism in supported_mechanisms else "legacy"
+        device = mechanism if mechanism in supported_mechanisms else "unknown"
+        capacity = feed.get("magazine_capacity") if isinstance(feed.get("magazine_capacity"), int) else 0
+        reload_batch = feed.get("reload_batch") if isinstance(feed.get("reload_batch"), int) else 0
+        ammo = feed.get("ammo") if isinstance(feed.get("ammo"), str) else default_gun_ammo_for_reference(platform)
+        nominal = ammo.split(":", 1)[-1] if ammo else "unknown"
+        external = device in {"detachable_magazine", "belt"}
+        profile = {
+            "schema_version": 1,
+            "generated_by": "tacz_industry_generator",
+            "canonical_model": f"default/{platform['slug']}",
+            "display_name": platform_display_label(platform, "en_us"),
+            "action": action_profile(platform),
+            "feed": {
+                "device": device,
+                "runtime_mechanism": runtime_mechanism,
+                "carrier_behavior": carrier_behaviour.get(device, "unknown"),
+                "family": feed.get("magazine_family", "") if external else "",
+                "capacity": capacity,
+                "reload_batch": reload_batch,
+            },
+            "ammunition": {
+                "class": reference_ammunition_class(ammo),
+                "nominal": nominal,
+            },
+            "manufacturing": {
+                "profile": "curated_default",
+                "tier": manufacturing_tier(platform),
+            },
+            "confidence": "curated",
+            "evidence": [
+                "bundled_default_industry_policy",
+                "bundled_gun_feed" if feed_path.exists() else "bundled_gun_data",
+            ],
+        }
+        if ammo:
+            profile["ammunition"]["expected_ammo"] = ammo
+        files[RESOURCE_ROOT / f"data/{namespace}/industry/reference/guns/{gun_path}.json"] = profile
+    return files
+
+
+def obsolete_generated_reference_profile_files(expected: dict[Path, Any]) -> set[Path]:
+    """Only clean generator-stamped default profiles; preserve authored compatibility data."""
+    root = RESOURCE_ROOT / "data/tacz/industry/reference/guns"
+    if not root.exists():
+        return set()
+    stale: set[Path] = set()
+    for path in root.rglob("*.json"):
+        if path in expected:
+            continue
+        try:
+            data = read_json(path)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(data, dict) and data.get("generated_by") == "tacz_industry_generator":
+            stale.add(path)
+    return stale
+
+
+
+def validate_generated_reference_profiles(platforms: list[dict[str, Any]], expected: dict[Path, Any]) -> None:
+    """Keep the generated default reference table complete and fact-linked to feeds/data."""
+    profile_paths: set[Path] = set()
+    for platform in platforms:
+        namespace, gun_path = platform["gun_id"].split(":", 1)
+        path = RESOURCE_ROOT / f"data/{namespace}/industry/reference/guns/{gun_path}.json"
+        profile = expected.get(path)
+        if not isinstance(profile, dict):
+            raise ValueError(f"{platform['slug']}: missing generated industry reference profile")
+        profile_paths.add(path)
+        if profile.get("schema_version") != 1 or profile.get("action") != action_profile(platform) \
+                or profile.get("manufacturing", {}).get("tier") != manufacturing_tier(platform):
+            raise ValueError(f"{platform['slug']}: generated reference profile action/tier mismatch")
+        feed = profile.get("feed", {})
+        ammunition = profile.get("ammunition", {})
+        if not isinstance(feed, dict) or not isinstance(ammunition, dict):
+            raise ValueError(f"{platform['slug']}: generated reference profile needs feed/ammunition objects")
+        feed_path = RESOURCE_ROOT / f"data/tacz/industry/gun_feed/{platform['slug']}.json"
+        if feed_path.exists():
+            declared = read_json(feed_path)
+            if feed.get("runtime_mechanism") != declared.get("mechanism") \
+                    or ammunition.get("expected_ammo") != declared.get("ammo") \
+                    or feed.get("capacity") != declared.get("magazine_capacity"):
+                raise ValueError(f"{platform['slug']}: generated reference profile disagrees with gun_feed")
+    if len(profile_paths) != len(platforms):
+        raise ValueError("generated reference profile path collision")
+
+
 def action_tooling_language_entries(platforms: list[dict[str, Any]], policy: dict[str, Any], language: str) -> dict[str, str]:
     """Names for reusable family fixtures and selected gauge stocks."""
     chinese = language == "zh_cn"
@@ -4396,6 +4535,15 @@ def run(write: bool) -> int:
         "tooltip.tacz.industry.carrier_gauge": "Reusable carrier specification gauge — forms the matching body and feed component",
         "tooltip.tacz.industry.carrier_component": "Named removable-carrier subassembly — install it at the final carrier station",
         "tooltip.tacz.industry.carrier_spec": "Carrier specification: %s / %s / %s rounds",
+        "commands.tacz.industry.unavailable": "§cTACZ industry reference data is not available on this side.",
+        "commands.tacz.industry.invalid_id": "§cInvalid gun identifier.",
+        "commands.tacz.industry.audit": "§bIndustry audit§r — gun: %s, ammo: %s, attachment: %s; direct: %s, alias: %s, unresolved: %s; curated: %s, surveyed: %s",
+        "commands.tacz.industry.reference_missing": "§eNo industry reference profile is available for %s.",
+        "commands.tacz.industry.reference_header": "§bIndustry reference§r %s — model: %s, confidence: %s",
+        "commands.tacz.industry.reference_action": "Action: %s; manufacturing profile: %s; tier: %s",
+        "commands.tacz.industry.reference_feed": "Feed: device=%s, runtime=%s, carrier=%s, family=%s, capacity=%s",
+        "commands.tacz.industry.reference_ammo": "Ammunition: class=%s, nominal=%s, expected=%s",
+        "commands.tacz.industry.reference_evidence": "Evidence: %s",
         "tooltip.tacz.industry.case_datum_gauge": "Reverse-engineered case datum — calibrates only the matching case die",
         "tooltip.tacz.industry.projectile_datum_gauge": "Reverse-engineered projectile datum — calibrates only the matching projectile die",
         "tooltip.tacz.industry.dossier_archive": "Tier archive packet — consumed by a Gunsmith dossier commission",
@@ -4433,6 +4581,15 @@ def run(write: bool) -> int:
         "tooltip.tacz.industry.carrier_gauge": "可复用供弹器规格量规——成型对应壳体与供弹组件",
         "tooltip.tacz.industry.carrier_component": "命名的可拆卸供弹器子总成——在最终供弹器工位装配",
         "tooltip.tacz.industry.carrier_spec": "供弹器规格：%s / %s / %s 发",
+        "commands.tacz.industry.unavailable": "§c当前端没有可用的 TACZ 工业参考数据。",
+        "commands.tacz.industry.invalid_id": "§c无效的枪械标识符。",
+        "commands.tacz.industry.audit": "§b工业审计§r — 枪：%s，弹药：%s，配件：%s；直接：%s，别名：%s，未解析：%s；已校验：%s，测绘候选：%s",
+        "commands.tacz.industry.reference_missing": "§e%s 没有可用的工业参考档案。",
+        "commands.tacz.industry.reference_header": "§b工业参考§r %s — 型号键：%s，置信度：%s",
+        "commands.tacz.industry.reference_action": "动作：%s；制造档案：%s；层级：%s",
+        "commands.tacz.industry.reference_feed": "供弹：设备=%s，运行时=%s，载具行为=%s，兼容族=%s，容量=%s",
+        "commands.tacz.industry.reference_ammo": "弹药：类别=%s，标称=%s，预期=%s",
+        "commands.tacz.industry.reference_evidence": "依据：%s",
         "tooltip.tacz.industry.case_datum_gauge": "逆向弹壳基准——只能校准对应弹壳模具",
         "tooltip.tacz.industry.projectile_datum_gauge": "逆向弹头基准——只能校准对应弹头模具",
         "tooltip.tacz.industry.dossier_archive": "层级档案包——在枪械工作台档案委托中消耗",
@@ -4459,6 +4616,7 @@ def run(write: bool) -> int:
         expected.update(generated_platform_files(platform))
         english.update(language_entries(platform, "en_us"))
         chinese.update(language_entries(platform, "zh_cn"))
+    expected.update(generated_reference_profile_files(platforms))
     expected.update(generated_cartridge_gauge_blank_file())
     for cartridge in cartridges:
         expected.update(generated_cartridge_files(cartridge))
@@ -4484,6 +4642,7 @@ def run(write: bool) -> int:
     obsolete_dossier_paths = obsolete_dossier_commission_files(expected)
     obsolete_magazine_paths = obsolete_legacy_magazine_files(magazine_carriers)
     obsolete_carrier_paths = obsolete_generated_carrier_files(expected)
+    obsolete_reference_paths = obsolete_generated_reference_profile_files(expected)
     validate_effective_create_recipe_collisions(
         expected, obsolete_platform_paths | obsolete_template_paths | obsolete_magazine_paths | obsolete_carrier_paths
     )
@@ -4491,6 +4650,7 @@ def run(write: bool) -> int:
     validate_viewer_continuity(platforms, expected)
     validate_cartridge_tooling_continuity(cartridges, expected)
     validate_magazine_tooling_continuity(magazine_carriers, platforms, expected)
+    validate_generated_reference_profiles(platforms, expected)
     validate_stable_dossier_commissions(platforms, blueprint_acquisition, expected)
 
     stale: list[str] = []
@@ -4525,6 +4685,14 @@ def run(write: bool) -> int:
     # Structural profile names can rename generator-owned component recipe
     # files; delete old stems so Create never sees duplicate deployments.
     for path in sorted(obsolete_platform_paths):
+        stale.append(str(path.relative_to(REPO)))
+        if write:
+            path.unlink()
+
+    # Generator-stamped default reference profiles are regenerated from the
+    # current platform/feed policy. Hand-authored third-party compatibility
+    # profiles are intentionally never deleted here.
+    for path in sorted(obsolete_reference_paths):
         stale.append(str(path.relative_to(REPO)))
         if write:
             path.unlink()
@@ -4587,7 +4755,7 @@ def run(write: bool) -> int:
             print(f"  {entry}")
         return 0 if write else 1
     print(
-        f"Industry generator {mode}: {len(platforms)} platform manifest(s), "
+        f"Industry generator {mode}: {len(platforms)} platform/reference-profile manifest(s), "
         f"{len(cartridges)} cartridge manifest(s), {len(magazine_carriers)} removable-carrier manifest(s), "
         "all managed outputs current."
     )

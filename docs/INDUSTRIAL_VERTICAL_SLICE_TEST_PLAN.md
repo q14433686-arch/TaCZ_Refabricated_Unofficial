@@ -9,6 +9,13 @@
 - `PhysicalMagazines = true` 可同时测试实体弹匣；
 - 本测试只覆盖 TACZ 内置 `tacz` 默认包，不改变任何第三方枪包配方。
 
+### 0.5 参考档案与第三方接入审计
+
+1. 资源重载后以管理员执行 `/tacz industry audit`：默认包应报告已校验的参考档案和零个未解析默认枪结果；
+2. 执行 `/tacz industry reference tacz:ak47`、`/tacz industry reference tacz:m870`、`/tacz industry reference tacz:m249`、`/tacz industry reference tacz:rpg7`：依次确认动作、供弹设备、运行时机制、容量、弹药类别和 tier；M870 必须是 `tube`，M249 必须是 `belt`，RPG-7 必须是 `single_shot`，不能都显示成 detachable magazine；
+3. 安装第三方包后，审计只能把有有效 Index/Data 的枪标记为 `surveyed` 候选；没有 `industry/reference` / `industry/gun_feed` 的第三方枪必须保持 `legacy` 供弹，不能因为其旧 `reload.type = magazine` 被自动变为实体弹匣；
+4. 对输出 ID 错误的第三方工作台配方，先观察审计的 `unresolved` 行；只有添加带 `expected_ammo` / `expected_capacity` 的显式 `industry/id_aliases` 条目后才允许其进入自动工业门槛。不要用文件名猜测直接修复。
+
 ## 1. 配方查看器桥接
 
 - JEI 应继续显示 Create Fly 原生完整树；

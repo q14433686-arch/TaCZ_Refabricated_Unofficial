@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.industry.IndustryProfileManager;
+import com.tacz.guns.resource.CommonAssetsManager;
 import net.minecraft.resources.Identifier;
 
 import java.util.HashSet;
@@ -79,8 +80,9 @@ public final class IndustrialRecipeTransformer {
 
         AutoFallbackStats autoFallbacks = autoDiscoverFallbacks(transformed, declaredAssemblyRecipes);
         GunMod.LOGGER.info(
-                "CREATE_FLY industry profile removed {} legacy gun-table terminal recipe(s) in favour of validated sequential assembly, removed {} legacy ammo table recipe(s), and synthesized {} gun / {} ammo / {} attachment fallback replacement(s).",
-                removedGunTableRecipes, replacedAmmoRecipes.size(), autoFallbacks.guns(), autoFallbacks.ammo(), autoFallbacks.attachments());
+                "CREATE_FLY industry profile removed {} legacy gun-table terminal recipe(s) in favour of validated sequential assembly, removed {} legacy ammo table recipe(s), and synthesized {} gun / {} ammo / {} attachment fallback replacement(s); {} unresolved result identity recipe(s) retained unchanged.",
+                removedGunTableRecipes, replacedAmmoRecipes.size(), autoFallbacks.guns(), autoFallbacks.ammo(),
+                autoFallbacks.attachments(), autoFallbacks.unresolved());
         return transformed;
     }
 
@@ -102,6 +104,7 @@ public final class IndustrialRecipeTransformer {
         int guns = 0;
         int ammo = 0;
         int attachments = 0;
+        int unresolved = 0;
         for (Map.Entry<Identifier, JsonElement> entry : recipes.entrySet()) {
             if (declaredAssemblyRecipes.contains(entry.getKey()) || !entry.getValue().isJsonObject()) {
                 continue;
@@ -112,6 +115,16 @@ public final class IndustrialRecipeTransformer {
                 continue;
             }
             String type = string(result, "type");
+            if (isIndustrialResultType(type) && !hasLoadedResultIdentity(type, result)) {
+                // A typoed/cross-pack id must remain visible as its original
+                // recipe until an explicit industry/id_aliases entry repairs
+                // it. Adding industrial costs to a result that cannot exist
+                // would turn an upstream data error into a misleading gate.
+                unresolved++;
+                GunMod.LOGGER.warn("Skipping automatic industrial fallback for {}: unresolved {} result id '{}'.",
+                        entry.getKey(), type, string(result, "id"));
+                continue;
+            }
             int materialWeight = materialWeight(recipe);
             int resultCount = resultCount(result);
             boolean changed = switch (type) {
@@ -145,7 +158,24 @@ public final class IndustrialRecipeTransformer {
                 recipe.addProperty("industry_auto_fallback", true);
             }
         }
-        return new AutoFallbackStats(guns, ammo, attachments);
+        return new AutoFallbackStats(guns, ammo, attachments, unresolved);
+    }
+
+    private static boolean isIndustrialResultType(String type) {
+        return "gun".equals(type) || "ammo".equals(type) || "attachment".equals(type);
+    }
+
+    private static boolean hasLoadedResultIdentity(String type, JsonObject result) {
+        Identifier id = Identifier.tryParse(string(result, "id"));
+        if (id == null) {
+            return false;
+        }
+        return switch (type) {
+            case "gun" -> CommonAssetsManager.get().getGunIndex(id) != null;
+            case "ammo" -> CommonAssetsManager.get().getAmmoIndex(id) != null;
+            case "attachment" -> CommonAssetsManager.get().getAttachmentIndex(id) != null;
+            default -> false;
+        };
     }
 
     private static int materialWeight(JsonObject recipe) {
@@ -216,8 +246,8 @@ public final class IndustrialRecipeTransformer {
         return parent.has(key) && parent.get(key).isJsonObject() ? parent.getAsJsonObject(key) : null;
     }
 
-    private record AutoFallbackStats(int guns, int ammo, int attachments) {
-        private static final AutoFallbackStats EMPTY = new AutoFallbackStats(0, 0, 0);
+    private record AutoFallbackStats(int guns, int ammo, int attachments, int unresolved) {
+        private static final AutoFallbackStats EMPTY = new AutoFallbackStats(0, 0, 0, 0);
     }
 
     private static Set<Identifier> legacyAmmoRecipeIds(Map<Identifier, JsonElement> rawAmmoReplacements) {

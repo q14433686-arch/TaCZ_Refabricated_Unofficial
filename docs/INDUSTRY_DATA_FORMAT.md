@@ -6,6 +6,9 @@
 
 内置平台的重复资源由作者工具生成，源定义、命令和碰撞验证规则见 [`INDUSTRY_GENERATION.md`](INDUSTRY_GENERATION.md)。第三方内容包仍可直接提供普通 JSON，不需要运行生成器。
 
+第三方枪包的“工作台结果 ID、实际 GunData、现实供弹结构、工业投影”由独立的
+[`INDUSTRY_REFERENCE_PROFILE.md`](INDUSTRY_REFERENCE_PROFILE.md) 契约约束。它提供 ReferenceProfile、明确 ID alias、运行时审计与缺 `.json` 后缀资源预检；不会把旧包的 `reload.type = magazine` 误当成真实可拆卸弹匣。
+
 ## 运行时自动识别与工业替代
 
 `CREATE_FLY` 档默认开启 `AutoDiscoverIndustryReplacements`。服务器在**资源重载时**扫描所有未手工声明的枪械工作台配方；玩家不需要、也不应运行 Python 工具。

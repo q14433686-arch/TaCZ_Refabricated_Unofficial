@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/minigun",
+  "display_name": "MINIGUN",
+  "action": "rotary",
+  "feed": {
+    "device": "unknown",
+    "runtime_mechanism": "legacy",
+    "carrier_behavior": "unknown",
+    "family": "",
+    "capacity": 0,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "308",
+    "expected_ammo": "tacz:308"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "precision"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_data"
+  ]
+}

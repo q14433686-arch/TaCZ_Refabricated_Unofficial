@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/ai_awp",
+  "display_name": "AI AWP",
+  "action": "bolt_action",
+  "feed": {
+    "device": "internal_box",
+    "runtime_mechanism": "internal_box",
+    "carrier_behavior": "internal",
+    "family": "",
+    "capacity": 5,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "338",
+    "expected_ammo": "tacz:338"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "precision"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_feed"
+  ]
+}

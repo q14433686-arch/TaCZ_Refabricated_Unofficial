@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/kar98",
+  "display_name": "KAR98",
+  "action": "bolt_action",
+  "feed": {
+    "device": "internal_box",
+    "runtime_mechanism": "internal_box",
+    "carrier_behavior": "internal",
+    "family": "",
+    "capacity": 4,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "792x57",
+    "expected_ammo": "tacz:792x57"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "legacy"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_feed"
+  ]
+}

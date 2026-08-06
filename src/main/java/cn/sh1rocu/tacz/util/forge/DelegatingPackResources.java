@@ -1,6 +1,7 @@
 package cn.sh1rocu.tacz.util.forge;
 
 import com.google.common.collect.ImmutableList;
+import com.tacz.guns.industry.reference.IndustryGunPackPreflight;
 import net.minecraft.network.chat.Component;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.resources.Identifier;
@@ -60,11 +61,7 @@ public class DelegatingPackResources extends AbstractPackResources {
                 var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, supplier);
                 resourceOutput.accept(location, wrapped);
             };
-            for (PackResources delegate : this.delegates) {
-                try {
-                    delegate.listResources(type, resourceNamespace, paths, transformingOutput);
-                } catch (Exception ignored) {}
-            }
+            listDelegateResourcesWithExtensionAliases(type, resourceNamespace, paths, transformingOutput, true);
             if (legacyPath != null) {
                 ResourceOutput legacyOutput = (location, supplier) -> {
                     var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
@@ -118,10 +115,52 @@ public class DelegatingPackResources extends AbstractPackResources {
                 } catch (Exception ignored) {}
             }
         } else {
-            for (PackResources delegate : this.delegates) {
-                delegate.listResources(type, resourceNamespace, paths, resourceOutput);
+            listDelegateResourcesWithExtensionAliases(type, resourceNamespace, paths, resourceOutput, false);
+        }
+    }
+
+    /**
+     * FileToIdConverter only accepts physical *.json paths. Legacy gun packs
+     * occasionally omit that suffix while still storing a JSON object. Expose
+     * a virtual sibling ending in .json only for the narrow TACZ data families
+     * classified by IndustryGunPackPreflight; never rename arbitrary pack data.
+     */
+    private void listDelegateResourcesWithExtensionAliases(PackType type, String namespace, String paths,
+                                                           ResourceOutput output, boolean suppressDelegateFailures) {
+        List<ListedResource> listed = new ArrayList<>();
+        ResourceOutput collector = (location, supplier) -> listed.add(new ListedResource(location, supplier));
+        for (PackResources delegate : this.delegates) {
+            if (!suppressDelegateFailures) {
+                delegate.listResources(type, namespace, paths, collector);
+                continue;
+            }
+            try {
+                delegate.listResources(type, namespace, paths, collector);
+            } catch (Exception ignored) {
+                // The recipe compatibility branch historically isolated a
+                // malformed optional delegate; preserve that narrow behaviour.
             }
         }
+        Set<Identifier> physicalLocations = new HashSet<>();
+        for (ListedResource resource : listed) {
+            physicalLocations.add(resource.location());
+            output.accept(resource.location(), resource.supplier());
+        }
+        if (type != PackType.SERVER_DATA) {
+            return;
+        }
+        Set<Identifier> emittedAliases = new HashSet<>();
+        for (ListedResource resource : listed) {
+            Identifier alias = IndustryGunPackPreflight.normalizedJsonLocation(resource.location());
+            if (alias == null || physicalLocations.contains(alias) || !emittedAliases.add(alias)
+                    || !IndustryGunPackPreflight.looksLikeJson(resource.supplier())) {
+                continue;
+            }
+            output.accept(alias, resource.supplier());
+        }
+    }
+
+    private record ListedResource(Identifier location, IoSupplier<InputStream> supplier) {
     }
 
     @Override
@@ -148,11 +187,12 @@ public class DelegatingPackResources extends AbstractPackResources {
         for (PackResources pack : getCandidatePacks(type, location)) {
             IoSupplier<InputStream> ioSupplier = pack.getResource(type, location);
             if (ioSupplier != null) {
-                if (type == PackType.SERVER_DATA && cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(location)) {
-                    return cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, ioSupplier);
-                }
-                return ioSupplier;
+                return wrapRecipeSupplier(type, location, ioSupplier);
             }
+        }
+        IoSupplier<InputStream> extensionless = getExtensionlessJsonAlias(type, location);
+        if (extensionless != null) {
+            return wrapRecipeSupplier(type, location, extensionless);
         }
 
         if (type == PackType.SERVER_DATA) {
@@ -161,24 +201,49 @@ public class DelegatingPackResources extends AbstractPackResources {
                 for (PackResources pack : getCandidatePacks(type, legacy)) {
                     IoSupplier<InputStream> ioSupplier = pack.getResource(type, legacy);
                     if (ioSupplier != null) {
-                        if (cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(location)) {
-                            return cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, ioSupplier);
-                        }
-                        return ioSupplier;
+                        return wrapRecipeSupplier(type, location, ioSupplier);
                     }
+                }
+                IoSupplier<InputStream> legacyExtensionless = getExtensionlessJsonAlias(type, legacy);
+                if (legacyExtensionless != null) {
+                    return wrapRecipeSupplier(type, location, legacyExtensionless);
                 }
                 for (PackResources pack : this.delegates) {
                     IoSupplier<InputStream> ioSupplier = pack.getResource(type, legacy);
                     if (ioSupplier != null) {
-                        if (cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(location)) {
-                            return cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, ioSupplier);
-                        }
-                        return ioSupplier;
+                        return wrapRecipeSupplier(type, location, ioSupplier);
                     }
                 }
             }
         }
 
+        return null;
+    }
+
+    private IoSupplier<InputStream> wrapRecipeSupplier(PackType type, Identifier requested,
+                                                        IoSupplier<InputStream> supplier) {
+        return type == PackType.SERVER_DATA && cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(requested)
+                ? cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(requested, supplier) : supplier;
+    }
+
+    @Nullable
+    private IoSupplier<InputStream> getExtensionlessJsonAlias(PackType type, Identifier requestedJsonLocation) {
+        if (type != PackType.SERVER_DATA || !requestedJsonLocation.getPath().endsWith(".json")) {
+            return null;
+        }
+        Identifier source = requestedJsonLocation.withPath(
+                requestedJsonLocation.getPath().substring(0, requestedJsonLocation.getPath().length() - ".json".length())
+        );
+        Identifier normalized = IndustryGunPackPreflight.normalizedJsonLocation(source);
+        if (!requestedJsonLocation.equals(normalized)) {
+            return null;
+        }
+        for (PackResources pack : getCandidatePacks(type, source)) {
+            IoSupplier<InputStream> supplier = pack.getResource(type, source);
+            if (supplier != null && IndustryGunPackPreflight.looksLikeJson(supplier)) {
+                return supplier;
+            }
+        }
         return null;
     }
 

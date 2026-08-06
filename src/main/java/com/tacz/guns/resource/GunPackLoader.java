@@ -6,6 +6,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.resource.ResourceManager;
+import com.tacz.guns.industry.reference.IndustryGunPackPreflight;
 import com.tacz.guns.config.PreLoadConfig;
 import com.tacz.guns.util.GetJarResources;
 import net.fabricmc.loader.api.FabricLoader;
@@ -89,6 +90,10 @@ public enum GunPackLoader implements RepositorySource {
 
         GunMod.LOGGER.info(MARKER, "Start scanning for gun packs in {}", resourcePacksPath);
         List<GunPack> gunPacks = scanExtensions(resourcePacksPath);
+        // Diagnose extensionless JSON that DelegatingPackResources exposes as
+        // a constrained virtual .json alias. The archive itself is never
+        // mutated and a physical .json file still wins over an alias.
+        IndustryGunPackPreflight.inspect(gunPacks);
         GunMod.LOGGER.info(MARKER, "Found {} possible gunpack(s) and added them to resource set.", gunPacks.size());
         List<PackResources> extensionPacks = new ArrayList<>();
 

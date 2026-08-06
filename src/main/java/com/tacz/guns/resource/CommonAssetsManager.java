@@ -34,6 +34,10 @@ import com.tacz.guns.industry.recipe.CartridgeAssemblyRecipeManager;
 import com.tacz.guns.industry.recipe.IndustryAssemblyDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessManager;
+import com.tacz.guns.industry.reference.IndustryIdentityAlias;
+import com.tacz.guns.industry.reference.IndustryIdentityAliasManager;
+import com.tacz.guns.industry.reference.IndustryReferenceProfile;
+import com.tacz.guns.industry.reference.IndustryReferenceProfileManager;
 import com.tacz.guns.resource.pojo.data.loot.LootTableInjection;
 import com.tacz.guns.resource.serialize.*;
 import com.tacz.guns.util.AllowAttachmentTagMatcher;
@@ -94,6 +98,10 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     private CommonDataManager<IndustryProcessDefinition> industryProcess;
     /** Server-authoritative dedicated cartridge-assembly definitions, synced for UI/REI. */
     private CommonDataManager<CartridgeAssemblyDefinition> cartridgeAssembly;
+    /** Explicit result-id repairs must load before TableRecipeManager applies industrial transforms. */
+    private IndustryIdentityAliasManager industryIdentityAliases;
+    /** Factual action/feed/ammunition profiles plus the post-table-reload audit snapshot. */
+    private IndustryReferenceProfileManager industryReferenceProfiles;
     private RecipeFilterManager recipeFilterManager;
     private LootInjectionManager lootInjectionManager;
 
@@ -118,6 +126,10 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         gunIndex = register(new CommonDataManager<>(DataType.GUN_INDEX, CommonGunIndex.class, GSON, "index/guns", "GunIndexLoader"));
         attachmentIndex = register(new CommonDataManager<>(DataType.ATTACHMENT_INDEX, CommonAttachmentIndex.class, GSON, "index/attachments", "AttachmentIndexLoader"));
         blockIndex = register(new CommonDataManager<>(DataType.BLOCK_INDEX, CommonBlockIndex.class, GSON, "index/blocks", "BlockIndexLoader"));
+        // Aliases depend on the loaded indexes and must be ready before table
+        // recipes are parsed/replaced. They are explicit compatibility data,
+        // never filename guesses.
+        industryIdentityAliases = register(new IndustryIdentityAliasManager());
         // 第 12 轮：把工作台配方也纳入同步。目录与 vanilla 数据包配方一致（data/<ns>/recipe），
         // 这样客户端无需 RecipeManager 也能列出配方（26.2 客户端已无完整配方表）。
         //
@@ -125,6 +137,10 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         // 与其他模组的配方（实测原版 1585 条），不按 "type" 过滤会全部灌进
         // TableRecipe 的解析器刷屏，并被原样打进同步包。详见该类的注释。
         tableRecipe = register(new TableRecipeManager());
+        // This manager validates curated factual profiles after the complete
+        // table-recipe snapshot exists, then emits the safe/alias/unresolved
+        // audit used by future runtime industrial generation.
+        industryReferenceProfiles = register(new IndustryReferenceProfileManager());
         industryProcess = register(new IndustryProcessManager());
         cartridgeAssembly = register(new CartridgeAssemblyRecipeManager());
 
@@ -267,6 +283,47 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     @Override
     public Set<Map.Entry<Identifier, GunFeedDefinition>> getAllGunFeedDefinitions() {
         return gunFeed == null ? Collections.emptySet() : gunFeed.getAllData().entrySet();
+    }
+
+    @Override
+    @Nullable
+    public IndustryReferenceProfile getIndustryReferenceProfile(Identifier gunId) {
+        return industryReferenceProfiles == null ? null : industryReferenceProfiles.getProfile(gunId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, IndustryReferenceProfile>> getAllIndustryReferenceProfiles() {
+        return industryReferenceProfiles == null ? Collections.emptySet()
+                : industryReferenceProfiles.getValidProfiles().entrySet();
+    }
+
+    @Override
+    @Nullable
+    public IndustryIdentityAlias getIndustryIdentityAlias(Identifier recipeId) {
+        return industryIdentityAliases == null ? null : industryIdentityAliases.getAlias(recipeId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, IndustryIdentityAlias>> getAllIndustryIdentityAliases() {
+        return industryIdentityAliases == null ? Collections.emptySet()
+                : industryIdentityAliases.getAliasesByRecipe().entrySet();
+    }
+
+    /** Internal reload ordering bridge for the post-table reference audit. */
+    @Nullable
+    public TableRecipeManager getTableRecipeManager() {
+        return tableRecipe;
+    }
+
+    /** Internal alias resolver used before TableRecipeManager parses table outputs. */
+    @Nullable
+    public IndustryIdentityAliasManager getIndustryIdentityAliasManager() {
+        return industryIdentityAliases;
+    }
+
+    @Nullable
+    public IndustryReferenceProfileManager getIndustryReferenceProfileManager() {
+        return industryReferenceProfiles;
     }
 
     @Override

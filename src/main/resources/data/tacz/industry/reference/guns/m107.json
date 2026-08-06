@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/m107",
+  "display_name": "M107",
+  "action": "anti_material_bolt",
+  "feed": {
+    "device": "internal_box",
+    "runtime_mechanism": "internal_box",
+    "carrier_behavior": "internal",
+    "family": "",
+    "capacity": 10,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "50bmg",
+    "expected_ammo": "tacz:50bmg"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "precision"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_feed"
+  ]
+}

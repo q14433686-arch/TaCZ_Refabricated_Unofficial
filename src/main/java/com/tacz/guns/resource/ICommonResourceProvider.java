@@ -12,6 +12,8 @@ import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
+import com.tacz.guns.industry.reference.IndustryIdentityAlias;
+import com.tacz.guns.industry.reference.IndustryReferenceProfile;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.luaj.vm2.LuaTable;
@@ -54,6 +56,16 @@ public interface ICommonResourceProvider {
     @Nullable GunFeedDefinition getGunFeedDefinition(Identifier gunId);
 
     Set<Map.Entry<Identifier, GunFeedDefinition>> getAllGunFeedDefinitions();
+
+    /** Optional curated actual-structure profile for a loaded gun identity. */
+    @Nullable IndustryReferenceProfile getIndustryReferenceProfile(Identifier gunId);
+
+    Set<Map.Entry<Identifier, IndustryReferenceProfile>> getAllIndustryReferenceProfiles();
+
+    /** Explicit guarded table-result alias, keyed by canonical table recipe id. */
+    @Nullable IndustryIdentityAlias getIndustryIdentityAlias(Identifier recipeId);
+
+    Set<Map.Entry<Identifier, IndustryIdentityAlias>> getAllIndustryIdentityAliases();
 
     @Nullable IndustryProcessDefinition getIndustryProcess(Identifier processId);
 

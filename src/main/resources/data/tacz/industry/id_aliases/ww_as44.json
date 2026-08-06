@@ -1,0 +1,9 @@
+{
+  "recipe": "ww:as44",
+  "kind": "gun",
+  "target": "ww:as44",
+  "expected_ammo": "tacz:762x39",
+  "expected_capacity": 30,
+  "confidence": "curated",
+  "reason": "Enlisted v1.2.1.3 recipe incorrectly outputs tacz:as44; the loaded pack identity is ww:as44."
+}

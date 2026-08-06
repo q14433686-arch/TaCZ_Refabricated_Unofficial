@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/taurus500",
+  "display_name": "TAURUS500",
+  "action": "revolver",
+  "feed": {
+    "device": "revolver",
+    "runtime_mechanism": "revolver",
+    "carrier_behavior": "internal",
+    "family": "",
+    "capacity": 5,
+    "reload_batch": 5
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "500mag",
+    "expected_ammo": "tacz:500mag"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "legacy"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_feed"
+  ]
+}

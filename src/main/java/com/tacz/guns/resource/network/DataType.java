@@ -27,4 +27,10 @@ public enum DataType {
 
     /** Dedicated four-slot cartridge assembly definitions, synchronized for GUI/REI display. */
     CARTRIDGE_ASSEMBLY,
+
+    /** Curated factual action/feed/ammunition reference profiles keyed by loaded GunId. */
+    INDUSTRY_REFERENCE,
+
+    /** Explicit, guarded repairs for legacy table recipe result ids. */
+    INDUSTRY_ID_ALIAS,
 }

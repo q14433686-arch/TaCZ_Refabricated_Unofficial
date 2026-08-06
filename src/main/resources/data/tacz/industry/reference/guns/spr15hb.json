@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/spr15hb",
+  "display_name": "SPR15HB",
+  "action": "gas_rifle",
+  "feed": {
+    "device": "internal_box",
+    "runtime_mechanism": "internal_box",
+    "carrier_behavior": "internal",
+    "family": "",
+    "capacity": 15,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "556x45",
+    "expected_ammo": "tacz:556x45"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "advanced"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_feed"
+  ]
+}

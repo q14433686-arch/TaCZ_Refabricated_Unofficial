@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "canonical_model": "default/glock_17",
+  "display_name": "Glock",
+  "action": "locked_breech_pistol",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "glock_9x19",
+    "capacity": 17,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "9mm",
+    "expected_ammo": "tacz:9mm"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "service"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "bundled_gun_feed"
+  ]
+}

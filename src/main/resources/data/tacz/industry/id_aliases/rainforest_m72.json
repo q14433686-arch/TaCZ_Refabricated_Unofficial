@@ -1,0 +1,9 @@
+{
+  "recipe": "rainforest:gun/m72",
+  "kind": "gun",
+  "target": "rainforest:m72",
+  "expected_ammo": "tacz:rpg_rocket",
+  "expected_capacity": 1,
+  "confidence": "curated",
+  "reason": "Cold War v0.51 recipe retained the legacy lol141 namespace for M72."
+}
