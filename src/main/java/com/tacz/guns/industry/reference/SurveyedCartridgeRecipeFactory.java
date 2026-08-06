@@ -114,7 +114,8 @@ public final class SurveyedCartridgeRecipeFactory {
         int batch = Math.clamp(requested, 1, Math.max(1, ammoIndex.getStackSize()));
         String caliber = "surveyed/" + ammoId.getNamespace() + "/" + ammoId.getPath();
         int propellant = Math.max(1, (batch + 7) / 8);
-        return new SurveyedCartridge(recipeId, ammoId, caliber, batch, propellant,
+        String ammoName = ammoIndex.getPojo() == null ? "" : ammoIndex.getPojo().getName();
+        return new SurveyedCartridge(recipeId, ammoId, caliber, batch, propellant, ammoName,
                 recipe.getAsJsonArray("materials").deepCopy());
     }
 
@@ -190,6 +191,9 @@ public final class SurveyedCartridgeRecipeFactory {
         // ItemStack and can be reconditioned through the generated commission.
         definition.addProperty("eject_case", true);
         definition.addProperty("spent_case_display_name", "item.tacz.cartridge_case.spent_surveyed");
+        if (cartridge.ammoName() != null && !cartridge.ammoName().isBlank()) {
+            definition.addProperty("survey_ammo_name", cartridge.ammoName());
+        }
         definition.addProperty(GENERATED_MARKER, true);
         return definition;
     }
@@ -287,6 +291,9 @@ public final class SurveyedCartridgeRecipeFactory {
         tag.addProperty("IndustryDisplayName", "item.tacz.cartridge_case.spent_surveyed");
         tag.addProperty("CartridgeCaliber", cartridge.caliber());
         tag.addProperty("CartridgeAmmoId", cartridge.ammoId().toString());
+        if (cartridge.ammoName() != null && !cartridge.ammoName().isBlank()) {
+            tag.addProperty("IndustrySurveyAmmoName", cartridge.ammoName());
+        }
         tag.addProperty("SpentCartridgeCase", true);
         return tag;
     }
@@ -305,6 +312,9 @@ public final class SurveyedCartridgeRecipeFactory {
         tag.addProperty("CartridgeCaliber", cartridge.caliber());
         tag.addProperty("CartridgeAmmoId", cartridge.ammoId().toString());
         tag.addProperty("IndustrySurveyAmmoId", cartridge.ammoId().toString());
+        if (cartridge.ammoName() != null && !cartridge.ammoName().isBlank()) {
+            tag.addProperty("IndustrySurveyAmmoName", cartridge.ammoName());
+        }
         return tag;
     }
 
@@ -354,6 +364,6 @@ public final class SurveyedCartridgeRecipeFactory {
     }
 
     private record SurveyedCartridge(Identifier sourceRecipeId, Identifier ammoId, String caliber, int batch,
-                                     int propellant, JsonArray legacyMaterials) {
+                                     int propellant, String ammoName, JsonArray legacyMaterials) {
     }
 }

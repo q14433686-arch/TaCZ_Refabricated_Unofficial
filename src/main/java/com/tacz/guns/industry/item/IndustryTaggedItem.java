@@ -48,13 +48,21 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
     public Component getName(ItemStack stack) {
         String key = getDisplayNameKey(stack);
         Component base = key.isBlank() ? super.getName(stack) : Component.translatable(key);
-        // Runtime-generated surveyed dossier/template/kit stacks intentionally
-        // share one localized generic display key. Append their exact GunId so
-        // a Gunsmith Table list can be searched/selected without pretending
-        // that TACZ has supplied a translated real-world part name.
+        // Runtime-generated surveyed gun dossiers/templates/kits intentionally
+        // share one generic localized name, so append their exact GunId for
+        // searchable selection. Surveyed ammunition is different: its AmmoIndex
+        // already supplies the actual player-facing product name, which is far
+        // more useful than exposing an internal surveyed/<namespace>/<path>
+        // identity in every case/projectile/gauge title.
         var data = ItemNbtUtils.getTag(stack);
         String surveyedGun = data.getStringOr("IndustrySurveyGunId", "");
         String surveyedAmmo = data.getStringOr("IndustrySurveyAmmoId", "");
+        String surveyedAmmoName = data.getStringOr("IndustrySurveyAmmoName", "");
+        if (!surveyedAmmoName.isBlank()) {
+            return Component.translatable(surveyedAmmoName)
+                    .append(Component.literal(" · ").withStyle(style -> style.withColor(0x777777)))
+                    .append(base);
+        }
         String surveyedTarget = !surveyedGun.isBlank() ? surveyedGun : surveyedAmmo;
         return surveyedTarget.isBlank() ? base : base.copy().append(Component.literal(" [" + surveyedTarget + "]")
                 .withStyle(style -> style.withColor(0x777777)));

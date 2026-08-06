@@ -60,6 +60,9 @@ public final class CartridgeAssemblyDefinition {
     private boolean ejectCase;
     @SerializedName("spent_case_display_name")
     private String spentCaseDisplayName;
+    /** Optional player-facing source ammo name for runtime surveyed profiles. */
+    @SerializedName("survey_ammo_name")
+    private String surveyAmmoName;
 
     public boolean isValid() {
         return valid(caseItem) && !blank(caseCaliber)
@@ -129,6 +132,9 @@ public final class CartridgeAssemblyDefinition {
         tag.putString("CartridgeCaliber", caseCaliber);
         if (ammo != null) {
             tag.putString("CartridgeAmmoId", ammo.toString());
+        }
+        if (!blank(surveyAmmoName)) {
+            tag.putString("IndustrySurveyAmmoName", surveyAmmoName);
         }
         tag.putBoolean("SpentCartridgeCase", true);
         return applyProductStackLimit(configuredPreview(caseItem, tag));
@@ -219,6 +225,9 @@ public final class CartridgeAssemblyDefinition {
         if (!blank(caseDisplayName)) {
             tag.putString("IndustryDisplayName", caseDisplayName);
         }
+        if (!blank(surveyAmmoName)) {
+            tag.putString("IndustrySurveyAmmoName", surveyAmmoName);
+        }
         return tag;
     }
 
@@ -233,6 +242,9 @@ public final class CartridgeAssemblyDefinition {
         tag.putString("ProjectileType", projectileType);
         if (!blank(projectileDisplayName)) {
             tag.putString("IndustryDisplayName", projectileDisplayName);
+        }
+        if (!blank(surveyAmmoName)) {
+            tag.putString("IndustrySurveyAmmoName", surveyAmmoName);
         }
         return tag;
     }
