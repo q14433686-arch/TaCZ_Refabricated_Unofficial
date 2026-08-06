@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "source": {
+    "archive": "extras/industry_packs/TACZ_industry_blocks.zip",
+    "sha256": "9787076695f2171efaef00e1bd6c30e1288253b8534b100c8cb2ff91f89c7174",
+    "machine_manifest": "tools/industry/machines.json",
+    "icon_catalog": "extras/icon_packs/TACZ_industry_icon_catalog.json"
+  },
+  "applied_machine_models": [
+    {
+      "id": "cartridge_assembly_machine",
+      "source_model": "tacz_extra:block/cartridge_assembly_machine",
+      "source_texture": "tacz_extra:block/cartridge_assembly_machine",
+      "model_file": "assets/tacz_extra/models/block/cartridge_assembly_machine.json",
+      "texture_file": "assets/tacz_extra/textures/block/cartridge_assembly_machine.png",
+      "format_version": "1.21.11",
+      "texture_size": [
+        128,
+        128
+      ],
+      "element_count": 88,
+      "face_count": 528,
+      "source_blockstate_file": "assets/tacz_extra/blockstates/cartridge_assembly_machine.json",
+      "source_item_model_file": "assets/tacz_extra/models/item/cartridge_assembly_machine.json",
+      "tacz_wrapper_model": "assets/tacz/models/block/cartridge_assembly_machine.json",
+      "tacz_registry_blockstate": "assets/tacz/blockstates/cartridge_assembly_machine.json",
+      "tacz_item_model": "assets/tacz/models/item/cartridge_assembly_machine.json",
+      "status": "bound"
+    },
+    {
+      "id": "industrial_salvage_station",
+      "source_model": "tacz_extra:block/industrial_salvage_station",
+      "source_texture": "tacz_extra:block/industrial_salvage_station",
+      "model_file": "assets/tacz_extra/models/block/industrial_salvage_station.json",
+      "texture_file": "assets/tacz_extra/textures/block/industrial_salvage_station.png",
+      "format_version": "1.21.11",
+      "texture_size": [
+        128,
+        128
+      ],
+      "element_count": 81,
+      "face_count": 486,
+      "source_blockstate_file": "assets/tacz_extra/blockstates/industrial_salvage_station.json",
+      "source_item_model_file": "assets/tacz_extra/models/item/industrial_salvage_station.json",
+      "tacz_wrapper_model": "assets/tacz/models/block/industrial_salvage_station.json",
+      "tacz_registry_blockstate": "assets/tacz/blockstates/industrial_salvage_station.json",
+      "tacz_item_model": "assets/tacz/models/item/industrial_salvage_station.json",
+      "status": "bound"
+    }
+  ],
+  "registered_machine_count": 2,
+  "remaining_visual_backlog": {
+    "exact_runtime_identity_count": 746,
+    "art_group_count": 731,
+    "by_category": {
+      "cartridge_case_die": 24,
+      "cartridge_gauge": 5,
+      "cartridge_projectile_die": 24,
+      "fresh_cartridge_case": 1,
+      "loose_ammo": 5,
+      "physical_magazine": 7,
+      "platform_blueprint": 53,
+      "platform_component": 265,
+      "platform_component_die": 265,
+      "platform_furniture_kit": 53,
+      "projectile_core": 3,
+      "shared_ammunition_intermediate": 4,
+      "shared_gun_intermediate": 6,
+      "spent_cartridge_case": 23,
+      "static_industrial_item": 3,
+      "visible_projectile_intermediate": 5
+    },
+    "remaining_static_industrial_items": [
+      {
+        "identity": "static:tacz:magazine_blank",
+        "item": "tacz:magazine_blank",
+        "asset_key": "static:tacz:magazine_blank"
+      },
+      {
+        "identity": "static:tacz:magazine_loader",
+        "item": "tacz:magazine_loader",
+        "asset_key": "static:tacz:magazine_loader"
+      },
+      {
+        "identity": "static:tacz:magazine_pouch",
+        "item": "tacz:magazine_pouch",
+        "asset_key": "static:tacz:magazine_pouch"
+      }
+    ]
+  },
+  "scope_notes": [
+    "The two supplied 128x128 Blockbench atlases are bound to their real tacz registry blocks through tacz model wrappers.",
+    "exact_runtime_identity_count is a high-fidelity identity backlog, not a claim that every line requires a separate PNG; shared family art may intentionally satisfy several identities.",
+    "All exact selectors and suggested art keys remain in TACZ_industry_icon_catalog.json and INDUSTRY_ICON_COVERAGE.md."
+  ]
+}

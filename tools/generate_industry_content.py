@@ -8,12 +8,11 @@ that remains inspectable and overridable by datapacks at runtime. See
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
-import struct
 import sys
 import zipfile
-import zlib
 from collections import Counter, defaultdict
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -27,9 +26,12 @@ MACHINE_MANIFEST = REPO / "tools/industry/machines.json"
 BLUEPRINT_ACQUISITION_MANIFEST = REPO / "tools/industry/blueprint_acquisition.json"
 ICON_MAPPING_MANIFEST = REPO / "tools/industry/icon_mapping.json"
 FIXED_ICON_PACK = REPO / "extras/icon_packs/TACZ_icons_pack_fixed.zip"
+INDUSTRY_BLOCK_PACK = REPO / "extras/industry_packs/TACZ_industry_blocks.zip"
 ICON_RUNTIME_MAPPING = RESOURCE_ROOT / "assets/tacz/industry_icons/default.json"
 ICON_CATALOG = REPO / "extras/icon_packs/TACZ_industry_icon_catalog.json"
 ICON_COVERAGE_DOCUMENT = REPO / "docs/INDUSTRY_ICON_COVERAGE.md"
+INDUSTRY_BLOCK_ASSET_REPORT = REPO / "extras/industry_packs/TACZ_industry_blocks_asset_report.json"
+INDUSTRY_BLOCK_COVERAGE_DOCUMENT = REPO / "docs/INDUSTRY_BLOCK_ASSET_COVERAGE.md"
 DEFAULT_AMMO_RECIPE_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/ammo"
 DEFAULT_AMMO_INDEX_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/index/ammo"
 DEFAULT_GUN_DATA_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/data/guns"
@@ -1172,60 +1174,76 @@ def language_entries(platform: dict[str, Any], language: str) -> dict[str, str]:
     return entries
 
 
-def parse_hex(value: str) -> tuple[int, int, int, int]:
-    value = value.lstrip("#")
-    if len(value) != 6:
-        raise ValueError(f"Invalid colour #{value}")
-    return tuple(int(value[index:index + 2], 16) for index in range(0, 6, 2)) + (255,)
+def load_machine_assets() -> list[dict[str, str]]:
+    """Validate the two real industry block visual bindings.
 
-
-def png_rgba(width: int, height: int, pixels: list[tuple[int, int, int, int]]) -> bytes:
-    raw = bytearray()
-    for y in range(height):
-        raw.append(0)
-        for x in range(width):
-            raw.extend(pixels[y * width + x])
-    def chunk(kind: bytes, data: bytes) -> bytes:
-        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
-    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b"")
-
-
-def machine_texture(machine: dict[str, Any]) -> bytes:
-    palette = {key: parse_hex(value) for key, value in machine["palette"].items()}
-    base = palette["base"]
-    pixels = [base] * (16 * 16)
-    def paint(x0: int, y0: int, x1: int, y1: int, colour: tuple[int, int, int, int]) -> None:
-        for y in range(max(0, y0), min(16, y1)):
-            for x in range(max(0, x0), min(16, x1)):
-                pixels[y * 16 + x] = colour
-    paint(0, 0, 16, 1, palette["shadow"])
-    paint(0, 15, 16, 16, palette["shadow"])
-    paint(0, 0, 1, 16, palette["shadow"])
-    paint(15, 0, 16, 16, palette["shadow"])
-    paint(2, 2, 14, 3, palette["brass"])
-    paint(2, 13, 14, 14, palette["brass"])
-    for x, y in ((3, 5), (8, 5), (3, 9), (8, 9)):
-        paint(x, y, x + 3, y + 3, palette["slot"])
-    paint(12, 7, 14, 10, palette["indicator"])
-    return png_rgba(16, 16, pixels)
-
-
-def generated_machine_files() -> dict[Path, bytes | Any]:
+    The palette-generated 16×16 cube stand-ins were useful while the machines
+    existed only as a functional vertical slice.  The supplied Blockbench pack
+    now provides the authoritative 128×128 texture atlases and element models.
+    Keep the registry namespace ``tacz`` as a small parent wrapper while leaving
+    the artist's ``tacz_extra`` asset namespace untouched and overrideable.
+    """
     manifest = read_json(MACHINE_MANIFEST)
-    result: dict[Path, bytes | Any] = {}
-    for machine in manifest.get("machines", []):
-        machine_id = machine["id"]
-        texture = RESOURCE_ROOT / f"assets/tacz/textures/block/{machine_id}.png"
-        model = RESOURCE_ROOT / f"assets/tacz/models/block/{machine_id}.json"
-        result[texture] = machine_texture(machine)
-        result[model] = {
-            "parent": "minecraft:block/cube_all",
-            "textures": {
-                "all": f"tacz:block/{machine_id}",
-                "particle": f"tacz:block/{machine_id}",
-            },
-        }
+    machines = manifest.get("machines") if isinstance(manifest, dict) else None
+    if not isinstance(machines, list) or not machines:
+        raise ValueError(f"{MACHINE_MANIFEST}: machines must be a non-empty list")
+    result: list[dict[str, str]] = []
+    seen: set[str] = set()
+    pattern = re.compile(r"^[a-z0-9_.-]+:[a-z0-9_./-]+$")
+    for machine in machines:
+        if not isinstance(machine, dict):
+            raise ValueError(f"{MACHINE_MANIFEST}: each machine must be an object")
+        machine_id = machine.get("id")
+        source_model = machine.get("source_model")
+        source_texture = machine.get("source_texture")
+        if not isinstance(machine_id, str) or not machine_id or machine_id in seen:
+            raise ValueError(f"{MACHINE_MANIFEST}: each machine needs a unique id")
+        if not isinstance(source_model, str) or not pattern.fullmatch(source_model):
+            raise ValueError(f"{MACHINE_MANIFEST}: {machine_id}.source_model must be a resource id")
+        if not isinstance(source_texture, str) or not pattern.fullmatch(source_texture):
+            raise ValueError(f"{MACHINE_MANIFEST}: {machine_id}.source_texture must be a resource id")
+        seen.add(machine_id)
+        result.append({"id": machine_id, "source_model": source_model, "source_texture": source_texture})
     return result
+
+
+def supplied_machine_item_visuals(machine_assets: list[dict[str, str]]) -> dict[str, str]:
+    """Registry item id -> supplied Blockbench parent model for the two real machines."""
+    return {f"tacz:{machine['id']}": machine["source_model"] for machine in machine_assets}
+
+
+def facing_blockstate(model: str) -> dict[str, Any]:
+    """One blockstate definition matching the horizontal FACING state in both machines."""
+    return {
+        "variants": {
+            "facing=north": {"model": model, "y": 0},
+            "facing=east": {"model": model, "y": 90},
+            "facing=south": {"model": model, "y": 180},
+            "facing=west": {"model": model, "y": 270},
+        }
+    }
+
+
+def generated_machine_files(machine_assets: list[dict[str, str]]) -> dict[Path, bytes | Any]:
+    """Emit lightweight ``tacz`` wrappers around the supplied tacz_extra models."""
+    result: dict[Path, bytes | Any] = {}
+    for machine in machine_assets:
+        machine_id = machine["id"]
+        result[RESOURCE_ROOT / f"assets/tacz/models/block/{machine_id}.json"] = {
+            "parent": machine["source_model"]
+        }
+        result[RESOURCE_ROOT / f"assets/tacz/blockstates/{machine_id}.json"] = facing_blockstate(
+            f"tacz:block/{machine_id}"
+        )
+    return result
+
+
+def obsolete_machine_placeholder_files(machine_assets: list[dict[str, str]]) -> set[Path]:
+    """Old generated 16×16 cube textures must not linger as misleading fallbacks."""
+    return {
+        RESOURCE_ROOT / f"assets/tacz/textures/block/{machine['id']}.png"
+        for machine in machine_assets
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -1293,27 +1311,118 @@ def load_icon_mapping() -> dict[str, Any]:
     return mapping
 
 
-def embedded_icon_pack_files() -> dict[Path, bytes]:
-    """Mirror the repaired user-supplied namespace into the mod's built-in assets.
-
-    The standalone ZIP remains useful as a drop-in pack, but the runtime mapping
-    must also work when players install only the mod.  All copied files are
-    byte-for-byte checked against the fixed archive by ``--check``.
-    """
-    if not FIXED_ICON_PACK.exists():
-        raise ValueError(f"Missing repaired icon archive {FIXED_ICON_PACK}")
+def archive_tacz_extra_files(archive_path: Path, label: str) -> dict[Path, bytes]:
+    """Read safe ``assets/tacz_extra`` files from one user-supplied archive."""
+    if not archive_path.exists():
+        raise ValueError(f"Missing {label} archive {archive_path}")
     files: dict[Path, bytes] = {}
-    with zipfile.ZipFile(FIXED_ICON_PACK) as archive:
+    with zipfile.ZipFile(archive_path) as archive:
         for name in archive.namelist():
             if not name.startswith("assets/tacz_extra/") or name.endswith("/"):
                 continue
             relative = PurePosixPath(name)
             if ".." in relative.parts:
-                raise ValueError(f"Unsafe path in {FIXED_ICON_PACK}: {name}")
+                raise ValueError(f"Unsafe path in {archive_path}: {name}")
             files[RESOURCE_ROOT / Path(*relative.parts)] = archive.read(name)
     if not files:
-        raise ValueError(f"{FIXED_ICON_PACK}: no assets/tacz_extra files found")
+        raise ValueError(f"{archive_path}: no assets/tacz_extra files found")
     return files
+
+
+def embedded_icon_pack_files() -> dict[Path, bytes]:
+    """Mirror the repaired user-supplied icon namespace into built-in assets."""
+    return archive_tacz_extra_files(FIXED_ICON_PACK, "repaired icon")
+
+
+def embedded_industry_block_pack_files() -> dict[Path, bytes]:
+    """Mirror supplied Blockbench machine models/textures into built-in assets."""
+    return archive_tacz_extra_files(INDUSTRY_BLOCK_PACK, "industry block")
+
+
+def merged_tacz_extra_files() -> dict[Path, bytes]:
+    """Combine independent icon and machine packs without silently overwriting art."""
+    merged: dict[Path, bytes] = {}
+    for label, files in (
+        ("repaired icon", embedded_icon_pack_files()),
+        ("industry block", embedded_industry_block_pack_files()),
+    ):
+        for path, value in files.items():
+            old = merged.get(path)
+            if old is not None and old != value:
+                raise ValueError(f"Conflicting tacz_extra asset {path} between embedded packs while reading {label}")
+            merged[path] = value
+    return merged
+
+
+def resource_asset_path(identifier: str, directory: str, suffix: str) -> Path:
+    namespace, path = identifier.split(":", 1)
+    return RESOURCE_ROOT / "assets" / namespace / directory / f"{path}{suffix}"
+
+
+def png_dimensions(data: bytes, source: Path) -> tuple[int, int]:
+    if len(data) < 24 or data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
+        raise ValueError(f"{source}: expected a PNG with IHDR")
+    return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+
+
+def validate_industry_block_assets(machine_assets: list[dict[str, str]], embedded: dict[Path, bytes]) -> list[dict[str, Any]]:
+    """Validate the supplied Blockbench files before binding game models to them."""
+    report: list[dict[str, Any]] = []
+    for machine in machine_assets:
+        machine_id = machine["id"]
+        source_model = machine["source_model"]
+        source_texture = machine["source_texture"]
+        model_path = resource_asset_path(source_model, "models", ".json")
+        texture_path = resource_asset_path(source_texture, "textures", ".png")
+        item_model_path = resource_asset_path(source_model.replace(":block/", ":item/"), "models", ".json")
+        blockstate_path = resource_asset_path(source_model.replace(":block/", ":"), "blockstates", ".json")
+        for path in (model_path, texture_path, item_model_path, blockstate_path):
+            if path not in embedded:
+                raise ValueError(f"{INDUSTRY_BLOCK_PACK}: missing required machine asset {path.relative_to(RESOURCE_ROOT)}")
+        model = json.loads(embedded[model_path].decode("utf-8"))
+        item_model = json.loads(embedded[item_model_path].decode("utf-8"))
+        blockstate = json.loads(embedded[blockstate_path].decode("utf-8"))
+        if not isinstance(model.get("elements"), list) or not model["elements"]:
+            raise ValueError(f"{model_path}: a machine model needs non-empty elements")
+        textures = model.get("textures")
+        if not isinstance(textures, dict) or textures.get("tex") != source_texture:
+            raise ValueError(f"{model_path}: textures.tex must bind {source_texture}")
+        face_count = 0
+        for element_index, element in enumerate(model["elements"]):
+            if not isinstance(element, dict) or not isinstance(element.get("faces"), dict):
+                raise ValueError(f"{model_path}: element {element_index} needs a faces object")
+            for face in element["faces"].values():
+                if not isinstance(face, dict):
+                    raise ValueError(f"{model_path}: element {element_index} has invalid face")
+                texture_ref = face.get("texture")
+                if not isinstance(texture_ref, str) or not texture_ref:
+                    raise ValueError(f"{model_path}: element {element_index} face has no texture reference")
+                if texture_ref.startswith("#") and texture_ref[1:] not in textures:
+                    raise ValueError(f"{model_path}: element {element_index} references undefined texture slot {texture_ref}")
+                face_count += 1
+        if item_model.get("parent") != source_model:
+            raise ValueError(f"{item_model_path}: item parent must be {source_model}")
+        variants = blockstate.get("variants")
+        expected_variants = {f"facing={direction}" for direction in ("north", "east", "south", "west")}
+        if not isinstance(variants, dict) or set(variants) != expected_variants:
+            raise ValueError(f"{blockstate_path}: expected exactly four horizontal facing variants")
+        if any(not isinstance(value, dict) or value.get("model") != source_model for value in variants.values()):
+            raise ValueError(f"{blockstate_path}: every variant must use {source_model}")
+        width, height = png_dimensions(embedded[texture_path], texture_path)
+        report.append({
+            "id": machine_id,
+            "source_model": source_model,
+            "source_texture": source_texture,
+            "model_file": str(model_path.relative_to(RESOURCE_ROOT)),
+            "texture_file": str(texture_path.relative_to(RESOURCE_ROOT)),
+            "format_version": model.get("format_version"),
+            "texture_size": [width, height],
+            "element_count": len(model["elements"]),
+            "face_count": face_count,
+            "source_blockstate_file": str(blockstate_path.relative_to(RESOURCE_ROOT)),
+            "source_item_model_file": str(item_model_path.relative_to(RESOURCE_ROOT)),
+        })
+    return report
 
 
 def texture_file_candidates(texture: str) -> list[Path]:
@@ -1384,7 +1493,8 @@ def build_icon_identity(category: str, identity: str, item: str, selectors: dict
     }
 
 
-def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[dict[str, Any]],
+                              machine_assets: list[dict[str, str]]) -> list[dict[str, Any]]:
     """Enumerate every current runtime visual identity, not broad item classes.
 
     This deliberately emits the 53 platform blueprints, 265 components, 265
@@ -1566,8 +1676,9 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
         ))
 
     # These are static registry-item models rather than NBT-generic stacks.
-    # They belong in the coverage audit, but adding a mapping JSON cannot change
-    # them until a separate custom item renderer/model selector is warranted.
+    # The two machine items now have supplied high-detail Blockbench parents;
+    # the remaining three stay in the audit until their final item art exists.
+    supplied_models = supplied_machine_item_visuals(machine_assets)
     for item, label in (
         ("tacz:magazine_blank", "Neutral Magazine Blank"),
         ("tacz:cartridge_assembly_machine", "Cartridge Assembly Machine"),
@@ -1575,10 +1686,14 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
         ("tacz:magazine_pouch", "Magazine Pouch"),
         ("tacz:magazine_loader", "Magazine Loader"),
     ):
-        identities.append(build_icon_identity(
+        accepted = ("exact", "supplied_block_model") if item in supplied_models else ("exact",)
+        identity = build_icon_identity(
             "static_industrial_item", f"static:{item}", item, {}, label,
-            ("exact",), f"static:{item}", "individual", False
-        ))
+            accepted, f"static:{item}", "individual", False
+        )
+        if item in supplied_models:
+            identity["supplied_block_model"] = supplied_models[item]
+        identities.append(identity)
 
     return sorted(identities, key=lambda value: (value["category"], value["identity"]))
 
@@ -1590,11 +1705,14 @@ def embedded_icon_texture_inventory(embedded: dict[Path, bytes], mapping_entries
         if texture.startswith("tacz_extra:"):
             referenced[texture].append(entry["id"])
     inventory: list[dict[str, Any]] = []
-    prefix = RESOURCE_ROOT / "assets/tacz_extra/textures/"
+    # This inventory is deliberately the icon library only. Supplied block
+    # atlases are audited separately in TACZ_industry_blocks_asset_report.json.
+    texture_root = RESOURCE_ROOT / "assets/tacz_extra/textures"
+    item_prefix = texture_root / "item"
     for path in sorted(embedded):
-        if path.suffix != ".png" or prefix not in path.parents:
+        if path.suffix != ".png" or item_prefix not in path.parents:
             continue
-        relative = path.relative_to(prefix).with_suffix("")
+        relative = path.relative_to(texture_root).with_suffix("")
         texture = f"tacz_extra:{relative.as_posix()}"
         inventory.append({
             "texture": texture,
@@ -1605,19 +1723,26 @@ def embedded_icon_texture_inventory(embedded: dict[Path, bytes], mapping_entries
 
 
 def build_icon_catalog(platforms: list[dict[str, Any]], cartridges: list[dict[str, Any]],
-                       mapping: dict[str, Any], embedded: dict[Path, bytes]) -> dict[str, Any]:
+                       machine_assets: list[dict[str, str]], mapping: dict[str, Any],
+                       embedded: dict[Path, bytes]) -> dict[str, Any]:
     entries = mapping["entries"]
-    identities = generated_icon_identities(platforms, cartridges)
+    identities = generated_icon_identities(platforms, cartridges, machine_assets)
     category_summary: dict[str, Counter[str]] = defaultdict(Counter)
     missing_groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
     for identity in identities:
         mapping_entry = resolve_icon_mapping(entries, identity["item"], identity["selectors"])
-        coverage = mapping_entry.get("coverage", "exact") if mapping_entry else "runtime_fallback"
+        supplied_model = identity.get("supplied_block_model")
+        if supplied_model is not None:
+            coverage = "supplied_block_model"
+            identity["mapping"] = "supplied_block_model"
+            identity["texture"] = supplied_model
+        else:
+            coverage = mapping_entry.get("coverage", "exact") if mapping_entry else "runtime_fallback"
+            identity["mapping"] = None if mapping_entry is None else mapping_entry["id"]
+            identity["texture"] = None if mapping_entry is None else mapping_entry["texture"]
         accepted = set(identity["accepted_coverage"])
         covered = coverage in accepted
-        identity["mapping"] = None if mapping_entry is None else mapping_entry["id"]
-        identity["texture"] = None if mapping_entry is None else mapping_entry["texture"]
         identity["current_coverage"] = coverage
         identity["covered"] = covered
         identity["needs_art"] = not covered
@@ -1657,6 +1782,7 @@ def build_icon_catalog(platforms: list[dict[str, Any]], cartridges: list[dict[st
         "sources": {
             "icon_mapping": str(ICON_MAPPING_MANIFEST.relative_to(REPO)),
             "fixed_icon_pack": str(FIXED_ICON_PACK.relative_to(REPO)),
+            "industry_block_pack": str(INDUSTRY_BLOCK_PACK.relative_to(REPO)),
             "platform_manifest_count": len(platforms),
             "cartridge_manifest_count": len(cartridges),
         },
@@ -1699,19 +1825,21 @@ def render_icon_coverage_document(catalog: dict[str, Any]) -> str:
         "- **exact**：已有该具体身份的图；",
         "- **family**：已有有意复用的同工艺视觉族（例如新鲜黄铜手枪壳）；",
         "- **placeholder**：暂时能画出来，但不能冒充完成品（例如已击发弹壳仍借用新壳图）；",
+        "- **supplied_block_model**：已由用户提供的实体方块模型/贴图覆盖；",
         "- **runtime_fallback**：没有映射条目，运行时退回原有 TACZ 图；",
         "- `needs_art = true` 的每一行都是仍需补图的具体身份。",
         "",
         "## 汇总",
         "",
-        "| 类别 | 总身份数 | 已满足 | 仍需补图 | exact | family | placeholder | runtime fallback |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| 类别 | 总身份数 | 已满足 | 仍需补图 | exact | family | placeholder | supplied block model | runtime fallback |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for category, counts in catalog["summary"].items():
         lines.append(
             f"| {category} | {counts.get('total', 0)} | {counts.get('covered', 0)} | "
             f"{counts.get('needs_art', 0)} | {counts.get('exact', 0)} | {counts.get('family', 0)} | "
-            f"{counts.get('placeholder', 0)} | {counts.get('runtime_fallback', 0)} |"
+            f"{counts.get('placeholder', 0)} | {counts.get('supplied_block_model', 0)} | "
+            f"{counts.get('runtime_fallback', 0)} |"
         )
 
     lines.extend([
@@ -1757,16 +1885,123 @@ def render_icon_coverage_document(catalog: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def generated_icon_mapping_files(platforms: list[dict[str, Any]], cartridges: list[dict[str, Any]]) -> dict[Path, bytes | Any]:
+def generated_icon_mapping_files(platforms: list[dict[str, Any]], cartridges: list[dict[str, Any]],
+                                 machine_assets: list[dict[str, str]]) -> dict[Path, bytes | Any]:
     mapping = load_icon_mapping()
-    embedded = embedded_icon_pack_files()
+    embedded = merged_tacz_extra_files()
     validate_icon_texture_references(mapping, embedded)
-    catalog = build_icon_catalog(platforms, cartridges, mapping, embedded)
+    validate_industry_block_assets(machine_assets, embedded)
+    catalog = build_icon_catalog(platforms, cartridges, machine_assets, mapping, embedded)
     files: dict[Path, bytes | Any] = dict(embedded)
     files[ICON_RUNTIME_MAPPING] = mapping
     files[ICON_CATALOG] = catalog
     files[ICON_COVERAGE_DOCUMENT] = render_icon_coverage_document(catalog)
     return files
+
+
+def build_industry_block_asset_report(machine_assets: list[dict[str, str]], embedded: dict[Path, bytes],
+                                      catalog: dict[str, Any]) -> dict[str, Any]:
+    """Report the supplied models and the remaining visual-art backlog separately."""
+    machines = validate_industry_block_assets(machine_assets, embedded)
+    for machine in machines:
+        machine_id = machine["id"]
+        machine["tacz_wrapper_model"] = f"assets/tacz/models/block/{machine_id}.json"
+        machine["tacz_registry_blockstate"] = f"assets/tacz/blockstates/{machine_id}.json"
+        machine["tacz_item_model"] = f"assets/tacz/models/item/{machine_id}.json"
+        machine["status"] = "bound"
+
+    missing = [entry for entry in catalog["entries"] if entry["needs_art"]]
+    category_counts: dict[str, int] = Counter(entry["category"] for entry in missing)
+    static_remaining = [
+        {
+            "identity": entry["identity"],
+            "item": entry["item"],
+            "asset_key": entry["asset_key"],
+        }
+        for entry in missing if entry["category"] == "static_industrial_item"
+    ]
+    return {
+        "schema_version": 1,
+        "source": {
+            "archive": str(INDUSTRY_BLOCK_PACK.relative_to(REPO)),
+            "sha256": hashlib.sha256(INDUSTRY_BLOCK_PACK.read_bytes()).hexdigest(),
+            "machine_manifest": str(MACHINE_MANIFEST.relative_to(REPO)),
+            "icon_catalog": str(ICON_CATALOG.relative_to(REPO)),
+        },
+        "applied_machine_models": machines,
+        "registered_machine_count": len(machines),
+        "remaining_visual_backlog": {
+            "exact_runtime_identity_count": len(missing),
+            "art_group_count": len(catalog["missing_art"]),
+            "by_category": dict(sorted(category_counts.items())),
+            "remaining_static_industrial_items": static_remaining,
+        },
+        "scope_notes": [
+            "The two supplied 128x128 Blockbench atlases are bound to their real tacz registry blocks through tacz model wrappers.",
+            "exact_runtime_identity_count is a high-fidelity identity backlog, not a claim that every line requires a separate PNG; shared family art may intentionally satisfy several identities.",
+            "All exact selectors and suggested art keys remain in TACZ_industry_icon_catalog.json and INDUSTRY_ICON_COVERAGE.md.",
+        ],
+    }
+
+
+def render_industry_block_asset_coverage(report: dict[str, Any]) -> str:
+    backlog = report["remaining_visual_backlog"]
+    lines = [
+        "# 工业方块模型与材质覆盖",
+        "",
+        "此文件由 `tools/generate_industry_content.py` 生成。它区分已经能正确解析的实际模型/PNG",
+        "和仍待补齐的高保真身份图，不把“已有基础后备图”误报成完成。",
+        "",
+        "## 已应用的用户方块资源",
+        "",
+        "| 方块 | 源模型 | 纹理 | 图集尺寸 | 元素数 | 面数 | 绑定状态 |",
+        "| --- | --- | --- | ---: | ---: | ---: | --- |",
+    ]
+    for machine in report["applied_machine_models"]:
+        width, height = machine["texture_size"]
+        lines.append(
+            f"| `tacz:{machine['id']}` | `{machine['source_model']}` | `{machine['source_texture']}` | "
+            f"{width}×{height} | {machine['element_count']} | {machine['face_count']} | {machine['status']} |"
+        )
+    lines.extend([
+        "",
+        "两个模型保留在 `tacz_extra` 命名空间；实际注册方块通过 `tacz:block/...` 父模型包装引用它们。",
+        "方块现在拥有水平 `facing` 状态，对应用户包提供的四个旋转 blockstate 变体；旧世界无此状态的方块会采用默认北向。",
+        "",
+        "## 仍待补齐的高保真视觉身份",
+        "",
+        f"- 仍缺 **{backlog['exact_runtime_identity_count']}** 个精确运行时视觉身份；",
+        f"- 按可共享图键归并后是 **{backlog['art_group_count']}** 个待办组；",
+        "- 这不是“当前会紫黑”的文件数：所有已注册工业物品/方块仍有后备模型或贴图。",
+        "",
+        "| 类别 | 仍缺精确身份数 |",
+        "| --- | ---: |",
+    ])
+    for category, count in backlog["by_category"].items():
+        lines.append(f"| {category} | {count} |")
+    lines.extend([
+        "",
+        "### 仍缺的静态工业物品图",
+        "",
+    ])
+    for item in backlog["remaining_static_industrial_items"]:
+        lines.append(f"- `{item['item']}` — `{item['asset_key']}`")
+    lines.extend([
+        "",
+        "完整到每个 `item + NBT selector` 的清单见：",
+        "`extras/icon_packs/TACZ_industry_icon_catalog.json` 与 `docs/INDUSTRY_ICON_COVERAGE.md`。",
+        "",
+    ])
+    return "\n".join(lines)
+
+
+def generated_industry_block_asset_files(machine_assets: list[dict[str, str]],
+                                         embedded: dict[Path, bytes], catalog: dict[str, Any]) -> dict[Path, bytes | Any]:
+    report = build_industry_block_asset_report(machine_assets, embedded, catalog)
+    return {
+        INDUSTRY_BLOCK_ASSET_REPORT: report,
+        INDUSTRY_BLOCK_COVERAGE_DOCUMENT: render_industry_block_asset_coverage(report),
+    }
 
 def existing_json_matches(path: Path, expected: Any) -> bool:
     try:
@@ -1795,6 +2030,7 @@ def run(write: bool) -> int:
             raise ValueError(f"{DEFAULT_GUN_POLICY}: auto blueprint signature collision for {platform['slug']}")
         signatures.add(signature)
     cartridges = load_cartridges()
+    machine_assets = load_machine_assets()
     blueprint_acquisition = load_blueprint_acquisition()
     expected: dict[Path, Any] = {}
     english: dict[str, str] = {"item.tacz.gun_component_blank.furniture": "Neutral Exterior / Furniture Blank"}
@@ -1810,11 +2046,15 @@ def run(write: bool) -> int:
         chinese.update(cartridge_language_entries(cartridge, "zh_cn"))
     expected.update(generated_blueprint_acquisition_files(platforms, blueprint_acquisition))
     expected.update(generated_magazine_files({cartridge["ammo"] for cartridge in cartridges}))
-    expected.update(generated_machine_files())
-    # The repaired user-supplied tacz_extra namespace is embedded so the
-    # client mapping works without requiring players to install a second ZIP.
-    # The same pass emits the exact missing-art catalog from live manifests.
-    expected.update(generated_icon_mapping_files(platforms, cartridges))
+    expected.update(generated_machine_files(machine_assets))
+    # The repaired icon library and the supplied high-detail machine pack are
+    # embedded so players do not need to install either ZIP separately. The
+    # same pass emits exact icon and block-asset coverage reports.
+    icon_files = generated_icon_mapping_files(platforms, cartridges, machine_assets)
+    expected.update(icon_files)
+    expected.update(generated_industry_block_asset_files(
+        machine_assets, merged_tacz_extra_files(), icon_files[ICON_CATALOG]
+    ))
 
     stale: list[str] = []
     for path, value in sorted(expected.items(), key=lambda pair: str(pair[0])):
@@ -1835,6 +2075,15 @@ def run(write: bool) -> int:
                     path.write_text(value, encoding="utf-8")
                 else:
                     write_json(path, value)
+
+    # These basic 16×16 cube textures were generator-owned placeholders. The
+    # supplied 128×128 Blockbench atlases now own the visual route, so remove
+    # obsolete files during --write and make --check reject their return.
+    for path in sorted(obsolete_machine_placeholder_files(machine_assets)):
+        if path.exists():
+            stale.append(str(path.relative_to(REPO)))
+            if write:
+                path.unlink()
 
     stale += [f"{path.relative_to(REPO)}::{key}" for path, entries in (
         (RESOURCE_ROOT / "assets/tacz/lang/en_us.json", english),

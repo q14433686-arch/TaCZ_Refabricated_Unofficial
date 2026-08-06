@@ -2,23 +2,13 @@
   "machines": [
     {
       "id": "cartridge_assembly_machine",
-      "palette": {
-        "base": "#38454e",
-        "shadow": "#1a2228",
-        "brass": "#c78731",
-        "slot": "#202a30",
-        "indicator": "#df9a32"
-      }
+      "source_model": "tacz_extra:block/cartridge_assembly_machine",
+      "source_texture": "tacz_extra:block/cartridge_assembly_machine"
     },
     {
       "id": "industrial_salvage_station",
-      "palette": {
-        "base": "#4a4140",
-        "shadow": "#241e20",
-        "brass": "#b67b39",
-        "slot": "#30272a",
-        "indicator": "#d55f39"
-      }
+      "source_model": "tacz_extra:block/industrial_salvage_station",
+      "source_texture": "tacz_extra:block/industrial_salvage_station"
     }
   ]
 }

@@ -1,0 +1,20 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "tacz_extra:block/cartridge_assembly_machine",
+   "y": 0
+  },
+  "facing=east": {
+   "model": "tacz_extra:block/cartridge_assembly_machine",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "tacz_extra:block/cartridge_assembly_machine",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "tacz_extra:block/cartridge_assembly_machine",
+   "y": 270
+  }
+ }
+}

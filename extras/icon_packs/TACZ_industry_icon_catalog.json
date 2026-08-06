@@ -4,6 +4,7 @@
   "sources": {
     "icon_mapping": "tools/industry/icon_mapping.json",
     "fixed_icon_pack": "extras/icon_packs/TACZ_icons_pack_fixed.zip",
+    "industry_block_pack": "extras/industry_packs/TACZ_industry_blocks.zip",
     "platform_manifest_count": 53,
     "cartridge_manifest_count": 24
   },
@@ -89,8 +90,10 @@
       "total": 23
     },
     "static_industrial_item": {
-      "needs_art": 5,
-      "runtime_fallback": 5,
+      "covered": 2,
+      "needs_art": 3,
+      "runtime_fallback": 3,
+      "supplied_block_model": 2,
       "total": 5
     },
     "visible_projectile_intermediate": {
@@ -19094,16 +19097,18 @@
       "selector": "tacz:cartridge_assembly_machine",
       "label": "Cartridge Assembly Machine",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "supplied_block_model"
       ],
       "asset_key": "static:tacz:cartridge_assembly_machine",
       "asset_strategy": "individual",
       "mapping_eligible": false,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
-      "covered": false,
-      "needs_art": true
+      "supplied_block_model": "tacz_extra:block/cartridge_assembly_machine",
+      "mapping": "supplied_block_model",
+      "texture": "tacz_extra:block/cartridge_assembly_machine",
+      "current_coverage": "supplied_block_model",
+      "covered": true,
+      "needs_art": false
     },
     {
       "category": "static_industrial_item",
@@ -19113,16 +19118,18 @@
       "selector": "tacz:industrial_salvage_station",
       "label": "Industrial Salvage Station",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "supplied_block_model"
       ],
       "asset_key": "static:tacz:industrial_salvage_station",
       "asset_strategy": "individual",
       "mapping_eligible": false,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
-      "covered": false,
-      "needs_art": true
+      "supplied_block_model": "tacz_extra:block/industrial_salvage_station",
+      "mapping": "supplied_block_model",
+      "texture": "tacz_extra:block/industrial_salvage_station",
+      "current_coverage": "supplied_block_model",
+      "covered": true,
+      "needs_art": false
     },
     {
       "category": "static_industrial_item",
@@ -28770,32 +28777,6 @@
       ],
       "identities": [
         "spent_case:12g"
-      ]
-    },
-    {
-      "asset_key": "static:tacz:cartridge_assembly_machine",
-      "identity_count": 1,
-      "categories": [
-        "static_industrial_item"
-      ],
-      "asset_strategy": [
-        "individual"
-      ],
-      "identities": [
-        "static:tacz:cartridge_assembly_machine"
-      ]
-    },
-    {
-      "asset_key": "static:tacz:industrial_salvage_station",
-      "identity_count": 1,
-      "categories": [
-        "static_industrial_item"
-      ],
-      "asset_strategy": [
-        "individual"
-      ],
-      "identities": [
-        "static:tacz:industrial_salvage_station"
       ]
     },
     {

@@ -1,7 +1,3 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "tacz:block/industrial_salvage_station",
-    "particle": "tacz:block/industrial_salvage_station"
-  }
+  "parent": "tacz_extra:block/industrial_salvage_station"
 }

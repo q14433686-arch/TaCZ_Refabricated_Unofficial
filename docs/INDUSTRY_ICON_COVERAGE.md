@@ -9,29 +9,30 @@
 - **exact**：已有该具体身份的图；
 - **family**：已有有意复用的同工艺视觉族（例如新鲜黄铜手枪壳）；
 - **placeholder**：暂时能画出来，但不能冒充完成品（例如已击发弹壳仍借用新壳图）；
+- **supplied_block_model**：已由用户提供的实体方块模型/贴图覆盖；
 - **runtime_fallback**：没有映射条目，运行时退回原有 TACZ 图；
 - `needs_art = true` 的每一行都是仍需补图的具体身份。
 
 ## 汇总
 
-| 类别 | 总身份数 | 已满足 | 仍需补图 | exact | family | placeholder | runtime fallback |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| cartridge_case_die | 24 | 0 | 24 | 0 | 0 | 0 | 24 |
-| cartridge_gauge | 5 | 0 | 5 | 0 | 0 | 0 | 5 |
-| cartridge_projectile_die | 24 | 0 | 24 | 0 | 0 | 0 | 24 |
-| fresh_cartridge_case | 23 | 22 | 1 | 0 | 22 | 1 | 0 |
-| loose_ammo | 24 | 19 | 5 | 19 | 0 | 0 | 5 |
-| physical_magazine | 22 | 15 | 7 | 15 | 0 | 0 | 7 |
-| platform_blueprint | 53 | 0 | 53 | 0 | 0 | 0 | 53 |
-| platform_component | 265 | 0 | 265 | 0 | 0 | 0 | 265 |
-| platform_component_die | 265 | 0 | 265 | 0 | 0 | 0 | 265 |
-| platform_furniture_kit | 53 | 0 | 53 | 0 | 0 | 0 | 53 |
-| projectile_core | 24 | 21 | 3 | 1 | 20 | 1 | 2 |
-| shared_ammunition_intermediate | 4 | 0 | 4 | 0 | 0 | 0 | 4 |
-| shared_gun_intermediate | 6 | 0 | 6 | 0 | 0 | 0 | 6 |
-| spent_cartridge_case | 23 | 0 | 23 | 0 | 0 | 23 | 0 |
-| static_industrial_item | 5 | 0 | 5 | 0 | 0 | 0 | 5 |
-| visible_projectile_intermediate | 5 | 0 | 5 | 0 | 0 | 0 | 5 |
+| 类别 | 总身份数 | 已满足 | 仍需补图 | exact | family | placeholder | supplied block model | runtime fallback |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cartridge_case_die | 24 | 0 | 24 | 0 | 0 | 0 | 0 | 24 |
+| cartridge_gauge | 5 | 0 | 5 | 0 | 0 | 0 | 0 | 5 |
+| cartridge_projectile_die | 24 | 0 | 24 | 0 | 0 | 0 | 0 | 24 |
+| fresh_cartridge_case | 23 | 22 | 1 | 0 | 22 | 1 | 0 | 0 |
+| loose_ammo | 24 | 19 | 5 | 19 | 0 | 0 | 0 | 5 |
+| physical_magazine | 22 | 15 | 7 | 15 | 0 | 0 | 0 | 7 |
+| platform_blueprint | 53 | 0 | 53 | 0 | 0 | 0 | 0 | 53 |
+| platform_component | 265 | 0 | 265 | 0 | 0 | 0 | 0 | 265 |
+| platform_component_die | 265 | 0 | 265 | 0 | 0 | 0 | 0 | 265 |
+| platform_furniture_kit | 53 | 0 | 53 | 0 | 0 | 0 | 0 | 53 |
+| projectile_core | 24 | 21 | 3 | 1 | 20 | 1 | 0 | 2 |
+| shared_ammunition_intermediate | 4 | 0 | 4 | 0 | 0 | 0 | 0 | 4 |
+| shared_gun_intermediate | 6 | 0 | 6 | 0 | 0 | 0 | 0 | 6 |
+| spent_cartridge_case | 23 | 0 | 23 | 0 | 0 | 23 | 0 | 0 |
+| static_industrial_item | 5 | 2 | 3 | 0 | 0 | 0 | 2 | 3 |
+| visible_projectile_intermediate | 5 | 0 | 5 | 0 | 0 | 0 | 0 | 5 |
 
 ## 仍缺失的精确视觉身份
 
@@ -778,8 +779,6 @@
 | spent_cartridge_case | `spent_case:762x54` | `tacz:cartridge_case ; cartridge_caliber=762x54 ; industry_part_kind=spent_case` | placeholder | `spent_variant:casing_rifle_steel` |
 | spent_cartridge_case | `spent_case:792x57` | `tacz:cartridge_case ; cartridge_caliber=792x57 ; industry_part_kind=spent_case` | placeholder | `spent_variant:casing_rifle_brass` |
 | spent_cartridge_case | `spent_case:9mm` | `tacz:cartridge_case ; cartridge_caliber=9mm ; industry_part_kind=spent_case` | placeholder | `spent_variant:casing_pistol_brass` |
-| static_industrial_item | `static:tacz:cartridge_assembly_machine` | `tacz:cartridge_assembly_machine` | runtime_fallback | `static:tacz:cartridge_assembly_machine` |
-| static_industrial_item | `static:tacz:industrial_salvage_station` | `tacz:industrial_salvage_station` | runtime_fallback | `static:tacz:industrial_salvage_station` |
 | static_industrial_item | `static:tacz:magazine_blank` | `tacz:magazine_blank` | runtime_fallback | `static:tacz:magazine_blank` |
 | static_industrial_item | `static:tacz:magazine_loader` | `tacz:magazine_loader` | runtime_fallback | `static:tacz:magazine_loader` |
 | static_industrial_item | `static:tacz:magazine_pouch` | `tacz:magazine_pouch` | runtime_fallback | `static:tacz:magazine_pouch` |

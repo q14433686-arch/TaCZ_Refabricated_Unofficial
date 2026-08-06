@@ -1,7 +1,3 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "tacz:block/cartridge_assembly_machine",
-    "particle": "tacz:block/cartridge_assembly_machine"
-  }
+  "parent": "tacz_extra:block/cartridge_assembly_machine"
 }

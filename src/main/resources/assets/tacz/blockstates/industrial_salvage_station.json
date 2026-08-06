@@ -1,7 +1,20 @@
 {
   "variants": {
-    "": {
-      "model": "tacz:block/industrial_salvage_station"
+    "facing=north": {
+      "model": "tacz:block/industrial_salvage_station",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "tacz:block/industrial_salvage_station",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "tacz:block/industrial_salvage_station",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "tacz:block/industrial_salvage_station",
+      "y": 270
     }
   }
 }
