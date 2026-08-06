@@ -54,6 +54,12 @@ public class ModCreativeTabs {
                         .platform("ammunition").kind("case_blank")
                         .displayNameKey("item.tacz.cartridge_case_blank").build());
                 output.accept(IndustryItemBuilder.pressDie()
+                        .platform("ammunition").kind("cartridge_gauge_blank")
+                        .displayNameKey("item.tacz.press_die_blank.cartridge_gauge").build());
+                output.accept(IndustryItemBuilder.pressDie()
+                        .platform("ammunition").kind("cartridge_gauge")
+                        .displayNameKey("item.tacz.press_die.gauge_9mm").caliber("9mm").build());
+                output.accept(IndustryItemBuilder.pressDie()
                         .platform("ammunition").kind("case_die")
                         .displayNameKey("item.tacz.press_die.case_9mm").caliber("9mm").build());
                 output.accept(IndustryItemBuilder.cartridgeCase()

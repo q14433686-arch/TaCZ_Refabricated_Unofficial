@@ -198,7 +198,7 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 
 弹药同样不靠材料数量区分：单输入动力冲压机只负责产出中性的 `tacz:cartridge_case_blank` 与 `tacz:projectile_blank`。之后由 Create 部署器持有一枚 NBT 标识的可复用 `tacz:press_die`，通过带 `keep_held_item: true` 的 `create:deploying` 工艺真正压制出指定身份。
 
-压实阶段也不能让多条相同材料表直接各自产出不同口径模具。现在先压实**中性弹壳模具体**或**中性弹头模具体**；有对应默认枪的口径再由部署器持同口径完整枪作为不消耗的膛室/口径量规。默认包虽然提供散装弹、但没有任何对应枪械的 4.6×30、5.45×39、6.8×51 Fury、7.62×25、7.62×54R，则先由真正的 Create **机械合成器**多槽配方制造带精确 `CartridgeCaliber` 的淬硬口径量规；绝不使用不相干的枪冒充量规，也不使用同输入/改数量的 Basin 分支伪造口径。
+压实阶段也不能让多条相同材料表直接各自产出不同口径模具。现在先压实**中性弹壳模具体**、**中性弹头模具体**和一枚**中性弹药基准量规毛坯**。有对应默认枪的口径由部署器持同口径完整枪，先把量规毛坯校准成带精确 `CartridgeCaliber` 的可复用口径基准量规；这同一枚量规再分别校准弹壳模具和弹头模具。默认包虽然提供散装弹、但没有任何对应枪械的 4.6×30、5.45×39、6.8×51 Fury、7.62×25、7.62×54R，则由真正的 Create **机械合成器**多槽 datum 配方直接制造对应淬硬口径量规；绝不使用不相干的枪冒充量规，也不使用同输入/改数量的 Basin 分支伪造口径。
 
 成品 `tacz:cartridge_case` 保存 `CartridgeCaliber`，`tacz:projectile_core` 同时保存 `CartridgeCaliber` 与 `ProjectileType`。5.56 弹壳不能进入 9 mm 装弹工艺；以后增加 HP、AP、slug 等弹头，只需新增数据配方与模具，不需要再在 Java 里加口径分支。
 

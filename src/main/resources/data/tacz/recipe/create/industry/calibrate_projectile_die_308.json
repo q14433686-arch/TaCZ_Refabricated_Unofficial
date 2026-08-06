@@ -8,7 +8,6 @@
     }
   ],
   "type": "create:deploying",
-  "keep_held_item": true,
   "target": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -23,10 +22,13 @@
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
-      "tacz:modern_kinetic_gun"
+      "tacz:press_die"
     ],
     "nbt": {
-      "GunId": "tacz:fn_fal"
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "cartridge_gauge",
+      "IndustryDisplayName": "item.tacz.press_die.gauge_308",
+      "CartridgeCaliber": "308"
     }
   },
   "results": [
@@ -42,5 +44,6 @@
         }
       }
     }
-  ]
+  ],
+  "keep_held_item": true
 }

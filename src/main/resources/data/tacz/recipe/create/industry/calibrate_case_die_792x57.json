@@ -22,10 +22,13 @@
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
-      "tacz:modern_kinetic_gun"
+      "tacz:press_die"
     ],
     "nbt": {
-      "GunId": "tacz:kar98"
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "cartridge_gauge",
+      "IndustryDisplayName": "item.tacz.press_die.gauge_792x57",
+      "CartridgeCaliber": "792x57"
     }
   },
   "results": [

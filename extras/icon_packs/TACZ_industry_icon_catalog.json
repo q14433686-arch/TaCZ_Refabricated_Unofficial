@@ -20,9 +20,10 @@
       "total": 24
     },
     "cartridge_gauge": {
-      "covered": 5,
+      "covered": 24,
       "exact": 5,
-      "total": 5
+      "family": 19,
+      "total": 24
     },
     "cartridge_projectile_die": {
       "covered": 24,
@@ -77,9 +78,10 @@
       "total": 24
     },
     "shared_ammunition_intermediate": {
-      "covered": 4,
+      "covered": 5,
       "exact": 4,
-      "total": 4
+      "family": 1,
+      "total": 5
     },
     "shared_gun_intermediate": {
       "covered": 6,
@@ -340,6 +342,25 @@
     {
       "texture": "tacz_extra:item/base_cartridge_gauge",
       "bound_by": [
+        "ammunition_cartridge_gauge_family_12g",
+        "ammunition_cartridge_gauge_family_22wmr",
+        "ammunition_cartridge_gauge_family_308",
+        "ammunition_cartridge_gauge_family_30_06",
+        "ammunition_cartridge_gauge_family_338",
+        "ammunition_cartridge_gauge_family_357mag",
+        "ammunition_cartridge_gauge_family_40mm",
+        "ammunition_cartridge_gauge_family_45_70",
+        "ammunition_cartridge_gauge_family_45acp",
+        "ammunition_cartridge_gauge_family_500mag",
+        "ammunition_cartridge_gauge_family_50ae",
+        "ammunition_cartridge_gauge_family_50bmg",
+        "ammunition_cartridge_gauge_family_556x45",
+        "ammunition_cartridge_gauge_family_57x28",
+        "ammunition_cartridge_gauge_family_58x42",
+        "ammunition_cartridge_gauge_family_762x39",
+        "ammunition_cartridge_gauge_family_792x57",
+        "ammunition_cartridge_gauge_family_9mm",
+        "ammunition_cartridge_gauge_family_rpg_rocket",
         "tooling_acceptance_gauge",
         "tooling_critical_fit_gauge"
       ],
@@ -358,6 +379,7 @@
     {
       "texture": "tacz_extra:item/base_die_blank",
       "bound_by": [
+        "ammunition_cartridge_gauge_blank",
         "tooling_acceptance_gauge_blank",
         "tooling_acceptance_gauge_stock",
         "tooling_action_jig",
@@ -7194,6 +7216,213 @@
     },
     {
       "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:12g",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "12g"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=12g ; industry_part_kind=cartridge_gauge",
+      "label": "12 Gauge Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:12g",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_12g",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:22wmr",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "22wmr"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=22wmr ; industry_part_kind=cartridge_gauge",
+      "label": ".22 WMR Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:22wmr",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_22wmr",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:308",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "308"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=308 ; industry_part_kind=cartridge_gauge",
+      "label": ".308 Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:308",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_308",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:30_06",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "30_06"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=30_06 ; industry_part_kind=cartridge_gauge",
+      "label": ".30-06 Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:30_06",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_30_06",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:338",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "338"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=338 ; industry_part_kind=cartridge_gauge",
+      "label": ".338 Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:338",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_338",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:357mag",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "357mag"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=357mag ; industry_part_kind=cartridge_gauge",
+      "label": ".357 Magnum Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:357mag",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_357mag",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:40mm",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "40mm"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=40mm ; industry_part_kind=cartridge_gauge",
+      "label": "40 mm Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:40mm",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_40mm",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:45_70",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "45_70"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=45_70 ; industry_part_kind=cartridge_gauge",
+      "label": ".45-70 Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:45_70",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_45_70",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:45acp",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "45acp"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=45acp ; industry_part_kind=cartridge_gauge",
+      "label": ".45 ACP Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:45acp",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_45acp",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
       "identity": "cartridge_gauge:46x30",
       "item": "tacz:press_die",
       "selectors": {
@@ -7203,14 +7432,84 @@
       "selector": "tacz:press_die ; cartridge_caliber=46x30 ; industry_part_kind=cartridge_gauge",
       "label": "4.6×30 Hardened Calibre Gauge",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family"
       ],
       "asset_key": "cartridge_gauge:46x30",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "complete_cartridge_gauge_46x30_a39ef4a61e",
       "texture": "tacz_extra:item/cartridge_gauge_46x30",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:500mag",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "500mag"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=500mag ; industry_part_kind=cartridge_gauge",
+      "label": ".500 Magnum Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:500mag",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_500mag",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:50ae",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "50ae"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=50ae ; industry_part_kind=cartridge_gauge",
+      "label": ".50 AE Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:50ae",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_50ae",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:50bmg",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "50bmg"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=50bmg ; industry_part_kind=cartridge_gauge",
+      "label": ".50 BMG Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:50bmg",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_50bmg",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -7225,14 +7524,84 @@
       "selector": "tacz:press_die ; cartridge_caliber=545x39 ; industry_part_kind=cartridge_gauge",
       "label": "5.45×39 Hardened Calibre Gauge",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family"
       ],
       "asset_key": "cartridge_gauge:545x39",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "complete_cartridge_gauge_545x39_6ed814876f",
       "texture": "tacz_extra:item/cartridge_gauge_545x39",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:556x45",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "556x45"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=556x45 ; industry_part_kind=cartridge_gauge",
+      "label": "5.56×45 Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:556x45",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_556x45",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:57x28",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "57x28"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=57x28 ; industry_part_kind=cartridge_gauge",
+      "label": "5.7×28 Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:57x28",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_57x28",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:58x42",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "58x42"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=58x42 ; industry_part_kind=cartridge_gauge",
+      "label": "5.8×42 Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:58x42",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_58x42",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -7247,10 +7616,11 @@
       "selector": "tacz:press_die ; cartridge_caliber=68x51fury ; industry_part_kind=cartridge_gauge",
       "label": "6.8×51 Fury Hardened Calibre Gauge",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family"
       ],
       "asset_key": "cartridge_gauge:68x51fury",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "complete_cartridge_gauge_68x51fury_63078518cd",
       "texture": "tacz_extra:item/cartridge_gauge_68x51fury",
@@ -7269,14 +7639,38 @@
       "selector": "tacz:press_die ; cartridge_caliber=762x25 ; industry_part_kind=cartridge_gauge",
       "label": "7.62×25 Hardened Calibre Gauge",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family"
       ],
       "asset_key": "cartridge_gauge:762x25",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "complete_cartridge_gauge_762x25_0f142d0de7",
       "texture": "tacz_extra:item/cartridge_gauge_762x25",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:762x39",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "762x39"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=762x39 ; industry_part_kind=cartridge_gauge",
+      "label": "7.62×39 Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:762x39",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_762x39",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -7291,14 +7685,84 @@
       "selector": "tacz:press_die ; cartridge_caliber=762x54 ; industry_part_kind=cartridge_gauge",
       "label": "7.62×54R Hardened Calibre Gauge",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family"
       ],
       "asset_key": "cartridge_gauge:762x54",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "complete_cartridge_gauge_762x54_47691024c9",
       "texture": "tacz_extra:item/cartridge_gauge_762x54",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:792x57",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "792x57"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=792x57 ; industry_part_kind=cartridge_gauge",
+      "label": "7.92×57 Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:792x57",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_792x57",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:9mm",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "9mm"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=9mm ; industry_part_kind=cartridge_gauge",
+      "label": "9 mm Chamber Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:9mm",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_9mm",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "cartridge_gauge",
+      "identity": "cartridge_gauge:rpg_rocket",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "rpg_rocket"
+      },
+      "selector": "tacz:press_die ; cartridge_caliber=rpg_rocket ; industry_part_kind=cartridge_gauge",
+      "label": "RPG-7 Launch-Tube Datum Gauge",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "cartridge_gauge:rpg_rocket",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_family_rpg_rocket",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -25368,6 +25832,29 @@
       "mapping": "complete_projectile_rpg_rocket_heat_64021d5a45",
       "texture": "tacz_extra:item/projectile_rpg_rocket_heat",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "shared_ammunition_intermediate",
+      "identity": "ammunition:cartridge_gauge_blank",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "ammunition",
+        "industry_part_kind": "cartridge_gauge_blank"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=cartridge_gauge_blank ; industry_platform=ammunition",
+      "label": "Neutral Cartridge Datum Gauge Blank",
+      "accepted_coverage": [
+        "exact",
+        "family"
+      ],
+      "asset_key": "ammunition:cartridge_gauge_blank",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "ammunition_cartridge_gauge_blank",
+      "texture": "tacz_extra:item/base_die_blank",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },

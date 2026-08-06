@@ -19,7 +19,7 @@
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | action_fixture | 32 | 32 | 0 | 0 | 32 | 0 | 0 | 0 |
 | cartridge_case_die | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
-| cartridge_gauge | 5 | 5 | 0 | 5 | 0 | 0 | 0 | 0 |
+| cartridge_gauge | 24 | 24 | 0 | 5 | 19 | 0 | 0 | 0 |
 | cartridge_projectile_die | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
 | fresh_cartridge_case | 23 | 23 | 0 | 1 | 22 | 0 | 0 | 0 |
 | loose_ammo | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
@@ -30,7 +30,7 @@
 | platform_component_die | 265 | 265 | 0 | 265 | 0 | 0 | 0 | 0 |
 | platform_furniture_kit | 53 | 53 | 0 | 53 | 0 | 0 | 0 | 0 |
 | projectile_core | 24 | 24 | 0 | 4 | 20 | 0 | 0 | 0 |
-| shared_ammunition_intermediate | 4 | 4 | 0 | 4 | 0 | 0 | 0 | 0 |
+| shared_ammunition_intermediate | 5 | 5 | 0 | 4 | 1 | 0 | 0 | 0 |
 | shared_gun_intermediate | 6 | 6 | 0 | 6 | 0 | 0 | 0 | 0 |
 | spent_cartridge_case | 23 | 23 | 0 | 23 | 0 | 0 | 0 | 0 |
 | static_industrial_item | 5 | 5 | 0 | 3 | 0 | 0 | 2 | 0 |

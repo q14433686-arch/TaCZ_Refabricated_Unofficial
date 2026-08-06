@@ -577,6 +577,7 @@ def load_cartridges() -> list[dict[str, Any]]:
         "id", "ammo", "projectile_type", "eject_case", "balance_tier",
         "batch_count", "propellant_count", "case_blank_count", "projectile_blank_count",
         "case_name_en", "case_name_zh", "projectile_name_en", "projectile_name_zh",
+        "gauge_name_en", "gauge_name_zh",
         "case_die_name_en", "case_die_name_zh", "projectile_die_name_en", "projectile_die_name_zh",
     )
     seen_ids: set[str] = set()
@@ -1355,6 +1356,40 @@ def obsolete_blueprint_acquisition_files(expected: dict[Path, Any]) -> set[Path]
     return stale
 
 
+def cartridge_gauge_blank_tag() -> dict[str, Any]:
+    """Neutral precision blank that a real chamber/launch-tube datum can calibrate."""
+    return {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "cartridge_gauge_blank",
+        "IndustryDisplayName": "item.tacz.press_die_blank.cartridge_gauge",
+    }
+
+
+def cartridge_gauge_tag(caliber: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "IndustryPlatform": "ammunition",
+        "IndustryPartKind": "cartridge_gauge",
+        "IndustryDisplayName": f"item.tacz.press_die.gauge_{caliber['id']}",
+        "CartridgeCaliber": caliber["id"],
+    }
+
+
+def generated_cartridge_gauge_blank_file() -> dict[Path, Any]:
+    """One Basin-formed neutral gauge blank; exact calibre comes later from a datum."""
+    return {
+        RESOURCE_ROOT / "data/tacz/recipe/create/industry/press_die_cartridge_gauge_blank.json": {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:compacting",
+            "ingredients": [
+                "tacz:high_carbon_steel_plate",
+                "create:brass_sheet",
+                "minecraft:quartz",
+            ],
+            "results": [output("tacz:press_die", cartridge_gauge_blank_tag())],
+        }
+    }
+
+
 def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
     caliber_id = caliber["id"]
     projectile_type = caliber["projectile_type"]
@@ -1418,22 +1453,25 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
     })
     files: dict[Path, Any] = {}
 
+    gauge_tag = cartridge_gauge_tag(caliber)
+    calibration_tool = partial("tacz:press_die", gauge_tag)
     master_gun = caliber.get("master_gun")
     if isinstance(master_gun, str) and master_gun:
-        calibration_tool = partial("tacz:modern_kinetic_gun", {"GunId": master_gun})
+        # A sample firearm is now measured once to make a reusable calibre
+        # datum gauge. The gauge, rather than the complete gun, then calibrates
+        # both case and projectile dies. This removes the duplicated gun-held
+        # calibration while preserving a real physical chamber datum.
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_cartridge_gauge_{caliber_id}.json"] = deploying(
+            partial("tacz:press_die", cartridge_gauge_blank_tag()),
+            partial("tacz:modern_kinetic_gun", {"GunId": master_gun}),
+            output("tacz:press_die", gauge_tag),
+        )
     else:
         gauge = caliber["calibration_gauge"]
-        gauge_tag = {
-            "IndustryPlatform": "ammunition",
-            "IndustryPartKind": "cartridge_gauge",
-            "IndustryDisplayName": f"item.tacz.press_die.gauge_{caliber_id}",
-            "CartridgeCaliber": caliber_id,
-        }
-        calibration_tool = partial("tacz:press_die", gauge_tag)
         # Some bundled loose-ammo ids intentionally have no firearm in the
-        # default pack.  A real multi-slot Mechanical Crafter forms their
-        # named hardened calibre gauge; this is an explicit datum, never an
-        # unrelated gun pretending to be the chamber reference.
+        # default pack. A real multi-slot Mechanical Crafter forms their named
+        # hardened calibre gauge from an explicit datum, never from an unrelated
+        # gun pretending to be a chamber reference.
         files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/caliber_gauge_{caliber_id}.json"] = {
             "fabric:load_conditions": CREATE_CONDITIONS,
             "type": "create:mechanical_crafting",
@@ -1450,6 +1488,9 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
             "result": output("tacz:press_die", gauge_tag),
         }
 
+    # All 24 calibres now share the same visible datum → two-die branch.
+    # The final four-slot cartridge machine, batch balance, casing recovery and
+    # projectile construction remain unchanged.
     files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_case_die_{caliber_id}.json"] = deploying(
         case_blank_die, calibration_tool, output("tacz:press_die", case_die)
     )
@@ -1625,6 +1666,7 @@ def cartridge_language_entries(caliber: dict[str, Any], language: str) -> dict[s
     entries = {
         f"item.tacz.cartridge_case.{caliber_id}": caliber[f"case_name_{suffix}"],
         f"item.tacz.projectile_core.{caliber_id}_{projectile_type}": caliber[f"projectile_name_{suffix}"],
+        f"item.tacz.press_die.gauge_{caliber_id}": caliber[f"gauge_name_{suffix}"],
         f"item.tacz.press_die.case_{caliber_id}": caliber[f"case_die_name_{suffix}"],
         f"item.tacz.press_die.projectile_{caliber_id}_{projectile_type}": caliber[f"projectile_die_name_{suffix}"],
     }
@@ -1644,9 +1686,6 @@ def cartridge_language_entries(caliber: dict[str, Any], language: str) -> dict[s
         entries[f"item.tacz.projectile_blank.incomplete_{caliber_id}"] = (
             f"未完成的{name}" if suffix == "zh" else f"Incomplete {name}"
         )
-    gauge = caliber.get("calibration_gauge")
-    if isinstance(gauge, dict):
-        entries[f"item.tacz.press_die.gauge_{caliber_id}"] = gauge[f"name_{suffix}"]
     return entries
 
 
@@ -2793,13 +2832,15 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
             },
             cartridge["projectile_die_name_en"], ("exact",), f"projectile_die:{caliber}:{projectile_type}"
         ))
-        gauge = cartridge.get("calibration_gauge")
-        if isinstance(gauge, dict):
-            identities.append(build_icon_identity(
-                "cartridge_gauge", f"cartridge_gauge:{caliber}", "tacz:press_die",
-                {"industry_part_kind": "cartridge_gauge", "cartridge_caliber": caliber},
-                gauge["name_en"], ("exact",), f"cartridge_gauge:{caliber}"
-            ))
+        # Every cartridge family now has one reusable datum gauge. Five
+        # no-firearm calibres retain supplied exact art; the remaining sampled
+        # calibres intentionally use the declared gauge visual family until
+        # dedicated artwork is supplied.
+        identities.append(build_icon_identity(
+            "cartridge_gauge", f"cartridge_gauge:{caliber}", "tacz:press_die",
+            {"industry_part_kind": "cartridge_gauge", "cartridge_caliber": caliber},
+            cartridge["gauge_name_en"], ("exact", "family"), f"cartridge_gauge:{caliber}", "family"
+        ))
 
     # Shared physical blanks are real stacks and need listed visual identities
     # even though their eventual calibre/platform is intentionally not known yet.
@@ -2808,11 +2849,13 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
         ("projectile_blank", "tacz:projectile_blank", "Neutral Projectile Blank"),
         ("case_die_blank", "tacz:press_die", "Blank Case Die"),
         ("projectile_die_blank", "tacz:press_die", "Blank Projectile Die"),
+        ("cartridge_gauge_blank", "tacz:press_die", "Neutral Cartridge Datum Gauge Blank"),
     ):
+        accepted = ("exact", "family") if kind == "cartridge_gauge_blank" else ("exact",)
         identities.append(build_icon_identity(
             "shared_ammunition_intermediate", f"ammunition:{kind}", item,
             {"industry_platform": "ammunition", "industry_part_kind": kind}, label,
-            ("exact",), f"ammunition:{kind}"
+            accepted, f"ammunition:{kind}", "family" if kind == "cartridge_gauge_blank" else "individual"
         ))
 
     for kind, label in (
@@ -3396,9 +3439,14 @@ def validate_platform_tooling_semantics(platforms: list[dict[str, Any]], expecte
 
 def _recipe_result_custom_data(recipe: dict[str, Any]) -> dict[str, Any] | None:
     results = recipe.get("results")
-    if not isinstance(results, list) or not results or not isinstance(results[0], dict):
+    raw_result: Any
+    if isinstance(results, list) and results and isinstance(results[0], dict):
+        raw_result = results[0]
+    else:
+        raw_result = recipe.get("result")
+    if not isinstance(raw_result, dict):
         return None
-    components = results[0].get("components")
+    components = raw_result.get("components")
     if not isinstance(components, dict):
         return None
     custom = components.get("minecraft:custom_data")
@@ -3480,6 +3528,60 @@ def validate_viewer_continuity(platforms: list[dict[str, Any]], expected: dict[P
                 raise ValueError(f"{name}: viewer-disconnected platform gauge → terminal edge")
 
 
+def _recipe_partial_nbt_values(value: Any) -> list[dict[str, Any]]:
+    if isinstance(value, dict):
+        found: list[dict[str, Any]] = []
+        nbt = value.get("nbt")
+        if isinstance(nbt, dict):
+            found.append(nbt)
+        for child in value.values():
+            found.extend(_recipe_partial_nbt_values(child))
+        return found
+    if isinstance(value, list):
+        return [tag for child in value for tag in _recipe_partial_nbt_values(child)]
+    return []
+
+
+def validate_cartridge_tooling_continuity(cartridges: list[dict[str, Any]], expected: dict[Path, Any]) -> None:
+    """Keep every calibre datum → die → physical component edge viewer-continuous."""
+    gauge_blank_path = RESOURCE_ROOT / "data/tacz/recipe/create/industry/press_die_cartridge_gauge_blank.json"
+    gauge_blank_recipe = expected.get(gauge_blank_path)
+    if not isinstance(gauge_blank_recipe, dict) \
+            or _recipe_result_custom_data(gauge_blank_recipe) != cartridge_gauge_blank_tag():
+        raise ValueError("Missing stable neutral cartridge gauge blank route")
+
+    for caliber in cartridges:
+        caliber_id = caliber["id"]
+        gauge_tag = cartridge_gauge_tag(caliber)
+        master_gun = caliber.get("master_gun")
+        if isinstance(master_gun, str) and master_gun:
+            gauge_recipe = expected.get(
+                RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_cartridge_gauge_{caliber_id}.json"
+            )
+            if not isinstance(gauge_recipe, dict) \
+                    or gauge_recipe.get("target", {}).get("nbt") != cartridge_gauge_blank_tag() \
+                    or _recipe_result_custom_data(gauge_recipe) != gauge_tag:
+                raise ValueError(f"{caliber_id}: sample firearm must create its reusable datum gauge")
+        else:
+            gauge_recipe = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/caliber_gauge_{caliber_id}.json")
+            if not isinstance(gauge_recipe, dict) or _recipe_result_custom_data(gauge_recipe) != gauge_tag:
+                raise ValueError(f"{caliber_id}: declared no-gun datum must create its reusable gauge")
+
+        for die_kind, form_name in (("case", "form_case"), ("projectile", "form_projectile")):
+            calibration = expected.get(
+                RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_{die_kind}_die_{caliber_id}.json"
+            )
+            form = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/{form_name}_{caliber_id}.json")
+            die_output = _recipe_result_custom_data(calibration) if isinstance(calibration, dict) else None
+            if not isinstance(calibration, dict) or calibration.get("ingredient", {}).get("nbt") != gauge_tag:
+                raise ValueError(f"{caliber_id}: {die_kind} die must use the calibre datum gauge")
+            if not isinstance(die_output, dict) or not isinstance(form, dict) or not any(
+                    _viewer_identity(die_output) == _viewer_identity(tag)
+                    for tag in _recipe_partial_nbt_values(form)
+            ):
+                raise ValueError(f"{caliber_id}: viewer-disconnected datum die → {form_name} edge")
+
+
 def existing_json_matches(path: Path, expected: Any) -> bool:
     try:
         return canonical(read_json(path)) == canonical(expected)
@@ -3507,6 +3609,7 @@ def run(write: bool) -> int:
     expected: dict[Path, Any] = {}
     english: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "Neutral Exterior / Furniture Blank",
+        "item.tacz.press_die_blank.cartridge_gauge": "Neutral Cartridge Datum Gauge Blank",
         "item.tacz.gun_blueprint.blank": "Blank Tooling Sheet",
         "item.tacz.press_die.acceptance_gauge_stock": "Precision Acceptance Gauge Stock",
         "tooltip.tacz.blueprint.role.blank": "Blank tooling sheet — transfer a dossier or measured pattern onto it",
@@ -3522,6 +3625,7 @@ def run(write: bool) -> int:
         "tooltip.tacz.industry.tooling_scope.critical_gauge": "Platform critical-fit gauge",
         "tooltip.tacz.industry.tooling_scope.platform_tooling": "Platform dies during tooling setup",
         "tooltip.tacz.industry.tooling_scope.final_acceptance": "Platform final-acceptance gauge",
+        "tooltip.tacz.industry.cartridge_gauge_blank": "Neutral datum-gauge blank — calibrate it with a sample firearm or declared datum",
         "tooltip.tacz.blueprint.tier.legacy": "Legacy Field Pattern — low tooling complexity",
         "tooltip.tacz.blueprint.tier.service": "Service Schematic — standardized production",
         "tooltip.tacz.blueprint.tier.advanced": "Modern Technical Package — advanced tooling required",
@@ -3535,6 +3639,7 @@ def run(write: bool) -> int:
     }
     chinese: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "中性外装套件毛坯",
+        "item.tacz.press_die_blank.cartridge_gauge": "中性弹药基准量规毛坯",
         "item.tacz.gun_blueprint.blank": "空白工装页",
         "item.tacz.press_die.acceptance_gauge_stock": "精密验收检具料坯",
         "tooltip.tacz.blueprint.role.blank": "空白工装页——用原始档案或实物测绘结果转印",
@@ -3550,6 +3655,7 @@ def run(write: bool) -> int:
         "tooltip.tacz.industry.tooling_scope.critical_gauge": "平台关键配合量规",
         "tooltip.tacz.industry.tooling_scope.platform_tooling": "建线时校准平台模具",
         "tooltip.tacz.industry.tooling_scope.final_acceptance": "平台最终验收检具",
+        "tooltip.tacz.industry.cartridge_gauge_blank": "中性基准量规毛坯——用样枪或已声明基准校准",
         "tooltip.tacz.blueprint.tier.legacy": "野战图样 — 低工具复杂度",
         "tooltip.tacz.blueprint.tier.service": "制式图纸 — 标准化生产",
         "tooltip.tacz.blueprint.tier.advanced": "现代技术包 — 需要高级工装",
@@ -3570,6 +3676,7 @@ def run(write: bool) -> int:
         expected.update(generated_platform_files(platform))
         english.update(language_entries(platform, "en_us"))
         chinese.update(language_entries(platform, "zh_cn"))
+    expected.update(generated_cartridge_gauge_blank_file())
     for cartridge in cartridges:
         expected.update(generated_cartridge_files(cartridge))
         english.update(cartridge_language_entries(cartridge, "en_us"))
@@ -3592,6 +3699,7 @@ def run(write: bool) -> int:
     validate_effective_create_recipe_collisions(expected, obsolete_platform_paths | obsolete_template_paths)
     validate_platform_tooling_semantics(platforms, expected)
     validate_viewer_continuity(platforms, expected)
+    validate_cartridge_tooling_continuity(cartridges, expected)
 
     stale: list[str] = []
     for path, value in sorted(expected.items(), key=lambda pair: str(pair[0])):

@@ -22,10 +22,13 @@
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
-      "tacz:modern_kinetic_gun"
+      "tacz:press_die"
     ],
     "nbt": {
-      "GunId": "tacz:springfield1873"
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "cartridge_gauge",
+      "IndustryDisplayName": "item.tacz.press_die.gauge_45_70",
+      "CartridgeCaliber": "45_70"
     }
   },
   "results": [

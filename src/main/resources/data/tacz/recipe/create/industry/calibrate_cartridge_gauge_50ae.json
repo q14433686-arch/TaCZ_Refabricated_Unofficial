@@ -1,0 +1,45 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "cartridge_gauge_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.cartridge_gauge"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:modern_kinetic_gun"
+    ],
+    "nbt": {
+      "GunId": "tacz:deagle"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "cartridge_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.gauge_50ae",
+          "CartridgeCaliber": "50ae"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

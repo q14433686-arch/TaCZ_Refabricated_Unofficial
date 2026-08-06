@@ -44,8 +44,9 @@ tools/industry/platforms/<gun recipe slug>.json
 - `slug`：原 TACZ 成枪工作台配方路径；
 - `platform`：NBT 平台身份；
 - `gun_id` 与初始 `fire_mode`；
-- 蓝图显示名、蓝图压实材料；
-- 五个结构件：`receiver`、`bolt`、`barrel`、`trigger`、`recoil`；
+- 原始档案、生产工装模板和旧存档模板的显示名；
+- `manufacturing_tier`、`action_profile`、`tooling_scope`；
+- 五个中性毛坯类别，以及向真实动作部件的映射；
 - 结构件到最终件的映射（例如手枪的 `receiver -> frame`、`bolt -> slide`）；
 - 最终总装消耗的家具/外装材料；
 - 中英名称与必要的模具名称覆盖。
@@ -53,7 +54,11 @@ tools/industry/platforms/<gun recipe slug>.json
 生成器根据这些字段写入：
 
 ```text
-data/tacz/recipe/create/industry/blueprint_<platform>.json
+data/tacz/recipe/create/industry/form_template_blank.json
+data/tacz/recipe/create/industry/survey_dossier_<platform>.json
+data/tacz/recipe/create/industry/blueprint_<platform>.json        # 原始档案 → 生产模板
+data/tacz/recipe/create/industry/copy_template_<platform>.json
+data/tacz/recipe/create/industry/restore_template_<platform>.json
 data/tacz/recipe/create/industry/calibrate_component_die_<platform>_*.json
 data/tacz/recipe/create/industry/form_component_<platform>_*.json
 data/tacz/recipe/create/industry/form_furniture_blank_<material signature>.json
@@ -68,30 +73,24 @@ assets/tacz/lang/zh_cn.json
 
 终端成枪结果还会写入 `IndustryAssemblyPlatform` 与 `IndustryAssemblyRecipe` 来源标记；工业回收站只接受这种实际终端产物，避免把旧工作台/战利品枪的同名 `GunId` 变成工业零件捷径。每个 assembly 声明同时保存五个结构毛坯类别，供回收站按实际枪械重量返还 3–5 件可再次成型的毛坯，并按外装材料表返还部分材料。
 
-每个平台还会生成两份**独立模板来源**，源策略在 `tools/industry/blueprint_acquisition.json`：
-
-```text
-data/tacz/villager_trade/weaponsmith/5/blueprint_<platform>.json
-data/minecraft/tags/villager_trade/weaponsmith/level_5.json
-data/tacz/tacz_loot_injectors/industrial_blueprint_cache.json
-```
-
-前两项采用 26.2 原版新的 `villager_trade` registry 和 `villager_trade` tag，只追加到大师武器匠的候选池，绝不覆盖原版 `trade_set` 或原版交易。第三项由已有 TACZ 战利品注入层向指定结构箱子放入随机模板。旧的蓝图压实配方仍保留；这两条新来源是替代“用成枪反推模板”的正常探索/交易路线，而不是要求玩家运行生成器。
+每个平台生成的是**原始工艺档案**来源，源策略在 `tools/industry/blueprint_acquisition.json`：legacy 档案进入 2 级武器匠与早期箱子，service 档案进入 5 级武器匠，advanced/precision 档案主要来自高阶探索箱。档案不是直接成枪模板；它要转印到 Basin 形成的空白工装页上，才得到可复制的生产工装模板。实际样枪也可经 `survey_dossier_<platform>` 测绘为同一份档案。旧存档蓝图则经 `restore_template_<platform>` 转换，不能报废。
 
 ## 弹药与弹匣源定义
 
 `tools/industry/cartridges.json` 是默认枪包全部 **24** 种散装弹药的口径源定义。每条口径声明 `AmmoId`、弹头类型、是否会抛出可回收弹壳、双语名称，以及一种真实的模具校准来源：
 
-- 有对应默认枪的口径使用实际同口径完整枪，作为部署器中不消耗的膛室/口径量规；生成器会校验该枪的 `ammo` 字段真的等于该 `AmmoId`，不能拿不相干的枪伪造量规。
+- 有对应默认枪的口径先让部署器持实际同口径完整枪，把一个中性弹药基准量规毛坯校准成可复用的**口径基准量规**；该量规再分别校准弹壳模具和弹头模具。生成器会校验样枪的 `ammo` 字段真的等于该 `AmmoId`，不能拿不相干的枪伪造量规，也不会让同一把枪重复直接“印”两枚不同模具。
 - 默认包虽然提供散装弹、但没有任何对应枪械数据的五种口径（4.6×30、5.45×39、6.8×51 Fury、7.62×25、7.62×54R）使用一条真正的机械合成器多槽配方制造专属淬硬口径量规；每条都有不同的物理 datum，不能靠同输入/改数量输出不同口径。
 - 40 mm HE 与 RPG-7 HEAT 弹头在中性弹头坯进入模具前，还必须沿顺序装配由部署器装入 TNT 战斗部；RPG 火箭显式声明 `eject_case: false`，不会凭空掉出“空弹壳”。
 
 生成器会输出：
 
 ```text
-caliber_gauge_<caliber>.json                 # 仅无对应默认枪的口径
-calibrate_case_die_<caliber>.json
-calibrate_projectile_die_<caliber>.json
+press_die_cartridge_gauge_blank.json         # Basin 形成中性弹药基准量规毛坯
+calibrate_cartridge_gauge_<caliber>.json     # 有对应默认枪：样枪 → 可复用口径基准量规
+caliber_gauge_<caliber>.json                 # 无对应默认枪：机械合成器 datum → 口径基准量规
+calibrate_case_die_<caliber>.json             # 口径基准量规 → 弹壳模具
+calibrate_projectile_die_<caliber>.json       # 口径基准量规 → 弹头模具
 form_case_<caliber>.json
 form_projectile_<caliber>.json
 recondition_case_<caliber>.json              # 已击发弹壳 + 对应弹壳模具 -> 可装填弹壳

@@ -972,6 +972,226 @@
         "industry_part_kind": "acceptance_gauge_stock"
       },
       "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_blank",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_die_blank",
+      "priority": 500,
+      "match": {
+        "industry_platform": "ammunition",
+        "industry_part_kind": "cartridge_gauge_blank"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_9mm",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "9mm"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_22wmr",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "22wmr"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_556x45",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "556x45"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_762x39",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "762x39"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_12g",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "12g"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_45acp",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "45acp"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_308",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "308"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_57x28",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "57x28"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_58x42",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "58x42"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_30_06",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "30_06"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_338",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "338"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_357mag",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "357mag"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_40mm",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "40mm"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_45_70",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "45_70"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_500mag",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "500mag"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_50ae",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "50ae"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_50bmg",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "50bmg"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_792x57",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "792x57"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "ammunition_cartridge_gauge_family_rpg_rocket",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 120,
+      "match": {
+        "industry_part_kind": "cartridge_gauge",
+        "cartridge_caliber": "rpg_rocket"
+      },
+      "coverage": "family"
     }
   ]
 }
