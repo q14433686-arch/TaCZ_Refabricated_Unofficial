@@ -37,10 +37,11 @@ assets/my_pack/textures/item/my_pack_68_case.png
 
 资源重载（进入世界、`F3+T` 或 TACZ 资源重载）后生效。映射 JSON 可以与纹理来自不同命名空间。
 
-内置默认表：
+内置运行时表：
 
 ```text
-assets/tacz/industry_icons/default.json
+assets/tacz/industry_icons/default.json   # 基础映射，priority 300
+assets/tacz/industry_icons/complete.json  # 完整包适配映射，priority 800
 ```
 
 作者源（生成器会检查它）：
@@ -59,7 +60,7 @@ tools/industry/icon_mapping.json
       "id": "my_pack_68x51_case",
       "item": "tacz:cartridge_case",
       "texture": "my_pack:item/68x51_case",
-      "priority": 500,
+      "priority": 1000,
       "match": {
         "industry_part_kind": "case",
         "cartridge_caliber": "68x51fury"
@@ -82,7 +83,7 @@ tools/industry/icon_mapping.json
 
 | 字段 | 默认值 | 含义 |
 | --- | --- | --- |
-| `priority` | `0` | 数值越高越优先。第三方要有意覆盖默认表，请使用高于默认表 `300` 的值，例如 `500`。 |
+| `priority` | `0` | 数值越高越优先。当前完整包 exact 映射使用 `800`；第三方若有意覆盖同一身份，请使用高于 `800` 的值，例如 `1000`。仅新增、不与内置身份冲突的第三方条目可使用任意正优先级。 |
 | `match` | `{}` | 下表的任意非空 selector；全部为 AND 条件。空 `match` 可作为该注册物品的后备图。 |
 | `coverage` | `exact` | 作者覆盖审计字段：`exact`、`family`、`placeholder`。运行时忽略它，不影响选择。 |
 | `note` | 无 | 作者备注；运行时忽略。 |
@@ -127,7 +128,7 @@ tools/industry/icon_mapping.json
       "id": "my_pack_f2000_magazine",
       "item": "tacz:magazine",
       "texture": "my_pack:item/f2000_556_mag",
-      "priority": 500,
+      "priority": 1000,
       "match": {
         "magazine_family": "my_pack_f2000_556"
       }
@@ -146,7 +147,7 @@ tools/industry/icon_mapping.json
       "id": "my_pack_spent_762x39",
       "item": "tacz:cartridge_case",
       "texture": "my_pack:item/casing_762x39_spent",
-      "priority": 500,
+      "priority": 1000,
       "match": {
         "industry_part_kind": "spent_case",
         "cartridge_caliber": "762x39"
@@ -166,7 +167,7 @@ tools/industry/icon_mapping.json
       "id": "my_pack_f2000_exterior_kit",
       "item": "tacz:gun_component",
       "texture": "my_pack:item/f2000_exterior_kit",
-      "priority": 500,
+      "priority": 1000,
       "match": {
         "industry_platform": "my_pack_f2000",
         "industry_part_kind": "furniture_kit"
@@ -178,10 +179,12 @@ tools/industry/icon_mapping.json
 
 ## 内置 `tacz_extra` 图标包
 
-修复后的 61 张用户提供图标已嵌入 `assets/tacz_extra/**`，所以默认映射无需额外 ZIP。
-若用户将 `TACZ_icons_pack_fixed.zip` 放入资源包目录，其相同命名空间纹理可以照常覆盖内置纹理。
+修复后的第一批图标与用户后续提供的完整包都已嵌入 `assets/tacz_extra/**`。
+完整包的 bare `identity -> texture` 作者表会在构建时转换为 `complete.json`，而不是由运行时误读。
+如果使用外部资源包覆盖同名纹理，仍会按正常资源包优先级覆盖内置 PNG；若要覆盖同一 NBT 身份的映射条目，则使用高于 `800` 的显式 `priority`。
 
-映射与缺图审计的当前状态见：
+映射与完整包审计见：
 
 - [`extras/icon_packs/TACZ_industry_icon_catalog.json`](../extras/icon_packs/TACZ_industry_icon_catalog.json)
+- [`extras/icon_packs/TACZ_extra_COMPLETE_compatibility_report.json`](../extras/icon_packs/TACZ_extra_COMPLETE_compatibility_report.json)
 - [`INDUSTRY_ICON_COVERAGE.md`](INDUSTRY_ICON_COVERAGE.md)

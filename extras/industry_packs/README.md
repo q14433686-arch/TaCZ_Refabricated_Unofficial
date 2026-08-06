@@ -3,8 +3,11 @@
 `TACZ_industry_blocks.zip` 是用户上传到 `26.2(main)` 的原始资源包，SHA-256：
 
 ```text
-9787076695f2171efaef00e1bd6c30e1288253b8534b100c8cb2ff91f89c7174
+bc348da760f92ee33b5df9ff71133f18a3a89e4c3d80037cbce8ce4047c23ac6
 ```
+
+这是用户随后上传的更新版：两份 Blockbench 方块模型增加了 `ambientocclusion: false`，
+用于避免精细机械内部小面被环境遮蔽压成不应出现的大块暗面。
 
 其 `assets/tacz_extra/**` 内容已由工业生成器逐字节嵌入模组资源；玩家只安装模组即可看到
 实际方块模型，不需要另放该 ZIP。原 ZIP 的 `pack.mcmeta` 仍是旧的独立包格式，因此它作为

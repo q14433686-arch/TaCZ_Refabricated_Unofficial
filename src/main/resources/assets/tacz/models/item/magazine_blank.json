@@ -1,6 +1,3 @@
 {
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "tacz:item/magazine_blank"
-  }
+  "parent": "tacz_extra:item/static_tacz_magazine_blank"
 }

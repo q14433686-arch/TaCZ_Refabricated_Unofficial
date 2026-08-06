@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "source": {
+    "archive": "extras/icon_packs/TACZ_extra_COMPLETE.zip",
+    "sha256": "3c15ffa0a0fa331008042a378c861290ac0dba0e733ae2031f9c36c1a11ffe34",
+    "declared_pack_format": 15
+  },
+  "compatibility": {
+    "standalone_pack_format_compatible": false,
+    "raw_exact_schema_directly_loadable": false,
+    "raw_rules_schema_directly_loadable": false,
+    "adapted_runtime_mapping": "assets/tacz/industry_icons/complete.json",
+    "raw_mapping_files_embedded": false
+  },
+  "art_validation": {
+    "complete_item_texture_count": 833,
+    "complete_item_model_count": 835,
+    "generated_item_model_count": 833,
+    "block_parent_item_model_count": 2,
+    "texture_dimensions": {
+      "32x32": 833
+    },
+    "raw_exact_entry_count": 746,
+    "raw_rule_platform_count": 60,
+    "raw_example_platform_count": 5
+  },
+  "generated_mapping_entry_count": 746,
+  "generated_static_item_model_count": 3,
+  "static_item_models": {
+    "tacz:magazine_blank": "static_tacz_magazine_blank",
+    "tacz:magazine_loader": "static_tacz_magazine_loader",
+    "tacz:magazine_pouch": "static_tacz_magazine_pouch"
+  },
+  "notes": [
+    "The complete pack's bare identity->texture map is correct authoring data, but IndustryIconManager requires item/NBT selector entries; complete.json is the generated adapter.",
+    "industry_icon_rules.json contains family/tint authoring rules. The current runtime does not execute that custom rule language, so it is preserved only in the source archive and is not copied into assets/tacz_extra/industry_icons.",
+    "The complete pack's pack_format 15 is not standalone-compatible with Minecraft 26.2 resource format 88. Its assets are embedded under the mod's own current pack metadata instead."
+  ]
+}

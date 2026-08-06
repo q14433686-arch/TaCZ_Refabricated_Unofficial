@@ -1,0 +1,6 @@
+{
+ "parent": "item/generated",
+ "textures": {
+  "layer0": "tacz_extra:item/magazine_mp5_9x19_30_tacz_9mm"
+ }
+}

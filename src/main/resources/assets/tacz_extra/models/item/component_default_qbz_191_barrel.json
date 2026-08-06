@@ -1,0 +1,6 @@
+{
+ "parent": "item/generated",
+ "textures": {
+  "layer0": "tacz_extra:item/component_default_qbz_191_barrel"
+ }
+}

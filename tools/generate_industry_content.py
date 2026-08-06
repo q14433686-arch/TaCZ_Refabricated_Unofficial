@@ -26,10 +26,14 @@ MACHINE_MANIFEST = REPO / "tools/industry/machines.json"
 BLUEPRINT_ACQUISITION_MANIFEST = REPO / "tools/industry/blueprint_acquisition.json"
 ICON_MAPPING_MANIFEST = REPO / "tools/industry/icon_mapping.json"
 FIXED_ICON_PACK = REPO / "extras/icon_packs/TACZ_icons_pack_fixed.zip"
+COMPLETE_EXTRA_PACK = REPO / "extras/icon_packs/TACZ_extra_COMPLETE.zip"
 INDUSTRY_BLOCK_PACK = REPO / "extras/industry_packs/TACZ_industry_blocks.zip"
 ICON_RUNTIME_MAPPING = RESOURCE_ROOT / "assets/tacz/industry_icons/default.json"
+COMPLETE_RUNTIME_MAPPING = RESOURCE_ROOT / "assets/tacz/industry_icons/complete.json"
 ICON_CATALOG = REPO / "extras/icon_packs/TACZ_industry_icon_catalog.json"
 ICON_COVERAGE_DOCUMENT = REPO / "docs/INDUSTRY_ICON_COVERAGE.md"
+COMPLETE_PACK_REPORT = REPO / "extras/icon_packs/TACZ_extra_COMPLETE_compatibility_report.json"
+COMPLETE_PACK_COVERAGE_DOCUMENT = REPO / "docs/TACZ_EXTRA_COMPLETE_COMPATIBILITY.md"
 INDUSTRY_BLOCK_ASSET_REPORT = REPO / "extras/industry_packs/TACZ_industry_blocks_asset_report.json"
 INDUSTRY_BLOCK_COVERAGE_DOCUMENT = REPO / "docs/INDUSTRY_BLOCK_ASSET_COVERAGE.md"
 DEFAULT_AMMO_RECIPE_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/ammo"
@@ -1246,6 +1250,12 @@ def obsolete_machine_placeholder_files(machine_assets: list[dict[str, str]]) -> 
     }
 
 
+def forbidden_complete_authoring_runtime_files() -> set[Path]:
+    """Raw complete-pack authoring maps must never be exposed to the runtime loader."""
+    root = RESOURCE_ROOT / "assets/tacz_extra/industry_icons"
+    return set(root.rglob("*.json")) if root.exists() else set()
+
+
 # ---------------------------------------------------------------------------
 # Client icon mapping and exact artwork coverage catalog
 # ---------------------------------------------------------------------------
@@ -1330,8 +1340,24 @@ def archive_tacz_extra_files(archive_path: Path, label: str) -> dict[Path, bytes
 
 
 def embedded_icon_pack_files() -> dict[Path, bytes]:
-    """Mirror the repaired user-supplied icon namespace into built-in assets."""
+    """Mirror the repaired first icon batch as a base layer."""
     return archive_tacz_extra_files(FIXED_ICON_PACK, "repaired icon")
+
+
+def complete_extra_pack_files() -> dict[Path, bytes]:
+    """Read current complete art, excluding its non-runtime authoring JSON schema.
+
+    ``industry_icon_exact.json`` and ``industry_icon_rules.json`` are valuable
+    source manifests but are not valid input to IndustryIconManager directly.
+    They are adapted into a generated ``assets/tacz/industry_icons/complete.json``
+    below.  Copying them verbatim under ``assets/tacz_extra/industry_icons`` would
+    make the runtime loader misinterpret them as mapping files.
+    """
+    files = archive_tacz_extra_files(COMPLETE_EXTRA_PACK, "complete extra")
+    return {
+        path: value for path, value in files.items()
+        if "/industry_icons/" not in path.as_posix()
+    }
 
 
 def embedded_industry_block_pack_files() -> dict[Path, bytes]:
@@ -1339,19 +1365,56 @@ def embedded_industry_block_pack_files() -> dict[Path, bytes]:
     return archive_tacz_extra_files(INDUSTRY_BLOCK_PACK, "industry block")
 
 
+def overlay_assets(target: dict[Path, bytes], files: dict[Path, bytes], label: str,
+                   require_equal: bool = False) -> None:
+    """Merge one explicitly ordered visual source into the embedded namespace."""
+    for path, value in files.items():
+        old = target.get(path)
+        if require_equal and old is not None and old != value:
+            raise ValueError(f"Conflicting tacz_extra asset {path} while reading {label}")
+        target[path] = value
+
+
 def merged_tacz_extra_files() -> dict[Path, bytes]:
-    """Combine independent icon and machine packs without silently overwriting art."""
+    """Combine baseline repair art, newer complete art, then the explicit block update.
+
+    The complete archive intentionally supersedes the earlier repaired 61-icon
+    batch for overlapping item paths. The separately uploaded block archive is
+    required to byte-match the complete pack's block assets; a mismatch signals
+    an ambiguous user source instead of silently choosing arbitrary geometry.
+    """
     merged: dict[Path, bytes] = {}
-    for label, files in (
-        ("repaired icon", embedded_icon_pack_files()),
-        ("industry block", embedded_industry_block_pack_files()),
-    ):
-        for path, value in files.items():
-            old = merged.get(path)
-            if old is not None and old != value:
-                raise ValueError(f"Conflicting tacz_extra asset {path} between embedded packs while reading {label}")
-            merged[path] = value
+    overlay_assets(merged, embedded_icon_pack_files(), "repaired icon")
+    overlay_assets(merged, complete_extra_pack_files(), "complete extra")
+    overlay_assets(merged, embedded_industry_block_pack_files(), "industry block", require_equal=True)
     return merged
+
+
+def read_complete_pack_json(path: str) -> Any:
+    if not COMPLETE_EXTRA_PACK.exists():
+        raise ValueError(f"Missing complete extra archive {COMPLETE_EXTRA_PACK}")
+    with zipfile.ZipFile(COMPLETE_EXTRA_PACK) as archive:
+        try:
+            return json.loads(archive.read(path).decode("utf-8"))
+        except KeyError as exception:
+            raise ValueError(f"{COMPLETE_EXTRA_PACK}: missing {path}") from exception
+        except (UnicodeDecodeError, json.JSONDecodeError) as exception:
+            raise ValueError(f"{COMPLETE_EXTRA_PACK}: invalid JSON in {path}") from exception
+
+
+def load_complete_exact_icons() -> dict[str, str]:
+    """Load the user-facing identity -> texture-name map from the complete pack."""
+    data = read_complete_pack_json("assets/tacz_extra/industry_icons/industry_icon_exact.json")
+    if not isinstance(data, dict) or not data:
+        raise ValueError(f"{COMPLETE_EXTRA_PACK}: industry_icon_exact.json must be a non-empty object")
+    result: dict[str, str] = {}
+    for identity, texture_name in data.items():
+        if not isinstance(identity, str) or not identity or not isinstance(texture_name, str) or not texture_name:
+            raise ValueError(f"{COMPLETE_EXTRA_PACK}: exact icon entries must be non-empty strings")
+        if not re.fullmatch(r"[a-z0-9_./-]+", texture_name):
+            raise ValueError(f"{COMPLETE_EXTRA_PACK}: unsafe texture name for {identity}: {texture_name}")
+        result[identity] = texture_name
+    return result
 
 
 def resource_asset_path(identifier: str, directory: str, suffix: str) -> Path:
@@ -1416,6 +1479,7 @@ def validate_industry_block_assets(machine_assets: list[dict[str, str]], embedde
             "model_file": str(model_path.relative_to(RESOURCE_ROOT)),
             "texture_file": str(texture_path.relative_to(RESOURCE_ROOT)),
             "format_version": model.get("format_version"),
+            "ambientocclusion": model.get("ambientocclusion", True),
             "texture_size": [width, height],
             "element_count": len(model["elements"]),
             "face_count": face_count,
@@ -1445,6 +1509,215 @@ def validate_icon_texture_references(mapping: dict[str, Any], embedded: dict[Pat
                 f"{ICON_MAPPING_MANIFEST}: icon entry {entry['id']} references missing texture {texture}"
             )
 
+
+
+def complete_texture_identifier(texture_name: str) -> str:
+    return f"tacz_extra:item/{texture_name}"
+
+
+def complete_texture_asset_paths(texture_name: str) -> tuple[Path, Path]:
+    identifier = complete_texture_identifier(texture_name)
+    return (
+        resource_asset_path(identifier, "textures", ".png"),
+        resource_asset_path(identifier, "models", ".json"),
+    )
+
+
+def validate_complete_pack_art(exact: dict[str, str], embedded: dict[Path, bytes]) -> dict[str, Any]:
+    """Validate all complete-pack item models/textures before generating mappings."""
+    complete_all = archive_tacz_extra_files(COMPLETE_EXTRA_PACK, "complete extra")
+    texture_root = RESOURCE_ROOT / "assets/tacz_extra/textures/item"
+    model_root = RESOURCE_ROOT / "assets/tacz_extra/models/item"
+    item_textures = sorted(path for path in complete_all if texture_root in path.parents and path.suffix == ".png")
+    item_models = sorted(path for path in complete_all if model_root in path.parents and path.suffix == ".json")
+    dimensions: Counter[tuple[int, int]] = Counter()
+    for texture_path in item_textures:
+        width, height = png_dimensions(complete_all[texture_path], texture_path)
+        if complete_all[texture_path][24] != 8 or complete_all[texture_path][25] != 6:
+            raise ValueError(f"{texture_path}: complete item icon must be 8-bit RGBA PNG")
+        dimensions[(width, height)] += 1
+
+    generated_models = 0
+    block_parent_models = 0
+    for model_path in item_models:
+        model = json.loads(complete_all[model_path].decode("utf-8"))
+        textures = model.get("textures")
+        if isinstance(textures, dict) and isinstance(textures.get("layer0"), str):
+            generated_models += 1
+            layer0 = textures["layer0"]
+            expected_texture = resource_asset_path(layer0, "textures", ".png")
+            if expected_texture not in complete_all:
+                raise ValueError(f"{model_path}: layer0 references missing {layer0}")
+        elif isinstance(model.get("parent"), str) and model["parent"].startswith("tacz_extra:block/"):
+            block_parent_models += 1
+        else:
+            raise ValueError(f"{model_path}: unsupported complete-pack item model form")
+
+    for identity, texture_name in exact.items():
+        texture_path, model_path = complete_texture_asset_paths(texture_name)
+        if texture_path not in embedded or model_path not in embedded:
+            raise ValueError(f"{COMPLETE_EXTRA_PACK}: {identity} -> {texture_name} has no embedded texture/model")
+        model = json.loads(embedded[model_path].decode("utf-8"))
+        if model.get("textures", {}).get("layer0") != complete_texture_identifier(texture_name):
+            raise ValueError(f"{model_path}: layer0 does not match exact map texture {texture_name}")
+
+    rules = read_complete_pack_json("assets/tacz_extra/industry_icons/industry_icon_rules.json")
+    example = read_complete_pack_json("assets/tacz_extra/industry_icons/example_platform_family.json")
+    if not isinstance(rules, dict) or rules.get("version") != 1 or not isinstance(rules.get("platform_rules"), list):
+        raise ValueError(f"{COMPLETE_EXTRA_PACK}: industry_icon_rules.json has unsupported authoring schema")
+    if not isinstance(example, dict):
+        raise ValueError(f"{COMPLETE_EXTRA_PACK}: example_platform_family.json must be an object")
+
+    return {
+        "complete_item_texture_count": len(item_textures),
+        "complete_item_model_count": len(item_models),
+        "generated_item_model_count": generated_models,
+        "block_parent_item_model_count": block_parent_models,
+        "texture_dimensions": {f"{width}x{height}": count for (width, height), count in sorted(dimensions.items())},
+        "raw_exact_entry_count": len(exact),
+        "raw_rule_platform_count": len(rules["platform_rules"]),
+        "raw_example_platform_count": len(example),
+    }
+
+
+def complete_mapping_entry_id(identity: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "_", identity.lower()).strip("_")[:72]
+    digest = hashlib.sha1(identity.encode("utf-8")).hexdigest()[:10]
+    return f"complete_{slug}_{digest}"
+
+
+def generated_complete_icon_mapping(platforms: list[dict[str, Any]], cartridges: list[dict[str, Any]],
+                                    machine_assets: list[dict[str, str]], base_mapping: dict[str, Any],
+                                    embedded: dict[Path, bytes]) -> tuple[dict[str, Any], dict[str, str], dict[str, Any]]:
+    """Adapt the user exact-map schema to IndustryIconManager's item/NBT schema.
+
+    The user map deliberately names visual identities (``component:ak:barrel``)
+    instead of Java/NBT selector fields. The generated catalog is the canonical
+    bridge between those identities and the actual generic TACZ ItemStacks.
+    """
+    exact = load_complete_exact_icons()
+    base_catalog = build_icon_catalog(platforms, cartridges, machine_assets, base_mapping, embedded)
+    missing = {entry["identity"]: entry for entry in base_catalog["entries"] if entry["needs_art"]}
+    if set(exact) != set(missing):
+        only_art = sorted(set(exact) - set(missing))
+        only_runtime = sorted(set(missing) - set(exact))
+        raise ValueError(
+            f"{COMPLETE_EXTRA_PACK}: exact identity set does not match current visual backlog; "
+            f"art-only={only_art[:5]} ({len(only_art)}), runtime-only={only_runtime[:5]} ({len(only_runtime)})"
+        )
+
+    art_validation = validate_complete_pack_art(exact, embedded)
+    entries: list[dict[str, Any]] = []
+    static_item_models: dict[str, str] = {}
+    seen_ids: set[str] = set()
+    for identity, texture_name in sorted(exact.items()):
+        source = missing[identity]
+        entry_id = complete_mapping_entry_id(identity)
+        if entry_id in seen_ids:
+            raise ValueError(f"{COMPLETE_EXTRA_PACK}: generated duplicate mapping id for {identity}")
+        seen_ids.add(entry_id)
+        entry = {
+            "id": entry_id,
+            "item": source["item"],
+            "texture": complete_texture_identifier(texture_name),
+            "priority": 800,
+            "match": source["selectors"],
+            "coverage": "exact",
+            "source_identity": identity,
+        }
+        entries.append(entry)
+        if source["category"] == "static_industrial_item":
+            static_item_models[source["item"]] = texture_name
+
+    return {
+        "schema_version": 1,
+        "description": "Generated adapter for TACZ_extra_COMPLETE exact identity art; do not edit by hand.",
+        "entries": entries,
+    }, static_item_models, art_validation
+
+
+def generated_complete_static_item_models(static_item_models: dict[str, str]) -> dict[Path, Any]:
+    """Point vanilla static item models at complete-pack art; dynamic NBT items use complete.json."""
+    files: dict[Path, Any] = {}
+    for item_id, texture_name in sorted(static_item_models.items()):
+        namespace, path = item_id.split(":", 1)
+        if namespace != "tacz":
+            raise ValueError(f"Complete static art currently supports tacz registry items only: {item_id}")
+        files[RESOURCE_ROOT / f"assets/tacz/models/item/{path}.json"] = {
+            "parent": complete_texture_identifier(texture_name)
+        }
+    return files
+
+
+def build_complete_pack_compatibility_report(art_validation: dict[str, Any], complete_mapping: dict[str, Any],
+                                              static_item_models: dict[str, str]) -> dict[str, Any]:
+    pack_meta = read_complete_pack_json("pack.mcmeta")
+    pack_format = pack_meta.get("pack", {}).get("pack_format") if isinstance(pack_meta, dict) else None
+    return {
+        "schema_version": 1,
+        "source": {
+            "archive": str(COMPLETE_EXTRA_PACK.relative_to(REPO)),
+            "sha256": hashlib.sha256(COMPLETE_EXTRA_PACK.read_bytes()).hexdigest(),
+            "declared_pack_format": pack_format,
+        },
+        "compatibility": {
+            "standalone_pack_format_compatible": pack_format == 88,
+            "raw_exact_schema_directly_loadable": False,
+            "raw_rules_schema_directly_loadable": False,
+            "adapted_runtime_mapping": str(COMPLETE_RUNTIME_MAPPING.relative_to(RESOURCE_ROOT)),
+            "raw_mapping_files_embedded": False,
+        },
+        "art_validation": art_validation,
+        "generated_mapping_entry_count": len(complete_mapping["entries"]),
+        "generated_static_item_model_count": len(static_item_models),
+        "static_item_models": static_item_models,
+        "notes": [
+            "The complete pack's bare identity->texture map is correct authoring data, but IndustryIconManager requires item/NBT selector entries; complete.json is the generated adapter.",
+            "industry_icon_rules.json contains family/tint authoring rules. The current runtime does not execute that custom rule language, so it is preserved only in the source archive and is not copied into assets/tacz_extra/industry_icons.",
+            "The complete pack's pack_format 15 is not standalone-compatible with Minecraft 26.2 resource format 88. Its assets are embedded under the mod's own current pack metadata instead.",
+        ],
+    }
+
+
+def render_complete_pack_compatibility_document(report: dict[str, Any]) -> str:
+    validation = report["art_validation"]
+    compatibility = report["compatibility"]
+    lines = [
+        "# TACZ Extra Complete 包兼容性与整合结果",
+        "",
+        "用户提供的 `TACZ_extra_COMPLETE.zip` 已逐项核对。它是完整高保真图源，",
+        "但其原始映射 JSON 不是本项目运行时直接读取的 schema，因此由生成器转换而不是原样加载。",
+        "",
+        "## 资源核对",
+        "",
+        f"- 原 ZIP SHA-256：`{report['source']['sha256']}`；",
+        f"- 物品 PNG：{validation['complete_item_texture_count']}，尺寸分布：{validation['texture_dimensions']}；",
+        f"- 物品模型：{validation['complete_item_model_count']}（generated：{validation['generated_item_model_count']}，方块父模型：{validation['block_parent_item_model_count']}）；",
+        f"- 用户 exact 身份映射：{validation['raw_exact_entry_count']}；与当前精确缺图身份一一对应；",
+        f"- 生成的运行时 NBT 映射：{report['generated_mapping_entry_count']} 条；",
+        f"- 额外静态物品模型包装：{report['generated_static_item_model_count']} 条。",
+        "",
+        "## 原写法在本环境中的结论",
+        "",
+        f"- `pack.mcmeta.pack_format = {report['source']['declared_pack_format']}`，不是 26.2 standalone 包格式 88：**不能直接当独立资源包安装**；",
+        "- `industry_icon_exact.json`（`identity -> texture_name`）语义正确，但不是 `assets/*/industry_icons/*.json` 的 `entries[]` runtime schema；",
+        "- `industry_icon_rules.json` 的 family/tint 规则是作者规则语言，当前 Java 映射器不会执行；",
+        "- 因此整合方式是：嵌入模型/PNG，生成 `assets/tacz/industry_icons/complete.json`，不嵌入那三份原始 authoring JSON 以免被错误解析。",
+        "",
+        "## 已覆盖的静态物品",
+        "",
+    ]
+    for item_id, texture in sorted(report["static_item_models"].items()):
+        lines.append(f"- `{item_id}` → `tacz_extra:item/{texture}`")
+    lines.extend([
+        "",
+        "完整 source/report 见：",
+        f"- `{report['source']['archive']}`",
+        "- `extras/icon_packs/TACZ_extra_COMPLETE_compatibility_report.json`",
+        "- `extras/icon_packs/TACZ_industry_icon_catalog.json`",
+        "",
+    ])
+    return "\n".join(lines)
 
 def mapping_matches(entry: dict[str, Any], item: str, selectors: dict[str, Any]) -> bool:
     if entry.get("item") != item:
@@ -1887,15 +2160,32 @@ def render_icon_coverage_document(catalog: dict[str, Any]) -> str:
 
 def generated_icon_mapping_files(platforms: list[dict[str, Any]], cartridges: list[dict[str, Any]],
                                  machine_assets: list[dict[str, str]]) -> dict[Path, bytes | Any]:
-    mapping = load_icon_mapping()
+    base_mapping = load_icon_mapping()
     embedded = merged_tacz_extra_files()
-    validate_icon_texture_references(mapping, embedded)
+    validate_icon_texture_references(base_mapping, embedded)
     validate_industry_block_assets(machine_assets, embedded)
-    catalog = build_icon_catalog(platforms, cartridges, machine_assets, mapping, embedded)
+
+    complete_mapping, static_item_models, art_validation = generated_complete_icon_mapping(
+        platforms, cartridges, machine_assets, base_mapping, embedded
+    )
+    validate_icon_texture_references(complete_mapping, embedded)
+    combined_mapping = {
+        "schema_version": 1,
+        "entries": [*base_mapping["entries"], *complete_mapping["entries"]],
+    }
+    catalog = build_icon_catalog(platforms, cartridges, machine_assets, combined_mapping, embedded)
+    compatibility = build_complete_pack_compatibility_report(
+        art_validation, complete_mapping, static_item_models
+    )
+
     files: dict[Path, bytes | Any] = dict(embedded)
-    files[ICON_RUNTIME_MAPPING] = mapping
+    files[ICON_RUNTIME_MAPPING] = base_mapping
+    files[COMPLETE_RUNTIME_MAPPING] = complete_mapping
+    files.update(generated_complete_static_item_models(static_item_models))
     files[ICON_CATALOG] = catalog
     files[ICON_COVERAGE_DOCUMENT] = render_icon_coverage_document(catalog)
+    files[COMPLETE_PACK_REPORT] = compatibility
+    files[COMPLETE_PACK_COVERAGE_DOCUMENT] = render_complete_pack_compatibility_document(compatibility)
     return files
 
 
@@ -1954,14 +2244,14 @@ def render_industry_block_asset_coverage(report: dict[str, Any]) -> str:
         "",
         "## 已应用的用户方块资源",
         "",
-        "| 方块 | 源模型 | 纹理 | 图集尺寸 | 元素数 | 面数 | 绑定状态 |",
-        "| --- | --- | --- | ---: | ---: | ---: | --- |",
+        "| 方块 | 源模型 | 图集尺寸 | 元素数 | 面数 | AO | 绑定状态 |",
+        "| --- | --- | ---: | ---: | ---: | --- | --- |",
     ]
     for machine in report["applied_machine_models"]:
         width, height = machine["texture_size"]
         lines.append(
-            f"| `tacz:{machine['id']}` | `{machine['source_model']}` | `{machine['source_texture']}` | "
-            f"{width}×{height} | {machine['element_count']} | {machine['face_count']} | {machine['status']} |"
+            f"| `tacz:{machine['id']}` | `{machine['source_model']}` | {width}×{height} | "
+            f"{machine['element_count']} | {machine['face_count']} | {machine['ambientocclusion']} | {machine['status']} |"
         )
     lines.extend([
         "",
@@ -2084,6 +2374,14 @@ def run(write: bool) -> int:
             stale.append(str(path.relative_to(REPO)))
             if write:
                 path.unlink()
+
+    # The complete source archive carries authoring-only bare maps under the
+    # tacz_extra namespace. If they leak into the mod they are scanned as
+    # malformed runtime mappings, so --write removes them and --check fails.
+    for path in sorted(forbidden_complete_authoring_runtime_files()):
+        stale.append(str(path.relative_to(REPO)))
+        if write:
+            path.unlink()
 
     stale += [f"{path.relative_to(REPO)}::{key}" for path, entries in (
         (RESOURCE_ROOT / "assets/tacz/lang/en_us.json", english),
