@@ -222,18 +222,24 @@ def load_blueprint_acquisition() -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: expected object")
     trade = data.get("weaponsmith")
+    foundation = data.get("foundation_cache")
     cache = data.get("world_cache")
-    if not isinstance(trade, dict) or not isinstance(cache, dict):
-        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: missing weaponsmith/world_cache object")
+    if not isinstance(trade, dict) or not isinstance(foundation, dict) or not isinstance(cache, dict):
+        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: missing weaponsmith/foundation_cache/world_cache object")
     for key in ("emerald_base", "emerald_per_material", "max_uses", "xp"):
         if not isinstance(trade.get(key), int) or trade[key] < 1:
             raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: weaponsmith.{key} must be a positive int")
-    chance = cache.get("chance")
-    tables = cache.get("loot_tables")
-    if not isinstance(chance, (int, float)) or not 0 < float(chance) <= 1:
-        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: world_cache.chance must be in (0, 1]")
-    if not isinstance(tables, list) or not tables or not all(isinstance(value, str) and value for value in tables):
-        raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: world_cache.loot_tables must be non-empty ids")
+    for section in (foundation, cache):
+        chance = section.get("chance")
+        tables = section.get("loot_tables")
+        if not isinstance(chance, (int, float)) or not 0 < float(chance) <= 1:
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: cache chance must be in (0, 1]")
+        if not isinstance(tables, list) or not tables or not all(isinstance(value, str) and value for value in tables):
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: cache loot_tables must be non-empty ids")
+    for key, source in (("weaponsmith.foundation_platforms", trade.get("foundation_platforms")),
+                        ("foundation_cache.platforms", foundation.get("platforms"))):
+        if not isinstance(source, list) or not source or not all(isinstance(value, str) and value for value in source):
+            raise ValueError(f"{BLUEPRINT_ACQUISITION_MANIFEST}: {key} must be non-empty platform ids")
     return data
 
 
@@ -796,25 +802,30 @@ def generated_blueprint_acquisition_files(platforms: list[dict[str, Any]], acqui
     """Generate chest-cache and new data-driven weaponsmith blueprint routes."""
     files: dict[Path, Any] = {}
     trade = acquisition["weaponsmith"]
+    foundation = acquisition["foundation_cache"]
     cache = acquisition["world_cache"]
+    foundation_platforms = set(trade["foundation_platforms"])
+    foundation_cache_platforms = set(foundation["platforms"])
     trade_ids: list[str] = []
     loot_entries: list[dict[str, Any]] = []
+    foundation_entries: list[dict[str, Any]] = []
     for platform in platforms:
         name = platform["platform"]
         custom = blueprint_custom_data(platform)
         material_weight = sum(material["count"] for material in platform["materials"])
         emerald_cost = min(64, trade["emerald_base"] + material_weight * trade["emerald_per_material"])
-        trade_id = f"tacz:weaponsmith/5/blueprint_{name}"
-        trade_ids.append(trade_id)
-        files[RESOURCE_ROOT / f"data/tacz/villager_trade/weaponsmith/5/blueprint_{name}.json"] = {
-            "wants": {"id": "minecraft:emerald", "count": float(emerald_cost)},
-            "additional_wants": {"id": "minecraft:book"},
-            "gives": output("tacz:gun_blueprint", custom),
-            "max_uses": float(trade["max_uses"]),
-            "reputation_discount": 0.05,
-            "xp": float(trade["xp"]),
-        }
-        loot_entries.append({
+        if name in foundation_platforms:
+            trade_id = f"tacz:weaponsmith/5/blueprint_{name}"
+            trade_ids.append(trade_id)
+            files[RESOURCE_ROOT / f"data/tacz/villager_trade/weaponsmith/5/blueprint_{name}.json"] = {
+                "wants": {"id": "minecraft:emerald", "count": float(emerald_cost)},
+                "additional_wants": {"id": "minecraft:book"},
+                "gives": output("tacz:gun_blueprint", custom),
+                "max_uses": float(trade["max_uses"]),
+                "reputation_discount": 0.05,
+                "xp": float(trade["xp"]),
+            }
+        entry = {
             "type": "minecraft:item",
             "name": "tacz:gun_blueprint",
             "functions": [{
@@ -823,7 +834,10 @@ def generated_blueprint_acquisition_files(platforms: list[dict[str, Any]], acqui
                 "function": "minecraft:set_nbt",
                 "tag": snbt_compound(custom),
             }],
-        })
+        }
+        loot_entries.append(entry)
+        if name in foundation_cache_platforms:
+            foundation_entries.append(entry)
 
     # 26.2 selects a bounded random subset from this tag using vanilla's
     # data-driven weaponsmith level-5 trade_set. Appending is deliberate: it
@@ -831,6 +845,14 @@ def generated_blueprint_acquisition_files(platforms: list[dict[str, Any]], acqui
     files[RESOURCE_ROOT / "data/minecraft/tags/villager_trade/weaponsmith/level_5.json"] = {
         "replace": False,
         "values": trade_ids,
+    }
+    files[RESOURCE_ROOT / "data/tacz/tacz_loot_injectors/industrial_blueprint_foundations.json"] = {
+        "loot_tables": foundation["loot_tables"],
+        "pools": [{
+            "rolls": 1,
+            "conditions": [{"condition": "minecraft:random_chance", "chance": foundation["chance"]}],
+            "entries": foundation_entries,
+        }],
     }
     files[RESOURCE_ROOT / "data/tacz/tacz_loot_injectors/industrial_blueprint_cache.json"] = {
         "loot_tables": cache["loot_tables"],

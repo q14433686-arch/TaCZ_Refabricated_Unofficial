@@ -1,0 +1,49 @@
+{
+  "loot_tables": [
+    "minecraft:chests/village/village_weaponsmith",
+    "minecraft:chests/village/village_toolsmith"
+  ],
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.65
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"ak\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ak\",BlueprintState:\"archive\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"glock\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.glock\",BlueprintState:\"archive\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:gun_blueprint",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{IndustryPlatform:\"ar\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ar\",BlueprintState:\"archive\"}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
