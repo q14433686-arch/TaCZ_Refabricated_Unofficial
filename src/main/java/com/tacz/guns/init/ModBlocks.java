@@ -61,7 +61,14 @@ public class ModBlocks {
     }
 
     private static BlockBehaviour.Properties metalProps(String name) {
-        return BlockBehaviour.Properties.of().setId(blockKey(name)).sound(SoundType.METAL).strength(4.0F, 6.0F).pushReaction(PushReaction.BLOCK);
+        // Both current metal blocks use detailed, non-cubic Blockbench models.
+        // Keeping the default full-block occlusion flag makes adjacent blocks
+        // discard their shared face even where this model has a visible gap.
+        // From an oblique angle that exposes the neighbour through the machine
+        // (the reported "x-ray" effect). This affects render-face culling only;
+        // collision, hardness and piston behaviour remain unchanged.
+        return BlockBehaviour.Properties.of().setId(blockKey(name)).sound(SoundType.METAL).strength(4.0F, 6.0F)
+                .noOcclusion().pushReaction(PushReaction.BLOCK);
     }
 
     private static Block registerBlock(String name, Block block) {
