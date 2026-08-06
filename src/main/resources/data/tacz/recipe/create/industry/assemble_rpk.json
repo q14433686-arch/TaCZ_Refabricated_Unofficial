@@ -48,13 +48,6 @@
   },
   "sequence": [
     {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    },
-    {
       "type": "create:deploying",
       "target": "$ingredient",
       "ingredient": {
@@ -68,13 +61,6 @@
           "IndustryDisplayName": "item.tacz.gun_component.default_rpk_bolt"
         }
       },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
       "results": [
         "$result"
       ]
@@ -98,13 +84,6 @@
       ]
     },
     {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    },
-    {
       "type": "create:deploying",
       "target": "$ingredient",
       "ingredient": {
@@ -118,13 +97,6 @@
           "IndustryDisplayName": "item.tacz.gun_component.default_rpk_trigger"
         }
       },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
       "results": [
         "$result"
       ]
@@ -148,13 +120,6 @@
       ]
     },
     {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    },
-    {
       "type": "create:deploying",
       "target": "$ingredient",
       "ingredient": {
@@ -168,41 +133,6 @@
           "IndustryDisplayName": "item.tacz.gun_component.default_rpk_furniture_kit"
         }
       },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "tooling",
-          "IndustryPartKind": "action_jig",
-          "IndustryDisplayName": "item.tacz.press_die.action_jig.gas_rifle",
-          "IndustryActionProfile": "gas_rifle",
-          "DieTargetKind": "gas_rifle"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
       "results": [
         "$result"
       ]

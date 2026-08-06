@@ -52,6 +52,10 @@ CREATE_CONDITIONS = [{"condition": "fabric:all_mods_loaded", "values": ["create"
 BLANK_CLASS_ORDER = ("receiver", "bolt", "barrel", "trigger", "recoil")
 TOOLING_SCOPE_IDS = ("family_jig", "critical_gauge", "platform_tooling", "final_acceptance")
 BLUEPRINT_ROLE_IDS = ("master", "production", "blank")
+# Create Fly 26.2's native JEI SequencedAssemblyCategory has exactly seven
+# stage labels/cells. Longer sequences crash its renderer, so each terminal
+# line must fit its actual visible machine-stage contract.
+MAX_SEQUENCED_ASSEMBLY_STEPS = 7
 # 26.2 serialises minecraft:max_stack_size in the inclusive [1, 99] range.
 MAX_ITEM_STACK_SIZE = 99
 # (minimum neutral case/projectile blank mass, minimum industrial propellant)
@@ -1100,50 +1104,68 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
     # Templates establish dies/gauges upstream. The terminal itself begins
     # with the receiver/frame workpiece, so an industrial line can mass-produce
     # after tooling setup instead of "installing a blueprint" in every gun.
-    sequence: list[dict[str, Any]] = [press_fit_step()]
-    for part in parts[1:]:
-        sequence.append({
-            "type": "create:deploying",
-            "target": "$ingredient",
-            "ingredient": partial("tacz:gun_component", {
-                "IndustryPlatform": name,
-                "IndustryPartKind": part["kind"],
-                "IndustryDisplayName": f"item.tacz.gun_component.{name}_{part['kind']}",
-            }),
-            "results": ["$result"],
-        })
-        sequence.append(press_fit_step())
-    if materials:
-        sequence.append({
-            "type": "create:deploying",
-            "target": "$ingredient",
-            "ingredient": partial("tacz:gun_component", furniture_kit_tag(platform)),
-            "results": ["$result"],
-        })
-        sequence.append(press_fit_step())
+    #
+    # Keep this list within Create Fly 26.2's seven actual JEI stage cells. This
+    # is not a visual-only truncation: a longer sequence crashes the native
+    # SequencedAssemblyCategory renderer. Critical/final action jigs remain
+    # mandatory upstream when they select their gauge blank; the terminal then
+    # uses the calibrated platform gauge as the real acceptance station.
+    deployments: list[dict[str, Any]] = []
 
-    # Simple action families use a reusable field fixture at final fit. Older
-    # but tolerance-sensitive actions add a platform-calibrated gauge; advanced
-    # and precision systems use a final acceptance gauge. No raw template is
-    # fed into a finished receiver here.
-    if scope in {"family_jig", "critical_gauge", "final_acceptance"}:
-        sequence.append({
+    def deployment_step(held: Any, keep: bool = False) -> dict[str, Any]:
+        step: dict[str, Any] = {
             "type": "create:deploying",
             "target": "$ingredient",
-            "ingredient": partial("tacz:press_die", action_jig_tag(profile)),
+            "ingredient": held,
             "results": ["$result"],
-            "keep_held_item": True,
-        })
-        sequence.append(press_fit_step())
-    if final_gauge is not None:
-        sequence.append({
-            "type": "create:deploying",
-            "target": "$ingredient",
-            "ingredient": partial("tacz:press_die", final_gauge),
-            "results": ["$result"],
-            "keep_held_item": True,
-        })
-        sequence.append(press_fit_step())
+        }
+        if keep:
+            step["keep_held_item"] = True
+        return step
+
+    for part in parts[1:]:
+        deployments.append(deployment_step(partial("tacz:gun_component", {
+            "IndustryPlatform": name,
+            "IndustryPartKind": part["kind"],
+            "IndustryDisplayName": f"item.tacz.gun_component.{name}_{part['kind']}",
+        })))
+    if materials:
+        deployments.append(deployment_step(partial("tacz:gun_component", furniture_kit_tag(platform))))
+
+    # A simple family has no platform acceptance gauge, so its reusable jig is
+    # the terminal's final fitting station. Critical/final scopes already use
+    # that same jig to create the gauge blank upstream and deploy only the
+    # platform-calibrated gauge here.
+    if scope == "family_jig":
+        deployments.append(deployment_step(partial("tacz:press_die", action_jig_tag(profile)), keep=True))
+    elif final_gauge is not None:
+        deployments.append(deployment_step(partial("tacz:press_die", final_gauge), keep=True))
+
+    if len(deployments) > MAX_SEQUENCED_ASSEMBLY_STEPS:
+        raise ValueError(
+            f"{slug}: {len(deployments)} mandatory terminal deployments exceed Create Fly's "
+            f"{MAX_SEQUENCED_ASSEMBLY_STEPS}-stage sequenced-assembly viewer limit"
+        )
+
+    # Use remaining real stage capacity for meaningful press fits. Standard
+    # platform-tooling lines retain two fits (barrel join and final exterior
+    # fit); jig/gauge lines retain their final fit after the acceptance station.
+    press_budget = min(2, MAX_SEQUENCED_ASSEMBLY_STEPS - len(deployments))
+    press_after: set[int] = set()
+    if press_budget == 1:
+        press_after.add(len(deployments) - 1)
+    elif press_budget >= 2:
+        press_after.add(min(1, len(deployments) - 1))
+        press_after.add(len(deployments) - 1)
+
+    sequence: list[dict[str, Any]] = []
+    for index, deployment in enumerate(deployments):
+        sequence.append(deployment)
+        if index in press_after:
+            sequence.append(press_fit_step())
+
+    if len(sequence) > MAX_SEQUENCED_ASSEMBLY_STEPS:
+        raise ValueError(f"{slug}: terminal sequence exceeds {MAX_SEQUENCED_ASSEMBLY_STEPS} Create Fly viewer stages")
 
     result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/assemble_{slug}.json"] = {
         "fabric:load_conditions": CREATE_CONDITIONS,
@@ -3351,14 +3373,24 @@ def validate_platform_tooling_semantics(platforms: list[dict[str, Any]], expecte
             raise ValueError(f"{name}: missing terminal sequence")
         held_tags = [step.get("ingredient", {}).get("nbt", {}) for step in assembly["sequence"]
                      if isinstance(step, dict) and isinstance(step.get("ingredient"), dict)]
+        if len(assembly["sequence"]) > MAX_SEQUENCED_ASSEMBLY_STEPS:
+            raise ValueError(f"{name}: terminal exceeds Create Fly's {MAX_SEQUENCED_ASSEMBLY_STEPS}-stage viewer limit")
         if any(tag.get("IndustryPartKind") == "blueprint" for tag in held_tags):
             raise ValueError(f"{name}: terminal assembly must not deploy a raw blueprint/template")
         kinds = {tag.get("IndustryPartKind") for tag in held_tags}
-        if scope in {"family_jig", "critical_gauge", "final_acceptance"} and "action_jig" not in kinds:
-            raise ValueError(f"{name}: {scope} terminal requires its reusable action fixture")
+        if scope == "family_jig" and "action_jig" not in kinds:
+            raise ValueError(f"{name}: family_jig terminal requires its reusable action fixture")
         expected_gauge = final_gauge_kind(scope)
-        if expected_gauge and expected_gauge not in kinds:
-            raise ValueError(f"{name}: {scope} terminal requires a calibrated {expected_gauge}")
+        if expected_gauge:
+            if expected_gauge not in kinds:
+                raise ValueError(f"{name}: {scope} terminal requires a calibrated {expected_gauge}")
+            selector_path = RESOURCE_ROOT / (
+                f"data/tacz/recipe/create/industry/select_{expected_gauge}_blank_{action_profile(platform)}.json"
+            )
+            selector = expected.get(selector_path)
+            if not isinstance(selector, dict) \
+                    or selector.get("ingredient", {}).get("nbt") != action_jig_tag(action_profile(platform)):
+                raise ValueError(f"{name}: {scope} gauge blank must be selected by its action fixture upstream")
 
 
 def existing_json_matches(path: Path, expected: Any) -> bool:

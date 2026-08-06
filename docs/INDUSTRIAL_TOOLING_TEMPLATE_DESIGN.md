@@ -119,6 +119,14 @@ Loaded <n> TACZ Create process(es) for JEI/REI recipe-viewer synchronization.
 
 `<n> = 0` 通常表示服务器没有启用 `CREATE_FLY` 工业档，或 Create Fly 没有实际加载；这不是缺少某一张组件配方。
 
+Create Fly 26.2 原生 JEI 的顺序装配视图只有 **7 个**阶段格；第 8 个阶段会触发其内部罗马数字数组越界。所有默认终端线因此由生成器硬性限制为不超过 7 个真实阶段，而不是只在 UI 中截断：
+
+- `platform_tooling`：五次真实子总成部署，保留枪管配合和最终外装配合两次冲压；
+- `family_jig`：五次子总成部署 + 动作夹具 + 最终压配；
+- `critical_gauge` / `final_acceptance`：动作夹具先在**上游**选择量规毛坯，终端部署五个子总成、外装套件和已校准平台量规，再做最终压配。
+
+这样不会重新把模板塞进终端线，也不会以隐藏工序换取不崩溃的假象；每个被省出的终端阶段都对应已经单独存在且可在查看器中反查的上游夹具／量规工序。
+
 ## 数据驱动入口
 
 - `tools/industry/default_gun_policy.json`
