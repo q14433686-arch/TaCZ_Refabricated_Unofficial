@@ -23,7 +23,6 @@ import com.tacz.guns.client.renderer.feature.TaczFeatureRenderers;
 import com.tacz.guns.client.renderer.item.AmmoBoxStatueProperty;
 import com.tacz.guns.client.renderer.item.TaczDynamicItemModel;
 import net.minecraft.client.renderer.item.properties.select.SelectItemModelProperties;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import com.tacz.guns.client.input.*;
 import com.tacz.guns.client.sound.SoundPlayManager;
 import com.tacz.guns.init.CommonRegistry;
@@ -32,7 +31,6 @@ import com.tacz.guns.network.NetworkHandler;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
@@ -45,7 +43,6 @@ public class TaCZFabricClient implements ClientModInitializer {
     public void onInitializeClient() {
         // 26.2 client item JSONs use the custom tacz:dynamic_item ItemModel type.
         TaczDynamicItemModel.registerType();
-        registerIndustryMachineRenderLayers();
         // 附属模块 LRTactical 的客户端物品模型类型（lrtactical:dynamic_item）与
         // 条件属性（lrtactical:has_custom_display）。
         // 必须与上面一行并排、在任何客户端物品 JSON 解码之前完成注册，
@@ -107,20 +104,6 @@ public class TaCZFabricClient implements ClientModInitializer {
         net.fabricmc.fabric.api.client.rendering.v1.PictureInPictureRendererRegistry.register(
                 ctx -> new com.tacz.guns.client.gui.preview.GunPreviewRenderer());
         subscribeEvents();
-    }
-
-    /**
-     * The supplied 128×128 Blockbench atlases are sparse, binary-alpha texture
-     * sheets: the model elements deliberately sample opaque islands surrounded
-     * by transparent packing canvas. Rendering them as the default SOLID chunk
-     * layer turns that canvas into opaque full planes / dark faces. CUTOUT is
-     * correct because the alpha scan contains only 0 and 255, not partial glass
-     * alpha; it preserves depth writing without translucent-sort artifacts.
-     */
-    private static void registerIndustryMachineRenderLayers() {
-        BlockRenderLayerMap.putBlocks(ChunkSectionLayer.CUTOUT,
-                ModBlocks.CARTRIDGE_ASSEMBLY_MACHINE,
-                ModBlocks.INDUSTRIAL_SALVAGE_STATION);
     }
 
     private void subscribeEvents() {
