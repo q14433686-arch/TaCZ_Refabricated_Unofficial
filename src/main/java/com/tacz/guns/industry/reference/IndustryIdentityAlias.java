@@ -92,7 +92,7 @@ public final class IndustryIdentityAlias {
         if (expectedCapacity < 0 || expectedStackSize < 0) {
             return Validation.invalid("expected capacity/stack size cannot be negative");
         }
-        return Validation.valid();
+        return Validation.success();
     }
 
     public Validation validateAgainst(ICommonResourceProvider assets) {
@@ -106,7 +106,7 @@ public final class IndustryIdentityAlias {
         return switch (getKind()) {
             case "gun" -> validateGun(assets.getGunIndex(target));
             case "ammo" -> validateAmmo(assets.getAmmoIndex(target));
-            case "attachment" -> Validation.valid();
+            case "attachment" -> Validation.success();
             default -> Validation.invalid("unsupported alias kind");
         };
     }
@@ -134,7 +134,7 @@ public final class IndustryIdentityAlias {
         if (expectedStackSize > 0 && expectedStackSize != index.getStackSize()) {
             return Validation.invalid("expected_stack_size disagrees with target ammo index stack_size");
         }
-        return Validation.valid();
+        return Validation.success();
     }
 
     private Validation validateGun(@Nullable CommonGunIndex index) {
@@ -150,11 +150,11 @@ public final class IndustryIdentityAlias {
         if (expectedCapacity < 0) {
             return Validation.invalid("expected_capacity cannot be negative");
         }
-        return Validation.valid();
+        return Validation.success();
     }
 
     public record Validation(boolean valid, String reason) {
-        public static Validation valid() {
+        public static Validation success() {
             return new Validation(true, "");
         }
 

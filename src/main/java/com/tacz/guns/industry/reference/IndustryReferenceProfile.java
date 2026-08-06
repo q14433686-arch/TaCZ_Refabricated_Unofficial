@@ -209,7 +209,7 @@ public final class IndustryReferenceProfile {
             return Validation.invalid("feed capacity " + feed.getCapacity()
                     + " disagrees with loaded GunData ammo_amount " + gunData.getAmmoAmount());
         }
-        return Validation.valid();
+        return Validation.success();
     }
 
     private static boolean token(String value) {
@@ -230,7 +230,7 @@ public final class IndustryReferenceProfile {
     }
 
     public record Validation(boolean valid, String reason) {
-        public static Validation valid() {
+        public static Validation success() {
             return new Validation(true, "");
         }
 
