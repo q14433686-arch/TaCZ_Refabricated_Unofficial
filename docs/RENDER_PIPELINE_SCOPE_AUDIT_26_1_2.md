@@ -302,9 +302,12 @@ pipeline 同样使用 `ALWAYS_PASS, writeDepth=true`。
   与原 pipeline 完全一致，非 mask 行为零差异；
 - vanilla 下 `tacz_WorldDepthSampler`/`tacz_ApertureDepthSampler` 由
   `ScopeDepthCopyState` 绑到最高两个空闲 texture unit 并在 draw 后原样恢复；
-- Iris 下 `IrisDepthRestoreShaderMixin` 注入第二个 dormant 分支
+- Iris 下由 `IrisScopeHandShaderMixin` + `ScopeShaderInjector` 注入第二个 dormant 分支
   （`tacz_ScopeMaskMode`），世界深度改用 Iris 官方 `depthtex2`；RESTORE 与 MASK
-  两个 mode 在各自 draw 前互相显式清零，杜绝共享 HAND shader 上的 uniform 泄漏；
+  两个 mode 在各自 draw 前互相显式清零，杜绝共享 HAND shader 上的 uniform 泄漏。
+  **注意**：该注入<b>只作用于 Iris 的手部 program</b>；早期的
+  `IrisDepthRestoreShaderMixin`（注入 Iris 链接的每一个 fragment shader）已删除，
+  它是「只有开某些 shader pack 才炸、且每台机器不一样」的真根因，详见 §6.9；
 - 任一环节失败（FBO 不完整、blit 报错、目标尺寸/格式漂移）都退化为 mode=0 的原样
   绘制，绝不使用过期深度纹理；
 - CPU 尺寸过滤 etched 面板的规则保留 —— 遮光板反正会被 mask 整块 discard，
@@ -407,8 +410,259 @@ OBJECT_NAME` 比对：`BACKUP` 记录 ocular 写入面的身份，`APERTURE_COPY
 
 三条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
 `GlCommandEncoder` mixin 负责 backup/aperture-copy/cleanup/mask 的 sampler 绑定；可选 Iris mixin
-补两条 dormant fragment branch。RenderType 构造器通过 Access Widener 开放，用于同步标记
-BACKUP/APERTURE_COPY/RESTORE/MASK 操作。
+只给**手部 program**补两条 dormant fragment branch（§6.9）。RenderType 构造器通过 Access Widener
+开放，用于同步标记 BACKUP/APERTURE_COPY/RESTORE/MASK 操作。
+
+### 6.9 第四轮：「只有开 Complementary Unbound R5.8.1 才炸、且每台机器不一样」的真根因
+
+#### 6.9.1 现象与已知事实
+
+远端反馈：**只在启用 Complementary Unbound R5.8.1 时渲染出错，不同机器的错法还不一样**。
+`latest.log`（26.1.2 分支，AMD Radeon RX 7800 XT / OpenGL 3.3.0 Core / Windows）给出的硬事实：
+
+| 行 | 内容 | 含义 |
+|---:|---|---|
+| 101-102, 278-280 | `AMD Radeon RX 7800 XT`、`OpenGL 3.3.0 Core Profile Context 26.7.1.260716` | RDNA3 + Windows 官方驱动 |
+| 103 | `Sodium ... [AMD_GAME_OPTIMIZATION_BROKEN]` | 该机已在 AMD 已知问题名单上 |
+| 147-154 | `Found fine program match for tacz:pipeline/scope_* : HAND_CUTOUT / HAND_TRANSLUCENT` | 四条 scope pipeline 成功挂到 Iris 手部 program |
+| 225 | `Using shaderpack: photon_v1.3b.zip` | 本次会话先加载 Photon |
+| 301 | `[TACZ Scope] Injected dormant depth-restore and ocular-mask branches into Iris shaders.` | 旧注入对**所有** program 生效（这条日志只打一次，故后面换包时不再出现） |
+| 694 / 724 | `Iris cannot classify render pipeline entity_cutout as HAND_CUTOUT/HAND` → `IllegalStateException: Shader already assigned: minecraft:pipeline/entity_cutout: HAND_CUTOUT` | 我们试图覆盖 Iris 的实体管线映射，被拒并吐出整段堆栈 |
+| 751-752 | `Profile: Custom (+2 options changed by user)` / `Using shaderpack: ComplementaryUnbound_r5.8.1.zip` | **用户改过 pack 选项** —— 逐机差异的直接来源 |
+| 761-763 | `Using Iris depthtex2 ...` / `Ocular aperture screen-space mask active.` / `Reticle draws now masked ...` | mask 链路本身在 Iris 下已经跑通（§6.8 生效） |
+| 全文 | 无 shader 编译错误、无崩溃，20:33:22 正常结束 | 是**画面损坏**，不是编译失败或崩溃 |
+
+也就是说：问题不在 mask 逻辑，而在**注入本身的作用域**。
+
+#### 6.9.2 旧实现做了什么
+
+`IrisDepthRestoreShaderMixin` 用 `@ModifyVariable(method = "link", index = 5)` 改
+`ShaderCreator#link` 的 fragment 源码，而 `link` 是 Iris **所有** gbuffer / shadow / fallback
+program 的唯一链接入口（`ShaderCreator.java:150 / 248 / 280 / 327`）。于是它给
+terrain、entities、block entities、particles、weather、clouds、sky、basic、lines
+以及全部 shadow 与 fallback program，逐个塞进了：
+
+```glsl
+uniform int tacz_DepthRestoreMode;          // 紧跟 #version 行插入
+uniform int tacz_ScopeMaskMode;
+uniform sampler2D tacz_ApertureDepthSampler;
+uniform sampler2D depthtex2;
+...
+void main() {
+    if (tacz_DepthRestoreMode != 0) { ... gl_FragDepth = texture(depthtex2, uv).r; return; }
+    if (tacz_ScopeMaskMode  != 0) { ... if (!(a < w - 1e-6)) { discard; } }   // main() 顶部
+    /* pack 自己的整段着色 */
+}
+```
+
+#### 6.9.3 五个缺陷，四类未定义行为
+
+**① `gl_FragDepth` 污染（最严重，本机现象的第一嫌疑）。**
+GLSL 规定：只要 fragment shader **静态地**给 `gl_FragDepth` 赋过值，那么在**没有**给它赋值的
+执行路径上，该片元的深度就是**未定义**的（GLSL 3.30 §7.2 / 4.60 §7.1.4，OpenGL 4.6 core §15.2.3
+同款措辞）。旧注入让**每一个** program 都静态写 `gl_FragDepth`，而 99.99% 的 draw 走的是
+`tacz_DepthRestoreMode == 0` 这条**不写**的路径：
+
+- NVIDIA 的编译器习惯性把 depth export 寄存器隐式初始化为 `gl_FragCoord.z`，于是看不出问题；
+- AMD RDNA 一旦发现 shader 会 export depth，就切到 depth-export 模式并把那个**从未写过的
+  寄存器**交给光栅化后端 —— 世界几何、实体、粒子、乃至 shadow map 的深度被随机值污染；
+- 附带代价：静态写 `gl_FragDepth` 会让驱动**全局关闭 early-Z / HiZ**，所有 pass 失去提前深度剔除。
+
+实测佐证（本仓库沙盒内对包源码直接验证）：
+
+```bash
+# Complementary Unbound r5.8.1（= Complementary Reimagined 同源）整包 0 处使用 gl_FragDepth
+grep -rn "gl_FragDepth" comp-src/ | wc -l      # -> 0
+# Photon v1.3b 唯一一处，且被 PROGRAM_GBUFFERS_VOXELS 挡在 gbuffers_all_solid.fsh:359
+grep -rn "gl_FragDepth" photon-src/            # -> 1 行
+```
+
+即：pack 自己完全没有 depth-export 语义，那句静态赋值是**我们凭空塞进去**的。
+Complementary 是重度延迟管线，composite/deferred 阶段几乎每个效果（SSAO、体积光、雾、反射、TAA）
+都从 `depthtex0/1` 反算世界坐标，深度一旦被污染，整帧画面而不是某个物件出错 —— 与
+「开这个包就整个渲染器出错」的描述一致；而具体烂成什么样，取决于驱动给那个寄存器留了什么残值，
+天然**每台机器不同**。
+
+**② 声明插在 `#version` 与 `#extension` 之间。**
+旧代码按「`#version` 行末尾」插入。但 Iris 的 jcpp 预处理器会把 pack 里所有 `#extension`
+提升到文件最顶部紧跟 `#version`，glsl-transformer 打印 AST 时同样把 extension 放在所有声明之前 ——
+这正是 Iris 自己只用 `ASTInjectionPoint.BEFORE_DECLARATIONS`（在 extension **之后**）的原因，
+`StringTransformations.java:33` 留着那句注释：
+
+> We need to avoid injecting non-preprocessor code fragments before #extension declarations
+
+GLSL 要求 `#extension` 必须出现在任何非预处理 token 之前。Mesa / 部分 AMD 编译器直接报错，
+NVIDIA 只给 warning。会不会踩到，取决于该 program 预处理后**还剩不剩** `#extension` ——
+Complementary 默认配置下的 `gbuffers_hand` 一条都不剩（已在沙盒里用 `cpp` 完整展开验证），
+但 `lib/voxelization/*`、`lib/materials/materialMethods/worldSpaceRef.glsl` 里带着
+`GL_ARB_shader_image_load_store` / `GL_ARB_gpu_shader5` / `GL_ARB_shader_storage_buffer_object` /
+`GL_ARB_shading_language_packing`，只要用户勾中相关选项（日志第 751 行
+`Profile: Custom (+2 options changed by user)`）就会被拉进对应 program。
+**同一个包、同一份代码，勾选项不同 → 结果不同 → 机器不同表现不同**，第二个来源。
+另外旧代码只有在 `source.startsWith("#version")` 时才计算插入点，否则插到 offset 0，
+即插到 `#version` **前面** —— 那是所有驱动都必然编译失败的写法。
+
+**③ 采样器单元膨胀。**
+被注入的 `depthtex2` 会成为每个 program 的 active uniform。Iris 的
+`ProgramSamplers.Builder#addDynamicSampler` 只按
+`glGetUniformLocation(program, name) != -1` 判断要不要占一个纹理单元，占满即抛
+（`ProgramSamplers.java:183-199`）：
+
+```java
+int location = GlStateManager._glGetUniformLocation(program, name);
+if (location == -1) { continue; }
+if (remainingUnits <= 0) {
+    throw new IllegalStateException("No more available texture units while activating sampler " + name);
+}
+```
+
+而 `IrisSamplers#addWorldDepthSamplers`（`IrisSamplers.java:220-226`，经
+`IrisRenderingPipeline:763` 提供给**每个** gbuffer/shadow program）恰好会把
+`depthtex2` 绑到 `RenderTargets#getDepthTextureNoHand()`。Complementary **自己从不声明
+`depthtex2`**（`grep -rn "uniform sampler2D depthtex2" comp-src/` → 0），所以旧注入是净 +1；
+Intel 核显只有 16 个 `GL_MAX_TEXTURE_IMAGE_UNITS`，越界就整条 pipeline 创建失败。
+越不越界同样取决于 pack 与用户勾的选项 —— 第三个「每台机器不一样」的来源。
+
+**④ 非一致 `discard` 破坏求导。**
+旧 mask 分支把 `discard` 放在 `main()` **开头**，条件却是逐像素的深度比较：同一个 2×2 quad 内的
+lane 会非一致地退出，之后 pack 自己所有隐式 LOD 采样与 `dFdx/dFdy/fwidth` 在 AMD 上就是垃圾。
+Complementary 的手部 program 里恰好带着一行
+
+```glsl
+// shaders/program/gbuffers_hand.glsl:103
+alphaCheck = max(fwidth(color.a), alphaCheck); // Fixes artifacts on fragment edges with non-nvidia gpus
+```
+
+（它在 `DO_PIXELATION_EFFECTS` 下才启用，而 `PIXELATED_*` 默认注释掉，见
+`lib/common.glsl:270-272`；但 `ComputeTexelOffset()` 一类的求导在别的选项组合下照样会被拉进来。）
+注意 Iris 自己追加 alpha test 用的是 `appendMainFunctionBody(...)`，即放在 `main()` **末尾**
+（`CommonTransformer.java:310`）—— 官方实现同样避开了「顶部 discard」。
+
+**⑤ 强行改写 Iris 的实体管线映射（另一条独立 BUG）。**
+`GunItemRendererWrapper` 每次第一人称渲染都会调
+`IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()`，试图把 vanilla 的
+`ENTITY_CUTOUT / ENTITY_CUTOUT_CULL / ENTITY_TRANSLUCENT* / ITEM_CUTOUT / ITEM_TRANSLUCENT`
+**常量地**重定向到 Iris 的 `HAND_CUTOUT / HAND_TRANSLUCENT`。但 Iris 的 `IrisPipelines`
+静态表里这些管线本来就登记为**动态**函数（`ENTITY_CUTOUT -> getCutout(p)`，内部按
+`HandRenderer.INSTANCE.isActive()` 在 `HAND_CUTOUT_DIFFUSE` / `BLOCK_ENTITY_DIFFUSE` /
+`ENTITIES_CUTOUT_DIFFUSE` 之间选）—— 「手部 pass 用手部 program」Iris 早就做对了。
+在 26.1.2 + Iris 1.11.2 上它只是抛 `Shader already assigned` 并刷堆栈（日志 694/724 行），
+属于**侥幸没生效**：一旦换个 Iris 版本或初始化顺序让它生效，**世界里所有实体与掉落物都会用
+`gbuffers_hand` 绘制**并被送进手部 FBO，那就是整屏级别的错误。
+
+#### 6.9.4 修复
+
+| 文件 | 动作 |
+|---|---|
+| `client/render/scope/ScopeShaderInjector.java` | 新增。全部 GLSL 字符串手术集中在这里，带完整的判据与降级 |
+| `mixin/client/iris/IrisShaderProgramNameMixin.java` | 新增。`ShaderPrinter#printProgram(String)` HEAD 处只**记录**即将链接的 program 名，原样返回；另在 `ShaderPrinter#resetPrintState()`（Iris 每次创建渲染管线时调用，即每次加载/重载 shader pack、切维度）重置注入器状态 |
+| `mixin/client/iris/IrisScopeHandShaderMixin.java` | 新增。仍改 `ShaderCreator#link` 的 fragment（index 5），但交给注入器按 program 名筛选 |
+| `mixin/client/iris/IrisDepthRestoreShaderMixin.java` | **删除** |
+| `resources/tacz.iris.mixins.json` | 换成上面两个 mixin，保持 `required:false` + `injectors.defaultRequire:0` |
+| `compat/iris/IrisCompat.java` | `assignCommonEntityPipelinesToHandIfNeeded()` 清空为 no-op（`@Deprecated`）；`assignPipelineToIrisAny` 把 `IllegalStateException("... already assigned")` 视为成功，不再刷堆栈 |
+| `client/renderer/item/GunItemRendererWrapper.java` | 删除对上述方法的调用 |
+
+**（a）只给手部 program 注入。** `ShaderCreator#link` 只拿得到已经变换完的 GLSL 字符串，
+分不出手部与地形。但四条创建路径（`create` / `createFallback` / `createFallbackShadow` /
+`createShadow`，`ShaderCreator.java:138 / 242 / 275 / 315`）都在紧邻的上一条语句调用
+`ShaderPrinter.printProgram(name)`，而 `name` 恰好就是 `ShaderKey#getName()`
+（`IrisRenderingPipeline.java:416/418` 传的就是 `key.getName()`，`ShaderKey.java:131` 是
+`toString().toLowerCase(Locale.ROOT)`）。因此把它记下来即可。全部手部 key
+（`HAND_CUTOUT`、`HAND_CUTOUT_BRIGHT`、`HAND_CUTOUT_DIFFUSE`、`HAND_TEXT`、
+`HAND_TEXT_TRANSLUCENT`、`HAND_TEXT_INTENSITY`、`HAND_TRANSLUCENT`、`HAND_WATER_BRIGHT`、
+`HAND_WATER_DIFFUSE`）小写后都以 `hand` 开头，且**没有任何非手部 key 以 `hand` 开头**，
+所以判据就是 `name.toLowerCase(Locale.ROOT).startsWith("hand")`。
+名字用完即 `null`，不可能串到下一次链接；拿不到名字就完全不注入（宁可 Iris 下没有目镜遮罩，
+也不生成一个未定义行为的 shader）。
+`ShaderPrinter#resetPrintState()`（`IrisRenderingPipeline.java:212`，每次创建渲染管线时调用）
+被用作「新 pack 开始」的信号：丢弃残留名字并重置一次性日志开关，于是**每加载一个 pack，
+日志里都会独立出现一次注入结果**——旧实现的那句 `Injected ... into Iris shaders.` 全局只打一次，
+本次远端日志正好卡在 Photon 阶段打完，换到 Complementary 后反而无从确认，这个坑一并堵上。
+
+**（b）声明插到整段预处理序言之后。** `afterPreprocessorPrologue()` 跳过
+`#version` / `#extension` / `#pragma` / 注释 / 空行（含反斜杠续行），等价于 Iris 自己的
+`ASTInjectionPoint.BEFORE_DECLARATIONS`，缺陷②消失。
+
+**（c）`gl_FragDepth` 在 `main()` 第一行无条件写一次。**
+
+```glsl
+bool tacz_scopeMaskDiscard = false;
+gl_FragDepth = gl_FragCoord.z;      // 让「静态赋值」在所有路径上都成为「实际赋值」
+```
+
+`gl_FragCoord.z` 与固定功能写入的深度逐位相同，对 pack 是零语义变化，却把缺陷①的未定义行为
+彻底消灭。early-Z 的损失现在**只落在手部这几个 program 上**（第一人称手臂/枪械只覆盖屏幕一小块，
+且本来就在最后画），世界与阴影 pass 完全不再被牵连。
+
+**（d）遮罩的 `discard` 移到 `main()` 结尾。** 前置分支只计算布尔量，`discard` 作为 main 的
+**最后一条语句**执行 —— 在 pack 自己的全部着色之后，也在 Iris 追加的 alpha test 之后，
+于是 pack 的所有求导都在一致控制流里完成（缺陷④消失）。多出来的代价只是「注定要 discard 的
+reticle 像素也被完整着色一遍」，而 reticle 只有几百个像素。
+我们自己的两处深度取样一律用 `textureLod(..., 0.0)`，不产生隐式求导。
+
+**（e）采样器只多 1 个，且只在手部。** `depthtex2` 仅在 pack 没有自己声明时才补声明
+（Photon 这类自己声明的包不会被重复声明），`tacz_ApertureDepthSampler` 由
+`ScopeDepthCopyState` 绑到最高的空闲 texture unit、draw 后原样还原，不参与 Iris 的单元预算。
+缺陷③的暴露面从「约 40 个 program」缩到「至多 9 个手部 program」。
+
+**（f）不可解析就整段放弃。** 以下任一条件成立时原样返回，绝不半途改写：
+源码为空 / 非手部 / 已注入过（幂等标记 `tacz_ScopeMaskMode`）/ `#version < 130` /
+已存在 `layout(depth_*)` 限定符（pack 对 `gl_FragDepth` 做过承诺，覆盖它就是新的 UB）/
+找不到可解析的 `main()` / 大括号不配平 / 预处理序言与 `main()` 重叠。
+解析前先用 `maskCommentsAndStrings()` 把注释与字符串整体替换为等长空格，
+所以 Complementary 的 `/* DRAWBUFFERS:0136 */` 之类块注释、以及注释里的假 `void main()`
+都不会带偏插入点 —— 旧代码用的是 `source.indexOf("void main")`，恰恰会被带偏。
+
+#### 6.9.5 离线验证（沙盒无 GPU、无 JDK 编译器）
+
+本次修复在无显卡、无 `javac`（`repo1.maven.org` / Adoptium / `services.gradle.org` 均不可达）
+的环境里完成，因此用**源码级等价验证**替代跑图。验证脚本已随仓库提交，可直接复跑：
+
+```bash
+python3 tools/verify_scope_shader_injection.py                                   # 合成用例
+python3 tools/verify_scope_shader_injection.py --pack <解包后的>/shaders          # 真实 pack
+```
+
+它是 `ScopeShaderInjector` 字符串手术的逐行 Python 移植 + 断言集（**改 Java 时必须同步改它**），
+`--pack` 会用系统 `cpp` 按 Iris 的 jcpp 语义展开该包的 `world0/gbuffers_hand.fsh`，
+再按 Iris 的产物形态补上 `#version 330 core` / hoisted `#extension` / 末尾 alpha test。
+本轮结果：
+
+1. **真包端到端**：Complementary Unbound r5.8.1 的 `gbuffers_hand` 展开后 3713 行、
+   Photon v1.3b 展开后 577 行，两个包**自身使用 `gl_FragDepth` 的次数都是 0**；
+   注入后再用 `tree-sitter-glsl` 解析：
+   - 注入前后解析错误数完全一致（Complementary 2 → 2，均为 grammar 对
+     `vec3[] x = vec3[](...)` 的已知限制，与注入无关；Photon 0 → 0）；
+   - `gl_FragDepth` 出现且仅出现 2 次（seed + restore），而**包自己 0 次**；
+   - `depthtex2` 恰好声明 1 次；
+   - 所有声明都在最后一条 `#extension` 之后，`#extension` 之前不含任何非预处理 token；
+   - mask 的 `discard` 在 Iris alpha test 之后，且是 `main()` 的最后一条语句；
+   - 大括号配平；**把三段注入原样删除后能逐字节还原原始源码**。
+2. **program 名筛选**：24 个非手部名字（`terrain_*` / `entities_*` / `block_entities` /
+   `particles*` / `clouds` / `weather` / `sky_*` / `basic` / `lines` / `damaged_block` /
+   `text*` / `glint` / `shadow_*` / `sodium_terrain` / `composite1` / `deferred1` / `final`）
+   全部**逐字节未改动**；9 个手部 key（`hand_cutout` … `hand_water_diffuse`）全部被改写。
+3. **降级路径**：`#version 120`、完全没有 `#version`、`layout(depth_greater)`、
+   无 `main()`、截断的 `main()` 五种畸形输入均原样返回。
+4. **幂等**：对已注入的源码再注入一次是 no-op。
+5. **Java 侧**：全部改动文件用 `tree-sitter-java` 解析，0 语法错误；
+   `tacz.iris.mixins.json` JSON 合法。`./gradlew clean build` 在本沙盒**无法执行**
+   （Gradle 发行版与 Maven 依赖域名全部不可达，也没有任何本地 Gradle 缓存），
+   需要在能联网的机器上补跑。
+
+#### 6.9.6 实机复核清单
+
+1. 开 Complementary Unbound R5.8.1，进世界不 ADS：地形/实体/粒子/阴影**不得**有深度错乱、
+   闪烁、雾或 SSAO 异常（这是缺陷①的直接观察面）；
+2. 打开 Iris 调试（`patched_shaders/` 导出）确认：只有 `*hand*` 的 `.fsh` 里出现
+   `tacz_ScopeMaskMode`，`terrain/entities/shadow/composite` 一律没有；
+3. ADS 后目镜孔、reticle 裁剪与 §6.6-§6.8 的行为一致（`Reticle draws now masked ...` 仍在日志里）；
+4. 日志里**不应**再出现 `Shader already assigned: minecraft:pipeline/entity_cutout` 的堆栈；
+5. 依次切换 Photon / BSL / Complementary，确认**每次**切换后日志里都重新出现
+   `[TACZ Scope] Injected the dormant depth-restore and ocular-mask branches into the Iris hand
+   programs only (first: hand_...)`（注入器在 `resetPrintState` 时重置，不缓存源码）；
+6. 有 Intel 核显的机器重点看 `No more available texture units while activating sampler`
+   是否消失。
 
 ## 7. 依赖版本审计（2026-07-30）
 
@@ -450,7 +704,8 @@ Iris/Sodium 验证配置：
 |---|---|---|
 | vanilla OpenGL | 关闭 | ACOG、LPVO、8x、98k 纯蚀刻 |
 | Iris 1.11.2 + Sodium 0.9.1 | 关闭 shader pack | 同上 |
-| Iris 1.11.2 + Sodium 0.9.1 | 任一常用 pack | 同上 |
+| Iris 1.11.2 + Sodium 0.9.1 | **Complementary Unbound R5.8.1**（含改过选项的 Custom profile） | 同上，且必须复核 §6.9.6 |
+| Iris 1.11.2 + Sodium 0.9.1 | Photon v1.3b / BSL 等另一族 pack | 同上 |
 | 两条路径 | 任意 | HAMR、Vudu、standard_8x 组合镜两种 view |
 
 每项检查：
@@ -461,7 +716,8 @@ Iris/Sodium 验证配置：
 4. illuminated 与 etched 分划不溢出镜外；
 5. 切换组合镜 view 后使用正确 ocular/division 编号；
 6. 世界深度、手部深度、雾和 shader pack 后处理无异常；
-7. 连续 resize / 全屏切换不产生 FBO incomplete 或显存持续增长。
+7. 连续 resize / 全屏切换不产生 FBO incomplete 或显存持续增长；
+8. 导出 `patched_shaders/` 后确认注入只出现在 `*hand*` program 中（§6.9.6）。
 
 ## 9. 参考来源
 
@@ -472,3 +728,14 @@ Iris/Sodium 验证配置：
 - TACZ Fabric 上游：<https://github.com/Sh1roCu/TACZ-Refabricated/tree/1.21.1>
 - Iris 1.11.2 Fabric 26.1.2：<https://www.curseforge.com/minecraft/mc-mods/irisshaders/files/8402621>
 - Sodium 0.9.1 Fabric 26.1.2：<https://modrinth.com/mod/sodium/version/mc26.1.2-0.9.1-fabric>
+- OpenGL Shading Language 3.30 §7.2 / 4.60 §7.1.4（`gl_FragDepth` 未赋值路径深度未定义）：
+  <https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.60.pdf>
+- OpenGL 4.6 core §15.2.3 Shader Outputs（同款措辞与 early-Z 影响）：
+  <https://registry.khronos.org/OpenGL/specs/gl/glspec46.core.pdf>
+- Complementary Reimagined / Unbound 源码（r5.8.1 同源）：
+  <https://github.com/ComplementaryDevelopment/ComplementaryReimagined>
+- Photon 源码：<https://github.com/sixthsurge/photon>
+- 本轮涉及的 Iris 源文件：`pipeline/programs/ShaderCreator.java`、`pipeline/programs/ShaderKey.java`、
+  `pipeline/transform/ShaderPrinter.java`、`pipeline/transform/transformer/CommonTransformer.java`、
+  `shaderpack/transform/StringTransformations.java`、`gl/program/ProgramSamplers.java`、
+  `samplers/IrisSamplers.java`、`pipeline/IrisRenderingPipeline.java`

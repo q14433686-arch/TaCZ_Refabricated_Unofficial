@@ -5,8 +5,10 @@
   "compatibilityLevel": "JAVA_17",
   "plugin": "com.tacz.guns.mixin.client.iris.IrisCompatMixinPlugin",
   "client": [
-    "IrisDepthRestoreShaderMixin"
+    "IrisScopeHandShaderMixin",
+    "IrisShaderProgramNameMixin"
   ],
+  "_comment": "IrisShaderProgramNameMixin only records the program name Iris is about to link; IrisScopeHandShaderMixin uses it so the scope branches are injected into the hand programs alone. The old IrisDepthRestoreShaderMixin patched every program and is gone - see docs/RENDER_PIPELINE_SCOPE_AUDIT_26_1_2.md section 6.9.",
   "injectors": {
     "defaultRequire": 0
   }

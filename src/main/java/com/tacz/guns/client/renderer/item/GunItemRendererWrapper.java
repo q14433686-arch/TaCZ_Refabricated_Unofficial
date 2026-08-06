@@ -22,7 +22,6 @@ import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.model.functional.ShellRender;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.TransformScale;
-import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.util.RenderDistance;
 import com.tacz.guns.util.math.MathUtil;
 import net.minecraft.client.Minecraft;
@@ -232,9 +231,12 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             if (RefitTransform.getOpeningProgress() != 0) {
                 gunModel.setRenderHand(false);
             }
-            // 第一人称手部 pass 下，预先让 Iris 把 vanilla entity/item 管线归到 hand program。
-            // 方法内部只尝试一次，避免 shader 下每帧重复匹配刷日志。
-            IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
+            // 注意：这里曾经调用 IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()，
+            // 试图把 vanilla 的 entity/item 管线常量重定向到 Iris 的 hand program。
+            // Iris 的 IrisPipelines 静态表本来就把它们登记为「按 HandRenderer.isActive() 动态选择」
+            // 的函数，我们的覆盖要么被 IllegalStateException("Shader already assigned") 拒绝并
+            // 刷一整段堆栈，要么一旦生效就会让世界里所有实体/掉落物都用 gbuffers_hand 绘制。
+            // 详见 IrisCompat#assignCommonEntityPipelinesToHandIfNeeded 的说明。
             // 调用枪械模型渲染
             RenderType renderType = display.enablesTransparency()
                     ? RenderTypes.entityTranslucent(display.getModelTexture())

@@ -8,7 +8,6 @@ import com.tacz.guns.init.CompatRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 
 import java.util.HashSet;
@@ -30,8 +29,6 @@ public final class IrisCompat {
     private static Supplier<Boolean> isRenderingShadow = () -> false;
     private static final Set<RenderPipeline> ASSIGNED_SCOPE_PIPELINES = new HashSet<>();
     private static boolean loggedScopePipelineFailure;
-    private static boolean commonEntityPipelinesAssigned = false;
-    private static boolean commonEntityPipelinesAssignAttempted = false;
 
     private IrisCompat() {
     }
@@ -101,6 +98,13 @@ public final class IrisCompat {
                         debugName, irisProgramName);
                 return true;
             } catch (Throwable t) {
+                if (isAlreadyAssigned(t)) {
+                    // Iris' coreShaderMap already routes this pipeline (either from a previous call
+                    // of ours after a resource reload, or from IrisPipelines' own defaults). That is
+                    // the desired end state, so treat it as success instead of logging a stack trace.
+                    ASSIGNED_SCOPE_PIPELINES.add(pipeline);
+                    return true;
+                }
                 lastFailure = t;
             }
         }
@@ -114,37 +118,53 @@ public final class IrisCompat {
         return false;
     }
 
+    /** @return whether {@code t} (or a cause of it) is Iris' "Shader already assigned" rejection. */
+    private static boolean isAlreadyAssigned(Throwable t) {
+        for (Throwable current = t; current != null; current = current.getCause()) {
+            if (current instanceof IllegalStateException) {
+                String message = current.getMessage();
+                if (message != null && message.contains("already assigned")) {
+                    return true;
+                }
+            }
+            if (current.getCause() == current) {
+                break;
+            }
+        }
+        return false;
+    }
+
     /**
-     * Assign vanilla entity/item pipelines used inside the first-person hand pass to Iris' hand
-     * programs. Some Iris versions otherwise rediscover the same "perfect program match" every
-     * frame. Try this once per client session only, even if a subset fails.
+     * No-op kept only so older call sites keep compiling.
+     *
+     * <p><b>为什么删掉原来的实现（这是一条真实的渲染 BUG，不是清理）。</b>旧实现会用
+     * {@code IrisApi#assignPipeline} 把 vanilla 的 {@code ENTITY_CUTOUT} /
+     * {@code ENTITY_CUTOUT_CULL} / {@code ENTITY_TRANSLUCENT*} / {@code ITEM_CUTOUT} /
+     * {@code ITEM_TRANSLUCENT} <b>常量地</b>重定向到 Iris 的 {@code HAND_CUTOUT} /
+     * {@code HAND_TRANSLUCENT} program。
+     *
+     * <p>但 Iris 的 {@code IrisPipelines} 静态初始化里，这些管线本来就已经登记为
+     * <b>动态</b>函数：{@code ENTITY_CUTOUT -> getCutout(p)}，其内部按
+     * {@code HandRenderer.INSTANCE.isActive()} 在
+     * {@code HAND_CUTOUT_DIFFUSE} / {@code BLOCK_ENTITY_DIFFUSE} / {@code ENTITIES_CUTOUT_DIFFUSE}
+     * 之间选择。也就是说「第一人称手部 pass 下走手部 program」这件事 Iris 自己已经做对了，
+     * 我们无事可做。
+     *
+     * <p>而一旦这个覆盖<b>成功</b>（换个 Iris 版本、换个初始化顺序、或 Iris 未来把
+     * {@code coreShaderMap} 改成允许覆盖），后果是<b>整个世界里所有实体与掉落物都会用
+     * shader pack 的 {@code gbuffers_hand} 绘制</b>，并被送进手部的 before/after-translucent
+     * FBO —— 这正是「光影下画面整个不对，而且每台机器不一样」的量级。
+     * 在 26.1.2 + Iris 1.11.2 上它只是抛
+     * {@code IllegalStateException: Shader already assigned: minecraft:pipeline/entity_cutout: HAND_CUTOUT}
+     * 并向日志倾倒一整段 {@code InvocationTargetException} 堆栈（远端 latest.log 20:32:34 即此），
+     * 属于「侥幸没生效」。因此彻底移除，而不是「捕获异常当作成功」。
+     *
+     * @deprecated Iris already routes the vanilla entity/item pipelines to its hand programs while
+     * {@code HandRenderer} is active; overriding that mapping is never correct.
      */
+    @Deprecated(forRemoval = true)
     public static synchronized void assignCommonEntityPipelinesToHandIfNeeded() {
-        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
-            return;
-        }
-        if (commonEntityPipelinesAssigned || commonEntityPipelinesAssignAttempted) {
-            return;
-        }
-        commonEntityPipelinesAssignAttempted = true;
-
-        boolean ok = true;
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT,
-                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT_CULL,
-                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout_cull");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT,
-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_CULL,
-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_cull");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE,
-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_emissive");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_CUTOUT,
-                new String[]{"HAND_CUTOUT", "HAND"}, "item_cutout");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_TRANSLUCENT,
-                new String[]{"HAND_TRANSLUCENT"}, "item_translucent");
-
-        commonEntityPipelinesAssigned = ok;
+        // Intentionally empty. See the javadoc above.
     }
 
     /**
