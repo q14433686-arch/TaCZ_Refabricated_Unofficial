@@ -25,7 +25,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_m249",
         "IndustryPartKind": "incomplete_m249",
-        "IndustryDisplayName": "item.tacz.gun_component.incomplete_m249"
+        "IndustryDisplayName": "item.tacz.gun_component.incomplete_m249",
+        "IndustryActionProfile": "belt_fed"
       }
     }
   },
@@ -39,30 +40,13 @@
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_m249",
         "IndustryAssemblyRecipe": "tacz:gun/m249",
-        "IndustryAssemblyTier": "precision"
+        "IndustryAssemblyTier": "precision",
+        "IndustryAssemblyActionProfile": "belt_fed",
+        "IndustryAssemblyToolingScope": "final_acceptance"
       }
     }
   },
   "sequence": [
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:gun_blueprint"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_m249",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_m249"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
     {
       "type": "create:pressing",
       "ingredient": "$ingredient",
@@ -187,6 +171,63 @@
       "results": [
         "$result"
       ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "action_jig",
+          "IndustryDisplayName": "item.tacz.press_die.action_jig.belt_fed",
+          "IndustryActionProfile": "belt_fed",
+          "DieTargetKind": "belt_fed"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_m249",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.acceptance_gauge.default_m249",
+          "IndustryActionProfile": "belt_fed",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "belt_fed"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
     },
     {
       "type": "create:pressing",

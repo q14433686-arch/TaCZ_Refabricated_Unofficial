@@ -25,7 +25,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "fal",
         "IndustryPartKind": "incomplete_fn_fal",
-        "IndustryDisplayName": "item.tacz.gun_component.incomplete_fn_fal"
+        "IndustryDisplayName": "item.tacz.gun_component.incomplete_fn_fal",
+        "IndustryActionProfile": "gas_rifle"
       }
     }
   },
@@ -39,30 +40,13 @@
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "fal",
         "IndustryAssemblyRecipe": "tacz:gun/fn_fal",
-        "IndustryAssemblyTier": "service"
+        "IndustryAssemblyTier": "service",
+        "IndustryAssemblyActionProfile": "gas_rifle",
+        "IndustryAssemblyToolingScope": "platform_tooling"
       }
     }
   },
   "sequence": [
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:gun_blueprint"
-        ],
-        "nbt": {
-          "IndustryPlatform": "fal",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.fal"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
     {
       "type": "create:pressing",
       "ingredient": "$ingredient",

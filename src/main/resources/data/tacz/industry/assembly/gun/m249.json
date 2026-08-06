@@ -1,31 +1,39 @@
 {
   "platform": "default_m249",
   "manufacturing_tier": "precision",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_m249",
+  "action_profile": "belt_fed",
+  "tooling_scope": "final_acceptance",
+  "blueprint_display_name": "item.tacz.gun_template.default_m249",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_m249",
   "terminal_process": "tacz:create/industry/assemble_m249",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "belt_fed_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_m249_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "feed_tray_and_bolt_group",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_m249_bolt"
     },
     {
-      "structural": "barrel",
+      "structural": "quick_change_barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_m249_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "feed_trigger_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_m249_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "buffer_and_recoil_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_m249_recoil"
     }

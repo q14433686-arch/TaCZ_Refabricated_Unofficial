@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_lonetrail",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_lonetrail"
+      "IndustryDisplayName": "item.tacz.gun_template.default_lonetrail",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
   "results": [

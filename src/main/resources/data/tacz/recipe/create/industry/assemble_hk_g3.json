@@ -25,7 +25,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_hk_g3",
         "IndustryPartKind": "incomplete_hk_g3",
-        "IndustryDisplayName": "item.tacz.gun_component.incomplete_hk_g3"
+        "IndustryDisplayName": "item.tacz.gun_component.incomplete_hk_g3",
+        "IndustryActionProfile": "roller_delayed_rifle"
       }
     }
   },
@@ -39,30 +40,13 @@
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_hk_g3",
         "IndustryAssemblyRecipe": "tacz:gun/hk_g3",
-        "IndustryAssemblyTier": "service"
+        "IndustryAssemblyTier": "service",
+        "IndustryAssemblyActionProfile": "roller_delayed_rifle",
+        "IndustryAssemblyToolingScope": "platform_tooling"
       }
     }
   },
   "sequence": [
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:gun_blueprint"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_hk_g3",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_hk_g3"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
     {
       "type": "create:pressing",
       "ingredient": "$ingredient",

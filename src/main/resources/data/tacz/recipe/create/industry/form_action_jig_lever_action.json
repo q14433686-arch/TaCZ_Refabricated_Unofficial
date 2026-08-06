@@ -1,0 +1,31 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:mechanical_crafting",
+  "key": {
+    "S": "tacz:high_carbon_steel_plate",
+    "B": "create:brass_sheet"
+  },
+  "pattern": [
+    "SS ",
+    " BS"
+  ],
+  "result": {
+    "id": "tacz:press_die",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "tooling",
+        "IndustryPartKind": "action_jig",
+        "IndustryDisplayName": "item.tacz.press_die.action_jig.lever_action",
+        "IndustryActionProfile": "lever_action",
+        "DieTargetKind": "lever_action"
+      }
+    }
+  }
+}

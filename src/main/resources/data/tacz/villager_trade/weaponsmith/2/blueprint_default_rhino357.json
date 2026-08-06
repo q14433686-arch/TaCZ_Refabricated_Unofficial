@@ -12,8 +12,11 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_rhino357",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_rhino357",
-        "IndustryBlueprintTier": "legacy"
+        "IndustryDisplayName": "item.tacz.gun_dossier.default_rhino357",
+        "IndustryBlueprintTier": "legacy",
+        "IndustryBlueprintRole": "master",
+        "IndustryActionProfile": "revolver",
+        "IndustryToolingScope": "critical_gauge"
       }
     }
   },

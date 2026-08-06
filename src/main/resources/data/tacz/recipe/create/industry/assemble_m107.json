@@ -25,7 +25,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_m107",
         "IndustryPartKind": "incomplete_m107",
-        "IndustryDisplayName": "item.tacz.gun_component.incomplete_m107"
+        "IndustryDisplayName": "item.tacz.gun_component.incomplete_m107",
+        "IndustryActionProfile": "anti_material_bolt"
       }
     }
   },
@@ -39,30 +40,13 @@
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_m107",
         "IndustryAssemblyRecipe": "tacz:gun/m107",
-        "IndustryAssemblyTier": "precision"
+        "IndustryAssemblyTier": "precision",
+        "IndustryAssemblyActionProfile": "anti_material_bolt",
+        "IndustryAssemblyToolingScope": "final_acceptance"
       }
     }
   },
   "sequence": [
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:gun_blueprint"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_m107",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_m107"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
     {
       "type": "create:pressing",
       "ingredient": "$ingredient",
@@ -187,6 +171,63 @@
       "results": [
         "$result"
       ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "action_jig",
+          "IndustryDisplayName": "item.tacz.press_die.action_jig.anti_material_bolt",
+          "IndustryActionProfile": "anti_material_bolt",
+          "DieTargetKind": "anti_material_bolt"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_m107",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.acceptance_gauge.default_m107",
+          "IndustryActionProfile": "anti_material_bolt",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "anti_material_bolt"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
     },
     {
       "type": "create:pressing",

@@ -27,6 +27,12 @@ public interface IndustryItemDataAccessor {
     String DIE_TARGET_KIND_TAG = "DieTargetKind";
     /** Manufacturing tier carried by a platform blueprint (legacy/service/advanced/precision). */
     String BLUEPRINT_TIER_TAG = "IndustryBlueprintTier";
+    /** Blueprint lifecycle: blank, master dossier, or reusable production template. */
+    String BLUEPRINT_ROLE_TAG = "IndustryBlueprintRole";
+    /** Mechanical action family (break action, bolt action, revolver, etc.). */
+    String ACTION_PROFILE_TAG = "IndustryActionProfile";
+    /** Where the platform template is mandatory: family jig, fit gauge, tooling, or acceptance. */
+    String TOOLING_SCOPE_TAG = "IndustryToolingScope";
 
     default String getPlatform(ItemStack stack) {
         return ItemNbtUtils.getTag(stack).getStringOr(PLATFORM_TAG, "");
@@ -90,6 +96,30 @@ public interface IndustryItemDataAccessor {
 
     default void setBlueprintTier(ItemStack stack, String tier) {
         ItemNbtUtils.updateTag(stack, tag -> tag.putString(BLUEPRINT_TIER_TAG, tier == null ? "" : tier));
+    }
+
+    default String getBlueprintRole(ItemStack stack) {
+        return ItemNbtUtils.getTag(stack).getStringOr(BLUEPRINT_ROLE_TAG, "");
+    }
+
+    default void setBlueprintRole(ItemStack stack, String role) {
+        ItemNbtUtils.updateTag(stack, tag -> tag.putString(BLUEPRINT_ROLE_TAG, role == null ? "" : role));
+    }
+
+    default String getActionProfile(ItemStack stack) {
+        return ItemNbtUtils.getTag(stack).getStringOr(ACTION_PROFILE_TAG, "");
+    }
+
+    default void setActionProfile(ItemStack stack, String profile) {
+        ItemNbtUtils.updateTag(stack, tag -> tag.putString(ACTION_PROFILE_TAG, profile == null ? "" : profile));
+    }
+
+    default String getToolingScope(ItemStack stack) {
+        return ItemNbtUtils.getTag(stack).getStringOr(TOOLING_SCOPE_TAG, "");
+    }
+
+    default void setToolingScope(ItemStack stack, String scope) {
+        ItemNbtUtils.updateTag(stack, tag -> tag.putString(TOOLING_SCOPE_TAG, scope == null ? "" : scope));
     }
 
     default boolean isConfiguredIndustryPart(ItemStack stack) {

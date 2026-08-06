@@ -38,7 +38,8 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "p90",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.p90_barrel"
+          "IndustryDisplayName": "item.tacz.gun_component.p90_barrel",
+          "IndustryActionProfile": "bullpup_rifle"
         }
       }
     }

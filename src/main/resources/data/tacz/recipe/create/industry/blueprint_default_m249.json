@@ -7,29 +7,49 @@
       ]
     }
   ],
-  "type": "create:mechanical_crafting",
-  "key": {
-    "P": "minecraft:paper",
-    "B": "create:brass_sheet",
-    "S": "tacz:high_carbon_steel_plate",
-    "D": "minecraft:diamond",
-    "E": "minecraft:echo_shard",
-    "K": "minecraft:echo_shard"
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "template_blank",
+      "IndustryDisplayName": "item.tacz.gun_blueprint.blank",
+      "IndustryBlueprintRole": "blank"
+    }
   },
-  "pattern": [
-    "PDP",
-    "SKS",
-    "BEB"
-  ],
-  "result": {
-    "id": "tacz:gun_blueprint",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_m249",
-        "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_m249",
-        "IndustryBlueprintTier": "precision"
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_m249",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_dossier.default_m249",
+      "IndustryBlueprintTier": "precision",
+      "IndustryBlueprintRole": "master",
+      "IndustryActionProfile": "belt_fed",
+      "IndustryToolingScope": "final_acceptance"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_blueprint",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_m249",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_template.default_m249",
+          "IndustryBlueprintTier": "precision",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "belt_fed",
+          "IndustryToolingScope": "final_acceptance"
+        }
       }
     }
-  }
+  ],
+  "keep_held_item": true
 }

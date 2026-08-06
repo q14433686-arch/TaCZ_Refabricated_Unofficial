@@ -17,12 +17,14 @@
 
 | 类别 | 总身份数 | 已满足 | 仍需补图 | exact | family | placeholder | supplied block model | runtime fallback |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| action_fixture | 32 | 32 | 0 | 0 | 32 | 0 | 0 | 0 |
 | cartridge_case_die | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
 | cartridge_gauge | 5 | 5 | 0 | 5 | 0 | 0 | 0 | 0 |
 | cartridge_projectile_die | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
 | fresh_cartridge_case | 23 | 23 | 0 | 1 | 22 | 0 | 0 | 0 |
 | loose_ammo | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
 | physical_magazine | 22 | 22 | 0 | 22 | 0 | 0 | 0 | 0 |
+| platform_acceptance_tool | 40 | 40 | 0 | 0 | 40 | 0 | 0 | 0 |
 | platform_blueprint | 53 | 53 | 0 | 53 | 0 | 0 | 0 | 0 |
 | platform_component | 265 | 265 | 0 | 265 | 0 | 0 | 0 | 0 |
 | platform_component_die | 265 | 265 | 0 | 265 | 0 | 0 | 0 | 0 |
@@ -32,6 +34,7 @@
 | shared_gun_intermediate | 6 | 6 | 0 | 6 | 0 | 0 | 0 | 0 |
 | spent_cartridge_case | 23 | 23 | 0 | 23 | 0 | 0 | 0 | 0 |
 | static_industrial_item | 5 | 5 | 0 | 3 | 0 | 0 | 2 | 0 |
+| tooling_template_blank | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
 | visible_projectile_intermediate | 5 | 5 | 0 | 5 | 0 | 0 | 0 | 0 |
 
 ## 仍缺失的精确视觉身份
@@ -52,13 +55,10 @@
 | `tacz_extra:item/base_barrel` |
 | `tacz_extra:item/base_barrel_blank` |
 | `tacz_extra:item/base_billet` |
-| `tacz_extra:item/base_blueprint` |
 | `tacz_extra:item/base_bolt` |
 | `tacz_extra:item/base_bolt_blank` |
-| `tacz_extra:item/base_cartridge_gauge` |
 | `tacz_extra:item/base_case_blank` |
 | `tacz_extra:item/base_case_die` |
-| `tacz_extra:item/base_die_blank` |
 | `tacz_extra:item/base_frame` |
 | `tacz_extra:item/base_furniture_blank` |
 | `tacz_extra:item/base_furniture_kit` |

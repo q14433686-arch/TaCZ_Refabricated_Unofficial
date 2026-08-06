@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_ai_awp",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_ai_awp"
+      "IndustryDisplayName": "item.tacz.gun_template.default_ai_awp",
+      "IndustryBlueprintTier": "precision",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "bolt_action",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [

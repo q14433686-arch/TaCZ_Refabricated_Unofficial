@@ -12,8 +12,11 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_m870",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_m870",
-        "IndustryBlueprintTier": "legacy"
+        "IndustryDisplayName": "item.tacz.gun_dossier.default_m870",
+        "IndustryBlueprintTier": "legacy",
+        "IndustryBlueprintRole": "master",
+        "IndustryActionProfile": "pump_action",
+        "IndustryToolingScope": "critical_gauge"
       }
     }
   },

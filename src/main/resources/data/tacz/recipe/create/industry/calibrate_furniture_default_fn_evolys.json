@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_fn_evolys",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_fn_evolys"
+      "IndustryDisplayName": "item.tacz.gun_template.default_fn_evolys",
+      "IndustryBlueprintTier": "precision",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "belt_fed",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [

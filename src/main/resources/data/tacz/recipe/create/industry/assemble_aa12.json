@@ -25,7 +25,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_aa12",
         "IndustryPartKind": "incomplete_aa12",
-        "IndustryDisplayName": "item.tacz.gun_component.incomplete_aa12"
+        "IndustryDisplayName": "item.tacz.gun_component.incomplete_aa12",
+        "IndustryActionProfile": "gas_operated_shotgun"
       }
     }
   },
@@ -39,30 +40,13 @@
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_aa12",
         "IndustryAssemblyRecipe": "tacz:gun/aa12",
-        "IndustryAssemblyTier": "advanced"
+        "IndustryAssemblyTier": "advanced",
+        "IndustryAssemblyActionProfile": "gas_operated_shotgun",
+        "IndustryAssemblyToolingScope": "final_acceptance"
       }
     }
   },
   "sequence": [
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:gun_blueprint"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_aa12",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_aa12"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
     {
       "type": "create:pressing",
       "ingredient": "$ingredient",
@@ -187,6 +171,63 @@
       "results": [
         "$result"
       ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "action_jig",
+          "IndustryDisplayName": "item.tacz.press_die.action_jig.gas_operated_shotgun",
+          "IndustryActionProfile": "gas_operated_shotgun",
+          "DieTargetKind": "gas_operated_shotgun"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_aa12",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.acceptance_gauge.default_aa12",
+          "IndustryActionProfile": "gas_operated_shotgun",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "gas_operated_shotgun"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
     },
     {
       "type": "create:pressing",

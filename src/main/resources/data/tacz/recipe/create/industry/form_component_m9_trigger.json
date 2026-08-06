@@ -38,7 +38,8 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "m9",
           "IndustryPartKind": "trigger",
-          "IndustryDisplayName": "item.tacz.gun_component.m9_trigger"
+          "IndustryDisplayName": "item.tacz.gun_component.m9_trigger",
+          "IndustryActionProfile": "locked_breech_pistol"
         }
       }
     }

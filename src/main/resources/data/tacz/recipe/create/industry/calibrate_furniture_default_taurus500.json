@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_taurus500",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_taurus500"
+      "IndustryDisplayName": "item.tacz.gun_template.default_taurus500",
+      "IndustryBlueprintTier": "legacy",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "revolver",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
   "results": [

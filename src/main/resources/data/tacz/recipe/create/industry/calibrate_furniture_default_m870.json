@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_m870",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m870"
+      "IndustryDisplayName": "item.tacz.gun_template.default_m870",
+      "IndustryBlueprintTier": "legacy",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "pump_action",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
   "results": [

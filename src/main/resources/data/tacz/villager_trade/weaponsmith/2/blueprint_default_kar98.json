@@ -12,8 +12,11 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_kar98",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_kar98",
-        "IndustryBlueprintTier": "legacy"
+        "IndustryDisplayName": "item.tacz.gun_dossier.default_kar98",
+        "IndustryBlueprintTier": "legacy",
+        "IndustryBlueprintRole": "master",
+        "IndustryActionProfile": "bolt_action",
+        "IndustryToolingScope": "critical_gauge"
       }
     }
   },

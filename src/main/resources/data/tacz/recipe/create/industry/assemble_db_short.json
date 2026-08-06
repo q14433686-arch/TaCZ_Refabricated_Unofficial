@@ -25,7 +25,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_db_short",
         "IndustryPartKind": "incomplete_db_short",
-        "IndustryDisplayName": "item.tacz.gun_component.incomplete_db_short"
+        "IndustryDisplayName": "item.tacz.gun_component.incomplete_db_short",
+        "IndustryActionProfile": "break_action"
       }
     }
   },
@@ -39,30 +40,13 @@
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_db_short",
         "IndustryAssemblyRecipe": "tacz:gun/db_short",
-        "IndustryAssemblyTier": "legacy"
+        "IndustryAssemblyTier": "legacy",
+        "IndustryAssemblyActionProfile": "break_action",
+        "IndustryAssemblyToolingScope": "family_jig"
       }
     }
   },
   "sequence": [
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:gun_blueprint"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_db_short",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_db_short"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
     {
       "type": "create:pressing",
       "ingredient": "$ingredient",
@@ -187,6 +171,34 @@
       "results": [
         "$result"
       ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "action_jig",
+          "IndustryDisplayName": "item.tacz.press_die.action_jig.break_action",
+          "IndustryActionProfile": "break_action",
+          "DieTargetKind": "break_action"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
     },
     {
       "type": "create:pressing",

@@ -25,7 +25,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_rpk",
         "IndustryPartKind": "incomplete_rpk",
-        "IndustryDisplayName": "item.tacz.gun_component.incomplete_rpk"
+        "IndustryDisplayName": "item.tacz.gun_component.incomplete_rpk",
+        "IndustryActionProfile": "gas_rifle"
       }
     }
   },
@@ -39,30 +40,13 @@
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "default_rpk",
         "IndustryAssemblyRecipe": "tacz:gun/rpk",
-        "IndustryAssemblyTier": "advanced"
+        "IndustryAssemblyTier": "advanced",
+        "IndustryAssemblyActionProfile": "gas_rifle",
+        "IndustryAssemblyToolingScope": "final_acceptance"
       }
     }
   },
   "sequence": [
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:gun_blueprint"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_rpk",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_rpk"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
     {
       "type": "create:pressing",
       "ingredient": "$ingredient",
@@ -187,6 +171,63 @@
       "results": [
         "$result"
       ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "action_jig",
+          "IndustryDisplayName": "item.tacz.press_die.action_jig.gas_rifle",
+          "IndustryActionProfile": "gas_rifle",
+          "DieTargetKind": "gas_rifle"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_rpk",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.acceptance_gauge.default_rpk",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "gas_rifle"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
     },
     {
       "type": "create:pressing",

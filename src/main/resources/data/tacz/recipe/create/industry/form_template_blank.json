@@ -1,0 +1,30 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    "minecraft:paper",
+    "minecraft:paper",
+    "minecraft:black_dye",
+    "create:brass_sheet"
+  ],
+  "results": [
+    {
+      "id": "tacz:gun_blueprint",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "template_blank",
+          "IndustryDisplayName": "item.tacz.gun_blueprint.blank",
+          "IndustryBlueprintRole": "blank"
+        }
+      }
+    }
+  ]
+}

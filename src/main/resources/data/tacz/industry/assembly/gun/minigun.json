@@ -1,31 +1,39 @@
 {
   "platform": "default_minigun",
   "manufacturing_tier": "precision",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_minigun",
+  "action_profile": "rotary",
+  "tooling_scope": "final_acceptance",
+  "blueprint_display_name": "item.tacz.gun_template.default_minigun",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_minigun",
   "terminal_process": "tacz:create/industry/assemble_minigun",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "rotary_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_minigun_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "rotary_bolt_cluster",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_minigun_bolt"
     },
     {
-      "structural": "barrel",
+      "structural": "barrel_cluster",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_minigun_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "drive_trigger_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_minigun_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "drive_buffer_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_minigun_recoil"
     }

@@ -28,7 +28,11 @@
     "nbt": {
       "IndustryPlatform": "default_hk_g3",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_hk_g3"
+      "IndustryDisplayName": "item.tacz.gun_template.default_hk_g3",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "roller_delayed_rifle",
+      "IndustryToolingScope": "platform_tooling"
     }
   },
   "results": [
@@ -39,7 +43,9 @@
           "IndustryPlatform": "default_hk_g3",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_hk_g3_barrel",
-          "DieTargetKind": "barrel"
+          "DieTargetKind": "barrel",
+          "IndustryActionProfile": "roller_delayed_rifle",
+          "IndustryToolingScope": "platform_tooling"
         }
       }
     }

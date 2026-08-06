@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_rhino357",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_rhino357"
+      "IndustryDisplayName": "item.tacz.gun_template.default_rhino357",
+      "IndustryBlueprintTier": "legacy",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "revolver",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
   "results": [

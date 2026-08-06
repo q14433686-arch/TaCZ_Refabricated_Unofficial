@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_uzi",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_uzi"
+      "IndustryDisplayName": "item.tacz.gun_template.default_uzi",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "blowback_smg",
+      "IndustryToolingScope": "platform_tooling"
     }
   },
   "results": [

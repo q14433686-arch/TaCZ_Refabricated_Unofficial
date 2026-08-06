@@ -1,31 +1,39 @@
 {
   "platform": "default_scar_h",
   "manufacturing_tier": "advanced",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_scar_h",
+  "action_profile": "gas_rifle",
+  "tooling_scope": "final_acceptance",
+  "blueprint_display_name": "item.tacz.gun_template.default_scar_h",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_scar_h",
   "terminal_process": "tacz:create/industry/assemble_scar_h",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "gas_system_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_scar_h_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "bolt_carrier_group",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_scar_h_bolt"
     },
     {
-      "structural": "barrel",
+      "structural": "gas_regulated_barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_scar_h_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "fire_control_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_scar_h_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "return_buffer_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_scar_h_recoil"
     }

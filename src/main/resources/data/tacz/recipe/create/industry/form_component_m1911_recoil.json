@@ -38,7 +38,8 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "m1911",
           "IndustryPartKind": "recoil",
-          "IndustryDisplayName": "item.tacz.gun_component.m1911_recoil"
+          "IndustryDisplayName": "item.tacz.gun_component.m1911_recoil",
+          "IndustryActionProfile": "locked_breech_pistol"
         }
       }
     }

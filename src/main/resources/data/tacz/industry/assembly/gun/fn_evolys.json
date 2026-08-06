@@ -1,31 +1,39 @@
 {
   "platform": "default_fn_evolys",
   "manufacturing_tier": "precision",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_fn_evolys",
+  "action_profile": "belt_fed",
+  "tooling_scope": "final_acceptance",
+  "blueprint_display_name": "item.tacz.gun_template.default_fn_evolys",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_fn_evolys",
   "terminal_process": "tacz:create/industry/assemble_fn_evolys",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "belt_fed_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_fn_evolys_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "feed_tray_and_bolt_group",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_fn_evolys_bolt"
     },
     {
-      "structural": "barrel",
+      "structural": "quick_change_barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_fn_evolys_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "feed_trigger_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_fn_evolys_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "buffer_and_recoil_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_fn_evolys_recoil"
     }

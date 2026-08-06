@@ -66,18 +66,51 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
             return;
         }
         String partKind = getPartKind(stack);
-        if ("blueprint".equals(partKind)) {
-            adder.accept(Component.translatable("tooltip.tacz.gun_smith_table.non_consumed")
-                    .withStyle(style -> style.withColor(0x55FFFF)));
+        if ("blueprint".equals(partKind) || "template_blank".equals(partKind)) {
+            String role = getBlueprintRole(stack);
+            if ("template_blank".equals(partKind) || "blank".equals(role)) {
+                adder.accept(Component.translatable("tooltip.tacz.blueprint.role.blank")
+                        .withStyle(style -> style.withColor(0xAAAAAA)));
+            } else {
+                adder.accept(Component.translatable("tooltip.tacz.gun_smith_table.non_consumed")
+                        .withStyle(style -> style.withColor(0x55FFFF)));
+                String roleKey = role.isBlank() ? "legacy" : role;
+                adder.accept(Component.translatable("tooltip.tacz.blueprint.role." + roleKey)
+                        .withStyle(style -> style.withColor("master".equals(role) ? 0xD4A85A : 0x8FD6C6)));
+            }
             String tier = getBlueprintTier(stack);
             if (!tier.isBlank()) {
                 adder.accept(Component.translatable("tooltip.tacz.blueprint.tier." + tier)
                         .withStyle(style -> style.withColor(blueprintTierColor(tier))));
             }
+            String actionProfile = getActionProfile(stack);
+            if (!actionProfile.isBlank()) {
+                adder.accept(Component.translatable("tooltip.tacz.industry.action_profile",
+                                Component.translatable("tooltip.tacz.industry.action_profile." + actionProfile))
+                        .withStyle(style -> style.withColor(0x8AA7B7)));
+            }
+            String toolingScope = getToolingScope(stack);
+            if (!toolingScope.isBlank()) {
+                adder.accept(Component.translatable("tooltip.tacz.industry.tooling_scope",
+                                Component.translatable("tooltip.tacz.industry.tooling_scope." + toolingScope))
+                        .withStyle(style -> style.withColor(0x8AA7B7)));
+            }
         }
         if (partKind.endsWith("_die")) {
             adder.accept(Component.translatable("tooltip.tacz.industry.reusable_die")
                     .withStyle(style -> style.withColor(0x55FFFF)));
+        }
+        if ("action_jig".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.action_jig")
+                    .withStyle(style -> style.withColor(0x55FFFF)));
+        }
+        if ("critical_fit_gauge".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.critical_gauge")
+                    .withStyle(style -> style.withColor(0x55FFFF)));
+        }
+        if ("acceptance_gauge".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.acceptance_gauge")
+                    .withStyle(style -> style.withColor(0xD4A85A)));
         }
         if ("cartridge_gauge".equals(partKind)) {
             adder.accept(Component.translatable("tooltip.tacz.industry.cartridge_gauge")

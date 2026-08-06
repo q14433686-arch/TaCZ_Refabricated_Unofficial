@@ -1,31 +1,39 @@
 {
   "platform": "default_taurus500",
   "manufacturing_tier": "legacy",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_taurus500",
+  "action_profile": "revolver",
+  "tooling_scope": "critical_gauge",
+  "blueprint_display_name": "item.tacz.gun_template.default_taurus500",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_taurus500",
   "terminal_process": "tacz:create/industry/assemble_taurus500",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "revolver_frame",
+      "blank_class": "receiver",
       "kind": "frame",
       "display_name": "item.tacz.gun_component.default_taurus500_frame"
     },
     {
-      "structural": "bolt",
+      "structural": "cylinder_and_crane_assembly",
+      "blank_class": "bolt",
       "kind": "slide",
       "display_name": "item.tacz.gun_component.default_taurus500_slide"
     },
     {
-      "structural": "barrel",
+      "structural": "barrel_and_forcing_cone",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_taurus500_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "timing_lockwork",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_taurus500_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "grip_frame_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_taurus500_recoil"
     }

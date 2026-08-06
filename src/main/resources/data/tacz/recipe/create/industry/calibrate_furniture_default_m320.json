@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_m320",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m320"
+      "IndustryDisplayName": "item.tacz.gun_template.default_m320",
+      "IndustryBlueprintTier": "advanced",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "launcher",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [

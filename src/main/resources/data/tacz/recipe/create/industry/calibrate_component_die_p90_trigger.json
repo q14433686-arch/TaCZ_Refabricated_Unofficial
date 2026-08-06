@@ -28,7 +28,11 @@
     "nbt": {
       "IndustryPlatform": "p90",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.p90"
+      "IndustryDisplayName": "item.tacz.gun_template.p90",
+      "IndustryBlueprintTier": "advanced",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "bullpup_rifle",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [
@@ -39,7 +43,9 @@
           "IndustryPlatform": "p90",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_p90_trigger",
-          "DieTargetKind": "trigger"
+          "DieTargetKind": "trigger",
+          "IndustryActionProfile": "bullpup_rifle",
+          "IndustryToolingScope": "final_acceptance"
         }
       }
     }

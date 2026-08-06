@@ -1,31 +1,39 @@
 {
   "platform": "m9",
   "manufacturing_tier": "service",
-  "blueprint_display_name": "item.tacz.gun_blueprint.m9",
+  "action_profile": "locked_breech_pistol",
+  "tooling_scope": "critical_gauge",
+  "blueprint_display_name": "item.tacz.gun_template.m9",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.m9",
   "terminal_process": "tacz:create/industry/assemble_m9a4",
   "components": [
     {
       "structural": "receiver",
+      "blank_class": "receiver",
       "kind": "frame",
       "display_name": "item.tacz.gun_component.m9_frame"
     },
     {
       "structural": "bolt",
+      "blank_class": "bolt",
       "kind": "slide",
       "display_name": "item.tacz.gun_component.m9_slide"
     },
     {
       "structural": "barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.m9_barrel"
     },
     {
       "structural": "trigger",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.m9_trigger"
     },
     {
       "structural": "recoil",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.m9_recoil"
     }

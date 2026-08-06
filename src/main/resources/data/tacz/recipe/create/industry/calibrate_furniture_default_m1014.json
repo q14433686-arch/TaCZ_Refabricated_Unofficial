@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_m1014",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m1014"
+      "IndustryDisplayName": "item.tacz.gun_template.default_m1014",
+      "IndustryBlueprintTier": "advanced",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "gas_operated_shotgun",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [

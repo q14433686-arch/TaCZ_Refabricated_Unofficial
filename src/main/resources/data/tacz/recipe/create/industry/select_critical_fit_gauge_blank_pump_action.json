@@ -1,0 +1,51 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "machining",
+      "IndustryPartKind": "die_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.generic"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "action_jig",
+      "IndustryDisplayName": "item.tacz.press_die.action_jig.pump_action",
+      "IndustryActionProfile": "pump_action",
+      "DieTargetKind": "pump_action"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "critical_fit_gauge_blank",
+          "IndustryDisplayName": "item.tacz.press_die.critical_fit_gauge_blank.pump_action",
+          "IndustryActionProfile": "pump_action",
+          "IndustryToolingScope": "critical_gauge",
+          "DieTargetKind": "pump_action"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

@@ -1,82 +1,930 @@
 {
-  "base_blueprint_ingredients": [
+  "template_blank_ingredients": [
     "minecraft:paper",
     "minecraft:paper",
+    "minecraft:black_dye",
     "create:brass_sheet"
   ],
-  "reserved_blueprint_seeds": [
-    "minecraft:redstone",
-    "minecraft:quartz",
-    "minecraft:lapis_lazuli",
-    "minecraft:gold_nugget",
-    "minecraft:iron_nugget",
-    "minecraft:amethyst_shard",
-    "minecraft:flint",
-    "minecraft:glowstone_dust",
-    "minecraft:blaze_powder"
-  ],
-  "blueprint_seed_items": [
-    "minecraft:apple",
-    "minecraft:carrot",
-    "minecraft:potato",
-    "minecraft:beetroot",
-    "minecraft:melon_slice",
-    "minecraft:sweet_berries",
-    "minecraft:glow_berries",
-    "minecraft:chorus_fruit",
-    "minecraft:cocoa_beans",
-    "minecraft:bone",
-    "minecraft:feather",
-    "minecraft:leather",
-    "minecraft:slime_ball",
-    "minecraft:magma_cream",
-    "minecraft:ender_pearl",
-    "minecraft:ghast_tear",
-    "minecraft:prismarine_shard",
-    "minecraft:prismarine_crystals",
-    "minecraft:nautilus_shell",
-    "minecraft:heart_of_the_sea",
-    "minecraft:echo_shard",
-    "minecraft:disc_fragment_5",
-    "minecraft:nether_star",
-    "minecraft:fire_charge",
-    "minecraft:charcoal",
-    "minecraft:clay_ball",
-    "minecraft:brick",
-    "minecraft:nether_brick",
-    "minecraft:obsidian",
-    "minecraft:crying_obsidian",
-    "minecraft:calcite",
-    "minecraft:dripstone_block",
-    "minecraft:sculk",
-    "minecraft:sculk_catalyst",
-    "minecraft:sculk_shrieker",
-    "minecraft:sculk_sensor",
-    "minecraft:blue_dye",
-    "minecraft:cyan_dye",
-    "minecraft:green_dye",
-    "minecraft:lime_dye",
-    "minecraft:yellow_dye",
-    "minecraft:orange_dye",
-    "minecraft:red_dye",
-    "minecraft:pink_dye",
-    "minecraft:purple_dye",
-    "minecraft:magenta_dye",
-    "minecraft:white_dye",
-    "minecraft:black_dye",
-    "minecraft:copper_ingot",
-    "minecraft:raw_copper",
-    "minecraft:raw_gold",
-    "minecraft:raw_iron",
-    "minecraft:diamond",
-    "minecraft:emerald",
-    "minecraft:netherite_scrap",
-    "minecraft:phantom_membrane",
-    "minecraft:rabbit_foot",
-    "minecraft:turtle_scute",
-    "minecraft:shulker_shell",
-    "minecraft:blaze_rod"
-  ],
+  "process_profiles": {
+    "break_action": {
+      "default_tooling_scope": "family_jig",
+      "parts": [
+        {
+          "structural": "break_action_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Break-Action Receiver",
+          "name_zh": "{gun} 折管机匣"
+        },
+        {
+          "structural": "hinge_and_locking_group",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Hinge and Locking Group",
+          "name_zh": "{gun} 铰链闭锁组"
+        },
+        {
+          "structural": "paired_barrel_set",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Paired Barrel Set",
+          "name_zh": "{gun} 双枪管组"
+        },
+        {
+          "structural": "double_trigger_lockwork",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Double-Trigger Lockwork",
+          "name_zh": "{gun} 双扳机击发组"
+        },
+        {
+          "structural": "fore_end_and_ejector_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Fore-end and Ejector Assembly",
+          "name_zh": "{gun} 护木与退壳组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet"
+        },
+        "pattern": [
+          "SBS",
+          " S "
+        ]
+      },
+      "label_en": "Break-Action",
+      "label_zh": "折管式"
+    },
+    "lever_action": {
+      "default_tooling_scope": "family_jig",
+      "parts": [
+        {
+          "structural": "lever_action_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Lever-Action Receiver",
+          "name_zh": "{gun} 杠杆式机匣"
+        },
+        {
+          "structural": "lever_and_locking_block",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Lever and Locking Block",
+          "name_zh": "{gun} 杠杆闭锁组"
+        },
+        {
+          "structural": "chambered_barrel",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Chambered Barrel",
+          "name_zh": "{gun} 已校准枪膛枪管"
+        },
+        {
+          "structural": "sear_and_trigger_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Sear and Trigger Group",
+          "name_zh": "{gun} 阻铁击发组"
+        },
+        {
+          "structural": "tubular_magazine_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Tubular Magazine Assembly",
+          "name_zh": "{gun} 管式弹仓组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet"
+        },
+        "pattern": [
+          "SS ",
+          " BS"
+        ]
+      },
+      "label_en": "Lever-Action",
+      "label_zh": "杠杆式"
+    },
+    "bolt_action": {
+      "default_tooling_scope": "critical_gauge",
+      "parts": [
+        {
+          "structural": "bolt_action_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Bolt-Action Receiver",
+          "name_zh": "{gun} 栓动机匣"
+        },
+        {
+          "structural": "bolt_and_extractor_group",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Bolt and Extractor Group",
+          "name_zh": "{gun} 枪机与抽壳组"
+        },
+        {
+          "structural": "headspaced_barrel",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Headspaced Barrel",
+          "name_zh": "{gun} 已校准枪膛枪管"
+        },
+        {
+          "structural": "sear_and_trigger_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Sear and Trigger Group",
+          "name_zh": "{gun} 阻铁击发组"
+        },
+        {
+          "structural": "stock_bedding_recoil_lug",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Stock Bedding / Recoil Lug",
+          "name_zh": "{gun} 枪托座与后坐凸笋"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot"
+        },
+        "pattern": [
+          "SIS",
+          " B "
+        ]
+      },
+      "label_en": "Bolt-Action",
+      "label_zh": "栓动式"
+    },
+    "revolver": {
+      "default_tooling_scope": "critical_gauge",
+      "parts": [
+        {
+          "structural": "revolver_frame",
+          "blank_class": "receiver",
+          "kind": "frame",
+          "name_en": "{gun} Revolver Frame",
+          "name_zh": "{gun} 转轮枪身"
+        },
+        {
+          "structural": "cylinder_and_crane_assembly",
+          "blank_class": "bolt",
+          "kind": "slide",
+          "name_en": "{gun} Cylinder and Crane Assembly",
+          "name_zh": "{gun} 转轮与摆臂组件"
+        },
+        {
+          "structural": "barrel_and_forcing_cone",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Barrel and Forcing Cone",
+          "name_zh": "{gun} 枪管与过渡锥组件"
+        },
+        {
+          "structural": "timing_lockwork",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Timing Lockwork",
+          "name_zh": "{gun} 转轮定时击发组"
+        },
+        {
+          "structural": "grip_frame_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Grip Frame Assembly",
+          "name_zh": "{gun} 握把框架组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot"
+        },
+        "pattern": [
+          " B ",
+          "SIS",
+          " B "
+        ]
+      },
+      "label_en": "Revolver",
+      "label_zh": "转轮式"
+    },
+    "pump_action": {
+      "default_tooling_scope": "critical_gauge",
+      "parts": [
+        {
+          "structural": "pump_action_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Pump-Action Receiver",
+          "name_zh": "{gun} 泵动机匣"
+        },
+        {
+          "structural": "slide_bolt_group",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Slide Bolt Group",
+          "name_zh": "{gun} 滑套枪机组"
+        },
+        {
+          "structural": "shotgun_barrel_assembly",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Shotgun Barrel Assembly",
+          "name_zh": "{gun} 霰弹枪管组件"
+        },
+        {
+          "structural": "pump_linkage_and_fore_end",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Pump Linkage and Fore-end",
+          "name_zh": "{gun} 泵动连杆与护木"
+        },
+        {
+          "structural": "tube_magazine_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Tube Magazine Assembly",
+          "name_zh": "{gun} 管式弹仓组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot"
+        },
+        "pattern": [
+          "S B",
+          "ISI"
+        ]
+      },
+      "label_en": "Pump-Action",
+      "label_zh": "泵动式"
+    },
+    "locked_breech_pistol": {
+      "default_tooling_scope": "critical_gauge",
+      "parts": [
+        {
+          "structural": "locked_breech_frame",
+          "blank_class": "receiver",
+          "kind": "frame",
+          "name_en": "{gun} Locked-Breech Frame",
+          "name_zh": "{gun} 闭锁枪身"
+        },
+        {
+          "structural": "slide_and_locking_lug_group",
+          "blank_class": "bolt",
+          "kind": "slide",
+          "name_en": "{gun} Slide and Locking Lug Group",
+          "name_zh": "{gun} 套筒与闭锁凸笋组"
+        },
+        {
+          "structural": "chambered_barrel",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Chambered Barrel",
+          "name_zh": "{gun} 已校准枪膛枪管"
+        },
+        {
+          "structural": "fire_control_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Fire-Control Group",
+          "name_zh": "{gun} 击发组"
+        },
+        {
+          "structural": "recoil_spring_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Recoil Spring Assembly",
+          "name_zh": "{gun} 复进簧组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot"
+        },
+        "pattern": [
+          "BSB",
+          " I "
+        ]
+      },
+      "label_en": "Locked-Breech Pistol",
+      "label_zh": "闭锁手枪"
+    },
+    "blowback_smg": {
+      "default_tooling_scope": "platform_tooling",
+      "parts": [
+        {
+          "structural": "blowback_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Blowback Receiver",
+          "name_zh": "{gun} 自由枪机机匣"
+        },
+        {
+          "structural": "open_bolt_group",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Open-Bolt Group",
+          "name_zh": "{gun} 开放式枪机组"
+        },
+        {
+          "structural": "barrel",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Barrel",
+          "name_zh": "{gun} 枪管"
+        },
+        {
+          "structural": "fire_control_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Fire-Control Group",
+          "name_zh": "{gun} 击发组"
+        },
+        {
+          "structural": "return_spring_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Return Spring Assembly",
+          "name_zh": "{gun} 复进簧组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot"
+        },
+        "pattern": [
+          "S S",
+          "BIB"
+        ]
+      },
+      "label_en": "Blowback SMG",
+      "label_zh": "自由枪机冲锋枪"
+    },
+    "roller_delayed_rifle": {
+      "default_tooling_scope": "platform_tooling",
+      "parts": [
+        {
+          "structural": "roller_delayed_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Roller-Delayed Receiver",
+          "name_zh": "{gun} 滚轮延迟机匣"
+        },
+        {
+          "structural": "roller_lock_bolt_group",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Roller-Lock Bolt Group",
+          "name_zh": "{gun} 滚轮闭锁枪机组"
+        },
+        {
+          "structural": "barrel",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Barrel",
+          "name_zh": "{gun} 枪管"
+        },
+        {
+          "structural": "fire_control_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Fire-Control Group",
+          "name_zh": "{gun} 击发组"
+        },
+        {
+          "structural": "return_buffer_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Return / Buffer Assembly",
+          "name_zh": "{gun} 复进缓冲组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot",
+          "R": "minecraft:redstone"
+        },
+        "pattern": [
+          "SRS",
+          "BIB"
+        ]
+      },
+      "label_en": "Roller-Delayed",
+      "label_zh": "滚轮延迟式"
+    },
+    "gas_rifle": {
+      "default_tooling_scope": "platform_tooling",
+      "parts": [
+        {
+          "structural": "gas_system_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Gas-System Receiver",
+          "name_zh": "{gun} 导气式机匣"
+        },
+        {
+          "structural": "bolt_carrier_group",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Bolt Carrier Group",
+          "name_zh": "{gun} 枪机框组"
+        },
+        {
+          "structural": "gas_regulated_barrel",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Gas-Regulated Barrel",
+          "name_zh": "{gun} 导气调节枪管"
+        },
+        {
+          "structural": "fire_control_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Fire-Control Group",
+          "name_zh": "{gun} 击发组"
+        },
+        {
+          "structural": "return_buffer_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Return / Buffer Assembly",
+          "name_zh": "{gun} 复进缓冲组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot",
+          "R": "minecraft:redstone"
+        },
+        "pattern": [
+          "SIS",
+          " R "
+        ]
+      },
+      "label_en": "Gas-Operated Rifle",
+      "label_zh": "导气式步枪"
+    },
+    "bullpup_rifle": {
+      "default_tooling_scope": "platform_tooling",
+      "parts": [
+        {
+          "structural": "bullpup_receiver_chassis",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Bullpup Receiver Chassis",
+          "name_zh": "{gun} 无托机匣底盘"
+        },
+        {
+          "structural": "rearward_bolt_carrier",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Rearward Bolt Carrier",
+          "name_zh": "{gun} 后置枪机框组"
+        },
+        {
+          "structural": "barrel",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Barrel",
+          "name_zh": "{gun} 枪管"
+        },
+        {
+          "structural": "bullpup_linkage_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Bullpup Linkage Group",
+          "name_zh": "{gun} 无托传动击发组"
+        },
+        {
+          "structural": "bullpup_return_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Bullpup Return Assembly",
+          "name_zh": "{gun} 无托复进组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot",
+          "R": "minecraft:redstone"
+        },
+        "pattern": [
+          "BIB",
+          "SRS"
+        ]
+      },
+      "label_en": "Bullpup Rifle",
+      "label_zh": "无托步枪"
+    },
+    "belt_fed": {
+      "default_tooling_scope": "platform_tooling",
+      "parts": [
+        {
+          "structural": "belt_fed_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Belt-Fed Receiver",
+          "name_zh": "{gun} 弹链供弹机匣"
+        },
+        {
+          "structural": "feed_tray_and_bolt_group",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Feed Tray and Bolt Group",
+          "name_zh": "{gun} 供弹盘与枪机组"
+        },
+        {
+          "structural": "quick_change_barrel",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Quick-Change Barrel",
+          "name_zh": "{gun} 快速更换枪管"
+        },
+        {
+          "structural": "feed_trigger_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Feed / Trigger Group",
+          "name_zh": "{gun} 供弹击发组"
+        },
+        {
+          "structural": "buffer_and_recoil_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Buffer and Recoil Assembly",
+          "name_zh": "{gun} 缓冲复进组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot",
+          "R": "minecraft:redstone"
+        },
+        "pattern": [
+          "SBS",
+          "IRI"
+        ]
+      },
+      "label_en": "Belt-Fed",
+      "label_zh": "弹链供弹"
+    },
+    "launcher": {
+      "default_tooling_scope": "platform_tooling",
+      "parts": [
+        {
+          "structural": "launcher_tube_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Launcher Tube / Receiver",
+          "name_zh": "{gun} 发射管与机匣"
+        },
+        {
+          "structural": "breech_and_firing_mechanism",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Breech and Firing Mechanism",
+          "name_zh": "{gun} 后膛与击发机构"
+        },
+        {
+          "structural": "launch_tube_assembly",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Launch Tube Assembly",
+          "name_zh": "{gun} 发射管组件"
+        },
+        {
+          "structural": "launcher_trigger_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Launcher Trigger Group",
+          "name_zh": "{gun} 发射器击发组"
+        },
+        {
+          "structural": "sighting_support_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Sighting / Support Assembly",
+          "name_zh": "{gun} 瞄具与支撑组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot",
+          "R": "minecraft:redstone"
+        },
+        "pattern": [
+          "B R",
+          "SIS"
+        ]
+      },
+      "label_en": "Launcher",
+      "label_zh": "发射器"
+    },
+    "rotary": {
+      "default_tooling_scope": "platform_tooling",
+      "parts": [
+        {
+          "structural": "rotary_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Rotary Receiver",
+          "name_zh": "{gun} 转管机匣"
+        },
+        {
+          "structural": "rotary_bolt_cluster",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Rotary Bolt Cluster",
+          "name_zh": "{gun} 转管枪机簇"
+        },
+        {
+          "structural": "barrel_cluster",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Barrel Cluster",
+          "name_zh": "{gun} 枪管簇"
+        },
+        {
+          "structural": "drive_trigger_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Drive / Trigger Group",
+          "name_zh": "{gun} 驱动击发组"
+        },
+        {
+          "structural": "drive_buffer_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Drive Buffer Assembly",
+          "name_zh": "{gun} 驱动缓冲组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot",
+          "R": "minecraft:redstone",
+          "D": "minecraft:diamond"
+        },
+        "pattern": [
+          "SDS",
+          "RIR"
+        ]
+      },
+      "label_en": "Rotary",
+      "label_zh": "转管式"
+    },
+    "gas_operated_shotgun": {
+      "default_tooling_scope": "platform_tooling",
+      "parts": [
+        {
+          "structural": "gas_operated_shotgun_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Gas-Operated Shotgun Receiver",
+          "name_zh": "{gun} 导气霰弹枪机匣"
+        },
+        {
+          "structural": "gas_piston_bolt_group",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Gas Piston Bolt Group",
+          "name_zh": "{gun} 导气活塞枪机组"
+        },
+        {
+          "structural": "shotgun_barrel_assembly",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Shotgun Barrel Assembly",
+          "name_zh": "{gun} 霰弹枪管组件"
+        },
+        {
+          "structural": "shotgun_trigger_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Shotgun Trigger Group",
+          "name_zh": "{gun} 霰弹枪击发组"
+        },
+        {
+          "structural": "return_spring_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Return Spring Assembly",
+          "name_zh": "{gun} 复进簧组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot",
+          "R": "minecraft:redstone"
+        },
+        "pattern": [
+          "IBI",
+          "SRS"
+        ]
+      },
+      "label_en": "Gas-Operated Shotgun",
+      "label_zh": "导气霰弹枪"
+    },
+    "hybrid_shotgun": {
+      "default_tooling_scope": "platform_tooling",
+      "parts": [
+        {
+          "structural": "hybrid_action_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Hybrid-Action Receiver",
+          "name_zh": "{gun} 混合机匣"
+        },
+        {
+          "structural": "dual_mode_bolt_group",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Dual-Mode Bolt Group",
+          "name_zh": "{gun} 双模式枪机组"
+        },
+        {
+          "structural": "shotgun_barrel_assembly",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Shotgun Barrel Assembly",
+          "name_zh": "{gun} 霰弹枪管组件"
+        },
+        {
+          "structural": "hybrid_linkage_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Hybrid Linkage Group",
+          "name_zh": "{gun} 混合传动组件"
+        },
+        {
+          "structural": "tube_magazine_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Tube Magazine Assembly",
+          "name_zh": "{gun} 管式弹仓组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot",
+          "R": "minecraft:redstone"
+        },
+        "pattern": [
+          "SIR",
+          "B S"
+        ]
+      },
+      "label_en": "Hybrid-Action Shotgun",
+      "label_zh": "混合式霰弹枪"
+    },
+    "anti_material_bolt": {
+      "default_tooling_scope": "critical_gauge",
+      "parts": [
+        {
+          "structural": "anti_material_receiver",
+          "blank_class": "receiver",
+          "kind": "receiver",
+          "name_en": "{gun} Anti-Material Receiver",
+          "name_zh": "{gun} 反器材机匣"
+        },
+        {
+          "structural": "heavy_bolt_group",
+          "blank_class": "bolt",
+          "kind": "bolt",
+          "name_en": "{gun} Heavy Bolt Group",
+          "name_zh": "{gun} 重型枪机组"
+        },
+        {
+          "structural": "heavy_chambered_barrel",
+          "blank_class": "barrel",
+          "kind": "barrel",
+          "name_en": "{gun} Heavy Chambered Barrel",
+          "name_zh": "{gun} 重型已校准枪管"
+        },
+        {
+          "structural": "precision_trigger_group",
+          "blank_class": "trigger",
+          "kind": "trigger",
+          "name_en": "{gun} Precision Trigger Group",
+          "name_zh": "{gun} 精密击发组"
+        },
+        {
+          "structural": "recoil_mitigation_assembly",
+          "blank_class": "recoil",
+          "kind": "recoil",
+          "name_en": "{gun} Recoil Mitigation Assembly",
+          "name_zh": "{gun} 后坐缓冲组件"
+        }
+      ],
+      "jig": {
+        "key": {
+          "S": "tacz:high_carbon_steel_plate",
+          "B": "create:brass_sheet",
+          "I": "minecraft:iron_ingot",
+          "D": "minecraft:diamond"
+        },
+        "pattern": [
+          "SDS",
+          "IBI"
+        ]
+      },
+      "label_en": "Anti-Material Bolt Action",
+      "label_zh": "反器材栓动式"
+    }
+  },
+  "action_profile_by_gun_type": {
+    "pistol": "locked_breech_pistol",
+    "smg": "blowback_smg",
+    "rifle": "gas_rifle",
+    "shotgun": "pump_action",
+    "sniper": "bolt_action",
+    "mg": "belt_fed",
+    "rpg": "launcher",
+    "default": "gas_rifle"
+  },
+  "action_profile_overrides": {
+    "aa12": "gas_operated_shotgun",
+    "ai_awp": "bolt_action",
+    "aug": "bullpup_rifle",
+    "db_long": "break_action",
+    "db_short": "break_action",
+    "fn_evolys": "belt_fed",
+    "g36k": "gas_rifle",
+    "hk416d": "gas_rifle",
+    "hk_g3": "roller_delayed_rifle",
+    "kar98": "bolt_action",
+    "m1014": "gas_operated_shotgun",
+    "m107": "anti_material_bolt",
+    "m16a1": "gas_rifle",
+    "m16a4": "gas_rifle",
+    "m249": "belt_fed",
+    "m320": "launcher",
+    "m4a1": "gas_rifle",
+    "m700": "bolt_action",
+    "m870": "pump_action",
+    "m95": "anti_material_bolt",
+    "minigun": "rotary",
+    "mk14": "gas_rifle",
+    "p90": "bullpup_rifle",
+    "qbz_191": "bullpup_rifle",
+    "qbz_95": "bullpup_rifle",
+    "rhino357": "revolver",
+    "rpg7": "launcher",
+    "rpk": "gas_rifle",
+    "scar_h": "gas_rifle",
+    "scar_l": "gas_rifle",
+    "sks_tactical": "gas_rifle",
+    "spas_12": "hybrid_shotgun",
+    "springfield1873": "lever_action",
+    "taurus500": "revolver",
+    "taurus943": "revolver",
+    "type_81": "gas_rifle",
+    "vector45": "blowback_smg",
+    "uzi": "blowback_smg"
+  },
+  "tooling_scope_overrides": {
+    "db_long": "family_jig",
+    "db_short": "family_jig",
+    "springfield1873": "family_jig",
+    "kar98": "critical_gauge",
+    "rhino357": "critical_gauge",
+    "taurus500": "critical_gauge",
+    "taurus943": "critical_gauge",
+    "m870": "critical_gauge",
+    "m1911": "critical_gauge"
+  },
   "materials_by_gun_type": {
     "pistol": [
       {

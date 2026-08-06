@@ -1,31 +1,39 @@
 {
   "platform": "ump",
   "manufacturing_tier": "service",
-  "blueprint_display_name": "item.tacz.gun_blueprint.ump",
+  "action_profile": "blowback_smg",
+  "tooling_scope": "platform_tooling",
+  "blueprint_display_name": "item.tacz.gun_template.ump",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.ump",
   "terminal_process": "tacz:create/industry/assemble_ump45",
   "components": [
     {
       "structural": "receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.ump_receiver"
     },
     {
       "structural": "bolt",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.ump_bolt"
     },
     {
       "structural": "barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.ump_barrel"
     },
     {
       "structural": "trigger",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.ump_trigger"
     },
     {
       "structural": "recoil",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.ump_recoil"
     }

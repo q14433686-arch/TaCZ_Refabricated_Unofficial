@@ -38,7 +38,8 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "ump",
           "IndustryPartKind": "recoil",
-          "IndustryDisplayName": "item.tacz.gun_component.ump_recoil"
+          "IndustryDisplayName": "item.tacz.gun_component.ump_recoil",
+          "IndustryActionProfile": "blowback_smg"
         }
       }
     }

@@ -38,7 +38,8 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "p90",
           "IndustryPartKind": "receiver",
-          "IndustryDisplayName": "item.tacz.gun_component.p90_receiver"
+          "IndustryDisplayName": "item.tacz.gun_component.p90_receiver",
+          "IndustryActionProfile": "bullpup_rifle"
         }
       }
     }

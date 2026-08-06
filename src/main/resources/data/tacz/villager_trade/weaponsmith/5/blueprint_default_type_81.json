@@ -12,8 +12,11 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_type_81",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_type_81",
-        "IndustryBlueprintTier": "service"
+        "IndustryDisplayName": "item.tacz.gun_dossier.default_type_81",
+        "IndustryBlueprintTier": "service",
+        "IndustryBlueprintRole": "master",
+        "IndustryActionProfile": "gas_rifle",
+        "IndustryToolingScope": "platform_tooling"
       }
     }
   },

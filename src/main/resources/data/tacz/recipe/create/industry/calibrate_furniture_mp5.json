@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "mp5",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.mp5"
+      "IndustryDisplayName": "item.tacz.gun_template.mp5",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "roller_delayed_rifle",
+      "IndustryToolingScope": "platform_tooling"
     }
   },
   "results": [

@@ -28,7 +28,11 @@
     "nbt": {
       "IndustryPlatform": "glock",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.glock"
+      "IndustryDisplayName": "item.tacz.gun_template.glock",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
   "results": [
@@ -39,7 +43,9 @@
           "IndustryPlatform": "glock",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_glock_barrel",
-          "DieTargetKind": "barrel"
+          "DieTargetKind": "barrel",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge"
         }
       }
     }

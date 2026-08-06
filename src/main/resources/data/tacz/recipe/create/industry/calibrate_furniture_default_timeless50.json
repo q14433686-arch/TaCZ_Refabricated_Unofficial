@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_timeless50",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_timeless50"
+      "IndustryDisplayName": "item.tacz.gun_template.default_timeless50",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
   "results": [

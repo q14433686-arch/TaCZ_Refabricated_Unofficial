@@ -77,10 +77,20 @@ public class ModCreativeTabs {
                 output.accept(IndustryItemBuilder.pressDie()
                         .platform("ak").kind("component_die")
                         .displayNameKey("item.tacz.press_die.component_ak_receiver")
-                        .dieTargetKind("receiver").build());
+                        .dieTargetKind("receiver").actionProfile("gas_rifle")
+                        .toolingScope("platform_tooling").build());
+                output.accept(IndustryItemBuilder.blueprint()
+                        .platform("tooling").kind("template_blank")
+                        .displayNameKey("item.tacz.gun_blueprint.blank").blueprintRole("blank").build());
+                output.accept(IndustryItemBuilder.pressDie()
+                        .platform("tooling").kind("action_jig")
+                        .displayNameKey("item.tacz.press_die.action_jig.break_action")
+                        .dieTargetKind("break_action").actionProfile("break_action").build());
                 output.accept(IndustryItemBuilder.blueprint()
                         .platform("ak").kind("blueprint")
-                        .displayNameKey("item.tacz.gun_blueprint.ak").build());
+                        .displayNameKey("item.tacz.gun_template.ak").blueprintTier("service")
+                        .blueprintRole("production").actionProfile("gas_rifle")
+                        .toolingScope("platform_tooling").build());
                 output.accept(IndustryItemBuilder.component()
                         .platform("ak").kind("receiver")
                         .displayNameKey("item.tacz.gun_component.ak_receiver").build());

@@ -1,0 +1,32 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:mechanical_crafting",
+  "key": {
+    "S": "tacz:high_carbon_steel_plate",
+    "B": "create:brass_sheet",
+    "I": "minecraft:iron_ingot"
+  },
+  "pattern": [
+    "S B",
+    "ISI"
+  ],
+  "result": {
+    "id": "tacz:press_die",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "tooling",
+        "IndustryPartKind": "action_jig",
+        "IndustryDisplayName": "item.tacz.press_die.action_jig.pump_action",
+        "IndustryActionProfile": "pump_action",
+        "DieTargetKind": "pump_action"
+      }
+    }
+  }
+}

@@ -2,8 +2,8 @@
   "tiers": {
     "legacy": {
       "rank": 1,
-      "label_en": "Field Pattern",
-      "label_zh": "野战图样",
+      "label_en": "Field Master Dossier",
+      "label_zh": "野战原始档案",
       "weaponsmith": {
         "level": 2,
         "emerald_base": 4,
@@ -23,8 +23,8 @@
     },
     "service": {
       "rank": 2,
-      "label_en": "Service Production Schematic",
-      "label_zh": "制式生产图纸",
+      "label_en": "Service Master Dossier",
+      "label_zh": "制式原始档案",
       "weaponsmith": {
         "level": 5,
         "emerald_base": 14,
@@ -45,8 +45,8 @@
     },
     "advanced": {
       "rank": 3,
-      "label_en": "Modern Technical Package",
-      "label_zh": "现代技术包",
+      "label_en": "Modern Master Technical Dossier",
+      "label_zh": "现代原始技术档案",
       "world_cache": {
         "chance": 0.16,
         "loot_tables": [
@@ -59,8 +59,8 @@
     },
     "precision": {
       "rank": 4,
-      "label_en": "Restricted Precision Dossier",
-      "label_zh": "受限精密档案",
+      "label_en": "Restricted Precision Master Dossier",
+      "label_zh": "受限精密原始档案",
       "world_cache": {
         "chance": 0.08,
         "loot_tables": [

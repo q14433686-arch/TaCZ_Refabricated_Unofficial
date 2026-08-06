@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_rpk",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_rpk"
+      "IndustryDisplayName": "item.tacz.gun_template.default_rpk",
+      "IndustryBlueprintTier": "advanced",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [

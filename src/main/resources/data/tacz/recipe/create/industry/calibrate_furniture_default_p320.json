@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_p320",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_p320"
+      "IndustryDisplayName": "item.tacz.gun_template.default_p320",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
   "results": [

@@ -22,7 +22,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"ak\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ak\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"ak\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.ak\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"platform_tooling\"}"
             }
           ]
         },
@@ -32,7 +32,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_b93r\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_b93r\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_b93r\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_b93r\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"locked_breech_pistol\",IndustryToolingScope:\"critical_gauge\"}"
             }
           ]
         },
@@ -42,7 +42,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_cz75\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_cz75\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_cz75\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_cz75\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"locked_breech_pistol\",IndustryToolingScope:\"critical_gauge\"}"
             }
           ]
         },
@@ -52,7 +52,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_deagle\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_deagle\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_deagle\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_deagle\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"locked_breech_pistol\",IndustryToolingScope:\"critical_gauge\"}"
             }
           ]
         },
@@ -62,7 +62,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_deagle_golden\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_deagle_golden\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_deagle_golden\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_deagle_golden\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"locked_breech_pistol\",IndustryToolingScope:\"critical_gauge\"}"
             }
           ]
         },
@@ -72,7 +72,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_hk_g3\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_hk_g3\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_hk_g3\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_hk_g3\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"roller_delayed_rifle\",IndustryToolingScope:\"platform_tooling\"}"
             }
           ]
         },
@@ -82,7 +82,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_lonetrail\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_lonetrail\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_lonetrail\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_lonetrail\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"locked_breech_pistol\",IndustryToolingScope:\"critical_gauge\"}"
             }
           ]
         },
@@ -92,7 +92,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m16a1\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m16a1\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_m16a1\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_m16a1\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"platform_tooling\"}"
             }
           ]
         },
@@ -102,7 +102,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m16a4\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m16a4\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_m16a4\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_m16a4\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"platform_tooling\"}"
             }
           ]
         },
@@ -112,7 +112,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m700\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m700\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_m700\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_m700\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"bolt_action\",IndustryToolingScope:\"critical_gauge\"}"
             }
           ]
         },
@@ -122,7 +122,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_p320\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_p320\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_p320\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_p320\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"locked_breech_pistol\",IndustryToolingScope:\"critical_gauge\"}"
             }
           ]
         },
@@ -132,7 +132,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_sks_tactical\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_sks_tactical\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_sks_tactical\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_sks_tactical\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"platform_tooling\"}"
             }
           ]
         },
@@ -142,7 +142,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_timeless50\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_timeless50\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_timeless50\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_timeless50\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"locked_breech_pistol\",IndustryToolingScope:\"critical_gauge\"}"
             }
           ]
         },
@@ -152,7 +152,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_type_81\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_type_81\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_type_81\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_type_81\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"platform_tooling\"}"
             }
           ]
         },
@@ -162,7 +162,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_uzi\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_uzi\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"default_uzi\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_uzi\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"blowback_smg\",IndustryToolingScope:\"platform_tooling\"}"
             }
           ]
         },
@@ -172,7 +172,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"fal\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.fal\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"fal\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.fal\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"platform_tooling\"}"
             }
           ]
         },
@@ -182,7 +182,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"glock\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.glock\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"glock\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.glock\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"locked_breech_pistol\",IndustryToolingScope:\"critical_gauge\"}"
             }
           ]
         },
@@ -192,7 +192,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"m9\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.m9\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"m9\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.m9\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"locked_breech_pistol\",IndustryToolingScope:\"critical_gauge\"}"
             }
           ]
         },
@@ -202,7 +202,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"mp5\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.mp5\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"mp5\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.mp5\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"roller_delayed_rifle\",IndustryToolingScope:\"platform_tooling\"}"
             }
           ]
         },
@@ -212,7 +212,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"ump\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ump\",IndustryBlueprintTier:\"service\"}"
+              "tag": "{IndustryPlatform:\"ump\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.ump\",IndustryBlueprintTier:\"service\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"blowback_smg\",IndustryToolingScope:\"platform_tooling\"}"
             }
           ]
         }

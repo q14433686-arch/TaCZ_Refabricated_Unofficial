@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_deagle_golden",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_deagle_golden"
+      "IndustryDisplayName": "item.tacz.gun_template.default_deagle_golden",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
   "results": [

@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_spas_12",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_spas_12"
+      "IndustryDisplayName": "item.tacz.gun_template.default_spas_12",
+      "IndustryBlueprintTier": "advanced",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "hybrid_shotgun",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [

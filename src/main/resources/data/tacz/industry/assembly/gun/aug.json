@@ -1,31 +1,39 @@
 {
   "platform": "default_aug",
   "manufacturing_tier": "advanced",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_aug",
+  "action_profile": "bullpup_rifle",
+  "tooling_scope": "final_acceptance",
+  "blueprint_display_name": "item.tacz.gun_template.default_aug",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_aug",
   "terminal_process": "tacz:create/industry/assemble_aug",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "bullpup_receiver_chassis",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_aug_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "rearward_bolt_carrier",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_aug_bolt"
     },
     {
       "structural": "barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_aug_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "bullpup_linkage_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_aug_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "bullpup_return_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_aug_recoil"
     }

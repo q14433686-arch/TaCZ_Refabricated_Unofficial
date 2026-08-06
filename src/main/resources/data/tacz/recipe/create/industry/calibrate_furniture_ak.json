@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "ak",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.ak"
+      "IndustryDisplayName": "item.tacz.gun_template.ak",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "platform_tooling"
     }
   },
   "results": [

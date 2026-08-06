@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_rpg7",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_rpg7"
+      "IndustryDisplayName": "item.tacz.gun_template.default_rpg7",
+      "IndustryBlueprintTier": "precision",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "launcher",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [

@@ -1,31 +1,39 @@
 {
   "platform": "default_springfield1873",
   "manufacturing_tier": "legacy",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_springfield1873",
+  "action_profile": "lever_action",
+  "tooling_scope": "family_jig",
+  "blueprint_display_name": "item.tacz.gun_template.default_springfield1873",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_springfield1873",
   "terminal_process": "tacz:create/industry/assemble_springfield1873",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "lever_action_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_springfield1873_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "lever_and_locking_block",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_springfield1873_bolt"
     },
     {
-      "structural": "barrel",
+      "structural": "chambered_barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_springfield1873_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "sear_and_trigger_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_springfield1873_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "tubular_magazine_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_springfield1873_recoil"
     }

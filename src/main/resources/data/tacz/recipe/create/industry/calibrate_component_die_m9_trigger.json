@@ -28,7 +28,11 @@
     "nbt": {
       "IndustryPlatform": "m9",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.m9"
+      "IndustryDisplayName": "item.tacz.gun_template.m9",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
   "results": [
@@ -39,7 +43,9 @@
           "IndustryPlatform": "m9",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_m9_trigger",
-          "DieTargetKind": "trigger"
+          "DieTargetKind": "trigger",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge"
         }
       }
     }

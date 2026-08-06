@@ -1,31 +1,39 @@
 {
   "platform": "default_m320",
   "manufacturing_tier": "advanced",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_m320",
+  "action_profile": "launcher",
+  "tooling_scope": "final_acceptance",
+  "blueprint_display_name": "item.tacz.gun_template.default_m320",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_m320",
   "terminal_process": "tacz:create/industry/assemble_m320",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "launcher_tube_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_m320_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "breech_and_firing_mechanism",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_m320_bolt"
     },
     {
-      "structural": "barrel",
+      "structural": "launch_tube_assembly",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_m320_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "launcher_trigger_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_m320_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "sighting_support_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_m320_recoil"
     }

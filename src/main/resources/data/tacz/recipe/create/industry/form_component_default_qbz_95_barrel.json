@@ -38,7 +38,8 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_qbz_95",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.default_qbz_95_barrel"
+          "IndustryDisplayName": "item.tacz.gun_component.default_qbz_95_barrel",
+          "IndustryActionProfile": "bullpup_rifle"
         }
       }
     }

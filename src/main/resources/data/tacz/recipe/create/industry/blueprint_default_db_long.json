@@ -7,12 +7,34 @@
       ]
     }
   ],
-  "type": "create:compacting",
-  "ingredients": [
-    "minecraft:paper",
-    "minecraft:paper",
-    "minecraft:sweet_berries"
-  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "template_blank",
+      "IndustryDisplayName": "item.tacz.gun_blueprint.blank",
+      "IndustryBlueprintRole": "blank"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_db_long",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_dossier.default_db_long",
+      "IndustryBlueprintTier": "legacy",
+      "IndustryBlueprintRole": "master",
+      "IndustryActionProfile": "break_action",
+      "IndustryToolingScope": "family_jig"
+    }
+  },
   "results": [
     {
       "id": "tacz:gun_blueprint",
@@ -20,10 +42,14 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_db_long",
           "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_db_long",
-          "IndustryBlueprintTier": "legacy"
+          "IndustryDisplayName": "item.tacz.gun_template.default_db_long",
+          "IndustryBlueprintTier": "legacy",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "break_action",
+          "IndustryToolingScope": "family_jig"
         }
       }
     }
-  ]
+  ],
+  "keep_held_item": true
 }

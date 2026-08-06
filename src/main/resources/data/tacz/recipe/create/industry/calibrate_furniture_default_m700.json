@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_m700",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m700"
+      "IndustryDisplayName": "item.tacz.gun_template.default_m700",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "bolt_action",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
   "results": [

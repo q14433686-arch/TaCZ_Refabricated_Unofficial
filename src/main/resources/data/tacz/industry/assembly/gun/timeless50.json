@@ -1,31 +1,39 @@
 {
   "platform": "default_timeless50",
   "manufacturing_tier": "service",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_timeless50",
+  "action_profile": "locked_breech_pistol",
+  "tooling_scope": "critical_gauge",
+  "blueprint_display_name": "item.tacz.gun_template.default_timeless50",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_timeless50",
   "terminal_process": "tacz:create/industry/assemble_timeless50",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "locked_breech_frame",
+      "blank_class": "receiver",
       "kind": "frame",
       "display_name": "item.tacz.gun_component.default_timeless50_frame"
     },
     {
-      "structural": "bolt",
+      "structural": "slide_and_locking_lug_group",
+      "blank_class": "bolt",
       "kind": "slide",
       "display_name": "item.tacz.gun_component.default_timeless50_slide"
     },
     {
-      "structural": "barrel",
+      "structural": "chambered_barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_timeless50_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "fire_control_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_timeless50_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "recoil_spring_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_timeless50_recoil"
     }

@@ -4,15 +4,10 @@
   "gun_id": "tacz:ak47",
   "fire_mode": "AUTO",
   "blueprint": {
-    "display_name": "item.tacz.gun_blueprint.ak",
-    "ingredients": [
-      "minecraft:paper",
-      "minecraft:paper",
-      "create:brass_sheet",
-      "minecraft:redstone"
-    ],
-    "name_en": "AK Platform Assembly Blueprint",
-    "name_zh": "AK 平台装配模板"
+    "display_name": "item.tacz.gun_template.ak",
+    "name_en": "AK Platform Tooling Template",
+    "name_zh": "AK 平台工装模板",
+    "legacy_display_name": "item.tacz.gun_blueprint.ak"
   },
   "parts": [
     {
@@ -21,7 +16,8 @@
       "name_en": "AK Receiver",
       "name_zh": "AK 机匣",
       "die_name_en": "AK Receiver Die",
-      "die_name_zh": "AK 机匣模具"
+      "die_name_zh": "AK 机匣模具",
+      "blank_class": "receiver"
     },
     {
       "structural": "bolt",
@@ -29,7 +25,8 @@
       "name_en": "AK Bolt Group",
       "name_zh": "AK 枪机组",
       "die_name_en": "AK Bolt Group Die",
-      "die_name_zh": "AK 枪机组模具"
+      "die_name_zh": "AK 枪机组模具",
+      "blank_class": "bolt"
     },
     {
       "structural": "barrel",
@@ -37,7 +34,8 @@
       "name_en": "AK 7.62 Barrel",
       "name_zh": "AK 7.62 枪管",
       "die_name_en": "AK Barrel Die",
-      "die_name_zh": "AK 枪管模具"
+      "die_name_zh": "AK 枪管模具",
+      "blank_class": "barrel"
     },
     {
       "structural": "trigger",
@@ -45,7 +43,8 @@
       "name_en": "AK Fire-Control Group",
       "name_zh": "AK 击发组",
       "die_name_en": "AK Fire-Control Die",
-      "die_name_zh": "AK 击发组模具"
+      "die_name_zh": "AK 击发组模具",
+      "blank_class": "trigger"
     },
     {
       "structural": "recoil",
@@ -53,7 +52,8 @@
       "name_en": "AK Recoil Assembly",
       "name_zh": "AK 复进组件",
       "die_name_en": "AK Recoil Die",
-      "die_name_zh": "AK 复进组件模具"
+      "die_name_zh": "AK 复进组件模具",
+      "blank_class": "recoil"
     }
   ],
   "materials": [
@@ -66,5 +66,7 @@
     "name_en": "Incomplete AK-47 Assembly",
     "name_zh": "未完成的 AK-47 总成"
   },
-  "manufacturing_tier": "service"
+  "manufacturing_tier": "service",
+  "action_profile": "gas_rifle",
+  "tooling_scope": "platform_tooling"
 }

@@ -12,8 +12,11 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_b93r",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_b93r",
-        "IndustryBlueprintTier": "service"
+        "IndustryDisplayName": "item.tacz.gun_dossier.default_b93r",
+        "IndustryBlueprintTier": "service",
+        "IndustryBlueprintRole": "master",
+        "IndustryActionProfile": "locked_breech_pistol",
+        "IndustryToolingScope": "critical_gauge"
       }
     }
   },

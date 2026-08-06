@@ -7,12 +7,34 @@
       ]
     }
   ],
-  "type": "create:compacting",
-  "ingredients": [
-    "minecraft:paper",
-    "minecraft:paper",
-    "minecraft:fire_charge"
-  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "template_blank",
+      "IndustryDisplayName": "item.tacz.gun_blueprint.blank",
+      "IndustryBlueprintRole": "blank"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_m870",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_dossier.default_m870",
+      "IndustryBlueprintTier": "legacy",
+      "IndustryBlueprintRole": "master",
+      "IndustryActionProfile": "pump_action",
+      "IndustryToolingScope": "critical_gauge"
+    }
+  },
   "results": [
     {
       "id": "tacz:gun_blueprint",
@@ -20,10 +42,14 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_m870",
           "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_m870",
-          "IndustryBlueprintTier": "legacy"
+          "IndustryDisplayName": "item.tacz.gun_template.default_m870",
+          "IndustryBlueprintTier": "legacy",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "pump_action",
+          "IndustryToolingScope": "critical_gauge"
         }
       }
     }
-  ]
+  ],
+  "keep_held_item": true
 }

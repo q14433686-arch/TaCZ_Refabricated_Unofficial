@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_m107",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m107"
+      "IndustryDisplayName": "item.tacz.gun_template.default_m107",
+      "IndustryBlueprintTier": "precision",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "anti_material_bolt",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [

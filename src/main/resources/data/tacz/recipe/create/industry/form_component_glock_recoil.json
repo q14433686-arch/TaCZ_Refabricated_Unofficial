@@ -8,7 +8,6 @@
     }
   ],
   "type": "create:deploying",
-  "keep_held_item": true,
   "target": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -39,9 +38,11 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "glock",
           "IndustryPartKind": "recoil",
-          "IndustryDisplayName": "item.tacz.gun_component.glock_recoil"
+          "IndustryDisplayName": "item.tacz.gun_component.glock_recoil",
+          "IndustryActionProfile": "locked_breech_pistol"
         }
       }
     }
-  ]
+  ],
+  "keep_held_item": true
 }

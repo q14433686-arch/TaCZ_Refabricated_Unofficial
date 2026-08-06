@@ -1,0 +1,56 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "acceptance_gauge_blank",
+      "IndustryDisplayName": "item.tacz.press_die.acceptance_gauge_blank.gas_operated_shotgun",
+      "IndustryActionProfile": "gas_operated_shotgun",
+      "IndustryToolingScope": "final_acceptance",
+      "DieTargetKind": "gas_operated_shotgun"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_m1014",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_template.default_m1014",
+      "IndustryBlueprintTier": "advanced",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "gas_operated_shotgun",
+      "IndustryToolingScope": "final_acceptance"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_m1014",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.acceptance_gauge.default_m1014",
+          "IndustryActionProfile": "gas_operated_shotgun",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "gas_operated_shotgun"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

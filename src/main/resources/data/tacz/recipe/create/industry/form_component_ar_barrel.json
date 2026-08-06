@@ -8,7 +8,6 @@
     }
   ],
   "type": "create:deploying",
-  "keep_held_item": true,
   "target": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -39,9 +38,11 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "ar",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.ar_barrel"
+          "IndustryDisplayName": "item.tacz.gun_component.ar_barrel",
+          "IndustryActionProfile": "gas_rifle"
         }
       }
     }
-  ]
+  ],
+  "keep_held_item": true
 }

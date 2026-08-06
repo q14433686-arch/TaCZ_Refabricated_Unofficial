@@ -1,31 +1,39 @@
 {
   "platform": "default_ai_awp",
   "manufacturing_tier": "precision",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_ai_awp",
+  "action_profile": "bolt_action",
+  "tooling_scope": "final_acceptance",
+  "blueprint_display_name": "item.tacz.gun_template.default_ai_awp",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_ai_awp",
   "terminal_process": "tacz:create/industry/assemble_ai_awp",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "bolt_action_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_ai_awp_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "bolt_and_extractor_group",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_ai_awp_bolt"
     },
     {
-      "structural": "barrel",
+      "structural": "headspaced_barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_ai_awp_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "sear_and_trigger_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_ai_awp_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "stock_bedding_recoil_lug",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_ai_awp_recoil"
     }

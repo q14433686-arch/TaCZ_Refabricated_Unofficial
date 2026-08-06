@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_qbz_95",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_qbz_95"
+      "IndustryDisplayName": "item.tacz.gun_template.default_qbz_95",
+      "IndustryBlueprintTier": "advanced",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "bullpup_rifle",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [

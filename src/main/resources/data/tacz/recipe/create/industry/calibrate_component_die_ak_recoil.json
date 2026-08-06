@@ -28,7 +28,11 @@
     "nbt": {
       "IndustryPlatform": "ak",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.ak"
+      "IndustryDisplayName": "item.tacz.gun_template.ak",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "platform_tooling"
     }
   },
   "results": [
@@ -39,7 +43,9 @@
           "IndustryPlatform": "ak",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_ak_recoil",
-          "DieTargetKind": "recoil"
+          "DieTargetKind": "recoil",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "platform_tooling"
         }
       }
     }

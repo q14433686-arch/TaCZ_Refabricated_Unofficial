@@ -1,31 +1,39 @@
 {
   "platform": "default_aa12",
   "manufacturing_tier": "advanced",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_aa12",
+  "action_profile": "gas_operated_shotgun",
+  "tooling_scope": "final_acceptance",
+  "blueprint_display_name": "item.tacz.gun_template.default_aa12",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_aa12",
   "terminal_process": "tacz:create/industry/assemble_aa12",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "gas_operated_shotgun_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_aa12_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "gas_piston_bolt_group",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_aa12_bolt"
     },
     {
-      "structural": "barrel",
+      "structural": "shotgun_barrel_assembly",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_aa12_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "shotgun_trigger_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_aa12_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "return_spring_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_aa12_recoil"
     }

@@ -77,7 +77,10 @@ public final class IndustrialSalvageService {
         String platform = tag.getStringOr("IndustryPlatform", "");
         String kind = tag.getStringOr("IndustryPartKind", "");
         if (platform.isBlank() || !(kind.endsWith("_die") || kind.endsWith("_die_blank")
-                || "die_blank".equals(kind) || "cartridge_gauge".equals(kind))) {
+                || kind.endsWith("_gauge") || kind.endsWith("_gauge_blank")
+                || "acceptance_gauge_stock".equals(kind)
+                || "die_blank".equals(kind) || "cartridge_gauge".equals(kind)
+                || "action_jig".equals(kind))) {
             return Plan.failure(Failure.INVALID_DIE);
         }
         List<ItemStack> outputs = new ArrayList<>();
@@ -135,13 +138,13 @@ public final class IndustrialSalvageService {
         for (int recovered = 0; recovered < recoveryCount; recovered++) {
             int index = (offset + recovered) % components.size();
             IndustryAssemblyDefinition.Component component = components.get(index);
-            String structural = structuralFor(component, index);
-            if (structural == null) {
+            String blankClass = blankClassFor(component, index);
+            if (blankClass == null) {
                 return Plan.failure(Failure.GUN_NOT_INDUSTRIAL);
             }
             outputs.add(IndustryItemBuilder.componentBlank()
                     .platform("machining")
-                    .kind(structural + "_blank")
+                    .kind(blankClass + "_blank")
                     .displayNameKey("item.tacz.gun_component_blank")
                     .build());
         }
@@ -209,14 +212,18 @@ public final class IndustrialSalvageService {
     }
 
     @Nullable
-    private static String structuralFor(IndustryAssemblyDefinition.Component component, int index) {
+    private static String blankClassFor(IndustryAssemblyDefinition.Component component, int index) {
+        String blankClass = component.blankClass();
+        if (STRUCTURAL_ORDER.contains(blankClass)) {
+            return blankClass;
+        }
+        // Pre-tooling-schema declarations have no blank_class. Their component
+        // list still follows receiver/bolt/barrel/trigger/recoil; only that
+        // explicit legacy order is allowed as a closed fallback.
         String structural = component.structural();
         if (STRUCTURAL_ORDER.contains(structural)) {
             return structural;
         }
-        // Pre-schema third-party declarations have no structural field. Their
-        // component list still follows the documented receiver/bolt/barrel/
-        // trigger/recoil order, otherwise recovery fails closed.
         return index >= 0 && index < STRUCTURAL_ORDER.size() ? STRUCTURAL_ORDER.get(index) : null;
     }
 

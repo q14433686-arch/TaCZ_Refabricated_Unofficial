@@ -18,6 +18,9 @@ public final class IndustryItemBuilder {
     private String projectileType = "";
     private String dieTargetKind = "";
     private String blueprintTier = "";
+    private String blueprintRole = "";
+    private String actionProfile = "";
+    private String toolingScope = "";
 
     private IndustryItemBuilder(Item item) {
         this.item = item;
@@ -95,6 +98,21 @@ public final class IndustryItemBuilder {
         return this;
     }
 
+    public IndustryItemBuilder blueprintRole(String role) {
+        this.blueprintRole = role == null ? "" : role;
+        return this;
+    }
+
+    public IndustryItemBuilder actionProfile(String profile) {
+        this.actionProfile = profile == null ? "" : profile;
+        return this;
+    }
+
+    public IndustryItemBuilder toolingScope(String scope) {
+        this.toolingScope = scope == null ? "" : scope;
+        return this;
+    }
+
     public ItemStack build() {
         ItemStack stack = new ItemStack(item);
         if (stack.getItem() instanceof IndustryItemDataAccessor accessor) {
@@ -106,6 +124,9 @@ public final class IndustryItemBuilder {
             accessor.setProjectileType(stack, projectileType);
             accessor.setDieTargetKind(stack, dieTargetKind);
             accessor.setBlueprintTier(stack, blueprintTier);
+            accessor.setBlueprintRole(stack, blueprintRole);
+            accessor.setActionProfile(stack, actionProfile);
+            accessor.setToolingScope(stack, toolingScope);
         }
         // Recipe JSON writes this component directly. Builders are also used
         // for creative/REI samples, so give those configured samples the same

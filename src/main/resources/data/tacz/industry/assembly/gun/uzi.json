@@ -1,31 +1,39 @@
 {
   "platform": "default_uzi",
   "manufacturing_tier": "service",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_uzi",
+  "action_profile": "blowback_smg",
+  "tooling_scope": "platform_tooling",
+  "blueprint_display_name": "item.tacz.gun_template.default_uzi",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_uzi",
   "terminal_process": "tacz:create/industry/assemble_uzi",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "blowback_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_uzi_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "open_bolt_group",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_uzi_bolt"
     },
     {
       "structural": "barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_uzi_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "fire_control_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_uzi_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "return_spring_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_uzi_recoil"
     }

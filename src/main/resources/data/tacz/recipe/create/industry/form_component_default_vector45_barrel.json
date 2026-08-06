@@ -38,7 +38,8 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_vector45",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.default_vector45_barrel"
+          "IndustryDisplayName": "item.tacz.gun_component.default_vector45_barrel",
+          "IndustryActionProfile": "blowback_smg"
         }
       }
     }

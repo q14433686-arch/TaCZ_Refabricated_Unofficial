@@ -28,7 +28,11 @@
     "nbt": {
       "IndustryPlatform": "fal",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.fal"
+      "IndustryDisplayName": "item.tacz.gun_template.fal",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "platform_tooling"
     }
   },
   "results": [
@@ -39,7 +43,9 @@
           "IndustryPlatform": "fal",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_fal_receiver",
-          "DieTargetKind": "receiver"
+          "DieTargetKind": "receiver",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "platform_tooling"
         }
       }
     }

@@ -897,6 +897,81 @@
       },
       "coverage": "placeholder",
       "note": "Temporary substitute only; a 12G shot/payload icon remains required."
+    },
+    {
+      "id": "tooling_template_blank",
+      "item": "tacz:gun_blueprint",
+      "texture": "tacz_extra:item/base_blueprint",
+      "priority": 500,
+      "match": {
+        "industry_platform": "tooling",
+        "industry_part_kind": "template_blank"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "tooling_action_jig",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_die_blank",
+      "priority": 500,
+      "match": {
+        "industry_platform": "tooling",
+        "industry_part_kind": "action_jig"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "tooling_critical_fit_gauge_blank",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_die_blank",
+      "priority": 500,
+      "match": {
+        "industry_platform": "tooling",
+        "industry_part_kind": "critical_fit_gauge_blank"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "tooling_acceptance_gauge_blank",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_die_blank",
+      "priority": 500,
+      "match": {
+        "industry_platform": "tooling",
+        "industry_part_kind": "acceptance_gauge_blank"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "tooling_critical_fit_gauge",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 500,
+      "match": {
+        "industry_part_kind": "critical_fit_gauge"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "tooling_acceptance_gauge",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 500,
+      "match": {
+        "industry_part_kind": "acceptance_gauge"
+      },
+      "coverage": "family"
+    },
+    {
+      "id": "tooling_acceptance_gauge_stock",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_die_blank",
+      "priority": 500,
+      "match": {
+        "industry_platform": "tooling",
+        "industry_part_kind": "acceptance_gauge_stock"
+      },
+      "coverage": "family"
     }
   ]
 }

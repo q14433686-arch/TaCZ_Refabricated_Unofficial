@@ -38,7 +38,8 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_uzi",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.default_uzi_barrel"
+          "IndustryDisplayName": "item.tacz.gun_component.default_uzi_barrel",
+          "IndustryActionProfile": "blowback_smg"
         }
       }
     }

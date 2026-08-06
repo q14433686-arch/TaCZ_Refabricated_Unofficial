@@ -1,31 +1,39 @@
 {
   "platform": "default_m700",
   "manufacturing_tier": "service",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_m700",
+  "action_profile": "bolt_action",
+  "tooling_scope": "critical_gauge",
+  "blueprint_display_name": "item.tacz.gun_template.default_m700",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_m700",
   "terminal_process": "tacz:create/industry/assemble_m700",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "bolt_action_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_m700_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "bolt_and_extractor_group",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_m700_bolt"
     },
     {
-      "structural": "barrel",
+      "structural": "headspaced_barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_m700_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "sear_and_trigger_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_m700_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "stock_bedding_recoil_lug",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_m700_recoil"
     }

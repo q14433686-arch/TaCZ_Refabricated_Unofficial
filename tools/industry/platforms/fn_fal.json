@@ -4,46 +4,46 @@
   "gun_id": "tacz:fn_fal",
   "fire_mode": "SEMI",
   "blueprint": {
-    "display_name": "item.tacz.gun_blueprint.fal",
-    "ingredients": [
-      "minecraft:paper",
-      "minecraft:paper",
-      "create:brass_sheet",
-      "minecraft:blaze_powder"
-    ],
-    "name_en": "FAL Platform Assembly Blueprint",
-    "name_zh": "FAL 平台装配模板"
+    "display_name": "item.tacz.gun_template.fal",
+    "name_en": "FAL Platform Tooling Template",
+    "name_zh": "FAL 平台工装模板",
+    "legacy_display_name": "item.tacz.gun_blueprint.fal"
   },
   "parts": [
     {
       "structural": "receiver",
       "kind": "receiver",
       "name_en": "FAL Receiver",
-      "name_zh": "FAL 机匣"
+      "name_zh": "FAL 机匣",
+      "blank_class": "receiver"
     },
     {
       "structural": "bolt",
       "kind": "bolt",
       "name_en": "FAL Bolt Group",
-      "name_zh": "FAL 枪机组"
+      "name_zh": "FAL 枪机组",
+      "blank_class": "bolt"
     },
     {
       "structural": "barrel",
       "kind": "barrel",
       "name_en": "FAL .308 Barrel",
-      "name_zh": "FAL .308 枪管"
+      "name_zh": "FAL .308 枪管",
+      "blank_class": "barrel"
     },
     {
       "structural": "trigger",
       "kind": "trigger",
       "name_en": "FAL Fire-Control Group",
-      "name_zh": "FAL 击发组"
+      "name_zh": "FAL 击发组",
+      "blank_class": "trigger"
     },
     {
       "structural": "recoil",
       "kind": "recoil",
       "name_en": "FAL Recoil Assembly",
-      "name_zh": "FAL 复进组件"
+      "name_zh": "FAL 复进组件",
+      "blank_class": "recoil"
     }
   ],
   "materials": [
@@ -60,5 +60,7 @@
     "name_en": "Incomplete FAL Assembly",
     "name_zh": "未完成的 FAL 总成"
   },
-  "manufacturing_tier": "service"
+  "manufacturing_tier": "service",
+  "action_profile": "gas_rifle",
+  "tooling_scope": "platform_tooling"
 }

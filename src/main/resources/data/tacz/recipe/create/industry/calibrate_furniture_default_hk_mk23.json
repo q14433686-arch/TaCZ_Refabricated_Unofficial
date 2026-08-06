@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_hk_mk23",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_hk_mk23"
+      "IndustryDisplayName": "item.tacz.gun_template.default_hk_mk23",
+      "IndustryBlueprintTier": "advanced",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [

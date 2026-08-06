@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_cz75",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_cz75"
+      "IndustryDisplayName": "item.tacz.gun_template.default_cz75",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
   "results": [

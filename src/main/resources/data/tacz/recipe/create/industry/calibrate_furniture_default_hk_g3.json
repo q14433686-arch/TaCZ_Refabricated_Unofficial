@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_hk_g3",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_hk_g3"
+      "IndustryDisplayName": "item.tacz.gun_template.default_hk_g3",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "roller_delayed_rifle",
+      "IndustryToolingScope": "platform_tooling"
     }
   },
   "results": [

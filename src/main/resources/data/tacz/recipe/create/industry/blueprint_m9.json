@@ -7,26 +7,49 @@
       ]
     }
   ],
-  "type": "create:mechanical_crafting",
-  "key": {
-    "P": "minecraft:paper",
-    "B": "create:brass_sheet",
-    "S": "tacz:high_carbon_steel_plate",
-    "K": "minecraft:iron_nugget"
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "template_blank",
+      "IndustryDisplayName": "item.tacz.gun_blueprint.blank",
+      "IndustryBlueprintRole": "blank"
+    }
   },
-  "pattern": [
-    "PBP",
-    "SK "
-  ],
-  "result": {
-    "id": "tacz:gun_blueprint",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "m9",
-        "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.m9",
-        "IndustryBlueprintTier": "service"
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "m9",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_dossier.m9",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "master",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_blueprint",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "m9",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_template.m9",
+          "IndustryBlueprintTier": "service",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge"
+        }
       }
     }
-  }
+  ],
+  "keep_held_item": true
 }

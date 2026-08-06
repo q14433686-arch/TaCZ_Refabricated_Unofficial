@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_springfield1873",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_springfield1873"
+      "IndustryDisplayName": "item.tacz.gun_template.default_springfield1873",
+      "IndustryBlueprintTier": "legacy",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "lever_action",
+      "IndustryToolingScope": "family_jig"
     }
   },
   "results": [

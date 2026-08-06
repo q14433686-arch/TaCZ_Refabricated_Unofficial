@@ -1,0 +1,56 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "critical_fit_gauge_blank",
+      "IndustryDisplayName": "item.tacz.press_die.critical_fit_gauge_blank.pump_action",
+      "IndustryActionProfile": "pump_action",
+      "IndustryToolingScope": "critical_gauge",
+      "DieTargetKind": "pump_action"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_m870",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_template.default_m870",
+      "IndustryBlueprintTier": "legacy",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "pump_action",
+      "IndustryToolingScope": "critical_gauge"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_m870",
+          "IndustryPartKind": "critical_fit_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.critical_fit_gauge.default_m870",
+          "IndustryActionProfile": "pump_action",
+          "IndustryToolingScope": "critical_gauge",
+          "DieTargetKind": "pump_action"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

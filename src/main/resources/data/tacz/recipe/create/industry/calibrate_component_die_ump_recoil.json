@@ -28,7 +28,11 @@
     "nbt": {
       "IndustryPlatform": "ump",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.ump"
+      "IndustryDisplayName": "item.tacz.gun_template.ump",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "blowback_smg",
+      "IndustryToolingScope": "platform_tooling"
     }
   },
   "results": [
@@ -39,7 +43,9 @@
           "IndustryPlatform": "ump",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_ump_recoil",
-          "DieTargetKind": "recoil"
+          "DieTargetKind": "recoil",
+          "IndustryActionProfile": "blowback_smg",
+          "IndustryToolingScope": "platform_tooling"
         }
       }
     }

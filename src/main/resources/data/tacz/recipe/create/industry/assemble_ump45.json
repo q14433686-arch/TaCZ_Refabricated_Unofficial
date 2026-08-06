@@ -25,7 +25,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "ump",
         "IndustryPartKind": "incomplete_ump45",
-        "IndustryDisplayName": "item.tacz.gun_component.incomplete_ump45"
+        "IndustryDisplayName": "item.tacz.gun_component.incomplete_ump45",
+        "IndustryActionProfile": "blowback_smg"
       }
     }
   },
@@ -39,30 +40,13 @@
         "HasBulletInBarrel": false,
         "IndustryAssemblyPlatform": "ump",
         "IndustryAssemblyRecipe": "tacz:gun/ump45",
-        "IndustryAssemblyTier": "service"
+        "IndustryAssemblyTier": "service",
+        "IndustryAssemblyActionProfile": "blowback_smg",
+        "IndustryAssemblyToolingScope": "platform_tooling"
       }
     }
   },
   "sequence": [
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:gun_blueprint"
-        ],
-        "nbt": {
-          "IndustryPlatform": "ump",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.ump"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
     {
       "type": "create:pressing",
       "ingredient": "$ingredient",

@@ -7,26 +7,49 @@
       ]
     }
   ],
-  "type": "create:mechanical_crafting",
-  "key": {
-    "P": "minecraft:paper",
-    "B": "create:brass_sheet",
-    "S": "tacz:high_carbon_steel_plate",
-    "K": "minecraft:slime_ball"
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "template_blank",
+      "IndustryDisplayName": "item.tacz.gun_blueprint.blank",
+      "IndustryBlueprintRole": "blank"
+    }
   },
-  "pattern": [
-    "PBP",
-    "SK "
-  ],
-  "result": {
-    "id": "tacz:gun_blueprint",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_hk_g3",
-        "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_hk_g3",
-        "IndustryBlueprintTier": "service"
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_hk_g3",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_dossier.default_hk_g3",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "master",
+      "IndustryActionProfile": "roller_delayed_rifle",
+      "IndustryToolingScope": "platform_tooling"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_blueprint",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_hk_g3",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_template.default_hk_g3",
+          "IndustryBlueprintTier": "service",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "roller_delayed_rifle",
+          "IndustryToolingScope": "platform_tooling"
+        }
       }
     }
-  }
+  ],
+  "keep_held_item": true
 }

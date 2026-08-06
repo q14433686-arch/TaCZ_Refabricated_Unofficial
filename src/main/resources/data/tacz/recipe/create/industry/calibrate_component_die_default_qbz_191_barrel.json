@@ -28,7 +28,11 @@
     "nbt": {
       "IndustryPlatform": "default_qbz_191",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_qbz_191"
+      "IndustryDisplayName": "item.tacz.gun_template.default_qbz_191",
+      "IndustryBlueprintTier": "advanced",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "bullpup_rifle",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [
@@ -39,7 +43,9 @@
           "IndustryPlatform": "default_qbz_191",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_qbz_191_barrel",
-          "DieTargetKind": "barrel"
+          "DieTargetKind": "barrel",
+          "IndustryActionProfile": "bullpup_rifle",
+          "IndustryToolingScope": "final_acceptance"
         }
       }
     }

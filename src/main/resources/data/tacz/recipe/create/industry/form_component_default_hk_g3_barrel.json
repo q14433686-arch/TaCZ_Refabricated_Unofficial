@@ -38,7 +38,8 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_hk_g3",
           "IndustryPartKind": "barrel",
-          "IndustryDisplayName": "item.tacz.gun_component.default_hk_g3_barrel"
+          "IndustryDisplayName": "item.tacz.gun_component.default_hk_g3_barrel",
+          "IndustryActionProfile": "roller_delayed_rifle"
         }
       }
     }

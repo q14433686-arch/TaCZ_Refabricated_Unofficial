@@ -46,7 +46,12 @@ DEFAULT_AMMO_INDEX_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/d
 DEFAULT_GUN_DATA_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/data/guns"
 
 CREATE_CONDITIONS = [{"condition": "fabric:all_mods_loaded", "values": ["create"]}]
-STRUCTURAL_ORDER = ("receiver", "bolt", "barrel", "trigger", "recoil")
+# Neutral stock classes are deliberately separate from the real action-part
+# names. A break-action hinge can be machined from the same neutral bolt stock,
+# but it must not be reported to the player as a fictitious "bolt group".
+BLANK_CLASS_ORDER = ("receiver", "bolt", "barrel", "trigger", "recoil")
+TOOLING_SCOPE_IDS = ("family_jig", "critical_gauge", "platform_tooling", "final_acceptance")
+BLUEPRINT_ROLE_IDS = ("master", "production", "blank")
 # 26.2 serialises minecraft:max_stack_size in the inclusive [1, 99] range.
 MAX_ITEM_STACK_SIZE = 99
 # (minimum neutral case/projectile blank mass, minimum industrial propellant)
@@ -151,10 +156,105 @@ def require_string(data: dict[str, Any], key: str, source: Path) -> str:
     return value
 
 
-def load_platforms() -> list[dict[str, Any]]:
+def _require_item_id_list(value: Any, source: Path, key: str, minimum: int = 1, maximum: int = 9) -> list[str]:
+    if not isinstance(value, list) or not minimum <= len(value) <= maximum \
+            or not all(isinstance(item, str) and item for item in value):
+        raise ValueError(f"{source}: {key} must be a list of {minimum}..{maximum} non-empty item ids")
+    return list(value)
+
+
+def _validate_mechanical_layout(layout: Any, source: Path, profile_id: str) -> None:
+    if not isinstance(layout, dict):
+        raise ValueError(f"{source}: process_profiles.{profile_id}.jig must be an object")
+    key = layout.get("key")
+    pattern = layout.get("pattern")
+    if not isinstance(key, dict) or not key or not all(isinstance(symbol, str) and len(symbol) == 1
+                                                       and isinstance(item, str) and item
+                                                       for symbol, item in key.items()):
+        raise ValueError(f"{source}: process_profiles.{profile_id}.jig.key must map one-character symbols to item ids")
+    if not isinstance(pattern, list) or not 1 <= len(pattern) <= 3 \
+            or not all(isinstance(row, str) and 1 <= len(row) <= 3 for row in pattern):
+        raise ValueError(f"{source}: process_profiles.{profile_id}.jig.pattern must be a non-empty <=3x3 grid")
+    symbols = {symbol for row in pattern for symbol in row if symbol != " "}
+    if not symbols or not symbols <= set(key):
+        raise ValueError(f"{source}: process_profiles.{profile_id}.jig.pattern references undefined symbols")
+    if len(symbols) < 2:
+        raise ValueError(f"{source}: process_profiles.{profile_id}.jig must use at least two real materials")
+
+
+def load_default_gun_policy() -> dict[str, Any]:
+    """Load manufacturing/action-family policy used for default-pack discovery.
+
+    The policy intentionally contains action profiles and real mechanical-crafter
+    jig layouts. It does *not* contain arbitrary per-platform "seed" items:
+    a platform identity now comes from a dossier or measured sample firearm.
+    """
+    policy = read_json(DEFAULT_GUN_POLICY)
+    if not isinstance(policy, dict):
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: policy must be an object")
+    _require_item_id_list(policy.get("template_blank_ingredients"), DEFAULT_GUN_POLICY,
+                          "template_blank_ingredients", minimum=2)
+    profiles = policy.get("process_profiles")
+    if not isinstance(profiles, dict) or not profiles:
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: process_profiles must be a non-empty object")
+    layouts: set[str] = set()
+    for profile_id, profile in profiles.items():
+        if not isinstance(profile_id, str) or not profile_id or not isinstance(profile, dict):
+            raise ValueError(f"{DEFAULT_GUN_POLICY}: invalid process profile")
+        for key in ("label_en", "label_zh", "default_tooling_scope"):
+            require_string(profile, key, DEFAULT_GUN_POLICY)
+        if profile["default_tooling_scope"] not in TOOLING_SCOPE_IDS:
+            raise ValueError(f"{DEFAULT_GUN_POLICY}: {profile_id} has unknown default_tooling_scope")
+        parts = profile.get("parts")
+        if not isinstance(parts, list) or len(parts) != len(BLANK_CLASS_ORDER):
+            raise ValueError(f"{DEFAULT_GUN_POLICY}: {profile_id}.parts must cover exactly {BLANK_CLASS_ORDER}")
+        blank_classes: list[str] = []
+        structural_ids: set[str] = set()
+        for part in parts:
+            if not isinstance(part, dict):
+                raise ValueError(f"{DEFAULT_GUN_POLICY}: {profile_id}.parts entries must be objects")
+            for key in ("structural", "blank_class", "kind", "name_en", "name_zh"):
+                require_string(part, key, DEFAULT_GUN_POLICY)
+            blank_class = part["blank_class"]
+            if blank_class not in BLANK_CLASS_ORDER:
+                raise ValueError(f"{DEFAULT_GUN_POLICY}: {profile_id} has unknown blank_class {blank_class}")
+            if part["structural"] in structural_ids:
+                raise ValueError(f"{DEFAULT_GUN_POLICY}: {profile_id} repeats structural identity {part['structural']}")
+            structural_ids.add(part["structural"])
+            blank_classes.append(blank_class)
+        if tuple(blank_classes) != BLANK_CLASS_ORDER:
+            raise ValueError(f"{DEFAULT_GUN_POLICY}: {profile_id}.parts must follow blank classes {BLANK_CLASS_ORDER}")
+        _validate_mechanical_layout(profile.get("jig"), DEFAULT_GUN_POLICY, profile_id)
+        jig = profile["jig"]
+        signature = canonical({"key": jig["key"], "pattern": jig["pattern"]})
+        if signature in layouts:
+            raise ValueError(f"{DEFAULT_GUN_POLICY}: action jig recipe collision for {profile_id}")
+        layouts.add(signature)
+
+    by_type = policy.get("action_profile_by_gun_type")
+    overrides = policy.get("action_profile_overrides")
+    scope_overrides = policy.get("tooling_scope_overrides")
+    tier_by_type = policy.get("tier_by_gun_type")
+    tier_overrides = policy.get("tier_overrides")
+    if not all(isinstance(value, dict) for value in (by_type, overrides, scope_overrides, tier_by_type, tier_overrides)):
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: action/tier mappings must be objects")
+    if "default" not in by_type or "default" not in tier_by_type:
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: action_profile_by_gun_type and tier_by_gun_type need default entries")
+    if any(value not in profiles for value in [*by_type.values(), *overrides.values()]):
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: action profile mapping references an unknown profile")
+    if any(value not in TOOLING_SCOPE_IDS for value in scope_overrides.values()):
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: tooling_scope_overrides references an unknown scope")
+    if any(value not in MANUFACTURING_TIER_IDS for value in [*tier_by_type.values(), *tier_overrides.values()]):
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: tier mapping references an unknown manufacturing tier")
+    if not isinstance(policy.get("materials_by_gun_type"), dict):
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: materials_by_gun_type must be an object")
+    return policy
+
+
+def load_platforms(policy: dict[str, Any]) -> list[dict[str, Any]]:
     platforms: list[dict[str, Any]] = []
     seen: dict[str, set[str]] = {"slug": set(), "platform": set(), "gun_id": set()}
-    blueprint_signatures: set[str] = set()
+    profiles = policy["process_profiles"]
     for path in sorted(PLATFORM_ROOT.glob("*.json")):
         data = read_json(path)
         if not isinstance(data, dict):
@@ -169,32 +269,37 @@ def load_platforms() -> list[dict[str, Any]]:
         tier = require_string(data, "manufacturing_tier", path)
         if tier not in MANUFACTURING_TIER_IDS:
             raise ValueError(f"{path}: unsupported manufacturing_tier '{tier}'")
+        action = require_string(data, "action_profile", path)
+        scope = require_string(data, "tooling_scope", path)
+        if action not in profiles:
+            raise ValueError(f"{path}: unknown action_profile '{action}'")
+        if scope not in TOOLING_SCOPE_IDS:
+            raise ValueError(f"{path}: unknown tooling_scope '{scope}'")
 
         blueprint = data.get("blueprint")
         if not isinstance(blueprint, dict):
             raise ValueError(f"{path}: missing blueprint object")
-        for key in ("display_name", "name_en", "name_zh"):
+        for key in ("display_name", "legacy_display_name", "name_en", "name_zh"):
             require_string(blueprint, key, path)
-        ingredients = blueprint.get("ingredients")
-        if not isinstance(ingredients, list) or not all(isinstance(v, str) and v for v in ingredients):
-            raise ValueError(f"{path}: blueprint.ingredients must be item ids")
-        signature = canonical(sorted(ingredients))
-        if signature in blueprint_signatures:
-            raise ValueError(f"{path}: duplicate compacting blueprint ingredient signature")
-        blueprint_signatures.add(signature)
+        if blueprint["display_name"] == blueprint["legacy_display_name"]:
+            raise ValueError(f"{path}: production and legacy template display names must differ")
 
         parts = data.get("parts")
-        if not isinstance(parts, list) or len(parts) != len(STRUCTURAL_ORDER):
-            raise ValueError(f"{path}: exactly five structural parts are required")
-        structural = []
+        if not isinstance(parts, list) or len(parts) != len(BLANK_CLASS_ORDER):
+            raise ValueError(f"{path}: exactly five action parts are required")
+        blank_classes: list[str] = []
+        structural_ids: set[str] = set()
         for part in parts:
             if not isinstance(part, dict):
                 raise ValueError(f"{path}: part must be object")
-            for key in ("structural", "kind", "name_en", "name_zh"):
+            for key in ("structural", "blank_class", "kind", "name_en", "name_zh"):
                 require_string(part, key, path)
-            structural.append(part["structural"])
-        if tuple(structural) != STRUCTURAL_ORDER:
-            raise ValueError(f"{path}: parts must be ordered {STRUCTURAL_ORDER}")
+            if part["structural"] in structural_ids:
+                raise ValueError(f"{path}: duplicate action structural identity '{part['structural']}'")
+            structural_ids.add(part["structural"])
+            blank_classes.append(part["blank_class"])
+        if tuple(blank_classes) != BLANK_CLASS_ORDER:
+            raise ValueError(f"{path}: parts must use blank classes in order {BLANK_CLASS_ORDER}")
 
         materials = data.get("materials")
         if not isinstance(materials, list):
@@ -217,12 +322,12 @@ def load_platforms() -> list[dict[str, Any]]:
 
 
 def load_blueprint_acquisition() -> dict[str, Any]:
-    """Validate tiered blueprint access rather than one flat master-trade pool.
+    """Validate tiered master-dossier access rather than one flat trade pool.
 
-    Legacy patterns are reproducible field documentation; service schematics are
-    licensed weaponsmith stock; advanced and precision dossiers are expedition
-    finds. Every tier still has a deterministic industrial blueprint recipe so
-    random loot enriches progression but never makes a platform unobtainable.
+    Legacy documents are early weaponsmith/world sources; service dossiers are
+    licensed stock; advanced and precision dossiers are expedition finds. A
+    dossier or actual sample gun supplies the platform identity, then a player
+    transfers it to a physical production template—never a random recipe seed.
     """
     data = read_json(BLUEPRINT_ACQUISITION_MANIFEST)
     if not isinstance(data, dict) or not isinstance(data.get("tiers"), dict):
@@ -263,6 +368,7 @@ def load_blueprint_acquisition() -> dict[str, Any]:
     return data
 
 
+
 def humanize_slug(slug: str) -> str:
     return slug.replace("_", " ").upper()
 
@@ -281,26 +387,47 @@ def first_fire_mode(data_path: Path) -> str:
     return "SEMI"
 
 
-def discover_default_platforms(explicit_slugs: set[str]) -> list[dict[str, Any]]:
-    """Create high-fidelity generic platforms for every remaining bundled gun.
+def action_profile_for(policy: dict[str, Any], slug: str, gun_type: str) -> str:
+    return policy["action_profile_overrides"].get(
+        slug, policy["action_profile_by_gun_type"].get(gun_type, policy["action_profile_by_gun_type"]["default"])
+    )
 
-    This reads the bundled default gun-pack at authoring time only. Players get
-    the committed ordinary generated recipes and never run this script.
+
+def tooling_scope_for(policy: dict[str, Any], slug: str, tier: str, action_profile: str) -> str:
+    override = policy["tooling_scope_overrides"].get(slug)
+    if isinstance(override, str):
+        return override
+    scope = policy["process_profiles"][action_profile]["default_tooling_scope"]
+    # Advanced and precision systems must pass an acceptance station even where
+    # their basic action family would otherwise stop at production tooling.
+    if tier in {"advanced", "precision"} and scope != "family_jig":
+        return "final_acceptance"
+    return scope
+
+
+def profile_parts(policy: dict[str, Any], action_profile: str, gun_label: str) -> list[dict[str, str]]:
+    result: list[dict[str, str]] = []
+    for part in policy["process_profiles"][action_profile]["parts"]:
+        result.append({
+            "structural": part["structural"],
+            "blank_class": part["blank_class"],
+            "kind": part["kind"],
+            "name_en": part["name_en"].replace("{gun}", gun_label),
+            "name_zh": part["name_zh"].replace("{gun}", gun_label),
+        })
+    return result
+
+
+def discover_default_platforms(explicit_slugs: set[str], policy: dict[str, Any]) -> list[dict[str, Any]]:
+    """Create data-driven industrial platforms for every remaining bundled gun.
+
+    The player never runs this authoring helper. Generated production templates
+    are copied from a world dossier or measured sample firearm; there is no
+    unrelated fruit/mineral "seed" that magically names a weapon platform.
     """
-    policy = read_json(DEFAULT_GUN_POLICY)
     recipe_root = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/gun"
     index_root = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/index/guns"
     data_root = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/data/guns"
-    base_ingredients = policy["base_blueprint_ingredients"]
-    reserved = set(policy["reserved_blueprint_seeds"])
-    seeds = [seed for seed in policy["blueprint_seed_items"] if seed not in reserved]
-    tier_by_type = policy.get("tier_by_gun_type")
-    tier_overrides = policy.get("tier_overrides")
-    if not isinstance(tier_by_type, dict) or not isinstance(tier_overrides, dict):
-        raise ValueError(f"{DEFAULT_GUN_POLICY}: tier_by_gun_type and tier_overrides are required objects")
-    if any(value not in MANUFACTURING_TIER_IDS for value in tier_by_type.values()) \
-            or any(value not in MANUFACTURING_TIER_IDS for value in tier_overrides.values()):
-        raise ValueError(f"{DEFAULT_GUN_POLICY}: unknown manufacturing tier")
     missing: list[tuple[str, dict[str, Any], dict[str, Any]]] = []
     for recipe_path in sorted(recipe_root.glob("*.json")):
         slug = recipe_path.stem
@@ -313,51 +440,40 @@ def discover_default_platforms(explicit_slugs: set[str]) -> list[dict[str, Any]]
         index_path = index_root / f"{slug}.json"
         index = read_json5(index_path) if index_path.exists() else {}
         missing.append((slug, recipe, index if isinstance(index, dict) else {}))
-    if len(missing) > len(seeds):
-        raise ValueError(f"{DEFAULT_GUN_POLICY}: not enough unique blueprint seed items")
 
     platforms: list[dict[str, Any]] = []
-    for (slug, recipe, index), seed in zip(missing, seeds):
+    for slug, recipe, index in missing:
         result = recipe["result"]
         gun_type = index.get("type") if isinstance(index.get("type"), str) else "default"
         data_id = index.get("data") if isinstance(index.get("data"), str) else f"tacz:{slug}_data"
         data_path = data_root / f"{data_id.split(':', 1)[-1]}.json"
         display = humanize_slug(slug)
-        handgun = gun_type == "pistol"
-        parts = [
-            {"structural": "receiver", "kind": "frame" if handgun else "receiver",
-             "name_en": f"{display} {'Frame' if handgun else 'Receiver'}",
-             "name_zh": f"{display} {'枪身' if handgun else '机匣'}"},
-            {"structural": "bolt", "kind": "slide" if handgun else "bolt",
-             "name_en": f"{display} {'Slide' if handgun else 'Bolt Group'}",
-             "name_zh": f"{display} {'套筒' if handgun else '枪机组'}"},
-            {"structural": "barrel", "kind": "barrel", "name_en": f"{display} Barrel", "name_zh": f"{display} 枪管"},
-            {"structural": "trigger", "kind": "trigger", "name_en": f"{display} Fire-Control Group", "name_zh": f"{display} 击发组"},
-            {"structural": "recoil", "kind": "recoil", "name_en": f"{display} Recoil Assembly", "name_zh": f"{display} 复进组件"},
-        ]
-        materials = policy["materials_by_gun_type"].get(gun_type, policy["materials_by_gun_type"]["default"])
-        tier = tier_overrides.get(slug, tier_by_type.get(gun_type, tier_by_type.get("default")))
-        if tier not in MANUFACTURING_TIER_IDS:
-            raise ValueError(f"{DEFAULT_GUN_POLICY}: no manufacturing tier for {slug}")
+        tier = policy["tier_overrides"].get(
+            slug, policy["tier_by_gun_type"].get(gun_type, policy["tier_by_gun_type"]["default"])
+        )
+        action_profile = action_profile_for(policy, slug, gun_type)
+        scope = tooling_scope_for(policy, slug, tier, action_profile)
         platform = f"default_{slug}"
+        materials = policy["materials_by_gun_type"].get(gun_type, policy["materials_by_gun_type"]["default"])
         platforms.append({
             "slug": slug,
             "platform": platform,
             "gun_id": result["id"],
             "manufacturing_tier": tier,
+            "action_profile": action_profile,
+            "tooling_scope": scope,
             "fire_mode": first_fire_mode(data_path),
             "blueprint": {
-                "display_name": f"item.tacz.gun_blueprint.{platform}",
-                "ingredients": [*base_ingredients, seed],
-                "name_en": f"{display} Industrial Blueprint",
-                "name_zh": f"{display} 工业装配模板",
+                "display_name": f"item.tacz.gun_template.{platform}",
+                "legacy_display_name": f"item.tacz.gun_blueprint.{platform}",
+                "name_en": f"{display} Platform Tooling Template",
+                "name_zh": f"{display} 平台工装模板",
             },
-            "parts": parts,
+            "parts": profile_parts(policy, action_profile, display),
             "materials": materials,
             "incomplete": {"name_en": f"Incomplete {display} Assembly", "name_zh": f"未完成的 {display} 总成"},
         })
     return platforms
-
 
 def default_ammo_recipe_ids() -> set[str]:
     """Return every real default-pack loose-ammo result id.
@@ -600,8 +716,8 @@ def furniture_kit_tag(platform: dict[str, Any]) -> dict[str, Any]:
 
 def platform_display_label(platform: dict[str, Any], language: str) -> str:
     name = platform["blueprint"]["name_zh" if language == "zh_cn" else "name_en"]
-    suffixes = (" 工业装配模板", " 平台装配模板") if language == "zh_cn" else (
-        " Industrial Blueprint", " Platform Assembly Blueprint"
+    suffixes = (" 工业工装模板", " 平台工装模板", " 工业装配模板", " 平台装配模板") if language == "zh_cn" else (
+        " Industrial Tooling Template", " Platform Tooling Template", " Industrial Blueprint", " Platform Assembly Blueprint"
     )
     for suffix in suffixes:
         if name.endswith(suffix):
@@ -654,76 +770,226 @@ def manufacturing_tier(platform: dict[str, Any]) -> str:
     return tier
 
 
-def blueprint_tag(platform: dict[str, Any]) -> dict[str, Any]:
+def action_profile(platform: dict[str, Any]) -> str:
+    profile = platform.get("action_profile")
+    if not isinstance(profile, str) or not profile:
+        raise ValueError(f"{platform.get('slug', '?')}: missing action_profile")
+    return profile
+
+
+def tooling_scope(platform: dict[str, Any]) -> str:
+    scope = platform.get("tooling_scope")
+    if scope not in TOOLING_SCOPE_IDS:
+        raise ValueError(f"{platform.get('slug', '?')}: missing valid tooling_scope")
+    return scope
+
+
+def template_blank_tag() -> dict[str, Any]:
+    return {
+        "IndustryPlatform": "tooling",
+        "IndustryPartKind": "template_blank",
+        "IndustryDisplayName": "item.tacz.gun_blueprint.blank",
+        "IndustryBlueprintRole": "blank",
+    }
+
+
+def production_blueprint_tag(platform: dict[str, Any]) -> dict[str, Any]:
     return {
         "IndustryPlatform": platform["platform"],
         "IndustryPartKind": "blueprint",
         "IndustryDisplayName": platform["blueprint"]["display_name"],
         "IndustryBlueprintTier": manufacturing_tier(platform),
+        "IndustryBlueprintRole": "production",
+        "IndustryActionProfile": action_profile(platform),
+        "IndustryToolingScope": tooling_scope(platform),
     }
 
 
-def blueprint_match_tag(platform: dict[str, Any]) -> dict[str, Any]:
-    """Tier is provenance/display metadata; old platform blueprints remain usable."""
-    tag = blueprint_tag(platform)
-    tag.pop("IndustryBlueprintTier")
-    return tag
+def master_blueprint_tag(platform: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "IndustryPlatform": platform["platform"],
+        "IndustryPartKind": "blueprint",
+        "IndustryDisplayName": f"item.tacz.gun_dossier.{platform['platform']}",
+        "IndustryBlueprintTier": manufacturing_tier(platform),
+        "IndustryBlueprintRole": "master",
+        "IndustryActionProfile": action_profile(platform),
+        "IndustryToolingScope": tooling_scope(platform),
+    }
 
 
-def blueprint_seed(platform: dict[str, Any]) -> str:
-    ingredients = platform["blueprint"]["ingredients"]
-    if not ingredients:
-        raise ValueError(f"{platform['slug']}: blueprint has no seed ingredient")
-    return ingredients[-1]
+def legacy_blueprint_match_tag(platform: dict[str, Any]) -> dict[str, Any]:
+    """Match pre-tooling-rework stacks without requiring new metadata.
+
+    Old worlds only have the original display key plus platform/kind. A separate
+    restoration route preserves those stacks while keeping a newly discovered
+    master dossier distinct from a production template.
+    """
+    return {
+        "IndustryPlatform": platform["platform"],
+        "IndustryPartKind": "blueprint",
+        "IndustryDisplayName": platform["blueprint"]["legacy_display_name"],
+    }
 
 
-def generated_tier_blueprint_recipe(platform: dict[str, Any]) -> dict[str, Any]:
-    """Emit a materially distinct, deterministic blueprint route by tech tier."""
-    tier = manufacturing_tier(platform)
-    seed = blueprint_seed(platform)
-    result = output("tacz:gun_blueprint", blueprint_tag(platform))
-    if tier == "legacy":
-        # A field manual: two sheets and a recognisable local datum. It is
-        # intentionally Basin/press accessible and does not require a modern
-        # tooling license.
-        return {
+def generic_component_die_stock() -> dict[str, Any]:
+    return {
+        "IndustryPlatform": "machining",
+        "IndustryPartKind": "die_blank",
+        "IndustryDisplayName": "item.tacz.press_die_blank.generic",
+    }
+
+
+def acceptance_gauge_stock_tag() -> dict[str, Any]:
+    """A distinct precision stock prevents critical/acceptance gauge collisions."""
+    return {
+        "IndustryPlatform": "tooling",
+        "IndustryPartKind": "acceptance_gauge_stock",
+        "IndustryDisplayName": "item.tacz.press_die.acceptance_gauge_stock",
+        "IndustryToolingScope": "final_acceptance",
+    }
+
+
+def action_jig_tag(profile: str) -> dict[str, Any]:
+    return {
+        "IndustryPlatform": "tooling",
+        "IndustryPartKind": "action_jig",
+        "IndustryDisplayName": f"item.tacz.press_die.action_jig.{profile}",
+        "IndustryActionProfile": profile,
+        "DieTargetKind": profile,
+    }
+
+
+def final_gauge_kind(scope: str) -> str:
+    return {
+        "critical_gauge": "critical_fit_gauge",
+        "final_acceptance": "acceptance_gauge",
+    }.get(scope, "")
+
+
+def action_gauge_blank_tag(profile: str, scope: str) -> dict[str, Any]:
+    kind = final_gauge_kind(scope)
+    if not kind:
+        raise ValueError(f"{scope}: no gauge blank kind")
+    return {
+        "IndustryPlatform": "tooling",
+        "IndustryPartKind": f"{kind}_blank",
+        "IndustryDisplayName": f"item.tacz.press_die.{kind}_blank.{profile}",
+        "IndustryActionProfile": profile,
+        "IndustryToolingScope": scope,
+        "DieTargetKind": profile,
+    }
+
+
+def platform_gauge_tag(platform: dict[str, Any]) -> dict[str, Any]:
+    scope = tooling_scope(platform)
+    kind = final_gauge_kind(scope)
+    if not kind:
+        raise ValueError(f"{platform['slug']}: {scope} has no final gauge")
+    name = platform["platform"]
+    return {
+        "IndustryPlatform": name,
+        "IndustryPartKind": kind,
+        "IndustryDisplayName": f"item.tacz.press_die.{kind}.{name}",
+        "IndustryActionProfile": action_profile(platform),
+        "IndustryToolingScope": scope,
+        "DieTargetKind": action_profile(platform),
+    }
+
+
+def generated_template_blank_file(policy: dict[str, Any]) -> dict[Path, Any]:
+    """A real multi-input Basin makes one physical sheet/plate workpiece.
+
+    The blank is the only stack sent down a belt. A dossier/sample later sits in
+    the held position of a deployment station, so no recipe asks a Depot to hold
+    several unrelated inputs at once.
+    """
+    return {
+        RESOURCE_ROOT / "data/tacz/recipe/create/industry/form_template_blank.json": {
             "fabric:load_conditions": CREATE_CONDITIONS,
             "type": "create:compacting",
-            "ingredients": ["minecraft:paper", "minecraft:paper", seed],
-            "results": [result],
+            "ingredients": policy["template_blank_ingredients"],
+            "results": [output("tacz:gun_blueprint", template_blank_tag())],
+        }
+    }
+
+
+def generated_action_jig_files(platforms: list[dict[str, Any]], policy: dict[str, Any]) -> dict[Path, Any]:
+    """Generate reusable family fixtures and their real gauge-blank stations."""
+    files: dict[Path, Any] = {}
+    profiles_in_use = sorted({action_profile(platform) for platform in platforms})
+    for profile_id in profiles_in_use:
+        profile = policy["process_profiles"][profile_id]
+        jig = profile["jig"]
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_action_jig_{profile_id}.json"] = {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:mechanical_crafting",
+            "key": jig["key"],
+            "pattern": jig["pattern"],
+            "result": output("tacz:press_die", action_jig_tag(profile_id)),
         }
 
-    if tier == "service":
-        key = {"P": "minecraft:paper", "B": "create:brass_sheet", "S": "tacz:high_carbon_steel_plate", "K": seed}
-        pattern = ["PBP", "SK "]
-    elif tier == "advanced":
-        key = {
-            "P": "minecraft:paper",
-            "B": "create:brass_sheet",
-            "S": "tacz:high_carbon_steel_plate",
-            "R": "minecraft:redstone",
-            "K": seed,
+    # A gauge blank is deliberately selected with the family fixture first.
+    # This prevents platform gauge recipes from colliding with component-die
+    # calibration (same die stock + same template) and visibly separates the
+    # two physical tooling stages.
+    gauge_profiles = sorted({(action_profile(platform), tooling_scope(platform)) for platform in platforms
+                             if tooling_scope(platform) in {"critical_gauge", "final_acceptance"}})
+    if any(scope == "final_acceptance" for _, scope in gauge_profiles):
+        # A precision acceptance blank is not the same generic die stock used
+        # for a field critical gauge. This is both a real high-tier material
+        # gate and prevents two Create deployments with identical inputs from
+        # claiming different gauge outputs for the same action profile.
+        files[RESOURCE_ROOT / "data/tacz/recipe/create/industry/form_acceptance_gauge_stock.json"] = {
+            "fabric:load_conditions": CREATE_CONDITIONS,
+            "type": "create:mechanical_crafting",
+            "key": {
+                "S": "tacz:high_carbon_steel_plate",
+                "B": "create:brass_sheet",
+                "D": "minecraft:diamond",
+                "E": "minecraft:echo_shard",
+            },
+            "pattern": ["SDS", "BEB", "S S"],
+            "result": output("tacz:press_die", acceptance_gauge_stock_tag()),
         }
-        pattern = ["PBP", "SKS", " R "]
-    elif tier == "precision":
-        key = {
-            "P": "minecraft:paper",
-            "B": "create:brass_sheet",
-            "S": "tacz:high_carbon_steel_plate",
-            "D": "minecraft:diamond",
-            "E": "minecraft:echo_shard",
-            "K": seed,
-        }
-        pattern = ["PDP", "SKS", "BEB"]
-    else:
-        raise ValueError(f"Unexpected manufacturing tier {tier}")
+    for profile_id, scope in gauge_profiles:
+        gauge_kind = final_gauge_kind(scope)
+        stock = generic_component_die_stock() if scope == "critical_gauge" else acceptance_gauge_stock_tag()
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/select_{gauge_kind}_blank_{profile_id}.json"] = deploying(
+            partial("tacz:press_die", stock),
+            partial("tacz:press_die", action_jig_tag(profile_id)),
+            output("tacz:press_die", action_gauge_blank_tag(profile_id, scope)),
+        )
+    return files
+
+
+def generated_template_transfer_files(platform: dict[str, Any]) -> dict[Path, Any]:
+    """Generate sample survey plus master/production-template transfer routes."""
+    name = platform["platform"]
+    blank = partial("tacz:gun_blueprint", template_blank_tag())
+    master = master_blueprint_tag(platform)
+    production = production_blueprint_tag(platform)
+    legacy = legacy_blueprint_match_tag(platform)
+    # Existing blueprint_<platform>.json is deliberately reused so an update
+    # replaces the old nonsensical seed recipe instead of leaving it behind.
     return {
-        "fabric:load_conditions": CREATE_CONDITIONS,
-        "type": "create:mechanical_crafting",
-        "key": key,
-        "pattern": pattern,
-        "result": result,
+        RESOURCE_ROOT / f"data/tacz/recipe/create/industry/survey_dossier_{name}.json": deploying(
+            blank, partial("tacz:modern_kinetic_gun", {"GunId": platform["gun_id"]}),
+            output("tacz:gun_blueprint", master),
+        ),
+        RESOURCE_ROOT / f"data/tacz/recipe/create/industry/blueprint_{name}.json": deploying(
+            blank, partial("tacz:gun_blueprint", master), output("tacz:gun_blueprint", production),
+        ),
+        RESOURCE_ROOT / f"data/tacz/recipe/create/industry/copy_template_{name}.json": deploying(
+            blank, partial("tacz:gun_blueprint", production), output("tacz:gun_blueprint", production),
+        ),
+        # Old worlds can convert their previous platform blueprint into the new
+        # explicit production template, but a master dossier cannot accidentally
+        # match this route because its display key is intentionally different.
+        RESOURCE_ROOT / f"data/tacz/recipe/create/industry/restore_template_{name}.json": deploying(
+            blank, partial("tacz:gun_blueprint", legacy), output("tacz:gun_blueprint", production),
+        ),
     }
+
 
 def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
     slug = platform["slug"]
@@ -732,59 +998,88 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
     blueprint = platform["blueprint"]
     parts = platform["parts"]
     materials = platform["materials"]
-    blueprint_key = blueprint["display_name"]
+    profile = action_profile(platform)
+    scope = tooling_scope(platform)
+    production_blueprint = partial("tacz:gun_blueprint", production_blueprint_tag(platform))
     result: dict[Path, Any] = {}
-
-    result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/blueprint_{name}.json"] = generated_tier_blueprint_recipe(platform)
+    result.update(generated_template_transfer_files(platform))
 
     component_entries: list[dict[str, str]] = []
     for part in parts:
         structural = part["structural"]
+        blank_class = part["blank_class"]
         final_kind = part["kind"]
         die_key = f"item.tacz.press_die.component_{name}_{final_kind}"
         component_key = f"item.tacz.gun_component.{name}_{final_kind}"
         die_blank = partial("tacz:press_die", {
             "IndustryPlatform": "machining",
             "IndustryPartKind": "die_blank",
-            "IndustryDisplayName": f"item.tacz.press_die_blank.{structural}",
-            "DieTargetKind": structural,
+            "IndustryDisplayName": f"item.tacz.press_die_blank.{blank_class}",
+            "DieTargetKind": blank_class,
         })
-        held_blueprint = partial("tacz:gun_blueprint", blueprint_match_tag(platform))
         calibrated_die = {
             "IndustryPlatform": name,
             "IndustryPartKind": "component_die",
             "IndustryDisplayName": die_key,
             "DieTargetKind": final_kind,
+            "IndustryActionProfile": profile,
+            "IndustryToolingScope": scope,
         }
+        # A production template is the normal hard gate. Saved-world blueprints
+        # first pass through restore_template_<platform>, which yields this same
+        # explicit production medium without letting a master dossier skip it.
         result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_component_die_{name}_{structural}.json"] = deploying(
-            die_blank, held_blueprint, output("tacz:press_die", calibrated_die)
+            die_blank, production_blueprint, output("tacz:press_die", calibrated_die)
         )
         structural_blank = partial("tacz:gun_component_blank", {
             "IndustryPlatform": "machining",
-            "IndustryPartKind": f"{structural}_blank",
+            "IndustryPartKind": f"{blank_class}_blank",
             "IndustryDisplayName": "item.tacz.gun_component_blank",
         })
         component = {
             "IndustryPlatform": name,
             "IndustryPartKind": final_kind,
             "IndustryDisplayName": component_key,
+            "IndustryActionProfile": profile,
+        }
+        # Profile/scope are provenance/tooltips on new dies. The forming
+        # ingredient deliberately matches only the historical stable identity,
+        # so pre-update calibrated dies in an existing world keep working.
+        calibrated_die_match = {
+            key: value for key, value in calibrated_die.items()
+            if key not in {"IndustryActionProfile", "IndustryToolingScope"}
         }
         result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_component_{name}_{structural}.json"] = deploying(
-            structural_blank, partial("tacz:press_die", calibrated_die), output("tacz:gun_component", component)
+            structural_blank, partial("tacz:press_die", calibrated_die_match), output("tacz:gun_component", component)
         )
-        component_entries.append({"structural": structural, "kind": final_kind, "display_name": component_key})
+        component_entries.append({
+            "structural": structural,
+            "blank_class": blank_class,
+            "kind": final_kind,
+            "display_name": component_key,
+        })
 
     if materials:
         furniture_blank = partial("tacz:gun_component_blank", furniture_blank_tag())
-        held_blueprint = partial("tacz:gun_blueprint", blueprint_match_tag(platform))
         result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_furniture_{name}.json"] = deploying(
-            furniture_blank, held_blueprint, output("tacz:gun_component", furniture_kit_tag(platform))
+            furniture_blank, production_blueprint, output("tacz:gun_component", furniture_kit_tag(platform))
+        )
+
+    final_gauge: dict[str, Any] | None = None
+    if scope in {"critical_gauge", "final_acceptance"}:
+        final_gauge = platform_gauge_tag(platform)
+        gauge_blank = partial("tacz:press_die", action_gauge_blank_tag(profile, scope))
+        result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_{scope}_{name}.json"] = deploying(
+            gauge_blank, production_blueprint, output("tacz:press_die", final_gauge)
         )
 
     result[RESOURCE_ROOT / f"data/tacz/industry/assembly/gun/{slug}.json"] = {
         "platform": name,
         "manufacturing_tier": manufacturing_tier(platform),
-        "blueprint_display_name": blueprint_key,
+        "action_profile": profile,
+        "tooling_scope": scope,
+        "blueprint_display_name": blueprint["display_name"],
+        "legacy_blueprint_display_name": blueprint["legacy_display_name"],
         "terminal_process": f"tacz:create/industry/assemble_{slug}",
         "components": component_entries,
         "materials": materials,
@@ -792,26 +1087,20 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
 
     initial = parts[0]
     initial_component_key = f"item.tacz.gun_component.{name}_{initial['kind']}"
+
     def press_fit_step() -> dict[str, Any]:
-        # A real Mechanical Press station: no second workpiece is introduced,
-        # but the current receiver assembly must physically pass under a press
-        # before the next Deployer can continue the sequential recipe.
+        # One moving workpiece remains on the belt. A press is an actual fit-up
+        # station, not a cosmetic duplicate of the next material deployment.
         return {
             "type": "create:pressing",
             "ingredient": "$ingredient",
             "results": ["$result"],
         }
 
-    sequence: list[dict[str, Any]] = [{
-        "type": "create:deploying",
-        "target": "$ingredient",
-        "ingredient": partial("tacz:gun_blueprint", blueprint_match_tag(platform)),
-        "results": ["$result"],
-        "keep_held_item": True,
-    }, press_fit_step()]
-    # Every major receiver/bolt/barrel/fire-control/recoil joint is both fed by
-    # a Deployer and mechanically press-fit. This makes the displayed sequence
-    # an actual belt line of alternating stations instead of a row of hands.
+    # Templates establish dies/gauges upstream. The terminal itself begins
+    # with the receiver/frame workpiece, so an industrial line can mass-produce
+    # after tooling setup instead of "installing a blueprint" in every gun.
+    sequence: list[dict[str, Any]] = [press_fit_step()]
     for part in parts[1:]:
         sequence.append({
             "type": "create:deploying",
@@ -824,19 +1113,37 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             "results": ["$result"],
         })
         sequence.append(press_fit_step())
-    # Raw wood/leather/glass/brass is intentionally *not* deployed into a
-    # finished receiver one item at a time. It first becomes a neutral
-    # furniture blank in a Mechanical Crafter, then this named kit is
-    # blueprint-calibrated and installed as one meaningful subassembly.
     if materials:
-        furniture = furniture_kit_tag(platform)
         sequence.append({
             "type": "create:deploying",
             "target": "$ingredient",
-            "ingredient": partial("tacz:gun_component", furniture),
+            "ingredient": partial("tacz:gun_component", furniture_kit_tag(platform)),
             "results": ["$result"],
         })
-    sequence.append(press_fit_step())
+        sequence.append(press_fit_step())
+
+    # Simple action families use a reusable field fixture at final fit. Older
+    # but tolerance-sensitive actions add a platform-calibrated gauge; advanced
+    # and precision systems use a final acceptance gauge. No raw template is
+    # fed into a finished receiver here.
+    if scope in {"family_jig", "critical_gauge", "final_acceptance"}:
+        sequence.append({
+            "type": "create:deploying",
+            "target": "$ingredient",
+            "ingredient": partial("tacz:press_die", action_jig_tag(profile)),
+            "results": ["$result"],
+            "keep_held_item": True,
+        })
+        sequence.append(press_fit_step())
+    if final_gauge is not None:
+        sequence.append({
+            "type": "create:deploying",
+            "target": "$ingredient",
+            "ingredient": partial("tacz:press_die", final_gauge),
+            "results": ["$result"],
+            "keep_held_item": True,
+        })
+        sequence.append(press_fit_step())
 
     result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/assemble_{slug}.json"] = {
         "fabric:load_conditions": CREATE_CONDITIONS,
@@ -850,25 +1157,26 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             "IndustryPlatform": name,
             "IndustryPartKind": f"incomplete_{slug}",
             "IndustryDisplayName": f"item.tacz.gun_component.incomplete_{slug}",
+            "IndustryActionProfile": profile,
         }),
         "result": output("tacz:modern_kinetic_gun", {
             "GunId": gun_id,
             "GunFireMode": platform["fire_mode"],
             "GunCurrentAmmoCount": 0,
             "HasBulletInBarrel": False,
-            # Salvage accepts only an actual industrial terminal output, not a
-            # legacy/loot gun that happens to share a GunId.
             "IndustryAssemblyPlatform": name,
             "IndustryAssemblyRecipe": f"tacz:gun/{slug}",
             "IndustryAssemblyTier": manufacturing_tier(platform),
+            "IndustryAssemblyActionProfile": profile,
+            "IndustryAssemblyToolingScope": scope,
         }),
         "sequence": sequence,
     }
     return result
 
-
 def blueprint_custom_data(platform: dict[str, Any]) -> dict[str, Any]:
-    return blueprint_tag(platform)
+    """Loot/trade grants original dossiers; players transfer them to tooling templates."""
+    return master_blueprint_tag(platform)
 
 
 def snbt_compound(values: dict[str, Any]) -> str:
@@ -883,11 +1191,12 @@ def snbt_compound(values: dict[str, Any]) -> str:
 
 
 def generated_blueprint_acquisition_files(platforms: list[dict[str, Any]], acquisition: dict[str, Any]) -> dict[Path, Any]:
-    """Generate tiered blueprint sources instead of a 53-entry master trade lottery.
+    """Generate tiered master-dossier sources instead of a 53-entry trade lottery.
 
-    Direct tier recipes remain deterministic. Villager stock now supplements
-    legacy/service access at appropriate career levels, while advanced/precision
-    dossiers are expedition finds rather than random master-trade clutter.
+    Villager stock supplements legacy/service access at appropriate career
+    levels, while advanced/precision dossiers are expedition finds. The output
+    is deliberately a master dossier; the player performs a physical transfer
+    to a production template on a one-workpiece Create station.
     """
     files: dict[Path, Any] = {}
     tier_platforms: dict[str, list[dict[str, Any]]] = {
@@ -955,6 +1264,49 @@ def generated_blueprint_acquisition_files(platforms: list[dict[str, Any]], acqui
             "values": trade_ids,
         }
     return files
+
+
+def obsolete_generated_platform_files(expected: dict[Path, Any], platforms: list[dict[str, Any]]) -> set[Path]:
+    """Remove renamed per-platform component recipes after action-profile migration.
+
+    Action profiles give old mechanisms real structural names (hinge lock,
+    cylinder timing, lever block, etc.). Their recipe file stems therefore no
+    longer use the old receiver/bolt/recoil labels. Leaving the former files
+    would register duplicate Create deployments with the same physical input.
+    """
+    root = RESOURCE_ROOT / "data/tacz/recipe/create/industry"
+    if not root.exists():
+        return set()
+    platform_ids = {platform["platform"] for platform in platforms}
+    stale: set[Path] = set()
+    for prefix in ("form_component_", "calibrate_component_die_"):
+        for path in root.glob(f"{prefix}*.json"):
+            suffix = path.stem[len(prefix):]
+            if any(suffix.startswith(f"{platform_id}_") for platform_id in platform_ids) and path not in expected:
+                stale.add(path)
+    return stale
+
+
+def obsolete_template_compatibility_files(expected: dict[Path, Any]) -> set[Path]:
+    """Remove an earlier per-die legacy bridge in favour of one restore step.
+
+    Old template stacks are converted once by ``restore_template_*``. Leaving
+    hundreds of duplicate calibration recipes would clutter recipe viewers and
+    weaken the production-template gate without improving compatibility.
+    """
+    root = RESOURCE_ROOT / "data/tacz/recipe/create/industry"
+    if not root.exists():
+        return set()
+    stale = {
+        path for path in root.glob("calibrate_*_legacy_*.json")
+        if path not in expected
+    }
+    # Naming from the draft used critical_gauge_gauge; its early acceptance
+    # selector also used generic die stock. Both must disappear so precision
+    # acceptance always starts from the dedicated multi-slot stock recipe.
+    stale.update(root.glob("select_*_gauge_gauge_blank_*.json"))
+    stale.update(root.glob("select_final_acceptance_gauge_blank_*.json"))
+    return {path for path in stale if path not in expected}
 
 
 def obsolete_blueprint_acquisition_files(expected: dict[Path, Any]) -> set[Path]:
@@ -1307,20 +1659,58 @@ def language_entries(platform: dict[str, Any], language: str) -> dict[str, str]:
     name = platform["platform"]
     blueprint = platform["blueprint"]
     chinese = language == "zh_cn"
-    entries = {blueprint["display_name"]: blueprint["name_zh" if chinese else "name_en"]}
+    label = platform_display_label(platform, language)
+    entries = {
+        blueprint["display_name"]: blueprint["name_zh" if chinese else "name_en"],
+        blueprint["legacy_display_name"]: (
+            f"{label} 旧版平台蓝图" if chinese else f"{label} Legacy Platform Blueprint"
+        ),
+        f"item.tacz.gun_dossier.{name}": (
+            f"{label} 原始工艺档案" if chinese else f"{label} Master Manufacturing Dossier"
+        ),
+    }
     for part in platform["parts"]:
         component_key = f"item.tacz.gun_component.{name}_{part['kind']}"
         die_key = f"item.tacz.press_die.component_{name}_{part['kind']}"
-        label = part["name_zh" if chinese else "name_en"]
+        label_part = part["name_zh" if chinese else "name_en"]
         die_label = part.get("die_name_zh" if chinese else "die_name_en")
-        entries[component_key] = label
-        entries[die_key] = die_label if die_label else (f"{label}模具" if chinese else f"{label} Die")
+        entries[component_key] = label_part
+        entries[die_key] = die_label if die_label else (f"{label_part}模具" if chinese else f"{label_part} Die")
     if platform["materials"]:
-        label = platform_display_label(platform, language)
         entries[f"item.tacz.gun_component.{name}_furniture_kit"] = (
             f"{label} 外装套件" if chinese else f"{label} Exterior Kit"
         )
+    scope = tooling_scope(platform)
+    if scope in {"critical_gauge", "final_acceptance"}:
+        gauge_kind = final_gauge_kind(scope)
+        entries[f"item.tacz.press_die.{gauge_kind}.{name}"] = (
+            f"{label}{'关键配合量规' if scope == 'critical_gauge' else '最终验收检具'}"
+            if chinese else f"{label} {'Critical Fit Gauge' if scope == 'critical_gauge' else 'Final Acceptance Gauge'}"
+        )
     entries[f"item.tacz.gun_component.incomplete_{platform['slug']}"] = platform["incomplete"]["name_zh" if chinese else "name_en"]
+    return entries
+
+
+def action_tooling_language_entries(platforms: list[dict[str, Any]], policy: dict[str, Any], language: str) -> dict[str, str]:
+    """Names for reusable family fixtures and selected gauge stocks."""
+    chinese = language == "zh_cn"
+    entries: dict[str, str] = {}
+    profiles = sorted({action_profile(platform) for platform in platforms})
+    for profile_id in profiles:
+        profile = policy["process_profiles"][profile_id]
+        label = profile["label_zh" if chinese else "label_en"]
+        entries[f"item.tacz.press_die.action_jig.{profile_id}"] = (
+            f"{label}动作夹具" if chinese else f"{label} Action Fixture"
+        )
+        entries[f"tooltip.tacz.industry.action_profile.{profile_id}"] = label
+    for profile_id, scope in sorted({(action_profile(platform), tooling_scope(platform)) for platform in platforms
+                                     if tooling_scope(platform) in {"critical_gauge", "final_acceptance"}}):
+        label = policy["process_profiles"][profile_id]["label_zh" if chinese else "label_en"]
+        gauge_kind = final_gauge_kind(scope)
+        entries[f"item.tacz.press_die.{gauge_kind}_blank.{profile_id}"] = (
+            f"{label}{'关键配合量规毛坯' if scope == 'critical_gauge' else '最终验收检具毛坯'}"
+            if chinese else f"{label} {'Critical Fit Gauge Blank' if scope == 'critical_gauge' else 'Acceptance Gauge Blank'}"
+        )
     return entries
 
 
@@ -2416,6 +2806,34 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
             ("exact",), f"machining:{kind}"
         ))
 
+    # A template blank is a real one-slot workpiece. Its visual family is
+    # intentionally shared with the blueprint medium rather than pretending it
+    # is a finished platform dossier.
+    identities.append(build_icon_identity(
+        "tooling_template_blank", "tooling:template_blank", "tacz:gun_blueprint",
+        {"industry_platform": "tooling", "industry_part_kind": "template_blank"},
+        "Blank Tooling Sheet", ("family",), "tooling:template_blank", "family"
+    ))
+    identities.append(build_icon_identity(
+        "action_fixture", "tooling:acceptance_gauge_stock", "tacz:press_die",
+        {"industry_platform": "tooling", "industry_part_kind": "acceptance_gauge_stock"},
+        "Precision Acceptance Gauge Stock", ("family",), "tooling:acceptance_gauge_stock", "family"
+    ))
+    for profile_id in sorted({action_profile(platform) for platform in platforms}):
+        identities.append(build_icon_identity(
+            "action_fixture", f"action_jig:{profile_id}", "tacz:press_die",
+            {"industry_platform": "tooling", "industry_part_kind": "action_jig", "die_target_kind": profile_id},
+            f"{profile_id} Action Fixture", ("family",), f"action_jig:{profile_id}", "family"
+        ))
+    for profile_id, scope in sorted({(action_profile(platform), tooling_scope(platform)) for platform in platforms
+                                     if tooling_scope(platform) in {"critical_gauge", "final_acceptance"}}):
+        kind = final_gauge_kind(scope)
+        identities.append(build_icon_identity(
+            "action_fixture", f"{kind}_blank:{profile_id}", "tacz:press_die",
+            {"industry_platform": "tooling", "industry_part_kind": f"{kind}_blank", "die_target_kind": profile_id},
+            f"{profile_id} {kind} Blank", ("family",), f"{kind}_blank:{profile_id}", "family"
+        ))
+
     for platform in sorted(platforms, key=lambda value: value["platform"]):
         platform_id = platform["platform"]
         blueprint = platform["blueprint"]
@@ -2424,6 +2842,15 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
             {"industry_platform": platform_id, "industry_part_kind": "blueprint"},
             blueprint["name_en"], ("exact",), f"blueprint:{platform_id}"
         ))
+        scope = tooling_scope(platform)
+        if scope in {"critical_gauge", "final_acceptance"}:
+            kind = final_gauge_kind(scope)
+            identities.append(build_icon_identity(
+                "platform_acceptance_tool", f"{kind}:{platform_id}", "tacz:press_die",
+                {"industry_platform": platform_id, "industry_part_kind": kind},
+                f"{platform_display_label(platform, 'en_us')} {kind}", ("family",),
+                f"{kind}:{platform_id}", "family"
+            ))
         for part in platform["parts"]:
             kind = part["kind"]
             structural = part["structural"]
@@ -2828,6 +3255,112 @@ def generated_industry_block_asset_files(machine_assets: list[dict[str, str]],
         INDUSTRY_BLOCK_COVERAGE_DOCUMENT: render_industry_block_asset_coverage(report),
     }
 
+def _create_input_signature(recipe: dict[str, Any]) -> str | None:
+    """Canonicalize the real input side of the three Create recipe kinds we emit."""
+    recipe_type = recipe.get("type")
+    if recipe_type == "create:compacting":
+        ingredients = recipe.get("ingredients")
+        if not isinstance(ingredients, list):
+            return None
+        return canonical((recipe_type, sorted(canonical(value) for value in ingredients)))
+    if recipe_type == "create:mechanical_crafting":
+        key = recipe.get("key")
+        pattern = recipe.get("pattern")
+        if not isinstance(key, dict) or not isinstance(pattern, list):
+            return None
+        grid: list[list[str]] = []
+        for row in pattern:
+            if not isinstance(row, str):
+                return None
+            grid.append([" " if symbol == " " else canonical(key.get(symbol)) for symbol in row])
+        return canonical((recipe_type, grid))
+    if recipe_type == "create:deploying":
+        if "target" not in recipe or "ingredient" not in recipe:
+            return None
+        return canonical((recipe_type, recipe["target"], recipe["ingredient"]))
+    return None
+
+
+def _create_output_signature(recipe: dict[str, Any]) -> str | None:
+    if "results" in recipe:
+        return canonical(recipe["results"])
+    if "result" in recipe:
+        return canonical(recipe["result"])
+    return None
+
+
+def validate_effective_create_recipe_collisions(expected: dict[Path, Any], removed_paths: set[Path]) -> None:
+    """Reject ambiguous Create processing in the final effective resource set.
+
+    Basin inputs are compared as a multiset, Mechanical Crafter inputs as a
+    physical grid, and Deployer input as its one target plus one held item. The
+    validator starts with unmanaged checked-in industry recipes, overlays the
+    generated output, and removes obsolete generated stems. Therefore it catches
+    a collision between a new route and an older hand-authored route as well as
+    a collision between two generated routes.
+    """
+    recipe_root = RESOURCE_ROOT / "data/tacz/recipe/create/industry"
+    effective: dict[Path, Any] = {}
+    if recipe_root.exists():
+        for path in recipe_root.glob("*.json"):
+            if path not in removed_paths:
+                effective[path] = read_json(path)
+    effective.update({
+        path: value for path, value in expected.items()
+        if recipe_root in path.parents and path not in removed_paths
+    })
+
+    seen: dict[str, tuple[Path, str]] = {}
+    for path, recipe in effective.items():
+        if not isinstance(recipe, dict):
+            continue
+        signature = _create_input_signature(recipe)
+        output_signature = _create_output_signature(recipe)
+        if signature is None or output_signature is None:
+            continue
+        old = seen.get(signature)
+        if old is not None and old[1] != output_signature:
+            raise ValueError(
+                "Create recipe collision: "
+                f"{old[0].relative_to(REPO)} and {path.relative_to(REPO)} have the same physical input but different outputs"
+            )
+        seen[signature] = (path, output_signature)
+
+
+def validate_platform_tooling_semantics(platforms: list[dict[str, Any]], expected: dict[Path, Any]) -> None:
+    """Keep template roles and terminal fixture requirements from silently regressing."""
+    for platform in platforms:
+        name = platform["platform"]
+        scope = tooling_scope(platform)
+        blueprint_path = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/blueprint_{name}.json"
+        blueprint_recipe = expected.get(blueprint_path)
+        if not isinstance(blueprint_recipe, dict) or blueprint_recipe.get("type") != "create:deploying":
+            raise ValueError(f"{name}: production template must come from a one-workpiece dossier transfer")
+        target = blueprint_recipe.get("target", {})
+        held = blueprint_recipe.get("ingredient", {})
+        if target.get("nbt") != template_blank_tag() or held.get("nbt") != master_blueprint_tag(platform):
+            raise ValueError(f"{name}: dossier transfer must be blank sheet + matching master dossier")
+        for part in platform["parts"]:
+            path = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_component_die_{name}_{part['structural']}.json"
+            recipe = expected.get(path)
+            if not isinstance(recipe, dict) or recipe.get("ingredient", {}).get("nbt") != production_blueprint_tag(platform):
+                raise ValueError(f"{name}: component die {part['structural']} must require the production template")
+        assembly_path = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/assemble_{platform['slug']}.json"
+        assembly = expected.get(assembly_path)
+        if not isinstance(assembly, dict) or not isinstance(assembly.get("sequence"), list):
+            raise ValueError(f"{name}: missing terminal sequence")
+        held_tags = [step.get("ingredient", {}).get("nbt", {}) for step in assembly["sequence"]
+                     if isinstance(step, dict) and isinstance(step.get("ingredient"), dict)]
+        if any(tag.get("IndustryPartKind") == "blueprint" for tag in held_tags):
+            raise ValueError(f"{name}: terminal assembly must not deploy a raw blueprint/template")
+        kinds = {tag.get("IndustryPartKind") for tag in held_tags}
+        if scope in {"family_jig", "critical_gauge", "final_acceptance"} and "action_jig" not in kinds:
+            raise ValueError(f"{name}: {scope} terminal requires its reusable action fixture")
+        expected_gauge = final_gauge_kind(scope)
+        if expected_gauge and expected_gauge not in kinds:
+            raise ValueError(f"{name}: {scope} terminal requires a calibrated {expected_gauge}")
+
+
 def existing_json_matches(path: Path, expected: Any) -> bool:
     try:
         return canonical(read_json(path)) == canonical(expected)
@@ -2845,21 +3378,31 @@ def update_language(path: Path, entries: dict[str, str], write: bool) -> list[st
 
 
 def run(write: bool) -> int:
-    explicit_platforms = load_platforms()
-    auto_platforms = discover_default_platforms({platform["slug"] for platform in explicit_platforms})
+    policy = load_default_gun_policy()
+    explicit_platforms = load_platforms(policy)
+    auto_platforms = discover_default_platforms({platform["slug"] for platform in explicit_platforms}, policy)
     platforms = [*explicit_platforms, *auto_platforms]
-    signatures = {canonical(sorted(platform["blueprint"]["ingredients"])) for platform in explicit_platforms}
-    for platform in auto_platforms:
-        signature = canonical(sorted(platform["blueprint"]["ingredients"]))
-        if signature in signatures:
-            raise ValueError(f"{DEFAULT_GUN_POLICY}: auto blueprint signature collision for {platform['slug']}")
-        signatures.add(signature)
     cartridges = load_cartridges()
     machine_assets = load_machine_assets()
     blueprint_acquisition = load_blueprint_acquisition()
     expected: dict[Path, Any] = {}
     english: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "Neutral Exterior / Furniture Blank",
+        "item.tacz.gun_blueprint.blank": "Blank Tooling Sheet",
+        "item.tacz.press_die.acceptance_gauge_stock": "Precision Acceptance Gauge Stock",
+        "tooltip.tacz.blueprint.role.blank": "Blank tooling sheet — transfer a dossier or measured pattern onto it",
+        "tooltip.tacz.blueprint.role.master": "Master manufacturing dossier — source document; retained by the transfer station",
+        "tooltip.tacz.blueprint.role.production": "Production tooling template — calibrates dies and gauges; retained by the tooling station",
+        "tooltip.tacz.blueprint.role.legacy": "Legacy platform blueprint — retained compatibility tooling",
+        "tooltip.tacz.industry.action_jig": "Action-family fixture (held by a Deployer; not consumed)",
+        "tooltip.tacz.industry.critical_gauge": "Platform critical-fit gauge (held by a Deployer; not consumed)",
+        "tooltip.tacz.industry.acceptance_gauge": "Platform final-acceptance gauge (held by a Deployer; not consumed)",
+        "tooltip.tacz.industry.action_profile": "Action profile: %s",
+        "tooltip.tacz.industry.tooling_scope": "Mandatory tooling: %s",
+        "tooltip.tacz.industry.tooling_scope.family_jig": "Family fixture at final fit",
+        "tooltip.tacz.industry.tooling_scope.critical_gauge": "Platform critical-fit gauge",
+        "tooltip.tacz.industry.tooling_scope.platform_tooling": "Platform dies during tooling setup",
+        "tooltip.tacz.industry.tooling_scope.final_acceptance": "Platform final-acceptance gauge",
         "tooltip.tacz.blueprint.tier.legacy": "Legacy Field Pattern — low tooling complexity",
         "tooltip.tacz.blueprint.tier.service": "Service Schematic — standardized production",
         "tooltip.tacz.blueprint.tier.advanced": "Modern Technical Package — advanced tooling required",
@@ -2873,6 +3416,21 @@ def run(write: bool) -> int:
     }
     chinese: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "中性外装套件毛坯",
+        "item.tacz.gun_blueprint.blank": "空白工装页",
+        "item.tacz.press_die.acceptance_gauge_stock": "精密验收检具料坯",
+        "tooltip.tacz.blueprint.role.blank": "空白工装页——用原始档案或实物测绘结果转印",
+        "tooltip.tacz.blueprint.role.master": "原始工艺档案——作为转印来源，由工位持有且不消耗",
+        "tooltip.tacz.blueprint.role.production": "生产工装模板——用于校准模具和量规，由工位持有且不消耗",
+        "tooltip.tacz.blueprint.role.legacy": "旧版平台蓝图——可继续作为兼容工装使用",
+        "tooltip.tacz.industry.action_jig": "动作族夹具（由部署器持有，不消耗）",
+        "tooltip.tacz.industry.critical_gauge": "平台关键配合量规（由部署器持有，不消耗）",
+        "tooltip.tacz.industry.acceptance_gauge": "平台最终验收检具（由部署器持有，不消耗）",
+        "tooltip.tacz.industry.action_profile": "动作类型：%s",
+        "tooltip.tacz.industry.tooling_scope": "强制工装：%s",
+        "tooltip.tacz.industry.tooling_scope.family_jig": "最终配合使用动作族夹具",
+        "tooltip.tacz.industry.tooling_scope.critical_gauge": "平台关键配合量规",
+        "tooltip.tacz.industry.tooling_scope.platform_tooling": "建线时校准平台模具",
+        "tooltip.tacz.industry.tooling_scope.final_acceptance": "平台最终验收检具",
         "tooltip.tacz.blueprint.tier.legacy": "野战图样 — 低工具复杂度",
         "tooltip.tacz.blueprint.tier.service": "制式图纸 — 标准化生产",
         "tooltip.tacz.blueprint.tier.advanced": "现代技术包 — 需要高级工装",
@@ -2885,6 +3443,10 @@ def run(write: bool) -> int:
         "gui.tacz.industrial_salvage.salvage_hint": "检验输入物，只回收带有工业来源标记的物品。",
     }
     expected.update(generated_furniture_blank_files(platforms))
+    expected.update(generated_template_blank_file(policy))
+    expected.update(generated_action_jig_files(platforms, policy))
+    english.update(action_tooling_language_entries(platforms, policy, "en_us"))
+    chinese.update(action_tooling_language_entries(platforms, policy, "zh_cn"))
     for platform in platforms:
         expected.update(generated_platform_files(platform))
         english.update(language_entries(platform, "en_us"))
@@ -2905,6 +3467,11 @@ def run(write: bool) -> int:
     expected.update(generated_industry_block_asset_files(
         machine_assets, merged_tacz_extra_files(), icon_files[ICON_CATALOG]
     ))
+    obsolete_platform_paths = obsolete_generated_platform_files(expected, platforms)
+    obsolete_template_paths = obsolete_template_compatibility_files(expected)
+    obsolete_acquisition_paths = obsolete_blueprint_acquisition_files(expected)
+    validate_effective_create_recipe_collisions(expected, obsolete_platform_paths | obsolete_template_paths)
+    validate_platform_tooling_semantics(platforms, expected)
 
     stale: list[str] = []
     for path, value in sorted(expected.items(), key=lambda pair: str(pair[0])):
@@ -2935,10 +3502,25 @@ def run(write: bool) -> int:
             if write:
                 path.unlink()
 
+    # Structural profile names can rename generator-owned component recipe
+    # files; delete old stems so Create never sees duplicate deployments.
+    for path in sorted(obsolete_platform_paths):
+        stale.append(str(path.relative_to(REPO)))
+        if write:
+            path.unlink()
+
+    # The first tooling-rework draft briefly emitted one legacy compatibility
+    # calibration recipe per die. One explicit restore route is clearer and
+    # preserves every old template without duplicate JEI/REI entries.
+    for path in sorted(obsolete_template_paths):
+        stale.append(str(path.relative_to(REPO)))
+        if write:
+            path.unlink()
+
     # Tiered acquisition supersedes the old monolithic level-5 cache/trade
     # set. Keep authored vanilla data untouched; remove only our blueprint_* /
     # industrial_blueprint_cache* generated files.
-    for path in sorted(obsolete_blueprint_acquisition_files(expected)):
+    for path in sorted(obsolete_acquisition_paths):
         stale.append(str(path.relative_to(REPO)))
         if write:
             path.unlink()

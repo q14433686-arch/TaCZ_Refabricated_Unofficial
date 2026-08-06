@@ -38,7 +38,8 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "mp5",
           "IndustryPartKind": "receiver",
-          "IndustryDisplayName": "item.tacz.gun_component.mp5_receiver"
+          "IndustryDisplayName": "item.tacz.gun_component.mp5_receiver",
+          "IndustryActionProfile": "roller_delayed_rifle"
         }
       }
     }

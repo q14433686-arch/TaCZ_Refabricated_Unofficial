@@ -21,7 +21,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"ar\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ar\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"ar\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.ar\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -31,7 +31,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_aa12\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_aa12\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_aa12\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_aa12\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_operated_shotgun\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -41,7 +41,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_aug\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_aug\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_aug\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_aug\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"bullpup_rifle\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -51,7 +51,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_g36k\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_g36k\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_g36k\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_g36k\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -61,7 +61,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_hk416d\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_hk416d\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_hk416d\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_hk416d\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -71,7 +71,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_hk_mk23\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_hk_mk23\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_hk_mk23\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_hk_mk23\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"locked_breech_pistol\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -81,7 +81,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m1014\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m1014\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_m1014\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_m1014\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_operated_shotgun\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -91,7 +91,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m320\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m320\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_m320\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_m320\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"launcher\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -101,7 +101,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_qbz_191\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_qbz_191\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_qbz_191\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_qbz_191\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"bullpup_rifle\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -111,7 +111,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_qbz_95\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_qbz_95\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_qbz_95\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_qbz_95\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"bullpup_rifle\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -121,7 +121,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_rpk\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_rpk\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_rpk\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_rpk\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -131,7 +131,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_scar_h\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_scar_h\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_scar_h\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_scar_h\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -141,7 +141,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_scar_l\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_scar_l\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_scar_l\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_scar_l\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -151,7 +151,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_spas_12\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_spas_12\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_spas_12\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_spas_12\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"hybrid_shotgun\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -161,7 +161,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_spr15hb\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_spr15hb\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_spr15hb\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_spr15hb\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"gas_rifle\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -171,7 +171,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_vector45\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_vector45\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"default_vector45\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.default_vector45\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"blowback_smg\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         },
@@ -181,7 +181,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"p90\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.p90\",IndustryBlueprintTier:\"advanced\"}"
+              "tag": "{IndustryPlatform:\"p90\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_dossier.p90\",IndustryBlueprintTier:\"advanced\",IndustryBlueprintRole:\"master\",IndustryActionProfile:\"bullpup_rifle\",IndustryToolingScope:\"final_acceptance\"}"
             }
           ]
         }

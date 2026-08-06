@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_minigun",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_minigun"
+      "IndustryDisplayName": "item.tacz.gun_template.default_minigun",
+      "IndustryBlueprintTier": "precision",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "rotary",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [

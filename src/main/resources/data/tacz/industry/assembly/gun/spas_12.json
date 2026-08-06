@@ -1,31 +1,39 @@
 {
   "platform": "default_spas_12",
   "manufacturing_tier": "advanced",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_spas_12",
+  "action_profile": "hybrid_shotgun",
+  "tooling_scope": "final_acceptance",
+  "blueprint_display_name": "item.tacz.gun_template.default_spas_12",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_spas_12",
   "terminal_process": "tacz:create/industry/assemble_spas_12",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "hybrid_action_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_spas_12_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "dual_mode_bolt_group",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_spas_12_bolt"
     },
     {
-      "structural": "barrel",
+      "structural": "shotgun_barrel_assembly",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_spas_12_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "hybrid_linkage_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_spas_12_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "tube_magazine_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_spas_12_recoil"
     }

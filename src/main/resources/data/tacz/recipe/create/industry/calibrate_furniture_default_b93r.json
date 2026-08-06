@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_b93r",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_b93r"
+      "IndustryDisplayName": "item.tacz.gun_template.default_b93r",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
   "results": [

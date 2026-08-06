@@ -7,12 +7,34 @@
       ]
     }
   ],
-  "type": "create:compacting",
-  "ingredients": [
-    "minecraft:paper",
-    "minecraft:paper",
-    "minecraft:ender_pearl"
-  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "template_blank",
+      "IndustryDisplayName": "item.tacz.gun_blueprint.blank",
+      "IndustryBlueprintRole": "blank"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_kar98",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_dossier.default_kar98",
+      "IndustryBlueprintTier": "legacy",
+      "IndustryBlueprintRole": "master",
+      "IndustryActionProfile": "bolt_action",
+      "IndustryToolingScope": "critical_gauge"
+    }
+  },
   "results": [
     {
       "id": "tacz:gun_blueprint",
@@ -20,10 +42,14 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_kar98",
           "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_kar98",
-          "IndustryBlueprintTier": "legacy"
+          "IndustryDisplayName": "item.tacz.gun_template.default_kar98",
+          "IndustryBlueprintTier": "legacy",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "bolt_action",
+          "IndustryToolingScope": "critical_gauge"
         }
       }
     }
-  ]
+  ],
+  "keep_held_item": true
 }

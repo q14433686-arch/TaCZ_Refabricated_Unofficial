@@ -4,46 +4,46 @@
   "gun_id": "tacz:p90",
   "fire_mode": "AUTO",
   "blueprint": {
-    "display_name": "item.tacz.gun_blueprint.p90",
-    "ingredients": [
-      "minecraft:paper",
-      "minecraft:paper",
-      "create:brass_sheet",
-      "minecraft:glowstone_dust"
-    ],
-    "name_en": "P90 Platform Assembly Blueprint",
-    "name_zh": "P90 平台装配模板"
+    "display_name": "item.tacz.gun_template.p90",
+    "name_en": "P90 Platform Tooling Template",
+    "name_zh": "P90 平台工装模板",
+    "legacy_display_name": "item.tacz.gun_blueprint.p90"
   },
   "parts": [
     {
       "structural": "receiver",
       "kind": "receiver",
       "name_en": "P90 Receiver",
-      "name_zh": "P90 机匣"
+      "name_zh": "P90 机匣",
+      "blank_class": "receiver"
     },
     {
       "structural": "bolt",
       "kind": "bolt",
       "name_en": "P90 Bolt Group",
-      "name_zh": "P90 枪机组"
+      "name_zh": "P90 枪机组",
+      "blank_class": "bolt"
     },
     {
       "structural": "barrel",
       "kind": "barrel",
       "name_en": "P90 5.7 Barrel",
-      "name_zh": "P90 5.7 枪管"
+      "name_zh": "P90 5.7 枪管",
+      "blank_class": "barrel"
     },
     {
       "structural": "trigger",
       "kind": "trigger",
       "name_en": "P90 Fire-Control Group",
-      "name_zh": "P90 击发组"
+      "name_zh": "P90 击发组",
+      "blank_class": "trigger"
     },
     {
       "structural": "recoil",
       "kind": "recoil",
       "name_en": "P90 Recoil Assembly",
-      "name_zh": "P90 复进组件"
+      "name_zh": "P90 复进组件",
+      "blank_class": "recoil"
     }
   ],
   "materials": [
@@ -60,5 +60,7 @@
     "name_en": "Incomplete P90 Assembly",
     "name_zh": "未完成的 P90 总成"
   },
-  "manufacturing_tier": "advanced"
+  "manufacturing_tier": "advanced",
+  "action_profile": "bullpup_rifle",
+  "tooling_scope": "final_acceptance"
 }

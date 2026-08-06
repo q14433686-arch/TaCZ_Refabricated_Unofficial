@@ -38,7 +38,8 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "ump",
           "IndustryPartKind": "trigger",
-          "IndustryDisplayName": "item.tacz.gun_component.ump_trigger"
+          "IndustryDisplayName": "item.tacz.gun_component.ump_trigger",
+          "IndustryActionProfile": "blowback_smg"
         }
       }
     }

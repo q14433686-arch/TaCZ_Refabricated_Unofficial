@@ -1,0 +1,49 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "template_blank",
+      "IndustryDisplayName": "item.tacz.gun_blueprint.blank",
+      "IndustryBlueprintRole": "blank"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:modern_kinetic_gun"
+    ],
+    "nbt": {
+      "GunId": "tacz:deagle_golden"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_blueprint",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_deagle_golden",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_dossier.default_deagle_golden",
+          "IndustryBlueprintTier": "service",
+          "IndustryBlueprintRole": "master",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

@@ -1,0 +1,56 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "acceptance_gauge_blank",
+      "IndustryDisplayName": "item.tacz.press_die.acceptance_gauge_blank.gas_rifle",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "final_acceptance",
+      "DieTargetKind": "gas_rifle"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_scar_h",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_template.default_scar_h",
+      "IndustryBlueprintTier": "advanced",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "final_acceptance"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_scar_h",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.acceptance_gauge.default_scar_h",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "gas_rifle"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

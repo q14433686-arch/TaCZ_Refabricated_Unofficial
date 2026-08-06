@@ -28,7 +28,11 @@
     "nbt": {
       "IndustryPlatform": "ar",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.ar"
+      "IndustryDisplayName": "item.tacz.gun_template.ar",
+      "IndustryBlueprintTier": "advanced",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "final_acceptance"
     }
   },
   "results": [
@@ -39,7 +43,9 @@
           "IndustryPlatform": "ar",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_ar_barrel",
-          "DieTargetKind": "barrel"
+          "DieTargetKind": "barrel",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "final_acceptance"
         }
       }
     }

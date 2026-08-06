@@ -21,14 +21,19 @@ import java.util.List;
 public final class IndustryAssemblyDefinition {
     private final String platform;
     private final String blueprintDisplayName;
+    private final String actionProfile;
+    private final String toolingScope;
     private final Identifier terminalProcess;
     private final List<Component> components;
     private final List<Material> materials;
 
-    private IndustryAssemblyDefinition(String platform, String blueprintDisplayName, Identifier terminalProcess,
+    private IndustryAssemblyDefinition(String platform, String blueprintDisplayName, String actionProfile,
+                                       String toolingScope, Identifier terminalProcess,
                                        List<Component> components, List<Material> materials) {
         this.platform = platform;
         this.blueprintDisplayName = blueprintDisplayName;
+        this.actionProfile = actionProfile;
+        this.toolingScope = toolingScope;
         this.terminalProcess = terminalProcess;
         this.components = List.copyOf(components);
         this.materials = List.copyOf(materials);
@@ -40,6 +45,16 @@ public final class IndustryAssemblyDefinition {
 
     public String getBlueprintDisplayName() {
         return blueprintDisplayName;
+    }
+
+    /** Data-visible action family; it drives jigs/gauges without conflating age with simplicity. */
+    public String getActionProfile() {
+        return actionProfile;
+    }
+
+    /** The stage where the platform tooling is mandatory. */
+    public String getToolingScope() {
+        return toolingScope;
     }
 
     /** Actual Create recipe id, e.g. {@code tacz:create/industry/assemble_ak47}. */
@@ -66,6 +81,8 @@ public final class IndustryAssemblyDefinition {
         JsonObject object = raw.getAsJsonObject();
         String platform = string(object, "platform");
         String blueprint = string(object, "blueprint_display_name");
+        String actionProfile = string(object, "action_profile");
+        String toolingScope = string(object, "tooling_scope");
         Identifier terminalProcess = Identifier.tryParse(string(object, "terminal_process"));
         List<Component> components = new ArrayList<>();
         if (object.has("components") && object.get("components").isJsonArray()) {
@@ -73,10 +90,11 @@ public final class IndustryAssemblyDefinition {
                 if (!entry.isJsonObject()) continue;
                 JsonObject component = entry.getAsJsonObject();
                 String structural = string(component, "structural");
+                String blankClass = string(component, "blank_class");
                 String kind = string(component, "kind");
                 String display = string(component, "display_name");
                 if (!kind.isBlank() && !display.isBlank()) {
-                    components.add(new Component(structural, kind, display));
+                    components.add(new Component(structural, blankClass, kind, display));
                 }
             }
         }
@@ -93,7 +111,7 @@ public final class IndustryAssemblyDefinition {
             }
         }
         IndustryAssemblyDefinition definition = new IndustryAssemblyDefinition(
-                platform, blueprint, terminalProcess, components, materials
+                platform, blueprint, actionProfile, toolingScope, terminalProcess, components, materials
         );
         return definition.isValid() ? definition : null;
     }
@@ -111,12 +129,14 @@ public final class IndustryAssemblyDefinition {
     }
 
     /**
-     * {@code structural} is the neutral blank class (receiver, bolt, barrel,
-     * trigger or recoil); {@code kind} is the platform-specific finished part.
-     * Older third-party declarations may omit structural and remain readable,
-     * but cannot claim a particular blank during safe industrial salvage.
+     * {@code structural} is the real action-part name shown to the player
+     * (for example hinge lock or cylinder timing). {@code blankClass} records
+     * which neutral stock it came from, so salvage can return a valid blank
+     * without falsely calling every old-gun mechanism a bolt or recoil unit.
+     * Older declarations may omit {@code blankClass}; recovery then falls back
+     * to the historical receiver/bolt/barrel/trigger/recoil order.
      */
-    public record Component(String structural, String kind, String displayName) {
+    public record Component(String structural, String blankClass, String kind, String displayName) {
     }
 
     public record Material(String itemId, int count) {

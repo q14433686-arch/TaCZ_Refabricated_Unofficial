@@ -1,31 +1,39 @@
 {
   "platform": "default_hk_g3",
   "manufacturing_tier": "service",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_hk_g3",
+  "action_profile": "roller_delayed_rifle",
+  "tooling_scope": "platform_tooling",
+  "blueprint_display_name": "item.tacz.gun_template.default_hk_g3",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_hk_g3",
   "terminal_process": "tacz:create/industry/assemble_hk_g3",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "roller_delayed_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_hk_g3_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "roller_lock_bolt_group",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_hk_g3_bolt"
     },
     {
       "structural": "barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_hk_g3_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "fire_control_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_hk_g3_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "return_buffer_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_hk_g3_recoil"
     }

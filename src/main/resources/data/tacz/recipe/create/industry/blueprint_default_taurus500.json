@@ -7,12 +7,34 @@
       ]
     }
   ],
-  "type": "create:compacting",
-  "ingredients": [
-    "minecraft:paper",
-    "minecraft:paper",
-    "minecraft:lime_dye"
-  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "template_blank",
+      "IndustryDisplayName": "item.tacz.gun_blueprint.blank",
+      "IndustryBlueprintRole": "blank"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_taurus500",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_dossier.default_taurus500",
+      "IndustryBlueprintTier": "legacy",
+      "IndustryBlueprintRole": "master",
+      "IndustryActionProfile": "revolver",
+      "IndustryToolingScope": "critical_gauge"
+    }
+  },
   "results": [
     {
       "id": "tacz:gun_blueprint",
@@ -20,10 +42,14 @@
         "minecraft:custom_data": {
           "IndustryPlatform": "default_taurus500",
           "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_taurus500",
-          "IndustryBlueprintTier": "legacy"
+          "IndustryDisplayName": "item.tacz.gun_template.default_taurus500",
+          "IndustryBlueprintTier": "legacy",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "revolver",
+          "IndustryToolingScope": "critical_gauge"
         }
       }
     }
-  ]
+  ],
+  "keep_held_item": true
 }

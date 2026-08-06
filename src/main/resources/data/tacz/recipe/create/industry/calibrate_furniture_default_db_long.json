@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_db_long",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_db_long"
+      "IndustryDisplayName": "item.tacz.gun_template.default_db_long",
+      "IndustryBlueprintTier": "legacy",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "break_action",
+      "IndustryToolingScope": "family_jig"
     }
   },
   "results": [

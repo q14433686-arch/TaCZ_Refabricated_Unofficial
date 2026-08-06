@@ -1,31 +1,39 @@
 {
   "platform": "fal",
   "manufacturing_tier": "service",
-  "blueprint_display_name": "item.tacz.gun_blueprint.fal",
+  "action_profile": "gas_rifle",
+  "tooling_scope": "platform_tooling",
+  "blueprint_display_name": "item.tacz.gun_template.fal",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.fal",
   "terminal_process": "tacz:create/industry/assemble_fn_fal",
   "components": [
     {
       "structural": "receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.fal_receiver"
     },
     {
       "structural": "bolt",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.fal_bolt"
     },
     {
       "structural": "barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.fal_barrel"
     },
     {
       "structural": "trigger",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.fal_trigger"
     },
     {
       "structural": "recoil",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.fal_recoil"
     }

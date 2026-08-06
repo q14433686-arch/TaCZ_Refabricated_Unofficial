@@ -1,31 +1,39 @@
 {
   "platform": "default_db_long",
   "manufacturing_tier": "legacy",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_db_long",
+  "action_profile": "break_action",
+  "tooling_scope": "family_jig",
+  "blueprint_display_name": "item.tacz.gun_template.default_db_long",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_db_long",
   "terminal_process": "tacz:create/industry/assemble_db_long",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "break_action_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_db_long_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "hinge_and_locking_group",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_db_long_bolt"
     },
     {
-      "structural": "barrel",
+      "structural": "paired_barrel_set",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_db_long_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "double_trigger_lockwork",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_db_long_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "fore_end_and_ejector_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_db_long_recoil"
     }

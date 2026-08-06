@@ -1,31 +1,39 @@
 {
   "platform": "mp5",
   "manufacturing_tier": "service",
-  "blueprint_display_name": "item.tacz.gun_blueprint.mp5",
+  "action_profile": "roller_delayed_rifle",
+  "tooling_scope": "platform_tooling",
+  "blueprint_display_name": "item.tacz.gun_template.mp5",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.mp5",
   "terminal_process": "tacz:create/industry/assemble_hk_mp5a5",
   "components": [
     {
       "structural": "receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.mp5_receiver"
     },
     {
       "structural": "bolt",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.mp5_bolt"
     },
     {
       "structural": "barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.mp5_barrel"
     },
     {
       "structural": "trigger",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.mp5_trigger"
     },
     {
       "structural": "recoil",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.mp5_recoil"
     }

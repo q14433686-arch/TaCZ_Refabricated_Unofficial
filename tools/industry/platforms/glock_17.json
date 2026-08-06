@@ -4,15 +4,10 @@
   "gun_id": "tacz:glock_17",
   "fire_mode": "SEMI",
   "blueprint": {
-    "display_name": "item.tacz.gun_blueprint.glock",
-    "ingredients": [
-      "minecraft:paper",
-      "minecraft:paper",
-      "create:brass_sheet",
-      "minecraft:lapis_lazuli"
-    ],
-    "name_en": "Glock Platform Assembly Blueprint",
-    "name_zh": "Glock 平台装配模板"
+    "display_name": "item.tacz.gun_template.glock",
+    "name_en": "Glock Platform Tooling Template",
+    "name_zh": "Glock 平台工装模板",
+    "legacy_display_name": "item.tacz.gun_blueprint.glock"
   },
   "parts": [
     {
@@ -21,7 +16,8 @@
       "name_en": "Glock Frame",
       "name_zh": "Glock 枪身",
       "die_name_en": "Glock Frame Die",
-      "die_name_zh": "Glock 枪身模具"
+      "die_name_zh": "Glock 枪身模具",
+      "blank_class": "receiver"
     },
     {
       "structural": "bolt",
@@ -29,7 +25,8 @@
       "name_en": "Glock Slide/Bolt",
       "name_zh": "Glock 套筒/枪机",
       "die_name_en": "Glock Slide Die",
-      "die_name_zh": "Glock 套筒模具"
+      "die_name_zh": "Glock 套筒模具",
+      "blank_class": "bolt"
     },
     {
       "structural": "barrel",
@@ -37,7 +34,8 @@
       "name_en": "Glock 9 mm Barrel",
       "name_zh": "Glock 9 mm 枪管",
       "die_name_en": "Glock Barrel Die",
-      "die_name_zh": "Glock 枪管模具"
+      "die_name_zh": "Glock 枪管模具",
+      "blank_class": "barrel"
     },
     {
       "structural": "trigger",
@@ -45,7 +43,8 @@
       "name_en": "Glock Fire-Control Group",
       "name_zh": "Glock 击发组",
       "die_name_en": "Glock Fire-Control Die",
-      "die_name_zh": "Glock 击发组模具"
+      "die_name_zh": "Glock 击发组模具",
+      "blank_class": "trigger"
     },
     {
       "structural": "recoil",
@@ -53,7 +52,8 @@
       "name_en": "Glock Recoil Assembly",
       "name_zh": "Glock 复进簧组件",
       "die_name_en": "Glock Recoil Die",
-      "die_name_zh": "Glock 复进簧模具"
+      "die_name_zh": "Glock 复进簧模具",
+      "blank_class": "recoil"
     }
   ],
   "materials": [
@@ -66,5 +66,7 @@
     "name_en": "Incomplete Glock 17 Assembly",
     "name_zh": "未完成的 Glock 17 总成"
   },
-  "manufacturing_tier": "service"
+  "manufacturing_tier": "service",
+  "action_profile": "locked_breech_pistol",
+  "tooling_scope": "critical_gauge"
 }

@@ -7,28 +7,49 @@
       ]
     }
   ],
-  "type": "create:mechanical_crafting",
-  "key": {
-    "P": "minecraft:paper",
-    "B": "create:brass_sheet",
-    "S": "tacz:high_carbon_steel_plate",
-    "R": "minecraft:redstone",
-    "K": "minecraft:cyan_dye"
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "template_blank",
+      "IndustryDisplayName": "item.tacz.gun_blueprint.blank",
+      "IndustryBlueprintRole": "blank"
+    }
   },
-  "pattern": [
-    "PBP",
-    "SKS",
-    " R "
-  ],
-  "result": {
-    "id": "tacz:gun_blueprint",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_spr15hb",
-        "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_spr15hb",
-        "IndustryBlueprintTier": "advanced"
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_spr15hb",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_dossier.default_spr15hb",
+      "IndustryBlueprintTier": "advanced",
+      "IndustryBlueprintRole": "master",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "final_acceptance"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_blueprint",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_spr15hb",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_template.default_spr15hb",
+          "IndustryBlueprintTier": "advanced",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "final_acceptance"
+        }
       }
     }
-  }
+  ],
+  "keep_held_item": true
 }

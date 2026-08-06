@@ -28,7 +28,11 @@
     "nbt": {
       "IndustryPlatform": "default_uzi",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_uzi"
+      "IndustryDisplayName": "item.tacz.gun_template.default_uzi",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "blowback_smg",
+      "IndustryToolingScope": "platform_tooling"
     }
   },
   "results": [
@@ -39,7 +43,9 @@
           "IndustryPlatform": "default_uzi",
           "IndustryPartKind": "component_die",
           "IndustryDisplayName": "item.tacz.press_die.component_default_uzi_barrel",
-          "DieTargetKind": "barrel"
+          "DieTargetKind": "barrel",
+          "IndustryActionProfile": "blowback_smg",
+          "IndustryToolingScope": "platform_tooling"
         }
       }
     }

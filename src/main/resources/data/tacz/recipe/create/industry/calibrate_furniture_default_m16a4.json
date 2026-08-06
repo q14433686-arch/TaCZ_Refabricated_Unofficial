@@ -27,7 +27,11 @@
     "nbt": {
       "IndustryPlatform": "default_m16a4",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m16a4"
+      "IndustryDisplayName": "item.tacz.gun_template.default_m16a4",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "platform_tooling"
     }
   },
   "results": [

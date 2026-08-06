@@ -1,31 +1,39 @@
 {
   "platform": "default_hk416d",
   "manufacturing_tier": "advanced",
-  "blueprint_display_name": "item.tacz.gun_blueprint.default_hk416d",
+  "action_profile": "gas_rifle",
+  "tooling_scope": "final_acceptance",
+  "blueprint_display_name": "item.tacz.gun_template.default_hk416d",
+  "legacy_blueprint_display_name": "item.tacz.gun_blueprint.default_hk416d",
   "terminal_process": "tacz:create/industry/assemble_hk416d",
   "components": [
     {
-      "structural": "receiver",
+      "structural": "gas_system_receiver",
+      "blank_class": "receiver",
       "kind": "receiver",
       "display_name": "item.tacz.gun_component.default_hk416d_receiver"
     },
     {
-      "structural": "bolt",
+      "structural": "bolt_carrier_group",
+      "blank_class": "bolt",
       "kind": "bolt",
       "display_name": "item.tacz.gun_component.default_hk416d_bolt"
     },
     {
-      "structural": "barrel",
+      "structural": "gas_regulated_barrel",
+      "blank_class": "barrel",
       "kind": "barrel",
       "display_name": "item.tacz.gun_component.default_hk416d_barrel"
     },
     {
-      "structural": "trigger",
+      "structural": "fire_control_group",
+      "blank_class": "trigger",
       "kind": "trigger",
       "display_name": "item.tacz.gun_component.default_hk416d_trigger"
     },
     {
-      "structural": "recoil",
+      "structural": "return_buffer_assembly",
+      "blank_class": "recoil",
       "kind": "recoil",
       "display_name": "item.tacz.gun_component.default_hk416d_recoil"
     }
