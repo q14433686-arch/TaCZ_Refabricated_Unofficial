@@ -5,7 +5,7 @@
   "feed_device_capacity": 5,
   "feed_device_reusable": false,
   "reload_batch": 5,
-  "loose_reload_batch": 1,
+  "loose_reload_mode": "none",
   "ammo": "tacz:762x39",
   "display_name": "item.tacz.feed_device.rainforest_type56_stripper"
 }

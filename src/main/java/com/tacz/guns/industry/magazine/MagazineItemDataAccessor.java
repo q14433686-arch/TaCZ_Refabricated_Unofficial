@@ -25,6 +25,13 @@ public interface MagazineItemDataAccessor extends IMagazine {
     String MAGAZINE_DISPLAY_NAME_TAG = "MagazineDisplayName";
     /** detachable_magazine/belt for legacy carrier stacks; stripper_clip/speedloader for internal loaders. */
     String FEED_DEVICE_KIND_TAG = "FeedDeviceKind";
+    /**
+     * Stable per-stack identity used only while a bridge clip/speedloader is
+     * reserved during a reload animation. AmmoCount is intentionally mutable,
+     * so comparing a copied ItemStack byte-for-byte would reject the second
+     * round of a genuine scripted loop.
+     */
+    String FEED_DEVICE_INSTANCE_ID_TAG = "FeedDeviceInstanceId";
 
     int MAX_MAGAZINE_CAPACITY = 512;
 
@@ -112,6 +119,16 @@ public interface MagazineItemDataAccessor extends IMagazine {
     default void setFeedDeviceKind(ItemStack magazine, String kind) {
         ItemNbtUtils.updateTag(magazine, tag -> tag.putString(
                 FEED_DEVICE_KIND_TAG, kind == null ? "" : kind
+        ));
+    }
+
+    default String getFeedDeviceInstanceId(ItemStack magazine) {
+        return ItemNbtUtils.getTag(magazine).getStringOr(FEED_DEVICE_INSTANCE_ID_TAG, "");
+    }
+
+    default void setFeedDeviceInstanceId(ItemStack magazine, String instanceId) {
+        ItemNbtUtils.updateTag(magazine, tag -> tag.putString(
+                FEED_DEVICE_INSTANCE_ID_TAG, instanceId == null ? "" : instanceId
         ));
     }
 

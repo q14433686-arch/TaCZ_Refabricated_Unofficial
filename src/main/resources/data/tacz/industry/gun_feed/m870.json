@@ -2,6 +2,7 @@
   "mechanism": "tube",
   "magazine_capacity": 5,
   "reload_batch": 5,
+  "loose_reload_mode": "script_loop",
   "ammo": "tacz:12g",
   "display_name": "item.tacz.internal_feed.m870"
 }

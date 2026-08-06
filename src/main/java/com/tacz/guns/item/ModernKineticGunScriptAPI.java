@@ -511,10 +511,9 @@ public class ModernKineticGunScriptAPI {
      */
     public int getNeededAmmoAmount() {
         // Tube/cylinder/double-barrel scripts cache this value at reload
-        // start. When the server reserved fewer real loose rounds than the
-        // physical capacity, expose the reservation so their animation loop
-        // cannot visually feed five shells while the authoritative transaction
-        // is allowed to consume only one or two.
+        // start. An active physical plan supplies the normal animation target;
+        // its real source budget is tracked separately so an empty-chamber
+        // per-round script can still transfer that first real cartridge.
         int plannedInternalRounds = dataHolder == null || itemStack == null
                 ? -1 : InternalFeedService.getPlannedReloadRounds(dataHolder, itemStack);
         if (plannedInternalRounds >= 0) {
@@ -553,10 +552,10 @@ public class ModernKineticGunScriptAPI {
     }
 
     /**
-     * True while a server-side physical magazine plan owns reload mutations.
-     * Lua reload scripts may still calculate timing/state normally, but their
-     * old loose-ammo calls become harmless no-ops until the central feed hook
-     * swaps the reserved ItemStack.
+     * True while a server-side physical reload plan owns at least the fallback
+     * reload transaction. External magazines still swap centrally; managed
+     * internal feeds may additionally execute real per-round script feed calls
+     * through {@link InternalFeedService}.
      */
     public boolean isPhysicalMagazineReloadManaged() {
         return dataHolder != null && itemStack != null
@@ -571,9 +570,16 @@ public class ModernKineticGunScriptAPI {
      * @return 实际消耗的数量
      */
     public int consumeAmmoFromPlayer(int neededAmount) {
-        if (isPhysicalMagazineReloadManaged()) {
-            // xmag_reload_logic and bespoke Lua scripts call this at their feed
-            // point. The central physical plan owns that transaction instead.
+        int internalReservation = InternalFeedService.reserveScriptAmmo(dataHolder, shooter, itemStack, neededAmount);
+        if (internalReservation >= 0) {
+            // Do not mutate loose ammunition merely because a Lua script has
+            // reached its pre-feed call. The matching put-in-magazine or
+            // set-in-barrel call is the authoritative visual feed point.
+            return internalReservation;
+        }
+        if (dataHolder != null && PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)) {
+            // External physical magazines are still swapped once at the
+            // central feed transition.
             return 0;
         }
         // 如果处于背包直读并且创造模式不消耗的情况
@@ -596,9 +602,18 @@ public class ModernKineticGunScriptAPI {
      * @return 玩家身上（或者虚拟备弹）是否有弹药可以消耗
      */
     public boolean hasAmmoToConsume() {
-        if (isPhysicalMagazineReloadManaged()) {
-            // A matching magazine was reserved at reload start; loose rounds
-            // must not terminate a physical reload loop.
+        Boolean internalSourceAvailable = InternalFeedService.hasScriptAmmoToConsume(
+                dataHolder, shooter, itemStack, isReloadingNeedConsumeAmmo()
+        );
+        if (internalSourceAvailable != null) {
+            // A real loop must stop when the selected physical clip is moved
+            // or its loose source runs dry. Returning true unconditionally
+            // here would animate cartridges the server can no longer supply.
+            return internalSourceAvailable;
+        }
+        if (dataHolder != null && PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)) {
+            // External-magazine reloads retain their one reserved swap at the
+            // central feed transition.
             return true;
         }
         if (!isReloadingNeedConsumeAmmo()) {
@@ -629,7 +644,13 @@ public class ModernKineticGunScriptAPI {
      * @return 多余的子弹
      */
     public int putAmmoInMagazine(int amount) {
-        if (isPhysicalMagazineReloadManaged()) {
+        int internalOverflow = InternalFeedService.putScriptAmmoInMagazine(
+                dataHolder, shooter, itemStack, amount, isReloadingNeedConsumeAmmo()
+        );
+        if (internalOverflow >= 0) {
+            return internalOverflow;
+        }
+        if (dataHolder != null && PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)) {
             // Report no overflow so legacy Lua scripts continue their timing
             // path, while central reload code performs the actual swap.
             return 0;
@@ -656,7 +677,13 @@ public class ModernKineticGunScriptAPI {
      * @return 成功移除的数量
      */
     public int removeAmmoFromMagazine(int amount) {
-        if (isPhysicalMagazineReloadManaged()) {
+        int internalReserved = InternalFeedService.reserveScriptMagazineRoundsForChamber(
+                dataHolder, shooter, itemStack, amount
+        );
+        if (internalReserved >= 0) {
+            return internalReserved;
+        }
+        if (dataHolder != null && PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)) {
             // Do not let a Lua script create a free chambered round before the
             // physical magazine has been installed at the central feed point.
             return 0;
@@ -697,7 +724,15 @@ public class ModernKineticGunScriptAPI {
      * 设置枪膛内是否有子弹
      */
     public void setAmmoInBarrel(boolean ammoInBarrel) {
-        if (isPhysicalMagazineReloadManaged()) {
+        if (ammoInBarrel) {
+            Boolean internalPlaced = InternalFeedService.placeScriptRoundInChamber(
+                    dataHolder, shooter, itemStack, isReloadingNeedConsumeAmmo()
+            );
+            if (internalPlaced != null) {
+                return;
+            }
+        }
+        if (dataHolder != null && PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)) {
             // Central feed handling transfers exactly one round only for a
             // non-tactical closed/manual reload.
             return;

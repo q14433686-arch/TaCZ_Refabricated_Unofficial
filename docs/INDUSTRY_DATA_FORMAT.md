@@ -394,7 +394,7 @@ speedloader          快装器，向内部转轮增量装填
 en_bloc_clip         漏夹（当前只可记录 reference，运行时机制仍待实现）
 ```
 
-`internal_box`、`tube`、`revolver`、`single_shot` 的余弹保存为枪 NBT 中受服务端控制的内置供弹状态，而不是伪造可退卸弹匣；`reload_batch` 指定一次**完整脚本换弹循环**最多填入/从背包扣除的发数。未指定时默认使用剩余容量，避免管式、转轮或双管动画逐发播放而服务器只扣一发的失步；RPG/M320 等容量为 1 的枪仍自然只填一发。`belt` 则使用带容量和余弹的外部实体弹链箱。
+`internal_box`、`tube`、`revolver`、`single_shot` 的余弹保存为枪 NBT 中受服务端控制的内置供弹状态，而不是伪造可退卸弹匣。`reload_batch` 是一次原生完整动作可从**单一来源**转入的最大批量；`script_loop` 则不按批量结算，而是在枪包每一个真实 Lua feed 调用处逐发扣除/转入。RPG/M320 等容量为 1 的枪仍自然只填一发。`belt` 则使用带容量和余弹的外部实体弹链箱。
 
 桥夹/快装器额外声明：
 
@@ -406,10 +406,20 @@ en_bloc_clip         漏夹（当前只可记录 reference，运行时机制仍�
   "feed_device_capacity": 5,
   "feed_device_reusable": false,
   "reload_batch": 5,
-  "loose_reload_batch": 1,
+  "loose_reload_mode": "none",
   "ammo": "yournamespace:762x39",
   "display_name": "item.yourmod.example_stripper_clip"
 }
 ```
 
-其中 `magazine_capacity` 是枪内固定仓容量，`feed_device_capacity` 才是一只桥夹/快装器自身可装的发数。桥夹不比较“自身余弹是否比枪内余弹多”；服务端只计算 `min(器件余弹, 内仓缺弹, reload_batch)` 的实际转入量。若没有兼容器件但有散装弹，仍可上弹，只是每次完整动画最多转入 `loose_reload_batch` 发；桥夹/快装器机制默认该值为 1。完整器件状态机与未来选择圆盘见 `docs/FEED_DEVICE_AND_CLIP_DESIGN.md`。
+其中 `magazine_capacity` 是枪内固定仓容量，`feed_device_capacity` 才是一只桥夹/快装器自身可装的发数。桥夹不比较“自身余弹是否比枪内余弹多”；服务端只计算 `min(器件余弹, 内仓缺弹, reload_batch)` 的实际转入量，部分使用后的余弹继续保存在**同一件**桥夹中，可再次使用、取出或补装。
+
+`loose_reload_mode` 不能从旧 `reload.type` 自动推断：
+
+```text
+none           不开放散装弹路径，避免伪造原包没有的动画
+single_action  一次原生完整动作转入 loose_reload_batch（未写时为 reload_batch）
+script_loop    一次 R 启动原枪包的真实逐发循环；每个脚本 feed 点独立扣除/转入
+```
+
+桥夹/快装器未声明时默认 `none`，而不是“每按一次 R 加一发”。只有已核验存在逐发 Lua 循环的枪才可选择 `script_loop`；完整器件状态机与未来选择圆盘见 `docs/FEED_DEVICE_AND_CLIP_DESIGN.md`。

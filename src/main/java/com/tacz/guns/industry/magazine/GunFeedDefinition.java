@@ -41,9 +41,18 @@ public class GunFeedDefinition {
     private int reloadBatch = 0;
 
     /**
-     * Maximum loose rounds inserted by one reload animation when this feed
-     * normally uses a bridge clip/speedloader. Defaults to one so a player
-     * without the device can still reload, but materially slower.
+     * Explicit animation contract for loading loose rounds.  A pack must opt
+     * into {@link LooseReloadMode#SCRIPT_LOOP} before we drive a one-press,
+     * one-round-at-a-time reload through its own repeated script feed points.
+     */
+    @SerializedName("loose_reload_mode")
+    private LooseReloadMode looseReloadMode = LooseReloadMode.AUTO;
+
+    /**
+     * Maximum loose rounds inserted by one native complete reload action when
+     * {@code loose_reload_mode = single_action}.  It is intentionally not used
+     * for {@code script_loop}: that mode follows the pack's real per-round
+     * timing and stops at full, empty source, or interruption.
      */
     @SerializedName("loose_reload_batch")
     private int looseReloadBatch = 0;
@@ -103,16 +112,41 @@ public class GunFeedDefinition {
     }
 
     /**
-     * Batch size for loose-round fallback on a bridge-clip/speedloader gun.
-     * This is intentionally separate from reload_batch: the latter caps what
-     * one physical device can transfer, while this one makes individual-round
-     * loading slow but always possible.
+     * Resolves the compatibility-safe default without guessing from legacy gun
+     * data.  A bridge clip/speedloader has no honest loose-round fallback by
+     * default because its pack may only contain a batch/clip animation.
+     */
+    public LooseReloadMode getLooseReloadMode() {
+        LooseReloadMode configured = looseReloadMode == null ? LooseReloadMode.AUTO : looseReloadMode;
+        if (configured != LooseReloadMode.AUTO) {
+            return configured;
+        }
+        return getMechanism().usesLoadingDevice() ? LooseReloadMode.NONE : LooseReloadMode.SINGLE_ACTION;
+    }
+
+    public boolean allowsLooseReload() {
+        return getLooseReloadMode() != LooseReloadMode.NONE;
+    }
+
+    public boolean usesScriptedLooseReloadLoop() {
+        return getLooseReloadMode() == LooseReloadMode.SCRIPT_LOOP;
+    }
+
+    /**
+     * Batch size for a non-looping loose-round action.  Script loops never use
+     * this value: their source is transferred at each real script feed event.
      */
     public int getLooseReloadBatch() {
+        if (!allowsLooseReload()) {
+            return 0;
+        }
+        if (usesScriptedLooseReloadLoop()) {
+            return Math.max(1, getMagazineCapacity());
+        }
         if (looseReloadBatch > 0) {
             return Math.min(looseReloadBatch, Math.max(1, getMagazineCapacity()));
         }
-        return getMechanism().usesLoadingDevice() ? 1 : getReloadBatch();
+        return getReloadBatch();
     }
 
     /** External carrier: detachable magazine or physical belt/ammo-box item. */
