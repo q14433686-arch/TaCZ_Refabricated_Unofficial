@@ -26,7 +26,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"ak\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ak\"}"
+              "tag": "{IndustryPlatform:\"ak\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ak\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -36,7 +36,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"fal\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.fal\"}"
+              "tag": "{IndustryPlatform:\"fal\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.fal\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -46,7 +46,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"glock\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.glock\"}"
+              "tag": "{IndustryPlatform:\"glock\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.glock\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -56,7 +56,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"mp5\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.mp5\"}"
+              "tag": "{IndustryPlatform:\"mp5\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.mp5\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -66,7 +66,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"m1911\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.m1911\"}"
+              "tag": "{IndustryPlatform:\"m1911\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.m1911\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -76,7 +76,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"ar\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ar\"}"
+              "tag": "{IndustryPlatform:\"ar\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ar\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -86,7 +86,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"m9\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.m9\"}"
+              "tag": "{IndustryPlatform:\"m9\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.m9\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -96,7 +96,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"p90\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.p90\"}"
+              "tag": "{IndustryPlatform:\"p90\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.p90\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -106,7 +106,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"ump\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ump\"}"
+              "tag": "{IndustryPlatform:\"ump\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.ump\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -116,7 +116,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_aa12\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_aa12\"}"
+              "tag": "{IndustryPlatform:\"default_aa12\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_aa12\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -126,7 +126,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_ai_awp\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_ai_awp\"}"
+              "tag": "{IndustryPlatform:\"default_ai_awp\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_ai_awp\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -136,7 +136,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_aug\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_aug\"}"
+              "tag": "{IndustryPlatform:\"default_aug\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_aug\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -146,7 +146,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_b93r\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_b93r\"}"
+              "tag": "{IndustryPlatform:\"default_b93r\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_b93r\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -156,7 +156,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_cz75\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_cz75\"}"
+              "tag": "{IndustryPlatform:\"default_cz75\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_cz75\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -166,7 +166,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_db_long\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_db_long\"}"
+              "tag": "{IndustryPlatform:\"default_db_long\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_db_long\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -176,7 +176,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_db_short\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_db_short\"}"
+              "tag": "{IndustryPlatform:\"default_db_short\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_db_short\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -186,7 +186,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_deagle\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_deagle\"}"
+              "tag": "{IndustryPlatform:\"default_deagle\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_deagle\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -196,7 +196,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_deagle_golden\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_deagle_golden\"}"
+              "tag": "{IndustryPlatform:\"default_deagle_golden\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_deagle_golden\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -206,7 +206,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_fn_evolys\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_fn_evolys\"}"
+              "tag": "{IndustryPlatform:\"default_fn_evolys\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_fn_evolys\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -216,7 +216,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_g36k\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_g36k\"}"
+              "tag": "{IndustryPlatform:\"default_g36k\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_g36k\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -226,7 +226,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_hk416d\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_hk416d\"}"
+              "tag": "{IndustryPlatform:\"default_hk416d\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_hk416d\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -236,7 +236,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_hk_g3\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_hk_g3\"}"
+              "tag": "{IndustryPlatform:\"default_hk_g3\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_hk_g3\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -246,7 +246,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_hk_mk23\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_hk_mk23\"}"
+              "tag": "{IndustryPlatform:\"default_hk_mk23\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_hk_mk23\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -256,7 +256,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_kar98\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_kar98\"}"
+              "tag": "{IndustryPlatform:\"default_kar98\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_kar98\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -266,7 +266,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_lonetrail\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_lonetrail\"}"
+              "tag": "{IndustryPlatform:\"default_lonetrail\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_lonetrail\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -276,7 +276,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m1014\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m1014\"}"
+              "tag": "{IndustryPlatform:\"default_m1014\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m1014\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -286,7 +286,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m107\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m107\"}"
+              "tag": "{IndustryPlatform:\"default_m107\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m107\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -296,7 +296,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m16a1\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m16a1\"}"
+              "tag": "{IndustryPlatform:\"default_m16a1\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m16a1\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -306,7 +306,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m16a4\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m16a4\"}"
+              "tag": "{IndustryPlatform:\"default_m16a4\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m16a4\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -316,7 +316,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m249\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m249\"}"
+              "tag": "{IndustryPlatform:\"default_m249\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m249\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -326,7 +326,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m320\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m320\"}"
+              "tag": "{IndustryPlatform:\"default_m320\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m320\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -336,7 +336,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m700\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m700\"}"
+              "tag": "{IndustryPlatform:\"default_m700\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m700\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -346,7 +346,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m870\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m870\"}"
+              "tag": "{IndustryPlatform:\"default_m870\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m870\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -356,7 +356,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_m95\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m95\"}"
+              "tag": "{IndustryPlatform:\"default_m95\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_m95\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -366,7 +366,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_minigun\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_minigun\"}"
+              "tag": "{IndustryPlatform:\"default_minigun\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_minigun\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -376,7 +376,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_mk14\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_mk14\"}"
+              "tag": "{IndustryPlatform:\"default_mk14\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_mk14\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -386,7 +386,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_p320\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_p320\"}"
+              "tag": "{IndustryPlatform:\"default_p320\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_p320\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -396,7 +396,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_qbz_191\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_qbz_191\"}"
+              "tag": "{IndustryPlatform:\"default_qbz_191\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_qbz_191\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -406,7 +406,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_qbz_95\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_qbz_95\"}"
+              "tag": "{IndustryPlatform:\"default_qbz_95\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_qbz_95\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -416,7 +416,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_rhino357\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_rhino357\"}"
+              "tag": "{IndustryPlatform:\"default_rhino357\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_rhino357\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -426,7 +426,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_rpg7\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_rpg7\"}"
+              "tag": "{IndustryPlatform:\"default_rpg7\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_rpg7\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -436,7 +436,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_rpk\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_rpk\"}"
+              "tag": "{IndustryPlatform:\"default_rpk\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_rpk\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -446,7 +446,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_scar_h\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_scar_h\"}"
+              "tag": "{IndustryPlatform:\"default_scar_h\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_scar_h\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -456,7 +456,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_scar_l\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_scar_l\"}"
+              "tag": "{IndustryPlatform:\"default_scar_l\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_scar_l\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -466,7 +466,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_sks_tactical\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_sks_tactical\"}"
+              "tag": "{IndustryPlatform:\"default_sks_tactical\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_sks_tactical\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -476,7 +476,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_spas_12\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_spas_12\"}"
+              "tag": "{IndustryPlatform:\"default_spas_12\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_spas_12\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -486,7 +486,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_spr15hb\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_spr15hb\"}"
+              "tag": "{IndustryPlatform:\"default_spr15hb\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_spr15hb\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -496,7 +496,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_springfield1873\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_springfield1873\"}"
+              "tag": "{IndustryPlatform:\"default_springfield1873\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_springfield1873\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -506,7 +506,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_taurus500\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_taurus500\"}"
+              "tag": "{IndustryPlatform:\"default_taurus500\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_taurus500\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -516,7 +516,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_timeless50\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_timeless50\"}"
+              "tag": "{IndustryPlatform:\"default_timeless50\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_timeless50\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -526,7 +526,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_type_81\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_type_81\"}"
+              "tag": "{IndustryPlatform:\"default_type_81\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_type_81\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -536,7 +536,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_uzi\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_uzi\"}"
+              "tag": "{IndustryPlatform:\"default_uzi\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_uzi\",BlueprintState:\"archive\"}"
             }
           ]
         },
@@ -546,7 +546,7 @@
           "functions": [
             {
               "function": "minecraft:set_nbt",
-              "tag": "{IndustryPlatform:\"default_vector45\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_vector45\"}"
+              "tag": "{IndustryPlatform:\"default_vector45\",IndustryPartKind:\"blueprint\",IndustryDisplayName:\"item.tacz.gun_blueprint.default_vector45\",BlueprintState:\"archive\"}"
             }
           ]
         }

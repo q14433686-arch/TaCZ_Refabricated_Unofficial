@@ -54,7 +54,8 @@
         "nbt": {
           "IndustryPlatform": "m9",
           "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.m9"
+          "IndustryDisplayName": "item.tacz.gun_blueprint.m9",
+          "BlueprintState": "production"
         }
       },
       "results": [

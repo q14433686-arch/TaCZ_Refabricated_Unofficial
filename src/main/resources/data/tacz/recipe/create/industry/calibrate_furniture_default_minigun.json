@@ -27,7 +27,8 @@
     "nbt": {
       "IndustryPlatform": "default_minigun",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_minigun"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_minigun",
+      "BlueprintState": "production"
     }
   },
   "results": [

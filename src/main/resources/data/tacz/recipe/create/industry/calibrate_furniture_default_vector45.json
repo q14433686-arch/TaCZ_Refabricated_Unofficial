@@ -27,7 +27,8 @@
     "nbt": {
       "IndustryPlatform": "default_vector45",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_vector45"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_vector45",
+      "BlueprintState": "production"
     }
   },
   "results": [

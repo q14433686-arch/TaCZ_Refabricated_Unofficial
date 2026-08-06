@@ -54,7 +54,8 @@
         "nbt": {
           "IndustryPlatform": "default_sks_tactical",
           "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_sks_tactical"
+          "IndustryDisplayName": "item.tacz.gun_blueprint.default_sks_tactical",
+          "BlueprintState": "production"
         }
       },
       "results": [

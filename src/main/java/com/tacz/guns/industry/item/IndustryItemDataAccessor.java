@@ -25,6 +25,10 @@ public interface IndustryItemDataAccessor {
     String PROJECTILE_TYPE_TAG = "ProjectileType";
     /** Component dies declare the exact output component kind they can form. */
     String DIE_TARGET_KIND_TAG = "DieTargetKind";
+    /** Archive = discovered but not studied; production = valid factory tooling. */
+    String BLUEPRINT_STATE_TAG = "BlueprintState";
+    String BLUEPRINT_ARCHIVE = "archive";
+    String BLUEPRINT_PRODUCTION = "production";
 
     default String getPlatform(ItemStack stack) {
         return ItemNbtUtils.getTag(stack).getStringOr(PLATFORM_TAG, "");
@@ -80,6 +84,24 @@ public interface IndustryItemDataAccessor {
 
     default void setDieTargetKind(ItemStack stack, String targetKind) {
         ItemNbtUtils.updateTag(stack, tag -> tag.putString(DIE_TARGET_KIND_TAG, targetKind == null ? "" : targetKind));
+    }
+
+    default String getBlueprintState(ItemStack stack) {
+        // Existing worlds already contain functional reusable blueprints from
+        // before the research feature existed. Missing state is therefore a
+        // legacy production template, never an archive that would lock a world
+        // after updating. Newly generated discovery sources write "archive"
+        // explicitly.
+        return ItemNbtUtils.getTag(stack).getStringOr(BLUEPRINT_STATE_TAG, BLUEPRINT_PRODUCTION);
+    }
+
+    default void setBlueprintState(ItemStack stack, String state) {
+        ItemNbtUtils.updateTag(stack, tag -> tag.putString(BLUEPRINT_STATE_TAG,
+                BLUEPRINT_PRODUCTION.equals(state) ? BLUEPRINT_PRODUCTION : BLUEPRINT_ARCHIVE));
+    }
+
+    default boolean isProductionBlueprint(ItemStack stack) {
+        return "blueprint".equals(getPartKind(stack)) && BLUEPRINT_PRODUCTION.equals(getBlueprintState(stack));
     }
 
     default boolean isConfiguredIndustryPart(ItemStack stack) {

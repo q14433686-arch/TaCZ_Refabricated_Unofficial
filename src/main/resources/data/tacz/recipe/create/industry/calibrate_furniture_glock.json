@@ -27,7 +27,8 @@
     "nbt": {
       "IndustryPlatform": "glock",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.glock"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.glock",
+      "BlueprintState": "production"
     }
   },
   "results": [

@@ -646,6 +646,7 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             "IndustryPlatform": name,
             "IndustryPartKind": "blueprint",
             "IndustryDisplayName": blueprint_key,
+            "BlueprintState": "production",
         })
         calibrated_die = {
             "IndustryPlatform": name,
@@ -677,6 +678,7 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             "IndustryPlatform": name,
             "IndustryPartKind": "blueprint",
             "IndustryDisplayName": blueprint_key,
+            "BlueprintState": "production",
         })
         result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_furniture_{name}.json"] = deploying(
             furniture_blank, held_blueprint, output("tacz:gun_component", furniture_kit_tag(platform))
@@ -709,6 +711,7 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             "IndustryPlatform": name,
             "IndustryPartKind": "blueprint",
             "IndustryDisplayName": blueprint_key,
+            "BlueprintState": "production",
         }),
         "results": ["$result"],
         "keep_held_item": True,
@@ -775,7 +778,14 @@ def blueprint_custom_data(platform: dict[str, Any]) -> dict[str, Any]:
         "IndustryPlatform": platform["platform"],
         "IndustryPartKind": "blueprint",
         "IndustryDisplayName": platform["blueprint"]["display_name"],
+        "BlueprintState": "archive",
     }
+
+
+def production_blueprint_data(platform: dict[str, Any]) -> dict[str, Any]:
+    data = blueprint_custom_data(platform)
+    data["BlueprintState"] = "production"
+    return data
 
 
 def snbt_compound(values: dict[str, Any]) -> str:

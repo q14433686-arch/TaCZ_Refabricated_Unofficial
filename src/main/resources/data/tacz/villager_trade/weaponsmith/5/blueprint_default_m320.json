@@ -12,7 +12,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_m320",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_m320"
+        "IndustryDisplayName": "item.tacz.gun_blueprint.default_m320",
+        "BlueprintState": "archive"
       }
     }
   },

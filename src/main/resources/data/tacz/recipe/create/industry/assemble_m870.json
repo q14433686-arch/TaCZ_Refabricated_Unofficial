@@ -54,7 +54,8 @@
         "nbt": {
           "IndustryPlatform": "default_m870",
           "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_m870"
+          "IndustryDisplayName": "item.tacz.gun_blueprint.default_m870",
+          "BlueprintState": "production"
         }
       },
       "results": [

@@ -28,7 +28,8 @@
     "nbt": {
       "IndustryPlatform": "default_cz75",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_cz75"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_cz75",
+      "BlueprintState": "production"
     }
   },
   "results": [

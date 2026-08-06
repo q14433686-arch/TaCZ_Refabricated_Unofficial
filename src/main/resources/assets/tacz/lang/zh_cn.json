@@ -1287,5 +1287,11 @@
   "gui.tacz.industrial_console.manual_ready": "手动控制就绪",
   "gui.tacz.industrial_console.auto_cycle": "自动处理循环",
   "gui.tacz.industrial_console.redstone_hint": "红石：通电后自动循环",
-  "gui.tacz.industrial_console.remove_before_recovery": "请先卸下弹匣 / 配件"
+  "gui.tacz.industrial_console.remove_before_recovery": "请先卸下弹匣 / 配件",
+  "tooltip.tacz.blueprint.archive": "未解读技术档案",
+  "tooltip.tacz.blueprint.study": "另一只手持书并使用以解读",
+  "tooltip.tacz.blueprint.production": "已认证生产模板 — 可重复使用",
+  "message.tacz.blueprint.need_book": "§c请在另一只手持有一本书以解读此档案。",
+  "message.tacz.blueprint.studied": "§a已记录技术知识：%s",
+  "message.tacz.blueprint.transcribed": "§a已转录生产模板：%s"
 }

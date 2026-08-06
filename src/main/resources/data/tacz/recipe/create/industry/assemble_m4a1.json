@@ -54,7 +54,8 @@
         "nbt": {
           "IndustryPlatform": "ar",
           "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.ar"
+          "IndustryDisplayName": "item.tacz.gun_blueprint.ar",
+          "BlueprintState": "production"
         }
       },
       "results": [

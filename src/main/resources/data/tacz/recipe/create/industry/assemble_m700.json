@@ -54,7 +54,8 @@
         "nbt": {
           "IndustryPlatform": "default_m700",
           "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_m700"
+          "IndustryDisplayName": "item.tacz.gun_blueprint.default_m700",
+          "BlueprintState": "production"
         }
       },
       "results": [

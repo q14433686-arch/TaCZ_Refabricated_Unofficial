@@ -28,7 +28,8 @@
     "nbt": {
       "IndustryPlatform": "default_m95",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m95"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m95",
+      "BlueprintState": "production"
     }
   },
   "results": [

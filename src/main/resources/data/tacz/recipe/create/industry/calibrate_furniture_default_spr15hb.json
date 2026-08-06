@@ -27,7 +27,8 @@
     "nbt": {
       "IndustryPlatform": "default_spr15hb",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_spr15hb"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_spr15hb",
+      "BlueprintState": "production"
     }
   },
   "results": [

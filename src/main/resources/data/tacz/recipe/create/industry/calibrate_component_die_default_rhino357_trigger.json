@@ -28,7 +28,8 @@
     "nbt": {
       "IndustryPlatform": "default_rhino357",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_rhino357"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_rhino357",
+      "BlueprintState": "production"
     }
   },
   "results": [

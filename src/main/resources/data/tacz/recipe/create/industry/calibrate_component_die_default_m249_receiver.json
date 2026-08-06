@@ -28,7 +28,8 @@
     "nbt": {
       "IndustryPlatform": "default_m249",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m249"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m249",
+      "BlueprintState": "production"
     }
   },
   "results": [

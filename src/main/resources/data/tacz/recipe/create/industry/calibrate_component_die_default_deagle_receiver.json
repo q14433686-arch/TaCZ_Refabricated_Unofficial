@@ -28,7 +28,8 @@
     "nbt": {
       "IndustryPlatform": "default_deagle",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_deagle"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_deagle",
+      "BlueprintState": "production"
     }
   },
   "results": [

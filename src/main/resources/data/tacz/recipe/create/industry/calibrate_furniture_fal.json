@@ -27,7 +27,8 @@
     "nbt": {
       "IndustryPlatform": "fal",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.fal"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.fal",
+      "BlueprintState": "production"
     }
   },
   "results": [

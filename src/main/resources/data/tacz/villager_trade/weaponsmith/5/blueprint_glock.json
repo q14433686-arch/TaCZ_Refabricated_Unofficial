@@ -12,7 +12,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "glock",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.glock"
+        "IndustryDisplayName": "item.tacz.gun_blueprint.glock",
+        "BlueprintState": "archive"
       }
     }
   },

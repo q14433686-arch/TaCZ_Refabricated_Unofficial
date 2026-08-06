@@ -12,7 +12,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_rhino357",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_rhino357"
+        "IndustryDisplayName": "item.tacz.gun_blueprint.default_rhino357",
+        "BlueprintState": "archive"
       }
     }
   },

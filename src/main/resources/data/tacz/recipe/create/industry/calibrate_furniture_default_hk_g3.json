@@ -27,7 +27,8 @@
     "nbt": {
       "IndustryPlatform": "default_hk_g3",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_hk_g3"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_hk_g3",
+      "BlueprintState": "production"
     }
   },
   "results": [

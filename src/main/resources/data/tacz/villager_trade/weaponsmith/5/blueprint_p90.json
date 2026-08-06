@@ -12,7 +12,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "p90",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.p90"
+        "IndustryDisplayName": "item.tacz.gun_blueprint.p90",
+        "BlueprintState": "archive"
       }
     }
   },

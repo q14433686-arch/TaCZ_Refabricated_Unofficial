@@ -12,7 +12,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_lonetrail",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_lonetrail"
+        "IndustryDisplayName": "item.tacz.gun_blueprint.default_lonetrail",
+        "BlueprintState": "archive"
       }
     }
   },

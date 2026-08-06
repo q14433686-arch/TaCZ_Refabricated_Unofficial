@@ -27,7 +27,8 @@
     "nbt": {
       "IndustryPlatform": "default_m16a4",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m16a4"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_m16a4",
+      "BlueprintState": "production"
     }
   },
   "results": [

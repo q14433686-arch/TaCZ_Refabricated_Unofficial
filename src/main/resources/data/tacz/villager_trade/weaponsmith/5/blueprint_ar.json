@@ -12,7 +12,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "ar",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.ar"
+        "IndustryDisplayName": "item.tacz.gun_blueprint.ar",
+        "BlueprintState": "archive"
       }
     }
   },

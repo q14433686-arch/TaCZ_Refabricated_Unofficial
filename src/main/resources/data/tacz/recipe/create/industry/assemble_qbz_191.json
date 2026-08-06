@@ -54,7 +54,8 @@
         "nbt": {
           "IndustryPlatform": "default_qbz_191",
           "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_qbz_191"
+          "IndustryDisplayName": "item.tacz.gun_blueprint.default_qbz_191",
+          "BlueprintState": "production"
         }
       },
       "results": [

@@ -54,7 +54,8 @@
         "nbt": {
           "IndustryPlatform": "default_timeless50",
           "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_blueprint.default_timeless50"
+          "IndustryDisplayName": "item.tacz.gun_blueprint.default_timeless50",
+          "BlueprintState": "production"
         }
       },
       "results": [

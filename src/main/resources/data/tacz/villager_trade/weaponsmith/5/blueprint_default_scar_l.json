@@ -12,7 +12,8 @@
       "minecraft:custom_data": {
         "IndustryPlatform": "default_scar_l",
         "IndustryPartKind": "blueprint",
-        "IndustryDisplayName": "item.tacz.gun_blueprint.default_scar_l"
+        "IndustryDisplayName": "item.tacz.gun_blueprint.default_scar_l",
+        "BlueprintState": "archive"
       }
     }
   },

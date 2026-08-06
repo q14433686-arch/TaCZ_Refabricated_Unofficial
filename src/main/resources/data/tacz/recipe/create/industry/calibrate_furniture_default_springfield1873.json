@@ -27,7 +27,8 @@
     "nbt": {
       "IndustryPlatform": "default_springfield1873",
       "IndustryPartKind": "blueprint",
-      "IndustryDisplayName": "item.tacz.gun_blueprint.default_springfield1873"
+      "IndustryDisplayName": "item.tacz.gun_blueprint.default_springfield1873",
+      "BlueprintState": "production"
     }
   },
   "results": [
