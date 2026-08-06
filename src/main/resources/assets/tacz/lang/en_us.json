@@ -1676,5 +1676,11 @@
   "tooltip.tacz.industry.surveyed_cartridge_part": "Physical cartridge part dedicated to its surveyed AmmoId",
   "tooltip.tacz.feed_device.kind.stripper_clip": "Stripper clip — transfers rounds into an internal feed; never replaces an installed magazine",
   "tooltip.tacz.feed_device.kind.speedloader": "Speedloader — transfers rounds into an internal cylinder; never replaces an installed magazine",
-  "item.tacz.feed_device.rainforest_type56_stripper": "Type 56 Stripper Clip"
+  "item.tacz.feed_device.rainforest_type56_stripper": "Type 56 Stripper Clip",
+  "item.tacz.feed_device.kar98_stripper": "Kar98k Stripper Clip",
+  "item.tacz.feed_device.hamster_mosin_stripper": "Mosin–Nagant Stripper Clip",
+  "item.tacz.feed_device.hamster_gew98_stripper": "Gewehr 98 Stripper Clip",
+  "item.tacz.feed_device.hamster_m1903_stripper": "M1903 Springfield Stripper Clip",
+  "item.tacz.feed_device.hamster_type99_stripper": "Type 99 Stripper Clip",
+  "tooltip.tacz.feed_device.reusable": "Reusable loading tool — remains after its rounds reach zero"
 }

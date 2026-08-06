@@ -798,7 +798,16 @@ public class ModernKineticGunScriptAPI {
     public String getAttachment(String type) {
         try {
             AttachmentType t = AttachmentType.valueOf(type);
-            return abstractGunItem.getAttachmentId(itemStack, t).toString();
+            String actual = abstractGunItem.getAttachmentId(itemStack, t).toString();
+            // Some audited historical scripts use a scope-presence predicate
+            // solely to choose clip vs individual-round reload animation. An
+            // active route may safely present that selector as occupied without
+            // installing a real attachment or changing any gun statistics.
+            if (DefaultAssets.EMPTY_ATTACHMENT_ID.toString().equals(actual)
+                    && InternalFeedService.forcesScriptAttachmentPresent(dataHolder, itemStack, type)) {
+                return "tacz:industry_reload_route";
+            }
+            return actual;
         } catch (IllegalArgumentException e) {
             return DefaultAssets.EMPTY_ATTACHMENT_ID.toString();
         }

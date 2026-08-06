@@ -1,24 +1,23 @@
 {
   "mechanism": "stripper_clip",
-  "magazine_family": "kar98_792x57_stripper",
-  "magazine_capacity": 4,
+  "magazine_family": "hamster_type99_77_stripper",
+  "magazine_capacity": 5,
   "feed_device_capacity": 5,
   "feed_device_reusable": true,
-  "reload_batch": 4,
-  "ammo": "tacz:792x57",
-  "display_name": "item.tacz.feed_device.kar98_stripper",
+  "reload_batch": 5,
+  "ammo": "hamster:long_ammo",
+  "display_name": "item.tacz.feed_device.hamster_type99_stripper",
   "reload_routes": [
     {
       "id": "stripper_clip_batch",
       "source": "loading_device",
       "script_driven": true,
-      "min_missing_rounds": 4,
-      "max_missing_rounds": 4,
-      "require_tactical": false,
+      "min_missing_rounds": 5,
+      "max_missing_rounds": 5,
       "min_source_rounds": 5,
-      "max_transfer_rounds": 4,
-      "extra_source_rounds": 1,
-      "require_attachment_empty": "scope"
+      "max_transfer_rounds": 5,
+      "require_attachment_empty": "scope",
+      "require_tactical": false
     },
     {
       "id": "loose_round_loop",

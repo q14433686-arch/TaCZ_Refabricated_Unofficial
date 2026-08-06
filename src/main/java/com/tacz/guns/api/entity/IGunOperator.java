@@ -42,6 +42,12 @@ public interface IGunOperator {
     ReloadState getSynReloadState();
 
     /**
+     * Server-selected audited reload route for client animation compatibility.
+     * Empty means no industry route override is active.
+     */
+    String getSynIndustryReloadRoute();
+
+    /**
      * 获取从服务端同步的瞄准进度
      */
     float getSynAimingProgress();

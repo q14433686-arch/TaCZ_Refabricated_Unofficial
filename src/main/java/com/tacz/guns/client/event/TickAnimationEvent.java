@@ -3,6 +3,7 @@ package com.tacz.guns.client.event;
 import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
+import com.tacz.guns.client.industry.magazine.IndustryReloadRouteClientState;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -18,6 +19,7 @@ public class TickAnimationEvent {
         if (player == null) {
             return;
         }
+        IndustryReloadRouteClientState.tick(player);
         ItemStack mainHandItem = player.getMainHandItem();
         TimelessAPI.getGunDisplay(mainHandItem).ifPresent(gunIndex -> {
             var animationStateMachine = gunIndex.getAnimationStateMachine();

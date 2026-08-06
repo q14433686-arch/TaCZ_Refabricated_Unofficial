@@ -78,6 +78,12 @@ public class ShooterDataHolder {
     @Nullable
     public InternalFeedReloadPlan internalFeedReload = null;
     /**
+     * Data-driven selected reload route, synchronised only as a short-lived
+     * animation selector. The server still owns the physical source plan.
+     */
+    @Nonnull
+    public String industryReloadRoute = "";
+    /**
      * 当前操作的枪械物品的 Supplier。在切枪时 (draw 方法) 更新。
      */
     @Nullable
@@ -129,6 +135,7 @@ public class ShooterDataHolder {
         reloadStateType = ReloadState.StateType.NOT_RELOADING;
         physicalMagazineReload = null;
         internalFeedReload = null;
+        industryReloadRoute = "";
         sprintTimestamp = -1;
         sprintTimeS = 0;
         boltTimestamp = -1;

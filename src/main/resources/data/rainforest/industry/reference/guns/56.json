@@ -6,7 +6,7 @@
   "feed": {
     "device": "stripper_clip",
     "runtime_mechanism": "stripper_clip",
-    "carrier_behavior": "consumed_loading_tool",
+    "carrier_behavior": "reusable_loading_tool",
     "family": "rainforest_type56_stripper",
     "capacity": 10,
     "reload_batch": 5

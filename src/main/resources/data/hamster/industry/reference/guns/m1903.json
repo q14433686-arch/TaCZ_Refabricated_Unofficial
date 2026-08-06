@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "canonical_model": "springfield_m1903",
+  "display_name": "M1903 Springfield",
+  "action": "bolt_action",
+  "feed": {
+    "device": "stripper_clip",
+    "runtime_mechanism": "stripper_clip",
+    "carrier_behavior": "reusable_loading_tool",
+    "family": "hamster_springfield_3006_stripper",
+    "capacity": 5,
+    "reload_batch": 5
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "long_ammo",
+    "expected_ammo": "hamster:long_ammo"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "GunpowderRevolution v1.2.7 m1903_data: ammo_amount=5 and hamster:gew98_gun_logic",
+    "m1903_display uses the verified mosin9130 clip/loop state-machine family"
+  ]
+}

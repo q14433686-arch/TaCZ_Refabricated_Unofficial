@@ -3,6 +3,11 @@ package com.tacz.guns.industry.magazine;
 import com.google.gson.annotations.SerializedName;
 import net.minecraft.resources.Identifier;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * Data-driven physical-feed declaration for one gun id.
  *
@@ -57,11 +62,23 @@ public class GunFeedDefinition {
     @SerializedName("loose_reload_batch")
     private int looseReloadBatch = 0;
 
+    /**
+     * Optional ordered, audited branches for guns whose native reload script
+     * can select a clip batch or a loose-round loop according to attachments,
+     * missing rounds, and the availability of a physical device.
+     */
+    @SerializedName("reload_routes")
+    private List<GunReloadRoute> reloadRoutes = List.of();
+
     /** Capacity of one bridge clip/speedloader. Internal capacity remains magazine_capacity. */
     @SerializedName("feed_device_capacity")
     private int feedDeviceCapacity = 0;
 
-    /** Empty bridge clips/speedloaders may be retained for refilling when true. */
+    /**
+     * Retained only for backwards-compatible data parsing. Bridge clips and
+     * speedloaders are physical reusable tools: an empty device is never
+     * deleted by the reload transaction.
+     */
     @SerializedName("feed_device_reusable")
     private boolean feedDeviceReusable = true;
 
@@ -90,7 +107,10 @@ public class GunFeedDefinition {
     }
 
     public boolean isFeedDeviceReusable() {
-        return feedDeviceReusable;
+        // A bridge clip/speedloader is not ammunition packaging. Its rounds
+        // may reach zero, but the physical loading tool remains available for
+        // unloading/refilling and must never disappear as a reload side effect.
+        return getMechanism().usesLoadingDevice() || feedDeviceReusable;
     }
 
     public int getReloadBatch() {
@@ -147,6 +167,37 @@ public class GunFeedDefinition {
             return Math.min(looseReloadBatch, Math.max(1, getMagazineCapacity()));
         }
         return getReloadBatch();
+    }
+
+    /**
+     * Ordered explicit reload branches. Invalid entries are ignored so one bad
+     * data-pack route cannot disable the legacy-safe fallback for every gun.
+     */
+    public List<GunReloadRoute> getReloadRoutes() {
+        if (reloadRoutes == null || reloadRoutes.isEmpty()) {
+            return List.of();
+        }
+        List<GunReloadRoute> valid = new ArrayList<>();
+        Set<String> seenIds = new HashSet<>();
+        for (GunReloadRoute route : reloadRoutes) {
+            if (route != null && route.isValid() && seenIds.add(route.getId())) {
+                valid.add(route);
+            }
+        }
+        return List.copyOf(valid);
+    }
+
+    public boolean hasReloadRoutes() {
+        return !getReloadRoutes().isEmpty();
+    }
+
+    public GunReloadRoute getReloadRoute(String routeId) {
+        if (routeId == null || routeId.isBlank()) {
+            return null;
+        }
+        return getReloadRoutes().stream()
+                .filter(route -> routeId.equals(route.getId()))
+                .findFirst().orElse(null);
     }
 
     /** External carrier: detachable magazine or physical belt/ammo-box item. */

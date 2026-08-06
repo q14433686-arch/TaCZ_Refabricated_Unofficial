@@ -104,6 +104,11 @@ public final class InternalFeedService {
         if (definition == null || getAmmoCount(gun) >= definition.getMagazineCapacity()) {
             return false;
         }
+        int missing = definition.getMagazineCapacity() - getAmmoCount(gun);
+        boolean consumesSource = shouldConsumeAmmo(player) && !isInfiniteReload(gun);
+        if (definition.hasReloadRoutes()) {
+            return selectReloadRoute(player, gun, definition, missing, isTacticalReload(gun), consumesSource) != null;
+        }
         if (!shouldConsumeAmmo(player) || isInfiniteReload(gun)) {
             return !definition.getMechanism().usesLoadingDevice()
                     || findBestLoadingDevice(player, definition,
@@ -135,7 +140,17 @@ public final class InternalFeedService {
 
         boolean consumesSource = shouldConsumeAmmo(player) && !isInfiniteReload(gun);
         InternalFeedReloadPlan plan;
-        if (definition.getMechanism().usesLoadingDevice()) {
+        RouteSelection explicitRoute = definition.hasReloadRoutes()
+                ? selectReloadRoute(player, gun, definition, missing, tactical, consumesSource) : null;
+        if (explicitRoute != null) {
+            plan = createRouteReloadPlan(iGun.getGunId(gun), player, gun, definition, missing, tactical,
+                    consumesSource, explicitRoute);
+        } else if (definition.hasReloadRoutes()) {
+            // A route-aware profile must not silently fall through to the old
+            // generic device preference. That would let a partly-filled clip
+            // choose a five-round bridge animation it cannot honestly supply.
+            return null;
+        } else if (definition.getMechanism().usesLoadingDevice()) {
             LoadingDeviceSelection selection = findBestLoadingDevice(player, definition, missing);
             if (selection != null) {
                 int transfer = Math.min(Math.min(missing, definition.getReloadBatch()), selection.transferableRounds());
@@ -169,7 +184,66 @@ public final class InternalFeedService {
             return null;
         }
         data.internalFeedReload = plan;
+        data.industryReloadRoute = plan.getReloadRouteId().isBlank() ? ""
+                : plan.getGunId() + "|" + plan.getReloadRouteId();
         return plan;
+    }
+
+    /**
+     * Client-side prediction uses the same data-only resolver before it
+     * triggers the local reload animation. The server always resolves again
+     * and owns the actual reservation/transaction.
+     */
+    public static ReloadRoutePreview previewReloadRoute(Player player, ItemStack gun) {
+        if (!usesInternalFeed(gun)) {
+            return ReloadRoutePreview.EMPTY;
+        }
+        GunFeedDefinition definition = getDefinition(gun);
+        if (definition == null || !definition.hasReloadRoutes()) {
+            return ReloadRoutePreview.EMPTY;
+        }
+        int missing = definition.getMagazineCapacity() - getAmmoCount(gun);
+        if (missing <= 0) {
+            return ReloadRoutePreview.EMPTY;
+        }
+        boolean consumesSource = shouldConsumeAmmo(player) && !isInfiniteReload(gun);
+        RouteSelection selection = selectReloadRoute(player, gun, definition, missing, isTacticalReload(gun), consumesSource);
+        return selection == null ? ReloadRoutePreview.EMPTY
+                : new ReloadRoutePreview(selection.route().getId(),
+                selection.route().getAnimationForceAttachmentPresent());
+    }
+
+    /** Route data needed by the client to mirror an audited animation selector. */
+    public static ReloadRoutePreview getReloadRoutePreview(ItemStack gun, String routeId) {
+        GunFeedDefinition definition = getDefinition(gun);
+        GunReloadRoute route = definition == null ? null : definition.getReloadRoute(routeId);
+        return route == null ? ReloadRoutePreview.EMPTY
+                : new ReloadRoutePreview(route.getId(), route.getAnimationForceAttachmentPresent());
+    }
+
+    /**
+     * Client-safe source check for an active/predicted route. It is visual
+     * gating only; the server plan still binds and validates the actual source.
+     */
+    @Nullable
+    public static Boolean hasReloadRouteSource(Player player, ItemStack gun, String routeId) {
+        GunFeedDefinition definition = getDefinition(gun);
+        GunReloadRoute route = definition == null ? null : definition.getReloadRoute(routeId);
+        if (route == null) {
+            return null;
+        }
+        int missing = definition.getMagazineCapacity() - getAmmoCount(gun);
+        boolean consumesSource = shouldConsumeAmmo(player) && !isInfiniteReload(gun);
+        if (missing <= 0 || !route.matchesMissingRounds(missing)
+                || !route.matchesTactical(isTacticalReload(gun)) || !matchesRouteAttachments(gun, route)) {
+            return false;
+        }
+        if (route.getSource() == ReloadRouteSource.LOADING_DEVICE) {
+            return findBestLoadingDevice(player, definition, missing,
+                    route.getMaximumTransferRounds(definition.getReloadBatch()),
+                    route.getMinimumSourceRounds()) != null;
+        }
+        return !consumesSource || countLooseAmmo(player, definition.getAmmoId()) > 0;
     }
 
     @Nullable
@@ -198,7 +272,126 @@ public final class InternalFeedService {
         int sourceBudget = Math.min(normalSourceLimit, available);
         int fallbackRounds = Math.min(animationRounds, available);
         return new InternalFeedReloadPlan(gunId, definition.getAmmoId(), animationRounds, fallbackRounds,
-                sourceBudget, tactical);
+                sourceBudget, tactical, "", definition.usesScriptedLooseReloadLoop(), "",
+                -1, ItemStack.EMPTY, true);
+    }
+
+    /**
+     * Resolve ordered audited routes. Route order is semantic: a valid full
+     * physical clip may win before loose rounds, while a partially filled clip
+     * that cannot match its batch animation naturally falls through to the
+     * loose-loop branch.
+     */
+    @Nullable
+    private static RouteSelection selectReloadRoute(Player player, ItemStack gun, GunFeedDefinition definition,
+                                                    int missing, boolean tactical, boolean consumesSource) {
+        for (GunReloadRoute route : definition.getReloadRoutes()) {
+            if (!route.matchesMissingRounds(missing) || !route.matchesTactical(tactical)
+                    || !matchesRouteAttachments(gun, route)) {
+                continue;
+            }
+            if (route.getSource() == ReloadRouteSource.LOADING_DEVICE) {
+                if (!definition.isValidLoadingDeviceDefinition()) {
+                    continue;
+                }
+                LoadingDeviceSelection device = findBestLoadingDevice(player, definition, missing,
+                        route.getMaximumTransferRounds(definition.getReloadBatch()), route.getMinimumSourceRounds());
+                if (device != null) {
+                    return new RouteSelection(route, device);
+                }
+                continue;
+            }
+            int sourceLimit = route.isScriptDriven()
+                    ? missing + emptyChamberSourceAllowance(gun, tactical) + route.getExtraSourceRounds()
+                    : Math.min(missing, route.getMaximumTransferRounds(definition.getLooseReloadBatch()));
+            if (sourceLimit <= 0) {
+                continue;
+            }
+            if (!consumesSource || countLooseAmmo(player, definition.getAmmoId()) > 0) {
+                return new RouteSelection(route, null);
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static InternalFeedReloadPlan createRouteReloadPlan(Identifier gunId, Player player, ItemStack gun,
+                                                                 GunFeedDefinition definition, int missing,
+                                                                 boolean tactical, boolean consumesSource,
+                                                                 RouteSelection selection) {
+        GunReloadRoute route = selection.route();
+        if (route.getSource() == ReloadRouteSource.LOADING_DEVICE) {
+            LoadingDeviceSelection device = selection.device();
+            if (device == null) {
+                return null;
+            }
+            int animationRounds = Math.min(missing,
+                    route.getMaximumTransferRounds(definition.getReloadBatch()));
+            int sourceBudget = animationRounds + route.getExtraSourceRounds();
+            ItemStack reserved = player.getInventory().getItem(device.slot());
+            if (!(reserved.getItem() instanceof IMagazine magazine)
+                    || magazine.getAmmoCount(reserved) < sourceBudget) {
+                return null;
+            }
+            ensureLoadingDeviceInstanceId(reserved);
+            player.getInventory().setChanged();
+            return new InternalFeedReloadPlan(gunId, definition.getAmmoId(), animationRounds, animationRounds,
+                    sourceBudget, tactical, route.getId(), route.isScriptDriven(),
+                    route.getAnimationForceAttachmentPresent(), device.slot(), reserved.copy(),
+                    definition.isFeedDeviceReusable());
+        }
+
+        int animationRounds = route.isScriptDriven() ? missing
+                : Math.min(missing, route.getMaximumTransferRounds(definition.getLooseReloadBatch()));
+        if (animationRounds <= 0) {
+            return null;
+        }
+        int sourceLimit = animationRounds + route.getExtraSourceRounds();
+        if (route.isScriptDriven()) {
+            sourceLimit += emptyChamberSourceAllowance(gun, tactical);
+        }
+        int available = consumesSource ? countLooseAmmo(player, definition.getAmmoId()) : sourceLimit;
+        if (available <= 0) {
+            return null;
+        }
+        int sourceBudget = Math.min(sourceLimit, available);
+        int fallbackRounds = Math.min(animationRounds, available);
+        return new InternalFeedReloadPlan(gunId, definition.getAmmoId(), animationRounds, fallbackRounds,
+                sourceBudget, tactical, route.getId(), route.isScriptDriven(),
+                route.getAnimationForceAttachmentPresent(), -1, ItemStack.EMPTY, true);
+    }
+
+    private static boolean matchesRouteAttachments(ItemStack gun, GunReloadRoute route) {
+        String requiredEmpty = route.getRequiredAttachmentEmpty();
+        if (!requiredEmpty.isBlank() && !isAttachmentEmpty(gun, requiredEmpty)) {
+            return false;
+        }
+        String requiredPresent = route.getRequiredAttachmentPresent();
+        return requiredPresent.isBlank() || !isAttachmentEmpty(gun, requiredPresent);
+    }
+
+    private static boolean isAttachmentEmpty(ItemStack gun, String attachmentName) {
+        if (!(gun.getItem() instanceof IGun iGun)) {
+            return true;
+        }
+        try {
+            var type = com.tacz.guns.api.item.attachment.AttachmentType.valueOf(
+                    attachmentName.toUpperCase(java.util.Locale.ROOT));
+            return com.tacz.guns.api.DefaultAssets.EMPTY_ATTACHMENT_ID.equals(iGun.getAttachmentId(gun, type));
+        } catch (IllegalArgumentException ignored) {
+            return true;
+        }
+    }
+
+    private static boolean isTacticalReload(ItemStack gun) {
+        if (!(gun.getItem() instanceof IGun iGun)) {
+            return false;
+        }
+        Bolt bolt = TimelessAPI.getCommonGunIndex(iGun.getGunId(gun))
+                .map(index -> index.getGunData().getBolt()).orElse(null);
+        int available = iGun.getCurrentAmmoCount(gun)
+                + (iGun.hasBulletInBarrel(gun) && bolt != Bolt.OPEN_BOLT ? 1 : 0);
+        return available > 0;
     }
 
     private static int emptyChamberSourceAllowance(ItemStack gun, boolean tactical) {
@@ -212,6 +405,9 @@ public final class InternalFeedService {
     }
 
     public static boolean isReloadManaged(ShooterDataHolder data, ItemStack gun) {
+        if (data == null) {
+            return false;
+        }
         InternalFeedReloadPlan plan = data.internalFeedReload;
         return plan != null && gun.getItem() instanceof IGun iGun && plan.getGunId().equals(iGun.getGunId(gun));
     }
@@ -226,6 +422,14 @@ public final class InternalFeedService {
 
     public static void clearReloadPlan(ShooterDataHolder data) {
         data.internalFeedReload = null;
+        data.industryReloadRoute = "";
+    }
+
+    /** True only while the active server plan asks a legacy script to treat one attachment slot as occupied. */
+    public static boolean forcesScriptAttachmentPresent(ShooterDataHolder data, ItemStack gun, String attachmentType) {
+        return data != null && isReloadManaged(data, gun)
+                && data.internalFeedReload.forcesAttachmentPresent(attachmentType)
+                && isAttachmentEmpty(gun, attachmentType);
     }
 
     /**
@@ -399,12 +603,10 @@ public final class InternalFeedService {
         if (definition == null || !definition.getAmmoId().equals(plan.getAmmoId())) {
             return false;
         }
-        if (plan.wasScriptTouched() || (definition.usesScriptedLooseReloadLoop() && !plan.usesFeedDevice())) {
-            // A declared loose-round loop owns every actual feed point. In
+        if (plan.wasScriptTouched() || plan.isScriptDriven()) {
+            // An audited script-driven branch owns every real feed point. In
             // particular, an immediate interrupt before its first feed must
             // not be converted into a full end-of-animation batch grant.
-            // Device-fed batch animations remain central unless their script
-            // actually calls a feed API and marks the plan itself.
             broadcastInventory(shooter);
             return plan.getTransferredSourceRounds() > 0;
         }
@@ -519,6 +721,13 @@ public final class InternalFeedService {
      */
     @Nullable
     private static LoadingDeviceSelection findBestLoadingDevice(Player player, GunFeedDefinition definition, int missing) {
+        return findBestLoadingDevice(player, definition, missing, definition.getReloadBatch(), 1);
+    }
+
+    @Nullable
+    private static LoadingDeviceSelection findBestLoadingDevice(Player player, GunFeedDefinition definition,
+                                                                int missing, int maximumTransfer,
+                                                                int minimumSourceRounds) {
         int bestTransfer = 0;
         LoadingDeviceSelection best = null;
         var inventory = player.getInventory();
@@ -528,8 +737,11 @@ public final class InternalFeedService {
             if (!isCompatibleLoadingDevice(definition, candidate) || !(candidate.getItem() instanceof IMagazine device)) {
                 continue;
             }
-            int transferable = Math.min(Math.min(device.getAmmoCount(candidate), Math.max(0, missing)),
-                    definition.getReloadBatch());
+            int available = device.getAmmoCount(candidate);
+            if (available < Math.max(1, minimumSourceRounds)) {
+                continue;
+            }
+            int transferable = Math.min(Math.min(available, Math.max(0, missing)), Math.max(1, maximumTransfer));
             if (transferable > bestTransfer) {
                 bestTransfer = transferable;
                 best = new LoadingDeviceSelection(slot, candidate.copy(), transferable);
@@ -602,6 +814,9 @@ public final class InternalFeedService {
             return 0;
         }
         device.setAmmoCount(current, device.getAmmoCount(current) - transferred);
+        // Bridge clips and speedloaders are reusable loading tools. Current
+        // plans always keep the now-empty physical ItemStack; the conditional
+        // remains only for old non-device plan compatibility.
         if (device.getAmmoCount(current) <= 0 && !plan.keepEmptyFeedDevice()) {
             inventory.setItem(plan.getFeedDeviceSlot(), ItemStack.EMPTY);
         }
@@ -676,6 +891,18 @@ public final class InternalFeedService {
         if (gun.getItem() instanceof GunItemDataAccessor data) {
             data.setLegacyAmmoCount(gun, count);
         }
+    }
+
+    /** Small client-safe projection; server reservation data never leaves the server. */
+    public record ReloadRoutePreview(String routeId, String animationForceAttachmentPresent) {
+        public static final ReloadRoutePreview EMPTY = new ReloadRoutePreview("", "");
+
+        public boolean isEmpty() {
+            return routeId == null || routeId.isBlank();
+        }
+    }
+
+    private record RouteSelection(GunReloadRoute route, @Nullable LoadingDeviceSelection device) {
     }
 
     private record LoadingDeviceSelection(int slot, ItemStack preview, int transferableRounds) {

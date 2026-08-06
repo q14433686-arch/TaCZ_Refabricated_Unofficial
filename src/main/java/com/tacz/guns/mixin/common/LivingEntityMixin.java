@@ -76,6 +76,12 @@ public abstract class LivingEntityMixin extends Entity implements IGunOperator, 
 
     @Override
     @Unique
+    public String getSynIndustryReloadRoute() {
+        return ModSyncedEntityData.INDUSTRY_RELOAD_ROUTE_KEY.getValue(tacz$shooter);
+    }
+
+    @Override
+    @Unique
     public float getSynAimingProgress() {
         return ModSyncedEntityData.AIMING_PROGRESS_KEY.getValue(tacz$shooter);
     }
@@ -236,6 +242,7 @@ public abstract class LivingEntityMixin extends Entity implements IGunOperator, 
             ModSyncedEntityData.DRAW_COOL_DOWN_KEY.setValue(tacz$shooter, this.tacz$draw.getDrawCoolDown());
             ModSyncedEntityData.IS_BOLTING_KEY.setValue(tacz$shooter, this.tacz$data.isBolting);
             ModSyncedEntityData.RELOAD_STATE_KEY.setValue(tacz$shooter, reloadState);
+            ModSyncedEntityData.INDUSTRY_RELOAD_ROUTE_KEY.setValue(tacz$shooter, this.tacz$data.industryReloadRoute);
             ModSyncedEntityData.AIMING_PROGRESS_KEY.setValue(tacz$shooter, this.tacz$data.aimingProgress);
             ModSyncedEntityData.IS_AIMING_KEY.setValue(tacz$shooter, this.tacz$data.isAiming);
             ModSyncedEntityData.SPRINT_TIME_KEY.setValue(tacz$shooter, this.tacz$data.sprintTimeS);

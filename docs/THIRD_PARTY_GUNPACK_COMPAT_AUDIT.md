@@ -44,6 +44,22 @@
 - `ww:303`、`ww:765` 有 Index，但其上传配方结果分别错误输出为其他 AmmoId；
 - `ea:*` 等跨 namespace 引用在上传集合中没有对应 Index，必须等待依赖包或显式 alias/descriptor。
 
+## 逐发 / 桥夹双路线审计样本
+
+GunpowderRevolution 不能按“老式栓动枪”一概而论。已逐项比对 GunData、服务端 gun logic、客户端 state machine 与动画名称后，以下五把枪共享可验证的 `hamster:gew98_gun_logic` 双路线：
+
+```text
+hamster:gew98
+hamster:m1903
+hamster:mosin91
+hamster:mosin9130
+hamster:type99
+```
+
+共同事实：`ammo_amount = 5`、`bolt = manual_action`；当**空仓**、`SCOPE == tacz:empty` 且尚缺 5 发时，服务端执行一次 `consumeAmmoFromPlayer(5) → putAmmoInMagazine(5)`，客户端走 `reload_clip` / `reload_load_clip_5round`；其他条件下，服务端循环逐发 `consume(1) → put(1)`，客户端走 `reload_loop`。这不是仅凭文件名得到的判断。
+
+因此它们使用 `reload_routes`：完整兼容 5 发桥夹优先走批量动画；没有完整桥夹、装了瞄具、只缺 1–4 发或桥夹半满时，只有存在散装 `hamster:long_ammo` 才走原包逐发动画。桥夹被转空后仍作为 `0/5` 的可复用物件留在背包。SMLE、Berthier、Krag、转轮、杠杆、漏夹虽然也出现循环或 clip 文本，但其条件/批量不同，尚未套用此 profile。
+
 ## 已内置的显式别名修复
 
 兼容层已提供且仅在目标 Index 存在时才激活的别名：

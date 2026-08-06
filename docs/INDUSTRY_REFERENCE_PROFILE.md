@@ -79,7 +79,7 @@ data/ww/industry/reference/guns/mg42.json
 | `action` | 实际动作/结构族，如 `gas_rifle`、`bolt_action`、`long_recoil`、`launcher` | 小写安全 token；不能拿 `reload.type` 代替 |
 | `feed.device` | 现实/设计上的供弹设备 | 见下表 |
 | `feed.runtime_mechanism` | 当前 TACZ 已可执行的机制 | 只能是现有 `FeedMechanism` 或 `legacy` |
-| `family` + `capacity` | 实体外部供弹器规格 | 仅 `detachable_magazine` / `belt` 必填；并核对 `GunData.ammo_amount` |
+| `family` + `capacity` | 实体供弹器或装填工具规格 | `detachable_magazine` / `belt` 必填；桥夹/快装器声明运行时机制时也应填写族；容量均核对 `GunData.ammo_amount` |
 | `ammunition.expected_ammo` | 当前包实际应加载的 AmmoId | 若写出，必须精确等于 `GunData.ammo` |
 | `manufacturing.tier` | `legacy` / `service` / `advanced` / `precision` / `surveyed` | 受限枚举 |
 | `confidence` | `curated` / `pack_declared` / `world_confirmed` / `automatic_candidate` | 非自动档案必须给 `evidence` |
@@ -94,7 +94,7 @@ data/ww/industry/reference/guns/mg42.json
 | `tube` | 管式、逐发装填 | `tube` |
 | `revolver` | 转轮 | `revolver` |
 | `single_shot` | 单发后膛/发射管 | `single_shot` |
-| `stripper_clip` | 夹条；装填工具，不是插入式弹匣 | `stripper_clip`：向内部仓增量转入 |
+| `stripper_clip` | 可复用夹条；装填工具，不是插入式弹匣 | `stripper_clip`：向内部仓增量转入；转空仍保留夹条 |
 | `en_bloc_clip` | 漏夹；入枪、打空弹出 | 先写 `legacy`，待独立已安装漏夹/自动弹出事务实现 |
 | `speedloader` | 转轮快速装弹器 | `speedloader`：向内部转轮增量转入 |
 | `fuel_canister` / `utility` | 燃料、医疗、工具类消耗物 | `legacy` |

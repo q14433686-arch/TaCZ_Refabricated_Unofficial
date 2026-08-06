@@ -29,6 +29,13 @@ public class ModSyncedEntityData {
             .syncMode(SyncedDataKey.SyncMode.ALL)
             .build();
 
+    /** Short-lived server-selected gun-id/route pair used by compatible client reload animation selectors. */
+    public static final SyncedDataKey<LivingEntity, String> INDUSTRY_RELOAD_ROUTE_KEY = SyncedDataKey.builder(SyncedClassKey.LIVING_ENTITY, Serializers.STRING)
+            .id(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "industry_reload_route"))
+            .defaultValueSupplier(() -> "")
+            .syncMode(SyncedDataKey.SyncMode.ALL)
+            .build();
+
     public static final SyncedDataKey<LivingEntity, Float> AIMING_PROGRESS_KEY = SyncedDataKey.builder(SyncedClassKey.LIVING_ENTITY, Serializers.FLOAT)
             .id(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "aiming_progress"))
             .defaultValueSupplier(() -> 0f)
@@ -69,6 +76,7 @@ public class ModSyncedEntityData {
         registerEntityData(SHOOT_COOL_DOWN_KEY);
         registerEntityData(MELEE_COOL_DOWN_KEY);
         registerEntityData(RELOAD_STATE_KEY);
+        registerEntityData(INDUSTRY_RELOAD_ROUTE_KEY);
         registerEntityData(AIMING_PROGRESS_KEY);
         registerEntityData(DRAW_COOL_DOWN_KEY);
         registerEntityData(IS_AIMING_KEY);

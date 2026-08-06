@@ -1,0 +1,59 @@
+{
+  "type": "tacz:gun_smith_table_crafting",
+  "industry_loading_device_commission": true,
+  "materials": [
+    {
+      "item": "tacz:magazine_blank",
+      "count": 1,
+      "consume": true
+    },
+    {
+      "item": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_blueprint"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_kar98",
+          "IndustryPartKind": "blueprint",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "bolt_action",
+          "IndustryToolingScope": "critical_gauge"
+        }
+      },
+      "count": 1,
+      "consume": false
+    },
+    {
+      "item": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_kar98",
+          "IndustryPartKind": "critical_fit_gauge",
+          "DieTargetKind": "bolt_action"
+        }
+      },
+      "count": 1,
+      "consume": false
+    }
+  ],
+  "result": {
+    "type": "custom",
+    "group": "tacz:misc",
+    "item": {
+      "item": "tacz:magazine",
+      "count": 1,
+      "nbt": {
+        "MagazineFamily": "kar98_792x57_stripper",
+        "MagazineAmmoId": "tacz:792x57",
+        "MagazineCapacity": 5,
+        "MagazineAmmoCount": 0,
+        "MagazineDisplayName": "item.tacz.feed_device.kar98_stripper",
+        "FeedDeviceKind": "stripper_clip"
+      }
+    }
+  }
+}

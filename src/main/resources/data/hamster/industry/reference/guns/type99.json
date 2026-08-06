@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "canonical_model": "type_99_rifle",
+  "display_name": "Type 99 Rifle",
+  "action": "bolt_action",
+  "feed": {
+    "device": "stripper_clip",
+    "runtime_mechanism": "stripper_clip",
+    "carrier_behavior": "reusable_loading_tool",
+    "family": "hamster_type99_77_stripper",
+    "capacity": 5,
+    "reload_batch": 5
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "long_ammo",
+    "expected_ammo": "hamster:long_ammo"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "GunpowderRevolution v1.2.7 type99_data: ammo_amount=5 and hamster:gew98_gun_logic",
+    "type99_display uses the verified mosin9130 clip/loop state-machine family"
+  ]
+}

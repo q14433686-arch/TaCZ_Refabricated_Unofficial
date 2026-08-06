@@ -5,12 +5,12 @@
   "display_name": "KAR98",
   "action": "bolt_action",
   "feed": {
-    "device": "internal_box",
-    "runtime_mechanism": "internal_box",
-    "carrier_behavior": "internal",
-    "family": "",
+    "device": "stripper_clip",
+    "runtime_mechanism": "stripper_clip",
+    "carrier_behavior": "reusable_loading_tool",
+    "family": "kar98_792x57_stripper",
     "capacity": 4,
-    "reload_batch": 0
+    "reload_batch": 4
   },
   "ammunition": {
     "class": "cartridge",

@@ -1676,5 +1676,11 @@
   "tooltip.tacz.industry.surveyed_cartridge_part": "专用于对应测绘 AmmoId 的物理弹药部件",
   "tooltip.tacz.feed_device.kind.stripper_clip": "桥夹——将弹药转入枪内固定仓，不会替换已安装弹匣",
   "tooltip.tacz.feed_device.kind.speedloader": "快装器——将弹药转入枪内转轮，不会替换已安装弹匣",
-  "item.tacz.feed_device.rainforest_type56_stripper": "56式半自动步枪桥夹"
+  "item.tacz.feed_device.rainforest_type56_stripper": "56式半自动步枪桥夹",
+  "item.tacz.feed_device.kar98_stripper": "Kar98k 桥夹",
+  "item.tacz.feed_device.hamster_mosin_stripper": "莫辛-纳甘桥夹",
+  "item.tacz.feed_device.hamster_gew98_stripper": "Gewehr 98 桥夹",
+  "item.tacz.feed_device.hamster_m1903_stripper": "M1903 春田桥夹",
+  "item.tacz.feed_device.hamster_type99_stripper": "九九式步枪桥夹",
+  "tooltip.tacz.feed_device.reusable": "可重复压弹的装填工具——余弹归零后仍会保留"
 }

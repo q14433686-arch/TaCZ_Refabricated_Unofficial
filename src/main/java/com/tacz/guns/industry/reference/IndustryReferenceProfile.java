@@ -37,8 +37,8 @@ public final class IndustryReferenceProfile {
             "stripper_clip", "en_bloc_clip", "speedloader", "fuel_canister", "utility"
     );
     private static final Set<String> CARRIER_BEHAVIOURS = Set.of(
-            "unknown", "none", "inserted_retained", "inserted_ejected_empty", "consumed_loading_tool",
-            "internal", "consumed", "utility"
+            "unknown", "none", "inserted_retained", "inserted_ejected_empty",
+            "reusable_loading_tool", "internal", "consumed", "utility"
     );
     private static final Set<String> AMMUNITION_CLASSES = Set.of(
             "unknown", "cartridge", "shot_shell", "grenade", "rocket", "fuel", "medical", "utility"

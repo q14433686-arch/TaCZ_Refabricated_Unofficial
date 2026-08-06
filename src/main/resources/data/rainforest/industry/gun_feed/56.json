@@ -3,7 +3,7 @@
   "magazine_family": "rainforest_type56_stripper",
   "magazine_capacity": 10,
   "feed_device_capacity": 5,
-  "feed_device_reusable": false,
+  "feed_device_reusable": true,
   "reload_batch": 5,
   "loose_reload_mode": "none",
   "ammo": "tacz:762x39",

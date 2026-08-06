@@ -404,7 +404,7 @@ en_bloc_clip         漏夹（当前只可记录 reference，运行时机制仍�
   "magazine_family": "example_stripper",
   "magazine_capacity": 10,
   "feed_device_capacity": 5,
-  "feed_device_reusable": false,
+  "feed_device_reusable": true,
   "reload_batch": 5,
   "loose_reload_mode": "none",
   "ammo": "yournamespace:762x39",
@@ -412,7 +412,7 @@ en_bloc_clip         漏夹（当前只可记录 reference，运行时机制仍�
 }
 ```
 
-其中 `magazine_capacity` 是枪内固定仓容量，`feed_device_capacity` 才是一只桥夹/快装器自身可装的发数。桥夹不比较“自身余弹是否比枪内余弹多”；服务端只计算 `min(器件余弹, 内仓缺弹, reload_batch)` 的实际转入量，部分使用后的余弹继续保存在**同一件**桥夹中，可再次使用、取出或补装。
+其中 `magazine_capacity` 是枪内固定仓容量，`feed_device_capacity` 才是一只桥夹/快装器自身可装的发数。桥夹不比较“自身余弹是否比枪内余弹多”；服务端只计算 `min(器件余弹, 内仓缺弹, reload_batch)` 的实际转入量，部分使用后的余弹继续保存在**同一件**桥夹中，可再次使用、取出或补装。桥夹/快装器都是可复用的物理装填工具，转空也绝不被换弹事务删除；`feed_device_reusable` 保留仅为旧数据兼容。
 
 `loose_reload_mode` 不能从旧 `reload.type` 自动推断：
 
@@ -422,4 +422,41 @@ single_action  一次原生完整动作转入 loose_reload_batch（未写时为 
 script_loop    一次 R 启动原枪包的真实逐发循环；每个脚本 feed 点独立扣除/转入
 ```
 
-桥夹/快装器未声明时默认 `none`，而不是“每按一次 R 加一发”。只有已核验存在逐发 Lua 循环的枪才可选择 `script_loop`；完整器件状态机与未来选择圆盘见 `docs/FEED_DEVICE_AND_CLIP_DESIGN.md`。
+桥夹/快装器未声明时默认 `none`，而不是“每按一次 R 加一发”。只有已核验存在逐发 Lua 循环的枪才可选择 `script_loop`。
+
+### 条件化 `reload_routes`
+
+莫辛 / Gewehr 98 一类枪的原包脚本可能同时有“完整桥夹批量动画”和“散装逐发循环动画”。这时不要仅写 `loose_reload_mode`，而要显式声明按顺序尝试的 `reload_routes`：
+
+```json
+{
+  "reload_routes": [
+    {
+      "id": "stripper_clip_batch",
+      "source": "loading_device",
+      "script_driven": true,
+      "min_missing_rounds": 5,
+      "max_missing_rounds": 5,
+      "require_tactical": false,
+      "min_source_rounds": 5,
+      "max_transfer_rounds": 5,
+      "require_attachment_empty": "scope"
+    },
+    {
+      "id": "loose_round_loop",
+      "source": "loose_ammo",
+      "script_driven": true,
+      "min_missing_rounds": 1,
+      "animation_force_attachment_present": "scope"
+    }
+  ]
+}
+```
+
+- `source` 是 `loading_device` 或 `loose_ammo`；前者只有背包里存在兼容、足量的**具体物理桥夹/快装器**时才匹配；
+- `min_missing_rounds` / `max_missing_rounds`、`min_source_rounds`、`require_tactical`、`require_attachment_empty` / `require_attachment_present` 是对原包真实分支条件的逐项记录；
+- `script_driven: true` 表示不在 FINISHING 阶段补发整批，而是在原 Lua 每一个 `consumeAmmoFromPlayer` / `putAmmoInMagazine` / `setAmmoInBarrel` feed 调用处实际转移；
+- `extra_source_rounds` 用于原脚本把一发先上膛、其余压入内仓的批量动画；
+- `animation_force_attachment_present` 只可在已审计的旧状态机把“配件是否存在”当作**动画分支选择器**时使用。它不会安装或渲染假配件，也不会改变枪械数值；服务器和客户端同时使用同一条 route，客户端仅预测、服务器最终验证。
+
+因此“背包有完整桥夹”是选择桥夹动画的条件之一；没有完整桥夹但有散装弹时会进入真实逐发动画；半满桥夹若没有对应的部分桥夹动画分支，不会被静默拿来伪造完整桥夹动画。完整审计规则见 `docs/FEED_DEVICE_AND_CLIP_DESIGN.md`。

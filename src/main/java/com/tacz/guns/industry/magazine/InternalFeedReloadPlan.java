@@ -27,6 +27,12 @@ public final class InternalFeedReloadPlan {
     private final int fallbackRounds;
     private final int sourceRoundBudget;
     private final boolean tactical;
+    /** Explicit audited route id, or blank for the legacy-safe single route. */
+    private final String reloadRouteId;
+    /** True when the pack's own Lua calls own every real feed point. */
+    private final boolean scriptDriven;
+    /** Attachment slot presented as occupied only to an audited animation/script selector. */
+    private final String animationForceAttachmentPresent;
     /** Inventory slot reserved for a loading device; -1 means ordinary loose-ammo loading. */
     private final int feedDeviceSlot;
     private final ItemStack expectedFeedDevice;
@@ -49,11 +55,19 @@ public final class InternalFeedReloadPlan {
     public InternalFeedReloadPlan(Identifier gunId, Identifier ammoId, int animationRounds, int fallbackRounds,
                                   int sourceRoundBudget, boolean tactical) {
         this(gunId, ammoId, animationRounds, fallbackRounds, sourceRoundBudget, tactical,
-                -1, ItemStack.EMPTY, true);
+                "", false, "", -1, ItemStack.EMPTY, true);
     }
 
     public InternalFeedReloadPlan(Identifier gunId, Identifier ammoId, int animationRounds, int fallbackRounds,
                                   int sourceRoundBudget, boolean tactical, int feedDeviceSlot,
+                                  ItemStack expectedFeedDevice, boolean keepEmptyFeedDevice) {
+        this(gunId, ammoId, animationRounds, fallbackRounds, sourceRoundBudget, tactical,
+                "", false, "", feedDeviceSlot, expectedFeedDevice, keepEmptyFeedDevice);
+    }
+
+    public InternalFeedReloadPlan(Identifier gunId, Identifier ammoId, int animationRounds, int fallbackRounds,
+                                  int sourceRoundBudget, boolean tactical, String reloadRouteId,
+                                  boolean scriptDriven, String animationForceAttachmentPresent, int feedDeviceSlot,
                                   ItemStack expectedFeedDevice, boolean keepEmptyFeedDevice) {
         this.gunId = gunId;
         this.ammoId = ammoId;
@@ -61,6 +75,10 @@ public final class InternalFeedReloadPlan {
         this.fallbackRounds = Math.max(0, Math.min(fallbackRounds, this.animationRounds));
         this.sourceRoundBudget = Math.max(0, sourceRoundBudget);
         this.tactical = tactical;
+        this.reloadRouteId = reloadRouteId == null ? "" : reloadRouteId;
+        this.scriptDriven = scriptDriven;
+        this.animationForceAttachmentPresent = animationForceAttachmentPresent == null
+                ? "" : animationForceAttachmentPresent;
         this.feedDeviceSlot = feedDeviceSlot;
         this.expectedFeedDevice = expectedFeedDevice == null ? ItemStack.EMPTY : expectedFeedDevice.copy();
         this.keepEmptyFeedDevice = keepEmptyFeedDevice;
@@ -86,6 +104,19 @@ public final class InternalFeedReloadPlan {
 
     public boolean isTactical() {
         return tactical;
+    }
+
+    public String getReloadRouteId() {
+        return reloadRouteId;
+    }
+
+    public boolean isScriptDriven() {
+        return scriptDriven;
+    }
+
+    public boolean forcesAttachmentPresent(String attachmentType) {
+        return attachmentType != null && !attachmentType.isBlank()
+                && attachmentType.equalsIgnoreCase(animationForceAttachmentPresent);
     }
 
     public boolean usesFeedDevice() {

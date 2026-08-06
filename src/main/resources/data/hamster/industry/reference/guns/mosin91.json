@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "canonical_model": "mosin_nagant_m1891",
+  "display_name": "Mosin–Nagant M1891",
+  "action": "bolt_action",
+  "feed": {
+    "device": "stripper_clip",
+    "runtime_mechanism": "stripper_clip",
+    "carrier_behavior": "reusable_loading_tool",
+    "family": "hamster_mosin_762r_stripper",
+    "capacity": 5,
+    "reload_batch": 5
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "long_ammo",
+    "expected_ammo": "hamster:long_ammo"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "GunpowderRevolution v1.2.7 mosin91_data: ammo_amount=5, manual_action, hamster:gew98_gun_logic",
+    "gew98_gun_logic: five-round branch only when SCOPE is empty; otherwise one-round loop",
+    "mosin9130_state_machine: reload_clip and reload_loop branches mirror those conditions"
+  ]
+}

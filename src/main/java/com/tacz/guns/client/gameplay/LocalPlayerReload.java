@@ -8,6 +8,7 @@ import com.tacz.guns.api.event.common.GunReloadEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
+import com.tacz.guns.client.industry.magazine.IndustryReloadRouteClientState;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.client.sound.SoundPlayManager;
@@ -95,6 +96,9 @@ public class LocalPlayerReload {
             if (gunReloadEvent.isCanceled()) {
                 return;
             }
+            // Predict only the audited animation route. The server separately
+            // resolves and validates its physical source reservation.
+            IndustryReloadRouteClientState.preview(player, mainHandItem);
             // 发包通知服务器
             ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
             // 执行客户端 reload 相关内容

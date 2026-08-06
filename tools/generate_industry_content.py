@@ -2412,6 +2412,8 @@ def generated_reference_profile_files(platforms: list[dict[str, Any]]) -> dict[P
         "tube": "internal",
         "revolver": "internal",
         "single_shot": "internal",
+        "stripper_clip": "reusable_loading_tool",
+        "speedloader": "reusable_loading_tool",
     }
     for platform in platforms:
         gun_id = platform["gun_id"]
@@ -2419,7 +2421,10 @@ def generated_reference_profile_files(platforms: list[dict[str, Any]]) -> dict[P
         feed_path = feed_root / f"{platform['slug']}.json"
         feed = read_json(feed_path) if feed_path.exists() else {}
         mechanism = feed.get("mechanism") if isinstance(feed.get("mechanism"), str) else "legacy"
-        supported_mechanisms = {"detachable_magazine", "belt", "internal_box", "tube", "revolver", "single_shot"}
+        supported_mechanisms = {
+            "detachable_magazine", "belt", "internal_box", "tube", "revolver", "single_shot",
+            "stripper_clip", "speedloader",
+        }
         runtime_mechanism = mechanism if mechanism in supported_mechanisms else "legacy"
         device = mechanism if mechanism in supported_mechanisms else "unknown"
         capacity = feed.get("magazine_capacity") if isinstance(feed.get("magazine_capacity"), int) else 0
@@ -2427,6 +2432,7 @@ def generated_reference_profile_files(platforms: list[dict[str, Any]]) -> dict[P
         ammo = feed.get("ammo") if isinstance(feed.get("ammo"), str) else default_gun_ammo_for_reference(platform)
         nominal = ammo.split(":", 1)[-1] if ammo else "unknown"
         external = device in {"detachable_magazine", "belt"}
+        loading_device = device in {"stripper_clip", "speedloader"}
         profile = {
             "schema_version": 1,
             "generated_by": "tacz_industry_generator",
@@ -2437,7 +2443,7 @@ def generated_reference_profile_files(platforms: list[dict[str, Any]]) -> dict[P
                 "device": device,
                 "runtime_mechanism": runtime_mechanism,
                 "carrier_behavior": carrier_behaviour.get(device, "unknown"),
-                "family": feed.get("magazine_family", "") if external else "",
+                "family": feed.get("magazine_family", "") if external or loading_device else "",
                 "capacity": capacity,
                 "reload_batch": reload_batch,
             },

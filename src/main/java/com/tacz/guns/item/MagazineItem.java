@@ -158,6 +158,10 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
         if (!feedDeviceKind.isBlank() && !"detachable_magazine".equals(feedDeviceKind)) {
             adder.accept(Component.translatable("tooltip.tacz.feed_device.kind." + feedDeviceKind)
                     .withStyle(style -> style.withColor(0x8FD6C6)));
+            if ("stripper_clip".equals(feedDeviceKind) || "speedloader".equals(feedDeviceKind)) {
+                adder.accept(Component.translatable("tooltip.tacz.feed_device.reusable")
+                        .withStyle(style -> style.withColor(0x8FD6C6)));
+            }
         }
         adder.accept(Component.translatable("tooltip.tacz.magazine.usage.load")
                 .withStyle(style -> style.withColor(0x777777)));

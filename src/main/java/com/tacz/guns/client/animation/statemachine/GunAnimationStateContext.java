@@ -12,6 +12,7 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.api.util.LuaNbtAccessor;
+import com.tacz.guns.client.industry.magazine.IndustryReloadRouteClientState;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.functional.ShellRender;
 import com.tacz.guns.client.resource.GunDisplayInstance;
@@ -176,6 +177,13 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @return 玩家身上（或者虚拟备弹）是否有弹药可以消耗
      */
     public boolean hasAmmoToConsume() {
+        LocalPlayer localPlayer = Minecraft.getInstance().player;
+        if (localPlayer != null) {
+            Boolean routeSource = IndustryReloadRouteClientState.hasAmmoToConsume(localPlayer, currentGunItem);
+            if (routeSource != null) {
+                return routeSource;
+            }
+        }
         if (!processRemoteGunOperator(IGunOperator::needCheckAmmo).orElse(true)) {
             return true;
         }
@@ -525,7 +533,16 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
     public String getAttachment(String type) {
         try {
             AttachmentType t = AttachmentType.valueOf(type);
-            return iGun.getAttachmentId(currentGunItem, t).toString();
+            String actual = iGun.getAttachmentId(currentGunItem, t).toString();
+            LocalPlayer player = Minecraft.getInstance().player;
+            // Mirror the server's audited route selector. This is only a
+            // state-machine predicate: no attachment is installed, rendered,
+            // or granted any stat effect.
+            if (DefaultAssets.EMPTY_ATTACHMENT_ID.toString().equals(actual) && player != null
+                    && IndustryReloadRouteClientState.forcesAttachmentPresent(player, currentGunItem, type)) {
+                return "tacz:industry_reload_route";
+            }
+            return actual;
         } catch (IllegalArgumentException e) {
             return DefaultAssets.EMPTY_ATTACHMENT_ID.toString();
         }
