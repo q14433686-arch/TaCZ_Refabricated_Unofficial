@@ -1667,5 +1667,11 @@
   "tooltip.tacz.industry.surveyed_target": "Surveyed target: %s",
   "tooltip.tacz.blueprint.tier.surveyed": "Audited Survey Dossier — generic industrial line pending an explicit structure profile",
   "tooltip.tacz.industry.action_profile.surveyed": "Surveyed Generic Structure",
-  "tooltip.tacz.industry.tooling_scope.surveyed": "Survey fixture and surveyed platform structural kit"
+  "tooltip.tacz.industry.tooling_scope.surveyed": "Survey fixture and surveyed platform structural kit",
+  "item.tacz.press_die.survey_cartridge_gauge": "Surveyed Cartridge Datum Gauge",
+  "item.tacz.cartridge_case.surveyed": "Surveyed-Calibre Cartridge Case",
+  "item.tacz.cartridge_case.spent_surveyed": "Fired Surveyed-Calibre Cartridge Case",
+  "item.tacz.projectile_core.surveyed": "Surveyed-Calibre Projectile Core",
+  "tooltip.tacz.industry.survey_cartridge_gauge": "Surveyed from the original ammo material bill; forms its matching case and projectile (not consumed)",
+  "tooltip.tacz.industry.surveyed_cartridge_part": "Physical cartridge part dedicated to its surveyed AmmoId"
 }

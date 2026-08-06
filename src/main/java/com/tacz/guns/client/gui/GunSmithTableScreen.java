@@ -218,14 +218,20 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
     private boolean isSuitableForMainHand(GunSmithTableRecipe recipe) {
         if (filterList != null && filterList.isByHandSelected()) {
             ItemStack result = recipe.getResult().getResult();
-            // Archive commissions and surveyed platform kits are deliberate
-            // research/catalogue choices, not gun attachments or compatible
-            // loaded rounds. Keep them visible when the normal Gunsmith screen
-            // auto-filters by the gun currently held by the player.
-            if (result.getItem() instanceof IndustryItemDataAccessor industry
-                    && ("blueprint".equals(industry.getPartKind(result))
-                    || "surveyed_platform_kit".equals(industry.getPartKind(result)))) {
-                return true;
+            // Archive commissions, surveyed platform kits, and surveyed
+            // cartridge operations are deliberate research/catalogue choices,
+            // not gun attachments or compatible loaded rounds. Keep them
+            // visible when the normal Gunsmith screen auto-filters by the gun
+            // currently held by the player.
+            if (result.getItem() instanceof IndustryItemDataAccessor industry) {
+                String partKind = industry.getPartKind(result);
+                if ("blueprint".equals(partKind)
+                        || "surveyed_platform_kit".equals(partKind)
+                        || "survey_cartridge_gauge".equals(partKind)
+                        || "case".equals(partKind)
+                        || "projectile".equals(partKind)) {
+                    return true;
+                }
             }
 
             Minecraft minecraft = Minecraft.getInstance();

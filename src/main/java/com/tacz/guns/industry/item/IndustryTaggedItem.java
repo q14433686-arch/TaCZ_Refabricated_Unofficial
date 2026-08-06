@@ -52,8 +52,11 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
         // share one localized generic display key. Append their exact GunId so
         // a Gunsmith Table list can be searched/selected without pretending
         // that TACZ has supplied a translated real-world part name.
-        String surveyedGun = ItemNbtUtils.getTag(stack).getStringOr("IndustrySurveyGunId", "");
-        return surveyedGun.isBlank() ? base : base.copy().append(Component.literal(" [" + surveyedGun + "]")
+        var data = ItemNbtUtils.getTag(stack);
+        String surveyedGun = data.getStringOr("IndustrySurveyGunId", "");
+        String surveyedAmmo = data.getStringOr("IndustrySurveyAmmoId", "");
+        String surveyedTarget = !surveyedGun.isBlank() ? surveyedGun : surveyedAmmo;
+        return surveyedTarget.isBlank() ? base : base.copy().append(Component.literal(" [" + surveyedTarget + "]")
                 .withStyle(style -> style.withColor(0x777777)));
     }
 
@@ -172,11 +175,21 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
             adder.accept(Component.translatable("tooltip.tacz.industry.surveyed_platform_kit")
                     .withStyle(style -> style.withColor(0x8FD6C6)));
         }
+        if ("survey_cartridge_gauge".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.survey_cartridge_gauge")
+                    .withStyle(style -> style.withColor(0x55FFFF)));
+        }
         CompoundTag surveyTag = ItemNbtUtils.getTag(stack);
         String surveyedGun = surveyTag.getStringOr("IndustrySurveyGunId", "");
-        if (!surveyedGun.isBlank()) {
-            adder.accept(Component.translatable("tooltip.tacz.industry.surveyed_target", surveyedGun)
+        String surveyedAmmo = surveyTag.getStringOr("IndustrySurveyAmmoId", "");
+        String surveyedTarget = !surveyedGun.isBlank() ? surveyedGun : surveyedAmmo;
+        if (!surveyedTarget.isBlank()) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.surveyed_target", surveyedTarget)
                     .withStyle(style -> style.withColor(0xAAAAAA)));
+        }
+        if (!surveyedAmmo.isBlank() && ("case".equals(partKind) || "projectile".equals(partKind))) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.surveyed_cartridge_part")
+                    .withStyle(style -> style.withColor(0x8FD6C6)));
         }
         if (partKind.startsWith("dossier_archive_")) {
             adder.accept(Component.translatable("tooltip.tacz.industry.dossier_archive")

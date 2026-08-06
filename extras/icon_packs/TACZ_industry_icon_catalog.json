@@ -119,6 +119,11 @@
       "supplied_block_model": 2,
       "total": 5
     },
+    "surveying_ammunition": {
+      "covered": 4,
+      "family": 4,
+      "total": 4
+    },
     "surveying_component": {
       "covered": 1,
       "family": 1,
@@ -396,6 +401,7 @@
         "ammunition_case_datum_gauge_family",
         "ammunition_projectile_datum_gauge_family",
         "carrier_gauge_family",
+        "survey_cartridge_gauge_family",
         "tooling_acceptance_gauge",
         "tooling_critical_fit_gauge"
       ],
@@ -920,7 +926,8 @@
     {
       "texture": "tacz_extra:item/bullet_fmj",
       "bound_by": [
-        "projectile_fmj"
+        "projectile_fmj",
+        "surveyed_projectile_standard_family"
       ],
       "status": "bound"
     },
@@ -1219,7 +1226,8 @@
         "spent_case_338",
         "spent_case_556x45",
         "spent_case_68x51fury",
-        "spent_case_792x57"
+        "spent_case_792x57",
+        "surveyed_case_standard_family"
       ],
       "status": "bound"
     },
@@ -5943,7 +5951,8 @@
         "complete_spent_case_338_319dcca3f8",
         "complete_spent_case_556x45_e0316efceb",
         "complete_spent_case_68x51fury_e258391317",
-        "complete_spent_case_792x57_4a4863d2e7"
+        "complete_spent_case_792x57_4a4863d2e7",
+        "surveyed_spent_case_standard_family"
       ],
       "status": "bound"
     },
@@ -29458,6 +29467,94 @@
       "mapping": "complete_static_tacz_magazine_pouch_749c05bb1f",
       "texture": "tacz_extra:item/static_tacz_magazine_pouch",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "surveying_ammunition",
+      "identity": "survey:cartridge_gauge",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_part_kind": "survey_cartridge_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=survey_cartridge_gauge",
+      "label": "Surveyed Cartridge Datum Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "survey:cartridge_gauge",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "survey_cartridge_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "surveying_ammunition",
+      "identity": "survey:case",
+      "item": "tacz:cartridge_case",
+      "selectors": {
+        "industry_platform": "ammunition",
+        "industry_part_kind": "case"
+      },
+      "selector": "tacz:cartridge_case ; industry_part_kind=case ; industry_platform=ammunition",
+      "label": "Surveyed-Calibre Cartridge Case",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "survey:case",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "surveyed_case_standard_family",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "surveying_ammunition",
+      "identity": "survey:projectile",
+      "item": "tacz:projectile_core",
+      "selectors": {
+        "industry_platform": "ammunition",
+        "industry_part_kind": "projectile",
+        "projectile_type": "surveyed"
+      },
+      "selector": "tacz:projectile_core ; projectile_type=surveyed ; industry_part_kind=projectile ; industry_platform=ammunition",
+      "label": "Surveyed-Calibre Projectile Core",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "survey:projectile",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "surveyed_projectile_standard_family",
+      "texture": "tacz_extra:item/bullet_fmj",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "surveying_ammunition",
+      "identity": "survey:spent_case",
+      "item": "tacz:cartridge_case",
+      "selectors": {
+        "industry_platform": "ammunition",
+        "industry_part_kind": "spent_case"
+      },
+      "selector": "tacz:cartridge_case ; industry_part_kind=spent_case ; industry_platform=ammunition",
+      "label": "Fired Surveyed-Calibre Cartridge Case",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "survey:spent_case",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "surveyed_spent_case_standard_family",
+      "texture": "tacz_extra:item/spent_variant_casing_rifle_brass",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },

@@ -51,6 +51,8 @@ public final class IndustrialRecipeTransformer {
         Map<Identifier, JsonElement> transformed = new LinkedHashMap<>(source);
         Set<Identifier> replacedAmmoRecipes = legacyAmmoRecipeIds(rawAmmoReplacements);
         replacedAmmoRecipes.forEach(transformed::remove);
+        Set<Identifier> surveyedAmmoRecipes = surveyedAmmoRecipeIds(source);
+        surveyedAmmoRecipes.forEach(transformed::remove);
 
         int removedGunTableRecipes = 0;
         // A declared platform is never silently downgraded to the generic
@@ -80,9 +82,9 @@ public final class IndustrialRecipeTransformer {
 
         AutoFallbackStats autoFallbacks = autoDiscoverFallbacks(transformed, declaredAssemblyRecipes);
         GunMod.LOGGER.info(
-                "CREATE_FLY industry profile removed {} legacy gun-table terminal recipe(s) in favour of validated sequential assembly, removed {} legacy ammo table recipe(s), and synthesized {} gun / {} ammo / {} attachment fallback replacement(s); {} unresolved result identity recipe(s) retained unchanged.",
-                removedGunTableRecipes, replacedAmmoRecipes.size(), autoFallbacks.guns(), autoFallbacks.ammo(),
-                autoFallbacks.attachments(), autoFallbacks.unresolved());
+                "CREATE_FLY industry profile removed {} legacy gun-table terminal recipe(s) in favour of validated sequential assembly, removed {} explicit and {} surveyed ammo table recipe(s), and synthesized {} gun / {} ammo / {} attachment fallback replacement(s); {} unresolved result identity recipe(s) retained unchanged.",
+                removedGunTableRecipes, replacedAmmoRecipes.size(), surveyedAmmoRecipes.size(), autoFallbacks.guns(),
+                autoFallbacks.ammo(), autoFallbacks.attachments(), autoFallbacks.unresolved());
         return transformed;
     }
 
@@ -255,6 +257,17 @@ public final class IndustrialRecipeTransformer {
 
     private record AutoFallbackStats(int guns, int ammo, int attachments, int unresolved) {
         private static final AutoFallbackStats EMPTY = new AutoFallbackStats(0, 0, 0, 0);
+    }
+
+    private static Set<Identifier> surveyedAmmoRecipeIds(Map<Identifier, JsonElement> recipes) {
+        Set<Identifier> ids = new HashSet<>();
+        for (Map.Entry<Identifier, JsonElement> entry : recipes.entrySet()) {
+            if (entry.getValue() != null && entry.getValue().isJsonObject()
+                    && entry.getValue().getAsJsonObject().has("industry_surveyed_ammo_fallback")) {
+                ids.add(entry.getKey());
+            }
+        }
+        return ids;
     }
 
     private static Set<Identifier> legacyAmmoRecipeIds(Map<Identifier, JsonElement> rawAmmoReplacements) {

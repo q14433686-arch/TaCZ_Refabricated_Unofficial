@@ -1351,6 +1351,54 @@
       },
       "coverage": "family",
       "note": "Family visual for runtime-generated audited third-party platform kits."
+    },
+    {
+      "id": "survey_cartridge_gauge_family",
+      "item": "tacz:press_die",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "priority": 570,
+      "match": {
+        "industry_part_kind": "survey_cartridge_gauge"
+      },
+      "coverage": "family",
+      "note": "Runtime-measured cartridge gauge; exact calibre art awaits an explicit ammo reference."
+    },
+    {
+      "id": "surveyed_case_standard_family",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/casing_rifle_brass",
+      "priority": 20,
+      "match": {
+        "industry_platform": "ammunition",
+        "industry_part_kind": "case"
+      },
+      "coverage": "family",
+      "note": "Low-priority standard case family for surveyed external calibre identities; explicit calibre art overrides it."
+    },
+    {
+      "id": "surveyed_spent_case_standard_family",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/spent_variant_casing_rifle_brass",
+      "priority": 20,
+      "match": {
+        "industry_platform": "ammunition",
+        "industry_part_kind": "spent_case"
+      },
+      "coverage": "family",
+      "note": "Low-priority standard fired-case family; explicit calibre art overrides it."
+    },
+    {
+      "id": "surveyed_projectile_standard_family",
+      "item": "tacz:projectile_core",
+      "texture": "tacz_extra:item/bullet_fmj",
+      "priority": 250,
+      "match": {
+        "industry_platform": "ammunition",
+        "industry_part_kind": "projectile",
+        "projectile_type": "surveyed"
+      },
+      "coverage": "family",
+      "note": "Standard projectile material for a runtime surveyed AmmoId with no explicit calibre art."
     }
   ]
 }

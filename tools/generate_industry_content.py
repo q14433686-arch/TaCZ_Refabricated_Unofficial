@@ -1004,9 +1004,15 @@ def surveying_language_entries(language: str) -> dict[str, str]:
         "item.tacz.gun_dossier.surveyed": "测绘平台原始档案" if chinese else "Surveyed Platform Master Dossier",
         "item.tacz.gun_template.surveyed": "测绘平台生产工装" if chinese else "Surveyed Platform Production Template",
         "item.tacz.gun_component.surveyed_platform_kit": "测绘平台结构套件" if chinese else "Surveyed Platform Structural Kit",
-        "tooltip.tacz.industry.survey_archive": "在枪械工作台中消耗，以委托一份已审计枪械的测绘档案" if chinese else "Consumed by a Gunsmith Table commission for one audited surveyed dossier",
+        "item.tacz.press_die.survey_cartridge_gauge": "测绘弹药基准量规" if chinese else "Surveyed Cartridge Datum Gauge",
+        "item.tacz.cartridge_case.surveyed": "测绘口径弹壳" if chinese else "Surveyed-Calibre Cartridge Case",
+        "item.tacz.cartridge_case.spent_surveyed": "已击发的测绘口径弹壳" if chinese else "Fired Surveyed-Calibre Cartridge Case",
+        "item.tacz.projectile_core.surveyed":  "测绘口径弹头" if chinese else "Surveyed-Calibre Projectile Core",
+        "tooltip.tacz.industry.survey_archive":  "在枪械工作台中消耗，以委托一份已审计枪械的测绘档案" if chinese else "Consumed by a Gunsmith Table commission for one audited surveyed dossier",
         "tooltip.tacz.industry.survey_fixture": "测绘平台操作的可复用基准夹具（不消耗）" if chinese else "Reusable reference fixture for surveyed-platform operations (not consumed)",
-        "tooltip.tacz.industry.surveyed_platform_kit": "由五种中性结构毛坯和生产工装组成；用于对应测绘枪的平台终端" if chinese else "Built from five neutral structural blanks and a production template; required by its surveyed gun terminal",
+        "tooltip.tacz.industry.survey_cartridge_gauge": "由原弹药材料表测绘；成型对应测绘弹壳和弹头（不消耗）" if chinese else "Surveyed from the original ammo material bill; forms its matching case and projectile (not consumed)",
+        "tooltip.tacz.industry.surveyed_cartridge_part": "专用于对应测绘 AmmoId 的物理弹药部件" if chinese else "Physical cartridge part dedicated to its surveyed AmmoId",
+        "tooltip.tacz.industry.surveyed_platform_kit":  "由五种中性结构毛坯和生产工装组成；用于对应测绘枪的平台终端" if chinese else "Built from five neutral structural blanks and a production template; required by its surveyed gun terminal",
         "tooltip.tacz.industry.surveyed_target": "测绘目标：%s" if chinese else "Surveyed target: %s",
         "tooltip.tacz.blueprint.tier.surveyed": "已审计测绘档案 — 未声明真实结构前使用通用工业线" if chinese else "Audited Survey Dossier — generic industrial line pending an explicit structure profile",
         "tooltip.tacz.industry.action_profile.surveyed": "测绘通用结构" if chinese else "Surveyed Generic Structure",
@@ -3769,6 +3775,26 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
         "surveying_component", "survey:platform_kit", "tacz:gun_component",
         {"industry_part_kind": "surveyed_platform_kit"},
         "Surveyed Platform Structural Kit", ("family",), "survey:platform_kit", "family"
+    ))
+    identities.append(build_icon_identity(
+        "surveying_ammunition", "survey:cartridge_gauge", "tacz:press_die",
+        {"industry_part_kind": "survey_cartridge_gauge"},
+        "Surveyed Cartridge Datum Gauge", ("family",), "survey:cartridge_gauge", "family"
+    ))
+    identities.append(build_icon_identity(
+        "surveying_ammunition", "survey:case", "tacz:cartridge_case",
+        {"industry_platform": "ammunition", "industry_part_kind": "case"},
+        "Surveyed-Calibre Cartridge Case", ("family",), "survey:case", "family"
+    ))
+    identities.append(build_icon_identity(
+        "surveying_ammunition", "survey:spent_case", "tacz:cartridge_case",
+        {"industry_platform": "ammunition", "industry_part_kind": "spent_case"},
+        "Fired Surveyed-Calibre Cartridge Case", ("family",), "survey:spent_case", "family"
+    ))
+    identities.append(build_icon_identity(
+        "surveying_ammunition", "survey:projectile", "tacz:projectile_core",
+        {"industry_platform": "ammunition", "industry_part_kind": "projectile", "projectile_type": "surveyed"},
+        "Surveyed-Calibre Projectile Core", ("family",), "survey:projectile", "family"
     ))
 
     # Current physical external feed definitions. Internal/tube/revolver feeds

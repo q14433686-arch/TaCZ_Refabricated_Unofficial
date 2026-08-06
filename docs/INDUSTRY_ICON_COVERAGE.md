@@ -38,6 +38,7 @@
 | shared_gun_intermediate | 6 | 6 | 0 | 6 | 0 | 0 | 0 | 0 |
 | spent_cartridge_case | 23 | 23 | 0 | 23 | 0 | 0 | 0 | 0 |
 | static_industrial_item | 5 | 5 | 0 | 3 | 0 | 0 | 2 | 0 |
+| surveying_ammunition | 4 | 4 | 0 | 0 | 4 | 0 | 0 | 0 |
 | surveying_component | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
 | surveying_tooling | 2 | 2 | 0 | 0 | 2 | 0 | 0 | 0 |
 | tooling_template_blank | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |

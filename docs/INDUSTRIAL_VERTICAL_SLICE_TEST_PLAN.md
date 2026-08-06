@@ -16,6 +16,7 @@
 3. 安装第三方包后，审计只能把有有效 Index/Data 的枪标记为 `surveyed` 候选；没有 `industry/reference` / `industry/gun_feed` 的第三方枪必须保持 `legacy` 供弹，不能因为其旧 `reload.type = magazine` 被自动变为实体弹匣；
 4. 对输出 ID 错误的第三方工作台配方，先观察审计的 `unresolved` 行；只有添加带 `expected_ammo` / `expected_capacity` 的显式 `industry/id_aliases` 条目后才允许其进入自动工业门槛。不要用文件名猜测直接修复。
 5. 对一把已审计但没有 `industry/assembly` 高保真声明的第三方枪：先在 Basin 制作测绘档案包、在机械合成器制作测绘夹具；在 Gunsmith Table 杂项页委托其测绘 master dossier，再转印生产工装；用五种中性结构毛坯、生产工装和夹具制作“测绘平台结构套件”。原枪包成枪配方应保留原材料表，但额外要求该 kit、生产工装和夹具；默认高保真枪不得被改成这条 GUI fallback。
+6. 对已审计的第三方普通 ammo：Misc 页应出现 `[namespace:ammo]` 测绘量规、弹壳和弹头操作；量规委托消耗原 ammo 材料表和中性弹药量规毛坯，后续弹壳/弹头必须带精确测绘 AmmoId/口径标签，最终只在四槽弹药装配机完成。射击后应产生标准材质族的已击发对应口径弹壳，并可通过量规/夹具操作整形；fuel/inventory/未解析 ammo 不得错误进入该流程。
 
 ## 1. 配方查看器桥接
 

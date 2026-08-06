@@ -23,7 +23,8 @@
 - 四包都使用旧目录 `data/<ns>/recipes/`；`TableRecipeManager` 已并行扫描这个目录，因此带 `.json` 的工作台配方会进入 TACZ 自建同步通道；
 - 旧式 `{ "tag": ... }` / `{ "item": ... }` 材料写法由 `GunSmithTableIngredient` 延迟规范化；这不是本次新增问题；
 - `DelegatingPackResources` 现在会为受限 TACZ 数据目录中的 extensionless JSON 公开虚拟 `.json` 别名，因此 `bf1` 的这六个资源不再因文件后缀被静默漏扫；原 ZIP 不被改写，真实 `.json` 同名文件仍优先；
-- 当前已审计 gun result 会获得测绘 GUI fallback：测绘档案/生产工装/五种结构毛坯组成的平台结构套件会被加入原枪包真实材料账单；它仍不声称知道第三方的真实组件几何，也还没有生成专用弹药机或实体供弹器；
+- 当前已审计 gun result 会获得测绘 GUI fallback：测绘档案/生产工装/五种结构毛坯组成的平台结构套件会被加入原枪包真实材料账单；它仍不声称知道第三方的真实组件几何，也不自动改变实体供弹器；
+- 已解析、普通 magazine/manual 消费的非 `tacz:` ammo 会获得测绘量规、精确 NBT 弹壳/弹头、已击发弹壳重整形和专用四槽装配机定义；fuel/inventory/未解析项保留原行为；
 - 新增 `IndustryReferenceProfile`、`industry/id_aliases` 和运行时审计后，无法解析的结果不再被自动工业门槛伪装成可安全处理的对象。
 
 ## 重点反例

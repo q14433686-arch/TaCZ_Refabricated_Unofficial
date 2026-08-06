@@ -1667,5 +1667,11 @@
   "tooltip.tacz.industry.surveyed_target": "测绘目标：%s",
   "tooltip.tacz.blueprint.tier.surveyed": "已审计测绘档案 — 未声明真实结构前使用通用工业线",
   "tooltip.tacz.industry.action_profile.surveyed": "测绘通用结构",
-  "tooltip.tacz.industry.tooling_scope.surveyed": "测绘夹具和测绘平台结构套件"
+  "tooltip.tacz.industry.tooling_scope.surveyed": "测绘夹具和测绘平台结构套件",
+  "item.tacz.press_die.survey_cartridge_gauge": "测绘弹药基准量规",
+  "item.tacz.cartridge_case.surveyed": "测绘口径弹壳",
+  "item.tacz.cartridge_case.spent_surveyed": "已击发的测绘口径弹壳",
+  "item.tacz.projectile_core.surveyed": "测绘口径弹头",
+  "tooltip.tacz.industry.survey_cartridge_gauge": "由原弹药材料表测绘；成型对应测绘弹壳和弹头（不消耗）",
+  "tooltip.tacz.industry.surveyed_cartridge_part": "专用于对应测绘 AmmoId 的物理弹药部件"
 }

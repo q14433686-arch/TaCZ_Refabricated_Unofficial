@@ -6,6 +6,7 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.init.ModRecipe;
 import com.tacz.guns.industry.recipe.IndustrialRecipeTransformer;
 import com.tacz.guns.industry.recipe.IndustryAssemblyDefinition;
+import com.tacz.guns.industry.reference.SurveyedCartridgeRecipeFactory;
 import com.tacz.guns.industry.reference.SurveyedIndustryRecipeFactory;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.network.DataType;
@@ -89,6 +90,8 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
     private Map<Identifier, JsonElement> industryAmmoReplacements = Map.of();
     /** Immutable pre-alias/pre-transform source used by the runtime compatibility audit. */
     private Map<Identifier, JsonElement> rawTableRecipeDefinitions = Map.of();
+    /** Runtime-generated dedicated cartridge-machine definitions for surveyed third-party ammo. */
+    private Map<Identifier, JsonElement> surveyedCartridgeDefinitions = Map.of();
     /** Server-side lookup used by the guarded industrial recovery station. */
     private Map<Identifier, IndustryAssemblyDefinition> industryAssembliesByGun = Map.of();
 
@@ -163,6 +166,11 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
                 effectiveRecipes, new HashSet<>(industryAssemblies.keySet()), CommonAssetsManager.get()
         );
         effectiveRecipes = surveyed.recipes();
+        SurveyedCartridgeRecipeFactory.Result surveyedAmmo = SurveyedCartridgeRecipeFactory.apply(
+                effectiveRecipes, CommonAssetsManager.get()
+        );
+        effectiveRecipes = surveyedAmmo.recipes();
+        surveyedCartridgeDefinitions = surveyedAmmo.definitions();
         industryAssembliesByGun = resolveIndustryAssembliesByGun(effectiveRecipes, industryAssemblies);
         // The industrial profile removes only terminals that have a real,
         // validated one-workpiece Create sequenced-assembly process. Pass the
@@ -195,6 +203,11 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
      */
     public Map<Identifier, JsonElement> getRawTableRecipeDefinitions() {
         return copyJsonMap(rawTableRecipeDefinitions);
+    }
+
+    /** Dynamic safe-ammo definitions consumed by CartridgeAssemblyRecipeManager after table reload. */
+    public Map<Identifier, JsonElement> getSurveyedCartridgeDefinitions() {
+        return copyJsonMap(surveyedCartridgeDefinitions);
     }
 
     private static Map<Identifier, JsonElement> copyJsonMap(Map<Identifier, JsonElement> source) {
