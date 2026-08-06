@@ -619,16 +619,10 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
     blueprint_key = blueprint["display_name"]
     result: dict[Path, Any] = {}
 
-    result[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/blueprint_{name}.json"] = {
-        "fabric:load_conditions": CREATE_CONDITIONS,
-        "type": "create:compacting",
-        "ingredients": blueprint["ingredients"],
-        "results": [output("tacz:gun_blueprint", {
-            "IndustryPlatform": name,
-            "IndustryPartKind": "blueprint",
-            "IndustryDisplayName": blueprint_key,
-        })],
-    }
+    # Blueprints are discovered technical archives, never a coloured mineral
+    # plus paper compacting recipe. Their acquisition is generated separately
+    # through the trade/loot routes; studying an archive makes the production
+    # template used below. Deliberately do not emit blueprint_<platform>.json.
 
     component_entries: list[dict[str, str]] = []
     for part in parts:
