@@ -62,5 +62,5 @@
 1. 安装包后运行 `/tacz industry audit`，先得到 direct / alias / unresolved / curated / surveyed 数量；
 2. 对尚未覆盖的错误结果 ID 写 `industry/id_aliases`，且用 `expected_ammo`、`expected_capacity` 防止错误覆盖；
 3. 对需要真实工业化的枪写 `industry/reference/guns/<gun>.json`，先记录动作、实际供弹设备和弹药类别；
-4. 只有明确的 `detachable_magazine` / `belt` 才进入实体供弹器路线；`stripper_clip`、`en_bloc_clip`、`speedloader`、`fuel_canister` 先记录事实、保留 legacy，等待各自真实机制；
+4. 只有明确的 `detachable_magazine` / `belt` 才进入已安装实体弹匣路线；`stripper_clip` / `speedloader` 走内部仓增量转移事务，`en_bloc_clip`、`fuel_canister` 仍先记录事实、保持 legacy，等待各自真实机制；
 5. 后续内存生成资源层只接收当前已审计的 133 条安全工作台身份，默认包的手工高保真路线始终优先。

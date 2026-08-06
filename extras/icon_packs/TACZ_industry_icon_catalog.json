@@ -50,6 +50,11 @@
       "family": 4,
       "total": 4
     },
+    "feed_device": {
+      "covered": 2,
+      "family": 2,
+      "total": 2
+    },
     "fresh_cartridge_case": {
       "covered": 23,
       "exact": 1,
@@ -456,7 +461,8 @@
     {
       "texture": "tacz_extra:item/base_m_loader",
       "bound_by": [
-        "carrier_feed_kit_family"
+        "carrier_feed_kit_family",
+        "feed_device_stripper_clip_family"
       ],
       "status": "bound"
     },
@@ -5584,8 +5590,10 @@
     },
     {
       "texture": "tacz_extra:item/mag_speedloader22",
-      "bound_by": [],
-      "status": "available_unbound"
+      "bound_by": [
+        "feed_device_speedloader_family"
+      ],
+      "status": "bound"
     },
     {
       "texture": "tacz_extra:item/mag_springfield1873",
@@ -11101,6 +11109,48 @@
       "mapping_eligible": true,
       "mapping": "dossier_archive_service",
       "texture": "tacz_extra:item/generic_blueprint",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "feed_device",
+      "identity": "feed_device:speedloader",
+      "item": "tacz:magazine",
+      "selectors": {
+        "feed_device_kind": "speedloader"
+      },
+      "selector": "tacz:magazine ; feed_device_kind=speedloader",
+      "label": "Speedloader Feed Device",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "feed_device:speedloader",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "feed_device_speedloader_family",
+      "texture": "tacz_extra:item/mag_speedloader22",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "feed_device",
+      "identity": "feed_device:stripper_clip",
+      "item": "tacz:magazine",
+      "selectors": {
+        "feed_device_kind": "stripper_clip"
+      },
+      "selector": "tacz:magazine ; feed_device_kind=stripper_clip",
+      "label": "Stripper Clip Feed Device",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "feed_device:stripper_clip",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "feed_device_stripper_clip_family",
+      "texture": "tacz_extra:item/base_m_loader",
       "current_coverage": "family",
       "covered": true,
       "needs_art": false

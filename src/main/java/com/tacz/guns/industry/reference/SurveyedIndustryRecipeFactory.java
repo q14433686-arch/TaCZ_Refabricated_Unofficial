@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.industry.IndustryProfileManager;
+import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.resource.ICommonResourceProvider;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import net.minecraft.resources.Identifier;
@@ -70,6 +71,10 @@ public final class SurveyedIndustryRecipeFactory {
             commissions += putIfAbsent(output, dossierId(platform), dossierRecipe(platform)) ? 1 : 0;
             commissions += putIfAbsent(output, templateId(platform), templateRecipe(platform)) ? 1 : 0;
             commissions += putIfAbsent(output, kitId(platform), kitRecipe(platform)) ? 1 : 0;
+            GunFeedDefinition feed = assets.getGunFeedDefinition(platform.gunId());
+            if (feed != null && feed.isValidLoadingDeviceDefinition()) {
+                commissions += putIfAbsent(output, deviceId(platform), loadingDeviceRecipe(platform, feed)) ? 1 : 0;
+            }
         }
         if (transformed > 0) {
             GunMod.LOGGER.info(
@@ -145,6 +150,26 @@ public final class SurveyedIndustryRecipeFactory {
         materials.add(material(partial("tacz:gun_blueprint", productionTemplateTag(platform)), 1, false));
         materials.add(material(partial("tacz:press_die", surveyFixtureTag()), 1, false));
         return generatedTableRecipe(materials, customResult("tacz:gun_component", surveyedKitTag(platform)));
+    }
+
+    private static JsonObject loadingDeviceRecipe(SurveyedPlatform platform, GunFeedDefinition definition) {
+        return generatedTableRecipe(
+                material(new com.google.gson.JsonPrimitive("tacz:magazine_blank"), 1, true),
+                material(partial("tacz:gun_blueprint", productionTemplateTag(platform)), 1, false),
+                material(partial("tacz:press_die", surveyFixtureTag()), 1, false),
+                customResult("tacz:magazine", loadingDeviceTag(definition))
+        );
+    }
+
+    private static JsonObject loadingDeviceTag(GunFeedDefinition definition) {
+        JsonObject tag = new JsonObject();
+        tag.addProperty("MagazineFamily", definition.getMagazineFamily());
+        tag.addProperty("MagazineAmmoId", definition.getAmmoId().toString());
+        tag.addProperty("MagazineCapacity", definition.getFeedDeviceCapacity());
+        tag.addProperty("MagazineAmmoCount", 0);
+        tag.addProperty("MagazineDisplayName", definition.getDisplayName());
+        tag.addProperty("FeedDeviceKind", definition.getMechanism().serializedName());
+        return tag;
     }
 
     private static JsonObject generatedTableRecipe(JsonObject first, JsonObject second, JsonObject third, JsonObject result) {
@@ -276,6 +301,10 @@ public final class SurveyedIndustryRecipeFactory {
 
     private static Identifier kitId(SurveyedPlatform platform) {
         return generatedId("kit", platform);
+    }
+
+    private static Identifier deviceId(SurveyedPlatform platform) {
+        return generatedId("device", platform);
     }
 
     private static Identifier generatedId(String operation, SurveyedPlatform platform) {

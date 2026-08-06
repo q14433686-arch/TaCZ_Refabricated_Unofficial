@@ -25,6 +25,7 @@
 | cartridge_projectile_die | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
 | cartridge_reverse_gauge | 48 | 48 | 0 | 0 | 48 | 0 | 0 | 0 |
 | dossier_archive | 4 | 4 | 0 | 0 | 4 | 0 | 0 | 0 |
+| feed_device | 2 | 2 | 0 | 0 | 2 | 0 | 0 | 0 |
 | fresh_cartridge_case | 23 | 23 | 0 | 1 | 22 | 0 | 0 | 0 |
 | loose_ammo | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
 | physical_magazine | 22 | 22 | 0 | 22 | 0 | 0 | 0 | 0 |
@@ -112,7 +113,6 @@
 | `tacz_extra:item/mag_m134_belt` |
 | `tacz_extra:item/mag_m700` |
 | `tacz_extra:item/mag_m95` |
-| `tacz_extra:item/mag_speedloader22` |
 | `tacz_extra:item/mag_springfield1873` |
 | `tacz_extra:item/mag_type81` |
 | `tacz_extra:item/pig_iron_ingot` |

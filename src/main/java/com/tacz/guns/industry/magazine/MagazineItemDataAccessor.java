@@ -23,6 +23,8 @@ public interface MagazineItemDataAccessor extends IMagazine {
     String MAGAZINE_CAPACITY_TAG = "MagazineCapacity";
     String MAGAZINE_AMMO_COUNT_TAG = "MagazineAmmoCount";
     String MAGAZINE_DISPLAY_NAME_TAG = "MagazineDisplayName";
+    /** detachable_magazine/belt for legacy carrier stacks; stripper_clip/speedloader for internal loaders. */
+    String FEED_DEVICE_KIND_TAG = "FeedDeviceKind";
 
     int MAX_MAGAZINE_CAPACITY = 512;
 
@@ -94,6 +96,22 @@ public interface MagazineItemDataAccessor extends IMagazine {
         ItemNbtUtils.updateTag(magazine, tag -> tag.putString(
                 MAGAZINE_DISPLAY_NAME_TAG,
                 displayNameKey == null ? "" : displayNameKey
+        ));
+    }
+
+    /**
+     * Existing magazine stacks predate this tag. Their behaviour is still
+     * resolved by the gun's FeedMechanism, so the neutral default here is only
+     * a display/storage convention and never changes an old belt box into an
+     * AR magazine by itself.
+     */
+    default String getFeedDeviceKind(ItemStack magazine) {
+        return ItemNbtUtils.getTag(magazine).getStringOr(FEED_DEVICE_KIND_TAG, "");
+    }
+
+    default void setFeedDeviceKind(ItemStack magazine, String kind) {
+        ItemNbtUtils.updateTag(magazine, tag -> tag.putString(
+                FEED_DEVICE_KIND_TAG, kind == null ? "" : kind
         ));
     }
 

@@ -1673,5 +1673,8 @@
   "item.tacz.cartridge_case.spent_surveyed": "已击发的测绘口径弹壳",
   "item.tacz.projectile_core.surveyed": "测绘口径弹头",
   "tooltip.tacz.industry.survey_cartridge_gauge": "由原弹药材料表测绘；成型对应测绘弹壳和弹头（不消耗）",
-  "tooltip.tacz.industry.surveyed_cartridge_part": "专用于对应测绘 AmmoId 的物理弹药部件"
+  "tooltip.tacz.industry.surveyed_cartridge_part": "专用于对应测绘 AmmoId 的物理弹药部件",
+  "tooltip.tacz.feed_device.kind.stripper_clip": "桥夹——将弹药转入枪内固定仓，不会替换已安装弹匣",
+  "tooltip.tacz.feed_device.kind.speedloader": "快装器——将弹药转入枪内转轮，不会替换已安装弹匣",
+  "item.tacz.feed_device.rainforest_type56_stripper": "56式半自动步枪桥夹"
 }

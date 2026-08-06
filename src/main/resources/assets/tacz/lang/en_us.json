@@ -1673,5 +1673,8 @@
   "item.tacz.cartridge_case.spent_surveyed": "Fired Surveyed-Calibre Cartridge Case",
   "item.tacz.projectile_core.surveyed": "Surveyed-Calibre Projectile Core",
   "tooltip.tacz.industry.survey_cartridge_gauge": "Surveyed from the original ammo material bill; forms its matching case and projectile (not consumed)",
-  "tooltip.tacz.industry.surveyed_cartridge_part": "Physical cartridge part dedicated to its surveyed AmmoId"
+  "tooltip.tacz.industry.surveyed_cartridge_part": "Physical cartridge part dedicated to its surveyed AmmoId",
+  "tooltip.tacz.feed_device.kind.stripper_clip": "Stripper clip — transfers rounds into an internal feed; never replaces an installed magazine",
+  "tooltip.tacz.feed_device.kind.speedloader": "Speedloader — transfers rounds into an internal cylinder; never replaces an installed magazine",
+  "item.tacz.feed_device.rainforest_type56_stripper": "Type 56 Stripper Clip"
 }

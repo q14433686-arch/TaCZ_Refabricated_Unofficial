@@ -20,9 +20,9 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Physical internal-feed ownership for tube, revolver, internal-box and
- * single-shot weapons. These mechanisms intentionally do not pretend an
- * internal tube/cylinder is a detachable magazine item.
+ * Physical internal-feed ownership for tube, revolver, internal-box,
+ * single-shot and bridge-device weapons. Stripper clips/speedloaders supply
+ * rounds into this state but are never installed as replacement magazines.
  */
 public final class InternalFeedService {
     public static final String INTERNAL_FEED_AMMO_ID = "InternalFeedAmmoId";
@@ -99,6 +99,10 @@ public final class InternalFeedService {
         if (!shouldConsumeAmmo(player) || isInfiniteReload(gun)) {
             return true;
         }
+        if (definition.getMechanism().usesLoadingDevice()) {
+            return findBestLoadingDevice(player, definition,
+                    definition.getMagazineCapacity() - getAmmoCount(gun)) != null;
+        }
         return countLooseAmmo(player, definition.getAmmoId()) > 0;
     }
 
@@ -117,13 +121,30 @@ public final class InternalFeedService {
             return null;
         }
         int planned = Math.min(missing, definition.getReloadBatch());
-        if (shouldConsumeAmmo(player) && !isInfiniteReload(gun)) {
-            planned = Math.min(planned, countLooseAmmo(player, definition.getAmmoId()));
+        InternalFeedReloadPlan plan;
+        if (definition.getMechanism().usesLoadingDevice() && shouldConsumeAmmo(player) && !isInfiniteReload(gun)) {
+            LoadingDeviceSelection selection = findBestLoadingDevice(player, definition, missing);
+            if (selection == null) {
+                return null;
+            }
+            planned = Math.min(planned, selection.transferableRounds());
+            if (planned <= 0) {
+                return null;
+            }
+            // Reserve exactly one physical clip/speedloader slot. Unlike a
+            // detachable magazine, this is additive: its rounds will be moved
+            // into InternalFeedAmmoCount at the FEEDING -> FINISHING point.
+            plan = new InternalFeedReloadPlan(iGun.getGunId(gun), definition.getAmmoId(), planned, tactical,
+                    selection.slot(), selection.preview(), definition.isFeedDeviceReusable());
+        } else {
+            if (shouldConsumeAmmo(player) && !isInfiniteReload(gun)) {
+                planned = Math.min(planned, countLooseAmmo(player, definition.getAmmoId()));
+            }
+            if (planned <= 0) {
+                return null;
+            }
+            plan = new InternalFeedReloadPlan(iGun.getGunId(gun), definition.getAmmoId(), planned, tactical);
         }
-        if (planned <= 0) {
-            return null;
-        }
-        InternalFeedReloadPlan plan = new InternalFeedReloadPlan(iGun.getGunId(gun), definition.getAmmoId(), planned, tactical);
         data.internalFeedReload = plan;
         return plan;
     }
@@ -175,12 +196,17 @@ public final class InternalFeedService {
         }
         int inserted = plan.getRounds();
         if (shouldConsumeAmmo(player) && !isInfiniteReload(gun)) {
-            inserted = extractLooseAmmo(player, definition.getAmmoId(), inserted);
+            inserted = plan.usesFeedDevice()
+                    ? extractLoadingDeviceRounds(player, definition, plan)
+                    : extractLooseAmmo(player, definition.getAmmoId(), inserted);
         }
+        int before = getAmmoCount(gun);
+        // A bridge device may have been moved/partially drained while the
+        // animation played. Fail closed and never overflow the internal feed.
+        inserted = Math.min(inserted, Math.max(0, definition.getMagazineCapacity() - before));
         if (inserted <= 0) {
             return false;
         }
-        int before = getAmmoCount(gun);
         setAmmoCount(gun, before + inserted);
         if (!plan.isTactical()) {
             chamberRoundAfterEmptyReload(gun);
@@ -201,6 +227,69 @@ public final class InternalFeedService {
                 && removeRounds(gun, 1) == 1) {
             iGun.setBulletInBarrel(gun, true);
         }
+    }
+
+    /**
+     * Choose the clip/speedloader by actual useful transfer, not by comparing
+     * its remaining rounds against the gun's current internal count. A 5-round
+     * bridge clip is valuable to a 7/10 fixed magazine because it can still
+     * transfer three rounds; the detachable-magazine "only replace with a
+     * better mag" rule is intentionally not used here.
+     */
+    @Nullable
+    private static LoadingDeviceSelection findBestLoadingDevice(Player player, GunFeedDefinition definition, int missing) {
+        int bestTransfer = 0;
+        LoadingDeviceSelection best = null;
+        var inventory = player.getInventory();
+        int slots = inventory.getNonEquipmentItems().size();
+        for (int slot = 0; slot < slots; slot++) {
+            ItemStack candidate = inventory.getItem(slot);
+            if (!isCompatibleLoadingDevice(definition, candidate) || !(candidate.getItem() instanceof IMagazine device)) {
+                continue;
+            }
+            int transferable = Math.min(Math.min(device.getAmmoCount(candidate), Math.max(0, missing)),
+                    definition.getReloadBatch());
+            if (transferable > bestTransfer) {
+                bestTransfer = transferable;
+                best = new LoadingDeviceSelection(slot, candidate.copy(), transferable);
+            }
+        }
+        return best;
+    }
+
+    private static boolean isCompatibleLoadingDevice(GunFeedDefinition definition, ItemStack stack) {
+        if (!definition.isValidLoadingDeviceDefinition() || !(stack.getItem() instanceof MagazineItemDataAccessor device)
+                || !device.isConfigured(stack)) {
+            return false;
+        }
+        return definition.getMechanism().serializedName().equals(device.getFeedDeviceKind(stack))
+                && definition.getMagazineFamily().equals(device.getMagazineFamily(stack))
+                && definition.getAmmoId().equals(device.getAmmoId(stack))
+                && definition.getFeedDeviceCapacity() == device.getCapacity(stack)
+                && device.getAmmoCount(stack) > 0;
+    }
+
+    private static int extractLoadingDeviceRounds(Player player, GunFeedDefinition definition,
+                                                  InternalFeedReloadPlan plan) {
+        if (!plan.usesFeedDevice() || plan.getFeedDeviceSlot() < 0) {
+            return 0;
+        }
+        var inventory = player.getInventory();
+        ItemStack current = inventory.getItem(plan.getFeedDeviceSlot());
+        ItemStack expected = plan.getExpectedFeedDevice();
+        if (!ItemStack.isSameItemSameComponents(current, expected) || !isCompatibleLoadingDevice(definition, current)
+                || !(current.getItem() instanceof MagazineItemDataAccessor device)) {
+            // A different stack must never be substituted during the reload
+            // animation: bridge clips are physical partly-filled items.
+            return 0;
+        }
+        int transferred = Math.min(plan.getRounds(), device.getAmmoCount(current));
+        device.setAmmoCount(current, device.getAmmoCount(current) - transferred);
+        if (device.getAmmoCount(current) <= 0 && !plan.keepEmptyFeedDevice()) {
+            inventory.setItem(plan.getFeedDeviceSlot(), ItemStack.EMPTY);
+        }
+        inventory.setChanged();
+        return transferred;
     }
 
     private static int countLooseAmmo(Player player, Identifier ammoId) {
@@ -255,5 +344,8 @@ public final class InternalFeedService {
         if (gun.getItem() instanceof GunItemDataAccessor data) {
             data.setLegacyAmmoCount(gun, count);
         }
+    }
+
+    private record LoadingDeviceSelection(int slot, ItemStack preview, int transferableRounds) {
     }
 }

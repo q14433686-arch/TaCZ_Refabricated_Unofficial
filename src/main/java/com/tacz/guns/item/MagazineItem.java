@@ -154,6 +154,11 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
                 .withStyle(style -> style.withColor(0xAAAAAA)));
         adder.accept(Component.translatable("tooltip.tacz.magazine.ammo", getAmmoId(stack).toString())
                 .withStyle(style -> style.withColor(0xAAAAAA)));
+        String feedDeviceKind = getFeedDeviceKind(stack);
+        if (!feedDeviceKind.isBlank() && !"detachable_magazine".equals(feedDeviceKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.feed_device.kind." + feedDeviceKind)
+                    .withStyle(style -> style.withColor(0x8FD6C6)));
+        }
         adder.accept(Component.translatable("tooltip.tacz.magazine.usage.load")
                 .withStyle(style -> style.withColor(0x777777)));
         adder.accept(Component.translatable("tooltip.tacz.magazine.usage.unload")
@@ -164,16 +169,25 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
         }
     }
 
-    /** Build one empty sample per unique family/capacity/ammo combination. */
+    /** Build one empty sample per unique external-carrier or loading-device identity. */
     public static NonNullList<ItemStack> fillItemCategory() {
         NonNullList<ItemStack> stacks = NonNullList.create();
         Set<String> seen = new HashSet<>();
         for (var entry : CommonAssetsManager.get().getAllGunFeedDefinitions()) {
-            GunFeedDefinition definition = entry.getValue();
-            if (!definition.isValidDetachableDefinition()) {
+            // Compatibility data may ship a dormant feed declaration for an
+            // optional gun pack. Do not expose a mysterious clip/magazine in
+            // creative until its target GunIndex actually exists.
+            if (CommonAssetsManager.get().getGunIndex(entry.getKey()) == null) {
                 continue;
             }
-            String key = definition.getMagazineFamily() + "|" + definition.getMagazineCapacity() + "|" + definition.getAmmoId();
+            GunFeedDefinition definition = entry.getValue();
+            if (!definition.isValidDetachableDefinition() && !definition.isValidLoadingDeviceDefinition()) {
+                continue;
+            }
+            int capacity = definition.getMechanism().usesLoadingDevice()
+                    ? definition.getFeedDeviceCapacity() : definition.getMagazineCapacity();
+            String key = definition.getMechanism().serializedName() + "|" + definition.getMagazineFamily()
+                    + "|" + capacity + "|" + definition.getAmmoId();
             if (seen.add(key)) {
                 stacks.add(MagazineItemBuilder.create().fromDefinition(definition).build());
             }

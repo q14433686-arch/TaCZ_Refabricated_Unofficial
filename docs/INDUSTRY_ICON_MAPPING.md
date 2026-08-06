@@ -96,6 +96,7 @@ tools/industry/icon_mapping.json
 | `magazine_family` | `MagazineFamily` | `stanag_556` |
 | `magazine_ammo_id` | `MagazineAmmoId` | `tacz:556x45` |
 | `magazine_capacity` | `MagazineCapacity`（正整数） | `40` |
+| `feed_device_kind` | `FeedDeviceKind` | `stripper_clip`、`speedloader` |
 | `cartridge_caliber` | `CartridgeCaliber` | `50bmg` |
 | `projectile_type` | `ProjectileType` | `fmj`、`he`、`heat` |
 | `industry_part_kind` | `IndustryPartKind` | `spent_case`、`component_die`、`furniture_kit` |

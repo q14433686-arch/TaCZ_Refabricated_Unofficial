@@ -1399,6 +1399,28 @@
       },
       "coverage": "family",
       "note": "Standard projectile material for a runtime surveyed AmmoId with no explicit calibre art."
+    },
+    {
+      "id": "feed_device_stripper_clip_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/base_m_loader",
+      "priority": 600,
+      "match": {
+        "feed_device_kind": "stripper_clip"
+      },
+      "coverage": "family",
+      "note": "Generic stripper-clip visual; an explicit family mapping may override it."
+    },
+    {
+      "id": "feed_device_speedloader_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_speedloader22",
+      "priority": 600,
+      "match": {
+        "feed_device_kind": "speedloader"
+      },
+      "coverage": "family",
+      "note": "Generic speedloader visual; an explicit family mapping may override it."
     }
   ]
 }

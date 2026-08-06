@@ -11,6 +11,7 @@ public final class MagazineItemBuilder {
     private int capacity;
     private int ammoCount;
     private String displayName = "";
+    private String feedDeviceKind = "";
 
     private MagazineItemBuilder() {
     }
@@ -44,11 +45,19 @@ public final class MagazineItemBuilder {
         return this;
     }
 
+    public MagazineItemBuilder setFeedDeviceKind(String feedDeviceKind) {
+        this.feedDeviceKind = feedDeviceKind == null ? "" : feedDeviceKind;
+        return this;
+    }
+
     public MagazineItemBuilder fromDefinition(GunFeedDefinition definition) {
+        int capacity = definition.getMechanism().usesLoadingDevice()
+                ? definition.getFeedDeviceCapacity() : definition.getMagazineCapacity();
         return setFamily(definition.getMagazineFamily())
                 .setAmmoId(definition.getAmmoId())
-                .setCapacity(definition.getMagazineCapacity())
-                .setDisplayNameKey(definition.getDisplayName());
+                .setCapacity(capacity)
+                .setDisplayNameKey(definition.getDisplayName())
+                .setFeedDeviceKind(definition.getMechanism().serializedName());
     }
 
     public ItemStack build() {
@@ -59,6 +68,7 @@ public final class MagazineItemBuilder {
             accessor.setCapacity(magazine, capacity);
             accessor.setAmmoCount(magazine, ammoCount);
             accessor.setDisplayNameKey(magazine, displayName);
+            accessor.setFeedDeviceKind(magazine, feedDeviceKind);
         }
         return magazine;
     }

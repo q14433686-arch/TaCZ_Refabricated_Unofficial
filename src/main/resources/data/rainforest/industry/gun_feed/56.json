@@ -1,0 +1,10 @@
+{
+  "mechanism": "stripper_clip",
+  "magazine_family": "rainforest_type56_stripper",
+  "magazine_capacity": 10,
+  "feed_device_capacity": 5,
+  "feed_device_reusable": false,
+  "reload_batch": 5,
+  "ammo": "tacz:762x39",
+  "display_name": "item.tacz.feed_device.rainforest_type56_stripper"
+}

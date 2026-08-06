@@ -40,7 +40,7 @@ import java.util.Optional;
  * schema and precedence rules.</p>
  *
  * <p>Only stable identity fields are considered: item id, {@code AmmoId},
- * {@code MagazineFamily}, {@code MagazineAmmoId}, {@code MagazineCapacity},
+ * {@code MagazineFamily}, {@code MagazineAmmoId}, {@code MagazineCapacity}, {@code FeedDeviceKind},
  * {@code CartridgeCaliber}, {@code ProjectileType}, {@code IndustryPartKind},
  * {@code IndustryPlatform}, and {@code DieTargetKind}. Mutable round counts are
  * intentionally excluded so a loaded magazine does not force the GUI icon atlas
@@ -157,6 +157,7 @@ public final class IndustryIconManager extends SimplePreparableReloadListener<Li
                                String magazineFamily,
                                String magazineAmmoId,
                                int magazineCapacity,
+                               String feedDeviceKind,
                                String cartridgeCaliber,
                                String projectileType,
                                String industryPartKind,
@@ -185,18 +186,19 @@ public final class IndustryIconManager extends SimplePreparableReloadListener<Li
             String magazineFamily = tag.getStringOr(MagazineItemDataAccessor.MAGAZINE_FAMILY_TAG, EMPTY);
             String magazineAmmoId = tag.getStringOr(MagazineItemDataAccessor.MAGAZINE_AMMO_ID_TAG, EMPTY);
             int magazineCapacity = Math.max(0, tag.getIntOr(MagazineItemDataAccessor.MAGAZINE_CAPACITY_TAG, 0));
+            String feedDeviceKind = tag.getStringOr(MagazineItemDataAccessor.FEED_DEVICE_KIND_TAG, EMPTY);
             String cartridgeCaliber = tag.getStringOr(IndustryItemDataAccessor.CARTRIDGE_CALIBER_TAG, EMPTY);
             String projectileType = tag.getStringOr(IndustryItemDataAccessor.PROJECTILE_TYPE_TAG, EMPTY);
             String partKind = tag.getStringOr(IndustryItemDataAccessor.PART_KIND_TAG, EMPTY);
             String platform = tag.getStringOr(IndustryItemDataAccessor.PLATFORM_TAG, EMPTY);
             String dieTargetKind = tag.getStringOr(IndustryItemDataAccessor.DIE_TARGET_KIND_TAG, EMPTY);
-            return new IconIdentity(itemId, ammoId, magazineFamily, magazineAmmoId, magazineCapacity,
+            return new IconIdentity(itemId, ammoId, magazineFamily, magazineAmmoId, magazineCapacity, feedDeviceKind,
                     cartridgeCaliber, projectileType, partKind, platform, dieTargetKind);
         }
 
         public String key() {
             return item + "|" + ammoId + "|" + magazineFamily + "|" + magazineAmmoId + "|"
-                    + magazineCapacity + "|" + cartridgeCaliber + "|" + projectileType + "|"
+                    + magazineCapacity + "|" + feedDeviceKind + "|" + cartridgeCaliber + "|" + projectileType + "|"
                     + industryPartKind + "|" + industryPlatform + "|" + dieTargetKind;
         }
     }
@@ -231,6 +233,8 @@ public final class IndustryIconManager extends SimplePreparableReloadListener<Li
         private String magazineAmmoId;
         @SerializedName("magazine_capacity")
         private Integer magazineCapacity;
+        @SerializedName("feed_device_kind")
+        private String feedDeviceKind;
         @SerializedName("cartridge_caliber")
         private String cartridgeCaliber;
         @SerializedName("projectile_type")
@@ -247,6 +251,7 @@ public final class IndustryIconManager extends SimplePreparableReloadListener<Li
                     && equalsOrBlank(magazineFamily, identity.magazineFamily())
                     && equalsOrBlank(magazineAmmoId, identity.magazineAmmoId())
                     && equalsOrNull(magazineCapacity, identity.magazineCapacity())
+                    && equalsOrBlank(feedDeviceKind, identity.feedDeviceKind())
                     && equalsOrBlank(cartridgeCaliber, identity.cartridgeCaliber())
                     && equalsOrBlank(projectileType, identity.projectileType())
                     && equalsOrBlank(industryPartKind, identity.industryPartKind())
@@ -260,6 +265,7 @@ public final class IndustryIconManager extends SimplePreparableReloadListener<Li
             result += isPresent(magazineFamily) ? 1 : 0;
             result += isPresent(magazineAmmoId) ? 1 : 0;
             result += magazineCapacity == null ? 0 : 1;
+            result += isPresent(feedDeviceKind) ? 1 : 0;
             result += isPresent(cartridgeCaliber) ? 1 : 0;
             result += isPresent(projectileType) ? 1 : 0;
             result += isPresent(industryPartKind) ? 1 : 0;

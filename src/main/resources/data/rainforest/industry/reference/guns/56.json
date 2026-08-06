@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "canonical_model": "type_56_semiautomatic",
+  "display_name": "56 Type Semi-Automatic Rifle",
+  "action": "gas_operated",
+  "feed": {
+    "device": "stripper_clip",
+    "runtime_mechanism": "stripper_clip",
+    "carrier_behavior": "consumed_loading_tool",
+    "family": "rainforest_type56_stripper",
+    "capacity": 10,
+    "reload_batch": 5
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "762x39",
+    "expected_ammo": "tacz:762x39"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Cold War v0.51 GunData ammo_amount=10 and explicit compat feed profile",
+    "curated fixed-magazine stripper-clip reference"
+  ]
+}

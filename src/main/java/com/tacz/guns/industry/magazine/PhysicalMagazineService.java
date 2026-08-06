@@ -319,6 +319,15 @@ public final class PhysicalMagazineService {
                 || !item.isConfigured(magazine)) {
             return false;
         }
+        if (magazine.getItem() instanceof MagazineItemDataAccessor accessor) {
+            String deviceKind = accessor.getFeedDeviceKind(magazine);
+            // Old worlds predate FeedDeviceKind and stay compatible. Explicit
+            // bridge clips/speedloaders must never be selected by the normal
+            // "best magazine" replacement policy.
+            if (!deviceKind.isBlank() && !definition.getMechanism().serializedName().equals(deviceKind)) {
+                return false;
+            }
+        }
         return definition.getMagazineFamily().equals(item.getMagazineFamily(magazine))
                 && definition.getAmmoId().equals(item.getAmmoId(magazine))
                 && item.getCapacity(magazine) <= definition.getMagazineCapacity();

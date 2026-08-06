@@ -36,21 +36,57 @@ public enum FeedMechanism {
 
     /** Single-shot breech/loading tube. */
     @SerializedName("single_shot")
-    SINGLE_SHOT;
+    SINGLE_SHOT,
+
+    /** A stripper/bridge clip transfers rounds into an internal fixed magazine. */
+    @SerializedName("stripper_clip")
+    STRIPPER_CLIP,
+
+    /** A speedloader transfers rounds into a cylinder; it is never installed in the gun. */
+    @SerializedName("speedloader")
+    SPEEDLOADER,
+
+    /**
+     * An en-bloc clip is recorded as a distinct future data mechanism. It is
+     * intentionally not returned by {@link #isKnownSerializedName(String)}
+     * until its installed-clip/eject-on-empty state transaction exists.
+     */
+    @SerializedName("en_bloc_clip")
+    EN_BLOC_CLIP;
 
     public boolean usesDetachableMagazine() {
         return this == DETACHABLE_MAGAZINE;
     }
 
+    /** Bridge clips and speedloaders are physical loaders for an internal feed, not replacement magazines. */
+    public boolean usesLoadingDevice() {
+        return this == STRIPPER_CLIP || this == SPEEDLOADER;
+    }
+
+    public String serializedName() {
+        return switch (this) {
+            case LEGACY -> "legacy";
+            case DETACHABLE_MAGAZINE -> "detachable_magazine";
+            case INTERNAL_BOX -> "internal_box";
+            case TUBE -> "tube";
+            case REVOLVER -> "revolver";
+            case BELT -> "belt";
+            case SINGLE_SHOT -> "single_shot";
+            case STRIPPER_CLIP -> "stripper_clip";
+            case SPEEDLOADER -> "speedloader";
+            case EN_BLOC_CLIP -> "en_bloc_clip";
+        };
+    }
+
     /**
      * Reference profiles store the serialized data value instead of a Java enum
-     * name so datapacks remain readable across versions. Unknown future device
-     * types must keep {@code runtime_mechanism = legacy} until gameplay support
-     * exists; this helper validates only mechanisms currently executable here.
+     * name so datapacks remain readable across versions. EN_BLOC_CLIP remains
+     * deliberately legacy-only until its own installed/eject transaction lands.
      */
     public static boolean isKnownSerializedName(String value) {
         return switch (value == null ? "" : value) {
-            case "legacy", "detachable_magazine", "internal_box", "tube", "revolver", "belt", "single_shot" -> true;
+            case "legacy", "detachable_magazine", "internal_box", "tube", "revolver", "belt", "single_shot",
+                    "stripper_clip", "speedloader" -> true;
             default -> false;
         };
     }

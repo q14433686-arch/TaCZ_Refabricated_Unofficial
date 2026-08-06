@@ -389,6 +389,26 @@ internal_box         内置弹仓
 tube                 管式弹仓
 revolver             转轮
 single_shot          单发后膛
+stripper_clip        桥夹，向固定内仓增量装填
+speedloader          快装器，向内部转轮增量装填
+en_bloc_clip         漏夹（当前只可记录 reference，运行时机制仍待实现）
 ```
 
 `internal_box`、`tube`、`revolver`、`single_shot` 的余弹保存为枪 NBT 中受服务端控制的内置供弹状态，而不是伪造可退卸弹匣；`reload_batch` 指定一次**完整脚本换弹循环**最多填入/从背包扣除的发数。未指定时默认使用剩余容量，避免管式、转轮或双管动画逐发播放而服务器只扣一发的失步；RPG/M320 等容量为 1 的枪仍自然只填一发。`belt` 则使用带容量和余弹的外部实体弹链箱。
+
+桥夹/快装器额外声明：
+
+```json
+{
+  "mechanism": "stripper_clip",
+  "magazine_family": "example_stripper",
+  "magazine_capacity": 10,
+  "feed_device_capacity": 5,
+  "feed_device_reusable": false,
+  "reload_batch": 5,
+  "ammo": "yournamespace:762x39",
+  "display_name": "item.yourmod.example_stripper_clip"
+}
+```
+
+其中 `magazine_capacity` 是枪内固定仓容量，`feed_device_capacity` 才是一只桥夹/快装器自身可装的发数。桥夹不比较“自身余弹是否比枪内余弹多”；服务端只计算 `min(器件余弹, 内仓缺弹, reload_batch)` 的实际转入量。完整器件状态机与未来选择圆盘见 `docs/FEED_DEVICE_AND_CLIP_DESIGN.md`。

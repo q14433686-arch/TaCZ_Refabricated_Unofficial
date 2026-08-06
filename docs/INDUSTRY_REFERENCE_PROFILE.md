@@ -94,12 +94,12 @@ data/ww/industry/reference/guns/mg42.json
 | `tube` | 管式、逐发装填 | `tube` |
 | `revolver` | 转轮 | `revolver` |
 | `single_shot` | 单发后膛/发射管 | `single_shot` |
-| `stripper_clip` | 夹条；装填工具，不是插入式弹匣 | 先写 `legacy`，待专属机制实现 |
-| `en_bloc_clip` | 漏夹；入枪、打空弹出 | 先写 `legacy`，待专属机制实现 |
-| `speedloader` | 转轮快速装弹器 | 先写 `legacy`，待专属机制实现 |
+| `stripper_clip` | 夹条；装填工具，不是插入式弹匣 | `stripper_clip`：向内部仓增量转入 |
+| `en_bloc_clip` | 漏夹；入枪、打空弹出 | 先写 `legacy`，待独立已安装漏夹/自动弹出事务实现 |
+| `speedloader` | 转轮快速装弹器 | `speedloader`：向内部转轮增量转入 |
 | `fuel_canister` / `utility` | 燃料、医疗、工具类消耗物 | `legacy` |
 
-这使资料表能准确记录 M1 Garand、转轮、霰弹枪、火焰/医疗设备，即使当前实体供弹代码尚未支持每一种设备；**记录事实不等于错误启用行为**。
+这使资料表能准确记录 M1 Garand、转轮、霰弹枪、火焰/医疗设备，即使当前实体供弹代码尚未支持每一种设备；**记录事实不等于错误启用行为**。桥夹、快装器、漏夹与未来长按 R 选择圆盘的完整状态机见 [`FEED_DEVICE_AND_CLIP_DESIGN.md`](FEED_DEVICE_AND_CLIP_DESIGN.md)。
 
 ## 明确身份别名
 

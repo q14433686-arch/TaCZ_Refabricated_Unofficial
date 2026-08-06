@@ -1017,6 +1017,9 @@ def surveying_language_entries(language: str) -> dict[str, str]:
         "tooltip.tacz.blueprint.tier.surveyed": "已审计测绘档案 — 未声明真实结构前使用通用工业线" if chinese else "Audited Survey Dossier — generic industrial line pending an explicit structure profile",
         "tooltip.tacz.industry.action_profile.surveyed": "测绘通用结构" if chinese else "Surveyed Generic Structure",
         "tooltip.tacz.industry.tooling_scope.surveyed": "测绘夹具和测绘平台结构套件" if chinese else "Survey fixture and surveyed platform structural kit",
+        "tooltip.tacz.feed_device.kind.stripper_clip": "桥夹——将弹药转入枪内固定仓，不会替换已安装弹匣" if chinese else "Stripper clip — transfers rounds into an internal feed; never replaces an installed magazine",
+        "tooltip.tacz.feed_device.kind.speedloader": "快装器——将弹药转入枪内转轮，不会替换已安装弹匣" if chinese else "Speedloader — transfers rounds into an internal cylinder; never replaces an installed magazine",
+        "item.tacz.feed_device.rainforest_type56_stripper": "56式半自动步枪桥夹" if chinese else "Type 56 Stripper Clip",
     }
 
 
@@ -2615,6 +2618,7 @@ ICON_SELECTOR_KEYS = (
     "magazine_family",
     "magazine_ammo_id",
     "magazine_capacity",
+    "feed_device_kind",
     "cartridge_caliber",
     "projectile_type",
     "industry_part_kind",
@@ -3796,6 +3800,15 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
         {"industry_platform": "ammunition", "industry_part_kind": "projectile", "projectile_type": "surveyed"},
         "Surveyed-Calibre Projectile Core", ("family",), "survey:projectile", "family"
     ))
+    for device_kind, label, texture_key in (
+        ("stripper_clip", "Stripper Clip Feed Device", "stripper_clip"),
+        ("speedloader", "Speedloader Feed Device", "speedloader"),
+    ):
+        identities.append(build_icon_identity(
+            "feed_device", f"feed_device:{device_kind}", "tacz:magazine",
+            {"feed_device_kind": device_kind}, label, ("family",),
+            f"feed_device:{texture_key}", "family"
+        ))
 
     # Current physical external feed definitions. Internal/tube/revolver feeds
     # intentionally do not fabricate a tacz:magazine stack, so they are not

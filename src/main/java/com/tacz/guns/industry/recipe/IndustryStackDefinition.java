@@ -111,6 +111,7 @@ public final class IndustryStackDefinition {
                     .setCapacity(integer(custom, "MagazineCapacity", 1))
                     .setAmmoCount(integer(custom, "MagazineAmmoCount", 0))
                     .setDisplayNameKey(string(custom, "MagazineDisplayName"))
+                    .setFeedDeviceKind(string(custom, "FeedDeviceKind"))
                     .build();
         } else if (item == ModItems.MODERN_KINETIC_GUN) {
             // A Create sequenced-assembly result is a real configured TACZ
