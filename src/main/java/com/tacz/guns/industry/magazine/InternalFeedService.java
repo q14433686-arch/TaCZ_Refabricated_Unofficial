@@ -100,8 +100,12 @@ public final class InternalFeedService {
             return true;
         }
         if (definition.getMechanism().usesLoadingDevice()) {
+            // A missing bridge clip never makes a fixed-magazine gun unusable:
+            // the player may still hand-load loose rounds, one slow batch per
+            // full reload animation. A clip merely provides the fast source.
             return findBestLoadingDevice(player, definition,
-                    definition.getMagazineCapacity() - getAmmoCount(gun)) != null;
+                    definition.getMagazineCapacity() - getAmmoCount(gun)) != null
+                    || countLooseAmmo(player, definition.getAmmoId()) > 0;
         }
         return countLooseAmmo(player, definition.getAmmoId()) > 0;
     }
@@ -120,24 +124,40 @@ public final class InternalFeedService {
         if (missing <= 0) {
             return null;
         }
-        int planned = Math.min(missing, definition.getReloadBatch());
+        boolean consumesAmmo = shouldConsumeAmmo(player) && !isInfiniteReload(gun);
         InternalFeedReloadPlan plan;
-        if (definition.getMechanism().usesLoadingDevice() && shouldConsumeAmmo(player) && !isInfiniteReload(gun)) {
+        if (definition.getMechanism().usesLoadingDevice()) {
             LoadingDeviceSelection selection = findBestLoadingDevice(player, definition, missing);
-            if (selection == null) {
-                return null;
+            if (selection != null) {
+                int planned = Math.min(Math.min(missing, definition.getReloadBatch()), selection.transferableRounds());
+                if (planned <= 0) {
+                    return null;
+                }
+                // Reserve exactly one physical clip/speedloader slot. Unlike a
+                // detachable magazine, this is additive: its rounds will be
+                // moved into InternalFeedAmmoCount at FEEDING -> FINISHING.
+                // In creative/infinite mode the same clip still selects the
+                // fast batch, but its ItemStack is not decremented.
+                plan = consumesAmmo
+                        ? new InternalFeedReloadPlan(iGun.getGunId(gun), definition.getAmmoId(), planned, tactical,
+                        selection.slot(), selection.preview(), definition.isFeedDeviceReusable())
+                        : new InternalFeedReloadPlan(iGun.getGunId(gun), definition.getAmmoId(), planned, tactical);
+            } else {
+                // No bridge device: hand-load only the configured loose batch
+                // (one round by default). This is deliberately slower than a
+                // clip without needing to forge an animation the pack lacks.
+                int planned = Math.min(missing, definition.getLooseReloadBatch());
+                if (consumesAmmo) {
+                    planned = Math.min(planned, countLooseAmmo(player, definition.getAmmoId()));
+                }
+                if (planned <= 0) {
+                    return null;
+                }
+                plan = new InternalFeedReloadPlan(iGun.getGunId(gun), definition.getAmmoId(), planned, tactical);
             }
-            planned = Math.min(planned, selection.transferableRounds());
-            if (planned <= 0) {
-                return null;
-            }
-            // Reserve exactly one physical clip/speedloader slot. Unlike a
-            // detachable magazine, this is additive: its rounds will be moved
-            // into InternalFeedAmmoCount at the FEEDING -> FINISHING point.
-            plan = new InternalFeedReloadPlan(iGun.getGunId(gun), definition.getAmmoId(), planned, tactical,
-                    selection.slot(), selection.preview(), definition.isFeedDeviceReusable());
         } else {
-            if (shouldConsumeAmmo(player) && !isInfiniteReload(gun)) {
+            int planned = Math.min(missing, definition.getReloadBatch());
+            if (consumesAmmo) {
                 planned = Math.min(planned, countLooseAmmo(player, definition.getAmmoId()));
             }
             if (planned <= 0) {

@@ -406,9 +406,10 @@ en_bloc_clip         漏夹（当前只可记录 reference，运行时机制仍�
   "feed_device_capacity": 5,
   "feed_device_reusable": false,
   "reload_batch": 5,
+  "loose_reload_batch": 1,
   "ammo": "yournamespace:762x39",
   "display_name": "item.yourmod.example_stripper_clip"
 }
 ```
 
-其中 `magazine_capacity` 是枪内固定仓容量，`feed_device_capacity` 才是一只桥夹/快装器自身可装的发数。桥夹不比较“自身余弹是否比枪内余弹多”；服务端只计算 `min(器件余弹, 内仓缺弹, reload_batch)` 的实际转入量。完整器件状态机与未来选择圆盘见 `docs/FEED_DEVICE_AND_CLIP_DESIGN.md`。
+其中 `magazine_capacity` 是枪内固定仓容量，`feed_device_capacity` 才是一只桥夹/快装器自身可装的发数。桥夹不比较“自身余弹是否比枪内余弹多”；服务端只计算 `min(器件余弹, 内仓缺弹, reload_batch)` 的实际转入量。若没有兼容器件但有散装弹，仍可上弹，只是每次完整动画最多转入 `loose_reload_batch` 发；桥夹/快装器机制默认该值为 1。完整器件状态机与未来选择圆盘见 `docs/FEED_DEVICE_AND_CLIP_DESIGN.md`。

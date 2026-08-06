@@ -40,6 +40,14 @@ public class GunFeedDefinition {
     @SerializedName("reload_batch")
     private int reloadBatch = 0;
 
+    /**
+     * Maximum loose rounds inserted by one reload animation when this feed
+     * normally uses a bridge clip/speedloader. Defaults to one so a player
+     * without the device can still reload, but materially slower.
+     */
+    @SerializedName("loose_reload_batch")
+    private int looseReloadBatch = 0;
+
     /** Capacity of one bridge clip/speedloader. Internal capacity remains magazine_capacity. */
     @SerializedName("feed_device_capacity")
     private int feedDeviceCapacity = 0;
@@ -92,6 +100,19 @@ public class GunFeedDefinition {
         // ammo extraction from the animation. Capacity is therefore the safe
         // data-driven default; packs may still declare a smaller explicit cap.
         return Math.max(1, getMagazineCapacity());
+    }
+
+    /**
+     * Batch size for loose-round fallback on a bridge-clip/speedloader gun.
+     * This is intentionally separate from reload_batch: the latter caps what
+     * one physical device can transfer, while this one makes individual-round
+     * loading slow but always possible.
+     */
+    public int getLooseReloadBatch() {
+        if (looseReloadBatch > 0) {
+            return Math.min(looseReloadBatch, Math.max(1, getMagazineCapacity()));
+        }
+        return getMechanism().usesLoadingDevice() ? 1 : getReloadBatch();
     }
 
     /** External carrier: detachable magazine or physical belt/ammo-box item. */
