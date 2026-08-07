@@ -1,0 +1,226 @@
+[20:09:20] [main/INFO]: Loading Minecraft 26.2 with Fabric Loader 0.19.3
+[20:09:20] [main/INFO]: Mappings not present!
+[20:09:20] [main/WARN]: Warnings were found!
+ - 模组 'Forge Config API Port' (forgeconfigapiport) 26.2.1 建议安装 modmenu 的 任意版本，但没有安装它！
+	 - 为了最佳体验，您应该安装 modmenu 的 任意版本。
+[20:09:20] [main/INFO]: Loading 61 mods:
+	- fabric-api 0.156.0+26.2
+	   |-- fabric-api-base 2.0.4+ece063239e
+	   |-- fabric-api-lookup-api-v1 2.0.17+11e1c9a39e
+	   |-- fabric-biome-api-v1 18.0.6+c7bd5b8e9e
+	   |-- fabric-block-api-v1 3.0.3+ec56b6019e
+	   |-- fabric-block-getter-api-v2 2.0.7+ec56b6019e
+	   |-- fabric-command-api-v2 3.1.0+00cb03469e
+	   |-- fabric-content-registries-v0 11.3.0+d0a699d09e
+	   |-- fabric-convention-tags-v2 4.7.0+1f023a9e9e
+	   |-- fabric-crash-report-info-v1 1.0.5+086d547a9e
+	   |-- fabric-creative-tab-api-v1 5.0.14+d871b99e9e
+	   |-- fabric-data-attachment-api-v1 2.2.18+515ac5339e
+	   |-- fabric-data-generation-api-v1 25.5.0+aed122aa9e
+	   |-- fabric-debug-api-v1 1.0.2+c792624d9e
+	   |-- fabric-dimensions-v1 5.1.11+515ac5339e
+	   |-- fabric-entity-events-v1 5.0.5+06488ac19e
+	   |-- fabric-events-interaction-v0 5.2.7+515ac5339e
+	   |-- fabric-game-rule-api-v1 4.0.8+46a6d00c9e
+	   |-- fabric-item-api-v1 14.4.0+49a69a7b9e
+	   |-- fabric-key-mapping-api-v1 2.0.5+e2bdee789e
+	   |-- fabric-lifecycle-events-v1 4.1.3+4575b05f9e
+	   |-- fabric-loot-api-v3 3.0.17+06488ac19e
+	   |-- fabric-menu-api-v1 2.0.16+086d547a9e
+	   |-- fabric-message-api-v1 7.0.7+086d547a9e
+	   |-- fabric-model-loading-api-v1 8.0.16+c80601bb9e
+	   |-- fabric-networking-api-v1 6.3.3+72073ef09e
+	   |-- fabric-object-builder-api-v1 24.1.0+6fcd5f039e
+	   |-- fabric-particles-v1 5.0.18+d1756aa99e
+	   |-- fabric-permission-api-v1 1.0.4+536fad2f9e
+	   |-- fabric-recipe-api-v1 9.0.20+11e1c9a39e
+	   |-- fabric-registry-sync-v0 7.1.0+c7bd5b8e9e
+	   |-- fabric-renderer-api-v1 14.1.3+2b0d8a229e
+	   |-- fabric-renderer-indigo 9.1.3+2b0d8a229e
+	   |-- fabric-rendering-fluids-v1 6.0.4+06488ac19e
+	   |-- fabric-rendering-v1 25.3.2+515ac5339e
+	   |-- fabric-resource-conditions-api-v1 6.1.0+10e9a28b9e
+	   |-- fabric-resource-loader-v0 3.3.20+4fc5413f9e
+	   |-- fabric-resource-loader-v1 2.0.13+9edec1269e
+	   |-- fabric-screen-api-v1 5.1.0+48e3c0b09e
+	   |-- fabric-serialization-api-v1 2.0.4+11a26f319e
+	   |-- fabric-sound-api-v1 2.0.5+11a26f319e
+	   |-- fabric-tag-api-v1 2.1.4+515ac5339e
+	   |-- fabric-transfer-api-v1 8.0.12+11dbb7d79e
+	   \-- fabric-transitive-access-wideners-v1 8.1.4+67c847259e
+	- fabricloader 0.19.3
+	   \-- mixinextras 0.5.4
+	- forgeconfigapiport 26.2.1
+	   |-- com_electronwill_night-config_core 3.8.4
+	   \-- com_electronwill_night-config_toml 3.8.4
+	- iris 1.11.2+mc26.2
+	   |-- io_github_douira_glsl-transformer 3.0.0-pre3
+	   |-- org_anarres_jcpp 1.4.14
+	   \-- org_antlr_antlr4-runtime 4.13.1
+	- java 25
+	- minecraft 26.2
+	- sodium 0.9.1+mc26.2
+	- tacz 1.1.8+fabric.26.2.Beta-3
+	   |-- com_github_figuramc_luaj_luaj-core 3.0.8-figura
+	   |-- com_github_figuramc_luaj_luaj-jse 3.0.8-figura
+	   |-- org_apache_bcel_bcel 6.6.1
+	   \-- org_apache_commons_commons-math3 3.6.1
+[20:09:20] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/F:/Games/MC%20Test/26.2/libraries/net/fabricmc/sponge-mixin/0.17.3+mixin.0.8.7/sponge-mixin-0.17.3+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[20:09:20] [main/INFO]: Compatibility level set to JAVA_25
+[20:09:20] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.json could not be read. If this is a development environment you can ignore this message
+[20:09:20] [main/WARN]: Reference map 'iris-fabric.refmap.json' for mixins.iris.fabric.json could not be read. If this is a development environment you can ignore this message
+[20:09:20] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.vertexformat.json could not be read. If this is a development environment you can ignore this message
+[20:09:20] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.bettermipmaps.json could not be read. If this is a development environment you can ignore this message
+[20:09:20] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.compat.sodium.json could not be read. If this is a development environment you can ignore this message
+[20:09:20] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.fixes.maxfpscrash.json could not be read. If this is a development environment you can ignore this message
+[20:09:20] [main/INFO]: Loaded configuration file for Sodium: 36 options available, 1 override(s) found
+[20:09:20] [main/INFO]: [TACZ Scope] Iris compat mixin config loaded: package=com.tacz.guns.mixin.client.iris, irisLoaded=true
+[20:09:21] [main/WARN]: Force-disabling mixin 'features.render.world.sky.LevelRendererMixin' as rule 'mixin.features.render.world.sky' (added by mods [iris]) disables it and children
+[20:09:21] [main/INFO]: [TACZ Scope] Iris compat mixin decision: apply=true, firstMixin=com.tacz.guns.mixin.client.iris.IrisShaderCreatorMixin, firstTarget=net.irisshaders.iris.pipeline.programs.ShaderCreator
+[20:09:21] [main/INFO]: Searching for graphics cards...
+[20:09:21] [main/INFO]: Found graphics adapter: AdapterInfo{vendor=NVIDIA, description='NVIDIA GeForce RTX 3090 Ti', adapterType=0x0000030B, openglIcdFilePath='C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_12ab2876952d3f1f\nvoglv64.dll', openglIcdVersion=32.0.15.9621}
+[20:09:21] [main/WARN]: Sodium has applied one or more workarounds to prevent crashes or other issues on your system: [NVIDIA_THREADED_OPTIMIZATIONS_BROKEN]
+[20:09:21] [main/WARN]: This is not necessarily an issue, but it may result in certain features or optimizations being disabled. You can sometimes fix these issues by upgrading your graphics driver.
+[20:09:21] [main/INFO]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.4).
+[20:09:22] [Datafixer Bootstrap #0/INFO]: 295 Datafixer optimizations took 291 milliseconds
+[20:09:22] [main/WARN]: Failed to add PDH Counter: \Paging File(_Total)\% Usage, Error code: 0xC0000BB8
+[20:09:22] [main/WARN]: Failed to add counter for PDH counter: \Paging File(_Total)\% Usage
+[20:09:22] [main/INFO]: Disabling further attempts to query Paging File.
+[20:09:22] [main/WARN]: COM exception: Invalid Query: SELECT PERCENTUSAGE FROM Win32_PerfRawData_PerfOS_PagingFile
+[20:09:22] [main/WARN]: Failed to locate performance object for Process in the registry. Performance counters may be corrupt. Pdh call failed with error code 0xC0000BB8
+[20:09:22] [main/INFO]: Disabling further attempts to query Process.
+[20:09:23] [main/WARN]: COM exception: Invalid Query: SELECT NAME,PRIORITYBASE,ELAPSEDTIME,IDPROCESS,CREATINGPROCESSID,IOREADBYTESPERSEC,IOWRITEBYTESPERSEC,PRIVATEBYTES,PAGEFAULTSPERSEC FROM Win32_PerfRawData_PerfProc_Process WHERE NOT Name LIKE "%_Total"
+[20:09:23] [main/WARN]: Failed to get system info for Process Loads
+java.lang.NullPointerException: Cannot invoke "oshi.software.os.OSProcess.getUserTime()" because "process" is null
+	at knot//net.minecraft.SystemReport.lambda$putProcessDetails$0(SystemReport.java:190)
+	at knot//net.minecraft.SystemReport.setDetail(SystemReport.java:96)
+	at knot//net.minecraft.SystemReport.putProcessDetails(SystemReport.java:189)
+	at knot//net.minecraft.SystemReport.lambda$putSoftware$0(SystemReport.java:116)
+	at knot//net.minecraft.SystemReport.ignoreErrors(SystemReport.java:121)
+	at knot//net.minecraft.SystemReport.putSoftware(SystemReport.java:116)
+	at knot//net.minecraft.SystemReport.lambda$new$7(SystemReport.java:68)
+	at knot//net.minecraft.SystemReport.ignoreErrors(SystemReport.java:121)
+	at knot//net.minecraft.SystemReport.<init>(SystemReport.java:68)
+	at knot//net.minecraft.CrashReport.<init>(CrashReport.java:35)
+	at knot//net.minecraft.CrashReport.preload(CrashReport.java:252)
+	at knot//net.minecraft.client.main.Main.main(Main.java:172)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[20:09:23] [main/WARN]: Failed to get system info for Process Virtual Size (MiB)
+java.lang.NullPointerException: Cannot invoke "oshi.software.os.OSProcess.getVirtualSize()" because "process" is null
+	at knot//net.minecraft.SystemReport.lambda$putProcessDetails$1(SystemReport.java:202)
+	at knot//net.minecraft.SystemReport.setDetail(SystemReport.java:96)
+	at knot//net.minecraft.SystemReport.putProcessDetails(SystemReport.java:202)
+	at knot//net.minecraft.SystemReport.lambda$putSoftware$0(SystemReport.java:116)
+	at knot//net.minecraft.SystemReport.ignoreErrors(SystemReport.java:121)
+	at knot//net.minecraft.SystemReport.putSoftware(SystemReport.java:116)
+	at knot//net.minecraft.SystemReport.lambda$new$7(SystemReport.java:68)
+	at knot//net.minecraft.SystemReport.ignoreErrors(SystemReport.java:121)
+	at knot//net.minecraft.SystemReport.<init>(SystemReport.java:68)
+	at knot//net.minecraft.CrashReport.<init>(CrashReport.java:35)
+	at knot//net.minecraft.CrashReport.preload(CrashReport.java:252)
+	at knot//net.minecraft.client.main.Main.main(Main.java:172)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[20:09:23] [main/WARN]: Failed to get system info for Process Resident Size (MiB)
+java.lang.NullPointerException: Cannot invoke "oshi.software.os.OSProcess.getResidentSetSize()" because "process" is null
+	at knot//net.minecraft.SystemReport.lambda$putProcessDetails$2(SystemReport.java:203)
+	at knot//net.minecraft.SystemReport.setDetail(SystemReport.java:96)
+	at knot//net.minecraft.SystemReport.putProcessDetails(SystemReport.java:203)
+	at knot//net.minecraft.SystemReport.lambda$putSoftware$0(SystemReport.java:116)
+	at knot//net.minecraft.SystemReport.ignoreErrors(SystemReport.java:121)
+	at knot//net.minecraft.SystemReport.putSoftware(SystemReport.java:116)
+	at knot//net.minecraft.SystemReport.lambda$new$7(SystemReport.java:68)
+	at knot//net.minecraft.SystemReport.ignoreErrors(SystemReport.java:121)
+	at knot//net.minecraft.SystemReport.<init>(SystemReport.java:68)
+	at knot//net.minecraft.CrashReport.<init>(CrashReport.java:35)
+	at knot//net.minecraft.CrashReport.preload(CrashReport.java:252)
+	at knot//net.minecraft.client.main.Main.main(Main.java:172)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[20:09:26] [Render thread/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[20:09:26] [Render thread/INFO]: Setting user: Titan_QZ
+[20:09:26] [Render thread/INFO]: Registered synced data key tacz:shoot_cool_down for minecraft:living_entity
+[20:09:26] [Render thread/INFO]: Registered synced data key tacz:melee_cool_down for minecraft:living_entity
+[20:09:26] [Render thread/INFO]: Registered synced data key tacz:reload_state for minecraft:living_entity
+[20:09:26] [Render thread/INFO]: Registered synced data key tacz:aiming_progress for minecraft:living_entity
+[20:09:26] [Render thread/INFO]: Registered synced data key tacz:draw_cool_down for minecraft:living_entity
+[20:09:26] [Render thread/INFO]: Registered synced data key tacz:is_aiming for minecraft:living_entity
+[20:09:26] [Render thread/INFO]: Registered synced data key tacz:sprint_time for minecraft:living_entity
+[20:09:26] [Render thread/INFO]: Registered synced data key tacz:is_bolting for minecraft:living_entity
+[20:09:26] [Render thread/INFO]: Registered synced data key tacz:throwable_using for minecraft:living_entity
+[20:09:26] [Render thread/INFO]: LRTactical (unofficial 26.2 port) initialized
+[20:09:26] [Render thread/INFO]: [Indigo] Different rendering plugin detected; not applying Indigo.
+[20:09:26] [Render thread/INFO]: [TACZ] Registering FeatureRenderers for 26.2...
+[20:09:26] [Render thread/INFO]: [TACZ] FeatureRenderers registered.
+[20:09:26] [Render thread/INFO]: Backend library: LWJGL version 3.4.1-snapshot
+[20:09:28] [Render thread/INFO]: Modifying process environment to apply workarounds for the NVIDIA graphics driver...
+[20:09:28] [Render thread/INFO]: Debug functionality is disabled.
+[20:09:28] [Render thread/INFO]: ARB_direct_state_access detected, enabling DSA.
+[20:09:28] [Render thread/INFO]: Profile: HIGH (+0 options changed by user)
+[20:09:28] [Render thread/INFO]: Using shaderpack: ComplementaryUnbound_r5.8.1.zip
+[20:09:28] [Render thread/INFO]: Using graphics backend OpenGL, using drivers: 3.3.0 NVIDIA 596.21
+[20:09:28] [Render thread/INFO]: Using graphics device: NVIDIA GeForce RTX 3090 Ti/PCIe/SSE2 (NVIDIA Corporation)
+[20:09:28] [Render thread/INFO]: Using graphics device extensions: GL_ARB_multi_draw_indirect, GL_ARB_buffer_storage, GL_ARB_shader_draw_parameters, GL_ARB_base_instance, GL_KHR_debug, GL_ARB_draw_indirect, GL_ARB_clip_control, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+[20:09:28] [Render thread/INFO]: Start scanning for gun packs in F:\Games\MC Test\26.2\versions\26.2-Fabric 0.19.3\tacz
+[20:09:28] [Render thread/INFO]: - tacz_default_gun, Main namespace: tacz
+[20:09:28] [Render thread/INFO]: Found 1 possible gunpack(s) and added them to resource set.
+[20:09:28] [ForkJoinPool.commonPool-worker-1/WARN]: [Iris Update Check] This version doesn't have an update index, skipping.
+[20:09:29] [Render thread/INFO]: Hardware information:
+[20:09:29] [Render thread/INFO]: CPU: 24x 12th Gen Intel(R) Core(TM) i9-12900K
+[20:09:29] [Render thread/INFO]: GPU: NVIDIA GeForce RTX 3090 Ti/PCIe/SSE2 (Supports OpenGL 3.3.0 NVIDIA 596.21)
+[20:09:29] [Render thread/INFO]: OS: Windows 10 (10.0)
+[20:09:29] [Render thread/INFO]: Reloading ResourceManager: vanilla, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, forgeconfigapiport, iris, org_apache_commons_commons-math3, sodium, tacz, tacz_resources
+[20:09:29] [Worker-Main-23/INFO]: Found unifont_pua-17.0.01.hex, loading
+[20:09:29] [Worker-Main-11/INFO]: Found unifont_all_no_pua-17.0.01.hex, loading
+[20:09:29] [Worker-Main-4/INFO]: Found unifont_jp_patch-17.0.01.hex, loading
+[20:09:29] [Worker-Main-7/WARN]: Invalid sounds.json in resourcepack: 'tacz'
+com.google.gson.JsonSyntaxException: Expected entry to be a JsonObject, was "Sou...e."
+	at knot//net.minecraft.util.GsonHelper.convertToJsonObject(GsonHelper.java:415)
+	at knot//net.minecraft.client.resources.sounds.SoundEventRegistrationSerializer.deserialize(SoundEventRegistrationSerializer.java:25)
+	at knot//net.minecraft.client.resources.sounds.SoundEventRegistrationSerializer.deserialize(SoundEventRegistrationSerializer.java:20)
+	at knot//com.google.gson.internal.bind.TreeTypeAdapter.read(TreeTypeAdapter.java:95)
+	at knot//com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper.read(TypeAdapterRuntimeTypeWrapper.java:40)
+	at knot//com.google.gson.internal.bind.MapTypeAdapterFactory$Adapter.read(MapTypeAdapterFactory.java:203)
+	at knot//com.google.gson.internal.bind.MapTypeAdapterFactory$Adapter.read(MapTypeAdapterFactory.java:161)
+	at knot//net.minecraft.util.GsonHelper.fromNullableJson(GsonHelper.java:530)
+	at knot//net.minecraft.util.GsonHelper.fromJson(GsonHelper.java:537)
+	at knot//net.minecraft.client.sounds.SoundManager.prepare(SoundManager.java:80)
+	at knot//net.minecraft.client.sounds.SoundManager.prepare(SoundManager.java:41)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$0(SimplePreparableReloadListener.java:13)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1789)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$1(SimpleReloadInstance.java:51)
+	at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1750)
+	at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1742)
+	at java.base/java.util.concurrent.ForkJoinTask$InterruptibleTask.exec(ForkJoinTask.java:1659)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)
+[20:09:29] [Render thread/INFO]: Thread[#3,Render thread,10,main]
+[20:09:29] [Render thread/INFO]: OpenGL Vendor: NVIDIA Corporation
+[20:09:29] [Render thread/INFO]: OpenGL Renderer: NVIDIA GeForce RTX 3090 Ti/PCIe/SSE2
+[20:09:29] [Render thread/INFO]: OpenGL Version: 3.3.0 NVIDIA 596.21
+[20:09:29] [Render thread/INFO]: Modifying OpenGL context to apply workarounds for the NVIDIA graphics driver...
+[20:09:29] [Render thread/INFO]: Enabling GL_DEBUG_OUTPUT_SYNCHRONOUS to force the NVIDIA driver to disable threaded command submission
+[20:09:30] [Render thread/INFO]: OpenAL initialized on device OpenAL Soft on 扬声器 (Steam Streaming Speakers)
+[20:09:30] [Render thread/INFO]: Sound engine started
+[20:09:30] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[20:09:30] [Render thread/INFO]: Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[20:09:30] [Render thread/INFO]: Created: 2048x1024x0 minecraft:textures/atlas/armor_trims.png-atlas
+[20:09:30] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[20:09:30] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[20:09:30] [Render thread/INFO]: Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas
+[20:09:30] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
+[20:09:30] [Render thread/INFO]: Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
+[20:09:30] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[20:09:30] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
+[20:09:30] [Render thread/INFO]: Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
+[20:09:30] [Render thread/INFO]: Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[20:09:30] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
+[20:09:31] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[20:09:31] [Render thread/INFO]: [TACZ Scope] Injecting dormant scope-mask branch into Iris linked fragment shaders.
+[20:14:31] [Render thread/INFO]: Stopping!
