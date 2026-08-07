@@ -52,6 +52,15 @@ public final class IndustryIconManager extends SimplePreparableReloadListener<Li
     public static final IndustryIconManager INSTANCE = new IndustryIconManager();
 
     private static final Identifier RELOAD_ID = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "industry_icon_manager");
+    /**
+     * A dismantled, durable component deliberately has a separate registry id
+     * so it cannot satisfy an ordinary production-assembly ingredient. Its
+     * stable platform/kind NBT identity is nevertheless the same physical part
+     * identity as the upstream production component, so it may reuse that
+     * component's authored icon when no service-specific icon is supplied.
+     */
+    private static final Identifier SERVICE_COMPONENT_ITEM = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "service_component");
+    private static final Identifier GUN_COMPONENT_ITEM = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "gun_component");
     private static final FileToIdConverter ICON_FILES = FileToIdConverter.json("industry_icons");
     /** Mapping JSON stores model-style ids such as {@code tacz_extra:item/ammo_9mm}. */
     private static final FileToIdConverter TEXTURE_FILES = new FileToIdConverter("textures", ".png");
@@ -106,12 +115,26 @@ public final class IndustryIconManager extends SimplePreparableReloadListener<Li
         entries = prepared;
     }
 
-    /** Resolve the highest-priority icon texture that matches this stack. */
+    /**
+     * Resolve the highest-priority icon texture that matches this stack.
+     *
+     * <p>Service components may declare an explicit {@code service_component}
+     * mapping, which always wins.  When they do not, they fall through to the
+     * exact {@code gun_component} mapping with the same platform/kind identity.
+     * The durable registry item remains distinct for recipe matching; this is
+     * only a client-resource visual alias and prevents a missing service-only
+     * texture from becoming the purple/black missing-texture sprite.</p>
+     */
     public Optional<Identifier> resolveTexture(ItemStack stack) {
         if (stack.isEmpty()) {
             return Optional.empty();
         }
-        return resolve(IconIdentity.of(stack));
+        IconIdentity identity = IconIdentity.of(stack);
+        Optional<Identifier> direct = resolve(identity);
+        if (direct.isPresent() || !SERVICE_COMPONENT_ITEM.equals(identity.item())) {
+            return direct;
+        }
+        return resolve(identity.withItem(GUN_COMPONENT_ITEM));
     }
 
     /** Resolve an identity directly; useful for renderer diagnostics and future REI integration. */
@@ -194,6 +217,13 @@ public final class IndustryIconManager extends SimplePreparableReloadListener<Li
             String dieTargetKind = tag.getStringOr(IndustryItemDataAccessor.DIE_TARGET_KIND_TAG, EMPTY);
             return new IconIdentity(itemId, ammoId, magazineFamily, magazineAmmoId, magazineCapacity, feedDeviceKind,
                     cartridgeCaliber, projectileType, partKind, platform, dieTargetKind);
+        }
+
+        /** Return the same NBT visual identity under another registry-item selector. */
+        private IconIdentity withItem(Identifier replacementItem) {
+            return new IconIdentity(replacementItem, ammoId, magazineFamily, magazineAmmoId, magazineCapacity,
+                    feedDeviceKind, cartridgeCaliber, projectileType, industryPartKind, industryPlatform,
+                    dieTargetKind);
         }
 
         public String key() {

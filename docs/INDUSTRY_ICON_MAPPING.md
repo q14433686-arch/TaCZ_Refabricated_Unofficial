@@ -11,10 +11,14 @@ TACZ 的散装弹药、实体弹匣和工业件是少量注册物品加 NBT 身�
 - `tacz:ammo` 的 GUI 槽位图；
 - `tacz:magazine` 的实体可拆卸弹匣/弹链箱图；
 - `IndustryTaggedItem`：`cartridge_case_blank`、`cartridge_case`、`projectile_blank`、
-  `projectile_core`、`press_die`、`gun_component_blank`、`gun_component`、`gun_blueprint`。
+  `projectile_core`、`press_die`、`gun_component_blank`、`gun_component`、`service_component`、
+  `gun_blueprint`。
 
 无匹配项时，弹药继续使用枪包原有 slot 纹理；弹匣/工业件继续使用原有
-`tacz:item/<item-path>` 图，因此错误或缺失的外部映射不会把物品渲染成空白。
+`tacz:item/<item-path>` 图，因此错误或缺失的外部映射不会把物品渲染成空白。`service_component`
+是一个用于隔离常规总装配方的独立 registry item：客户端会先尝试它自己的映射，若没有，再以相同
+`IndustryPlatform + IndustryPartKind` 复用上游 `tacz:gun_component` 映射，最后退回通用
+`tacz:item/gun_component` 图。这个视觉别名不改变服务端物品 ID、耐久 NBT 或配方匹配语义。
 
 此层只影响视觉，**不是数据包配方系统**，不改服务端物品、配方、弹道、库存或 NBT。
 玩家不需要运行任何 Python；`tools/generate_industry_content.py` 只是仓库作者/CI 用于同步

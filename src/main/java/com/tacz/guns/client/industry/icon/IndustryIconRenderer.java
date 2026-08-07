@@ -65,8 +65,14 @@ public final class IndustryIconRenderer implements BuiltinItemRendererRegistry.D
     private static Identifier fallbackTexture(ItemStack stack) {
         Identifier itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
         if (itemId != null && GunMod.MOD_ID.equals(itemId.getNamespace())) {
+            // SERVICE_COMPONENT is intentionally a separate item identity for
+            // server-side assembly isolation, but it is a durable instance of
+            // the same manufactured part.  Its generic fallback must therefore
+            // reuse the existing production-component texture rather than look
+            // for a nonexistent service_component.png.
+            String path = "service_component".equals(itemId.getPath()) ? "gun_component" : itemId.getPath();
             return IndustryIconManager.toTextureFile(
-                    Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "item/" + itemId.getPath())
+                    Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "item/" + path)
             );
         }
         return MissingTextureAtlasSprite.getLocation();

@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "tacz:dynamic_item",
+    "base": "tacz:item/service_component"
+  }
+}
