@@ -15,6 +15,7 @@ import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.client.sound.SoundPlayManager;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
 import com.tacz.guns.network.message.ClientMessagePlayerShoot;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
@@ -203,6 +204,14 @@ public class LocalPlayerShoot {
         // 判断是否处于近战冷却时间
         if (gunOperator.getSynMeleeCoolDown() != 0) {
             return ShootResult.IS_MELEE;
+        }
+        // C.1 critical-condition lockout is item-NBT-backed and therefore
+        // visible to the local client before it predicts a trigger pull.
+        if (IndustryMaintenanceService.isLockout(mainHandItem)) {
+            if (playDrySound) {
+                SoundPlayManager.playDryFireSound(player, display);
+            }
+            return ShootResult.JAMMED;
         }
         // 判断子弹数
         Bolt boltType = gunIndex.getGunData().getBolt();

@@ -258,8 +258,8 @@ chance = clamp(
 ### C. 卡壳与清障（C.0 环境/结构数据已开始）
 
 1. 已扩展默认 53 枪维护 profile：操作结构的基础 wear/fouling multiplier、浸没 multiplier、`#tacz:maintenance_contaminants` 地面污染 multiplier 均由数据决定；服务端只在实际扣弹后读取浸没/污染暴露并计入 Condition/Fouling，不按枪名硬编码现实“可靠性”；
-2. 下一步才是 `feed` / `lockout` 服务端状态、`ShootResult.JAMMED`、同步消息、HUD/声音；
-3. 先为默认包和有已审计 clear 动画或可验证 bolt 动作的枪启用；
+2. C.1 已启用确定性的 `lockout`：组件最低 Condition 到 profile `critical_condition` 后，在**下一次**扣弹前通过 `ShootResult.JAMMED` 阻止射击；Tooltip/HUD 显示“勤务锁止”，只能拆解、维修组件并复装后解除。它不吞弹、不制造未同步的随机动作；
+3. 下一步才是随机 `feed` jam、客户端/服务器 clear action、声音和第三人称状态；只为有已审计 clear 动画或可验证 bolt 动作的枪启用；
 4. 最后才按维护档案逐步放开第三方测绘枪。
 
 ## 8. 发现的未完成 / 未完全替换项目

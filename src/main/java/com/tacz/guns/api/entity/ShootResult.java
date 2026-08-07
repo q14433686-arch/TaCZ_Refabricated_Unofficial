@@ -64,5 +64,9 @@ public enum ShootResult {
     /**
      * 武器过热
      */
-    OVERHEATED
+    OVERHEATED,
+    /**
+     * C.1 critical-condition lockout; repair through the industrial service bench is required.
+     */
+    JAMMED
 }

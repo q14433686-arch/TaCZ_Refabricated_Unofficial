@@ -168,6 +168,12 @@ public class ModernKineticGunScriptAPI {
             boolean fire = !gunFireEvent.isCanceled();
             if (fire) {
                 NetworkHandler.sendToTrackingEntity(new ServerMessageGunFire(shooter.getId(), itemStack), shooter);
+                // C.1 lockout is checked again inside the real delayed fire
+                // cycle so burst/Lua paths cannot emit an extra round after a
+                // condition threshold was crossed by the preceding shot.
+                if (consumeAmmo && IndustryMaintenanceService.isLockout(itemStack)) {
+                    return false;
+                }
                 // 削减弹药
                 if (consumeAmmo) {
                     if (!this.reduceAmmoOnce()) {

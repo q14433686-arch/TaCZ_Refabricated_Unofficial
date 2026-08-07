@@ -2004,5 +2004,6 @@
   "message.tacz.industrial_service.repair_materials": "Need %s high-carbon steel plate(s) and %s brass sheet(s).",
   "message.tacz.industrial_service.repair_success": "Repaired %s component(s); consumed %s steel plate(s) and %s brass sheet(s).",
   "message.tacz.industrial_service.components_already_serviceable": "All installed service components are already at full condition.",
-  "tooltip.tacz.service.legacy_part": "Legacy B.2 replacement part — retained for world compatibility; use the Industrial Service Bench repair bays for new repairs."
+  "tooltip.tacz.service.legacy_part": "Legacy B.2 replacement part — retained for world compatibility; use the Industrial Service Bench repair bays for new repairs.",
+  "tooltip.tacz.maintenance.lockout": "Service lockout — repair components at the Industrial Service Bench"
 }

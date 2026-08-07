@@ -44,6 +44,9 @@ public final class IndustryMaintenanceService {
     public static final String FOULING_TAG = "IndustryFouling";
     public static final String SEED_TAG = "IndustryMaintenanceSeed";
     public static final String SHOTS_TAG = "IndustryMaintenanceShots";
+    /** C.1 deterministic hard-stop; feed jams remain disabled until a clear action is audited. */
+    public static final String JAM_TAG = "IndustryJam";
+    public static final String LOCKOUT_JAM = "lockout";
 
     /** Existing industrial assembly provenance written by Create results. */
     public static final String ASSEMBLY_PLATFORM_TAG = "IndustryAssemblyPlatform";
@@ -99,7 +102,26 @@ public final class IndustryMaintenanceService {
             long oldShots = Math.max(0L, tag.getLongOr(SHOTS_TAG, 0L));
             tag.putLong(SHOTS_TAG, oldShots == Long.MAX_VALUE ? Long.MAX_VALUE : oldShots + 1L);
         });
+        refreshFaultState(gun);
         return true;
+    }
+
+    /** C.1 only hard-stops a critically degraded industrial gun; no random feed jam is enabled here. */
+    public static boolean isLockout(ItemStack gun) {
+        IndustryMaintenanceProfile profile = getProfileFor(gun);
+        Snapshot snapshot = getSnapshot(gun);
+        return profile != null && snapshot.eligible()
+                && snapshot.minimumCondition() <= profile.getJam().getCriticalCondition();
+    }
+
+    private static void refreshFaultState(ItemStack gun) {
+        ItemNbtUtils.updateTag(gun, tag -> {
+            if (isLockout(gun)) {
+                tag.putString(JAM_TAG, LOCKOUT_JAM);
+            } else if (LOCKOUT_JAM.equals(tag.getStringOr(JAM_TAG, ""))) {
+                tag.remove(JAM_TAG);
+            }
+        });
     }
 
     /**
@@ -135,9 +157,12 @@ public final class IndustryMaintenanceService {
         }
         String condition = percentage(snapshot.minimumCondition());
         String fouling = percentage(snapshot.fouling());
-        return Component.translatable("tooltip.tacz.maintenance.status",
-                        Component.translatable(snapshot.status().translationKey()), condition, fouling)
-                .withStyle(style -> style.withColor(snapshot.status().color()));
+        Component state = isLockout(gun)
+                ? Component.translatable("tooltip.tacz.maintenance.lockout")
+                : Component.translatable(snapshot.status().translationKey());
+        int color = isLockout(gun) ? 0xE05252 : snapshot.status().color();
+        return Component.translatable("tooltip.tacz.maintenance.status", state, condition, fouling)
+                .withStyle(style -> style.withColor(color));
     }
 
     @Nullable

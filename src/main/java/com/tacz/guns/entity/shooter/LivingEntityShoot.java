@@ -11,6 +11,7 @@ import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.ServerMessageSyncBaseTimestamp;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
 import com.tacz.guns.industry.magazine.EnBlocClipService;
 import com.tacz.guns.network.message.event.ServerMessageGunShoot;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -107,6 +108,13 @@ public class LivingEntityShoot {
             return ShootResult.UNKNOWN_FAIL;
         }
         IGunOperator gunOperator = IGunOperator.fromLivingEntity(shooter);
+        // C.1 is deliberately deterministic: a critically degraded component
+        // locks the gun until the real service-bench repair path restores it.
+        // Random feed jams remain disabled until a verified clear animation is
+        // available for that gun profile.
+        if (IndustryMaintenanceService.isLockout(currentGunItem)) {
+            return ShootResult.JAMMED;
+        }
         // 判断子弹数
         Bolt boltType = gunIndex.getGunData().getBolt();
         // 是否为背包直读
