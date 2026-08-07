@@ -185,7 +185,7 @@ TACZ 当前的扩容等级最多使用该数组的前三项。少数旧枪包虽
 config/tacz/industry-feed-survey.json
 ```
 
-它包含当前所有已加载枪的分类、原始 GunData 事实、脚本参数键、信号和待复核枪的 sidecar 草稿位置。草稿会故意写入：
+它包含当前所有已加载枪的分类、原始 GunData 事实、脚本参数键、信号和待复核枪的 sidecar 草稿位置，并额外提供按 namespace / class / script / review route 分组的 `review_cohorts`。草稿会故意写入：
 
 ```json
 "mechanism": "REQUIRES_HUMAN_CONFIRMATION"

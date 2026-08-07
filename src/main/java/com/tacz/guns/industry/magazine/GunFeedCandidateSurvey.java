@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -78,6 +79,10 @@ public final class GunFeedCandidateSurvey {
     }
 
     public record Summary(int total, int validated, int review, int incrementalOrClip, int excluded) {
+    }
+
+    /** Stable grouping key for one-click report review; it never affects runtime behaviour. */
+    private record ReviewCohortKey(String namespace, String route, String gunClass, String script) {
     }
 
     public static Candidate analyze(Identifier gunId, @Nullable CommonGunIndex index,
@@ -202,7 +207,7 @@ public final class GunFeedCandidateSurvey {
      */
     public static JsonObject exportReport(ICommonResourceProvider provider) {
         JsonObject report = new JsonObject();
-        report.addProperty("schema_version", 1);
+        report.addProperty("schema_version", 2);
         report.addProperty("generated_by", "tacz_industry_feed_survey");
         report.addProperty("activation", "none");
         report.addProperty("warning", "Review artifact only. It is not a datapack and never enables feed behaviour.");
@@ -217,14 +222,18 @@ public final class GunFeedCandidateSurvey {
         report.add("summary", summaryJson);
 
         JsonArray entries = new JsonArray();
+        Map<ReviewCohortKey, List<String>> reviewCohorts = new HashMap<>();
         for (Candidate candidate : allCandidates(provider)) {
             JsonObject entry = new JsonObject();
             entry.addProperty("gun_id", candidate.gunId().toString());
             entry.addProperty("gun_class", candidate.gunClass());
             entry.addProperty("classification", candidate.classification().serializedName());
+            entry.addProperty("review_route", reviewRoute(candidate));
             entry.addProperty("provisional_private_family", candidate.provisionalPrivateFamily());
             JsonArray signals = new JsonArray();
-            candidate.signals().forEach(signals::add);
+            for (String signal : candidate.signals()) {
+                signals.add(signal);
+            }
             entry.add("signals", signals);
 
             CommonGunIndex index = provider.getGunIndex(candidate.gunId());
@@ -234,11 +243,65 @@ public final class GunFeedCandidateSurvey {
             }
             if (candidate.classification().needsHumanReview()) {
                 entry.add("draft_sidecar", reviewDraft(candidate, data));
+                ReviewCohortKey key = new ReviewCohortKey(
+                        candidate.gunId().getNamespace(), reviewRoute(candidate), candidate.gunClass(), scriptLabel(data)
+                );
+                reviewCohorts.computeIfAbsent(key, ignored -> new ArrayList<>()).add(candidate.gunId().toString());
             }
             entries.add(entry);
         }
         report.add("entries", entries);
+        report.add("review_cohorts", reviewCohortsJson(reviewCohorts));
         return report;
+    }
+
+    /** Class-driven review routes make hundreds of candidates batch-reviewable without enabling them. */
+    private static String reviewRoute(Candidate candidate) {
+        return switch (candidate.classification()) {
+            case VALIDATED -> "already_validated";
+            case EXCLUDED_NON_MAGAZINE, EXCLUDED_INFINITE, EXCLUDED_LOW_CAPACITY -> "legacy_excluded";
+            case INCREMENTAL_OR_CLIP -> "incremental_or_clip_review";
+            case ACTION_AMBIGUOUS -> "revolver_or_action_review";
+            case REVIEW_SINGLE_SWAP -> switch (candidate.gunClass()) {
+                case "pistol", "smg" -> "external_candidate_not_proof";
+                case "rifle" -> "external_or_fixed_review";
+                case "sniper" -> "fixed_or_detachable_review";
+                case "shotgun" -> "tube_or_box_review";
+                case "mg" -> "belt_box_or_internal_review";
+                case "rpg" -> "launcher_review";
+                default -> "manual_mechanism_review";
+            };
+        };
+    }
+
+    private static String scriptLabel(@Nullable GunData data) {
+        return data == null || data.getScript() == null ? "default_java" : data.getScript().toString();
+    }
+
+    private static JsonArray reviewCohortsJson(Map<ReviewCohortKey, List<String>> cohorts) {
+        List<Map.Entry<ReviewCohortKey, List<String>>> grouped = new ArrayList<>(cohorts.entrySet());
+        grouped.sort(Comparator
+                .comparing((Map.Entry<ReviewCohortKey, List<String>> entry) -> entry.getKey().namespace())
+                .thenComparing(entry -> entry.getKey().route())
+                .thenComparing(entry -> entry.getKey().gunClass())
+                .thenComparing(entry -> entry.getKey().script()));
+        JsonArray result = new JsonArray();
+        for (Map.Entry<ReviewCohortKey, List<String>> entry : grouped) {
+            ReviewCohortKey key = entry.getKey();
+            JsonObject cohort = new JsonObject();
+            cohort.addProperty("namespace", key.namespace());
+            cohort.addProperty("review_route", key.route());
+            cohort.addProperty("gun_class", key.gunClass());
+            cohort.addProperty("script", key.script());
+            cohort.addProperty("count", entry.getValue().size());
+            JsonArray gunIds = new JsonArray();
+            for (String gunId : entry.getValue()) {
+                gunIds.add(gunId);
+            }
+            cohort.add("gun_ids", gunIds);
+            result.add(cohort);
+        }
+        return result;
     }
 
     private static JsonObject observedGunData(GunData data) {
@@ -259,7 +322,13 @@ public final class GunFeedCandidateSurvey {
         observed.add("extended_capacities", extended);
         JsonArray scriptParameters = new JsonArray();
         if (data.getScriptParam() != null) {
-            data.getScriptParam().keySet().stream().filter(key -> key != null).sorted().forEach(scriptParameters::add);
+            List<String> keys = data.getScriptParam().keySet().stream()
+                    .filter(key -> key != null)
+                    .sorted()
+                    .toList();
+            for (String key : keys) {
+                scriptParameters.add(key);
+            }
         }
         observed.add("script_parameter_keys", scriptParameters);
         return observed;
