@@ -4,7 +4,7 @@
   "eligibility": "industrial_assembly",
   "maintenance_class": "blowback_smg",
   "durability_grade": "enhanced",
-  "expected_barrel_shots": 8000,
+  "expected_barrel_shots": 10000,
   "wear_per_shot": {
     "receiver": 1,
     "bolt": 1,

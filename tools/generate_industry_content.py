@@ -2530,26 +2530,28 @@ def maintenance_baseline(platform: dict[str, Any]) -> dict[str, Any]:
     # grade and expected barrel interval are visible to the player and fully
     # data-overridable per GunId.
     by_tier = {
-        "legacy": ({"receiver": 2, "bolt": 3, "barrel": 4, "trigger": 1, "recoil": 2}, 10, "field", 3_000),
-        "service": ({"receiver": 1, "bolt": 2, "barrel": 2, "trigger": 1, "recoil": 1}, 12, "service", 5_000),
-        "advanced": ({"receiver": 1, "bolt": 1, "barrel": 1, "trigger": 1, "recoil": 1}, 10, "enhanced", 8_000),
-        "precision": ({"receiver": 1, "bolt": 1, "barrel": 3, "trigger": 1, "recoil": 1}, 8, "precision", 3_500),
+        "legacy": ({"receiver": 1, "bolt": 2, "barrel": 2, "trigger": 1, "recoil": 1}, 12, "field", 5_000),
+        "service": ({"receiver": 1, "bolt": 1, "barrel": 1, "trigger": 1, "recoil": 1}, 12, "service", 9_000),
+        "advanced": ({"receiver": 1, "bolt": 1, "barrel": 1, "trigger": 1, "recoil": 1}, 10, "enhanced", 10_000),
+        "precision": ({"receiver": 1, "bolt": 1, "barrel": 2, "trigger": 1, "recoil": 1}, 8, "precision", 5_000),
     }
     tier = manufacturing_tier(platform)
     wear, fouling, durability_grade, expected_barrel_shots = by_tier[tier]
     action = action_profile(platform)
     if action in {"belt_fed", "rotary"}:
+        wear = {"receiver": 1, "bolt": 1, "barrel": 1, "trigger": 1, "recoil": 1}
         durability_grade, expected_barrel_shots = "heavy_duty", 9_000
     elif action in {"anti_material_bolt", "bolt_action"}:
-        durability_grade, expected_barrel_shots = "precision", min(expected_barrel_shots, 4_000)
+        wear = {"receiver": 1, "bolt": 1, "barrel": 2, "trigger": 1, "recoil": 1}
+        durability_grade, expected_barrel_shots = "precision", 5_000
     # Broad gameplay maintenance classes, not claims about real named weapons.
     operation_by_action = {
         "bolt_action": (0.80, 0.75, 1.20, 1.35, 1.10, 1.20),
         "anti_material_bolt": (1.05, 0.80, 1.25, 1.35, 1.10, 1.20),
         "break_action": (0.75, 0.65, 1.15, 1.25, 1.05, 1.15),
         "revolver": (0.90, 0.80, 1.20, 1.30, 1.10, 1.20),
-        "belt_fed": (1.25, 1.30, 1.30, 1.55, 1.15, 1.35),
-        "rotary": (1.35, 1.15, 1.35, 1.45, 1.20, 1.25),
+        "belt_fed": (1.00, 1.30, 1.15, 1.55, 1.10, 1.35),
+        "rotary": (1.00, 1.15, 1.15, 1.45, 1.15, 1.25),
         "gas_operated_shotgun": (1.10, 1.20, 1.30, 1.55, 1.15, 1.35),
         "blowback_smg": (1.00, 1.15, 1.25, 1.45, 1.15, 1.30),
     }
@@ -5078,6 +5080,20 @@ def run(write: bool) -> int:
         "gui.tacz.industrial_salvage.inspect": "INSPECTION / CUTTER LINE",
         "gui.tacz.industrial_salvage.status": "RECOVERY STATUS",
         "gui.tacz.industrial_salvage.salvage_hint": "Inspect the input and recover only items with an industrial provenance tag.",
+        "gui.tacz.industrial_service.disassemble": "Disassemble",
+        "gui.tacz.industrial_service.reassemble": "Reassemble",
+        "gui.tacz.industrial_service.repair": "Repair components",
+        "gui.tacz.industrial_service.disassemble_hint": "Strip a safe, empty industrial gun into five preserved components.",
+        "gui.tacz.industrial_service.reassemble_hint": "Reassemble five matching components without directly restoring their condition.",
+        "gui.tacz.industrial_service.repair_hint": "Use steel and brass stocks here to restore only damaged components; no mechanical power required.",
+        "gui.tacz.industrial_service.gun_input": "GUN IN",
+        "gui.tacz.industrial_service.gun_output": "GUN OUT",
+        "gui.tacz.industrial_service.tooling": "TEMPLATE / FIXTURE / WRENCH",
+        "gui.tacz.industrial_service.components": "FIVE SERVICE COMPONENTS",
+        "gui.tacz.industrial_service.materials": "REPAIR STOCK",
+        "message.tacz.industrial_service.repair_materials": "Need %s high-carbon steel plate(s) and %s brass sheet(s).",
+        "message.tacz.industrial_service.repair_success": "Repaired %s component(s); consumed %s steel plate(s) and %s brass sheet(s).",
+        "message.tacz.industrial_service.components_already_serviceable": "All installed service components are already at full condition.",
         "config.tacz.server.industry_maintenance_scope": "Industrial Maintenance Scope",
         "config.tacz.server.industry_maintenance_scope.desc": "Phase A records condition and fouling. INDUSTRIAL_ASSEMBLY safely limits it to real industrial-origin guns; ALL_GUNS migrates legacy guns full and clean.",
         "tooltip.tacz.maintenance.status": "Service: %s  |  Condition %s  |  Fouling %s",
@@ -5096,6 +5112,7 @@ def run(write: bool) -> int:
         "tooltip.tacz.service.component_repair": "Repair stations: damaged component + named part Deployer → fixture Deployer → Mechanical Press.",
         "tooltip.tacz.service.blank_step": "Step 1: form this neutral blank in a heated Basin, then use the matching component-die Deployer.",
         "tooltip.tacz.service.named_part_step": "Step 2: first replace the damaged component on a depot/belt, then run the fitted component through its fixture and press stations.",
+        "tooltip.tacz.service.legacy_part": "Legacy B.2 replacement part — retained for world compatibility; use the Industrial Service Bench repair bays for new repairs.",
     }
     chinese: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "中性外装套件毛坯",
@@ -5143,6 +5160,20 @@ def run(write: bool) -> int:
         "gui.tacz.industrial_salvage.inspect": "检验 / 切割工位",
         "gui.tacz.industrial_salvage.status": "回收状态",
         "gui.tacz.industrial_salvage.salvage_hint": "检验输入物，只回收带有工业来源标记的物品。",
+        "gui.tacz.industrial_service.disassemble": "拆解",
+        "gui.tacz.industrial_service.reassemble": "复装",
+        "gui.tacz.industrial_service.repair": "维修组件",
+        "gui.tacz.industrial_service.disassemble_hint": "将安全、清空的工业枪拆为五个保真组件。",
+        "gui.tacz.industrial_service.reassemble_hint": "复装五个匹配组件，不会直接恢复其枪况。",
+        "gui.tacz.industrial_service.repair_hint": "在此消耗钢板和黄铜板恢复损坏组件；不需要机械动力。",
+        "gui.tacz.industrial_service.gun_input": "枪械输入",
+        "gui.tacz.industrial_service.gun_output": "枪械输出",
+        "gui.tacz.industrial_service.tooling": "模板 / 检具 / 扳手",
+        "gui.tacz.industrial_service.components": "五个勤务组件",
+        "gui.tacz.industrial_service.materials": "维修材料",
+        "message.tacz.industrial_service.repair_materials": "需要 %s 块高碳钢板和 %s 张黄铜板。",
+        "message.tacz.industrial_service.repair_success": "已维修 %s 个组件；消耗 %s 块钢板和 %s 张黄铜板。",
+        "message.tacz.industrial_service.components_already_serviceable": "所有勤务组件均已处于满枪况。",
         "config.tacz.server.industry_maintenance_scope": "工业维护范围",
         "config.tacz.server.industry_maintenance_scope.desc": "A 阶段只记录枪况和污垢。INDUSTRIAL_ASSEMBLY 仅作用于真实工业来源枪械；ALL_GUNS 会让旧枪以满状态、清洁状态安全迁移。",
         "tooltip.tacz.maintenance.status": "勤务：%s  |  枪况 %s  |  污垢 %s",
@@ -5161,6 +5192,7 @@ def run(write: bool) -> int:
         "tooltip.tacz.service.component_repair": "维修工位：损坏组件 + 命名替换件部署器 → 检具部署器 → 动力冲压机。",
         "tooltip.tacz.service.blank_step": "第 1 步：先在加热 Basin 制成该中性毛坯，再由对应组件模具部署器成型。",
         "tooltip.tacz.service.named_part_step": "第 2 步：先在置物台/传送带上由命名替换件部署器替换损坏组件，再依次经过检具与动力冲压工位。",
+        "tooltip.tacz.service.legacy_part": "旧 B.2 替换件——为旧存档保留；新维修请使用工业勤务台的维修材料槽。",
     }
     expected.update(generated_furniture_blank_files(platforms))
     expected.update(generated_template_blank_file(policy))
@@ -5177,11 +5209,8 @@ def run(write: bool) -> int:
         expected.update(generated_platform_files(platform))
         english.update(language_entries(platform, "en_us"))
         chinese.update(language_entries(platform, "zh_cn"))
-        english.update(service_language_entries(platform, "en_us"))
-        chinese.update(service_language_entries(platform, "zh_cn"))
     expected.update(generated_reference_profile_files(platforms))
     expected.update(generated_maintenance_profile_files(platforms))
-    expected.update(generated_service_repair_files(platforms))
     expected.update(generated_cartridge_gauge_blank_file())
     for cartridge in cartridges:
         expected.update(generated_cartridge_files(cartridge))
@@ -5220,7 +5249,6 @@ def run(write: bool) -> int:
     validate_generated_reference_profiles(platforms, expected)
     validate_generated_maintenance_profiles(platforms, expected)
     validate_initial_maintenance_assembly_outputs(platforms, expected)
-    validate_generated_service_repair_files(platforms, expected)
     validate_stable_dossier_commissions(platforms, blueprint_acquisition, expected)
 
     stale: list[str] = []

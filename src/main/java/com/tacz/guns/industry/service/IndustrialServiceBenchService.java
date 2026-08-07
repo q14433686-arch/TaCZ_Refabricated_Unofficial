@@ -13,6 +13,7 @@ import com.tacz.guns.init.ModItems;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.util.ItemNbtUtils;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -199,6 +200,75 @@ public final class IndustrialServiceBenchService {
         return ReassemblyPlan.success(origin, gun);
     }
 
+    /**
+     * Non-powered bench repair: validates the same real component/template/
+     * fixture identity contract as reassembly, then computes material demand
+     * from the actual lost Condition. Components remain visible in their bays
+     * while the server repairs them; no hidden Create sequence is involved.
+     */
+    public static RepairPlan planRepair(List<ItemStack> components, ItemStack blueprint, ItemStack fixture,
+                                        ItemStack wrench) {
+        ReassemblyPlan identity = planReassembly(components, blueprint, fixture, wrench);
+        if (!identity.success() || identity.origin() == null) {
+            return RepairPlan.failure(identity.failure() == null ? Failure.COMPONENT_SET_INVALID : identity.failure());
+        }
+        int steel = 0;
+        int brass = 0;
+        int repaired = 0;
+        for (ItemStack component : components) {
+            CompoundTag tag = ItemNbtUtils.getTag(component);
+            int condition = Math.clamp(tag.getIntOr(PART_CONDITION, IndustryMaintenanceService.MAX_CONDITION),
+                    0, IndustryMaintenanceService.MAX_CONDITION);
+            int deficit = IndustryMaintenanceService.MAX_CONDITION - condition;
+            if (deficit <= 0) {
+                continue;
+            }
+            int slot = tag.getIntOr(SERVICE_CONDITION_SLOT,
+                    conditionSlotForComponent(identity.origin(), tag.getStringOr("IndustryPartKind", "")));
+            if (slot < 0) {
+                return RepairPlan.failure(Failure.COMPONENT_SET_INVALID);
+            }
+            repaired++;
+            switch (slot) {
+                case 0 -> steel += units(deficit, 5_000);
+                case 1 -> steel += units(deficit, 4_000);
+                case 2 -> {
+                    steel += units(deficit, 3_500);
+                    brass += units(deficit, 7_000);
+                }
+                case 3 -> brass += units(deficit, 4_000);
+                case 4 -> {
+                    steel += units(deficit, 6_000);
+                    brass += units(deficit, 6_000);
+                }
+                default -> {
+                    return RepairPlan.failure(Failure.COMPONENT_SET_INVALID);
+                }
+            }
+        }
+        return repaired == 0 ? RepairPlan.failure(Failure.COMPONENTS_ALREADY_SERVICEABLE)
+                : RepairPlan.success(identity.origin(), steel, brass, repaired);
+    }
+
+    public static void repairComponents(List<ItemStack> components) {
+        for (ItemStack component : components) {
+            ItemNbtUtils.updateTag(component, tag -> tag.putInt(PART_CONDITION, IndustryMaintenanceService.MAX_CONDITION));
+        }
+    }
+
+    public static boolean isSteelRepairMaterial(ItemStack stack) {
+        return stack.is(ModItems.HIGH_CARBON_STEEL_PLATE);
+    }
+
+    public static boolean isBrassRepairMaterial(ItemStack stack) {
+        Identifier key = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        return Identifier.fromNamespaceAndPath("create", "brass_sheet").equals(key);
+    }
+
+    private static int units(int deficit, int perUnit) {
+        return Math.max(1, (deficit + Math.max(1, perUnit) - 1) / Math.max(1, perUnit));
+    }
+
     /** Apply native 26.2 durability only after a complete successful transaction. */
     public static void damageWrench(ItemStack wrench) {
         if (!wrench.is(ModItems.ARMORER_WRENCH)) {
@@ -370,6 +440,8 @@ public final class IndustrialServiceBenchService {
         FIXTURE_MISMATCH("message.tacz.industrial_service.fixture_mismatch"),
         WRENCH_REQUIRED("message.tacz.industrial_service.wrench_required"),
         COMPONENT_SET_INVALID("message.tacz.industrial_service.component_set_invalid"),
+        COMPONENTS_ALREADY_SERVICEABLE("message.tacz.industrial_service.components_already_serviceable"),
+        REPAIR_MATERIALS("message.tacz.industrial_service.repair_materials"),
         OUTPUT_BLOCKED("message.tacz.industrial_service.output_blocked");
 
         private final String key;
@@ -388,5 +460,13 @@ public final class IndustrialServiceBenchService {
         static ReassemblyPlan success(Origin origin, ItemStack gun) { return new ReassemblyPlan(origin, gun.copy(), null); }
         static ReassemblyPlan failure(Failure failure) { return new ReassemblyPlan(null, ItemStack.EMPTY, failure); }
         public boolean success() { return failure == null && !gun.isEmpty(); }
+    }
+    public record RepairPlan(@Nullable Origin origin, int steelPlates, int brassSheets, int repairedComponents,
+                             @Nullable Failure failure) {
+        static RepairPlan success(Origin origin, int steel, int brass, int repaired) {
+            return new RepairPlan(origin, steel, brass, repaired, null);
+        }
+        static RepairPlan failure(Failure failure) { return new RepairPlan(null, 0, 0, 0, failure); }
+        public boolean success() { return failure == null && origin != null && repairedComponents > 0; }
     }
 }

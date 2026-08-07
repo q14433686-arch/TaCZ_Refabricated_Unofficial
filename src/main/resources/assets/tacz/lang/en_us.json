@@ -1701,8 +1701,8 @@
   "item.tacz.armorer_wrench": "Armorer Wrench",
   "gui.tacz.industrial_service.disassemble": "Disassemble",
   "gui.tacz.industrial_service.reassemble": "Reassemble",
-  "gui.tacz.industrial_service.disassemble_hint": "Strip one safe, empty industrial gun into five preserved components.",
-  "gui.tacz.industrial_service.reassemble_hint": "Reassemble five matching serviced components into their original industrial gun.",
+  "gui.tacz.industrial_service.disassemble_hint": "Strip a safe, empty industrial gun into five preserved components.",
+  "gui.tacz.industrial_service.reassemble_hint": "Reassemble five matching components without directly restoring their condition.",
   "gui.tacz.industrial_service.gun_input": "GUN IN",
   "gui.tacz.industrial_service.gun_output": "GUN OUT",
   "gui.tacz.industrial_service.tooling": "TEMPLATE / FIXTURE / WRENCH",
@@ -1997,5 +1997,12 @@
   "tooltip.tacz.maintenance.grade.service": "Service grade",
   "tooltip.tacz.maintenance.grade.enhanced": "Enhanced service grade",
   "tooltip.tacz.maintenance.grade.precision": "Precision barrel grade",
-  "tooltip.tacz.maintenance.grade.heavy_duty": "Sustained-fire grade"
+  "tooltip.tacz.maintenance.grade.heavy_duty": "Sustained-fire grade",
+  "gui.tacz.industrial_service.repair": "Repair components",
+  "gui.tacz.industrial_service.repair_hint": "Use steel and brass stocks here to restore only damaged components; no mechanical power required.",
+  "gui.tacz.industrial_service.materials": "REPAIR STOCK",
+  "message.tacz.industrial_service.repair_materials": "Need %s high-carbon steel plate(s) and %s brass sheet(s).",
+  "message.tacz.industrial_service.repair_success": "Repaired %s component(s); consumed %s steel plate(s) and %s brass sheet(s).",
+  "message.tacz.industrial_service.components_already_serviceable": "All installed service components are already at full condition.",
+  "tooltip.tacz.service.legacy_part": "Legacy B.2 replacement part — retained for world compatibility; use the Industrial Service Bench repair bays for new repairs."
 }

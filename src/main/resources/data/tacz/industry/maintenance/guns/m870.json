@@ -4,15 +4,15 @@
   "eligibility": "industrial_assembly",
   "maintenance_class": "pump_action",
   "durability_grade": "field",
-  "expected_barrel_shots": 3000,
+  "expected_barrel_shots": 5000,
   "wear_per_shot": {
-    "receiver": 2,
-    "bolt": 3,
-    "barrel": 4,
+    "receiver": 1,
+    "bolt": 2,
+    "barrel": 2,
     "trigger": 1,
-    "recoil": 2
+    "recoil": 1
   },
-  "fouling_per_shot": 10,
+  "fouling_per_shot": 12,
   "heat_stress_multiplier": 1.0,
   "operation": {
     "wear_multiplier": 1.0,

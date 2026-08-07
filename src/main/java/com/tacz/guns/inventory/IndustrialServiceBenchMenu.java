@@ -1,6 +1,7 @@
 package com.tacz.guns.inventory;
 
 import com.tacz.guns.block.entity.IndustrialServiceBenchBlockEntity;
+import com.tacz.guns.industry.service.IndustrialServiceBenchService;
 import com.tacz.guns.init.ModBlocks;
 import com.tacz.guns.init.ModItems;
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
@@ -42,23 +43,25 @@ public final class IndustrialServiceBenchMenu extends AbstractContainerMenu {
         addSlot(new Slot(bench, IndustrialServiceBenchBlockEntity.GUN_OUTPUT, 181, 43) {
             @Override public boolean mayPlace(ItemStack stack) { return false; }
         });
+        addSlot(new Slot(bench, IndustrialServiceBenchBlockEntity.STEEL_MATERIAL, 151, 75));
+        addSlot(new Slot(bench, IndustrialServiceBenchBlockEntity.BRASS_MATERIAL, 187, 75));
         addPlayerInventory(playerInventory);
     }
 
     private void addPlayerInventory(Inventory inventory) {
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 9; column++) {
-                addSlot(new Slot(inventory, column + row * 9 + 9, 24 + column * 18, 137 + row * 18));
+                addSlot(new Slot(inventory, column + row * 9 + 9, 24 + column * 18, 157 + row * 18));
             }
         }
         for (int column = 0; column < 9; column++) {
-            addSlot(new Slot(inventory, column, 24 + column * 18, 195));
+            addSlot(new Slot(inventory, column, 24 + column * 18, 215));
         }
     }
 
-    public void service(net.minecraft.server.level.ServerPlayer player, boolean reassemble) {
+    public void service(net.minecraft.server.level.ServerPlayer player, int action) {
         if (bench instanceof IndustrialServiceBenchBlockEntity entity) {
-            entity.service(player, reassemble);
+            entity.service(player, action);
         }
     }
 
@@ -89,6 +92,12 @@ public final class IndustrialServiceBenchMenu extends AbstractContainerMenu {
             } else if (source.is(ModItems.GUN_COMPONENT)) {
                 moved = moveItemStackTo(source, IndustrialServiceBenchBlockEntity.COMPONENT_START,
                         IndustrialServiceBenchBlockEntity.COMPONENT_START + IndustrialServiceBenchBlockEntity.COMPONENT_COUNT, false);
+            } else if (IndustrialServiceBenchService.isSteelRepairMaterial(source)) {
+                moved = moveItemStackTo(source, IndustrialServiceBenchBlockEntity.STEEL_MATERIAL,
+                        IndustrialServiceBenchBlockEntity.STEEL_MATERIAL + 1, false);
+            } else if (IndustrialServiceBenchService.isBrassRepairMaterial(source)) {
+                moved = moveItemStackTo(source, IndustrialServiceBenchBlockEntity.BRASS_MATERIAL,
+                        IndustrialServiceBenchBlockEntity.BRASS_MATERIAL + 1, false);
             } else {
                 moved = false;
             }

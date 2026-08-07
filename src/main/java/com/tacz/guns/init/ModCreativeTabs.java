@@ -37,9 +37,6 @@ public class ModCreativeTabs {
                 output.accept(ModItems.INDUSTRIAL_SALVAGE_STATION);
                 output.accept(ModItems.INDUSTRIAL_SERVICE_BENCH);
                 output.accept(ModItems.ARMORER_WRENCH);
-                output.accept(IndustryItemBuilder.servicePartBlank()
-                        .platform("service").kind("service_part_blank")
-                        .displayNameKey("item.tacz.service_part_blank").build());
                 output.accept(ModItems.MAGAZINE_POUCH);
                 output.accept(ModItems.MAGAZINE_LOADER);
                 output.accept(ModItems.TARGET_MINECART);

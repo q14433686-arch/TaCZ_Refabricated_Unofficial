@@ -4,11 +4,11 @@
   "eligibility": "industrial_assembly",
   "maintenance_class": "gas_rifle",
   "durability_grade": "service",
-  "expected_barrel_shots": 5000,
+  "expected_barrel_shots": 9000,
   "wear_per_shot": {
     "receiver": 1,
-    "bolt": 2,
-    "barrel": 2,
+    "bolt": 1,
+    "barrel": 1,
     "trigger": 1,
     "recoil": 1
   },

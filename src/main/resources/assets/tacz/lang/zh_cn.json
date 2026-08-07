@@ -1701,8 +1701,8 @@
   "item.tacz.armorer_wrench": "军械勤务扳手",
   "gui.tacz.industrial_service.disassemble": "拆解",
   "gui.tacz.industrial_service.reassemble": "复装",
-  "gui.tacz.industrial_service.disassemble_hint": "将一把已清空、已退匣的工业枪拆为五个保真组件。",
-  "gui.tacz.industrial_service.reassemble_hint": "将五个匹配的勤务组件复装回原工业枪。",
+  "gui.tacz.industrial_service.disassemble_hint": "将安全、清空的工业枪拆为五个保真组件。",
+  "gui.tacz.industrial_service.reassemble_hint": "复装五个匹配组件，不会直接恢复其枪况。",
   "gui.tacz.industrial_service.gun_input": "枪械输入",
   "gui.tacz.industrial_service.gun_output": "枪械输出",
   "gui.tacz.industrial_service.tooling": "模板 / 检具 / 扳手",
@@ -1997,5 +1997,12 @@
   "tooltip.tacz.maintenance.grade.service": "制式勤务等级",
   "tooltip.tacz.maintenance.grade.enhanced": "强化制式等级",
   "tooltip.tacz.maintenance.grade.precision": "精密枪管等级",
-  "tooltip.tacz.maintenance.grade.heavy_duty": "持续火力等级"
+  "tooltip.tacz.maintenance.grade.heavy_duty": "持续火力等级",
+  "gui.tacz.industrial_service.repair": "维修组件",
+  "gui.tacz.industrial_service.repair_hint": "在此消耗钢板和黄铜板恢复损坏组件；不需要机械动力。",
+  "gui.tacz.industrial_service.materials": "维修材料",
+  "message.tacz.industrial_service.repair_materials": "需要 %s 块高碳钢板和 %s 张黄铜板。",
+  "message.tacz.industrial_service.repair_success": "已维修 %s 个组件；消耗 %s 块钢板和 %s 张黄铜板。",
+  "message.tacz.industrial_service.components_already_serviceable": "所有勤务组件均已处于满枪况。",
+  "tooltip.tacz.service.legacy_part": "旧 B.2 替换件——为旧存档保留；新维修请使用工业勤务台的维修材料槽。"
 }

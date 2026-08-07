@@ -10,7 +10,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
 /** C2S request for one validated service-bench transaction. */
-public record ClientMessageServiceIndustry(int menuId, boolean reassemble) implements CustomPacketPayload {
+public record ClientMessageServiceIndustry(int menuId, int action) implements CustomPacketPayload {
     public static final Identifier PACKET_ID = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "c2s_service_industry");
     public static final CustomPacketPayload.Type<ClientMessageServiceIndustry> TYPE = new CustomPacketPayload.Type<>(PACKET_ID);
     public static final StreamCodec<FriendlyByteBuf, ClientMessageServiceIndustry> CODEC = StreamCodec.ofMember(
@@ -18,19 +18,19 @@ public record ClientMessageServiceIndustry(int menuId, boolean reassemble) imple
     );
 
     public ClientMessageServiceIndustry(FriendlyByteBuf buffer) {
-        this(buffer.readVarInt(), buffer.readBoolean());
+        this(buffer.readVarInt(), buffer.readVarInt());
     }
 
     public void write(FriendlyByteBuf buffer) {
         buffer.writeVarInt(menuId);
-        buffer.writeBoolean(reassemble);
+        buffer.writeVarInt(action);
     }
 
     @Override public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public void handle(ServerPlayer player, PacketSender responseSender) {
         if (player.containerMenu.containerId == menuId && player.containerMenu instanceof IndustrialServiceBenchMenu menu) {
-            menu.service(player, reassemble);
+            menu.service(player, action);
         }
     }
 }

@@ -267,17 +267,11 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
             }
             adder.accept(Component.translatable("tooltip.tacz.service.component_repair")
                     .withStyle(style -> style.withColor(0xF2C14E)));
-        } else if ("service_part_blank".equals(partKind)) {
-            adder.accept(Component.translatable("tooltip.tacz.service.blank_step")
+        } else if ("service_part_blank".equals(partKind) || partKind.startsWith("service_part_")) {
+            // Kept registered solely so worlds made during the first B.2 pass
+            // do not lose items. New repairs are intentionally bench-native.
+            adder.accept(Component.translatable("tooltip.tacz.service.legacy_part")
                     .withStyle(style -> style.withColor(0xAAAAAA)));
-        } else if (partKind.startsWith("service_part_")) {
-            adder.accept(Component.translatable("tooltip.tacz.service.named_part_step")
-                    .withStyle(style -> style.withColor(0x8FD6C6)));
-            String serviceGun = serviceTag.getStringOr("IndustryServiceGunId", "");
-            if (!serviceGun.isBlank()) {
-                adder.accept(Component.translatable("tooltip.tacz.service.component_gun", serviceGun)
-                        .withStyle(style -> style.withColor(0x8AA7B7)));
-            }
         }
         if (advanced.isAdvanced()) {
             adder.accept(Component.translatable("tooltip.tacz.industry.platform", getPlatform(stack))

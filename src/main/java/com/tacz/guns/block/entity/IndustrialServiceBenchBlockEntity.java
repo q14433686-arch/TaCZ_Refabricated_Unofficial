@@ -42,7 +42,10 @@ public final class IndustrialServiceBenchBlockEntity extends BlockEntity impleme
     public static final int COMPONENT_START = 4;
     public static final int COMPONENT_COUNT = 5;
     public static final int GUN_OUTPUT = COMPONENT_START + COMPONENT_COUNT;
-    public static final int SLOT_COUNT = GUN_OUTPUT + 1;
+    /** Non-powered bench repair material bays: steel structural stock + brass fine-fit stock. */
+    public static final int STEEL_MATERIAL = GUN_OUTPUT + 1;
+    public static final int BRASS_MATERIAL = STEEL_MATERIAL + 1;
+    public static final int SLOT_COUNT = BRASS_MATERIAL + 1;
 
     public static final BlockEntityType<IndustrialServiceBenchBlockEntity> TYPE = new BlockEntityType<>(
             IndustrialServiceBenchBlockEntity::new, Set.of(ModBlocks.INDUSTRIAL_SERVICE_BENCH)
@@ -59,12 +62,17 @@ public final class IndustrialServiceBenchBlockEntity extends BlockEntity impleme
         super(TYPE, pos, state);
     }
 
-    public boolean service(ServerPlayer player, boolean reassemble) {
+    public boolean service(ServerPlayer player, int action) {
         if (!IndustryProfileManager.isCreateFlyProfileActive()) {
             player.sendSystemMessage(Component.translatable("message.tacz.industrial_service.disabled"), true);
             return false;
         }
-        return reassemble ? reassemble(player) : disassemble(player);
+        return switch (action) {
+            case 0 -> disassemble(player);
+            case 1 -> reassemble(player);
+            case 2 -> repairComponents(player);
+            default -> false;
+        };
     }
 
     private boolean disassemble(ServerPlayer player) {
@@ -112,6 +120,42 @@ public final class IndustrialServiceBenchBlockEntity extends BlockEntity impleme
         return true;
     }
 
+    private boolean repairComponents(ServerPlayer player) {
+        if (!getItem(GUN_INPUT).isEmpty() || !getItem(GUN_OUTPUT).isEmpty()) {
+            player.sendSystemMessage(Component.translatable("message.tacz.industrial_service.output_blocked"), true);
+            return false;
+        }
+        List<ItemStack> components = java.util.stream.IntStream.range(0, COMPONENT_COUNT)
+                .mapToObj(index -> getItem(COMPONENT_START + index)).toList();
+        IndustrialServiceBenchService.RepairPlan plan = IndustrialServiceBenchService.planRepair(
+                components, getItem(BLUEPRINT), getItem(FIXTURE), getItem(WRENCH)
+        );
+        if (!plan.success()) {
+            reportFailure(player, plan.failure());
+            return false;
+        }
+        ItemStack steel = getItem(STEEL_MATERIAL);
+        ItemStack brass = getItem(BRASS_MATERIAL);
+        if (!IndustrialServiceBenchService.isSteelRepairMaterial(steel)
+                || steel.getCount() < plan.steelPlates()
+                || (plan.brassSheets() > 0 && (!IndustrialServiceBenchService.isBrassRepairMaterial(brass)
+                || brass.getCount() < plan.brassSheets()))) {
+            player.sendSystemMessage(Component.translatable("message.tacz.industrial_service.repair_materials",
+                    plan.steelPlates(), plan.brassSheets()), true);
+            return false;
+        }
+        steel.shrink(plan.steelPlates());
+        if (plan.brassSheets() > 0) {
+            brass.shrink(plan.brassSheets());
+        }
+        IndustrialServiceBenchService.repairComponents(components);
+        IndustrialServiceBenchService.damageWrench(getItem(WRENCH));
+        player.sendSystemMessage(Component.translatable("message.tacz.industrial_service.repair_success",
+                plan.repairedComponents(), plan.steelPlates(), plan.brassSheets()), true);
+        finishTransaction(player);
+        return true;
+    }
+
     private void finishTransaction(ServerPlayer player) {
         setChanged();
         player.containerMenu.broadcastFullState();
@@ -146,6 +190,8 @@ public final class IndustrialServiceBenchBlockEntity extends BlockEntity impleme
             case FIXTURE -> stack.is(ModItems.PRESS_DIE);
             case WRENCH -> stack.is(ModItems.ARMORER_WRENCH);
             case COMPONENT_START, COMPONENT_START + 1, COMPONENT_START + 2, COMPONENT_START + 3, COMPONENT_START + 4 -> stack.is(ModItems.GUN_COMPONENT);
+            case STEEL_MATERIAL -> IndustrialServiceBenchService.isSteelRepairMaterial(stack);
+            case BRASS_MATERIAL -> IndustrialServiceBenchService.isBrassRepairMaterial(stack);
             default -> false;
         };
     }

@@ -18,7 +18,7 @@ public final class IndustrialServiceBenchScreen extends AbstractContainerScreen<
     private static final int ACCENT = 0xFF4EA8A8;
 
     public IndustrialServiceBenchScreen(IndustrialServiceBenchMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 230, 220);
+        super(menu, inventory, title, 230, 240);
     }
 
     @Override
@@ -27,11 +27,15 @@ public final class IndustrialServiceBenchScreen extends AbstractContainerScreen<
         addRenderableWidget(new IndustrialActionButton(leftPos + 16, topPos + 103, 93, 20,
                 Component.translatable("gui.tacz.industrial_service.disassemble"), ACCENT,
                 Component.translatable("gui.tacz.industrial_service.disassemble_hint"),
-                button -> ClientPlayNetworking.send(new ClientMessageServiceIndustry(menu.containerId, false))));
+                button -> ClientPlayNetworking.send(new ClientMessageServiceIndustry(menu.containerId, 0))));
         addRenderableWidget(new IndustrialActionButton(leftPos + 121, topPos + 103, 93, 20,
                 Component.translatable("gui.tacz.industrial_service.reassemble"), ACCENT,
                 Component.translatable("gui.tacz.industrial_service.reassemble_hint"),
-                button -> ClientPlayNetworking.send(new ClientMessageServiceIndustry(menu.containerId, true))));
+                button -> ClientPlayNetworking.send(new ClientMessageServiceIndustry(menu.containerId, 1))));
+        addRenderableWidget(new IndustrialActionButton(leftPos + 68, topPos + 124, 94, 20,
+                Component.translatable("gui.tacz.industrial_service.repair"), 0xFFF2C14E,
+                Component.translatable("gui.tacz.industrial_service.repair_hint"),
+                button -> ClientPlayNetworking.send(new ClientMessageServiceIndustry(menu.containerId, 2))));
     }
 
     @Override
@@ -47,13 +51,16 @@ public final class IndustrialServiceBenchScreen extends AbstractContainerScreen<
         slot(gui, leftPos + 130, topPos + 23, 0xFFF2C14E);
         for (int index = 0; index < 5; index++) slot(gui, leftPos + 50 + index * 18, topPos + 73, ACCENT);
         slot(gui, leftPos + 179, topPos + 41, 0xFF65C466);
+        slot(gui, leftPos + 149, topPos + 73, 0xFFB8C9D3);
+        slot(gui, leftPos + 185, topPos + 73, 0xFFD4A85A);
 
         gui.text(font, title, leftPos + 12, topPos + 7, 0xFFF3F6F7, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_service.gun_input"), leftPos + 15, topPos + 29, 0xFFB8C9D3, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_service.tooling"), leftPos + 59, topPos + 7, 0xFFB8C9D3, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_service.components"), leftPos + 50, topPos + 56, 0xFFB8C9D3, false);
+        gui.text(font, Component.translatable("gui.tacz.industrial_service.materials"), leftPos + 149, topPos + 56, 0xFFB8C9D3, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_service.gun_output"), leftPos + 169, topPos + 29, 0xFFB8C9D3, false);
-        gui.text(font, Component.translatable("gui.tacz.cartridge_assembly.inventory"), leftPos + 24, topPos + 124, 0xFFB8C9D3, false);
+        gui.text(font, Component.translatable("gui.tacz.cartridge_assembly.inventory"), leftPos + 24, topPos + 144, 0xFFB8C9D3, false);
     }
 
     private static void slot(GuiGraphicsExtractor gui, int x, int y, int frame) {
