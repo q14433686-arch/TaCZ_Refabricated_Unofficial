@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "cib/ak103",
+  "display_name": "AK-103",
+  "action": "gas_operated_rifle",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "ak_762x39",
+    "capacity": 30,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "762x39",
+    "expected_ammo": "tacz:762x39"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "User-provided runtime log for the survey environment identifies [Tacz1.1.7+]CIBR_GunsPack_v0.3_1.1.7.zip as namespace cib; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for cib:ak103 was individually checked for current ammo, base capacity, reload contract, and selectable capacity values.",
+    "AK-103 and its Laffey variant are manually confirmed as the same 7.62×39 detachable AK interface. The shared AK family is an explicit physical decision, not a same-caliber bulk merge.",
+    "The runtime sidecar fails closed if loaded GunData ammo or base capacity changes. Its surveyed carrier commission is emitted only from an actual loaded Gunsmith Table gun recipe; no standalone creative-only carrier route is added."
+  ]
+}

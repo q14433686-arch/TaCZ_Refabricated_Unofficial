@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "cib/usp",
+  "display_name": "USP",
+  "action": "recoil_operated_pistol",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "cib_usp_45acp",
+    "capacity": 12,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "45acp",
+    "expected_ammo": "tacz:45acp"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "User-provided runtime log for the survey environment identifies [Tacz1.1.7+]CIBR_GunsPack_v0.3_1.1.7.zip as namespace cib; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for cib:usp was individually checked for current ammo, base capacity, reload contract, and selectable capacity values.",
+    "USP and USP-S are manually confirmed as the same detachable .45 ACP pistol interface. No other .45 pistol is included by this family decision.",
+    "The runtime sidecar fails closed if loaded GunData ammo or base capacity changes. Its surveyed carrier commission is emitted only from an actual loaded Gunsmith Table gun recipe; no standalone creative-only carrier route is added."
+  ]
+}

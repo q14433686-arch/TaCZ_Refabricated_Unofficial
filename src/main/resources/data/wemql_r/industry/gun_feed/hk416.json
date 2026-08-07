@@ -7,15 +7,15 @@
   "carrier_variants": [
     {
       "capacity": 40,
-      "display_name": "item.tacz.magazine.wemql_r_stanag_556_40"
+      "display_name": "item.tacz.magazine.stanag_556_40"
     },
     {
       "capacity": 45,
-      "display_name": "item.tacz.magazine.wemql_r_stanag_556_45"
+      "display_name": "item.tacz.magazine.stanag_556_45"
     },
     {
       "capacity": 60,
-      "display_name": "item.tacz.magazine.wemql_r_stanag_556_60"
+      "display_name": "item.tacz.magazine.stanag_556_60"
     }
   ]
 }

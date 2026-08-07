@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_galilace32_762x39",
+  "magazine_capacity": 35,
+  "ammo": "tacz:762x39",
+  "display_name": "item.tacz.magazine.cib_galilace32_762x39_35",
+  "carrier_variants": [
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.cib_galilace32_762x39_45"
+    },
+    {
+      "capacity": 55,
+      "display_name": "item.tacz.magazine.cib_galilace32_762x39_55"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.cib_galilace32_762x39_60"
+    }
+  ]
+}

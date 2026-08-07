@@ -3,7 +3,7 @@
   "magazine_family": "ak_762x39",
   "magazine_capacity": 20,
   "ammo": "tacz:762x39",
-  "display_name": "item.tacz.magazine.murasamet_ak_762x39_20",
+  "display_name": "item.tacz.magazine.ak_762x39_20",
   "carrier_variants": [
     {
       "capacity": 30,
@@ -11,11 +11,11 @@
     },
     {
       "capacity": 45,
-      "display_name": "item.tacz.magazine.murasamet_ak_762x39_45"
+      "display_name": "item.tacz.magazine.ak_762x39_45"
     },
     {
       "capacity": 75,
-      "display_name": "item.tacz.magazine.murasamet_ak_762x39_75"
+      "display_name": "item.tacz.magazine.ak_762x39_75"
     }
   ]
 }

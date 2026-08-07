@@ -6,8 +6,12 @@
   "display_name": "item.tacz.magazine.stanag_556",
   "carrier_variants": [
     {
-      "capacity": 45,
-      "display_name": "item.tacz.magazine.stanag_556_45"
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.stanag_556_40"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.stanag_556_50"
     },
     {
       "capacity": 60,

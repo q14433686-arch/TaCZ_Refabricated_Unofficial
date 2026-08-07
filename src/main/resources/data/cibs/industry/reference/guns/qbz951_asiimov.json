@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "cibs/qbz951_asiimov",
+  "display_name": "QBZ-95-1 Asiimov",
+  "action": "gas_operated_rifle",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "cib_qbz951_58x42",
+    "capacity": 30,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "58x42",
+    "expected_ammo": "tacz:58x42"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "User-provided runtime log for the survey environment identifies [Tacz1.1.7+]CIBR_GunsPack_v0.3_1.1.7.zip as namespace cib; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for cibs:qbz951_asiimov was individually checked for current ammo, base capacity, reload contract, and selectable capacity values.",
+    "QBZ-95-1 and Asiimov are manually confirmed as the same detachable 5.8×42 platform. The family remains distinct from QBZ-191 pending a dedicated cross-generation compatibility audit.",
+    "The runtime sidecar fails closed if loaded GunData ammo or base capacity changes. Its surveyed carrier commission is emitted only from an actual loaded Gunsmith Table gun recipe; no standalone creative-only carrier route is added."
+  ]
+}

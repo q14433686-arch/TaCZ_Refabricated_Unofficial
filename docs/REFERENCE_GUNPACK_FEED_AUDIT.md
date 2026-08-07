@@ -238,6 +238,37 @@ exposed-belt material，不是 MG34/MG42 的精确网格。DP/DPM 顶部盘、PP
 本批刻意保留 KhanPowder 中的 `mika`、`miyako`、`natsu`、`kittygun`、`barstard`、各转轮、逐发/clip 枪和其他
 未明机制条目为 legacy。批量只缩短重复平台的人工核对，不降低 unknown gun 的 fail-closed 边界。
 
+## CIBR / CIB + CIBS 镜像平台批量 cohort
+
+这一批专门利用 survey 里可验证的“主枪 + 同平台皮肤”重复组，而不是见到 `cibs` namespace 就自动复制机制。
+用户提供的 survey 环境日志记录 `[Tacz1.1.7+]CIBR_GunsPack_v0.3_1.1.7.zip` 主 namespace 为 `cib`；每个
+CIB/CIBS 对在写 sidecar 前都逐项比较了当前 Ammo、基础容量、完整前三档扩容数组、bolt 和 script。只有这些
+运行时合同完全相同、且人工确认现实供弹机构无争议的对才进入本批。
+
+| 主枪 / 镜像枪 | family | 实体容量 | 边界 |
+|---|---|---|---|
+| `ak103` / `ak103_laffey` | `ak_762x39` | 30、45、50、60 | 明确 AK-103 同接收机皮肤组。 |
+| `ak105` / `ak105_kaltsit` | 私有 `cib_ak105_545x39` | 30、40、50、60 | 同一镜像组，但未把它自动并入 AK-74/AK-12。 |
+| `galilace32` / `galilace_lesh` | 私有 Galil ACE 32 family | 35、45、55、60 | 同平台皮肤，不从 7.62×39 数字推成 AK 互插。 |
+| `m4` / `m4_koei`；`mk18` / `mk18_jianjiu` | `stanag_556` | 30、40、50、60 | 四把均人工确认 STANAG 接收机。 |
+| `qbz191` / `qbz191_warrior` | 私有 QBZ-191 family | 30、40、50、60 | 仅这一对；不自动并 QBZ-95。 |
+| `qbz951` / `qbz951_asiimov` | 私有 QBZ-95-1 family | 30、35、40、50 | 仅这一对；不自动并 QBZ-191。 |
+| `sig556` / `sig556_shiroko` | 私有 SIG 556 family | 30、40、50、60 | 5.56 不等于自动 STANAG family。 |
+| `type20` / `type20_hibiki` | 私有 Type 20 family | 30、40、50、60 | 同平台皮肤的显式契约。 |
+| `cs_awp` / `awp_hm` | 私有 AWP .308 family | 5、10、15、20 | 手动 bolt 仍人工确认可拆卸盒式弹匣。 |
+| `qcq171` / `qcq171_ocean` | 私有 QCQ-171 9 mm family | 30、35、40、70 | 只接入同一 SMG 皮肤组。 |
+| `usp` / `usps` | 私有 USP .45 family | 12、15、20、25 | 只接入 USP/USP-S 对，不扩展到其他 .45 手枪。 |
+
+共 **24 把** active profile。所有私有 family 保持已有中性 detachable material；AK 与 STANAG 复用已有实体
+标准族和材质。为避免相同物理 NBT 身份因来源枪包不同而显示不同名称，本批还统一了已声明
+`ak_762x39 + tacz:762x39 + capacity` 及 `stanag_556 + tacz:556x45 + capacity` 的 display key：Rainforest、
+WEMQL_R、KhanPowder 和本批 CIB 的相同容量现在使用同一个稳定显示身份。旧世界物品仍保存旧 key，匹配/余弹
+语义不受影响。
+
+这不启用 CIB/CIBS 的未知机枪、霰弹枪、固定仓、转轮、火箭、`error` 条目或未配对候选。所有已接入载具仍经当前
+GunData fail-closed 验证，并仅在实际 loaded Gunsmith Table 成枪 recipe 存在时由 surveyed factory 给出真实多槽
+制造出口。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：

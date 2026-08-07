@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_usp_45acp",
+  "magazine_capacity": 12,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.cib_usp_45acp_12",
+  "carrier_variants": [
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.cib_usp_45acp_15"
+    },
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.cib_usp_45acp_20"
+    },
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.cib_usp_45acp_25"
+    }
+  ]
+}
