@@ -36,6 +36,28 @@
       "ingredient": {
         "fabric:type": "forge:partial_nbt",
         "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_p320",
+          "IndustryPartKind": "service_part_trigger",
+          "IndustryDisplayName": "item.tacz.service_part.p320_trigger",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge",
+          "IndustryServiceGunId": "tacz:p320",
+          "IndustryServiceOrigin": "default_p320"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
           "tacz:press_die"
         ],
         "nbt": {
@@ -50,29 +72,6 @@
         "$result"
       ],
       "keep_held_item": true
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_p320",
-          "IndustryPartKind": "service_part_trigger",
-          "IndustryDisplayName": "item.tacz.service_part.p320_trigger",
-          "IndustryActionProfile": "locked_breech_pistol",
-          "IndustryToolingScope": "critical_gauge",
-          "IndustryServiceGunId": "tacz:p320",
-          "IndustryServiceOrigin": "default_p320",
-          "IndustryServiceConditionSlot": 3
-        }
-      },
-      "results": [
-        "$result"
-      ]
     },
     {
       "type": "create:pressing",

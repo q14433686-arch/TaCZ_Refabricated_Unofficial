@@ -2717,6 +2717,11 @@ def generated_service_repair_files(platforms: list[dict[str, Any]]) -> dict[Path
             kind = part["kind"]
             part_tag = service_part_tag(platform, kind)
             part_tag["IndustryServiceConditionSlot"] = condition_slot
+            # Old B.2 replacement parts predate the explicit slot field. The
+            # repair match deliberately keys on GunId/platform/kind instead, so
+            # updating a world never strands already-made replacement parts.
+            repair_part_match = dict(part_tag)
+            repair_part_match.pop("IndustryServiceConditionSlot", None)
             component_tag = service_component_tag(platform, kind, condition_slot)
             component_die = partial("tacz:press_die", {
                 "IndustryPlatform": platform["platform"],
@@ -2757,10 +2762,14 @@ def generated_service_repair_files(platforms: list[dict[str, Any]]) -> dict[Path
                     "IndustryDisplayName": f"item.tacz.gun_component.service_{kind}",
                 }),
                 "sequence": [
+                    # Replacement first makes the physical direction intuitive:
+                    # damaged component is the belt workpiece, named part is
+                    # held by the first Deployer, then the retained fixture
+                    # verifies/sets the fit before the press closes it.
+                    {"type": "create:deploying", "target": "$ingredient", "ingredient": partial("tacz:service_part", repair_part_match),
+                     "results": ["$result"]},
                     {"type": "create:deploying", "target": "$ingredient", "ingredient": fixture,
                      "results": ["$result"], "keep_held_item": True},
-                    {"type": "create:deploying", "target": "$ingredient", "ingredient": partial("tacz:service_part", part_tag),
-                     "results": ["$result"]},
                     {"type": "create:pressing", "ingredient": "$ingredient", "results": ["$result"]},
                 ],
                 "result": output("tacz:gun_component", component_tag),
@@ -5060,9 +5069,9 @@ def run(write: bool) -> int:
         "tooltip.tacz.maintenance.out_of_service": "Out of Service",
         "tooltip.tacz.service.component_condition": "Component condition: %s",
         "tooltip.tacz.service.component_gun": "Service identity: %s",
-        "tooltip.tacz.service.component_repair": "Step 3/3: run this component on one Create belt sequence: fixture Deployer → named replacement Deployer → Mechanical Press.",
+        "tooltip.tacz.service.component_repair": "Step 3/3: run this component on one Create belt sequence: named replacement Deployer → fixture Deployer → Mechanical Press.",
         "tooltip.tacz.service.blank_step": "Step 1/3: form this neutral blank in a heated Basin, then run a component-die Deployer followed by a production-template Deployer.",
-        "tooltip.tacz.service.named_part_step": "Step 2/3: this named replacement goes in the second Deployer of the matching damaged-component belt sequence.",
+        "tooltip.tacz.service.named_part_step": "Step 2/3: place this named replacement in the first Deployer; the damaged component is the belt workpiece.",
     }
     chinese: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "中性外装套件毛坯",
@@ -5119,9 +5128,9 @@ def run(write: bool) -> int:
         "tooltip.tacz.maintenance.out_of_service": "停用",
         "tooltip.tacz.service.component_condition": "组件枪况：%s",
         "tooltip.tacz.service.component_gun": "勤务身份：%s",
-        "tooltip.tacz.service.component_repair": "第 3/3 步：同一条 Create 传送带依次经过检具部署器 → 命名替换件部署器 → 动力冲压机。",
+        "tooltip.tacz.service.component_repair": "第 3/3 步：同一条 Create 传送带依次经过命名替换件部署器 → 检具部署器 → 动力冲压机。",
         "tooltip.tacz.service.blank_step": "第 1/3 步：先在加热 Basin 制成该中性毛坯，再在同一条线依次经过组件模具部署器与生产模板部署器。",
-        "tooltip.tacz.service.named_part_step": "第 2/3 步：该命名替换件放入损坏组件维修传送带的第二台部署器。",
+        "tooltip.tacz.service.named_part_step": "第 2/3 步：损坏组件是传送带工件；该命名替换件放入第一台部署器。",
     }
     expected.update(generated_furniture_blank_files(platforms))
     expected.update(generated_template_blank_file(policy))

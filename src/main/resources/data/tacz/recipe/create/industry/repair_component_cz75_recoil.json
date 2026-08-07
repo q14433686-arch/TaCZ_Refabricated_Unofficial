@@ -36,6 +36,28 @@
       "ingredient": {
         "fabric:type": "forge:partial_nbt",
         "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_cz75",
+          "IndustryPartKind": "service_part_recoil",
+          "IndustryDisplayName": "item.tacz.service_part.cz75_recoil",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge",
+          "IndustryServiceGunId": "tacz:cz75",
+          "IndustryServiceOrigin": "default_cz75"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
           "tacz:press_die"
         ],
         "nbt": {
@@ -50,29 +72,6 @@
         "$result"
       ],
       "keep_held_item": true
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_cz75",
-          "IndustryPartKind": "service_part_recoil",
-          "IndustryDisplayName": "item.tacz.service_part.cz75_recoil",
-          "IndustryActionProfile": "locked_breech_pistol",
-          "IndustryToolingScope": "critical_gauge",
-          "IndustryServiceGunId": "tacz:cz75",
-          "IndustryServiceOrigin": "default_cz75",
-          "IndustryServiceConditionSlot": 4
-        }
-      },
-      "results": [
-        "$result"
-      ]
     },
     {
       "type": "create:pressing",

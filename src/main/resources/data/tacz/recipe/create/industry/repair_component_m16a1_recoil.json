@@ -36,6 +36,28 @@
       "ingredient": {
         "fabric:type": "forge:partial_nbt",
         "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_m16a1",
+          "IndustryPartKind": "service_part_recoil",
+          "IndustryDisplayName": "item.tacz.service_part.m16a1_recoil",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "platform_tooling",
+          "IndustryServiceGunId": "tacz:m16a1",
+          "IndustryServiceOrigin": "default_m16a1"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
           "tacz:press_die"
         ],
         "nbt": {
@@ -49,29 +71,6 @@
         "$result"
       ],
       "keep_held_item": true
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_m16a1",
-          "IndustryPartKind": "service_part_recoil",
-          "IndustryDisplayName": "item.tacz.service_part.m16a1_recoil",
-          "IndustryActionProfile": "gas_rifle",
-          "IndustryToolingScope": "platform_tooling",
-          "IndustryServiceGunId": "tacz:m16a1",
-          "IndustryServiceOrigin": "default_m16a1",
-          "IndustryServiceConditionSlot": 4
-        }
-      },
-      "results": [
-        "$result"
-      ]
     },
     {
       "type": "create:pressing",

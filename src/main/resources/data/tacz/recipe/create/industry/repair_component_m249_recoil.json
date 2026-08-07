@@ -36,6 +36,28 @@
       "ingredient": {
         "fabric:type": "forge:partial_nbt",
         "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_m249",
+          "IndustryPartKind": "service_part_recoil",
+          "IndustryDisplayName": "item.tacz.service_part.m249_recoil",
+          "IndustryActionProfile": "belt_fed",
+          "IndustryToolingScope": "final_acceptance",
+          "IndustryServiceGunId": "tacz:m249",
+          "IndustryServiceOrigin": "default_m249"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
           "tacz:press_die"
         ],
         "nbt": {
@@ -50,29 +72,6 @@
         "$result"
       ],
       "keep_held_item": true
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_m249",
-          "IndustryPartKind": "service_part_recoil",
-          "IndustryDisplayName": "item.tacz.service_part.m249_recoil",
-          "IndustryActionProfile": "belt_fed",
-          "IndustryToolingScope": "final_acceptance",
-          "IndustryServiceGunId": "tacz:m249",
-          "IndustryServiceOrigin": "default_m249",
-          "IndustryServiceConditionSlot": 4
-        }
-      },
-      "results": [
-        "$result"
-      ]
     },
     {
       "type": "create:pressing",

@@ -36,6 +36,28 @@
       "ingredient": {
         "fabric:type": "forge:partial_nbt",
         "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_hk_g3",
+          "IndustryPartKind": "service_part_bolt",
+          "IndustryDisplayName": "item.tacz.service_part.hk_g3_bolt",
+          "IndustryActionProfile": "roller_delayed_rifle",
+          "IndustryToolingScope": "platform_tooling",
+          "IndustryServiceGunId": "tacz:hk_g3",
+          "IndustryServiceOrigin": "default_hk_g3"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
           "tacz:press_die"
         ],
         "nbt": {
@@ -49,29 +71,6 @@
         "$result"
       ],
       "keep_held_item": true
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_hk_g3",
-          "IndustryPartKind": "service_part_bolt",
-          "IndustryDisplayName": "item.tacz.service_part.hk_g3_bolt",
-          "IndustryActionProfile": "roller_delayed_rifle",
-          "IndustryToolingScope": "platform_tooling",
-          "IndustryServiceGunId": "tacz:hk_g3",
-          "IndustryServiceOrigin": "default_hk_g3",
-          "IndustryServiceConditionSlot": 1
-        }
-      },
-      "results": [
-        "$result"
-      ]
     },
     {
       "type": "create:pressing",

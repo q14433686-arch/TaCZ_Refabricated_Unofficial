@@ -36,6 +36,28 @@
       "ingredient": {
         "fabric:type": "forge:partial_nbt",
         "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ar",
+          "IndustryPartKind": "service_part_receiver",
+          "IndustryDisplayName": "item.tacz.service_part.m4a1_receiver",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "final_acceptance",
+          "IndustryServiceGunId": "tacz:m4a1",
+          "IndustryServiceOrigin": "ar"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
           "tacz:press_die"
         ],
         "nbt": {
@@ -50,29 +72,6 @@
         "$result"
       ],
       "keep_held_item": true
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
-          "IndustryPlatform": "ar",
-          "IndustryPartKind": "service_part_receiver",
-          "IndustryDisplayName": "item.tacz.service_part.m4a1_receiver",
-          "IndustryActionProfile": "gas_rifle",
-          "IndustryToolingScope": "final_acceptance",
-          "IndustryServiceGunId": "tacz:m4a1",
-          "IndustryServiceOrigin": "ar",
-          "IndustryServiceConditionSlot": 0
-        }
-      },
-      "results": [
-        "$result"
-      ]
     },
     {
       "type": "create:pressing",

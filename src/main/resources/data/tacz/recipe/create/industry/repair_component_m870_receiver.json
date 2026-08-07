@@ -36,6 +36,28 @@
       "ingredient": {
         "fabric:type": "forge:partial_nbt",
         "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_m870",
+          "IndustryPartKind": "service_part_receiver",
+          "IndustryDisplayName": "item.tacz.service_part.m870_receiver",
+          "IndustryActionProfile": "pump_action",
+          "IndustryToolingScope": "critical_gauge",
+          "IndustryServiceGunId": "tacz:m870",
+          "IndustryServiceOrigin": "default_m870"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
           "tacz:press_die"
         ],
         "nbt": {
@@ -50,29 +72,6 @@
         "$result"
       ],
       "keep_held_item": true
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_m870",
-          "IndustryPartKind": "service_part_receiver",
-          "IndustryDisplayName": "item.tacz.service_part.m870_receiver",
-          "IndustryActionProfile": "pump_action",
-          "IndustryToolingScope": "critical_gauge",
-          "IndustryServiceGunId": "tacz:m870",
-          "IndustryServiceOrigin": "default_m870",
-          "IndustryServiceConditionSlot": 0
-        }
-      },
-      "results": [
-        "$result"
-      ]
     },
     {
       "type": "create:pressing",

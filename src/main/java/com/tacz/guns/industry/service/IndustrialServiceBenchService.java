@@ -114,14 +114,22 @@ public final class IndustrialServiceBenchService {
             }
             CompoundTag tag = ItemNbtUtils.getTag(component);
             Origin componentOrigin = originFromComponent(tag);
-            int conditionSlot = tag.getIntOr(SERVICE_CONDITION_SLOT, -1);
-            if (componentOrigin == null || conditionSlot < 0 || conditionSlot >= COMPONENT_ORDER.size()
-                    || !foundSlots.add(conditionSlot)) {
+            if (componentOrigin == null) {
                 return ReassemblyPlan.failure(Failure.COMPONENT_SET_INVALID);
             }
             if (origin == null) {
                 origin = componentOrigin;
             } else if (!origin.equals(componentOrigin)) {
+                return ReassemblyPlan.failure(Failure.COMPONENT_SET_INVALID);
+            }
+            int conditionSlot = tag.getIntOr(SERVICE_CONDITION_SLOT, -1);
+            if (conditionSlot < 0) {
+                // B.1 components existed before the explicit slot field. Map
+                // their real platform kind back to the stable five-condition
+                // order instead of making an update strand a dismantled gun.
+                conditionSlot = conditionSlotForComponent(componentOrigin, tag.getStringOr("IndustryPartKind", ""));
+            }
+            if (conditionSlot < 0 || conditionSlot >= COMPONENT_ORDER.size() || !foundSlots.add(conditionSlot)) {
                 return ReassemblyPlan.failure(Failure.COMPONENT_SET_INVALID);
             }
             int condition = Math.clamp(tag.getIntOr(PART_CONDITION, IndustryMaintenanceService.MAX_CONDITION),
@@ -332,6 +340,15 @@ public final class IndustrialServiceBenchService {
             specs.add(new ComponentSpec(component.kind(), component.displayName(), index));
         }
         return specs;
+    }
+
+    private static int conditionSlotForComponent(Origin origin, String kind) {
+        for (ComponentSpec spec : componentSpecs(origin)) {
+            if (spec.kind().equals(kind)) {
+                return spec.conditionSlot();
+            }
+        }
+        return -1;
     }
 
     private static int conditionForSlot(IndustryMaintenanceService.Snapshot snapshot, int slot) {
