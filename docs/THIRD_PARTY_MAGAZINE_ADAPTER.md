@@ -176,7 +176,7 @@ TACZ 当前的扩容等级最多使用该数组的前三项。少数旧枪包虽
 
 `feed inspect` 直接读取服务器已加载的 `GunData`，报告 Ammo、基础/原始扩容容量、`reload.type`、bolt、脚本和当前已验证的适配状态。它是为兼容包作者收集**可验证事实**的命令；输出会明确提醒：它不会也不能据此自动选择 `detachable_magazine`、`belt`、管仓或转轮机制。
 
-`feed candidates` 是只读的候选汇总，并列出最多 12 把按 GunId 排序的待复核枪。它会参考 GunIndex 的枪种 class、FeedType、容量、无限备弹、已知逐发/桥夹 script 参数（`loop_feed`、`roundN_feed`、`clip_load_feed`）以及 open-bolt/semi-only 的转轮风险信号，把枪分为：已验证、需复核、逐发/夹具候选或排除。它不会写入 `GunFeedDefinition`、不会生成创造物品、不会接管换弹，也不会把同 Ammo/同容量的枪自动合并 family。
+`feed candidates` 是只读的候选汇总，并列出最多 12 把按 GunId 排序的待复核枪。队列中的条目就是可直接粘贴的资源 ID，例如 `bf1:smg0818`；早期显示中的 `[smg]` 只是 class 提示，不属于 GunId。它会参考 GunIndex 的枪种 class、FeedType、容量、无限备弹、已知逐发/桥夹 script 参数（`loop_feed`、`roundN_feed`、`clip_load_feed`）以及 open-bolt/semi-only 的转轮风险信号，把枪分为：已验证、需复核、逐发/夹具候选或排除。它不会写入 `GunFeedDefinition`、不会生成创造物品、不会接管换弹，也不会把同 Ammo/同容量的枪自动合并 family。
 
 枪种 class、枪名、模型或弹匣井骨骼只可作为人工审计线索：手动栓动既可能是 AWM/M107 这种可拆卸弹匣，也可能是 Kar98/Mosin 这种固定仓；closed/open bolt 同样不是供弹机构证明。真实互插始终需要明确 `magazine_family`。
 

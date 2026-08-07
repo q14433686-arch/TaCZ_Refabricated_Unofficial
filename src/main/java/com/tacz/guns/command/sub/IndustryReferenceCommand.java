@@ -15,6 +15,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.TreeSet;
@@ -100,15 +101,38 @@ public final class IndustryReferenceCommand {
         return Command.SINGLE_SUCCESS;
     }
 
+    /** Queue text intentionally contains raw, directly reusable GunIds only. */
     private static String formatSurveyQueue(List<GunFeedCandidateSurvey.Candidate> candidates) {
         StringBuilder output = new StringBuilder();
         for (GunFeedCandidateSurvey.Candidate candidate : candidates) {
             if (!output.isEmpty()) {
                 output.append(", ");
             }
-            output.append(candidate.gunId()).append('[').append(candidate.gunClass()).append(']');
+            output.append(candidate.gunId());
         }
         return output.toString();
+    }
+
+    /**
+     * Accepts the old queue's cosmetic {@code id[class]} and angle-bracket
+     * wrapping as a backwards-compatible convenience, then validates only the
+     * actual resource id. New queues print raw ids so users never need this
+     * cleanup path in normal use.
+     */
+    @Nullable
+    private static Identifier parsePresentedGunId(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String value = raw.trim();
+        if (value.length() >= 2 && value.startsWith("<") && value.endsWith(">")) {
+            value = value.substring(1, value.length() - 1).trim();
+        }
+        int classHint = value.lastIndexOf('[');
+        if (classHint > 0 && value.endsWith("]")) {
+            value = value.substring(0, classHint).trim();
+        }
+        return Identifier.tryParse(value);
     }
 
     /**
@@ -118,10 +142,12 @@ public final class IndustryReferenceCommand {
      * for tubes, cylinders, fixed boxes and real removable magazines alike.
      */
     private static int inspectFeed(CommandContext<CommandSourceStack> context) {
-        Identifier gunId = Identifier.tryParse(StringArgumentType.getString(context, GUN));
+        Identifier gunId = parsePresentedGunId(StringArgumentType.getString(context, GUN));
         CommonAssetsManager manager = CommonAssetsManager.getInstance();
         if (gunId == null) {
-            context.getSource().sendSystemMessage(Component.translatable("commands.tacz.industry.invalid_id"));
+            context.getSource().sendSystemMessage(Component.translatable(
+                    "commands.tacz.industry.feed_inspect_usage"
+            ));
             return 0;
         }
         if (manager == null) {

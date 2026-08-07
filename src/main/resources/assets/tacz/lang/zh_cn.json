@@ -2089,5 +2089,6 @@
   "commands.tacz.industry.feed_candidates_hint": "测绘结果绝不会启用实体弹匣。先检查具体枪 ID，再确认真实机构与 family 后写入作者声明或已验证 sidecar。",
   "commands.tacz.industry.feed_candidate": "测绘（非权威）：类别=%s；GunIndex 枪种=%s；私有 family 建议=%s；信号=%s",
   "commands.tacz.industry.feed_source_audit": "供弹声明来源 —— sidecar：%s；作者内联声明：%s",
-  "commands.tacz.industry.feed_candidates_queue": "首批待复核队列（最多 12 把）：%s"
+  "commands.tacz.industry.feed_candidates_queue": "首批待复核队列（最多 12 把；以下均为可直接使用的 GunId）：%s",
+  "commands.tacz.industry.feed_inspect_usage": "§e用法：/tacz industry feed inspect bf1:smg0818。只填 GunId；不要输入 < >、[smg] 或 namespace: 前缀。"
 }
