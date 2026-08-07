@@ -110,6 +110,18 @@
 
 其中 M1916 的 25 发可拆卸盒式弹匣、Villar Perosa 的双 25 发可拆卸盒式供弹、VG1-5 的可拆卸盒式弹匣、Welrod 的可拆卸握把弹匣和 ZK-383 的可拆卸盒式弹匣均与其主包身份和导出数据相符。RSC 1917、Mannlicher M1895、刘将军步枪、Obrez、Model 10-A、Sjögren、转轮、火焰/医疗/低容量发射器仍不在此批强制变成实体可拆卸弹匣。
 
+## GunpowderRevolution / Hamster 外部载具补充
+
+已有桥夹、漏夹和快装器 profile 保持原样；本批只补充能够由 GunData、枪名和动画直观确认的外部载具：
+
+| 枪 | 机制 | 说明 |
+|---|---|---|
+| Madsen | detachable magazine | 专用可拆卸盒式弹匣 |
+| MG14/17 | belt | 弹链箱语义；其自定义 reload logic 仍使用同一服务器物品交换点 |
+| Luger P08、Makarov、MP18 | detachable magazine | 各自专用手枪/冲锋枪可拆卸弹匣 |
+
+Berthier、SKS、SW Mk2 41 及其他转轮/历史 clip 仍保持候选或原有物理装填路线，不能因为同为 `pistol`/`rifle` 就自动接管。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：

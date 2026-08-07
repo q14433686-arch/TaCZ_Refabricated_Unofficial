@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "canonical_model": "hamster/lugerp08",
+  "display_name": "Luger P08",
+  "action": "toggle_lock_pistol",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "hamster_lugerp08_compact_8",
+    "capacity": 8,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "compact_ammo",
+    "expected_ammo": "hamster:compact_ammo"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "GunpowderRevolution v1.2.7: loaded GunIndex/GunData ammo, base capacity, action and reload contract audited",
+    "Curated feed mechanism reviewed against pack identity and animation evidence",
+    "Runtime declaration remains guarded against loaded GunData ammo and base capacity"
+  ]
+}

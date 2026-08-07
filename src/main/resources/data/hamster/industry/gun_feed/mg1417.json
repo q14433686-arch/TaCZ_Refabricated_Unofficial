@@ -1,0 +1,7 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "hamster_mg1417_long_belt",
+  "magazine_capacity": 100,
+  "ammo": "hamster:long_ammo",
+  "display_name": "item.tacz.magazine.hamster_mg1417_belt_100"
+}

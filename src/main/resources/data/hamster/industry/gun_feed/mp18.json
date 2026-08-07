@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "hamster_mp18_compact_32",
+  "magazine_capacity": 32,
+  "ammo": "hamster:compact_ammo",
+  "display_name": "item.tacz.magazine.hamster_mp18_32"
+}

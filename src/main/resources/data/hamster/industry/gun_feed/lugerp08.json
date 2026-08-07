@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "hamster_lugerp08_compact_8",
+  "magazine_capacity": 8,
+  "ammo": "hamster:compact_ammo",
+  "display_name": "item.tacz.magazine.hamster_lugerp08_8"
+}
