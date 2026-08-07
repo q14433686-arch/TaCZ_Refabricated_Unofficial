@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_taurus500",
+      "IndustryPartKind": "barrel",
+      "IndustryServiceGunId": "tacz:taurus500"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_taurus500",
+        "IndustryPartKind": "incomplete_service_taurus500_barrel",
+        "IndustryDisplayName": "item.tacz.gun_component.service_barrel"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_taurus500",
+          "IndustryPartKind": "critical_gauge",
+          "IndustryActionProfile": "revolver",
+          "IndustryToolingScope": "critical_gauge",
+          "DieTargetKind": "revolver"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_taurus500",
+          "IndustryPartKind": "service_part_barrel",
+          "IndustryDisplayName": "item.tacz.service_part.taurus500_barrel",
+          "IndustryActionProfile": "revolver",
+          "IndustryToolingScope": "critical_gauge",
+          "IndustryServiceGunId": "tacz:taurus500",
+          "IndustryServiceOrigin": "default_taurus500",
+          "IndustryServiceConditionSlot": 2
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_taurus500",
+        "IndustryPartKind": "barrel",
+        "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
+        "IndustryActionProfile": "revolver",
+        "IndustryToolingScope": "critical_gauge",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 2,
+        "IndustryServiceGunId": "tacz:taurus500",
+        "IndustryServiceOrigin": "default_taurus500",
+        "IndustryServiceRecipe": "tacz:gun/taurus500",
+        "IndustryServiceTier": "legacy",
+        "IndustryServiceAction": "revolver",
+        "IndustryServiceToolingScope": "critical_gauge",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_cz75",
+      "IndustryPartKind": "trigger",
+      "IndustryServiceGunId": "tacz:cz75"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_cz75",
+        "IndustryPartKind": "incomplete_service_cz75_trigger",
+        "IndustryDisplayName": "item.tacz.gun_component.service_trigger"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_cz75",
+          "IndustryPartKind": "critical_gauge",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge",
+          "DieTargetKind": "locked_breech_pistol"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_cz75",
+          "IndustryPartKind": "service_part_trigger",
+          "IndustryDisplayName": "item.tacz.service_part.cz75_trigger",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge",
+          "IndustryServiceGunId": "tacz:cz75",
+          "IndustryServiceOrigin": "default_cz75",
+          "IndustryServiceConditionSlot": 3
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_cz75",
+        "IndustryPartKind": "trigger",
+        "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
+        "IndustryActionProfile": "locked_breech_pistol",
+        "IndustryToolingScope": "critical_gauge",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 3,
+        "IndustryServiceGunId": "tacz:cz75",
+        "IndustryServiceOrigin": "default_cz75",
+        "IndustryServiceRecipe": "tacz:gun/cz75",
+        "IndustryServiceTier": "service",
+        "IndustryServiceAction": "locked_breech_pistol",
+        "IndustryServiceToolingScope": "critical_gauge",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

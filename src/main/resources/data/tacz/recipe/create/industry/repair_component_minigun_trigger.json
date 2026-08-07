@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_minigun",
+      "IndustryPartKind": "trigger",
+      "IndustryServiceGunId": "tacz:minigun"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_minigun",
+        "IndustryPartKind": "incomplete_service_minigun_trigger",
+        "IndustryDisplayName": "item.tacz.gun_component.service_trigger"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_minigun",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryActionProfile": "rotary",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "rotary"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_minigun",
+          "IndustryPartKind": "service_part_trigger",
+          "IndustryDisplayName": "item.tacz.service_part.minigun_trigger",
+          "IndustryActionProfile": "rotary",
+          "IndustryToolingScope": "final_acceptance",
+          "IndustryServiceGunId": "tacz:minigun",
+          "IndustryServiceOrigin": "default_minigun",
+          "IndustryServiceConditionSlot": 3
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_minigun",
+        "IndustryPartKind": "trigger",
+        "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
+        "IndustryActionProfile": "rotary",
+        "IndustryToolingScope": "final_acceptance",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 3,
+        "IndustryServiceGunId": "tacz:minigun",
+        "IndustryServiceOrigin": "default_minigun",
+        "IndustryServiceRecipe": "tacz:gun/minigun",
+        "IndustryServiceTier": "precision",
+        "IndustryServiceAction": "rotary",
+        "IndustryServiceToolingScope": "final_acceptance",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

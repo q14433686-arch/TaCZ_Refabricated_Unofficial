@@ -1,0 +1,105 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ump",
+      "IndustryPartKind": "recoil",
+      "IndustryServiceGunId": "tacz:ump45"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ump",
+        "IndustryPartKind": "incomplete_service_ump45_recoil",
+        "IndustryDisplayName": "item.tacz.gun_component.service_recoil"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "action_jig",
+          "IndustryActionProfile": "blowback_smg",
+          "DieTargetKind": "blowback_smg"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ump",
+          "IndustryPartKind": "service_part_recoil",
+          "IndustryDisplayName": "item.tacz.service_part.ump45_recoil",
+          "IndustryActionProfile": "blowback_smg",
+          "IndustryToolingScope": "platform_tooling",
+          "IndustryServiceGunId": "tacz:ump45",
+          "IndustryServiceOrigin": "ump",
+          "IndustryServiceConditionSlot": 4
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ump",
+        "IndustryPartKind": "recoil",
+        "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
+        "IndustryActionProfile": "blowback_smg",
+        "IndustryToolingScope": "platform_tooling",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 4,
+        "IndustryServiceGunId": "tacz:ump45",
+        "IndustryServiceOrigin": "ump",
+        "IndustryServiceRecipe": "tacz:gun/ump45",
+        "IndustryServiceTier": "service",
+        "IndustryServiceAction": "blowback_smg",
+        "IndustryServiceToolingScope": "platform_tooling",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

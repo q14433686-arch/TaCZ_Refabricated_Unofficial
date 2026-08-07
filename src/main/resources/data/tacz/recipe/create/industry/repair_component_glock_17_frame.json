@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "glock",
+      "IndustryPartKind": "frame",
+      "IndustryServiceGunId": "tacz:glock_17"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "glock",
+        "IndustryPartKind": "incomplete_service_glock_17_frame",
+        "IndustryDisplayName": "item.tacz.gun_component.service_frame"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "glock",
+          "IndustryPartKind": "critical_gauge",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge",
+          "DieTargetKind": "locked_breech_pistol"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "glock",
+          "IndustryPartKind": "service_part_frame",
+          "IndustryDisplayName": "item.tacz.service_part.glock_17_frame",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge",
+          "IndustryServiceGunId": "tacz:glock_17",
+          "IndustryServiceOrigin": "glock",
+          "IndustryServiceConditionSlot": 0
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "glock",
+        "IndustryPartKind": "frame",
+        "IndustryDisplayName": "item.tacz.gun_component.service_frame",
+        "IndustryActionProfile": "locked_breech_pistol",
+        "IndustryToolingScope": "critical_gauge",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 0,
+        "IndustryServiceGunId": "tacz:glock_17",
+        "IndustryServiceOrigin": "glock",
+        "IndustryServiceRecipe": "tacz:gun/glock_17",
+        "IndustryServiceTier": "service",
+        "IndustryServiceAction": "locked_breech_pistol",
+        "IndustryServiceToolingScope": "critical_gauge",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

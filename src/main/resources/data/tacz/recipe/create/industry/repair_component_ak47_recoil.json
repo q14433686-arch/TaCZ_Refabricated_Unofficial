@@ -1,0 +1,105 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ak",
+      "IndustryPartKind": "recoil",
+      "IndustryServiceGunId": "tacz:ak47"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ak",
+        "IndustryPartKind": "incomplete_service_ak47_recoil",
+        "IndustryDisplayName": "item.tacz.gun_component.service_recoil"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "action_jig",
+          "IndustryActionProfile": "gas_rifle",
+          "DieTargetKind": "gas_rifle"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ak",
+          "IndustryPartKind": "service_part_recoil",
+          "IndustryDisplayName": "item.tacz.service_part.ak47_recoil",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "platform_tooling",
+          "IndustryServiceGunId": "tacz:ak47",
+          "IndustryServiceOrigin": "ak",
+          "IndustryServiceConditionSlot": 4
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ak",
+        "IndustryPartKind": "recoil",
+        "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
+        "IndustryActionProfile": "gas_rifle",
+        "IndustryToolingScope": "platform_tooling",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 4,
+        "IndustryServiceGunId": "tacz:ak47",
+        "IndustryServiceOrigin": "ak",
+        "IndustryServiceRecipe": "tacz:gun/ak47",
+        "IndustryServiceTier": "service",
+        "IndustryServiceAction": "gas_rifle",
+        "IndustryServiceToolingScope": "platform_tooling",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

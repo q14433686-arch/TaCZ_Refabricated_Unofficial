@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_spr15hb",
+      "IndustryPartKind": "recoil",
+      "IndustryServiceGunId": "tacz:spr15hb"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_spr15hb",
+        "IndustryPartKind": "incomplete_service_spr15hb_recoil",
+        "IndustryDisplayName": "item.tacz.gun_component.service_recoil"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_spr15hb",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "gas_rifle"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_spr15hb",
+          "IndustryPartKind": "service_part_recoil",
+          "IndustryDisplayName": "item.tacz.service_part.spr15hb_recoil",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "final_acceptance",
+          "IndustryServiceGunId": "tacz:spr15hb",
+          "IndustryServiceOrigin": "default_spr15hb",
+          "IndustryServiceConditionSlot": 4
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_spr15hb",
+        "IndustryPartKind": "recoil",
+        "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
+        "IndustryActionProfile": "gas_rifle",
+        "IndustryToolingScope": "final_acceptance",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 4,
+        "IndustryServiceGunId": "tacz:spr15hb",
+        "IndustryServiceOrigin": "default_spr15hb",
+        "IndustryServiceRecipe": "tacz:gun/spr15hb",
+        "IndustryServiceTier": "advanced",
+        "IndustryServiceAction": "gas_rifle",
+        "IndustryServiceToolingScope": "final_acceptance",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

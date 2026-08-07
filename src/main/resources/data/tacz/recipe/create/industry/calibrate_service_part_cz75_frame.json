@@ -1,0 +1,91 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part_blank"
+    ],
+    "nbt": {
+      "IndustryPlatform": "service",
+      "IndustryPartKind": "service_part_blank",
+      "IndustryDisplayName": "item.tacz.service_part_blank"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:service_part_blank",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_cz75",
+        "IndustryPartKind": "incomplete_service_part_cz75_frame",
+        "IndustryDisplayName": "item.tacz.service_part_blank"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_cz75",
+          "IndustryPartKind": "component_die",
+          "DieTargetKind": "frame"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_blueprint"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_cz75",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_template.default_cz75",
+          "IndustryBlueprintTier": "service",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    }
+  ],
+  "result": {
+    "id": "tacz:service_part",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_cz75",
+        "IndustryPartKind": "service_part_frame",
+        "IndustryDisplayName": "item.tacz.service_part.cz75_frame",
+        "IndustryActionProfile": "locked_breech_pistol",
+        "IndustryToolingScope": "critical_gauge",
+        "IndustryServiceGunId": "tacz:cz75",
+        "IndustryServiceOrigin": "default_cz75",
+        "IndustryServiceConditionSlot": 0
+      }
+    }
+  }
+}

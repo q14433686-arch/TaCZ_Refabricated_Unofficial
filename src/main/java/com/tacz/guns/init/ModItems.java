@@ -63,6 +63,10 @@ public class ModItems {
     public static Item GUN_COMPONENT_BLANK = register("gun_component_blank", new IndustryTaggedItem(itemProps("gun_component_blank").stacksTo(16)));
     /** Platform/kind are stored in custom data so one registry item serves all gun packs. */
     public static Item GUN_COMPONENT = register("gun_component", new IndustryTaggedItem(itemProps("gun_component").stacksTo(16)));
+    /** Neutral maintenance workpiece; a production template names the exact replacement component. */
+    public static Item SERVICE_PART_BLANK = register("service_part_blank", new IndustryTaggedItem(itemProps("service_part_blank").stacksTo(16)));
+    /** Named, GunId-bound service replacement part consumed by the single-component Create repair line. */
+    public static Item SERVICE_PART = register("service_part", new IndustryTaggedItem(itemProps("service_part").stacksTo(16)));
     /** Blank sheets, master dossiers, and reusable production templates share one NBT-backed tooling medium. */
     public static Item GUN_BLUEPRINT = register("gun_blueprint", new IndustryTaggedItem(itemProps("gun_blueprint").stacksTo(1)));
     /** Native-durability tool consumed only after a successful service-bench transaction. */

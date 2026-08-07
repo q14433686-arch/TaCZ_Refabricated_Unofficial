@@ -2613,6 +2613,168 @@ def validate_initial_maintenance_assembly_outputs(platforms: list[dict[str, Any]
             raise ValueError(f"{platform['slug']}: final assembly lacks full/clean initial maintenance state")
 
 
+def service_component_tag(platform: dict[str, Any], kind: str, condition_slot: int, condition: int = 10000) -> dict[str, Any]:
+    return {
+        "IndustryPlatform": platform["platform"],
+        "IndustryPartKind": kind,
+        "IndustryDisplayName": f"item.tacz.gun_component.service_{kind}",
+        "IndustryActionProfile": action_profile(platform),
+        "IndustryToolingScope": tooling_scope(platform),
+        "IndustryPartCondition": condition,
+        "IndustryServiceConditionSlot": condition_slot,
+        "IndustryServiceGunId": platform["gun_id"],
+        "IndustryServiceOrigin": platform["platform"],
+        "IndustryServiceRecipe": f"tacz:gun/{platform['slug']}",
+        "IndustryServiceTier": manufacturing_tier(platform),
+        "IndustryServiceAction": action_profile(platform),
+        "IndustryServiceToolingScope": tooling_scope(platform),
+        "IndustryServiceShots": 0,
+    }
+
+
+def service_part_tag(platform: dict[str, Any], kind: str) -> dict[str, Any]:
+    return {
+        "IndustryPlatform": platform["platform"],
+        "IndustryPartKind": f"service_part_{kind}",
+        "IndustryDisplayName": f"item.tacz.service_part.{platform['slug']}_{kind}",
+        "IndustryActionProfile": action_profile(platform),
+        "IndustryToolingScope": tooling_scope(platform),
+        "IndustryServiceGunId": platform["gun_id"],
+        "IndustryServiceOrigin": platform["platform"],
+    }
+
+
+def service_fixture_tag(platform: dict[str, Any]) -> dict[str, Any]:
+    scope = tooling_scope(platform)
+    action = action_profile(platform)
+    if scope in {"family_jig", "platform_tooling"}:
+        return {
+            "IndustryPlatform": "tooling",
+            "IndustryPartKind": "action_jig",
+            "IndustryActionProfile": action,
+            "DieTargetKind": action,
+        }
+    kind = "critical_gauge" if scope == "critical_gauge" else "acceptance_gauge"
+    return {
+        "IndustryPlatform": platform["platform"],
+        "IndustryPartKind": kind,
+        "IndustryActionProfile": action,
+        "IndustryToolingScope": scope,
+        "DieTargetKind": action,
+    }
+
+
+def generated_service_repair_files(platforms: list[dict[str, Any]]) -> dict[Path, Any]:
+    """Actual Create one-workpiece component replacement routes for B.2."""
+    files: dict[Path, Any] = {}
+    blank_tag = {
+        "IndustryPlatform": "service",
+        "IndustryPartKind": "service_part_blank",
+        "IndustryDisplayName": "item.tacz.service_part_blank",
+    }
+    files[RESOURCE_ROOT / "data/tacz/recipe/create/industry/form_service_part_blank.json"] = {
+        "fabric:load_conditions": CREATE_CONDITIONS,
+        "type": "create:compacting",
+        "ingredients": ["tacz:high_carbon_steel_ingot", "tacz:high_carbon_steel_plate", "create:brass_nugget"],
+        "heat_requirement": "heated",
+        "results": [output("tacz:service_part_blank", blank_tag)],
+    }
+    for platform in platforms:
+        blueprint = partial("tacz:gun_blueprint", production_blueprint_tag(platform))
+        fixture = partial("tacz:press_die", service_fixture_tag(platform))
+        for condition_slot, part in enumerate(platform["parts"]):
+            kind = part["kind"]
+            part_tag = service_part_tag(platform, kind)
+            part_tag["IndustryServiceConditionSlot"] = condition_slot
+            component_tag = service_component_tag(platform, kind, condition_slot)
+            component_die = partial("tacz:press_die", {
+                "IndustryPlatform": platform["platform"],
+                "IndustryPartKind": "component_die",
+                "DieTargetKind": kind,
+            })
+            # A service part must not be selected by a shared blank + blueprint
+            # alone. The platform component die supplies the real geometry, then
+            # the retained production template confirms its named service role.
+            files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_service_part_{platform['slug']}_{kind}.json"] = {
+                "fabric:load_conditions": CREATE_CONDITIONS,
+                "type": "create:sequenced_assembly",
+                "ingredient": partial("tacz:service_part_blank", blank_tag),
+                "transitional_item": output("tacz:service_part_blank", {
+                    "IndustryPlatform": platform["platform"],
+                    "IndustryPartKind": f"incomplete_service_part_{platform['slug']}_{kind}",
+                    "IndustryDisplayName": "item.tacz.service_part_blank",
+                }),
+                "sequence": [
+                    {"type": "create:deploying", "target": "$ingredient", "ingredient": component_die,
+                     "results": ["$result"], "keep_held_item": True},
+                    {"type": "create:deploying", "target": "$ingredient", "ingredient": blueprint,
+                     "results": ["$result"], "keep_held_item": True},
+                ],
+                "result": output("tacz:service_part", part_tag),
+            }
+            files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/repair_component_{platform['slug']}_{kind}.json"] = {
+                "fabric:load_conditions": CREATE_CONDITIONS,
+                "type": "create:sequenced_assembly",
+                "ingredient": partial("tacz:gun_component", {
+                    "IndustryPlatform": platform["platform"],
+                    "IndustryPartKind": kind,
+                    "IndustryServiceGunId": platform["gun_id"],
+                }),
+                "transitional_item": output("tacz:gun_component", {
+                    "IndustryPlatform": platform["platform"],
+                    "IndustryPartKind": f"incomplete_service_{platform['slug']}_{kind}",
+                    "IndustryDisplayName": f"item.tacz.gun_component.service_{kind}",
+                }),
+                "sequence": [
+                    {"type": "create:deploying", "target": "$ingredient", "ingredient": fixture,
+                     "results": ["$result"], "keep_held_item": True},
+                    {"type": "create:deploying", "target": "$ingredient", "ingredient": partial("tacz:service_part", part_tag),
+                     "results": ["$result"]},
+                    {"type": "create:pressing", "ingredient": "$ingredient", "results": ["$result"]},
+                ],
+                "result": output("tacz:gun_component", component_tag),
+            }
+    return files
+
+
+def service_language_entries(platform: dict[str, Any], language: str) -> dict[str, str]:
+    chinese = language == "zh_cn"
+    label = platform_display_label(platform, language)
+    entries: dict[str, str] = {}
+    for part in platform["parts"]:
+        kind = part["kind"]
+        part_label = part["name_zh" if chinese else "name_en"]
+        entries[f"item.tacz.service_part.{platform['slug']}_{kind}"] = (
+            f"{label}{part_label}维修替换件" if chinese else f"{label} {part_label} Service Replacement Part"
+        )
+    return entries
+
+
+def obsolete_generated_service_repair_files(expected: dict[Path, Any]) -> set[Path]:
+    root = RESOURCE_ROOT / "data/tacz/recipe/create/industry"
+    if not root.exists():
+        return set()
+    prefixes = ("calibrate_service_part_", "repair_component_", "form_service_part_blank")
+    return {path for path in root.glob("*.json") if path not in expected and path.stem.startswith(prefixes)}
+
+
+def validate_generated_service_repair_files(platforms: list[dict[str, Any]], expected: dict[Path, Any]) -> None:
+    count = 0
+    for platform in platforms:
+        for part in platform["parts"]:
+            kind = part["kind"]
+            calibrate = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_service_part_{platform['slug']}_{kind}.json"
+            repair = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/repair_component_{platform['slug']}_{kind}.json"
+            if calibrate not in expected or repair not in expected:
+                raise ValueError(f"{platform['slug']}: missing service repair route for {kind}")
+            recipe = expected[repair]
+            if recipe.get("type") != "create:sequenced_assembly" or len(recipe.get("sequence", [])) != 3:
+                raise ValueError(f"{platform['slug']}: invalid service repair sequence for {kind}")
+            count += 1
+    if count != len(platforms) * len(BLANK_CLASS_ORDER):
+        raise ValueError("service repair route count mismatch")
+
+
 def obsolete_generated_reference_profile_files(expected: dict[Path, Any]) -> set[Path]:
     """Only clean generator-stamped default profiles; preserve authored compatibility data."""
     root = RESOURCE_ROOT / "data/tacz/industry/reference/guns"
@@ -4814,6 +4976,7 @@ def run(write: bool) -> int:
     expected: dict[Path, Any] = {}
     english: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "Neutral Exterior / Furniture Blank",
+        "item.tacz.service_part_blank": "Neutral Service Replacement Blank",
         "item.tacz.press_die_blank.cartridge_gauge": "Neutral Cartridge Datum Gauge Blank",
         "item.tacz.gun_blueprint.blank": "Blank Tooling Sheet",
         "item.tacz.press_die.acceptance_gauge_stock": "Precision Acceptance Gauge Stock",
@@ -4867,6 +5030,7 @@ def run(write: bool) -> int:
     }
     chinese: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "中性外装套件毛坯",
+        "item.tacz.service_part_blank": "中性维修替换件毛坯",
         "item.tacz.press_die_blank.cartridge_gauge": "中性弹药基准量规毛坯",
         "item.tacz.gun_blueprint.blank": "空白工装页",
         "item.tacz.press_die.acceptance_gauge_stock": "精密验收检具料坯",
@@ -4933,8 +5097,11 @@ def run(write: bool) -> int:
         expected.update(generated_platform_files(platform))
         english.update(language_entries(platform, "en_us"))
         chinese.update(language_entries(platform, "zh_cn"))
+        english.update(service_language_entries(platform, "en_us"))
+        chinese.update(service_language_entries(platform, "zh_cn"))
     expected.update(generated_reference_profile_files(platforms))
     expected.update(generated_maintenance_profile_files(platforms))
+    expected.update(generated_service_repair_files(platforms))
     expected.update(generated_cartridge_gauge_blank_file())
     for cartridge in cartridges:
         expected.update(generated_cartridge_files(cartridge))
@@ -4962,6 +5129,7 @@ def run(write: bool) -> int:
     obsolete_carrier_paths = obsolete_generated_carrier_files(expected)
     obsolete_reference_paths = obsolete_generated_reference_profile_files(expected)
     obsolete_maintenance_paths = obsolete_generated_maintenance_profile_files(expected)
+    obsolete_service_repair_paths = obsolete_generated_service_repair_files(expected)
     validate_effective_create_recipe_collisions(
         expected, obsolete_platform_paths | obsolete_template_paths | obsolete_magazine_paths | obsolete_carrier_paths
     )
@@ -4972,6 +5140,7 @@ def run(write: bool) -> int:
     validate_generated_reference_profiles(platforms, expected)
     validate_generated_maintenance_profiles(platforms, expected)
     validate_initial_maintenance_assembly_outputs(platforms, expected)
+    validate_generated_service_repair_files(platforms, expected)
     validate_stable_dossier_commissions(platforms, blueprint_acquisition, expected)
 
     stale: list[str] = []
@@ -5021,6 +5190,13 @@ def run(write: bool) -> int:
     # Phase-A maintenance profiles are generated only for bundled default guns;
     # authored compatibility-pack maintenance data is never removed.
     for path in sorted(obsolete_maintenance_paths):
+        stale.append(str(path.relative_to(REPO)))
+        if write:
+            path.unlink()
+
+    # One named repair line exists for each default platform component; remove
+    # only generator-owned stale variants when platform manifests change.
+    for path in sorted(obsolete_service_repair_paths):
         stale.append(str(path.relative_to(REPO)))
         if write:
             path.unlink()

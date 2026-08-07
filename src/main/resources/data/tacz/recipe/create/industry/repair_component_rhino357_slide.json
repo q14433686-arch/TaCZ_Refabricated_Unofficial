@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_rhino357",
+      "IndustryPartKind": "slide",
+      "IndustryServiceGunId": "tacz:rhino357"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_rhino357",
+        "IndustryPartKind": "incomplete_service_rhino357_slide",
+        "IndustryDisplayName": "item.tacz.gun_component.service_slide"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_rhino357",
+          "IndustryPartKind": "critical_gauge",
+          "IndustryActionProfile": "revolver",
+          "IndustryToolingScope": "critical_gauge",
+          "DieTargetKind": "revolver"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_rhino357",
+          "IndustryPartKind": "service_part_slide",
+          "IndustryDisplayName": "item.tacz.service_part.rhino357_slide",
+          "IndustryActionProfile": "revolver",
+          "IndustryToolingScope": "critical_gauge",
+          "IndustryServiceGunId": "tacz:rhino357",
+          "IndustryServiceOrigin": "default_rhino357",
+          "IndustryServiceConditionSlot": 1
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_rhino357",
+        "IndustryPartKind": "slide",
+        "IndustryDisplayName": "item.tacz.gun_component.service_slide",
+        "IndustryActionProfile": "revolver",
+        "IndustryToolingScope": "critical_gauge",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 1,
+        "IndustryServiceGunId": "tacz:rhino357",
+        "IndustryServiceOrigin": "default_rhino357",
+        "IndustryServiceRecipe": "tacz:gun/rhino357",
+        "IndustryServiceTier": "legacy",
+        "IndustryServiceAction": "revolver",
+        "IndustryServiceToolingScope": "critical_gauge",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

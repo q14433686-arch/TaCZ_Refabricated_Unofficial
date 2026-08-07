@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_deagle",
+      "IndustryPartKind": "recoil",
+      "IndustryServiceGunId": "tacz:deagle"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_deagle",
+        "IndustryPartKind": "incomplete_service_deagle_recoil",
+        "IndustryDisplayName": "item.tacz.gun_component.service_recoil"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_deagle",
+          "IndustryPartKind": "critical_gauge",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge",
+          "DieTargetKind": "locked_breech_pistol"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_deagle",
+          "IndustryPartKind": "service_part_recoil",
+          "IndustryDisplayName": "item.tacz.service_part.deagle_recoil",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge",
+          "IndustryServiceGunId": "tacz:deagle",
+          "IndustryServiceOrigin": "default_deagle",
+          "IndustryServiceConditionSlot": 4
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_deagle",
+        "IndustryPartKind": "recoil",
+        "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
+        "IndustryActionProfile": "locked_breech_pistol",
+        "IndustryToolingScope": "critical_gauge",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 4,
+        "IndustryServiceGunId": "tacz:deagle",
+        "IndustryServiceOrigin": "default_deagle",
+        "IndustryServiceRecipe": "tacz:gun/deagle",
+        "IndustryServiceTier": "service",
+        "IndustryServiceAction": "locked_breech_pistol",
+        "IndustryServiceToolingScope": "critical_gauge",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

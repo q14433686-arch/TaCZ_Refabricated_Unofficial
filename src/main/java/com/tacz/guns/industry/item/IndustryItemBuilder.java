@@ -41,6 +41,14 @@ public final class IndustryItemBuilder {
         return new IndustryItemBuilder(ModItems.GUN_COMPONENT);
     }
 
+    public static IndustryItemBuilder servicePartBlank() {
+        return new IndustryItemBuilder(ModItems.SERVICE_PART_BLANK);
+    }
+
+    public static IndustryItemBuilder servicePart() {
+        return new IndustryItemBuilder(ModItems.SERVICE_PART);
+    }
+
     public static IndustryItemBuilder blueprint() {
         return new IndustryItemBuilder(ModItems.GUN_BLUEPRINT);
     }

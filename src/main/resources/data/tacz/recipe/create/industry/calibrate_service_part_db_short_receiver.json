@@ -1,0 +1,91 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part_blank"
+    ],
+    "nbt": {
+      "IndustryPlatform": "service",
+      "IndustryPartKind": "service_part_blank",
+      "IndustryDisplayName": "item.tacz.service_part_blank"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:service_part_blank",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_db_short",
+        "IndustryPartKind": "incomplete_service_part_db_short_receiver",
+        "IndustryDisplayName": "item.tacz.service_part_blank"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_db_short",
+          "IndustryPartKind": "component_die",
+          "DieTargetKind": "receiver"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_blueprint"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_db_short",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_template.default_db_short",
+          "IndustryBlueprintTier": "legacy",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "break_action",
+          "IndustryToolingScope": "family_jig"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    }
+  ],
+  "result": {
+    "id": "tacz:service_part",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_db_short",
+        "IndustryPartKind": "service_part_receiver",
+        "IndustryDisplayName": "item.tacz.service_part.db_short_receiver",
+        "IndustryActionProfile": "break_action",
+        "IndustryToolingScope": "family_jig",
+        "IndustryServiceGunId": "tacz:db_short",
+        "IndustryServiceOrigin": "default_db_short",
+        "IndustryServiceConditionSlot": 0
+      }
+    }
+  }
+}

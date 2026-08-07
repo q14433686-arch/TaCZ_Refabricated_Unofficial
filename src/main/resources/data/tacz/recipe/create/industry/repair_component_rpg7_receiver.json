@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_rpg7",
+      "IndustryPartKind": "receiver",
+      "IndustryServiceGunId": "tacz:rpg7"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_rpg7",
+        "IndustryPartKind": "incomplete_service_rpg7_receiver",
+        "IndustryDisplayName": "item.tacz.gun_component.service_receiver"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_rpg7",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryActionProfile": "launcher",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "launcher"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_rpg7",
+          "IndustryPartKind": "service_part_receiver",
+          "IndustryDisplayName": "item.tacz.service_part.rpg7_receiver",
+          "IndustryActionProfile": "launcher",
+          "IndustryToolingScope": "final_acceptance",
+          "IndustryServiceGunId": "tacz:rpg7",
+          "IndustryServiceOrigin": "default_rpg7",
+          "IndustryServiceConditionSlot": 0
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_rpg7",
+        "IndustryPartKind": "receiver",
+        "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
+        "IndustryActionProfile": "launcher",
+        "IndustryToolingScope": "final_acceptance",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 0,
+        "IndustryServiceGunId": "tacz:rpg7",
+        "IndustryServiceOrigin": "default_rpg7",
+        "IndustryServiceRecipe": "tacz:gun/rpg7",
+        "IndustryServiceTier": "precision",
+        "IndustryServiceAction": "launcher",
+        "IndustryServiceToolingScope": "final_acceptance",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

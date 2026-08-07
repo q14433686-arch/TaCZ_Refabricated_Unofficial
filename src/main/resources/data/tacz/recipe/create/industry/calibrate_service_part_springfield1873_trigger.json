@@ -1,0 +1,91 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part_blank"
+    ],
+    "nbt": {
+      "IndustryPlatform": "service",
+      "IndustryPartKind": "service_part_blank",
+      "IndustryDisplayName": "item.tacz.service_part_blank"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:service_part_blank",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_springfield1873",
+        "IndustryPartKind": "incomplete_service_part_springfield1873_trigger",
+        "IndustryDisplayName": "item.tacz.service_part_blank"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_springfield1873",
+          "IndustryPartKind": "component_die",
+          "DieTargetKind": "trigger"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_blueprint"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_springfield1873",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_template.default_springfield1873",
+          "IndustryBlueprintTier": "legacy",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "lever_action",
+          "IndustryToolingScope": "family_jig"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    }
+  ],
+  "result": {
+    "id": "tacz:service_part",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_springfield1873",
+        "IndustryPartKind": "service_part_trigger",
+        "IndustryDisplayName": "item.tacz.service_part.springfield1873_trigger",
+        "IndustryActionProfile": "lever_action",
+        "IndustryToolingScope": "family_jig",
+        "IndustryServiceGunId": "tacz:springfield1873",
+        "IndustryServiceOrigin": "default_springfield1873",
+        "IndustryServiceConditionSlot": 3
+      }
+    }
+  }
+}

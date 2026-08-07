@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_g36k",
+      "IndustryPartKind": "trigger",
+      "IndustryServiceGunId": "tacz:g36k"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_g36k",
+        "IndustryPartKind": "incomplete_service_g36k_trigger",
+        "IndustryDisplayName": "item.tacz.gun_component.service_trigger"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_g36k",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "gas_rifle"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_g36k",
+          "IndustryPartKind": "service_part_trigger",
+          "IndustryDisplayName": "item.tacz.service_part.g36k_trigger",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "final_acceptance",
+          "IndustryServiceGunId": "tacz:g36k",
+          "IndustryServiceOrigin": "default_g36k",
+          "IndustryServiceConditionSlot": 3
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_g36k",
+        "IndustryPartKind": "trigger",
+        "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
+        "IndustryActionProfile": "gas_rifle",
+        "IndustryToolingScope": "final_acceptance",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 3,
+        "IndustryServiceGunId": "tacz:g36k",
+        "IndustryServiceOrigin": "default_g36k",
+        "IndustryServiceRecipe": "tacz:gun/g36k",
+        "IndustryServiceTier": "advanced",
+        "IndustryServiceAction": "gas_rifle",
+        "IndustryServiceToolingScope": "final_acceptance",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

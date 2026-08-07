@@ -1,0 +1,91 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part_blank"
+    ],
+    "nbt": {
+      "IndustryPlatform": "service",
+      "IndustryPartKind": "service_part_blank",
+      "IndustryDisplayName": "item.tacz.service_part_blank"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:service_part_blank",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_rpk",
+        "IndustryPartKind": "incomplete_service_part_rpk_bolt",
+        "IndustryDisplayName": "item.tacz.service_part_blank"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_rpk",
+          "IndustryPartKind": "component_die",
+          "DieTargetKind": "bolt"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_blueprint"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_rpk",
+          "IndustryPartKind": "blueprint",
+          "IndustryDisplayName": "item.tacz.gun_template.default_rpk",
+          "IndustryBlueprintTier": "advanced",
+          "IndustryBlueprintRole": "production",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "final_acceptance"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    }
+  ],
+  "result": {
+    "id": "tacz:service_part",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_rpk",
+        "IndustryPartKind": "service_part_bolt",
+        "IndustryDisplayName": "item.tacz.service_part.rpk_bolt",
+        "IndustryActionProfile": "gas_rifle",
+        "IndustryToolingScope": "final_acceptance",
+        "IndustryServiceGunId": "tacz:rpk",
+        "IndustryServiceOrigin": "default_rpk",
+        "IndustryServiceConditionSlot": 1
+      }
+    }
+  }
+}

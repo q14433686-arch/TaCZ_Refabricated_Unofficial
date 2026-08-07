@@ -1,0 +1,105 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_hk_g3",
+      "IndustryPartKind": "recoil",
+      "IndustryServiceGunId": "tacz:hk_g3"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_hk_g3",
+        "IndustryPartKind": "incomplete_service_hk_g3_recoil",
+        "IndustryDisplayName": "item.tacz.gun_component.service_recoil"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "action_jig",
+          "IndustryActionProfile": "roller_delayed_rifle",
+          "DieTargetKind": "roller_delayed_rifle"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_hk_g3",
+          "IndustryPartKind": "service_part_recoil",
+          "IndustryDisplayName": "item.tacz.service_part.hk_g3_recoil",
+          "IndustryActionProfile": "roller_delayed_rifle",
+          "IndustryToolingScope": "platform_tooling",
+          "IndustryServiceGunId": "tacz:hk_g3",
+          "IndustryServiceOrigin": "default_hk_g3",
+          "IndustryServiceConditionSlot": 4
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_hk_g3",
+        "IndustryPartKind": "recoil",
+        "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
+        "IndustryActionProfile": "roller_delayed_rifle",
+        "IndustryToolingScope": "platform_tooling",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 4,
+        "IndustryServiceGunId": "tacz:hk_g3",
+        "IndustryServiceOrigin": "default_hk_g3",
+        "IndustryServiceRecipe": "tacz:gun/hk_g3",
+        "IndustryServiceTier": "service",
+        "IndustryServiceAction": "roller_delayed_rifle",
+        "IndustryServiceToolingScope": "platform_tooling",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

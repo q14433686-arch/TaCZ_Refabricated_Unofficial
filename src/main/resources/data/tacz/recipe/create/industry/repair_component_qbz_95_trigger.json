@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_qbz_95",
+      "IndustryPartKind": "trigger",
+      "IndustryServiceGunId": "tacz:qbz_95"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_qbz_95",
+        "IndustryPartKind": "incomplete_service_qbz_95_trigger",
+        "IndustryDisplayName": "item.tacz.gun_component.service_trigger"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_qbz_95",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryActionProfile": "bullpup_rifle",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "bullpup_rifle"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_qbz_95",
+          "IndustryPartKind": "service_part_trigger",
+          "IndustryDisplayName": "item.tacz.service_part.qbz_95_trigger",
+          "IndustryActionProfile": "bullpup_rifle",
+          "IndustryToolingScope": "final_acceptance",
+          "IndustryServiceGunId": "tacz:qbz_95",
+          "IndustryServiceOrigin": "default_qbz_95",
+          "IndustryServiceConditionSlot": 3
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_qbz_95",
+        "IndustryPartKind": "trigger",
+        "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
+        "IndustryActionProfile": "bullpup_rifle",
+        "IndustryToolingScope": "final_acceptance",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 3,
+        "IndustryServiceGunId": "tacz:qbz_95",
+        "IndustryServiceOrigin": "default_qbz_95",
+        "IndustryServiceRecipe": "tacz:gun/qbz_95",
+        "IndustryServiceTier": "advanced",
+        "IndustryServiceAction": "bullpup_rifle",
+        "IndustryServiceToolingScope": "final_acceptance",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

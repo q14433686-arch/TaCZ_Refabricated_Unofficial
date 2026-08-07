@@ -8,7 +8,9 @@ import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.industry.item.IndustryItemBuilder;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
 import com.tacz.guns.industry.magazine.EnBlocClipService;
+import com.tacz.guns.industry.recipe.IndustryAssemblyDefinition;
 import com.tacz.guns.init.ModItems;
+import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.util.ItemNbtUtils;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -41,6 +43,8 @@ public final class IndustrialServiceBenchService {
     public static final String SERVICE_ACTION = "IndustryServiceAction";
     public static final String SERVICE_SCOPE = "IndustryServiceToolingScope";
     public static final String SERVICE_SHOTS = "IndustryServiceShots";
+    /** Index 0..4 maps a real platform component to the five persistent Condition fields. */
+    public static final String SERVICE_CONDITION_SLOT = "IndustryServiceConditionSlot";
     public static final int WRENCH_MAX_DAMAGE = 256;
 
     private IndustrialServiceBenchService() {
@@ -69,17 +73,23 @@ public final class IndustrialServiceBenchService {
         }
 
         IndustryMaintenanceService.Snapshot maintenance = IndustryMaintenanceService.getSnapshot(gunStack);
+        List<ComponentSpec> specs = componentSpecs(origin);
+        if (specs.size() != COMPONENT_ORDER.size()) {
+            return DisassemblyPlan.failure(Failure.COMPONENT_SET_INVALID);
+        }
         List<ItemStack> components = new ArrayList<>();
-        for (String kind : COMPONENT_ORDER) {
-            int condition = conditionFor(maintenance, kind);
+        for (ComponentSpec spec : specs) {
+            int condition = conditionForSlot(maintenance, spec.conditionSlot());
             ItemStack component = IndustryItemBuilder.component()
                     .platform(origin.platform())
-                    .kind(kind)
-                    .displayNameKey("item.tacz.gun_component.service_" + kind)
+                    .kind(spec.kind())
+                    .displayNameKey(spec.displayName())
                     .actionProfile(origin.action())
                     .toolingScope(origin.scope())
                     .build();
-            ItemNbtUtils.updateTag(component, tag -> writeServiceIdentity(tag, origin, kind, condition, maintenance.shots()));
+            ItemNbtUtils.updateTag(component, tag -> writeServiceIdentity(
+                    tag, origin, spec.kind(), spec.conditionSlot(), condition, maintenance.shots()
+            ));
             components.add(component);
         }
         return DisassemblyPlan.success(origin, components);
@@ -91,7 +101,7 @@ public final class IndustrialServiceBenchService {
             return ReassemblyPlan.failure(Failure.COMPONENT_SET_INVALID);
         }
         Origin origin = null;
-        Set<String> foundKinds = new HashSet<>();
+        Set<Integer> foundSlots = new HashSet<>();
         int receiver = IndustryMaintenanceService.MAX_CONDITION;
         int bolt = IndustryMaintenanceService.MAX_CONDITION;
         int barrel = IndustryMaintenanceService.MAX_CONDITION;
@@ -104,8 +114,9 @@ public final class IndustrialServiceBenchService {
             }
             CompoundTag tag = ItemNbtUtils.getTag(component);
             Origin componentOrigin = originFromComponent(tag);
-            String kind = tag.getStringOr("IndustryPartKind", "");
-            if (componentOrigin == null || !COMPONENT_ORDER.contains(kind) || !foundKinds.add(kind)) {
+            int conditionSlot = tag.getIntOr(SERVICE_CONDITION_SLOT, -1);
+            if (componentOrigin == null || conditionSlot < 0 || conditionSlot >= COMPONENT_ORDER.size()
+                    || !foundSlots.add(conditionSlot)) {
                 return ReassemblyPlan.failure(Failure.COMPONENT_SET_INVALID);
             }
             if (origin == null) {
@@ -115,18 +126,18 @@ public final class IndustrialServiceBenchService {
             }
             int condition = Math.clamp(tag.getIntOr(PART_CONDITION, IndustryMaintenanceService.MAX_CONDITION),
                     0, IndustryMaintenanceService.MAX_CONDITION);
-            switch (kind) {
-                case "receiver" -> receiver = condition;
-                case "bolt" -> bolt = condition;
-                case "barrel" -> barrel = condition;
-                case "trigger" -> trigger = condition;
-                case "recoil" -> recoil = condition;
+            switch (conditionSlot) {
+                case 0 -> receiver = condition;
+                case 1 -> bolt = condition;
+                case 2 -> barrel = condition;
+                case 3 -> trigger = condition;
+                case 4 -> recoil = condition;
                 default -> {
                 }
             }
             shots = Math.max(shots, Math.max(0L, tag.getLongOr(SERVICE_SHOTS, 0L)));
         }
-        if (origin == null || foundKinds.size() != COMPONENT_ORDER.size()) {
+        if (origin == null || foundSlots.size() != COMPONENT_ORDER.size()) {
             return ReassemblyPlan.failure(Failure.COMPONENT_SET_INVALID);
         }
         if (!matchesBlueprint(blueprint, origin)) {
@@ -286,8 +297,10 @@ public final class IndustrialServiceBenchService {
                 && (kind.contains("gauge") || kind.contains("fixture"));
     }
 
-    private static void writeServiceIdentity(CompoundTag tag, Origin origin, String kind, int condition, long shots) {
+    private static void writeServiceIdentity(CompoundTag tag, Origin origin, String kind, int conditionSlot,
+                                             int condition, long shots) {
         tag.putInt(PART_CONDITION, Math.clamp(condition, 0, IndustryMaintenanceService.MAX_CONDITION));
+        tag.putInt(SERVICE_CONDITION_SLOT, conditionSlot);
         tag.putString(SERVICE_GUN_ID, origin.gunId().toString());
         tag.putString(SERVICE_ORIGIN, origin.platform());
         tag.putString(SERVICE_RECIPE, origin.recipe());
@@ -298,13 +311,36 @@ public final class IndustrialServiceBenchService {
         tag.putString("IndustryPartKind", kind);
     }
 
-    private static int conditionFor(IndustryMaintenanceService.Snapshot snapshot, String kind) {
-        return switch (kind) {
-            case "receiver" -> snapshot.receiver();
-            case "bolt" -> snapshot.bolt();
-            case "barrel" -> snapshot.barrel();
-            case "trigger" -> snapshot.trigger();
-            case "recoil" -> snapshot.recoil();
+    private static List<ComponentSpec> componentSpecs(Origin origin) {
+        if (origin.platform().startsWith("surveyed/")) {
+            List<ComponentSpec> surveyed = new ArrayList<>();
+            for (int index = 0; index < COMPONENT_ORDER.size(); index++) {
+                String kind = COMPONENT_ORDER.get(index);
+                surveyed.add(new ComponentSpec(kind, "item.tacz.gun_component.service_" + kind, index));
+            }
+            return surveyed;
+        }
+        CommonAssetsManager manager = CommonAssetsManager.getInstance();
+        IndustryAssemblyDefinition assembly = manager == null ? null : manager.getIndustryAssemblyForGun(origin.gunId());
+        if (assembly == null || !origin.platform().equals(assembly.getPlatform())
+                || assembly.getComponents().size() != COMPONENT_ORDER.size()) {
+            return List.of();
+        }
+        List<ComponentSpec> specs = new ArrayList<>();
+        for (int index = 0; index < assembly.getComponents().size(); index++) {
+            IndustryAssemblyDefinition.Component component = assembly.getComponents().get(index);
+            specs.add(new ComponentSpec(component.kind(), component.displayName(), index));
+        }
+        return specs;
+    }
+
+    private static int conditionForSlot(IndustryMaintenanceService.Snapshot snapshot, int slot) {
+        return switch (slot) {
+            case 0 -> snapshot.receiver();
+            case 1 -> snapshot.bolt();
+            case 2 -> snapshot.barrel();
+            case 3 -> snapshot.trigger();
+            case 4 -> snapshot.recoil();
             default -> IndustryMaintenanceService.MAX_CONDITION;
         };
     }
@@ -325,6 +361,7 @@ public final class IndustrialServiceBenchService {
     }
 
     public record Origin(Identifier gunId, String platform, String recipe, String tier, String action, String scope) {}
+    private record ComponentSpec(String kind, String displayName, int conditionSlot) {}
     public record DisassemblyPlan(@Nullable Origin origin, List<ItemStack> components, @Nullable Failure failure) {
         static DisassemblyPlan success(Origin origin, List<ItemStack> components) { return new DisassemblyPlan(origin, List.copyOf(components), null); }
         static DisassemblyPlan failure(Failure failure) { return new DisassemblyPlan(null, List.of(), failure); }

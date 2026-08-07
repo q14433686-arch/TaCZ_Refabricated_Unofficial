@@ -1,0 +1,105 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_uzi",
+      "IndustryPartKind": "barrel",
+      "IndustryServiceGunId": "tacz:uzi"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_uzi",
+        "IndustryPartKind": "incomplete_service_uzi_barrel",
+        "IndustryDisplayName": "item.tacz.gun_component.service_barrel"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "action_jig",
+          "IndustryActionProfile": "blowback_smg",
+          "DieTargetKind": "blowback_smg"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_uzi",
+          "IndustryPartKind": "service_part_barrel",
+          "IndustryDisplayName": "item.tacz.service_part.uzi_barrel",
+          "IndustryActionProfile": "blowback_smg",
+          "IndustryToolingScope": "platform_tooling",
+          "IndustryServiceGunId": "tacz:uzi",
+          "IndustryServiceOrigin": "default_uzi",
+          "IndustryServiceConditionSlot": 2
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_uzi",
+        "IndustryPartKind": "barrel",
+        "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
+        "IndustryActionProfile": "blowback_smg",
+        "IndustryToolingScope": "platform_tooling",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 2,
+        "IndustryServiceGunId": "tacz:uzi",
+        "IndustryServiceOrigin": "default_uzi",
+        "IndustryServiceRecipe": "tacz:gun/uzi",
+        "IndustryServiceTier": "service",
+        "IndustryServiceAction": "blowback_smg",
+        "IndustryServiceToolingScope": "platform_tooling",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

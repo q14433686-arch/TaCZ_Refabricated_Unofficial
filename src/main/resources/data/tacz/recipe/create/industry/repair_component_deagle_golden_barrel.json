@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_deagle_golden",
+      "IndustryPartKind": "barrel",
+      "IndustryServiceGunId": "tacz:deagle_golden"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_deagle_golden",
+        "IndustryPartKind": "incomplete_service_deagle_golden_barrel",
+        "IndustryDisplayName": "item.tacz.gun_component.service_barrel"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_deagle_golden",
+          "IndustryPartKind": "critical_gauge",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge",
+          "DieTargetKind": "locked_breech_pistol"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_deagle_golden",
+          "IndustryPartKind": "service_part_barrel",
+          "IndustryDisplayName": "item.tacz.service_part.deagle_golden_barrel",
+          "IndustryActionProfile": "locked_breech_pistol",
+          "IndustryToolingScope": "critical_gauge",
+          "IndustryServiceGunId": "tacz:deagle_golden",
+          "IndustryServiceOrigin": "default_deagle_golden",
+          "IndustryServiceConditionSlot": 2
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_deagle_golden",
+        "IndustryPartKind": "barrel",
+        "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
+        "IndustryActionProfile": "locked_breech_pistol",
+        "IndustryToolingScope": "critical_gauge",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 2,
+        "IndustryServiceGunId": "tacz:deagle_golden",
+        "IndustryServiceOrigin": "default_deagle_golden",
+        "IndustryServiceRecipe": "tacz:gun/deagle_golden",
+        "IndustryServiceTier": "service",
+        "IndustryServiceAction": "locked_breech_pistol",
+        "IndustryServiceToolingScope": "critical_gauge",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

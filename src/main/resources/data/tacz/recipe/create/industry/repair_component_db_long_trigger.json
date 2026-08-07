@@ -1,0 +1,105 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_db_long",
+      "IndustryPartKind": "trigger",
+      "IndustryServiceGunId": "tacz:db_long"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_db_long",
+        "IndustryPartKind": "incomplete_service_db_long_trigger",
+        "IndustryDisplayName": "item.tacz.gun_component.service_trigger"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "tooling",
+          "IndustryPartKind": "action_jig",
+          "IndustryActionProfile": "break_action",
+          "DieTargetKind": "break_action"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_db_long",
+          "IndustryPartKind": "service_part_trigger",
+          "IndustryDisplayName": "item.tacz.service_part.db_long_trigger",
+          "IndustryActionProfile": "break_action",
+          "IndustryToolingScope": "family_jig",
+          "IndustryServiceGunId": "tacz:db_long",
+          "IndustryServiceOrigin": "default_db_long",
+          "IndustryServiceConditionSlot": 3
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_db_long",
+        "IndustryPartKind": "trigger",
+        "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
+        "IndustryActionProfile": "break_action",
+        "IndustryToolingScope": "family_jig",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 3,
+        "IndustryServiceGunId": "tacz:db_long",
+        "IndustryServiceOrigin": "default_db_long",
+        "IndustryServiceRecipe": "tacz:gun/db_long",
+        "IndustryServiceTier": "legacy",
+        "IndustryServiceAction": "break_action",
+        "IndustryServiceToolingScope": "family_jig",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

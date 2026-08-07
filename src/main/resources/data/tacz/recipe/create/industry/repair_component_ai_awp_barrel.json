@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_ai_awp",
+      "IndustryPartKind": "barrel",
+      "IndustryServiceGunId": "tacz:ai_awp"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_ai_awp",
+        "IndustryPartKind": "incomplete_service_ai_awp_barrel",
+        "IndustryDisplayName": "item.tacz.gun_component.service_barrel"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_ai_awp",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryActionProfile": "bolt_action",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "bolt_action"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "default_ai_awp",
+          "IndustryPartKind": "service_part_barrel",
+          "IndustryDisplayName": "item.tacz.service_part.ai_awp_barrel",
+          "IndustryActionProfile": "bolt_action",
+          "IndustryToolingScope": "final_acceptance",
+          "IndustryServiceGunId": "tacz:ai_awp",
+          "IndustryServiceOrigin": "default_ai_awp",
+          "IndustryServiceConditionSlot": 2
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "default_ai_awp",
+        "IndustryPartKind": "barrel",
+        "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
+        "IndustryActionProfile": "bolt_action",
+        "IndustryToolingScope": "final_acceptance",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 2,
+        "IndustryServiceGunId": "tacz:ai_awp",
+        "IndustryServiceOrigin": "default_ai_awp",
+        "IndustryServiceRecipe": "tacz:gun/ai_awp",
+        "IndustryServiceTier": "precision",
+        "IndustryServiceAction": "bolt_action",
+        "IndustryServiceToolingScope": "final_acceptance",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}

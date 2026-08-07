@@ -1,0 +1,106 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ar",
+      "IndustryPartKind": "bolt",
+      "IndustryServiceGunId": "tacz:m4a1"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ar",
+        "IndustryPartKind": "incomplete_service_m4a1_bolt",
+        "IndustryDisplayName": "item.tacz.gun_component.service_bolt"
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ar",
+          "IndustryPartKind": "acceptance_gauge",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "final_acceptance",
+          "DieTargetKind": "gas_rifle"
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:service_part"
+        ],
+        "nbt": {
+          "IndustryPlatform": "ar",
+          "IndustryPartKind": "service_part_bolt",
+          "IndustryDisplayName": "item.tacz.service_part.m4a1_bolt",
+          "IndustryActionProfile": "gas_rifle",
+          "IndustryToolingScope": "final_acceptance",
+          "IndustryServiceGunId": "tacz:m4a1",
+          "IndustryServiceOrigin": "ar",
+          "IndustryServiceConditionSlot": 1
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredient": "$ingredient",
+      "results": [
+        "$result"
+      ]
+    }
+  ],
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "ar",
+        "IndustryPartKind": "bolt",
+        "IndustryDisplayName": "item.tacz.gun_component.service_bolt",
+        "IndustryActionProfile": "gas_rifle",
+        "IndustryToolingScope": "final_acceptance",
+        "IndustryPartCondition": 10000,
+        "IndustryServiceConditionSlot": 1,
+        "IndustryServiceGunId": "tacz:m4a1",
+        "IndustryServiceOrigin": "ar",
+        "IndustryServiceRecipe": "tacz:gun/m4a1",
+        "IndustryServiceTier": "advanced",
+        "IndustryServiceAction": "gas_rifle",
+        "IndustryServiceToolingScope": "final_acceptance",
+        "IndustryServiceShots": 0
+      }
+    }
+  }
+}
