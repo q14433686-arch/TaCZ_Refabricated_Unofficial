@@ -10,7 +10,8 @@
   "client": [
     "IrisShaderCreatorMixin",
     "IrisGlCommandEncoderMixin",
-    "IrisExtendedShaderMixin"
+    "IrisExtendedShaderMixin",
+    "IrisHandRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 0
