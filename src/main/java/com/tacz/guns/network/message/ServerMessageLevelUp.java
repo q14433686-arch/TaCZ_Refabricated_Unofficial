@@ -1,7 +1,6 @@
 package com.tacz.guns.network.message;
 
 import com.tacz.guns.GunMod;
-import com.tacz.guns.client.gui.toast.GunLevelUpToast;
 import com.tacz.guns.experience.GunExperienceService;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -56,15 +55,14 @@ public class ServerMessageLevelUp implements CustomPacketPayload {
         if (player == null) {
             return;
         }
-        if (level >= GunExperienceService.MAX_LEVEL) {
-            Minecraft.getInstance().getToastManager().add(new GunLevelUpToast(gun,
-                    Component.translatable("toast.tacz.level_up"),
-                    Component.translatable("toast.tacz.sub.final_level")));
-        } else {
-            Minecraft.getInstance().getToastManager().add(new GunLevelUpToast(gun,
-                    Component.translatable("toast.tacz.level_up"),
-                    Component.translatable("toast.tacz.sub.level_up")));
-        }
+        Component subtitle = level >= GunExperienceService.MAX_LEVEL
+                ? Component.translatable("toast.tacz.sub.final_level")
+                : Component.translatable("toast.tacz.sub.level_up");
+        // 26.2 no longer exposes either old ToastManager accessor on
+        // Minecraft. Keep the upgrade feedback authoritative and portable by
+        // using the player message path already used by client key actions.
+        player.sendSystemMessage(Component.translatable("toast.tacz.level_up")
+                .append(Component.literal(" ")).append(subtitle));
     }
 
     public ItemStack getGun() {

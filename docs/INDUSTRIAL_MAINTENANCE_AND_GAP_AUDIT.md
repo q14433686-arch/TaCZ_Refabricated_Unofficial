@@ -26,7 +26,7 @@
 
 ## 2. 已恢复的枪械熟练度（独立于维护）
 
-原先 `ModernKineticGunItem#getLevel/getExp/getMaxLevel` 全部返回 `0`，虽然 NBT 与 Tooltip/Toast 外壳还在，进度永远不会增长。现已恢复为每把**实体枪**独立的 0–10 熟练度：
+原先 `ModernKineticGunItem#getLevel/getExp/getMaxLevel` 全部返回 `0`，虽然 NBT、Tooltip 与升级通知外壳还在，进度永远不会增长。现已恢复为每把**实体枪**独立的 0–10 熟练度：
 
 ```text
 命中：+8 XP
@@ -35,7 +35,7 @@
 等级阈值：level² × 100，总上限 10000 XP
 ```
 
-投射物发射时会绑定发射枪的稳定 NBT token；命中延迟发生后只会给这同一把实体枪记经验，不会因为玩家切换到另一把同 GunId 的枪而串经验。当前熟练度只恢复进度条、Tooltip 与升级 Toast，**不改变伤害、可靠性、耐久或维修成本**，因此不会与下文的 Condition/Fouling 混成一个数值。
+投射物发射时会绑定发射枪的稳定 NBT token；命中延迟发生后只会给这同一把实体枪记经验，不会因为玩家切换到另一把同 GunId 的枪而串经验。当前熟练度只恢复进度条、Tooltip 与客户端升级消息，**不改变伤害、可靠性、耐久或维修成本**，因此不会与下文的 Condition/Fouling 混成一个数值。
 
 ## 3. 推荐总原则
 
@@ -274,7 +274,7 @@ chance = clamp(
 | P1 | RPG 发动机壳体 | 已新增 `motor_housing` 可见 ItemStack 与 `finish_case_rpg_rocket` 单工件结束站 | 在 Create/装弹机实机回归中确认它不能绕过为最终 case。 |
 | P2 | 第三方高保真 Create 终端 | 当前安全回退是 Gunsmith Table 测绘多槽路径 | 只为资料足够的高置信枪包做显式终端，不动态猜结构。 |
 | P2 | 测绘弹药精确视觉 / 特殊抛壳 | 未声明口径使用标准材质族 | 引入独立 ammo reference profile 后补精确贴图与特殊语义。 |
-| P2 | 枪械等级 | 已恢复 0–10 的实体枪熟练度：命中/击杀按发射时绑定的实体枪 token 记经验，Tooltip 与 level-up toast 生效 | 当前只恢复可见进度，不暗中改变伤害/可靠性；后续如要加收益必须单独平衡。 |
+| P2 | 枪械等级 | 已恢复 0–10 的实体枪熟练度：命中/击杀按发射时绑定的实体枪 token 记经验，Tooltip 与升级消息生效 | 当前只恢复可见进度，不暗中改变伤害/可靠性；后续如要加收益必须单独平衡。 |
 | P3 | 26.2 客户端表现待办 | 激光束、枪口火焰、部分文字渲染、Accelerated Rendering 兼容仍有明确 TODO | 与工业语义无直接耦合，按渲染 API 稳定程度单独处理。 |
 | P3 | LRTactical 未完移植 | 多种投掷物、网络同步/音频和部分实体效果仍标注未实现 | 与 TACZ 工业线分开排期，避免混入维护提交。 |
 
