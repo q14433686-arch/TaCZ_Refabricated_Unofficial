@@ -81,7 +81,7 @@ public final class IndustrialServiceBenchService {
         List<ItemStack> components = new ArrayList<>();
         for (ComponentSpec spec : specs) {
             int condition = conditionForSlot(maintenance, spec.conditionSlot());
-            ItemStack component = IndustryItemBuilder.component()
+            ItemStack component = IndustryItemBuilder.serviceComponent()
                     .platform(origin.platform())
                     .kind(spec.kind())
                     .displayNameKey(spec.displayName())
@@ -110,7 +110,7 @@ public final class IndustrialServiceBenchService {
         int recoil = IndustryMaintenanceService.MAX_CONDITION;
         long shots = 0L;
         for (ItemStack component : components) {
-            if (!component.is(ModItems.GUN_COMPONENT)) {
+            if (!isServiceComponent(component)) {
                 return ReassemblyPlan.failure(Failure.COMPONENT_SET_INVALID);
             }
             CompoundTag tag = ItemNbtUtils.getTag(component);
@@ -250,10 +250,38 @@ public final class IndustrialServiceBenchService {
                 : RepairPlan.success(identity.origin(), steel, brass, repaired);
     }
 
-    public static void repairComponents(List<ItemStack> components) {
+    public static List<ItemStack> repairComponents(List<ItemStack> components) {
+        List<ItemStack> repaired = new ArrayList<>();
         for (ItemStack component : components) {
-            ItemNbtUtils.updateTag(component, tag -> tag.putInt(PART_CONDITION, IndustryMaintenanceService.MAX_CONDITION));
+            ItemStack serviceComponent = toServiceComponent(component);
+            ItemNbtUtils.updateTag(serviceComponent, tag -> tag.putInt(PART_CONDITION, IndustryMaintenanceService.MAX_CONDITION));
+            repaired.add(serviceComponent);
         }
+        return List.copyOf(repaired);
+    }
+
+    /** New dismantles use SERVICE_COMPONENT; old condition-bearing components remain accepted for migration. */
+    public static boolean isServiceComponent(ItemStack stack) {
+        return stack.is(ModItems.SERVICE_COMPONENT)
+                || (stack.is(ModItems.GUN_COMPONENT) && ItemNbtUtils.getTag(stack).contains(PART_CONDITION));
+    }
+
+    /** Convert an old condition-bearing normal component only inside the service bench transaction. */
+    public static ItemStack toServiceComponent(ItemStack stack) {
+        if (stack.is(ModItems.SERVICE_COMPONENT)) {
+            return stack;
+        }
+        ItemStack converted = new ItemStack(ModItems.SERVICE_COMPONENT, stack.getCount());
+        CompoundTag source = ItemNbtUtils.getTag(stack);
+        ItemNbtUtils.updateTag(converted, target -> {
+            for (String key : source.keySet()) {
+                net.minecraft.nbt.Tag value = source.get(key);
+                if (value != null) {
+                    target.put(key, value.copy());
+                }
+            }
+        });
+        return converted;
     }
 
     public static boolean isSteelRepairMaterial(ItemStack stack) {

@@ -148,7 +148,10 @@ public final class IndustrialServiceBenchBlockEntity extends BlockEntity impleme
         if (plan.brassSheets() > 0) {
             brass.shrink(plan.brassSheets());
         }
-        IndustrialServiceBenchService.repairComponents(components);
+        List<ItemStack> repaired = IndustrialServiceBenchService.repairComponents(components);
+        for (int index = 0; index < COMPONENT_COUNT; index++) {
+            setItem(COMPONENT_START + index, repaired.get(index));
+        }
         IndustrialServiceBenchService.damageWrench(getItem(WRENCH));
         player.sendSystemMessage(Component.translatable("message.tacz.industrial_service.repair_success",
                 plan.repairedComponents(), plan.steelPlates(), plan.brassSheets()), true);
@@ -189,7 +192,7 @@ public final class IndustrialServiceBenchBlockEntity extends BlockEntity impleme
             case BLUEPRINT -> stack.is(ModItems.GUN_BLUEPRINT);
             case FIXTURE -> stack.is(ModItems.PRESS_DIE);
             case WRENCH -> stack.is(ModItems.ARMORER_WRENCH);
-            case COMPONENT_START, COMPONENT_START + 1, COMPONENT_START + 2, COMPONENT_START + 3, COMPONENT_START + 4 -> stack.is(ModItems.GUN_COMPONENT);
+            case COMPONENT_START, COMPONENT_START + 1, COMPONENT_START + 2, COMPONENT_START + 3, COMPONENT_START + 4 -> IndustrialServiceBenchService.isServiceComponent(stack);
             case STEEL_MATERIAL -> IndustrialServiceBenchService.isSteelRepairMaterial(stack);
             case BRASS_MATERIAL -> IndustrialServiceBenchService.isBrassRepairMaterial(stack);
             default -> false;

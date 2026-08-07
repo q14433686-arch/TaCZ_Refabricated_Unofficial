@@ -5,6 +5,8 @@ import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import com.tacz.guns.client.industry.icon.IndustryIconRenderer;
 import com.tacz.guns.industry.ammo.CartridgeStackLimitService;
 import com.tacz.guns.industry.magazine.MagazineItemDataAccessor;
+import com.tacz.guns.industry.service.IndustrialServiceBenchService;
+import com.tacz.guns.init.ModItems;
 import com.tacz.guns.util.ItemNbtUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -14,6 +16,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -43,6 +46,21 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
                               @Nonnull Entity entity, @Nullable EquipmentSlot slot) {
         super.inventoryTick(stack, level, entity, slot);
         CartridgeStackLimitService.normalize(stack);
+        // Components dismantled by pre-service-component builds shared the
+        // normal production item id. Move those condition-bearing legacy stacks
+        // into the dedicated service registry item the first time a player has
+        // them in inventory, so they cannot enter ordinary gun assembly routes.
+        if (stack.is(ModItems.GUN_COMPONENT) && ItemNbtUtils.getTag(stack).contains("IndustryPartCondition")
+                && entity instanceof Player player) {
+            var inventory = player.getInventory();
+            for (int index = 0; index < inventory.getNonEquipmentItems().size(); index++) {
+                if (inventory.getItem(index) == stack) {
+                    inventory.setItem(index, IndustrialServiceBenchService.toServiceComponent(stack));
+                    inventory.setChanged();
+                    break;
+                }
+            }
+        }
     }
 
     @Override

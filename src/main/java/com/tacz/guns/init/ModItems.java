@@ -61,9 +61,11 @@ public class ModItems {
 
     /** Neutral blank with a structural class; a reusable platform die forms its final identity. */
     public static Item GUN_COMPONENT_BLANK = register("gun_component_blank", new IndustryTaggedItem(itemProps("gun_component_blank").stacksTo(16)));
-    /** Platform/kind are stored in custom data so one registry item serves all gun packs. */
+    /** Platform/kind are stored in custom data so one registry item serves all normal production assemblies. */
     public static Item GUN_COMPONENT = register("gun_component", new IndustryTaggedItem(itemProps("gun_component").stacksTo(16)));
-    /** Neutral maintenance workpiece; a production template names the exact replacement component. */
+    /** Durable, dismantled service component; deliberately cannot enter normal production terminal recipes. */
+    public static Item SERVICE_COMPONENT = register("service_component", new IndustryTaggedItem(itemProps("service_component").stacksTo(1)));
+    /** Neutral maintenance workpiece; retained only for old-world item compatibility after bench-native repair replaced this route. */
     public static Item SERVICE_PART_BLANK = register("service_part_blank", new IndustryTaggedItem(itemProps("service_part_blank").stacksTo(16)));
     /** Named, GunId-bound service replacement part consumed by the single-component Create repair line. */
     public static Item SERVICE_PART = register("service_part", new IndustryTaggedItem(itemProps("service_part").stacksTo(16)));

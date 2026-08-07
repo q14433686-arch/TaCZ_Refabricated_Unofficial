@@ -89,7 +89,7 @@ public final class IndustrialServiceBenchMenu extends AbstractContainerMenu {
             } else if (source.is(ModItems.ARMORER_WRENCH)) {
                 moved = moveItemStackTo(source, IndustrialServiceBenchBlockEntity.WRENCH,
                         IndustrialServiceBenchBlockEntity.WRENCH + 1, false);
-            } else if (source.is(ModItems.GUN_COMPONENT)) {
+            } else if (IndustrialServiceBenchService.isServiceComponent(source)) {
                 moved = moveItemStackTo(source, IndustrialServiceBenchBlockEntity.COMPONENT_START,
                         IndustrialServiceBenchBlockEntity.COMPONENT_START + IndustrialServiceBenchBlockEntity.COMPONENT_COUNT, false);
             } else if (IndustrialServiceBenchService.isSteelRepairMaterial(source)) {

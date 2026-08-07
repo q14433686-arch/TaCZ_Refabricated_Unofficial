@@ -70,13 +70,14 @@ public final class IndustryStackDefinition {
         JsonObject custom = components.has("minecraft:custom_data") && components.get("minecraft:custom_data").isJsonObject()
                 ? components.getAsJsonObject("minecraft:custom_data") : new JsonObject();
         ItemStack stack;
-        if (item == ModItems.GUN_COMPONENT_BLANK || item == ModItems.GUN_COMPONENT
+        if (item == ModItems.GUN_COMPONENT_BLANK || item == ModItems.GUN_COMPONENT || item == ModItems.SERVICE_COMPONENT
                 || item == ModItems.SERVICE_PART_BLANK || item == ModItems.SERVICE_PART || item == ModItems.GUN_BLUEPRINT
                 || item == ModItems.CARTRIDGE_CASE_BLANK || item == ModItems.CARTRIDGE_CASE
                 || item == ModItems.PROJECTILE_BLANK || item == ModItems.PROJECTILE_CORE
                 || item == ModItems.PRESS_DIE) {
             IndustryItemBuilder builder = item == ModItems.GUN_COMPONENT_BLANK ? IndustryItemBuilder.componentBlank()
                     : item == ModItems.GUN_COMPONENT ? IndustryItemBuilder.component()
+                    : item == ModItems.SERVICE_COMPONENT ? IndustryItemBuilder.serviceComponent()
                     : item == ModItems.SERVICE_PART_BLANK ? IndustryItemBuilder.servicePartBlank()
                     : item == ModItems.SERVICE_PART ? IndustryItemBuilder.servicePart()
                     : item == ModItems.GUN_BLUEPRINT ? IndustryItemBuilder.blueprint()
