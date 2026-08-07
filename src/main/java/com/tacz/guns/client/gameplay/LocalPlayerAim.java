@@ -3,7 +3,7 @@ package com.tacz.guns.client.gameplay;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
-import com.tacz.guns.experience.GunExperienceService;
+import com.tacz.guns.experience.GunLevelImplementation;
 import com.tacz.guns.network.message.ClientMessagePlayerAim;
 import com.tacz.guns.resource.modifier.custom.AdsModifier;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
@@ -90,7 +90,7 @@ public class LocalPlayerAim {
         if (operator.getCacheProperty() != null) {
             aimTime = operator.getCacheProperty().<Float>getCache(AdsModifier.ID);
         }
-        aimTime = Math.max(0, aimTime) * GunExperienceService.aimTimeMultiplier(gun);
+        aimTime = Math.max(0, aimTime) * GunLevelImplementation.aimTimeMultiplier(gun);
         return (System.currentTimeMillis() - data.clientAimingTimestamp + 1) / (aimTime * 1000);
     }
 }

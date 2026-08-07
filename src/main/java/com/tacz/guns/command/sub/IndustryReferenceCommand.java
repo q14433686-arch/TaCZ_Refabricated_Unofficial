@@ -46,6 +46,10 @@ public final class IndustryReferenceCommand {
                 snapshot.guns(), snapshot.ammo(), snapshot.attachments(), snapshot.direct(), snapshot.aliases(),
                 snapshot.unresolved(), snapshot.profiledGuns(), snapshot.surveyedGunCandidates()
         ));
+        var feedAudit = manager.getGunFeedAudit();
+        context.getSource().sendSystemMessage(Component.translatable(
+                "commands.tacz.industry.feed_audit", feedAudit.accepted(), feedAudit.dormant(), feedAudit.rejected()
+        ));
         return Command.SINGLE_SUCCESS;
     }
 

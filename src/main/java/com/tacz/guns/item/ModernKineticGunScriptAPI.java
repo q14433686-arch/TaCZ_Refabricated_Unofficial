@@ -18,7 +18,7 @@ import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.config.common.AmmoConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
-import com.tacz.guns.experience.GunExperienceService;
+import com.tacz.guns.experience.GunLevelImplementation;
 import com.tacz.guns.industry.ammo.SpentCartridgeService;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
 import com.tacz.guns.industry.magazine.EnBlocClipService;
@@ -138,7 +138,7 @@ public class ModernKineticGunScriptAPI {
         // Real per-stack proficiency handling: this is the server value passed
         // into projectile spread, not a tooltip-only or client camera effect.
         final float inaccuracy = Math.max(0, modifyProperty(GunProperties.INACCURACY, Float.class, unmodifiedInaccuracy)
-                * GunExperienceService.inaccuracyMultiplier(itemStack));
+                * GunLevelImplementation.inaccuracyMultiplier(itemStack));
 
         // 消音器影响
         // 使用消音这个选项对于射手来说是在客户端处理的，脚本改了没用，所以干脆不让改了

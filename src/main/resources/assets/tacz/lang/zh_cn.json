@@ -2025,5 +2025,6 @@
   "config.tacz.server.gun_experience_recoil_reduction": "10 级最大后坐镜头缩减",
   "tooltip.tacz.gun.proficiency_handling": "熟练操控：瞄准快 %s · 散布紧 %s · 后坐低 %s",
   "toast.tacz.sub.handling_up": "这把实体枪的操控更加熟练",
-  "tooltip.tacz.maintenance.service_fault": "机械勤务故障——请在工业勤务台维修组件"
+  "tooltip.tacz.maintenance.service_fault": "机械勤务故障——请在工业勤务台维修组件",
+  "commands.tacz.industry.feed_audit": "§b供弹适配审计§r — 已接受：%s，可选包休眠：%s，被拒绝：%s"
 }

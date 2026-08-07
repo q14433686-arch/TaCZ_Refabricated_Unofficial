@@ -153,7 +153,7 @@ TACZ industry runtime audit:
 /tacz industry reference <namespace:path>
 ```
 
-前者显示直接解析/别名/未解析/已校验/测绘候选总数；后者显示一把枪的实际或保守测绘参考行、运行时供弹状态、弹药事实、制造档位和证据。它是检查表，不会借查询操作改变供弹机制。
+前者显示直接解析/别名/未解析/已校验/测绘候选总数，并额外报告已接受、可选包休眠、或因 Ammo/容量不符被拒绝的 `gun_feed` 适配声明；后者显示一把枪的实际或保守测绘参考行、运行时供弹状态、弹药事实、制造档位和证据。它是检查表，不会借查询操作改变供弹机制。
 
 另有 gun-pack 预检与资源包装层：它会识别 `data/.../recipes`、`index/...`、`data/...` 中“内容像 JSON 但缺 `.json` 后缀”的文件，并只对这些受限 TACZ 数据目录公开同路径的虚拟 `.json` 别名。原文件仍存在、ZIP 不被修改；若同路径已有真实 `.json`，真实文件优先，虚拟别名不会覆盖它。
 
@@ -162,7 +162,7 @@ TACZ industry runtime audit:
 1. **零文件但结果身份已解析**：`CREATE_FLY` 会生成明确标注的测绘 fallback：测绘档案包 + 空白工装页 + 测绘夹具 → master dossier → production template；五种中性结构毛坯 + template + fixture → 测绘平台结构套件；原枪包的真实材料表再加 kit/template/fixture，仍在 Gunsmith Table 这个真实多槽 GUI 中完成终端制造。未知供弹保持 `legacy`。
 2. **仅 ReferenceProfile**：测绘流程会显示真实动作、供弹和弹药事实，但不会自动猜出尚未实现的 clip/fuel 行为。
 3. **ReferenceProfile + id_aliases**：修复旧包错误 ID，得到稳定身份与受事实守卫的测绘工艺。
-4. **再提供 `industry/gun_feed` / 高保真 Create 声明**：启用实体弹匣、弹链箱或完整专用组件线；手工高保真声明优先，测绘 GUI fallback 不会覆盖它。
+4. **再提供 `industry/gun_feed` / 高保真 Create 声明**：通过运行时 Ammo/容量验证后启用实体弹匣、弹链箱或完整专用组件线；已通过验证的测绘枪还会获得真实 Gunsmith Table 供弹器委托。手工高保真声明优先，测绘 GUI fallback 不会覆盖它。完整字段、制造出口和拒绝边界见 [`THIRD_PARTY_MAGAZINE_ADAPTER.md`](THIRD_PARTY_MAGAZINE_ADAPTER.md)。
 
 测绘 fallback 故意不声称知道第三方模型的真实闭锁块/供弹盘几何：它只称“测绘平台结构套件”，并保留原材料账单。动态 dossier/template/kit 的显示名会追加 `[namespace:gun]`，可以在 Gunsmith Table 搜索中按实际 GunId 区分，不需要伪造一个未经证实的部件名。
 

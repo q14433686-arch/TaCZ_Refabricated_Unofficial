@@ -11,7 +11,7 @@ import com.tacz.guns.client.resource.pojo.PackInfo;
 import com.tacz.guns.client.resource.pojo.display.gun.AmmoCountStyle;
 import com.tacz.guns.client.resource.pojo.display.gun.DamageStyle;
 import com.tacz.guns.config.sync.SyncConfig;
-import com.tacz.guns.experience.GunExperienceService;
+import com.tacz.guns.experience.GunLevelImplementation;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
 import com.tacz.guns.item.GunTooltipPart;
@@ -205,7 +205,7 @@ public class ClientGunTooltip implements ClientTooltipComponent {
         }
 
         this.proficiencyHandlingInfo = shouldShow(GunTooltipPart.BASE_INFO)
-                ? GunExperienceService.getHandlingTooltipLine(gun) : null;
+                ? GunLevelImplementation.getHandlingTooltipLine(gun) : null;
         if (this.proficiencyHandlingInfo != null) {
             this.maxWidth = Math.max(font.width(this.proficiencyHandlingInfo), this.maxWidth);
         }

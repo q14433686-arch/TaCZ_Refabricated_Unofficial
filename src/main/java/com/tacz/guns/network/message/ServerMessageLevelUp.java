@@ -1,7 +1,7 @@
 package com.tacz.guns.network.message;
 
 import com.tacz.guns.GunMod;
-import com.tacz.guns.experience.GunExperienceService;
+import com.tacz.guns.experience.GunLevelImplementation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -55,9 +55,9 @@ public class ServerMessageLevelUp implements CustomPacketPayload {
         if (player == null) {
             return;
         }
-        Component subtitle = level >= GunExperienceService.MAX_LEVEL
+        Component subtitle = level >= GunLevelImplementation.MAX_LEVEL
                 ? Component.translatable("toast.tacz.sub.final_level")
-                : Component.translatable(GunExperienceService.isHandlingEnabled()
+                : Component.translatable(GunLevelImplementation.isHandlingEnabled()
                         ? "toast.tacz.sub.handling_up" : "toast.tacz.sub.level_up");
         // 26.2 no longer exposes either old ToastManager accessor on
         // Minecraft. Keep the upgrade feedback authoritative and portable by

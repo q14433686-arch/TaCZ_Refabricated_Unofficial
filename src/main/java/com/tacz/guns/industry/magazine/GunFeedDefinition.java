@@ -1,6 +1,8 @@
 package com.tacz.guns.industry.magazine;
 
 import com.google.gson.annotations.SerializedName;
+import com.tacz.guns.resource.index.CommonGunIndex;
+import com.tacz.guns.resource.pojo.data.gun.GunData;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
@@ -255,5 +257,52 @@ public class GunFeedDefinition {
                 && getMagazineCapacity() > 0
                 && getFeedDeviceCapacity() > 0
                 && getAmmoId() != null;
+    }
+
+    /**
+     * Validate an add-on declaration against the actual loaded TACZ GunData.
+     * This is intentionally stricter than checking JSON shape: a pack cannot
+     * accidentally wire a physical STANAG magazine to a same-named gun whose
+     * currently loaded ammo or receiver capacity has changed.
+     */
+    public Validation validateAgainst(Identifier gunId, CommonGunIndex index) {
+        if (gunId == null || index == null || index.getGunData() == null) {
+            return Validation.invalid("target GunIndex/GunData is absent");
+        }
+        FeedMechanism declared = getMechanism();
+        if (declared == FeedMechanism.LEGACY) {
+            return Validation.invalid("mechanism=legacy does not opt into a physical-feed transaction");
+        }
+        GunData data = index.getGunData();
+        if (getAmmoId() == null || !getAmmoId().equals(data.getAmmoId())) {
+            return Validation.invalid("declared ammo does not equal loaded GunData.ammo");
+        }
+        int capacity = getMagazineCapacity();
+        if (capacity != data.getAmmoAmount()) {
+            return Validation.invalid("declared magazine_capacity does not equal loaded GunData.ammo_amount");
+        }
+        if (getDisplayName().isBlank()) {
+            return Validation.invalid("display_name is required for a player-visible feed device");
+        }
+        boolean validMechanism = switch (declared) {
+            case DETACHABLE_MAGAZINE, BELT -> isValidExternalCarrierDefinition();
+            case INTERNAL_BOX, TUBE, REVOLVER, SINGLE_SHOT -> isValidInternalDefinition();
+            case STRIPPER_CLIP, SPEEDLOADER -> isValidLoadingDeviceDefinition();
+            case EN_BLOC_CLIP -> isValidEnBlocClipDefinition()
+                    && getFeedDeviceCapacity() == capacity;
+            case LEGACY -> false;
+        };
+        if (!validMechanism) {
+            return Validation.invalid("required mechanism/family/capacity/feed-device fields are incomplete");
+        }
+        if (reloadRoutes != null && !reloadRoutes.isEmpty() && getReloadRoutes().isEmpty()) {
+            return Validation.invalid("all declared reload_routes are invalid");
+        }
+        return Validation.success();
+    }
+
+    public record Validation(boolean valid, String reason) {
+        public static Validation success() { return new Validation(true, ""); }
+        public static Validation invalid(String reason) { return new Validation(false, reason == null ? "invalid declaration" : reason); }
     }
 }

@@ -85,5 +85,5 @@ SMLE、Berthier、Krag、其他转轮、杠杆枪虽然也出现循环或 clip �
 1. 安装包后运行 `/tacz industry audit`，先得到 direct / alias / unresolved / curated / surveyed 数量；
 2. 对尚未覆盖的错误结果 ID 写 `industry/id_aliases`，且用 `expected_ammo`、`expected_capacity` 防止错误覆盖；
 3. 对需要真实工业化的枪写 `industry/reference/guns/<gun>.json`，先记录动作、实际供弹设备和弹药类别；
-4. 只有明确的 `detachable_magazine` / `belt` 才进入已安装实体弹匣路线；`stripper_clip` / `speedloader` 走各自物理装填事务，`en_bloc_clip` 走独立“装入枪 NBT → 随射击扣除 → 空夹自动弹出”事务；`fuel_canister` 仍先记录事实、保持 legacy，等待其真实机制；
+4. 只有明确的 `detachable_magazine` / `belt` 才进入已安装实体弹匣路线；声明会在运行时用实际 GunData Ammo/容量验证，并为测绘平台生成真实多槽供弹器委托；`stripper_clip` / `speedloader` 走各自物理装填事务，`en_bloc_clip` 走独立“装入枪 NBT → 随射击扣除 → 空夹自动弹出”事务；`fuel_canister` 仍先记录事实、保持 legacy，等待其真实机制；完整接入示例见 [`THIRD_PARTY_MAGAZINE_ADAPTER.md`](THIRD_PARTY_MAGAZINE_ADAPTER.md)。
 5. 后续内存生成资源层只接收当前已审计的 133 条安全工作台身份，默认包的手工高保真路线始终优先。

@@ -76,6 +76,12 @@ public final class SurveyedIndustryRecipeFactory {
             if (feed != null && (feed.isValidLoadingDeviceDefinition() || feed.isValidEnBlocClipDefinition())) {
                 commissions += putIfAbsent(output, deviceId(platform), loadingDeviceRecipe(platform, feed)) ? 1 : 0;
             }
+            if (feed != null && feed.isValidExternalCarrierDefinition()) {
+                // A validated addon declaration now gains a real multi-slot
+                // surveyed carrier commission instead of merely accepting a
+                // creative/debug magazine ItemStack with no manufacturing path.
+                commissions += putIfAbsent(output, carrierId(platform), externalCarrierRecipe(platform, feed)) ? 1 : 0;
+            }
         }
         if (transformed > 0) {
             GunMod.LOGGER.info(
@@ -188,11 +194,39 @@ public final class SurveyedIndustryRecipeFactory {
         );
     }
 
+    /**
+     * Honest fallback manufacture for a validated third-party detachable
+     * magazine or belt box. It is a real Gunsmith Table multi-slot transaction:
+     * a neutral carrier blank and this platform's surveyed kit are consumed;
+     * the proven production template and fixture are retained. We deliberately
+     * do not claim a high-fidelity Create carrier line for an addon whose real
+     * shell geometry has not been supplied.
+     */
+    private static JsonObject externalCarrierRecipe(SurveyedPlatform platform, GunFeedDefinition definition) {
+        JsonArray materials = new JsonArray();
+        materials.add(material(new com.google.gson.JsonPrimitive("tacz:magazine_blank"), 1, true));
+        materials.add(material(partial("tacz:gun_component", surveyedKitTag(platform)), 1, true));
+        materials.add(material(partial("tacz:gun_blueprint", productionTemplateTag(platform)), 1, false));
+        materials.add(material(partial("tacz:press_die", surveyFixtureTag()), 1, false));
+        return generatedTableRecipe(materials, customResult("tacz:magazine", externalCarrierTag(definition)));
+    }
+
     private static JsonObject loadingDeviceTag(GunFeedDefinition definition) {
         JsonObject tag = new JsonObject();
         tag.addProperty("MagazineFamily", definition.getMagazineFamily());
         tag.addProperty("MagazineAmmoId", definition.getAmmoId().toString());
         tag.addProperty("MagazineCapacity", definition.getFeedDeviceCapacity());
+        tag.addProperty("MagazineAmmoCount", 0);
+        tag.addProperty("MagazineDisplayName", definition.getDisplayName());
+        tag.addProperty("FeedDeviceKind", definition.getMechanism().serializedName());
+        return tag;
+    }
+
+    private static JsonObject externalCarrierTag(GunFeedDefinition definition) {
+        JsonObject tag = new JsonObject();
+        tag.addProperty("MagazineFamily", definition.getMagazineFamily());
+        tag.addProperty("MagazineAmmoId", definition.getAmmoId().toString());
+        tag.addProperty("MagazineCapacity", definition.getMagazineCapacity());
         tag.addProperty("MagazineAmmoCount", 0);
         tag.addProperty("MagazineDisplayName", definition.getDisplayName());
         tag.addProperty("FeedDeviceKind", definition.getMechanism().serializedName());
@@ -332,6 +366,10 @@ public final class SurveyedIndustryRecipeFactory {
 
     private static Identifier deviceId(SurveyedPlatform platform) {
         return generatedId("device", platform);
+    }
+
+    private static Identifier carrierId(SurveyedPlatform platform) {
+        return generatedId("carrier", platform);
     }
 
     private static Identifier generatedId(String operation, SurveyedPlatform platform) {

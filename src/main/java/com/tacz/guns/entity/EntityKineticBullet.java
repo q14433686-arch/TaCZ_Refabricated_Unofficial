@@ -19,7 +19,7 @@ import com.tacz.guns.client.particle.AmmoParticleSpawner;
 import com.tacz.guns.config.common.AmmoConfig;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
-import com.tacz.guns.experience.GunExperienceService;
+import com.tacz.guns.experience.GunLevelImplementation;
 import com.tacz.guns.init.ModDamageTypes;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunHurt;
@@ -177,7 +177,7 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         this.setOwner(throwerIn);
         // gunId 提前赋值，以让 modifyProperty 可以在构造函数中运行
         this.gunId = gunId;
-        this.gunExperienceToken = GunExperienceService.captureToken(gunItem);
+        this.gunExperienceToken = GunLevelImplementation.captureToken(gunItem);
         AttachmentCacheProperty cacheProperty = Objects.requireNonNull(IGunOperator.fromLivingEntity(throwerIn).getCacheProperty());
         float armorIgnore = modifyProperty(GunProperties.ARMOR_IGNORE, Float.class, cacheProperty.getCache(GunProperties.ARMOR_IGNORE));
         float headshot = modifyProperty(GunProperties.HEADSHOT_MULTIPLIER, Float.class, cacheProperty.getCache(GunProperties.HEADSHOT_MULTIPLIER));
@@ -473,12 +473,12 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
                 if (livingCore.isDeadOrDying()) {
                     EntityKillByGunEvent killByGunEvent = new EntityKillByGunEvent(this, livingCore, attacker, newGunId, gunDisplayId, damage, sources, headshot, headShotMultiplier, LogicalSide.SERVER);
                     EntityKillByGunEvent.CALLBACK.invoker().post(killByGunEvent);
-                    GunExperienceService.awardHit(attacker, this.gunId, gunExperienceToken, headshot, true);
+                    GunLevelImplementation.awardHit(attacker, this.gunId, gunExperienceToken, headshot, true);
                     NetworkHandler.sendToDimension(new ServerMessageGunKill(getId(), livingCore.getId(), attackerId, newGunId, gunDisplayId, damage, headshot, headShotMultiplier), livingCore);
                 } else {
                     EntityHurtByGunEvent.Post hurtByGunEvent = new EntityHurtByGunEvent.Post(this, livingCore, attacker, newGunId, gunDisplayId, damage, sources, headshot, headShotMultiplier, LogicalSide.SERVER);
                     EntityHurtByGunEvent.POST.invoker().post(hurtByGunEvent);
-                    GunExperienceService.awardHit(attacker, this.gunId, gunExperienceToken, headshot, false);
+                    GunLevelImplementation.awardHit(attacker, this.gunId, gunExperienceToken, headshot, false);
                     NetworkHandler.sendToDimension(new ServerMessageGunHurt(getId(), livingCore.getId(), attackerId, newGunId, gunDisplayId, damage, headshot, headShotMultiplier), livingCore);
                 }
             }

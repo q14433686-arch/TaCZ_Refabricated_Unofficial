@@ -31,6 +31,7 @@ import com.tacz.guns.resource.pojo.data.gun.Ignite;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceProfile;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceProfileManager;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
+import com.tacz.guns.industry.magazine.GunFeedDefinitionManager;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyRecipeManager;
 import com.tacz.guns.industry.recipe.IndustryAssemblyDefinition;
@@ -95,7 +96,8 @@ public class CommonAssetsManager implements ICommonResourceProvider {
      * original gun pack's GunData files so the ND-licensed default pack is not
      * modified and third-party packs can opt in independently.
      */
-    private CommonDataManager<GunFeedDefinition> gunFeed;
+    /** Validated only after GunIndex is available, so add-on capacity/ammo mismatches fail closed. */
+    private GunFeedDefinitionManager gunFeed;
     /** Create recipe projection synchronised for the built-in REI bridge. */
     private CommonDataManager<IndustryProcessDefinition> industryProcess;
     /** Server-authoritative dedicated cartridge-assembly definitions, synced for UI/REI. */
@@ -116,8 +118,6 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     public void reloadAndRegister(Consumer<PreparableReloadListener> register) {
         // 这里会顺序重载，所以需要把index这种依赖data的放在后面
         gunData = register(new CommonDataManager<>(DataType.GUN_DATA, GunData.class, GSON, "data/guns", "GunDataLoader"));
-        gunFeed = register(new CommonDataManager<>(DataType.GUN_FEED, GunFeedDefinition.class, GSON,
-                "industry/gun_feed", "GunFeedLoader"));
         attachmentData = register(new AttachmentDataManager());
         attachmentsTagManager = register(new AttachmentsTagManager());
         recipeFilterManager = register(new RecipeFilterManager());
@@ -128,6 +128,9 @@ public class CommonAssetsManager implements ICommonResourceProvider {
 
         ammoIndex = register(new CommonDataManager<>(DataType.AMMO_INDEX, CommonAmmoIndex.class, GSON, "index/ammo", "AmmoIndexLoader"));
         gunIndex = register(new CommonDataManager<>(DataType.GUN_INDEX, CommonGunIndex.class, GSON, "index/guns", "GunIndexLoader"));
+        // Feed declarations must see the fully loaded GunIndex/GunData before
+        // they can safely enable a physical magazine for an addon receiver.
+        gunFeed = register(new GunFeedDefinitionManager());
         attachmentIndex = register(new CommonDataManager<>(DataType.ATTACHMENT_INDEX, CommonAttachmentIndex.class, GSON, "index/attachments", "AttachmentIndexLoader"));
         blockIndex = register(new CommonDataManager<>(DataType.BLOCK_INDEX, CommonBlockIndex.class, GSON, "index/blocks", "BlockIndexLoader"));
         // Aliases depend on the loaded indexes and must be ready before table
@@ -282,12 +285,17 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     @Override
     @Nullable
     public GunFeedDefinition getGunFeedDefinition(Identifier gunId) {
-        return gunFeed == null ? null : gunFeed.getData(gunId);
+        return gunFeed == null ? null : gunFeed.getDefinition(gunId);
     }
 
     @Override
     public Set<Map.Entry<Identifier, GunFeedDefinition>> getAllGunFeedDefinitions() {
-        return gunFeed == null ? Collections.emptySet() : gunFeed.getAllData().entrySet();
+        return gunFeed == null ? Collections.emptySet() : gunFeed.getValidDefinitions().entrySet();
+    }
+
+    /** Add-on magazine adapter audit; accepted definitions alone are exposed to runtime services. */
+    public GunFeedDefinitionManager.Audit getGunFeedAudit() {
+        return gunFeed == null ? new GunFeedDefinitionManager.Audit(0, 0, 0) : gunFeed.getAudit();
     }
 
     @Override

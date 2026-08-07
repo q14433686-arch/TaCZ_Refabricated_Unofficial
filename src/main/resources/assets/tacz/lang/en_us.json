@@ -2025,5 +2025,6 @@
   "config.tacz.server.gun_experience_recoil_reduction": "Maximum level-10 recoil-camera reduction",
   "tooltip.tacz.gun.proficiency_handling": "Proficiency handling: ADS %s faster · spread %s tighter · recoil %s lower",
   "toast.tacz.sub.handling_up": "This physical gun now handles more cleanly",
-  "tooltip.tacz.maintenance.service_fault": "Mechanical service fault — repair components at the Industrial Service Bench"
+  "tooltip.tacz.maintenance.service_fault": "Mechanical service fault — repair components at the Industrial Service Bench",
+  "commands.tacz.industry.feed_audit": "§bFeed adapter audit§r — accepted: %s, optional-pack dormant: %s, rejected: %s"
 }
