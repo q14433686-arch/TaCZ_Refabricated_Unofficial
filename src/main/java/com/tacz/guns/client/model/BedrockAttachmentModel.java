@@ -49,7 +49,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * 收枪结束时可能停在 0.001 这类残值上，用 {@code > 0} 判据会让镜身
      * 一直挂着一个几乎不可见但确实存在的洞。
      */
-    private static final float AIM_CLIP_START = 0.02f;
+    /** 开镜进度超过该值才启用目镜掩码裁剪。与 {@code GunItemRendererWrapper#resolveScopeMaskActive} 共用。 */
+    public static final float AIM_CLIP_START = 0.02f;
 
     /**
      * 瞄具文字开始显示的开镜进度。与 {@code IlluminatedReticleRenderer.FADE_IN_START}
@@ -396,6 +397,16 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     }
 
 
+
+    /**
+     * 该瞄具模型是否带<b>目镜几何</b>。
+     *
+     * <p>镜身/准星的掩码裁剪只在「有目镜」时才有意义；枪身（{@code GunItemRendererWrapper}）
+     * 与准星复用同一条判定，保证镜身/枪身/准星/手臂同进同退，不会出现「裁一半」的半边状态。</p>
+     */
+    public boolean hasOcularGeometry() {
+        return !ocularParts.isEmpty();
+    }
 
     @Nullable
     public List<BedrockPart> getScopeViewPath(int viewSwitchCount) {

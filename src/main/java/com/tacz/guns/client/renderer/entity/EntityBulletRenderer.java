@@ -4,6 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.client.other.KeepingItemRenderer;
+import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.model.BedrockAmmoModel;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
@@ -28,11 +31,13 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
@@ -117,8 +122,21 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 return;
             }
             boolean isFirstPerson = this.entityRenderDispatcher.options.getCameraType().isFirstPerson() && shooter instanceof LocalPlayer;
-            if (isFirstPerson && !RenderConfig.FIRST_PERSON_BULLET_TRACER_ENABLE.get()) {
-                return;
+            if (isFirstPerson) {
+                if (!RenderConfig.FIRST_PERSON_BULLET_TRACER_ENABLE.get()) {
+                    return;
+                }
+                // 【本轮】第一人称曳光改由手部 pass 提交（GunItemRendererWrapper#renderFirstPerson
+                // 在缓存当帧枪口视图偏移后调用 submitFirstPersonTracers），起点 = 当帧枪口，
+                // 与枪械同投影、同 pass，彻底消除「实体 pass 先于手部 pass」造成的跨帧滞后。
+                //
+                // 本帧手部 pass 会画到这颗子弹（手里有枪、有枪口锚点、且子弹在曳光射程内）时，
+                // 这里必须跳过，否则同一颗子弹的拖尾会被画两遍；其余情况
+                // （收枪完成/切到非枪械/子弹飞出射程/枪械没有枪口节点）退回本路径的旧锚点逻辑兜底，
+                // 保证曳光不会凭空消失。
+                if (isGunRenderedInHandPass() && hasMuzzleAnchor() && withinHandPassRange(bullet)) {
+                    return;
+                }
             }
             poseStack.pushPose();
             {
@@ -253,6 +271,182 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             }
             poseStack.popPose();
         });
+    }
+
+    /** 手部 pass 曳光覆盖的子弹距离（超出后由实体 pass 的旧锚点路径兜底）。 */
+    private static final double HAND_PASS_RANGE = 256.0;
+    /** 手部 pass 曳光拖尾长度上限，防止远距离子弹在屏幕上拉出贯穿全屏的长线。 */
+    private static final double HAND_PASS_MAX_TRAIL = 32.0;
+
+    /**
+     * 第一人称曳光的手部 pass 提交入口（由 {@code GunItemRendererWrapper#renderFirstPerson}
+     * 在缓存当帧枪口视图偏移之后调用）。
+     *
+     * <h2>为什么要把第一人称曳光挪到手部 pass</h2>
+     * 实体（Level）pass 每帧先于手部（Hand）pass 执行，旧实现里曳光渲染时读到的
+     * {@code muzzleRenderOffset} 是<b>上一帧</b>手部 pass 缓存的枪口偏移 —— 转头、开镜过渡、
+     * 后坐动画、跳跃摆动期间枪口视图偏移每帧都在变，于是起点相对枪口漂移（1 帧滞后）。
+     *
+     * <p>这里改为在<b>手部 pass 内</b>、拿到<b>当帧</b> {@code muzzleRenderOffsetView}
+     * （视图空间、未乘 FOV 因子）后提交：起点 = 当帧枪口，与枪械同投影、同 pass，
+     * 不存在跨帧滞后，开镜/后坐/摆动期间拖尾都死死钉在枪口上。
+     * 渲染流程与 {@code ShellRender} 一致（手部 pass 内提交模型），已被多轮实测验证。</p>
+     *
+     * <p>旧路径（{@link #renderTracerAmmo}）对第一人称子弹只保留兜底职责：手部 pass 不渲染
+     * 本帧枪械（收枪/切到非枪械）或子弹超出 {@link #HAND_PASS_RANGE} 时才由它接管。</p>
+     */
+    public static void submitFirstPersonTracers(SubmitNodeCollector collector, int packedLight) {
+        if (!RenderConfig.FIRST_PERSON_BULLET_TRACER_ENABLE.get()) {
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null) {
+            return;
+        }
+        if (mc.options == null || mc.options.getCameraType() == null || !mc.options.getCameraType().isFirstPerson()) {
+            return;
+        }
+        // 改装界面里枪被摆到改装姿态，枪口偏移不是射击姿态，这期间不提交曳光。
+        if (RefitTransform.getOpeningProgress() != 0) {
+            return;
+        }
+        getModel().ifPresent(model -> {
+            Camera camera = mc.gameRenderer.mainCamera();
+            float partialTicks = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+            Vec3 camPos = camera.getPosition();
+            // 世界 -> 视图：把相机旋转取逆，再对（世界-相机）向量旋转。
+            Quaternionf invRot = new Quaternionf(camera.rotation()).conjugate();
+            Vector3f muzzleView = new Vector3f(GunItemRendererWrapper.muzzleRenderOffsetView);
+            if (muzzleView.lengthSquared() < 1e-8f) {
+                // 模型没有枪口节点（muzzleFlashPosPath 为 null）时偏移恒为 0，无从锚定，跳过。
+                return;
+            }
+            AABB range = new AABB(camPos.x - HAND_PASS_RANGE, camPos.y - HAND_PASS_RANGE, camPos.z - HAND_PASS_RANGE,
+                    camPos.x + HAND_PASS_RANGE, camPos.y + HAND_PASS_RANGE, camPos.z + HAND_PASS_RANGE);
+            for (EntityKineticBullet bullet : mc.level.getEntitiesOfClass(EntityKineticBullet.class, range)) {
+                if (!(bullet.getOwner() instanceof LocalPlayer)) {
+                    continue;
+                }
+                if (!bullet.isTracerAmmo()) {
+                    continue;
+                }
+                submitFirstPersonTracer(model, bullet, collector, packedLight, camPos, invRot, muzzleView, partialTicks);
+            }
+        });
+    }
+
+    private static void submitFirstPersonTracer(BedrockModel model, EntityKineticBullet bullet, SubmitNodeCollector collector,
+                                                int packedLight, Vec3 camPos, Quaternionf invRot, Vector3f muzzleView,
+                                                float partialTicks) {
+        Vec3 bulletPos = bullet.getPosition(partialTicks);
+        Vec3 delta = bullet.getDeltaMovement();
+        Vector3f viewBullet = new Vector3f((float) (bulletPos.x - camPos.x), (float) (bulletPos.y - camPos.y),
+                (float) (bulletPos.z - camPos.z)).rotate(invRot);
+        Vector3f viewDelta = new Vector3f((float) delta.x, (float) delta.y, (float) delta.z).rotate(invRot);
+        double rawTrailLength = 0.85 * delta.length();
+        double disToEye = viewBullet.length();
+        // 起点固定在当帧枪口（muzzleView），拖尾沿子弹速度方向向前延伸：
+        // 长度随子弹距离增长（disToEye*0.8），近处保底 1.5 格（刚出膛也有可见拖尾），
+        // 并有上限，避免远距离在屏幕上拉出贯穿全屏的长线。
+        double trailLength = Math.min(rawTrailLength, Math.max(disToEye * 0.8, 1.5));
+        trailLength = Math.min(trailLength, HAND_PASS_MAX_TRAIL);
+        if (trailLength <= 0.05 || viewDelta.lengthSquared() < 1e-6) {
+            return;
+        }
+        // 与实体路径同一套朝向约定：yaw = atan2(x, z)，pitch = atan2(y, 水平距离)，旋转 YP(yaw-180)+XP(pitch)。
+        // 只是这里用的是【视图空间】速度向量 —— 坐标系换到视图后公式不变。
+        float yaw = (float) Math.toDegrees(Math.atan2(viewDelta.x, viewDelta.z));
+        double horizontalDistance = Math.hypot(viewDelta.x, viewDelta.y);
+        float pitch = (float) Math.toDegrees(Math.atan2(viewDelta.y, horizontalDistance));
+        float width = 0.005f * bullet.getTracerSizeOverride();
+        width *= (float) Math.max(1.0, disToEye / 3.5);
+        // 解析曳光颜色：与实体路径同一套回退链（override -> gun display -> ammo）。
+        float[] tracerColor = bullet.getTracerColorOverride().orElse(null);
+        if (tracerColor == null) {
+            tracerColor = TimelessAPI.getGunDisplay(bullet.getGunDisplayId(), bullet.getGunId())
+                    .map(GunDisplayInstance::getTracerColor).orElse(null);
+        }
+        if (tracerColor == null) {
+            tracerColor = TimelessAPI.getClientAmmoIndex(bullet.getAmmoId())
+                    .map(ammoIndex -> ammoIndex.getTracerColor()).orElse(null);
+        }
+        if (tracerColor == null) {
+            tracerColor = new float[]{1.0f, 1.0f, 1.0f, 1.0f};
+        }
+        PoseStack pose = new PoseStack();
+        pose.translate(muzzleView.x(), muzzleView.y(), muzzleView.z());
+        pose.mulPose(Axis.YP.rotationDegrees(yaw - 180.0F));
+        pose.mulPose(Axis.XP.rotationDegrees(pitch));
+        pose.translate(0, 0, (float) (trailLength / 2.0));
+        pose.scale(width, width, (float) trailLength);
+        if (IrisCompat.isHandRendererActive()) {
+            // 与抛壳/枪口火光同一套光影兼容：把能量漩涡管线显式归到手部 program，
+            // 否则在 Iris hand pass 中可能不渲染或坐标系错乱。
+            IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
+        }
+        RenderType type = RenderTypes.energySwirl(InternalAssetLoader.DEFAULT_BULLET_TEXTURE, 15, 15);
+        model.submit(pose, ItemDisplayContext.NONE, collector, type, packedLight, OverlayTexture.NO_OVERLAY,
+                tracerColor[0], tracerColor[1], tracerColor[2], 1);
+        debugFirstPersonTracer(bullet, partialTicks, camPos, muzzleView, viewBullet, viewDelta, trailLength, width, yaw, pitch, tracerColor);
+    }
+
+    /** 当前枪械是否有可用的枪口锚点（muzzleFlashPosPath 存在时偏移非零）。 */
+    private static boolean hasMuzzleAnchor() {
+        return GunItemRendererWrapper.muzzleRenderOffsetView.lengthSquared() >= 1e-8f;
+    }
+
+    /** 本帧手部 pass 是否渲染枪械（第一人称 + 主手/延留物品是枪且模型已加载）。 */
+    private static boolean isGunRenderedInHandPass() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.options == null || mc.options.getCameraType() == null || !mc.options.getCameraType().isFirstPerson()) {
+            return false;
+        }
+        if (mc.player == null) {
+            return false;
+        }
+        ItemStack current = KeepingItemRenderer.getRenderer().getCurrentItem();
+        if (current == null || current.isEmpty()) {
+            return false;
+        }
+        return IGun.getIGunOrNull(current) != null;
+    }
+
+    /** 子弹是否在 {@link #HAND_PASS_RANGE} 内（超出则由实体 pass 的旧锚点路径兜底）。 */
+    private static boolean withinHandPassRange(EntityKineticBullet bullet) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return false;
+        }
+        Vec3 camPos = mc.gameRenderer.mainCamera().getPosition();
+        return bullet.distanceToSqr(camPos.x, camPos.y, camPos.z) <= HAND_PASS_RANGE * HAND_PASS_RANGE;
+    }
+
+    private static void debugFirstPersonTracer(EntityKineticBullet bullet, float partialTicks, Vec3 camPos,
+                                               Vector3f muzzleView, Vector3f viewBullet, Vector3f viewDelta,
+                                               double trailLength, float width, float yaw, float pitch,
+                                               float[] tracerColor) {
+        if (!shouldLogTracer(bullet, tracerDebugEnabled(bullet))) {
+            return;
+        }
+        GunMod.LOGGER.info("[TACZ TracerDebug-FP] bullet={} gun={} tick={} partial={} shader={} irisHand={} camera=({},{}) camPos={} muzzleView={} viewBullet={} viewDelta={} disToEye={} trail={} width={} yaw={} pitch={} color=({},{},{},{})",
+                bullet.getId(),
+                bullet.getGunId(),
+                bullet.tickCount,
+                trim(partialTicks),
+                IrisCompat.isUsingRenderPack(),
+                IrisCompat.isHandRendererActive(),
+                trim(Minecraft.getInstance().gameRenderer.mainCamera().xRot()),
+                trim(Minecraft.getInstance().gameRenderer.mainCamera().yRot()),
+                vec(camPos),
+                vec(muzzleView),
+                vec(viewBullet),
+                vec(viewDelta),
+                trim(viewBullet.length()),
+                trim(trailLength),
+                trim(width),
+                trim(yaw),
+                trim(pitch),
+                trim(tracerColor[0]), trim(tracerColor[1]), trim(tracerColor[2]), trim(tracerColor.length > 3 ? tracerColor[3] : 1));
     }
 
     private static boolean tracerDebugEnabled(EntityKineticBullet bullet) {

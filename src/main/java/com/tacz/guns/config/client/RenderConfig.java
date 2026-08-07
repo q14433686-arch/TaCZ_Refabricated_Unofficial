@@ -15,6 +15,14 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_ENABLE;
     /** 【调试】把瞄具目镜掩码贴图画到屏幕左上角，用于排查离屏渲染链路。默认关闭。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_DEBUG;
+    /**
+     * 开镜时隐藏第一人称手臂。默认开启。
+     *
+     * <p>第一人称手臂走 AvatarRenderer 皮肤管线，其内部 RenderType 无法替换为「目镜掩码裁剪」版，
+     * 因此镜内排除手臂退而采用与改装界面相同的整段隐藏机制（{@code gunModel.setRenderHand(false)}）。
+     * 副作用是开镜时屏幕底部也看不到持枪手；若不接受可关掉本项（代价是镜内仍能看到手臂）。</p>
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_MASK_HIDE_ARMS;
     public static ForgeConfigSpec.BooleanValue GUN_HUD_ENABLE;
     public static ForgeConfigSpec.BooleanValue KILL_AMOUNT_ENABLE;
     public static ForgeConfigSpec.DoubleValue KILL_AMOUNT_DURATION_SECOND;
@@ -67,6 +75,9 @@ public class RenderConfig {
         SCOPE_MASK_DEBUG = builder
                 .comment("Debug: draw the scope ocular mask texture at the top-left corner.")
                 .define("ScopeMaskDebug", false);
+        SCOPE_MASK_HIDE_ARMS = builder
+                .comment("Hide the first-person arms while scoped (the skin pipeline cannot be mask-clipped; hiding is the safe fallback).")
+                .define("ScopeMaskHideArms", true);
 
         builder.comment("Whether or not to display the gun's HUD");
         GUN_HUD_ENABLE = builder.define("GunHUDEnable", true);

@@ -5,23 +5,31 @@ import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.animation.statemachine.LuaAnimationStateMachine;
 import com.tacz.guns.api.client.event.BeforeRenderHandEvent;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.client.event.CameraSetupEvent;
 import com.tacz.guns.client.event.FirstPersonRenderGunEvent;
+import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.SlotModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.model.functional.ShellRender;
+import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
+import com.tacz.guns.client.render.scope.ScopeMaskTextureHandle;
 import com.tacz.guns.client.resource.GunDisplayInstance;
+import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.client.resource.pojo.TransformScale;
+import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.util.RenderDistance;
 import com.tacz.guns.util.math.MathUtil;
 import net.minecraft.client.Minecraft;
@@ -56,6 +64,15 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
     private static final SlotModel SLOT_GUN_MODEL = new SlotModel();
     private static BedrockGunModel lastModel = null;
     public static final Vector3f muzzleRenderOffset = new Vector3f();
+    /**
+     * 视图空间（<b>未乘</b> FOV 因子）的枪口偏移，相对相机。
+     *
+     * <p>与 {@link #muzzleRenderOffset}（乘了 {@code tan(itemFov/2)/tan(levelFov/2)}，供
+     * Level pass 实体路径在<b>世界投影</b>下使用）不同，本值保持「枪模投影」下的原始偏移，
+     * 供手部 pass 内的第一人称曳光直接使用 —— 与枪械同投影、同帧、同 pass，
+     * 不存在跨帧滞后，也没有「视图空间↔世界空间」的旋转换算误差。</p>
+     */
+    public static final Vector3f muzzleRenderOffsetView = new Vector3f();
 
     /**
      * 「当前这次 THIRD_PERSON_*_HAND 提交对应的是<b>主手</b>」。
@@ -226,15 +243,20 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             // 开启第一人称弹壳和火焰渲染
             MuzzleFlashRender.isSelf = true;
             ShellRender.isSelf = true;
-            // 如果正在打开改装界面，则取消手臂渲染
+            // 开镜镜内排除枪体/手臂：
+            //  1) 镜身裁剪可用时，枪身整体换用「目镜掩码裁剪」RenderType（目镜圆孔内 discard）；
+            //  2) 第一人称手臂走 AvatarRenderer 皮肤管线，内部 RenderType 无法替换成裁剪版，
+            //     退而采用与改装界面相同的既有机制（setRenderHand(false)）整段隐藏，
+            //     受 RenderConfig.SCOPE_MASK_HIDE_ARMS 控制。
+            // 两者同进同退，且与 BedrockAttachmentModel#submit 的 maskable 判定逐条一致。
+            boolean scopeMaskActive = resolveScopeMaskActive(player, stack);
             boolean renderHand = gunModel.getRenderHand();
-            if (RefitTransform.getOpeningProgress() != 0) {
+            if (RefitTransform.getOpeningProgress() != 0
+                    || (scopeMaskActive && RenderConfig.SCOPE_MASK_HIDE_ARMS.get())) {
                 gunModel.setRenderHand(false);
             }
             // 调用枪械模型渲染
-            RenderType renderType = display.enablesTransparency()
-                    ? RenderTypes.entityTranslucent(display.getModelTexture())
-                    : RenderTypes.entityCutout(display.getModelTexture());
+            RenderType renderType = resolveGunBodyRenderType(display, scopeMaskActive);
             gunModel.submit(poseStack, stack, ctx, collector, renderType, light, OverlayTexture.NO_OVERLAY);
             // 缓存枪口位置，为第一人称曳光弹渲染作准备
             cacheMuzzlePosition(poseStack, gunModel);
@@ -246,6 +268,9 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             // 关闭第一人称弹壳和火焰渲染
             MuzzleFlashRender.isSelf = false;
             ShellRender.isSelf = false;
+            // 第一人称曳光：在手部 pass 内、拿到当帧枪口视图偏移后提交，
+            // 起点 = 当帧枪口，与枪械同投影，彻底消除「实体 pass 先于手部 pass」造成的跨帧滞后。
+            EntityBulletRenderer.submitFirstPersonTracers(collector, light);
         });
     }
 
@@ -260,13 +285,73 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             double itemRenderFov = CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get();
             double levelRenderFov = CameraSetupEvent.WORLD_FOV_DYNAMICS.get();
             poseStack.popPose();
-            // 缓存转换后的偏移坐标
+            // 缓存原始（视图/枪模投影）偏移 —— 手部 pass 内第一人称曳光直接用这个值
+            muzzleRenderOffsetView.set(pose.m30(), pose.m31(), pose.m32());
+            // 缓存转换后的偏移坐标（乘 FOV 因子，供 Level pass 实体路径在世界投影下使用）
             muzzleRenderOffset.set(
                     pose.m30(),
                     pose.m31(),
                     pose.m32() * Math.tan(itemRenderFov / 2 * Math.PI / 180) / Math.tan(levelRenderFov / 2 * Math.PI / 180)
             );
         }
+    }
+
+    /**
+     * 当前第一人称枪械是否应启用「目镜掩码裁剪」。
+     *
+     * <p>条件与 {@code BedrockAttachmentModel#submit} 里的 {@code maskable} 判定<b>逐条一致</b>：
+     * 总开关、光影回退、装了带目镜的瞄具、开镜进度超过阈值、掩码纹理可绑定。
+     * 只有两边同进同退，镜身/枪身/准星/手臂才不会出现「裁一半」的半边状态。</p>
+     */
+    private static boolean resolveScopeMaskActive(LocalPlayer player, ItemStack stack) {
+        if (!RenderConfig.SCOPE_MASK_ENABLE.get()) {
+            return false;
+        }
+        if (IrisCompat.shouldDisableScopeMaskUnderShaderPack()) {
+            return false;
+        }
+        if (!(stack.getItem() instanceof IGun iGun)) {
+            return false;
+        }
+        Identifier scopeId = iGun.getAttachmentId(stack, AttachmentType.SCOPE);
+        if (scopeId.equals(DefaultAssets.EMPTY_ATTACHMENT_ID)) {
+            scopeId = iGun.getBuiltInAttachmentId(stack, AttachmentType.SCOPE);
+        }
+        if (DefaultAssets.isEmptyAttachmentId(scopeId)) {
+            return false;
+        }
+        float aimingProgress = IClientPlayerGunOperator.fromLocalPlayer(player)
+                .getClientAimingProgress(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+        if (aimingProgress <= BedrockAttachmentModel.AIM_CLIP_START) {
+            return false;
+        }
+        Optional<ClientAttachmentIndex> index = TimelessAPI.getClientAttachmentIndex(scopeId);
+        if (index.isEmpty()) {
+            return false;
+        }
+        BedrockAttachmentModel attachmentModel = index.get().getAttachmentModel();
+        if (attachmentModel == null || !attachmentModel.hasOcularGeometry()) {
+            return false;
+        }
+        return ScopeMaskTextureHandle.syncToMaskTarget();
+    }
+
+    /**
+     * 枪身 RenderType：开镜裁剪可用时换成「目镜掩码裁剪」版（目镜圆孔内 discard），
+     * 否则维持原来的 cutout/translucent。
+     */
+    private static RenderType resolveGunBodyRenderType(GunDisplayInstance display, boolean scopeMaskActive) {
+        RenderType base = display.enablesTransparency()
+                ? RenderTypes.entityTranslucent(display.getModelTexture())
+                : RenderTypes.entityCutout(display.getModelTexture());
+        if (!scopeMaskActive) {
+            return base;
+        }
+        Identifier texture = display.getModelTexture();
+        if (texture == null) {
+            return base;
+        }
+        return ScopeBodyRenderTypes.clipped(texture);
     }
 
 

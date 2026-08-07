@@ -773,3 +773,32 @@ sf.write(out, seg/peak*0.707, sr, format='OGG', subtype='VORBIS')
 > **实测建议**：静止连续开火，观察起点是否始终偏同一处（坐标系问题）或仅第一发偏（时序问题）。若 ADS 横移时偏移过高，可把 50 改为 35~40 线性，而非 12 二次（后者起点虽对，但快速贴回弹道，主观上仍感觉“从胸口出来”）。
 
 **已知限制**：子弹实体生成位置仍在眼睛下方 0.1（上游设计，弹道需与准星一致），视觉上从枪口出来仅是第一人称的偏移补偿，第三人称无补偿（上游原生表现）。
+
+---
+
+## 十、曳光弹枪口跟随 + 开镜镜内排除枪体/手臂（2026-08-07 修复）
+
+**症状**（玩家反馈）：① 第一人称曳光弹起点不跟随枪口，开镜/后坐/转头/行走时尤其明显；
+② 开镜后目镜圆孔内能看到枪身与手臂，应该只看到放大的世界与准星。
+
+**根因**（彻查报告见 `docs/INVESTIGATION_TRACER_SCOPE_2026-08-06.md`）：
+
+1. 曳光 1 帧滞后：实体（Level）pass 先于手部（Hand）pass，Level pass 里读到的
+   `muzzleRenderOffset` 是上一帧手部 pass 的枪口偏移（含上一帧 FOV 因子）；且旧代码
+   `tickCount >= 5` 门禁让曳光出膛 0.25 秒内根本不显示。
+2. 镜内裁剪（26.2 无 stencil 的替代：屏幕空间掩码 + shader discard）只挂在瞄具配件
+   的镜身/准星上；枪身走普通 entityCutout、手臂走 AvatarRenderer 皮肤管线，都不参与
+   discard → 圆孔内透出枪身/手臂。
+
+**修复**（详见 `docs/archive/PROGRESS_ROUND23.md`）：
+
+1. 第一人称曳光改由**手部 pass** 提交（与抛壳同构）：起点 = **当帧**枪口视图偏移
+   （新增 `muzzleRenderOffsetView`，未乘 FOV 因子），与枪械同投影、同 pass，
+   无跨帧滞后；Level pass 在「手部 pass 本帧会画到它」时跳过，其余情况兜底。
+2. 枪身换用「目镜掩码裁剪」RenderType（`ScopeBodyRenderTypes.clipped`），与镜身
+   共用同一张当帧掩码；条件与 `BedrockAttachmentModel` 的 maskable 判定逐条一致。
+3. 手臂整段隐藏（`setRenderHand(false)`，与改装界面同机制），新配置
+   `ScopeMaskHideArms`（默认 true）控制 —— 手臂管线无法替换 RenderType 的降级方案。
+
+**已知限制**：手臂是隐藏不是裁剪（开镜时屏幕底部看不到持枪手）；第一人称子弹
+≤256 格走枪口锚定，超出退回实体 pass；第三人称无枪口锚定（上游设计）。
