@@ -3,14 +3,16 @@
   "generated_by": "tacz_industry_generator",
   "eligibility": "industrial_assembly",
   "maintenance_class": "launcher",
+  "durability_grade": "precision",
+  "expected_barrel_shots": 3500,
   "wear_per_shot": {
-    "receiver": 8,
-    "bolt": 15,
-    "barrel": 22,
-    "trigger": 7,
-    "recoil": 12
+    "receiver": 1,
+    "bolt": 1,
+    "barrel": 3,
+    "trigger": 1,
+    "recoil": 1
   },
-  "fouling_per_shot": 12,
+  "fouling_per_shot": 8,
   "heat_stress_multiplier": 1.0,
   "operation": {
     "wear_multiplier": 1.0,

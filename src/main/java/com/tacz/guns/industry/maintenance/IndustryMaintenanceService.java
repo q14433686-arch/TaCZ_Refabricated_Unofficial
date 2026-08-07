@@ -140,6 +140,18 @@ public final class IndustryMaintenanceService {
                 .withStyle(style -> style.withColor(snapshot.status().color()));
     }
 
+    @Nullable
+    public static Component getDurabilityGradeLine(ItemStack gun) {
+        IndustryMaintenanceProfile profile = getProfileFor(gun);
+        if (profile == null || !getSnapshot(gun).eligible()) {
+            return null;
+        }
+        return Component.translatable("tooltip.tacz.maintenance.grade",
+                Component.translatable("tooltip.tacz.maintenance.grade." + profile.getDurabilityGrade()),
+                profile.getExpectedBarrelShots())
+                .withStyle(style -> style.withColor(0x8AA7B7));
+    }
+
     public static boolean hasIndustrialOrigin(ItemStack gun) {
         return hasIndustrialOrigin(ItemNbtUtils.getTag(gun));
     }

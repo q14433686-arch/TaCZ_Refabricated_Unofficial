@@ -62,6 +62,7 @@ public class ClientGunTooltip implements ClientTooltipComponent {
     private MutableComponent levelInfo;
     /** Phase-A read-only condition/fouling line; null for non-industrial guns. */
     private @Nullable Component maintenanceInfo;
+    private @Nullable Component maintenanceGradeInfo;
     private @Nullable MutableComponent packInfo;
 
     private int maxWidth;
@@ -90,6 +91,9 @@ public class ClientGunTooltip implements ClientTooltipComponent {
             height += 34;
         }
         if (this.maintenanceInfo != null) {
+            height += 10;
+        }
+        if (this.maintenanceGradeInfo != null) {
             height += 10;
         }
         if (shouldShow(GunTooltipPart.EXTRA_DAMAGE_INFO)) {
@@ -195,8 +199,12 @@ public class ClientGunTooltip implements ClientTooltipComponent {
         }
 
         this.maintenanceInfo = IndustryMaintenanceService.getTooltipLine(gun);
+        this.maintenanceGradeInfo = IndustryMaintenanceService.getDurabilityGradeLine(gun);
         if (this.maintenanceInfo != null) {
             this.maxWidth = Math.max(font.width(this.maintenanceInfo), this.maxWidth);
+        }
+        if (this.maintenanceGradeInfo != null) {
+            this.maxWidth = Math.max(font.width(this.maintenanceGradeInfo), this.maxWidth);
         }
 
         if (shouldShow(GunTooltipPart.EXTRA_DAMAGE_INFO)) {
@@ -287,6 +295,10 @@ public class ClientGunTooltip implements ClientTooltipComponent {
 
         if (this.maintenanceInfo != null) {
             graphics.text(font, this.maintenanceInfo, pX, yOffset, 0xFF777777);
+            yOffset += 10;
+        }
+        if (this.maintenanceGradeInfo != null) {
+            graphics.text(font, this.maintenanceGradeInfo, pX, yOffset, 0xFF777777);
             yOffset += 10;
         }
 

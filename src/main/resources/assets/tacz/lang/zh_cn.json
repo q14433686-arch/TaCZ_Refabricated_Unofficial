@@ -1991,5 +1991,11 @@
   "tooltip.tacz.service.component_gun": "勤务身份：%s",
   "tooltip.tacz.service.component_repair": "维修工位：损坏组件 + 命名替换件部署器 → 检具部署器 → 动力冲压机。",
   "tooltip.tacz.service.blank_step": "第 1 步：先在加热 Basin 制成该中性毛坯，再由对应组件模具部署器成型。",
-  "tooltip.tacz.service.named_part_step": "第 2 步：先在置物台/传送带上由命名替换件部署器替换损坏组件，再依次经过检具与动力冲压工位。"
+  "tooltip.tacz.service.named_part_step": "第 2 步：先在置物台/传送带上由命名替换件部署器替换损坏组件，再依次经过检具与动力冲压工位。",
+  "tooltip.tacz.maintenance.grade": "耐久等级：%s · 预计枪管勤务：约 %s 发",
+  "tooltip.tacz.maintenance.grade.field": "野战 / 旧制等级",
+  "tooltip.tacz.maintenance.grade.service": "制式勤务等级",
+  "tooltip.tacz.maintenance.grade.enhanced": "强化制式等级",
+  "tooltip.tacz.maintenance.grade.precision": "精密枪管等级",
+  "tooltip.tacz.maintenance.grade.heavy_duty": "持续火力等级"
 }

@@ -1991,5 +1991,11 @@
   "tooltip.tacz.service.component_gun": "Service identity: %s",
   "tooltip.tacz.service.component_repair": "Repair stations: damaged component + named part Deployer → fixture Deployer → Mechanical Press.",
   "tooltip.tacz.service.blank_step": "Step 1: form this neutral blank in a heated Basin, then use the matching component-die Deployer.",
-  "tooltip.tacz.service.named_part_step": "Step 2: first replace the damaged component on a depot/belt, then run the fitted component through its fixture and press stations."
+  "tooltip.tacz.service.named_part_step": "Step 2: first replace the damaged component on a depot/belt, then run the fitted component through its fixture and press stations.",
+  "tooltip.tacz.maintenance.grade": "Maintenance grade: %s · planned barrel service: ~%s shots",
+  "tooltip.tacz.maintenance.grade.field": "Field / legacy",
+  "tooltip.tacz.maintenance.grade.service": "Service grade",
+  "tooltip.tacz.maintenance.grade.enhanced": "Enhanced service grade",
+  "tooltip.tacz.maintenance.grade.precision": "Precision barrel grade",
+  "tooltip.tacz.maintenance.grade.heavy_duty": "Sustained-fire grade"
 }

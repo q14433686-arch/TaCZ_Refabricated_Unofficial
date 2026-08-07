@@ -2524,19 +2524,24 @@ def maintenance_baseline(platform: dict[str, Any]) -> dict[str, Any]:
     bookkeeping. No random jam or shoot gate consumes these values until a
     later phase has an audited clear-jam transaction.
     """
-    # 10,000 is an internal fixed-point scale, not Minecraft item durability.
-    # These values put a normal service rifle into the maintenance-warning band
-    # after roughly one to two hundred real shots rather than thousands, so the
-    # B.2 component replacement loop is meaningful in ordinary survival play.
+    # 10,000 is a normalized internal condition scale. Structural replacement
+    # is deliberately a thousands-of-round lifecycle, not a hundred-shot game
+    # durability bar. Fouling can still require ordinary service sooner; the
+    # grade and expected barrel interval are visible to the player and fully
+    # data-overridable per GunId.
     by_tier = {
-        "legacy": ({"receiver": 16, "bolt": 30, "barrel": 44, "trigger": 12, "recoil": 24}, 24),
-        "service": ({"receiver": 12, "bolt": 22, "barrel": 32, "trigger": 9, "recoil": 18}, 18),
-        "advanced": ({"receiver": 10, "bolt": 18, "barrel": 26, "trigger": 8, "recoil": 15}, 15),
-        "precision": ({"receiver": 8, "bolt": 15, "barrel": 22, "trigger": 7, "recoil": 12}, 12),
+        "legacy": ({"receiver": 2, "bolt": 3, "barrel": 4, "trigger": 1, "recoil": 2}, 10, "field", 3_000),
+        "service": ({"receiver": 1, "bolt": 2, "barrel": 2, "trigger": 1, "recoil": 1}, 12, "service", 5_000),
+        "advanced": ({"receiver": 1, "bolt": 1, "barrel": 1, "trigger": 1, "recoil": 1}, 10, "enhanced", 8_000),
+        "precision": ({"receiver": 1, "bolt": 1, "barrel": 3, "trigger": 1, "recoil": 1}, 8, "precision", 3_500),
     }
     tier = manufacturing_tier(platform)
-    wear, fouling = by_tier[tier]
+    wear, fouling, durability_grade, expected_barrel_shots = by_tier[tier]
     action = action_profile(platform)
+    if action in {"belt_fed", "rotary"}:
+        durability_grade, expected_barrel_shots = "heavy_duty", 9_000
+    elif action in {"anti_material_bolt", "bolt_action"}:
+        durability_grade, expected_barrel_shots = "precision", min(expected_barrel_shots, 4_000)
     # Broad gameplay maintenance classes, not claims about real named weapons.
     operation_by_action = {
         "bolt_action": (0.80, 0.75, 1.20, 1.35, 1.10, 1.20),
@@ -2554,6 +2559,8 @@ def maintenance_baseline(platform: dict[str, Any]) -> dict[str, Any]:
         "generated_by": "tacz_industry_generator",
         "eligibility": "industrial_assembly",
         "maintenance_class": action_profile(platform),
+        "durability_grade": durability_grade,
+        "expected_barrel_shots": expected_barrel_shots,
         "wear_per_shot": wear,
         "fouling_per_shot": fouling,
         "heat_stress_multiplier": 1.0,
@@ -2620,6 +2627,8 @@ def validate_generated_maintenance_profiles(platforms: list[dict[str, Any]], exp
                           "contaminant_fouling_multiplier"}
         if profile.get("schema_version") != 1 or profile.get("eligibility") != "industrial_assembly" \
                 or profile.get("maintenance_class") != action_profile(platform) \
+                or profile.get("durability_grade") not in {"field", "service", "enhanced", "precision", "heavy_duty"} \
+                or not isinstance(profile.get("expected_barrel_shots"), int) or not 100 <= profile["expected_barrel_shots"] <= 100_000 \
                 or not isinstance(wear, dict) or set(wear) != components \
                 or not all(isinstance(value, int) and 0 <= value <= 1000 for value in wear.values()) \
                 or not isinstance(profile.get("fouling_per_shot"), int) \
@@ -5076,6 +5085,12 @@ def run(write: bool) -> int:
         "tooltip.tacz.maintenance.service": "Service Due",
         "tooltip.tacz.maintenance.repair": "Repair Required",
         "tooltip.tacz.maintenance.out_of_service": "Out of Service",
+        "tooltip.tacz.maintenance.grade": "Maintenance grade: %s · planned barrel service: ~%s shots",
+        "tooltip.tacz.maintenance.grade.field": "Field / legacy",
+        "tooltip.tacz.maintenance.grade.service": "Service grade",
+        "tooltip.tacz.maintenance.grade.enhanced": "Enhanced service grade",
+        "tooltip.tacz.maintenance.grade.precision": "Precision barrel grade",
+        "tooltip.tacz.maintenance.grade.heavy_duty": "Sustained-fire grade",
         "tooltip.tacz.service.component_condition": "Component condition: %s",
         "tooltip.tacz.service.component_gun": "Service identity: %s",
         "tooltip.tacz.service.component_repair": "Repair stations: damaged component + named part Deployer → fixture Deployer → Mechanical Press.",
@@ -5135,6 +5150,12 @@ def run(write: bool) -> int:
         "tooltip.tacz.maintenance.service": "需保养",
         "tooltip.tacz.maintenance.repair": "需维修",
         "tooltip.tacz.maintenance.out_of_service": "停用",
+        "tooltip.tacz.maintenance.grade": "耐久等级：%s · 预计枪管勤务：约 %s 发",
+        "tooltip.tacz.maintenance.grade.field": "野战 / 旧制等级",
+        "tooltip.tacz.maintenance.grade.service": "制式勤务等级",
+        "tooltip.tacz.maintenance.grade.enhanced": "强化制式等级",
+        "tooltip.tacz.maintenance.grade.precision": "精密枪管等级",
+        "tooltip.tacz.maintenance.grade.heavy_duty": "持续火力等级",
         "tooltip.tacz.service.component_condition": "组件枪况：%s",
         "tooltip.tacz.service.component_gun": "勤务身份：%s",
         "tooltip.tacz.service.component_repair": "维修工位：损坏组件 + 命名替换件部署器 → 检具部署器 → 动力冲压机。",

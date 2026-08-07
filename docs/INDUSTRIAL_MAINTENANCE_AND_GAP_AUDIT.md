@@ -70,7 +70,7 @@ IndustryMaintenanceSeed:   long
 IndustryMaintenanceShots:  long
 ```
 
-组件初始条件为 `10000`。枪 HUD/Tooltip 显示为“良好 / 需保养 / 需维修 / 停用”，不强迫玩家记忆整数。
+组件初始条件为 `10000`。枪 HUD/Tooltip 显示为“良好 / 需保养 / 需维修 / 停用”，不强迫玩家记忆整数。维护 profile 还声明玩家可见的 `durability_grade` 与 `expected_barrel_shots`：它是可审计、可覆盖的工业耐久分级与预计枪管勤务区间，而不是把所有枪压成数百发即报废的统一条，也不是对现实型号做未经证据的寿命断言。
 
 ### 3.2 组件上的状态
 

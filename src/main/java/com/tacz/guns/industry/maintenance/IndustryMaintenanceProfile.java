@@ -23,6 +23,14 @@ public final class IndustryMaintenanceProfile {
     @SerializedName("maintenance_class")
     private String maintenanceClass = "surveyed";
 
+    /** Player-facing maintenance/lifecycle grade; individual data packs may override it per GunId. */
+    @SerializedName("durability_grade")
+    private String durabilityGrade = "service";
+
+    /** Approximate dry-condition barrel replacement interval used for Tooltip planning, not a hard lockout. */
+    @SerializedName("expected_barrel_shots")
+    private int expectedBarrelShots = 5_000;
+
     @SerializedName("wear_per_shot")
     private WearPerShot wearPerShot = new WearPerShot();
 
@@ -52,6 +60,14 @@ public final class IndustryMaintenanceProfile {
         return maintenanceClass == null ? "surveyed" : maintenanceClass;
     }
 
+    public String getDurabilityGrade() {
+        return durabilityGrade == null || durabilityGrade.isBlank() ? "service" : durabilityGrade;
+    }
+
+    public int getExpectedBarrelShots() {
+        return Math.clamp(expectedBarrelShots, 100, 100_000);
+    }
+
     public WearPerShot getWearPerShot() {
         return wearPerShot == null ? new WearPerShot() : wearPerShot;
     }
@@ -76,6 +92,8 @@ public final class IndustryMaintenanceProfile {
         return schemaVersion == 1
                 && "industrial_assembly".equals(getEligibility())
                 && !getMaintenanceClass().isBlank()
+                && !getDurabilityGrade().isBlank()
+                && expectedBarrelShots >= 100 && expectedBarrelShots <= 100_000
                 && getWearPerShot().isValid()
                 && foulingPerShot >= 0 && foulingPerShot <= MAX_FOULING_PER_SHOT
                 && Float.isFinite(heatStressMultiplier) && heatStressMultiplier >= 0.0F

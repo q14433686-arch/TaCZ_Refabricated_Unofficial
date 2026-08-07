@@ -3,14 +3,16 @@
   "generated_by": "tacz_industry_generator",
   "eligibility": "industrial_assembly",
   "maintenance_class": "locked_breech_pistol",
+  "durability_grade": "enhanced",
+  "expected_barrel_shots": 8000,
   "wear_per_shot": {
-    "receiver": 10,
-    "bolt": 18,
-    "barrel": 26,
-    "trigger": 8,
-    "recoil": 15
+    "receiver": 1,
+    "bolt": 1,
+    "barrel": 1,
+    "trigger": 1,
+    "recoil": 1
   },
-  "fouling_per_shot": 15,
+  "fouling_per_shot": 10,
   "heat_stress_multiplier": 1.0,
   "operation": {
     "wear_multiplier": 1.0,
