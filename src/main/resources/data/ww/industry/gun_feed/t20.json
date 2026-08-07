@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_t20_3006",
+  "magazine_capacity": 20,
+  "ammo": "tacz:30_06",
+  "display_name": "item.tacz.magazine.ww_t20_3006_20",
+  "carrier_variants": [
+    {
+      "capacity": 21,
+      "display_name": "item.tacz.magazine.ww_t20_3006_21"
+    },
+    {
+      "capacity": 22,
+      "display_name": "item.tacz.magazine.ww_t20_3006_22"
+    },
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.ww_t20_3006_25"
+    }
+  ]
+}

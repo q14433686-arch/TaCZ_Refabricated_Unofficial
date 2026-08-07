@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "ww/mp28",
+  "display_name": "MP28",
+  "action": "blowback_smg",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "ww_mp28_9mm",
+    "capacity": 30,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "9mm",
+    "expected_ammo": "tacz:9mm"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Enlisted v1.2.1.3 archive (read from origin/26.2(main), SHA-256 a0dc616286fc43146e2c6b94ee3bae141a4e6aff65a3fece2370f8388ab057f5): data/ww/index/guns/mp28.json and data/ww/data/guns/mp28_data.json were checked for this exact GunId, ammo and base capacity.",
+    "Archived MP28 geometry names its mag_well and magazine presentation nodes; these corroborate, but do not create, the explicit detachable declaration.",
+    "MP28 is manually confirmed to use a detachable box magazine; it is kept private rather than inferred compatible with any other 9 mm SMG.",
+    "The sidecar remains runtime-guarded against the loaded GunData ammo and base capacity; each declared carrier variant is an exact selectable first-three extended_mag_ammo_amount value."
+  ]
+}

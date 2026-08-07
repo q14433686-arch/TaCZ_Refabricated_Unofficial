@@ -1,0 +1,17 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_m1_m2_carbine_30c",
+  "magazine_capacity": 15,
+  "ammo": "ww:30c",
+  "display_name": "item.tacz.magazine.ww_m1_m2_carbine_30c_15",
+  "carrier_variants": [
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.ww_m1_m2_carbine_30c_20"
+    },
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.ww_m1_m2_carbine_30c_30"
+    }
+  ]
+}

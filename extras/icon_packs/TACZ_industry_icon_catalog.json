@@ -5539,7 +5539,10 @@
       "bound_by": [
         "magazine_bf1_mg0815_belt_family",
         "magazine_bf1_mg42_belt_family",
-        "magazine_hamster_mg1417_belt_family"
+        "magazine_hamster_mg1417_belt_family",
+        "magazine_ww_m1919a6_belt_family",
+        "magazine_ww_mg34_belt_family",
+        "magazine_ww_mg42_belt_family"
       ],
       "status": "bound"
     },

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_mp28_9mm",
+  "magazine_capacity": 30,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.ww_mp28_9mm_30",
+  "carrier_variants": [
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ww_mp28_9mm_50"
+    },
+    {
+      "capacity": 75,
+      "display_name": "item.tacz.magazine.ww_mp28_9mm_75"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.ww_mp28_9mm_100"
+    }
+  ]
+}

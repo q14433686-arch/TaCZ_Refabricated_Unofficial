@@ -1,0 +1,21 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "ww_mg34_792x57_belt",
+  "magazine_capacity": 50,
+  "ammo": "ea:792x57",
+  "display_name": "item.tacz.magazine.ww_mg34_792x57_belt_50",
+  "carrier_variants": [
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.ww_mg34_792x57_belt_100"
+    },
+    {
+      "capacity": 150,
+      "display_name": "item.tacz.magazine.ww_mg34_792x57_belt_150"
+    },
+    {
+      "capacity": 200,
+      "display_name": "item.tacz.magazine.ww_mg34_792x57_belt_200"
+    }
+  ]
+}

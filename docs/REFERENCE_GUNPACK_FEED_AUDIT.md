@@ -122,6 +122,59 @@
 
 Berthier、SKS、SW Mk2 41 及其他转轮/历史 clip 仍保持候选或原有物理装填路线，不能因为同为 `pistol`/`rifle` 就自动接管。
 
+## Enlisted / WW 第一批外部供弹 cohort
+
+本批没有把 survey 的 `ww` 分组直接转成 JSON。实际人工审计重新读取了用户上传在
+`origin/26.2(main)` 的 `[TaCZ] Enlisted Gun Pack v1.2.1.3.zip`：归档 SHA-256 为
+`a0dc616286fc43146e2c6b94ee3bae141a4e6aff65a3fece2370f8388ab057f5`。每把启用枪均核对了
+`data/ww/index/guns/<id>.json`、`data/ww/data/guns/<id>_data.json`、其 display/geometry/animation
+资源和原始 Gunsmith Table 成枪 recipe；模型节点和动画只作人工佐证，**不是**启用规则。
+
+这轮明确写入 25 个 `data/ww/industry/gun_feed/*.json` sidecar 和同数的
+`industry/reference/guns/*.json`。运行时仍以当前加载 GunData 的 Ammo、基础容量和声明的可选
+扩容数组校验；包升级后不匹配就拒绝，而不会继续接管换弹。
+
+| 已核对接收机 | 机制 / 显式 family | 基础与已制造的实体容量 | 人工边界 |
+|---|---|---|---|
+| `m1918`、`m1918a1`、`m1918a2` | detachable / `ww_bar_3006` | 20 | 只在三种 BAR 变体之间共享实际 20 发 BAR 盒式弹匣。 |
+| `m1921`、`m1928a1`、`m1a1`、`m1t`、`m28s` | detachable / `ww_thompson_45acp` | 20、30 | 审核的是汤普森 20/30 发盒式路线；没有把鼓式外形伪称成精确模型。 |
+| `m1`、`m2` | detachable / `ww_m1_m2_carbine_30c` | 15、20、30 | 仅 M1/M2 Carbine 这对经审核的实际互插族。 |
+| `m1919` | belt / `ww_m1919a6_3006_belt` | 100、150、250、500 | M1919A6 弹链独立；其 client state machine 只负责动画，服务器仍使用普通 reload 事务。 |
+| `mg34` | belt / `ww_mg34_792x57_belt` | 50、100、150、200 | 即使与 MG42 同口径也不自动共享 family。 |
+| `mg42` | belt / `ww_mg42_792x57_belt` | 50、100、150、200 | 独立链族；不从 BF1 MG42 或名称借用互插关系。 |
+| `mp28`、`mp34` | detachable / 各自专用 family | 30 或 32；各自 50、75、100 | 同为 9 mm 也不合并。 |
+| `mp38`、`mp40`、`mp41` | detachable / `ww_mp38_40_41_9mm` | 32、50、75、100 | 这是明确审核过的 MP38/40/41 盒式弹匣互插组。 |
+| `sten` | detachable / `ww_sten_mk2_9mm` | 32、50、75、100 | Sten Mk II 保留独立 family，不借“9 mm + 32”猜测互插。 |
+| `avt_40`、`svt_40` | detachable / `ww_svt_avt_762x54` | 10、15、20 | 显式审核的 SVT/AVT 10 发弹匣组。 |
+| `g43` | detachable / `ww_g43_792x57` | 10、15、20 | Gewehr 43 专用盒式弹匣。 |
+| `as44` | detachable / `ww_as44_762x39` | 30、34、37、40 | `tacz:xmag_reload_logic` 的三条实际扩容 feed 路径逐项受容量 guard。 |
+| `stg44` | detachable / `ww_stg44_792x33` | 30、34、37、40 | 与 AS-44 的口径、family 都独立。 |
+| `t20` | detachable / `ww_t20_3006` | 20、21、22、25 | 已确认可拆卸盒式供弹，但**没有**在没有硬证据时宣称与 BAR 互插。 |
+
+扩容值只取当前 GunData 前三个可选层中实际存在的数值；汤普森与 M1/M2 的重复值及 `1` 发旧占位值
+没有伪造成新的实体弹匣。上述每个基础/扩容载具都由 surveyed Gunsmith Table 的真实多槽委托产出：
+
+```text
+中性弹匣壳体毛坯（消耗）
++ 对应 WW 平台结构套件（消耗）
++ 对应 production template（保留）
++ survey fixture（保留）
+→ 空的、带 MagazineFamily / Ammo / Capacity / FeedDeviceKind 的实体载具
+```
+
+所以这不是创造物品、REI 图标或传送带多输入假配方；`detachable_magazine` 和 `belt` 都进入现有服务器
+库存交换事务。`ea:792x57` / `ea:792x33` 仍严格引用原枪包的 AmmoId：若安装环境缺少提供这些 Ammo 的
+依赖包，不能用本层伪造替代弹药，原枪和实体载具都会保持其依赖边界。
+
+视觉上，普通盒式弹匣继续使用已有的中性 detachable material，绝不冒充某一把枪的精确网格。M1919A6、MG34
+和 MG42 的外露弹链复用 `tacz_extra:item/mag_m134_belt`，映射明确标为 **family-level material**，不是这些
+型号的精确 belt geometry。DP-28 顶部盘、AN/M2、Type 96/99、C96、Lee-Enfield、其余手枪/冲锋枪和所有
+未列出的 `ww` survey 候选本轮仍保持 legacy；它们没有因名称、class、弹匣节点或 survey 条目被自动开启。
+
+这仍是离线结构审计，不是 Gradle 构建或游戏实机回归。后续实机应重点覆盖空仓/战术换弹、潜行退匣、满背包掉落、
+重连、实体容量与 HUD/tooltip、以及 AS-44/StG44 的三档容量切换；MG34/MG42/G43/StG44 还应在实际安装 EA
+弹药依赖的服务器上验证一次完整装填与卸载。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：

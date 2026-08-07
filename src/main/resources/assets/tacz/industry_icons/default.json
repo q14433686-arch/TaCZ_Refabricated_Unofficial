@@ -1532,6 +1532,39 @@
       },
       "coverage": "family",
       "note": "Existing drum material reused for the RPD belt-drum container family; not an exact RPD mesh."
+    },
+    {
+      "id": "magazine_ww_m1919a6_belt_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_m134_belt",
+      "priority": 270,
+      "match": {
+        "magazine_family": "ww_m1919a6_3006_belt"
+      },
+      "coverage": "family",
+      "note": "Existing exposed-belt material reused for WW M1919A6; family-level visual, not exact belt geometry."
+    },
+    {
+      "id": "magazine_ww_mg34_belt_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_m134_belt",
+      "priority": 270,
+      "match": {
+        "magazine_family": "ww_mg34_792x57_belt"
+      },
+      "coverage": "family",
+      "note": "Existing exposed-belt material reused for WW MG34; family-level visual, not exact belt geometry."
+    },
+    {
+      "id": "magazine_ww_mg42_belt_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_m134_belt",
+      "priority": 270,
+      "match": {
+        "magazine_family": "ww_mg42_792x57_belt"
+      },
+      "coverage": "family",
+      "note": "Existing exposed-belt material reused for WW MG42; family-level visual, not exact belt geometry."
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_stg44_792x33",
+  "magazine_capacity": 30,
+  "ammo": "ea:792x33",
+  "display_name": "item.tacz.magazine.ww_stg44_792x33_30",
+  "carrier_variants": [
+    {
+      "capacity": 34,
+      "display_name": "item.tacz.magazine.ww_stg44_792x33_34"
+    },
+    {
+      "capacity": 37,
+      "display_name": "item.tacz.magazine.ww_stg44_792x33_37"
+    },
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.ww_stg44_792x33_40"
+    }
+  ]
+}

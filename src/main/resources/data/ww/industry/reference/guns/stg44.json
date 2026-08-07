@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "ww/stg44",
+  "display_name": "Sturmgewehr 44",
+  "action": "gas_operated_rifle",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "ww_stg44_792x33",
+    "capacity": 30,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "792x33",
+    "expected_ammo": "ea:792x33"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Enlisted v1.2.1.3 archive (read from origin/26.2(main), SHA-256 a0dc616286fc43146e2c6b94ee3bae141a4e6aff65a3fece2370f8388ab057f5): data/ww/index/guns/stg44.json and data/ww/data/guns/stg44_data.json were checked for this exact GunId, ammo and base capacity.",
+    "stg44_data explicitly uses tacz:xmag_reload_logic with base and three extension feed paths; the archive animation has removable magazine states.",
+    "StG 44 is manually confirmed to use a detachable 30-round box magazine; its separate EA 7.92×33 identity prevents an unsafe AS-44 family merge.",
+    "The sidecar remains runtime-guarded against the loaded GunData ammo and base capacity; each declared carrier variant is an exact selectable first-three extended_mag_ammo_amount value."
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_g43_792x57",
+  "magazine_capacity": 10,
+  "ammo": "ea:792x57",
+  "display_name": "item.tacz.magazine.ww_g43_792x57_10",
+  "carrier_variants": [
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.ww_g43_792x57_15"
+    },
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.ww_g43_792x57_20"
+    }
+  ]
+}
