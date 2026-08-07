@@ -5536,8 +5536,12 @@
     },
     {
       "texture": "tacz_extra:item/mag_m134_belt",
-      "bound_by": [],
-      "status": "available_unbound"
+      "bound_by": [
+        "magazine_bf1_mg0815_belt_family",
+        "magazine_bf1_mg42_belt_family",
+        "magazine_hamster_mg1417_belt_family"
+      ],
+      "status": "bound"
     },
     {
       "texture": "tacz_extra:item/mag_m1911",
@@ -5589,7 +5593,8 @@
       "texture": "tacz_extra:item/mag_rpk_drum",
       "bound_by": [
         "magazine_ak_762x39_rpk_40",
-        "magazine_bf1_smg0818_drum_family"
+        "magazine_bf1_smg0818_drum_family",
+        "magazine_rainforest_rpd_belt_family"
       ],
       "status": "bound"
     },

@@ -110,7 +110,6 @@
 | `tacz_extra:item/mag_eternal50z` |
 | `tacz_extra:item/mag_hk416` |
 | `tacz_extra:item/mag_lonestar3006` |
-| `tacz_extra:item/mag_m134_belt` |
 | `tacz_extra:item/mag_m700` |
 | `tacz_extra:item/mag_m95` |
 | `tacz_extra:item/mag_springfield1873` |

@@ -29,19 +29,20 @@ FeedDeviceKind = stripper_clip | speedloader | en_bloc_clip
 |---|---|---|
 | 普通可拆卸盒式弹匣 | `tacz:item/magazine` | 中性既有弹匣材质；仅说明“可拆卸弹匣”，不伪称精确外形 |
 | 弹链箱 / 带盒 | `tacz_extra:item/mag_m249_box` | 既有弹链箱材料；M249/Evolys 的精确 family 图仍优先 |
+| 暴露式布带 | `tacz_extra:item/mag_m134_belt` | MG08/15、MG42、MG14/17 复用现有 belt 材料，标记为 family 近似 |
+| RPD 带鼓容器 | `tacz_extra:item/mag_rpk_drum` | RPD/RPD-MS 的带鼓式容器复用鼓式材料，非精确 RPD 网格 |
 | 桥夹 | `tacz_extra:item/base_m_loader` | 已有桥夹/装填器材料族，保留 `stripper_clip` 语义 |
 | 漏夹 | `tacz_extra:item/base_m_loader` | 与桥夹复用金属夹条材料，但仍由 `en_bloc_clip` 状态和自动弹出区分 |
 | 快装器 | `tacz_extra:item/mag_speedloader22` | 已有圆柱快装器材料族 |
 | 已审计 FAL 系列 | 既有 FAL 弹匣图 | `rainforest_fal_308` 复用 FAL 家族材质，标记为 family 而非每容量精确模型 |
 | SMG08/18 鼓式弹匣 | `tacz_extra:item/mag_rpk_drum` | 复用既有鼓式材料，明确是 family 级近似而不是 SMG08 精确复刻 |
 
-以下类型**不适合**硬套已有方盒弹匣图，当前保留中性材质，直到有合适的可授权资源：
+以下类型仍**不适合**硬套已有方盒弹匣图，当前保留中性材质，直到有合适的可授权资源：
 
 ```text
 Lewis / DP28 顶部盘式弹匣
 Villar Perosa 双上置盒式弹匣
-MG08/15 等暴露式布带/特殊容器
-特殊蜗牛盘、异形双联、专有顶部供弹器
+真正的蜗牛盘、异形双联、专有顶部供弹器
 ```
 
 它们的机制、余弹、制造和图标选择仍是实际生效的；“中性材质”只是诚实地不把错误几何说成精确美术。资源包作者可用 `industry_icons` 的 `magazine_family` 或 `feed_device_kind` selector 以更高优先级提供精确覆盖。

@@ -1488,6 +1488,50 @@
       },
       "coverage": "family",
       "note": "Existing drum material reused for the SMG08/18 drum family; visual is intentionally family-level, not exact."
+    },
+    {
+      "id": "magazine_bf1_mg0815_belt_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_m134_belt",
+      "priority": 270,
+      "match": {
+        "magazine_family": "bf1_mg0815_762x54_belt"
+      },
+      "coverage": "family",
+      "note": "Existing exposed-belt material reused for MG08/15; family-level visual, not exact belt geometry."
+    },
+    {
+      "id": "magazine_bf1_mg42_belt_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_m134_belt",
+      "priority": 270,
+      "match": {
+        "magazine_family": "bf1_mg42_762x54_belt"
+      },
+      "coverage": "family",
+      "note": "Existing exposed-belt material reused for MG42; family-level visual, not exact belt geometry."
+    },
+    {
+      "id": "magazine_hamster_mg1417_belt_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_m134_belt",
+      "priority": 270,
+      "match": {
+        "magazine_family": "hamster_mg1417_long_belt"
+      },
+      "coverage": "family",
+      "note": "Existing exposed-belt material reused for MG14/17; family-level visual, not exact belt geometry."
+    },
+    {
+      "id": "magazine_rainforest_rpd_belt_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_rpk_drum",
+      "priority": 270,
+      "match": {
+        "magazine_family": "rainforest_rpd_762x39_belt"
+      },
+      "coverage": "family",
+      "note": "Existing drum material reused for the RPD belt-drum container family; not an exact RPD mesh."
     }
   ]
 }
