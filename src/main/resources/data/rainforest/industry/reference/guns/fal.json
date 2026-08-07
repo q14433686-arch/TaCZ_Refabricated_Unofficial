@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "rainforest/fal",
+  "display_name": "FN FAL",
+  "action": "gas_operated_rifle",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "rainforest_fal_308",
+    "capacity": 20,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "308",
+    "expected_ammo": "tacz:308"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Cold War from 1947-1991 v0.51: rainforest:index/guns/fal names FN FAL and targets rainforest:fal_data",
+    "fal_data: ammo=tacz:308, ammo_amount=20, extended_mag_ammo_amount=[25,30,32], bolt=closed_bolt, default magazine reload, no custom script",
+    "rainforest:fal animation exposes magrelease and additional_magazine across empty and tactical reload paths",
+    "runtime declaration is guarded against the currently loaded GunData before activation"
+  ]
+}

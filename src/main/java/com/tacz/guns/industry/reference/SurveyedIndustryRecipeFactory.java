@@ -7,6 +7,7 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.industry.IndustryProfileManager;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
+import com.tacz.guns.industry.magazine.ExternalCarrierVariant;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.resource.ICommonResourceProvider;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -80,7 +81,12 @@ public final class SurveyedIndustryRecipeFactory {
                 // A validated addon declaration now gains a real multi-slot
                 // surveyed carrier commission instead of merely accepting a
                 // creative/debug magazine ItemStack with no manufacturing path.
-                commissions += putIfAbsent(output, carrierId(platform), externalCarrierRecipe(platform, feed)) ? 1 : 0;
+                // Explicit extended-capacity carriers are separate physical
+                // outputs, never a hidden NBT resize of the base magazine.
+                for (ExternalCarrierVariant variant : feed.getExternalCarrierVariants()) {
+                    commissions += putIfAbsent(output, carrierId(platform, feed, variant),
+                            externalCarrierRecipe(platform, feed, variant)) ? 1 : 0;
+                }
             }
         }
         if (transformed > 0) {
@@ -202,13 +208,14 @@ public final class SurveyedIndustryRecipeFactory {
      * do not claim a high-fidelity Create carrier line for an addon whose real
      * shell geometry has not been supplied.
      */
-    private static JsonObject externalCarrierRecipe(SurveyedPlatform platform, GunFeedDefinition definition) {
+    private static JsonObject externalCarrierRecipe(SurveyedPlatform platform, GunFeedDefinition definition,
+                                                    ExternalCarrierVariant variant) {
         JsonArray materials = new JsonArray();
         materials.add(material(new com.google.gson.JsonPrimitive("tacz:magazine_blank"), 1, true));
         materials.add(material(partial("tacz:gun_component", surveyedKitTag(platform)), 1, true));
         materials.add(material(partial("tacz:gun_blueprint", productionTemplateTag(platform)), 1, false));
         materials.add(material(partial("tacz:press_die", surveyFixtureTag()), 1, false));
-        return generatedTableRecipe(materials, customResult("tacz:magazine", externalCarrierTag(definition)));
+        return generatedTableRecipe(materials, customResult("tacz:magazine", externalCarrierTag(definition, variant)));
     }
 
     private static JsonObject loadingDeviceTag(GunFeedDefinition definition) {
@@ -222,13 +229,13 @@ public final class SurveyedIndustryRecipeFactory {
         return tag;
     }
 
-    private static JsonObject externalCarrierTag(GunFeedDefinition definition) {
+    private static JsonObject externalCarrierTag(GunFeedDefinition definition, ExternalCarrierVariant variant) {
         JsonObject tag = new JsonObject();
         tag.addProperty("MagazineFamily", definition.getMagazineFamily());
         tag.addProperty("MagazineAmmoId", definition.getAmmoId().toString());
-        tag.addProperty("MagazineCapacity", definition.getMagazineCapacity());
+        tag.addProperty("MagazineCapacity", variant.getCapacity());
         tag.addProperty("MagazineAmmoCount", 0);
-        tag.addProperty("MagazineDisplayName", definition.getDisplayName());
+        tag.addProperty("MagazineDisplayName", variant.getDisplayName());
         tag.addProperty("FeedDeviceKind", definition.getMechanism().serializedName());
         return tag;
     }
@@ -368,8 +375,18 @@ public final class SurveyedIndustryRecipeFactory {
         return generatedId("device", platform);
     }
 
-    private static Identifier carrierId(SurveyedPlatform platform) {
-        return generatedId("carrier", platform);
+    /**
+     * Preserve the pre-variant base commission id so an existing compatibility
+     * data pack can still override it. Additional audited capacities receive a
+     * suffix and cannot collide with the level-zero physical carrier.
+     */
+    private static Identifier carrierId(SurveyedPlatform platform, GunFeedDefinition definition,
+                                        ExternalCarrierVariant variant) {
+        Identifier base = generatedId("carrier", platform);
+        if (variant.getCapacity() == definition.getMagazineCapacity()) {
+            return base;
+        }
+        return Identifier.fromNamespaceAndPath(base.getNamespace(), base.getPath() + "/" + variant.getCapacity());
     }
 
     private static Identifier generatedId(String operation, SurveyedPlatform platform) {

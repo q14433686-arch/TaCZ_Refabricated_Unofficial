@@ -10,6 +10,7 @@ import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.industry.IndustryProfileManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
+import com.tacz.guns.util.AttachmentDataUtils;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -60,7 +61,7 @@ public final class PhysicalMagazineService {
             return false;
         }
         GunFeedDefinition definition = getDefinition(gun);
-        return definition != null && isCompatible(definition, iGun.getInstalledMagazine(gun));
+        return definition != null && isCompatible(definition, gun, iGun.getInstalledMagazine(gun));
     }
 
     /**
@@ -129,6 +130,13 @@ public final class PhysicalMagazineService {
         if (!usesPhysicalMagazine(gun)) {
             return false;
         }
+        GunFeedDefinition definition = getDefinition(gun);
+        if (definition == null || !canSafelyMaterializeLegacyMagazine(gun, definition)) {
+            // Never exchange a legacy integer count for a smaller physical
+            // carrier. A missing declared capacity must leave the old state
+            // untouched rather than silently delete rounds.
+            return false;
+        }
         if (!(shooter instanceof Player player)) {
             // NPCs keep the legacy path until their inventory semantics and
             // reload scripts have an explicit physical-magazine implementation.
@@ -155,7 +163,7 @@ public final class PhysicalMagazineService {
             return null;
         }
         GunFeedDefinition definition = getDefinition(gun);
-        if (definition == null) {
+        if (definition == null || !canSafelyMaterializeLegacyMagazine(gun, definition)) {
             return null;
         }
 
@@ -235,7 +243,7 @@ public final class PhysicalMagazineService {
             return false;
         }
         GunFeedDefinition definition = getDefinition(gun);
-        if (definition == null) {
+        if (definition == null || !canSafelyMaterializeLegacyMagazine(gun, definition)) {
             return false;
         }
 
@@ -245,7 +253,7 @@ public final class PhysicalMagazineService {
             // cloning an arbitrary player-owned ItemStack.
             incoming = createMagazine(definition, definition.getMagazineCapacity());
         } else {
-            incoming = extractReservedMagazine(player, plan, definition);
+            incoming = extractReservedMagazine(player, gun, plan, definition);
             if (incoming.isEmpty()) {
                 return false;
             }
@@ -276,7 +284,7 @@ public final class PhysicalMagazineService {
      */
     public static boolean migrateLegacyIntoInstalledMagazine(ItemStack gun) {
         if (!usesPhysicalMagazine(gun) || !(gun.getItem() instanceof IGun iGun)
-                || hasActiveInstalledMagazine(gun)) {
+                || hasActiveInstalledMagazine(gun) || hasStoredInstalledMagazine(gun)) {
             return false;
         }
         GunFeedDefinition definition = getDefinition(gun);
@@ -288,6 +296,12 @@ public final class PhysicalMagazineService {
             return false;
         }
         ItemStack magazine = createMagazine(definition, legacyAmmo);
+        // A larger variant may preserve the old count in inventory, but it may
+        // only become the installed source when the gun's currently installed
+        // extended-mag attachment exposes that exact receiver capacity.
+        if (magazine.isEmpty() || !isCompatible(definition, gun, magazine)) {
+            return false;
+        }
         iGun.setInstalledMagazine(gun, magazine);
         syncLegacyAmmoCount(gun, getMagazineAmmoCount(magazine));
         return true;
@@ -314,6 +328,11 @@ public final class PhysicalMagazineService {
         return true;
     }
 
+    /**
+     * Structural carrier identity check. It is intentionally public for
+     * inventory/recipe callers that have no receiver stack yet; installation
+     * and reload selection use the receiver-aware overload below.
+     */
     public static boolean isCompatible(GunFeedDefinition definition, ItemStack magazine) {
         if (!definition.isValidExternalCarrierDefinition() || !(magazine.getItem() instanceof IMagazine item)
                 || !item.isConfigured(magazine)) {
@@ -330,7 +349,18 @@ public final class PhysicalMagazineService {
         }
         return definition.getMagazineFamily().equals(item.getMagazineFamily(magazine))
                 && definition.getAmmoId().equals(item.getAmmoId(magazine))
-                && item.getCapacity(magazine) <= definition.getMagazineCapacity();
+                && definition.acceptsExternalCarrierCapacity(item.getCapacity(magazine));
+    }
+
+    /**
+     * Installation check: an explicit larger variant additionally needs the
+     * matching capacity exposed by the gun's real current attachment state.
+     */
+    public static boolean isCompatible(GunFeedDefinition definition, ItemStack gun, ItemStack magazine) {
+        if (!isCompatible(definition, magazine) || !(magazine.getItem() instanceof IMagazine item)) {
+            return false;
+        }
+        return item.getCapacity(magazine) <= getCurrentReceiverCapacity(gun);
     }
 
     private static boolean shouldConsumeMagazine(Player player) {
@@ -371,7 +401,7 @@ public final class PhysicalMagazineService {
         int mainInventorySlots = inventory.getNonEquipmentItems().size();
         for (int slot = 0; slot < mainInventorySlots; slot++) {
             ItemStack candidate = inventory.getItem(slot);
-            if (!isCompatible(definition, candidate) || !(candidate.getItem() instanceof IMagazine magazine)) {
+            if (!isCompatible(definition, gun, candidate) || !(candidate.getItem() instanceof IMagazine magazine)) {
                 continue;
             }
             int rounds = magazine.getAmmoCount(candidate);
@@ -388,7 +418,7 @@ public final class PhysicalMagazineService {
         return best;
     }
 
-    private static ItemStack extractReservedMagazine(Player player, PhysicalMagazineReloadPlan plan,
+    private static ItemStack extractReservedMagazine(Player player, ItemStack gun, PhysicalMagazineReloadPlan plan,
                                                      GunFeedDefinition definition) {
         if (plan.getSourceSlot() < 0) {
             return ItemStack.EMPTY;
@@ -398,7 +428,7 @@ public final class PhysicalMagazineService {
         // index space used by Inventory#getItem/removeItem in 26.2.
         ItemStack current = inventory.getItem(plan.getSourceSlot());
         ItemStack expected = plan.getExpectedMagazine();
-        if (!ItemStack.isSameItemSameComponents(current, expected) || !isCompatible(definition, current)) {
+        if (!ItemStack.isSameItemSameComponents(current, expected) || !isCompatible(definition, gun, current)) {
             // The player moved/replaced the reserved stack during the animation.
             // Fail closed: do not pick another magazine and never reload from
             // loose rounds as a fallback.
@@ -407,7 +437,7 @@ public final class PhysicalMagazineService {
 
         ItemStack extracted = inventory.removeItem(plan.getSourceSlot(), 1);
         inventory.setChanged();
-        if (isCompatible(definition, extracted)) {
+        if (isCompatible(definition, gun, extracted)) {
             return extracted;
         }
         if (!extracted.isEmpty()) {
@@ -447,11 +477,43 @@ public final class PhysicalMagazineService {
         }
     }
 
+    /**
+     * Materialise only a declared capacity large enough for every preserved
+     * legacy round. Returning EMPTY is a no-loss failure signal, never a
+     * request to clamp the count into the base carrier.
+     */
     private static ItemStack createMagazine(GunFeedDefinition definition, int rounds) {
+        ExternalCarrierVariant variant = definition.getExternalCarrierVariantForRounds(rounds);
+        if (variant == null) {
+            return ItemStack.EMPTY;
+        }
         return MagazineItemBuilder.create()
-                .fromDefinition(definition)
+                .fromExternalCarrier(definition, variant)
                 .setAmmoCount(rounds)
                 .build();
+    }
+
+    /**
+     * A legacy integer can be converted only when an actual configured carrier
+     * exists for its full count. Installed legacy magazines are already real
+     * ItemStacks and can always be returned untouched.
+     */
+    private static boolean canSafelyMaterializeLegacyMagazine(ItemStack gun, GunFeedDefinition definition) {
+        if (gun.getItem() instanceof IGun iGun && !iGun.getInstalledMagazine(gun).isEmpty()) {
+            return true;
+        }
+        int legacyAmmo = getLegacyAmmoCount(gun);
+        return legacyAmmo <= 0 || definition.getExternalCarrierVariantForRounds(legacyAmmo) != null;
+    }
+
+    /** Current base/extended receiver capacity, derived from real loaded GunData and attachment state. */
+    private static int getCurrentReceiverCapacity(ItemStack gun) {
+        if (!(gun.getItem() instanceof IGun iGun)) {
+            return 0;
+        }
+        return com.tacz.guns.api.TimelessAPI.getCommonGunIndex(iGun.getGunId(gun))
+                .map(index -> AttachmentDataUtils.getAmmoCountWithAttachment(gun, index.getGunData()))
+                .orElse(0);
     }
 
     private static int getMagazineAmmoCount(ItemStack magazine) {

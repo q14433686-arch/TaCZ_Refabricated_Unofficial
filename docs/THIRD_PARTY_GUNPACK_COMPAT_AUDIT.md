@@ -33,7 +33,7 @@
 
 - GunpowderRevolution 的 Auto-5 使用 `tacz:m870_gun_logic`，但旧数据仍写 `reload.type = magazine`；
 - 四包中存在转轮、双管、管式、固定内部仓、历史夹条/漏夹、弹链箱、火箭筒和燃料设备；
-- 因此缺少 `industry/reference` 或 `industry/gun_feed` 的枪必须保持 `legacy` 供弹，直到有证据资料，不得自动生成实体弹匣。
+- 因此缺少 `industry/reference` 或 `industry/gun_feed` 的枪必须保持 `legacy` 供弹，直到有证据资料，不得自动生成实体弹匣。四个 main 参考包的逐项 GunData/扩容数组统计与新的变体边界见 [`REFERENCE_GUNPACK_FEED_AUDIT.md`](REFERENCE_GUNPACK_FEED_AUDIT.md)。
 
 ### 弹药也不是一律金属弹药筒
 

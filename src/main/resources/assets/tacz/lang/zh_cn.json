@@ -2026,5 +2026,15 @@
   "tooltip.tacz.gun.proficiency_handling": "熟练操控：瞄准快 %s · 散布紧 %s · 后坐低 %s",
   "toast.tacz.sub.handling_up": "这把实体枪的操控更加熟练",
   "tooltip.tacz.maintenance.service_fault": "机械勤务故障——请在工业勤务台维修组件",
-  "commands.tacz.industry.feed_audit": "§b供弹适配审计§r — 已接受：%s，可选包休眠：%s，被拒绝：%s"
+  "commands.tacz.industry.feed_audit": "§b供弹适配审计§r — 已接受：%s，可选包休眠：%s，被拒绝：%s",
+  "commands.tacz.industry.feed_inspect_missing": "§e未找到 %s 已加载的 GunData。",
+  "commands.tacz.industry.feed_inspect_header": "§b供弹适配检查§r %s —— 仅显示已加载事实；绝不猜测实体供弹结构。",
+  "commands.tacz.industry.feed_inspect_facts": "GunData：弹药=%s；基础容量=%s；原始扩容容量=%s；reload.type=%s；枪栓=%s；脚本=%s；无限备弹=%s",
+  "commands.tacz.industry.feed_inspect_legacy": "没有已验证的供弹适配：保持原包 legacy 换弹。必须提供经审计的 sidecar 声明；仅凭 reload.type 不能证明可拆卸弹匣。",
+  "commands.tacz.industry.feed_inspect_external": "已验证外部供弹适配：机制=%s；兼容族=%s；已声明实体容量=%s",
+  "commands.tacz.industry.feed_inspect_non_external": "已验证非外部供弹适配：机制=%s；机匣容量=%s",
+  "item.tacz.magazine.rainforest_fal_20": "测绘 FAL 20 发弹匣",
+  "item.tacz.magazine.rainforest_fal_25": "测绘 FAL 25 发扩容弹匣",
+  "item.tacz.magazine.rainforest_fal_30": "测绘 FAL 30 发扩容弹匣",
+  "item.tacz.magazine.rainforest_fal_32": "测绘 FAL 32 发扩容弹匣"
 }

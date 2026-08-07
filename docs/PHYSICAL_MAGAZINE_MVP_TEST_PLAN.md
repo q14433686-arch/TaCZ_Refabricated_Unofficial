@@ -14,7 +14,7 @@ PhysicalMagazines = true
 ```
 
 - `detachable_magazine` 使用可拆卸 `tacz:magazine`；`belt` 使用同一实体物品承载的弹链箱；
-- 默认包当前有 **22 种独立的族／口径／容量供弹器身份**，由 `tools/industry/magazine_carriers.json` 与 `data/tacz/industry/gun_feed/*.json` 双向校验；
+- 默认包当前有 **22 种独立的族／口径／容量供弹器身份**，由 `tools/industry/magazine_carriers.json` 与 `data/tacz/industry/gun_feed/*.json` 双向校验；第三方已验证外部载具走独立 surveyed Gunsmith Table 多槽委托，不伪装成默认包高保真 Create 规格量规线；
 - `tube`、`revolver`、`internal_box`、`single_shot` 是枪内供弹状态或枪械组件，**不伪造为可拆卸弹匣**；
 - 最终散装弹药仍由专用四槽弹药装配机制造；弹匣装填仍是背包交互／装弹器操作，**没有新增假装配 GUI**；
 - `LEGACY` 档仍使用原有整数备弹行为。
@@ -101,6 +101,19 @@ Basin：高碳钢板 + 黄铜板 + 石英 + 铁粒
    - 枪膛一发、已安装供弹器余弹与 HUD 数字一致；
    - 战术换弹退回半满旧供弹器，背包满时掉在脚边；
    - 潜行退匣只取出实体供弹器，不影响膛内一发。
+
+### Cold War `rainforest:fal` 扩容载具样本
+
+> 前置：安装 `Cold War from 1947-1991 v0.51`，并确认
+> `/tacz industry feed inspect rainforest:fal` 报告基础 `20`、原始扩容
+> `[25,30,32]`，且适配为已验证的 `detachable_magazine`。这是 main
+> 参考包的首个外部载具样本，不是对同 namespace 其他枪的自动推广。
+
+1. 在 surveyed Gunsmith Table 中确认有四条独立供弹器委托，输出容量分别为 `20`、`25`、`30`、`32`；每条均消耗中性弹匣壳体毛坯和 FAL 平台套件，保留 FAL production template 与 survey fixture；
+2. 不安装扩容配件时：20 发 FAL 弹匣可以插入；25/30/32 发实体载具不能被选作换弹来源，也不得成为 `InstalledMagazine`；
+3. 分别装入使当前 GunData 容量变为 25、30、32 的真实扩容配件后：只验证对应或更小、同 family 的实体载具可插入；更大的未匹配载具必须保持在背包中；
+4. 对四个容量分别验证空仓、战术换弹、潜行退匣、取消 reload、背包满时掉落、断线重连和 HUD/膛内一发同步；
+5. 将一把旧 FAL 的 legacy 余弹设为 25/30/32 后分别验证：有对应声明变体时绝不截断；无相应扩容状态时不得把较大载具偷偷装入枪内；若未来包更新容量数组，定义必须被 runtime validator 拒绝并保持 legacy。
 
 ## 4. 特殊供弹机制回归
 

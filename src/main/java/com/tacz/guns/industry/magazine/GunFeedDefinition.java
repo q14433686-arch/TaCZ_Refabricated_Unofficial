@@ -39,6 +39,16 @@ public class GunFeedDefinition {
     private String displayName = "";
 
     /**
+     * Additional, explicitly manufactured capacities for an external carrier.
+     * The base {@link #magazineCapacity} is always the level-zero capacity;
+     * each extra entry must match an actual extended-mag capacity exposed by
+     * the currently loaded GunData. This is intentionally not a generic
+     * "smaller magazines fit" guess.
+     */
+    @SerializedName("carrier_variants")
+    private List<ExternalCarrierVariant> carrierVariants = List.of();
+
+    /**
      * Maximum loose rounds one complete scripted reload action may insert for
      * an internal feed. Tube/cylinder/double-barrel scripts may visually feed
      * several rounds before FINISHING, so their default is full remaining
@@ -102,6 +112,74 @@ public class GunFeedDefinition {
 
     public String getDisplayName() {
         return displayName == null ? "" : displayName;
+    }
+
+    /**
+     * All explicit external-carrier identities, with the base declaration
+     * first. Internal feeds and loading devices deliberately return no carrier
+     * stack variants because their {@code magazine_capacity} describes receiver
+     * capacity rather than a removable ItemStack.
+     */
+    public List<ExternalCarrierVariant> getExternalCarrierVariants() {
+        if (!isValidExternalCarrierDefinition()) {
+            return List.of();
+        }
+        List<ExternalCarrierVariant> variants = new ArrayList<>();
+        Set<Integer> seenCapacities = new HashSet<>();
+        ExternalCarrierVariant base = new ExternalCarrierVariant(getMagazineCapacity(), getDisplayName());
+        variants.add(base);
+        seenCapacities.add(base.getCapacity());
+        if (carrierVariants != null) {
+            for (ExternalCarrierVariant variant : carrierVariants) {
+                if (variant != null && variant.isValid() && seenCapacities.add(variant.getCapacity())) {
+                    variants.add(variant);
+                }
+            }
+        }
+        return List.copyOf(variants);
+    }
+
+    /**
+     * Returns the declared identity for this exact carrier capacity, or null
+     * when a larger capacity was not explicitly audited for this receiver.
+     */
+    public ExternalCarrierVariant getExternalCarrierVariant(int capacity) {
+        int safeCapacity = Math.max(0, capacity);
+        for (ExternalCarrierVariant variant : getExternalCarrierVariants()) {
+            if (variant.getCapacity() == safeCapacity) {
+                return variant;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Selects the smallest explicit carrier that can preserve this many legacy
+     * rounds during migration. Returning null is intentional: callers must
+     * retain legacy state rather than silently clamp ammunition into the base
+     * magazine when no real carrier capacity has been declared.
+     */
+    public ExternalCarrierVariant getExternalCarrierVariantForRounds(int rounds) {
+        int required = Math.max(0, rounds);
+        ExternalCarrierVariant selected = null;
+        for (ExternalCarrierVariant variant : getExternalCarrierVariants()) {
+            if (variant.getCapacity() >= required
+                    && (selected == null || variant.getCapacity() < selected.getCapacity())) {
+                selected = variant;
+            }
+        }
+        return selected;
+    }
+
+    /**
+     * Existing lower-capacity members of the same explicit family remain
+     * compatible as before. A capacity above the receiver's base declaration,
+     * however, must be one of the exact audited variants above.
+     */
+    public boolean acceptsExternalCarrierCapacity(int capacity) {
+        int safeCapacity = Math.max(0, capacity);
+        return safeCapacity > 0 && (safeCapacity <= getMagazineCapacity()
+                || getExternalCarrierVariant(safeCapacity) != null);
     }
 
     public int getFeedDeviceCapacity() {
@@ -295,10 +373,58 @@ public class GunFeedDefinition {
         if (!validMechanism) {
             return Validation.invalid("required mechanism/family/capacity/feed-device fields are incomplete");
         }
+        Validation carrierVariantsValidation = validateExternalCarrierVariants(declared, data);
+        if (!carrierVariantsValidation.valid()) {
+            return carrierVariantsValidation;
+        }
         if (reloadRoutes != null && !reloadRoutes.isEmpty() && getReloadRoutes().isEmpty()) {
             return Validation.invalid("all declared reload_routes are invalid");
         }
         return Validation.success();
+    }
+
+    /**
+     * A carrier variant is not an arbitrary capacity override. TACZ's extended
+     * magazine attachment can expose at most its first three levels at runtime,
+     * so every additional physical carrier must exactly match one of those
+     * loaded values. Some old gun packs carry a fourth archival number; it is
+     * deliberately not accepted until the runtime can actually select it.
+     */
+    private Validation validateExternalCarrierVariants(FeedMechanism declared, GunData data) {
+        if (carrierVariants == null || carrierVariants.isEmpty()) {
+            return Validation.success();
+        }
+        if (declared != FeedMechanism.DETACHABLE_MAGAZINE && declared != FeedMechanism.BELT) {
+            return Validation.invalid("carrier_variants are only valid for detachable_magazine or belt");
+        }
+        Set<Integer> seenCapacities = new HashSet<>();
+        seenCapacities.add(getMagazineCapacity());
+        for (ExternalCarrierVariant variant : carrierVariants) {
+            if (variant == null || !variant.isValid()) {
+                return Validation.invalid("carrier_variants need positive capacity and display_name");
+            }
+            int capacity = variant.getCapacity();
+            if (!seenCapacities.add(capacity)) {
+                return Validation.invalid("carrier_variants cannot duplicate base or another capacity");
+            }
+            if (!matchesRuntimeExtendedCapacity(capacity, data)) {
+                return Validation.invalid("carrier_variants capacity does not equal a selectable loaded GunData.extended_mag_ammo_amount value");
+            }
+        }
+        return Validation.success();
+    }
+
+    private static boolean matchesRuntimeExtendedCapacity(int capacity, GunData data) {
+        if (data == null || data.getExtendedMagAmmoAmount() == null) {
+            return false;
+        }
+        int[] values = data.getExtendedMagAmmoAmount();
+        for (int level = 0; level < Math.min(3, values.length); level++) {
+            if (values[level] == capacity) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public record Validation(boolean valid, String reason) {

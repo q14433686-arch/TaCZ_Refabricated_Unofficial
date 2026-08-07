@@ -6,6 +6,7 @@ import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.client.industry.icon.IndustryIconRenderer;
 import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.api.item.builder.AmmoItemBuilder;
+import com.tacz.guns.industry.magazine.ExternalCarrierVariant;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.magazine.MagazineItemBuilder;
 import com.tacz.guns.industry.magazine.MagazineItemDataAccessor;
@@ -192,12 +193,26 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
                 continue;
             }
             GunFeedDefinition definition = entry.getValue();
-            if (!definition.isValidDetachableDefinition() && !definition.isValidLoadingDeviceDefinition()
-                    && !definition.isValidEnBlocClipDefinition()) {
+            if (definition.isValidExternalCarrierDefinition()) {
+                // A belt box is just as physical as a detachable box magazine;
+                // it used to be omitted here because the old check accepted
+                // detachable_magazine only. Every explicit larger variant also
+                // deserves its own empty creative sample rather than a fake
+                // base-capacity clone.
+                for (ExternalCarrierVariant variant : definition.getExternalCarrierVariants()) {
+                    int capacity = variant.getCapacity();
+                    String key = definition.getMechanism().serializedName() + "|" + definition.getMagazineFamily()
+                            + "|" + capacity + "|" + definition.getAmmoId();
+                    if (seen.add(key)) {
+                        stacks.add(MagazineItemBuilder.create().fromExternalCarrier(definition, variant).build());
+                    }
+                }
                 continue;
             }
-            int capacity = definition.getMechanism().usesPhysicalFeedDevice()
-                    ? definition.getFeedDeviceCapacity() : definition.getMagazineCapacity();
+            if (!definition.isValidLoadingDeviceDefinition() && !definition.isValidEnBlocClipDefinition()) {
+                continue;
+            }
+            int capacity = definition.getFeedDeviceCapacity();
             String key = definition.getMechanism().serializedName() + "|" + definition.getMagazineFamily()
                     + "|" + capacity + "|" + definition.getAmmoId();
             if (seen.add(key)) {

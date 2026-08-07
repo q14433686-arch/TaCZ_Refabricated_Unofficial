@@ -60,6 +60,22 @@ public final class MagazineItemBuilder {
                 .setFeedDeviceKind(definition.getMechanism().serializedName());
     }
 
+    /**
+     * Build one declared detachable-magazine/belt capacity. The variant is
+     * supplied by a validated {@link GunFeedDefinition}; this factory does not
+     * manufacture an arbitrary larger NBT capacity from a loose round count.
+     */
+    public MagazineItemBuilder fromExternalCarrier(GunFeedDefinition definition, ExternalCarrierVariant variant) {
+        if (variant == null) {
+            return fromDefinition(definition);
+        }
+        return setFamily(definition.getMagazineFamily())
+                .setAmmoId(definition.getAmmoId())
+                .setCapacity(variant.getCapacity())
+                .setDisplayNameKey(variant.getDisplayName())
+                .setFeedDeviceKind(definition.getMechanism().serializedName());
+    }
+
     public ItemStack build() {
         ItemStack magazine = new ItemStack(ModItems.MAGAZINE);
         if (magazine.getItem() instanceof MagazineItemDataAccessor accessor) {

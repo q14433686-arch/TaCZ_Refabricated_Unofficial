@@ -17,6 +17,8 @@ GunData.ammo_amount
 
 正确路径是：**附属包作者或兼容数据包显式声明 `industry/gun_feed`，运行时再用实际加载的 GunIndex/GunData 验证。** 没有通过验证的声明保持 legacy，不会产生实体弹匣。
 
+仓库 `main` 中四个参考枪包的离线审计、容量统计和安全边界见 [`REFERENCE_GUNPACK_FEED_AUDIT.md`](REFERENCE_GUNPACK_FEED_AUDIT.md)。
+
 ## 放置位置
 
 资源 ID 即目标 GunId。因此目标为：
@@ -50,11 +52,48 @@ data/my_addon/industry/gun_feed/f2000.json
 1. `my_addon:f2000` 的 GunIndex 与 GunData 确实已加载；
 2. `ammo` 精确等于当前 `GunData.ammo`；
 3. `magazine_capacity` 精确等于当前 `GunData.ammo_amount`；
-4. `mechanism`、弹匣族、显示键及外部供弹字段完整有效。
+4. `mechanism`、弹匣族、显示键及外部供弹字段完整有效；
+5. 若声明 `carrier_variants`，每一个额外容量都精确匹配当前 GunData 的可选扩容等级，且有自己的显示键。
 
 任一项不一致，日志会说明拒绝原因，客户端也不会同步该定义、不会在创造栏出现错误弹匣、不会接管原包换弹。
 
 `belt` 使用相同结构，只把 `mechanism` 改成 `belt`；成品仍是有独立余弹的 `tacz:magazine`，但作为弹链箱/弹鼓语义而非 STANAG 弹匣。
+
+## 已审计的扩容载具变体
+
+不少附属包在真实 `GunData.extended_mag_ammo_amount` 中暴露了扩容等级。它不能被当成“把 30 发 NBT 改成 60 发”的权限；每个额外容量都必须有自己的、可制造的实体载具声明：
+
+```json
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "my_addon_f2000_556",
+  "magazine_capacity": 30,
+  "ammo": "my_addon:556x45",
+  "display_name": "item.my_addon.magazine.f2000_30",
+  "carrier_variants": [
+    {
+      "capacity": 40,
+      "display_name": "item.my_addon.magazine.f2000_40"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.my_addon.magazine.f2000_50"
+    }
+  ]
+}
+```
+
+运行时会逐项拒绝以下任一种情况：
+
+- `carrier_variants` 被写在 `internal_box`、`tube`、桥夹等非外部载具上；
+- 容量重复、等于基础容量，或没有独立 `display_name`；
+- 额外容量不精确等于**当前加载** `GunData.extended_mag_ammo_amount` 的可选等级之一。
+
+TACZ 当前的扩容等级最多使用该数组的前三项。少数旧枪包虽然写有第四个历史数值，但运行时无对应等级，故不能借此生成不可实际选用的实体弹匣。
+
+基础载具仍是 `magazine_capacity` 对应的 level-0 实体。只有枪上真实安装的扩容配件使当前接收机容量达到某个已声明变体时，那个较大实体载具才能插入。未声明能容纳旧备弹数的变体时，旧世界迁移会**保持 legacy 状态并拒绝交换**，而不是把超出的子弹悄悄截断。
+
+已验证的第三方 surveyed 平台会为基础容量和每个 `carrier_variants` 条目各生成一条真实 Gunsmith Table 多槽供弹器委托；结果是不同容量的独立 `tacz:magazine`，不是 GUI/REI 上显示相同物品的假扩容。
 
 ## 与现有弹匣的共享
 
@@ -103,8 +142,11 @@ data/my_addon/industry/gun_feed/f2000.json
 ```text
 /tacz industry audit
 /tacz industry reference my_addon:f2000
+/tacz industry feed inspect my_addon:f2000
 ```
 
 `industry audit` 现在会额外显示供弹适配统计：已接受、可选附属包未安装而休眠、以及因 Ammo/容量/字段不符被拒绝的声明数量。
+
+`feed inspect` 直接读取服务器已加载的 `GunData`，报告 Ammo、基础/原始扩容容量、`reload.type`、bolt、脚本和当前已验证的适配状态。它是为兼容包作者收集**可验证事实**的命令；输出会明确提醒：它不会也不能据此自动选择 `detachable_magazine`、`belt`、管仓或转轮机制。
 
 玩家不需要运行仓库 Python 工具；`tools/generate_industry_content.py --check` 只用于作者/CI 验证内置默认供弹器清单。
