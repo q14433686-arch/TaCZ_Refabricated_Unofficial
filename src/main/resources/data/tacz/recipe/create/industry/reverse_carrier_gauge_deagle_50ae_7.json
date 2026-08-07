@@ -1,0 +1,52 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_gauge_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.carrier_gauge",
+      "DieTargetKind": "carrier"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:magazine"
+    ],
+    "nbt": {
+      "MagazineFamily": "deagle_50ae",
+      "MagazineAmmoId": "tacz:50ae",
+      "MagazineCapacity": 7,
+      "MagazineAmmoCount": 0,
+      "MagazineDisplayName": "item.tacz.magazine.deagle_50ae"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "feeding",
+          "IndustryPartKind": "carrier_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.deagle_50ae_7",
+          "DieTargetKind": "deagle_50ae_7",
+          "MagazineFamily": "deagle_50ae",
+          "MagazineAmmoId": "tacz:50ae",
+          "MagazineCapacity": 7
+        }
+      }
+    }
+  ]
+}

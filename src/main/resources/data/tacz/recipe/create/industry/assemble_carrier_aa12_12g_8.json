@@ -1,0 +1,55 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_body",
+      "IndustryDisplayName": "item.tacz.gun_component.carrier_body.aa12_12g_8",
+      "DieTargetKind": "aa12_12g_8",
+      "MagazineFamily": "aa12_12g",
+      "MagazineAmmoId": "tacz:12g",
+      "MagazineCapacity": 8
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_feed_kit",
+      "IndustryDisplayName": "item.tacz.gun_component.carrier_feed_kit.aa12_12g_8",
+      "DieTargetKind": "aa12_12g_8",
+      "MagazineFamily": "aa12_12g",
+      "MagazineAmmoId": "tacz:12g",
+      "MagazineCapacity": 8
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:magazine",
+      "components": {
+        "minecraft:custom_data": {
+          "MagazineFamily": "aa12_12g",
+          "MagazineAmmoId": "tacz:12g",
+          "MagazineCapacity": 8,
+          "MagazineAmmoCount": 0,
+          "MagazineDisplayName": "item.tacz.magazine.aa12_12g"
+        }
+      }
+    }
+  ]
+}

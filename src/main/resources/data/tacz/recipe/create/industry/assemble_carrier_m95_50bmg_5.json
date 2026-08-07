@@ -1,0 +1,55 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_body",
+      "IndustryDisplayName": "item.tacz.gun_component.carrier_body.m95_50bmg_5",
+      "DieTargetKind": "m95_50bmg_5",
+      "MagazineFamily": "m95_50bmg",
+      "MagazineAmmoId": "tacz:50bmg",
+      "MagazineCapacity": 5
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_feed_kit",
+      "IndustryDisplayName": "item.tacz.gun_component.carrier_feed_kit.m95_50bmg_5",
+      "DieTargetKind": "m95_50bmg_5",
+      "MagazineFamily": "m95_50bmg",
+      "MagazineAmmoId": "tacz:50bmg",
+      "MagazineCapacity": 5
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:magazine",
+      "components": {
+        "minecraft:custom_data": {
+          "MagazineFamily": "m95_50bmg",
+          "MagazineAmmoId": "tacz:50bmg",
+          "MagazineCapacity": 5,
+          "MagazineAmmoCount": 0,
+          "MagazineDisplayName": "item.tacz.magazine.m95_50bmg"
+        }
+      }
+    }
+  ]
+}

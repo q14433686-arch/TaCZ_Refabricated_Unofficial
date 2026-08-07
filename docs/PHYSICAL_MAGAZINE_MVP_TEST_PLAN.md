@@ -14,7 +14,7 @@ PhysicalMagazines = true
 ```
 
 - `detachable_magazine` 使用可拆卸 `tacz:magazine`；`belt` 使用同一实体物品承载的弹链箱；
-- 默认包当前有 **22 种独立的族／口径／容量供弹器身份**，由 `tools/industry/magazine_carriers.json` 与 `data/tacz/industry/gun_feed/*.json` 双向校验；第三方已验证外部载具走独立 surveyed Gunsmith Table 多槽委托，不伪装成默认包高保真 Create 规格量规线；
+- 默认包当前有 **34 种独立的族／口径／容量供弹器身份**，由 `tools/industry/magazine_carriers.json` 与 `data/tacz/industry/gun_feed/*.json` 双向校验；第三方已验证外部载具走独立 surveyed Gunsmith Table 多槽委托，不伪装成默认包高保真 Create 规格量规线；
 - `tube`、`revolver`、`internal_box`、`single_shot` 是枪内供弹状态或枪械组件，**不伪造为可拆卸弹匣**；
 - 最终散装弹药仍由专用四槽弹药装配机制造；弹匣装填仍是背包交互／装弹器操作，**没有新增假装配 GUI**；
 - `LEGACY` 档仍使用原有整数备弹行为。
@@ -110,18 +110,19 @@ Basin：高碳钢板 + 黄铜板 + 石英 + 铁粒
 > 参考包的首个外部载具样本，不是对同 namespace 其他枪的自动推广。
 
 1. 在 surveyed Gunsmith Table 中确认有四条独立供弹器委托，输出容量分别为 `20`、`25`、`30`、`32`；每条均消耗中性弹匣壳体毛坯和 FAL 平台套件，保留 FAL production template 与 survey fixture；
-2. 不安装扩容配件时：20 发 FAL 弹匣可以插入；25/30/32 发实体载具不能被选作换弹来源，也不得成为 `InstalledMagazine`；
-3. 分别装入使当前 GunData 容量变为 25、30、32 的真实扩容配件后：只验证对应或更小、同 family 的实体载具可插入；更大的未匹配载具必须保持在背包中；
+2. **不安装旧 `extended_mag` 配件**时，20/25/30/32 发四种已声明实体 FAL 弹匣都应可被识别、插入和退回；物理载具本身替代原包的虚拟扩容状态，不能要求玩家同时装两张“弹匣”；
+3. 分别插入四种容量后，HUD、tooltip、脚本最大容量与实际扣弹必须跟随已安装实体载具，而不是继续显示基础 20 发；
 4. 对四个容量分别验证空仓、战术换弹、潜行退匣、取消 reload、背包满时掉落、断线重连和 HUD/膛内一发同步；
-5. 将一把旧 FAL 的 legacy 余弹设为 25/30/32 后分别验证：有对应声明变体时绝不截断；无相应扩容状态时不得把较大载具偷偷装入枪内；若未来包更新容量数组，定义必须被 runtime validator 拒绝并保持 legacy。
+5. 将一把旧 FAL 的 legacy 余弹设为 25/30/32 后分别验证：有对应声明变体时绝不截断；若未来包更新 Ammo、基础容量或扩容数组，定义必须被 runtime validator 拒绝并保持 legacy。
 
 ## 4. 特殊供弹机制回归
 
 - M870、SPAS-12、M1014：管式供弹按枪内容量逐发从散装弹扣除；
 - Rhino/Taurus：转轮按枪内容量扣除；
 - RPG-7、M320、双管枪：单发/双膛不能接受实体弹匣；双管空仓一次换弹须真实扣除两发；
-- AI AWP、Kar98、M700、M95、SKS、M107、SPR15HB、AA-12：内置弹仓按声明容量受服务器控制；
-- 它们不得因本次可拆卸供弹器重构而获得错误的 `tacz:magazine` 插槽。
+- Kar98、M700、SKS：固定内仓按声明容量受服务器控制；不得因本次可拆卸供弹器重构而获得错误的 `tacz:magazine` 插槽；
+- AI AWP、M95、M107、AA-12、SPR-15 HB：已审计为可拆卸外部供弹，必须验证各自专用实体弹匣的插入/退匣和独立余弹，不能再退回 `InternalFeedAmmoCount`；
+- AUG、B93R、两把 Desert Eagle、SCAR-H、Timeless .50、81-1 式也各有独立已制造实体弹匣；其中只有明确共用 `magazine_family` 的平台可互插。
 
 ## 5. 存档、多人和查看器
 

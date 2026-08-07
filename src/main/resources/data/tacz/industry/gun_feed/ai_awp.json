@@ -1,6 +1,7 @@
 {
-  "mechanism": "internal_box",
+  "mechanism": "detachable_magazine",
+  "magazine_family": "awm_338",
   "magazine_capacity": 5,
   "ammo": "tacz:338",
-  "display_name": "item.tacz.internal_feed.ai_awp"
+  "display_name": "item.tacz.magazine.awm_338"
 }

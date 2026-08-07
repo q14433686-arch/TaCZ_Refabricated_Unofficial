@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "aug_556",
+  "magazine_capacity": 30,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.aug_556"
+}

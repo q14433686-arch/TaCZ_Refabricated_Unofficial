@@ -1059,6 +1059,10 @@
     "uzi": "service",
     "vector45": "advanced"
   },
+  "explicit_legacy_feed_ids": {
+    "lonetrail": "One-round Lonetrail hand cannon has no audited removable carrier or server-side external-feed transaction.",
+    "minigun": "GunData reload.type=inventory has no ammo_amount and no audited physical belt/box source in the bundled pack."
+  },
   "audited_feed_jam_clear_actions": {
     "ai_awp": "bolt",
     "kar98": "bolt",

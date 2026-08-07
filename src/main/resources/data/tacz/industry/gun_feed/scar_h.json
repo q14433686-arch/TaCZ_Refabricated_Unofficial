@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "scar_h_308",
+  "magazine_capacity": 20,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.scar_h_308"
+}

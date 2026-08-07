@@ -1,0 +1,55 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_body",
+      "IndustryDisplayName": "item.tacz.gun_component.carrier_body.scar_h_308_20",
+      "DieTargetKind": "scar_h_308_20",
+      "MagazineFamily": "scar_h_308",
+      "MagazineAmmoId": "tacz:308",
+      "MagazineCapacity": 20
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_feed_kit",
+      "IndustryDisplayName": "item.tacz.gun_component.carrier_feed_kit.scar_h_308_20",
+      "DieTargetKind": "scar_h_308_20",
+      "MagazineFamily": "scar_h_308",
+      "MagazineAmmoId": "tacz:308",
+      "MagazineCapacity": 20
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:magazine",
+      "components": {
+        "minecraft:custom_data": {
+          "MagazineFamily": "scar_h_308",
+          "MagazineAmmoId": "tacz:308",
+          "MagazineCapacity": 20,
+          "MagazineAmmoCount": 0,
+          "MagazineDisplayName": "item.tacz.magazine.scar_h_308"
+        }
+      }
+    }
+  ]
+}

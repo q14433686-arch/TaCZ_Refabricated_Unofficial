@@ -5,10 +5,10 @@
   "display_name": "SPR15HB",
   "action": "gas_rifle",
   "feed": {
-    "device": "internal_box",
-    "runtime_mechanism": "internal_box",
-    "carrier_behavior": "internal",
-    "family": "",
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "spr15hb_556",
     "capacity": 15,
     "reload_batch": 0
   },

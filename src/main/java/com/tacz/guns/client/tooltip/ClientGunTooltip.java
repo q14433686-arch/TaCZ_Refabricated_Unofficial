@@ -13,6 +13,7 @@ import com.tacz.guns.client.resource.pojo.display.gun.DamageStyle;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.experience.GunLevelImplementation;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
 import com.tacz.guns.item.GunTooltipPart;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -145,7 +146,9 @@ public class ClientGunTooltip implements ClientTooltipComponent {
             this.maxWidth = Math.max(font.width(this.ammoName) + 22, this.maxWidth);
 
             int barrelBulletAmount = (iGun.hasBulletInBarrel(gun) && gunIndex.getGunData().getBolt() != Bolt.OPEN_BOLT) ? 1 : 0;
-            int maxAmmoCount = AttachmentDataUtils.getAmmoCountWithAttachment(gun, gunIndex.getGunData()) + barrelBulletAmount;
+            int maxAmmoCount = PhysicalMagazineService.getEffectiveMagazineCapacity(
+                    gun, AttachmentDataUtils.getAmmoCountWithAttachment(gun, gunIndex.getGunData())
+            ) + barrelBulletAmount;
             int currentAmmoCount = iGun.getCurrentAmmoCount(this.gun) + barrelBulletAmount;
 
             if (!iGun.useDummyAmmo(gun)) {

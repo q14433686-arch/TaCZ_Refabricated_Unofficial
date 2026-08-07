@@ -10,16 +10,16 @@
 - **family**：已有有意复用的同工艺视觉族（例如新鲜黄铜手枪壳）；
 - **placeholder**：暂时能画出来，但不能冒充完成品（例如已击发弹壳仍借用新壳图）；
 - **supplied_block_model**：已由用户提供的实体方块模型/贴图覆盖；
-- **runtime_fallback**：没有映射条目，运行时退回原有 TACZ 图；
-- `needs_art = true` 的每一行都是仍需补图的具体身份。
+- **runtime_fallback**：没有映射条目，运行时退回原有 TACZ 通用图；它保证物件可见，但绝不表示已有该型号的精确视觉；
+- `needs_art = true` 的每一行都是仍需补图的具体身份。某些真实工业物件可明确接受通用回退，精确/通用数量仍会分列显示。
 
 ## 汇总
 
-| 类别 | 总身份数 | 已满足 | 仍需补图 | exact | family | placeholder | supplied block model | runtime fallback |
+| 类别 | 总身份数 | 可渲染（含通用回退） | 仍需补图 | exact | family | placeholder | supplied block model | runtime fallback |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | action_fixture | 32 | 32 | 0 | 0 | 32 | 0 | 0 | 0 |
-| carrier_component | 45 | 45 | 0 | 0 | 45 | 0 | 0 | 0 |
-| carrier_tooling | 23 | 23 | 0 | 0 | 23 | 0 | 0 | 0 |
+| carrier_component | 69 | 69 | 0 | 0 | 69 | 0 | 0 | 0 |
+| carrier_tooling | 35 | 35 | 0 | 0 | 35 | 0 | 0 | 0 |
 | cartridge_case_die | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
 | cartridge_gauge | 24 | 24 | 0 | 5 | 19 | 0 | 0 | 0 |
 | cartridge_projectile_die | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
@@ -28,7 +28,7 @@
 | feed_device | 2 | 2 | 0 | 0 | 2 | 0 | 0 | 0 |
 | fresh_cartridge_case | 23 | 23 | 0 | 1 | 22 | 0 | 0 | 0 |
 | loose_ammo | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
-| physical_magazine | 22 | 22 | 0 | 22 | 0 | 0 | 0 | 0 |
+| physical_magazine | 34 | 34 | 0 | 22 | 0 | 0 | 0 | 12 |
 | platform_acceptance_tool | 40 | 40 | 0 | 0 | 40 | 0 | 0 | 0 |
 | platform_blueprint | 53 | 53 | 0 | 53 | 0 | 0 | 0 | 0 |
 | platform_component | 265 | 265 | 0 | 265 | 0 | 0 | 0 | 0 |

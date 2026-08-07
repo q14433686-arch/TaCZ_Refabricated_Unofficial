@@ -5,11 +5,11 @@
   "display_name": "AUG",
   "action": "bullpup_rifle",
   "feed": {
-    "device": "unknown",
-    "runtime_mechanism": "legacy",
-    "carrier_behavior": "unknown",
-    "family": "",
-    "capacity": 0,
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "aug_556",
+    "capacity": 30,
     "reload_batch": 0
   },
   "ammunition": {
@@ -24,6 +24,6 @@
   "confidence": "curated",
   "evidence": [
     "bundled_default_industry_policy",
-    "bundled_gun_data"
+    "bundled_gun_feed"
   ]
 }

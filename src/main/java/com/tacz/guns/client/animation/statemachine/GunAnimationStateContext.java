@@ -17,6 +17,7 @@ import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.functional.ShellRender;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.industry.ammo.SpentCartridgeService;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
@@ -165,8 +166,9 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      */
     public int getMaxAmmoCount() {
         return processGunData(
-                (iGun, gunIndex) ->
-                        AttachmentDataUtils.getAmmoCountWithAttachment(currentGunItem, gunData)
+                (iGun, gunIndex) -> PhysicalMagazineService.getEffectiveMagazineCapacity(
+                        currentGunItem, AttachmentDataUtils.getAmmoCountWithAttachment(currentGunItem, gunData)
+                )
         ).orElse(0);
     }
 
@@ -224,8 +226,11 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
             return forced;
         }
         return processGunData(
-                (iGun, gunIndex) ->
-                        AttachmentDataUtils.getMagExtendLevel(currentGunItem, gunData)
+                (iGun, gunIndex) -> {
+                    int physicalLevel = PhysicalMagazineService.getInstalledCarrierExtentLevel(currentGunItem, gunData);
+                    return physicalLevel >= 0 ? physicalLevel
+                            : AttachmentDataUtils.getMagExtendLevel(currentGunItem, gunData);
+                }
         ).orElse(0);
     }
 

@@ -15,6 +15,8 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
+import java.util.TreeSet;
+
 /** Moderator-facing inspection of the runtime factual reference table. */
 public final class IndustryReferenceCommand {
     private static final String ROOT = "industry";
@@ -137,17 +139,27 @@ public final class IndustryReferenceCommand {
         return output.append(']').toString();
     }
 
+    /**
+     * Show every exact capacity declared by the same explicit family, not only
+     * the current gun's base row. This makes shared standards visible in the
+     * diagnostic: an M16A1 can report both its 20-round base and the 30-round
+     * STANAG manufactured by M4A1/SCAR-L declarations.
+     */
     private static String formatExternalCarrierVariants(GunFeedDefinition definition) {
-        StringBuilder output = new StringBuilder("[");
-        boolean first = true;
-        for (ExternalCarrierVariant variant : definition.getExternalCarrierVariants()) {
-            if (!first) {
-                output.append(',');
+        TreeSet<Integer> capacities = new TreeSet<>();
+        for (var entry : CommonAssetsManager.get().getAllGunFeedDefinitions()) {
+            GunFeedDefinition candidate = entry.getValue();
+            if (candidate == null || !candidate.isValidExternalCarrierDefinition()
+                    || candidate.getMechanism() != definition.getMechanism()
+                    || !candidate.getMagazineFamily().equals(definition.getMagazineFamily())
+                    || !candidate.getAmmoId().equals(definition.getAmmoId())) {
+                continue;
             }
-            output.append(variant.getCapacity());
-            first = false;
+            for (ExternalCarrierVariant variant : candidate.getExternalCarrierVariants()) {
+                capacities.add(variant.getCapacity());
+            }
         }
-        return output.append(']').toString();
+        return capacities.toString();
     }
 
     private static int reference(CommandContext<CommandSourceStack> context) {

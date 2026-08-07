@@ -15,14 +15,14 @@
       "total": 32
     },
     "carrier_component": {
-      "covered": 45,
-      "family": 45,
-      "total": 45
+      "covered": 69,
+      "family": 69,
+      "total": 69
     },
     "carrier_tooling": {
-      "covered": 23,
-      "family": 23,
-      "total": 23
+      "covered": 35,
+      "family": 35,
+      "total": 35
     },
     "cartridge_case_die": {
       "covered": 24,
@@ -67,9 +67,10 @@
       "total": 24
     },
     "physical_magazine": {
-      "covered": 22,
+      "covered": 34,
       "exact": 22,
-      "total": 22
+      "runtime_fallback": 12,
+      "total": 34
     },
     "platform_acceptance_tool": {
       "covered": 40,
@@ -6777,6 +6778,29 @@
     },
     {
       "category": "carrier_component",
+      "identity": "carrier_body:aa12_12g_8",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "aa12_12g_8",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=aa12_12g_8",
+      "label": "AA-12 12-gauge 8-round Box Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:aa12_12g_8",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
       "identity": "carrier_body:ak_762x39_30",
       "item": "tacz:gun_component",
       "selectors": {
@@ -6823,6 +6847,75 @@
     },
     {
       "category": "carrier_component",
+      "identity": "carrier_body:aug_556_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "aug_556_30",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=aug_556_30",
+      "label": "AUG 5.56×45 30-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:aug_556_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:awm_338_5",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "awm_338_5",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=awm_338_5",
+      "label": "AWM .338 5-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:awm_338_5",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:b93r_9x19_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "b93r_9x19_20",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=b93r_9x19_20",
+      "label": "B93R 9 mm 20-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:b93r_9x19_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
       "identity": "carrier_body:cz75_9x19_16",
       "item": "tacz:gun_component",
       "selectors": {
@@ -6836,6 +6929,52 @@
         "family"
       ],
       "asset_key": "carrier_body:cz75_9x19_16",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:deagle_357_9",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "deagle_357_9",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=deagle_357_9",
+      "label": "Golden Desert Eagle .357 9-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:deagle_357_9",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:deagle_50ae_7",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "deagle_50ae_7",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=deagle_50ae_7",
+      "label": "Desert Eagle .50 AE 7-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:deagle_50ae_7",
       "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "carrier_body_family",
@@ -6961,6 +7100,29 @@
     },
     {
       "category": "carrier_component",
+      "identity": "carrier_body:m107_50bmg_10",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m107_50bmg_10",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=m107_50bmg_10",
+      "label": "M107 .50 BMG 10-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:m107_50bmg_10",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
       "identity": "carrier_body:m14_308_10",
       "item": "tacz:gun_component",
       "selectors": {
@@ -7020,6 +7182,29 @@
         "family"
       ],
       "asset_key": "carrier_body:m249_556_belt_75",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:m95_50bmg_5",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m95_50bmg_5",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=m95_50bmg_5",
+      "label": "M95 .50 BMG 5-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:m95_50bmg_5",
       "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "carrier_body_family",
@@ -7168,6 +7353,52 @@
     },
     {
       "category": "carrier_component",
+      "identity": "carrier_body:scar_h_308_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "scar_h_308_20",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=scar_h_308_20",
+      "label": "SCAR-H .308 20-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:scar_h_308_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:spr15hb_556_15",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "spr15hb_556_15",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=spr15hb_556_15",
+      "label": "SPR-15 HB 5.56×45 15-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:spr15hb_556_15",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
       "identity": "carrier_body:stanag_556_20",
       "item": "tacz:gun_component",
       "selectors": {
@@ -7204,6 +7435,52 @@
         "family"
       ],
       "asset_key": "carrier_body:stanag_556_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:timeless50_50ae_8",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "timeless50_50ae_8",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=timeless50_50ae_8",
+      "label": "Timeless .50 Z-Type 8-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:timeless50_50ae_8",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_body_family",
+      "texture": "tacz_extra:item/base_m_assembly",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_body:type81_762x39_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "type81_762x39_30",
+        "industry_part_kind": "carrier_body"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_body ; industry_platform=feeding ; die_target_kind=type81_762x39_30",
+      "label": "Type 81-1 7.62×39 30-round Magazine Body",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_body:type81_762x39_30",
       "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "carrier_body_family",
@@ -7283,6 +7560,29 @@
     },
     {
       "category": "carrier_component",
+      "identity": "carrier_feed_kit:aa12_12g_8",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "aa12_12g_8",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=aa12_12g_8",
+      "label": "AA-12 12-gauge 8-round Box Magazine Shot-shell Box-Magazine Feed Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:aa12_12g_8",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
       "identity": "carrier_feed_kit:ak_762x39_30",
       "item": "tacz:gun_component",
       "selectors": {
@@ -7329,6 +7629,75 @@
     },
     {
       "category": "carrier_component",
+      "identity": "carrier_feed_kit:aug_556_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "aug_556_30",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=aug_556_30",
+      "label": "AUG 5.56×45 30-round Magazine Rifle Double-Column Feed Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:aug_556_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:awm_338_5",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "awm_338_5",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=awm_338_5",
+      "label": "AWM .338 5-round Magazine Rifle Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:awm_338_5",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:b93r_9x19_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "b93r_9x19_20",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=b93r_9x19_20",
+      "label": "B93R 9 mm 20-round Magazine Extended Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:b93r_9x19_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
       "identity": "carrier_feed_kit:cz75_9x19_16",
       "item": "tacz:gun_component",
       "selectors": {
@@ -7342,6 +7711,52 @@
         "family"
       ],
       "asset_key": "carrier_feed_kit:cz75_9x19_16",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:deagle_357_9",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "deagle_357_9",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=deagle_357_9",
+      "label": "Golden Desert Eagle .357 9-round Magazine Magnum Pistol Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:deagle_357_9",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:deagle_50ae_7",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "deagle_50ae_7",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=deagle_50ae_7",
+      "label": "Desert Eagle .50 AE 7-round Magazine Magnum Pistol Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:deagle_50ae_7",
       "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "carrier_feed_kit_family",
@@ -7467,6 +7882,29 @@
     },
     {
       "category": "carrier_component",
+      "identity": "carrier_feed_kit:m107_50bmg_10",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m107_50bmg_10",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=m107_50bmg_10",
+      "label": "M107 .50 BMG 10-round Magazine Anti-Materiel Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:m107_50bmg_10",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
       "identity": "carrier_feed_kit:m14_308_10",
       "item": "tacz:gun_component",
       "selectors": {
@@ -7526,6 +7964,29 @@
         "family"
       ],
       "asset_key": "carrier_feed_kit:m249_556_belt_75",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:m95_50bmg_5",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m95_50bmg_5",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=m95_50bmg_5",
+      "label": "M95 .50 BMG 5-round Magazine Anti-Materiel Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:m95_50bmg_5",
       "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "carrier_feed_kit_family",
@@ -7674,6 +8135,52 @@
     },
     {
       "category": "carrier_component",
+      "identity": "carrier_feed_kit:scar_h_308_20",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "scar_h_308_20",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=scar_h_308_20",
+      "label": "SCAR-H .308 20-round Magazine Full-Rifle Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:scar_h_308_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:spr15hb_556_15",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "spr15hb_556_15",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=spr15hb_556_15",
+      "label": "SPR-15 HB 5.56×45 15-round Magazine Rifle Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:spr15hb_556_15",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
       "identity": "carrier_feed_kit:stanag_556_20",
       "item": "tacz:gun_component",
       "selectors": {
@@ -7710,6 +8217,52 @@
         "family"
       ],
       "asset_key": "carrier_feed_kit:stanag_556_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:timeless50_50ae_8",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "timeless50_50ae_8",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=timeless50_50ae_8",
+      "label": "Timeless .50 Z-Type 8-round Magazine Magnum Pistol Follower and Spring Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:timeless50_50ae_8",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_feed_kit_family",
+      "texture": "tacz_extra:item/base_m_loader",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_component",
+      "identity": "carrier_feed_kit:type81_762x39_30",
+      "item": "tacz:gun_component",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "type81_762x39_30",
+        "industry_part_kind": "carrier_feed_kit"
+      },
+      "selector": "tacz:gun_component ; industry_part_kind=carrier_feed_kit ; industry_platform=feeding ; die_target_kind=type81_762x39_30",
+      "label": "Type 81-1 7.62×39 30-round Magazine Rifle Double-Column Feed Kit",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_feed_kit:type81_762x39_30",
       "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "carrier_feed_kit_family",
@@ -7811,6 +8364,29 @@
     },
     {
       "category": "carrier_tooling",
+      "identity": "carrier_gauge:aa12_12g_8",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "aa12_12g_8",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=aa12_12g_8",
+      "label": "AA-12 12-gauge 8-round Box Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:aa12_12g_8",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
       "identity": "carrier_gauge:ak_762x39_30",
       "item": "tacz:press_die",
       "selectors": {
@@ -7857,6 +8433,75 @@
     },
     {
       "category": "carrier_tooling",
+      "identity": "carrier_gauge:aug_556_30",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "aug_556_30",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=aug_556_30",
+      "label": "AUG 5.56×45 30-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:aug_556_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:awm_338_5",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "awm_338_5",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=awm_338_5",
+      "label": "AWM .338 5-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:awm_338_5",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:b93r_9x19_20",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "b93r_9x19_20",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=b93r_9x19_20",
+      "label": "B93R 9 mm 20-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:b93r_9x19_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
       "identity": "carrier_gauge:cz75_9x19_16",
       "item": "tacz:press_die",
       "selectors": {
@@ -7870,6 +8515,52 @@
         "family"
       ],
       "asset_key": "carrier_gauge:cz75_9x19_16",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:deagle_357_9",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "deagle_357_9",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=deagle_357_9",
+      "label": "Golden Desert Eagle .357 9-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:deagle_357_9",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:deagle_50ae_7",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "deagle_50ae_7",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=deagle_50ae_7",
+      "label": "Desert Eagle .50 AE 7-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:deagle_50ae_7",
       "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "carrier_gauge_family",
@@ -7995,6 +8686,29 @@
     },
     {
       "category": "carrier_tooling",
+      "identity": "carrier_gauge:m107_50bmg_10",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m107_50bmg_10",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=m107_50bmg_10",
+      "label": "M107 .50 BMG 10-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:m107_50bmg_10",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
       "identity": "carrier_gauge:m14_308_10",
       "item": "tacz:press_die",
       "selectors": {
@@ -8054,6 +8768,29 @@
         "family"
       ],
       "asset_key": "carrier_gauge:m249_556_belt_75",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:m95_50bmg_5",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "m95_50bmg_5",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=m95_50bmg_5",
+      "label": "M95 .50 BMG 5-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:m95_50bmg_5",
       "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "carrier_gauge_family",
@@ -8202,6 +8939,52 @@
     },
     {
       "category": "carrier_tooling",
+      "identity": "carrier_gauge:scar_h_308_20",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "scar_h_308_20",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=scar_h_308_20",
+      "label": "SCAR-H .308 20-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:scar_h_308_20",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:spr15hb_556_15",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "spr15hb_556_15",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=spr15hb_556_15",
+      "label": "SPR-15 HB 5.56×45 15-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:spr15hb_556_15",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
       "identity": "carrier_gauge:stanag_556_20",
       "item": "tacz:press_die",
       "selectors": {
@@ -8238,6 +9021,52 @@
         "family"
       ],
       "asset_key": "carrier_gauge:stanag_556_30",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:timeless50_50ae_8",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "timeless50_50ae_8",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=timeless50_50ae_8",
+      "label": "Timeless .50 Z-Type 8-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:timeless50_50ae_8",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": "carrier_gauge_family",
+      "texture": "tacz_extra:item/base_cartridge_gauge",
+      "current_coverage": "family",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "carrier_tooling",
+      "identity": "carrier_gauge:type81_762x39_30",
+      "item": "tacz:press_die",
+      "selectors": {
+        "industry_platform": "feeding",
+        "die_target_kind": "type81_762x39_30",
+        "industry_part_kind": "carrier_gauge"
+      },
+      "selector": "tacz:press_die ; industry_part_kind=carrier_gauge ; industry_platform=feeding ; die_target_kind=type81_762x39_30",
+      "label": "Type 81-1 7.62×39 30-round Magazine Specification Gauge",
+      "accepted_coverage": [
+        "family"
+      ],
+      "asset_key": "carrier_gauge:type81_762x39_30",
       "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "carrier_gauge_family",
@@ -12192,6 +13021,31 @@
     },
     {
       "category": "physical_magazine",
+      "identity": "magazine:aa12_12g:8:tacz:12g",
+      "item": "tacz:magazine",
+      "selectors": {
+        "magazine_family": "aa12_12g",
+        "magazine_ammo_id": "tacz:12g",
+        "magazine_capacity": 8
+      },
+      "selector": "tacz:magazine ; magazine_family=aa12_12g ; magazine_ammo_id=tacz:12g ; magazine_capacity=8",
+      "label": "item.tacz.magazine.aa12_12g",
+      "accepted_coverage": [
+        "exact",
+        "family",
+        "runtime_fallback"
+      ],
+      "asset_key": "magazine:aa12_12g:8:tacz:12g",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": null,
+      "texture": null,
+      "current_coverage": "runtime_fallback",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "physical_magazine",
       "identity": "magazine:ak_762x39:30:tacz:762x39",
       "item": "tacz:magazine",
       "selectors": {
@@ -12202,10 +13056,12 @@
       "selector": "tacz:magazine ; magazine_family=ak_762x39 ; magazine_ammo_id=tacz:762x39 ; magazine_capacity=30",
       "label": "item.tacz.magazine.ak_762",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:ak_762x39:30:tacz:762x39",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_ak_762x39",
       "texture": "tacz_extra:item/mag_akm",
@@ -12225,14 +13081,91 @@
       "selector": "tacz:magazine ; magazine_family=ak_762x39 ; magazine_ammo_id=tacz:762x39 ; magazine_capacity=40",
       "label": "item.tacz.magazine.rpk_762",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:ak_762x39:40:tacz:762x39",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_ak_762x39_rpk_40",
       "texture": "tacz_extra:item/mag_rpk_drum",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "physical_magazine",
+      "identity": "magazine:aug_556:30:tacz:556x45",
+      "item": "tacz:magazine",
+      "selectors": {
+        "magazine_family": "aug_556",
+        "magazine_ammo_id": "tacz:556x45",
+        "magazine_capacity": 30
+      },
+      "selector": "tacz:magazine ; magazine_family=aug_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=30",
+      "label": "item.tacz.magazine.aug_556",
+      "accepted_coverage": [
+        "exact",
+        "family",
+        "runtime_fallback"
+      ],
+      "asset_key": "magazine:aug_556:30:tacz:556x45",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": null,
+      "texture": null,
+      "current_coverage": "runtime_fallback",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "physical_magazine",
+      "identity": "magazine:awm_338:5:tacz:338",
+      "item": "tacz:magazine",
+      "selectors": {
+        "magazine_family": "awm_338",
+        "magazine_ammo_id": "tacz:338",
+        "magazine_capacity": 5
+      },
+      "selector": "tacz:magazine ; magazine_family=awm_338 ; magazine_ammo_id=tacz:338 ; magazine_capacity=5",
+      "label": "item.tacz.magazine.awm_338",
+      "accepted_coverage": [
+        "exact",
+        "family",
+        "runtime_fallback"
+      ],
+      "asset_key": "magazine:awm_338:5:tacz:338",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": null,
+      "texture": null,
+      "current_coverage": "runtime_fallback",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "physical_magazine",
+      "identity": "magazine:b93r_9x19:20:tacz:9mm",
+      "item": "tacz:magazine",
+      "selectors": {
+        "magazine_family": "b93r_9x19",
+        "magazine_ammo_id": "tacz:9mm",
+        "magazine_capacity": 20
+      },
+      "selector": "tacz:magazine ; magazine_family=b93r_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=20",
+      "label": "item.tacz.magazine.b93r_9x19",
+      "accepted_coverage": [
+        "exact",
+        "family",
+        "runtime_fallback"
+      ],
+      "asset_key": "magazine:b93r_9x19:20:tacz:9mm",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": null,
+      "texture": null,
+      "current_coverage": "runtime_fallback",
       "covered": true,
       "needs_art": false
     },
@@ -12248,14 +13181,66 @@
       "selector": "tacz:magazine ; magazine_family=cz75_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=16",
       "label": "item.tacz.magazine.cz75",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:cz75_9x19:16:tacz:9mm",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_cz75_9x19",
       "texture": "tacz_extra:item/mag_cz75",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "physical_magazine",
+      "identity": "magazine:deagle_357:9:tacz:357mag",
+      "item": "tacz:magazine",
+      "selectors": {
+        "magazine_family": "deagle_357",
+        "magazine_ammo_id": "tacz:357mag",
+        "magazine_capacity": 9
+      },
+      "selector": "tacz:magazine ; magazine_family=deagle_357 ; magazine_ammo_id=tacz:357mag ; magazine_capacity=9",
+      "label": "item.tacz.magazine.deagle_357",
+      "accepted_coverage": [
+        "exact",
+        "family",
+        "runtime_fallback"
+      ],
+      "asset_key": "magazine:deagle_357:9:tacz:357mag",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": null,
+      "texture": null,
+      "current_coverage": "runtime_fallback",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "physical_magazine",
+      "identity": "magazine:deagle_50ae:7:tacz:50ae",
+      "item": "tacz:magazine",
+      "selectors": {
+        "magazine_family": "deagle_50ae",
+        "magazine_ammo_id": "tacz:50ae",
+        "magazine_capacity": 7
+      },
+      "selector": "tacz:magazine ; magazine_family=deagle_50ae ; magazine_ammo_id=tacz:50ae ; magazine_capacity=7",
+      "label": "item.tacz.magazine.deagle_50ae",
+      "accepted_coverage": [
+        "exact",
+        "family",
+        "runtime_fallback"
+      ],
+      "asset_key": "magazine:deagle_50ae:7:tacz:50ae",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": null,
+      "texture": null,
+      "current_coverage": "runtime_fallback",
       "covered": true,
       "needs_art": false
     },
@@ -12271,10 +13256,12 @@
       "selector": "tacz:magazine ; magazine_family=evolys_308_belt ; magazine_ammo_id=tacz:308 ; magazine_capacity=75",
       "label": "item.tacz.magazine.fn_evolys_belt",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:evolys_308_belt:75:tacz:308",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "complete_magazine_evolys_308_belt_75_tacz_308_0aef9c14bd",
       "texture": "tacz_extra:item/magazine_evolys_308_belt_75_tacz_308",
@@ -12294,10 +13281,12 @@
       "selector": "tacz:magazine ; magazine_family=fal_308 ; magazine_ammo_id=tacz:308 ; magazine_capacity=20",
       "label": "item.tacz.magazine.fal_308",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:fal_308:20:tacz:308",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "complete_magazine_fal_308_20_tacz_308_31470b218e",
       "texture": "tacz_extra:item/magazine_fal_308_20_tacz_308",
@@ -12317,10 +13306,12 @@
       "selector": "tacz:magazine ; magazine_family=g36_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=30",
       "label": "item.tacz.magazine.g36_556",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:g36_556:30:tacz:556x45",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "complete_magazine_g36_556_30_tacz_556x45_d22efa43b8",
       "texture": "tacz_extra:item/magazine_g36_556_30_tacz_556x45",
@@ -12340,10 +13331,12 @@
       "selector": "tacz:magazine ; magazine_family=g3_308 ; magazine_ammo_id=tacz:308 ; magazine_capacity=20",
       "label": "item.tacz.magazine.g3_308",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:g3_308:20:tacz:308",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_g3_308",
       "texture": "tacz_extra:item/mag_g3",
@@ -12363,14 +13356,41 @@
       "selector": "tacz:magazine ; magazine_family=glock_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=17",
       "label": "item.tacz.magazine.glock_17",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:glock_9x19:17:tacz:9mm",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_glock_9x19",
       "texture": "tacz_extra:item/mag_glock17",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "physical_magazine",
+      "identity": "magazine:m107_50bmg:10:tacz:50bmg",
+      "item": "tacz:magazine",
+      "selectors": {
+        "magazine_family": "m107_50bmg",
+        "magazine_ammo_id": "tacz:50bmg",
+        "magazine_capacity": 10
+      },
+      "selector": "tacz:magazine ; magazine_family=m107_50bmg ; magazine_ammo_id=tacz:50bmg ; magazine_capacity=10",
+      "label": "item.tacz.magazine.m107_50bmg",
+      "accepted_coverage": [
+        "exact",
+        "family",
+        "runtime_fallback"
+      ],
+      "asset_key": "magazine:m107_50bmg:10:tacz:50bmg",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": null,
+      "texture": null,
+      "current_coverage": "runtime_fallback",
       "covered": true,
       "needs_art": false
     },
@@ -12386,10 +13406,12 @@
       "selector": "tacz:magazine ; magazine_family=m14_308 ; magazine_ammo_id=tacz:308 ; magazine_capacity=10",
       "label": "item.tacz.magazine.m14_308",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:m14_308:10:tacz:308",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "complete_magazine_m14_308_10_tacz_308_2652d96391",
       "texture": "tacz_extra:item/magazine_m14_308_10_tacz_308",
@@ -12409,10 +13431,12 @@
       "selector": "tacz:magazine ; magazine_family=m1911_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=7",
       "label": "item.tacz.magazine.m1911",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:m1911_45acp:7:tacz:45acp",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_m1911_45acp",
       "texture": "tacz_extra:item/mag_m1911",
@@ -12432,14 +13456,41 @@
       "selector": "tacz:magazine ; magazine_family=m249_556_belt ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=75",
       "label": "item.tacz.magazine.m249_belt",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:m249_556_belt:75:tacz:556x45",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_m249_556_belt",
       "texture": "tacz_extra:item/mag_m249_box",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "physical_magazine",
+      "identity": "magazine:m95_50bmg:5:tacz:50bmg",
+      "item": "tacz:magazine",
+      "selectors": {
+        "magazine_family": "m95_50bmg",
+        "magazine_ammo_id": "tacz:50bmg",
+        "magazine_capacity": 5
+      },
+      "selector": "tacz:magazine ; magazine_family=m95_50bmg ; magazine_ammo_id=tacz:50bmg ; magazine_capacity=5",
+      "label": "item.tacz.magazine.m95_50bmg",
+      "accepted_coverage": [
+        "exact",
+        "family",
+        "runtime_fallback"
+      ],
+      "asset_key": "magazine:m95_50bmg:5:tacz:50bmg",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": null,
+      "texture": null,
+      "current_coverage": "runtime_fallback",
       "covered": true,
       "needs_art": false
     },
@@ -12455,10 +13506,12 @@
       "selector": "tacz:magazine ; magazine_family=m9_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=17",
       "label": "item.tacz.magazine.m9a4",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:m9_9x19:17:tacz:9mm",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "complete_magazine_m9_9x19_17_tacz_9mm_639092b192",
       "texture": "tacz_extra:item/magazine_m9_9x19_17_tacz_9mm",
@@ -12478,10 +13531,12 @@
       "selector": "tacz:magazine ; magazine_family=mk23_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=12",
       "label": "item.tacz.magazine.hk_mk23",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:mk23_45acp:12:tacz:45acp",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "complete_magazine_mk23_45acp_12_tacz_45acp_34f48d0d10",
       "texture": "tacz_extra:item/magazine_mk23_45acp_12_tacz_45acp",
@@ -12501,10 +13556,12 @@
       "selector": "tacz:magazine ; magazine_family=mp5_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=30",
       "label": "item.tacz.magazine.mp5_9",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:mp5_9x19:30:tacz:9mm",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "complete_magazine_mp5_9x19_30_tacz_9mm_9b91acdc66",
       "texture": "tacz_extra:item/magazine_mp5_9x19_30_tacz_9mm",
@@ -12524,10 +13581,12 @@
       "selector": "tacz:magazine ; magazine_family=p320_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=12",
       "label": "item.tacz.magazine.p320",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:p320_45acp:12:tacz:45acp",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_p320_45acp",
       "texture": "tacz_extra:item/mag_p320",
@@ -12547,10 +13606,12 @@
       "selector": "tacz:magazine ; magazine_family=p90_57x28 ; magazine_ammo_id=tacz:57x28 ; magazine_capacity=50",
       "label": "item.tacz.magazine.p90_57",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:p90_57x28:50:tacz:57x28",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_p90_57x28",
       "texture": "tacz_extra:item/mag_p90",
@@ -12570,14 +13631,66 @@
       "selector": "tacz:magazine ; magazine_family=qbz_58x42 ; magazine_ammo_id=tacz:58x42 ; magazine_capacity=30",
       "label": "item.tacz.magazine.qbz_58",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:qbz_58x42:30:tacz:58x42",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_qbz_58x42",
       "texture": "tacz_extra:item/mag_qbz95",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "physical_magazine",
+      "identity": "magazine:scar_h_308:20:tacz:308",
+      "item": "tacz:magazine",
+      "selectors": {
+        "magazine_family": "scar_h_308",
+        "magazine_ammo_id": "tacz:308",
+        "magazine_capacity": 20
+      },
+      "selector": "tacz:magazine ; magazine_family=scar_h_308 ; magazine_ammo_id=tacz:308 ; magazine_capacity=20",
+      "label": "item.tacz.magazine.scar_h_308",
+      "accepted_coverage": [
+        "exact",
+        "family",
+        "runtime_fallback"
+      ],
+      "asset_key": "magazine:scar_h_308:20:tacz:308",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": null,
+      "texture": null,
+      "current_coverage": "runtime_fallback",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "physical_magazine",
+      "identity": "magazine:spr15hb_556:15:tacz:556x45",
+      "item": "tacz:magazine",
+      "selectors": {
+        "magazine_family": "spr15hb_556",
+        "magazine_ammo_id": "tacz:556x45",
+        "magazine_capacity": 15
+      },
+      "selector": "tacz:magazine ; magazine_family=spr15hb_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=15",
+      "label": "item.tacz.magazine.spr15hb_556",
+      "accepted_coverage": [
+        "exact",
+        "family",
+        "runtime_fallback"
+      ],
+      "asset_key": "magazine:spr15hb_556:15:tacz:556x45",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": null,
+      "texture": null,
+      "current_coverage": "runtime_fallback",
       "covered": true,
       "needs_art": false
     },
@@ -12593,10 +13706,12 @@
       "selector": "tacz:magazine ; magazine_family=stanag_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=20",
       "label": "item.tacz.magazine.stanag_556_20",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:stanag_556:20:tacz:556x45",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_stanag_556",
       "texture": "tacz_extra:item/mag_stanag",
@@ -12616,14 +13731,66 @@
       "selector": "tacz:magazine ; magazine_family=stanag_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=30",
       "label": "item.tacz.magazine.stanag_556",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:stanag_556:30:tacz:556x45",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_stanag_556",
       "texture": "tacz_extra:item/mag_stanag",
       "current_coverage": "exact",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "physical_magazine",
+      "identity": "magazine:timeless50_50ae:8:tacz:50ae",
+      "item": "tacz:magazine",
+      "selectors": {
+        "magazine_family": "timeless50_50ae",
+        "magazine_ammo_id": "tacz:50ae",
+        "magazine_capacity": 8
+      },
+      "selector": "tacz:magazine ; magazine_family=timeless50_50ae ; magazine_ammo_id=tacz:50ae ; magazine_capacity=8",
+      "label": "item.tacz.magazine.timeless50_50ae",
+      "accepted_coverage": [
+        "exact",
+        "family",
+        "runtime_fallback"
+      ],
+      "asset_key": "magazine:timeless50_50ae:8:tacz:50ae",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": null,
+      "texture": null,
+      "current_coverage": "runtime_fallback",
+      "covered": true,
+      "needs_art": false
+    },
+    {
+      "category": "physical_magazine",
+      "identity": "magazine:type81_762x39:30:tacz:762x39",
+      "item": "tacz:magazine",
+      "selectors": {
+        "magazine_family": "type81_762x39",
+        "magazine_ammo_id": "tacz:762x39",
+        "magazine_capacity": 30
+      },
+      "selector": "tacz:magazine ; magazine_family=type81_762x39 ; magazine_ammo_id=tacz:762x39 ; magazine_capacity=30",
+      "label": "item.tacz.magazine.type81_762x39",
+      "accepted_coverage": [
+        "exact",
+        "family",
+        "runtime_fallback"
+      ],
+      "asset_key": "magazine:type81_762x39:30:tacz:762x39",
+      "asset_strategy": "family",
+      "mapping_eligible": true,
+      "mapping": null,
+      "texture": null,
+      "current_coverage": "runtime_fallback",
       "covered": true,
       "needs_art": false
     },
@@ -12639,10 +13806,12 @@
       "selector": "tacz:magazine ; magazine_family=ump_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=25",
       "label": "item.tacz.magazine.ump_45",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:ump_45acp:25:tacz:45acp",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_ump_45acp",
       "texture": "tacz_extra:item/mag_ump45",
@@ -12662,10 +13831,12 @@
       "selector": "tacz:magazine ; magazine_family=uzi_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=20",
       "label": "item.tacz.magazine.uzi_9",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:uzi_9x19:20:tacz:9mm",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_uzi_9x19",
       "texture": "tacz_extra:item/mag_uzi",
@@ -12685,10 +13856,12 @@
       "selector": "tacz:magazine ; magazine_family=vector_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=20",
       "label": "item.tacz.magazine.vector_45",
       "accepted_coverage": [
-        "exact"
+        "exact",
+        "family",
+        "runtime_fallback"
       ],
       "asset_key": "magazine:vector_45acp:20:tacz:45acp",
-      "asset_strategy": "individual",
+      "asset_strategy": "family",
       "mapping_eligible": true,
       "mapping": "magazine_vector_45acp",
       "texture": "tacz_extra:item/mag_vector",

@@ -1,6 +1,7 @@
 {
-  "mechanism": "internal_box",
+  "mechanism": "detachable_magazine",
+  "magazine_family": "m95_50bmg",
   "magazine_capacity": 5,
   "ammo": "tacz:50bmg",
-  "display_name": "item.tacz.internal_feed.m95"
+  "display_name": "item.tacz.magazine.m95_50bmg"
 }

@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "deagle_50ae",
+  "magazine_capacity": 7,
+  "ammo": "tacz:50ae",
+  "display_name": "item.tacz.magazine.deagle_50ae"
+}

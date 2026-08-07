@@ -1,6 +1,7 @@
 {
-  "mechanism": "internal_box",
+  "mechanism": "detachable_magazine",
+  "magazine_family": "spr15hb_556",
   "magazine_capacity": 15,
   "ammo": "tacz:556x45",
-  "display_name": "item.tacz.internal_feed.spr15hb"
+  "display_name": "item.tacz.magazine.spr15hb_556"
 }

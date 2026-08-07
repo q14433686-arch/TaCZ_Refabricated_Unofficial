@@ -1,0 +1,89 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component_blank"
+    ],
+    "nbt": {
+      "IndustryPlatform": "feeding",
+      "IndustryPartKind": "carrier_feed_kit_blank",
+      "IndustryDisplayName": "item.tacz.gun_component_blank.carrier_feed_kit"
+    }
+  },
+  "transitional_item": {
+    "id": "tacz:gun_component_blank",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "feeding",
+        "IndustryPartKind": "carrier_feed_kit_blank",
+        "IndustryDisplayName": "item.tacz.gun_component_blank.carrier_feed_kit"
+      }
+    }
+  },
+  "result": {
+    "id": "tacz:gun_component",
+    "components": {
+      "minecraft:custom_data": {
+        "IndustryPlatform": "feeding",
+        "IndustryPartKind": "carrier_feed_kit",
+        "IndustryDisplayName": "item.tacz.gun_component.carrier_feed_kit.type81_762x39_30",
+        "DieTargetKind": "type81_762x39_30",
+        "MagazineFamily": "type81_762x39",
+        "MagazineAmmoId": "tacz:762x39",
+        "MagazineCapacity": 30
+      }
+    }
+  },
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:gun_component_blank"
+        ],
+        "nbt": {
+          "IndustryPlatform": "feeding",
+          "IndustryPartKind": "carrier_feed_kit_blank",
+          "IndustryDisplayName": "item.tacz.gun_component_blank.carrier_feed_kit"
+        }
+      },
+      "results": [
+        "$result"
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "target": "$ingredient",
+      "ingredient": {
+        "fabric:type": "forge:partial_nbt",
+        "items": [
+          "tacz:press_die"
+        ],
+        "nbt": {
+          "IndustryPlatform": "feeding",
+          "IndustryPartKind": "carrier_gauge",
+          "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.type81_762x39_30",
+          "DieTargetKind": "type81_762x39_30",
+          "MagazineFamily": "type81_762x39",
+          "MagazineAmmoId": "tacz:762x39",
+          "MagazineCapacity": 30
+        }
+      },
+      "results": [
+        "$result"
+      ],
+      "keep_held_item": true
+    }
+  ]
+}

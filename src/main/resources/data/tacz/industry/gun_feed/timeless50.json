@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "timeless50_50ae",
+  "magazine_capacity": 8,
+  "ammo": "tacz:50ae",
+  "display_name": "item.tacz.magazine.timeless50_50ae"
+}

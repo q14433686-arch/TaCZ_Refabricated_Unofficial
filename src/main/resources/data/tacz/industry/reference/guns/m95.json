@@ -5,10 +5,10 @@
   "display_name": "M95",
   "action": "anti_material_bolt",
   "feed": {
-    "device": "internal_box",
-    "runtime_mechanism": "internal_box",
-    "carrier_behavior": "internal",
-    "family": "",
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "m95_50bmg",
     "capacity": 5,
     "reload_batch": 0
   },

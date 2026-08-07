@@ -61,6 +61,24 @@
       "feed_kit_blank_count": 5,
       "feed_name_en": "Belt Link and Feed Tray Kit",
       "feed_name_zh": "弹链节与供弹盘组件"
+    },
+    "magnum_pistol": {
+      "body_blank_count": 2,
+      "feed_kit_blank_count": 2,
+      "feed_name_en": "Magnum Pistol Follower and Spring Kit",
+      "feed_name_zh": "马格南手枪托弹板与弹簧组件"
+    },
+    "shotgun_box": {
+      "body_blank_count": 2,
+      "feed_kit_blank_count": 3,
+      "feed_name_en": "Shot-shell Box-Magazine Feed Kit",
+      "feed_name_zh": "霰弹枪盒式弹匣供弹组件"
+    },
+    "anti_material_box": {
+      "body_blank_count": 4,
+      "feed_kit_blank_count": 4,
+      "feed_name_en": "Anti-Materiel Follower and Spring Kit",
+      "feed_name_zh": "反器材步枪托弹板与弹簧组件"
     }
   },
   "carriers": [
@@ -71,7 +89,9 @@
       "capacity": 30,
       "mechanism": "detachable_magazine",
       "profile": "rifle_30",
-      "source_guns": ["ak47"],
+      "source_guns": [
+        "ak47"
+      ],
       "name_en": "AK 7.62×39 30-round Magazine",
       "name_zh": "AK 7.62×39 30 发弹匣"
     },
@@ -82,7 +102,9 @@
       "capacity": 40,
       "mechanism": "detachable_magazine",
       "profile": "rifle_40",
-      "source_guns": ["rpk"],
+      "source_guns": [
+        "rpk"
+      ],
       "name_en": "RPK 7.62×39 40-round Magazine",
       "name_zh": "RPK 7.62×39 40 发加长弹匣"
     },
@@ -93,7 +115,9 @@
       "capacity": 16,
       "mechanism": "detachable_magazine",
       "profile": "pistol_service",
-      "source_guns": ["cz75"],
+      "source_guns": [
+        "cz75"
+      ],
       "name_en": "CZ 75 16-round Magazine",
       "name_zh": "CZ 75 16 发弹匣"
     },
@@ -104,7 +128,9 @@
       "capacity": 75,
       "mechanism": "belt",
       "profile": "belt_box_75",
-      "source_guns": ["fn_evolys"],
+      "source_guns": [
+        "fn_evolys"
+      ],
       "name_en": "FN Evolys .308 75-round Belt Box",
       "name_zh": "FN Evolys .308 75 发弹链箱"
     },
@@ -115,7 +141,9 @@
       "capacity": 20,
       "mechanism": "detachable_magazine",
       "profile": "rifle_308",
-      "source_guns": ["fn_fal"],
+      "source_guns": [
+        "fn_fal"
+      ],
       "name_en": "FAL .308 20-round Magazine",
       "name_zh": "FAL .308 20 发弹匣"
     },
@@ -126,7 +154,9 @@
       "capacity": 30,
       "mechanism": "detachable_magazine",
       "profile": "rifle_30",
-      "source_guns": ["g36k"],
+      "source_guns": [
+        "g36k"
+      ],
       "name_en": "G36 5.56×45 30-round Magazine",
       "name_zh": "G36 5.56×45 30 发弹匣"
     },
@@ -137,7 +167,9 @@
       "capacity": 20,
       "mechanism": "detachable_magazine",
       "profile": "rifle_308",
-      "source_guns": ["hk_g3"],
+      "source_guns": [
+        "hk_g3"
+      ],
       "name_en": "G3 .308 20-round Magazine",
       "name_zh": "G3 .308 20 发弹匣"
     },
@@ -148,7 +180,9 @@
       "capacity": 17,
       "mechanism": "detachable_magazine",
       "profile": "pistol_service",
-      "source_guns": ["glock_17"],
+      "source_guns": [
+        "glock_17"
+      ],
       "name_en": "Glock 17 17-round Magazine",
       "name_zh": "Glock 17 17 发弹匣"
     },
@@ -159,7 +193,9 @@
       "capacity": 10,
       "mechanism": "detachable_magazine",
       "profile": "rifle_20",
-      "source_guns": ["mk14"],
+      "source_guns": [
+        "mk14"
+      ],
       "name_en": "M14 .308 10-round Magazine",
       "name_zh": "M14 .308 10 发弹匣"
     },
@@ -170,7 +206,9 @@
       "capacity": 7,
       "mechanism": "detachable_magazine",
       "profile": "pistol_compact",
-      "source_guns": ["m1911"],
+      "source_guns": [
+        "m1911"
+      ],
       "name_en": "M1911 .45 ACP 7-round Magazine",
       "name_zh": "M1911 .45 ACP 7 发弹匣"
     },
@@ -181,7 +219,9 @@
       "capacity": 75,
       "mechanism": "belt",
       "profile": "belt_box_75",
-      "source_guns": ["m249"],
+      "source_guns": [
+        "m249"
+      ],
       "name_en": "M249 5.56 75-round Belt Box",
       "name_zh": "M249 5.56 75 发弹链箱"
     },
@@ -192,7 +232,9 @@
       "capacity": 17,
       "mechanism": "detachable_magazine",
       "profile": "pistol_service",
-      "source_guns": ["m9a4"],
+      "source_guns": [
+        "m9a4"
+      ],
       "name_en": "M9 17-round Magazine",
       "name_zh": "M9 17 发弹匣"
     },
@@ -203,7 +245,9 @@
       "capacity": 12,
       "mechanism": "detachable_magazine",
       "profile": "pistol_extended",
-      "source_guns": ["hk_mk23"],
+      "source_guns": [
+        "hk_mk23"
+      ],
       "name_en": "MK23 .45 ACP 12-round Magazine",
       "name_zh": "MK23 .45 ACP 12 发弹匣"
     },
@@ -214,7 +258,9 @@
       "capacity": 30,
       "mechanism": "detachable_magazine",
       "profile": "smg_box",
-      "source_guns": ["hk_mp5a5"],
+      "source_guns": [
+        "hk_mp5a5"
+      ],
       "name_en": "MP5 9 mm 30-round Magazine",
       "name_zh": "MP5 9 mm 30 发弹匣"
     },
@@ -225,7 +271,9 @@
       "capacity": 12,
       "mechanism": "detachable_magazine",
       "profile": "pistol_extended",
-      "source_guns": ["p320"],
+      "source_guns": [
+        "p320"
+      ],
       "name_en": "P320 .45 ACP 12-round Magazine",
       "name_zh": "P320 .45 ACP 12 发弹匣"
     },
@@ -236,7 +284,9 @@
       "capacity": 50,
       "mechanism": "detachable_magazine",
       "profile": "top_feed_50",
-      "source_guns": ["p90"],
+      "source_guns": [
+        "p90"
+      ],
       "name_en": "P90 5.7×28 50-round Magazine",
       "name_zh": "P90 5.7×28 50 发弹匣"
     },
@@ -247,7 +297,10 @@
       "capacity": 30,
       "mechanism": "detachable_magazine",
       "profile": "rifle_30",
-      "source_guns": ["qbz_191", "qbz_95"],
+      "source_guns": [
+        "qbz_191",
+        "qbz_95"
+      ],
       "name_en": "QBZ 5.8×42 30-round Magazine",
       "name_zh": "QBZ 5.8×42 30 发弹匣"
     },
@@ -258,7 +311,9 @@
       "capacity": 20,
       "mechanism": "detachable_magazine",
       "profile": "rifle_20",
-      "source_guns": ["m16a1"],
+      "source_guns": [
+        "m16a1"
+      ],
       "name_en": "STANAG 5.56×45 20-round Magazine",
       "name_zh": "STANAG 5.56×45 20 发弹匣"
     },
@@ -269,7 +324,12 @@
       "capacity": 30,
       "mechanism": "detachable_magazine",
       "profile": "rifle_30",
-      "source_guns": ["hk416d", "m16a4", "m4a1", "scar_l"],
+      "source_guns": [
+        "hk416d",
+        "m16a4",
+        "m4a1",
+        "scar_l"
+      ],
       "name_en": "STANAG 5.56×45 30-round Magazine",
       "name_zh": "STANAG 5.56×45 30 发弹匣"
     },
@@ -280,7 +340,9 @@
       "capacity": 25,
       "mechanism": "detachable_magazine",
       "profile": "smg_box",
-      "source_guns": ["ump45"],
+      "source_guns": [
+        "ump45"
+      ],
       "name_en": "UMP .45 ACP 25-round Magazine",
       "name_zh": "UMP .45 ACP 25 发弹匣"
     },
@@ -291,7 +353,9 @@
       "capacity": 20,
       "mechanism": "detachable_magazine",
       "profile": "smg_box",
-      "source_guns": ["uzi"],
+      "source_guns": [
+        "uzi"
+      ],
       "name_en": "Uzi 9 mm 20-round Magazine",
       "name_zh": "Uzi 9 mm 20 发弹匣"
     },
@@ -302,9 +366,167 @@
       "capacity": 20,
       "mechanism": "detachable_magazine",
       "profile": "smg_box",
-      "source_guns": ["vector45"],
+      "source_guns": [
+        "vector45"
+      ],
       "name_en": "Vector .45 ACP 20-round Magazine",
       "name_zh": "Vector .45 ACP 20 发弹匣"
+    },
+    {
+      "id": "aa12_12g_8",
+      "family": "aa12_12g",
+      "ammo": "tacz:12g",
+      "capacity": 8,
+      "mechanism": "detachable_magazine",
+      "profile": "shotgun_box",
+      "source_guns": [
+        "aa12"
+      ],
+      "name_en": "AA-12 12-gauge 8-round Box Magazine",
+      "name_zh": "AA-12 12 号 8 发盒式弹匣"
+    },
+    {
+      "id": "awm_338_5",
+      "family": "awm_338",
+      "ammo": "tacz:338",
+      "capacity": 5,
+      "mechanism": "detachable_magazine",
+      "profile": "rifle_20",
+      "source_guns": [
+        "ai_awp"
+      ],
+      "name_en": "AWM .338 5-round Magazine",
+      "name_zh": "AWM .338 5 发弹匣"
+    },
+    {
+      "id": "aug_556_30",
+      "family": "aug_556",
+      "ammo": "tacz:556x45",
+      "capacity": 30,
+      "mechanism": "detachable_magazine",
+      "profile": "rifle_30",
+      "source_guns": [
+        "aug"
+      ],
+      "name_en": "AUG 5.56×45 30-round Magazine",
+      "name_zh": "AUG 5.56×45 30 发弹匣"
+    },
+    {
+      "id": "b93r_9x19_20",
+      "family": "b93r_9x19",
+      "ammo": "tacz:9mm",
+      "capacity": 20,
+      "mechanism": "detachable_magazine",
+      "profile": "pistol_extended",
+      "source_guns": [
+        "b93r"
+      ],
+      "name_en": "B93R 9 mm 20-round Magazine",
+      "name_zh": "B93R 9 mm 20 发弹匣"
+    },
+    {
+      "id": "deagle_50ae_7",
+      "family": "deagle_50ae",
+      "ammo": "tacz:50ae",
+      "capacity": 7,
+      "mechanism": "detachable_magazine",
+      "profile": "magnum_pistol",
+      "source_guns": [
+        "deagle"
+      ],
+      "name_en": "Desert Eagle .50 AE 7-round Magazine",
+      "name_zh": "沙漠之鹰 .50 AE 7 发弹匣"
+    },
+    {
+      "id": "deagle_357_9",
+      "family": "deagle_357",
+      "ammo": "tacz:357mag",
+      "capacity": 9,
+      "mechanism": "detachable_magazine",
+      "profile": "magnum_pistol",
+      "source_guns": [
+        "deagle_golden"
+      ],
+      "name_en": "Golden Desert Eagle .357 9-round Magazine",
+      "name_zh": "金色沙漠之鹰 .357 9 发弹匣"
+    },
+    {
+      "id": "m107_50bmg_10",
+      "family": "m107_50bmg",
+      "ammo": "tacz:50bmg",
+      "capacity": 10,
+      "mechanism": "detachable_magazine",
+      "profile": "anti_material_box",
+      "source_guns": [
+        "m107"
+      ],
+      "name_en": "M107 .50 BMG 10-round Magazine",
+      "name_zh": "M107 .50 BMG 10 发弹匣"
+    },
+    {
+      "id": "m95_50bmg_5",
+      "family": "m95_50bmg",
+      "ammo": "tacz:50bmg",
+      "capacity": 5,
+      "mechanism": "detachable_magazine",
+      "profile": "anti_material_box",
+      "source_guns": [
+        "m95"
+      ],
+      "name_en": "M95 .50 BMG 5-round Magazine",
+      "name_zh": "M95 .50 BMG 5 发弹匣"
+    },
+    {
+      "id": "scar_h_308_20",
+      "family": "scar_h_308",
+      "ammo": "tacz:308",
+      "capacity": 20,
+      "mechanism": "detachable_magazine",
+      "profile": "rifle_308",
+      "source_guns": [
+        "scar_h"
+      ],
+      "name_en": "SCAR-H .308 20-round Magazine",
+      "name_zh": "SCAR-H .308 20 发弹匣"
+    },
+    {
+      "id": "spr15hb_556_15",
+      "family": "spr15hb_556",
+      "ammo": "tacz:556x45",
+      "capacity": 15,
+      "mechanism": "detachable_magazine",
+      "profile": "rifle_20",
+      "source_guns": [
+        "spr15hb"
+      ],
+      "name_en": "SPR-15 HB 5.56×45 15-round Magazine",
+      "name_zh": "SPR-15 HB 5.56×45 15 发弹匣"
+    },
+    {
+      "id": "timeless50_50ae_8",
+      "family": "timeless50_50ae",
+      "ammo": "tacz:50ae",
+      "capacity": 8,
+      "mechanism": "detachable_magazine",
+      "profile": "magnum_pistol",
+      "source_guns": [
+        "timeless50"
+      ],
+      "name_en": "Timeless .50 Z-Type 8-round Magazine",
+      "name_zh": "Timeless .50 Z-Type 8 发弹匣"
+    },
+    {
+      "id": "type81_762x39_30",
+      "family": "type81_762x39",
+      "ammo": "tacz:762x39",
+      "capacity": 30,
+      "mechanism": "detachable_magazine",
+      "profile": "rifle_30",
+      "source_guns": [
+        "type_81"
+      ],
+      "name_en": "Type 81-1 7.62×39 30-round Magazine",
+      "name_zh": "81-1 式 7.62×39 30 发弹匣"
     }
   ]
 }

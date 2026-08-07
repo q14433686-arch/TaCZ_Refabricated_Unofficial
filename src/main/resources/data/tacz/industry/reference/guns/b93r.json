@@ -5,11 +5,11 @@
   "display_name": "B93R",
   "action": "locked_breech_pistol",
   "feed": {
-    "device": "unknown",
-    "runtime_mechanism": "legacy",
-    "carrier_behavior": "unknown",
-    "family": "",
-    "capacity": 0,
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "b93r_9x19",
+    "capacity": 20,
     "reload_batch": 0
   },
   "ammunition": {
@@ -24,6 +24,6 @@
   "confidence": "curated",
   "evidence": [
     "bundled_default_industry_policy",
-    "bundled_gun_data"
+    "bundled_gun_feed"
   ]
 }

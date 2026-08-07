@@ -360,7 +360,7 @@ HasBulletInBarrel    继续独立保存膛内一发
 - 服务端在换弹开始时预留一只具体弹匣，并只在既有动画状态机的 `FEEDING → FINISHING` 点完成交换；
 - 默认 Java 换弹与 `xmag_reload_logic` 等 Lua 脚本的散装弹药 API 调用在物理会话期间被抑制，旧脚本只提供动画时间；
 - 潜行退匣、满背包掉落、旧存档整数备弹迁移与 LEGACY 镜像回退已接入；
-- 当前 26 条默认外部供弹枪声明归并为 22 个实体供弹器身份，包含 M249/FN Evolys 弹链箱；管式、转轮、内置仓与单发仍保持各自受服务器控制的枪内供弹逻辑。
+- 当前 38 条默认外部供弹枪声明归并为 34 个实体供弹器身份，包含 M249/FN Evolys 弹链箱；AA-12、AWM、M95、M107、AUG、B93R、Desert Eagle、SCAR-H、SPR-15 HB、Timeless .50 与 81-1 式的可拆卸载具均有真实制造线。管式、转轮、固定内仓与单发仍保持各自受服务器控制的枪内供弹逻辑；遗漏修正、STANAG 共享边界和剩余 legacy 枪见 [`DEFAULT_PHYSICAL_FEED_AUDIT.md`](DEFAULT_PHYSICAL_FEED_AUDIT.md)。
 
 ### 已落地：Create Fly 工业纵切
 

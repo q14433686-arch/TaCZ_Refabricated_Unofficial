@@ -172,14 +172,13 @@ public class GunFeedDefinition {
     }
 
     /**
-     * Existing lower-capacity members of the same explicit family remain
-     * compatible as before. A capacity above the receiver's base declaration,
-     * however, must be one of the exact audited variants above.
+     * Only an exact declared physical identity is valid here. Cross-platform
+     * sharing is resolved by {@link PhysicalMagazineService} over other loaded
+     * declarations with the same family/ammo/mechanism; a random smaller NBT
+     * capacity is never accepted merely because it is below this gun's base.
      */
     public boolean acceptsExternalCarrierCapacity(int capacity) {
-        int safeCapacity = Math.max(0, capacity);
-        return safeCapacity > 0 && (safeCapacity <= getMagazineCapacity()
-                || getExternalCarrierVariant(safeCapacity) != null);
+        return getExternalCarrierVariant(Math.max(0, capacity)) != null;
     }
 
     public int getFeedDeviceCapacity() {

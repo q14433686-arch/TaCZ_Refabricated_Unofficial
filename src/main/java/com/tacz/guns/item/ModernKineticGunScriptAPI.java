@@ -551,7 +551,9 @@ public class ModernKineticGunScriptAPI {
         if (plannedInternalRounds >= 0) {
             return plannedInternalRounds;
         }
-        int maxAmmoCount = AttachmentDataUtils.getAmmoCountWithAttachment(itemStack, gunIndex.getGunData());
+        int maxAmmoCount = PhysicalMagazineService.getEffectiveMagazineCapacity(
+                itemStack, AttachmentDataUtils.getAmmoCountWithAttachment(itemStack, gunIndex.getGunData())
+        );
         int currentAmmoCount = abstractGunItem.getCurrentAmmoCount(itemStack);
         return maxAmmoCount - currentAmmoCount;
     }
@@ -571,7 +573,9 @@ public class ModernKineticGunScriptAPI {
      * @return 返回枪械弹匣的最大备弹数，不计算已在枪管中的弹药。
      */
     public int getMaxAmmoCount() {
-        return AttachmentDataUtils.getAmmoCountWithAttachment(itemStack, gunIndex.getGunData());
+        return PhysicalMagazineService.getEffectiveMagazineCapacity(
+                itemStack, AttachmentDataUtils.getAmmoCountWithAttachment(itemStack, gunIndex.getGunData())
+        );
     }
 
     /**
@@ -581,7 +585,12 @@ public class ModernKineticGunScriptAPI {
      */
     public int getMagExtentLevel() {
         int forced = InternalFeedService.getScriptForcedMagExtentLevel(dataHolder, itemStack);
-        return forced >= 0 ? forced : AttachmentDataUtils.getMagExtendLevel(itemStack, gunIndex.getGunData());
+        if (forced >= 0) {
+            return forced;
+        }
+        int physicalLevel = PhysicalMagazineService.getInstalledCarrierExtentLevel(itemStack, gunIndex.getGunData());
+        return physicalLevel >= 0 ? physicalLevel
+                : AttachmentDataUtils.getMagExtendLevel(itemStack, gunIndex.getGunData());
     }
 
     /**
@@ -695,7 +704,9 @@ public class ModernKineticGunScriptAPI {
         if (amount < 0) {
             return 0;
         }
-        int maxAmmoCount = AttachmentDataUtils.getAmmoCountWithAttachment(itemStack, gunIndex.getGunData());
+        int maxAmmoCount = PhysicalMagazineService.getEffectiveMagazineCapacity(
+                itemStack, AttachmentDataUtils.getAmmoCountWithAttachment(itemStack, gunIndex.getGunData())
+        );
         int currentAmmoCount = abstractGunItem.getCurrentAmmoCount(itemStack);
         int newAmmoCount = currentAmmoCount + amount;
         if (maxAmmoCount < newAmmoCount) {

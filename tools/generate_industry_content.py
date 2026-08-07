@@ -255,6 +255,16 @@ def load_default_gun_policy() -> dict[str, Any]:
         raise ValueError(f"{DEFAULT_GUN_POLICY}: tier mapping references an unknown manufacturing tier")
     if not isinstance(policy.get("materials_by_gun_type"), dict):
         raise ValueError(f"{DEFAULT_GUN_POLICY}: materials_by_gun_type must be an object")
+    explicit_legacy_feeds = policy.get("explicit_legacy_feed_ids")
+    if not isinstance(explicit_legacy_feeds, dict) or not explicit_legacy_feeds:
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: explicit_legacy_feed_ids must be a non-empty object")
+    for slug, reason in explicit_legacy_feeds.items():
+        if not isinstance(slug, str) or not re.fullmatch(r"[a-z0-9_]+", slug) \
+                or not isinstance(reason, str) or not reason.strip():
+            raise ValueError(
+                f"{DEFAULT_GUN_POLICY}: explicit_legacy_feed_ids must map [a-z0-9_]+ gun slugs to non-empty reasons"
+            )
+
     clear_actions = policy.get("audited_feed_jam_clear_actions", {})
     if not isinstance(clear_actions, dict):
         raise ValueError(f"{DEFAULT_GUN_POLICY}: audited_feed_jam_clear_actions must be an object")
@@ -264,6 +274,54 @@ def load_default_gun_policy() -> dict[str, Any]:
                 f"{DEFAULT_GUN_POLICY}: each audited feed-jam clear action must be a [a-z0-9_]+ slug mapped to 'bolt'"
             )
     return policy
+
+
+def validate_default_gun_feed_coverage(policy: dict[str, Any]) -> None:
+    """Fail closed when a bundled default GunData silently loses feed coverage.
+
+    Default-pack identities are a closed, author-audited set, unlike unknown
+    third-party packs. Every default GunData must therefore either have an
+    explicit ``industry/gun_feed`` declaration whose ammo/base capacity still
+    matches, or appear in ``explicit_legacy_feed_ids`` with a concrete reason.
+    This prevents a future conservative edit from accidentally sending a known
+    detachable platform back to unclassified legacy behaviour.
+    """
+    data_paths = sorted(DEFAULT_GUN_DATA_ROOT.glob("*_data.json"))
+    if not data_paths:
+        raise ValueError(f"{DEFAULT_GUN_DATA_ROOT}: no default GunData files found")
+    default_data = {
+        path.name.removesuffix("_data.json"): read_json5(path)
+        for path in data_paths
+    }
+    feed_root = RESOURCE_ROOT / "data/tacz/industry/gun_feed"
+    feeds = {path.stem: read_json(path) for path in sorted(feed_root.glob("*.json"))}
+    legacy = policy["explicit_legacy_feed_ids"]
+
+    unknown_feeds = set(feeds) - set(default_data)
+    if unknown_feeds:
+        raise ValueError(f"default gun_feed files without bundled GunData: {sorted(unknown_feeds)}")
+    unknown_legacy = set(legacy) - set(default_data)
+    if unknown_legacy:
+        raise ValueError(f"explicit legacy feed ids without bundled GunData: {sorted(unknown_legacy)}")
+    overlap = set(feeds) & set(legacy)
+    if overlap:
+        raise ValueError(f"default gun ids cannot be both declared feed and explicit legacy: {sorted(overlap)}")
+    uncovered = set(default_data) - set(feeds) - set(legacy)
+    if uncovered:
+        raise ValueError(
+            f"default GunData lacks an explicit feed declaration or explicit legacy reason: {sorted(uncovered)}"
+        )
+
+    for slug, feed in feeds.items():
+        if not isinstance(feed, dict):
+            raise ValueError(f"{feed_root / (slug + '.json')}: feed declaration must be an object")
+        data = default_data[slug]
+        if not isinstance(data, dict):
+            raise ValueError(f"{slug}: bundled GunData must be an object")
+        if feed.get("ammo") != data.get("ammo"):
+            raise ValueError(f"{slug}: gun_feed ammo must exactly equal bundled GunData.ammo")
+        if feed.get("magazine_capacity") != data.get("ammo_amount"):
+            raise ValueError(f"{slug}: gun_feed magazine_capacity must exactly equal bundled GunData.ammo_amount")
 
 
 def load_platforms(policy: dict[str, Any]) -> list[dict[str, Any]]:
@@ -772,6 +830,20 @@ def load_magazine_carriers(cartridge_ammo_ids: set[str]) -> list[dict[str, Any]]
 
     feed_root = RESOURCE_ROOT / "data/tacz/industry/gun_feed"
     feeds_by_identity: dict[tuple[str, str, int], list[tuple[str, dict[str, Any]]]] = defaultdict(list)
+
+    def add_feed_identity(path: Path, feed: dict[str, Any], family: str, ammo: str,
+                          capacity: Any, display_name: Any) -> None:
+        if not isinstance(capacity, int) or not 1 <= capacity <= 512 \
+                or not isinstance(display_name, str) or not display_name:
+            raise ValueError(f"{path}: invalid removable carrier capacity/display_name")
+        # Preserve the ordinary runtime declaration while projecting the exact
+        # physical identity being validated. A 20-round STANAG receiver can
+        # explicitly declare the already-manufactured 30-round STANAG carrier;
+        # the manufacturing manifest then sees both source guns rather than
+        # silently treating the variant as a base 20-round item.
+        identity_feed = {**feed, "magazine_capacity": capacity, "display_name": display_name}
+        feeds_by_identity[(family, ammo, capacity)].append((path.stem, identity_feed))
+
     for path in sorted(feed_root.glob("*.json")):
         feed = read_json(path)
         mechanism = feed.get("mechanism")
@@ -779,13 +851,24 @@ def load_magazine_carriers(cartridge_ammo_ids: set[str]) -> list[dict[str, Any]]
             continue
         family = feed.get("magazine_family")
         ammo = feed.get("ammo")
-        capacity = feed.get("magazine_capacity")
-        display_name = feed.get("display_name")
-        if not isinstance(family, str) or not family or not isinstance(ammo, str) or ammo not in cartridge_ammo_ids \
-                or not isinstance(capacity, int) or not 1 <= capacity <= 512 \
-                or not isinstance(display_name, str) or not display_name:
+        if not isinstance(family, str) or not family or not isinstance(ammo, str) or ammo not in cartridge_ammo_ids:
             raise ValueError(f"{path}: invalid removable carrier declaration")
-        feeds_by_identity[(family, ammo, capacity)].append((path.stem, feed))
+        add_feed_identity(path, feed, family, ammo, feed.get("magazine_capacity"), feed.get("display_name"))
+
+        variants = feed.get("carrier_variants", [])
+        if variants is None:
+            variants = []
+        if not isinstance(variants, list):
+            raise ValueError(f"{path}: carrier_variants must be an array when present")
+        seen_variant_capacities = {feed.get("magazine_capacity")}
+        for variant in variants:
+            if not isinstance(variant, dict):
+                raise ValueError(f"{path}: carrier_variants entries must be objects")
+            capacity = variant.get("capacity")
+            if capacity in seen_variant_capacities:
+                raise ValueError(f"{path}: carrier_variants cannot duplicate a capacity")
+            seen_variant_capacities.add(capacity)
+            add_feed_identity(path, feed, family, ammo, capacity, variant.get("display_name"))
 
     seen_ids: set[str] = set()
     seen_identities: set[tuple[str, str, int]] = set()
@@ -2349,6 +2432,11 @@ def magazine_language_entries(carriers: list[dict[str, Any]], language: str) -> 
         name = carrier[f"name_{suffix}"]
         profile = carrier["_profile"]
         feed_name = profile[f"feed_name_{suffix}"]
+        # The configured tacz:magazine stack stores this exact translation key.
+        # Keep it generated from the same manifest that produces the real
+        # gauge/body/feed-kit line, so a newly audited default carrier can never
+        # show an untranslated key while its industrial route exists.
+        entries[carrier["_display_name"]] = name
         entries[f"item.tacz.press_die.carrier_gauge.{carrier['id']}"] = (
             f"{name}规格量规" if chinese else f"{name} Specification Gauge"
         )
@@ -3792,7 +3880,15 @@ def generated_complete_icon_mapping(platforms: list[dict[str, Any]], cartridges:
     """
     exact = load_complete_exact_icons()
     base_catalog = build_icon_catalog(platforms, cartridges, machine_assets, base_mapping, embedded)
-    missing = {entry["identity"]: entry for entry in base_catalog["entries"] if entry["needs_art"]}
+    # A newly audited physical carrier may honestly use the neutral runtime
+    # fallback while artwork is absent. Existing complete-pack identities still
+    # need to be emitted as exact mappings even though that fallback is now an
+    # accepted non-deceptive coverage state, so retain every identity named by
+    # the artist's exact map as well.
+    missing = {
+        entry["identity"]: entry for entry in base_catalog["entries"]
+        if entry["needs_art"] or entry["identity"] in exact
+    }
     if set(exact) != set(missing):
         only_art = sorted(set(exact) - set(missing))
         only_runtime = sorted(set(missing) - set(exact))
@@ -4297,7 +4393,13 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
                 "magazine_ammo_id": ammo,
                 "magazine_capacity": capacity,
             },
-            feed["display_name"], ("exact",), f"magazine:{identity_suffix}"
+            # Correct server identity/manufacture must never be held hostage by
+            # absent artwork. Exact/family art wins when supplied; otherwise the
+            # renderer visibly falls back to the neutral tacz:magazine icon.
+            # That fallback is intentionally recorded as runtime_fallback, not
+            # mislabelled as model-specific art.
+            feed["display_name"], ("exact", "family", "runtime_fallback"),
+            f"magazine:{identity_suffix}", "family"
         ))
 
     # These are static registry-item models rather than NBT-generic stacks.
@@ -4443,12 +4545,12 @@ def render_icon_coverage_document(catalog: dict[str, Any]) -> str:
         "- **family**：已有有意复用的同工艺视觉族（例如新鲜黄铜手枪壳）；",
         "- **placeholder**：暂时能画出来，但不能冒充完成品（例如已击发弹壳仍借用新壳图）；",
         "- **supplied_block_model**：已由用户提供的实体方块模型/贴图覆盖；",
-        "- **runtime_fallback**：没有映射条目，运行时退回原有 TACZ 图；",
-        "- `needs_art = true` 的每一行都是仍需补图的具体身份。",
+        "- **runtime_fallback**：没有映射条目，运行时退回原有 TACZ 通用图；它保证物件可见，但绝不表示已有该型号的精确视觉；",
+        "- `needs_art = true` 的每一行都是仍需补图的具体身份。某些真实工业物件可明确接受通用回退，精确/通用数量仍会分列显示。",
         "",
         "## 汇总",
         "",
-        "| 类别 | 总身份数 | 已满足 | 仍需补图 | exact | family | placeholder | supplied block model | runtime fallback |",
+        "| 类别 | 总身份数 | 可渲染（含通用回退） | 仍需补图 | exact | family | placeholder | supplied block model | runtime fallback |",
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for category, counts in catalog["summary"].items():
@@ -5115,6 +5217,7 @@ def update_language(path: Path, entries: dict[str, str], write: bool) -> list[st
 
 def run(write: bool) -> int:
     policy = load_default_gun_policy()
+    validate_default_gun_feed_coverage(policy)
     explicit_platforms = load_platforms(policy)
     auto_platforms = discover_default_platforms({platform["slug"] for platform in explicit_platforms}, policy)
     platforms = [*explicit_platforms, *auto_platforms]

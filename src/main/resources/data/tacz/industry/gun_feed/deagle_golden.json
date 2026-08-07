@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "deagle_357",
+  "magazine_capacity": 9,
+  "ammo": "tacz:357mag",
+  "display_name": "item.tacz.magazine.deagle_357"
+}

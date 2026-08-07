@@ -4,6 +4,7 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
@@ -100,10 +101,12 @@ public final class GunPropertyDiagrams {
                 graphics.text(font, Component.literal("INV"), valueTextStartX, yOffset[0], fontColor, false);
             } else {
                 int barrelBulletAmount = (iGun.hasBulletInBarrel(gunItem) && index.getGunData().getBolt() != Bolt.OPEN_BOLT) ? 1 : 0;
-                int ammoAmount = gunData.getAmmoAmount() + barrelBulletAmount;
+                int legacyCapacity = AttachmentDataUtils.getAmmoCountWithAttachment(gunItem, index.getGunData());
+                int physicalCapacity = PhysicalMagazineService.getEffectiveMagazineCapacity(gunItem, legacyCapacity);
+                int ammoAmount = physicalCapacity + barrelBulletAmount;
                 double ammoAmountPercent = Math.min(ammoAmount / 100.0, 1);
                 int ammoLength = (int) (barStartX + barMaxWidth * ammoAmountPercent);
-                int maxAmmoCount = AttachmentDataUtils.getAmmoCountWithAttachment(gunItem, index.getGunData()) + barrelBulletAmount;
+                int maxAmmoCount = physicalCapacity + barrelBulletAmount;
                 int addAmmoCount = Math.max(maxAmmoCount - ammoAmount, 0);
                 int addAmmoCountLength = (int) (barMaxWidth * addAmmoCount / 100.0);
 

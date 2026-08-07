@@ -10,7 +10,7 @@ import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.industry.IndustryProfileManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
-import com.tacz.guns.util.AttachmentDataUtils;
+import com.tacz.guns.resource.pojo.data.gun.GunData;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -84,6 +84,15 @@ public final class PhysicalMagazineService {
         }
         ItemStack magazine = iGun.getInstalledMagazine(gun);
         return magazine.getItem() instanceof IMagazine item ? item.getAmmoCount(magazine) : 0;
+    }
+
+    /** Capacity of the actual installed external carrier, or zero when absent. */
+    public static int getInstalledMagazineCapacity(ItemStack gun) {
+        if (!(gun.getItem() instanceof IGun iGun)) {
+            return 0;
+        }
+        ItemStack magazine = iGun.getInstalledMagazine(gun);
+        return magazine.getItem() instanceof IMagazine item ? item.getCapacity(magazine) : 0;
     }
 
     /** Mutates the stored magazine then updates the old integer compatibility mirror. */
@@ -296,9 +305,9 @@ public final class PhysicalMagazineService {
             return false;
         }
         ItemStack magazine = createMagazine(definition, legacyAmmo);
-        // A larger variant may preserve the old count in inventory, but it may
-        // only become the installed source when the gun's currently installed
-        // extended-mag attachment exposes that exact receiver capacity.
+        // For an external physical-feed declaration, the carrier itself is the
+        // capacity-bearing component. A legacy extended-mag attachment is not a
+        // second receiver upgrade that must be installed alongside it.
         if (magazine.isEmpty() || !isCompatible(definition, gun, magazine)) {
             return false;
         }
@@ -349,18 +358,105 @@ public final class PhysicalMagazineService {
         }
         return definition.getMagazineFamily().equals(item.getMagazineFamily(magazine))
                 && definition.getAmmoId().equals(item.getAmmoId(magazine))
-                && definition.acceptsExternalCarrierCapacity(item.getCapacity(magazine));
+                && familyDeclaresCarrierCapacity(definition, item.getCapacity(magazine));
     }
 
     /**
-     * Installation check: an explicit larger variant additionally needs the
-     * matching capacity exposed by the gun's real current attachment state.
+     * MagazineFamily is an explicit cross-platform fit contract. A receiver
+     * may therefore accept an exact larger carrier declared by another loaded
+     * receiver in the same family (for example a 20-round M16A1 and a 30-round
+     * M4A1/SCAR-L STANAG), without copying a second factory recipe or guessing
+     * from calibre alone.
+     */
+    private static boolean familyDeclaresCarrierCapacity(GunFeedDefinition definition, int capacity) {
+        if (definition.acceptsExternalCarrierCapacity(capacity)) {
+            return true;
+        }
+        for (var entry : CommonAssetsManager.get().getAllGunFeedDefinitions()) {
+            GunFeedDefinition candidate = entry.getValue();
+            if (sameCarrierFamily(definition, candidate)
+                    && candidate.acceptsExternalCarrierCapacity(capacity)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Nullable
+    private static ExternalCarrierVariant selectCompatibleCarrierVariant(GunFeedDefinition definition, int rounds) {
+        ExternalCarrierVariant selected = definition.getExternalCarrierVariantForRounds(rounds);
+        for (var entry : CommonAssetsManager.get().getAllGunFeedDefinitions()) {
+            GunFeedDefinition candidate = entry.getValue();
+            if (!sameCarrierFamily(definition, candidate)) {
+                continue;
+            }
+            ExternalCarrierVariant alternative = candidate.getExternalCarrierVariantForRounds(rounds);
+            if (alternative != null && (selected == null || alternative.getCapacity() < selected.getCapacity())) {
+                selected = alternative;
+            }
+        }
+        return selected;
+    }
+
+    private static boolean sameCarrierFamily(GunFeedDefinition first, GunFeedDefinition second) {
+        return first != null && second != null
+                && first.isValidExternalCarrierDefinition() && second.isValidExternalCarrierDefinition()
+                && first.getMechanism() == second.getMechanism()
+                && first.getMagazineFamily().equals(second.getMagazineFamily())
+                && first.getAmmoId().equals(second.getAmmoId());
+    }
+
+    /**
+     * Receiver-aware spelling retained for callers that are selecting a source
+     * for a particular gun. An external physical carrier is itself the
+     * capacity-bearing part: the old TACZ EXTENDED_MAG attachment represents a
+     * virtual magazine and must not be required as a second, conflicting item.
      */
     public static boolean isCompatible(GunFeedDefinition definition, ItemStack gun, ItemStack magazine) {
-        if (!isCompatible(definition, magazine) || !(magazine.getItem() instanceof IMagazine item)) {
-            return false;
+        return isCompatible(definition, magazine);
+    }
+
+    /**
+     * The inserted physical external carrier is authoritative for every
+     * capacity-facing caller (HUD, tooltip, scripts and reload math). Before a
+     * carrier is inserted, the legacy GunData/attachment capacity remains the
+     * safe fallback.
+     */
+    public static int getEffectiveMagazineCapacity(ItemStack gun, int legacyCapacity) {
+        if (hasActiveInstalledMagazine(gun) && gun.getItem() instanceof IGun iGun) {
+            ItemStack magazine = iGun.getInstalledMagazine(gun);
+            if (magazine.getItem() instanceof IMagazine item) {
+                return item.getCapacity(magazine);
+            }
         }
-        return item.getCapacity(magazine) <= getCurrentReceiverCapacity(gun);
+        return Math.max(0, legacyCapacity);
+    }
+
+    /**
+     * Translate an installed declared carrier capacity back into the legacy
+     * animation selector only when the loaded GunData actually declares that
+     * level. This keeps xmag-style scripts visually/timing-compatible without
+     * requiring a duplicate EXTENDED_MAG attachment beside the physical item.
+     */
+    public static int getInstalledCarrierExtentLevel(ItemStack gun, GunData data) {
+        if (!hasActiveInstalledMagazine(gun) || data == null) {
+            return -1;
+        }
+        int capacity = getInstalledMagazineCapacity(gun);
+        if (capacity == data.getAmmoAmount()) {
+            return 0;
+        }
+        int[] extended = data.getExtendedMagAmmoAmount();
+        if (extended != null) {
+            for (int level = 0; level < Math.min(3, extended.length); level++) {
+                if (extended[level] == capacity) {
+                    return level + 1;
+                }
+            }
+        }
+        // A deliberately compatible lower-capacity physical carrier has no
+        // matching virtual extended-mag level; use the normal/base selector.
+        return 0;
     }
 
     private static boolean shouldConsumeMagazine(Player player) {
@@ -483,7 +579,7 @@ public final class PhysicalMagazineService {
      * request to clamp the count into the base carrier.
      */
     private static ItemStack createMagazine(GunFeedDefinition definition, int rounds) {
-        ExternalCarrierVariant variant = definition.getExternalCarrierVariantForRounds(rounds);
+        ExternalCarrierVariant variant = selectCompatibleCarrierVariant(definition, rounds);
         if (variant == null) {
             return ItemStack.EMPTY;
         }
@@ -503,17 +599,7 @@ public final class PhysicalMagazineService {
             return true;
         }
         int legacyAmmo = getLegacyAmmoCount(gun);
-        return legacyAmmo <= 0 || definition.getExternalCarrierVariantForRounds(legacyAmmo) != null;
-    }
-
-    /** Current base/extended receiver capacity, derived from real loaded GunData and attachment state. */
-    private static int getCurrentReceiverCapacity(ItemStack gun) {
-        if (!(gun.getItem() instanceof IGun iGun)) {
-            return 0;
-        }
-        return com.tacz.guns.api.TimelessAPI.getCommonGunIndex(iGun.getGunId(gun))
-                .map(index -> AttachmentDataUtils.getAmmoCountWithAttachment(gun, index.getGunData()))
-                .orElse(0);
+        return legacyAmmo <= 0 || selectCompatibleCarrierVariant(definition, legacyAmmo) != null;
     }
 
     private static int getMagazineAmmoCount(ItemStack magazine) {
