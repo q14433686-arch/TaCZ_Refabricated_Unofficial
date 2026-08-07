@@ -252,7 +252,7 @@ chance = clamp(
 
 1. 已新增独立 `industrial_service_bench` block entity、十槽 menu、screen 与服务端 C2S 事务；它不复用或改写破坏性回收站；
 2. 已实现五组件保真拆解和复装：空枪 + 生产模板 + 对应动作/平台检具 + 原生耐久的军械勤务扳手 → receiver/bolt/barrel/trigger/recoil，复装严格要求同 GunId、同工业来源；附件、实体供弹器、漏夹、内部/膛内弹药未清空时拒绝；
-3. 已新增 Create 单工件维修链：钢/黄铜 → Basin 形成中性 `service_part_blank` → 组件专用模具 + production 模板校准命名 `service_part` → 损坏组件经检具、命名维修件、动力冲压机替换为同 GunId/同平台、满 Condition 的组件；复装按钮只保留组件 Condition、清洁 Fouling，绝不直接满修；
+3. 已新增 Create 单工件维修链：钢/黄铜 → 加热 Basin 形成中性 `service_part_blank` → **同一条传送带**依次经组件专用模具部署器（保留）和 production 模板部署器（保留）校准命名 `service_part` → 损坏组件在另一条**同一条顺序带**依次经检具部署器（保留）、命名维修件部署器（消耗）、动力冲压机替换为同 GunId/同平台、满 Condition 的组件；复装按钮只保留组件 Condition、清洁 Fouling，绝不直接满修；
 4. 完整回归附件、实体弹匣、桥夹、内部弹药与输出堵塞。
 
 ### C. 卡壳与清障（C.0 环境/结构数据已开始）

@@ -5,11 +5,11 @@
   "type": "create:mechanical_crafting",
   "pattern": ["SBS", "PWP", "SCS"],
   "key": {
-    "S": {"item": "tacz:high_carbon_steel_plate"},
-    "B": {"item": "create:brass_sheet"},
-    "P": {"item": "tacz:gun_component_blank"},
-    "W": {"item": "tacz:armorer_wrench"},
-    "C": {"item": "tacz:press_die"}
+    "S": "tacz:high_carbon_steel_plate",
+    "B": "create:brass_sheet",
+    "P": "tacz:gun_component_blank",
+    "W": "tacz:armorer_wrench",
+    "C": "tacz:press_die"
   },
   "result": {"id": "tacz:industrial_service_bench"}
 }

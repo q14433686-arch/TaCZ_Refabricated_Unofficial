@@ -5060,9 +5060,9 @@ def run(write: bool) -> int:
         "tooltip.tacz.maintenance.out_of_service": "Out of Service",
         "tooltip.tacz.service.component_condition": "Component condition: %s",
         "tooltip.tacz.service.component_gun": "Service identity: %s",
-        "tooltip.tacz.service.component_repair": "Step 3/3: use the matching fixture + named service part in the Create repair line.",
-        "tooltip.tacz.service.blank_step": "Step 1/3: form this neutral blank in a heated Basin, then use the matching component die and production template.",
-        "tooltip.tacz.service.named_part_step": "Step 2/3: this named replacement is consumed by the matching damaged component repair line.",
+        "tooltip.tacz.service.component_repair": "Step 3/3: run this component on one Create belt sequence: fixture Deployer → named replacement Deployer → Mechanical Press.",
+        "tooltip.tacz.service.blank_step": "Step 1/3: form this neutral blank in a heated Basin, then run a component-die Deployer followed by a production-template Deployer.",
+        "tooltip.tacz.service.named_part_step": "Step 2/3: this named replacement goes in the second Deployer of the matching damaged-component belt sequence.",
     }
     chinese: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "中性外装套件毛坯",
@@ -5119,9 +5119,9 @@ def run(write: bool) -> int:
         "tooltip.tacz.maintenance.out_of_service": "停用",
         "tooltip.tacz.service.component_condition": "组件枪况：%s",
         "tooltip.tacz.service.component_gun": "勤务身份：%s",
-        "tooltip.tacz.service.component_repair": "第 3/3 步：在对应 Create 维修线中放入此组件、匹配检具和命名维修替换件。",
-        "tooltip.tacz.service.blank_step": "第 1/3 步：先在加热 Basin 制成该中性毛坯，再用对应组件模具与生产模板校准。",
-        "tooltip.tacz.service.named_part_step": "第 2/3 步：该命名替换件会在对应损坏组件维修线中被消耗。",
+        "tooltip.tacz.service.component_repair": "第 3/3 步：同一条 Create 传送带依次经过检具部署器 → 命名替换件部署器 → 动力冲压机。",
+        "tooltip.tacz.service.blank_step": "第 1/3 步：先在加热 Basin 制成该中性毛坯，再在同一条线依次经过组件模具部署器与生产模板部署器。",
+        "tooltip.tacz.service.named_part_step": "第 2/3 步：该命名替换件放入损坏组件维修传送带的第二台部署器。",
     }
     expected.update(generated_furniture_blank_files(platforms))
     expected.update(generated_template_blank_file(policy))
