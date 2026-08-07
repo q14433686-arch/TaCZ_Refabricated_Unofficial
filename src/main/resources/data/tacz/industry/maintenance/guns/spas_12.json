@@ -4,13 +4,13 @@
   "eligibility": "industrial_assembly",
   "maintenance_class": "hybrid_shotgun",
   "wear_per_shot": {
-    "receiver": 1,
-    "bolt": 2,
-    "barrel": 2,
-    "trigger": 1,
-    "recoil": 1
+    "receiver": 10,
+    "bolt": 18,
+    "barrel": 26,
+    "trigger": 8,
+    "recoil": 15
   },
-  "fouling_per_shot": 2,
+  "fouling_per_shot": 15,
   "heat_stress_multiplier": 1.0,
   "operation": {
     "wear_multiplier": 1.0,

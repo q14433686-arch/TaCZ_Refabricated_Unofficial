@@ -4,13 +4,13 @@
   "eligibility": "industrial_assembly",
   "maintenance_class": "roller_delayed_rifle",
   "wear_per_shot": {
-    "receiver": 1,
-    "bolt": 2,
-    "barrel": 3,
-    "trigger": 1,
-    "recoil": 2
+    "receiver": 12,
+    "bolt": 22,
+    "barrel": 32,
+    "trigger": 9,
+    "recoil": 18
   },
-  "fouling_per_shot": 3,
+  "fouling_per_shot": 18,
   "heat_stress_multiplier": 1.0,
   "operation": {
     "wear_multiplier": 1.0,

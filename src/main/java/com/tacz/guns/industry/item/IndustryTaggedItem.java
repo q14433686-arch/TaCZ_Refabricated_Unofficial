@@ -11,6 +11,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
@@ -66,6 +67,27 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
         String surveyedTarget = !surveyedGun.isBlank() ? surveyedGun : surveyedAmmo;
         return surveyedTarget.isBlank() ? base : base.copy().append(Component.literal(" [" + surveyedTarget + "]")
                 .withStyle(style -> style.withColor(0x777777)));
+    }
+
+    @Override
+    public boolean isBarVisible(ItemStack stack) {
+        return ItemNbtUtils.getTag(stack).contains("IndustryPartCondition");
+    }
+
+    @Override
+    public int getBarWidth(ItemStack stack) {
+        int condition = Math.clamp(ItemNbtUtils.getTag(stack).getIntOr("IndustryPartCondition", 10_000), 0, 10_000);
+        return Math.clamp(1 + condition * 12 / 10_000, 0, 13);
+    }
+
+    @Override
+    public int getBarColor(ItemStack stack) {
+        int condition = Math.clamp(ItemNbtUtils.getTag(stack).getIntOr("IndustryPartCondition", 10_000), 0, 10_000);
+        return Mth.hsvToRgb(condition * 0.33F / 10_000F, 0.92F, 0.95F);
+    }
+
+    private static int conditionColor(int condition) {
+        return Mth.hsvToRgb(Math.clamp(condition, 0, 10_000) * 0.33F / 10_000F, 0.92F, 0.95F);
     }
 
     private static int blueprintTierColor(String tier) {
@@ -227,6 +249,35 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
         if (!getDieTargetKind(stack).isBlank()) {
             adder.accept(Component.translatable("tooltip.tacz.industry.die_target", getDieTargetKind(stack))
                     .withStyle(style -> style.withColor(0xAAAAAA)));
+        }
+
+        // B.2 service parts must be self-explanatory in inventory/REI: the
+        // player should never need to inspect hidden NBT to learn whether this
+        // is a damaged component, a neutral blank, or the named replacement.
+        CompoundTag serviceTag = ItemNbtUtils.getTag(stack);
+        if (serviceTag.contains("IndustryPartCondition")) {
+            int condition = Math.clamp(serviceTag.getIntOr("IndustryPartCondition", 10_000), 0, 10_000);
+            String conditionText = String.format(java.util.Locale.ROOT, "%.2f%%", condition / 100.0D);
+            adder.accept(Component.translatable("tooltip.tacz.service.component_condition", conditionText)
+                    .withStyle(style -> style.withColor(conditionColor(condition))));
+            String serviceGun = serviceTag.getStringOr("IndustryServiceGunId", "");
+            if (!serviceGun.isBlank()) {
+                adder.accept(Component.translatable("tooltip.tacz.service.component_gun", serviceGun)
+                        .withStyle(style -> style.withColor(0x8AA7B7)));
+            }
+            adder.accept(Component.translatable("tooltip.tacz.service.component_repair")
+                    .withStyle(style -> style.withColor(0xF2C14E)));
+        } else if ("service_part_blank".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.service.blank_step")
+                    .withStyle(style -> style.withColor(0xAAAAAA)));
+        } else if (partKind.startsWith("service_part_")) {
+            adder.accept(Component.translatable("tooltip.tacz.service.named_part_step")
+                    .withStyle(style -> style.withColor(0x8FD6C6)));
+            String serviceGun = serviceTag.getStringOr("IndustryServiceGunId", "");
+            if (!serviceGun.isBlank()) {
+                adder.accept(Component.translatable("tooltip.tacz.service.component_gun", serviceGun)
+                        .withStyle(style -> style.withColor(0x8AA7B7)));
+            }
         }
         if (advanced.isAdvanced()) {
             adder.accept(Component.translatable("tooltip.tacz.industry.platform", getPlatform(stack))

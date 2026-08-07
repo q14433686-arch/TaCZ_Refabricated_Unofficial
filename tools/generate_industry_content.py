@@ -2524,11 +2524,15 @@ def maintenance_baseline(platform: dict[str, Any]) -> dict[str, Any]:
     bookkeeping. No random jam or shoot gate consumes these values until a
     later phase has an audited clear-jam transaction.
     """
+    # 10,000 is an internal fixed-point scale, not Minecraft item durability.
+    # These values put a normal service rifle into the maintenance-warning band
+    # after roughly one to two hundred real shots rather than thousands, so the
+    # B.2 component replacement loop is meaningful in ordinary survival play.
     by_tier = {
-        "legacy": ({"receiver": 2, "bolt": 3, "barrel": 4, "trigger": 1, "recoil": 2}, 4),
-        "service": ({"receiver": 1, "bolt": 2, "barrel": 3, "trigger": 1, "recoil": 2}, 3),
-        "advanced": ({"receiver": 1, "bolt": 2, "barrel": 2, "trigger": 1, "recoil": 1}, 2),
-        "precision": ({"receiver": 1, "bolt": 1, "barrel": 2, "trigger": 1, "recoil": 1}, 2),
+        "legacy": ({"receiver": 16, "bolt": 30, "barrel": 44, "trigger": 12, "recoil": 24}, 24),
+        "service": ({"receiver": 12, "bolt": 22, "barrel": 32, "trigger": 9, "recoil": 18}, 18),
+        "advanced": ({"receiver": 10, "bolt": 18, "barrel": 26, "trigger": 8, "recoil": 15}, 15),
+        "precision": ({"receiver": 8, "bolt": 15, "barrel": 22, "trigger": 7, "recoil": 12}, 12),
     }
     tier = manufacturing_tier(platform)
     wear, fouling = by_tier[tier]
@@ -2772,7 +2776,7 @@ def service_language_entries(platform: dict[str, Any], language: str) -> dict[st
         kind = part["kind"]
         part_label = part["name_zh" if chinese else "name_en"]
         entries[f"item.tacz.service_part.{platform['slug']}_{kind}"] = (
-            f"{label}{part_label}维修替换件" if chinese else f"{label} {part_label} Service Replacement Part"
+            f"{part_label}维修替换件" if chinese else f"{part_label} Service Replacement Part"
         )
     return entries
 
@@ -5054,6 +5058,11 @@ def run(write: bool) -> int:
         "tooltip.tacz.maintenance.service": "Service Due",
         "tooltip.tacz.maintenance.repair": "Repair Required",
         "tooltip.tacz.maintenance.out_of_service": "Out of Service",
+        "tooltip.tacz.service.component_condition": "Component condition: %s",
+        "tooltip.tacz.service.component_gun": "Service identity: %s",
+        "tooltip.tacz.service.component_repair": "Step 3/3: use the matching fixture + named service part in the Create repair line.",
+        "tooltip.tacz.service.blank_step": "Step 1/3: form this neutral blank in a heated Basin, then use the matching component die and production template.",
+        "tooltip.tacz.service.named_part_step": "Step 2/3: this named replacement is consumed by the matching damaged component repair line.",
     }
     chinese: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "中性外装套件毛坯",
@@ -5108,6 +5117,11 @@ def run(write: bool) -> int:
         "tooltip.tacz.maintenance.service": "需保养",
         "tooltip.tacz.maintenance.repair": "需维修",
         "tooltip.tacz.maintenance.out_of_service": "停用",
+        "tooltip.tacz.service.component_condition": "组件枪况：%s",
+        "tooltip.tacz.service.component_gun": "勤务身份：%s",
+        "tooltip.tacz.service.component_repair": "第 3/3 步：在对应 Create 维修线中放入此组件、匹配检具和命名维修替换件。",
+        "tooltip.tacz.service.blank_step": "第 1/3 步：先在加热 Basin 制成该中性毛坯，再用对应组件模具与生产模板校准。",
+        "tooltip.tacz.service.named_part_step": "第 2/3 步：该命名替换件会在对应损坏组件维修线中被消耗。",
     }
     expected.update(generated_furniture_blank_files(platforms))
     expected.update(generated_template_blank_file(policy))

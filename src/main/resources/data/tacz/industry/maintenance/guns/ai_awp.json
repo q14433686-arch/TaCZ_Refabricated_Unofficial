@@ -4,13 +4,13 @@
   "eligibility": "industrial_assembly",
   "maintenance_class": "bolt_action",
   "wear_per_shot": {
-    "receiver": 1,
-    "bolt": 1,
-    "barrel": 2,
-    "trigger": 1,
-    "recoil": 1
+    "receiver": 8,
+    "bolt": 15,
+    "barrel": 22,
+    "trigger": 7,
+    "recoil": 12
   },
-  "fouling_per_shot": 2,
+  "fouling_per_shot": 12,
   "heat_stress_multiplier": 1.0,
   "operation": {
     "wear_multiplier": 0.8,
