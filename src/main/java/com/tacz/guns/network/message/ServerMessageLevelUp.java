@@ -57,7 +57,7 @@ public class ServerMessageLevelUp implements CustomPacketPayload {
         }
         Component subtitle = level >= GunExperienceService.MAX_LEVEL
                 ? Component.translatable("toast.tacz.sub.final_level")
-                : Component.translatable("toast.tacz.sub.level_up");
+                : Component.translatable("toast.tacz.sub.handling_up");
         // 26.2 no longer exposes either old ToastManager accessor on
         // Minecraft. Keep the upgrade feedback authoritative and portable by
         // using the player message path already used by client key actions.

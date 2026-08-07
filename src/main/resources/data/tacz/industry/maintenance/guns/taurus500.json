@@ -25,9 +25,10 @@
     "contaminant_fouling_multiplier": 1.2
   },
   "jam": {
-    "warning_condition": 6000,
-    "critical_condition": 1500,
-    "max_chance": 0.08,
-    "clear_action": "none"
+    "warning_condition": 6300,
+    "critical_condition": 1700,
+    "max_chance": 0.038,
+    "clear_action": "none",
+    "fault_mode": "service_lockout"
   }
 }

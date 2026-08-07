@@ -56,8 +56,12 @@ public final class IndustryMaintenanceService {
     public static final String SHOTS_TAG = "IndustryMaintenanceShots";
     /** Server-authoritative C.1/C.2 fault state; never written from client prediction. */
     public static final String JAM_TAG = "IndustryJam";
+    /** Deterministic C.1 threshold lockout. */
     public static final String LOCKOUT_JAM = "lockout";
+    /** C.2 only: a real manual bolt can clear this after it chambers a round. */
     public static final String FEED_JAM = "feed";
+    /** C.4 universal safe fault: requires the real industrial service bench, never a fabricated rack animation. */
+    public static final String SERVICE_LOCKOUT_JAM = "service_lockout";
 
     /** Existing industrial assembly provenance written by Create results. */
     public static final String ASSEMBLY_PLATFORM_TAG = "IndustryAssemblyPlatform";
@@ -127,26 +131,61 @@ public final class IndustryMaintenanceService {
         });
         refreshFaultState(gun);
 
-        // Lockout always wins. A profile without a verified manual clear action
-        // remains phase-A/C.1 only and can never opt into random feed faults by
-        // accident, including generic surveyed third-party profiles.
-        if (isLockout(gun) || !canCreateFeedJam(shooter, gun, profile)) {
+        // A deterministic C.1 threshold lockout always wins. C.4 then selects
+        // one explicitly declared post-shot fault mode: only real manual-bolt
+        // guns may create a feed jam; every other serviceable action family can
+        // use the safe bench-only service lockout rather than a fake animation.
+        if (isLockout(gun)) {
             return ShotOutcome.RECORDED;
         }
         Snapshot snapshot = getSnapshot(gun);
-        if (!shouldCreateFeedJam(gun, snapshot, profile)) {
+        IndustryMaintenanceProfile.FaultMode faultMode = profile.getJam().getFaultMode();
+        boolean unsupportedFeed = faultMode == IndustryMaintenanceProfile.FaultMode.FEED
+                && !canCreateFeedJam(shooter, gun, profile);
+        boolean unsupportedServiceLockout = faultMode == IndustryMaintenanceProfile.FaultMode.SERVICE_LOCKOUT
+                && !hasServiceBenchResolution(gun);
+        if (faultMode == IndustryMaintenanceProfile.FaultMode.NONE || unsupportedFeed || unsupportedServiceLockout
+                || !shouldCreateRandomFault(gun, snapshot, profile, exposure)) {
             return ShotOutcome.RECORDED;
         }
-        ItemNbtUtils.updateTag(gun, tag -> tag.putString(JAM_TAG, FEED_JAM));
-        return ShotOutcome.FEED_JAMMED;
+        return switch (faultMode) {
+            case FEED -> {
+                ItemNbtUtils.updateTag(gun, tag -> tag.putString(JAM_TAG, FEED_JAM));
+                yield ShotOutcome.FEED_JAMMED;
+            }
+            case SERVICE_LOCKOUT -> {
+                ItemNbtUtils.updateTag(gun, tag -> tag.putString(JAM_TAG, SERVICE_LOCKOUT_JAM));
+                yield ShotOutcome.SERVICE_LOCKED;
+            }
+            case NONE -> ShotOutcome.RECORDED;
+        };
     }
 
-    /** C.1 deterministic hard-stop; only the service bench can remove it. */
+    /**
+     * C.1 deterministic threshold lockout plus C.4's bench-only service fault.
+     * Both are removed by a real industrial reassembly, never a client click or
+     * an unaudited rack animation.
+     */
     public static boolean isLockout(ItemStack gun) {
+        // C.1 is intentionally recomputed from real component condition, so a
+        // repaired/migrated old stack cannot remain stuck on a stale old tag.
+        return isServiceLockout(gun) || isCriticalConditionLockout(gun);
+    }
+
+    private static boolean isCriticalConditionLockout(ItemStack gun) {
         IndustryMaintenanceProfile profile = getProfileFor(gun);
         Snapshot snapshot = getSnapshot(gun);
-        return profile != null && snapshot.eligible()
+        return profile != null && snapshot.eligible() && hasServiceBenchResolution(gun)
                 && snapshot.minimumCondition() <= profile.getJam().getCriticalCondition();
+    }
+
+    /** True for the supported C.4 stochastic fault variant, useful for a distinct Tooltip line. */
+    public static boolean isServiceLockout(ItemStack gun) {
+        IndustryMaintenanceProfile profile = getProfileFor(gun);
+        return SERVICE_LOCKOUT_JAM.equals(ItemNbtUtils.getTag(gun).getStringOr(JAM_TAG, ""))
+                && profile != null
+                && profile.getJam().getFaultMode() == IndustryMaintenanceProfile.FaultMode.SERVICE_LOCKOUT
+                && hasServiceBenchResolution(gun);
     }
 
     /** True when the server has recorded a C.2 feed failure on this maintained gun. */
@@ -176,6 +215,7 @@ public final class IndustryMaintenanceService {
         }
         IndustryMaintenanceProfile profile = getProfileFor(gun);
         return profile != null
+                && profile.getJam().getFaultMode() == IndustryMaintenanceProfile.FaultMode.FEED
                 && profile.getJam().getClearAction() == IndustryMaintenanceProfile.ClearAction.BOLT
                 && hasManualBolt(gun);
     }
@@ -222,15 +262,23 @@ public final class IndustryMaintenanceService {
     }
 
     private static void refreshFaultState(ItemStack gun) {
-        boolean lockout = isLockout(gun);
+        boolean criticalLockout = isCriticalConditionLockout(gun);
         boolean feedClearable = canClearFeedJamWithBolt(gun);
+        IndustryMaintenanceProfile profile = getProfileFor(gun);
+        boolean serviceLockoutSupported = profile != null
+                && profile.getJam().getFaultMode() == IndustryMaintenanceProfile.FaultMode.SERVICE_LOCKOUT
+                && hasServiceBenchResolution(gun);
         ItemNbtUtils.updateTag(gun, tag -> {
             String current = tag.getStringOr(JAM_TAG, "");
-            if (lockout) {
+            if (criticalLockout) {
                 tag.putString(JAM_TAG, LOCKOUT_JAM);
             } else if (FEED_JAM.equals(current) && !feedClearable) {
                 // A removed/changed datapack profile must not strand an old
                 // feed tag on a gun with no possible real clear action.
+                tag.remove(JAM_TAG);
+            } else if (SERVICE_LOCKOUT_JAM.equals(current) && !serviceLockoutSupported) {
+                // C.4 never leaves an item locked merely because the profile or
+                // real industrial service provenance was removed later.
                 tag.remove(JAM_TAG);
             } else if (LOCKOUT_JAM.equals(current)) {
                 tag.remove(JAM_TAG);
@@ -242,6 +290,11 @@ public final class IndustryMaintenanceService {
         return profile.getJam().getClearAction() == IndustryMaintenanceProfile.ClearAction.BOLT
                 && canClearFeedJamWithBolt(gun)
                 && hasFeedableRound(shooter, gun);
+    }
+
+    /** Never create a universal C.4 lockout unless the actual bench can later resolve this exact gun. */
+    private static boolean hasServiceBenchResolution(ItemStack gun) {
+        return hasIndustrialOrigin(gun);
     }
 
     private static boolean hasFeedableRound(LivingEntity shooter, ItemStack gun) {
@@ -269,7 +322,8 @@ public final class IndustryMaintenanceService {
      * on client RNG, world time, entity UUID, or packet arrival order, so a
      * server reload/replay cannot turn a known shot into a different outcome.
      */
-    private static boolean shouldCreateFeedJam(ItemStack gun, Snapshot snapshot, IndustryMaintenanceProfile profile) {
+    private static boolean shouldCreateRandomFault(ItemStack gun, Snapshot snapshot,
+                                                   IndustryMaintenanceProfile profile, Exposure exposure) {
         IndustryMaintenanceProfile.JamThresholds jam = profile.getJam();
         int warning = jam.getWarningCondition();
         int critical = jam.getCriticalCondition();
@@ -279,11 +333,13 @@ public final class IndustryMaintenanceService {
             return false;
         }
         float foulingRisk = Math.clamp(snapshot.fouling() / (float) MAX_CONDITION, 0.0F, 1.0F);
-        // Feed trouble rises gently at the warning threshold and sharply only
-        // near critical condition. Fouling modulates the declared maximum but
-        // cannot make a fresh, clean weapon randomly jam.
+        // C.4 fault risk rises gently at the warning threshold and sharply
+        // near critical condition. Fouling and the real C.3 heat/weather/dirt
+        // exposure modulate a per-action declared maximum, but cannot make a
+        // fresh, clean weapon fault from pure randomness.
+        double operationalStress = Math.clamp(exposure.faultStress(), 1.0F, 2.0F);
         double chance = jam.getMaxChance() * conditionRisk * conditionRisk * conditionRisk
-                * (0.15D + 0.85D * foulingRisk);
+                * (0.15D + 0.85D * foulingRisk) * operationalStress;
         if (chance <= 0.0D) {
             return false;
         }
@@ -335,9 +391,11 @@ public final class IndustryMaintenanceService {
         String condition = percentage(snapshot.minimumCondition());
         String fouling = percentage(snapshot.fouling());
         boolean lockout = isLockout(gun);
+        boolean serviceLockout = isServiceLockout(gun);
         boolean feedJam = !lockout && isFeedJammed(gun);
         Component state = lockout
-                ? Component.translatable("tooltip.tacz.maintenance.lockout")
+                ? Component.translatable(serviceLockout
+                        ? "tooltip.tacz.maintenance.service_fault" : "tooltip.tacz.maintenance.lockout")
                 : feedJam ? Component.translatable("tooltip.tacz.maintenance.feed_jam")
                 : Component.translatable(snapshot.status().translationKey());
         int color = lockout || feedJam ? 0xE05252 : snapshot.status().color();
@@ -475,37 +533,51 @@ public final class IndustryMaintenanceService {
      * state. Rain is intentionally distinct from immersion/wet contact, so a
      * player under cover is not penalised merely because the dimension rains.
      */
-    private record Exposure(float wearMultiplier, float foulingMultiplier) {
+    private record Exposure(float wearMultiplier, float foulingMultiplier, float faultStress) {
         private static Exposure capture(LivingEntity shooter, ItemStack gun, IndustryMaintenanceProfile profile) {
             IndustryMaintenanceProfile.OperationProfile operation = profile.getOperation();
-            float heatStress = heatStress(gun, profile.getHeatStressMultiplier());
-            float wear = operation.getWearMultiplier() * heatStress;
-            float fouling = operation.getFoulingMultiplier() * heatStress;
+            HeatStress heatStress = heatStress(gun, profile.getHeatStressMultiplier());
+            float wear = operation.getWearMultiplier() * heatStress.wearMultiplier();
+            float fouling = operation.getFoulingMultiplier() * heatStress.foulingMultiplier();
+            float faultStress = Math.max(heatStress.wearMultiplier(), heatStress.foulingMultiplier());
             if (shooter != null) {
                 boolean wetContact = shooter.isInWater() || touchesTaggedBlock(shooter, WET_EXPOSURE_BLOCKS);
                 if (wetContact) {
                     wear *= operation.getSubmergedWearMultiplier();
                     fouling *= operation.getSubmergedFoulingMultiplier();
+                    faultStress *= Math.max(operation.getSubmergedWearMultiplier(), operation.getSubmergedFoulingMultiplier());
                 } else if (shooter.level().isRainingAt(shooter.blockPosition())) {
                     wear *= operation.getRainWearMultiplier();
                     fouling *= operation.getRainFoulingMultiplier();
+                    faultStress *= Math.max(operation.getRainWearMultiplier(), operation.getRainFoulingMultiplier());
                 }
                 if (touchesTaggedBlock(shooter, CONTAMINANT_BLOCKS)) {
                     wear *= operation.getContaminantWearMultiplier();
                     fouling *= operation.getContaminantFoulingMultiplier();
+                    faultStress *= Math.max(operation.getContaminantWearMultiplier(), operation.getContaminantFoulingMultiplier());
                 }
             }
-            return new Exposure(Math.clamp(wear, 0.0F, 16.0F), Math.clamp(fouling, 0.0F, 16.0F));
+            return new Exposure(Math.clamp(wear, 0.0F, 16.0F), Math.clamp(fouling, 0.0F, 16.0F),
+                    Math.clamp(faultStress, 1.0F, 4.0F));
         }
 
-        /** A profile multiplier is the maximum stress at full real HeatData, never a fabricated heat value. */
-        private static float heatStress(ItemStack gun, float configuredMaximum) {
+        /**
+         * A profile multiplier is the maximum stress at full real HeatData,
+         * never a fabricated heat value. Server configuration scales only the
+         * excess above 1.0, so a scale of zero cleanly disables heat stress
+         * without disabling normal maintenance accounting.
+         */
+        private static HeatStress heatStress(ItemStack gun, float configuredMaximum) {
+            if (SyncConfig.INDUSTRY_HEAT_STRESS_ENABLED != null
+                    && !SyncConfig.INDUSTRY_HEAT_STRESS_ENABLED.get()) {
+                return HeatStress.NONE;
+            }
             if (!(gun.getItem() instanceof IGun iGun) || !iGun.hasHeatData(gun)) {
-                return 1.0F;
+                return HeatStress.NONE;
             }
             Identifier gunId = iGun.getGunId(gun);
             if (gunId == null) {
-                return 1.0F;
+                return HeatStress.NONE;
             }
             return TimelessAPI.getCommonGunIndex(gunId)
                     .map(index -> index.getGunData().getHeatData())
@@ -513,8 +585,24 @@ public final class IndustryMaintenanceService {
                     .map(heat -> {
                         float ratio = Math.clamp(iGun.getHeatAmount(gun) / heat.getHeatMax(), 0.0F, 1.0F);
                         float maximum = Math.clamp(Math.max(1.0F, configuredMaximum), 1.0F, 16.0F);
-                        return 1.0F + ratio * (maximum - 1.0F);
-                    }).orElse(1.0F);
+                        float excess = ratio * (maximum - 1.0F);
+                        return new HeatStress(
+                                1.0F + excess * configuredHeatScale(SyncConfig.INDUSTRY_HEAT_WEAR_SCALE),
+                                1.0F + excess * configuredHeatScale(SyncConfig.INDUSTRY_HEAT_FOULING_SCALE)
+                        );
+                    }).orElse(HeatStress.NONE);
+        }
+
+        private static float configuredHeatScale(net.minecraftforge.common.ForgeConfigSpec.DoubleValue value) {
+            if (value == null) {
+                return 1.0F;
+            }
+            double raw = value.get();
+            return Double.isFinite(raw) ? (float) Math.max(0.0D, Math.min(16.0D, raw)) : 1.0F;
+        }
+
+        private record HeatStress(float wearMultiplier, float foulingMultiplier) {
+            private static final HeatStress NONE = new HeatStress(1.0F, 1.0F);
         }
 
         private static boolean touchesTaggedBlock(LivingEntity shooter, TagKey<Block> tag) {
@@ -533,10 +621,16 @@ public final class IndustryMaintenanceService {
     }
 
     /** Result of one actual server-side round after maintenance accounting. */
-    public record ShotOutcome(boolean recorded, boolean feedJammed) {
-        public static final ShotOutcome NONE = new ShotOutcome(false, false);
-        public static final ShotOutcome RECORDED = new ShotOutcome(true, false);
-        public static final ShotOutcome FEED_JAMMED = new ShotOutcome(true, true);
+    public record ShotOutcome(boolean recorded, boolean feedJammed, boolean serviceLocked) {
+        public static final ShotOutcome NONE = new ShotOutcome(false, false, false);
+        public static final ShotOutcome RECORDED = new ShotOutcome(true, false, false);
+        public static final ShotOutcome FEED_JAMMED = new ShotOutcome(true, true, false);
+        public static final ShotOutcome SERVICE_LOCKED = new ShotOutcome(true, false, true);
+
+        /** Both C.2 and C.4 outcomes need an immediate authoritative held-stack snapshot. */
+        public boolean faultCreated() {
+            return feedJammed || serviceLocked;
+        }
     }
 
     public enum Status {

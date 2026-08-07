@@ -27,7 +27,8 @@
   "jam": {
     "warning_condition": 6000,
     "critical_condition": 1500,
-    "max_chance": 0.08,
-    "clear_action": "bolt"
+    "max_chance": 0.04,
+    "clear_action": "bolt",
+    "fault_mode": "feed"
   }
 }

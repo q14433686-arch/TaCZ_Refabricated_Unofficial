@@ -2616,6 +2616,23 @@ def maintenance_baseline(platform: dict[str, Any], policy: dict[str, Any]) -> di
         "break_action": 1.10,
         "revolver": 1.10,
     }.get(action, 1.20)
+    # C.4 uses one safe post-shot fault per actual action family. Only the
+    # short clear-action audit list can use feed: every other generated default
+    # gun receives a bench-only service lockout rather than a fictional rack or
+    # reload animation. Values are gameplay balancing data, not claims about
+    # real firearm reliability.
+    warning, critical, max_chance = {
+        "bolt_action": (5_800, 1_400, 0.035),
+        "anti_material_bolt": (6_000, 1_500, 0.040),
+        "break_action": (6_500, 1_800, 0.040),
+        "revolver": (6_300, 1_700, 0.038),
+        "belt_fed": (7_000, 2_000, 0.055),
+        "rotary": (7_000, 2_000, 0.060),
+        "gas_operated_shotgun": (6_200, 1_600, 0.050),
+        "blowback_smg": (6_000, 1_500, 0.038),
+    }.get(action, (6_000, 1_500, 0.040))
+    clear_action = audited_feed_jam_clear_action(platform, policy)
+    fault_mode = "feed" if clear_action == "bolt" else "service_lockout"
     return {
         "schema_version": 1,
         "generated_by": "tacz_industry_generator",
@@ -2637,10 +2654,11 @@ def maintenance_baseline(platform: dict[str, Any], policy: dict[str, Any]) -> di
             "contaminant_fouling_multiplier": multipliers[7],
         },
         "jam": {
-            "warning_condition": 6000,
-            "critical_condition": 1500,
-            "max_chance": 0.08,
-            "clear_action": audited_feed_jam_clear_action(platform, policy),
+            "warning_condition": warning,
+            "critical_condition": critical,
+            "max_chance": max_chance,
+            "clear_action": clear_action,
+            "fault_mode": fault_mode,
         },
     }
 
@@ -2702,11 +2720,12 @@ def validate_generated_maintenance_profiles(platforms: list[dict[str, Any]], exp
                 or not isinstance(operation, dict) or set(operation) != operation_keys \
                 or not all(isinstance(value, (int, float)) and 0 <= float(value) <= 16 for value in operation.values()) \
                 or not isinstance(jam, dict) \
-                or set(jam) != {"warning_condition", "critical_condition", "max_chance", "clear_action"} \
+                or set(jam) != {"warning_condition", "critical_condition", "max_chance", "clear_action", "fault_mode"} \
                 or not isinstance(jam.get("warning_condition"), int) or not 0 <= jam["warning_condition"] <= 10_000 \
                 or not isinstance(jam.get("critical_condition"), int) or not 0 <= jam["critical_condition"] <= jam["warning_condition"] \
                 or not isinstance(jam.get("max_chance"), (int, float)) or not 0 <= float(jam["max_chance"]) <= 1 \
-                or jam.get("clear_action") != audited_feed_jam_clear_action(platform, policy):
+                or jam.get("clear_action") != audited_feed_jam_clear_action(platform, policy) \
+                or jam.get("fault_mode") != ("feed" if audited_feed_jam_clear_action(platform, policy) == "bolt" else "service_lockout"):
             raise ValueError(f"{platform['slug']}: malformed generated maintenance profile")
     if len(paths) != len(platforms):
         raise ValueError("generated maintenance profile path collision")
@@ -5172,13 +5191,25 @@ def run(write: bool) -> int:
         "message.tacz.industrial_service.cleaning_materials": "Need %s industrial cleaning kit(s).",
         "message.tacz.industrial_service.clean_success": "Removed %s fouling; consumed %s industrial cleaning kit(s).",
         "config.tacz.server.industry_maintenance_scope": "Industrial Maintenance Scope",
-        "config.tacz.server.industry_maintenance_scope.desc": "Industrial maintenance records condition and fouling. INDUSTRIAL_ASSEMBLY safely limits it to real industrial-origin guns; ALL_GUNS migrates legacy guns full and clean. Random feed faults still require an explicit audited clear-action profile.",
+        "config.tacz.server.industry_maintenance_scope.desc": "Industrial maintenance records condition and fouling. INDUSTRIAL_ASSEMBLY safely limits it to real industrial-origin guns; ALL_GUNS migrates legacy guns full and clean. Feed faults require an explicit audited clear action; bench-only service faults require a real industrial service exit.",
+        "config.tacz.server.industry_heat_stress_enabled": "Native heat maintenance stress",
+        "config.tacz.server.industry_heat_stress_enabled.desc": "Use only a gun's real GunHeatData/HeatAmount as C.3 maintenance exposure; per-gun profiles still define the maximum stress.",
+        "config.tacz.server.industry_heat_wear_scale": "Heat-derived wear scale",
+        "config.tacz.server.industry_heat_fouling_scale": "Heat-derived fouling scale",
+        "config.tacz.server.gun_experience_handling_enabled": "Gun proficiency handling bonuses",
+        "config.tacz.server.gun_experience_handling_enabled.desc": "Enables capped per-physical-gun ADS, real projectile spread, and local recoil handling bonuses; never direct damage or maintenance bypasses.",
+        "config.tacz.server.gun_experience_aim_time_reduction": "Maximum level-10 ADS-time reduction",
+        "config.tacz.server.gun_experience_inaccuracy_reduction": "Maximum level-10 projectile-spread reduction",
+        "config.tacz.server.gun_experience_recoil_reduction": "Maximum level-10 recoil-camera reduction",
+        "tooltip.tacz.gun.proficiency_handling": "Proficiency handling: ADS %s faster · spread %s tighter · recoil %s lower",
+        "toast.tacz.sub.handling_up": "This physical gun now handles more cleanly",
         "tooltip.tacz.maintenance.status": "Service: %s  |  Condition %s  |  Fouling %s",
         "tooltip.tacz.maintenance.good": "Good",
         "tooltip.tacz.maintenance.service": "Service Due",
         "tooltip.tacz.maintenance.repair": "Repair Required",
         "tooltip.tacz.maintenance.out_of_service": "Out of Service",
-        "tooltip.tacz.maintenance.lockout": "Service lockout — repair components at the Industrial Service Bench",
+        "tooltip.tacz.maintenance.lockout": "Critical service lockout — repair components at the Industrial Service Bench",
+        "tooltip.tacz.maintenance.service_fault": "Mechanical service fault — repair components at the Industrial Service Bench",
         "tooltip.tacz.maintenance.feed_jam": "Feed jam — press fire to cycle the action clear",
         "tooltip.tacz.maintenance.grade": "Maintenance grade: %s · planned barrel service: ~%s shots",
         "tooltip.tacz.maintenance.grade.field": "Field / legacy",
@@ -5261,13 +5292,25 @@ def run(write: bool) -> int:
         "message.tacz.industrial_service.cleaning_materials": "需要 %s 份工业枪械清洁套件。",
         "message.tacz.industrial_service.clean_success": "已清除 %s 点污垢；消耗 %s 份工业枪械清洁套件。",
         "config.tacz.server.industry_maintenance_scope": "工业维护范围",
-        "config.tacz.server.industry_maintenance_scope.desc": "工业维护记录枪况和污垢。INDUSTRIAL_ASSEMBLY 仅作用于真实工业来源枪械；ALL_GUNS 会让旧枪以满状态、清洁状态安全迁移。随机供弹卡滞仍只会由显式、已审计的清障档案启用。",
+        "config.tacz.server.industry_maintenance_scope.desc": "工业维护记录枪况和污垢。INDUSTRIAL_ASSEMBLY 仅作用于真实工业来源枪械；ALL_GUNS 会让旧枪以满状态、清洁状态安全迁移。供弹卡滞必须有显式、已审计的清障动作；勤务锁止必须有真实工业维修出口。",
+        "config.tacz.server.industry_heat_stress_enabled": "原生过热维护应力",
+        "config.tacz.server.industry_heat_stress_enabled.desc": "仅使用枪自身真实的 GunHeatData/HeatAmount 作为 C.3 维护暴露；每枪档案仍决定最大应力。",
+        "config.tacz.server.industry_heat_wear_scale": "热量额外磨损倍率",
+        "config.tacz.server.industry_heat_fouling_scale": "热量额外污垢倍率",
+        "config.tacz.server.gun_experience_handling_enabled": "枪械熟练度操控收益",
+        "config.tacz.server.gun_experience_handling_enabled.desc": "启用按实体枪计算、封顶的瞄准、真实弹道散布与本地后坐操控收益；绝不直接增加伤害或绕过维护。",
+        "config.tacz.server.gun_experience_aim_time_reduction": "10 级最大瞄准时间缩短",
+        "config.tacz.server.gun_experience_inaccuracy_reduction": "10 级最大真实散布缩减",
+        "config.tacz.server.gun_experience_recoil_reduction": "10 级最大后坐镜头缩减",
+        "tooltip.tacz.gun.proficiency_handling": "熟练操控：瞄准快 %s · 散布紧 %s · 后坐低 %s",
+        "toast.tacz.sub.handling_up": "这把实体枪的操控更加熟练",
         "tooltip.tacz.maintenance.status": "勤务：%s  |  枪况 %s  |  污垢 %s",
         "tooltip.tacz.maintenance.good": "良好",
         "tooltip.tacz.maintenance.service": "需保养",
         "tooltip.tacz.maintenance.repair": "需维修",
         "tooltip.tacz.maintenance.out_of_service": "停用",
-        "tooltip.tacz.maintenance.lockout": "勤务锁止——请在工业勤务台维修组件",
+        "tooltip.tacz.maintenance.lockout": "临界勤务锁止——请在工业勤务台维修组件",
+        "tooltip.tacz.maintenance.service_fault": "机械勤务故障——请在工业勤务台维修组件",
         "tooltip.tacz.maintenance.feed_jam": "供弹卡滞——按开火键执行拉栓清障",
         "tooltip.tacz.maintenance.grade": "耐久等级：%s · 预计枪管勤务：约 %s 发",
         "tooltip.tacz.maintenance.grade.field": "野战 / 旧制等级",

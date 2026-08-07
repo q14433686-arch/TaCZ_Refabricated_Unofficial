@@ -18,6 +18,7 @@ import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.config.client.RenderConfig;
+import com.tacz.guns.experience.GunExperienceService;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
 import com.tacz.guns.resource.modifier.custom.RecoilModifier;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
@@ -186,6 +187,10 @@ public class CameraSetupEvent {
             if (!player.isSwimming() && player.getPose() == Pose.SWIMMING) {
                 aimingRecoilModifier = aimingRecoilModifier * gunData.getCrawlRecoilMultiplier();
             }
+            // Real per-stack proficiency handling, intentionally limited to
+            // local camera recoil. It does not alter projectile damage or any
+            // server-maintenance/fault state.
+            aimingRecoilModifier *= GunExperienceService.recoilMultiplier(mainHandItem);
             pitchSplineFunction = gunData.getRecoil().genPitchSplineFunction((float) attachmentRecoilModifier.left().eval(aimingRecoilModifier));
             yawSplineFunction = gunData.getRecoil().genYawSplineFunction((float) attachmentRecoilModifier.right().eval(aimingRecoilModifier));
             shootTimeStamp = System.currentTimeMillis();

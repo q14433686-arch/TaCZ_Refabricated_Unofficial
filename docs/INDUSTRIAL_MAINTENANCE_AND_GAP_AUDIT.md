@@ -1,6 +1,6 @@
 # 工业维护、卡壳与模块化维修：代码审计与实施设计
 
-> 状态：A 阶段维护数据、B 阶段工业勤务台、C.0/C.1/C.2 清障，以及 C.3 的真实 HeatData、雨/湿/污染暴露和独立清洁事务均已接入；C.4 才处理按枪种分级扩展到全枪械的故障模型。
+> 状态：A 阶段维护数据、B 阶段工业勤务台、C.0/C.1/C.2 清障、C.3 的真实 HeatData/环境/清洁，以及 C.4 首批按动作族分级的故障模型均已接入；没有真实维修出口的旧/未知枪不会被随机锁死。
 > 原则：先建立完整的服务端事务、清障动作与真实维修路线，再启用会妨碍开火的随机状态；任何未声明/未验证清障动作的枪保持 `clear_action = none`。
 
 ## 1. 审计结论
@@ -35,7 +35,7 @@
 等级阈值：level² × 100，总上限 10000 XP
 ```
 
-投射物发射时会绑定发射枪的稳定 NBT token；命中延迟发生后只会给这同一把实体枪记经验，不会因为玩家切换到另一把同 GunId 的枪而串经验。当前熟练度只恢复进度条、Tooltip 与客户端升级消息，**不改变伤害、可靠性、耐久或维修成本**，因此不会与下文的 Condition/Fouling 混成一个数值。
+投射物发射时会绑定发射枪的稳定 NBT token；命中延迟发生后只会给这同一把实体枪记经验，不会因为玩家切换到另一把同 GunId 的枪而串经验。熟练度现在不再只是进度条：服主可配置地让 0–10 级实体枪逐步缩短 ADS 时间、降低**服务器实际投射物**散布，并降低本地后坐镜头。它不增加直接伤害、护甲穿透、维修折扣，也不绕过 C.1/C.2/C.4 的真实维护故障，因此不会与 Condition/Fouling 混成一个数值。
 
 ## 3. 推荐总原则
 
@@ -128,8 +128,9 @@ data/<namespace>/industry/maintenance/guns/<gun-path>.json
   "jam": {
     "warning_condition": 6000,
     "critical_condition": 1500,
-    "max_chance": 0.08,
-    "clear_action": "none"
+    "max_chance": 0.04,
+    "clear_action": "none",
+    "fault_mode": "service_lockout"
   },
   "service": {
     "fixture": "bolt_action",
@@ -165,22 +166,25 @@ LivingEntityShoot / 延迟 burst-Lua cycle
 | 状态 | 弹药 | 后果 | 解除 |
 |---|---|---|---|
 | `feed` | 触发它的当前一发已按正常语义真实扣除；后续触发不扣弹 | 下一次触发被服务器拒绝 | 显式 C2S 清障请求 → 已验证的手动拉栓完成且真实上膛 |
+| `service_lockout` | 触发它的当前一发已按正常语义真实扣除；后续触发不扣弹 | C.4 机械勤务故障，服务端锁止 | 工业勤务台拆解、维修组件并复装 |
 | `lockout` | 后续触发不扣弹 | 组件状态到临界值，禁止继续射击 | 工业勤务台拆解、维修组件并复装 |
 
 `stovepipe`、双重供弹、卡壳中遗留已击发壳等会影响膛内/壳体状态，必须等独立动画与状态模型齐备后再做；不能先用随机扣一发弹冒充。
 
 ### 4.2 风险计算
 
-C.2 的直接抽样仍只读取已保存的结构/污垢；C.3 已先把真实 HeatData、雨/湿/污染转换为该次 wear/Fouling 的服务器倍率，因此高温和恶劣环境会通过可见、可维修的状态间接提高后续风险，而不会给未审计枪凭空追加随机故障。对 `warning_condition > minCondition > critical_condition` 的已审计 profile：
+C.4 的直接抽样读取已保存的结构/污垢，并以本次真实 C.3 HeatData、雨/湿/污染 Exposure 作封顶放大。每枪 profile 按动作族声明 `warning_condition`、`critical_condition`、`max_chance` 与 `fault_mode`；对 `warning_condition > minCondition > critical_condition`：
 
 ```text
-conditionRisk = clamp((warning_condition - minCondition)
-                      / (warning_condition - critical_condition), 0, 1)
-foulingRisk   = clamp(Fouling / 10000, 0, 1)
-chance        = max_chance × conditionRisk³ × (0.15 + 0.85 × foulingRisk)
+conditionRisk    = clamp((warning_condition - minCondition)
+                         / (warning_condition - critical_condition), 0, 1)
+foulingRisk      = clamp(Fouling / 10000, 0, 1)
+exposureStress   = clamp(real heat / rain-or-wet / contaminant stress, 1, 2)
+chance           = max_chance × conditionRisk³
+                   × (0.15 + 0.85 × foulingRisk) × exposureStress
 ```
 
-满状态的 `conditionRisk = 0`，故不会凭空卡滞；达到 `critical_condition` 前后由确定性的 `lockout` 优先。`IndustryMaintenanceSeed + IndustryMaintenanceShots` 经固定 64 位混合生成**服务器确定性**抽样，避免客户端预测、退出重进或多人时序成为刷概率手段。
+满状态的 `conditionRisk = 0`，故不会凭空故障；达到 `critical_condition` 前后由确定性的 `lockout` 优先。`IndustryMaintenanceSeed + IndustryMaintenanceShots` 经固定 64 位混合生成**服务器确定性**抽样，避免客户端预测、退出重进或多人时序成为刷概率手段。
 
 ### 4.3 清障协议先于卡壳启用
 
@@ -261,18 +265,19 @@ C.3 另增**不拆枪的清洁事务**，仍在同一工业勤务台：安全清
 
 ### B. 拆解、Create 修件、复装（B.1 已开始）
 
-1. 已新增独立 `industrial_service_bench` block entity、十槽 menu、screen 与服务端 C2S 事务；它不复用或改写破坏性回收站；
+1. 已新增独立 `industrial_service_bench` block entity、十三槽 menu、screen 与服务端 C2S 事务；它不复用或改写破坏性回收站；
 2. 已实现五组件保真拆解和复装：空枪 + 生产模板 + 对应动作/平台检具 + 原生耐久的军械勤务扳手 → 专用 `service_component`（receiver/bolt/barrel/trigger/recoil 的真实平台种类），复装严格要求同 GunId、同工业来源；带 `IndustryPartCondition` 的勤务组件与普通 `gun_component` 是不同 registry item，因此不能再进入常规枪械总装配方。客户端保留相同的 `IndustryPlatform + IndustryPartKind`，优先允许资源包提供专用耐久组件图；没有专用图时复用该上游普通组件的精确映射和通用组件底图，不出现紫黑缺图块；附件、实体供弹器、漏夹、内部/膛内弹药未清空时拒绝；
 3. 维修已收束到独立工业勤务台的真实多槽事务，不要求机械动力或隐藏的 Create 序列：五个拆出组件 + 对应 production 模板 + 检具 + 扳手 + 高碳钢板/黄铜板进入工作台；服务器按每个组件的实际 Condition 缺口计算材料需求，只修复损坏组件并在槽内写回满 Condition。复装按钮只保留组件 Condition、清洁 Fouling，绝不直接满修；旧 service_part 物品保留为世界兼容物但不再是维修路径；
 4. 完整回归附件、实体弹匣、桥夹、内部弹药与输出堵塞。
 
-### C. 卡壳、环境与清障（C.0–C.3 已实施，待外部实机回归）
+### C. 卡壳、环境与清障（C.0–C.4 首批已实施，待外部实机回归）
 
 1. C.0 已扩展默认 53 枪维护 profile：操作结构的基础 wear/fouling multiplier、浸没 multiplier、`#tacz:maintenance_contaminants` 地面污染 multiplier 均由数据决定；服务端只在实际扣弹后读取浸没/污染暴露并计入 Condition/Fouling，不按枪名硬编码现实“可靠性”；
 2. C.1 已启用确定性的 `lockout`：组件最低 Condition 到 profile `critical_condition` 后，在**下一次**扣弹前通过 `ShootResult.JAMMED` 阻止射击；Tooltip/HUD 显示“勤务锁止”，只能拆解、维修组件并复装后解除。它不吞弹、不制造未同步的随机动作；
-3. C.2 已启用确定性 `feed` 抽样，但范围严格限于 7 把通过默认资源审计、且运行时为 `MANUAL_ACTION` 的枪。它发生在已成功扣除当前一发之后，下一次触发前被服务器阻止；玩家按开火键发起独立 C2S 清障，只有真实拉栓结束并确认上膛才解除。普通自动 bolt 不可绕过，S2C 完整枪快照消除客户端自动 bolt 的竞态；
-4. C.3 已将原生 `GunHeatData` 接入实际 wear/Fouling：满热时按 profile 的 `heat_stress_multiplier` 放大，未声明 heat 的枪不受影响；服务端还区分淋雨、浸没/湿接触、以及可数据扩展的接触污染标签。工业勤务台新增 13 号清洁材料槽和独立清洁按钮，使用 Basin 制成的套件降低 Fouling，不改变结构 Condition 或故障状态；
-5. **C.4（后续）**才实现用户要求的全枪械故障体系：按枪种/动作、结构 Condition、Fouling、热和环境分层决定不同故障率与故障类型。它仍必须先为每一种可随机故障的枪建立真实、服务器可验证的清障动作；未知第三方枪绝不能仅按 `reload.type`、命名空间或一张 JSON 就被强行加上无法处理的卡壳。
+3. C.2 已启用确定性 `feed` 抽样，但范围严格限于通过默认资源审计、且运行时为 `MANUAL_ACTION` 的枪。它发生在已成功扣除当前一发之后，下一次触发前被服务器阻止；玩家按开火键发起独立 C2S 清障，只有真实拉栓结束并确认上膛才解除。普通自动 bolt 不可绕过，S2C 完整枪快照消除客户端自动 bolt 的竞态；
+4. C.3 已将原生 `GunHeatData` 接入实际 wear/Fouling：满热时按 profile 的 `heat_stress_multiplier` 放大，服主可用全局开关、额外 wear/fouling scale 覆盖；未声明 heat 的枪不受影响。服务端还区分淋雨、浸没/湿接触、以及可数据扩展的接触污染标签。工业勤务台新增 13 号清洁材料槽和独立清洁按钮，使用 Basin 制成的套件降低 Fouling，不改变结构 Condition 或故障状态；
+5. C.4 首批将每个生成的默认工业枪按 `maintenance_class` 写入不同 warning/critical/max-chance 与 `fault_mode`。有已审计 manual bolt 的平台维持 `feed`；其余默认动作族使用 `service_lockout`：当前一发照常真实射出，随后由服务端锁止，必须走工业勤务台的拆解、维修、复装，绝不伪造 closed/open-bolt、转轮或折管的“拉栓清障”动画。热、雨/湿/污染只通过本次服务端 Exposure 放大实际故障风险；
+6. C.4 的安全边界：`service_lockout` 只会施加给确实带工业来源、因此能被真实勤务台复装的默认/测绘枪。管理员的 `ALL_GUNS` 旧战利品若没有工业来源和对应工装，仍只记录维护数据，不能被随机锁成没有维修出口的物品。后续扩展更多第三方故障种类前，仍须先提供其真实、服务器可验证的清障或勤务路径；不能仅按 `reload.type`、命名空间或一张 JSON 伪造处理能力。
 
 ## 8. 发现的未完成 / 未完全替换项目
 
@@ -280,7 +285,7 @@ C.3 另增**不拆枪的清洁事务**，仍在同一工业勤务台：安全清
 |---|---|---|---|
 | P0 | 最新桥夹路线的外部编译与实机验证 | `3eae889` 后尚无 Windows Gradle / 游戏结果 | 先执行 `./gradlew build`；重点测 Kar98、Mosin、桥夹归零保留。 |
 | P0 | 漏夹 `en_bloc_clip` | 已完成独立 `InstalledEnBlocClip`、逐发扣除、空夹真实 ItemEntity 自动弹出；首个样本为 `hamster:m1garand` | 外部 Gradle/实机验证后，为更多已审计漏夹枪补 profile。 |
-| P1 | 工业维护 / 模块维修 | A/B 已完成 Condition/Fouling、来源迁移、Tooltip/HUD、工业勤务台拆解/维修/复装；C.2 仅启用已审计手动拉栓枪的服务器 `feed` 清障；C.3 已接真实热/雨/湿/污染倍率和 Basin 清洁套件事务，回收站仍是破坏性报废 | 外部实机回归 C.2/C.3 的无吞弹、S2C 同步、热倍率与清洁不越权；C.4 再设计分枪种的全枪械故障/清障矩阵。 |
+| P1 | 工业维护 / 模块维修 | A/B 已完成 Condition/Fouling、来源迁移、Tooltip/HUD、工业勤务台拆解/维修/复装；C.2 `feed` 只给已审计手动拉栓枪；C.3 已接可配置原生热/雨/湿/污染与 Basin 清洁；C.4 默认动作族已获得 feed 或 bench-only `service_lockout` 分型 | 外部实机回归 C.2–C.4 的无吞弹、S2C 同步、热配置、熟练度操控和 service lockout 的真实勤务台出口；再审计第三方动作族。 |
 | P1 | 长按 R 供弹器选择圆盘 | 服务器预留已存在，客户端选择 UI 尚未实现 | 在 route/选择槽位协议稳定后实现，不越过服务器事务。 |
 | P1 | 速度装填器代表包 | 已接入 GunpowderRevolution `hamster:webley`：完整 6 发快装器触发原 `reload_loader`，无完整器件走逐发 | 外部验证后再审计 Webley 以外的转轮；不同脚本不套用。 |
 | P1 | RPG 发动机壳体 | 已新增 `motor_housing` 可见 ItemStack 与 `finish_case_rpg_rocket` 单工件结束站 | 在 Create/装弹机实机回归中确认它不能绕过为最终 case。 |

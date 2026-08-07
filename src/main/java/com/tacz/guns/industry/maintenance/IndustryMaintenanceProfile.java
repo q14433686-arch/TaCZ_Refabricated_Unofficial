@@ -5,10 +5,11 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Data-driven maintenance baseline for one GunId.
  *
- * <p>Condition/Fouling accounting is available to every valid profile. A feed
- * jam is deliberately opt-in: it additionally requires an explicit
- * {@code jam.clear_action}, and the server verifies that the declared action
- * is executable by the loaded gun before it can ever block a shot.</p>
+ * <p>Condition/Fouling accounting is available to every valid profile. C.4
+ * declares one post-shot {@code jam.fault_mode}: feed is deliberately opt-in
+ * and additionally requires an explicit {@code jam.clear_action} backed by a
+ * loaded real action; service_lockout resolves only through the industrial
+ * service bench.</p>
  */
 public final class IndustryMaintenanceProfile {
     public static final int MAX_PER_SHOT_WEAR = 1_000;
@@ -33,6 +34,32 @@ public final class IndustryMaintenanceProfile {
             for (ClearAction action : values()) {
                 if (action.serializedName.equals(value)) {
                     return action;
+                }
+            }
+            return NONE;
+        }
+    }
+
+    /**
+     * C.4 fault action after a real round has fired. A feed fault requires a
+     * separately verified clear action; a service lockout is deliberately
+     * bench-only and is safe for action families without a rack animation.
+     */
+    public enum FaultMode {
+        NONE("none"),
+        FEED("feed"),
+        SERVICE_LOCKOUT("service_lockout");
+
+        private final String serializedName;
+
+        FaultMode(String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        private static FaultMode fromSerializedName(String value) {
+            for (FaultMode mode : values()) {
+                if (mode.serializedName.equals(value)) {
+                    return mode;
                 }
             }
             return NONE;
@@ -237,6 +264,9 @@ public final class IndustryMaintenanceProfile {
         /** "none" keeps random feed jams disabled; "bolt" requires a real manual-bolt completion. */
         @SerializedName("clear_action")
         private String clearAction = "none";
+        /** C.4 post-shot fault path; service_lockout always resolves at the real industrial bench. */
+        @SerializedName("fault_mode")
+        private String faultMode = "service_lockout";
 
         public int getWarningCondition() {
             return Math.clamp(warningCondition, 0, IndustryMaintenanceService.MAX_CONDITION);
@@ -254,11 +284,24 @@ public final class IndustryMaintenanceProfile {
             return ClearAction.fromSerializedName(clearAction == null ? "none" : clearAction);
         }
 
+        public FaultMode getFaultMode() {
+            return FaultMode.fromSerializedName(faultMode == null ? "none" : faultMode);
+        }
+
         private boolean isValid() {
             return warningCondition >= 0 && warningCondition <= IndustryMaintenanceService.MAX_CONDITION
                     && criticalCondition >= 0 && criticalCondition <= warningCondition
                     && Float.isFinite(maxChance) && maxChance >= 0.0F && maxChance <= 1.0F
-                    && ("none".equals(clearAction) || "bolt".equals(clearAction));
+                    && validClearAction(clearAction) && validFaultMode(faultMode, clearAction);
+        }
+
+        private static boolean validClearAction(String value) {
+            return "none".equals(value) || "bolt".equals(value);
+        }
+
+        private static boolean validFaultMode(String mode, String clearAction) {
+            return "none".equals(mode) || "service_lockout".equals(mode)
+                    || ("feed".equals(mode) && "bolt".equals(clearAction));
         }
     }
 }

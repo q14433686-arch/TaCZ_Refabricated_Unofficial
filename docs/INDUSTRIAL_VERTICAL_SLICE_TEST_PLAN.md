@@ -23,7 +23,7 @@
 10. 对默认 `tacz:kar98`：空仓、无瞄具、背包有完整 5 发 Kar98k 桥夹时应走原包桥夹动画，实际消耗 5 发（1 发上膛、4 发内仓）并留下空桥夹；没有完整桥夹时应强制原包真实 `reload_loop` 逐发路线，而不是播放桥夹动画后从散装弹批量扣除。
 11. 对两种已审计 M1 分别回归：`hamster:m1garand` 必须使用装满 `hamster:long_ammo` 的 8 发 M1 漏夹，`ww:m1g` 必须使用装满 `tacz:30_06` 的另一种 8 发 M1 漏夹；两者不能混用。R 装入后枪 NBT 必须保存 `InstalledEnBlocClip`，而不是普通 `InstalledMagazine`，也不得写入桥夹/转轮专用的 `InternalFeedAmmoCount`；每发实际射击扣除漏夹余弹；最后一发真正离开供弹系统后，空漏夹必须从枪手右前方以真实 `ItemEntity` 弹出（短暂不可拾取，随后可由玩家/漏斗收集），而不是静默返还背包或等到切枪动画才处理。创造模式无实体漏夹时，R 仍必须完成一次不消耗来源的 8 发装入；潜行 + R 应能人工退出尚有余弹的漏夹；生存模式没有物理漏夹时不得从散装弹伪造 M1 装夹。
 12. 对 `hamster:webley`：完整 6 发实体快装器应让原 `reload_loader` 动画运行，先按上游语义清空转轮旧弹再装满 6 发，空快装器保留在背包；移走完整快装器但保留散装 `hamster:medium_ammo` 时应走原逐发循环；半满快装器不能冒充完整 loader 动画。
-13. 枪械熟练度：用一把带 `GunExperienceToken` 的枪确认命中与击杀；同一把枪应累加 `GunLevelExp`，0–10 Tooltip 进度与升级 Toast 应更新。射击后换到另一把相同 GunId 的枪再命中，经验必须仍归给发射时绑定 token 的原枪；熟练度不得改变耐久、卡壳、伤害或维修成本。
+13. 枪械熟练度：用一把带 `GunExperienceToken` 的枪确认命中与击杀；同一把枪应累加 `GunLevelExp`，0–10 Tooltip 进度与升级消息应更新。射击后换到另一把相同 GunId 的枪再命中，经验必须仍归给发射时绑定 token 的原枪。达到较高等级后，Tooltip 必须明确显示当前 ADS、真实投射物散布和本地后坐操控收益；服务器实际弹道散布与服务器/客户端 ADS 进度要同步变小，不能只改 Tooltip。熟练度仍不得增加直接伤害、护甲穿透、维修折扣或绕过维护故障。
 
 ## 1. 配方查看器桥接
 
@@ -160,9 +160,11 @@ REI 中该类别会汇总列出首工件与所有工位供料，显示 `D→P→
 4. 通过测绘 Gunsmith Table 完成一把第三方 surveyed 枪；最终成枪必须带 `IndustryAssemblyPlatform = surveyed/...` 等完整工业来源标签，并以满状态进入同一维护可视化路径。
 5. C.1：把工业枪最差组件调至 `critical_condition` 以下后，下一次触发必须在任何扣弹前返回 `JAMMED` 并写入 `IndustryJam = lockout`；拆解、维修、复装后才可解除。不能用换弹/拉栓、重新进服或客户端预测绕过。
 6. C.2：仅对 `AI AWP`、`Kar98`、`M107`、`M700`、`M870`、`M95`、`SPAS-12` 的工业来源枪，把枪况调入 warning/critical 区间并提高 Fouling 后回归。命中确定性抽样的那一发必须照常发射、只扣一次真实弹药并随后写 `IndustryJam = feed`；下一次触发不得进入 `reduceAmmoOnce`。再次按开火键应发送清障请求并运行原有手动 bolt 动画；普通自动 bolt 不得清除。只有服务器 bolt 结束且膛内真实有弹时才清除 `feed`，失败/无弹时必须保留；HUD、Tooltip 和持有枪 NBT 应随 S2C 完整快照同步。所有 `clear_action = none` 的其余默认枪、surveyed 通用档和未知第三方枪不得随机写入 `feed`。
-7. C.3 热/环境：对实际声明 `GunHeatData` 的工业枪（当前默认样本为 Minigun）比较冷态与高热态的真实扣弹射击；高热态的 Condition/Fouling 增量必须按 profile `heat_stress_multiplier` 提高，且没有 HeatData 的工业枪不得凭空获得热 NBT 或热倍率。分别在晴天、服务端确认淋雨、浸水/`#tacz:maintenance_wet_exposure` 接触、以及 `#tacz:maintenance_contaminants` 接触时射击，验证只由服务器位置/天气决定 rain/wet/污染倍率，且雨和浸没不重复叠加为客户端猜测的倍率。
+7. C.3 热/环境：对实际声明 `GunHeatData` 的工业枪（当前默认样本为 Minigun）比较冷态与高热态的真实扣弹射击；高热态的 Condition/Fouling 增量必须按 profile `heat_stress_multiplier` 提高，且没有 HeatData 的工业枪不得凭空获得热 NBT 或热倍率。分别在晴天、服务端确认淋雨、浸水/`#tacz:maintenance_wet_exposure` 接触、以及 `#tacz:maintenance_contaminants` 接触时射击，验证只由服务器位置/天气决定 rain/wet/污染倍率，且雨和浸没不重复叠加为客户端猜测的倍率。分别将 `IndustryHeatStressEnabled` 关闭、或将 HeatWear/FoulingScale 设为 0，确认只关闭热量额外部分，不关闭基础维护或环境倍率。
 8. C.3 清洁：先在真实加热 Basin 用 2 个 `tacz:carbon_dust`、纸和黏液球制得 `tacz:maintenance_cleaning_kit`；再把安全清空的完整工业枪、匹配 production 模板、检具、扳手和足量套件放入工业勤务台的独立清洁材料槽，点击“清除污垢”。服务器应按 `ceil(Fouling / 2500)` 扣套件、将输出枪 Fouling 置 0、保留五项 Condition/Shot/附件隔离语义，并不得清除 `IndustryJam=feed` 或 `lockout`、不得走部署器/传送带/顺序装配。
-9. 仅在管理员明确把 `IndustryMaintenanceScope` 设为 `ALL_GUNS` 后，非工业来源枪才参与；其第一次迁移也必须从满状态、清洁状态开始。
+9. C.4：把工业 AK/Glock/Minigun 等 `fault_mode = service_lockout` 枪调进自己的 warning/critical 区间并提高 Fouling/真实 Exposure，命中确定性抽样后当前一发必须照常发射，随后写 `IndustryJam = service_lockout`；下一次触发不得扣弹，Tooltip 必须显示机械勤务故障。它只能通过真实工业勤务台的拆解、维修、复装解除，不能用 R、普通 bolt 或客户端 NBT 绕过。`fault_mode = feed` 的 7 把手动动作枪仍走第 6 项的真实 bolt 清障。
+10. 熟练度：把同一实体枪升至较高等级，Tooltip 必须显示实际 ADS/真实散布/后坐操控收益；服务器投射物散布与服务端/客户端 ADS 进度都应按 `GunExperience*` 配置变化，本地后坐镜头也应变化。关闭 HandlingEnabled 或将各项最大缩减设为 0 后对应收益应消失，且伤害、护甲穿透、维修材料和维护故障不得改变。
+11. 仅在管理员明确把 `IndustryMaintenanceScope` 设为 `ALL_GUNS` 后，非工业来源枪才参与；其第一次迁移也必须从满状态、清洁状态开始。没有工业来源和实际勤务台出口的旧战利品不得被 C.4 随机 `service_lockout` 锁死。
 
 ## 7. 运行时自动识别回退
 

@@ -27,7 +27,8 @@
   "jam": {
     "warning_condition": 6000,
     "critical_condition": 1500,
-    "max_chance": 0.08,
-    "clear_action": "none"
+    "max_chance": 0.038,
+    "clear_action": "none",
+    "fault_mode": "service_lockout"
   }
 }

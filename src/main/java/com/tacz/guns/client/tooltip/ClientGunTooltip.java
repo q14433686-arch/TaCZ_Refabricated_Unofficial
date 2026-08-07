@@ -11,6 +11,7 @@ import com.tacz.guns.client.resource.pojo.PackInfo;
 import com.tacz.guns.client.resource.pojo.display.gun.AmmoCountStyle;
 import com.tacz.guns.client.resource.pojo.display.gun.DamageStyle;
 import com.tacz.guns.config.sync.SyncConfig;
+import com.tacz.guns.experience.GunExperienceService;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
 import com.tacz.guns.item.GunTooltipPart;
@@ -60,6 +61,8 @@ public class ClientGunTooltip implements ClientTooltipComponent {
     private MutableComponent weight;
     private MutableComponent tips;
     private MutableComponent levelInfo;
+    /** Real per-stack handling benefit; null at level 0 or when the server disables it. */
+    private @Nullable Component proficiencyHandlingInfo;
     /** Phase-A read-only condition/fouling line; null for non-industrial guns. */
     private @Nullable Component maintenanceInfo;
     private @Nullable Component maintenanceGradeInfo;
@@ -89,6 +92,9 @@ public class ClientGunTooltip implements ClientTooltipComponent {
         }
         if (shouldShow(GunTooltipPart.BASE_INFO)) {
             height += 34;
+        }
+        if (this.proficiencyHandlingInfo != null) {
+            height += 10;
         }
         if (this.maintenanceInfo != null) {
             height += 10;
@@ -198,6 +204,11 @@ public class ClientGunTooltip implements ClientTooltipComponent {
             this.maxWidth = Math.max(font.width(this.damage), this.maxWidth);
         }
 
+        this.proficiencyHandlingInfo = shouldShow(GunTooltipPart.BASE_INFO)
+                ? GunExperienceService.getHandlingTooltipLine(gun) : null;
+        if (this.proficiencyHandlingInfo != null) {
+            this.maxWidth = Math.max(font.width(this.proficiencyHandlingInfo), this.maxWidth);
+        }
         this.maintenanceInfo = IndustryMaintenanceService.getTooltipLine(gun);
         this.maintenanceGradeInfo = IndustryMaintenanceService.getDurabilityGradeLine(gun);
         if (this.maintenanceInfo != null) {
@@ -293,6 +304,10 @@ public class ClientGunTooltip implements ClientTooltipComponent {
             yOffset += 10;
         }
 
+        if (this.proficiencyHandlingInfo != null) {
+            graphics.text(font, this.proficiencyHandlingInfo, pX, yOffset, 0xFF8FD6C6);
+            yOffset += 10;
+        }
         if (this.maintenanceInfo != null) {
             graphics.text(font, this.maintenanceInfo, pX, yOffset, 0xFF777777);
             yOffset += 10;

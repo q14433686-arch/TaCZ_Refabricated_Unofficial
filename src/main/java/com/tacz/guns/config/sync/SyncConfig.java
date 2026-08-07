@@ -25,6 +25,15 @@ public class SyncConfig {
     public static ForgeConfigSpec.BooleanValue AUTO_DISCOVER_INDUSTRY_REPLACEMENTS;
     /** Safe default limits phase-A condition/fouling accounting to real industrial-origin gun stacks. */
     public static ForgeConfigSpec.EnumValue<IndustryMaintenanceScope> INDUSTRY_MAINTENANCE_SCOPE;
+    /** C.3 global gate/scales layered on top of each maintenance profile's real native-heat stress. */
+    public static ForgeConfigSpec.BooleanValue INDUSTRY_HEAT_STRESS_ENABLED;
+    public static ForgeConfigSpec.DoubleValue INDUSTRY_HEAT_WEAR_SCALE;
+    public static ForgeConfigSpec.DoubleValue INDUSTRY_HEAT_FOULING_SCALE;
+    /** Per-physical-gun proficiency becomes real handling only when this server policy permits it. */
+    public static ForgeConfigSpec.BooleanValue GUN_EXPERIENCE_HANDLING_ENABLED;
+    public static ForgeConfigSpec.DoubleValue GUN_EXPERIENCE_AIM_TIME_REDUCTION;
+    public static ForgeConfigSpec.DoubleValue GUN_EXPERIENCE_INACCURACY_REDUCTION;
+    public static ForgeConfigSpec.DoubleValue GUN_EXPERIENCE_RECOIL_REDUCTION;
 
     // 三个全局系数，用于客户端枪械文本提示，需要同步
     public static ForgeConfigSpec.DoubleValue DAMAGE_BASE_MULTIPLIER;
@@ -111,8 +120,24 @@ public class SyncConfig {
         builder.comment("Automatically scan uncurated gun-pack table recipes and add an in-game industrial fallback material gate. Curated platform declarations always take priority.");
         AUTO_DISCOVER_INDUSTRY_REPLACEMENTS = builder.define("AutoDiscoverIndustryReplacements", true);
 
-        builder.comment("Phase-A maintenance eligibility. INDUSTRIAL_ASSEMBLY safely affects only guns with real industrial provenance; ALL_GUNS opts legacy guns in but migrates them full and clean.");
+        builder.comment("Industrial maintenance eligibility. INDUSTRIAL_ASSEMBLY safely affects only guns with real industrial provenance; ALL_GUNS opts legacy guns in but migrates them full and clean.");
         INDUSTRY_MAINTENANCE_SCOPE = builder.defineEnum("IndustryMaintenanceScope", IndustryMaintenanceScope.INDUSTRIAL_ASSEMBLY);
+
+        builder.comment("Use native GunHeatData/HeatAmount as an additional C.3 maintenance exposure. Per-gun maintenance profiles still set their own maximum heat stress.");
+        INDUSTRY_HEAT_STRESS_ENABLED = builder.define("IndustryHeatStressEnabled", true);
+        builder.comment("Scale only the extra heat-derived structural wear above 1.0. 0 disables the extra wear without disabling normal Condition accounting.");
+        INDUSTRY_HEAT_WEAR_SCALE = builder.defineInRange("IndustryHeatWearScale", 1.0, 0.0, 16.0);
+        builder.comment("Scale only the extra heat-derived Fouling above 1.0. 0 disables the extra fouling without disabling normal Fouling accounting.");
+        INDUSTRY_HEAT_FOULING_SCALE = builder.defineInRange("IndustryHeatFoulingScale", 1.0, 0.0, 16.0);
+
+        builder.comment("Enable real per-physical-gun proficiency handling bonuses. It never adds direct damage, armor penetration, or maintenance/fault bypasses.");
+        GUN_EXPERIENCE_HANDLING_ENABLED = builder.define("GunExperienceHandlingEnabled", true);
+        builder.comment("Maximum ADS-time reduction at gun proficiency level 10. 0 disables only the ADS bonus.");
+        GUN_EXPERIENCE_AIM_TIME_REDUCTION = builder.defineInRange("GunExperienceMaxAimTimeReduction", 0.15, 0.0, 0.75);
+        builder.comment("Maximum real server projectile-inaccuracy reduction at gun proficiency level 10. 0 disables only the accuracy bonus.");
+        GUN_EXPERIENCE_INACCURACY_REDUCTION = builder.defineInRange("GunExperienceMaxInaccuracyReduction", 0.20, 0.0, 0.75);
+        builder.comment("Maximum client recoil-camera reduction at gun proficiency level 10. 0 disables only the recoil bonus.");
+        GUN_EXPERIENCE_RECOIL_REDUCTION = builder.defineInRange("GunExperienceMaxRecoilReduction", 0.15, 0.0, 0.75);
 
         builder.comment("[Debug Option] Do server-side network check while shooting or not");
         SERVER_SHOOT_NETWORK_V = builder.define("ServerShootNetworkCheck", true);

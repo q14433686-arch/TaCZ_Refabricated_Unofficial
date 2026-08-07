@@ -3,6 +3,7 @@ package com.tacz.guns.client.gameplay;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.experience.GunExperienceService;
 import com.tacz.guns.network.message.ClientMessagePlayerAim;
 import com.tacz.guns.resource.modifier.custom.AdsModifier;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
@@ -57,7 +58,7 @@ public class LocalPlayerAim {
         }
         Identifier gunId = iGun.getGunId(mainHandItem);
         TimelessAPI.getCommonGunIndex(gunId).ifPresentOrElse(index -> {
-            float alphaProgress = this.getAlphaProgress(index.getGunData());
+            float alphaProgress = this.getAlphaProgress(index.getGunData(), mainHandItem);
             this.aimProgressCalculate(alphaProgress);
         }, () -> {
             data.clientAimingProgress = 0;
@@ -83,13 +84,13 @@ public class LocalPlayerAim {
         data.clientAimingTimestamp = System.currentTimeMillis();
     }
 
-    private float getAlphaProgress(GunData gunData) {
+    private float getAlphaProgress(GunData gunData, ItemStack gun) {
         float aimTime = gunData.getAimTime();
         IGunOperator operator = IGunOperator.fromLivingEntity(this.player);
         if (operator.getCacheProperty() != null) {
             aimTime = operator.getCacheProperty().<Float>getCache(AdsModifier.ID);
         }
-        aimTime = Math.max(0, aimTime);
+        aimTime = Math.max(0, aimTime) * GunExperienceService.aimTimeMultiplier(gun);
         return (System.currentTimeMillis() - data.clientAimingTimestamp + 1) / (aimTime * 1000);
     }
 }

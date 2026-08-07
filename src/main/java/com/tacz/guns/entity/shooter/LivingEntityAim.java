@@ -7,6 +7,7 @@ import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
+import com.tacz.guns.experience.GunExperienceService;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.modifier.custom.AdsModifier;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
@@ -81,7 +82,9 @@ public class LivingEntityAim {
         if (this.data.cacheProperty != null) {
             aimTime = this.data.cacheProperty.<Float>getCache(AdsModifier.ID);
         }
-        aimTime = Math.max(0, aimTime);
+        // Match the local client's proficiency multiplier exactly. The synced
+        // aiming progress remains authoritative for other players and scripts.
+        aimTime = Math.max(0, aimTime) * GunExperienceService.aimTimeMultiplier(currentGunItem);
         float alphaProgress = (System.currentTimeMillis() - data.aimingTimestamp + 1) / (aimTime * 1000);
         if (data.isAiming) {
             // 处于执行瞄准状态，增加 aimingProgress
