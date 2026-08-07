@@ -223,7 +223,10 @@ public final class IndustryMaintenanceService {
     }
 
     private static String percentage(int amount) {
-        return String.format(Locale.ROOT, "%.0f%%", clampCondition(amount) * 100.0D / MAX_CONDITION);
+        // Phase-A wear is intentionally gradual. Two decimals make the first
+        // real shot visible in Tooltip (for example 99.97% / 0.03%) without
+        // exposing raw 0..10000 implementation integers to players.
+        return String.format(Locale.ROOT, "%.2f%%", clampCondition(amount) * 100.0D / MAX_CONDITION);
     }
 
     public enum Status {
