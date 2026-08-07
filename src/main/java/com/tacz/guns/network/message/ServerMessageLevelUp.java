@@ -57,11 +57,11 @@ public class ServerMessageLevelUp implements CustomPacketPayload {
             return;
         }
         if (level >= GunExperienceService.MAX_LEVEL) {
-            Minecraft.getInstance().getToasts().addToast(new GunLevelUpToast(gun,
+            Minecraft.getInstance().getToastManager().add(new GunLevelUpToast(gun,
                     Component.translatable("toast.tacz.level_up"),
                     Component.translatable("toast.tacz.sub.final_level")));
         } else {
-            Minecraft.getInstance().getToasts().addToast(new GunLevelUpToast(gun,
+            Minecraft.getInstance().getToastManager().add(new GunLevelUpToast(gun,
                     Component.translatable("toast.tacz.level_up"),
                     Component.translatable("toast.tacz.sub.level_up")));
         }
