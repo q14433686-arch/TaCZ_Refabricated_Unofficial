@@ -1,12 +1,15 @@
 package com.tacz.guns.network.message;
 
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.gui.toast.GunLevelUpToast;
+import com.tacz.guns.experience.GunExperienceService;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
@@ -30,7 +33,7 @@ public class ServerMessageLevelUp implements CustomPacketPayload {
         this.level = level;
     }
 
-        public void write(RegistryFriendlyByteBuf buf) {
+    public void write(RegistryFriendlyByteBuf buf) {
         ItemStack.STREAM_CODEC.encode(buf, gun);
         buf.writeInt(level);
     }
@@ -53,21 +56,15 @@ public class ServerMessageLevelUp implements CustomPacketPayload {
         if (player == null) {
             return;
         }
-        // TODO 在完成了枪械升级逻辑后，解封下面的代码
-                /*
-                if (GunLevelManager.DAMAGE_UP_LEVELS.contains(level)) {
-                    Minecraft.getInstance().getToasts().addToast(new GunLevelUpToast(gun,
-                            Component.translatable("toast.tacz.level_up"),
-                            Component.translatable("toast.tacz.sub.damage_up")));
-                } else if (level >= GunLevelManager.MAX_LEVEL) {
-                    Minecraft.getInstance().getToasts().addToast(new GunLevelUpToast(gun,
-                            Component.translatable("toast.tacz.level_up"),
-                            Component.translatable("toast.tacz.sub.final_level")));
-                } else {
-                    Minecraft.getInstance().getToasts().addToast(new GunLevelUpToast(gun,
-                            Component.translatable("toast.tacz.level_up"),
-                            Component.translatable("toast.tacz.sub.level_up")));
-                }*/
+        if (level >= GunExperienceService.MAX_LEVEL) {
+            Minecraft.getInstance().getToasts().addToast(new GunLevelUpToast(gun,
+                    Component.translatable("toast.tacz.level_up"),
+                    Component.translatable("toast.tacz.sub.final_level")));
+        } else {
+            Minecraft.getInstance().getToasts().addToast(new GunLevelUpToast(gun,
+                    Component.translatable("toast.tacz.level_up"),
+                    Component.translatable("toast.tacz.sub.level_up")));
+        }
     }
 
     public ItemStack getGun() {

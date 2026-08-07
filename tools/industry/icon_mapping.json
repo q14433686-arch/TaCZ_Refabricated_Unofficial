@@ -1421,6 +1421,29 @@
       },
       "coverage": "family",
       "note": "Generic speedloader visual; an explicit family mapping may override it."
+    },
+    {
+      "id": "feed_device_en_bloc_clip_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/base_m_loader",
+      "priority": 600,
+      "match": {
+        "feed_device_kind": "en_bloc_clip"
+      },
+      "coverage": "family",
+      "note": "Generic en-bloc clip visual; an explicit family mapping may override it."
+    },
+    {
+      "id": "ammunition_rpg_motor_housing",
+      "item": "tacz:cartridge_case",
+      "texture": "tacz_extra:item/ammunition_case_blank",
+      "priority": 820,
+      "match": {
+        "industry_part_kind": "motor_housing",
+        "cartridge_caliber": "rpg_rocket"
+      },
+      "coverage": "family",
+      "note": "Visible RPG motor-housing intermediate; neutral formed-case art until a dedicated motor texture is supplied."
     }
   ]
 }

@@ -68,6 +68,18 @@ public final class IndustryReloadRouteClientState {
                 && attachmentType.equalsIgnoreCase(route.animationForceAttachmentPresent());
     }
 
+    /** Returns -1 when no active route overrides a legacy extended-mag selector. */
+    public static int forcedMagExtentLevel(LocalPlayer player, ItemStack gun) {
+        if (!(gun.getItem() instanceof IGun iGun)) {
+            return -1;
+        }
+        String routeId = activeRouteId(player, iGun.getGunId(gun));
+        if (routeId == null) {
+            return -1;
+        }
+        return InternalFeedService.getReloadRoutePreview(gun, routeId).animationForceMagExtentLevel();
+    }
+
     private static String activeRouteId(LocalPlayer player, Identifier gunId) {
         String syncedRoute = IGunOperator.fromLivingEntity(player).getSynIndustryReloadRoute();
         if (syncedRoute != null && !syncedRoute.isBlank()) {

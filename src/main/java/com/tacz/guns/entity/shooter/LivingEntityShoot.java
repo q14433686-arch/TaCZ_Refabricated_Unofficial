@@ -11,6 +11,7 @@ import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.ServerMessageSyncBaseTimestamp;
+import com.tacz.guns.industry.magazine.EnBlocClipService;
 import com.tacz.guns.network.message.event.ServerMessageGunShoot;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
@@ -140,6 +141,9 @@ public class LivingEntityShoot {
                 iGun.reduceCurrentAmmoCount(currentGunItem);
             }
             iGun.setBulletInBarrel(currentGunItem, true);
+            // Do not eject an en-bloc clip while its final round has just
+            // moved into the chamber; the actual shot path ejects it later.
+            EnBlocClipService.ejectIfEmpty(shooter, currentGunItem);
         }
         // 触发射击事件
         GunShootEvent gunShootEvent = new GunShootEvent(shooter, currentGunItem, LogicalSide.SERVER);

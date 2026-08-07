@@ -207,11 +207,16 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
             adder.accept(Component.translatable("tooltip.tacz.industry.spent_case")
                     .withStyle(style -> style.withColor(0xFFCC66)));
         }
+        if ("motor_housing".equals(partKind)) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.motor_housing")
+                    .withStyle(style -> style.withColor(0x8FD6C6)));
+        }
         if (!getCartridgeCaliber(stack).isBlank()) {
             adder.accept(Component.translatable("tooltip.tacz.industry.caliber", getCartridgeCaliber(stack))
                     .withStyle(style -> style.withColor(0xAAAAAA)));
         }
-        if ("case".equals(partKind) || "spent_case".equals(partKind) || "projectile".equals(partKind)) {
+        if ("case".equals(partKind) || "motor_housing".equals(partKind)
+                || "spent_case".equals(partKind) || "projectile".equals(partKind)) {
             adder.accept(Component.translatable("tooltip.tacz.industry.stack_limit", stack.getMaxStackSize())
                     .withStyle(style -> style.withColor(0x777777)));
         }

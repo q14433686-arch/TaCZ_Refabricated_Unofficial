@@ -95,7 +95,7 @@ data/ww/industry/reference/guns/mg42.json
 | `revolver` | 转轮 | `revolver` |
 | `single_shot` | 单发后膛/发射管 | `single_shot` |
 | `stripper_clip` | 可复用夹条；装填工具，不是插入式弹匣 | `stripper_clip`：向内部仓增量转入；转空仍保留夹条 |
-| `en_bloc_clip` | 漏夹；入枪、打空弹出 | 先写 `legacy`，待独立已安装漏夹/自动弹出事务实现 |
+| `en_bloc_clip` | 漏夹；入枪、打空弹出 | `en_bloc_clip`：独立已安装漏夹状态，最后一发离枪后自动弹出 |
 | `speedloader` | 转轮快速装弹器 | `speedloader`：向内部转轮增量转入 |
 | `fuel_canister` / `utility` | 燃料、医疗、工具类消耗物 | `legacy` |
 

@@ -37,8 +37,8 @@
     "components": {
       "minecraft:custom_data": {
         "IndustryPlatform": "ammunition",
-        "IndustryPartKind": "case",
-        "IndustryDisplayName": "item.tacz.cartridge_case.rpg_rocket",
+        "IndustryPartKind": "motor_housing",
+        "IndustryDisplayName": "item.tacz.cartridge_case.rpg_rocket.motor_housing",
         "CartridgeCaliber": "rpg_rocket",
         "CartridgeAmmoId": "tacz:rpg_rocket"
       },

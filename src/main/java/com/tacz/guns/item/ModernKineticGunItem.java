@@ -15,6 +15,7 @@ import com.tacz.guns.command.sub.DebugCommand;
 import com.tacz.guns.debug.GunMeleeDebug;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
+import com.tacz.guns.experience.GunExperienceService;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.pojo.data.attachment.EffectData;
 import com.tacz.guns.resource.pojo.data.attachment.MeleeData;
@@ -593,16 +594,16 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
 
     @Override
     public int getLevel(int exp) {
-        return 0;
+        return GunExperienceService.levelForExperience(exp);
     }
 
     @Override
     public int getExp(int level) {
-        return 0;
+        return GunExperienceService.experienceForLevel(level);
     }
 
     @Override
     public int getMaxLevel() {
-        return 0;
+        return GunExperienceService.MAX_LEVEL;
     }
 }

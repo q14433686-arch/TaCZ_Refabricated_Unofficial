@@ -660,6 +660,12 @@ def load_cartridges() -> list[dict[str, Any]]:
                 if not isinstance(value, str) or not value:
                     raise ValueError(f"{CARTRIDGE_MANIFEST}: ejecting caliber '{entry['id']}' missing '{key}'")
 
+        motor_name_keys = ("motor_housing_name_en", "motor_housing_name_zh")
+        if any(key in entry for key in motor_name_keys) and not all(
+                isinstance(entry.get(key), str) and entry.get(key) for key in motor_name_keys
+        ):
+            raise ValueError(f"{CARTRIDGE_MANIFEST}: {entry['id']} motor housing names must be declared as an en/zh pair")
+
         payloads = entry.get("projectile_payloads", [])
         if not isinstance(payloads, list):
             raise ValueError(f"{CARTRIDGE_MANIFEST}: projectile_payloads for '{entry['id']}' must be a list")
@@ -1760,6 +1766,20 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
         "CartridgeCaliber": caliber_id,
         "CartridgeAmmoId": ammo_id,
     }
+    # RPG ammunition has a real launch-motor housing between the heavy brass
+    # blank sequence and the final cartridge-machine case input. It must be a
+    # persistent ItemStack, not just a transitional name hidden inside the
+    # sequenced assembly.
+    motor_housing = None
+    if caliber.get("motor_housing_name_en") and caliber.get("motor_housing_name_zh"):
+        motor_housing = {
+            "IndustryPlatform": "ammunition",
+            "IndustryPartKind": "motor_housing",
+            "IndustryDisplayName": f"item.tacz.cartridge_case.{caliber_id}.motor_housing",
+            "CartridgeCaliber": caliber_id,
+            "CartridgeAmmoId": ammo_id,
+        }
+    case_form_output = motor_housing if motor_housing is not None else case
     spent_case = {
         "IndustryPlatform": "ammunition",
         "IndustryPartKind": "spent_case",
@@ -1870,7 +1890,7 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
     projectile_blank_count = caliber["projectile_blank_count"]
     if case_blank_count == 1:
         files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_case_{caliber_id}.json"] = deploying(
-            case_stock, partial("tacz:press_die", case_die), output("tacz:cartridge_case", case, stack_limit)
+            case_stock, partial("tacz:press_die", case_die), output("tacz:cartridge_case", case_form_output, stack_limit)
         )
     else:
         incomplete_case_key = f"item.tacz.cartridge_case_blank.incomplete_{caliber_id}"
@@ -1902,9 +1922,15 @@ def generated_cartridge_files(caliber: dict[str, Any]) -> dict[Path, Any]:
                 "CartridgeCaliber": caliber_id,
                 "CartridgeAmmoId": ammo_id,
             }, stack_limit),
-            "result": output("tacz:cartridge_case", case, stack_limit),
+            "result": output("tacz:cartridge_case", case_form_output, stack_limit),
             "sequence": case_sequence,
         }
+
+    if motor_housing is not None:
+        files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/finish_case_{caliber_id}.json"] = deploying(
+            partial("tacz:cartridge_case", motor_housing), partial("tacz:press_die", case_die),
+            output("tacz:cartridge_case", case, stack_limit)
+        )
 
     payloads = caliber.get("projectile_payloads", [])
     if payloads:
@@ -2044,10 +2070,14 @@ def cartridge_language_entries(caliber: dict[str, Any], language: str) -> dict[s
     if caliber["eject_case"]:
         entries[f"item.tacz.cartridge_case.spent_{caliber_id}"] = caliber[f"spent_case_name_{suffix}"]
     if caliber["case_blank_count"] > 1:
-        name = caliber[f"case_name_{suffix}"]
+        name = caliber.get(f"motor_housing_name_{suffix}", caliber[f"case_name_{suffix}"])
         entries[f"item.tacz.cartridge_case_blank.incomplete_{caliber_id}"] = (
             f"未完成的{name}" if suffix == "zh" else f"Incomplete {name}"
         )
+    if caliber.get("motor_housing_name_en") and caliber.get("motor_housing_name_zh"):
+        entries[f"item.tacz.cartridge_case.{caliber_id}.motor_housing"] = caliber[
+            f"motor_housing_name_{suffix}"
+        ]
     if caliber.get("projectile_payloads"):
         entries[f"item.tacz.projectile_blank.body_{caliber_id}"] = caliber[f"projectile_body_name_{suffix}"]
         for index, name in enumerate(caliber[f"projectile_payload_names_{suffix}"], start=1):
@@ -3960,14 +3990,6 @@ def build_icon_catalog(platforms: list[dict[str, Any]], cartridges: list[dict[st
         "missing_art": missing_art,
         "planned_not_currently_mappable": [
             {
-                "asset_key": "rpg_motor_housing",
-                "reason": (
-                    "The current RPG route has a warhead body, explosive-charge body, shaped-charge preform, "
-                    "and final HEAT core, but no separate motor-housing ItemStack/NBT stage. Add that real stage "
-                    "before attempting to bind an icon."
-                ),
-            },
-            {
                 "asset_key": "internal_feed_carriers",
                 "reason": (
                     "Tube, revolver, double-barrel, and internal-box guns currently store rounds in gun data, not "
@@ -4458,6 +4480,28 @@ def validate_cartridge_tooling_continuity(cartridges: list[dict[str, Any]], expe
         case_form = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_case_{caliber_id}.json")
         projectile_form = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_projectile_{caliber_id}.json")
         case_output = _recipe_result_custom_data(case_form) if isinstance(case_form, dict) else None
+        if caliber.get("motor_housing_name_en") and caliber.get("motor_housing_name_zh"):
+            motor_housing = {
+                "IndustryPlatform": "ammunition",
+                "IndustryPartKind": "motor_housing",
+                "IndustryDisplayName": f"item.tacz.cartridge_case.{caliber_id}.motor_housing",
+                "CartridgeCaliber": caliber_id,
+                "CartridgeAmmoId": caliber["ammo"],
+            }
+            finish_case = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/finish_case_{caliber_id}.json")
+            final_case = {
+                "IndustryPlatform": "ammunition",
+                "IndustryPartKind": "case",
+                "IndustryDisplayName": f"item.tacz.cartridge_case.{caliber_id}",
+                "CartridgeCaliber": caliber_id,
+                "CartridgeAmmoId": caliber["ammo"],
+            }
+            if not isinstance(case_form, dict) or case_output != motor_housing \
+                    or not isinstance(finish_case, dict) \
+                    or finish_case.get("target", {}).get("nbt") != motor_housing \
+                    or _recipe_result_custom_data(finish_case) != final_case:
+                raise ValueError(f"{caliber_id}: motor housing must be a persistent case → final motor route")
+            case_output = final_case
         projectile_output = _recipe_result_custom_data(projectile_form) if isinstance(projectile_form, dict) else None
         case_reverse = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_case_gauge_{caliber_id}.json")
         projectile_reverse = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_projectile_gauge_{caliber_id}.json")

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "canonical_model": "webley_revolver",
+  "display_name": "Webley Revolver",
+  "action": "revolver",
+  "feed": {
+    "device": "speedloader",
+    "runtime_mechanism": "speedloader",
+    "carrier_behavior": "reusable_loading_tool",
+    "family": "hamster_webley_455_speedloader",
+    "capacity": 6,
+    "reload_batch": 6
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "medium_ammo",
+    "expected_ammo": "hamster:medium_ammo"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "GunpowderRevolution v1.2.7 webley_data: ammo_amount=6 and hamster:webley_gun_logic",
+    "hamster:speedloader is an extended_mag attachment with extended_mag_level=1",
+    "webley_gun_logic and webley_state_machine use level 1 for reload_loader/full-cylinder behavior"
+  ]
+}

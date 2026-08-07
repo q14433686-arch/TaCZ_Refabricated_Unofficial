@@ -110,7 +110,7 @@ public class GunFeedDefinition {
         // A bridge clip/speedloader is not ammunition packaging. Its rounds
         // may reach zero, but the physical loading tool remains available for
         // unloading/refilling and must never disappear as a reload side effect.
-        return getMechanism().usesLoadingDevice() || feedDeviceReusable;
+        return getMechanism().usesPhysicalFeedDevice() || feedDeviceReusable;
     }
 
     public int getReloadBatch() {
@@ -141,7 +141,7 @@ public class GunFeedDefinition {
         if (configured != LooseReloadMode.AUTO) {
             return configured;
         }
-        return getMechanism().usesLoadingDevice() ? LooseReloadMode.NONE : LooseReloadMode.SINGLE_ACTION;
+        return getMechanism().usesPhysicalFeedDevice() ? LooseReloadMode.NONE : LooseReloadMode.SINGLE_ACTION;
     }
 
     public boolean allowsLooseReload() {
@@ -224,13 +224,26 @@ public class GunFeedDefinition {
         return switch (getMechanism()) {
             case INTERNAL_BOX, TUBE, REVOLVER, SINGLE_SHOT -> getMagazineCapacity() > 0 && getAmmoId() != null;
             case STRIPPER_CLIP, SPEEDLOADER -> isValidLoadingDeviceDefinition();
+            case EN_BLOC_CLIP -> isValidEnBlocClipDefinition();
             default -> false;
         };
     }
 
+    /** Bridge clips and speedloaders are inventory sources for an internal feed. */
     public boolean isValidLoadingDeviceDefinition() {
         return getMechanism().usesLoadingDevice()
-                && !getMagazineFamily().isBlank()
+                && hasValidPhysicalFeedDeviceFields();
+    }
+
+    /** An en-bloc clip is physically installed into the receiver until empty. */
+    public boolean isValidEnBlocClipDefinition() {
+        return getMechanism().usesEnBlocClip()
+                && hasValidPhysicalFeedDeviceFields();
+    }
+
+    /** Shared configured ItemStack requirements for all physical clips/loaders. */
+    public boolean hasValidPhysicalFeedDeviceFields() {
+        return !getMagazineFamily().isBlank()
                 && getMagazineCapacity() > 0
                 && getFeedDeviceCapacity() > 0
                 && getAmmoId() != null;

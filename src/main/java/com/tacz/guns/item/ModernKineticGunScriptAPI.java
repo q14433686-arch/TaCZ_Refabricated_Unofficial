@@ -19,6 +19,7 @@ import com.tacz.guns.config.common.AmmoConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.industry.ammo.SpentCartridgeService;
+import com.tacz.guns.industry.magazine.EnBlocClipService;
 import com.tacz.guns.industry.magazine.InternalFeedService;
 import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.network.NetworkHandler;
@@ -175,6 +176,10 @@ public class ModernKineticGunScriptAPI {
                     // round has been consumed, emit the data-declared case on
                     // the server so it can be picked up and reconditioned.
                     SpentCartridgeService.ejectAfterFiring(shooter, gunData.getAmmoId());
+                    // Installed en-bloc clips remain in gun NBT until the last
+                    // real round has left the gun, then return as an empty
+                    // reusable clip rather than disappearing.
+                    EnBlocClipService.ejectIfEmpty(shooter, itemStack);
                 }
                 //Handle Heat Data
                 if (gunIndex.getGunData().hasHeatData()) {
@@ -548,7 +553,8 @@ public class ModernKineticGunScriptAPI {
      * @return 扩容等级，范围 0 ~ 3。0 表示没有安装扩容弹匣，1 ~ 3 表示安装了扩容等级 1 ~ 3 的扩容弹匣
      */
     public int getMagExtentLevel() {
-        return AttachmentDataUtils.getMagExtendLevel(itemStack, gunIndex.getGunData());
+        int forced = InternalFeedService.getScriptForcedMagExtentLevel(dataHolder, itemStack);
+        return forced >= 0 ? forced : AttachmentDataUtils.getMagExtendLevel(itemStack, gunIndex.getGunData());
     }
 
     /**
@@ -560,6 +566,7 @@ public class ModernKineticGunScriptAPI {
     public boolean isPhysicalMagazineReloadManaged() {
         return dataHolder != null && itemStack != null
                 && (PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)
+                || EnBlocClipService.isReloadManaged(dataHolder, itemStack)
                 || InternalFeedService.isReloadManaged(dataHolder, itemStack));
     }
 
@@ -577,7 +584,8 @@ public class ModernKineticGunScriptAPI {
             // set-in-barrel call is the authoritative visual feed point.
             return internalReservation;
         }
-        if (dataHolder != null && PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)) {
+        if (dataHolder != null && (PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)
+                || EnBlocClipService.isReloadManaged(dataHolder, itemStack))) {
             // External physical magazines are still swapped once at the
             // central feed transition.
             return 0;
@@ -611,7 +619,8 @@ public class ModernKineticGunScriptAPI {
             // here would animate cartridges the server can no longer supply.
             return internalSourceAvailable;
         }
-        if (dataHolder != null && PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)) {
+        if (dataHolder != null && (PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)
+                || EnBlocClipService.isReloadManaged(dataHolder, itemStack))) {
             // External-magazine reloads retain their one reserved swap at the
             // central feed transition.
             return true;
@@ -650,7 +659,8 @@ public class ModernKineticGunScriptAPI {
         if (internalOverflow >= 0) {
             return internalOverflow;
         }
-        if (dataHolder != null && PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)) {
+        if (dataHolder != null && (PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)
+                || EnBlocClipService.isReloadManaged(dataHolder, itemStack))) {
             // Report no overflow so legacy Lua scripts continue their timing
             // path, while central reload code performs the actual swap.
             return 0;
@@ -683,7 +693,8 @@ public class ModernKineticGunScriptAPI {
         if (internalReserved >= 0) {
             return internalReserved;
         }
-        if (dataHolder != null && PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)) {
+        if (dataHolder != null && (PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)
+                || EnBlocClipService.isReloadManaged(dataHolder, itemStack))) {
             // Do not let a Lua script create a free chambered round before the
             // physical magazine has been installed at the central feed point.
             return 0;
@@ -692,13 +703,9 @@ public class ModernKineticGunScriptAPI {
             return 0;
         }
         int currentAmmoCount = abstractGunItem.getCurrentAmmoCount(itemStack);
-        if (currentAmmoCount < amount) {
-            abstractGunItem.setCurrentAmmoCount(itemStack, 0);
-            return currentAmmoCount;
-        } else {
-            abstractGunItem.setCurrentAmmoCount(itemStack, currentAmmoCount - amount);
-            return amount;
-        }
+        int removed = Math.min(Math.max(0, amount), currentAmmoCount);
+        abstractGunItem.setCurrentAmmoCount(itemStack, currentAmmoCount - removed);
+        return removed;
     }
 
     /**
@@ -732,12 +739,16 @@ public class ModernKineticGunScriptAPI {
                 return;
             }
         }
-        if (dataHolder != null && PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)) {
+        if (dataHolder != null && (PhysicalMagazineService.isReloadManaged(dataHolder, itemStack)
+                || EnBlocClipService.isReloadManaged(dataHolder, itemStack))) {
             // Central feed handling transfers exactly one round only for a
             // non-tactical closed/manual reload.
             return;
         }
         abstractGunItem.setBulletInBarrel(itemStack, ammoInBarrel);
+        if (!ammoInBarrel) {
+            EnBlocClipService.ejectIfEmpty(shooter, itemStack);
+        }
     }
 
     /**

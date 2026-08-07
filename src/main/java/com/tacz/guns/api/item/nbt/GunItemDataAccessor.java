@@ -7,6 +7,7 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
 import com.tacz.guns.api.item.gun.FireMode;
+import com.tacz.guns.industry.magazine.EnBlocClipService;
 import com.tacz.guns.industry.magazine.InternalFeedService;
 import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.client.resource.GunDisplayInstance;
@@ -223,6 +224,9 @@ public interface GunItemDataAccessor extends IGun {
         if (PhysicalMagazineService.hasActiveInstalledMagazine(gun)) {
             return PhysicalMagazineService.getInstalledAmmoCount(gun);
         }
+        if (EnBlocClipService.hasActiveInstalledClip(gun)) {
+            return EnBlocClipService.getInstalledAmmoCount(gun);
+        }
         if (InternalFeedService.usesInternalFeed(gun)) {
             return InternalFeedService.getAmmoCount(gun);
         }
@@ -244,6 +248,10 @@ public interface GunItemDataAccessor extends IGun {
     default void setCurrentAmmoCount(ItemStack gun, int ammoCount) {
         if (PhysicalMagazineService.hasActiveInstalledMagazine(gun)) {
             PhysicalMagazineService.setInstalledAmmoCount(gun, ammoCount);
+            return;
+        }
+        if (EnBlocClipService.hasActiveInstalledClip(gun)) {
+            EnBlocClipService.setInstalledAmmoCount(gun, ammoCount);
             return;
         }
         if (InternalFeedService.usesInternalFeed(gun)) {
@@ -268,6 +276,10 @@ public interface GunItemDataAccessor extends IGun {
         }
         if (PhysicalMagazineService.hasActiveInstalledMagazine(gun)) {
             PhysicalMagazineService.removeInstalledRounds(gun, 1);
+            return;
+        }
+        if (EnBlocClipService.hasActiveInstalledClip(gun)) {
+            EnBlocClipService.removeInstalledRounds(gun, 1);
             return;
         }
         if (InternalFeedService.usesInternalFeed(gun)) {

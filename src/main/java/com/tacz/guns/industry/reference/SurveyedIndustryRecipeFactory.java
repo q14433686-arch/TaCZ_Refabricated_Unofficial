@@ -72,7 +72,7 @@ public final class SurveyedIndustryRecipeFactory {
             commissions += putIfAbsent(output, templateId(platform), templateRecipe(platform)) ? 1 : 0;
             commissions += putIfAbsent(output, kitId(platform), kitRecipe(platform)) ? 1 : 0;
             GunFeedDefinition feed = assets.getGunFeedDefinition(platform.gunId());
-            if (feed != null && feed.isValidLoadingDeviceDefinition()) {
+            if (feed != null && (feed.isValidLoadingDeviceDefinition() || feed.isValidEnBlocClipDefinition())) {
                 commissions += putIfAbsent(output, deviceId(platform), loadingDeviceRecipe(platform, feed)) ? 1 : 0;
             }
         }

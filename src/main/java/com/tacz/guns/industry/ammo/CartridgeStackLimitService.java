@@ -35,7 +35,8 @@ public final class CartridgeStackLimitService {
             return;
         }
         String partKind = tag.getStringOr(PART_KIND, "");
-        if (!"case".equals(partKind) && !"spent_case".equals(partKind) && !"projectile".equals(partKind)) {
+        if (!"case".equals(partKind) && !"motor_housing".equals(partKind)
+                && !"spent_case".equals(partKind) && !"projectile".equals(partKind)) {
             return;
         }
 

@@ -13,6 +13,7 @@ import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
+import com.tacz.guns.industry.magazine.EnBlocClipService;
 import com.tacz.guns.industry.magazine.InternalFeedService;
 import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
@@ -140,6 +141,9 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
         if (shooter instanceof Player && PhysicalMagazineService.usesPhysicalMagazine(gunItem)) {
             return PhysicalMagazineService.canReload(shooter, gunItem);
         }
+        if (shooter instanceof Player && EnBlocClipService.usesEnBlocClip(gunItem)) {
+            return EnBlocClipService.canReload(shooter, gunItem);
+        }
         if (shooter instanceof Player && InternalFeedService.usesInternalFeed(gunItem)) {
             return InternalFeedService.canReload(shooter, gunItem);
         }
@@ -196,6 +200,10 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
         // intact and the chambered round remains untouched as before.
         if (PhysicalMagazineService.usesPhysicalMagazine(gunItem)) {
             PhysicalMagazineService.ejectMagazine(player, gunItem);
+            return;
+        }
+        if (EnBlocClipService.usesEnBlocClip(gunItem)) {
+            EnBlocClipService.ejectClip(player, gunItem);
             return;
         }
         // 操作对象已从 Player 改为 LivingEntity，以支持非玩家实体

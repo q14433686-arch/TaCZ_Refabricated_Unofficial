@@ -210,7 +210,8 @@ public final class InternalFeedService {
         RouteSelection selection = selectReloadRoute(player, gun, definition, missing, isTacticalReload(gun), consumesSource);
         return selection == null ? ReloadRoutePreview.EMPTY
                 : new ReloadRoutePreview(selection.route().getId(),
-                selection.route().getAnimationForceAttachmentPresent());
+                selection.route().getAnimationForceAttachmentPresent(),
+                selection.route().getAnimationForceMagExtentLevel());
     }
 
     /** Route data needed by the client to mirror an audited animation selector. */
@@ -218,7 +219,8 @@ public final class InternalFeedService {
         GunFeedDefinition definition = getDefinition(gun);
         GunReloadRoute route = definition == null ? null : definition.getReloadRoute(routeId);
         return route == null ? ReloadRoutePreview.EMPTY
-                : new ReloadRoutePreview(route.getId(), route.getAnimationForceAttachmentPresent());
+                : new ReloadRoutePreview(route.getId(), route.getAnimationForceAttachmentPresent(),
+                route.getAnimationForceMagExtentLevel());
     }
 
     /**
@@ -325,8 +327,9 @@ public final class InternalFeedService {
             if (device == null) {
                 return null;
             }
-            int animationRounds = Math.min(missing,
-                    route.getMaximumTransferRounds(definition.getReloadBatch()));
+            int animationRounds = route.getForcedAnimationRounds() > 0
+                    ? route.getForcedAnimationRounds()
+                    : Math.min(missing, route.getMaximumTransferRounds(definition.getReloadBatch()));
             int sourceBudget = animationRounds + route.getExtraSourceRounds();
             ItemStack reserved = player.getInventory().getItem(device.slot());
             if (!(reserved.getItem() instanceof IMagazine magazine)
@@ -337,11 +340,14 @@ public final class InternalFeedService {
             player.getInventory().setChanged();
             return new InternalFeedReloadPlan(gunId, definition.getAmmoId(), animationRounds, animationRounds,
                     sourceBudget, tactical, route.getId(), route.isScriptDriven(),
-                    route.getAnimationForceAttachmentPresent(), device.slot(), reserved.copy(),
+                    route.getAnimationForceAttachmentPresent(), route.getAnimationForceMagExtentLevel(),
+                    route.getScriptRemovalMode(), device.slot(), reserved.copy(),
                     definition.isFeedDeviceReusable());
         }
 
-        int animationRounds = route.isScriptDriven() ? missing
+        int animationRounds = route.getForcedAnimationRounds() > 0
+                ? route.getForcedAnimationRounds()
+                : route.isScriptDriven() ? missing
                 : Math.min(missing, route.getMaximumTransferRounds(definition.getLooseReloadBatch()));
         if (animationRounds <= 0) {
             return null;
@@ -358,7 +364,8 @@ public final class InternalFeedService {
         int fallbackRounds = Math.min(animationRounds, available);
         return new InternalFeedReloadPlan(gunId, definition.getAmmoId(), animationRounds, fallbackRounds,
                 sourceBudget, tactical, route.getId(), route.isScriptDriven(),
-                route.getAnimationForceAttachmentPresent(), -1, ItemStack.EMPTY, true);
+                route.getAnimationForceAttachmentPresent(), route.getAnimationForceMagExtentLevel(),
+                route.getScriptRemovalMode(), -1, ItemStack.EMPTY, true);
     }
 
     private static boolean matchesRouteAttachments(ItemStack gun, GunReloadRoute route) {
@@ -432,6 +439,12 @@ public final class InternalFeedService {
                 && isAttachmentEmpty(gun, attachmentType);
     }
 
+    /** Returns -1 when no audited route overrides a legacy extended-mag selector. */
+    public static int getScriptForcedMagExtentLevel(ShooterDataHolder data, ItemStack gun) {
+        return data != null && isReloadManaged(data, gun)
+                ? data.internalFeedReload.getAnimationForceMagExtentLevel() : -1;
+    }
+
     /**
      * Called from {@link com.tacz.guns.item.ModernKineticGunScriptAPI} when a
      * managed internal-feed Lua script reaches consumeAmmoFromPlayer. The
@@ -491,6 +504,13 @@ public final class InternalFeedService {
         InternalFeedReloadPlan plan = activePlan(data, shooter, gun);
         if (plan == null) {
             return -1;
+        }
+        if (plan.getScriptRemovalMode() == ReloadRouteScriptRemovalMode.DISCARD) {
+            // Verified speedloader scripts first empty the cylinder. Preserve
+            // that declared semantics explicitly instead of pretending every
+            // remove call is a chamber transfer.
+            plan.markScriptTouched();
+            return removeRounds(gun, requested);
         }
         return plan.reserveMagazineRoundsForChamber(requested, getAmmoCount(gun));
     }
@@ -894,8 +914,9 @@ public final class InternalFeedService {
     }
 
     /** Small client-safe projection; server reservation data never leaves the server. */
-    public record ReloadRoutePreview(String routeId, String animationForceAttachmentPresent) {
-        public static final ReloadRoutePreview EMPTY = new ReloadRoutePreview("", "");
+    public record ReloadRoutePreview(String routeId, String animationForceAttachmentPresent,
+                                     int animationForceMagExtentLevel) {
+        public static final ReloadRoutePreview EMPTY = new ReloadRoutePreview("", "", -1);
 
         public boolean isEmpty() {
             return routeId == null || routeId.isBlank();

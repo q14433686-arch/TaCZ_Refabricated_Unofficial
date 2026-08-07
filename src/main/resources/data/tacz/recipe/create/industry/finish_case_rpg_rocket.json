@@ -1,0 +1,52 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:cartridge_case"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "motor_housing",
+      "IndustryDisplayName": "item.tacz.cartridge_case.rpg_rocket.motor_housing",
+      "CartridgeCaliber": "rpg_rocket",
+      "CartridgeAmmoId": "tacz:rpg_rocket"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "case_die",
+      "IndustryDisplayName": "item.tacz.press_die.case_rpg_rocket",
+      "CartridgeCaliber": "rpg_rocket"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:cartridge_case",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "case",
+          "IndustryDisplayName": "item.tacz.cartridge_case.rpg_rocket",
+          "CartridgeCaliber": "rpg_rocket",
+          "CartridgeAmmoId": "tacz:rpg_rocket"
+        },
+        "minecraft:max_stack_size": 6
+      }
+    }
+  ],
+  "keep_held_item": true
+}

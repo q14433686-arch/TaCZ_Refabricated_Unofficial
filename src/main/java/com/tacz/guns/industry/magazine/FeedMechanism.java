@@ -47,9 +47,8 @@ public enum FeedMechanism {
     SPEEDLOADER,
 
     /**
-     * An en-bloc clip is recorded as a distinct future data mechanism. It is
-     * intentionally not returned by {@link #isKnownSerializedName(String)}
-     * until its installed-clip/eject-on-empty state transaction exists.
+     * A physical clip that stays installed in an internal feed and is
+     * automatically ejected once its final round has been fired.
      */
     @SerializedName("en_bloc_clip")
     EN_BLOC_CLIP;
@@ -61,6 +60,16 @@ public enum FeedMechanism {
     /** Bridge clips and speedloaders are physical loaders for an internal feed, not replacement magazines. */
     public boolean usesLoadingDevice() {
         return this == STRIPPER_CLIP || this == SPEEDLOADER;
+    }
+
+    /** An en-bloc clip is physically installed and therefore has its own transaction service. */
+    public boolean usesEnBlocClip() {
+        return this == EN_BLOC_CLIP;
+    }
+
+    /** Any reusable physical feed device represented by a configured magazine ItemStack. */
+    public boolean usesPhysicalFeedDevice() {
+        return usesLoadingDevice() || usesEnBlocClip();
     }
 
     public String serializedName() {
@@ -78,15 +87,11 @@ public enum FeedMechanism {
         };
     }
 
-    /**
-     * Reference profiles store the serialized data value instead of a Java enum
-     * name so datapacks remain readable across versions. EN_BLOC_CLIP remains
-     * deliberately legacy-only until its own installed/eject transaction lands.
-     */
+    /** Reference profiles store the readable serialized mechanism name. */
     public static boolean isKnownSerializedName(String value) {
         return switch (value == null ? "" : value) {
             case "legacy", "detachable_magazine", "internal_box", "tube", "revolver", "belt", "single_shot",
-                    "stripper_clip", "speedloader" -> true;
+                    "stripper_clip", "speedloader", "en_bloc_clip" -> true;
             default -> false;
         };
     }

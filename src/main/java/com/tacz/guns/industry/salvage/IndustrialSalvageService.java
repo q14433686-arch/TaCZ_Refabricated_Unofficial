@@ -5,6 +5,7 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.industry.item.IndustryItemBuilder;
+import com.tacz.guns.industry.magazine.EnBlocClipService;
 import com.tacz.guns.industry.magazine.IMagazine;
 import com.tacz.guns.industry.recipe.IndustryAssemblyDefinition;
 import com.tacz.guns.init.ModItems;
@@ -95,7 +96,7 @@ public final class IndustrialSalvageService {
     }
 
     private static Plan planGun(ItemStack input, IGun gun) {
-        if (gun.hasInstalledMagazine(input)) {
+        if (gun.hasInstalledMagazine(input) || !EnBlocClipService.getInstalledClip(input).isEmpty()) {
             return Plan.failure(Failure.GUN_HAS_CARRIER);
         }
         for (AttachmentType type : AttachmentType.values()) {

@@ -52,6 +52,18 @@ public final class GunReloadRoute {
     @SerializedName("max_transfer_rounds")
     private int maximumTransferRounds;
 
+    /**
+     * Some audited loader animations intentionally replace the complete
+     * internal feed even when only a few rounds are missing. Zero means use
+     * the normal missing-round target.
+     */
+    @SerializedName("force_animation_rounds")
+    private int forcedAnimationRounds;
+
+    /** Legacy script interpretation for removeAmmoFromMagazine during this route. */
+    @SerializedName("script_remove_mode")
+    private ReloadRouteScriptRemovalMode scriptRemovalMode = ReloadRouteScriptRemovalMode.CHAMBER;
+
     /** Extra real source rounds consumed outside the magazine-fill target, e.g. an empty-chamber load. */
     @SerializedName("extra_source_rounds")
     private int extraSourceRounds;
@@ -72,6 +84,15 @@ public final class GunReloadRoute {
      */
     @SerializedName("animation_force_attachment_present")
     private String animationForceAttachmentPresent = "";
+
+    /**
+     * Some legacy reload scripts choose a speedloader path from extended-mag
+     * level. This only overrides the script/state-machine selector while the
+     * route is reserved; no attachment is installed and no capacity stat is
+     * changed.
+     */
+    @SerializedName("animation_force_mag_extent_level")
+    private int animationForceMagExtentLevel = -1;
 
     public String getId() {
         return id == null ? "" : id;
@@ -108,6 +129,14 @@ public final class GunReloadRoute {
         return Math.max(1, fallback);
     }
 
+    public int getForcedAnimationRounds() {
+        return Math.max(0, forcedAnimationRounds);
+    }
+
+    public ReloadRouteScriptRemovalMode getScriptRemovalMode() {
+        return scriptRemovalMode == null ? ReloadRouteScriptRemovalMode.CHAMBER : scriptRemovalMode;
+    }
+
     public int getExtraSourceRounds() {
         return Math.max(0, extraSourceRounds);
     }
@@ -124,6 +153,10 @@ public final class GunReloadRoute {
         return animationForceAttachmentPresent == null ? "" : animationForceAttachmentPresent;
     }
 
+    public int getAnimationForceMagExtentLevel() {
+        return Math.max(-1, animationForceMagExtentLevel);
+    }
+
     public boolean matchesMissingRounds(int missing) {
         int safeMissing = Math.max(0, missing);
         return safeMissing >= getMinimumMissingRounds()
@@ -138,6 +171,7 @@ public final class GunReloadRoute {
                 && validAttachmentSlot(getRequiredAttachmentEmpty())
                 && validAttachmentSlot(getRequiredAttachmentPresent())
                 && validAttachmentSlot(getAnimationForceAttachmentPresent())
+                && getAnimationForceMagExtentLevel() >= -1
                 && (getRequiredAttachmentEmpty().isBlank() || getRequiredAttachmentPresent().isBlank()
                 || !getRequiredAttachmentEmpty().equalsIgnoreCase(getRequiredAttachmentPresent()));
     }

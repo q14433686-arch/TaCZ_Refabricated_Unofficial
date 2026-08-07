@@ -23,7 +23,7 @@ public interface MagazineItemDataAccessor extends IMagazine {
     String MAGAZINE_CAPACITY_TAG = "MagazineCapacity";
     String MAGAZINE_AMMO_COUNT_TAG = "MagazineAmmoCount";
     String MAGAZINE_DISPLAY_NAME_TAG = "MagazineDisplayName";
-    /** detachable_magazine/belt for legacy carrier stacks; stripper_clip/speedloader for internal loaders. */
+    /** detachable_magazine/belt carriers; stripper_clip/speedloader loaders; en_bloc_clip is installed in gun NBT. */
     String FEED_DEVICE_KIND_TAG = "FeedDeviceKind";
     /**
      * Stable per-stack identity used only while a bridge clip/speedloader is

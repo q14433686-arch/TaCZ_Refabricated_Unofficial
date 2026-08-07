@@ -121,5 +121,4 @@
 
 ## 尚不存在可绑定身份的设计项
 
-- `rpg_motor_housing`：The current RPG route has a warhead body, explosive-charge body, shaped-charge preform, and final HEAT core, but no separate motor-housing ItemStack/NBT stage. Add that real stage before attempting to bind an icon.
 - `internal_feed_carriers`：Tube, revolver, double-barrel, and internal-box guns currently store rounds in gun data, not in a physical tacz:magazine ItemStack. Their gun/feed UI needs a separate renderer contract; they are deliberately not mislabeled as missing MagazineFamily icons.

@@ -10,13 +10,13 @@
 | `belt` | `InstalledMagazine` | 弹链箱保留余弹 | 替换已安装供弹器 | 可退回/可回收 |
 | `stripper_clip` | `InternalFeedAmmoCount` | 桥夹保存自身余弹 | 向固定内仓增量转入 | **空夹仍保留，可再次压弹** |
 | `speedloader` | `InternalFeedAmmoCount` | 快装器保存自身余弹 | 向内部转轮增量转入 | **空快装器仍保留，可再次压弹** |
-| `en_bloc_clip` | 未来独立“已安装漏夹”状态 | 漏夹保存自身余弹 | 装入枪内后逐发扣除 | 打空自动弹出 |
+| `en_bloc_clip` | 独立 `InstalledEnBlocClip` 状态 | 漏夹随枪保存余弹 | 装入枪内后逐发扣除 | 最后一发真正离开枪后自动弹出空夹 |
 | `tube` / `revolver` / `internal_box` / `single_shot` | `InternalFeedAmmoCount` | 无强制外部器件 | 从散装弹或明确器件装填 | 枪内状态继续保存 |
 
 桥夹、快装器使用的 registry item 当前复用 `tacz:magazine` 的成熟“容量、余弹、库存交互”数据容器，但强制带：
 
 ```text
-FeedDeviceKind = stripper_clip | speedloader
+FeedDeviceKind = stripper_clip | speedloader | en_bloc_clip
 ```
 
 这只是复用可靠的 ItemStack 存储与装卸 UI；它们不会进入 `InstalledMagazine`，也不会触发普通弹匣的替换逻辑。
@@ -48,6 +48,39 @@ transfer = min(5, 3, 5) = 3
 这里的 **2 发不会消失，也不会自动变成另一只桥夹**：它们保存在原桥夹的 `MagazineAmmoCount` 中，可在下一次兼容装填时继续使用；玩家也可像实体弹匣一样把桥夹与同口径散装弹右键叠放来补弹，或对空槽右键取出余弹。桥夹和快装器都是可复用的物理装填工具：即使余弹变为 `0 / capacity`，服务器也**绝不**在换弹事务中删除该 ItemStack，空夹仍可重新压弹。
 
 桥夹/快装器的正常批量动画在其真实 feed 点由服务端扣除。预留期间会绑定具体物理器件实例；若玩家中途移动、替换或改写该槽中的器件，事务失败关闭，绝不临时选择另一只桥夹或改扣其他来源。
+
+## 漏夹：安装状态与自动弹出
+
+`en_bloc_clip` 不走桥夹的“背包内剩余几发 → 向枪内加几发”逻辑。它会把完整的物理 ItemStack 写入枪 NBT：
+
+```text
+InstalledEnBlocClip = configured tacz:magazine ItemStack
+```
+
+枪的当前备弹直接读取这只已安装漏夹；每次真正消耗一发时同步减少漏夹内的 `MagazineAmmoCount`。当且仅当：
+
+```text
+漏夹余弹 = 0
+且枪膛内也没有最后一发
+```
+
+服务器才把同一只空漏夹退出枪 NBT 并返还玩家背包；背包满则按既有物品交付规则掉落。它不会在装入时被消耗，也不会因 NBT 整数归零而静默删除。潜行 + R 是明确的人工退夹路径，可安全取回尚有余弹的漏夹。
+
+首个已审计样本是 GunpowderRevolution 的 `hamster:m1garand`：8 发 `hamster:long_ammo` 漏夹，原包状态机带有 `last_shoot`、clip bone 与空仓 ping。它只接受完整物理漏夹；无漏夹时不借散装弹伪造 M1 装夹动画。
+
+## 快装器：完整转轮替换语义
+
+快装器是可复用物理器件，但不等于“每次从快装器拿一发”。首个已审计样本为 GunpowderRevolution `hamster:webley`：原包 `hamster:speedloader` 附件以 `extended_mag_level = 1` 选择 `reload_loader` 动画，服务端脚本先清空转轮再一次装入 6 发。
+
+工业兼容层把该选择器绑定到一只完整 6 发 Webley 快装器：
+
+```text
+完整 6 发快装器 → 原 reload_loader 动画 → 原转轮旧弹按上游语义清除 → 一次转入 6 发
+无完整快装器但有散装弹 → 原逐发 reload_loop
+半满快装器 → 不伪造完整 reload_loader；保留器件，走散装逐发或拒绝
+```
+
+这样保留了该枪包明确声明的“快速装填会丢弃未击发旧弹”行为；不会把快装器误当成可安装弹匣，也不会在转空后删除快装器。
 
 ## 逐发散装弹：必须有真实循环动画
 
@@ -183,4 +216,4 @@ selectedSlot + expected ItemStack components
 
 服务器仍会检查兼容性、预留槽位、在动画 feed 点执行。这样圆盘只改变“选哪只弹匣/桥夹”，不会绕过弹药扣除或让客户端伪造余弹。
 
-漏夹 `en_bloc_clip` 需要单独的枪内已安装器件状态和“打空自动弹出”钩子，不能借桥夹的增量装填流程伪造；它在桥夹/快装器服务端回归完成后再实现。
+漏夹已拥有独立已安装器件状态和打空自动弹出钩子；后续只为已审计的具体枪包添加 profile。长按 R 圆盘仍是客户端选择层，不能绕过已经完成的服务器预留与动画 feed 事务。

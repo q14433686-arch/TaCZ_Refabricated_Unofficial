@@ -218,6 +218,11 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @return 扩容等级，范围 0 ~ 3。0 表示没有安装扩容弹匣，1 ~ 3 表示安装了扩容等级 1 ~ 3 的扩容弹匣
      */
     public int getMagExtentLevel() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        int forced = player == null ? -1 : IndustryReloadRouteClientState.forcedMagExtentLevel(player, currentGunItem);
+        if (forced >= 0) {
+            return forced;
+        }
         return processGunData(
                 (iGun, gunIndex) ->
                         AttachmentDataUtils.getMagExtendLevel(currentGunItem, gunData)

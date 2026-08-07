@@ -322,6 +322,7 @@
     {
       "texture": "tacz_extra:item/ammunition_case_blank",
       "bound_by": [
+        "ammunition_rpg_motor_housing",
         "complete_ammunition_case_blank_fd0718c225"
       ],
       "status": "bound"
@@ -462,6 +463,7 @@
       "texture": "tacz_extra:item/base_m_loader",
       "bound_by": [
         "carrier_feed_kit_family",
+        "feed_device_en_bloc_clip_family",
         "feed_device_stripper_clip_family"
       ],
       "status": "bound"
@@ -29808,10 +29810,6 @@
   ],
   "missing_art": [],
   "planned_not_currently_mappable": [
-    {
-      "asset_key": "rpg_motor_housing",
-      "reason": "The current RPG route has a warhead body, explosive-charge body, shaped-charge preform, and final HEAT core, but no separate motor-housing ItemStack/NBT stage. Add that real stage before attempting to bind an icon."
-    },
     {
       "asset_key": "internal_feed_carriers",
       "reason": "Tube, revolver, double-barrel, and internal-box guns currently store rounds in gun data, not in a physical tacz:magazine ItemStack. Their gun/feed UI needs a separate renderer contract; they are deliberately not mislabeled as missing MagazineFamily icons."

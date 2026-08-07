@@ -705,8 +705,8 @@
         "RPG-7 装药战斗部",
         "RPG-7 聚能破甲战斗部预制件"
       ],
-      "case_name_en": "RPG-7 Rocket Motor Housing",
-      "case_name_zh": "RPG-7 火箭发动机壳体",
+      "case_name_en": "RPG-7 Rocket Motor Assembly",
+      "case_name_zh": "RPG-7 火箭发动机总成",
       "projectile_name_en": "RPG-7 HEAT Warhead Core",
       "projectile_name_zh": "RPG-7 聚能破甲战斗部芯",
       "case_die_name_en": "RPG-7 Motor Housing Die",
@@ -718,7 +718,9 @@
       "case_gauge_name_en": "RPG-7 Motor-Housing Gauge",
       "case_gauge_name_zh": "RPG-7 发动机壳体尺寸量规",
       "projectile_gauge_name_en": "RPG-7 HEAT Warhead-Form Gauge",
-      "projectile_gauge_name_zh": "RPG-7 聚能战斗部外形量规"
+      "projectile_gauge_name_zh": "RPG-7 聚能战斗部外形量规",
+      "motor_housing_name_en": "RPG-7 Rocket Motor Housing",
+      "motor_housing_name_zh": "RPG-7 火箭发动机壳体"
     }
   ]
 }

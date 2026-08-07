@@ -158,7 +158,8 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
         if (!feedDeviceKind.isBlank() && !"detachable_magazine".equals(feedDeviceKind)) {
             adder.accept(Component.translatable("tooltip.tacz.feed_device.kind." + feedDeviceKind)
                     .withStyle(style -> style.withColor(0x8FD6C6)));
-            if ("stripper_clip".equals(feedDeviceKind) || "speedloader".equals(feedDeviceKind)) {
+            if ("stripper_clip".equals(feedDeviceKind) || "speedloader".equals(feedDeviceKind)
+                    || "en_bloc_clip".equals(feedDeviceKind)) {
                 adder.accept(Component.translatable("tooltip.tacz.feed_device.reusable")
                         .withStyle(style -> style.withColor(0x8FD6C6)));
             }
@@ -185,10 +186,11 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
                 continue;
             }
             GunFeedDefinition definition = entry.getValue();
-            if (!definition.isValidDetachableDefinition() && !definition.isValidLoadingDeviceDefinition()) {
+            if (!definition.isValidDetachableDefinition() && !definition.isValidLoadingDeviceDefinition()
+                    && !definition.isValidEnBlocClipDefinition()) {
                 continue;
             }
-            int capacity = definition.getMechanism().usesLoadingDevice()
+            int capacity = definition.getMechanism().usesPhysicalFeedDevice()
                     ? definition.getFeedDeviceCapacity() : definition.getMagazineCapacity();
             String key = definition.getMechanism().serializedName() + "|" + definition.getMagazineFamily()
                     + "|" + capacity + "|" + definition.getAmmoId();

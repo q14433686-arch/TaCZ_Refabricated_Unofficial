@@ -1,8 +1,8 @@
 {
-  "toast.tacz.level_up": "Level Up!",
-  "toast.tacz.sub.level_up": "This weapon works better",
+  "toast.tacz.level_up": "Gun proficiency increased!",
+  "toast.tacz.sub.level_up": "This physical gun has gained combat experience",
   "toast.tacz.sub.damage_up": "Weapons become more deadly",
-  "toast.tacz.sub.final_level": "Man and gun become one",
+  "toast.tacz.sub.final_level": "This physical gun has reached veteran proficiency",
   "tooltip.tacz.gun.level": "Level: ",
   "tooltip.tacz.gun.inventory_mode": "Use Inv. Ammo",
   "custom.tacz.error.no_name": "Error: No Name",
@@ -1191,7 +1191,7 @@
   "item.tacz.press_die.case_792x57": "7.92×57 Case Die",
   "item.tacz.press_die.projectile_792x57_fmj": "7.92×57 FMJ Projectile Die",
   "item.tacz.cartridge_case.spent_792x57": "Fired 7.92×57 Cartridge Case",
-  "item.tacz.cartridge_case.rpg_rocket": "RPG-7 Rocket Motor Housing",
+  "item.tacz.cartridge_case.rpg_rocket": "RPG-7 Rocket Motor Assembly",
   "item.tacz.projectile_core.rpg_rocket_heat": "RPG-7 HEAT Warhead Core",
   "item.tacz.press_die.case_rpg_rocket": "RPG-7 Motor Housing Die",
   "item.tacz.press_die.projectile_rpg_rocket_heat": "RPG-7 HEAT Warhead Die",
@@ -1682,5 +1682,10 @@
   "item.tacz.feed_device.hamster_gew98_stripper": "Gewehr 98 Stripper Clip",
   "item.tacz.feed_device.hamster_m1903_stripper": "M1903 Springfield Stripper Clip",
   "item.tacz.feed_device.hamster_type99_stripper": "Type 99 Stripper Clip",
-  "tooltip.tacz.feed_device.reusable": "Reusable loading tool — remains after its rounds reach zero"
+  "tooltip.tacz.feed_device.reusable": "Reusable loading tool — remains after its rounds reach zero",
+  "item.tacz.feed_device.hamster_m1garand_enbloc": "M1 Garand En-Bloc Clip",
+  "tooltip.tacz.feed_device.kind.en_bloc_clip": "En-bloc clip — stays installed in the gun and automatically ejects empty",
+  "item.tacz.feed_device.hamster_webley_speedloader": "Webley Speedloader",
+  "item.tacz.cartridge_case.rpg_rocket.motor_housing": "RPG-7 Rocket Motor Housing",
+  "tooltip.tacz.industry.motor_housing": "RPG motor housing — finish it with the motor-housing die before cartridge assembly"
 }

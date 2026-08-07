@@ -1,6 +1,7 @@
 package com.tacz.guns.entity.shooter;
 
 import com.tacz.guns.api.entity.ReloadState;
+import com.tacz.guns.industry.magazine.EnBlocClipReloadPlan;
 import com.tacz.guns.industry.magazine.InternalFeedReloadPlan;
 import com.tacz.guns.industry.magazine.PhysicalMagazineReloadPlan;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
@@ -77,6 +78,9 @@ public class ShooterDataHolder {
     /** Server-only reservation for tube/cylinder/internal/single-shot feeds. */
     @Nullable
     public InternalFeedReloadPlan internalFeedReload = null;
+    /** Server-only reservation for an installed en-bloc clip reload. */
+    @Nullable
+    public EnBlocClipReloadPlan enBlocClipReload = null;
     /**
      * Data-driven selected reload route, synchronised only as a short-lived
      * animation selector. The server still owns the physical source plan.
@@ -135,6 +139,7 @@ public class ShooterDataHolder {
         reloadStateType = ReloadState.StateType.NOT_RELOADING;
         physicalMagazineReload = null;
         internalFeedReload = null;
+        enBlocClipReload = null;
         industryReloadRoute = "";
         sprintTimestamp = -1;
         sprintTimeS = 0;

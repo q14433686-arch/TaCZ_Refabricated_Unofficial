@@ -210,13 +210,16 @@ data/yourmod/recipe/create/industry/assemble_ak47.json
 40 mm HE 与 RPG-7 HEAT 不再把 TNT 和毛坯藏在一个不可见的顺序临时态里。它们的战斗部有实际可存放/可查看的中间物品：
 
 ```text
-RPG-7：4 弹头毛坯 --机械合成器--> RPG-7 战斗部弹体
+RPG-7：4 弹壳毛坯 --顺序部署/发动机壳体模--> RPG-7 火箭发动机壳体
+      --部署器持发动机壳体模--> RPG-7 火箭发动机总成（可送入装弹机）
+
+       4 弹头毛坯 --机械合成器--> RPG-7 战斗部弹体
       --部署 TNT--> RPG-7 装药战斗部
       --部署 TNT--> RPG-7 聚能破甲战斗部预制件
       --部署器持 HEAT 模具--> RPG-7 聚能破甲战斗部芯
 ```
 
-40 mm 同样先形成“40 mm 榴弹弹体”，再部署 TNT 形成“40 mm 高爆装药榴弹体”，最后持 HE 模具成型。每一步都是独立真实输出，失败、断线或物流中断时不会凭空丢失“中间态”。
+RPG 发动机壳体是带 `IndustryPartKind: motor_housing` 的可见 `tacz:cartridge_case`，不能直接放进弹药装配机；必须经过 `finish_case_rpg_rocket` 的单工件部署站成为 `IndustryPartKind: case` 的火箭发动机总成。40 mm 同样先形成“40 mm 榴弹弹体”，再部署 TNT 形成“40 mm 高爆装药榴弹体”，最后持 HE 模具成型。每一步都是独立真实输出，失败、断线或物流中断时不会凭空丢失“中间态”。
 
 最终装弹不再交给 `create:compacting` 的 Basin，也不再把四种物料伪装成传送带上的单一工件。它由 TACZ 的**弹药装配机**完成：GUI 中有独立的弹壳、弹头、底火、推进药四个输入槽与一个成品槽；按钮请求只发到服务端，服务端按数据定义验证 NBT、扣除四件材料并输出弹药。
 
@@ -391,10 +394,26 @@ revolver             转轮
 single_shot          单发后膛
 stripper_clip        桥夹，向固定内仓增量装填
 speedloader          快装器，向内部转轮增量装填
-en_bloc_clip         漏夹（当前只可记录 reference，运行时机制仍待实现）
+en_bloc_clip         漏夹（独立装入枪 NBT，打空自动弹出）
 ```
 
 `internal_box`、`tube`、`revolver`、`single_shot` 的余弹保存为枪 NBT 中受服务端控制的内置供弹状态，而不是伪造可退卸弹匣。`reload_batch` 是一次原生完整动作可从**单一来源**转入的最大批量；`script_loop` 则不按批量结算，而是在枪包每一个真实 Lua feed 调用处逐发扣除/转入。RPG/M320 等容量为 1 的枪仍自然只填一发。`belt` 则使用带容量和余弹的外部实体弹链箱。
+
+桥夹、快装器与漏夹都使用物理 `tacz:magazine` ItemStack 保存族、口径、容量和余弹，但生命周期不同：桥夹/快装器留在背包作为可复用装填工具；漏夹在 reload feed 点写入枪 NBT 的 `InstalledEnBlocClip`，最后一发实际离枪后自动弹出。漏夹示例：
+
+```json
+{
+  "mechanism": "en_bloc_clip",
+  "magazine_family": "example_m1_3006_enbloc",
+  "magazine_capacity": 8,
+  "feed_device_capacity": 8,
+  "feed_device_reusable": true,
+  "reload_batch": 8,
+  "loose_reload_mode": "none",
+  "ammo": "example:30_06",
+  "display_name": "item.example.m1_enbloc"
+}
+```
 
 桥夹/快装器额外声明：
 
@@ -457,6 +476,8 @@ script_loop    一次 R 启动原枪包的真实逐发循环；每个脚本 feed
 - `min_missing_rounds` / `max_missing_rounds`、`min_source_rounds`、`require_tactical`、`require_attachment_empty` / `require_attachment_present` 是对原包真实分支条件的逐项记录；
 - `script_driven: true` 表示不在 FINISHING 阶段补发整批，而是在原 Lua 每一个 `consumeAmmoFromPlayer` / `putAmmoInMagazine` / `setAmmoInBarrel` feed 调用处实际转移；
 - `extra_source_rounds` 用于原脚本把一发先上膛、其余压入内仓的批量动画；
-- `animation_force_attachment_present` 只可在已审计的旧状态机把“配件是否存在”当作**动画分支选择器**时使用。它不会安装或渲染假配件，也不会改变枪械数值；服务器和客户端同时使用同一条 route，客户端仅预测、服务器最终验证。
+- `animation_force_attachment_present` 只可在已审计的旧状态机把“配件是否存在”当作**动画分支选择器**时使用。它不会安装或渲染假配件，也不会改变枪械数值；服务器和客户端同时使用同一条 route，客户端仅预测、服务器最终验证；
+- `animation_force_mag_extent_level` 同理只覆盖旧脚本/状态机的扩容等级选择器，可用于已有 `reload_loader` 快装器动画；
+- `force_animation_rounds` 允许已审计的完整快装器路线明确要求一次完整装入量；`script_remove_mode: discard` 只用于原包明确声明“先丢弃转轮旧弹”的脚本，不能泛用。
 
-因此“背包有完整桥夹”是选择桥夹动画的条件之一；没有完整桥夹但有散装弹时会进入真实逐发动画；半满桥夹若没有对应的部分桥夹动画分支，不会被静默拿来伪造完整桥夹动画。完整审计规则见 `docs/FEED_DEVICE_AND_CLIP_DESIGN.md`。
+因此“背包有完整桥夹/快装器”是选择对应动画的条件之一；没有完整器件但有散装弹时会进入真实逐发动画；半满器件若没有对应的部分装填动画分支，不会被静默拿来伪造完整动画。完整审计规则见 `docs/FEED_DEVICE_AND_CLIP_DESIGN.md`。

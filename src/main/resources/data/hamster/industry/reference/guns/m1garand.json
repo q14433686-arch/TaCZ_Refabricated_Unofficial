@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "canonical_model": "m1_garand",
+  "display_name": "M1 Garand",
+  "action": "gas_operated_rifle",
+  "feed": {
+    "device": "en_bloc_clip",
+    "runtime_mechanism": "en_bloc_clip",
+    "carrier_behavior": "inserted_ejected_empty",
+    "family": "hamster_m1garand_3006_enbloc",
+    "capacity": 8,
+    "reload_batch": 8
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "long_ammo",
+    "expected_ammo": "hamster:long_ammo"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "GunpowderRevolution v1.2.7 m1garand_data: ammo_amount=8",
+    "m1garand_state_machine has last_shoot, clip bone and empty-ping state",
+    "curated installed en-bloc clip with automatic empty ejection"
+  ]
+}

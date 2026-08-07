@@ -51,7 +51,7 @@ public final class MagazineItemBuilder {
     }
 
     public MagazineItemBuilder fromDefinition(GunFeedDefinition definition) {
-        int capacity = definition.getMechanism().usesLoadingDevice()
+        int capacity = definition.getMechanism().usesPhysicalFeedDevice()
                 ? definition.getFeedDeviceCapacity() : definition.getMagazineCapacity();
         return setFamily(definition.getMagazineFamily())
                 .setAmmoId(definition.getAmmoId())

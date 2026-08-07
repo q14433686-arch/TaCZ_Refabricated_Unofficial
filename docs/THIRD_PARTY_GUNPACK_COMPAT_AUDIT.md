@@ -58,7 +58,14 @@ hamster:type99
 
 共同事实：`ammo_amount = 5`、`bolt = manual_action`；当**空仓**、`SCOPE == tacz:empty` 且尚缺 5 发时，服务端执行一次 `consumeAmmoFromPlayer(5) → putAmmoInMagazine(5)`，客户端走 `reload_clip` / `reload_load_clip_5round`；其他条件下，服务端循环逐发 `consume(1) → put(1)`，客户端走 `reload_loop`。这不是仅凭文件名得到的判断。
 
-因此它们使用 `reload_routes`：完整兼容 5 发桥夹优先走批量动画；没有完整桥夹、装了瞄具、只缺 1–4 发或桥夹半满时，只有存在散装 `hamster:long_ammo` 才走原包逐发动画。桥夹被转空后仍作为 `0/5` 的可复用物件留在背包。SMLE、Berthier、Krag、转轮、杠杆、漏夹虽然也出现循环或 clip 文本，但其条件/批量不同，尚未套用此 profile。
+因此它们使用 `reload_routes`：完整兼容 5 发桥夹优先走批量动画；没有完整桥夹、装了瞄具、只缺 1–4 发或桥夹半满时，只有存在散装 `hamster:long_ammo` 才走原包逐发动画。桥夹被转空后仍作为 `0/5` 的可复用物件留在背包。
+
+另有两个已逐项核验但语义不同的 GunpowderRevolution 样本：
+
+- `hamster:m1garand`：`ammo_amount=8`，状态机具有 `last_shoot`、clip bone 和空仓 ping；使用 `en_bloc_clip` 的独立已安装状态，最后一发实际离枪后返还空漏夹；
+- `hamster:webley`：原 `hamster:speedloader` 附件给出 `extended_mag_level=1`，Lua/状态机在该级别选择 `reload_loader` 并按上游语义清空旧转轮弹再装入 6 发；工业层以完整物理快装器驱动该分支，半满快装器不会伪装为完整 loader。
+
+SMLE、Berthier、Krag、其他转轮、杠杆枪虽然也出现循环或 clip 文本，但其条件/批量不同，尚未套用这些 profile。
 
 ## 已内置的显式别名修复
 
@@ -78,5 +85,5 @@ hamster:type99
 1. 安装包后运行 `/tacz industry audit`，先得到 direct / alias / unresolved / curated / surveyed 数量；
 2. 对尚未覆盖的错误结果 ID 写 `industry/id_aliases`，且用 `expected_ammo`、`expected_capacity` 防止错误覆盖；
 3. 对需要真实工业化的枪写 `industry/reference/guns/<gun>.json`，先记录动作、实际供弹设备和弹药类别；
-4. 只有明确的 `detachable_magazine` / `belt` 才进入已安装实体弹匣路线；`stripper_clip` / `speedloader` 走内部仓增量转移事务，`en_bloc_clip`、`fuel_canister` 仍先记录事实、保持 legacy，等待各自真实机制；
+4. 只有明确的 `detachable_magazine` / `belt` 才进入已安装实体弹匣路线；`stripper_clip` / `speedloader` 走各自物理装填事务，`en_bloc_clip` 走独立“装入枪 NBT → 随射击扣除 → 空夹自动弹出”事务；`fuel_canister` 仍先记录事实、保持 legacy，等待其真实机制；
 5. 后续内存生成资源层只接收当前已审计的 133 条安全工作台身份，默认包的手工高保真路线始终优先。

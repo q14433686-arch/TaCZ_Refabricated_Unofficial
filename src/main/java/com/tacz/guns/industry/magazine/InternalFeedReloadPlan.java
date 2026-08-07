@@ -33,6 +33,10 @@ public final class InternalFeedReloadPlan {
     private final boolean scriptDriven;
     /** Attachment slot presented as occupied only to an audited animation/script selector. */
     private final String animationForceAttachmentPresent;
+    /** Legacy state-machine selector override for verified speedloader routes; -1 leaves it unchanged. */
+    private final int animationForceMagExtentLevel;
+    /** Meaning of a legacy script's removeAmmoFromMagazine call for this route. */
+    private final ReloadRouteScriptRemovalMode scriptRemovalMode;
     /** Inventory slot reserved for a loading device; -1 means ordinary loose-ammo loading. */
     private final int feedDeviceSlot;
     private final ItemStack expectedFeedDevice;
@@ -69,6 +73,17 @@ public final class InternalFeedReloadPlan {
                                   int sourceRoundBudget, boolean tactical, String reloadRouteId,
                                   boolean scriptDriven, String animationForceAttachmentPresent, int feedDeviceSlot,
                                   ItemStack expectedFeedDevice, boolean keepEmptyFeedDevice) {
+        this(gunId, ammoId, animationRounds, fallbackRounds, sourceRoundBudget, tactical, reloadRouteId,
+                scriptDriven, animationForceAttachmentPresent, -1, ReloadRouteScriptRemovalMode.CHAMBER,
+                feedDeviceSlot, expectedFeedDevice, keepEmptyFeedDevice);
+    }
+
+    public InternalFeedReloadPlan(Identifier gunId, Identifier ammoId, int animationRounds, int fallbackRounds,
+                                  int sourceRoundBudget, boolean tactical, String reloadRouteId,
+                                  boolean scriptDriven, String animationForceAttachmentPresent,
+                                  int animationForceMagExtentLevel,
+                                  ReloadRouteScriptRemovalMode scriptRemovalMode, int feedDeviceSlot,
+                                  ItemStack expectedFeedDevice, boolean keepEmptyFeedDevice) {
         this.gunId = gunId;
         this.ammoId = ammoId;
         this.animationRounds = Math.max(1, animationRounds);
@@ -79,6 +94,8 @@ public final class InternalFeedReloadPlan {
         this.scriptDriven = scriptDriven;
         this.animationForceAttachmentPresent = animationForceAttachmentPresent == null
                 ? "" : animationForceAttachmentPresent;
+        this.animationForceMagExtentLevel = Math.max(-1, animationForceMagExtentLevel);
+        this.scriptRemovalMode = scriptRemovalMode == null ? ReloadRouteScriptRemovalMode.CHAMBER : scriptRemovalMode;
         this.feedDeviceSlot = feedDeviceSlot;
         this.expectedFeedDevice = expectedFeedDevice == null ? ItemStack.EMPTY : expectedFeedDevice.copy();
         this.keepEmptyFeedDevice = keepEmptyFeedDevice;
@@ -117,6 +134,14 @@ public final class InternalFeedReloadPlan {
     public boolean forcesAttachmentPresent(String attachmentType) {
         return attachmentType != null && !attachmentType.isBlank()
                 && attachmentType.equalsIgnoreCase(animationForceAttachmentPresent);
+    }
+
+    public int getAnimationForceMagExtentLevel() {
+        return animationForceMagExtentLevel;
+    }
+
+    public ReloadRouteScriptRemovalMode getScriptRemovalMode() {
+        return scriptRemovalMode;
     }
 
     public boolean usesFeedDevice() {

@@ -8,6 +8,7 @@ import com.tacz.guns.api.event.common.GunReloadEvent;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunReload;
+import com.tacz.guns.industry.magazine.EnBlocClipService;
 import com.tacz.guns.industry.magazine.InternalFeedService;
 import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
@@ -62,16 +63,23 @@ public class LivingEntityReload {
             // Sneak + reload is the explicit magazine-eject action. It follows
             // the same state gates as a normal reload but does not start an
             // animation or consume loose ammunition.
-            if (shooter instanceof Player && shooter.isShiftKeyDown()
-                    && PhysicalMagazineService.usesPhysicalMagazine(currentGunItem)) {
-                PhysicalMagazineService.ejectMagazine(shooter, currentGunItem);
-                return;
+            if (shooter instanceof Player && shooter.isShiftKeyDown()) {
+                if (PhysicalMagazineService.usesPhysicalMagazine(currentGunItem)) {
+                    PhysicalMagazineService.ejectMagazine(shooter, currentGunItem);
+                    return;
+                }
+                if (EnBlocClipService.usesEnBlocClip(currentGunItem)) {
+                    EnBlocClipService.ejectClip(shooter, currentGunItem);
+                    return;
+                }
             }
             boolean physicalReload = shooter instanceof Player
                     && PhysicalMagazineService.usesPhysicalMagazine(currentGunItem);
+            boolean enBlocReload = shooter instanceof Player
+                    && EnBlocClipService.usesEnBlocClip(currentGunItem);
             boolean internalReload = shooter instanceof Player
                     && InternalFeedService.usesInternalFeed(currentGunItem);
-            boolean managedIndustryReload = physicalReload || internalReload;
+            boolean managedIndustryReload = physicalReload || enBlocReload || internalReload;
 
             // External carriers and physical internal feeds reserve their own
             // transaction here. Legacy Java/Lua logic supplies animation only.
@@ -96,6 +104,10 @@ public class LivingEntityReload {
                     && PhysicalMagazineService.beginReload(data, shooter, currentGunItem, tactical) == null) {
                 return;
             }
+            if (enBlocReload
+                    && EnBlocClipService.beginReload(data, shooter, currentGunItem, tactical) == null) {
+                return;
+            }
             if (internalReload
                     && InternalFeedService.beginReload(data, shooter, currentGunItem, tactical) == null) {
                 return;
@@ -115,6 +127,7 @@ public class LivingEntityReload {
                 data.reloadStateType = ReloadState.StateType.NOT_RELOADING;
                 data.reloadTimestamp = -1;
                 PhysicalMagazineService.clearReloadPlan(data);
+                EnBlocClipService.clearReloadPlan(data);
                 InternalFeedService.clearReloadPlan(data);
             }
         });
@@ -140,6 +153,7 @@ public class LivingEntityReload {
         // 如果没有在换弹，直接返回
         if (data.reloadTimestamp == -1) {
             PhysicalMagazineService.clearReloadPlan(data);
+            EnBlocClipService.clearReloadPlan(data);
             InternalFeedService.clearReloadPlan(data);
             return result;
         }
@@ -159,11 +173,15 @@ public class LivingEntityReload {
             PhysicalMagazineService.onReloadStateTransition(
                     data, shooter, currentGunItem, previousState, result.getStateType()
             );
+            EnBlocClipService.onReloadStateTransition(
+                    data, shooter, currentGunItem, previousState, result.getStateType()
+            );
             InternalFeedService.onReloadStateTransition(
                     data, shooter, currentGunItem, previousState, result.getStateType()
             );
         } else {
             PhysicalMagazineService.clearReloadPlan(data);
+            EnBlocClipService.clearReloadPlan(data);
             InternalFeedService.clearReloadPlan(data);
         }
 
@@ -172,6 +190,7 @@ public class LivingEntityReload {
         if (!result.getStateType().isReloading()) {
             data.reloadTimestamp = -1;
             PhysicalMagazineService.clearReloadPlan(data);
+            EnBlocClipService.clearReloadPlan(data);
             InternalFeedService.clearReloadPlan(data);
         }
         return result;
