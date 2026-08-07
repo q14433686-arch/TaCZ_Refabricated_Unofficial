@@ -1,0 +1,17 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "rainforest_m60_308_belt",
+  "magazine_capacity": 20,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.rainforest_m60_belt_20",
+  "carrier_variants": [
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.rainforest_m60_belt_35"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.rainforest_m60_belt_50"
+    }
+  ]
+}

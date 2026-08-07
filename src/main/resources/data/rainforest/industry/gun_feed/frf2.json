@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "rainforest_frf2_308",
+  "magazine_capacity": 5,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.rainforest_frf2_5",
+  "carrier_variants": [
+    {
+      "capacity": 7,
+      "display_name": "item.tacz.magazine.rainforest_frf2_7"
+    },
+    {
+      "capacity": 9,
+      "display_name": "item.tacz.magazine.rainforest_frf2_9"
+    },
+    {
+      "capacity": 10,
+      "display_name": "item.tacz.magazine.rainforest_frf2_10"
+    }
+  ]
+}

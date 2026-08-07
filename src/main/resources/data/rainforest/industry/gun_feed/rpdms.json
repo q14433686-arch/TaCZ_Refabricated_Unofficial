@@ -1,0 +1,17 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "rainforest_rpd_762x39_belt",
+  "magazine_capacity": 50,
+  "ammo": "tacz:762x39",
+  "display_name": "item.tacz.magazine.rainforest_rpd_belt_50",
+  "carrier_variants": [
+    {
+      "capacity": 75,
+      "display_name": "item.tacz.magazine.rainforest_rpd_belt_75"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.rainforest_rpd_belt_100"
+    }
+  ]
+}

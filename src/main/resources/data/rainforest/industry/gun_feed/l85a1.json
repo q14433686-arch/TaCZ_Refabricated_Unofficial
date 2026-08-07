@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "stanag_556",
+  "magazine_capacity": 30,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.stanag_556",
+  "carrier_variants": [
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.rainforest_stanag_556_35"
+    },
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.rainforest_stanag_556_40"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.rainforest_stanag_556_45"
+    }
+  ]
+}

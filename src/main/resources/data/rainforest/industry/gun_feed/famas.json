@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "rainforest_famas_556",
+  "magazine_capacity": 25,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.rainforest_famas_25",
+  "carrier_variants": [
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.rainforest_famas_30"
+    },
+    {
+      "capacity": 32,
+      "display_name": "item.tacz.magazine.rainforest_famas_32"
+    },
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.rainforest_famas_35"
+    }
+  ]
+}

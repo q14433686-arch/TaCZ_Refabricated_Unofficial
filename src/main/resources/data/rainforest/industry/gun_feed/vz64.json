@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "rainforest_vz64_9x19",
+  "magazine_capacity": 10,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.rainforest_vz64_10",
+  "carrier_variants": [
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.rainforest_vz64_12"
+    },
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.rainforest_vz64_15"
+    },
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.rainforest_vz64_20"
+    }
+  ]
+}

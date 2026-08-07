@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "canonical_model": "rainforest/vz68",
+  "display_name": "Samopal Vzor 1961",
+  "action": "blowback_smg",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "rainforest_vz68_9x19",
+    "capacity": 10,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "9mm",
+    "expected_ammo": "tacz:9mm"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Cold War from 1947-1991 v0.51: loaded GunIndex/GunData ammo, capacity and reload contract audited",
+    "Curated real feed mechanism reviewed against the pack identity and reload/animation evidence",
+    "Runtime declaration remains guarded against loaded GunData ammo and base capacity"
+  ]
+}

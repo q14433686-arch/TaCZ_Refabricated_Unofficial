@@ -77,7 +77,25 @@
 
 它有单独的 `rainforest/industry/gun_feed/fal.json` 和参考档案；`carrier_variants` 的每一种容量都由当前 GunData 精确验证。其原动画包含 `magrelease` 与 `additional_magazine` 的空仓/战术 reload 路径，因此不是仅从 `reload.type` 写出的泛化 JSON。包缺失时它休眠；Ammo、基础容量或任一扩容数组值变化时它会被拒绝，而不会接管升级后的枪。
 
-物理 FAL 弹匣本身是容量部件：20/25/30/32 发都应直接被同族 FAL 接收机识别，不要求再装原包的虚拟 `extended_mag` 配件；插入后的实体容量会覆盖 HUD、tooltip 与脚本容量读数。其他外部枪仍须逐把通过同样的证据链，不能因为 FAL 已接入就按名称批量开启。
+物理 FAL 弹匣本身是容量部件：20/25/30/32 发都应直接被同族 FAL 接收机识别，不要求再装原包的虚拟 `extended_mag` 配件；插入后的实体容量会覆盖 HUD、tooltip 与脚本容量读数。
+
+## Cold War 第一批 cohort 审计
+
+根据 main 中 `Cold War from 1947-1991 v0.51` 的实际 index、GunData、默认/指定动画及导出的 `review_cohorts`，首批明确接入的不是“所有 rifle/smg 自动弹匣化”，而是以下逐枪审计后的机制：
+
+| 枪 | 机制 | family / 说明 |
+|---|---|---|
+| EM-2、FAMAS F1 | detachable magazine | 各自专用实体族 |
+| FR-F2 | detachable magazine | 专用 .308 狙击枪弹匣族 |
+| HK SPG1（PSG-1 资料/ G3 动画） | detachable magazine | `g3_308`，可使用已声明 G3 族载具 |
+| L85A1、L86A2 | detachable magazine | `stanag_556`；L86 是支持步枪但仍使用 STANAG，而非因为 class=mg 就造 belt |
+| M60 | belt | 专用 .308 弹链箱族 |
+| RPD、RPD-MS | belt | 共用 7.62×39 弹链/鼓式容器族；同容量变体共享显示身份 |
+| PM12S、PM-63、Vz.64、Vz.68 | detachable magazine | 各自专用 9 mm 族 |
+
+这些 profile 的 Ammo、基础容量和可选载具容量均由当前 Cold War GunData 校验；每个额外容量必须等于该 GunData 可选择的前三项扩容值。它们的制造出口仍是 surveyed Gunsmith Table 的真实多槽事务，不能伪装成默认枪包的高保真几何 Create 线。
+
+`56` 保持已审计的桥夹固定仓；AT4/M72 保持低容量发射器路径。此批接入不为 `ccrp`、`cib`、`ww` 等其他 cohort 自动创建任何实体弹匣。
 
 ## 当前可安全使用的工作流
 

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "rainforest_pm12s_9x19",
+  "magazine_capacity": 20,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.rainforest_pm12s_20",
+  "carrier_variants": [
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.rainforest_pm12s_25"
+    },
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.rainforest_pm12s_30"
+    },
+    {
+      "capacity": 32,
+      "display_name": "item.tacz.magazine.rainforest_pm12s_32"
+    }
+  ]
+}

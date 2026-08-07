@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "canonical_model": "rainforest/l85a1",
+  "display_name": "L85A1 IW",
+  "action": "gas_operated_rifle",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "stanag_556",
+    "capacity": 30,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "556x45",
+    "expected_ammo": "tacz:556x45"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Cold War from 1947-1991 v0.51: loaded GunIndex/GunData ammo, capacity and reload contract audited",
+    "Curated real feed mechanism reviewed against the pack identity and reload/animation evidence",
+    "Runtime declaration remains guarded against loaded GunData ammo and base capacity"
+  ]
+}
