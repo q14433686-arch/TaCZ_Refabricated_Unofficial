@@ -12,6 +12,7 @@ import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceProfile;
 import com.tacz.guns.industry.reference.IndustryIdentityAlias;
 import com.tacz.guns.industry.reference.IndustryReferenceProfile;
 import net.minecraft.resources.Identifier;
@@ -61,6 +62,11 @@ public interface ICommonResourceProvider {
     @Nullable IndustryReferenceProfile getIndustryReferenceProfile(Identifier gunId);
 
     Set<Map.Entry<Identifier, IndustryReferenceProfile>> getAllIndustryReferenceProfiles();
+
+    /** Optional data-driven condition/fouling baseline for one loaded gun identity. */
+    @Nullable IndustryMaintenanceProfile getIndustryMaintenanceProfile(Identifier gunId);
+
+    Set<Map.Entry<Identifier, IndustryMaintenanceProfile>> getAllIndustryMaintenanceProfiles();
 
     /** Explicit guarded table-result alias, keyed by canonical table recipe id. */
     @Nullable IndustryIdentityAlias getIndustryIdentityAlias(Identifier recipeId);

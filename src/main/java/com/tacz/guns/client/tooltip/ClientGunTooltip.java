@@ -11,6 +11,7 @@ import com.tacz.guns.client.resource.pojo.PackInfo;
 import com.tacz.guns.client.resource.pojo.display.gun.AmmoCountStyle;
 import com.tacz.guns.client.resource.pojo.display.gun.DamageStyle;
 import com.tacz.guns.config.sync.SyncConfig;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
 import com.tacz.guns.item.GunTooltipPart;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -59,6 +60,8 @@ public class ClientGunTooltip implements ClientTooltipComponent {
     private MutableComponent weight;
     private MutableComponent tips;
     private MutableComponent levelInfo;
+    /** Phase-A read-only condition/fouling line; null for non-industrial guns. */
+    private @Nullable Component maintenanceInfo;
     private @Nullable MutableComponent packInfo;
 
     private int maxWidth;
@@ -85,6 +88,9 @@ public class ClientGunTooltip implements ClientTooltipComponent {
         }
         if (shouldShow(GunTooltipPart.BASE_INFO)) {
             height += 34;
+        }
+        if (this.maintenanceInfo != null) {
+            height += 10;
         }
         if (shouldShow(GunTooltipPart.EXTRA_DAMAGE_INFO)) {
             height += 34;
@@ -188,6 +194,10 @@ public class ClientGunTooltip implements ClientTooltipComponent {
             this.maxWidth = Math.max(font.width(this.damage), this.maxWidth);
         }
 
+        this.maintenanceInfo = IndustryMaintenanceService.getTooltipLine(gun);
+        if (this.maintenanceInfo != null) {
+            this.maxWidth = Math.max(font.width(this.maintenanceInfo), this.maxWidth);
+        }
 
         if (shouldShow(GunTooltipPart.EXTRA_DAMAGE_INFO)) {
             @Nullable ExtraDamage extraDamage = bulletData.getExtraDamage();
@@ -275,6 +285,10 @@ public class ClientGunTooltip implements ClientTooltipComponent {
             yOffset += 10;
         }
 
+        if (this.maintenanceInfo != null) {
+            graphics.text(font, this.maintenanceInfo, pX, yOffset, 0xFF777777);
+            yOffset += 10;
+        }
 
         if (shouldShow(GunTooltipPart.EXTRA_DAMAGE_INFO)) {
             yOffset += 4;

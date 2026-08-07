@@ -11,6 +11,7 @@ import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.client.resource.pojo.display.gun.AmmoCountStyle;
 import com.tacz.guns.config.client.RenderConfig;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.util.AttachmentDataUtils;
@@ -199,6 +200,29 @@ public class GunHudOverlay {
         graphics.blit(RenderPipelines.GUI_TEXTURED, fireModeTexture,
                 (int) (width - 68.5 + font.width(currentAmmoCountText) * 1.5), height - 38,
                 0.0F, 0.0F, 10, 10, 10, 10);
+
+        // Phase-A maintenance HUD: two compact server-NBT-backed bars above
+        // the existing gun card. The upper bar is the worst component
+        // condition; the lower bar is fouling. They are informational only:
+        // no jam/lockout is enabled in this phase.
+        IndustryMaintenanceService.Snapshot maintenance = IndustryMaintenanceService.getSnapshot(stack);
+        if (maintenance.eligible()) {
+            final int maintenanceLeft = width - 117;
+            final int maintenanceTop = height - 52;
+            final int maintenanceWidth = 39;
+            int conditionWidth = Math.round(maintenanceWidth * maintenance.minimumCondition()
+                    / (float) IndustryMaintenanceService.MAX_CONDITION);
+            int foulingWidth = Math.round(maintenanceWidth * maintenance.fouling()
+                    / (float) IndustryMaintenanceService.MAX_CONDITION);
+            graphics.fill(maintenanceLeft, maintenanceTop, maintenanceLeft + maintenanceWidth,
+                    maintenanceTop + 3, 0xAA202020);
+            graphics.fill(maintenanceLeft, maintenanceTop, maintenanceLeft + conditionWidth,
+                    maintenanceTop + 3, 0xFF000000 | maintenance.status().color());
+            graphics.fill(maintenanceLeft, maintenanceTop + 4, maintenanceLeft + maintenanceWidth,
+                    maintenanceTop + 6, 0xAA202020);
+            graphics.fill(maintenanceLeft, maintenanceTop + 4, maintenanceLeft + foulingWidth,
+                    maintenanceTop + 6, 0xFFC98647);
+        }
     }
 
     /** 版本信息文本，格式与上游一致：{@code <MC版本>-<模组版本>}。 */

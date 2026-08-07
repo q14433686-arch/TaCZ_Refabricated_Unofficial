@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.industry.IndustryProfileManager;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.resource.ICommonResourceProvider;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -121,6 +122,32 @@ public final class SurveyedIndustryRecipeFactory {
         materials.add(material(partial("tacz:gun_component", surveyedKitTag(platform)), 1, true));
         materials.add(material(partial("tacz:gun_blueprint", productionTemplateTag(platform)), 1, false));
         materials.add(material(partial("tacz:press_die", surveyFixtureTag()), 1, false));
+        // A surveyed final gun has passed a real multi-slot industrial gate.
+        // Persist the same provenance family as Create-built defaults so phase-A
+        // maintenance can migrate it safely without guessing from GunId alone.
+        JsonObject result = object(recipe, "result");
+        if (result != null) {
+            JsonObject nbt = result.has("nbt") && result.get("nbt").isJsonObject()
+                    ? result.getAsJsonObject("nbt") : new JsonObject();
+            nbt.addProperty("IndustryAssemblyPlatform", platform.platformId());
+            nbt.addProperty("IndustryAssemblyRecipe", "tacz:industry/survey/gun/"
+                    + platform.gunId().getNamespace() + "/" + platform.gunId().getPath());
+            nbt.addProperty("IndustryAssemblyTier", "surveyed");
+            nbt.addProperty("IndustryAssemblyActionProfile", "surveyed");
+            nbt.addProperty("IndustryAssemblyToolingScope", "surveyed");
+            // The server fills the per-stack random seed on first handling;
+            // all visible condition/fouling values are full and clean at the
+            // actual surveyed final-gun transaction, not guessed from GunId.
+            nbt.addProperty(IndustryMaintenanceService.SCHEMA_TAG, IndustryMaintenanceService.SCHEMA_VERSION);
+            nbt.addProperty(IndustryMaintenanceService.RECEIVER_TAG, IndustryMaintenanceService.MAX_CONDITION);
+            nbt.addProperty(IndustryMaintenanceService.BOLT_TAG, IndustryMaintenanceService.MAX_CONDITION);
+            nbt.addProperty(IndustryMaintenanceService.BARREL_TAG, IndustryMaintenanceService.MAX_CONDITION);
+            nbt.addProperty(IndustryMaintenanceService.TRIGGER_TAG, IndustryMaintenanceService.MAX_CONDITION);
+            nbt.addProperty(IndustryMaintenanceService.RECOIL_TAG, IndustryMaintenanceService.MAX_CONDITION);
+            nbt.addProperty(IndustryMaintenanceService.FOULING_TAG, 0);
+            nbt.addProperty(IndustryMaintenanceService.SHOTS_TAG, 0);
+            result.add("nbt", nbt);
+        }
         recipe.addProperty(FALLBACK_MARKER, true);
     }
 

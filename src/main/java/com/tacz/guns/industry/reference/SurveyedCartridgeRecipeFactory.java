@@ -13,14 +13,18 @@ import net.minecraft.resources.Identifier;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Generates a conservative cartridge-machine path for audited third-party
  * loose-ammo table results.
  *
- * <p>Only non-{@code tacz} ammo with a real loaded AmmoIndex and at least one
- * normal magazine/manual gun consumer is eligible. Fuel/inventory consumers
- * remain outside this path. The generated gauge/case/projectile commissions
+ * <p>Any ammo identity not already covered by an explicit high-fidelity
+ * cartridge declaration is eligible when it has a real loaded AmmoIndex and at
+ * least one normal magazine/manual gun consumer. This is identity-based rather
+ * than namespace-based so a third-party TACZ-namespaced compatibility round
+ * cannot retain an old table shortcut. Fuel/inventory consumers remain outside
+ * this path. The generated gauge/case/projectile commissions
  * preserve the legacy ammo material bill once as a real Gunsmith Table survey
  * operation; subsequent batches use exact NBT case/projectile stacks in the
  * dedicated four-slot cartridge assembler.</p>
@@ -43,17 +47,26 @@ public final class SurveyedCartridgeRecipeFactory {
     private SurveyedCartridgeRecipeFactory() {
     }
 
-    public static Result apply(Map<Identifier, JsonElement> source, ICommonResourceProvider assets) {
+    /**
+     * @param explicitlyManagedAmmo identities already backed by an explicit
+     *                              high-fidelity cartridge definition. They
+     *                              must not be re-surveyed merely because an
+     *                              optional gun pack ships a duplicate legacy
+     *                              table recipe for the same AmmoId.
+     */
+    public static Result apply(Map<Identifier, JsonElement> source, ICommonResourceProvider assets,
+                               Set<Identifier> explicitlyManagedAmmo) {
         if (!IndustryProfileManager.isCreateFlyProfileActive()
                 || SyncConfig.AUTO_DISCOVER_INDUSTRY_REPLACEMENTS == null
                 || !SyncConfig.AUTO_DISCOVER_INDUSTRY_REPLACEMENTS.get()) {
-            return new Result(source, Map.of(), 0);
+            return new Result(source, Map.of(), Set.of(), 0);
         }
+        Set<Identifier> protectedAmmo = explicitlyManagedAmmo == null ? Set.of() : Set.copyOf(explicitlyManagedAmmo);
         Map<Identifier, JsonElement> output = new LinkedHashMap<>();
         Map<Identifier, SurveyedCartridge> cartridges = new LinkedHashMap<>();
         int replaced = 0;
         for (Map.Entry<Identifier, JsonElement> entry : source.entrySet()) {
-            SurveyedCartridge cartridge = surveyedCartridge(entry.getKey(), entry.getValue(), assets);
+            SurveyedCartridge cartridge = surveyedCartridge(entry.getKey(), entry.getValue(), assets, protectedAmmo);
             if (cartridge == null || cartridges.containsKey(cartridge.ammoId())) {
                 output.put(entry.getKey(), entry.getValue());
                 continue;
@@ -84,11 +97,12 @@ public final class SurveyedCartridgeRecipeFactory {
             GunMod.LOGGER.info("Synthesized {} surveyed cartridge fallback(s), {} survey/reconditioning commission(s), and {} dedicated assembler definition(s).",
                     replaced, replaced * 4, definitions.size());
         }
-        return new Result(Map.copyOf(output), Map.copyOf(definitions), replaced);
+        return new Result(Map.copyOf(output), Map.copyOf(definitions), Set.copyOf(cartridges.keySet()), replaced);
     }
 
     private static SurveyedCartridge surveyedCartridge(Identifier recipeId, JsonElement raw,
-                                                        ICommonResourceProvider assets) {
+                                                        ICommonResourceProvider assets,
+                                                        Set<Identifier> explicitlyManagedAmmo) {
         if (raw == null || !raw.isJsonObject()) {
             return null;
         }
@@ -103,7 +117,11 @@ public final class SurveyedCartridgeRecipeFactory {
             return null;
         }
         Identifier ammoId = Identifier.tryParse(string(result, "id"));
-        if (ammoId == null || "tacz".equals(ammoId.getNamespace())) {
+        // Namespace alone is not ownership evidence. Several third-party packs
+        // legitimately expose an extra TACZ-namespaced AmmoIndex (for example
+        // a .300 Blackout compatibility round). Only an identity with an
+        // explicit high-fidelity cartridge declaration is protected here.
+        if (ammoId == null || explicitlyManagedAmmo.contains(ammoId)) {
             return null;
         }
         CommonAmmoIndex ammoIndex = assets.getAmmoIndex(ammoId);
@@ -359,8 +377,13 @@ public final class SurveyedCartridgeRecipeFactory {
         }
     }
 
+    /**
+     * managedAmmoIds includes one identity per generated assembler definition.
+     * The table transformer removes every legacy table shortcut that emits one
+     * of those identities, including duplicate recipes from other gun packs.
+     */
     public record Result(Map<Identifier, JsonElement> recipes, Map<Identifier, JsonElement> definitions,
-                         int replacedAmmoRecipes) {
+                         Set<Identifier> managedAmmoIds, int replacedAmmoRecipes) {
     }
 
     private record SurveyedCartridge(Identifier sourceRecipeId, Identifier ammoId, String caliber, int batch,

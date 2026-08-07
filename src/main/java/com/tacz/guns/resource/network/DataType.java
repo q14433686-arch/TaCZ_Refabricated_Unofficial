@@ -31,6 +31,9 @@ public enum DataType {
     /** Curated factual action/feed/ammunition reference profiles keyed by loaded GunId. */
     INDUSTRY_REFERENCE,
 
+    /** Per-gun condition/fouling baselines synchronized for maintenance HUD/Tooltip semantics. */
+    INDUSTRY_MAINTENANCE,
+
     /** Explicit, guarded repairs for legacy table recipe result ids. */
     INDUSTRY_ID_ALIAS,
 }

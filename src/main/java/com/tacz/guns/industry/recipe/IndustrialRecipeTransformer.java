@@ -39,20 +39,29 @@ public final class IndustrialRecipeTransformer {
      * @param rawAssemblies           terminal declaration files, keyed by legacy table-recipe id
      * @param rawAmmoReplacements     old table-ammo declarations
      * @param allRawRecipes           unfiltered {@code recipe/**} data used to verify named Create processes
+     * @param managedCartridgeAmmo    AmmoIds with an explicit or dynamically
+     *                                surveyed four-slot cartridge definition
      */
     public static Map<Identifier, JsonElement> transform(Map<Identifier, JsonElement> source,
                                                           Map<Identifier, JsonElement> rawAssemblies,
                                                           Map<Identifier, JsonElement> rawAmmoReplacements,
-                                                          Map<Identifier, JsonElement> allRawRecipes) {
+                                                          Map<Identifier, JsonElement> allRawRecipes,
+                                                          Set<Identifier> managedCartridgeAmmo) {
         if (!IndustryProfileManager.isCreateFlyProfileActive()) {
             return source;
         }
 
         Map<Identifier, JsonElement> transformed = new LinkedHashMap<>(source);
-        Set<Identifier> replacedAmmoRecipes = legacyAmmoRecipeIds(rawAmmoReplacements);
-        replacedAmmoRecipes.forEach(transformed::remove);
+        // A cartridge declaration owns an AmmoId, not merely one historical
+        // recipe filename. Compatibility packs frequently duplicate a default
+        // copper/gunpowder table recipe under their own namespace; retaining it
+        // would bypass the declared case/projectile/primer/propellant assembly.
+        Set<Identifier> explicitlyDeclaredAmmoRecipes = legacyAmmoRecipeIds(rawAmmoReplacements);
         Set<Identifier> surveyedAmmoRecipes = surveyedAmmoRecipeIds(source);
-        surveyedAmmoRecipes.forEach(transformed::remove);
+        Set<Identifier> allManagedAmmoRecipes = new HashSet<>(explicitlyDeclaredAmmoRecipes);
+        allManagedAmmoRecipes.addAll(surveyedAmmoRecipes);
+        allManagedAmmoRecipes.addAll(ammoRecipeIdsForManagedAmmo(source, managedCartridgeAmmo));
+        allManagedAmmoRecipes.forEach(transformed::remove);
 
         int removedGunTableRecipes = 0;
         // A declared platform is never silently downgraded to the generic
@@ -82,9 +91,10 @@ public final class IndustrialRecipeTransformer {
 
         AutoFallbackStats autoFallbacks = autoDiscoverFallbacks(transformed, declaredAssemblyRecipes);
         GunMod.LOGGER.info(
-                "CREATE_FLY industry profile removed {} legacy gun-table terminal recipe(s) in favour of validated sequential assembly, removed {} explicit and {} surveyed ammo table recipe(s), and synthesized {} gun / {} ammo / {} attachment fallback replacement(s); {} unresolved result identity recipe(s) retained unchanged.",
-                removedGunTableRecipes, replacedAmmoRecipes.size(), surveyedAmmoRecipes.size(), autoFallbacks.guns(),
-                autoFallbacks.ammo(), autoFallbacks.attachments(), autoFallbacks.unresolved());
+                "CREATE_FLY industry profile removed {} legacy gun-table terminal recipe(s) in favour of validated sequential assembly, removed {} managed ammo table shortcut(s) ({} explicit declaration id(s), {} surveyed source id(s)), and synthesized {} gun / {} ammo / {} attachment fallback replacement(s); {} unresolved result identity recipe(s) retained unchanged.",
+                removedGunTableRecipes, allManagedAmmoRecipes.size(), explicitlyDeclaredAmmoRecipes.size(),
+                surveyedAmmoRecipes.size(), autoFallbacks.guns(), autoFallbacks.ammo(), autoFallbacks.attachments(),
+                autoFallbacks.unresolved());
         return transformed;
     }
 
@@ -283,6 +293,35 @@ public final class IndustrialRecipeTransformer {
                 if (parsed != null) {
                     ids.add(parsed);
                 }
+            }
+        }
+        return ids;
+    }
+
+    /**
+     * Remove every old Gunsmith Table route that outputs an AmmoId now owned by
+     * a four-slot cartridge assembly definition. Recipe ids are not reliable
+     * ownership keys: the bundled 7.62×39 recipe and an optional pack's
+     * copper-case duplicate may have different paths while emitting the same
+     * physical ammunition identity.
+     */
+    private static Set<Identifier> ammoRecipeIdsForManagedAmmo(Map<Identifier, JsonElement> recipes,
+                                                                 Set<Identifier> managedAmmo) {
+        if (managedAmmo == null || managedAmmo.isEmpty()) {
+            return Set.of();
+        }
+        Set<Identifier> ids = new HashSet<>();
+        for (Map.Entry<Identifier, JsonElement> entry : recipes.entrySet()) {
+            if (entry.getValue() == null || !entry.getValue().isJsonObject()) {
+                continue;
+            }
+            JsonObject result = object(entry.getValue().getAsJsonObject(), "result");
+            if (result == null || !"ammo".equals(string(result, "type"))) {
+                continue;
+            }
+            Identifier ammoId = Identifier.tryParse(string(result, "id"));
+            if (ammoId != null && managedAmmo.contains(ammoId)) {
+                ids.add(entry.getKey());
             }
         }
         return ids;

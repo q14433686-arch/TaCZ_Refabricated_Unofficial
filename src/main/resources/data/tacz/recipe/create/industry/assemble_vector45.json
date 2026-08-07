@@ -42,7 +42,15 @@
         "IndustryAssemblyRecipe": "tacz:gun/vector45",
         "IndustryAssemblyTier": "advanced",
         "IndustryAssemblyActionProfile": "blowback_smg",
-        "IndustryAssemblyToolingScope": "final_acceptance"
+        "IndustryAssemblyToolingScope": "final_acceptance",
+        "IndustryMaintenanceSchema": 1,
+        "IndustryConditionReceiver": 10000,
+        "IndustryConditionBolt": 10000,
+        "IndustryConditionBarrel": 10000,
+        "IndustryConditionTrigger": 10000,
+        "IndustryConditionRecoil": 10000,
+        "IndustryFouling": 0,
+        "IndustryMaintenanceShots": 0
       }
     }
   },

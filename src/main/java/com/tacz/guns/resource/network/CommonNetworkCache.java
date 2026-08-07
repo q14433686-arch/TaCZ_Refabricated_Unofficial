@@ -18,6 +18,7 @@ import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import com.tacz.guns.resource.pojo.data.block.BlockData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceProfile;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
@@ -55,6 +56,8 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     public Map<Identifier, CartridgeAssemblyDefinition> cartridgeAssembly = new HashMap<>();
     /** Factual gun-id → action/feed/ammunition profiles. */
     public Map<Identifier, IndustryReferenceProfile> industryReference = new HashMap<>();
+    /** Server-synchronized condition/fouling profile data keyed by GunId. */
+    public Map<Identifier, IndustryMaintenanceProfile> industryMaintenance = new HashMap<>();
     /** Explicit aliases are stored by their logical TableRecipe id, not source-file id. */
     public Map<Identifier, IndustryIdentityAlias> industryIdentityAlias = new HashMap<>();
     public Map<Identifier, Set<String>> attachmentTags = new HashMap<>();
@@ -160,6 +163,16 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     }
 
     @Override
+    public @Nullable IndustryMaintenanceProfile getIndustryMaintenanceProfile(Identifier gunId) {
+        return industryMaintenance.get(gunId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, IndustryMaintenanceProfile>> getAllIndustryMaintenanceProfiles() {
+        return industryMaintenance.entrySet();
+    }
+
+    @Override
     public @Nullable IndustryIdentityAlias getIndustryIdentityAlias(Identifier recipeId) {
         return industryIdentityAlias.get(recipeId);
     }
@@ -210,6 +223,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
         industryProcess.clear();
         cartridgeAssembly.clear();
         industryReference.clear();
+        industryMaintenance.clear();
         industryIdentityAlias.clear();
         recipeFilter.clear();
         tableRecipe.clear();
@@ -232,6 +246,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                 case BLOCK_INDEX:
                 case CARTRIDGE_ASSEMBLY:
                 case INDUSTRY_REFERENCE:
+                case INDUSTRY_MAINTENANCE:
                 case INDUSTRY_ID_ALIAS:
                     delayed.put(entry.getKey(), entry.getValue());
                     break;
@@ -307,6 +322,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                     case INDUSTRY_PROCESS -> industryProcess.put(entry.getKey(), parse(entry.getValue(), IndustryProcessDefinition.class));
                     case CARTRIDGE_ASSEMBLY -> cartridgeAssembly.put(entry.getKey(), parse(entry.getValue(), CartridgeAssemblyDefinition.class));
                     case INDUSTRY_REFERENCE -> industryReference.put(entry.getKey(), parse(entry.getValue(), IndustryReferenceProfile.class));
+                    case INDUSTRY_MAINTENANCE -> industryMaintenance.put(entry.getKey(), parse(entry.getValue(), IndustryMaintenanceProfile.class));
                     case INDUSTRY_ID_ALIAS -> {
                         IndustryIdentityAlias alias = parse(entry.getValue(), IndustryIdentityAlias.class);
                         if (alias != null && alias.getRecipe() != null) {

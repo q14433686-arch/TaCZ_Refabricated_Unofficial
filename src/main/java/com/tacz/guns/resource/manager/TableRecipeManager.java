@@ -162,15 +162,25 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         var aliases = CommonAssetsManager.getInstance() == null ? null
                 : CommonAssetsManager.getInstance().getIndustryIdentityAliasManager();
         Map<Identifier, JsonElement> effectiveRecipes = aliases == null ? ours : aliases.applyAliases(ours);
+        // Explicit default-cartridge declarations identify ammo by the actual
+        // table result, not by namespace/path guessing. This lets a third-party
+        // recipe that emits tacz:762x39 be removed as a duplicate legacy
+        // shortcut while still allowing an unrelated tacz:300blackout index to
+        // enter the surveyed cartridge path.
+        Set<Identifier> explicitlyManagedAmmo = resolveExplicitManagedAmmoIds(
+                effectiveRecipes, industryAmmoReplacements
+        );
         SurveyedIndustryRecipeFactory.Result surveyed = SurveyedIndustryRecipeFactory.apply(
                 effectiveRecipes, new HashSet<>(industryAssemblies.keySet()), CommonAssetsManager.get()
         );
         effectiveRecipes = surveyed.recipes();
         SurveyedCartridgeRecipeFactory.Result surveyedAmmo = SurveyedCartridgeRecipeFactory.apply(
-                effectiveRecipes, CommonAssetsManager.get()
+                effectiveRecipes, CommonAssetsManager.get(), explicitlyManagedAmmo
         );
         effectiveRecipes = surveyedAmmo.recipes();
         surveyedCartridgeDefinitions = surveyedAmmo.definitions();
+        Set<Identifier> managedCartridgeAmmo = new HashSet<>(explicitlyManagedAmmo);
+        managedCartridgeAmmo.addAll(surveyedAmmo.managedAmmoIds());
         industryAssembliesByGun = resolveIndustryAssembliesByGun(effectiveRecipes, industryAssemblies);
         // The industrial profile removes only terminals that have a real,
         // validated one-workpiece Create sequenced-assembly process. Pass the
@@ -180,7 +190,7 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         // the local data map and network cache, so server validation and every
         // client recipe viewer agree on which shortcuts are disabled.
         Map<Identifier, JsonElement> profileRecipes = IndustrialRecipeTransformer.transform(
-                effectiveRecipes, industryAssemblies, industryAmmoReplacements, pObject
+                effectiveRecipes, industryAssemblies, industryAmmoReplacements, pObject, managedCartridgeAmmo
         );
         // 父类会用这一份（且仅这一份）同时构建 dataMap 与 networkCache。
         super.apply(profileRecipes, pResourceManager, pProfiler);
@@ -258,6 +268,49 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         }
         JsonObject result = recipe.getAsJsonObject("result");
         if (!"gun".equals(result.has("type") && result.get("type").isJsonPrimitive()
+                ? result.get("type").getAsString() : "")) {
+            return null;
+        }
+        return result.has("id") && result.get("id").isJsonPrimitive()
+                ? Identifier.tryParse(result.get("id").getAsString()) : null;
+    }
+
+    /**
+     * Resolve the actual AmmoId guarded by each explicit cartridge declaration.
+     * A declaration names a legacy table recipe because the same default ammo
+     * may also be emitted by a compatibility pack under a different recipe id.
+     */
+    private static Set<Identifier> resolveExplicitManagedAmmoIds(Map<Identifier, JsonElement> recipes,
+                                                                   Map<Identifier, JsonElement> declarations) {
+        Set<Identifier> ammoIds = new HashSet<>();
+        for (JsonElement declaration : declarations.values()) {
+            if (declaration == null || !declaration.isJsonObject()) {
+                continue;
+            }
+            JsonObject object = declaration.getAsJsonObject();
+            if (!object.has("legacy_recipe") || !object.get("legacy_recipe").isJsonPrimitive()) {
+                continue;
+            }
+            Identifier recipeId = Identifier.tryParse(object.get("legacy_recipe").getAsString());
+            Identifier ammoId = recipeId == null ? null : ammoResultId(recipes.get(recipeId));
+            if (ammoId != null) {
+                ammoIds.add(ammoId);
+            }
+        }
+        return Set.copyOf(ammoIds);
+    }
+
+    @Nullable
+    private static Identifier ammoResultId(JsonElement rawRecipe) {
+        if (rawRecipe == null || !rawRecipe.isJsonObject()) {
+            return null;
+        }
+        JsonObject recipe = rawRecipe.getAsJsonObject();
+        if (!recipe.has("result") || !recipe.get("result").isJsonObject()) {
+            return null;
+        }
+        JsonObject result = recipe.getAsJsonObject("result");
+        if (!"ammo".equals(result.has("type") && result.get("type").isJsonPrimitive()
                 ? result.get("type").getAsString() : "")) {
             return null;
         }

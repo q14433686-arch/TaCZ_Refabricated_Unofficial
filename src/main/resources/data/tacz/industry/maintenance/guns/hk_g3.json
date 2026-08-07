@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_industry_generator",
+  "eligibility": "industrial_assembly",
+  "maintenance_class": "roller_delayed_rifle",
+  "wear_per_shot": {
+    "receiver": 1,
+    "bolt": 2,
+    "barrel": 3,
+    "trigger": 1,
+    "recoil": 2
+  },
+  "fouling_per_shot": 3,
+  "heat_stress_multiplier": 1.0,
+  "jam": {
+    "warning_condition": 6000,
+    "critical_condition": 1500,
+    "max_chance": 0.08
+  }
+}

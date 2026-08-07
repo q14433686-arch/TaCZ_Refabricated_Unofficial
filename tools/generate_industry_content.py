@@ -1310,6 +1310,25 @@ def generated_template_transfer_files(platform: dict[str, Any]) -> dict[Path, An
     }
 
 
+def initial_maintenance_state() -> dict[str, Any]:
+    """Initial phase-A custom data written onto every real industrial gun result.
+
+    The random maintenance seed is intentionally not baked into a shared recipe
+    result. The first server-side handling assigns one per ItemStack; conditions
+    themselves are already explicit full/clean state at manufacture time.
+    """
+    return {
+        "IndustryMaintenanceSchema": 1,
+        "IndustryConditionReceiver": 10000,
+        "IndustryConditionBolt": 10000,
+        "IndustryConditionBarrel": 10000,
+        "IndustryConditionTrigger": 10000,
+        "IndustryConditionRecoil": 10000,
+        "IndustryFouling": 0,
+        "IndustryMaintenanceShots": 0,
+    }
+
+
 def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
     slug = platform["slug"]
     name = platform["platform"]
@@ -1507,6 +1526,7 @@ def generated_platform_files(platform: dict[str, Any]) -> dict[Path, Any]:
             "IndustryAssemblyTier": manufacturing_tier(platform),
             "IndustryAssemblyActionProfile": profile,
             "IndustryAssemblyToolingScope": scope,
+            **initial_maintenance_state(),
         }),
         "sequence": sequence,
     }
@@ -2495,6 +2515,102 @@ def generated_reference_profile_files(platforms: list[dict[str, Any]]) -> dict[P
             profile["ammunition"]["expected_ammo"] = ammo
         files[RESOURCE_ROOT / f"data/{namespace}/industry/reference/guns/{gun_path}.json"] = profile
     return files
+
+
+def maintenance_baseline(platform: dict[str, Any]) -> dict[str, Any]:
+    """Phase-A accounting values, not real-world lifetime/failure claims.
+
+    They intentionally only determine gentle server-side Condition/Fouling
+    bookkeeping. No random jam or shoot gate consumes these values until a
+    later phase has an audited clear-jam transaction.
+    """
+    by_tier = {
+        "legacy": ({"receiver": 2, "bolt": 3, "barrel": 4, "trigger": 1, "recoil": 2}, 4),
+        "service": ({"receiver": 1, "bolt": 2, "barrel": 3, "trigger": 1, "recoil": 2}, 3),
+        "advanced": ({"receiver": 1, "bolt": 2, "barrel": 2, "trigger": 1, "recoil": 1}, 2),
+        "precision": ({"receiver": 1, "bolt": 1, "barrel": 2, "trigger": 1, "recoil": 1}, 2),
+    }
+    tier = manufacturing_tier(platform)
+    wear, fouling = by_tier[tier]
+    return {
+        "schema_version": 1,
+        "generated_by": "tacz_industry_generator",
+        "eligibility": "industrial_assembly",
+        "maintenance_class": action_profile(platform),
+        "wear_per_shot": wear,
+        "fouling_per_shot": fouling,
+        "heat_stress_multiplier": 1.0,
+        # Declared and shown to authors now, intentionally unused in phase A.
+        "jam": {
+            "warning_condition": 6000,
+            "critical_condition": 1500,
+            "max_chance": 0.08,
+        },
+    }
+
+
+def generated_maintenance_profile_files(platforms: list[dict[str, Any]]) -> dict[Path, Any]:
+    """Emit one data-driven phase-A profile for every default industrial gun."""
+    files: dict[Path, Any] = {}
+    for platform in platforms:
+        namespace, gun_path = platform["gun_id"].split(":", 1)
+        files[RESOURCE_ROOT / f"data/{namespace}/industry/maintenance/guns/{gun_path}.json"] = maintenance_baseline(platform)
+    return files
+
+
+def obsolete_generated_maintenance_profile_files(expected: dict[Path, Any]) -> set[Path]:
+    """Only remove generator-stamped defaults; optional pack maintenance data stays untouched."""
+    root = RESOURCE_ROOT / "data/tacz/industry/maintenance/guns"
+    if not root.exists():
+        return set()
+    stale: set[Path] = set()
+    for path in root.rglob("*.json"):
+        if path in expected:
+            continue
+        try:
+            data = read_json(path)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(data, dict) and data.get("generated_by") == "tacz_industry_generator":
+            stale.add(path)
+    return stale
+
+
+def validate_generated_maintenance_profiles(platforms: list[dict[str, Any]], expected: dict[Path, Any]) -> None:
+    """Ensure all default industrial outputs have a complete phase-A baseline."""
+    paths: set[Path] = set()
+    components = {"receiver", "bolt", "barrel", "trigger", "recoil"}
+    for platform in platforms:
+        namespace, gun_path = platform["gun_id"].split(":", 1)
+        path = RESOURCE_ROOT / f"data/{namespace}/industry/maintenance/guns/{gun_path}.json"
+        profile = expected.get(path)
+        if not isinstance(profile, dict):
+            raise ValueError(f"{platform['slug']}: missing generated maintenance profile")
+        paths.add(path)
+        wear = profile.get("wear_per_shot")
+        jam = profile.get("jam")
+        if profile.get("schema_version") != 1 or profile.get("eligibility") != "industrial_assembly" \
+                or profile.get("maintenance_class") != action_profile(platform) \
+                or not isinstance(wear, dict) or set(wear) != components \
+                or not all(isinstance(value, int) and 0 <= value <= 1000 for value in wear.values()) \
+                or not isinstance(profile.get("fouling_per_shot"), int) \
+                or not isinstance(jam, dict):
+            raise ValueError(f"{platform['slug']}: malformed generated maintenance profile")
+    if len(paths) != len(platforms):
+        raise ValueError("generated maintenance profile path collision")
+
+
+def validate_initial_maintenance_assembly_outputs(platforms: list[dict[str, Any]], expected: dict[Path, Any]) -> None:
+    """Every real default final-gun result must begin phase A full and clean."""
+    expected_state = initial_maintenance_state()
+    for platform in platforms:
+        path = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/assemble_{platform['slug']}.json"
+        recipe = expected.get(path)
+        if not isinstance(recipe, dict):
+            raise ValueError(f"{platform['slug']}: missing generated final assembly for maintenance state")
+        custom = recipe.get("result", {}).get("components", {}).get("minecraft:custom_data", {})
+        if not isinstance(custom, dict) or any(custom.get(key) != value for key, value in expected_state.items()):
+            raise ValueError(f"{platform['slug']}: final assembly lacks full/clean initial maintenance state")
 
 
 def obsolete_generated_reference_profile_files(expected: dict[Path, Any]) -> set[Path]:
@@ -4741,6 +4857,13 @@ def run(write: bool) -> int:
         "gui.tacz.industrial_salvage.inspect": "INSPECTION / CUTTER LINE",
         "gui.tacz.industrial_salvage.status": "RECOVERY STATUS",
         "gui.tacz.industrial_salvage.salvage_hint": "Inspect the input and recover only items with an industrial provenance tag.",
+        "config.tacz.server.industry_maintenance_scope": "Industrial Maintenance Scope",
+        "config.tacz.server.industry_maintenance_scope.desc": "Phase A records condition and fouling. INDUSTRIAL_ASSEMBLY safely limits it to real industrial-origin guns; ALL_GUNS migrates legacy guns full and clean.",
+        "tooltip.tacz.maintenance.status": "Service: %s  |  Condition %s  |  Fouling %s",
+        "tooltip.tacz.maintenance.good": "Good",
+        "tooltip.tacz.maintenance.service": "Service Due",
+        "tooltip.tacz.maintenance.repair": "Repair Required",
+        "tooltip.tacz.maintenance.out_of_service": "Out of Service",
     }
     chinese: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "中性外装套件毛坯",
@@ -4787,6 +4910,13 @@ def run(write: bool) -> int:
         "gui.tacz.industrial_salvage.inspect": "检验 / 切割工位",
         "gui.tacz.industrial_salvage.status": "回收状态",
         "gui.tacz.industrial_salvage.salvage_hint": "检验输入物，只回收带有工业来源标记的物品。",
+        "config.tacz.server.industry_maintenance_scope": "工业维护范围",
+        "config.tacz.server.industry_maintenance_scope.desc": "A 阶段只记录枪况和污垢。INDUSTRIAL_ASSEMBLY 仅作用于真实工业来源枪械；ALL_GUNS 会让旧枪以满状态、清洁状态安全迁移。",
+        "tooltip.tacz.maintenance.status": "勤务：%s  |  枪况 %s  |  污垢 %s",
+        "tooltip.tacz.maintenance.good": "良好",
+        "tooltip.tacz.maintenance.service": "需保养",
+        "tooltip.tacz.maintenance.repair": "需维修",
+        "tooltip.tacz.maintenance.out_of_service": "停用",
     }
     expected.update(generated_furniture_blank_files(platforms))
     expected.update(generated_template_blank_file(policy))
@@ -4804,6 +4934,7 @@ def run(write: bool) -> int:
         english.update(language_entries(platform, "en_us"))
         chinese.update(language_entries(platform, "zh_cn"))
     expected.update(generated_reference_profile_files(platforms))
+    expected.update(generated_maintenance_profile_files(platforms))
     expected.update(generated_cartridge_gauge_blank_file())
     for cartridge in cartridges:
         expected.update(generated_cartridge_files(cartridge))
@@ -4830,6 +4961,7 @@ def run(write: bool) -> int:
     obsolete_magazine_paths = obsolete_legacy_magazine_files(magazine_carriers)
     obsolete_carrier_paths = obsolete_generated_carrier_files(expected)
     obsolete_reference_paths = obsolete_generated_reference_profile_files(expected)
+    obsolete_maintenance_paths = obsolete_generated_maintenance_profile_files(expected)
     validate_effective_create_recipe_collisions(
         expected, obsolete_platform_paths | obsolete_template_paths | obsolete_magazine_paths | obsolete_carrier_paths
     )
@@ -4838,6 +4970,8 @@ def run(write: bool) -> int:
     validate_cartridge_tooling_continuity(cartridges, expected)
     validate_magazine_tooling_continuity(magazine_carriers, platforms, expected)
     validate_generated_reference_profiles(platforms, expected)
+    validate_generated_maintenance_profiles(platforms, expected)
+    validate_initial_maintenance_assembly_outputs(platforms, expected)
     validate_stable_dossier_commissions(platforms, blueprint_acquisition, expected)
 
     stale: list[str] = []
@@ -4880,6 +5014,13 @@ def run(write: bool) -> int:
     # current platform/feed policy. Hand-authored third-party compatibility
     # profiles are intentionally never deleted here.
     for path in sorted(obsolete_reference_paths):
+        stale.append(str(path.relative_to(REPO)))
+        if write:
+            path.unlink()
+
+    # Phase-A maintenance profiles are generated only for bundled default guns;
+    # authored compatibility-pack maintenance data is never removed.
+    for path in sorted(obsolete_maintenance_paths):
         stale.append(str(path.relative_to(REPO)))
         if write:
             path.unlink()
@@ -4942,7 +5083,7 @@ def run(write: bool) -> int:
             print(f"  {entry}")
         return 0 if write else 1
     print(
-        f"Industry generator {mode}: {len(platforms)} platform/reference-profile manifest(s), "
+        f"Industry generator {mode}: {len(platforms)} platform/reference/maintenance profile manifest(s), "
         f"{len(cartridges)} cartridge manifest(s), {len(magazine_carriers)} removable-carrier manifest(s), "
         "all managed outputs current."
     )

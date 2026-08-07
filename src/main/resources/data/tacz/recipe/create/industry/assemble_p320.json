@@ -42,7 +42,15 @@
         "IndustryAssemblyRecipe": "tacz:gun/p320",
         "IndustryAssemblyTier": "service",
         "IndustryAssemblyActionProfile": "locked_breech_pistol",
-        "IndustryAssemblyToolingScope": "critical_gauge"
+        "IndustryAssemblyToolingScope": "critical_gauge",
+        "IndustryMaintenanceSchema": 1,
+        "IndustryConditionReceiver": 10000,
+        "IndustryConditionBolt": 10000,
+        "IndustryConditionBarrel": 10000,
+        "IndustryConditionTrigger": 10000,
+        "IndustryConditionRecoil": 10000,
+        "IndustryFouling": 0,
+        "IndustryMaintenanceShots": 0
       }
     }
   },

@@ -1689,5 +1689,12 @@
   "item.tacz.cartridge_case.rpg_rocket.motor_housing": "RPG-7 Rocket Motor Housing",
   "tooltip.tacz.industry.motor_housing": "RPG motor housing — finish it with the motor-housing die before cartridge assembly",
   "item.tacz.feed_device.ww_m1g_enbloc": "M1 Garand En-Bloc Clip (.30-06)",
-  "item.tacz.feed_device.hamster_sw_mk2_speedloader": "S&W Mk II Speedloader"
+  "item.tacz.feed_device.hamster_sw_mk2_speedloader": "S&W Mk II Speedloader",
+  "config.tacz.server.industry_maintenance_scope": "Industrial Maintenance Scope",
+  "config.tacz.server.industry_maintenance_scope.desc": "Phase A records condition and fouling. INDUSTRIAL_ASSEMBLY safely limits it to real industrial-origin guns; ALL_GUNS migrates legacy guns full and clean.",
+  "tooltip.tacz.maintenance.status": "Service: %s  |  Condition %s  |  Fouling %s",
+  "tooltip.tacz.maintenance.good": "Good",
+  "tooltip.tacz.maintenance.service": "Service Due",
+  "tooltip.tacz.maintenance.repair": "Repair Required",
+  "tooltip.tacz.maintenance.out_of_service": "Out of Service"
 }

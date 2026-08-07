@@ -1689,5 +1689,12 @@
   "item.tacz.cartridge_case.rpg_rocket.motor_housing": "RPG-7 火箭发动机壳体",
   "tooltip.tacz.industry.motor_housing": "RPG 火箭发动机壳体——必须经发动机壳体模具完成后才能送入装弹机",
   "item.tacz.feed_device.ww_m1g_enbloc": "M1 加兰德漏夹（.30-06）",
-  "item.tacz.feed_device.hamster_sw_mk2_speedloader": "史密斯-威森 Mk II 快速装填器"
+  "item.tacz.feed_device.hamster_sw_mk2_speedloader": "史密斯-威森 Mk II 快速装填器",
+  "config.tacz.server.industry_maintenance_scope": "工业维护范围",
+  "config.tacz.server.industry_maintenance_scope.desc": "A 阶段只记录枪况和污垢。INDUSTRIAL_ASSEMBLY 仅作用于真实工业来源枪械；ALL_GUNS 会让旧枪以满状态、清洁状态安全迁移。",
+  "tooltip.tacz.maintenance.status": "勤务：%s  |  枪况 %s  |  污垢 %s",
+  "tooltip.tacz.maintenance.good": "良好",
+  "tooltip.tacz.maintenance.service": "需保养",
+  "tooltip.tacz.maintenance.repair": "需维修",
+  "tooltip.tacz.maintenance.out_of_service": "停用"
 }

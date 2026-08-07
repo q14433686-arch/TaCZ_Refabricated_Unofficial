@@ -2,6 +2,7 @@ package com.tacz.guns.config.sync;
 
 import com.google.common.collect.Lists;
 import com.tacz.guns.industry.IndustryProfile;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceScope;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import java.util.List;
@@ -22,6 +23,8 @@ public class SyncConfig {
     public static ForgeConfigSpec.BooleanValue PHYSICAL_MAGAZINES;
     /** Scan uncurated gun-pack table recipes at reload and synthesize safe industrial fallback replacements. */
     public static ForgeConfigSpec.BooleanValue AUTO_DISCOVER_INDUSTRY_REPLACEMENTS;
+    /** Safe default limits phase-A condition/fouling accounting to real industrial-origin gun stacks. */
+    public static ForgeConfigSpec.EnumValue<IndustryMaintenanceScope> INDUSTRY_MAINTENANCE_SCOPE;
 
     // 三个全局系数，用于客户端枪械文本提示，需要同步
     public static ForgeConfigSpec.DoubleValue DAMAGE_BASE_MULTIPLIER;
@@ -107,6 +110,9 @@ public class SyncConfig {
 
         builder.comment("Automatically scan uncurated gun-pack table recipes and add an in-game industrial fallback material gate. Curated platform declarations always take priority.");
         AUTO_DISCOVER_INDUSTRY_REPLACEMENTS = builder.define("AutoDiscoverIndustryReplacements", true);
+
+        builder.comment("Phase-A maintenance eligibility. INDUSTRIAL_ASSEMBLY safely affects only guns with real industrial provenance; ALL_GUNS opts legacy guns in but migrates them full and clean.");
+        INDUSTRY_MAINTENANCE_SCOPE = builder.defineEnum("IndustryMaintenanceScope", IndustryMaintenanceScope.INDUSTRIAL_ASSEMBLY);
 
         builder.comment("[Debug Option] Do server-side network check while shooting or not");
         SERVER_SHOOT_NETWORK_V = builder.define("ServerShootNetworkCheck", true);

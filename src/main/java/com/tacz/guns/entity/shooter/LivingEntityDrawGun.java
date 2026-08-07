@@ -4,6 +4,7 @@ import cn.sh1rocu.tacz.api.LogicalSide;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.event.common.GunDrawEvent;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
 import com.tacz.guns.industry.magazine.EnBlocClipService;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunDraw;
@@ -33,6 +34,10 @@ public class LivingEntityDrawGun {
         // remains hidden in the gun NBT.
         ItemStack lastItem = data.currentGunItem == null ? ItemStack.EMPTY : data.currentGunItem.get();
         EnBlocClipService.ejectIfEmpty(shooter, lastItem);
+        // First server-side handling of a real industrial gun is the safe
+        // migration point: old stacks start full/clean, never pre-worn.
+        IndustryMaintenanceService.migrateIfEligible(lastItem);
+        IndustryMaintenanceService.migrateIfEligible(gunItemSupplier.get());
 
         // 重置各个状态
         data.initialData();

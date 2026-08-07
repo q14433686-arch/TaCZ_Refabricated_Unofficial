@@ -1,6 +1,6 @@
 # 工业维护、卡壳与模块化维修：代码审计与实施设计
 
-> 状态：已完成代码结构审计；尚未把耐久/卡壳强行接入战斗逻辑。
+> 状态：A 阶段的维护数据、来源迁移、Tooltip/HUD 与逐发记录已接入；未把耐久/卡壳强行接入战斗逻辑。
 > 原则：先建立完整的服务端事务、清障动作与真实维修路线，再启用会妨碍开火的随机状态。
 
 ## 1. 审计结论
@@ -22,7 +22,7 @@
 1. **过热不是耐久。** 当前热量只在实际射击后写入 NBT，并只影响声明了 `heat` 的枪。许多普通步枪没有 `heat` 数据，直接拿它作为“枪况”会让系统只覆盖少数机枪。
 2. **工业回收站不可逆。** 它只有一输入、九输出，并有意把工业枪拆成中性毛坯；直接把它改成维修台会破坏现有安全回收语义。
 3. **现有 reload / bolt 动画不能被随意借来伪装清障。** 如果服务器产生卡壳但客户端没有同一条清障动画/事务，玩家会看到枪在动作而服务器状态不同步。因此卡壳要晚于“清障协议”上线。
-4. **第三方测绘成枪目前不总有默认枪的 `IndustryAssemblyPlatform` 标记。** 在给测绘 fallback 启用可维修耐久前，必须在其最终产物上补入明确的工业来源/平台记录，不能根据 GunId 猜测。
+4. **第三方测绘成枪不能只根据 GunId 猜测来源。** A 阶段已让测绘 fallback 的最终枪写入 `IndustryAssemblyPlatform = surveyed/<namespace>/<gun>`、测绘 tier/工装来源；未经过该最终多槽委托的同 GunId 战利品仍不会默认参与维护。
 
 ## 2. 已恢复的枪械熟练度（独立于维护）
 
@@ -241,12 +241,12 @@ chance = clamp(
 
 ## 7. 分阶段实施
 
-### A. 维护数据和可视化基础
+### A. 维护数据和可视化基础（已实施，待外部实机回归）
 
-1. `IndustryMaintenanceProfile` manager、网络同步、Tooltip/HUD 条；
-2. 工业成枪首次获得满 Condition；旧工业枪安全补齐；
-3. 不启用随机卡壳，只记录 Shot / Fouling / Condition；
-4. 为默认枪和已审计测绘枪补完整来源标记。
+1. `IndustryMaintenanceProfile` manager 已经通过独立 `INDUSTRY_MAINTENANCE` 网络通道同步；生成了默认 53 枪的 `industry/maintenance/guns/*.json`，Tooltip/HUD 显示最差组件枪况与污垢；
+2. `INDUSTRIAL_ASSEMBLY` 是默认安全范围：Create 总装枪和测绘最终枪首次在服务器使用时得到满 Condition/清洁状态，旧工业 NBT 同样补齐；`ALL_GUNS` 是管理员显式 opt-in，首次迁移仍满状态；
+3. 只在 `reduceAmmoOnce()` 成功后记录 Shot / Fouling / Condition；创造模式免费射击不磨损；没有随机卡壳、锁死、吞弹或额外扣弹；
+4. 默认总装输出已有来源标签，测绘 Gunsmith Table fallback 现在也写入完整 `surveyed/...` 来源、tier 与工装标签。
 
 ### B. 拆解、Create 修件、复装
 
@@ -268,7 +268,7 @@ chance = clamp(
 |---|---|---|---|
 | P0 | 最新桥夹路线的外部编译与实机验证 | `3eae889` 后尚无 Windows Gradle / 游戏结果 | 先执行 `./gradlew build`；重点测 Kar98、Mosin、桥夹归零保留。 |
 | P0 | 漏夹 `en_bloc_clip` | 已完成独立 `InstalledEnBlocClip`、逐发扣除、空夹真实 ItemEntity 自动弹出；首个样本为 `hamster:m1garand` | 外部 Gradle/实机验证后，为更多已审计漏夹枪补 profile。 |
-| P1 | 工业维护 / 模块维修 | 当前不存在；回收站是破坏性报废，不是维修 | 按本文件 A → B → C 实施。 |
+| P1 | 工业维护 / 模块维修 | A 阶段已完成 Condition/Fouling、来源迁移、Tooltip/HUD 与逐发记录；回收站仍是破坏性报废，不是维修 | 下一步只进入 B 的真实多槽勤务台、拆解/复装与 Create 单工件修件；随后才考虑 C 的卡壳/清障。 |
 | P1 | 长按 R 供弹器选择圆盘 | 服务器预留已存在，客户端选择 UI 尚未实现 | 在 route/选择槽位协议稳定后实现，不越过服务器事务。 |
 | P1 | 速度装填器代表包 | 已接入 GunpowderRevolution `hamster:webley`：完整 6 发快装器触发原 `reload_loader`，无完整器件走逐发 | 外部验证后再审计 Webley 以外的转轮；不同脚本不套用。 |
 | P1 | RPG 发动机壳体 | 已新增 `motor_housing` 可见 ItemStack 与 `finish_case_rpg_rocket` 单工件结束站 | 在 Create/装弹机实机回归中确认它不能绕过为最终 case。 |

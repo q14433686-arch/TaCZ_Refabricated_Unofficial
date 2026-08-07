@@ -28,6 +28,8 @@ import com.tacz.guns.resource.pojo.data.block.TabConfig;
 import com.tacz.guns.resource.pojo.data.gun.ExtraDamage;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.gun.Ignite;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceProfile;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceProfileManager;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyRecipeManager;
@@ -102,6 +104,8 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     private IndustryIdentityAliasManager industryIdentityAliases;
     /** Factual action/feed/ammunition profiles plus the post-table-reload audit snapshot. */
     private IndustryReferenceProfileManager industryReferenceProfiles;
+    /** Data-driven phase-A condition/fouling baselines, synchronized for client status rendering. */
+    private IndustryMaintenanceProfileManager industryMaintenanceProfiles;
     private RecipeFilterManager recipeFilterManager;
     private LootInjectionManager lootInjectionManager;
 
@@ -141,6 +145,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         // table-recipe snapshot exists, then emits the safe/alias/unresolved
         // audit used by future runtime industrial generation.
         industryReferenceProfiles = register(new IndustryReferenceProfileManager());
+        industryMaintenanceProfiles = register(new IndustryMaintenanceProfileManager());
         industryProcess = register(new IndustryProcessManager());
         cartridgeAssembly = register(new CartridgeAssemblyRecipeManager());
 
@@ -295,6 +300,18 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     public Set<Map.Entry<Identifier, IndustryReferenceProfile>> getAllIndustryReferenceProfiles() {
         return industryReferenceProfiles == null ? Collections.emptySet()
                 : industryReferenceProfiles.getValidProfiles().entrySet();
+    }
+
+    @Override
+    @Nullable
+    public IndustryMaintenanceProfile getIndustryMaintenanceProfile(Identifier gunId) {
+        return industryMaintenanceProfiles == null ? null : industryMaintenanceProfiles.getProfile(gunId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, IndustryMaintenanceProfile>> getAllIndustryMaintenanceProfiles() {
+        return industryMaintenanceProfiles == null ? Collections.emptySet()
+                : industryMaintenanceProfiles.getValidProfiles().entrySet();
     }
 
     @Override

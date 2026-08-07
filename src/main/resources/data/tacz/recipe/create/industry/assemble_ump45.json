@@ -42,7 +42,15 @@
         "IndustryAssemblyRecipe": "tacz:gun/ump45",
         "IndustryAssemblyTier": "service",
         "IndustryAssemblyActionProfile": "blowback_smg",
-        "IndustryAssemblyToolingScope": "platform_tooling"
+        "IndustryAssemblyToolingScope": "platform_tooling",
+        "IndustryMaintenanceSchema": 1,
+        "IndustryConditionReceiver": 10000,
+        "IndustryConditionBolt": 10000,
+        "IndustryConditionBarrel": 10000,
+        "IndustryConditionTrigger": 10000,
+        "IndustryConditionRecoil": 10000,
+        "IndustryFouling": 0,
+        "IndustryMaintenanceShots": 0
       }
     }
   },
