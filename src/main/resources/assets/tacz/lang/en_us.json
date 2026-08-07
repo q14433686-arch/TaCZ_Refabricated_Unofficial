@@ -1687,5 +1687,7 @@
   "tooltip.tacz.feed_device.kind.en_bloc_clip": "En-bloc clip — stays installed in the gun and automatically ejects empty",
   "item.tacz.feed_device.hamster_webley_speedloader": "Webley Speedloader",
   "item.tacz.cartridge_case.rpg_rocket.motor_housing": "RPG-7 Rocket Motor Housing",
-  "tooltip.tacz.industry.motor_housing": "RPG motor housing — finish it with the motor-housing die before cartridge assembly"
+  "tooltip.tacz.industry.motor_housing": "RPG motor housing — finish it with the motor-housing die before cartridge assembly",
+  "item.tacz.feed_device.ww_m1g_enbloc": "M1 Garand En-Bloc Clip (.30-06)",
+  "item.tacz.feed_device.hamster_sw_mk2_speedloader": "S&W Mk II Speedloader"
 }

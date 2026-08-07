@@ -1,0 +1,31 @@
+{
+  "mechanism": "speedloader",
+  "magazine_family": "hamster_sw_mk2_455_speedloader",
+  "magazine_capacity": 6,
+  "feed_device_capacity": 6,
+  "feed_device_reusable": true,
+  "reload_batch": 6,
+  "ammo": "hamster:medium_ammo",
+  "display_name": "item.tacz.feed_device.hamster_sw_mk2_speedloader",
+  "reload_routes": [
+    {
+      "id": "speedloader_full_cylinder",
+      "source": "loading_device",
+      "script_driven": true,
+      "min_missing_rounds": 1,
+      "min_source_rounds": 6,
+      "max_transfer_rounds": 6,
+      "force_animation_rounds": 6,
+      "script_remove_mode": "discard",
+      "animation_force_mag_extent_level": 1
+    },
+    {
+      "id": "loose_round_loop",
+      "source": "loose_ammo",
+      "script_driven": true,
+      "min_missing_rounds": 1,
+      "script_remove_mode": "discard",
+      "animation_force_mag_extent_level": 0
+    }
+  ]
+}

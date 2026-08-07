@@ -1,0 +1,11 @@
+{
+  "mechanism": "en_bloc_clip",
+  "magazine_family": "ww_m1garand_3006_enbloc",
+  "magazine_capacity": 8,
+  "feed_device_capacity": 8,
+  "feed_device_reusable": true,
+  "reload_batch": 8,
+  "loose_reload_mode": "none",
+  "ammo": "tacz:30_06",
+  "display_name": "item.tacz.feed_device.ww_m1g_enbloc"
+}

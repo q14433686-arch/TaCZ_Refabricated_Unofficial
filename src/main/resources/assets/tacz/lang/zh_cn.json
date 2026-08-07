@@ -1687,5 +1687,7 @@
   "tooltip.tacz.feed_device.kind.en_bloc_clip": "漏夹——装入枪内，打空后自动弹出",
   "item.tacz.feed_device.hamster_webley_speedloader": "韦伯利左轮快速装填器",
   "item.tacz.cartridge_case.rpg_rocket.motor_housing": "RPG-7 火箭发动机壳体",
-  "tooltip.tacz.industry.motor_housing": "RPG 火箭发动机壳体——必须经发动机壳体模具完成后才能送入装弹机"
+  "tooltip.tacz.industry.motor_housing": "RPG 火箭发动机壳体——必须经发动机壳体模具完成后才能送入装弹机",
+  "item.tacz.feed_device.ww_m1g_enbloc": "M1 加兰德漏夹（.30-06）",
+  "item.tacz.feed_device.hamster_sw_mk2_speedloader": "史密斯-威森 Mk II 快速装填器"
 }

@@ -66,11 +66,11 @@ InstalledEnBlocClip = configured tacz:magazine ItemStack
 
 服务器才把同一只空漏夹退出枪 NBT 并返还玩家背包；背包满则按既有物品交付规则掉落。它不会在装入时被消耗，也不会因 NBT 整数归零而静默删除。潜行 + R 是明确的人工退夹路径，可安全取回尚有余弹的漏夹。
 
-首个已审计样本是 GunpowderRevolution 的 `hamster:m1garand`：8 发 `hamster:long_ammo` 漏夹，原包状态机带有 `last_shoot`、clip bone 与空仓 ping。它只接受完整物理漏夹；无漏夹时不借散装弹伪造 M1 装夹动画。
+已审计样本包括 GunpowderRevolution 的 `hamster:m1garand`（8 发 `hamster:long_ammo`，原包状态机带有 `last_shoot`、clip bone 与空仓 ping）和 Enlisted 的 `ww:m1g`（8 发 `tacz:30_06`，带 M1 ping/装夹音效）。两者的漏夹族与弹药必须分别匹配；它们只接受已实际装入弹药的物理漏夹，无漏夹时不借散装弹伪造 M1 装夹动画。
 
 ## 快装器：完整转轮替换语义
 
-快装器是可复用物理器件，但不等于“每次从快装器拿一发”。首个已审计样本为 GunpowderRevolution `hamster:webley`：原包 `hamster:speedloader` 附件以 `extended_mag_level = 1` 选择 `reload_loader` 动画，服务端脚本先清空转轮再一次装入 6 发。
+快装器是可复用物理器件，但不等于“每次从快装器拿一发”。已审计样本为 GunpowderRevolution `hamster:webley` 与 `hamster:sw_mk2`：原包 `hamster:speedloader` 附件以 `extended_mag_level = 1` 选择 `reload_loader` / `double_reload_loader` 动画，服务端脚本先清空转轮再一次装入 6 发。
 
 工业兼容层把该选择器绑定到一只完整 6 发 Webley 快装器：
 

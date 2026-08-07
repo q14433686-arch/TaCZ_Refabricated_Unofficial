@@ -14,6 +14,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -152,7 +153,12 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
         }
         adder.accept(Component.translatable("tooltip.tacz.magazine.rounds", getAmmoCount(stack), getCapacity(stack))
                 .withStyle(style -> style.withColor(0xAAAAAA)));
-        adder.accept(Component.translatable("tooltip.tacz.magazine.ammo", getAmmoId(stack).toString())
+        Identifier ammoId = getAmmoId(stack);
+        var ammoIndex = CommonAssetsManager.get().getAmmoIndex(ammoId);
+        Component ammoName = ammoIndex == null || ammoIndex.getPojo().getName() == null
+                ? Component.literal(ammoId.toString())
+                : Component.translatable(ammoIndex.getPojo().getName());
+        adder.accept(Component.translatable("tooltip.tacz.magazine.ammo", ammoName)
                 .withStyle(style -> style.withColor(0xAAAAAA)));
         String feedDeviceKind = getFeedDeviceKind(stack);
         if (!feedDeviceKind.isBlank() && !"detachable_magazine".equals(feedDeviceKind)) {

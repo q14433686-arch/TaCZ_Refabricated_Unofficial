@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "canonical_model": "ww_m1_garand",
+  "display_name": "M1 Garand",
+  "action": "gas_operated_rifle",
+  "feed": {
+    "device": "en_bloc_clip",
+    "runtime_mechanism": "en_bloc_clip",
+    "carrier_behavior": "inserted_ejected_empty",
+    "family": "ww_m1garand_3006_enbloc",
+    "capacity": 8,
+    "reload_batch": 8
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "30_06",
+    "expected_ammo": "tacz:30_06"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Enlisted v1.2.1.3 m1g_data: ammo_amount=8 and tacz:30_06",
+    "m1g animation includes m1garand ping effect and dedicated empty/tactical reload sounds",
+    "curated installed en-bloc clip with automatic empty ejection"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "canonical_model": "smith_wesson_mk2",
+  "display_name": "Smith & Wesson Mk II",
+  "action": "revolver",
+  "feed": {
+    "device": "speedloader",
+    "runtime_mechanism": "speedloader",
+    "carrier_behavior": "reusable_loading_tool",
+    "family": "hamster_sw_mk2_455_speedloader",
+    "capacity": 6,
+    "reload_batch": 6
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "medium_ammo",
+    "expected_ammo": "hamster:medium_ammo"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "GunpowderRevolution v1.2.7 sw_mk2_data: ammo_amount=6 and hamster:sw_mk2_gun_logic",
+    "hamster:speedloader attachment has extended_mag_level=1 and is allowed by sw_mk2",
+    "sw_mk2_gun_logic and state machine use level 1 loader/full-cylinder behavior"
+  ]
+}
