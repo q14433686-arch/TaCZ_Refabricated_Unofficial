@@ -44,6 +44,9 @@
     上限 32 格防全屏拉线；
   - 与枪械同投影（枪模 FOV）、同 pass → 不存在跨帧滞后；
   - Iris 手部兼容：`assignCommonEntityPipelinesToHandIfNeeded`（与抛壳/枪口火光一致）。
+  - **26.2 API 适配**：`Camera` 不再暴露 `getPosition()`（位置已移入 `CameraRenderState`），
+    第一人称下相机位置 == 玩家眼睛位置，改用 `player.getEyePosition(partialTicks)`
+    （本文件既有同款调用，编译验证通过）。
 - `EntityBulletRenderer#renderTracerAmmo`（Level pass）：第一人称子弹在
   「手部 pass 本帧会渲染枪械 && 有枪口锚点 && 子弹在射程内」时**跳过**（避免双份拖尾）；
   其余情况（收枪/切非枪械/超射程/无枪口节点）退回旧锚点逻辑兜底，曳光不会凭空消失。

@@ -25,6 +25,7 @@ import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.model.functional.ShellRender;
 import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
 import com.tacz.guns.client.render.scope.ScopeMaskTextureHandle;
+import com.tacz.guns.client.renderer.entity.EntityBulletRenderer;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.client.resource.pojo.TransformScale;

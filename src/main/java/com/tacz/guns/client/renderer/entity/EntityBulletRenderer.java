@@ -313,7 +313,9 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
         getModel().ifPresent(model -> {
             Camera camera = mc.gameRenderer.mainCamera();
             float partialTicks = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-            Vec3 camPos = camera.getPosition();
+            // 26.2 的 Camera 不再暴露 getPosition()（位置已移入 CameraRenderState）；
+            // 第一人称下相机位置 == 玩家眼睛位置，用 getEyePosition 获取（本文件既有同款调用，可编译）。
+            Vec3 camPos = mc.player.getEyePosition(partialTicks);
             // 世界 -> 视图：把相机旋转取逆，再对（世界-相机）向量旋转。
             Quaternionf invRot = new Quaternionf(camera.rotation()).conjugate();
             Vector3f muzzleView = new Vector3f(GunItemRendererWrapper.muzzleRenderOffsetView);
@@ -414,10 +416,11 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
     /** 子弹是否在 {@link #HAND_PASS_RANGE} 内（超出则由实体 pass 的旧锚点路径兜底）。 */
     private static boolean withinHandPassRange(EntityKineticBullet bullet) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
+        if (mc.level == null || mc.player == null) {
             return false;
         }
-        Vec3 camPos = mc.gameRenderer.mainCamera().getPosition();
+        // 与 submitFirstPersonTracers 同一约定：第一人称下相机位置 == 玩家眼睛位置。
+        Vec3 camPos = mc.player.getEyePosition();
         return bullet.distanceToSqr(camPos.x, camPos.y, camPos.z) <= HAND_PASS_RANGE * HAND_PASS_RANGE;
     }
 
