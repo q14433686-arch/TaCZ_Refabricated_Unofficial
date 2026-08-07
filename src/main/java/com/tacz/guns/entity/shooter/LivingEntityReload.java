@@ -77,7 +77,11 @@ public class LivingEntityReload {
                     && PhysicalMagazineService.usesPhysicalMagazine(currentGunItem);
             boolean enBlocReload = shooter instanceof Player
                     && EnBlocClipService.usesEnBlocClip(currentGunItem);
-            boolean internalReload = shooter instanceof Player
+            // An en-bloc clip is an installed physical carrier, not an
+            // InternalFeedAmmoCount source. Keep the transaction families
+            // mutually exclusive even if malformed third-party data is later
+            // accepted by a broader validator.
+            boolean internalReload = !enBlocReload && shooter instanceof Player
                     && InternalFeedService.usesInternalFeed(currentGunItem);
             boolean managedIndustryReload = physicalReload || enBlocReload || internalReload;
 

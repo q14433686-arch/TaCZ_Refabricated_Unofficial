@@ -12,6 +12,7 @@ import com.tacz.guns.client.industry.magazine.IndustryReloadRouteClientState;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.client.sound.SoundPlayManager;
+import com.tacz.guns.industry.magazine.EnBlocClipService;
 import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.network.message.ClientMessagePlayerCancelReload;
 import com.tacz.guns.network.message.ClientMessagePlayerReloadGun;
@@ -76,9 +77,11 @@ public class LocalPlayerReload {
                 return;
             }
             // Match the server-side sneak + reload eject path without playing a
-            // reload animation client-side. The server owns the inventory
-            // transaction and will synchronise the changed gun stack normally.
-            if (player.isShiftKeyDown() && PhysicalMagazineService.usesPhysicalMagazine(mainHandItem)) {
+            // reload animation client-side. This includes an installed en-bloc
+            // clip as well as a detachable magazine; the server owns the
+            // inventory transaction and synchronises the changed gun stack.
+            if (player.isShiftKeyDown() && (PhysicalMagazineService.usesPhysicalMagazine(mainHandItem)
+                    || EnBlocClipService.usesEnBlocClip(mainHandItem))) {
                 ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
                 return;
             }

@@ -217,15 +217,23 @@ public class GunFeedDefinition {
 
     /**
      * Tube, cylinder, internal box, single-shot and loading-device feeds store
-     * their authoritative round count in gun NBT. A bridge clip/speedloader is
-     * an inventory source for that count, not an InstalledMagazine replacement.
+     * their authoritative round count in {@code InternalFeedAmmoCount}. A
+     * bridge clip/speedloader is an inventory source for that count, not an
+     * InstalledMagazine replacement.
+     *
+     * <p>An en-bloc clip is deliberately <strong>not</strong> an internal-feed
+     * definition here. It has its own {@code InstalledEnBlocClip} transaction:
+     * treating it as both kinds of feed makes {@link InternalFeedService}
+     * start a second, incompatible reload plan after {@link EnBlocClipService}
+     * has reserved the clip. In particular, an M1 then rejects the reload even
+     * in Creative because its en-bloc profile intentionally has no loose-round
+     * internal-feed route.</p>
      */
     public boolean isValidInternalDefinition() {
         return switch (getMechanism()) {
             case INTERNAL_BOX, TUBE, REVOLVER, SINGLE_SHOT -> getMagazineCapacity() > 0 && getAmmoId() != null;
             case STRIPPER_CLIP, SPEEDLOADER -> isValidLoadingDeviceDefinition();
-            case EN_BLOC_CLIP -> isValidEnBlocClipDefinition();
-            default -> false;
+            case EN_BLOC_CLIP, LEGACY, DETACHABLE_MAGAZINE, BELT -> false;
         };
     }
 

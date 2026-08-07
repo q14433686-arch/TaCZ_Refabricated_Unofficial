@@ -53,7 +53,12 @@ public final class InternalFeedService {
             return null;
         }
         GunFeedDefinition definition = CommonAssetsManager.get().getGunFeedDefinition(iGun.getGunId(gun));
-        return definition != null && definition.isValidInternalDefinition() ? definition : null;
+        // En-bloc clips use InstalledEnBlocClip and EnBlocClipService, never
+        // InternalFeedAmmoCount. Keep this guard alongside the definition
+        // validator so a future data-validator broadening cannot make a gun
+        // start two competing reload transactions again.
+        return definition != null && !definition.getMechanism().usesEnBlocClip()
+                && definition.isValidInternalDefinition() ? definition : null;
     }
 
     public static boolean usesInternalFeed(ItemStack gun) {
