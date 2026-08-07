@@ -152,20 +152,29 @@ public final class IndustrialServiceBenchService {
         if (gun.isEmpty()) {
             return ReassemblyPlan.failure(Failure.INVALID_GUN);
         }
+        // The component loop above assigns these locals repeatedly, so capture
+        // one immutable reassembly snapshot before entering the NBT lambda.
+        final Origin reassembledOrigin = origin;
+        final int reassembledReceiver = receiver;
+        final int reassembledBolt = bolt;
+        final int reassembledBarrel = barrel;
+        final int reassembledTrigger = trigger;
+        final int reassembledRecoil = recoil;
+        final long reassembledShots = shots;
         ItemNbtUtils.updateTag(gun, tag -> {
-            tag.putString(IndustryMaintenanceService.ASSEMBLY_PLATFORM_TAG, origin.platform());
-            tag.putString(IndustryMaintenanceService.ASSEMBLY_RECIPE_TAG, origin.recipe());
-            tag.putString(IndustryMaintenanceService.ASSEMBLY_TIER_TAG, origin.tier());
-            tag.putString(IndustryMaintenanceService.ASSEMBLY_ACTION_TAG, origin.action());
-            tag.putString(IndustryMaintenanceService.ASSEMBLY_TOOLING_SCOPE_TAG, origin.scope());
+            tag.putString(IndustryMaintenanceService.ASSEMBLY_PLATFORM_TAG, reassembledOrigin.platform());
+            tag.putString(IndustryMaintenanceService.ASSEMBLY_RECIPE_TAG, reassembledOrigin.recipe());
+            tag.putString(IndustryMaintenanceService.ASSEMBLY_TIER_TAG, reassembledOrigin.tier());
+            tag.putString(IndustryMaintenanceService.ASSEMBLY_ACTION_TAG, reassembledOrigin.action());
+            tag.putString(IndustryMaintenanceService.ASSEMBLY_TOOLING_SCOPE_TAG, reassembledOrigin.scope());
             tag.putInt(IndustryMaintenanceService.SCHEMA_TAG, IndustryMaintenanceService.SCHEMA_VERSION);
-            tag.putInt(IndustryMaintenanceService.RECEIVER_TAG, receiver);
-            tag.putInt(IndustryMaintenanceService.BOLT_TAG, bolt);
-            tag.putInt(IndustryMaintenanceService.BARREL_TAG, barrel);
-            tag.putInt(IndustryMaintenanceService.TRIGGER_TAG, trigger);
-            tag.putInt(IndustryMaintenanceService.RECOIL_TAG, recoil);
+            tag.putInt(IndustryMaintenanceService.RECEIVER_TAG, reassembledReceiver);
+            tag.putInt(IndustryMaintenanceService.BOLT_TAG, reassembledBolt);
+            tag.putInt(IndustryMaintenanceService.BARREL_TAG, reassembledBarrel);
+            tag.putInt(IndustryMaintenanceService.TRIGGER_TAG, reassembledTrigger);
+            tag.putInt(IndustryMaintenanceService.RECOIL_TAG, reassembledRecoil);
             tag.putInt(IndustryMaintenanceService.FOULING_TAG, 0);
-            tag.putLong(IndustryMaintenanceService.SHOTS_TAG, shots);
+            tag.putLong(IndustryMaintenanceService.SHOTS_TAG, reassembledShots);
             tag.remove(IndustryMaintenanceService.SEED_TAG);
         });
         return ReassemblyPlan.success(origin, gun);

@@ -35,7 +35,7 @@ public final class IndustrialServiceBenchScreen extends AbstractContainerScreen<
     }
 
     @Override
-    protected void extractBackground(@NotNull GuiGraphicsExtractor gui, int mouseX, int mouseY, float partialTick) {
+    public void extractBackground(@NotNull GuiGraphicsExtractor gui, int mouseX, int mouseY, float partialTick) {
         super.extractBackground(gui, mouseX, mouseY, partialTick);
         gui.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xFF12191C);
         gui.fill(leftPos + 1, topPos + 1, leftPos + imageWidth - 1, topPos + imageHeight - 1, 0xFF26343A);
