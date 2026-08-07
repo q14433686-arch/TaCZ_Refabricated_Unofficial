@@ -2084,5 +2084,10 @@
   "item.tacz.magazine.type81_762x39": "Type 81-1 7.62×39 30-round Magazine",
   "item.tacz.press_die.carrier_gauge.type81_762x39_30": "Type 81-1 7.62×39 30-round Magazine Specification Gauge",
   "item.tacz.gun_component.carrier_body.type81_762x39_30": "Type 81-1 7.62×39 30-round Magazine Body",
-  "item.tacz.gun_component.carrier_feed_kit.type81_762x39_30": "Type 81-1 7.62×39 30-round Magazine Rifle Double-Column Feed Kit"
+  "item.tacz.gun_component.carrier_feed_kit.type81_762x39_30": "Type 81-1 7.62×39 30-round Magazine Rifle Double-Column Feed Kit",
+  "commands.tacz.industry.feed_candidates": "§bFeed survey§r — loaded: %s; validated: %s; review required: %s; incremental/clip: %s; excluded: %s",
+  "commands.tacz.industry.feed_candidates_hint": "Survey results never enable physical magazines. Inspect a gun id, then add an author declaration or a validated sidecar after confirming its real mechanism and family.",
+  "commands.tacz.industry.feed_candidate": "Survey (non-authoritative): category=%s; GunIndex class=%s; private-family proposal=%s; signals=%s",
+  "commands.tacz.industry.feed_source_audit": "Feed declaration sources — sidecar: %s; inline author declarations: %s",
+  "commands.tacz.industry.feed_candidates_queue": "First review queue (max 12): %s"
 }

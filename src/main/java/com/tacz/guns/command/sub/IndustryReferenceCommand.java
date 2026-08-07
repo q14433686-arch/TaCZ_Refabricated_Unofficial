@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.tacz.guns.industry.magazine.ExternalCarrierVariant;
+import com.tacz.guns.industry.magazine.GunFeedCandidateSurvey;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.reference.IndustryReferenceProfile;
 import com.tacz.guns.industry.reference.IndustryRuntimeAudit;
@@ -15,6 +16,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
+import java.util.List;
 import java.util.TreeSet;
 
 /** Moderator-facing inspection of the runtime factual reference table. */
@@ -24,6 +26,7 @@ public final class IndustryReferenceCommand {
     private static final String REFERENCE = "reference";
     private static final String FEED = "feed";
     private static final String INSPECT = "inspect";
+    private static final String CANDIDATES = "candidates";
     private static final String GUN = "gun";
 
     private IndustryReferenceCommand() {
@@ -42,7 +45,9 @@ public final class IndustryReferenceCommand {
                 .then(Commands.literal(FEED)
                         .then(Commands.literal(INSPECT)
                                 .then(Commands.argument(GUN, StringArgumentType.greedyString())
-                                        .executes(IndustryReferenceCommand::inspectFeed))));
+                                        .executes(IndustryReferenceCommand::inspectFeed)))
+                        .then(Commands.literal(CANDIDATES)
+                                .executes(IndustryReferenceCommand::candidateSummary)));
     }
 
     private static int audit(CommandContext<CommandSourceStack> context) {
@@ -61,7 +66,49 @@ public final class IndustryReferenceCommand {
         context.getSource().sendSystemMessage(Component.translatable(
                 "commands.tacz.industry.feed_audit", feedAudit.accepted(), feedAudit.dormant(), feedAudit.rejected()
         ));
+        context.getSource().sendSystemMessage(Component.translatable(
+                "commands.tacz.industry.feed_source_audit", feedAudit.sidecarAccepted(), feedAudit.inlineAccepted()
+        ));
         return Command.SINGLE_SUCCESS;
+    }
+
+    /**
+     * Aggregate the intentionally non-active reload-data survey. This gives an
+     * administrator a bounded review queue without silently turning candidate
+     * guns into physical magazines.
+     */
+    private static int candidateSummary(CommandContext<CommandSourceStack> context) {
+        CommonAssetsManager manager = CommonAssetsManager.getInstance();
+        if (manager == null) {
+            context.getSource().sendSystemMessage(Component.translatable("commands.tacz.industry.unavailable"));
+            return 0;
+        }
+        GunFeedCandidateSurvey.Summary summary = GunFeedCandidateSurvey.summarize(manager);
+        context.getSource().sendSystemMessage(Component.translatable(
+                "commands.tacz.industry.feed_candidates",
+                summary.total(), summary.validated(), summary.review(), summary.incrementalOrClip(), summary.excluded()
+        ));
+        context.getSource().sendSystemMessage(Component.translatable(
+                "commands.tacz.industry.feed_candidates_hint"
+        ));
+        List<GunFeedCandidateSurvey.Candidate> queue = GunFeedCandidateSurvey.reviewCandidates(manager, 12);
+        if (!queue.isEmpty()) {
+            context.getSource().sendSystemMessage(Component.translatable(
+                    "commands.tacz.industry.feed_candidates_queue", formatSurveyQueue(queue)
+            ));
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static String formatSurveyQueue(List<GunFeedCandidateSurvey.Candidate> candidates) {
+        StringBuilder output = new StringBuilder();
+        for (GunFeedCandidateSurvey.Candidate candidate : candidates) {
+            if (!output.isEmpty()) {
+                output.append(", ");
+            }
+            output.append(candidate.gunId()).append('[').append(candidate.gunClass()).append(']');
+        }
+        return output.toString();
     }
 
     /**
@@ -122,6 +169,13 @@ public final class IndustryReferenceCommand {
                     definition.getMechanism().serializedName(), definition.getMagazineCapacity()
             ));
         }
+        GunFeedCandidateSurvey.Candidate candidate = GunFeedCandidateSurvey.analyze(gunId, index, definition);
+        context.getSource().sendSystemMessage(Component.translatable(
+                "commands.tacz.industry.feed_candidate",
+                candidate.classification().serializedName(), candidate.gunClass(),
+                candidate.provisionalPrivateFamily().isBlank() ? "-" : candidate.provisionalPrivateFamily(),
+                String.join(", ", candidate.signals())
+        ));
         return Command.SINGLE_SUCCESS;
     }
 

@@ -17,7 +17,7 @@ GunData.ammo_amount
 
 正确路径是：**附属包作者或兼容数据包显式声明 `industry/gun_feed`，运行时再用实际加载的 GunIndex/GunData 验证。** 没有通过验证的声明保持 legacy，不会产生实体弹匣。
 
-仓库 `main` 中四个参考枪包的离线审计、容量统计和安全边界见 [`REFERENCE_GUNPACK_FEED_AUDIT.md`](REFERENCE_GUNPACK_FEED_AUDIT.md)。
+仓库 `main` 中四个参考枪包的离线审计、容量统计和安全边界见 [`REFERENCE_GUNPACK_FEED_AUDIT.md`](REFERENCE_GUNPACK_FEED_AUDIT.md)。未知枪包的候选测绘、作者内联声明与 sidecar 优先级见 [`FEED_DISCOVERY_POLICY.md`](FEED_DISCOVERY_POLICY.md)。
 
 ## 放置位置
 
@@ -34,6 +34,29 @@ data/my_addon/industry/gun_feed/f2000.json
 ```
 
 兼容数据包可以提供另一个枪包的 `data/my_addon/...` 路径；不必、也不应修改附属枪包 ZIP。
+
+## 枪包作者内联声明（可选）
+
+新枪包作者也可像 GunsmithLib 一类 TACZ 扩展那样，在自己的 GunData 中明确 opt-in：
+
+```json5
+{
+  "tacz_industry": {
+    "schema_version": 1,
+    "feed": {
+      "mechanism": "detachable_magazine",
+      "magazine_family": "my_addon_f2000_556",
+      "magazine_capacity": 30,
+      "ammo": "my_addon:556x45",
+      "display_name": "item.my_addon.magazine.f2000"
+    }
+  },
+  "ammo": "my_addon:556x45",
+  "ammo_amount": 30
+}
+```
+
+内联 `tacz_industry.feed` 与 sidecar 使用同一份服务器验证；它不是 `reload.type` 的替代解释，也不会由 TACZ 自动补写。若同一 GunId 存在 sidecar，**sidecar 优先且拥有该目标**：哪怕 sidecar 已过期而被拒绝，也不会偷偷回退到旧内联声明。这保证服务器兼容层能 fail closed。
 
 ## 最小可拆卸弹匣声明
 
@@ -145,11 +168,16 @@ TACZ 当前的扩容等级最多使用该数组的前三项。少数旧枪包虽
 ```text
 /tacz industry audit
 /tacz industry reference my_addon:f2000
+/tacz industry feed candidates
 /tacz industry feed inspect my_addon:f2000
 ```
 
 `industry audit` 现在会额外显示供弹适配统计：已接受、可选附属包未安装而休眠、以及因 Ammo/容量/字段不符被拒绝的声明数量。
 
 `feed inspect` 直接读取服务器已加载的 `GunData`，报告 Ammo、基础/原始扩容容量、`reload.type`、bolt、脚本和当前已验证的适配状态。它是为兼容包作者收集**可验证事实**的命令；输出会明确提醒：它不会也不能据此自动选择 `detachable_magazine`、`belt`、管仓或转轮机制。
+
+`feed candidates` 是只读的候选汇总，并列出最多 12 把按 GunId 排序的待复核枪。它会参考 GunIndex 的枪种 class、FeedType、容量、无限备弹、已知逐发/桥夹 script 参数（`loop_feed`、`roundN_feed`、`clip_load_feed`）以及 open-bolt/semi-only 的转轮风险信号，把枪分为：已验证、需复核、逐发/夹具候选或排除。它不会写入 `GunFeedDefinition`、不会生成创造物品、不会接管换弹，也不会把同 Ammo/同容量的枪自动合并 family。
+
+枪种 class、枪名、模型或弹匣井骨骼只可作为人工审计线索：手动栓动既可能是 AWM/M107 这种可拆卸弹匣，也可能是 Kar98/Mosin 这种固定仓；closed/open bolt 同样不是供弹机构证明。真实互插始终需要明确 `magazine_family`。
 
 玩家不需要运行仓库 Python 工具；`tools/generate_industry_content.py --check` 只用于作者/CI 验证内置默认供弹器清单。

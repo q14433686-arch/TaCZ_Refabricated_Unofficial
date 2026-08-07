@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.annotations.SerializedName;
 import com.tacz.guns.api.entity.IGunOperator;
+import com.tacz.guns.industry.magazine.IndustryGunDataExtension;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.FireMode;
@@ -119,6 +120,16 @@ public class GunData {
 
     @SerializedName("script_param")
     private Map<String, Object> scriptParam = null;
+
+    /**
+     * Optional pack-author industry declaration. It is not inferred from the
+     * legacy reload API; GunFeedDefinitionManager validates it after the real
+     * GunIndex is available and a sidecar compatibility data pack may override
+     * it without changing this GunData resource.
+     */
+    @SerializedName("tacz_industry")
+    @Nullable
+    private IndustryGunDataExtension industryExtension = null;
 
     @SerializedName("charging")
     private EnumMap<FireMode, ChargeData> chargeData = null;
@@ -294,6 +305,12 @@ public class GunData {
     @Nullable
     public Map<String, Object> getScriptParam() {
         return scriptParam;
+    }
+
+    /** Optional author-declared industry metadata; null means no opt-in. */
+    @Nullable
+    public IndustryGunDataExtension getIndustryExtension() {
+        return industryExtension;
     }
 
     /**

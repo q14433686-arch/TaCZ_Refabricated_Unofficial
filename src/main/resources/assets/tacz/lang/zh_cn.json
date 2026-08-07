@@ -2084,5 +2084,10 @@
   "item.tacz.magazine.type81_762x39": "81-1 式 7.62×39 30 发弹匣",
   "item.tacz.press_die.carrier_gauge.type81_762x39_30": "81-1 式 7.62×39 30 发弹匣规格量规",
   "item.tacz.gun_component.carrier_body.type81_762x39_30": "81-1 式 7.62×39 30 发弹匣壳体",
-  "item.tacz.gun_component.carrier_feed_kit.type81_762x39_30": "81-1 式 7.62×39 30 发弹匣步枪双排供弹组件"
+  "item.tacz.gun_component.carrier_feed_kit.type81_762x39_30": "81-1 式 7.62×39 30 发弹匣步枪双排供弹组件",
+  "commands.tacz.industry.feed_candidates": "§b供弹测绘§r —— 已加载：%s；已验证：%s；需人工复核：%s；逐发/夹具候选：%s；排除：%s",
+  "commands.tacz.industry.feed_candidates_hint": "测绘结果绝不会启用实体弹匣。先检查具体枪 ID，再确认真实机构与 family 后写入作者声明或已验证 sidecar。",
+  "commands.tacz.industry.feed_candidate": "测绘（非权威）：类别=%s；GunIndex 枪种=%s；私有 family 建议=%s；信号=%s",
+  "commands.tacz.industry.feed_source_audit": "供弹声明来源 —— sidecar：%s；作者内联声明：%s",
+  "commands.tacz.industry.feed_candidates_queue": "首批待复核队列（最多 12 把）：%s"
 }
