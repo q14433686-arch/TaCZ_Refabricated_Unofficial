@@ -114,11 +114,15 @@ public final class InternalFeedService {
         if (definition.hasReloadRoutes()) {
             return selectReloadRoute(player, gun, definition, missing, isTacticalReload(gun), consumesSource) != null;
         }
-        if (!shouldConsumeAmmo(player) || isInfiniteReload(gun)) {
-            return !definition.getMechanism().usesLoadingDevice()
-                    || findBestLoadingDevice(player, definition,
-                    definition.getMagazineCapacity() - getAmmoCount(gun)) != null
-                    || definition.allowsLooseReload();
+        if (!consumesSource) {
+            // Creative/infinite reloads still need a real native reload action,
+            // but do not need a physical source stack. In particular, a
+            // stripper-clip profile such as the Type 56 may deliberately have
+            // no loose-round route because its pack only supplies a batch
+            // reload animation. The matching virtual source is materialised in
+            // beginReload; requiring a creative player to own a clip here made
+            // that valid animation path impossible to start.
+            return true;
         }
         if (definition.getMechanism().usesLoadingDevice()
                 && findBestLoadingDevice(player, definition,
@@ -171,6 +175,19 @@ public final class InternalFeedService {
                 // declared and is never inferred from reload.type.
                 plan = new InternalFeedReloadPlan(iGun.getGunId(gun), definition.getAmmoId(), transfer, transfer,
                         transfer, tactical, selection.slot(), reserved.copy(), definition.isFeedDeviceReusable());
+            } else if (!consumesSource) {
+                // No real source is decremented in Creative/infinite mode. Do
+                // not invent an inventory clip, but reserve the same batch that
+                // one physical device would transfer so a pack's native batch
+                // reload timing remains authoritative. This is essential for
+                // audited batch-only clip guns (for example rainforest:56),
+                // whose honest profile intentionally has no loose-round path.
+                int transfer = Math.min(missing, definition.getReloadBatch());
+                if (transfer <= 0) {
+                    return null;
+                }
+                plan = new InternalFeedReloadPlan(iGun.getGunId(gun), definition.getAmmoId(), transfer, transfer,
+                        transfer, tactical);
             } else {
                 if (!definition.allowsLooseReload()) {
                     return null;

@@ -4,6 +4,7 @@ import cn.sh1rocu.tacz.api.LogicalSide;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.event.common.GunDrawEvent;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.industry.magazine.EnBlocClipService;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunDraw;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -25,6 +26,14 @@ public class LivingEntityDrawGun {
     }
 
     public void draw(Supplier<ItemStack> gunItemSupplier) {
+        // A final-shot ejection normally happens in the fire transaction. This
+        // is only a safe server-side recovery point for an already-empty clip
+        // from an older stack or an interrupted tick: never let a put-away
+        // animation be the only apparent "ejection" while the physical clip
+        // remains hidden in the gun NBT.
+        ItemStack lastItem = data.currentGunItem == null ? ItemStack.EMPTY : data.currentGunItem.get();
+        EnBlocClipService.ejectIfEmpty(shooter, lastItem);
+
         // 重置各个状态
         data.initialData();
 
@@ -46,7 +55,6 @@ public class LivingEntityDrawGun {
                 data.drawTimestamp = System.currentTimeMillis() + (long) (data.currentPutAwayTimeS * 1000);
             }
         }
-        ItemStack lastItem = data.currentGunItem == null ? ItemStack.EMPTY : data.currentGunItem.get();
         GunDrawEvent.CALLBACK.invoker().post(new GunDrawEvent(shooter, lastItem, gunItemSupplier.get(), LogicalSide.SERVER));
         NetworkHandler.sendToTrackingEntity(new ServerMessageGunDraw(shooter.getId(), lastItem, gunItemSupplier.get()), shooter);
         data.currentGunItem = gunItemSupplier;

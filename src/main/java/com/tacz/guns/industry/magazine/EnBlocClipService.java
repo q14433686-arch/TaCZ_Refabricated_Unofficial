@@ -16,8 +16,10 @@ import com.tacz.guns.util.ItemNbtUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
  * <p>An en-bloc clip is deliberately neither an InstalledMagazine nor a
  * bridge clip inventory source. The whole configured ItemStack is stored in
  * gun NBT while firing; its count falls with the gun's internal rounds and the
- * empty clip is automatically returned to the player after the final chambered
- * round has actually left the gun.</p>
+ * empty clip is physically ejected as a real world ItemEntity after the final
+ * chambered round has actually left the gun.</p>
  */
 public final class EnBlocClipService {
     public static final String INSTALLED_EN_BLOC_CLIP_TAG = "InstalledEnBlocClip";
@@ -195,21 +197,53 @@ public final class EnBlocClipService {
     }
 
     /**
-     * Return the empty physical clip only once the gun has no remaining
-     * internal clip rounds and no chambered round still waiting to be fired.
+     * Eject the empty physical clip only once the gun has no remaining clip
+     * rounds and no chambered round still waiting to be fired. This is a real
+     * server ItemEntity ejection, not a delayed inventory grant or a client
+     * animation substitute; manual/tactical removal remains inventory-native.
      */
     public static boolean ejectIfEmpty(LivingEntity shooter, ItemStack gun) {
         if (!usesEnBlocClip(gun) || !(shooter instanceof Player player) || !(gun.getItem() instanceof IGun iGun)) {
             return false;
         }
         ItemStack clip = getInstalledClip(gun);
-        if (clip.isEmpty() || getInstalledAmmoCount(gun) > 0 || iGun.hasBulletInBarrel(gun)) {
+        if (clip.isEmpty() || getInstalledAmmoCount(gun) > 0 || hasUnfiredChamberRound(iGun, gun)) {
             return false;
         }
         setInstalledClip(gun, ItemStack.EMPTY);
-        ItemHandlerHelper.giveItemToPlayer(player, clip);
+        ejectClipIntoWorld(shooter, clip);
         player.inventoryMenu.broadcastFullState();
         return true;
+    }
+
+    /**
+     * Native item-entity ejection for an automatically emptied clip. It uses a
+     * server-side trajectory so remote clients, hoppers and the firing player
+     * all observe the same physical result. The short pickup delay keeps the
+     * clip visibly clear of the receiver before normal vanilla pickup begins.
+     */
+    private static void ejectClipIntoWorld(LivingEntity shooter, ItemStack clip) {
+        if (clip.isEmpty() || shooter.level().isClientSide()) {
+            return;
+        }
+        Vec3 forward = shooter.getLookAngle();
+        Vec3 right = new Vec3(-forward.z, 0.0, forward.x);
+        if (right.lengthSqr() < 1.0E-6) {
+            right = new Vec3(1.0, 0.0, 0.0);
+        } else {
+            right = right.normalize();
+        }
+        Vec3 spawn = shooter.position()
+                .add(right.scale(0.14))
+                .add(forward.scale(0.08))
+                .add(0.0, shooter.getEyeHeight() * 0.56, 0.0);
+        Vec3 velocity = right.scale(0.16 + shooter.getRandom().nextDouble() * 0.05)
+                .add(forward.scale((shooter.getRandom().nextDouble() - 0.5) * 0.04))
+                .add(0.0, 0.13 + shooter.getRandom().nextDouble() * 0.05, 0.0);
+        ItemEntity entity = new ItemEntity(shooter.level(), spawn.x, spawn.y, spawn.z, clip.copy());
+        entity.setPickUpDelay(10);
+        entity.setDeltaMovement(velocity);
+        shooter.level().addFreshEntity(entity);
     }
 
     private static boolean finishReservedReload(LivingEntity shooter, ItemStack gun, EnBlocClipReloadPlan plan) {
@@ -286,6 +320,18 @@ public final class EnBlocClipService {
 
     private static ItemStack createClip(GunFeedDefinition definition, int rounds) {
         return MagazineItemBuilder.create().fromDefinition(definition).setAmmoCount(rounds).build();
+    }
+
+    /**
+     * Mirrors TACZ's actual firing semantics: an OPEN_BOLT gun never has a
+     * meaningful chambered-round state, even if an old ItemStack still carries
+     * a stale HasBulletInBarrel flag. Without this distinction an empty M1
+     * en-bloc clip can remain installed forever after its final shot.
+     */
+    private static boolean hasUnfiredChamberRound(IGun iGun, ItemStack gun) {
+        Bolt bolt = TimelessAPI.getCommonGunIndex(iGun.getGunId(gun))
+                .map(index -> index.getGunData().getBolt()).orElse(null);
+        return bolt != Bolt.OPEN_BOLT && iGun.hasBulletInBarrel(gun);
     }
 
     private static void chamberRoundAfterEmptyReload(ItemStack gun) {

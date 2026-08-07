@@ -267,7 +267,7 @@ chance = clamp(
 | 优先级 | 项目 | 当前事实 | 建议 |
 |---|---|---|---|
 | P0 | 最新桥夹路线的外部编译与实机验证 | `3eae889` 后尚无 Windows Gradle / 游戏结果 | 先执行 `./gradlew build`；重点测 Kar98、Mosin、桥夹归零保留。 |
-| P0 | 漏夹 `en_bloc_clip` | 已完成独立 `InstalledEnBlocClip`、逐发扣除、空夹自动返还；首个样本为 `hamster:m1garand` | 外部 Gradle/实机验证后，为更多已审计漏夹枪补 profile。 |
+| P0 | 漏夹 `en_bloc_clip` | 已完成独立 `InstalledEnBlocClip`、逐发扣除、空夹真实 ItemEntity 自动弹出；首个样本为 `hamster:m1garand` | 外部 Gradle/实机验证后，为更多已审计漏夹枪补 profile。 |
 | P1 | 工业维护 / 模块维修 | 当前不存在；回收站是破坏性报废，不是维修 | 按本文件 A → B → C 实施。 |
 | P1 | 长按 R 供弹器选择圆盘 | 服务器预留已存在，客户端选择 UI 尚未实现 | 在 route/选择槽位协议稳定后实现，不越过服务器事务。 |
 | P1 | 速度装填器代表包 | 已接入 GunpowderRevolution `hamster:webley`：完整 6 发快装器触发原 `reload_loader`，无完整器件走逐发 | 外部验证后再审计 Webley 以外的转轮；不同脚本不套用。 |
