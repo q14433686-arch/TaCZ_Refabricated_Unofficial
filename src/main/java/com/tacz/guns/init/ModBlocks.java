@@ -4,6 +4,7 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.block.*;
 import com.tacz.guns.block.entity.CartridgeAssemblyMachineBlockEntity;
 import com.tacz.guns.block.entity.IndustrialSalvageStationBlockEntity;
+import com.tacz.guns.block.entity.IndustrialServiceBenchBlockEntity;
 import com.tacz.guns.block.entity.GunSmithTableBlockEntity;
 import com.tacz.guns.block.entity.StatueBlockEntity;
 import com.tacz.guns.block.entity.TargetBlockEntity;
@@ -36,6 +37,9 @@ public class ModBlocks {
     /** One-input recovery station for stripped guns, empty magazines and obsolete dies. */
     public static Block INDUSTRIAL_SALVAGE_STATION = registerBlock("industrial_salvage_station",
             new IndustrialSalvageStationBlock(detailedMachineProps("industrial_salvage_station")));
+    /** Real ten-slot service transaction; deliberately separate from destructive salvage. */
+    public static Block INDUSTRIAL_SERVICE_BENCH = registerBlock("industrial_service_bench",
+            new IndustrialServiceBenchBlock(detailedMachineProps("industrial_service_bench")));
 
     public static Block TARGET = registerBlock("target", new TargetBlock(woodProps("target")));
     public static Block STATUE = registerBlock("statue", new StatueBlock(BlockBehaviour.Properties.of().setId(blockKey("statue")).sound(SoundType.STONE).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.DESTROY)));
@@ -46,6 +50,9 @@ public class ModBlocks {
     );
     public static BlockEntityType<IndustrialSalvageStationBlockEntity> INDUSTRIAL_SALVAGE_STATION_BE = registerBlockEntity(
             "industrial_salvage_station", IndustrialSalvageStationBlockEntity.TYPE
+    );
+    public static BlockEntityType<IndustrialServiceBenchBlockEntity> INDUSTRIAL_SERVICE_BENCH_BE = registerBlockEntity(
+            "industrial_service_bench", IndustrialServiceBenchBlockEntity.TYPE
     );
     public static BlockEntityType<TargetBlockEntity> TARGET_BE = registerBlockEntity("target", TargetBlockEntity.TYPE);
     public static BlockEntityType<StatueBlockEntity> STATUE_BE = registerBlockEntity("statue", StatueBlockEntity.TYPE);

@@ -248,11 +248,11 @@ chance = clamp(
 3. 只在 `reduceAmmoOnce()` 成功后记录 Shot / Fouling / Condition；创造模式免费射击不磨损；没有随机卡壳、锁死、吞弹或额外扣弹；
 4. 默认总装输出已有来源标签，测绘 Gunsmith Table fallback 现在也写入完整 `surveyed/...` 来源、tier 与工装标签。
 
-### B. 拆解、Create 修件、复装
+### B. 拆解、Create 修件、复装（B.1 已开始）
 
-1. 新工业勤务台 block entity、menu、screen、C2S 事务；
-2. 五组件保真拆解和复装；
-3. Create 单工件维修配方、勤务扳手和命名维修件；
+1. 已新增独立 `industrial_service_bench` block entity、十槽 menu、screen 与服务端 C2S 事务；它不复用或改写破坏性回收站；
+2. 已实现五组件保真拆解和复装：空枪 + 生产模板 + 对应动作/平台检具 + 原生耐久的军械勤务扳手 → receiver/bolt/barrel/trigger/recoil，复装严格要求同 GunId、同工业来源；附件、实体供弹器、漏夹、内部/膛内弹药未清空时拒绝；
+3. 下一步仍是 Create 单工件维修配方、命名维修件与组件 Condition 的实际恢复，不能用复装按钮直接满修；
 4. 完整回归附件、实体弹匣、桥夹、内部弹药与输出堵塞。
 
 ### C. 卡壳与清障

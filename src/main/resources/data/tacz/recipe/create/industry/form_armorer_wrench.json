@@ -1,0 +1,12 @@
+{
+  "fabric:load_conditions": [
+    {"condition": "fabric:all_mods_loaded", "values": ["create"]}
+  ],
+  "type": "create:mechanical_crafting",
+  "pattern": [" S ", " BS", "B  "],
+  "key": {
+    "S": {"item": "tacz:high_carbon_steel_plate"},
+    "B": {"item": "create:brass_sheet"}
+  },
+  "result": {"id": "tacz:armorer_wrench"}
+}

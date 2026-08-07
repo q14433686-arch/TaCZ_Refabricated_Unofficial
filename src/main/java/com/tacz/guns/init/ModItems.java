@@ -65,6 +65,8 @@ public class ModItems {
     public static Item GUN_COMPONENT = register("gun_component", new IndustryTaggedItem(itemProps("gun_component").stacksTo(16)));
     /** Blank sheets, master dossiers, and reusable production templates share one NBT-backed tooling medium. */
     public static Item GUN_BLUEPRINT = register("gun_blueprint", new IndustryTaggedItem(itemProps("gun_blueprint").stacksTo(1)));
+    /** Native-durability tool consumed only after a successful service-bench transaction. */
+    public static Item ARMORER_WRENCH = register("armorer_wrench", new Item(itemProps("armorer_wrench").stacksTo(1)));
 
     public static AttachmentItem ATTACHMENT = register("attachment", new AttachmentItem(itemProps("attachment")));
 
@@ -78,6 +80,9 @@ public class ModItems {
     /** Safe one-input recovery machine for stripped industrial equipment. */
     public static Item INDUSTRIAL_SALVAGE_STATION = register("industrial_salvage_station",
             new BlockItem(ModBlocks.INDUSTRIAL_SALVAGE_STATION, blockItemProps("industrial_salvage_station")));
+    /** Ten-slot industrial dismantling/reassembly station, not a salvage replacement. */
+    public static Item INDUSTRIAL_SERVICE_BENCH = register("industrial_service_bench",
+            new BlockItem(ModBlocks.INDUSTRIAL_SERVICE_BENCH, blockItemProps("industrial_service_bench")));
     /** Stores up to four complete physical magazine stacks, including their remaining rounds. */
     public static Item MAGAZINE_POUCH = register("magazine_pouch", new MagazinePouchItem(itemProps("magazine_pouch")));
     /** Reusable cursor tool that batch-loads a physical magazine from loose ammunition. */

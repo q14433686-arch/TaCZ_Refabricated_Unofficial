@@ -4,6 +4,7 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.inventory.CartridgeAssemblyMenu;
 import com.tacz.guns.inventory.GunSmithTableMenu;
 import com.tacz.guns.inventory.IndustrialSalvageMenu;
+import com.tacz.guns.inventory.IndustrialServiceBenchMenu;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -21,6 +22,9 @@ public class ModContainer {
     );
     public static final MenuType<IndustrialSalvageMenu> INDUSTRIAL_SALVAGE_MENU = register(
             "industrial_salvage_menu", IndustrialSalvageMenu.TYPE
+    );
+    public static final MenuType<IndustrialServiceBenchMenu> INDUSTRIAL_SERVICE_BENCH_MENU = register(
+            "industrial_service_bench_menu", IndustrialServiceBenchMenu.TYPE
     );
 
     private static <T extends AbstractContainerMenu> MenuType<T> register(String name, MenuType<T> type) {
