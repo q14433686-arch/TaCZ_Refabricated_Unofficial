@@ -2590,17 +2590,32 @@ def maintenance_baseline(platform: dict[str, Any], policy: dict[str, Any]) -> di
         wear = {"receiver": 1, "bolt": 1, "barrel": 2, "trigger": 1, "recoil": 1}
         durability_grade, expected_barrel_shots = "precision", 5_000
     # Broad gameplay maintenance classes, not claims about real named weapons.
+    # Each tuple is dry wear/fouling, wet wear/fouling, rain wear/fouling, then
+    # dirt-contact wear/fouling. Rain only applies when the shooter is actually
+    # exposed; immersion/wet-contact uses the stronger wet pair.
     operation_by_action = {
-        "bolt_action": (0.80, 0.75, 1.20, 1.35, 1.10, 1.20),
-        "anti_material_bolt": (1.05, 0.80, 1.25, 1.35, 1.10, 1.20),
-        "break_action": (0.75, 0.65, 1.15, 1.25, 1.05, 1.15),
-        "revolver": (0.90, 0.80, 1.20, 1.30, 1.10, 1.20),
-        "belt_fed": (1.00, 1.30, 1.15, 1.55, 1.10, 1.35),
-        "rotary": (1.00, 1.15, 1.15, 1.45, 1.15, 1.25),
-        "gas_operated_shotgun": (1.10, 1.20, 1.30, 1.55, 1.15, 1.35),
-        "blowback_smg": (1.00, 1.15, 1.25, 1.45, 1.15, 1.30),
+        "bolt_action": (0.80, 0.75, 1.20, 1.35, 1.05, 1.15, 1.10, 1.20),
+        "anti_material_bolt": (1.05, 0.80, 1.25, 1.35, 1.10, 1.18, 1.10, 1.20),
+        "break_action": (0.75, 0.65, 1.15, 1.25, 1.05, 1.12, 1.05, 1.15),
+        "revolver": (0.90, 0.80, 1.20, 1.30, 1.05, 1.15, 1.10, 1.20),
+        "belt_fed": (1.00, 1.30, 1.15, 1.55, 1.08, 1.28, 1.10, 1.35),
+        "rotary": (1.00, 1.15, 1.15, 1.45, 1.08, 1.25, 1.15, 1.25),
+        "gas_operated_shotgun": (1.10, 1.20, 1.30, 1.55, 1.12, 1.30, 1.15, 1.35),
+        "blowback_smg": (1.00, 1.15, 1.25, 1.45, 1.10, 1.25, 1.15, 1.30),
     }
-    multipliers = operation_by_action.get(action, (1.0, 1.0, 1.35, 1.75, 1.15, 1.45))
+    multipliers = operation_by_action.get(action, (1.0, 1.0, 1.35, 1.75, 1.10, 1.25, 1.15, 1.45))
+    # This is a maximum at full *real* GunHeatData. Guns without native heat
+    # state stay exactly at 1.0 at runtime; the generator never invents heat.
+    heat_stress = {
+        "rotary": 1.75,
+        "belt_fed": 1.55,
+        "gas_operated_shotgun": 1.35,
+        "blowback_smg": 1.25,
+        "anti_material_bolt": 1.20,
+        "bolt_action": 1.15,
+        "break_action": 1.10,
+        "revolver": 1.10,
+    }.get(action, 1.20)
     return {
         "schema_version": 1,
         "generated_by": "tacz_industry_generator",
@@ -2610,14 +2625,16 @@ def maintenance_baseline(platform: dict[str, Any], policy: dict[str, Any]) -> di
         "expected_barrel_shots": expected_barrel_shots,
         "wear_per_shot": wear,
         "fouling_per_shot": fouling,
-        "heat_stress_multiplier": 1.0,
+        "heat_stress_multiplier": heat_stress,
         "operation": {
             "wear_multiplier": multipliers[0],
             "fouling_multiplier": multipliers[1],
             "submerged_wear_multiplier": multipliers[2],
             "submerged_fouling_multiplier": multipliers[3],
-            "contaminant_wear_multiplier": multipliers[4],
-            "contaminant_fouling_multiplier": multipliers[5],
+            "rain_wear_multiplier": multipliers[4],
+            "rain_fouling_multiplier": multipliers[5],
+            "contaminant_wear_multiplier": multipliers[6],
+            "contaminant_fouling_multiplier": multipliers[7],
         },
         "jam": {
             "warning_condition": 6000,
@@ -2671,8 +2688,8 @@ def validate_generated_maintenance_profiles(platforms: list[dict[str, Any]], exp
         operation = profile.get("operation")
         jam = profile.get("jam")
         operation_keys = {"wear_multiplier", "fouling_multiplier", "submerged_wear_multiplier",
-                          "submerged_fouling_multiplier", "contaminant_wear_multiplier",
-                          "contaminant_fouling_multiplier"}
+                          "submerged_fouling_multiplier", "rain_wear_multiplier", "rain_fouling_multiplier",
+                          "contaminant_wear_multiplier", "contaminant_fouling_multiplier"}
         if profile.get("schema_version") != 1 or profile.get("eligibility") != "industrial_assembly" \
                 or profile.get("maintenance_class") != action_profile(platform) \
                 or profile.get("durability_grade") not in {"field", "service", "enhanced", "precision", "heavy_duty"} \
@@ -2680,6 +2697,8 @@ def validate_generated_maintenance_profiles(platforms: list[dict[str, Any]], exp
                 or not isinstance(wear, dict) or set(wear) != components \
                 or not all(isinstance(value, int) and 0 <= value <= 1000 for value in wear.values()) \
                 or not isinstance(profile.get("fouling_per_shot"), int) \
+                or not isinstance(profile.get("heat_stress_multiplier"), (int, float)) \
+                or not 1 <= float(profile["heat_stress_multiplier"]) <= 16 \
                 or not isinstance(operation, dict) or set(operation) != operation_keys \
                 or not all(isinstance(value, (int, float)) and 0 <= float(value) <= 16 for value in operation.values()) \
                 or not isinstance(jam, dict) \
@@ -5088,6 +5107,7 @@ def run(write: bool) -> int:
     english: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "Neutral Exterior / Furniture Blank",
         "item.tacz.service_part_blank": "Neutral Service Replacement Blank",
+        "item.tacz.maintenance_cleaning_kit": "Industrial Cleaning Kit",
         "item.tacz.press_die_blank.cartridge_gauge": "Neutral Cartridge Datum Gauge Blank",
         "item.tacz.gun_blueprint.blank": "Blank Tooling Sheet",
         "item.tacz.press_die.acceptance_gauge_stock": "Precision Acceptance Gauge Stock",
@@ -5134,17 +5154,23 @@ def run(write: bool) -> int:
         "gui.tacz.industrial_service.disassemble": "Disassemble",
         "gui.tacz.industrial_service.reassemble": "Reassemble",
         "gui.tacz.industrial_service.repair": "Repair components",
+        "gui.tacz.industrial_service.clean": "Clean fouling",
         "gui.tacz.industrial_service.disassemble_hint": "Strip a safe, empty industrial gun into five preserved components.",
         "gui.tacz.industrial_service.reassemble_hint": "Reassemble five matching components without directly restoring their condition.",
         "gui.tacz.industrial_service.repair_hint": "Use steel and brass stocks here to restore only damaged components; no mechanical power required.",
+        "gui.tacz.industrial_service.clean_hint": "Clean a safe assembled industrial gun with matching tooling and Basin-made cleaning kits; component condition and fault state stay intact.",
         "gui.tacz.industrial_service.gun_input": "GUN IN",
         "gui.tacz.industrial_service.gun_output": "GUN OUT",
         "gui.tacz.industrial_service.tooling": "TEMPLATE / FIXTURE / WRENCH",
         "gui.tacz.industrial_service.components": "FIVE SERVICE COMPONENTS",
         "gui.tacz.industrial_service.materials": "REPAIR STOCK",
+        "gui.tacz.industrial_service.cleaning_material": "CLEANER",
         "message.tacz.industrial_service.repair_materials": "Need %s high-carbon steel plate(s) and %s brass sheet(s).",
         "message.tacz.industrial_service.repair_success": "Repaired %s component(s); consumed %s steel plate(s) and %s brass sheet(s).",
         "message.tacz.industrial_service.components_already_serviceable": "All installed service components are already at full condition.",
+        "message.tacz.industrial_service.gun_already_clean": "This safe industrial gun has no fouling to remove.",
+        "message.tacz.industrial_service.cleaning_materials": "Need %s industrial cleaning kit(s).",
+        "message.tacz.industrial_service.clean_success": "Removed %s fouling; consumed %s industrial cleaning kit(s).",
         "config.tacz.server.industry_maintenance_scope": "Industrial Maintenance Scope",
         "config.tacz.server.industry_maintenance_scope.desc": "Industrial maintenance records condition and fouling. INDUSTRIAL_ASSEMBLY safely limits it to real industrial-origin guns; ALL_GUNS migrates legacy guns full and clean. Random feed faults still require an explicit audited clear-action profile.",
         "tooltip.tacz.maintenance.status": "Service: %s  |  Condition %s  |  Fouling %s",
@@ -5170,6 +5196,7 @@ def run(write: bool) -> int:
     chinese: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "中性外装套件毛坯",
         "item.tacz.service_part_blank": "中性维修替换件毛坯",
+        "item.tacz.maintenance_cleaning_kit": "工业枪械清洁套件",
         "item.tacz.press_die_blank.cartridge_gauge": "中性弹药基准量规毛坯",
         "item.tacz.gun_blueprint.blank": "空白工装页",
         "item.tacz.press_die.acceptance_gauge_stock": "精密验收检具料坯",
@@ -5216,17 +5243,23 @@ def run(write: bool) -> int:
         "gui.tacz.industrial_service.disassemble": "拆解",
         "gui.tacz.industrial_service.reassemble": "复装",
         "gui.tacz.industrial_service.repair": "维修组件",
+        "gui.tacz.industrial_service.clean": "清除污垢",
         "gui.tacz.industrial_service.disassemble_hint": "将安全、清空的工业枪拆为五个保真组件。",
         "gui.tacz.industrial_service.reassemble_hint": "复装五个匹配组件，不会直接恢复其枪况。",
         "gui.tacz.industrial_service.repair_hint": "在此消耗钢板和黄铜板恢复损坏组件；不需要机械动力。",
+        "gui.tacz.industrial_service.clean_hint": "将安全、已清空的工业成枪与匹配工装、Basin 制成的清洁套件放入此处清污；不恢复组件枪况，也不解除故障。",
         "gui.tacz.industrial_service.gun_input": "枪械输入",
         "gui.tacz.industrial_service.gun_output": "枪械输出",
         "gui.tacz.industrial_service.tooling": "模板 / 检具 / 扳手",
         "gui.tacz.industrial_service.components": "五个勤务组件",
         "gui.tacz.industrial_service.materials": "维修材料",
+        "gui.tacz.industrial_service.cleaning_material": "清洁剂",
         "message.tacz.industrial_service.repair_materials": "需要 %s 块高碳钢板和 %s 张黄铜板。",
         "message.tacz.industrial_service.repair_success": "已维修 %s 个组件；消耗 %s 块钢板和 %s 张黄铜板。",
         "message.tacz.industrial_service.components_already_serviceable": "所有勤务组件均已处于满枪况。",
+        "message.tacz.industrial_service.gun_already_clean": "这把安全的工业枪没有可清除的污垢。",
+        "message.tacz.industrial_service.cleaning_materials": "需要 %s 份工业枪械清洁套件。",
+        "message.tacz.industrial_service.clean_success": "已清除 %s 点污垢；消耗 %s 份工业枪械清洁套件。",
         "config.tacz.server.industry_maintenance_scope": "工业维护范围",
         "config.tacz.server.industry_maintenance_scope.desc": "工业维护记录枪况和污垢。INDUSTRIAL_ASSEMBLY 仅作用于真实工业来源枪械；ALL_GUNS 会让旧枪以满状态、清洁状态安全迁移。随机供弹卡滞仍只会由显式、已审计的清障档案启用。",
         "tooltip.tacz.maintenance.status": "勤务：%s  |  枪况 %s  |  污垢 %s",

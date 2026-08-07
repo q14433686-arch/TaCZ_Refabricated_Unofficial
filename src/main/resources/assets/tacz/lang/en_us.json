@@ -2006,5 +2006,12 @@
   "message.tacz.industrial_service.components_already_serviceable": "All installed service components are already at full condition.",
   "tooltip.tacz.service.legacy_part": "Legacy B.2 replacement part — retained for world compatibility; use the Industrial Service Bench repair bays for new repairs.",
   "tooltip.tacz.maintenance.lockout": "Service lockout — repair components at the Industrial Service Bench",
-  "tooltip.tacz.maintenance.feed_jam": "Feed jam — press fire to cycle the action clear"
+  "tooltip.tacz.maintenance.feed_jam": "Feed jam — press fire to cycle the action clear",
+  "item.tacz.maintenance_cleaning_kit": "Industrial Cleaning Kit",
+  "gui.tacz.industrial_service.clean": "Clean fouling",
+  "gui.tacz.industrial_service.clean_hint": "Clean a safe assembled industrial gun with matching tooling and Basin-made cleaning kits; component condition and fault state stay intact.",
+  "gui.tacz.industrial_service.cleaning_material": "CLEANER",
+  "message.tacz.industrial_service.gun_already_clean": "This safe industrial gun has no fouling to remove.",
+  "message.tacz.industrial_service.cleaning_materials": "Need %s industrial cleaning kit(s).",
+  "message.tacz.industrial_service.clean_success": "Removed %s fouling; consumed %s industrial cleaning kit(s)."
 }

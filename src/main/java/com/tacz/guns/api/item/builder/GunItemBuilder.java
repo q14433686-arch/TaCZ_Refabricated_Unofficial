@@ -113,6 +113,10 @@ public final class GunItemBuilder {
             if (this.ammoCount > 0) {
                 PhysicalMagazineService.migrateLegacyIntoInstalledMagazine(gun);
             }
+            // Keep build() symmetric with forceBuild(): callers that already
+            // know a real GunHeatData contract can initialise the native heat
+            // component without fabricating it for every gun.
+            if (heatData) iGun.setHeatAmount(gun, 0f);
             this.attachments.forEach((type, id) -> {
                 ItemStack attachmentStack = AttachmentItemBuilder.create().setId(id).build();
                 iGun.installAttachment(gun, attachmentStack);

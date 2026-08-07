@@ -30,9 +30,11 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Actual ten-slot disassembly/reassembly station. The five component bays are
- * outputs during strip-down and inputs during reassembly; the server operation
- * itself decides mode atomically, never a client-side visual toggle.
+ * Actual thirteen-slot industrial service station. The five component bays are
+ * outputs during strip-down and inputs during reassembly; dedicated steel,
+ * brass, and named-cleaner bays keep repair and C.3 cleaning material semantics
+ * visible. The server operation itself decides mode atomically, never a
+ * client-side visual toggle.
  */
 public final class IndustrialServiceBenchBlockEntity extends BlockEntity implements Container, ExtendedMenuProvider<BlockPos> {
     public static final int GUN_INPUT = 0;
@@ -45,7 +47,9 @@ public final class IndustrialServiceBenchBlockEntity extends BlockEntity impleme
     /** Non-powered bench repair material bays: steel structural stock + brass fine-fit stock. */
     public static final int STEEL_MATERIAL = GUN_OUTPUT + 1;
     public static final int BRASS_MATERIAL = STEEL_MATERIAL + 1;
-    public static final int SLOT_COUNT = BRASS_MATERIAL + 1;
+    /** C.3 named Basin-made cleaner; never accepts raw cleaning ingredients. */
+    public static final int CLEANING_MATERIAL = BRASS_MATERIAL + 1;
+    public static final int SLOT_COUNT = CLEANING_MATERIAL + 1;
 
     public static final BlockEntityType<IndustrialServiceBenchBlockEntity> TYPE = new BlockEntityType<>(
             IndustrialServiceBenchBlockEntity::new, Set.of(ModBlocks.INDUSTRIAL_SERVICE_BENCH)
@@ -71,6 +75,7 @@ public final class IndustrialServiceBenchBlockEntity extends BlockEntity impleme
             case 0 -> disassemble(player);
             case 1 -> reassemble(player);
             case 2 -> repairComponents(player);
+            case 3 -> cleanGun(player);
             default -> false;
         };
     }
@@ -159,6 +164,40 @@ public final class IndustrialServiceBenchBlockEntity extends BlockEntity impleme
         return true;
     }
 
+    /**
+     * C.3 assembled-gun cleaning is a separate visible multi-slot transaction:
+     * safe industrial gun + matching template/fixture + wrench + named Basin
+     * cleaner. It preserves Condition and does not clear a feed/lockout fault.
+     */
+    private boolean cleanGun(ServerPlayer player) {
+        if (!getItem(GUN_OUTPUT).isEmpty() || !componentBaysEmpty()) {
+            player.sendSystemMessage(Component.translatable("message.tacz.industrial_service.output_blocked"), true);
+            return false;
+        }
+        IndustrialServiceBenchService.CleaningPlan plan = IndustrialServiceBenchService.planCleaning(
+                getItem(GUN_INPUT), getItem(BLUEPRINT), getItem(FIXTURE), getItem(WRENCH)
+        );
+        if (!plan.success()) {
+            reportFailure(player, plan.failure());
+            return false;
+        }
+        ItemStack cleaner = getItem(CLEANING_MATERIAL);
+        if (!IndustrialServiceBenchService.isCleaningMaterial(cleaner) || cleaner.getCount() < plan.cleaningKits()) {
+            player.sendSystemMessage(Component.translatable("message.tacz.industrial_service.cleaning_materials",
+                    plan.cleaningKits()), true);
+            return false;
+        }
+        ItemStack cleaned = IndustrialServiceBenchService.cleanGun(getItem(GUN_INPUT));
+        cleaner.shrink(plan.cleaningKits());
+        setItem(GUN_INPUT, ItemStack.EMPTY);
+        setItem(GUN_OUTPUT, cleaned);
+        IndustrialServiceBenchService.damageWrench(getItem(WRENCH));
+        player.sendSystemMessage(Component.translatable("message.tacz.industrial_service.clean_success",
+                plan.foulingRemoved(), plan.cleaningKits()), true);
+        finishTransaction(player);
+        return true;
+    }
+
     private void finishTransaction(ServerPlayer player) {
         setChanged();
         player.containerMenu.broadcastFullState();
@@ -195,6 +234,7 @@ public final class IndustrialServiceBenchBlockEntity extends BlockEntity impleme
             case COMPONENT_START, COMPONENT_START + 1, COMPONENT_START + 2, COMPONENT_START + 3, COMPONENT_START + 4 -> IndustrialServiceBenchService.isServiceComponent(stack);
             case STEEL_MATERIAL -> IndustrialServiceBenchService.isSteelRepairMaterial(stack);
             case BRASS_MATERIAL -> IndustrialServiceBenchService.isBrassRepairMaterial(stack);
+            case CLEANING_MATERIAL -> IndustrialServiceBenchService.isCleaningMaterial(stack);
             default -> false;
         };
     }

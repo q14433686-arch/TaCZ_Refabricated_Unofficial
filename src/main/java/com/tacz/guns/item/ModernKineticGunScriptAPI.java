@@ -177,16 +177,28 @@ public class ModernKineticGunScriptAPI {
             if (fire) {
                 NetworkHandler.sendToTrackingEntity(new ServerMessageGunFire(shooter.getId(), itemStack), shooter);
                 // 削减弹药
+                if (consumeAmmo && !this.reduceAmmoOnce()) {
+                    return false;
+                }
+                // Apply the gun's real HeatData before C.3 maintenance
+                // accounting. Free/creative shots retain their prior heat
+                // semantics, but only a real consumed round records wear.
+                if (gunIndex.getGunData().hasHeatData()) {
+                    Optional.ofNullable(gunIndex.getScript())
+                            .map(script -> checkFunction(script.get("handle_shoot_heat")))
+                            .ifPresentOrElse(
+                                    func -> func.call(CoerceJavaToLua.coerce(this)),
+                                    this::handleShootHeat
+                            );
+                }
                 if (consumeAmmo) {
-                    if (!this.reduceAmmoOnce()) {
-                        return false;
-                    }
                     // A feed fault is evaluated only after this exact real
-                    // round was consumed. It can therefore stop only a later
+                    // round was consumed. C.3 now sees the just-updated native
+                    // heat amount, while a fault can still stop only a later
                     // trigger pull and never becomes a fake client-side shot.
                     IndustryMaintenanceService.ShotOutcome maintenance =
                             IndustryMaintenanceService.recordSuccessfulShotOutcome(shooter, itemStack);
-                    // The client shell model is only cosmetic.  Once a real
+                    // The client shell model is only cosmetic. Once a real
                     // round has been consumed, emit the data-declared case on
                     // the server so it can be picked up and reconditioned.
                     SpentCartridgeService.ejectAfterFiring(shooter, gunData.getAmmoId());
@@ -199,15 +211,6 @@ public class ModernKineticGunScriptAPI {
                         // stack, not a client-created status flag.
                         NetworkHandler.sendToClientPlayer(new ServerMessageMaintenanceGunState(itemStack), player);
                     }
-                }
-                //Handle Heat Data
-                if (gunIndex.getGunData().hasHeatData()) {
-                    Optional.ofNullable(gunIndex.getScript())
-                            .map(script -> checkFunction(script.get("handle_shoot_heat")))
-                            .ifPresentOrElse(
-                                    func -> func.call(CoerceJavaToLua.coerce(this)),
-                                    this::handleShootHeat
-                            );
                 }
                 // 获取射击方向（pitch 和 yaw）
                 float pitch = pitchSupplier != null ? pitchSupplier.get() : shooter.getXRot();

@@ -13,12 +13,14 @@
     "recoil": 1
   },
   "fouling_per_shot": 12,
-  "heat_stress_multiplier": 1.0,
+  "heat_stress_multiplier": 1.2,
   "operation": {
     "wear_multiplier": 1.0,
     "fouling_multiplier": 1.0,
     "submerged_wear_multiplier": 1.35,
     "submerged_fouling_multiplier": 1.75,
+    "rain_wear_multiplier": 1.1,
+    "rain_fouling_multiplier": 1.25,
     "contaminant_wear_multiplier": 1.15,
     "contaminant_fouling_multiplier": 1.45
   },

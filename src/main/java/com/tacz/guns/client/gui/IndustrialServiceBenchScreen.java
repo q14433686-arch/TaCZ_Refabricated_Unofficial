@@ -11,8 +11,9 @@ import net.minecraft.world.entity.player.Inventory;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Deliberately exposes all ten real service slots: no recipe list or fake
- * progress overlay can replace the five physical component bays.
+ * Deliberately exposes all thirteen real service slots: no recipe list or fake
+ * progress overlay can replace the five component bays, material bays, and the
+ * separate C.3 named-cleaner input.
  */
 public final class IndustrialServiceBenchScreen extends AbstractContainerScreen<IndustrialServiceBenchMenu> {
     private static final int ACCENT = 0xFF4EA8A8;
@@ -32,10 +33,14 @@ public final class IndustrialServiceBenchScreen extends AbstractContainerScreen<
                 Component.translatable("gui.tacz.industrial_service.reassemble"), ACCENT,
                 Component.translatable("gui.tacz.industrial_service.reassemble_hint"),
                 button -> ClientPlayNetworking.send(new ClientMessageServiceIndustry(menu.containerId, 1))));
-        addRenderableWidget(new IndustrialActionButton(leftPos + 68, topPos + 124, 94, 20,
+        addRenderableWidget(new IndustrialActionButton(leftPos + 16, topPos + 124, 93, 20,
                 Component.translatable("gui.tacz.industrial_service.repair"), 0xFFF2C14E,
                 Component.translatable("gui.tacz.industrial_service.repair_hint"),
                 button -> ClientPlayNetworking.send(new ClientMessageServiceIndustry(menu.containerId, 2))));
+        addRenderableWidget(new IndustrialActionButton(leftPos + 121, topPos + 124, 93, 20,
+                Component.translatable("gui.tacz.industrial_service.clean"), 0xFF65C466,
+                Component.translatable("gui.tacz.industrial_service.clean_hint"),
+                button -> ClientPlayNetworking.send(new ClientMessageServiceIndustry(menu.containerId, 3))));
     }
 
     @Override
@@ -49,6 +54,7 @@ public final class IndustrialServiceBenchScreen extends AbstractContainerScreen<
         slot(gui, leftPos + 58, topPos + 23, 0xFF8EA4B0);
         slot(gui, leftPos + 94, topPos + 23, 0xFF8EA4B0);
         slot(gui, leftPos + 130, topPos + 23, 0xFFF2C14E);
+        slot(gui, leftPos + 23, topPos + 73, 0xFF65C466);
         for (int index = 0; index < 5; index++) slot(gui, leftPos + 50 + index * 18, topPos + 73, ACCENT);
         slot(gui, leftPos + 179, topPos + 41, 0xFF65C466);
         slot(gui, leftPos + 149, topPos + 73, 0xFFB8C9D3);
@@ -57,6 +63,7 @@ public final class IndustrialServiceBenchScreen extends AbstractContainerScreen<
         gui.text(font, title, leftPos + 12, topPos + 7, 0xFFF3F6F7, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_service.gun_input"), leftPos + 15, topPos + 29, 0xFFB8C9D3, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_service.tooling"), leftPos + 59, topPos + 7, 0xFFB8C9D3, false);
+        gui.text(font, Component.translatable("gui.tacz.industrial_service.cleaning_material"), leftPos + 11, topPos + 56, 0xFF65C466, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_service.components"), leftPos + 50, topPos + 56, 0xFFB8C9D3, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_service.materials"), leftPos + 149, topPos + 56, 0xFFB8C9D3, false);
         gui.text(font, Component.translatable("gui.tacz.industrial_service.gun_output"), leftPos + 169, topPos + 29, 0xFFB8C9D3, false);

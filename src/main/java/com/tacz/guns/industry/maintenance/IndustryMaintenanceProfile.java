@@ -101,6 +101,7 @@ public final class IndustryMaintenanceProfile {
         return Math.clamp(foulingPerShot, 0, MAX_FOULING_PER_SHOT);
     }
 
+    /** Maximum C.3 wear/fouling multiplier at full native GunHeatData; guns without HeatData remain 1.0. */
     public float getHeatStressMultiplier() {
         return Float.isFinite(heatStressMultiplier) ? Math.clamp(heatStressMultiplier, 0.0F, 16.0F) : 1.0F;
     }
@@ -190,6 +191,11 @@ public final class IndustryMaintenanceProfile {
         private float submergedWearMultiplier = 1.35F;
         @SerializedName("submerged_fouling_multiplier")
         private float submergedFoulingMultiplier = 1.75F;
+        /** Exposed rain only; submerged/wet-contact exposure uses the stronger submerged pair. */
+        @SerializedName("rain_wear_multiplier")
+        private float rainWearMultiplier = 1.10F;
+        @SerializedName("rain_fouling_multiplier")
+        private float rainFoulingMultiplier = 1.25F;
         @SerializedName("contaminant_wear_multiplier")
         private float contaminantWearMultiplier = 1.15F;
         @SerializedName("contaminant_fouling_multiplier")
@@ -199,12 +205,15 @@ public final class IndustryMaintenanceProfile {
         public float getFoulingMultiplier() { return clampMultiplier(foulingMultiplier); }
         public float getSubmergedWearMultiplier() { return clampMultiplier(submergedWearMultiplier); }
         public float getSubmergedFoulingMultiplier() { return clampMultiplier(submergedFoulingMultiplier); }
+        public float getRainWearMultiplier() { return clampMultiplier(rainWearMultiplier); }
+        public float getRainFoulingMultiplier() { return clampMultiplier(rainFoulingMultiplier); }
         public float getContaminantWearMultiplier() { return clampMultiplier(contaminantWearMultiplier); }
         public float getContaminantFoulingMultiplier() { return clampMultiplier(contaminantFoulingMultiplier); }
 
         private boolean isValid() {
             return validMultiplier(wearMultiplier) && validMultiplier(foulingMultiplier)
                     && validMultiplier(submergedWearMultiplier) && validMultiplier(submergedFoulingMultiplier)
+                    && validMultiplier(rainWearMultiplier) && validMultiplier(rainFoulingMultiplier)
                     && validMultiplier(contaminantWearMultiplier) && validMultiplier(contaminantFoulingMultiplier);
         }
 

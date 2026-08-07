@@ -152,7 +152,7 @@ Create 工艺应形成明确的“毛坯 → 中性模具体 → 实体量规选
 
 REI 中该类别会汇总列出首工件与所有工位供料，显示 `D→P→…` 的实际工位顺序，并标注“置物台/传送带始终只有一个工件”；这表示**顺序**工艺，不表示这些输入同时占据一个置物台，也不表示只需一台机械手。
 
-## 6.5 A 阶段：工业维护数据与可视化
+## 6.5 工业维护与 C 阶段回归
 
 1. 保持默认 `IndustryMaintenanceScope = INDUSTRIAL_ASSEMBLY`。通过 Create 终端产出一把默认工业枪，首次手持后应获得 `IndustryMaintenanceSchema = 1`、五项 `IndustryCondition* = 10000`、`IndustryFouling = 0` 与 `IndustryMaintenanceShots = 0`；旧存档中已有工业来源标记、但尚无维护字段的枪也必须以相同满状态安全补齐。
 2. Tooltip 应显示“良好 / 需保养 / 需维修 / 停用”之一及枪况、污垢百分比；持枪 HUD 的枪卡上方应有两条小条，分别表示最差组件枪况与污垢。它们读取保存的服务器 NBT，不得从枪械等级或普通物品耐久猜测。
@@ -160,7 +160,9 @@ REI 中该类别会汇总列出首工件与所有工位供料，显示 `D→P→
 4. 通过测绘 Gunsmith Table 完成一把第三方 surveyed 枪；最终成枪必须带 `IndustryAssemblyPlatform = surveyed/...` 等完整工业来源标签，并以满状态进入同一维护可视化路径。
 5. C.1：把工业枪最差组件调至 `critical_condition` 以下后，下一次触发必须在任何扣弹前返回 `JAMMED` 并写入 `IndustryJam = lockout`；拆解、维修、复装后才可解除。不能用换弹/拉栓、重新进服或客户端预测绕过。
 6. C.2：仅对 `AI AWP`、`Kar98`、`M107`、`M700`、`M870`、`M95`、`SPAS-12` 的工业来源枪，把枪况调入 warning/critical 区间并提高 Fouling 后回归。命中确定性抽样的那一发必须照常发射、只扣一次真实弹药并随后写 `IndustryJam = feed`；下一次触发不得进入 `reduceAmmoOnce`。再次按开火键应发送清障请求并运行原有手动 bolt 动画；普通自动 bolt 不得清除。只有服务器 bolt 结束且膛内真实有弹时才清除 `feed`，失败/无弹时必须保留；HUD、Tooltip 和持有枪 NBT 应随 S2C 完整快照同步。所有 `clear_action = none` 的其余默认枪、surveyed 通用档和未知第三方枪不得随机写入 `feed`。
-7. 仅在管理员明确把 `IndustryMaintenanceScope` 设为 `ALL_GUNS` 后，非工业来源枪才参与；其第一次迁移也必须从满状态、清洁状态开始。
+7. C.3 热/环境：对实际声明 `GunHeatData` 的工业枪（当前默认样本为 Minigun）比较冷态与高热态的真实扣弹射击；高热态的 Condition/Fouling 增量必须按 profile `heat_stress_multiplier` 提高，且没有 HeatData 的工业枪不得凭空获得热 NBT 或热倍率。分别在晴天、服务端确认淋雨、浸水/`#tacz:maintenance_wet_exposure` 接触、以及 `#tacz:maintenance_contaminants` 接触时射击，验证只由服务器位置/天气决定 rain/wet/污染倍率，且雨和浸没不重复叠加为客户端猜测的倍率。
+8. C.3 清洁：先在真实加热 Basin 用 2 个 `tacz:carbon_dust`、纸和黏液球制得 `tacz:maintenance_cleaning_kit`；再把安全清空的完整工业枪、匹配 production 模板、检具、扳手和足量套件放入工业勤务台的独立清洁材料槽，点击“清除污垢”。服务器应按 `ceil(Fouling / 2500)` 扣套件、将输出枪 Fouling 置 0、保留五项 Condition/Shot/附件隔离语义，并不得清除 `IndustryJam=feed` 或 `lockout`、不得走部署器/传送带/顺序装配。
+9. 仅在管理员明确把 `IndustryMaintenanceScope` 设为 `ALL_GUNS` 后，非工业来源枪才参与；其第一次迁移也必须从满状态、清洁状态开始。
 
 ## 7. 运行时自动识别回退
 

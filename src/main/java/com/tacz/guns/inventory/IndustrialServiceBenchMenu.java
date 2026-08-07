@@ -14,7 +14,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-/** Client/server menu for the real ten-slot industrial service transaction. */
+/** Client/server menu for the real thirteen-slot industrial service transaction. */
 public final class IndustrialServiceBenchMenu extends AbstractContainerMenu {
     public static final ExtendedMenuType<IndustrialServiceBenchMenu, BlockPos> TYPE = new ExtendedMenuType<>(
             (containerId, inventory, pos) -> new IndustrialServiceBenchMenu(containerId, inventory, pos), BlockPos.STREAM_CODEC
@@ -45,6 +45,7 @@ public final class IndustrialServiceBenchMenu extends AbstractContainerMenu {
         });
         addSlot(new Slot(bench, IndustrialServiceBenchBlockEntity.STEEL_MATERIAL, 151, 75));
         addSlot(new Slot(bench, IndustrialServiceBenchBlockEntity.BRASS_MATERIAL, 187, 75));
+        addSlot(new Slot(bench, IndustrialServiceBenchBlockEntity.CLEANING_MATERIAL, 25, 75));
         addPlayerInventory(playerInventory);
     }
 
@@ -98,6 +99,9 @@ public final class IndustrialServiceBenchMenu extends AbstractContainerMenu {
             } else if (IndustrialServiceBenchService.isBrassRepairMaterial(source)) {
                 moved = moveItemStackTo(source, IndustrialServiceBenchBlockEntity.BRASS_MATERIAL,
                         IndustrialServiceBenchBlockEntity.BRASS_MATERIAL + 1, false);
+            } else if (IndustrialServiceBenchService.isCleaningMaterial(source)) {
+                moved = moveItemStackTo(source, IndustrialServiceBenchBlockEntity.CLEANING_MATERIAL,
+                        IndustrialServiceBenchBlockEntity.CLEANING_MATERIAL + 1, false);
             } else {
                 moved = false;
             }

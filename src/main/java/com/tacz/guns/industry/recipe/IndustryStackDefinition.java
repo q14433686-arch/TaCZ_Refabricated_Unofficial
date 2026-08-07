@@ -1,6 +1,7 @@
 package com.tacz.guns.industry.recipe;
 
 import com.google.gson.JsonObject;
+import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.api.item.gun.FireMode;
@@ -125,11 +126,19 @@ public final class IndustryStackDefinition {
             // the synchronized gun index is ready. It still writes the same
             // empty-gun data components that the normal builder would write.
             Identifier gunId = Identifier.tryParse(string(custom, "GunId"));
+            boolean declaredHeat = gunId != null && TimelessAPI.getCommonGunIndex(gunId)
+                    .map(index -> index.getGunData().hasHeatData())
+                    .orElse(false);
             stack = GunItemBuilder.create()
                     .setId(gunId)
                     .setFireMode(fireMode(custom))
                     .setAmmoCount(integer(custom, "GunCurrentAmmoCount", 0))
                     .setAmmoInBarrel(bool(custom, "HasBulletInBarrel", false))
+                    // Create-produced guns with actual GunHeatData must carry
+                    // the native heat component from their first real shot;
+                    // otherwise C.3 would only appear to work on creative
+                    // samples rather than the industrial output.
+                    .setHeatData(declaredHeat)
                     .forceBuild();
         } else {
             stack = new ItemStack(item, count);

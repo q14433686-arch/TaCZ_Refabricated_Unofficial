@@ -26,11 +26,12 @@ import java.util.UUID;
  * Server-authoritative industrial maintenance state.
  *
  * <p>Condition/Fouling and the deterministic feed-jam draw are written only
- * after a real round has been consumed. A feed jam is never a client-only
- * effect: it is an NBT fault set by this service, rejects later shots on the
- * server, and can be removed only after the separately validated manual-bolt
- * transaction reports that it chambered a round. Critical-condition lockout
- * remains a service-bench-only fault.</p>
+ * after a real round has been consumed. C.3 derives heat, rain, wet-contact,
+ * and contamination multipliers only from server-visible native state. A feed
+ * jam is never a client-only effect: it is an NBT fault set by this service,
+ * rejects later shots on the server, and can be removed only after the
+ * separately validated manual-bolt transaction reports that it chambered a
+ * round. Critical-condition lockout remains a service-bench-only fault.</p>
  */
 public final class IndustryMaintenanceService {
     public static final int SCHEMA_VERSION = 1;
@@ -38,6 +39,10 @@ public final class IndustryMaintenanceService {
     /** Datapack-extensible blocks that expose service components to dirt/sand/mud contamination. */
     public static final TagKey<Block> CONTAMINANT_BLOCKS = TagKey.create(
             Registries.BLOCK, Identifier.fromNamespaceAndPath("tacz", "maintenance_contaminants")
+    );
+    /** Wet ground/contact sources beyond direct immersion; evaluated server-side at the shooter's position. */
+    public static final TagKey<Block> WET_EXPOSURE_BLOCKS = TagKey.create(
+            Registries.BLOCK, Identifier.fromNamespaceAndPath("tacz", "maintenance_wet_exposure")
     );
 
     public static final String SCHEMA_TAG = "IndustryMaintenanceSchema";
@@ -79,6 +84,7 @@ public final class IndustryMaintenanceService {
             return false;
         }
         ItemNbtUtils.updateTag(gun, tag -> migrateTag(tag));
+        ensureDeclaredHeatData(gun);
         return true;
     }
 
@@ -106,7 +112,7 @@ public final class IndustryMaintenanceService {
             return ShotOutcome.NONE;
         }
         IndustryMaintenanceProfile.WearPerShot wear = profile.getWearPerShot();
-        Exposure exposure = Exposure.capture(shooter, profile.getOperation());
+        Exposure exposure = Exposure.capture(shooter, gun, profile);
         ItemNbtUtils.updateTag(gun, tag -> {
             migrateTag(tag);
             tag.putInt(RECEIVER_TAG, subtractWear(tag.getIntOr(RECEIVER_TAG, MAX_CONDITION), exposure.wear(wear.getReceiver())));
@@ -355,6 +361,20 @@ public final class IndustryMaintenanceService {
         return hasIndustrialOrigin(ItemNbtUtils.getTag(gun));
     }
 
+    /** Restore the native heat component for old/Create-generated guns only when their loaded GunData declares it. */
+    private static void ensureDeclaredHeatData(ItemStack gun) {
+        if (!(gun.getItem() instanceof IGun iGun) || iGun.hasHeatData(gun)) {
+            return;
+        }
+        Identifier gunId = iGun.getGunId(gun);
+        boolean declared = gunId != null && TimelessAPI.getCommonGunIndex(gunId)
+                .map(index -> index.getGunData().hasHeatData())
+                .orElse(false);
+        if (declared) {
+            iGun.setHeatAmount(gun, 0.0F);
+        }
+    }
+
     private static boolean isEligible(ItemStack gun) {
         if (!isFeatureEnabled() || !(gun.getItem() instanceof IGun iGun)) {
             return false;
@@ -450,22 +470,57 @@ public final class IndustryMaintenanceService {
         return String.format(Locale.ROOT, "%.2f%%", clampCondition(amount) * 100.0D / MAX_CONDITION);
     }
 
-    /** Read the two environment signals that are server-verifiable without client weather guesses. */
+    /**
+     * Capture heat and environmental exposure exclusively from server-visible
+     * state. Rain is intentionally distinct from immersion/wet contact, so a
+     * player under cover is not penalised merely because the dimension rains.
+     */
     private record Exposure(float wearMultiplier, float foulingMultiplier) {
-        private static Exposure capture(LivingEntity shooter, IndustryMaintenanceProfile.OperationProfile operation) {
-            float wear = operation.getWearMultiplier();
-            float fouling = operation.getFoulingMultiplier();
+        private static Exposure capture(LivingEntity shooter, ItemStack gun, IndustryMaintenanceProfile profile) {
+            IndustryMaintenanceProfile.OperationProfile operation = profile.getOperation();
+            float heatStress = heatStress(gun, profile.getHeatStressMultiplier());
+            float wear = operation.getWearMultiplier() * heatStress;
+            float fouling = operation.getFoulingMultiplier() * heatStress;
             if (shooter != null) {
-                if (shooter.isInWater()) {
+                boolean wetContact = shooter.isInWater() || touchesTaggedBlock(shooter, WET_EXPOSURE_BLOCKS);
+                if (wetContact) {
                     wear *= operation.getSubmergedWearMultiplier();
                     fouling *= operation.getSubmergedFoulingMultiplier();
+                } else if (shooter.level().isRainingAt(shooter.blockPosition())) {
+                    wear *= operation.getRainWearMultiplier();
+                    fouling *= operation.getRainFoulingMultiplier();
                 }
-                if (shooter.level().getBlockState(shooter.blockPosition().below()).is(CONTAMINANT_BLOCKS)) {
+                if (touchesTaggedBlock(shooter, CONTAMINANT_BLOCKS)) {
                     wear *= operation.getContaminantWearMultiplier();
                     fouling *= operation.getContaminantFoulingMultiplier();
                 }
             }
             return new Exposure(Math.clamp(wear, 0.0F, 16.0F), Math.clamp(fouling, 0.0F, 16.0F));
+        }
+
+        /** A profile multiplier is the maximum stress at full real HeatData, never a fabricated heat value. */
+        private static float heatStress(ItemStack gun, float configuredMaximum) {
+            if (!(gun.getItem() instanceof IGun iGun) || !iGun.hasHeatData(gun)) {
+                return 1.0F;
+            }
+            Identifier gunId = iGun.getGunId(gun);
+            if (gunId == null) {
+                return 1.0F;
+            }
+            return TimelessAPI.getCommonGunIndex(gunId)
+                    .map(index -> index.getGunData().getHeatData())
+                    .filter(heat -> heat != null && Float.isFinite(heat.getHeatMax()) && heat.getHeatMax() > 0.0F)
+                    .map(heat -> {
+                        float ratio = Math.clamp(iGun.getHeatAmount(gun) / heat.getHeatMax(), 0.0F, 1.0F);
+                        float maximum = Math.clamp(Math.max(1.0F, configuredMaximum), 1.0F, 16.0F);
+                        return 1.0F + ratio * (maximum - 1.0F);
+                    }).orElse(1.0F);
+        }
+
+        private static boolean touchesTaggedBlock(LivingEntity shooter, TagKey<Block> tag) {
+            var position = shooter.blockPosition();
+            return shooter.level().getBlockState(position).is(tag)
+                    || shooter.level().getBlockState(position.below()).is(tag);
         }
 
         private int wear(int base) {

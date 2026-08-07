@@ -1,0 +1,25 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:mixing",
+  "ingredients": [
+    "tacz:carbon_dust",
+    "tacz:carbon_dust",
+    "minecraft:paper",
+    "minecraft:slime_ball"
+  ],
+  "results": [
+    {
+      "id": "tacz:maintenance_cleaning_kit",
+      "count": 4
+    }
+  ],
+  "processing_time": 160,
+  "heat_requirement": "heated"
+}

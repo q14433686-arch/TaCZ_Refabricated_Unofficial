@@ -2006,5 +2006,12 @@
   "message.tacz.industrial_service.components_already_serviceable": "所有勤务组件均已处于满枪况。",
   "tooltip.tacz.service.legacy_part": "旧 B.2 替换件——为旧存档保留；新维修请使用工业勤务台的维修材料槽。",
   "tooltip.tacz.maintenance.lockout": "勤务锁止——请在工业勤务台维修组件",
-  "tooltip.tacz.maintenance.feed_jam": "供弹卡滞——按开火键执行拉栓清障"
+  "tooltip.tacz.maintenance.feed_jam": "供弹卡滞——按开火键执行拉栓清障",
+  "item.tacz.maintenance_cleaning_kit": "工业枪械清洁套件",
+  "gui.tacz.industrial_service.clean": "清除污垢",
+  "gui.tacz.industrial_service.clean_hint": "将安全、已清空的工业成枪与匹配工装、Basin 制成的清洁套件放入此处清污；不恢复组件枪况，也不解除故障。",
+  "gui.tacz.industrial_service.cleaning_material": "清洁剂",
+  "message.tacz.industrial_service.gun_already_clean": "这把安全的工业枪没有可清除的污垢。",
+  "message.tacz.industrial_service.cleaning_materials": "需要 %s 份工业枪械清洁套件。",
+  "message.tacz.industrial_service.clean_success": "已清除 %s 点污垢；消耗 %s 份工业枪械清洁套件。"
 }

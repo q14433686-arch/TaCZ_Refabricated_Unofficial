@@ -8,6 +8,11 @@
     "minecraft:gravel",
     "minecraft:soul_sand",
     "minecraft:soul_soil",
-    "minecraft:powder_snow"
+    "minecraft:powder_snow",
+    "minecraft:snow",
+    "minecraft:coarse_dirt",
+    "minecraft:rooted_dirt",
+    "minecraft:mycelium",
+    "minecraft:moss_block"
   ]
 }

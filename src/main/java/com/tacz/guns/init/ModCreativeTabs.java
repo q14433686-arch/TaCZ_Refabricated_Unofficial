@@ -37,6 +37,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.INDUSTRIAL_SALVAGE_STATION);
                 output.accept(ModItems.INDUSTRIAL_SERVICE_BENCH);
                 output.accept(ModItems.ARMORER_WRENCH);
+                output.accept(ModItems.MAINTENANCE_CLEANING_KIT);
                 output.accept(ModItems.MAGAZINE_POUCH);
                 output.accept(ModItems.MAGAZINE_LOADER);
                 output.accept(ModItems.TARGET_MINECART);

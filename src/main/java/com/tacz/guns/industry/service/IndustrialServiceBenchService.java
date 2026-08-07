@@ -47,6 +47,8 @@ public final class IndustrialServiceBenchService {
     /** Index 0..4 maps a real platform component to the five persistent Condition fields. */
     public static final String SERVICE_CONDITION_SLOT = "IndustryServiceConditionSlot";
     public static final int WRENCH_MAX_DAMAGE = 256;
+    /** One real Basin-made cleaning kit removes this much stored Fouling in a bench transaction. */
+    public static final int FOULING_PER_CLEANING_KIT = 2_500;
 
     private IndustrialServiceBenchService() {
     }
@@ -163,11 +165,15 @@ public final class IndustrialServiceBenchService {
                 .filter(modes -> !modes.isEmpty())
                 .map(modes -> modes.getFirst())
                 .orElse(FireMode.UNKNOWN);
+        boolean declaredHeat = TimelessAPI.getCommonGunIndex(origin.gunId())
+                .map(index -> index.getGunData().hasHeatData())
+                .orElse(false);
         ItemStack gun = GunItemBuilder.create()
                 .setId(origin.gunId())
                 .setFireMode(fireMode)
                 .setAmmoCount(0)
                 .setAmmoInBarrel(false)
+                .setHeatData(declaredHeat)
                 .build();
         if (gun.isEmpty()) {
             return ReassemblyPlan.failure(Failure.INVALID_GUN);
@@ -260,6 +266,48 @@ public final class IndustrialServiceBenchService {
         return List.copyOf(repaired);
     }
 
+    /**
+     * C.3 assembled-gun cleaning path. It deliberately uses the same physical
+     * production template, fitting fixture, wrench and safety checks as the
+     * other bench operations, while leaving all five structural Condition
+     * values and every fault state untouched. Cleaning dirt is not a disguised
+     * component repair or a way to bypass a feed/lockout clear action.
+     */
+    public static CleaningPlan planCleaning(ItemStack gunStack, ItemStack blueprint, ItemStack fixture,
+                                            ItemStack wrench) {
+        if (!(gunStack.getItem() instanceof IGun gun)) {
+            return CleaningPlan.failure(Failure.INVALID_GUN);
+        }
+        if (!isGunSafeToService(gunStack, gun)) {
+            return CleaningPlan.failure(Failure.GUN_NOT_STRIPPED);
+        }
+        Origin origin = origin(gunStack, gun);
+        if (origin == null) {
+            return CleaningPlan.failure(Failure.GUN_NOT_INDUSTRIAL);
+        }
+        if (!matchesBlueprint(blueprint, origin)) {
+            return CleaningPlan.failure(Failure.BLUEPRINT_MISMATCH);
+        }
+        if (!matchesFixture(fixture, origin)) {
+            return CleaningPlan.failure(Failure.FIXTURE_MISMATCH);
+        }
+        if (!isUsableWrench(wrench)) {
+            return CleaningPlan.failure(Failure.WRENCH_REQUIRED);
+        }
+        int fouling = IndustryMaintenanceService.getSnapshot(gunStack).fouling();
+        if (fouling <= 0) {
+            return CleaningPlan.failure(Failure.GUN_ALREADY_CLEAN);
+        }
+        return CleaningPlan.success(origin, units(fouling, FOULING_PER_CLEANING_KIT), fouling);
+    }
+
+    /** Return a cleaned copy; only Fouling changes and the server transaction owns input/output movement. */
+    public static ItemStack cleanGun(ItemStack gun) {
+        ItemStack cleaned = gun.copy();
+        ItemNbtUtils.updateTag(cleaned, tag -> tag.putInt(IndustryMaintenanceService.FOULING_TAG, 0));
+        return cleaned;
+    }
+
     /** New dismantles use SERVICE_COMPONENT; old condition-bearing components remain accepted for migration. */
     public static boolean isServiceComponent(ItemStack stack) {
         return stack.is(ModItems.SERVICE_COMPONENT)
@@ -291,6 +339,11 @@ public final class IndustrialServiceBenchService {
     public static boolean isBrassRepairMaterial(ItemStack stack) {
         Identifier key = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return Identifier.fromNamespaceAndPath("create", "brass_sheet").equals(key);
+    }
+
+    /** Named Basin-made consumable; raw paper/slime/carbon cannot be inserted into a finished gun service. */
+    public static boolean isCleaningMaterial(ItemStack stack) {
+        return stack.is(ModItems.MAINTENANCE_CLEANING_KIT);
     }
 
     private static int units(int deficit, int perUnit) {
@@ -469,6 +522,7 @@ public final class IndustrialServiceBenchService {
         WRENCH_REQUIRED("message.tacz.industrial_service.wrench_required"),
         COMPONENT_SET_INVALID("message.tacz.industrial_service.component_set_invalid"),
         COMPONENTS_ALREADY_SERVICEABLE("message.tacz.industrial_service.components_already_serviceable"),
+        GUN_ALREADY_CLEAN("message.tacz.industrial_service.gun_already_clean"),
         REPAIR_MATERIALS("message.tacz.industrial_service.repair_materials"),
         OUTPUT_BLOCKED("message.tacz.industrial_service.output_blocked");
 
@@ -496,5 +550,13 @@ public final class IndustrialServiceBenchService {
         }
         static RepairPlan failure(Failure failure) { return new RepairPlan(null, 0, 0, 0, failure); }
         public boolean success() { return failure == null && origin != null && repairedComponents > 0; }
+    }
+    public record CleaningPlan(@Nullable Origin origin, int cleaningKits, int foulingRemoved,
+                               @Nullable Failure failure) {
+        static CleaningPlan success(Origin origin, int kits, int fouling) {
+            return new CleaningPlan(origin, kits, fouling, null);
+        }
+        static CleaningPlan failure(Failure failure) { return new CleaningPlan(null, 0, 0, failure); }
+        public boolean success() { return failure == null && origin != null && cleaningKits > 0 && foulingRemoved > 0; }
     }
 }

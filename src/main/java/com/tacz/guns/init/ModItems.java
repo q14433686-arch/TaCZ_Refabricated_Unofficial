@@ -67,12 +67,16 @@ public class ModItems {
     public static Item SERVICE_COMPONENT = register("service_component", new IndustryTaggedItem(itemProps("service_component").stacksTo(1)));
     /** Neutral maintenance workpiece; retained only for old-world item compatibility after bench-native repair replaced this route. */
     public static Item SERVICE_PART_BLANK = register("service_part_blank", new IndustryTaggedItem(itemProps("service_part_blank").stacksTo(16)));
-    /** Named, GunId-bound service replacement part consumed by the single-component Create repair line. */
+    /** Named legacy replacement part retained only for old-world compatibility after bench-native repair replaced this route. */
     public static Item SERVICE_PART = register("service_part", new IndustryTaggedItem(itemProps("service_part").stacksTo(16)));
     /** Blank sheets, master dossiers, and reusable production templates share one NBT-backed tooling medium. */
     public static Item GUN_BLUEPRINT = register("gun_blueprint", new IndustryTaggedItem(itemProps("gun_blueprint").stacksTo(1)));
     /** Native-durability tool consumed only after a successful service-bench transaction. */
     public static Item ARMORER_WRENCH = register("armorer_wrench", new Item(itemProps("armorer_wrench").stacksTo(1)));
+    /** Basin-made named consumable used only by the service bench's server-side fouling-cleaning transaction. */
+    public static Item MAINTENANCE_CLEANING_KIT = register("maintenance_cleaning_kit", new Item(
+            itemProps("maintenance_cleaning_kit").stacksTo(16)
+    ));
 
     public static AttachmentItem ATTACHMENT = register("attachment", new AttachmentItem(itemProps("attachment")));
 
