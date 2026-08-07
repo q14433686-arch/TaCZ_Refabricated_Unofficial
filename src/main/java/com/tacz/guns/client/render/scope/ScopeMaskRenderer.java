@@ -171,22 +171,27 @@ public final class ScopeMaskRenderer {
         inHandPass = value;
     }
 
+    public static boolean isInHandPass() {
+        return inHandPass || IrisCompat.isHandRendererActive();
+    }
+
     /**
      * 在阶段边界把当帧登记的目镜几何画进掩码 target。
      *
      * <p>无论成败，末尾都会清空当帧清单 —— 见 {@code finally}。
      */
     public static void renderAtPhaseBoundary() {
+        boolean activeHandPass = isInHandPass();
         // 【诊断】上一版实测「预览全黑 + 日志一行都没有」，原因是几何一个都没登记，
         // isEmpty() 直接 return，于是连个说法都没有。静默失败最难查，
         // 所以这里补一条：开着调试却收不到任何目镜几何时，明确说出来（只说一次）。
-        if (inHandPass && RenderConfig.SCOPE_MASK_ENABLE.get()
+        if (activeHandPass && RenderConfig.SCOPE_MASK_ENABLE.get()
                 && ScopeMaskGeometry.isEmpty() && !loggedEmpty) {
             loggedEmpty = true;
             GunMod.LOGGER.warn("[TACZ Scope] Mask enabled but no ocular geometry was registered this frame. "
                     + "Either no scope is equipped/aimed, or ocular collection is broken.");
         }
-        if (!inHandPass) {
+        if (!activeHandPass) {
             // 世界渲染那次直接跳过，且【不清空】清单 ——
             // 目镜是在手持渲染的 submit 阶段登记的，而手持渲染发生在世界之后，
             // 所以此刻清单本就是空的；真要清反而会误伤（万一顺序变了）。

@@ -42,27 +42,47 @@ public abstract class IrisShaderCreatorMixin {
             return source;
         }
 
-        int declarationPos = 0;
-        if (source.startsWith("#version")) {
-            int lineEnd = source.indexOf('\n');
-            if (lineEnd >= 0) {
-                declarationPos = lineEnd + 1;
-            }
-        }
-
         String declarations = "\n// TACZ Iris scope mask bridge: 0=off, 1=body discard-inside, 2=reticle discard-outside\n"
                 + "uniform int tacz_ScopeMaskMode;\n"
-                + "uniform sampler2D tacz_ScopeMaskSampler;\n";
+                + "uniform sampler2D tacz_ScopeMaskSampler;\n\n";
+
         String branch = "\n    if (tacz_ScopeMaskMode != 0) {\n"
                 + "        vec2 tacz_scopeMaskUv = gl_FragCoord.xy / max(vec2(textureSize(tacz_ScopeMaskSampler, 0)), vec2(1.0));\n"
-                + "        bool tacz_insideScope = texture(tacz_ScopeMaskSampler, tacz_scopeMaskUv).r > 0.5;\n"
+                + "        vec2 tacz_maskSample = texture(tacz_ScopeMaskSampler, tacz_scopeMaskUv).rg;\n"
+                + "        bool tacz_insideScope = tacz_maskSample.r > 0.5;\n"
+                + "        if (tacz_insideScope) {\n"
+                + "            float tacz_progress = tacz_maskSample.g;\n"
+                + "            if (tacz_progress < 0.999) {\n"
+                + "                const int RINGS = 3;\n"
+                + "                const int STEPS = 8;\n"
+                + "                float inside = 0.0;\n"
+                + "                float total = 0.0;\n"
+                + "                float unit = 0.055;\n"
+                + "                vec2 tacz_texSize = vec2(textureSize(tacz_ScopeMaskSampler, 0));\n"
+                + "                for (int r = 1; r <= RINGS; r++) {\n"
+                + "                    float radius = unit * float(r) / float(RINGS);\n"
+                + "                    for (int i = 0; i < STEPS; i++) {\n"
+                + "                        float a = 6.2831853 * float(i) / float(STEPS);\n"
+                + "                        vec2 off = vec2(cos(a), sin(a)) * radius;\n"
+                + "                        off.x *= tacz_texSize.y / max(tacz_texSize.x, 1.0);\n"
+                + "                        total += 1.0;\n"
+                + "                        inside += texture(tacz_ScopeMaskSampler, tacz_scopeMaskUv + off).r > 0.5 ? 1.0 : 0.0;\n"
+                + "                    }\n"
+                + "                }\n"
+                + "                float depth = total > 0.0 ? inside / total : 1.0;\n"
+                + "                if (depth < 1.0 - tacz_progress) {\n"
+                + "                    tacz_insideScope = false;\n"
+                + "                }\n"
+                + "            }\n"
+                + "        }\n"
                 + "        if ((tacz_ScopeMaskMode == 1 && tacz_insideScope) || (tacz_ScopeMaskMode == 2 && !tacz_insideScope)) {\n"
                 + "            discard;\n"
                 + "        }\n"
                 + "    }\n";
 
-        String withDeclarations = source.substring(0, declarationPos) + declarations + source.substring(declarationPos);
-        int adjustedBrace = brace + declarations.length();
-        return withDeclarations.substring(0, adjustedBrace + 1) + branch + withDeclarations.substring(adjustedBrace + 1);
+        String beforeMain = source.substring(0, main);
+        String afterMain = source.substring(main);
+        int newBrace = afterMain.indexOf('{');
+        return beforeMain + declarations + afterMain.substring(0, newBrace + 1) + branch + afterMain.substring(newBrace + 1);
     }
 }
