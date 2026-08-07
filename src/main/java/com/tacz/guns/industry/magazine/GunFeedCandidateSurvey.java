@@ -1,5 +1,7 @@
 package com.tacz.guns.industry.magazine;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.resource.ICommonResourceProvider;
@@ -150,17 +152,26 @@ public final class GunFeedCandidateSurvey {
                 privateFamilyProposal(gunId), signals);
     }
 
+    /** Deterministic survey of every loaded gun; the returned records are inert. */
+    public static List<Candidate> allCandidates(ICommonResourceProvider provider) {
+        if (provider == null) {
+            return List.of();
+        }
+        List<Candidate> candidates = new ArrayList<>();
+        for (Map.Entry<Identifier, CommonGunIndex> entry : provider.getAllGuns()) {
+            candidates.add(analyze(entry.getKey(), entry.getValue(), provider.getGunFeedDefinition(entry.getKey())));
+        }
+        candidates.sort(Comparator.comparing((Candidate candidate) -> candidate.gunId().toString()));
+        return List.copyOf(candidates);
+    }
+
     public static Summary summarize(ICommonResourceProvider provider) {
         int total = 0;
         int validated = 0;
         int review = 0;
         int incremental = 0;
         int excluded = 0;
-        if (provider == null) {
-            return new Summary(0, 0, 0, 0, 0);
-        }
-        for (Map.Entry<Identifier, CommonGunIndex> entry : provider.getAllGuns()) {
-            Candidate candidate = analyze(entry.getKey(), entry.getValue(), provider.getGunFeedDefinition(entry.getKey()));
+        for (Candidate candidate : allCandidates(provider)) {
             total++;
             switch (candidate.classification()) {
                 case VALIDATED -> validated++;
@@ -174,18 +185,100 @@ public final class GunFeedCandidateSurvey {
 
     /** Deterministic bounded queue for moderators; candidates remain inactive. */
     public static List<Candidate> reviewCandidates(ICommonResourceProvider provider, int limit) {
-        if (provider == null || limit <= 0) {
+        if (limit <= 0) {
             return List.of();
         }
-        List<Candidate> candidates = new ArrayList<>();
-        for (Map.Entry<Identifier, CommonGunIndex> entry : provider.getAllGuns()) {
-            Candidate candidate = analyze(entry.getKey(), entry.getValue(), provider.getGunFeedDefinition(entry.getKey()));
+        List<Candidate> review = allCandidates(provider).stream()
+                .filter(candidate -> candidate.classification().needsHumanReview())
+                .toList();
+        return List.copyOf(review.subList(0, Math.min(limit, review.size())));
+    }
+
+    /**
+     * Build a review-only JSON artifact. Its drafts deliberately contain an
+     * invalid activation marker instead of a FeedMechanism, so copying the file
+     * into a datapack cannot silently turn unreviewed candidates into physical
+     * magazines.
+     */
+    public static JsonObject exportReport(ICommonResourceProvider provider) {
+        JsonObject report = new JsonObject();
+        report.addProperty("schema_version", 1);
+        report.addProperty("generated_by", "tacz_industry_feed_survey");
+        report.addProperty("activation", "none");
+        report.addProperty("warning", "Review artifact only. It is not a datapack and never enables feed behaviour.");
+
+        Summary summary = summarize(provider);
+        JsonObject summaryJson = new JsonObject();
+        summaryJson.addProperty("total", summary.total());
+        summaryJson.addProperty("validated", summary.validated());
+        summaryJson.addProperty("review_required", summary.review());
+        summaryJson.addProperty("incremental_or_clip", summary.incrementalOrClip());
+        summaryJson.addProperty("excluded", summary.excluded());
+        report.add("summary", summaryJson);
+
+        JsonArray entries = new JsonArray();
+        for (Candidate candidate : allCandidates(provider)) {
+            JsonObject entry = new JsonObject();
+            entry.addProperty("gun_id", candidate.gunId().toString());
+            entry.addProperty("gun_class", candidate.gunClass());
+            entry.addProperty("classification", candidate.classification().serializedName());
+            entry.addProperty("provisional_private_family", candidate.provisionalPrivateFamily());
+            JsonArray signals = new JsonArray();
+            candidate.signals().forEach(signals::add);
+            entry.add("signals", signals);
+
+            CommonGunIndex index = provider.getGunIndex(candidate.gunId());
+            GunData data = index == null ? null : index.getGunData();
+            if (data != null) {
+                entry.add("observed", observedGunData(data));
+            }
             if (candidate.classification().needsHumanReview()) {
-                candidates.add(candidate);
+                entry.add("draft_sidecar", reviewDraft(candidate, data));
+            }
+            entries.add(entry);
+        }
+        report.add("entries", entries);
+        return report;
+    }
+
+    private static JsonObject observedGunData(GunData data) {
+        JsonObject observed = new JsonObject();
+        observed.addProperty("ammo", data.getAmmoId() == null ? "" : data.getAmmoId().toString());
+        observed.addProperty("base_capacity", data.getAmmoAmount());
+        observed.addProperty("reload_type", data.getReloadData() == null || data.getReloadData().getType() == null
+                ? "" : data.getReloadData().getType().name().toLowerCase(Locale.ROOT));
+        observed.addProperty("infinite", data.getReloadData() != null && data.getReloadData().isInfinite());
+        observed.addProperty("bolt", data.getBolt() == null ? "" : data.getBolt().name().toLowerCase(Locale.ROOT));
+        observed.addProperty("script", data.getScript() == null ? "" : data.getScript().toString());
+        JsonArray extended = new JsonArray();
+        if (data.getExtendedMagAmmoAmount() != null) {
+            for (int capacity : data.getExtendedMagAmmoAmount()) {
+                extended.add(capacity);
             }
         }
-        candidates.sort(Comparator.comparing((Candidate candidate) -> candidate.gunId().toString()));
-        return List.copyOf(candidates.subList(0, Math.min(limit, candidates.size())));
+        observed.add("extended_capacities", extended);
+        JsonArray scriptParameters = new JsonArray();
+        if (data.getScriptParam() != null) {
+            data.getScriptParam().keySet().stream().filter(key -> key != null).sorted().forEach(scriptParameters::add);
+        }
+        observed.add("script_parameter_keys", scriptParameters);
+        return observed;
+    }
+
+    private static JsonObject reviewDraft(Candidate candidate, @Nullable GunData data) {
+        JsonObject draft = new JsonObject();
+        Identifier id = candidate.gunId();
+        draft.addProperty("target_path", "data/" + id.getNamespace() + "/industry/gun_feed/" + id.getPath() + ".json");
+        draft.addProperty("activation", "REQUIRES_HUMAN_CONFIRMATION");
+        draft.addProperty("mechanism", "REQUIRES_HUMAN_CONFIRMATION");
+        draft.addProperty("magazine_family", candidate.provisionalPrivateFamily());
+        if (data != null) {
+            draft.addProperty("magazine_capacity", data.getAmmoAmount());
+            draft.addProperty("ammo", data.getAmmoId() == null ? "" : data.getAmmoId().toString());
+        }
+        draft.addProperty("display_name", "TODO: pack-author-or-compatibility-translation-key");
+        draft.addProperty("note", "Confirm detachable/belt versus fixed/internal/clip first. This object is intentionally not loadable as gun_feed JSON.");
+        return draft;
     }
 
     private static List<String> incrementalScriptSignals(@Nullable Map<String, Object> parameters) {

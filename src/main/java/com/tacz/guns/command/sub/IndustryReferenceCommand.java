@@ -1,5 +1,7 @@
 package com.tacz.guns.command.sub;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -11,12 +13,17 @@ import com.tacz.guns.industry.reference.IndustryReferenceProfile;
 import com.tacz.guns.industry.reference.IndustryRuntimeAudit;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -28,7 +35,10 @@ public final class IndustryReferenceCommand {
     private static final String FEED = "feed";
     private static final String INSPECT = "inspect";
     private static final String CANDIDATES = "candidates";
+    private static final String EXPORT = "export";
     private static final String GUN = "gun";
+    /** Review artifacts use plain JSON primitives, so a pretty standalone Gson is safe here. */
+    private static final Gson SURVEY_GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private IndustryReferenceCommand() {
     }
@@ -48,7 +58,9 @@ public final class IndustryReferenceCommand {
                                 .then(Commands.argument(GUN, StringArgumentType.greedyString())
                                         .executes(IndustryReferenceCommand::inspectFeed)))
                         .then(Commands.literal(CANDIDATES)
-                                .executes(IndustryReferenceCommand::candidateSummary)));
+                                .executes(IndustryReferenceCommand::candidateSummary))
+                        .then(Commands.literal(EXPORT)
+                                .executes(IndustryReferenceCommand::exportSurvey)));
     }
 
     private static int audit(CommandContext<CommandSourceStack> context) {
@@ -99,6 +111,36 @@ public final class IndustryReferenceCommand {
             ));
         }
         return Command.SINGLE_SUCCESS;
+    }
+
+    /**
+     * Writes one deterministic, review-only artifact outside any data-pack
+     * directory. The report intentionally cannot be picked up by the resource
+     * loader, so exporting a large third-party pack is safe and reversible.
+     */
+    private static int exportSurvey(CommandContext<CommandSourceStack> context) {
+        CommonAssetsManager manager = CommonAssetsManager.getInstance();
+        if (manager == null) {
+            context.getSource().sendSystemMessage(Component.translatable("commands.tacz.industry.unavailable"));
+            return 0;
+        }
+        Path report = FabricLoader.getInstance().getConfigDir()
+                .resolve("tacz")
+                .resolve("industry-feed-survey.json");
+        try {
+            Files.createDirectories(report.getParent());
+            Files.writeString(report, SURVEY_GSON.toJson(GunFeedCandidateSurvey.exportReport(manager)),
+                    StandardCharsets.UTF_8);
+            context.getSource().sendSystemMessage(Component.translatable(
+                    "commands.tacz.industry.feed_export_success", report.toAbsolutePath()
+            ));
+            return Command.SINGLE_SUCCESS;
+        } catch (IOException exception) {
+            context.getSource().sendSystemMessage(Component.translatable(
+                    "commands.tacz.industry.feed_export_failure", exception.getMessage()
+            ));
+            return 0;
+        }
     }
 
     /** Queue text intentionally contains raw, directly reusable GunIds only. */

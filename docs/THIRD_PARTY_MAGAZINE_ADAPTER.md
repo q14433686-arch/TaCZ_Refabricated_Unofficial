@@ -170,6 +170,7 @@ TACZ 当前的扩容等级最多使用该数组的前三项。少数旧枪包虽
 /tacz industry reference my_addon:f2000
 /tacz industry feed candidates
 /tacz industry feed inspect my_addon:f2000
+/tacz industry feed export
 ```
 
 `industry audit` 现在会额外显示供弹适配统计：已接受、可选附属包未安装而休眠、以及因 Ammo/容量/字段不符被拒绝的声明数量。
@@ -177,6 +178,20 @@ TACZ 当前的扩容等级最多使用该数组的前三项。少数旧枪包虽
 `feed inspect` 直接读取服务器已加载的 `GunData`，报告 Ammo、基础/原始扩容容量、`reload.type`、bolt、脚本和当前已验证的适配状态。它是为兼容包作者收集**可验证事实**的命令；输出会明确提醒：它不会也不能据此自动选择 `detachable_magazine`、`belt`、管仓或转轮机制。
 
 `feed candidates` 是只读的候选汇总，并列出最多 12 把按 GunId 排序的待复核枪。队列中的条目就是可直接粘贴的资源 ID，例如 `bf1:smg0818`；早期显示中的 `[smg]` 只是 class 提示，不属于 GunId。它会参考 GunIndex 的枪种 class、FeedType、容量、无限备弹、已知逐发/桥夹 script 参数（`loop_feed`、`roundN_feed`、`clip_load_feed`）以及 open-bolt/semi-only 的转轮风险信号，把枪分为：已验证、需复核、逐发/夹具候选或排除。它不会写入 `GunFeedDefinition`、不会生成创造物品、不会接管换弹，也不会把同 Ammo/同容量的枪自动合并 family。
+
+`feed export` 会一键覆盖写入服务器配置目录的：
+
+```text
+config/tacz/industry-feed-survey.json
+```
+
+它包含当前所有已加载枪的分类、原始 GunData 事实、脚本参数键、信号和待复核枪的 sidecar 草稿位置。草稿会故意写入：
+
+```json
+"mechanism": "REQUIRES_HUMAN_CONFIRMATION"
+```
+
+因此它不是 datapack、不会被资源加载器读取，也不能被误复制后自动启用。兼容作者可以一次性审阅该文件，确认真实机构后才将所需条目改写成真正的 `industry/gun_feed` 声明。
 
 枪种 class、枪名、模型或弹匣井骨骼只可作为人工审计线索：手动栓动既可能是 AWM/M107 这种可拆卸弹匣，也可能是 Kar98/Mosin 这种固定仓；closed/open bolt 同样不是供弹机构证明。真实互插始终需要明确 `magazine_family`。
 

@@ -44,6 +44,7 @@ GunIndex 的 `type`（pistol / rifle / shotgun / sniper / mg 等）是有价值�
 ```text
 /tacz industry feed candidates
 /tacz industry feed inspect <namespace:gun_id>
+/tacz industry feed export
 ```
 
 测绘读取当前加载的真实 GunData，并只给出下列类别：
@@ -57,6 +58,8 @@ GunIndex 的 `type`（pistol / rifle / shotgun / sniper / mg 等）是有价值�
 | `incremental_or_clip` | `loop_feed`、`roundN_feed`、`clip_load_feed` | 保持 legacy，等待 tube/clip route 审计 |
 | `action_ambiguous` | open-bolt + semi-only 等转轮风险 | 保持 legacy |
 | `review_external_or_fixed` | 一次性 reload 时序候选 | **仍保持 legacy**，等待确认可拆卸或固定内仓 |
+
+`feed export` 会把全量结果写成 `config/tacz/industry-feed-survey.json`。这是单个、可提交给兼容作者审阅的 JSON 报告，不是 datapack；其中的 `draft_sidecar.mechanism` 故意为 `REQUIRES_HUMAN_CONFIRMATION`，所以无法误触发实际供弹逻辑。
 
 对于最后两类，命令会给出一个仅供作者使用的私有 family 建议：
 

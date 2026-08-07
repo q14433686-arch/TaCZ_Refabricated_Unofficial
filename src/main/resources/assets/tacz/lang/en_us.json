@@ -2090,5 +2090,7 @@
   "commands.tacz.industry.feed_candidate": "Survey (non-authoritative): category=%s; GunIndex class=%s; private-family proposal=%s; signals=%s",
   "commands.tacz.industry.feed_source_audit": "Feed declaration sources — sidecar: %s; inline author declarations: %s",
   "commands.tacz.industry.feed_candidates_queue": "First review queue (max 12; each entry is a directly usable GunId): %s",
-  "commands.tacz.industry.feed_inspect_usage": "§eUsage: /tacz industry feed inspect bf1:smg0818. Enter only the GunId; do not include < >, [smg], or a namespace: prefix."
+  "commands.tacz.industry.feed_inspect_usage": "§eUsage: /tacz industry feed inspect bf1:smg0818. Enter only the GunId; do not include < >, [smg], or a namespace: prefix.",
+  "commands.tacz.industry.feed_export_success": "§aWrote a review-only feed survey to %s. It is not a datapack and cannot enable magazines by itself.",
+  "commands.tacz.industry.feed_export_failure": "§cCould not write the feed survey: %s"
 }

@@ -2090,5 +2090,7 @@
   "commands.tacz.industry.feed_candidate": "测绘（非权威）：类别=%s；GunIndex 枪种=%s；私有 family 建议=%s；信号=%s",
   "commands.tacz.industry.feed_source_audit": "供弹声明来源 —— sidecar：%s；作者内联声明：%s",
   "commands.tacz.industry.feed_candidates_queue": "首批待复核队列（最多 12 把；以下均为可直接使用的 GunId）：%s",
-  "commands.tacz.industry.feed_inspect_usage": "§e用法：/tacz industry feed inspect bf1:smg0818。只填 GunId；不要输入 < >、[smg] 或 namespace: 前缀。"
+  "commands.tacz.industry.feed_inspect_usage": "§e用法：/tacz industry feed inspect bf1:smg0818。只填 GunId；不要输入 < >、[smg] 或 namespace: 前缀。",
+  "commands.tacz.industry.feed_export_success": "§a已写出仅供复核的供弹测绘文件：%s。它不是数据包，不能自行启用实体弹匣。",
+  "commands.tacz.industry.feed_export_failure": "§c无法写出供弹测绘文件：%s"
 }
