@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,91 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "default_rpk",
-      "IndustryPartKind": "recoil",
+      "IndustryPartKind": "service_fixture_fitted_rpk_recoil",
+      "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
       "IndustryServiceGunId": "tacz:rpk"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_rpk",
-        "IndustryPartKind": "incomplete_service_rpk_recoil",
-        "IndustryDisplayName": "item.tacz.gun_component.service_recoil"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_rpk",
-          "IndustryPartKind": "service_part_recoil",
-          "IndustryDisplayName": "item.tacz.service_part.rpk_recoil",
+          "IndustryPartKind": "recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
           "IndustryActionProfile": "gas_rifle",
           "IndustryToolingScope": "final_acceptance",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 4,
           "IndustryServiceGunId": "tacz:rpk",
-          "IndustryServiceOrigin": "default_rpk"
+          "IndustryServiceOrigin": "default_rpk",
+          "IndustryServiceRecipe": "tacz:gun/rpk",
+          "IndustryServiceTier": "advanced",
+          "IndustryServiceAction": "gas_rifle",
+          "IndustryServiceToolingScope": "final_acceptance",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_rpk",
-          "IndustryPartKind": "acceptance_gauge",
-          "IndustryActionProfile": "gas_rifle",
-          "IndustryToolingScope": "final_acceptance",
-          "DieTargetKind": "gas_rifle"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_rpk",
-        "IndustryPartKind": "recoil",
-        "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
-        "IndustryActionProfile": "gas_rifle",
-        "IndustryToolingScope": "final_acceptance",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 4,
-        "IndustryServiceGunId": "tacz:rpk",
-        "IndustryServiceOrigin": "default_rpk",
-        "IndustryServiceRecipe": "tacz:gun/rpk",
-        "IndustryServiceTier": "advanced",
-        "IndustryServiceAction": "gas_rifle",
-        "IndustryServiceToolingScope": "final_acceptance",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

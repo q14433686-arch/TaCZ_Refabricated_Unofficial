@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,91 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "default_spas_12",
-      "IndustryPartKind": "receiver",
+      "IndustryPartKind": "service_fixture_fitted_spas_12_receiver",
+      "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
       "IndustryServiceGunId": "tacz:spas_12"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_spas_12",
-        "IndustryPartKind": "incomplete_service_spas_12_receiver",
-        "IndustryDisplayName": "item.tacz.gun_component.service_receiver"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_spas_12",
-          "IndustryPartKind": "service_part_receiver",
-          "IndustryDisplayName": "item.tacz.service_part.spas_12_receiver",
+          "IndustryPartKind": "receiver",
+          "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
           "IndustryActionProfile": "hybrid_shotgun",
           "IndustryToolingScope": "final_acceptance",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 0,
           "IndustryServiceGunId": "tacz:spas_12",
-          "IndustryServiceOrigin": "default_spas_12"
+          "IndustryServiceOrigin": "default_spas_12",
+          "IndustryServiceRecipe": "tacz:gun/spas_12",
+          "IndustryServiceTier": "advanced",
+          "IndustryServiceAction": "hybrid_shotgun",
+          "IndustryServiceToolingScope": "final_acceptance",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_spas_12",
-          "IndustryPartKind": "acceptance_gauge",
-          "IndustryActionProfile": "hybrid_shotgun",
-          "IndustryToolingScope": "final_acceptance",
-          "DieTargetKind": "hybrid_shotgun"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_spas_12",
-        "IndustryPartKind": "receiver",
-        "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
-        "IndustryActionProfile": "hybrid_shotgun",
-        "IndustryToolingScope": "final_acceptance",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 0,
-        "IndustryServiceGunId": "tacz:spas_12",
-        "IndustryServiceOrigin": "default_spas_12",
-        "IndustryServiceRecipe": "tacz:gun/spas_12",
-        "IndustryServiceTier": "advanced",
-        "IndustryServiceAction": "hybrid_shotgun",
-        "IndustryServiceToolingScope": "final_acceptance",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

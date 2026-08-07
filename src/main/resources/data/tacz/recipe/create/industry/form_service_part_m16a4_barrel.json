@@ -1,0 +1,47 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part_blank"
+    ],
+    "nbt": {
+      "IndustryPlatform": "service",
+      "IndustryPartKind": "service_part_blank",
+      "IndustryDisplayName": "item.tacz.service_part_blank"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_m16a4",
+      "IndustryPartKind": "component_die",
+      "DieTargetKind": "barrel"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:service_part_blank",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_m16a4",
+          "IndustryPartKind": "service_part_die_barrel",
+          "IndustryDisplayName": "item.tacz.service_part_blank",
+          "IndustryServiceGunId": "tacz:m16a4"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

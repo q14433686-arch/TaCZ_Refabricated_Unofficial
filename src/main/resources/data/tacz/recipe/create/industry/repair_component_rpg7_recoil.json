@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,91 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "default_rpg7",
-      "IndustryPartKind": "recoil",
+      "IndustryPartKind": "service_fixture_fitted_rpg7_recoil",
+      "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
       "IndustryServiceGunId": "tacz:rpg7"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_rpg7",
-        "IndustryPartKind": "incomplete_service_rpg7_recoil",
-        "IndustryDisplayName": "item.tacz.gun_component.service_recoil"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_rpg7",
-          "IndustryPartKind": "service_part_recoil",
-          "IndustryDisplayName": "item.tacz.service_part.rpg7_recoil",
+          "IndustryPartKind": "recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
           "IndustryActionProfile": "launcher",
           "IndustryToolingScope": "final_acceptance",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 4,
           "IndustryServiceGunId": "tacz:rpg7",
-          "IndustryServiceOrigin": "default_rpg7"
+          "IndustryServiceOrigin": "default_rpg7",
+          "IndustryServiceRecipe": "tacz:gun/rpg7",
+          "IndustryServiceTier": "precision",
+          "IndustryServiceAction": "launcher",
+          "IndustryServiceToolingScope": "final_acceptance",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_rpg7",
-          "IndustryPartKind": "acceptance_gauge",
-          "IndustryActionProfile": "launcher",
-          "IndustryToolingScope": "final_acceptance",
-          "DieTargetKind": "launcher"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_rpg7",
-        "IndustryPartKind": "recoil",
-        "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
-        "IndustryActionProfile": "launcher",
-        "IndustryToolingScope": "final_acceptance",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 4,
-        "IndustryServiceGunId": "tacz:rpg7",
-        "IndustryServiceOrigin": "default_rpg7",
-        "IndustryServiceRecipe": "tacz:gun/rpg7",
-        "IndustryServiceTier": "precision",
-        "IndustryServiceAction": "launcher",
-        "IndustryServiceToolingScope": "final_acceptance",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

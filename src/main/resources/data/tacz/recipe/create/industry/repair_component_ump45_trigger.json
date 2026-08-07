@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,90 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "ump",
-      "IndustryPartKind": "trigger",
+      "IndustryPartKind": "service_fixture_fitted_ump45_trigger",
+      "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
       "IndustryServiceGunId": "tacz:ump45"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "ump",
-        "IndustryPartKind": "incomplete_service_ump45_trigger",
-        "IndustryDisplayName": "item.tacz.gun_component.service_trigger"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "ump",
-          "IndustryPartKind": "service_part_trigger",
-          "IndustryDisplayName": "item.tacz.service_part.ump45_trigger",
+          "IndustryPartKind": "trigger",
+          "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
           "IndustryActionProfile": "blowback_smg",
           "IndustryToolingScope": "platform_tooling",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 3,
           "IndustryServiceGunId": "tacz:ump45",
-          "IndustryServiceOrigin": "ump"
+          "IndustryServiceOrigin": "ump",
+          "IndustryServiceRecipe": "tacz:gun/ump45",
+          "IndustryServiceTier": "service",
+          "IndustryServiceAction": "blowback_smg",
+          "IndustryServiceToolingScope": "platform_tooling",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "tooling",
-          "IndustryPartKind": "action_jig",
-          "IndustryActionProfile": "blowback_smg",
-          "DieTargetKind": "blowback_smg"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "ump",
-        "IndustryPartKind": "trigger",
-        "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
-        "IndustryActionProfile": "blowback_smg",
-        "IndustryToolingScope": "platform_tooling",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 3,
-        "IndustryServiceGunId": "tacz:ump45",
-        "IndustryServiceOrigin": "ump",
-        "IndustryServiceRecipe": "tacz:gun/ump45",
-        "IndustryServiceTier": "service",
-        "IndustryServiceAction": "blowback_smg",
-        "IndustryServiceToolingScope": "platform_tooling",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "glock",
+      "IndustryPartKind": "service_part_fitted_glock_17_trigger",
+      "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
+      "IndustryServiceGunId": "tacz:glock_17"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "glock",
+      "IndustryPartKind": "critical_gauge",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge",
+      "DieTargetKind": "locked_breech_pistol"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "glock",
+          "IndustryPartKind": "service_fixture_fitted_glock_17_trigger",
+          "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
+          "IndustryServiceGunId": "tacz:glock_17"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

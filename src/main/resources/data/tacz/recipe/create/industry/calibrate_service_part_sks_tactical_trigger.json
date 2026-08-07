@@ -7,85 +7,50 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
-  "ingredient": {
+  "type": "create:deploying",
+  "target": {
     "fabric:type": "forge:partial_nbt",
     "items": [
       "tacz:service_part_blank"
     ],
     "nbt": {
-      "IndustryPlatform": "service",
-      "IndustryPartKind": "service_part_blank",
-      "IndustryDisplayName": "item.tacz.service_part_blank"
+      "IndustryPlatform": "default_sks_tactical",
+      "IndustryPartKind": "service_part_die_trigger",
+      "IndustryDisplayName": "item.tacz.service_part_blank",
+      "IndustryServiceGunId": "tacz:sks_tactical"
     }
   },
-  "transitional_item": {
-    "id": "tacz:service_part_blank",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_sks_tactical",
-        "IndustryPartKind": "incomplete_service_part_sks_tactical_trigger",
-        "IndustryDisplayName": "item.tacz.service_part_blank"
-      }
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_sks_tactical",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_template.default_sks_tactical",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "platform_tooling"
     }
   },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
+      "id": "tacz:service_part",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_sks_tactical",
-          "IndustryPartKind": "component_die",
-          "DieTargetKind": "trigger"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:gun_blueprint"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_sks_tactical",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_template.default_sks_tactical",
-          "IndustryBlueprintTier": "service",
-          "IndustryBlueprintRole": "production",
+          "IndustryPartKind": "service_part_trigger",
+          "IndustryDisplayName": "item.tacz.service_part.sks_tactical_trigger",
           "IndustryActionProfile": "gas_rifle",
-          "IndustryToolingScope": "platform_tooling"
+          "IndustryToolingScope": "platform_tooling",
+          "IndustryServiceGunId": "tacz:sks_tactical",
+          "IndustryServiceOrigin": "default_sks_tactical",
+          "IndustryServiceConditionSlot": 3
         }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
+      }
     }
   ],
-  "result": {
-    "id": "tacz:service_part",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_sks_tactical",
-        "IndustryPartKind": "service_part_trigger",
-        "IndustryDisplayName": "item.tacz.service_part.sks_tactical_trigger",
-        "IndustryActionProfile": "gas_rifle",
-        "IndustryToolingScope": "platform_tooling",
-        "IndustryServiceGunId": "tacz:sks_tactical",
-        "IndustryServiceOrigin": "default_sks_tactical",
-        "IndustryServiceConditionSlot": 3
-      }
-    }
-  }
+  "keep_held_item": true
 }

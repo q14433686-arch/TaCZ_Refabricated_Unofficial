@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,91 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "default_m249",
-      "IndustryPartKind": "trigger",
+      "IndustryPartKind": "service_fixture_fitted_m249_trigger",
+      "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
       "IndustryServiceGunId": "tacz:m249"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_m249",
-        "IndustryPartKind": "incomplete_service_m249_trigger",
-        "IndustryDisplayName": "item.tacz.gun_component.service_trigger"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_m249",
-          "IndustryPartKind": "service_part_trigger",
-          "IndustryDisplayName": "item.tacz.service_part.m249_trigger",
+          "IndustryPartKind": "trigger",
+          "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
           "IndustryActionProfile": "belt_fed",
           "IndustryToolingScope": "final_acceptance",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 3,
           "IndustryServiceGunId": "tacz:m249",
-          "IndustryServiceOrigin": "default_m249"
+          "IndustryServiceOrigin": "default_m249",
+          "IndustryServiceRecipe": "tacz:gun/m249",
+          "IndustryServiceTier": "precision",
+          "IndustryServiceAction": "belt_fed",
+          "IndustryServiceToolingScope": "final_acceptance",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_m249",
-          "IndustryPartKind": "acceptance_gauge",
-          "IndustryActionProfile": "belt_fed",
-          "IndustryToolingScope": "final_acceptance",
-          "DieTargetKind": "belt_fed"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_m249",
-        "IndustryPartKind": "trigger",
-        "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
-        "IndustryActionProfile": "belt_fed",
-        "IndustryToolingScope": "final_acceptance",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 3,
-        "IndustryServiceGunId": "tacz:m249",
-        "IndustryServiceOrigin": "default_m249",
-        "IndustryServiceRecipe": "tacz:gun/m249",
-        "IndustryServiceTier": "precision",
-        "IndustryServiceAction": "belt_fed",
-        "IndustryServiceToolingScope": "final_acceptance",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

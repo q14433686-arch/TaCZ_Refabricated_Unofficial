@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,90 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "default_hk_g3",
-      "IndustryPartKind": "trigger",
+      "IndustryPartKind": "service_fixture_fitted_hk_g3_trigger",
+      "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
       "IndustryServiceGunId": "tacz:hk_g3"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_hk_g3",
-        "IndustryPartKind": "incomplete_service_hk_g3_trigger",
-        "IndustryDisplayName": "item.tacz.gun_component.service_trigger"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_hk_g3",
-          "IndustryPartKind": "service_part_trigger",
-          "IndustryDisplayName": "item.tacz.service_part.hk_g3_trigger",
+          "IndustryPartKind": "trigger",
+          "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
           "IndustryActionProfile": "roller_delayed_rifle",
           "IndustryToolingScope": "platform_tooling",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 3,
           "IndustryServiceGunId": "tacz:hk_g3",
-          "IndustryServiceOrigin": "default_hk_g3"
+          "IndustryServiceOrigin": "default_hk_g3",
+          "IndustryServiceRecipe": "tacz:gun/hk_g3",
+          "IndustryServiceTier": "service",
+          "IndustryServiceAction": "roller_delayed_rifle",
+          "IndustryServiceToolingScope": "platform_tooling",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "tooling",
-          "IndustryPartKind": "action_jig",
-          "IndustryActionProfile": "roller_delayed_rifle",
-          "DieTargetKind": "roller_delayed_rifle"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_hk_g3",
-        "IndustryPartKind": "trigger",
-        "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
-        "IndustryActionProfile": "roller_delayed_rifle",
-        "IndustryToolingScope": "platform_tooling",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 3,
-        "IndustryServiceGunId": "tacz:hk_g3",
-        "IndustryServiceOrigin": "default_hk_g3",
-        "IndustryServiceRecipe": "tacz:gun/hk_g3",
-        "IndustryServiceTier": "service",
-        "IndustryServiceAction": "roller_delayed_rifle",
-        "IndustryServiceToolingScope": "platform_tooling",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

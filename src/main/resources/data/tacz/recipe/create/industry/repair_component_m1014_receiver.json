@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,91 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "default_m1014",
-      "IndustryPartKind": "receiver",
+      "IndustryPartKind": "service_fixture_fitted_m1014_receiver",
+      "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
       "IndustryServiceGunId": "tacz:m1014"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_m1014",
-        "IndustryPartKind": "incomplete_service_m1014_receiver",
-        "IndustryDisplayName": "item.tacz.gun_component.service_receiver"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_m1014",
-          "IndustryPartKind": "service_part_receiver",
-          "IndustryDisplayName": "item.tacz.service_part.m1014_receiver",
+          "IndustryPartKind": "receiver",
+          "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
           "IndustryActionProfile": "gas_operated_shotgun",
           "IndustryToolingScope": "final_acceptance",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 0,
           "IndustryServiceGunId": "tacz:m1014",
-          "IndustryServiceOrigin": "default_m1014"
+          "IndustryServiceOrigin": "default_m1014",
+          "IndustryServiceRecipe": "tacz:gun/m1014",
+          "IndustryServiceTier": "advanced",
+          "IndustryServiceAction": "gas_operated_shotgun",
+          "IndustryServiceToolingScope": "final_acceptance",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_m1014",
-          "IndustryPartKind": "acceptance_gauge",
-          "IndustryActionProfile": "gas_operated_shotgun",
-          "IndustryToolingScope": "final_acceptance",
-          "DieTargetKind": "gas_operated_shotgun"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_m1014",
-        "IndustryPartKind": "receiver",
-        "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
-        "IndustryActionProfile": "gas_operated_shotgun",
-        "IndustryToolingScope": "final_acceptance",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 0,
-        "IndustryServiceGunId": "tacz:m1014",
-        "IndustryServiceOrigin": "default_m1014",
-        "IndustryServiceRecipe": "tacz:gun/m1014",
-        "IndustryServiceTier": "advanced",
-        "IndustryServiceAction": "gas_operated_shotgun",
-        "IndustryServiceToolingScope": "final_acceptance",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

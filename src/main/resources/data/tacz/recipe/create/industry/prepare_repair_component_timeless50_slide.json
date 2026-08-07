@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_timeless50",
+      "IndustryPartKind": "slide",
+      "IndustryServiceGunId": "tacz:timeless50"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_timeless50",
+      "IndustryPartKind": "service_part_slide",
+      "IndustryDisplayName": "item.tacz.service_part.timeless50_slide",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge",
+      "IndustryServiceGunId": "tacz:timeless50",
+      "IndustryServiceOrigin": "default_timeless50"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_timeless50",
+          "IndustryPartKind": "service_part_fitted_timeless50_slide",
+          "IndustryDisplayName": "item.tacz.gun_component.service_slide",
+          "IndustryServiceGunId": "tacz:timeless50"
+        }
+      }
+    }
+  ]
+}

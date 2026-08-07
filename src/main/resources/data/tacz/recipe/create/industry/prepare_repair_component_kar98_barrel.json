@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_kar98",
+      "IndustryPartKind": "barrel",
+      "IndustryServiceGunId": "tacz:kar98"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_kar98",
+      "IndustryPartKind": "service_part_barrel",
+      "IndustryDisplayName": "item.tacz.service_part.kar98_barrel",
+      "IndustryActionProfile": "bolt_action",
+      "IndustryToolingScope": "critical_gauge",
+      "IndustryServiceGunId": "tacz:kar98",
+      "IndustryServiceOrigin": "default_kar98"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_kar98",
+          "IndustryPartKind": "service_part_fitted_kar98_barrel",
+          "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
+          "IndustryServiceGunId": "tacz:kar98"
+        }
+      }
+    }
+  ]
+}

@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,91 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "default_kar98",
-      "IndustryPartKind": "trigger",
+      "IndustryPartKind": "service_fixture_fitted_kar98_trigger",
+      "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
       "IndustryServiceGunId": "tacz:kar98"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_kar98",
-        "IndustryPartKind": "incomplete_service_kar98_trigger",
-        "IndustryDisplayName": "item.tacz.gun_component.service_trigger"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_kar98",
-          "IndustryPartKind": "service_part_trigger",
-          "IndustryDisplayName": "item.tacz.service_part.kar98_trigger",
+          "IndustryPartKind": "trigger",
+          "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
           "IndustryActionProfile": "bolt_action",
           "IndustryToolingScope": "critical_gauge",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 3,
           "IndustryServiceGunId": "tacz:kar98",
-          "IndustryServiceOrigin": "default_kar98"
+          "IndustryServiceOrigin": "default_kar98",
+          "IndustryServiceRecipe": "tacz:gun/kar98",
+          "IndustryServiceTier": "legacy",
+          "IndustryServiceAction": "bolt_action",
+          "IndustryServiceToolingScope": "critical_gauge",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_kar98",
-          "IndustryPartKind": "critical_gauge",
-          "IndustryActionProfile": "bolt_action",
-          "IndustryToolingScope": "critical_gauge",
-          "DieTargetKind": "bolt_action"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_kar98",
-        "IndustryPartKind": "trigger",
-        "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
-        "IndustryActionProfile": "bolt_action",
-        "IndustryToolingScope": "critical_gauge",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 3,
-        "IndustryServiceGunId": "tacz:kar98",
-        "IndustryServiceOrigin": "default_kar98",
-        "IndustryServiceRecipe": "tacz:gun/kar98",
-        "IndustryServiceTier": "legacy",
-        "IndustryServiceAction": "bolt_action",
-        "IndustryServiceToolingScope": "critical_gauge",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

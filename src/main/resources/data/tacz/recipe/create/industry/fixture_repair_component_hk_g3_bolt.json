@@ -1,0 +1,49 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_hk_g3",
+      "IndustryPartKind": "service_part_fitted_hk_g3_bolt",
+      "IndustryDisplayName": "item.tacz.gun_component.service_bolt",
+      "IndustryServiceGunId": "tacz:hk_g3"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "tooling",
+      "IndustryPartKind": "action_jig",
+      "IndustryActionProfile": "roller_delayed_rifle",
+      "DieTargetKind": "roller_delayed_rifle"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_hk_g3",
+          "IndustryPartKind": "service_fixture_fitted_hk_g3_bolt",
+          "IndustryDisplayName": "item.tacz.gun_component.service_bolt",
+          "IndustryServiceGunId": "tacz:hk_g3"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

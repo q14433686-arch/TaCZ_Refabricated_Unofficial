@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,91 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "default_m700",
-      "IndustryPartKind": "recoil",
+      "IndustryPartKind": "service_fixture_fitted_m700_recoil",
+      "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
       "IndustryServiceGunId": "tacz:m700"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_m700",
-        "IndustryPartKind": "incomplete_service_m700_recoil",
-        "IndustryDisplayName": "item.tacz.gun_component.service_recoil"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_m700",
-          "IndustryPartKind": "service_part_recoil",
-          "IndustryDisplayName": "item.tacz.service_part.m700_recoil",
+          "IndustryPartKind": "recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
           "IndustryActionProfile": "bolt_action",
           "IndustryToolingScope": "critical_gauge",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 4,
           "IndustryServiceGunId": "tacz:m700",
-          "IndustryServiceOrigin": "default_m700"
+          "IndustryServiceOrigin": "default_m700",
+          "IndustryServiceRecipe": "tacz:gun/m700",
+          "IndustryServiceTier": "service",
+          "IndustryServiceAction": "bolt_action",
+          "IndustryServiceToolingScope": "critical_gauge",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_m700",
-          "IndustryPartKind": "critical_gauge",
-          "IndustryActionProfile": "bolt_action",
-          "IndustryToolingScope": "critical_gauge",
-          "DieTargetKind": "bolt_action"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_m700",
-        "IndustryPartKind": "recoil",
-        "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
-        "IndustryActionProfile": "bolt_action",
-        "IndustryToolingScope": "critical_gauge",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 4,
-        "IndustryServiceGunId": "tacz:m700",
-        "IndustryServiceOrigin": "default_m700",
-        "IndustryServiceRecipe": "tacz:gun/m700",
-        "IndustryServiceTier": "service",
-        "IndustryServiceAction": "bolt_action",
-        "IndustryServiceToolingScope": "critical_gauge",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

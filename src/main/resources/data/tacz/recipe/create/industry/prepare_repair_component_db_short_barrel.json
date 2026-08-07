@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_db_short",
+      "IndustryPartKind": "barrel",
+      "IndustryServiceGunId": "tacz:db_short"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_db_short",
+      "IndustryPartKind": "service_part_barrel",
+      "IndustryDisplayName": "item.tacz.service_part.db_short_barrel",
+      "IndustryActionProfile": "break_action",
+      "IndustryToolingScope": "family_jig",
+      "IndustryServiceGunId": "tacz:db_short",
+      "IndustryServiceOrigin": "default_db_short"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_db_short",
+          "IndustryPartKind": "service_part_fitted_db_short_barrel",
+          "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
+          "IndustryServiceGunId": "tacz:db_short"
+        }
+      }
+    }
+  ]
+}

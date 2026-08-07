@@ -7,85 +7,50 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
-  "ingredient": {
+  "type": "create:deploying",
+  "target": {
     "fabric:type": "forge:partial_nbt",
     "items": [
       "tacz:service_part_blank"
     ],
     "nbt": {
-      "IndustryPlatform": "service",
-      "IndustryPartKind": "service_part_blank",
-      "IndustryDisplayName": "item.tacz.service_part_blank"
+      "IndustryPlatform": "default_springfield1873",
+      "IndustryPartKind": "service_part_die_receiver",
+      "IndustryDisplayName": "item.tacz.service_part_blank",
+      "IndustryServiceGunId": "tacz:springfield1873"
     }
   },
-  "transitional_item": {
-    "id": "tacz:service_part_blank",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_springfield1873",
-        "IndustryPartKind": "incomplete_service_part_springfield1873_receiver",
-        "IndustryDisplayName": "item.tacz.service_part_blank"
-      }
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_springfield1873",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_template.default_springfield1873",
+      "IndustryBlueprintTier": "legacy",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "lever_action",
+      "IndustryToolingScope": "family_jig"
     }
   },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
+      "id": "tacz:service_part",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_springfield1873",
-          "IndustryPartKind": "component_die",
-          "DieTargetKind": "receiver"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:gun_blueprint"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_springfield1873",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_template.default_springfield1873",
-          "IndustryBlueprintTier": "legacy",
-          "IndustryBlueprintRole": "production",
+          "IndustryPartKind": "service_part_receiver",
+          "IndustryDisplayName": "item.tacz.service_part.springfield1873_receiver",
           "IndustryActionProfile": "lever_action",
-          "IndustryToolingScope": "family_jig"
+          "IndustryToolingScope": "family_jig",
+          "IndustryServiceGunId": "tacz:springfield1873",
+          "IndustryServiceOrigin": "default_springfield1873",
+          "IndustryServiceConditionSlot": 0
         }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
+      }
     }
   ],
-  "result": {
-    "id": "tacz:service_part",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_springfield1873",
-        "IndustryPartKind": "service_part_receiver",
-        "IndustryDisplayName": "item.tacz.service_part.springfield1873_receiver",
-        "IndustryActionProfile": "lever_action",
-        "IndustryToolingScope": "family_jig",
-        "IndustryServiceGunId": "tacz:springfield1873",
-        "IndustryServiceOrigin": "default_springfield1873",
-        "IndustryServiceConditionSlot": 0
-      }
-    }
-  }
+  "keep_held_item": true
 }

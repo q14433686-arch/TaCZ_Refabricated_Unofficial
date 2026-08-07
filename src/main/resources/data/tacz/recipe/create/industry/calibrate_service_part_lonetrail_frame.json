@@ -7,85 +7,50 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
-  "ingredient": {
+  "type": "create:deploying",
+  "target": {
     "fabric:type": "forge:partial_nbt",
     "items": [
       "tacz:service_part_blank"
     ],
     "nbt": {
-      "IndustryPlatform": "service",
-      "IndustryPartKind": "service_part_blank",
-      "IndustryDisplayName": "item.tacz.service_part_blank"
+      "IndustryPlatform": "default_lonetrail",
+      "IndustryPartKind": "service_part_die_frame",
+      "IndustryDisplayName": "item.tacz.service_part_blank",
+      "IndustryServiceGunId": "tacz:lonetrail"
     }
   },
-  "transitional_item": {
-    "id": "tacz:service_part_blank",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_lonetrail",
-        "IndustryPartKind": "incomplete_service_part_lonetrail_frame",
-        "IndustryDisplayName": "item.tacz.service_part_blank"
-      }
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_lonetrail",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_template.default_lonetrail",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
+      "id": "tacz:service_part",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_lonetrail",
-          "IndustryPartKind": "component_die",
-          "DieTargetKind": "frame"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:gun_blueprint"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_lonetrail",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_template.default_lonetrail",
-          "IndustryBlueprintTier": "service",
-          "IndustryBlueprintRole": "production",
+          "IndustryPartKind": "service_part_frame",
+          "IndustryDisplayName": "item.tacz.service_part.lonetrail_frame",
           "IndustryActionProfile": "locked_breech_pistol",
-          "IndustryToolingScope": "critical_gauge"
+          "IndustryToolingScope": "critical_gauge",
+          "IndustryServiceGunId": "tacz:lonetrail",
+          "IndustryServiceOrigin": "default_lonetrail",
+          "IndustryServiceConditionSlot": 0
         }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
+      }
     }
   ],
-  "result": {
-    "id": "tacz:service_part",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_lonetrail",
-        "IndustryPartKind": "service_part_frame",
-        "IndustryDisplayName": "item.tacz.service_part.lonetrail_frame",
-        "IndustryActionProfile": "locked_breech_pistol",
-        "IndustryToolingScope": "critical_gauge",
-        "IndustryServiceGunId": "tacz:lonetrail",
-        "IndustryServiceOrigin": "default_lonetrail",
-        "IndustryServiceConditionSlot": 0
-      }
-    }
-  }
+  "keep_held_item": true
 }

@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_qbz_191",
+      "IndustryPartKind": "receiver",
+      "IndustryServiceGunId": "tacz:qbz_191"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_qbz_191",
+      "IndustryPartKind": "service_part_receiver",
+      "IndustryDisplayName": "item.tacz.service_part.qbz_191_receiver",
+      "IndustryActionProfile": "bullpup_rifle",
+      "IndustryToolingScope": "final_acceptance",
+      "IndustryServiceGunId": "tacz:qbz_191",
+      "IndustryServiceOrigin": "default_qbz_191"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_qbz_191",
+          "IndustryPartKind": "service_part_fitted_qbz_191_receiver",
+          "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
+          "IndustryServiceGunId": "tacz:qbz_191"
+        }
+      }
+    }
+  ]
+}

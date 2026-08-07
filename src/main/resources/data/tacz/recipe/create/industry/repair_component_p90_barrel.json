@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,91 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "p90",
-      "IndustryPartKind": "barrel",
+      "IndustryPartKind": "service_fixture_fitted_p90_barrel",
+      "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
       "IndustryServiceGunId": "tacz:p90"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "p90",
-        "IndustryPartKind": "incomplete_service_p90_barrel",
-        "IndustryDisplayName": "item.tacz.gun_component.service_barrel"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "p90",
-          "IndustryPartKind": "service_part_barrel",
-          "IndustryDisplayName": "item.tacz.service_part.p90_barrel",
+          "IndustryPartKind": "barrel",
+          "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
           "IndustryActionProfile": "bullpup_rifle",
           "IndustryToolingScope": "final_acceptance",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 2,
           "IndustryServiceGunId": "tacz:p90",
-          "IndustryServiceOrigin": "p90"
+          "IndustryServiceOrigin": "p90",
+          "IndustryServiceRecipe": "tacz:gun/p90",
+          "IndustryServiceTier": "advanced",
+          "IndustryServiceAction": "bullpup_rifle",
+          "IndustryServiceToolingScope": "final_acceptance",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "p90",
-          "IndustryPartKind": "acceptance_gauge",
-          "IndustryActionProfile": "bullpup_rifle",
-          "IndustryToolingScope": "final_acceptance",
-          "DieTargetKind": "bullpup_rifle"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "p90",
-        "IndustryPartKind": "barrel",
-        "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
-        "IndustryActionProfile": "bullpup_rifle",
-        "IndustryToolingScope": "final_acceptance",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 2,
-        "IndustryServiceGunId": "tacz:p90",
-        "IndustryServiceOrigin": "p90",
-        "IndustryServiceRecipe": "tacz:gun/p90",
-        "IndustryServiceTier": "advanced",
-        "IndustryServiceAction": "bullpup_rifle",
-        "IndustryServiceToolingScope": "final_acceptance",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

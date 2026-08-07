@@ -7,85 +7,50 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
-  "ingredient": {
+  "type": "create:deploying",
+  "target": {
     "fabric:type": "forge:partial_nbt",
     "items": [
       "tacz:service_part_blank"
     ],
     "nbt": {
-      "IndustryPlatform": "service",
-      "IndustryPartKind": "service_part_blank",
-      "IndustryDisplayName": "item.tacz.service_part_blank"
+      "IndustryPlatform": "default_timeless50",
+      "IndustryPartKind": "service_part_die_frame",
+      "IndustryDisplayName": "item.tacz.service_part_blank",
+      "IndustryServiceGunId": "tacz:timeless50"
     }
   },
-  "transitional_item": {
-    "id": "tacz:service_part_blank",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_timeless50",
-        "IndustryPartKind": "incomplete_service_part_timeless50_frame",
-        "IndustryDisplayName": "item.tacz.service_part_blank"
-      }
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_blueprint"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_timeless50",
+      "IndustryPartKind": "blueprint",
+      "IndustryDisplayName": "item.tacz.gun_template.default_timeless50",
+      "IndustryBlueprintTier": "service",
+      "IndustryBlueprintRole": "production",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge"
     }
   },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
+      "id": "tacz:service_part",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_timeless50",
-          "IndustryPartKind": "component_die",
-          "DieTargetKind": "frame"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:gun_blueprint"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_timeless50",
-          "IndustryPartKind": "blueprint",
-          "IndustryDisplayName": "item.tacz.gun_template.default_timeless50",
-          "IndustryBlueprintTier": "service",
-          "IndustryBlueprintRole": "production",
+          "IndustryPartKind": "service_part_frame",
+          "IndustryDisplayName": "item.tacz.service_part.timeless50_frame",
           "IndustryActionProfile": "locked_breech_pistol",
-          "IndustryToolingScope": "critical_gauge"
+          "IndustryToolingScope": "critical_gauge",
+          "IndustryServiceGunId": "tacz:timeless50",
+          "IndustryServiceOrigin": "default_timeless50",
+          "IndustryServiceConditionSlot": 0
         }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
+      }
     }
   ],
-  "result": {
-    "id": "tacz:service_part",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_timeless50",
-        "IndustryPartKind": "service_part_frame",
-        "IndustryDisplayName": "item.tacz.service_part.timeless50_frame",
-        "IndustryActionProfile": "locked_breech_pistol",
-        "IndustryToolingScope": "critical_gauge",
-        "IndustryServiceGunId": "tacz:timeless50",
-        "IndustryServiceOrigin": "default_timeless50",
-        "IndustryServiceConditionSlot": 0
-      }
-    }
-  }
+  "keep_held_item": true
 }

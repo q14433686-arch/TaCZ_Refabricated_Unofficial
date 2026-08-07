@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ump",
+      "IndustryPartKind": "trigger",
+      "IndustryServiceGunId": "tacz:ump45"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ump",
+      "IndustryPartKind": "service_part_trigger",
+      "IndustryDisplayName": "item.tacz.service_part.ump45_trigger",
+      "IndustryActionProfile": "blowback_smg",
+      "IndustryToolingScope": "platform_tooling",
+      "IndustryServiceGunId": "tacz:ump45",
+      "IndustryServiceOrigin": "ump"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ump",
+          "IndustryPartKind": "service_part_fitted_ump45_trigger",
+          "IndustryDisplayName": "item.tacz.gun_component.service_trigger",
+          "IndustryServiceGunId": "tacz:ump45"
+        }
+      }
+    }
+  ]
+}

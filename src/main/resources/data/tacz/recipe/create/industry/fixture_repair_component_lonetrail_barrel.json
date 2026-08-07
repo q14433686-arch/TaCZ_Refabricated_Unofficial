@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_lonetrail",
+      "IndustryPartKind": "service_part_fitted_lonetrail_barrel",
+      "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
+      "IndustryServiceGunId": "tacz:lonetrail"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_lonetrail",
+      "IndustryPartKind": "critical_gauge",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge",
+      "DieTargetKind": "locked_breech_pistol"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_lonetrail",
+          "IndustryPartKind": "service_fixture_fitted_lonetrail_barrel",
+          "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
+          "IndustryServiceGunId": "tacz:lonetrail"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

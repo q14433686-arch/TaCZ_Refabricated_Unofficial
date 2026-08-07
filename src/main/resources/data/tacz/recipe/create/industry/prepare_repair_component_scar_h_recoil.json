@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_scar_h",
+      "IndustryPartKind": "recoil",
+      "IndustryServiceGunId": "tacz:scar_h"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_scar_h",
+      "IndustryPartKind": "service_part_recoil",
+      "IndustryDisplayName": "item.tacz.service_part.scar_h_recoil",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "final_acceptance",
+      "IndustryServiceGunId": "tacz:scar_h",
+      "IndustryServiceOrigin": "default_scar_h"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_scar_h",
+          "IndustryPartKind": "service_part_fitted_scar_h_recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
+          "IndustryServiceGunId": "tacz:scar_h"
+        }
+      }
+    }
+  ]
+}

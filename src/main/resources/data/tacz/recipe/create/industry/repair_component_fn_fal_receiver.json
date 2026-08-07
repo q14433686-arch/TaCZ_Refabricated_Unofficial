@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,90 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "fal",
-      "IndustryPartKind": "receiver",
+      "IndustryPartKind": "service_fixture_fitted_fn_fal_receiver",
+      "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
       "IndustryServiceGunId": "tacz:fn_fal"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "fal",
-        "IndustryPartKind": "incomplete_service_fn_fal_receiver",
-        "IndustryDisplayName": "item.tacz.gun_component.service_receiver"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "fal",
-          "IndustryPartKind": "service_part_receiver",
-          "IndustryDisplayName": "item.tacz.service_part.fn_fal_receiver",
+          "IndustryPartKind": "receiver",
+          "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
           "IndustryActionProfile": "gas_rifle",
           "IndustryToolingScope": "platform_tooling",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 0,
           "IndustryServiceGunId": "tacz:fn_fal",
-          "IndustryServiceOrigin": "fal"
+          "IndustryServiceOrigin": "fal",
+          "IndustryServiceRecipe": "tacz:gun/fn_fal",
+          "IndustryServiceTier": "service",
+          "IndustryServiceAction": "gas_rifle",
+          "IndustryServiceToolingScope": "platform_tooling",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "tooling",
-          "IndustryPartKind": "action_jig",
-          "IndustryActionProfile": "gas_rifle",
-          "DieTargetKind": "gas_rifle"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "fal",
-        "IndustryPartKind": "receiver",
-        "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
-        "IndustryActionProfile": "gas_rifle",
-        "IndustryToolingScope": "platform_tooling",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 0,
-        "IndustryServiceGunId": "tacz:fn_fal",
-        "IndustryServiceOrigin": "fal",
-        "IndustryServiceRecipe": "tacz:gun/fn_fal",
-        "IndustryServiceTier": "service",
-        "IndustryServiceAction": "gas_rifle",
-        "IndustryServiceToolingScope": "platform_tooling",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

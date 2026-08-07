@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,91 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "default_hk_mk23",
-      "IndustryPartKind": "slide",
+      "IndustryPartKind": "service_fixture_fitted_hk_mk23_slide",
+      "IndustryDisplayName": "item.tacz.gun_component.service_slide",
       "IndustryServiceGunId": "tacz:hk_mk23"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_hk_mk23",
-        "IndustryPartKind": "incomplete_service_hk_mk23_slide",
-        "IndustryDisplayName": "item.tacz.gun_component.service_slide"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_hk_mk23",
-          "IndustryPartKind": "service_part_slide",
-          "IndustryDisplayName": "item.tacz.service_part.hk_mk23_slide",
+          "IndustryPartKind": "slide",
+          "IndustryDisplayName": "item.tacz.gun_component.service_slide",
           "IndustryActionProfile": "locked_breech_pistol",
           "IndustryToolingScope": "final_acceptance",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 1,
           "IndustryServiceGunId": "tacz:hk_mk23",
-          "IndustryServiceOrigin": "default_hk_mk23"
+          "IndustryServiceOrigin": "default_hk_mk23",
+          "IndustryServiceRecipe": "tacz:gun/hk_mk23",
+          "IndustryServiceTier": "advanced",
+          "IndustryServiceAction": "locked_breech_pistol",
+          "IndustryServiceToolingScope": "final_acceptance",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_hk_mk23",
-          "IndustryPartKind": "acceptance_gauge",
-          "IndustryActionProfile": "locked_breech_pistol",
-          "IndustryToolingScope": "final_acceptance",
-          "DieTargetKind": "locked_breech_pistol"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_hk_mk23",
-        "IndustryPartKind": "slide",
-        "IndustryDisplayName": "item.tacz.gun_component.service_slide",
-        "IndustryActionProfile": "locked_breech_pistol",
-        "IndustryToolingScope": "final_acceptance",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 1,
-        "IndustryServiceGunId": "tacz:hk_mk23",
-        "IndustryServiceOrigin": "default_hk_mk23",
-        "IndustryServiceRecipe": "tacz:gun/hk_mk23",
-        "IndustryServiceTier": "advanced",
-        "IndustryServiceAction": "locked_breech_pistol",
-        "IndustryServiceToolingScope": "final_acceptance",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

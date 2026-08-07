@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_g36k",
+      "IndustryPartKind": "service_part_fitted_g36k_receiver",
+      "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
+      "IndustryServiceGunId": "tacz:g36k"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_g36k",
+      "IndustryPartKind": "acceptance_gauge",
+      "IndustryActionProfile": "gas_rifle",
+      "IndustryToolingScope": "final_acceptance",
+      "DieTargetKind": "gas_rifle"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_g36k",
+          "IndustryPartKind": "service_fixture_fitted_g36k_receiver",
+          "IndustryDisplayName": "item.tacz.gun_component.service_receiver",
+          "IndustryServiceGunId": "tacz:g36k"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

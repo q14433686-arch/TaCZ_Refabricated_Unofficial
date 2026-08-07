@@ -2728,51 +2728,55 @@ def generated_service_repair_files(platforms: list[dict[str, Any]]) -> dict[Path
                 "IndustryPartKind": "component_die",
                 "DieTargetKind": kind,
             })
-            # A service part must not be selected by a shared blank + blueprint
-            # alone. The platform component die supplies the real geometry, then
-            # the retained production template confirms its named service role.
-            files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_service_part_{platform['slug']}_{kind}.json"] = {
-                "fabric:load_conditions": CREATE_CONDITIONS,
-                "type": "create:sequenced_assembly",
-                "ingredient": partial("tacz:service_part_blank", blank_tag),
-                "transitional_item": output("tacz:service_part_blank", {
-                    "IndustryPlatform": platform["platform"],
-                    "IndustryPartKind": f"incomplete_service_part_{platform['slug']}_{kind}",
-                    "IndustryDisplayName": "item.tacz.service_part_blank",
-                }),
-                "sequence": [
-                    {"type": "create:deploying", "target": "$ingredient", "ingredient": component_die,
-                     "results": ["$result"], "keep_held_item": True},
-                    {"type": "create:deploying", "target": "$ingredient", "ingredient": blueprint,
-                     "results": ["$result"], "keep_held_item": True},
-                ],
-                "result": output("tacz:service_part", part_tag),
+            # Direct stations instead of opaque sequenced assembly: each stage
+            # has one visible belt/depot workpiece and one held input. This lets
+            # a player diagnose an incorrect die/template/part at the exact
+            # station instead of seeing a whole sequence silently refuse.
+            die_formed_part = {
+                "IndustryPlatform": platform["platform"],
+                "IndustryPartKind": f"service_part_die_{kind}",
+                "IndustryDisplayName": "item.tacz.service_part_blank",
+                "IndustryServiceGunId": platform["gun_id"],
             }
+            files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_service_part_{platform['slug']}_{kind}.json"] = deploying(
+                partial("tacz:service_part_blank", blank_tag), component_die,
+                output("tacz:service_part_blank", die_formed_part), keep=True
+            )
+            files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_service_part_{platform['slug']}_{kind}.json"] = deploying(
+                partial("tacz:service_part_blank", die_formed_part), blueprint,
+                output("tacz:service_part", part_tag), keep=True
+            )
+
+            damaged_component = {
+                "IndustryPlatform": platform["platform"],
+                "IndustryPartKind": kind,
+                "IndustryServiceGunId": platform["gun_id"],
+            }
+            replacement_fitted = {
+                "IndustryPlatform": platform["platform"],
+                "IndustryPartKind": f"service_part_fitted_{platform['slug']}_{kind}",
+                "IndustryDisplayName": f"item.tacz.gun_component.service_{kind}",
+                "IndustryServiceGunId": platform["gun_id"],
+            }
+            fixture_fitted = {
+                "IndustryPlatform": platform["platform"],
+                "IndustryPartKind": f"service_fixture_fitted_{platform['slug']}_{kind}",
+                "IndustryDisplayName": f"item.tacz.gun_component.service_{kind}",
+                "IndustryServiceGunId": platform["gun_id"],
+            }
+            files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/prepare_repair_component_{platform['slug']}_{kind}.json"] = deploying(
+                partial("tacz:gun_component", damaged_component), partial("tacz:service_part", repair_part_match),
+                output("tacz:gun_component", replacement_fitted), keep=False
+            )
+            files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/fixture_repair_component_{platform['slug']}_{kind}.json"] = deploying(
+                partial("tacz:gun_component", replacement_fitted), fixture,
+                output("tacz:gun_component", fixture_fitted), keep=True
+            )
             files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/repair_component_{platform['slug']}_{kind}.json"] = {
                 "fabric:load_conditions": CREATE_CONDITIONS,
-                "type": "create:sequenced_assembly",
-                "ingredient": partial("tacz:gun_component", {
-                    "IndustryPlatform": platform["platform"],
-                    "IndustryPartKind": kind,
-                    "IndustryServiceGunId": platform["gun_id"],
-                }),
-                "transitional_item": output("tacz:gun_component", {
-                    "IndustryPlatform": platform["platform"],
-                    "IndustryPartKind": f"incomplete_service_{platform['slug']}_{kind}",
-                    "IndustryDisplayName": f"item.tacz.gun_component.service_{kind}",
-                }),
-                "sequence": [
-                    # Replacement first makes the physical direction intuitive:
-                    # damaged component is the belt workpiece, named part is
-                    # held by the first Deployer, then the retained fixture
-                    # verifies/sets the fit before the press closes it.
-                    {"type": "create:deploying", "target": "$ingredient", "ingredient": partial("tacz:service_part", repair_part_match),
-                     "results": ["$result"]},
-                    {"type": "create:deploying", "target": "$ingredient", "ingredient": fixture,
-                     "results": ["$result"], "keep_held_item": True},
-                    {"type": "create:pressing", "ingredient": "$ingredient", "results": ["$result"]},
-                ],
-                "result": output("tacz:gun_component", component_tag),
+                "type": "create:pressing",
+                "ingredient": partial("tacz:gun_component", fixture_fitted),
+                "results": [output("tacz:gun_component", component_tag)],
             }
     return files
 
@@ -2794,7 +2798,8 @@ def obsolete_generated_service_repair_files(expected: dict[Path, Any]) -> set[Pa
     root = RESOURCE_ROOT / "data/tacz/recipe/create/industry"
     if not root.exists():
         return set()
-    prefixes = ("calibrate_service_part_", "repair_component_", "form_service_part_blank")
+    prefixes = ("calibrate_service_part_", "form_service_part_", "prepare_repair_component_",
+                "fixture_repair_component_", "repair_component_")
     return {path for path in root.glob("*.json") if path not in expected and path.stem.startswith(prefixes)}
 
 
@@ -2803,13 +2808,17 @@ def validate_generated_service_repair_files(platforms: list[dict[str, Any]], exp
     for platform in platforms:
         for part in platform["parts"]:
             kind = part["kind"]
+            form = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_service_part_{platform['slug']}_{kind}.json"
             calibrate = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/calibrate_service_part_{platform['slug']}_{kind}.json"
+            prepare = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/prepare_repair_component_{platform['slug']}_{kind}.json"
+            fixture = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/fixture_repair_component_{platform['slug']}_{kind}.json"
             repair = RESOURCE_ROOT / f"data/tacz/recipe/create/industry/repair_component_{platform['slug']}_{kind}.json"
-            if calibrate not in expected or repair not in expected:
-                raise ValueError(f"{platform['slug']}: missing service repair route for {kind}")
-            recipe = expected[repair]
-            if recipe.get("type") != "create:sequenced_assembly" or len(recipe.get("sequence", [])) != 3:
-                raise ValueError(f"{platform['slug']}: invalid service repair sequence for {kind}")
+            if any(path not in expected for path in (form, calibrate, prepare, fixture, repair)):
+                raise ValueError(f"{platform['slug']}: missing direct service repair station for {kind}")
+            if expected[form].get("type") != "create:deploying" or expected[calibrate].get("type") != "create:deploying" \
+                    or expected[prepare].get("type") != "create:deploying" or expected[fixture].get("type") != "create:deploying" \
+                    or expected[repair].get("type") != "create:pressing":
+                raise ValueError(f"{platform['slug']}: invalid direct service repair route for {kind}")
             count += 1
     if count != len(platforms) * len(BLANK_CLASS_ORDER):
         raise ValueError("service repair route count mismatch")
@@ -5069,9 +5078,9 @@ def run(write: bool) -> int:
         "tooltip.tacz.maintenance.out_of_service": "Out of Service",
         "tooltip.tacz.service.component_condition": "Component condition: %s",
         "tooltip.tacz.service.component_gun": "Service identity: %s",
-        "tooltip.tacz.service.component_repair": "Step 3/3: run this component on one Create belt sequence: named replacement Deployer → fixture Deployer → Mechanical Press.",
-        "tooltip.tacz.service.blank_step": "Step 1/3: form this neutral blank in a heated Basin, then run a component-die Deployer followed by a production-template Deployer.",
-        "tooltip.tacz.service.named_part_step": "Step 2/3: place this named replacement in the first Deployer; the damaged component is the belt workpiece.",
+        "tooltip.tacz.service.component_repair": "Repair stations: damaged component + named part Deployer → fixture Deployer → Mechanical Press.",
+        "tooltip.tacz.service.blank_step": "Step 1: form this neutral blank in a heated Basin, then use the matching component-die Deployer.",
+        "tooltip.tacz.service.named_part_step": "Step 2: first replace the damaged component on a depot/belt, then run the fitted component through its fixture and press stations.",
     }
     chinese: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "中性外装套件毛坯",
@@ -5128,9 +5137,9 @@ def run(write: bool) -> int:
         "tooltip.tacz.maintenance.out_of_service": "停用",
         "tooltip.tacz.service.component_condition": "组件枪况：%s",
         "tooltip.tacz.service.component_gun": "勤务身份：%s",
-        "tooltip.tacz.service.component_repair": "第 3/3 步：同一条 Create 传送带依次经过命名替换件部署器 → 检具部署器 → 动力冲压机。",
-        "tooltip.tacz.service.blank_step": "第 1/3 步：先在加热 Basin 制成该中性毛坯，再在同一条线依次经过组件模具部署器与生产模板部署器。",
-        "tooltip.tacz.service.named_part_step": "第 2/3 步：损坏组件是传送带工件；该命名替换件放入第一台部署器。",
+        "tooltip.tacz.service.component_repair": "维修工位：损坏组件 + 命名替换件部署器 → 检具部署器 → 动力冲压机。",
+        "tooltip.tacz.service.blank_step": "第 1 步：先在加热 Basin 制成该中性毛坯，再由对应组件模具部署器成型。",
+        "tooltip.tacz.service.named_part_step": "第 2 步：先在置物台/传送带上由命名替换件部署器替换损坏组件，再依次经过检具与动力冲压工位。",
     }
     expected.update(generated_furniture_blank_files(platforms))
     expected.update(generated_template_blank_file(policy))

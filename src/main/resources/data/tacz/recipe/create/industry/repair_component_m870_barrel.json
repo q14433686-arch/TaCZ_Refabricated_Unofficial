@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,91 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "default_m870",
-      "IndustryPartKind": "barrel",
+      "IndustryPartKind": "service_fixture_fitted_m870_barrel",
+      "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
       "IndustryServiceGunId": "tacz:m870"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_m870",
-        "IndustryPartKind": "incomplete_service_m870_barrel",
-        "IndustryDisplayName": "item.tacz.gun_component.service_barrel"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_m870",
-          "IndustryPartKind": "service_part_barrel",
-          "IndustryDisplayName": "item.tacz.service_part.m870_barrel",
+          "IndustryPartKind": "barrel",
+          "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
           "IndustryActionProfile": "pump_action",
           "IndustryToolingScope": "critical_gauge",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 2,
           "IndustryServiceGunId": "tacz:m870",
-          "IndustryServiceOrigin": "default_m870"
+          "IndustryServiceOrigin": "default_m870",
+          "IndustryServiceRecipe": "tacz:gun/m870",
+          "IndustryServiceTier": "legacy",
+          "IndustryServiceAction": "pump_action",
+          "IndustryServiceToolingScope": "critical_gauge",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_m870",
-          "IndustryPartKind": "critical_gauge",
-          "IndustryActionProfile": "pump_action",
-          "IndustryToolingScope": "critical_gauge",
-          "DieTargetKind": "pump_action"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_m870",
-        "IndustryPartKind": "barrel",
-        "IndustryDisplayName": "item.tacz.gun_component.service_barrel",
-        "IndustryActionProfile": "pump_action",
-        "IndustryToolingScope": "critical_gauge",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 2,
-        "IndustryServiceGunId": "tacz:m870",
-        "IndustryServiceOrigin": "default_m870",
-        "IndustryServiceRecipe": "tacz:gun/m870",
-        "IndustryServiceTier": "legacy",
-        "IndustryServiceAction": "pump_action",
-        "IndustryServiceToolingScope": "critical_gauge",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }

@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_m95",
+      "IndustryPartKind": "service_part_fitted_m95_recoil",
+      "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
+      "IndustryServiceGunId": "tacz:m95"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_m95",
+      "IndustryPartKind": "acceptance_gauge",
+      "IndustryActionProfile": "anti_material_bolt",
+      "IndustryToolingScope": "final_acceptance",
+      "DieTargetKind": "anti_material_bolt"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_m95",
+          "IndustryPartKind": "service_fixture_fitted_m95_recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
+          "IndustryServiceGunId": "tacz:m95"
+        }
+      }
+    }
+  ],
+  "keep_held_item": true
+}

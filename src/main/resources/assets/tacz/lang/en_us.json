@@ -1989,7 +1989,7 @@
   "item.tacz.service_part.vector45_recoil": "VECTOR45 Return Spring Assembly Service Replacement Part",
   "tooltip.tacz.service.component_condition": "Component condition: %s",
   "tooltip.tacz.service.component_gun": "Service identity: %s",
-  "tooltip.tacz.service.component_repair": "Step 3/3: run this component on one Create belt sequence: named replacement Deployer → fixture Deployer → Mechanical Press.",
-  "tooltip.tacz.service.blank_step": "Step 1/3: form this neutral blank in a heated Basin, then run a component-die Deployer followed by a production-template Deployer.",
-  "tooltip.tacz.service.named_part_step": "Step 2/3: place this named replacement in the first Deployer; the damaged component is the belt workpiece."
+  "tooltip.tacz.service.component_repair": "Repair stations: damaged component + named part Deployer → fixture Deployer → Mechanical Press.",
+  "tooltip.tacz.service.blank_step": "Step 1: form this neutral blank in a heated Basin, then use the matching component-die Deployer.",
+  "tooltip.tacz.service.named_part_step": "Step 2: first replace the damaged component on a depot/belt, then run the fitted component through its fixture and press stations."
 }

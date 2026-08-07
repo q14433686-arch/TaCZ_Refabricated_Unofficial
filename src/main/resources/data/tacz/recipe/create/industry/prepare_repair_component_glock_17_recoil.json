@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "glock",
+      "IndustryPartKind": "recoil",
+      "IndustryServiceGunId": "tacz:glock_17"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part"
+    ],
+    "nbt": {
+      "IndustryPlatform": "glock",
+      "IndustryPartKind": "service_part_recoil",
+      "IndustryDisplayName": "item.tacz.service_part.glock_17_recoil",
+      "IndustryActionProfile": "locked_breech_pistol",
+      "IndustryToolingScope": "critical_gauge",
+      "IndustryServiceGunId": "tacz:glock_17",
+      "IndustryServiceOrigin": "glock"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "glock",
+          "IndustryPartKind": "service_part_fitted_glock_17_recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
+          "IndustryServiceGunId": "tacz:glock_17"
+        }
+      }
+    }
+  ]
+}

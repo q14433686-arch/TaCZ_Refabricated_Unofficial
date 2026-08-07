@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "mp5",
+      "IndustryPartKind": "recoil",
+      "IndustryServiceGunId": "tacz:hk_mp5a5"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part"
+    ],
+    "nbt": {
+      "IndustryPlatform": "mp5",
+      "IndustryPartKind": "service_part_recoil",
+      "IndustryDisplayName": "item.tacz.service_part.hk_mp5a5_recoil",
+      "IndustryActionProfile": "roller_delayed_rifle",
+      "IndustryToolingScope": "platform_tooling",
+      "IndustryServiceGunId": "tacz:hk_mp5a5",
+      "IndustryServiceOrigin": "mp5"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "mp5",
+          "IndustryPartKind": "service_part_fitted_hk_mp5a5_recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
+          "IndustryServiceGunId": "tacz:hk_mp5a5"
+        }
+      }
+    }
+  ]
+}

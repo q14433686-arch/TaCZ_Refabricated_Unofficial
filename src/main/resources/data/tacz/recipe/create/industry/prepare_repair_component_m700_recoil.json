@@ -1,0 +1,50 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:gun_component"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_m700",
+      "IndustryPartKind": "recoil",
+      "IndustryServiceGunId": "tacz:m700"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:service_part"
+    ],
+    "nbt": {
+      "IndustryPlatform": "default_m700",
+      "IndustryPartKind": "service_part_recoil",
+      "IndustryDisplayName": "item.tacz.service_part.m700_recoil",
+      "IndustryActionProfile": "bolt_action",
+      "IndustryToolingScope": "critical_gauge",
+      "IndustryServiceGunId": "tacz:m700",
+      "IndustryServiceOrigin": "default_m700"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "default_m700",
+          "IndustryPartKind": "service_part_fitted_m700_recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
+          "IndustryServiceGunId": "tacz:m700"
+        }
+      }
+    }
+  ]
+}

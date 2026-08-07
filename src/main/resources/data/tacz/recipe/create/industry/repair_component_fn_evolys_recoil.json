@@ -7,7 +7,7 @@
       ]
     }
   ],
-  "type": "create:sequenced_assembly",
+  "type": "create:pressing",
   "ingredient": {
     "fabric:type": "forge:partial_nbt",
     "items": [
@@ -15,91 +15,32 @@
     ],
     "nbt": {
       "IndustryPlatform": "default_fn_evolys",
-      "IndustryPartKind": "recoil",
+      "IndustryPartKind": "service_fixture_fitted_fn_evolys_recoil",
+      "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
       "IndustryServiceGunId": "tacz:fn_evolys"
     }
   },
-  "transitional_item": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_fn_evolys",
-        "IndustryPartKind": "incomplete_service_fn_evolys_recoil",
-        "IndustryDisplayName": "item.tacz.gun_component.service_recoil"
-      }
-    }
-  },
-  "sequence": [
+  "results": [
     {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:service_part"
-        ],
-        "nbt": {
+      "id": "tacz:gun_component",
+      "components": {
+        "minecraft:custom_data": {
           "IndustryPlatform": "default_fn_evolys",
-          "IndustryPartKind": "service_part_recoil",
-          "IndustryDisplayName": "item.tacz.service_part.fn_evolys_recoil",
+          "IndustryPartKind": "recoil",
+          "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
           "IndustryActionProfile": "belt_fed",
           "IndustryToolingScope": "final_acceptance",
+          "IndustryPartCondition": 10000,
+          "IndustryServiceConditionSlot": 4,
           "IndustryServiceGunId": "tacz:fn_evolys",
-          "IndustryServiceOrigin": "default_fn_evolys"
+          "IndustryServiceOrigin": "default_fn_evolys",
+          "IndustryServiceRecipe": "tacz:gun/fn_evolys",
+          "IndustryServiceTier": "precision",
+          "IndustryServiceAction": "belt_fed",
+          "IndustryServiceToolingScope": "final_acceptance",
+          "IndustryServiceShots": 0
         }
-      },
-      "results": [
-        "$result"
-      ]
-    },
-    {
-      "type": "create:deploying",
-      "target": "$ingredient",
-      "ingredient": {
-        "fabric:type": "forge:partial_nbt",
-        "items": [
-          "tacz:press_die"
-        ],
-        "nbt": {
-          "IndustryPlatform": "default_fn_evolys",
-          "IndustryPartKind": "acceptance_gauge",
-          "IndustryActionProfile": "belt_fed",
-          "IndustryToolingScope": "final_acceptance",
-          "DieTargetKind": "belt_fed"
-        }
-      },
-      "results": [
-        "$result"
-      ],
-      "keep_held_item": true
-    },
-    {
-      "type": "create:pressing",
-      "ingredient": "$ingredient",
-      "results": [
-        "$result"
-      ]
-    }
-  ],
-  "result": {
-    "id": "tacz:gun_component",
-    "components": {
-      "minecraft:custom_data": {
-        "IndustryPlatform": "default_fn_evolys",
-        "IndustryPartKind": "recoil",
-        "IndustryDisplayName": "item.tacz.gun_component.service_recoil",
-        "IndustryActionProfile": "belt_fed",
-        "IndustryToolingScope": "final_acceptance",
-        "IndustryPartCondition": 10000,
-        "IndustryServiceConditionSlot": 4,
-        "IndustryServiceGunId": "tacz:fn_evolys",
-        "IndustryServiceOrigin": "default_fn_evolys",
-        "IndustryServiceRecipe": "tacz:gun/fn_evolys",
-        "IndustryServiceTier": "precision",
-        "IndustryServiceAction": "belt_fed",
-        "IndustryServiceToolingScope": "final_acceptance",
-        "IndustryServiceShots": 0
       }
     }
-  }
+  ]
 }
