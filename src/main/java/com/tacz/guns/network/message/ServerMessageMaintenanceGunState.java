@@ -16,13 +16,14 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Immediate authoritative snapshot for a server-created/cleared C.2 feed fault.
+ * Immediate authoritative snapshot for a server-created/cleared C.2/C.4 fault.
  *
  * <p>Vanilla inventory synchronization still follows normally. This small S2C
  * message closes the one-tick race in which the client might otherwise start
- * its ordinary automatic manual-bolt animation before it receives the changed
- * held-stack NBT. It never invents a jam: the supplied stack is the server's
- * exact post-shot or post-bolt state.</p>
+ * its ordinary automatic manual-bolt animation before it receives a feed
+ * state, and makes a post-shot bench-only service lockout visible without a
+ * client-created status. The supplied stack is always the server's exact
+ * post-shot or post-bolt state.</p>
  */
 public final class ServerMessageMaintenanceGunState implements CustomPacketPayload {
     public static final Identifier PACKET_ID = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "s2c_maintenance_gun_state");
