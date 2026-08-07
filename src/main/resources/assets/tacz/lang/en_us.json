@@ -1691,7 +1691,7 @@
   "item.tacz.feed_device.ww_m1g_enbloc": "M1 Garand En-Bloc Clip (.30-06)",
   "item.tacz.feed_device.hamster_sw_mk2_speedloader": "S&W Mk II Speedloader",
   "config.tacz.server.industry_maintenance_scope": "Industrial Maintenance Scope",
-  "config.tacz.server.industry_maintenance_scope.desc": "Phase A records condition and fouling. INDUSTRIAL_ASSEMBLY safely limits it to real industrial-origin guns; ALL_GUNS migrates legacy guns full and clean.",
+  "config.tacz.server.industry_maintenance_scope.desc": "Industrial maintenance records condition and fouling. INDUSTRIAL_ASSEMBLY safely limits it to real industrial-origin guns; ALL_GUNS migrates legacy guns full and clean. Random feed faults still require an explicit audited clear-action profile.",
   "tooltip.tacz.maintenance.status": "Service: %s  |  Condition %s  |  Fouling %s",
   "tooltip.tacz.maintenance.good": "Good",
   "tooltip.tacz.maintenance.service": "Service Due",
@@ -2005,5 +2005,6 @@
   "message.tacz.industrial_service.repair_success": "Repaired %s component(s); consumed %s steel plate(s) and %s brass sheet(s).",
   "message.tacz.industrial_service.components_already_serviceable": "All installed service components are already at full condition.",
   "tooltip.tacz.service.legacy_part": "Legacy B.2 replacement part — retained for world compatibility; use the Industrial Service Bench repair bays for new repairs.",
-  "tooltip.tacz.maintenance.lockout": "Service lockout — repair components at the Industrial Service Bench"
+  "tooltip.tacz.maintenance.lockout": "Service lockout — repair components at the Industrial Service Bench",
+  "tooltip.tacz.maintenance.feed_jam": "Feed jam — press fire to cycle the action clear"
 }

@@ -158,8 +158,9 @@ REI 中该类别会汇总列出首工件与所有工位供料，显示 `D→P→
 2. Tooltip 应显示“良好 / 需保养 / 需维修 / 停用”之一及枪况、污垢百分比；持枪 HUD 的枪卡上方应有两条小条，分别表示最差组件枪况与污垢。它们读取保存的服务器 NBT，不得从枪械等级或普通物品耐久猜测。
 3. 用实际消耗弹药的工业枪完成射击后，`IndustryMaintenanceShots` 才增加，五项 Condition 按该 GunId 的 `industry/maintenance/guns/*.json` 递减、Fouling 增加。创造模式未实际扣弹的免费射击不得磨损；非工业来源的战利品/命令枪在默认范围内不得被写入维护数据。
 4. 通过测绘 Gunsmith Table 完成一把第三方 surveyed 枪；最终成枪必须带 `IndustryAssemblyPlatform = surveyed/...` 等完整工业来源标签，并以满状态进入同一维护可视化路径。
-5. 故意把枪况调低或污垢调高后，A 阶段仍不得随机卡壳、拒绝射击、吞弹、自动扣额外弹药或写入 `IndustryJam`。卡壳/清障和维修台属于后续 B/C 阶段。
-6. 仅在管理员明确把 `IndustryMaintenanceScope` 设为 `ALL_GUNS` 后，非工业来源枪才参与；其第一次迁移也必须从满状态、清洁状态开始。
+5. C.1：把工业枪最差组件调至 `critical_condition` 以下后，下一次触发必须在任何扣弹前返回 `JAMMED` 并写入 `IndustryJam = lockout`；拆解、维修、复装后才可解除。不能用换弹/拉栓、重新进服或客户端预测绕过。
+6. C.2：仅对 `AI AWP`、`Kar98`、`M107`、`M700`、`M870`、`M95`、`SPAS-12` 的工业来源枪，把枪况调入 warning/critical 区间并提高 Fouling 后回归。命中确定性抽样的那一发必须照常发射、只扣一次真实弹药并随后写 `IndustryJam = feed`；下一次触发不得进入 `reduceAmmoOnce`。再次按开火键应发送清障请求并运行原有手动 bolt 动画；普通自动 bolt 不得清除。只有服务器 bolt 结束且膛内真实有弹时才清除 `feed`，失败/无弹时必须保留；HUD、Tooltip 和持有枪 NBT 应随 S2C 完整快照同步。所有 `clear_action = none` 的其余默认枪、surveyed 通用档和未知第三方枪不得随机写入 `feed`。
+7. 仅在管理员明确把 `IndustryMaintenanceScope` 设为 `ALL_GUNS` 后，非工业来源枪才参与；其第一次迁移也必须从满状态、清洁状态开始。
 
 ## 7. 运行时自动识别回退
 

@@ -108,11 +108,10 @@ public class LivingEntityShoot {
             return ShootResult.UNKNOWN_FAIL;
         }
         IGunOperator gunOperator = IGunOperator.fromLivingEntity(shooter);
-        // C.1 is deliberately deterministic: a critically degraded component
-        // locks the gun until the real service-bench repair path restores it.
-        // Random feed jams remain disabled until a verified clear animation is
-        // available for that gun profile.
-        if (IndustryMaintenanceService.isLockout(currentGunItem)) {
+        // Every maintenance fault is server-NBT-authoritative. A feed jam was
+        // created only after a previous real shot, so reject this later trigger
+        // before the ordinary chamber/reduce-ammo paths can mutate anything.
+        if (IndustryMaintenanceService.isJammed(currentGunItem)) {
             return ShootResult.JAMMED;
         }
         // 判断子弹数

@@ -3,9 +3,13 @@ package com.tacz.guns.entity.shooter;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
+import com.tacz.guns.network.NetworkHandler;
+import com.tacz.guns.network.message.ServerMessageMaintenanceGunState;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
@@ -25,6 +29,17 @@ public class LivingEntityBolt {
     }
 
     public void bolt() {
+        // The flag is set only by the dedicated C2S clear-feed-jam request.
+        // Consume it before every validation return so a rejected packet cannot
+        // accidentally authorise a later automatic bolt call.
+        boolean clearFeedJamRequested = data.industryFeedJamClearRequested;
+        data.industryFeedJamClearRequested = false;
+        // Never let an incidental repeated C2S bolt packet cancel evidence
+        // collection for a bolt cycle that is already in progress.
+        if (data.isBolting) {
+            return;
+        }
+        data.industryFeedJamClearInProgress = false;
         if (data.currentGunItem == null) {
             return;
         }
@@ -48,6 +63,17 @@ public class LivingEntityBolt {
             }
             // 检查是否在拉栓
             if (data.isBolting) {
+                return;
+            }
+            boolean feedJammed = IndustryMaintenanceService.isFeedJammed(currentGunItem);
+            // Ordinary client auto-bolt packets are intentionally refused while
+            // a feed fault exists. Only the explicit C2S clear request can turn
+            // the existing manual-bolt animation into a clearing transaction.
+            if (feedJammed && !clearFeedJamRequested) {
+                return;
+            }
+            if (clearFeedJamRequested && (!feedJammed
+                    || !IndustryMaintenanceService.canClearFeedJamWithBolt(currentGunItem))) {
                 return;
             }
             IGunOperator gunOperator = IGunOperator.fromLivingEntity(shooter);
@@ -75,6 +101,7 @@ public class LivingEntityBolt {
             }
             data.boltTimestamp = System.currentTimeMillis();
             data.isBolting = iGun.startBolt(data, currentGunItem, shooter);
+            data.industryFeedJamClearInProgress = data.isBolting && clearFeedJamRequested;
         });
     }
 
@@ -85,15 +112,28 @@ public class LivingEntityBolt {
         }
         if (data.currentGunItem == null) {
             data.isBolting = false;
+            data.industryFeedJamClearInProgress = false;
             return;
         }
         ItemStack currentGunItem = data.currentGunItem.get();
         if (!(currentGunItem.getItem() instanceof AbstractGunItem iGun)) {
             data.isBolting = false;
+            data.industryFeedJamClearInProgress = false;
             return;
         }
         Identifier gunId = iGun.getGunId(currentGunItem);
         Optional<CommonGunIndex> gunIndex = TimelessAPI.getCommonGunIndex(gunId);
-        data.isBolting = gunIndex.map(index -> iGun.tickBolt(data, currentGunItem, shooter)).orElse(false);
+        boolean remainsBolting = gunIndex.map(index -> iGun.tickBolt(data, currentGunItem, shooter)).orElse(false);
+        data.isBolting = remainsBolting;
+        if (!remainsBolting && data.industryFeedJamClearInProgress) {
+            // This is the only point at which a C.2 feed fault can disappear:
+            // the ordinary server bolt script has ended and its real chamber
+            // flag proves that it fed a round. A failed feed leaves the fault.
+            IndustryMaintenanceService.completeFeedJamClear(currentGunItem, iGun.hasBulletInBarrel(currentGunItem));
+            data.industryFeedJamClearInProgress = false;
+            if (shooter instanceof ServerPlayer player) {
+                NetworkHandler.sendToClientPlayer(new ServerMessageMaintenanceGunState(currentGunItem), player);
+            }
+        }
     }
 }

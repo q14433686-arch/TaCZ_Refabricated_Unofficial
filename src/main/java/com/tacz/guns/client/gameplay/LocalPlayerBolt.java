@@ -7,6 +7,8 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.client.sound.SoundPlayManager;
+import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
+import com.tacz.guns.network.message.ClientMessageClearFeedJam;
 import com.tacz.guns.network.message.ClientMessagePlayerBoltGun;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
@@ -23,7 +25,21 @@ public class LocalPlayerBolt {
         this.player = player;
     }
 
+    /** Existing automatic/manual chambering route; it must never clear a C.2 feed fault. */
     public void bolt() {
+        startBolt(false);
+    }
+
+    /**
+     * Player-initiated C.2 clear route. The client plays the same established
+     * manual-bolt animation, but the C2S message is distinct so the server can
+     * reject automatic/replayed bolt packets while a jam exists.
+     */
+    public void clearFeedJam() {
+        startBolt(true);
+    }
+
+    private void startBolt(boolean clearFeedJam) {
         // 检查状态锁
         if (data.clientStateLock) {
             return;
@@ -37,6 +53,9 @@ public class LocalPlayerBolt {
         }
         GunData gunData = TimelessAPI.getClientGunIndex(iGun.getGunId(mainHandItem)).map(ClientGunIndex::getGunData).orElse(null);
         if (gunData == null) {
+            return;
+        }
+        if (clearFeedJam && !IndustryMaintenanceService.isFeedJammed(mainHandItem)) {
             return;
         }
 
@@ -67,8 +86,14 @@ public class LocalPlayerBolt {
             // 锁上状态锁
             data.lockState(IGunOperator::getSynIsBolting);
             data.isBolting = true;
-            // 发包通知服务器
-            ClientPlayNetworking.send(new ClientMessagePlayerBoltGun());
+            data.isClearingFeedJam = clearFeedJam;
+            // A normal auto-bolt and an intentional fault-clear have different
+            // server semantics even though both render the same real animation.
+            if (clearFeedJam) {
+                ClientPlayNetworking.send(new ClientMessageClearFeedJam());
+            } else {
+                ClientPlayNetworking.send(new ClientMessagePlayerBoltGun());
+            }
             // 播放动画和音效
             AnimationStateMachine<?> animationStateMachine = display.getAnimationStateMachine();
             if (animationStateMachine != null) {
@@ -82,6 +107,16 @@ public class LocalPlayerBolt {
         ItemStack mainHandItem = player.getMainHandItem();
         if (!(mainHandItem.getItem() instanceof IGun iGun)) {
             data.isBolting = false;
+            data.isClearingFeedJam = false;
+            return;
+        }
+        // A server-created feed fault must wait for the player's explicit C2S
+        // clear request. Preserve the local state during that one requested
+        // action; the authoritative S2C snapshot resolves it on success/fail.
+        if (IndustryMaintenanceService.isFeedJammed(mainHandItem)) {
+            if (!data.isClearingFeedJam) {
+                data.isBolting = false;
+            }
             return;
         }
         bolt();
@@ -89,6 +124,7 @@ public class LocalPlayerBolt {
             // 对于客户端来说，膛内弹药被填入的状态同步到客户端的瞬间，bolt 过程才算完全结束
             if (iGun.hasBulletInBarrel(mainHandItem)) {
                 data.isBolting = false;
+                data.isClearingFeedJam = false;
             }
         }
     }

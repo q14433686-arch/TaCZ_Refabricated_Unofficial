@@ -3,16 +3,41 @@ package com.tacz.guns.industry.maintenance;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Data-driven, non-jamming maintenance baseline for one GunId.
+ * Data-driven maintenance baseline for one GunId.
  *
- * <p>This profile only controls persistent Condition/Fouling accounting in
- * phase A. The {@code jam} object is retained as declared future service data,
- * but no random jam, lockout, shoot rejection, or ammo mutation is enabled by
- * this class or {@link IndustryMaintenanceService}.</p>
+ * <p>Condition/Fouling accounting is available to every valid profile. A feed
+ * jam is deliberately opt-in: it additionally requires an explicit
+ * {@code jam.clear_action}, and the server verifies that the declared action
+ * is executable by the loaded gun before it can ever block a shot.</p>
  */
 public final class IndustryMaintenanceProfile {
     public static final int MAX_PER_SHOT_WEAR = 1_000;
     public static final int MAX_FOULING_PER_SHOT = 1_000;
+
+    /** A declared, server-verifiable action that can clear a feed jam. */
+    public enum ClearAction {
+        NONE("none"),
+        BOLT("bolt");
+
+        private final String serializedName;
+
+        ClearAction(String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        public String serializedName() {
+            return serializedName;
+        }
+
+        private static ClearAction fromSerializedName(String value) {
+            for (ClearAction action : values()) {
+                if (action.serializedName.equals(value)) {
+                    return action;
+                }
+            }
+            return NONE;
+        }
+    }
 
     @SerializedName("schema_version")
     private int schemaVersion = 1;
@@ -44,7 +69,7 @@ public final class IndustryMaintenanceProfile {
     @SerializedName("operation")
     private OperationProfile operation = new OperationProfile();
 
-    /** Declared for phase C only; phase A does not inspect it for shoot gating. */
+    /** Feed-jam threshold/chance data plus the explicitly audited clear action. */
     @SerializedName("jam")
     private JamThresholds jam = new JamThresholds();
 
@@ -200,6 +225,9 @@ public final class IndustryMaintenanceProfile {
         private int criticalCondition = 1_500;
         @SerializedName("max_chance")
         private float maxChance = 0.08F;
+        /** "none" keeps random feed jams disabled; "bolt" requires a real manual-bolt completion. */
+        @SerializedName("clear_action")
+        private String clearAction = "none";
 
         public int getWarningCondition() {
             return Math.clamp(warningCondition, 0, IndustryMaintenanceService.MAX_CONDITION);
@@ -213,10 +241,15 @@ public final class IndustryMaintenanceProfile {
             return Float.isFinite(maxChance) ? Math.clamp(maxChance, 0.0F, 1.0F) : 0.0F;
         }
 
+        public ClearAction getClearAction() {
+            return ClearAction.fromSerializedName(clearAction == null ? "none" : clearAction);
+        }
+
         private boolean isValid() {
             return warningCondition >= 0 && warningCondition <= IndustryMaintenanceService.MAX_CONDITION
                     && criticalCondition >= 0 && criticalCondition <= warningCondition
-                    && Float.isFinite(maxChance) && maxChance >= 0.0F && maxChance <= 1.0F;
+                    && Float.isFinite(maxChance) && maxChance >= 0.0F && maxChance <= 1.0F
+                    && ("none".equals(clearAction) || "bolt".equals(clearAction));
         }
     }
 }

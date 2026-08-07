@@ -1691,7 +1691,7 @@
   "item.tacz.feed_device.ww_m1g_enbloc": "M1 加兰德漏夹（.30-06）",
   "item.tacz.feed_device.hamster_sw_mk2_speedloader": "史密斯-威森 Mk II 快速装填器",
   "config.tacz.server.industry_maintenance_scope": "工业维护范围",
-  "config.tacz.server.industry_maintenance_scope.desc": "A 阶段只记录枪况和污垢。INDUSTRIAL_ASSEMBLY 仅作用于真实工业来源枪械；ALL_GUNS 会让旧枪以满状态、清洁状态安全迁移。",
+  "config.tacz.server.industry_maintenance_scope.desc": "工业维护记录枪况和污垢。INDUSTRIAL_ASSEMBLY 仅作用于真实工业来源枪械；ALL_GUNS 会让旧枪以满状态、清洁状态安全迁移。随机供弹卡滞仍只会由显式、已审计的清障档案启用。",
   "tooltip.tacz.maintenance.status": "勤务：%s  |  枪况 %s  |  污垢 %s",
   "tooltip.tacz.maintenance.good": "良好",
   "tooltip.tacz.maintenance.service": "需保养",
@@ -2005,5 +2005,6 @@
   "message.tacz.industrial_service.repair_success": "已维修 %s 个组件；消耗 %s 块钢板和 %s 张黄铜板。",
   "message.tacz.industrial_service.components_already_serviceable": "所有勤务组件均已处于满枪况。",
   "tooltip.tacz.service.legacy_part": "旧 B.2 替换件——为旧存档保留；新维修请使用工业勤务台的维修材料槽。",
-  "tooltip.tacz.maintenance.lockout": "勤务锁止——请在工业勤务台维修组件"
+  "tooltip.tacz.maintenance.lockout": "勤务锁止——请在工业勤务台维修组件",
+  "tooltip.tacz.maintenance.feed_jam": "供弹卡滞——按开火键执行拉栓清障"
 }

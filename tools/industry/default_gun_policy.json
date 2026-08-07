@@ -1058,5 +1058,14 @@
     "type_81": "service",
     "uzi": "service",
     "vector45": "advanced"
+  },
+  "audited_feed_jam_clear_actions": {
+    "ai_awp": "bolt",
+    "kar98": "bolt",
+    "m107": "bolt",
+    "m700": "bolt",
+    "m870": "bolt",
+    "m95": "bolt",
+    "spas_12": "bolt"
   }
 }

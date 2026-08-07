@@ -24,6 +24,7 @@ import com.tacz.guns.industry.magazine.EnBlocClipService;
 import com.tacz.guns.industry.magazine.InternalFeedService;
 import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.network.NetworkHandler;
+import com.tacz.guns.network.message.ServerMessageMaintenanceGunState;
 import com.tacz.guns.network.message.event.ServerMessageGunFire;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
@@ -35,6 +36,7 @@ import com.tacz.guns.util.CycleTaskHelper;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.entity.LivingEntity;
@@ -162,27 +164,28 @@ public class ModernKineticGunScriptAPI {
             if (!shooter.getMainHandItem().equals(itemStack) || shooter.getMainHandItem().isEmpty()) {
                 return false;
             }
+            // A delayed burst/Lua cycle must honour the same server fault as
+            // the normal shoot entry point before it can emit an event, play a
+            // fire sound, or consume an additional round.
+            if (consumeAmmo && IndustryMaintenanceService.isJammed(itemStack)) {
+                return false;
+            }
             // 触发击发事件
             GunFireEvent gunFireEvent = new GunFireEvent(shooter, itemStack, LogicalSide.SERVER);
             GunFireEvent.CALLBACK.invoker().post(gunFireEvent);
             boolean fire = !gunFireEvent.isCanceled();
             if (fire) {
                 NetworkHandler.sendToTrackingEntity(new ServerMessageGunFire(shooter.getId(), itemStack), shooter);
-                // C.1 lockout is checked again inside the real delayed fire
-                // cycle so burst/Lua paths cannot emit an extra round after a
-                // condition threshold was crossed by the preceding shot.
-                if (consumeAmmo && IndustryMaintenanceService.isLockout(itemStack)) {
-                    return false;
-                }
                 // 削减弹药
                 if (consumeAmmo) {
                     if (!this.reduceAmmoOnce()) {
                         return false;
                     }
-                    // Phase A only records wear/fouling after a real server
-                    // round was consumed. It never gates this shot or creates
-                    // a jam; clear-jam mechanics belong to the later phase.
-                    IndustryMaintenanceService.recordSuccessfulShot(shooter, itemStack);
+                    // A feed fault is evaluated only after this exact real
+                    // round was consumed. It can therefore stop only a later
+                    // trigger pull and never becomes a fake client-side shot.
+                    IndustryMaintenanceService.ShotOutcome maintenance =
+                            IndustryMaintenanceService.recordSuccessfulShotOutcome(shooter, itemStack);
                     // The client shell model is only cosmetic.  Once a real
                     // round has been consumed, emit the data-declared case on
                     // the server so it can be picked up and reconditioned.
@@ -191,6 +194,11 @@ public class ModernKineticGunScriptAPI {
                     // real round has left the gun, then return as an empty
                     // reusable clip rather than disappearing.
                     EnBlocClipService.ejectIfEmpty(shooter, itemStack);
+                    if (maintenance.feedJammed() && shooter instanceof ServerPlayer player) {
+                        // Close the local auto-bolt race with the actual server
+                        // stack, not a client-created status flag.
+                        NetworkHandler.sendToClientPlayer(new ServerMessageMaintenanceGunState(itemStack), player);
+                    }
                 }
                 //Handle Heat Data
                 if (gunIndex.getGunData().hasHeatData()) {

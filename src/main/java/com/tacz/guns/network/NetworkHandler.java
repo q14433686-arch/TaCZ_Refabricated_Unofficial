@@ -47,6 +47,7 @@ public class NetworkHandler {
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageRefitGun.TYPE, ClientMessageRefitGun.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageUnloadAttachment.TYPE, ClientMessageUnloadAttachment.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerBoltGun.TYPE, ClientMessagePlayerBoltGun.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(ClientMessageClearFeedJam.TYPE, ClientMessageClearFeedJam.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerMelee.TYPE, ClientMessagePlayerMelee.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageSyncBaseTimestamp.TYPE, ClientMessageSyncBaseTimestamp.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageLaserColor.TYPE, ClientMessageLaserColor.CODEC);
@@ -66,6 +67,7 @@ public class NetworkHandler {
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunMelee.TYPE, ServerMessageGunMelee.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunReload.TYPE, ServerMessageGunReload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunShoot.TYPE, ServerMessageGunShoot.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(ServerMessageMaintenanceGunState.TYPE, ServerMessageMaintenanceGunState.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageSyncBaseTimestamp.TYPE, ServerMessageSyncBaseTimestamp.CODEC);
         // Extra spawn data payload
         IEntityAdditionalSpawnData.registerPayload();
@@ -89,6 +91,7 @@ public class NetworkHandler {
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageRefitGun.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageUnloadAttachment.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerBoltGun.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
+        ServerPlayNetworking.registerGlobalReceiver(ClientMessageClearFeedJam.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerMelee.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageSyncBaseTimestamp.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageLaserColor.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
@@ -125,6 +128,7 @@ public class NetworkHandler {
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunMelee.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunReload.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunShoot.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageMaintenanceGunState.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncBaseTimestamp.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
     }
 

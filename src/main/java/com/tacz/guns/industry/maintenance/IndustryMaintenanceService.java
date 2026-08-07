@@ -1,9 +1,13 @@
 package com.tacz.guns.industry.maintenance;
 
+import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.config.sync.SyncConfig;
+import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.industry.IndustryProfileManager;
 import com.tacz.guns.resource.CommonAssetsManager;
+import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.util.ItemNbtUtils;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -19,13 +23,14 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * Server-authoritative phase-A maintenance state.
+ * Server-authoritative industrial maintenance state.
  *
- * <p>This service deliberately records only component Condition, Fouling and
- * shot count. It does not reject shots, create a jam, mutate ammunition, or
- * consume maintenance materials. Those mechanics require the separate,
- * animation-backed clear-jam and service-bench transactions planned for later
- * phases.</p>
+ * <p>Condition/Fouling and the deterministic feed-jam draw are written only
+ * after a real round has been consumed. A feed jam is never a client-only
+ * effect: it is an NBT fault set by this service, rejects later shots on the
+ * server, and can be removed only after the separately validated manual-bolt
+ * transaction reports that it chambered a round. Critical-condition lockout
+ * remains a service-bench-only fault.</p>
  */
 public final class IndustryMaintenanceService {
     public static final int SCHEMA_VERSION = 1;
@@ -44,9 +49,10 @@ public final class IndustryMaintenanceService {
     public static final String FOULING_TAG = "IndustryFouling";
     public static final String SEED_TAG = "IndustryMaintenanceSeed";
     public static final String SHOTS_TAG = "IndustryMaintenanceShots";
-    /** C.1 deterministic hard-stop; feed jams remain disabled until a clear action is audited. */
+    /** Server-authoritative C.1/C.2 fault state; never written from client prediction. */
     public static final String JAM_TAG = "IndustryJam";
     public static final String LOCKOUT_JAM = "lockout";
+    public static final String FEED_JAM = "feed";
 
     /** Existing industrial assembly provenance written by Create results. */
     public static final String ASSEMBLY_PLATFORM_TAG = "IndustryAssemblyPlatform";
@@ -77,16 +83,27 @@ public final class IndustryMaintenanceService {
     }
 
     /**
-     * Called only after {@code reduceAmmoOnce()} succeeded. Phase A records the
-     * event but never changes its result, preserving current shooting semantics.
+     * Compatibility return for callers that only need to know whether real
+     * maintenance accounting occurred. New firing paths use
+     * {@link #recordSuccessfulShotOutcome(LivingEntity, ItemStack)} so they can
+     * immediately sync a server-created feed fault to the firing client.
      */
     public static boolean recordSuccessfulShot(LivingEntity shooter, ItemStack gun) {
+        return recordSuccessfulShotOutcome(shooter, gun).recorded();
+    }
+
+    /**
+     * Called only after {@code reduceAmmoOnce()} succeeded. The current round
+     * has already fired; a C.2 feed jam can therefore only stop a later trigger
+     * pull and can never swallow or refund the just-fired round.
+     */
+    public static ShotOutcome recordSuccessfulShotOutcome(LivingEntity shooter, ItemStack gun) {
         if (!migrateIfEligible(gun)) {
-            return false;
+            return ShotOutcome.NONE;
         }
         IndustryMaintenanceProfile profile = getProfileFor(gun);
         if (profile == null) {
-            return false;
+            return ShotOutcome.NONE;
         }
         IndustryMaintenanceProfile.WearPerShot wear = profile.getWearPerShot();
         Exposure exposure = Exposure.capture(shooter, profile.getOperation());
@@ -103,10 +120,22 @@ public final class IndustryMaintenanceService {
             tag.putLong(SHOTS_TAG, oldShots == Long.MAX_VALUE ? Long.MAX_VALUE : oldShots + 1L);
         });
         refreshFaultState(gun);
-        return true;
+
+        // Lockout always wins. A profile without a verified manual clear action
+        // remains phase-A/C.1 only and can never opt into random feed faults by
+        // accident, including generic surveyed third-party profiles.
+        if (isLockout(gun) || !canCreateFeedJam(shooter, gun, profile)) {
+            return ShotOutcome.RECORDED;
+        }
+        Snapshot snapshot = getSnapshot(gun);
+        if (!shouldCreateFeedJam(gun, snapshot, profile)) {
+            return ShotOutcome.RECORDED;
+        }
+        ItemNbtUtils.updateTag(gun, tag -> tag.putString(JAM_TAG, FEED_JAM));
+        return ShotOutcome.FEED_JAMMED;
     }
 
-    /** C.1 only hard-stops a critically degraded industrial gun; no random feed jam is enabled here. */
+    /** C.1 deterministic hard-stop; only the service bench can remove it. */
     public static boolean isLockout(ItemStack gun) {
         IndustryMaintenanceProfile profile = getProfileFor(gun);
         Snapshot snapshot = getSnapshot(gun);
@@ -114,14 +143,156 @@ public final class IndustryMaintenanceService {
                 && snapshot.minimumCondition() <= profile.getJam().getCriticalCondition();
     }
 
-    private static void refreshFaultState(ItemStack gun) {
+    /** True when the server has recorded a C.2 feed failure on this maintained gun. */
+    public static boolean isFeedJammed(ItemStack gun) {
+        return getSnapshot(gun).eligible()
+                && FEED_JAM.equals(ItemNbtUtils.getTag(gun).getStringOr(JAM_TAG, ""))
+                // Do not trap a world after a datapack removes an opt-in
+                // clear contract. The next server maintenance migration also
+                // strips that stale tag in refreshFaultState().
+                && canClearFeedJamWithBolt(gun);
+    }
+
+    /** Both fault kinds block a later trigger pull before any ammunition mutation. */
+    public static boolean isJammed(ItemStack gun) {
+        return isLockout(gun) || isFeedJammed(gun);
+    }
+
+    /**
+     * A data profile may request a bolt clear only when the loaded gun really
+     * exposes TACZ's server-side {@link Bolt#MANUAL_ACTION} cycle. This runtime
+     * guard prevents a third-party JSON declaration from inventing a clear
+     * action for a closed/open-bolt gun that has no audited bolt transaction.
+     */
+    public static boolean canClearFeedJamWithBolt(ItemStack gun) {
+        if (!isEligible(gun)) {
+            return false;
+        }
+        IndustryMaintenanceProfile profile = getProfileFor(gun);
+        return profile != null
+                && profile.getJam().getClearAction() == IndustryMaintenanceProfile.ClearAction.BOLT
+                && hasManualBolt(gun);
+    }
+
+    /**
+     * Server entry for the explicit C2S clear request. It does not remove the
+     * fault itself: {@link com.tacz.guns.entity.shooter.LivingEntityBolt} must
+     * first start and finish its normal bolt script, then prove that a round
+     * reached the chamber.
+     */
+    public static boolean requestFeedJamClear(LivingEntity shooter) {
+        if (shooter == null) {
+            return false;
+        }
+        IGunOperator operator = IGunOperator.fromLivingEntity(shooter);
+        ShooterDataHolder data = operator.getDataHolder();
+        if (data.currentGunItem == null || data.isBolting) {
+            return false;
+        }
+        ItemStack gun = data.currentGunItem.get();
+        if (!isFeedJammed(gun) || !canClearFeedJamWithBolt(gun)) {
+            return false;
+        }
+        data.industryFeedJamClearRequested = true;
+        operator.bolt();
+        boolean accepted = data.industryFeedJamClearInProgress;
+        if (!accepted) {
+            data.industryFeedJamClearRequested = false;
+        }
+        return accepted;
+    }
+
+    /** Remove only a feed fault after the verified manual bolt has chambered a round. */
+    public static boolean completeFeedJamClear(ItemStack gun, boolean chamberedRound) {
+        if (!chamberedRound || !isFeedJammed(gun) || !canClearFeedJamWithBolt(gun)) {
+            return false;
+        }
         ItemNbtUtils.updateTag(gun, tag -> {
-            if (isLockout(gun)) {
-                tag.putString(JAM_TAG, LOCKOUT_JAM);
-            } else if (LOCKOUT_JAM.equals(tag.getStringOr(JAM_TAG, ""))) {
+            if (FEED_JAM.equals(tag.getStringOr(JAM_TAG, ""))) {
                 tag.remove(JAM_TAG);
             }
         });
+        return true;
+    }
+
+    private static void refreshFaultState(ItemStack gun) {
+        boolean lockout = isLockout(gun);
+        boolean feedClearable = canClearFeedJamWithBolt(gun);
+        ItemNbtUtils.updateTag(gun, tag -> {
+            String current = tag.getStringOr(JAM_TAG, "");
+            if (lockout) {
+                tag.putString(JAM_TAG, LOCKOUT_JAM);
+            } else if (FEED_JAM.equals(current) && !feedClearable) {
+                // A removed/changed datapack profile must not strand an old
+                // feed tag on a gun with no possible real clear action.
+                tag.remove(JAM_TAG);
+            } else if (LOCKOUT_JAM.equals(current)) {
+                tag.remove(JAM_TAG);
+            }
+        });
+    }
+
+    private static boolean canCreateFeedJam(LivingEntity shooter, ItemStack gun, IndustryMaintenanceProfile profile) {
+        return profile.getJam().getClearAction() == IndustryMaintenanceProfile.ClearAction.BOLT
+                && canClearFeedJamWithBolt(gun)
+                && hasFeedableRound(shooter, gun);
+    }
+
+    private static boolean hasFeedableRound(LivingEntity shooter, ItemStack gun) {
+        if (shooter == null || !(gun.getItem() instanceof IGun iGun)) {
+            return false;
+        }
+        boolean needCheckAmmo = IGunOperator.fromLivingEntity(shooter).needCheckAmmo();
+        return iGun.useInventoryAmmo(gun)
+                ? iGun.hasInventoryAmmo(shooter, gun, needCheckAmmo)
+                : iGun.getCurrentAmmoCount(gun) > 0;
+    }
+
+    private static boolean hasManualBolt(ItemStack gun) {
+        if (!(gun.getItem() instanceof IGun iGun)) {
+            return false;
+        }
+        Identifier gunId = iGun.getGunId(gun);
+        return TimelessAPI.getCommonGunIndex(gunId)
+                .map(index -> index.getGunData().getBolt() == Bolt.MANUAL_ACTION)
+                .orElse(false);
+    }
+
+    /**
+     * Stable, per-item/per-shot Bernoulli draw. It is intentionally not based
+     * on client RNG, world time, entity UUID, or packet arrival order, so a
+     * server reload/replay cannot turn a known shot into a different outcome.
+     */
+    private static boolean shouldCreateFeedJam(ItemStack gun, Snapshot snapshot, IndustryMaintenanceProfile profile) {
+        IndustryMaintenanceProfile.JamThresholds jam = profile.getJam();
+        int warning = jam.getWarningCondition();
+        int critical = jam.getCriticalCondition();
+        int span = Math.max(1, warning - critical);
+        float conditionRisk = Math.clamp((warning - snapshot.minimumCondition()) / (float) span, 0.0F, 1.0F);
+        if (conditionRisk <= 0.0F) {
+            return false;
+        }
+        float foulingRisk = Math.clamp(snapshot.fouling() / (float) MAX_CONDITION, 0.0F, 1.0F);
+        // Feed trouble rises gently at the warning threshold and sharply only
+        // near critical condition. Fouling modulates the declared maximum but
+        // cannot make a fresh, clean weapon randomly jam.
+        double chance = jam.getMaxChance() * conditionRisk * conditionRisk * conditionRisk
+                * (0.15D + 0.85D * foulingRisk);
+        if (chance <= 0.0D) {
+            return false;
+        }
+        CompoundTag tag = ItemNbtUtils.getTag(gun);
+        long seed = tag.getLongOr(SEED_TAG, 0L);
+        long shots = Math.max(0L, tag.getLongOr(SHOTS_TAG, 0L));
+        long mixed = mix64(seed ^ (shots * 0x9E3779B97F4A7C15L));
+        double draw = (mixed >>> 11) * 0x1.0p-53;
+        return draw < Math.min(chance, 1.0D);
+    }
+
+    private static long mix64(long value) {
+        value = (value ^ (value >>> 30)) * 0xBF58476D1CE4E5B9L;
+        value = (value ^ (value >>> 27)) * 0x94D049BB133111EBL;
+        return value ^ (value >>> 31);
     }
 
     /**
@@ -157,10 +328,13 @@ public final class IndustryMaintenanceService {
         }
         String condition = percentage(snapshot.minimumCondition());
         String fouling = percentage(snapshot.fouling());
-        Component state = isLockout(gun)
+        boolean lockout = isLockout(gun);
+        boolean feedJam = !lockout && isFeedJammed(gun);
+        Component state = lockout
                 ? Component.translatable("tooltip.tacz.maintenance.lockout")
+                : feedJam ? Component.translatable("tooltip.tacz.maintenance.feed_jam")
                 : Component.translatable(snapshot.status().translationKey());
-        int color = isLockout(gun) ? 0xE05252 : snapshot.status().color();
+        int color = lockout || feedJam ? 0xE05252 : snapshot.status().color();
         return Component.translatable("tooltip.tacz.maintenance.status", state, condition, fouling)
                 .withStyle(style -> style.withColor(color));
     }
@@ -301,6 +475,13 @@ public final class IndustryMaintenanceService {
         private int fouling(int base) {
             return base <= 0 || foulingMultiplier <= 0.0F ? 0 : Math.max(1, (int) Math.ceil(base * foulingMultiplier));
         }
+    }
+
+    /** Result of one actual server-side round after maintenance accounting. */
+    public record ShotOutcome(boolean recorded, boolean feedJammed) {
+        public static final ShotOutcome NONE = new ShotOutcome(false, false);
+        public static final ShotOutcome RECORDED = new ShotOutcome(true, false);
+        public static final ShotOutcome FEED_JAMMED = new ShotOutcome(true, true);
     }
 
     public enum Status {

@@ -54,6 +54,8 @@ public class LocalPlayerDataHolder {
      * 用于标记 bolt 是否已经执行完成，防止因为客户端、服务端异步产生的数据不同步而造成的重复 bolt
      */
     public boolean isBolting = false;
+    /** True only while the client awaits the server result of an explicit C.2 clear request. */
+    public boolean isClearingFeedJam = false;
     /**
      * 瞄准的进度，范围 0 ~ 1
      */
@@ -145,6 +147,7 @@ public class LocalPlayerDataHolder {
         oldAimingProgress = 0;
         // 重置拉栓状态
         isBolting = false;
+        isClearingFeedJam = false;
         // 打开状态锁
         clientStateLock = false;
     }

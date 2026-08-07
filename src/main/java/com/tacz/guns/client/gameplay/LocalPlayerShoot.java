@@ -205,6 +205,13 @@ public class LocalPlayerShoot {
         if (gunOperator.getSynMeleeCoolDown() != 0) {
             return ShootResult.IS_MELEE;
         }
+        // C.2 feed faults are server-NBT-backed. A trigger press does not fire
+        // or consume anything; it asks the established manual-bolt path to
+        // perform the explicit C2S clearing action instead.
+        if (IndustryMaintenanceService.isFeedJammed(mainHandItem)) {
+            IClientPlayerGunOperator.fromLocalPlayer(player).clearFeedJam();
+            return ShootResult.JAMMED;
+        }
         // C.1 critical-condition lockout is item-NBT-backed and therefore
         // visible to the local client before it predicts a trigger pull.
         if (IndustryMaintenanceService.isLockout(mainHandItem)) {

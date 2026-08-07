@@ -46,6 +46,15 @@ public class ShooterDataHolder {
     public long boltTimestamp = -1;
     public boolean isBolting = false;
     /**
+     * Server-only C.2 clear-jam handshake. A normal automatic bolt must not
+     * silently clear a feed jam: the explicit C2S request sets this flag for
+     * one validation attempt, then {@link LivingEntityBolt} records whether a
+     * real bolt cycle is in progress.
+     */
+    public boolean industryFeedJamClearRequested = false;
+    /** True only while the server is waiting for the requested bolt to actually chamber a round. */
+    public boolean industryFeedJamClearInProgress = false;
+    /**
      * 瞄准的进度，范围 0 ~ 1
      */
     public float aimingProgress = 0;
@@ -145,6 +154,8 @@ public class ShooterDataHolder {
         sprintTimeS = 0;
         boltTimestamp = -1;
         isBolting = false;
+        industryFeedJamClearRequested = false;
+        industryFeedJamClearInProgress = false;
         shootCount = 0;
         chargeProgress = 0f;
         scriptData = null;

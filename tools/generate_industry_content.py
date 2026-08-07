@@ -45,6 +45,8 @@ INDUSTRY_BLOCK_COVERAGE_DOCUMENT = REPO / "docs/INDUSTRY_BLOCK_ASSET_COVERAGE.md
 DEFAULT_AMMO_RECIPE_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/ammo"
 DEFAULT_AMMO_INDEX_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/index/ammo"
 DEFAULT_GUN_DATA_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/data/tacz/data/guns"
+DEFAULT_GUN_DISPLAY_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/assets/tacz/display/guns"
+DEFAULT_GUN_ANIMATION_ROOT = RESOURCE_ROOT / "assets/tacz/custom/tacz_default_gun/assets/tacz/animations"
 
 CREATE_CONDITIONS = [{"condition": "fabric:all_mods_loaded", "values": ["create"]}]
 # Neutral stock classes are deliberately separate from the real action-part
@@ -253,6 +255,14 @@ def load_default_gun_policy() -> dict[str, Any]:
         raise ValueError(f"{DEFAULT_GUN_POLICY}: tier mapping references an unknown manufacturing tier")
     if not isinstance(policy.get("materials_by_gun_type"), dict):
         raise ValueError(f"{DEFAULT_GUN_POLICY}: materials_by_gun_type must be an object")
+    clear_actions = policy.get("audited_feed_jam_clear_actions", {})
+    if not isinstance(clear_actions, dict):
+        raise ValueError(f"{DEFAULT_GUN_POLICY}: audited_feed_jam_clear_actions must be an object")
+    for slug, action in clear_actions.items():
+        if not isinstance(slug, str) or not re.fullmatch(r"[a-z0-9_]+", slug) or action != "bolt":
+            raise ValueError(
+                f"{DEFAULT_GUN_POLICY}: each audited feed-jam clear action must be a [a-z0-9_]+ slug mapped to 'bolt'"
+            )
     return policy
 
 
@@ -2517,12 +2527,47 @@ def generated_reference_profile_files(platforms: list[dict[str, Any]]) -> dict[P
     return files
 
 
-def maintenance_baseline(platform: dict[str, Any]) -> dict[str, Any]:
-    """Phase-A accounting values, not real-world lifetime/failure claims.
+def audited_feed_jam_clear_action(platform: dict[str, Any], policy: dict[str, Any]) -> str:
+    """Return an explicitly audited clear action, never an inferred one."""
+    return policy["audited_feed_jam_clear_actions"].get(platform["slug"], "none")
 
-    They intentionally only determine gentle server-side Condition/Fouling
-    bookkeeping. No random jam or shoot gate consumes these values until a
-    later phase has an audited clear-jam transaction.
+
+def validate_audited_feed_jam_clear_actions(platforms: list[dict[str, Any]], policy: dict[str, Any]) -> None:
+    """Audit every built-in C.2 opt-in against the untouched bundled assets.
+
+    A generated maintenance JSON is not sufficient evidence for a random feed
+    jam. Each default opt-in must still have the actual manual server bolt type,
+    a display state machine, and a real named bolt animation in the default gun
+    pack. Third-party packs remain opt-in through their own explicit profile and
+    the runtime re-check in ``IndustryMaintenanceService``.
+    """
+    by_slug = {platform["slug"]: platform for platform in platforms}
+    for slug, clear_action in sorted(policy["audited_feed_jam_clear_actions"].items()):
+        if clear_action != "bolt" or slug not in by_slug:
+            raise ValueError(f"{DEFAULT_GUN_POLICY}: invalid audited feed-jam clear target {slug!r}")
+        data_path = DEFAULT_GUN_DATA_ROOT / f"{slug}_data.json"
+        display_path = DEFAULT_GUN_DISPLAY_ROOT / f"{slug}_display.json"
+        animation_path = DEFAULT_GUN_ANIMATION_ROOT / f"{slug}.animation.json"
+        if not data_path.exists() or not display_path.exists() or not animation_path.exists():
+            raise ValueError(f"{DEFAULT_GUN_POLICY}: {slug} lacks bundled data/display/animation evidence for bolt clear")
+        data = read_json5(data_path)
+        display = read_json5(display_path)
+        if not isinstance(data, dict) or data.get("bolt") != "manual_action":
+            raise ValueError(f"{DEFAULT_GUN_POLICY}: {slug} is not a bundled manual_action gun")
+        if not isinstance(display, dict) or not isinstance(display.get("animation"), str) \
+                or not isinstance(display.get("state_machine"), str):
+            raise ValueError(f"{DEFAULT_GUN_POLICY}: {slug} lacks a bundled animated bolt state-machine contract")
+        if not re.search(r'"bolt"\s*:', animation_path.read_text(encoding="utf-8")):
+            raise ValueError(f"{DEFAULT_GUN_POLICY}: {slug} lacks a named bundled bolt animation")
+
+
+def maintenance_baseline(platform: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
+    """Phase-A accounting values plus explicitly audited C.2 opt-ins.
+
+    Condition/Fouling always remains server-side bookkeeping. Random feed
+    faults stay disabled unless this platform is listed in the separate audited
+    clear-action manifest; the runtime still verifies the live manual-bolt type
+    before a listed profile can affect shooting.
     """
     # 10,000 is a normalized internal condition scale. Structural replacement
     # is deliberately a thousands-of-round lifecycle, not a hundred-shot game
@@ -2574,21 +2619,21 @@ def maintenance_baseline(platform: dict[str, Any]) -> dict[str, Any]:
             "contaminant_wear_multiplier": multipliers[4],
             "contaminant_fouling_multiplier": multipliers[5],
         },
-        # Declared and shown to authors now, intentionally unused in phase A.
         "jam": {
             "warning_condition": 6000,
             "critical_condition": 1500,
             "max_chance": 0.08,
+            "clear_action": audited_feed_jam_clear_action(platform, policy),
         },
     }
 
 
-def generated_maintenance_profile_files(platforms: list[dict[str, Any]]) -> dict[Path, Any]:
-    """Emit one data-driven phase-A profile for every default industrial gun."""
+def generated_maintenance_profile_files(platforms: list[dict[str, Any]], policy: dict[str, Any]) -> dict[Path, Any]:
+    """Emit maintenance profiles; C.2 remains disabled except for audited bolt clears."""
     files: dict[Path, Any] = {}
     for platform in platforms:
         namespace, gun_path = platform["gun_id"].split(":", 1)
-        files[RESOURCE_ROOT / f"data/{namespace}/industry/maintenance/guns/{gun_path}.json"] = maintenance_baseline(platform)
+        files[RESOURCE_ROOT / f"data/{namespace}/industry/maintenance/guns/{gun_path}.json"] = maintenance_baseline(platform, policy)
     return files
 
 
@@ -2610,8 +2655,9 @@ def obsolete_generated_maintenance_profile_files(expected: dict[Path, Any]) -> s
     return stale
 
 
-def validate_generated_maintenance_profiles(platforms: list[dict[str, Any]], expected: dict[Path, Any]) -> None:
-    """Ensure all default industrial outputs have a complete phase-A baseline."""
+def validate_generated_maintenance_profiles(platforms: list[dict[str, Any]], expected: dict[Path, Any],
+                                            policy: dict[str, Any]) -> None:
+    """Ensure every generated profile has an explicit safe C.2 clear policy."""
     paths: set[Path] = set()
     components = {"receiver", "bolt", "barrel", "trigger", "recoil"}
     for platform in platforms:
@@ -2636,7 +2682,12 @@ def validate_generated_maintenance_profiles(platforms: list[dict[str, Any]], exp
                 or not isinstance(profile.get("fouling_per_shot"), int) \
                 or not isinstance(operation, dict) or set(operation) != operation_keys \
                 or not all(isinstance(value, (int, float)) and 0 <= float(value) <= 16 for value in operation.values()) \
-                or not isinstance(jam, dict):
+                or not isinstance(jam, dict) \
+                or set(jam) != {"warning_condition", "critical_condition", "max_chance", "clear_action"} \
+                or not isinstance(jam.get("warning_condition"), int) or not 0 <= jam["warning_condition"] <= 10_000 \
+                or not isinstance(jam.get("critical_condition"), int) or not 0 <= jam["critical_condition"] <= jam["warning_condition"] \
+                or not isinstance(jam.get("max_chance"), (int, float)) or not 0 <= float(jam["max_chance"]) <= 1 \
+                or jam.get("clear_action") != audited_feed_jam_clear_action(platform, policy):
             raise ValueError(f"{platform['slug']}: malformed generated maintenance profile")
     if len(paths) != len(platforms):
         raise ValueError("generated maintenance profile path collision")
@@ -5095,13 +5146,14 @@ def run(write: bool) -> int:
         "message.tacz.industrial_service.repair_success": "Repaired %s component(s); consumed %s steel plate(s) and %s brass sheet(s).",
         "message.tacz.industrial_service.components_already_serviceable": "All installed service components are already at full condition.",
         "config.tacz.server.industry_maintenance_scope": "Industrial Maintenance Scope",
-        "config.tacz.server.industry_maintenance_scope.desc": "Phase A records condition and fouling. INDUSTRIAL_ASSEMBLY safely limits it to real industrial-origin guns; ALL_GUNS migrates legacy guns full and clean.",
+        "config.tacz.server.industry_maintenance_scope.desc": "Industrial maintenance records condition and fouling. INDUSTRIAL_ASSEMBLY safely limits it to real industrial-origin guns; ALL_GUNS migrates legacy guns full and clean. Random feed faults still require an explicit audited clear-action profile.",
         "tooltip.tacz.maintenance.status": "Service: %s  |  Condition %s  |  Fouling %s",
         "tooltip.tacz.maintenance.good": "Good",
         "tooltip.tacz.maintenance.service": "Service Due",
         "tooltip.tacz.maintenance.repair": "Repair Required",
         "tooltip.tacz.maintenance.out_of_service": "Out of Service",
         "tooltip.tacz.maintenance.lockout": "Service lockout — repair components at the Industrial Service Bench",
+        "tooltip.tacz.maintenance.feed_jam": "Feed jam — press fire to cycle the action clear",
         "tooltip.tacz.maintenance.grade": "Maintenance grade: %s · planned barrel service: ~%s shots",
         "tooltip.tacz.maintenance.grade.field": "Field / legacy",
         "tooltip.tacz.maintenance.grade.service": "Service grade",
@@ -5176,13 +5228,14 @@ def run(write: bool) -> int:
         "message.tacz.industrial_service.repair_success": "已维修 %s 个组件；消耗 %s 块钢板和 %s 张黄铜板。",
         "message.tacz.industrial_service.components_already_serviceable": "所有勤务组件均已处于满枪况。",
         "config.tacz.server.industry_maintenance_scope": "工业维护范围",
-        "config.tacz.server.industry_maintenance_scope.desc": "A 阶段只记录枪况和污垢。INDUSTRIAL_ASSEMBLY 仅作用于真实工业来源枪械；ALL_GUNS 会让旧枪以满状态、清洁状态安全迁移。",
+        "config.tacz.server.industry_maintenance_scope.desc": "工业维护记录枪况和污垢。INDUSTRIAL_ASSEMBLY 仅作用于真实工业来源枪械；ALL_GUNS 会让旧枪以满状态、清洁状态安全迁移。随机供弹卡滞仍只会由显式、已审计的清障档案启用。",
         "tooltip.tacz.maintenance.status": "勤务：%s  |  枪况 %s  |  污垢 %s",
         "tooltip.tacz.maintenance.good": "良好",
         "tooltip.tacz.maintenance.service": "需保养",
         "tooltip.tacz.maintenance.repair": "需维修",
         "tooltip.tacz.maintenance.out_of_service": "停用",
         "tooltip.tacz.maintenance.lockout": "勤务锁止——请在工业勤务台维修组件",
+        "tooltip.tacz.maintenance.feed_jam": "供弹卡滞——按开火键执行拉栓清障",
         "tooltip.tacz.maintenance.grade": "耐久等级：%s · 预计枪管勤务：约 %s 发",
         "tooltip.tacz.maintenance.grade.field": "野战 / 旧制等级",
         "tooltip.tacz.maintenance.grade.service": "制式勤务等级",
@@ -5212,7 +5265,8 @@ def run(write: bool) -> int:
         english.update(language_entries(platform, "en_us"))
         chinese.update(language_entries(platform, "zh_cn"))
     expected.update(generated_reference_profile_files(platforms))
-    expected.update(generated_maintenance_profile_files(platforms))
+    validate_audited_feed_jam_clear_actions(platforms, policy)
+    expected.update(generated_maintenance_profile_files(platforms, policy))
     expected.update(generated_cartridge_gauge_blank_file())
     for cartridge in cartridges:
         expected.update(generated_cartridge_files(cartridge))
@@ -5249,7 +5303,7 @@ def run(write: bool) -> int:
     validate_cartridge_tooling_continuity(cartridges, expected)
     validate_magazine_tooling_continuity(magazine_carriers, platforms, expected)
     validate_generated_reference_profiles(platforms, expected)
-    validate_generated_maintenance_profiles(platforms, expected)
+    validate_generated_maintenance_profiles(platforms, expected, policy)
     validate_initial_maintenance_assembly_outputs(platforms, expected)
     validate_stable_dossier_commissions(platforms, blueprint_acquisition, expected)
 

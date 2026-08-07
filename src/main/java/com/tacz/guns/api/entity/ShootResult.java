@@ -66,7 +66,8 @@ public enum ShootResult {
      */
     OVERHEATED,
     /**
-     * C.1 critical-condition lockout; repair through the industrial service bench is required.
+     * Server-authoritative maintenance fault: either a C.1 critical lockout or
+     * a C.2 feed jam awaiting its verified manual-bolt clear action.
      */
     JAMMED
 }

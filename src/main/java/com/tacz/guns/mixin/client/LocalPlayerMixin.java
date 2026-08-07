@@ -50,6 +50,12 @@ public abstract class LocalPlayerMixin implements IClientPlayerGunOperator {
 
     @Unique
     @Override
+    public void clearFeedJam() {
+        tac$bolt.clearFeedJam();
+    }
+
+    @Unique
+    @Override
     public void reload() {
         tac$reload.reload();
     }

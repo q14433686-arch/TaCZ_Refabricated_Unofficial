@@ -38,6 +38,11 @@ public interface IClientPlayerGunOperator {
     void bolt();
 
     /**
+     * 请求以真实的手动拉栓动作清除服务器已记录的供弹卡滞。
+     */
+    void clearFeedJam();
+
+    /**
      * 客户端换弹
      */
     void reload();

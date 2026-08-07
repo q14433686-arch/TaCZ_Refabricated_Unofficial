@@ -201,10 +201,10 @@ public class GunHudOverlay {
                 (int) (width - 68.5 + font.width(currentAmmoCountText) * 1.5), height - 38,
                 0.0F, 0.0F, 10, 10, 10, 10);
 
-        // Phase-A maintenance HUD: two compact server-NBT-backed bars above
-        // the existing gun card. The upper bar is the worst component
-        // condition; the lower bar is fouling. They are informational only:
-        // no jam/lockout is enabled in this phase.
+        // Server-NBT-backed maintenance HUD: the upper bar is the worst
+        // component condition and the lower bar is fouling. A server-recorded
+        // C.1/C.2 fault turns the condition bar red; no client-only jam state
+        // is invented here.
         IndustryMaintenanceService.Snapshot maintenance = IndustryMaintenanceService.getSnapshot(stack);
         if (maintenance.eligible()) {
             final int maintenanceLeft = width - 117;
@@ -216,8 +216,10 @@ public class GunHudOverlay {
                     / (float) IndustryMaintenanceService.MAX_CONDITION);
             graphics.fill(maintenanceLeft, maintenanceTop, maintenanceLeft + maintenanceWidth,
                     maintenanceTop + 3, 0xAA202020);
+            int conditionColor = IndustryMaintenanceService.isJammed(stack)
+                    ? 0xE05252 : maintenance.status().color();
             graphics.fill(maintenanceLeft, maintenanceTop, maintenanceLeft + conditionWidth,
-                    maintenanceTop + 3, 0xFF000000 | maintenance.status().color());
+                    maintenanceTop + 3, 0xFF000000 | conditionColor);
             graphics.fill(maintenanceLeft, maintenanceTop + 4, maintenanceLeft + maintenanceWidth,
                     maintenanceTop + 6, 0xAA202020);
             graphics.fill(maintenanceLeft, maintenanceTop + 4, maintenanceLeft + foulingWidth,
