@@ -20,6 +20,8 @@ import com.tacz.guns.client.model.SlotModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.model.functional.ShellRender;
+import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
+import com.tacz.guns.client.render.scope.ScopeClipHelper;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.TransformScale;
 import com.tacz.guns.util.RenderDistance;
@@ -235,6 +237,13 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             RenderType renderType = display.enablesTransparency()
                     ? RenderTypes.entityTranslucent(display.getModelTexture())
                     : RenderTypes.entityCutout(display.getModelTexture());
+            // 【镜内排除枪体】开镜时把枪体套上「目镜圆外才画」的掩码裁剪 RenderType，
+            // 让落在目镜投影内的枪体被 discard（等价上游 stencilFunc(GL_EQUAL,0) 对镜身的处理）。
+            // 仅对不透明(cutout)枪体启用：translucent 枪体用不透明裁剪管线会改变透明语义，
+            // 宁可不裁也不能把透明枪体画成实体。掩码内容每帧现画，没装瞄具/机瞄时全黑 → 什么都不裁，安全退化。
+            if (!display.enablesTransparency() && ScopeClipHelper.isScopedMaskActive()) {
+                renderType = ScopeBodyRenderTypes.clipped(display.getModelTexture());
+            }
             gunModel.submit(poseStack, stack, ctx, collector, renderType, light, OverlayTexture.NO_OVERLAY);
             // 缓存枪口位置，为第一人称曳光弹渲染作准备
             cacheMuzzlePosition(poseStack, gunModel);
