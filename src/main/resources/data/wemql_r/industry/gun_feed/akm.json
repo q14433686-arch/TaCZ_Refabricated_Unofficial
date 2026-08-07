@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ak_762x39",
+  "magazine_capacity": 30,
+  "ammo": "tacz:762x39",
+  "display_name": "item.tacz.magazine.ak_762",
+  "carrier_variants": [
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.wemql_r_ak_762x39_35"
+    },
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.rpk_762"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.wemql_r_ak_762x39_45"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "aug_556",
+  "magazine_capacity": 30,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.aug_556",
+  "carrier_variants": [
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.wemql_r_aug_556_40"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.wemql_r_aug_556_45"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.wemql_r_aug_556_60"
+    }
+  ]
+}

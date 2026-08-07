@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "wemql_r_ak12_545x39",
+  "magazine_capacity": 30,
+  "ammo": "tacz:545x39",
+  "display_name": "item.tacz.magazine.wemql_r_ak12_545x39_30",
+  "carrier_variants": [
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.wemql_r_ak12_545x39_40"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.wemql_r_ak12_545x39_60"
+    },
+    {
+      "capacity": 75,
+      "display_name": "item.tacz.magazine.wemql_r_ak12_545x39_75"
+    }
+  ]
+}

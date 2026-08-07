@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "wemql_r/m7",
+  "display_name": "M7",
+  "action": "gas_operated_rifle",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "wemql_r_m7_68x51",
+    "capacity": 20,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "68x51fury",
+    "expected_ammo": "tacz:68x51fury"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Uploaded latest.log identifies Delta Force-Storm Assault-v2.5 as namespace wemql_r; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for wemql_r:m7 was individually checked for its current ammo, base capacity, xmag/default reload contract, and selectable capacity values.",
+    "The M7 and its named Prismatic Offensive Gen2 variant are manually reviewed as the same detachable 6.8×51 platform. The 30-round receiver uses the same explicitly declared carrier identity; no unrelated 6.8 firearm is merged.",
+    "The runtime sidecar still fails closed if the loaded GunData ammo or base capacity changes. Its surveyed carrier commission is emitted only from an actual loaded Gunsmith Table gun recipe; no standalone creative-only carrier route is added."
+  ]
+}

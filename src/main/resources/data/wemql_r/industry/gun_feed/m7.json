@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "wemql_r_m7_68x51",
+  "magazine_capacity": 20,
+  "ammo": "tacz:68x51fury",
+  "display_name": "item.tacz.magazine.wemql_r_m7_68x51_20",
+  "carrier_variants": [
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.wemql_r_m7_68x51_25"
+    },
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.wemql_r_m7_68x51_30"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.wemql_r_m7_68x51_45"
+    }
+  ]
+}

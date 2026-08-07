@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "vector_45acp",
+  "magazine_capacity": 20,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.vector_45",
+  "carrier_variants": [
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.wemql_r_vector_45acp_30"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.wemql_r_vector_45acp_45"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.wemql_r_vector_45acp_50"
+    }
+  ]
+}

@@ -175,6 +175,38 @@ Berthier、SKS、SW Mk2 41 及其他转轮/历史 clip 仍保持候选或原有�
 重连、实体容量与 HUD/tooltip、以及 AS-44/StG44 的三档容量切换；MG34/MG42/G43/StG44 还应在实际安装 EA
 弹药依赖的服务器上验证一次完整装填与卸载。
 
+## Delta Force: Storm Assault / WEMQL_R 完整常规外部供弹 cohort
+
+这批是对“survey 不只有仓库内四个 ZIP”的首个实际回应：它不从本仓库复制或修改 Delta Force
+资源。证据链来自用户上传的运行日志与 survey：`latest.log` 明确记录当前加载
+`Delta Force-Storm Assault-v2.5.zip`、主 namespace `wemql_r`；schema-2 survey 的 SHA-256 为
+`919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a`。该包公开武器清单也明确是
+6 rifle、6 DMR、1 SMG，并提供自己的工作台。每个下列 GunId 都按当前 survey 的 Ammo、基础容量、
+全部前三档可选容量、`xmag_reload_logic` 或默认 reload contract 逐项复核后才进入 sidecar。
+
+| 已核对接收机 | family 决定 | 实体容量 | 说明 |
+|---|---|---|---|
+| `ak12` | 私有 `wemql_r_ak12_545x39` | 30、40、60、75 | AK-12 的可拆卸 5.45 盒式弹匣；不因 AK 外形自动接入任何其他 5.45 family。 |
+| `akm`、`akm_long` | `ak_762x39` | 30、35、40、45 | 人工确认同一 AKM 7.62×39 接收机；40 发明确复用现有 RPK 实体身份。 |
+| `aug` | `aug_556` | 30、40、45、60 | 明确是 AUG 专用可拆卸弹匣，而不是 STANAG 猜测。 |
+| `hk416` | `stanag_556` | 30、40、45、60 | 人工确认的 STANAG 5.56 接收机；这是物理标准契约，不是同口径自动归类。 |
+| `kriss_vector` | `vector_45acp` | 20、30、45、50 | 只接入既有 Vector .45 平台族，不把其他 .45 手枪/SMG 一并接入。 |
+| `m14_long`、`m14_long_foot_stool`、`m14_short`、`m14_short_foot_stool` | `m14_308` | 10、20、30、50 | 四种 M14 EBR 长度/外装变体明确共享 M14 可拆卸弹匣。 |
+| `m7`、`m7_prismatic` | 私有 `wemql_r_m7_68x51` | 20、25、30、45 | 仅项目明确命名的 M7 与 Prismatic Offensive Gen2 共族；30 发 M7 Prismatic 使用同一物理 identity。 |
+| `scar_h` | `scar_h_308` | 20、30、45、60 | 只接入既有 SCAR-H .308 family，绝不与 STANAG/M14 混用。 |
+
+共 **13 把**、**8 个明确 family 决定**。其中 AKM、AUG、HK416、Vector、M14 与 SCAR-H 复用已经存在的
+标准 family/材质身份；私有 AK-12 与 M7 只使用已有中性可拆卸弹匣材质，避免把不相符的图说成精确模型。
+
+这仍不是从 GunId、`reload.type`、容量或 xmag 脚本自动推导：这些字段只是当前版本 guard。每把都有独立
+`gun_feed` 与 reference profile；GunData 的 Ammo 或基础容量变化会 fail closed。已有 surveyed carrier factory
+只会在该 GunId 的**实际加载 Gunsmith Table 成枪 recipe**存在时，生成壳体毛坯 + 平台套件 + 保留模板/fixture 的
+真实多槽实体载具委托；本批没有添加创造样品或另起一条假制造路线。
+
+仍需实机验证 M7/M7 Prismatic 的跨容量互插、AKM/RPK 40 发身份、以及各 xmag 三档实体容量切换。未列出的
+`ccrp`、`classicr`、`cib`、`cibs`、`murasamet`、`suffuse` 等候选继续 legacy，等下一组人工审计；它们没有被
+本批“批量”二字自动实体化。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：

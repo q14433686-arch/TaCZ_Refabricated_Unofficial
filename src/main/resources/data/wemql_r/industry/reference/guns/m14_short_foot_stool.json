@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "wemql_r/m14_ebr_short_foot_stool",
+  "display_name": "M14 EBR Short Foot Stool",
+  "action": "gas_operated_rifle",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "m14_308",
+    "capacity": 10,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "308",
+    "expected_ammo": "tacz:308"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Uploaded latest.log identifies Delta Force-Storm Assault-v2.5 as namespace wemql_r; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for wemql_r:m14_short_foot_stool was individually checked for its current ammo, base capacity, xmag/default reload contract, and selectable capacity values.",
+    "The four M14 EBR length/furniture variants are manually reviewed as one M14 detachable-magazine interface and explicitly reuse the existing M14 .308 carrier family.",
+    "The runtime sidecar still fails closed if the loaded GunData ammo or base capacity changes. Its surveyed carrier commission is emitted only from an actual loaded Gunsmith Table gun recipe; no standalone creative-only carrier route is added."
+  ]
+}

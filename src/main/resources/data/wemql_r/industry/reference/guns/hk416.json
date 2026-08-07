@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "wemql_r/hk416",
+  "display_name": "HK416",
+  "action": "gas_operated_rifle",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "stanag_556",
+    "capacity": 30,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "556x45",
+    "expected_ammo": "tacz:556x45"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Uploaded latest.log identifies Delta Force-Storm Assault-v2.5 as namespace wemql_r; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for wemql_r:hk416 was individually checked for its current ammo, base capacity, xmag/default reload contract, and selectable capacity values.",
+    "HK416 is manually confirmed as a 5.56 STANAG-pattern detachable-magazine receiver, so this is an explicit physical-standard decision rather than an ammo/capacity grouping.",
+    "The runtime sidecar still fails closed if the loaded GunData ammo or base capacity changes. Its surveyed carrier commission is emitted only from an actual loaded Gunsmith Table gun recipe; no standalone creative-only carrier route is added."
+  ]
+}
