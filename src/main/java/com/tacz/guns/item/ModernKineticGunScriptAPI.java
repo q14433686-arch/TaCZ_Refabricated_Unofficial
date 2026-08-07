@@ -176,7 +176,7 @@ public class ModernKineticGunScriptAPI {
                     // Phase A only records wear/fouling after a real server
                     // round was consumed. It never gates this shot or creates
                     // a jam; clear-jam mechanics belong to the later phase.
-                    IndustryMaintenanceService.recordSuccessfulShot(itemStack);
+                    IndustryMaintenanceService.recordSuccessfulShot(shooter, itemStack);
                     // The client shell model is only cosmetic.  Once a real
                     // round has been consumed, emit the data-declared case on
                     // the server so it can be picked up and reconditioned.

@@ -2532,6 +2532,19 @@ def maintenance_baseline(platform: dict[str, Any]) -> dict[str, Any]:
     }
     tier = manufacturing_tier(platform)
     wear, fouling = by_tier[tier]
+    action = action_profile(platform)
+    # Broad gameplay maintenance classes, not claims about real named weapons.
+    operation_by_action = {
+        "bolt_action": (0.80, 0.75, 1.20, 1.35, 1.10, 1.20),
+        "anti_material_bolt": (1.05, 0.80, 1.25, 1.35, 1.10, 1.20),
+        "break_action": (0.75, 0.65, 1.15, 1.25, 1.05, 1.15),
+        "revolver": (0.90, 0.80, 1.20, 1.30, 1.10, 1.20),
+        "belt_fed": (1.25, 1.30, 1.30, 1.55, 1.15, 1.35),
+        "rotary": (1.35, 1.15, 1.35, 1.45, 1.20, 1.25),
+        "gas_operated_shotgun": (1.10, 1.20, 1.30, 1.55, 1.15, 1.35),
+        "blowback_smg": (1.00, 1.15, 1.25, 1.45, 1.15, 1.30),
+    }
+    multipliers = operation_by_action.get(action, (1.0, 1.0, 1.35, 1.75, 1.15, 1.45))
     return {
         "schema_version": 1,
         "generated_by": "tacz_industry_generator",
@@ -2540,6 +2553,14 @@ def maintenance_baseline(platform: dict[str, Any]) -> dict[str, Any]:
         "wear_per_shot": wear,
         "fouling_per_shot": fouling,
         "heat_stress_multiplier": 1.0,
+        "operation": {
+            "wear_multiplier": multipliers[0],
+            "fouling_multiplier": multipliers[1],
+            "submerged_wear_multiplier": multipliers[2],
+            "submerged_fouling_multiplier": multipliers[3],
+            "contaminant_wear_multiplier": multipliers[4],
+            "contaminant_fouling_multiplier": multipliers[5],
+        },
         # Declared and shown to authors now, intentionally unused in phase A.
         "jam": {
             "warning_condition": 6000,
@@ -2588,12 +2609,18 @@ def validate_generated_maintenance_profiles(platforms: list[dict[str, Any]], exp
             raise ValueError(f"{platform['slug']}: missing generated maintenance profile")
         paths.add(path)
         wear = profile.get("wear_per_shot")
+        operation = profile.get("operation")
         jam = profile.get("jam")
+        operation_keys = {"wear_multiplier", "fouling_multiplier", "submerged_wear_multiplier",
+                          "submerged_fouling_multiplier", "contaminant_wear_multiplier",
+                          "contaminant_fouling_multiplier"}
         if profile.get("schema_version") != 1 or profile.get("eligibility") != "industrial_assembly" \
                 or profile.get("maintenance_class") != action_profile(platform) \
                 or not isinstance(wear, dict) or set(wear) != components \
                 or not all(isinstance(value, int) and 0 <= value <= 1000 for value in wear.values()) \
                 or not isinstance(profile.get("fouling_per_shot"), int) \
+                or not isinstance(operation, dict) or set(operation) != operation_keys \
+                or not all(isinstance(value, (int, float)) and 0 <= float(value) <= 16 for value in operation.values()) \
                 or not isinstance(jam, dict):
             raise ValueError(f"{platform['slug']}: malformed generated maintenance profile")
     if len(paths) != len(platforms):

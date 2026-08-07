@@ -5,10 +5,14 @@ import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.industry.IndustryProfileManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.util.ItemNbtUtils;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
@@ -26,6 +30,10 @@ import java.util.UUID;
 public final class IndustryMaintenanceService {
     public static final int SCHEMA_VERSION = 1;
     public static final int MAX_CONDITION = 10_000;
+    /** Datapack-extensible blocks that expose service components to dirt/sand/mud contamination. */
+    public static final TagKey<Block> CONTAMINANT_BLOCKS = TagKey.create(
+            Registries.BLOCK, Identifier.fromNamespaceAndPath("tacz", "maintenance_contaminants")
+    );
 
     public static final String SCHEMA_TAG = "IndustryMaintenanceSchema";
     public static final String RECEIVER_TAG = "IndustryConditionReceiver";
@@ -69,7 +77,7 @@ public final class IndustryMaintenanceService {
      * Called only after {@code reduceAmmoOnce()} succeeded. Phase A records the
      * event but never changes its result, preserving current shooting semantics.
      */
-    public static boolean recordSuccessfulShot(ItemStack gun) {
+    public static boolean recordSuccessfulShot(LivingEntity shooter, ItemStack gun) {
         if (!migrateIfEligible(gun)) {
             return false;
         }
@@ -78,14 +86,16 @@ public final class IndustryMaintenanceService {
             return false;
         }
         IndustryMaintenanceProfile.WearPerShot wear = profile.getWearPerShot();
+        Exposure exposure = Exposure.capture(shooter, profile.getOperation());
         ItemNbtUtils.updateTag(gun, tag -> {
             migrateTag(tag);
-            tag.putInt(RECEIVER_TAG, subtractWear(tag.getIntOr(RECEIVER_TAG, MAX_CONDITION), wear.getReceiver()));
-            tag.putInt(BOLT_TAG, subtractWear(tag.getIntOr(BOLT_TAG, MAX_CONDITION), wear.getBolt()));
-            tag.putInt(BARREL_TAG, subtractWear(tag.getIntOr(BARREL_TAG, MAX_CONDITION), wear.getBarrel()));
-            tag.putInt(TRIGGER_TAG, subtractWear(tag.getIntOr(TRIGGER_TAG, MAX_CONDITION), wear.getTrigger()));
-            tag.putInt(RECOIL_TAG, subtractWear(tag.getIntOr(RECOIL_TAG, MAX_CONDITION), wear.getRecoil()));
-            tag.putInt(FOULING_TAG, clampCondition(tag.getIntOr(FOULING_TAG, 0) + profile.getFoulingPerShot()));
+            tag.putInt(RECEIVER_TAG, subtractWear(tag.getIntOr(RECEIVER_TAG, MAX_CONDITION), exposure.wear(wear.getReceiver())));
+            tag.putInt(BOLT_TAG, subtractWear(tag.getIntOr(BOLT_TAG, MAX_CONDITION), exposure.wear(wear.getBolt())));
+            tag.putInt(BARREL_TAG, subtractWear(tag.getIntOr(BARREL_TAG, MAX_CONDITION), exposure.wear(wear.getBarrel())));
+            tag.putInt(TRIGGER_TAG, subtractWear(tag.getIntOr(TRIGGER_TAG, MAX_CONDITION), exposure.wear(wear.getTrigger())));
+            tag.putInt(RECOIL_TAG, subtractWear(tag.getIntOr(RECOIL_TAG, MAX_CONDITION), exposure.wear(wear.getRecoil())));
+            tag.putInt(FOULING_TAG, clampCondition(tag.getIntOr(FOULING_TAG, 0)
+                    + exposure.fouling(profile.getFoulingPerShot())));
             long oldShots = Math.max(0L, tag.getLongOr(SHOTS_TAG, 0L));
             tag.putLong(SHOTS_TAG, oldShots == Long.MAX_VALUE ? Long.MAX_VALUE : oldShots + 1L);
         });
@@ -227,6 +237,33 @@ public final class IndustryMaintenanceService {
         // real shot visible in Tooltip (for example 99.97% / 0.03%) without
         // exposing raw 0..10000 implementation integers to players.
         return String.format(Locale.ROOT, "%.2f%%", clampCondition(amount) * 100.0D / MAX_CONDITION);
+    }
+
+    /** Read the two environment signals that are server-verifiable without client weather guesses. */
+    private record Exposure(float wearMultiplier, float foulingMultiplier) {
+        private static Exposure capture(LivingEntity shooter, IndustryMaintenanceProfile.OperationProfile operation) {
+            float wear = operation.getWearMultiplier();
+            float fouling = operation.getFoulingMultiplier();
+            if (shooter != null) {
+                if (shooter.isInWater()) {
+                    wear *= operation.getSubmergedWearMultiplier();
+                    fouling *= operation.getSubmergedFoulingMultiplier();
+                }
+                if (shooter.level().getBlockState(shooter.blockPosition().below()).is(CONTAMINANT_BLOCKS)) {
+                    wear *= operation.getContaminantWearMultiplier();
+                    fouling *= operation.getContaminantFoulingMultiplier();
+                }
+            }
+            return new Exposure(Math.clamp(wear, 0.0F, 16.0F), Math.clamp(fouling, 0.0F, 16.0F));
+        }
+
+        private int wear(int base) {
+            return base <= 0 || wearMultiplier <= 0.0F ? 0 : Math.max(1, (int) Math.ceil(base * wearMultiplier));
+        }
+
+        private int fouling(int base) {
+            return base <= 0 || foulingMultiplier <= 0.0F ? 0 : Math.max(1, (int) Math.ceil(base * foulingMultiplier));
+        }
     }
 
     public enum Status {

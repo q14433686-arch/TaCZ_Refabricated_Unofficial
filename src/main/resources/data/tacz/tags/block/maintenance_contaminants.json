@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:mud",
+    "minecraft:clay",
+    "minecraft:sand",
+    "minecraft:red_sand",
+    "minecraft:gravel",
+    "minecraft:soul_sand",
+    "minecraft:soul_soil",
+    "minecraft:powder_snow"
+  ]
+}

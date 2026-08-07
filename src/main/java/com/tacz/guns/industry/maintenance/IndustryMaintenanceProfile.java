@@ -32,6 +32,10 @@ public final class IndustryMaintenanceProfile {
     @SerializedName("heat_stress_multiplier")
     private float heatStressMultiplier = 1.0F;
 
+    /** Structure and exposure coefficients; gameplay maintenance data, not real-world reliability claims. */
+    @SerializedName("operation")
+    private OperationProfile operation = new OperationProfile();
+
     /** Declared for phase C only; phase A does not inspect it for shoot gating. */
     @SerializedName("jam")
     private JamThresholds jam = new JamThresholds();
@@ -60,6 +64,10 @@ public final class IndustryMaintenanceProfile {
         return Float.isFinite(heatStressMultiplier) ? Math.clamp(heatStressMultiplier, 0.0F, 16.0F) : 1.0F;
     }
 
+    public OperationProfile getOperation() {
+        return operation == null ? new OperationProfile() : operation;
+    }
+
     public JamThresholds getJam() {
         return jam == null ? new JamThresholds() : jam;
     }
@@ -71,6 +79,7 @@ public final class IndustryMaintenanceProfile {
                 && getWearPerShot().isValid()
                 && foulingPerShot >= 0 && foulingPerShot <= MAX_FOULING_PER_SHOT
                 && Float.isFinite(heatStressMultiplier) && heatStressMultiplier >= 0.0F
+                && getOperation().isValid()
                 && getJam().isValid();
     }
 
@@ -121,6 +130,47 @@ public final class IndustryMaintenanceProfile {
 
         private static int clampWear(int value) {
             return Math.clamp(value, 0, MAX_PER_SHOT_WEAR);
+        }
+    }
+
+    /**
+     * Multipliers are deliberately broad operational classes. Content packs can
+     * override them per GunId; no code path infers real reliability from a gun
+     * name or namespace.
+     */
+    public static final class OperationProfile {
+        @SerializedName("wear_multiplier")
+        private float wearMultiplier = 1.0F;
+        @SerializedName("fouling_multiplier")
+        private float foulingMultiplier = 1.0F;
+        @SerializedName("submerged_wear_multiplier")
+        private float submergedWearMultiplier = 1.35F;
+        @SerializedName("submerged_fouling_multiplier")
+        private float submergedFoulingMultiplier = 1.75F;
+        @SerializedName("contaminant_wear_multiplier")
+        private float contaminantWearMultiplier = 1.15F;
+        @SerializedName("contaminant_fouling_multiplier")
+        private float contaminantFoulingMultiplier = 1.45F;
+
+        public float getWearMultiplier() { return clampMultiplier(wearMultiplier); }
+        public float getFoulingMultiplier() { return clampMultiplier(foulingMultiplier); }
+        public float getSubmergedWearMultiplier() { return clampMultiplier(submergedWearMultiplier); }
+        public float getSubmergedFoulingMultiplier() { return clampMultiplier(submergedFoulingMultiplier); }
+        public float getContaminantWearMultiplier() { return clampMultiplier(contaminantWearMultiplier); }
+        public float getContaminantFoulingMultiplier() { return clampMultiplier(contaminantFoulingMultiplier); }
+
+        private boolean isValid() {
+            return validMultiplier(wearMultiplier) && validMultiplier(foulingMultiplier)
+                    && validMultiplier(submergedWearMultiplier) && validMultiplier(submergedFoulingMultiplier)
+                    && validMultiplier(contaminantWearMultiplier) && validMultiplier(contaminantFoulingMultiplier);
+        }
+
+        private static boolean validMultiplier(float value) {
+            return Float.isFinite(value) && value >= 0.0F && value <= 16.0F;
+        }
+
+        private static float clampMultiplier(float value) {
+            return validMultiplier(value) ? value : 1.0F;
         }
     }
 

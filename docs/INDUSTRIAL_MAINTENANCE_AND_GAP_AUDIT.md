@@ -255,11 +255,11 @@ chance = clamp(
 3. 已新增 Create 单工件维修链：钢/黄铜 → Basin 形成中性 `service_part_blank` → 组件专用模具 + production 模板校准命名 `service_part` → 损坏组件经检具、命名维修件、动力冲压机替换为同 GunId/同平台、满 Condition 的组件；复装按钮只保留组件 Condition、清洁 Fouling，绝不直接满修；
 4. 完整回归附件、实体弹匣、桥夹、内部弹药与输出堵塞。
 
-### C. 卡壳与清障
+### C. 卡壳与清障（C.0 环境/结构数据已开始）
 
-1. `feed` / `lockout` 服务端状态；
-2. `ShootResult.JAMMED`、同步消息、HUD/声音；
-3. 先为默认包和有已审计 clear 动画的第三方枪启用；
+1. 已扩展默认 53 枪维护 profile：操作结构的基础 wear/fouling multiplier、浸没 multiplier、`#tacz:maintenance_contaminants` 地面污染 multiplier 均由数据决定；服务端只在实际扣弹后读取浸没/污染暴露并计入 Condition/Fouling，不按枪名硬编码现实“可靠性”；
+2. 下一步才是 `feed` / `lockout` 服务端状态、`ShootResult.JAMMED`、同步消息、HUD/声音；
+3. 先为默认包和有已审计 clear 动画或可验证 bolt 动作的枪启用；
 4. 最后才按维护档案逐步放开第三方测绘枪。
 
 ## 8. 发现的未完成 / 未完全替换项目

@@ -12,6 +12,14 @@
   },
   "fouling_per_shot": 4,
   "heat_stress_multiplier": 1.0,
+  "operation": {
+    "wear_multiplier": 1.0,
+    "fouling_multiplier": 1.0,
+    "submerged_wear_multiplier": 1.35,
+    "submerged_fouling_multiplier": 1.75,
+    "contaminant_wear_multiplier": 1.15,
+    "contaminant_fouling_multiplier": 1.45
+  },
   "jam": {
     "warning_condition": 6000,
     "critical_condition": 1500,
