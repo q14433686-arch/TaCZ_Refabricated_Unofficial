@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "bf1_welrod_9x19",
+  "magazine_capacity": 6,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.bf1_welrod_6"
+}

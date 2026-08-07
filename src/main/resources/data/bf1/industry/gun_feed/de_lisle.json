@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "bf1_de_lisle_45acp",
+  "magazine_capacity": 7,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.bf1_de_lisle_7",
+  "carrier_variants": [
+    {
+      "capacity": 9,
+      "display_name": "item.tacz.magazine.bf1_de_lisle_9"
+    },
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.bf1_de_lisle_12"
+    },
+    {
+      "capacity": 14,
+      "display_name": "item.tacz.magazine.bf1_de_lisle_14"
+    }
+  ]
+}

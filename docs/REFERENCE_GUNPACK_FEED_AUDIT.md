@@ -97,6 +97,19 @@
 
 `56` 保持已审计的桥夹固定仓；AT4/M72 保持低容量发射器路径。此批接入不为 `ccrp`、`cib`、`ww` 等其他 cohort 自动创建任何实体弹匣。
 
+## Apocalypse / BF1 第一批 cohort 审计
+
+`bf1` cohort 没有因为“smg/rifle/mg”而整批自动启用。仅在实际枪名、GunData、动画与公开机械供弹资料相互一致时接入：
+
+| 枪 | 机制 | 说明 |
+|---|---|---|
+| Chauchat、Lewis Gun | detachable magazine | 半月形 / 顶部盘式可拆卸供弹器 |
+| De Lisle、Selbstlader M1916、Welrod | detachable magazine | 各自专用可拆卸盒式/握把供弹器 |
+| SMG08/18、Villar Perosa、ZK-383、VG1-5 | detachable magazine | 鼓式、双盒式或盒式可拆卸供弹器 |
+| MG08/15、MG42 | belt | 可拆卸弹链箱 / 鼓式容器语义 |
+
+其中 M1916 的 25 发可拆卸盒式弹匣、Villar Perosa 的双 25 发可拆卸盒式供弹、VG1-5 的可拆卸盒式弹匣、Welrod 的可拆卸握把弹匣和 ZK-383 的可拆卸盒式弹匣均与其主包身份和导出数据相符。RSC 1917、Mannlicher M1895、刘将军步枪、Obrez、Model 10-A、Sjögren、转轮、火焰/医疗/低容量发射器仍不在此批强制变成实体可拆卸弹匣。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：

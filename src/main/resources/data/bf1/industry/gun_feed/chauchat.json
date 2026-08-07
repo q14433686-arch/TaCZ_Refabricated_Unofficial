@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "bf1_chauchat_3006",
+  "magazine_capacity": 20,
+  "ammo": "tacz:30_06",
+  "display_name": "item.tacz.magazine.bf1_chauchat_20"
+}

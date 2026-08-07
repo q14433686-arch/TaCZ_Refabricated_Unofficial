@@ -1,0 +1,17 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "bf1_mg42_762x54_belt",
+  "magazine_capacity": 75,
+  "ammo": "tacz:762x54",
+  "display_name": "item.tacz.magazine.bf1_mg42_belt_75",
+  "carrier_variants": [
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.bf1_mg42_belt_50"
+    },
+    {
+      "capacity": 250,
+      "display_name": "item.tacz.magazine.bf1_mg42_belt_250"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "bf1_m1916_308",
+  "magazine_capacity": 25,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.bf1_m1916_25"
+}

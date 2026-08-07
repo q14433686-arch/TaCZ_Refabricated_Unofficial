@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "bf1_smg0818_9x19_drum",
+  "magazine_capacity": 80,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.bf1_smg0818_drum_80"
+}

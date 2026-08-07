@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "canonical_model": "bf1/zk383",
+  "display_name": "ZK-383",
+  "action": "blowback_smg",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "bf1_zk383_9x19",
+    "capacity": 30,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "9mm",
+    "expected_ammo": "tacz:9mm"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Apocalypse v1.1.7: loaded GunIndex/GunData ammo, capacity and reload contract audited",
+    "Curated feed identity reviewed against pack name, action/feed documentation and animation evidence",
+    "Runtime declaration remains guarded against loaded GunData ammo and base capacity"
+  ]
+}

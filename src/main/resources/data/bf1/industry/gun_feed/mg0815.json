@@ -1,0 +1,13 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "bf1_mg0815_762x54_belt",
+  "magazine_capacity": 200,
+  "ammo": "tacz:762x54",
+  "display_name": "item.tacz.magazine.bf1_mg0815_belt_200",
+  "carrier_variants": [
+    {
+      "capacity": 250,
+      "display_name": "item.tacz.magazine.bf1_mg0815_belt_250"
+    }
+  ]
+}

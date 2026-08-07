@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "bf1_zk383_9x19",
+  "magazine_capacity": 30,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.bf1_zk383_30",
+  "carrier_variants": [
+    {
+      "capacity": 32,
+      "display_name": "item.tacz.magazine.bf1_zk383_32"
+    },
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.bf1_zk383_35"
+    },
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.bf1_zk383_40"
+    }
+  ]
+}

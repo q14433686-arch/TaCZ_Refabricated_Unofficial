@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "bf1_vp1915_9x19_twin",
+  "magazine_capacity": 50,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.bf1_vp1915_50",
+  "carrier_variants": [
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.bf1_vp1915_60"
+    },
+    {
+      "capacity": 80,
+      "display_name": "item.tacz.magazine.bf1_vp1915_80"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.bf1_vp1915_100"
+    }
+  ]
+}

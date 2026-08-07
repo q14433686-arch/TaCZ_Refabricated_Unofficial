@@ -1,0 +1,13 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "bf1_lewis_308_pan",
+  "magazine_capacity": 47,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.bf1_lewis_pan_47",
+  "carrier_variants": [
+    {
+      "capacity": 97,
+      "display_name": "item.tacz.magazine.bf1_lewis_pan_97"
+    }
+  ]
+}

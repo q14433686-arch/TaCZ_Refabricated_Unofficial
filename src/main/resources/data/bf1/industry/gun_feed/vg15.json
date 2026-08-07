@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "bf1_vg15_762x39",
+  "magazine_capacity": 10,
+  "ammo": "tacz:762x39",
+  "display_name": "item.tacz.magazine.bf1_vg15_10",
+  "carrier_variants": [
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.bf1_vg15_30"
+    },
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.bf1_vg15_40"
+    },
+    {
+      "capacity": 80,
+      "display_name": "item.tacz.magazine.bf1_vg15_80"
+    }
+  ]
+}
