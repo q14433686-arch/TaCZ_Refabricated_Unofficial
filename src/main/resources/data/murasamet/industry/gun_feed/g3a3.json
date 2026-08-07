@@ -1,0 +1,17 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "g3_308",
+  "magazine_capacity": 20,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.g3_308",
+  "carrier_variants": [
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.murasamet_g3_308_15"
+    },
+    {
+      "capacity": 18,
+      "display_name": "item.tacz.magazine.murasamet_g3_308_18"
+    }
+  ]
+}

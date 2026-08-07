@@ -40,9 +40,9 @@ FeedDeviceKind = stripper_clip | speedloader | en_bloc_clip
 以下类型仍**不适合**硬套已有方盒弹匣图，当前保留中性材质，直到有合适的可授权资源：
 
 ```text
-Lewis / DP28 顶部盘式弹匣
+Lewis / DP28 / DPM 顶部盘式弹匣
 Villar Perosa 双上置盒式弹匣
-真正的蜗牛盘、异形双联、专有顶部供弹器
+PPSh / KP/-31 等真正的蜗牛盘、异形双联、专有顶部供弹器
 ```
 
 它们的机制、余弹、制造和图标选择仍是实际生效的；“中性材质”只是诚实地不把错误几何说成精确美术。资源包作者可用 `industry_icons` 的 `magazine_family` 或 `feed_device_kind` selector 以更高优先级提供精确覆盖。

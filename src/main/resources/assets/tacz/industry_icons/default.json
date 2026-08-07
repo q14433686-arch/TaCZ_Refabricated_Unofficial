@@ -1565,6 +1565,28 @@
       },
       "coverage": "family",
       "note": "Existing exposed-belt material reused for WW MG42; family-level visual, not exact belt geometry."
+    },
+    {
+      "id": "magazine_murasamet_mg34_792x57_belt_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_m134_belt",
+      "priority": 270,
+      "match": {
+        "magazine_family": "murasamet_mg34_792x57_belt"
+      },
+      "coverage": "family",
+      "note": "Existing exposed-belt material reused for KhanPowder MG34; family-level visual, not exact belt geometry."
+    },
+    {
+      "id": "magazine_murasamet_mg42_792x57_belt_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_m134_belt",
+      "priority": 270,
+      "match": {
+        "magazine_family": "murasamet_mg42_792x57_belt"
+      },
+      "coverage": "family",
+      "note": "Existing exposed-belt material reused for KhanPowder MG42; family-level visual, not exact belt geometry."
     }
   ]
 }

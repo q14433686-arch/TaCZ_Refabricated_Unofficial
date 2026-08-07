@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "murasamet_ppsh_762x25",
+  "magazine_capacity": 25,
+  "ammo": "tacz:762x25",
+  "display_name": "item.tacz.magazine.murasamet_ppsh_762x25_25",
+  "carrier_variants": [
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.murasamet_ppsh_762x25_35"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.murasamet_ppsh_762x25_50"
+    },
+    {
+      "capacity": 71,
+      "display_name": "item.tacz.magazine.murasamet_ppsh_762x25_71"
+    }
+  ]
+}

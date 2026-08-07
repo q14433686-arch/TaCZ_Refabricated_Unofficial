@@ -1,0 +1,7 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "murasamet_mg34_792x57_belt",
+  "magazine_capacity": 75,
+  "ammo": "tacz:792x57",
+  "display_name": "item.tacz.magazine.murasamet_mg34_792x57_belt_75"
+}

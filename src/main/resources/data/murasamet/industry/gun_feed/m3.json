@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "murasamet_m3_45acp",
+  "magazine_capacity": 30,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.murasamet_m3_45acp_30"
+}

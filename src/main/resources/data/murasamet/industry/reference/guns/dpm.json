@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "murasamet/dpm",
+  "display_name": "DPM",
+  "action": "gas_operated_lmg",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "murasamet_dp_pan_762x54",
+    "capacity": 47,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "762x54",
+    "expected_ammo": "tacz:762x54"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "User-provided runtime log for the survey environment identifies KhanPowder_v0.8.99_hotfix as namespace murasamet; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for murasamet:dpm was individually checked for current ammo, base capacity, reload contract, and selectable capacity values.",
+    "DP-28 and DPM are manually confirmed as the same detachable 47-round top-pan interface. They remain a private family and intentionally retain neutral material rather than masquerading as a box magazine or exact pan mesh.",
+    "The runtime sidecar fails closed if the loaded GunData ammo or base capacity changes. Its surveyed carrier commission is emitted only from an actual loaded Gunsmith Table gun recipe; no standalone creative-only carrier route is added."
+  ]
+}

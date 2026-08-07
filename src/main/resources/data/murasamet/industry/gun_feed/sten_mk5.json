@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "murasamet_sten_9mm",
+  "magazine_capacity": 32,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.murasamet_sten_9mm_32"
+}

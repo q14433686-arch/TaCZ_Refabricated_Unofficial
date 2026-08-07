@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "murasamet/m1918a2_bar",
+  "display_name": "M1918A2 BAR",
+  "action": "automatic_rifle",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "ww_bar_3006",
+    "capacity": 20,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "30_06",
+    "expected_ammo": "tacz:30_06"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "User-provided runtime log for the survey environment identifies KhanPowder_v0.8.99_hotfix as namespace murasamet; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for murasamet:m1918a2 was individually checked for current ammo, base capacity, reload contract, and selectable capacity values.",
+    "The three named BAR variants are manually confirmed to use the same detachable BAR box-magazine interface. Their MG class is not used as belt evidence.",
+    "The runtime sidecar fails closed if the loaded GunData ammo or base capacity changes. Its surveyed carrier commission is emitted only from an actual loaded Gunsmith Table gun recipe; no standalone creative-only carrier route is added."
+  ]
+}

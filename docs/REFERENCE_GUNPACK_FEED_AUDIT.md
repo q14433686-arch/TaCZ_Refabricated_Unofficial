@@ -207,6 +207,37 @@ Berthier、SKS、SW Mk2 41 及其他转轮/历史 clip 仍保持候选或原有�
 `ccrp`、`classicr`、`cib`、`cibs`、`murasamet`、`suffuse` 等候选继续 legacy，等下一组人工审计；它们没有被
 本批“批量”二字自动实体化。
 
+## KhanPowder / Murasamet 历史枪械批量 cohort
+
+本轮按“供弹本身无争议、同平台重复变体”批量审计 `murasamet`，但没有用 `mg` / `smg` class 自动决定 belt
+或 detachable。用户提供的 survey 环境日志记录 `KhanPowder_v0.8.99_hotfix.zip` 对应 namespace `murasamet`；
+当前 schema-2 survey 仍以 SHA-256
+`919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a` 提供每把枪的真实 Ammo、基础容量、脚本与
+可选容量 guard。下列 **27 把**均有独立 sidecar/reference，不是从 cohort 文字直接批量生成。
+
+| 已核对接收机 | 机构 / family | 容量 | 人工边界 |
+|---|---|---|---|
+| `amd65` | detachable / `ak_762x39` | 20、30、45、75 | 明确审核 AMD-65 的 AK 7.62×39 接口；不是按“AK 名称”盲合并。 |
+| `g3a3` | detachable / `g3_308` | 20、15、18 | 明确 G3 盒式弹匣接口；15/18 是独立 survey 物理容量。 |
+| `l85a3` | detachable / `stanag_556` | 30、45、60 | 明确 STANAG；源数组重复的 30 不会再制造一张假变体。 |
+| `dp28`、`dpm` | detachable / 私有 47 发 top-pan | 47 | 同一 DP/DPM 顶部盘式接口；仍保留中性视觉，不伪称方盒/精确盘式网格。 |
+| `m1918`、`m1918a1`、`m1918a2` | detachable / `ww_bar_3006` | 20、30、35、40 | 三种 BAR 明确共享盒式弹匣；这也说明 MG class 绝不等于 belt。 |
+| `mg34`、`mg42` | belt / 各自私有 belt family | 各 75 | 两把均人工确认弹链供弹，但不因名称或 7.92×57 自动共享 family。 |
+| `m1921`、`m1928a1` | detachable / 私有 Thompson drum-capable family | 20、30、40、50 | 可以使用本包实际 40/50 容量路线。 |
+| `m1a1` | detachable / `ww_thompson_45acp` | 20、30 | 刻意只保留盒式路线，不让前两把的 40/50 身份泄漏进 M1A1。 |
+| `m3`、`m3a1` | detachable / 私有 M3 .45 family | 30 | 明确共享 Grease Gun 弹匣。 |
+| `mp28`；`mp38`、`mp40`；`sten_mk2`、`sten_mk5`；`lanchester` | detachable / 四个明确 family | 各 32 | 只共享 MP38/40、Sten Mk II/V 这两对；其余即使同为 9 mm / 32 发也不臆测互插。 |
+| `ppsh`、`kp31` | detachable / 各自私有 box/drum family | PPSh 25、35、50、71；KP/-31 70 | 机构真实，但没有合适授权模型时仍使用中性视觉。 |
+| `m1911a1`、`tt33`、`vz61`、`micro_uzi` | detachable / 对应 M1911、TT-33、Vz.61、Uzi family | 7；8；20、25、35、50；20、25、35、50 | M1911 和 Micro Uzi 才复用已有标准实体族；TT-33/Vz.61 保持私有。 |
+
+MG34/MG42 的载具复用现有 `tacz_extra:item/mag_m134_belt`，并在 icon mapping 中明确标记为 family-level
+exposed-belt material，不是 MG34/MG42 的精确网格。DP/DPM 顶部盘、PPSh 与 KP/-31 的鼓式/异形供弹器没有被
+硬套 RPK 或方盒贴图；它们继续走已有中性 fallback，真实服务器库存、容量、退匣和 surveyed Gunsmith Table 多槽
+制造委托仍照常生效。
+
+本批刻意保留 KhanPowder 中的 `mika`、`miyako`、`natsu`、`kittygun`、`barstard`、各转轮、逐发/clip 枪和其他
+未明机制条目为 legacy。批量只缩短重复平台的人工核对，不降低 unknown gun 的 fail-closed 边界。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：

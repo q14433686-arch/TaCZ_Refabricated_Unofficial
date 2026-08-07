@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "murasamet_tt33_762x25",
+  "magazine_capacity": 8,
+  "ammo": "tacz:762x25",
+  "display_name": "item.tacz.magazine.murasamet_tt33_762x25_8"
+}

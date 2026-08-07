@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_bar_3006",
+  "magazine_capacity": 20,
+  "ammo": "tacz:30_06",
+  "display_name": "item.tacz.magazine.ww_bar_3006_20",
+  "carrier_variants": [
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.murasamet_bar_3006_30"
+    },
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.murasamet_bar_3006_35"
+    },
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.murasamet_bar_3006_40"
+    }
+  ]
+}
