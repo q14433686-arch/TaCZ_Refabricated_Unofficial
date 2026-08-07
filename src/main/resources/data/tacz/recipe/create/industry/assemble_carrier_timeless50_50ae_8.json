@@ -47,7 +47,8 @@
           "MagazineAmmoId": "tacz:50ae",
           "MagazineCapacity": 8,
           "MagazineAmmoCount": 0,
-          "MagazineDisplayName": "item.tacz.magazine.timeless50_50ae"
+          "MagazineDisplayName": "item.tacz.magazine.timeless50_50ae",
+          "FeedDeviceKind": "detachable_magazine"
         }
       }
     }

@@ -47,7 +47,8 @@
           "MagazineAmmoId": "tacz:50bmg",
           "MagazineCapacity": 5,
           "MagazineAmmoCount": 0,
-          "MagazineDisplayName": "item.tacz.magazine.m95_50bmg"
+          "MagazineDisplayName": "item.tacz.magazine.m95_50bmg",
+          "FeedDeviceKind": "detachable_magazine"
         }
       }
     }

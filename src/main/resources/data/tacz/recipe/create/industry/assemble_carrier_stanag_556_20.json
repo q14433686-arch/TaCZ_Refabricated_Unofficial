@@ -47,7 +47,8 @@
           "MagazineAmmoId": "tacz:556x45",
           "MagazineCapacity": 20,
           "MagazineAmmoCount": 0,
-          "MagazineDisplayName": "item.tacz.magazine.stanag_556_20"
+          "MagazineDisplayName": "item.tacz.magazine.stanag_556_20",
+          "FeedDeviceKind": "detachable_magazine"
         }
       }
     }

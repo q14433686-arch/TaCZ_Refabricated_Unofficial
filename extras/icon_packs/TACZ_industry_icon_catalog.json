@@ -69,7 +69,7 @@
     "physical_magazine": {
       "covered": 34,
       "exact": 22,
-      "runtime_fallback": 12,
+      "family": 12,
       "total": 34
     },
     "platform_acceptance_tool": {
@@ -5549,6 +5549,7 @@
     {
       "texture": "tacz_extra:item/mag_m249_box",
       "bound_by": [
+        "feed_device_belt_box_generic_material",
         "magazine_m249_556_belt"
       ],
       "status": "bound"
@@ -5587,7 +5588,8 @@
     {
       "texture": "tacz_extra:item/mag_rpk_drum",
       "bound_by": [
-        "magazine_ak_762x39_rpk_40"
+        "magazine_ak_762x39_rpk_40",
+        "magazine_bf1_smg0818_drum_family"
       ],
       "status": "bound"
     },
@@ -5646,7 +5648,8 @@
     {
       "texture": "tacz_extra:item/magazine_fal_308_20_tacz_308",
       "bound_by": [
-        "complete_magazine_fal_308_20_tacz_308_31470b218e"
+        "complete_magazine_fal_308_20_tacz_308_31470b218e",
+        "magazine_rainforest_fal_308_family"
       ],
       "status": "bound"
     },
@@ -13026,9 +13029,10 @@
       "selectors": {
         "magazine_family": "aa12_12g",
         "magazine_ammo_id": "tacz:12g",
-        "magazine_capacity": 8
+        "magazine_capacity": 8,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=aa12_12g ; magazine_ammo_id=tacz:12g ; magazine_capacity=8",
+      "selector": "tacz:magazine ; magazine_family=aa12_12g ; magazine_ammo_id=tacz:12g ; magazine_capacity=8 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.aa12_12g",
       "accepted_coverage": [
         "exact",
@@ -13038,9 +13042,9 @@
       "asset_key": "magazine:aa12_12g:8:tacz:12g",
       "asset_strategy": "family",
       "mapping_eligible": true,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
+      "mapping": "feed_device_detachable_generic_material",
+      "texture": "tacz:item/magazine",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -13051,9 +13055,10 @@
       "selectors": {
         "magazine_family": "ak_762x39",
         "magazine_ammo_id": "tacz:762x39",
-        "magazine_capacity": 30
+        "magazine_capacity": 30,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=ak_762x39 ; magazine_ammo_id=tacz:762x39 ; magazine_capacity=30",
+      "selector": "tacz:magazine ; magazine_family=ak_762x39 ; magazine_ammo_id=tacz:762x39 ; magazine_capacity=30 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.ak_762",
       "accepted_coverage": [
         "exact",
@@ -13076,9 +13081,10 @@
       "selectors": {
         "magazine_family": "ak_762x39",
         "magazine_ammo_id": "tacz:762x39",
-        "magazine_capacity": 40
+        "magazine_capacity": 40,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=ak_762x39 ; magazine_ammo_id=tacz:762x39 ; magazine_capacity=40",
+      "selector": "tacz:magazine ; magazine_family=ak_762x39 ; magazine_ammo_id=tacz:762x39 ; magazine_capacity=40 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.rpk_762",
       "accepted_coverage": [
         "exact",
@@ -13101,9 +13107,10 @@
       "selectors": {
         "magazine_family": "aug_556",
         "magazine_ammo_id": "tacz:556x45",
-        "magazine_capacity": 30
+        "magazine_capacity": 30,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=aug_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=30",
+      "selector": "tacz:magazine ; magazine_family=aug_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=30 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.aug_556",
       "accepted_coverage": [
         "exact",
@@ -13113,9 +13120,9 @@
       "asset_key": "magazine:aug_556:30:tacz:556x45",
       "asset_strategy": "family",
       "mapping_eligible": true,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
+      "mapping": "feed_device_detachable_generic_material",
+      "texture": "tacz:item/magazine",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -13126,9 +13133,10 @@
       "selectors": {
         "magazine_family": "awm_338",
         "magazine_ammo_id": "tacz:338",
-        "magazine_capacity": 5
+        "magazine_capacity": 5,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=awm_338 ; magazine_ammo_id=tacz:338 ; magazine_capacity=5",
+      "selector": "tacz:magazine ; magazine_family=awm_338 ; magazine_ammo_id=tacz:338 ; magazine_capacity=5 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.awm_338",
       "accepted_coverage": [
         "exact",
@@ -13138,9 +13146,9 @@
       "asset_key": "magazine:awm_338:5:tacz:338",
       "asset_strategy": "family",
       "mapping_eligible": true,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
+      "mapping": "feed_device_detachable_generic_material",
+      "texture": "tacz:item/magazine",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -13151,9 +13159,10 @@
       "selectors": {
         "magazine_family": "b93r_9x19",
         "magazine_ammo_id": "tacz:9mm",
-        "magazine_capacity": 20
+        "magazine_capacity": 20,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=b93r_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=20",
+      "selector": "tacz:magazine ; magazine_family=b93r_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=20 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.b93r_9x19",
       "accepted_coverage": [
         "exact",
@@ -13163,9 +13172,9 @@
       "asset_key": "magazine:b93r_9x19:20:tacz:9mm",
       "asset_strategy": "family",
       "mapping_eligible": true,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
+      "mapping": "feed_device_detachable_generic_material",
+      "texture": "tacz:item/magazine",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -13176,9 +13185,10 @@
       "selectors": {
         "magazine_family": "cz75_9x19",
         "magazine_ammo_id": "tacz:9mm",
-        "magazine_capacity": 16
+        "magazine_capacity": 16,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=cz75_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=16",
+      "selector": "tacz:magazine ; magazine_family=cz75_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=16 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.cz75",
       "accepted_coverage": [
         "exact",
@@ -13201,9 +13211,10 @@
       "selectors": {
         "magazine_family": "deagle_357",
         "magazine_ammo_id": "tacz:357mag",
-        "magazine_capacity": 9
+        "magazine_capacity": 9,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=deagle_357 ; magazine_ammo_id=tacz:357mag ; magazine_capacity=9",
+      "selector": "tacz:magazine ; magazine_family=deagle_357 ; magazine_ammo_id=tacz:357mag ; magazine_capacity=9 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.deagle_357",
       "accepted_coverage": [
         "exact",
@@ -13213,9 +13224,9 @@
       "asset_key": "magazine:deagle_357:9:tacz:357mag",
       "asset_strategy": "family",
       "mapping_eligible": true,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
+      "mapping": "feed_device_detachable_generic_material",
+      "texture": "tacz:item/magazine",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -13226,9 +13237,10 @@
       "selectors": {
         "magazine_family": "deagle_50ae",
         "magazine_ammo_id": "tacz:50ae",
-        "magazine_capacity": 7
+        "magazine_capacity": 7,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=deagle_50ae ; magazine_ammo_id=tacz:50ae ; magazine_capacity=7",
+      "selector": "tacz:magazine ; magazine_family=deagle_50ae ; magazine_ammo_id=tacz:50ae ; magazine_capacity=7 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.deagle_50ae",
       "accepted_coverage": [
         "exact",
@@ -13238,9 +13250,9 @@
       "asset_key": "magazine:deagle_50ae:7:tacz:50ae",
       "asset_strategy": "family",
       "mapping_eligible": true,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
+      "mapping": "feed_device_detachable_generic_material",
+      "texture": "tacz:item/magazine",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -13251,9 +13263,10 @@
       "selectors": {
         "magazine_family": "evolys_308_belt",
         "magazine_ammo_id": "tacz:308",
-        "magazine_capacity": 75
+        "magazine_capacity": 75,
+        "feed_device_kind": "belt"
       },
-      "selector": "tacz:magazine ; magazine_family=evolys_308_belt ; magazine_ammo_id=tacz:308 ; magazine_capacity=75",
+      "selector": "tacz:magazine ; magazine_family=evolys_308_belt ; magazine_ammo_id=tacz:308 ; magazine_capacity=75 ; feed_device_kind=belt",
       "label": "item.tacz.magazine.fn_evolys_belt",
       "accepted_coverage": [
         "exact",
@@ -13276,9 +13289,10 @@
       "selectors": {
         "magazine_family": "fal_308",
         "magazine_ammo_id": "tacz:308",
-        "magazine_capacity": 20
+        "magazine_capacity": 20,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=fal_308 ; magazine_ammo_id=tacz:308 ; magazine_capacity=20",
+      "selector": "tacz:magazine ; magazine_family=fal_308 ; magazine_ammo_id=tacz:308 ; magazine_capacity=20 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.fal_308",
       "accepted_coverage": [
         "exact",
@@ -13301,9 +13315,10 @@
       "selectors": {
         "magazine_family": "g36_556",
         "magazine_ammo_id": "tacz:556x45",
-        "magazine_capacity": 30
+        "magazine_capacity": 30,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=g36_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=30",
+      "selector": "tacz:magazine ; magazine_family=g36_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=30 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.g36_556",
       "accepted_coverage": [
         "exact",
@@ -13326,9 +13341,10 @@
       "selectors": {
         "magazine_family": "g3_308",
         "magazine_ammo_id": "tacz:308",
-        "magazine_capacity": 20
+        "magazine_capacity": 20,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=g3_308 ; magazine_ammo_id=tacz:308 ; magazine_capacity=20",
+      "selector": "tacz:magazine ; magazine_family=g3_308 ; magazine_ammo_id=tacz:308 ; magazine_capacity=20 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.g3_308",
       "accepted_coverage": [
         "exact",
@@ -13351,9 +13367,10 @@
       "selectors": {
         "magazine_family": "glock_9x19",
         "magazine_ammo_id": "tacz:9mm",
-        "magazine_capacity": 17
+        "magazine_capacity": 17,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=glock_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=17",
+      "selector": "tacz:magazine ; magazine_family=glock_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=17 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.glock_17",
       "accepted_coverage": [
         "exact",
@@ -13376,9 +13393,10 @@
       "selectors": {
         "magazine_family": "m107_50bmg",
         "magazine_ammo_id": "tacz:50bmg",
-        "magazine_capacity": 10
+        "magazine_capacity": 10,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=m107_50bmg ; magazine_ammo_id=tacz:50bmg ; magazine_capacity=10",
+      "selector": "tacz:magazine ; magazine_family=m107_50bmg ; magazine_ammo_id=tacz:50bmg ; magazine_capacity=10 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.m107_50bmg",
       "accepted_coverage": [
         "exact",
@@ -13388,9 +13406,9 @@
       "asset_key": "magazine:m107_50bmg:10:tacz:50bmg",
       "asset_strategy": "family",
       "mapping_eligible": true,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
+      "mapping": "feed_device_detachable_generic_material",
+      "texture": "tacz:item/magazine",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -13401,9 +13419,10 @@
       "selectors": {
         "magazine_family": "m14_308",
         "magazine_ammo_id": "tacz:308",
-        "magazine_capacity": 10
+        "magazine_capacity": 10,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=m14_308 ; magazine_ammo_id=tacz:308 ; magazine_capacity=10",
+      "selector": "tacz:magazine ; magazine_family=m14_308 ; magazine_ammo_id=tacz:308 ; magazine_capacity=10 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.m14_308",
       "accepted_coverage": [
         "exact",
@@ -13426,9 +13445,10 @@
       "selectors": {
         "magazine_family": "m1911_45acp",
         "magazine_ammo_id": "tacz:45acp",
-        "magazine_capacity": 7
+        "magazine_capacity": 7,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=m1911_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=7",
+      "selector": "tacz:magazine ; magazine_family=m1911_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=7 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.m1911",
       "accepted_coverage": [
         "exact",
@@ -13451,9 +13471,10 @@
       "selectors": {
         "magazine_family": "m249_556_belt",
         "magazine_ammo_id": "tacz:556x45",
-        "magazine_capacity": 75
+        "magazine_capacity": 75,
+        "feed_device_kind": "belt"
       },
-      "selector": "tacz:magazine ; magazine_family=m249_556_belt ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=75",
+      "selector": "tacz:magazine ; magazine_family=m249_556_belt ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=75 ; feed_device_kind=belt",
       "label": "item.tacz.magazine.m249_belt",
       "accepted_coverage": [
         "exact",
@@ -13476,9 +13497,10 @@
       "selectors": {
         "magazine_family": "m95_50bmg",
         "magazine_ammo_id": "tacz:50bmg",
-        "magazine_capacity": 5
+        "magazine_capacity": 5,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=m95_50bmg ; magazine_ammo_id=tacz:50bmg ; magazine_capacity=5",
+      "selector": "tacz:magazine ; magazine_family=m95_50bmg ; magazine_ammo_id=tacz:50bmg ; magazine_capacity=5 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.m95_50bmg",
       "accepted_coverage": [
         "exact",
@@ -13488,9 +13510,9 @@
       "asset_key": "magazine:m95_50bmg:5:tacz:50bmg",
       "asset_strategy": "family",
       "mapping_eligible": true,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
+      "mapping": "feed_device_detachable_generic_material",
+      "texture": "tacz:item/magazine",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -13501,9 +13523,10 @@
       "selectors": {
         "magazine_family": "m9_9x19",
         "magazine_ammo_id": "tacz:9mm",
-        "magazine_capacity": 17
+        "magazine_capacity": 17,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=m9_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=17",
+      "selector": "tacz:magazine ; magazine_family=m9_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=17 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.m9a4",
       "accepted_coverage": [
         "exact",
@@ -13526,9 +13549,10 @@
       "selectors": {
         "magazine_family": "mk23_45acp",
         "magazine_ammo_id": "tacz:45acp",
-        "magazine_capacity": 12
+        "magazine_capacity": 12,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=mk23_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=12",
+      "selector": "tacz:magazine ; magazine_family=mk23_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=12 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.hk_mk23",
       "accepted_coverage": [
         "exact",
@@ -13551,9 +13575,10 @@
       "selectors": {
         "magazine_family": "mp5_9x19",
         "magazine_ammo_id": "tacz:9mm",
-        "magazine_capacity": 30
+        "magazine_capacity": 30,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=mp5_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=30",
+      "selector": "tacz:magazine ; magazine_family=mp5_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=30 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.mp5_9",
       "accepted_coverage": [
         "exact",
@@ -13576,9 +13601,10 @@
       "selectors": {
         "magazine_family": "p320_45acp",
         "magazine_ammo_id": "tacz:45acp",
-        "magazine_capacity": 12
+        "magazine_capacity": 12,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=p320_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=12",
+      "selector": "tacz:magazine ; magazine_family=p320_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=12 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.p320",
       "accepted_coverage": [
         "exact",
@@ -13601,9 +13627,10 @@
       "selectors": {
         "magazine_family": "p90_57x28",
         "magazine_ammo_id": "tacz:57x28",
-        "magazine_capacity": 50
+        "magazine_capacity": 50,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=p90_57x28 ; magazine_ammo_id=tacz:57x28 ; magazine_capacity=50",
+      "selector": "tacz:magazine ; magazine_family=p90_57x28 ; magazine_ammo_id=tacz:57x28 ; magazine_capacity=50 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.p90_57",
       "accepted_coverage": [
         "exact",
@@ -13626,9 +13653,10 @@
       "selectors": {
         "magazine_family": "qbz_58x42",
         "magazine_ammo_id": "tacz:58x42",
-        "magazine_capacity": 30
+        "magazine_capacity": 30,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=qbz_58x42 ; magazine_ammo_id=tacz:58x42 ; magazine_capacity=30",
+      "selector": "tacz:magazine ; magazine_family=qbz_58x42 ; magazine_ammo_id=tacz:58x42 ; magazine_capacity=30 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.qbz_58",
       "accepted_coverage": [
         "exact",
@@ -13651,9 +13679,10 @@
       "selectors": {
         "magazine_family": "scar_h_308",
         "magazine_ammo_id": "tacz:308",
-        "magazine_capacity": 20
+        "magazine_capacity": 20,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=scar_h_308 ; magazine_ammo_id=tacz:308 ; magazine_capacity=20",
+      "selector": "tacz:magazine ; magazine_family=scar_h_308 ; magazine_ammo_id=tacz:308 ; magazine_capacity=20 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.scar_h_308",
       "accepted_coverage": [
         "exact",
@@ -13663,9 +13692,9 @@
       "asset_key": "magazine:scar_h_308:20:tacz:308",
       "asset_strategy": "family",
       "mapping_eligible": true,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
+      "mapping": "feed_device_detachable_generic_material",
+      "texture": "tacz:item/magazine",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -13676,9 +13705,10 @@
       "selectors": {
         "magazine_family": "spr15hb_556",
         "magazine_ammo_id": "tacz:556x45",
-        "magazine_capacity": 15
+        "magazine_capacity": 15,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=spr15hb_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=15",
+      "selector": "tacz:magazine ; magazine_family=spr15hb_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=15 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.spr15hb_556",
       "accepted_coverage": [
         "exact",
@@ -13688,9 +13718,9 @@
       "asset_key": "magazine:spr15hb_556:15:tacz:556x45",
       "asset_strategy": "family",
       "mapping_eligible": true,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
+      "mapping": "feed_device_detachable_generic_material",
+      "texture": "tacz:item/magazine",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -13701,9 +13731,10 @@
       "selectors": {
         "magazine_family": "stanag_556",
         "magazine_ammo_id": "tacz:556x45",
-        "magazine_capacity": 20
+        "magazine_capacity": 20,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=stanag_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=20",
+      "selector": "tacz:magazine ; magazine_family=stanag_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=20 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.stanag_556_20",
       "accepted_coverage": [
         "exact",
@@ -13726,9 +13757,10 @@
       "selectors": {
         "magazine_family": "stanag_556",
         "magazine_ammo_id": "tacz:556x45",
-        "magazine_capacity": 30
+        "magazine_capacity": 30,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=stanag_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=30",
+      "selector": "tacz:magazine ; magazine_family=stanag_556 ; magazine_ammo_id=tacz:556x45 ; magazine_capacity=30 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.stanag_556",
       "accepted_coverage": [
         "exact",
@@ -13751,9 +13783,10 @@
       "selectors": {
         "magazine_family": "timeless50_50ae",
         "magazine_ammo_id": "tacz:50ae",
-        "magazine_capacity": 8
+        "magazine_capacity": 8,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=timeless50_50ae ; magazine_ammo_id=tacz:50ae ; magazine_capacity=8",
+      "selector": "tacz:magazine ; magazine_family=timeless50_50ae ; magazine_ammo_id=tacz:50ae ; magazine_capacity=8 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.timeless50_50ae",
       "accepted_coverage": [
         "exact",
@@ -13763,9 +13796,9 @@
       "asset_key": "magazine:timeless50_50ae:8:tacz:50ae",
       "asset_strategy": "family",
       "mapping_eligible": true,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
+      "mapping": "feed_device_detachable_generic_material",
+      "texture": "tacz:item/magazine",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -13776,9 +13809,10 @@
       "selectors": {
         "magazine_family": "type81_762x39",
         "magazine_ammo_id": "tacz:762x39",
-        "magazine_capacity": 30
+        "magazine_capacity": 30,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=type81_762x39 ; magazine_ammo_id=tacz:762x39 ; magazine_capacity=30",
+      "selector": "tacz:magazine ; magazine_family=type81_762x39 ; magazine_ammo_id=tacz:762x39 ; magazine_capacity=30 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.type81_762x39",
       "accepted_coverage": [
         "exact",
@@ -13788,9 +13822,9 @@
       "asset_key": "magazine:type81_762x39:30:tacz:762x39",
       "asset_strategy": "family",
       "mapping_eligible": true,
-      "mapping": null,
-      "texture": null,
-      "current_coverage": "runtime_fallback",
+      "mapping": "feed_device_detachable_generic_material",
+      "texture": "tacz:item/magazine",
+      "current_coverage": "family",
       "covered": true,
       "needs_art": false
     },
@@ -13801,9 +13835,10 @@
       "selectors": {
         "magazine_family": "ump_45acp",
         "magazine_ammo_id": "tacz:45acp",
-        "magazine_capacity": 25
+        "magazine_capacity": 25,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=ump_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=25",
+      "selector": "tacz:magazine ; magazine_family=ump_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=25 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.ump_45",
       "accepted_coverage": [
         "exact",
@@ -13826,9 +13861,10 @@
       "selectors": {
         "magazine_family": "uzi_9x19",
         "magazine_ammo_id": "tacz:9mm",
-        "magazine_capacity": 20
+        "magazine_capacity": 20,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=uzi_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=20",
+      "selector": "tacz:magazine ; magazine_family=uzi_9x19 ; magazine_ammo_id=tacz:9mm ; magazine_capacity=20 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.uzi_9",
       "accepted_coverage": [
         "exact",
@@ -13851,9 +13887,10 @@
       "selectors": {
         "magazine_family": "vector_45acp",
         "magazine_ammo_id": "tacz:45acp",
-        "magazine_capacity": 20
+        "magazine_capacity": 20,
+        "feed_device_kind": "detachable_magazine"
       },
-      "selector": "tacz:magazine ; magazine_family=vector_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=20",
+      "selector": "tacz:magazine ; magazine_family=vector_45acp ; magazine_ammo_id=tacz:45acp ; magazine_capacity=20 ; feed_device_kind=detachable_magazine",
       "label": "item.tacz.magazine.vector_45",
       "accepted_coverage": [
         "exact",

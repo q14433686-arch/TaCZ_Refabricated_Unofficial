@@ -47,7 +47,8 @@
           "MagazineAmmoId": "tacz:556x45",
           "MagazineCapacity": 75,
           "MagazineAmmoCount": 0,
-          "MagazineDisplayName": "item.tacz.magazine.m249_belt"
+          "MagazineDisplayName": "item.tacz.magazine.m249_belt",
+          "FeedDeviceKind": "belt"
         }
       }
     }

@@ -47,7 +47,8 @@
           "MagazineAmmoId": "tacz:308",
           "MagazineCapacity": 75,
           "MagazineAmmoCount": 0,
-          "MagazineDisplayName": "item.tacz.magazine.fn_evolys_belt"
+          "MagazineDisplayName": "item.tacz.magazine.fn_evolys_belt",
+          "FeedDeviceKind": "belt"
         }
       }
     }

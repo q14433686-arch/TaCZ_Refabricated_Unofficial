@@ -47,7 +47,8 @@
           "MagazineAmmoId": "tacz:357mag",
           "MagazineCapacity": 9,
           "MagazineAmmoCount": 0,
-          "MagazineDisplayName": "item.tacz.magazine.deagle_357"
+          "MagazineDisplayName": "item.tacz.magazine.deagle_357",
+          "FeedDeviceKind": "detachable_magazine"
         }
       }
     }

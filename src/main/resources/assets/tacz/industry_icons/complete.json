@@ -8442,7 +8442,8 @@
       "match": {
         "magazine_family": "evolys_308_belt",
         "magazine_ammo_id": "tacz:308",
-        "magazine_capacity": 75
+        "magazine_capacity": 75,
+        "feed_device_kind": "belt"
       },
       "coverage": "exact",
       "source_identity": "magazine:evolys_308_belt:75:tacz:308"
@@ -8455,7 +8456,8 @@
       "match": {
         "magazine_family": "fal_308",
         "magazine_ammo_id": "tacz:308",
-        "magazine_capacity": 20
+        "magazine_capacity": 20,
+        "feed_device_kind": "detachable_magazine"
       },
       "coverage": "exact",
       "source_identity": "magazine:fal_308:20:tacz:308"
@@ -8468,7 +8470,8 @@
       "match": {
         "magazine_family": "g36_556",
         "magazine_ammo_id": "tacz:556x45",
-        "magazine_capacity": 30
+        "magazine_capacity": 30,
+        "feed_device_kind": "detachable_magazine"
       },
       "coverage": "exact",
       "source_identity": "magazine:g36_556:30:tacz:556x45"
@@ -8481,7 +8484,8 @@
       "match": {
         "magazine_family": "m14_308",
         "magazine_ammo_id": "tacz:308",
-        "magazine_capacity": 10
+        "magazine_capacity": 10,
+        "feed_device_kind": "detachable_magazine"
       },
       "coverage": "exact",
       "source_identity": "magazine:m14_308:10:tacz:308"
@@ -8494,7 +8498,8 @@
       "match": {
         "magazine_family": "m9_9x19",
         "magazine_ammo_id": "tacz:9mm",
-        "magazine_capacity": 17
+        "magazine_capacity": 17,
+        "feed_device_kind": "detachable_magazine"
       },
       "coverage": "exact",
       "source_identity": "magazine:m9_9x19:17:tacz:9mm"
@@ -8507,7 +8512,8 @@
       "match": {
         "magazine_family": "mk23_45acp",
         "magazine_ammo_id": "tacz:45acp",
-        "magazine_capacity": 12
+        "magazine_capacity": 12,
+        "feed_device_kind": "detachable_magazine"
       },
       "coverage": "exact",
       "source_identity": "magazine:mk23_45acp:12:tacz:45acp"
@@ -8520,7 +8526,8 @@
       "match": {
         "magazine_family": "mp5_9x19",
         "magazine_ammo_id": "tacz:9mm",
-        "magazine_capacity": 30
+        "magazine_capacity": 30,
+        "feed_device_kind": "detachable_magazine"
       },
       "coverage": "exact",
       "source_identity": "magazine:mp5_9x19:30:tacz:9mm"

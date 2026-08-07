@@ -1444,6 +1444,50 @@
       },
       "coverage": "family",
       "note": "Visible RPG motor-housing intermediate; neutral formed-case art until a dedicated motor texture is supplied."
+    },
+    {
+      "id": "feed_device_detachable_generic_material",
+      "item": "tacz:magazine",
+      "texture": "tacz:item/magazine",
+      "priority": 120,
+      "match": {
+        "feed_device_kind": "detachable_magazine"
+      },
+      "coverage": "family",
+      "note": "Neutral existing magazine material for surveyed detachable carriers; exact family mappings override it."
+    },
+    {
+      "id": "feed_device_belt_box_generic_material",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_m249_box",
+      "priority": 120,
+      "match": {
+        "feed_device_kind": "belt"
+      },
+      "coverage": "family",
+      "note": "Existing belt-box material reused for surveyed belt containers; exact M249/Evolys mappings override it."
+    },
+    {
+      "id": "magazine_rainforest_fal_308_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/magazine_fal_308_20_tacz_308",
+      "priority": 270,
+      "match": {
+        "magazine_family": "rainforest_fal_308"
+      },
+      "coverage": "family",
+      "note": "Reuses the supplied FAL family material for surveyed Cold War FAL capacities; not an exact per-capacity mesh."
+    },
+    {
+      "id": "magazine_bf1_smg0818_drum_family",
+      "item": "tacz:magazine",
+      "texture": "tacz_extra:item/mag_rpk_drum",
+      "priority": 270,
+      "match": {
+        "magazine_family": "bf1_smg0818_9x19_drum"
+      },
+      "coverage": "family",
+      "note": "Existing drum material reused for the SMG08/18 drum family; visual is intentionally family-level, not exact."
     }
   ]
 }

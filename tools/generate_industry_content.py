@@ -2247,15 +2247,25 @@ def carrier_feed_kit_tag(carrier: dict[str, Any]) -> dict[str, Any]:
     return carrier_spec_tag(carrier, "carrier_feed_kit", f"item.tacz.gun_component.carrier_feed_kit.{carrier['id']}")
 
 
-def carrier_magazine_tag(carrier: dict[str, Any]) -> dict[str, Any]:
-    """The actual configured removable stack; no incomplete magazine is usable."""
-    return {
+def carrier_magazine_tag(carrier: dict[str, Any], include_feed_device_kind: bool = True) -> dict[str, Any]:
+    """The actual configured removable stack; no incomplete magazine is usable.
+
+    New manufacturing outputs persist ``FeedDeviceKind`` so icon/material
+    selectors distinguish a belt box from a detachable box. Reverse metrology
+    intentionally omits that optional field from its partial-NBT ingredient:
+    pre-kind old-world magazines must remain valid empty calibration evidence,
+    while modern stacks still match because partial NBT ignores their extra key.
+    """
+    tag = {
         "MagazineFamily": carrier["family"],
         "MagazineAmmoId": carrier["ammo"],
         "MagazineCapacity": carrier["capacity"],
         "MagazineAmmoCount": 0,
         "MagazineDisplayName": carrier["_display_name"],
     }
+    if include_feed_device_kind:
+        tag["FeedDeviceKind"] = carrier["mechanism"]
+    return tag
 
 
 def carrier_forming_recipe(stock: Any, stock_count: int, gauge: dict[str, Any], result: dict[str, Any],
@@ -2361,6 +2371,10 @@ def generated_magazine_files(carriers: list[dict[str, Any]], platforms: list[dic
         body = carrier_body_tag(carrier)
         feed_kit = carrier_feed_kit_tag(carrier)
         magazine = carrier_magazine_tag(carrier)
+        # Do not require FeedDeviceKind when reading an old empty stack as
+        # reverse-engineering evidence. See carrier_magazine_tag's compatibility
+        # note; the manufactured result itself always includes the kind.
+        reverse_magazine = carrier_magazine_tag(carrier, include_feed_device_kind=False)
 
         # Any declared gun that accepts this exact physical carrier may donate
         # its production template to establish the same reusable gauge. This
@@ -2385,7 +2399,7 @@ def generated_magazine_files(carriers: list[dict[str, Any]], platforms: list[dic
         # fails the exact zero-round evidence match and must be unloaded first.
         files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_carrier_gauge_{carrier_id}.json"] = deploying(
             partial("tacz:press_die", carrier_gauge_blank_tag()),
-            partial("tacz:magazine", magazine),
+            partial("tacz:magazine", reverse_magazine),
             output("tacz:press_die", gauge),
             keep=False,
         )
@@ -4392,6 +4406,7 @@ def generated_icon_identities(platforms: list[dict[str, Any]], cartridges: list[
                 "magazine_family": family,
                 "magazine_ammo_id": ammo,
                 "magazine_capacity": capacity,
+                "feed_device_kind": feed["mechanism"],
             },
             # Correct server identity/manufacture must never be held hostage by
             # absent artwork. Exact/family art wins when supplied; otherwise the
@@ -5139,6 +5154,7 @@ def validate_magazine_tooling_continuity(carriers: list[dict[str, Any]], platfor
         body = carrier_body_tag(carrier)
         feed_kit = carrier_feed_kit_tag(carrier)
         magazine = carrier_magazine_tag(carrier)
+        reverse_magazine = carrier_magazine_tag(carrier, include_feed_device_kind=False)
         profile = carrier["_profile"]
 
         for source_slug in carrier["source_guns"]:
@@ -5157,7 +5173,7 @@ def validate_magazine_tooling_continuity(carriers: list[dict[str, Any]], platfor
         reverse = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/reverse_carrier_gauge_{carrier_id}.json")
         if not isinstance(reverse, dict) \
                 or reverse.get("target", {}).get("nbt") != carrier_gauge_blank_tag() \
-                or reverse.get("ingredient", {}).get("nbt") != magazine \
+                or reverse.get("ingredient", {}).get("nbt") != reverse_magazine \
                 or _recipe_result_custom_data(reverse) != gauge \
                 or reverse.get("keep_held_item"):
             raise ValueError(f"{carrier_id}: empty carrier reverse evidence must be destructive and exact")
@@ -5193,9 +5209,10 @@ def validate_magazine_tooling_continuity(carriers: list[dict[str, Any]], platfor
                 or _recipe_result_custom_data(assembly) != magazine \
                 or assembly.get("keep_held_item"):
             raise ValueError(f"{carrier_id}: final carrier assembly must consume body + named feed kit")
-        # The exact final stack is the reverse-evidence input, while the two
-        # named components are the exact final assembly inputs in recipe viewers.
-        if reverse.get("ingredient", {}).get("nbt") != magazine:
+        # Reverse metrology intentionally uses the legacy-compatible subset of
+        # the final identity. FeedDeviceKind is an optional extra on new output,
+        # not a requirement that invalidates old empty carrier evidence.
+        if reverse.get("ingredient", {}).get("nbt") != reverse_magazine:
             raise ValueError(f"{carrier_id}: final carrier → reverse-gauge viewer edge is disconnected")
 
 

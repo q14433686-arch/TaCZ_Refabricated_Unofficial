@@ -47,7 +47,8 @@
           "MagazineAmmoId": "tacz:50ae",
           "MagazineCapacity": 7,
           "MagazineAmmoCount": 0,
-          "MagazineDisplayName": "item.tacz.magazine.deagle_50ae"
+          "MagazineDisplayName": "item.tacz.magazine.deagle_50ae",
+          "FeedDeviceKind": "detachable_magazine"
         }
       }
     }

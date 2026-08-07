@@ -21,6 +21,31 @@ FeedDeviceKind = stripper_clip | speedloader | en_bloc_clip
 
 这只是复用可靠的 ItemStack 存储与装卸 UI；它们不会进入 `InstalledMagazine`，也不会触发普通弹匣的替换逻辑。
 
+## 已有材质的诚实复用规则
+
+新接入的枪包不需要等待新 PNG 才能获得真实服务器事务，但也不能把一张错误的 AK/STANAG 图冒充成任何新枪的精确弹匣。客户端映射现在按 `FeedDeviceKind` 优先复用已有材料：
+
+| 器件 | 复用材质 | 说明 |
+|---|---|---|
+| 普通可拆卸盒式弹匣 | `tacz:item/magazine` | 中性既有弹匣材质；仅说明“可拆卸弹匣”，不伪称精确外形 |
+| 弹链箱 / 带盒 | `tacz_extra:item/mag_m249_box` | 既有弹链箱材料；M249/Evolys 的精确 family 图仍优先 |
+| 桥夹 | `tacz_extra:item/base_m_loader` | 已有桥夹/装填器材料族，保留 `stripper_clip` 语义 |
+| 漏夹 | `tacz_extra:item/base_m_loader` | 与桥夹复用金属夹条材料，但仍由 `en_bloc_clip` 状态和自动弹出区分 |
+| 快装器 | `tacz_extra:item/mag_speedloader22` | 已有圆柱快装器材料族 |
+| 已审计 FAL 系列 | 既有 FAL 弹匣图 | `rainforest_fal_308` 复用 FAL 家族材质，标记为 family 而非每容量精确模型 |
+| SMG08/18 鼓式弹匣 | `tacz_extra:item/mag_rpk_drum` | 复用既有鼓式材料，明确是 family 级近似而不是 SMG08 精确复刻 |
+
+以下类型**不适合**硬套已有方盒弹匣图，当前保留中性材质，直到有合适的可授权资源：
+
+```text
+Lewis / DP28 顶部盘式弹匣
+Villar Perosa 双上置盒式弹匣
+MG08/15 等暴露式布带/特殊容器
+特殊蜗牛盘、异形双联、专有顶部供弹器
+```
+
+它们的机制、余弹、制造和图标选择仍是实际生效的；“中性材质”只是诚实地不把错误几何说成精确美术。资源包作者可用 `industry_icons` 的 `magazine_family` 或 `feed_device_kind` selector 以更高优先级提供精确覆盖。
+
 ## 桥夹选择、余弹与扣除规则
 
 普通弹匣当前的自动策略是“候选余弹必须大于当前已装载供弹器余弹”才替换。桥夹绝不能沿用它。

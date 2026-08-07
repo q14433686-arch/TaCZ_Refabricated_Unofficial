@@ -47,7 +47,8 @@
           "MagazineAmmoId": "tacz:9mm",
           "MagazineCapacity": 17,
           "MagazineAmmoCount": 0,
-          "MagazineDisplayName": "item.tacz.magazine.m9a4"
+          "MagazineDisplayName": "item.tacz.magazine.m9a4",
+          "FeedDeviceKind": "detachable_magazine"
         }
       }
     }

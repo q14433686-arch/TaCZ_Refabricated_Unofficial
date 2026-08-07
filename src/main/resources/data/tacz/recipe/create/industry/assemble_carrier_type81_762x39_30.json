@@ -47,7 +47,8 @@
           "MagazineAmmoId": "tacz:762x39",
           "MagazineCapacity": 30,
           "MagazineAmmoCount": 0,
-          "MagazineDisplayName": "item.tacz.magazine.type81_762x39"
+          "MagazineDisplayName": "item.tacz.magazine.type81_762x39",
+          "FeedDeviceKind": "detachable_magazine"
         }
       }
     }

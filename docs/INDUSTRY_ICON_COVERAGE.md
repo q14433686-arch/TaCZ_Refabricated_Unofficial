@@ -28,7 +28,7 @@
 | feed_device | 2 | 2 | 0 | 0 | 2 | 0 | 0 | 0 |
 | fresh_cartridge_case | 23 | 23 | 0 | 1 | 22 | 0 | 0 | 0 |
 | loose_ammo | 24 | 24 | 0 | 24 | 0 | 0 | 0 | 0 |
-| physical_magazine | 34 | 34 | 0 | 22 | 0 | 0 | 0 | 12 |
+| physical_magazine | 34 | 34 | 0 | 22 | 12 | 0 | 0 | 0 |
 | platform_acceptance_tool | 40 | 40 | 0 | 0 | 40 | 0 | 0 | 0 |
 | platform_blueprint | 53 | 53 | 0 | 53 | 0 | 0 | 0 | 0 |
 | platform_component | 265 | 265 | 0 | 265 | 0 | 0 | 0 | 0 |
