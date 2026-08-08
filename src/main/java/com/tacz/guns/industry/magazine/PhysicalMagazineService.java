@@ -17,6 +17,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Server-authoritative operations for ItemStack-backed detachable magazines.
  *
@@ -177,6 +182,10 @@ public final class PhysicalMagazineService {
         }
 
         boolean consumeMagazine = shouldConsumeMagazine(player) && !isInfiniteReload(gun);
+        int preferredSlot = data.preferredPhysicalMagazineSlot;
+        // Consume the one-shot preference regardless of creative/infinite
+        // policy. Stale wheel selections must never leak into a later reload.
+        data.preferredPhysicalMagazineSlot = -1;
         if (!consumeMagazine) {
             PhysicalMagazineReloadPlan plan = new PhysicalMagazineReloadPlan(
                     iGun.getGunId(gun), tactical, false, -1, ItemStack.EMPTY
@@ -185,7 +194,9 @@ public final class PhysicalMagazineService {
             return plan;
         }
 
-        MagazineSelection selection = findBestMagazine(player, gun);
+        MagazineSelection selection = preferredSlot >= 0
+                ? findMagazineAtSlot(player, gun, preferredSlot)
+                : findBestMagazine(player, gun);
         if (selection == null || !(selection.preview().getItem() instanceof IMagazine magazine)
                 || magazine.getAmmoCount(selection.preview()) <= getEffectiveAmmoCount(gun)) {
             return null;
@@ -475,6 +486,78 @@ public final class PhysicalMagazineService {
                 .orElse(false);
     }
 
+    /**
+     * Read-only candidates for the long-R reload wheel. Candidates are grouped
+     * by real carrier identity (family/ammo/capacity); selecting one still
+     * reserves an exact inventory slot and the server revalidates it at feed.
+     */
+    public static List<ReloadWheelCandidate> getReloadWheelCandidates(Player player, ItemStack gun) {
+        if (player == null || !usesPhysicalMagazine(gun)) {
+            return List.of();
+        }
+        GunFeedDefinition definition = getDefinition(gun);
+        if (definition == null || !canSafelyMaterializeLegacyMagazine(gun, definition)) {
+            return List.of();
+        }
+        int currentRounds = getEffectiveAmmoCount(gun);
+        Map<String, ReloadWheelCandidate> bestByIdentity = new LinkedHashMap<>();
+        var inventory = player.getInventory();
+        int slots = inventory.getNonEquipmentItems().size();
+        for (int slot = 0; slot < slots; slot++) {
+            ItemStack candidate = inventory.getItem(slot);
+            if (!isCompatible(definition, gun, candidate) || !(candidate.getItem() instanceof IMagazine magazine)) {
+                continue;
+            }
+            int rounds = magazine.getAmmoCount(candidate);
+            if (rounds <= currentRounds) {
+                continue;
+            }
+            String identity = magazine.getMagazineFamily(candidate) + "|" + magazine.getAmmoId(candidate)
+                    + "|" + magazine.getCapacity(candidate);
+            ReloadWheelCandidate previous = bestByIdentity.get(identity);
+            if (previous == null || rounds > previous.rounds()
+                    || (rounds == previous.rounds() && slot < previous.slot())) {
+                bestByIdentity.put(identity, new ReloadWheelCandidate(slot, candidate.copy(), rounds));
+            }
+        }
+        List<ReloadWheelCandidate> result = new ArrayList<>(bestByIdentity.values());
+        result.sort((first, second) -> {
+            int byRounds = Integer.compare(second.rounds(), first.rounds());
+            if (byRounds != 0) {
+                return byRounds;
+            }
+            int firstCapacity = first.preview().getItem() instanceof IMagazine magazine
+                    ? magazine.getCapacity(first.preview()) : 0;
+            int secondCapacity = second.preview().getItem() instanceof IMagazine magazine
+                    ? magazine.getCapacity(second.preview()) : 0;
+            int byCapacity = Integer.compare(secondCapacity, firstCapacity);
+            return byCapacity != 0 ? byCapacity : Integer.compare(first.slot(), second.slot());
+        });
+        return List.copyOf(result);
+    }
+
+    /** Client convenience predicate; the server always repeats this validation. */
+    public static boolean isReloadWheelSlotAvailable(Player player, ItemStack gun, int slot) {
+        if (player == null || slot < 0) {
+            return false;
+        }
+        return getReloadWheelCandidates(player, gun).stream().anyMatch(candidate -> candidate.slot() == slot);
+    }
+
+    @Nullable
+    private static MagazineSelection findMagazineAtSlot(Player player, ItemStack gun, int slot) {
+        GunFeedDefinition definition = getDefinition(gun);
+        if (definition == null || slot < 0 || slot >= player.getInventory().getNonEquipmentItems().size()) {
+            return null;
+        }
+        ItemStack candidate = player.getInventory().getItem(slot);
+        if (!isCompatible(definition, gun, candidate) || !(candidate.getItem() instanceof IMagazine magazine)
+                || magazine.getAmmoCount(candidate) <= getEffectiveAmmoCount(gun)) {
+            return null;
+        }
+        return new MagazineSelection(slot, candidate.copy());
+    }
+
     @Nullable
     private static MagazineSelection findBestMagazine(Player player, ItemStack gun) {
         GunFeedDefinition definition = getDefinition(gun);
@@ -626,5 +709,12 @@ public final class PhysicalMagazineService {
     }
 
     private record MagazineSelection(int slot, ItemStack preview) {
+    }
+
+    /** Immutable client display / server validation snapshot for one source slot. */
+    public record ReloadWheelCandidate(int slot, ItemStack preview, int rounds) {
+        public ReloadWheelCandidate {
+            preview = preview == null ? ItemStack.EMPTY : preview.copy();
+        }
     }
 }

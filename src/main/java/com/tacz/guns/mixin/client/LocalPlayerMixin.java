@@ -62,6 +62,12 @@ public abstract class LocalPlayerMixin implements IClientPlayerGunOperator {
 
     @Unique
     @Override
+    public void reload(int preferredMagazineSlot) {
+        tac$reload.reload(preferredMagazineSlot);
+    }
+
+    @Unique
+    @Override
     public void inspect() {
         tac$inspect.inspect();
     }

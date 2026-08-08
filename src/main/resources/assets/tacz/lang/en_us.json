@@ -3195,5 +3195,7 @@
   "item.tacz.magazine.ww_t99_77a_40": "Surveyed WW T99 77a 40-round Magazine",
   "item.tacz.magazine.ww_tbe_763_50": "Surveyed WW TBE 763 50-round Magazine",
   "item.tacz.magazine.ww_tbe_763_75": "Surveyed WW TBE 763 75-round Magazine",
-  "item.tacz.magazine.ww_tbe_763_100": "Surveyed WW TBE 763 100-round Magazine"
+  "item.tacz.magazine.ww_tbe_763_100": "Surveyed WW TBE 763 100-round Magazine",
+  "gui.tacz.reload_wheel.title": "RELOAD",
+  "gui.tacz.reload_wheel.more": "+%s more carrier identities"
 }
