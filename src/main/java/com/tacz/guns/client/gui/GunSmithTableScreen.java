@@ -24,6 +24,7 @@ import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.crafting.GunSmithTableIngredient;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.industry.item.IndustryItemDataAccessor;
+import com.tacz.guns.industry.magazine.MagazineItemDataAccessor;
 import com.tacz.guns.init.ModRecipe;
 import com.tacz.guns.inventory.GunSmithTableMenu;
 import com.tacz.guns.network.message.ClientMessageCraft;
@@ -58,6 +59,7 @@ import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import org.apache.commons.lang3.StringUtils;
@@ -73,6 +75,8 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
 
     private final LinkedHashMap<Identifier, TabConfig> recipeKeys = Maps.newLinkedHashMap();
     private final Map<Identifier, List<Identifier>> recipes = Maps.newLinkedHashMap();
+    /** Cross-tab result list produced by the recipe finder; it never changes server crafting permission. */
+    private final List<Identifier> searchResults = new ArrayList<>();
 
     private int typePage;
     private Identifier selectedType = null;
@@ -86,6 +90,10 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
     private boolean filterEnabled = false;
     private GunPackList filterList;
     private boolean autoByHandFilterApplied = false;
+    /** True while the right-hand list presents cross-tab keyword results. */
+    private boolean searchMode = false;
+    /** Real tab selected before the current query, restored when the query is cleared. */
+    private @Nullable Identifier selectedTypeBeforeSearch;
 
     public GunSmithTableScreen(GunSmithTableMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 344, 186);
@@ -123,6 +131,10 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         });
 
         List<Pair<Identifier, Identifier>> recipeIds = Lists.newArrayList();
+        Map<Identifier, GunSmithTableRecipe> searchableRecipes = Maps.newHashMap();
+        List<Identifier> matchedSearchResults = Lists.newArrayList();
+        String searchQuery = getSearchQuery();
+        boolean searchRequested = !searchQuery.isBlank();
 
         // 第 12 轮修复：改用 CommonAssetsManager.get()。
         //
@@ -157,9 +169,6 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             if (!isSuitableForMainHand(recipe)) {
                 continue;
             }
-            if (!isNameMatch(recipe)) {
-                continue;
-            }
             Identifier groupName = recipe.getResult().getGroup();
             // Industrial compatibility work has its own tacz:industry_* pages.
             // A third-party table may declare a narrow tab list, so inject only
@@ -175,6 +184,7 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             }
             if (recipeKeys.containsKey(groupName)) {
                 recipeIds.add(Pair.of(groupName, id));
+                searchableRecipes.put(id, recipe);
             }
         }
 
@@ -190,7 +200,12 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         }).orElse(recipeIds).forEach(entry -> {
             Identifier groupName = entry.key();
             if (recipeKeys.containsKey(groupName)) {
-                recipes.computeIfAbsent(groupName, g -> Lists.newArrayList()).add(entry.value());
+                Identifier recipeId = entry.value();
+                recipes.computeIfAbsent(groupName, g -> Lists.newArrayList()).add(recipeId);
+                GunSmithTableRecipe recipe = searchableRecipes.get(recipeId);
+                if (searchRequested && recipe != null && matchesSearchQuery(recipe, searchQuery)) {
+                    matchedSearchResults.add(recipeId);
+                }
             }
         });
 
@@ -207,14 +222,28 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             indexPage = 0;
         }
 
-        if (!this.recipeKeys.keySet().isEmpty()) {
-            if (selectedType == null) {
-                selectedType = this.recipeKeys.keySet().iterator().next();
-            }
+        if (!this.recipeKeys.keySet().isEmpty() && selectedType == null) {
+            selectedType = this.recipeKeys.keySet().iterator().next();
         }
 
-        if (selectedType != null) {
-            selectedRecipeList = this.recipes.get(selectedType);
+        this.searchResults.clear();
+        matchedSearchResults.sort(Comparator.comparing(Identifier::toString));
+        this.searchResults.addAll(matchedSearchResults);
+        if (searchRequested) {
+            if (!searchMode && selectedType != null) {
+                selectedTypeBeforeSearch = selectedType;
+            }
+            searchMode = true;
+            selectedRecipeList = searchResults;
+        } else {
+            if (searchMode && selectedTypeBeforeSearch != null && recipeKeys.containsKey(selectedTypeBeforeSearch)) {
+                selectedType = selectedTypeBeforeSearch;
+            }
+            searchMode = false;
+            selectedTypeBeforeSearch = null;
+            if (selectedType != null) {
+                selectedRecipeList = this.recipes.get(selectedType);
+            }
         }
     }
 
@@ -228,13 +257,85 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         return TabConfig.findKnownTaczTab(group);
     }
 
-    private boolean isNameMatch(GunSmithTableRecipe recipe) {
-        if (filterList != null && StringUtils.isNotBlank(filterList.getSearchText())) {
-            String searchText = filterList.getSearchText().toLowerCase();
-            Component name = recipe.getResult().getResult().getHoverName();
-            return name.getString().toLowerCase().contains(searchText);
+    /** Current normalized finder query; an empty query keeps the normal tab list. */
+    private String getSearchQuery() {
+        return filterList == null ? "" : filterList.getSearchText().trim().toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Keyword finder for the real synchronized recipe list. Every whitespace-
+     * separated token must match, which makes queries such as
+     * {@code stanag 30}, {@code 556 ap}, {@code industry_feed} and a complete
+     * recipe id predictable without inventing another recipe source or server
+     * crafting bypass.
+     */
+    private boolean matchesSearchQuery(GunSmithTableRecipe recipe, String normalizedQuery) {
+        if (recipe == null || normalizedQuery.isBlank()) {
+            return false;
+        }
+        String document = searchDocument(recipe).toLowerCase(Locale.ROOT);
+        for (String token : normalizedQuery.split("\\s+")) {
+            if (!token.isBlank() && !document.contains(token)) {
+                return false;
+            }
         }
         return true;
+    }
+
+    /** Build a cheap, non-resolving keyword document for one table recipe. */
+    private static String searchDocument(GunSmithTableRecipe recipe) {
+        StringBuilder document = new StringBuilder(recipe.getId().toString())
+                .append(' ').append(recipe.getResult().getGroup());
+        ItemStack output = recipe.getOutput();
+        if (!output.isEmpty()) {
+            appendSearchTerm(document, output.getHoverName().getString());
+            Identifier itemId = BuiltInRegistries.ITEM.getKey(output.getItem());
+            if (itemId != null) {
+                appendSearchTerm(document, itemId.toString());
+            }
+            if (output.getItem() instanceof IGun gun) {
+                appendSearchTerm(document, gun.getGunId(output).toString());
+            }
+            if (output.getItem() instanceof IAttachment attachment) {
+                appendSearchTerm(document, attachment.getAttachmentId(output).toString());
+            }
+            if (output.getItem() instanceof IAmmo ammo) {
+                appendSearchTerm(document, ammo.getAmmoId(output).toString());
+            }
+            if (output.getItem() instanceof IndustryItemDataAccessor industry) {
+                appendSearchTerm(document, industry.getPlatform(output));
+                appendSearchTerm(document, industry.getPartKind(output));
+                appendSearchTerm(document, industry.getCartridgeCaliber(output));
+                appendSearchTerm(document, industry.getCartridgeAmmoId(output));
+                appendSearchTerm(document, industry.getProjectileType(output));
+                appendSearchTerm(document, industry.getDieTargetKind(output));
+                appendSearchTerm(document, industry.getBlueprintTier(output));
+                appendSearchTerm(document, industry.getBlueprintRole(output));
+            }
+            if (output.getItem() instanceof MagazineItemDataAccessor magazine) {
+                appendSearchTerm(document, magazine.getMagazineFamily(output));
+                appendSearchTerm(document, magazine.getAmmoId(output).toString());
+                appendSearchTerm(document, String.valueOf(magazine.getCapacity(output)));
+                Identifier standard = magazine.getFeedStandardId(output);
+                if (standard != null) {
+                    appendSearchTerm(document, standard.toString());
+                }
+            }
+        }
+        for (GunSmithTableIngredient ingredient : recipe.getInputs()) {
+            // This is the serialized item/tag/NBT source preserved by the
+            // delayed ingredient resolver. Searching never forces tag parsing
+            // while the player types, so invalid third-party tags cannot make
+            // the finder lag or poison a recipe just by being indexed.
+            appendSearchTerm(document, ingredient.getSearchText());
+        }
+        return document.toString();
+    }
+
+    private static void appendSearchTerm(StringBuilder document, @Nullable String value) {
+        if (value != null && !value.isBlank()) {
+            document.append(' ').append(value);
+        }
     }
 
     private boolean isSuitableForMainHand(GunSmithTableRecipe recipe) {
@@ -381,7 +482,7 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         this.addTypeButtons();
         this.addIndexPageButtons();
         this.addIndexButtons();
-        this.addRenderableWidget(new FlatColorButton(leftPos - 10, topPos, 9, 9, Component.literal("F"), b -> {
+        this.addRenderableWidget(new FlatColorButton(leftPos - 12, topPos, 11, 9, Component.literal("S"), b -> {
             this.filterEnabled = !this.filterEnabled;
             this.init();
         }).setTooltips("gui.tacz.gun_smith_table.filter"));
@@ -504,6 +605,13 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             ItemStack icon = tabConfig.icon().get();
 
             TypeButton typeButton = new TypeButton(xOffset, topPos + 2, icon, b -> {
+                // A tab click is an explicit return to browsing. Clearing the
+                // query through GunPackList invokes its responder and rebuilds
+                // the real tab list, so do not continue on stale widgets.
+                if (filterList != null && filterList.hasSearchText()) {
+                    filterList.clearSearchText();
+                    return;
+                }
                 this.selectedType = type;
                 this.selectedRecipeList = recipes.get(type);
                 this.indexPage = 0;
@@ -512,7 +620,7 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                 this.init();
             });
             typeButton.setTooltip(Tooltip.create(tabConfig.getName(), tabConfig.getName()));
-            if (this.selectedType.equals(type)) {
+            if (!this.searchMode && this.selectedType != null && this.selectedType.equals(type)) {
                 typeButton.setSelected(true);
             }
             this.addRenderableWidget(typeButton);
@@ -589,7 +697,10 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
     public void extractRenderState(@NotNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
         drawModCenteredString(graphics, font, Component.translatable("gui.tacz.gun_smith_table.preview"), leftPos + 108, topPos + 5, 0xFF555555);
-        if (selectedType != null) {
+        if (searchMode) {
+            graphics.text(font, Component.translatable("gui.tacz.gun_smith_table.search.results",
+                    getSearchQuery(), searchResults.size()), leftPos + 150, topPos + 32, 0xFF555555, false);
+        } else if (selectedType != null) {
             var config = recipeKeys.get(selectedType);
             if (config != null) {
                 graphics.text(font, config.getName(), leftPos + 150, topPos + 32, 0xFF555555, false);
@@ -612,6 +723,9 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         }
         if (selectedRecipeList != null && !selectedRecipeList.isEmpty()) {
             renderIngredient(graphics);
+        } else if (searchMode) {
+            graphics.text(font, Component.translatable("gui.tacz.gun_smith_table.search.empty"),
+                    leftPos + 165, topPos + 96, 0xFF777777, false);
         }
 
         ((ScreenAccessor) this).tacz$getRenderables().stream().filter(w -> w instanceof ResultButton)

@@ -95,7 +95,14 @@
 5. RPG-7 发射火箭时不应产生可回收弹壳（`eject_case=false`）。创造模式未实际消耗弹药时也不应凭空刷出可回收壳。
 6. 分别检查 9 mm、12G、40 mm 的成型弹壳、成型弹头、重新整形壳与掉落 spent case：其 `minecraft:max_stack_size` 必须与同 `AmmoId` 的最终散装弹一致（预期分别为 60、36、6），而不是统一旧值 16。旧存档的壳/弹头放入玩家背包后也应自动校正。
 
-### 4.5 工业回收、弹匣袋与装弹器
+### 4.5 Gunsmith Table 配方检索
+
+1. 打开默认 Gunsmith Table，点击左侧 `S`（配方检索），输入 `stanag 30`、完整 recipe ID、材料 tag 片段（例如 `high_carbon_steel_plate`）和中文/英文成品名的一部分；
+2. 预期：结果列表跨实际允许页签汇总，空格词按 AND 匹配；不必逐个切工业页或普通页；
+3. 切换 namespace 勾选或“按手中物品”后，搜索结果必须同步收窄；清空关键词必须回到原先浏览页；
+4. 从搜索结果点击合成：服务端仍按实际 recipe group、当前方块 filter 和真实材料校验。搜索不能显示被服务器 filter 排除的配方，更不能成为合成旁路。
+
+### 4.6 工业回收、弹匣袋与装弹器
 
 1. 制造工业回收站；从顶部/侧面只允许送入一件枪、实体弹匣或模具，底面只能抽取回收产物。红石信号下应在 40 tick 完成一次有效回收；
 2. 将一只**空**实体弹匣送入：应输出 `magazine_blank`；带余弹弹匣不得被消耗。将已配置 case/projectile/component die 或口径量规送入：应回收高碳钢板和黄铜粒；
@@ -105,7 +112,7 @@
 6. 在玩家背包/容器界面把已配置实体弹匣、桥夹或漏夹拿在光标上，按想要的顺序右击同 canonical calibre 的不同 AmmoId：每次右击应立即转入该来源可容纳的数量。手持装弹器右击载具应立即从背包中首个兼容散装弹堆转入，不得启动逐发后台计时；
 7. 载具拿在光标上右击空槽时必须立即退出顶部连续且 AmmoId 相同的一段弹药到该槽；输出被占用或身份无效时，不得吞弹、复制或改写为另一种弹药。混装后最后装入的 profile 必须是下一发。
 
-### 4.6 多弹种与有序载具回归
+### 4.7 多弹种与有序载具回归
 
 1. 在 JEI/REI 对 9 mm AP/HP、.45 ACP AP/HP、5.56×45 AP/HP、7.62×39 AP/HP、.308 AP/HP、.50 BMG AP 和 12 gauge slug 分别确认两段 Create 工艺：加热 Basin 的类型预制坯，以及同口径量规部署器的 profile blank 印刻；不能用同一套 Create 输入随机产出不同 die，也不能退回 Gunsmith Table 弹种选择。
 2. 实作链路时，先在加热 Basin 将中性弹头毛坯与 AP/HP/Slug 的实体材料压成类型预制坯；再用部署器持有的对应口径量规印刻精确 profile blank，量规必须保留。用该 profile blank 校准对应 projectile die，并在单工件部署器中形成带精确 `CartridgeAmmoId` 与 `ProjectileType` 的弹头；四槽 Cartridge Assembly 必须拒绝把 AP 弹头装进 HP AmmoId、把 slug 弹头装进 shot 输出，或把错误口径弹壳混入。

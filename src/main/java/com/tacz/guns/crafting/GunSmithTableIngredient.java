@@ -64,6 +64,12 @@ public class GunSmithTableIngredient {
     private JsonElement rawItem;
     /** 只记录「是否已打过日志」，不缓存失败结果——避免过早的一次调用把材料永久毒化。 */
     private boolean loggedFailure;
+    /**
+     * Immutable source text for the Gunsmith recipe finder. Keeping it apart
+     * from {@link #rawItem} means search never forces an early tag/ingredient
+     * resolution merely to index a keyword such as {@code #c:ingots/copper}.
+     */
+    private final String searchText;
 
     public GunSmithTableIngredient(Ingredient ingredient, int count) {
         this(ingredient, count, true);
@@ -73,6 +79,7 @@ public class GunSmithTableIngredient {
         this.ingredient = ingredient;
         this.count = count;
         this.consume = consume;
+        this.searchText = "";
     }
 
     /** 延迟解析用的构造器，见类注释。 */
@@ -84,6 +91,7 @@ public class GunSmithTableIngredient {
         this.rawItem = rawItem;
         this.count = count;
         this.consume = consume;
+        this.searchText = rawItem == null ? "" : rawItem.toString();
     }
 
     /**
@@ -263,6 +271,11 @@ public class GunSmithTableIngredient {
     /** 材料是否可用（tag 已绑定且解析成功）。 */
     public boolean isResolved() {
         return this.getIngredient() != null;
+    }
+
+    /** Raw item/tag/NBT source text used by the client-only recipe finder. */
+    public String getSearchText() {
+        return searchText;
     }
 
     public int getCount() {

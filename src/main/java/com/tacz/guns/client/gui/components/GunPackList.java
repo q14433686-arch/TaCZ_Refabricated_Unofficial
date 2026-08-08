@@ -61,8 +61,8 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
         this.byName = new EditBox(pMinecraft.font, 3, 0, 94, 10, Component.empty());
         this.byName.setHint(Component.translatable("gui.tacz.gun_smith_table.filter.search"));
         this.byName.setResponder((pText) -> {
-            parent.init();
             parent.setIndexPage(0);
+            parent.init();
         });
         this.addEntry(new Entry(byName));
 
@@ -70,8 +70,8 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
             @Override
             public void onPress(InputWithModifiers input) {
                 super.onPress(input);
-                parent.init();
                 parent.setIndexPage(0);
+                parent.init();
             }
         };
         this.addEntry(new Entry(byHandCheckbox));
@@ -108,6 +108,15 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
         return byName.getValue();
     }
 
+    public boolean hasSearchText() {
+        return !byName.getValue().isBlank();
+    }
+
+    /** Clears the finder query without changing selected namespaces or hand filtering. */
+    public void clearSearchText() {
+        byName.setValue("");
+    }
+
     public boolean isByHandSelected() {
         return byHandCheckbox.selected;
     }
@@ -127,8 +136,8 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
                 selectedNamespaces.add(checkbox.getId());
             }
         });
-        parent.init();
         parent.setIndexPage(0);
+        parent.init();
     }
 
     protected int scrollBarX() {
