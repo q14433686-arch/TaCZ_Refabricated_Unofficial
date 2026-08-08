@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_sr_3m_9x39",
+  "magazine_capacity": 30,
+  "ammo": "tacz:9x39",
+  "display_name": "item.tacz.magazine.ccrp_sr_3m_9x39_30",
+  "carrier_variants": [
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.ccrp_sr_3m_9x39_35"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.ccrp_sr_3m_9x39_45"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_sr_3m_9x39_50"
+    }
+  ]
+}

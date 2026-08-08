@@ -1,0 +1,21 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "ccrp_m249_saw_556x45_belt",
+  "magazine_capacity": 30,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.ccrp_m249_saw_556x45_belt_30",
+  "carrier_variants": [
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.ccrp_m249_saw_556x45_belt_45"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.ccrp_m249_saw_556x45_belt_60"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.ccrp_m249_saw_556x45_belt_100"
+    }
+  ]
+}

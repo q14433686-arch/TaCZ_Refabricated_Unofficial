@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_timeless_50_50ae",
+  "magazine_capacity": 7,
+  "ammo": "tacz:50ae",
+  "display_name": "item.tacz.magazine.ccrp_timeless_50_50ae_7",
+  "carrier_variants": [
+    {
+      "capacity": 8,
+      "display_name": "item.tacz.magazine.ccrp_timeless_50_50ae_8"
+    },
+    {
+      "capacity": 10,
+      "display_name": "item.tacz.magazine.ccrp_timeless_50_50ae_10"
+    },
+    {
+      "capacity": 14,
+      "display_name": "item.tacz.magazine.ccrp_timeless_50_50ae_14"
+    }
+  ]
+}

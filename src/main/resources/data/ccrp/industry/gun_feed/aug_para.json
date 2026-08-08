@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_aug_para_9mm",
+  "magazine_capacity": 25,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.ccrp_aug_para_9mm_25",
+  "carrier_variants": [
+    {
+      "capacity": 32,
+      "display_name": "item.tacz.magazine.ccrp_aug_para_9mm_32"
+    },
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.ccrp_aug_para_9mm_35"
+    },
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.ccrp_aug_para_9mm_40"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_vector10_10mm",
+  "magazine_capacity": 15,
+  "ammo": "tacz:10mm",
+  "display_name": "item.tacz.magazine.ccrp_vector10_10mm_15",
+  "carrier_variants": [
+    {
+      "capacity": 33,
+      "display_name": "item.tacz.magazine.ccrp_vector10_10mm_33"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_vector10_10mm_50"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.ccrp_vector10_10mm_100"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_scar_17s_65cm",
+  "magazine_capacity": 10,
+  "ammo": "ccrp:65cm",
+  "display_name": "item.tacz.magazine.ccrp_scar_17s_65cm_10",
+  "carrier_variants": [
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.ccrp_scar_17s_65cm_15"
+    },
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.ccrp_scar_17s_65cm_20"
+    },
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.ccrp_scar_17s_65cm_25"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_mp5k_9mm",
+  "magazine_capacity": 15,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.ccrp_mp5k_9mm_15",
+  "carrier_variants": [
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.ccrp_mp5k_9mm_30"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_mp5k_9mm_50"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.ccrp_mp5k_9mm_60"
+    }
+  ]
+}

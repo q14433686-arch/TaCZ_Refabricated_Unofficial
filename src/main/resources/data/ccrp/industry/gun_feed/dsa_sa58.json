@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_dsa_sa58_308",
+  "magazine_capacity": 15,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.ccrp_dsa_sa58_308_15",
+  "carrier_variants": [
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.ccrp_dsa_sa58_308_20"
+    },
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.ccrp_dsa_sa58_308_30"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_dsa_sa58_308_50"
+    }
+  ]
+}

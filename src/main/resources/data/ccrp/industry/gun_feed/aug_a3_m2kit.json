@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_aug_a3_m2kit_556x45_m995",
+  "magazine_capacity": 30,
+  "ammo": "ccrp:556x45_m995",
+  "display_name": "item.tacz.magazine.ccrp_aug_a3_m2kit_556x45_m995_30",
+  "carrier_variants": [
+    {
+      "capacity": 42,
+      "display_name": "item.tacz.magazine.ccrp_aug_a3_m2kit_556x45_m995_42"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.ccrp_aug_a3_m2kit_556x45_m995_60"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.ccrp_aug_a3_m2kit_556x45_m995_100"
+    }
+  ]
+}

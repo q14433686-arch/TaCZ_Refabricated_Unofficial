@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_rpk_203_762x39",
+  "magazine_capacity": 40,
+  "ammo": "tacz:762x39",
+  "display_name": "item.tacz.magazine.ccrp_rpk_203_762x39_40",
+  "carrier_variants": [
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.ccrp_rpk_203_762x39_30"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.ccrp_rpk_203_762x39_60"
+    },
+    {
+      "capacity": 75,
+      "display_name": "item.tacz.magazine.ccrp_rpk_203_762x39_75"
+    }
+  ]
+}

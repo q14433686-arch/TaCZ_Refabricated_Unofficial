@@ -1,0 +1,7 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "ccrp_hk21_308_belt",
+  "magazine_capacity": 200,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.ccrp_hk21_308_belt_200"
+}

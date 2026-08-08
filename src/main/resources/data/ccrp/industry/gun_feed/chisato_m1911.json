@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_chisato_m1911_45acp",
+  "magazine_capacity": 7,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.ccrp_chisato_m1911_45acp_7",
+  "carrier_variants": [
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.ccrp_chisato_m1911_45acp_12"
+    },
+    {
+      "capacity": 18,
+      "display_name": "item.tacz.magazine.ccrp_chisato_m1911_45acp_18"
+    },
+    {
+      "capacity": 22,
+      "display_name": "item.tacz.magazine.ccrp_chisato_m1911_45acp_22"
+    }
+  ]
+}

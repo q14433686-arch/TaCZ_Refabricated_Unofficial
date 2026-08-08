@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_f90_556x45",
+  "magazine_capacity": 30,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.ccrp_f90_556x45_30",
+  "carrier_variants": [
+    {
+      "capacity": 42,
+      "display_name": "item.tacz.magazine.ccrp_f90_556x45_42"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_f90_556x45_50"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.ccrp_f90_556x45_60"
+    }
+  ]
+}

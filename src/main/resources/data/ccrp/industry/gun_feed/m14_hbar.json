@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_m14_hbar_308",
+  "magazine_capacity": 20,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.ccrp_m14_hbar_308_20",
+  "carrier_variants": [
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.ccrp_m14_hbar_308_30"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_m14_hbar_308_50"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.ccrp_m14_hbar_308_100"
+    }
+  ]
+}

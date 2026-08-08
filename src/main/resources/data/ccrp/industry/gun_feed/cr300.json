@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_cr300_300blk",
+  "magazine_capacity": 20,
+  "ammo": "tacz:300blk",
+  "display_name": "item.tacz.magazine.ccrp_cr300_300blk_20",
+  "carrier_variants": [
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.ccrp_cr300_300blk_30"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.ccrp_cr300_300blk_45"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.ccrp_cr300_300blk_60"
+    }
+  ]
+}

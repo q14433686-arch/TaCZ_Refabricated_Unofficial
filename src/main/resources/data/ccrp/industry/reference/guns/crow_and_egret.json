@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "ccrp/crow_and_egret",
+  "display_name": "crow_and_egret",
+  "action": "surveyed_action",
+  "feed": {
+    "device": "unknown",
+    "runtime_mechanism": "legacy",
+    "carrier_behavior": "unknown",
+    "family": "",
+    "capacity": 0,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "50ae",
+    "expected_ammo": "tacz:50ae"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "User-provided runtime log for the survey environment identifies [TACZ1.1.8+Arcana]ClassicRCCRP 1.1.6_release_hotfix2.zip; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for ccrp:crow_and_egret was individually checked for current ammo, base capacity, reload contract, and selectable capacity values.",
+    "Action-ambiguous custom weapon remains legacy.",
+    "No gun_feed sidecar is supplied, so no physical carrier or reload transaction is activated."
+  ]
+}

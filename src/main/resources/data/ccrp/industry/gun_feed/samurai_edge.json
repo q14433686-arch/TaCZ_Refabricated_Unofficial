@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_samurai_edge_45acp",
+  "magazine_capacity": 20,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.ccrp_samurai_edge_45acp_20",
+  "carrier_variants": [
+    {
+      "capacity": 23,
+      "display_name": "item.tacz.magazine.ccrp_samurai_edge_45acp_23"
+    },
+    {
+      "capacity": 26,
+      "display_name": "item.tacz.magazine.ccrp_samurai_edge_45acp_26"
+    },
+    {
+      "capacity": 32,
+      "display_name": "item.tacz.magazine.ccrp_samurai_edge_45acp_32"
+    }
+  ]
+}

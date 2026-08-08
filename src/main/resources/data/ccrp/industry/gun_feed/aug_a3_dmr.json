@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_aug_a3_dmr_556x45",
+  "magazine_capacity": 10,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.ccrp_aug_a3_dmr_556x45_10",
+  "carrier_variants": [
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.ccrp_aug_a3_dmr_556x45_20"
+    },
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.ccrp_aug_a3_dmr_556x45_30"
+    },
+    {
+      "capacity": 42,
+      "display_name": "item.tacz.magazine.ccrp_aug_a3_dmr_556x45_42"
+    }
+  ]
+}

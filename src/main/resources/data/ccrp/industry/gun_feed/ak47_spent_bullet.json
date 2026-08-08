@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_ak47_spent_bullet_762x39",
+  "magazine_capacity": 30,
+  "ammo": "tacz:762x39",
+  "display_name": "item.tacz.magazine.ccrp_ak47_spent_bullet_762x39_30",
+  "carrier_variants": [
+    {
+      "capacity": 34,
+      "display_name": "item.tacz.magazine.ccrp_ak47_spent_bullet_762x39_34"
+    },
+    {
+      "capacity": 37,
+      "display_name": "item.tacz.magazine.ccrp_ak47_spent_bullet_762x39_37"
+    },
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.ccrp_ak47_spent_bullet_762x39_40"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_sr25_308",
+  "magazine_capacity": 15,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.ccrp_sr25_308_15",
+  "carrier_variants": [
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.ccrp_sr25_308_25"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_sr25_308_50"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_mp7a3_46x30",
+  "magazine_capacity": 30,
+  "ammo": "tacz:46x30",
+  "display_name": "item.tacz.magazine.ccrp_mp7a3_46x30_30",
+  "carrier_variants": [
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.ccrp_mp7a3_46x30_40"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_mp7a3_46x30_50"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.ccrp_mp7a3_46x30_60"
+    }
+  ]
+}

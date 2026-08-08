@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_honeybadger_300blk",
+  "magazine_capacity": 30,
+  "ammo": "tacz:300blk",
+  "display_name": "item.tacz.magazine.ccrp_honeybadger_300blk_30",
+  "carrier_variants": [
+    {
+      "capacity": 32,
+      "display_name": "item.tacz.magazine.ccrp_honeybadger_300blk_32"
+    },
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.ccrp_honeybadger_300blk_35"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.ccrp_honeybadger_300blk_60"
+    }
+  ]
+}

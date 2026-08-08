@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_type_95_longbow_58x42",
+  "magazine_capacity": 60,
+  "ammo": "tacz:58x42",
+  "display_name": "item.tacz.magazine.ccrp_type_95_longbow_58x42_60",
+  "carrier_variants": [
+    {
+      "capacity": 75,
+      "display_name": "item.tacz.magazine.ccrp_type_95_longbow_58x42_75"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.ccrp_type_95_longbow_58x42_100"
+    },
+    {
+      "capacity": 150,
+      "display_name": "item.tacz.magazine.ccrp_type_95_longbow_58x42_150"
+    }
+  ]
+}

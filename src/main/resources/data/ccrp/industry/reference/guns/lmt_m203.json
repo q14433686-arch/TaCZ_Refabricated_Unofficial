@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "ccrp/lmt_m203",
+  "display_name": "lmt_m203",
+  "action": "launcher",
+  "feed": {
+    "device": "single_shot",
+    "runtime_mechanism": "legacy",
+    "carrier_behavior": "internal",
+    "family": "",
+    "capacity": 1,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "grenade",
+    "nominal": "40mm",
+    "expected_ammo": "tacz:40mm"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "User-provided runtime log for the survey environment identifies [TACZ1.1.8+Arcana]ClassicRCCRP 1.1.6_release_hotfix2.zip; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for ccrp:lmt_m203 was individually checked for current ammo, base capacity, reload contract, and selectable capacity values.",
+    "40 mm launcher remains legacy; no fabricated detachable carrier.",
+    "No gun_feed sidecar is supplied, so no physical carrier or reload transaction is activated."
+  ]
+}

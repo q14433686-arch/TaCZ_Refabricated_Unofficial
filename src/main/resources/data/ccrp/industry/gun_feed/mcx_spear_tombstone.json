@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_mcx_spear_tombstone_68x51fury",
+  "magazine_capacity": 20,
+  "ammo": "tacz:68x51fury",
+  "display_name": "item.tacz.magazine.ccrp_mcx_spear_tombstone_68x51fury_20",
+  "carrier_variants": [
+    {
+      "capacity": 22,
+      "display_name": "item.tacz.magazine.ccrp_mcx_spear_tombstone_68x51fury_22"
+    },
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.ccrp_mcx_spear_tombstone_68x51fury_25"
+    },
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.ccrp_mcx_spear_tombstone_68x51fury_30"
+    }
+  ]
+}

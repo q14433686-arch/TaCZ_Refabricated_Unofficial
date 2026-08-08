@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_m27_iar_556x45",
+  "magazine_capacity": 40,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.ccrp_m27_iar_556x45_40",
+  "carrier_variants": [
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_m27_iar_556x45_50"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.ccrp_m27_iar_556x45_60"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.ccrp_m27_iar_556x45_100"
+    }
+  ]
+}

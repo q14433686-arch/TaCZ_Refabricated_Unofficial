@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_x95_smg_9mm",
+  "magazine_capacity": 32,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.ccrp_x95_smg_9mm_32",
+  "carrier_variants": [
+    {
+      "capacity": 38,
+      "display_name": "item.tacz.magazine.ccrp_x95_smg_9mm_38"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.ccrp_x95_smg_9mm_45"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_x95_smg_9mm_50"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_m110a3_65cm",
+  "magazine_capacity": 15,
+  "ammo": "ccrp:65cm",
+  "display_name": "item.tacz.magazine.ccrp_m110a3_65cm_15",
+  "carrier_variants": [
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.ccrp_m110a3_65cm_20"
+    },
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.ccrp_m110a3_65cm_25"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_m110a3_65cm_50"
+    }
+  ]
+}

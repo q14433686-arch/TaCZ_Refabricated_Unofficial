@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_ro635_9mm",
+  "magazine_capacity": 30,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.ccrp_ro635_9mm_30",
+  "carrier_variants": [
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.ccrp_ro635_9mm_35"
+    },
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.ccrp_ro635_9mm_40"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_ro635_9mm_50"
+    }
+  ]
+}

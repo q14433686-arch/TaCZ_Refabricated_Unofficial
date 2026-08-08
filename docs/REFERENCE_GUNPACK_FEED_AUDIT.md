@@ -325,6 +325,45 @@ GunData fail-closed 验证，并仅在实际 loaded Gunsmith Table 成枪 recipe
 因此 ClassicR 现在没有“未处理的 survey 枪”：每把要么有 fail-closed 实体供弹与真实制造出口，要么有可审计的
 legacy 边界记录。旧资源、默认枪包和未授权模型均未修改。
 
+## CCRP 完整枪包审计（131 / 131）
+
+ClassicR 完成后，本轮按同一收口标准审计 `ccrp` 的全部 **131** 条 survey entry。这里的“完整”不等于把所有
+`reload.type = magazine` 变成实体弹匣：每条都有 reference profile，明确外部机构的才有 active sidecar。
+
+- **110 条**：已进入 `detachable_magazine` 或 `belt` 路线；每条都用当前 Ammo、基础容量、前三档可选容量作为
+  fail-closed guard，并由实际 loaded Gunsmith Table 成枪 recipe 驱动 surveyed 多槽载具出口；
+- **21 条**：保留 legacy，并有对应事实记录和原因；没有用假弹匣、假 belt 或创造样品“补齐数量”。
+
+本包中规模较大的 AK、AR、AUG、SCAR、HK、M4、MP、P90、精确步枪、手枪及支持步枪组均逐项有 sidecar；为
+避免“同口径 + 同容量”误成互插，本轮绝大多数 CCRP active 载具使用稳定的私有 `ccrp_<gun>_<ammo>` family。
+这不是降级：它使每个 receiver 获得真实物理载具、容量和制造出口，同时把跨平台互插留给以后有明确物理契约的
+二次审计。
+
+几个容易被 class 误导的反例已明确处理：
+
+| GunId | 结论 |
+|---|---|
+| `aug_hbar`、`m27_iar`、`mg36`、`rpk74m`、`rpk_203`、`type_95_longbow` | active detachable；MG class 不被误推成 belt。 |
+| `hk21`、`m249_saw` | active belt；不是普通盒式弹匣。 |
+| `aics_m700`、`m110`、`m110a3`、`m14_hbar`、`m39_emr`、`mk13_mod5`、`mk18_mjolnir`、`sr25`、`troy_m14_sass` | active detachable；manual/precision 不被误推成 fixed internal。 |
+| AK、AR、AUG、SCAR、P90、MP5/MPX、手枪等明确外部平台 | active detachable，但默认 private family，未偷做大范围共享。 |
+
+完整审计后的 **14 条 legacy 决定**：
+
+| GunId | 结论 |
+|---|---|
+| `camg_dexterous`、`camg_krait`、`camg_cheetah40`、`msh41` | 自定义平台的真实 carrier 未证，保持 unknown / legacy。 |
+| `cslr_42a`、`cslr_43a`、`cslr_44`、`m38_spr`、`silence_meteor`、`type_192`、`v308` | 身份/外部载具接口未证；不从 rifle class、Ammo、容量或名称猜测 detachable。 |
+| `camg_m1014`、`lastwar`、`m1887_long`、`marlin_1895`、`springfield1873_tube_mag` | 当前真实 loop/tube script 路线未接入，保持 tube legacy。 |
+| `crow_and_egret`、`requiem` | action-ambiguous custom weapon，保持 legacy。 |
+| `lmt_m203` | 单发 40 mm launcher，不伪造可拆载具。 |
+| `m4_bolter` | 自定义 launcher / bolter 供弹未证，保持 legacy。 |
+| `mp9_thunder` | thunder-cell utility weapon，不伪造成金属弹药筒弹匣。 |
+
+因此 `ccrp` 现在和 ClassicR 一样不存在“没有结论的 survey 枪”：每把要么有严格验证的实体供弹，要么有明确、可见、
+不改变原包行为的 legacy 原因。所有 private family 使用中性既有 detachable/belt material；没有将未经授权的第三方
+模型或错误图标冒充精确美术。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：

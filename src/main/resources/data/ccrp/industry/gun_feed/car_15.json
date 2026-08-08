@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_car_15_556x45",
+  "magazine_capacity": 20,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.ccrp_car_15_556x45_20",
+  "carrier_variants": [
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.ccrp_car_15_556x45_30"
+    },
+    {
+      "capacity": 32,
+      "display_name": "item.tacz.magazine.ccrp_car_15_556x45_32"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.ccrp_car_15_556x45_60"
+    }
+  ]
+}

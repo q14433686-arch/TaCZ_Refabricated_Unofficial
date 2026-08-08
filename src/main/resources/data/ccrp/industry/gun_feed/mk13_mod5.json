@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_mk13_mod5_300wm",
+  "magazine_capacity": 5,
+  "ammo": "ccrp:300wm",
+  "display_name": "item.tacz.magazine.ccrp_mk13_mod5_300wm_5",
+  "carrier_variants": [
+    {
+      "capacity": 6,
+      "display_name": "item.tacz.magazine.ccrp_mk13_mod5_300wm_6"
+    },
+    {
+      "capacity": 10,
+      "display_name": "item.tacz.magazine.ccrp_mk13_mod5_300wm_10"
+    },
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.ccrp_mk13_mod5_300wm_12"
+    }
+  ]
+}

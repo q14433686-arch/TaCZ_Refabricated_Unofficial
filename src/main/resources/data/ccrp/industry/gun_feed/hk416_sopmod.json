@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_hk416_sopmod_556x45",
+  "magazine_capacity": 30,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.ccrp_hk416_sopmod_556x45_30",
+  "carrier_variants": [
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.ccrp_hk416_sopmod_556x45_45"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.ccrp_hk416_sopmod_556x45_60"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.ccrp_hk416_sopmod_556x45_100"
+    }
+  ]
+}

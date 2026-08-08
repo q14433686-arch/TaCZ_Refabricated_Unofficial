@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_m39_emr_308",
+  "magazine_capacity": 10,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.ccrp_m39_emr_308_10",
+  "carrier_variants": [
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.ccrp_m39_emr_308_20"
+    },
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.ccrp_m39_emr_308_25"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ccrp_m39_emr_308_50"
+    }
+  ]
+}

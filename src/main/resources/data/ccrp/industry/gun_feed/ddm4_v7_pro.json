@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ccrp_ddm4_v7_pro_556x45_m855a2_f",
+  "magazine_capacity": 32,
+  "ammo": "ccrp:556x45_m855a2_f",
+  "display_name": "item.tacz.magazine.ccrp_ddm4_v7_pro_556x45_m855a2_f_32",
+  "carrier_variants": [
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.ccrp_ddm4_v7_pro_556x45_m855a2_f_35"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.ccrp_ddm4_v7_pro_556x45_m855a2_f_45"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.ccrp_ddm4_v7_pro_556x45_m855a2_f_60"
+    }
+  ]
+}
