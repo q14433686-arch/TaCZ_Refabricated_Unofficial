@@ -127,6 +127,12 @@ public final class IrisCompat {
             }
             return true;
         } catch (Throwable t) {
+            String msg = t.getMessage();
+            Throwable cause = t.getCause();
+            if ((msg != null && msg.contains("already assigned")) || (cause != null && cause.getMessage() != null && cause.getMessage().contains("already assigned"))) {
+                // Pipeline is already assigned to HAND by Iris, which is expected for vanilla pipelines.
+                return true;
+            }
             if (!loggedScopePipelineAssign) {
                 loggedScopePipelineAssign = true;
                 GunMod.LOGGER.warn("[TACZ Scope] Failed to assign custom scope pipelines to Iris; scope mask will fall back under shaders.", t);
