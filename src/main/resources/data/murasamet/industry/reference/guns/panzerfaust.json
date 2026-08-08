@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "murasamet/panzerfaust",
+  "display_name": "panzerfaust",
+  "action": "launcher",
+  "feed": {
+    "device": "single_shot",
+    "runtime_mechanism": "legacy",
+    "carrier_behavior": "internal",
+    "family": "",
+    "capacity": 1,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "rocket",
+    "nominal": "rpg_rocket",
+    "expected_ammo": "tacz:rpg_rocket"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "User-provided runtime log for the survey environment identifies KhanPowder_v0.8.99_hotfix as namespace murasamet; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for murasamet:panzerfaust was individually checked for current ammo, base capacity, reload contract, and selectable capacity values.",
+    "Single-shot launcher remains legacy.",
+    "No gun_feed sidecar is supplied, so no physical carrier or reload transaction is activated."
+  ]
+}

@@ -32,8 +32,9 @@
       "material_gaps": 5
     },
     "murasamet": {
-      "carrier_families": 20,
-      "material_gaps": 15
+      "carrier_families": 21,
+      "function_gaps": 48,
+      "material_gaps": 16
     },
     "rainforest": {
       "carrier_families": 12,
@@ -3719,6 +3720,20 @@
       "needs_detailed_material": false
     },
     {
+      "family": "murasamet_boys_50bmg",
+      "ammo": "tacz:50bmg",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        5
+      ],
+      "gun_ids": [
+        "murasamet:boys"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
       "family": "murasamet_dp_pan_762x54",
       "ammo": "tacz:762x54",
       "mechanism": "detachable_magazine",
@@ -5180,6 +5195,390 @@
       "action": "rotary",
       "expected_ammo": "tacz:308",
       "reason": "The survey does not establish an audited removable belt/box source for this rotary implementation. It remains legacy rather than inheriting a belt from its class or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:abe_pipe_gun",
+      "device": "unknown",
+      "action": "surveyed_shotgun",
+      "expected_ammo": "murasamet:powder_and_bullet",
+      "reason": "Primitive custom powder weapon remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:anantha_action",
+      "device": "unknown",
+      "action": "surveyed_rifle",
+      "expected_ammo": "tacz:22wmr",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:at4",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "tacz:rpg_rocket",
+      "reason": "Single-shot launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:auv",
+      "device": "unknown",
+      "action": "surveyed_smg",
+      "expected_ammo": "tacz:45acp",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:barstard",
+      "device": "unknown",
+      "action": "surveyed_smg",
+      "expected_ammo": "tacz:545x39",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:blunderbuss",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "murasamet:powder_and_bullet",
+      "reason": "Primitive powder weapon remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:brownbess",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "murasamet:powder_and_bullet",
+      "reason": "Primitive powder weapon remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:brownbess_tactical",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "murasamet:powder_and_bullet",
+      "reason": "Primitive powder weapon remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:colt_1917",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "tacz:45acp",
+      "reason": "M1917 is a revolver; no speedloader route is activated without script evidence.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:flint_grenade_launcher",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "tacz:40mm",
+      "reason": "Single-shot grenade launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:fp45",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "tacz:45acp",
+      "reason": "Single-shot pistol remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:garand",
+      "device": "en_bloc_clip",
+      "action": "gas_operated_rifle",
+      "expected_ammo": "tacz:30_06",
+      "reason": "M1 Garand en-bloc behavior is recorded, but this pack script route is not yet audited for physical clip insertion/ejection.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:giddings_ssc410",
+      "device": "unknown",
+      "action": "surveyed_rifle",
+      "expected_ammo": "tacz:762x25",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:girandoni",
+      "device": "unknown",
+      "action": "surveyed_rifle",
+      "expected_ammo": "murasamet:lead_shot",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:glock_1",
+      "device": "unknown",
+      "action": "surveyed_pistol",
+      "expected_ammo": "murasamet:6mmbb",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:glock_999",
+      "device": "unknown",
+      "action": "surveyed_rpg",
+      "expected_ammo": "murasamet:90mm",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:hand_connon",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "murasamet:powder_and_bullet",
+      "reason": "Primitive powder weapon remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:kar98b",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "tacz:792x57",
+      "reason": "Fixed internal box / stripper route remains legacy until this pack script is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:kar98k",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "tacz:792x57",
+      "reason": "Fixed internal box / stripper route remains legacy until this pack script is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:kittygun",
+      "device": "unknown",
+      "action": "surveyed_pistol",
+      "expected_ammo": "tacz:45acp",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:mika",
+      "device": "unknown",
+      "action": "surveyed_smg",
+      "expected_ammo": "tacz:9mm",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:miyako",
+      "device": "unknown",
+      "action": "surveyed_smg",
+      "expected_ammo": "tacz:9mm",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:mosin_nagant1891",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "tacz:762x54",
+      "reason": "Fixed internal box / stripper route remains legacy until this pack script is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:mosin_nagant38",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "tacz:762x54",
+      "reason": "Fixed internal box / stripper route remains legacy until this pack script is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:mosin_nagant44",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "tacz:762x54",
+      "reason": "Fixed internal box / stripper route remains legacy until this pack script is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:nagant1895",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "murasamet:762x38r",
+      "reason": "Nagant 1895 cylinder route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:natsu",
+      "device": "unknown",
+      "action": "surveyed_pistol",
+      "expected_ammo": "tacz:9mm",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:natsu_micro_uzi",
+      "device": "unknown",
+      "action": "surveyed_pistol",
+      "expected_ammo": "tacz:9mm",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:panzerfaust",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "tacz:rpg_rocket",
+      "reason": "Single-shot launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:powder_craft",
+      "device": "unknown",
+      "action": "surveyed_shotgun",
+      "expected_ammo": "murasamet:powder_and_bullet",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:rpg7_og7he",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "murasamet:og7he",
+      "reason": "Single-shot launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:rpg7_pg7heat",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "murasamet:pg7heat",
+      "reason": "Single-shot launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:rpg7_pg7vr_tandem_heat",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "murasamet:pg7vr_tandem_heat",
+      "reason": "Single-shot launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:russian1895",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "tacz:762x54",
+      "reason": "Fixed internal box / stripper route remains legacy until this pack script is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:russian1895_carbine",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "tacz:762x54",
+      "reason": "Fixed internal box / stripper route remains legacy until this pack script is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:shambler",
+      "device": "unknown",
+      "action": "surveyed_shotgun",
+      "expected_ammo": "tacz:12g",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:sks",
+      "device": "stripper_clip",
+      "action": "gas_operated_rifle",
+      "expected_ammo": "tacz:762x39",
+      "reason": "Fixed internal box / stripper route remains legacy until this pack script is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:steeltube",
+      "device": "unknown",
+      "action": "surveyed_shotgun",
+      "expected_ammo": "tacz:9mm",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:sw_1917",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "tacz:45acp",
+      "reason": "M1917 is a revolver; no speedloader route is activated without script evidence.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:tdf141ls",
+      "device": "unknown",
+      "action": "surveyed_sniper",
+      "expected_ammo": "murasamet:waveenergy_bullet",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:tdf45sg",
+      "device": "unknown",
+      "action": "surveyed_shotgun",
+      "expected_ammo": "murasamet:waveenergy_bullet",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:tdf739mg",
+      "device": "unknown",
+      "action": "surveyed_mg",
+      "expected_ammo": "murasamet:waveenergy_bullet",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:tdf74e",
+      "device": "unknown",
+      "action": "surveyed_sniper",
+      "expected_ammo": "murasamet:waveenergy_bullet",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:tdf97ar",
+      "device": "unknown",
+      "action": "surveyed_rifle",
+      "expected_ammo": "murasamet:waveenergy_bullet",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:tianqing",
+      "device": "unknown",
+      "action": "surveyed_sniper",
+      "expected_ammo": "tacz:762x54",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:type11",
+      "device": "unknown",
+      "action": "surveyed_mg",
+      "expected_ammo": "tacz:792x57",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:type56",
+      "device": "stripper_clip",
+      "action": "gas_operated_rifle",
+      "expected_ammo": "tacz:762x39",
+      "reason": "Fixed internal box / stripper route remains legacy until this pack script is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "murasamet:vallgarda_375",
+      "device": "unknown",
+      "action": "surveyed_sniper",
+      "expected_ammo": "tacz:30_06",
+      "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
       "needs_detailed_function": true
     }
   ]

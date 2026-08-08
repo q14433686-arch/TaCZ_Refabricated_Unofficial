@@ -3094,5 +3094,9 @@
   "item.tacz.magazine.cib_usas12_12g_10": "Surveyed CIB USAS12 12g 10-round Magazine",
   "item.tacz.magazine.cib_usas12_12g_15": "Surveyed CIB USAS12 12g 15-round Magazine",
   "item.tacz.magazine.cib_usas12_12g_20": "Surveyed CIB USAS12 12g 20-round Magazine",
-  "item.tacz.magazine.cib_usas12_12g_25": "Surveyed CIB USAS12 12g 25-round Magazine"
+  "item.tacz.magazine.cib_usas12_12g_25": "Surveyed CIB USAS12 12g 25-round Magazine",
+  "item.tacz.magazine.murasamet_boys_50bmg_5": "Surveyed Boys Anti-Tank Rifle .50 BMG 5-round Magazine",
+  "item.tacz.magazine.ak_762x39_20": "AK 7.62×39 20-round Magazine",
+  "item.tacz.magazine.ak_762x39_35": "AK 7.62×39 35-round Magazine",
+  "item.tacz.magazine.ak_762x39_75": "AK 7.62×39 75-round Magazine"
 }

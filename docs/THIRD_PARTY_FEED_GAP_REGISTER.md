@@ -31,7 +31,7 @@ tools/industry/third_party_feed_gap_registry.json
 | `cibs` | 14 | 12 | 2 |
 | `classicr` | 25 | 24 | 7 |
 | `hamster` | 5 | 5 | 0 |
-| `murasamet` | 20 | 15 | 0 |
+| `murasamet` | 21 | 16 | 48 |
 | `rainforest` | 12 | 10 | 0 |
 | `suffuse` | 19 | 18 | 0 |
 | `wemql_r` | 8 | 5 | 0 |
@@ -260,6 +260,7 @@ tools/industry/third_party_feed_gap_registry.json
 | `hamster_mg1417_long_belt` | `hamster:long_ammo` | `belt` | 100 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
 | `hamster_mp18_compact_32` | `hamster:compact_ammo` | `detachable_magazine` | 32 | `neutral_generic_material` → `tacz:item/magazine` |
 | `m14_308` | `tacz:308` | `detachable_magazine` | 10, 20, 30, 50 | `neutral_generic_material` → `tacz:item/magazine` |
+| `murasamet_boys_50bmg` | `tacz:50bmg` | `detachable_magazine` | 5 | `neutral_generic_material` → `tacz:item/magazine` |
 | `murasamet_dp_pan_762x54` | `tacz:762x54` | `detachable_magazine` | 47 | `neutral_generic_material` → `tacz:item/magazine` |
 | `murasamet_kp31_9mm` | `tacz:9mm` | `detachable_magazine` | 70 | `neutral_generic_material` → `tacz:item/magazine` |
 | `murasamet_lanchester_9mm` | `tacz:9mm` | `detachable_magazine` | 32 | `neutral_generic_material` → `tacz:item/magazine` |
@@ -379,3 +380,51 @@ tools/industry/third_party_feed_gap_registry.json
 | `classicr:mauser_c96` | `internal_box` | `recoil_operated_pistol` | Mauser C96 standard fixed internal box remains legacy; its source extension values do not convert it into a detachable carrier. |
 | `classicr:mgl_40mm` | `revolver` | `revolver_grenade_launcher` | MGL is a rotary grenade launcher. It remains legacy until a dedicated physical cylinder/reload-route transaction is audited. |
 | `classicr:minigun` | `unknown` | `rotary` | The survey does not establish an audited removable belt/box source for this rotary implementation. It remains legacy rather than inheriting a belt from its class or capacity. |
+| `murasamet:abe_pipe_gun` | `unknown` | `surveyed_shotgun` | Primitive custom powder weapon remains legacy. |
+| `murasamet:anantha_action` | `unknown` | `surveyed_rifle` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:at4` | `single_shot` | `launcher` | Single-shot launcher remains legacy. |
+| `murasamet:auv` | `unknown` | `surveyed_smg` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:barstard` | `unknown` | `surveyed_smg` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:blunderbuss` | `single_shot` | `single_shot` | Primitive powder weapon remains legacy. |
+| `murasamet:brownbess` | `single_shot` | `single_shot` | Primitive powder weapon remains legacy. |
+| `murasamet:brownbess_tactical` | `single_shot` | `single_shot` | Primitive powder weapon remains legacy. |
+| `murasamet:colt_1917` | `revolver` | `revolver` | M1917 is a revolver; no speedloader route is activated without script evidence. |
+| `murasamet:flint_grenade_launcher` | `single_shot` | `launcher` | Single-shot grenade launcher remains legacy. |
+| `murasamet:fp45` | `single_shot` | `single_shot` | Single-shot pistol remains legacy. |
+| `murasamet:garand` | `en_bloc_clip` | `gas_operated_rifle` | M1 Garand en-bloc behavior is recorded, but this pack script route is not yet audited for physical clip insertion/ejection. |
+| `murasamet:giddings_ssc410` | `unknown` | `surveyed_rifle` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:girandoni` | `unknown` | `surveyed_rifle` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:glock_1` | `unknown` | `surveyed_pistol` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:glock_999` | `unknown` | `surveyed_rpg` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:hand_connon` | `single_shot` | `single_shot` | Primitive powder weapon remains legacy. |
+| `murasamet:kar98b` | `stripper_clip` | `bolt_action` | Fixed internal box / stripper route remains legacy until this pack script is audited. |
+| `murasamet:kar98k` | `stripper_clip` | `bolt_action` | Fixed internal box / stripper route remains legacy until this pack script is audited. |
+| `murasamet:kittygun` | `unknown` | `surveyed_pistol` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:mika` | `unknown` | `surveyed_smg` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:miyako` | `unknown` | `surveyed_smg` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:mosin_nagant1891` | `stripper_clip` | `bolt_action` | Fixed internal box / stripper route remains legacy until this pack script is audited. |
+| `murasamet:mosin_nagant38` | `stripper_clip` | `bolt_action` | Fixed internal box / stripper route remains legacy until this pack script is audited. |
+| `murasamet:mosin_nagant44` | `stripper_clip` | `bolt_action` | Fixed internal box / stripper route remains legacy until this pack script is audited. |
+| `murasamet:nagant1895` | `revolver` | `revolver` | Nagant 1895 cylinder route remains legacy. |
+| `murasamet:natsu` | `unknown` | `surveyed_pistol` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:natsu_micro_uzi` | `unknown` | `surveyed_pistol` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:panzerfaust` | `single_shot` | `launcher` | Single-shot launcher remains legacy. |
+| `murasamet:powder_craft` | `unknown` | `surveyed_shotgun` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:rpg7_og7he` | `single_shot` | `launcher` | Single-shot launcher remains legacy. |
+| `murasamet:rpg7_pg7heat` | `single_shot` | `launcher` | Single-shot launcher remains legacy. |
+| `murasamet:rpg7_pg7vr_tandem_heat` | `single_shot` | `launcher` | Single-shot launcher remains legacy. |
+| `murasamet:russian1895` | `stripper_clip` | `bolt_action` | Fixed internal box / stripper route remains legacy until this pack script is audited. |
+| `murasamet:russian1895_carbine` | `stripper_clip` | `bolt_action` | Fixed internal box / stripper route remains legacy until this pack script is audited. |
+| `murasamet:shambler` | `unknown` | `surveyed_shotgun` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:sks` | `stripper_clip` | `gas_operated_rifle` | Fixed internal box / stripper route remains legacy until this pack script is audited. |
+| `murasamet:steeltube` | `unknown` | `surveyed_shotgun` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:sw_1917` | `revolver` | `revolver` | M1917 is a revolver; no speedloader route is activated without script evidence. |
+| `murasamet:tdf141ls` | `unknown` | `surveyed_sniper` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:tdf45sg` | `unknown` | `surveyed_shotgun` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:tdf739mg` | `unknown` | `surveyed_mg` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:tdf74e` | `unknown` | `surveyed_sniper` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:tdf97ar` | `unknown` | `surveyed_rifle` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:tianqing` | `unknown` | `surveyed_sniper` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:type11` | `unknown` | `surveyed_mg` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `murasamet:type56` | `stripper_clip` | `gas_operated_rifle` | Fixed internal box / stripper route remains legacy until this pack script is audited. |
+| `murasamet:vallgarda_375` | `unknown` | `surveyed_sniper` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |

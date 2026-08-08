@@ -393,6 +393,30 @@ MG3/Negev/PKP/QJY/QJZ belt。先前已审镜像枪与本轮主枪保持同一 fa
 [`THIRD_PARTY_FEED_GAP_REGISTER.md`](THIRD_PARTY_FEED_GAP_REGISTER.md)。该登记册不会启用任何供弹，只用于后续授权
 贴图、专用盘/鼓/双联模型和脚本 reload route 的补齐排序。
 
+## KhanPowder / Murasamet 完整枪包审计（76 / 76）
+
+此前已接入的 27 把历史外部载具在本轮扩展为完整 `murasamet` 审计：全部 **76 条** survey entry 都已有 reference
+profile。
+
+- **28 条 active**：AMD-65、G3A3、L85A3、DP/DPM 顶盘、BAR 组、MG34/MG42 belt、Thompson/M3/MP/Sten/Lanchester、
+  PPSh、KP/-31、M1911/TT-33/Vz.61/Micro Uzi，以及新增的 Boys 反坦克步枪可拆 5 发弹匣；
+- **48 条 legacy**：原包的火绳/粉枪、单发/火箭、固定仓+桥夹、漏夹、转轮、tube/loop、空气枪、能量武器和未证自定义
+  平台均有 factual reference，不用“完整”之名把它们错误实体弹匣化。
+
+| 典型组 | 完整审计结论 |
+|---|---|
+| DP-28/DPM | active detachable top-pan，不是 belt；细分盘式美术在 gap register 中记录为待补。 |
+| M1918/A1/A2 | active detachable BAR；MG class 不决定 belt。 |
+| MG34/MG42 | active belt，各自 private family，现有 exposed-belt material 仅是 family-level。 |
+| Boys | active detachable 五发反坦克步枪弹匣；RPG class 不决定 single-shot。 |
+| Garand | `en_bloc_clip` 事实已记录，但本包 script 未审，runtime 保持 legacy。 |
+| Kar98/Mosin/SKS/Type56/俄制步枪 | `stripper_clip` 事实已记录，真实 script feed route 未审，runtime legacy。 |
+| M1917/Nagant | `revolver` legacy；无 speedloader route 不假装成外部弹匣。 |
+| 火绳枪、粉枪、AT4/Panzerfaust/RPG、wave-energy/TDF、未知动漫平台 | 单发/utility/unknown legacy。 |
+
+因此 Murasamet 没有未决 survey entry；每把都有 active 或 explicit legacy 的可见结论，且新增 legacy 记录已同步进入
+细分材质/功能缺口登记册。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：

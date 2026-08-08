@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "murasamet_boys_50bmg",
+  "magazine_capacity": 5,
+  "ammo": "tacz:50bmg",
+  "display_name": "item.tacz.magazine.murasamet_boys_50bmg_5"
+}

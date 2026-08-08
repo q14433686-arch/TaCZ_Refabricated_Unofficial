@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "generated_by": "tacz_third_party_feed_progress",
+  "warning": "Author/CI audit only. This report is not a datapack and cannot enable feeds.",
+  "survey": {
+    "schema_version": 2,
+    "sha256": "919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a",
+    "summary": {
+      "total": 594,
+      "validated": 63,
+      "review_required": 428,
+      "incremental_or_clip": 57,
+      "excluded": 46
+    }
+  },
+  "pack_groups": [
+    {
+      "pack": "Default TACZ",
+      "namespaces": [
+        "tacz"
+      ],
+      "survey_total": 54,
+      "reference_count": 53,
+      "active_feed_count": 52,
+      "legacy_reference_count": 2,
+      "uncovered_count": 1,
+      "status": "in_progress"
+    },
+    {
+      "pack": "Apocalypse",
+      "namespaces": [
+        "bf1"
+      ],
+      "survey_total": 30,
+      "reference_count": 11,
+      "active_feed_count": 11,
+      "legacy_reference_count": 0,
+      "uncovered_count": 19,
+      "status": "in_progress"
+    },
+    {
+      "pack": "Cold War",
+      "namespaces": [
+        "rainforest"
+      ],
+      "survey_total": 17,
+      "reference_count": 15,
+      "active_feed_count": 15,
+      "legacy_reference_count": 0,
+      "uncovered_count": 2,
+      "status": "in_progress"
+    },
+    {
+      "pack": "GunpowderRevolution",
+      "namespaces": [
+        "hamster"
+      ],
+      "survey_total": 36,
+      "reference_count": 13,
+      "active_feed_count": 13,
+      "legacy_reference_count": 0,
+      "uncovered_count": 23,
+      "status": "in_progress"
+    },
+    {
+      "pack": "Enlisted",
+      "namespaces": [
+        "ww"
+      ],
+      "survey_total": 52,
+      "reference_count": 26,
+      "active_feed_count": 26,
+      "legacy_reference_count": 0,
+      "uncovered_count": 26,
+      "status": "in_progress"
+    },
+    {
+      "pack": "CCRP / ClassicR",
+      "namespaces": [
+        "ccrp",
+        "classicr"
+      ],
+      "survey_total": 164,
+      "reference_count": 164,
+      "active_feed_count": 136,
+      "legacy_reference_count": 28,
+      "uncovered_count": 0,
+      "status": "complete"
+    },
+    {
+      "pack": "CIBR",
+      "namespaces": [
+        "cib",
+        "cibs"
+      ],
+      "survey_total": 106,
+      "reference_count": 106,
+      "active_feed_count": 82,
+      "legacy_reference_count": 24,
+      "uncovered_count": 0,
+      "status": "complete"
+    },
+    {
+      "pack": "KhanPowder",
+      "namespaces": [
+        "murasamet"
+      ],
+      "survey_total": 76,
+      "reference_count": 76,
+      "active_feed_count": 28,
+      "legacy_reference_count": 48,
+      "uncovered_count": 0,
+      "status": "complete"
+    },
+    {
+      "pack": "Suffuse GunSmoke",
+      "namespaces": [
+        "suffuse"
+      ],
+      "survey_total": 46,
+      "reference_count": 21,
+      "active_feed_count": 21,
+      "legacy_reference_count": 0,
+      "uncovered_count": 25,
+      "status": "in_progress"
+    },
+    {
+      "pack": "Delta Force: Storm Assault",
+      "namespaces": [
+        "wemql_r"
+      ],
+      "survey_total": 13,
+      "reference_count": 13,
+      "active_feed_count": 13,
+      "legacy_reference_count": 0,
+      "uncovered_count": 0,
+      "status": "complete"
+    }
+  ],
+  "namespace_details": {
+    "bf1": {
+      "namespace": "bf1",
+      "survey_total": 30,
+      "reference_count": 11,
+      "active_feed_count": 11,
+      "legacy_reference_count": 0,
+      "uncovered_count": 19,
+      "active_mechanisms": {
+        "belt": 2,
+        "detachable_magazine": 9
+      },
+      "status": "in_progress"
+    },
+    "ccrp": {
+      "namespace": "ccrp",
+      "survey_total": 131,
+      "reference_count": 131,
+      "active_feed_count": 110,
+      "legacy_reference_count": 21,
+      "uncovered_count": 0,
+      "active_mechanisms": {
+        "belt": 2,
+        "detachable_magazine": 108
+      },
+      "status": "complete"
+    },
+    "cib": {
+      "namespace": "cib",
+      "survey_total": 89,
+      "reference_count": 89,
+      "active_feed_count": 67,
+      "legacy_reference_count": 22,
+      "uncovered_count": 0,
+      "active_mechanisms": {
+        "belt": 6,
+        "detachable_magazine": 61
+      },
+      "status": "complete"
+    },
+    "cibs": {
+      "namespace": "cibs",
+      "survey_total": 17,
+      "reference_count": 17,
+      "active_feed_count": 15,
+      "legacy_reference_count": 2,
+      "uncovered_count": 0,
+      "active_mechanisms": {
+        "detachable_magazine": 15
+      },
+      "status": "complete"
+    },
+    "classicr": {
+      "namespace": "classicr",
+      "survey_total": 33,
+      "reference_count": 33,
+      "active_feed_count": 26,
+      "legacy_reference_count": 7,
+      "uncovered_count": 0,
+      "active_mechanisms": {
+        "belt": 1,
+        "detachable_magazine": 25
+      },
+      "status": "complete"
+    },
+    "hamster": {
+      "namespace": "hamster",
+      "survey_total": 36,
+      "reference_count": 13,
+      "active_feed_count": 13,
+      "legacy_reference_count": 0,
+      "uncovered_count": 23,
+      "active_mechanisms": {
+        "belt": 1,
+        "detachable_magazine": 4,
+        "en_bloc_clip": 1,
+        "speedloader": 2,
+        "stripper_clip": 5
+      },
+      "status": "in_progress"
+    },
+    "murasamet": {
+      "namespace": "murasamet",
+      "survey_total": 76,
+      "reference_count": 76,
+      "active_feed_count": 28,
+      "legacy_reference_count": 48,
+      "uncovered_count": 0,
+      "active_mechanisms": {
+        "belt": 2,
+        "detachable_magazine": 26
+      },
+      "status": "complete"
+    },
+    "rainforest": {
+      "namespace": "rainforest",
+      "survey_total": 17,
+      "reference_count": 15,
+      "active_feed_count": 15,
+      "legacy_reference_count": 0,
+      "uncovered_count": 2,
+      "active_mechanisms": {
+        "belt": 3,
+        "detachable_magazine": 11,
+        "stripper_clip": 1
+      },
+      "status": "in_progress"
+    },
+    "suffuse": {
+      "namespace": "suffuse",
+      "survey_total": 46,
+      "reference_count": 21,
+      "active_feed_count": 21,
+      "legacy_reference_count": 0,
+      "uncovered_count": 25,
+      "active_mechanisms": {
+        "belt": 1,
+        "detachable_magazine": 20
+      },
+      "status": "in_progress"
+    },
+    "tacz": {
+      "namespace": "tacz",
+      "survey_total": 54,
+      "reference_count": 53,
+      "active_feed_count": 52,
+      "legacy_reference_count": 2,
+      "uncovered_count": 1,
+      "active_mechanisms": {
+        "belt": 2,
+        "detachable_magazine": 36,
+        "internal_box": 2,
+        "revolver": 3,
+        "single_shot": 5,
+        "stripper_clip": 1,
+        "tube": 3
+      },
+      "status": "in_progress"
+    },
+    "wemql_r": {
+      "namespace": "wemql_r",
+      "survey_total": 13,
+      "reference_count": 13,
+      "active_feed_count": 13,
+      "legacy_reference_count": 0,
+      "uncovered_count": 0,
+      "active_mechanisms": {
+        "detachable_magazine": 13
+      },
+      "status": "complete"
+    },
+    "ww": {
+      "namespace": "ww",
+      "survey_total": 52,
+      "reference_count": 26,
+      "active_feed_count": 26,
+      "legacy_reference_count": 0,
+      "uncovered_count": 26,
+      "active_mechanisms": {
+        "belt": 3,
+        "detachable_magazine": 22,
+        "en_bloc_clip": 1
+      },
+      "status": "in_progress"
+    }
+  }
+}
