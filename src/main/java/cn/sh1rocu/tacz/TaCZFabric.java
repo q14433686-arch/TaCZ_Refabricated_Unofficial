@@ -19,6 +19,7 @@ import com.tacz.guns.init.CommandRegistry;
 import com.tacz.guns.init.CommonRegistry;
 import com.tacz.guns.init.CompatRegistry;
 import com.tacz.guns.industry.IndustryProfileManager;
+import com.tacz.guns.industry.magazine.InventoryRoundHandlingService;
 import com.tacz.guns.resource.CommonAssetsManager;
 import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
 import fuzs.forgeconfigapiport.fabric.api.v5.ModConfigEvents;
@@ -122,7 +123,11 @@ public class TaCZFabric implements ModInitializer {
         LivingHurtEvent.CALLBACK.register(LOW, EntityDamageEvent::onLivingHurt);
 
         PlayerTickEvent.END.register(HitboxHelperEvent::onPlayerTick);
+        // Inventory secondary-click starts a server-owned timed round task;
+        // this tick is where the single real cartridge is finally moved.
+        PlayerTickEvent.END.register(InventoryRoundHandlingService::tick);
         PlayerEvent.LOGGED_OUT.register(HitboxHelperEvent::onPlayerLoggedOut);
+        PlayerEvent.LOGGED_OUT.register(event -> InventoryRoundHandlingService.cancel(event.getEntity()));
 
         LivingKnockBackEvent.CALLBACK.register(KnockbackChange::onKnockback);
 

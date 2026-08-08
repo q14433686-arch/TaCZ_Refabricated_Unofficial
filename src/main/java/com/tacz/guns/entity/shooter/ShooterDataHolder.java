@@ -3,6 +3,7 @@ package com.tacz.guns.entity.shooter;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.industry.magazine.EnBlocClipReloadPlan;
 import com.tacz.guns.industry.magazine.InternalFeedReloadPlan;
+import com.tacz.guns.industry.magazine.InventoryRoundHandlingPlan;
 import com.tacz.guns.industry.magazine.PhysicalMagazineReloadPlan;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
 import net.minecraft.world.item.ItemStack;
@@ -91,6 +92,12 @@ public class ShooterDataHolder {
     @Nullable
     public EnBlocClipReloadPlan enBlocClipReload = null;
     /**
+     * Server-only timed transaction started from the player's existing
+     * inventory slots while handling one physical round.
+     */
+    @Nullable
+    public InventoryRoundHandlingPlan inventoryRoundHandling = null;
+    /**
      * Data-driven selected reload route, synchronised only as a short-lived
      * animation selector. The server still owns the physical source plan.
      */
@@ -149,6 +156,7 @@ public class ShooterDataHolder {
         physicalMagazineReload = null;
         internalFeedReload = null;
         enBlocClipReload = null;
+        inventoryRoundHandling = null;
         industryReloadRoute = "";
         sprintTimestamp = -1;
         sprintTimeS = 0;

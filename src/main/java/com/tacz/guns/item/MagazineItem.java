@@ -5,6 +5,7 @@ import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import com.tacz.guns.client.industry.icon.IndustryIconRenderer;
 import com.tacz.guns.industry.magazine.ExternalCarrierVariant;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
+import com.tacz.guns.industry.magazine.InventoryRoundHandlingService;
 import com.tacz.guns.industry.magazine.MagazineItemBuilder;
 import com.tacz.guns.industry.magazine.MagazineItemDataAccessor;
 import com.tacz.guns.resource.CommonAssetsManager;
@@ -33,10 +34,10 @@ import java.util.function.Consumer;
 /**
  * A one-stack physical detachable magazine or physical loading device.
  *
- * <p>Round handling is deliberately routed through the real multi-slot
- * ammunition handling bench. Inventory right-click used to transfer an entire
- * stack instantly; leaving that shortcut active would bypass both mixed-round
- * ordering and the server-authoritative per-round handling time.</p>
+ * <p>Right-clicking a loose round stack or an empty inventory slot keeps the
+ * familiar inventory workflow, but now starts a server-timed one-round
+ * transaction. There is no instant bulk-loading shortcut: ordered mixed-round
+ * handling happens in the player's real inventory slots.</p>
  */
 public class MagazineItem extends Item implements MagazineItemDataAccessor, IItem {
     public MagazineItem(Properties properties) {
@@ -63,10 +64,15 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
 
     @Override
     public boolean overrideStackedOnOther(ItemStack magazine, Slot slot, ClickAction action, Player player) {
-        // Do not retain an inventory-click bulk-loading bypass. The handling
-        // bench owns mixed-order validation, one-round timing and output-space
-        // checks for magazines, bridge clips and en-bloc clips alike.
-        return false;
+        if (action != ClickAction.SECONDARY || !isConfigured(magazine)) {
+            return false;
+        }
+        // Consume the client click too, so vanilla never swaps the stacks while
+        // the server is counting down the selected physical round.
+        if (player.level().isClientSide()) {
+            return slot.getItem().isEmpty() || slot.getItem().getItem() instanceof com.tacz.guns.api.item.IAmmo;
+        }
+        return InventoryRoundHandlingService.beginMagazineInteraction(player, magazine, slot);
     }
 
     @Override

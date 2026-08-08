@@ -87,9 +87,6 @@ public class ModItems {
     /** Dedicated GUI block for final cartridge assembly; it is intentionally not a Create Depot recipe. */
     public static Item CARTRIDGE_ASSEMBLY_MACHINE = register("cartridge_assembly_machine",
             new BlockItem(ModBlocks.CARTRIDGE_ASSEMBLY_MACHINE, blockItemProps("cartridge_assembly_machine")));
-    /** Timed multi-slot bench for loading/unloading mixed same-calibre physical carriers. */
-    public static Item AMMUNITION_HANDLING_BENCH = register("ammunition_handling_bench",
-            new BlockItem(ModBlocks.AMMUNITION_HANDLING_BENCH, blockItemProps("ammunition_handling_bench")));
     /** Safe one-input recovery machine for stripped industrial equipment. */
     public static Item INDUSTRIAL_SALVAGE_STATION = register("industrial_salvage_station",
             new BlockItem(ModBlocks.INDUSTRIAL_SALVAGE_STATION, blockItemProps("industrial_salvage_station")));
@@ -98,7 +95,7 @@ public class ModItems {
             new BlockItem(ModBlocks.INDUSTRIAL_SERVICE_BENCH, blockItemProps("industrial_service_bench")));
     /** Stores up to four complete physical magazine stacks, including their remaining rounds. */
     public static Item MAGAZINE_POUCH = register("magazine_pouch", new MagazinePouchItem(itemProps("magazine_pouch")));
-    /** Reusable handling-bench tool that accelerates, but never batch-skips, physical round loading. */
+    /** Reusable inventory tool that accelerates, but never batch-skips, physical round loading. */
     public static Item MAGAZINE_LOADER = register("magazine_loader", new MagazineLoaderItem(itemProps("magazine_loader")));
 
 

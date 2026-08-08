@@ -16,7 +16,7 @@ PhysicalMagazines = true
 - `detachable_magazine` 使用可拆卸 `tacz:magazine`；`belt` 使用同一实体物品承载的弹链箱；
 - 默认包当前有 **34 种独立的族／口径／容量供弹器身份**，由 `tools/industry/magazine_carriers.json` 与 `data/tacz/industry/gun_feed/*.json` 双向校验；第三方已验证外部载具走独立 surveyed Gunsmith Table 多槽委托，不伪装成默认包高保真 Create 规格量规线；
 - `tube`、`revolver`、`internal_box`、`single_shot` 是枪内供弹状态或枪械组件，**不伪造为可拆卸弹匣**；
-- 最终散装弹药仍由专用四槽弹药装配机制造；弹匣、桥夹、漏夹和快装器的装/退弹改走真实十槽弹药处理台，每发有服务端计时，**不是背包右键或假装配 GUI**；
+- 最终散装弹药仍由专用四槽弹药装配机制造；弹匣、桥夹、漏夹和快装器在玩家真实背包/容器多槽界面中逐发装/退，每发有服务端计时，**不是瞬时背包右键或假装配 GUI**；
 - `LEGACY` 档仍使用原有整数备弹行为。
 
 ## 1. 新的实体供弹器制造链
@@ -92,9 +92,9 @@ Basin：高碳钢板 + 黄铜板 + 石英 + 铁粒
 
 ## 3. 装填与换弹
 
-1. 制造弹药处理台，将一只新造的实体弹匣、漏夹或桥夹放入载具槽；四个输入槽分别放入同口径 FMJ/AP/HP（12 gauge 则 shot/slug）样本；
-2. 预期：每次“装一发”在服务器计时结束后才使 `MagazineRounds` 与 `MagazineAmmoCount` 增加一发、输入恰好减少一发；错误口径、未知 profile 和满载具均不得装入；
-3. 依次装入 FMJ → AP → HP 后，tooltip 的下一发必须为 HP；连续退弹依次输出 HP → AP → FMJ，输出槽堵塞/载具移动/取消/离开 GUI 时不得复制、吞弹或换源；
+1. 在玩家背包/容器界面把一只新造的实体弹匣、漏夹或桥夹拿在光标上，依次右击同口径 FMJ/AP/HP（12 gauge 则 shot/slug）散装弹槽；
+2. 预期：每次右击只启动一发服务器计时；时间结束后 `MagazineRounds` 与 `MagazineAmmoCount` 才增加一发、来源恰好减少一发；错误口径、未知 profile 和满载具均不得装入；
+3. 依次装入 FMJ → AP → HP 后，tooltip 的下一发必须为 HP；把载具拿在光标上右击空槽，潜行连续退弹应依次输出 HP → AP → FMJ；来源/输出/载具移动、取消、关闭容器时不得复制、吞弹或换源；
 4. 用 AK-47、M4A1、Glock 17、P90、RPK、M249、FN Evolys 分别验证：
    - 单点 `R` 必须在**按下**时立即开始正常换弹，不能等待松键；当前按住 R 也不得弹出轮盘或延迟/吞掉这次换弹；
    - 换弹动画仍由原枪械逻辑提供时间点；
