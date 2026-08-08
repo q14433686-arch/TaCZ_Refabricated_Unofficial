@@ -8,6 +8,7 @@ import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.industry.IndustryProfileManager;
 import com.tacz.guns.resource.ICommonResourceProvider;
 import com.tacz.guns.resource.index.CommonAmmoIndex;
+import com.tacz.guns.resource.pojo.data.block.TabConfig;
 import com.tacz.guns.resource.pojo.data.gun.FeedType;
 import net.minecraft.resources.Identifier;
 
@@ -37,8 +38,8 @@ import java.util.Set;
  */
 public final class SurveyedCartridgeRecipeFactory {
     private static final String TABLE_TYPE = "tacz:gun_smith_table_crafting";
-    /** Surveyed loose-ammo commissions belong to the existing ammo tab, not misc. */
-    private static final String GROUP = "tacz:ammo";
+    /** Surveyed gauges, cases and projectiles have their own industrial page. */
+    private static final String GROUP = TabConfig.TAB_INDUSTRY_CARTRIDGE.toString();
     private static final String MARKER = "industry_surveyed_ammo_fallback";
     private static final String GENERATED_MARKER = "industry_surveyed_generated";
     private static final String SURVEYING_PLATFORM = "surveying";

@@ -208,7 +208,6 @@ public class TaCZFabricClient implements ClientModInitializer {
 
         InputEvent.Key.EVENT.register(ReloadKey::onReloadPress);
         PlayerTickEvent.START.register(ReloadKey::autoReload);
-        ClientTickEvents.END_CLIENT_TICK.register(ReloadKey::tickReloadWheel);
 
         ClientTickEvents.START_CLIENT_TICK.register(mc -> ShootKey.autoShoot(mc, false));
         ClientTickEvents.END_CLIENT_TICK.register(mc -> ShootKey.autoShoot(mc, true));

@@ -1197,10 +1197,11 @@ def generated_stable_dossier_files(platforms: list[dict[str, Any]], acquisition:
         tier_id = manufacturing_tier(platform)
         files[RESOURCE_ROOT / f"data/tacz/recipe/industry/dossier_commission_{platform['slug']}.json"] = {
             "type": "tacz:gun_smith_table_crafting",
-            # Existing default Gunsmith Table has a real misc tab. This is an
-            # explicit commission catalogue selection, so multiple platforms
-            # may legitimately share an archive/action evidence bill of goods
-            # without becoming ambiguous physical machine recipes.
+            # This is a real GUI-selected operation, but it belongs on the
+            # dedicated industry-platform page rather than the legacy misc tab.
+            # Multiple platforms may legitimately share an archive/action
+            # evidence bill of goods without becoming ambiguous physical
+            # machine recipes.
             "industry_dossier_commission": True,
             "materials": [
                 dossier_commission_material("tacz:gun_component_blank", dossier_archive_tag(tier_id, acquisition), True),
@@ -1209,7 +1210,7 @@ def generated_stable_dossier_files(platforms: list[dict[str, Any]], acquisition:
             ],
             "result": {
                 "type": "custom",
-                "group": "tacz:misc",
+                "group": "tacz:industry_platform",
                 "item": {
                     "item": "tacz:gun_blueprint",
                     "count": 1,
@@ -5104,7 +5105,7 @@ def validate_stable_dossier_commissions(platforms: list[dict[str, Any]], acquisi
         result = recipe.get("result", {})
         item = result.get("item", {}) if isinstance(result, dict) else {}
         if not isinstance(result, dict) or result.get("type") != "custom" \
-                or result.get("group") != "tacz:misc" \
+                or result.get("group") != "tacz:industry_platform" \
                 or not isinstance(item, dict) or item.get("item") != "tacz:gun_blueprint" \
                 or item.get("nbt") != master_blueprint_tag(platform):
             raise ValueError(f"{platform['slug']}: dossier commission result is not the exact master dossier")

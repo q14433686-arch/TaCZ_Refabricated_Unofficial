@@ -11,7 +11,6 @@ import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.gui.GunRefitScreen;
-import com.tacz.guns.client.industry.magazine.ReloadWheelOverlay;
 import com.tacz.guns.client.renderer.crosshair.CrosshairType;
 import com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat;
 import com.tacz.guns.config.client.RenderConfig;
@@ -43,10 +42,6 @@ public class RenderCrosshairEvent {
     public static void onRenderOverlay(GuiGraphicsExtractor guiGraphics, Window window) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
-            return;
-        }
-        ReloadWheelOverlay.render(guiGraphics, window);
-        if (ReloadWheelOverlay.isOpen()) {
             return;
         }
         if (!IGun.mainHandHoldGun(player)) {

@@ -84,12 +84,6 @@ public class ShooterDataHolder {
      */
     @Nullable
     public PhysicalMagazineReloadPlan physicalMagazineReload = null;
-    /**
-     * One server-authoritative inventory slot requested by the long-R reload
-     * wheel. -1 preserves the normal best-loaded-magazine policy. The value is
-     * consumed at reload start and never synchronised as trusted client state.
-     */
-    public int preferredPhysicalMagazineSlot = -1;
     /** Server-only reservation for tube/cylinder/internal/single-shot feeds. */
     @Nullable
     public InternalFeedReloadPlan internalFeedReload = null;
@@ -153,7 +147,6 @@ public class ShooterDataHolder {
         reloadTimestamp = -1;
         reloadStateType = ReloadState.StateType.NOT_RELOADING;
         physicalMagazineReload = null;
-        preferredPhysicalMagazineSlot = -1;
         internalFeedReload = null;
         enBlocClipReload = null;
         industryReloadRoute = "";

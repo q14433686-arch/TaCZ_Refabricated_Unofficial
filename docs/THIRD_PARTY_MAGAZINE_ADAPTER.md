@@ -146,19 +146,24 @@ TACZ 当前的扩容等级最多使用该数组的前三项。少数旧枪包虽
 
 这不是把完整成枪当模具，也不是置物台多输入伪装。它是 Gunsmith Table 的真实多槽事务；附属包若要获得高保真 Create 生产线，仍可自行提供实际 carrier 工艺数据。
 
-### 工作台分类
+### 工作台分类：独立工业页
 
-测绘兼容配方不再全部塞入 `tacz:misc`：平台档案、production template、平台套件、桥夹/漏夹委托以及实体弹匣/弹链委托会按目标 GunIndex 的实际 `pistol`、`rifle`、`sniper`、`shotgun`、`smg`、`mg`、`rpg` 分类进入对应 TACZ Gunsmith Table 标签。测绘弹壳、弹头、量规与补弹委托进入 `tacz:ammo` 标签。
+兼容工业配方不再塞进原有的 `pistol`、`rifle`、`ammo` 或 `misc` 页。Gunsmith Table 现在把它们放到四个独立、代码拥有的页签：
 
-有些第三方工作台本身只声明了很窄的一组标签。客户端发现某条已同步的工业配方使用标准 TACZ group、但当前 table 缺少该标签时，会只为该已知标准 group 补入对应内置标签；不会伪造任意第三方 tab，也不会把配方退回杂项或静默隐藏。
+| 页签 | 内容 | 真实出口 |
+|---|---|---|
+| `tacz:industry_assembly`（工业总装） | 已测绘第三方枪的最终多槽总装配方 | 原配方材料 + 平台套件 + production template + 夹具 → 成枪 |
+| `tacz:industry_platform`（工业档案与平台套件） | master dossier、production template、平台套件，以及既有默认平台 dossier commission | 真实 Gunsmith Table 多槽事务 |
+| `tacz:industry_feed`（实体供弹器件） | 已审计的桥夹、漏夹/快装器委托，以及实体弹匣、弹链箱 carrier commission | 空的、带精确 family/ammo/capacity 的真实实体器件 |
+| `tacz:industry_cartridge`（测绘弹药工艺） | 测绘量规、指定口径的弹壳、弹头与已击发壳复整 | 最终散装弹仍只由四槽 Cartridge Assembly Machine 输出 |
 
-### 长按 R：实体载具选择轮盘
+因此“工业总装”和“平台/供弹/弹药工装”都有独立页面，既不把一堆蓝图伪装成枪械类别，也不把真实弹药机的出口塞回普通 ammo 页。已声明高保真平台的默认 **34** 个可拆卸供弹器身份继续使用既有 Basin → 量规 → 壳体/供弹组件 → 单工件总装路线，不会被 survey 委托替换。
 
-对已启用 `detachable_magazine` / `belt` 的枪：短按 R 保持普通“自动选择余弹最多的兼容载具”逻辑；按住 R 八个客户端 tick 后会打开轮盘，显示背包里**真实存在、兼容且余弹更多**的载具身份。松开 R 后只会请求所选真实库存槽位，服务器在开始 reload 与真正 feed 时各验证一次该 ItemStack；物品移动、余弹不足、family/ammo/capacity 不匹配时 fail closed，不会退回去偷用别的弹匣或散装弹。
+有些第三方工作台本身只声明了很窄的一组标签。客户端只会在已同步配方实际使用时补入有限的、代码拥有的 TACZ 页面（包括上述四页）；服务端、JEI 和 REI 使用同一白名单与同一 recipe filter 校验。任意第三方自定义 tab 仍由其数据包显式声明，客户端不会凭空造页，也不会把工业配方退回杂项或静默隐藏。
 
-轮盘目前仅接管外部实体载具。桥夹、漏夹、快装器、内部仓、转轮与 legacy 枪仍保持各自已经审计的动作路线；不会因为有一个轮盘 UI 就伪装出不存在的物理 reload 行为。
+### 延后的长按 R 轮盘
 
-已声明高保真平台的默认 **34** 个可拆卸供弹器身份继续使用既有 Basin → 量规 → 壳体/供弹组件 → 单工件总装路线，不会被 survey 委托替换。
+长按 R 轮盘目前刻意未启用：单点 R 在**按下时立即**进入原有换弹逻辑。已记录的实体载具选择方案在 [`RELOAD_WHEEL_DEFERRED_DESIGN.md`](RELOAD_WHEEL_DEFERRED_DESIGN.md)；在重新确认交互并完成多弹种/服务端事务验收前，本文不把它描述为已完成功能。
 
 ## 非可拆卸供弹绝不能套用此文件
 

@@ -53,15 +53,6 @@ public class LocalPlayerReload {
     }
 
     public void reload() {
-        reload(-1);
-    }
-
-    /**
-     * Start a reload from a source selected by the long-R wheel. The exact
-     * inventory slot remains only a client request; the server validates it
-     * before reserving and again before extracting the real ItemStack.
-     */
-    public void reload(int preferredMagazineSlot) {
         // 暂定只有主手可以装弹
         ItemStack mainHandItem = player.getMainHandItem();
         if (!(mainHandItem.getItem() instanceof AbstractGunItem gunItem)) {
@@ -91,15 +82,11 @@ public class LocalPlayerReload {
             // inventory transaction and synchronises the changed gun stack.
             if (player.isShiftKeyDown() && (PhysicalMagazineService.usesPhysicalMagazine(mainHandItem)
                     || EnBlocClipService.usesEnBlocClip(mainHandItem))) {
-                ClientPlayNetworking.send(new ClientMessagePlayerReloadGun(preferredMagazineSlot));
+                ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
                 return;
             }
             // 弹药简单检查
-            boolean wheelSelectedPhysical = preferredMagazineSlot >= 0
-                    && PhysicalMagazineService.usesPhysicalMagazine(mainHandItem);
-            boolean canReload = wheelSelectedPhysical
-                    ? PhysicalMagazineService.isReloadWheelSlotAvailable(player, mainHandItem, preferredMagazineSlot)
-                    : gunItem.canReload(player, mainHandItem);
+            boolean canReload = gunItem.canReload(player, mainHandItem);
             if (IGunOperator.fromLivingEntity(player).needCheckAmmo() && !canReload) {
                 return;
             }
@@ -116,7 +103,7 @@ public class LocalPlayerReload {
             // resolves and validates its physical source reservation.
             IndustryReloadRouteClientState.preview(player, mainHandItem);
             // 发包通知服务器
-            ClientPlayNetworking.send(new ClientMessagePlayerReloadGun(preferredMagazineSlot));
+            ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
             // 执行客户端 reload 相关内容
             this.doReload(gunItem, display, gunData, mainHandItem);
         });

@@ -30,7 +30,6 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIClientPlugin {
     public static final CategoryIdentifier<AttachmentQueryDisplay> ATTACHMENT_QUERY = CategoryIdentifier.of(GunMod.MOD_ID, "plugins/attachment_query");
@@ -116,8 +115,7 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
         for (var entry : displays.entrySet()) {
             TimelessAPI.getCommonBlockIndex(entry.getKey()).ifPresent(blockIndex -> {
                 List<GunSmithTableRecipe> recipeList = blockIndex.getFilter().filter(recipes, GunSmithTableRecipe::getId);
-                recipeList.removeIf(recipe ->
-                        blockIndex.getData().getTabs().stream().noneMatch(tab -> Objects.equals(tab.id(), recipe.getResult().getGroup())));
+                recipeList.removeIf(recipe -> !blockIndex.getData().supportsTab(recipe.getResult().getGroup()));
                 recipeList.forEach(recipe -> registry.add(new GunSmithTableDisplay(recipe, entry)));
             });
         }

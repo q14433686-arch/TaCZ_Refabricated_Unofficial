@@ -3196,6 +3196,8 @@
   "item.tacz.magazine.ww_tbe_763_50": "测绘 WW TBE 763 50 发弹匣",
   "item.tacz.magazine.ww_tbe_763_75": "测绘 WW TBE 763 75 发弹匣",
   "item.tacz.magazine.ww_tbe_763_100": "测绘 WW TBE 763 100 发弹匣",
-  "gui.tacz.reload_wheel.title": "换装",
-  "gui.tacz.reload_wheel.more": "另有 %s 种载具身份"
+  "tacz.type.industry_assembly.name": "工业总装",
+  "tacz.type.industry_platform.name": "工业档案与平台套件",
+  "tacz.type.industry_feed.name": "实体供弹器件",
+  "tacz.type.industry_cartridge.name": "测绘弹药工艺"
 }

@@ -47,9 +47,6 @@ public interface IClientPlayerGunOperator {
      */
     void reload();
 
-    /** Long-R wheel-selected reload source slot; -1 keeps normal selection. */
-    void reload(int preferredMagazineSlot);
-
     /**
      * 客户端检视
      */

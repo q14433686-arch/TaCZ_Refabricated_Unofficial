@@ -121,7 +121,7 @@ data/tacz/recipe/create/industry/form_dossier_archive_<tier>.json
 data/tacz/recipe/industry/dossier_commission_<platform>.json
 ```
 
-后者是默认枪械工作台杂项页中的显式 GUI 委托：消耗对应层级档案包和空白工装页，检查但不消耗对应动作夹具，输出玩家选定的 `master` 原始档案。它不是多个同输入 Create 物理配方竞争不同输出；型号由工作台中玩家明确选择的委托条目决定。随机村民、箱子和样枪测绘仍是捷径。
+后者是默认枪械工作台「工业档案与平台套件」页（`tacz:industry_platform`）中的显式 GUI 委托：消耗对应层级档案包和空白工装页，检查但不消耗对应动作夹具，输出玩家选定的 `master` 原始档案。它不是多个同输入 Create 物理配方竞争不同输出；型号由工作台中玩家明确选择的委托条目决定。随机村民、箱子和样枪测绘仍是捷径。
 
 ## 自动验证
 

@@ -286,7 +286,7 @@ C.3 另增**不拆枪的清洁事务**，仍在同一工业勤务台：安全清
 | P0 | 最新桥夹路线的外部编译与实机验证 | `3eae889` 后尚无 Windows Gradle / 游戏结果 | 先执行 `./gradlew build`；重点测 Kar98、Mosin、桥夹归零保留。 |
 | P0 | 漏夹 `en_bloc_clip` | 已完成独立 `InstalledEnBlocClip`、逐发扣除、空夹真实 ItemEntity 自动弹出；首个样本为 `hamster:m1garand` | 外部 Gradle/实机验证后，为更多已审计漏夹枪补 profile。 |
 | P1 | 工业维护 / 模块维修 | A/B 已完成 Condition/Fouling、来源迁移、Tooltip/HUD、工业勤务台拆解/维修/复装；C.2 `feed` 只给已审计手动拉栓枪；C.3 已接可配置原生热/雨/湿/污染与 Basin 清洁；C.4 默认动作族已获得 feed 或 bench-only `service_lockout` 分型 | 外部实机回归 C.2–C.4 的无吞弹、S2C 同步、热配置、熟练度操控和 service lockout 的真实勤务台出口；再审计第三方动作族。 |
-| P1 | 长按 R 供弹器选择圆盘 | 服务器预留已存在，客户端选择 UI 尚未实现 | 在 route/选择槽位协议稳定后实现，不越过服务器事务。 |
+| P1 | 长按 R 供弹器选择圆盘 | 按用户要求暂缓；当前没有长按输入、轮盘 UI、选槽位包或服务器预留，单点 R 已恢复为按下即换弹 | 设计冻结在 [`RELOAD_WHEEL_DEFERRED_DESIGN.md`](RELOAD_WHEEL_DEFERRED_DESIGN.md)；重新确认交互并完成多弹种/服务端事务验收后再实现。 |
 | P1 | 速度装填器代表包 | 已接入 GunpowderRevolution `hamster:webley`：完整 6 发快装器触发原 `reload_loader`，无完整器件走逐发 | 外部验证后再审计 Webley 以外的转轮；不同脚本不套用。 |
 | P1 | RPG 发动机壳体 | 已新增 `motor_housing` 可见 ItemStack 与 `finish_case_rpg_rocket` 单工件结束站 | 在 Create/装弹机实机回归中确认它不能绕过为最终 case。 |
 | P2 | 第三方高保真 Create 终端 | 当前安全回退是 Gunsmith Table 测绘多槽路径 | 只为资料足够的高置信枪包做显式终端，不动态猜结构。 |

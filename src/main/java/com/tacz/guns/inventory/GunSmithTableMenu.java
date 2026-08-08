@@ -101,9 +101,13 @@ public class GunSmithTableMenu extends AbstractContainerMenu {
         // 少了这一步 getTab() 恒为 null，下面的页签校验必然失败。
         gunSmithTableRecipe.init();
 
-        boolean flag = TimelessAPI.getCommonBlockIndex(getBlockId()).map(blockIndex -> {
-            return blockIndex.getData().getTabs().stream().noneMatch(tab -> tab.id().equals(gunSmithTableRecipe.getTab()));
-        }).orElse(true);
+        // Keep this server-side whitelist in lockstep with the client screen:
+        // declared data-pack tabs plus the finite code-owned TACZ pages (which
+        // include the dedicated industry_* pages) are valid. RecipeFilter
+        // remains the authority over which recipe IDs a specific table admits.
+        boolean flag = TimelessAPI.getCommonBlockIndex(getBlockId()).map(blockIndex ->
+                !blockIndex.getData().supportsTab(gunSmithTableRecipe.getTab())
+        ).orElse(true);
         if (DefaultAssets.DEFAULT_BLOCK_ID.equals(getBlockId()) && !SyncConfig.ENABLE_TABLE_FILTER.get()) {
             flag = false;
         }

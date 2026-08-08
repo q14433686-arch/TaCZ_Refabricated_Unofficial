@@ -3196,6 +3196,8 @@
   "item.tacz.magazine.ww_tbe_763_50": "Surveyed WW TBE 763 50-round Magazine",
   "item.tacz.magazine.ww_tbe_763_75": "Surveyed WW TBE 763 75-round Magazine",
   "item.tacz.magazine.ww_tbe_763_100": "Surveyed WW TBE 763 100-round Magazine",
-  "gui.tacz.reload_wheel.title": "RELOAD",
-  "gui.tacz.reload_wheel.more": "+%s more carrier identities"
+  "tacz.type.industry_assembly.name": "Industrial Assembly",
+  "tacz.type.industry_platform.name": "Industrial Dossiers & Platform Kits",
+  "tacz.type.industry_feed.name": "Physical Feed Devices",
+  "tacz.type.industry_cartridge.name": "Surveyed Cartridge Work"
 }

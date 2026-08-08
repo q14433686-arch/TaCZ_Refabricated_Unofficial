@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 @JeiPlugin
@@ -100,9 +99,7 @@ public class GunModPlugin implements IModPlugin {
         for (var entry : recipeTypeMap.entrySet()) {
             TimelessAPI.getCommonBlockIndex(entry.getKey()).ifPresent(blockIndex -> {
                 List<GunSmithTableRecipe> recipeList = blockIndex.getFilter().filter(recipes, GunSmithTableRecipe::getId);
-                recipeList.removeIf(recipe -> {
-                    return blockIndex.getData().getTabs().stream().noneMatch(tab -> Objects.equals(tab.id(), recipe.getResult().getGroup()));
-                });
+                recipeList.removeIf(recipe -> !blockIndex.getData().supportsTab(recipe.getResult().getGroup()));
                 registration.addRecipes(entry.getValue(), recipeList);
             });
         }

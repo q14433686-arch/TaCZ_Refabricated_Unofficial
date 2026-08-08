@@ -99,7 +99,7 @@ data/ww/industry/reference/guns/mg42.json
 | `speedloader` | 转轮快速装弹器 | `speedloader`：向内部转轮增量转入 |
 | `fuel_canister` / `utility` | 燃料、医疗、工具类消耗物 | `legacy` |
 
-这使资料表能准确记录 M1 Garand、转轮、霰弹枪、火焰/医疗设备，即使当前实体供弹代码尚未支持每一种设备；**记录事实不等于错误启用行为**。桥夹、快装器、漏夹与未来长按 R 选择圆盘的完整状态机见 [`FEED_DEVICE_AND_CLIP_DESIGN.md`](FEED_DEVICE_AND_CLIP_DESIGN.md)；main 参考枪包为何不能从 `reload.type` 自动推断、以及扩容实体载具边界见 [`REFERENCE_GUNPACK_FEED_AUDIT.md`](REFERENCE_GUNPACK_FEED_AUDIT.md)。
+这使资料表能准确记录 M1 Garand、转轮、霰弹枪、火焰/医疗设备，即使当前实体供弹代码尚未支持每一种设备；**记录事实不等于错误启用行为**。桥夹、快装器与漏夹的状态机见 [`FEED_DEVICE_AND_CLIP_DESIGN.md`](FEED_DEVICE_AND_CLIP_DESIGN.md)；已暂缓的长按 R 实体载具选择方案见 [`RELOAD_WHEEL_DEFERRED_DESIGN.md`](RELOAD_WHEEL_DEFERRED_DESIGN.md)。main 参考枪包为何不能从 `reload.type` 自动推断、以及扩容实体载具边界见 [`REFERENCE_GUNPACK_FEED_AUDIT.md`](REFERENCE_GUNPACK_FEED_AUDIT.md)。
 
 ## 明确身份别名
 

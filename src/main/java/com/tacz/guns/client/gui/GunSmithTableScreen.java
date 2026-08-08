@@ -161,13 +161,13 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                 continue;
             }
             Identifier groupName = recipe.getResult().getGroup();
-            // Surveyed industry recipes now carry their real gun-class group
-            // (or tacz:ammo). A third-party table is allowed to define a
-            // narrow tab list, so make the known TACZ tab visible on demand
-            // rather than silently dropping a real server recipe back into
-            // misc or hiding it altogether.
+            // Industrial compatibility work has its own tacz:industry_* pages.
+            // A third-party table may declare a narrow tab list, so inject only
+            // one of our finite, code-owned TACZ tabs when a synchronized
+            // recipe actually uses it. Arbitrary third-party page IDs remain
+            // data-pack owned and are never fabricated client-side.
             if (!recipeKeys.containsKey(groupName)) {
-                TabConfig fallbackTab = industryTabFor(groupName);
+                TabConfig fallbackTab = knownTaczTabFor(groupName);
                 if (fallbackTab != null) {
                     recipes.put(groupName, Lists.newArrayList());
                     recipeKeys.put(groupName, fallbackTab);
@@ -219,22 +219,13 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
     }
 
     /**
-     * Return a built-in tab only for a known TACZ group.  We intentionally do
-     * not synthesize arbitrary third-party tab ids: a pack retains ownership of
-     * its custom UI taxonomy, while our generated industry commissions stay
-     * discoverable under the standard ammo / gun-class pages.
+     * Return a finite code-owned TACZ tab only. The industry taxonomy is a
+     * separate set of pages, not a fallback into pistol/rifle/ammo/misc;
+     * arbitrary third-party tab ids remain owned by their source pack.
      */
     @Nullable
-    private static TabConfig industryTabFor(@Nullable Identifier group) {
-        if (group == null) {
-            return null;
-        }
-        for (TabConfig tab : TabConfig.DEFAULT_TABS) {
-            if (tab.id().equals(group)) {
-                return tab;
-            }
-        }
-        return null;
+    private static TabConfig knownTaczTabFor(@Nullable Identifier group) {
+        return TabConfig.findKnownTaczTab(group);
     }
 
     private boolean isNameMatch(GunSmithTableRecipe recipe) {
@@ -273,6 +264,13 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                 }
                 if (result.getItem() instanceof IAttachment) {
                     return igun.allowAttachment(stack, result);
+                }
+                // A surveyed final-gun commission now lives on the dedicated
+                // industrial-assembly page. Keep the exact same-GunId route
+                // visible under the normal held-gun filter without exposing
+                // unrelated final assemblies.
+                if (result.getItem() instanceof IGun resultGun) {
+                    return igun.getGunId(stack).equals(resultGun.getGunId(result));
                 }
                 return false;
             }

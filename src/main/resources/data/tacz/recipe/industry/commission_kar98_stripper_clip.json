@@ -42,7 +42,7 @@
   ],
   "result": {
     "type": "custom",
-    "group": "tacz:misc",
+    "group": "tacz:industry_feed",
     "item": {
       "item": "tacz:magazine",
       "count": 1,

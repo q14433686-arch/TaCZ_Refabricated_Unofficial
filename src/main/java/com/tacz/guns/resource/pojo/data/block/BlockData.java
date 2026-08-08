@@ -25,4 +25,16 @@ public class BlockData {
     public List<TabConfig> getTabs() {
         return tabs.isEmpty() ? TabConfig.DEFAULT_TABS : tabs;
     }
+
+    /**
+     * A narrow data-pack table may still host the finite, code-owned TACZ
+     * pages. This keeps the server transaction, GUI, JEI and REI on the same
+     * whitelist when a synchronized industrial commission is present, while
+     * arbitrary third-party tab IDs remain owned by that pack's declared list.
+     * Recipe filters are deliberately checked separately and still apply.
+     */
+    public boolean supportsTab(Identifier tabId) {
+        return getTabs().stream().anyMatch(tab -> tab.id().equals(tabId))
+                || TabConfig.isKnownTaczTab(tabId);
+    }
 }

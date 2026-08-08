@@ -13,8 +13,10 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -46,7 +48,18 @@ public record TabConfig(Identifier id, String name, Supplier<ItemStack> icon) {
     public static final Identifier TAB_MISC = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "misc");
     public static final Identifier TAB_EMPTY = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "empty");
 
-    public static final List<TabConfig> DEFAULT_TABS = List.of(
+    /**
+     * Dedicated GPL-side pages for industrial compatibility work.  These are
+     * intentionally separate from the original gun/ammo/attachment taxonomy:
+     * a survey dossier or a physical carrier commission is not a pistol,
+     * rifle, ordinary loose-ammo recipe, or miscellaneous item.
+     */
+    public static final Identifier TAB_INDUSTRY_ASSEMBLY = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "industry_assembly");
+    public static final Identifier TAB_INDUSTRY_PLATFORM = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "industry_platform");
+    public static final Identifier TAB_INDUSTRY_FEED = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "industry_feed");
+    public static final Identifier TAB_INDUSTRY_CARTRIDGE = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "industry_cartridge");
+
+    private static final List<TabConfig> STANDARD_TABS = List.of(
             new TabConfig(TabConfig.TAB_AMMO, "tacz.type.ammo.name", () -> AmmoItemBuilder.create().setId(DefaultAssets.DEFAULT_AMMO_ID).build()),
             new TabConfig(TabConfig.TAB_PISTOL, "tacz.type.pistol.name", () -> GunItemBuilder.create().setId(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "glock_17")).forceBuild()),
             new TabConfig(TabConfig.TAB_SNIPER, "tacz.type.sniper.name", () -> GunItemBuilder.create().setId(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "ai_awp")).forceBuild()),
@@ -63,6 +76,45 @@ public record TabConfig(Identifier id, String name, Supplier<ItemStack> icon) {
             new TabConfig(TabConfig.TAB_LASER, "tacz.type.laser.name", () -> AttachmentItemBuilder.create().setId(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "laser_compact")).build()),
             new TabConfig(TabConfig.TAB_MISC, "tacz.type.misc.name", () -> ModItems.GUN_SMITH_TABLE.getDefaultInstance())
     );
+
+    public static final List<TabConfig> INDUSTRY_TABS = List.of(
+            new TabConfig(TabConfig.TAB_INDUSTRY_ASSEMBLY, "tacz.type.industry_assembly.name", () -> ModItems.GUN_COMPONENT.getDefaultInstance()),
+            new TabConfig(TabConfig.TAB_INDUSTRY_PLATFORM, "tacz.type.industry_platform.name", () -> ModItems.GUN_BLUEPRINT.getDefaultInstance()),
+            new TabConfig(TabConfig.TAB_INDUSTRY_FEED, "tacz.type.industry_feed.name", () -> ModItems.MAGAZINE.getDefaultInstance()),
+            new TabConfig(TabConfig.TAB_INDUSTRY_CARTRIDGE, "tacz.type.industry_cartridge.name", () -> ModItems.CARTRIDGE_CASE.getDefaultInstance())
+    );
+
+    /**
+     * The standard TACZ pages plus the dedicated industry pages. Empty pages
+     * are still removed by the screen, so adding these does not create blank
+     * UI chrome on a table with no industrial operations.
+     */
+    public static final List<TabConfig> DEFAULT_TABS = mergeTabs(STANDARD_TABS, INDUSTRY_TABS);
+
+    private static List<TabConfig> mergeTabs(List<TabConfig> first, List<TabConfig> second) {
+        List<TabConfig> tabs = new ArrayList<>(first.size() + second.size());
+        tabs.addAll(first);
+        tabs.addAll(second);
+        return List.copyOf(tabs);
+    }
+
+    /** Return only a code-owned TACZ tab; arbitrary third-party IDs stay data-pack owned. */
+    @Nullable
+    public static TabConfig findKnownTaczTab(@Nullable Identifier id) {
+        if (id == null) {
+            return null;
+        }
+        for (TabConfig tab : DEFAULT_TABS) {
+            if (tab.id().equals(id)) {
+                return tab;
+            }
+        }
+        return null;
+    }
+
+    public static boolean isKnownTaczTab(@Nullable Identifier id) {
+        return findKnownTaczTab(id) != null;
+    }
 
     public static class Deserializer implements JsonDeserializer<TabConfig> {
         @Override
