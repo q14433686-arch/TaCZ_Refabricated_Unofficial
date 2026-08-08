@@ -195,20 +195,13 @@ public final class ScopeBodyRenderTypes {
     // ── RenderType construction ────────────────────────────────────────
 
     private static RenderType create(String name, RenderPipeline pipeline, Identifier tex, boolean bindMask) {
-        RenderSetup.Builder setupBuilder = RenderSetup.builder(pipeline)
-                .withTexture("Sampler0", tex);
+        RenderType base = RenderType.create(name, RenderSetup.builder(pipeline)
+                .withTexture("Sampler0", tex)
+                .useLightmap()
+                .useOverlay()
+                .createRenderSetup());
 
-        if (bindMask) {
-            // Placeholder texture for validation; the DepthCopyRenderType wrapper
-            // rebinds the actual mask FBO texture before each draw via raw GL.
-            // Use the same texture as placeholder — it will be overwritten.
-            setupBuilder.withTexture(MASK_SAMPLER, tex);
-        }
-
-        RenderType base = RenderType.create(name,
-                setupBuilder.useLightmap().useOverlay().createRenderSetup());
-
-        // Wrap in DepthCopyRenderType to bind mask texture before each draw
+        // Wrap in MaskAwareRenderType to bind mask texture before each draw
         return bindMask ? new MaskAwareRenderType(name, base) : base;
     }
 

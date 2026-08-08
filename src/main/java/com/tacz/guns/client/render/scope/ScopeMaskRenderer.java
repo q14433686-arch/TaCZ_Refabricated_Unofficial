@@ -1,6 +1,5 @@
 package com.tacz.guns.client.render.scope;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.model.bedrock.BedrockCube;
 import com.tacz.guns.config.client.RenderConfig;
@@ -207,12 +206,14 @@ public final class ScopeMaskRenderer {
             // ProjMat: vanilla's current projection matrix.
             // Vertices are already in camera space (ModelView baked in during submission),
             // so only the projection matrix is needed.
+            // 26.1.2's RenderSystem has no public getProjectionMatrix(); access internal field.
             int projLoc = GL20.glGetUniformLocation(shaderProgram, "ProjMat");
             if (projLoc >= 0) {
+                float[] proj = getProjectionMatrix();
                 java.nio.FloatBuffer fb = java.nio.ByteBuffer.allocateDirect(16 * 4)
                         .order(java.nio.ByteOrder.nativeOrder())
                         .asFloatBuffer();
-                com.mojang.blaze3d.systems.RenderSystem.getProjectionMatrix().get(fb);
+                fb.put(proj);
                 fb.rewind();
                 GL20.glUniformMatrix4fv(projLoc, false, fb);
             }
@@ -318,6 +319,33 @@ public final class ScopeMaskRenderer {
     }
 
     // ── Shader compilation ─────────────────────────────────────────────
+
+    /**
+     * Retrieves the current projection matrix from RenderSystem via reflection.
+     * 26.1.2's RenderSystem stores it as a private static Matrix4fStack field "projectionMatrix".
+     */
+    private static float[] getProjectionMatrix() {
+        try {
+            java.lang.reflect.Field f = com.mojang.blaze3d.systems.RenderSystem.class
+                    .getDeclaredField("projectionMatrix");
+            f.setAccessible(true);
+            Object mat = f.get(null);
+            // Matrix4fStack extends Matrix4f — call get(FloatBuffer) via reflection
+            java.nio.FloatBuffer fb = java.nio.ByteBuffer.allocateDirect(16 * 4)
+                    .order(java.nio.ByteOrder.nativeOrder())
+                    .asFloatBuffer();
+            java.lang.reflect.Method m = mat.getClass().getMethod("get", java.nio.FloatBuffer.class);
+            m.invoke(mat, fb);
+            fb.rewind();
+            float[] arr = new float[16];
+            fb.get(arr);
+            return arr;
+        } catch (Exception e) {
+            GunMod.LOGGER.warn("[TACZ Scope] Could not read projection matrix, using identity", e);
+            return new float[]{1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+        }
+    }
+
 
     private static int compileProgram(String vertexSource, String fragmentSource) {
         int vs = compileShader(GL20.GL_VERTEX_SHADER, vertexSource);
