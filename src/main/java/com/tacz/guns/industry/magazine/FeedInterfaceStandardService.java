@@ -1,6 +1,7 @@
 package com.tacz.guns.industry.magazine;
 
 import com.tacz.guns.industry.IndustryProfileManager;
+import com.tacz.guns.industry.ammo.AmmoProfileService;
 import com.tacz.guns.industry.ammo.CartridgeStandardService;
 import com.tacz.guns.resource.CommonAssetsManager;
 import net.minecraft.resources.Identifier;
@@ -100,28 +101,27 @@ public final class FeedInterfaceStandardService {
     }
 
     /**
-     * Compatibility grouping for capacity selection and diagnostics. Two bound
-     * declarations share only their exact named standard. A declaration still
-     * lacking a standard retains the former exact family/native-AmmoId contract
-     * for old audited content, but cannot unlock cross-native-AmmoId sharing.
+     * Compatibility grouping for capacity selection and diagnostics. A named
+     * standard rejects an explicitly conflicting standard id, but never removes
+     * the older data-driven family + canonical-calibre route. That route already
+     * requires both declarations and real AmmoIndex/profile identities; it is
+     * not a GunIndex/model/name/capacity inference.
      */
     public static boolean hasSameCarrierInterface(GunFeedDefinition first, GunFeedDefinition second) {
         if (first == null || second == null
                 || !first.isValidExternalCarrierDefinition() || !second.isValidExternalCarrierDefinition()
-                || first.getMechanism() != second.getMechanism()) {
+                || first.getMechanism() != second.getMechanism()
+                || !first.getMagazineFamily().equals(second.getMagazineFamily())) {
             return false;
         }
         Identifier firstId = getStandardId(first);
         Identifier secondId = getStandardId(second);
-        if (firstId != null && secondId != null) {
-            return firstId.equals(secondId);
+        if (firstId != null && secondId != null && !firstId.equals(secondId)) {
+            return false;
         }
-        // Preserve already-audited old-world/third-party sharing for the same
-        // exact native AmmoId. It does not grant the newer cross-native-AmmoId
-        // path; that path still requires both declarations to bind one named
-        // standard.
-        return first.getMagazineFamily().equals(second.getMagazineFamily())
-                && first.getAmmoId().equals(second.getAmmoId());
+        return AmmoProfileService.isLoadedAmmoIdentity(first.getAmmoId())
+                && AmmoProfileService.isLoadedAmmoIdentity(second.getAmmoId())
+                && AmmoProfileService.isSameCaliber(first.getAmmoId(), second.getAmmoId());
     }
 
     /**

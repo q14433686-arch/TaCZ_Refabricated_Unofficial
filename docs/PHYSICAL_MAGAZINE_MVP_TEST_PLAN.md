@@ -135,6 +135,7 @@ Basin：高碳钢板 + 黄铜板 + 石英 + 铁粒
    - 量规应连到壳体和供弹组件成型；
    - 两个命名子总成应连到最终装配；
    - 成品空供弹器应连回逆向量规；
-3. 对 M16A1/M4A1/STANAG、AK/RPK 等已绑定标准的枪执行 `/tacz industry feed inspect <gun>`：输出必须显示同一 `feed_standard` 及该标准的已验证容量；新造载具的高级 Tooltip 必须有 `MagazineFeedStandard`，旧世界无该 tag 的同 native-AmmoId 载具仍可正常迁移；
-4. 多人、断线重连、背包/箱子/掉落物转移半满供弹器后，`InstalledMagazine`、`MagazineAmmoCount` 与旧整数镜像必须一致；
-5. 客户端篡改 NBT 不能提高余弹，所有抽取/退还仍由 `PhysicalMagazineService` 在服务端完成。
+3. 对 M16A1/M4A1/STANAG、AK/RPK 等已绑定标准的枪执行 `/tacz industry feed inspect <gun>`：输出必须显示同一 `feed_standard` 及该标准的已验证容量；新造载具的高级 Tooltip 必须有 `MagazineFeedStandard`；
+4. 将一只无 `MagazineFeedStandard` 的旧/私有实体载具或一只带该 tag 的新标准载具放入已经明确声明同 `magazine_family + canonical calibre` 的兼容枪：两者都必须仍出现在普通换弹候选中。标准 tag 只能拒绝两个**相互冲突**的显式标准，不能让通用弹匣退出通用换弹；
+5. 多人、断线重连、背包/箱子/掉落物转移半满供弹器后，`InstalledMagazine`、`MagazineAmmoCount` 与旧整数镜像必须一致；
+6. 客户端篡改 NBT 不能提高余弹，所有抽取/退还仍由 `PhysicalMagazineService` 在服务端完成。

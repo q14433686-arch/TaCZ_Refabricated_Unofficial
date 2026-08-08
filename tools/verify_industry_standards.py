@@ -180,10 +180,22 @@ def verify() -> int:
         if "MagazineFeedStandard" in reverse_tag:
             fail(f"{reverse_path}: old empty-carrier reverse evidence must not require the new standard tag")
 
+    # A feed standard is additive governance, not permission to remove an
+    # already explicit generic-family reload route. Keep the regression guard
+    # close to the resource assertions because this bug is otherwise invisible
+    # to JSON-only validation: the game loads every definition successfully but
+    # generic magazines silently disappear from reload selection.
+    physical_service = (ROOT / "src/main/java/com/tacz/guns/industry/magazine/PhysicalMagazineService.java").read_text(encoding="utf-8")
+    standard_service = (ROOT / "src/main/java/com/tacz/guns/industry/magazine/FeedInterfaceStandardService.java").read_text(encoding="utf-8")
+    if "hasSameDeclaredCarrierCaliber(definition.getAmmoId(), item.getAmmoId(magazine))" not in physical_service \
+            or "AmmoProfileService.isSameCaliber(first.getAmmoId(), second.getAmmoId())" not in standard_service \
+            or "carrierHasExplicitMatchingStandard" in physical_service:
+        fail("feed standards must preserve explicit family + canonical-calibre generic magazine reload compatibility")
+
     print(
         f"Industry standards checked: {len(cartridges)} cartridge standard(s), "
         f"{len(by_standard)} feed-interface standard(s), {default_external} bound default external and "
-        f"{bound_third_party_feeds} explicitly matched third-party feed declaration(s)."
+        f"{bound_third_party_feeds} explicitly matched third-party feed declaration(s); generic-magazine regression guard passed."
     )
     return 0
 

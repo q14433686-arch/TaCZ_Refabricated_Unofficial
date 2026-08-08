@@ -83,7 +83,7 @@ data/my_addon/industry/gun_feed/f2000.json
 
 任一项不一致，日志会说明拒绝原因，客户端也不会同步该定义、不会在创造栏出现错误弹匣、不会接管原包换弹。
 
-旧兼容包仍可省略 `feed_standard` 并保留原有 private `magazine_family` 行为，但它只能按 exact family + exact native AmmoId 互插；不能获得跨 native-AmmoId 的统一标准能力。新包和希望跨包复用的兼容包应使用上面的标准绑定。
+旧兼容包仍可省略 `feed_standard` 并保留原有 private `magazine_family + explicit canonical calibre` 通用换弹行为；新标准不会把这些已经明确声明的通用弹匣排除出去。`feed_standard` 额外提供集中容量/制造/冲突治理，且新包和希望明确跨包复用的兼容包应使用上面的标准绑定。
 
 `belt` 使用相同结构，只把 `mechanism` 改成 `belt`；成品仍是有独立余弹的 `tacz:magazine`，但作为弹链箱/弹鼓语义而非 STANAG 弹匣。
 

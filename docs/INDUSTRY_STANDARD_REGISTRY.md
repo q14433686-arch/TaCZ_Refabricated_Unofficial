@@ -165,7 +165,7 @@ MagazineCapacity
 
 `MagazineRounds` 仍是逐发精确 AmmoId 队列，绝不被标准化层压扁。
 
-旧世界中没有 `MagazineFeedStandard` 的实体弹匣不被删除：它只会在原先的 family + exact native AmmoId 范围内兼容。要使用跨 native-AmmoId 的标准互插，必须重新制造或经正常载具流程获得带标准 tag 的物件。
+旧世界中没有 `MagazineFeedStandard` 的实体弹匣不被删除：它继续按已经显式声明的 `magazine_family + canonical calibre` 参与普通换弹。新标准 tag 用于审计、制造、容量治理和识别冲突标准，**不能**把原本可用的通用实体弹匣排除出换弹候选。
 
 ## 5. 边界
 
