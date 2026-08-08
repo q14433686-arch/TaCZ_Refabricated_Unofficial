@@ -25,14 +25,14 @@ tools/industry/third_party_feed_gap_registry.json
 
 | Namespace | 实体 family | 缺细分材质 family | 缺细分功能枪数 |
 |---|---:|---:|---:|
-| `bf1` | 11 | 11 | 0 |
+| `bf1` | 11 | 11 | 19 |
 | `ccrp` | 110 | 110 | 21 |
 | `cib` | 66 | 64 | 22 |
 | `cibs` | 14 | 12 | 2 |
 | `classicr` | 25 | 24 | 7 |
 | `hamster` | 5 | 5 | 0 |
 | `murasamet` | 21 | 16 | 48 |
-| `rainforest` | 12 | 10 | 0 |
+| `rainforest` | 12 | 10 | 2 |
 | `suffuse` | 19 | 18 | 0 |
 | `wemql_r` | 8 | 5 | 0 |
 | `ww` | 15 | 15 | 0 |
@@ -328,6 +328,25 @@ tools/industry/third_party_feed_gap_registry.json
 
 | GunId | 已知 device | Action | 原因 |
 |---|---|---|---|
+| `bf1:ef46` | `utility` | `flamethrower` | Fuel weapon remains legacy. |
+| `bf1:f_faust` | `single_shot` | `launcher` | Launcher remains legacy. |
+| `bf1:handgun` | `revolver` | `revolver` | Action-ambiguous handgun remains legacy until a cylinder route is audited. |
+| `bf1:kolibri` | `unknown` | `surveyed_pistol` | Tiny pistol carrier form remains unproven. |
+| `bf1:liu` | `stripper_clip` | `gas_operated_rifle` | Clip script route remains legacy until audited. |
+| `bf1:lunge_mine` | `single_shot` | `launcher` | Single-use launcher remains legacy. |
+| `bf1:m2_2` | `utility` | `flamethrower` | Fuel weapon remains legacy. |
+| `bf1:man_m95` | `en_bloc_clip` | `bolt_action` | Mannlicher en-bloc behavior is recorded, but pack script insertion/ejection route is not yet audited. |
+| `bf1:martini` | `single_shot` | `single_shot` | Single-shot rifle remains legacy. |
+| `bf1:mhgl` | `single_shot` | `launcher` | Grenade launcher remains legacy. |
+| `bf1:model10` | `tube` | `pump_action_shotgun` | Tube/loop route remains legacy. |
+| `bf1:obrez` | `stripper_clip` | `bolt_action` | Clip script route remains legacy until audited. |
+| `bf1:rorsch_mk4` | `unknown` | `surveyed_precision_rifle` | Custom Rorsch mechanism remains unproven. |
+| `bf1:rsc1917` | `internal_box` | `gas_operated_rifle` | RSC 1917 fixed/internal implementation remains legacy until its exact carrier/clip route is audited. |
+| `bf1:sjogren` | `tube` | `recoil_operated_shotgun` | Tube/loop route remains legacy. |
+| `bf1:sw_model3` | `revolver` | `revolver` | Model 3 revolver remains legacy until speedloader route is audited. |
+| `bf1:syringe` | `utility` | `utility` | Medical syringe is not a cartridge feed device. |
+| `bf1:tg1918` | `single_shot` | `single_shot` | Single-shot anti-materiel implementation remains legacy. |
+| `bf1:wex` | `utility` | `flamethrower` | Fuel weapon remains legacy. |
 | `ccrp:camg_cheetah40` | `unknown` | `surveyed_smg` | Custom CAMG Cheetah 40 remains legacy pending a real feed identity audit. |
 | `ccrp:camg_dexterous` | `unknown` | `surveyed_rifle` | Custom CAMG Dexerous platform has no sufficiently audited external-feed evidence. |
 | `ccrp:camg_krait` | `unknown` | `surveyed_rifle` | Custom CAMG Krait platform has no sufficiently audited external-feed evidence. |
@@ -428,3 +447,5 @@ tools/industry/third_party_feed_gap_registry.json
 | `murasamet:type11` | `unknown` | `surveyed_mg` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
 | `murasamet:type56` | `stripper_clip` | `gas_operated_rifle` | Fixed internal box / stripper route remains legacy until this pack script is audited. |
 | `murasamet:vallgarda_375` | `unknown` | `surveyed_sniper` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
+| `rainforest:at4` | `single_shot` | `launcher` | Single-shot disposable launcher semantics remain legacy; no fabricated removable carrier is supplied. |
+| `rainforest:m72` | `single_shot` | `launcher` | Single-shot disposable launcher semantics remain legacy; no fabricated removable carrier is supplied. |

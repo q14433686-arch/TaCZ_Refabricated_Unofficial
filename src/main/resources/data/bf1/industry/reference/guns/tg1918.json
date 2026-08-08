@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "bf1/tg1918",
+  "display_name": "tg1918",
+  "action": "single_shot",
+  "feed": {
+    "device": "single_shot",
+    "runtime_mechanism": "legacy",
+    "carrier_behavior": "internal",
+    "family": "",
+    "capacity": 1,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "50bmg",
+    "expected_ammo": "tacz:50bmg"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for bf1:tg1918 was individually checked for current ammo, base capacity, reload contract, and selectable capacity values.",
+    "Single-shot anti-materiel implementation remains legacy.",
+    "No gun_feed sidecar is supplied, so no physical carrier or reload transaction is activated."
+  ]
+}

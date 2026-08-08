@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "canonical_model": "default/taurus943",
+  "display_name": "Taurus 943",
+  "action": "revolver",
+  "feed": {
+    "device": "revolver",
+    "runtime_mechanism": "revolver",
+    "carrier_behavior": "internal",
+    "family": "",
+    "capacity": 8,
+    "reload_batch": 8
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "22wmr",
+    "expected_ammo": "tacz:22wmr"
+  },
+  "manufacturing": {
+    "profile": "curated_default",
+    "tier": "precision"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "bundled_default_industry_policy",
+    "Existing tacz:taurus943 gun_feed declares the audited eight-round internal revolver route.",
+    "The reference row completes default-pack factual coverage without modifying licensed default gun resources."
+  ]
+}

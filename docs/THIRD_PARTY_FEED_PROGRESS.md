@@ -13,9 +13,9 @@
 
 | 枪包 | Namespace | Survey 总数 | 已有事实 profile | Active 实体供弹 | Explicit legacy | 未覆盖 | 状态 |
 |---|---|---:|---:|---:|---:|---:|---|
-| Default TACZ | `tacz` | 54 | 53 | 52 | 2 | 1 | `in_progress` |
-| Apocalypse | `bf1` | 30 | 11 | 11 | 0 | 19 | `in_progress` |
-| Cold War | `rainforest` | 17 | 15 | 15 | 0 | 2 | `in_progress` |
+| Default TACZ | `tacz` | 54 | 54 | 52 | 2 | 0 | `complete` |
+| Apocalypse | `bf1` | 30 | 30 | 11 | 19 | 0 | `complete` |
+| Cold War | `rainforest` | 17 | 17 | 15 | 2 | 0 | `complete` |
 | GunpowderRevolution | `hamster` | 36 | 13 | 13 | 0 | 23 | `in_progress` |
 | Enlisted | `ww` | 52 | 26 | 26 | 0 | 26 | `in_progress` |
 | CCRP / ClassicR | `ccrp, classicr` | 164 | 164 | 136 | 28 | 0 | `complete` |

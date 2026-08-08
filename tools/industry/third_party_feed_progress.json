@@ -20,11 +20,11 @@
         "tacz"
       ],
       "survey_total": 54,
-      "reference_count": 53,
+      "reference_count": 54,
       "active_feed_count": 52,
       "legacy_reference_count": 2,
-      "uncovered_count": 1,
-      "status": "in_progress"
+      "uncovered_count": 0,
+      "status": "complete"
     },
     {
       "pack": "Apocalypse",
@@ -32,11 +32,11 @@
         "bf1"
       ],
       "survey_total": 30,
-      "reference_count": 11,
+      "reference_count": 30,
       "active_feed_count": 11,
-      "legacy_reference_count": 0,
-      "uncovered_count": 19,
-      "status": "in_progress"
+      "legacy_reference_count": 19,
+      "uncovered_count": 0,
+      "status": "complete"
     },
     {
       "pack": "Cold War",
@@ -44,11 +44,11 @@
         "rainforest"
       ],
       "survey_total": 17,
-      "reference_count": 15,
+      "reference_count": 17,
       "active_feed_count": 15,
-      "legacy_reference_count": 0,
-      "uncovered_count": 2,
-      "status": "in_progress"
+      "legacy_reference_count": 2,
+      "uncovered_count": 0,
+      "status": "complete"
     },
     {
       "pack": "GunpowderRevolution",
@@ -141,15 +141,15 @@
     "bf1": {
       "namespace": "bf1",
       "survey_total": 30,
-      "reference_count": 11,
+      "reference_count": 30,
       "active_feed_count": 11,
-      "legacy_reference_count": 0,
-      "uncovered_count": 19,
+      "legacy_reference_count": 19,
+      "uncovered_count": 0,
       "active_mechanisms": {
         "belt": 2,
         "detachable_magazine": 9
       },
-      "status": "in_progress"
+      "status": "complete"
     },
     "ccrp": {
       "namespace": "ccrp",
@@ -234,16 +234,16 @@
     "rainforest": {
       "namespace": "rainforest",
       "survey_total": 17,
-      "reference_count": 15,
+      "reference_count": 17,
       "active_feed_count": 15,
-      "legacy_reference_count": 0,
-      "uncovered_count": 2,
+      "legacy_reference_count": 2,
+      "uncovered_count": 0,
       "active_mechanisms": {
         "belt": 3,
         "detachable_magazine": 11,
         "stripper_clip": 1
       },
-      "status": "in_progress"
+      "status": "complete"
     },
     "suffuse": {
       "namespace": "suffuse",
@@ -261,10 +261,10 @@
     "tacz": {
       "namespace": "tacz",
       "survey_total": 54,
-      "reference_count": 53,
+      "reference_count": 54,
       "active_feed_count": 52,
       "legacy_reference_count": 2,
-      "uncovered_count": 1,
+      "uncovered_count": 0,
       "active_mechanisms": {
         "belt": 2,
         "detachable_magazine": 36,
@@ -274,7 +274,7 @@
         "stripper_clip": 1,
         "tube": 3
       },
-      "status": "in_progress"
+      "status": "complete"
     },
     "wemql_r": {
       "namespace": "wemql_r",

@@ -5,6 +5,7 @@
   "summary_by_namespace": {
     "bf1": {
       "carrier_families": 11,
+      "function_gaps": 19,
       "material_gaps": 11
     },
     "ccrp": {
@@ -38,6 +39,7 @@
     },
     "rainforest": {
       "carrier_families": 12,
+      "function_gaps": 2,
       "material_gaps": 10
     },
     "suffuse": {
@@ -4782,6 +4784,158 @@
   ],
   "legacy_function_records": [
     {
+      "gun_id": "bf1:ef46",
+      "device": "utility",
+      "action": "flamethrower",
+      "expected_ammo": "bf1:fuel",
+      "reason": "Fuel weapon remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:f_faust",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "tacz:40mm",
+      "reason": "Launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:handgun",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "tacz:9mm",
+      "reason": "Action-ambiguous handgun remains legacy until a cylinder route is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:kolibri",
+      "device": "unknown",
+      "action": "surveyed_pistol",
+      "expected_ammo": "tacz:9mm",
+      "reason": "Tiny pistol carrier form remains unproven.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:liu",
+      "device": "stripper_clip",
+      "action": "gas_operated_rifle",
+      "expected_ammo": "tacz:762x54",
+      "reason": "Clip script route remains legacy until audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:lunge_mine",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "tacz:40mm",
+      "reason": "Single-use launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:m2_2",
+      "device": "utility",
+      "action": "flamethrower",
+      "expected_ammo": "bf1:fuel",
+      "reason": "Fuel weapon remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:man_m95",
+      "device": "en_bloc_clip",
+      "action": "bolt_action",
+      "expected_ammo": "tacz:30_06",
+      "reason": "Mannlicher en-bloc behavior is recorded, but pack script insertion/ejection route is not yet audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:martini",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "tacz:45_70",
+      "reason": "Single-shot rifle remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:mhgl",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "tacz:40mm",
+      "reason": "Grenade launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:model10",
+      "device": "tube",
+      "action": "pump_action_shotgun",
+      "expected_ammo": "tacz:12g",
+      "reason": "Tube/loop route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:obrez",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "tacz:762x54",
+      "reason": "Clip script route remains legacy until audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:rorsch_mk4",
+      "device": "unknown",
+      "action": "surveyed_precision_rifle",
+      "expected_ammo": "tacz:30_06",
+      "reason": "Custom Rorsch mechanism remains unproven.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:rsc1917",
+      "device": "internal_box",
+      "action": "gas_operated_rifle",
+      "expected_ammo": "tacz:30_06",
+      "reason": "RSC 1917 fixed/internal implementation remains legacy until its exact carrier/clip route is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:sjogren",
+      "device": "tube",
+      "action": "recoil_operated_shotgun",
+      "expected_ammo": "tacz:12g",
+      "reason": "Tube/loop route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:sw_model3",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "tacz:357mag",
+      "reason": "Model 3 revolver remains legacy until speedloader route is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:syringe",
+      "device": "utility",
+      "action": "utility",
+      "expected_ammo": "bf1:medkit",
+      "reason": "Medical syringe is not a cartridge feed device.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:tg1918",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "tacz:50bmg",
+      "reason": "Single-shot anti-materiel implementation remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "bf1:wex",
+      "device": "utility",
+      "action": "flamethrower",
+      "expected_ammo": "bf1:fuel",
+      "reason": "Fuel weapon remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
       "gun_id": "ccrp:camg_cheetah40",
       "device": "unknown",
       "action": "surveyed_smg",
@@ -5579,6 +5733,22 @@
       "action": "surveyed_sniper",
       "expected_ammo": "tacz:30_06",
       "reason": "No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "rainforest:at4",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "tacz:rpg_rocket",
+      "reason": "Single-shot disposable launcher semantics remain legacy; no fabricated removable carrier is supplied.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "rainforest:m72",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "tacz:rpg_rocket",
+      "reason": "Single-shot disposable launcher semantics remain legacy; no fabricated removable carrier is supplied.",
       "needs_detailed_function": true
     }
   ]

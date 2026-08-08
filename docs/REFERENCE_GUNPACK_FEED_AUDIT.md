@@ -417,6 +417,22 @@ profile。
 因此 Murasamet 没有未决 survey entry；每把都有 active 或 explicit legacy 的可见结论，且新增 legacy 记录已同步进入
 细分材质/功能缺口登记册。
 
+## Apocalypse / BF1 完整枪包审计（30 / 30）
+
+原有的 11 把明确外部供弹器保留；本轮为剩余 19 条补充 factual legacy reference，因此 `bf1` 的全部 **30 条**
+survey entry 都有明确结论。
+
+- **11 条 active**：Chauchat、De Lisle、Lewis、M1916、MG08/15、MG42、SMG08/18、VG1-5、Villar Perosa、
+  Welrod、ZK-383；
+- **19 条 legacy**：燃料/医疗设备、单发/发射器、转轮、bridge/en-bloc clip、tube、未证自定义精确枪和微型手枪。
+
+漏夹/桥夹不是被忽略：`man_m95` 记为 `en_bloc_clip` 事实，`liu`、`obrez` 记为 `stripper_clip` 事实，但因为该包
+对应脚本的真实物理插入/逐发/空夹弹出 route 还未审计，runtime 仍保持 legacy。它们已进入功能缺口登记册，未来
+路线完成后直接复用已有 `base_m_loader` 的桥夹/漏夹材料与实体状态设计，而不是另造一套视觉假物品。
+
+其余例如 EF46/M2-2/Wex fuel、Syringe、Lunge Mine/Faust/MHGL、Martini/TG1918 单发、Model10/Sjögren tube、
+Model3 revolver 都明确不进入 detachable/belt。至此 Apocalypse 没有未覆盖 survey entry。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：
