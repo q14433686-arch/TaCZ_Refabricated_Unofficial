@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "cib/negev",
+  "display_name": "negev",
+  "action": "belt_fed",
+  "feed": {
+    "device": "belt",
+    "runtime_mechanism": "belt",
+    "carrier_behavior": "inserted_retained",
+    "family": "cib_negev_556x45_belt",
+    "capacity": 65,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "556x45",
+    "expected_ammo": "tacz:556x45"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "User-provided runtime log for the survey environment identifies [Tacz1.1.7+]CIBR_GunsPack_v0.3_1.1.7.zip; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for cib:negev was individually checked for current ammo, base capacity, reload contract, and selectable capacity values.",
+    "Closed manual CIBR complete-pack decision: established external belt mechanism; family remains private until stricter interchangeability evidence is available.",
+    "The runtime sidecar fails closed if loaded GunData ammo or base capacity changes. Its surveyed carrier commission is emitted only from an actual loaded Gunsmith Table gun recipe; no standalone creative-only carrier route is added."
+  ]
+}

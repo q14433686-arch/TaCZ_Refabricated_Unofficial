@@ -1,0 +1,21 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "cib_qjz171_127x108_belt",
+  "magazine_capacity": 60,
+  "ammo": "cib:127x108",
+  "display_name": "item.tacz.magazine.cib_qjz171_127x108_belt_60",
+  "carrier_variants": [
+    {
+      "capacity": 80,
+      "display_name": "item.tacz.magazine.cib_qjz171_127x108_belt_80"
+    },
+    {
+      "capacity": 90,
+      "display_name": "item.tacz.magazine.cib_qjz171_127x108_belt_90"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.cib_qjz171_127x108_belt_100"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_evo3_9mm",
+  "magazine_capacity": 20,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.cib_evo3_9mm_20",
+  "carrier_variants": [
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.cib_evo3_9mm_30"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.cib_evo3_9mm_45"
+    },
+    {
+      "capacity": 65,
+      "display_name": "item.tacz.magazine.cib_evo3_9mm_65"
+    }
+  ]
+}

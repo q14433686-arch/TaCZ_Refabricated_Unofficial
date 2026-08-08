@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_p250_9mm",
+  "magazine_capacity": 13,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.cib_p250_9mm_13",
+  "carrier_variants": [
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.cib_p250_9mm_15"
+    },
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.cib_p250_9mm_20"
+    },
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.cib_p250_9mm_25"
+    }
+  ]
+}

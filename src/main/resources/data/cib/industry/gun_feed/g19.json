@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_g19_9mm",
+  "magazine_capacity": 15,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.cib_g19_9mm_15",
+  "carrier_variants": [
+    {
+      "capacity": 17,
+      "display_name": "item.tacz.magazine.cib_g19_9mm_17"
+    },
+    {
+      "capacity": 19,
+      "display_name": "item.tacz.magazine.cib_g19_9mm_19"
+    },
+    {
+      "capacity": 33,
+      "display_name": "item.tacz.magazine.cib_g19_9mm_33"
+    }
+  ]
+}

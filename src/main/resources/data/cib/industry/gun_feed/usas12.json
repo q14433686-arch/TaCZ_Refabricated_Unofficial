@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_usas12_12g",
+  "magazine_capacity": 10,
+  "ammo": "tacz:12g",
+  "display_name": "item.tacz.magazine.cib_usas12_12g_10",
+  "carrier_variants": [
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.cib_usas12_12g_15"
+    },
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.cib_usas12_12g_20"
+    },
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.cib_usas12_12g_25"
+    }
+  ]
+}

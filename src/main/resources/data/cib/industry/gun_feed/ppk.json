@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_ppk_32acp",
+  "magazine_capacity": 7,
+  "ammo": "cib:32acp",
+  "display_name": "item.tacz.magazine.cib_ppk_32acp_7",
+  "carrier_variants": [
+    {
+      "capacity": 9,
+      "display_name": "item.tacz.magazine.cib_ppk_32acp_9"
+    },
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.cib_ppk_32acp_12"
+    },
+    {
+      "capacity": 14,
+      "display_name": "item.tacz.magazine.cib_ppk_32acp_14"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_sig552_556x45",
+  "magazine_capacity": 20,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.cib_sig552_556x45_20",
+  "carrier_variants": [
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.cib_sig552_556x45_30"
+    },
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.cib_sig552_556x45_40"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.cib_sig552_556x45_50"
+    }
+  ]
+}

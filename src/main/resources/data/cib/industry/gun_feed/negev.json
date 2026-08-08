@@ -1,0 +1,21 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "cib_negev_556x45_belt",
+  "magazine_capacity": 65,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.cib_negev_556x45_belt_65",
+  "carrier_variants": [
+    {
+      "capacity": 75,
+      "display_name": "item.tacz.magazine.cib_negev_556x45_belt_75"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.cib_negev_556x45_belt_100"
+    },
+    {
+      "capacity": 150,
+      "display_name": "item.tacz.magazine.cib_negev_556x45_belt_150"
+    }
+  ]
+}

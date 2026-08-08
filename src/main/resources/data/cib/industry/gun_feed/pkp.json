@@ -1,0 +1,21 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "cib_pkp_762x54_belt",
+  "magazine_capacity": 70,
+  "ammo": "tacz:762x54",
+  "display_name": "item.tacz.magazine.cib_pkp_762x54_belt_70",
+  "carrier_variants": [
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.cib_pkp_762x54_belt_100"
+    },
+    {
+      "capacity": 150,
+      "display_name": "item.tacz.magazine.cib_pkp_762x54_belt_150"
+    },
+    {
+      "capacity": 200,
+      "display_name": "item.tacz.magazine.cib_pkp_762x54_belt_200"
+    }
+  ]
+}

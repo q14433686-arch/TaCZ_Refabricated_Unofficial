@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_qbu191_58x42",
+  "magazine_capacity": 10,
+  "ammo": "tacz:58x42",
+  "display_name": "item.tacz.magazine.cib_qbu191_58x42_10",
+  "carrier_variants": [
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.cib_qbu191_58x42_15"
+    },
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.cib_qbu191_58x42_20"
+    },
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.cib_qbu191_58x42_30"
+    }
+  ]
+}

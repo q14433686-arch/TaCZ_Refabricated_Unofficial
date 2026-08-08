@@ -364,6 +364,35 @@ ClassicR 完成后，本轮按同一收口标准审计 `ccrp` 的全部 **131** 
 不改变原包行为的 legacy 原因。所有 private family 使用中性既有 detachable/belt material；没有将未经授权的第三方
 模型或错误图标冒充精确美术。
 
+## CIBR 完整枪包审计（CIB 89 / 89，CIBS 17 / 17）
+
+CIBR 的主 namespace 是 `cib`，皮肤/镜像内容在 `cibs`；两者属于同一发行包，因此本轮一并收口 **106 / 106**
+条 survey entry，而不是只处理此前的镜像组。
+
+- `cib`：**67 active / 22 legacy**；
+- `cibs`：**15 active / 2 legacy**；
+- 合计：**82 条**真实 detachable/belt sidecar，**24 条**明确的 legacy factual profile。
+
+已明确接入的内容包括 AK、AS Val、FAL、Galil、HK、K2、M4/M16/MK18、OTs、QBZ/QBU、SIG、T91、Type 20/56、
+EVO/JS9/PM9/PP19/PPSh/QCQ/Type79、常规手枪、AWP/G3SG1/M99/QBU/SSG08/SV98/SVD、Origin12/USAS12，以及
+MG3/Negev/PKP/QJY/QJZ belt。先前已审镜像枪与本轮主枪保持同一 family；新补条目默认 private family，防止仅因
+口径/容量相同发生跨平台互插。
+
+| 易误判组 | 完整审计结论 |
+|---|---|
+| `mg3`、`negev`、`pkp`、`qjy201`、`qjy88`、`qjz171` | active belt。 |
+| `qjb951`、`origin12`、`usas12`、QBU/QBZ、各精确步枪 | active detachable；MG / shotgun / sniper class 不自动决定机构。 |
+| `686`、`dprkrpg`、`dzj08`、`lmt_m203`、`qlu11` | single-shot / launcher legacy。 |
+| `hawk97_1`、`nova`、`qbs09` | tube legacy，保留原 script loop。 |
+| `hawk97_2`、`origin12db`、`qba221`、`qba221_burst`、`widow` | box/tube/特殊高容量实现未证，legacy。 |
+| `r8`、`type38`、`mini`、`qjb201`、`type11`、`type73`、`881`、`882`、`ar2`、`error` | 分别为转轮、clip、rotary、未审脚本、未证 LMG、特殊/无效身份；均有 factual legacy record。 |
+
+对于“没有细分材质和功能”的记录，本轮不再只散落在说明文字中：新增作者/CI gap register，机器可读文件
+`tools/industry/third_party_feed_gap_registry.json` 按 family 列出当前 `exact` / `family-level` / `neutral generic`
+材质状态，并逐枪列出 runtime `legacy` 功能缺口；人可读汇总见
+[`THIRD_PARTY_FEED_GAP_REGISTER.md`](THIRD_PARTY_FEED_GAP_REGISTER.md)。该登记册不会启用任何供弹，只用于后续授权
+贴图、专用盘/鼓/双联模型和脚本 reload route 的补齐排序。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：

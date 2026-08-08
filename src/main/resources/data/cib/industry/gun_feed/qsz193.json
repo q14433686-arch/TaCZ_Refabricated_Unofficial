@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_qsz193_9mm",
+  "magazine_capacity": 7,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.cib_qsz193_9mm_7",
+  "carrier_variants": [
+    {
+      "capacity": 9,
+      "display_name": "item.tacz.magazine.cib_qsz193_9mm_9"
+    },
+    {
+      "capacity": 10,
+      "display_name": "item.tacz.magazine.cib_qsz193_9mm_10"
+    },
+    {
+      "capacity": 11,
+      "display_name": "item.tacz.magazine.cib_qsz193_9mm_11"
+    }
+  ]
+}

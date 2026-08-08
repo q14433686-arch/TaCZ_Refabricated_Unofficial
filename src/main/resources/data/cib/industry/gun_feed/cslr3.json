@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_cslr3_58x42",
+  "magazine_capacity": 10,
+  "ammo": "tacz:58x42",
+  "display_name": "item.tacz.magazine.cib_cslr3_58x42_10",
+  "carrier_variants": [
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.cib_cslr3_58x42_12"
+    },
+    {
+      "capacity": 13,
+      "display_name": "item.tacz.magazine.cib_cslr3_58x42_13"
+    },
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.cib_cslr3_58x42_25"
+    }
+  ]
+}

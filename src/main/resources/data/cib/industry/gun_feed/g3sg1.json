@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_g3sg1_308",
+  "magazine_capacity": 20,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.cib_g3sg1_308_20",
+  "carrier_variants": [
+    {
+      "capacity": 22,
+      "display_name": "item.tacz.magazine.cib_g3sg1_308_22"
+    },
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.cib_g3sg1_308_25"
+    },
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.cib_g3sg1_308_30"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_cslr4_308",
+  "magazine_capacity": 5,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.cib_cslr4_308_5",
+  "carrier_variants": [
+    {
+      "capacity": 10,
+      "display_name": "item.tacz.magazine.cib_cslr4_308_10"
+    },
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.cib_cslr4_308_15"
+    },
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.cib_cslr4_308_20"
+    }
+  ]
+}

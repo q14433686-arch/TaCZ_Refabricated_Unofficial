@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_ppsh41_762x25",
+  "magazine_capacity": 20,
+  "ammo": "tacz:762x25",
+  "display_name": "item.tacz.magazine.cib_ppsh41_762x25_20",
+  "carrier_variants": [
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.cib_ppsh41_762x25_35"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.cib_ppsh41_762x25_45"
+    },
+    {
+      "capacity": 71,
+      "display_name": "item.tacz.magazine.cib_ppsh41_762x25_71"
+    }
+  ]
+}

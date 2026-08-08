@@ -1,0 +1,21 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "cib_mg3_308_belt",
+  "magazine_capacity": 65,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.cib_mg3_308_belt_65",
+  "carrier_variants": [
+    {
+      "capacity": 75,
+      "display_name": "item.tacz.magazine.cib_mg3_308_belt_75"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.cib_mg3_308_belt_100"
+    },
+    {
+      "capacity": 150,
+      "display_name": "item.tacz.magazine.cib_mg3_308_belt_150"
+    }
+  ]
+}

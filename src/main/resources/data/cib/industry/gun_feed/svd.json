@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_svd_762x54",
+  "magazine_capacity": 10,
+  "ammo": "tacz:762x54",
+  "display_name": "item.tacz.magazine.cib_svd_762x54_10"
+}

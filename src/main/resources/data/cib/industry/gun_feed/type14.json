@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "cib_type14_8x22",
+  "magazine_capacity": 8,
+  "ammo": "cib:8x22",
+  "display_name": "item.tacz.magazine.cib_type14_8x22_8"
+}
