@@ -1,0 +1,7 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "suffuse_pkp_762x54_belt",
+  "magazine_capacity": 120,
+  "ammo": "tacz:762x54",
+  "display_name": "item.tacz.magazine.suffuse_pkp_762x54_belt_120"
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_dvl10_308",
+  "magazine_capacity": 10,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.suffuse_dvl10_308_10",
+  "carrier_variants": [
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.suffuse_dvl10_308_12"
+    },
+    {
+      "capacity": 14,
+      "display_name": "item.tacz.magazine.suffuse_dvl10_308_14"
+    },
+    {
+      "capacity": 16,
+      "display_name": "item.tacz.magazine.suffuse_dvl10_308_16"
+    }
+  ]
+}

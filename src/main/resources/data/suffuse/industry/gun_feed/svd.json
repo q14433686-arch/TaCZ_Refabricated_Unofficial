@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_svd_762x54",
+  "magazine_capacity": 10,
+  "ammo": "tacz:762x54",
+  "display_name": "item.tacz.magazine.suffuse_svd_762x54_10",
+  "carrier_variants": [
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.suffuse_svd_762x54_12"
+    },
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.suffuse_svd_762x54_15"
+    },
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.suffuse_svd_762x54_20"
+    }
+  ]
+}

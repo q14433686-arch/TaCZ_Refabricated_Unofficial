@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "suffuse/aks74u",
+  "display_name": "AKS-74U",
+  "action": "gas_operated_rifle",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "suffuse_aks74u_545x39",
+    "capacity": 30,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "545x39",
+    "expected_ammo": "suffuse:545x39"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "User-provided runtime log for the survey environment identifies Suffuse-GunSmoke-Pack1.0.7--hotfix.zip as namespace suffuse; uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for suffuse:aks74u was individually checked for current ammo, base capacity, reload contract, and selectable capacity values.",
+    "AKS-74U is manually confirmed detachable-box fed. Its custom 5.45 AmmoId keeps this contract private rather than merging it with another AK family.",
+    "The runtime sidecar fails closed if loaded GunData ammo or base capacity changes. Its surveyed carrier commission is emitted only from an actual loaded Gunsmith Table gun recipe; no standalone creative-only carrier route is added."
+  ]
+}

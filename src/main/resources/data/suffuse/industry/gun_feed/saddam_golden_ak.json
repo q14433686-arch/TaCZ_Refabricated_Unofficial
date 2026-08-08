@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_saddam_ak_762x39",
+  "magazine_capacity": 30,
+  "ammo": "tacz:762x39",
+  "display_name": "item.tacz.magazine.suffuse_saddam_ak_762x39_30",
+  "carrier_variants": [
+    {
+      "capacity": 34,
+      "display_name": "item.tacz.magazine.suffuse_saddam_ak_762x39_34"
+    },
+    {
+      "capacity": 37,
+      "display_name": "item.tacz.magazine.suffuse_saddam_ak_762x39_37"
+    },
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.suffuse_saddam_ak_762x39_40"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_aw50_50bmg",
+  "magazine_capacity": 5,
+  "ammo": "tacz:50bmg",
+  "display_name": "item.tacz.magazine.suffuse_aw50_50bmg_5",
+  "carrier_variants": [
+    {
+      "capacity": 6,
+      "display_name": "item.tacz.magazine.suffuse_aw50_50bmg_6"
+    },
+    {
+      "capacity": 8,
+      "display_name": "item.tacz.magazine.suffuse_aw50_50bmg_8"
+    },
+    {
+      "capacity": 10,
+      "display_name": "item.tacz.magazine.suffuse_aw50_50bmg_10"
+    }
+  ]
+}

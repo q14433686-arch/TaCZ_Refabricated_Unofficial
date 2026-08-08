@@ -269,6 +269,29 @@ WEMQL_R、KhanPowder 和本批 CIB 的相同容量现在使用同一个稳定显
 GunData fail-closed 验证，并仅在实际 loaded Gunsmith Table 成枪 recipe 存在时由 surveyed factory 给出真实多槽
 制造出口。
 
+## Suffuse GunSmoke 核心步枪 / 精确步枪 / PKP 批量 cohort
+
+本批针对 `suffuse` 中能够由实际平台身份、当前 survey contract 和人工供弹资料共同确认的核心外部载具。
+用户提供的 survey 环境日志记录 `Suffuse-GunSmoke-Pack1.0.7--hotfix.zip`；每把均以当前 Ammo、基础容量、
+脚本、前三档扩容数组作版本 guard，而不是仅凭 class 或名字启用。
+
+| 已核对接收机 | 机构 / family | 容量 | 边界 |
+|---|---|---|---|
+| `aks74u` | detachable / 私有 5.45 family | 30、34、37、40 | 自定义 AmmoId，不自动并入其他 AK。 |
+| `ash12`、`kacpdw`、`mpdr`、`rm277`、`xm7` | detachable / 各自私有 family | 10/30/20 等对应 survey 变体 | 机构明确，但没有凭相似口径或未来平台猜 family。 |
+| `n4` | detachable / `stanag_556` | 30、40、50、60 | 明确 STANAG 接口。 |
+| `aw50`、`axmc`、`axsr`、`dvl10`、`gm6`、`m200`、`svd` | detachable / 精确步枪专用 family（AXMC/AXSR 共族） | 各自 survey 容量 | 手动 bolt 不被误判为固定仓；只在 AXMC/AXSR 这对明确共享。 |
+| `pkp` | belt / 私有 PKP belt family | 120 | 真正弹链，复用现有 exposed-belt material，但明确不是精确 PKP 网格。 |
+| `qbu191`、`qbz191`、`qbz192`、`qbz951`、`qbz951s` | detachable / QBZ/QBU 私有族（951/951S 共族） | 对应 survey 容量 | 相同 5.8×42 不自动合并不同代际/用途接收机。 |
+| `saddam_golden_ak` | detachable / 私有 family | 30、34、37、40 | 特殊 AK 平台不从名称继承跨包 AK 互插。 |
+
+共 **21 把** profile。PKP 的 `tacz_extra:item/mag_m134_belt` 映射仍标为 family-level material；其余专用、精确、
+异形载具使用中性 detachable material，避免宣称不存在的精确网格。`an94` 的专用脚本、AR-57/P90 异形顶置、PP19
+螺旋仓、霰弹枪、逐发/clip 路线、转轮、低容量发射器及未列出的候选均继续 legacy。
+
+所有本批 sidecar 仍用 GunData Ammo/基础容量 fail-closed，并由实际 loaded Gunsmith Table 成枪 recipe 触发 surveyed
+多槽载具委托；没有独立创造样品或伪造制造出口。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：

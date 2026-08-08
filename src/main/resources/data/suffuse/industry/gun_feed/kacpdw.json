@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_kacpdw_6x35",
+  "magazine_capacity": 30,
+  "ammo": "suffuse:6x35mm",
+  "display_name": "item.tacz.magazine.suffuse_kacpdw_6x35_30",
+  "carrier_variants": [
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.suffuse_kacpdw_6x35_40"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.suffuse_kacpdw_6x35_50"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.suffuse_kacpdw_6x35_60"
+    }
+  ]
+}

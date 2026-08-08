@@ -29,7 +29,7 @@ FeedDeviceKind = stripper_clip | speedloader | en_bloc_clip
 |---|---|---|
 | 普通可拆卸盒式弹匣 | `tacz:item/magazine` | 中性既有弹匣材质；仅说明“可拆卸弹匣”，不伪称精确外形 |
 | 弹链箱 / 带盒 | `tacz_extra:item/mag_m249_box` | 既有弹链箱材料；M249/Evolys 的精确 family 图仍优先 |
-| 暴露式布带 | `tacz_extra:item/mag_m134_belt` | MG08/15、MG42、MG14/17 与 WW M1919A6/MG34/MG42 复用现有 belt 材料，标记为 family 近似而非精确网格 |
+| 暴露式布带 | `tacz_extra:item/mag_m134_belt` | MG08/15、MG42、MG14/17、WW M1919A6/MG34/MG42 与 Suffuse PKP 复用现有 belt 材料，标记为 family 近似而非精确网格 |
 | RPD 带鼓容器 | `tacz_extra:item/mag_rpk_drum` | RPD/RPD-MS 的带鼓式容器复用鼓式材料，非精确 RPD 网格 |
 | 桥夹 | `tacz_extra:item/base_m_loader` | 已有桥夹/装填器材料族，保留 `stripper_clip` 语义 |
 | 漏夹 | `tacz_extra:item/base_m_loader` | 与桥夹复用金属夹条材料，但仍由 `en_bloc_clip` 状态和自动弹出区分 |

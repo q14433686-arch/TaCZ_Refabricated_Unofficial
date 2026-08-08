@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_mpdr_556",
+  "magazine_capacity": 20,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.suffuse_mpdr_556_20",
+  "carrier_variants": [
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.suffuse_mpdr_556_40"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.suffuse_mpdr_556_50"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.suffuse_mpdr_556_60"
+    }
+  ]
+}

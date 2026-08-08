@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_qbz951_58x42",
+  "magazine_capacity": 30,
+  "ammo": "tacz:58x42",
+  "display_name": "item.tacz.magazine.suffuse_qbz951_58x42_30",
+  "carrier_variants": [
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.suffuse_qbz951_58x42_35"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.suffuse_qbz951_58x42_50"
+    },
+    {
+      "capacity": 75,
+      "display_name": "item.tacz.magazine.suffuse_qbz951_58x42_75"
+    }
+  ]
+}
