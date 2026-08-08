@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "classicr_b93r_9mm",
+  "magazine_capacity": 15,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.classicr_b93r_9mm_15",
+  "carrier_variants": [
+    {
+      "capacity": 24,
+      "display_name": "item.tacz.magazine.classicr_b93r_9mm_24"
+    },
+    {
+      "capacity": 27,
+      "display_name": "item.tacz.magazine.classicr_b93r_9mm_27"
+    },
+    {
+      "capacity": 33,
+      "display_name": "item.tacz.magazine.classicr_b93r_9mm_33"
+    }
+  ]
+}

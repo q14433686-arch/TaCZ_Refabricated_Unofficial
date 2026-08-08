@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "classicr_m1a1_thompson_45acp",
+  "magazine_capacity": 30,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.classicr_m1a1_thompson_45acp_30",
+  "carrier_variants": [
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.classicr_m1a1_thompson_45acp_40"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.classicr_m1a1_thompson_45acp_45"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.classicr_m1a1_thompson_45acp_50"
+    }
+  ]
+}

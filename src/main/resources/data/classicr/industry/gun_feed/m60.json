@@ -1,0 +1,21 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "classicr_m60_308_belt",
+  "magazine_capacity": 100,
+  "ammo": "tacz:308",
+  "display_name": "item.tacz.magazine.classicr_m60_308_belt_100",
+  "carrier_variants": [
+    {
+      "capacity": 150,
+      "display_name": "item.tacz.magazine.classicr_m60_308_belt_150"
+    },
+    {
+      "capacity": 175,
+      "display_name": "item.tacz.magazine.classicr_m60_308_belt_175"
+    },
+    {
+      "capacity": 200,
+      "display_name": "item.tacz.magazine.classicr_m60_308_belt_200"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "classicr_ak12_545x39",
+  "magazine_capacity": 30,
+  "ammo": "tacz:545x39",
+  "display_name": "item.tacz.magazine.classicr_ak12_545x39_30",
+  "carrier_variants": [
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.classicr_ak12_545x39_35"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.classicr_ak12_545x39_45"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.classicr_ak12_545x39_60"
+    }
+  ]
+}

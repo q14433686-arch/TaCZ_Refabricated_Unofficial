@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "classicr_m82a2_50bmg",
+  "magazine_capacity": 8,
+  "ammo": "tacz:50bmg",
+  "display_name": "item.tacz.magazine.classicr_m82a2_50bmg_8",
+  "carrier_variants": [
+    {
+      "capacity": 10,
+      "display_name": "item.tacz.magazine.classicr_m82a2_50bmg_10"
+    },
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.classicr_m82a2_50bmg_12"
+    },
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.classicr_m82a2_50bmg_15"
+    }
+  ]
+}

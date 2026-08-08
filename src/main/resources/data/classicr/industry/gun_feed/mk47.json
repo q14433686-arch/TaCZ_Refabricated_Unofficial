@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "classicr_mk47_762x39copper",
+  "magazine_capacity": 30,
+  "ammo": "tacz:762x39copper",
+  "display_name": "item.tacz.magazine.classicr_mk47_762x39copper_30",
+  "carrier_variants": [
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.classicr_mk47_762x39copper_45"
+    },
+    {
+      "capacity": 60,
+      "display_name": "item.tacz.magazine.classicr_mk47_762x39copper_60"
+    },
+    {
+      "capacity": 75,
+      "display_name": "item.tacz.magazine.classicr_mk47_762x39copper_75"
+    }
+  ]
+}

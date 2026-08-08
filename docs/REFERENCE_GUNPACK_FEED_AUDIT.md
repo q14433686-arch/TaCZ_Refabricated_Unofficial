@@ -292,6 +292,39 @@ GunData fail-closed 验证，并仅在实际 loaded Gunsmith Table 成枪 recipe
 所有本批 sidecar 仍用 GunData Ammo/基础容量 fail-closed，并由实际 loaded Gunsmith Table 成枪 recipe 触发 surveyed
 多槽载具委托；没有独立创造样品或伪造制造出口。
 
+## ClassicR 完整枪包审计（33 / 33）
+
+按“每轮至少完整完成一个枪包”的规则，本轮对 `classicr` 的 **全部 33 条** survey entry 给出明确结论，而不是只
+挑可拆卸弹匣枪。用户提供的运行日志将 ClassicR 与 CCRP 1.1.6 release hotfix2 对应；当前 survey 继续对每个
+结论的 Ammo、基础容量、脚本与可选容量做版本 guard。
+
+- **26 把**已获得 `gun_feed`：真实 detachable / belt、服务器库存事务和实际 surveyed Gunsmith Table 多槽载具出口；
+- **7 把**仅获得 factual `industry/reference`，显式保持 legacy，绝不因“完整审计”而伪造一个弹匣。
+
+| 已启用的主要组 | 机制 / family 原则 |
+|---|---|
+| AK-12、B93R、FAL Tactical、Glock 18、M92FS、MAC-10、MK47、MP7、MP9、STI 2011、TEC-9、TTI G34、UDP-9 | 明确可拆卸，但除已审核标准外各自 private family。 |
+| HK416 A5、MK18 Mod 1 | 明确 `stanag_556`；同一 capacity 使用稳定 STANAG display identity。 |
+| M1A1 Thompson | 可拆卸，但 ClassicR 40/45/50 容量保持私有，不污染 earlier 20/30 M1A1 盒式 family。 |
+| DP-28 | 可拆顶置盘，不是 belt；中性视觉，不硬套方盒。 |
+| M60 | 真正 belt / 私有 belt-box family。 |
+| M82A2、MRAD、MRAD ELR、MSR、NGSW-R、QBZ-191、SCAR MK20、SPR-15 | 手动 bolt / precision class 仍逐项确认为可拆卸，不以 class 代替机构。 |
+
+以下七条是**完成审计后的明确 legacy 决定**：
+
+| GunId | 记录的真实/安全结论 | 为什么不启用实体外部载具 |
+|---|---|---|
+| `aa410` | `unknown` | 当前证据不能安全区分 tube / box。 |
+| `colt_python` | `revolver` | 保留原转轮；尚无真实 speedloader / clear route。 |
+| `kar98` | `stripper_clip` | 固定内仓 + bridge clip；其自定义 script route 尚未接入。 |
+| `m24_renewed` | `unknown` | 名称、bolt、容量不足以判定固定或可拆。 |
+| `mauser_c96` | `internal_box` | 标准 C96 固定内仓，不把扩容数组变成弹匣井。 |
+| `mgl_40mm` | `revolver` | 旋转榴弹发射器需独立 cylinder 事务。 |
+| `minigun` | `unknown` | 没有审计到实际 removable belt/box source，不从 class/capacity 猜。 |
+
+因此 ClassicR 现在没有“未处理的 survey 枪”：每把要么有 fail-closed 实体供弹与真实制造出口，要么有可审计的
+legacy 边界记录。旧资源、默认枪包和未授权模型均未修改。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：

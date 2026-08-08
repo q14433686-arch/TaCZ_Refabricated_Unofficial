@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "classicr_mac10_9mm",
+  "magazine_capacity": 30,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.classicr_mac10_9mm_30",
+  "carrier_variants": [
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.classicr_mac10_9mm_35"
+    },
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.classicr_mac10_9mm_40"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.classicr_mac10_9mm_45"
+    }
+  ]
+}

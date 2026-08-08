@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "classicr_ngsw_r_68x51",
+  "magazine_capacity": 20,
+  "ammo": "tacz:68x51fury",
+  "display_name": "item.tacz.magazine.classicr_ngsw_r_68x51_20",
+  "carrier_variants": [
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.classicr_ngsw_r_68x51_25"
+    },
+    {
+      "capacity": 35,
+      "display_name": "item.tacz.magazine.classicr_ngsw_r_68x51_35"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.classicr_ngsw_r_68x51_45"
+    }
+  ]
+}

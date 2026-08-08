@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "classicr_sti2011_9mm",
+  "magazine_capacity": 17,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.classicr_sti2011_9mm_17",
+  "carrier_variants": [
+    {
+      "capacity": 19,
+      "display_name": "item.tacz.magazine.classicr_sti2011_9mm_19"
+    },
+    {
+      "capacity": 23,
+      "display_name": "item.tacz.magazine.classicr_sti2011_9mm_23"
+    },
+    {
+      "capacity": 27,
+      "display_name": "item.tacz.magazine.classicr_sti2011_9mm_27"
+    }
+  ]
+}

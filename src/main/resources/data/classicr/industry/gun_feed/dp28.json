@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "classicr_dp28_pan_762x54r",
+  "magazine_capacity": 47,
+  "ammo": "tacz:762x54r",
+  "display_name": "item.tacz.magazine.classicr_dp28_pan_762x54r_47"
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "classicr_mrad_338",
+  "magazine_capacity": 10,
+  "ammo": "tacz:338",
+  "display_name": "item.tacz.magazine.classicr_mrad_338_10",
+  "carrier_variants": [
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.classicr_mrad_338_12"
+    },
+    {
+      "capacity": 13,
+      "display_name": "item.tacz.magazine.classicr_mrad_338_13"
+    },
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.classicr_mrad_338_15"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "classicr_msr_3006",
+  "magazine_capacity": 10,
+  "ammo": "tacz:30_06",
+  "display_name": "item.tacz.magazine.classicr_msr_3006_10"
+}

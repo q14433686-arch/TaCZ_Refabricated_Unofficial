@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "classicr_spr15_556",
+  "magazine_capacity": 20,
+  "ammo": "tacz:556x45",
+  "display_name": "item.tacz.magazine.classicr_spr15_556_20",
+  "carrier_variants": [
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.classicr_spr15_556_25"
+    },
+    {
+      "capacity": 38,
+      "display_name": "item.tacz.magazine.classicr_spr15_556_38"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.classicr_spr15_556_45"
+    }
+  ]
+}
