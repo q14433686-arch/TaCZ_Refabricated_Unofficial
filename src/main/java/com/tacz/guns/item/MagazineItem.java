@@ -8,6 +8,7 @@ import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.client.industry.icon.IndustryIconRenderer;
 import com.tacz.guns.industry.ammo.AmmoProfileService;
 import com.tacz.guns.industry.magazine.ExternalCarrierVariant;
+import com.tacz.guns.industry.magazine.FeedInterfaceStandardService;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.magazine.MagazineItemBuilder;
 import com.tacz.guns.industry.magazine.MagazineItemDataAccessor;
@@ -243,6 +244,11 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
         if (advanced.isAdvanced()) {
             adder.accept(Component.translatable("tooltip.tacz.magazine.family", getMagazineFamily(stack))
                     .withStyle(style -> style.withColor(0x555555)));
+            Identifier feedStandard = getFeedStandardId(stack);
+            if (feedStandard != null) {
+                adder.accept(Component.translatable("tooltip.tacz.magazine.feed_standard", feedStandard)
+                        .withStyle(style -> style.withColor(0x555555)));
+            }
         }
     }
 
@@ -273,8 +279,11 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
                 // base-capacity clone.
                 for (ExternalCarrierVariant variant : definition.getExternalCarrierVariants()) {
                     int capacity = variant.getCapacity();
-                    String key = definition.getMechanism().serializedName() + "|" + definition.getMagazineFamily()
-                            + "|" + capacity + "|" + AmmoProfileService.canonicalCaliber(definition.getAmmoId());
+                    var standardId = FeedInterfaceStandardService.getStandardId(definition);
+                    String interfaceKey = standardId == null
+                            ? definition.getMagazineFamily() + "|" + definition.getAmmoId()
+                            : standardId.toString();
+                    String key = definition.getMechanism().serializedName() + "|" + interfaceKey + "|" + capacity;
                     if (seen.add(key)) {
                         stacks.add(MagazineItemBuilder.create().fromExternalCarrier(definition, variant).build());
                     }

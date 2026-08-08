@@ -3,5 +3,6 @@
   "magazine_family": "vector_45acp",
   "magazine_capacity": 20,
   "ammo": "tacz:45acp",
-  "display_name": "item.tacz.magazine.vector_45"
+  "display_name": "item.tacz.magazine.vector_45",
+  "feed_standard": "tacz:vector_45acp"
 }

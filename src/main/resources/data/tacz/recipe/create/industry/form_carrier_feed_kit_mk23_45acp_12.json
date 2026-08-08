@@ -38,6 +38,7 @@
         "IndustryDisplayName": "item.tacz.gun_component.carrier_feed_kit.mk23_45acp_12",
         "DieTargetKind": "mk23_45acp_12",
         "MagazineFamily": "mk23_45acp",
+        "MagazineFeedStandard": "tacz:mk23_45acp",
         "MagazineAmmoId": "tacz:45acp",
         "MagazineCapacity": 12
       }

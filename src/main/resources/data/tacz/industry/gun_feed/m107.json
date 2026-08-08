@@ -3,5 +3,6 @@
   "magazine_family": "m107_50bmg",
   "magazine_capacity": 10,
   "ammo": "tacz:50bmg",
-  "display_name": "item.tacz.magazine.m107_50bmg"
+  "display_name": "item.tacz.magazine.m107_50bmg",
+  "feed_standard": "tacz:m107_50bmg"
 }

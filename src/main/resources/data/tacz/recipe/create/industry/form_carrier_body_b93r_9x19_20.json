@@ -21,6 +21,7 @@
         "IndustryDisplayName": "item.tacz.gun_component.carrier_body.b93r_9x19_20",
         "DieTargetKind": "b93r_9x19_20",
         "MagazineFamily": "b93r_9x19",
+        "MagazineFeedStandard": "tacz:b93r_9x19",
         "MagazineAmmoId": "tacz:9mm",
         "MagazineCapacity": 20
       }

@@ -21,6 +21,7 @@
         "IndustryDisplayName": "item.tacz.gun_component.carrier_body.g36_556_30",
         "DieTargetKind": "g36_556_30",
         "MagazineFamily": "g36_556",
+        "MagazineFeedStandard": "tacz:g36_556",
         "MagazineAmmoId": "tacz:556x45",
         "MagazineCapacity": 30
       }

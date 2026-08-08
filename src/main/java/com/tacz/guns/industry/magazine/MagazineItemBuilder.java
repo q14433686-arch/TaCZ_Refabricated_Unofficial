@@ -1,6 +1,5 @@
 package com.tacz.guns.industry.magazine;
 
-import com.tacz.guns.industry.ammo.AmmoProfileService;
 import com.tacz.guns.init.ModItems;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -8,6 +7,7 @@ import net.minecraft.world.item.ItemStack;
 /** Small, explicit factory for a configured physical magazine stack. */
 public final class MagazineItemBuilder {
     private String family = "";
+    private Identifier feedStandardId;
     private Identifier ammoId;
     private int capacity;
     private int ammoCount;
@@ -28,6 +28,11 @@ public final class MagazineItemBuilder {
 
     public MagazineItemBuilder setAmmoId(Identifier ammoId) {
         this.ammoId = ammoId;
+        return this;
+    }
+
+    public MagazineItemBuilder setFeedStandardId(Identifier feedStandardId) {
+        this.feedStandardId = feedStandardId;
         return this;
     }
 
@@ -70,12 +75,15 @@ public final class MagazineItemBuilder {
         if (variant == null) {
             return fromDefinition(definition);
         }
+        Identifier standardId = FeedInterfaceStandardService.getStandardId(definition);
+        Identifier canonicalAmmo = standardId == null ? definition.getAmmoId()
+                : FeedInterfaceStandardService.getCanonicalAmmo(definition);
         return setFamily(definition.getMagazineFamily())
-                // External-carrier stacks store the shared canonical cartridge
-                // specification. The receiver still validates its exact
-                // GunData ammo in GunFeedDefinition; this only lets explicitly
-                // shared standards span reviewed native AmmoId aliases.
-                .setAmmoId(AmmoProfileService.canonicalCaliber(definition.getAmmoId()))
+                // Only an explicit validated feed standard may canonicalize the
+                // carrier specification across native AmmoIds. Private legacy
+                // families retain their exact declared AmmoId.
+                .setFeedStandardId(standardId)
+                .setAmmoId(canonicalAmmo == null ? definition.getAmmoId() : canonicalAmmo)
                 .setCapacity(variant.getCapacity())
                 .setDisplayNameKey(variant.getDisplayName())
                 .setFeedDeviceKind(definition.getMechanism().serializedName());
@@ -85,6 +93,7 @@ public final class MagazineItemBuilder {
         ItemStack magazine = new ItemStack(ModItems.MAGAZINE);
         if (magazine.getItem() instanceof MagazineItemDataAccessor accessor) {
             accessor.setMagazineFamily(magazine, family);
+            accessor.setFeedStandardId(magazine, feedStandardId);
             accessor.setAmmoId(magazine, ammoId);
             accessor.setCapacity(magazine, capacity);
             accessor.setAmmoCount(magazine, ammoCount);

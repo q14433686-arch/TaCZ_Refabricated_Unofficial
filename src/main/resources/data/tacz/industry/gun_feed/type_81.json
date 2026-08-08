@@ -3,5 +3,6 @@
   "magazine_family": "type81_762x39",
   "magazine_capacity": 30,
   "ammo": "tacz:762x39",
-  "display_name": "item.tacz.magazine.type81_762x39"
+  "display_name": "item.tacz.magazine.type81_762x39",
+  "feed_standard": "tacz:type81_762x39"
 }

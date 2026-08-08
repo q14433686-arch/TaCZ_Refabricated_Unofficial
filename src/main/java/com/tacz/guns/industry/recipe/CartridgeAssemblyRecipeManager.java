@@ -4,6 +4,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.industry.IndustryProfileManager;
+import com.tacz.guns.industry.ammo.CartridgeStandardDefinition;
+import com.tacz.guns.industry.ammo.CartridgeStandardService;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.manager.CommonDataManager;
 import com.tacz.guns.resource.network.DataType;
@@ -72,6 +74,15 @@ public final class CartridgeAssemblyRecipeManager extends CommonDataManager<Cart
         CartridgeAssemblyDefinition definition = super.parseJson(element);
         if (definition == null || !definition.isValid()) {
             GunMod.LOGGER.error("Invalid dedicated cartridge assembly definition: {}", element);
+            return null;
+        }
+        CartridgeStandardDefinition standard = CartridgeStandardService.getStandard(definition.getAmmo());
+        if (standard != null && (!standard.getCartridgeCaliber().equals(definition.getCaseCaliber())
+                || !standard.getCartridgeCaliber().equals(definition.getProjectileCaliber()))) {
+            GunMod.LOGGER.error(
+                    "Ignoring cartridge assembly definition for {}: case/projectile calibre must match cartridge standard {} ({}).",
+                    definition.getAmmo(), standard.getCanonicalAmmo(), standard.getCartridgeCaliber()
+            );
             return null;
         }
         return definition;

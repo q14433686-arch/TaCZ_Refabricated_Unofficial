@@ -43,6 +43,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.g3_308_20",
           "DieTargetKind": "g3_308_20",
           "MagazineFamily": "g3_308",
+          "MagazineFeedStandard": "tacz:g3_308",
           "MagazineAmmoId": "tacz:308",
           "MagazineCapacity": 20
         }

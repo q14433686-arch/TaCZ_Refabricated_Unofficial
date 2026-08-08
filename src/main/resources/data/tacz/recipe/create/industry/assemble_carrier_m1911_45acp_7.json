@@ -48,6 +48,7 @@
           "MagazineCapacity": 7,
           "MagazineAmmoCount": 0,
           "MagazineDisplayName": "item.tacz.magazine.m1911",
+          "MagazineFeedStandard": "tacz:m1911_45acp",
           "FeedDeviceKind": "detachable_magazine"
         }
       }

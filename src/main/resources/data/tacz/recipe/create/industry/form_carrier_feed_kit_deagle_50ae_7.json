@@ -38,6 +38,7 @@
         "IndustryDisplayName": "item.tacz.gun_component.carrier_feed_kit.deagle_50ae_7",
         "DieTargetKind": "deagle_50ae_7",
         "MagazineFamily": "deagle_50ae",
+        "MagazineFeedStandard": "tacz:deagle_50ae",
         "MagazineAmmoId": "tacz:50ae",
         "MagazineCapacity": 7
       }

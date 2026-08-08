@@ -21,6 +21,7 @@
         "IndustryDisplayName": "item.tacz.gun_component.carrier_body.vector_45acp_20",
         "DieTargetKind": "vector_45acp_20",
         "MagazineFamily": "vector_45acp",
+        "MagazineFeedStandard": "tacz:vector_45acp",
         "MagazineAmmoId": "tacz:45acp",
         "MagazineCapacity": 20
       }

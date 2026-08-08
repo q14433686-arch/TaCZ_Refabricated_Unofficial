@@ -17,5 +17,6 @@
       "capacity": 50,
       "display_name": "item.tacz.magazine.wemql_r_vector_45acp_50"
     }
-  ]
+  ],
+  "feed_standard": "tacz:vector_45acp"
 }

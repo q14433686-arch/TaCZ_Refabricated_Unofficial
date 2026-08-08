@@ -34,6 +34,7 @@
           "IndustryDisplayName": "item.tacz.gun_component.carrier_body.cz75_9x19_16",
           "DieTargetKind": "cz75_9x19_16",
           "MagazineFamily": "cz75_9x19",
+          "MagazineFeedStandard": "tacz:cz75_9x19",
           "MagazineAmmoId": "tacz:9mm",
           "MagazineCapacity": 16
         }

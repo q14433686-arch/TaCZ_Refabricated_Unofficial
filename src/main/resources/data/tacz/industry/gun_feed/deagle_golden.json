@@ -3,5 +3,6 @@
   "magazine_family": "deagle_357",
   "magazine_capacity": 9,
   "ammo": "tacz:357mag",
-  "display_name": "item.tacz.magazine.deagle_357"
+  "display_name": "item.tacz.magazine.deagle_357",
+  "feed_standard": "tacz:deagle_357"
 }

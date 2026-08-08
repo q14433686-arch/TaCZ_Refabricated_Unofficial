@@ -50,7 +50,7 @@ AmmoProfileDefinition
 }
 ```
 
-该 AmmoId 还必须有真实 AmmoIndex、独立 projectile core/die 和 Cartridge Assembly 输出；profile JSON 单独存在并不会解锁假弹药。
+该 AmmoId 还必须有真实 AmmoIndex、其 `caliber_ammo` 对应的 `industry/cartridge_standards` 标准、独立 projectile core/die 和 Cartridge Assembly 输出；profile JSON 单独存在并不会解锁假弹药。标准只统一实际尺寸与量规，不会把 AP/HP/Slug 压扁为同一个 AmmoId。完整跨包标准层见 [`INDUSTRY_STANDARD_REGISTRY.md`](INDUSTRY_STANDARD_REGISTRY.md)。
 
 ### 首批实际内容范围
 

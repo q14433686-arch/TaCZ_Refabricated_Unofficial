@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "mechanism": "detachable_magazine",
+  "magazine_family": "stanag_556",
+  "cartridge_standard": "tacz:556x45",
+  "accepted_capacities": [
+    20,
+    30,
+    35,
+    40,
+    45,
+    50,
+    60
+  ]
+}

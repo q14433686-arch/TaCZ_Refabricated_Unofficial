@@ -23,15 +23,23 @@ public class GunFeedDefinition {
     private FeedMechanism mechanism = FeedMechanism.LEGACY;
 
     /**
-     * Explicit physical-interface parent standard, such as {@code ak_762x39}
-     * or {@code stanag_556}. It covers the audited carrier geometry/feed-lip/
-     * latch/reload contract; it is deliberately distinct from calibre. A pack
-     * may reuse this key only after it explicitly verifies real interchange,
-     * never merely because its GunIndex, model, capacity or loose AmmoId looks
-     * similar to another receiver.
+     * Stable physical family key for the carrier shell/latch/feed-lip contract,
+     * such as {@code ak_762x39} or {@code stanag_556}. A named
+     * {@link #feedStandardId} is the central parent standard when a declaration
+     * opts into cross-pack interoperability; neither field is inferred from a
+     * GunIndex, model, capacity or loose AmmoId.
      */
     @SerializedName("magazine_family")
     private String magazineFamily = "";
+
+    /**
+     * Optional central interface-standard resource. New cross-pack sharing
+     * should name this explicitly; an absent value keeps an existing private
+     * family compatible with old worlds but cannot opt into cross-native-AmmoId
+     * reuse by itself.
+     */
+    @SerializedName("feed_standard")
+    private Identifier feedStandardId;
 
     /** Maximum capacity that this receiver accepts.  Smaller compatible magazines remain valid. */
     @SerializedName("magazine_capacity")
@@ -113,6 +121,10 @@ public class GunFeedDefinition {
 
     public String getMagazineFamily() {
         return magazineFamily == null ? "" : magazineFamily;
+    }
+
+    public Identifier getFeedStandardId() {
+        return feedStandardId;
     }
 
     public int getMagazineCapacity() {

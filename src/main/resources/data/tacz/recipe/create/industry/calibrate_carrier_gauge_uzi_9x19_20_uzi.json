@@ -45,6 +45,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.uzi_9x19_20",
           "DieTargetKind": "uzi_9x19_20",
           "MagazineFamily": "uzi_9x19",
+          "MagazineFeedStandard": "tacz:uzi_9x19",
           "MagazineAmmoId": "tacz:9mm",
           "MagazineCapacity": 20
         }

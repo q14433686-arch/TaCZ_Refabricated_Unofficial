@@ -3,5 +3,6 @@
   "magazine_family": "glock_9x19",
   "magazine_capacity": 17,
   "ammo": "tacz:9mm",
-  "display_name": "item.tacz.magazine.glock_17"
+  "display_name": "item.tacz.magazine.glock_17",
+  "feed_standard": "tacz:glock_9x19"
 }

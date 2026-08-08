@@ -48,6 +48,7 @@
           "MagazineCapacity": 12,
           "MagazineAmmoCount": 0,
           "MagazineDisplayName": "item.tacz.magazine.hk_mk23",
+          "MagazineFeedStandard": "tacz:mk23_45acp",
           "FeedDeviceKind": "detachable_magazine"
         }
       }

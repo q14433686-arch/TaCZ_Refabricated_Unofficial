@@ -45,6 +45,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.spr15hb_556_15",
           "DieTargetKind": "spr15hb_556_15",
           "MagazineFamily": "spr15hb_556",
+          "MagazineFeedStandard": "tacz:spr15hb_556",
           "MagazineAmmoId": "tacz:556x45",
           "MagazineCapacity": 15
         }

@@ -3,5 +3,6 @@
   "magazine_family": "ump_45acp",
   "magazine_capacity": 25,
   "ammo": "tacz:45acp",
-  "display_name": "item.tacz.magazine.ump_45"
+  "display_name": "item.tacz.magazine.ump_45",
+  "feed_standard": "tacz:ump_45acp"
 }

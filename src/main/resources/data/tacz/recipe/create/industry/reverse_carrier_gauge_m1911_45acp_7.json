@@ -43,6 +43,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.m1911_45acp_7",
           "DieTargetKind": "m1911_45acp_7",
           "MagazineFamily": "m1911_45acp",
+          "MagazineFeedStandard": "tacz:m1911_45acp",
           "MagazineAmmoId": "tacz:45acp",
           "MagazineCapacity": 7
         }

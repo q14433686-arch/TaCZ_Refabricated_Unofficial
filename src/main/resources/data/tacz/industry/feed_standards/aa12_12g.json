@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "mechanism": "detachable_magazine",
+  "magazine_family": "aa12_12g",
+  "cartridge_standard": "tacz:12g",
+  "accepted_capacities": [
+    8
+  ]
+}

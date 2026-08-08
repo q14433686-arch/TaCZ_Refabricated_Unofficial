@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "mechanism": "detachable_magazine",
+  "magazine_family": "awm_338",
+  "cartridge_standard": "tacz:338",
+  "accepted_capacities": [
+    5
+  ]
+}

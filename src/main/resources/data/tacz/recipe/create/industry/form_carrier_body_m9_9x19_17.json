@@ -34,6 +34,7 @@
           "IndustryDisplayName": "item.tacz.gun_component.carrier_body.m9_9x19_17",
           "DieTargetKind": "m9_9x19_17",
           "MagazineFamily": "m9_9x19",
+          "MagazineFeedStandard": "tacz:m9_9x19",
           "MagazineAmmoId": "tacz:9mm",
           "MagazineCapacity": 17
         }

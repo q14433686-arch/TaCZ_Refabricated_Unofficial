@@ -24,6 +24,8 @@ import java.util.List;
  */
 public interface MagazineItemDataAccessor extends IMagazine {
     String MAGAZINE_FAMILY_TAG = "MagazineFamily";
+    /** Optional named feed-interface standard; absent on old/private carrier stacks. */
+    String MAGAZINE_FEED_STANDARD_TAG = "MagazineFeedStandard";
     /** Canonical carrier/chamber ammo identity, not a claim that all rounds have this AmmoId. */
     String MAGAZINE_AMMO_ID_TAG = "MagazineAmmoId";
     String MAGAZINE_CAPACITY_TAG = "MagazineCapacity";
@@ -51,6 +53,21 @@ public interface MagazineItemDataAccessor extends IMagazine {
 
     default void setMagazineFamily(ItemStack magazine, String family) {
         ItemNbtUtils.updateTag(magazine, tag -> tag.putString(MAGAZINE_FAMILY_TAG, family == null ? "" : family));
+    }
+
+    @Nullable
+    default Identifier getFeedStandardId(ItemStack magazine) {
+        return Identifier.tryParse(ItemNbtUtils.getTag(magazine).getStringOr(MAGAZINE_FEED_STANDARD_TAG, ""));
+    }
+
+    default void setFeedStandardId(ItemStack magazine, @Nullable Identifier standardId) {
+        ItemNbtUtils.updateTag(magazine, tag -> {
+            if (standardId == null) {
+                tag.remove(MAGAZINE_FEED_STANDARD_TAG);
+            } else {
+                tag.putString(MAGAZINE_FEED_STANDARD_TAG, standardId.toString());
+            }
+        });
     }
 
     @Override

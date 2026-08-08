@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "mechanism": "detachable_magazine",
+  "magazine_family": "aug_556",
+  "cartridge_standard": "tacz:556x45",
+  "accepted_capacities": [
+    30,
+    40,
+    45,
+    60
+  ]
+}

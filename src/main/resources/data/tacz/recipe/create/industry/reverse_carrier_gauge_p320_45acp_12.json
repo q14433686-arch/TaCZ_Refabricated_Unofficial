@@ -43,6 +43,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.p320_45acp_12",
           "DieTargetKind": "p320_45acp_12",
           "MagazineFamily": "p320_45acp",
+          "MagazineFeedStandard": "tacz:p320_45acp",
           "MagazineAmmoId": "tacz:45acp",
           "MagazineCapacity": 12
         }

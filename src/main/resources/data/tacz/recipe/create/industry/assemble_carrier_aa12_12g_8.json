@@ -48,6 +48,7 @@
           "MagazineCapacity": 8,
           "MagazineAmmoCount": 0,
           "MagazineDisplayName": "item.tacz.magazine.aa12_12g",
+          "MagazineFeedStandard": "tacz:aa12_12g",
           "FeedDeviceKind": "detachable_magazine"
         }
       }

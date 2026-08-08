@@ -7,10 +7,11 @@ import net.minecraft.resources.Identifier;
  * Server-authoritative ballistic profile for one independently addressable
  * loose-ammo identity.
  *
- * <p>{@code caliber_ammo} is the canonical chamber/carrier identity. It is
- * deliberately separate from {@code ammo}: an AP, HP, or slug round can be a
- * distinct ItemStack and projectile while still being physically compatible
- * with a carrier made for the same calibre.</p>
+ * <p>{@code caliber_ammo} is the canonical chamber/carrier identity and must
+ * resolve to one named {@link CartridgeStandardDefinition}. It is deliberately
+ * separate from {@code ammo}: an AP, HP, or slug round can be a distinct
+ * ItemStack and projectile while still being physically compatible with a
+ * carrier made for the same cartridge standard.</p>
  */
 public final class AmmoProfileDefinition {
     public static final int SCHEMA_VERSION = 1;

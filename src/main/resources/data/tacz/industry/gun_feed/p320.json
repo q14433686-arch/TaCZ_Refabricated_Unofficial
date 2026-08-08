@@ -3,5 +3,6 @@
   "magazine_family": "p320_45acp",
   "magazine_capacity": 12,
   "ammo": "tacz:45acp",
-  "display_name": "item.tacz.magazine.p320"
+  "display_name": "item.tacz.magazine.p320",
+  "feed_standard": "tacz:p320_45acp"
 }

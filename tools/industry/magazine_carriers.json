@@ -93,7 +93,8 @@
         "ak47"
       ],
       "name_en": "AK 7.62×39 30-round Magazine",
-      "name_zh": "AK 7.62×39 30 发弹匣"
+      "name_zh": "AK 7.62×39 30 发弹匣",
+      "feed_standard": "tacz:ak_762x39"
     },
     {
       "id": "ak_762x39_40",
@@ -106,7 +107,8 @@
         "rpk"
       ],
       "name_en": "RPK 7.62×39 40-round Magazine",
-      "name_zh": "RPK 7.62×39 40 发加长弹匣"
+      "name_zh": "RPK 7.62×39 40 发加长弹匣",
+      "feed_standard": "tacz:ak_762x39"
     },
     {
       "id": "cz75_9x19_16",
@@ -119,7 +121,8 @@
         "cz75"
       ],
       "name_en": "CZ 75 16-round Magazine",
-      "name_zh": "CZ 75 16 发弹匣"
+      "name_zh": "CZ 75 16 发弹匣",
+      "feed_standard": "tacz:cz75_9x19"
     },
     {
       "id": "evolys_308_belt_75",
@@ -132,7 +135,8 @@
         "fn_evolys"
       ],
       "name_en": "FN Evolys .308 75-round Belt Box",
-      "name_zh": "FN Evolys .308 75 发弹链箱"
+      "name_zh": "FN Evolys .308 75 发弹链箱",
+      "feed_standard": "tacz:evolys_308_belt"
     },
     {
       "id": "fal_308_20",
@@ -145,7 +149,8 @@
         "fn_fal"
       ],
       "name_en": "FAL .308 20-round Magazine",
-      "name_zh": "FAL .308 20 发弹匣"
+      "name_zh": "FAL .308 20 发弹匣",
+      "feed_standard": "tacz:fal_308"
     },
     {
       "id": "g36_556_30",
@@ -158,7 +163,8 @@
         "g36k"
       ],
       "name_en": "G36 5.56×45 30-round Magazine",
-      "name_zh": "G36 5.56×45 30 发弹匣"
+      "name_zh": "G36 5.56×45 30 发弹匣",
+      "feed_standard": "tacz:g36_556"
     },
     {
       "id": "g3_308_20",
@@ -171,7 +177,8 @@
         "hk_g3"
       ],
       "name_en": "G3 .308 20-round Magazine",
-      "name_zh": "G3 .308 20 发弹匣"
+      "name_zh": "G3 .308 20 发弹匣",
+      "feed_standard": "tacz:g3_308"
     },
     {
       "id": "glock_9x19_17",
@@ -184,7 +191,8 @@
         "glock_17"
       ],
       "name_en": "Glock 17 17-round Magazine",
-      "name_zh": "Glock 17 17 发弹匣"
+      "name_zh": "Glock 17 17 发弹匣",
+      "feed_standard": "tacz:glock_9x19"
     },
     {
       "id": "m14_308_10",
@@ -197,7 +205,8 @@
         "mk14"
       ],
       "name_en": "M14 .308 10-round Magazine",
-      "name_zh": "M14 .308 10 发弹匣"
+      "name_zh": "M14 .308 10 发弹匣",
+      "feed_standard": "tacz:m14_308"
     },
     {
       "id": "m1911_45acp_7",
@@ -210,7 +219,8 @@
         "m1911"
       ],
       "name_en": "M1911 .45 ACP 7-round Magazine",
-      "name_zh": "M1911 .45 ACP 7 发弹匣"
+      "name_zh": "M1911 .45 ACP 7 发弹匣",
+      "feed_standard": "tacz:m1911_45acp"
     },
     {
       "id": "m249_556_belt_75",
@@ -223,7 +233,8 @@
         "m249"
       ],
       "name_en": "M249 5.56 75-round Belt Box",
-      "name_zh": "M249 5.56 75 发弹链箱"
+      "name_zh": "M249 5.56 75 发弹链箱",
+      "feed_standard": "tacz:m249_556_belt"
     },
     {
       "id": "m9_9x19_17",
@@ -236,7 +247,8 @@
         "m9a4"
       ],
       "name_en": "M9 17-round Magazine",
-      "name_zh": "M9 17 发弹匣"
+      "name_zh": "M9 17 发弹匣",
+      "feed_standard": "tacz:m9_9x19"
     },
     {
       "id": "mk23_45acp_12",
@@ -249,7 +261,8 @@
         "hk_mk23"
       ],
       "name_en": "MK23 .45 ACP 12-round Magazine",
-      "name_zh": "MK23 .45 ACP 12 发弹匣"
+      "name_zh": "MK23 .45 ACP 12 发弹匣",
+      "feed_standard": "tacz:mk23_45acp"
     },
     {
       "id": "mp5_9x19_30",
@@ -262,7 +275,8 @@
         "hk_mp5a5"
       ],
       "name_en": "MP5 9 mm 30-round Magazine",
-      "name_zh": "MP5 9 mm 30 发弹匣"
+      "name_zh": "MP5 9 mm 30 发弹匣",
+      "feed_standard": "tacz:mp5_9x19"
     },
     {
       "id": "p320_45acp_12",
@@ -275,7 +289,8 @@
         "p320"
       ],
       "name_en": "P320 .45 ACP 12-round Magazine",
-      "name_zh": "P320 .45 ACP 12 发弹匣"
+      "name_zh": "P320 .45 ACP 12 发弹匣",
+      "feed_standard": "tacz:p320_45acp"
     },
     {
       "id": "p90_57x28_50",
@@ -288,7 +303,8 @@
         "p90"
       ],
       "name_en": "P90 5.7×28 50-round Magazine",
-      "name_zh": "P90 5.7×28 50 发弹匣"
+      "name_zh": "P90 5.7×28 50 发弹匣",
+      "feed_standard": "tacz:p90_57x28"
     },
     {
       "id": "qbz_58x42_30",
@@ -302,7 +318,8 @@
         "qbz_95"
       ],
       "name_en": "QBZ 5.8×42 30-round Magazine",
-      "name_zh": "QBZ 5.8×42 30 发弹匣"
+      "name_zh": "QBZ 5.8×42 30 发弹匣",
+      "feed_standard": "tacz:qbz_58x42"
     },
     {
       "id": "stanag_556_20",
@@ -315,7 +332,8 @@
         "m16a1"
       ],
       "name_en": "STANAG 5.56×45 20-round Magazine",
-      "name_zh": "STANAG 5.56×45 20 发弹匣"
+      "name_zh": "STANAG 5.56×45 20 发弹匣",
+      "feed_standard": "tacz:stanag_556"
     },
     {
       "id": "stanag_556_30",
@@ -331,7 +349,8 @@
         "scar_l"
       ],
       "name_en": "STANAG 5.56×45 30-round Magazine",
-      "name_zh": "STANAG 5.56×45 30 发弹匣"
+      "name_zh": "STANAG 5.56×45 30 发弹匣",
+      "feed_standard": "tacz:stanag_556"
     },
     {
       "id": "ump_45acp_25",
@@ -344,7 +363,8 @@
         "ump45"
       ],
       "name_en": "UMP .45 ACP 25-round Magazine",
-      "name_zh": "UMP .45 ACP 25 发弹匣"
+      "name_zh": "UMP .45 ACP 25 发弹匣",
+      "feed_standard": "tacz:ump_45acp"
     },
     {
       "id": "uzi_9x19_20",
@@ -357,7 +377,8 @@
         "uzi"
       ],
       "name_en": "Uzi 9 mm 20-round Magazine",
-      "name_zh": "Uzi 9 mm 20 发弹匣"
+      "name_zh": "Uzi 9 mm 20 发弹匣",
+      "feed_standard": "tacz:uzi_9x19"
     },
     {
       "id": "vector_45acp_20",
@@ -370,7 +391,8 @@
         "vector45"
       ],
       "name_en": "Vector .45 ACP 20-round Magazine",
-      "name_zh": "Vector .45 ACP 20 发弹匣"
+      "name_zh": "Vector .45 ACP 20 发弹匣",
+      "feed_standard": "tacz:vector_45acp"
     },
     {
       "id": "aa12_12g_8",
@@ -383,7 +405,8 @@
         "aa12"
       ],
       "name_en": "AA-12 12-gauge 8-round Box Magazine",
-      "name_zh": "AA-12 12 号 8 发盒式弹匣"
+      "name_zh": "AA-12 12 号 8 发盒式弹匣",
+      "feed_standard": "tacz:aa12_12g"
     },
     {
       "id": "awm_338_5",
@@ -396,7 +419,8 @@
         "ai_awp"
       ],
       "name_en": "AWM .338 5-round Magazine",
-      "name_zh": "AWM .338 5 发弹匣"
+      "name_zh": "AWM .338 5 发弹匣",
+      "feed_standard": "tacz:awm_338"
     },
     {
       "id": "aug_556_30",
@@ -409,7 +433,8 @@
         "aug"
       ],
       "name_en": "AUG 5.56×45 30-round Magazine",
-      "name_zh": "AUG 5.56×45 30 发弹匣"
+      "name_zh": "AUG 5.56×45 30 发弹匣",
+      "feed_standard": "tacz:aug_556"
     },
     {
       "id": "b93r_9x19_20",
@@ -422,7 +447,8 @@
         "b93r"
       ],
       "name_en": "B93R 9 mm 20-round Magazine",
-      "name_zh": "B93R 9 mm 20 发弹匣"
+      "name_zh": "B93R 9 mm 20 发弹匣",
+      "feed_standard": "tacz:b93r_9x19"
     },
     {
       "id": "deagle_50ae_7",
@@ -435,7 +461,8 @@
         "deagle"
       ],
       "name_en": "Desert Eagle .50 AE 7-round Magazine",
-      "name_zh": "沙漠之鹰 .50 AE 7 发弹匣"
+      "name_zh": "沙漠之鹰 .50 AE 7 发弹匣",
+      "feed_standard": "tacz:deagle_50ae"
     },
     {
       "id": "deagle_357_9",
@@ -448,7 +475,8 @@
         "deagle_golden"
       ],
       "name_en": "Golden Desert Eagle .357 9-round Magazine",
-      "name_zh": "金色沙漠之鹰 .357 9 发弹匣"
+      "name_zh": "金色沙漠之鹰 .357 9 发弹匣",
+      "feed_standard": "tacz:deagle_357"
     },
     {
       "id": "m107_50bmg_10",
@@ -461,7 +489,8 @@
         "m107"
       ],
       "name_en": "M107 .50 BMG 10-round Magazine",
-      "name_zh": "M107 .50 BMG 10 发弹匣"
+      "name_zh": "M107 .50 BMG 10 发弹匣",
+      "feed_standard": "tacz:m107_50bmg"
     },
     {
       "id": "m95_50bmg_5",
@@ -474,7 +503,8 @@
         "m95"
       ],
       "name_en": "M95 .50 BMG 5-round Magazine",
-      "name_zh": "M95 .50 BMG 5 发弹匣"
+      "name_zh": "M95 .50 BMG 5 发弹匣",
+      "feed_standard": "tacz:m95_50bmg"
     },
     {
       "id": "scar_h_308_20",
@@ -487,7 +517,8 @@
         "scar_h"
       ],
       "name_en": "SCAR-H .308 20-round Magazine",
-      "name_zh": "SCAR-H .308 20 发弹匣"
+      "name_zh": "SCAR-H .308 20 发弹匣",
+      "feed_standard": "tacz:scar_h_308"
     },
     {
       "id": "spr15hb_556_15",
@@ -500,7 +531,8 @@
         "spr15hb"
       ],
       "name_en": "SPR-15 HB 5.56×45 15-round Magazine",
-      "name_zh": "SPR-15 HB 5.56×45 15 发弹匣"
+      "name_zh": "SPR-15 HB 5.56×45 15 发弹匣",
+      "feed_standard": "tacz:spr15hb_556"
     },
     {
       "id": "timeless50_50ae_8",
@@ -513,7 +545,8 @@
         "timeless50"
       ],
       "name_en": "Timeless .50 Z-Type 8-round Magazine",
-      "name_zh": "Timeless .50 Z-Type 8 发弹匣"
+      "name_zh": "Timeless .50 Z-Type 8 发弹匣",
+      "feed_standard": "tacz:timeless50_50ae"
     },
     {
       "id": "type81_762x39_30",
@@ -526,7 +559,8 @@
         "type_81"
       ],
       "name_en": "Type 81-1 7.62×39 30-round Magazine",
-      "name_zh": "81-1 式 7.62×39 30 发弹匣"
+      "name_zh": "81-1 式 7.62×39 30 发弹匣",
+      "feed_standard": "tacz:type81_762x39"
     }
   ]
 }

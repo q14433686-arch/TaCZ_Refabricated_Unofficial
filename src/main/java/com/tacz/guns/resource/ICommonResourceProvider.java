@@ -10,6 +10,8 @@ import com.tacz.guns.resource.pojo.data.block.BlockData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
 import com.tacz.guns.industry.ammo.AmmoProfileDefinition;
+import com.tacz.guns.industry.ammo.CartridgeStandardDefinition;
+import com.tacz.guns.industry.magazine.FeedInterfaceStandardDefinition;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
@@ -58,6 +60,19 @@ public interface ICommonResourceProvider {
     @Nullable GunFeedDefinition getGunFeedDefinition(Identifier gunId);
 
     Set<Map.Entry<Identifier, GunFeedDefinition>> getAllGunFeedDefinitions();
+
+    /** Named standard that owns a canonical cartridge gauge/case/projectile geometry. */
+    @Nullable CartridgeStandardDefinition getCartridgeStandard(Identifier standardId);
+
+    /** Resolve a canonical base AmmoId to its one explicit cartridge standard. */
+    @Nullable Identifier getCartridgeStandardIdForCanonicalAmmo(Identifier canonicalAmmo);
+
+    Set<Map.Entry<Identifier, CartridgeStandardDefinition>> getAllCartridgeStandards();
+
+    /** Named removable-carrier interface standard (magwell/latch/feed-lip contract). */
+    @Nullable FeedInterfaceStandardDefinition getFeedInterfaceStandard(Identifier standardId);
+
+    Set<Map.Entry<Identifier, FeedInterfaceStandardDefinition>> getAllFeedInterfaceStandards();
 
     /** Explicit same-calibre / ballistic profile for an alternate AmmoId. */
     @Nullable AmmoProfileDefinition getAmmoProfile(Identifier ammoId);

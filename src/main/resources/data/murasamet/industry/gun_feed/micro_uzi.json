@@ -17,5 +17,6 @@
       "capacity": 50,
       "display_name": "item.tacz.magazine.murasamet_uzi_9mm_50"
     }
-  ]
+  ],
+  "feed_standard": "tacz:uzi_9x19"
 }

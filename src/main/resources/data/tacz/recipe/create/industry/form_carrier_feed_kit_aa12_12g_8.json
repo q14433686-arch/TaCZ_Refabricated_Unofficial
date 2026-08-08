@@ -38,6 +38,7 @@
         "IndustryDisplayName": "item.tacz.gun_component.carrier_feed_kit.aa12_12g_8",
         "DieTargetKind": "aa12_12g_8",
         "MagazineFamily": "aa12_12g",
+        "MagazineFeedStandard": "tacz:aa12_12g",
         "MagazineAmmoId": "tacz:12g",
         "MagazineCapacity": 8
       }

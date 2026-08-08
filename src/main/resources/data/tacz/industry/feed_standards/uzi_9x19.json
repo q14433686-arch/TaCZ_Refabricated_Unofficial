@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "mechanism": "detachable_magazine",
+  "magazine_family": "uzi_9x19",
+  "cartridge_standard": "tacz:9mm",
+  "accepted_capacities": [
+    20,
+    25,
+    35,
+    50
+  ]
+}

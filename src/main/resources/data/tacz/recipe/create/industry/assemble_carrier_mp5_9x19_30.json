@@ -48,6 +48,7 @@
           "MagazineCapacity": 30,
           "MagazineAmmoCount": 0,
           "MagazineDisplayName": "item.tacz.magazine.mp5_9",
+          "MagazineFeedStandard": "tacz:mp5_9x19",
           "FeedDeviceKind": "detachable_magazine"
         }
       }

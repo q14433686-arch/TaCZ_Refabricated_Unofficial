@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "mechanism": "detachable_magazine",
+  "magazine_family": "m95_50bmg",
+  "cartridge_standard": "tacz:50bmg",
+  "accepted_capacities": [
+    5
+  ]
+}

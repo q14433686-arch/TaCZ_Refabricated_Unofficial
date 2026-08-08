@@ -13,5 +13,6 @@
       "capacity": 18,
       "display_name": "item.tacz.magazine.murasamet_g3_308_18"
     }
-  ]
+  ],
+  "feed_standard": "tacz:g3_308"
 }

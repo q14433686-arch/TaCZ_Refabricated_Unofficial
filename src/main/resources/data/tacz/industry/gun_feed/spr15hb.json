@@ -3,5 +3,6 @@
   "magazine_family": "spr15hb_556",
   "magazine_capacity": 15,
   "ammo": "tacz:556x45",
-  "display_name": "item.tacz.magazine.spr15hb_556"
+  "display_name": "item.tacz.magazine.spr15hb_556",
+  "feed_standard": "tacz:spr15hb_556"
 }

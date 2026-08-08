@@ -14,6 +14,7 @@ PhysicalMagazines = true
 ```
 
 - `detachable_magazine` 使用可拆卸 `tacz:magazine`；`belt` 使用同一实体物品承载的弹链箱；
+- 默认 24 个 `CartridgeStandard` 与 32 个 `FeedInterfaceStandard` 是服务器同步的独立数据资源：前者统一膛室/弹壳/弹头尺寸，后者统一经审计的壳体/卡笋/供弹唇/容量接口；它们不按枪种 class 自动归类；
 - 默认包当前有 **34 种独立的族／口径／容量供弹器身份**，由 `tools/industry/magazine_carriers.json` 与 `data/tacz/industry/gun_feed/*.json` 双向校验；第三方已验证外部载具走独立 surveyed Gunsmith Table 多槽委托，不伪装成默认包高保真 Create 规格量规线；
 - `tube`、`revolver`、`internal_box`、`single_shot` 是枪内供弹状态或枪械组件，**不伪造为可拆卸弹匣**；
 - 最终散装弹药仍由专用四槽弹药装配机制造；弹匣、桥夹、漏夹和快装器在玩家真实背包/容器多槽界面中即时装入/取出，保留有序实体内容，**不使用额外处理台或后台计时 GUI**；
@@ -134,5 +135,6 @@ Basin：高碳钢板 + 黄铜板 + 石英 + 铁粒
    - 量规应连到壳体和供弹组件成型；
    - 两个命名子总成应连到最终装配；
    - 成品空供弹器应连回逆向量规；
-3. 多人、断线重连、背包/箱子/掉落物转移半满供弹器后，`InstalledMagazine`、`MagazineAmmoCount` 与旧整数镜像必须一致；
-4. 客户端篡改 NBT 不能提高余弹，所有抽取/退还仍由 `PhysicalMagazineService` 在服务端完成。
+3. 对 M16A1/M4A1/STANAG、AK/RPK 等已绑定标准的枪执行 `/tacz industry feed inspect <gun>`：输出必须显示同一 `feed_standard` 及该标准的已验证容量；新造载具的高级 Tooltip 必须有 `MagazineFeedStandard`，旧世界无该 tag 的同 native-AmmoId 载具仍可正常迁移；
+4. 多人、断线重连、背包/箱子/掉落物转移半满供弹器后，`InstalledMagazine`、`MagazineAmmoCount` 与旧整数镜像必须一致；
+5. 客户端篡改 NBT 不能提高余弹，所有抽取/退还仍由 `PhysicalMagazineService` 在服务端完成。

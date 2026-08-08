@@ -3,5 +3,6 @@
   "magazine_family": "b93r_9x19",
   "magazine_capacity": 20,
   "ammo": "tacz:9mm",
-  "display_name": "item.tacz.magazine.b93r_9x19"
+  "display_name": "item.tacz.magazine.b93r_9x19",
+  "feed_standard": "tacz:b93r_9x19"
 }

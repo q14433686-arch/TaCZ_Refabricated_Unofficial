@@ -117,7 +117,13 @@ def verify() -> int:
             fail(f"{profile_path}: missing canonical calibre or kind")
         if kind not in PROFILE_KIND_MATERIALS:
             fail(f"{profile_path}: no real Create material route declared for projectile kind {kind!r}")
-        _, caliber = canonical.split(":", 1)
+        canonical_namespace, caliber = canonical.split(":", 1)
+        standard_path = RES / f"data/{canonical_namespace}/industry/cartridge_standards/{caliber}.json"
+        if not standard_path.exists():
+            fail(f"{profile_path}: canonical calibre {canonical} has no cartridge standard resource")
+        standard = read(standard_path)
+        if standard.get("canonical_ammo") != canonical or standard.get("cartridge_caliber") != caliber:
+            fail(f"{standard_path}: profile canonical calibre must resolve to its exact central standard")
 
         index_path = INDEX_ROOT / f"{path}.json"
         assembly_path = ASSEMBLY_ROOT / f"{path}.json"

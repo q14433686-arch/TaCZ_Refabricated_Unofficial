@@ -6,9 +6,9 @@ import com.google.gson.JsonObject;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.industry.IndustryProfileManager;
-import com.tacz.guns.industry.ammo.AmmoProfileService;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
 import com.tacz.guns.industry.magazine.ExternalCarrierVariant;
+import com.tacz.guns.industry.magazine.FeedInterfaceStandardService;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.resource.ICommonResourceProvider;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -240,10 +240,16 @@ public final class SurveyedIndustryRecipeFactory {
     private static JsonObject externalCarrierTag(GunFeedDefinition definition, ExternalCarrierVariant variant) {
         JsonObject tag = new JsonObject();
         tag.addProperty("MagazineFamily", definition.getMagazineFamily());
-        // External carriers carry the explicit canonical cartridge standard,
-        // while GunFeedDefinition continues to validate the exact native
-        // GunData AmmoId for this reviewed receiver.
-        tag.addProperty("MagazineAmmoId", AmmoProfileService.canonicalCaliber(definition.getAmmoId()).toString());
+        Identifier standardId = FeedInterfaceStandardService.getStandardId(definition);
+        Identifier canonicalAmmo = standardId == null ? definition.getAmmoId()
+                : FeedInterfaceStandardService.getCanonicalAmmo(definition);
+        // Only a named validated standard may canonicalize an output across
+        // native AmmoIds. Private surveyed carriers preserve their exact
+        // declared identity rather than receiving a guessed shared standard.
+        tag.addProperty("MagazineAmmoId", (canonicalAmmo == null ? definition.getAmmoId() : canonicalAmmo).toString());
+        if (standardId != null) {
+            tag.addProperty("MagazineFeedStandard", standardId.toString());
+        }
         tag.addProperty("MagazineCapacity", variant.getCapacity());
         tag.addProperty("MagazineAmmoCount", 0);
         tag.addProperty("MagazineDisplayName", variant.getDisplayName());

@@ -17,5 +17,6 @@
       "capacity": 75,
       "display_name": "item.tacz.magazine.ak_762x39_75"
     }
-  ]
+  ],
+  "feed_standard": "tacz:ak_762x39"
 }

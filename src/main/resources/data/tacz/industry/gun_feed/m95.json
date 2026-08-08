@@ -3,5 +3,6 @@
   "magazine_family": "m95_50bmg",
   "magazine_capacity": 5,
   "ammo": "tacz:50bmg",
-  "display_name": "item.tacz.magazine.m95_50bmg"
+  "display_name": "item.tacz.magazine.m95_50bmg",
+  "feed_standard": "tacz:m95_50bmg"
 }

@@ -17,5 +17,6 @@
       "capacity": 50,
       "display_name": "item.tacz.magazine.wemql_r_m14_308_50"
     }
-  ]
+  ],
+  "feed_standard": "tacz:m14_308"
 }

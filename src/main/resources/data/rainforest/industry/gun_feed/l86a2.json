@@ -17,5 +17,6 @@
       "capacity": 45,
       "display_name": "item.tacz.magazine.stanag_556_45"
     }
-  ]
+  ],
+  "feed_standard": "tacz:stanag_556"
 }

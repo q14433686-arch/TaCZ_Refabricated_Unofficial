@@ -11,7 +11,9 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,6 +27,14 @@ public final class AmmoProfileManager extends CommonDataManager<AmmoProfileDefin
     public AmmoProfileManager() {
         super(DataType.AMMO_PROFILE, AmmoProfileDefinition.class, CommonAssetsManager.GSON,
                 "industry/ammo_profiles", "AmmoProfileLoader");
+    }
+
+    @Override
+    public Collection<Identifier> getFabricDependencies() {
+        return List.of(
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "ammoindexloader"),
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "cartridgestandardloader")
+        );
     }
 
     @Override
@@ -53,6 +63,13 @@ public final class AmmoProfileManager extends CommonDataManager<AmmoProfileDefin
                     || CommonAssetsManager.get().getAmmoIndex(definition.getCaliberAmmoId()) == null) {
                 GunMod.LOGGER.error("Ignoring ammunition profile {}: ammo {} or canonical calibre {} has no loaded AmmoIndex.",
                         profileId, definition.getAmmoId(), definition.getCaliberAmmoId());
+                continue;
+            }
+            if (CommonAssetsManager.get().getCartridgeStandardIdForCanonicalAmmo(definition.getCaliberAmmoId()) == null) {
+                GunMod.LOGGER.error(
+                        "Ignoring ammunition profile {}: canonical calibre {} has no explicit industry/cartridge_standards declaration.",
+                        profileId, definition.getCaliberAmmoId()
+                );
                 continue;
             }
             resolved.put(profileId, definition);

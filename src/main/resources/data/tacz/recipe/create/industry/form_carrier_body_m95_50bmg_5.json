@@ -21,6 +21,7 @@
         "IndustryDisplayName": "item.tacz.gun_component.carrier_body.m95_50bmg_5",
         "DieTargetKind": "m95_50bmg_5",
         "MagazineFamily": "m95_50bmg",
+        "MagazineFeedStandard": "tacz:m95_50bmg",
         "MagazineAmmoId": "tacz:50bmg",
         "MagazineCapacity": 5
       }

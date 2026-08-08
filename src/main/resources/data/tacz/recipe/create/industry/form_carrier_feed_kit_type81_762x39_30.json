@@ -38,6 +38,7 @@
         "IndustryDisplayName": "item.tacz.gun_component.carrier_feed_kit.type81_762x39_30",
         "DieTargetKind": "type81_762x39_30",
         "MagazineFamily": "type81_762x39",
+        "MagazineFeedStandard": "tacz:type81_762x39",
         "MagazineAmmoId": "tacz:762x39",
         "MagazineCapacity": 30
       }

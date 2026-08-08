@@ -43,6 +43,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.fal_308_20",
           "DieTargetKind": "fal_308_20",
           "MagazineFamily": "fal_308",
+          "MagazineFeedStandard": "tacz:fal_308",
           "MagazineAmmoId": "tacz:308",
           "MagazineCapacity": 20
         }

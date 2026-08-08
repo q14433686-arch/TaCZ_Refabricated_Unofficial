@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ak_762x39",
+  "cartridge_standard": "tacz:762x39",
+  "accepted_capacities": [
+    20,
+    30,
+    35,
+    40,
+    45,
+    50,
+    60,
+    75
+  ]
+}

@@ -322,6 +322,11 @@ def validate_default_gun_feed_coverage(policy: dict[str, Any]) -> None:
             raise ValueError(f"{slug}: gun_feed ammo must exactly equal bundled GunData.ammo")
         if feed.get("magazine_capacity") != data.get("ammo_amount"):
             raise ValueError(f"{slug}: gun_feed magazine_capacity must exactly equal bundled GunData.ammo_amount")
+        if feed.get("mechanism") in {"detachable_magazine", "belt"}:
+            family = feed.get("magazine_family")
+            expected_standard = f"tacz:{family}" if isinstance(family, str) and family else ""
+            if feed.get("feed_standard") != expected_standard:
+                raise ValueError(f"{slug}: removable default gun_feed must bind central feed_standard {expected_standard!r}")
 
 
 def load_platforms(policy: dict[str, Any]) -> list[dict[str, Any]]:
@@ -851,8 +856,10 @@ def load_magazine_carriers(cartridge_ammo_ids: set[str]) -> list[dict[str, Any]]
             continue
         family = feed.get("magazine_family")
         ammo = feed.get("ammo")
-        if not isinstance(family, str) or not family or not isinstance(ammo, str) or ammo not in cartridge_ammo_ids:
-            raise ValueError(f"{path}: invalid removable carrier declaration")
+        feed_standard = feed.get("feed_standard")
+        if not isinstance(family, str) or not family or not isinstance(ammo, str) or ammo not in cartridge_ammo_ids \
+                or not isinstance(feed_standard, str) or ":" not in feed_standard:
+            raise ValueError(f"{path}: invalid removable carrier declaration or missing feed_standard")
         add_feed_identity(path, feed, family, ammo, feed.get("magazine_capacity"), feed.get("display_name"))
 
         variants = feed.get("carrier_variants", [])
@@ -876,7 +883,7 @@ def load_magazine_carriers(cartridge_ammo_ids: set[str]) -> list[dict[str, Any]]
     for carrier in carriers:
         if not isinstance(carrier, dict):
             raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: carrier entries must be objects")
-        for key in ("id", "family", "ammo", "mechanism", "profile", "name_en", "name_zh"):
+        for key in ("id", "family", "feed_standard", "ammo", "mechanism", "profile", "name_en", "name_zh"):
             require_string(carrier, key, MAGAZINE_CARRIER_MANIFEST)
         carrier_id = carrier["id"]
         if not re.fullmatch(r"[a-z0-9_]+", carrier_id) or carrier_id in seen_ids:
@@ -889,6 +896,10 @@ def load_magazine_carriers(cartridge_ammo_ids: set[str]) -> list[dict[str, Any]]
             raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id} references undeclared cartridge {carrier['ammo']}")
         if carrier["mechanism"] not in {"detachable_magazine", "belt"}:
             raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id}.mechanism must be detachable_magazine or belt")
+        if carrier["feed_standard"] != f"tacz:{carrier['family']}":
+            raise ValueError(
+                f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id}.feed_standard must name its central tacz family standard"
+            )
         profile_id = carrier["profile"]
         if profile_id not in profiles:
             raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id} references unknown profile {profile_id}")
@@ -906,10 +917,13 @@ def load_magazine_carriers(cartridge_ammo_ids: set[str]) -> list[dict[str, Any]]
         if not feeds:
             raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id} has no matching gun_feed identity {identity}")
         mechanisms = {feed["mechanism"] for _, feed in feeds}
+        feed_standards = {feed["feed_standard"] for _, feed in feeds}
         display_names = {feed["display_name"] for _, feed in feeds}
         actual_sources = {source for source, _ in feeds}
         if mechanisms != {carrier["mechanism"]}:
             raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id} mechanism disagrees with gun_feed")
+        if feed_standards != {carrier["feed_standard"]}:
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id} feed_standard disagrees with gun_feed")
         if actual_sources != set(source_guns):
             raise ValueError(
                 f"{MAGAZINE_CARRIER_MANIFEST}: {carrier_id}.source_guns must exactly match gun_feed "
@@ -929,6 +943,98 @@ def load_magazine_carriers(cartridge_ammo_ids: set[str]) -> list[dict[str, Any]]
             f"{MAGAZINE_CARRIER_MANIFEST}: missing removable gun_feed identity declarations: {sorted(missing)}"
         )
     return sorted(result, key=lambda value: value["id"])
+
+
+def generated_standard_registry_files(cartridges: list[dict[str, Any]],
+                                      carriers: list[dict[str, Any]]) -> dict[Path, Any]:
+    """Emit the default named cartridge and feed-interface standard registries.
+
+    Cartridge standards are central dimensional identities, while feed standards
+    are audited physical magwell/latch/feed-lip contracts. The latter are built
+    from the same removable-carrier manifest that drives actual gauge/body/feed
+    manufacture, so a standard cannot merely be a display-name alias.
+    """
+    files: dict[Path, Any] = {}
+    cartridge_by_ammo: dict[str, dict[str, Any]] = {}
+    for cartridge in cartridges:
+        ammo = cartridge["ammo"]
+        namespace, path = ammo.split(":", 1)
+        if namespace != "tacz" or path != cartridge["id"]:
+            raise ValueError(f"{CARTRIDGE_MANIFEST}: default cartridge standard id must equal ammo path for {ammo}")
+        cartridge_by_ammo[ammo] = cartridge
+        files[RESOURCE_ROOT / f"data/tacz/industry/cartridge_standards/{path}.json"] = {
+            "schema_version": 1,
+            "canonical_ammo": ammo,
+            "cartridge_caliber": cartridge["id"],
+        }
+
+    by_standard: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for carrier in carriers:
+        by_standard[carrier["feed_standard"]].append(carrier)
+
+    # Existing third-party sidecars may already have explicitly declared the
+    # exact same family/ammo/mechanism as a default standard. Once they opt in
+    # with that standard id, their audited base/xmag capacities become part of
+    # the central capacity contract too. This reads only explicit data; it does
+    # not inspect names, classes, models or capacities to discover a match.
+    extension_capacities: dict[str, set[int]] = defaultdict(set)
+    for path in sorted((RESOURCE_ROOT / "data").glob("*/industry/gun_feed/*.json")):
+        feed = read_json(path)
+        if not isinstance(feed, dict):
+            continue
+        standard_id = feed.get("feed_standard")
+        if not isinstance(standard_id, str) or standard_id not in by_standard:
+            continue
+        members = by_standard[standard_id]
+        expected_mechanisms = {member["mechanism"] for member in members}
+        expected_families = {member["family"] for member in members}
+        expected_ammo = {member["ammo"] for member in members}
+        if feed.get("mechanism") not in expected_mechanisms \
+                or feed.get("magazine_family") not in expected_families \
+                or feed.get("ammo") not in expected_ammo:
+            raise ValueError(f"{path}: feed_standard {standard_id} disagrees with the central family/mechanism/ammo")
+        capacities = [feed.get("magazine_capacity")]
+        variants = feed.get("carrier_variants", [])
+        if isinstance(variants, list):
+            capacities.extend(variant.get("capacity") for variant in variants if isinstance(variant, dict))
+        for capacity in capacities:
+            if not isinstance(capacity, int) or not 1 <= capacity <= 512:
+                raise ValueError(f"{path}: feed_standard {standard_id} has invalid carrier capacity")
+            extension_capacities[standard_id].add(capacity)
+
+    for standard_id, members in sorted(by_standard.items()):
+        namespace, path = standard_id.split(":", 1)
+        if namespace != "tacz" or not re.fullmatch(r"[a-z0-9_]+", path):
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: unsupported generated feed_standard id {standard_id!r}")
+        mechanisms = {member["mechanism"] for member in members}
+        families = {member["family"] for member in members}
+        ammo_ids = {member["ammo"] for member in members}
+        if len(mechanisms) != 1 or len(families) != 1 or len(ammo_ids) != 1:
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {standard_id} must own one mechanism/family/ammo identity")
+        ammo = next(iter(ammo_ids))
+        cartridge = cartridge_by_ammo.get(ammo)
+        if cartridge is None:
+            raise ValueError(f"{MAGAZINE_CARRIER_MANIFEST}: {standard_id} references no default cartridge standard for {ammo}")
+        files[RESOURCE_ROOT / f"data/tacz/industry/feed_standards/{path}.json"] = {
+            "schema_version": 1,
+            "mechanism": next(iter(mechanisms)),
+            "magazine_family": next(iter(families)),
+            "cartridge_standard": f"tacz:{cartridge['id']}",
+            "accepted_capacities": sorted({member["capacity"] for member in members} | extension_capacities[standard_id]),
+        }
+    return files
+
+
+def obsolete_generated_standard_files(expected: dict[Path, Any]) -> set[Path]:
+    """Remove only generator-owned default standard rows retired from manifests."""
+    stale: set[Path] = set()
+    for root in (
+        RESOURCE_ROOT / "data/tacz/industry/cartridge_standards",
+        RESOURCE_ROOT / "data/tacz/industry/feed_standards",
+    ):
+        if root.exists():
+            stale.update(path for path in root.glob("*.json") if path not in expected)
+    return stale
 
 
 def furniture_blank_tag() -> dict[str, Any]:
@@ -2231,6 +2337,7 @@ def carrier_spec_tag(carrier: dict[str, Any], kind: str, display_key: str) -> di
         "IndustryDisplayName": display_key,
         "DieTargetKind": carrier["id"],
         "MagazineFamily": carrier["family"],
+        "MagazineFeedStandard": carrier["feed_standard"],
         "MagazineAmmoId": carrier["ammo"],
         "MagazineCapacity": carrier["capacity"],
     }
@@ -2248,7 +2355,18 @@ def carrier_feed_kit_tag(carrier: dict[str, Any]) -> dict[str, Any]:
     return carrier_spec_tag(carrier, "carrier_feed_kit", f"item.tacz.gun_component.carrier_feed_kit.{carrier['id']}")
 
 
-def carrier_magazine_tag(carrier: dict[str, Any], include_feed_device_kind: bool = True) -> dict[str, Any]:
+def legacy_carrier_match_tag(tag: dict[str, Any]) -> dict[str, Any]:
+    """Match pre-standard intermediate stacks while all new outputs gain the tag.
+
+    Partial NBT deliberately accepts additional keys, so removing only the new
+    standard field gives saved gauges/bodies/feed kits a non-destructive upgrade
+    path without allowing a wrong family/ammo/capacity identity through.
+    """
+    return {key: value for key, value in tag.items() if key != "MagazineFeedStandard"}
+
+
+def carrier_magazine_tag(carrier: dict[str, Any], include_feed_device_kind: bool = True,
+                         include_feed_standard: bool = True) -> dict[str, Any]:
     """The actual configured removable stack; no incomplete magazine is usable.
 
     New manufacturing outputs persist ``FeedDeviceKind`` so icon/material
@@ -2264,6 +2382,8 @@ def carrier_magazine_tag(carrier: dict[str, Any], include_feed_device_kind: bool
         "MagazineAmmoCount": 0,
         "MagazineDisplayName": carrier["_display_name"],
     }
+    if include_feed_standard:
+        tag["MagazineFeedStandard"] = carrier["feed_standard"]
     if include_feed_device_kind:
         tag["FeedDeviceKind"] = carrier["mechanism"]
     return tag
@@ -2369,13 +2489,16 @@ def generated_magazine_files(carriers: list[dict[str, Any]], platforms: list[dic
         carrier_id = carrier["id"]
         profile = carrier["_profile"]
         gauge = carrier_gauge_tag(carrier)
+        gauge_match = legacy_carrier_match_tag(gauge)
         body = carrier_body_tag(carrier)
+        body_match = legacy_carrier_match_tag(body)
         feed_kit = carrier_feed_kit_tag(carrier)
+        feed_kit_match = legacy_carrier_match_tag(feed_kit)
         magazine = carrier_magazine_tag(carrier)
         # Do not require FeedDeviceKind when reading an old empty stack as
         # reverse-engineering evidence. See carrier_magazine_tag's compatibility
         # note; the manufactured result itself always includes the kind.
-        reverse_magazine = carrier_magazine_tag(carrier, include_feed_device_kind=False)
+        reverse_magazine = carrier_magazine_tag(carrier, include_feed_device_kind=False, include_feed_standard=False)
 
         # Any declared gun that accepts this exact physical carrier may donate
         # its production template to establish the same reusable gauge. This
@@ -2409,7 +2532,7 @@ def generated_magazine_files(carriers: list[dict[str, Any]], platforms: list[dic
             carrier_forming_recipe(
                 "tacz:magazine_blank",
                 profile["body_blank_count"],
-                gauge,
+                gauge_match,
                 output("tacz:gun_component", body),
                 {"id": "tacz:magazine_blank"},
             )
@@ -2418,7 +2541,7 @@ def generated_magazine_files(carriers: list[dict[str, Any]], platforms: list[dic
             carrier_forming_recipe(
                 partial("tacz:gun_component_blank", carrier_feed_kit_blank_tag()),
                 profile["feed_kit_blank_count"],
-                gauge,
+                gauge_match,
                 output("tacz:gun_component", feed_kit),
                 output("tacz:gun_component_blank", carrier_feed_kit_blank_tag()),
             )
@@ -2427,8 +2550,8 @@ def generated_magazine_files(carriers: list[dict[str, Any]], platforms: list[dic
         # held and consumed by the supply/deployment station; it is never
         # represented as a second item sitting on the Depot or belt.
         files[RESOURCE_ROOT / f"data/tacz/recipe/create/industry/assemble_carrier_{carrier_id}.json"] = deploying(
-            partial("tacz:gun_component", body),
-            partial("tacz:gun_component", feed_kit),
+            partial("tacz:gun_component", body_match),
+            partial("tacz:gun_component", feed_kit_match),
             output("tacz:magazine", magazine),
             keep=False,
         )
@@ -4894,7 +5017,7 @@ def _viewer_identity(custom: dict[str, Any]) -> dict[str, Any]:
     """Identity shared by JEI/REI recipe lookup, excluding provenance-only fields."""
     return {
         key: value for key, value in custom.items()
-        if key not in {"IndustryActionProfile", "IndustryToolingScope"}
+        if key not in {"IndustryActionProfile", "IndustryToolingScope", "MagazineFeedStandard"}
     }
 
 
@@ -5152,10 +5275,13 @@ def validate_magazine_tooling_continuity(carriers: list[dict[str, Any]], platfor
     for carrier in carriers:
         carrier_id = carrier["id"]
         gauge = carrier_gauge_tag(carrier)
+        gauge_match = legacy_carrier_match_tag(gauge)
         body = carrier_body_tag(carrier)
+        body_match = legacy_carrier_match_tag(body)
         feed_kit = carrier_feed_kit_tag(carrier)
+        feed_kit_match = legacy_carrier_match_tag(feed_kit)
         magazine = carrier_magazine_tag(carrier)
-        reverse_magazine = carrier_magazine_tag(carrier, include_feed_device_kind=False)
+        reverse_magazine = carrier_magazine_tag(carrier, include_feed_device_kind=False, include_feed_standard=False)
         profile = carrier["_profile"]
 
         for source_slug in carrier["source_guns"]:
@@ -5182,7 +5308,8 @@ def validate_magazine_tooling_continuity(carriers: list[dict[str, Any]], platfor
         body_recipe = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/form_carrier_body_{carrier_id}.json")
         if not isinstance(body_recipe, dict) or _recipe_result_custom_data(body_recipe) != body \
                 or _carrier_recipe_stack_count(body_recipe, "tacz:magazine_blank") != profile["body_blank_count"] \
-                or not any(_viewer_identity(gauge) == _viewer_identity(tag)
+                or gauge_match not in _recipe_partial_nbt_values(body_recipe) \
+                or not any(_viewer_identity(gauge_match) == _viewer_identity(tag)
                            for tag in _recipe_partial_nbt_values(body_recipe)):
             raise ValueError(f"{carrier_id}: body must consume the declared neutral shell mass and retained gauge")
 
@@ -5190,7 +5317,8 @@ def validate_magazine_tooling_continuity(carriers: list[dict[str, Any]], platfor
         feed_blank = partial("tacz:gun_component_blank", carrier_feed_kit_blank_tag())
         if not isinstance(feed_recipe, dict) or _recipe_result_custom_data(feed_recipe) != feed_kit \
                 or _carrier_recipe_stack_count(feed_recipe, feed_blank) != profile["feed_kit_blank_count"] \
-                or not any(_viewer_identity(gauge) == _viewer_identity(tag)
+                or gauge_match not in _recipe_partial_nbt_values(feed_recipe) \
+                or not any(_viewer_identity(gauge_match) == _viewer_identity(tag)
                            for tag in _recipe_partial_nbt_values(feed_recipe)):
             raise ValueError(f"{carrier_id}: feed kit must consume its declared neutral stock and retained gauge")
 
@@ -5205,14 +5333,15 @@ def validate_magazine_tooling_continuity(carriers: list[dict[str, Any]], platfor
 
         assembly = expected.get(RESOURCE_ROOT / f"data/tacz/recipe/create/industry/assemble_carrier_{carrier_id}.json")
         if not isinstance(assembly, dict) \
-                or assembly.get("target", {}).get("nbt") != body \
-                or assembly.get("ingredient", {}).get("nbt") != feed_kit \
+                or assembly.get("target", {}).get("nbt") != body_match \
+                or assembly.get("ingredient", {}).get("nbt") != feed_kit_match \
                 or _recipe_result_custom_data(assembly) != magazine \
                 or assembly.get("keep_held_item"):
             raise ValueError(f"{carrier_id}: final carrier assembly must consume body + named feed kit")
         # Reverse metrology intentionally uses the legacy-compatible subset of
-        # the final identity. FeedDeviceKind is an optional extra on new output,
-        # not a requirement that invalidates old empty carrier evidence.
+        # the final identity. FeedDeviceKind and MagazineFeedStandard are new
+        # output metadata, not requirements that invalidate old empty carrier
+        # evidence.
         if reverse.get("ingredient", {}).get("nbt") != reverse_magazine:
             raise ValueError(f"{carrier_id}: final carrier → reverse-gauge viewer edge is disconnected")
 
@@ -5244,6 +5373,7 @@ def run(write: bool) -> int:
     machine_assets = load_machine_assets()
     blueprint_acquisition = load_blueprint_acquisition()
     expected: dict[Path, Any] = {}
+    expected.update(generated_standard_registry_files(cartridges, magazine_carriers))
     english: dict[str, str] = {
         "item.tacz.gun_component_blank.furniture": "Neutral Exterior / Furniture Blank",
         "item.tacz.service_part_blank": "Neutral Service Replacement Blank",
@@ -5269,6 +5399,7 @@ def run(write: bool) -> int:
         "tooltip.tacz.industry.carrier_gauge": "Reusable carrier specification gauge — forms the matching body and feed component",
         "tooltip.tacz.industry.carrier_component": "Named removable-carrier subassembly — install it at the final carrier station",
         "tooltip.tacz.industry.carrier_spec": "Carrier specification: %s / %s / %s rounds",
+        "tooltip.tacz.magazine.feed_standard": "Feed-interface standard: %s",
         "commands.tacz.industry.unavailable": "§cTACZ industry reference data is not available on this side.",
         "commands.tacz.industry.invalid_id": "§cInvalid gun identifier.",
         "commands.tacz.industry.audit": "§bIndustry audit§r — gun: %s, ammo: %s, attachment: %s; direct: %s, alias: %s, unresolved: %s; curated: %s, surveyed: %s",
@@ -5371,6 +5502,7 @@ def run(write: bool) -> int:
         "tooltip.tacz.industry.carrier_gauge": "可复用供弹器规格量规——成型对应壳体与供弹组件",
         "tooltip.tacz.industry.carrier_component": "命名的可拆卸供弹器子总成——在最终供弹器工位装配",
         "tooltip.tacz.industry.carrier_spec": "供弹器规格：%s / %s / %s 发",
+        "tooltip.tacz.magazine.feed_standard": "供弹接口标准：%s",
         "commands.tacz.industry.unavailable": "§c当前端没有可用的 TACZ 工业参考数据。",
         "commands.tacz.industry.invalid_id": "§c无效的枪械标识符。",
         "commands.tacz.industry.audit": "§b工业审计§r — 枪：%s，弹药：%s，配件：%s；直接：%s，别名：%s，未解析：%s；已校验：%s，测绘候选：%s",
@@ -5494,6 +5626,7 @@ def run(write: bool) -> int:
     obsolete_reference_paths = obsolete_generated_reference_profile_files(expected)
     obsolete_maintenance_paths = obsolete_generated_maintenance_profile_files(expected)
     obsolete_service_repair_paths = obsolete_generated_service_repair_files(expected)
+    obsolete_standard_paths = obsolete_generated_standard_files(expected)
     validate_effective_create_recipe_collisions(
         expected, obsolete_platform_paths | obsolete_template_paths | obsolete_magazine_paths | obsolete_carrier_paths
     )
@@ -5575,6 +5708,14 @@ def run(write: bool) -> int:
     # If a carrier identity is retired/renamed, remove only the named generated
     # carrier route family so it cannot remain as a stale alternate output.
     for path in sorted(obsolete_carrier_paths):
+        stale.append(str(path.relative_to(REPO)))
+        if write:
+            path.unlink()
+
+    # Retire only default standard rows no longer emitted by the audited
+    # cartridge/carrier manifests. Third-party standards live in their own
+    # namespace and are never touched by this generator.
+    for path in sorted(obsolete_standard_paths):
         stale.append(str(path.relative_to(REPO)))
         if write:
             path.unlink()

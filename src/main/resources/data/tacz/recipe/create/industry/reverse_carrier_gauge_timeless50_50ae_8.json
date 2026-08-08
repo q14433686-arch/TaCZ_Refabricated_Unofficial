@@ -43,6 +43,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.timeless50_50ae_8",
           "DieTargetKind": "timeless50_50ae_8",
           "MagazineFamily": "timeless50_50ae",
+          "MagazineFeedStandard": "tacz:timeless50_50ae",
           "MagazineAmmoId": "tacz:50ae",
           "MagazineCapacity": 8
         }

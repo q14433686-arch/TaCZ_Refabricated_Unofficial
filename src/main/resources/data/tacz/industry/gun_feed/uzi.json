@@ -3,5 +3,6 @@
   "magazine_family": "uzi_9x19",
   "magazine_capacity": 20,
   "ammo": "tacz:9mm",
-  "display_name": "item.tacz.magazine.uzi_9"
+  "display_name": "item.tacz.magazine.uzi_9",
+  "feed_standard": "tacz:uzi_9x19"
 }

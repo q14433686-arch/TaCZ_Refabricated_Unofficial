@@ -17,5 +17,6 @@
       "capacity": 15,
       "display_name": "item.tacz.magazine.rainforest_psg1_15"
     }
-  ]
+  ],
+  "feed_standard": "tacz:g3_308"
 }

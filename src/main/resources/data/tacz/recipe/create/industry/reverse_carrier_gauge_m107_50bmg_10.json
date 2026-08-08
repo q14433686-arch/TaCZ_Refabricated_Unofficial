@@ -43,6 +43,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.m107_50bmg_10",
           "DieTargetKind": "m107_50bmg_10",
           "MagazineFamily": "m107_50bmg",
+          "MagazineFeedStandard": "tacz:m107_50bmg",
           "MagazineAmmoId": "tacz:50bmg",
           "MagazineCapacity": 10
         }

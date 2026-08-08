@@ -3,5 +3,6 @@
   "magazine_family": "cz75_9x19",
   "magazine_capacity": 16,
   "ammo": "tacz:9mm",
-  "display_name": "item.tacz.magazine.cz75"
+  "display_name": "item.tacz.magazine.cz75",
+  "feed_standard": "tacz:cz75_9x19"
 }

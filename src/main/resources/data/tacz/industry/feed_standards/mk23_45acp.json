@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "mechanism": "detachable_magazine",
+  "magazine_family": "mk23_45acp",
+  "cartridge_standard": "tacz:45acp",
+  "accepted_capacities": [
+    12
+  ]
+}

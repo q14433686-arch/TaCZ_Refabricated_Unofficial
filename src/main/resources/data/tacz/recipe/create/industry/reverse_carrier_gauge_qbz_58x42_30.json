@@ -43,6 +43,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.qbz_58x42_30",
           "DieTargetKind": "qbz_58x42_30",
           "MagazineFamily": "qbz_58x42",
+          "MagazineFeedStandard": "tacz:qbz_58x42",
           "MagazineAmmoId": "tacz:58x42",
           "MagazineCapacity": 30
         }

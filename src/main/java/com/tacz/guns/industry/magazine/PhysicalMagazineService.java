@@ -8,7 +8,7 @@ import com.tacz.guns.api.item.nbt.GunItemDataAccessor;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.industry.IndustryProfileManager;
-import com.tacz.guns.industry.ammo.AmmoProfileService;
+import com.tacz.guns.industry.ammo.CartridgeStandardService;
 import com.tacz.guns.industry.ammo.RoundProfileService;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
@@ -376,6 +376,7 @@ public final class PhysicalMagazineService {
                 || !item.isConfigured(magazine)) {
             return false;
         }
+        Identifier definitionStandard = FeedInterfaceStandardService.getStandardId(definition);
         if (magazine.getItem() instanceof MagazineItemDataAccessor accessor) {
             String deviceKind = accessor.getFeedDeviceKind(magazine);
             // Old worlds predate FeedDeviceKind and stay compatible. Explicit
@@ -384,21 +385,41 @@ public final class PhysicalMagazineService {
             if (!deviceKind.isBlank() && !definition.getMechanism().serializedName().equals(deviceKind)) {
                 return false;
             }
+            // A manufactured standard carrier records its standard id. An old
+            // carrier without that tag is still accepted only through the same
+            // audited family/cartridge-standard fallback below; it cannot claim
+            // an unrelated standard merely by matching a loose calibre name.
+            Identifier carrierStandard = accessor.getFeedStandardId(magazine);
+            if (definitionStandard != null && carrierStandard != null && !definitionStandard.equals(carrierStandard)) {
+                return false;
+            }
         }
+        boolean sameCartridge = definitionStandard == null
+                ? definition.getAmmoId().equals(item.getAmmoId(magazine))
+                : carrierHasExplicitMatchingStandard(magazine, definitionStandard)
+                ? CartridgeStandardService.isSameStandard(definition.getAmmoId(), item.getAmmoId(magazine))
+                // An untagged old carrier remains valid only when it carries
+                // the receiver's original exact native AmmoId. This preserves
+                // old worlds without turning a profile alias into a standard
+                // merely because its family string looks familiar.
+                : definition.getAmmoId().equals(item.getAmmoId(magazine));
         return definition.getMagazineFamily().equals(item.getMagazineFamily(magazine))
-                && hasSameDeclaredCarrierCaliber(definition.getAmmoId(), item.getAmmoId(magazine))
+                && sameCartridge
                 && familyDeclaresCarrierCapacity(definition, item.getCapacity(magazine));
     }
 
+    private static boolean carrierHasExplicitMatchingStandard(ItemStack magazine, Identifier definitionStandard) {
+        return magazine.getItem() instanceof MagazineItemDataAccessor accessor
+                && definitionStandard.equals(accessor.getFeedStandardId(magazine));
+    }
+
     /**
-     * MagazineFamily is an explicit cross-platform physical-interface parent
-     * contract. A receiver may therefore accept an exact larger carrier
-     * declared by another loaded receiver in the same family (for example a
-     * 20-round M16A1 and a 30-round M4A1/SCAR-L STANAG). When two explicitly
-     * declared receivers use different native AmmoIds, their carriers may also
-     * share only if both identities have loaded AmmoIndex entries and resolve to
-     * the same explicit canonical calibre. Neither a shared calibre alone nor
-     * a matching GunIndex/model/capacity can create this contract.
+     * An explicit FeedInterfaceStandard is the cross-platform physical parent
+     * contract. A receiver may therefore accept a larger carrier declared by
+     * another loaded receiver with the same standard (for example a 20-round
+     * M16A1 and a 30-round M4A1/SCAR-L STANAG). Unregistered legacy families
+     * remain exact-family/exact-native-AmmoId only. Neither a shared calibre
+     * nor a matching GunIndex/model/capacity can create a standard contract.
      */
     private static boolean familyDeclaresCarrierCapacity(GunFeedDefinition definition, int capacity) {
         if (definition.acceptsExternalCarrierCapacity(capacity)) {
@@ -431,24 +452,13 @@ public final class PhysicalMagazineService {
     }
 
     /**
-     * A shared family is still fail-closed: both endpoints must be real
-     * external-carrier declarations with the same mechanism and a loaded,
-     * explicitly resolved canonical calibre. This permits a reviewed addon to
-     * reuse a standard such as STANAG across differing native AmmoIds, without
-     * turning same-calibre strangers into compatible magazines.
+     * Shared standards are strict opt-in when both declarations bind one. An
+     * older unbound declaration may still share only the former exact
+     * family/native-AmmoId identity, preserving audited old worlds without
+     * granting any cross-native-AmmoId standard alias.
      */
     private static boolean sameCarrierFamily(GunFeedDefinition first, GunFeedDefinition second) {
-        return first != null && second != null
-                && first.isValidExternalCarrierDefinition() && second.isValidExternalCarrierDefinition()
-                && first.getMechanism() == second.getMechanism()
-                && first.getMagazineFamily().equals(second.getMagazineFamily())
-                && hasSameDeclaredCarrierCaliber(first.getAmmoId(), second.getAmmoId());
-    }
-
-    private static boolean hasSameDeclaredCarrierCaliber(Identifier first, Identifier second) {
-        return AmmoProfileService.isLoadedAmmoIdentity(first)
-                && AmmoProfileService.isLoadedAmmoIdentity(second)
-                && AmmoProfileService.isSameCaliber(first, second);
+        return FeedInterfaceStandardService.hasSameCarrierInterface(first, second);
     }
 
     /**

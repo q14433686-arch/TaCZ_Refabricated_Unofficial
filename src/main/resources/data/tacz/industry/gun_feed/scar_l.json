@@ -3,5 +3,6 @@
   "magazine_family": "stanag_556",
   "magazine_capacity": 30,
   "ammo": "tacz:556x45",
-  "display_name": "item.tacz.magazine.stanag_556"
+  "display_name": "item.tacz.magazine.stanag_556",
+  "feed_standard": "tacz:stanag_556"
 }

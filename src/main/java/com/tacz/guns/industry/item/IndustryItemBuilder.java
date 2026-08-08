@@ -26,6 +26,7 @@ public final class IndustryItemBuilder {
     // Carrier tooling/components reuse the magazine compatibility contract so
     // their real family/ammo/capacity identity survives recipe-viewer samples.
     private String magazineFamily = "";
+    private String magazineFeedStandard = "";
     private String magazineAmmoId = "";
     private int magazineCapacity;
 
@@ -142,6 +143,11 @@ public final class IndustryItemBuilder {
         return this;
     }
 
+    public IndustryItemBuilder magazineFeedStandard(String standardId) {
+        this.magazineFeedStandard = standardId == null ? "" : standardId;
+        return this;
+    }
+
     public IndustryItemBuilder magazineAmmoId(String ammoId) {
         this.magazineAmmoId = ammoId == null ? "" : ammoId;
         return this;
@@ -167,9 +173,14 @@ public final class IndustryItemBuilder {
             accessor.setActionProfile(stack, actionProfile);
             accessor.setToolingScope(stack, toolingScope);
         }
-        if (!magazineFamily.isBlank() || !magazineAmmoId.isBlank() || magazineCapacity > 0) {
+        if (!magazineFamily.isBlank() || !magazineFeedStandard.isBlank() || !magazineAmmoId.isBlank() || magazineCapacity > 0) {
             ItemNbtUtils.updateTag(stack, tag -> {
                 tag.putString(MagazineItemDataAccessor.MAGAZINE_FAMILY_TAG, magazineFamily);
+                if (magazineFeedStandard.isBlank()) {
+                    tag.remove(MagazineItemDataAccessor.MAGAZINE_FEED_STANDARD_TAG);
+                } else {
+                    tag.putString(MagazineItemDataAccessor.MAGAZINE_FEED_STANDARD_TAG, magazineFeedStandard);
+                }
                 tag.putString(MagazineItemDataAccessor.MAGAZINE_AMMO_ID_TAG, magazineAmmoId);
                 tag.putInt(MagazineItemDataAccessor.MAGAZINE_CAPACITY_TAG, magazineCapacity);
             });

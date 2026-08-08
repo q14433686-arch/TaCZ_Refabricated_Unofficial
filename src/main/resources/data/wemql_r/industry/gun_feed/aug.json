@@ -17,5 +17,6 @@
       "capacity": 60,
       "display_name": "item.tacz.magazine.wemql_r_aug_556_60"
     }
-  ]
+  ],
+  "feed_standard": "tacz:aug_556"
 }

@@ -6,8 +6,8 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import com.tacz.guns.industry.ammo.AmmoProfileService;
 import com.tacz.guns.industry.magazine.ExternalCarrierVariant;
+import com.tacz.guns.industry.magazine.FeedInterfaceStandardService;
 import com.tacz.guns.industry.magazine.GunFeedCandidateSurvey;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.reference.IndustryReferenceProfile;
@@ -227,9 +227,11 @@ public final class IndustryReferenceCommand {
                     "commands.tacz.industry.feed_inspect_legacy"
             ));
         } else if (definition.isValidExternalCarrierDefinition()) {
+            Identifier feedStandard = FeedInterfaceStandardService.getStandardId(definition);
             context.getSource().sendSystemMessage(Component.translatable(
                     "commands.tacz.industry.feed_inspect_external",
                     definition.getMechanism().serializedName(), definition.getMagazineFamily(),
+                    feedStandard == null ? "-" : feedStandard,
                     formatExternalCarrierVariants(definition)
             ));
         } else {
@@ -272,12 +274,7 @@ public final class IndustryReferenceCommand {
         TreeSet<Integer> capacities = new TreeSet<>();
         for (var entry : CommonAssetsManager.get().getAllGunFeedDefinitions()) {
             GunFeedDefinition candidate = entry.getValue();
-            if (candidate == null || !candidate.isValidExternalCarrierDefinition()
-                    || candidate.getMechanism() != definition.getMechanism()
-                    || !candidate.getMagazineFamily().equals(definition.getMagazineFamily())
-                    || !AmmoProfileService.isLoadedAmmoIdentity(candidate.getAmmoId())
-                    || !AmmoProfileService.isLoadedAmmoIdentity(definition.getAmmoId())
-                    || !AmmoProfileService.isSameCaliber(candidate.getAmmoId(), definition.getAmmoId())) {
+            if (candidate == null || !FeedInterfaceStandardService.hasSameCarrierInterface(definition, candidate)) {
                 continue;
             }
             for (ExternalCarrierVariant variant : candidate.getExternalCarrierVariants()) {

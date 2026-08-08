@@ -43,6 +43,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.aug_556_30",
           "DieTargetKind": "aug_556_30",
           "MagazineFamily": "aug_556",
+          "MagazineFeedStandard": "tacz:aug_556",
           "MagazineAmmoId": "tacz:556x45",
           "MagazineCapacity": 30
         }

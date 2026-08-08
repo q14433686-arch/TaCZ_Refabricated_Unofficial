@@ -2031,7 +2031,7 @@
   "commands.tacz.industry.feed_inspect_header": "§bFeed adapter inspection§r %s — loaded facts only; this never guesses a physical mechanism.",
   "commands.tacz.industry.feed_inspect_facts": "GunData: ammo=%s; base capacity=%s; raw extended capacities=%s; reload.type=%s; bolt=%s; script=%s; infinite=%s",
   "commands.tacz.industry.feed_inspect_legacy": "No validated feed adapter: legacy reload remains active. Add an explicitly audited sidecar declaration; reload.type alone is not proof of a removable magazine.",
-  "commands.tacz.industry.feed_inspect_external": "Validated external adapter: mechanism=%s; family=%s; verified family carrier capacities=%s",
+  "commands.tacz.industry.feed_inspect_external": "Validated external adapter: mechanism=%s; family=%s; feed standard=%s; verified standard carrier capacities=%s",
   "commands.tacz.industry.feed_inspect_non_external": "Validated non-external adapter: mechanism=%s; receiver capacity=%s",
   "item.tacz.magazine.rainforest_fal_20": "Surveyed FAL 20-round Magazine",
   "item.tacz.magazine.rainforest_fal_25": "Surveyed FAL 25-round Extended Magazine",
@@ -3255,5 +3255,6 @@
   "item.tacz.projectile_blank.9mm_hp": "9 mm HP Profile Blank",
   "item.tacz.projectile_blank.type_ap": "AP Projectile Type Preform",
   "item.tacz.projectile_blank.type_hp": "HP Projectile Type Preform",
-  "item.tacz.projectile_blank.type_slug": "Slug Projectile Type Preform"
+  "item.tacz.projectile_blank.type_slug": "Slug Projectile Type Preform",
+  "tooltip.tacz.magazine.feed_standard": "Feed-interface standard: %s"
 }

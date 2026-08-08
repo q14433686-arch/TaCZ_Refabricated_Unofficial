@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "mechanism": "detachable_magazine",
+  "magazine_family": "deagle_357",
+  "cartridge_standard": "tacz:357mag",
+  "accepted_capacities": [
+    9
+  ]
+}

@@ -43,6 +43,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.ak_762x39_30",
           "DieTargetKind": "ak_762x39_30",
           "MagazineFamily": "ak_762x39",
+          "MagazineFeedStandard": "tacz:ak_762x39",
           "MagazineAmmoId": "tacz:762x39",
           "MagazineCapacity": 30
         }

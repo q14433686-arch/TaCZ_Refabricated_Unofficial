@@ -30,8 +30,12 @@ import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.gun.Ignite;
 import com.tacz.guns.industry.ammo.AmmoProfileDefinition;
 import com.tacz.guns.industry.ammo.AmmoProfileManager;
+import com.tacz.guns.industry.ammo.CartridgeStandardDefinition;
+import com.tacz.guns.industry.ammo.CartridgeStandardManager;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceProfile;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceProfileManager;
+import com.tacz.guns.industry.magazine.FeedInterfaceStandardDefinition;
+import com.tacz.guns.industry.magazine.FeedInterfaceStandardManager;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.magazine.GunFeedDefinitionManager;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
@@ -98,10 +102,14 @@ public class CommonAssetsManager implements ICommonResourceProvider {
      * original gun pack's GunData files so the ND-licensed default pack is not
      * modified and third-party packs can opt in independently.
      */
-    /** Validated only after GunIndex is available, so add-on capacity/ammo mismatches fail closed. */
-    private GunFeedDefinitionManager gunFeed;
+    /** Named cartridge geometry standards load before AmmoId aliases and feed-interface standards. */
+    private CartridgeStandardManager cartridgeStandards;
     /** Explicit alternate AmmoId profiles; base ammunition remains neutral unless a data file opts in. */
     private AmmoProfileManager ammoProfiles;
+    /** Named physical magwell/latch/feed-lip standards load before per-gun declarations. */
+    private FeedInterfaceStandardManager feedInterfaceStandards;
+    /** Validated only after GunIndex and both standard registries are available. */
+    private GunFeedDefinitionManager gunFeed;
     /** Create recipe projection synchronised for the built-in REI bridge. */
     private CommonDataManager<IndustryProcessDefinition> industryProcess;
     /** Server-authoritative dedicated cartridge-assembly definitions, synced for UI/REI. */
@@ -132,12 +140,19 @@ public class CommonAssetsManager implements ICommonResourceProvider {
 
         ammoIndex = register(new CommonDataManager<>(DataType.AMMO_INDEX, CommonAmmoIndex.class, GSON, "index/ammo", "AmmoIndexLoader"));
         gunIndex = register(new CommonDataManager<>(DataType.GUN_INDEX, CommonGunIndex.class, GSON, "index/guns", "GunIndexLoader"));
-        // Feed declarations must see the fully loaded GunIndex/GunData before
-        // they can safely enable a physical magazine for an addon receiver.
-        gunFeed = register(new GunFeedDefinitionManager());
-        // Alternate ammo profiles depend on both source and canonical AmmoIndex
-        // identities, so they load only after the complete index map exists.
+        // Cartridge standards own the canonical gauge/case/projectile geometry
+        // and therefore load immediately after every AmmoIndex is available.
+        cartridgeStandards = register(new CartridgeStandardManager());
+        // Alternate profiles may alias a native AmmoId only to a declared
+        // cartridge standard, so they load after the standard registry.
         ammoProfiles = register(new AmmoProfileManager());
+        // Feed-interface standards bind physical magwell/latch/feed-lip
+        // contracts to cartridge standards before any per-gun declaration may
+        // claim to reuse one.
+        feedInterfaceStandards = register(new FeedInterfaceStandardManager());
+        // Feed declarations must see GunIndex/GunData and both standard
+        // registries before they can safely enable a physical magazine.
+        gunFeed = register(new GunFeedDefinitionManager());
         attachmentIndex = register(new CommonDataManager<>(DataType.ATTACHMENT_INDEX, CommonAttachmentIndex.class, GSON, "index/attachments", "AttachmentIndexLoader"));
         blockIndex = register(new CommonDataManager<>(DataType.BLOCK_INDEX, CommonBlockIndex.class, GSON, "index/blocks", "BlockIndexLoader"));
         // Aliases depend on the loaded indexes and must be ready before table
@@ -298,6 +313,35 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     @Override
     public Set<Map.Entry<Identifier, GunFeedDefinition>> getAllGunFeedDefinitions() {
         return gunFeed == null ? Collections.emptySet() : gunFeed.getValidDefinitions().entrySet();
+    }
+
+    @Override
+    @Nullable
+    public CartridgeStandardDefinition getCartridgeStandard(Identifier standardId) {
+        return cartridgeStandards == null ? null : cartridgeStandards.getStandard(standardId);
+    }
+
+    @Override
+    @Nullable
+    public Identifier getCartridgeStandardIdForCanonicalAmmo(Identifier canonicalAmmo) {
+        return cartridgeStandards == null ? null : cartridgeStandards.getStandardIdForCanonicalAmmo(canonicalAmmo);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, CartridgeStandardDefinition>> getAllCartridgeStandards() {
+        return cartridgeStandards == null ? Collections.emptySet() : cartridgeStandards.getValidStandards().entrySet();
+    }
+
+    @Override
+    @Nullable
+    public FeedInterfaceStandardDefinition getFeedInterfaceStandard(Identifier standardId) {
+        return feedInterfaceStandards == null ? null : feedInterfaceStandards.getStandard(standardId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, FeedInterfaceStandardDefinition>> getAllFeedInterfaceStandards() {
+        return feedInterfaceStandards == null ? Collections.emptySet()
+                : feedInterfaceStandards.getValidStandards().entrySet();
     }
 
     /** Add-on magazine adapter audit; accepted definitions alone are exposed to runtime services. */

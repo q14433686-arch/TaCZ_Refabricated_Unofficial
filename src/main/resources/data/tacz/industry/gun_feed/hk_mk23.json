@@ -3,5 +3,6 @@
   "magazine_family": "mk23_45acp",
   "magazine_capacity": 12,
   "ammo": "tacz:45acp",
-  "display_name": "item.tacz.magazine.hk_mk23"
+  "display_name": "item.tacz.magazine.hk_mk23",
+  "feed_standard": "tacz:mk23_45acp"
 }

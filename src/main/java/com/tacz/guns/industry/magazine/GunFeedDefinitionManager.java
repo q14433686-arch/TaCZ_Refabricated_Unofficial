@@ -10,7 +10,9 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,6 +33,15 @@ public final class GunFeedDefinitionManager extends CommonDataManager<GunFeedDef
     public GunFeedDefinitionManager() {
         super(DataType.GUN_FEED, GunFeedDefinition.class, CommonAssetsManager.GSON,
                 "industry/gun_feed", "GunFeedLoader");
+    }
+
+    @Override
+    public Collection<Identifier> getFabricDependencies() {
+        return List.of(
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "gunindexloader"),
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "ammoprofileloader"),
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "feedinterfacestandardloader")
+        );
     }
 
     @Override
@@ -70,7 +81,7 @@ public final class GunFeedDefinitionManager extends CommonDataManager<GunFeedDef
             GunFeedDefinition definition = extension.getFeed();
             GunFeedDefinition.Validation validation = definition == null
                     ? GunFeedDefinition.Validation.invalid("tacz_industry.feed is absent")
-                    : definition.validateAgainst(gunId, index);
+                    : validateDefinition(gunId, index, definition);
             if (!validation.valid()) {
                 rejected++;
                 GunMod.LOGGER.error("Ignoring inline tacz_industry declaration {}: {}", gunId, validation.reason());
@@ -95,7 +106,7 @@ public final class GunFeedDefinitionManager extends CommonDataManager<GunFeedDef
             GunFeedDefinition definition = entry.getValue();
             GunFeedDefinition.Validation validation = definition == null
                     ? GunFeedDefinition.Validation.invalid("definition is null")
-                    : definition.validateAgainst(gunId, index);
+                    : validateDefinition(gunId, index, definition);
             if (!validation.valid()) {
                 rejected++;
                 GunMod.LOGGER.error("Ignoring gun-feed declaration {}: {}", gunId, validation.reason());
@@ -115,6 +126,18 @@ public final class GunFeedDefinitionManager extends CommonDataManager<GunFeedDef
                 "Loaded {} validated gun-feed declaration(s): {} sidecar, {} inline; {} dormant optional declaration(s), {} rejected declaration(s).",
                 validDefinitions.size(), sidecarAccepted, inlineAccepted, dormant, rejected
         );
+    }
+
+    private static GunFeedDefinition.Validation validateDefinition(Identifier gunId,
+                                                                   com.tacz.guns.resource.index.CommonGunIndex index,
+                                                                   GunFeedDefinition definition) {
+        GunFeedDefinition.Validation base = definition.validateAgainst(gunId, index);
+        if (!base.valid()) {
+            return base;
+        }
+        String standardFailure = FeedInterfaceStandardService.validationFailure(definition);
+        return standardFailure == null ? GunFeedDefinition.Validation.success()
+                : GunFeedDefinition.Validation.invalid(standardFailure);
     }
 
     @Nullable

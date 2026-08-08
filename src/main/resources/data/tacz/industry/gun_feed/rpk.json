@@ -3,5 +3,6 @@
   "magazine_family": "ak_762x39",
   "magazine_capacity": 40,
   "ammo": "tacz:762x39",
-  "display_name": "item.tacz.magazine.rpk_762"
+  "display_name": "item.tacz.magazine.rpk_762",
+  "feed_standard": "tacz:ak_762x39"
 }

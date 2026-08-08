@@ -45,6 +45,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.deagle_50ae_7",
           "DieTargetKind": "deagle_50ae_7",
           "MagazineFamily": "deagle_50ae",
+          "MagazineFeedStandard": "tacz:deagle_50ae",
           "MagazineAmmoId": "tacz:50ae",
           "MagazineCapacity": 7
         }

@@ -45,6 +45,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.p90_57x28_50",
           "DieTargetKind": "p90_57x28_50",
           "MagazineFamily": "p90_57x28",
+          "MagazineFeedStandard": "tacz:p90_57x28",
           "MagazineAmmoId": "tacz:57x28",
           "MagazineCapacity": 50
         }

@@ -48,6 +48,7 @@
           "MagazineCapacity": 10,
           "MagazineAmmoCount": 0,
           "MagazineDisplayName": "item.tacz.magazine.m107_50bmg",
+          "MagazineFeedStandard": "tacz:m107_50bmg",
           "FeedDeviceKind": "detachable_magazine"
         }
       }

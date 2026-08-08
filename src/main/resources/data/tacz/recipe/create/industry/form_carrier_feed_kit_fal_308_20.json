@@ -38,6 +38,7 @@
         "IndustryDisplayName": "item.tacz.gun_component.carrier_feed_kit.fal_308_20",
         "DieTargetKind": "fal_308_20",
         "MagazineFamily": "fal_308",
+        "MagazineFeedStandard": "tacz:fal_308",
         "MagazineAmmoId": "tacz:308",
         "MagazineCapacity": 20
       }

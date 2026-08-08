@@ -46,6 +46,7 @@ data/my_addon/industry/gun_feed/f2000.json
     "feed": {
       "mechanism": "detachable_magazine",
       "magazine_family": "my_addon_f2000_556",
+      "feed_standard": "my_addon:f2000_556",
       "magazine_capacity": 30,
       "ammo": "my_addon:556x45",
       "display_name": "item.my_addon.magazine.f2000"
@@ -64,6 +65,7 @@ data/my_addon/industry/gun_feed/f2000.json
 {
   "mechanism": "detachable_magazine",
   "magazine_family": "my_addon_f2000_556",
+  "feed_standard": "my_addon:f2000_556",
   "magazine_capacity": 30,
   "ammo": "my_addon:556x45",
   "display_name": "item.my_addon.magazine.f2000"
@@ -76,9 +78,12 @@ data/my_addon/industry/gun_feed/f2000.json
 2. `ammo` 精确等于当前 `GunData.ammo`；
 3. `magazine_capacity` 精确等于当前 `GunData.ammo_amount`；
 4. `mechanism`、弹匣族、显示键及外部供弹字段完整有效；
-5. 若声明 `carrier_variants`，每一个额外容量都精确匹配当前 GunData 的可选扩容等级，且有自己的显示键。
+5. `feed_standard` 已加载，且其 mechanism、family、cartridge standard 与本枪的显式 canonical ammo profile 一致；
+6. 若声明 `carrier_variants`，每一个额外容量都精确匹配当前 GunData 的可选扩容等级、列在该 feed standard 的 `accepted_capacities` 中，且有自己的显示键。
 
 任一项不一致，日志会说明拒绝原因，客户端也不会同步该定义、不会在创造栏出现错误弹匣、不会接管原包换弹。
+
+旧兼容包仍可省略 `feed_standard` 并保留原有 private `magazine_family` 行为，但它只能按 exact family + exact native AmmoId 互插；不能获得跨 native-AmmoId 的统一标准能力。新包和希望跨包复用的兼容包应使用上面的标准绑定。
 
 `belt` 使用相同结构，只把 `mechanism` 改成 `belt`；成品仍是有独立余弹的 `tacz:magazine`，但作为弹链箱/弹鼓语义而非 STANAG 弹匣。
 
@@ -90,6 +95,7 @@ data/my_addon/industry/gun_feed/f2000.json
 {
   "mechanism": "detachable_magazine",
   "magazine_family": "my_addon_f2000_556",
+  "feed_standard": "my_addon:f2000_556",
   "magazine_capacity": 30,
   "ammo": "my_addon:556x45",
   "display_name": "item.my_addon.magazine.f2000_30",
@@ -120,16 +126,18 @@ TACZ 当前的扩容等级最多使用该数组的前三项。少数旧枪包虽
 
 已验证的第三方 surveyed 平台会为基础容量和每个 `carrier_variants` 条目各生成一条真实 Gunsmith Table 多槽供弹器委托；结果是不同容量的独立 `tacz:magazine`，不是 GUI/REI 上显示相同物品的假扩容。
 
+完整 schema、标准资源和旧世界兼容边界见 [`INDUSTRY_STANDARD_REGISTRY.md`](INDUSTRY_STANDARD_REGISTRY.md)。
+
 ## 与现有弹匣的共享
 
-`magazine_family` 就是数据驱动的**实体供弹接口父标准**：它承担“父类/统一度量衡”的角色，而不是一个只供显示的名字。`ammo`/canonical calibre 只说明载具可以装什么弹；`magazine_family` 说明壳体外形、卡笋、供弹唇、插入位置和已审计的 reload 契约可以互插。因而只有作者明确复用同一个 family 的枪才共享实体载具；不能把“同口径”自动提升为这个父标准。
+`magazine_family` 是稳定的实体接口键，而 `feed_standard` 才是数据驱动的**接口父标准 / 统一度量衡**：它把经审计的壳体外形、卡笋、供弹唇、插入位置、机制、尺寸标准和允许容量集中成一个服务器同步资源。`ammo`/canonical calibre 只说明载具可以装什么弹；同口径本身绝不能自动升级为接口标准。
 
-`magazine_family + mechanism + 已解析的 canonical calibre` 是真实互插契约，`capacity` 是该族中某个已制造实体的尺寸。`ammo` 仍必须精确匹配各自 GunData；若不同枪包使用不同 native AmmoId，它们还必须各自有已加载 AmmoIndex，并通过明确 `industry/ammo_profiles` 映射到同一个 `caliber_ammo`，才可以在同 family 下共享：
+绑定标准时，`feed_standard + mechanism + 已解析的 cartridge standard` 是真实互插契约，`capacity` 是该标准中某个已制造实体的尺寸。`ammo` 仍必须精确匹配各自 GunData；若不同枪包使用不同 native AmmoId，它们还必须各自有已加载 AmmoIndex，并通过明确 `industry/ammo_profiles` 映射到同一个 `caliber_ammo`，才可以在同一 feed standard 下共享：
 
 - 想共享 30 发 STANAG 时，各枪明确声明同一个 `stanag_556`；当前已验证的同族实体容量可互插。例如 M4A1、M16A4、HK416D、SCAR-L 的 30 发 STANAG 是同一物件，20 发 M16A1 也可使用这张已经声明、已经制造的 30 发 STANAG；
 - 想让审计确认兼容、但 native AmmoId 不同的第三方枪复用该标准，声明同一个 family，并为该 AmmoId 提供显式 canonical-profile；完成后实体载具保存统一 canonical `MagazineAmmoId`，而每发 `MagazineRounds` 仍保留精确原始 AmmoId；
 - 想使用专用壳体时，声明新的稳定 family；
-- 额外容量必须仍由某个同 family、同 mechanism、同 resolved canonical calibre 的已验证声明或 `carrier_variants` 实体化，不能只因枪的口径相同就接受；
+- 额外容量必须仍由同一 `feed_standard` 的 `accepted_capacities` 明确列出，并由某个已验证声明或 `carrier_variants` 实体化，不能只因枪的口径相同就接受；
 - `SCAR-H` 是 `.308` / 7.62×51 接收机，不与 5.56 的 M4A1/STANAG 互插；它需要自己的 `scar_h_308` 20 发实体弹匣；
 - 仅口径相同并不代表可互插，不能省略 family。9 mm Glock、MP5、Uzi 与 B93R 的弹匣就是不同物理接口；.308 FAL、G3、M14、SCAR-H 也不能仅按弹种合并；
 - 第三方若经过真实结构与脚本审计确认兼容，可直接声明已有标准（例如 `"magazine_family": "stanag_556"`）；若 native AmmoId 不同，还须显式 profile 映射到相同 canonical calibre。只有这两条数据契约同时成立，才复用已制造的标准载具、量规与容量变体；未经确认的“看起来相似”枪仍必须有自己的 family 或保持 legacy。

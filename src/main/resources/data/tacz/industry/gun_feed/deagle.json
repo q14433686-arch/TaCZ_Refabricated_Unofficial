@@ -3,5 +3,6 @@
   "magazine_family": "deagle_50ae",
   "magazine_capacity": 7,
   "ammo": "tacz:50ae",
-  "display_name": "item.tacz.magazine.deagle_50ae"
+  "display_name": "item.tacz.magazine.deagle_50ae",
+  "feed_standard": "tacz:deagle_50ae"
 }

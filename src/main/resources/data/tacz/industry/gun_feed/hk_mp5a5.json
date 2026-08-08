@@ -3,5 +3,6 @@
   "magazine_family": "mp5_9x19",
   "magazine_capacity": 30,
   "ammo": "tacz:9mm",
-  "display_name": "item.tacz.magazine.mp5_9"
+  "display_name": "item.tacz.magazine.mp5_9",
+  "feed_standard": "tacz:mp5_9x19"
 }

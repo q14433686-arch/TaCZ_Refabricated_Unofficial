@@ -3,5 +3,6 @@
   "magazine_family": "m14_308",
   "magazine_capacity": 10,
   "ammo": "tacz:308",
-  "display_name": "item.tacz.magazine.m14_308"
+  "display_name": "item.tacz.magazine.m14_308",
+  "feed_standard": "tacz:m14_308"
 }

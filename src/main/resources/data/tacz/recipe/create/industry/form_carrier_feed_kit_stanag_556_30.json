@@ -38,6 +38,7 @@
         "IndustryDisplayName": "item.tacz.gun_component.carrier_feed_kit.stanag_556_30",
         "DieTargetKind": "stanag_556_30",
         "MagazineFamily": "stanag_556",
+        "MagazineFeedStandard": "tacz:stanag_556",
         "MagazineAmmoId": "tacz:556x45",
         "MagazineCapacity": 30
       }

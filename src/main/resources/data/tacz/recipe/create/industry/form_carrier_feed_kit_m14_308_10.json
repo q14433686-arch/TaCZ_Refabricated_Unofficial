@@ -38,6 +38,7 @@
         "IndustryDisplayName": "item.tacz.gun_component.carrier_feed_kit.m14_308_10",
         "DieTargetKind": "m14_308_10",
         "MagazineFamily": "m14_308",
+        "MagazineFeedStandard": "tacz:m14_308",
         "MagazineAmmoId": "tacz:308",
         "MagazineCapacity": 10
       }

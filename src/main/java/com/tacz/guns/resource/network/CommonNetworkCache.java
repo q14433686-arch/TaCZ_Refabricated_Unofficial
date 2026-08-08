@@ -19,7 +19,9 @@ import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import com.tacz.guns.resource.pojo.data.block.BlockData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.industry.ammo.AmmoProfileDefinition;
+import com.tacz.guns.industry.ammo.CartridgeStandardDefinition;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceProfile;
+import com.tacz.guns.industry.magazine.FeedInterfaceStandardDefinition;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
@@ -51,8 +53,12 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     public Map<Identifier, CommonBlockIndex> blockIndex = new HashMap<>();
     /** Per-gun physical-feed declarations synchronised with gun-pack data. */
     public Map<Identifier, GunFeedDefinition> gunFeed = new HashMap<>();
+    /** Canonical cartridge dimensional standards for gauges/cases/projectiles. */
+    public Map<Identifier, CartridgeStandardDefinition> cartridgeStandards = new HashMap<>();
     /** Explicit alternate AmmoId profiles needed for client-side compatibility and projectile presentation. */
     public Map<Identifier, AmmoProfileDefinition> ammoProfiles = new HashMap<>();
+    /** Named removable-carrier physical interface standards. */
+    public Map<Identifier, FeedInterfaceStandardDefinition> feedInterfaceStandards = new HashMap<>();
     /** TACZ-owned Create Fly process graph for REI when Create Fly lacks its own REI plugin. */
     public Map<Identifier, IndustryProcessDefinition> industryProcess = new HashMap<>();
     /** Definitions shown by the dedicated cartridge assembly-machine GUI and REI category. */
@@ -156,6 +162,40 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     }
 
     @Override
+    public @Nullable CartridgeStandardDefinition getCartridgeStandard(Identifier standardId) {
+        return cartridgeStandards.get(standardId);
+    }
+
+    @Override
+    public @Nullable Identifier getCartridgeStandardIdForCanonicalAmmo(Identifier canonicalAmmo) {
+        if (canonicalAmmo == null) {
+            return null;
+        }
+        for (Map.Entry<Identifier, CartridgeStandardDefinition> entry : cartridgeStandards.entrySet()) {
+            CartridgeStandardDefinition definition = entry.getValue();
+            if (definition != null && canonicalAmmo.equals(definition.getCanonicalAmmo())) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, CartridgeStandardDefinition>> getAllCartridgeStandards() {
+        return cartridgeStandards.entrySet();
+    }
+
+    @Override
+    public @Nullable FeedInterfaceStandardDefinition getFeedInterfaceStandard(Identifier standardId) {
+        return feedInterfaceStandards.get(standardId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, FeedInterfaceStandardDefinition>> getAllFeedInterfaceStandards() {
+        return feedInterfaceStandards.entrySet();
+    }
+
+    @Override
     public @Nullable AmmoProfileDefinition getAmmoProfile(Identifier ammoId) {
         return ammoProfiles.get(ammoId);
     }
@@ -233,7 +273,9 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
         attachmentIndex.clear();
         blockIndex.clear();
         gunFeed.clear();
+        cartridgeStandards.clear();
         ammoProfiles.clear();
+        feedInterfaceStandards.clear();
         industryProcess.clear();
         cartridgeAssembly.clear();
         industryReference.clear();
@@ -251,14 +293,17 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     public void fromNetwork(Map<DataType, Map<Identifier, String>> cache) {
         clear();
         // 延后处理
-        Map<DataType, Map<Identifier, String>> delayed = new HashMap<>();
+        Map<DataType, Map<Identifier, String>> delayed = new EnumMap<>(DataType.class);
         for (Map.Entry<DataType, Map<Identifier, String>> entry : cache.entrySet()) {
             switch (entry.getKey()) {
                 case GUN_INDEX:
                 case AMMO_INDEX:
                 case ATTACHMENT_INDEX:
                 case BLOCK_INDEX:
+                case GUN_FEED:
+                case CARTRIDGE_STANDARD:
                 case AMMO_PROFILE:
+                case FEED_STANDARD:
                 case CARTRIDGE_ASSEMBLY:
                 case INDUSTRY_REFERENCE:
                 case INDUSTRY_MAINTENANCE:
@@ -269,8 +314,27 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                     fromNetwork(entry.getKey(), entry.getValue());
             }
         }
-        for (Map.Entry<DataType, Map<Identifier, String>> entry : delayed.entrySet()) {
-            fromNetwork(entry.getKey(), entry.getValue());
+        // Do not rely on enum ordinals here: this is an actual dependency
+        // order, with the two standard registries in front of profiles and
+        // feed declarations.
+        for (DataType type : List.of(
+                DataType.GUN_INDEX,
+                DataType.AMMO_INDEX,
+                DataType.ATTACHMENT_INDEX,
+                DataType.BLOCK_INDEX,
+                DataType.CARTRIDGE_STANDARD,
+                DataType.AMMO_PROFILE,
+                DataType.FEED_STANDARD,
+                DataType.GUN_FEED,
+                DataType.CARTRIDGE_ASSEMBLY,
+                DataType.INDUSTRY_REFERENCE,
+                DataType.INDUSTRY_MAINTENANCE,
+                DataType.INDUSTRY_ID_ALIAS
+        )) {
+            Map<Identifier, String> data = delayed.get(type);
+            if (data != null) {
+                fromNetwork(type, data);
+            }
         }
     }
 
@@ -334,7 +398,9 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                     case RECIPES -> tableRecipe.put(entry.getKey(), parse(entry.getValue(), TableRecipe.class));
                     case BLOCK_DATA -> blockData.put(entry.getKey(), parse(entry.getValue(), BlockData.class));
                     case GUN_FEED -> gunFeed.put(entry.getKey(), parse(entry.getValue(), GunFeedDefinition.class));
+                    case CARTRIDGE_STANDARD -> cartridgeStandards.put(entry.getKey(), parse(entry.getValue(), CartridgeStandardDefinition.class));
                     case AMMO_PROFILE -> ammoProfiles.put(entry.getKey(), parse(entry.getValue(), AmmoProfileDefinition.class));
+                    case FEED_STANDARD -> feedInterfaceStandards.put(entry.getKey(), parse(entry.getValue(), FeedInterfaceStandardDefinition.class));
                     case INDUSTRY_PROCESS -> industryProcess.put(entry.getKey(), parse(entry.getValue(), IndustryProcessDefinition.class));
                     case CARTRIDGE_ASSEMBLY -> cartridgeAssembly.put(entry.getKey(), parse(entry.getValue(), CartridgeAssemblyDefinition.class));
                     case INDUSTRY_REFERENCE -> industryReference.put(entry.getKey(), parse(entry.getValue(), IndustryReferenceProfile.class));

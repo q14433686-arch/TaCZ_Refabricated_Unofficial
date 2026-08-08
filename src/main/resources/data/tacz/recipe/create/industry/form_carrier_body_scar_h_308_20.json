@@ -21,6 +21,7 @@
         "IndustryDisplayName": "item.tacz.gun_component.carrier_body.scar_h_308_20",
         "DieTargetKind": "scar_h_308_20",
         "MagazineFamily": "scar_h_308",
+        "MagazineFeedStandard": "tacz:scar_h_308",
         "MagazineAmmoId": "tacz:308",
         "MagazineCapacity": 20
       }

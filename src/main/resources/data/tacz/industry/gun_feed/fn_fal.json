@@ -3,5 +3,6 @@
   "magazine_family": "fal_308",
   "magazine_capacity": 20,
   "ammo": "tacz:308",
-  "display_name": "item.tacz.magazine.fal_308"
+  "display_name": "item.tacz.magazine.fal_308",
+  "feed_standard": "tacz:fal_308"
 }

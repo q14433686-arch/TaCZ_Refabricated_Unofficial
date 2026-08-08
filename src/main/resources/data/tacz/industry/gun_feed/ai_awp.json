@@ -3,5 +3,6 @@
   "magazine_family": "awm_338",
   "magazine_capacity": 5,
   "ammo": "tacz:338",
-  "display_name": "item.tacz.magazine.awm_338"
+  "display_name": "item.tacz.magazine.awm_338",
+  "feed_standard": "tacz:awm_338"
 }

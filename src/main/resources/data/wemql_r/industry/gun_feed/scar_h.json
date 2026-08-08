@@ -17,5 +17,6 @@
       "capacity": 60,
       "display_name": "item.tacz.magazine.wemql_r_scar_h_308_60"
     }
-  ]
+  ],
+  "feed_standard": "tacz:scar_h_308"
 }

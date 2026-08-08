@@ -45,6 +45,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.m249_556_belt_75",
           "DieTargetKind": "m249_556_belt_75",
           "MagazineFamily": "m249_556_belt",
+          "MagazineFeedStandard": "tacz:m249_556_belt",
           "MagazineAmmoId": "tacz:556x45",
           "MagazineCapacity": 75
         }

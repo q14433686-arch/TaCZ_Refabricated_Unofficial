@@ -43,6 +43,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.deagle_357_9",
           "DieTargetKind": "deagle_357_9",
           "MagazineFamily": "deagle_357",
+          "MagazineFeedStandard": "tacz:deagle_357",
           "MagazineAmmoId": "tacz:357mag",
           "MagazineCapacity": 9
         }

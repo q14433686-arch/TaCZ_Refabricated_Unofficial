@@ -43,6 +43,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.aa12_12g_8",
           "DieTargetKind": "aa12_12g_8",
           "MagazineFamily": "aa12_12g",
+          "MagazineFeedStandard": "tacz:aa12_12g",
           "MagazineAmmoId": "tacz:12g",
           "MagazineCapacity": 8
         }

@@ -45,6 +45,7 @@
           "IndustryDisplayName": "item.tacz.press_die.carrier_gauge.evolys_308_belt_75",
           "DieTargetKind": "evolys_308_belt_75",
           "MagazineFamily": "evolys_308_belt",
+          "MagazineFeedStandard": "tacz:evolys_308_belt",
           "MagazineAmmoId": "tacz:308",
           "MagazineCapacity": 75
         }

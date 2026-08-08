@@ -48,6 +48,7 @@
           "MagazineCapacity": 20,
           "MagazineAmmoCount": 0,
           "MagazineDisplayName": "item.tacz.magazine.vector_45",
+          "MagazineFeedStandard": "tacz:vector_45acp",
           "FeedDeviceKind": "detachable_magazine"
         }
       }

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "mechanism": "detachable_magazine",
+  "magazine_family": "g3_308",
+  "cartridge_standard": "tacz:308",
+  "accepted_capacities": [
+    5,
+    10,
+    12,
+    15,
+    18,
+    20
+  ]
+}

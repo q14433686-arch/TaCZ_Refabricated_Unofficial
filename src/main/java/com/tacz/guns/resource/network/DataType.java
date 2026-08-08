@@ -22,8 +22,14 @@ public enum DataType {
      */
     GUN_FEED,
 
+    /** Named cartridge dimensional standards, separate from individual AmmoId ballistic profiles. */
+    CARTRIDGE_STANDARD,
+
     /** Explicit alternate AmmoId → canonical-calibre / ballistic profile definitions. */
     AMMO_PROFILE,
+
+    /** Named removable-magazine/belt interface standards. */
+    FEED_STANDARD,
 
     /** Data-driven projection of TACZ Create Fly processes for client recipe viewers. */
     INDUSTRY_PROCESS,

@@ -2031,7 +2031,7 @@
   "commands.tacz.industry.feed_inspect_header": "§b供弹适配检查§r %s —— 仅显示已加载事实；绝不猜测实体供弹结构。",
   "commands.tacz.industry.feed_inspect_facts": "GunData：弹药=%s；基础容量=%s；原始扩容容量=%s；reload.type=%s；枪栓=%s；脚本=%s；无限备弹=%s",
   "commands.tacz.industry.feed_inspect_legacy": "没有已验证的供弹适配：保持原包 legacy 换弹。必须提供经审计的 sidecar 声明；仅凭 reload.type 不能证明可拆卸弹匣。",
-  "commands.tacz.industry.feed_inspect_external": "已验证外部供弹适配：机制=%s；兼容族=%s；该族已验证实体容量=%s",
+  "commands.tacz.industry.feed_inspect_external": "已验证外部供弹适配：机制=%s；兼容族=%s；供弹接口标准=%s；该标准已验证实体容量=%s",
   "commands.tacz.industry.feed_inspect_non_external": "已验证非外部供弹适配：机制=%s；机匣容量=%s",
   "item.tacz.magazine.rainforest_fal_20": "测绘 FAL 20 发弹匣",
   "item.tacz.magazine.rainforest_fal_25": "测绘 FAL 25 发扩容弹匣",
@@ -3255,5 +3255,6 @@
   "item.tacz.projectile_blank.9mm_hp": "9 mm 空尖弹预制坯",
   "item.tacz.projectile_blank.type_ap": "穿甲弹头类型预制坯",
   "item.tacz.projectile_blank.type_hp": "空尖弹头类型预制坯",
-  "item.tacz.projectile_blank.type_slug": "独头弹类型预制坯"
+  "item.tacz.projectile_blank.type_slug": "独头弹类型预制坯",
+  "tooltip.tacz.magazine.feed_standard": "供弹接口标准：%s"
 }
