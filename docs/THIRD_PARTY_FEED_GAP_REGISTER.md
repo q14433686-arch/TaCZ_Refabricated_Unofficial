@@ -4,6 +4,7 @@
 普通玩家不需要运行 Python。它不会启用任何 `gun_feed`，只登记当前已经审计的数据中：
 
 - 没有精确细分材质、仍使用中性/家族级材料的实体载具；
+- 每个缺口载具当前可见的中文/英文名称和容量变体；
 - 已有事实 profile、但故意保持 `legacy` runtime 的枪械功能缺口。
 
 机器可读的完整逐 family / 逐枪记录位于：
@@ -37,318 +38,330 @@ tools/industry/third_party_feed_gap_registry.json
 | `wemql_r` | 8 | 5 | 0 |
 | `ww` | 32 | 32 | 9 |
 
+## 细分材质分类汇总
+
+这里的分类按**当前视觉替代方式**，不是按枪种猜测。每一项都是已有 `gun_feed` 的真实实体载具；
+缺失的是授权/精确美术，不是库存、容量、制造或换弹功能。
+
+| 细分材质类别 | family 数 |
+|---|---:|
+| 复用同类弹链箱/弹链图（非精确） (`family_reused_belt_box`) | 10 |
+| 复用同类可拆卸弹匣图（非精确） (`family_reused_detachable_magazine`) | 2 |
+| 中性通用弹链箱（缺专用细节图） (`neutral_belt_box`) | 11 |
+| 中性通用可拆卸弹匣（缺专用细节图） (`neutral_detachable_magazine`) | 282 |
+
 ## 当前需要补细分材质的 family
 
 下列条目没有 `exact_existing_material`。`gun_ids` 是受影响的已审计接收机；
 它们的服务器库存、容量与制造出口已经生效，缺的是细分授权美术，而不是功能。
 
-| Family | Ammo | Mechanism | Capacities | 当前材料状态 |
-|---|---|---|---|---|
-| `aug_556` | `tacz:556x45` | `detachable_magazine` | 30, 40, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `bf1_chauchat_3006` | `tacz:30_06` | `detachable_magazine` | 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `bf1_de_lisle_45acp` | `tacz:45acp` | `detachable_magazine` | 7, 9, 12, 14 | `neutral_generic_material` → `tacz:item/magazine` |
-| `bf1_lewis_308_pan` | `tacz:308` | `detachable_magazine` | 47, 97 | `neutral_generic_material` → `tacz:item/magazine` |
-| `bf1_m1916_308` | `tacz:308` | `detachable_magazine` | 25 | `neutral_generic_material` → `tacz:item/magazine` |
-| `bf1_mg0815_762x54_belt` | `tacz:762x54` | `belt` | 200, 250 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
-| `bf1_mg42_762x54_belt` | `tacz:762x54` | `belt` | 50, 75, 250 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
-| `bf1_smg0818_9x19_drum` | `tacz:9mm` | `detachable_magazine` | 80 | `family_level_material` → `tacz_extra:item/mag_rpk_drum` |
-| `bf1_vg15_762x39` | `tacz:762x39` | `detachable_magazine` | 10, 30, 40, 80 | `neutral_generic_material` → `tacz:item/magazine` |
-| `bf1_vp1915_9x19_twin` | `tacz:9mm` | `detachable_magazine` | 50, 60, 80, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `bf1_welrod_9x19` | `tacz:9mm` | `detachable_magazine` | 6 | `neutral_generic_material` → `tacz:item/magazine` |
-| `bf1_zk383_9x19` | `tacz:9mm` | `detachable_magazine` | 30, 32, 35, 40 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_a545_545x39` | `tacz:545x39` | `detachable_magazine` | 30, 45, 60, 95 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_aac_honeybadger_300blk` | `tacz:300blk` | `detachable_magazine` | 30, 32, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_af2011_45acp` | `tacz:45acp` | `detachable_magazine` | 7, 9, 12, 14 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_aics_m700_65cm` | `ccrp:65cm` | `detachable_magazine` | 5, 6, 10, 12 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_ak103_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 40, 60, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_ak47_spent_bullet_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 34, 37, 40 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_ak74_545x39` | `tacz:545x39` | `detachable_magazine` | 30, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_ak74m_545x39` | `tacz:545x39` | `detachable_magazine` | 30, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_aks74u_545x39` | `tacz:545x39` | `detachable_magazine` | 30, 35, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_am17_545x39` | `tacz:545x39` | `detachable_magazine` | 30, 35, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_apc_9k_pro_g_9mm` | `tacz:9mm` | `detachable_magazine` | 25, 40, 45, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_ar57_57x28` | `tacz:57x28` | `detachable_magazine` | 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_aug_a3_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 42, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_aug_a3_dmr_556x45` | `tacz:556x45` | `detachable_magazine` | 10, 20, 30, 42 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_aug_a3_m2kit_556x45_m995` | `ccrp:556x45_m995` | `detachable_magazine` | 30, 42, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_aug_a3s_300blk` | `tacz:300blk` | `detachable_magazine` | 30, 45, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_aug_camg_kit_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 42, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_aug_hbar_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 42, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_aug_para_9mm` | `tacz:9mm` | `detachable_magazine` | 25, 32, 35, 40 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_block_17_9mm` | `tacz:9mm` | `detachable_magazine` | 17, 20, 25, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_brn_180_bullpup_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 32, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_camg_m4_sopmod2_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_camg_mk18_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_car_15_556x45` | `tacz:556x45` | `detachable_magazine` | 20, 30, 32, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_chisato_m1911_45acp` | `tacz:45acp` | `detachable_magazine` | 7, 12, 18, 22 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_cr300_300blk` | `tacz:300blk` | `detachable_magazine` | 20, 30, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_ddm4_556x45_m995` | `ccrp:556x45_m995` | `detachable_magazine` | 30, 35, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_ddm4_pdw_300blk` | `tacz:300blk` | `detachable_magazine` | 20, 32, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_ddm4_v7_pro_556x45_m855a2_f` | `ccrp:556x45_m855a2_f` | `detachable_magazine` | 32, 35, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_ddm4a1_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_deagle_nightingale_44mag` | `ccrp:44mag` | `detachable_magazine` | 7, 8, 10, 12 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_deagle_xix_50ae` | `tacz:50ae` | `detachable_magazine` | 7, 8, 10, 12 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_dsa_sa58_308` | `tacz:308` | `detachable_magazine` | 15, 20, 30, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_f90_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 42, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_f90_mbr_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_fightlite_scr_hg_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 40, 50, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_g95a1_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_glock20gen5mos_10mm` | `tacz:10mm` | `detachable_magazine` | 15, 33, 50, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_glock40gen5mos_10mm` | `tacz:10mm` | `detachable_magazine` | 15, 33, 50, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_hk21_308_belt` | `tacz:308` | `belt` | 200 | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
-| `ccrp_hk416_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_hk416_sopmod_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_hk416a8_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_hk416c_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_hk417_308` | `tacz:308` | `detachable_magazine` | 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_hk433_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_hk_g28_308` | `tacz:308` | `detachable_magazine` | 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_hk_g28_patrol_308` | `tacz:308` | `detachable_magazine` | 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_honeybadger_300blk` | `tacz:300blk` | `detachable_magazine` | 30, 32, 35, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_kac_ks_1_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 32, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_keltec_p50_57x28` | `tacz:57x28` | `detachable_magazine` | 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_km_ak74m_545x39` | `tacz:545x39` | `detachable_magazine` | 30, 45, 60, 95 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_m110_308` | `tacz:308` | `detachable_magazine` | 15, 25, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_m110a3_65cm` | `ccrp:65cm` | `detachable_magazine` | 15, 20, 25, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_m14_hbar_308` | `tacz:308` | `detachable_magazine` | 20, 30, 50, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_m16a3_556x45` | `tacz:556x45` | `detachable_magazine` | 20, 30, 32, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_m231_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 33, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_m249_saw_556x45_belt` | `tacz:556x45` | `belt` | 30, 45, 60, 100 | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
-| `ccrp_m27_iar_556x45` | `tacz:556x45` | `detachable_magazine` | 40, 50, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_m305a_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 45, 50, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_m39_emr_308` | `tacz:308` | `detachable_magazine` | 10, 20, 25, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_m4_cqbr_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_m4_sopmod2_fsp_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_m4_ss_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_mcx_spear_tombstone_68x51fury` | `tacz:68x51fury` | `detachable_magazine` | 20, 22, 25, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_mcx_virtus_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_mg36_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_mk13_mod5_300wm` | `ccrp:300wm` | `detachable_magazine` | 5, 6, 10, 12 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_mk17_308` | `tacz:308` | `detachable_magazine` | 20, 22, 25, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_mk18_mjolnir_338` | `tacz:338` | `detachable_magazine` | 7, 10, 12, 15 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_mk556_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_mp5_sd_9mm` | `tacz:9mm` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_mp5k_9mm` | `tacz:9mm` | `detachable_magazine` | 15, 30, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_mp5k_pdw_9mm` | `tacz:9mm` | `detachable_magazine` | 30, 50, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_mp7a3_46x30` | `tacz:46x30` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_mpx_9mm` | `tacz:9mm` | `detachable_magazine` | 25, 30, 35, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_p90_effen_90_57x28` | `tacz:57x28` | `detachable_magazine` | 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_p90_paw_57x28` | `tacz:57x28` | `detachable_magazine` | 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_p90_shround_s_57x28` | `tacz:57x28` | `detachable_magazine` | 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_psa_ak556_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 32, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_qbu_191_58x42` | `tacz:58x42` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_qbz_191_58x42` | `tacz:58x42` | `detachable_magazine` | 30, 45, 60, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_rd704_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 35, 40, 45 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_ro635_9mm` | `tacz:9mm` | `detachable_magazine` | 30, 35, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_rpk74m_545x39` | `tacz:545x39` | `detachable_magazine` | 30, 45, 60, 95 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_rpk_203_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 40, 60, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_sai_gry_lite_black_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_samurai_edge_45acp` | `tacz:45acp` | `detachable_magazine` | 20, 23, 26, 32 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_scar16_ariana_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 32, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_scar17_armarise_308` | `tacz:308` | `detachable_magazine` | 10, 15, 20, 25 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_scar_16s_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 32, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_scar_17s_65cm` | `ccrp:65cm` | `detachable_magazine` | 10, 15, 20, 25 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_scar_sc_300blk` | `tacz:300blk` | `detachable_magazine` | 30, 45, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_shield_ots33_9mm` | `tacz:9mm` | `detachable_magazine` | 18, 23, 27, 33 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_sig277_68x51fury` | `tacz:68x51fury` | `detachable_magazine` | 20, 25, 30, 45 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_solgw_mk1_556x45_m855a1` | `ccrp:556x45_m855a1` | `detachable_magazine` | 20, 30, 32, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_sr25_308` | `tacz:308` | `detachable_magazine` | 15, 25, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_sr_3m_9x39` | `tacz:9x39` | `detachable_magazine` | 30, 35, 45, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_timeless_50_50ae` | `tacz:50ae` | `detachable_magazine` | 7, 8, 10, 14 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_troy_m14_sass_308` | `tacz:308` | `detachable_magazine` | 20, 30, 50, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_tti_mpx_9mm` | `tacz:9mm` | `detachable_magazine` | 30, 36, 50, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_tti_tr1_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 32, 60, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_type_95_longbow_58x42` | `tacz:58x42` | `detachable_magazine` | 60, 75, 100, 150 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_type_97_gen2_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 60, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_uzi45_45acp` | `tacz:45acp` | `detachable_magazine` | 20, 32, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_vector10_10mm` | `tacz:10mm` | `detachable_magazine` | 15, 33, 50, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_x95_smg_9mm` | `tacz:9mm` | `detachable_magazine` | 32, 38, 45, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_x95r_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 45, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_zenit_ak104_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 40, 60, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ccrp_zenit_ak105_545x39` | `tacz:545x39` | `detachable_magazine` | 30, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_9a91_9x39mm` | `cib:9x39mm` | `detachable_magazine` | 20, 30, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_ak105_545x39` | `tacz:545x39` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_ak24_556` | `tacz:556x45` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_asval_9x39mm` | `cib:9x39mm` | `detachable_magazine` | 20, 30, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_awp_308` | `tacz:308` | `detachable_magazine` | 5, 10, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_cs_ak47_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 45, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_cslr3_58x42` | `tacz:58x42` | `detachable_magazine` | 10, 12, 13, 25 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_cslr4_308` | `tacz:308` | `detachable_magazine` | 5, 10, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_evo3_9mm` | `tacz:9mm` | `detachable_magazine` | 20, 30, 45, 65 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_fal_308` | `tacz:308` | `detachable_magazine` | 20, 30, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_g18c_9mm` | `tacz:9mm` | `detachable_magazine` | 20, 30, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_g19_9mm` | `tacz:9mm` | `detachable_magazine` | 15, 17, 19, 33 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_g3sg1_308` | `tacz:308` | `detachable_magazine` | 20, 22, 25, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_galil_556x45` | `tacz:556x45` | `detachable_magazine` | 35, 45, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_galilace32_762x39` | `tacz:762x39` | `detachable_magazine` | 35, 45, 55, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_galilace_556x45` | `tacz:556x45` | `detachable_magazine` | 35, 45, 55, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_hk433_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_js9_9mm` | `tacz:9mm` | `detachable_magazine` | 20, 30, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_k2_556x45` | `tacz:556x45` | `detachable_magazine` | 20, 30, 35, 40 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_k2c1_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_la89_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 40, 50, 65 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_m16a4_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_m99_127x108` | `cib:127x108` | `detachable_magazine` | 5, 10, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_mg3_308_belt` | `tacz:308` | `belt` | 65, 75, 100, 150 | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
-| `cib_negev_556x45_belt` | `tacz:556x45` | `belt` | 65, 75, 100, 150 | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
-| `cib_origin12_12g` | `tacz:12g` | `detachable_magazine` | 8, 10, 20, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_ots14_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_p250_9mm` | `tacz:9mm` | `detachable_magazine` | 13, 15, 20, 25 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_pkp_762x54_belt` | `tacz:762x54` | `belt` | 70, 100, 150, 200 | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
-| `cib_pm9_9mm` | `tacz:9mm` | `detachable_magazine` | 25, 30, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_pp19_9mm` | `tacz:9mm` | `detachable_magazine` | 50, 53, 60, 64 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_ppk_32acp` | `cib:32acp` | `detachable_magazine` | 7, 9, 12, 14 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_ppsh41_762x25` | `tacz:762x25` | `detachable_magazine` | 20, 35, 45, 71 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qbu10_127x108` | `cib:127x108` | `detachable_magazine` | 5, 10, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qbu191_58x42` | `tacz:58x42` | `detachable_magazine` | 10, 15, 20, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qbu201_127x108` | `cib:127x108` | `detachable_magazine` | 5, 10, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qbu202_338` | `tacz:338` | `detachable_magazine` | 5, 8, 10, 15 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qbu203_308` | `tacz:308` | `detachable_magazine` | 5, 10, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qbu88_58x42` | `tacz:58x42` | `detachable_magazine` | 10, 15, 20, 25 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qbz03_58x42` | `tacz:58x42` | `detachable_magazine` | 30, 35, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qbz191_58x42` | `tacz:58x42` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qbz192_58x42` | `tacz:58x42` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qbz951_58x42` | `tacz:58x42` | `detachable_magazine` | 30, 35, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qbz95b1_58x42` | `tacz:58x42` | `detachable_magazine` | 30, 35, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qcq171_9mm` | `tacz:9mm` | `detachable_magazine` | 30, 35, 40, 70 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qcw05_58x21` | `cib:58x21` | `detachable_magazine` | 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qjb951_58x42` | `tacz:58x42` | `detachable_magazine` | 75, 80, 85, 90 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qjy201_308_belt` | `tacz:308` | `belt` | 100, 150, 200, 250 | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
-| `cib_qjy88_58x42_belt` | `tacz:58x42` | `belt` | 90, 100, 150, 200 | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
-| `cib_qjz171_127x108_belt` | `cib:127x108` | `belt` | 60, 80, 90, 100 | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
-| `cib_qsz193_9mm` | `tacz:9mm` | `detachable_magazine` | 7, 9, 10, 11 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_qsz92_58x21` | `cib:58x21` | `detachable_magazine` | 20, 23, 25, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_sig552_556x45` | `tacz:556x45` | `detachable_magazine` | 20, 30, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_sig556_556` | `tacz:556x45` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_ssg08_308` | `tacz:308` | `detachable_magazine` | 5, 8, 10, 15 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_sv98_762x54` | `tacz:762x54` | `detachable_magazine` | 10, 15, 20, 25 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_svd_762x54` | `tacz:762x54` | `detachable_magazine` | 10 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_t91_556x45` | `tacz:556x45` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_type14_8x22` | `cib:8x22` | `detachable_magazine` | 8 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_type20_556` | `tacz:556x45` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_type56_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 45, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_type79_762x25` | `tacz:762x25` | `detachable_magazine` | 20, 30, 35, 40 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_usas12_12g` | `tacz:12g` | `detachable_magazine` | 10, 15, 20, 25 | `neutral_generic_material` → `tacz:item/magazine` |
-| `cib_usp_45acp` | `tacz:45acp` | `detachable_magazine` | 12, 15, 20, 25 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_ak12_545x39` | `tacz:545x39` | `detachable_magazine` | 30, 35, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_b93r_9mm` | `tacz:9mm` | `detachable_magazine` | 15, 24, 27, 33 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_dp28_pan_762x54r` | `tacz:762x54r` | `detachable_magazine` | 47 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_fal_308` | `tacz:308` | `detachable_magazine` | 20, 25, 30, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_glock18_9mm` | `tacz:9mm` | `detachable_magazine` | 17, 24, 27, 33 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_m1a1_thompson_45acp` | `tacz:45acp` | `detachable_magazine` | 30, 40, 45, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_m60_308_belt` | `tacz:308` | `belt` | 100, 150, 175, 200 | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
-| `classicr_m82a2_50bmg` | `tacz:50bmg` | `detachable_magazine` | 8, 10, 12, 15 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_m92fs_9mm` | `tacz:9mm` | `detachable_magazine` | 15, 17, 20, 24 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_mac10_9mm` | `tacz:9mm` | `detachable_magazine` | 30, 35, 40, 45 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_mk47_762x39copper` | `tacz:762x39copper` | `detachable_magazine` | 30, 45, 60, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_mp7_46x30` | `tacz:46x30` | `detachable_magazine` | 20, 30, 40, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_mp9_9mm` | `tacz:9mm` | `detachable_magazine` | 30, 34, 37, 46 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_mrad_338` | `tacz:338` | `detachable_magazine` | 10, 12, 13, 15 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_mrad_elr_416barrett` | `tacz:416barrett` | `detachable_magazine` | 10, 12, 13, 15 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_msr_3006` | `tacz:30_06` | `detachable_magazine` | 10 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_ngsw_r_68x51` | `tacz:68x51fury` | `detachable_magazine` | 20, 25, 35, 45 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_qbz191_58x42` | `tacz:58x42` | `detachable_magazine` | 30, 45, 60, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_scar_mk20_308` | `tacz:308` | `detachable_magazine` | 10, 20, 30, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_spr15_556` | `tacz:556x45` | `detachable_magazine` | 20, 25, 38, 45 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_sti2011_9mm` | `tacz:9mm` | `detachable_magazine` | 17, 19, 23, 27 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_tec9_9mm` | `tacz:9mm` | `detachable_magazine` | 17, 24, 33, 72 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_tti_g34_9mm` | `tacz:9mm` | `detachable_magazine` | 19, 24, 27, 33 | `neutral_generic_material` → `tacz:item/magazine` |
-| `classicr_udp9_9mm` | `tacz:9mm` | `detachable_magazine` | 22, 30, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `hamster_lugerp08_compact_8` | `hamster:compact_ammo` | `detachable_magazine` | 8 | `neutral_generic_material` → `tacz:item/magazine` |
-| `hamster_madsen_long_30` | `hamster:long_ammo` | `detachable_magazine` | 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `hamster_makarov_compact_8` | `hamster:compact_ammo` | `detachable_magazine` | 8 | `neutral_generic_material` → `tacz:item/magazine` |
-| `hamster_mg1417_long_belt` | `hamster:long_ammo` | `belt` | 100 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
-| `hamster_mp18_compact_32` | `hamster:compact_ammo` | `detachable_magazine` | 32 | `neutral_generic_material` → `tacz:item/magazine` |
-| `m14_308` | `tacz:308` | `detachable_magazine` | 10, 20, 30, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `murasamet_boys_50bmg` | `tacz:50bmg` | `detachable_magazine` | 5 | `neutral_generic_material` → `tacz:item/magazine` |
-| `murasamet_dp_pan_762x54` | `tacz:762x54` | `detachable_magazine` | 47 | `neutral_generic_material` → `tacz:item/magazine` |
-| `murasamet_kp31_9mm` | `tacz:9mm` | `detachable_magazine` | 70 | `neutral_generic_material` → `tacz:item/magazine` |
-| `murasamet_lanchester_9mm` | `tacz:9mm` | `detachable_magazine` | 32 | `neutral_generic_material` → `tacz:item/magazine` |
-| `murasamet_m3_45acp` | `tacz:45acp` | `detachable_magazine` | 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `murasamet_mg34_792x57_belt` | `tacz:792x57` | `belt` | 75 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
-| `murasamet_mg42_792x57_belt` | `tacz:792x57` | `belt` | 75 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
-| `murasamet_mp28_9mm` | `tacz:9mm` | `detachable_magazine` | 32 | `neutral_generic_material` → `tacz:item/magazine` |
-| `murasamet_mp38_40_9mm` | `tacz:9mm` | `detachable_magazine` | 32 | `neutral_generic_material` → `tacz:item/magazine` |
-| `murasamet_ppsh_762x25` | `tacz:762x25` | `detachable_magazine` | 25, 35, 50, 71 | `neutral_generic_material` → `tacz:item/magazine` |
-| `murasamet_sten_9mm` | `tacz:9mm` | `detachable_magazine` | 32 | `neutral_generic_material` → `tacz:item/magazine` |
-| `murasamet_thompson_drum_45acp` | `tacz:45acp` | `detachable_magazine` | 20, 30, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `murasamet_tt33_762x25` | `tacz:762x25` | `detachable_magazine` | 8 | `neutral_generic_material` → `tacz:item/magazine` |
-| `murasamet_vz61_9mm` | `tacz:9mm` | `detachable_magazine` | 20, 25, 35, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `rainforest_em2_308` | `tacz:308` | `detachable_magazine` | 20, 25, 30, 32 | `neutral_generic_material` → `tacz:item/magazine` |
-| `rainforest_fal_308` | `tacz:308` | `detachable_magazine` | 20, 25, 30, 32 | `family_level_material` → `tacz_extra:item/magazine_fal_308_20_tacz_308` |
-| `rainforest_famas_556` | `tacz:556x45` | `detachable_magazine` | 25, 30, 32, 35 | `neutral_generic_material` → `tacz:item/magazine` |
-| `rainforest_frf2_308` | `tacz:308` | `detachable_magazine` | 5, 7, 9, 10 | `neutral_generic_material` → `tacz:item/magazine` |
-| `rainforest_m60_308_belt` | `tacz:308` | `belt` | 20, 35, 50 | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
-| `rainforest_pm12s_9x19` | `tacz:9mm` | `detachable_magazine` | 20, 25, 30, 32 | `neutral_generic_material` → `tacz:item/magazine` |
-| `rainforest_pm63_9x19` | `tacz:9mm` | `detachable_magazine` | 15, 25, 30, 32 | `neutral_generic_material` → `tacz:item/magazine` |
-| `rainforest_rpd_762x39_belt` | `tacz:762x39` | `belt` | 35, 45, 50, 75, 100 | `family_level_material` → `tacz_extra:item/mag_rpk_drum` |
-| `rainforest_vz64_9x19` | `tacz:9mm` | `detachable_magazine` | 10, 12, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `rainforest_vz68_9x19` | `tacz:9mm` | `detachable_magazine` | 10, 12, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `scar_h_308` | `tacz:308` | `detachable_magazine` | 20, 30, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_aks74u_545x39` | `suffuse:545x39` | `detachable_magazine` | 30, 34, 37, 40 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_ar57_57x28` | `tacz:57x28` | `detachable_magazine` | 34, 37, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_ash12_127x55` | `suffuse:12.7x55` | `detachable_magazine` | 10, 15, 20, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_aw50_50bmg` | `tacz:50bmg` | `detachable_magazine` | 5, 6, 8, 10 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_axmc_axsr_338` | `tacz:338` | `detachable_magazine` | 10, 12, 14, 16 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_dvl10_308` | `tacz:308` | `detachable_magazine` | 10, 12, 14, 16 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_gepardpdw_9mm` | `tacz:9mm` | `detachable_magazine` | 40, 43, 45, 47 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_gm6_50bmg` | `tacz:50bmg` | `detachable_magazine` | 6, 8, 10 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_kacpdw_6x35` | `suffuse:6x35mm` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_m200_408ct` | `suffuse:.408ct` | `detachable_magazine` | 6, 7, 8, 10 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_mas38_7_65x20mm` | `suffuse:7.65x20mm` | `detachable_magazine` | 32 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_mpdr_556` | `tacz:556x45` | `detachable_magazine` | 20, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_np762_762x25` | `tacz:762x25` | `detachable_magazine` | 10, 12, 15, 17 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_pkp_762x54_belt` | `tacz:762x54` | `belt` | 120 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
-| `suffuse_qbu191_58x42` | `tacz:58x42` | `detachable_magazine` | 30, 35, 50, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_qbz191_58x42` | `tacz:58x42` | `detachable_magazine` | 20, 30, 40, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_qbz192_58x42` | `tacz:58x42` | `detachable_magazine` | 30, 35, 50, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_qbz951_58x42` | `tacz:58x42` | `detachable_magazine` | 30, 35, 50, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_rm277_68tvcm` | `suffuse:6.8tvcm` | `detachable_magazine` | 20, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_saddam_ak_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 34, 37, 40 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_svd_762x54` | `tacz:762x54` | `detachable_magazine` | 10, 12, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_tec9_9mm` | `tacz:9mm` | `detachable_magazine` | 15, 20, 30, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_tt33_762x25` | `tacz:762x25` | `detachable_magazine` | 7, 10, 13, 16 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_tti2011_9mm` | `tacz:9mm` | `detachable_magazine` | 12, 20, 25, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_ump45_45acp` | `tacz:45acp` | `detachable_magazine` | 20, 25, 30, 50 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_usp45_45acp` | `tacz:45acp` | `detachable_magazine` | 12, 15, 18 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_usp45_black_45acp` | `tacz:45acp` | `detachable_magazine` | 12, 15, 18 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_viper2011_9mm` | `tacz:9mm` | `detachable_magazine` | 12, 15, 20, 25 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_webley1913_45acp` | `tacz:45acp` | `detachable_magazine` | 7, 10, 13, 16 | `neutral_generic_material` → `tacz:item/magazine` |
-| `suffuse_xm7_308` | `tacz:308` | `detachable_magazine` | 20, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `wemql_r_ak12_545x39` | `tacz:545x39` | `detachable_magazine` | 30, 40, 60, 75 | `neutral_generic_material` → `tacz:item/magazine` |
-| `wemql_r_m7_68x51` | `tacz:68x51fury` | `detachable_magazine` | 20, 25, 30, 45 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_anm2_30_06_belt` | `tacz:30_06` | `belt` | 100, 150, 250, 500 | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
-| `ww_as44_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 34, 37, 40 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_bar_3006` | `tacz:30_06` | `detachable_magazine` | 20, 30, 35, 40 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_cph_32acp` | `ea:32acp` | `detachable_magazine` | 7, 9, 12, 14 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_dp28_762x54` | `tacz:762x54` | `detachable_magazine` | 47 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_g43_792x57` | `ea:792x57` | `detachable_magazine` | 10, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_m1911a1_45acp` | `tacz:45acp` | `detachable_magazine` | 7, 9, 12, 14 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_m1919a6_3006_belt` | `tacz:30_06` | `belt` | 100, 150, 250, 500 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
-| `ww_m1_m2_carbine_30c` | `ww:30c` | `detachable_magazine` | 15, 20, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_m2s_30c` | `ww:30c` | `detachable_magazine` | 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_m50_45acp` | `tacz:45acp` | `detachable_magazine` | 20, 21, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_m712_763` | `ww:763` | `detachable_magazine` | 10, 20, 25, 30 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_mg34_792x57_belt` | `ea:792x57` | `belt` | 50, 100, 150, 200 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
-| `ww_mg42_792x57_belt` | `ea:792x57` | `belt` | 50, 100, 150, 200 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
-| `ww_mp28_9mm` | `tacz:9mm` | `detachable_magazine` | 30, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_mp34_9mm` | `tacz:9mm` | `detachable_magazine` | 32, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_mp38_40_41_9mm` | `tacz:9mm` | `detachable_magazine` | 32, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_p08_765` | `ww:765` | `detachable_magazine` | 8, 19, 23, 27 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_p38_9mm` | `tacz:9mm` | `detachable_magazine` | 8, 19, 23, 27 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_pps_762x25` | `tacz:762x25` | `detachable_magazine` | 35, 71 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_s1100_763` | `ww:763` | `detachable_magazine` | 32, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_sten_mk2_9mm` | `tacz:9mm` | `detachable_magazine` | 32, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_stg44_792x33` | `ea:792x33` | `detachable_magazine` | 30, 34, 37, 40 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_svt_avt_762x54` | `tacz:762x54` | `detachable_magazine` | 10, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_t100_8mm` | `ww:8mm` | `detachable_magazine` | 30, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_t100l_8mm` | `ww:8mm` | `detachable_magazine` | 30, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_t14_8mm` | `ww:8mm` | `detachable_magazine` | 8, 9, 12, 14 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_t20_3006` | `tacz:30_06` | `detachable_magazine` | 20, 21, 22, 25 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_t96_65a` | `ww:65a` | `detachable_magazine` | 30, 40 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_t99_77a` | `ww:77a` | `detachable_magazine` | 30, 40 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_tbe_763` | `ww:763` | `detachable_magazine` | 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
-| `ww_thompson_45acp` | `tacz:45acp` | `detachable_magazine` | 20, 30 | `neutral_generic_material` → `tacz:item/magazine` |
+| 玩家可见名称（全部容量） | Family | Ammo | Mechanism | 细分材质分类 | 当前材料状态 |
+|---|---|---|---|---|---|
+| 30 发：AUG 5.56×45 30 发弹匣<br>40 发：测绘 AUG 5.56×45 40 发弹匣<br>45 发：测绘 AUG 5.56×45 45 发弹匣<br>60 发：测绘 AUG 5.56×45 60 发弹匣 | `aug_556` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 绍沙 20 发弹匣 | `bf1_chauchat_3006` | `tacz:30_06` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 7 发：测绘 德利尔卡宾枪 7 发弹匣<br>9 发：测绘 德利尔卡宾枪 9 发弹匣<br>12 发：测绘 德利尔卡宾枪 12 发弹匣<br>14 发：测绘 德利尔卡宾枪 14 发弹匣 | `bf1_de_lisle_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 47 发：测绘 刘易斯机枪 47 发弹匣<br>97 发：测绘 刘易斯机枪 97 发弹匣 | `bf1_lewis_308_pan` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 25 发：测绘 M1916自动装填步枪 25 发弹匣 | `bf1_m1916_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 200 发：测绘 MG08/15 200 发弹链箱<br>250 发：测绘 MG08/15 250 发弹链箱 | `bf1_mg0815_762x54_belt` | `tacz:762x54` | `belt` | `family_reused_belt_box` | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
+| 50 发：测绘 MG42 50 发弹链箱<br>75 发：测绘 MG42 75 发弹链箱<br>250 发：测绘 MG42 250 发弹链箱 | `bf1_mg42_762x54_belt` | `tacz:762x54` | `belt` | `family_reused_belt_box` | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
+| 80 发：测绘 SMG08/18 80 发弹匣 | `bf1_smg0818_9x19_drum` | `tacz:9mm` | `detachable_magazine` | `family_reused_detachable_magazine` | `family_level_material` → `tacz_extra:item/mag_rpk_drum` |
+| 10 发：测绘 VG1-5 10 发弹匣<br>30 发：测绘 VG1-5 30 发弹匣<br>40 发：测绘 VG1-5 40 发弹匣<br>80 发：测绘 VG1-5 80 发弹匣 | `bf1_vg15_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 50 发：测绘 维拉·佩罗萨 50 发弹匣<br>60 发：测绘 维拉·佩罗萨 60 发弹匣<br>80 发：测绘 维拉·佩罗萨 80 发弹匣<br>100 发：测绘 维拉·佩罗萨 100 发弹匣 | `bf1_vp1915_9x19_twin` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 6 发：测绘 威尔洛德 6 发弹匣 | `bf1_welrod_9x19` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 ZK-383 30 发弹匣<br>32 发：测绘 ZK-383 32 发弹匣<br>35 发：测绘 ZK-383 35 发弹匣<br>40 发：测绘 ZK-383 40 发弹匣 | `bf1_zk383_9x19` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP A545 545x39 30 发弹匣<br>45 发：测绘 CCRP A545 545x39 45 发弹匣<br>60 发：测绘 CCRP A545 545x39 60 发弹匣<br>95 发：测绘 CCRP A545 545x39 95 发弹匣 | `ccrp_a545_545x39` | `tacz:545x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP AAC HONEYBADGER 300blk 30 发弹匣<br>32 发：测绘 CCRP AAC HONEYBADGER 300blk 32 发弹匣<br>45 发：测绘 CCRP AAC HONEYBADGER 300blk 45 发弹匣<br>60 发：测绘 CCRP AAC HONEYBADGER 300blk 60 发弹匣 | `ccrp_aac_honeybadger_300blk` | `tacz:300blk` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 7 发：测绘 CCRP AF2011 45acp 7 发弹匣<br>9 发：测绘 CCRP AF2011 45acp 9 发弹匣<br>12 发：测绘 CCRP AF2011 45acp 12 发弹匣<br>14 发：测绘 CCRP AF2011 45acp 14 发弹匣 | `ccrp_af2011_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 CCRP AICS M700 65cm 5 发弹匣<br>6 发：测绘 CCRP AICS M700 65cm 6 发弹匣<br>10 发：测绘 CCRP AICS M700 65cm 10 发弹匣<br>12 发：测绘 CCRP AICS M700 65cm 12 发弹匣 | `ccrp_aics_m700_65cm` | `ccrp:65cm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP AK103 762x39 30 发弹匣<br>40 发：测绘 CCRP AK103 762x39 40 发弹匣<br>60 发：测绘 CCRP AK103 762x39 60 发弹匣<br>75 发：测绘 CCRP AK103 762x39 75 发弹匣 | `ccrp_ak103_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP AK47 SPENT BULLET 762x39 30 发弹匣<br>34 发：测绘 CCRP AK47 SPENT BULLET 762x39 34 发弹匣<br>37 发：测绘 CCRP AK47 SPENT BULLET 762x39 37 发弹匣<br>40 发：测绘 CCRP AK47 SPENT BULLET 762x39 40 发弹匣 | `ccrp_ak47_spent_bullet_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP AK74 545x39 30 发弹匣<br>45 发：测绘 CCRP AK74 545x39 45 发弹匣<br>60 发：测绘 CCRP AK74 545x39 60 发弹匣 | `ccrp_ak74_545x39` | `tacz:545x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP AK74M 545x39 30 发弹匣<br>45 发：测绘 CCRP AK74M 545x39 45 发弹匣<br>60 发：测绘 CCRP AK74M 545x39 60 发弹匣 | `ccrp_ak74m_545x39` | `tacz:545x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP AKS74U 545x39 30 发弹匣<br>35 发：测绘 CCRP AKS74U 545x39 35 发弹匣<br>45 发：测绘 CCRP AKS74U 545x39 45 发弹匣<br>60 发：测绘 CCRP AKS74U 545x39 60 发弹匣 | `ccrp_aks74u_545x39` | `tacz:545x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP AM17 545x39 30 发弹匣<br>35 发：测绘 CCRP AM17 545x39 35 发弹匣<br>50 发：测绘 CCRP AM17 545x39 50 发弹匣<br>60 发：测绘 CCRP AM17 545x39 60 发弹匣 | `ccrp_am17_545x39` | `tacz:545x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 25 发：测绘 CCRP APC 9K PRO G 9mm 25 发弹匣<br>40 发：测绘 CCRP APC 9K PRO G 9mm 40 发弹匣<br>45 发：测绘 CCRP APC 9K PRO G 9mm 45 发弹匣<br>50 发：测绘 CCRP APC 9K PRO G 9mm 50 发弹匣 | `ccrp_apc_9k_pro_g_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 50 发：测绘 CCRP AR57 57x28 50 发弹匣 | `ccrp_ar57_57x28` | `tacz:57x28` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP AUG A3 556x45 30 发弹匣<br>42 发：测绘 CCRP AUG A3 556x45 42 发弹匣<br>60 发：测绘 CCRP AUG A3 556x45 60 发弹匣<br>100 发：测绘 CCRP AUG A3 556x45 100 发弹匣 | `ccrp_aug_a3_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 CCRP AUG A3 DMR 556x45 10 发弹匣<br>20 发：测绘 CCRP AUG A3 DMR 556x45 20 发弹匣<br>30 发：测绘 CCRP AUG A3 DMR 556x45 30 发弹匣<br>42 发：测绘 CCRP AUG A3 DMR 556x45 42 发弹匣 | `ccrp_aug_a3_dmr_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP AUG A3 M2KIT 556x45_m995 30 发弹匣<br>42 发：测绘 CCRP AUG A3 M2KIT 556x45_m995 42 发弹匣<br>60 发：测绘 CCRP AUG A3 M2KIT 556x45_m995 60 发弹匣<br>100 发：测绘 CCRP AUG A3 M2KIT 556x45_m995 100 发弹匣 | `ccrp_aug_a3_m2kit_556x45_m995` | `ccrp:556x45_m995` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP AUG A3S 300blk 30 发弹匣<br>45 发：测绘 CCRP AUG A3S 300blk 45 发弹匣<br>50 发：测绘 CCRP AUG A3S 300blk 50 发弹匣<br>60 发：测绘 CCRP AUG A3S 300blk 60 发弹匣 | `ccrp_aug_a3s_300blk` | `tacz:300blk` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP AUG CAMG KIT 556x45 30 发弹匣<br>42 发：测绘 CCRP AUG CAMG KIT 556x45 42 发弹匣<br>60 发：测绘 CCRP AUG CAMG KIT 556x45 60 发弹匣<br>100 发：测绘 CCRP AUG CAMG KIT 556x45 100 发弹匣 | `ccrp_aug_camg_kit_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP AUG HBAR 556x45 30 发弹匣<br>42 发：测绘 CCRP AUG HBAR 556x45 42 发弹匣<br>60 发：测绘 CCRP AUG HBAR 556x45 60 发弹匣<br>100 发：测绘 CCRP AUG HBAR 556x45 100 发弹匣 | `ccrp_aug_hbar_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 25 发：测绘 CCRP AUG PARA 9mm 25 发弹匣<br>32 发：测绘 CCRP AUG PARA 9mm 32 发弹匣<br>35 发：测绘 CCRP AUG PARA 9mm 35 发弹匣<br>40 发：测绘 CCRP AUG PARA 9mm 40 发弹匣 | `ccrp_aug_para_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 17 发：测绘 CCRP BLOCK 17 9mm 17 发弹匣<br>20 发：测绘 CCRP BLOCK 17 9mm 20 发弹匣<br>25 发：测绘 CCRP BLOCK 17 9mm 25 发弹匣<br>30 发：测绘 CCRP BLOCK 17 9mm 30 发弹匣 | `ccrp_block_17_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP BRN 180 BULLPUP 556x45 30 发弹匣<br>32 发：测绘 CCRP BRN 180 BULLPUP 556x45 32 发弹匣<br>45 发：测绘 CCRP BRN 180 BULLPUP 556x45 45 发弹匣<br>60 发：测绘 CCRP BRN 180 BULLPUP 556x45 60 发弹匣 | `ccrp_brn_180_bullpup_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP CAMG M4 SOPMOD2 556x45 30 发弹匣<br>45 发：测绘 CCRP CAMG M4 SOPMOD2 556x45 45 发弹匣<br>60 发：测绘 CCRP CAMG M4 SOPMOD2 556x45 60 发弹匣<br>100 发：测绘 CCRP CAMG M4 SOPMOD2 556x45 100 发弹匣 | `ccrp_camg_m4_sopmod2_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP CAMG MK18 556x45 30 发弹匣<br>45 发：测绘 CCRP CAMG MK18 556x45 45 发弹匣<br>60 发：测绘 CCRP CAMG MK18 556x45 60 发弹匣<br>100 发：测绘 CCRP CAMG MK18 556x45 100 发弹匣 | `ccrp_camg_mk18_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP CAR 15 556x45 20 发弹匣<br>30 发：测绘 CCRP CAR 15 556x45 30 发弹匣<br>32 发：测绘 CCRP CAR 15 556x45 32 发弹匣<br>60 发：测绘 CCRP CAR 15 556x45 60 发弹匣 | `ccrp_car_15_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 7 发：测绘 CCRP CHISATO M1911 45acp 7 发弹匣<br>12 发：测绘 CCRP CHISATO M1911 45acp 12 发弹匣<br>18 发：测绘 CCRP CHISATO M1911 45acp 18 发弹匣<br>22 发：测绘 CCRP CHISATO M1911 45acp 22 发弹匣 | `ccrp_chisato_m1911_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP CR300 300blk 20 发弹匣<br>30 发：测绘 CCRP CR300 300blk 30 发弹匣<br>45 发：测绘 CCRP CR300 300blk 45 发弹匣<br>60 发：测绘 CCRP CR300 300blk 60 发弹匣 | `ccrp_cr300_300blk` | `tacz:300blk` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP DDM4 556x45_m995 30 发弹匣<br>35 发：测绘 CCRP DDM4 556x45_m995 35 发弹匣<br>45 发：测绘 CCRP DDM4 556x45_m995 45 发弹匣<br>60 发：测绘 CCRP DDM4 556x45_m995 60 发弹匣 | `ccrp_ddm4_556x45_m995` | `ccrp:556x45_m995` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP DDM4 PDW 300blk 20 发弹匣<br>32 发：测绘 CCRP DDM4 PDW 300blk 32 发弹匣<br>45 发：测绘 CCRP DDM4 PDW 300blk 45 发弹匣<br>60 发：测绘 CCRP DDM4 PDW 300blk 60 发弹匣 | `ccrp_ddm4_pdw_300blk` | `tacz:300blk` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 32 发：测绘 CCRP DDM4 V7 PRO 556x45_m855a2_f 32 发弹匣<br>35 发：测绘 CCRP DDM4 V7 PRO 556x45_m855a2_f 35 发弹匣<br>45 发：测绘 CCRP DDM4 V7 PRO 556x45_m855a2_f 45 发弹匣<br>60 发：测绘 CCRP DDM4 V7 PRO 556x45_m855a2_f 60 发弹匣 | `ccrp_ddm4_v7_pro_556x45_m855a2_f` | `ccrp:556x45_m855a2_f` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP DDM4A1 556x45 30 发弹匣<br>45 发：测绘 CCRP DDM4A1 556x45 45 发弹匣<br>60 发：测绘 CCRP DDM4A1 556x45 60 发弹匣 | `ccrp_ddm4a1_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 7 发：测绘 CCRP DEAGLE NIGHTINGALE 44mag 7 发弹匣<br>8 发：测绘 CCRP DEAGLE NIGHTINGALE 44mag 8 发弹匣<br>10 发：测绘 CCRP DEAGLE NIGHTINGALE 44mag 10 发弹匣<br>12 发：测绘 CCRP DEAGLE NIGHTINGALE 44mag 12 发弹匣 | `ccrp_deagle_nightingale_44mag` | `ccrp:44mag` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 7 发：测绘 CCRP DEAGLE XIX 50ae 7 发弹匣<br>8 发：测绘 CCRP DEAGLE XIX 50ae 8 发弹匣<br>10 发：测绘 CCRP DEAGLE XIX 50ae 10 发弹匣<br>12 发：测绘 CCRP DEAGLE XIX 50ae 12 发弹匣 | `ccrp_deagle_xix_50ae` | `tacz:50ae` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 CCRP DSA SA58 308 15 发弹匣<br>20 发：测绘 CCRP DSA SA58 308 20 发弹匣<br>30 发：测绘 CCRP DSA SA58 308 30 发弹匣<br>50 发：测绘 CCRP DSA SA58 308 50 发弹匣 | `ccrp_dsa_sa58_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP F90 556x45 30 发弹匣<br>42 发：测绘 CCRP F90 556x45 42 发弹匣<br>50 发：测绘 CCRP F90 556x45 50 发弹匣<br>60 发：测绘 CCRP F90 556x45 60 发弹匣 | `ccrp_f90_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP F90 MBR 556x45 30 发弹匣<br>45 发：测绘 CCRP F90 MBR 556x45 45 发弹匣<br>60 发：测绘 CCRP F90 MBR 556x45 60 发弹匣<br>100 发：测绘 CCRP F90 MBR 556x45 100 发弹匣 | `ccrp_f90_mbr_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP FIGHTLITE SCR HG 556x45 30 发弹匣<br>40 发：测绘 CCRP FIGHTLITE SCR HG 556x45 40 发弹匣<br>50 发：测绘 CCRP FIGHTLITE SCR HG 556x45 50 发弹匣<br>100 发：测绘 CCRP FIGHTLITE SCR HG 556x45 100 发弹匣 | `ccrp_fightlite_scr_hg_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP G95A1 556x45 30 发弹匣<br>45 发：测绘 CCRP G95A1 556x45 45 发弹匣<br>60 发：测绘 CCRP G95A1 556x45 60 发弹匣<br>100 发：测绘 CCRP G95A1 556x45 100 发弹匣 | `ccrp_g95a1_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 CCRP GLOCK20GEN5MOS 10mm 15 发弹匣<br>33 发：测绘 CCRP GLOCK20GEN5MOS 10mm 33 发弹匣<br>50 发：测绘 CCRP GLOCK20GEN5MOS 10mm 50 发弹匣<br>100 发：测绘 CCRP GLOCK20GEN5MOS 10mm 100 发弹匣 | `ccrp_glock20gen5mos_10mm` | `tacz:10mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 CCRP GLOCK40GEN5MOS 10mm 15 发弹匣<br>33 发：测绘 CCRP GLOCK40GEN5MOS 10mm 33 发弹匣<br>50 发：测绘 CCRP GLOCK40GEN5MOS 10mm 50 发弹匣<br>100 发：测绘 CCRP GLOCK40GEN5MOS 10mm 100 发弹匣 | `ccrp_glock40gen5mos_10mm` | `tacz:10mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 200 发：测绘 CCRP HK21 308 200 发弹链 | `ccrp_hk21_308_belt` | `tacz:308` | `belt` | `neutral_belt_box` | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
+| 30 发：测绘 CCRP HK416 556x45 30 发弹匣<br>45 发：测绘 CCRP HK416 556x45 45 发弹匣<br>60 发：测绘 CCRP HK416 556x45 60 发弹匣<br>100 发：测绘 CCRP HK416 556x45 100 发弹匣 | `ccrp_hk416_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP HK416 SOPMOD 556x45 30 发弹匣<br>45 发：测绘 CCRP HK416 SOPMOD 556x45 45 发弹匣<br>60 发：测绘 CCRP HK416 SOPMOD 556x45 60 发弹匣<br>100 发：测绘 CCRP HK416 SOPMOD 556x45 100 发弹匣 | `ccrp_hk416_sopmod_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP HK416A8 556x45 30 发弹匣<br>45 发：测绘 CCRP HK416A8 556x45 45 发弹匣<br>60 发：测绘 CCRP HK416A8 556x45 60 发弹匣 | `ccrp_hk416a8_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP HK416C 556x45 30 发弹匣<br>40 发：测绘 CCRP HK416C 556x45 40 发弹匣<br>50 发：测绘 CCRP HK416C 556x45 50 发弹匣<br>60 发：测绘 CCRP HK416C 556x45 60 发弹匣 | `ccrp_hk416c_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP HK417 308 20 发弹匣 | `ccrp_hk417_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP HK433 556x45 30 发弹匣<br>45 发：测绘 CCRP HK433 556x45 45 发弹匣<br>60 发：测绘 CCRP HK433 556x45 60 发弹匣<br>100 发：测绘 CCRP HK433 556x45 100 发弹匣 | `ccrp_hk433_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP HK G28 308 20 发弹匣 | `ccrp_hk_g28_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP HK G28 PATROL 308 20 发弹匣 | `ccrp_hk_g28_patrol_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP HONEYBADGER 300blk 30 发弹匣<br>32 发：测绘 CCRP HONEYBADGER 300blk 32 发弹匣<br>35 发：测绘 CCRP HONEYBADGER 300blk 35 发弹匣<br>60 发：测绘 CCRP HONEYBADGER 300blk 60 发弹匣 | `ccrp_honeybadger_300blk` | `tacz:300blk` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP KAC KS 1 556x45 30 发弹匣<br>32 发：测绘 CCRP KAC KS 1 556x45 32 发弹匣<br>45 发：测绘 CCRP KAC KS 1 556x45 45 发弹匣<br>60 发：测绘 CCRP KAC KS 1 556x45 60 发弹匣 | `ccrp_kac_ks_1_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 50 发：测绘 CCRP KELTEC P50 57x28 50 发弹匣 | `ccrp_keltec_p50_57x28` | `tacz:57x28` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP KM AK74M 545x39 30 发弹匣<br>45 发：测绘 CCRP KM AK74M 545x39 45 发弹匣<br>60 发：测绘 CCRP KM AK74M 545x39 60 发弹匣<br>95 发：测绘 CCRP KM AK74M 545x39 95 发弹匣 | `ccrp_km_ak74m_545x39` | `tacz:545x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 CCRP M110 308 15 发弹匣<br>25 发：测绘 CCRP M110 308 25 发弹匣<br>50 发：测绘 CCRP M110 308 50 发弹匣 | `ccrp_m110_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 CCRP M110A3 65cm 15 发弹匣<br>20 发：测绘 CCRP M110A3 65cm 20 发弹匣<br>25 发：测绘 CCRP M110A3 65cm 25 发弹匣<br>50 发：测绘 CCRP M110A3 65cm 50 发弹匣 | `ccrp_m110a3_65cm` | `ccrp:65cm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP M14 HBAR 308 20 发弹匣<br>30 发：测绘 CCRP M14 HBAR 308 30 发弹匣<br>50 发：测绘 CCRP M14 HBAR 308 50 发弹匣<br>100 发：测绘 CCRP M14 HBAR 308 100 发弹匣 | `ccrp_m14_hbar_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP M16A3 556x45 20 发弹匣<br>30 发：测绘 CCRP M16A3 556x45 30 发弹匣<br>32 发：测绘 CCRP M16A3 556x45 32 发弹匣<br>60 发：测绘 CCRP M16A3 556x45 60 发弹匣 | `ccrp_m16a3_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP M231 556x45 30 发弹匣<br>33 发：测绘 CCRP M231 556x45 33 发弹匣<br>60 发：测绘 CCRP M231 556x45 60 发弹匣<br>100 发：测绘 CCRP M231 556x45 100 发弹匣 | `ccrp_m231_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP M249 SAW 556x45 30 发弹链<br>45 发：测绘 CCRP M249 SAW 556x45 45 发弹链<br>60 发：测绘 CCRP M249 SAW 556x45 60 发弹链<br>100 发：测绘 CCRP M249 SAW 556x45 100 发弹链 | `ccrp_m249_saw_556x45_belt` | `tacz:556x45` | `belt` | `neutral_belt_box` | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
+| 40 发：测绘 CCRP M27 IAR 556x45 40 发弹匣<br>50 发：测绘 CCRP M27 IAR 556x45 50 发弹匣<br>60 发：测绘 CCRP M27 IAR 556x45 60 发弹匣<br>100 发：测绘 CCRP M27 IAR 556x45 100 发弹匣 | `ccrp_m27_iar_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP M305A 762x39 30 发弹匣<br>45 发：测绘 CCRP M305A 762x39 45 发弹匣<br>50 发：测绘 CCRP M305A 762x39 50 发弹匣<br>75 发：测绘 CCRP M305A 762x39 75 发弹匣 | `ccrp_m305a_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 CCRP M39 EMR 308 10 发弹匣<br>20 发：测绘 CCRP M39 EMR 308 20 发弹匣<br>25 发：测绘 CCRP M39 EMR 308 25 发弹匣<br>50 发：测绘 CCRP M39 EMR 308 50 发弹匣 | `ccrp_m39_emr_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP M4 CQBR 556x45 30 发弹匣<br>40 发：测绘 CCRP M4 CQBR 556x45 40 发弹匣<br>50 发：测绘 CCRP M4 CQBR 556x45 50 发弹匣<br>60 发：测绘 CCRP M4 CQBR 556x45 60 发弹匣 | `ccrp_m4_cqbr_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP M4 SOPMOD2 FSP 556x45 30 发弹匣<br>45 发：测绘 CCRP M4 SOPMOD2 FSP 556x45 45 发弹匣<br>60 发：测绘 CCRP M4 SOPMOD2 FSP 556x45 60 发弹匣<br>100 发：测绘 CCRP M4 SOPMOD2 FSP 556x45 100 发弹匣 | `ccrp_m4_sopmod2_fsp_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP M4 SS 556x45 30 发弹匣<br>45 发：测绘 CCRP M4 SS 556x45 45 发弹匣<br>60 发：测绘 CCRP M4 SS 556x45 60 发弹匣<br>100 发：测绘 CCRP M4 SS 556x45 100 发弹匣 | `ccrp_m4_ss_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP MCX SPEAR TOMBSTONE 68x51fury 20 发弹匣<br>22 发：测绘 CCRP MCX SPEAR TOMBSTONE 68x51fury 22 发弹匣<br>25 发：测绘 CCRP MCX SPEAR TOMBSTONE 68x51fury 25 发弹匣<br>30 发：测绘 CCRP MCX SPEAR TOMBSTONE 68x51fury 30 发弹匣 | `ccrp_mcx_spear_tombstone_68x51fury` | `tacz:68x51fury` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP MCX VIRTUS 556x45 30 发弹匣<br>40 发：测绘 CCRP MCX VIRTUS 556x45 40 发弹匣<br>50 发：测绘 CCRP MCX VIRTUS 556x45 50 发弹匣<br>60 发：测绘 CCRP MCX VIRTUS 556x45 60 发弹匣 | `ccrp_mcx_virtus_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP MG36 556x45 30 发弹匣<br>50 发：测绘 CCRP MG36 556x45 50 发弹匣<br>75 发：测绘 CCRP MG36 556x45 75 发弹匣<br>100 发：测绘 CCRP MG36 556x45 100 发弹匣 | `ccrp_mg36_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 CCRP MK13 MOD5 300wm 5 发弹匣<br>6 发：测绘 CCRP MK13 MOD5 300wm 6 发弹匣<br>10 发：测绘 CCRP MK13 MOD5 300wm 10 发弹匣<br>12 发：测绘 CCRP MK13 MOD5 300wm 12 发弹匣 | `ccrp_mk13_mod5_300wm` | `ccrp:300wm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP MK17 308 20 发弹匣<br>22 发：测绘 CCRP MK17 308 22 发弹匣<br>25 发：测绘 CCRP MK17 308 25 发弹匣<br>50 发：测绘 CCRP MK17 308 50 发弹匣 | `ccrp_mk17_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 7 发：测绘 CCRP MK18 MJOLNIR 338 7 发弹匣<br>10 发：测绘 CCRP MK18 MJOLNIR 338 10 发弹匣<br>12 发：测绘 CCRP MK18 MJOLNIR 338 12 发弹匣<br>15 发：测绘 CCRP MK18 MJOLNIR 338 15 发弹匣 | `ccrp_mk18_mjolnir_338` | `tacz:338` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP MK556 556x45 30 发弹匣<br>45 发：测绘 CCRP MK556 556x45 45 发弹匣<br>60 发：测绘 CCRP MK556 556x45 60 发弹匣<br>75 发：测绘 CCRP MK556 556x45 75 发弹匣 | `ccrp_mk556_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP MP5 SD 9mm 30 发弹匣<br>40 发：测绘 CCRP MP5 SD 9mm 40 发弹匣<br>50 发：测绘 CCRP MP5 SD 9mm 50 发弹匣<br>60 发：测绘 CCRP MP5 SD 9mm 60 发弹匣 | `ccrp_mp5_sd_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 CCRP MP5K 9mm 15 发弹匣<br>30 发：测绘 CCRP MP5K 9mm 30 发弹匣<br>50 发：测绘 CCRP MP5K 9mm 50 发弹匣<br>60 发：测绘 CCRP MP5K 9mm 60 发弹匣 | `ccrp_mp5k_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP MP5K PDW 9mm 30 发弹匣<br>50 发：测绘 CCRP MP5K PDW 9mm 50 发弹匣<br>60 发：测绘 CCRP MP5K PDW 9mm 60 发弹匣<br>100 发：测绘 CCRP MP5K PDW 9mm 100 发弹匣 | `ccrp_mp5k_pdw_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP MP7A3 46x30 30 发弹匣<br>40 发：测绘 CCRP MP7A3 46x30 40 发弹匣<br>50 发：测绘 CCRP MP7A3 46x30 50 发弹匣<br>60 发：测绘 CCRP MP7A3 46x30 60 发弹匣 | `ccrp_mp7a3_46x30` | `tacz:46x30` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 25 发：测绘 CCRP MPX 9mm 25 发弹匣<br>30 发：测绘 CCRP MPX 9mm 30 发弹匣<br>35 发：测绘 CCRP MPX 9mm 35 发弹匣<br>50 发：测绘 CCRP MPX 9mm 50 发弹匣 | `ccrp_mpx_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 50 发：测绘 CCRP P90 EFFEN 90 57x28 50 发弹匣 | `ccrp_p90_effen_90_57x28` | `tacz:57x28` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 50 发：测绘 CCRP P90 PAW 57x28 50 发弹匣 | `ccrp_p90_paw_57x28` | `tacz:57x28` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 50 发：测绘 CCRP P90 SHROUND S 57x28 50 发弹匣 | `ccrp_p90_shround_s_57x28` | `tacz:57x28` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP PSA AK556 556x45 30 发弹匣<br>32 发：测绘 CCRP PSA AK556 556x45 32 发弹匣<br>45 发：测绘 CCRP PSA AK556 556x45 45 发弹匣<br>60 发：测绘 CCRP PSA AK556 556x45 60 发弹匣 | `ccrp_psa_ak556_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP QBU 191 58x42 30 发弹匣<br>40 发：测绘 CCRP QBU 191 58x42 40 发弹匣<br>50 发：测绘 CCRP QBU 191 58x42 50 发弹匣<br>60 发：测绘 CCRP QBU 191 58x42 60 发弹匣 | `ccrp_qbu_191_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP QBZ 191 58x42 30 发弹匣<br>45 发：测绘 CCRP QBZ 191 58x42 45 发弹匣<br>60 发：测绘 CCRP QBZ 191 58x42 60 发弹匣<br>75 发：测绘 CCRP QBZ 191 58x42 75 发弹匣 | `ccrp_qbz_191_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP RD704 762x39 30 发弹匣<br>35 发：测绘 CCRP RD704 762x39 35 发弹匣<br>40 发：测绘 CCRP RD704 762x39 40 发弹匣<br>45 发：测绘 CCRP RD704 762x39 45 发弹匣 | `ccrp_rd704_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP RO635 9mm 30 发弹匣<br>35 发：测绘 CCRP RO635 9mm 35 发弹匣<br>40 发：测绘 CCRP RO635 9mm 40 发弹匣<br>50 发：测绘 CCRP RO635 9mm 50 发弹匣 | `ccrp_ro635_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP RPK74M 545x39 30 发弹匣<br>45 发：测绘 CCRP RPK74M 545x39 45 发弹匣<br>60 发：测绘 CCRP RPK74M 545x39 60 发弹匣<br>95 发：测绘 CCRP RPK74M 545x39 95 发弹匣 | `ccrp_rpk74m_545x39` | `tacz:545x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP RPK 203 762x39 30 发弹匣<br>40 发：测绘 CCRP RPK 203 762x39 40 发弹匣<br>60 发：测绘 CCRP RPK 203 762x39 60 发弹匣<br>75 发：测绘 CCRP RPK 203 762x39 75 发弹匣 | `ccrp_rpk_203_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP SAI GRY LITE BLACK 556x45 30 发弹匣<br>45 发：测绘 CCRP SAI GRY LITE BLACK 556x45 45 发弹匣<br>60 发：测绘 CCRP SAI GRY LITE BLACK 556x45 60 发弹匣<br>75 发：测绘 CCRP SAI GRY LITE BLACK 556x45 75 发弹匣 | `ccrp_sai_gry_lite_black_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP SAMURAI EDGE 45acp 20 发弹匣<br>23 发：测绘 CCRP SAMURAI EDGE 45acp 23 发弹匣<br>26 发：测绘 CCRP SAMURAI EDGE 45acp 26 发弹匣<br>32 发：测绘 CCRP SAMURAI EDGE 45acp 32 发弹匣 | `ccrp_samurai_edge_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP SCAR16 ARIANA 556x45 30 发弹匣<br>32 发：测绘 CCRP SCAR16 ARIANA 556x45 32 发弹匣<br>45 发：测绘 CCRP SCAR16 ARIANA 556x45 45 发弹匣<br>60 发：测绘 CCRP SCAR16 ARIANA 556x45 60 发弹匣 | `ccrp_scar16_ariana_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 CCRP SCAR17 ARMARISE 308 10 发弹匣<br>15 发：测绘 CCRP SCAR17 ARMARISE 308 15 发弹匣<br>20 发：测绘 CCRP SCAR17 ARMARISE 308 20 发弹匣<br>25 发：测绘 CCRP SCAR17 ARMARISE 308 25 发弹匣 | `ccrp_scar17_armarise_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP SCAR 16S 556x45 30 发弹匣<br>32 发：测绘 CCRP SCAR 16S 556x45 32 发弹匣<br>45 发：测绘 CCRP SCAR 16S 556x45 45 发弹匣<br>60 发：测绘 CCRP SCAR 16S 556x45 60 发弹匣 | `ccrp_scar_16s_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 CCRP SCAR 17S 65cm 10 发弹匣<br>15 发：测绘 CCRP SCAR 17S 65cm 15 发弹匣<br>20 发：测绘 CCRP SCAR 17S 65cm 20 发弹匣<br>25 发：测绘 CCRP SCAR 17S 65cm 25 发弹匣 | `ccrp_scar_17s_65cm` | `ccrp:65cm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP SCAR SC 300blk 30 发弹匣<br>45 发：测绘 CCRP SCAR SC 300blk 45 发弹匣<br>60 发：测绘 CCRP SCAR SC 300blk 60 发弹匣<br>100 发：测绘 CCRP SCAR SC 300blk 100 发弹匣 | `ccrp_scar_sc_300blk` | `tacz:300blk` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 18 发：测绘 CCRP SHIELD OTS33 9mm 18 发弹匣<br>23 发：测绘 CCRP SHIELD OTS33 9mm 23 发弹匣<br>27 发：测绘 CCRP SHIELD OTS33 9mm 27 发弹匣<br>33 发：测绘 CCRP SHIELD OTS33 9mm 33 发弹匣 | `ccrp_shield_ots33_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP SIG277 68x51fury 20 发弹匣<br>25 发：测绘 CCRP SIG277 68x51fury 25 发弹匣<br>30 发：测绘 CCRP SIG277 68x51fury 30 发弹匣<br>45 发：测绘 CCRP SIG277 68x51fury 45 发弹匣 | `ccrp_sig277_68x51fury` | `tacz:68x51fury` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP SOLGW MK1 556x45_m855a1 20 发弹匣<br>30 发：测绘 CCRP SOLGW MK1 556x45_m855a1 30 发弹匣<br>32 发：测绘 CCRP SOLGW MK1 556x45_m855a1 32 发弹匣<br>60 发：测绘 CCRP SOLGW MK1 556x45_m855a1 60 发弹匣 | `ccrp_solgw_mk1_556x45_m855a1` | `ccrp:556x45_m855a1` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 CCRP SR25 308 15 发弹匣<br>25 发：测绘 CCRP SR25 308 25 发弹匣<br>50 发：测绘 CCRP SR25 308 50 发弹匣 | `ccrp_sr25_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP SR 3M 9x39 30 发弹匣<br>35 发：测绘 CCRP SR 3M 9x39 35 发弹匣<br>45 发：测绘 CCRP SR 3M 9x39 45 发弹匣<br>50 发：测绘 CCRP SR 3M 9x39 50 发弹匣 | `ccrp_sr_3m_9x39` | `tacz:9x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 7 发：测绘 CCRP TIMELESS 50 50ae 7 发弹匣<br>8 发：测绘 CCRP TIMELESS 50 50ae 8 发弹匣<br>10 发：测绘 CCRP TIMELESS 50 50ae 10 发弹匣<br>14 发：测绘 CCRP TIMELESS 50 50ae 14 发弹匣 | `ccrp_timeless_50_50ae` | `tacz:50ae` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP TROY M14 SASS 308 20 发弹匣<br>30 发：测绘 CCRP TROY M14 SASS 308 30 发弹匣<br>50 发：测绘 CCRP TROY M14 SASS 308 50 发弹匣<br>100 发：测绘 CCRP TROY M14 SASS 308 100 发弹匣 | `ccrp_troy_m14_sass_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP TTI MPX 9mm 30 发弹匣<br>36 发：测绘 CCRP TTI MPX 9mm 36 发弹匣<br>50 发：测绘 CCRP TTI MPX 9mm 50 发弹匣<br>100 发：测绘 CCRP TTI MPX 9mm 100 发弹匣 | `ccrp_tti_mpx_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP TTI TR1 556x45 30 发弹匣<br>32 发：测绘 CCRP TTI TR1 556x45 32 发弹匣<br>60 发：测绘 CCRP TTI TR1 556x45 60 发弹匣<br>100 发：测绘 CCRP TTI TR1 556x45 100 发弹匣 | `ccrp_tti_tr1_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 60 发：测绘 CCRP TYPE 95 LONGBOW 58x42 60 发弹匣<br>75 发：测绘 CCRP TYPE 95 LONGBOW 58x42 75 发弹匣<br>100 发：测绘 CCRP TYPE 95 LONGBOW 58x42 100 发弹匣<br>150 发：测绘 CCRP TYPE 95 LONGBOW 58x42 150 发弹匣 | `ccrp_type_95_longbow_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP TYPE 97 GEN2 556x45 30 发弹匣<br>45 发：测绘 CCRP TYPE 97 GEN2 556x45 45 发弹匣<br>60 发：测绘 CCRP TYPE 97 GEN2 556x45 60 发弹匣<br>75 发：测绘 CCRP TYPE 97 GEN2 556x45 75 发弹匣 | `ccrp_type_97_gen2_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CCRP UZI45 45acp 20 发弹匣<br>32 发：测绘 CCRP UZI45 45acp 32 发弹匣<br>40 发：测绘 CCRP UZI45 45acp 40 发弹匣<br>50 发：测绘 CCRP UZI45 45acp 50 发弹匣 | `ccrp_uzi45_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 CCRP VECTOR10 10mm 15 发弹匣<br>33 发：测绘 CCRP VECTOR10 10mm 33 发弹匣<br>50 发：测绘 CCRP VECTOR10 10mm 50 发弹匣<br>100 发：测绘 CCRP VECTOR10 10mm 100 发弹匣 | `ccrp_vector10_10mm` | `tacz:10mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 32 发：测绘 CCRP X95 SMG 9mm 32 发弹匣<br>38 发：测绘 CCRP X95 SMG 9mm 38 发弹匣<br>45 发：测绘 CCRP X95 SMG 9mm 45 发弹匣<br>50 发：测绘 CCRP X95 SMG 9mm 50 发弹匣 | `ccrp_x95_smg_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP X95R 556x45 30 发弹匣<br>45 发：测绘 CCRP X95R 556x45 45 发弹匣<br>50 发：测绘 CCRP X95R 556x45 50 发弹匣<br>60 发：测绘 CCRP X95R 556x45 60 发弹匣 | `ccrp_x95r_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP ZENIT AK104 762x39 30 发弹匣<br>40 发：测绘 CCRP ZENIT AK104 762x39 40 发弹匣<br>60 发：测绘 CCRP ZENIT AK104 762x39 60 发弹匣<br>75 发：测绘 CCRP ZENIT AK104 762x39 75 发弹匣 | `ccrp_zenit_ak104_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CCRP ZENIT AK105 545x39 30 发弹匣<br>45 发：测绘 CCRP ZENIT AK105 545x39 45 发弹匣<br>60 发：测绘 CCRP ZENIT AK105 545x39 60 发弹匣 | `ccrp_zenit_ak105_545x39` | `tacz:545x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CIB 9A91 9x39mm 20 发弹匣<br>30 发：测绘 CIB 9A91 9x39mm 30 发弹匣<br>40 发：测绘 CIB 9A91 9x39mm 40 发弹匣<br>50 发：测绘 CIB 9A91 9x39mm 50 发弹匣 | `cib_9a91_9x39mm` | `cib:9x39mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 AK-105 545x39 30 发弹匣<br>40 发：测绘 AK-105 545x39 40 发弹匣<br>50 发：测绘 AK-105 545x39 50 发弹匣<br>60 发：测绘 AK-105 545x39 60 发弹匣 | `cib_ak105_545x39` | `tacz:545x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CIBS AK24 TEXAS 556x45 30 发弹匣<br>40 发：测绘 CIBS AK24 TEXAS 556x45 40 发弹匣<br>50 发：测绘 CIBS AK24 TEXAS 556x45 50 发弹匣<br>60 发：测绘 CIBS AK24 TEXAS 556x45 60 发弹匣 | `cib_ak24_556` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CIB ASVAL 9x39mm 20 发弹匣<br>30 发：测绘 CIB ASVAL 9x39mm 30 发弹匣<br>40 发：测绘 CIB ASVAL 9x39mm 40 发弹匣<br>50 发：测绘 CIB ASVAL 9x39mm 50 发弹匣 | `cib_asval_9x39mm` | `cib:9x39mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 CS AWP 308 5 发弹匣<br>10 发：测绘 CS AWP 308 10 发弹匣<br>15 发：测绘 CS AWP 308 15 发弹匣<br>20 发：测绘 CS AWP 308 20 发弹匣 | `cib_awp_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CIB CS AK47 762x39 30 发弹匣<br>45 发：测绘 CIB CS AK47 762x39 45 发弹匣<br>50 发：测绘 CIB CS AK47 762x39 50 发弹匣<br>60 发：测绘 CIB CS AK47 762x39 60 发弹匣 | `cib_cs_ak47_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 CIB CSLR3 58x42 10 发弹匣<br>12 发：测绘 CIB CSLR3 58x42 12 发弹匣<br>13 发：测绘 CIB CSLR3 58x42 13 发弹匣<br>25 发：测绘 CIB CSLR3 58x42 25 发弹匣 | `cib_cslr3_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 CIB CSLR4 308 5 发弹匣<br>10 发：测绘 CIB CSLR4 308 10 发弹匣<br>15 发：测绘 CIB CSLR4 308 15 发弹匣<br>20 发：测绘 CIB CSLR4 308 20 发弹匣 | `cib_cslr4_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CIB EVO3 9mm 20 发弹匣<br>30 发：测绘 CIB EVO3 9mm 30 发弹匣<br>45 发：测绘 CIB EVO3 9mm 45 发弹匣<br>65 发：测绘 CIB EVO3 9mm 65 发弹匣 | `cib_evo3_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CIB FAL 308 20 发弹匣<br>30 发：测绘 CIB FAL 308 30 发弹匣<br>40 发：测绘 CIB FAL 308 40 发弹匣<br>50 发：测绘 CIB FAL 308 50 发弹匣 | `cib_fal_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CIB G18C 9mm 20 发弹匣<br>30 发：测绘 CIB G18C 9mm 30 发弹匣<br>40 发：测绘 CIB G18C 9mm 40 发弹匣<br>50 发：测绘 CIB G18C 9mm 50 发弹匣 | `cib_g18c_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 CIB G19 9mm 15 发弹匣<br>17 发：测绘 CIB G19 9mm 17 发弹匣<br>19 发：测绘 CIB G19 9mm 19 发弹匣<br>33 发：测绘 CIB G19 9mm 33 发弹匣 | `cib_g19_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CIB G3SG1 308 20 发弹匣<br>22 发：测绘 CIB G3SG1 308 22 发弹匣<br>25 发：测绘 CIB G3SG1 308 25 发弹匣<br>30 发：测绘 CIB G3SG1 308 30 发弹匣 | `cib_g3sg1_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 35 发：测绘 CIB GALIL 556x45 35 发弹匣<br>45 发：测绘 CIB GALIL 556x45 45 发弹匣<br>50 发：测绘 CIB GALIL 556x45 50 发弹匣<br>60 发：测绘 CIB GALIL 556x45 60 发弹匣 | `cib_galil_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 35 发：测绘 Galil ACE 32 762x39 35 发弹匣<br>45 发：测绘 Galil ACE 32 762x39 45 发弹匣<br>55 发：测绘 Galil ACE 32 762x39 55 发弹匣<br>60 发：测绘 Galil ACE 32 762x39 60 发弹匣 | `cib_galilace32_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 35 发：测绘 CIB GALILACE 556x45 35 发弹匣<br>45 发：测绘 CIB GALILACE 556x45 45 发弹匣<br>55 发：测绘 CIB GALILACE 556x45 55 发弹匣<br>60 发：测绘 CIB GALILACE 556x45 60 发弹匣 | `cib_galilace_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CIB HK433 556x45 30 发弹匣<br>40 发：测绘 CIB HK433 556x45 40 发弹匣<br>50 发：测绘 CIB HK433 556x45 50 发弹匣<br>60 发：测绘 CIB HK433 556x45 60 发弹匣 | `cib_hk433_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CIB JS9 9mm 20 发弹匣<br>30 发：测绘 CIB JS9 9mm 30 发弹匣<br>40 发：测绘 CIB JS9 9mm 40 发弹匣<br>50 发：测绘 CIB JS9 9mm 50 发弹匣 | `cib_js9_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CIB K2 556x45 20 发弹匣<br>30 发：测绘 CIB K2 556x45 30 发弹匣<br>35 发：测绘 CIB K2 556x45 35 发弹匣<br>40 发：测绘 CIB K2 556x45 40 发弹匣 | `cib_k2_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CIB K2C1 556x45 30 发弹匣<br>40 发：测绘 CIB K2C1 556x45 40 发弹匣<br>50 发：测绘 CIB K2C1 556x45 50 发弹匣<br>60 发：测绘 CIB K2C1 556x45 60 发弹匣 | `cib_k2c1_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CIB LA89 762x39 30 发弹匣<br>40 发：测绘 CIB LA89 762x39 40 发弹匣<br>50 发：测绘 CIB LA89 762x39 50 发弹匣<br>65 发：测绘 CIB LA89 762x39 65 发弹匣 | `cib_la89_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CIB M16A4 556x45 30 发弹匣<br>40 发：测绘 CIB M16A4 556x45 40 发弹匣<br>50 发：测绘 CIB M16A4 556x45 50 发弹匣<br>60 发：测绘 CIB M16A4 556x45 60 发弹匣 | `cib_m16a4_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 CIB M99 127x108 5 发弹匣<br>10 发：测绘 CIB M99 127x108 10 发弹匣<br>15 发：测绘 CIB M99 127x108 15 发弹匣<br>20 发：测绘 CIB M99 127x108 20 发弹匣 | `cib_m99_127x108` | `cib:127x108` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 65 发：测绘 CIB MG3 308 65 发弹链<br>75 发：测绘 CIB MG3 308 75 发弹链<br>100 发：测绘 CIB MG3 308 100 发弹链<br>150 发：测绘 CIB MG3 308 150 发弹链 | `cib_mg3_308_belt` | `tacz:308` | `belt` | `neutral_belt_box` | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
+| 65 发：测绘 CIB NEGEV 556x45 65 发弹链<br>75 发：测绘 CIB NEGEV 556x45 75 发弹链<br>100 发：测绘 CIB NEGEV 556x45 100 发弹链<br>150 发：测绘 CIB NEGEV 556x45 150 发弹链 | `cib_negev_556x45_belt` | `tacz:556x45` | `belt` | `neutral_belt_box` | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
+| 8 发：测绘 CIB ORIGIN12 12g 8 发弹匣<br>10 发：测绘 CIB ORIGIN12 12g 10 发弹匣<br>20 发：测绘 CIB ORIGIN12 12g 20 发弹匣<br>30 发：测绘 CIB ORIGIN12 12g 30 发弹匣 | `cib_origin12_12g` | `tacz:12g` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CIB OTS14 762x39 30 发弹匣<br>40 发：测绘 CIB OTS14 762x39 40 发弹匣<br>50 发：测绘 CIB OTS14 762x39 50 发弹匣<br>60 发：测绘 CIB OTS14 762x39 60 发弹匣 | `cib_ots14_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 13 发：测绘 CIB P250 9mm 13 发弹匣<br>15 发：测绘 CIB P250 9mm 15 发弹匣<br>20 发：测绘 CIB P250 9mm 20 发弹匣<br>25 发：测绘 CIB P250 9mm 25 发弹匣 | `cib_p250_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 70 发：测绘 CIB PKP 762x54 70 发弹链<br>100 发：测绘 CIB PKP 762x54 100 发弹链<br>150 发：测绘 CIB PKP 762x54 150 发弹链<br>200 发：测绘 CIB PKP 762x54 200 发弹链 | `cib_pkp_762x54_belt` | `tacz:762x54` | `belt` | `neutral_belt_box` | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
+| 25 发：测绘 CIB PM9 9mm 25 发弹匣<br>30 发：测绘 CIB PM9 9mm 30 发弹匣<br>40 发：测绘 CIB PM9 9mm 40 发弹匣<br>50 发：测绘 CIB PM9 9mm 50 发弹匣 | `cib_pm9_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 50 发：测绘 CIB PP19 9mm 50 发弹匣<br>53 发：测绘 CIB PP19 9mm 53 发弹匣<br>60 发：测绘 CIB PP19 9mm 60 发弹匣<br>64 发：测绘 CIB PP19 9mm 64 发弹匣 | `cib_pp19_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 7 发：测绘 CIB PPK 32acp 7 发弹匣<br>9 发：测绘 CIB PPK 32acp 9 发弹匣<br>12 发：测绘 CIB PPK 32acp 12 发弹匣<br>14 发：测绘 CIB PPK 32acp 14 发弹匣 | `cib_ppk_32acp` | `cib:32acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CIB PPSH41 762x25 20 发弹匣<br>35 发：测绘 CIB PPSH41 762x25 35 发弹匣<br>45 发：测绘 CIB PPSH41 762x25 45 发弹匣<br>71 发：测绘 CIB PPSH41 762x25 71 发弹匣 | `cib_ppsh41_762x25` | `tacz:762x25` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 CIB QBU10 127x108 5 发弹匣<br>10 发：测绘 CIB QBU10 127x108 10 发弹匣<br>15 发：测绘 CIB QBU10 127x108 15 发弹匣<br>20 发：测绘 CIB QBU10 127x108 20 发弹匣 | `cib_qbu10_127x108` | `cib:127x108` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 CIB QBU191 58x42 10 发弹匣<br>15 发：测绘 CIB QBU191 58x42 15 发弹匣<br>20 发：测绘 CIB QBU191 58x42 20 发弹匣<br>30 发：测绘 CIB QBU191 58x42 30 发弹匣 | `cib_qbu191_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 CIB QBU201 127x108 5 发弹匣<br>10 发：测绘 CIB QBU201 127x108 10 发弹匣<br>15 发：测绘 CIB QBU201 127x108 15 发弹匣<br>20 发：测绘 CIB QBU201 127x108 20 发弹匣 | `cib_qbu201_127x108` | `cib:127x108` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 CIBS QBU202 LINGCHE 338 5 发弹匣<br>8 发：测绘 CIBS QBU202 LINGCHE 338 8 发弹匣<br>10 发：测绘 CIBS QBU202 LINGCHE 338 10 发弹匣<br>15 发：测绘 CIBS QBU202 LINGCHE 338 15 发弹匣 | `cib_qbu202_338` | `tacz:338` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 CIB QBU203 308 5 发弹匣<br>10 发：测绘 CIB QBU203 308 10 发弹匣<br>15 发：测绘 CIB QBU203 308 15 发弹匣<br>20 发：测绘 CIB QBU203 308 20 发弹匣 | `cib_qbu203_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 CIB QBU88 58x42 10 发弹匣<br>15 发：测绘 CIB QBU88 58x42 15 发弹匣<br>20 发：测绘 CIB QBU88 58x42 20 发弹匣<br>25 发：测绘 CIB QBU88 58x42 25 发弹匣 | `cib_qbu88_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CIB QBZ03 58x42 30 发弹匣<br>35 发：测绘 CIB QBZ03 58x42 35 发弹匣<br>40 发：测绘 CIB QBZ03 58x42 40 发弹匣<br>50 发：测绘 CIB QBZ03 58x42 50 发弹匣 | `cib_qbz03_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 QBZ-191 58x42 30 发弹匣<br>40 发：测绘 QBZ-191 58x42 40 发弹匣<br>50 发：测绘 QBZ-191 58x42 50 发弹匣<br>60 发：测绘 QBZ-191 58x42 60 发弹匣 | `cib_qbz191_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CIB QBZ192 58x42 30 发弹匣<br>40 发：测绘 CIB QBZ192 58x42 40 发弹匣<br>50 发：测绘 CIB QBZ192 58x42 50 发弹匣<br>60 发：测绘 CIB QBZ192 58x42 60 发弹匣 | `cib_qbz192_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 QBZ-95-1 58x42 30 发弹匣<br>35 发：测绘 QBZ-95-1 58x42 35 发弹匣<br>40 发：测绘 QBZ-95-1 58x42 40 发弹匣<br>50 发：测绘 QBZ-95-1 58x42 50 发弹匣 | `cib_qbz951_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CIB QBZ95B1 58x42 30 发弹匣<br>35 发：测绘 CIB QBZ95B1 58x42 35 发弹匣<br>40 发：测绘 CIB QBZ95B1 58x42 40 发弹匣<br>50 发：测绘 CIB QBZ95B1 58x42 50 发弹匣 | `cib_qbz95b1_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 QCQ-171 9mm 30 发弹匣<br>35 发：测绘 QCQ-171 9mm 35 发弹匣<br>40 发：测绘 QCQ-171 9mm 40 发弹匣<br>70 发：测绘 QCQ-171 9mm 70 发弹匣 | `cib_qcq171_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 50 发：测绘 CIB QCW05 58x21 50 发弹匣 | `cib_qcw05_58x21` | `cib:58x21` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 75 发：测绘 CIB QJB951 58x42 75 发弹匣<br>80 发：测绘 CIB QJB951 58x42 80 发弹匣<br>85 发：测绘 CIB QJB951 58x42 85 发弹匣<br>90 发：测绘 CIB QJB951 58x42 90 发弹匣 | `cib_qjb951_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 100 发：测绘 CIB QJY201 308 100 发弹链<br>150 发：测绘 CIB QJY201 308 150 发弹链<br>200 发：测绘 CIB QJY201 308 200 发弹链<br>250 发：测绘 CIB QJY201 308 250 发弹链 | `cib_qjy201_308_belt` | `tacz:308` | `belt` | `neutral_belt_box` | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
+| 90 发：测绘 CIB QJY88 58x42 90 发弹链<br>100 发：测绘 CIB QJY88 58x42 100 发弹链<br>150 发：测绘 CIB QJY88 58x42 150 发弹链<br>200 发：测绘 CIB QJY88 58x42 200 发弹链 | `cib_qjy88_58x42_belt` | `tacz:58x42` | `belt` | `neutral_belt_box` | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
+| 60 发：测绘 CIB QJZ171 127x108 60 发弹链<br>80 发：测绘 CIB QJZ171 127x108 80 发弹链<br>90 发：测绘 CIB QJZ171 127x108 90 发弹链<br>100 发：测绘 CIB QJZ171 127x108 100 发弹链 | `cib_qjz171_127x108_belt` | `cib:127x108` | `belt` | `neutral_belt_box` | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
+| 7 发：测绘 CIB QSZ193 9mm 7 发弹匣<br>9 发：测绘 CIB QSZ193 9mm 9 发弹匣<br>10 发：测绘 CIB QSZ193 9mm 10 发弹匣<br>11 发：测绘 CIB QSZ193 9mm 11 发弹匣 | `cib_qsz193_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CIB QSZ92 58x21 20 发弹匣<br>23 发：测绘 CIB QSZ92 58x21 23 发弹匣<br>25 发：测绘 CIB QSZ92 58x21 25 发弹匣<br>30 发：测绘 CIB QSZ92 58x21 30 发弹匣 | `cib_qsz92_58x21` | `cib:58x21` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CIB SIG552 556x45 20 发弹匣<br>30 发：测绘 CIB SIG552 556x45 30 发弹匣<br>40 发：测绘 CIB SIG552 556x45 40 发弹匣<br>50 发：测绘 CIB SIG552 556x45 50 发弹匣 | `cib_sig552_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 SIG 556 556x45 30 发弹匣<br>40 发：测绘 SIG 556 556x45 40 发弹匣<br>50 发：测绘 SIG 556 556x45 50 发弹匣<br>60 发：测绘 SIG 556 556x45 60 发弹匣 | `cib_sig556_556` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 CIB SSG08 308 5 发弹匣<br>8 发：测绘 CIB SSG08 308 8 发弹匣<br>10 发：测绘 CIB SSG08 308 10 发弹匣<br>15 发：测绘 CIB SSG08 308 15 发弹匣 | `cib_ssg08_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 CIB SV98 762x54 10 发弹匣<br>15 发：测绘 CIB SV98 762x54 15 发弹匣<br>20 发：测绘 CIB SV98 762x54 20 发弹匣<br>25 发：测绘 CIB SV98 762x54 25 发弹匣 | `cib_sv98_762x54` | `tacz:762x54` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 CIB SVD 762x54 10 发弹匣 | `cib_svd_762x54` | `tacz:762x54` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CIB T91 556x45 30 发弹匣<br>40 发：测绘 CIB T91 556x45 40 发弹匣<br>50 发：测绘 CIB T91 556x45 50 发弹匣<br>60 发：测绘 CIB T91 556x45 60 发弹匣 | `cib_t91_556x45` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 8 发：测绘 CIB TYPE14 8x22 8 发弹匣 | `cib_type14_8x22` | `cib:8x22` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 Type 20 556x45 30 发弹匣<br>40 发：测绘 Type 20 556x45 40 发弹匣<br>50 发：测绘 Type 20 556x45 50 发弹匣<br>60 发：测绘 Type 20 556x45 60 发弹匣 | `cib_type20_556` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 CIBS TYPE56 COMMEMORATE 762x39 30 发弹匣<br>45 发：测绘 CIBS TYPE56 COMMEMORATE 762x39 45 发弹匣<br>50 发：测绘 CIBS TYPE56 COMMEMORATE 762x39 50 发弹匣<br>60 发：测绘 CIBS TYPE56 COMMEMORATE 762x39 60 发弹匣 | `cib_type56_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 CIB TYPE79 762x25 20 发弹匣<br>30 发：测绘 CIB TYPE79 762x25 30 发弹匣<br>35 发：测绘 CIB TYPE79 762x25 35 发弹匣<br>40 发：测绘 CIB TYPE79 762x25 40 发弹匣 | `cib_type79_762x25` | `tacz:762x25` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 CIB USAS12 12g 10 发弹匣<br>15 发：测绘 CIB USAS12 12g 15 发弹匣<br>20 发：测绘 CIB USAS12 12g 20 发弹匣<br>25 发：测绘 CIB USAS12 12g 25 发弹匣 | `cib_usas12_12g` | `tacz:12g` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 12 发：测绘 USP 45acp 12 发弹匣<br>15 发：测绘 USP 45acp 15 发弹匣<br>20 发：测绘 USP 45acp 20 发弹匣<br>25 发：测绘 USP 45acp 25 发弹匣 | `cib_usp_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 AK-12 545x39 30 发弹匣<br>35 发：测绘 AK-12 545x39 35 发弹匣<br>45 发：测绘 AK-12 545x39 45 发弹匣<br>60 发：测绘 AK-12 545x39 60 发弹匣 | `classicr_ak12_545x39` | `tacz:545x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 B93R 9mm 15 发弹匣<br>24 发：测绘 B93R 9mm 24 发弹匣<br>27 发：测绘 B93R 9mm 27 发弹匣<br>33 发：测绘 B93R 9mm 33 发弹匣 | `classicr_b93r_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 47 发：测绘 DP-28 762x54r 47 发弹匣 | `classicr_dp28_pan_762x54r` | `tacz:762x54r` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 FAL Tactical 308 20 发弹匣<br>25 发：测绘 FAL Tactical 308 25 发弹匣<br>30 发：测绘 FAL Tactical 308 30 发弹匣<br>50 发：测绘 FAL Tactical 308 50 发弹匣 | `classicr_fal_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 17 发：测绘 Glock 18 9mm 17 发弹匣<br>24 发：测绘 Glock 18 9mm 24 发弹匣<br>27 发：测绘 Glock 18 9mm 27 发弹匣<br>33 发：测绘 Glock 18 9mm 33 发弹匣 | `classicr_glock18_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 M1A1 Thompson 45acp 30 发弹匣<br>40 发：测绘 M1A1 Thompson 45acp 40 发弹匣<br>45 发：测绘 M1A1 Thompson 45acp 45 发弹匣<br>50 发：测绘 M1A1 Thompson 45acp 50 发弹匣 | `classicr_m1a1_thompson_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 100 发：测绘 M60 308 100 发弹匣<br>150 发：测绘 M60 308 150 发弹匣<br>175 发：测绘 M60 308 175 发弹匣<br>200 发：测绘 M60 308 200 发弹匣 | `classicr_m60_308_belt` | `tacz:308` | `belt` | `neutral_belt_box` | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
+| 8 发：测绘 M82A2 50bmg 8 发弹匣<br>10 发：测绘 M82A2 50bmg 10 发弹匣<br>12 发：测绘 M82A2 50bmg 12 发弹匣<br>15 发：测绘 M82A2 50bmg 15 发弹匣 | `classicr_m82a2_50bmg` | `tacz:50bmg` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 M92FS 9mm 15 发弹匣<br>17 发：测绘 M92FS 9mm 17 发弹匣<br>20 发：测绘 M92FS 9mm 20 发弹匣<br>24 发：测绘 M92FS 9mm 24 发弹匣 | `classicr_m92fs_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 MAC-10 9mm 30 发弹匣<br>35 发：测绘 MAC-10 9mm 35 发弹匣<br>40 发：测绘 MAC-10 9mm 40 发弹匣<br>45 发：测绘 MAC-10 9mm 45 发弹匣 | `classicr_mac10_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 MK47 762x39copper 30 发弹匣<br>45 发：测绘 MK47 762x39copper 45 发弹匣<br>60 发：测绘 MK47 762x39copper 60 发弹匣<br>75 发：测绘 MK47 762x39copper 75 发弹匣 | `classicr_mk47_762x39copper` | `tacz:762x39copper` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 MP7 46x30 20 发弹匣<br>30 发：测绘 MP7 46x30 30 发弹匣<br>40 发：测绘 MP7 46x30 40 发弹匣<br>60 发：测绘 MP7 46x30 60 发弹匣 | `classicr_mp7_46x30` | `tacz:46x30` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 MP9 9mm 30 发弹匣<br>34 发：测绘 MP9 9mm 34 发弹匣<br>37 发：测绘 MP9 9mm 37 发弹匣<br>46 发：测绘 MP9 9mm 46 发弹匣 | `classicr_mp9_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 MRAD 338 10 发弹匣<br>12 发：测绘 MRAD 338 12 发弹匣<br>13 发：测绘 MRAD 338 13 发弹匣<br>15 发：测绘 MRAD 338 15 发弹匣 | `classicr_mrad_338` | `tacz:338` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 MRAD ELR 416barrett 10 发弹匣<br>12 发：测绘 MRAD ELR 416barrett 12 发弹匣<br>13 发：测绘 MRAD ELR 416barrett 13 发弹匣<br>15 发：测绘 MRAD ELR 416barrett 15 发弹匣 | `classicr_mrad_elr_416barrett` | `tacz:416barrett` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 MSR 30_06 10 发弹匣 | `classicr_msr_3006` | `tacz:30_06` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 NGSW-R 68x51fury 20 发弹匣<br>25 发：测绘 NGSW-R 68x51fury 25 发弹匣<br>35 发：测绘 NGSW-R 68x51fury 35 发弹匣<br>45 发：测绘 NGSW-R 68x51fury 45 发弹匣 | `classicr_ngsw_r_68x51` | `tacz:68x51fury` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 QBZ-191 58x42 30 发弹匣<br>45 发：测绘 QBZ-191 58x42 45 发弹匣<br>60 发：测绘 QBZ-191 58x42 60 发弹匣<br>75 发：测绘 QBZ-191 58x42 75 发弹匣 | `classicr_qbz191_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 SCAR MK20 308 10 发弹匣<br>20 发：测绘 SCAR MK20 308 20 发弹匣<br>30 发：测绘 SCAR MK20 308 30 发弹匣<br>50 发：测绘 SCAR MK20 308 50 发弹匣 | `classicr_scar_mk20_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 SPR-15 556x45 20 发弹匣<br>25 发：测绘 SPR-15 556x45 25 发弹匣<br>38 发：测绘 SPR-15 556x45 38 发弹匣<br>45 发：测绘 SPR-15 556x45 45 发弹匣 | `classicr_spr15_556` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 17 发：测绘 STI 2011 9mm 17 发弹匣<br>19 发：测绘 STI 2011 9mm 19 发弹匣<br>23 发：测绘 STI 2011 9mm 23 发弹匣<br>27 发：测绘 STI 2011 9mm 27 发弹匣 | `classicr_sti2011_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 17 发：测绘 TEC-9 9mm 17 发弹匣<br>24 发：测绘 TEC-9 9mm 24 发弹匣<br>33 发：测绘 TEC-9 9mm 33 发弹匣<br>72 发：测绘 TEC-9 9mm 72 发弹匣 | `classicr_tec9_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 19 发：测绘 TTI G34 9mm 19 发弹匣<br>24 发：测绘 TTI G34 9mm 24 发弹匣<br>27 发：测绘 TTI G34 9mm 27 发弹匣<br>33 发：测绘 TTI G34 9mm 33 发弹匣 | `classicr_tti_g34_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 22 发：测绘 UDP-9 9mm 22 发弹匣<br>30 发：测绘 UDP-9 9mm 30 发弹匣<br>45 发：测绘 UDP-9 9mm 45 发弹匣<br>60 发：测绘 UDP-9 9mm 60 发弹匣 | `classicr_udp9_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 8 发：测绘 鲁格P08 8 发弹匣 | `hamster_lugerp08_compact_8` | `hamster:compact_ammo` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 麦德森 30 发弹匣 | `hamster_madsen_long_30` | `hamster:long_ammo` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 8 发：测绘 马卡洛夫 8 发弹匣 | `hamster_makarov_compact_8` | `hamster:compact_ammo` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 100 发：测绘 MG14/17 100 发弹链箱 | `hamster_mg1417_long_belt` | `hamster:long_ammo` | `belt` | `family_reused_belt_box` | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
+| 32 发：测绘 MP18 32 发弹匣 | `hamster_mp18_compact_32` | `hamster:compact_ammo` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：M14 .308 10 发弹匣<br>20 发：测绘 M14 .308 20 发弹匣<br>30 发：测绘 M14 .308 30 发弹匣<br>50 发：测绘 M14 .308 50 发弹匣 | `m14_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 博伊斯反坦克步枪 .50 BMG 5 发弹匣 | `murasamet_boys_50bmg` | `tacz:50bmg` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 47 发：测绘 DP/DPM 7.62×54R 47 发盘式弹匣 | `murasamet_dp_pan_762x54` | `tacz:762x54` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 70 发：测绘 KP/-31 9 mm 70 发鼓式弹匣 | `murasamet_kp31_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 32 发：测绘 兰彻斯特 9 mm 32 发弹匣 | `murasamet_lanchester_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 M3/M3A1 .45 ACP 30 发弹匣 | `murasamet_m3_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 75 发：测绘 MG34 7.92×57 75 发弹链 | `murasamet_mg34_792x57_belt` | `tacz:792x57` | `belt` | `family_reused_belt_box` | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
+| 75 发：测绘 MG42 7.92×57 75 发弹链 | `murasamet_mg42_792x57_belt` | `tacz:792x57` | `belt` | `family_reused_belt_box` | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
+| 32 发：测绘 MP28 9 mm 32 发弹匣 | `murasamet_mp28_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 32 发：测绘 MP38/MP40 9 mm 32 发弹匣 | `murasamet_mp38_40_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 25 发：测绘 PPSh 7.62×25 25 发弹匣<br>35 发：测绘 PPSh 7.62×25 35 发弹匣<br>50 发：测绘 PPSh 7.62×25 50 发弹匣<br>71 发：测绘 PPSh 7.62×25 71 发弹匣 | `murasamet_ppsh_762x25` | `tacz:762x25` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 32 发：测绘 斯登 Mk II/Mk V 9 mm 32 发弹匣 | `murasamet_sten_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 汤普森 .45 ACP 20 发弹匣<br>30 发：测绘 汤普森 .45 ACP 30 发弹匣<br>40 发：测绘 汤普森 .45 ACP 40 发弹匣<br>50 发：测绘 汤普森 .45 ACP 50 发弹匣 | `murasamet_thompson_drum_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 8 发：测绘 TT-33 7.62×25 8 发弹匣 | `murasamet_tt33_762x25` | `tacz:762x25` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 Vz.61 9 mm 20 发弹匣<br>25 发：测绘 Vz.61 9 mm 25 发弹匣<br>35 发：测绘 Vz.61 9 mm 35 发弹匣<br>50 发：测绘 Vz.61 9 mm 50 发弹匣 | `murasamet_vz61_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 EM-2 20 发弹匣<br>25 发：测绘 EM-2 25 发弹匣<br>30 发：测绘 EM-2 30 发弹匣<br>32 发：测绘 EM-2 32 发弹匣 | `rainforest_em2_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 FAL 20 发弹匣<br>25 发：测绘 FAL 25 发扩容弹匣<br>30 发：测绘 FAL 30 发扩容弹匣<br>32 发：测绘 FAL 32 发扩容弹匣 | `rainforest_fal_308` | `tacz:308` | `detachable_magazine` | `family_reused_detachable_magazine` | `family_level_material` → `tacz_extra:item/magazine_fal_308_20_tacz_308` |
+| 25 发：测绘 FAMAS F1 25 发弹匣<br>30 发：测绘 FAMAS F1 30 发弹匣<br>32 发：测绘 FAMAS F1 32 发弹匣<br>35 发：测绘 FAMAS F1 35 发弹匣 | `rainforest_famas_556` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 FR-F2 5 发弹匣<br>7 发：测绘 FR-F2 7 发弹匣<br>9 发：测绘 FR-F2 9 发弹匣<br>10 发：测绘 FR-F2 10 发弹匣 | `rainforest_frf2_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 M60 20 发弹链箱<br>35 发：测绘 M60 35 发弹链箱<br>50 发：测绘 M60 50 发弹链箱 | `rainforest_m60_308_belt` | `tacz:308` | `belt` | `neutral_belt_box` | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
+| 20 发：测绘 PM12S 20 发弹匣<br>25 发：测绘 PM12S 25 发弹匣<br>30 发：测绘 PM12S 30 发弹匣<br>32 发：测绘 PM12S 32 发弹匣 | `rainforest_pm12s_9x19` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 PM-63 15 发弹匣<br>25 发：测绘 PM-63 25 发弹匣<br>30 发：测绘 PM-63 30 发弹匣<br>32 发：测绘 PM-63 32 发弹匣 | `rainforest_pm63_9x19` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 35 发：测绘 RPD 35 发弹链箱<br>45 发：测绘 RPD 45 发弹链箱<br>50 发：测绘 RPD-MS 50 发弹链箱<br>75 发：测绘 RPD 75 发弹链箱<br>100 发：测绘 RPD-MS 100 发弹链箱 | `rainforest_rpd_762x39_belt` | `tacz:762x39` | `belt` | `family_reused_belt_box` | `family_level_material` → `tacz_extra:item/mag_rpk_drum` |
+| 10 发：测绘 Vz.64 10 发弹匣<br>12 发：测绘 Vz.64 12 发弹匣<br>15 发：测绘 Vz.64 15 发弹匣<br>20 发：测绘 Vz.64 20 发弹匣 | `rainforest_vz64_9x19` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 Vz.61 10 发弹匣<br>12 发：测绘 Vz.61 12 发弹匣<br>15 发：测绘 Vz.61 15 发弹匣<br>20 发：测绘 Vz.61 20 发弹匣 | `rainforest_vz68_9x19` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：SCAR-H .308 20 发弹匣<br>30 发：测绘 SCAR-H .308 30 发弹匣<br>45 发：测绘 SCAR-H .308 45 发弹匣<br>60 发：测绘 SCAR-H .308 60 发弹匣 | `scar_h_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 AKS-74U 545x39 30 发弹匣<br>34 发：测绘 AKS-74U 545x39 34 发弹匣<br>37 发：测绘 AKS-74U 545x39 37 发弹匣<br>40 发：测绘 AKS-74U 545x39 40 发弹匣 | `suffuse_aks74u_545x39` | `suffuse:545x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 34 发：测绘 SUFFUSE AR57 57x28 34 发弹匣<br>37 发：测绘 SUFFUSE AR57 57x28 37 发弹匣<br>40 发：测绘 SUFFUSE AR57 57x28 40 发弹匣<br>50 发：测绘 SUFFUSE AR57 57x28 50 发弹匣 | `suffuse_ar57_57x28` | `tacz:57x28` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 ASh-12 12.7x55 10 发弹匣<br>15 发：测绘 ASh-12 12.7x55 15 发弹匣<br>20 发：测绘 ASh-12 12.7x55 20 发弹匣<br>30 发：测绘 ASh-12 12.7x55 30 发弹匣 | `suffuse_ash12_127x55` | `suffuse:12.7x55` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 5 发：测绘 AW50 50bmg 5 发弹匣<br>6 发：测绘 AW50 50bmg 6 发弹匣<br>8 发：测绘 AW50 50bmg 8 发弹匣<br>10 发：测绘 AW50 50bmg 10 发弹匣 | `suffuse_aw50_50bmg` | `tacz:50bmg` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 AXMC 338 10 发弹匣<br>12 发：测绘 AXMC 338 12 发弹匣<br>14 发：测绘 AXMC 338 14 发弹匣<br>16 发：测绘 AXMC 338 16 发弹匣 | `suffuse_axmc_axsr_338` | `tacz:338` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 DVL-10 308 10 发弹匣<br>12 发：测绘 DVL-10 308 12 发弹匣<br>14 发：测绘 DVL-10 308 14 发弹匣<br>16 发：测绘 DVL-10 308 16 发弹匣 | `suffuse_dvl10_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 40 发：测绘 SUFFUSE GEPARDPDW 9mm 40 发弹匣<br>43 发：测绘 SUFFUSE GEPARDPDW 9mm 43 发弹匣<br>45 发：测绘 SUFFUSE GEPARDPDW 9mm 45 发弹匣<br>47 发：测绘 SUFFUSE GEPARDPDW 9mm 47 发弹匣 | `suffuse_gepardpdw_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 6 发：测绘 GM6 Lynx 50bmg 6 发弹匣<br>8 发：测绘 GM6 Lynx 50bmg 8 发弹匣<br>10 发：测绘 GM6 Lynx 50bmg 10 发弹匣 | `suffuse_gm6_50bmg` | `tacz:50bmg` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 KAC PDW 6x35mm 30 发弹匣<br>40 发：测绘 KAC PDW 6x35mm 40 发弹匣<br>50 发：测绘 KAC PDW 6x35mm 50 发弹匣<br>60 发：测绘 KAC PDW 6x35mm 60 发弹匣 | `suffuse_kacpdw_6x35` | `suffuse:6x35mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 6 发：测绘 M200 .408ct 6 发弹匣<br>7 发：测绘 M200 .408ct 7 发弹匣<br>8 发：测绘 M200 .408ct 8 发弹匣<br>10 发：测绘 M200 .408ct 10 发弹匣 | `suffuse_m200_408ct` | `suffuse:.408ct` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 32 发：测绘 SUFFUSE MAS38 7.65x20mm 32 发弹匣 | `suffuse_mas38_7_65x20mm` | `suffuse:7.65x20mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 MPDR 556x45 20 发弹匣<br>40 发：测绘 MPDR 556x45 40 发弹匣<br>50 发：测绘 MPDR 556x45 50 发弹匣<br>60 发：测绘 MPDR 556x45 60 发弹匣 | `suffuse_mpdr_556` | `tacz:556x45` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 SUFFUSE NP762 762x25 10 发弹匣<br>12 发：测绘 SUFFUSE NP762 762x25 12 发弹匣<br>15 发：测绘 SUFFUSE NP762 762x25 15 发弹匣<br>17 发：测绘 SUFFUSE NP762 762x25 17 发弹匣 | `suffuse_np762_762x25` | `tacz:762x25` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 120 发：测绘 PKP Pecheneg 762x54 120 发弹匣 | `suffuse_pkp_762x54_belt` | `tacz:762x54` | `belt` | `family_reused_belt_box` | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
+| 30 发：测绘 QBU-191 58x42 30 发弹匣<br>35 发：测绘 QBU-191 58x42 35 发弹匣<br>50 发：测绘 QBU-191 58x42 50 发弹匣<br>75 发：测绘 QBU-191 58x42 75 发弹匣 | `suffuse_qbu191_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 QBZ-191 58x42 20 发弹匣<br>30 发：测绘 QBZ-191 58x42 30 发弹匣<br>40 发：测绘 QBZ-191 58x42 40 发弹匣<br>75 发：测绘 QBZ-191 58x42 75 发弹匣 | `suffuse_qbz191_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 QBZ-192 58x42 30 发弹匣<br>35 发：测绘 QBZ-192 58x42 35 发弹匣<br>50 发：测绘 QBZ-192 58x42 50 发弹匣<br>75 发：测绘 QBZ-192 58x42 75 发弹匣 | `suffuse_qbz192_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 QBZ-95-1 58x42 30 发弹匣<br>35 发：测绘 QBZ-95-1 58x42 35 发弹匣<br>50 发：测绘 QBZ-95-1 58x42 50 发弹匣<br>75 发：测绘 QBZ-95-1 58x42 75 发弹匣 | `suffuse_qbz951_58x42` | `tacz:58x42` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 RM277 6.8tvcm 20 发弹匣<br>30 发：测绘 RM277 6.8tvcm 30 发弹匣 | `suffuse_rm277_68tvcm` | `suffuse:6.8tvcm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 Saddam Golden AK 762x39 30 发弹匣<br>34 发：测绘 Saddam Golden AK 762x39 34 发弹匣<br>37 发：测绘 Saddam Golden AK 762x39 37 发弹匣<br>40 发：测绘 Saddam Golden AK 762x39 40 发弹匣 | `suffuse_saddam_ak_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 SVD 762x54 10 发弹匣<br>12 发：测绘 SVD 762x54 12 发弹匣<br>15 发：测绘 SVD 762x54 15 发弹匣<br>20 发：测绘 SVD 762x54 20 发弹匣 | `suffuse_svd_762x54` | `tacz:762x54` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 15 发：测绘 SUFFUSE TEC9 9mm 15 发弹匣<br>20 发：测绘 SUFFUSE TEC9 9mm 20 发弹匣<br>30 发：测绘 SUFFUSE TEC9 9mm 30 发弹匣<br>50 发：测绘 SUFFUSE TEC9 9mm 50 发弹匣 | `suffuse_tec9_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 7 发：测绘 SUFFUSE TT33 762x25 7 发弹匣<br>10 发：测绘 SUFFUSE TT33 762x25 10 发弹匣<br>13 发：测绘 SUFFUSE TT33 762x25 13 发弹匣<br>16 发：测绘 SUFFUSE TT33 762x25 16 发弹匣 | `suffuse_tt33_762x25` | `tacz:762x25` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 12 发：测绘 SUFFUSE TTI2011 9mm 12 发弹匣<br>20 发：测绘 SUFFUSE TTI2011 9mm 20 发弹匣<br>25 发：测绘 SUFFUSE TTI2011 9mm 25 发弹匣<br>30 发：测绘 SUFFUSE TTI2011 9mm 30 发弹匣 | `suffuse_tti2011_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 SUFFUSE UMP45 45acp 20 发弹匣<br>25 发：测绘 SUFFUSE UMP45 45acp 25 发弹匣<br>30 发：测绘 SUFFUSE UMP45 45acp 30 发弹匣<br>50 发：测绘 SUFFUSE UMP45 45acp 50 发弹匣 | `suffuse_ump45_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 12 发：测绘 SUFFUSE USP45 45acp 12 发弹匣<br>15 发：测绘 SUFFUSE USP45 45acp 15 发弹匣<br>18 发：测绘 SUFFUSE USP45 45acp 18 发弹匣 | `suffuse_usp45_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 12 发：测绘 SUFFUSE USP45 BLACK 45acp 12 发弹匣<br>15 发：测绘 SUFFUSE USP45 BLACK 45acp 15 发弹匣<br>18 发：测绘 SUFFUSE USP45 BLACK 45acp 18 发弹匣 | `suffuse_usp45_black_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 12 发：测绘 SUFFUSE VIPER2011 9mm 12 发弹匣<br>15 发：测绘 SUFFUSE VIPER2011 9mm 15 发弹匣<br>20 发：测绘 SUFFUSE VIPER2011 9mm 20 发弹匣<br>25 发：测绘 SUFFUSE VIPER2011 9mm 25 发弹匣 | `suffuse_viper2011_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 7 发：测绘 SUFFUSE WEBLEY1913 45acp 7 发弹匣<br>10 发：测绘 SUFFUSE WEBLEY1913 45acp 10 发弹匣<br>13 发：测绘 SUFFUSE WEBLEY1913 45acp 13 发弹匣<br>16 发：测绘 SUFFUSE WEBLEY1913 45acp 16 发弹匣 | `suffuse_webley1913_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 XM7 308 20 发弹匣<br>30 发：测绘 XM7 308 30 发弹匣 | `suffuse_xm7_308` | `tacz:308` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 WEMQL_R AK-12 5.45×39 30 发弹匣<br>40 发：测绘 WEMQL_R AK-12 5.45×39 40 发弹匣<br>60 发：测绘 WEMQL_R AK-12 5.45×39 60 发弹匣<br>75 发：测绘 WEMQL_R AK-12 5.45×39 75 发弹匣 | `wemql_r_ak12_545x39` | `tacz:545x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 WEMQL_R M7 6.8×51 20 发弹匣<br>25 发：测绘 WEMQL_R M7 6.8×51 25 发弹匣<br>30 发：测绘 WEMQL_R M7 6.8×51 30 发弹匣<br>45 发：测绘 WEMQL_R M7 6.8×51 45 发弹匣 | `wemql_r_m7_68x51` | `tacz:68x51fury` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 100 发：测绘 WW ANM2 30_06 100 发弹链<br>150 发：测绘 WW ANM2 30_06 150 发弹链<br>250 发：测绘 WW ANM2 30_06 250 发弹链<br>500 发：测绘 WW ANM2 30_06 500 发弹链 | `ww_anm2_30_06_belt` | `tacz:30_06` | `belt` | `neutral_belt_box` | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
+| 30 发：测绘 AS-44 7.62×39 30 发弹匣<br>34 发：测绘 AS-44 7.62×39 34 发弹匣<br>37 发：测绘 AS-44 7.62×39 37 发弹匣<br>40 发：测绘 AS-44 7.62×39 40 发弹匣 | `ww_as44_762x39` | `tacz:762x39` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 BAR .30-06 20 发弹匣<br>30 发：测绘 BAR .30-06 30 发弹匣<br>35 发：测绘 BAR .30-06 35 发弹匣<br>40 发：测绘 BAR .30-06 40 发弹匣 | `ww_bar_3006` | `tacz:30_06` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 7 发：测绘 WW CPH 32acp 7 发弹匣<br>9 发：测绘 WW CPH 32acp 9 发弹匣<br>12 发：测绘 WW CPH 32acp 12 发弹匣<br>14 发：测绘 WW CPH 32acp 14 发弹匣 | `ww_cph_32acp` | `ea:32acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 47 发：测绘 WW DP28 762x54 47 发弹匣 | `ww_dp28_762x54` | `tacz:762x54` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 Gewehr 43 7.92×57 10 发弹匣<br>15 发：测绘 Gewehr 43 7.92×57 15 发弹匣<br>20 发：测绘 Gewehr 43 7.92×57 20 发弹匣 | `ww_g43_792x57` | `ea:792x57` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 7 发：测绘 WW M1911A1 45acp 7 发弹匣<br>9 发：测绘 WW M1911A1 45acp 9 发弹匣<br>12 发：测绘 WW M1911A1 45acp 12 发弹匣<br>14 发：测绘 WW M1911A1 45acp 14 发弹匣 | `ww_m1911a1_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 100 发：测绘 M1919A6 .30-06 100 发弹链<br>150 发：测绘 M1919A6 .30-06 150 发弹链<br>250 发：测绘 M1919A6 .30-06 250 发弹链<br>500 发：测绘 M1919A6 .30-06 500 发弹链 | `ww_m1919a6_3006_belt` | `tacz:30_06` | `belt` | `family_reused_belt_box` | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
+| 15 发：测绘 M1/M2 卡宾枪 .30 Carbine 15 发弹匣<br>20 发：测绘 M1/M2 卡宾枪 .30 Carbine 20 发弹匣<br>30 发：测绘 M1/M2 卡宾枪 .30 Carbine 30 发弹匣 | `ww_m1_m2_carbine_30c` | `ww:30c` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 WW M2S 30c 30 发弹匣 | `ww_m2s_30c` | `ww:30c` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 WW M50 45acp 20 发弹匣<br>21 发：测绘 WW M50 45acp 21 发弹匣<br>30 发：测绘 WW M50 45acp 30 发弹匣 | `ww_m50_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 WW M712 763 10 发弹匣<br>20 发：测绘 WW M712 763 20 发弹匣<br>25 发：测绘 WW M712 763 25 发弹匣<br>30 发：测绘 WW M712 763 30 发弹匣 | `ww_m712_763` | `ww:763` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 50 发：测绘 MG34 7.92×57 50 发弹链<br>100 发：测绘 MG34 7.92×57 100 发弹链<br>150 发：测绘 MG34 7.92×57 150 发弹链<br>200 发：测绘 MG34 7.92×57 200 发弹链 | `ww_mg34_792x57_belt` | `ea:792x57` | `belt` | `family_reused_belt_box` | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
+| 50 发：测绘 MG42 7.92×57 50 发弹链<br>100 发：测绘 MG42 7.92×57 100 发弹链<br>150 发：测绘 MG42 7.92×57 150 发弹链<br>200 发：测绘 MG42 7.92×57 200 发弹链 | `ww_mg42_792x57_belt` | `ea:792x57` | `belt` | `family_reused_belt_box` | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
+| 30 发：测绘 MP28 9 mm 30 发弹匣<br>50 发：测绘 MP28 9 mm 50 发弹匣<br>75 发：测绘 MP28 9 mm 75 发弹匣<br>100 发：测绘 MP28 9 mm 100 发弹匣 | `ww_mp28_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 32 发：测绘 MP34 9 mm 32 发弹匣<br>50 发：测绘 MP34 9 mm 50 发弹匣<br>75 发：测绘 MP34 9 mm 75 发弹匣<br>100 发：测绘 MP34 9 mm 100 发弹匣 | `ww_mp34_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 32 发：测绘 MP38/40/41 9 mm 32 发弹匣<br>50 发：测绘 MP38/40/41 9 mm 50 发弹匣<br>75 发：测绘 MP38/40/41 9 mm 75 发弹匣<br>100 发：测绘 MP38/40/41 9 mm 100 发弹匣 | `ww_mp38_40_41_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 8 发：测绘 WW P08 765 8 发弹匣<br>19 发：测绘 WW P08 765 19 发弹匣<br>23 发：测绘 WW P08 765 23 发弹匣<br>27 发：测绘 WW P08 765 27 发弹匣 | `ww_p08_765` | `ww:765` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 8 发：测绘 WW P38 9mm 8 发弹匣<br>19 发：测绘 WW P38 9mm 19 发弹匣<br>23 发：测绘 WW P38 9mm 23 发弹匣<br>27 发：测绘 WW P38 9mm 27 发弹匣 | `ww_p38_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 35 发：测绘 WW PPS 762x25 35 发弹匣<br>71 发：测绘 WW PPS 762x25 71 发弹匣 | `ww_pps_762x25` | `tacz:762x25` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 32 发：测绘 WW S1100 763 32 发弹匣<br>50 发：测绘 WW S1100 763 50 发弹匣<br>75 发：测绘 WW S1100 763 75 发弹匣<br>100 发：测绘 WW S1100 763 100 发弹匣 | `ww_s1100_763` | `ww:763` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 32 发：测绘 斯登 Mk II 9 mm 32 发弹匣<br>50 发：测绘 斯登 Mk II 9 mm 50 发弹匣<br>75 发：测绘 斯登 Mk II 9 mm 75 发弹匣<br>100 发：测绘 斯登 Mk II 9 mm 100 发弹匣 | `ww_sten_mk2_9mm` | `tacz:9mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 StG 44 7.92×33 30 发弹匣<br>34 发：测绘 StG 44 7.92×33 34 发弹匣<br>37 发：测绘 StG 44 7.92×33 37 发弹匣<br>40 发：测绘 StG 44 7.92×33 40 发弹匣 | `ww_stg44_792x33` | `ea:792x33` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 10 发：测绘 SVT/AVT 7.62×54R 10 发弹匣<br>15 发：测绘 SVT/AVT 7.62×54R 15 发弹匣<br>20 发：测绘 SVT/AVT 7.62×54R 20 发弹匣 | `ww_svt_avt_762x54` | `tacz:762x54` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 WW T100 8mm 30 发弹匣<br>50 发：测绘 WW T100 8mm 50 发弹匣<br>75 发：测绘 WW T100 8mm 75 发弹匣<br>100 发：测绘 WW T100 8mm 100 发弹匣 | `ww_t100_8mm` | `ww:8mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 WW T100L 8mm 30 发弹匣<br>50 发：测绘 WW T100L 8mm 50 发弹匣<br>75 发：测绘 WW T100L 8mm 75 发弹匣<br>100 发：测绘 WW T100L 8mm 100 发弹匣 | `ww_t100l_8mm` | `ww:8mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 8 发：测绘 WW T14 8mm 8 发弹匣<br>9 发：测绘 WW T14 8mm 9 发弹匣<br>12 发：测绘 WW T14 8mm 12 发弹匣<br>14 发：测绘 WW T14 8mm 14 发弹匣 | `ww_t14_8mm` | `ww:8mm` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 T20 加兰德 .30-06 20 发弹匣<br>21 发：测绘 T20 加兰德 .30-06 21 发弹匣<br>22 发：测绘 T20 加兰德 .30-06 22 发弹匣<br>25 发：测绘 T20 加兰德 .30-06 25 发弹匣 | `ww_t20_3006` | `tacz:30_06` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 WW T96 65a 30 发弹匣<br>40 发：测绘 WW T96 65a 40 发弹匣 | `ww_t96_65a` | `ww:65a` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 30 发：测绘 WW T99 77a 30 发弹匣<br>40 发：测绘 WW T99 77a 40 发弹匣 | `ww_t99_77a` | `ww:77a` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 50 发：测绘 WW TBE 763 50 发弹匣<br>75 发：测绘 WW TBE 763 75 发弹匣<br>100 发：测绘 WW TBE 763 100 发弹匣 | `ww_tbe_763` | `ww:763` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
+| 20 发：测绘 汤普森 .45 ACP 20 发弹匣<br>30 发：测绘 汤普森 .45 ACP 30 发弹匣 | `ww_thompson_45acp` | `tacz:45acp` | `detachable_magazine` | `neutral_detachable_magazine` | `neutral_generic_material` → `tacz:item/magazine` |
 
 ## 当前保持 legacy 的功能记录
 

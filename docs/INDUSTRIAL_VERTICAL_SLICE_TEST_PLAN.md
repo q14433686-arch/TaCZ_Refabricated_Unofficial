@@ -104,6 +104,13 @@
 3. 切换 namespace 勾选或“按手中物品”后，搜索结果必须同步收窄；清空关键词必须回到原先浏览页；
 4. 从搜索结果点击合成：服务端仍按实际 recipe group、当前方块 filter 和真实材料校验。搜索不能显示被服务器 filter 排除的配方，更不能成为合成旁路。
 
+### 4.5.1 测绘名称与内部身份回归
+
+1. 安装包含 `suffuse:trapper50cal` 和 `ww:77a` 的枪包后，分别悬停测绘平台结构套件与测绘弹药量规/弹壳。普通 Tooltip 与工作台结果名必须显示当前 GunIndex / AmmoIndex 的**原枪包正式名称**，不能显示 `suffuse:trapper50cal`、`ww:77a` 或 `surveyed/ww/77a` 这类内部路径；
+2. 对带 `fmj`、`ap`、`hp`、`slug`、`shot`、`he`、`heat` 的弹头/模具，普通 Tooltip 必须显示本地化弹头类型，不能直接显示小写技术 token；对 carrier/action/测绘模具等未能安全命名的专用目标，普通 Tooltip 应显示“专用匹配规格/对应测绘规格”，而不是猜测某把枪；
+3. 开启高级 Tooltip（F3+H）后，原始 GunId、AmmoId、`CartridgeCaliber`、`ProjectileType`、`DieTargetKind` 必须仍可见，便于作者定位真实身份；关闭高级 Tooltip 后这些路径不得污染玩家界面；
+4. 断开或尚未收到 CommonNetworkCache 时，普通 Tooltip 应诚实显示“未解析的测绘对象/弹药口径标准”，不能用名称、namespace 或模型猜测身份。
+
 ### 4.6 工业回收、弹匣袋与装弹器
 
 1. 制造工业回收站；从顶部/侧面只允许送入一件枪、实体弹匣或模具，底面只能抽取回收产物。红石信号下应在 40 tick 完成一次有效回收；

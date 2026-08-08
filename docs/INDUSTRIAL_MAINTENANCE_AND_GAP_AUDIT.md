@@ -281,6 +281,10 @@ C.3 另增**不拆枪的清洁事务**，仍在同一工业勤务台：安全清
 
 ## 8. 发现的未完成 / 未完全替换项目
 
+本节保留维护系统的历史审计上下文；跨工作台、供弹器、精细材质、查看器和 26.2 表现层的当前总清单见
+[`REMAINING_WORK_ROADMAP.md`](REMAINING_WORK_ROADMAP.md)。其中第三方载具的全部显示名/容量/材质分类以
+[`THIRD_PARTY_FEED_GAP_REGISTER.md`](THIRD_PARTY_FEED_GAP_REGISTER.md) 为准，不能把“有中性后备图”误称为已经有精确美术。
+
 | 优先级 | 项目 | 当前事实 | 建议 |
 |---|---|---|---|
 | P0 | 最新桥夹路线的外部编译与实机验证 | `3eae889` 后尚无 Windows Gradle / 游戏结果 | 先执行 `./gradlew build`；重点测 Kar98、Mosin、桥夹归零保留。 |

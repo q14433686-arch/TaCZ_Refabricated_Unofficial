@@ -20,12 +20,55 @@ ROOT = Path(__file__).resolve().parents[1]
 RESOURCE_ROOT = ROOT / "src/main/resources"
 DATA_ROOT = RESOURCE_ROOT / "data"
 ICON_MAPPING = ROOT / "tools/industry/icon_mapping.json"
+LANGUAGE_FILES = {
+    "zh_cn": RESOURCE_ROOT / "assets/tacz/lang/zh_cn.json",
+    "en_us": RESOURCE_ROOT / "assets/tacz/lang/en_us.json",
+}
 OUTPUT_JSON = ROOT / "tools/industry/third_party_feed_gap_registry.json"
 OUTPUT_DOC = ROOT / "docs/THIRD_PARTY_FEED_GAP_REGISTER.md"
 
 
 def read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def language_entries(language: str) -> dict[str, str]:
+    path = LANGUAGE_FILES[language]
+    data = read_json(path)
+    return data if isinstance(data, dict) else {}
+
+
+def localized_display_name(key: str, language: str, entries: dict[str, str]) -> str:
+    if not key:
+        return "未声明名称" if language == "zh_cn" else "Unnamed"
+    value = entries.get(key)
+    if isinstance(value, str) and value.strip():
+        return value
+    # Preserve an honest author-facing fallback when a third-party sidecar has
+    # a display key supplied only by the external pack. Do not invent a name
+    # from family/namespace heuristics.
+    return f"未载入本地化：{key}" if language == "zh_cn" else f"Unloaded translation: {key}"
+
+
+def detailed_material_class(state: str, mechanism: str) -> str:
+    carrier = "belt_box" if mechanism == "belt" else "detachable_magazine"
+    if state == "neutral_generic_material":
+        return f"neutral_{carrier}"
+    if state == "family_level_material":
+        return f"family_reused_{carrier}"
+    return f"exact_{carrier}"
+
+
+def detailed_material_class_label(material_class: str) -> str:
+    labels = {
+        "neutral_detachable_magazine": "中性通用可拆卸弹匣（缺专用细节图）",
+        "neutral_belt_box": "中性通用弹链箱（缺专用细节图）",
+        "family_reused_detachable_magazine": "复用同类可拆卸弹匣图（非精确）",
+        "family_reused_belt_box": "复用同类弹链箱/弹链图（非精确）",
+        "exact_detachable_magazine": "已有精确可拆卸弹匣图",
+        "exact_belt_box": "已有精确弹链箱/弹链图",
+    }
+    return labels.get(material_class, material_class)
 
 
 def family_icon_entries() -> dict[str, list[dict[str, Any]]]:
@@ -56,7 +99,14 @@ def material_state(family: str, mechanism: str, mappings: dict[str, list[dict[st
 
 def carrier_records() -> list[dict[str, Any]]:
     mappings = family_icon_entries()
+    zh_names = language_entries("zh_cn")
+    en_names = language_entries("en_us")
     grouped: dict[tuple[str, str, str], dict[str, Any]] = {}
+
+    def record_display_name(record: dict[str, Any], capacity: int, display_name: Any) -> None:
+        if isinstance(display_name, str) and display_name:
+            record["display_name_keys"].setdefault(capacity, set()).add(display_name)
+
     for namespace_dir in sorted(DATA_ROOT.iterdir() if DATA_ROOT.exists() else []):
         if not namespace_dir.is_dir() or namespace_dir.name == "tacz":
             continue
@@ -84,18 +134,31 @@ def carrier_records() -> list[dict[str, Any]]:
                     "mechanism": mechanism,
                     "capacities": set(),
                     "gun_ids": [],
+                    "display_name_keys": {},
                 },
             )
             record["capacities"].add(capacity)
+            record_display_name(record, capacity, data.get("display_name"))
             for variant in data.get("carrier_variants", []):
                 if isinstance(variant, dict) and isinstance(variant.get("capacity"), int):
-                    record["capacities"].add(variant["capacity"])
+                    variant_capacity = variant["capacity"]
+                    record["capacities"].add(variant_capacity)
+                    record_display_name(record, variant_capacity, variant.get("display_name"))
             record["gun_ids"].append(f"{namespace_dir.name}:{path.stem}")
 
     records = []
     for key in sorted(grouped):
         record = grouped[key]
         state, texture = material_state(record["family"], record["mechanism"], mappings)
+        name_variants = []
+        for capacity in sorted(record["display_name_keys"]):
+            for translation_key in sorted(record["display_name_keys"][capacity]):
+                name_variants.append({
+                    "capacity": capacity,
+                    "translation_key": translation_key,
+                    "zh_cn": localized_display_name(translation_key, "zh_cn", zh_names),
+                    "en_us": localized_display_name(translation_key, "en_us", en_names),
+                })
         records.append(
             {
                 "family": record["family"],
@@ -103,7 +166,9 @@ def carrier_records() -> list[dict[str, Any]]:
                 "mechanism": record["mechanism"],
                 "capacities": sorted(record["capacities"]),
                 "gun_ids": sorted(record["gun_ids"]),
+                "display_name_variants": name_variants,
                 "material_state": state,
+                "material_class": detailed_material_class(state, record["mechanism"]),
                 "current_texture": texture,
                 "needs_detailed_material": state != "exact_existing_material",
             }
@@ -154,14 +219,19 @@ def registry() -> dict[str, Any]:
                 by_namespace[namespace]["material_gaps"] += 1
     for function in functions:
         by_namespace[function["gun_id"].split(":", 1)[0]]["function_gaps"] += 1
+    material_classes: dict[str, int] = defaultdict(int)
+    for carrier in carriers:
+        if carrier["needs_detailed_material"]:
+            material_classes[carrier["material_class"]] += 1
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_by": "tacz_third_party_feed_gap_register",
         "warning": "Author/CI audit only. This registry is not a datapack and cannot enable feeds.",
         "summary_by_namespace": {
             namespace: dict(sorted(counts.items()))
             for namespace, counts in sorted(by_namespace.items())
         },
+        "detailed_material_classes": dict(sorted(material_classes.items())),
         "carrier_material_records": carriers,
         "legacy_function_records": functions,
     }
@@ -175,6 +245,7 @@ def render_document(data: dict[str, Any]) -> str:
         "普通玩家不需要运行 Python。它不会启用任何 `gun_feed`，只登记当前已经审计的数据中：",
         "",
         "- 没有精确细分材质、仍使用中性/家族级材料的实体载具；",
+        "- 每个缺口载具当前可见的中文/英文名称和容量变体；",
         "- 已有事实 profile、但故意保持 `legacy` runtime 的枪械功能缺口。",
         "",
         "机器可读的完整逐 family / 逐枪记录位于：",
@@ -204,20 +275,42 @@ def render_document(data: dict[str, Any]) -> str:
         )
     lines.extend([
         "",
+        "## 细分材质分类汇总",
+        "",
+        "这里的分类按**当前视觉替代方式**，不是按枪种猜测。每一项都是已有 `gun_feed` 的真实实体载具；",
+        "缺失的是授权/精确美术，不是库存、容量、制造或换弹功能。",
+        "",
+        "| 细分材质类别 | family 数 |",
+        "|---|---:|",
+    ])
+    for material_class, count in data["detailed_material_classes"].items():
+        lines.append(f"| {detailed_material_class_label(material_class)} (`{material_class}`) | {count} |")
+
+    lines.extend([
+        "",
         "## 当前需要补细分材质的 family",
         "",
         "下列条目没有 `exact_existing_material`。`gun_ids` 是受影响的已审计接收机；",
         "它们的服务器库存、容量与制造出口已经生效，缺的是细分授权美术，而不是功能。",
         "",
-        "| Family | Ammo | Mechanism | Capacities | 当前材料状态 |",
-        "|---|---|---|---|---|",
+        "| 玩家可见名称（全部容量） | Family | Ammo | Mechanism | 细分材质分类 | 当前材料状态 |",
+        "|---|---|---|---|---|---|",
     ])
     for carrier in data["carrier_material_records"]:
         if not carrier["needs_detailed_material"]:
             continue
+        variants = carrier["display_name_variants"]
+        if variants:
+            visible_names = "<br>".join(
+                f"{variant['capacity']} 发：{variant['zh_cn']}" for variant in variants
+            )
+        else:
+            visible_names = "未载入名称（请补 display_name）"
+        escaped_names = visible_names.replace("|", "\\|")
         lines.append(
-            f"| `{carrier['family']}` | `{carrier['ammo']}` | `{carrier['mechanism']}` | "
-            f"{', '.join(map(str, carrier['capacities']))} | `{carrier['material_state']}` → `{carrier['current_texture']}` |"
+            f"| {escaped_names} | `{carrier['family']}` | `{carrier['ammo']}` | "
+            f"`{carrier['mechanism']}` | `{carrier['material_class']}` | "
+            f"`{carrier['material_state']}` → `{carrier['current_texture']}` |"
         )
     lines.extend([
         "",

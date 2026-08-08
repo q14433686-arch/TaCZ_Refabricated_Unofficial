@@ -194,6 +194,23 @@ TACZ 当前的扩容等级最多使用该数组的前三项。少数旧枪包虽
 
 来源 namespace 勾选、手持物筛选和服务器 `RecipeFilter` 仍先执行；搜索只筛客户端已同步、当前工作台真正允许的配方。点击结果仍发送原 recipe ID，服务端仍按其**实际页签和真实材料**重新验证并合成，因此检索模式不是客户端合成旁路。
 
+### 测绘身份的玩家可读名称
+
+`IndustrySurveyGunId`、`IndustrySurveyAmmoId`、`CartridgeCaliber`、`ProjectileType` 与 `DieTargetKind` 仍保留稳定 NBT 身份，供服务端配方、旧世界迁移和标准验证使用；但普通 Tooltip、工作台成品名、JEI/REI 样本**不直接把它们显示为路径**。客户端会优先从已同步的 GunIndex / AmmoIndex 读取原枪包自己的显示名：
+
+```text
+suffuse:trapper50cal
+→ 原枪包的 Trapper .50 Cal（或该包当前语言里的正式名称）
+
+ww:77a / surveyed/ww/77a
+→ 原枪包的 7.7×58 mm Arisaka 弹药正式名称
+
+fmj / ap / hp / slug / shot / he / heat
+→ 全金属被甲 / 穿甲 / 空尖 / 独头弹 / 散弹装药 / 高爆 / 聚能破甲
+```
+
+当前索引尚未加载或某枪包没有可用名称时，普通 Tooltip 只会诚实显示“未解析的测绘对象/口径”，不会把内部 path 伪装成名称；开启高级 Tooltip（F3+H）后才额外显示原始 GunId、AmmoId、口径、弹头类型和成型目标，便于作者排错。
+
 ### REI / JEI 精确配方锁定
 
 打开某一把实际 Gunsmith Table 后，在 REI 或 JEI 中打开该工作台所属的配方页，使用配方查看器标准的 `+` / transfer 按钮即可把**该条原始 recipe ID**锁定到当前工作台。它不会把物品塞进不存在的 ghost 网格、不会自动合成、更不会发送制造包；只会让工作台显示对应成品、真实材料和现有的“制造”按钮。真正点击“制造”时，服务器仍以当前方块、真实 `RecipeFilter`、实际页签和库存重新验证。

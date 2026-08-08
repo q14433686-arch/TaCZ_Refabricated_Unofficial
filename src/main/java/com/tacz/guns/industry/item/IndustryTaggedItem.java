@@ -68,23 +68,30 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
         String key = getDisplayNameKey(stack);
         Component base = key.isBlank() ? super.getName(stack) : Component.translatable(key);
         // Runtime-generated surveyed gun dossiers/templates/kits intentionally
-        // share one generic localized name, so append their exact GunId for
-        // searchable selection. Surveyed ammunition is different: its AmmoIndex
-        // already supplies the actual player-facing product name, which is far
-        // more useful than exposing an internal surveyed/<namespace>/<path>
-        // identity in every case/projectile/gauge title.
+        // share one generic localized name, so append the matching source-pack
+        // gun name for player selection. Surveyed ammunition is different: its
+        // AmmoIndex already supplies the actual product name, which is far more
+        // useful than exposing an internal surveyed/<namespace>/<path> identity
+        // in every case/projectile/gauge title.
         var data = ItemNbtUtils.getTag(stack);
         String surveyedGun = data.getStringOr("IndustrySurveyGunId", "");
         String surveyedAmmo = data.getStringOr("IndustrySurveyAmmoId", "");
         String surveyedAmmoName = data.getStringOr("IndustrySurveyAmmoName", "");
-        if (!surveyedAmmoName.isBlank()) {
-            return Component.translatable(surveyedAmmoName)
+        // The save-safe id is still present in NBT, but player-facing item
+        // titles must use the source gun pack's own display name rather than a
+        // namespace path such as suffuse:trapper50cal or surveyed/ww/77a.
+        if (surveyedGun.isBlank() && (!surveyedAmmo.isBlank() || !surveyedAmmoName.isBlank())) {
+            return IndustryIdentityDisplay.surveyedTarget("", surveyedAmmo, surveyedAmmoName).copy()
                     .append(Component.literal(" · ").withStyle(style -> style.withColor(0x777777)))
                     .append(base);
         }
-        String surveyedTarget = !surveyedGun.isBlank() ? surveyedGun : surveyedAmmo;
-        return surveyedTarget.isBlank() ? base : base.copy().append(Component.literal(" [" + surveyedTarget + "]")
-                .withStyle(style -> style.withColor(0x777777)));
+        if (surveyedGun.isBlank() && surveyedAmmo.isBlank()) {
+            return base;
+        }
+        return base.copy().append(Component.literal(" [").withStyle(style -> style.withColor(0x777777)))
+                .append(IndustryIdentityDisplay.surveyedTarget(surveyedGun, surveyedAmmo, surveyedAmmoName).copy()
+                        .withStyle(style -> style.withColor(0x777777)))
+                .append(Component.literal("]").withStyle(style -> style.withColor(0x777777)));
     }
 
     @Override
@@ -207,7 +214,15 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
             String ammo = tag.getStringOr(MagazineItemDataAccessor.MAGAZINE_AMMO_ID_TAG, "");
             int capacity = Math.max(0, tag.getIntOr(MagazineItemDataAccessor.MAGAZINE_CAPACITY_TAG, 0));
             if (!family.isBlank() && !ammo.isBlank() && capacity > 0) {
-                adder.accept(Component.translatable("tooltip.tacz.industry.carrier_spec", family, ammo, capacity)
+                Component carrierName = getDisplayNameKey(stack).isBlank()
+                        ? IndustryIdentityDisplay.dieTarget("carrier")
+                        : Component.translatable(getDisplayNameKey(stack));
+                Component ammoName = IndustryIdentityDisplay.findAmmoName(ammo);
+                adder.accept(Component.translatable("tooltip.tacz.industry.carrier_spec", carrierName,
+                                ammoName == null
+                                        ? Component.translatable("tooltip.tacz.industry.caliber.unresolved")
+                                        : ammoName,
+                                capacity)
                         .withStyle(style -> style.withColor(0xAAAAAA)));
             }
         }
@@ -230,9 +245,10 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
         CompoundTag surveyTag = ItemNbtUtils.getTag(stack);
         String surveyedGun = surveyTag.getStringOr("IndustrySurveyGunId", "");
         String surveyedAmmo = surveyTag.getStringOr("IndustrySurveyAmmoId", "");
-        String surveyedTarget = !surveyedGun.isBlank() ? surveyedGun : surveyedAmmo;
-        if (!surveyedTarget.isBlank()) {
-            adder.accept(Component.translatable("tooltip.tacz.industry.surveyed_target", surveyedTarget)
+        String surveyedAmmoName = surveyTag.getStringOr("IndustrySurveyAmmoName", "");
+        if (!surveyedGun.isBlank() || !surveyedAmmo.isBlank() || !surveyedAmmoName.isBlank()) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.surveyed_target",
+                            IndustryIdentityDisplay.surveyedTarget(surveyedGun, surveyedAmmo, surveyedAmmoName))
                     .withStyle(style -> style.withColor(0xAAAAAA)));
         }
         if (!surveyedAmmo.isBlank() && ("case".equals(partKind) || "projectile".equals(partKind))) {
@@ -251,8 +267,12 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
             adder.accept(Component.translatable("tooltip.tacz.industry.motor_housing")
                     .withStyle(style -> style.withColor(0x8FD6C6)));
         }
-        if (!getCartridgeCaliber(stack).isBlank()) {
-            adder.accept(Component.translatable("tooltip.tacz.industry.caliber", getCartridgeCaliber(stack))
+        String cartridgeCaliber = getCartridgeCaliber(stack);
+        String cartridgeAmmoId = getCartridgeAmmoId(stack);
+        if (!cartridgeCaliber.isBlank()) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.caliber",
+                            IndustryIdentityDisplay.cartridgeCaliber(cartridgeCaliber, cartridgeAmmoId,
+                                    surveyedAmmo, surveyedAmmoName))
                     .withStyle(style -> style.withColor(0xAAAAAA)));
         }
         if ("case".equals(partKind) || "motor_housing".equals(partKind)
@@ -260,12 +280,16 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
             adder.accept(Component.translatable("tooltip.tacz.industry.stack_limit", stack.getMaxStackSize())
                     .withStyle(style -> style.withColor(0x777777)));
         }
-        if (!getProjectileType(stack).isBlank()) {
-            adder.accept(Component.translatable("tooltip.tacz.industry.projectile_type", getProjectileType(stack))
+        String projectileType = getProjectileType(stack);
+        if (!projectileType.isBlank()) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.projectile_type",
+                            IndustryIdentityDisplay.projectileType(projectileType))
                     .withStyle(style -> style.withColor(0xAAAAAA)));
         }
-        if (!getDieTargetKind(stack).isBlank()) {
-            adder.accept(Component.translatable("tooltip.tacz.industry.die_target", getDieTargetKind(stack))
+        String dieTarget = getDieTargetKind(stack);
+        if (!dieTarget.isBlank()) {
+            adder.accept(Component.translatable("tooltip.tacz.industry.die_target",
+                            IndustryIdentityDisplay.dieTarget(dieTarget))
                     .withStyle(style -> style.withColor(0xAAAAAA)));
         }
 
@@ -280,7 +304,11 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
                     .withStyle(style -> style.withColor(conditionColor(condition))));
             String serviceGun = serviceTag.getStringOr("IndustryServiceGunId", "");
             if (!serviceGun.isBlank()) {
-                adder.accept(Component.translatable("tooltip.tacz.service.component_gun", serviceGun)
+                Component serviceGunName = IndustryIdentityDisplay.findGunName(serviceGun);
+                adder.accept(Component.translatable("tooltip.tacz.service.component_gun",
+                                serviceGunName == null
+                                        ? Component.translatable("tooltip.tacz.industry.surveyed_target.unresolved")
+                                        : serviceGunName)
                         .withStyle(style -> style.withColor(0x8AA7B7)));
             }
             adder.accept(Component.translatable("tooltip.tacz.service.component_repair")
@@ -292,6 +320,28 @@ public class IndustryTaggedItem extends Item implements IndustryItemDataAccessor
                     .withStyle(style -> style.withColor(0xAAAAAA)));
         }
         if (advanced.isAdvanced()) {
+            // Raw identities remain inspectable for pack authors and bug
+            // reports, but no longer pollute the normal player tooltip.
+            if (!surveyedGun.isBlank()) {
+                adder.accept(Component.translatable("tooltip.tacz.industry.surveyed_target_id", surveyedGun)
+                        .withStyle(style -> style.withColor(0x555555)));
+            }
+            if (!surveyedAmmo.isBlank()) {
+                adder.accept(Component.translatable("tooltip.tacz.industry.surveyed_ammo_id", surveyedAmmo)
+                        .withStyle(style -> style.withColor(0x555555)));
+            }
+            if (!cartridgeCaliber.isBlank()) {
+                adder.accept(Component.translatable("tooltip.tacz.industry.caliber_id", cartridgeCaliber)
+                        .withStyle(style -> style.withColor(0x555555)));
+            }
+            if (!projectileType.isBlank()) {
+                adder.accept(Component.translatable("tooltip.tacz.industry.projectile_type_id", projectileType)
+                        .withStyle(style -> style.withColor(0x555555)));
+            }
+            if (!dieTarget.isBlank()) {
+                adder.accept(Component.translatable("tooltip.tacz.industry.die_target_id", dieTarget)
+                        .withStyle(style -> style.withColor(0x555555)));
+            }
             adder.accept(Component.translatable("tooltip.tacz.industry.platform", getPlatform(stack))
                     .withStyle(style -> style.withColor(0x555555)));
             adder.accept(Component.translatable("tooltip.tacz.industry.part", getPartKind(stack))

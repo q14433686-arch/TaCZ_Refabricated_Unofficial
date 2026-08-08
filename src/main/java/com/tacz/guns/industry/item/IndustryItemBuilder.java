@@ -23,6 +23,10 @@ public final class IndustryItemBuilder {
     private String blueprintRole = "";
     private String actionProfile = "";
     private String toolingScope = "";
+    /** Survey provenance is player-facing through the runtime GunIndex/AmmoIndex resolver. */
+    private String surveyGunId = "";
+    private String surveyAmmoId = "";
+    private String surveyAmmoName = "";
     // Carrier tooling/components reuse the magazine compatibility contract so
     // their real family/ammo/capacity identity survives recipe-viewer samples.
     private String magazineFamily = "";
@@ -133,6 +137,21 @@ public final class IndustryItemBuilder {
         return this;
     }
 
+    public IndustryItemBuilder surveyGunId(String gunId) {
+        this.surveyGunId = gunId == null ? "" : gunId;
+        return this;
+    }
+
+    public IndustryItemBuilder surveyAmmoId(String ammoId) {
+        this.surveyAmmoId = ammoId == null ? "" : ammoId;
+        return this;
+    }
+
+    public IndustryItemBuilder surveyAmmoNameKey(String nameKey) {
+        this.surveyAmmoName = nameKey == null ? "" : nameKey;
+        return this;
+    }
+
     /**
      * Preserve the physical carrier specification on a generic industry stack.
      * This is not a second magazine implementation: it is the same stable
@@ -172,6 +191,19 @@ public final class IndustryItemBuilder {
             accessor.setBlueprintRole(stack, blueprintRole);
             accessor.setActionProfile(stack, actionProfile);
             accessor.setToolingScope(stack, toolingScope);
+        }
+        if (!surveyGunId.isBlank() || !surveyAmmoId.isBlank() || !surveyAmmoName.isBlank()) {
+            ItemNbtUtils.updateTag(stack, tag -> {
+                if (!surveyGunId.isBlank()) {
+                    tag.putString("IndustrySurveyGunId", surveyGunId);
+                }
+                if (!surveyAmmoId.isBlank()) {
+                    tag.putString("IndustrySurveyAmmoId", surveyAmmoId);
+                }
+                if (!surveyAmmoName.isBlank()) {
+                    tag.putString("IndustrySurveyAmmoName", surveyAmmoName);
+                }
+            });
         }
         if (!magazineFamily.isBlank() || !magazineFeedStandard.isBlank() || !magazineAmmoId.isBlank() || magazineCapacity > 0) {
             ItemNbtUtils.updateTag(stack, tag -> {

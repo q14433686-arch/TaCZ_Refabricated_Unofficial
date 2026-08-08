@@ -31,6 +31,7 @@ import com.tacz.guns.network.message.ClientMessageCraft;
 import com.tacz.guns.resource.filter.RecipeFilter;
 import com.tacz.guns.resource.pojo.data.block.TabConfig;
 import com.tacz.guns.util.RenderDistance;
+import com.tacz.guns.util.ItemNbtUtils;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -427,6 +428,12 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                     appendSearchTerm(document, standard.toString());
                 }
             }
+            // Friendly surveyed names must not remove an author's ability to
+            // search an exact GunId/AmmoId. These identity fields are hidden
+            // from ordinary tooltips but remain valid search/debug metadata.
+            var custom = ItemNbtUtils.getTag(output);
+            appendSearchTerm(document, custom.getStringOr("IndustrySurveyGunId", ""));
+            appendSearchTerm(document, custom.getStringOr("IndustrySurveyAmmoId", ""));
         }
         for (GunSmithTableIngredient ingredient : recipe.getInputs()) {
             // This is the serialized item/tag/NBT source preserved by the
