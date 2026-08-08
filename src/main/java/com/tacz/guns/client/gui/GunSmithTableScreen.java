@@ -72,6 +72,12 @@ import java.util.*;
 public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMenu> {
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "textures/gui/gun_smith_table.png");
     private static final Identifier SIDE = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "textures/gui/gun_smith_table_side.png");
+    /**
+     * JEI opens a temporary recipe screen above its parent container. Keep the
+     * parent object so its transfer handler can lock the real table even while
+     * Minecraft's active screen is JEI's recipe page.
+     */
+    private static @Nullable GunSmithTableScreen recipeViewerParentScreen;
 
     private final LinkedHashMap<Identifier, TabConfig> recipeKeys = Maps.newLinkedHashMap();
     private final Map<Identifier, List<Identifier>> recipes = Maps.newLinkedHashMap();
@@ -94,6 +100,11 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
     private boolean searchMode = false;
     /** Real tab selected before the current query, restored when the query is cleared. */
     private @Nullable Identifier selectedTypeBeforeSearch;
+    /**
+     * Exact recipe selected from JEI/REI's transfer action. This is local UI
+     * navigation only: the server still validates the id when Craft is pressed.
+     */
+    private @Nullable Identifier viewerLockedRecipeId;
 
     public GunSmithTableScreen(GunSmithTableMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 344, 186);
@@ -130,11 +141,18 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             }
         });
 
-        List<Pair<Identifier, Identifier>> recipeIds = Lists.newArrayList();
-        Map<Identifier, GunSmithTableRecipe> searchableRecipes = Maps.newHashMap();
+        // Keep the table-authorized recipe set separate from the player's
+        // temporary namespace/held-item finder filters. A viewer can only lock
+        // a recipe from the former; the latter must not make a valid JEI/REI
+        // selection disappear just because the player happened to be holding
+        // an unrelated item while opening the table.
+        List<Pair<Identifier, Identifier>> tableCandidateIds = Lists.newArrayList();
+        Map<Identifier, GunSmithTableRecipe> tableCandidates = Maps.newHashMap();
+        List<Pair<Identifier, Identifier>> visibleRecipeIds = Lists.newArrayList();
         List<Identifier> matchedSearchResults = Lists.newArrayList();
         String searchQuery = getSearchQuery();
         boolean searchRequested = !searchQuery.isBlank();
+        Set<String> namespaces = filterList != null ? filterList.namespaceList() : null;
 
         // 第 12 轮修复：改用 CommonAssetsManager.get()。
         //
@@ -149,14 +167,10 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         // 注意不能照抄上游的 recipeManager.getAllRecipesFor(...)：26.2 客户端<b>没有</b>
         // 完整配方表（ClientLevel#recipeAccess 只有 propertySet/stonecutterRecipes），
         // 因此配方改由 mod 自己经 DataType.RECIPES 通道同步过来。
-        Set<String> namespaces = filterList != null ? filterList.namespaceList() : null;
         for (Map.Entry<Identifier, TableRecipe> entry : CommonAssetsManager.get().getAllTableRecipes()) {
             Identifier id = entry.getKey();
             TableRecipe pojo = entry.getValue();
             if (pojo == null || pojo.getResult() == null) {
-                continue;
-            }
-            if (namespaces != null && !namespaces.contains(id.getNamespace())) {
                 continue;
             }
             GunSmithTableRecipe recipe = new GunSmithTableRecipe(id, pojo);
@@ -166,9 +180,6 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             // 所有配方都会在下面的 recipeKeys.containsKey(groupName) 处被过滤掉
             // —— 这就是第 12 轮"所有配方都看不见"的原因。
             recipe.init();
-            if (!isSuitableForMainHand(recipe)) {
-                continue;
-            }
             Identifier groupName = recipe.getResult().getGroup();
             // Industrial compatibility work has its own tacz:industry_* pages.
             // A third-party table may declare a narrow tab list, so inject only
@@ -183,32 +194,49 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                 }
             }
             if (recipeKeys.containsKey(groupName)) {
-                recipeIds.add(Pair.of(groupName, id));
-                searchableRecipes.put(id, recipe);
+                tableCandidateIds.add(Pair.of(groupName, id));
+                tableCandidates.put(id, recipe);
             }
         }
 
-        TimelessAPI.getCommonBlockIndex(menu.getBlockId()).map(blockIndex -> {
-            if (menu.getBlockId().equals(DefaultAssets.DEFAULT_BLOCK_ID) && !SyncConfig.ENABLE_TABLE_FILTER.get()) {
-                return null;
+        List<Pair<Identifier, Identifier>> tableAllowedRecipeIds = TimelessAPI.getCommonBlockIndex(menu.getBlockId())
+                .map(blockIndex -> {
+                    if (menu.getBlockId().equals(DefaultAssets.DEFAULT_BLOCK_ID) && !SyncConfig.ENABLE_TABLE_FILTER.get()) {
+                        return tableCandidateIds;
+                    }
+                    RecipeFilter filter = blockIndex.getFilter();
+                    return filter == null ? tableCandidateIds : filter.filter(tableCandidateIds, Pair::value);
+                })
+                .orElse(tableCandidateIds);
+        Set<Identifier> tableAllowedIds = new HashSet<>();
+        for (Pair<Identifier, Identifier> entry : tableAllowedRecipeIds) {
+            Identifier recipeId = entry.value();
+            GunSmithTableRecipe recipe = tableCandidates.get(recipeId);
+            if (recipe == null) {
+                continue;
             }
-            RecipeFilter filter = blockIndex.getFilter();
-            if (filter != null) {
-                return filter.filter(recipeIds, Pair::value);
+            tableAllowedIds.add(recipeId);
+            // These are client-side browsing filters only. They are applied
+            // after the actual table filter so the search list and the viewer
+            // lock never create a server crafting bypass.
+            if (namespaces != null && !namespaces.contains(recipeId.getNamespace())) {
+                continue;
             }
-            return null;
-        }).orElse(recipeIds).forEach(entry -> {
+            if (!isSuitableForMainHand(recipe)) {
+                continue;
+            }
+            visibleRecipeIds.add(entry);
+            if (searchRequested && matchesSearchQuery(recipe, searchQuery)) {
+                matchedSearchResults.add(recipeId);
+            }
+        }
+
+        for (Pair<Identifier, Identifier> entry : visibleRecipeIds) {
             Identifier groupName = entry.key();
             if (recipeKeys.containsKey(groupName)) {
-                Identifier recipeId = entry.value();
-                recipes.computeIfAbsent(groupName, g -> Lists.newArrayList()).add(recipeId);
-                GunSmithTableRecipe recipe = searchableRecipes.get(recipeId);
-                if (searchRequested && recipe != null && matchesSearchQuery(recipe, searchQuery)) {
-                    matchedSearchResults.add(recipeId);
-                }
+                recipes.computeIfAbsent(groupName, g -> Lists.newArrayList()).add(entry.value());
             }
-        });
-
+        }
         for (var entry : recipes.entrySet()) {
             if (!entry.getValue().isEmpty()) {
                 this.recipes.put(entry.getKey(), entry.getValue());
@@ -216,35 +244,113 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             }
         }
 
-        if (!this.recipeKeys.containsKey(selectedType)) {
-            selectedType = null;
-            selectedRecipeList = null;
-            indexPage = 0;
-        }
-
-        if (!this.recipeKeys.keySet().isEmpty() && selectedType == null) {
-            selectedType = this.recipeKeys.keySet().iterator().next();
-        }
-
         this.searchResults.clear();
         matchedSearchResults.sort(Comparator.comparing(Identifier::toString));
         this.searchResults.addAll(matchedSearchResults);
-        if (searchRequested) {
-            if (!searchMode && selectedType != null) {
-                selectedTypeBeforeSearch = selectedType;
-            }
-            searchMode = true;
-            selectedRecipeList = searchResults;
-        } else {
-            if (searchMode && selectedTypeBeforeSearch != null && recipeKeys.containsKey(selectedTypeBeforeSearch)) {
-                selectedType = selectedTypeBeforeSearch;
-            }
-            searchMode = false;
-            selectedTypeBeforeSearch = null;
-            if (selectedType != null) {
-                selectedRecipeList = this.recipes.get(selectedType);
+
+        boolean viewerLockActive = false;
+        if (viewerLockedRecipeId != null) {
+            GunSmithTableRecipe lockedRecipe = tableCandidates.get(viewerLockedRecipeId);
+            if (lockedRecipe != null && tableAllowedIds.contains(viewerLockedRecipeId)) {
+                viewerLockActive = true;
+                this.selectedType = lockedRecipe.getResult().getGroup();
+                this.selectedRecipeList = List.of(viewerLockedRecipeId);
+                this.indexPage = 0;
+                // A locked viewer selection intentionally wins over a stale
+                // finder query. Typing a new query clears the lock explicitly.
+                this.searchMode = false;
+                this.selectedTypeBeforeSearch = null;
+            } else {
+                // The data pack/table filter changed under this screen. Fail
+                // closed and restore ordinary browsing rather than showing a
+                // recipe that the current table no longer admits.
+                this.viewerLockedRecipeId = null;
             }
         }
+
+        if (!viewerLockActive) {
+            if (!this.recipeKeys.containsKey(selectedType)) {
+                selectedType = null;
+                selectedRecipeList = null;
+                indexPage = 0;
+            }
+            if (!this.recipeKeys.keySet().isEmpty() && selectedType == null) {
+                selectedType = this.recipeKeys.keySet().iterator().next();
+            }
+            if (searchRequested) {
+                if (!searchMode && selectedType != null) {
+                    selectedTypeBeforeSearch = selectedType;
+                }
+                searchMode = true;
+                selectedRecipeList = searchResults;
+            } else {
+                if (searchMode && selectedTypeBeforeSearch != null && recipeKeys.containsKey(selectedTypeBeforeSearch)) {
+                    selectedType = selectedTypeBeforeSearch;
+                }
+                searchMode = false;
+                selectedTypeBeforeSearch = null;
+                if (selectedType != null) {
+                    selectedRecipeList = this.recipes.get(selectedType);
+                }
+            }
+        }
+    }
+
+    /**
+     * Resolve JEI's parent container screen without depending on JEI internal
+     * screen classes. The same menu instance is retained while JEI displays a
+     * recipe page, so identity is stricter than merely comparing a reusable
+     * container id.
+     */
+    @Nullable
+    public static GunSmithTableScreen getRecipeViewerParent(GunSmithTableMenu targetMenu) {
+        GunSmithTableScreen screen = recipeViewerParentScreen;
+        return screen != null && screen.menu == targetMenu ? screen : null;
+    }
+
+    /**
+     * Lock an exact recipe selected by JEI/REI in this already-open table.
+     * This method only changes local GUI navigation; {@link GunSmithTableMenu}
+     * remains the server-side authority when the player presses Craft.
+     */
+    public boolean selectRecipeFromViewer(@Nullable Identifier recipeId) {
+        GunSmithTableRecipe recipe = getSelectedRecipe(recipeId);
+        if (recipe == null || !isAvailableToCurrentTable(recipe)) {
+            return false;
+        }
+        this.viewerLockedRecipeId = recipeId;
+        this.selectedType = recipe.getResult().getGroup();
+        this.selectedRecipeList = List.of(recipeId);
+        this.selectedRecipe = recipe;
+        this.indexPage = 0;
+        this.getPlayerIngredientCount(recipe);
+        this.init();
+        return true;
+    }
+
+    /** A viewer lock may only target a real recipe admitted by this exact table. */
+    private boolean isAvailableToCurrentTable(GunSmithTableRecipe recipe) {
+        Identifier blockId = menu.getBlockId();
+        if (blockId == null || recipe.getResult() == null || recipe.getResult().getGroup() == null) {
+            return false;
+        }
+        return TimelessAPI.getCommonBlockIndex(blockId).map(blockIndex -> {
+            if (DefaultAssets.DEFAULT_BLOCK_ID.equals(blockId) && !SyncConfig.ENABLE_TABLE_FILTER.get()) {
+                return true;
+            }
+            RecipeFilter filter = blockIndex.getFilter();
+            return (filter == null || filter.contains(recipe.getId()))
+                    && blockIndex.getData().supportsTab(recipe.getResult().getGroup());
+        }).orElse(false);
+    }
+
+    /** Explicit return to normal tab/finder browsing. */
+    public void clearRecipeViewerLock() {
+        this.viewerLockedRecipeId = null;
+    }
+
+    private boolean hasRecipeViewerLock() {
+        return this.viewerLockedRecipeId != null;
     }
 
     /**
@@ -464,6 +570,7 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
     @Override
     public void init() {
         super.init();
+        recipeViewerParentScreen = this;
         if (this.filterList == null) {
             this.filterList = new GunPackList(this.minecraft, 134, this.imageHeight, topPos, topPos + imageHeight + 1, 15, recipes, this);
         }
@@ -486,6 +593,12 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             this.filterEnabled = !this.filterEnabled;
             this.init();
         }).setTooltips("gui.tacz.gun_smith_table.filter"));
+        if (this.hasRecipeViewerLock()) {
+            this.addRenderableWidget(new FlatColorButton(leftPos - 12, topPos + 11, 11, 9, Component.literal("×"), b -> {
+                this.clearRecipeViewerLock();
+                this.init();
+            }).setTooltips("gui.tacz.gun_smith_table.viewer.unlock"));
+        }
         if (this.filterEnabled) {
             this.addRenderableWidget(this.filterList);
         } else {
@@ -581,6 +694,7 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                 continue;
             }
             ResultButton button = addRenderableWidget(new ResultButton(leftPos + 144, yOffset, recipe.getOutput(), b -> {
+                this.clearRecipeViewerLock();
                 this.selectedRecipe = recipe;
                 this.getPlayerIngredientCount(this.selectedRecipe);
                 this.init();
@@ -605,6 +719,9 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             ItemStack icon = tabConfig.icon().get();
 
             TypeButton typeButton = new TypeButton(xOffset, topPos + 2, icon, b -> {
+                // A tab click is an explicit return to browsing, including a
+                // prior exact selection made through JEI/REI.
+                this.clearRecipeViewerLock();
                 // A tab click is an explicit return to browsing. Clearing the
                 // query through GunPackList invokes its responder and rebuilds
                 // the real tab list, so do not continue on stale widgets.
@@ -697,7 +814,10 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
     public void extractRenderState(@NotNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
         drawModCenteredString(graphics, font, Component.translatable("gui.tacz.gun_smith_table.preview"), leftPos + 108, topPos + 5, 0xFF555555);
-        if (searchMode) {
+        if (hasRecipeViewerLock() && this.selectedRecipe != null) {
+            graphics.text(font, Component.translatable("gui.tacz.gun_smith_table.viewer.locked",
+                    this.selectedRecipe.getOutput().getHoverName()), leftPos + 150, topPos + 32, 0xFF8FD6C6, false);
+        } else if (searchMode) {
             graphics.text(font, Component.translatable("gui.tacz.gun_smith_table.search.results",
                     getSearchQuery(), searchResults.size()), leftPos + 150, topPos + 32, 0xFF555555, false);
         } else if (selectedType != null) {

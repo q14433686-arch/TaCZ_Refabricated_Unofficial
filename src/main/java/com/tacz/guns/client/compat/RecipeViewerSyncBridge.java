@@ -14,8 +14,9 @@ import java.lang.reflect.Method;
  *
  * <p>This class deliberately uses reflection for JEI. The normal mod must load
  * without JEI installed, while the JEI plugin itself has compile-only API
- * references. REI uses live display generators and therefore reads the same
- * cache lazily without a refresh call.</p>
+ * references. The JEI callback refreshes both synchronized Create processes
+ * and the gun/feed reference relationship. REI uses live display generators
+ * and therefore reads the same cache lazily without a refresh call.</p>
  */
 @Environment(EnvType.CLIENT)
 public final class RecipeViewerSyncBridge {
@@ -44,7 +45,7 @@ public final class RecipeViewerSyncBridge {
             // available yet. The plugin's onRuntimeAvailable callback retries
             // from the already synchronized cache.
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | LinkageError exception) {
-            GunMod.LOGGER.warn("Unable to refresh JEI industry process recipes after TACZ data sync", exception);
+            GunMod.LOGGER.warn("Unable to refresh JEI synchronized recipe-viewer data after TACZ sync", exception);
         }
     }
 }

@@ -61,6 +61,9 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
         this.byName = new EditBox(pMinecraft.font, 3, 0, 94, 10, Component.empty());
         this.byName.setHint(Component.translatable("gui.tacz.gun_smith_table.filter.search"));
         this.byName.setResponder((pText) -> {
+            // Typing in the finder is an explicit new browsing request; do
+            // not keep a previously JEI/REI-locked recipe over the results.
+            parent.clearRecipeViewerLock();
             parent.setIndexPage(0);
             parent.init();
         });

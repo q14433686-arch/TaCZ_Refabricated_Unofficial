@@ -29,6 +29,11 @@ public class GunSmithTableDisplay extends BasicDisplay {
         return recipe;
     }
 
+    /** Exact table identity that owns this display; used by the REI lock handler. */
+    public Identifier getBlockId() {
+        return entry.getKey();
+    }
+
     @Override
     public CategoryIdentifier<?> getCategoryIdentifier() {
         return entry.getValue();

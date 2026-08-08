@@ -31,6 +31,8 @@
 - REI 应新增 TACZ 的工业研磨、工业粉碎、加热/炽热鼓风炉搅拌、机械冲压、**工作盆压实**、部署器成型、**真实多槽机械合成器**和**顺序枪械装配**类别；
 - 点击碳粉、硫粉、朱砂粉、钢板、零件、弹药或最终 AK/M4/Glock 时，应能沿输入/输出查到完整 TACZ 工艺链；顺序装配页必须标明置物台/传送带只有一个流动工件，并显示 `D→P→…` 实际工位图例（D=部署器、P=动力冲压机、F=液体喷嘴），不能再只有模糊的机械手图标；
 - REI 显示来自服务器同步的 `recipe/create/` 工艺投影，专用服务器也应可用；
+- 打开实际 Gunsmith Table 后，分别在 JEI 与 REI 打开一条属于该 table 的配方并按其标准 `+` / transfer 按钮：工作台必须锁定**同一条 recipe ID**、显示该成品和真实材料；不得移动库存、不得自动制造。JEI/REI 配方来自另一种 table、当前 block filter 排除该 recipe 或 tab 不允许时，按钮必须拒绝锁定。随后点击工作台左侧 `×`、普通 tab 或输入新的检索词，应恢复普通浏览；
+- 在 JEI 与 REI 对一把枪执行“查看配方”、对其基础/alternate 弹药和已配置实体弹匣执行“查看用途”：应出现“枪械供弹查询 / Gun Feed Reference”，且页面只显示该枪实际接受的 AmmoId profile 与已验证的实体载具样本。对固定内仓枪应明确显示没有可拆卸弹匣；对没有 `gun_feed` 的未知第三方枪应显示 legacy/未声明，而绝不能根据 `reload.type`、枪名、GunIndex class、模型或容量虚构弹匣；
 - 重载日志中不得出现 `Ambiguous Create compacting recipes`，也不得出现 `ingredients type is too many, expected range [0-9]`。
 
 ## 2. Create Fly 基础材料链

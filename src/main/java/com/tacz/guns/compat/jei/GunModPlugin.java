@@ -7,9 +7,11 @@ import com.tacz.guns.api.item.gun.GunItemManager;
 import com.tacz.guns.compat.jei.category.AttachmentQueryCategory;
 import com.tacz.guns.compat.jei.category.CartridgeAssemblyCategory;
 import com.tacz.guns.compat.jei.category.GunSmithTableCategory;
+import com.tacz.guns.compat.jei.category.GunFeedReferenceCategory;
 import com.tacz.guns.compat.jei.category.IndustryProcessCategory;
 import com.tacz.guns.compat.jei.entry.AttachmentQueryEntry;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
+import com.tacz.guns.industry.magazine.GunFeedReferenceEntry;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessMachine;
 import com.tacz.guns.init.ModItems;
@@ -19,6 +21,7 @@ import mezz.jei.api.recipe.types.IRecipeType;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
+import mezz.jei.api.registration.IRecipeTransferRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
@@ -43,6 +46,8 @@ public class GunModPlugin implements IModPlugin {
             new EnumMap<>(IndustryProcessMachine.class);
     /** Runtime JEI recipes are added after TACZ's server data cache arrives. */
     private final Set<Identifier> syncedIndustryRecipeIds = new HashSet<>();
+    /** One feed reference per gun; dynamic additions are needed after remote cache sync. */
+    private final Set<Identifier> syncedGunFeedReferenceIds = new HashSet<>();
     private IJeiRuntime runtime;
 
     public GunModPlugin() {
@@ -72,6 +77,7 @@ public class GunModPlugin implements IModPlugin {
             recipeTypeMap.put(entry.getKey(), type);
         }
         registration.addRecipeCategories(new AttachmentQueryCategory(registration.getJeiHelpers().getGuiHelper()));
+        registration.addRecipeCategories(new GunFeedReferenceCategory(registration.getJeiHelpers().getGuiHelper()));
         registration.addRecipeCategories(new CartridgeAssemblyCategory(registration.getJeiHelpers().getGuiHelper()));
     }
 
@@ -105,6 +111,7 @@ public class GunModPlugin implements IModPlugin {
         }
 
         registerInitialIndustryRecipes(registration);
+        registerInitialGunFeedReferences(registration);
         registration.addRecipes(AttachmentQueryCategory.ATTACHMENT_QUERY, AttachmentQueryEntry.getAllAttachmentQueryEntries());
         registration.addRecipes(CartridgeAssemblyCategory.TYPE,
                 com.tacz.guns.resource.CommonAssetsManager.get().getAllCartridgeAssemblyRecipes().stream()
@@ -145,40 +152,85 @@ public class GunModPlugin implements IModPlugin {
         }
     }
 
-    private void refreshIndustryRecipes() {
+    /**
+     * Gun/feed relationships are synchronized data, just like the industry
+     * process graph. JEI can initialize before a dedicated server has supplied
+     * that cache, so retain only the gun ids already registered and add the
+     * missing references once the client receives the normal sync packet.
+     */
+    private synchronized List<GunFeedReferenceEntry> takeUnregisteredGunFeedReferences() {
+        List<GunFeedReferenceEntry> references = new java.util.ArrayList<>();
+        for (GunFeedReferenceEntry entry : GunFeedReferenceEntry.getAll()) {
+            if (syncedGunFeedReferenceIds.add(entry.getGunId())) {
+                references.add(entry);
+            }
+        }
+        return references;
+    }
+
+    private void registerInitialGunFeedReferences(IRecipeRegistration registration) {
+        List<GunFeedReferenceEntry> references = takeUnregisteredGunFeedReferences();
+        if (!references.isEmpty()) {
+            registration.addRecipes(GunFeedReferenceCategory.TYPE, references);
+        }
+    }
+
+    private void refreshSynchronizedViewerRecipes() {
         IJeiRuntime activeRuntime = runtime;
         if (activeRuntime == null) {
             return;
         }
-        int added = 0;
+        int addedProcesses = 0;
         for (Map.Entry<IRecipeType<IndustryProcessDefinition>, List<IndustryProcessDefinition>> entry :
                 takeUnregisteredIndustryProcesses().entrySet()) {
             activeRuntime.getRecipeManager().addRecipes(entry.getKey(), entry.getValue());
-            added += entry.getValue().size();
+            addedProcesses += entry.getValue().size();
         }
-        if (added > 0) {
-            GunMod.LOGGER.info("Added {} synchronized TACZ Create process(es) to JEI.", added);
+        List<GunFeedReferenceEntry> references = takeUnregisteredGunFeedReferences();
+        if (!references.isEmpty()) {
+            activeRuntime.getRecipeManager().addRecipes(GunFeedReferenceCategory.TYPE, references);
+        }
+        if (addedProcesses > 0 || !references.isEmpty()) {
+            GunMod.LOGGER.info("Added {} synchronized TACZ Create process(es) and {} gun-feed reference entry/entries to JEI.",
+                    addedProcesses, references.size());
         }
     }
 
-    /** Called on the client thread after {@code ServerMessageSyncGunPack} refreshes common data. */
+    /** Called on the client thread after {@code ServerMessageSyncGunPack} refreshes viewer data. */
     public static void onIndustryProcessesSynchronized() {
         GunModPlugin plugin = instance;
         if (plugin != null) {
-            plugin.refreshIndustryRecipes();
+            plugin.refreshSynchronizedViewerRecipes();
         }
     }
 
     @Override
     public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
         this.runtime = jeiRuntime;
-        refreshIndustryRecipes();
+        refreshSynchronizedViewerRecipes();
     }
 
     @Override
     public void onRuntimeUnavailable() {
         this.runtime = null;
         this.syncedIndustryRecipeIds.clear();
+        this.syncedGunFeedReferenceIds.clear();
+    }
+
+    /**
+     * The Gunsmith Table has no input-grid slots to fill. Registering a normal
+     * JEI transfer handler lets the familiar + button lock the selected
+     * synchronized recipe in the open table instead, while crafting remains
+     * server-authoritative through the existing table packet.
+     */
+    @Override
+    public void registerRecipeTransferHandlers(IRecipeTransferRegistration registration) {
+        for (Map.Entry<Identifier, IRecipeType<GunSmithTableRecipe>> entry : recipeTypeMap.entrySet()) {
+            registration.addRecipeTransferHandler(
+                    new GunSmithTableRecipeTransferHandler(entry.getKey(), entry.getValue(), registration.getTransferHelper()),
+                    entry.getValue()
+            );
+        }
     }
 
     @Override

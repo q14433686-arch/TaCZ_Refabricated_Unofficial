@@ -3,10 +3,13 @@ package cn.sh1rocu.tacz.compat.rei;
 import cn.sh1rocu.tacz.compat.rei.category.AttachmentQueryCategory;
 import cn.sh1rocu.tacz.compat.rei.category.CartridgeAssemblyCategory;
 import cn.sh1rocu.tacz.compat.rei.category.GunSmithTableCategory;
+import cn.sh1rocu.tacz.compat.rei.category.GunFeedReferenceCategory;
 import cn.sh1rocu.tacz.compat.rei.category.IndustryProcessCategory;
 import cn.sh1rocu.tacz.compat.rei.display.AttachmentQueryDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.CartridgeAssemblyDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.GunSmithTableDisplay;
+import cn.sh1rocu.tacz.compat.rei.display.GunFeedReferenceDisplay;
+import cn.sh1rocu.tacz.compat.rei.display.GunFeedReferenceDisplayGenerator;
 import cn.sh1rocu.tacz.compat.rei.display.IndustryProcessDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.IndustryProcessDisplayGenerator;
 import cn.sh1rocu.tacz.compat.rei.entry.AttachmentQueryEntry;
@@ -18,6 +21,7 @@ import com.tacz.guns.industry.recipe.IndustryProcessMachine;
 import com.tacz.guns.init.ModItems;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
+import me.shedaniel.rei.api.client.registry.transfer.TransferHandlerRegistry;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.minecraft.client.Minecraft;
@@ -35,6 +39,9 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
     public static final CategoryIdentifier<AttachmentQueryDisplay> ATTACHMENT_QUERY = CategoryIdentifier.of(GunMod.MOD_ID, "plugins/attachment_query");
     public static final CategoryIdentifier<CartridgeAssemblyDisplay> CARTRIDGE_ASSEMBLY =
             CategoryIdentifier.of(GunMod.MOD_ID, "industry/cartridge_assembly_machine");
+    /** Read-only relationship category: ammunition/carrier inputs → exact gun. */
+    public static final CategoryIdentifier<GunFeedReferenceDisplay> GUN_FEED_REFERENCE =
+            CategoryIdentifier.of(GunMod.MOD_ID, "gun_feed_reference");
 
     public static final Map<Identifier, CategoryIdentifier<GunSmithTableDisplay>> displays = new HashMap<>();
     private static final Map<IndustryProcessMachine, CategoryIdentifier<IndustryProcessDisplay>> INDUSTRY_CATEGORIES =
@@ -63,6 +70,7 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
             registry.addWorkstations(id, EntryStacks.of(icon));
         }
         registry.add(new AttachmentQueryCategory());
+        registry.add(new GunFeedReferenceCategory());
         registry.add(new CartridgeAssemblyCategory());
         registry.addWorkstations(CARTRIDGE_ASSEMBLY, EntryStacks.of(ModItems.CARTRIDGE_ASSEMBLY_MACHINE.getDefaultInstance()));
         for (IndustryProcessMachine machine : IndustryProcessMachine.values()) {
@@ -83,6 +91,8 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
             CategoryIdentifier<IndustryProcessDisplay> id = getIndustryCategory(machine);
             registry.registerDisplayGenerator(id, new IndustryProcessDisplayGenerator(machine, id));
         }
+        registry.registerDisplayGenerator(GUN_FEED_REFERENCE,
+                new GunFeedReferenceDisplayGenerator(GUN_FEED_REFERENCE));
         if (Minecraft.getInstance().level == null) return;
         // 第 20 轮修复：本类此前一直沿用 CommonAssetsManager.getInstance() + RecipeManager，
         // 那是**纯服务端**路径（recipeManager 只在 AddReloadListenerEvent 里由
@@ -131,5 +141,15 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
                 registry.add(new CartridgeAssemblyDisplay(entry.getKey(), entry.getValue()));
             }
         }
+    }
+
+    /**
+     * REI's normal transfer button becomes an exact local table-recipe lock;
+     * no items are moved and the existing server craft validation remains the
+     * only path that produces an item.
+     */
+    @Override
+    public void registerTransferHandlers(TransferHandlerRegistry registry) {
+        registry.register(new GunSmithTableTransferHandler());
     }
 }
