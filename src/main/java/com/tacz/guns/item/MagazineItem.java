@@ -2,10 +2,13 @@ package com.tacz.guns.item;
 
 import cn.sh1rocu.tacz.api.extension.IItem;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
+import com.tacz.guns.api.DefaultAssets;
+import com.tacz.guns.api.item.IAmmo;
+import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.client.industry.icon.IndustryIconRenderer;
+import com.tacz.guns.industry.ammo.AmmoProfileService;
 import com.tacz.guns.industry.magazine.ExternalCarrierVariant;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
-import com.tacz.guns.industry.magazine.InventoryRoundHandlingService;
 import com.tacz.guns.industry.magazine.MagazineItemBuilder;
 import com.tacz.guns.industry.magazine.MagazineItemDataAccessor;
 import com.tacz.guns.resource.CommonAssetsManager;
@@ -14,7 +17,9 @@ import net.fabricmc.api.Environment;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickAction;
@@ -27,6 +32,7 @@ import net.minecraft.world.item.component.TooltipDisplay;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -34,10 +40,11 @@ import java.util.function.Consumer;
 /**
  * A one-stack physical detachable magazine or physical loading device.
  *
- * <p>Right-clicking a loose round stack or an empty inventory slot keeps the
- * familiar inventory workflow, but now starts a server-timed one-round
- * transaction. There is no instant bulk-loading shortcut: ordered mixed-round
- * handling happens in the player's real inventory slots.</p>
+ * <p>Loading and unloading use the usual inventory secondary-click workflow.
+ * A compatible loose-ammo stack is transferred immediately into the ordered
+ * carrier contents; unloading transfers the contiguous top run of one exact
+ * AmmoId. The carrier therefore keeps its real mixed-round order without a
+ * background inventory timer.</p>
  */
 public class MagazineItem extends Item implements MagazineItemDataAccessor, IItem {
     public MagazineItem(Properties properties) {
@@ -67,12 +74,98 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
         if (action != ClickAction.SECONDARY || !isConfigured(magazine)) {
             return false;
         }
-        // Consume the client click too, so vanilla never swaps the stacks while
-        // the server is counting down the selected physical round.
-        if (player.level().isClientSide()) {
-            return slot.getItem().isEmpty() || slot.getItem().getItem() instanceof com.tacz.guns.api.item.IAmmo;
+
+        ItemStack target = slot.getItem();
+        if (target.isEmpty()) {
+            return unloadIntoEmptySlot(magazine, slot, player);
         }
-        return InventoryRoundHandlingService.beginMagazineInteraction(player, magazine, slot);
+        if (target.getItem() instanceof IAmmo ammo && canLoad(magazine, target, ammo)) {
+            return loadFromAmmoStack(magazine, target, ammo, slot, player);
+        }
+        return false;
+    }
+
+    private boolean canLoad(ItemStack magazine, ItemStack ammoStack, IAmmo ammo) {
+        Identifier roundAmmoId = ammo.getAmmoId(ammoStack);
+        return getAmmoCount(magazine) < getCapacity(magazine)
+                && AmmoProfileService.isLoadedAmmoIdentity(roundAmmoId)
+                && AmmoProfileService.isSameCaliber(getAmmoId(magazine), roundAmmoId);
+    }
+
+    private boolean loadFromAmmoStack(ItemStack magazine, ItemStack ammoStack, IAmmo ammo, Slot slot, Player player) {
+        int free = getCapacity(magazine) - getAmmoCount(magazine);
+        if (free <= 0) {
+            return false;
+        }
+        Identifier roundAmmoId = ammo.getAmmoId(ammoStack);
+        ItemStack extracted = slot.safeTake(ammoStack.getCount(), free, player);
+        if (extracted.isEmpty()) {
+            return false;
+        }
+        int loaded = 0;
+        for (int index = 0; index < extracted.getCount(); index++) {
+            if (!pushRound(magazine, roundAmmoId)) {
+                break;
+            }
+            loaded++;
+        }
+        if (loaded != extracted.getCount()) {
+            // This is only reachable if another server-side mutation changed
+            // the carrier between safeTake and pushRound. Restore the portion
+            // that was not accepted instead of dropping or duplicating it.
+            slot.safeInsert(extracted.copyWithCount(extracted.getCount() - loaded));
+        }
+        if (loaded <= 0) {
+            return false;
+        }
+        playInsertSound(player);
+        return true;
+    }
+
+    private boolean unloadIntoEmptySlot(ItemStack magazine, Slot slot, Player player) {
+        Identifier topRound = getNextRoundAmmoId(magazine);
+        if (topRound.equals(DefaultAssets.EMPTY_AMMO_ID) || !AmmoProfileService.isLoadedAmmoIdentity(topRound)) {
+            return false;
+        }
+
+        var ammoIndex = CommonAssetsManager.get().getAmmoIndex(topRound);
+        int stackLimit = ammoIndex == null ? 64 : ammoIndex.getStackSize();
+        int removable = 0;
+        List<Identifier> rounds = getRoundAmmoIds(magazine);
+        for (int index = rounds.size() - 1; index >= 0 && removable < stackLimit; index--) {
+            if (!topRound.equals(rounds.get(index))) {
+                break;
+            }
+            removable++;
+        }
+        if (removable <= 0) {
+            return false;
+        }
+
+        ItemStack looseAmmo = AmmoItemBuilder.create().setId(topRound).setCount(removable).build();
+        ItemStack remainder = slot.safeInsert(looseAmmo);
+        int inserted = removable - remainder.getCount();
+        if (inserted <= 0) {
+            return false;
+        }
+        for (int index = 0; index < inserted; index++) {
+            if (!topRound.equals(popNextRound(magazine))) {
+                // The top run was calculated from this same stack and cannot
+                // normally change during a menu click. Do not remove a
+                // different profile if an external mutation ever races it.
+                break;
+            }
+        }
+        playRemoveSound(player);
+        return true;
+    }
+
+    private static void playInsertSound(Entity entity) {
+        entity.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, 0.8F + entity.level().getRandom().nextFloat() * 0.4F);
+    }
+
+    private static void playRemoveSound(Entity entity) {
+        entity.playSound(SoundEvents.BUNDLE_REMOVE_ONE, 0.8F, 0.8F + entity.level().getRandom().nextFloat() * 0.4F);
     }
 
     @Override
@@ -109,7 +202,7 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
         adder.accept(Component.translatable("tooltip.tacz.magazine.ammo", ammoName)
                 .withStyle(style -> style.withColor(0xAAAAAA)));
         Identifier nextRound = getNextRoundAmmoId(stack);
-        if (!nextRound.equals(com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID)) {
+        if (!nextRound.equals(DefaultAssets.EMPTY_AMMO_ID)) {
             adder.accept(Component.translatable("tooltip.tacz.magazine.next_round", ammoDisplayName(nextRound))
                     .withStyle(style -> style.withColor(0x8FD6C6)));
         }

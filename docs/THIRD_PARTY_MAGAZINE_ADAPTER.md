@@ -148,7 +148,7 @@ TACZ 当前的扩容等级最多使用该数组的前三项。少数旧枪包虽
 
 ### 同口径混装与逐发处理
 
-`MagazineAmmoId` 现在只表示载具的 canonical 受弹口径；实际内容是有序 `MagazineRounds`，允许作者通过明确 `industry/ammo_profiles` 声明的同口径 alternate AmmoId 混装。实体弹匣、桥夹、漏夹与快装器在玩家真实背包/容器多槽界面中逐发装/退：右击来源或空输出槽会启动服务端计时，旧背包批量瞬移路径已移除。完整数据格式、首批 AP/HP/Slug 内容与边界见 [`MIXED_AMMO_AND_TIMED_HANDLING_DESIGN.md`](MIXED_AMMO_AND_TIMED_HANDLING_DESIGN.md)。
+`MagazineAmmoId` 现在只表示载具的 canonical 受弹口径；实际内容是有序 `MagazineRounds`，允许作者通过明确 `industry/ammo_profiles` 声明的同口径 alternate AmmoId 混装。实体弹匣、桥夹、漏夹与快装器在玩家真实背包/容器多槽界面中即时装入/取出：右击来源会转入其兼容弹药，右击空输出槽会退出顶部连续且身份相同的一段弹药；不存在服务端计时任务。完整数据格式、首批 AP/HP/Slug 内容与边界见 [`MIXED_AMMO_AND_TIMED_HANDLING_DESIGN.md`](MIXED_AMMO_AND_TIMED_HANDLING_DESIGN.md)。
 
 ### 工作台分类：独立工业页
 

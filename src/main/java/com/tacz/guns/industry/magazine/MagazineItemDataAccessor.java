@@ -31,8 +31,6 @@ public interface MagazineItemDataAccessor extends IMagazine {
     String MAGAZINE_AMMO_COUNT_TAG = "MagazineAmmoCount";
     /** Ordered bottom-to-top AmmoId strings; the last entry is next to feed/eject. */
     String MAGAZINE_ROUNDS_TAG = "MagazineRounds";
-    /** Stable server-only transaction identity for a timed inventory operation. */
-    String ROUND_HANDLING_INSTANCE_ID_TAG = "RoundHandlingInstanceId";
     String MAGAZINE_DISPLAY_NAME_TAG = "MagazineDisplayName";
     /** detachable_magazine/belt carriers; stripper_clip/speedloader loaders; en_bloc_clip is installed in gun NBT. */
     String FEED_DEVICE_KIND_TAG = "FeedDeviceKind";
@@ -246,15 +244,6 @@ public interface MagazineItemDataAccessor extends IMagazine {
         ));
     }
 
-    default String getRoundHandlingInstanceId(ItemStack magazine) {
-        return ItemNbtUtils.getTag(magazine).getStringOr(ROUND_HANDLING_INSTANCE_ID_TAG, "");
-    }
-
-    default void setRoundHandlingInstanceId(ItemStack magazine, String instanceId) {
-        ItemNbtUtils.updateTag(magazine, tag -> tag.putString(
-                ROUND_HANDLING_INSTANCE_ID_TAG, instanceId == null ? "" : instanceId
-        ));
-    }
 
     @Override
     default boolean isConfigured(ItemStack magazine) {
