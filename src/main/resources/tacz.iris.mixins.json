@@ -5,7 +5,9 @@
   "compatibilityLevel": "JAVA_17",
   "plugin": "com.tacz.guns.mixin.client.iris.IrisCompatMixinPlugin",
   "client": [
-    "IrisDepthRestoreShaderMixin"
+    "IrisShaderCreatorMixin",
+    "IrisGlCommandEncoderMixin",
+    "IrisExtendedShaderMixin"
   ],
   "injectors": {
     "defaultRequire": 0

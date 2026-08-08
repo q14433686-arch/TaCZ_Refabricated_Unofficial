@@ -4,6 +4,7 @@ import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
+import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.DeltaTracker;
@@ -34,6 +35,9 @@ public abstract class GameRendererMixin {
                                     Matrix4fc projection,
                                     CallbackInfo ci) {
         this.tacz$renderingItemInHand = true;
+        // renderAllFeatures is called multiple times per frame (world + hand).
+        // The scope mask must only render during the hand pass.
+        ScopeMaskRenderer.setInHandPass(true);
     }
 
     @Inject(method = "renderItemInHand", at = @At("RETURN"))
@@ -42,6 +46,7 @@ public abstract class GameRendererMixin {
                                   Matrix4fc projection,
                                   CallbackInfo ci) {
         this.tacz$renderingItemInHand = false;
+        ScopeMaskRenderer.setInHandPass(false);
     }
 
     @Unique

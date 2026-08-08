@@ -7,6 +7,8 @@ import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.BeamRenderer;
 import com.tacz.guns.client.render.scope.IReticleRenderer;
 import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
+import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
+import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.render.scope.ScopeNodeSet;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.model.functional.TextShowRender;
@@ -542,36 +544,44 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             }
         }
 
-        // Submit ordered aperture/body/reticle batches. The aperture uses an ordinary RenderPipeline depth
-        // state, so it remains inside vanilla/Iris scheduling and does not alter framebuffer attachments.
+        // Submit ordered aperture/body/reticle batches.
+        //
+        // NEW MASK APPROACH: Instead of depth buffer manipulation (BACKUP/RESTORE/APERTURE_COPY),
+        // we render the ocular geometry to an offscreen RGBA8 mask FBO at the phase boundary.
+        // The scope body shader samples this mask to discard pixels inside the ocular projection.
+        // The depth buffer is never touched — no ghost-hand / fog / SSAO artifacts.
         if (apertureActive && texture != null && !ocularSnapshots.isEmpty() && !bodySnapshot.isEmpty()) {
             PoseStack identity = new PoseStack();
-            RenderType apertureWriter = ScopeRenderTypes.depthAperture(texture);
-            OrderedSubmitNodeCollector apertureCollector = collector.order(SCOPE_APERTURE_ORDER);
-            apertureCollector.submitCustomGeometry(identity, apertureWriter, (entryPose, consumer) -> {
-                for (com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
-                    ocularSnap.write(consumer);
+
+            // Collect ocular geometry for the mask renderer.
+            // It will render these to the offscreen FBO at the phase boundary (before solid pass).
+            // The pose must contain the FULL transform chain: gun root → parents → ocular itself.
+            // This matches the ocularSnapshots capture above so the mask aligns with the actual
+            // ocular position on screen.
+            for (BedrockPart ocular : ocularParts) {
+                if (ocular.visible && isOcularInActiveGroup(ocular)) {
+                    PoseStack ocularPose = new PoseStack();
+                    ocularPose.last().pose().set(poseStack.last().pose());
+                    ocularPose.last().normal().set(poseStack.last().normal());
+                    List<BedrockPart> path = new ArrayList<>();
+                    for (BedrockPart p = ocular.getParent(); p != null; p = p.getParent()) {
+                        path.add(0, p);
+                    }
+                    for (BedrockPart p : path) {
+                        p.translateAndRotateAndScale(ocularPose);
+                    }
+                    ocular.translateAndRotateAndScale(ocularPose);
+                    ScopeMaskRenderer.addEntry(
+                            new Matrix4f(ocularPose.last().pose()),
+                            ocular.cubes
+                    );
                 }
-            });
+            }
 
-            // Step 3 of the ocular screen-space mask happens at this draw boundary: the wrapped
-            // body type first copies the aperture depth (world depth plus only the ocular
-            // differences) into the mask texture, and only then does the ordinary scope body draw.
-            // Body fragments behind the invisible ocular still fail their normal depth test, so
-            // neither stencil nor framebuffer attachment changes are involved.
-            RenderType bodyWithApertureCopy = ScopeRenderTypes.apertureCopy(renderType);
-            collector.order(SCOPE_BODY_ORDER).submitCustomGeometry(identity, bodyWithApertureCopy,
+            // Scope body: draw only where ocular does NOT cover (SCOPE_MASK, no INVERT)
+            RenderType clippedBody = ScopeBodyRenderTypes.clipped(texture);
+            collector.order(SCOPE_BODY_ORDER).submitCustomGeometry(identity, clippedBody,
                     (entryPose, consumer) -> bodySnapshot.write(consumer));
-
-            // Restore the aperture pixels from the exact pre-ocular world-depth backup. Iris renders water,
-            // fog, particles and volumetric clouds after its solid-hand pass and needs the original depth.
-            RenderType depthCleanup = ScopeRenderTypes.depthCleanup(texture);
-            collector.order(SCOPE_DEPTH_CLEANUP_ORDER).submitCustomGeometry(identity, depthCleanup,
-                    (entryPose, consumer) -> {
-                        for (com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
-                            ocularSnap.write(consumer);
-                        }
-                    });
         } else if (!bodySnapshot.isEmpty()) {
             PoseStack identity = new PoseStack();
             collector.submitCustomGeometry(identity, renderType,
@@ -584,18 +594,14 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
             if (reticle != null && !active.isEmpty()) {
                 boolean etchedOnly = active.hasEtched() && !active.hasIlluminated() && texture != null;
+                // NEW: Use mask-based reticle types instead of depth-comparison types
                 RenderType baseReticleType = etchedOnly
-                        ? ScopeRenderTypes.etchedReticle(texture)
+                        ? ScopeBodyRenderTypes.reticle(texture)    // etched: inside ocular
                         : renderType;
                 RenderType baseIlluminatedType = texture == null
                         ? renderType
-                        : ScopeRenderTypes.visibleReticle(texture);
+                        : ScopeBodyRenderTypes.reticleEmissive(texture);  // emissive reticle
 
-                // Pure etched trees are CPU-filtered to retain thin marks and discard large blackout panels.
-                // Both etched and illuminated reticles render after the exact world-depth restore, sample the
-                // world-depth backup and the ocular aperture copy per pixel, and only keep fragments where
-                // ocularDepth < worldDepth - epsilon — the true screen-space ocular mask. Surviving pixels
-                // still write near hand depth so later water/fog/particle passes cannot cover them.
                 reticle.submitReticle(new IReticleRenderer.Context(
                         poseStack, collector.order(SCOPE_RETICLE_ORDER),
                         transformType, baseReticleType, baseIlluminatedType,
