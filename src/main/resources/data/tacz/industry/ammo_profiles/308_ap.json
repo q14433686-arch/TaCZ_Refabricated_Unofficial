@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "ammo": "tacz:308_ap",
+  "caliber_ammo": "tacz:308",
+  "kind": "ap",
+  "damage_multiplier": 0.92,
+  "armor_ignore_multiplier": 1.38,
+  "armor_ignore_addend": 0.08,
+  "pierce_add": 1,
+  "pierce_override": 0,
+  "speed_multiplier": 1.05,
+  "projectile_count_override": 0
+}

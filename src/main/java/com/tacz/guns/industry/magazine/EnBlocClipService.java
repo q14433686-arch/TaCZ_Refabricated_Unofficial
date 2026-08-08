@@ -10,6 +10,7 @@ import com.tacz.guns.api.item.nbt.GunItemDataAccessor;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.industry.IndustryProfileManager;
+import com.tacz.guns.industry.ammo.RoundProfileService;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.util.ItemNbtUtils;
@@ -95,11 +96,37 @@ public final class EnBlocClipService {
     }
 
     public static int removeInstalledRounds(ItemStack gun, int amount) {
-        int removed = Math.min(Math.max(0, amount), getInstalledAmmoCount(gun));
-        if (removed > 0) {
-            setInstalledAmmoCount(gun, getInstalledAmmoCount(gun) - removed);
+        int removed = 0;
+        for (int index = 0; index < Math.max(0, amount); index++) {
+            if (takeInstalledNextRound(gun).equals(DefaultAssets.EMPTY_AMMO_ID)) {
+                break;
+            }
+            removed++;
         }
         return removed;
+    }
+
+    /** Pop and persist the real top round from the installed en-bloc clip. */
+    public static Identifier takeInstalledNextRound(ItemStack gun) {
+        return takeInstalledRound(gun, true);
+    }
+
+    /** See MagazineItemDataAccessor#popOldestRound for closed-bolt order preservation. */
+    public static Identifier takeInstalledOldestRound(ItemStack gun) {
+        return takeInstalledRound(gun, false);
+    }
+
+    private static Identifier takeInstalledRound(ItemStack gun, boolean top) {
+        ItemStack clip = getInstalledClip(gun);
+        if (!(clip.getItem() instanceof MagazineItemDataAccessor magazine)) {
+            return DefaultAssets.EMPTY_AMMO_ID;
+        }
+        Identifier round = top ? magazine.popNextRound(clip) : magazine.popOldestRound(clip);
+        if (round.equals(DefaultAssets.EMPTY_AMMO_ID)) {
+            return round;
+        }
+        setInstalledClip(gun, clip);
+        return round;
     }
 
     public static boolean canReload(LivingEntity shooter, ItemStack gun) {
@@ -341,8 +368,13 @@ public final class EnBlocClipService {
         Bolt bolt = TimelessAPI.getCommonGunIndex(iGun.getGunId(gun))
                 .map(index -> index.getGunData().getBolt()).orElse(null);
         if ((bolt == Bolt.MANUAL_ACTION || bolt == Bolt.CLOSED_BOLT)
-                && !iGun.hasBulletInBarrel(gun) && removeInstalledRounds(gun, 1) == 1) {
-            iGun.setBulletInBarrel(gun, true);
+                && !iGun.hasBulletInBarrel(gun)) {
+            Identifier chambered = bolt == Bolt.CLOSED_BOLT
+                    ? takeInstalledOldestRound(gun) : takeInstalledNextRound(gun);
+            if (!chambered.equals(DefaultAssets.EMPTY_AMMO_ID)) {
+                RoundProfileService.setChamberAmmoId(gun, chambered);
+                iGun.setBulletInBarrel(gun, true);
+            }
         }
     }
 

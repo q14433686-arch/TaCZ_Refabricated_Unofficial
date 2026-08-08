@@ -2,6 +2,7 @@ package com.tacz.guns.init;
 
 import com.tacz.guns.GunMod;
 import com.tacz.guns.block.*;
+import com.tacz.guns.block.entity.AmmunitionHandlingBenchBlockEntity;
 import com.tacz.guns.block.entity.CartridgeAssemblyMachineBlockEntity;
 import com.tacz.guns.block.entity.IndustrialSalvageStationBlockEntity;
 import com.tacz.guns.block.entity.IndustrialServiceBenchBlockEntity;
@@ -34,6 +35,9 @@ public class ModBlocks {
     /** Dedicated GUI machine for the final case/projectile/primer/propellant assembly. */
     public static Block CARTRIDGE_ASSEMBLY_MACHINE = registerBlock("cartridge_assembly_machine",
             new CartridgeAssemblyMachineBlock(detailedMachineProps("cartridge_assembly_machine")));
+    /** Real timed multi-slot handling station for mixed physical ammunition carriers. */
+    public static Block AMMUNITION_HANDLING_BENCH = registerBlock("ammunition_handling_bench",
+            new AmmunitionHandlingBenchBlock(detailedMachineProps("ammunition_handling_bench")));
     /** One-input recovery station for stripped guns, empty magazines and obsolete dies. */
     public static Block INDUSTRIAL_SALVAGE_STATION = registerBlock("industrial_salvage_station",
             new IndustrialSalvageStationBlock(detailedMachineProps("industrial_salvage_station")));
@@ -47,6 +51,9 @@ public class ModBlocks {
     public static BlockEntityType<GunSmithTableBlockEntity> GUN_SMITH_TABLE_BE = registerBlockEntity("gun_smith_table", GunSmithTableBlockEntity.TYPE);
     public static BlockEntityType<CartridgeAssemblyMachineBlockEntity> CARTRIDGE_ASSEMBLY_MACHINE_BE = registerBlockEntity(
             "cartridge_assembly_machine", CartridgeAssemblyMachineBlockEntity.TYPE
+    );
+    public static BlockEntityType<AmmunitionHandlingBenchBlockEntity> AMMUNITION_HANDLING_BENCH_BE = registerBlockEntity(
+            "ammunition_handling_bench", AmmunitionHandlingBenchBlockEntity.TYPE
     );
     public static BlockEntityType<IndustrialSalvageStationBlockEntity> INDUSTRIAL_SALVAGE_STATION_BE = registerBlockEntity(
             "industrial_salvage_station", IndustrialSalvageStationBlockEntity.TYPE

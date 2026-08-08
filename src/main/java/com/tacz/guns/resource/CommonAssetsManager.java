@@ -28,6 +28,8 @@ import com.tacz.guns.resource.pojo.data.block.TabConfig;
 import com.tacz.guns.resource.pojo.data.gun.ExtraDamage;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.gun.Ignite;
+import com.tacz.guns.industry.ammo.AmmoProfileDefinition;
+import com.tacz.guns.industry.ammo.AmmoProfileManager;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceProfile;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceProfileManager;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
@@ -98,6 +100,8 @@ public class CommonAssetsManager implements ICommonResourceProvider {
      */
     /** Validated only after GunIndex is available, so add-on capacity/ammo mismatches fail closed. */
     private GunFeedDefinitionManager gunFeed;
+    /** Explicit alternate AmmoId profiles; base ammunition remains neutral unless a data file opts in. */
+    private AmmoProfileManager ammoProfiles;
     /** Create recipe projection synchronised for the built-in REI bridge. */
     private CommonDataManager<IndustryProcessDefinition> industryProcess;
     /** Server-authoritative dedicated cartridge-assembly definitions, synced for UI/REI. */
@@ -131,6 +135,9 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         // Feed declarations must see the fully loaded GunIndex/GunData before
         // they can safely enable a physical magazine for an addon receiver.
         gunFeed = register(new GunFeedDefinitionManager());
+        // Alternate ammo profiles depend on both source and canonical AmmoIndex
+        // identities, so they load only after the complete index map exists.
+        ammoProfiles = register(new AmmoProfileManager());
         attachmentIndex = register(new CommonDataManager<>(DataType.ATTACHMENT_INDEX, CommonAttachmentIndex.class, GSON, "index/attachments", "AttachmentIndexLoader"));
         blockIndex = register(new CommonDataManager<>(DataType.BLOCK_INDEX, CommonBlockIndex.class, GSON, "index/blocks", "BlockIndexLoader"));
         // Aliases depend on the loaded indexes and must be ready before table
@@ -296,6 +303,17 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     /** Add-on magazine adapter audit; accepted definitions alone are exposed to runtime services. */
     public GunFeedDefinitionManager.Audit getGunFeedAudit() {
         return gunFeed == null ? new GunFeedDefinitionManager.Audit(0, 0, 0) : gunFeed.getAudit();
+    }
+
+    @Override
+    @Nullable
+    public AmmoProfileDefinition getAmmoProfile(Identifier ammoId) {
+        return ammoProfiles == null ? null : ammoProfiles.getProfile(ammoId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, AmmoProfileDefinition>> getAllAmmoProfiles() {
+        return ammoProfiles == null ? Collections.emptySet() : ammoProfiles.getValidProfiles().entrySet();
     }
 
     @Override

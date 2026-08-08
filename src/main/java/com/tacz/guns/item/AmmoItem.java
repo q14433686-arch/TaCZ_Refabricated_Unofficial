@@ -6,6 +6,7 @@ import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.api.item.nbt.AmmoItemDataAccessor;
 import com.tacz.guns.client.renderer.item.AmmoItemRenderer;
 import com.tacz.guns.client.resource.ClientAssetsManager;
+import com.tacz.guns.industry.ammo.AmmoProfileService;
 import com.tacz.guns.client.resource.index.ClientAmmoIndex;
 import com.tacz.guns.client.resource.pojo.PackInfo;
 import com.tacz.guns.resource.index.CommonAmmoIndex;
@@ -139,6 +140,11 @@ public class AmmoItem extends Item implements AmmoItemDataAccessor, IItem {
                 adder.accept(Component.translatable(tooltipKey).withStyle(style -> style.withColor(0xAAAAAA)));
             }
         });
+        var profile = AmmoProfileService.resolve(ammoId);
+        if (!ammoId.equals(profile.getCaliberAmmoId()) || !"fmj".equals(profile.getKind())) {
+            adder.accept(Component.translatable("tooltip.tacz.ammo.profile." + profile.getKind())
+                    .withStyle(style -> style.withColor(0xD6B46C)));
+        }
 
         PackInfo packInfoObject = ClientAssetsManager.INSTANCE.getPackInfo(ammoId);
         if (packInfoObject != null) {

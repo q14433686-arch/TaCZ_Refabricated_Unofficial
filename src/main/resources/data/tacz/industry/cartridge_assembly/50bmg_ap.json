@@ -1,0 +1,19 @@
+{
+  "case_item": "tacz:cartridge_case",
+  "case_caliber": "50bmg",
+  "case_display_name": "item.tacz.cartridge_case.50bmg",
+  "projectile_item": "tacz:projectile_core",
+  "projectile_caliber": "50bmg",
+  "projectile_type": "ap",
+  "projectile_display_name": "item.tacz.projectile_core.50bmg_ap",
+  "primer_item": "tacz:primer",
+  "propellant_item": "tacz:industrial_propellant",
+  "ammo": "tacz:50bmg_ap",
+  "count": 4,
+  "case_count": 4,
+  "projectile_count": 4,
+  "primer_count": 4,
+  "propellant_count": 9,
+  "eject_case": true,
+  "spent_case_display_name": "item.tacz.cartridge_case.spent_50bmg"
+}

@@ -1,0 +1,19 @@
+{
+  "case_item": "tacz:cartridge_case",
+  "case_caliber": "556x45",
+  "case_display_name": "item.tacz.cartridge_case.556x45",
+  "projectile_item": "tacz:projectile_core",
+  "projectile_caliber": "556x45",
+  "projectile_type": "ap",
+  "projectile_display_name": "item.tacz.projectile_core.556x45_ap",
+  "primer_item": "tacz:primer",
+  "propellant_item": "tacz:industrial_propellant",
+  "ammo": "tacz:556x45_ap",
+  "count": 16,
+  "case_count": 16,
+  "projectile_count": 16,
+  "primer_count": 16,
+  "propellant_count": 4,
+  "eject_case": true,
+  "spent_case_display_name": "item.tacz.cartridge_case.spent_556x45"
+}

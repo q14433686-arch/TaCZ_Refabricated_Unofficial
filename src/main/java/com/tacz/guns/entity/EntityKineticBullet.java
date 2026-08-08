@@ -20,6 +20,7 @@ import com.tacz.guns.config.common.AmmoConfig;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.experience.GunLevelImplementation;
+import com.tacz.guns.industry.ammo.AmmoProfileDefinition;
 import com.tacz.guns.init.ModDamageTypes;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunHurt;
@@ -233,6 +234,19 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         if (bulletCount > 1) {
             this.damageModifier = 1f / bulletCount;
         }
+    }
+
+    /** Apply only the exact server-resolved round profile after gun/attachment properties exist. */
+    @ApiStatus.Internal
+    public void applyAmmoProfile(AmmoProfileDefinition profile) {
+        if (profile == null) {
+            return;
+        }
+        this.damageModifier = Math.max(0.0F, this.damageModifier * profile.getDamageMultiplier());
+        this.armorIgnore = Mth.clamp(this.armorIgnore * profile.getArmorIgnoreMultiplier()
+                + profile.getArmorIgnoreAddend(), 0.0F, 1.0F);
+        int override = profile.getPierceOverride();
+        this.pierce = override > 0 ? override : Mth.clamp(this.pierce + profile.getPierceAdd(), 1, Integer.MAX_VALUE);
     }
 
     @ApiStatus.Internal

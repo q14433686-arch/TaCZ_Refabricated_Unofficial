@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": {"model": "tacz:block/ammunition_handling_bench"},
+    "facing=east": {"model": "tacz:block/ammunition_handling_bench", "y": 90},
+    "facing=south": {"model": "tacz:block/ammunition_handling_bench", "y": 180},
+    "facing=west": {"model": "tacz:block/ammunition_handling_bench", "y": 270}
+  }
+}

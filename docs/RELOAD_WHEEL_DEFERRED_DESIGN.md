@@ -18,7 +18,7 @@
 拟议轮盘只改变“选择哪一件真实载具”，绝不改变供弹、扣弹、动画或库存的服务端权威性：
 
 1. 只向玩家展示背包中真实存在的、与当前枪和当前供弹定义兼容的实体载具；候选至少按 `MagazineFamily`、`MagazineAmmoId`、容量和 `FeedDeviceKind` 区分。
-2. 每种弹药 profile 保持独立 `AmmoId`、独立散装弹、独立实体载具；一个实体弹匣/弹链内不得混装 profile。未来 AP、HP、Slug 或作者明确的 alternate `AmmoId` 都必须以真实身份显示，而不能只换名称或附件图标。
+2. 每种弹药 profile 保持独立 `AmmoId`、独立散装弹和独立服务端弹道；同 canonical calibre 的 profile 可以按真实顶部顺序混装进同一实体载具。轮盘必须显示下一发与混装统计，不能只换名称或附件图标。详见 [`MIXED_AMMO_AND_TIMED_HANDLING_DESIGN.md`](MIXED_AMMO_AND_TIMED_HANDLING_DESIGN.md)。
 3. 客户端最多只能提出“库存槽位 + 当时预览的 ItemStack 身份”；服务器必须重新读取该槽位，并在开始 reload 和真正动画 feed 点再次验证 family、ammo、容量、器件类型、余弹和完整 ItemStack 组件。
 4. 选中物品被移动、替换、装空、变成不兼容或动画中断时必须 **fail closed**：不转而选择另一只弹匣、不回退为散装弹、不静默扣除其他库存。
 5. 只有真实服务器 reload 事务成功预留后，才可播放相应的原枪包换弹动作；轮盘不制造不存在的动画 feed 点。

@@ -21,6 +21,10 @@ public class SyncConfig {
     public static ForgeConfigSpec.EnumValue<IndustryProfile> INDUSTRY_PROFILE;
     /** Enables physical external and internal feed ownership for gun-feed declarations in the active industrial profile. */
     public static ForgeConfigSpec.BooleanValue PHYSICAL_MAGAZINES;
+    /** Tarkov-paced, server-authoritative per-round handling time for magazines and physical clips. */
+    public static ForgeConfigSpec.IntValue INDUSTRY_ROUND_LOAD_TICKS;
+    public static ForgeConfigSpec.IntValue INDUSTRY_ROUND_UNLOAD_TICKS;
+    public static ForgeConfigSpec.DoubleValue INDUSTRY_MAGAZINE_LOADER_TIME_MULTIPLIER;
     /** Scan uncurated gun-pack table recipes at reload and synthesize safe industrial fallback replacements. */
     public static ForgeConfigSpec.BooleanValue AUTO_DISCOVER_INDUSTRY_REPLACEMENTS;
     /** Safe default limits phase-A condition/fouling accounting to real industrial-origin gun stacks. */
@@ -116,6 +120,13 @@ public class SyncConfig {
 
         builder.comment("Use real external carriers and internal-feed ownership for guns that declare an industry/gun_feed definition. Requires an active CREATE_FLY profile.");
         PHYSICAL_MAGAZINES = builder.define("PhysicalMagazines", true);
+
+        builder.comment("Server ticks required to load one physical round through the cartridge handling bench. 10 ticks is the default 0.50 s Tarkov-style baseline.");
+        INDUSTRY_ROUND_LOAD_TICKS = builder.defineInRange("IndustryRoundLoadTicks", 10, 1, 200);
+        builder.comment("Server ticks required to unload one top physical round through the cartridge handling bench. 8 ticks is the default 0.40 s baseline.");
+        INDUSTRY_ROUND_UNLOAD_TICKS = builder.defineInRange("IndustryRoundUnloadTicks", 8, 1, 200);
+        builder.comment("Multiplier applied only when a real magazine-loader tool occupies the handling bench tool slot. Every round still has an individual server transaction.");
+        INDUSTRY_MAGAZINE_LOADER_TIME_MULTIPLIER = builder.defineInRange("IndustryMagazineLoaderTimeMultiplier", 0.75, 0.10, 4.0);
 
         builder.comment("Automatically scan uncurated gun-pack table recipes and add an in-game industrial fallback material gate. Curated platform declarations always take priority.");
         AUTO_DISCOVER_INDUSTRY_REPLACEMENTS = builder.define("AutoDiscoverIndustryReplacements", true);

@@ -3,6 +3,10 @@ package com.tacz.guns.industry.magazine;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Server-side reservation for a tube/cylinder/internal/single-shot reload or
  * a bridge clip/speedloader transfer into that internal feed.
@@ -48,6 +52,8 @@ public final class InternalFeedReloadPlan {
     private int issuedScriptRounds;
     /** Real source rounds already moved into the gun (magazine or chamber). */
     private int transferredSourceRounds;
+    /** Exact profiles popped from a reserved physical device, in source next-feed order. */
+    private final ArrayDeque<Identifier> extractedSourceProfiles = new ArrayDeque<>();
     /** Magazine rounds a script requested to move to the chamber on its next set-barrel call. */
     private int pendingMagazineToChamberRounds;
     /** A script touched this plan; central end-of-animation fallback must not duplicate it. */
@@ -214,6 +220,33 @@ public final class InternalFeedReloadPlan {
 
     public void recordSourceTransfer(int transferred) {
         transferredSourceRounds += Math.max(0, transferred);
+    }
+
+    /** Add profiles only after their physical source stack was actually mutated. */
+    public void recordExtractedSourceProfiles(List<Identifier> profiles) {
+        if (profiles == null) {
+            return;
+        }
+        for (Identifier profile : profiles) {
+            if (profile != null) {
+                extractedSourceProfiles.addLast(profile);
+            }
+        }
+    }
+
+    /**
+     * Consume exact source profiles for an immediately following destination
+     * mutation. Loose/creative paths have no explicit entries and receive the
+     * plan's canonical base identity as their safe fallback.
+     */
+    public List<Identifier> consumeExtractedSourceProfiles(int count) {
+        int safeCount = Math.max(0, count);
+        List<Identifier> profiles = new ArrayList<>(safeCount);
+        for (int index = 0; index < safeCount; index++) {
+            Identifier profile = extractedSourceProfiles.pollFirst();
+            profiles.add(profile == null ? ammoId : profile);
+        }
+        return List.copyOf(profiles);
     }
 
     public int getTransferredSourceRounds() {

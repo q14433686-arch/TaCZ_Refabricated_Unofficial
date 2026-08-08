@@ -19,6 +19,9 @@ import com.tacz.guns.config.common.AmmoConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.experience.GunLevelImplementation;
+import com.tacz.guns.industry.ammo.AmmoProfileDefinition;
+import com.tacz.guns.industry.ammo.AmmoProfileService;
+import com.tacz.guns.industry.ammo.RoundProfileService;
 import com.tacz.guns.industry.ammo.SpentCartridgeService;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceService;
 import com.tacz.guns.industry.magazine.EnBlocClipService;
@@ -179,10 +182,21 @@ public class ModernKineticGunScriptAPI {
             GunFireEvent.CALLBACK.invoker().post(gunFireEvent);
             boolean fire = !gunFireEvent.isCanceled();
             if (fire) {
+                // Capture the real top/chambered profile before the existing
+                // count mutation removes it. The server, not a client NBT hint,
+                // owns this identity for projectile, case and damage behavior.
+                Identifier firedAmmoId = RoundProfileService.peekFiredAmmo(itemStack, gunData);
+                AmmoProfileDefinition ammoProfile = AmmoProfileService.resolve(firedAmmoId);
+                int profileBulletAmount = ammoProfile.getProjectileCountOverride() > 0
+                        ? ammoProfile.getProjectileCountOverride() : bulletAmount;
+                float profileSpeed = Mth.clamp(processedSpeed * ammoProfile.getSpeedMultiplier(), 0.0F, Float.MAX_VALUE);
                 NetworkHandler.sendToTrackingEntity(new ServerMessageGunFire(shooter.getId(), itemStack), shooter);
                 // 削减弹药
                 if (consumeAmmo && !this.reduceAmmoOnce()) {
                     return false;
+                }
+                if (consumeAmmo) {
+                    RoundProfileService.clearChamberIfEmpty(itemStack);
                 }
                 // Apply the gun's real HeatData before C.3 maintenance
                 // accounting. Free/creative shots retain their prior heat
@@ -205,7 +219,7 @@ public class ModernKineticGunScriptAPI {
                     // The client shell model is only cosmetic. Once a real
                     // round has been consumed, emit the data-declared case on
                     // the server so it can be picked up and reconditioned.
-                    SpentCartridgeService.ejectAfterFiring(shooter, gunData.getAmmoId());
+                    SpentCartridgeService.ejectAfterFiring(shooter, firedAmmoId);
                     // Installed en-bloc clips remain in gun NBT until the last
                     // real round has left the gun, then return as an empty
                     // reusable clip rather than disappearing.
@@ -222,14 +236,14 @@ public class ModernKineticGunScriptAPI {
                 float yaw = yawSupplier != null ? yawSupplier.get() : shooter.getYRot();
                 // 生成子弹
                 Level world = shooter.level();
-                Identifier ammoId = gunData.getAmmoId();
-                for (int i = 0; i < bulletAmount; i++) {
+                for (int i = 0; i < profileBulletAmount; i++) {
                     boolean isTracer = bulletData.hasTracerAmmo() && gunOperator.nextBulletIsTracer(bulletData.getTracerCountInterval());
-                    EntityKineticBullet bullet = new EntityKineticBullet(world, shooter, itemStack, ammoId, gunId,
+                    EntityKineticBullet bullet = new EntityKineticBullet(world, shooter, itemStack, firedAmmoId, gunId,
                             gunDisplayId, isTracer, gunData, bulletData);
-                    bullet.applyShotgunDamageSpread(bulletAmount);
+                    bullet.applyShotgunDamageSpread(profileBulletAmount);
+                    bullet.applyAmmoProfile(ammoProfile);
                     bullet.setShotDamageMultiplier(shotDamageMultiplier);
-                    abstractGunItem.doBulletSpread(dataHolder, itemStack, shooter, bullet, i, processedSpeed,
+                    abstractGunItem.doBulletSpread(dataHolder, itemStack, shooter, bullet, i, profileSpeed,
                             inaccuracy, pitch, yaw);
                     world.addFreshEntity(bullet);
                 }
@@ -740,6 +754,24 @@ public class ModernKineticGunScriptAPI {
         if (amount < 0) {
             return 0;
         }
+        // Outside a managed reload, legacy scripts commonly remove exactly one
+        // stored round immediately before setAmmoInBarrel(true). Preserve that
+        // physical profile until the actual chamber feed call instead of
+        // reducing a mixed carrier through the old integer setter.
+        if (amount == 1) {
+            Identifier removedProfile = com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID;
+            if (PhysicalMagazineService.hasActiveInstalledMagazine(itemStack)) {
+                removedProfile = PhysicalMagazineService.takeInstalledNextRound(itemStack);
+            } else if (EnBlocClipService.hasActiveInstalledClip(itemStack)) {
+                removedProfile = EnBlocClipService.takeInstalledNextRound(itemStack);
+            } else if (InternalFeedService.usesInternalFeed(itemStack)) {
+                removedProfile = InternalFeedService.takeNextRound(itemStack);
+            }
+            if (!removedProfile.equals(com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID)) {
+                RoundProfileService.setPendingChamberAmmoId(itemStack, removedProfile);
+                return 1;
+            }
+        }
         int currentAmmoCount = abstractGunItem.getCurrentAmmoCount(itemStack);
         int removed = Math.min(Math.max(0, amount), currentAmmoCount);
         abstractGunItem.setCurrentAmmoCount(itemStack, currentAmmoCount - removed);
@@ -784,7 +816,10 @@ public class ModernKineticGunScriptAPI {
             return;
         }
         abstractGunItem.setBulletInBarrel(itemStack, ammoInBarrel);
-        if (!ammoInBarrel) {
+        if (ammoInBarrel) {
+            RoundProfileService.promotePendingChamberAmmoId(itemStack);
+        } else {
+            RoundProfileService.clearChamberIfEmpty(itemStack);
             EnBlocClipService.ejectIfEmpty(shooter, itemStack);
         }
     }

@@ -1,0 +1,6 @@
+{
+  "name": "item.tacz.ammo.45acp_ap",
+  "display": "tacz:45acp_display",
+  "stack_size": 60,
+  "sort": 103
+}

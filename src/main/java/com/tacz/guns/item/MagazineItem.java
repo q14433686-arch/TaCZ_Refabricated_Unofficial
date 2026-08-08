@@ -2,10 +2,7 @@ package com.tacz.guns.item;
 
 import cn.sh1rocu.tacz.api.extension.IItem;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
-import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.client.industry.icon.IndustryIconRenderer;
-import com.tacz.guns.api.item.IAmmo;
-import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.industry.magazine.ExternalCarrierVariant;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.magazine.MagazineItemBuilder;
@@ -16,9 +13,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickAction;
@@ -30,16 +25,18 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
 /**
- * A one-stack physical detachable magazine.
+ * A one-stack physical detachable magazine or physical loading device.
  *
- * <p>Loading/unloading is deliberately inventory-native: hold this item and
- * right-click a matching loose-ammo stack to load it, or right-click an empty
- * slot to take out a normal stack of rounds.  This mirrors the existing TACZ
- * ammo-box interaction without adding another screen for a simple operation.</p>
+ * <p>Round handling is deliberately routed through the real multi-slot
+ * ammunition handling bench. Inventory right-click used to transfer an entire
+ * stack instantly; leaving that shortcut active would bypass both mixed-round
+ * ordering and the server-authoritative per-round handling time.</p>
  */
 public class MagazineItem extends Item implements MagazineItemDataAccessor, IItem {
     public MagazineItem(Properties properties) {
@@ -66,63 +63,10 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
 
     @Override
     public boolean overrideStackedOnOther(ItemStack magazine, Slot slot, ClickAction action, Player player) {
-        if (action != ClickAction.SECONDARY || !isConfigured(magazine)) {
-            return false;
-        }
-
-        ItemStack target = slot.getItem();
-        if (target.isEmpty()) {
-            return unloadIntoEmptySlot(magazine, slot, player);
-        }
-        if (target.getItem() instanceof IAmmo ammo && ammo.getAmmoId(target).equals(getAmmoId(magazine))) {
-            return loadFromAmmoStack(magazine, target, slot, player);
-        }
+        // Do not retain an inventory-click bulk-loading bypass. The handling
+        // bench owns mixed-order validation, one-round timing and output-space
+        // checks for magazines, bridge clips and en-bloc clips alike.
         return false;
-    }
-
-    private boolean loadFromAmmoStack(ItemStack magazine, ItemStack ammoStack, Slot slot, Player player) {
-        int free = getCapacity(magazine) - getAmmoCount(magazine);
-        if (free <= 0) {
-            return false;
-        }
-        ItemStack extracted = slot.safeTake(ammoStack.getCount(), free, player);
-        if (extracted.isEmpty()) {
-            return false;
-        }
-        setAmmoCount(magazine, getAmmoCount(magazine) + extracted.getCount());
-        playInsertSound(player);
-        return true;
-    }
-
-    private boolean unloadIntoEmptySlot(ItemStack magazine, Slot slot, Player player) {
-        int stored = getAmmoCount(magazine);
-        if (stored <= 0 || getAmmoId(magazine).equals(DefaultAssets.EMPTY_AMMO_ID)) {
-            return false;
-        }
-
-        // One normal loose-ammo stack at a time keeps the inventory interaction
-        // predictable and honours each pack's per-calibre stack-size setting.
-        var ammoIndex = CommonAssetsManager.get().getAmmoIndex(getAmmoId(magazine));
-        int take = ammoIndex == null
-                ? Math.min(64, stored)
-                : Math.min(ammoIndex.getStackSize(), stored);
-        ItemStack looseAmmo = AmmoItemBuilder.create().setId(getAmmoId(magazine)).setCount(take).build();
-        ItemStack remainder = slot.safeInsert(looseAmmo);
-        int inserted = take - remainder.getCount();
-        if (inserted <= 0) {
-            return false;
-        }
-        setAmmoCount(magazine, stored - inserted);
-        playRemoveSound(player);
-        return true;
-    }
-
-    private static void playInsertSound(Entity entity) {
-        entity.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, 0.8F + entity.level().getRandom().nextFloat() * 0.4F);
-    }
-
-    private static void playRemoveSound(Entity entity) {
-        entity.playSound(SoundEvents.BUNDLE_REMOVE_ONE, 0.8F, 0.8F + entity.level().getRandom().nextFloat() * 0.4F);
     }
 
     @Override
@@ -155,12 +99,34 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
         adder.accept(Component.translatable("tooltip.tacz.magazine.rounds", getAmmoCount(stack), getCapacity(stack))
                 .withStyle(style -> style.withColor(0xAAAAAA)));
         Identifier ammoId = getAmmoId(stack);
-        var ammoIndex = CommonAssetsManager.get().getAmmoIndex(ammoId);
-        Component ammoName = ammoIndex == null || ammoIndex.getPojo().getName() == null
-                ? Component.literal(ammoId.toString())
-                : Component.translatable(ammoIndex.getPojo().getName());
+        Component ammoName = ammoDisplayName(ammoId);
         adder.accept(Component.translatable("tooltip.tacz.magazine.ammo", ammoName)
                 .withStyle(style -> style.withColor(0xAAAAAA)));
+        Identifier nextRound = getNextRoundAmmoId(stack);
+        if (!nextRound.equals(com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID)) {
+            adder.accept(Component.translatable("tooltip.tacz.magazine.next_round", ammoDisplayName(nextRound))
+                    .withStyle(style -> style.withColor(0x8FD6C6)));
+        }
+        Map<Identifier, Integer> composition = new LinkedHashMap<>();
+        for (Identifier round : getRoundAmmoIds(stack)) {
+            composition.merge(round, 1, Integer::sum);
+        }
+        if (composition.size() > 1) {
+            StringBuilder summary = new StringBuilder();
+            int visible = 0;
+            for (Map.Entry<Identifier, Integer> entry : composition.entrySet()) {
+                if (visible++ >= 4) {
+                    summary.append(" +");
+                    break;
+                }
+                if (summary.length() > 0) {
+                    summary.append(", ");
+                }
+                summary.append(ammoDisplayName(entry.getKey()).getString()).append(" ×").append(entry.getValue());
+            }
+            adder.accept(Component.translatable("tooltip.tacz.magazine.mixed", summary.toString())
+                    .withStyle(style -> style.withColor(0xD6B46C)));
+        }
         String feedDeviceKind = getFeedDeviceKind(stack);
         if (!feedDeviceKind.isBlank() && !"detachable_magazine".equals(feedDeviceKind)) {
             adder.accept(Component.translatable("tooltip.tacz.feed_device.kind." + feedDeviceKind)
@@ -179,6 +145,13 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
             adder.accept(Component.translatable("tooltip.tacz.magazine.family", getMagazineFamily(stack))
                     .withStyle(style -> style.withColor(0x555555)));
         }
+    }
+
+    private static Component ammoDisplayName(Identifier ammoId) {
+        var ammoIndex = CommonAssetsManager.get().getAmmoIndex(ammoId);
+        return ammoIndex == null || ammoIndex.getPojo().getName() == null
+                ? Component.literal(ammoId.toString())
+                : Component.translatable(ammoIndex.getPojo().getName());
     }
 
     /** Build one empty sample per unique external-carrier or loading-device identity. */

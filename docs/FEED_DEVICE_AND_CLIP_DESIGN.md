@@ -8,10 +8,10 @@
 |---|---|---|---|---|
 | `detachable_magazine` | `InstalledMagazine` | 半满弹匣保留余弹 | 替换已安装供弹器 | 可退匣/可回收 |
 | `belt` | `InstalledMagazine` | 弹链箱保留余弹 | 替换已安装供弹器 | 可退回/可回收 |
-| `stripper_clip` | `InternalFeedAmmoCount` | 桥夹保存自身余弹 | 向固定内仓增量转入 | **空夹仍保留，可再次压弹** |
-| `speedloader` | `InternalFeedAmmoCount` | 快装器保存自身余弹 | 向内部转轮增量转入 | **空快装器仍保留，可再次压弹** |
-| `en_bloc_clip` | 独立 `InstalledEnBlocClip` 状态 | 漏夹随枪保存余弹 | 装入枪内后逐发扣除 | 最后一发真正离开枪后自动弹出空夹 |
-| `tube` / `revolver` / `internal_box` / `single_shot` | `InternalFeedAmmoCount` | 无强制外部器件 | 从散装弹或明确器件装填 | 枪内状态继续保存 |
+| `stripper_clip` | `InternalFeedAmmoCount` + 有序 `InternalFeedRounds` | 桥夹保存自身余弹/顺序 | 向固定内仓增量转入 | **空夹仍保留，可再次压弹** |
+| `speedloader` | `InternalFeedAmmoCount` + 有序 `InternalFeedRounds` | 快装器保存自身余弹/顺序 | 向内部转轮增量转入 | **空快装器仍保留，可再次压弹** |
+| `en_bloc_clip` | 独立 `InstalledEnBlocClip` 状态及有序 round list | 漏夹随枪保存余弹/顺序 | 装入枪内后逐发扣除 | 最后一发真正离开枪后自动弹出空夹 |
+| `tube` / `revolver` / `internal_box` / `single_shot` | `InternalFeedAmmoCount` + 有序 `InternalFeedRounds` | 无强制外部器件 | 从散装弹或明确器件装填 | 枪内状态继续保存 |
 
 桥夹、快装器使用的 registry item 当前复用 `tacz:magazine` 的成熟“容量、余弹、库存交互”数据容器，但强制带：
 
@@ -71,7 +71,7 @@ transfer = min(5, 3, 5) = 3
 结果：枪内 10 / 10，桥夹仍是同一件物品，余弹 2 / 5
 ```
 
-这里的 **2 发不会消失，也不会自动变成另一只桥夹**：它们保存在原桥夹的 `MagazineAmmoCount` 中，可在下一次兼容装填时继续使用；玩家也可像实体弹匣一样把桥夹与同口径散装弹右键叠放来补弹，或对空槽右键取出余弹。桥夹和快装器都是可复用的物理装填工具：即使余弹变为 `0 / capacity`，服务器也**绝不**在换弹事务中删除该 ItemStack，空夹仍可重新压弹。
+这里的 **2 发不会消失，也不会自动变成另一只桥夹**：它们保存在原桥夹的 `MagazineRounds` / `MagazineAmmoCount` 镜像中，可在下一次兼容装填时继续使用。桥夹和快装器都必须通过真实多槽弹药处理台逐发装/退；同口径的 profile 可按顶部顺序混装，输出受阻时不会吞掉余弹。即使余弹变为 `0 / capacity`，服务器也**绝不**在换弹事务中删除该 ItemStack，空夹仍可重新压弹。
 
 桥夹/快装器的正常批量动画在其真实 feed 点由服务端扣除。预留期间会绑定具体物理器件实例；若玩家中途移动、替换或改写该槽中的器件，事务失败关闭，绝不临时选择另一只桥夹或改扣其他来源。
 
@@ -230,7 +230,7 @@ FeedDeviceKind = stripper_clip
 → Type 56 Stripper Clip（空）
 ```
 
-它可以像其他物理供弹器一样装入/取出散装弹，但在换弹时只向枪内固定仓转移弹药。
+它可以像其他物理供弹器一样在弹药处理台逐发装入/取出同口径散装弹，但在换弹时只向枪内固定仓转移弹药。
 
 ## 延后的选择轮盘 UI
 

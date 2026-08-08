@@ -1,0 +1,6 @@
+{
+  "name": "item.tacz.ammo.9mm_hp",
+  "display": "tacz:9mm_display",
+  "stack_size": 60,
+  "sort": 102
+}

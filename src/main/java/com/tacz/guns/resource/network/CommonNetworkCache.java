@@ -18,6 +18,7 @@ import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import com.tacz.guns.resource.pojo.data.block.BlockData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
+import com.tacz.guns.industry.ammo.AmmoProfileDefinition;
 import com.tacz.guns.industry.maintenance.IndustryMaintenanceProfile;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
@@ -50,6 +51,8 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     public Map<Identifier, CommonBlockIndex> blockIndex = new HashMap<>();
     /** Per-gun physical-feed declarations synchronised with gun-pack data. */
     public Map<Identifier, GunFeedDefinition> gunFeed = new HashMap<>();
+    /** Explicit alternate AmmoId profiles needed for client-side compatibility and projectile presentation. */
+    public Map<Identifier, AmmoProfileDefinition> ammoProfiles = new HashMap<>();
     /** TACZ-owned Create Fly process graph for REI when Create Fly lacks its own REI plugin. */
     public Map<Identifier, IndustryProcessDefinition> industryProcess = new HashMap<>();
     /** Definitions shown by the dedicated cartridge assembly-machine GUI and REI category. */
@@ -153,6 +156,16 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     }
 
     @Override
+    public @Nullable AmmoProfileDefinition getAmmoProfile(Identifier ammoId) {
+        return ammoProfiles.get(ammoId);
+    }
+
+    @Override
+    public Set<Map.Entry<Identifier, AmmoProfileDefinition>> getAllAmmoProfiles() {
+        return ammoProfiles.entrySet();
+    }
+
+    @Override
     public @Nullable IndustryReferenceProfile getIndustryReferenceProfile(Identifier gunId) {
         return industryReference.get(gunId);
     }
@@ -220,6 +233,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
         attachmentIndex.clear();
         blockIndex.clear();
         gunFeed.clear();
+        ammoProfiles.clear();
         industryProcess.clear();
         cartridgeAssembly.clear();
         industryReference.clear();
@@ -244,6 +258,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                 case AMMO_INDEX:
                 case ATTACHMENT_INDEX:
                 case BLOCK_INDEX:
+                case AMMO_PROFILE:
                 case CARTRIDGE_ASSEMBLY:
                 case INDUSTRY_REFERENCE:
                 case INDUSTRY_MAINTENANCE:
@@ -319,6 +334,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                     case RECIPES -> tableRecipe.put(entry.getKey(), parse(entry.getValue(), TableRecipe.class));
                     case BLOCK_DATA -> blockData.put(entry.getKey(), parse(entry.getValue(), BlockData.class));
                     case GUN_FEED -> gunFeed.put(entry.getKey(), parse(entry.getValue(), GunFeedDefinition.class));
+                    case AMMO_PROFILE -> ammoProfiles.put(entry.getKey(), parse(entry.getValue(), AmmoProfileDefinition.class));
                     case INDUSTRY_PROCESS -> industryProcess.put(entry.getKey(), parse(entry.getValue(), IndustryProcessDefinition.class));
                     case CARTRIDGE_ASSEMBLY -> cartridgeAssembly.put(entry.getKey(), parse(entry.getValue(), CartridgeAssemblyDefinition.class));
                     case INDUSTRY_REFERENCE -> industryReference.put(entry.getKey(), parse(entry.getValue(), IndustryReferenceProfile.class));

@@ -1,0 +1,24 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": ["create"]
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SBS",
+    "LHL",
+    "SRS"
+  ],
+  "key": {
+    "S": "tacz:high_carbon_steel_plate",
+    "B": "create:brass_sheet",
+    "L": "tacz:magazine_loader",
+    "H": "minecraft:hopper",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "tacz:ammunition_handling_bench"
+  }
+}

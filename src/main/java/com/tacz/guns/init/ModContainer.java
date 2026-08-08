@@ -1,6 +1,7 @@
 package com.tacz.guns.init;
 
 import com.tacz.guns.GunMod;
+import com.tacz.guns.inventory.AmmunitionHandlingBenchMenu;
 import com.tacz.guns.inventory.CartridgeAssemblyMenu;
 import com.tacz.guns.inventory.GunSmithTableMenu;
 import com.tacz.guns.inventory.IndustrialSalvageMenu;
@@ -19,6 +20,9 @@ public class ModContainer {
     public static final MenuType<GunSmithTableMenu> GUN_SMITH_TABLE_MENU = register("gun_smith_table_menu", GunSmithTableMenu.TYPE);
     public static final MenuType<CartridgeAssemblyMenu> CARTRIDGE_ASSEMBLY_MENU = register(
             "cartridge_assembly_menu", CartridgeAssemblyMenu.TYPE
+    );
+    public static final MenuType<AmmunitionHandlingBenchMenu> AMMUNITION_HANDLING_BENCH_MENU = register(
+            "ammunition_handling_bench_menu", AmmunitionHandlingBenchMenu.TYPE
     );
     public static final MenuType<IndustrialSalvageMenu> INDUSTRIAL_SALVAGE_MENU = register(
             "industrial_salvage_menu", IndustrialSalvageMenu.TYPE

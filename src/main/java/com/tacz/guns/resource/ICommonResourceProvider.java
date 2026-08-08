@@ -9,6 +9,7 @@ import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import com.tacz.guns.resource.pojo.data.block.BlockData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
+import com.tacz.guns.industry.ammo.AmmoProfileDefinition;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
 import com.tacz.guns.industry.recipe.CartridgeAssemblyDefinition;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
@@ -57,6 +58,11 @@ public interface ICommonResourceProvider {
     @Nullable GunFeedDefinition getGunFeedDefinition(Identifier gunId);
 
     Set<Map.Entry<Identifier, GunFeedDefinition>> getAllGunFeedDefinitions();
+
+    /** Explicit same-calibre / ballistic profile for an alternate AmmoId. */
+    @Nullable AmmoProfileDefinition getAmmoProfile(Identifier ammoId);
+
+    Set<Map.Entry<Identifier, AmmoProfileDefinition>> getAllAmmoProfiles();
 
     /** Optional curated actual-structure profile for a loaded gun identity. */
     @Nullable IndustryReferenceProfile getIndustryReferenceProfile(Identifier gunId);

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "ammo": "tacz:12g_slug",
+  "caliber_ammo": "tacz:12g",
+  "kind": "slug",
+  "damage_multiplier": 2.05,
+  "armor_ignore_multiplier": 1.08,
+  "armor_ignore_addend": 0.03,
+  "pierce_add": 0,
+  "pierce_override": 1,
+  "speed_multiplier": 1.28,
+  "projectile_count_override": 1
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "ammo": "tacz:9mm_hp",
+  "caliber_ammo": "tacz:9mm",
+  "kind": "hp",
+  "damage_multiplier": 1.28,
+  "armor_ignore_multiplier": 0.5,
+  "armor_ignore_addend": 0.0,
+  "pierce_add": 0,
+  "pierce_override": 1,
+  "speed_multiplier": 0.92,
+  "projectile_count_override": 0
+}

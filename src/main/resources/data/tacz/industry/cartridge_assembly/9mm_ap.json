@@ -1,0 +1,19 @@
+{
+  "case_item": "tacz:cartridge_case",
+  "case_caliber": "9mm",
+  "case_display_name": "item.tacz.cartridge_case.9mm",
+  "projectile_item": "tacz:projectile_core",
+  "projectile_caliber": "9mm",
+  "projectile_type": "ap",
+  "projectile_display_name": "item.tacz.projectile_core.9mm_ap",
+  "primer_item": "tacz:primer",
+  "propellant_item": "tacz:industrial_propellant",
+  "ammo": "tacz:9mm_ap",
+  "count": 24,
+  "case_count": 24,
+  "projectile_count": 24,
+  "primer_count": 24,
+  "propellant_count": 3,
+  "eject_case": true,
+  "spent_case_display_name": "item.tacz.cartridge_case.spent_9mm"
+}

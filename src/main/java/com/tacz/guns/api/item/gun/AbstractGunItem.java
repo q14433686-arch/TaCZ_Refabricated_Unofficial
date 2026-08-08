@@ -206,6 +206,33 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
             EnBlocClipService.ejectClip(player, gunItem);
             return;
         }
+        // This path is an attachment-change safety transaction, not player
+        // initiated magazine unloading. Preserve every internal mixed profile
+        // rather than flattening it to GunData.ammo while the item is moved.
+        if (InternalFeedService.usesInternalFeed(gunItem) && !useDummyAmmo(gunItem) && !player.isCreative()) {
+            Map<Identifier, Integer> byProfile = new LinkedHashMap<>();
+            for (Identifier round : InternalFeedService.getRoundAmmoIds(gunItem)) {
+                byProfile.merge(round, 1, Integer::sum);
+            }
+            if (byProfile.keySet().stream().anyMatch(ammoId -> TimelessAPI.getCommonAmmoIndex(ammoId).isEmpty())) {
+                // A data pack was removed or changed while this gun still holds
+                // an exact profile. Fail closed and retain the physical state;
+                // never clear an unknown round just because an attachment moved.
+                return;
+            }
+            for (Map.Entry<Identifier, Integer> entry : byProfile.entrySet()) {
+                int remaining = entry.getValue();
+                int stackSize = TimelessAPI.getCommonAmmoIndex(entry.getKey()).orElseThrow().getStackSize();
+                while (remaining > 0) {
+                    int count = Math.min(remaining, stackSize);
+                    ItemHandlerHelper.giveItemToPlayer(player,
+                            AmmoItemBuilder.create().setId(entry.getKey()).setCount(count).build());
+                    remaining -= count;
+                }
+            }
+            InternalFeedService.setAmmoCount(gunItem, 0);
+            return;
+        }
         // 操作对象已从 Player 改为 LivingEntity，以支持非玩家实体
         // 此外，现在也处理枪膛内的子弹
         int ammoCount = getCurrentAmmoCount(gunItem);

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "ammo": "tacz:762x39_hp",
+  "caliber_ammo": "tacz:762x39",
+  "kind": "hp",
+  "damage_multiplier": 1.27,
+  "armor_ignore_multiplier": 0.52,
+  "armor_ignore_addend": 0.0,
+  "pierce_add": 0,
+  "pierce_override": 1,
+  "speed_multiplier": 0.91,
+  "projectile_count_override": 0
+}

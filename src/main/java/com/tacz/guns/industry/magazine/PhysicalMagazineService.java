@@ -8,6 +8,7 @@ import com.tacz.guns.api.item.nbt.GunItemDataAccessor;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.industry.IndustryProfileManager;
+import com.tacz.guns.industry.ammo.RoundProfileService;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
@@ -118,16 +119,43 @@ public final class PhysicalMagazineService {
         syncLegacyAmmoCount(gun, item.getAmmoCount(magazine));
     }
 
+    /** Remove top rounds one by one so mixed physical order remains authoritative. */
     public static int removeInstalledRounds(ItemStack gun, int amount) {
-        if (amount <= 0) {
-            return 0;
-        }
-        int current = getInstalledAmmoCount(gun);
-        int removed = Math.min(current, amount);
-        if (removed > 0) {
-            setInstalledAmmoCount(gun, current - removed);
+        int removed = 0;
+        for (int index = 0; index < Math.max(0, amount); index++) {
+            if (takeInstalledNextRound(gun).equals(com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID)) {
+                break;
+            }
+            removed++;
         }
         return removed;
+    }
+
+    /** Pop and persist the real top round from the installed physical carrier. */
+    public static Identifier takeInstalledNextRound(ItemStack gun) {
+        return takeInstalledRound(gun, true);
+    }
+
+    /** See MagazineItemDataAccessor#popOldestRound for the closed-bolt compatibility reason. */
+    public static Identifier takeInstalledOldestRound(ItemStack gun) {
+        return takeInstalledRound(gun, false);
+    }
+
+    private static Identifier takeInstalledRound(ItemStack gun, boolean top) {
+        if (!(gun.getItem() instanceof IGun iGun)) {
+            return com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID;
+        }
+        ItemStack installed = iGun.getInstalledMagazine(gun);
+        if (!(installed.getItem() instanceof MagazineItemDataAccessor magazine)) {
+            return com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID;
+        }
+        Identifier round = top ? magazine.popNextRound(installed) : magazine.popOldestRound(installed);
+        if (round.equals(com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID)) {
+            return round;
+        }
+        iGun.setInstalledMagazine(gun, installed);
+        syncLegacyAmmoCount(gun, magazine.getAmmoCount(installed));
+        return round;
     }
 
     /**
@@ -567,9 +595,13 @@ public final class PhysicalMagazineService {
                 .map(index -> index.getGunData().getBolt())
                 .orElse(null);
         if ((bolt == Bolt.MANUAL_ACTION || bolt == Bolt.CLOSED_BOLT)
-                && !iGun.hasBulletInBarrel(gun)
-                && removeInstalledRounds(gun, 1) == 1) {
-            iGun.setBulletInBarrel(gun, true);
+                && !iGun.hasBulletInBarrel(gun)) {
+            Identifier chambered = bolt == Bolt.CLOSED_BOLT
+                    ? takeInstalledOldestRound(gun) : takeInstalledNextRound(gun);
+            if (!chambered.equals(com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID)) {
+                RoundProfileService.setChamberAmmoId(gun, chambered);
+                iGun.setBulletInBarrel(gun, true);
+            }
         }
     }
 

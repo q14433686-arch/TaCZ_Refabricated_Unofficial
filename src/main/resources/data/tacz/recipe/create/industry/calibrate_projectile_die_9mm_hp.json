@@ -1,0 +1,52 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "projectile_die_blank",
+      "IndustryDisplayName": "item.tacz.press_die_blank.projectile"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:projectile_blank"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "projectile_profile_blank",
+      "IndustryDisplayName": "item.tacz.projectile_blank.9mm_hp",
+      "CartridgeCaliber": "9mm",
+      "CartridgeAmmoId": "tacz:9mm_hp",
+      "ProjectileType": "hp"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:press_die",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "projectile_die",
+          "IndustryDisplayName": "item.tacz.press_die.projectile_9mm_hp",
+          "CartridgeCaliber": "9mm",
+          "ProjectileType": "hp"
+        },
+        "minecraft:max_stack_size": 1
+      }
+    }
+  ],
+  "keep_held_item": true
+}

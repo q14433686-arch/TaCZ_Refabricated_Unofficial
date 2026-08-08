@@ -146,6 +146,10 @@ TACZ 当前的扩容等级最多使用该数组的前三项。少数旧枪包虽
 
 这不是把完整成枪当模具，也不是置物台多输入伪装。它是 Gunsmith Table 的真实多槽事务；附属包若要获得高保真 Create 生产线，仍可自行提供实际 carrier 工艺数据。
 
+### 同口径混装与逐发处理
+
+`MagazineAmmoId` 现在只表示载具的 canonical 受弹口径；实际内容是有序 `MagazineRounds`，允许作者通过明确 `industry/ammo_profiles` 声明的同口径 alternate AmmoId 混装。实体弹匣、桥夹、漏夹与快装器必须在真实多槽弹药处理台逐发装/退，不能用旧背包右键或装弹器批量路径绕过服务端时间。完整数据格式、首批 AP/HP/Slug 内容与边界见 [`MIXED_AMMO_AND_TIMED_HANDLING_DESIGN.md`](MIXED_AMMO_AND_TIMED_HANDLING_DESIGN.md)。
+
 ### 工作台分类：独立工业页
 
 兼容工业配方不再塞进原有的 `pistol`、`rifle`、`ammo` 或 `misc` 页。Gunsmith Table 现在把它们放到四个独立、代码拥有的页签：

@@ -34,6 +34,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.TARGET);
                 output.accept(ModItems.STATUE);
                 output.accept(ModItems.CARTRIDGE_ASSEMBLY_MACHINE);
+                output.accept(ModItems.AMMUNITION_HANDLING_BENCH);
                 output.accept(ModItems.INDUSTRIAL_SALVAGE_STATION);
                 output.accept(ModItems.INDUSTRIAL_SERVICE_BENCH);
                 output.accept(ModItems.ARMORER_WRENCH);

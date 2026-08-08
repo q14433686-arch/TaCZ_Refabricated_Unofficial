@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "ammo": "tacz:45acp_ap",
+  "caliber_ammo": "tacz:45acp",
+  "kind": "ap",
+  "damage_multiplier": 0.9,
+  "armor_ignore_multiplier": 1.42,
+  "armor_ignore_addend": 0.07,
+  "pierce_add": 1,
+  "pierce_override": 0,
+  "speed_multiplier": 1.03,
+  "projectile_count_override": 0
+}

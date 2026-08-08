@@ -1,0 +1,55 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "create"
+      ]
+    }
+  ],
+  "type": "create:deploying",
+  "target": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:projectile_blank"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "projectile_profile_blank",
+      "IndustryDisplayName": "item.tacz.projectile_blank.45acp_ap",
+      "CartridgeCaliber": "45acp",
+      "CartridgeAmmoId": "tacz:45acp_ap",
+      "ProjectileType": "ap"
+    }
+  },
+  "ingredient": {
+    "fabric:type": "forge:partial_nbt",
+    "items": [
+      "tacz:press_die"
+    ],
+    "nbt": {
+      "IndustryPlatform": "ammunition",
+      "IndustryPartKind": "projectile_die",
+      "IndustryDisplayName": "item.tacz.press_die.projectile_45acp_ap",
+      "CartridgeCaliber": "45acp",
+      "ProjectileType": "ap"
+    }
+  },
+  "results": [
+    {
+      "id": "tacz:projectile_core",
+      "components": {
+        "minecraft:custom_data": {
+          "IndustryPlatform": "ammunition",
+          "IndustryPartKind": "projectile",
+          "IndustryDisplayName": "item.tacz.projectile_core.45acp_ap",
+          "CartridgeCaliber": "45acp",
+          "CartridgeAmmoId": "tacz:45acp_ap",
+          "ProjectileType": "ap"
+        },
+        "minecraft:max_stack_size": 60
+      }
+    }
+  ],
+  "keep_held_item": true
+}

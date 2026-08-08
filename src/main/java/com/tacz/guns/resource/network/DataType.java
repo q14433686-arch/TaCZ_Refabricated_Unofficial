@@ -22,6 +22,9 @@ public enum DataType {
      */
     GUN_FEED,
 
+    /** Explicit alternate AmmoId → canonical-calibre / ballistic profile definitions. */
+    AMMO_PROFILE,
+
     /** Data-driven projection of TACZ Create Fly processes for client recipe viewers. */
     INDUSTRY_PROCESS,
 

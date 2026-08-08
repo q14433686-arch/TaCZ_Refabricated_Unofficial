@@ -1,0 +1,6 @@
+{
+  "name": "item.tacz.ammo.762x39_ap",
+  "display": "tacz:762x39_display",
+  "stack_size": 60,
+  "sort": 110
+}

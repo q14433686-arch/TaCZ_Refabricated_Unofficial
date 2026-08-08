@@ -9,16 +9,22 @@ import com.tacz.guns.api.item.nbt.GunItemDataAccessor;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.industry.IndustryProfileManager;
+import com.tacz.guns.industry.ammo.RoundProfileService;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.util.ItemNbtUtils;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -36,6 +42,8 @@ public final class InternalFeedService {
     public static final String INTERNAL_FEED_AMMO_ID = "InternalFeedAmmoId";
     public static final String INTERNAL_FEED_CAPACITY = "InternalFeedCapacity";
     public static final String INTERNAL_FEED_COUNT = "InternalFeedAmmoCount";
+    /** Ordered bottom-to-top AmmoIds; the final entry is next to feed/fire. */
+    public static final String INTERNAL_FEED_ROUNDS = "InternalFeedRounds";
     public static final String INTERNAL_FEED_MECHANISM = "InternalFeedMechanism";
 
     private InternalFeedService() {
@@ -66,37 +74,114 @@ public final class InternalFeedService {
     }
 
     public static int getAmmoCount(ItemStack gun) {
-        GunFeedDefinition definition = getDefinition(gun);
-        if (definition == null) {
-            return legacyAmmo(gun);
-        }
-        CompoundTag tag = ItemNbtUtils.getTag(gun);
-        if (!tag.contains(INTERNAL_FEED_COUNT)) {
-            return Math.min(definition.getMagazineCapacity(), legacyAmmo(gun));
-        }
-        return Math.clamp(tag.getIntOr(INTERNAL_FEED_COUNT, 0), 0, definition.getMagazineCapacity());
+        return getDefinition(gun) == null ? legacyAmmo(gun) : getRoundAmmoIds(gun).size();
     }
 
+    /** Ordered internal rounds from bottom to top, with lossless legacy projection. */
+    public static List<Identifier> getRoundAmmoIds(ItemStack gun) {
+        GunFeedDefinition definition = getDefinition(gun);
+        if (definition == null) {
+            return List.of();
+        }
+        CompoundTag tag = ItemNbtUtils.getTag(gun);
+        int capacity = definition.getMagazineCapacity();
+        if (!tag.contains(INTERNAL_FEED_ROUNDS)) {
+            int legacyCount = tag.contains(INTERNAL_FEED_COUNT)
+                    ? tag.getIntOr(INTERNAL_FEED_COUNT, 0) : legacyAmmo(gun);
+            return repeated(definition.getAmmoId(), Math.clamp(legacyCount, 0, capacity));
+        }
+        List<Identifier> rounds = new ArrayList<>();
+        for (Tag entry : tag.getListOrEmpty(INTERNAL_FEED_ROUNDS)) {
+            if (entry instanceof StringTag stringTag) {
+                Identifier ammoId = Identifier.tryParse(stringTag.getAsString());
+                if (ammoId != null && !com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID.equals(ammoId)) {
+                    rounds.add(ammoId);
+                    if (rounds.size() >= capacity) {
+                        break;
+                    }
+                }
+            }
+        }
+        int legacyCount = Math.clamp(tag.getIntOr(INTERNAL_FEED_COUNT, 0), 0, capacity);
+        while (rounds.size() < legacyCount) {
+            rounds.add(definition.getAmmoId());
+        }
+        return List.copyOf(rounds);
+    }
+
+    public static Identifier getNextRoundAmmoId(ItemStack gun) {
+        List<Identifier> rounds = getRoundAmmoIds(gun);
+        return rounds.isEmpty() ? com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID : rounds.getLast();
+    }
+
+    /** Compatibility bridge: grow with base rounds and shrink from the top. */
     public static void setAmmoCount(ItemStack gun, int count) {
         GunFeedDefinition definition = getDefinition(gun);
         if (definition == null) {
             return;
         }
         int clamped = Math.clamp(count, 0, definition.getMagazineCapacity());
-        ItemNbtUtils.updateTag(gun, tag -> {
-            tag.putString(INTERNAL_FEED_AMMO_ID, definition.getAmmoId().toString());
-            tag.putInt(INTERNAL_FEED_CAPACITY, definition.getMagazineCapacity());
-            tag.putInt(INTERNAL_FEED_COUNT, clamped);
-            tag.putString(INTERNAL_FEED_MECHANISM, definition.getMechanism().name());
-        });
-        syncLegacy(gun, clamped);
+        List<Identifier> rounds = new ArrayList<>(getRoundAmmoIds(gun));
+        while (rounds.size() > clamped) {
+            rounds.removeLast();
+        }
+        while (rounds.size() < clamped) {
+            rounds.add(definition.getAmmoId());
+        }
+        writeRounds(gun, definition, rounds);
+    }
+
+    /** Append source profiles in the supplied next-feed order. */
+    public static int appendRoundsPreservingFeedOrder(ItemStack gun, List<Identifier> sourceNextFirst) {
+        GunFeedDefinition definition = getDefinition(gun);
+        if (definition == null || sourceNextFirst == null || sourceNextFirst.isEmpty()) {
+            return 0;
+        }
+        List<Identifier> rounds = new ArrayList<>(getRoundAmmoIds(gun));
+        int free = Math.max(0, definition.getMagazineCapacity() - rounds.size());
+        int accepted = Math.min(free, sourceNextFirst.size());
+        // The destination's final list element feeds first. Source order is
+        // top-first, so append the accepted source range in reverse.
+        for (int index = accepted - 1; index >= 0; index--) {
+            Identifier ammoId = sourceNextFirst.get(index);
+            if (ammoId != null && !com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID.equals(ammoId)) {
+                rounds.add(ammoId);
+            }
+        }
+        writeRounds(gun, definition, rounds);
+        return accepted;
+    }
+
+    public static Identifier takeNextRound(ItemStack gun) {
+        return takeRound(gun, true);
+    }
+
+    /** See MagazineItemDataAccessor#popOldestRound for closed-bolt order preservation. */
+    public static Identifier takeOldestRound(ItemStack gun) {
+        return takeRound(gun, false);
+    }
+
+    private static Identifier takeRound(ItemStack gun, boolean top) {
+        GunFeedDefinition definition = getDefinition(gun);
+        if (definition == null) {
+            return com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID;
+        }
+        List<Identifier> rounds = new ArrayList<>(getRoundAmmoIds(gun));
+        if (rounds.isEmpty()) {
+            return com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID;
+        }
+        Identifier round = top ? rounds.removeLast() : rounds.removeFirst();
+        writeRounds(gun, definition, rounds);
+        return round;
     }
 
     public static int removeRounds(ItemStack gun, int amount) {
-        int current = getAmmoCount(gun);
-        int removed = Math.min(Math.max(0, amount), current);
-        if (removed > 0) {
-            setAmmoCount(gun, current - removed);
+        int removed = 0;
+        for (int index = 0; index < Math.max(0, amount); index++) {
+            if (takeNextRound(gun).equals(com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID)) {
+                break;
+            }
+            removed++;
         }
         return removed;
     }
@@ -561,9 +646,11 @@ public final class InternalFeedService {
             return true;
         }
         if (plan.claimMagazineRoundForChamber()) {
-            if (removeRounds(gun, 1) != 1) {
+            Identifier chambered = takeNextRound(gun);
+            if (chambered.equals(com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID)) {
                 return false;
             }
+            RoundProfileService.setChamberAmmoId(gun, chambered);
             iGun.setBulletInBarrel(gun, true);
             broadcastInventory(shooter);
             return true;
@@ -681,7 +768,15 @@ public final class InternalFeedService {
         if (moved <= 0) {
             return 0;
         }
-        setAmmoCount(gun, getAmmoCount(gun) + moved);
+        List<Identifier> profiles = plan.consumeExtractedSourceProfiles(moved);
+        int appended = appendRoundsPreservingFeedOrder(gun, profiles);
+        if (appended != moved) {
+            // The capacity was checked before extraction; a mismatch here is a
+            // fail-closed guard against concurrent state edits, never a reason
+            // to silently discard a physical source profile.
+            plan.markSourceFailed();
+            return 0;
+        }
         plan.recordSourceTransfer(moved);
         broadcastInventory(shooter);
         return moved;
@@ -701,7 +796,9 @@ public final class InternalFeedService {
         if (moved <= 0) {
             return 0;
         }
+        Identifier chambered = plan.consumeExtractedSourceProfiles(moved).getFirst();
         plan.recordSourceTransfer(moved);
+        RoundProfileService.setChamberAmmoId(gun, chambered);
         iGun.setBulletInBarrel(gun, true);
         broadcastInventory(shooter);
         return moved;
@@ -748,9 +845,13 @@ public final class InternalFeedService {
                 .map(index -> index.getGunData().getBolt())
                 .orElse(null);
         if ((bolt == Bolt.MANUAL_ACTION || bolt == Bolt.CLOSED_BOLT)
-                && !iGun.hasBulletInBarrel(gun)
-                && removeRounds(gun, 1) == 1) {
-            iGun.setBulletInBarrel(gun, true);
+                && !iGun.hasBulletInBarrel(gun)) {
+            Identifier chambered = bolt == Bolt.CLOSED_BOLT
+                    ? takeOldestRound(gun) : takeNextRound(gun);
+            if (!chambered.equals(com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID)) {
+                RoundProfileService.setChamberAmmoId(gun, chambered);
+                iGun.setBulletInBarrel(gun, true);
+            }
         }
     }
 
@@ -850,12 +951,24 @@ public final class InternalFeedService {
             plan.markSourceFailed();
             return 0;
         }
-        int transferred = Math.min(Math.max(0, requested), device.getAmmoCount(current));
-        if (transferred <= 0) {
+        int requestedSafe = Math.min(Math.max(0, requested), device.getAmmoCount(current));
+        if (requestedSafe <= 0) {
             plan.markSourceFailed();
             return 0;
         }
-        device.setAmmoCount(current, device.getAmmoCount(current) - transferred);
+        List<Identifier> extractedProfiles = new ArrayList<>(requestedSafe);
+        for (int index = 0; index < requestedSafe; index++) {
+            Identifier profile = device.popNextRound(current);
+            if (profile.equals(com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID)) {
+                plan.markSourceFailed();
+                break;
+            }
+            extractedProfiles.add(profile);
+        }
+        if (extractedProfiles.isEmpty()) {
+            return 0;
+        }
+        plan.recordExtractedSourceProfiles(extractedProfiles);
         // Bridge clips and speedloaders are reusable loading tools. Current
         // plans always keep the now-empty physical ItemStack; the conditional
         // remains only for old non-device plan compatibility.
@@ -863,7 +976,7 @@ public final class InternalFeedService {
             inventory.setItem(plan.getFeedDeviceSlot(), ItemStack.EMPTY);
         }
         inventory.setChanged();
-        return transferred;
+        return extractedProfiles.size();
     }
 
     private static int countLooseAmmo(Player player, Identifier ammoId) {
@@ -923,6 +1036,44 @@ public final class InternalFeedService {
         return TimelessAPI.getCommonGunIndex(iGun.getGunId(gun))
                 .map(index -> index.getGunData().getReloadData().isInfinite())
                 .orElse(false);
+    }
+
+    private static List<Identifier> repeated(Identifier ammoId, int count) {
+        if (count <= 0 || ammoId == null || com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID.equals(ammoId)) {
+            return List.of();
+        }
+        List<Identifier> rounds = new ArrayList<>(count);
+        for (int index = 0; index < count; index++) {
+            rounds.add(ammoId);
+        }
+        return List.copyOf(rounds);
+    }
+
+    private static void writeRounds(ItemStack gun, GunFeedDefinition definition, List<Identifier> requested) {
+        int capacity = definition.getMagazineCapacity();
+        List<Identifier> safe = new ArrayList<>();
+        if (requested != null) {
+            for (Identifier ammoId : requested) {
+                if (ammoId != null && !com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID.equals(ammoId)) {
+                    safe.add(ammoId);
+                    if (safe.size() >= capacity) {
+                        break;
+                    }
+                }
+            }
+        }
+        ItemNbtUtils.updateTag(gun, tag -> {
+            ListTag stored = new ListTag();
+            for (Identifier ammoId : safe) {
+                stored.add(StringTag.valueOf(ammoId.toString()));
+            }
+            tag.putString(INTERNAL_FEED_AMMO_ID, definition.getAmmoId().toString());
+            tag.putInt(INTERNAL_FEED_CAPACITY, definition.getMagazineCapacity());
+            tag.putInt(INTERNAL_FEED_COUNT, safe.size());
+            tag.put(INTERNAL_FEED_ROUNDS, stored);
+            tag.putString(INTERNAL_FEED_MECHANISM, definition.getMechanism().name());
+        });
+        syncLegacy(gun, safe.size());
     }
 
     private static int legacyAmmo(ItemStack gun) {

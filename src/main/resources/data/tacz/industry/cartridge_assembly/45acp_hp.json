@@ -1,0 +1,19 @@
+{
+  "case_item": "tacz:cartridge_case",
+  "case_caliber": "45acp",
+  "case_display_name": "item.tacz.cartridge_case.45acp",
+  "projectile_item": "tacz:projectile_core",
+  "projectile_caliber": "45acp",
+  "projectile_type": "hp",
+  "projectile_display_name": "item.tacz.projectile_core.45acp_hp",
+  "primer_item": "tacz:primer",
+  "propellant_item": "tacz:industrial_propellant",
+  "ammo": "tacz:45acp_hp",
+  "count": 20,
+  "case_count": 20,
+  "projectile_count": 20,
+  "primer_count": 20,
+  "propellant_count": 2,
+  "eject_case": true,
+  "spent_case_display_name": "item.tacz.cartridge_case.spent_45acp"
+}

@@ -4,6 +4,9 @@ import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.industry.ammo.AmmoProfileService;
+import com.tacz.guns.industry.magazine.EnBlocClipService;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.util.ItemNbtUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
@@ -64,7 +67,13 @@ public interface AmmoBoxItemDataAccessor extends IAmmoBox {
                 return false;
             }
             Identifier gunId = iGun.getGunId(gun);
-            return TimelessAPI.getCommonGunIndex(gunId).map(gunIndex -> gunIndex.getGunData().getAmmoId().equals(ammoId)).orElse(false);
+            return TimelessAPI.getCommonGunIndex(gunId).map(gunIndex -> {
+                Identifier baseAmmo = gunIndex.getGunData().getAmmoId();
+                return AmmoProfileService.isSameCaliber(baseAmmo, ammoId)
+                        && (baseAmmo.equals(ammoId)
+                        || PhysicalMagazineService.usesPhysicalMagazine(gun)
+                        || EnBlocClipService.usesEnBlocClip(gun));
+            }).orElse(false);
         }
         return false;
     }

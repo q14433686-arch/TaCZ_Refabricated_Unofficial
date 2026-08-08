@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "ammo": "tacz:556x45_hp",
+  "caliber_ammo": "tacz:556x45",
+  "kind": "hp",
+  "damage_multiplier": 1.24,
+  "armor_ignore_multiplier": 0.54,
+  "armor_ignore_addend": 0.0,
+  "pierce_add": 0,
+  "pierce_override": 1,
+  "speed_multiplier": 0.93,
+  "projectile_count_override": 0
+}

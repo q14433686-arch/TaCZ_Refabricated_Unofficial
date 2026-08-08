@@ -1,0 +1,6 @@
+{
+  "name": "item.tacz.ammo.50bmg_ap",
+  "display": "tacz:50bmg_display",
+  "stack_size": 30,
+  "sort": 121
+}

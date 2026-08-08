@@ -4,6 +4,9 @@ import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.industry.ammo.AmmoProfileService;
+import com.tacz.guns.industry.magazine.EnBlocClipService;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.util.ItemNbtUtils;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -89,7 +92,19 @@ public interface AmmoItemDataAccessor extends IAmmo {
         if (gun.getItem() instanceof IGun iGun && ammo.getItem() instanceof IAmmo iAmmo) {
             Identifier gunId = iGun.getGunId(gun);
             Identifier ammoId = iAmmo.getAmmoId(ammo);
-            return TimelessAPI.getCommonGunIndex(gunId).map(gunIndex -> gunIndex.getGunData().getAmmoId().equals(ammoId)).orElse(false);
+            return TimelessAPI.getCommonGunIndex(gunId).map(gunIndex -> {
+                Identifier baseAmmo = gunIndex.getGunData().getAmmoId();
+                if (!AmmoProfileService.isSameCaliber(baseAmmo, ammoId)) {
+                    return false;
+                }
+                // Alternate profiles are enabled only on paths that preserve
+                // an exact physical round identity. Unknown legacy/internal
+                // loose-ammo routes remain base-only rather than silently
+                // consuming AP/HP as FMJ through an integer-ammo path.
+                return baseAmmo.equals(ammoId)
+                        || PhysicalMagazineService.usesPhysicalMagazine(gun)
+                        || EnBlocClipService.usesEnBlocClip(gun);
+            }).orElse(false);
         }
         return false;
     }

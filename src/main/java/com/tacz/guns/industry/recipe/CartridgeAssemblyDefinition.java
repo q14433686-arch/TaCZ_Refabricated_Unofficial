@@ -97,10 +97,12 @@ public final class CartridgeAssemblyDefinition {
             return false;
         }
         CompoundTag tag = ItemNbtUtils.getTag(stack);
+        Identifier projectileAmmo = Identifier.tryParse(tag.getStringOr("CartridgeAmmoId", ""));
         return "ammunition".equals(tag.getStringOr("IndustryPlatform", ""))
                 && "projectile".equals(tag.getStringOr("IndustryPartKind", ""))
                 && projectileCaliber.equals(tag.getStringOr("CartridgeCaliber", ""))
-                && projectileType.equals(tag.getStringOr("ProjectileType", ""));
+                && projectileType.equals(tag.getStringOr("ProjectileType", ""))
+                && ammo != null && ammo.equals(projectileAmmo);
     }
 
     public boolean matchesPrimer(ItemStack stack) {
