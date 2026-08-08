@@ -9,6 +9,7 @@ import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.industry.ammo.AmmoProfileService;
 import com.tacz.guns.init.ModItems;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;

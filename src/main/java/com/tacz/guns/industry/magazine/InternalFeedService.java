@@ -93,7 +93,7 @@ public final class InternalFeedService {
         List<Identifier> rounds = new ArrayList<>();
         for (Tag entry : tag.getListOrEmpty(INTERNAL_FEED_ROUNDS)) {
             if (entry instanceof StringTag stringTag) {
-                Identifier ammoId = Identifier.tryParse(stringTag.getAsString());
+                Identifier ammoId = Identifier.tryParse(stringTag.value());
                 if (ammoId != null && !com.tacz.guns.api.DefaultAssets.EMPTY_AMMO_ID.equals(ammoId)) {
                     rounds.add(ammoId);
                     if (rounds.size() >= capacity) {

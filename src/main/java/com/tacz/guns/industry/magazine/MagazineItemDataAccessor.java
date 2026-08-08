@@ -112,7 +112,7 @@ public interface MagazineItemDataAccessor extends IMagazine {
             if (!(entry instanceof StringTag stringTag)) {
                 continue;
             }
-            Identifier ammoId = Identifier.tryParse(stringTag.getAsString());
+            Identifier ammoId = Identifier.tryParse(stringTag.value());
             if (ammoId != null && !DefaultAssets.EMPTY_AMMO_ID.equals(ammoId)) {
                 rounds.add(ammoId);
                 if (rounds.size() >= capacity) {
