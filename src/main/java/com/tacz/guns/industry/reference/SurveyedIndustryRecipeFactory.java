@@ -34,7 +34,6 @@ public final class SurveyedIndustryRecipeFactory {
     private static final String SURVEY_ACTION = "surveyed";
     private static final String SURVEY_TIER = "surveyed";
     private static final String SURVEY_SCOPE = "surveyed";
-    private static final String GROUP = "tacz:misc";
     private static final String TABLE_TYPE = "tacz:gun_smith_table_crafting";
     private static final String GENERATED_MARKER = "industry_surveyed_generated";
     private static final String FALLBACK_MARKER = "industry_surveyed_fallback";
@@ -126,7 +125,8 @@ public final class SurveyedIndustryRecipeFactory {
         if (gunId == null || index == null || index.getGunData() == null) {
             return null;
         }
-        return new SurveyedPlatform(gunId, index.getGunData().getAmmoId(), index.getGunData().getAmmoAmount());
+        return new SurveyedPlatform(gunId, index.getGunData().getAmmoId(), index.getGunData().getAmmoAmount(),
+                index.getType() == null ? "" : index.getType());
     }
 
     private static void appendSurveyedFinalMaterials(JsonObject recipe, SurveyedPlatform platform) {
@@ -168,7 +168,7 @@ public final class SurveyedIndustryRecipeFactory {
                 material(partial("tacz:gun_component_blank", surveyArchiveTag()), 1, true),
                 material(partial("tacz:gun_blueprint", templateBlankTag()), 1, true),
                 material(partial("tacz:press_die", surveyFixtureTag()), 1, false),
-                customResult("tacz:gun_blueprint", masterDossierTag(platform))
+                customResult("tacz:gun_blueprint", masterDossierTag(platform), groupFor(platform))
         );
     }
 
@@ -177,7 +177,7 @@ public final class SurveyedIndustryRecipeFactory {
                 material(partial("tacz:gun_blueprint", templateBlankTag()), 1, true),
                 material(partial("tacz:gun_blueprint", masterDossierTag(platform)), 1, false),
                 material(partial("tacz:press_die", surveyFixtureTag()), 1, false),
-                customResult("tacz:gun_blueprint", productionTemplateTag(platform))
+                customResult("tacz:gun_blueprint", productionTemplateTag(platform), groupFor(platform))
         );
     }
 
@@ -188,7 +188,7 @@ public final class SurveyedIndustryRecipeFactory {
         }
         materials.add(material(partial("tacz:gun_blueprint", productionTemplateTag(platform)), 1, false));
         materials.add(material(partial("tacz:press_die", surveyFixtureTag()), 1, false));
-        return generatedTableRecipe(materials, customResult("tacz:gun_component", surveyedKitTag(platform)));
+        return generatedTableRecipe(materials, customResult("tacz:gun_component", surveyedKitTag(platform), groupFor(platform)));
     }
 
     private static JsonObject loadingDeviceRecipe(SurveyedPlatform platform, GunFeedDefinition definition) {
@@ -196,7 +196,7 @@ public final class SurveyedIndustryRecipeFactory {
                 material(new com.google.gson.JsonPrimitive("tacz:magazine_blank"), 1, true),
                 material(partial("tacz:gun_blueprint", productionTemplateTag(platform)), 1, false),
                 material(partial("tacz:press_die", surveyFixtureTag()), 1, false),
-                customResult("tacz:magazine", loadingDeviceTag(definition))
+                customResult("tacz:magazine", loadingDeviceTag(definition), groupFor(platform))
         );
     }
 
@@ -215,7 +215,7 @@ public final class SurveyedIndustryRecipeFactory {
         materials.add(material(partial("tacz:gun_component", surveyedKitTag(platform)), 1, true));
         materials.add(material(partial("tacz:gun_blueprint", productionTemplateTag(platform)), 1, false));
         materials.add(material(partial("tacz:press_die", surveyFixtureTag()), 1, false));
-        return generatedTableRecipe(materials, customResult("tacz:magazine", externalCarrierTag(definition, variant)));
+        return generatedTableRecipe(materials, customResult("tacz:magazine", externalCarrierTag(definition, variant), groupFor(platform)));
     }
 
     private static JsonObject loadingDeviceTag(GunFeedDefinition definition) {
@@ -257,14 +257,15 @@ public final class SurveyedIndustryRecipeFactory {
         return recipe;
     }
 
-    private static JsonObject customResult(String itemId, JsonObject nbt) {
+    /** Keep surveyed commissions discoverable under the real gun class rather than the misc tab. */
+    private static JsonObject customResult(String itemId, JsonObject nbt, String group) {
         JsonObject item = new JsonObject();
         item.addProperty("item", itemId);
         item.addProperty("count", 1);
         item.add("nbt", nbt);
         JsonObject result = new JsonObject();
         result.addProperty("type", "custom");
-        result.addProperty("group", GROUP);
+        result.addProperty("group", group);
         result.add("item", item);
         return result;
     }
@@ -405,7 +406,20 @@ public final class SurveyedIndustryRecipeFactory {
     public record Result(Map<Identifier, JsonElement> recipes, int platforms, int transformedGunRecipes) {
     }
 
-    private record SurveyedPlatform(Identifier gunId, Identifier ammoId, int capacity) {
+    private static String groupFor(SurveyedPlatform platform) {
+        return switch (platform.gunClass()) {
+            case "pistol" -> "tacz:pistol";
+            case "sniper" -> "tacz:sniper";
+            case "rifle" -> "tacz:rifle";
+            case "shotgun" -> "tacz:shotgun";
+            case "smg" -> "tacz:smg";
+            case "rpg" -> "tacz:rpg";
+            case "mg" -> "tacz:mg";
+            default -> "tacz:misc";
+        };
+    }
+
+    private record SurveyedPlatform(Identifier gunId, Identifier ammoId, int capacity, String gunClass) {
         private String platformId() {
             return "surveyed/" + gunId.getNamespace() + "/" + gunId.getPath();
         }

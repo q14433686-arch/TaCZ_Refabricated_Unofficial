@@ -37,7 +37,8 @@ import java.util.Set;
  */
 public final class SurveyedCartridgeRecipeFactory {
     private static final String TABLE_TYPE = "tacz:gun_smith_table_crafting";
-    private static final String GROUP = "tacz:misc";
+    /** Surveyed loose-ammo commissions belong to the existing ammo tab, not misc. */
+    private static final String GROUP = "tacz:ammo";
     private static final String MARKER = "industry_surveyed_ammo_fallback";
     private static final String GENERATED_MARKER = "industry_surveyed_generated";
     private static final String SURVEYING_PLATFORM = "surveying";

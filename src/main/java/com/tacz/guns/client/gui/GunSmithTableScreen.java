@@ -161,6 +161,18 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                 continue;
             }
             Identifier groupName = recipe.getResult().getGroup();
+            // Surveyed industry recipes now carry their real gun-class group
+            // (or tacz:ammo). A third-party table is allowed to define a
+            // narrow tab list, so make the known TACZ tab visible on demand
+            // rather than silently dropping a real server recipe back into
+            // misc or hiding it altogether.
+            if (!recipeKeys.containsKey(groupName)) {
+                TabConfig fallbackTab = industryTabFor(groupName);
+                if (fallbackTab != null) {
+                    recipes.put(groupName, Lists.newArrayList());
+                    recipeKeys.put(groupName, fallbackTab);
+                }
+            }
             if (recipeKeys.containsKey(groupName)) {
                 recipeIds.add(Pair.of(groupName, id));
             }
@@ -204,6 +216,25 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         if (selectedType != null) {
             selectedRecipeList = this.recipes.get(selectedType);
         }
+    }
+
+    /**
+     * Return a built-in tab only for a known TACZ group.  We intentionally do
+     * not synthesize arbitrary third-party tab ids: a pack retains ownership of
+     * its custom UI taxonomy, while our generated industry commissions stay
+     * discoverable under the standard ammo / gun-class pages.
+     */
+    @Nullable
+    private static TabConfig industryTabFor(@Nullable Identifier group) {
+        if (group == null) {
+            return null;
+        }
+        for (TabConfig tab : TabConfig.DEFAULT_TABS) {
+            if (tab.id().equals(group)) {
+                return tab;
+            }
+        }
+        return null;
     }
 
     private boolean isNameMatch(GunSmithTableRecipe recipe) {
