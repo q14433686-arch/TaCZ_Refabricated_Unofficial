@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_t14_8mm",
+  "magazine_capacity": 8,
+  "ammo": "ww:8mm",
+  "display_name": "item.tacz.magazine.ww_t14_8mm_8",
+  "carrier_variants": [
+    {
+      "capacity": 9,
+      "display_name": "item.tacz.magazine.ww_t14_8mm_9"
+    },
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.ww_t14_8mm_12"
+    },
+    {
+      "capacity": 14,
+      "display_name": "item.tacz.magazine.ww_t14_8mm_14"
+    }
+  ]
+}

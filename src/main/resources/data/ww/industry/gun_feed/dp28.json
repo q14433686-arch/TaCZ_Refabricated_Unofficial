@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_dp28_762x54",
+  "magazine_capacity": 47,
+  "ammo": "tacz:762x54",
+  "display_name": "item.tacz.magazine.ww_dp28_762x54_47"
+}

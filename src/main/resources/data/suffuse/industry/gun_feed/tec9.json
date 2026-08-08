@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_tec9_9mm",
+  "magazine_capacity": 15,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.suffuse_tec9_9mm_15",
+  "carrier_variants": [
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.suffuse_tec9_9mm_20"
+    },
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.suffuse_tec9_9mm_30"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.suffuse_tec9_9mm_50"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_mas38_7_65x20mm",
+  "magazine_capacity": 32,
+  "ammo": "suffuse:7.65x20mm",
+  "display_name": "item.tacz.magazine.suffuse_mas38_7_65x20mm_32"
+}

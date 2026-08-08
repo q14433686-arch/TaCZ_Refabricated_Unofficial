@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_viper2011_9mm",
+  "magazine_capacity": 12,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.suffuse_viper2011_9mm_12",
+  "carrier_variants": [
+    {
+      "capacity": 15,
+      "display_name": "item.tacz.magazine.suffuse_viper2011_9mm_15"
+    },
+    {
+      "capacity": 20,
+      "display_name": "item.tacz.magazine.suffuse_viper2011_9mm_20"
+    },
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.suffuse_viper2011_9mm_25"
+    }
+  ]
+}

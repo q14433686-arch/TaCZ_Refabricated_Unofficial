@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "canonical_model": "suffuse/usp45_black",
+  "display_name": "usp45_black",
+  "action": "surveyed_external",
+  "feed": {
+    "device": "detachable_magazine",
+    "runtime_mechanism": "detachable_magazine",
+    "carrier_behavior": "inserted_retained",
+    "family": "suffuse_usp45_black_45acp",
+    "capacity": 12,
+    "reload_batch": 0
+  },
+  "ammunition": {
+    "class": "cartridge",
+    "nominal": "45acp",
+    "expected_ammo": "tacz:45acp"
+  },
+  "manufacturing": {
+    "profile": "surveyed",
+    "tier": "surveyed"
+  },
+  "confidence": "curated",
+  "evidence": [
+    "Uploaded schema-2 industry-feed-survey.json (SHA-256 919d71b5e0217bc061e45e4b386328f8f7aaf27b00ec29e72a43e85938e3a20a) records this exact current GunData.",
+    "The survey entry for suffuse:usp45_black was individually checked for current ammo, base capacity, reload contract, and selectable capacity values.",
+    "Closed manual full-pack decision: established external detachable carrier mechanism; family remains private until stricter interchangeability evidence is available.",
+    "The runtime sidecar fails closed if loaded GunData ammo or base capacity changes. Its surveyed carrier commission is emitted only from an actual loaded Gunsmith Table gun recipe; no standalone creative-only carrier route is added."
+  ]
+}

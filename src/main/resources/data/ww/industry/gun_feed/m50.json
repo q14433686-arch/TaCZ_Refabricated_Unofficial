@@ -1,0 +1,17 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_m50_45acp",
+  "magazine_capacity": 20,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.ww_m50_45acp_20",
+  "carrier_variants": [
+    {
+      "capacity": 21,
+      "display_name": "item.tacz.magazine.ww_m50_45acp_21"
+    },
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.ww_m50_45acp_30"
+    }
+  ]
+}

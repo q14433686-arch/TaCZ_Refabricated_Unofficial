@@ -433,6 +433,34 @@ survey entry 都有明确结论。
 其余例如 EF46/M2-2/Wex fuel、Syringe、Lunge Mine/Faust/MHGL、Martini/TG1918 单发、Model10/Sjögren tube、
 Model3 revolver 都明确不进入 detachable/belt。至此 Apocalypse 没有未覆盖 survey entry。
 
+## GunpowderRevolution 完整枪包审计（36 / 36）
+
+`hamster` 已从首批的 13 条 active 扩展到全部 **36 / 36** reference coverage。
+
+- **13 条 active**：既有 Gew98/M1903/Mosin/Type99 bridge clip、M1 Garand en-bloc、Webley/SW Mk2 speedloader、
+  Madsen、MG14/17、Luger、Makarov、MP18；
+- **23 条 legacy**：Auto-5/Lebel/Winchester/M1887 等 tube/lever，Berthier/SMLE/Krag 等未审 clip，Colt/Nagant
+  系列转轮，以及各单发/flare/airgun/fixed internal 平台。
+
+已有的桥夹、漏夹、快装器材料和状态机继续复用；未审原包 script 的条目只记录事实，不借同一张 loader 图提前伪造
+物理 reload transaction。
+
+## Suffuse GunSmoke 完整枪包审计（46 / 46）
+
+`Suffuse` 现为 **46 / 46** reference coverage：**33 active / 13 legacy**。新增 active 包含 AR57、GepardPDW、
+MAS-38、NP762、TEC-9、TTI 2011、UMP45、USP45/Black、Viper2011、Webley1913 等明确外部载具；AN-94 专用脚本、
+KS23/M1895/SPAS tube、PP19 螺旋仓、Python 转轮、M203/M79/PF98A、Lifecard/Trapper 等保持明确 legacy。
+
+## Enlisted 完整枪包审计（52 / 52）
+
+`ww` 现为 **52 / 52** reference coverage：**43 active / 9 legacy**。除先前核心 BAR/Thompson/MG/MP/步枪组外，
+本轮补入 AN/M2 belt、DP-28 pan、P08/P38/Type14/M1911/M712、M2 Carbine、Reising、PPS、S1-100、Type100 等
+明确外部载具；C96、Kar98、Lee、M1903、M91、Type38/99 和管式霰弹枪保持 internal/clip/tube legacy。
+
+Enlisted 的 M1 Garand 继续使用已审的实体漏夹；其他桥夹候选仅在其真实脚本 route 审计后复用现有设计，不按年代或
+容量自动写入 `InstalledEnBlocClip` / `InstalledMagazine`。`m2s`、`m50`、`pps` 原始扩容数组中的 `1` 发占位值也
+明确不制造实体载具。
+
 ## 当前可安全使用的工作流
 
 1. 在装有目标枪包的**服务器**执行：

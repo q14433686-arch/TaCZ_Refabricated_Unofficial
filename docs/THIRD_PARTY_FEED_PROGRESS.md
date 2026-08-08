@@ -16,12 +16,12 @@
 | Default TACZ | `tacz` | 54 | 54 | 52 | 2 | 0 | `complete` |
 | Apocalypse | `bf1` | 30 | 30 | 11 | 19 | 0 | `complete` |
 | Cold War | `rainforest` | 17 | 17 | 15 | 2 | 0 | `complete` |
-| GunpowderRevolution | `hamster` | 36 | 13 | 13 | 0 | 23 | `in_progress` |
-| Enlisted | `ww` | 52 | 26 | 26 | 0 | 26 | `in_progress` |
+| GunpowderRevolution | `hamster` | 36 | 36 | 13 | 23 | 0 | `complete` |
+| Enlisted | `ww` | 52 | 52 | 43 | 9 | 0 | `complete` |
 | CCRP / ClassicR | `ccrp, classicr` | 164 | 164 | 136 | 28 | 0 | `complete` |
 | CIBR | `cib, cibs` | 106 | 106 | 82 | 24 | 0 | `complete` |
 | KhanPowder | `murasamet` | 76 | 76 | 28 | 48 | 0 | `complete` |
-| Suffuse GunSmoke | `suffuse` | 46 | 21 | 21 | 0 | 25 | `in_progress` |
+| Suffuse GunSmoke | `suffuse` | 46 | 46 | 33 | 13 | 0 | `complete` |
 | Delta Force: Storm Assault | `wemql_r` | 13 | 13 | 13 | 0 | 0 | `complete` |
 
 `complete` 的含义是该 survey 中每把枪都已有明确 reference 结论；它不意味着每把都被强行实体弹匣化。
@@ -39,7 +39,7 @@
 | `hamster` | `belt`=1, `detachable_magazine`=4, `en_bloc_clip`=1, `speedloader`=2, `stripper_clip`=5 |
 | `murasamet` | `belt`=2, `detachable_magazine`=26 |
 | `rainforest` | `belt`=3, `detachable_magazine`=11, `stripper_clip`=1 |
-| `suffuse` | `belt`=1, `detachable_magazine`=20 |
+| `suffuse` | `belt`=1, `detachable_magazine`=32 |
 | `tacz` | `belt`=2, `detachable_magazine`=36, `internal_box`=2, `revolver`=3, `single_shot`=5, `stripper_clip`=1, `tube`=3 |
 | `wemql_r` | `detachable_magazine`=13 |
-| `ww` | `belt`=3, `detachable_magazine`=22, `en_bloc_clip`=1 |
+| `ww` | `belt`=4, `detachable_magazine`=38, `en_bloc_clip`=1 |

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_webley1913_45acp",
+  "magazine_capacity": 7,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.suffuse_webley1913_45acp_7",
+  "carrier_variants": [
+    {
+      "capacity": 10,
+      "display_name": "item.tacz.magazine.suffuse_webley1913_45acp_10"
+    },
+    {
+      "capacity": 13,
+      "display_name": "item.tacz.magazine.suffuse_webley1913_45acp_13"
+    },
+    {
+      "capacity": 16,
+      "display_name": "item.tacz.magazine.suffuse_webley1913_45acp_16"
+    }
+  ]
+}

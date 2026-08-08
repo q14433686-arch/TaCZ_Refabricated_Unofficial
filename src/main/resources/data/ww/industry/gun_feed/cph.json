@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_cph_32acp",
+  "magazine_capacity": 7,
+  "ammo": "ea:32acp",
+  "display_name": "item.tacz.magazine.ww_cph_32acp_7",
+  "carrier_variants": [
+    {
+      "capacity": 9,
+      "display_name": "item.tacz.magazine.ww_cph_32acp_9"
+    },
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.ww_cph_32acp_12"
+    },
+    {
+      "capacity": 14,
+      "display_name": "item.tacz.magazine.ww_cph_32acp_14"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_m2s_30c",
+  "magazine_capacity": 30,
+  "ammo": "ww:30c",
+  "display_name": "item.tacz.magazine.ww_m2s_30c_30"
+}

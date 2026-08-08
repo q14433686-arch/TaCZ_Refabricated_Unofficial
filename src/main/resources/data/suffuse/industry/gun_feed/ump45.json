@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_ump45_45acp",
+  "magazine_capacity": 20,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.suffuse_ump45_45acp_20",
+  "carrier_variants": [
+    {
+      "capacity": 25,
+      "display_name": "item.tacz.magazine.suffuse_ump45_45acp_25"
+    },
+    {
+      "capacity": 30,
+      "display_name": "item.tacz.magazine.suffuse_ump45_45acp_30"
+    },
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.suffuse_ump45_45acp_50"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_t100_8mm",
+  "magazine_capacity": 30,
+  "ammo": "ww:8mm",
+  "display_name": "item.tacz.magazine.ww_t100_8mm_30",
+  "carrier_variants": [
+    {
+      "capacity": 50,
+      "display_name": "item.tacz.magazine.ww_t100_8mm_50"
+    },
+    {
+      "capacity": 75,
+      "display_name": "item.tacz.magazine.ww_t100_8mm_75"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.ww_t100_8mm_100"
+    }
+  ]
+}

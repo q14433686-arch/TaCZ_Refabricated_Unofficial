@@ -1,0 +1,13 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_pps_762x25",
+  "magazine_capacity": 35,
+  "ammo": "tacz:762x25",
+  "display_name": "item.tacz.magazine.ww_pps_762x25_35",
+  "carrier_variants": [
+    {
+      "capacity": 71,
+      "display_name": "item.tacz.magazine.ww_pps_762x25_71"
+    }
+  ]
+}

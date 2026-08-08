@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_gepardpdw_9mm",
+  "magazine_capacity": 40,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.suffuse_gepardpdw_9mm_40",
+  "carrier_variants": [
+    {
+      "capacity": 43,
+      "display_name": "item.tacz.magazine.suffuse_gepardpdw_9mm_43"
+    },
+    {
+      "capacity": 45,
+      "display_name": "item.tacz.magazine.suffuse_gepardpdw_9mm_45"
+    },
+    {
+      "capacity": 47,
+      "display_name": "item.tacz.magazine.suffuse_gepardpdw_9mm_47"
+    }
+  ]
+}

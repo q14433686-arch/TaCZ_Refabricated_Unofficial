@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_p08_765",
+  "magazine_capacity": 8,
+  "ammo": "ww:765",
+  "display_name": "item.tacz.magazine.ww_p08_765_8",
+  "carrier_variants": [
+    {
+      "capacity": 19,
+      "display_name": "item.tacz.magazine.ww_p08_765_19"
+    },
+    {
+      "capacity": 23,
+      "display_name": "item.tacz.magazine.ww_p08_765_23"
+    },
+    {
+      "capacity": 27,
+      "display_name": "item.tacz.magazine.ww_p08_765_27"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mechanism": "belt",
+  "magazine_family": "ww_anm2_30_06_belt",
+  "magazine_capacity": 100,
+  "ammo": "tacz:30_06",
+  "display_name": "item.tacz.magazine.ww_anm2_30_06_belt_100",
+  "carrier_variants": [
+    {
+      "capacity": 150,
+      "display_name": "item.tacz.magazine.ww_anm2_30_06_belt_150"
+    },
+    {
+      "capacity": 250,
+      "display_name": "item.tacz.magazine.ww_anm2_30_06_belt_250"
+    },
+    {
+      "capacity": 500,
+      "display_name": "item.tacz.magazine.ww_anm2_30_06_belt_500"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_t96_65a",
+  "magazine_capacity": 30,
+  "ammo": "ww:65a",
+  "display_name": "item.tacz.magazine.ww_t96_65a_30",
+  "carrier_variants": [
+    {
+      "capacity": 40,
+      "display_name": "item.tacz.magazine.ww_t96_65a_40"
+    }
+  ]
+}

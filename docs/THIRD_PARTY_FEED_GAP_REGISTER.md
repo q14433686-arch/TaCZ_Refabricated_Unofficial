@@ -30,12 +30,12 @@ tools/industry/third_party_feed_gap_registry.json
 | `cib` | 66 | 64 | 22 |
 | `cibs` | 14 | 12 | 2 |
 | `classicr` | 25 | 24 | 7 |
-| `hamster` | 5 | 5 | 0 |
+| `hamster` | 5 | 5 | 23 |
 | `murasamet` | 21 | 16 | 48 |
 | `rainforest` | 12 | 10 | 2 |
-| `suffuse` | 19 | 18 | 0 |
+| `suffuse` | 31 | 30 | 13 |
 | `wemql_r` | 8 | 5 | 0 |
-| `ww` | 15 | 15 | 0 |
+| `ww` | 32 | 32 | 9 |
 
 ## 当前需要补细分材质的 family
 
@@ -286,14 +286,18 @@ tools/industry/third_party_feed_gap_registry.json
 | `rainforest_vz68_9x19` | `tacz:9mm` | `detachable_magazine` | 10, 12, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
 | `scar_h_308` | `tacz:308` | `detachable_magazine` | 20, 30, 45, 60 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_aks74u_545x39` | `suffuse:545x39` | `detachable_magazine` | 30, 34, 37, 40 | `neutral_generic_material` → `tacz:item/magazine` |
+| `suffuse_ar57_57x28` | `tacz:57x28` | `detachable_magazine` | 34, 37, 40, 50 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_ash12_127x55` | `suffuse:12.7x55` | `detachable_magazine` | 10, 15, 20, 30 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_aw50_50bmg` | `tacz:50bmg` | `detachable_magazine` | 5, 6, 8, 10 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_axmc_axsr_338` | `tacz:338` | `detachable_magazine` | 10, 12, 14, 16 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_dvl10_308` | `tacz:308` | `detachable_magazine` | 10, 12, 14, 16 | `neutral_generic_material` → `tacz:item/magazine` |
+| `suffuse_gepardpdw_9mm` | `tacz:9mm` | `detachable_magazine` | 40, 43, 45, 47 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_gm6_50bmg` | `tacz:50bmg` | `detachable_magazine` | 6, 8, 10 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_kacpdw_6x35` | `suffuse:6x35mm` | `detachable_magazine` | 30, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_m200_408ct` | `suffuse:.408ct` | `detachable_magazine` | 6, 7, 8, 10 | `neutral_generic_material` → `tacz:item/magazine` |
+| `suffuse_mas38_7_65x20mm` | `suffuse:7.65x20mm` | `detachable_magazine` | 32 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_mpdr_556` | `tacz:556x45` | `detachable_magazine` | 20, 40, 50, 60 | `neutral_generic_material` → `tacz:item/magazine` |
+| `suffuse_np762_762x25` | `tacz:762x25` | `detachable_magazine` | 10, 12, 15, 17 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_pkp_762x54_belt` | `tacz:762x54` | `belt` | 120 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
 | `suffuse_qbu191_58x42` | `tacz:58x42` | `detachable_magazine` | 30, 35, 50, 75 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_qbz191_58x42` | `tacz:58x42` | `detachable_magazine` | 20, 30, 40, 75 | `neutral_generic_material` → `tacz:item/magazine` |
@@ -302,23 +306,48 @@ tools/industry/third_party_feed_gap_registry.json
 | `suffuse_rm277_68tvcm` | `suffuse:6.8tvcm` | `detachable_magazine` | 20, 30 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_saddam_ak_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 34, 37, 40 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_svd_762x54` | `tacz:762x54` | `detachable_magazine` | 10, 12, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
+| `suffuse_tec9_9mm` | `tacz:9mm` | `detachable_magazine` | 15, 20, 30, 50 | `neutral_generic_material` → `tacz:item/magazine` |
+| `suffuse_tt33_762x25` | `tacz:762x25` | `detachable_magazine` | 7, 10, 13, 16 | `neutral_generic_material` → `tacz:item/magazine` |
+| `suffuse_tti2011_9mm` | `tacz:9mm` | `detachable_magazine` | 12, 20, 25, 30 | `neutral_generic_material` → `tacz:item/magazine` |
+| `suffuse_ump45_45acp` | `tacz:45acp` | `detachable_magazine` | 20, 25, 30, 50 | `neutral_generic_material` → `tacz:item/magazine` |
+| `suffuse_usp45_45acp` | `tacz:45acp` | `detachable_magazine` | 12, 15, 18 | `neutral_generic_material` → `tacz:item/magazine` |
+| `suffuse_usp45_black_45acp` | `tacz:45acp` | `detachable_magazine` | 12, 15, 18 | `neutral_generic_material` → `tacz:item/magazine` |
+| `suffuse_viper2011_9mm` | `tacz:9mm` | `detachable_magazine` | 12, 15, 20, 25 | `neutral_generic_material` → `tacz:item/magazine` |
+| `suffuse_webley1913_45acp` | `tacz:45acp` | `detachable_magazine` | 7, 10, 13, 16 | `neutral_generic_material` → `tacz:item/magazine` |
 | `suffuse_xm7_308` | `tacz:308` | `detachable_magazine` | 20, 30 | `neutral_generic_material` → `tacz:item/magazine` |
 | `wemql_r_ak12_545x39` | `tacz:545x39` | `detachable_magazine` | 30, 40, 60, 75 | `neutral_generic_material` → `tacz:item/magazine` |
 | `wemql_r_m7_68x51` | `tacz:68x51fury` | `detachable_magazine` | 20, 25, 30, 45 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_anm2_30_06_belt` | `tacz:30_06` | `belt` | 100, 150, 250, 500 | `neutral_generic_material` → `tacz_extra:item/mag_m249_box` |
 | `ww_as44_762x39` | `tacz:762x39` | `detachable_magazine` | 30, 34, 37, 40 | `neutral_generic_material` → `tacz:item/magazine` |
 | `ww_bar_3006` | `tacz:30_06` | `detachable_magazine` | 20, 30, 35, 40 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_cph_32acp` | `ea:32acp` | `detachable_magazine` | 7, 9, 12, 14 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_dp28_762x54` | `tacz:762x54` | `detachable_magazine` | 47 | `neutral_generic_material` → `tacz:item/magazine` |
 | `ww_g43_792x57` | `ea:792x57` | `detachable_magazine` | 10, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_m1911a1_45acp` | `tacz:45acp` | `detachable_magazine` | 7, 9, 12, 14 | `neutral_generic_material` → `tacz:item/magazine` |
 | `ww_m1919a6_3006_belt` | `tacz:30_06` | `belt` | 100, 150, 250, 500 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
 | `ww_m1_m2_carbine_30c` | `ww:30c` | `detachable_magazine` | 15, 20, 30 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_m2s_30c` | `ww:30c` | `detachable_magazine` | 30 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_m50_45acp` | `tacz:45acp` | `detachable_magazine` | 20, 21, 30 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_m712_763` | `ww:763` | `detachable_magazine` | 10, 20, 25, 30 | `neutral_generic_material` → `tacz:item/magazine` |
 | `ww_mg34_792x57_belt` | `ea:792x57` | `belt` | 50, 100, 150, 200 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
 | `ww_mg42_792x57_belt` | `ea:792x57` | `belt` | 50, 100, 150, 200 | `family_level_material` → `tacz_extra:item/mag_m134_belt` |
 | `ww_mp28_9mm` | `tacz:9mm` | `detachable_magazine` | 30, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
 | `ww_mp34_9mm` | `tacz:9mm` | `detachable_magazine` | 32, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
 | `ww_mp38_40_41_9mm` | `tacz:9mm` | `detachable_magazine` | 32, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_p08_765` | `ww:765` | `detachable_magazine` | 8, 19, 23, 27 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_p38_9mm` | `tacz:9mm` | `detachable_magazine` | 8, 19, 23, 27 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_pps_762x25` | `tacz:762x25` | `detachable_magazine` | 35, 71 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_s1100_763` | `ww:763` | `detachable_magazine` | 32, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
 | `ww_sten_mk2_9mm` | `tacz:9mm` | `detachable_magazine` | 32, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
 | `ww_stg44_792x33` | `ea:792x33` | `detachable_magazine` | 30, 34, 37, 40 | `neutral_generic_material` → `tacz:item/magazine` |
 | `ww_svt_avt_762x54` | `tacz:762x54` | `detachable_magazine` | 10, 15, 20 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_t100_8mm` | `ww:8mm` | `detachable_magazine` | 30, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_t100l_8mm` | `ww:8mm` | `detachable_magazine` | 30, 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_t14_8mm` | `ww:8mm` | `detachable_magazine` | 8, 9, 12, 14 | `neutral_generic_material` → `tacz:item/magazine` |
 | `ww_t20_3006` | `tacz:30_06` | `detachable_magazine` | 20, 21, 22, 25 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_t96_65a` | `ww:65a` | `detachable_magazine` | 30, 40 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_t99_77a` | `ww:77a` | `detachable_magazine` | 30, 40 | `neutral_generic_material` → `tacz:item/magazine` |
+| `ww_tbe_763` | `ww:763` | `detachable_magazine` | 50, 75, 100 | `neutral_generic_material` → `tacz:item/magazine` |
 | `ww_thompson_45acp` | `tacz:45acp` | `detachable_magazine` | 20, 30 | `neutral_generic_material` → `tacz:item/magazine` |
 
 ## 当前保持 legacy 的功能记录
@@ -399,6 +428,29 @@ tools/industry/third_party_feed_gap_registry.json
 | `classicr:mauser_c96` | `internal_box` | `recoil_operated_pistol` | Mauser C96 standard fixed internal box remains legacy; its source extension values do not convert it into a detachable carrier. |
 | `classicr:mgl_40mm` | `revolver` | `revolver_grenade_launcher` | MGL is a rotary grenade launcher. It remains legacy until a dedicated physical cylinder/reload-route transaction is audited. |
 | `classicr:minigun` | `unknown` | `rotary` | The survey does not establish an audited removable belt/box source for this rotary implementation. It remains legacy rather than inheriting a belt from its class or capacity. |
+| `hamster:auto5` | `tube` | `recoil_operated_shotgun` | Tube shotgun route remains legacy. |
+| `hamster:berthier` | `stripper_clip` | `bolt_action` | Berthier clip route remains legacy until script feed is audited. |
+| `hamster:colt1873` | `revolver` | `revolver` | Revolver route remains legacy. |
+| `hamster:coltm1851` | `revolver` | `revolver` | Revolver route remains legacy. |
+| `hamster:coltm1892` | `revolver` | `revolver` | Revolver route remains legacy. |
+| `hamster:coltm1892pair` | `revolver` | `revolver` | Paired revolver route remains legacy. |
+| `hamster:flaregun` | `single_shot` | `single_shot` | Flare gun remains legacy. |
+| `hamster:gras1874` | `single_shot` | `single_shot` | Single-shot rifle remains legacy. |
+| `hamster:krag` | `internal_box` | `bolt_action` | Krag internal magazine route remains legacy. |
+| `hamster:lebel1886` | `tube` | `bolt_action` | Tube rifle route remains legacy. |
+| `hamster:luger1906` | `unknown` | `surveyed_precision_rifle` | Custom Luger 1906 route remains legacy. |
+| `hamster:m1879revolver` | `revolver` | `revolver` | Revolver route remains legacy. |
+| `hamster:m1887` | `tube` | `lever_action` | Tube/loop route remains legacy. |
+| `hamster:martinihenry` | `single_shot` | `single_shot` | Single-shot rifle remains legacy. |
+| `hamster:nagantcarbine` | `revolver` | `revolver` | Nagant cylinder route remains legacy. |
+| `hamster:nagantm1895` | `revolver` | `revolver` | Nagant cylinder route remains legacy. |
+| `hamster:one_barrel` | `single_shot` | `single_shot` | Single-barrel shotgun remains legacy. |
+| `hamster:sharps` | `single_shot` | `single_shot` | Single-shot rifle remains legacy. |
+| `hamster:sks` | `internal_box` | `gas_operated_rifle` | SKS internal box route remains legacy. |
+| `hamster:smle_mk3` | `stripper_clip` | `bolt_action` | SMLE clip route remains legacy until script feed is audited. |
+| `hamster:sw_mk2_41` | `revolver` | `revolver` | Revolver variant remains legacy. |
+| `hamster:win1873` | `tube` | `lever_action` | Tube/lever route remains legacy. |
+| `hamster:win1894` | `tube` | `lever_action` | Tube/lever route remains legacy. |
 | `murasamet:abe_pipe_gun` | `unknown` | `surveyed_shotgun` | Primitive custom powder weapon remains legacy. |
 | `murasamet:anantha_action` | `unknown` | `surveyed_rifle` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
 | `murasamet:at4` | `single_shot` | `launcher` | Single-shot launcher remains legacy. |
@@ -449,3 +501,25 @@ tools/industry/third_party_feed_gap_registry.json
 | `murasamet:vallgarda_375` | `unknown` | `surveyed_sniper` | No sufficiently audited physical carrier / reload route; preserve legacy rather than guessing from class, name, ammo, bolt, or capacity. |
 | `rainforest:at4` | `single_shot` | `launcher` | Single-shot disposable launcher semantics remain legacy; no fabricated removable carrier is supplied. |
 | `rainforest:m72` | `single_shot` | `launcher` | Single-shot disposable launcher semantics remain legacy; no fabricated removable carrier is supplied. |
+| `suffuse:aiyasinrpg` | `single_shot` | `launcher` | Launcher remains legacy. |
+| `suffuse:an94` | `unknown` | `surveyed_rifle` | Custom AN-94 script route remains legacy until audited. |
+| `suffuse:ks23m` | `tube` | `pump_action_shotgun` | Tube/loop route remains legacy. |
+| `suffuse:lifecard` | `single_shot` | `single_shot` | Single-shot pocket pistol remains legacy. |
+| `suffuse:m1895` | `tube` | `lever_action` | Tube/loop route remains legacy. |
+| `suffuse:m203` | `single_shot` | `launcher` | 40 mm launcher remains legacy. |
+| `suffuse:m79` | `single_shot` | `launcher` | 40 mm launcher remains legacy. |
+| `suffuse:pf98a` | `single_shot` | `launcher` | Launcher remains legacy. |
+| `suffuse:pp19` | `unknown` | `surveyed_smg` | Helical/unique PP19 carrier remains legacy until its physical removal route is audited. |
+| `suffuse:python` | `revolver` | `revolver` | Revolver route remains legacy. |
+| `suffuse:qlu11` | `unknown` | `launcher` | Grenade launcher carrier mechanism remains unproven. |
+| `suffuse:spas12` | `tube` | `pump_action_shotgun` | Tube/loop route remains legacy. |
+| `suffuse:trapper50cal` | `single_shot` | `single_shot` | Single-shot custom weapon remains legacy. |
+| `ww:c96` | `internal_box` | `recoil_operated_pistol` | Standard C96 fixed internal box remains legacy. |
+| `ww:kar98k` | `stripper_clip` | `bolt_action` | Fixed internal box / stripper route remains legacy until script feed is audited. |
+| `ww:lee` | `unknown` | `bolt_action` | Lee-Enfield pack implementation remains legacy pending fixed/detachable route proof. |
+| `ww:m1897` | `tube` | `pump_action_shotgun` | Tube/loop route remains legacy. |
+| `ww:m1903` | `stripper_clip` | `bolt_action` | Fixed internal box / stripper route remains legacy until script feed is audited. |
+| `ww:m1912` | `tube` | `pump_action_shotgun` | Tube/loop route remains legacy. |
+| `ww:m91` | `stripper_clip` | `bolt_action` | Fixed internal box / stripper route remains legacy until script feed is audited. |
+| `ww:type38` | `stripper_clip` | `bolt_action` | Fixed internal box / stripper route remains legacy until script feed is audited. |
+| `ww:type99` | `stripper_clip` | `bolt_action` | Fixed internal box / stripper route remains legacy until script feed is audited. |

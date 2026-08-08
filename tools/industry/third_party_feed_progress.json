@@ -56,11 +56,11 @@
         "hamster"
       ],
       "survey_total": 36,
-      "reference_count": 13,
+      "reference_count": 36,
       "active_feed_count": 13,
-      "legacy_reference_count": 0,
-      "uncovered_count": 23,
-      "status": "in_progress"
+      "legacy_reference_count": 23,
+      "uncovered_count": 0,
+      "status": "complete"
     },
     {
       "pack": "Enlisted",
@@ -68,11 +68,11 @@
         "ww"
       ],
       "survey_total": 52,
-      "reference_count": 26,
-      "active_feed_count": 26,
-      "legacy_reference_count": 0,
-      "uncovered_count": 26,
-      "status": "in_progress"
+      "reference_count": 52,
+      "active_feed_count": 43,
+      "legacy_reference_count": 9,
+      "uncovered_count": 0,
+      "status": "complete"
     },
     {
       "pack": "CCRP / ClassicR",
@@ -118,11 +118,11 @@
         "suffuse"
       ],
       "survey_total": 46,
-      "reference_count": 21,
-      "active_feed_count": 21,
-      "legacy_reference_count": 0,
-      "uncovered_count": 25,
-      "status": "in_progress"
+      "reference_count": 46,
+      "active_feed_count": 33,
+      "legacy_reference_count": 13,
+      "uncovered_count": 0,
+      "status": "complete"
     },
     {
       "pack": "Delta Force: Storm Assault",
@@ -205,10 +205,10 @@
     "hamster": {
       "namespace": "hamster",
       "survey_total": 36,
-      "reference_count": 13,
+      "reference_count": 36,
       "active_feed_count": 13,
-      "legacy_reference_count": 0,
-      "uncovered_count": 23,
+      "legacy_reference_count": 23,
+      "uncovered_count": 0,
       "active_mechanisms": {
         "belt": 1,
         "detachable_magazine": 4,
@@ -216,7 +216,7 @@
         "speedloader": 2,
         "stripper_clip": 5
       },
-      "status": "in_progress"
+      "status": "complete"
     },
     "murasamet": {
       "namespace": "murasamet",
@@ -248,15 +248,15 @@
     "suffuse": {
       "namespace": "suffuse",
       "survey_total": 46,
-      "reference_count": 21,
-      "active_feed_count": 21,
-      "legacy_reference_count": 0,
-      "uncovered_count": 25,
+      "reference_count": 46,
+      "active_feed_count": 33,
+      "legacy_reference_count": 13,
+      "uncovered_count": 0,
       "active_mechanisms": {
         "belt": 1,
-        "detachable_magazine": 20
+        "detachable_magazine": 32
       },
-      "status": "in_progress"
+      "status": "complete"
     },
     "tacz": {
       "namespace": "tacz",
@@ -291,16 +291,16 @@
     "ww": {
       "namespace": "ww",
       "survey_total": 52,
-      "reference_count": 26,
-      "active_feed_count": 26,
-      "legacy_reference_count": 0,
-      "uncovered_count": 26,
+      "reference_count": 52,
+      "active_feed_count": 43,
+      "legacy_reference_count": 9,
+      "uncovered_count": 0,
       "active_mechanisms": {
-        "belt": 3,
-        "detachable_magazine": 22,
+        "belt": 4,
+        "detachable_magazine": 38,
         "en_bloc_clip": 1
       },
-      "status": "in_progress"
+      "status": "complete"
     }
   }
 }

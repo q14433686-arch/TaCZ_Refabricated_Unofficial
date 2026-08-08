@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_p38_9mm",
+  "magazine_capacity": 8,
+  "ammo": "tacz:9mm",
+  "display_name": "item.tacz.magazine.ww_p38_9mm_8",
+  "carrier_variants": [
+    {
+      "capacity": 19,
+      "display_name": "item.tacz.magazine.ww_p38_9mm_19"
+    },
+    {
+      "capacity": 23,
+      "display_name": "item.tacz.magazine.ww_p38_9mm_23"
+    },
+    {
+      "capacity": 27,
+      "display_name": "item.tacz.magazine.ww_p38_9mm_27"
+    }
+  ]
+}

@@ -30,6 +30,7 @@
     },
     "hamster": {
       "carrier_families": 5,
+      "function_gaps": 23,
       "material_gaps": 5
     },
     "murasamet": {
@@ -43,16 +44,18 @@
       "material_gaps": 10
     },
     "suffuse": {
-      "carrier_families": 19,
-      "material_gaps": 18
+      "carrier_families": 31,
+      "function_gaps": 13,
+      "material_gaps": 30
     },
     "wemql_r": {
       "carrier_families": 8,
       "material_gaps": 5
     },
     "ww": {
-      "carrier_families": 15,
-      "material_gaps": 15
+      "carrier_families": 32,
+      "function_gaps": 9,
+      "material_gaps": 32
     }
   },
   "carrier_material_records": [
@@ -4166,6 +4169,23 @@
       "needs_detailed_material": true
     },
     {
+      "family": "suffuse_ar57_57x28",
+      "ammo": "tacz:57x28",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        34,
+        37,
+        40,
+        50
+      ],
+      "gun_ids": [
+        "suffuse:ar57"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
       "family": "suffuse_ash12_127x55",
       "ammo": "suffuse:12.7x55",
       "mechanism": "detachable_magazine",
@@ -4235,6 +4255,23 @@
       "needs_detailed_material": true
     },
     {
+      "family": "suffuse_gepardpdw_9mm",
+      "ammo": "tacz:9mm",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        40,
+        43,
+        45,
+        47
+      ],
+      "gun_ids": [
+        "suffuse:gepardpdw"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
       "family": "suffuse_gm6_50bmg",
       "ammo": "tacz:50bmg",
       "mechanism": "detachable_magazine",
@@ -4285,6 +4322,20 @@
       "needs_detailed_material": true
     },
     {
+      "family": "suffuse_mas38_7_65x20mm",
+      "ammo": "suffuse:7.65x20mm",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        32
+      ],
+      "gun_ids": [
+        "suffuse:mas38"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
       "family": "suffuse_mpdr_556",
       "ammo": "tacz:556x45",
       "mechanism": "detachable_magazine",
@@ -4296,6 +4347,23 @@
       ],
       "gun_ids": [
         "suffuse:mpdr"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "suffuse_np762_762x25",
+      "ammo": "tacz:762x25",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        10,
+        12,
+        15,
+        17
+      ],
+      "gun_ids": [
+        "suffuse:np762"
       ],
       "material_state": "neutral_generic_material",
       "current_texture": "tacz:item/magazine",
@@ -4434,6 +4502,140 @@
       "needs_detailed_material": true
     },
     {
+      "family": "suffuse_tec9_9mm",
+      "ammo": "tacz:9mm",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        15,
+        20,
+        30,
+        50
+      ],
+      "gun_ids": [
+        "suffuse:tec9"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "suffuse_tt33_762x25",
+      "ammo": "tacz:762x25",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        7,
+        10,
+        13,
+        16
+      ],
+      "gun_ids": [
+        "suffuse:tt33"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "suffuse_tti2011_9mm",
+      "ammo": "tacz:9mm",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        12,
+        20,
+        25,
+        30
+      ],
+      "gun_ids": [
+        "suffuse:tti2011"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "suffuse_ump45_45acp",
+      "ammo": "tacz:45acp",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        20,
+        25,
+        30,
+        50
+      ],
+      "gun_ids": [
+        "suffuse:ump45"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "suffuse_usp45_45acp",
+      "ammo": "tacz:45acp",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        12,
+        15,
+        18
+      ],
+      "gun_ids": [
+        "suffuse:usp45"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "suffuse_usp45_black_45acp",
+      "ammo": "tacz:45acp",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        12,
+        15,
+        18
+      ],
+      "gun_ids": [
+        "suffuse:usp45_black"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "suffuse_viper2011_9mm",
+      "ammo": "tacz:9mm",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        12,
+        15,
+        20,
+        25
+      ],
+      "gun_ids": [
+        "suffuse:viper2011"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "suffuse_webley1913_45acp",
+      "ammo": "tacz:45acp",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        7,
+        10,
+        13,
+        16
+      ],
+      "gun_ids": [
+        "suffuse:webley1913"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
       "family": "suffuse_xm7_308",
       "ammo": "tacz:308",
       "mechanism": "detachable_magazine",
@@ -4518,6 +4720,23 @@
       "needs_detailed_material": true
     },
     {
+      "family": "ww_anm2_30_06_belt",
+      "ammo": "tacz:30_06",
+      "mechanism": "belt",
+      "capacities": [
+        100,
+        150,
+        250,
+        500
+      ],
+      "gun_ids": [
+        "ww:anm2"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz_extra:item/mag_m249_box",
+      "needs_detailed_material": true
+    },
+    {
       "family": "ww_as44_762x39",
       "ammo": "tacz:762x39",
       "mechanism": "detachable_magazine",
@@ -4557,6 +4776,37 @@
       "needs_detailed_material": true
     },
     {
+      "family": "ww_cph_32acp",
+      "ammo": "ea:32acp",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        7,
+        9,
+        12,
+        14
+      ],
+      "gun_ids": [
+        "ww:cph"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_dp28_762x54",
+      "ammo": "tacz:762x54",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        47
+      ],
+      "gun_ids": [
+        "ww:dp28"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
       "family": "ww_g43_792x57",
       "ammo": "ea:792x57",
       "mechanism": "detachable_magazine",
@@ -4567,6 +4817,23 @@
       ],
       "gun_ids": [
         "ww:g43"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_m1911a1_45acp",
+      "ammo": "tacz:45acp",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        7,
+        9,
+        12,
+        14
+      ],
+      "gun_ids": [
+        "ww:m1911a1"
       ],
       "material_state": "neutral_generic_material",
       "current_texture": "tacz:item/magazine",
@@ -4601,6 +4868,53 @@
       "gun_ids": [
         "ww:m1",
         "ww:m2"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_m2s_30c",
+      "ammo": "ww:30c",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        30
+      ],
+      "gun_ids": [
+        "ww:m2s"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_m50_45acp",
+      "ammo": "tacz:45acp",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        20,
+        21,
+        30
+      ],
+      "gun_ids": [
+        "ww:m50"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_m712_763",
+      "ammo": "ww:763",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        10,
+        20,
+        25,
+        30
+      ],
+      "gun_ids": [
+        "ww:m712"
       ],
       "material_state": "neutral_generic_material",
       "current_texture": "tacz:item/magazine",
@@ -4694,6 +5008,72 @@
       "needs_detailed_material": true
     },
     {
+      "family": "ww_p08_765",
+      "ammo": "ww:765",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        8,
+        19,
+        23,
+        27
+      ],
+      "gun_ids": [
+        "ww:p08"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_p38_9mm",
+      "ammo": "tacz:9mm",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        8,
+        19,
+        23,
+        27
+      ],
+      "gun_ids": [
+        "ww:p38"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_pps_762x25",
+      "ammo": "tacz:762x25",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        35,
+        71
+      ],
+      "gun_ids": [
+        "ww:pps"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_s1100_763",
+      "ammo": "ww:763",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        32,
+        50,
+        75,
+        100
+      ],
+      "gun_ids": [
+        "ww:s1100"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
       "family": "ww_sten_mk2_9mm",
       "ammo": "tacz:9mm",
       "mechanism": "detachable_magazine",
@@ -4745,6 +5125,57 @@
       "needs_detailed_material": true
     },
     {
+      "family": "ww_t100_8mm",
+      "ammo": "ww:8mm",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        30,
+        50,
+        75,
+        100
+      ],
+      "gun_ids": [
+        "ww:t100"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_t100l_8mm",
+      "ammo": "ww:8mm",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        30,
+        50,
+        75,
+        100
+      ],
+      "gun_ids": [
+        "ww:t100l"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_t14_8mm",
+      "ammo": "ww:8mm",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        8,
+        9,
+        12,
+        14
+      ],
+      "gun_ids": [
+        "ww:t14"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
       "family": "ww_t20_3006",
       "ammo": "tacz:30_06",
       "mechanism": "detachable_magazine",
@@ -4756,6 +5187,52 @@
       ],
       "gun_ids": [
         "ww:t20"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_t96_65a",
+      "ammo": "ww:65a",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        30,
+        40
+      ],
+      "gun_ids": [
+        "ww:t96"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_t99_77a",
+      "ammo": "ww:77a",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        30,
+        40
+      ],
+      "gun_ids": [
+        "ww:t99"
+      ],
+      "material_state": "neutral_generic_material",
+      "current_texture": "tacz:item/magazine",
+      "needs_detailed_material": true
+    },
+    {
+      "family": "ww_tbe_763",
+      "ammo": "ww:763",
+      "mechanism": "detachable_magazine",
+      "capacities": [
+        50,
+        75,
+        100
+      ],
+      "gun_ids": [
+        "ww:tbe"
       ],
       "material_state": "neutral_generic_material",
       "current_texture": "tacz:item/magazine",
@@ -5352,6 +5829,190 @@
       "needs_detailed_function": true
     },
     {
+      "gun_id": "hamster:auto5",
+      "device": "tube",
+      "action": "recoil_operated_shotgun",
+      "expected_ammo": "tacz:12g",
+      "reason": "Tube shotgun route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:berthier",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "hamster:long_ammo",
+      "reason": "Berthier clip route remains legacy until script feed is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:colt1873",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "hamster:medium_ammo",
+      "reason": "Revolver route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:coltm1851",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "hamster:compact_ammo",
+      "reason": "Revolver route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:coltm1892",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "hamster:compact_ammo",
+      "reason": "Revolver route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:coltm1892pair",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "hamster:compact_ammo",
+      "reason": "Paired revolver route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:flaregun",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "hamster:flares_ammo",
+      "reason": "Flare gun remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:gras1874",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "hamster:medium_ammo",
+      "reason": "Single-shot rifle remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:krag",
+      "device": "internal_box",
+      "action": "bolt_action",
+      "expected_ammo": "hamster:long_ammo",
+      "reason": "Krag internal magazine route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:lebel1886",
+      "device": "tube",
+      "action": "bolt_action",
+      "expected_ammo": "hamster:long_ammo",
+      "reason": "Tube rifle route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:luger1906",
+      "device": "unknown",
+      "action": "surveyed_precision_rifle",
+      "expected_ammo": "hamster:long_ammo",
+      "reason": "Custom Luger 1906 route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:m1879revolver",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "hamster:medium_ammo",
+      "reason": "Revolver route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:m1887",
+      "device": "tube",
+      "action": "lever_action",
+      "expected_ammo": "tacz:12g",
+      "reason": "Tube/loop route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:martinihenry",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "hamster:long_ammo",
+      "reason": "Single-shot rifle remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:nagantcarbine",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "hamster:compact_ammo",
+      "reason": "Nagant cylinder route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:nagantm1895",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "hamster:compact_ammo",
+      "reason": "Nagant cylinder route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:one_barrel",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "tacz:12g",
+      "reason": "Single-barrel shotgun remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:sharps",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "hamster:long_ammo",
+      "reason": "Single-shot rifle remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:sks",
+      "device": "internal_box",
+      "action": "gas_operated_rifle",
+      "expected_ammo": "hamster:medium_ammo",
+      "reason": "SKS internal box route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:smle_mk3",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "hamster:long_ammo",
+      "reason": "SMLE clip route remains legacy until script feed is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:sw_mk2_41",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "hamster:medium_ammo",
+      "reason": "Revolver variant remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:win1873",
+      "device": "tube",
+      "action": "lever_action",
+      "expected_ammo": "hamster:compact_ammo",
+      "reason": "Tube/lever route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "hamster:win1894",
+      "device": "tube",
+      "action": "lever_action",
+      "expected_ammo": "hamster:medium_ammo",
+      "reason": "Tube/lever route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
       "gun_id": "murasamet:abe_pipe_gun",
       "device": "unknown",
       "action": "surveyed_shotgun",
@@ -5749,6 +6410,182 @@
       "action": "launcher",
       "expected_ammo": "tacz:rpg_rocket",
       "reason": "Single-shot disposable launcher semantics remain legacy; no fabricated removable carrier is supplied.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:aiyasinrpg",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "tacz:rpg_rocket",
+      "reason": "Launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:an94",
+      "device": "unknown",
+      "action": "surveyed_rifle",
+      "expected_ammo": "suffuse:545x39",
+      "reason": "Custom AN-94 script route remains legacy until audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:ks23m",
+      "device": "tube",
+      "action": "pump_action_shotgun",
+      "expected_ammo": "suffuse:23mm",
+      "reason": "Tube/loop route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:lifecard",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "suffuse:.22wmr",
+      "reason": "Single-shot pocket pistol remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:m1895",
+      "device": "tube",
+      "action": "lever_action",
+      "expected_ammo": "tacz:45_70",
+      "reason": "Tube/loop route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:m203",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "tacz:40mm",
+      "reason": "40 mm launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:m79",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "tacz:40mm",
+      "reason": "40 mm launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:pf98a",
+      "device": "single_shot",
+      "action": "launcher",
+      "expected_ammo": "suffuse:120mm",
+      "reason": "Launcher remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:pp19",
+      "device": "unknown",
+      "action": "surveyed_smg",
+      "expected_ammo": "tacz:9mm",
+      "reason": "Helical/unique PP19 carrier remains legacy until its physical removal route is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:python",
+      "device": "revolver",
+      "action": "revolver",
+      "expected_ammo": "tacz:357mag",
+      "reason": "Revolver route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:qlu11",
+      "device": "unknown",
+      "action": "launcher",
+      "expected_ammo": "suffuse:35x32mm",
+      "reason": "Grenade launcher carrier mechanism remains unproven.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:spas12",
+      "device": "tube",
+      "action": "pump_action_shotgun",
+      "expected_ammo": "tacz:12g",
+      "reason": "Tube/loop route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "suffuse:trapper50cal",
+      "device": "single_shot",
+      "action": "single_shot",
+      "expected_ammo": "suffuse:boomstickshot",
+      "reason": "Single-shot custom weapon remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "ww:c96",
+      "device": "internal_box",
+      "action": "recoil_operated_pistol",
+      "expected_ammo": "ww:763",
+      "reason": "Standard C96 fixed internal box remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "ww:kar98k",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "ea:792x57",
+      "reason": "Fixed internal box / stripper route remains legacy until script feed is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "ww:lee",
+      "device": "unknown",
+      "action": "bolt_action",
+      "expected_ammo": "ww:303",
+      "reason": "Lee-Enfield pack implementation remains legacy pending fixed/detachable route proof.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "ww:m1897",
+      "device": "tube",
+      "action": "pump_action_shotgun",
+      "expected_ammo": "tacz:12g",
+      "reason": "Tube/loop route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "ww:m1903",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "tacz:30_06",
+      "reason": "Fixed internal box / stripper route remains legacy until script feed is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "ww:m1912",
+      "device": "tube",
+      "action": "pump_action_shotgun",
+      "expected_ammo": "tacz:12g",
+      "reason": "Tube/loop route remains legacy.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "ww:m91",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "tacz:762x54",
+      "reason": "Fixed internal box / stripper route remains legacy until script feed is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "ww:type38",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "ww:65a",
+      "reason": "Fixed internal box / stripper route remains legacy until script feed is audited.",
+      "needs_detailed_function": true
+    },
+    {
+      "gun_id": "ww:type99",
+      "device": "stripper_clip",
+      "action": "bolt_action",
+      "expected_ammo": "ww:77a",
+      "reason": "Fixed internal box / stripper route remains legacy until script feed is audited.",
       "needs_detailed_function": true
     }
   ]

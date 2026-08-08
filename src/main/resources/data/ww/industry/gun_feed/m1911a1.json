@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_m1911a1_45acp",
+  "magazine_capacity": 7,
+  "ammo": "tacz:45acp",
+  "display_name": "item.tacz.magazine.ww_m1911a1_45acp_7",
+  "carrier_variants": [
+    {
+      "capacity": 9,
+      "display_name": "item.tacz.magazine.ww_m1911a1_45acp_9"
+    },
+    {
+      "capacity": 12,
+      "display_name": "item.tacz.magazine.ww_m1911a1_45acp_12"
+    },
+    {
+      "capacity": 14,
+      "display_name": "item.tacz.magazine.ww_m1911a1_45acp_14"
+    }
+  ]
+}

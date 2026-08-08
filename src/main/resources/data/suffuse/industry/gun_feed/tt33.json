@@ -1,0 +1,21 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "suffuse_tt33_762x25",
+  "magazine_capacity": 7,
+  "ammo": "tacz:762x25",
+  "display_name": "item.tacz.magazine.suffuse_tt33_762x25_7",
+  "carrier_variants": [
+    {
+      "capacity": 10,
+      "display_name": "item.tacz.magazine.suffuse_tt33_762x25_10"
+    },
+    {
+      "capacity": 13,
+      "display_name": "item.tacz.magazine.suffuse_tt33_762x25_13"
+    },
+    {
+      "capacity": 16,
+      "display_name": "item.tacz.magazine.suffuse_tt33_762x25_16"
+    }
+  ]
+}

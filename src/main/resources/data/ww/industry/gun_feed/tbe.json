@@ -1,0 +1,17 @@
+{
+  "mechanism": "detachable_magazine",
+  "magazine_family": "ww_tbe_763",
+  "magazine_capacity": 50,
+  "ammo": "ww:763",
+  "display_name": "item.tacz.magazine.ww_tbe_763_50",
+  "carrier_variants": [
+    {
+      "capacity": 75,
+      "display_name": "item.tacz.magazine.ww_tbe_763_75"
+    },
+    {
+      "capacity": 100,
+      "display_name": "item.tacz.magazine.ww_tbe_763_100"
+    }
+  ]
+}
