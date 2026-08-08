@@ -3252,5 +3252,8 @@
   "item.tacz.projectile_blank.762x39_ap": "7.62×39 AP Profile Blank",
   "item.tacz.projectile_blank.762x39_hp": "7.62×39 HP Profile Blank",
   "item.tacz.projectile_blank.9mm_ap": "9 mm AP Profile Blank",
-  "item.tacz.projectile_blank.9mm_hp": "9 mm HP Profile Blank"
+  "item.tacz.projectile_blank.9mm_hp": "9 mm HP Profile Blank",
+  "item.tacz.projectile_blank.type_ap": "AP Projectile Type Preform",
+  "item.tacz.projectile_blank.type_hp": "HP Projectile Type Preform",
+  "item.tacz.projectile_blank.type_slug": "Slug Projectile Type Preform"
 }

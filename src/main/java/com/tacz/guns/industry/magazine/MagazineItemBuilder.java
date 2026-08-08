@@ -1,5 +1,6 @@
 package com.tacz.guns.industry.magazine;
 
+import com.tacz.guns.industry.ammo.AmmoProfileService;
 import com.tacz.guns.init.ModItems;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -70,7 +71,11 @@ public final class MagazineItemBuilder {
             return fromDefinition(definition);
         }
         return setFamily(definition.getMagazineFamily())
-                .setAmmoId(definition.getAmmoId())
+                // External-carrier stacks store the shared canonical cartridge
+                // specification. The receiver still validates its exact
+                // GunData ammo in GunFeedDefinition; this only lets explicitly
+                // shared standards span reviewed native AmmoId aliases.
+                .setAmmoId(AmmoProfileService.canonicalCaliber(definition.getAmmoId()))
                 .setCapacity(variant.getCapacity())
                 .setDisplayNameKey(variant.getDisplayName())
                 .setFeedDeviceKind(definition.getMechanism().serializedName());

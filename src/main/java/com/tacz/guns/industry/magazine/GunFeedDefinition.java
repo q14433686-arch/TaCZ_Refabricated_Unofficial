@@ -22,7 +22,14 @@ public class GunFeedDefinition {
     @SerializedName("mechanism")
     private FeedMechanism mechanism = FeedMechanism.LEGACY;
 
-    /** Cross-platform compatibility key such as {@code ak_762x39} or {@code stanag_556}. */
+    /**
+     * Explicit physical-interface parent standard, such as {@code ak_762x39}
+     * or {@code stanag_556}. It covers the audited carrier geometry/feed-lip/
+     * latch/reload contract; it is deliberately distinct from calibre. A pack
+     * may reuse this key only after it explicitly verifies real interchange,
+     * never merely because its GunIndex, model, capacity or loose AmmoId looks
+     * similar to another receiver.
+     */
     @SerializedName("magazine_family")
     private String magazineFamily = "";
 
@@ -30,7 +37,13 @@ public class GunFeedDefinition {
     @SerializedName("magazine_capacity")
     private int magazineCapacity = 0;
 
-    /** The only loose-ammo type accepted by magazines made from this definition. */
+    /**
+     * Exact native AmmoId required by this receiver's loaded GunData. External
+     * carriers store/compare its resolved canonical calibre only after an
+     * explicit shared {@link #magazineFamily} contract and validated
+     * {@code industry/ammo_profiles} mapping; this field itself is never a
+     * loose "same calibre" inference.
+     */
     @SerializedName("ammo")
     private Identifier ammoId = null;
 

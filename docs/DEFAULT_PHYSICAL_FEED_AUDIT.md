@@ -27,8 +27,8 @@ FAL 的 20/25/30/32 发实体载具都已被服务器接受，但旧实现把
 
 ### 2. `MagazineFamily` 才是跨枪互插契约
 
-同 family、同 Ammo、同 mechanism 的**已声明实体身份**可以跨平台互插。
-这不是“同口径都能插”：仍须有明确 family。
+同 family、同 mechanism、且同一显式 resolved canonical calibre 的**已声明实体身份**可以跨平台互插。若 native AmmoId 不同，还必须有已加载 AmmoIndex 与明确 `industry/ammo_profiles` canonical 映射；外部载具保存统一 canonical `MagazineAmmoId`。
+这不是“同口径都能插”：仍须有明确 family 和审计确认的互插事实。
 
 | 平台 | family | 结果 |
 |---|---|---|

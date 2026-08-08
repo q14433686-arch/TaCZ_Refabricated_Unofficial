@@ -6,6 +6,7 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.tacz.guns.industry.ammo.AmmoProfileService;
 import com.tacz.guns.industry.magazine.ExternalCarrierVariant;
 import com.tacz.guns.industry.magazine.GunFeedCandidateSurvey;
 import com.tacz.guns.industry.magazine.GunFeedDefinition;
@@ -274,7 +275,9 @@ public final class IndustryReferenceCommand {
             if (candidate == null || !candidate.isValidExternalCarrierDefinition()
                     || candidate.getMechanism() != definition.getMechanism()
                     || !candidate.getMagazineFamily().equals(definition.getMagazineFamily())
-                    || !candidate.getAmmoId().equals(definition.getAmmoId())) {
+                    || !AmmoProfileService.isLoadedAmmoIdentity(candidate.getAmmoId())
+                    || !AmmoProfileService.isLoadedAmmoIdentity(definition.getAmmoId())
+                    || !AmmoProfileService.isSameCaliber(candidate.getAmmoId(), definition.getAmmoId())) {
                 continue;
             }
             for (ExternalCarrierVariant variant : candidate.getExternalCarrierVariants()) {

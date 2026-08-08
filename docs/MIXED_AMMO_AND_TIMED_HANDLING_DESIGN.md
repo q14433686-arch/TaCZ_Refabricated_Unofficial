@@ -62,7 +62,25 @@ AmmoProfileDefinition
 12 gauge：Slug
 ```
 
-每个条目都有独立 AmmoIndex、`industry/ammo_profiles`、真实 Gunsmith Table 多槽“profile projectile blank”、独立 projectile die、独立 projectile core、四槽 Cartridge Assembly 输出和服务端 profile。profile blank 让不同 AP/HP/Slug die 不会以同一套 Create 物理输入竞争不同输出；弹壳按真实口径可在同口径 profile 间共用，弹头/模具与最终 AmmoId 不可混用。当前没有把 .50 BMG HP 或其他未经明确内容定义的类型假装成首批支持。
+每个条目都有独立 AmmoIndex、`industry/ammo_profiles`、真实 Create 加热 Basin 的类型预制坯、保留口径量规的部署器 profile 印刻、独立 projectile die、独立 projectile core、四槽 Cartridge Assembly 输出和服务端 profile。类型预制坯先由“中性弹头毛坯 + AP/HP/Slug 的实体材料”形成，但尚无口径或 AmmoId；只有后续部署器持有的实体口径量规才能写入精确 calibre/AmmoId。这样不同 AP/HP/Slug die 不会以同一套 Create 物理输入竞争不同输出，且不再借 Gunsmith Table 选择弹种。弹壳按真实口径可在同口径 profile 间共用，弹头/模具与最终 AmmoId 不可混用。当前没有把 .50 BMG HP 或其他未经明确内容定义的类型假装成首批支持。
+
+```text
+中性弹头毛坯 + 类型实体材料
+  → Create 加热 Basin / 机械压实
+  → AP / HP / Slug 类型预制坯（尚未定口径）
+
+类型预制坯 + 对应口径量规（部署器持有并保留）
+  → 精确 calibre + AmmoId 的 profile blank
+
+profile blank + 弹头模具毛坯
+  → Create 部署器：专用弹头模具
+
+profile blank + 专用模具（部署器持有并保留）
+  → 精确 AP / HP / Slug 弹头
+
+弹壳 + 精确弹头 + 底火 + 发射药
+  → 四槽 Cartridge Assembly：最终独立 AmmoId
+```
 
 首批 alternate 弹药暂时复用**同口径**的既有 cartridge display 资源，以避免伪称有一张并不存在的精确 AP/HP/Slug 外观；名称、AmmoId、投射物/已击发壳身份、制造和服务端弹道均独立，精确弹种美术仍应作为后续资源缺口登记。默认包已有的 `ammo_mod_*` 附件仍是附件系统，不能被当作这些独立弹药内容的替代品。
 

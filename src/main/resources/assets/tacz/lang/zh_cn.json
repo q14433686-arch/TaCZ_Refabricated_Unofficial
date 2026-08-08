@@ -3252,5 +3252,8 @@
   "item.tacz.projectile_blank.762x39_ap": "7.62×39 穿甲弹预制坯",
   "item.tacz.projectile_blank.762x39_hp": "7.62×39 空尖弹预制坯",
   "item.tacz.projectile_blank.9mm_ap": "9 mm 穿甲弹预制坯",
-  "item.tacz.projectile_blank.9mm_hp": "9 mm 空尖弹预制坯"
+  "item.tacz.projectile_blank.9mm_hp": "9 mm 空尖弹预制坯",
+  "item.tacz.projectile_blank.type_ap": "穿甲弹头类型预制坯",
+  "item.tacz.projectile_blank.type_hp": "空尖弹头类型预制坯",
+  "item.tacz.projectile_blank.type_slug": "独头弹类型预制坯"
 }

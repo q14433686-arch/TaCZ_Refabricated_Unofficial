@@ -107,8 +107,8 @@
 
 ### 4.6 多弹种与有序载具回归
 
-1. 在「测绘弹药工艺」页分别制作 9 mm AP/HP、.45 ACP AP/HP、5.56×45 AP/HP、7.62×39 AP/HP、.308 AP/HP、.50 BMG AP 和 12 gauge slug 的 profile projectile blank；每条都必须消耗中性弹头毛坯、类型材料和同口径量规，不能用同一套 Create 输入随机产出不同 die。
-2. 用每种 profile blank 校准对应 projectile die，并在单工件部署器中形成带精确 `CartridgeAmmoId` 与 `ProjectileType` 的弹头；四槽 Cartridge Assembly 必须拒绝把 AP 弹头装进 HP AmmoId、把 slug 弹头装进 shot 输出，或把错误口径弹壳混入。
+1. 在 JEI/REI 对 9 mm AP/HP、.45 ACP AP/HP、5.56×45 AP/HP、7.62×39 AP/HP、.308 AP/HP、.50 BMG AP 和 12 gauge slug 分别确认两段 Create 工艺：加热 Basin 的类型预制坯，以及同口径量规部署器的 profile blank 印刻；不能用同一套 Create 输入随机产出不同 die，也不能退回 Gunsmith Table 弹种选择。
+2. 实作链路时，先在加热 Basin 将中性弹头毛坯与 AP/HP/Slug 的实体材料压成类型预制坯；再用部署器持有的对应口径量规印刻精确 profile blank，量规必须保留。用该 profile blank 校准对应 projectile die，并在单工件部署器中形成带精确 `CartridgeAmmoId` 与 `ProjectileType` 的弹头；四槽 Cartridge Assembly 必须拒绝把 AP 弹头装进 HP AmmoId、把 slug 弹头装进 shot 输出，或把错误口径弹壳混入。
 3. 将 FMJ → AP → HP 逐发装入 9 mm 或 5.56×45 实体弹匣，装入枪并分别射击三发：服务端投射物 AmmoId、已击发壳 `CartridgeAmmoId` 和伤害/护甲忽略/穿透 profile 必须依次对应 HP → AP → FMJ（最后装入先供弹）。12 gauge shot → slug 则必须由 slug 产生一枚、而不是原霰弹数量的投射物。
 4. 对已审计的桥夹和漏夹重复混装：桥夹转入固定仓、漏夹装入枪内、脚本上膛和最终射击都不得退化为基础 AmmoId；空漏夹仍按原规则真实弹出。不同口径、没有 `industry/ammo_profiles` 声明的 alternate AmmoId、输出槽堵塞或中途移动来源均必须 fail closed。
 5. 创造/免费弹药策略不得把未知或不兼容 profile 写入载具；生存模式的即时背包操作只能从实际选定来源扣除已转入的数量。不存在重连、关闭容器或移动物品后继续执行的未完成后台事务。

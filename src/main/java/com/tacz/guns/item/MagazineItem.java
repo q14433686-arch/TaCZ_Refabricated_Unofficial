@@ -274,7 +274,7 @@ public class MagazineItem extends Item implements MagazineItemDataAccessor, IIte
                 for (ExternalCarrierVariant variant : definition.getExternalCarrierVariants()) {
                     int capacity = variant.getCapacity();
                     String key = definition.getMechanism().serializedName() + "|" + definition.getMagazineFamily()
-                            + "|" + capacity + "|" + definition.getAmmoId();
+                            + "|" + capacity + "|" + AmmoProfileService.canonicalCaliber(definition.getAmmoId());
                     if (seen.add(key)) {
                         stacks.add(MagazineItemBuilder.create().fromExternalCarrier(definition, variant).build());
                     }

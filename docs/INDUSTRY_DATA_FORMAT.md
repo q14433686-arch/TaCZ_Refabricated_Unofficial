@@ -351,7 +351,7 @@ Basin → 中性供弹器规格量规毛坯
 - 空成品供弹器可逆向生成量规，但装有余弹的供弹器不会匹配零余弹证据条件；
 - 旧世界的 `tacz:magazine_blank` 仍可作为新壳体路线的中性输入；工业回收站也只返还该中性壳体，而不会把旧成品直接变种。
 
-默认包的 34 种独立可拆卸供弹器身份都由该清单覆盖。共享 STANAG/QBZ 等标准时，任一声明兼容枪的**生产模板**都可校准同一把规格量规；不会任意规定某一把成枪是其他枪弹匣的唯一来源。运行时以同一 `MagazineFamily + Ammo + mechanism` 识别已声明的跨平台实体载具，因此 20 发 M16A1 可插入已经制造的 30 发 STANAG；SCAR-H 的 `.308` 载具则不会被误认为 M4A1 的 5.56 STANAG。
+默认包的 34 种独立可拆卸供弹器身份都由该清单覆盖。`MagazineFamily` 是数据驱动的实体接口父标准，`Ammo`/canonical calibre 则只是弹药规格：前者控制壳体、卡笋、供弹唇和脚本已审计的互插关系，后者控制可装入哪些 FMJ/AP/HP/Slug 轮次。共享 STANAG/QBZ 等标准时，任一声明兼容枪的**生产模板**都可校准同一把规格量规；不会任意规定某一把成枪是其他枪弹匣的唯一来源。运行时以同一 `MagazineFamily + mechanism + resolved canonical calibre` 识别已声明的跨平台实体载具，因此 20 发 M16A1 可插入已经制造的 30 发 STANAG；审计确认兼容、但 native AmmoId 不同的第三方枪还必须用显式 `industry/ammo_profiles` 映射到同一 canonical calibre，才会共享该标准。成品外部载具保存统一 canonical `MagazineAmmoId`，逐发队列仍保存精确 AmmoId。SCAR-H 的 `.308` 载具则不会被误认为 M4A1 的 5.56 STANAG。同口径但未显式审计为同一接口的载具绝不自动互插。
 
 第三方内容包无需、也不应要求玩家运行本项目的 Python 工具。它可在自己的命名空间提供 `industry/gun_feed/<gun>.json` 以启用实体供弹逻辑，并同时提供普通的 `recipe/create/...` JSON，遵循上面的“中性毛坯 → 真实量规 → 命名子总成 → 单工件总装”契约。TACZ 的工艺查看器会在资源重载时读取其 `recipe/create/` 工艺；没有这类高保真声明的枪仍保留运行时工业材料门槛/旧供弹行为，不会由客户端猜测不存在的弹匣几何。
 
