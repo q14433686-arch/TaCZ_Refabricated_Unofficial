@@ -45,6 +45,14 @@ public abstract class GameRendererMixin {
                                   float partialTick,
                                   Matrix4fc projection,
                                   CallbackInfo ci) {
+        // Render mask HERE: after ocular geometry was submitted during renderArmWithItem,
+        // before FeatureRenderDispatcher.executeSolid draws the scope body.
+        // This is the reliable injection point for both vanilla and Iris paths.
+        if (ScopeMaskRenderer.isInHandPass()) {
+            com.tacz.guns.GunMod.LOGGER.info("[TACZ Scope] renderItemInHand RETURN: calling renderAtPhaseBoundary, entries={}",
+                    com.tacz.guns.client.render.scope.ScopeMaskState.currentAimingProgress());
+        }
+        ScopeMaskRenderer.renderAtPhaseBoundary();
         this.tacz$renderingItemInHand = false;
         ScopeMaskRenderer.setInHandPass(false);
     }

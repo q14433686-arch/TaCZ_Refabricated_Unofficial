@@ -91,6 +91,9 @@ public final class ScopeMaskRenderer {
     public static void addEntry(Matrix4f pose, List<BedrockCube> cubes) {
         if (cubes != null && !cubes.isEmpty()) {
             ENTRIES.add(new Entry(pose, cubes));
+            if (!loggedSuccess) {
+                GunMod.LOGGER.info("[TACZ Scope] addEntry: {} cubes registered", cubes.size());
+            }
         }
     }
 
@@ -105,6 +108,9 @@ public final class ScopeMaskRenderer {
             ENTRIES.clear();
             return;
         }
+
+        GunMod.LOGGER.info("[TACZ Scope] renderAtPhaseBoundary: {} entries, maskEnable={}",
+                ENTRIES.size(), RenderConfig.SCOPE_MASK_ENABLE.get());
 
         try {
             if (failed) { ENTRIES.clear(); return; }
