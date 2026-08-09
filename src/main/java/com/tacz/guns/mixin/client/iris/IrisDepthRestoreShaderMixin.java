@@ -3,30 +3,44 @@ package com.tacz.guns.mixin.client.iris;
 import com.tacz.guns.GunMod;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 /**
- * Adds dormant depth-restore and ocular screen-space mask branches to Iris linked fragment shaders.
- * Both branches are compiled into every shader but stay inert while the mode uniforms are 0;
- * ScopeDepthCopyState enables exactly one of them around the cleanup or reticle draw.
+ * Adds depth-restore and ocular screen-space mask branches to Iris hand fragment shaders.
+ *
+ * <p>Important NVIDIA compatibility note: older revisions injected these dormant branches into
+ * every Iris shader-pack program. Even with both mode uniforms at 0, merely adding conditional
+ * {@code discard} / {@code gl_FragDepth} paths can make some NVIDIA drivers compile ordinary
+ * gbuffers programs differently, producing translucent-looking mobs, arms and gun shells. The
+ * scope depth backup is only consumed by first-person hand draws, so this mixin now patches only
+ * Iris' first-person hand shader keys/programs.</p>
  *
  * <p>Under Iris the mask world-depth source is {@code depthtex2}, which Iris copies immediately
  * before HAND_SOLID, while the aperture depth is the mod-owned copy bound to a high texture unit
- * for the duration of the reticle draw.
+ * for the duration of the reticle draw.</p>
  */
 @Mixin(targets = "net.irisshaders.iris.pipeline.programs.ShaderCreator", remap = false)
 public abstract class IrisDepthRestoreShaderMixin {
     private static boolean tacz$loggedPatch;
 
-    @ModifyVariable(
+    @ModifyArgs(
             method = "link",
-            at = @At("HEAD"),
-            argsOnly = true,
-            index = 5,
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/irisshaders/iris/pipeline/programs/ShaderCreator;createShader(Ljava/lang/String;Lnet/irisshaders/iris/gl/shader/ShaderType;Ljava/lang/String;)I",
+                    ordinal = 4
+            ),
             require = 0
     )
-    private static String tacz$injectScopeBranches(String source) {
-        if (source == null || source.contains("tacz_ScopeMaskMode")) {
+    private static void tacz$injectScopeBranchesIntoFragmentShader(Args args) {
+        String name = (String) args.get(0);
+        String source = (String) args.get(2);
+        args.set(2, tacz$patchHandFragmentShader(name, source));
+    }
+
+    private static String tacz$patchHandFragmentShader(String name, String source) {
+        if (!tacz$isHandProgram(name) || source == null || source.contains("tacz_ScopeMaskMode")) {
             return source;
         }
         int main = source.indexOf("void main");
@@ -50,12 +64,18 @@ public abstract class IrisDepthRestoreShaderMixin {
         String depthtex2Declaration = source.contains("depthtex2")
                 ? ""
                 : "uniform sampler2D depthtex2;\n";
-        String declarations = "\n// TACZ ocular scope branches; dormant for every ordinary draw\n"
+        String declarations = "\n// TACZ ocular scope branches; dormant for ordinary hand draws\n"
                 + "uniform int tacz_DepthRestoreMode;\n"
                 + "uniform int tacz_ScopeMaskMode;\n"
                 + "uniform sampler2D tacz_ApertureDepthSampler;\n"
                 + depthtex2Declaration;
-        String restoreBranch = "\n    if (tacz_DepthRestoreMode != 0) {\n"
+        // Once a shader statically writes gl_FragDepth anywhere, OpenGL leaves the value undefined
+        // on paths that do not write it. NVIDIA exposes this aggressively: ordinary hand draws can
+        // poison the hand depth buffer, which then breaks water/fog/particles and produces odd lens
+        // clipping. Preserve vanilla depth for every normal path; the cleanup branch overwrites it
+        // with the sampled pre-hand world depth and returns.
+        String restoreBranch = "\n    gl_FragDepth = gl_FragCoord.z;\n"
+                + "    if (tacz_DepthRestoreMode != 0) {\n"
                 + "        vec2 tacz_depthSize = max(vec2(textureSize(depthtex2, 0)), vec2(1.0));\n"
                 + "        vec2 tacz_depthUv = gl_FragCoord.xy / tacz_depthSize;\n"
                 + "        gl_FragDepth = texture(depthtex2, tacz_depthUv).r;\n"
@@ -80,8 +100,24 @@ public abstract class IrisDepthRestoreShaderMixin {
                 + restoreBranch + maskBranch + withDeclarations.substring(adjustedBrace + 1);
         if (!tacz$loggedPatch) {
             tacz$loggedPatch = true;
-            GunMod.LOGGER.info("[TACZ Scope] Injected dormant depth-restore and ocular-mask branches into Iris shaders.");
+            GunMod.LOGGER.info("[TACZ Scope] Injected dormant depth-restore and ocular-mask branches into Iris hand shaders.");
         }
         return patched;
+    }
+
+    private static boolean tacz$isHandProgram(String name) {
+        if (name == null) {
+            return false;
+        }
+        // ShaderCreator#createShader receives ShaderKey#getName() (for example
+        // hand_cutout / hand_translucent / hand_water_bright), not only the underlying
+        // shader-pack ProgramId source name (gbuffers_hand / gbuffers_hand_water).
+        // Patch every first-person hand key, but keep world/entity/particle/water keys untouched.
+        return name.equals("gbuffers_hand")
+                || name.equals("gbuffers_hand_water")
+                || name.endsWith("/gbuffers_hand")
+                || name.endsWith("/gbuffers_hand_water")
+                || name.equals("hand")
+                || name.startsWith("hand_");
     }
 }
