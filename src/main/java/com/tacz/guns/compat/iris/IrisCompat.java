@@ -10,6 +10,7 @@ import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -161,6 +162,44 @@ public final class IrisCompat {
             return (Boolean) handRendererClass.getMethod("isActive").invoke(instance);
         } catch (Throwable ignored) {
             return false;
+        }
+    }
+
+    /**
+     * Mirrors Iris' own {@code MixinItemInHandRenderer#iris$skipTranslucentHands} phase gate for
+     * TACZ' cancellable first-person renderer.
+     *
+     * <p>Iris renders first-person hands twice when either held item is considered translucent:
+     * once during {@code HAND_SOLID} and once during {@code HAND_TRANSLUCENT}. Vanilla item/arm
+     * rendering is protected by Iris' HEAD injection in {@code renderArmWithItem}; TACZ replaces
+     * that method at the same injection point, so depending on mixin callback order our custom
+     * gun renderer can bypass Iris' guard and submit an opaque gun/arm batch again in the
+     * translucent pass. Shader packs then composite the duplicated hand buffer as translucent,
+     * which looks exactly like missing/see-through gun shells and arms while shaders are enabled.
+     *
+     * <p>When Iris is not actively rendering a shader-pack hand pass this returns {@code true},
+     * preserving vanilla/no-shader behavior. During an Iris hand pass it applies the same boolean
+     * as Iris: solid items render only in the solid phase; translucent block items render only in
+     * the translucent phase.</p>
+     */
+    public static boolean shouldRenderInCurrentHandPhase(ItemStack stack) {
+        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS) || !isUsingRenderPack()) {
+            return true;
+        }
+        try {
+            Class<?> handRendererClass = Class.forName("net.irisshaders.iris.pathways.HandRenderer");
+            Object instance = handRendererClass.getField("INSTANCE").get(null);
+            boolean active = (Boolean) handRendererClass.getMethod("isActive").invoke(instance);
+            if (!active) {
+                return true;
+            }
+            boolean renderingSolid = (Boolean) handRendererClass.getMethod("isRenderingSolid").invoke(instance);
+            boolean itemTranslucent = (Boolean) handRendererClass.getMethod("isHandTranslucent", ItemStack.class)
+                    .invoke(instance, stack);
+            return renderingSolid != itemTranslucent;
+        } catch (Throwable ignored) {
+            // Fail open: a broken optional Iris reflection bridge must not make the held item vanish.
+            return true;
         }
     }
 

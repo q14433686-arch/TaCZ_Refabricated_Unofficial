@@ -3,6 +3,7 @@ package com.tacz.guns.mixin.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.BeforeRenderHandEvent;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
+import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
@@ -132,6 +133,17 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
         //      而下面的 ci.cancel() 已经把 vanilla 的渲染取消掉了 ——
         //      结果是【第一人称手里空无一物】，比不接管还糟。
         if (geoRenderer.getModel(renderStack) == null) {
+            return;
+        }
+
+        // Iris shader packs split first-person hand rendering into HAND_SOLID and HAND_TRANSLUCENT.
+        // Iris' own HEAD injection normally cancels vanilla item rendering in the wrong phase, but
+        // TACZ also cancels renderArmWithItem at HEAD and can therefore bypass that guard. Apply the
+        // same phase predicate before submitting the custom gun/arm geometry; otherwise opaque guns
+        // and first-person arms may be drawn again in Iris' translucent hand pass and shader packs
+        // composite them as see-through/missing shells.
+        if (!IrisCompat.shouldRenderInCurrentHandPhase(renderStack)) {
+            ci.cancel();
             return;
         }
 
