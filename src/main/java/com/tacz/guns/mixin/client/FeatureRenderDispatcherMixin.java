@@ -69,4 +69,27 @@ public abstract class FeatureRenderDispatcherMixin {
         // 结论固化后探针即删除，不留死代码。
         ScopeMaskRenderer.renderAtPhaseBoundary();
     }
+
+    /**
+     * TacZ Mesh Loader：poly_mesh GPU 烘焙的绘制时机。
+     *
+     * <p>在 {@code executeAlwaysOnTop} 之后（feature 渲染收尾前）把本帧登记的
+     * 骨骼画到主屏幕 target —— 此时主世界的 solid/translucent/实体深度都已写入
+     * {@code mainRenderTarget}，枪的 LEQUAL 深度测试与世界正确遮挡；第一人称
+     * 手持枪的 consumer 提交已被 GPU 路径取代，不会重复绘制。</p>
+     *
+     * <p>Iris 光影启用时 {@code PolyMeshGpuRenderer} 内部自动回退
+     * （登记列表为空，本方法直接返回）。</p>
+     */
+    @Inject(
+            method = "renderAllFeatures",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeAlwaysOnTop()V",
+                    shift = At.Shift.AFTER
+            )
+    )
+    private void tacz$meshGpuAtPhaseBoundary(SubmitNodeStorage storage, CallbackInfo ci) {
+        cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer.renderAtPhaseBoundary();
+    }
 }

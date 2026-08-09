@@ -37,6 +37,13 @@ public class MeshyConfig {
     /** 加载时输出 mesh 统计（骨骼数/顶点数），便于排查性能。 */
     public static ForgeConfigSpec.BooleanValue LOG_STATS;
 
+    /**
+     * GPU 静态烘焙（每骨骼常驻 GpuBuffer，每帧只更新变换）。
+     * 开启后第一人称高面数枪的每帧 CPU 顶点工作从 O(顶点) 降到 O(骨骼)；
+     * Iris 光影包启用时自动回退 consumer 路径（不受本开关影响）。
+     */
+    public static ForgeConfigSpec.BooleanValue GPU_BAKING;
+
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("mesh_loader");
 
@@ -60,6 +67,13 @@ public class MeshyConfig {
 
         builder.comment("Log poly_mesh statistics (bone/vertex counts) when models load.");
         LOG_STATS = builder.define("MeshLogStats", true);
+
+        builder.comment("GPU static baking: each bone's vertices are uploaded to a persistent "
+                + "GpuBuffer once and only per-bone transforms are updated every frame. "
+                + "Reduces per-frame CPU vertex work from O(vertices) to O(bones) for "
+                + "first-person high-poly guns. Automatically falls back to the CPU path "
+                + "when an Iris shader pack is active.");
+        GPU_BAKING = builder.define("MeshGpuBaking", true);
 
         builder.pop();
     }

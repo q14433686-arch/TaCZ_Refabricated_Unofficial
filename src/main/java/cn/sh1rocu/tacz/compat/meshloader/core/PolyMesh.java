@@ -2,6 +2,7 @@ package cn.sh1rocu.tacz.compat.meshloader.core;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.fabricmc.api.EnvType;
@@ -147,6 +148,26 @@ public class PolyMesh {
                     .setOverlay(overlay)
                     .setLight(light)
                     .setNormal(pose, scratchNormal.x(), scratchNormal.y(), scratchNormal.z());
+        }
+    }
+
+    /**
+     * 把烘焙好的顶点以<b>骨骼本地坐标</b>直接写入 BufferBuilder（GPU 烘焙用）。
+     *
+     * <p>与 {@link #compile} 使用同一份顶点数据，但位置/法线不做任何变换
+     * （变换由 shader 的 ModelViewMat / MeshNormalMat 完成，见
+     * {@code PolyMeshGpuRenderer}）。写入顺序与 compile 的 consumer 链式
+     * 完全一致，保证顶点格式（DefaultVertexFormat.ENTITY）与烘焙语义匹配。</p>
+     */
+    public void writeRaw(BufferBuilder builder, int light) {
+        if (vertexCount == 0) return;
+        for (int i = 0; i < vertexCount; i++) {
+            builder.addVertex(bakedX[i], bakedY[i], bakedZ[i])
+                    .setColor(1f, 1f, 1f, 1f)
+                    .setUv(bakedU[i], bakedV[i])
+                    .setOverlay(0)
+                    .setLight(light)
+                    .setNormal(bakedNX[i], bakedNY[i], bakedNZ[i]);
         }
     }
 

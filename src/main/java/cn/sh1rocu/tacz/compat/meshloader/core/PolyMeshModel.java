@@ -131,9 +131,19 @@ public class PolyMeshModel {
      * 应在 submit 时调用：此刻骨骼变换是当帧动画后的实时值。
      */
     public PolyMeshSnapshot capture(PoseStack rootPose, int light) {
+        return capture(rootPose, light, null);
+    }
+
+    /**
+     * 带骨骼过滤的采集：{@code skipBones} 命中的骨骼不写入快照
+     * （GPU 烘焙路径下由 {@code PolyMeshGpuRenderer} 负责绘制），
+     * 其余骨骼照常。用于 GPU 路径下把 translucent 骨骼留在 consumer、
+     * cutout 骨骼交给 GPU 的分流。
+     */
+    public PolyMeshSnapshot capture(PoseStack rootPose, int light, java.util.function.Predicate<String> skipBones) {
         List<PolyMeshSnapshot.Command> cutout = new ArrayList<>();
         List<PolyMeshSnapshot.Command> translucent = new ArrayList<>();
-        captureBone(root, rootPose, light, true, cutout, translucent);
+        captureBone(root, rootPose, light, true, skipBones, cutout, translucent);
         return new PolyMeshSnapshot(cutout, translucent);
     }
 
@@ -161,7 +171,7 @@ public class PolyMeshModel {
         if (mirrorRoot) {
             captureBoneMirrored(bone, rootPose, light, cutout, translucent);
         } else {
-            captureBone(bone, rootPose, light, false, cutout, translucent);
+            captureBone(bone, rootPose, light, false, null, cutout, translucent);
         }
         return new PolyMeshSnapshot(cutout, translucent);
     }
@@ -173,23 +183,56 @@ public class PolyMeshModel {
         if (!meshAncestorBones.contains(bone.getName())) return;
         drawBoneMeshes(bone, poseStack, light, cutout, translucent);
         for (IPolyMeshBone child : bone.getChildren()) {
-            captureBone(child, poseStack, light, false, cutout, translucent);
+            captureBone(child, poseStack, light, false, null, cutout, translucent);
         }
     }
 
     private void captureBone(IPolyMeshBone bone, PoseStack poseStack, int light, boolean checkExcluded,
+                             java.util.function.Predicate<String> skipBones,
                              List<PolyMeshSnapshot.Command> cutout, List<PolyMeshSnapshot.Command> translucent) {
         if (!bone.isVisible()) return;
         if (!meshAncestorBones.contains(bone.getName())) return;
         if (checkExcluded && !excludedBones.isEmpty() && excludedBones.contains(bone.getName())) return;
+        if (skipBones != null && skipBones.test(bone.getName())) return;
 
         poseStack.pushPose();
         bone.applyTransform(poseStack);
         drawBoneMeshes(bone, poseStack, light, cutout, translucent);
         for (IPolyMeshBone child : bone.getChildren()) {
-            captureBone(child, poseStack, light, checkExcluded, cutout, translucent);
+            captureBone(child, poseStack, light, checkExcluded, skipBones, cutout, translucent);
         }
         poseStack.popPose();
+    }
+
+    /**
+     * 遍历骨骼树（GPU 烘焙路径的矩阵收集用）。
+     * 回调在骨骼变换已压入 {@code poseStack} 后触发；
+     * 返回 false 可剪掉整棵子树。
+     */
+    public void visitBones(PoseStack poseStack, int light,
+                           java.util.function.Predicate<String> skipBones,
+                           java.util.function.BiPredicate<String, PoseStack> visitor) {
+        visitBone(root, poseStack, light, true, skipBones, visitor);
+    }
+
+    private boolean visitBone(IPolyMeshBone bone, PoseStack poseStack, int light, boolean checkExcluded,
+                              java.util.function.Predicate<String> skipBones,
+                              java.util.function.BiPredicate<String, PoseStack> visitor) {
+        if (!bone.isVisible()) return false;
+        if (!meshAncestorBones.contains(bone.getName())) return false;
+        if (checkExcluded && !excludedBones.isEmpty() && excludedBones.contains(bone.getName())) return false;
+        if (skipBones != null && skipBones.test(bone.getName())) return false;
+
+        poseStack.pushPose();
+        bone.applyTransform(poseStack);
+        boolean descend = visitor.test(bone.getName(), poseStack);
+        if (descend) {
+            for (IPolyMeshBone child : bone.getChildren()) {
+                visitBone(child, poseStack, light, checkExcluded, skipBones, visitor);
+            }
+        }
+        poseStack.popPose();
+        return true;
     }
 
     /** 把当前骨骼自身的网格按当前矩阵采集为命令（不含子骨骼）。 */
@@ -242,6 +285,16 @@ public class PolyMeshModel {
     // =========================================================================
     // 查询
     // =========================================================================
+
+    /** 骨骼名 → 网格列表（GPU 烘焙遍历用）。 */
+    public Map<String, List<PolyMesh>> getMeshMap() {
+        return meshMap;
+    }
+
+    /** 该骨骼是否半透明（骨骼名含 "translucent"）。 */
+    public boolean isTranslucentBone(String boneName) {
+        return translucentBones.contains(boneName);
+    }
 
     /** 全部 poly 网格的顶点总数（含半透明/发光），用于加载统计与性能排查。 */
     public int getTotalVertexCount() {

@@ -6,9 +6,12 @@ import cn.sh1rocu.tacz.compat.meshloader.config.PolyRenderPolicy;
 import cn.sh1rocu.tacz.compat.meshloader.core.BedrockPartBoneAdapter;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshModel;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshSnapshot;
+import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.other.GunModelTypeManager;
 import com.tacz.guns.client.model.BedrockGunModel;
@@ -27,10 +30,15 @@ import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -69,6 +77,10 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
     private boolean cachedHasAdditionalMagMesh = false;
     /** additional_magazine 骨骼到根的路径（模型加载后固定，缓存避免每帧重建）。 */
     private List<BedrockPart> cachedAdditionalMagazinePath = null;
+    /** GPU 烘焙：骨骼名 → 常驻 GPU 几何（烘焙完成后填充）。 */
+    private final Map<String, PolyMeshGpuRenderer.BakedBone> bakedBones = new HashMap<>();
+    /** GPU 烘焙是否已完成（烘焙失败则保持 false，永久走 consumer）。 */
+    private boolean gpuBaked = false;
 
     public TaczPolyMeshGunModel(BedrockModelPOJO pojo, BedrockVersion version) {
         super(pojo, version);
@@ -107,8 +119,35 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             return;
         }
 
-        // 主 pass：整棵 mesh 树（additional_magazine 已排除）。
-        submitPolyMesh(polyMeshModel.capture(poseStack, light), collector, texture, overlay);
+        // GPU 烘焙路径：仅第一人称开启（第三人称/掉落物等数量少且距离可裁剪，
+        // 保持 consumer 路径；Iris 光影或烘焙未就绪时自动回退 consumer）。
+        boolean gpuActive = transformType.firstPerson()
+                && PolyMeshGpuRenderer.isGpuPathUsable()
+                && ensureBaked(texture);
+        if (gpuActive) {
+            // 收集 cutout 骨骼的当帧变换并登记；translucent 骨骼留给 consumer。
+            polyMeshModel.visitBones(poseStack, light,
+                    this::isGpuBone,
+                    (boneName, bonePose) -> {
+                        if (polyMeshModel.isTranslucentBone(boneName)) {
+                            return false; // translucent 骨骼不登记 GPU
+                        }
+                        Matrix4f frozen = new Matrix4f(RenderSystem.getModelViewMatrixCopy())
+                                .mul(bonePose.last().pose());
+                        Matrix3f frozenNormal = new Matrix3f(bonePose.last().normal());
+                        PolyMeshGpuRenderer.BakedBone baked = bakedBones.get(boneName);
+                        if (baked != null) {
+                            PolyMeshGpuRenderer.submitBone(frozen, frozenNormal, baked);
+                        }
+                        return true;
+                    });
+            // translucent 骨骼走 consumer（需排序）；cutout 骨骼已被 GPU 登记，跳过。
+            PolyMeshSnapshot translucentOnly = polyMeshModel.capture(poseStack, light, this::isGpuBone);
+            submitPolyMeshTranslucent(translucentOnly, collector, texture, overlay);
+        } else {
+            // 主 pass：整棵 mesh 树（additional_magazine 已排除）。
+            submitPolyMesh(polyMeshModel.capture(poseStack, light), collector, texture, overlay);
+        }
 
         // 镜像副本 pass：换弹/检视等动画期间 additional_magazine.visible=true，
         // 在 additional_magazine 的变换下补画 magazine / additional_magazine 子树。
@@ -140,6 +179,68 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
                         collector, texture, overlay);
             }
         }
+    }
+
+    /** GPU 骨骼判定：已烘焙且非半透明。 */
+    private boolean isGpuBone(String boneName) {
+        return bakedBones.containsKey(boneName) && !polyMeshModel.isTranslucentBone(boneName);
+    }
+
+    /** 只提交快照的 translucent 部分（GPU 路径下 cutout 已由 GPU 绘制）。 */
+    private void submitPolyMeshTranslucent(PolyMeshSnapshot snapshot, SubmitNodeCollector collector,
+                                           Identifier texture, int overlay) {
+        if (!snapshot.hasTranslucent()) {
+            return;
+        }
+        PoseStack identity = new PoseStack();
+        collector.submitCustomGeometry(identity, RenderTypes.entityTranslucent(texture),
+                (entryPose, consumer) -> snapshot.writeTranslucent(consumer, overlay));
+    }
+
+    /**
+     * 首次 GPU 使用时把全部骨骼烘焙成常驻缓冲（渲染线程）。
+     * 烘焙失败会静默回退 consumer 路径（gpuBaked 保持 false）。
+     */
+    private boolean ensureBaked(Identifier texture) {
+        if (gpuBaked) {
+            return true;
+        }
+        if (polyMeshModel == null) {
+            return false;
+        }
+        boolean allOk = true;
+        for (Map.Entry<String, List<cn.sh1rocu.tacz.compat.meshloader.core.PolyMesh>> entry
+                : polyMeshModel.getMeshMap().entrySet()) {
+            String boneName = entry.getKey();
+            if (polyMeshModel.isTranslucentBone(boneName)) {
+                continue; // translucent 骨骼保持 consumer（半透明排序）
+            }
+            PolyMeshGpuRenderer.BakedBone baked =
+                    PolyMeshGpuRenderer.bakeBone(entry.getValue(), texture);
+            if (baked == null) {
+                allOk = false;
+                continue;
+            }
+            bakedBones.put(boneName, baked);
+        }
+        gpuBaked = allOk && !bakedBones.isEmpty();
+        if (gpuBaked) {
+            GunMod.LOGGER.info("[TacZMeshLoader] GPU-baked {} bones ({} vertices) for {}",
+                    bakedBones.size(), polyMeshModel.getTotalVertexCount(), texture);
+        } else {
+            // 释放已烘焙的（若有），永久回退 consumer
+            releaseBaked();
+        }
+        return gpuBaked;
+    }
+
+    /** 释放 GPU 烘焙资源（模型重载/资源重载时调用）。 */
+    private void releaseBaked() {
+        for (PolyMeshGpuRenderer.BakedBone baked : bakedBones.values()) {
+            baked.close();
+        }
+        bakedBones.clear();
+        gpuBaked = false;
     }
 
     /**
@@ -196,6 +297,8 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
      * 的 TAIL（由 mixin 触发），此时骨骼树已由构造器建好。
      */
     public void loadPolyMesh(Identifier modelLocation) {
+        // 释放上一份 GPU 烘焙（资源重载/模型替换时）
+        releaseBaked();
         try {
             Optional<net.minecraft.server.packs.resources.Resource> resource =
                     Minecraft.getInstance().getResourceManager().getResource(modelLocation);

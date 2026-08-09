@@ -549,6 +549,44 @@ pass 内贴图绑定（Sampler0）、深度附件这 3 个 API 在移植版中**
    `GpuBuffer` + 每帧仅更新 `DynamicTransforms` uniform，CPU 侧从
    O(顶点) 降到 O(骨骼)），需本地逐项验证 API。
 
+### ✅ P3-性能 第二阶段已落地：GPU 静态烘焙（2026-08-09）
+
+**实测瓶颈（用户 log，MeshLogStats）**：ak_enact **365,848 顶点**、
+mcx_virtus **309,464**、benelli_m3 83,256、samurai_edge 47,376、kar98un 43,064。
+consumer 路径每帧 CPU 重建 → 30 帧瓶颈实锤。
+
+**实现**（新文件 + 改造）：
+```
+├── render/PolyMeshGpuRenderer.java       ← 新增：管线/烘焙/登记/阶段边界绘制
+├── resources/assets/tacz/shaders/core/mesh_entity.vsh / .fsh   ← 自建 shader
+└── model/TaczPolyMeshGunModel.java       ← 接入 GPU 路径 + 回退
+    core/PolyMesh.writeRaw / PolyMeshModel.capture(skip) / visitBones
+    mixin/FeatureRenderDispatcherMixin    ← executeAlwaysOnTop AFTER 注入
+    config/MeshyConfig.MeshGpuBaking      ← 开关（默认 true）
+```
+
+**原理**（全部 API 经 MC 26.2 jar 逐项验证）：
+- 每骨骼顶点（骨骼本地空间）一次性烘焙为常驻 `GpuBuffer`（`DefaultVertexFormat.ENTITY`，light 烘焙满亮）；
+- 每帧 submit 只收集每骨骼变换（`modelView × 根 × 骨骼` 矩阵 + 法线矩阵，O(骨骼)）；
+- 在 feature 渲染阶段边界（`executeAlwaysOnTop` 之后）用原始 GPU pass 画到
+  `GameRenderer.mainRenderTarget()`（**带深度附件、不清空** → 与世界正确遮挡）；
+- 法线变换用自建 `MeshNormalMat` uniform（std140 mat3，每帧每骨骼 48B），
+  shader 内 `NormalMat × 本地法线`，与 consumer 路径（CPU `pose.normal()`）等价；
+- 贴图经 `RenderPass.bindTexture("Sampler0"/"Sampler1"/"Sampler2")` 绑定
+  （枪贴图 view 经反射取 `AbstractTexture.textureView`）；
+- 光照 uniform `Lighting` 取自 `RenderSystem.getShaderLights()`（全局当帧值）。
+
+**回退与边界**：
+- Iris 光影包启用时（`IrisCompat.isUsingRenderPack()`）自动回退 consumer（主屏幕
+  target 被光影接管，正确性优先）；
+- 仅第一人称启用；第三人称/掉落物/方块保持 consumer（数量少 + 距离裁剪）；
+- translucent 骨骼保持 consumer（半透明排序）；发光骨骼烘焙满亮（本就该满亮）；
+- 普通骨骼烘焙 light 固定满亮 —— **夜晚手持枪不再随环境变暗**（与 vanilla 手持
+  物品接近，已知取舍，可后续按 light 分桶改进）；
+- 烘焙失败自动降级 consumer；模型重载时释放 GPU 资源（queueFencedTask）。
+
+**每帧成本**：CPU O(顶点) → O(骨骼 × draw)（20 骨骼 ≈ 20 次 draw + 20 组 uniform）。
+
 ---
 
 ### 附：本仓库核对过的关键文件（2026-08-09）
