@@ -577,6 +577,11 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             collector.submitCustomGeometry(identity, renderType,
                     (entryPose, consumer) -> bodySnapshot.write(consumer));
         }
+        // The body snapshot can contain non-geometry functional tasks such as TextShowRender's
+        // SubmitNodeCollector#submitText calls. Snapshot#write only emits cube geometry, so these
+        // must be submitted separately; otherwise in-scope text (e.g. MK5/MARK5 ammo readouts) is
+        // captured but never drawn.
+        bodySnapshot.submitFunctionalTasks(collector);
 
         // Render Reticle
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
