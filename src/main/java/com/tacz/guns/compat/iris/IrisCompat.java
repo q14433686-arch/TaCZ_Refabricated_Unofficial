@@ -28,9 +28,13 @@ public final class IrisCompat {
     }
 
     private static Supplier<Boolean> isRenderingShadow = () -> false;
-    private static final Set<RenderPipeline> ASSIGNED_SCOPE_PIPELINES = new HashSet<>();
-    private static boolean loggedScopePipelineFailure;
-    private static boolean commonEntityPipelinesAssigned = false;
+    /**
+     * Pipelines that are already known to have an Iris classification. This includes both pipelines
+     * TACZ assigned explicitly and pipelines Iris already matched on its own; attempting to assign
+     * either one again makes newer Iris builds throw {@code IllegalStateException}.
+     */
+    private static final Set<RenderPipeline> ASSIGNED_PIPELINES = new HashSet<>();
+    private static boolean loggedPipelineFailure;
     private static boolean commonEntityPipelinesAssignAttempted = false;
 
     private IrisCompat() {
@@ -81,8 +85,10 @@ public final class IrisCompat {
         if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
             return false;
         }
-        if (ASSIGNED_SCOPE_PIPELINES.contains(pipeline)) {
-            return true;
+        synchronized (ASSIGNED_PIPELINES) {
+            if (ASSIGNED_PIPELINES.contains(pipeline)) {
+                return true;
+            }
         }
 
         Throwable lastFailure = null;
@@ -96,17 +102,24 @@ public final class IrisCompat {
                         (Class<? extends Enum>) programClass.asSubclass(Enum.class), irisProgramName);
                 apiClass.getMethod("assignPipeline", RenderPipeline.class, programClass)
                         .invoke(api, pipeline, irisProgram);
-                ASSIGNED_SCOPE_PIPELINES.add(pipeline);
+                markPipelineAssigned(pipeline);
                 GunMod.LOGGER.info("[TACZ Iris] Assigned {} to the Iris {} program.",
                         debugName, irisProgramName);
                 return true;
             } catch (Throwable t) {
                 lastFailure = t;
+                if (isAlreadyAssignedFailure(t)) {
+                    markPipelineAssigned(pipeline);
+                    // Iris has already classified this pipeline (for example from its automatic
+                    // "fine/perfect program match" path). That is the desired state; do not try
+                    // fallback programs and do not spam warnings for later pipelines.
+                    return true;
+                }
             }
         }
 
-        if (!loggedScopePipelineFailure) {
-            loggedScopePipelineFailure = true;
+        if (!loggedPipelineFailure) {
+            loggedPipelineFailure = true;
             GunMod.LOGGER.warn("[TACZ Iris] Iris cannot classify render pipeline {} as {}; "
                             + "vanilla pipeline behavior will be used.",
                     debugName, String.join("/", irisProgramNames), lastFailure);
@@ -114,37 +127,53 @@ public final class IrisCompat {
         return false;
     }
 
+    private static void markPipelineAssigned(RenderPipeline pipeline) {
+        synchronized (ASSIGNED_PIPELINES) {
+            ASSIGNED_PIPELINES.add(pipeline);
+        }
+    }
+
+    private static boolean isAlreadyAssignedFailure(Throwable throwable) {
+        Throwable current = throwable;
+        int depth = 0;
+        while (current != null && depth++ < 8) {
+            if (current instanceof IllegalStateException
+                    && current.getMessage() != null
+                    && current.getMessage().contains("Shader already assigned")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
     /**
      * Assign vanilla entity/item pipelines used inside the first-person hand pass to Iris' hand
-     * programs. Some Iris versions otherwise rediscover the same "perfect program match" every
-     * frame. Try this once per client session only, even if a subset fails.
+     * programs. Some shader packs otherwise leave these vanilla pipelines on world/entity phases,
+     * which can make the held gun and arm draw through terrain or with the wrong transparency.
+     * Each pipeline is idempotent; a shader reload or pack switch may add new automatic matches,
+     * so skip only pipelines we already know are classified.
      */
     public static synchronized void assignCommonEntityPipelinesToHandIfNeeded() {
         if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
             return;
         }
-        if (commonEntityPipelinesAssigned || commonEntityPipelinesAssignAttempted) {
-            return;
-        }
         commonEntityPipelinesAssignAttempted = true;
 
-        boolean ok = true;
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT,
+        assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT,
                 new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT_CULL,
+        assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT_CULL,
                 new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout_cull");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT,
+        assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT,
                 new String[]{"HAND_TRANSLUCENT"}, "entity_translucent");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_CULL,
+        assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_CULL,
                 new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_cull");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE,
+        assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE,
                 new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_emissive");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_CUTOUT,
+        assignPipelineToIrisAny(RenderPipelines.ITEM_CUTOUT,
                 new String[]{"HAND_CUTOUT", "HAND"}, "item_cutout");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_TRANSLUCENT,
+        assignPipelineToIrisAny(RenderPipelines.ITEM_TRANSLUCENT,
                 new String[]{"HAND_TRANSLUCENT"}, "item_translucent");
-
-        commonEntityPipelinesAssigned = ok;
     }
 
     /**
