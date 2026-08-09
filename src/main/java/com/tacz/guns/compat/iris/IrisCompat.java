@@ -102,6 +102,12 @@ public final class IrisCompat {
                         debugName, irisProgramName);
                 return true;
             } catch (Throwable t) {
+                if (isAlreadyAssigned(t)) {
+                    ASSIGNED_SCOPE_PIPELINES.add(pipeline);
+                    GunMod.LOGGER.debug("[TACZ Iris] {} is already classified by Iris; keeping existing assignment.",
+                            debugName);
+                    return true;
+                }
                 lastFailure = t;
             }
         }
@@ -111,6 +117,16 @@ public final class IrisCompat {
             GunMod.LOGGER.warn("[TACZ Iris] Iris cannot classify render pipeline {} as {}; "
                             + "vanilla pipeline behavior will be used.",
                     debugName, String.join("/", irisProgramNames), lastFailure);
+        }
+        return false;
+    }
+
+    private static boolean isAlreadyAssigned(Throwable throwable) {
+        for (Throwable t = throwable; t != null; t = t.getCause()) {
+            String message = t.getMessage();
+            if (message != null && message.contains("Shader already assigned")) {
+                return true;
+            }
         }
         return false;
     }
