@@ -45,7 +45,8 @@
     "tacz.mixins.json",
     "tacz.fabric.mixins.json",
     "tacz.iris.mixins.json",
-    "lrtactical.mixins.json"
+    "lrtactical.mixins.json",
+    "tacz.mesh.mixins.json"
   ],
   "accessWidener": "tacz.accesswidener",
   "depends": {

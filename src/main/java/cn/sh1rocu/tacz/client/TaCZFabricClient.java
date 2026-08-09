@@ -53,6 +53,9 @@ public class TaCZFabricClient implements ClientModInitializer {
         SelectItemModelProperties.ID_MAPPER.put(AmmoBoxStatueProperty.ID, AmmoBoxStatueProperty.TYPE);
         NetworkHandler.registerS2CPackets();
         ClientSetupEvent.init();
+        // 内置附属：TacZ Mesh Loader（GPL-3.0 代码移植，见 docs/MESH_LOADER_INTEGRATION_PLAN.md）。
+        // 注册 "mesh" 枪械模型类型；必须在任何枪械 display 资源加载之前完成。
+        cn.sh1rocu.tacz.compat.meshloader.TaczMeshyIntegration.onClientSetup();
         ModContainerScreen.registerScreens();
         ModEntitiesRender.registerEntityRenderers();
         // 附属模块 LRTactical 的实体渲染器。
