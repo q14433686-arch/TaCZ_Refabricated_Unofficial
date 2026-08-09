@@ -443,7 +443,7 @@ public void submit(PoseStack poseStack, ItemStack gunItem, ItemDisplayContext tr
 
 ## 10. 实施进度（2026-08-09 更新）
 
-### ✅ P0+P1 已落地（本仓库工作分支）
+### ✅ P0+P1 已落地（PR #33）
 
 已提交到工作分支的代码（全部为新建/小改动，可整体摘除）：
 
@@ -463,38 +463,53 @@ src/main/java/cn/sh1rocu/tacz/compat/meshloader/
 - 新 mixin 配置 `src/main/resources/tacz.mesh.mixins.json`（独立文件，便于整块摘除）
 - `fabric.mod.json` mixins 数组追加该配置
 
-实现要点（相对本文 §5 的骨架）：
-- 顶点写入完全照抄移植版 `BedrockCubeBox` 的已验证模式（位置/法线手动乘
-  矩阵后以原始坐标写入），不依赖 26.2 `VertexConsumer` 各重载的变换语义；
-- additional_magazine 镜像副本 pass 与移植版 `IMirrorGeometry` 的
-  `captureGeometry` 逐条对齐：把 additional_magazine 完整变换压入 pose 后，
-  以「不套用根变换但根网格照画」的镜像模式采集 magazine / additional_magazine
-  子树（magazine 副本不会跟着换弹动画跑）；
-- 贴图解析带 LOD 固定（`setOverrideTexture`，LOD mixin 注入时调用）；
-- 不再需要上游的 VBO / ShaderStateTracker / ScreenRenderTracker /
-  MeshyBatchFlushHandler / MeshyRenderTypes / ARCompat 联动。
+### ✅ P2 已落地 + 卡顿优化（2026-08-09）
 
-已做的验证（沙箱网络受限，无法跑 Gradle，见下）：
-- 全部 8 个 Java 文件通过 java-parser 语法解析；
-- 新代码引用的每个外部符号（类/方法/字段）均逐一与移植版源码 grep 核对；
-- 两个 JSON 通过格式校验。
+**P2：弹药 / 方块 / 配件 poly_mesh 支持**
+
+```
+├── core/BedrockPartBoneAdapter.java           ← 新增：共享 BedrockPart 适配器
+├── model/TaczPolyMeshAmmoModel.java           ← 弹药（ammo/ammo_entity/shell）
+├── model/TaczPolyMeshBlockModel.java          ← 方块（工作台/靶子/雕像）
+├── model/TaczPolyMeshAttachmentModel.java     ← 配件（含 LOD）
+├── mixin/ClientAmmoIndexMixin.java            ← checkTextureAndModel/checkAmmoEntity/checkShell
+├── mixin/ClientBlockIndexMixin.java           ← checkModel
+└── mixin/ClientAttachmentIndexMixin.java      ← checkTextureAndModel/checkLod
+```
+
+- 三个子类均重写 **10 参 / 9 参 submit**（6 参/8 参由父类委托，动态分派自动进入子类实现），
+  立方体走 `super.submit`，poly 层经 `submitCustomGeometry` 提交；
+- 弹药支持颜色参数（曳光弹染色走 10 参）；
+- 配件：`super.submit` 内含移植版自己的目镜掩码/镜身裁剪/准星流程，
+  poly 层先按普通几何提交，**mesh 目镜的镜内裁剪留待 P3**；
+- 配件 LOD：`checkLod` TAIL 注入，替换 `lodModel`（Pair 类型 26.2 为
+  `Pair<BedrockAttachmentModel, Identifier>`）。
+
+**卡顿优化（针对「模型越精细越卡」）**
+
+现象符合预期：26.2 无 VBO 几何缓存，高面数 mesh 每帧由 CPU 重建顶点，
+几万顶点 × 60fps 的 GC 压力是主因。本轮优化：
+
+1. **`PolyMesh.compile` 消除每顶点对象分配**（最大头）：`Vector4f`/`Vector3f`
+   改为成员复用缓冲，不再每顶点 new（几万顶点 × 每帧的分配直接消失）；
+2. **`PolyMeshSnapshot` 去掉防御拷贝**：命令列表构造后不再修改，直接持有
+   引用（矩阵的防御拷贝保留——poseStack 会被复用改写）；
+3. **additional_magazine 根路径缓存**：模型加载后路径固定，不再每帧重建；
+4. 弹药/方块/配件与枪共用同一套快照/写入路径，无额外分配。
 
 **⚠️ 尚未验证（必须在你本地做）：**
 1. `./gradlew build` 编译通过（沙箱无法下载 Gradle/Loom/MC 26.2 依赖）；
-2. 实机加载一个 `model_type: "mesh"` 的枪包，检查第一/第三人称、物品栏、
-   工作台预览、换弹动画（magazine 镜像）是否正常；
-3. 若出现光照反向/模型翻转/UV 错位，优先调 `PolyMesh` 顶部的
-   `FLIP_MODEL_X/Y`、`FLIP_UV_V`、`INVERT_FLAT_NORMAL` 开关；
-4. 高面数模型的帧率（consumer 路径每帧重建顶点，必要时再上
-   `StagedVertexBuffer` 静态烘焙）。
+2. 实机验证枪 + 弹药（子弹实体/弹壳）+ 方块 + 配件（含 LOD 距离切换）的
+   mesh 显示与动画；
+3. 对比优化前后帧率（重点：高面数枪第一人称 + 物品栏/工作台预览）；
+4. 若仍卡：下一步是 P3 的「静态几何烘焙」（`StagedVertexBuffer`），
+   把不动画的骨骼几何缓存到 GPU 缓冲，每帧只传矩阵 —— 工作量较大，先确认
+   去分配后的实际收益再决定。
 
 ### ⏳ 未实施（后续阶段）
 
-- P2：ammo / block / attachment 子类 + 对应 3 个 mixin（上游
-  `TaczPolyMeshAmmoModel` / `TaczPolyMeshBlockModel` /
-  `TaczPolyMeshAttachmentModel`，同样改成 submit 路径）；
 - P3：mesh 瞄具接入离屏掩码裁剪（`ScopeMaskGeometry` 加 mesh 变体）、
-  半透明排序实测、AR/Iris 联动实测。
+  半透明排序实测、AR/Iris 联动实测、静态几何烘焙（性能兜底）。
 
 ---
 

@@ -43,6 +43,15 @@ public class PolyMesh {
     private final float[] bakedU, bakedV;
     private final int vertexCount;
 
+    /**
+     * 每帧顶点写入的复用缓冲。
+     * 26.2 无 VBO 缓存，高面数 mesh 每帧由 CPU 重建顶点 ——
+     * 每顶点 new Vector4f/Vector3f 会带来巨大 GC 压力（几万顶点 × 60fps）。
+     * 渲染线程单线程执行，字段复用是安全的。
+     */
+    private final Vector4f scratchPos = new Vector4f();
+    private final Vector3f scratchNormal = new Vector3f();
+
     public PolyMesh(JsonObject meshObj, float texWidth, float texHeight, float[] absPivot) {
         float pivotX = absPivot[0], pivotY = absPivot[1], pivotZ = absPivot[2];
 
@@ -127,19 +136,17 @@ public class PolyMesh {
         if (vertexCount == 0) return;
         Matrix4f matrix4f = pose.pose();
         Matrix3f matrix3f = pose.normal();
-        Vector4f pos = new Vector4f();
-        Vector3f normal = new Vector3f();
         for (int i = 0; i < vertexCount; i++) {
-            pos.set(bakedX[i], bakedY[i], bakedZ[i], 1.0F);
-            pos.mul(matrix4f);
-            normal.set(bakedNX[i], bakedNY[i], bakedNZ[i]);
-            normal.mul(matrix3f);
-            consumer.addVertex(pos.x(), pos.y(), pos.z())
+            scratchPos.set(bakedX[i], bakedY[i], bakedZ[i], 1.0F);
+            scratchPos.mul(matrix4f);
+            scratchNormal.set(bakedNX[i], bakedNY[i], bakedNZ[i]);
+            scratchNormal.mul(matrix3f);
+            consumer.addVertex(scratchPos.x(), scratchPos.y(), scratchPos.z())
                     .setColor(red, green, blue, alpha)
                     .setUv(bakedU[i], bakedV[i])
                     .setOverlay(overlay)
                     .setLight(light)
-                    .setNormal(pose, normal.x(), normal.y(), normal.z());
+                    .setNormal(pose, scratchNormal.x(), scratchNormal.y(), scratchNormal.z());
         }
     }
 
