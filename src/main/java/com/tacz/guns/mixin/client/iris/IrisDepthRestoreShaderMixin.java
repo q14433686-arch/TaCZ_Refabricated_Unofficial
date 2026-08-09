@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
  * {@code discard} / {@code gl_FragDepth} paths can make some NVIDIA drivers compile ordinary
  * gbuffers programs differently, producing translucent-looking mobs, arms and gun shells. The
  * scope depth backup is only consumed by first-person hand draws, so this mixin now patches only
- * Iris' {@code gbuffers_hand} / {@code gbuffers_hand_water} programs.</p>
+ * Iris' first-person hand shader keys/programs.</p>
  *
  * <p>Under Iris the mask world-depth source is {@code depthtex2}, which Iris copies immediately
  * before HAND_SOLID, while the aperture depth is the mod-owned copy bound to a high texture unit
@@ -103,10 +103,15 @@ public abstract class IrisDepthRestoreShaderMixin {
         if (name == null) {
             return false;
         }
-        // Iris ProgramId uses gbuffers_hand for HAND and gbuffers_hand_water for HAND_TRANSLUCENT.
+        // ShaderCreator#createShader receives ShaderKey#getName() (for example
+        // hand_cutout / hand_translucent / hand_water_bright), not only the underlying
+        // shader-pack ProgramId source name (gbuffers_hand / gbuffers_hand_water).
+        // Patch every first-person hand key, but keep world/entity/particle/water keys untouched.
         return name.equals("gbuffers_hand")
                 || name.equals("gbuffers_hand_water")
                 || name.endsWith("/gbuffers_hand")
-                || name.endsWith("/gbuffers_hand_water");
+                || name.endsWith("/gbuffers_hand_water")
+                || name.equals("hand")
+                || name.startsWith("hand_");
     }
 }
