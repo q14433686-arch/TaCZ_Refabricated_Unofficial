@@ -243,6 +243,32 @@ public class PolyMeshModel {
     // 查询
     // =========================================================================
 
+    /** 全部 poly 网格的顶点总数（含半透明/发光），用于加载统计与性能排查。 */
+    public int getTotalVertexCount() {
+        int total = 0;
+        for (List<PolyMesh> meshes : meshMap.values()) {
+            for (PolyMesh mesh : meshes) {
+                total += mesh.getVertexCount();
+            }
+        }
+        return total;
+    }
+
+    /** 带 poly_mesh 的骨骼数。 */
+    public int getMeshBoneCount() {
+        return meshMap.size();
+    }
+
+    /** 半透明骨骼数（骨骼名含 "translucent"）。 */
+    public int getTranslucentBoneCount() {
+        return translucentBones.size();
+    }
+
+    /** 发光骨骼数（自身或祖先 illuminated）。 */
+    public int getIlluminatedBoneCount() {
+        return illuminatedBones.size();
+    }
+
     /** 指定骨骼（或其子树）是否带 poly_mesh。 */
     public boolean hasMeshInSubtree(String boneName) {
         IPolyMeshBone bone = findBone(this.root, boneName);

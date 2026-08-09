@@ -1,6 +1,8 @@
 package cn.sh1rocu.tacz.compat.meshloader.model;
 
 import cn.sh1rocu.tacz.compat.meshloader.api.IPolyMeshBone;
+import cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig;
+import cn.sh1rocu.tacz.compat.meshloader.config.PolyRenderPolicy;
 import cn.sh1rocu.tacz.compat.meshloader.core.BedrockPartBoneAdapter;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshModel;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshSnapshot;
@@ -93,6 +95,12 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
 
         // 立方体部分（含 scope 提交、laser、AR 兼容、muzzle flash 等）完全走原路径。
         super.submit(poseStack, gunItem, transformType, collector, renderType, light, overlay);
+
+        // poly 层渲染策略：第一人称全量；阴影 pass 默认跳过（立方体阴影足够）；
+        // GUI/FIXED 预览与距离裁剪由配置控制 —— 见 PolyRenderPolicy。
+        if (!PolyRenderPolicy.shouldRenderPoly(transformType, poseStack)) {
+            return;
+        }
 
         Identifier texture = resolveTexture(gunItem);
         if (texture == null) {
@@ -223,7 +231,7 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
                 this.cachedHasMagMesh = this.polyMeshModel.hasMeshInSubtree(GunModelConstant.MAG_NORMAL_NODE);
                 this.cachedHasAdditionalMagMesh = this.polyMeshModel.hasMeshInSubtree(GunModelConstant.MAG_ADDITIONAL_NODE);
 
-                LOGGER.info("[TacZMeshLoader] Loaded poly_mesh from: {}", modelLocation);
+                logStats(modelLocation);
             }
         } catch (Exception e) {
             LOGGER.error("[TacZMeshLoader] Failed to load poly_mesh: {}", modelLocation, e);
@@ -232,6 +240,22 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
 
     public boolean hasPolyMesh() {
         return polyMeshModel != null;
+    }
+
+    /** 加载统计日志（骨骼/顶点/半透明/发光），便于排查性能。 */
+    private void logStats(Identifier modelLocation) {
+        if (!MeshyConfig.LOG_STATS.get()) {
+            return;
+        }
+        LOGGER.info("[TacZMeshLoader] poly_mesh stats for {}: {} bones, {} vertices"
+                        + " (translucent={}, illuminated={}, mag={}, additionalMag={})",
+                modelLocation,
+                polyMeshModel.getMeshBoneCount(),
+                polyMeshModel.getTotalVertexCount(),
+                polyMeshModel.getTranslucentBoneCount(),
+                polyMeshModel.getIlluminatedBoneCount(),
+                cachedHasMagMesh,
+                cachedHasAdditionalMagMesh);
     }
 
     // =========================================================================

@@ -508,8 +508,46 @@ src/main/java/cn/sh1rocu/tacz/compat/meshloader/
 
 ### ⏳ 未实施（后续阶段）
 
-- P3：mesh 瞄具接入离屏掩码裁剪（`ScopeMaskGeometry` 加 mesh 变体）、
-  半透明排序实测、AR/Iris 联动实测、静态几何烘焙（性能兜底）。
+- P3 剩余：mesh 瞄具接入离屏掩码裁剪（`ScopeMaskGeometry` 加 mesh 变体）、
+  半透明排序实测、AR 联动实测。
+
+### ✅ P3-性能 第一阶段已落地（2026-08-09）
+
+新增配置化渲染策略（挂 TACZ 客户端配置系统）：
+
+```
+src/main/java/cn/sh1rocu/tacz/compat/meshloader/
+├── config/MeshyConfig.java          ← ForgeConfigSpec：5 项配置
+└── config/PolyRenderPolicy.java     ← 按上下文决定是否绘制 poly 层
+```
+
+| 配置 | 默认 | 作用 |
+|---|---|---|
+| `MeshEnable` | true | 总开关 |
+| `MeshPolyInShadow` | false | **阴影 pass 跳过 poly**（立方体阴影足够；上游同款策略，开光影可省约一半绘制量） |
+| `MeshMaxRenderDistance` | 48 | 非第一人称（其他玩家/掉落物/方块）超距不画 poly；0 = 不限 |
+| `MeshPolyInPreview` | true | GUI/FIXED 预览（工作台预览等）是否画 poly |
+| `MeshLogStats` | true | 加载时输出骨骼/顶点/半透明/发光统计 |
+
+策略规则：第一人称永远全量 → 阴影 pass 默认跳过 → GUI/FIXED/HEAD 按预览开关 →
+其余世界上下文按距离裁剪。4 个模型类（gun/ammo/block/attachment）统一接入；
+poly 被跳过时快照采集也一并跳过（零开销）。
+
+**为什么先做策略裁剪而不是直接上 GPU 静态烘焙（重要）：**
+26.2 的原始 GPU pass（`CommandEncoder`/`RenderPass`）在本移植版里只有
+「离屏 target + 无贴图」这一条验证过的路径（瞄具掩码）。主屏幕 target、
+pass 内贴图绑定（Sampler0）、深度附件这 3 个 API 在移植版中**没有先例**，
+盲写风险极高（移植版注释记录了多次 `VK_ERROR_DEVICE_LOST` /
+`Missing sampler` 事故，全部发生在这些 API 的边界上）。
+因此 GPU 烘焙作为实验性后续项，需要在你本地逐项验证后再合入。
+
+**后续性能路径（按优先级）：**
+1. 先用本轮的 `MeshLogStats` 拿到 duyupack 各枪的真实顶点数，确认瓶颈量级；
+2. 若开光影（Iris），`MeshPolyInShadow=false` 直接减半绘制量；
+3. 多人/大场景下 `MeshMaxRenderDistance` 按需调小；
+4. 若仍需根治第一人称高面数：实验性 GPU 静态烘焙（每骨骼一个静态
+   `GpuBuffer` + 每帧仅更新 `DynamicTransforms` uniform，CPU 侧从
+   O(顶点) 降到 O(骨骼)），需本地逐项验证 API。
 
 ---
 

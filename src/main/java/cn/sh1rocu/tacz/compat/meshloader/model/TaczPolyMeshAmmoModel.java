@@ -1,6 +1,8 @@
 package cn.sh1rocu.tacz.compat.meshloader.model;
 
 import cn.sh1rocu.tacz.compat.meshloader.api.IPolyMeshBone;
+import cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig;
+import cn.sh1rocu.tacz.compat.meshloader.config.PolyRenderPolicy;
 import cn.sh1rocu.tacz.compat.meshloader.core.BedrockPartBoneAdapter;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshModel;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshSnapshot;
@@ -63,6 +65,11 @@ public class TaczPolyMeshAmmoModel extends BedrockAmmoModel {
         // 立方体层正常提交
         super.submit(poseStack, transformType, collector, renderType, light, overlay, red, green, blue, alpha);
 
+        // poly 层渲染策略（阴影 pass 跳过 / 距离裁剪 / 预览开关）
+        if (!PolyRenderPolicy.shouldRenderPoly(transformType, poseStack)) {
+            return;
+        }
+
         // poly_mesh 层
         if (polyMeshModel == null || texture == null) {
             return;
@@ -118,7 +125,15 @@ public class TaczPolyMeshAmmoModel extends BedrockAmmoModel {
                 this.polyMeshModel = new PolyMeshModel(adaptedRoot, rawJson);
                 this.texture = textureLocation;
 
-                LOGGER.info("[TacZMeshLoader] Loaded ammo poly_mesh from: {}", modelLocation);
+                if (MeshyConfig.LOG_STATS.get()) {
+                    LOGGER.info("[TacZMeshLoader] ammo poly_mesh stats for {}: {} bones, {} vertices"
+                                    + " (translucent={}, illuminated={})",
+                            modelLocation,
+                            polyMeshModel.getMeshBoneCount(),
+                            polyMeshModel.getTotalVertexCount(),
+                            polyMeshModel.getTranslucentBoneCount(),
+                            polyMeshModel.getIlluminatedBoneCount());
+                }
             }
         } catch (Exception e) {
             LOGGER.error("[TacZMeshLoader] Failed to load ammo poly_mesh: {}", modelLocation, e);

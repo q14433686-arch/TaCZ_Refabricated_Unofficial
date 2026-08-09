@@ -11,6 +11,8 @@ public class ClientConfig {
         ResourceConfig.init(builder);
         SoundConfig.init(builder);
         ZoomConfig.init(builder);
+        // 内置附属 TacZ Mesh Loader 的客户端配置（见 docs/MESH_LOADER_INTEGRATION_PLAN.md）
+        cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig.init(builder);
         return builder.build();
     }
 }

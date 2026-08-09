@@ -1,6 +1,8 @@
 package cn.sh1rocu.tacz.compat.meshloader.model;
 
 import cn.sh1rocu.tacz.compat.meshloader.api.IPolyMeshBone;
+import cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig;
+import cn.sh1rocu.tacz.compat.meshloader.config.PolyRenderPolicy;
 import cn.sh1rocu.tacz.compat.meshloader.core.BedrockPartBoneAdapter;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshModel;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshSnapshot;
@@ -77,6 +79,11 @@ public class TaczPolyMeshAttachmentModel extends BedrockAttachmentModel {
         super.submit(attachmentItem, currentGunItem, poseStack, transformType, collector,
                 renderType, texture, light, overlay);
 
+        // poly 层渲染策略（阴影 pass 跳过 / 距离裁剪 / 预览开关）
+        if (!PolyRenderPolicy.shouldRenderPoly(transformType, poseStack)) {
+            return;
+        }
+
         // poly_mesh 层：普通几何提交（P3 再接入离屏掩码裁剪）
         Identifier tex = texture != null ? texture : resolveTexture(attachmentItem);
         if (tex == null) {
@@ -151,7 +158,15 @@ public class TaczPolyMeshAttachmentModel extends BedrockAttachmentModel {
                 this.polyMeshModel = new PolyMeshModel(adaptedRoot, rawJson);
                 this.cachedTexture = null;
 
-                LOGGER.info("[TacZMeshLoader] Loaded attachment poly_mesh from: {}", modelLocation);
+                if (MeshyConfig.LOG_STATS.get()) {
+                    LOGGER.info("[TacZMeshLoader] attachment poly_mesh stats for {}: {} bones, {} vertices"
+                                    + " (translucent={}, illuminated={})",
+                            modelLocation,
+                            polyMeshModel.getMeshBoneCount(),
+                            polyMeshModel.getTotalVertexCount(),
+                            polyMeshModel.getTranslucentBoneCount(),
+                            polyMeshModel.getIlluminatedBoneCount());
+                }
             }
         } catch (Exception e) {
             LOGGER.error("[TacZMeshLoader] Failed to load attachment poly_mesh: {}", modelLocation, e);
