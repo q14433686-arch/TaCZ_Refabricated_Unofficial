@@ -297,8 +297,9 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
      * 的 TAIL（由 mixin 触发），此时骨骼树已由构造器建好。
      */
     public void loadPolyMesh(Identifier modelLocation) {
-        // 释放上一份 GPU 烘焙（资源重载/模型替换时）
+        // 释放上一份 GPU 烘焙 + 清贴图 view 缓存（资源重载/模型替换时旧 view 失效）
         releaseBaked();
+        PolyMeshGpuRenderer.clearTextureViewCache();
         try {
             Optional<net.minecraft.server.packs.resources.Resource> resource =
                     Minecraft.getInstance().getResourceManager().getResource(modelLocation);

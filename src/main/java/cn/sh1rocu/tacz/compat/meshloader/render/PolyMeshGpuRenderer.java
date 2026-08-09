@@ -6,6 +6,8 @@ import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.BindGroupLayout;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.shaders.UniformType;
@@ -100,18 +102,29 @@ public final class PolyMeshGpuRenderer {
             .withBindGroupLayout(BindGroupLayouts.SAMPLER1)
             .withBindGroupLayout(NORMAL_LAYOUT)
             .withCull(false)
+            // 关键：必须显式声明深度/颜色状态。
+            // 26.2 里 pipeline 不声明深度状态（depthStencilState==null）＝
+            // 「不需要深度附件」，而我们的 pass 却带了 mainRenderTarget 的深度
+            // 附件 —— 声明与实际不符时绘制会被引擎静默丢弃（ScopeMaskRenderer
+            // 注释里记录过同款事故的反向情形），表现就是「枪完全不渲染、无任何报错」。
+            // DEFAULT 是 vanilla 实体管线的标准状态（深度测试 + 写深度 + 标准颜色输出）。
+            .withDepthStencilState(DepthStencilState.DEFAULT)
+            .withColorTargetState(ColorTargetState.DEFAULT)
             .build();
 
     // =========================================================================
     // 烘焙数据
     // =========================================================================
 
-    /** 一个骨骼的常驻 GPU 几何。 */
-    public record BakedBone(GpuBuffer vertexBuffer, int indexCount, Identifier texture) {
+    /** 一个骨骼的常驻 GPU 几何（含法线矩阵 uniform 缓冲，每帧只更新内容）。 */
+    public record BakedBone(GpuBuffer vertexBuffer, GpuBuffer normalUniform, int indexCount, Identifier texture) {
         public void close() {
             if (vertexBuffer != null) {
                 // GPU 资源释放必须在渲染线程
                 RenderSystem.queueFencedTask(vertexBuffer::close);
+            }
+            if (normalUniform != null) {
+                RenderSystem.queueFencedTask(normalUniform::close);
             }
         }
     }
@@ -121,6 +134,8 @@ public final class PolyMeshGpuRenderer {
     }
 
     private static final List<DrawEntry> DRAW_LIST = new ArrayList<>();
+    /** 首次绘制成功的统计日志只打一次。 */
+    private static boolean loggedFirstDraw = false;
 
     // =========================================================================
     // 纹理 view 解析
@@ -198,7 +213,11 @@ public final class PolyMeshGpuRenderer {
         try (meshData) {
             GpuBuffer vertexBuffer = RenderSystem.getDevice().createBuffer(
                     () -> "tacz_mesh_bone", GpuBuffer.USAGE_VERTEX, meshData.vertexBuffer());
-            return new BakedBone(vertexBuffer, meshData.drawState().indexCount(), texture);
+            // 常驻法线矩阵 uniform 缓冲（48 字节 std140 mat3），每帧只更新内容、不重建。
+            GpuBuffer normalUniform = RenderSystem.getDevice().createBuffer(
+                    () -> "tacz_mesh_normal", GpuBuffer.USAGE_UNIFORM,
+                    ByteBuffer.allocate(48).order(ByteOrder.nativeOrder()));
+            return new BakedBone(vertexBuffer, normalUniform, meshData.drawState().indexCount(), texture);
         } catch (Exception e) {
             GunMod.LOGGER.error("[TacZMeshLoader] Failed to bake bone geometry", e);
             return null;
@@ -250,6 +269,13 @@ public final class PolyMeshGpuRenderer {
             }
 
             CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+
+            // 在开 pass 之前统一更新所有骨骼的法线 uniform 缓冲
+            // （writeToBuffer 是 encoder 命令，放 pass 外记录更安全）
+            for (DrawEntry entry : DRAW_LIST) {
+                writeNormalMatrix(encoder, entry.bone().normalUniform(), entry.normal());
+            }
+
             try (RenderPass pass = encoder.createRenderPass(
                     () -> "tacz_mesh_gpu",
                     colorView,
@@ -279,13 +305,23 @@ public final class PolyMeshGpuRenderer {
                     for (DrawEntry entry : group.getValue()) {
                         pass.setUniform("DynamicTransforms",
                                 RenderSystem.getDynamicUniforms().writeTransform(entry.modelView(), WHITE));
-                        pass.setUniform(NORMAL_UNIFORM, writeNormalMatrix(entry.normal()));
+                        pass.setUniform(NORMAL_UNIFORM, entry.bone().normalUniform().slice());
                         pass.setVertexBuffer(0, entry.bone().vertexBuffer().slice());
                         RenderSystem.AutoStorageIndexBuffer indices =
                                 RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
                         pass.setIndexBuffer(indices.getBuffer(entry.bone().indexCount()), indices.type());
                         pass.drawIndexed(entry.bone().indexCount(), 1, 0, 0, 0);
                     }
+                }
+                if (!loggedFirstDraw) {
+                    loggedFirstDraw = true;
+                    int bones = DRAW_LIST.size();
+                    long indices = 0;
+                    for (DrawEntry entry : DRAW_LIST) {
+                        indices += entry.bone().indexCount();
+                    }
+                    GunMod.LOGGER.info("[TacZMeshLoader] GPU mesh pass drew {} bones ({} indices) to main target.",
+                            bones, indices);
                 }
             } catch (Exception e) {
                 GunMod.LOGGER.error("[TacZMeshLoader] GPU mesh pass failed; falling back to consumer path.", e);
@@ -297,22 +333,17 @@ public final class PolyMeshGpuRenderer {
     }
 
     /**
-     * 把 3x3 法线矩阵写成 std140 mat3 uniform buffer（48 字节，列主序，
-     * 每列 16 字节对齐）。每帧每骨骼新建一个小 buffer（48 字节成本可忽略）。
+     * 把 3x3 法线矩阵写入骨骼的常驻 uniform 缓冲（std140 mat3，48 字节，
+     * 列主序，每列 16 字节对齐）。零分配：缓冲在烘焙时创建，每帧仅覆写内容。
      */
-    private static GpuBufferSlice writeNormalMatrix(Matrix3f normal) {
+    private static void writeNormalMatrix(CommandEncoder encoder, GpuBuffer buffer, Matrix3f normal) {
         ByteBuffer data = ByteBuffer.allocate(48).order(ByteOrder.nativeOrder());
         FloatBuffer f = data.asFloatBuffer();
         f.put(normal.m00()).put(normal.m10()).put(normal.m20()).put(0f);
         f.put(normal.m01()).put(normal.m11()).put(normal.m21()).put(0f);
         f.put(normal.m02()).put(normal.m12()).put(normal.m22()).put(0f);
         data.rewind();
-        GpuBuffer buffer = RenderSystem.getDevice().createBuffer(
-                () -> "tacz_mesh_normal", GpuBuffer.USAGE_UNIFORM, data);
-        GpuBufferSlice slice = buffer.slice();
-        // 小 uniform buffer 每帧重建，随 pass 生命周期结束即释放
-        RenderSystem.queueFencedTask(buffer::close);
-        return slice;
+        encoder.writeToBuffer(buffer.slice(), data);
     }
 
     private PolyMeshGpuRenderer() {
