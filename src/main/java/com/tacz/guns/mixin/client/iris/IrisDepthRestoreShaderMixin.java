@@ -69,7 +69,13 @@ public abstract class IrisDepthRestoreShaderMixin {
                 + "uniform int tacz_ScopeMaskMode;\n"
                 + "uniform sampler2D tacz_ApertureDepthSampler;\n"
                 + depthtex2Declaration;
-        String restoreBranch = "\n    if (tacz_DepthRestoreMode != 0) {\n"
+        // Once a shader statically writes gl_FragDepth anywhere, OpenGL leaves the value undefined
+        // on paths that do not write it. NVIDIA exposes this aggressively: ordinary hand draws can
+        // poison the hand depth buffer, which then breaks water/fog/particles and produces odd lens
+        // clipping. Preserve vanilla depth for every normal path; the cleanup branch overwrites it
+        // with the sampled pre-hand world depth and returns.
+        String restoreBranch = "\n    gl_FragDepth = gl_FragCoord.z;\n"
+                + "    if (tacz_DepthRestoreMode != 0) {\n"
                 + "        vec2 tacz_depthSize = max(vec2(textureSize(depthtex2, 0)), vec2(1.0));\n"
                 + "        vec2 tacz_depthUv = gl_FragCoord.xy / tacz_depthSize;\n"
                 + "        gl_FragDepth = texture(depthtex2, tacz_depthUv).r;\n"
