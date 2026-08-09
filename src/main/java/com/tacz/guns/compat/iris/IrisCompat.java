@@ -8,7 +8,6 @@ import com.tacz.guns.init.CompatRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 
 import java.util.HashSet;
@@ -35,7 +34,6 @@ public final class IrisCompat {
      */
     private static final Set<RenderPipeline> ASSIGNED_PIPELINES = new HashSet<>();
     private static boolean loggedPipelineFailure;
-    private static boolean commonEntityPipelinesAssignAttempted = false;
 
     private IrisCompat() {
     }
@@ -145,35 +143,6 @@ public final class IrisCompat {
             current = current.getCause();
         }
         return false;
-    }
-
-    /**
-     * Assign vanilla entity/item pipelines used inside the first-person hand pass to Iris' hand
-     * programs. Some shader packs otherwise leave these vanilla pipelines on world/entity phases,
-     * which can make the held gun and arm draw through terrain or with the wrong transparency.
-     * Each pipeline is idempotent; a shader reload or pack switch may add new automatic matches,
-     * so skip only pipelines we already know are classified.
-     */
-    public static synchronized void assignCommonEntityPipelinesToHandIfNeeded() {
-        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
-            return;
-        }
-        commonEntityPipelinesAssignAttempted = true;
-
-        assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT,
-                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout");
-        assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT_CULL,
-                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout_cull");
-        assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT,
-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent");
-        assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_CULL,
-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_cull");
-        assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE,
-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_emissive");
-        assignPipelineToIrisAny(RenderPipelines.ITEM_CUTOUT,
-                new String[]{"HAND_CUTOUT", "HAND"}, "item_cutout");
-        assignPipelineToIrisAny(RenderPipelines.ITEM_TRANSLUCENT,
-                new String[]{"HAND_TRANSLUCENT"}, "item_translucent");
     }
 
     /**
