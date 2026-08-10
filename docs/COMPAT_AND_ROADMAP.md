@@ -850,3 +850,23 @@ sf.write(out, seg/peak*0.707, sr, format='OGG', subtype='VORBIS')
   保持视图空间常量（约 `(0.16, -0.19, -1.6~1.9)`），`poseAfterOffset` 应落在
   `muzzle` 世界位置附近；斜向扫射时弹道视觉不再整体侧甩。
 - 水平视线与仰/俯视下枪身顶面亮度应一致；切光影前后枪身明暗不变。
+
+### 实测验证（2026-08-10，a2838e4 构建的 latest.log，vanilla 路径 irisHand=false 全程）
+
+- **渲染侧**：745 条 `[TACZ TracerDebug]` 全部满足 `fpWorldOffset = R(q)·globalMuzzle`
+  （最大偏差 0.0067，纯四位小数舍入）——`camera.rotation()` 直接 rotate 的路径符合设计。
+- **采集侧（旧 bug 判据）**：旧构建（25 轮调试版）tick=0 的 `muzzleAnchor` 随 yaw 正弦旋转：
+  yaw≈−90° → (+1.95, …)；yaw≈−5° → z≈+1.6；yaw≈+85° → (−2.1, …)；yaw≈+189° → (+0.47, −1.56)，
+  x 分量活动域 **−2.20 .. +2.18**。新构建全部 745 行、全朝向、含开火/瞄准各动画态：
+  `globalMuzzle.x ∈ [−0.13, +0.28]`、`y ∈ [−0.30, −0.13]`、`z ∈ [−1.68, −1.14]`——
+  世界轴旋转特征完全消失，剩余散布为动画态族（腰射 z≈−1.53 / fov 动态 −1.32 /
+  瞄准 (0.016, −0.136, −1.159)），同族值跨 360° yaw 与四个斜向逐一核对一致。
+- **绝对位置交叉验证**：对每条 `[TACZ MuzzleSpace]` 用当帧相机做 `R(q)ᵀ·rawMuzzle`
+  （= 该帧枪口在屏幕上的真实视图位置），平稳帧与采集端写出的 `viewMuzzle`
+  吻合到小数点后三–四位（err ≤ 0.007）；连射 roll / 快速甩枪帧偏差 0.08–0.22 属预期
+  （日志的 `camera=(xRot,yRot)` 不含 CameraMixin 的 ZP roll，且 bob 滞后会进基座 B 的转置归一化）。
+  ［注：曾有脚本误用 R(q)·rawMuzzle 复核，误差恰为 4.2 左右——那正是旧 bug 的
+  二倍旋转方向，反向印证了根因判定。］
+- **modelView 实证**：手部 pass 内 `RenderSystem.getModelViewMatrixCopy()` 实测 == R(q)
+  （view→world，平稳帧与相机重建值逐元素吻合）——坐实了「26.2 的 RenderSystem
+  modelView 栈内容不可作为坐标信源」，也解释了首版（modelView 剥离）为何无效。
