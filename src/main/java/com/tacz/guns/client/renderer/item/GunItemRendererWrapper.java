@@ -180,7 +180,10 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             float aimingProgress = clientPlayerGunOperator.getClientAimingProgress(partialTicks);
             float zoom = iGun.getAimingZoom(stack);
             float multiplier = 1 - aimingProgress + aimingProgress / (float) Math.sqrt(zoom);
-            this.applyLevelCameraAnimation(event, stack, multiplier);
+            // 【RecoilDebug 隔离】第 27.4 轮：运行时旁路摄像机动画的世界相机叠加消费
+            if (RenderConfig.DEBUG_DISABLE_CAMERA_ANIM == null || !RenderConfig.DEBUG_DISABLE_CAMERA_ANIM.get()) {
+                this.applyLevelCameraAnimation(event, stack, multiplier);
+            }
         });
     }
 
@@ -202,7 +205,10 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             if (RenderConfig.RECOIL_DEBUG.get()) {
                 debugRecoilItemCam(quaternion, multiplier, poseStack);
             }
-            poseStack.mulPose(quaternion);
+            // 【RecoilDebug 隔离】第 27.4 轮：运行时旁路摄像机动画的手部消费（旋转不叠加，但数据照常清理，避免残留）
+            if (RenderConfig.DEBUG_DISABLE_CAMERA_ANIM == null || !RenderConfig.DEBUG_DISABLE_CAMERA_ANIM.get()) {
+                poseStack.mulPose(quaternion);
+            }
             recoilDebugTouchCleanMark();
             // 截至目前，摄像机动画数据已消费完毕。是否有更好的清理动画数据的方法？
             model.cleanCameraAnimationTransform();

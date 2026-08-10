@@ -120,6 +120,10 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             if (isFirstPerson && !RenderConfig.FIRST_PERSON_BULLET_TRACER_ENABLE.get()) {
                 return;
             }
+            // 【RecoilDebug 隔离】第 27.4 轮：运行时关闭曳光渲染，定位斜向"后坐力固定侧偏"的视觉载体
+            if (RenderConfig.DEBUG_DISABLE_TRACER != null && RenderConfig.DEBUG_DISABLE_TRACER.get()) {
+                return;
+            }
             poseStack.pushPose();
             {
                 float width = 0.005f;

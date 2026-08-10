@@ -79,6 +79,11 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
     @Override
     @SuppressWarnings("unchecked")
     public void extract(ExtractionContext context) {
+        // 【RecoilDebug 隔离】第 27.4 轮：运行时关闭枪口火光，用于定位斜向"后坐力固定侧偏"的视觉载体
+        if (com.tacz.guns.config.client.RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH != null
+                && com.tacz.guns.config.client.RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) {
+            return;
+        }
         if (IrisCompat.isRenderShadow() || !isSelf) {
             return;
         }

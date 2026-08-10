@@ -28,6 +28,14 @@ public class RenderConfig {
     public static ForgeConfigSpec.ConfigValue<String> SHELL_EJECTION_DEBUG_GUN;
     public static ForgeConfigSpec.IntValue SHELL_EJECTION_DEBUG_INTERVAL_MS;
     public static ForgeConfigSpec.BooleanValue RECOIL_DEBUG;
+    /** 【RecoilDebug 隔离】运行时关闭枪口火光渲染（定位斜向侧偏视觉载体用）。默认 false=正常渲染。 */
+    public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_MUZZLE_FLASH;
+    /** 【RecoilDebug 隔离】运行时关闭第一人称抛壳。 */
+    public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_SHELL;
+    /** 【RecoilDebug 隔离】运行时关闭曳光弹道实体渲染。 */
+    public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_TRACER;
+    /** 【RecoilDebug 隔离】运行时关闭摄像机动画（镜头摇动）的两处消费（世界叠加 + 手部旋转），含数据清理。 */
+    public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_CAMERA_ANIM;
     public static ForgeConfigSpec.BooleanValue DISABLE_INTERACT_HUD_TEXT;
     public static ForgeConfigSpec.BooleanValue AUTO_SELECT_GUN_SMITH_TABLE_FILTER;
     public static ForgeConfigSpec.IntValue DAMAGE_COUNTER_RESET_TIME;
@@ -112,6 +120,20 @@ public class RenderConfig {
                         "pitch/yaw deltas applied to the player rotation with facing + iris state, plus the level/item",
                         "camera-animation quaternions. Used to trace direction-bias of recoil feedback vs facing. Default off.")
                 .define("RecoilDebug", false);
+
+        // 【RecoilDebug · 第 27.4 轮：斜向"后坐力反馈固定侧偏"视觉载体隔离开关】
+        // 数值取证已证明第一人称渲染管线全链干净（基座/绘制残差/后坐/镜头动画/枪根与枪口
+        // 视图坐标在开枪的斜向帧上全部朝向无差异），但用户仍能稳定复现 sin(2θ) 镜像规律的
+        // 侧偏 → 载体必为某个可视元素。以下四个运行时开关供逐项关闭定位：
+        // 关掉哪一项后偏转消失，哪一项就是载体。
+        DEBUG_DISABLE_MUZZLE_FLASH = builder
+                .define("DebugDisableMuzzleFlash", false);
+        DEBUG_DISABLE_SHELL = builder
+                .define("DebugDisableShell", false);
+        DEBUG_DISABLE_TRACER = builder
+                .define("DebugDisableTracer", false);
+        DEBUG_DISABLE_CAMERA_ANIM = builder
+                .define("DebugDisableCameraAnim", false);
 
         builder.comment("Disable the interact hud text in center of the screen");
         DISABLE_INTERACT_HUD_TEXT = builder.define("DisableInteractHudText", false);
