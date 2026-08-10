@@ -773,3 +773,80 @@ sf.write(out, seg/peak*0.707, sr, format='OGG', subtype='VORBIS')
 > **实测建议**：静止连续开火，观察起点是否始终偏同一处（坐标系问题）或仅第一发偏（时序问题）。若 ADS 横移时偏移过高，可把 50 改为 35~40 线性，而非 12 二次（后者起点虽对，但快速贴回弹道，主观上仍感觉“从胸口出来”）。
 
 **已知限制**：子弹实体生成位置仍在眼睛下方 0.1（上游设计，弹道需与准星一致），视觉上从枪口出来仅是第一人称的偏移补偿，第三人称无补偿（上游原生表现）。
+
+---
+
+## 十、三症状同案终审：26.2 手部 pass 基座旋转 + 基岩模型法线二乘（2026-08-10）
+
+本轮把三个「修了几轮没修掉」的历史问题放在一起从 26.2 jar 字节码层面重新推导，
+结论：**问题①③同根因（跨 pass 坐标系污染），问题②独立（法线二次变换）**。
+文档此前各轮的相互矛盾结论（第 24 轮「世界向量」/第 25 轮「视图空间常量」）
+均以本节 26.2 字节码事实为准。
+
+### 26.2 底层渲染变换事实（全部经反汇编确认）
+
+- `Camera.extractRenderState` → `CameraRenderState.viewRotationMatrix =
+  R(camera.rotation().conjugate())`（world→view；`rotation()` 本身是 view→world，
+  `Camera#setRotation` 内 `rotationYXZ(PI - yaw, -pitch, 0)`，`FORWARDS.rotate(rotation)`）。
+- `LevelRenderer.render(...)`：开头 `modelViewStack.pushMatrix(); mul(viewRotationMatrix)`，
+  实体提交只做 `translate(entityPos - cameraPos)`——**实体 pass 的 PoseStack 平移是世界轴**，
+  相机旋转在绘制时由 modelView 统一施加（与第 25 轮实测 `poseBefore ≡ bulletPos - eye` 吻合）。
+- `GameRenderer.renderLevel` 尾部 `renderItemInHand(cameraState, tickDelta, viewRotationMatrix)`：
+  先 `RenderSystem.setProjectionMatrix(hud3dProjection(hudFov…))` 再调用。其方法体开头：
+  ```java
+  poseStack.mulPose(new Matrix4f(viewRotationMatrix).invert()); // 手部 PoseStack 基座 = view→world
+  modelViewStack.pushMatrix(); mul(viewRotationMatrix);          // modelView = world→view
+  ```
+  两个互相抵消，所以所有手持物**画出来都对**——但 `submitHandsWithItems` 里只有两条
+  `0.1` 系数的 bob `mulPose`（第 25 轮看到的就是这两条，于是漏了更外层的基座），
+  **手部 pass 内的 pose.last().pose() 不再是 1.21.1 的纯视图空间**。
+- Iris 开光影后手部改由其 `HandRenderer` 直接调 `ItemInHandRenderer.renderHandsWithItems`，
+  **绕过 `GameRenderer.renderItemInHand`**，没有这段基座预乘——这是
+  「vanilla 异常、光影下正常」这一症状签名的来源。
+
+### 问题① 曳光弹起点不锁枪口 & 问题③ 开火弹道视觉固定向左/右偏（同根因）
+
+- `GunItemRendererWrapper.cacheMuzzlePosition` 在手部 pass 里读
+  `pose.last().pose().m30/31/32`：vanilla 26.2 下读到的是 **R(q)·v（世界轴）**，
+  不是上游 1.21.1 的视图空间 v（`latest.log` 中 `liveMuzzle` 随 yaw 在 ±1.8 间正弦摆动即为此）。
+- `EntityBulletRenderer`（实体 pass，世界轴 pose）再 `rotate(camera.rotation())` 一次 →
+  实际平移量是 **R(q)²·v**，枪口起点按二倍朝向角偏转：
+  面南 yaw=0 误差 0；斜向 1.26 格；正东西 2.33 格；面北 3.30 格（已按
+  v≈(0.16,−0.19,−1.64) 数值模拟，与「斜向固定严重向左/右偏」吻合；
+  深度方向误差在视觉上不易归为左右偏，所以用户报告集中在斜向）。
+- 开相机后坐力走的是 `player.setXRot/setYRot` 样条（方向无关、与光影管线无关），
+  数学上不可能产生「斜向固定偏、光影下正常」——问题③是问题①在开火窗口期的观感。
+- **修法（采集端归一化 · 自校正版）**：在 `renderFirstPerson` 入口记录基座矩阵 B
+  （vanilla 下 B≈R(q)；Iris 手部 pass 下 B≈I），`cacheMuzzlePosition` 用
+  `Bᵀ · (m30..m32 − B.m30..m32)`（B 正交 → 逆 = 转置）把采集位移解算回纯视图空间，
+  恢复 `muzzleRenderOffset` 的上游不变量。
+  B 与枪口矩阵共享同一条「基座预乘 + bob + 伤害后仰」前缀，因此该还原与管线内部
+  状态完全无关，vanilla / Iris / 其他 shader 管线同时正确，无需分支。
+  ⚠️ 教训：首版曾用 `RenderSystem.getModelViewMatrixCopy()`（假定其为 W2V）做还原，
+  实测无效 —— 26.2 的绘制矩阵经 SubmitNodeCollector / DynamicTransforms 下发，
+  RenderSystem 的 modelView 栈仅是兼容残留，内容不能作信源。
+  FOV 比值 `tan(itemFov/2)/tan(levelFov/2)` 改乘在**还原后的视图空间 z** 上
+  （旧代码乘的是 `pose.m32()`，在 vanilla 26.2 下那是世界轴 Z，开镜补偿的方向就是错的）。
+  诊断：`RenderConfig.TRACER_DEBUG` 下每条 `[TACZ MuzzleSpace]` 节流日志会打印
+  基座位移、原始/还原后枪口位移、以及手部 pass 内 modelView 的真实 3x3，
+  用 yaw≈45°/135° 各打一发即可实证管线行为。
+
+### 问题② 枪身阴影方向不对 / 水平视线枪身过暗（独立根因）
+
+- `BedrockCubeBox.compile` / `BedrockCubePerFace.compile` 先手工
+  `vector3f.mul(pose.normal())` 变换法线，再调用 `setNormal(pose, nx, ny, nz)`——
+  而 26.2 的 `VertexConsumer#setNormal(Pose,FFF)` 是默认方法，内部
+  `pose.transformNormal(x,y,z)` **再变换一次**（字节码确认），法线被施加 N²。
+- 效果：`renderFirstPerson` 的 `ZP(180°)` 翻转到法线上被抵消（R·R=I），
+  枪身「上表面」在光照计算里实际朝下——`entityCutout` 的两个平行光
+  （视角空间固定方向，+y 分量）在水平视线下都照不到顶面 → **视平线高度枪身过暗**；
+  且 N 含相机基座 R(q)，未抵消部分使明暗朝向随视角漂移 → **阴影位置不对**。
+  vanilla 26.2 `ModelPart$Cube.compile` 只做一次 `pose.transformNormal` 后写裸值，已对齐之。
+- **修法**：手工变换一次后直接 `setNormal(nx, ny, nz)`（裸值重载）。
+
+### 验证要点
+
+- TracerDebug（`RenderConfig.TRACER_DEBUG`）下 `globalMuzzle` 现在应在任意 yaw 下
+  保持视图空间常量（约 `(0.16, -0.19, -1.6~1.9)`），`poseAfterOffset` 应落在
+  `muzzle` 世界位置附近；斜向扫射时弹道视觉不再整体侧甩。
+- 水平视线与仰/俯视下枪身顶面亮度应一致；切光影前后枪身明暗不变。
