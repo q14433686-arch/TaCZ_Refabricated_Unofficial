@@ -773,3 +773,32 @@ sf.write(out, seg/peak*0.707, sr, format='OGG', subtype='VORBIS')
 > **实测建议**：静止连续开火，观察起点是否始终偏同一处（坐标系问题）或仅第一发偏（时序问题）。若 ADS 横移时偏移过高，可把 50 改为 35~40 线性，而非 12 二次（后者起点虽对，但快速贴回弹道，主观上仍感觉“从胸口出来”）。
 
 **已知限制**：子弹实体生成位置仍在眼睛下方 0.1（上游设计，弹道需与准星一致），视觉上从枪口出来仅是第一人称的偏移补偿，第三人称无补偿（上游原生表现）。
+
+---
+
+### 九·补【2026-08-10】26.2 手部管线基座问题 —— 真正的根因
+
+> 上一段结论（「muzzleRenderOffset 是视图空间，rotate(camera.rotation()) 即可」）
+> **在 26.2 下是错的**，特此更正。之前修不掉的根因在采集端，不在渲染端。
+
+**26.2 手部渲染管线改动**（`GameRenderer#renderItemInHand` 字节码确认）：
+
+```java
+poseStack.mulPose(projection.invert(new Matrix4f()));  // 逆投影矩阵乘进 PoseStack 基座
+RenderSystem.getModelViewStack().mul(projection);      // 投影矩阵用作 ModelView
+```
+
+两者在 shader 里相乘抵消（顶点净效果 = 视图空间），**但** `cacheMuzzlePosition`
+直接读 PoseStack 平移分量时拿到的是 `M = P_hud⁻¹ · B`：
+
+- `m30 = (f/as)·B.x`、`m31 = (1/f)·B.y` —— 带 FOV/aspect 畸变；
+- `m32 = −1` **恒定** —— 深度信息被逆投影的投影行吃掉；
+- `m33 ≈ 30`（不是 1）—— w 分量，旧代码从未读取。
+
+于是旧代码把「深度钉死 −1、x/y 畸变」的量当视图空间坐标旋转到世界，
+起点自然不在枪口。r25 日志里的 `gz≈−1.83` 来自 26.1.2（无此基座），照搬失效。
+
+**修复**（`GunItemRendererWrapper#cacheMuzzlePosition`）：左乘手部投影还原
+`B' = P_hud · M`（用 `m30/m31/m32/m33` 四分量），再对真深度施加 FOV 缩放。
+数值仿真：GL/Vulkan 两种深度约定下，`P_level·offset` 与 `P_hud·B` 的屏幕 NDC
+逐分量相等。渲染端 `EntityBulletRenderer` 无需改动。

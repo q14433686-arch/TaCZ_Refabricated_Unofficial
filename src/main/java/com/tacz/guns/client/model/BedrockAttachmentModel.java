@@ -10,6 +10,7 @@ import com.tacz.guns.client.render.scope.IReticleRenderer;
 import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
 import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
 import com.tacz.guns.client.render.scope.ScopeMaskGeometry;
+import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.render.scope.ScopeMaskTextureHandle;
 import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.client.render.scope.ScopeNodeSet;
@@ -49,7 +50,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * 收枪结束时可能停在 0.001 这类残值上，用 {@code > 0} 判据会让镜身
      * 一直挂着一个几乎不可见但确实存在的洞。
      */
-    private static final float AIM_CLIP_START = 0.02f;
+    /** 开镜进度超过该值才开始做镜内裁剪（上游把半径乘上 aimingProgress，0 进度=不裁剪）。 */
+    public static final float AIM_CLIP_START = 0.02f;
 
     /**
      * 瞄具文字开始显示的开镜进度。与 {@code IlluminatedReticleRenderer.FADE_IN_START}
@@ -408,6 +410,16 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         return scopeViewPaths.get(viewSwitchCount);
     }
 
+    /**
+     * 该配件是否带有目镜（ocular*）节点 —— 即是否具备「镜内裁剪」能力。
+     *
+     * <p>供 {@code GunItemRendererWrapper#renderFirstPerson} 前置判定
+     * 「开镜用筒镜时整枪/配件要不要被掩码裁剪」。</p>
+     */
+    public boolean hasOcularParts() {
+        return !ocularParts.isEmpty();
+    }
+
     public void setIsScope(boolean isScope) {
         this.isScope = isScope;
     }
@@ -710,6 +722,17 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private RenderType resolveBodyRenderType(RenderType original,
                                              @Nullable Identifier texture,
                                              boolean maskable) {
+        // 【2026-08-10】整枪镜内裁剪：开镜用筒镜时，枪体与无目镜的配件
+        // （枪管、前准星、枪口装置…）也要被目镜掩码裁掉镜内部分。
+        // 标志由 GunItemRendererWrapper#renderFirstPerson 在提交整枪前置位，
+        // 只对第一人称生效。
+        if (ScopeMaskRenderer.isForceGunClip()) {
+            if (texture != null && RenderConfig.SCOPE_MASK_ENABLE.get()
+                    && ScopeMaskTextureHandle.syncToMaskTarget()) {
+                return ScopeBodyRenderTypes.clipped(texture);
+            }
+            return original;
+        }
         if (!maskable) {
             // 第三人称，或这个配件压根没有目镜（如握把、消音器）—— 不需要裁剪。
             return original;
@@ -719,8 +742,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             return original;
         }
         if (!RenderConfig.SCOPE_MASK_ENABLE.get()) {
-            // 特性总开关。Step 3 期间仍挂在调试开关下，默认关闭：
-            // 万一有兼容问题，玩家关掉开关就能回到已知可用的状态，无需回滚版本。
+            // 特性总开关。万一有兼容问题，玩家关掉开关就能回到已知可用的状态，无需回滚版本。
             return original;
         }
         // 把掩码 target 的纹理挂到 TextureManager 上，供 shader 采样。

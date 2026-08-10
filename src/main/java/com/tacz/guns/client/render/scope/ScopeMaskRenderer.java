@@ -16,7 +16,6 @@ import com.mojang.blaze3d.PrimitiveTopology;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.client.model.bedrock.BedrockCube;
-import com.tacz.guns.client.model.bedrock.BedrockCubeBox;
 import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import net.fabricmc.api.EnvType;
@@ -29,6 +28,7 @@ import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -144,16 +144,55 @@ public final class ScopeMaskRenderer {
             // 背面剔除可能因建模朝向把它整个剔掉。掩码只要投影形状，正反面都算。
             .withCull(false)
             .withVertexBinding(0, DefaultVertexFormat.POSITION)
-            .withPrimitiveTopology(PrimitiveTopology.QUADS)
+            // 【2026-08-10】QUADS → TRIANGLES：掩码内容从「目镜几何投影」改为
+            // 「屏幕空间圆」（三角形扇），QUADS 拓扑无法表达扇形。
+            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
             .build();
 
     /** 顶点暂存区。复用同一个，避免每帧分配。 */
     private static final ByteBufferBuilder SCRATCH = new ByteBufferBuilder(4096);
 
+    /**
+     * 镜内透明圆相对目镜外径的比例（上游 1.21.1 的 rad=80 经验常数，
+     * 实测对默认枪包相当于目镜外径的 0.79~1.19 倍，因枪而异）。
+     *
+     * <p>本实现按目镜几何在视图空间 XY 平面上的最大外延自标定，
+     * 再乘该比例：{@code 圆半径 = 目镜外延 × SCOPE_CIRCLE_RATIO × 开镜进度}。
+     * 圆外到目镜边缘那一圈就是保留的「镜筒黑环」（目镜黑片画在圆外）。
+     * 想调黑环宽窄就改这里（越小环越宽，1.0 表示圆与目镜边缘齐平、无环）。
+     */
+    private static final float SCOPE_CIRCLE_RATIO = 0.9f;
+
+    /** 掩码圆的三角形段数。48 段足够圆滑（边缘误差约半径的 0.2%）。 */
+    private static final int CIRCLE_SEGMENTS = 48;
+
     private static boolean failed = false;
     private static boolean loggedSuccess = false;
     /** 「开着调试却没有任何目镜几何」只警告一次，避免刷屏。 */
     private static boolean loggedEmpty = false;
+
+    /**
+     * 【2026-08-10】「整枪镜内裁剪」强制标志。
+     *
+     * <p>当玩家用筒镜开镜时，不只镜身要被目镜掩码裁剪 —— 枪体与其余配件
+     * （枪管、前准星、枪口装置等落在镜内的部分）同样要裁掉，
+     * 否则镜内会透出枪体（用户反馈的问题 2）。</p>
+     *
+     * <p>由 {@code GunItemRendererWrapper#renderFirstPerson} 在提交整枪模型<b>之前</b>
+     * 置位、提交结束后还原（配件与镜身的 submit 都发生在枪模 submit 内部，
+     * 是同步直调，因此普通 static 标志即可，无跨帧残留）。
+     * {@code BedrockAttachmentModel#submit} 在标志生效时，对没有目镜的配件
+     * 也改用掩码裁剪版 RenderType。</p>
+     */
+    private static boolean forceGunClip = false;
+
+    public static void setForceGunClip(boolean value) {
+        forceGunClip = value;
+    }
+
+    public static boolean isForceGunClip() {
+        return forceGunClip;
+    }
 
     /**
      * 当前是否正在渲染手持物（第一人称枪械）。
@@ -243,7 +282,8 @@ public final class ScopeMaskRenderer {
                         GpuBuffer.USAGE_VERTEX,
                         mesh.vertexBuffer());
 
-                // 共享的四边形索引缓冲：把 QUADS 展开成三角形。
+                // 共享的顺序索引缓冲：TRIANGLES 走 RenderSystem.sharedSequential
+                // （0,1,2,3,… 顺序索引，每 3 个连续顶点一个三角形），
                 // 用 vanilla 现成的，不必自己生成索引。
                 RenderSystem.AutoStorageIndexBuffer indices =
                         RenderSystem.getSequentialBuffer(draw.primitiveTopology());
@@ -271,13 +311,17 @@ public final class ScopeMaskRenderer {
                                     // basis captured when the scope geometry was submitted.
                                     new Matrix4f(),
                                     // R = 1：被目镜盖到的像素，红通道恒为 1（掩码本体）。
-                                    // G = 开镜进度：镜身/准星 shader 用它做屏幕空间的渐进收缩。
+                                    // G = 1：【2026-08-10】开镜进度已编码进掩码圆的半径
+                                    // （半径 = 目镜外延 × SCOPE_CIRCLE_RATIO × 进度，上游 rad=80·progress
+                                    //  的语义），绿通道不再参与收缩。
+                                    // 置 1.0 使 scope_body.fsh / Iris 注入分支里的「屏幕空间收缩」休眠，
+                                    // 避免对半径二次收缩把镜区缩小。
                                     //
                                     // 为什么把进度塞进颜色通道而不是新加一个 uniform：
                                     // 掩码管线本就要写 ColorModulator，绿通道是现成的空闲载体；
                                     // 新增 uniform 意味着再改一次 bind group layout，
                                     // 而那正是 r46/r52 两次崩溃的来源。能不动就不动。
-                                    new Vector4f(1.0f, currentAimingProgress(), 1.0f, 1.0f)));
+                                    new Vector4f(1.0f, 1.0f, 1.0f, 1.0f)));
                     pass.setVertexBuffer(0, vertexBuffer.slice());
                     pass.setIndexBuffer(indexBuffer, indices.type());
                     // 【参数顺序照字节码抄】RenderPass#drawIndexed 是 5 个 int。
@@ -336,48 +380,123 @@ public final class ScopeMaskRenderer {
     }
 
     /**
-     * 把当帧登记的所有目镜 cube 写成一份顶点数据。
+     * 把当帧登记的目镜几何写成一份<b>屏幕空间圆</b>顶点数据。
+     *
+     * <p>【2026-08-10】掩码内容从「目镜几何投影」改为「屏幕空间圆」，与上游
+     * {@code renderOcularAndDivision} 的 stencil 圆语义一致：
+     * <pre>
+     * rad = 80 * scopeViewRadiusModifier * aimingProgress   // 只有半径在变
+     * 圆心 = 目镜投影中心（getBedrockPartCenter）
+     * </pre>
+     * 本实现以目镜几何在掩码空间（即视图空间，掩码 pass 用 identity ModelView）
+     * 的<b>质心</b>为圆心、以几何顶点到质心的最大 XY 外延为基准半径，
+     * 再乘 {@link #SCOPE_CIRCLE_RATIO} 与开镜进度。这样：
+     * <ul>
+     *   <li>半径按每个瞄具目镜的真实大小自标定，不依赖“80”这个经验常数；</li>
+     *   <li>对非实心目镜（如第三方 PU 镜的 6 根辐条）也能得到一个<b>实心圆</b>，
+     *       不再退化成 6 条细缝；</li>
+     *   <li>圆外保留目镜黑片 → 恢复「镜筒黑环」。</li>
+     * </ul>
      *
      * @return 顶点网格；没有任何可画几何时返回 {@code null}
      */
     private static MeshData buildMesh() {
-        BufferBuilder builder = new BufferBuilder(SCRATCH, PrimitiveTopology.QUADS, DefaultVertexFormat.POSITION);
+        BufferBuilder builder = new BufferBuilder(SCRATCH, PrimitiveTopology.TRIANGLES, DefaultVertexFormat.POSITION);
+        float progress = currentAimingProgress();
         for (ScopeMaskGeometry.Entry entry : ScopeMaskGeometry.entries()) {
-            Matrix4f pose = entry.pose();
-            for (BedrockCube cube : entry.cubes()) {
-                // 通过接口取面，【不做 instanceof 判断】。
-                //
-                // 第一版写的是 `if (cube instanceof BedrockCubeBox box)`，实测掩码全黑：
-                // 默认枪包 161 个目镜立方体【无一例外】都是 BedrockCubePerFace
-                // （它们都带 face_uv），被那个 instanceof 百分之百滤掉了。
-                // 两个实现的 polygons 结构完全同构，能力应当由接口表达。
-                writeCube(builder, pose, cube);
-            }
+            writeCircle(builder, entry.pose(), entry.cubes(), progress);
         }
         // 一个顶点都没写时 build() 返回 null，调用方据此走「只清空」分支。
         return builder.build();
     }
 
     /**
-     * 写一个立方体的 6 个面。
+     * 以目镜几何的投影质心为圆心、外延×比例×进度为半径，写一个实心圆（三角形扇）。
      *
-     * <p>顶点变换与 {@link BedrockCubeBox#compile} <b>逐行一致</b>：
-     * {@code pos / 16 → mul(matrix)}。两条路径必须用同一套算法，
-     * 否则掩码会与画面错位 —— 那种偏差极难排查。
+     * <p>顶点直接写在掩码空间（视图空间）：掩码 pass 的 ModelView 是 identity，
+     * 圆心与半径都是 {@code pose} 变换后的成品坐标，不再二次变换。
+     * 圆盘位于目镜质心所在的、垂直于视线（视图 Z 轴）的平面上 ——
+     * 透视投影下该圆在屏幕上仍是正圆（x/y 的 NDC 缩放系数相同，
+     * 见分析文档 §2.4 的推导）。</p>
      */
-    private static void writeCube(BufferBuilder builder, Matrix4f pose, BedrockCube cube) {
-        for (var polygon : cube.getPolygons()) {
-            if (polygon == null) {
-                continue;
+    private static void writeCircle(BufferBuilder builder, Matrix4f pose, List<BedrockCube> cubes, float progress) {
+        if (cubes.isEmpty()) {
+            return;
+        }
+        // 目镜几何在掩码空间的质心 = 圆心（比直接取 pose 平移更稳：
+        // 目镜盘面若相对节点原点有偏移，质心仍落在盘面中心）。
+        float cx = 0.0f;
+        float cy = 0.0f;
+        float cz = 0.0f;
+        int count = 0;
+        float radius = 0.0f;
+        for (BedrockCube cube : cubes) {
+            // 通过接口取面，【不做 instanceof 判断】。
+            //
+            // 第一版写的是 `if (cube instanceof BedrockCubeBox box)`，实测掩码全黑：
+            // 默认枪包 161 个目镜立方体【无一例外】都是 BedrockCubePerFace
+            // （它们都带 face_uv），被那个 instanceof 百分之百滤掉了。
+            // 两个实现的 polygons 结构完全同构，能力应当由接口表达。
+            for (var polygon : cube.getPolygons()) {
+                if (polygon == null) {
+                    continue;
+                }
+                for (var vertex : polygon.vertices) {
+                    // 顶点变换与 {@link BedrockCubeBox#compile} <b>逐行一致</b>：
+                    // {@code pos / 16 → mul(matrix)}。两条路径必须用同一套算法，
+                    // 否则掩码会与画面错位 —— 那种偏差极难排查。
+                    float x = vertex.pos.x() / 16.0F;
+                    float y = vertex.pos.y() / 16.0F;
+                    float z = vertex.pos.z() / 16.0F;
+                    Vector4f v = new Vector4f(x, y, z, 1.0F);
+                    v.mul(pose);
+                    cx += v.x();
+                    cy += v.y();
+                    cz += v.z();
+                    count++;
+                }
             }
-            for (var vertex : polygon.vertices) {
-                float x = vertex.pos.x() / 16.0F;
-                float y = vertex.pos.y() / 16.0F;
-                float z = vertex.pos.z() / 16.0F;
-                Vector4f v = new Vector4f(x, y, z, 1.0F);
-                v.mul(pose);
-                builder.addVertex(v.x(), v.y(), v.z());
+        }
+        if (count == 0) {
+            return;
+        }
+        cx /= count;
+        cy /= count;
+        cz /= count;
+        // 外延 = 顶点到质心的最大 XY 平面距离（垂直于视线方向的分量），
+        // 再乘比例与开镜进度 → 掩码圆半径。
+        for (BedrockCube cube : cubes) {
+            for (var polygon : cube.getPolygons()) {
+                if (polygon == null) {
+                    continue;
+                }
+                for (var vertex : polygon.vertices) {
+                    float x = vertex.pos.x() / 16.0F;
+                    float y = vertex.pos.y() / 16.0F;
+                    float z = vertex.pos.z() / 16.0F;
+                    Vector4f v = new Vector4f(x, y, z, 1.0F);
+                    v.mul(pose);
+                    float dx = v.x() - cx;
+                    float dy = v.y() - cy;
+                    float d = (float) Math.sqrt(dx * dx + dy * dy);
+                    if (d > radius) {
+                        radius = d;
+                    }
+                }
             }
+        }
+        radius *= SCOPE_CIRCLE_RATIO * Mth.clamp(progress, 0.0f, 1.0f);
+        if (radius <= 1.0e-5f) {
+            // 还没开镜（进度≈0）或目镜退化成点：不写任何顶点，调用方走「只清空」。
+            return;
+        }
+        // 三角形扇：圆心 + 圆周 48 段。
+        for (int i = 0; i < CIRCLE_SEGMENTS; i++) {
+            double a0 = 2.0 * Math.PI * i / CIRCLE_SEGMENTS;
+            double a1 = 2.0 * Math.PI * (i + 1) / CIRCLE_SEGMENTS;
+            builder.addVertex(cx, cy, cz);
+            builder.addVertex(cx + (float) Math.cos(a0) * radius, cy + (float) Math.sin(a0) * radius, cz);
+            builder.addVertex(cx + (float) Math.cos(a1) * radius, cy + (float) Math.sin(a1) * radius, cz);
         }
     }
 }

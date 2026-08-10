@@ -2,21 +2,30 @@ package com.tacz.guns.client.renderer.item;
 
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
 import com.google.common.base.Suppliers;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.animation.statemachine.LuaAnimationStateMachine;
 import com.tacz.guns.api.client.event.BeforeRenderHandEvent;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.client.event.CameraSetupEvent;
 import com.tacz.guns.client.event.FirstPersonRenderGunEvent;
+import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.SlotModel;
+import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
+import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
+import com.tacz.guns.client.render.scope.ScopeMaskTextureHandle;
+import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.model.functional.ShellRender;
@@ -235,9 +244,29 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             RenderType renderType = display.enablesTransparency()
                     ? RenderTypes.entityTranslucent(display.getModelTexture())
                     : RenderTypes.entityCutout(display.getModelTexture());
-            gunModel.submit(poseStack, stack, ctx, collector, renderType, light, OverlayTexture.NO_OVERLAY);
-            // 缓存枪口位置，为第一人称曳光弹渲染作准备
-            cacheMuzzlePosition(poseStack, gunModel);
+            // 【2026-08-10】整枪镜内裁剪：开镜用筒镜时，枪体与其余配件
+            // （枪管、前准星、枪口装置…落在镜内的部分）也要被目镜掩码裁掉，
+            // 否则镜内会透出枪体（用户反馈问题 2）。
+            //
+            // 前置判定与 BedrockAttachmentModel#submit 的 maskable 保持一致：
+            // 第一人称 + 瞄具确有目镜 + 开镜进度超过阈值 + 掩码可用 +
+            // 未被光影降级。透明材质的枪（enablesTransparency）不走裁剪 ——
+            // 裁剪版 RenderType 基于 ENTITY_CUTOUT，强行套用会丢失半透明。
+            boolean scopeGunClipActive = !display.enablesTransparency()
+                    && isScopeGunClipActive(stack, player, partialTick);
+            if (scopeGunClipActive) {
+                ScopeMaskRenderer.setForceGunClip(true);
+                renderType = ScopeBodyRenderTypes.clipped(display.getModelTexture());
+            }
+            try {
+                gunModel.submit(poseStack, stack, ctx, collector, renderType, light, OverlayTexture.NO_OVERLAY);
+                // 缓存枪口位置，为第一人称曳光弹渲染作准备
+                cacheMuzzlePosition(poseStack, gunModel);
+            } finally {
+                // 配件/镜身的 submit 都发生在枪模 submit 内部（同步直调），
+                // 提交结束立即还原标志，避免污染第三人称与物品栏预览。
+                ScopeMaskRenderer.setForceGunClip(false);
+            }
             // 恢复手臂渲染
             gunModel.setRenderHand(renderHand);
             // 渲染完成后，将动画数据从模型中清除，不对其他视角下的模型渲染产生影响
@@ -247,6 +276,47 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             MuzzleFlashRender.isSelf = false;
             ShellRender.isSelf = false;
         });
+    }
+
+    /**
+     * 判定当前第一人称渲染是否处于「筒镜开镜」状态 —— 此时整枪/配件要被目镜掩码裁剪。
+     *
+     * <p>判定条件与 {@code BedrockAttachmentModel#submit} 的 maskable 一一对应，
+     * 保证「枪体裁了、镜身也裁了、掩码也画了」三者同进同退；任何一环不满足
+     * 都返回 false，退回现状（镜内能看到枪体），不会比现在更糟。</p>
+     */
+    private static boolean isScopeGunClipActive(ItemStack stack, LocalPlayer player, float partialTick) {
+        if (!RenderConfig.SCOPE_MASK_ENABLE.get()) {
+            return false;
+        }
+        if (IrisCompat.shouldDisableScopeMaskUnderShaderPack()) {
+            return false;
+        }
+        if (!(stack.getItem() instanceof IGun iGun)) {
+            return false;
+        }
+        Identifier scopeItemId = iGun.getAttachmentId(stack, AttachmentType.SCOPE);
+        if (scopeItemId.equals(DefaultAssets.EMPTY_ATTACHMENT_ID)) {
+            scopeItemId = iGun.getBuiltInAttachmentId(stack, AttachmentType.SCOPE);
+        }
+        boolean hasOcular = TimelessAPI.getClientAttachmentIndex(scopeItemId)
+                .map(index -> {
+                    BedrockAttachmentModel model = index.getAttachmentModel();
+                    // 只对筒镜/组合镜做整枪裁剪：纯红点镜（renderSight）上游不裁枪体，
+                    // 1.5 倍低倍下透过镜片看到枪管属正常观感，不做增强。
+                    return model != null && model.hasOcularParts() && model.isScope();
+                })
+                .orElse(false);
+        if (!hasOcular) {
+            return false;
+        }
+        float aimingProgress = IClientPlayerGunOperator.fromLocalPlayer(player)
+                .getClientAimingProgress(partialTick);
+        if (aimingProgress <= BedrockAttachmentModel.AIM_CLIP_START) {
+            return false;
+        }
+        // 掩码 target 必须可用，否则裁剪版 shader 会采样到陈旧/无效纹理。
+        return ScopeMaskTextureHandle.syncToMaskTarget();
     }
 
     private static void cacheMuzzlePosition(PoseStack poseStack, BedrockGunModel gunModel) {
@@ -260,13 +330,53 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             double itemRenderFov = CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get();
             double levelRenderFov = CameraSetupEvent.WORLD_FOV_DYNAMICS.get();
             poseStack.popPose();
-            // 缓存转换后的偏移坐标
+            // 【2026-08-10 修复】26.2 手部渲染管线改动：GameRenderer#renderItemInHand
+            // 在进入 submitHandsWithItems 之前，先把手部投影的逆矩阵乘进 PoseStack 基座
+            // （poseStack.mulPose(projection.invert())），再以投影矩阵作 ModelView
+            // （modelViewStack.mul(projection)），两者在 shader 里相乘抵消。
+            //
+            // 因此这里的 pose 不是「视图空间」的枪口坐标，而是合成矩阵 M = P_hud⁻¹ · B：
+            //   m30 = (f/as)·B.x      m31 = (1/f)·B.y
+            //   m32 = -1               ← 深度信息被逆投影的投影行吃掉，恒为 -1
+            //   m33 = w 分量（量级 ≈ 30，不是 1）
+            // 旧代码把 M 的平移分量当成视图空间枪口位置直接用，深度被钉死在 -1，
+            // x/y 又带 FOV/aspect 畸变 —— 这就是曳光弹起点「固定在某处、转视角仍偏」的根源。
+            //
+            // 修法：左乘手部投影矩阵还原真视图空间枪口坐标 B' = P_hud · M，
+            // 再对真深度施加 FOV 缩放（见下）。数值仿真已验证：
+            // P_level · (B'.x, B'.y, B'.z·tan(itemFov/2)/tan(levelFov/2))
+            // 与 P_hud · B 在屏幕上的 NDC 逐分量相等（GL/Vulkan 两种深度约定均通过）。
+            Matrix4f viewPose = new Matrix4f(buildHudProjection()).mul(pose);
+            float muzzleX = viewPose.m30();
+            float muzzleY = viewPose.m31();
+            float muzzleZ = viewPose.m32();
+            // 缓存转换后的偏移坐标（视图空间，Z 方向已按两套 FOV 的差异缩放，
+            // 使曳光弹在世界 pass 下与枪口在手部 pass 下落在同一屏幕位置）
             muzzleRenderOffset.set(
-                    pose.m30(),
-                    pose.m31(),
-                    pose.m32() * Math.tan(itemRenderFov / 2 * Math.PI / 180) / Math.tan(levelRenderFov / 2 * Math.PI / 180)
+                    muzzleX,
+                    muzzleY,
+                    muzzleZ * (float) (Math.tan(itemRenderFov / 2 * Math.PI / 180) / Math.tan(levelRenderFov / 2 * Math.PI / 180))
             );
         }
+    }
+
+    /**
+     * 重建 26.2 手部 pass 使用的 HUD 投影矩阵。
+     *
+     * <p>与 {@code GameRenderer#renderLevel} 里
+     * {@code hudProjection.setupPerspective(0.05f, 100f, hudFov, w, h)} 保持一致：
+     * {@code Projection#getMatrix} 最终调用
+     * {@code setPerspective(fov·deg2rad, width/height, zFar, zNear, zZeroToOne)} ——
+     * 注意实参顺序是 <b>先 zFar 后 zNear</b>（近/远互换会让 z 行符号翻转，
+     * 必须原样复刻）。fov 取 {@link CameraSetupEvent#ITEM_MODEL_FOV_DYNAMICS}，
+     * 与 Camera 的 hudFov 同源（同一事件链驱动）。</p>
+     */
+    private static Matrix4f buildHudProjection() {
+        Minecraft mc = Minecraft.getInstance();
+        float fovRad = (float) Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get());
+        float aspect = mc.getWindow().getWidth() / (float) Math.max(1, mc.getWindow().getHeight());
+        boolean zZeroToOne = RenderSystem.getDevice().getDeviceInfo().isZZeroToOne();
+        return new Matrix4f().setPerspective(fovRad, aspect, 100.0f, 0.05f, zZeroToOne);
     }
 
 
