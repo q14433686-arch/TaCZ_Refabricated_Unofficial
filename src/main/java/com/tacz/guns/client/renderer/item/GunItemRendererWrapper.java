@@ -289,6 +289,11 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             gunModel.submit(poseStack, stack, ctx, collector, renderType, light, OverlayTexture.NO_OVERLAY);
             // 缓存枪口位置，为第一人称曳光弹渲染作准备
             cacheMuzzlePosition(poseStack, gunModel);
+            // 【RecoilDebug 探针】第 27.5 轮：机瞄骨骼链视图坐标逐帧取证。
+            // 已证根↔枪口链在开枪斜向帧冻结（±0.001），但用户目击「机瞄框偏离屏幕中线」——
+            // 瞄具位于另一条骨骼链，若唯独它摆动，则动画写入层（AnimationRunner 通道）
+            // 存在朝向污染（与当年摄像机动画通道同族）。
+            debugRecoilSightPos(poseStack, gunModel);
             // 恢复手臂渲染
             gunModel.setRenderHand(renderHand);
             // 渲染完成后，将动画数据从模型中清除，不对其他视角下的模型渲染产生影响
@@ -390,6 +395,57 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
 
     private static String trim2(double v) {
         return String.format(java.util.Locale.ROOT, "%.4f", v);
+    }
+
+    /**
+     * 【RecoilDebug 探针】把机瞄定位组骨骼链（iron sight path，未装瞄具时的瞄具所在链）
+     * 的末端原点换算到视图空间并逐帧打印，口径与 cacheMuzzlePosition 完全一致的 Bᵀ 转置归一化，
+     * 可直接与 viewRoot / viewMuzzle 三分量互扣。装在枪身上的任何一条骨骼链的漂移由此现形。
+     */
+    private static void debugRecoilSightPos(PoseStack poseStack, BedrockGunModel gunModel) {
+        try {
+            if (RenderConfig.RECOIL_DEBUG == null || !RenderConfig.RECOIL_DEBUG.get()) {
+                return;
+            }
+            List<BedrockPart> path = gunModel.getIronSightPath();
+            if (path == null || path.isEmpty()) {
+                return;
+            }
+            logSightPathPose(poseStack, path, "sight");
+            List<BedrockPart> scopePath = gunModel.getScopePosPath();
+            if (scopePath != null && !scopePath.isEmpty()) {
+                logSightPathPose(poseStack, scopePath, "scope");
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static void logSightPathPose(PoseStack poseStack, List<BedrockPart> path, String tag) {
+        try {
+            poseStack.pushPose();
+            for (BedrockPart part : path) {
+                part.translateAndRotateAndScale(poseStack);
+            }
+            Matrix4f pose = poseStack.last().pose();
+            poseStack.popPose();
+            float dx = pose.m30() - handBasePose.m30();
+            float dy = pose.m31() - handBasePose.m31();
+            float dz = pose.m32() - handBasePose.m32();
+            float viewX = handBasePose.m00() * dx + handBasePose.m01() * dy + handBasePose.m02() * dz;
+            float viewY = handBasePose.m10() * dx + handBasePose.m11() * dy + handBasePose.m12() * dz;
+            float viewZ = handBasePose.m20() * dx + handBasePose.m21() * dy + handBasePose.m22() * dz;
+            net.minecraft.client.player.LocalPlayer player = Minecraft.getInstance().player;
+            float fy = player == null ? Float.NaN : net.minecraft.util.Mth.wrapDegrees(player.getYRot());
+            float fx = player == null ? Float.NaN : player.getXRot();
+            GunMod.LOGGER.info(
+                    "[TACZ RecoilDebug] {}Pos view=({},{},{}) raw=({},{},{}) facing=({},{}) shader={} irisHand={}",
+                    tag,
+                    trim2(viewX), trim2(viewY), trim2(viewZ),
+                    trim2(pose.m30()), trim2(pose.m31()), trim2(pose.m32()),
+                    trim2(fx), trim2(fy),
+                    IrisCompat.isUsingRenderPack(), IrisCompat.isHandRendererActive());
+        } catch (Throwable ignored) {
+        }
     }
 
     /**
