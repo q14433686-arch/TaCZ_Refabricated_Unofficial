@@ -870,3 +870,38 @@ sf.write(out, seg/peak*0.707, sr, format='OGG', subtype='VORBIS')
 - **modelView 实证**：手部 pass 内 `RenderSystem.getModelViewMatrixCopy()` 实测 == R(q)
   （view→world，平稳帧与相机重建值逐元素吻合）——坐实了「26.2 的 RenderSystem
   modelView 栈内容不可作为坐标信源」，也解释了首版（modelView 剥离）为何无效。
+
+### 衍生案（第 26 轮追加）：曳光弹"整串随朝向缓慢左右摆"——生成包坐标取整
+
+用户在锚点修复后回报：曳光弹西向"大体正确"，北/西北整体偏右、南/东南→东渐偏左，
+即随 yaw 平滑正弦摆动的**残留偏置**。排查手法与结论：
+
+- 日志三通道（锚点 `globalMuzzle` 全朝向恒定；`fpWorldOffset ≡ R(q)·globalMuzzle`；
+  条带朝向 `finalPose − poseAfterOffset ≡ −velocity`）全部干净 → 渲染侧再无残留，
+  矛头转向**弹体实体本身的出生位置**。
+- 将 113 发 tick=0 子弹的 `bulletPos − eye` 按 yaw 分桶：**世界轴下恒为
+  (-0.309, -0.620, -0.755)** —— 恰为玩家站立点块内小数部分的相反数，即
+  客户端收到的子弹出生坐标＝**整块对齐的整数坐标**。
+- 字节码实锤，26.2 的 `ClientboundAddEntityPacket.<init>(Entity, int, BlockPos)` 已改为：
+  ```java
+  this(entity.getId(), entity.getUUID(),
+       pos.getX(), pos.getY(), pos.getZ(),   // int → double 强转，取整！
+       entity.getXRot(), entity.getYRot(), entity.getType(), data,
+       entity.getDeltaMovement(), entity.getYHeadRot());
+  ```
+  1.21.1 时代该构造器 x/y/z 取自实体精确坐标、BlockPos 只是附属元数据字段；
+  26.2 直接拿 BlockPos 顶替 x/y/z（Packet 已无独立 BlockPos 字段，画/展示框的
+  客户端处理器就把 x/y/z 当贴块坐标读）。移植库 `IEntityAdditionalSpawnData.
+  getEntitySpawningPacket(entity)` 沿用 1.21.1 习惯写法
+  `new ClientboundAddEntityPacket(entity, 0, entity.blockPosition())`，在 26.2 下
+  静默变成**出生坐标量化 bug**：客户端子弹从脚下方块负角起飞，出生锚点与瞄准眼线
+  相差一个与朝向无关的世界轴常向量 → 屏幕投影 `offset·right_world` 随 yaw 正弦，
+  正对/背对该向量方位时"回正"——与报告的偏右/偏左/回正方位族谱吻合
+  （具体零相位随站立点块内小数变，用户换点测试相位即变）。
+  服务端弹道/命中不受影响（全部由服务端精确坐标模拟）；客户端整条预测轨迹
+  受影响。（26.2 原生走 `ServerEntity.getPositionBase()` 的两参构造器不受影响。）
+- **修复**：`IEntityAdditionalSpawnData.getEntitySpawningPacket(Entity)` 改用公开
+  全参构造器显式传 `entity.getX/getY/getZ()` 精确 double。同一调用点的
+  `ThrowableItemEntity`（投掷物）一并治愈。
+- 诊断增强：TracerDebug 日志新增 `bulletRot=(lerpY,lerpX)`（条带朝向来源的实体
+  rot 插值），便于今后一行核对"朝向==速度反向"。

@@ -203,8 +203,12 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 }
                 width *= bullet.getTracerSizeOverride();
                 width *= (float) Math.max(1.0, disToEye / 3.5);
-                poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, bullet.yRotO, bullet.getYRot()) - 180.0F));
-                poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, bullet.xRotO, bullet.getXRot())));
+                // 曳光弹轨迹条带的朝向来源是【实体 rot 字段】而非速度向量；
+                // 提起为本地变量并写进诊断日志，用于核对「条带朝向 == 速度反向」。
+                float bulletLerpYRot = Mth.lerp(partialTicks, bullet.yRotO, bullet.getYRot());
+                float bulletLerpXRot = Mth.lerp(partialTicks, bullet.xRotO, bullet.getXRot());
+                poseStack.mulPose(Axis.YP.rotationDegrees(bulletLerpYRot - 180.0F));
+                poseStack.mulPose(Axis.XP.rotationDegrees(bulletLerpXRot));
                 poseStack.translate(0, isFirstPerson ? 0 : -0.2, trailLength / 2.0);
                 poseStack.scale(width, width, (float) trailLength);
                 double bulletDistance = bulletPosition.distanceTo(shooter.getEyePosition());
@@ -212,7 +216,8 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                         rawTrailLength, trailLength, disToEye, bulletDistance, width, offsetReducer,
                         globalMuzzleOffset, firstPersonOffsetBefore, firstPersonOffsetAfter,
                         firstPersonWorldOffset,
-                        offsetInitialized, camera, poseBeforeOffset, poseAfterOffset,
+                        offsetInitialized, camera, bulletLerpYRot, bulletLerpXRot,
+                        poseBeforeOffset, poseAfterOffset,
                         new Matrix4f(poseStack.last().pose()), debug);
                 if (bullet.tickCount >= 5 || bulletDistance > 2) {
                     RenderType type = RenderTypes.energySwirl(InternalAssetLoader.DEFAULT_BULLET_TEXTURE, 15, 15);
@@ -295,6 +300,8 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                                     @Nullable Vector3f firstPersonWorldOffset,
                                     boolean offsetInitialized,
                                     Camera camera,
+                                    float bulletLerpYRot,
+                                    float bulletLerpXRot,
                                     Matrix4f poseBeforeOffset,
                                     @Nullable Matrix4f poseAfterOffset,
                                     Matrix4f finalPose,
@@ -302,7 +309,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
         if (!shouldLogTracer(bullet, enabled)) {
             return;
         }
-        GunMod.LOGGER.info("[TACZ TracerDebug] bullet={} gun={} display={} ammo={} tick={} partial={} firstPerson={} shader={} irisHand={} tracer={} camera=({},{}) cachedCamera=({},{}) offsetInit={} offsetReducer={} bulletPos={} eye={} delta={} disToEye={} bulletDistance={} rawTrail={} trail={} width={} globalMuzzle={} fpOffsetBefore={} fpOffsetAfter={} fpWorldOffset={} poseBefore={} poseAfterOffset={} finalPose={}",
+        GunMod.LOGGER.info("[TACZ TracerDebug] bullet={} gun={} display={} ammo={} tick={} partial={} firstPerson={} shader={} irisHand={} tracer={} camera=({},{}) cachedCamera=({},{}) bulletRot=({},{}) offsetInit={} offsetReducer={} bulletPos={} eye={} delta={} disToEye={} bulletDistance={} rawTrail={} trail={} width={} globalMuzzle={} fpOffsetBefore={} fpOffsetAfter={} fpWorldOffset={} poseBefore={} poseAfterOffset={} finalPose={}",
                 bullet.getId(),
                 bullet.getGunId(),
                 bullet.getGunDisplayId(),
@@ -315,6 +322,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 bullet.isTracerAmmo(),
                 trim(camera.xRot()), trim(camera.yRot()),
                 trim(bullet.getCameraXRot()), trim(bullet.getCameraYRot()),
+                trim(bulletLerpYRot), trim(bulletLerpXRot),
                 offsetInitialized,
                 trim(offsetReducer),
                 vec(bulletPosition),
