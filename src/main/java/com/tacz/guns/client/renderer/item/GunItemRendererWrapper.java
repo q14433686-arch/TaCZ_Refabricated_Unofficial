@@ -98,6 +98,16 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
      */
     private static final Matrix4f handBasePose = new Matrix4f();
 
+    /**
+     * 供 {@link com.tacz.guns.client.event.FirstPersonRenderGunEvent#applyAnimationConstraintTransform}
+     * 做「入口基座归一化」用的只读副本：第一人称手部 pass 进入 {@code renderFirstPerson} 时的
+     * 基座 3x3 旋转（vanilla 26.2 ≈ R(相机四元数)，Iris 手部 pass ≈ 单位阵，正交旋转，逆=转置）。
+     * 仅渲染线程使用。
+     */
+    public static void copyHandBaseRotation(org.joml.Matrix3f dst) {
+        dst.set(handBasePose);
+    }
+
     public GunItemRendererWrapper() {
         super();
     }

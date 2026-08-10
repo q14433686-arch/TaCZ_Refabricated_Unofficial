@@ -33,6 +33,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -383,7 +384,31 @@ public class FirstPersonRenderGunEvent {
         Vector3f inverseTranslation = new Vector3f(originTranslation);
         inverseTranslation.sub(animatedTranslation);
         inverseTranslation.mulDirection(poseStack.last().pose());
+        // 【26.2 修复：ADS 开枪时枪身在斜向（东南/西南/东北/西北）固定向一侧大幅偏移——
+        //  东南/西北偏左、东北/西南偏右、正方向与腰射与 Iris 手部 pass 均无感】
+        //
+        // 上游 1.21.1 里第一人称手部 PoseStack 从【单位阵】开始，此处 pose.last().pose()
+        // 只含「骨骼链内」的旋转；于是 mulDirection（旋入当前帧）→ 逐轴乘约束系数 都发生在
+        // 骨骼链/视图坐标系，与最终渲染自洽。
+        // 26.2 vanilla 手部 pass 会在链前预乘 R(q)（view→world 相机基座；Iris 手部 pass
+        // 不预乘，基座≈单位阵）。先旋转再逐轴缩放，等价于把各向异性系数 diag(cx,cy,cz)
+        // 用 R(q) 共轭成 R(q)·diag·R(q)ᵀ —— 当 cx≠cz 时共轭矩阵出现 ±(cx−cz)·sin2θ 的
+        // 非对角元：正方向（θ=0/90/180/270°）恰好退化为轴向交换、几乎无感，斜向却产生
+        // 纯横向的整枪滑移，且按象限对反号 —— 正是本轮目击的全部特征。
+        // AK47 的 constraint 轨道 shoot 触发帧 position 键为 [0.15, 0.05, 0.4]，
+        // 系数 (x−1, y−1, 1−z) ≈ (−0.85, −0.95, +0.6)，x 与 z 反号、强各向异性；
+        // 满开镜时 weight≈1，泄漏到 m30..m32 的横移可达 0.1~0.2 视图单位（~2-4°），肉眼显著。
+        //
+        // 修法（与曳光弹枪口锚一案同族的「入口基座归一化」）：把已经旋入写入帧的向量，
+        // 先乘 Bᵀ（B = 手部 pass 入口基座旋转，正交 ⇔ 逆）归一回骨骼链/视图坐标系，
+        // 在正确坐标系里逐轴乘约束系数，再乘 B 旋回写入帧：
+        //   vanilla：B≈R(q)，净效果恢复 1.21.1 的 diag·R_chain·δ，全朝向一致；
+        //   Iris   ：B≈I，整段恒等，保持现状不变。
+        org.joml.Matrix3f baseR = new Matrix3f();
+        GunItemRendererWrapper.copyHandBaseRotation(baseR);
+        inverseTranslation.mulTranspose(baseR);  // Bᵀ·v：写入帧 → 骨骼链（视图）帧
         inverseTranslation.mul(translationICA.x() - 1, translationICA.y() - 1, 1 - translationICA.z()); // 基岩版模型的旋转导致 xy 轴要反过来
+        inverseTranslation.mul(baseR);           // B·v：旋回 m30..m32 的写入帧
         // 计算约束旋转需要的反向旋转。因需要插值，获取的是欧拉角
         Vector3f inverseRotation = new Vector3f(rotation);
         inverseRotation.mul(rotationICA.x() - 1, rotationICA.y() - 1, rotationICA.z() - 1);

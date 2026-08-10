@@ -992,3 +992,44 @@ ADS 高倍率瞄具下曳光弹感观也建议顺带扫一眼。`TRACER_DEBUG` �
 5. 下一轮只需：关光影，原地 5 发 × （正南 / 正东 / 正西） 三组静态扫射，
    换向间不动鼠标。`camWrite` 流将直接回答：x≠0 的帧到底收到了什么输入、
    来自几个通道实例。
+
+---
+
+### 衍生案②·终案（第 27.3~27.5 轮，已破案）：真凶是 `applyAnimationConstraintTransform` 的逐轴约束系数帧混用
+
+**症状终审口径**：「开镜（ADS）+ 开枪时，枪身在四个斜向固定向一侧严重偏移：
+东南/西北偏左、东北/西南偏右；正四个朝向、腰射、开任意光影均正常」。
+
+**破案链条**：
+1. **正方向三向协议（27.2）**：摄像机动画通道污染被洗清——开枪瞬间通道输入
+   在 S/E/W 完全一致（纯 z 欧拉 ±1°，x/y 精确为 0），写入端 blend 逐帧正常；
+   疑似「第二消费者」的 cleanOrphan 仅换模型时触发一次，无害。
+2. **四斜向镜像协议（27.5，关键证据）**：新增 `gunRoot/viewRoot`、全帧率
+   `viewMuzzle`、`sightPos/scopePos`（同一 Bᵀ 转置归一化口径）。四个斜向
+   突发中，**枪根/枪口/机瞄/瞄具四个骨骼测点的 view-x 位移同向同量级**，
+   且符号完美镜像：SE −0.17、NW −0.02、SW +0.03、NE +0.07——刚性整体横移，
+   sin(2θ) 指纹实锤。
+3. **机制**：`FirstPersonRenderGunEvent.applyAnimationConstraintTransform` 计算
+   约束反向位移时原为
+   `inverseTranslation.mulDirection(pose); inverseTranslation.mul(cx−1, cy−1, 1−cz)`。
+   1.21.1 里手部 PoseStack 从单位阵开始，两步都在骨骼链（视图）坐标系，自洽；
+   26.2 vanilla 手部 pass 在链前预乘了 R(q)（view→world 相机基座，Iris 不预乘），
+   先旋转再逐轴缩放 ⇒ 各向异性系数 diag() 被 R(q) 共轭 ⇒ cx≠cz 时产生
+   ±(cx−cz)·sin(θ)cos(θ) 的横向泄漏——正方向退化为轴交换近乎无感，斜向最大，
+   象限对反号。AK47 `constraint` 骨骼 shoot 键位 [0.15,0.05,0.4]
+   （系数 ≈(−0.85, −0.95, +0.6)，xz 反号强各向异性），满开镜 weight≈1 时
+   泄漏横移 0.1~0.2 视图单位（≈2~4°），肉眼显著；腰射 weight≈0 无感；
+   光影下基座≈I 恒等无感。与曳光弹锚点（第 26 轮）同属
+   「入口基座未归一化」家族。
+4. **修法（`FirstPersonRenderGunEvent`）**：`mulDirection(pose)` 之后，先
+   `mulTranspose(B)` 归一回链内帧（B = `GunItemRendererWrapper.copyHandBaseRotation`
+   提供的手部 pass 入口基座 3×3，正交，Iris 下≈I 为恒等），再做逐轴约束系数
+   缩放，最后 `mul(B)` 旋回写入帧。vanilla 下严格恢复 1.21.1 的 diag·R_chain·δ
+   语义；Iris 下整段为零增量回归。
+5. 27.4 轮的四个运行时 FX 隔离开关（`DebugDisableMuzzleFlash/Shell/Tracer/
+   CameraAnim`）留在配置里——用户逐项排除特效的证据链也是定案的一部分。
+
+**遗留观察项（低优先）**：27.1 轮曾观测 `rotationQuaternion` 含 |sin(yaw)| 比例的
+x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制未明，当前判定与本案
+主症状无关（本案幅度 2~4° 且已被完整解释）；长期挂在 w≈0.9987 的非单位稳态
+已查明为 fastInvSqrt 归一化误差被 blend 每帧刷新钉住，视觉无感，不修。
