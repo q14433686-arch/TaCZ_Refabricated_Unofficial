@@ -921,3 +921,40 @@ sf.write(out, seg/peak*0.707, sr, format='OGG', subtype='VORBIS')
 自绘管线）尚未实机回归，建议在光影开启后快速打一梭子确认观感一致；
 ADS 高倍率瞄具下曳光弹感观也建议顺带扫一眼。`TRACER_DEBUG` 系列日志默认关闭，
 保留无碍，发布前如需精简可整体摘除。
+
+### 衍生案②（第 27 轮，进行中）：后坐力反馈方向在对角朝向固定左右偏——诊断探针布设
+
+用户回报（`fa2297f` 构建实测）：**开光影时任意朝向后坐力反馈正常；
+关光影（vanilla 手部管线）时面向东南/西南/东北/西北四个对角朝向，
+后坐力反馈固定严重向左/右偏**。症状指纹：误差∝sin(2θ)，对角最大、正方位为零，
+且随渲染管线翻转——与曳光弹案同族（世界系/视系坐标串扰）但非同一处。
+
+**全链静态审计结论（本轮逐项核对源码）**：后坐相关全部通道在构造上都是**朝向无关**的——
+
+1. 摄像机后坐力（`CameraSetupEvent#applyCameraRecoil`）直接加在玩家自身
+   `xRot/yRot`（玩家坐标系），无任何朝向输入；
+2. yaw 后坐力样条（`GunRecoil#getSplineFunction`）每发 `[min,max]` 均匀随机，
+   无朝向输入，无法产生「固定方向」；
+3. 手持相机动画（`applyItemInHandCameraAnimation`）为视空间**后乘**四元数，
+   对基座内容免疫；
+4. 枪口焰/抛壳均在手部**视空间矩阵**内演化；
+5. 世界相机动画（`AnimateGeoItemRenderer#applyLevelCameraAnimation`）**存在一处
+   已确认的语义错配**：视空间动画四元数被按 **ZYX（航空序）**公式分解欧拉角后
+   叠加到世界系欧拉角（yaw 落在最外层世界 Y 轴），而相机复合约定是 **YXZ 内旋序**。
+   但其静态误差只随**俯仰角**耦合、与朝向**无关**——与症状指纹不符，
+   本轮只记录、**不修复**（避免与待证因的观测混淆）。
+
+静态模型全部干净 + 用户实测存在朝向依赖 ⇒ 静态模型仍有洞，转入运行时取证。
+本轮布设 `RecoilDebug` 探针（`config` 客户端节 `RecoilDebug`，默认关）：
+
+| 日志行 | 位置 | 捕获内容 |
+|---|---|---|
+| `[TACZ RecoilDebug] fire` | `initialCameraRecoil` | 当发 pitch/yaw 样条 8 点包络 + 修正系数 + 朝向 + Iris 状态 |
+| `[TACZ RecoilDebug] apply` | `applyCameraRecoil` | 逐帧 dPitch/dYaw 增量、玩家旋转、相机事件角度、Iris 状态 |
+| `[TACZ RecoilDebug] levelCam` | `applyLevelCameraAnimation`（基类） | 动画四元数、ZYX 分解结果、事件入值 |
+| `[TACZ RecoilDebug] itemCam` | 基类+枪械重载两处 `applyItemInHandCameraAnimation` | 动画四元数 + **叠加前**手部基座 3×3 与平移 |
+
+判读逻辑：`apply` 行对角朝向 ΣdYaw 若仍≈0 ⇒ 摄像机后坐力通道实锤干净，
+矛头指向视觉层的第三处写入；`itemCam` 的 `base3x3` 若在 vanilla 管线呈非纯旋转
+（分量含缩放/切变、随朝向混合），即锁定 sin(2θ) 来源；Iris 档的对照组
+继续豁免则互为印证。上一轮拿用户日志后即按朝向分桶裁决。

@@ -27,6 +27,7 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue SHELL_EJECTION_DEBUG;
     public static ForgeConfigSpec.ConfigValue<String> SHELL_EJECTION_DEBUG_GUN;
     public static ForgeConfigSpec.IntValue SHELL_EJECTION_DEBUG_INTERVAL_MS;
+    public static ForgeConfigSpec.BooleanValue RECOIL_DEBUG;
     public static ForgeConfigSpec.BooleanValue DISABLE_INTERACT_HUD_TEXT;
     public static ForgeConfigSpec.BooleanValue AUTO_SELECT_GUN_SMITH_TABLE_FILTER;
     public static ForgeConfigSpec.IntValue DAMAGE_COUNTER_RESET_TIME;
@@ -105,6 +106,12 @@ public class RenderConfig {
         SHELL_EJECTION_DEBUG_INTERVAL_MS = builder
                 .comment("[DEBUG] Minimum interval between shell ejection debug log lines, in milliseconds.")
                 .defineInRange("ShellEjectionDebugIntervalMs", 250, 50, 10000);
+
+        RECOIL_DEBUG = builder
+                .comment("[DEBUG] Log camera recoil diagnostics: per-shot recoil spline envelopes and per-frame",
+                        "pitch/yaw deltas applied to the player rotation with facing + iris state, plus the level/item",
+                        "camera-animation quaternions. Used to trace direction-bias of recoil feedback vs facing. Default off.")
+                .define("RecoilDebug", false);
 
         builder.comment("Disable the interact hud text in center of the screen");
         DISABLE_INTERACT_HUD_TEXT = builder.define("DisableInteractHudText", false);

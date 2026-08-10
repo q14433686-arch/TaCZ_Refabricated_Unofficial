@@ -182,6 +182,11 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             float zoom = iGun.getAimingZoom(stack);
             float multiplier = 1 - aimingProgress + aimingProgress / (float) Math.sqrt(zoom);
             Quaternionf quaternion = MathUtil.multiplyQuaternion(model.getCameraAnimationObject().rotationQuaternion, multiplier);
+            // 【RecoilDebug 探针】枪械走本重载而非基类 applyItemInHandCameraAnimation，
+            // 探针挂在这里（叠加前基座采样），与基类探针共用同一输出通道。
+            if (RenderConfig.RECOIL_DEBUG.get()) {
+                debugRecoilItemCam(quaternion, multiplier, poseStack);
+            }
             poseStack.mulPose(quaternion);
             // 截至目前，摄像机动画数据已消费完毕。是否有更好的清理动画数据的方法？
             model.cleanCameraAnimationTransform();
