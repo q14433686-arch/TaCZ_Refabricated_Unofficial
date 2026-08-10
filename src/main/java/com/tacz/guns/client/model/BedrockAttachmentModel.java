@@ -9,10 +9,12 @@ import com.tacz.guns.client.model.functional.BeamRenderer;
 import com.tacz.guns.client.render.scope.IReticleRenderer;
 import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
 import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
+import com.tacz.guns.client.render.scope.ScopeClipState;
 import com.tacz.guns.client.render.scope.ScopeMaskGeometry;
 import com.tacz.guns.client.render.scope.ScopeMaskTextureHandle;
-import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.client.render.scope.ScopeNodeSet;
+import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
+import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.client.model.functional.TextShowRender;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
@@ -48,8 +50,11 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * <p>取一个很小的正数而非 0：{@code aimingProgress} 是插值出来的浮点，
      * 收枪结束时可能停在 0.001 这类残值上，用 {@code > 0} 判据会让镜身
      * 一直挂着一个几乎不可见但确实存在的洞。
+     *
+     * <p>public：{@code GunItemRendererWrapper#renderFirstPerson} 决定枪体是否
+     * 换用窗口裁切 RenderType 时用同一阈值，保证枪体与瞄具同进同退。
      */
-    private static final float AIM_CLIP_START = 0.02f;
+    public static final float AIM_CLIP_START = 0.02f;
 
     /**
      * 瞄具文字开始显示的开镜进度。与 {@code IlluminatedReticleRenderer.FADE_IN_START}
@@ -408,6 +413,17 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         return scopeViewPaths.get(viewSwitchCount);
     }
 
+    /**
+     * 该瞄具模型是否有目镜几何（有目镜才有掩码，枪体/配件才可能被镜内裁切）。
+     *
+     * <p>供 {@code GunItemRendererWrapper#renderFirstPerson} 在提交枪体之前
+     * 判定「本帧枪体要不要换窗口裁切 RenderType」——枪体的 RenderType 在瞄具
+     * 提交之前就要选定，读不到 {@link ScopeClipState}，只能自己按同一条件算。
+     */
+    public boolean hasOculars() {
+        return !ocularParts.isEmpty();
+    }
+
     public void setIsScope(boolean isScope) {
         this.isScope = isScope;
     }
@@ -566,6 +582,13 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         boolean shaderMaskUnsafe = IrisCompat.shouldDisableScopeMaskUnderShaderPack();
         if (maskable && !shaderMaskUnsafe) {
             registerOcularMaskGeometry(poseStack);
+            // 掩码活了：同帧的枪体/其它配件据此改用「窗口裁切」RenderType，
+            // 让镜内窗口里不再出现枪的任何部分（用户要求「镜内只剩世界+准星」）。
+            // 只对筒镜生效 —— 红点/全息的镜片在真实里是透光的，枪体透过镜片可见
+            // 是正确行为（上游 renderSight 也不裁枪体）。
+            if (isScope) {
+                ScopeClipState.setScopeAimActive(true);
+            }
         } else if (shaderMaskUnsafe) {
             maskable = false;
         }
@@ -579,17 +602,32 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // 实现方式是临时把不该画的目镜 visible=false，submit 完在 finally 里还原 ——
         // BedrockPart 是跨帧共享对象，不还原会污染第三人称与物品栏预览。
         //
+        // 【第 26 轮】筒镜目镜在掩码生效时也走这条路：它带着「镜身裁切版」
+        // RenderType 进 super.submit 会被整块 discard（掩码=它自己的投影），
+        // 于是目镜黑圈永远画不出来。改为从主提交摘出，用【窗口裁切版】单独提交，
+        // 窗口内(镜片中央)被裁掉、只保留窗口外的边缘带 = 上游「圆外目镜黑色遮罩」。
+        //
         // 【Step 3】镜身改用「会被目镜掩码裁剪」的 RenderType，
         // 复刻上游 scope_body 的 stencilFunc(GL_EQUAL, 0)：只在目镜没盖到处画镜身。
         //
         // 任何一环不满足就原样退回 renderType（= RenderTypes.entityCutout），
         // 也就是当前已 PASS 的行为。最坏情况只是「镜内仍见镜筒内壁」，不会更糟。
         List<BedrockPart> hiddenOculars = new ArrayList<>();
+        List<BedrockPart> ringOculars = new ArrayList<>();
         if (transformType != null && transformType.firstPerson()) {
             for (BedrockPart ocular : ocularParts) {
-                if (ocular.visible && !shouldDrawOcularBlackout(ocular)) {
+                if (!ocular.visible) {
+                    continue;
+                }
+                boolean blackout = shouldDrawOcularBlackout(ocular);
+                if (!blackout || maskable) {
+                    // 红点组目镜：第一人称从不画（上游 renderSight / selective 分支）。
+                    // 筒镜组目镜 + 掩码生效：改由 submitOcularRing 单独绘制（只出黑圈）。
                     ocular.visible = false;
                     hiddenOculars.add(ocular);
+                    if (blackout) {
+                        ringOculars.add(ocular);
+                    }
                 }
             }
         }
@@ -602,20 +640,26 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             }
         }
 
+        // 目镜黑圈单独提交（筒镜 + 掩码生效时）。见上方注释。
+        if (!ringOculars.isEmpty() && texture != null) {
+            submitOcularRing(ringOculars, poseStack, transformType, collector, texture, light, overlay);
+        }
+
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
             ScopeNodeSet active = filterReticleByActiveView(reticleNodes);
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
             if (reticle != null && !active.isEmpty()) {
-                // 准星用【反向裁剪】版：只在目镜盖到处绘制。
+                // 准星用【反向裁剪】版：只保留窗口内绘制。
                 //
-                // 这是上游 renderDivisionOnly 的等价物：
-                //     stencilFunc(GL_EQUAL, i + 1)   // 模板值 i+1 = 第 i 个目镜的投影区
-                // 也就是说准星【被约束在目镜投影内】。
+                // 这是上游 renderOcularAndDivision 的等价物：
+                //     stencilFunc(GL_EQUAL, ~(i + 1))   // 圆(窗口)内才画分划
+                // 也就是说准星【被约束在窗口内】（全开时窗口=目镜投影收缩掉黑圈带宽，
+                // 准星不会压到黑圈上）。
                 //
                 // 少了这层约束，准星就会溢出镜筒、像贴纸一样固定在屏幕上，
                 // 不随镜框缩放 —— 正是用户实测到的第 2 个问题。
                 //
-                // 注意方向别搞反：镜身是「盖到就 discard」，准星是「没盖到才 discard」。
+                // 注意方向别搞反：镜身是「掩码内就 discard」，准星是「窗口外才 discard」。
                 // 两者共用同一张掩码、同一份 shader，靠 SCOPE_MASK_INVERT 区分。
                 RenderType reticleType = resolveReticleRenderType(renderType, texture, maskable);
                 RenderType illuminatedReticleType = resolveIlluminatedReticleRenderType(renderType, texture, maskable);
@@ -710,17 +754,12 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private RenderType resolveBodyRenderType(RenderType original,
                                              @Nullable Identifier texture,
                                              boolean maskable) {
-        if (!maskable) {
-            // 第三人称，或这个配件压根没有目镜（如握把、消音器）—— 不需要裁剪。
-            return original;
-        }
         if (texture == null) {
             // 拿不到贴图就没法建等价的裁剪版 RenderType。宁可不裁剪，也不能画错贴图。
             return original;
         }
         if (!RenderConfig.SCOPE_MASK_ENABLE.get()) {
-            // 特性总开关。Step 3 期间仍挂在调试开关下，默认关闭：
-            // 万一有兼容问题，玩家关掉开关就能回到已知可用的状态，无需回滚版本。
+            // 特性总开关。万一有兼容问题，玩家关掉开关就能回到已知可用的状态。
             return original;
         }
         // 把掩码 target 的纹理挂到 TextureManager 上，供 shader 采样。
@@ -729,7 +768,16 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         if (!ScopeMaskTextureHandle.syncToMaskTarget()) {
             return original;
         }
-        return ScopeBodyRenderTypes.clipped(texture);
+        if (maskable) {
+            // 本瞄具自己有目镜：镜身整块目镜投影内不画（上游 stencilFunc(EQUAL, 0)）。
+            return ScopeBodyRenderTypes.clipped(texture);
+        }
+        if (ScopeClipState.isScopeAimActive()) {
+            // 本配件没有目镜（前瞄、制退器、握把…），但本帧有人在用筒镜开镜：
+            // 用【窗口裁切版】，让镜内窗口里不出现这些配件。
+            return ScopeBodyRenderTypes.window(texture);
+        }
+        return original;
     }
 
     /**
@@ -901,6 +949,67 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             }
         } finally {
             poseStack.popPose();
+        }
+    }
+
+    /**
+     * 用【窗口裁切版】RenderType 单独提交筒镜目镜，只保留窗口外的边缘带（黑圈）。
+     *
+     * <h2>为什么必须单独提交</h2>
+     * {@code super.submit} 整棵树只有一个 RenderType。目镜如果带着镜身裁切版
+     * （{@code SCOPE_MASK}，整块目镜投影内 discard）进主提交，会被自己的掩码
+     * 整块裁掉 —— 黑圈永远画不出来（用户反馈「未能保留目镜内的那一圈黑色边缘」）。
+     * 窗口裁切版（{@code SCOPE_MASK_WINDOW}）只裁窗口内，于是目镜只在
+     * 「目镜投影 − 窗口」的环带里出现 = 上游 {@code stencilFunc(EQUAL, i+1)}
+     * 画的「圆外目镜黑色遮罩」。
+     *
+     * <p>遍历结构、visible 临时开关、快照提交方式均与
+     * {@code IlluminatedReticleRenderer#submitOne} 同构（那条路径已被多轮实测
+     * 验证），不另起炉灶。</p>
+     */
+    private void submitOcularRing(List<BedrockPart> oculars,
+                                  PoseStack poseStack,
+                                  ItemDisplayContext transformType,
+                                  SubmitNodeCollector collector,
+                                  Identifier texture,
+                                  int light,
+                                  int overlay) {
+        RenderType ringType = ScopeBodyRenderTypes.window(texture);
+        for (BedrockPart ocular : oculars) {
+            java.util.Deque<BedrockPart> chain = new java.util.ArrayDeque<>();
+            for (BedrockPart p = ocular; p != null; p = p.getParent()) {
+                chain.push(p);
+            }
+            // 祖先链可能是隐藏的（目镜自身的 visible 刚被我们关掉），而快照遍历器
+            // 遇到 visible=false 会直接 return。临时打开整条链，画完在 finally 还原。
+            List<BedrockPart> touched = new ArrayList<>();
+            List<Boolean> saved = new ArrayList<>();
+            for (BedrockPart p : chain) {
+                touched.add(p);
+                saved.add(p.visible);
+                p.visible = true;
+            }
+            poseStack.pushPose();
+            try {
+                for (BedrockPart p : chain) {
+                    p.translateAndRotateAndScale(poseStack);
+                }
+                BedrockRenderSnapshot snapshot = BedrockRenderSnapshot.captureSubtree(
+                        ocular, poseStack, transformType, light, overlay,
+                        1.0f, 1.0f, 1.0f, 1.0f);
+                if (!snapshot.isEmpty()) {
+                    // 快照里的矩阵已经包含完整的入参 pose，必须从【单位矩阵】提交，
+                    // 否则根变换会被叠加两次。
+                    PoseStack identity = new PoseStack();
+                    collector.submitCustomGeometry(identity, ringType,
+                            (entryPose, consumer) -> snapshot.write(consumer));
+                }
+            } finally {
+                poseStack.popPose();
+                for (int i = 0; i < touched.size(); i++) {
+                    touched.get(i).visible = saved.get(i);
+                }
+            }
         }
     }
 }

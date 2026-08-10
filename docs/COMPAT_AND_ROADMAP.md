@@ -773,3 +773,56 @@ sf.write(out, seg/peak*0.707, sr, format='OGG', subtype='VORBIS')
 > **实测建议**：静止连续开火，观察起点是否始终偏同一处（坐标系问题）或仅第一发偏（时序问题）。若 ADS 横移时偏移过高，可把 50 改为 35~40 线性，而非 12 二次（后者起点虽对，但快速贴回弹道，主观上仍感觉“从胸口出来”）。
 
 **已知限制**：子弹实体生成位置仍在眼睛下方 0.1（上游设计，弹道需与准星一致），视觉上从枪口出来仅是第一人称的偏移补偿，第三人称无补偿（上游原生表现）。
+
+---
+
+## 十、两个历史遗留问题根因终判（2026-08-10，以 26.2 字节码为准）
+
+> 本节推翻 §9 及 `EntityBulletRenderer` 第 25 轮注释的部分结论。
+> 完整推导见 `docs/ROOTCAUSE_TRACER_SCOPE_2026-08-10.md`。
+
+### 10.1 曳光弹：第 25 轮的「视图空间常量」判断建立在漏反汇编上
+
+**字节码事实**（`GameRenderer#renderItemInHand` L350）：26.2 在调用
+`submitHandsWithItems` 之前先执行 `poseStack.mulPose(invert(viewRotationMatrix))`，
+即手部 poseStack 根部带着「视图→世界」的相机旋转 R；着色器层 ModelView=
+`viewRotationMatrix`（=R⁻¹）与之抵消后画面才正确。因此
+`cacheMuzzlePosition` 读到的 `pose.m30..32` 是 **R·(视图空间枪口位置)**，即
+**世界轴、相对相机**的向量，而不是第 25 轮文档断言的「视图空间常量」。
+
+§9 第 2 条「26.2 实体仍在视图空间」同样不成立：`LevelRenderer#submitEntities` /
+`EntityRenderDispatcher#submit` 只做 `translate(entity.pos - camera.pos)`，
+实体 poseStack 是**相机相对的世界轴**空间（着色器再乘 viewRotationMatrix）。
+
+**修复**（`GunItemRendererWrapper#cacheMuzzlePosition`，2026-08-10）：
+捕获后先乘 `camera.rotation().conjugate()`（世界→视图）还原成真正的视图空间
+枪口偏移，再做 FOV 比值换算（k 只乘在**视图 z** 上）。`EntityBulletRenderer`
+现有的 `rotate(camera.rotation())` 因而恰好正确。Iris 手部路径绕过
+renderItemInHand（poseStack 不含 R），以 `isHandRendererActive()` 门控跳过抵消。
+
+### 10.2 镜内裁切：补上「目镜黑圈」与「枪体/配件窗口裁切」
+
+**上游 1.21.1 结构**（已逐行核对 Sh1roCu/TACZ-Refabricated 1.21.1 源码）：
+- 裁剪区域 A = 目镜几何的屏幕投影（写模板的那一步）；
+- 窗口 B = 屏幕空间圆（半径 80×modifier×progress），**全开时黑圈依然存在**；
+- **黑圈 = 目镜几何画在 A−B 里**；
+- 镜身 A 内不画；准星只画在窗口内；枪体/配件上游也不裁（靠几何避开窗口）。
+
+**26.2 移植版此前**：目镜带着镜身裁切版 RenderType 进主提交被自己的掩码整块
+discard → 黑圈缺失；`progress<0.999` 跳过收缩 → 全开时连过渡黑圈也消失；
+枪体/配件不裁 → 镜内看到枪（用户两条反馈）。
+
+**修复**（2026-08-10）：
+- `scope_body.fsh`：A/B 分离，三种裁切模式
+  （`SCOPE_MASK`=镜身 A 内 discard；`SCOPE_MASK_WINDOW`=目镜黑圈/枪体/配件
+  窗口内 discard；`SCOPE_MASK_INVERT`=准星只保留窗口内）；
+  全开时保留 `0.65×0.055 ≈ 3.6% 屏高` 的黑圈带宽（去掉 `progress<0.999` 跳过）。
+- `BedrockAttachmentModel`：筒镜目镜从主提交摘出，用窗口裁切版单独提交（黑圈）；
+  非瞄具配件在 `ScopeClipState` 生效时改用窗口裁切版。
+- `GunItemRendererWrapper#renderFirstPerson`：筒镜开镜时枪体 RenderType 换
+  窗口裁切版（含透明枪的混合版本），与瞄具同一条件同进同退。
+- 红点/全息（isSight）不裁枪体 —— 真实镜片透光，上游 renderSight 同样不裁。
+
+**待实测确认项**：黑圈带宽常量（`FINAL_RING_FRACTION=0.65`）的观感；
+开镜过渡的窗口扩张速率（掩码距离场饱和导致过渡并非从中心张开，与上游圆形
+窗口的差异为已知近似）。

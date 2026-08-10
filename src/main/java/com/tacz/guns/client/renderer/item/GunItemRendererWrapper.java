@@ -5,11 +5,17 @@ import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.animation.statemachine.LuaAnimationStateMachine;
 import com.tacz.guns.api.client.event.BeforeRenderHandEvent;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.model.BedrockAttachmentModel;
+import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
+import com.tacz.guns.client.render.scope.ScopeMaskTextureHandle;
+import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
@@ -22,8 +28,10 @@ import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.model.functional.ShellRender;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.TransformScale;
+import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.util.RenderDistance;
 import com.tacz.guns.util.math.MathUtil;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -40,6 +48,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -232,9 +241,42 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
                 gunModel.setRenderHand(false);
             }
             // 调用枪械模型渲染
-            RenderType renderType = display.enablesTransparency()
+            boolean translucent = display.enablesTransparency();
+            RenderType renderType = translucent
                     ? RenderTypes.entityTranslucent(display.getModelTexture())
                     : RenderTypes.entityCutout(display.getModelTexture());
+            // 【第 26 轮】筒镜开镜时，枪体在镜内窗口中的部分必须裁掉
+            // （「镜内只剩世界+准星」，用户反馈「未能镜内裁切掉枪体」）。
+            //
+            // 枪体的 RenderType 在瞄具配件提交【之前】就要选定（BedrockGunModel#submit
+            // 先提交瞄具、再 super.submit 枪体），读不到 ScopeClipState（它由瞄具的
+            // submit 置位），所以这里用与瞄具 maskable 完全相同的条件自行判定：
+            // 装的是【筒镜】（红点/全息不算 —— 真实里透过镜片看到枪是正确行为）、
+            // 该瞄具确实有目镜（有目镜才有掩码）、开镜进度超过阈值、开关与光影均放行。
+            // 与瞄具侧同进同退：任一条件不满足就退回原 RenderType。
+            if (RenderConfig.SCOPE_MASK_ENABLE.get()
+                    && !IrisCompat.shouldDisableScopeMaskUnderShaderPack()) {
+                IGun iGun = IGun.getIGunOrNull(stack);
+                if (iGun != null) {
+                    Identifier scopeId = iGun.getAttachmentId(stack, AttachmentType.SCOPE);
+                    if (scopeId.equals(DefaultAssets.EMPTY_ATTACHMENT_ID)) {
+                        scopeId = iGun.getBuiltInAttachmentId(stack, AttachmentType.SCOPE);
+                    }
+                    if (!DefaultAssets.isEmptyAttachmentId(scopeId)) {
+                        var indexOptional = TimelessAPI.getClientAttachmentIndex(scopeId);
+                        if (indexOptional.isPresent()) {
+                            var attachmentModel = indexOptional.get().getAttachmentModel();
+                            if (attachmentModel != null && attachmentModel.isScope()
+                                    && attachmentModel.hasOculars()
+                                    && IClientPlayerGunOperator.fromLocalPlayer(player)
+                                            .getClientAimingProgress(partialTick) > BedrockAttachmentModel.AIM_CLIP_START
+                                    && ScopeMaskTextureHandle.syncToMaskTarget()) {
+                                renderType = ScopeBodyRenderTypes.gunBody(display.getModelTexture(), translucent);
+                            }
+                        }
+                    }
+                }
+            }
             gunModel.submit(poseStack, stack, ctx, collector, renderType, light, OverlayTexture.NO_OVERLAY);
             // 缓存枪口位置，为第一人称曳光弹渲染作准备
             cacheMuzzlePosition(poseStack, gunModel);
@@ -260,11 +302,42 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             double itemRenderFov = CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get();
             double levelRenderFov = CameraSetupEvent.WORLD_FOV_DYNAMICS.get();
             poseStack.popPose();
-            // 缓存转换后的偏移坐标
+            // 【第 26 轮修复：枪口偏移必须存成【视图空间】，而不是 pose 的原始平移】
+            //
+            // 26.2 的 GameRenderer#renderItemInHand（字节码确认，见
+            // docs/ROOTCAUSE_TRACER_SCOPE_2026-08-10.md）在调用
+            // ItemInHandRenderer#submitHandsWithItems 之前先执行了：
+            //     poseStack.mulPose(invert(cameraState.viewRotationMatrix));
+            //     RenderSystem.getModelViewStack().mul(viewRotationMatrix);
+            // 即手部 poseStack 根部带着一个「视图→世界」的相机旋转 R（=
+            // camera.rotation()，与着色器层的 viewRotationMatrix=R⁻¹ 精确抵消后
+            // 画面才正确）。于是这里读到的 pose.m30..32 = R * (枪口视图空间坐标)，
+            // 是【世界轴、相对相机】的向量，不是视图空间向量。
+            //
+            // 曳光弹实体走的是世界轴实体管线（poseStack = translate(entity.pos -
+            // camera.pos)，着色器再乘 viewRotationMatrix），它需要的偏移必须先回到
+            // 视图空间：乘 R⁻¹(= rotation().conjugate()) 得到真正的视图空间枪口位置，
+            // 再做 FOV 比值换算（k 只对视图 z 成立；对世界 z 施放会在开镜时随朝向漂移，
+            // 这正是「面朝不同方向，曳光弹出发点各不相同」的直接来源）。
+            //
+            // 上游 1.21.1 的手部 poseStack 不带 R（没有 mulPose(invert(viewRot)) 那一步），
+            // 捕获值天然是视图空间 —— 这里的旋转只是把 26.2 新增的那一步抵消掉，
+            // 使语义与上游逐字一致。
+            Vector3f muzzleOffset = new Vector3f(pose.m30(), pose.m31(), pose.m32());
+            if (!IrisCompat.isHandRendererActive()) {
+                // Iris 手部路径绕过 renderItemInHand（不注入 R），无需抵消。
+                // 与上游「Iris 下才做 YN/XN 旋转」的语义对应。
+                // 注意必须用两参 conjugate(dest)：无参版会原地共轭 camera.rotation()
+                // 返回的内部 Quaternionf 本体，把整个相机的朝向旋转破坏掉。
+                Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
+                muzzleOffset.rotate(camera.rotation().conjugate(new Quaternionf()));
+            }
+            // 缓存转换后的偏移坐标（视图空间，z 已做 FOV 换算）
+            double fovRatio = Math.tan(itemRenderFov / 2 * Math.PI / 180) / Math.tan(levelRenderFov / 2 * Math.PI / 180);
             muzzleRenderOffset.set(
-                    pose.m30(),
-                    pose.m31(),
-                    pose.m32() * Math.tan(itemRenderFov / 2 * Math.PI / 180) / Math.tan(levelRenderFov / 2 * Math.PI / 180)
+                    muzzleOffset.x(),
+                    muzzleOffset.y(),
+                    (float) (muzzleOffset.z() * fovRatio)
             );
         }
     }

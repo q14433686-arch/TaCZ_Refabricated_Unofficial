@@ -182,6 +182,9 @@ public final class ScopeMaskRenderer {
      * <p>无论成败，末尾都会清空当帧清单 —— 见 {@code finally}。
      */
     public static void renderAtPhaseBoundary() {
+        // 开关只影响提交阶段的 RenderType 选择；掩码 pass 之后本帧已无提交，
+        // 无条件清除，防止枪械收起后残留到下一帧。
+        ScopeClipState.setScopeAimActive(false);
         boolean activeHandPass = isInHandPass();
         // 【诊断】上一版实测「预览全黑 + 日志一行都没有」，原因是几何一个都没登记，
         // isEmpty() 直接 return，于是连个说法都没有。静默失败最难查，

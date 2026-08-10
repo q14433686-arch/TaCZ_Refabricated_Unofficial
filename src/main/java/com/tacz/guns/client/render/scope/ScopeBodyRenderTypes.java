@@ -1,6 +1,8 @@
 package com.tacz.guns.client.render.scope;
 
 import com.mojang.blaze3d.pipeline.BindGroupLayout;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
@@ -70,7 +72,7 @@ public final class ScopeBodyRenderTypes {
     private static final BindGroupLayout MASK_SAMPLER_LAYOUT =
             BindGroupLayout.builder().withSampler(MASK_SAMPLER).build();
 
-    private static RenderPipeline buildPipeline(String name, boolean mask, boolean invert, boolean emissive) {
+    private static RenderPipeline buildPipeline(String name, boolean mask, boolean invert, boolean window, boolean emissive, boolean translucent) {
         var builder = RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
                 .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/" + name))
                 .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
@@ -83,35 +85,51 @@ public final class ScopeBodyRenderTypes {
             builder = builder.withShaderDefine("EMISSIVE")
                     .withShaderDefine("NO_CARDINAL_LIGHTING");
         } else {
-            // 以下与 vanilla ENTITY_CUTOUT 一致，用于镜身和蚀刻分划。
+            // 以下与 vanilla ENTITY_CUTOUT 一致，用于镜身、蚀刻分划、枪体与配件。
             builder = builder.withShaderDefine("PER_FACE_LIGHTING");
         }
         if (mask) {
             builder = builder.withShaderDefine("SCOPE_MASK")
                     .withBindGroupLayout(MASK_SAMPLER_LAYOUT);
             if (invert) {
-                // 准星版：只保留镜内（上游 stencilFunc(EQUAL, i+1)）
+                // 准星版：只保留镜内窗口（上游 stencilFunc(EQUAL, ~(i+1))）
                 builder = builder.withShaderDefine("SCOPE_MASK_INVERT");
             }
+            if (window) {
+                // 窗口裁切版：只裁掉镜内窗口（目镜黑圈 / 枪体 / 配件）
+                builder = builder.withShaderDefine("SCOPE_MASK_WINDOW");
+            }
+        }
+        if (translucent) {
+            // 与 vanilla ENTITY_TRANSLUCENT 的混合状态一致（含透明枪械的枪体）。
+            builder = builder.withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT));
         }
         return builder.build();
     }
 
-    /** 镜身：只在目镜<b>没盖到</b>处绘制。 */
+    /** 镜身：整块目镜投影内都不画（上游 stencilFunc(GL_EQUAL, 0)）。 */
     private static final RenderPipeline CLIPPED_PIPELINE =
-            buildPipeline("scope_body_clipped", true, false, false);
+            buildPipeline("scope_body_clipped", true, false, false, false, false);
 
-    /** 蚀刻准星：只在目镜<b>盖到</b>处绘制，保留受光。 */
+    /** 蚀刻准星：只在窗口内绘制，保留受光。 */
     private static final RenderPipeline RETICLE_PIPELINE =
-            buildPipeline("scope_reticle_clipped", true, true, false);
+            buildPipeline("scope_reticle_clipped", true, true, false, false, false);
 
-    /** 发光准星：只在目镜<b>盖到</b>处绘制，满亮且不受方向光影响。 */
+    /** 发光准星：只在窗口内绘制，满亮且不受方向光影响。 */
     private static final RenderPipeline RETICLE_EMISSIVE_PIPELINE =
-            buildPipeline("scope_reticle_emissive_clipped", true, true, true);
+            buildPipeline("scope_reticle_emissive_clipped", true, true, false, true, false);
 
     /** 发光准星无掩码回退：满亮且不受方向光影响。 */
     private static final RenderPipeline EMISSIVE_PIPELINE =
-            buildPipeline("scope_reticle_emissive", false, false, true);
+            buildPipeline("scope_reticle_emissive", false, false, false, true, false);
+
+    /** 窗口裁切（目镜黑圈 / 非瞄具配件）：只裁掉镜内窗口，不透明。 */
+    private static final RenderPipeline WINDOW_PIPELINE =
+            buildPipeline("scope_window_clipped", true, false, true, false, false);
+
+    /** 窗口裁切 + 混合（含透明枪械的枪体，等价 entityTranslucent + 窗口裁切）。 */
+    private static final RenderPipeline WINDOW_TRANSLUCENT_PIPELINE =
+            buildPipeline("scope_window_clipped_translucent", true, false, true, false, true);
 
     private static boolean irisAssignmentAttempted = false;
 
@@ -130,6 +148,8 @@ public final class ScopeBodyRenderTypes {
         IrisCompat.assignScopePipelineToHand(RETICLE_PIPELINE, "scope_reticle_clipped");
         IrisCompat.assignScopePipelineToHand(RETICLE_EMISSIVE_PIPELINE, "scope_reticle_emissive_clipped");
         IrisCompat.assignScopePipelineToHand(EMISSIVE_PIPELINE, "scope_reticle_emissive");
+        IrisCompat.assignScopePipelineToHand(WINDOW_PIPELINE, "scope_window_clipped");
+        IrisCompat.assignScopePipelineToHand(WINDOW_TRANSLUCENT_PIPELINE, "scope_window_clipped_translucent");
     }
 
     /**
@@ -143,6 +163,9 @@ public final class ScopeBodyRenderTypes {
     private static final Map<Identifier, RenderType> RETICLE_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> RETICLE_EMISSIVE_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> EMISSIVE_CACHE = new HashMap<>();
+    private static final Map<Identifier, RenderType> WINDOW_CACHE = new HashMap<>();
+    private static final Map<Identifier, RenderType> GUN_BODY_CACHE = new HashMap<>();
+    private static final Map<Identifier, RenderType> GUN_BODY_TRANSLUCENT_CACHE = new HashMap<>();
 
     private ScopeBodyRenderTypes() {
     }
@@ -182,6 +205,38 @@ public final class ScopeBodyRenderTypes {
         ensureIrisCompatibility();
         return EMISSIVE_CACHE.computeIfAbsent(texture,
                 tex -> create("tacz_scope_reticle_emissive", EMISSIVE_PIPELINE, tex, false));
+    }
+
+    /**
+     * 窗口裁切（不透明）：只裁掉镜内窗口。
+     *
+     * <p>两个用途：</p>
+     * <ul>
+     *   <li><b>目镜黑圈</b>：筒镜目镜用本类型单独提交后，窗口内(镜片中央)被裁掉，
+     *       只保留窗口外的边缘带 —— 等价于上游 {@code stencilFunc(EQUAL, i+1)}
+     *       画的「圆外目镜黑色遮罩」；</li>
+     *   <li><b>非瞄具配件</b>（前瞄、制退器等）：开镜时镜内不该出现它们。</li>
+     * </ul>
+     */
+    public static RenderType window(Identifier texture) {
+        ensureIrisCompatibility();
+        return WINDOW_CACHE.computeIfAbsent(texture,
+                tex -> create("tacz_scope_window_clipped", WINDOW_PIPELINE, tex, true));
+    }
+
+    /**
+     * 枪体窗口裁切：开镜时枪体在镜内窗口中的部分不可见（「镜内只剩世界+准星」）。
+     *
+     * @param translucent 该枪贴图是否启用透明（对应 entityTranslucent 的混合状态）
+     */
+    public static RenderType gunBody(Identifier texture, boolean translucent) {
+        ensureIrisCompatibility();
+        if (translucent) {
+            return GUN_BODY_TRANSLUCENT_CACHE.computeIfAbsent(texture,
+                    tex -> create("tacz_scope_gun_body_window_translucent", WINDOW_TRANSLUCENT_PIPELINE, tex, true));
+        }
+        return GUN_BODY_CACHE.computeIfAbsent(texture,
+                tex -> create("tacz_scope_gun_body_window", WINDOW_PIPELINE, tex, true));
     }
 
     private static RenderType create(String name, RenderPipeline pipeline, Identifier tex, boolean bindMask) {

@@ -24,6 +24,8 @@ public final class IrisScopeMaskState {
     private static final String BODY_PIPELINE = "pipeline/scope_body_clipped";
     private static final String RETICLE_PIPELINE = "pipeline/scope_reticle_clipped";
     private static final String RETICLE_EMISSIVE_PIPELINE = "pipeline/scope_reticle_emissive_clipped";
+    private static final String WINDOW_PIPELINE = "pipeline/scope_window_clipped";
+    private static final String WINDOW_TRANSLUCENT_PIPELINE = "pipeline/scope_window_clipped_translucent";
     private static final String MASK_SAMPLER = "ScopeMaskSampler";
     private static final String UNIFORM_MODE = "tacz_ScopeMaskMode";
     private static final String UNIFORM_SAMPLER = "tacz_ScopeMaskSampler";
@@ -143,6 +145,11 @@ public final class IrisScopeMaskState {
             }
             if (RETICLE_PIPELINE.equals(normalized) || RETICLE_EMISSIVE_PIPELINE.equals(normalized)) {
                 return 2;
+            }
+            // 目镜黑圈 / 枪体 / 配件：窗口内 discard（与 scope_body.fsh 的
+            // SCOPE_MASK_WINDOW 分支同语义）。
+            if (WINDOW_PIPELINE.equals(normalized) || WINDOW_TRANSLUCENT_PIPELINE.equals(normalized)) {
+                return 3;
             }
         } catch (Throwable t) {
             logOnce("resolve scope render pass", t);

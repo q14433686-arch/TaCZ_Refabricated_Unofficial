@@ -24,7 +24,7 @@ uniform sampler2D DissolveMaskSampler;
 #endif
 
 #ifdef SCOPE_MASK
-// 目镜掩码：白 = 该像素属于镜内（目镜投影覆盖），黑 = 镜外。
+// 目镜掩码：R = 目镜投影(A)，G = 开镜进度(0~1)。
 // 由 ScopeMaskRenderer 在阶段边界渲染到离屏 target。
 uniform sampler2D ScopeMaskSampler;
 #endif
@@ -53,71 +53,80 @@ out vec4 fragColor;
 void main() {
 #ifdef SCOPE_MASK
     // 用 gl_FragCoord 而不是 texCoord0：我们要问的是「屏幕上这个位置」
-    // 有没有被目镜盖住，与镜身自己的贴图 UV 无关。
+    // 有没有被目镜盖住，与几何自己的贴图 UV 无关。
     //
     // gl_FragCoord.xy 是以【左下】为原点的窗口像素坐标，掩码 target 的
     // 纹理原点同样在左下，两者一致，所以这里【不需要】翻 Y。
     // （调试预览里要翻 V，那是因为 GUI 坐标系原点在左上 —— 两回事，别混。）
     vec2 maskUv = gl_FragCoord.xy / ScreenSize;
     vec2 maskSample = texture(ScopeMaskSampler, maskUv).rg;
-    bool insideOcular = maskSample.r > 0.5;
+    // A = 目镜投影（掩码本体）。
+    bool inMask = maskSample.r > 0.5;
 
-    // 【开镜渐进】绿通道存的是开镜进度(由 ScopeMaskRenderer 写入 ColorModulator.g)。
+    // 掩码距离场采样带宽（UV 单位，约 5.5% 屏高）。
+    // 也是「窗口收缩带」的最大宽度：窗口 = A 向内收缩 progress×(1-FINAL_RING_FRACTION)×带宽。
+    const float RING_BAND = 0.055;
+    // 全开镜时保留的黑圈宽度占带宽的比例。0.65 → 全开时黑圈 ≈ 0.036 UV ≈ 3.6% 屏高。
+    // 上游 1.21.1 的圆半径 = 80×modifier×progress，全开时同样保留黑圈 —— 本常量是其等价物。
+    const float FINAL_RING_FRACTION = 0.65;
+
+    // 【窗口 B = A 向内收缩】绿通道存的是开镜进度(由 ScopeMaskRenderer 写入
+    // ColorModulator.g)。以掩码本身做距离场：采样周围若干环，数一数有多少落在
+    // 掩码内。全在内部 -> depth≈1(处于中心深处)；贴着边缘 -> depth≈0。
+    // 这样不需要知道圆心在哪，对任意形状的目镜投影都成立。
     //
-    // 上游的做法是: 圆心固定在目镜投影中心, 只让半径随进度增长 ——
-    //     centerX/centerY = getBedrockPartCenter(...)  // 固定不动
-    //     rad = 80 * modifier * aimingProgress         // 只有半径在变
-    // 关键在于这是【纯二维】操作: 位置不动, 只有覆盖范围在变。
-    //
-    // 早前的实现是按进度缩放 3D 目镜几何, 那在透视投影下会连带改变投影【位置】,
-    // 观感就是镜内区域从画面外"飞"进来 —— 用户实测到的第 2 个问题。
-    //
-    // 这里改成等价的二维操作: 沿掩码边缘向内收缩。progress 小时只保留
-    // 深处的像素(离边缘远的), progress=1 时保留全部。位置始终不动。
-    if (insideOcular) {
-        float progress = maskSample.g;
-        if (progress < 0.999) {
-            // 以掩码本身做距离场: 采样周围若干环, 数一数有多少落在掩码内。
-            // 全在内部 -> depth≈1(处于中心深处); 贴着边缘 -> depth≈0。
-            // 这样不需要知道圆心在哪, 对任意形状的目镜投影都成立
-            // (我们的掩码是多边形投影, 不是正圆)。
-            const int RINGS = 3;
-            const int STEPS = 8;
-            float inside = 0.0;
-            float total = 0.0;
-            // 收缩带宽度, 以 UV 为单位。取 0.055 约等于屏幕高度的 5.5%,
-            // 对默认枪包里最大的目镜投影也够覆盖到中心。
-            float unit = 0.055;
-            for (int r = 1; r <= RINGS; r++) {
-                float radius = unit * float(r) / float(RINGS);
-                for (int i = 0; i < STEPS; i++) {
-                    float a = 6.2831853 * float(i) / float(STEPS);
-                    vec2 off = vec2(cos(a), sin(a)) * radius;
-                    // 纵横比修正: UV 空间里同样的数值在 x/y 上对应不同像素数
-                    off.x *= ScreenSize.y / max(ScreenSize.x, 1.0);
-                    total += 1.0;
-                    inside += texture(ScopeMaskSampler, maskUv + off).r > 0.5 ? 1.0 : 0.0;
-                }
-            }
-            float depth = total > 0.0 ? inside / total : 1.0;
-            // depth < 1-progress 的像素(靠近边缘的)暂时不算"镜内"
-            if (depth < 1.0 - progress) {
-                insideOcular = false;
+    // 上游的做法是圆心固定、半径随进度增长（纯二维操作）；我们没有圆心，
+    // 用「离边缘的距离」做等价物：窗口 = 掩码向内收缩 progress 比例的带宽。
+    // 与上游不同的一点：全开时【不】把收缩带清零 —— 保留
+    // FINAL_RING_FRACTION×带宽的黑圈（上游全开时半径停在 80×modifier，同样有黑圈）。
+    bool inWindow = false;
+    if (inMask) {
+        float progress = clamp(maskSample.g, 0.0, 1.0);
+        const int RINGS = 3;
+        const int STEPS = 8;
+        float inside = 0.0;
+        float total = 0.0;
+        for (int r = 1; r <= RINGS; r++) {
+            float radius = RING_BAND * float(r) / float(RINGS);
+            for (int i = 0; i < STEPS; i++) {
+                float a = 6.2831853 * float(i) / float(STEPS);
+                vec2 off = vec2(cos(a), sin(a)) * radius;
+                // 纵横比修正: UV 空间里同样的数值在 x/y 上对应不同像素数
+                off.x *= ScreenSize.y / max(ScreenSize.x, 1.0);
+                total += 1.0;
+                inside += texture(ScopeMaskSampler, maskUv + off).r > 0.5 ? 1.0 : 0.0;
             }
         }
+        float depth = total > 0.0 ? inside / total : 1.0;
+        // 窗口阈值：progress 0→1 时从 1.0（只有最深处算窗口内）线性降到
+        // 1 - 0.5×(1-FINAL_RING_FRACTION) ≈ 0.825（保留约 3.6% 屏高的黑圈带宽）。
+        // 深度值在掩码边缘约 0.5、深入带宽后饱和到 1.0，故 0.5 系数把
+        // 「收缩带宽」换算成「深度阈值」。
+        float threshold = 1.0 - 0.5 * progress * (1.0 - FINAL_RING_FRACTION);
+        inWindow = depth >= threshold;
     }
-  #ifdef SCOPE_MASK_INVERT
-    // 【反向】只保留镜内 —— 用于准星（分划）。
-    // 上游对准星用的是 stencilFunc(GL_EQUAL, i+1)，即「只在第 i 个目镜的
-    // 投影区内绘制」（renderDivisionOnly / renderOcularAndDivision 均如此）。
+  #ifdef SCOPE_MASK_WINDOW
+    // 【窗口裁切】只裁掉窗口内 —— 用于目镜黑圈、枪体与配件。
+    // 目镜：落在窗口内(镜片中央)的部分不画，只保留窗口外的边缘带 = 黑圈
+    //       （等价于上游 stencilFunc(EQUAL, i+1) 画的「圆外目镜遮罩」）。
+    // 枪体/配件：镜内不该出现枪的任何部分（用户要求「镜内只剩世界+准星」）。
+    if (inWindow) {
+        discard;
+    }
+  #elif defined(SCOPE_MASK_INVERT)
+    // 【反向】只保留窗口内 —— 用于准星（分划）。
+    // 上游对准星用的是 stencilFunc(GL_EQUAL, ~(i+1))，即「只在窗口内绘制」
+    // （renderDivisionOnly / renderOcularAndDivision 均如此）。
     // 少了这一步，准星就会溢出镜筒、贴在屏幕上不受镜框约束。
-    if (!insideOcular) {
+    if (!inWindow) {
         discard;
     }
   #else
-    // 落在目镜投影内 —— 这里属于「镜内」，镜身不该出现，
-    // 让后面的世界画面透出来。等价于上游 stencilFunc(GL_EQUAL, 0)。
-    if (insideOcular) {
+    // 【镜身】整块目镜投影内都不画 —— 上游 stencilFunc(GL_EQUAL, 0)。
+    // 落在目镜投影内属于「镜内」，镜身不该出现，让世界画面透出来；
+    // 窗口外的边缘带（黑圈）由目镜单独绘制（SCOPE_MASK_WINDOW 那一支），
+    // 不会露出镜筒内壁。
+    if (inMask) {
         discard;
     }
   #endif
