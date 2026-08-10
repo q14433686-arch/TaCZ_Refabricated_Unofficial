@@ -275,6 +275,11 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             RenderType renderType = display.enablesTransparency()
                     ? RenderTypes.entityTranslucent(display.getModelTexture())
                     : RenderTypes.entityCutout(display.getModelTexture());
+            // 【RecoilDebug 探针】第 27.3 轮：枪击瞬间枪模网格在屏幕上确证整体右偏（SW/NE 斜向），
+            // 但入口基座/摄像机动画四元数/相机后坐包络全部干净——故把「枪根原点」在定位链施加
+            // 之后的视图坐标也逐帧记下：若 viewRoot 与 viewMuzzle 同偏同量，偏转来自定位/延滞链；
+            // 若 viewRoot 不偏而 viewMuzzle 偏，则来自骨骼动画层（枪口骨骼路径）。
+            debugRecoilGunRoot(poseStack.last().pose());
             gunModel.submit(poseStack, stack, ctx, collector, renderType, light, OverlayTexture.NO_OVERLAY);
             // 缓存枪口位置，为第一人称曳光弹渲染作准备
             cacheMuzzlePosition(poseStack, gunModel);
@@ -342,20 +347,25 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
         }
     }
 
-    // —— 枪口空间诊断（配合 RenderConfig.TRACER_DEBUG；节流，仅供对照实证）——
+    // —— 枪口空间诊断（配合 RenderConfig.TRACER_DEBUG / RECOIL_DEBUG；后者逐帧，仅供对照实证）——
     private static long debugMuzzleSpaceLastLog = 0L;
 
     private static void debugMuzzleSpace(float rawX, float rawY, float rawZ,
                                          float viewX, float viewY, float viewZ, double fovScale) {
         try {
+            boolean perFrame = RenderConfig.RECOIL_DEBUG != null && RenderConfig.RECOIL_DEBUG.get();
             if (RenderConfig.TRACER_DEBUG == null || !RenderConfig.TRACER_DEBUG.get()) {
-                return;
+                if (!perFrame) {
+                    return;
+                }
             }
             long now = System.currentTimeMillis();
-            if (now - debugMuzzleSpaceLastLog < 1000) {
-                return;
+            if (!perFrame) {
+                if (now - debugMuzzleSpaceLastLog < 1000) {
+                    return;
+                }
+                debugMuzzleSpaceLastLog = now;
             }
-            debugMuzzleSpaceLastLog = now;
             net.minecraft.client.Camera cam = Minecraft.getInstance().gameRenderer.mainCamera();
             Matrix4f modelViewAtHand = RenderSystem.getModelViewMatrixCopy();
             GunMod.LOGGER.info(
@@ -374,6 +384,41 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
 
     private static String trim2(double v) {
         return String.format(java.util.Locale.ROOT, "%.4f", v);
+    }
+
+    /**
+     * 【RecoilDebug 探针】逐帧打印「枪根原点」在世界轴（raw）与视图空间（viewRoot）的坐标，
+     * 以及此刻矩阵 3x3 的列正交偏差（捕捉非均匀缩放/剪切），随帧附带 facing/shader。
+     * 视图空间换算与 cacheMuzzlePosition 同一转置归一化（Bᵀ·(t−B.t)），保证与 viewMuzzle 可直接相减对比。
+     */
+    private static void debugRecoilGunRoot(Matrix4f pose) {
+        try {
+            if (RenderConfig.RECOIL_DEBUG == null || !RenderConfig.RECOIL_DEBUG.get()) {
+                return;
+            }
+            float dx = pose.m30() - handBasePose.m30();
+            float dy = pose.m31() - handBasePose.m31();
+            float dz = pose.m32() - handBasePose.m32();
+            float viewX = handBasePose.m00() * dx + handBasePose.m01() * dy + handBasePose.m02() * dz;
+            float viewY = handBasePose.m10() * dx + handBasePose.m11() * dy + handBasePose.m12() * dz;
+            float viewZ = handBasePose.m20() * dx + handBasePose.m21() * dy + handBasePose.m22() * dz;
+            double c0 = Math.sqrt(pose.m00() * pose.m00() + pose.m10() * pose.m10() + pose.m20() * pose.m20());
+            double c1 = Math.sqrt(pose.m01() * pose.m01() + pose.m11() * pose.m11() + pose.m21() * pose.m21());
+            double c2 = Math.sqrt(pose.m02() * pose.m02() + pose.m12() * pose.m12() + pose.m22() * pose.m22());
+            double dev = Math.max(Math.abs(c0 - 1), Math.max(Math.abs(c1 - 1), Math.abs(c2 - 1)));
+            net.minecraft.client.player.LocalPlayer player = Minecraft.getInstance().player;
+            float fy = player == null ? Float.NaN : net.minecraft.util.Mth.wrapDegrees(player.getYRot());
+            float fx = player == null ? Float.NaN : player.getXRot();
+            GunMod.LOGGER.info(
+                    "[TACZ RecoilDebug] gunRoot viewRoot=({},{},{}) raw=({},{},{}) colNormDev={} shear=m01/m10 {}/{} m02/m20 {}/{} facing=({},{}) shader={} irisHand={}",
+                    trim2(viewX), trim2(viewY), trim2(viewZ),
+                    trim2(pose.m30()), trim2(pose.m31()), trim2(pose.m32()),
+                    String.format(java.util.Locale.ROOT, "%.6f", dev),
+                    trim2(pose.m01()), trim2(pose.m10()), trim2(pose.m02()), trim2(pose.m20()),
+                    trim2(fx), trim2(fy),
+                    IrisCompat.isUsingRenderPack(), IrisCompat.isHandRendererActive());
+        } catch (Throwable ignored) {
+        }
     }
 
 
