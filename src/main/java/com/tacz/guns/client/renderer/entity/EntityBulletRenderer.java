@@ -88,9 +88,9 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             BedrockAmmoModel ammoEntityModel = ammoIndex.getAmmoEntityModel();
             Identifier textureLocation = ammoIndex.getAmmoEntityTextureLocation();
             if (ammoEntityModel != null && textureLocation != null) {
+                poseStack.pushPose();
                 poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, bullet.yRotO, bullet.getYRot()) - 180.0F));
                 poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, bullet.xRotO, bullet.getXRot())));
-                poseStack.pushPose();
                 poseStack.translate(0, 1.5, 0);
                 poseStack.scale(-1, -1, 1);
                 ammoEntityModel.submit(poseStack, ItemDisplayContext.GROUND, collector, getRenderType(textureLocation), state.lightCoords, OverlayTexture.NO_OVERLAY);
