@@ -1009,23 +1009,33 @@ ADS 高倍率瞄具下曳光弹感观也建议顺带扫一眼。`TRACER_DEBUG` �
    突发中，**枪根/枪口/机瞄/瞄具四个骨骼测点的 view-x 位移同向同量级**，
    且符号完美镜像：SE −0.17、NW −0.02、SW +0.03、NE +0.07——刚性整体横移，
    sin(2θ) 指纹实锤。
-3. **机制**：`FirstPersonRenderGunEvent.applyAnimationConstraintTransform` 计算
-   约束反向位移时原为
-   `inverseTranslation.mulDirection(pose); inverseTranslation.mul(cx−1, cy−1, 1−cz)`。
-   1.21.1 里手部 PoseStack 从单位阵开始，两步都在骨骼链（视图）坐标系，自洽；
-   26.2 vanilla 手部 pass 在链前预乘了 R(q)（view→world 相机基座，Iris 不预乘），
-   先旋转再逐轴缩放 ⇒ 各向异性系数 diag() 被 R(q) 共轭 ⇒ cx≠cz 时产生
-   ±(cx−cz)·sin(θ)cos(θ) 的横向泄漏——正方向退化为轴交换近乎无感，斜向最大，
-   象限对反号。AK47 `constraint` 骨骼 shoot 键位 [0.15,0.05,0.4]
-   （系数 ≈(−0.85, −0.95, +0.6)，xz 反号强各向异性），满开镜 weight≈1 时
-   泄漏横移 0.1~0.2 视图单位（≈2~4°），肉眼显著；腰射 weight≈0 无感；
-   光影下基座≈I 恒等无感。与曳光弹锚点（第 26 轮）同属
-   「入口基座未归一化」家族。
-4. **修法（`FirstPersonRenderGunEvent`）**：`mulDirection(pose)` 之后，先
-   `mulTranspose(B)` 归一回链内帧（B = `GunItemRendererWrapper.copyHandBaseRotation`
-   提供的手部 pass 入口基座 3×3，正交，Iris 下≈I 为恒等），再做逐轴约束系数
-   缩放，最后 `mul(B)` 旋回写入帧。vanilla 下严格恢复 1.21.1 的 diag·R_chain·δ
-   语义；Iris 下整段为零增量回归。
+3. **机制（终版，经"反修复"反证锁定）**：26.2 vanilla 手部 pass 在 poseStack
+   进入物品渲染前就预乘了基座 B=R(q)（view→world 相机基座；Iris 手部 pass 不预乘，
+   B≈I；1.21.1 从单位阵开始，B≈I）。决定性事实：`applyAnimationConstraintTransform`
+   写入的 m30..m32 槽位，其**上方链在提交（ViewSnapshot→几何）时还会再左乘一次 B**，
+   即「最终视图位移 = B · v_written」；而 authored（1.21.1 正确观感）要求
+   「最终视图位移 = diag(c) · F · Δ」（F=骨骼链内翻转、Δ=约束骨骼位移差、
+   c=(ICA_x−1, ICA_y−1, 1−ICA_z)，AK47 shoot 键位 [0.15,0.05,0.4] ⇒
+   c ≈ (−0.85, −0.95, +0.6)，强各向异性，满开镜 weight≈1，腰射 weight≈0）。
+   - **老 bug**：原代码 `mulDirection(pose)`（v0 = B·F·Δ）→ 逐轴乘系数
+     （v = diag(c)·B·F·Δ）→ 提交时再被 B 带一次 ⇒ 最终 = **B·diag·B**·FΔ
+     （注意不是数学共轭：Y 轴旋转让 x/z 之一带负号）。非对角元 = (cx+cz)/2 · sin2θ：
+     正方向归零或退化为无横向分量的轴交换，斜向产生按象限对反号的纯横向泄漏
+     （0.1~0.2 视图单位 ≈ 2~4°）——两象限对镜像、腰射/光影无感，全部吻合。
+   - **错误修复版（d24e604，已回滚语义）**：误将修正写成 v = B·diag·Bᵀ·v0
+     （共轭方向写反）⇒ 净效果 = **B²·diag·F·Δ = R(2θ)·authored**：正南/正北
+     （2θ=0/360°）恒等正常；正东/正西（2θ=±180°）x/z 符号翻转 → 后坐力"向后怼"、
+     换弹跑到右后方；斜向（2θ=±90°）x/z 互换 → 后坐力变纯平移。用户复测报告
+     与该 2θ 指纹逐条吻合，反证了「写入槽位上方链 = B」的坐标系结构。
+4. **修法（终版，`FirstPersonRenderGunEvent`）**：`mulDirection(pose)` 之后**两次**乘
+   Bᵀ：`v = Bᵀ · diag(c) · Bᵀ · v0`（`mulTranspose(baseR)` → 逐轴 `mul(cx,cy,cz)` →
+   再 `mulTranspose(baseR)`）。则 v = Bᵀ·diag(c)·F·Δ，提交时被上方链的 B 带回
+   = diag(c)·F·Δ = authored，**全朝向与 1.21.1 严格一致**；Iris 下 B≈I 两步均恒等。
+   B 由 `GunItemRendererWrapper.copyHandBaseRotation` 提供（手部 pass 入口基座 3×3，
+   正交，捕获于 renderFirstPerson 入口、翻转压栈之前）。换弹动画同样驱动
+   constraint 骨骼，同路径一并修复。首版修复的方向性错误已按上方第 3 条归档——
+   教训：在「写入帧与提交帧差一次左乘」的管线里，基座归一化的乘子方向必须按
+   实测朝向指纹校验，而非凭坐标系直觉。
 5. 27.4 轮的四个运行时 FX 隔离开关（`DebugDisableMuzzleFlash/Shell/Tracer/
    CameraAnim`）留在配置里——用户逐项排除特效的证据链也是定案的一部分。
 
