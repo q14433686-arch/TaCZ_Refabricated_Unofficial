@@ -77,6 +77,21 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
     public static final Supplier<GunItemRendererWrapper> INSTANCE = Suppliers.memoize(GunItemRendererWrapper::new);
 
     /**
+     * 【RecoilDebug】枪械第一人称路径最近一次「消费摄像机动画数据」的毫秒时间戳。
+     * 供 {@code BedrockAnimatedModel#cleanCameraAnimationTransform} 核对调用者身份：
+     * 正常语义下清理只应紧跟本路径发生（30ms 窗口内）。
+     */
+    private static volatile long recoilDebugLastWrapTouchMs = -1;
+
+    public static boolean recoilDebugExpectedCleanOwner() {
+        return System.currentTimeMillis() - recoilDebugLastWrapTouchMs < 30;
+    }
+
+    private static void recoilDebugTouchCleanMark() {
+        recoilDebugLastWrapTouchMs = System.currentTimeMillis();
+    }
+
+    /**
      * 本次手部提交入口处的基座矩阵（渲染线程单线程使用；与 26.2 手部 pass 的
      * PoseStack 基座预乘对应，只在本帧 renderFirstPerson → cacheMuzzlePosition 之间有效，
      * 用完即弃，见 {@link #cacheMuzzlePosition}）。
@@ -188,6 +203,7 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
                 debugRecoilItemCam(quaternion, multiplier, poseStack);
             }
             poseStack.mulPose(quaternion);
+            recoilDebugTouchCleanMark();
             // 截至目前，摄像机动画数据已消费完毕。是否有更好的清理动画数据的方法？
             model.cleanCameraAnimationTransform();
         });
