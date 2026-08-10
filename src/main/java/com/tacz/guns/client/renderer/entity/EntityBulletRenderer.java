@@ -224,8 +224,9 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                     firstPersonOffsetAfter = new Vector3f(offset);
                     offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
 
-                    // 视图空间 -> 世界空间：camera.rotation() 即视图→世界，直接 rotate。
-                    Vector3f worldOffset = new Vector3f(globalMuzzleOffset).rotate(camera.rotation());
+                    // 视图空间 (手部坐标系: +X=右, +Y=上, -Z=前) -> Minecraft 相机基底 (+X=左, +Y=上, +Z=前)
+                    Vector3f cameraBasisOffset = new Vector3f(-globalMuzzleOffset.x(), globalMuzzleOffset.y(), -globalMuzzleOffset.z());
+                    Vector3f worldOffset = new Vector3f(cameraBasisOffset).rotate(camera.rotation());
                     firstPersonWorldOffset = new Vector3f(worldOffset);
                     poseStack.translate(worldOffset.x() * offsetReducer,
                             worldOffset.y() * offsetReducer,

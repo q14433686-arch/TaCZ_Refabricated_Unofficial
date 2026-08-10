@@ -202,12 +202,16 @@ public class CameraSetupEvent {
         long timeTotal = System.currentTimeMillis() - shootTimeStamp;
         if (pitchSplineFunction != null && pitchSplineFunction.isValidPoint(timeTotal)) {
             double value = pitchSplineFunction.value(timeTotal);
-            player.setXRot(player.getXRot() - (float) (value - xRotO));
+            float deltaPitch = (float) (value - xRotO);
+            player.setXRot(player.getXRot() - deltaPitch);
+            event.setPitch(event.getPitch() - deltaPitch);
             xRotO = value;
         }
         if (yawSplineFunction != null && yawSplineFunction.isValidPoint(timeTotal)) {
             double value = yawSplineFunction.value(timeTotal);
-            player.setYRot(player.getYRot() - (float) (value - yRotO));
+            float deltaYaw = (float) (value - yRotO);
+            player.setYRot(player.getYRot() - deltaYaw);
+            event.setYaw(event.getYaw() - deltaYaw);
             yRotO = value;
         }
     }

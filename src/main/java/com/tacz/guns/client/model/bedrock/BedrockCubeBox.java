@@ -92,25 +92,20 @@ public class BedrockCubeBox implements BedrockCube {
     @Override
     public void compile(PoseStack.Pose pose, VertexConsumer consumer, int light, int overlay, float red, float green, float blue, float alpha) {
         Matrix4f matrix4f = pose.pose();
-        Matrix3f matrix3f = pose.normal();
 
         for (BedrockPolygon polygon : this.polygons) {
-            Vector3f vector3f = new Vector3f(polygon.normal);
-            vector3f.mul(matrix3f);
-            float nx = vector3f.x();
-            float ny = vector3f.y();
-            float nz = vector3f.z();
+            float nx = polygon.normal.x();
+            float ny = polygon.normal.y();
+            float nz = polygon.normal.z();
 
             for (BedrockVertex vertex : polygon.vertices) {
                 float x = vertex.pos.x() / 16.0F;
                 float y = vertex.pos.y() / 16.0F;
                 float z = vertex.pos.z() / 16.0F;
-                // 26.2 迁移: 旧 API consumer.vertex(x,y,z,r,g,b,a,u,v,overlay,light,nx,ny,nz) 已移除
-                // 新 API 使用链式 addVertex + setColor + setUv + setOverlay + setLight + setNormal
-                // 保留矩阵变换以兼容旧逻辑，或直接使用 pose 传递
+                // 26.2 迁移: 使用新 VertexConsumer API
+                // setNormal(pose, nx, ny, nz) 内部会自动应用 pose.normal()，传入模型局部法线即可
                 Vector4f vector4f = new Vector4f(x, y, z, 1.0F);
                 vector4f.mul(matrix4f);
-                // 新 API 示例 (需根据 26.2 实际 VertexConsumer 确认):
                 consumer.addVertex(vector4f.x(), vector4f.y(), vector4f.z())
                         .setColor(red, green, blue, alpha)
                         .setUv(vertex.u, vertex.v)

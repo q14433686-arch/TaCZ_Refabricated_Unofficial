@@ -195,15 +195,13 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
             return;
         }
         Quaternionf q = MathUtil.multiplyQuaternion(model.getCameraAnimationObject().rotationQuaternion, multiplier);
-        double yaw = Math.asin(2 * (q.w() * q.y() - q.x() * q.z()));
-        double pitch = Math.atan2(2 * (q.w() * q.x() + q.y() * q.z()), 1 - 2 * (q.x() * q.x() + q.y() * q.y()));
-        double roll = Math.atan2(2 * (q.w() * q.z() + q.x() * q.y()), 1 - 2 * (q.y() * q.y() + q.z() * q.z()));
-        yaw = Math.toDegrees(yaw);
-        pitch = Math.toDegrees(pitch);
-        roll = Math.toDegrees(roll);
-        event.setYaw((float) yaw + event.getYaw());
-        event.setPitch((float) pitch + event.getPitch());
-        event.setRoll((float) roll + event.getRoll());
+        float[] angles = MathUtil.toEulerAngles(q);
+        float pitch = (float) Math.toDegrees(angles[0]);
+        float yaw = (float) Math.toDegrees(angles[1]);
+        float roll = (float) Math.toDegrees(angles[2]);
+        event.setYaw(yaw + event.getYaw());
+        event.setPitch(pitch + event.getPitch());
+        event.setRoll(roll + event.getRoll());
     }
 
     /**

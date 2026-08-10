@@ -201,12 +201,14 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
 
             poseStack.pushPose();
             // 逆转原版施加在手上的延滞效果，改为写入模型动画数据中
+            // 原版 submitHandsWithItems 先 mulPose(XP, (viewXRot - xBob) * 0.1) 后 mulPose(YP, (viewYRot - yBob) * 0.1)
+            // 逆变换必须按反序先 YP(-yRot*0.1) 后 XP(-xRot*0.1)，否则矩阵乘法非对易性会在斜向产生严重残差
             float xRotOffset = Mth.lerp(partialTick, player.xBobO, player.xBob);
             float yRotOffset = Mth.lerp(partialTick, player.yBobO, player.yBob);
             float xRot = player.getViewXRot(partialTick) - xRotOffset;
             float yRot = player.getViewYRot(partialTick) - yRotOffset;
-            poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
             poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F));
+            poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
             BedrockPart rootNode = gunModel.getRootNode();
             if (rootNode != null) {
                 xRot = (float) Math.tanh(xRot / 25) * 25;

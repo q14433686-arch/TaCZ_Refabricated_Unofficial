@@ -153,8 +153,8 @@ public class MeleeItemRenderer extends AnimateGeoItemRenderer<CustomBedrockModel
         float yRotOffset = Mth.lerp(partialTick, player.yBobO, player.yBob);
         float xRot = player.getViewXRot(partialTick) - xRotOffset;
         float yRot = player.getViewYRot(partialTick) - yRotOffset;
-        poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
         poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F));
+        poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
         BedrockPart rootNode = model.getRootNode();
         if (rootNode != null) {
             xRot = (float) Math.tanh(xRot / 25) * 25;
