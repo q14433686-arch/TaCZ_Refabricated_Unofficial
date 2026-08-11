@@ -53,11 +53,12 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue CONSTRAINT_BASE_COMPENSATE;
     /**
-     * 【案例⑧ · 第 31 轮定案】约束位移写入形态：
-     * 0 = plain（修复前原版 diag·v0；用户实测定「整体转」全消，但四方向斜向后坐力侧漏复现）；
-     * 1 = Bᵀ·diag·Bᵀ 三明治（8/10 终版；即本案病灶，仅存档勿用）；
-     * 2 = 姿态帧共轭 P_post·diag·P_preᵀ·v0（本仓库默认；不读任何外部矩阵，
-     *     各向异性 Fold 进姿态帧内部，与朝向/基座结构解耦）。
+     * 【案例⑧ · 第 31~33 轮】约束位移写入形态：
+     * 0 = plain（修复前原版 diag·v0；用户两次实测本案症状全消 = 本仓库默认；
+     *     已知代价：8/10 前就存在的四方向斜向后坐力侧漏原样保留）；
+     * 1 = Bᵀ·diag·Bᵀ 三明治（第 31 轮在体否决：本案病灶注入源；归档勿用）；
+     * 2 = 姿态帧共轭 P_post·diag·P_preᵀ·v0（第 33 轮在体否决：斜向漏消除但
+     *     「整体随朝向转」复现 + 手感不自然；归档勿用）。
      */
     public static ForgeConfigSpec.IntValue CONSTRAINT_COMPENSATE_MODE;
     /**
@@ -220,16 +221,18 @@ public class RenderConfig {
                         "config files load cleanly. Use ConstraintCompensateMode (0/1/2) instead.")
                 .define("ConstraintBaseCompensate", true);
 
-        // 第 31 轮定案：约束位移形态三档。0=plain（用户实测无「整体转」但斜向侧漏复现），
-        // 1=终版三明治（即本案病灶，存档勿用），2=姿态帧共轭（默认，结构免疫帧混用）。
-        // 第 32 轮起本键是档位的唯一信源（上方 ConstraintBaseCompensate 已废弃、不再读取）。
+        // 第 33 轮：mode 2 首次真实生效即被用户在体否决（回报「①转 / ②不漏 / ③不自然」——
+        // 姿态帧共轭确实消除了斜向侧漏，但「整枪随朝向转」复现、且手感不自然），
+        // 与 mode 1（三明治）并列归档。默认自此回落 mode 0（plain）：
+        // 用户两次全场实测确认的「本案症状全消」态；已知代价 = 8/10 前就存在的
+        // 四方向斜向后坐力侧漏原样回归。
         CONSTRAINT_COMPENSATE_MODE = builder
                 .comment("[FIX] Constraint-translation write form:",
-                        "0 = plain (pre-fix formula; diagonal ADS recoil leak returns),",
-                        "1 = legacy B^T-diag-B^T sandwich (caused facing-locked gun rotation; archived),",
-                        "2 = pose-frame conjugate (default; base-free, immune to frame mixing).",
+                        "0 = plain (DEFAULT; user-verified clean of all case-8 symptoms; known cost: diagonal ADS recoil leak),",
+                        "1 = legacy B^T-diag-B^T sandwich (REJECTED in-body: facing-locked rotation; archived),",
+                        "2 = pose-frame conjugate (REJECTED in-body: leak fixed but rotation returned + unnatural feel; archived).",
                         "The old ConstraintBaseCompensate boolean is deprecated and fully ignored.")
-                .defineInRange("ConstraintCompensateMode", 2, 0, 2);
+                .defineInRange("ConstraintCompensateMode", 0, 0, 2);
 
         // 第 29 轮：实测 modelView 顶部在部分帧携带 ~0.7% 均匀缩放（旋转不变），
         // 不剔除会被 (B·MV)⁻¹ 烙进基座与整条姿态链；本开关只控制归一化这一步。

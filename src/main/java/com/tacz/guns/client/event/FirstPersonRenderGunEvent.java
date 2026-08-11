@@ -439,6 +439,11 @@ public class FirstPersonRenderGunEvent {
         //               的写法 = 用当前姿态自身做共轭，各向异性系数被 Fold 进姿态帧内部，
         //               与朝向/基座结构性解耦；斜向泄漏同型消除。
         // Iris 手部 pass 基座≈I 时三档逐位等价 ⇒ 恒按 mode 0 执行（保持参照零介入）。
+        // 【第 33 轮判决补记】mode 2 首次真实生效即被用户在体否决——回报
+        // 「①整体随朝向转（复现）/ ②斜向不漏 / ③手感不自然」：斜向侧漏消除，
+        // 证明各向异性归位 authored 帧的思路本身有效，但换帧写入同时把本案
+        // 主症状带了回来 ⇒ mode 2 与 mode 1 并列归档（两枚公式修复全部实证
+        // 注入旋转），默认回落 mode 0 = plain = 用户两次全场实测确认的全消态。
         // 【第 32 轮修正 · 档位判定唯一信源化】
         // 第 31 轮的兼容映射「老布尔 ConstraintBaseCompensate=false 强制落 mode 0」
         // 在现场被证明是配置陷阱：用户在第 30 轮 A/B 时把那枚布尔留在 false，
@@ -451,10 +456,10 @@ public class FirstPersonRenderGunEvent {
         if (com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE != null) {
             case08Mode = com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE.get();
         } else {
-            case08Mode = 2;
+            case08Mode = 0; // 配置未加载完毕时的安全态 = 默认档 0（plain，第 33 轮起）
         }
         if (case08Mode < 0 || case08Mode > 2) {
-            case08Mode = 2; // 文件被手改越界时回落默认档，绝不落到未定义形态
+            case08Mode = 0; // 文件被手改越界时回落默认档，绝不落到未定义形态
         }
         int case08EffMode = com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive() ? 0 : case08Mode;
         // 【第 32 轮】生效档一次性播报：上一轮的静默降级让「这一局跑的到底是哪档」
