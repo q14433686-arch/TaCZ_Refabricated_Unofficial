@@ -456,9 +456,9 @@ public class FirstPersonRenderGunEvent {
         if (com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE != null) {
             case08Mode = com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE.get();
         } else {
-            case08Mode = 0; // 配置未加载完毕时的安全态 = 默认档 0（plain，第 33 轮起）
+            case08Mode = 0; // 配置未加载完毕时的安全态 = 默认档 0（plain）
         }
-        if (case08Mode < 0 || case08Mode > 2) {
+        if (case08Mode < 0 || case08Mode > 3) {
             case08Mode = 0; // 文件被手改越界时回落默认档，绝不落到未定义形态
         }
         int case08EffMode = com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive() ? 0 : case08Mode;
@@ -471,16 +471,43 @@ public class FirstPersonRenderGunEvent {
                     case08EffMode, case08Mode,
                     com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
         }
+        // 【第 35 轮 · mode 3 = 26.1.2 在体验证公式的本链转写】
+        // 隔壁 26.1.2 移植线同症修复已在体通过（用户提供其结论；其实现尚未推送，
+        // 以下为按其公式的忠实转写）。核心认识：代码里乘的 D=(ICAx−1, ICAy−1, 1−ICAz)
+        // 与槽位写回 (−x, −y, +z) 合并后的 C=(1−ICAx, 1−ICAy, 1−ICAz) 才是真正的
+        // authored 系数——写回里藏着 Q=diag(−1,−1,+1)。本案三条被拒形态（mode 1/2、
+        // 锁）共轭的全是 D，Q 被留在写入帧；Q 与旋转不可交换 ⇒ 纯偏航出二倍角/象限
+        // 指纹、偏航×俯仰组合出竖直后方/过压 —— 与本案例全部实测指纹逐条吻合。
+        // 隔壁验证链：authored = Wᵀ·v0；constrained = C·authored；world = W·constrained
+        // （W = mulDirection 当帧姿态 3x3 = 本文的 P_pre），此后槽位不再做 Q 翻号。
+        // 转写到本链（槽位写回保持旧约定含 Q）：写入向量
+        //     v = Q·W·C·Wᵀ·v0 = Ŵ·D·Wᵀ·v0     （Ŵ = Q·W·Q；C=Q·D 故 D 行原样沿用）
+        // 即与 mode 2 的唯一差别 = 左半姿态帧由 W_post 换成 Ŵ_pre；纯偏航/纯俯仰下
+        // Ŵ = Wᵀ，形态上等价于「c975748 三明治把入口基座快照换成写入当帧活姿态」——
+        // 三版被拒形态（入口 Bᵀ、活 W、W_post）之外从未测过的第四种排列。
+        // 【状态：26.1.2 在体验证通过、26.2 未验证 ⇒ 暂不做默认，待用户复测裁决后再
+        //  翻默认；Iris 手部 pass 恒走 mode 0（基座≈I 时与 plain 逐位一致），不受影响】
+        org.joml.Matrix3f case08QConjW = null;
+        if (case08EffMode == 3) {
+            org.joml.Matrix3f qFlip = new org.joml.Matrix3f();
+            qFlip.m00(-1f);
+            qFlip.m11(-1f); // Q = diag(−1, −1, +1)，m22 保持 +1
+            case08QConjW = new org.joml.Matrix3f(qFlip).mul(case08PoseFrameR).mul(qFlip); // Ŵ = Q·W·Q
+        }
         org.joml.Matrix3f baseR = new Matrix3f();
         GunItemRendererWrapper.copyHandBaseRotation(baseR);
         if (case08EffMode == 1) {
             inverseTranslation.mulTranspose(baseR);  // Bᵀ·v0：写入帧 → 逆基座（authored）帧
         } else if (case08EffMode == 2) {
             inverseTranslation.mulTranspose(case08PoseFrameR);  // P_preᵀ·v0 = F_pre·Δ（姿态自身逆帧）
+        } else if (case08EffMode == 3) {
+            inverseTranslation.mulTranspose(case08PoseFrameR);  // Wᵀ·v0 → authored 帧（隔壁 authored = Bᵀ·rawWorld）
         }
         inverseTranslation.mul(translationICA.x() - 1, translationICA.y() - 1, 1 - translationICA.z()); // 基岩版模型的旋转导致 xy 轴要反过来
         if (case08EffMode == 1) {
             inverseTranslation.mulTranspose(baseR);  // 终版三明治右半（存档形态，勿作默认）
+        } else if (case08EffMode == 3) {
+            inverseTranslation.mul(case08QConjW);    // Ŵ·D·Wᵀ·v0 的左半 = Q 共轭姿态帧（C=Q·D 已含写回翻号）
         }
         // mode 2 的右半（P_post·…）必须等下面的约束旋转块执行完、拿到终态 3x3 后再补乘，
         // 见下方写入前的 mul(new Matrix3f(poseMatrix))。

@@ -53,12 +53,16 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue CONSTRAINT_BASE_COMPENSATE;
     /**
-     * 【案例⑧ · 第 31~33 轮】约束位移写入形态：
+     * 【案例⑧ · 第 31~35 轮】约束位移写入形态：
      * 0 = plain（修复前原版 diag·v0；用户两次实测本案症状全消 = 本仓库默认；
-     *     已知代价：8/10 前就存在的四方向斜向后坐力侧漏原样保留）；
+     *     已知代价：四方向斜向后坐力侧漏原样保留）；
      * 1 = Bᵀ·diag·Bᵀ 三明治（第 31 轮在体否决：本案病灶注入源；归档勿用）；
      * 2 = 姿态帧共轭 P_post·diag·P_preᵀ·v0（第 33 轮在体否决：斜向漏消除但
-     *     「整体随朝向转」复现 + 手感不自然；归档勿用）。
+     *     「整体随朝向转」复现 + 手感不自然；归档勿用）；
+     * 3 = 第 35 轮从 26.1.2 移植线在体验证形态转写：v = Ŵ·D·Wᵀ·v0，Ŵ=Q·W·Q。
+     *     邻链关键认识：写回 (−x,−y,+z) 藏了 Q=diag(−1,−1,+1)，真正 authored
+     *     系数是 C=Q·D；Q 与旋转不可交换，必须连 Q 一起共轭。26.1.2 在体
+     *     已通过；26.2 待用户在体验证后再翻默认。
      */
     public static ForgeConfigSpec.IntValue CONSTRAINT_COMPENSATE_MODE;
     /**
@@ -226,13 +230,17 @@ public class RenderConfig {
         // 与 mode 1（三明治）并列归档。默认自此回落 mode 0（plain）：
         // 用户两次全场实测确认的「本案症状全消」态；已知代价 = 8/10 前就存在的
         // 四方向斜向后坐力侧漏原样回归。
+        // 第 35 轮追加 mode 3：26.1.2 线在体验证形态（写入向量 Ŵ·D·Wᵀ·v0，Ŵ=Q·W·Q，
+        // 即把写回符号里藏的 Q=diag(-1,-1,+1) 一并纳入共轭）——26.2 在体验证前不做默认。
         CONSTRAINT_COMPENSATE_MODE = builder
                 .comment("[FIX] Constraint-translation write form:",
                         "0 = plain (DEFAULT; user-verified clean of all case-8 symptoms; known cost: diagonal ADS recoil leak),",
                         "1 = legacy B^T-diag-B^T sandwich (REJECTED in-body: facing-locked rotation; archived),",
-                        "2 = pose-frame conjugate (REJECTED in-body: leak fixed but rotation returned + unnatural feel; archived).",
+                        "2 = pose-frame conjugate (REJECTED in-body: leak fixed but rotation returned + unnatural feel; archived),",
+                        "3 = 26.1.2-verified form: the hidden write-back flip Q=diag(-1,-1,1) is conjugated together",
+                        "    with the coefficients inside the live pose frame (pending 26.2 in-body confirmation).",
                         "The old ConstraintBaseCompensate boolean is deprecated and fully ignored.")
-                .defineInRange("ConstraintCompensateMode", 0, 0, 2);
+                .defineInRange("ConstraintCompensateMode", 0, 0, 3);
 
         // 第 29 轮：实测 modelView 顶部在部分帧携带 ~0.7% 均匀缩放（旋转不变），
         // 不剔除会被 (B·MV)⁻¹ 烙进基座与整条姿态链；本开关只控制归一化这一步。
