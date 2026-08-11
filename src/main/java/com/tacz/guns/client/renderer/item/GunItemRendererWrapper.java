@@ -39,6 +39,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.apache.commons.lang3.tuple.Pair;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -60,18 +61,24 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
     public static final Vector3f muzzleRenderOffset = new Vector3f();
 
     /**
-     * 第一人称手部提交进入 {@link #renderFirstPerson} 时的基座矩阵 B。
-     * 26.1.2 vanilla 会在调用本渲染器前预乘视图到世界的相机旋转；Iris 手部 pass
-     * 通常接近单位阵。缓存入口矩阵后，枪口和动画约束都能用同一份实际基座做归一化，
-     * 无需按渲染后端硬编码分支。仅由渲染线程在一次同步提交内读写。
+     * 第一人称手部提交进入 {@link #renderFirstPerson} 时的完整入口矩阵。
+     * 枪口位置需要相对这个实际入口做归一化；它包含相机基座和手部 bob，不能拿来替代
+     * 动画约束所需的纯相机旋转。仅由渲染线程在一次同步提交内读写。
      */
     private static final Matrix4f handBasePose = new Matrix4f();
 
     /**
-     * 将当前手部入口基座的旋转复制给动画约束解算器。
+     * 当前手部 pass 中真正需要在最终 model-view 阶段抵消的相机基座旋转。
+     * vanilla 为 Camera 的 view-to-world 旋转；Iris 接管的 hand pass 不预乘该基座，故为单位阵。
+     *
+     * <p>不能直接拿 {@link #handBasePose} 的 3x3 代替：入口矩阵还包含 hurt/view bob 与
+     * ItemInHand 的延滞旋转，而这些本来就属于旧版 authored 视图空间。把它们也当作相机基座
+     * 逆掉，会在偏航与俯仰组合时重新引入朝向相关平移。</p>
      */
-    public static void copyHandBaseRotation(org.joml.Matrix3f dst) {
-        dst.set(handBasePose);
+    private static final Matrix3f handCameraRotation = new Matrix3f();
+
+    public static void copyHandCameraRotation(Matrix3f dst) {
+        dst.set(handCameraRotation);
     }
 
     /**
@@ -220,6 +227,13 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             // 入口基座必须在 TACZ 自己施加任何旋转/位移前捕获。它与稍后枪口矩阵
             // 共享同一前缀，因此可用 B 的转置恢复纯视图空间位移。
             handBasePose.set(poseStack.last().pose());
+            // 约束位移只应剥离 GameRenderer 的相机基座，不能把同处入口矩阵中的
+            // hurt/view bob 和手部延滞一并剥离。Iris hand pass 没有该预乘，保持单位阵。
+            if (IrisCompat.isHandRendererActive()) {
+                handCameraRotation.identity();
+            } else {
+                handCameraRotation.set(Minecraft.getInstance().gameRenderer.getMainCamera().rotation());
+            }
             // 逆转原版施加在手上的延滞效果，改为写入模型动画数据中
             float xRotOffset = Mth.lerp(partialTick, player.xBobO, player.xBob);
             float yRotOffset = Mth.lerp(partialTick, player.yBobO, player.yBob);
