@@ -267,9 +267,10 @@ based on TACZ `1.1.8-hotfix`.
 - Gun packs requiring TacZ:Arcana (encrypted assets) will show missing textures.
 
 ### Known issues
-- Under an active Iris shader pack, recoloring the laser sight may have no visible
-  effect on some NVIDIA drivers (AMD, and NVIDIA without shaders, are unaffected);
-  root cause under investigation.
+- Laser-sight recoloring works via vertex color on a vanilla emissive render type.
+  Under an active Iris shader pack the pack decides whether that color is applied:
+  minimal packs without colored-emissive support will keep the laser at its default
+  color. This is a shader-pack limitation, not a GPU or driver issue.
 - The ocular mask is now the filled convex hull of the ocular projection
   (ScopeMaskHullFill=true). On some scopes the hull can be slightly larger than
   the true aperture, nibbling the scope body's inner rim; if you see that, set
