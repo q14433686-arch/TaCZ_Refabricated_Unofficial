@@ -1082,6 +1082,11 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
   ②**各镜种镜框内圈是否被凸包啃出过裁**（凸包可能比孔径略大）——
   若有，开 `ScopeMaskDebug=true` 同帧截图（左上角掩码预览 + 画面同框），
   下一轮按距离场内缩收敛。
+- **第 28.4 轮状态更新（用户裁决）**：A/B 对比（HullFill true/false 两张）
+  主画面差异目视不可辨；用户决定**案例①暂不深究、挂起**。
+  已知待办保留：凸包 UV-读回偶发失败帧自动回退描摹（一次性 WARN，
+  正确性无碍）；个别镜种内圈遮光边可能存在少量过裁，`ScopeMaskHullFill=false`
+  随时秒退。若日后重启此案，入口开关即该配置。
 
 #### 案例④：目镜内未裁切枪体、配件（镜片里看得见护木/激光盒）—— 已定位，已修
 
@@ -1100,13 +1105,23 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
   - 瞄具自身：清单为空时恒等返回，内部 `maskable` 逻辑不变（零交互）。
 - **枪口火光大面片层**（第二轮追加）：开火后坐时火光会探进目镜口径，
   给大面片层接入同源裁剪管线 `scope_flash_translucent_clipped`
-  （以 vanilla `ENTITY_TRANSLUCENT` 管线为底叠加 SCOPE_MASK 分支，
-  观感逐状态一致；`MuzzleFlashRender` 在掩码就绪时才换型）。
-  **辉光涡旋层（energySwirl）未动**：其 shader 在 26.2 已折叠进共享实现
-  （jar 内无独立 rendertype_energy_swirl.fsh），未逆向确认前不动，
-  残余至多是镜内仍见缩半柔光，可后补。
+  （以 vanilla `ENTITY_TRANSLUCENT` 配方逐条照抄——用 ENTITY_SNIPPET 为底
+  叠加 ALPHA_CUTOUT/PER_FACE_LIGHTING/SAMPLER1/TRANSLUCENT/不剔除，
+  再叠 SCOPE_MASK；`MuzzleFlashRender` 在掩码就绪时才换型）。
+  用户 LayerAssignment 裁决实验（辉光层强制裁剪）证实：**镜内火团全部来自
+  辉光层，大面片从未失手**（FlashDebug 六分量早已全 true）。
+- **枪口火光辉光涡旋层**（第三轮收口，已随本构建发出）：
+  逐指令反汇编 `RenderPipelines.<clinit>` 的 ENERGY_SWIRL 段
+  （jar ins 914-956）发现 26.2 所谓「折叠」就是 `core/entity` 双 shader +
+  `APPLY_TEXTURE_MATRIX` define —— 我们的 scope_body 着色器正是 entity 的
+  逐字节拷贝，于是轻车熟路立 `scope_flash_swirl_clipped`：
+  MATRICES_FOG_SNIPPET + ALPHA_CUTOUT/EMISSIVE/NO_OVERLAY/
+  NO_CARDINAL_LIGHTING/APPLY_TEXTURE_MATRIX/SCOPE_MASK 六 define +
+  ADDITIVE 混合 + ENTITY 顶点绑定 + OffsetTextureTransform(1,1)，
+  观感与 vanilla swirl 逐状态一致、镜内正常 discard。用户实测：镜内火团
+  **彻底消失**。Iris 侧同样挂进 HAND（mode=1）。
 - **枪口烟雾**：属于世界粒子 pass，要裁需侵入全局粒子着色器 —— 风险高，
-  且上游 1.21.1 是否裁镜内烟雾未核实，本轮不动。
+  且上游 1.21.1 是否裁镜内烟雾未核实，维持不动。
 - **验证**：开镜后镜片透出纯净世界画面，看不到任何枪体/配件碎片。
 
 #### 案例⑤：NVIDIA + 光影开启时激光改色无效（A 卡 / N 卡无光影正常）—— 取证中

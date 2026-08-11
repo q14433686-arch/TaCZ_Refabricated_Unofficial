@@ -3,6 +3,7 @@ package com.tacz.guns.client.render.scope;
 import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
@@ -12,6 +13,7 @@ import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.TextureTransform;
 import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
@@ -142,6 +144,56 @@ public final class ScopeBodyRenderTypes {
                     .withCull(false)
                     .build();
 
+    /**
+     * 枪口火光【辉光涡旋层】的掩码裁剪管线。
+     *
+     * <p>配方逐项对照 26.2 {@code RenderPipelines.<clinit>} 里 {@code ENERGY_SWIRL}
+     * 的字节码（clinit ins 914-956 实读）：<pre>
+     * builder(MATRICES_FOG_SNIPPET)
+     *     .withLocation("pipeline/energy_swirl")
+     *     .withVertexShader("core/entity")      // 26.2 把 swirl 折叠回通用 entity shader
+     *     .withFragmentShader("core/entity")    //   （jar 内已无独立 energy_swirl.fsh）
+     *     .withShaderDefine("ALPHA_CUTOUT", 0.1F)
+     *     .withShaderDefine("EMISSIVE")
+     *     .withShaderDefine("NO_OVERLAY")
+     *     .withShaderDefine("NO_CARDINAL_LIGHTING")
+     *     .withShaderDefine("APPLY_TEXTURE_MATRIX")  // UV 动画全靠它 + OffsetTextureTransform
+     *     .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
+     *     .withColorTargetState(new ColorTargetState(BlendFunction.ADDITIVE))
+     *     .withCull(false)
+     *     .withVertexBinding(0, DefaultVertexFormat.ENTITY)
+     *     .withPrimitiveTopology(QUADS)
+     *     .withDepthStencilState(DepthStencilState.DEFAULT)</pre>
+     * 看到 {@code core/entity} 的那一刻一切都顺了：我们的 {@code scope_body} 着色器
+     * 就是 entity 的逐字节拷贝 + SCOPE_MASK 段，把上面配方原样复刻、换上我们的
+     * 着色器再加 SCOPE_MASK/掩码 layout，即可得到「观感逐像素一致的 swirl、
+     * 镜内被 discard」的辉光层 —— 之前悬而未决的「辉光层镜内残余」由此件正式收口
+     * （LayerAssignment 裁决实验结论：残余一直是这层，大面片从未失手）。
+     *
+     * <p>与 flash 大面片管线的区别只是底子和混合：MATRICES_FOG_SNIPPET + ADDITIVE
+     * （swirl 是叠加发光），顶点绑定/拓扑/深度状态需要显式给出
+     * （ENTITY_SNIPPET 才有这些默认值，MATRICES_FOG_SNIPPET 没有）。
+     */
+    private static final RenderPipeline FLASH_SWIRL_CLIPPED_PIPELINE =
+            RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+                    .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_flash_swirl_clipped"))
+                    .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
+                    .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
+                    .withShaderDefine("ALPHA_CUTOUT", 0.1F)
+                    .withShaderDefine("EMISSIVE")
+                    .withShaderDefine("NO_OVERLAY")
+                    .withShaderDefine("NO_CARDINAL_LIGHTING")
+                    .withShaderDefine("APPLY_TEXTURE_MATRIX")
+                    .withShaderDefine("SCOPE_MASK")
+                    .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
+                    .withBindGroupLayout(MASK_SAMPLER_LAYOUT)
+                    .withColorTargetState(new ColorTargetState(BlendFunction.ADDITIVE))
+                    .withCull(false)
+                    .withVertexBinding(0, com.mojang.blaze3d.vertex.DefaultVertexFormat.ENTITY)
+                    .withPrimitiveTopology(com.mojang.blaze3d.PrimitiveTopology.QUADS)
+                    .withDepthStencilState(DepthStencilState.DEFAULT)
+                    .build();
+
     /** 蚀刻准星：只在目镜<b>盖到</b>处绘制，保留受光。 */
     private static final RenderPipeline RETICLE_PIPELINE =
             buildPipeline("scope_reticle_clipped", true, true, false);
@@ -205,6 +257,7 @@ public final class ScopeBodyRenderTypes {
         IrisCompat.assignScopePipelineToHand(RETICLE_EMISSIVE_PIPELINE, "scope_reticle_emissive_clipped");
         IrisCompat.assignScopePipelineToHand(EMISSIVE_PIPELINE, "scope_reticle_emissive");
         IrisCompat.assignScopePipelineToHand(FLASH_TRANSLUCENT_CLIPPED_PIPELINE, "scope_flash_translucent_clipped");
+        IrisCompat.assignScopePipelineToHand(FLASH_SWIRL_CLIPPED_PIPELINE, "scope_flash_swirl_clipped");
     }
 
     /**
@@ -219,6 +272,7 @@ public final class ScopeBodyRenderTypes {
     private static final Map<Identifier, RenderType> RETICLE_EMISSIVE_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> EMISSIVE_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_TRANSLUCENT_CACHE = new HashMap<>();
+    private static final Map<Identifier, RenderType> FLASH_SWIRL_CACHE = new HashMap<>();
 
     private ScopeBodyRenderTypes() {
     }
@@ -270,6 +324,30 @@ public final class ScopeBodyRenderTypes {
         ensureIrisCompatibility();
         return FLASH_TRANSLUCENT_CACHE.computeIfAbsent(texture,
                 tex -> create("tacz_scope_flash_translucent_clipped", FLASH_TRANSLUCENT_CLIPPED_PIPELINE, tex, true));
+    }
+
+    /**
+     * 枪口火光【辉光涡旋层】：只在目镜<b>没盖到</b>处绘制，叠加发光观感与
+     * vanilla {@code RenderTypes.energySwirl(tex, 1, 1)} 逐状态一致。
+     *
+     * <p>RenderSetup 显式对照 vanilla energySwirl 的方法体字节码：
+     * Sampler0 + OffsetTextureTransform(1,1)（UV 滚动）+ useLightmap + useOverlay
+     * + sortOnUpload，再补一个掩码采样器绑定（管线里声明了就必须绑，r52 的教训）。</p>
+     *
+     * <p>调用方须先过 {@link #maskReadyForViewmodel}。 </p>
+     */
+    public static RenderType flashSwirlClipped(Identifier texture) {
+        ensureIrisCompatibility();
+        return FLASH_SWIRL_CACHE.computeIfAbsent(texture,
+                tex -> RenderType.create("tacz_scope_flash_swirl_clipped",
+                        RenderSetup.builder(FLASH_SWIRL_CLIPPED_PIPELINE)
+                                .withTexture("Sampler0", tex)
+                                .withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
+                                .setTextureTransform(new TextureTransform.OffsetTextureTransform(1.0F, 1.0F))
+                                .useLightmap()
+                                .useOverlay()
+                                .sortOnUpload()
+                                .createRenderSetup()));
     }
 
     /**

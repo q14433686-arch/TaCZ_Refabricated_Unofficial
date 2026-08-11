@@ -23,6 +23,7 @@ import java.util.Map;
 public final class IrisScopeMaskState {
     private static final String BODY_PIPELINE = "pipeline/scope_body_clipped";
     private static final String FLASH_TRANSLUCENT_PIPELINE = "pipeline/scope_flash_translucent_clipped";
+    private static final String FLASH_SWIRL_PIPELINE = "pipeline/scope_flash_swirl_clipped";
     private static final String RETICLE_PIPELINE = "pipeline/scope_reticle_clipped";
     private static final String RETICLE_EMISSIVE_PIPELINE = "pipeline/scope_reticle_emissive_clipped";
     private static final String MASK_SAMPLER = "ScopeMaskSampler";
@@ -139,7 +140,8 @@ public final class IrisScopeMaskState {
                 return 0;
             }
             String normalized = path.toLowerCase(Locale.ROOT);
-            if (BODY_PIPELINE.equals(normalized) || FLASH_TRANSLUCENT_PIPELINE.equals(normalized)) {
+            if (BODY_PIPELINE.equals(normalized) || FLASH_TRANSLUCENT_PIPELINE.equals(normalized)
+                    || FLASH_SWIRL_PIPELINE.equals(normalized)) {
                 return 1;
             }
             if (RETICLE_PIPELINE.equals(normalized) || RETICLE_EMISSIVE_PIPELINE.equals(normalized)) {

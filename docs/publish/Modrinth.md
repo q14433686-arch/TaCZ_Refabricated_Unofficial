@@ -220,8 +220,11 @@ based on TACZ `1.1.8-hotfix`.
   (Bᵀ·diag·Bᵀ), restoring exact 1.21.1 behavior in all 8 headings. Hip-fire and
   shader-pack rendering are unchanged.
 - See-through scopes (offscreen-mask path): the gun body, non-scope attachments and
-  the main muzzle-flash quad are now discarded inside the sight picture, so the
-  world shows through the scope lens correctly (vanilla renderer).
+  both muzzle-flash layers (the main quad and the additive glow swirl) are now
+  discarded inside the sight picture, so the world shows through the scope lens
+  correctly (vanilla renderer). The glow layer replicates vanilla's 26.2
+  energy_swirl setup (shared entity shader + APPLY_TEXTURE_MATRIX + additive
+  blending) with the mask discard added on top, so its look is unchanged.
 - Scope mask shape upgraded with an opt-out: the ocular mask is now the filled
   convex hull of the ocular projection (`ScopeMaskHullFill=true`), fixing sparse
   sliver-glass oculars (AUG built-in sight, Elcan slats) leaving scope-body
