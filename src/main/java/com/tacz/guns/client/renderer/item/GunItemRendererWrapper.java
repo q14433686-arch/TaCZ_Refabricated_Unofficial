@@ -276,6 +276,8 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             poseStack.translate(0, 1.5f, 0);
             // 基岩版模型是上下颠倒的，需要翻转过来。
             poseStack.mulPose(Axis.ZP.rotationDegrees(180f));
+            // 【案例⑧ 探针】分段点 P1：基座之后、定位/约束之前的逐帧链位姿
+            debugCase08ChainP1(poseStack.last().pose());
             // 应用持枪姿态变换，如第一人称摄像机定位
             FirstPersonRenderGunEvent.applyFirstPersonGunTransform(player, stack, poseStack, gunModel, partialTick);
 
@@ -483,13 +485,43 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             float fy = player == null ? Float.NaN : net.minecraft.util.Mth.wrapDegrees(player.getYRot());
             float fx = player == null ? Float.NaN : player.getXRot();
             GunMod.LOGGER.info(
-                    "[TACZ RecoilDebug] gunRoot viewRoot=({},{},{}) raw=({},{},{}) colNormDev={} shear=m01/m10 {}/{} m02/m20 {}/{} facing=({},{}) shader={} irisHand={}",
+                    "[TACZ RecoilDebug] gunRoot ms={} viewRoot=({},{},{}) raw=({},{},{}) colNormDev={} shear=m01/m10 {}/{} m02/m20 {}/{} facing=({},{}) shader={} irisHand={}",
+                    System.currentTimeMillis(),
                     trim2(viewX), trim2(viewY), trim2(viewZ),
                     trim2(pose.m30()), trim2(pose.m31()), trim2(pose.m32()),
                     String.format(java.util.Locale.ROOT, "%.6f", dev),
                     trim2(pose.m01()), trim2(pose.m10()), trim2(pose.m02()), trim2(pose.m20()),
                     trim2(fx), trim2(fy),
                     IrisCompat.isUsingRenderPack(), IrisCompat.isHandRendererActive());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * 【案例⑧ 探针】链上分段取证：在「基座捕获之后、applyFirstPersonGunTransform 之前」
+     * （即 lag 逆转 + Z180 翻转完成、定位/约束尚未施加的分段点）逐帧落 B′ 归一化的视图坐标。
+     * 与 gunRoot（链末端）成对比较：若本点已随朝向漂移，泄漏在基座/lag/摄像机动画段；
+     * 若本点稳定而 gunRoot 漂移，泄漏在定位/约束写入段。
+     */
+    private static void debugCase08ChainP1(Matrix4f pose) {
+        try {
+            if (RenderConfig.RECOIL_DEBUG == null || !RenderConfig.RECOIL_DEBUG.get()) {
+                return;
+            }
+            float dx = pose.m30() - handBasePose.m30();
+            float dy = pose.m31() - handBasePose.m31();
+            float dz = pose.m32() - handBasePose.m32();
+            float viewX = handBasePose.m00() * dx + handBasePose.m01() * dy + handBasePose.m02() * dz;
+            float viewY = handBasePose.m10() * dx + handBasePose.m11() * dy + handBasePose.m12() * dz;
+            float viewZ = handBasePose.m20() * dx + handBasePose.m21() * dy + handBasePose.m22() * dz;
+            net.minecraft.client.player.LocalPlayer player = Minecraft.getInstance().player;
+            float fy = player == null ? Float.NaN : net.minecraft.util.Mth.wrapDegrees(player.getYRot());
+            float fx = player == null ? Float.NaN : player.getXRot();
+            GunMod.LOGGER.info(
+                    "[TACZ Case08] chainP1 ms={} view=({},{},{}) facing=({},{})",
+                    System.currentTimeMillis(),
+                    trim2(viewX), trim2(viewY), trim2(viewZ),
+                    trim2(fx), trim2(fy));
         } catch (Throwable ignored) {
         }
     }

@@ -107,6 +107,15 @@ public class LocalPlayerReload {
             SoundPlayManager.stopPlayGunSound();
             SoundPlayManager.playReloadSound(player, display, noAmmo);
             animationStateMachine.trigger(GunAnimationConstant.INPUT_RELOAD);
+            // 【案例⑧ 探针】换弹开始标记：gated by RecoilDebug，给逐帧探针序列提供相位零点
+            if (com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG != null
+                    && com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG.get()) {
+                com.tacz.guns.GunMod.LOGGER.info(
+                        "[TACZ Case08] RELOAD_START ms={} facing=({},{})",
+                        System.currentTimeMillis(),
+                        String.format(java.util.Locale.ROOT, "%.4f", player.getXRot()),
+                        String.format(java.util.Locale.ROOT, "%.4f", net.minecraft.util.Mth.wrapDegrees(player.getYRot())));
+            }
         }
     }
 
