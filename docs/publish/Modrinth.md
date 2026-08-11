@@ -261,6 +261,35 @@ based on TACZ `1.1.8-hotfix`.
 
 ---
 
+## ⑥ 次回发布用 Changelog 草稿（案例⑧ 收口 · 2026-08-12）
+
+> 下一版（Beta 3 Hotfix-2 / Beta 4）发布时替换 §⑤ 的 `` ```markdown `` 块；下方的
+> 旧块是 Beta 3 Hotfix 已发布原文，留档勿动。
+
+```markdown
+Beta 3 Hotfix-2 – public test build of this Fabric port.
+
+### Fixes
+- First-person ADS viewmodel: reverted the 2026-08-10 diagonal-heading recoil fix
+  (the B^T*diag*B^T constraint sandwich). In-body A/B testing proved that fix was
+  the injector of the ADS regression reported on 2026-08-11 — the whole arm+gun
+  assembly offset rotating with player heading, "running backward" shift when
+  looking up/down, and over-pressed recoil. The constraint translation now writes
+  the verified-clean plain form (config `ConstraintCompensateMode=0`, the new
+  default), which in-body testing confirms is free of all of the above symptoms
+  in every heading. Hip-fire and Iris shader-pack rendering are unchanged.
+
+### Known issues
+- The pre-existing diagonal-heading ADS lateral drift (SE/NW slightly left, NE/SW
+  slightly right; vanilla renderer only) returns with the revert. Three candidate
+  reference frames (hand-pass entry base, RenderSystem modelView, live pose frame)
+  were each tested in-body and falsified — every one re-injected heading-locked
+  rotation and/or crosshair-locked rigidity — so the drift is parked as a known
+  port-era issue until trustworthy 26.2 hand-pass frame data is available.
+```
+
+---
+
 ## ⑥ 其他设置
 
 - **Categories**：`Adventure`、`Equipment`
