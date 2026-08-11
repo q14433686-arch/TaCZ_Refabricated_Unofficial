@@ -125,7 +125,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                     // world->view 绘制链统一施加。枪口缓存则经 GunItemRendererWrapper
                     // 归一化为纯视图空间，因此必须用 camera.rotation()（view->world）
                     // 旋到世界轴后再平移。直接使用视图向量会产生随 yaw 呈正弦变化的侧偏。
-                    Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
+                    Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
                     Vector3f viewOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
                     if (bullet.getFirstPersonRenderOffset() == null) {
                         // 保留精确出生帧的诊断快照；定位实际使用当帧枪口，避免转头后
