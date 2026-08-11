@@ -1136,3 +1136,28 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
   - 若日志里颜色**跟着改色变**而画面不变 → GL/Iris 管线侧吞顶点色；
   - 若日志颜色**不变** → 数据侧（改装写回/同步/缓存索引）问题。
 - **待用户回传**：N 卡机上开光影 + LaserDebug，改色一两次后上传 latest.log。
+
+#### 案例⑥：PAL（Player Animation Library）下切枪一次、第三人称持枪动画整局失效 —— 已修（第 38 轮）
+
+- **症状**：安装 player_animation_library 1.2.5 后，初次持枪动画正常；
+  只要切枪（无需在第三人称视角），持枪动画本次会话永不恢复；
+  小退（重进存档）/大退（重启进程）恢复。该缺陷自很早轮次即存在。
+- **根因（PAL 源码级实锤，zigythebird/PlayerAnimationLibrary@main）**：
+  1. `PalAnimationManager.stop()` 原先对每个 controller 调
+     `replaceAnimationWithFade(standardFadeOut(8), null)`；
+  2. PAL `AbstractFadeModifier#canRemove()`：**仅 FADE_IN 完成才返回 true；
+     FADE_OUT 恒 false** → fadeOut 完成后【永久残留】在 modifier 链上；
+     `AnimationController#tick()` 每 tick 只按 canRemove 摘除 —— 摘不掉它；
+  3. `AnimationController#get3DTransform`：链非空则全权交给链首 modifier；
+     fadeOut 完成态 progress=0 → alpha=0 → 输出 = 上游（链首=identity）
+     ＋ 下游全部动画 × 0 → **controller 永久哑掉**；
+  4. controller 由 avatar 工厂在实体重建时才重新生成 —— 小退/大退因此「治好」；
+     第三十七轮的「fade 堆积削幅」诊断方向正确，本坐实为更绝对的屏蔽机制。
+- **修复（零侵入 PAL）**：stop() 改用 **FADE_IN-to-null**
+  （`standardFadeIn(fadeTicks)` + `triggerAnimation(null)`）：
+  PAL 会把当前骨骼快照塞进 transitionAnimation，8 tick 内从旧姿势平滑滑入
+  identity（=视觉淡出），progress≥1 后 canRemove=true → 下一 tick 自动摘除；
+  与新枪动画的 fadeIn 叠加也互相不压制（FADE_IN 不将下游乘 0）。
+  `then(null)` 路径已由现网行为验证宽容（旧调用只哑不崩），无新增风险。
+- **验证**：装 PAL，持枪第三人称 → 切另一把枪 → 切回/换空手/再持枪，
+  动画应始终恢复（收枪淡出观感与之前一致）。

@@ -176,30 +176,36 @@ public final class PalAnimationManager {
             }
             return;
         }
-        // 【第 37 轮】去重：本 controller 的淡出只请求一次。
+        // 【第 38 轮】STOP 永远不要用 FADE_OUT —— PAL 1.2.5 的 fadeOut 会【永久哑掉】
+        // 该 controller，这正是「装 PAL 后切枪一次、第三人称动画整局消失、小退/大退才恢复」
+        // 的根因。源码级证据链（zigythebird/PlayerAnimationLibrary@main）：
         //
-        // 为什么必须去重（PAL 源码 AnimationController#replaceAnimationWithFade L434-446）：
-        //     if (fadeFromNothing || this.isActive()) {
-        //         ...
-        //         addModifierLast(fadeModifier);      // ← 无条件【追加】，不是替换
-        //     }
-        //     this.triggerAnimation(newAnimation);
-        // 它每调用一次就往 modifier 链上<b>挂一个新的</b> fade modifier，从不移除旧的。
+        //   1. AbstractFadeModifier#canRemove()：只有 FADE_IN 完成（progress>=1）才返回
+        //      true；FADE_OUT 恒 false —— fadeOut 走完也【永远留在 modifier 链上】；
+        //   2. AnimationController#tick() 逐帧只按 canRemove() 摘除 modifier —— 摘不掉它；
+        //   3. AnimationController#get3DTransform(bone)：链非空即全权交给链首，靠
+        //      super.get3DTransform 逐级内传。fadeOut 完成态 progress=0 → alpha=0 →
+        //      输出 = bone（上游输入，链首即空 identity）＋ 下游动画 × 0
+        //      —— 此后无论再 trigger/fadeIn 什么，骨骼输出恒为 identity；
+        //   4. controller 只在 avatar 重建时重新生成 —— 所以大退/小退「治好」。
         //
-        // 而 stopAllAnimation 是从 InnerThirdPersonManager 里每帧调的
-        // （手里不是枪 -> 每一帧都走 stopAllAnimation）。原来只有 isActive() 这一道门禁，
-        // 但淡出期间 isActive() 仍为 true，于是每帧都会再挂一个 fade ——
-        // 几十帧后 modifier 链上堆满淡出层，链首那个 modifier 把后续动画的输出层层削掉。
-        // 表现就是用户报告的：收枪后走/跑/游泳<b>没有对应动作</b>，
-        // 而开枪/换弹走 ONCE_UPPER 的 triggerAnimation（会重置 modifier 链）能短暂恢复，
-        // 随后又被新一轮堆积压回去。
+        // 规避（零侵入 PAL）：改用 <b>FADE_IN-to-null</b>——
+        // standardFadeIn(ticks) + triggerAnimation(null)。replaceAnimationWithFade 会
+        // 把当前骨骼快照塞进 transitionAnimation，8 tick 内从旧姿势平滑滑入 identity
+        // （=视觉上的淡出），其 progress>=1 后 canRemove()=true → PAL 下一 tick 自动
+        // 摘除，链路恢复干净，后续播放/fade 一切如常。
+        // 切枪时若新枪动画同帧 fadeIn 进来，两条 FADE_IN 链上短暂共存也是平滑叠加，
+        // 互不压制（FADE_IN 从不把下游乘 0）。
+        //
+        // 注：then(null) 的路径经现网行为证实宽容（旧 fadeOut(null) 调用只哑不崩），
+        // 本调用走同一 RawAnimation 路径，无新增风险。
         Set<Identifier> marks = FADING_OUT.computeIfAbsent(
                 player, p -> Collections.synchronizedSet(new HashSet<>()));
         if (!marks.add(controllerId)) {
             return;
         }
         controller.replaceAnimationWithFade(
-                AbstractFadeModifier.standardFadeOut(fadeTicks, EasingType.EASE_IN_OUT_SINE),
+                AbstractFadeModifier.standardFadeIn(fadeTicks, EasingType.EASE_IN_OUT_SINE),
                 (Animation) null
         );
     }

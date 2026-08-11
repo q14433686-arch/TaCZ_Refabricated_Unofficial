@@ -249,6 +249,13 @@ based on TACZ `1.1.8-hotfix`.
   correctly (vanilla renderer). The glow layer replicates vanilla's 26.2
   energy_swirl setup (shared entity shader + APPLY_TEXTURE_MATRIX + additive
   blending) with the mask discard added on top, so its look is unchanged.
+- Third-person gun animation: fixed a long-standing failure where switching guns
+  once with Player Animation Library installed permanently killed all third-person
+  gun animations for the session (a full world reload was required). Root cause is in
+  PAL itself: its FADE_OUT modifier is never removed from the controller chain and
+  zeroes out everything below it once finished; our stop path now uses a
+  FADE_IN-to-null fade, which PAL removes correctly after completion. Gun switching,
+  holstering and re-equipping now re-play animations as expected.
 - Scope mask shape upgraded with an opt-out: the ocular mask is now the filled
   convex hull of the ocular projection (`ScopeMaskHullFill=true`), fixing sparse
   sliver-glass oculars (AUG built-in sight, Elcan slats) leaving scope-body
