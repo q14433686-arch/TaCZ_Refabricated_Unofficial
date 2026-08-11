@@ -383,7 +383,11 @@ public class FirstPersonRenderGunEvent {
         // 配合约束系数，计算约束位移需要的反向位移
         Vector3f inverseTranslation = new Vector3f(originTranslation);
         inverseTranslation.sub(animatedTranslation);
+        // 【案例⑧探针 · 采样点1】骨骼链差值（authored 帧），仅在探针开启时分配
+        Vector3f case08Delta = case08DebugOn() ? new Vector3f(inverseTranslation) : null;
         inverseTranslation.mulDirection(poseStack.last().pose());
+        // 【案例⑧探针 · 采样点2】经 mulDirection 进入写入帧的向量 v0
+        Vector3f case08V0 = case08Delta != null ? new Vector3f(inverseTranslation) : null;
         // 【26.2 修复·终版：ADS 开枪/换弹时枪身随朝向整体偏移——
         //  原始症状：斜向（东南/西南/东北/西北）固定向一侧横移（东南/西北偏左、东北/西南偏右），
         //  正方向与腰射完全正常，开启 Iris 光影（手部 pass 无基座预乘）时一切正常】
@@ -437,5 +441,76 @@ public class FirstPersonRenderGunEvent {
         poseMatrix.m30(poseMatrix.m30() - inverseTranslation.x() * weight);
         poseMatrix.m31(poseMatrix.m31() - inverseTranslation.y() * weight);
         poseMatrix.m32(poseMatrix.m32() + inverseTranslation.z() * weight);
+        // 【案例⑧探针 · 采样点3】最终写入向量 v3 与全部基座数据落日志
+        case08DebugConstraint(case08Delta, case08V0, inverseTranslation, baseR, poseMatrix, weight);
+    }
+
+    // ============================ 案例⑧ 取证探针（2026-08-11） ============================
+    //
+    // 症状（用户六朝向实测）：换弹时「手臂+枪体」作为整体的平移方向随玩家朝向旋转
+    // （北→偏左、南→~正常或偏下、西→偏右、东→偏左、仰视→左上+后方、俯视→后方）；
+    // 后坐力除正北外均「过分向下压」、正南最重；**开 Iris 光影时全部正常**。
+    //
+    // 静态审计已排除（数学或字节码级）：相机后坐力通道（setXRot/setYRot 增量，与朝向无关）、
+    // 普通骨骼动画（模型空间撰写，天然锁视角）、渲染全程的右乘局部复合（26.2 vanilla 手部链
+    // 经官方 jar 字节码核对：pose 预乘 invert(viewRotation)、modelView mul viewRotation，
+    // 提交时 C·base=I，静帧下任何纯右乘变换不可能产生朝向相关平移）。
+    // 唯一帧敏感操作 = 本函数的 m30..m32 绝对槽位写入（不能右乘复合，必须显式做基座归一化）。
+    // 但现状代码（两次 mulTranspose + diag）经数值拟合**注定在 N/S 双干净、E/W 同号**，
+    // 与用户指纹（N 偏、S 净、E/W 异号）不符 —— 说明还有第三处未被静态建模覆盖的写入/错位。
+    //
+    // 本探针把整条链的三个采样点 + 两张基座矩阵一起落日志，六朝向各打一发连点+一次换弹后，
+    // 离线直接算出真实残差旋转的轴与角，一次性锁定错误因子，杜绝再靠脑推改矩阵。
+    private static long case08LastLogMs = 0L;
+
+    private static boolean case08DebugOn() {
+        return com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG != null
+                && com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG.get();
+    }
+
+    private static String c8(double v) {
+        return String.format(java.util.Locale.ROOT, "%+.4f", v);
+    }
+
+    private static void case08DebugConstraint(Vector3f delta, Vector3f v0, Vector3f v3,
+                                              Matrix3f baseR, Matrix4f poseNow, float weight) {
+        try {
+            if (delta == null) {
+                return;
+            }
+            if (delta.lengthSquared() < 1.0e-6 && v3.lengthSquared() < 1.0e-6) {
+                return; // 静帧不打，避免刷屏
+            }
+            long now = System.currentTimeMillis();
+            if (now - case08LastLogMs < 150L) {
+                return;
+            }
+            case08LastLogMs = now;
+            LocalPlayer player = Minecraft.getInstance().player;
+            float fy = player == null ? Float.NaN : Mth.wrapDegrees(player.getYRot());
+            float fx = player == null ? Float.NaN : player.getXRot();
+            Matrix4f mv = com.mojang.blaze3d.systems.RenderSystem.getModelViewMatrixCopy();
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ Case08] facing=({},{}) w={} d=({},{},{}) v0=({},{},{}) v3=({},{},{}) "
+                            + "B=[{},{},{} {},{},{} {},{},{}] P=[{},{},{} {},{},{} {},{},{}] Pt=({},{},{}) "
+                            + "MV=[{},{},{} {},{},{} {},{},{}] irisHand={} pack={}",
+                    c8(fx), c8(fy), c8(weight),
+                    c8(delta.x()), c8(delta.y()), c8(delta.z()),
+                    c8(v0.x()), c8(v0.y()), c8(v0.z()),
+                    c8(v3.x()), c8(v3.y()), c8(v3.z()),
+                    c8(baseR.m00()), c8(baseR.m01()), c8(baseR.m02()),
+                    c8(baseR.m10()), c8(baseR.m11()), c8(baseR.m12()),
+                    c8(baseR.m20()), c8(baseR.m21()), c8(baseR.m22()),
+                    c8(poseNow.m00()), c8(poseNow.m01()), c8(poseNow.m02()),
+                    c8(poseNow.m10()), c8(poseNow.m11()), c8(poseNow.m12()),
+                    c8(poseNow.m20()), c8(poseNow.m21()), c8(poseNow.m22()),
+                    c8(poseNow.m30()), c8(poseNow.m31()), c8(poseNow.m32()),
+                    c8(mv.m00()), c8(mv.m01()), c8(mv.m02()),
+                    c8(mv.m10()), c8(mv.m11()), c8(mv.m12()),
+                    c8(mv.m20()), c8(mv.m21()), c8(mv.m22()),
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive(),
+                    com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack());
+        } catch (Throwable ignored) {
+        }
     }
 }

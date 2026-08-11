@@ -1197,3 +1197,52 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
   与「借用曳光锚定向量到非曳光路径」的反例教训；若未来重启，正确入口是
   从**射击当帧的第一人称视模世界矩阵**现场解算出膛口位置（事件时点采集），
   而不是复用为曳光目的存量缓存向量。
+
+#### 案例⑧：第一人称「臂+枪整体」平移方向随玩家朝向旋转 + 后坐力随朝向「过分向下压」—— 取证中（2026-08-11 立案）
+
+- **症状指纹（用户六朝向实测，原话要点）**：
+  | 朝向 | 换弹时整体平移 | 备注 |
+  |---|---|---|
+  | 北 | 偏左 | 手臂、枪体作为一个整体 |
+  | 南 | ~正常（或偏下，看不太出来） | 唯一接近正常的朝向 |
+  | 西 | 偏右 | |
+  | 东 | 偏左 | 与西**异号** |
+  | 仰视 | 左上 + **后方**（枪整体往后移） | 有深度分量 |
+  | 俯视 | **后方** | |
+
+  后坐力：正北开枪无明显问题；其他朝向都「过分向下压」，**正南最重**。
+  **开启 Iris 光影时以上问题全部消失**（现场环境：iris 1.11.2+mc26.2 / sodium 0.9.1+mc26.2，
+  用户上传 latest.log 实证）。
+  用户怀疑：本移植修换弹/后坐力时的遗留（第 26/27.x 轮、d24e604/c975748 一系）。
+
+- **静态审计已排除（不信任注释，全部以代码/字节码/数值验证为准）**：
+  - 相机后坐力通道：`CameraSetupEvent.applyCameraRecoil` 只对玩家自身 `setXRot/setYRot`
+    做增量，是自身坐标系操作，**数学上不可能**随朝向偏置。
+  - 普通骨骼动画：床岩动画撰写在模型空间，天然锁视角，无朝向自由变量。
+  - 第一人称渲染链的**右乘局部复合**：26.2 官方 jar 字节码确认
+    `GameRenderer.renderItemInHand` 开头 `pose.mulPose(viewRotationMatrix.invert())`、
+    `modelViewStack.mul(viewRotationMatrix)`（viewRotation = `Camera#getViewRotationMatrix`
+    = R(camera.rotation().conjugate())，view→world 的逆），提交时 C·base=I ——
+    **静帧下任何纯右乘变换都不可能产生朝向相关平移**。
+  - `applyAnimationConstraintTransform` 现状（c975748 版「两次 mulTranspose+diag」）
+    经 numpy 逐朝向数值拟合：**注定 N/S 双干净、E/W 同号**——与用户指纹
+    （N 偏左、S 净、E/W 异号、俯仰有深度分量）**不符**。即：现状约束公式不是
+    本案载体（无论它自身还剩多少理论残余），另有第三处写入/错位未覆盖。
+  - 上一轮（c975748）自称修复的 R(2θ) 指纹（N/S 好、E/W 后怼）恰恰是全对称型，
+    本案指纹是**单频率型**（仅一处朝向干净），两者结构性矛盾 → 说明当前线上症状
+    不是那条约束链的遗留态，疑似另有世界量写入点或未采样的基座分歧。
+
+- **在查嫌疑**：① 摄像机动画双消费链（`applyLevelCameraAnimation` 把按 ZYX 分解的
+  euler 加到世界相机 vs `applyItemInHandCameraAnimation` 直接把四元数 mulPose 进手栈，
+  两者的消费帧参考系若存在不完全抵消，残余随俯仰耦合）；② `handBasePose` 采集时刻
+  与约束函数读取时刻之间可能夹了 `BeforeRenderHandEvent` 的 q_cam（提交时 C 不含它）；
+  ③ 某个尚未发现的绝对槽位写入。
+
+- **本轮动作（取证先行，按 D4 铁律先日志后改动）**：
+  在 `FirstPersonRenderGunEvent.applyAnimationConstraintTransform` 内置「Case08 探针」
+  （`RecoilDebug=true` 门禁，150ms 节流，静帧不打），三采样点：骨骼链差值 Δ、
+  写入帧向量 v0（mulDirection 后）、最终写入 v3；同时落日志入口基座 B′ 3x3、
+  当帧栈 P 3x3、RenderSystem modelView 3x3、iris 状态。
+  **测试协议**：开 `RecoilDebug`，持 AK，依次面 N→E→S→W→仰视→俯视，每个朝向
+  射击 2-3 发 + 换弹一次，然后把 latest.log 发来。离线逐项算出真实残差旋转的轴/角，
+  直接选定因子序修复（并行开关、可秒退）。
