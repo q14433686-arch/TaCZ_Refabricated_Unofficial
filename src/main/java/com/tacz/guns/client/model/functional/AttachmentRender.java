@@ -8,9 +8,11 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
+import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.renderer.item.AttachmentItemRenderer;
 import com.tacz.guns.util.RenderDistance;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.Identifier;
@@ -51,10 +53,14 @@ public class AttachmentRender implements IFunctionalSubmitter {
                     model = lodModel.getLeft();
                     texture = lodModel.getRight();
                 }
-                // 多传一个 texture：瞄具镜身可能要换成「被目镜掩码裁剪」的 RenderType，
-                // 而那需要按贴图构造。model 内部会自行判断要不要用（见 resolveBodyRenderType）。
+                RenderType renderType = RenderTypes.entityCutout(texture);
+                // The scope itself reaches this call before it marks the aperture, so it keeps its
+                // dedicated depth-body sequence. Non-scope attachments are traversed afterwards and
+                // use the same screen-space outside mask as the gun body when the aperture is active.
+                renderType = ScopeRenderTypes.clipForViewmodel(renderType, texture,
+                        transformType != null && transformType.firstPerson());
                 model.submit(attachmentItem, gunItem, poseStack, transformType, collector,
-                        RenderTypes.entityCutout(texture), texture, light, overlay);
+                        renderType, texture, light, overlay);
             }
         }, () -> collector.submitCustomGeometry(
                 poseStack,

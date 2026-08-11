@@ -101,8 +101,9 @@ IrisApi.getInstance().assignPipeline(customPipeline, IrisProgram.HAND);
 ```
 
 TACZ 的自定义 mask pipeline 必须归类为 `HAND`，否则 Iris 可能给它选择 fallback/错误 program，
-或让 mask 与 body 落到不同 FBO。除此之外不需要修改 Iris 内部 shader 源码。旧的
-`ShaderCreator` / `ExtendedShader` 内部 mixin 已移除，以降低对 Iris 私有实现和参数索引的耦合。
+或让 mask 与 body 落到不同 FBO。当前另保留一个 `require=0` 的最小 `ShaderCreator` mixin，
+只给 hand fragment 注入默认休眠的 depth-restore/mask 分支；世界/entity shader 不修改，
+避免普通 gbuffers 在 NVIDIA 上因 dormant discard/gl_FragDepth 路径发生编译差异。
 
 ## 4. 上游 TACZ 的 stencil 语义
 
@@ -405,10 +406,30 @@ OBJECT_NAME` 比对：`BACKUP` 记录 ocular 写入面的身份，`APERTURE_COPY
 另把失败日志的去重从「仅与上一条比较」换成「按原因集合去重（32 条封顶）」，
 避免降级周期在两个原因间交替时刷日志。
 
-三条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
+### 6.9 HOTFIX2：cleanup 之后的视模与火光反向裁剪
+
+有序批次还暴露出一个不能只靠 depth-test 解决的时序：scope cleanup 在 order `-1`
+恢复了世界深度，而枪身、非瞄具配件和半透明枪口火光位于默认 order `0`；它们若继续使用
+vanilla RenderType，会在目镜孔内重新通过深度测试。HOTFIX2 不移植 26.2 的离屏颜色掩码，
+而直接复用本方案已经生成的两份深度：
+
+- `tacz_ScopeMaskMode = 1`：保留 `apertureDepth < worldDepth - 1e-6` 的镜内像素（reticle）；
+- `tacz_ScopeMaskMode = 2`：丢弃上述镜内像素，只保留镜外（gun/attachment/flash）；
+- 分别克隆 `ENTITY_CUTOUT`、`ENTITY_TRANSLUCENT`、`ENERGY_SWIRL`，除 fragment shader 与
+  两个深度 sampler 外逐状态保留原管线；swirl 的 `OffsetTextureTransform(1,1)`、lightmap、
+  overlay 与 sort-on-upload 也按 26.1.2 官方字节码完整复刻；
+- 只有同一次第一人称枪械提取已经提交 aperture 时才换 RenderType；`prepareMaskDraw` 仍在
+  GPU draw 边界复核深度附件身份/格式/尺寸，失败时 mode=0 原样绘制，禁止使用上一帧掩码；
+- Iris 的 HAND fragment dormant 分支同步支持 mode 2，自定义 cutout 归类为 HAND，
+  两条火光管线归类为 HAND_TRANSLUCENT。
+
+这样枪身、非瞄具配件、火光大面片与 additive swirl 都不会重新覆盖镜内世界画面，
+腰射、第三人称、未形成 aperture 的开镜初段以及深度副本失败路径保持原行为。
+
+七条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
 `GlCommandEncoder` mixin 负责 backup/aperture-copy/cleanup/mask 的 sampler 绑定；可选 Iris mixin
 补两条 dormant fragment branch。RenderType 构造器通过 Access Widener 开放，用于同步标记
-BACKUP/APERTURE_COPY/RESTORE/MASK 操作。
+BACKUP/APERTURE_COPY/RESTORE/MASK/MASK_OUTSIDE 操作。
 
 ## 7. 依赖版本审计（2026-07-30）
 

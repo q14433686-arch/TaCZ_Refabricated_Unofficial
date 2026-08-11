@@ -20,6 +20,7 @@ import com.tacz.guns.client.model.SlotModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.model.functional.ShellRender;
+import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.TransformScale;
 import com.tacz.guns.compat.iris.IrisCompat;
@@ -57,6 +58,21 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
     private static final SlotModel SLOT_GUN_MODEL = new SlotModel();
     private static BedrockGunModel lastModel = null;
     public static final Vector3f muzzleRenderOffset = new Vector3f();
+
+    /**
+     * 第一人称手部提交进入 {@link #renderFirstPerson} 时的基座矩阵 B。
+     * 26.1.2 vanilla 会在调用本渲染器前预乘视图到世界的相机旋转；Iris 手部 pass
+     * 通常接近单位阵。缓存入口矩阵后，枪口和动画约束都能用同一份实际基座做归一化，
+     * 无需按渲染后端硬编码分支。仅由渲染线程在一次同步提交内读写。
+     */
+    private static final Matrix4f handBasePose = new Matrix4f();
+
+    /**
+     * 将当前手部入口基座的旋转复制给动画约束解算器。
+     */
+    public static void copyHandBaseRotation(org.joml.Matrix3f dst) {
+        dst.set(handBasePose);
+    }
 
     /**
      * 「当前这次 THIRD_PERSON_*_HAND 提交对应的是<b>主手</b>」。
@@ -201,6 +217,9 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             }
 
             poseStack.pushPose();
+            // 入口基座必须在 TACZ 自己施加任何旋转/位移前捕获。它与稍后枪口矩阵
+            // 共享同一前缀，因此可用 B 的转置恢复纯视图空间位移。
+            handBasePose.set(poseStack.last().pose());
             // 逆转原版施加在手上的延滞效果，改为写入模型动画数据中
             float xRotOffset = Mth.lerp(partialTick, player.xBobO, player.xBob);
             float yRotOffset = Mth.lerp(partialTick, player.yBobO, player.yBob);
@@ -235,11 +254,15 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             // 第一人称手部 pass 下，预先让 Iris 把 vanilla entity/item 管线归到 hand program。
             // 方法内部只尝试一次，避免 shader 下每帧重复匹配刷日志。
             IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
+            // Reset the extraction-time aperture marker before the scope attachment and gun FX
+            // are traversed synchronously by gunModel.submit.
+            ScopeRenderTypes.beginViewmodelSubmission();
             // 调用枪械模型渲染
             RenderType renderType = display.enablesTransparency()
                     ? RenderTypes.entityTranslucent(display.getModelTexture())
                     : RenderTypes.entityCutout(display.getModelTexture());
-            gunModel.submit(poseStack, stack, ctx, collector, renderType, light, OverlayTexture.NO_OVERLAY);
+            gunModel.submit(poseStack, stack, ctx, collector, renderType,
+                    display.getModelTexture(), light, OverlayTexture.NO_OVERLAY);
             // 缓存枪口位置，为第一人称曳光弹渲染作准备
             cacheMuzzlePosition(poseStack, gunModel);
             // 恢复手臂渲染
@@ -264,12 +287,21 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             double itemRenderFov = CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get();
             double levelRenderFov = CameraSetupEvent.WORLD_FOV_DYNAMICS.get();
             poseStack.popPose();
-            // 缓存转换后的偏移坐标
-            muzzleRenderOffset.set(
-                    pose.m30(),
-                    pose.m31(),
-                    pose.m32() * Math.tan(itemRenderFov / 2 * Math.PI / 180) / Math.tan(levelRenderFov / 2 * Math.PI / 180)
-            );
+            // 26.1.2 的 vanilla 手部 pass 在入口预乘基座 B≈R(camera)，所以这里的
+            // 枪口平移 m 是世界轴的 B·v，而不是旧版代码所假定的纯视图空间 v。
+            // 去掉基座平移并乘 B 的转置（正交旋转的逆），恢复统一的视图空间契约：
+            //     v = Bᵀ · (m - B.t)
+            float dx = pose.m30() - handBasePose.m30();
+            float dy = pose.m31() - handBasePose.m31();
+            float dz = pose.m32() - handBasePose.m32();
+            float viewX = handBasePose.m00() * dx + handBasePose.m01() * dy + handBasePose.m02() * dz;
+            float viewY = handBasePose.m10() * dx + handBasePose.m11() * dy + handBasePose.m12() * dz;
+            float viewZ = handBasePose.m20() * dx + handBasePose.m21() * dy + handBasePose.m22() * dz;
+
+            // FOV 比值只应缩放视图空间深度，不能缩放基座旋转后的世界 Z 分量。
+            double fovScale = Math.tan(itemRenderFov / 2 * Math.PI / 180)
+                    / Math.tan(levelRenderFov / 2 * Math.PI / 180);
+            muzzleRenderOffset.set(viewX, viewY, (float) (viewZ * fovScale));
         }
     }
 

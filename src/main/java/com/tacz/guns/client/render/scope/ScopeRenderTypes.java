@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.OutputTarget;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.TextureTransform;
 import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
@@ -29,6 +30,12 @@ public final class ScopeRenderTypes {
     private static final Map<Identifier, RenderType> DEPTH_CLEANUPS = new HashMap<>();
     private static final Map<Identifier, RenderType> ETCHED_RETICLES = new HashMap<>();
     private static final Map<Identifier, RenderType> VISIBLE_RETICLES = new HashMap<>();
+    private static final Map<Identifier, RenderType> VIEWMODEL_CUTOUT_TYPES = new HashMap<>();
+    private static final Map<Identifier, RenderType> FLASH_TRANSLUCENT_TYPES = new HashMap<>();
+    private static final Map<Identifier, RenderType> FLASH_SWIRL_TYPES = new HashMap<>();
+
+    /** Set during extraction when this first-person gun submission actually queued an ocular aperture. */
+    private static boolean apertureScheduledForViewmodel;
 
     /**
      * Writes ocular geometry to the existing hand depth attachment without touching color.
@@ -51,11 +58,30 @@ public final class ScopeRenderTypes {
      */
     private static final RenderPipeline VISIBLE_RETICLE_PIPELINE = createVisibleReticlePipeline();
 
+    /** Entity cutout plus an outside-aperture mask for the gun body and non-scope attachments. */
+    private static final RenderPipeline VIEWMODEL_CUTOUT_PIPELINE = createViewmodelCutoutPipeline();
+
+    /** Ordinary entity translucency plus an outside-aperture fragment mask for the flash quad. */
+    private static final RenderPipeline FLASH_TRANSLUCENT_PIPELINE = createFlashTranslucentPipeline();
+
+    /** Vanilla energy-swirl states plus the same outside-aperture mask for the glow layer. */
+    private static final RenderPipeline FLASH_SWIRL_PIPELINE = createFlashSwirlPipeline();
+
     private ScopeRenderTypes() {
     }
 
     /** Forces registration before ShaderManager's initial resource reload. */
     public static void init() {
+    }
+
+    /** Starts extraction of one first-person gun; prevents a previous frame's aperture from clipping fire. */
+    public static void beginViewmodelSubmission() {
+        apertureScheduledForViewmodel = false;
+    }
+
+    /** @return whether this gun submission queued a valid depth-aperture sequence before its FX. */
+    public static boolean hasScheduledViewmodelAperture() {
+        return apertureScheduledForViewmodel;
     }
 
     /**
@@ -67,6 +93,10 @@ public final class ScopeRenderTypes {
     }
 
     public static RenderType depthAperture(Identifier texture) {
+        // This method is called while extracting an active first-person ocular, before the gun's
+        // functional muzzle-flash node is visited. The flag only selects a masked RenderType;
+        // draw-time validation still fails open when a depth copy is unavailable.
+        apertureScheduledForViewmodel = true;
         return DEPTH_APERTURES.computeIfAbsent(texture, ScopeRenderTypes::createDepthApertureType);
     }
 
@@ -80,6 +110,32 @@ public final class ScopeRenderTypes {
 
     public static RenderType visibleReticle(Identifier texture) {
         return VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createVisibleReticleType);
+    }
+
+    /**
+     * Replaces an ordinary first-person gun/attachment cutout type only after an ocular was queued.
+     * All other contexts and failed aperture cycles retain the caller's original behavior.
+     */
+    public static RenderType clipForViewmodel(RenderType original, Identifier texture, boolean applies) {
+        if (!applies || !apertureScheduledForViewmodel) {
+            return original;
+        }
+        // Gun displays may opt into entityTranslucent; retain that blend/sort recipe rather than
+        // silently forcing every body through cutout. AttachmentRender supplies cutout here.
+        if (original.hasBlending()) {
+            return FLASH_TRANSLUCENT_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createFlashTranslucentType);
+        }
+        return VIEWMODEL_CUTOUT_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createViewmodelCutoutType);
+    }
+
+    /** Muzzle-flash background quad: retain vanilla appearance outside the ocular, discard inside. */
+    public static RenderType flashTranslucentClipped(Identifier texture) {
+        return FLASH_TRANSLUCENT_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createFlashTranslucentType);
+    }
+
+    /** Muzzle-flash additive glow: retain vanilla energy-swirl appearance outside the ocular. */
+    public static RenderType flashSwirlClipped(Identifier texture) {
+        return FLASH_SWIRL_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createFlashSwirlType);
     }
 
     private static RenderType createApertureCopyType(RenderType base) {
@@ -157,6 +213,67 @@ public final class ScopeRenderTypes {
         );
     }
 
+    private static RenderType createViewmodelCutoutType(Identifier texture) {
+        // Bytecode-equivalent to RenderTypes.entityCutout(texture, true), plus the two depth
+        // samplers consumed by the outside-aperture branch.
+        RenderSetup setup = RenderSetup.builder(VIEWMODEL_CUTOUT_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
+                .useLightmap()
+                .useOverlay()
+                .affectsCrumbling()
+                .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
+                .createRenderSetup();
+        RenderType base = RenderType.create("tacz_scope_viewmodel_cutout_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_viewmodel_cutout",
+                base,
+                ScopeDepthCopyState.Operation.MASK_OUTSIDE
+        );
+    }
+
+    private static RenderType createFlashTranslucentType(Identifier texture) {
+        // Bytecode-equivalent to RenderTypes.entityTranslucent(texture, true), with two placeholder
+        // depth samplers added. ScopeDepthCopyState replaces those bindings at the real draw boundary.
+        RenderSetup setup = RenderSetup.builder(FLASH_TRANSLUCENT_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
+                .useLightmap()
+                .useOverlay()
+                .affectsCrumbling()
+                .sortOnUpload()
+                .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
+                .createRenderSetup();
+        RenderType base = RenderType.create("tacz_scope_flash_translucent_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_flash_translucent",
+                base,
+                ScopeDepthCopyState.Operation.MASK_OUTSIDE
+        );
+    }
+
+    private static RenderType createFlashSwirlType(Identifier texture) {
+        // Exact RenderTypes.energySwirl setup: animated UV transform, lightmap/overlay bindings and
+        // upload sorting are preserved; only the depth-mask samplers are additional.
+        RenderSetup setup = RenderSetup.builder(FLASH_SWIRL_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
+                .setTextureTransform(new TextureTransform.OffsetTextureTransform(1.0F, 1.0F))
+                .useLightmap()
+                .useOverlay()
+                .sortOnUpload()
+                .createRenderSetup();
+        RenderType base = RenderType.create("tacz_scope_flash_swirl_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_flash_swirl",
+                base,
+                ScopeDepthCopyState.Operation.MASK_OUTSIDE
+        );
+    }
+
     private static RenderPipeline createDepthAperturePipeline() {
         RenderPipeline source = RenderPipelines.ENTITY_CUTOUT;
         RenderPipeline.Builder builder = clonePipeline(source,
@@ -230,6 +347,48 @@ public final class ScopeRenderTypes {
 
         RenderPipeline pipeline = RenderPipelines.register(builder.build());
         IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_visible_reticle");
+        return pipeline;
+    }
+
+    private static RenderPipeline createViewmodelCutoutPipeline() {
+        RenderPipeline.Builder builder = clonePipeline(
+                RenderPipelines.ENTITY_CUTOUT,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_viewmodel_cutout"));
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_flash_clip"));
+        builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        IrisCompat.assignPipelineToIris(pipeline, "HAND", "scope_viewmodel_cutout");
+        return pipeline;
+    }
+
+    private static RenderPipeline createFlashTranslucentPipeline() {
+        RenderPipeline.Builder builder = clonePipeline(
+                RenderPipelines.ENTITY_TRANSLUCENT,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_flash_translucent"));
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_flash_clip"));
+        builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_flash_translucent");
+        return pipeline;
+    }
+
+    private static RenderPipeline createFlashSwirlPipeline() {
+        RenderPipeline.Builder builder = clonePipeline(
+                RenderPipelines.ENERGY_SWIRL,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_flash_swirl"));
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_flash_clip"));
+        builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_flash_swirl");
         return pipeline;
     }
 

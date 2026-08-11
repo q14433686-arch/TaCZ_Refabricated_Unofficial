@@ -6,7 +6,7 @@
   ],
   "version": "${version}",
   "name": "[UNOFFICIAL] TaCZ Refabricated (26.1.2 HOTFIX)",
-  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. HOTFIX build for Minecraft 26.1.2 - not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.1.2.HOTFIX' build metadata so gun packs declaring a 'tacz' version requirement continue to load.",
+  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. HOTFIX build for Minecraft 26.1.2 - not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.1.2.HOTFIX2' build metadata so gun packs declaring a 'tacz' version requirement continue to load.",
   "authors": [
     "Sh1roCu"
   ],

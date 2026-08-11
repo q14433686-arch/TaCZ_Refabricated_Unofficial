@@ -40,7 +40,31 @@ public interface IEntityAdditionalSpawnData {
     void writeSpawnData(FriendlyByteBuf buf);
 
     static Packet<ClientGamePacketListener> getEntitySpawningPacket(Entity entity) {
-        return getEntitySpawningPacket(entity, new ClientboundAddEntityPacket(entity, 0, entity.blockPosition()));
+        // 【26.2 移植陷阱：实体生成包出生坐标被 BlockPos 取整】
+        // 1.21.1 的 ClientboundAddEntityPacket(Entity, int, BlockPos) 里 BlockPos 只是
+        // "pos" 附属字段（供画/展示框等贴方块实体用），x/y/z 取自实体精确坐标；
+        // 但 26.2 字节码确认该构造器已改为：
+        //   this(entity.getId(), entity.getUUID(),
+        //        pos.getX(), pos.getY(), pos.getZ(),   // ← int！x/y/z 全部块对齐
+        //        entity.getXRot(), entity.getYRot(), entity.getType(), data,
+        //        entity.getDeltaMovement(), entity.getYHeadRot());
+        // 即 26.2 中 BlockPos 直接【替代】了 x/y/z（新签名已无独立 BlockPos 字段，
+        // 画/展示框的客户端处理器直接把 x/y/z 当贴块坐标读）。
+        // 本方法若沿用 1.21.1 时代的 `new ClientboundAddEntityPacket(entity, 0, entity.blockPosition())`，
+        // 客户端收到的子弹出生位置 = floor(服务器精确坐标)：所有子弹从玩家脚下方块的负角飞出，
+        // 出生点与瞄准眼线的偏差是一个【与视线朝向无关的世界轴固定向量】≈ (0, -1, 0)^3 内随机。
+        // 视觉上：第一人称曳光弹近端锚定枪口（第 26 轮修复），远端弹道收敛到被取整的弹道线，
+        // 其屏幕左右偏量 = offset · right_world，随 yaw 正弦摆动（朝某方位"回正"，
+        // 其反方向偏最大）——实测日志：全朝向 113 发子弹 spawn−eye 恒为
+        // (-0.309, -0.620, -0.755)（= 站立点块内小数部分的相反数），按 yaw 重新投影
+        // 即得报告的"北偏右、南偏左、西/东回正"现象。服务器端命中判定不受影响（逻辑在服务端）。
+        // 修法：改用公开全参构造器直接写入实体精确 double 坐标，恢复 1.21.1 语义。
+        return getEntitySpawningPacket(entity, new ClientboundAddEntityPacket(
+                entity.getId(), entity.getUUID(),
+                entity.getX(), entity.getY(), entity.getZ(),
+                entity.getXRot(), entity.getYRot(),
+                entity.getType(), 0,
+                entity.getDeltaMovement(), entity.getYHeadRot()));
     }
 
     static Packet<ClientGamePacketListener> getEntitySpawningPacket(Entity entity, Packet<ClientGamePacketListener> base) {

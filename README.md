@@ -36,10 +36,22 @@
 
 HOTFIX 在 Beta-2 的可游玩基线上，按 `26.2(main)` 的 `backport-26.1.2/` 清单回移植了
 7 项已在 26.2 验证的修复，并通过签名适配移植补齐了工作台预览模型的缩放/旋转。
+HOTFIX2 又同步了 26.2 后续结案的 PAL、弹道/后坐力、法线与镜内视模裁剪修复。
 它仍然是测试构建，不保证与上游完全等价。
 
-HOTFIX 主要新增 / 修复（回移植自 26.2(main)，逐项明细见
-`docs/BACKPORT_FROM_26_2_APPLIED.md`）：
+HOTFIX2 本轮新增 / 修复：
+
+- **PAL 切枪后第三人称动画永久失效**：规避 Player Animation Library 1.2.5
+  无法摘除完成态 fade-out modifier 的缺陷，改用可自动摘除的 fade-in-to-null 过渡。
+- **曳光弹出生点取整与枪口漂移**：实体生成包改发精确 double 坐标；第一人称枪口
+  以手部入口基座矩阵归一回视图空间，再按相机旋转写入世界轴。
+- **ADS 开枪/换弹斜向固定侧偏**：动画约束按入口基座的逆变换恢复旧版坐标契约，
+  消除随朝向出现的二倍角偏移。
+- **枪械法线重复变换**：已经过 normal matrix 的法线改写裸值，修复平视过暗与光照方向错误。
+- **镜内视模与枪口火光**：复用 26.1.2 的深度孔径副本做屏幕空间反向裁剪；枪身、
+  非瞄具配件、火光大面片和 energy-swirl 辉光只保留在目镜外，vanilla/Iris 均走失败开放回退。
+
+此前 HOTFIX 主要新增 / 修复（逐项明细见 `docs/BACKPORT_FROM_26_2_APPLIED.md`）：
 
 - **跨维度后服务端枪械状态不复位**：Fabric 的 `AFTER_ENTITY_CHANGE_LEVEL` 事件
   javadoc 明写不适用于玩家，原实现里玩家一次都没进过 handler；
@@ -62,19 +74,17 @@ HOTFIX 主要新增 / 修复（回移植自 26.2(main)，逐项明细见
 以下 Beta-2 引入的内容继续保留：
 
 - **中高倍镜镜内裁剪**：不再在 `CustomGeometryRenderer` 的顶点提交阶段直接改 GL 状态；
-  改为独立 mask/body/reticle 批次，并在 `GlCommandEncoder` 真正发出 draw 前配置 stencil。
-  Iris 下通过公开的 `assignPipeline(..., HAND)` API 把自定义掩码管线归入手部 pass，不再修改 Iris shader 源码。
+  改为独立 aperture/body/cleanup/reticle 批次，以不可见目镜深度形成孔径并精确恢复世界深度。
+  Iris 下通过公开的 `assignPipeline(..., HAND)` API 归类自定义管线，并仅向手部 shader 注入默认休眠的恢复/掩码分支。
 - **发光准星修复为真正自发光**：`*_illuminated` 准星改用专用 emissive/no-cardinal-lighting
   渲染类型，避免随玩家朝向在 vanilla/Iris 下反向变亮变暗。
 - **LRTactical 继续作为内置兼容层**：throwable、melee、detonator/C4、consumable 基础流程保留；
   Fabric 元数据继续通过 `provides: ["lrtactical"]` 提供依赖标识。
-- **曳光弹显示做了阶段性修复**：恢复上游 `energySwirl` 渲染类型、满亮 block light，并让
-  第一人称枪口视觉偏移按每发子弹缓存。弹道/命中本身未改。
+- **曳光弹显示做了阶段性修复**：恢复上游 `energySwirl` 渲染类型与满亮 block light；
+  HOTFIX2 进一步修复了出生坐标取整和第一人称枪口空间换算。弹道/命中逻辑本身未改。
 
 当前已知重点限制：
 
-- **曳光弹仍可能存在视觉偏移差异**：目前观察到弹道/最终交汇点基本正确，问题集中在挂在
-  子弹实体上的曳光几何显示；它不影响命中判定，后续仍需继续细查。
 - **PIP / 二次世界渲染不默认启用**：此前验证显示 26.1.2 地形渲染、RenderTarget 与光影 pass
   耦合很深，已暂停作为主线方案。
 - **LRTactical 仍是部分内置移植**：flash shield 等上游模块仍未完整移植。
@@ -179,7 +189,7 @@ HOTFIX 主要新增 / 修复（回移植自 26.2(main)，逐项明细见
 > ℹ️ **关于 `Mod version mismatch`**：枪包 `gunpack.meta.json` 里的
 > `"dependencies": { "tacz": ">=1.0.4" }` 这类约束，会与本模组的版本号比对。
 >
-> 本移植版的版本号是 **`1.1.8+fabric.26.1.2.HOTFIX`** —— 前面的 `1.1.8` 是所基于的
+> 本移植版的版本号是 **`1.1.8+fabric.26.1.2.HOTFIX2`** —— 前面的 `1.1.8` 是所基于的
 > 上游版本（Forge 的 `1.1.8-hotfix`），`+` 之后是 SemVer 的**构建元数据**。
 > 按 SemVer 规则，构建元数据**不参与版本比较**，因此它等价于 `1.1.8`，
 > 面向 `1.1.8` 及更早版本的枪包都能正常通过校验。
@@ -234,7 +244,8 @@ Arcana 没有 Fabric / 26.1.2 版本，且其格式与密钥未公开。
   雾和粒子既不会被目镜挡掉，也不会无视地形叠在前景上。
   发光准星使用不受 ocular depth 遮挡的 HAND_TRANSLUCENT 管线；纯蚀刻 division 会过滤大面积
   blackout panel 后恢复细线/刻度。客户端配置 `[render]` 下应存在 `ScopeMaskEnable = true`。
-- **枪身/手臂不做镜内排除**：上游同样不做，非移植缺陷。
+- **手臂仍不做镜内排除**：HOTFIX2 已裁掉镜内的枪身、非瞄具配件与两层枪口火光；
+  独立玩家手臂提交保持原渲染路径。
 - 三个工作台（`workbench_a/b/c`）的名称取自枪包数据，上下游均未提供内置译名。
 
 ---

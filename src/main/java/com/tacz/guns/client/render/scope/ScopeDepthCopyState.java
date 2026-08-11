@@ -38,7 +38,10 @@ public final class ScopeDepthCopyState {
         BACKUP,
         APERTURE_COPY,
         RESTORE,
-        MASK
+        /** Keep fragments inside the ocular (reticles). */
+        MASK,
+        /** Keep fragments outside the ocular (viewmodel muzzle-flash layers). */
+        MASK_OUTSIDE
     }
 
     public static final String MODE_UNIFORM = "tacz_DepthRestoreMode";
@@ -149,7 +152,8 @@ public final class ScopeDepthCopyState {
                 yield true;
             }
             case RESTORE -> prepareRestoreDraw(program);
-            case MASK -> prepareMaskDraw(program);
+            case MASK -> prepareMaskDraw(program, 1);
+            case MASK_OUTSIDE -> prepareMaskDraw(program, 2);
             case NONE -> {
                 disableScopeBranches(program);
                 yield true;
@@ -307,7 +311,7 @@ public final class ScopeDepthCopyState {
      * branch. When anything is missing the draw falls back to the previous unmasked behavior
      * (mode stays 0), which never produces stale or garbage masking.
      */
-    private static boolean prepareMaskDraw(int program) {
+    private static boolean prepareMaskDraw(int program, int maskMode) {
         if (program <= 0) {
             return true;
         }
@@ -363,7 +367,8 @@ public final class ScopeDepthCopyState {
             int worldUnit = bindDepthTexture(2, WORLD_TARGET.texture());
             GL20.glUniform1i(worldLocation, worldUnit);
         }
-        GL20.glUniform1i(maskLocation, 1);
+        // 1 keeps the ocular interior (reticles); 2 discards it (muzzle flash/viewmodel FX).
+        GL20.glUniform1i(maskLocation, maskMode);
         // Log each mask flavour once: toggling a shader pack switches between them mid-session,
         // and a single boolean would hide the Iris path ever becoming active.
         if (irisWorld ? !loggedMaskActiveIris : !loggedMaskActiveVanilla) {
@@ -372,7 +377,7 @@ public final class ScopeDepthCopyState {
             } else {
                 loggedMaskActiveVanilla = true;
             }
-            GunMod.LOGGER.info("[TACZ Scope] Reticle draws now masked by the ocular aperture depth"
+            GunMod.LOGGER.info("[TACZ Scope] Scope draws now masked by the ocular aperture depth"
                     + (irisWorld ? " (Iris depthtex2 world source)." : " (vanilla world-depth backup)."));
         }
         return true;

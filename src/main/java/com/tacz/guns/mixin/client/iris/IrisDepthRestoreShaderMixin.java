@@ -81,14 +81,16 @@ public abstract class IrisDepthRestoreShaderMixin {
                 + "        gl_FragDepth = texture(depthtex2, tacz_depthUv).r;\n"
                 + "        return;\n"
                 + "    }\n";
-        // Reticle pixels survive only inside the ocular footprint: the aperture copy holds the
-        // invisible near depth the ocular wrote, so nearer-than-world means "ocular was here".
+        // Mode 1 keeps reticles inside the ocular. Mode 2 keeps viewmodel FX outside it; this is
+        // used by both muzzle-flash layers after the cleanup draw restores ordinary world depth.
         String maskBranch = "\n    if (tacz_ScopeMaskMode != 0) {\n"
                 + "        vec2 tacz_maskWorldUv = gl_FragCoord.xy / max(vec2(textureSize(depthtex2, 0)), vec2(1.0));\n"
                 + "        vec2 tacz_maskApertureUv = gl_FragCoord.xy / max(vec2(textureSize(tacz_ApertureDepthSampler, 0)), vec2(1.0));\n"
                 + "        float tacz_maskWorldDepth = texture(depthtex2, tacz_maskWorldUv).r;\n"
                 + "        float tacz_maskApertureDepth = texture(tacz_ApertureDepthSampler, tacz_maskApertureUv).r;\n"
-                + "        if (!(tacz_maskApertureDepth < tacz_maskWorldDepth - 1.0e-6)) {\n"
+                + "        bool tacz_insideOcular = tacz_maskApertureDepth < tacz_maskWorldDepth - 1.0e-6;\n"
+                + "        if ((tacz_ScopeMaskMode == 1 && !tacz_insideOcular)\n"
+                + "                || (tacz_ScopeMaskMode == 2 && tacz_insideOcular)) {\n"
                 + "            discard;\n"
                 + "        }\n"
                 + "    }\n";

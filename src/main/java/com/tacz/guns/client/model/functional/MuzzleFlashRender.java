@@ -10,6 +10,7 @@ import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.model.SlotModel;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
+import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.display.gun.MuzzleFlash;
 import com.tacz.guns.compat.iris.IrisCompat;
@@ -120,6 +121,20 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         int overlay = context.overlay();
         muzzleFlashStartMark = false;
 
+        // The depth aperture is restored before ordinary translucent FX, so both muzzle-flash
+        // layers would otherwise reappear inside the scope. Select an aperture-aware type only
+        // when this same first-person gun submission actually queued an ocular sequence. At draw
+        // time ScopeDepthCopyState validates both depth copies and fails open to normal rendering.
+        boolean clipToScopeExterior = context.displayContext() != null
+                && context.displayContext().firstPerson()
+                && ScopeRenderTypes.hasScheduledViewmodelAperture();
+        RenderType backgroundType = clipToScopeExterior
+                ? ScopeRenderTypes.flashTranslucentClipped(muzzleFlash.getTexture())
+                : RenderTypes.entityTranslucent(muzzleFlash.getTexture());
+        RenderType glowType = clipToScopeExterior
+                ? ScopeRenderTypes.flashSwirlClipped(muzzleFlash.getTexture())
+                : RenderTypes.energySwirl(muzzleFlash.getTexture(), 1, 1);
+
         context.add(collector -> {
             PoseStack backgroundPose = new PoseStack();
             backgroundPose.last().pose().set(frozenPose.last().pose());
@@ -127,7 +142,7 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
             backgroundPose.scale(frozenScale, frozenScale, frozenScale);
             backgroundPose.mulPose(Axis.ZP.rotationDegrees(frozenRotation));
             backgroundPose.translate(0, -1, 0);
-            collector.submitCustomGeometry(backgroundPose, RenderTypes.entityTranslucent(muzzleFlash.getTexture()),
+            collector.submitCustomGeometry(backgroundPose, backgroundType,
                     (pose, buffer) -> MUZZLE_FLASH_MODEL.renderToBuffer(
                             backgroundPose, buffer, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F));
 
@@ -137,7 +152,7 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
             glowPose.scale(frozenScale / 2, frozenScale / 2, frozenScale / 2);
             glowPose.mulPose(Axis.ZP.rotationDegrees(frozenRotation));
             glowPose.translate(0, -0.9, 0);
-            collector.submitCustomGeometry(glowPose, RenderTypes.energySwirl(muzzleFlash.getTexture(), 1, 1),
+            collector.submitCustomGeometry(glowPose, glowType,
                     (pose, buffer) -> MUZZLE_FLASH_MODEL.renderToBuffer(
                             glowPose, buffer, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F));
         });
