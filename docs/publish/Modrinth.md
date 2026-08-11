@@ -219,9 +219,14 @@ based on TACZ `1.1.8-hotfix`.
   facing (R·diag·R leakage, ~sin(2·yaw)). The fix conjugates against the inverse base
   (Bᵀ·diag·Bᵀ), restoring exact 1.21.1 behavior in all 8 headings. Hip-fire and
   shader-pack rendering are unchanged.
-- See-through scopes (offscreen-mask path): the gun body and non-scope attachments
-  are now discarded inside the sight picture, so the world shows through the
-  scope lens correctly (vanilla renderer).
+- See-through scopes (offscreen-mask path): the gun body, non-scope attachments and
+  the main muzzle-flash quad are now discarded inside the sight picture, so the
+  world shows through the scope lens correctly (vanilla renderer).
+- Scope mask shape upgraded with an opt-out: the ocular mask is now the filled
+  convex hull of the ocular projection (`ScopeMaskHullFill=true`), fixing sparse
+  sliver-glass oculars (AUG built-in sight, Elcan slats) leaving scope-body
+  fragments inside the lens. Set to false to instantly fall back to the legacy
+  geometric projection.
 
 ### Notes
 - Requires Java 25 and Forge Config API Port.
@@ -231,9 +236,11 @@ based on TACZ `1.1.8-hotfix`.
 - Under an active Iris shader pack, recoloring the laser sight may have no visible
   effect on some NVIDIA drivers (AMD, and NVIDIA without shaders, are unaffected);
   root cause under investigation.
-- The scope body's inner rim can lose a thin ring of pixels at the ocular edge
-  (the geometric projection mask is slightly larger than the true aperture on some
-  scopes); a shrink-tolerance fix is staged behind user screenshots.
+- The ocular mask is now the filled convex hull of the ocular projection
+  (ScopeMaskHullFill=true). On some scopes the hull can be slightly larger than
+  the true aperture, nibbling the scope body's inner rim; if you see that, set
+  ScopeMaskHullFill=false to fall back instantly and send us a screenshot with
+  ScopeMaskDebug=true.
 - PIP / second-world scope rendering is not enabled by default and remains paused.
 - Under active Iris shader packs the in-lens masking stays in its safe fallback
   (scope tube interior visible inside the ocular).

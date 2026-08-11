@@ -101,6 +101,31 @@ public final class ScopeBodyRenderTypes {
     private static final RenderPipeline CLIPPED_PIPELINE =
             buildPipeline("scope_body_clipped", true, false, false);
 
+    /**
+     * 枪口火光（大面片层）的掩码裁剪管线。
+     *
+     * <p>等价于 vanilla {@code pipeline/entity_translucent} 之上叠加
+     * {@code SCOPE_MASK} 分支 —— 直接以 {@code RenderPipelines.ENTITY_TRANSLUCENT}
+     * 为底拷贝整套状态（blend/深度/cull/布局全继承），只替换 shader 为我们那份
+     * 「entity 逐字节一致 + SCOPE_MASK 段」的 scope_body 着色器，并声明掩码采样器。
+     * 因此火光在镜外的观感与 vanilla 逐像素一致，镜内被 discard（透视口径契约：
+     * 口径内一切视模像素都不出现）。
+     *
+     * <p>只覆盖火光的【大面片】层。辉光涡旋层（{@code energySwirl}）在 26.2 里
+     * 的 shader 已被折叠进共享实现（jar 内无独立 rendertype_energy_swirl.fsh），
+     * 未逆向确认前不动它 —— 残余效果至多是镜内仍见一倍缩小后的柔光，
+     * 可后补，不属于回归风险。
+     */
+    private static final RenderPipeline FLASH_TRANSLUCENT_CLIPPED_PIPELINE =
+            RenderPipeline.builder(RenderPipelines.ENTITY_TRANSLUCENT)
+                    .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_flash_translucent_clipped"))
+                    .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
+                    .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
+                    .withShaderDefine("ALPHA_CUTOUT", 0.1F)
+                    .withShaderDefine("SCOPE_MASK")
+                    .withBindGroupLayout(MASK_SAMPLER_LAYOUT)
+                    .build();
+
     /** 蚀刻准星：只在目镜<b>盖到</b>处绘制，保留受光。 */
     private static final RenderPipeline RETICLE_PIPELINE =
             buildPipeline("scope_reticle_clipped", true, true, false);
@@ -137,23 +162,10 @@ public final class ScopeBodyRenderTypes {
     public static RenderType clipForViewmodel(RenderType original,
                                               @javax.annotation.Nullable Identifier texture,
                                               boolean applies) {
-        if (!applies || texture == null) {
+        if (texture == null) {
             return original;
         }
-        if (!com.tacz.guns.config.client.RenderConfig.SCOPE_MASK_ENABLE.get()) {
-            return original;
-        }
-        // 光影开启时掩码整体停用（见 BedrockAttachmentModel 同名门禁），这里必须同进同退。
-        if (IrisCompat.shouldDisableScopeMaskUnderShaderPack()) {
-            return original;
-        }
-        // 掩码清单为空 = 本帧没有瞄具在目镜登记（没装瞄具/没在开镜）——不裁剪。
-        // 提交顺序由 BedrockGunModel.submit 保证：瞄具配件先提交并登记，
-        // 枪身与其余配件随后，故此处能读到当帧登记结果。
-        if (com.tacz.guns.client.render.scope.ScopeMaskGeometry.isEmpty()) {
-            return original;
-        }
-        if (!ScopeMaskTextureHandle.syncToMaskTarget()) {
+        if (!maskReadyForViewmodel(applies)) {
             return original;
         }
         return clipped(texture);
@@ -176,6 +188,7 @@ public final class ScopeBodyRenderTypes {
         IrisCompat.assignScopePipelineToHand(RETICLE_PIPELINE, "scope_reticle_clipped");
         IrisCompat.assignScopePipelineToHand(RETICLE_EMISSIVE_PIPELINE, "scope_reticle_emissive_clipped");
         IrisCompat.assignScopePipelineToHand(EMISSIVE_PIPELINE, "scope_reticle_emissive");
+        IrisCompat.assignScopePipelineToHand(FLASH_TRANSLUCENT_CLIPPED_PIPELINE, "scope_flash_translucent_clipped");
     }
 
     /**
@@ -189,6 +202,7 @@ public final class ScopeBodyRenderTypes {
     private static final Map<Identifier, RenderType> RETICLE_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> RETICLE_EMISSIVE_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> EMISSIVE_CACHE = new HashMap<>();
+    private static final Map<Identifier, RenderType> FLASH_TRANSLUCENT_CACHE = new HashMap<>();
 
     private ScopeBodyRenderTypes() {
     }
@@ -228,6 +242,41 @@ public final class ScopeBodyRenderTypes {
         ensureIrisCompatibility();
         return EMISSIVE_CACHE.computeIfAbsent(texture,
                 tex -> create("tacz_scope_reticle_emissive", EMISSIVE_PIPELINE, tex, false));
+    }
+
+    /**
+     * 枪口火光（大面片层）：只在目镜<b>没盖到</b>处绘制。
+     *
+     * <p>调用方须先过 {@link #maskReadyForViewmodel} —— 掩码没就绪时必须
+     * 继续用 vanilla {@code entityTranslucent}，否则火光整层消失。</p>
+     */
+    public static RenderType flashTranslucent(Identifier texture) {
+        ensureIrisCompatibility();
+        return FLASH_TRANSLUCENT_CACHE.computeIfAbsent(texture,
+                tex -> create("tacz_scope_flash_translucent_clipped", FLASH_TRANSLUCENT_CLIPPED_PIPELINE, tex, true));
+    }
+
+    /**
+     * 「本帧第一人称视模上，目镜掩码是否就绪可裁」的统一判定。
+     *
+     * <p>供火光这类【不想换镜像身贴图管线、只想换个同源裁剪版】的调用点使用。
+     * 与 {@link #clipForViewmodel} 的前置条件完全同一份：任一不满足务必退回
+     * 原版渲染类型。</p>
+     */
+    public static boolean maskReadyForViewmodel(boolean appliesToFirstPersonViewmodel) {
+        if (!appliesToFirstPersonViewmodel) {
+            return false;
+        }
+        if (!com.tacz.guns.config.client.RenderConfig.SCOPE_MASK_ENABLE.get()) {
+            return false;
+        }
+        if (IrisCompat.shouldDisableScopeMaskUnderShaderPack()) {
+            return false;
+        }
+        if (com.tacz.guns.client.render.scope.ScopeMaskGeometry.isEmpty()) {
+            return false;
+        }
+        return ScopeMaskTextureHandle.syncToMaskTarget();
     }
 
     private static RenderType create(String name, RenderPipeline pipeline, Identifier tex, boolean bindMask) {

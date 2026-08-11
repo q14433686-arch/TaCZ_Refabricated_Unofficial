@@ -128,6 +128,20 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         int overlay = context.overlay();
         muzzleFlashStartMark = false;
 
+        // 【镜内裁切 · 枪口火光大面片层】开火后坐瞬间枪身下沉，火光会短暂探进目镜口径，
+        // 在镜片里糊一块亮斑。透视口径契约要求口径内一切视模像素都不出现，
+        // 故掩码就绪时把大面片换成裁剪版渲染类型（blend/深度/着色与 vanilla
+        // entityTranslucent 逐状态一致，仅多一步掩码 discard）。
+        // 辉光涡旋层（energySwirl）因其 26.2 shader 被折叠进共享实现、未逆向确认，
+        // 本轮不动 —— 残余至多是镜内仍见缩半的柔光，不属于回归风险。
+        // （本 extract 在枪模 functional 遍历中被调用，时序晚于瞄具登记掩码，故此刻
+        //   读 ScopeBodyRenderTypes.maskReadyForViewmodel 即可拿到当帧结果。）
+        boolean flashMaskReady = com.tacz.guns.client.render.scope.ScopeBodyRenderTypes
+                .maskReadyForViewmodel(context.displayContext() != null && context.displayContext().firstPerson());
+        RenderType flashQuadType = flashMaskReady
+                ? com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.flashTranslucent(muzzleFlash.getTexture())
+                : RenderTypes.entityTranslucent(muzzleFlash.getTexture());
+
         context.add(collector -> {
             PoseStack backgroundPose = new PoseStack();
             backgroundPose.last().pose().set(frozenPose.last().pose());
@@ -135,7 +149,7 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
             backgroundPose.scale(frozenScale, frozenScale, frozenScale);
             backgroundPose.mulPose(Axis.ZP.rotationDegrees(frozenRotation));
             backgroundPose.translate(0, -1, 0);
-            collector.submitCustomGeometry(backgroundPose, RenderTypes.entityTranslucent(muzzleFlash.getTexture()),
+            collector.submitCustomGeometry(backgroundPose, flashQuadType,
                     (pose, buffer) -> MUZZLE_FLASH_MODEL.renderToBuffer(
                             backgroundPose, buffer, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F));
 

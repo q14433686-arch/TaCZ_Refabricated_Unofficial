@@ -15,6 +15,7 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_ENABLE;
     /** 【调试】把瞄具目镜掩码贴图画到屏幕左上角，用于排查离屏渲染链路。默认关闭。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_DEBUG;
+    public static ForgeConfigSpec.BooleanValue SCOPE_MASK_HULL_FILL;
     public static ForgeConfigSpec.BooleanValue GUN_HUD_ENABLE;
     public static ForgeConfigSpec.BooleanValue KILL_AMOUNT_ENABLE;
     public static ForgeConfigSpec.DoubleValue KILL_AMOUNT_DURATION_SECOND;
@@ -77,6 +78,21 @@ public class RenderConfig {
         SCOPE_MASK_DEBUG = builder
                 .comment("Debug: draw the scope ocular mask texture at the top-left corner.")
                 .define("ScopeMaskDebug", false);
+        // 【案例③ 第二轮：凸包填充模式】
+        // 「几何投影」掩码（默认枪包实测覆盖 33 款）在两类瞄具上失真：
+        //   - 全玻璃板目镜（红点/全息）：掩码≈孔径，表现正确；
+        //   - 板条拼玻璃的目镜（AUG 3 条十字、elcan 8 片竖板）：掩码只有板条区域,
+        //     孔径内的镜身内壁网格漏裁 = 镜片里残留灰块（AUG 最明显）;
+        //   - 高倍筒镜若玻璃板大于真实孔径, 又会把镜框内圈啃掉一圈 (黑边被裁)。
+        // 凸包模式：把当帧目镜几何投影的【2D 凸包】整体涂进掩码 —
+        // 板条展开的跨度正好勾勒出孔径内切多边形，掩码从「形状描摹」升级为「孔径近似」。
+        // 严格比板条掩码覆盖更大 → 漏裁类残块必消；镜框内圈是否在部分镜种被啃,
+        // 由用户对照截图裁决（开 ScopeMaskDebug 可见掩码本体）。
+        SCOPE_MASK_HULL_FILL = builder
+                .comment("Scope mask shape: true = fill the convex hull of the ocular projection (recommended;",
+                        "fixes sparse-sliver oculars like AUG leaving scope-body fragments inside the sight picture).",
+                        "false = legacy raw ocular geometry projection, kept as an instant fallback.")
+                .define("ScopeMaskHullFill", true);
 
         builder.comment("Whether or not to display the gun's HUD");
         GUN_HUD_ENABLE = builder.define("GunHUDEnable", true);
