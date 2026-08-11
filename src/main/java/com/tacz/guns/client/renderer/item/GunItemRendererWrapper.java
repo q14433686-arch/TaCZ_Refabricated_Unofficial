@@ -484,15 +484,41 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             net.minecraft.client.player.LocalPlayer player = Minecraft.getInstance().player;
             float fy = player == null ? Float.NaN : net.minecraft.util.Mth.wrapDegrees(player.getYRot());
             float fx = player == null ? Float.NaN : player.getXRot();
+            // 【案例⑧ · 第三轮】锁残差 R = modelView × handBasePose(3x3) 的轴角分解。
+            // 19:25 辑拿：ADS 下 R 恒为 ~1.4-2.1° 的成建制旋转、轴随朝向翻转（世界系固定轴），
+            // hip-S 桶 R=I —— 破锁仅存在于开镜态。此项给出相位精确(与 gunRoot 同 ms)的 R(t)，
+            // 供离线把「整枪图像刚性旋转」按方位逐相位核对用户指纹。
+            double lockAng = 0, lockAxX = 0, lockAxY = 0, lockAxZ = 1;
+            try {
+                org.joml.Matrix4f mv4 = com.mojang.blaze3d.systems.RenderSystem.getModelViewMatrixCopy();
+                double r00 = mv4.m00() * handBasePose.m00() + mv4.m01() * handBasePose.m10() + mv4.m02() * handBasePose.m20();
+                double r01 = mv4.m00() * handBasePose.m01() + mv4.m01() * handBasePose.m11() + mv4.m02() * handBasePose.m21();
+                double r02 = mv4.m00() * handBasePose.m02() + mv4.m01() * handBasePose.m12() + mv4.m02() * handBasePose.m22();
+                double r10 = mv4.m10() * handBasePose.m00() + mv4.m11() * handBasePose.m10() + mv4.m12() * handBasePose.m20();
+                double r11 = mv4.m10() * handBasePose.m01() + mv4.m11() * handBasePose.m11() + mv4.m12() * handBasePose.m21();
+                double r12 = mv4.m10() * handBasePose.m02() + mv4.m11() * handBasePose.m12() + mv4.m12() * handBasePose.m22();
+                double r20 = mv4.m20() * handBasePose.m00() + mv4.m21() * handBasePose.m10() + mv4.m22() * handBasePose.m20();
+                double r21 = mv4.m20() * handBasePose.m01() + mv4.m21() * handBasePose.m11() + mv4.m22() * handBasePose.m21();
+                double r22 = mv4.m20() * handBasePose.m02() + mv4.m21() * handBasePose.m12() + mv4.m22() * handBasePose.m22();
+                double tr = r00 + r11 + r22;
+                lockAng = Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, (tr - 1) / 2))));
+                double ax = r21 - r12, ay = r02 - r20, az = r10 - r01;
+                double an = Math.sqrt(ax * ax + ay * ay + az * az);
+                if (an > 1e-9) {
+                    lockAxX = ax / an; lockAxY = ay / an; lockAxZ = az / an;
+                }
+            } catch (Throwable ignored2) {
+            }
             GunMod.LOGGER.info(
-                    "[TACZ RecoilDebug] gunRoot ms={} viewRoot=({},{},{}) raw=({},{},{}) colNormDev={} shear=m01/m10 {}/{} m02/m20 {}/{} facing=({},{}) shader={} irisHand={}",
+                    "[TACZ RecoilDebug] gunRoot ms={} viewRoot=({},{},{}) raw=({},{},{}) colNormDev={} shear=m01/m10 {}/{} m02/m20 {}/{} facing=({},{}) shader={} irisHand={} lockAng={} lockAxis=({},{},{})",
                     System.currentTimeMillis(),
                     trim2(viewX), trim2(viewY), trim2(viewZ),
                     trim2(pose.m30()), trim2(pose.m31()), trim2(pose.m32()),
                     String.format(java.util.Locale.ROOT, "%.6f", dev),
                     trim2(pose.m01()), trim2(pose.m10()), trim2(pose.m02()), trim2(pose.m20()),
                     trim2(fx), trim2(fy),
-                    IrisCompat.isUsingRenderPack(), IrisCompat.isHandRendererActive());
+                    IrisCompat.isUsingRenderPack(), IrisCompat.isHandRendererActive(),
+                    trim2(lockAng), trim2(lockAxX), trim2(lockAxY), trim2(lockAxZ));
         } catch (Throwable ignored) {
         }
     }
@@ -521,6 +547,49 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
                     "[TACZ Case08] chainP1 ms={} view=({},{},{}) facing=({},{})",
                     System.currentTimeMillis(),
                     trim2(viewX), trim2(viewY), trim2(viewZ),
+                    trim2(fx), trim2(fy));
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * 【案例⑧ 探针 · 第三轮新增】链上中段取证点 P2：「瞄准定位 lerp 之后、动画约束写入之前」。
+     * 19:25 ADS 辑拿证实：chainP1 四朝向逐位一致而 gunRoot 漂移 0.02~0.05，
+     * 且 F=BᵀP（局部链 3x3）呈 {N,S}/{E,W}/{UP,DN} 三块结构（桶间矩阵范数差 ~2.6）。
+     * 本探针把 B′ 归一化平移 与 B′ᵀ·P 局部 3x3 同时落日志：
+     * 漂移若在此点已出现 → 定位段（applyFirstPersonPositioningTransform）携带朝向内容；
+     * 若此点干净而 gunRoot 漂移 → 只剩约束写入段。
+     */
+    public static void debugCase08ChainP2(PoseStack poseStack) {
+        try {
+            if (RenderConfig.RECOIL_DEBUG == null || !RenderConfig.RECOIL_DEBUG.get()) {
+                return;
+            }
+            Matrix4f pose = poseStack.last().pose();
+            float dx = pose.m30() - handBasePose.m30();
+            float dy = pose.m31() - handBasePose.m31();
+            float dz = pose.m32() - handBasePose.m32();
+            float viewX = handBasePose.m00() * dx + handBasePose.m01() * dy + handBasePose.m02() * dz;
+            float viewY = handBasePose.m10() * dx + handBasePose.m11() * dy + handBasePose.m12() * dz;
+            float viewZ = handBasePose.m20() * dx + handBasePose.m21() * dy + handBasePose.m22() * dz;
+            // B′ᵀ·P（局部链 3x3；行主序。B′ 为捕获基座，名义上列正交 ⇒ 转置≈逆）
+            float f00 = handBasePose.m00() * pose.m00() + handBasePose.m10() * pose.m10() + handBasePose.m20() * pose.m20();
+            float f01 = handBasePose.m00() * pose.m01() + handBasePose.m10() * pose.m11() + handBasePose.m20() * pose.m21();
+            float f02 = handBasePose.m00() * pose.m02() + handBasePose.m10() * pose.m12() + handBasePose.m20() * pose.m22();
+            float f10 = handBasePose.m01() * pose.m00() + handBasePose.m11() * pose.m10() + handBasePose.m21() * pose.m20();
+            float f11 = handBasePose.m01() * pose.m01() + handBasePose.m11() * pose.m11() + handBasePose.m21() * pose.m21();
+            float f12 = handBasePose.m01() * pose.m02() + handBasePose.m11() * pose.m12() + handBasePose.m21() * pose.m22();
+            float f20 = handBasePose.m02() * pose.m00() + handBasePose.m12() * pose.m10() + handBasePose.m22() * pose.m20();
+            float f21 = handBasePose.m02() * pose.m01() + handBasePose.m12() * pose.m11() + handBasePose.m22() * pose.m21();
+            float f22 = handBasePose.m02() * pose.m02() + handBasePose.m12() * pose.m12() + handBasePose.m22() * pose.m22();
+            net.minecraft.client.player.LocalPlayer player = Minecraft.getInstance().player;
+            float fy = player == null ? Float.NaN : net.minecraft.util.Mth.wrapDegrees(player.getYRot());
+            float fx = player == null ? Float.NaN : player.getXRot();
+            GunMod.LOGGER.info(
+                    "[TACZ Case08] chainP2 ms={} view=({},{},{}) F=[{},{},{} {},{},{} {},{},{}] facing=({},{})",
+                    System.currentTimeMillis(),
+                    trim2(viewX), trim2(viewY), trim2(viewZ),
+                    trim2(f00), trim2(f01), trim2(f02), trim2(f10), trim2(f11), trim2(f12), trim2(f20), trim2(f21), trim2(f22),
                     trim2(fx), trim2(fy));
         } catch (Throwable ignored) {
         }

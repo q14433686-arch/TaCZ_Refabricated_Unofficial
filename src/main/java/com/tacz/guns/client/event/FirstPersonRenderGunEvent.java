@@ -122,6 +122,10 @@ public class FirstPersonRenderGunEvent {
         applyGunMovements(model, aimingProgress, partialTicks);
         // 应用各种摄像机定位组的变换（默认持枪、瞄准、改装界面等）
         applyFirstPersonPositioningTransform(poseStack, model, gunItemStack, aimingProgress, refitScreenOpeningProgress);
+        // 【案例⑧ 探针 · 第三轮】分段点 P2：定位 lerp 之后、约束写入之前。
+        // ADS 辑拿显示 chainP1(基座段) 逐位干净而 gunRoot(链末端) 随朝向漂移 0.02~0.05，
+        // 本探针把「定位段 / 约束段」的注入归属当场劈开。
+        GunItemRendererWrapper.debugCase08ChainP2(poseStack);
         // 应用动画约束变换
         applyAnimationConstraintTransform(poseStack, model, aimingProgress * (1 - refitScreenOpeningProgress));
     }
@@ -491,9 +495,10 @@ public class FirstPersonRenderGunEvent {
             float fx = player == null ? Float.NaN : player.getXRot();
             Matrix4f mv = com.mojang.blaze3d.systems.RenderSystem.getModelViewMatrixCopy();
             com.tacz.guns.GunMod.LOGGER.info(
-                    "[TACZ Case08] facing=({},{}) w={} d=({},{},{}) v0=({},{},{}) v3=({},{},{}) "
+                    "[TACZ Case08] ms={} facing=({},{}) w={} d=({},{},{}) v0=({},{},{}) v3=({},{},{}) "
                             + "B=[{},{},{} {},{},{} {},{},{}] P=[{},{},{} {},{},{} {},{},{}] Pt=({},{},{}) "
                             + "MV=[{},{},{} {},{},{} {},{},{}] irisHand={} pack={}",
+                    now,
                     c8(fx), c8(fy), c8(weight),
                     c8(delta.x()), c8(delta.y()), c8(delta.z()),
                     c8(v0.x()), c8(v0.y()), c8(v0.z()),

@@ -231,7 +231,8 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
             float facingY = player == null ? Float.NaN : Mth.wrapDegrees(player.getYRot());
             float facingX = player == null ? Float.NaN : player.getXRot();
             com.tacz.guns.GunMod.LOGGER.info(
-                    "[TACZ RecoilDebug] levelCam q=({},{},{},{}) mult={} ang={} eulerD=({},{},{}) in=({},{},{}) facing=({},{}) shader={} irisHand={}",
+                    "[TACZ RecoilDebug] levelCam ms={} q=({},{},{},{}) mult={} ang={} eulerD=({},{},{}) in=({},{},{}) facing=({},{}) shader={} irisHand={}",
+                    System.currentTimeMillis(),
                     f(q.x()), f(q.y()), f(q.z()), f(q.w()), f(mult), f(angleDeg),
                     f(dYaw), f(dPitch), f(dRoll),
                     f(inYaw), f(inPitch), f(inRoll),
@@ -261,7 +262,8 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
             float facingY = player == null ? Float.NaN : Mth.wrapDegrees(player.getYRot());
             float facingX = player == null ? Float.NaN : player.getXRot();
             com.tacz.guns.GunMod.LOGGER.info(
-                    "[TACZ RecoilDebug] itemCam q=({},{},{},{}) mult={} ang={} base3x3=[{},{},{}; {},{},{}; {},{},{}] baseT=({},{},{}) facing=({},{}) shader={} irisHand={}",
+                    "[TACZ RecoilDebug] itemCam ms={} q=({},{},{},{}) mult={} ang={} base3x3=[{},{},{}; {},{},{}; {},{},{}] baseT=({},{},{}) facing=({},{}) shader={} irisHand={}",
+                    System.currentTimeMillis(),
                     f(q.x()), f(q.y()), f(q.z()), f(q.w()), f(mult), f(angleDeg),
                     f(b.m00()), f(b.m01()), f(b.m02()),
                     f(b.m10()), f(b.m11()), f(b.m12()),
