@@ -38,6 +38,11 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_TRACER;
     /** 【RecoilDebug 隔离】运行时关闭摄像机动画（镜头摇动）的两处消费（世界叠加 + 手部旋转），含数据清理。 */
     public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_CAMERA_ANIM;
+    /**
+     * 【案例⑧主修复 · 第 28 轮并行开关】第一人称手部锁视角强制（renderFirstPerson 捕获基座后
+     * 左乘 (B·MV)⁻¹，使 modelView×基座=I）。默认开启（修复态）；置 false 秒回退到旧行为。
+     */
+    public static ForgeConfigSpec.BooleanValue HAND_VIEW_LOCK_FIX;
     public static ForgeConfigSpec.BooleanValue DISABLE_INTERACT_HUD_TEXT;
     public static ForgeConfigSpec.BooleanValue AUTO_SELECT_GUN_SMITH_TABLE_FILTER;
     public static ForgeConfigSpec.IntValue DAMAGE_COUNTER_RESET_TIME;
@@ -162,6 +167,21 @@ public class RenderConfig {
                 .define("DebugDisableTracer", false);
         DEBUG_DISABLE_CAMERA_ANIM = builder
                 .define("DebugDisableCameraAnim", false);
+
+        // 【案例⑧主修复 · 第 28 轮】手部锁视角强制。
+        // 取证链（20:25 日志, v3 探针逐帧相位对齐）：开镜换弹/开火期间
+        // R=modelView×手部基座 ≡ 摄像机动画全量旋转（k=1.000, corr=0.998），
+        // 轴为世界系固定轴（跨朝向世界系夹角中位 6.5° = 噪声底）——即手部链
+        // 完全丢失摄像机动画的世界系补偿，整枪图像被该旋转整体甩动，
+        // 且屏幕投影方向随玩家朝向旋转 ⇒「臂枪整体随朝向平移」「斜向最偏」
+        // 「除北外后坐过分下压」。Iris 手部 pass 基座≈单位阵使 R 恒=I，
+        // 与「开光影全部正常」的目击互洽 ⇒ 修复 = 把 vanilla 手部链也钉成 R=I。
+        // 关闭本开关即可秒回退旧行为（掩码类改动并行开关铁律）。
+        HAND_VIEW_LOCK_FIX = builder
+                .comment("[FIX] Force-lock first-person hand view: left-multiply the captured hand base",
+                        "by (base*modelView)^-1 so modelView*base == I (matches the Iris/on-shader look).",
+                        "Fixes gun+arm assembly drifting with player facing during ADS reload/fire. Default on.")
+                .define("HandViewLockFix", true);
 
         builder.comment("Disable the interact hud text in center of the screen");
         DISABLE_INTERACT_HUD_TEXT = builder.define("DisableInteractHudText", false);

@@ -256,6 +256,45 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             // 因此先把入口矩阵原样记下，供 cacheMuzzlePosition 做转置归一化。
             // Iris 手部 pass 基座≈单位阵，转置归一化天然 no-op。
             handBasePose.set(poseStack.last().pose());
+            // 【案例⑧主修复 · 第 28 轮：开镜换弹/开火时整枪随朝向平移 + 后坐过分下压】
+            //
+            // 取证链（v3 探针 + 20:25 受控 ADS 辑拿，全部逐帧毫秒对齐）：
+            // ① R = modelView × 手部基座(3x3) 在开镜状态下 ≡ 摄像机动画的**全量**旋转
+            //    （lockAng 拟合 k=1.000 vs itemCam 角度，corr=0.998，全程逐帧成立）；
+            // ② R 的旋转轴是**世界系固定轴**（N/S、N/E、N/W 同相位配对后世界系夹角
+            //    中位 6.5°，与 N/N' 同朝向噪声底 6.5° 一致；视图系夹角则达 86°~162°）；
+            // ③ 腰射同协议下 R 残差只有约一半、且用户无感——开镜（aiming→1、zoom
+            //    放大画面）让同一根残差越过可见阈值；
+            // ④ 即：26.2 的手部渲染链里，摄像机动画经 CameraMixin 欧拉叠加进
+            //    camera.quaternion 后随世界视图矩阵进入了 modelView，而手部基座
+            //    （BeforeRenderHandEvent 的 mulPose 消费）并没有收到与之匹配的世界系分量
+            //    ——R≠I 的部分就是把整枪图像绕一根世界系轴刚性旋转；玩家转身时该轴在
+            //    屏幕上的投影方向跟着转 ⇒「手臂+枪整体随朝向平移」；轴带俯仰分量
+            //    ⇒ 部分朝向屏幕上呈现为「整体向下压」。
+            // ⑤ Iris 手部 pass 基座≈单位阵、其 modelView 与基座天然互逆 ⇒ R≡I ⇒
+            //    「开光影全部正常」的实测与本案同构 —— Iris 观感即为本案的正确参照系。
+            //
+            // 修复手法（强制锁视角）：捕获基座后把当前栈左乘 C=(B·MV)⁻¹：
+            //   之后屏幕上 = MV·(C·B·X·p) = MV·(B·MV)⁻¹·B·X·p = X·p
+            // 即图像恒等于「基座归一化后的 authored 局部内容」，与 Iris/上游观感逐位一致，
+            // 与朝向完全解耦。一次捕获期 3 次矩阵乘法，开销可忽略。
+            // 并行开关：RenderConfig.HAND_VIEW_LOCK_FIX（默认 true；false = 秒回退旧行为）。
+            // Iris 手部渲染激活时本 fix 恒为恒等矩阵，保持豁免、行为零变化。
+            if (RenderConfig.HAND_VIEW_LOCK_FIX != null && RenderConfig.HAND_VIEW_LOCK_FIX.get()
+                    && !IrisCompat.isHandRendererActive()) {
+                try {
+                    org.joml.Matrix4f mvNow = com.mojang.blaze3d.systems.RenderSystem.getModelViewMatrixCopy();
+                    org.joml.Matrix4f lockC = new org.joml.Matrix4f(handBasePose).mul(mvNow);
+                    if (Math.abs(lockC.determinant()) > 1.0e-8) {
+                        lockC.invert();
+                        poseStack.last().pose().set(lockC.mul(poseStack.last().pose()));
+                        // 基座对象随之更新：下游所有 B′ 归一化探针/约束写入/枪口缓存
+                        // 一律以校正后的基座为准，探针读数即修复后的在体事实。
+                        handBasePose.set(poseStack.last().pose());
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
             // 逆转原版施加在手上的延滞效果，改为写入模型动画数据中
             float xRotOffset = Mth.lerp(partialTick, player.xBobO, player.xBob);
             float yRotOffset = Mth.lerp(partialTick, player.yBobO, player.yBob);
