@@ -176,7 +176,22 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
         }
         // 视图空间 -> 世界空间：camera.rotation() 即视图→世界，直接 rotate，不取共轭
         // （Camera#setRotation 用 rotationYXZ(PI - yRot, -xRot, 0) 构造，与曳光段注释一致）。
-        Vector3f worldOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset).rotate(camera.rotation());
+        //
+        // 【第 31.3 轮修正】存量 muzzleRenderOffset 的【纵向分量对真实视图空间是反号的】。
+        // 实证：第 31 轮上线后用户截图（16:12，面南/面西各一）显示炮弹/烟的锚定起点
+        // 稳定地出现在视角内【偏上】——即世界位移的竖直分量朝上而非朝下。
+        // 来源推断：枪口位移的捕获链贯穿床岩视模渲染（其惯例含 y 翻转），
+        // 存下来的 gy≈-0.19 相对真实视图空间实际应为 +0.19 的镜像。
+        // 曳光条带共用了同一向量却从没暴露——条带宽 5mm、弹速 ~800m/s、
+        // 收敛 0.06s 完成，~0.19 格的纵向镜像在其上完全不可见；
+        // 炮弹/烟又大又慢，立刻现形。
+        // 处置：仅在本路径入 rotate 前对 y 取反（x 不动——存量 x=+0.16 指向屏幕右方，
+        // 与右下持枪的视模位置相符，截图也未显示横向反号）。
+        // 曳光已验收行为【不动】；若日后要全局统一，应去 cacheMuzzlePosition 的
+        // 捕获空间规范里做，并用 TracerDebug 复核后才能动曳光。
+        Vector3f viewOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
+        viewOffset.y = -viewOffset.y;
+        Vector3f worldOffset = viewOffset.rotate(camera.rotation());
         return new Vec3(worldOffset.x() * offsetReducer,
                 worldOffset.y() * offsetReducer,
                 worldOffset.z() * offsetReducer);
