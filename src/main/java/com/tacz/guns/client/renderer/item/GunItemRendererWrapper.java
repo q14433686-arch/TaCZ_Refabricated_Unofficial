@@ -98,14 +98,22 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
      */
     private static final Matrix4f handBasePose = new Matrix4f();
 
+    // 【第 30 轮（案例⑧ 追根）】入口基座的**原始快照**（锁定修复改写前的那一份）。
+    // 斜向修复（d24e604/c975748）的全套代数契约——包括 v1 朝向指纹实测所证明的
+    // 「写入槽位的带回矩阵 = 入口基座本身」——全部建立在入口基座上；第 28 轮的
+    // 锁视角修复会把 handBasePose 改写为 (B·MV)⁻¹ 派生值，两者不再相同。
+    // 凡契约消费者（约束三明治、枪口缓存归一化）一律用本字段，保证与修复前逐位一致。
+    private static final Matrix4f handBasePoseEntry = new Matrix4f();
+
     /**
      * 供 {@link com.tacz.guns.client.event.FirstPersonRenderGunEvent#applyAnimationConstraintTransform}
      * 做「入口基座归一化」用的只读副本：第一人称手部 pass 进入 {@code renderFirstPerson} 时的
      * 基座 3x3 旋转（vanilla 26.2 ≈ R(相机四元数)，Iris 手部 pass ≈ 单位阵，正交旋转，逆=转置）。
      * 仅渲染线程使用。
+     * 【第 30 轮修正】恢复为入口快照（锁视角修复前的契约值），不再跟随锁后改写。
      */
     public static void copyHandBaseRotation(org.joml.Matrix3f dst) {
-        dst.set(handBasePose);
+        dst.set(handBasePoseEntry);
     }
 
     public GunItemRendererWrapper() {
@@ -256,6 +264,9 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             // 因此先把入口矩阵原样记下，供 cacheMuzzlePosition 做转置归一化。
             // Iris 手部 pass 基座≈单位阵，转置归一化天然 no-op。
             handBasePose.set(poseStack.last().pose());
+            // 入口原始快照（第 30 轮）：在锁视角修复可能改写基座之前留存，
+            // 下游「斜向修复契约」消费者（约束三明治/枪口归一化）只认这一份。
+            handBasePoseEntry.set(poseStack.last().pose());
             // 【案例⑧主修复 · 第 28 轮：开镜换弹/开火时整枪随朝向平移 + 后坐过分下压】
             //
             // 取证链（v3 探针 + 20:25 受控 ADS 辑拿，全部逐帧毫秒对齐）：
@@ -416,12 +427,14 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             float mx0 = pose.m30();
             float my0 = pose.m31();
             float mz0 = pose.m32();
-            float dx = mx0 - handBasePose.m30();
-            float dy = my0 - handBasePose.m31();
-            float dz = mz0 - handBasePose.m32();
-            float viewX = handBasePose.m00() * dx + handBasePose.m01() * dy + handBasePose.m02() * dz;
-            float viewY = handBasePose.m10() * dx + handBasePose.m11() * dy + handBasePose.m12() * dz;
-            float viewZ = handBasePose.m20() * dx + handBasePose.m21() * dy + handBasePose.m22() * dz;
+            // 【第 30 轮】归一化基座恢复为入口原始快照 handBasePoseEntry（锁视角修复
+            // 不再改写下游契约；与第 26 轮实测定案的版本逐位一致）。
+            float dx = mx0 - handBasePoseEntry.m30();
+            float dy = my0 - handBasePoseEntry.m31();
+            float dz = mz0 - handBasePoseEntry.m32();
+            float viewX = handBasePoseEntry.m00() * dx + handBasePoseEntry.m01() * dy + handBasePoseEntry.m02() * dz;
+            float viewY = handBasePoseEntry.m10() * dx + handBasePoseEntry.m11() * dy + handBasePoseEntry.m12() * dz;
+            float viewZ = handBasePoseEntry.m20() * dx + handBasePoseEntry.m21() * dy + handBasePoseEntry.m22() * dz;
             // FOV 比值换算作用于【视图空间】的深度 z（开镜时手部 FOV 与世界 FOV 分离的补偿）。
             // 旧代码乘在 pose.m32() 上 —— 那在 vanilla 26.2 下是世界轴 Z（正北方向），与视深无关。
             double fovScale = Math.tan(itemRenderFov / 2 * Math.PI / 180) / Math.tan(levelRenderFov / 2 * Math.PI / 180);

@@ -424,13 +424,22 @@ public class FirstPersonRenderGunEvent {
         // [0.15, 0.05, 0.4] 给出系数 ≈(−0.85, −0.95, +0.6)，强各向异性，
         // 故无修复时斜向横移可达 0.1~0.2 视图单位（~2-4°），肉眼显著；换弹动画同样
         // 驱动 constraint 骨骼，故同路径一并修复。
+        // 【第 30 轮（案例⑧）A/B 对照开关】用户指认「整体随朝向转」为四方向斜向修复引入的回归。
+        // 当 CONSTRAINT_BASE_COMPENSATE=false 时跳过整个 Bᵀ 三明治，逐位回到修复前的
+        // 原版公式（v = diag(c)·v0 直写）。注意：此状态下斜向横移会复现——只为定位回归源。
+        boolean case08Compensate = com.tacz.guns.config.client.RenderConfig.CONSTRAINT_BASE_COMPENSATE == null
+                || com.tacz.guns.config.client.RenderConfig.CONSTRAINT_BASE_COMPENSATE.get();
         org.joml.Matrix3f baseR = new Matrix3f();
         GunItemRendererWrapper.copyHandBaseRotation(baseR);
-        inverseTranslation.mulTranspose(baseR);  // Bᵀ·v0：写入帧 → 逆基座（authored）帧
+        if (case08Compensate) {
+            inverseTranslation.mulTranspose(baseR);  // Bᵀ·v0：写入帧 → 逆基座（authored）帧
+        }
         inverseTranslation.mul(translationICA.x() - 1, translationICA.y() - 1, 1 - translationICA.z()); // 基岩版模型的旋转导致 xy 轴要反过来
-        inverseTranslation.mulTranspose(baseR);  // 再乘 Bᵀ：把各向异性留在 authored 帧里，
-                                                 // 提交时上方链的 B 会把它带回视图帧，
-                                                 // 净效果 = diag(c)·F·Δ（= 1.21.1 观感）
+        if (case08Compensate) {
+            inverseTranslation.mulTranspose(baseR);  // 再乘 Bᵀ：把各向异性留在 authored 帧里，
+                                                     // 提交时上方链的 B 会把它带回视图帧，
+                                                     // 净效果 = diag(c)·F·Δ（= 1.21.1 观感）
+        }
         // 计算约束旋转需要的反向旋转。因需要插值，获取的是欧拉角
         Vector3f inverseRotation = new Vector3f(rotation);
         inverseRotation.mul(rotationICA.x() - 1, rotationICA.y() - 1, rotationICA.z() - 1);

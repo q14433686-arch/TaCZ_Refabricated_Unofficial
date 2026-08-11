@@ -39,10 +39,17 @@ public class RenderConfig {
     /** 【RecoilDebug 隔离】运行时关闭摄像机动画（镜头摇动）的两处消费（世界叠加 + 手部旋转），含数据清理。 */
     public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_CAMERA_ANIM;
     /**
-     * 【案例⑧主修复 · 第 28 轮并行开关】第一人称手部锁视角强制（renderFirstPerson 捕获基座后
-     * 左乘 (B·MV)⁻¹，使 modelView×基座=I）。默认开启（修复态）；置 false 秒回退到旧行为。
+     * 【案例⑧ · 第 28~30 轮实验开关】第一人称手部锁视角强制（renderFirstPerson 捕获基座后
+     * 左乘 (B·MV)⁻¹）。第 30 轮裁决：modelView 在手部 pass 不受控（第 26 轮枪口归一化实证 +
+     * 第 29 轮缩放污染探针）+ 用户实测「没解决」⇒ 理论证伪，默认关闭；保留开关供 A/B。
      */
     public static ForgeConfigSpec.BooleanValue HAND_VIEW_LOCK_FIX;
+    /**
+     * 【案例⑧ · 第 30 轮 A/B 开关】约束位移的基座归一化补偿（Bᵀ·diag·Bᵀ 三明治——
+     * 8 月 10 日「四方向斜向后坐力」修复定版）。用户指认本案为该机位引入的回归：
+     * 置 false 即逐位回到修复前的原版公式（diag·v0 直写）做对照实验。默认 true=现行定版。
+     */
+    public static ForgeConfigSpec.BooleanValue CONSTRAINT_BASE_COMPENSATE;
     /**
      * 【案例⑧ · 第 29 轮并行开关】锁视角读取 modelView 时剔除 3x3 缩放分量：
      * v5 日志实测该读取在部分帧上携带 0.9933~1.0068 的均匀缩放（旋转分部逐位不变），
@@ -183,11 +190,25 @@ public class RenderConfig {
         // 「除北外后坐过分下压」。Iris 手部 pass 基座≈单位阵使 R 恒=I，
         // 与「开光影全部正常」的目击互洽 ⇒ 修复 = 把 vanilla 手部链也钉成 R=I。
         // 关闭本开关即可秒回退旧行为（掩码类改动并行开关铁律）。
+        // 【第 30 轮裁决·默认回退】用户复测「没解决」+ 第 26 轮的既有实证
+        // （26.2 手部 pass 的 RenderSystem modelView 仅为兼容保留、内容不受控——
+        // 枪口归一化当时正是弃用它改为入口基座转置才定案）+ 第 29 轮探针抓到该读取
+        // 携带合法缩放污染，三重证据表明：锁视角修复建立在错误的矩阵上。
+        // 默认改回 false（=回到「四方向斜向修复」定版以来用户实测过的基线）；
+        // 仍保留开关供你的 A/B 实验随时开回。
         HAND_VIEW_LOCK_FIX = builder
-                .comment("[FIX] Force-lock first-person hand view: left-multiply the captured hand base",
-                        "by (base*modelView)^-1 so modelView*base == I (matches the Iris/on-shader look).",
-                        "Fixes gun+arm assembly drifting with player facing during ADS reload/fire. Default on.")
-                .define("HandViewLockFix", true);
+                .comment("[EXPERIMENT] Force-lock first-person hand view via the RenderSystem modelView matrix.",
+                        "26.2 keeps that matrix compat-only for the hand pass, so this lock was reverted to",
+                        "OFF by default after in-body rebuttal. Enable only for A/B experiments.")
+                .define("HandViewLockFix", false);
+
+        // 第 30 轮 A/B：用户指认当前「整体随朝向转」症状系四方向斜向修复引入，
+        // 此开关置 false 即回到修复前原版约束公式，用于无日志对照实验。
+        CONSTRAINT_BASE_COMPENSATE = builder
+                .comment("[A/B] Constraint-translation base compensation (B^T*diag*B^T sandwich) that fixed",
+                        "diagonal-direction ADS recoil drift on 2026-08-10. Set false to restore the",
+                        "pre-fix formula for regression A/B testing. Default on (= current shipped behavior).")
+                .define("ConstraintBaseCompensate", true);
 
         // 第 29 轮：实测 modelView 顶部在部分帧携带 ~0.7% 均匀缩放（旋转不变），
         // 不剔除会被 (B·MV)⁻¹ 烙进基座与整条姿态链；本开关只控制归一化这一步。
