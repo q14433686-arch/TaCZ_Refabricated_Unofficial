@@ -29,6 +29,8 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
      * 50ms 显示时间
      */
     private static final long TIME_RANGE = 50;
+    /** 【FlashDebug 探针】上次日志输出的墙上时钟（1s 节流，挂 ScopeMaskDebug 总开关）。 */
+    private static long flashDebugLastLogMs = 0L;
     public static boolean isSelf = false;
     private static long shootTimeStamp = -1;
     private static boolean muzzleFlashStartMark = false;
@@ -138,6 +140,20 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         //   读 ScopeBodyRenderTypes.maskReadyForViewmodel 即可拿到当帧结果。）
         boolean flashMaskReady = com.tacz.guns.client.render.scope.ScopeBodyRenderTypes
                 .maskReadyForViewmodel(context.displayContext() != null && context.displayContext().firstPerson());
+        // 【FlashDebug 探针】用户实测「枪身/配件已裁、火光仍在镜内」——时序桌面推演机制上
+        // 成立，需要现场确认是哪个分量把开关打掉了。挂在 ScopeMaskDebug 下（同属掩码诊断），
+        // 火光窗口内 1 秒节流，常态零噪音。
+        if (com.tacz.guns.config.client.RenderConfig.SCOPE_MASK_DEBUG.get()
+                && System.currentTimeMillis() - flashDebugLastLogMs > 1000L) {
+            flashDebugLastLogMs = System.currentTimeMillis();
+            com.tacz.guns.GunMod.LOGGER.info("[TACZ FlashDebug] ready={} ctx={} enable={} irisUnsafe={} geomEmpty={} targetOk={}",
+                    flashMaskReady,
+                    context.displayContext(),
+                    com.tacz.guns.config.client.RenderConfig.SCOPE_MASK_ENABLE.get(),
+                    IrisCompat.shouldDisableScopeMaskUnderShaderPack(),
+                    com.tacz.guns.client.render.scope.ScopeMaskGeometry.isEmpty(),
+                    com.tacz.guns.client.render.scope.ScopeMaskTextureHandle.syncToMaskTarget());
+        }
         RenderType flashQuadType = flashMaskReady
                 ? com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.flashTranslucent(muzzleFlash.getTexture())
                 : RenderTypes.entityTranslucent(muzzleFlash.getTexture());
