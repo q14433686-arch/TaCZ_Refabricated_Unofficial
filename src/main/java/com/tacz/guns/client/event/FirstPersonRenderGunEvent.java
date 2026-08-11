@@ -384,45 +384,28 @@ public class FirstPersonRenderGunEvent {
         Vector3f inverseTranslation = new Vector3f(originTranslation);
         inverseTranslation.sub(animatedTranslation);
         inverseTranslation.mulDirection(poseStack.last().pose());
-        // 【26.2 修复·终版：ADS 开枪/换弹时枪身随朝向整体偏移——
-        //  原始症状：斜向（东南/西南/东北/西北）固定向一侧横移（东南/西北偏左、东北/西南偏右），
-        //  正方向与腰射完全正常，开启 Iris 光影（手部 pass 无基座预乘）时一切正常】
+        // 【26.1.2 定稿：约束位移必须做 Bᵀ -> diag -> B，而不是照搬 26.2 的第二次 Bᵀ】
         //
-        // 坐标系结构（经两轮朝向指纹实测锁定）：
-        // 26.2 vanilla 手部 pass 在 poseStack 进入物品渲染前就预乘了基座 B=R(q)
-        // （view→world 相机基座，含朝向 q；Iris 手部 pass 不预乘，B≈I）。
-        // 而 1.21.1 里该栈从单位阵开始。关键实测事实：本函数写入的 m30..m32 槽位，
-        // 其上方链在提交（ViewSnapshot→几何）时还会再左乘一次 B —— 即
-        //   最终视图位移 = B · v_written
-        // 上游 1.21.1 正确观感（authored）是：最终视图位移 = diag(c) · F · Δ
-        // （F=ZP 翻转等骨骼链内变换，Δ=约束骨骼位移差，c=(ICA_x−1, ICA_y−1, 1−ICA_z)）。
+        // vanilla 手部入口预乘视图到世界基座 B；Iris 光影手部 pass 的 B≈I。
+        // mulDirection(pose) 因而得到写入帧向量 v0 = B·F·Δ。逐轴约束系数 diag(c)
+        // 属于枪模 authored/视图坐标，必须先用 Bᵀ 把 v0 还原，再在该坐标系中应用。
         //
-        // ——老 bug 的成因——：
-        // mulDirection(pose) 把 Δ 旋进「写入帧」：v0 = B·F·Δ；逐轴乘系数后 v = diag(c)·B·F·Δ；
-        // 提交时再被 B 带一次：最终 = B·diag(c)·B ·(FΔ)。注意是 B·diag·B 而非共轭
-        // （Y 轴旋转让 x/z 之一带负号）：非对角元 = (cx+cz)/2 · sin2θ —— 正方向归零，
-        // 斜向出现按象限对反号的纯横向泄漏，正是最初目击的全部特征。
+        // 26.1.2 与 26.2 的关键差异在提交尾端：BedrockRenderSnapshot 已冻结完整 pose，
+        // BedrockCube 在 CPU 侧把顶点乘进该矩阵，再从 identity PoseStack 提交；这里没有
+        // 26.2 结案推导所依赖的“提交时再左乘一次 B”。GPU 手部 model-view 只用 Bᵀ
+        // 抵消入口基座一次。因此写回 pose 的位移必须先旋回世界写入帧：
         //
-        // ——上一版修复为何反而更糟（26.2 复测确诊）——：
-        // 上一版做了 v = B·diag·Bᵀ·v0（共轭方向写反），净效果 = B²·diag·F·Δ = R(2θ)·authored：
-        // 正南/正北（2θ=0/360°）恰好恒等 → 正常；正东/正西（2θ=±180°）x/z 符号翻转
-        // → 后坐力"向后怼"、换弹跑到右后方；斜向（2θ=±90°）x/z 互换 → 纯平移。
-        // 与用户复测报告逐条吻合，此指纹是本坐标系模型的决定性证据。
+        //   vWritten = B · diag(c) · Bᵀ · v0 = B · diag(c) · F · Δ
+        //   vScreen  = Bᵀ · vWritten            = diag(c) · F · Δ
         //
-        // ——正确修复——：
-        // 需要在写入前把向量变到「逆基座」帧：v = Bᵀ·diag(c)·Bᵀ·v0 = Bᵀ·diag(c)·F·Δ，
-        // 提交时被 B 带回：B·v = diag(c)·F·Δ = authored，全朝向与 1.21.1 完全一致；
-        // Iris 下 B≈I，两步均恒等、行为不变。AK47 shoot 的 constraint 位移动画
-        // [0.15, 0.05, 0.4] 给出系数 ≈(−0.85, −0.95, +0.6)，强各向异性，
-        // 故无修复时斜向横移可达 0.1~0.2 视图单位（~2-4°），肉眼显著；换弹动画同样
-        // 驱动 constraint 骨骼，故同路径一并修复。
+        // 若第二步也乘 Bᵀ，会得到 vScreen = Bᵀ²·diag(c)·F·Δ：面北偶然正常，
+        // 东西向左右反偏，南向后坐力过度下压，俯仰时整枪向左上/后方飞移；而 Iris
+        // 因 B≈I 不复现。该朝向指纹与 26.1.2 实机报告完全一致。
         Matrix3f baseR = new Matrix3f();
         GunItemRendererWrapper.copyHandBaseRotation(baseR);
-        inverseTranslation.mulTranspose(baseR);  // Bᵀ·v0：写入帧 → 逆基座（authored）帧
+        inverseTranslation.mulTranspose(baseR);  // Bᵀ·v0：世界写入帧 -> authored/视图帧
         inverseTranslation.mul(translationICA.x() - 1, translationICA.y() - 1, 1 - translationICA.z()); // 基岩版模型的旋转导致 xy 轴要反过来
-        inverseTranslation.mulTranspose(baseR);  // 再乘 Bᵀ：把各向异性留在 authored 帧里，
-                                                 // 提交时上方链的 B 会把它带回视图帧，
-                                                 // 净效果 = diag(c)·F·Δ（= 1.21.1 观感）
+        inverseTranslation.mul(baseR);           // B·v：旋回 26.1.2 pose 的世界写入帧
         // 计算约束旋转需要的反向旋转。因需要插值，获取的是欧拉角
         Vector3f inverseRotation = new Vector3f(rotation);
         inverseRotation.mul(rotationICA.x() - 1, rotationICA.y() - 1, rotationICA.z() - 1);
