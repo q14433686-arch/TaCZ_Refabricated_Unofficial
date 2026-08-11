@@ -219,10 +219,9 @@ based on TACZ `1.1.8-hotfix`.
   facing (R·diag·R leakage, ~sin(2·yaw)). The fix conjugates against the inverse base
   (Bᵀ·diag·Bᵀ), restoring exact 1.21.1 behavior in all 8 headings. Hip-fire and
   shader-pack rendering are unchanged.
-- See-through scopes (offscreen-mask path): the dark ocular ring no longer clips
-  itself (it was discarded by its own projection mask), and the gun body plus
-  non-scope attachments are now discarded inside the lens as well, so the world
-  shows through the sight picture correctly.
+- See-through scopes (offscreen-mask path): the gun body and non-scope attachments
+  are now discarded inside the sight picture, so the world shows through the
+  scope lens correctly (vanilla renderer).
 
 ### Notes
 - Requires Java 25 and Forge Config API Port.
@@ -232,6 +231,9 @@ based on TACZ `1.1.8-hotfix`.
 - Under an active Iris shader pack, recoloring the laser sight may have no visible
   effect on some NVIDIA drivers (AMD, and NVIDIA without shaders, are unaffected);
   root cause under investigation.
+- The scope body's inner rim can lose a thin ring of pixels at the ocular edge
+  (the geometric projection mask is slightly larger than the true aperture on some
+  scopes); a shrink-tolerance fix is staged behind user screenshots.
 - PIP / second-world scope rendering is not enabled by default and remains paused.
 - Under active Iris shader packs the in-lens masking stays in its safe fallback
   (scope tube interior visible inside the ocular).

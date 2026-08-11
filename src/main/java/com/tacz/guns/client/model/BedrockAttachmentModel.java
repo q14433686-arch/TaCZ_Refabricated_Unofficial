@@ -584,49 +584,32 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         //
         // 任何一环不满足就原样退回 renderType（= RenderTypes.entityCutout），
         // 也就是当前已 PASS 的行为。最坏情况只是「镜内仍见镜筒内壁」，不会更糟。
-        RenderType resolvedBodyType = resolveBodyRenderType(renderType, texture, maskable);
-        boolean bodyClipped = resolvedBodyType != renderType;
+        // 【案例③ 首判修正 · 回退记录】曾把黑片从主提交摘除并单独用反向裁剪版
+        // RenderType 提交（认为黑环贴图中心透明、被自己的投影自裁）。
+        // 实测（用户截图 + 全部瞄具贴图 alpha 取证）推翻前提：
+        // ocular 板材采样的是【实心深色纹素】（alpha=255，非透明中心），
+        // 「透视镜片」恰恰依赖它跟着镜身一起被自己的掩码投影 discard 才成立 ——
+        // 单独重画等于把不透明深色玻璃拍回镜片上，表现为整片黑盘、甚至溢出镜框。
+        // 因此恢复原路径：黑片依旧随 super.submit 走同一裁剪版 RenderType。
+        // 案例③（黑环边缘被啃）的真因指向「几何投影掩码略大于真实通光孔径、
+        // 吃掉 scope_body 内圈边缘」（上游用固定半径圆，见 PORTING_NOTES §3.5），
+        // 留待拿到对照截图+掩码预览后再修。
         List<BedrockPart> hiddenOculars = new ArrayList<>();
-        // 【镜内裁切 · 黑片不得走裁剪版渲染类型】（「目镜内一圈黑边被不正确裁切」一案）
-        //
-        // 黑色遮光环 = ocular 立方体 + 贴图——贴图中心是【透明】的（ALPHA_CUTOUT 挖空），
-        // 外圈才是黑边；开镜后视线从透明中心穿过去看后面的世界。
-        // 而掩码 = ocular 几何的整盘投影（没有贴图透明概念）。若黑片跟着
-        // super.submit 用【盖到即 discard】的裁剪版渲染，它会被自己的投影整片裁掉
-        // —— 黑边消失/被啃出缺口，正是实测到的症状。
-        //
-        // 上游真相（PORTING_NOTES §3.1）：renderOcularAndDivision 画黑片用的是
-        // stencilFunc(EQUAL, i+1) —— 黑片【约束在自己投影内可见】，从不被裁掉。
-        // 等价物就是反向裁剪版渲染类型（SCOPE_MASK_INVERT，与准星同款语义）。
-        //
-        // 故 bodyClipped 时：所有可见黑片先从 super.submit 摘除（visible=false），
-        // 事后再按【是否隶属于当前激活瞄准组】分别用 反向裁剪版/原始版 单独提交。
-        List<BedrockPart> blackoutOculars = new ArrayList<>();
         if (transformType != null && transformType.firstPerson()) {
             for (BedrockPart ocular : ocularParts) {
-                if (!ocular.visible) {
-                    continue;
-                }
-                if (!shouldDrawOcularBlackout(ocular)) {
+                if (ocular.visible && !shouldDrawOcularBlackout(ocular)) {
                     ocular.visible = false;
                     hiddenOculars.add(ocular);
-                } else if (bodyClipped) {
-                    ocular.visible = false;
-                    hiddenOculars.add(ocular);
-                    blackoutOculars.add(ocular);
                 }
             }
         }
         try {
-            super.submit(poseStack, transformType, collector, resolvedBodyType, light, overlay);
+            super.submit(poseStack, transformType, collector,
+                    resolveBodyRenderType(renderType, texture, maskable), light, overlay);
         } finally {
             for (BedrockPart ocular : hiddenOculars) {
                 ocular.visible = true;
             }
-        }
-        for (BedrockPart ocular : blackoutOculars) {
-            submitOcularBlackout(ocular, poseStack, transformType, collector,
-                    renderType, texture, light, overlay);
         }
 
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
@@ -719,70 +702,6 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             } finally {
                 poseStack.popPose();
             }
-        }
-    }
-
-    /**
-     * 单独提交一个目镜黑片（遮光环）。
-     *
-     * <h2>为什么黑片必须单独提交（「黑边被不正确裁切」一案）</h2>
-     * 黑片 = ocular 立方体 + 贴图：贴图中心<b>透明</b>（被 {@code ALPHA_CUTOUT} 挖空）、
-     * 外圈为黑色遮光环。开镜后视线穿过透明中心看到后面的世界；黑边则是视野的框。
-     * 掩码 = ocular 几何的【整盘投影】，不携带贴图透明概念 ——
-     * 黑片若随镜身一起走「盖到即 discard」的裁剪版渲染类型，会被<b>自己的投影</b>
-     * 整片裁掉（黑边消失/出现缺口，正是用户实测症状）。
-     *
-     * <p>上游语义（PORTING_NOTES §3.1）：黑片用 {@code stencilFunc(EQUAL, i+1)} 绘制
-     * —— 它<b>可见于自己的投影之内</b>，从不被裁掉；且随
-     * {@code rad *= aimingProgress} 做开合过渡。等价物 = 反向裁剪版
-     * （{@code SCOPE_MASK_INVERT}，与准星同款，含屏幕空间渐进收缩）。
-     *
-     * <h2>非激活组的黑片</h2>
-     * 组合镜里不属于当前激活瞄准组的黑片，其投影不在当帧掩码里 ——
-     * 用反向裁剪版会整块消失，故退回原始渲染类型照常画（与旧行为一致）。
-     *
-     * <p>提交方式与 {@code EtchedReticleRenderer#submitOne} 同构：
-     * 临时打开链上可见性 → 套用父级链 → 快照 → 从单位矩阵提交（快照矩阵已含完整 pose）。
-     */
-    private void submitOcularBlackout(BedrockPart ocular, PoseStack poseStack,
-                                      ItemDisplayContext transformType, SubmitNodeCollector collector,
-                                      RenderType originalType, @Nullable Identifier texture,
-                                      int light, int overlay) {
-        RenderType type = originalType;
-        if (texture != null && isOcularInActiveGroup(ocular)
-                && ScopeMaskTextureHandle.syncToMaskTarget()) {
-            type = ScopeBodyRenderTypes.reticle(texture);
-        }
-        java.util.Deque<BedrockPart> chain = new java.util.ArrayDeque<>();
-        for (BedrockPart p = ocular; p != null; p = p.getParent()) {
-            chain.push(p);
-        }
-        List<BedrockPart> touched = new ArrayList<>();
-        List<Boolean> saved = new ArrayList<>();
-        for (BedrockPart p : chain) {
-            touched.add(p);
-            saved.add(p.visible);
-            p.visible = true;
-        }
-        poseStack.pushPose();
-        com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot snapshot;
-        try {
-            for (BedrockPart p : chain) {
-                p.translateAndRotateAndScale(poseStack);
-            }
-            snapshot = com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(
-                    ocular, poseStack, transformType, light, overlay, 1.0f, 1.0f, 1.0f, 1.0f);
-        } finally {
-            poseStack.popPose();
-            for (int i = 0; i < touched.size(); i++) {
-                touched.get(i).visible = saved.get(i);
-            }
-        }
-        if (!snapshot.isEmpty()) {
-            PoseStack identity = new PoseStack();
-            RenderType submitType = type;
-            collector.submitCustomGeometry(identity, submitType,
-                    (entryPose, consumer) -> snapshot.write(consumer));
         }
     }
 
