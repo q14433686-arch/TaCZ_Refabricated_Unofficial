@@ -66,7 +66,7 @@ arena/019fea3a-tacz-refabricated-unofficial`）：
 
 ```bash
 BASE=5e8cba8ff8ae256e1ccef88384e295942700ef16
-TIP=7389916e329741a7b7c9225de5bea439acce97a0
+TIP=$(git rev-parse FETCH_HEAD)   # 即 arena 分支最新 tip（≥7389916；附录 A 单元 H 于初稿后追加，取最新值才包含它）
 git diff $BASE..$TIP -- <相对路径> > /tmp/x.patch
 git apply --check /tmp/x.patch && git apply /tmp/x.patch
 ```
@@ -115,7 +115,8 @@ C/D（镜内裁切类，先评估必要性再动）。
 | D | ④镜内枪口火光（大面片+辉光两层） | `9b56e8b` `8ff08fe` `571ac3c` `eb6f2f7` `1237ddb` | **依赖掩码架构/深度架构适配**，先实测 | ★（评估后定） |
 | E | ⑤激光改色 NVIDIA+Iris —— LaserDebug 探针 | `9738161`（部分） | **直贴** | ★★ |
 | F | RecoilDebug 探针 + 四个 FX 运行时开关 | `2de6cb0` `7e95af9` `e42be3b` `896b1d9` `92174cd` | 半直贴半适配，可选 | ★ |
-| G | ⑤激光改色的治本候选（未实施，调研结论移交） | — | 方案移交 | 决策项 |
+| G | ⑤激光改色的治本候选（已结案：光影包限制，不实施） | — | 搁置 | — |
+| H | ⑦炮弹/炮烟第一人称从眼睛飞出 → 枪口锚定（第 31 轮） | 见附录 A | 混合：`AmmoParticleSpawner` 整文件直贴；其余适配 | ★★ |
 
 ---
 
@@ -443,3 +444,50 @@ LASER_DEBUG = builder
 本次落地完成后把 26.1.2 的 build metadata 升一档（如
 `1.1.8+fabric.26.1.2.HOTFIX` → `...HOTFIX2`），保持「`+` 后段不参与枪包版本比较」
 的既有约定不动（其 gradle.properties 注释已有完整论证，照抄语义即可）。
+
+---
+
+## 附录 A —— 单元 H（第 31 轮追加）：弹药模型/尾烟第一人称枪口锚定
+
+> 本单元为本文档首次发布（`f8360ed`）之后的新增修复，同样源于 26.2 分支
+> （案例⑦，见 COMPAT_AND_ROADMAP）。**与掩码架构完全无关，可独立落地。**
+
+**症状**（用户在 26.2 实测报告）：带弹药实体模型的弹种（炮弹/榴弹等）与
+弹药尾烟，第一人称下飞行起点与轨迹仍在眼睛处——第 26 轮曳光锚定只管曳光条带。
+
+**改法一句话**：新增公共函数
+`EntityBulletRenderer.firstPersonMuzzleAnchor(bullet, bulletPos, eyePos)`
+（视图空间 `muzzleRenderOffset` × 当帧相机旋转 → 世界轴，按弹眼距
+`(50−d)/50` 线性收敛；仅本地玩家第一人称返回非 null），
+弹药模型绘制路径与尾烟粒子播撒路径共用它做起点锚定；新开关
+`FirstPersonAmmoMuzzleAnchor`（默认 true 可秒退）。
+
+**26.1.2 落地**：
+
+1. `src/main/java/com/tacz/guns/client/particle/AmmoParticleSpawner.java`
+   —— **三方已比对：26.1.2 与源基线逐字节相同**（本次为证又复核了一遍；
+   动手前请再跑一次 §0.2 的哈希核对）。整文件取源分支终版即可：
+   `git fetch origin arena/019fea3a-tacz-refabricated-unofficial`，然后
+   `git diff 5e8cba8ff8ae256e1ccef88384e295942700ef16..FETCH_HEAD -- src/main/java/com/tacz/guns/client/particle/AmmoParticleSpawner.java | git apply`
+   （用 FETCH_HEAD 最新值，别用文中固定的旧 TIP——本单元晚于初稿落地）。
+2. `src/main/java/com/tacz/guns/client/renderer/entity/EntityBulletRenderer.java`
+   —— 需适配（该文件在两分支因版本 API 有出入）：
+   - 把 `firstPersonMuzzleAnchor` 静态方法整体拷入（其内部只用到
+     `RenderConfig` / `Minecraft` / `Camera` / `LocalPlayer` /
+     `GunItemRendererWrapper.muzzleRenderOffset` / JOML，全部版本无关；
+     唯一要核的是 26.1.2 的 `Camera#rotation()` 与 `mainCamera()` 存在性——
+     你们曳光锚定修复若已在 26.1.2 落地（单元 B2），这些必然已可用）；
+   - `submit()` 的模型路径（`ammoEntityModel.submit(...)` 所在块）按源分支
+     终版补上 `pushPose` + 锚定 translate + 收尾 `popPose`
+     （注意源分支此处**多了一层 push/pop**，是顺带治理 YP/XP mulPose
+     外泄的 latent bug，一并带走）。
+3. `src/main/java/com/tacz/guns/config/client/RenderConfig.java` —— 需适配：
+   在 `[render]` builder 区追加 `FIRST_PERSON_AMMO_MUZZLE_ANCHOR` 字段与注册
+   （照源分支终版抄，含双行注释）。
+4. **前置依赖**：`GunItemRendererWrapper.muzzleRenderOffset`（单元 B2 的
+   枪口采集链）。若 26.1.2 尚未落地 B2，本单元不要先上——锚定位移会拿到
+   零向量/旧值，等于没修。
+
+**验收**：带弹药模型/尾烟的弹种（榴弹/炮弹类枪包）第一人称开火，炮弹与烟
+从枪口喷出并线性并入真实弹道；第三人称与旁观不变；`FirstPersonAmmoMuzzleAnchor=false`
+立即回退。

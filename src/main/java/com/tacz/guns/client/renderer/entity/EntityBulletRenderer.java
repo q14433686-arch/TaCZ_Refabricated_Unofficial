@@ -88,12 +88,29 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             BedrockAmmoModel ammoEntityModel = ammoIndex.getAmmoEntityModel();
             Identifier textureLocation = ammoIndex.getAmmoEntityTextureLocation();
             if (ammoEntityModel != null && textureLocation != null) {
+                poseStack.pushPose();
+                // 【第 31 轮 · 第一人称弹药模型枪口锚定】
+                // 弹药实体模型（炮弹/榴弹等带 BedrockAmmoModel 的弹种）原生在【实体位置】
+                // 开始绘制，而子弹实体出生在射者眼位 —— 第一人称观感是从「眼睛」飞出。
+                // 这里复用第 26 轮曳光的同一条数学链：近距离把绘制起点从眼位拉向
+                // 上一帧手部 pass 采集的枪口（muzzleRenderOffset × 当帧相机旋转 → 世界轴），
+                // 按 offsetReducer 线性收敛，50 格外回到真实弹道。
+                // 第三人称/旁观路径不动（眼位≈手部区域，与上游观感一致）。
+                Entity anchorShooter = bullet.getOwner();
+                if (anchorShooter != null) {
+                    Vec3 anchor = firstPersonMuzzleAnchor(bullet,
+                            bullet.getPosition(partialTicks), anchorShooter.getEyePosition(partialTicks));
+                    if (anchor != null) {
+                        poseStack.translate(anchor.x, anchor.y, anchor.z);
+                    }
+                }
                 poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, bullet.yRotO, bullet.getYRot()) - 180.0F));
                 poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, bullet.xRotO, bullet.getXRot())));
                 poseStack.pushPose();
                 poseStack.translate(0, 1.5, 0);
                 poseStack.scale(-1, -1, 1);
                 ammoEntityModel.submit(poseStack, ItemDisplayContext.GROUND, collector, getRenderType(textureLocation), state.lightCoords, OverlayTexture.NO_OVERLAY);
+                poseStack.popPose();
                 poseStack.popPose();
             }
 
@@ -108,6 +125,51 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
     private RenderType getRenderType(Identifier textureLocation) {
         // 由于entityTranslucentCull不可用，使用entityTranslucent作为替代
         return RenderTypes.entityTranslucent(textureLocation);
+    }
+
+    /**
+     * 【第 31 轮】第一人称弹药的「眼位 → 枪口」锚定位移（世界轴）。
+     *
+     * <p>数学链与第 26 轮曳光修复逐行同源：{@code muzzleRenderOffset} 是手部 pass
+     * 采集的【视图空间】枪口偏移，乘当帧相机四元数（视图→世界，
+     * {@code Camera#rotation()} 直接 rotate、不取共轭）得到世界轴偏移，
+     * 再按 {@code offsetReducer = max(0, 50 - 弹眼距) / 50} 线性衰减 ——
+     * 出生瞬间整块位移到枪口，50 格外收敛回真实弹道。弹药模型与尾烟粒子
+     * 共用此函数，保证两者贴合同一条「从枪口喷出」的可见轨迹。</p>
+     *
+     * <p>仅当【本地玩家本人在第一人称】时返回非 null：
+     * 第三人称自己/旁观他人时实体出生点（眼位）在屏幕上本就贴着持枪手，
+     * 保持原生实体位置渲染（与上游观感一致）。</p>
+     *
+     * @param bulletPos 弹药当前（或插值后）世界位置
+     * @param eyePos    射者当前（或插值后）眼位
+     * @return 世界轴锚定位移；开关关闭 / 非第一人称本地射击 / 已收敛（≥50 格）时返回 null
+     */
+    @Nullable
+    public static Vec3 firstPersonMuzzleAnchor(EntityKineticBullet bullet, Vec3 bulletPos, Vec3 eyePos) {
+        if (RenderConfig.FIRST_PERSON_AMMO_MUZZLE_ANCHOR != null
+                && !RenderConfig.FIRST_PERSON_AMMO_MUZZLE_ANCHOR.get()) {
+            return null;
+        }
+        if (!(bullet.getOwner() instanceof LocalPlayer)) {
+            return null;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        Camera camera = mc.gameRenderer.mainCamera();
+        if (camera == null || !mc.options.getCameraType().isFirstPerson()) {
+            return null;
+        }
+        double disToEye = bulletPos.distanceTo(eyePos);
+        double offsetReducer = Math.max(0.0, 50.0 - disToEye) / 50.0;
+        if (offsetReducer <= 0.0) {
+            return null;
+        }
+        // 视图空间 -> 世界空间：camera.rotation() 即视图→世界，直接 rotate，不取共轭
+        // （Camera#setRotation 用 rotationYXZ(PI - yRot, -xRot, 0) 构造，与曳光段注释一致）。
+        Vector3f worldOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset).rotate(camera.rotation());
+        return new Vec3(worldOffset.x() * offsetReducer,
+                worldOffset.y() * offsetReducer,
+                worldOffset.z() * offsetReducer);
     }
 
     public void renderTracerAmmo(EntityKineticBullet bullet, float[] tracerColor, float partialTicks, PoseStack poseStack, SubmitNodeCollector collector, int packedLight) {
