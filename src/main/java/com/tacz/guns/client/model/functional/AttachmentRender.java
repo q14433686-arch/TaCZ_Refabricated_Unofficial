@@ -11,6 +11,7 @@ import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.renderer.item.AttachmentItemRenderer;
 import com.tacz.guns.util.RenderDistance;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.Identifier;
@@ -53,8 +54,15 @@ public class AttachmentRender implements IFunctionalSubmitter {
                 }
                 // 多传一个 texture：瞄具镜身可能要换成「被目镜掩码裁剪」的 RenderType，
                 // 而那需要按贴图构造。model 内部会自行判断要不要用（见 resolveBodyRenderType）。
+                RenderType bodyType = RenderTypes.entityCutout(texture);
+                // 【镜内裁切 · 非瞄具配件】「透视瞄具」成立的条件是目镜投影内一切视模像素
+                // 都 discard（颜色+深度都不写），否则镜片里看得见护木/激光盒等穿过镜面。
+                // 瞄具自身的镜身裁剪在 BedrockAttachmentModel 内部处理；这里给其余配件
+                // （握把/枪口/激光盒…）接上同一张掩码。不满足条件时原样返回 entityCutout。
+                bodyType = com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipForViewmodel(
+                        bodyType, texture, transformType.firstPerson());
                 model.submit(attachmentItem, gunItem, poseStack, transformType, collector,
-                        RenderTypes.entityCutout(texture), texture, light, overlay);
+                        bodyType, texture, light, overlay);
             }
         }, () -> collector.submitCustomGeometry(
                 poseStack,

@@ -113,6 +113,52 @@ public final class ScopeBodyRenderTypes {
     private static final RenderPipeline EMISSIVE_PIPELINE =
             buildPipeline("scope_reticle_emissive", false, false, true);
 
+    /**
+     * 第一人称视模（枪身/非瞄具配件）的「镜内 discard」总入口。
+     *
+     * <h2>它补的是哪个洞（目镜内未裁切枪体、配件 一案）</h2>
+     * 「透视瞄具」的成立条件是：目镜投影区内<b>一切</b>属于视模的像素都必须
+     * discard —— 不仅不写颜色，也不写深度，后面的世界画面才能透过镜片露出来。
+     * 而裁剪版 RenderType 此前只发给了瞄具镜身（{@code BedrockAttachmentModel}），
+     * 枪身（{@code GunItemRendererWrapper}）与其他配件（{@code AttachmentRender}）
+     * 用的还是原版 {@code entityCutout} —— 镜内区域照常写颜色+深度，
+     * 于是镜片中看得见护木/激光盒等穿过镜面，世界画面透不过来。
+     *
+     * <h2>前置条件为什么这么多</h2>
+     * 与 {@code BedrockAttachmentModel#resolveBodyRenderType} 的哲学一致：
+     * 任何一环不满足就原样退回 —— 最坏情况只是回到「镜内见镜筒」的已验证状态，
+     * 绝不能因为裁剪特性坏掉而画错模型。
+     *
+     * @param original    调用方原本的 RenderType（不满足条件时原样返回）
+     * @param texture     该模型/配件的贴图；为 {@code null} 无法构造裁剪版，退回
+     * @param applies     调用点是否属于「第一人称手持视模」（手持渲染路径才需要，
+     *                    GUI 预览/第三人称/掉落物一律退回）
+     */
+    public static RenderType clipForViewmodel(RenderType original,
+                                              @javax.annotation.Nullable Identifier texture,
+                                              boolean applies) {
+        if (!applies || texture == null) {
+            return original;
+        }
+        if (!com.tacz.guns.config.client.RenderConfig.SCOPE_MASK_ENABLE.get()) {
+            return original;
+        }
+        // 光影开启时掩码整体停用（见 BedrockAttachmentModel 同名门禁），这里必须同进同退。
+        if (IrisCompat.shouldDisableScopeMaskUnderShaderPack()) {
+            return original;
+        }
+        // 掩码清单为空 = 本帧没有瞄具在目镜登记（没装瞄具/没在开镜）——不裁剪。
+        // 提交顺序由 BedrockGunModel.submit 保证：瞄具配件先提交并登记，
+        // 枪身与其余配件随后，故此处能读到当帧登记结果。
+        if (com.tacz.guns.client.render.scope.ScopeMaskGeometry.isEmpty()) {
+            return original;
+        }
+        if (!ScopeMaskTextureHandle.syncToMaskTarget()) {
+            return original;
+        }
+        return clipped(texture);
+    }
+
     private static boolean irisAssignmentAttempted = false;
 
     /**

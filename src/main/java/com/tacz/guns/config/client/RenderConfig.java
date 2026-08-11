@@ -25,6 +25,7 @@ public class RenderConfig {
     public static ForgeConfigSpec.IntValue TRACER_DEBUG_INTERVAL_MS;
     public static ForgeConfigSpec.IntValue TRACER_DEBUG_FIRST_TICKS;
     public static ForgeConfigSpec.BooleanValue SHELL_EJECTION_DEBUG;
+    public static ForgeConfigSpec.BooleanValue LASER_DEBUG;
     public static ForgeConfigSpec.ConfigValue<String> SHELL_EJECTION_DEBUG_GUN;
     public static ForgeConfigSpec.IntValue SHELL_EJECTION_DEBUG_INTERVAL_MS;
     public static ForgeConfigSpec.BooleanValue RECOIL_DEBUG;
@@ -114,6 +115,17 @@ public class RenderConfig {
         SHELL_EJECTION_DEBUG_INTERVAL_MS = builder
                 .comment("[DEBUG] Minimum interval between shell ejection debug log lines, in milliseconds.")
                 .defineInRange("ShellEjectionDebugIntervalMs", 250, 50, 10000);
+
+        // 【LaserDebug · 第 28 轮：NVIDIA + Iris 下激光改颜色不生效 一案的二分探针】
+        // 用户实测：N 卡 + 光影开启时改装界面里换激光颜色无效（N 卡关光影 / A 卡开关光影均正常）。
+        // 激光颜色走【顶点色】提交（BeamRenderer.setColor），渲染类型用 vanilla
+        // entityTranslucentEmissive。本探针在每次提交时记录「待写入的 RGB」，
+        // 据此二分：若日志里颜色跟着改色变而画面不变 → 问题在 GL/Iris 管线侧；
+        // 若日志里颜色也不变 → 问题在数据侧（NBT/同步/索引缓存）。
+        LASER_DEBUG = builder
+                .comment("[DEBUG] Log the laser beam vertex color at each submit (throttled 1s),",
+                        "to bisect the 'laser recolor has no effect on NVIDIA + shader pack' issue. Default off.")
+                .define("LaserDebug", false);
 
         RECOIL_DEBUG = builder
                 .comment("[DEBUG] Log camera recoil diagnostics: per-shot recoil spline envelopes and per-frame",

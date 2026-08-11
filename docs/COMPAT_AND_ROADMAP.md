@@ -1043,3 +1043,58 @@ ADS 高倍率瞄具下曳光弹感观也建议顺带扫一眼。`TRACER_DEBUG` �
 x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制未明，当前判定与本案
 主症状无关（本案幅度 2~4° 且已被完整解释）；长期挂在 w≈0.9987 的非单位稳态
 已查明为 fastInvSqrt 归一化误差被 blend 每帧刷新钉住，视觉无感，不修。
+
+**✅ 结案确认（第 28 轮）**：首版修复（d24e604，共轭方向写反）被用户复测打回
+——症状变为「仅正南/正北正常；正东/正西后坐力'向后怼'；斜向变纯平移」，
+与 R(2θ) 数学指纹逐条吻合，反证了「写入槽位上方链 = B」的坐标系结构。
+逆向共轭终版（c975748，`mulTranspose → 逐轴缩放 → mulTranspose`）经用户实测
+**八朝向全部正常，确认修复**。
+
+---
+
+### 第 28 轮新问题登记册（按优先级推进中）
+
+#### 案例③：目镜内「黑边（遮光环）被不正确裁切」—— 已定位，已修
+
+- **症状**：开镜时目镜内圈黑色遮光环被错误裁掉/啃出缺口。
+- **机制**：黑色遮光环 = `ocular` 立方体 + 贴图（**贴图中心透明**、外圈黑色）。
+  它随镜身 `super.submit` 走了「盖到即 discard」的裁剪版 RenderType，
+  而掩码恰是它自己几何的整盘投影 → **黑片被自己的投影自我裁掉**。
+  上游真相（PORTING_NOTES §3.1）：黑片用 `stencilFunc(EQUAL, i+1)` 画，
+  即**可见于自己投影内、从不被裁**，并随 `rad*=progress` 开合。
+- **修法**：`BedrockAttachmentModel.submit` 在裁剪版生效（bodyClipped）时，
+  把可见黑片从主提交摘除（visible=false），事后用
+  `submitOcularBlackout` 单独提交：激活瞄准组用**反向裁剪版**
+  （SCOPE_MASK_INVERT，与准星同款，含屏幕空间渐进开合），
+  非激活组退回原始类型（组合镜另一组的黑片照常画）。
+- **验证**：开镜全程（含过渡动画）黑环完整、中心透明区透出世界。
+
+#### 案例④：目镜内未裁切枪体、配件（镜片里看得见护木/激光盒）—— 已定位，已修
+
+- **症状**：开镜后镜片投影区内仍看得到枪身与其他配件穿过镜面。
+- **机制**：「透视瞄具」要求目镜投影内**一切视模像素都 discard**
+  （颜色+深度都不写），世界画面才能透出。此前裁剪版 RenderType 只发给
+  瞄具镜身；枪身（`GunItemRendererWrapper`）与其余配件（`AttachmentRender`）
+  用原版 `entityCutout` 照常在镜内写像素。
+- **修法**：新增 `ScopeBodyRenderTypes.clipForViewmodel` 总入口
+  （第一人称 & SCOPE_MASK_ENABLE & 无光影 & 当帧掩码非空 & 采样器可用 →
+  换裁剪版）：
+  - 枪身：`BedrockGunModel.submit` 新增带 `gunTexture` 的重载，
+    在瞄具提交登记掩码**之后**再为 `super.submit` 解析类型
+    （不能上提到 wrapper —— 那时本帧清单还是空的）；
+  - 配件：`AttachmentRender.submitAttachment` 为所有非瞄具配件接同一掩码。
+  - 瞄具自身：清单为空时恒等返回，内部 `maskable` 逻辑不变（零交互）。
+- **验证**：开镜后镜片透出纯净世界画面，看不到任何枪体/配件碎片。
+
+#### 案例⑤：NVIDIA + 光影开启时激光改色无效（A 卡 / N 卡无光影正常）—— 取证中
+
+- **症状**：改装界面里换激光颜色，画面不更新；仅 N 卡 + Iris 光影开启触发。
+- **已知事实**：激光颜色走**顶点色**（`BeamRenderer.setColor`），
+  渲染类型是 vanilla `entityTranslucentEmissive`；N/A 卡分歧指向
+  CustomGeometry 提交链上的属性/状态不严谨之处（GL 规范未定义行为在
+  两厂驱动上表现不同）。
+- **取证方案**：新增 `LaserDebug` 配置（默认关）。开启后每次激光提交记录
+  `[TACZ LaserDebug] beam submit color=#RRGGBB custom=… ctx=… irisPack=…`（1s 节流）。
+  - 若日志里颜色**跟着改色变**而画面不变 → GL/Iris 管线侧吞顶点色；
+  - 若日志颜色**不变** → 数据侧（改装写回/同步/缓存索引）问题。
+- **待用户回传**：N 卡机上开光影 + LaserDebug，改色一两次后上传 latest.log。

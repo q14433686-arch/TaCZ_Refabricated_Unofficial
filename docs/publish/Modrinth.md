@@ -204,33 +204,39 @@ world corruption, crashes, data loss and mod conflicts. Non-commercial project.
 ## ⑤ Changelog
 
 ```markdown
-Alpha 2 public test build of this Fabric port.
+Beta 3 Hotfix – public test build of this Fabric port.
 
 Ported from the upstream Fabric project (`Sh1roCu/TACZ-Refabricated`),
 based on TACZ `1.1.8-hotfix`.
 
 ### Highlights
-- Iris/shader-pack scope compatibility improved: in-scope mask clipping now runs
-  through an Iris HAND shader bridge instead of falling back to a broken mask path.
-- Illuminated reticles are now rendered as emissive/no-cardinal-lighting geometry,
-  fixing direction-dependent brightness under both vanilla and Iris.
-- Tracer rendering was moved closer to upstream behavior (`energySwirl`, full block
-  light, per-bullet first-person muzzle offset caching). Ballistics/hit detection
-  are unchanged.
-- LRTactical partial integration remains included via `provides: ["lrtactical"]`.
+- Fixed a long-standing viewmodel bug: while aiming-down-sights, firing or reloading
+  made the whole gun body slide sideways by several degrees when facing the four
+  diagonal headings (SE/NW drifted left, NE/SW right; vanilla renderer only — Iris
+  shader packs were not affected). Root cause: the 26.2 vanilla hand pass premultiplies
+  a per-facing camera base rotation that the ported ADS-constraint math did not
+  neutralize; the anisotropic constraint coefficients were therefore rotated by that
+  facing (R·diag·R leakage, ~sin(2·yaw)). The fix conjugates against the inverse base
+  (Bᵀ·diag·Bᵀ), restoring exact 1.21.1 behavior in all 8 headings. Hip-fire and
+  shader-pack rendering are unchanged.
+- See-through scopes (offscreen-mask path): the dark ocular ring no longer clips
+  itself (it was discarded by its own projection mask), and the gun body plus
+  non-scope attachments are now discarded inside the lens as well, so the world
+  shows through the sight picture correctly.
 
 ### Notes
-- Alpha 2 test build — playable, but expect bugs.
 - Requires Java 25 and Forge Config API Port.
 - Gun packs requiring TacZ:Arcana (encrypted assets) will show missing textures.
 
 ### Known issues
-- Tracer visuals may still have display offset differences; current evidence points
-  to rendering geometry/offset only, not ballistic or hit-detection errors.
-- PIP / second-world scope rendering is not enabled by default and remains paused
-  as a mainline approach.
-- LRTactical is partially integrated; flash shield and some advanced add-on systems
-  are not complete yet.
+- Under an active Iris shader pack, recoloring the laser sight may have no visible
+  effect on some NVIDIA drivers (AMD, and NVIDIA without shaders, are unaffected);
+  root cause under investigation.
+- PIP / second-world scope rendering is not enabled by default and remains paused.
+- Under active Iris shader packs the in-lens masking stays in its safe fallback
+  (scope tube interior visible inside the ocular).
+- LRTactical is partially integrated; flash shield and some add-on systems are
+  incomplete.
 
 ```
 

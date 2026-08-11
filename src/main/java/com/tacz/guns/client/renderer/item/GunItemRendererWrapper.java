@@ -296,7 +296,8 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             // 之后的视图坐标也逐帧记下：若 viewRoot 与 viewMuzzle 同偏同量，偏转来自定位/延滞链；
             // 若 viewRoot 不偏而 viewMuzzle 偏，则来自骨骼动画层（枪口骨骼路径）。
             debugRecoilGunRoot(poseStack.last().pose());
-            gunModel.submit(poseStack, stack, ctx, collector, renderType, light, OverlayTexture.NO_OVERLAY);
+            gunModel.submit(poseStack, stack, ctx, collector, renderType,
+                    display.getModelTexture(), light, OverlayTexture.NO_OVERLAY);
             // 缓存枪口位置，为第一人称曳光弹渲染作准备
             cacheMuzzlePosition(poseStack, gunModel);
             // 【RecoilDebug 探针】第 27.5 轮：机瞄骨骼链视图坐标逐帧取证。
@@ -557,7 +558,8 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             applyScaleTransform(transformType, gunIndex.getTransform().getScale(), poseStack);
             // 渲染枪械模型
             RenderType renderType = RenderTypes.entityCutout(gunTexture);
-            gunModel.submit(poseStack, stack, transformType, collector, renderType, pPackedLight, pPackedOverlay);
+            gunModel.submit(poseStack, stack, transformType, collector, renderType,
+                    gunTexture, pPackedLight, pPackedOverlay);
         }, () -> {
             // 没有这个 gunID，渲染个错误材质提醒别人
             renderSlotTexture(poseStack, collector, pPackedLight, pPackedOverlay, MissingTextureAtlasSprite.getLocation());
