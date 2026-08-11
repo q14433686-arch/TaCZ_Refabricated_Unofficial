@@ -45,11 +45,11 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue HAND_VIEW_LOCK_FIX;
     /**
-     * 【案例⑧ · 第 30 轮 A/B 开关】约束位移的基座归一化补偿（Bᵀ·diag·Bᵀ 三明治——
-     * 8 月 10 日「四方向斜向后坐力」修复定版）。第 31 轮用户在场实测：
-     * 本补偿就是「整体随朝向转」病灶的注入源（false 后症状消失）。
-     * 现由 {@link #CONSTRAINT_COMPENSATE_MODE} 接管（0/1/2 档）；
-     * 本布尔仅保留为 legacy 兼容：显式 false 会强制等效 mode 0。
+     * 【案例⑧ · 第 30 轮 A/B 开关，第 32 轮起废弃（代码零读取）】
+     * 原「false 强制落 mode 0」legacy 映射被现场证明是配置陷阱：用户 A/B 期间
+     * 把本键留在 false，导致其显式设置的 ConstraintCompensateMode=2 被静默否决，
+     * 实测跑的其实是 mode 0。自第 32 轮起档位只认 {@link #CONSTRAINT_COMPENSATE_MODE}；
+     * 本布尔仅保留注册，让旧配置文件原样加载不报错。
      */
     public static ForgeConfigSpec.BooleanValue CONSTRAINT_BASE_COMPENSATE;
     /**
@@ -212,23 +212,23 @@ public class RenderConfig {
                         "OFF by default after in-body rebuttal. Enable only for A/B experiments.")
                 .define("HandViewLockFix", false);
 
-        // 第 30 轮 A/B：用户指认当前「整体随朝向转」症状系四方向斜向修复引入，
-        // 此开关置 false 即回到修复前原版约束公式，用于无日志对照实验。
+        // 第 32 轮起：本布尔已不再被任何代码读取（原 legacy 否决映射证明是配置陷阱，
+        // 会把用户显式设置的 ConstraintCompensateMode 静默降级）。保留注册仅为
+        // 兼容旧配置文件；档位一律用 ConstraintCompensateMode。
         CONSTRAINT_BASE_COMPENSATE = builder
-                .comment("[A/B] Constraint-translation base compensation (B^T*diag*B^T sandwich) that fixed",
-                        "diagonal-direction ADS recoil drift on 2026-08-10. Set false to restore the",
-                        "pre-fix formula for regression A/B testing. Default on (= current shipped behavior).")
+                .comment("[DEPRECATED since round 32] No longer read by any code. Kept only so existing",
+                        "config files load cleanly. Use ConstraintCompensateMode (0/1/2) instead.")
                 .define("ConstraintBaseCompensate", true);
 
         // 第 31 轮定案：约束位移形态三档。0=plain（用户实测无「整体转」但斜向侧漏复现），
         // 1=终版三明治（即本案病灶，存档勿用），2=姿态帧共轭（默认，结构免疫帧混用）。
-        // 注意：老布尔 ConstraintBaseCompensate=false 会覆盖本档强制落 mode 0。
+        // 第 32 轮起本键是档位的唯一信源（上方 ConstraintBaseCompensate 已废弃、不再读取）。
         CONSTRAINT_COMPENSATE_MODE = builder
                 .comment("[FIX] Constraint-translation write form:",
                         "0 = plain (pre-fix formula; diagonal ADS recoil leak returns),",
                         "1 = legacy B^T-diag-B^T sandwich (caused facing-locked gun rotation; archived),",
                         "2 = pose-frame conjugate (default; base-free, immune to frame mixing).",
-                        "Legacy key ConstraintBaseCompensate=false forces mode 0.")
+                        "The old ConstraintBaseCompensate boolean is deprecated and fully ignored.")
                 .defineInRange("ConstraintCompensateMode", 2, 0, 2);
 
         // 第 29 轮：实测 modelView 顶部在部分帧携带 ~0.7% 均匀缩放（旋转不变），

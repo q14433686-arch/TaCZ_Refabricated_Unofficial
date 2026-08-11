@@ -1467,3 +1467,24 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
   **待用户验证**：四方向 + 正朝向 + 竖直的开镜换弹/点射——报「整体还转不转 /
   斜向还漏不漏 / 枪口跟手感」。若有任何异样，`ConstraintCompensateMode=0`
   即刻回到今日实测定案的 plain 状态。
+
+- **第 32 轮：mode-2 首测被配置陷阱拦截——用户回报「不转/漏/自然」实为 mode 0 复测**：
+  1. **用户回报**：配置 `ConstraintCompensateMode=2`，三问答卷「整体不转 /
+     斜向后坐力仍漏 / 枪口跟手自然」。这三项拼起来正是 **mode 0 plain 的已知
+     指纹**——整体不随朝向转 ✓（B 格实测结论复现）；四方向斜向侧漏 ✓（= 本案
+     最原始的病灶，plain 下必然复现）；无锁无刚性 → 跟手自然 ✓。若 mode 2
+     真在运行，不会出现与 plain 逐位相同的画像。
+  2. **原因自查（代码定罪，非用户操作失误）**：用户配置文件里同时留着上一轮
+     A/B 设置的 `ConstraintBaseCompensate=false`；第 31 轮为「兼容既有设置」
+     写的 legacy 映射（老布尔优先、false 强制落 mode 0）把用户显式设置的
+     `ConstraintCompensateMode=2` **静默否决**——mode 2 从未真正运行。映射规则
+     虽写进了配置注释，但用户没有任何理由预期上一轮实验的残留键会反过来
+     否决新档位键；优先级设计本身就是错的。
+  3. **修正（本仓库默认已含）**：档位判定**唯一信源化**——只认
+     `ConstraintCompensateMode`∈{0,1,2}（越界值回落 2）；`ConstraintBaseCompensate`
+     保留注册但代码零读取（旧文件原样加载）。另加每进程一次性生效档播报日志
+     `[TACZ Case08] ConstraintCompensateMode effective=… (config=…, irisHandActive=…)`，
+     不共享日志也能在 latest.log 一眼自查「这一局跑的到底是哪一档」。
+  **待用户复测（本次 mode 2 将真正生效）**：原三问不变——①整体还随朝向转吗
+  ②斜向后坐力还漏吗 ③枪口跟手感自然吗。任何异样 `ConstraintCompensateMode=0`
+  秒回 plain（已被两次实测确认的全消态）。

@@ -439,16 +439,33 @@ public class FirstPersonRenderGunEvent {
         //               的写法 = 用当前姿态自身做共轭，各向异性系数被 Fold 进姿态帧内部，
         //               与朝向/基座结构性解耦；斜向泄漏同型消除。
         // Iris 手部 pass 基座≈I 时三档逐位等价 ⇒ 恒按 mode 0 执行（保持参照零介入）。
+        // 【第 32 轮修正 · 档位判定唯一信源化】
+        // 第 31 轮的兼容映射「老布尔 ConstraintBaseCompensate=false 强制落 mode 0」
+        // 在现场被证明是配置陷阱：用户在第 30 轮 A/B 时把那枚布尔留在 false，
+        // 随后显式把 ConstraintCompensateMode 设为 2，布尔却静默否决了它——
+        // 用户当轮回报「整体不转 / 斜向漏 / 跟手自然」三项正是 mode 0 plain 的
+        // 已知指纹（斜向漏 = 本案最原始病灶复现），即 mode 2 从未真正运行。
+        // 判定从此只认 ConstraintCompensateMode 一个信源；老布尔保留注册
+        // （旧配置文件不出错），但代码中不再读取。
         int case08Mode;
-        if (com.tacz.guns.config.client.RenderConfig.CONSTRAINT_BASE_COMPENSATE != null
-                && !com.tacz.guns.config.client.RenderConfig.CONSTRAINT_BASE_COMPENSATE.get()) {
-            case08Mode = 0; // 老布尔显式关 = plain（兼容用户在第 30 轮构建里的既有设置）
-        } else if (com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE != null) {
+        if (com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE != null) {
             case08Mode = com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE.get();
         } else {
             case08Mode = 2;
         }
+        if (case08Mode < 0 || case08Mode > 2) {
+            case08Mode = 2; // 文件被手改越界时回落默认档，绝不落到未定义形态
+        }
         int case08EffMode = com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive() ? 0 : case08Mode;
+        // 【第 32 轮】生效档一次性播报：上一轮的静默降级让「这一局跑的到底是哪档」
+        // 完全不可感知、只能猜；每进程首帧约束写入时落一行日志，供不共享日志时自查。
+        if (!case08ModeAnnounced) {
+            case08ModeAnnounced = true;
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ Case08] ConstraintCompensateMode effective={} (config={}, irisHandActive={})",
+                    case08EffMode, case08Mode,
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
+        }
         org.joml.Matrix3f baseR = new Matrix3f();
         GunItemRendererWrapper.copyHandBaseRotation(baseR);
         if (case08EffMode == 1) {
@@ -501,6 +518,9 @@ public class FirstPersonRenderGunEvent {
     // 本探针把整条链的三个采样点 + 两张基座矩阵一起落日志，六朝向各打一发连点+一次换弹后，
     // 离线直接算出真实残差旋转的轴与角，一次性锁定错误因子，杜绝再靠脑推改矩阵。
     private static long case08LastLogMs = 0L;
+
+    // 【第 32 轮】生效档一次性播报的去重门闩（每 JVM 进程只打一行，见上方写入路径）
+    private static boolean case08ModeAnnounced = false;
 
     private static boolean case08DebugOn() {
         return com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG != null
