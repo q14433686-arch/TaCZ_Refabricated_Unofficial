@@ -116,7 +116,7 @@ C/D（镜内裁切类，先评估必要性再动）。
 | E | ⑤激光改色 NVIDIA+Iris —— LaserDebug 探针 | `9738161`（部分） | **直贴** | ★★ |
 | F | RecoilDebug 探针 + 四个 FX 运行时开关 | `2de6cb0` `7e95af9` `e42be3b` `896b1d9` `92174cd` | 半直贴半适配，可选 | ★ |
 | G | ⑤激光改色的治本候选（已结案：光影包限制，不实施） | — | 搁置 | — |
-| H | ⑦炮弹/炮烟第一人称从眼睛飞出 → 枪口锚定（第 31 轮） | 见附录 A | 混合：`AmmoParticleSpawner` 整文件直贴；其余适配 | ★★ |
+| H | ~~⑦炮弹/炮烟第一人称枪口锚定（第 31 轮）~~ **已回退，勿移植** | 见附录 A | — | ✕ |
 
 ---
 
@@ -447,55 +447,14 @@ LASER_DEBUG = builder
 
 ---
 
-## 附录 A —— 单元 H（第 31 轮追加）：弹药模型/尾烟第一人称枪口锚定
+## 附录 A —— 单元 H（已回退，第 31–31.3 轮存档）：弹药模型/尾烟第一人称枪口锚定
 
-> 本单元为本文档首次发布（`f8360ed`）之后的新增修复，同样源于 26.2 分支
-> （案例⑦，见 COMPAT_AND_ROADMAP）。**与掩码架构完全无关，可独立落地。**
-
-**症状**（用户在 26.2 实测报告）：带弹药实体模型的弹种（炮弹/榴弹等）与
-弹药尾烟，第一人称下飞行起点与轨迹仍在眼睛处——第 26 轮曳光锚定只管曳光条带。
-
-**改法一句话**：新增公共函数
-`EntityBulletRenderer.firstPersonMuzzleAnchor(bullet, bulletPos, eyePos)`
-（视图空间 `muzzleRenderOffset` × 当帧相机旋转 → 世界轴，按弹眼距
-`(2.5−d)/2.5` 线性收敛 —— 第 31.2 轮：不能用曳光的 50 格窗口，
-低速弹种会全程背着跟随相机的幽灵位移（「固定在枪口上方」反馈）；
-仅本地玩家第一人称返回非 null），
-弹药模型绘制路径与尾烟粒子播撒路径共用它做起点锚定；新开关
-`FirstPersonAmmoMuzzleAnchor`（默认 true 可秒退）。
-
-**26.1.2 落地**：
-
-1. `src/main/java/com/tacz/guns/client/particle/AmmoParticleSpawner.java`
-   —— **三方已比对：26.1.2 与源基线逐字节相同**（本次为证又复核了一遍；
-   动手前请再跑一次 §0.2 的哈希核对）。整文件取源分支终版即可：
-   `git fetch origin arena/019fea3a-tacz-refabricated-unofficial`，然后
-   `git diff 5e8cba8ff8ae256e1ccef88384e295942700ef16..FETCH_HEAD -- src/main/java/com/tacz/guns/client/particle/AmmoParticleSpawner.java | git apply`
-   （用 FETCH_HEAD 最新值，别用文中固定的旧 TIP——本单元晚于初稿落地）。
-2. `src/main/java/com/tacz/guns/client/renderer/entity/EntityBulletRenderer.java`
-   —— 需适配（该文件在两分支因版本 API 有出入）：
-   - 把 `firstPersonMuzzleAnchor` 静态方法整体拷入（其内部只用到
-     `RenderConfig` / `Minecraft` / `Camera` / `LocalPlayer` /
-     `GunItemRendererWrapper.muzzleRenderOffset` / JOML，全部版本无关；
-     唯一要核的是 26.1.2 的 `Camera#rotation()` 与 `mainCamera()` 存在性——
-     你们曳光锚定修复若已在 26.1.2 落地（单元 B2），这些必然已可用）；
-   - `submit()` 的模型路径（`ammoEntityModel.submit(...)` 所在块）按源分支
-     终版补上 `pushPose` + 锚定 translate + 收尾 `popPose`
-     （注意源分支此处**多了一层 push/pop**，是顺带治理 YP/XP mulPose
-     外泄的 latent bug，一并带走）。
-3. `src/main/java/com/tacz/guns/config/client/RenderConfig.java` —— 需适配：
-   在 `[render]` builder 区追加 `FIRST_PERSON_AMMO_MUZZLE_ANCHOR` 字段与注册
-   （照源分支终版抄，含双行注释）。
-4. **前置依赖**：`GunItemRendererWrapper.muzzleRenderOffset`（单元 B2 的
-   枪口采集链）。若 26.1.2 尚未落地 B2，本单元不要先上——锚定位移会拿到
-   零向量/旧值，等于没修。
-
-**验收**：带弹药模型/尾烟的弹种（榴弹/炮弹类枪包）第一人称开火，炮弹与烟
-从枪口喷出并线性并入真实弹道；第三人称与旁观不变；`FirstPersonAmmoMuzzleAnchor=false`
-立即回退。
-
-> ⚠️ 移植时务必直接取源分支**终版**的 `firstPersonMuzzleAnchor`：
-> 初版（50 格窗口）对低速弹种会「钉在枪口上方」（31.2 修正为 2.5 格窗口）；
-> 且终版在进入相机旋转前对视图偏移的 **y 分量取反**（31.3 修正——存量
-> `muzzleRenderOffset` 纵向分量相对真实视图空间反号，床岩视模 y 翻转惯例所致，
-> 曳光因弹速太快从未暴露，炮弹/烟立刻现形）。
+> **2026-08-11 更新：本单元已在源分支整组回退（代码恢复至第 31 轮之前），
+> 不要移植。** 三轮尝试（曳光锚定链照搬到弹药模型/尾烟路径 → 低速弹种
+> 幽灵位移「钉在枪口上方」→ 收敛窗口缩 2.5 格 → 存量 muzzleRenderOffset
+> 纵向分量疑似反号继续打补丁）后被判定该静态向量是在别的渲染语义下为
+> 曳光目的采集的，借用到这条路径上符号/语义风险无法收束，观感仍怪，
+> 用户决定止损回退，维持上游原生行为（炮弹/尾烟按实体位置渲染）。
+> 完整教训链见 COMPAT_AND_ROADMAP 案例⑦。若未来重启，正确入口是从
+> **射击当帧的第一人称视模世界矩阵**现场解算出膛口（事件时点采集），
+> 而非复用曳光目的的存量缓存向量。

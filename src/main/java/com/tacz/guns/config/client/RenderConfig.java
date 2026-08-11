@@ -21,8 +21,6 @@ public class RenderConfig {
     public static ForgeConfigSpec.DoubleValue KILL_AMOUNT_DURATION_SECOND;
     public static ForgeConfigSpec.IntValue TARGET_RENDER_DISTANCE;
     public static ForgeConfigSpec.BooleanValue FIRST_PERSON_BULLET_TRACER_ENABLE;
-    /** 第 31 轮：第一人称弹药模型（炮弹/榴弹等）与尾烟粒子的枪口锚定开关，默认开；false 立即回退为原生实体位置渲染。 */
-    public static ForgeConfigSpec.BooleanValue FIRST_PERSON_AMMO_MUZZLE_ANCHOR;
     public static ForgeConfigSpec.BooleanValue TRACER_DEBUG;
     public static ForgeConfigSpec.ConfigValue<String> TRACER_DEBUG_GUN;
     public static ForgeConfigSpec.IntValue TRACER_DEBUG_INTERVAL_MS;
@@ -110,18 +108,6 @@ public class RenderConfig {
 
         builder.comment("Whether or not to render first person bullet trail");
         FIRST_PERSON_BULLET_TRACER_ENABLE = builder.define("FirstPersonBulletTracerEnable", true);
-
-        // 【第 31 轮】弹药实体模型（炮弹/榴弹等带 BedrockAmmoModel 的弹种）与弹药尾烟
-        // 粒子原生都在【实体位置】绘制/生成，而子弹实体出生在射者眼位 —— 第一人称
-        // 观感是炮弹从「眼睛」飞出。本开关把它们的第一人称起点锚定到上一帧手部 pass
-        // 采集的枪口（与第 26 轮曳光共用同一条 视图偏移×当帧相机旋转 数学链；
-        // 收敛窗口 2.5 格 —— 第 31.2 轮：低速弹种用曳光的 50 格会全程背着
-        // 跟随相机的幽灵位移，观感像被钉在枪口上方）；第三人称与旁观不变。
-        FIRST_PERSON_AMMO_MUZZLE_ANCHOR = builder
-                .comment("Anchor first-person ammo entity models (shells/grenades) and their trail particles",
-                        "to the viewmodel muzzle instead of the eye position; merges into the true trajectory",
-                        "within ~2.5 blocks. Set false to restore raw entity-position rendering instantly.")
-                .define("FirstPersonAmmoMuzzleAnchor", true);
 
         TRACER_DEBUG = builder
                 .comment("[DEBUG] Log first-person tracer/bullet trail origin diagnostics. Default off.")

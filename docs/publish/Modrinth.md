@@ -237,13 +237,6 @@ based on TACZ `1.1.8-hotfix`.
   sliver-glass oculars (AUG built-in sight, Elcan slats) leaving scope-body
   fragments inside the lens. Set to false to instantly fall back to the legacy
   geometric projection.
-- First-person ammo entity models (cannon shells, grenades and other pack-defined
-  projectiles) and their trail smoke now visually leave from the viewmodel muzzle
-  instead of the camera eye position, merging into the true trajectory
-  within ~2.5 blocks (no lingering camera-following offset for slow projectiles). It reuses the tracers' view-space to world anchoring math; third
-  person and spectating are unchanged. `FirstPersonAmmoMuzzleAnchor=false`
-  restores the raw behavior instantly.
-
 ### Notes
 - Requires Java 25 and Forge Config API Port.
 - Gun packs requiring TacZ:Arcana (encrypted assets) will show missing textures.

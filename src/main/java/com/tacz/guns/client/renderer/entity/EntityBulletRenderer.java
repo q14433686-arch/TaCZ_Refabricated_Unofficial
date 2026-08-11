@@ -88,29 +88,12 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             BedrockAmmoModel ammoEntityModel = ammoIndex.getAmmoEntityModel();
             Identifier textureLocation = ammoIndex.getAmmoEntityTextureLocation();
             if (ammoEntityModel != null && textureLocation != null) {
-                poseStack.pushPose();
-                // 【第 31 轮 · 第一人称弹药模型枪口锚定】
-                // 弹药实体模型（炮弹/榴弹等带 BedrockAmmoModel 的弹种）原生在【实体位置】
-                // 开始绘制，而子弹实体出生在射者眼位 —— 第一人称观感是从「眼睛」飞出。
-                // 这里复用第 26 轮曳光的同一条数学链：近距离把绘制起点从眼位拉向
-                // 上一帧手部 pass 采集的枪口（muzzleRenderOffset × 当帧相机旋转 → 世界轴），
-                // 按 offsetReducer 线性收敛，50 格外回到真实弹道。
-                // 第三人称/旁观路径不动（眼位≈手部区域，与上游观感一致）。
-                Entity anchorShooter = bullet.getOwner();
-                if (anchorShooter != null) {
-                    Vec3 anchor = firstPersonMuzzleAnchor(bullet,
-                            bullet.getPosition(partialTicks), anchorShooter.getEyePosition(partialTicks));
-                    if (anchor != null) {
-                        poseStack.translate(anchor.x, anchor.y, anchor.z);
-                    }
-                }
                 poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, bullet.yRotO, bullet.getYRot()) - 180.0F));
                 poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, bullet.xRotO, bullet.getXRot())));
                 poseStack.pushPose();
                 poseStack.translate(0, 1.5, 0);
                 poseStack.scale(-1, -1, 1);
                 ammoEntityModel.submit(poseStack, ItemDisplayContext.GROUND, collector, getRenderType(textureLocation), state.lightCoords, OverlayTexture.NO_OVERLAY);
-                poseStack.popPose();
                 poseStack.popPose();
             }
 
@@ -125,76 +108,6 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
     private RenderType getRenderType(Identifier textureLocation) {
         // 由于entityTranslucentCull不可用，使用entityTranslucent作为替代
         return RenderTypes.entityTranslucent(textureLocation);
-    }
-
-    /**
-     * 【第 31 轮】第一人称弹药的「眼位 → 枪口」锚定位移（世界轴）。
-     *
-     * <p>数学链与第 26 轮曳光修复逐行同源：{@code muzzleRenderOffset} 是手部 pass
-     * 采集的【视图空间】枪口偏移，乘当帧相机四元数（视图→世界，
-     * {@code Camera#rotation()} 直接 rotate、不取共轭）得到世界轴偏移，
-     * 再按 {@code offsetReducer = max(0, 2.5 - 弹眼距) / 2.5} 线性衰减
-     * （窗口取值见方法内第 31.2 轮注释：低速弹种不能用曳光的 50 格，
-     * 否则全程背着跟随相机的幽灵位移，观感像被钉在枪口上方）——
-     * 出生瞬间整块位移到枪口，2.5 格内即并入真实弹道。弹药模型与尾烟粒子
-     * 共用此函数，保证两者贴合同一条「从枪口喷出」的可见轨迹。</p>
-     *
-     * <p>仅当【本地玩家本人在第一人称】时返回非 null：
-     * 第三人称自己/旁观他人时实体出生点（眼位）在屏幕上本就贴着持枪手，
-     * 保持原生实体位置渲染（与上游观感一致）。</p>
-     *
-     * @param bulletPos 弹药当前（或插值后）世界位置
-     * @param eyePos    射者当前（或插值后）眼位
-     * @return 世界轴锚定位移；开关关闭 / 非第一人称本地射击 / 已收敛（≥50 格）时返回 null
-     */
-    @Nullable
-    public static Vec3 firstPersonMuzzleAnchor(EntityKineticBullet bullet, Vec3 bulletPos, Vec3 eyePos) {
-        if (RenderConfig.FIRST_PERSON_AMMO_MUZZLE_ANCHOR != null
-                && !RenderConfig.FIRST_PERSON_AMMO_MUZZLE_ANCHOR.get()) {
-            return null;
-        }
-        if (!(bullet.getOwner() instanceof LocalPlayer)) {
-            return null;
-        }
-        Minecraft mc = Minecraft.getInstance();
-        Camera camera = mc.gameRenderer.mainCamera();
-        if (camera == null || !mc.options.getCameraType().isFirstPerson()) {
-            return null;
-        }
-        double disToEye = bulletPos.distanceTo(eyePos);
-        // 【第 31.2 轮 · 收敛窗口修正】曳光的 50 格窗口不能照搬到本路径：
-        // 曳光弹速 ~800m/s，0.06s 内完成收敛，肉眼不可感知；而炮弹/榴弹类
-        // 是【低速长寿命】弹种，会在窗口里飞行数秒 —— 50 格窗口意味着它全程
-        // 背着一块「跟随当帧相机旋转、按距离缓慢缩小」的幽灵位移，转头时
-        // 炮弹跟着画面甩，观感就是「固定在枪口上方」（第 31 轮用户实测反馈）。
-        // 收到 2.5 格：出膛瞬间从枪口并入真实弹道；残余跳变几乎全部来自
-        // 偏移的前向分量（沿视轴，屏幕上几不可见），横向分量仅 ~0.25 格，
-        // 在出膛速度下同样不可感知。
-        double offsetReducer = Math.max(0.0, 2.5 - disToEye) / 2.5;
-        if (offsetReducer <= 0.0) {
-            return null;
-        }
-        // 视图空间 -> 世界空间：camera.rotation() 即视图→世界，直接 rotate，不取共轭
-        // （Camera#setRotation 用 rotationYXZ(PI - yRot, -xRot, 0) 构造，与曳光段注释一致）。
-        //
-        // 【第 31.3 轮修正】存量 muzzleRenderOffset 的【纵向分量对真实视图空间是反号的】。
-        // 实证：第 31 轮上线后用户截图（16:12，面南/面西各一）显示炮弹/烟的锚定起点
-        // 稳定地出现在视角内【偏上】——即世界位移的竖直分量朝上而非朝下。
-        // 来源推断：枪口位移的捕获链贯穿床岩视模渲染（其惯例含 y 翻转），
-        // 存下来的 gy≈-0.19 相对真实视图空间实际应为 +0.19 的镜像。
-        // 曳光条带共用了同一向量却从没暴露——条带宽 5mm、弹速 ~800m/s、
-        // 收敛 0.06s 完成，~0.19 格的纵向镜像在其上完全不可见；
-        // 炮弹/烟又大又慢，立刻现形。
-        // 处置：仅在本路径入 rotate 前对 y 取反（x 不动——存量 x=+0.16 指向屏幕右方，
-        // 与右下持枪的视模位置相符，截图也未显示横向反号）。
-        // 曳光已验收行为【不动】；若日后要全局统一，应去 cacheMuzzlePosition 的
-        // 捕获空间规范里做，并用 TracerDebug 复核后才能动曳光。
-        Vector3f viewOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
-        viewOffset.y = -viewOffset.y;
-        Vector3f worldOffset = viewOffset.rotate(camera.rotation());
-        return new Vec3(worldOffset.x() * offsetReducer,
-                worldOffset.y() * offsetReducer,
-                worldOffset.z() * offsetReducer);
     }
 
     public void renderTracerAmmo(EntityKineticBullet bullet, float[] tracerColor, float partialTicks, PoseStack poseStack, SubmitNodeCollector collector, int packedLight) {
