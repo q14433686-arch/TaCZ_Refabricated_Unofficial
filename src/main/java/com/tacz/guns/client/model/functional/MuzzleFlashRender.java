@@ -71,10 +71,10 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
             float scaleTime = TIME_RANGE / 2.0f;
             scale = time < scaleTime ? (scale * (time / scaleTime)) : scale;
             muzzleFlashStartMark = false;
-            // 26.2: MultiBufferSource/renderBuffers() removed.
-            // Muzzle flash requires separate render type buffers which are not available
-            // in the new SubmitNodeCollector pipeline without a collector reference.
-            // TODO: Reimplement muzzle flash rendering when a proper approach is available.
+            // 【2026-08-11 核实】枪口火光的正式实现在 extract()（submitCustomGeometry
+            // 双层提交，含镜内掩码裁剪），在役正常。本 doRender 属于旧即时渲染链
+            // （render → renderMuzzleFlash → delegateRender → 本方法），整条旧链在 26.2
+            // 无调用方（BedrockModel.renderInto 零调用），保持空实现；勿在此续写。
         }
     }
 

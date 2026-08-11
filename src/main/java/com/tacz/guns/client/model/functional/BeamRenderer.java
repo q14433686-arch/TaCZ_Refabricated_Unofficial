@@ -58,7 +58,10 @@ public class BeamRenderer {
 
         // 26.2: MultiBufferSource 已移除，通过 SubmitNodeCollector.submitCustomGeometry 提交自定义几何
         if (collector == null) {
-            // TODO 26.2: 调用者尚未提供 SubmitNodeCollector，激光束暂不渲染，待渲染管线全面迁移后恢复
+            // 【2026-08-11 核实】此分支目前不可达：现存两个调用方
+            // （BedrockGunModel / BedrockAttachmentModel）都传了 collector；
+            // collector==null 只会来自 4 参便捷重载，而它没有调用方。
+            // 语义：无 collector 即不画（26.2 下没有可退回的即时渲染通道）。
             return;
         }
 
