@@ -456,10 +456,10 @@ public class FirstPersonRenderGunEvent {
         if (com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE != null) {
             case08Mode = com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE.get();
         } else {
-            case08Mode = 0; // 配置未加载完毕时的安全态 = 默认档 0（plain）
+            case08Mode = 3; // 配置未加载完毕时的安全态 = 默认档 3（第 36 轮起在体验证通过）
         }
         if (case08Mode < 0 || case08Mode > 3) {
-            case08Mode = 0; // 文件被手改越界时回落默认档，绝不落到未定义形态
+            case08Mode = 3; // 文件被手改越界时回落默认档，绝不落到未定义形态
         }
         int case08EffMode = com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive() ? 0 : case08Mode;
         // 【第 32 轮】生效档一次性播报：上一轮的静默降级让「这一局跑的到底是哪档」
@@ -485,8 +485,9 @@ public class FirstPersonRenderGunEvent {
         // 即与 mode 2 的唯一差别 = 左半姿态帧由 W_post 换成 Ŵ_pre；纯偏航/纯俯仰下
         // Ŵ = Wᵀ，形态上等价于「c975748 三明治把入口基座快照换成写入当帧活姿态」——
         // 三版被拒形态（入口 Bᵀ、活 W、W_post）之外从未测过的第四种排列。
-        // 【状态：26.1.2 在体验证通过、26.2 未验证 ⇒ 暂不做默认，待用户复测裁决后再
-        //  翻默认；Iris 手部 pass 恒走 mode 0（基座≈I 时与 plain 逐位一致），不受影响】
+        // 【状态：26.1.2 + 26.2 双线在体验证通过（第 36 轮用户答卷「不转 / 不漏 /
+        //  自然」三项全过）⇒ 第 36 轮起翻为本仓默认；mode 0 留档可秒回退；
+        //  Iris 手部 pass 恒走 mode 0（基座≈I 时与 plain 逐位一致），不受影响】
         org.joml.Matrix3f case08QConjW = null;
         if (case08EffMode == 3) {
             org.joml.Matrix3f qFlip = new org.joml.Matrix3f();
