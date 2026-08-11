@@ -458,7 +458,9 @@ LASER_DEBUG = builder
 **改法一句话**：新增公共函数
 `EntityBulletRenderer.firstPersonMuzzleAnchor(bullet, bulletPos, eyePos)`
 （视图空间 `muzzleRenderOffset` × 当帧相机旋转 → 世界轴，按弹眼距
-`(50−d)/50` 线性收敛；仅本地玩家第一人称返回非 null），
+`(2.5−d)/2.5` 线性收敛 —— 第 31.2 轮：不能用曳光的 50 格窗口，
+低速弹种会全程背着跟随相机的幽灵位移（「固定在枪口上方」反馈）；
+仅本地玩家第一人称返回非 null），
 弹药模型绘制路径与尾烟粒子播撒路径共用它做起点锚定；新开关
 `FirstPersonAmmoMuzzleAnchor`（默认 true 可秒退）。
 

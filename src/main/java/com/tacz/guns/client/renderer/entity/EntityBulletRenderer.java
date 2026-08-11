@@ -133,8 +133,10 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
      * <p>数学链与第 26 轮曳光修复逐行同源：{@code muzzleRenderOffset} 是手部 pass
      * 采集的【视图空间】枪口偏移，乘当帧相机四元数（视图→世界，
      * {@code Camera#rotation()} 直接 rotate、不取共轭）得到世界轴偏移，
-     * 再按 {@code offsetReducer = max(0, 50 - 弹眼距) / 50} 线性衰减 ——
-     * 出生瞬间整块位移到枪口，50 格外收敛回真实弹道。弹药模型与尾烟粒子
+     * 再按 {@code offsetReducer = max(0, 2.5 - 弹眼距) / 2.5} 线性衰减
+     * （窗口取值见方法内第 31.2 轮注释：低速弹种不能用曳光的 50 格，
+     * 否则全程背着跟随相机的幽灵位移，观感像被钉在枪口上方）——
+     * 出生瞬间整块位移到枪口，2.5 格内即并入真实弹道。弹药模型与尾烟粒子
      * 共用此函数，保证两者贴合同一条「从枪口喷出」的可见轨迹。</p>
      *
      * <p>仅当【本地玩家本人在第一人称】时返回非 null：
@@ -160,7 +162,15 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             return null;
         }
         double disToEye = bulletPos.distanceTo(eyePos);
-        double offsetReducer = Math.max(0.0, 50.0 - disToEye) / 50.0;
+        // 【第 31.2 轮 · 收敛窗口修正】曳光的 50 格窗口不能照搬到本路径：
+        // 曳光弹速 ~800m/s，0.06s 内完成收敛，肉眼不可感知；而炮弹/榴弹类
+        // 是【低速长寿命】弹种，会在窗口里飞行数秒 —— 50 格窗口意味着它全程
+        // 背着一块「跟随当帧相机旋转、按距离缓慢缩小」的幽灵位移，转头时
+        // 炮弹跟着画面甩，观感就是「固定在枪口上方」（第 31 轮用户实测反馈）。
+        // 收到 2.5 格：出膛瞬间从枪口并入真实弹道；残余跳变几乎全部来自
+        // 偏移的前向分量（沿视轴，屏幕上几不可见），横向分量仅 ~0.25 格，
+        // 在出膛速度下同样不可感知。
+        double offsetReducer = Math.max(0.0, 2.5 - disToEye) / 2.5;
         if (offsetReducer <= 0.0) {
             return null;
         }

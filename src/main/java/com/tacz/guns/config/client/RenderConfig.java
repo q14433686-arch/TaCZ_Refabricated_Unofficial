@@ -114,12 +114,13 @@ public class RenderConfig {
         // 【第 31 轮】弹药实体模型（炮弹/榴弹等带 BedrockAmmoModel 的弹种）与弹药尾烟
         // 粒子原生都在【实体位置】绘制/生成，而子弹实体出生在射者眼位 —— 第一人称
         // 观感是炮弹从「眼睛」飞出。本开关把它们的第一人称起点锚定到上一帧手部 pass
-        // 采集的枪口（与第 26 轮曳光共用同一条 视图偏移×当帧相机旋转 数学链，
-        // 50 格内线性收敛回真实弹道）；第三人称与旁观不变。false = 立即回退原生行为。
+        // 采集的枪口（与第 26 轮曳光共用同一条 视图偏移×当帧相机旋转 数学链；
+        // 收敛窗口 2.5 格 —— 第 31.2 轮：低速弹种用曳光的 50 格会全程背着
+        // 跟随相机的幽灵位移，观感像被钉在枪口上方）；第三人称与旁观不变。
         FIRST_PERSON_AMMO_MUZZLE_ANCHOR = builder
                 .comment("Anchor first-person ammo entity models (shells/grenades) and their trail particles",
-                        "to the viewmodel muzzle instead of the eye position; converges to the true trajectory",
-                        "within ~50 blocks. Set false to restore raw entity-position rendering instantly.")
+                        "to the viewmodel muzzle instead of the eye position; merges into the true trajectory",
+                        "within ~2.5 blocks. Set false to restore raw entity-position rendering instantly.")
                 .define("FirstPersonAmmoMuzzleAnchor", true);
 
         TRACER_DEBUG = builder
