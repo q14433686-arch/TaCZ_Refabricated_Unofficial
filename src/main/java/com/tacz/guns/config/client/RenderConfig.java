@@ -43,6 +43,12 @@ public class RenderConfig {
      * 左乘 (B·MV)⁻¹，使 modelView×基座=I）。默认开启（修复态）；置 false 秒回退到旧行为。
      */
     public static ForgeConfigSpec.BooleanValue HAND_VIEW_LOCK_FIX;
+    /**
+     * 【案例⑧ · 第 29 轮并行开关】锁视角读取 modelView 时剔除 3x3 缩放分量：
+     * v5 日志实测该读取在部分帧上携带 0.9933~1.0068 的均匀缩放（旋转分部逐位不变），
+     * 缩放会经 (B·MV)⁻¹ 烙进基座。默认开启；置 false 可单独回退本步而不动第 28 轮主修复。
+     */
+    public static ForgeConfigSpec.BooleanValue HAND_VIEW_LOCK_NORMALIZE;
     public static ForgeConfigSpec.BooleanValue DISABLE_INTERACT_HUD_TEXT;
     public static ForgeConfigSpec.BooleanValue AUTO_SELECT_GUN_SMITH_TABLE_FILTER;
     public static ForgeConfigSpec.IntValue DAMAGE_COUNTER_RESET_TIME;
@@ -182,6 +188,14 @@ public class RenderConfig {
                         "by (base*modelView)^-1 so modelView*base == I (matches the Iris/on-shader look).",
                         "Fixes gun+arm assembly drifting with player facing during ADS reload/fire. Default on.")
                 .define("HandViewLockFix", true);
+
+        // 第 29 轮：实测 modelView 顶部在部分帧携带 ~0.7% 均匀缩放（旋转不变），
+        // 不剔除会被 (B·MV)⁻¹ 烙进基座与整条姿态链；本开关只控制归一化这一步。
+        HAND_VIEW_LOCK_NORMALIZE = builder
+                .comment("[FIX] Strip any 3x3 scale from the captured modelView before composing the",
+                        "hand-view lock matrix (observed 0.9933~1.0068 uniform scale on some frames).",
+                        "Only effective when HandViewLockFix is on. Default on.")
+                .define("HandViewLockNormalize", true);
 
         builder.comment("Disable the interact hud text in center of the screen");
         DISABLE_INTERACT_HUD_TEXT = builder.define("DisableInteractHudText", false);

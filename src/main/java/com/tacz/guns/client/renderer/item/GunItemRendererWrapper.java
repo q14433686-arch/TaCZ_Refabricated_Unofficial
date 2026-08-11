@@ -284,6 +284,26 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
                     && !IrisCompat.isHandRendererActive()) {
                 try {
                     org.joml.Matrix4f mvNow = com.mojang.blaze3d.systems.RenderSystem.getModelViewMatrixCopy();
+                    // 【案例⑧ · 第 29 轮取证】v5 受控辑拿：此处的 modelView 顶部读取在约 39% 帧上
+                    // 携带 0.9933~1.0068 的均匀缩放，而旋转分部与同帧稍后两次读取逐位一致
+                    // （离线验证 B=s·MVᵀ、MV·B 非对角元恒 0、colNormDev=0.0067、F 出现 s² 对角）。
+                    // 先落 lockCap 全量矩阵供离线指认该缩放矩阵的真实身份。
+                    debugRecoilLockCap(mvNow);
+                    // 【第 29 轮并行开关】剔除 mvNow 3x3 的列缩放：防止缩放经 (B·MV)⁻¹ 烙进
+                    // 基座与整条姿态链（旋转分部不动，故绘制观感要么完全一致、要么只差 ≤0.7%
+                    // 的均匀缩放——远低于可见阈值；并行开关可单独回退本步）。
+                    if (RenderConfig.HAND_VIEW_LOCK_NORMALIZE != null
+                            && RenderConfig.HAND_VIEW_LOCK_NORMALIZE.get()) {
+                        float n0 = (float) Math.sqrt((double) (mvNow.m00() * mvNow.m00() + mvNow.m10() * mvNow.m10() + mvNow.m20() * mvNow.m20()));
+                        float n1 = (float) Math.sqrt((double) (mvNow.m01() * mvNow.m01() + mvNow.m11() * mvNow.m11() + mvNow.m21() * mvNow.m21()));
+                        float n2 = (float) Math.sqrt((double) (mvNow.m02() * mvNow.m02() + mvNow.m12() * mvNow.m12() + mvNow.m22() * mvNow.m22()));
+                        if (n0 > 1.0e-8f && n1 > 1.0e-8f && n2 > 1.0e-8f) {
+                            float i0 = 1.0f / n0, i1 = 1.0f / n1, i2 = 1.0f / n2;
+                            mvNow.m00(mvNow.m00() * i0); mvNow.m10(mvNow.m10() * i0); mvNow.m20(mvNow.m20() * i0);
+                            mvNow.m01(mvNow.m01() * i1); mvNow.m11(mvNow.m11() * i1); mvNow.m21(mvNow.m21() * i1);
+                            mvNow.m02(mvNow.m02() * i2); mvNow.m12(mvNow.m12() * i2); mvNow.m22(mvNow.m22() * i2);
+                        }
+                    }
                     org.joml.Matrix4f lockC = new org.joml.Matrix4f(handBasePose).mul(mvNow);
                     if (Math.abs(lockC.determinant()) > 1.0e-8) {
                         lockC.invert();
@@ -449,6 +469,51 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
         return String.format(java.util.Locale.ROOT, "%.4f", v);
     }
 
+    private static long lockCapFrameCount = 0L;
+    private static long lockCapLastLogMs = 0L;
+
+    /**
+     * 【案例⑧ · 第 29 轮取证探针】把锁视角修复首次读取的 modelView（mvNow）逐帧落档：
+     * 三列模长（检出 0.9933~1.0068 缩放突发的直接证据）+ 完整 3x3 + 平移列 + 朝向/iris 态。
+     * 平移列用于离线指认该矩阵属于哪个渲染 pass（手部括弧理论平移≈0；GUI/世界则不然）。
+     * 缩放异常帧（最大列模偏差 &gt; 0.002）全量落（50ms 节流）；正常帧每 200 帧心跳一次。
+     */
+    private static void debugRecoilLockCap(org.joml.Matrix4f mvNow) {
+        try {
+            if (RenderConfig.RECOIL_DEBUG == null || !RenderConfig.RECOIL_DEBUG.get()) {
+                return;
+            }
+            float n0 = (float) Math.sqrt((double) (mvNow.m00() * mvNow.m00() + mvNow.m10() * mvNow.m10() + mvNow.m20() * mvNow.m20()));
+            float n1 = (float) Math.sqrt((double) (mvNow.m01() * mvNow.m01() + mvNow.m11() * mvNow.m11() + mvNow.m21() * mvNow.m21()));
+            float n2 = (float) Math.sqrt((double) (mvNow.m02() * mvNow.m02() + mvNow.m12() * mvNow.m12() + mvNow.m22() * mvNow.m22()));
+            float dev = Math.max(Math.abs(n0 - 1), Math.max(Math.abs(n1 - 1), Math.abs(n2 - 1)));
+            lockCapFrameCount++;
+            boolean anomaly = dev > 0.002f;
+            if (!anomaly && (lockCapFrameCount % 200L) != 0L) {
+                return;
+            }
+            long now = System.currentTimeMillis();
+            if (now - lockCapLastLogMs < 50L) {
+                return;
+            }
+            lockCapLastLogMs = now;
+            net.minecraft.client.player.LocalPlayer player = Minecraft.getInstance().player;
+            float fy = player == null ? Float.NaN : net.minecraft.util.Mth.wrapDegrees(player.getYRot());
+            float fx = player == null ? Float.NaN : player.getXRot();
+            GunMod.LOGGER.info(
+                    "[TACZ RecoilDebug] lockCap ms={} colN=({},{},{}) mv=[{},{},{} {},{},{} {},{},{}] mvT=({},{},{}) facing=({},{}) irisHand={} anomaly={}",
+                    now,
+                    trim2(n0), trim2(n1), trim2(n2),
+                    trim2(mvNow.m00()), trim2(mvNow.m01()), trim2(mvNow.m02()),
+                    trim2(mvNow.m10()), trim2(mvNow.m11()), trim2(mvNow.m12()),
+                    trim2(mvNow.m20()), trim2(mvNow.m21()), trim2(mvNow.m22()),
+                    trim2(mvNow.m30()), trim2(mvNow.m31()), trim2(mvNow.m32()),
+                    trim2(fx), trim2(fy),
+                    IrisCompat.isHandRendererActive(), anomaly);
+        } catch (Throwable ignored) {
+        }
+    }
+
     /**
      * 【RecoilDebug 探针】把机瞄定位组骨骼链（iron sight path，未装瞄具时的瞄具所在链）
      * 的末端原点换算到视图空间并逐帧打印，口径与 cacheMuzzlePosition 完全一致的 Bᵀ 转置归一化，
@@ -528,8 +593,18 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             // hip-S 桶 R=I —— 破锁仅存在于开镜态。此项给出相位精确(与 gunRoot 同 ms)的 R(t)，
             // 供离线把「整枪图像刚性旋转」按方位逐相位核对用户指纹。
             double lockAng = 0, lockAxX = 0, lockAxY = 0, lockAxZ = 1;
+            // 【案例⑧ · 第 29 轮】此处读到的 modelView 也与 lockCap 对照全量落档：
+            // 两次读取若列模长不一致，即为「同一调用内顶部内容被改写」的在体铁证。
+            double mv00 = 0, mv01 = 0, mv02 = 0, mv10 = 0, mv11 = 0, mv12 = 0, mv20 = 0, mv21 = 0, mv22 = 0;
+            double mvN0 = -1, mvN1 = -1, mvN2 = -1;
             try {
                 org.joml.Matrix4f mv4 = com.mojang.blaze3d.systems.RenderSystem.getModelViewMatrixCopy();
+                mv00 = mv4.m00(); mv01 = mv4.m01(); mv02 = mv4.m02();
+                mv10 = mv4.m10(); mv11 = mv4.m11(); mv12 = mv4.m12();
+                mv20 = mv4.m20(); mv21 = mv4.m21(); mv22 = mv4.m22();
+                mvN0 = Math.sqrt(mv00 * mv00 + mv10 * mv10 + mv20 * mv20);
+                mvN1 = Math.sqrt(mv01 * mv01 + mv11 * mv11 + mv21 * mv21);
+                mvN2 = Math.sqrt(mv02 * mv02 + mv12 * mv12 + mv22 * mv22);
                 double r00 = mv4.m00() * handBasePose.m00() + mv4.m01() * handBasePose.m10() + mv4.m02() * handBasePose.m20();
                 double r01 = mv4.m00() * handBasePose.m01() + mv4.m01() * handBasePose.m11() + mv4.m02() * handBasePose.m21();
                 double r02 = mv4.m00() * handBasePose.m02() + mv4.m01() * handBasePose.m12() + mv4.m02() * handBasePose.m22();
@@ -549,7 +624,7 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             } catch (Throwable ignored2) {
             }
             GunMod.LOGGER.info(
-                    "[TACZ RecoilDebug] gunRoot ms={} viewRoot=({},{},{}) raw=({},{},{}) colNormDev={} shear=m01/m10 {}/{} m02/m20 {}/{} facing=({},{}) shader={} irisHand={} lockAng={} lockAxis=({},{},{})",
+                    "[TACZ RecoilDebug] gunRoot ms={} viewRoot=({},{},{}) raw=({},{},{}) colNormDev={} shear=m01/m10 {}/{} m02/m20 {}/{} facing=({},{}) shader={} irisHand={} lockAng={} lockAxis=({},{},{}) mvColN=({},{},{}) mv=[{},{},{} {},{},{} {},{},{}]",
                     System.currentTimeMillis(),
                     trim2(viewX), trim2(viewY), trim2(viewZ),
                     trim2(pose.m30()), trim2(pose.m31()), trim2(pose.m32()),
@@ -557,7 +632,11 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
                     trim2(pose.m01()), trim2(pose.m10()), trim2(pose.m02()), trim2(pose.m20()),
                     trim2(fx), trim2(fy),
                     IrisCompat.isUsingRenderPack(), IrisCompat.isHandRendererActive(),
-                    trim2(lockAng), trim2(lockAxX), trim2(lockAxY), trim2(lockAxZ));
+                    trim2(lockAng), trim2(lockAxX), trim2(lockAxY), trim2(lockAxZ),
+                    trim2(mvN0), trim2(mvN1), trim2(mvN2),
+                    trim2(mv00), trim2(mv01), trim2(mv02),
+                    trim2(mv10), trim2(mv11), trim2(mv12),
+                    trim2(mv20), trim2(mv21), trim2(mv22));
         } catch (Throwable ignored) {
         }
     }
