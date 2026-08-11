@@ -1124,20 +1124,46 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
   且上游 1.21.1 是否裁镜内烟雾未核实，维持不动。
 - **验证**：开镜后镜片透出纯净世界画面，看不到任何枪体/配件碎片。
 
-#### 案例⑤：NVIDIA + 光影开启时激光改色无效（A 卡 / N 卡无光影正常）—— 取证中
+#### 案例⑤：NVIDIA + 光影开启时激光改色无效（A 卡 / N 卡无光影正常）—— 取证中（2026-08-11 调研+代码审查更新）
 
 - **症状**：改装界面里换激光颜色，画面不更新；仅 N 卡 + Iris 光影开启触发。
 - **已知事实**：激光颜色走**顶点色**（`BeamRenderer.setColor`），
   渲染类型是 vanilla `entityTranslucentEmissive`；N/A 卡分歧指向
   CustomGeometry 提交链上的属性/状态不严谨之处（GL 规范未定义行为在
   两厂驱动上表现不同）。
+- **2026-08-11 调研结论（修正方向）**：
+  - 网络调研（Iris/Oculus issue 区）：**没有任何「顶点色在 NVIDIA 失效、AMD 兜底」
+    的同类记录**。GLSL 顶点色语义与厂商无关；我们对顶点格式的全部元素都写满
+    （color/uv/overlay/light/normal 齐），属 GL 规范定义内行为，两厂驱动不应分歧。
+    用户猜测的「RGB 写法在光影路径下不对、AMD 兜底」方向证据不足。
+  - 相关先例：IrisShaders/Iris#3049 —— 开启任意光影后，模组自定义 emissive
+    rendertype 在特定相机角度整片变黑；与厂商无关，根子在 Iris 对自定义/vanilla
+    渲染类型的整包替换机制。我们的激光走的正是这类被替换的类型。
+  - **代码审查（数据侧清白）**：`LaserColorUtil.getLaserColor` 每帧现读 NBT、无缓存；
+    改装写回若坏应**全平台**都坏，与「仅 N卡+光影」矛盾。颜色只走一条通道：
+    `submitCustomGeometry` + `entityTranslucentEmissive` + 顶点色。光影开启时
+    Iris 用 shader pack 的 hand/entities 程序替换该管线，**顶点色是否参与乘算
+    完全由 pack 决定** —— vanilla 原生内容几乎不依赖此类型的顶点色，pack
+    漏乘也无人发现。这能完美解释「只有开光影才失效」。
+- **当前最强假设**：纯 Iris/光影包侧吞顶点色，**与显卡厂商无关**
+  （N 卡测试员 scene 里别的差异：包设置/包版本/驱动设置等）。
+- **实验矩阵（按判别力排序，用户可直接执行）**：
+  1. **A卡机主本人装同一光影包开光影自测激光改色** —— 若同样失效 → 厂商无关，定性完毕；
+  2. Iris 保留安装但 shaders OFF 的对照（分离 Iris 本体 vs 光影包）；
+  3. N 卡机换另一个光影包（如 Complementary ↔ BSL）对照；
+  4. N 卡机回来补 LaserDebug=true 日志（数据侧收尾证实）。
+- **治本候选（待定性后择一）**：
+  1. 激光专属 RenderType（克隆 ENTITY_TRANSLUCENT_EMISSIVE）+
+     `IrisCompat.assignPipelineToIris(pipeline,"HAND_TRANSLUCENT",…)`，行为受控；
+  2. 颜色烤进按色缓存的动态纹理（参照 ScopeMaskTextureHandle 模式），
+     彻底摆脱顶点色通道。
 - **取证方案**：新增 `LaserDebug` 配置（默认关）。开启后每次激光提交记录
   `[TACZ LaserDebug] beam submit color=#RRGGBB custom=… ctx=… irisPack=…`（1s 节流）。
   - 若日志里颜色**跟着改色变**而画面不变 → GL/Iris 管线侧吞顶点色；
   - 若日志颜色**不变** → 数据侧（改装写回/同步/缓存索引）问题。
 - **待用户回传**：N 卡机上开光影 + LaserDebug，改色一两次后上传 latest.log。
 
-#### 案例⑥：PAL（Player Animation Library）下切枪一次、第三人称持枪动画整局失效 —— 已修（第 38 轮）
+#### 案例⑥：PAL（Player Animation Library）下切枪一次、第三人称持枪动画整局失效 —— 已修·用户实测确认闭环（第 38 轮，2026-08-11 确认）
 
 - **症状**：安装 player_animation_library 1.2.5 后，初次持枪动画正常；
   只要切枪（无需在第三人称视角），持枪动画本次会话永不恢复；
@@ -1161,3 +1187,4 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
   `then(null)` 路径已由现网行为验证宽容（旧调用只哑不崩），无新增风险。
 - **验证**：装 PAL，持枪第三人称 → 切另一把枪 → 切回/换空手/再持枪，
   动画应始终恢复（收枪淡出观感与之前一致）。
+  **用户 2026-08-11 实测确认闭环。**
