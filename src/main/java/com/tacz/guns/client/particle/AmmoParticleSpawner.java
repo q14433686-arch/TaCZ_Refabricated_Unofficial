@@ -2,7 +2,6 @@ package com.tacz.guns.client.particle;
 
 
 import com.tacz.guns.api.TimelessAPI;
-import com.tacz.guns.client.renderer.entity.FirstPersonBulletRenderOffset;
 import com.tacz.guns.client.resource.pojo.display.ammo.AmmoParticle;
 import com.tacz.guns.entity.EntityKineticBullet;
 import net.fabricmc.api.EnvType;
@@ -46,20 +45,11 @@ public class AmmoParticleSpawner {
         Vector3f delta = particle.getDelta();
         float particleSpeed = particle.getSpeed();
         ParticleEngine particleEngine = Minecraft.getInstance().particleEngine;
-        // 40 mm/RPG smoke is spawned from the authoritative bullet entity, whose trajectory starts
-        // at the eye in both upstream 1.21.1 and this port. Use the same client-only visual offset
-        // as the projectile model/tracer so persistent smoke begins at the muzzle as well.
-        Vector3f visualOffset = FirstPersonBulletRenderOffset.atTickPosition(bullet);
-        double visualX = visualOffset == null ? 0.0 : visualOffset.x();
-        double visualY = visualOffset == null ? 0.0 : visualOffset.y();
-        double visualZ = visualOffset == null ? 0.0 : visualOffset.z();
         if (count == 0) {
             double xSpeed = particleSpeed * delta.x();
             double ySpeed = particleSpeed * delta.y();
             double zSpeed = particleSpeed * delta.z();
-            Particle result = particleEngine.createParticle(particleOptions,
-                    bullet.getX() + visualX, bullet.getY() + visualY, bullet.getZ() + visualZ,
-                    xSpeed, ySpeed, zSpeed);
+            Particle result = particleEngine.createParticle(particleOptions, bullet.getX(), bullet.getY(), bullet.getZ(), xSpeed, ySpeed, zSpeed);
             if (result != null) {
                 result.setLifetime(particle.getLifeTime());
             }
@@ -67,16 +57,12 @@ public class AmmoParticleSpawner {
             RandomSource random = bullet.getRandom();
             Entity owner = bullet.getOwner();
             for (int i = 0; i < count; ++i) {
-                createParticle(bullet, particle, random, delta, particleSpeed, owner, particleEngine,
-                        particleOptions, visualX, visualY, visualZ);
+                createParticle(bullet, particle, random, delta, particleSpeed, owner, particleEngine, particleOptions);
             }
         }
     }
 
-    private static void createParticle(EntityKineticBullet bullet, AmmoParticle particle, RandomSource random,
-                                       Vector3f delta, float particleSpeed, Entity owner,
-                                       ParticleEngine particleEngine, ParticleOptions particleOptions,
-                                       double visualX, double visualY, double visualZ) {
+    private static void createParticle(EntityKineticBullet bullet, AmmoParticle particle, RandomSource random, Vector3f delta, float particleSpeed, Entity owner, ParticleEngine particleEngine, ParticleOptions particleOptions) {
         Vec3 deltaMovement = bullet.getDeltaMovement();
         double deltaMovementRandom = random.nextDouble();
         double offsetX = random.nextGaussian() * delta.x() + deltaMovementRandom * deltaMovement.x;
@@ -86,9 +72,9 @@ public class AmmoParticleSpawner {
         double ySpeed = random.nextGaussian() * particleSpeed;
         double zSpeed = random.nextGaussian() * particleSpeed;
 
-        double posX = bullet.getX() + offsetX + visualX;
-        double posY = bullet.getY() + offsetY + visualY;
-        double posZ = bullet.getZ() + offsetZ + visualZ;
+        double posX = bullet.getX() + offsetX;
+        double posY = bullet.getY() + offsetY;
+        double posZ = bullet.getZ() + offsetZ;
 
         // 如果太贴近发射者，不进行粒子生成
         if (owner == null || owner.distanceToSqr(posX, posY, posZ) > 3 * 3) {

@@ -5,10 +5,13 @@ import com.mojang.math.Axis;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.client.model.BedrockAmmoModel;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
+import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.InternalAssetLoader;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -76,19 +79,10 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
         TimelessAPI.getClientAmmoIndex(ammoId).ifPresent(ammoIndex -> {
             BedrockAmmoModel ammoEntityModel = ammoIndex.getAmmoEntityModel();
             Identifier textureLocation = ammoIndex.getAmmoEntityTextureLocation();
-            Vector3f firstPersonVisualOffset = FirstPersonBulletRenderOffset.atRenderPosition(bullet, partialTicks);
             if (ammoEntityModel != null && textureLocation != null) {
-                // 1.21.1 only offsets the tracer mesh. Slow rounds with an explicit entity model
-                // (40 mm grenade/RPG rocket) therefore visibly leave the player's eye. Apply the
-                // same client-only muzzle offset to the model while keeping server ballistics intact.
-                // Push before every transform: upstream rotates the shared stack before push(),
-                // leaking projectile rotation into the following tracer submission.
-                poseStack.pushPose();
-                if (firstPersonVisualOffset != null) {
-                    poseStack.translate(firstPersonVisualOffset.x(), firstPersonVisualOffset.y(), firstPersonVisualOffset.z());
-                }
                 poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, bullet.yRotO, bullet.getYRot()) - 180.0F));
                 poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, bullet.xRotO, bullet.getXRot())));
+                poseStack.pushPose();
                 poseStack.translate(0, 1.5, 0);
                 poseStack.scale(-1, -1, 1);
                 ammoEntityModel.submit(poseStack, ItemDisplayContext.GROUND, collector, getRenderType(textureLocation), state.lightCoords, OverlayTexture.NO_OVERLAY);
@@ -98,8 +92,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             // 曳光弹发光
             if (bullet.isTracerAmmo()) {
                 float[] actualTracerColor = Objects.requireNonNullElse(tracerColor, ammoIndex.getTracerColor());
-                renderTracerAmmo(bullet, actualTracerColor, partialTicks, poseStack, collector,
-                        state.lightCoords, firstPersonVisualOffset);
+                renderTracerAmmo(bullet, actualTracerColor, partialTicks, poseStack, collector, state.lightCoords);
             }
         });
     }
@@ -109,15 +102,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
         return RenderTypes.entityTranslucent(textureLocation);
     }
 
-    public void renderTracerAmmo(EntityKineticBullet bullet, float[] tracerColor, float partialTicks,
-                                 PoseStack poseStack, SubmitNodeCollector collector, int packedLight) {
-        renderTracerAmmo(bullet, tracerColor, partialTicks, poseStack, collector, packedLight,
-                FirstPersonBulletRenderOffset.atRenderPosition(bullet, partialTicks));
-    }
-
-    private void renderTracerAmmo(EntityKineticBullet bullet, float[] tracerColor, float partialTicks,
-                                  PoseStack poseStack, SubmitNodeCollector collector, int packedLight,
-                                  @Nullable Vector3f firstPersonVisualOffset) {
+    public void renderTracerAmmo(EntityKineticBullet bullet, float[] tracerColor, float partialTicks, PoseStack poseStack, SubmitNodeCollector collector, int packedLight) {
         getModel().ifPresent(model -> {
             Entity shooter = bullet.getOwner();
             if (shooter == null) {
@@ -135,12 +120,26 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 double disToEye = bulletPosition.distanceTo(shooter.getEyePosition(partialTicks));
                 trailLength = Math.min(trailLength, disToEye * 0.8);
 
-                if (isFirstPerson && firstPersonVisualOffset != null) {
-                    // Entity submission is world-axis translated; the shared helper has already
-                    // converted the launch-frame muzzle offset to world space and applied decay.
-                    poseStack.translate(firstPersonVisualOffset.x(),
-                            firstPersonVisualOffset.y(),
-                            firstPersonVisualOffset.z());
+                if (isFirstPerson) {
+                    // 实体提交栈只含 entityPos-cameraPos 的世界轴平移；相机旋转由后续
+                    // world->view 绘制链统一施加。枪口缓存则经 GunItemRendererWrapper
+                    // 归一化为纯视图空间，因此必须用 camera.rotation()（view->world）
+                    // 旋到世界轴后再平移。直接使用视图向量会产生随 yaw 呈正弦变化的侧偏。
+                    Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+                    Vector3f viewOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
+                    if (bullet.getFirstPersonRenderOffset() == null) {
+                        // 保留精确出生帧的诊断快照；定位实际使用当帧枪口，避免转头后
+                        // 长时间沿用旧相机朝向下的缓存。
+                        bullet.setFirstPersonRenderOffset(new Vector3f(viewOffset));
+                        bullet.setCameraXRot(camera.xRot());
+                        bullet.setCameraYRot(camera.yRot());
+                    }
+                    Vector3f worldOffset = viewOffset.rotate(camera.rotation());
+                    // 近端从枪口发出，随后平滑收敛到服务器的真实弹道。
+                    double offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
+                    poseStack.translate(worldOffset.x() * offsetReducer,
+                            worldOffset.y() * offsetReducer,
+                            worldOffset.z() * offsetReducer);
                 }
                 // 说是 override 其实默认值是 1
                 // 所以这里直接乘也没关系
