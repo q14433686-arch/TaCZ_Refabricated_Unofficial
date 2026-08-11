@@ -46,10 +46,20 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue HAND_VIEW_LOCK_FIX;
     /**
      * 【案例⑧ · 第 30 轮 A/B 开关】约束位移的基座归一化补偿（Bᵀ·diag·Bᵀ 三明治——
-     * 8 月 10 日「四方向斜向后坐力」修复定版）。用户指认本案为该机位引入的回归：
-     * 置 false 即逐位回到修复前的原版公式（diag·v0 直写）做对照实验。默认 true=现行定版。
+     * 8 月 10 日「四方向斜向后坐力」修复定版）。第 31 轮用户在场实测：
+     * 本补偿就是「整体随朝向转」病灶的注入源（false 后症状消失）。
+     * 现由 {@link #CONSTRAINT_COMPENSATE_MODE} 接管（0/1/2 档）；
+     * 本布尔仅保留为 legacy 兼容：显式 false 会强制等效 mode 0。
      */
     public static ForgeConfigSpec.BooleanValue CONSTRAINT_BASE_COMPENSATE;
+    /**
+     * 【案例⑧ · 第 31 轮定案】约束位移写入形态：
+     * 0 = plain（修复前原版 diag·v0；用户实测定「整体转」全消，但四方向斜向后坐力侧漏复现）；
+     * 1 = Bᵀ·diag·Bᵀ 三明治（8/10 终版；即本案病灶，仅存档勿用）；
+     * 2 = 姿态帧共轭 P_post·diag·P_preᵀ·v0（本仓库默认；不读任何外部矩阵，
+     *     各向异性 Fold 进姿态帧内部，与朝向/基座结构解耦）。
+     */
+    public static ForgeConfigSpec.IntValue CONSTRAINT_COMPENSATE_MODE;
     /**
      * 【案例⑧ · 第 29 轮并行开关】锁视角读取 modelView 时剔除 3x3 缩放分量：
      * v5 日志实测该读取在部分帧上携带 0.9933~1.0068 的均匀缩放（旋转分部逐位不变），
@@ -209,6 +219,17 @@ public class RenderConfig {
                         "diagonal-direction ADS recoil drift on 2026-08-10. Set false to restore the",
                         "pre-fix formula for regression A/B testing. Default on (= current shipped behavior).")
                 .define("ConstraintBaseCompensate", true);
+
+        // 第 31 轮定案：约束位移形态三档。0=plain（用户实测无「整体转」但斜向侧漏复现），
+        // 1=终版三明治（即本案病灶，存档勿用），2=姿态帧共轭（默认，结构免疫帧混用）。
+        // 注意：老布尔 ConstraintBaseCompensate=false 会覆盖本档强制落 mode 0。
+        CONSTRAINT_COMPENSATE_MODE = builder
+                .comment("[FIX] Constraint-translation write form:",
+                        "0 = plain (pre-fix formula; diagonal ADS recoil leak returns),",
+                        "1 = legacy B^T-diag-B^T sandwich (caused facing-locked gun rotation; archived),",
+                        "2 = pose-frame conjugate (default; base-free, immune to frame mixing).",
+                        "Legacy key ConstraintBaseCompensate=false forces mode 0.")
+                .defineInRange("ConstraintCompensateMode", 2, 0, 2);
 
         // 第 29 轮：实测 modelView 顶部在部分帧携带 ~0.7% 均匀缩放（旋转不变），
         // 不剔除会被 (B·MV)⁻¹ 烙进基座与整条姿态链；本开关只控制归一化这一步。

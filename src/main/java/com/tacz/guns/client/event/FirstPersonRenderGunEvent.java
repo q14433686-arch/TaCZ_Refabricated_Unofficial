@@ -392,6 +392,8 @@ public class FirstPersonRenderGunEvent {
         inverseTranslation.mulDirection(poseStack.last().pose());
         // 【案例⑧探针 · 采样点2】经 mulDirection 进入写入帧的向量 v0
         Vector3f case08V0 = case08Delta != null ? new Vector3f(inverseTranslation) : null;
+        // 【第 31 轮】mode 2（当前姿态帧共轭）用：与 mulDirection 同一时刻的姿态旋转 P_pre。
+        org.joml.Matrix3f case08PoseFrameR = new org.joml.Matrix3f(poseStack.last().pose());
         // 【26.2 修复·终版：ADS 开枪/换弹时枪身随朝向整体偏移——
         //  原始症状：斜向（东南/西南/东北/西北）固定向一侧横移（东南/西北偏左、东北/西南偏右），
         //  正方向与腰射完全正常，开启 Iris 光影（手部 pass 无基座预乘）时一切正常】
@@ -424,22 +426,42 @@ public class FirstPersonRenderGunEvent {
         // [0.15, 0.05, 0.4] 给出系数 ≈(−0.85, −0.95, +0.6)，强各向异性，
         // 故无修复时斜向横移可达 0.1~0.2 视图单位（~2-4°），肉眼显著；换弹动画同样
         // 驱动 constraint 骨骼，故同路径一并修复。
-        // 【第 30 轮（案例⑧）A/B 对照开关】用户指认「整体随朝向转」为四方向斜向修复引入的回归。
-        // 当 CONSTRAINT_BASE_COMPENSATE=false 时跳过整个 Bᵀ 三明治，逐位回到修复前的
-        // 原版公式（v = diag(c)·v0 直写）。注意：此状态下斜向横移会复现——只为定位回归源。
-        boolean case08Compensate = com.tacz.guns.config.client.RenderConfig.CONSTRAINT_BASE_COMPENSATE == null
-                || com.tacz.guns.config.client.RenderConfig.CONSTRAINT_BASE_COMPENSATE.get();
+        // 【第 31 轮（案例⑧ 定案）约束位移写入的三档形态 —— 用户在场 A/B 实测裁决：
+        //   mode 0 = plain：diag·v0 直写（修复前原版）。用户实测：当前「整体随朝向转」
+        //            病根完全消失；代价 = 四方向斜向后坐力侧漏回来了（8/10 的原案）。
+        //   mode 1 = Bᵀ·diag·Bᵀ 三明治（8/10 终版存档）。用户实测：正朝向整枪随朝向转、
+        //            竖直「跑后方」、后坐过压 —— 即本案全部症状 ⇒ 三明治是该病灶注入源。
+        //   mode 2 = 姿态帧共轭 v = P_post·diag·P_preᵀ·v0。【默认】。推导依据：
+        //            ① plain（mode 0）在全部朝向/竖直的观感都正确 ⇒ 槽位带回乘子 X 满足
+        //               X·(姿态链旋转) = I（至多差一个产生斜向 sin2φ 泄漏的小残差）；
+        //            ② upstream/authored 要求最终视图位移 = diag(c)·F_pre·Δ；
+        //            ③ 唯一两条同时成立且不读任何外部矩阵（B/modelView 都被实测证伪过）
+        //               的写法 = 用当前姿态自身做共轭，各向异性系数被 Fold 进姿态帧内部，
+        //               与朝向/基座结构性解耦；斜向泄漏同型消除。
+        // Iris 手部 pass 基座≈I 时三档逐位等价 ⇒ 恒按 mode 0 执行（保持参照零介入）。
+        int case08Mode;
+        if (com.tacz.guns.config.client.RenderConfig.CONSTRAINT_BASE_COMPENSATE != null
+                && !com.tacz.guns.config.client.RenderConfig.CONSTRAINT_BASE_COMPENSATE.get()) {
+            case08Mode = 0; // 老布尔显式关 = plain（兼容用户在第 30 轮构建里的既有设置）
+        } else if (com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE != null) {
+            case08Mode = com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE.get();
+        } else {
+            case08Mode = 2;
+        }
+        int case08EffMode = com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive() ? 0 : case08Mode;
         org.joml.Matrix3f baseR = new Matrix3f();
         GunItemRendererWrapper.copyHandBaseRotation(baseR);
-        if (case08Compensate) {
+        if (case08EffMode == 1) {
             inverseTranslation.mulTranspose(baseR);  // Bᵀ·v0：写入帧 → 逆基座（authored）帧
+        } else if (case08EffMode == 2) {
+            inverseTranslation.mulTranspose(case08PoseFrameR);  // P_preᵀ·v0 = F_pre·Δ（姿态自身逆帧）
         }
         inverseTranslation.mul(translationICA.x() - 1, translationICA.y() - 1, 1 - translationICA.z()); // 基岩版模型的旋转导致 xy 轴要反过来
-        if (case08Compensate) {
-            inverseTranslation.mulTranspose(baseR);  // 再乘 Bᵀ：把各向异性留在 authored 帧里，
-                                                     // 提交时上方链的 B 会把它带回视图帧，
-                                                     // 净效果 = diag(c)·F·Δ（= 1.21.1 观感）
+        if (case08EffMode == 1) {
+            inverseTranslation.mulTranspose(baseR);  // 终版三明治右半（存档形态，勿作默认）
         }
+        // mode 2 的右半（P_post·…）必须等下面的约束旋转块执行完、拿到终态 3x3 后再补乘，
+        // 见下方写入前的 mul(new Matrix3f(poseMatrix))。
         // 计算约束旋转需要的反向旋转。因需要插值，获取的是欧拉角
         Vector3f inverseRotation = new Vector3f(rotation);
         inverseRotation.mul(rotationICA.x() - 1, rotationICA.y() - 1, rotationICA.z() - 1);
@@ -451,6 +473,10 @@ public class FirstPersonRenderGunEvent {
         poseStack.translate(-animatedTranslation.x(), -animatedTranslation.y() - 1.5f, -animatedTranslation.z());
         // 约束位移
         Matrix4f poseMatrix = poseStack.last().pose();
+        if (case08EffMode == 2) {
+            // P_post·diag·P_preᵀ·v0 的右半：约束旋转块执行完之后的终态姿态帧。
+            inverseTranslation.mul(new org.joml.Matrix3f(poseMatrix));
+        }
         poseMatrix.m30(poseMatrix.m30() - inverseTranslation.x() * weight);
         poseMatrix.m31(poseMatrix.m31() - inverseTranslation.y() * weight);
         poseMatrix.m32(poseMatrix.m32() + inverseTranslation.z() * weight);
