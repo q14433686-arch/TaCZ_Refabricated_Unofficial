@@ -1,6 +1,8 @@
 package com.tacz.guns.client.render.scope;
 
 import com.mojang.blaze3d.pipeline.BindGroupLayout;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
@@ -104,12 +106,22 @@ public final class ScopeBodyRenderTypes {
     /**
      * 枪口火光（大面片层）的掩码裁剪管线。
      *
-     * <p>等价于 vanilla {@code pipeline/entity_translucent} 之上叠加
-     * {@code SCOPE_MASK} 分支 —— 直接以 {@code RenderPipelines.ENTITY_TRANSLUCENT}
-     * 为底拷贝整套状态（blend/深度/cull/布局全继承），只替换 shader 为我们那份
-     * 「entity 逐字节一致 + SCOPE_MASK 段」的 scope_body 着色器，并声明掩码采样器。
-     * 因此火光在镜外的观感与 vanilla 逐像素一致，镜内被 discard（透视口径契约：
-     * 口径内一切视模像素都不出现）。
+     * <p>配方逐项对照 26.2 {@code RenderPipelines.<clinit>} 里 {@code ENTITY_TRANSLUCENT}
+     * 的字节码（putstatic 前 24 条指令实读）：<pre>
+     * builder(ENTITY_SNIPPET)
+     *     .withLocation("pipeline/entity_translucent")
+     *     .withShaderDefine("ALPHA_CUTOUT", 0.1F)
+     *     .withShaderDefine("PER_FACE_LIGHTING")
+     *     .withBindGroupLayout(BindGroupLayouts.SAMPLER1)
+     *     .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+     *     .withCull(false)</pre>
+     * 注意 26.2 里 {@code RenderPipeline.builder} 只接受 {@code Snippet...}，
+     * 而 {@code RenderPipelines.ENTITY_TRANSLUCENT} 是<b>完整管线不是 Snippet</b>
+     * （26.2 暴露的 Snippet 只有 {@code ENTITY_SNIPPET} 等基础款），所以不能
+     * 「以它为底」，必须把整条配方照抄出来，再叠加我们那三样
+     * （SCOPE_MASK + 掩码 layout + scope_body 着色器）。除这三样外与 vanilla
+     * entity_translucent 逐状态一致 —— 火光在镜外的观感不变，镜内被 discard
+     * （透视口径契约：口径内一切视模像素都不出现）。
      *
      * <p>只覆盖火光的【大面片】层。辉光涡旋层（{@code energySwirl}）在 26.2 里
      * 的 shader 已被折叠进共享实现（jar 内无独立 rendertype_energy_swirl.fsh），
@@ -117,13 +129,17 @@ public final class ScopeBodyRenderTypes {
      * 可后补，不属于回归风险。
      */
     private static final RenderPipeline FLASH_TRANSLUCENT_CLIPPED_PIPELINE =
-            RenderPipeline.builder(RenderPipelines.ENTITY_TRANSLUCENT)
+            RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
                     .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_flash_translucent_clipped"))
                     .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
                     .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
                     .withShaderDefine("ALPHA_CUTOUT", 0.1F)
+                    .withShaderDefine("PER_FACE_LIGHTING")
                     .withShaderDefine("SCOPE_MASK")
+                    .withBindGroupLayout(BindGroupLayouts.SAMPLER1)
                     .withBindGroupLayout(MASK_SAMPLER_LAYOUT)
+                    .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+                    .withCull(false)
                     .build();
 
     /** 蚀刻准星：只在目镜<b>盖到</b>处绘制，保留受光。 */

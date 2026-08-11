@@ -1,6 +1,7 @@
 package com.tacz.guns.client.render.scope;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
@@ -152,6 +153,8 @@ public final class ScopeMaskRenderer {
 
     private static boolean failed = false;
     private static boolean loggedSuccess = false;
+    /** 凸包模式读投影 UBO 失败只喊一次（之后每帧静默回退逐立方体描摹）。 */
+    private static boolean loggedProjReadFailure = false;
     /** 「开着调试却没有任何目镜几何」只警告一次，避免刷屏。 */
     private static boolean loggedEmpty = false;
 
@@ -386,7 +389,25 @@ public final class ScopeMaskRenderer {
      */
     private static boolean writeHullFill(BufferBuilder builder, Matrix4f pose, java.util.List<BedrockCube> cubes) {
         java.util.List<float[]> pts = new java.util.ArrayList<>();
-        Matrix4f proj = new Matrix4f(RenderSystem.getProjectionMatrix());
+        // 【26.2 取证】RenderSystem 已没有 getProjectionMatrix()——投影矩阵只以
+        // GpuBufferSlice（UBO）形式躺在 GPU 侧（字段投影 PROJECTION_MATRIX_UBO_SIZE，
+        // 布局即一个 std140 mat4：列主序 16 个 float）。CPU 侧做凸包就必须把它
+        // 读回来：slice.map(read, write) 拿到 MappedView.data()，读 64 字节。
+        // 关键在同源：掩码 pass 稍后 bindDefaultUniforms 用的就是
+        // RenderSystem.getProjectionMatrixBuffer() 这同一个 slice，所以这里读到的
+        // 与着色器实际消费的是【同一份字节】，凸包与画面严丝合缝。
+        // 成本是每帧至多一次 64B 的读回；UBO 是本帧刚上传的 ring 段，不是重同步。
+        // 读失败（驱动/Iris 怪异状态）一次 warn，本帧该条目回退逐立方体描摹。
+        Matrix4f proj = new Matrix4f();
+        try (GpuBufferSlice.MappedView view = RenderSystem.getProjectionMatrixBuffer().map(true, false)) {
+            proj.set(view.data());
+        } catch (Exception e) {
+            if (!loggedProjReadFailure) {
+                loggedProjReadFailure = true;
+                GunMod.LOGGER.warn("[TACZ Scope] Hull-fill: could not read back the projection UBO; this entry falls back to legacy per-cube tracing.", e);
+            }
+            return false;
+        }
         Vector4f tmp = new Vector4f();
         for (BedrockCube cube : cubes) {
             for (var polygon : cube.getPolygons()) {
