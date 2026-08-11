@@ -175,7 +175,20 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
             glowPose.scale(frozenScale / 2, frozenScale / 2, frozenScale / 2);
             glowPose.mulPose(Axis.ZP.rotationDegrees(frozenRotation));
             glowPose.translate(0, -0.9, 0);
-            collector.submitCustomGeometry(glowPose, RenderTypes.energySwirl(muzzleFlash.getTexture(), 1, 1),
+            // 【诊断层 · LayerAssignment 裁决】09:22 实测 ready=true（大面片确实换了
+            // 裁剪管线）但镜内仍见火团 —— 那么那团火到底是「没裁成的大面片」还是
+            // 「我们尚未接入的 energySwirl 辉光层」？energySwirl 的 shader 在 26.2
+            // 已被 Mojang 折叠进共享实现（jar 无独立 fsh），无法零风险复刻。
+            // 判定实验：ScopeMaskDebug 开启时，辉光层也换成裁剪版贴图管线
+            // （观感会从叠加柔光变成普通半透明——这只是探针，不是最终渲染效果）。
+            // 若镜内火团【彻底消失】→ 残余一直是辉光层 → 下一轮给它单独立管线；
+            // 若火团【仍在】→ 大面片的裁剪绘制本身没生效 → 转查该 draw 的 bucket/时序。
+            RenderType glowType = RenderTypes.energySwirl(muzzleFlash.getTexture(), 1, 1);
+            if (com.tacz.guns.config.client.RenderConfig.SCOPE_MASK_DEBUG.get() && flashMaskReady) {
+                glowType = com.tacz.guns.client.render.scope.ScopeBodyRenderTypes
+                        .flashTranslucent(muzzleFlash.getTexture());
+            }
+            collector.submitCustomGeometry(glowPose, glowType,
                     (pose, buffer) -> MUZZLE_FLASH_MODEL.renderToBuffer(
                             glowPose, buffer, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F));
         });
