@@ -2,16 +2,17 @@ package com.tacz.guns.compat.immediatelyfast;
 
 import net.minecraft.world.item.ItemStack;
 
-// 26.2: ImmediatelyFast not yet available, stub implementation
+/**
+ * Compatibility facade for an obsolete ImmediatelyFast batching workaround.
+ *
+ * <p>ImmediatelyFast itself supports 26.1.2, but the old ImmediatelyFastApi HUD batching controls
+ * used by TACZ 1.21.1 no longer exist. The 26.1.2 item bridge submits through GuiItemAtlas and
+ * {@code SubmitNodeCollector}, so there is no immediate batch to end/restart here.</p>
+ */
 public class ImmediatelyFastCompat {
-    private static final String MOD_ID = "immediatelyfast";
-    private static boolean INSTALLED = false;
-
     public static void init() {
-        // No-op: ImmediatelyFast not available for 26.2
     }
 
     public static void renderHotbarItem(ItemStack stack, boolean pre) {
-        // No-op: ImmediatelyFast not available for 26.2
     }
 }

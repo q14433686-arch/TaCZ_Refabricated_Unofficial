@@ -147,11 +147,12 @@ dependencies {
     annotationProcessor 'com.google.code.findbugs:jsr305:3.0.2'
 
     // ============================================================
-    // 以下依赖经 26.1.2 可用性核查后保留禁用；待上游发布 26.1.2 构建再恢复
+    // 26.1.2 dependency audit. Optional integrations stay compile-only so they are
+    // absent from the distributable and are guarded by FabricLoader at runtime.
     // ============================================================
 
-    // simplebedrockmodel — 需要确认 26.1.2 兼容版本
-    // implementation(include("libs:simplebedrockmodel-fabric:2.3.0.1+mc1.20.1"))
+    // simplebedrockmodel — the old library has no 26.1.2 build; the small API surface TACZ
+    // consumes is provided by local compatibility interfaces and the collector-backed renderer.
 
     // MAE (Math Expression Evaluator)
     implementation("com.maydaymemory:mae:1.1.1") {
@@ -187,13 +188,18 @@ dependencies {
     // Embeddium
     // compileOnly "curse.maven:embeddium-908741:${embeddedt_id}"
 
-    // Carry On
-    // compileOnly "curse.maven:carry-on-274259:${carry_on_id}"
+    // Carry On 2.10.0 supports 26.1.2. Its modern compatibility contract is the
+    // carryon:block_blacklist data tag, so TACZ needs no compile-time dependency.
 
-    // Player Animation Lib — 26.1.2：KosmX(dev.kosmx.playerAnim) 无 26.1.2 构建；modrinth 的
-    // player-animation-library 是 zigythebird 的不兼容分支。compat/playeranimator 暂排除，待迁移到可用 API。
-    // PAL is optional at runtime, but compile its 26.1.2 API for the isolated compat implementation.
+    // Player Animation Library (PAL) is optional at runtime. TACZ's isolated PAL 1.2.5
+    // implementation replaces the unavailable KosmX API used by the 1.21.1 upstream.
     compileOnly "maven.modrinth:player-animation-library:${player_animation_lib}"
+
+    // MrCrayfish's Controllable 0.26.0 and Shoulder Surfing 5.0.10 both publish
+    // Fabric 26.1.2 builds. These restore upstream controller bindings/rumble and
+    // adaptive shoulder-camera behavior without making either mod mandatory.
+    compileOnly "curse.maven:controllable-317269:${controllable_curse_file}"
+    compileOnly "maven.modrinth:shoulder-surfing-reloaded:${shoulder_surfing_version}"
 
     // KubeJS
     // compileOnly "dev.latvian.mods:kubejs-fabric:${kubejs_version}"
@@ -218,8 +224,8 @@ dependencies {
     // Zoomify — 2.16.0+26.1 supports 26.1–26.1.2.
     compileOnly "maven.modrinth:zoomify:${zoomify_version}"
 
-    // ImmediatelyFast
-    // compileOnly "maven.modrinth:immediatelyfast:1.5.1+1.20.4-fabric"
+    // ImmediatelyFast supports 26.1.2, but its old public HUD batching API was removed.
+    // TACZ's delayed GuiItemAtlas path needs no direct compile-time integration.
 
     // REI — 26.1.2
     compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
@@ -272,27 +278,25 @@ tasks.withType(JavaCompile).configureEach {
     }
 }
 
-// 26.1.2 的可选兼容实现：目标 API 缺失或与原 KosmX/Forge API 不兼容的模块暂不编译。
-// 门面类尽量保留，待各目标模组提供 26.1.2 API 或完成独立迁移后再恢复实现。
-// Iris 不在排除清单内；它通过公开 API + vanilla GlCommandEncoder 边界进行可选兼容。
+// Source selection for integrations whose APIs genuinely have no 26.1.2 equivalent.
+// PAL, Controllable, Shoulder Surfing and Iris are compiled above and guarded at runtime;
+// only obsolete KosmX/OptiFine/KubeJS-Fabric/Accelerated Rendering implementations remain excluded.
 sourceSets {
     main {
         java {
             // AR(Accelerated Rendering)：仅排除硬依赖 argon4w 的 IMPL，保留 ARCompat/BeamRenderContext 门面（改为禁用态）
             exclude 'com/tacz/guns/compat/ar/ARCompatImpl.java'
             exclude 'com/tacz/guns/compat/ar/AcceleratedBeamRenderer.java'
-            // Controllable：仅排除硬依赖 mrcrayfish 的 IMPL，保留 ControllableCompat 门面
-            exclude 'com/tacz/guns/compat/controllable/ControllableInner.java'
-            // KubeJS：dev.latvian.kubejs 无 26.1.2 Fabric 构建，核心 KubeJSGunEventPoster/GunMod 改为禁用态门面
+            // Controllable 0.26.0 now has a verified 26.1.2 Fabric build; its isolated
+            // implementation is compiled again and only loaded when the mod is installed.
+            // KubeJS：26.1.2 only has NeoForge builds; the Fabric event poster remains a disabled facade.
             exclude 'com/tacz/guns/compat/kubejs/**'
-            // Player Animator(KosmX dev.kosmx.playerAnim)：无 26.1.2 构建；保留门面 PlayerAnimatorCompat/AnimationName/PlayerAnimatorLoader
+            // The obsolete KosmX implementation is replaced by compat/playeranimator/pal/**.
             exclude 'com/tacz/guns/compat/playeranimator/animation/**'
             exclude 'com/tacz/guns/compat/playeranimator/PlayerAnimatorAssetManager.java'
             // Optifine：非 Fabric，待评估永久废弃
             exclude 'com/tacz/guns/compat/optifine/**'
-            // Carry On：无 26.1.2 构建
-            exclude 'com/tacz/guns/compat/carryon/**'
-            exclude 'cn/sh1rocu/tacz/mixin/compat/carryon/**'
+            // Carry On 2.10 uses a data-tag contract; its old Java config hook is intentionally absent.
             // Accelerated Rendering mixin：随 AR 模块禁用
             exclude 'com/tacz/guns/mixin/client/ar/**'
         }

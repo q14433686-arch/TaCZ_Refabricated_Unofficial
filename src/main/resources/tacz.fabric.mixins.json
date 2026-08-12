@@ -35,9 +35,10 @@
     "client.LivingEntityRendererMixin",
     "client.MinecraftMixin",
     "client.MouseHandlerMixin",
-    "client.TextureAtlasMixin"
+    "client.TextureAtlasMixin",
+    "compat.controllable.BindingContextMixin"
   ],
-  "_comment": "26.1.2 r33: RenderTargetMixin + AbstractSliderButtonAccessor deleted (targets gone in 26.1.2). LivingEntityRendererMixin re-enabled: both injection descriptors verified byte-for-byte against the 26.1.2 jar (extractRenderState(LivingEntity,LivingEntityRenderState,F)V and submit(LivingEntityRenderState,PoseStack,SubmitNodeCollector,CameraRenderState)V). Still unregistered on purpose, see MIXIN_AUDIT_2026-07-27.md.",
+  "_comment": "26.1.2: obsolete RenderTargetMixin and AbstractSliderButtonAccessor targets were removed. LivingEntityRendererMixin is registered above after both injection descriptors were verified against 26.1.2. The optional Controllable mixin is gated by MixinPlugin.",
   "injectors": {
     "defaultRequire": 1
   }

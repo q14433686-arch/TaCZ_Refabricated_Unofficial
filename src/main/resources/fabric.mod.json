@@ -56,6 +56,9 @@
     "forgeconfigapiport": ">=26.1.5"
   },
   "suggests": {
+    "carryon": ">=2.10.0",
+    "controllable": ">=0.26.0",
+    "shouldersurfing": ">=5.0.0",
     "iris": ">=1.11.2",
     "sodium": ">=0.9.1"
   }
