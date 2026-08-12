@@ -267,7 +267,8 @@ public class LivingEntityShoot {
     }
 
     /**
-     * 消耗备弹 TODO: 需要检查，是否有其他更简单的方法消耗背包内的弹药 (这段是直接从逻辑机 API 里复制过来的)
+     * 消耗备弹。统一复用 {@link AbstractGunItem} 的虚拟弹药与物品处理器提取逻辑，
+     * 以保持服务端射击和普通换弹对弹药箱/背包槽位的处理一致。
      */
     public void consumeAmmoFromPlayer(int neededAmount, ItemStack itemStack, boolean needCheckAmmo) {
         if (!(itemStack.getItem() instanceof AbstractGunItem abstractGunItem)) {

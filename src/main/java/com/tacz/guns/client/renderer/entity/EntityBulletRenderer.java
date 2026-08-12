@@ -10,6 +10,8 @@ import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.InternalAssetLoader;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -119,23 +121,25 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 trailLength = Math.min(trailLength, disToEye * 0.8);
 
                 if (isFirstPerson) {
-                    // 第一人称渲染自己的曳光弹时应用枪口视觉偏移（偏移量 = 枪口相对摄像机的位置）。
-                    Vector3f offset = bullet.getFirstPersonRenderOffset();
-                    if (offset == null) {
-                        // 26.x entity render extraction already gives a camera/view-space pose.
-                        // Do not rotate/unrotate the muzzle offset under shader packs: applying
-                        // camera yaw/pitch here double-applies the view transform, so looking up can
-                        // fling the tracer start upward/rightward into the sky. Keep the cached
-                        // muzzleRenderOffset in view-space and translate directly below.
-                        offset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
-                        bullet.setFirstPersonRenderOffset(offset);
+                    // 实体提交栈只含 entityPos-cameraPos 的世界轴平移；相机旋转由后续
+                    // world->view 绘制链统一施加。枪口缓存则经 GunItemRendererWrapper
+                    // 归一化为纯视图空间，因此必须用 camera.rotation()（view->world）
+                    // 旋到世界轴后再平移。直接使用视图向量会产生随 yaw 呈正弦变化的侧偏。
+                    Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+                    Vector3f viewOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
+                    if (bullet.getFirstPersonRenderOffset() == null) {
+                        // 保留精确出生帧的诊断快照；定位实际使用当帧枪口，避免转头后
+                        // 长时间沿用旧相机朝向下的缓存。
+                        bullet.setFirstPersonRenderOffset(new Vector3f(viewOffset));
+                        bullet.setCameraXRot(camera.xRot());
+                        bullet.setCameraYRot(camera.yRot());
                     }
-                    // 按照距离快速削减第一人称枪口视觉偏移，避免远处曳光仍被大幅拉向开火瞬间的枪口侧。
-                    // 旧曲线是 50 格线性衰减，ADS 横移时偏移量过高、持续太久；这里改为 12 格二次衰减
-                    // 并整体压到 65%，只在枪口附近保留“从枪口出来”的视觉感，随后快速贴回真实弹道。
-                    double offsetT = Math.max(0, (12.0 - disToEye)) / 12.0;
-                    double offsetReducer = offsetT * offsetT * 0.65;
-                    poseStack.translate(offset.x * offsetReducer, offset.y * offsetReducer, offset.z * offsetReducer);
+                    Vector3f worldOffset = viewOffset.rotate(camera.rotation());
+                    // 近端从枪口发出，随后平滑收敛到服务器的真实弹道。
+                    double offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
+                    poseStack.translate(worldOffset.x() * offsetReducer,
+                            worldOffset.y() * offsetReducer,
+                            worldOffset.z() * offsetReducer);
                 }
                 // 说是 override 其实默认值是 1
                 // 所以这里直接乘也没关系

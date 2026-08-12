@@ -101,8 +101,9 @@ IrisApi.getInstance().assignPipeline(customPipeline, IrisProgram.HAND);
 ```
 
 TACZ 的自定义 mask pipeline 必须归类为 `HAND`，否则 Iris 可能给它选择 fallback/错误 program，
-或让 mask 与 body 落到不同 FBO。除此之外不需要修改 Iris 内部 shader 源码。旧的
-`ShaderCreator` / `ExtendedShader` 内部 mixin 已移除，以降低对 Iris 私有实现和参数索引的耦合。
+或让 mask 与 body 落到不同 FBO。当前另保留一个 `require=0` 的最小 `ShaderCreator` mixin，
+只给 hand fragment 注入默认休眠的 depth-restore/mask 分支；世界/entity shader 不修改，
+避免普通 gbuffers 在 NVIDIA 上因 dormant discard/gl_FragDepth 路径发生编译差异。
 
 ## 4. 上游 TACZ 的 stencil 语义
 
@@ -233,7 +234,9 @@ Iris 已在 `beginHand()` 把准确的 pre-hand 世界深度复制到 `depthtex2
 - order `-2`：aperture-copy 包装后的 attachment body（draw 边界先复制 ocular aperture
   depth，再正常绘制移除了活动 ocular 的镜身）；
 - order `-1`：同一 ocular 的 exact world-depth cleanup；
-- order `1`：illuminated reticle 与 CPU 过滤后的纯 etched reticle（两者都经
+- 默认 order `0`：枪身与普通配件（镜内像素走 outside-mask 丢弃）；
+- order `1`：物理 `ocular_ring` 镜框单独重画，不参与 aperture 裁剪并重新写入近处深度；
+- order `2`：illuminated reticle 与 CPU 过滤后的纯 etched reticle（两者都经
   ocular 屏幕空间 mask 裁剪）。
 
 使用 `SubmitNodeCollector.order(int)` 是必要的，因为 custom geometry 在单个 order 内按
@@ -405,10 +408,58 @@ OBJECT_NAME` 比对：`BACKUP` 记录 ocular 写入面的身份，`APERTURE_COPY
 另把失败日志的去重从「仅与上一条比较」换成「按原因集合去重（32 条封顶）」，
 避免降级周期在两个原因间交替时刷日志。
 
-三条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
+### 6.9 R1：cleanup 之后的视模与火光反向裁剪
+
+有序批次还暴露出一个不能只靠 depth-test 解决的时序：scope cleanup 在 order `-1`
+恢复了世界深度，而枪身、非瞄具配件和半透明枪口火光位于默认 order `0`；它们若继续使用
+vanilla RenderType，会在目镜孔内重新通过深度测试。R1 不移植 26.2 的离屏颜色掩码，
+而直接复用本方案已经生成的两份深度：
+
+- `tacz_ScopeMaskMode = 1`：保留 `apertureDepth < worldDepth - 1e-6` 的镜内像素（reticle）；
+- `tacz_ScopeMaskMode = 2`：丢弃上述镜内像素，只保留镜外（gun/attachment/flash）；
+- 分别克隆 `ENTITY_CUTOUT`、`ENTITY_TRANSLUCENT`、`ENERGY_SWIRL`，除 fragment shader 与
+  两个深度 sampler 外逐状态保留原管线；swirl 的 `OffsetTextureTransform(1,1)`、lightmap、
+  overlay 与 sort-on-upload 也按 26.1.2 官方字节码完整复刻；
+- 只有同一次第一人称枪械提取已经提交 aperture 时才换 RenderType；`prepareMaskDraw` 仍在
+  GPU draw 边界复核深度附件身份/格式/尺寸，失败时 mode=0 原样绘制，禁止使用上一帧掩码；
+- Iris 的 HAND fragment dormant 分支同步支持 mode 2，自定义 cutout 归类为 HAND，
+  两条火光管线归类为 HAND_TRANSLUCENT。
+
+这样枪身、非瞄具配件、火光大面片与 additive swirl 都不会重新覆盖镜内世界画面，
+腰射、第三人称、未形成 aperture 的开镜初段以及深度副本失败路径保持原行为。
+
+### 6.10 `ocular_ring` 不是 aperture：恢复目镜内侧黑边
+
+默认枪包的 14 个中高倍镜都带独立 `ocular_ring` 骨骼。上游 1.21.1 在写入 stencil 之前先用
+`GL_ALWAYS` 单独绘制该骨骼，因此它是物理镜框，绝不参与目镜孔裁剪。26.1.2 迁移曾遗漏这条
+特殊提交，把 `ocular_ring` 留在 body 快照中；order `-3` 的 invisible ocular depth 会在
+order `-2` body draw 时杀掉与孔径重叠的镜框像素，于是所有镜都出现内圈黑边被啃。
+
+修复把 `ocular_ring` 从 aperture-active 的 body 快照中临时移出，按完整父级变换冻结成独立
+snapshot，并在 cleanup 后、reticle 前单独提交。选择 cleanup 后重画而不是照抄上游的“最先画”，
+是因为本方案的 cleanup 会恢复整个 ocular footprint 的世界深度；后画才能同时恢复镜框颜色与
+近处深度，避免后续水、雾和透明粒子覆盖它。未开镜、第三人称以及没有 `ocular_ring` 的模型不变。
+
+### 6.11 Iris 水/粒子/云覆盖低倍镜内部：选择性 depth cleanup
+
+旧 cleanup 在 ocular 几何覆盖的每个像素无条件写回世界深度。scope body 虽然已经把可见内部零件
+画进颜色和近处 hand depth，但 cleanup 随后把这些零件的深度也抹成世界深度；Iris 后续绘制水、
+粒子和云时便会通过深度测试，叠到已经画好的镜体颜色上。关闭光影时后续 pass 较少，因而症状
+通常只在开启光影并面对水面/云层时出现。
+
+修复在 cleanup draw 边界额外复制一份 post-body depth，并逐像素与 aperture depth 比较：
+
+- 两者完全相等：该像素仍只有 invisible ocular，安全恢复为 pre-hand 世界深度；
+- 两者不同：scope body 写入了更近的可见深度，cleanup `discard`，保留 hand depth；
+- post-body copy 或 sampler 不可用：退回 mode 1 的旧式无条件恢复，优先保证水/雾不会被整块孔径挡住。
+
+vanilla cleanup shader 与 Iris HAND dormant branch 使用同一 mode 2 规则；比较的是两张同格式、
+NEAREST 采样的私有 depth copy，因此采用精确相等判断，不用会误吞一个 depth 量化步长的 epsilon。
+
+七条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
 `GlCommandEncoder` mixin 负责 backup/aperture-copy/cleanup/mask 的 sampler 绑定；可选 Iris mixin
 补两条 dormant fragment branch。RenderType 构造器通过 Access Widener 开放，用于同步标记
-BACKUP/APERTURE_COPY/RESTORE/MASK 操作。
+BACKUP/APERTURE_COPY/RESTORE/MASK/MASK_OUTSIDE 操作。
 
 ## 7. 依赖版本审计（2026-07-30）
 

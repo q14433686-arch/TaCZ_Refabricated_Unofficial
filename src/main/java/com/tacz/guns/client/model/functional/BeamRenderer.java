@@ -54,9 +54,10 @@ public class BeamRenderer {
             return;
         }
 
-        // 26.2: MultiBufferSource 已移除，通过 SubmitNodeCollector.submitCustomGeometry 提交自定义几何
+        // The 26.1.2 renderer is collector-only. Every built-in gun and attachment submission
+        // supplies a collector; the nullable legacy overload is retained solely for binary/source
+        // compatibility with old callers and cannot emit delayed geometry by itself.
         if (collector == null) {
-            // TODO 26.2: 调用者尚未提供 SubmitNodeCollector，激光束暂不渲染，待渲染管线全面迁移后恢复
             return;
         }
 
@@ -85,11 +86,11 @@ public class BeamRenderer {
     }
 
     public static boolean renderLaserBeamAccelerated(ItemStack stack, PoseStack poseStack, ItemDisplayContext transformType, @Nonnull List<BedrockPart> path, @Nullable SubmitNodeCollector collector) {
-        // 26.2: ARCompat 加速渲染路径暂时禁用（Accelerated Rendering 无 26.2 构建）
+        // Accelerated Rendering has no 26.1.2 build/API for Feature Rendering. The ordinary
+        // collector path above is complete and remains the authoritative rendering path.
         if (!ARCompat.shouldAccelerate()) {
             return false;
         }
-        // TODO 26.2: 待 Accelerated Rendering 移植后恢复加速路径
         return false;
     }
 

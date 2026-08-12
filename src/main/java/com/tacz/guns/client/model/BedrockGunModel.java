@@ -13,6 +13,7 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.*;
 import com.tacz.guns.client.model.listener.model.ModelAdditionalMagazineListener;
+import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
@@ -292,6 +293,21 @@ public class BedrockGunModel extends BedrockAnimatedModel {
                        RenderType renderType,
                        int light,
                        int overlay) {
+        submit(poseStack, gunItem, transformType, collector, renderType, null, light, overlay);
+    }
+
+    /**
+     * First-person overload carrying the gun texture so the body can switch to an aperture-clipped
+     * clone after (and only after) the scope attachment has queued this frame's depth mask.
+     */
+    public void submit(PoseStack poseStack,
+                       ItemStack gunItem,
+                       ItemDisplayContext transformType,
+                       SubmitNodeCollector collector,
+                       RenderType renderType,
+                       @Nullable Identifier gunTexture,
+                       int light,
+                       int overlay) {
         if (!prepareRenderState(gunItem)) {
             return;
         }
@@ -299,9 +315,9 @@ public class BedrockGunModel extends BedrockAnimatedModel {
             BeamRenderer.renderLaserBeam(gunItem, poseStack, transformType, laserBeamPaths, collector);
         }
 
-        // A6 baseline: submit the scope as normal geometry without raw-GL stencil clipping. This
-        // keeps the scope body/ring/reticle visible on both backends; a PIP implementation can
-        // replace this ordered fallback later without blocking the core gun model.
+        // The scope must submit first: depthAperture() marks whether this exact viewmodel has an
+        // active ocular. Gun body and later functional attachments can then select the outside-mask
+        // pipeline without importing the unrelated 26.2 off-screen-mask architecture.
         ItemStack scope = currentAttachmentItem.get(AttachmentType.SCOPE);
         if (scopePosPath != null && scope != null && !scope.isEmpty()) {
             PoseStack scopePose = new PoseStack();
@@ -314,7 +330,11 @@ public class BedrockGunModel extends BedrockAnimatedModel {
                     transformType, collector, light, overlay);
         }
 
-        super.submit(poseStack, transformType, collector, renderType, light, overlay);
+        RenderType bodyType = gunTexture == null
+                ? renderType
+                : ScopeRenderTypes.clipForViewmodel(renderType, gunTexture,
+                        transformType != null && transformType.firstPerson());
+        super.submit(poseStack, transformType, collector, bodyType, light, overlay);
     }
 
 

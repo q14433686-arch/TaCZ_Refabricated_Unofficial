@@ -32,16 +32,13 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * Compile-level prototype for the 26.2 item model bridge.
+ * Production 26.1.2 item-model bridge for TACZ's dynamic renderers.
  *
- * <p>This replaces the removed BuiltinItemRendererRegistry integration with a
- * custom ItemModel type. ItemModel.update still has the ItemDisplayContext, so
- * it can freeze both the stack and context into an immutable argument before
- * the delayed SpecialModelRenderer submit phase.</p>
- *
- * <p>Do not treat this class as a complete rendering migration. The existing
- * renderers still need to stop calling the deprecated no-op BedrockModel.render
- * path and must snapshot mutable Bedrock model state before deferred submission.</p>
+ * <p>This replaces the removed BuiltinItemRendererRegistry integration with a custom
+ * {@link ItemModel} type. {@link #update} freezes both the stack and display context into an
+ * immutable argument; the special renderer then routes gun, attachment, ammo and workbench models
+ * through their collector-aware submission methods. Bedrock geometry and functional nodes are
+ * captured as immutable snapshots before delayed drawing.</p>
  */
 public final class TaczDynamicItemModel implements ItemModel {
     public static final Identifier TYPE_ID = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "dynamic_item");

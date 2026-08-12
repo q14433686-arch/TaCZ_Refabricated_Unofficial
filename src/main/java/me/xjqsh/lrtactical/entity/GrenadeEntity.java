@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p><b>由此丢失的能力</b>（如实记录，不假装等价）：
  * 上游的 {@code screenShakeTime} / {@code screenShakeAmplitude}（爆炸屏幕震动）
- * 依赖自定义网络包 {@code SShakeScreenMessage}，网络层尚未移植，
+ * 依赖尚未实现的专用 {@code SShakeScreenMessage}（索引与近战网络层已经完成），
  * 故这两个字段<b>保留但暂不生效</b>；{@code destroyMultiplier}（破坏力倍率）
  * 同理，原版 {@code explode} 不支持该参数。
  *

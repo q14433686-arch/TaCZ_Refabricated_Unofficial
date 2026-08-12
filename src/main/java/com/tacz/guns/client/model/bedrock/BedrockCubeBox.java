@@ -107,16 +107,22 @@ public class BedrockCubeBox implements BedrockCube {
                 float z = vertex.pos.z() / 16.0F;
                 // 26.2 迁移: 旧 API consumer.vertex(x,y,z,r,g,b,a,u,v,overlay,light,nx,ny,nz) 已移除
                 // 新 API 使用链式 addVertex + setColor + setUv + setOverlay + setLight + setNormal
-                // 保留矩阵变换以兼容旧逻辑，或直接使用 pose 传递
                 Vector4f vector4f = new Vector4f(x, y, z, 1.0F);
                 vector4f.mul(matrix4f);
-                // 新 API 示例 (需根据 26.2 实际 VertexConsumer 确认):
+                // 【法线修复：枪械阴影方向错误 / 视平线高度看枪过暗】
+                // 上面的 mul(matrix3f) 已经把法线变换了一次；
+                // 26.2 的 setNormal(Pose,FFF) 内部还会再做一次 pose.transformNormal
+                // （字节码确认：VertexConsumer#setNormal(Pose,FFF) → pose.transformNormal(x,y,z)）。
+                // 两次应用法线矩阵的效果：ZP(180) 翻转被抵消（R·R=I）、动画骨骼旋转被二倍化，
+                // 枪的"上表面"在光照计算里实际朝下 —— 水平视角下两个平行光(Light0/1，+y 分量)
+                // 都照不到 → 枪身过暗，且阴影朝向随视角漂移。vanilla 26.2
+                // ModelPart$Cube#compile 只做一次 transformNormal 后直接写裸值，对齐之。
                 consumer.addVertex(vector4f.x(), vector4f.y(), vector4f.z())
                         .setColor(red, green, blue, alpha)
                         .setUv(vertex.u, vertex.v)
                         .setOverlay(overlay)
                         .setLight(light)
-                        .setNormal(pose, nx, ny, nz);
+                        .setNormal(nx, ny, nz);
             }
         }
     }

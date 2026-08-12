@@ -33,6 +33,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -379,11 +380,41 @@ public class FirstPersonRenderGunEvent {
         Vector3f translationICA = gunModel.getConstraintObject().translationConstraint;
         Vector3f rotationICA = gunModel.getConstraintObject().rotationConstraint;
         getAnimationConstraintTransform(nodePath, originTranslation, animatedTranslation, rotation);
-        // 配合约束系数，计算约束位移需要的反向位移
-        Vector3f inverseTranslation = new Vector3f(originTranslation);
-        inverseTranslation.sub(animatedTranslation);
-        inverseTranslation.mulDirection(poseStack.last().pose());
-        inverseTranslation.mul(translationICA.x() - 1, translationICA.y() - 1, 1 - translationICA.z()); // 基岩版模型的旋转导致 xy 轴要反过来
+        // 配合约束系数，计算最终要加到 pose 平移槽的世界帧位移。
+        Vector3f constraintTranslation = new Vector3f(originTranslation);
+        constraintTranslation.sub(animatedTranslation);
+        constraintTranslation.mulDirection(poseStack.last().pose());
+        // 【通用终案：显式恢复 1.21.1 的净位移，不再让轴符号参与基座共轭】
+        //
+        // 设 B 为 vanilla GameRenderer 预乘的纯相机 view-to-world 旋转（Iris hand pass
+        // 不预乘，故 B=I），H·F 为 hurt/view bob、定位与骨骼链。上行得到：
+        //
+        //   rawWorld = B · H · F · Δ
+        //
+        // 旧实现先乘 (ICAx-1, ICAy-1, 1-ICAz)，写 m30/m31 时再取负、m32 取正；
+        // 两步合起来的真实 authored 系数其实统一是：
+        //
+        //   C = diag(1-ICAx, 1-ICAy, 1-ICAz)
+        //
+        // 若把旧的“x/y 写回取负”留在 B 的两侧，无论第二次用 B 还是 Bᵀ，都会把
+        // 隐含的 Q=diag(-1,-1,+1) 参与共轭：纯 yaw 时出现二倍角，yaw+pitch 时还因
+        // 旋转不交换而把整枪送到左上/后方。这正好解释「北向近似正常、东西左右反偏、
+        // 南向过度下压、抬头/低头整枪后移」，以及 Iris(B=I) 完全不复现。
+        //
+        // 正确做法是先用纯相机 Bᵀ 回到旧版 authored 视图帧，显式应用 C，再用 B
+        // 旋回 pose 的世界写入帧，最后三轴统一做加法：
+        //
+        //   authored = Bᵀ · rawWorld = H · F · Δ
+        //   world    = B · C · authored
+        //   screen   = Bᵀ · world    = C · H · F · Δ    （与 1.21.1 完全一致）
+        //
+        // 注意这里故意不用完整 handBasePose：它还含 H 的一部分，把 H 也逆掉会在
+        // 偏航与俯仰组合时制造新的帧混用。wrapper 单独提供本 pass 的纯 B。
+        Matrix3f cameraR = new Matrix3f();
+        GunItemRendererWrapper.copyHandCameraRotation(cameraR);
+        constraintTranslation.mulTranspose(cameraR);
+        constraintTranslation.mul(1 - translationICA.x(), 1 - translationICA.y(), 1 - translationICA.z());
+        constraintTranslation.mul(cameraR);
         // 计算约束旋转需要的反向旋转。因需要插值，获取的是欧拉角
         Vector3f inverseRotation = new Vector3f(rotation);
         inverseRotation.mul(rotationICA.x() - 1, rotationICA.y() - 1, rotationICA.z() - 1);
@@ -393,10 +424,10 @@ public class FirstPersonRenderGunEvent {
         poseStack.mulPose(Axis.YP.rotation(inverseRotation.y() * weight));
         poseStack.mulPose(Axis.ZP.rotation(inverseRotation.z() * weight));
         poseStack.translate(-animatedTranslation.x(), -animatedTranslation.y() - 1.5f, -animatedTranslation.z());
-        // 约束位移
+        // 约束位移已经是 world 写入帧，三轴统一相加；旧版 x/y 的额外负号已吸收到 C。
         Matrix4f poseMatrix = poseStack.last().pose();
-        poseMatrix.m30(poseMatrix.m30() - inverseTranslation.x() * weight);
-        poseMatrix.m31(poseMatrix.m31() - inverseTranslation.y() * weight);
-        poseMatrix.m32(poseMatrix.m32() + inverseTranslation.z() * weight);
+        poseMatrix.m30(poseMatrix.m30() + constraintTranslation.x() * weight);
+        poseMatrix.m31(poseMatrix.m31() + constraintTranslation.y() * weight);
+        poseMatrix.m32(poseMatrix.m32() + constraintTranslation.z() * weight);
     }
 }

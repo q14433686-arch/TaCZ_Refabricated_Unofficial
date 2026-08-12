@@ -4,13 +4,11 @@ import com.tacz.guns.GunMod;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 public class ServerMessageLevelUp implements CustomPacketPayload {
@@ -30,7 +28,7 @@ public class ServerMessageLevelUp implements CustomPacketPayload {
         this.level = level;
     }
 
-        public void write(RegistryFriendlyByteBuf buf) {
+    public void write(RegistryFriendlyByteBuf buf) {
         ItemStack.STREAM_CODEC.encode(buf, gun);
         buf.writeInt(level);
     }
@@ -47,27 +45,12 @@ public class ServerMessageLevelUp implements CustomPacketPayload {
 
     @Environment(EnvType.CLIENT)
     private static void onLevelUp(ServerMessageLevelUp message) {
-        int level = message.getLevel();
-        ItemStack gun = message.getGun();
-        Player player = Minecraft.getInstance().player;
-        if (player == null) {
-            return;
-        }
-        // TODO 在完成了枪械升级逻辑后，解封下面的代码
-                /*
-                if (GunLevelManager.DAMAGE_UP_LEVELS.contains(level)) {
-                    Minecraft.getInstance().getToasts().addToast(new GunLevelUpToast(gun,
-                            Component.translatable("toast.tacz.level_up"),
-                            Component.translatable("toast.tacz.sub.damage_up")));
-                } else if (level >= GunLevelManager.MAX_LEVEL) {
-                    Minecraft.getInstance().getToasts().addToast(new GunLevelUpToast(gun,
-                            Component.translatable("toast.tacz.level_up"),
-                            Component.translatable("toast.tacz.sub.final_level")));
-                } else {
-                    Minecraft.getInstance().getToasts().addToast(new GunLevelUpToast(gun,
-                            Component.translatable("toast.tacz.level_up"),
-                            Component.translatable("toast.tacz.sub.level_up")));
-                }*/
+        /*
+         * Reserved protocol from upstream TACZ 1.1.8. There is no GunLevelManager, no experience
+         * writer and no server-side sender in either the official 1.20.1 tree or Refabricated
+         * 1.21.1, so inventing a toast here would falsely imply that progression exists. Keep the
+         * payload decoder for binary/API compatibility, but deliberately perform no client action.
+         */
     }
 
     public ItemStack getGun() {

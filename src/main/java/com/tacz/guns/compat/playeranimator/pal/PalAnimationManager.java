@@ -75,12 +75,14 @@ public final class PalAnimationManager {
     }
 
     public static void play(AbstractClientPlayer player, GunDisplayInstance display, float limbSwingAmount) {
+        discardProneTransitionOnStand(player);
         playLower(player, display, limbSwingAmount);
         playUpper(player, display, limbSwingAmount);
         playNamed(player, display, PlayerAnimatorCompat.ROTATION_ANIMATION, AnimationName.EMPTY, true);
     }
 
     public static void stopAll(AbstractClientPlayer player, int fadeTicks) {
+        discardProneTransitionOnStand(player);
         stop(player, PlayerAnimatorCompat.LOWER_ANIMATION, fadeTicks);
         stop(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION, fadeTicks);
         stop(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION, fadeTicks);
@@ -144,7 +146,13 @@ public final class PalAnimationManager {
         }
         Animation animation = PalAssetManager.INSTANCE.get(fileId, animationName).orElse(null);
         PlayerAnimationController controller = controller(player, controllerId);
-        if (animation == null || controller == null || controller.getCurrentAnimationInstance() == animation) {
+        if (animation == null || controller == null) {
+            return;
+        }
+        // getCurrentAnimationInstance() reports the last loaded clip even after the controller has
+        // stopped. Only suppress an identical request while that clip is actually active; otherwise
+        // a controller reset (and a finished one-shot such as fire/reload) could never restart it.
+        if (controller.isActive() && controller.getCurrentAnimationInstance() == animation) {
             return;
         }
         // 重新开始播放 -> 允许下一次收枪再触发一次淡出。
@@ -166,6 +174,50 @@ public final class PalAnimationManager {
     private static final Map<AbstractClientPlayer, Set<Identifier>> FADING_OUT =
             Collections.synchronizedMap(new WeakHashMap<>());
 
+    /** Last TACZ prone state observed while driving or stopping PAL for each player. */
+    private static final Map<AbstractClientPlayer, Boolean> LAST_PRONE_STATE =
+            Collections.synchronizedMap(new WeakHashMap<>());
+
+    /**
+     * PAL 1.2.5 represents each fade as a modifier containing a snapshot of the outgoing bone
+     * transforms. That is normally useful, but a TACZ prone clip and a standing clip use different
+     * body axes and substantially different arm offsets. Keeping the prone snapshot across the
+     * {@code Pose.SWIMMING -> standing} boundary lets a later draw/fade use that snapshot as its
+     * starting pose again. Repeating the cycle can therefore retain and compound the old Euler
+     * rotations until an unrelated first-person render resets the model.
+     *
+     * <p>The boundary is also observed from {@link #stopAll}: switching to a non-gun clears TACZ's
+     * forced swimming pose before there is another call to {@link #play}, so checking only the play
+     * path would miss that exit. At the exact prone-to-standing edge we discard only fade modifiers
+     * and controller playback state. The permanent rotation adjustment modifier is deliberately
+     * retained, as are ordinary fade transitions that do not cross this incompatible pose edge.</p>
+     */
+    private static void discardProneTransitionOnStand(AbstractClientPlayer player) {
+        boolean prone = isPlayerLie(player);
+        Boolean wasProne = LAST_PRONE_STATE.put(player, prone);
+        if (!Boolean.TRUE.equals(wasProne) || prone) {
+            return;
+        }
+
+        resetAtProneExit(player, PlayerAnimatorCompat.LOWER_ANIMATION);
+        resetAtProneExit(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION);
+        resetAtProneExit(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION);
+        resetAtProneExit(player, PlayerAnimatorCompat.ROTATION_ANIMATION);
+        FADING_OUT.remove(player);
+    }
+
+    private static void resetAtProneExit(AbstractClientPlayer player, Identifier controllerId) {
+        PlayerAnimationController controller = controller(player, controllerId);
+        if (controller == null) {
+            return;
+        }
+        // Do not use removeAllModifiers(): ROTATION owns SafeAdjustmentModifier for its lifetime.
+        controller.removeModifierIf(AbstractFadeModifier.class::isInstance);
+        controller.stopTriggeredAnimation();
+        controller.stop();
+        controller.forceAnimationReset();
+    }
+
     private static void stop(AbstractClientPlayer player, Identifier controllerId, int fadeTicks) {
         PlayerAnimationController controller = controller(player, controllerId);
         if (controller == null || !controller.isActive()) {
@@ -176,30 +228,36 @@ public final class PalAnimationManager {
             }
             return;
         }
-        // 【第 37 轮】去重：本 controller 的淡出只请求一次。
+        // 【第 38 轮】STOP 永远不要用 FADE_OUT —— PAL 1.2.5 的 fadeOut 会【永久哑掉】
+        // 该 controller，这正是「装 PAL 后切枪一次、第三人称动画整局消失、小退/大退才恢复」
+        // 的根因。源码级证据链（zigythebird/PlayerAnimationLibrary@main）：
         //
-        // 为什么必须去重（PAL 源码 AnimationController#replaceAnimationWithFade L434-446）：
-        //     if (fadeFromNothing || this.isActive()) {
-        //         ...
-        //         addModifierLast(fadeModifier);      // ← 无条件【追加】，不是替换
-        //     }
-        //     this.triggerAnimation(newAnimation);
-        // 它每调用一次就往 modifier 链上<b>挂一个新的</b> fade modifier，从不移除旧的。
+        //   1. AbstractFadeModifier#canRemove()：只有 FADE_IN 完成（progress>=1）才返回
+        //      true；FADE_OUT 恒 false —— fadeOut 走完也【永远留在 modifier 链上】；
+        //   2. AnimationController#tick() 逐帧只按 canRemove() 摘除 modifier —— 摘不掉它；
+        //   3. AnimationController#get3DTransform(bone)：链非空即全权交给链首，靠
+        //      super.get3DTransform 逐级内传。fadeOut 完成态 progress=0 → alpha=0 →
+        //      输出 = bone（上游输入，链首即空 identity）＋ 下游动画 × 0
+        //      —— 此后无论再 trigger/fadeIn 什么，骨骼输出恒为 identity；
+        //   4. controller 只在 avatar 重建时重新生成 —— 所以大退/小退「治好」。
         //
-        // 而 stopAllAnimation 是从 InnerThirdPersonManager 里每帧调的
-        // （手里不是枪 -> 每一帧都走 stopAllAnimation）。原来只有 isActive() 这一道门禁，
-        // 但淡出期间 isActive() 仍为 true，于是每帧都会再挂一个 fade ——
-        // 几十帧后 modifier 链上堆满淡出层，链首那个 modifier 把后续动画的输出层层削掉。
-        // 表现就是用户报告的：收枪后走/跑/游泳<b>没有对应动作</b>，
-        // 而开枪/换弹走 ONCE_UPPER 的 triggerAnimation（会重置 modifier 链）能短暂恢复，
-        // 随后又被新一轮堆积压回去。
+        // 规避（零侵入 PAL）：改用 <b>FADE_IN-to-null</b>——
+        // standardFadeIn(ticks) + triggerAnimation(null)。replaceAnimationWithFade 会
+        // 把当前骨骼快照塞进 transitionAnimation，8 tick 内从旧姿势平滑滑入 identity
+        // （=视觉上的淡出），其 progress>=1 后 canRemove()=true → PAL 下一 tick 自动
+        // 摘除，链路恢复干净，后续播放/fade 一切如常。
+        // 切枪时若新枪动画同帧 fadeIn 进来，两条 FADE_IN 链上短暂共存也是平滑叠加，
+        // 互不压制（FADE_IN 从不把下游乘 0）。
+        //
+        // 注：then(null) 的路径经现网行为证实宽容（旧 fadeOut(null) 调用只哑不崩），
+        // 本调用走同一 RawAnimation 路径，无新增风险。
         Set<Identifier> marks = FADING_OUT.computeIfAbsent(
                 player, p -> Collections.synchronizedSet(new HashSet<>()));
         if (!marks.add(controllerId)) {
             return;
         }
         controller.replaceAnimationWithFade(
-                AbstractFadeModifier.standardFadeOut(fadeTicks, EasingType.EASE_IN_OUT_SINE),
+                AbstractFadeModifier.standardFadeIn(fadeTicks, EasingType.EASE_IN_OUT_SINE),
                 (Animation) null
         );
     }
@@ -279,7 +337,13 @@ public final class PalAnimationManager {
         }
         if (event.getCurrentGunItem().getItem() instanceof IGun
                 && event.getPreviousGunItem().getItem() instanceof IGun) {
-            stopAll(player, 8);
+            discardProneTransitionOnStand(player);
+            // Match the legacy PlayerAnimator contract: gun draws restart the authored animation
+            // layers, not ROTATION. ROTATION is an always-current view adjustment and fading it on
+            // every draw creates needless snapshots of the prone/standing axis change.
+            stop(player, PlayerAnimatorCompat.LOWER_ANIMATION, 8);
+            stop(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION, 8);
+            stop(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION, 8);
         }
     }
 }

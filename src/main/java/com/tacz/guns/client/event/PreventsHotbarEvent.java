@@ -12,7 +12,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Environment(EnvType.CLIENT)
 public class PreventsHotbarEvent {
     public static void onRenderHotbarEvent(AtomicBoolean cancelled) {
-        // todo 需要测试行为
+        // GuiMixin forwards this decision from Gui#extractRenderState; cancelling there matches
+        // upstream's renderHotbarAndDecorations cancellation while either full-screen TACZ UI is open.
         Screen screen = Minecraft.getInstance().screen;
         // 枪械合成台界面关闭背景
         if (screen instanceof GunSmithTableScreen) {

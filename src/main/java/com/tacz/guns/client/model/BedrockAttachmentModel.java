@@ -9,6 +9,7 @@ import com.tacz.guns.client.render.scope.IReticleRenderer;
 import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
 import com.tacz.guns.client.render.scope.ScopeNodeSet;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
+import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
 import com.tacz.guns.client.model.functional.TextShowRender;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
@@ -32,6 +33,7 @@ import java.util.regex.Pattern;
 public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private static final String SCOPE_VIEW_NODE = "scope_view";
     private static final String DIVISION_NODE = "division";
+    private static final String OCULAR_RING_NODE = "ocular_ring";
     private static final String OCULAR_NODE = "ocular";
     private static final String OCULAR_SIGHT_NODE = "ocular_sight";
     private static final String OCULAR_SCOPE_NODE = "ocular_scope";
@@ -58,7 +60,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private static final int SCOPE_APERTURE_ORDER = -3;
     private static final int SCOPE_BODY_ORDER = -2;
     private static final int SCOPE_DEPTH_CLEANUP_ORDER = -1;
-    private static final int SCOPE_RETICLE_ORDER = 1;
+    /** Physical ocular rim: draw after depth cleanup so the aperture cannot punch holes in it. */
+    private static final int SCOPE_OCULAR_RING_ORDER = 1;
+    private static final int SCOPE_RETICLE_ORDER = 2;
 
     /**
      * 发光准星节点。凡是名字以 {@code _illuminated} 结尾的，
@@ -126,6 +130,11 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * 单独作为 invisible depth-aperture 几何。它的屏幕投影决定镜身被深度挡掉的区域。
      */
     protected final List<BedrockPart> ocularParts = new ArrayList<>();
+    /**
+     * Physical inner rim around the lens. Upstream 1.21.1 renders this before any stencil clipping;
+     * it is not aperture/blackout geometry and must never be removed by the ocular mask.
+     */
+    protected final @Nullable BedrockPart ocularRingPart;
     protected @Nullable List<List<BedrockPart>> laserBeamPaths;
 
     private @Nullable ItemStack currentGunItem;
@@ -138,6 +147,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         super(pojo, version);
         scopeViewPaths = new ArrayList<>();
         laserBeamPaths = new ArrayList<>();
+        ModelRendererWrapper ocularRingWrapper = modelMap.get(OCULAR_RING_NODE);
+        ocularRingPart = ocularRingWrapper == null ? null : ocularRingWrapper.getModelRenderer();
         // 初始化 view 的 node path
         List<BedrockPart> path = getPath(modelMap.get(SCOPE_VIEW_NODE));
         int i = 2;
@@ -447,6 +458,38 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 }));
     }
 
+    /**
+     * Captures one named part with its complete parent transform while preserving its shared
+     * visibility flag. This mirrors upstream renderTempPart(), but produces immutable geometry for
+     * the 26.1.2 delayed collector instead of drawing immediately.
+     */
+    private static BedrockRenderSnapshot captureStandalonePart(BedrockPart part,
+                                                                PoseStack rootPose,
+                                                                ItemDisplayContext transformType,
+                                                                int light,
+                                                                int overlay) {
+        PoseStack partPose = new PoseStack();
+        partPose.last().pose().set(rootPose.last().pose());
+        partPose.last().normal().set(rootPose.last().normal());
+        List<BedrockPart> parents = new ArrayList<>();
+        for (BedrockPart parent = part.getParent(); parent != null; parent = parent.getParent()) {
+            parents.add(0, parent);
+        }
+        for (BedrockPart parent : parents) {
+            parent.translateAndRotateAndScale(partPose);
+        }
+        part.translateAndRotateAndScale(partPose);
+
+        boolean originallyVisible = part.visible;
+        part.visible = true;
+        try {
+            return BedrockRenderSnapshot.captureSubtree(
+                    part, partPose, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
+        } finally {
+            part.visible = originallyVisible;
+        }
+    }
+
 
     /**
      * 兼容重载：不带贴图。此时<b>不做镜内裁剪</b>，行为与 Step 2 之前完全一致。
@@ -490,8 +533,14 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 && !ocularParts.isEmpty()
                 && currentAimingProgress() > AIM_CLIP_START;
 
+        // ocular_ring is the physical black rim, not the aperture. Upstream draws it with stencil
+        // disabled. Freeze it separately so the depth writer cannot clip it out of the body batch.
+        BedrockRenderSnapshot ocularRingSnapshot = apertureActive && texture != null && ocularRingPart != null
+                ? captureStandalonePart(ocularRingPart, poseStack, transformType, light, overlay)
+                : null;
+
         // Capture ocular snapshots for invisible depth writing
-        List<com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot> ocularSnapshots = new ArrayList<>();
+        List<BedrockRenderSnapshot> ocularSnapshots = new ArrayList<>();
         if (apertureActive) {
             for (BedrockPart ocular : ocularParts) {
                 if (ocular.visible && isOcularInActiveGroup(ocular)) {
@@ -511,7 +560,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     // positioned reticle no longer aligns with the lens. This exactly produces a transparent red-dot
                     // window with no dot and a fully black magnified scope.
                     ocular.translateAndRotateAndScale(ocularPose);
-                    ocularSnapshots.add(com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(
+                    ocularSnapshots.add(BedrockRenderSnapshot.captureSubtree(
                             ocular, ocularPose, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F
                     ));
                 }
@@ -520,14 +569,18 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
 
         // The active ocular is depth-aperture geometry, not visible body geometry. Keeping it in bodySnapshot
         // would draw the opaque lens after the invisible writer and cover the opening again.
-        List<BedrockPart> hiddenOculars = new ArrayList<>();
+        List<BedrockPart> hiddenParts = new ArrayList<>();
+        if (ocularRingSnapshot != null && ocularRingPart != null && ocularRingPart.visible) {
+            ocularRingPart.visible = false;
+            hiddenParts.add(ocularRingPart);
+        }
         if (transformType != null && transformType.firstPerson()) {
             for (BedrockPart ocular : ocularParts) {
                 boolean hideForAperture = apertureActive && isOcularInActiveGroup(ocular);
                 boolean hideByNormalVisibilityRule = !shouldDrawOcularBlackout(ocular);
                 if (ocular.visible && (hideForAperture || hideByNormalVisibilityRule)) {
                     ocular.visible = false;
-                    hiddenOculars.add(ocular);
+                    hiddenParts.add(ocular);
                 }
             }
         }
@@ -537,8 +590,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     this, poseStack, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F
             );
         } finally {
-            for (BedrockPart ocular : hiddenOculars) {
-                ocular.visible = true;
+            for (BedrockPart hiddenPart : hiddenParts) {
+                hiddenPart.visible = true;
             }
         }
 
@@ -568,10 +621,18 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             RenderType depthCleanup = ScopeRenderTypes.depthCleanup(texture);
             collector.order(SCOPE_DEPTH_CLEANUP_ORDER).submitCustomGeometry(identity, depthCleanup,
                     (entryPose, consumer) -> {
-                        for (com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
+                        for (BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
                             ocularSnap.write(consumer);
                         }
                     });
+
+            // Upstream 1.21.1 renders ocular_ring with stencil disabled. In the depth fallback it
+            // must be redrawn after cleanup: drawing it in the body batch lets the invisible ocular
+            // kill its inner pixels, while drawing it before cleanup would lose its depth again.
+            if (ocularRingSnapshot != null && !ocularRingSnapshot.isEmpty()) {
+                collector.order(SCOPE_OCULAR_RING_ORDER).submitCustomGeometry(identity, renderType,
+                        (entryPose, consumer) -> ocularRingSnapshot.write(consumer));
+            }
         } else if (!bodySnapshot.isEmpty()) {
             PoseStack identity = new PoseStack();
             collector.submitCustomGeometry(identity, renderType,

@@ -8,9 +8,8 @@ public class CompatRegistry {
     public static final String CARRY_ON_ID = "carryon";
 
     public static void onEnqueue() {
-        // 26.2: Iris/CarryOn compat temporarily disabled (dependencies not yet available)
-        // checkModLoad(IRIS, IrisCompat::initCompat);
-        // checkModLoad(CARRY_ON_ID, BlackList::addBlackList);
+        // No imperative setup is required here: IrisCompat guards its public API calls and mixins
+        // by mod presence, while Carry On 2.10 consumes data/carryon/tags/blocks/block_blacklist.json.
     }
 
     public static void checkModLoad(String modId, Runnable runnable) {

@@ -2,85 +2,62 @@ package com.tacz.guns.compat.ar;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.fabricmc.loader.api.FabricLoader;
 
+/**
+ * Compatibility facade retained for callers shared with upstream.
+ *
+ * <p>Accelerated Rendering only publishes through Minecraft 1.21.1 and its API targets the old
+ * immediate entity renderer. It has no 26.1.2 Feature Rendering build, so all acceleration hooks
+ * intentionally report disabled while TACZ uses its complete {@code SubmitNodeCollector} path.</p>
+ */
 public class ARCompat {
+    public static final String MOD_ID = "acceleratedrendering";
+    public static boolean LOADED;
 
-	public static final String MOD_ID = "acceleratedrendering";
+    public static void init() {
+        LOADED = false;
+    }
 
-	public static boolean LOADED;
+    public static boolean shouldAccelerate() {
+        return false;
+    }
 
-	public static void init() {
-		LOADED = FabricLoader.getInstance().isModLoaded(MOD_ID);
-		// 26.2 迁移: 加速渲染 Mod 可能不兼容 26.2 Feature Rendering，暂时禁用
-		// 若检测到 26.2 且 Mod 版本不支持，强制禁用
-		// TODO: 等待 acceleratedrendering 的 26.2 版本发布后重新启用
-		if (LOADED) {
-			// 简单检查: 若当前是 26.2，默认禁用
-			LOADED = false;
-		}
-	}
+    public static boolean isAccelerated(VertexConsumer vertexConsumer) {
+        return false;
+    }
 
-	public static boolean shouldAccelerate() {
-		// 26.2 暂时禁用
-		return false;
-		// return LOADED && ARCompatImpl.shouldAccelerate();
-	}
+    public static void setRenderingLevel() {
+    }
 
-	public static boolean isAccelerated(VertexConsumer vertexConsumer) {
-		// 26.2: ARCompatImpl not available, acceleration disabled
-		return false;
-	}
+    public static void resetRenderingLevel() {
+    }
 
-	public static void setRenderingLevel() {
-		// 26.2: no-op
-	}
+    public static void setRenderLayer(int layer) {
+    }
 
-	public static void resetRenderingLevel() {
-		// 26.2: no-op
-	}
+    public static void setRenderBeforeFunction(Runnable runnable) {
+    }
 
-	public static void setRenderLayer(int layer) {
-		// 26.2: no-op
-	}
+    public static void setRenderAfterFunction(Runnable runnable) {
+    }
 
-	public static void setRenderBeforeFunction(Runnable runnable) {
-		// 26.2: no-op
-	}
+    public static void resetRenderLayer() {
+    }
 
-	public static void setRenderAfterFunction(Runnable runnable) {
-		// 26.2: no-op
-	}
+    public static void resetRenderBeforeFunction() {
+    }
 
-	public static void resetRenderLayer() {
-		// 26.2: no-op
-	}
+    public static void resetRenderAfterFunction() {
+    }
 
-	public static void resetRenderBeforeFunction() {
-		// 26.2: no-op
-	}
+    public static void disableAcceleration() {
+    }
 
-	public static void resetRenderAfterFunction() {
-		// 26.2: no-op
-	}
+    public static void resetAcceleration() {
+    }
 
-	public static void disableAcceleration() {
-		// 26.2: no-op
-	}
-
-	public static void resetAcceleration() {
-		// 26.2: no-op
-	}
-
-	// 防止类意外加载 (直接在BeamRenderer类使用AcceleratedBeamRenderer.INSTANCE在会触发类加载)
-	public static void renderLaser(
-			VertexConsumer extension,
-			float z,
-			float width,
-			boolean fadeOut,
-			PoseStack poseStack,
-			int color
-	) {
-		// 26.2: no-op, accelerated rendering disabled
-	}
+    /** Prevents accidental linkage to the absent AcceleratedBeamRenderer implementation. */
+    public static void renderLaser(VertexConsumer extension, float z, float width, boolean fadeOut,
+                                   PoseStack poseStack, int color) {
+    }
 }

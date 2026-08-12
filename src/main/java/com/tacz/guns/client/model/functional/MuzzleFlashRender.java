@@ -1,7 +1,6 @@
 package com.tacz.guns.client.model.functional;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAttachment;
@@ -9,7 +8,7 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.model.SlotModel;
-import com.tacz.guns.client.model.bedrock.BedrockModel;
+import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.display.gun.MuzzleFlash;
 import com.tacz.guns.compat.iris.IrisCompat;
@@ -17,11 +16,7 @@ import com.tacz.guns.resource.modifier.custom.SilenceModifier;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 public class MuzzleFlashRender implements IFunctionalSubmitter {
     private static final SlotModel MUZZLE_FLASH_MODEL = new SlotModel(true);
@@ -33,8 +28,6 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
     private static long shootTimeStamp = -1;
     private static boolean muzzleFlashStartMark = false;
     private static float muzzleFlashRandomRotate = 0;
-    private static Matrix3f muzzleFlashNormal = new Matrix3f();
-    private static Matrix4f muzzleFlashPose = new Matrix4f();
 
     private final BedrockGunModel bedrockGunModel;
 
@@ -49,31 +42,6 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         muzzleFlashStartMark = true;
         // 随机给予枪口火焰的旋转
         muzzleFlashRandomRotate = (float) (Math.random() * 360);
-    }
-
-    private static void renderMuzzleFlash(GunDisplayInstance display, PoseStack poseStack, BedrockModel bedrockModel, long time) {
-        MuzzleFlash muzzleFlash = display.getMuzzleFlash();
-        if (muzzleFlash == null) {
-            return;
-        }
-        if (muzzleFlashStartMark) {
-            muzzleFlashNormal = new Matrix3f(poseStack.last().normal());
-            muzzleFlashPose = new Matrix4f(poseStack.last().pose());
-        }
-        bedrockModel.delegateRender((poseStack1, vertexConsumer1, transformType1, light, overlay) -> doRender(light, overlay, muzzleFlash, time));
-    }
-
-    private static void doRender(int light, int overlay, MuzzleFlash muzzleFlash, long time) {
-        if (muzzleFlashNormal != null && muzzleFlashPose != null) {
-            float scale = 0.5f * muzzleFlash.getScale();
-            float scaleTime = TIME_RANGE / 2.0f;
-            scale = time < scaleTime ? (scale * (time / scaleTime)) : scale;
-            muzzleFlashStartMark = false;
-            // 26.2: MultiBufferSource/renderBuffers() removed.
-            // Muzzle flash requires separate render type buffers which are not available
-            // in the new SubmitNodeCollector pipeline without a collector reference.
-            // TODO: Reimplement muzzle flash rendering when a proper approach is available.
-        }
     }
 
     @Override
@@ -120,6 +88,20 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         int overlay = context.overlay();
         muzzleFlashStartMark = false;
 
+        // The depth aperture is restored before ordinary translucent FX, so both muzzle-flash
+        // layers would otherwise reappear inside the scope. Select an aperture-aware type only
+        // when this same first-person gun submission actually queued an ocular sequence. At draw
+        // time ScopeDepthCopyState validates both depth copies and fails open to normal rendering.
+        boolean clipToScopeExterior = context.displayContext() != null
+                && context.displayContext().firstPerson()
+                && ScopeRenderTypes.hasScheduledViewmodelAperture();
+        RenderType backgroundType = clipToScopeExterior
+                ? ScopeRenderTypes.flashTranslucentClipped(muzzleFlash.getTexture())
+                : RenderTypes.entityTranslucent(muzzleFlash.getTexture());
+        RenderType glowType = clipToScopeExterior
+                ? ScopeRenderTypes.flashSwirlClipped(muzzleFlash.getTexture())
+                : RenderTypes.energySwirl(muzzleFlash.getTexture(), 1, 1);
+
         context.add(collector -> {
             PoseStack backgroundPose = new PoseStack();
             backgroundPose.last().pose().set(frozenPose.last().pose());
@@ -127,7 +109,7 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
             backgroundPose.scale(frozenScale, frozenScale, frozenScale);
             backgroundPose.mulPose(Axis.ZP.rotationDegrees(frozenRotation));
             backgroundPose.translate(0, -1, 0);
-            collector.submitCustomGeometry(backgroundPose, RenderTypes.entityTranslucent(muzzleFlash.getTexture()),
+            collector.submitCustomGeometry(backgroundPose, backgroundType,
                     (pose, buffer) -> MUZZLE_FLASH_MODEL.renderToBuffer(
                             backgroundPose, buffer, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F));
 
@@ -137,45 +119,10 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
             glowPose.scale(frozenScale / 2, frozenScale / 2, frozenScale / 2);
             glowPose.mulPose(Axis.ZP.rotationDegrees(frozenRotation));
             glowPose.translate(0, -0.9, 0);
-            collector.submitCustomGeometry(glowPose, RenderTypes.energySwirl(muzzleFlash.getTexture(), 1, 1),
+            collector.submitCustomGeometry(glowPose, glowType,
                     (pose, buffer) -> MUZZLE_FLASH_MODEL.renderToBuffer(
                             glowPose, buffer, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F));
         });
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public void render(PoseStack poseStack, VertexConsumer vertexBuffer, ItemDisplayContext transformType, int light, int overlay) {
-        if (IrisCompat.isRenderShadow()) {
-            return;
-        }
-        if (!isSelf) {
-            return;
-        }
-        long time = System.currentTimeMillis() - shootTimeStamp;
-        if (time > TIME_RANGE) {
-            return;
-        }
-        ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();
-
-        TimelessAPI.getGunDisplay(currentGunItem).ifPresent(display -> {
-            ItemStack muzzleAttachment = bedrockGunModel.getCurrentAttachmentItem().get(AttachmentType.MUZZLE);
-            IAttachment iAttachment = IAttachment.getIAttachmentOrNull(muzzleAttachment);
-            if (iAttachment != null) {
-                Identifier attachmentId = iAttachment.getAttachmentId(muzzleAttachment);
-                TimelessAPI.getCommonAttachmentIndex(attachmentId).ifPresent(index -> {
-                    var modifier = index.getData().getModifier();
-                    if (modifier.containsKey(SilenceModifier.ID) && modifier.get(SilenceModifier.ID).getValue() instanceof Pair<?, ?> pair) {
-                        // 如果安装了消音器，则不渲染枪口火光
-                        if (((Pair<Integer, Boolean>) pair).right()) {
-                            return;
-                        }
-                    }
-                    renderMuzzleFlash(display, poseStack, bedrockGunModel, time);
-                });
-            } else {
-                renderMuzzleFlash(display, poseStack, bedrockGunModel, time);
-            }
-        });
-    }
 }
