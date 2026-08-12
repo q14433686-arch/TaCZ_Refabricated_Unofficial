@@ -527,3 +527,15 @@ RenderType，开镜时内环被（hull 略偏大的）掩码啃掉——这正�
 > （纯筒镜恒裁、纯红点恒不裁），组合镜再看 `views[zoom]` 当前通道、通道映射
 > 缺失时回退「裁」。8x（views=[1,1]）、lpvo（[2,2]）、mk5hd（[2,2,1]）都是
 > 「flag 与节点命名不同构」的实锤样本——你们适配时直接抄 flag 版。
+
+---
+
+## 附录 D —— PAL 趴姿修复回流确认（2026-08-12）：1:1 直贴完成
+
+- `e43a3a9d`（reset prone transition state on stand）已逐字直贴进 26.2——
+  PR 基线与 26.2 的 `PalAnimationManager.java` **逐字节相同**，`git apply` 零冲突、
+  零语义适配。PAL 版本两侧同为 1.2.5（我们 `player_animation_lib=1.2.5`），
+  controller API 面一致。待用户按你们的协议复测两条路径（各 5–10 次）。
+- `6c0d004`（preserve visible depth during cleanup）为深度孔径架构专属
+  （ScopeDepthCopyState/ScopeRenderTypes/scope_depth_cleanup.fsh），26.2 无对应物，
+  **不移植**，仅此记录。

@@ -75,12 +75,14 @@ public final class PalAnimationManager {
     }
 
     public static void play(AbstractClientPlayer player, GunDisplayInstance display, float limbSwingAmount) {
+        discardProneTransitionOnStand(player);
         playLower(player, display, limbSwingAmount);
         playUpper(player, display, limbSwingAmount);
         playNamed(player, display, PlayerAnimatorCompat.ROTATION_ANIMATION, AnimationName.EMPTY, true);
     }
 
     public static void stopAll(AbstractClientPlayer player, int fadeTicks) {
+        discardProneTransitionOnStand(player);
         stop(player, PlayerAnimatorCompat.LOWER_ANIMATION, fadeTicks);
         stop(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION, fadeTicks);
         stop(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION, fadeTicks);
@@ -144,7 +146,13 @@ public final class PalAnimationManager {
         }
         Animation animation = PalAssetManager.INSTANCE.get(fileId, animationName).orElse(null);
         PlayerAnimationController controller = controller(player, controllerId);
-        if (animation == null || controller == null || controller.getCurrentAnimationInstance() == animation) {
+        if (animation == null || controller == null) {
+            return;
+        }
+        // getCurrentAnimationInstance() reports the last loaded clip even after the controller has
+        // stopped. Only suppress an identical request while that clip is actually active; otherwise
+        // a controller reset (and a finished one-shot such as fire/reload) could never restart it.
+        if (controller.isActive() && controller.getCurrentAnimationInstance() == animation) {
             return;
         }
         // 重新开始播放 -> 允许下一次收枪再触发一次淡出。
@@ -165,6 +173,50 @@ public final class PalAnimationManager {
      */
     private static final Map<AbstractClientPlayer, Set<Identifier>> FADING_OUT =
             Collections.synchronizedMap(new WeakHashMap<>());
+
+    /** Last TACZ prone state observed while driving or stopping PAL for each player. */
+    private static final Map<AbstractClientPlayer, Boolean> LAST_PRONE_STATE =
+            Collections.synchronizedMap(new WeakHashMap<>());
+
+    /**
+     * PAL 1.2.5 represents each fade as a modifier containing a snapshot of the outgoing bone
+     * transforms. That is normally useful, but a TACZ prone clip and a standing clip use different
+     * body axes and substantially different arm offsets. Keeping the prone snapshot across the
+     * {@code Pose.SWIMMING -> standing} boundary lets a later draw/fade use that snapshot as its
+     * starting pose again. Repeating the cycle can therefore retain and compound the old Euler
+     * rotations until an unrelated first-person render resets the model.
+     *
+     * <p>The boundary is also observed from {@link #stopAll}: switching to a non-gun clears TACZ's
+     * forced swimming pose before there is another call to {@link #play}, so checking only the play
+     * path would miss that exit. At the exact prone-to-standing edge we discard only fade modifiers
+     * and controller playback state. The permanent rotation adjustment modifier is deliberately
+     * retained, as are ordinary fade transitions that do not cross this incompatible pose edge.</p>
+     */
+    private static void discardProneTransitionOnStand(AbstractClientPlayer player) {
+        boolean prone = isPlayerLie(player);
+        Boolean wasProne = LAST_PRONE_STATE.put(player, prone);
+        if (!Boolean.TRUE.equals(wasProne) || prone) {
+            return;
+        }
+
+        resetAtProneExit(player, PlayerAnimatorCompat.LOWER_ANIMATION);
+        resetAtProneExit(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION);
+        resetAtProneExit(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION);
+        resetAtProneExit(player, PlayerAnimatorCompat.ROTATION_ANIMATION);
+        FADING_OUT.remove(player);
+    }
+
+    private static void resetAtProneExit(AbstractClientPlayer player, Identifier controllerId) {
+        PlayerAnimationController controller = controller(player, controllerId);
+        if (controller == null) {
+            return;
+        }
+        // Do not use removeAllModifiers(): ROTATION owns SafeAdjustmentModifier for its lifetime.
+        controller.removeModifierIf(AbstractFadeModifier.class::isInstance);
+        controller.stopTriggeredAnimation();
+        controller.stop();
+        controller.forceAnimationReset();
+    }
 
     private static void stop(AbstractClientPlayer player, Identifier controllerId, int fadeTicks) {
         PlayerAnimationController controller = controller(player, controllerId);
@@ -285,7 +337,13 @@ public final class PalAnimationManager {
         }
         if (event.getCurrentGunItem().getItem() instanceof IGun
                 && event.getPreviousGunItem().getItem() instanceof IGun) {
-            stopAll(player, 8);
+            discardProneTransitionOnStand(player);
+            // Match the legacy PlayerAnimator contract: gun draws restart the authored animation
+            // layers, not ROTATION. ROTATION is an always-current view adjustment and fading it on
+            // every draw creates needless snapshots of the prone/standing axis change.
+            stop(player, PlayerAnimatorCompat.LOWER_ANIMATION, 8);
+            stop(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION, 8);
+            stop(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION, 8);
         }
     }
 }

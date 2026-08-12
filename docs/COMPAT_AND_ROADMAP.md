@@ -1649,3 +1649,34 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
     与第二轮一致）；②AUG 默认/ACOG/8x/lpvo 高倍：恢复裁剪（镜内透光）、黑环
     完整；③hamr/vudu/mk5hd：红点组不裁、筒镜组恢复裁剪；④elcan/views=[2,2] 的
     低倍视组属筒镜通道 = 维持裁剪（其内环靠第一轮 ocular_ring 修复保完整）。
+
+#### 案例⑩：PAL 趴姿（TACZ 强制 Pose.SWIMMING）消退后动画状态污染 —— 26.1.2 邻链修复 1:1 直贴（2026-08-12 立案，当日移植，待用户复测）
+
+- **案例⑨ 状态先记**：第 1~3 轮（ocular_ring 独立路径 / sight 通道撤裁 /
+  判别器 flag 化纠错）用户复测 **PASS**，案例⑨ 结案（因端口沿用合并条目，
+  不再单开结案行）。
+- **邻链修复（commit `e43a3a9d` / PR #39，在体验证）**：PAL 1.2.5 的 fade 以
+  「携带离场骨骼变换快照的 modifier」实现；TACZ 趴姿片段与站姿片段坐标轴
+  不同、手臂偏移差异大 ⇒ 趴姿 fade 快照跨过趴→站边界滞留后，后续 draw/fade
+  会拿旧快照当起点，反复循环还会**累积**旧欧拉旋转，只能切第一/第三人称
+  之类无关渲染重置模型才解。修复内容（逐字直贴，PR 基线与 26.2 该文件
+  **逐字节相同**，`git apply` 零冲突）：
+  1. 新增 `discardProneTransitionOnStand`：WeakHashMap 追踪每玩家趴姿态，
+     `play()`/`stopAll()`/切枪三入口在**趴→站边界**对四个 controller
+     执行「只删 AbstractFadeModifier + stopTriggeredAnimation + stop +
+     forceAnimationReset」——刻意**不动** ROTATION 的 SafeAdjustmentModifier
+     （保住 rotation adjustment、不引回初始化 NPE），不碰未跨边界的普通 fade；
+  2. `playNamed` 的「同 clip 抑制」加 `controller.isActive()` 门控——已停止
+     但记录同 clip 的 controller 可以重播（开火/换弹等一次性动画可重启）；
+  3. 切枪不再对 ROTATION 层做 stop（只 lower/loop-upper/once-upper，8 tick
+     安全 fade-in-to-null 路径不变）——对齐旧 PlayerAnimator 契约。
+  PAL 版本两侧同为 1.2.5（我们 `gradle.properties: player_animation_lib=1.2.5`），
+  API 面一致，直贴不存在版本风险。
+- **不适用条目记录**：同 PR 的 `6c0d004`（preserve visible depth during cleanup）
+  是深度孔径架构专属（ScopeDepthCopyState/ScopeRenderTypes/scope_depth_cleanup.fsh），
+  26.2 掩码架构无对应物，**不移植**。
+- **待用户复测**（沿邻链协议，两条路径各 5~10 次）：
+  1. 持枪趴下 → 按趴姿键站起 → 切枪/重新持枪；
+  2. 持枪趴下 → 切到非枪物品站起 → 再切回枪；
+  并确认 ①不再需要切第一/第三人称来清污染 ②开火/换弹/近战/固定手型/普通
+  移动动画全部正常。一句 PASS/异常即可。

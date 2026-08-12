@@ -319,6 +319,15 @@ Beta 3 Hotfix-2 – public test build of this Fabric port.
   body is drawn unconditionally there). Our clip had been nibbling the sight's own
   inner frame since the scope-mask architecture landed. Instant fallback:
   ScopeSightClipFix=false.
+- Player Animation Library: prone-dive exit no longer leaks PAL fade state. PAL 1.2.5
+  fades carry a snapshot of outgoing bone transforms; a prone snapshot surviving the
+  prone-to-standing edge was reused as the next draw's starting pose (prone and standing
+  clips use different body axes), accumulating until an unrelated first-person render
+  reset the model. On that edge the four controllers now drop only fade modifiers and
+  playback state (the permanent rotation-adjustment modifier is kept); one-shot clips
+  (fire/reload) can restart a stopped controller again, and gun switching no longer
+  restarts the ROTATION layer — matching the legacy PlayerAnimator contract. Ported
+  from the sibling 26.1.2 port's in-body-verified fix.
 ```
 
 ---
