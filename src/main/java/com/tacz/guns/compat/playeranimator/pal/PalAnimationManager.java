@@ -338,12 +338,43 @@ public final class PalAnimationManager {
         if (event.getCurrentGunItem().getItem() instanceof IGun
                 && event.getPreviousGunItem().getItem() instanceof IGun) {
             discardProneTransitionOnStand(player);
-            // Match the legacy PlayerAnimator contract: gun draws restart the authored animation
-            // layers, not ROTATION. ROTATION is an always-current view adjustment and fading it on
-            // every draw creates needless snapshots of the prone/standing axis change.
-            stop(player, PlayerAnimatorCompat.LOWER_ANIMATION, 8);
-            stop(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION, 8);
-            stop(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION, 8);
+            // PAL 1.2.5 的 replaceAnimationWithFade 会把当前骨骼拍进 fade 的
+            // transitionAnimation。官方 PlayerAnimator 在切枪时 fade-to-null 再让
+            // play() fade-in 新片段，在它自己的 fade 模型里只是短暂收一下；
+            // 搬到 PAL 就变成两条快照叠在同一条 modifier 链上：
+            //   onDraw: 旧持枪/趴姿快照 → identity
+            //   play():  再拍一次（可能还在上一次 fade 半途）→ 新持枪
+            // get3DTransform 按链混合，观感就是「切枪那一下动画脏」。
+            // 淡出结束 modifier 会摘掉，所以不是持续错形——用户纠正的正是这点。
+            //
+            // 正确做法：不要先 fade-to-null。循环层留给 play() 一次
+            // replaceAnimationWithFade（旧片段 → 新片段，或同片段直接 early-return）。
+            // 一次性层（开火/换弹）必须清掉，否则旧枪的 one-shot 会接到新枪上。
+            hardStopOnce(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION);
+            stripFadeModifiers(player, PlayerAnimatorCompat.LOWER_ANIMATION);
+            stripFadeModifiers(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION);
         }
+    }
+
+    /** 立刻停掉 one-shot，不走 fade，避免和下一次 play() 的 fade 叠快照。 */
+    private static void hardStopOnce(AbstractClientPlayer player, Identifier controllerId) {
+        PlayerAnimationController controller = controller(player, controllerId);
+        if (controller == null) {
+            return;
+        }
+        controller.removeModifierIf(AbstractFadeModifier.class::isInstance);
+        controller.stopTriggeredAnimation();
+        controller.stop();
+        controller.forceAnimationReset();
+        clearFadeMark(player, controllerId);
+    }
+
+    private static void stripFadeModifiers(AbstractClientPlayer player, Identifier controllerId) {
+        PlayerAnimationController controller = controller(player, controllerId);
+        if (controller == null) {
+            return;
+        }
+        controller.removeModifierIf(AbstractFadeModifier.class::isInstance);
+        clearFadeMark(player, controllerId);
     }
 }

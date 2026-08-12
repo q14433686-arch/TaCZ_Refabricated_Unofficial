@@ -193,6 +193,7 @@ Arcana 没有 Fabric / 26.2 版本，且其格式与密钥未公开。
 |---|---|
 | `README.md`（本文） | 项目说明、免责声明、许可、装包方法 |
 | `docs/PORTING_NOTES.md` | **移植经验总结** —— 26.2 破坏性变更清单与踩坑记录，面向后续开发者 |
+| `docs/UPSTREAM_AND_TODO_AUDIT_2026_08_12.md` | 上游对照 + TODO 真伪（枪械等级是上游半成品；本侧未解只剩 PAL 趴姿） |
 | `docs/archive/` | 38 份历史过程文档（含已作废结论），**仅供考古**，见下 |
 
 ### 关于 `docs/archive/`

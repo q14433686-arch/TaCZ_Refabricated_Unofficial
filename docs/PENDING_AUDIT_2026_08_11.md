@@ -7,7 +7,9 @@
 > （用户指出：注释很多是落后/错的）。本版**每一条结论都以调用链/字节码核实为准，
 > 注释仅作线索**；核实过程中发现的错误注释已顺手在源码里更正
 > （TextShowRender、MuzzleFlashRender、BeamRenderer、IrisCompat、FeatureRenderCompat）。
-> 案例①~⑦的诊疗史见 `COMPAT_AND_ROADMAP.md`，不重复收录。
+> 案例①~⑩的诊疗史见 `COMPAT_AND_ROADMAP.md`，不重复收录。
+> 2026-08-12 上游对照 + TODO 真伪见 `docs/UPSTREAM_AND_TODO_AUDIT_2026_08_12.md`
+> （结论：枪械经验等级是上游半成品；本移植侧未解只剩 PAL 案例⑩）。
 
 ## A. 玩家可见的功能缺口（按影响排序）
 
@@ -29,7 +31,7 @@
 | B2 | **KubeJS** | 桩（`KubeJSGunEventPoster`） | KubeJS 支持 26.2 |
 | B3 | **Controllable（手柄）** | 桩（`ControllableCompat`） | Controllable 支持 26.2 |
 | B4 | **Sulkan（Vulkan 光影）** | **❌ 初版「检测未实现」有误。** 实测代码：`isUsingRenderPack` 与 `shouldDisableScopeMaskUnderShaderPack` 都有 `FabricLoader.isModLoaded("sulkan")` 存在级探测并在存在时保守回退。Sulkan 确为真实新 Mod（mravatin 的 Vulkan 光影引擎，面向 26.2，Sodium/独立后端），其有无公开查询 API **未核实源码**、按无处理 | Sulkan 提供公开 API；现状回退安全。另：IrisCompat 旧头注「Iris 已被 Sulkan 取代」系错误陈述，已更正——Iris 在 26.2 在役（用户实测环境 iris 1.11.2） |
-| B5 | Optifine-detect / ShoulderSurfing / CarryOn / ImmediatelyFast / JEI / REI / Zoomify / PAL | 检测或浅兼容，在役（JEI/REI PR#22 已修；PAL 案例⑥已闭环） | — |
+| B5 | Optifine-detect / ShoulderSurfing / CarryOn / ImmediatelyFast / JEI / REI / Zoomify / PAL | 检测或浅兼容，在役（JEI/REI PR#22 已修；PAL 案例⑥切枪哑动画已闭环）。**PAL 案例⑩ 趴姿退出手臂错形仍挂起**，见 `COMPAT_AND_ROADMAP` | — |
 
 ## C. 死代码 / 陈旧标记（无玩家影响，可择机清理）
 
@@ -56,7 +58,11 @@
 
 `LootTableInjectorModifier`（第 39 轮已结案，残留 TODO 字样是历史文书）、
 `LivingEntityShoot:270`、`EntityKineticBullet:439`（暴击 flag 透传）、
-`ModernKineticGunScriptAPI:843`。这些等上游定，跟上游对齐即可。
+`ModernKineticGunScriptAPI:843`、`ServerMessageLevelUp` Toast 封印、
+`AnimationConstant` 空类、`LocalPlayerShoot:290`、`PreventsHotbarEvent:15`、
+`AbstractGunItem.dropAllAmmo`（签名仍是 Player、不退膛内弹 —— 本仓曾误标「已做」，
+2026-08-12 已改回与官方一致的 TODO）。这些等上游定，跟上游对齐即可。
+完整对照见 `docs/UPSTREAM_AND_TODO_AUDIT_2026_08_12.md`。
 
 ## 建议行动顺序（复核后）
 

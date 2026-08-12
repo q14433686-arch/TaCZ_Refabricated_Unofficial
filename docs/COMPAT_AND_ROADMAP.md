@@ -1650,25 +1650,29 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
     完整；③hamr/vudu/mk5hd：红点组不裁、筒镜组恢复裁剪；④elcan/views=[2,2] 的
     低倍视组属筒镜通道 = 维持裁剪（其内环靠第一轮 ocular_ring 修复保完整）。
 
-#### 案例⑩：PAL 趴姿退出后第三人称手臂错形 —— 已知未解决（2026-08-12 按用户指示挂起，仅记录现象）
+#### 案例⑩：PAL 切枪第三人称动画脏 —— 2026-08-12 口径更正并改切枪路径（待复测）
 
-> 本节**只记录在体观察到的现象与最终代码状态**，不含机制推测；请勿据本节文字
-> 推断根因，后来者应自行取证。
+> **用户更正（2026-08-12）**：一直说的是「切枪的动画脏」，**不是**持续错形。
+> 此前文档写成「趴姿退出后手臂停留在异常角度、切视角才恢复」——那是误记，作废。
 
-- **现象（用户在体观察）**：
-  1. 环境含 Player Animation Library 1.2.5，持枪、第三人称看自己；
-  2. 趴下（TACZ 强制趴姿）再站起，随后切枪/重新持枪，手臂出现错形
-     （停留在趴姿一类的异常角度）；
-  3. 错形**持续注视不自行恢复**，切换第一/第三人称视角后恢复正常；
-  4. 不趴姿、站着反复切枪**不会**触发——必须先趴姿过一次。
-- **已做过的处置与实际结果（事实记录）**：
-  - 26.2 移植了 26.1.2 侧 PR #39 的 `e43a3a9d`（趴→站边界重置四个 PAL
-    controller 的播放态与 fade modifier，保留 rotation adjustment）；
-    该移植与 26.1.2 侧相关代码**逐字节相同**，PAL 依赖两侧同为 modrinth
-    1.2.5（两版 tag 指向同一 commit）。**同码两侧，在体结果不同**：
-    26.1.2 构建用户实测通过，26.2 构建实测现象依旧——此结果仅作事实登记。
-  - 26.2 曾短期叠加「客户端 tick 级趴姿观测 + 日志探针」（5711aaa/9065061），
-    实测后已按用户指示**整体移除**；现仅保留 `e43a3a9d` 的 1:1 移植本体。
-- **当前状态**：未解决，挂起。相关配置面无本案开关（PalProneTickObserver
-  已随探针实验一并撤除）。待出现新的在体证据（可复现条件变化 / 录屏 /
-  新日志来源）再立案。
+- **现象（用户口径）**：装 PAL 1.2.5，第三人称切枪时过渡动画脏（旧姿势/新姿势
+  拧在一起），不是事后一直错着。
+- **机制（PAL 1.2.5 源码，`replaceAnimationWithFade` + `AbstractFadeModifier`）**：
+  `replaceAnimationWithFade` 会把当前 `activeBones` 拍进 fade 的
+  `transitionAnimation`，再 `addModifierLast`。`get3DTransform` 在 FADE_IN
+  期间把这份快照和下游动画按 alpha 混合。
+  旧切枪路径照搬官方 PlayerAnimator：`onDraw` 先对 LOWER/LOOP_UPPER/ONCE_UPPER
+  做 8 tick fade-to-null，下一帧 `play()` 再 fade-in 新片段 —— 两条快照叠在
+  同一条 modifier 链上。官方 PlayerAnimator 的 fade 不这么拍骨骼，所以同款
+  停法搬过来就会脏；淡出结束 modifier 会摘掉，所以观感是「切那一下脏」而不是
+  持续错形。趴过一次更明显，是因为快照里带着 SWIMMING 轴的手臂偏移。
+- **本轮改法**（`PalAnimationManager#onDraw`）：
+  - 循环层（LOWER / LOOP_UPPER）**不再** fade-to-null；只剥掉残留 fade
+    modifier，交给 `play()` 一次 `replaceAnimationWithFade`（旧片段→新片段；
+    同片段 early-return，视觉连续）。
+  - 一次性层（ONCE_UPPER，开火/换弹）硬停，避免旧枪 one-shot 接到新枪上。
+  - `discardProneTransitionOnStand`（26.1.2 `e43a3a9d`）仍留在趴→站边界，
+    与切枪路径无关。
+- **待用户复测**：装 PAL，第三人称，站着切枪若干次；再趴→站→切枪若干次。
+  看点：切枪过渡还脏不脏、收枪淡出还在不在、案例⑥（切枪后整局哑掉）有没有回归。
+  若过渡仍脏，下一刀再考虑循环层也硬切（零 fade，会失去 8 tick 平滑）。

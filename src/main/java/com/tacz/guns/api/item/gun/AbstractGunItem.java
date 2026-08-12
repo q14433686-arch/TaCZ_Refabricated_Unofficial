@@ -178,8 +178,10 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
         if (useInventoryAmmo(gunItem)) {
             return;
         }
-        // 操作对象已从 Player 改为 LivingEntity，以支持非玩家实体
-        // 此外，现在也处理枪膛内的子弹
+        // TODO（上游原文，2026-08-12 核实仍成立）：操作对象不应该是 Player 而是 LivingEntity。
+        // 此外枪膛内的子弹也要退。本仓曾有注释声称这两点「已经做了」——是错的：
+        // 签名仍是 Player，且下面只读 getCurrentAmmoCount（弹匣），从不碰 hasBulletInBarrel。
+        // 与官方 / Sh1roCu 1.21.1 同款未完成项，跟上游对齐，不擅自改行为。
         int ammoCount = getCurrentAmmoCount(gunItem);
         if (ammoCount <= 0) {
             return;
