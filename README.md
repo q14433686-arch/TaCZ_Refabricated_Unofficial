@@ -1,9 +1,17 @@
-# TACZ 26.2 移植版（Timeless & Classics Zero — Minecraft 26.2 / Fabric）
+# [UNOFFICIAL] TaCZ Refabricated — Minecraft 26.2 / Fabric
 
-> **这是一个非官方的社区移植版本，不是 TACZ 官方发布。**
+> **非官方社区移植，不是 TACZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
 
-把 **Timeless & Classics Guns: Zero**（枪械 mod）从 Minecraft 1.21.1 Fabric
-移植到 **Minecraft 26.2 Fabric**。
+将 **Timeless & Classics Guns: Zero（TaCZ）** 基于上游 `1.1.8-hotfix`
+移植到 **Minecraft 26.2 Fabric**。当前源码版本：**`1.1.8+fabric.26.2.R1`**。
+
+[下载构建（Releases）](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
+· [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
+· [当前兼容与缺口审计](docs/UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md)
+· [移植说明](docs/PORTING_NOTES.md)
+
+> **下载前请确认：** 本项目只提供 Fabric 构建；运行需要 **Java 25+、Fabric API**
+> 与 **Forge Config API Port**。需要 TacZ:Arcana 的加密枪包无法在本移植版加载。
 
 ---
 
@@ -11,10 +19,10 @@
 
 | | 说明 |
 |---|---|
-| **是** | 上游 [TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)（1.21.1 分支）的 26.2 移植 |
-| **是** | **R1** 发布构建：已可游玩，但仍不保证无 bug |
+| **是** | 上游 [TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)（1.21.1 分支、TaCZ `1.1.8-hotfix` 基线）的 26.2 移植 |
+| **是** | **R1** 源码：已可游玩，但仍不保证无 bug；可下载版本以 [Releases](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases) 页面为准 |
 | **不是** | TACZ 官方版本，也不隶属于 TACZ Dev Team |
-| **不是** | 内容扩展 —— 除移植必需的改动外，不新增枪械/玩法 |
+| **不是** | 内容扩展 —— 除移植与兼容所需改动外，不新增枪械或玩法 |
 
 **上游项目**
 - 原版 mod：Timeless & Classics Guns: Zero（TACZ Dev Team）
@@ -34,41 +42,47 @@
 
 ## 2. R1 状态与已知限制
 
-R1 在此前公开测试基线之上，重点补齐 Iris/光影下的瞄准镜兼容、LRTactical
-反馈层与可选第一人称动画兼容。它仍不保证与上游完全等价。
+R1 已从早期公开测试版推进到可发布源码，重点收口了 26.2 第一人称渲染、
+瞄具、枪包兼容和可选模组协作；它仍不保证与上游完全等价。
 
-R1 主要新增 / 修复：
+### R1 主要新增 / 修复
 
-- **Iris shader pack 下的瞄准镜镜内裁剪基本可用**：在 Iris HAND shader 路径内注入 TACZ
-  的 scope mask 分支，避免此前光影下镜身、准星、雾效/自发光层互相冲突的问题；普通非光影路径保持可用。
-- **发光准星修复为真正自发光**：`*_illuminated` 准星改用专用 emissive/no-cardinal-lighting
-  渲染类型，避免随玩家朝向在 vanilla/Iris 下反向变亮变暗。
-- **LRTactical 继续作为内置兼容层**：throwable、melee、detonator/C4、consumable 基础流程保留；
-  Fabric 元数据继续通过 `provides: ["lrtactical"]` 提供依赖标识。
-- **通用第一人称动画让出层已接入**：普通物品保留 First-person Model、Punchy、Hide Hands、
-  SkyHands、Viewmodel Changer 与 swing 类 Mod 的行为；持有实际可渲染的 TACZ/LRTactical
-  枪、手雷或刀时自动交还给 TACZ viewmodel。实现与测试矩阵见
+- **第一人称 ADS 朝向问题已收口**：修复开镜射击或换弹时，臂枪整体随玩家朝向偏转、
+  四个斜向后坐力侧漏及仰俯视跑偏；最终约束公式已在 26.1.2 与 26.2 实机验证。
+- **瞄具渲染路径重做并补齐**：用离屏掩码替代 26.2 已移除的 stencil；普通与 Iris
+  HAND shader 路径均接入 scope mask。枪身、非瞄具配件和两层枪口火光会在镜内正确排除，
+  发光准星使用真正的 emissive/no-cardinal-lighting 渲染；物理目镜框与低倍 sight
+  通道也按上游语义拆分处理。
+- **曳光弹位置问题已修复**：恢复上游 `energySwirl` 与满亮 block light，按每发子弹缓存
+  枪口视觉偏移，并修正 26.2 生成包把出生坐标取整的问题。服务端弹道和命中逻辑未改。
+- **LRTactical 内置兼容框架继续完善**：已覆盖 throwable（五种类型）、melee、
+  detonator/C4、consumable 的基础流程，以及 tooltip、使用/预燃 HUD 和分类冷却遮罩；
+  Fabric 元数据通过 `provides: ["lrtactical"]` 提供依赖标识。
+- **第三方第一人称动画兼容已接入**：普通物品保留 First-person Model、Punchy、Hide Hands、
+  SkyHands、Viewmodel Changer 与 swing 类 Mod 的行为；实际持有 TACZ/LRTactical 枪、
+  手雷或刀时自动让出给本项目 viewmodel。详见
   [`docs/FIRST_PERSON_ANIMATION_COMPAT_26_2.md`](docs/FIRST_PERSON_ANIMATION_COMPAT_26_2.md)。
-- **曳光弹显示做了阶段性修复**：恢复上游 `energySwirl` 渲染类型、满亮 block light，并让
-  第一人称枪口视觉偏移按每发子弹缓存。弹道/命中本身未改。
+- **Player Animation Library 切枪后永久失效已修复**：收枪改用 PAL 能正常回收的
+  fade-in-to-null 过渡，切枪、收枪和重新持枪后第三人称动画可继续工作。
 
-当前已知重点限制：
+### 当前重点限制
 
 - **上游 `.30-06 孤星 手炮` 的带镜换弹子弹可能被目镜裁剪**：默认枪包把换弹子弹
   `bullet_in_barrel` 与整个枪身放在同一个 scope-clipped 批次；安装筒镜后，子弹经过目镜
   投影区域时会和枪身一样被裁掉。官方 1.20.1、直接 Fabric 上游及本移植资源一致，
-  与是否开启光影无关。修复需要拆分动态子树渲染，暂不以未经运行验证的资源偏移硬改。
-- **曳光弹仍可能存在视觉偏移差异**：目前观察到弹道/最终交汇点基本正确，问题集中在挂在
-  子弹实体上的曳光几何显示；它不影响命中判定，后续仍需继续细查。
-- **PIP / 二次世界渲染不默认启用**：此前验证显示 26.2 地形渲染、RenderTarget 与光影 pass
-  耦合很深，已暂停作为主线方案。
-- **Player Animation Library 有一个低优先级已知问题**：经历 TACZ 趴姿再站起后，
-  稳态持枪姿势正常，但随后切枪时约 8 tick 的第三人称过渡动画仍会带入脏姿态。
-  26.1.2 已解决；26.2 的逐字移植与 GunDraw 硬复位两案均无效，已按用户决定挂起。
-- **LRTactical 仍是部分内置移植**：flash shield 等独立子系统仍未完整移植；
-  但物品 tooltip、使用/预燃进度 HUD 与自定义分类冷却遮罩现已接入 26.2 路径。
-- **枪械“经验等级”是上游未完成的脚手**：当前上游与本移植均没有 XP 获取、
-  等级曲线或等级属性加成；tooltip 的 `0 (MAX)` 不是可工作的等级系统。
+  与是否开启光影无关。修复需要拆分动态子树渲染，暂不以资源偏移硬改。
+- **光影包决定彩色自发光是否生效**：不支持 colored emissive 的精简 shader pack
+  可能让激光保持默认色；这与 GPU 或驱动无关。Iris 已接入 HAND shader 掩码桥，
+  Sulkan 因暂无等价公开 API，当前会安全回退到不做镜内裁剪的普通瞄具几何。
+- **PIP / 二次世界渲染不默认启用**：26.2 地形渲染、RenderTarget 与光影 pass
+  耦合很深，目前暂停作为主线方案。
+- **Player Animation Library 仍有一个低优先级问题**：经历 TACZ 趴姿再站起后，
+  稳态持枪正常，但随后切枪时约 8 tick 的第三人称 crossfade 仍可能带入脏姿态。
+  26.1.2 已解决；26.2 的现有两种修法均经实测无效，当前挂起。
+- **LRTactical 仍是部分内置移植**：flash shield、完整 consumable 动画/模型及原作
+  All Rights Reserved 素材等并未全量移植。
+- **枪械“经验等级”是上游未完成的脚手**：当前没有 XP 获取、等级曲线或等级属性加成；
+  tooltip 的 `0 (MAX)` 不是可工作的等级系统。
 - **需要 TacZ:Arcana 解密能力的加密枪包不支持**，见下文专节。
 
 ---
@@ -106,15 +120,28 @@ R1 主要新增 / 修复：
 
 ---
 
-## 5. 环境要求
+## 5. 下载、安装与构建
 
-| 项目 | 版本 |
+| 项目 | 版本 / 说明 |
 |---|---|
-| Minecraft | 26.2 |
-| 加载器 | Fabric Loader 0.19.3+ |
-| Fabric API | 0.155.2+26.2 |
+| Minecraft | **26.2** |
+| 加载器 | **Fabric Loader 0.19.3+** |
+| Java | **25+** |
+| Fabric API | **0.155.2+26.2**（R1 构建目标） |
+| Forge Config API Port | **26.2.1+，硬依赖** |
 
-构建：
+运行安装：
+
+1. 从 [Releases](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
+   下载标注为 Minecraft 26.2 / Fabric 的构建；
+2. 安装 Fabric API 与 Forge Config API Port；
+3. 把本 mod 和依赖的 `.jar` 一起放入 `.minecraft/mods/`；
+4. 启动一次游戏。第三方枪包另按下一节放入 `.minecraft/tacz/`。
+
+> **仅支持 Fabric。** Forge / NeoForge 版不能混用；缺少 Forge Config API Port
+> 会在启动时直接报告依赖不满足。
+
+从源码构建：
 
 ```bash
 ./gradlew build
@@ -227,21 +254,27 @@ Arcana 没有 Fabric / 26.2 版本，且其格式与密钥未公开。
 
 ## 8. 已知差异与限制
 
-- **镜内渲染是重写的**：26.2 移除了模板缓冲（stencil），上游赖以实现镜内裁剪的
-  `stencilFunc`/`stencilOp` 全部不存在。本移植改用「离屏掩码纹理 + shader discard」
-  复刻等价效果。可在配置中关闭（「瞄准镜镜内透视」）。
-- **枪身/手臂不做镜内排除**：上游同样不做，非移植缺陷。
+- **镜内渲染是重写的**：26.2 移除了模板缓冲（stencil），上游依赖的
+  `stencilFunc` / `stencilOp` 已不存在。本移植改用「离屏掩码纹理 + shader discard」
+  复刻对应效果；可在客户端配置中关闭瞄准镜镜内透视。
+- **第一人称视模排除已覆盖枪身、非瞄具配件与枪口火光**；枪口烟雾等世界粒子仍属于
+  全局粒子 pass，不为单个瞄具侵入全局 shader，镜内观感可能与上游存在细微差异。
+- **不同 shader pack 的最终效果可能不同**：尤其是彩色自发光等非原版必需特性，
+  是否参与计算由光影包自身的 HAND / entity shader 决定。
 - 三个工作台（`workbench_a/b/c`）的名称取自枪包数据，上下游均未提供内置译名。
 
 ---
 
 ## 9. 贡献与反馈
 
+请只在[本项目 Issues](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
+反馈本移植版问题，不要提交到 TACZ 或 LRTactical 原作者仓库。
+
 提交 issue 时请附：
 
 1. 完整崩溃日志 / `latest.log`
 2. Minecraft、Fabric Loader、Fabric API、本 mod 的版本号
-3. 复现步骤，以及**是否在纯净环境（仅本 mod + Fabric API）下复现**
+3. 复现步骤，以及**是否在纯净环境（仅本 mod + Fabric API + Forge Config API Port）下复现**
 
 修改代码前建议先读 `docs/PORTING_NOTES.md`，其中记录的坑大多是
 「看起来能改、实际会引发连锁问题」的类型。
