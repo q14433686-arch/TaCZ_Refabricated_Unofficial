@@ -234,7 +234,9 @@ Iris 已在 `beginHand()` 把准确的 pre-hand 世界深度复制到 `depthtex2
 - order `-2`：aperture-copy 包装后的 attachment body（draw 边界先复制 ocular aperture
   depth，再正常绘制移除了活动 ocular 的镜身）；
 - order `-1`：同一 ocular 的 exact world-depth cleanup；
-- order `1`：illuminated reticle 与 CPU 过滤后的纯 etched reticle（两者都经
+- 默认 order `0`：枪身与普通配件（镜内像素走 outside-mask 丢弃）；
+- order `1`：物理 `ocular_ring` 镜框单独重画，不参与 aperture 裁剪并重新写入近处深度；
+- order `2`：illuminated reticle 与 CPU 过滤后的纯 etched reticle（两者都经
   ocular 屏幕空间 mask 裁剪）。
 
 使用 `SubmitNodeCollector.order(int)` 是必要的，因为 custom geometry 在单个 order 内按
@@ -425,6 +427,18 @@ vanilla RenderType，会在目镜孔内重新通过深度测试。HOTFIX2 不移
 
 这样枪身、非瞄具配件、火光大面片与 additive swirl 都不会重新覆盖镜内世界画面，
 腰射、第三人称、未形成 aperture 的开镜初段以及深度副本失败路径保持原行为。
+
+### 6.10 `ocular_ring` 不是 aperture：恢复目镜内侧黑边
+
+默认枪包的 14 个中高倍镜都带独立 `ocular_ring` 骨骼。上游 1.21.1 在写入 stencil 之前先用
+`GL_ALWAYS` 单独绘制该骨骼，因此它是物理镜框，绝不参与目镜孔裁剪。26.1.2 迁移曾遗漏这条
+特殊提交，把 `ocular_ring` 留在 body 快照中；order `-3` 的 invisible ocular depth 会在
+order `-2` body draw 时杀掉与孔径重叠的镜框像素，于是所有镜都出现内圈黑边被啃。
+
+修复把 `ocular_ring` 从 aperture-active 的 body 快照中临时移出，按完整父级变换冻结成独立
+snapshot，并在 cleanup 后、reticle 前单独提交。选择 cleanup 后重画而不是照抄上游的“最先画”，
+是因为本方案的 cleanup 会恢复整个 ocular footprint 的世界深度；后画才能同时恢复镜框颜色与
+近处深度，避免后续水、雾和透明粒子覆盖它。未开镜、第三人称以及没有 `ocular_ring` 的模型不变。
 
 七条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
 `GlCommandEncoder` mixin 负责 backup/aperture-copy/cleanup/mask 的 sampler 绑定；可选 Iris mixin
