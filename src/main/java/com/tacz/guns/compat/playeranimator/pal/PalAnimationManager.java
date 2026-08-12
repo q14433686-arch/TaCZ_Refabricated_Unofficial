@@ -338,12 +338,38 @@ public final class PalAnimationManager {
         if (event.getCurrentGunItem().getItem() instanceof IGun
                 && event.getPreviousGunItem().getItem() instanceof IGun) {
             discardProneTransitionOnStand(player);
-            // Match the legacy PlayerAnimator contract: gun draws restart the authored animation
-            // layers, not ROTATION. ROTATION is an always-current view adjustment and fading it on
-            // every draw creates needless snapshots of the prone/standing axis change.
-            stop(player, PlayerAnimatorCompat.LOWER_ANIMATION, 8);
-            stop(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION, 8);
-            stop(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION, 8);
+
+            // 26.2-specific switch boundary: hard-reset the three authored animation layers
+            // instead of fading the old gun to null.
+            //
+            // The 26.1.2 and 26.2 PalAnimationManager sources were byte-for-byte identical,
+            // and both use PAL 1.2.5. The remaining behavioral difference is therefore not a
+            // failed textual backport. The old fix depended on LAST_PRONE_STATE being observed
+            // by the render-driven play()/stopAll() calls before this event, then called stop(),
+            // which captures the controller's current activeBones into another fade snapshot.
+            // Under 26.2's deferred PlayerModel submission/order that render observation can be
+            // late, so the gun-to-gun transition itself re-snapshots the contaminated pose. The
+            // steady held-gun loop is clean; only this eight-tick switch crossfade is dirty.
+            //
+            // GunDrawEvent is the authoritative boundary and occurs before the next model setup.
+            // Removing all fade snapshots and stopping these layers here makes the new gun start
+            // its normal 8-tick fade-in from identity on the next play() call. ROTATION is kept:
+            // it is a permanent view adjustment, not part of the authored switch transition.
+            hardResetSwitchLayer(player, PlayerAnimatorCompat.LOWER_ANIMATION);
+            hardResetSwitchLayer(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION);
+            hardResetSwitchLayer(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION);
+            FADING_OUT.remove(player);
         }
+    }
+
+    private static void hardResetSwitchLayer(AbstractClientPlayer player, Identifier controllerId) {
+        PlayerAnimationController controller = controller(player, controllerId);
+        if (controller == null) {
+            return;
+        }
+        controller.removeModifierIf(AbstractFadeModifier.class::isInstance);
+        controller.stopTriggeredAnimation();
+        controller.stop();
+        controller.forceAnimationReset();
     }
 }

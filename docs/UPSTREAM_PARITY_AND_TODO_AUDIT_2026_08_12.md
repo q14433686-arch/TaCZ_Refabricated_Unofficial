@@ -164,8 +164,10 @@
 
 ## 5. 当前仍应公开的限制（按玩家可见性）
 
-1. **Player Animation Library**：趴姿退出后第三人称手臂偶发保持错形，切一次第一/
-   第三人称可恢复；这是当前主 TACZ 兼容遗留。
+1. **Player Animation Library**：准确症状不是“稳态持枪手臂持续错形”，而是
+   **趴姿→站立后，下一次切枪的约 8 tick 第三人称 crossfade 使用了脏姿态**；切完后的
+   稳态持枪不是病灶。26.1.2 的 `e43a3a9d` 有效，但逐字移植到 26.2 无效。
+   本轮已把 26.2 的 gun-to-gun `GunDrawEvent` 改成三层 controller 硬复位，待实机复测。
 2. **LRTactical 仍是部分内置框架**：flash shield、完整 consumable 动画/输入、专属
    音效/素材等未全量移植；投掷物 tooltip、使用进度 HUD 与自定义分类冷却遮罩仍缺。
 3. **Accelerated Rendering / KubeJS / Controllable**：等待目标 26.2 Fabric API/构建；

@@ -1654,25 +1654,29 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
     完整；③hamr/vudu/mk5hd：红点组不裁、筒镜组恢复裁剪；④elcan/views=[2,2] 的
     低倍视组属筒镜通道 = 维持裁剪（其内环靠第一轮 ocular_ring 修复保完整）。
 
-#### 案例⑩：PAL 趴姿退出后第三人称手臂错形 —— 已知未解决（2026-08-12 按用户指示挂起，仅记录现象）
+#### 案例⑩：PAL 趴姿后「切枪过渡动画」姿态脏 —— 26.2 专用边界修复待复测（2026-08-12）
 
-> 本节**只记录在体观察到的现象与最终代码状态**，不含机制推测；请勿据本节文字
-> 推断根因，后来者应自行取证。
+> **口径更正（用户再次明确）**：此前文档把病灶写成“持枪手臂持续错形”是错的。
+> 条件没有变化——仍须先 TACZ 趴姿、再站起、随后切枪；但脏的是**切枪期间约 8 tick
+> 的第三人称过渡/crossfade**，不是切完后的稳态持枪动画。
 
-- **现象（用户在体观察）**：
-  1. 环境含 Player Animation Library 1.2.5，持枪、第三人称看自己；
-  2. 趴下（TACZ 强制趴姿）再站起，随后切枪/重新持枪，手臂出现错形
-     （停留在趴姿一类的异常角度）；
-  3. 错形**持续注视不自行恢复**，切换第一/第三人称视角后恢复正常；
-  4. 不趴姿、站着反复切枪**不会**触发——必须先趴姿过一次。
-- **已做过的处置与实际结果（事实记录）**：
-  - 26.2 移植了 26.1.2 侧 PR #39 的 `e43a3a9d`（趴→站边界重置四个 PAL
-    controller 的播放态与 fade modifier，保留 rotation adjustment）；
-    该移植与 26.1.2 侧相关代码**逐字节相同**，PAL 依赖两侧同为 modrinth
-    1.2.5（两版 tag 指向同一 commit）。**同码两侧，在体结果不同**：
-    26.1.2 构建用户实测通过，26.2 构建实测现象依旧——此结果仅作事实登记。
-  - 26.2 曾短期叠加「客户端 tick 级趴姿观测 + 日志探针」（5711aaa/9065061），
-    实测后已按用户指示**整体移除**；现仅保留 `e43a3a9d` 的 1:1 移植本体。
-- **当前状态**：未解决，挂起。相关配置面无本案开关（PalProneTickObserver
-  已随探针实验一并撤除）。待出现新的在体证据（可复现条件变化 / 录屏 /
-  新日志来源）再立案。
+- **已确认事实**：
+  1. 26.1.2 的 `e43a3a9d` 已由用户实测解决该切枪过渡问题；
+  2. 26.1.2 与 26.2 的 `PalAnimationManager.java` 当前 SHA-256 **逐字相同**
+     （`6264f974...910703`），`PlayerAnimatorCompat`、`PlayerModelMixin`、
+     `InnerThirdPersonManager` 与 PAL 依赖 1.2.5 也相同；唯一源码差异是
+     `minecraft.screen` → `minecraft.gui.screen()` 的 26.2 API 改名，与切枪无关；
+  3. 因此失败不是“PR 漏贴一行”，而是 26.1.2 修法依赖了宿主渲染时序：
+     `LAST_PRONE_STATE` 只由 render-driven `play/stopAll` 观察，`onDraw` 随后又用
+     `stop()` 把 controller 的 `activeBones` 拍成一份新的 fade snapshot。
+     同码在 26.2 的 deferred PlayerModel 提交/回调顺序下可能观察得更晚，
+     于是**正是切枪 crossfade 再次拍进脏姿态**；稳态循环本身仍正常。
+- **本轮 26.2 专用处置**（`PalAnimationManager#onDraw`）：
+  - gun→gun 的 `GunDrawEvent` 是不依赖渲染观察的权威切换边界；
+  - 不再对 LOWER / LOOP_UPPER / ONCE_UPPER 做“旧枪→null”的软 fade；
+  - 在该边界移除三层全部 `AbstractFadeModifier`，停止 triggered/current animation，
+    `forceAnimationReset()`；ROTATION 保留（它是持续视角修正，不是切枪动画）；
+  - 下一次 `play()` 会让新枪从 identity 做正常 8 tick fade-in，既保留过渡又不继承
+    旧的趴姿 snapshot。
+- **待用户裁决**：PAL 1.2.5，第三人称执行“持枪→趴下→站起→切另一把枪”，只看
+  切枪的 8 tick；回报“过渡干净/仍脏”。稳态持枪无需再作为判据。

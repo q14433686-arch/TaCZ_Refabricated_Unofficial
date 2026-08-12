@@ -539,14 +539,16 @@ RenderType，开镜时内环被（hull 略偏大的）掩码啃掉——这正�
 - `6c0d004`（preserve visible depth during cleanup）为深度孔径架构专属
   （ScopeDepthCopyState/ScopeRenderTypes/scope_depth_cleanup.fsh），26.2 无对应物，
   **不移植**，仅此记录。
-## 附录 E —— PAL 趴姿修复在 26.2 的在体结果（2026-08-12，仅事实登记）
+## 附录 E —— PAL 同码异果的口径更正与 26.2 专用处理（2026-08-12）
 
-- 26.2 已按你们的协议在用户环境复测：`e43a3a9d` 1:1 移植本体在 26.2
-  **未观察到修复效果**；两侧相关代码现保持**逐字节相同**（PalAnimationManager、
-  驱动 mixin、趴姿系统），PAL 依赖同为 modrinth 1.2.5（两版 tag 同一 commit）。
-  「同码两侧、结果不同」仅作为事实登记，此处不做机制结论。
-- 26.2 曾短期叠加 tick 级观测与日志探针（5711aaa/9065061），已整体移除；
-  当前 26.2 的 PAL 趴姿修复代码 = `e43a3a9d` 纯 1:1 移植本体，
-  与 PR #39 保持对齐，将来任何一侧得出新修复即可直接对贴。
-- 26.2 侧本案状态：已知问题挂起（仅现象记录于 COMPAT_AND_ROADMAP 案例⑩，
-  其中不含机制叙述）。
+- 用户再次明确：病灶是**趴姿→站立后的下一次切枪 crossfade 脏**，不是稳态持枪手臂
+  持续错形。此前案例⑩的症状文字写错。
+- `e43a3a9d` 在 26.1.2 实测有效；26.2 逐字移植无效。复核后两侧
+  `PalAnimationManager.java` SHA-256 同为 `6264f974...910703`，相关 TACZ 驱动与
+  PAL 1.2.5 也一致，故不是文本补丁漏移植，而是修法依赖 render-driven
+  `LAST_PRONE_STATE` 与 fade snapshot 时序；26.2 deferred PlayerModel 路径不保证
+  同一观察顺序。
+- 26.2 现改为在 gun→gun `GunDrawEvent` 权威边界硬清 LOWER/LOOP_UPPER/ONCE_UPPER
+  的 fade snapshot 与播放态；下一次 `play()` 从 identity 正常 fade-in。ROTATION 不动。
+  此改动是 26.2 专用语义适配，**不应反向搬到已实测通过的 26.1.2**。
+- 待复测判据只看切枪约 8 tick：“过渡干净/仍脏”；稳态持枪不再作为本案判据。
