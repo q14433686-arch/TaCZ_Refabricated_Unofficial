@@ -17,23 +17,7 @@ public final class RenderHelper {
     // BufferUploader-era helpers were removed during the completed 26.1.2 Feature Rendering
     // migration. GUI work uses GuiGraphics and model work uses SubmitNodeCollector.
 
-    /**
-     * @deprecated Feature rendering is delayed in 26.1.2. Enabling stencil while a
-     * {@code CustomGeometryRenderer} emits vertices cannot affect the later GPU draw. Current scope rendering
-     * uses an ordinary colorless depth-aperture pipeline and never calls this helper.
-     */
-    @Deprecated
-    public static void enableItemEntityStencilTest() {
-        RenderSystem.assertOnRenderThread();
-        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
-    }
 
-    /** @deprecated See {@link #enableItemEntityStencilTest()}. */
-    @Deprecated
-    public static void disableItemEntityStencilTest() {
-        RenderSystem.assertOnRenderThread();
-        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
-    }
 
     /**
      * Collector-aware 26.1.2 first-person arm submission.
