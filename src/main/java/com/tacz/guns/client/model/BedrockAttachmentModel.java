@@ -40,6 +40,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private static final String OCULAR_NODE = "ocular";
     private static final String OCULAR_SIGHT_NODE = "ocular_sight";
     private static final String OCULAR_SCOPE_NODE = "ocular_scope";
+    private static final String OCULAR_RING_NODE = "ocular_ring";
     private static final Pattern LASER_BEAM_PATTERN = Pattern.compile("^laser_beam(_(\\d+))?$");
 
     /**
@@ -123,6 +124,15 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * 但要用它们的屏幕投影生成镜内掩码 —— 这正是上游 stencil 裁剪区域的来源。
      */
     protected final List<BedrockPart> ocularParts = new ArrayList<>();
+    /**
+     * 物理目镜框（镜口黑色实体内圈）。上游 1.21.1 始终以 {@code stencilFunc(ALWAYS)}
+     * 无裁剪独立绘制它——它是实体件，<b>不是</b>孔径/遮光几何；默认枪包 14 个中高倍镜
+     * 全部包含该骨骼（上游弃用旧命名 {@code oculus_ring} 另见邻链审计）。
+     * 26.1.2 在体实证：把它混进「会被 ocular 区域杀掉的批」会逐镜统一啃掉内环
+     * （26.2 掩码架构的同源病灶 = 案例③ 遗留的「镜框内圈边缘被 hull 掩码啃掉」）。
+     * 只在构造时收集引用；摘除/重画与否由开关与开镜状态在 submit 里决定。
+     */
+    protected final @Nullable BedrockPart ocularRingPart;
     protected @Nullable List<List<BedrockPart>> laserBeamPaths;
 
     private @Nullable ItemStack currentGunItem;
@@ -135,6 +145,11 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         super(pojo, version);
         scopeViewPaths = new ArrayList<>();
         laserBeamPaths = new ArrayList<>();
+        // 【案例⑨ · 邻链回流】ocular_ring = 物理目镜框（实体件），上游单独无裁剪绘制。
+        // 只收集引用、不隐藏：腰射 / 第三人称 / 未开镜时它必须随镜身完整出现；
+        // 开镜掩码激活时才摘除主提交、事后用未裁剪 RenderType 重画（见 submit）。
+        ModelRendererWrapper ocularRingWrapper = modelMap.get(OCULAR_RING_NODE);
+        ocularRingPart = ocularRingWrapper == null ? null : ocularRingWrapper.getModelRenderer();
         // 初始化 view 的 node path
         List<BedrockPart> path = getPath(modelMap.get(SCOPE_VIEW_NODE));
         int i = 2;
@@ -557,6 +572,20 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         boolean maskable = transformType != null && transformType.firstPerson()
                 && !ocularParts.isEmpty()
                 && currentAimingProgress() > AIM_CLIP_START;
+        // 【案例⑨ 第二轮 · sight（低倍/红点通道）激活时镜身不做掩码裁剪】
+        // 上游事实（SCOPE_UPSTREAM_TRUTH §4，逐行核对 renderSight / renderBoth）：
+        // 低倍链【没有】圆形 INVERT 模板、scope_body 无条件绘制；组合镜只对筒镜组
+        // 走筒镜逻辑。我们的掩码若在 sight 通道激活时裁剪镜身，瞄具自己的内框/边缘
+        // （普通镜身几何，红点类没有 ocular_ring 骨骼可摘）会在镜片投影内被啃出
+        // 缺口——用户报告的慢性病灶「低倍镜（含组合镜低倍组）的边的内部某些部分
+        // 被错误裁切」即此。sight 组目镜本就被 shouldDrawOcularBlackout 恒隐藏
+        // （恒掏空 = 透视窗），撤掉镜身裁剪后观感 = 上游 r34 语义：窗内是世界、
+        // 窗框完整，两者都不依赖掩码。开关 false = 旧行为（sight 也裁）。
+        if (maskable && RenderConfig.SCOPE_SIGHT_CLIP_FIX != null
+                && RenderConfig.SCOPE_SIGHT_CLIP_FIX.get()
+                && !activeGroupIsScope()) {
+            maskable = false;
+        }
         // 光影开启时禁用 26.2 的离屏掩码裁剪，退回普通瞄具几何。
         //
         // 现象：Iris/Sulkan 类光影包会接管主世界的若干 pass（发光实体、天气/雾、后处理等），
@@ -584,6 +613,31 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         //
         // 任何一环不满足就原样退回 renderType（= RenderTypes.entityCutout），
         // 也就是当前已 PASS 的行为。最坏情况只是「镜内仍见镜筒内壁」，不会更糟。
+        // 【案例③ 首判修正 · 回退记录】曾把黑片从主提交摘除并单独用反向裁剪版
+        // RenderType 提交（认为黑环贴图中心透明、被自己的投影自裁）。
+        // 实测（用户截图 + 全部瞄具贴图 alpha 取证）推翻前提：
+        // ocular 板材采样的是【实心深色纹素】（alpha=255，非透明中心），
+        // 「透视镜片」恰恰依赖它跟着镜身一起被自己的掩码投影 discard 才成立 ——
+        // 单独重画等于把不透明深色玻璃拍回镜片上，表现为整片黑盘、甚至溢出镜框。
+        // 因此恢复原路径：黑片依旧随 super.submit 走同一裁剪版 RenderType。
+        // 案例③（黑环边缘被啃）的真因指向「几何投影掩码略大于真实通光孔径、
+        // 吃掉 scope_body 内圈边缘」（上游用固定半径圆，见 PORTING_NOTES §3.5），
+        // 留待拿到对照截图+掩码预览后再修。
+        // 【案例⑨ · 26.1.2 → 26.2 邻链回流适配】ocular_ring 物理目镜框的独立路径：
+        // 邻链在体实证（commit 0b7c4cd，含上游语义取证）——它是实体件而非孔径/遮光几何，
+        // 上游 1.21.1 以 stencilFunc(ALWAYS) 无裁剪绘制；混入「会被 ocular 区域杀掉的批」
+        // 会在全部 14 个含该骨骼的镜子上统一啃掉内环。本架构的同源形态 = 这里若让它
+        // 随镜身走裁剪版 RenderType，开镜时内环被 hull 掩码啃掉（案例③ 遗留条目由此定因）。
+        // 等价处置（本架构无深度 order 概念，且掩码只在 shader 端杀片段、无深度写入者）：
+        // 开镜掩码激活时把它从主提交摘除（visible=false 会连子树一起摘除，
+        // 见 BedrockRenderSnapshot.capturePart 的剪枝语义），主提交后用未裁剪的原版
+        // RenderType 重画；普通 opaque cutout 天然回写深度（邻链的「重写入镜框深度
+        // 防水/雾/透明粒子覆盖」语义在本架构免费成立，无需额外步骤）。
+        // 开关 ScopeOcularRingFix = false 即整体回到旧行为（摘除+重画全部跳过）。
+        // 无 ocular_ring 骨骼的第三方模型、腰射、第三人称、Iris 回退路径（maskable=false）
+        // 均不受影响——此时 detaching=false，走原来的主提交。
+        boolean detachOcularRing = maskable && ocularRingPart != null && ocularRingPart.visible
+                && RenderConfig.SCOPE_OCULAR_RING_FIX != null && RenderConfig.SCOPE_OCULAR_RING_FIX.get();
         List<BedrockPart> hiddenOculars = new ArrayList<>();
         if (transformType != null && transformType.firstPerson()) {
             for (BedrockPart ocular : ocularParts) {
@@ -593,13 +647,24 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 }
             }
         }
+        if (detachOcularRing) {
+            ocularRingPart.visible = false; // 主提交摘除（finally 里必还原，anti-lock 跨帧共享对象）
+        }
         try {
             super.submit(poseStack, transformType, collector,
                     resolveBodyRenderType(renderType, texture, maskable), light, overlay);
         } finally {
+            if (detachOcularRing) {
+                ocularRingPart.visible = true;
+            }
             for (BedrockPart ocular : hiddenOculars) {
                 ocular.visible = true;
             }
+        }
+        // 重画物理目镜框（先于下面的准星提交，等价于邻链 ring=order 1 / reticle=order 2 的语义；
+        // 本架构按提交顺序消费，且目镜框是 opaque cutout，深度测试下顺序本来就不敏感）。
+        if (detachOcularRing) {
+            submitOcularRingPlain(poseStack, collector, renderType, transformType, light, overlay);
         }
 
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
@@ -632,6 +697,45 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             for (var entry : laserBeamPaths) {
                 BeamRenderer.renderLaserBeam(attachmentItem, poseStack, transformType, entry, collector);
             }
+        }
+    }
+
+    /**
+     * 【案例⑨】以未裁剪的原版 RenderType 重画物理目镜框（含子树）。
+     *
+     * <p>父链遍历-套用写法与 {@link #registerOcularMaskGeometry} 同构：两者都复刻
+     * {@code BedrockRenderSnapshot.captureSubtree} 的调用约定——rootPose 必须已经
+     * 套用根节点自身及其全部父级变换（自底向上收集祖先 → 自顶向下逐个
+     * {@code translateAndRotateAndScale}），captureSubtree 内部不再对根节点重复套用。
+     * 该约定与主渲染产出的模型矩阵完全一致（registerOcularMaskGeometry 的注释链
+     * 已多轮实测验证）。
+     *
+     * @param renderType 调用点收到的<b>原始</b> RenderType（未走 {@link #resolveBodyRenderType}
+     *                   的裁剪分支），即该配件的正常材质——上游 stencilFunc(ALWAYS) 的等价物。
+     */
+    private void submitOcularRingPlain(PoseStack poseStack, SubmitNodeCollector collector,
+                                       RenderType renderType, ItemDisplayContext transformType,
+                                       int light, int overlay) {
+        if (ocularRingPart == null) {
+            return;
+        }
+        PoseStack ringPose = new PoseStack();
+        ringPose.last().pose().set(poseStack.last().pose());
+        ringPose.last().normal().set(poseStack.last().normal());
+        java.util.List<BedrockPart> ringParents = new java.util.ArrayList<>();
+        for (BedrockPart parent = ocularRingPart.getParent(); parent != null; parent = parent.getParent()) {
+            ringParents.add(0, parent);
+        }
+        for (BedrockPart parent : ringParents) {
+            parent.translateAndRotateAndScale(ringPose);
+        }
+        ocularRingPart.translateAndRotateAndScale(ringPose);
+        com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ringSnapshot =
+                com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(
+                        ocularRingPart, ringPose, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
+        if (!ringSnapshot.isEmpty()) {
+            collector.submitCustomGeometry(new PoseStack(), renderType,
+                    (entryPose, consumer) -> ringSnapshot.write(consumer));
         }
     }
 
@@ -806,6 +910,42 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             return true;
         }
         return ocularByIndex.get(activeIndex) == ocular;
+    }
+
+    /**
+     * 【案例⑨ 第三轮】当前激活的目镜通道是否为「筒镜（高倍）」——决定镜身要不要走
+     * 掩码裁剪。判别输入与上游三分支（renderScope / renderSight / renderBoth）同源：
+     * display json 的 {@code scope}/{@code sight} 双 flag + {@code views[]} 当前通道值。
+     *
+     * <h2>第二轮判别器为何误伤（教训：命名≠物理属性）</h2>
+     * 当时直接读 {@code ocularIsScopeByIndex} —— 它的语义是「该节点名带不带
+     * {@code ocular_scope} 前缀」，纯倍镜（AUG 默认镜 / ACOG / lpvo 等）的目镜名
+     * 是普通 {@code ocular}，映射恒 false ⇒ 被误判为「非筒镜」而误关裁剪
+     * （用户实测：倍镜组合高倍组与 AUG 默认镜失去一切裁剪痕迹）。
+     * 还有 standard_8x（views=[1,1] 双 zoom 全组 1）、mk5hd（views=[2,2,1]）这类
+     * 「flag 与命名不同构」的模型，只有 flag+通道才是稳态判据。
+     *
+     * <pre>
+     * 纯筒镜（scope=true, sight=false）  → 恒 true（镜身恒裁，含 8x/lpvo/elcan 的多档 zoom）
+     * 纯红点/全息（sight=true, scope=false）→ 恒 false（上游 renderSight 无条件画镜身）
+     * 组合镜（双 flag）                   → 看当前通道：通道查不到/映射缺失时回退 true
+     *                                     （保守维持旧行为，与「宁可多画」原则一致）
+     * </pre>
+     */
+    private boolean activeGroupIsScope() {
+        if (isSight && !isScope) {
+            return false; // 纯红点/全息：上游 renderSight 从不裁镜身
+        }
+        if (isScope && !isSight) {
+            return true;  // 纯筒镜：目镜无论叫什么名都是物理高倍通道
+        }
+        // 组合镜（hamr/vudu/mk5hd）：views[zoom] 选出当前通道；通道组内没有
+        // 「名符其实」的筒镜目镜（如纯 plain-ocular 命名）时回退 true = 恒裁旧行为。
+        Integer activeIndex = activeViewGroup == 0 ? null : activeOcularIndex();
+        if (activeIndex == null) {
+            return true;
+        }
+        return Boolean.TRUE.equals(ocularIsScopeByIndex.get(activeIndex));
     }
 
     /**

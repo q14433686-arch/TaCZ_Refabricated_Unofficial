@@ -201,9 +201,83 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         yaw = Math.toDegrees(yaw);
         pitch = Math.toDegrees(pitch);
         roll = Math.toDegrees(roll);
-        event.setYaw((float) yaw + event.getYaw());
-        event.setPitch((float) pitch + event.getPitch());
-        event.setRoll((float) roll + event.getRoll());
+        float inYaw = event.getYaw();
+        float inPitch = event.getPitch();
+        float inRoll = event.getRoll();
+        event.setYaw((float) yaw + inYaw);
+        event.setPitch((float) pitch + inPitch);
+        event.setRoll((float) roll + inRoll);
+        if (com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG.get()) {
+            debugRecoilLevelCam(q, multiplier, (float) yaw, (float) pitch, (float) roll, inYaw, inPitch, inRoll);
+        }
+    }
+
+    /**
+     * 【RecoilDebug 探针 · 世界相机动画】开火动画驱动世界摄像机的逐帧取证。
+     *
+     * <p>已知疑点（待日志裁决）：此处把视空间动画四元数按 ZYX 顺序分解出
+     * (yaw,pitch,roll) 后**加在世界系欧拉角**上（yaw 叠在最外层世界 Y 轴），
+     * 而正确的选择子复合应对应 YXZ 内旋序。静态推导该错配的误差只随俯仰角耦合、
+     * 与朝向无关，与用户「对角朝向固定偏」症状指纹不符——日志将双向验证。</p>
+     */
+    private static void debugRecoilLevelCam(Quaternionf q, float mult, float dYaw, float dPitch, float dRoll,
+                                            float inYaw, float inPitch, float inRoll) {
+        try {
+            double angleDeg = Math.toDegrees(2 * Math.acos(Math.min(1, Math.abs(q.w()))));
+            if (angleDeg < 0.05) {
+                return;
+            }
+            LocalPlayer player = Minecraft.getInstance().player;
+            float facingY = player == null ? Float.NaN : Mth.wrapDegrees(player.getYRot());
+            float facingX = player == null ? Float.NaN : player.getXRot();
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ RecoilDebug] levelCam ms={} q=({},{},{},{}) mult={} ang={} eulerD=({},{},{}) in=({},{},{}) facing=({},{}) shader={} irisHand={}",
+                    System.currentTimeMillis(),
+                    f(q.x()), f(q.y()), f(q.z()), f(q.w()), f(mult), f(angleDeg),
+                    f(dYaw), f(dPitch), f(dRoll),
+                    f(inYaw), f(inPitch), f(inRoll),
+                    f(facingX), f(facingY),
+                    com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack(),
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * 【RecoilDebug 探针 · 手持相机动画】记录动画四元数左乘/右乘到手部基座之前的
+     * 完整状态：四元数、乘子、以及<b>叠加前</b>的手部基座矩阵（3x3 旋转 + 平移）。
+     *
+     * <p>若手部基座在 vanilla 管线混入非纯旋转内容（缩放/切变），
+     * 视空间后乘假设即被破坏，误差随朝向出场——对角朝向的固定侧偏正属此类指纹；
+     * Iris 手部 pass 基座≈单位阵时则天然豁免，与「开光影正常」的目击吻合。</p>
+     */
+    protected static void debugRecoilItemCam(Quaternionf q, float mult, PoseStack poseStack) {
+        try {
+            double angleDeg = Math.toDegrees(2 * Math.acos(Math.min(1, Math.abs(q.w()))));
+            if (angleDeg < 0.05) {
+                return;
+            }
+            Matrix4f b = poseStack.last().pose();
+            LocalPlayer player = Minecraft.getInstance().player;
+            float facingY = player == null ? Float.NaN : Mth.wrapDegrees(player.getYRot());
+            float facingX = player == null ? Float.NaN : player.getXRot();
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ RecoilDebug] itemCam ms={} q=({},{},{},{}) mult={} ang={} base3x3=[{},{},{}; {},{},{}; {},{},{}] baseT=({},{},{}) facing=({},{}) shader={} irisHand={}",
+                    System.currentTimeMillis(),
+                    f(q.x()), f(q.y()), f(q.z()), f(q.w()), f(mult), f(angleDeg),
+                    f(b.m00()), f(b.m01()), f(b.m02()),
+                    f(b.m10()), f(b.m11()), f(b.m12()),
+                    f(b.m20()), f(b.m21()), f(b.m22()),
+                    f(b.m30()), f(b.m31()), f(b.m32()),
+                    f(facingX), f(facingY),
+                    com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack(),
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static String f(double v) {
+        return String.format(java.util.Locale.ROOT, "%+.5f", v);
     }
 
     /**
@@ -220,6 +294,9 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         }
         Quaternionf quaternion = MathUtil.multiplyQuaternion(model.getCameraAnimationObject().rotationQuaternion, multiplier);
         PoseStack poseStack = event.getPoseStack();
+        if (com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG.get()) {
+            debugRecoilItemCam(quaternion, multiplier, poseStack);
+        }
         poseStack.mulPose(quaternion);
     }
 

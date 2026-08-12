@@ -204,34 +204,104 @@ world corruption, crashes, data loss and mod conflicts. Non-commercial project.
 ## ⑤ Changelog
 
 ```markdown
-Alpha 2 public test build of this Fabric port.
+Beta 3 Hotfix – public test build of this Fabric port.
 
 Ported from the upstream Fabric project (`Sh1roCu/TACZ-Refabricated`),
 based on TACZ `1.1.8-hotfix`.
 
 ### Highlights
-- Iris/shader-pack scope compatibility improved: in-scope mask clipping now runs
-  through an Iris HAND shader bridge instead of falling back to a broken mask path.
-- Illuminated reticles are now rendered as emissive/no-cardinal-lighting geometry,
-  fixing direction-dependent brightness under both vanilla and Iris.
-- Tracer rendering was moved closer to upstream behavior (`energySwirl`, full block
-  light, per-bullet first-person muzzle offset caching). Ballistics/hit detection
-  are unchanged.
-- LRTactical partial integration remains included via `provides: ["lrtactical"]`.
-
+- Fixed a long-standing viewmodel bug: while aiming-down-sights, firing or reloading
+  made the whole gun body slide sideways by several degrees when facing the four
+  diagonal headings (SE/NW drifted left, NE/SW right; vanilla renderer only — Iris
+  shader packs were not affected). Root cause: the 26.2 vanilla hand pass premultiplies
+  a per-facing camera base rotation that the ported ADS-constraint math did not
+  neutralize; the anisotropic constraint coefficients were therefore rotated by that
+  facing (R·diag·R leakage, ~sin(2·yaw)). The fix conjugates against the inverse base
+  (Bᵀ·diag·Bᵀ), restoring exact 1.21.1 behavior in all 8 headings. Hip-fire and
+  shader-pack rendering are unchanged.
+- See-through scopes (offscreen-mask path): the gun body, non-scope attachments and
+  both muzzle-flash layers (the main quad and the additive glow swirl) are now
+  discarded inside the sight picture, so the world shows through the scope lens
+  correctly (vanilla renderer). The glow layer replicates vanilla's 26.2
+  energy_swirl setup (shared entity shader + APPLY_TEXTURE_MATRIX + additive
+  blending) with the mask discard added on top, so its look is unchanged.
+- Third-person gun animation: fixed a long-standing failure where switching guns
+  once with Player Animation Library installed permanently killed all third-person
+  gun animations for the session (a full world reload was required). Root cause is in
+  PAL itself: its FADE_OUT modifier is never removed from the controller chain and
+  zeroes out everything below it once finished; our stop path now uses a
+  FADE_IN-to-null fade, which PAL removes correctly after completion. Gun switching,
+  holstering and re-equipping now re-play animations as expected.
+- Scope mask shape upgraded with an opt-out: the ocular mask is now the filled
+  convex hull of the ocular projection (`ScopeMaskHullFill=true`), fixing sparse
+  sliver-glass oculars (AUG built-in sight, Elcan slats) leaving scope-body
+  fragments inside the lens. Set to false to instantly fall back to the legacy
+  geometric projection.
 ### Notes
-- Alpha 2 test build — playable, but expect bugs.
 - Requires Java 25 and Forge Config API Port.
 - Gun packs requiring TacZ:Arcana (encrypted assets) will show missing textures.
 
 ### Known issues
-- Tracer visuals may still have display offset differences; current evidence points
-  to rendering geometry/offset only, not ballistic or hit-detection errors.
-- PIP / second-world scope rendering is not enabled by default and remains paused
-  as a mainline approach.
-- LRTactical is partially integrated; flash shield and some advanced add-on systems
-  are not complete yet.
+- Laser-sight recoloring works via vertex color on a vanilla emissive render type.
+  Under an active Iris shader pack the pack decides whether that color is applied:
+  minimal packs without colored-emissive support will keep the laser at its default
+  color. This is a shader-pack limitation, not a GPU or driver issue.
+- The ocular mask is now the filled convex hull of the ocular projection
+  (ScopeMaskHullFill=true). On some scopes the hull can be slightly larger than
+  the true aperture, nibbling the scope body's inner rim; if you see that, set
+  ScopeMaskHullFill=false to fall back instantly and send us a screenshot with
+  ScopeMaskDebug=true.
+- PIP / second-world scope rendering is not enabled by default and remains paused.
+- Under active Iris shader packs the in-lens masking stays in its safe fallback
+  (scope tube interior visible inside the ocular).
+- LRTactical is partially integrated; flash shield and some add-on systems are
+  incomplete.
 
+```
+
+---
+
+## ⑤-bis 次回发布用 Changelog 草稿（案例⑧ 正式修复 · 2026-08-12）
+
+> 下一版（Beta 3 Hotfix-2 / Beta 4）发布时用本块替换线上 changelog；
+> §⑤ 里的 Beta 3 Hotfix 块是已发布原文，留档勿动。
+
+```markdown
+Beta 3 Hotfix-2 – public test build of this Fabric port.
+
+### Fixes
+- First-person ADS viewmodel: the diagonal-heading recoil fix shipped in
+  Beta-3-Hotfix (2026-08-10) turned out to be defective. Its B^T*diag*B^T
+  sandwich conjugated only the raw coefficient D = (ICAx-1, ICAy-1, 1-ICAz)
+  and left the write-back sign flip Q = diag(-1,-1,+1) outside the frame
+  transform; since Q does not commute with rotations, aiming down sights while
+  reloading or firing made the whole arm+gun assembly rotate with the player's
+  heading (north drifted left, west right, the gun ran backward when looking
+  up/down, recoil over-pressed downward — everything normal only under Iris
+  shader packs). The constraint translation now conjugates the true authored
+  coefficient C = Q*D inside the live pose frame (v = (Q*W*Q)*D*Wᵀ*v0, W = the
+  write-time pose rotation), matching 1.21.1 behavior in all eight headings:
+  no heading-locked rotation, no diagonal-direction lateral leak, natural
+  muzzle feel. Verified in-body on both 26.1.2 and 26.2. Instant fallback:
+  ConstraintCompensateMode=0 restores the pre-fix plain form.
+- See-through scopes: the physical ocular_ring (the black eyepiece rim present on all
+  14 mid/high-magnification scopes of the default pack) is now drawn unclipped while
+  aiming, mirroring upstream 1.21.1 stencil-ALWAYS handling — previously it rode the
+  mask-clipped body batch, so the oculus mask nibbled its inner rim. Adapted for the
+  26.2 mask architecture from the sibling 26.1.2 port's verified fix. Instant
+  fallback: ScopeOcularRingFix=false.
+- Low-power / red-dot sights (including the low-power side of combo scopes) no longer
+  mask-clip the sight body, restoring upstream 1.21.1 renderSight semantics (the sight
+  body is drawn unconditionally there). Our clip had been nibbling the sight's own
+  inner frame since the scope-mask architecture landed. Instant fallback:
+  ScopeSightClipFix=false.
+- Player Animation Library, prone-dive exit: this build carries the sibling 26.1.2
+  port's controller reset at the prone-to-standing edge (ported 1:1; it passed
+  in-body verification on 26.1.2). On 26.2 the following remains a KNOWN ISSUE:
+  in third person with PAL installed, after a prone cycle the arms can show a
+  stale pose until the camera view is toggled; a prone cycle is required to
+  trigger it, standing gun-switches alone do not. Cause not established —
+  recorded as phenomenon only.
 ```
 
 ---

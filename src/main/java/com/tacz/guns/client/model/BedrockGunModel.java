@@ -293,6 +293,23 @@ public class BedrockGunModel extends BedrockAnimatedModel {
                        RenderType renderType,
                        int light,
                        int overlay) {
+        submit(poseStack, gunItem, transformType, collector, renderType, null, light, overlay);
+    }
+
+    /**
+     * 带贴图参数的提交：枪身可能要在「开镜当帧」换成被目镜掩码裁剪的 RenderType，
+     * 而裁剪版按贴图构造（见 {@code ScopeBodyRenderTypes#clipForViewmodel}）。
+     *
+     * @param gunTexture 枪身贴图；为 {@code null} 时不做镜内裁剪（回退旧行为）
+     */
+    public void submit(PoseStack poseStack,
+                       ItemStack gunItem,
+                       ItemDisplayContext transformType,
+                       SubmitNodeCollector collector,
+                       RenderType renderType,
+                       @javax.annotation.Nullable net.minecraft.resources.Identifier gunTexture,
+                       int light,
+                       int overlay) {
         if (!prepareRenderState(gunItem)) {
             return;
         }
@@ -315,7 +332,14 @@ public class BedrockGunModel extends BedrockAnimatedModel {
                     transformType, collector, light, overlay);
         }
 
-        super.submit(poseStack, transformType, collector, renderType, light, overlay);
+        // 【镜内裁切 · 枪身】这一步必须排在瞄具提交之后：是否裁剪取决于
+        // 「本帧有没有目镜几何登记进掩码清单」，而登记发生在上面瞄具提交的内部。
+        // （调用方 wrapper 在调本方法之前就组好了 renderType，那时清单还是空的，
+        //  所以裁剪判断只能在这里做，不能上提到 wrapper。）
+        super.submit(poseStack, transformType, collector,
+                com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipForViewmodel(
+                        renderType, gunTexture, transformType != null && transformType.firstPerson()),
+                light, overlay);
     }
 
 

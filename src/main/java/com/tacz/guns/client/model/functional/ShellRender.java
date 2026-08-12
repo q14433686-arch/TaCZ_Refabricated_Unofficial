@@ -59,6 +59,10 @@ public class ShellRender implements IFunctionalSubmitter {
     }
 
     private void renderShell(GunDisplayInstance display, GunData gunData, PoseStack poseStack, BedrockGunModel gunModel) {
+        // 【RecoilDebug 隔离】第 27.4 轮：旧(delegateRender)抛壳路径同样受运行时开关控制
+        if (RenderConfig.DEBUG_DISABLE_SHELL != null && RenderConfig.DEBUG_DISABLE_SHELL.get()) {
+            return;
+        }
         ShellEjection shellEjection = display.getShellEjection();
         if (shellEjection == null) {
             SHELL_QUEUE.clear();
@@ -153,6 +157,10 @@ public class ShellRender implements IFunctionalSubmitter {
 
     @Override
     public void extract(ExtractionContext context) {
+        // 【RecoilDebug 隔离】第 27.4 轮：运行时关闭抛壳，用于定位斜向"后坐力固定侧偏"的视觉载体
+        if (RenderConfig.DEBUG_DISABLE_SHELL != null && RenderConfig.DEBUG_DISABLE_SHELL.get()) {
+            return;
+        }
         if (IrisCompat.isRenderShadow() || !isSelf || !shellContextMatchesCamera(context.displayContext())) {
             return;
         }

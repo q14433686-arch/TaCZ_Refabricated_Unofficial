@@ -83,7 +83,30 @@ public class BedrockAnimatedModel extends BedrockModel implements AnimationListe
         }
     }
 
+    /** 【RecoilDebug】孤儿清理日志节流器（2s），避免非枪械路径持有时刷爆日志。 */
+    private static volatile long recoilDebugLastOrphanLogMs = 0;
+
     public void cleanCameraAnimationTransform() {
+        // 【RecoilDebug 探针】本方法按枪械渲染约定只应被第一人称渲染路径在
+        // 消费完摄像机动画数据后调用（调用前 30ms 内必有 GunItemRendererWrapper 心跳）。
+        // 若心跳缺席，说明存在**第二条消费者**（其他渲染 pass/其他渲染器）在清倒
+        // rotationQuaternion —— 它同时解释了「本次值为何与上次写入对不上」。
+        if (com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG.get()
+                && !com.tacz.guns.client.renderer.item.GunItemRendererWrapper.recoilDebugExpectedCleanOwner()) {
+            long now = System.currentTimeMillis();
+            if (now - recoilDebugLastOrphanLogMs > 2000) {
+                recoilDebugLastOrphanLogMs = now;
+                StackTraceElement[] st = Thread.currentThread().getStackTrace();
+                StringBuilder sb = new StringBuilder();
+                for (int i = 2; i < Math.min(st.length, 10); i++) {
+                    sb.append(st[i].getClassName()).append('.').append(st[i].getMethodName());
+                    if (i < Math.min(st.length, 10) - 1) {
+                        sb.append(" <= ");
+                    }
+                }
+                com.tacz.guns.GunMod.LOGGER.info("[TACZ RecoilDebug] cleanOrphan caller={}", sb);
+            }
+        }
         cameraAnimationObject.rotationQuaternion = new Quaternionf(0.0F, 0.0F, 0.0F, 1.0F);
     }
 

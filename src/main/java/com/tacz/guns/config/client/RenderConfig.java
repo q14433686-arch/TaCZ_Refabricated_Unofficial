@@ -15,6 +15,11 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_ENABLE;
     /** 【调试】把瞄具目镜掩码贴图画到屏幕左上角，用于排查离屏渲染链路。默认关闭。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_DEBUG;
+    public static ForgeConfigSpec.BooleanValue SCOPE_MASK_HULL_FILL;
+    /** 开镜掩码激活时，物理目镜框 {@code ocular_ring} 摘除主提交并以未裁剪 RenderType 重画（上游 stencil-ALWAYS 语义）。默认<b>开启</b>。 */
+    public static ForgeConfigSpec.BooleanValue SCOPE_OCULAR_RING_FIX;
+    /** 低倍/红点通道（含组合镜低倍组）激活时，镜身不做目镜掩码裁剪（上游 renderSight 无条件绘制镜身）。默认<b>开启</b>。 */
+    public static ForgeConfigSpec.BooleanValue SCOPE_SIGHT_CLIP_FIX;
     public static ForgeConfigSpec.BooleanValue GUN_HUD_ENABLE;
     public static ForgeConfigSpec.BooleanValue KILL_AMOUNT_ENABLE;
     public static ForgeConfigSpec.DoubleValue KILL_AMOUNT_DURATION_SECOND;
@@ -25,8 +30,52 @@ public class RenderConfig {
     public static ForgeConfigSpec.IntValue TRACER_DEBUG_INTERVAL_MS;
     public static ForgeConfigSpec.IntValue TRACER_DEBUG_FIRST_TICKS;
     public static ForgeConfigSpec.BooleanValue SHELL_EJECTION_DEBUG;
+    public static ForgeConfigSpec.BooleanValue LASER_DEBUG;
     public static ForgeConfigSpec.ConfigValue<String> SHELL_EJECTION_DEBUG_GUN;
     public static ForgeConfigSpec.IntValue SHELL_EJECTION_DEBUG_INTERVAL_MS;
+    public static ForgeConfigSpec.BooleanValue RECOIL_DEBUG;
+    /** 【RecoilDebug 隔离】运行时关闭枪口火光渲染（定位斜向侧偏视觉载体用）。默认 false=正常渲染。 */
+    public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_MUZZLE_FLASH;
+    /** 【RecoilDebug 隔离】运行时关闭第一人称抛壳。 */
+    public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_SHELL;
+    /** 【RecoilDebug 隔离】运行时关闭曳光弹道实体渲染。 */
+    public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_TRACER;
+    /** 【RecoilDebug 隔离】运行时关闭摄像机动画（镜头摇动）的两处消费（世界叠加 + 手部旋转），含数据清理。 */
+    public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_CAMERA_ANIM;
+    /**
+     * 【案例⑧ · 第 28~30 轮实验开关】第一人称手部锁视角强制（renderFirstPerson 捕获基座后
+     * 左乘 (B·MV)⁻¹）。第 30 轮裁决：modelView 在手部 pass 不受控（第 26 轮枪口归一化实证 +
+     * 第 29 轮缩放污染探针）+ 用户实测「没解决」⇒ 理论证伪，默认关闭；保留开关供 A/B。
+     */
+    public static ForgeConfigSpec.BooleanValue HAND_VIEW_LOCK_FIX;
+    /**
+     * 【案例⑧ · 第 30 轮 A/B 开关，第 32 轮起废弃（代码零读取）】
+     * 原「false 强制落 mode 0」legacy 映射被现场证明是配置陷阱：用户 A/B 期间
+     * 把本键留在 false，导致其显式设置的 ConstraintCompensateMode=2 被静默否决，
+     * 实测跑的其实是 mode 0。自第 32 轮起档位只认 {@link #CONSTRAINT_COMPENSATE_MODE}；
+     * 本布尔仅保留注册，让旧配置文件原样加载不报错。
+     */
+    public static ForgeConfigSpec.BooleanValue CONSTRAINT_BASE_COMPENSATE;
+    /**
+     * 【案例⑧ · 第 31~35 轮】约束位移写入形态：
+     * 0 = plain（修复前原版 diag·v0；秒回退档——用户两次实测本案症状全消，
+     *     已知代价：四方向斜向后坐力侧漏原样保留）；
+     * 1 = Bᵀ·diag·Bᵀ 三明治（第 31 轮在体否决：本案病灶注入源；归档勿用）；
+     * 2 = 姿态帧共轭 P_post·diag·P_preᵀ·v0（第 33 轮在体否决：斜向漏消除但
+     *     「整体随朝向转」复现 + 手感不自然；归档勿用）；
+     * 3 = 【本仓库默认 · 第 36 轮起】从 26.1.2 移植线在体验证形态转写：
+     *     v = Ŵ·D·Wᵀ·v0，Ŵ=Q·W·Q。邻链关键认识：写回 (−x,−y,+z) 藏了
+     *     Q=diag(−1,−1,+1)，真正 authored 系数是 C=Q·D；Q 与旋转不可交换，
+     *     必须连 Q 一起共轭。26.1.2 与 26.2 双线在体验证通过
+     *     （第 36 轮用户答卷「不转 / 不漏 / 自然」三项全过，案例⑧ 结案）。
+     */
+    public static ForgeConfigSpec.IntValue CONSTRAINT_COMPENSATE_MODE;
+    /**
+     * 【案例⑧ · 第 29 轮并行开关】锁视角读取 modelView 时剔除 3x3 缩放分量：
+     * v5 日志实测该读取在部分帧上携带 0.9933~1.0068 的均匀缩放（旋转分部逐位不变），
+     * 缩放会经 (B·MV)⁻¹ 烙进基座。默认开启；置 false 可单独回退本步而不动第 28 轮主修复。
+     */
+    public static ForgeConfigSpec.BooleanValue HAND_VIEW_LOCK_NORMALIZE;
     public static ForgeConfigSpec.BooleanValue DISABLE_INTERACT_HUD_TEXT;
     public static ForgeConfigSpec.BooleanValue AUTO_SELECT_GUN_SMITH_TABLE_FILTER;
     public static ForgeConfigSpec.IntValue DAMAGE_COUNTER_RESET_TIME;
@@ -67,6 +116,46 @@ public class RenderConfig {
         SCOPE_MASK_DEBUG = builder
                 .comment("Debug: draw the scope ocular mask texture at the top-left corner.")
                 .define("ScopeMaskDebug", false);
+        // 【案例③ 第二轮：凸包填充模式】
+        // 「几何投影」掩码（默认枪包实测覆盖 33 款）在两类瞄具上失真：
+        //   - 全玻璃板目镜（红点/全息）：掩码≈孔径，表现正确；
+        //   - 板条拼玻璃的目镜（AUG 3 条十字、elcan 8 片竖板）：掩码只有板条区域,
+        //     孔径内的镜身内壁网格漏裁 = 镜片里残留灰块（AUG 最明显）;
+        //   - 高倍筒镜若玻璃板大于真实孔径, 又会把镜框内圈啃掉一圈 (黑边被裁)。
+        // 凸包模式：把当帧目镜几何投影的【2D 凸包】整体涂进掩码 —
+        // 板条展开的跨度正好勾勒出孔径内切多边形，掩码从「形状描摹」升级为「孔径近似」。
+        // 严格比板条掩码覆盖更大 → 漏裁类残块必消；镜框内圈是否在部分镜种被啃,
+        // 由用户对照截图裁决（开 ScopeMaskDebug 可见掩码本体）。
+        SCOPE_MASK_HULL_FILL = builder
+                .comment("Scope mask shape: true = fill the convex hull of the ocular projection (recommended;",
+                        "fixes sparse-sliver oculars like AUG leaving scope-body fragments inside the sight picture).",
+                        "false = legacy raw ocular geometry projection, kept as an instant fallback.")
+                .define("ScopeMaskHullFill", true);
+
+        // 【案例⑨ · 26.1.2 邻链回流适配】ocular_ring 物理目镜框：上游 1.21.1 以
+        // stencilFunc(ALWAYS) 无裁剪独立绘制（实体件，非孔径/遮光几何；默认枪包 14 个
+        // 中高倍镜全有）。26.1.2 在体实证：混入会被 ocular 区域杀掉的批 ⇒ 内环被啃。
+        // 26.2 掩码架构同源病灶 = 案例③ 遗留「镜框内圈被 hull 掩码啃掉」。处置 =
+        // 开镜掩码激活时摘除主提交、事后以未裁剪原版 RenderType 重画（含子树）。
+        // false = 秒回退到旧行为（随主提交走裁剪版）。
+        SCOPE_OCULAR_RING_FIX = builder
+                .comment("[FIX] Draw the physical ocular_ring (scope eyepiece rim) unclipped while aiming;",
+                        "mirrors upstream 1.21.1 stencil-ALWAYS handling (verified in-body on the 26.1.2 port).",
+                        "Without this, the oculus mask nibbles the ring's inner rim on all mid/high-zoom scopes",
+                        "that contain the bone. Set false to revert instantly. Default on.")
+                .define("ScopeOcularRingFix", true);
+
+        // 【案例⑨ 第二轮】sight（低倍/红点）通道不留掩码裁剪：上游 renderSight 的
+        // scope_body 无条件绘制（无圆形 INVERT 模板；组合镜只对筒镜组走筒镜逻辑）。
+        // 掩码对 sight 激活帧裁剪镜身 ⇒ 瞄具自己的内框/边缘在镜片投影内被啃缺口
+        // （用户报告的慢性低倍镜病灶）。sight 目镜本就恒隐藏（恒掏空=透视窗），
+        // 故撤裁后观感与上游一致。false = 旧行为（sight 也裁）。
+        SCOPE_SIGHT_CLIP_FIX = builder
+                .comment("[FIX] Skip the ocular-mask body clip while aiming through a low-power/red-dot",
+                        "sight (including the low-power side of combo scopes). Upstream 1.21.1 renderSight",
+                        "draws the sight body unconditionally; our clip nibbled the sight's own inner frame.",
+                        "Default on; set false to restore legacy clipping on sights too.")
+                .define("ScopeSightClipFix", true);
 
         builder.comment("Whether or not to display the gun's HUD");
         GUN_HUD_ENABLE = builder.define("GunHUDEnable", true);
@@ -105,6 +194,92 @@ public class RenderConfig {
         SHELL_EJECTION_DEBUG_INTERVAL_MS = builder
                 .comment("[DEBUG] Minimum interval between shell ejection debug log lines, in milliseconds.")
                 .defineInRange("ShellEjectionDebugIntervalMs", 250, 50, 10000);
+
+        // 【LaserDebug · 第 28 轮：NVIDIA + Iris 下激光改颜色不生效 一案的二分探针】
+        // 用户实测：N 卡 + 光影开启时改装界面里换激光颜色无效（N 卡关光影 / A 卡开关光影均正常）。
+        // 激光颜色走【顶点色】提交（BeamRenderer.setColor），渲染类型用 vanilla
+        // entityTranslucentEmissive。本探针在每次提交时记录「待写入的 RGB」，
+        // 据此二分：若日志里颜色跟着改色变而画面不变 → 问题在 GL/Iris 管线侧；
+        // 若日志里颜色也不变 → 问题在数据侧（NBT/同步/索引缓存）。
+        LASER_DEBUG = builder
+                .comment("[DEBUG] Log the laser beam vertex color at each submit (throttled 1s),",
+                        "to bisect the 'laser recolor has no effect on NVIDIA + shader pack' issue. Default off.")
+                .define("LaserDebug", false);
+
+        RECOIL_DEBUG = builder
+                .comment("[DEBUG] Log camera recoil diagnostics: per-shot recoil spline envelopes and per-frame",
+                        "pitch/yaw deltas applied to the player rotation with facing + iris state, plus the level/item",
+                        "camera-animation quaternions. Used to trace direction-bias of recoil feedback vs facing. Default off.")
+                .define("RecoilDebug", false);
+
+        // 【RecoilDebug · 第 27.4 轮：斜向"后坐力反馈固定侧偏"视觉载体隔离开关】
+        // 数值取证已证明第一人称渲染管线全链干净（基座/绘制残差/后坐/镜头动画/枪根与枪口
+        // 视图坐标在开枪的斜向帧上全部朝向无差异），但用户仍能稳定复现 sin(2θ) 镜像规律的
+        // 侧偏 → 载体必为某个可视元素。以下四个运行时开关供逐项关闭定位：
+        // 关掉哪一项后偏转消失，哪一项就是载体。
+        DEBUG_DISABLE_MUZZLE_FLASH = builder
+                .define("DebugDisableMuzzleFlash", false);
+        DEBUG_DISABLE_SHELL = builder
+                .define("DebugDisableShell", false);
+        DEBUG_DISABLE_TRACER = builder
+                .define("DebugDisableTracer", false);
+        DEBUG_DISABLE_CAMERA_ANIM = builder
+                .define("DebugDisableCameraAnim", false);
+
+        // 【案例⑧主修复 · 第 28 轮】手部锁视角强制。
+        // 取证链（20:25 日志, v3 探针逐帧相位对齐）：开镜换弹/开火期间
+        // R=modelView×手部基座 ≡ 摄像机动画全量旋转（k=1.000, corr=0.998），
+        // 轴为世界系固定轴（跨朝向世界系夹角中位 6.5° = 噪声底）——即手部链
+        // 完全丢失摄像机动画的世界系补偿，整枪图像被该旋转整体甩动，
+        // 且屏幕投影方向随玩家朝向旋转 ⇒「臂枪整体随朝向平移」「斜向最偏」
+        // 「除北外后坐过分下压」。Iris 手部 pass 基座≈单位阵使 R 恒=I，
+        // 与「开光影全部正常」的目击互洽 ⇒ 修复 = 把 vanilla 手部链也钉成 R=I。
+        // 关闭本开关即可秒回退旧行为（掩码类改动并行开关铁律）。
+        // 【第 30 轮裁决·默认回退】用户复测「没解决」+ 第 26 轮的既有实证
+        // （26.2 手部 pass 的 RenderSystem modelView 仅为兼容保留、内容不受控——
+        // 枪口归一化当时正是弃用它改为入口基座转置才定案）+ 第 29 轮探针抓到该读取
+        // 携带合法缩放污染，三重证据表明：锁视角修复建立在错误的矩阵上。
+        // 默认改回 false（=回到「四方向斜向修复」定版以来用户实测过的基线）；
+        // 仍保留开关供你的 A/B 实验随时开回。
+        HAND_VIEW_LOCK_FIX = builder
+                .comment("[EXPERIMENT] Force-lock first-person hand view via the RenderSystem modelView matrix.",
+                        "26.2 keeps that matrix compat-only for the hand pass, so this lock was reverted to",
+                        "OFF by default after in-body rebuttal. Enable only for A/B experiments.")
+                .define("HandViewLockFix", false);
+
+        // 第 32 轮起：本布尔已不再被任何代码读取（原 legacy 否决映射证明是配置陷阱，
+        // 会把用户显式设置的 ConstraintCompensateMode 静默降级）。保留注册仅为
+        // 兼容旧配置文件；档位一律用 ConstraintCompensateMode。
+        CONSTRAINT_BASE_COMPENSATE = builder
+                .comment("[DEPRECATED since round 32] No longer read by any code. Kept only so existing",
+                        "config files load cleanly. Use ConstraintCompensateMode (0/1/2) instead.")
+                .define("ConstraintBaseCompensate", true);
+
+        // 第 33 轮：mode 2 首次真实生效即被用户在体否决（回报「①转 / ②不漏 / ③不自然」——
+        // 姿态帧共轭确实消除了斜向侧漏，但「整枪随朝向转」复现、且手感不自然），
+        // 与 mode 1（三明治）并列归档。默认自此回落 mode 0（plain）：
+        // 用户两次全场实测确认的「本案症状全消」态；已知代价 = 8/10 前就存在的
+        // 四方向斜向后坐力侧漏原样回归。
+        // 第 35 轮追加 mode 3：26.1.2 线在体验证形态（写入向量 Ŵ·D·Wᵀ·v0，Ŵ=Q·W·Q，
+        // 即把写回符号里藏的 Q=diag(-1,-1,+1) 一并纳入共轭）；第 36 轮 26.2 在体
+        // 复现通过（不转/不漏/自然）⇒ 翻为默认，mode 0 留作秒回退档。
+        CONSTRAINT_COMPENSATE_MODE = builder
+                .comment("[FIX] Constraint-translation write form:",
+                        "0 = plain (instant fallback; user-verified clean of case-8 main symptoms; known cost: diagonal ADS recoil leak),",
+                        "1 = legacy B^T-diag-B^T sandwich (REJECTED in-body: facing-locked rotation; archived),",
+                        "2 = pose-frame conjugate (REJECTED in-body: leak fixed but rotation returned + unnatural feel; archived),",
+                        "3 = DEFAULT: conjugates the true authored coefficient C=diag(-1,-1,1)*D inside the live pose frame;",
+                        "    verified in-body on both 26.1.2 and 26.2 (no rotation, no diagonal leak, natural feel).",
+                        "The old ConstraintBaseCompensate boolean is deprecated and fully ignored.")
+                .defineInRange("ConstraintCompensateMode", 3, 0, 3);
+
+        // 第 29 轮：实测 modelView 顶部在部分帧携带 ~0.7% 均匀缩放（旋转不变），
+        // 不剔除会被 (B·MV)⁻¹ 烙进基座与整条姿态链；本开关只控制归一化这一步。
+        HAND_VIEW_LOCK_NORMALIZE = builder
+                .comment("[FIX] Strip any 3x3 scale from the captured modelView before composing the",
+                        "hand-view lock matrix (observed 0.9933~1.0068 uniform scale on some frames).",
+                        "Only effective when HandViewLockFix is on. Default on.")
+                .define("HandViewLockNormalize", true);
 
         builder.comment("Disable the interact hud text in center of the screen");
         DISABLE_INTERACT_HUD_TEXT = builder.define("DisableInteractHudText", false);
