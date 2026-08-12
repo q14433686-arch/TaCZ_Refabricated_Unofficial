@@ -510,3 +510,12 @@ W·D·Wᵀ（消漏成功但「转」复现）。**唯独没有人共轭过「�
 RenderType，开镜时内环被（hull 略偏大的）掩码啃掉——这正是我们案例③遗留
 已知问题「镜框内圈被啃」的真正构成。**待用户在 26.2 复测你建议的清单**
 （ACOG/AUG/LPVO/8x/HAMR/Vudu）。
+
+> **2026-08-12 同日反流（案例⑨ 第二轮）**：请顺手检查你们 `apertureActive` 的
+> flat 条件（`!ocularParts.isEmpty() && aimingProgress>阈值`）——26.2 同款条件
+> 把 **sight 通道（纯红点 + 组合镜低倍组）** 也卷进了镜身裁剪，而上游
+> `renderSight`/`renderBoth` 逐行事实是：低倍链 scope_body 无条件绘制、无任何
+> 圆形 INVERT 模板（archive/SCOPE_UPSTREAM_TRUTH §4）。用户刚指认这是「很早就
+> 有的」慢性病灶。我们的修法：`activeGroupIsScope()` 门控——sight 激活帧
+> `maskable=false`（你们的 ring 修复只摘了倍镜的物理环，sight 通道基底病灶
+> 大概率仍在你们那边残留，建议同款门控）。开关名 `ScopeSightClipFix`。

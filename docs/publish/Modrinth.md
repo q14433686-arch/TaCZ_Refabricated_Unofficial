@@ -290,6 +290,11 @@ Beta 3 Hotfix-2 – public test build of this Fabric port.
   mask-clipped body batch, so the oculus mask nibbled its inner rim. Adapted for the
   26.2 mask architecture from the sibling 26.1.2 port's verified fix. Instant
   fallback: ScopeOcularRingFix=false.
+- Low-power / red-dot sights (including the low-power side of combo scopes) no longer
+  mask-clip the sight body, restoring upstream 1.21.1 renderSight semantics (the sight
+  body is drawn unconditionally there). Our clip had been nibbling the sight's own
+  inner frame since the scope-mask architecture landed. Instant fallback:
+  ScopeSightClipFix=false.
 ```
 
 ---

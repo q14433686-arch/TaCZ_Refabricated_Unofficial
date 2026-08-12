@@ -572,6 +572,20 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         boolean maskable = transformType != null && transformType.firstPerson()
                 && !ocularParts.isEmpty()
                 && currentAimingProgress() > AIM_CLIP_START;
+        // 【案例⑨ 第二轮 · sight（低倍/红点通道）激活时镜身不做掩码裁剪】
+        // 上游事实（SCOPE_UPSTREAM_TRUTH §4，逐行核对 renderSight / renderBoth）：
+        // 低倍链【没有】圆形 INVERT 模板、scope_body 无条件绘制；组合镜只对筒镜组
+        // 走筒镜逻辑。我们的掩码若在 sight 通道激活时裁剪镜身，瞄具自己的内框/边缘
+        // （普通镜身几何，红点类没有 ocular_ring 骨骼可摘）会在镜片投影内被啃出
+        // 缺口——用户报告的慢性病灶「低倍镜（含组合镜低倍组）的边的内部某些部分
+        // 被错误裁切」即此。sight 组目镜本就被 shouldDrawOcularBlackout 恒隐藏
+        // （恒掏空 = 透视窗），撤掉镜身裁剪后观感 = 上游 r34 语义：窗内是世界、
+        // 窗框完整，两者都不依赖掩码。开关 false = 旧行为（sight 也裁）。
+        if (maskable && RenderConfig.SCOPE_SIGHT_CLIP_FIX != null
+                && RenderConfig.SCOPE_SIGHT_CLIP_FIX.get()
+                && !activeGroupIsScope()) {
+            maskable = false;
+        }
         // 光影开启时禁用 26.2 的离屏掩码裁剪，退回普通瞄具几何。
         //
         // 现象：Iris/Sulkan 类光影包会接管主世界的若干 pass（发光实体、天气/雾、后处理等），
@@ -896,6 +910,27 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             return true;
         }
         return ocularByIndex.get(activeIndex) == ocular;
+    }
+
+    /**
+     * 【案例⑨ 第二轮】当前激活的目镜组是否为「筒镜（高倍）通道」——决定镜身要不要走
+     * 掩码裁剪的上游事实依据。判定只看 {@code ocularIsScopeByIndex} 标注为筒镜的
+     * 目镜是否在 {@link #isOcularInActiveGroup} 意义下激活：
+     * 纯筒镜 → 恒 true；纯红点/全息 → 恒 false；组合镜 → 随当前通道切换。
+     * 查不到分组信息时 isOcularInActiveGroup 恒 true ⇒ 只要有筒镜组就返回 true，
+     * 维持旧行为（与该处「宁可多画、不误删」原则一致，最坏只退回本案之前的状态）。
+     */
+    private boolean activeGroupIsScope() {
+        for (Map.Entry<Integer, BedrockPart> entry : ocularByIndex.entrySet()) {
+            BedrockPart part = entry.getValue();
+            if (part == null || !Boolean.TRUE.equals(ocularIsScopeByIndex.get(entry.getKey()))) {
+                continue;
+            }
+            if (isOcularInActiveGroup(part)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

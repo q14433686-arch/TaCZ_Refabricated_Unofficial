@@ -1613,3 +1613,24 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
   LPVO（lpvo_1_6，含子骨骼）、8x（standard_8x，含子骨骼）、HAMR/Vudu 双视组——
   看点：镜框内圈在开镜全程是否完整实黑、无被啃缺口，且镜内透视与准星无回归。
   一句「正常/有图」即可裁决；若有任何异样 `ScopeOcularRingFix=false` 秒回退。
+  - **第二轮（同日，用户补充指纹后追加）**：用户指认「这个 bug 很早就有了——低倍镜
+    （包括组合镜的低倍组）的边的内部某些部分被错误裁切」。代码级事实核查闭环：
+    ① 上游逐行事实（archive/SCOPE_UPSTREAM_TRUTH §4）：`renderSight` 无任何圆形
+    INVERT 模板、`scope_body` 无条件绘制；`renderBoth` 只对 `ocular_scope*` 组走
+    筒镜逻辑 ⇒ 上游对 sight 通道从来不做镜身裁切，所以我们 r34 时代文档才写着
+    「sight 不剔除镜身、目镜恒掏空」语义一致。② 我们掩码架构落地时 `maskable`
+    写的是 flat 条件 `!ocularParts.isEmpty()` ⇒ sight 通道（纯红点 + 组合镜低倍
+    组）也被卷进镜身裁剪；红点模型没有 `ocular_ring` 骨骼，被啃的是普通镜身几何
+    的内框/边缘——正是用户描述。③ sight 目镜由 `shouldDrawOcularBlackout` 恒隐藏
+    （恒掏空=透视窗，证于案例③ 33 款贴图 alpha=255 取证链），故撤裁无次生影响。
+    **修复**：`maskable && ScopeSightClipFix && !activeGroupIsScope()` ⇒ maskable=false
+    （组合镜随当前通道切换；查不到分组信息时维持旧行为，与既有「宁可多画」原则
+    一致）。开关 `ScopeSightClipFix`（默认开；false 秒回退旧行为）。
+    邻链注意：26.1.2 的 `apertureActive` 是同款 flat 条件 ⇒ 其深度孔径对 sight
+    通道大概率留有同款慢性病灶（ring 修复只摘了倍镜的环），已在 PORT_SYNC 附录 C
+    反流给他们建议同款 gating。
+  - **合并复测清单（两个开关都默认开）**：纯红点/全息各款 + retro_2x / qmk152 类
+    低倍镜 + ACOG、AUG 自带镜 + LPVO@1x 与筒镜组、8x 筒镜 + HAMR/Vudu 两个视组
+    各切一遍——看点：低倍/红点通道窗框完整无缺口、倍镜通道黑环完整、两通道
+    镜内透视与准星均无回归。`ScopeOcularRingFix=false`、`ScopeSightClipFix=false`
+    可各自独立秒回退定位。

@@ -18,6 +18,8 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_HULL_FILL;
     /** 开镜掩码激活时，物理目镜框 {@code ocular_ring} 摘除主提交并以未裁剪 RenderType 重画（上游 stencil-ALWAYS 语义）。默认<b>开启</b>。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_OCULAR_RING_FIX;
+    /** 低倍/红点通道（含组合镜低倍组）激活时，镜身不做目镜掩码裁剪（上游 renderSight 无条件绘制镜身）。默认<b>开启</b>。 */
+    public static ForgeConfigSpec.BooleanValue SCOPE_SIGHT_CLIP_FIX;
     public static ForgeConfigSpec.BooleanValue GUN_HUD_ENABLE;
     public static ForgeConfigSpec.BooleanValue KILL_AMOUNT_ENABLE;
     public static ForgeConfigSpec.DoubleValue KILL_AMOUNT_DURATION_SECOND;
@@ -142,6 +144,18 @@ public class RenderConfig {
                         "Without this, the oculus mask nibbles the ring's inner rim on all mid/high-zoom scopes",
                         "that contain the bone. Set false to revert instantly. Default on.")
                 .define("ScopeOcularRingFix", true);
+
+        // 【案例⑨ 第二轮】sight（低倍/红点）通道不留掩码裁剪：上游 renderSight 的
+        // scope_body 无条件绘制（无圆形 INVERT 模板；组合镜只对筒镜组走筒镜逻辑）。
+        // 掩码对 sight 激活帧裁剪镜身 ⇒ 瞄具自己的内框/边缘在镜片投影内被啃缺口
+        // （用户报告的慢性低倍镜病灶）。sight 目镜本就恒隐藏（恒掏空=透视窗），
+        // 故撤裁后观感与上游一致。false = 旧行为（sight 也裁）。
+        SCOPE_SIGHT_CLIP_FIX = builder
+                .comment("[FIX] Skip the ocular-mask body clip while aiming through a low-power/red-dot",
+                        "sight (including the low-power side of combo scopes). Upstream 1.21.1 renderSight",
+                        "draws the sight body unconditionally; our clip nibbled the sight's own inner frame.",
+                        "Default on; set false to restore legacy clipping on sights too.")
+                .define("ScopeSightClipFix", true);
 
         builder.comment("Whether or not to display the gun's HUD");
         GUN_HUD_ENABLE = builder.define("GunHUDEnable", true);
