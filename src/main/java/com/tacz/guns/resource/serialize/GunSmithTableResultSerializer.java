@@ -96,6 +96,14 @@ public class GunSmithTableResultSerializer implements JsonDeserializer<GunSmithT
         JsonObject inner = itemElement != null && itemElement.isJsonObject()
                 ? itemElement.getAsJsonObject() : jsonObject;
 
+        if (inner.has("id") && inner.has("components")) {
+            JsonObject modern = inner.deepCopy();
+            if (!modern.has("count") && jsonObject.has("count")) {
+                modern.add("count", jsonObject.get("count"));
+            }
+            return modern;
+        }
+
         JsonElement itemId = null;
         if (inner.has("item") && inner.get("item").isJsonPrimitive()) {
             itemId = inner.get("item");
