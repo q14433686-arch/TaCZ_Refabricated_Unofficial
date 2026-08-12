@@ -1,13 +1,16 @@
-# [UNOFFICIAL] TaCZ Refabricated — Minecraft 26.2 / Fabric
+<!-- 此文件按 26.1.2 分支根目录 README.md 的位置和用途编写，可直接复制替换。 -->
+
+# [UNOFFICIAL] TaCZ Refabricated — Minecraft 26.1.2 / Fabric
 
 > **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
-的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R1`**。
+的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.1.2 Fabric**。直接上游的版本号为
+`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.1.2.R1`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
+· [26.1.2 源码](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2)
 · [直接上游](https://github.com/Sh1roCu/TACZ-Refabricated/tree/1.21.1)
 · [原始 TaCZ 项目](https://github.com/MCModderAnchor/TACZ)
 
@@ -17,14 +20,14 @@
 
 ## 1. 支持环境
 
-| 项目 | 26.2 分支要求 |
+| 项目 | 26.1.2 分支要求 |
 |---|---|
-| Minecraft | **26.2** |
+| Minecraft | **26.1.2** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **25+** |
-| Fabric API | 需要安装；R1 构建使用 **0.155.2+26.2** |
-| Forge Config API Port | **26.2.1+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.2.R1`** |
+| Fabric API | **0.155.2+**；R1 构建使用 **0.155.2+26.1.2** |
+| Forge Config API Port | **26.1.5+，硬依赖** |
+| 本 mod | **`1.1.8+fabric.26.1.2.R1`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
@@ -34,7 +37,7 @@
 
 本仓库包含：
 
-- TaCZ 的 Fabric 26.2 端口及随上游带来的默认枪包；
+- TaCZ 的 Fabric 26.1.2 端口及随上游带来的默认枪包；
 - 为 26.x API 改写的网络、资源加载、GUI 和渲染接线；
 - 一套内置的 **LRTactical 兼容框架**；
 - 若干可选模组的兼容接线。
@@ -68,26 +71,27 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 使用 stencil 值控制目镜、镜身、准星和枪体片元；镜片后看到的
 仍是同一次世界渲染。它没有第二台相机，也没有第二次 `renderLevel`。
 
-26.2 端口无法沿用上游的即时 stencil 调用与绘制时序，因此改为：
+26.1.2 端口无法沿用上游的即时 stencil 调用与绘制时序，因此使用 branch-specific 的
+**深度孔径**路径：
 
-1. 把目镜几何写入一张离屏**掩码纹理**；
-2. 枪身、相关配件、枪口火光和准星的 shader 采样该掩码并按区域丢弃片元；
-3. 世界场景本身仍只渲染一次。
+1. 用不可见目镜几何写入孔径深度；
+2. 在镜身绘制前保存并复制所需的世界/孔径深度；
+3. 枪身、相关配件、枪口火光和准星按孔径关系过滤；
+4. 完成后恢复对应的世界深度。
 
-这里的离屏目标只保存目镜掩码，**不是第二份世界画面**。代码中的
+这套流程仍只使用同一次世界渲染，**不是第二份世界画面**。代码中的
 `PictureInPictureRenderer` 仅用于枪械工作台的 GUI 模型预览，与瞄具实现无关。
 
-Iris 有单独的 HAND shader 接线；其他 shader pack 仍可能改写自定义管线的最终效果。
-Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码裁剪的普通瞄具几何。
+Iris 有专门的 HAND/depth 接线；其他 shader pack 没有因此自动获得兼容保证。
 
 ---
 
 ## 4. 安装
 
-1. 安装 Minecraft 26.2、Fabric Loader 0.19.3+ 与 Java 25+；
-2. 安装 Fabric API 和 Forge Config API Port 26.2.1+；
+1. 安装 Minecraft 26.1.2、Fabric Loader 0.19.3+ 与 Java 25+；
+2. 安装 Fabric API 0.155.2+ 和 Forge Config API Port 26.1.5+；
 3. 从 [Releases](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
-   下载明确标注为 **26.2 / Fabric** 的构建；
+   下载明确标注为 **26.1.2 / Fabric** 的构建；
 4. 把三个 mod 的 `.jar` 放入 `.minecraft/mods/`；
 5. 启动游戏。第三方枪包按下一节安装。
 
@@ -146,7 +150,7 @@ gunpack.meta.json
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.2.R1` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.26.1.2.R1` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容
@@ -164,10 +168,8 @@ gunpack.meta.json
 ## 6. 当前已知边界
 
 - LRTactical 是部分兼容框架，`flash_shield` 未实现；第三方包兼容性需要逐包验证。
-- 26.2 的瞄具裁剪是 branch-specific 的掩码实现，不应描述成上游 PIP，也不保证每个 shader pack
-  都得到完全相同的结果。
-- 26.2 的现有实测记录中，Player Animation Library 在经历 TaCZ 趴姿再站起后，下一次切枪的
-  短暂第三人称 crossfade 仍可能带入旧姿态；切换完成后的稳态持枪不是该问题。
+- 26.1.2 的瞄具裁剪是 branch-specific 的深度孔径实现，不应描述成上游 PIP，也不保证每个
+  shader pack 都得到完全相同的结果。
 - 明确依赖 Arcana 的内容不受支持；其他枪包也不能仅凭“能被扫描到”就视为完全兼容。
 
 提交兼容问题时请给出实际包名与版本、完整日志和最小复现环境，不要只给缺失贴图截图。
@@ -184,8 +186,11 @@ gunpack.meta.json
 - 随 jar 打包的 Mayday Animation Engine 使用 MIT；
 - 其他第三方库、资源和外部内容包可能有各自许可。
 
-详见 [`LICENSE`](LICENSE) 与 [`LICENSES.md`](LICENSES.md)。代码许可不会自动覆盖美术资源，
-本仓库兼容某个第三方内容包也不代表取得、转授或改变了该内容包的许可。
+详见该分支的
+[`LICENSE`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/blob/26.1.2/LICENSE)
+与 [`LICENSES.md`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/blob/26.1.2/LICENSES.md)。
+代码许可不会自动覆盖美术资源，本仓库兼容某个第三方内容包也不代表取得、转授或改变了
+该内容包的许可。
 
 本项目按“原样”提供，不附带担保。请勿把本移植的问题提交给 TaCZ 或 LRTactical 原作者。
 
@@ -200,6 +205,12 @@ gunpack.meta.json
 ```
 
 产物位于 `build/libs/`。
+
+若要使用分支内的 Iris/Sodium 开发运行配置：
+
+```bash
+./gradlew runClient -PwithIris
+```
 
 ---
 
