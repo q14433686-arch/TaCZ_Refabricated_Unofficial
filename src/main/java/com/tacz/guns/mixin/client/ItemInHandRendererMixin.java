@@ -1,12 +1,21 @@
 package com.tacz.guns.mixin.client;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.BeforeRenderHandEvent;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
+import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
+import com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -69,102 +78,67 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
      * 视角回摆<b>仍然保留</b>（它在本方法之前执行），这正是
      * {@code GunItemRendererWrapper#renderFirstPerson} 开头那段"逆转原版延滞效果"所预期的输入。</p>
      */
-    @Inject(method = "renderArmWithItem", at = @At("HEAD"), cancellable = true)
-    private void tacz$submitArmWithGun(net.minecraft.client.player.AbstractClientPlayer player,
-                                       float frameInterp,
-                                       float xRot,
-                                       net.minecraft.world.InteractionHand hand,
-                                       float attack,
-                                       ItemStack itemStack,
-                                       float inverseArmHeight,
-                                       PoseStack poseStack,
-                                       net.minecraft.client.renderer.SubmitNodeCollector collector,
-                                       int lightCoords,
-                                       CallbackInfo ci) {
-        if (!(player instanceof LocalPlayer localPlayer)) {
+    @WrapOperation(
+            method = "renderHandsWithItems",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V"
+            )
+    )
+    private void tacz$submitArmWithAnimatedItem(ItemInHandRenderer instance,
+                                                AbstractClientPlayer player,
+                                                float frameInterp,
+                                                float xRot,
+                                                InteractionHand hand,
+                                                float attack,
+                                                ItemStack itemStack,
+                                                float inverseArmHeight,
+                                                PoseStack poseStack,
+                                                SubmitNodeCollector collector,
+                                                int lightCoords,
+                                                Operation<Void> original) {
+        if (!(player instanceof LocalPlayer localPlayer)
+                || !Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
+            original.call(instance, player, frameInterp, xRot, hand, attack, itemStack,
+                    inverseArmHeight, poseStack, collector, lightCoords);
             return;
         }
 
-        // 【第 5 轮】必须显式判定“当前确为第一人称”。
-        //
-        // 症状：第三人称持枪时身上出现两条多余且残缺的手臂；换成非枪械物品即消失；
-        //      第一人称可“截获”该状态并持久化。
-        //
-        // 根因：ItemInHandRenderer 实例是全局共享的。GameRenderer#renderItemInHand 虽然有
-        //      isFirstPerson() 门禁，但第三人称视角 mod（Shoulder Surfing 等）以及 26.2
-        //      自身的某些 PIP/离屏路径仍可能进入 submitArmWithItem。一旦进入，TACZ 就会走
-        //      renderFirstPerson -> Left/RightHandRender -> AvatarRenderer#renderHand，
-        //      而后者会直接改写共享 PlayerModel（arm.visible=true、zRot=±0.1、袖子可见性）
-        //      且从不还原。
-        //
-        //      关键：submitModelPart 存的是【活的 ModelPart 引用】（见 RenderHelper 注释），
-        //      真正绘制发生在稍后的 renderAllFeatures，于是这些被强制打开的手臂部件
-        //      会在第三人称玩家实体上再画一遍 —— 就是那两条“多余、残缺”的手臂。
-        //
-        // 修复：只在真正的第一人称接管；第三人称一律放行给 vanilla，
-        //      TACZ 的第三人称枪械由 renderByItem + PlayerModelMixin 的手臂姿态负责。
-        if (!Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
-            return;
-        }
-        // 延长渲染：切枪时保持上一把枪的模型，与 1.21.1 行为一致。
-        ItemStack renderStack = itemStack;
-        if (hand == net.minecraft.world.InteractionHand.MAIN_HAND) {
-            ItemStack kept = KeepingItemRenderer.getRenderer().getCurrentItem();
-            if (kept != null && !kept.isEmpty()) {
-                renderStack = kept;
-            }
-        }
-        var renderer = cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry.INSTANCE.get(renderStack.getItem());
-        if (!(renderer instanceof com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer<?, ?> geoRenderer)) {
+        ItemStack mainRenderStack = FirstPersonAnimationCompat.getMainRenderStack(localPlayer);
+        boolean mainHandOwnedByTacz = FirstPersonAnimationCompat.isTaczViewmodel(mainRenderStack);
+
+        if (hand == InteractionHand.OFF_HAND && mainHandOwnedByTacz) {
             return;
         }
 
-        // 【附属模块接入点】原先这里写死 IGun.getIGunOrNull(renderStack) == null 就 return，
-        // 于是 LRTactical 的近战/投掷物即便注册了 AnimateGeoItemRenderer 也永远走不进
-        // 第一人称渲染 —— 表现为「第三人称有 Bedrock 模型和动画，第一人称却是原版方块状物品」。
-        //
-        // 改为按【是否真的有可渲染的 Bedrock 模型】判定，理由：
-        //   1. 这正是本方法接下来要做的事所需要的前提，比「是不是枪」更贴切；
-        //   2. 对枪械完全等价 —— 枪的渲染器是 GunItemRendererWrapper，
-        //      其 getModel 就是 GunDisplayInstance#getGunModel；
-        //   3. 【关键】必须判 null 而不能只判「渲染器类型对不对」：
-        //      本移植不打包美术资源，没装内容包时 LRTactical 的 getModel 返回 null。
-        //      若此时仍然接管，renderFirstPerson 会直接 return，
-        //      而下面的 ci.cancel() 已经把 vanilla 的渲染取消掉了 ——
-        //      结果是【第一人称手里空无一物】，比不接管还糟。
-        if (geoRenderer.getModel(renderStack) == null) {
+        ItemStack renderStack = hand == InteractionHand.MAIN_HAND ? mainRenderStack : itemStack;
+        var renderer = cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry.INSTANCE
+                .get(renderStack.getItem());
+        if (!(renderer instanceof AnimateGeoItemRenderer<?, ?> geoRenderer)
+                || geoRenderer.getModel(renderStack) == null) {
+            original.call(instance, player, frameInterp, xRot, hand, attack, itemStack,
+                    inverseArmHeight, poseStack, collector, lightCoords);
             return;
         }
 
-        // Iris shader packs split first-person hand rendering into HAND_SOLID and HAND_TRANSLUCENT.
-        // Iris' own HEAD injection normally cancels vanilla item rendering in the wrong phase, but
-        // TACZ also cancels renderArmWithItem at HEAD and can therefore bypass that guard. Apply the
-        // same phase predicate before submitting the custom gun/arm geometry; otherwise opaque guns
-        // and first-person arms may be drawn again in Iris' translucent hand pass and shader packs
-        // composite them as see-through/missing shells.
         if (!IrisCompat.shouldRenderInCurrentHandPhase(renderStack)) {
-            ci.cancel();
             return;
         }
 
-        // 上游语义：主手持动画物品时副手不走常规渲染（副手枪由 HumanoidOffhandRender 背挂显示）。
-        if (hand == net.minecraft.world.InteractionHand.OFF_HAND) {
-            ci.cancel();
+        if (hand == InteractionHand.OFF_HAND) {
             return;
         }
 
-        net.minecraft.world.item.ItemDisplayContext ctx =
-                player.getMainArm() == net.minecraft.world.entity.HumanoidArm.RIGHT
-                        ? net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
-                        : net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
-
+        ItemDisplayContext context = player.getMainArm() == HumanoidArm.RIGHT
+                ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+                : ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
         if (geoRenderer.needReInit(renderStack)) {
             geoRenderer.tryInit(renderStack, localPlayer, frameInterp);
         }
         poseStack.pushPose();
-        geoRenderer.renderFirstPerson(localPlayer, renderStack, ctx, poseStack, collector, lightCoords, frameInterp);
+        geoRenderer.renderFirstPerson(localPlayer, renderStack, context, poseStack,
+                collector, lightCoords, frameInterp);
         poseStack.popPose();
-        ci.cancel();
     }
 
     /**

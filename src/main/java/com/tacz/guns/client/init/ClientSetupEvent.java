@@ -102,6 +102,8 @@ public class ClientSetupEvent {
         // 注册自己的的硬编码第三人称动画
         ThirdPersonManager.registerDefault();
 
+        com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat.init();
+
         // 26.2 已解决: ColorProviderRegistry.ITEM 与 ItemProperties 均已移除。
         // 弹药箱染色改由 items/ammo_box.json 模型里的 minecraft:dye tint 完成；
         // 变体选择改由 minecraft:select + tacz:ammo_statue 属性完成

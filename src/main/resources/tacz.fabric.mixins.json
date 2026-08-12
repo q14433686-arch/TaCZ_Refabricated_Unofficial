@@ -36,7 +36,11 @@
     "client.MinecraftMixin",
     "client.MouseHandlerMixin",
     "client.TextureAtlasMixin",
-    "compat.controllable.BindingContextMixin"
+    "compat.controllable.BindingContextMixin",
+    "compat.punchy.PunchyArmRendererMixin",
+    "compat.punchy.PunchyHandEquipStateMachineMixin",
+    "compat.punchy.PunchyHandRenderBobContextMixin",
+    "compat.punchy.PunchyMovementStateMachineMixin"
   ],
   "_comment": "26.1.2: obsolete RenderTargetMixin and AbstractSliderButtonAccessor targets were removed. LivingEntityRendererMixin is registered above after both injection descriptors were verified against 26.1.2. The optional Controllable mixin is gated by MixinPlugin.",
   "injectors": {

@@ -60,8 +60,8 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         // 挥动动画和装备抬手动画，PoseStack 不再是上游 1.21.1 所预期的干净矩阵 ——
         // 会导致枪相对摄像机位置/缩放错误，且移动时与 TACZ 动画叠加产生抖动。
         //
-        // 正确入口是 ItemInHandRendererMixin#tacz$submitArmWithGun，它在 renderArmWithItem 的 HEAD
-        // 拦截并取消，语义与 SimpleBedrockModel 的 RenderHandEvent 注入点一致。详见该 mixin 注释。
+        // 正确入口是 ItemInHandRendererMixin#tacz$submitArmWithAnimatedItem，它在 renderHandsWithItems
+        // 外部包裹调用，语义与 SimpleBedrockModel 的 RenderHandEvent 注入点一致。详见该 mixin 注释。
         //
         // 这里仍需处理 firstPerson 分支的兜底：正常情况下走不到（mixin 已 cancel），
         // 但如果 mixin 因故未生效，直接 return 也比画在错误位置好 —— 至少不会出现"双份枪"。

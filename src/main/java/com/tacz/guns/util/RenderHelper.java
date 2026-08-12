@@ -51,12 +51,17 @@ public final class RenderHelper {
         }
         AvatarRenderer<?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getPlayerRenderer(player);
         var skinTexture = player.getSkin().body().texturePath();
-        if (hand == HumanoidArm.RIGHT) {
-            renderer.renderRightHand(matrixStack, collector, combinedLight, skinTexture,
-                    player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
-        } else {
-            renderer.renderLeftHand(matrixStack, collector, combinedLight, skinTexture,
-                    player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
+        com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat.beginDirectArmRender();
+        try {
+            if (hand == HumanoidArm.RIGHT) {
+                renderer.renderRightHand(matrixStack, collector, combinedLight, skinTexture,
+                        player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
+            } else {
+                renderer.renderLeftHand(matrixStack, collector, combinedLight, skinTexture,
+                        player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
+            }
+        } finally {
+            com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat.endDirectArmRender();
         }
     }
 
