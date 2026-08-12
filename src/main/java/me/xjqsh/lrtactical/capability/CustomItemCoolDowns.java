@@ -2,6 +2,7 @@ package me.xjqsh.lrtactical.capability;
 
 import me.xjqsh.lrtactical.EquipmentMod;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 
@@ -20,9 +21,9 @@ import java.util.Map;
  * <h2>26.2 移植改动</h2>
  * <ul>
  *   <li>{@code ResourceLocation} → {@link Identifier}（26.2 类名变更，全仓统一）；</li>
- *   <li><b>仍缺少冷却专用同步</b>：LRTactical 的索引/C2S 网络层已经存在，
- *       但上游 {@code SCustomCoolDownMessage} 与客户端冷却装饰器尚未移植。
- *       后果是服务端冷却判定正确，客户端物品图标不显示冷却遮罩。</li>
+ *   <li>冷却专用 S2C 同步已接入 {@code ServerMessageCustomCooldown}；客户端
+ *       {@code GuiGraphicsExtractorMixin} 在原版 itemCooldown 提取结束后叠加分类遮罩。
+ *       服务端仍是唯一权威，客户端状态只负责反馈。</li>
  * </ul>
  */
 public class CustomItemCoolDowns {
@@ -66,6 +67,10 @@ public class CustomItemCoolDowns {
     }
 
     public void addCooldown(Identifier id, int ticks) {
+        if (ticks <= 0) {
+            removeCooldown(id);
+            return;
+        }
         this.cooldowns.put(id, new CooldownInstance(this.tickCount, this.tickCount + ticks));
         this.onCooldownStarted(id, ticks);
     }
@@ -75,13 +80,17 @@ public class CustomItemCoolDowns {
         this.onCooldownEnded(id);
     }
 
-    // TODO[lr-cooldown-sync]: 移植 SCustomCoolDownMessage，并在 26.2 的
-    // GuiGraphicsExtractor#itemCooldown 路径叠加自定义分类冷却。只发包而不接 GUI
-    // 消费方仍不会出现遮罩。服务端判定现已完整，不存在绕过冷却的逻辑漏洞。
+    /** Server-authoritative start/end updates; client calls do not echo packets. */
     protected void onCooldownStarted(Identifier id, int ticks) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            me.xjqsh.lrtactical.network.LrNetworkHandler.syncCooldown(serverPlayer, id, ticks);
+        }
     }
 
     protected void onCooldownEnded(Identifier id) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            me.xjqsh.lrtactical.network.LrNetworkHandler.syncCooldown(serverPlayer, id, 0);
+        }
     }
 
     public Player getPlayer() {

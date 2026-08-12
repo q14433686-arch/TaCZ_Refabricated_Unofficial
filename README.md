@@ -57,8 +57,8 @@ Beta 1 主要新增 / 修复：
 - **Player Animation Library 有一个低优先级已知问题**：经历 TACZ 趴姿再站起后，
   稳态持枪姿势正常，但随后切枪时约 8 tick 的第三人称过渡动画仍会带入脏姿态。
   26.1.2 已解决；26.2 的逐字移植与 GunDraw 硬复位两案均无效，已按用户决定挂起。
-- **LRTactical 仍是部分内置移植**：flash shield 等上游模块仍未完整移植，
-  自定义分类冷却的服务端判定正常，但物品图标暂不显示冷却遮罩。
+- **LRTactical 仍是部分内置移植**：flash shield 等独立子系统仍未完整移植；
+  但物品 tooltip、使用/预燃进度 HUD 与自定义分类冷却遮罩现已接入 26.2 路径。
 - **枪械“经验等级”是上游未完成的脚手**：当前上游与本移植均没有 XP 获取、
   等级曲线或等级属性加成；tooltip 的 `0 (MAX)` 不是可工作的等级系统。
 - **需要 TacZ:Arcana 解密能力的加密枪包不支持**，见下文专节。
@@ -200,6 +200,7 @@ Arcana 没有 Fabric / 26.2 版本，且其格式与密钥未公开。
 | `README.md`（本文） | 项目说明、免责声明、许可、装包方法 |
 | `docs/PORTING_NOTES.md` | **移植经验总结** —— 26.2 破坏性变更清单与踩坑记录，面向后续开发者 |
 | `docs/UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md` | 上游文件/功能对齐、枪械等级真相、TODO 真伪与当前剩余缺口 |
+| `docs/LRTACTICAL_FEEDBACK_LAYER_26_2.md` | LRTactical tooltip、使用进度 HUD、分类冷却遮罩的 26.2 实现与 flash shield 评估 |
 | `docs/archive/` | 历史过程文档（含已作废结论），**仅供考古**，见下 |
 
 ### 关于 `docs/archive/`

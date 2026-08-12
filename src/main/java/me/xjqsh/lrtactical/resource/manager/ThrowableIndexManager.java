@@ -118,6 +118,7 @@ public class ThrowableIndexManager extends com.tacz.guns.resource.manager.JsonDa
 
     public static ThrowableIndex<?, ?> parse(JsonObject json, Identifier id) throws JsonParseException {
         String name = GsonHelper.getAsString(json, "name", "unknown.lrtactical.name");
+        String tooltip = GsonHelper.getAsString(json, "tooltip", null);
 
         String typeName = GsonHelper.getAsString(json, "type");
         Identifier typeId = Identifier.tryParse(typeName);
@@ -141,7 +142,7 @@ public class ThrowableIndexManager extends com.tacz.guns.resource.manager.JsonDa
         }
 
         JsonObject data = GsonHelper.getAsJsonObject(json, "data");
-        return deserialize(type, data, name, id, item);
+        return deserialize(type, data, name, tooltip, id, item);
     }
 
     /**
@@ -155,7 +156,7 @@ public class ThrowableIndexManager extends com.tacz.guns.resource.manager.JsonDa
     private static <T extends me.xjqsh.lrtactical.item.throwable.ThrowableData,
             E extends me.xjqsh.lrtactical.entity.ThrowableItemEntity>
     ThrowableIndex<T, E> deserialize(ThrowableType<T, E> type, JsonElement data,
-                                     String name, Identifier id, Item baseItem) {
-        return ThrowableIndex.deserialize(type, data, name, id, baseItem);
+                                     String name, String tooltip, Identifier id, Item baseItem) {
+        return ThrowableIndex.deserialize(type, data, name, tooltip, id, baseItem);
     }
 }

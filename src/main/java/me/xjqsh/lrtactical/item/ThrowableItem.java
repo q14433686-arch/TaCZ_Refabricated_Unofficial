@@ -19,9 +19,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUseAnimation;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 /**
  * 可投掷物品（手雷等）。一个物品承载所有手雷，具体种类由 NBT 决定。
@@ -48,17 +51,17 @@ import org.jetbrains.annotations.Nullable;
  *   <li><b>{@code Item.Properties} 必须带注册键</b>（{@code setId}），
  *       否则注册期报错 —— 沿用本仓库 {@code ModItems#itemProps} 的做法，
  *       故构造器改为接收 {@code Properties} 而非自己 new。</li>
- *   <li><b>{@code appendHoverText} 签名新增 {@code TooltipDisplay} 参数</b>且改用
- *       {@code Consumer<Component>}。上游实际通过 {@code getTooltipImage} +
- *       {@code ThrowableTooltip} 展示数据行；这套 tooltip 尚未移植，是当前真实缺口。</li>
+ *   <li>上游 tooltip 走 {@code getTooltipImage}；现已按 26.2 的
+ *       {@code ClientTooltipComponent#extractText(GuiGraphicsExtractor,...)} 接回，
+ *       不再尝试旧 {@code GuiGraphics/MultiBufferSource} 即时绘制。</li>
  * </ol>
  *
  * <h2>当前能力边界（2026-08-12 复核）</h2>
  * <ul>
  *   <li><b>已完成</b>：五种投掷类型、索引联机同步、Bedrock/Lua 动画渲染、
  *       遥控起爆器与 C4 所有权判定；旧注释把它们写成“尚未移植”已经过时。</li>
- *   <li><b>仍缺</b>：物品 tooltip、使用进度 HUD，以及自定义分类冷却的客户端遮罩。
- *       这些只影响反馈层，不影响服务端投掷与伤害判定。</li>
+ *   <li><b>反馈层已完成</b>：物品 tooltip、拔销/预燃进度 HUD，以及自定义分类
+ *       冷却遮罩均走 26.2 extracted-GUI 路径。</li>
  * </ul>
  */
 public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api.item.IAnimationItem, cn.sh1rocu.tacz.api.extension.IItem {
@@ -122,13 +125,14 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
      * 服务端 {@code ServerPlayerGameMode#useItem} 再真正执行一次。
      * 两端<b>各自独立</b>地决定要不要 {@code startUsingItem}。
      *
-     * <p>而冷却数据 {@link CustomItemCoolDowns} 目前仍是<b>纯服务端状态</b>
-     * （LRTactical 通用网络层与索引同步已存在，但冷却专用 payload/GUI 装饰尚未移植；
-     * 客户端那份表因此为空，见 {@code ModCapabilities}）。
+     * <p>冷却的<b>判定</b>仍是纯服务端权威；客户端表现在由
+     * {@code ServerMessageCustomCooldown} 同步，仅用于图标遮罩。这里仍不能用客户端
+     * 预测结果拒绝 {@code startUsingItem}，否则网络延迟会让两端分叉。
      * 因此旧写法必然分叉：
      * <ul>
      *   <li><b>服务端</b>：冷却中 → 不 {@code startUsingItem}；</li>
-     *   <li><b>客户端</b>：查不到冷却 → 照常 {@code startUsingItem}，进入「使用中」。</li>
+     *   <li><b>客户端</b>：显示表可能因包延迟仍为空/已过期 → 照常
+     *       {@code startUsingItem}，进入“使用中”。</li>
      * </ul>
      *
      * <p>客户端一旦进入「使用中」，{@code LivingEntity#startUsingItem} 开头那句
@@ -148,8 +152,7 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
      * 那里本来就有同一份冷却校验，不会漏判。
      *
      * <p>这也是原版的通行做法：客户端只做乐观预测，权威判定始终在服务端。
-     * <b>不</b>去给客户端补一份冷却表 —— 那需要网络层，
-     * 且会引入「两份状态如何保持一致」的新问题。
+     * 当前客户端冷却表严格限定为 HUD 数据源，绝不进入本方法的行为门禁。
      */
     @Override
     public @NotNull InteractionResult use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
@@ -157,8 +160,8 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             return InteractionResult.FAIL;
         }
         ItemStack stack = player.getItemInHand(hand);
-        // 客户端没有冷却数据（纯服务端状态），若在此判定必然与服务端分叉，
-        // 故客户端一律放行，权威判定交给服务端。
+        // 客户端同步表只供 HUD；网络延迟下不能作为行为门禁。
+        // 故客户端一律乐观放行，权威判定交给服务端。
         boolean onCooldown = false;
         if (!level.isClientSide()) {
             CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
@@ -363,6 +366,13 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
     @Override
     public boolean isSame(ItemStack stack1, ItemStack stack2) {
         return IThrowable.super.isSame(stack1, stack2);
+    }
+
+    @Override
+    public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+        return this.getThrowableIndex(stack).isPresent()
+                ? Optional.of(new me.xjqsh.lrtactical.inventory.tooltip.ThrowableTooltip(stack))
+                : Optional.empty();
     }
 
     /**

@@ -5,15 +5,21 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import me.xjqsh.lrtactical.util.PotionTooltipUtil;
+import me.xjqsh.lrtactical.util.TooltipLine;
+import me.xjqsh.lrtactical.util.TooltipUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -67,6 +73,65 @@ public class ConsumableData {
     public float getSaturation() { return saturation; }
     public List<EffectData> getEffects() { return effects; }
     public List<RemoveEffectSelector> getRemoveEffects() { return removeEffects; }
+
+    public List<TooltipLine> getTooltipLines() {
+        List<TooltipLine> lines = new ArrayList<>();
+        if (getHeal() > 0f) {
+            lines.add(TooltipLine.normal(Component.translatable(
+                    "tooltip.lrtactical.consumable.heal", TooltipUtil.format(getHeal()))));
+        }
+        if (getFood() > 0 || getSaturation() > 0f) {
+            lines.add(TooltipLine.normal(Component.translatable(
+                    "tooltip.lrtactical.consumable.food", getFood(), TooltipUtil.format(getSaturation()))));
+        }
+        List<PotionTooltipUtil.EffectWithChance> effects = new ArrayList<>();
+        for (EffectData effectData : getEffects()) {
+            MobEffectInstance effect = effectData.createInstance();
+            if (effect != null) {
+                effects.add(new PotionTooltipUtil.EffectWithChance(effect, effectData.getChance()));
+            }
+        }
+        List<Component> effectLines = new ArrayList<>();
+        PotionTooltipUtil.addPotionTooltip(effects, effectLines);
+        effectLines.forEach(line -> lines.add(TooltipLine.collapsible(line)));
+
+        for (RemoveEffectSelector selector : getRemoveEffects()) {
+            if (selector.isCategory() && selector.getCategory() != null) {
+                String categoryKey = switch (selector.getCategory()) {
+                    case BENEFICIAL -> "tooltip.lrtactical.consumable.effect_category.beneficial";
+                    case HARMFUL -> "tooltip.lrtactical.consumable.effect_category.harmful";
+                    case NEUTRAL -> "tooltip.lrtactical.consumable.effect_category.neutral";
+                };
+                lines.add(TooltipLine.collapsible(Component.translatable(
+                        "tooltip.lrtactical.consumable.remove_effects_by_category",
+                        Component.translatable(categoryKey)).withStyle(ChatFormatting.GRAY)));
+            } else if (selector.getEffect() != null) {
+                Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.get(selector.getEffect()).orElse(null);
+                if (effect != null) {
+                    lines.add(TooltipLine.collapsible(Component.translatable(
+                            "tooltip.lrtactical.consumable.remove_effect",
+                            Component.translatable(effect.value().getDescriptionId()))
+                            .withStyle(ChatFormatting.GRAY)));
+                }
+            }
+        }
+        if (getMaxDurability() > 1 && getDurabilityDamage() > 0) {
+            lines.add(TooltipLine.normal(Component.translatable(
+                    "tooltip.lrtactical.consumable.uses",
+                    getMaxDurability() / getDurabilityDamage())));
+        }
+        if (getUseDuration() > 0) {
+            lines.add(TooltipLine.normal(Component.translatable(
+                    "tooltip.lrtactical.consumable.use_duration",
+                    TooltipUtil.formatTicks(getUseDuration()))));
+        }
+        if (getCooldown() > 0) {
+            lines.add(TooltipLine.normal(Component.translatable(
+                    "tooltip.lrtactical.consumable.cooldown",
+                    TooltipUtil.formatTicks(getCooldown()))));
+        }
+        return lines;
+    }
 
     public enum UseMode {
         @SerializedName("hold") HOLD,

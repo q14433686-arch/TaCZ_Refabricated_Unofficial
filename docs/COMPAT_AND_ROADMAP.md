@@ -321,16 +321,15 @@ grep 上游全仓（1.21.1 fork）确认：
   满格后还会用 `sin` 做闪烁警告；
 - 潜行时额外画一个箭头图标，提示「当前是减速投掷」。
 
-**这个类尚未移植**，所以玩家完全看不到蓄力状态 ——
-主观上就会觉得「蓄力没有任何反馈 / 和初速度对不上」。
+**26.2 实现现已完成**：`UsingProgressOverlay` 通过 Fabric
+`HudElementRegistry` + `GuiGraphicsExtractor` 绘制白色准备条、红色预燃条、toggle
+提示及近战冷却。原作箭头贴图属 ARR，未打包；潜行减速提示改为四行 GUI fill
+组成的几何箭头，不引入受限素材。
 
-未移植的原因：26.2 的 HUD 层是 `Hud#extractRenderState` + `GuiGraphicsExtractor`
-（与 1.21.1 的 `GuiGraphics` 完全不同），且上游那个 overlay 依赖
-原作的箭头贴图（All Rights Reserved，本移植不打包）。
-按「一次只引入一个变量」的原则，留待客户端 HUD 层单独一轮处理。
+同一批还补齐：LRTactical 三类物品的 expandable tooltip，以及
+`ServerMessageCustomCooldown` + `GuiGraphicsExtractor#itemCooldown` mixin 分类冷却遮罩。
 
-**结论**：4.1 是预期行为（与上游一致），4.2 是待补的反馈层。
-两者都不影响手雷的实际功能。
+**结论**：4.1 是预期行为（与上游一致），4.2 反馈层已补齐。
 
 ---
 

@@ -32,7 +32,7 @@
 7. 发现本仓一边依赖 MAE 1.1.1，一边又用同包名的空 `Pose/DummyPose` 覆盖它；
    stub 缺少真实接口的 `getBoneTransforms()`，存在二进制不兼容风险。现删除假 stub，
    将真实 MAE 库作为 nested dependency 打包。
-8. 源码中的显式 TODO 从 24 处清到 7 处；剩余 7 处都是真缺口或外部阻塞，
+8. 源码中的显式 TODO 从 24 处清到 6 处；剩余 6 处都是外部兼容阻塞，
    不再混入“历史上曾有 TODO”“已实现但忘删”“纯重构建议”。
 
 ---
@@ -114,11 +114,13 @@
 
 ## 4. TODO / 假待办逐项裁决
 
-### 4.1 仍然是真的（显式 TODO 共 7 行）
+### 4.1 仍然是真的（显式 TODO 共 6 行）
+
+> 原列于此的 `CustomItemCoolDowns` 已完成：`ServerMessageCustomCooldown` 同步起止，
+> `GuiGraphicsExtractorMixin#itemCooldown` 叠加分类遮罩，因此源码 TODO 已删除。
 
 | 项 | 真伪与影响 |
 |---|---|
-| `CustomItemCoolDowns` 冷却同步 | **真。** 服务端判定完整；缺 `SCustomCoolDownMessage` + 26.2 GUI 冷却装饰，客户端图标无遮罩 |
 | Controllable | **真（外部阻塞）。** 这里指 MrCrayfish Controllable，不是已有 26.2 版的 Controlify |
 | Accelerated Rendering（4 处同一件事） | **真（外部阻塞）。** Fabric fork最高只到 1.21.1；普通渲染路径不受影响 |
 | KubeJS event bridge | **真（外部阻塞）。** 26.2 API/构建未接回，事件本体仍在，只是不投递给 KubeJS |
@@ -148,7 +150,7 @@
 | `IrisCompatNewly/Legacy` | “no-op / Iris 不兼容 Vulkan” | `isRenderShadow` 实际有完整反射调用；头注错误，已改 |
 | 本地 MAE `Pose/DummyPose` | “MAE 26.2 不可用” | build 已依赖 MAE 1.1.1；stub 反而少真实接口方法并覆盖依赖，已删除并 bundle 真库 |
 | SimpleBedrockModel 事件/接口 | 一律叫“stub” | 事件有真实发射/订阅，renderer 有真实实现；准确说法是 26.2 最小 ABI replacement |
-| LRTactical 多处阶段注释 | 投掷索引/五类型/动画/Detonator 尚未移植 | 四项均已在役；已改成当前能力边界，真实剩余是 tooltip/使用进度/冷却遮罩 |
+| LRTactical 多处阶段注释 | 投掷索引/五类型/动画/Detonator 尚未移植 | 四项均已在役；tooltip/使用进度/冷却遮罩也已于后续 26.2 反馈层批次补齐 |
 | LRTactical bounce/death sound | 普通 TODO | 属 ARR 音源与未移植通用自定义音效通道的有意边界，不是把代码补两行就能交付 |
 
 ### 4.4 本次直接完成
@@ -168,8 +170,8 @@
    **趴姿→站立后，下一次切枪的约 8 tick 第三人称 crossfade 使用了脏姿态**；切完后的
    稳态持枪不是病灶。26.1.2 的 `e43a3a9d` 有效，但逐字移植到 26.2 无效；随后尝试的
    gun-to-gun GunDraw 三层硬复位也经用户实测无效，已回退并按用户决定挂起。
-2. **LRTactical 仍是部分内置框架**：flash shield、完整 consumable 动画/输入、专属
-   音效/素材等未全量移植；投掷物 tooltip、使用进度 HUD 与自定义分类冷却遮罩仍缺。
+2. **LRTactical 仍是部分内置框架**：flash shield、完整 consumable 动画/模型、专属
+   ARR 音效/素材等未全量移植；tooltip、使用进度 HUD 与分类冷却遮罩已经补齐。
 3. **Accelerated Rendering / KubeJS / Controllable**：等待目标 26.2 Fabric API/构建；
    不影响这些 mod 不存在时的 TACZ 主流程。
 4. **枪械经验等级与普通暴击**：上游未完成，不应写成“本移植未来必补”的承诺。
