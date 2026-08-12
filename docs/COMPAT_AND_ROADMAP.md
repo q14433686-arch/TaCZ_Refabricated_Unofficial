@@ -1654,29 +1654,15 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
     完整；③hamr/vudu/mk5hd：红点组不裁、筒镜组恢复裁剪；④elcan/views=[2,2] 的
     低倍视组属筒镜通道 = 维持裁剪（其内环靠第一轮 ocular_ring 修复保完整）。
 
-#### 案例⑩：PAL 趴姿后「切枪过渡动画」姿态脏 —— 26.2 专用边界修复待复测（2026-08-12）
+#### 案例⑩：PAL 趴姿后「切枪过渡动画」姿态脏 —— 26.2 挂起（2026-08-12）
 
-> **口径更正（用户再次明确）**：此前文档把病灶写成“持枪手臂持续错形”是错的。
-> 条件没有变化——仍须先 TACZ 趴姿、再站起、随后切枪；但脏的是**切枪期间约 8 tick
-> 的第三人称过渡/crossfade**，不是切完后的稳态持枪动画。
+> **准确口径**：条件仍是 TACZ 趴姿→站起→随后切枪；脏的是**切枪期间约 8 tick 的
+> 第三人称过渡/crossfade**，不是切完后的稳态持枪动画。
 
-- **已确认事实**：
-  1. 26.1.2 的 `e43a3a9d` 已由用户实测解决该切枪过渡问题；
-  2. 26.1.2 与 26.2 的 `PalAnimationManager.java` 当前 SHA-256 **逐字相同**
-     （`6264f974...910703`），`PlayerAnimatorCompat`、`PlayerModelMixin`、
-     `InnerThirdPersonManager` 与 PAL 依赖 1.2.5 也相同；唯一源码差异是
-     `minecraft.screen` → `minecraft.gui.screen()` 的 26.2 API 改名，与切枪无关；
-  3. 因此失败不是“PR 漏贴一行”，而是 26.1.2 修法依赖了宿主渲染时序：
-     `LAST_PRONE_STATE` 只由 render-driven `play/stopAll` 观察，`onDraw` 随后又用
-     `stop()` 把 controller 的 `activeBones` 拍成一份新的 fade snapshot。
-     同码在 26.2 的 deferred PlayerModel 提交/回调顺序下可能观察得更晚，
-     于是**正是切枪 crossfade 再次拍进脏姿态**；稳态循环本身仍正常。
-- **本轮 26.2 专用处置**（`PalAnimationManager#onDraw`）：
-  - gun→gun 的 `GunDrawEvent` 是不依赖渲染观察的权威切换边界；
-  - 不再对 LOWER / LOOP_UPPER / ONCE_UPPER 做“旧枪→null”的软 fade；
-  - 在该边界移除三层全部 `AbstractFadeModifier`，停止 triggered/current animation，
-    `forceAnimationReset()`；ROTATION 保留（它是持续视角修正，不是切枪动画）；
-  - 下一次 `play()` 会让新枪从 identity 做正常 8 tick fade-in，既保留过渡又不继承
-    旧的趴姿 snapshot。
-- **待用户裁决**：PAL 1.2.5，第三人称执行“持枪→趴下→站起→切另一把枪”，只看
-  切枪的 8 tick；回报“过渡干净/仍脏”。稳态持枪无需再作为判据。
+- 26.1.2 的 `e43a3a9d` 已由用户实测解决；逐字移到 26.2 后无效。
+- 复核时两侧 `PalAnimationManager.java` SHA-256 同为 `6264f974...910703`，相关
+  TACZ 驱动与 PAL 1.2.5 也一致，所以不是文本补丁漏贴。
+- 26.2 后续试过在 gun→gun `GunDrawEvent` 硬清 LOWER / LOOP_UPPER /
+  ONCE_UPPER 三层 fade snapshot 与播放态；用户复测**仍脏**，该实验已回退。
+- **当前状态**：按用户决定不再追查。26.2 保留 `e43a3a9d` 的既有兼容基线；
+  26.1.2 已经正常，绝对不要把 26.2 失败的 GunDraw 硬复位反向移植过去。

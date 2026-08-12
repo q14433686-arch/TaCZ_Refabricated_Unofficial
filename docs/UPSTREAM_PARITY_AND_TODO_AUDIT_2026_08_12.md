@@ -166,8 +166,8 @@
 
 1. **Player Animation Library**：准确症状不是“稳态持枪手臂持续错形”，而是
    **趴姿→站立后，下一次切枪的约 8 tick 第三人称 crossfade 使用了脏姿态**；切完后的
-   稳态持枪不是病灶。26.1.2 的 `e43a3a9d` 有效，但逐字移植到 26.2 无效。
-   本轮已把 26.2 的 gun-to-gun `GunDrawEvent` 改成三层 controller 硬复位，待实机复测。
+   稳态持枪不是病灶。26.1.2 的 `e43a3a9d` 有效，但逐字移植到 26.2 无效；随后尝试的
+   gun-to-gun GunDraw 三层硬复位也经用户实测无效，已回退并按用户决定挂起。
 2. **LRTactical 仍是部分内置框架**：flash shield、完整 consumable 动画/输入、专属
    音效/素材等未全量移植；投掷物 tooltip、使用进度 HUD 与自定义分类冷却遮罩仍缺。
 3. **Accelerated Rendering / KubeJS / Controllable**：等待目标 26.2 Fabric API/构建；

@@ -1,5 +1,9 @@
-# 26.2 → 26.1.2 同步移植清单（arena/019fea3a 分支全部修复）
+# 26.2 → 26.1.2 同步移植清单（历史主批次）
 
+> **2026-08-12 上游审计后的新增回流请改看**
+> [`HANDOFF_26_2_AUDIT_TO_26_1_2_2026_08_12.md`](HANDOFF_26_2_AUDIT_TO_26_1_2_2026_08_12.md)。
+> 新文档已读取 `origin/26.1.2@08b3559` 实码，并明确哪些 26.1.2 进度领先、禁止倒灌。
+>
 > 写给负责 26.1.2 分支的移植 AI。
 > 源分支：`arena/019fea3a-tacz-refabricated-unofficial`（基线 = `26.2(main)` 的 `5e8cba8`，
 > 修复终止点 = `7389916`）。
@@ -539,16 +543,11 @@ RenderType，开镜时内环被（hull 略偏大的）掩码啃掉——这正�
 - `6c0d004`（preserve visible depth during cleanup）为深度孔径架构专属
   （ScopeDepthCopyState/ScopeRenderTypes/scope_depth_cleanup.fsh），26.2 无对应物，
   **不移植**，仅此记录。
-## 附录 E —— PAL 同码异果的口径更正与 26.2 专用处理（2026-08-12）
+## 附录 E —— PAL 同码异果终态（2026-08-12）
 
-- 用户再次明确：病灶是**趴姿→站立后的下一次切枪 crossfade 脏**，不是稳态持枪手臂
-  持续错形。此前案例⑩的症状文字写错。
-- `e43a3a9d` 在 26.1.2 实测有效；26.2 逐字移植无效。复核后两侧
-  `PalAnimationManager.java` SHA-256 同为 `6264f974...910703`，相关 TACZ 驱动与
-  PAL 1.2.5 也一致，故不是文本补丁漏移植，而是修法依赖 render-driven
-  `LAST_PRONE_STATE` 与 fade snapshot 时序；26.2 deferred PlayerModel 路径不保证
-  同一观察顺序。
-- 26.2 现改为在 gun→gun `GunDrawEvent` 权威边界硬清 LOWER/LOOP_UPPER/ONCE_UPPER
-  的 fade snapshot 与播放态；下一次 `play()` 从 identity 正常 fade-in。ROTATION 不动。
-  此改动是 26.2 专用语义适配，**不应反向搬到已实测通过的 26.1.2**。
-- 待复测判据只看切枪约 8 tick：“过渡干净/仍脏”；稳态持枪不再作为本案判据。
+- 准确症状是**趴姿→站立后的下一次切枪 crossfade 脏**，不是稳态持枪手臂持续错形。
+- `e43a3a9d` 在 26.1.2 实测有效；26.2 逐字移植无效，且两侧相关代码与 PAL 1.2.5
+  一致，不是漏贴补丁。
+- 26.2 追加的 GunDraw 三层硬复位实验也经用户复测无效，已回退；本案按用户决定挂起。
+- **给 26.1.2 的硬约束**：该分支已经正常，保留 `e43a3a9d`；不要移植任何 26.2
+  后续 PAL 实验（tick observer、日志探针、GunDraw hard reset）。
