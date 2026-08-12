@@ -70,6 +70,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2d;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 
 import java.util.*;
 
@@ -385,12 +386,10 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
             Entity core
     ) {
         public static MaybeMultipartEntity of(Entity hitPart) {
-            /*
-             * NeoForge exposes a generic PartEntity#getParent contract; Fabric/Minecraft does not.
-             * Keep the hit entity as its own core rather than reflectively guessing mod-specific
-             * parent fields. Vanilla multipart entities forward damage from their part themselves.
-             */
-            return new MaybeMultipartEntity(hitPart, hitPart);
+            Entity core = hitPart instanceof EnderDragonPart dragonPart
+                    ? dragonPart.parentMob
+                    : hitPart;
+            return new MaybeMultipartEntity(hitPart, core);
         }
     }
 
