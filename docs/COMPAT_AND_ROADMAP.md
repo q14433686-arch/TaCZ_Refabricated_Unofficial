@@ -1634,3 +1634,18 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
     各切一遍——看点：低倍/红点通道窗框完整无缺口、倍镜通道黑环完整、两通道
     镜内透视与准星均无回归。`ScopeOcularRingFix=false`、`ScopeSightClipFix=false`
     可各自独立秒回退定位。
+  - **第三轮（同日，复测回归修正）**：用户复测「低倍好了，但组合镜高倍组与 AUG
+    默认镜**失去一切裁剪痕迹**」⇒ 第二轮判别器误伤排查。根因 = **把命名当物理属性**：
+    第二轮直接读 `ocularIsScopeByIndex`，而它的语义只是「节点名带不带
+    `ocular_scope` 前缀」——纯倍镜（AUG 默认/ACOG/lpvo，乃至 8x 之外几乎全部）
+    的目镜名是普通 `ocular`，映射恒 false ⇒ 被误判「非筒镜」误关裁剪。
+    数据全表核实（display json）：纯筒镜单 flag「scope:true」（acog/aug/8x/lpvo/
+    scout/qmk152/contender/elcan/1873/98k/retro…）；纯红点「sight:true」；真组合镜
+    双 flag（hamr/vudu/mk5hd，views=[2,1]/[2,1]/[2,2,1]）；另有 8x views=[1,1]、
+    lpvo views=[2,2] 这类「flag 与命名不同构」实例。**修正**：判别输入换成上游
+    三分支同源的「双 flag + views 当前通道」——纯筒镜恒裁、纯红点恒不裁、组合镜
+    看当前 channels 组映射、映射缺失回退 true（保守维持旧行为）。开关与语义不变。
+  - **第三轮后复测矩阵（两开关均默认开）**：①纯红点/全息：不裁、窗框完整（理应
+    与第二轮一致）；②AUG 默认/ACOG/8x/lpvo 高倍：恢复裁剪（镜内透光）、黑环
+    完整；③hamr/vudu/mk5hd：红点组不裁、筒镜组恢复裁剪；④elcan/views=[2,2] 的
+    低倍视组属筒镜通道 = 维持裁剪（其内环靠第一轮 ocular_ring 修复保完整）。

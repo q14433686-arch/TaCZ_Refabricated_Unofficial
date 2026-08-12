@@ -519,3 +519,11 @@ RenderType，开镜时内环被（hull 略偏大的）掩码啃掉——这正�
 > 有的」慢性病灶。我们的修法：`activeGroupIsScope()` 门控——sight 激活帧
 > `maskable=false`（你们的 ring 修复只摘了倍镜的物理环，sight 通道基底病灶
 > 大概率仍在你们那边残留，建议同款门控）。开关名 `ScopeSightClipFix`。
+
+> **2026-08-12 第二轮建议的修正（判据换成 flag+通道，命名判据已证误）**：
+> 26.2 在体复测抓到我们反流版判据的误伤——纯倍镜的目镜名是普通 `ocular`
+> （`ocularIsScopeByIndex` 恒 false），命名判据会把 AUG 默认镜/ACOG/lpvo 的
+> 裁剪整组误关。正确判据 = display json 的 `scope`/`sight` 双 flag 先行分流
+> （纯筒镜恒裁、纯红点恒不裁），组合镜再看 `views[zoom]` 当前通道、通道映射
+> 缺失时回退「裁」。8x（views=[1,1]）、lpvo（[2,2]）、mk5hd（[2,2,1]）都是
+> 「flag 与节点命名不同构」的实锤样本——你们适配时直接抄 flag 版。

@@ -913,24 +913,39 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     }
 
     /**
-     * 【案例⑨ 第二轮】当前激活的目镜组是否为「筒镜（高倍）通道」——决定镜身要不要走
-     * 掩码裁剪的上游事实依据。判定只看 {@code ocularIsScopeByIndex} 标注为筒镜的
-     * 目镜是否在 {@link #isOcularInActiveGroup} 意义下激活：
-     * 纯筒镜 → 恒 true；纯红点/全息 → 恒 false；组合镜 → 随当前通道切换。
-     * 查不到分组信息时 isOcularInActiveGroup 恒 true ⇒ 只要有筒镜组就返回 true，
-     * 维持旧行为（与该处「宁可多画、不误删」原则一致，最坏只退回本案之前的状态）。
+     * 【案例⑨ 第三轮】当前激活的目镜通道是否为「筒镜（高倍）」——决定镜身要不要走
+     * 掩码裁剪。判别输入与上游三分支（renderScope / renderSight / renderBoth）同源：
+     * display json 的 {@code scope}/{@code sight} 双 flag + {@code views[]} 当前通道值。
+     *
+     * <h2>第二轮判别器为何误伤（教训：命名≠物理属性）</h2>
+     * 当时直接读 {@code ocularIsScopeByIndex} —— 它的语义是「该节点名带不带
+     * {@code ocular_scope} 前缀」，纯倍镜（AUG 默认镜 / ACOG / lpvo 等）的目镜名
+     * 是普通 {@code ocular}，映射恒 false ⇒ 被误判为「非筒镜」而误关裁剪
+     * （用户实测：倍镜组合高倍组与 AUG 默认镜失去一切裁剪痕迹）。
+     * 还有 standard_8x（views=[1,1] 双 zoom 全组 1）、mk5hd（views=[2,2,1]）这类
+     * 「flag 与命名不同构」的模型，只有 flag+通道才是稳态判据。
+     *
+     * <pre>
+     * 纯筒镜（scope=true, sight=false）  → 恒 true（镜身恒裁，含 8x/lpvo/elcan 的多档 zoom）
+     * 纯红点/全息（sight=true, scope=false）→ 恒 false（上游 renderSight 无条件画镜身）
+     * 组合镜（双 flag）                   → 看当前通道：通道查不到/映射缺失时回退 true
+     *                                     （保守维持旧行为，与「宁可多画」原则一致）
+     * </pre>
      */
     private boolean activeGroupIsScope() {
-        for (Map.Entry<Integer, BedrockPart> entry : ocularByIndex.entrySet()) {
-            BedrockPart part = entry.getValue();
-            if (part == null || !Boolean.TRUE.equals(ocularIsScopeByIndex.get(entry.getKey()))) {
-                continue;
-            }
-            if (isOcularInActiveGroup(part)) {
-                return true;
-            }
+        if (isSight && !isScope) {
+            return false; // 纯红点/全息：上游 renderSight 从不裁镜身
         }
-        return false;
+        if (isScope && !isSight) {
+            return true;  // 纯筒镜：目镜无论叫什么名都是物理高倍通道
+        }
+        // 组合镜（hamr/vudu/mk5hd）：views[zoom] 选出当前通道；通道组内没有
+        // 「名符其实」的筒镜目镜（如纯 plain-ocular 命名）时回退 true = 恒裁旧行为。
+        Integer activeIndex = activeViewGroup == 0 ? null : activeOcularIndex();
+        if (activeIndex == null) {
+            return true;
+        }
+        return Boolean.TRUE.equals(ocularIsScopeByIndex.get(activeIndex));
     }
 
     /**
