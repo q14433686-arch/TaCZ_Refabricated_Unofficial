@@ -154,11 +154,8 @@ public abstract class ThrowableItemEntity extends Projectile
     }
 
     /**
-     * 默认物品。
-     *
-     * <p>上游返回 {@code ModItems.THROWABLE.get()}。物品层尚未移植，
-     * 故此处声明为抽象，由子类/后续接线提供 —— <b>不</b>临时塞一个错误的占位物品，
-     * 那会在物品层接上后变成难查的静默错误。
+     * 默认物品。保持为抽象，让每个实体类型显式声明自己的回退栈；当前投掷物子类
+     * 都返回已注册的 {@code ModItems.THROWABLE}，不会依赖错误的通用占位物。
      */
     protected abstract Item getDefaultItem();
 
@@ -186,7 +183,8 @@ public abstract class ThrowableItemEntity extends Projectile
                 if (speed > 0.1) {
                     this.level().playSound(null, result.getLocation().x, result.getLocation().y, result.getLocation().z,
                             event, SoundSource.AMBIENT, 2.0F, 1.0F);
-                    // TODO(音效): 上游此处还会播放 ModSounds.GRENADE_BOUNCE。
+                    // Audited limitation: upstream plays its ARR grenade-bounce asset here; that
+                    // sound is intentionally not redistributed by this code-only LRTactical port.
                     //  音效资源属原作 All Rights Reserved 素材，本移植不打包，
                     //  故只保留方块本身的脚步声。内容包可自行提供弹跳音效。
                 }
@@ -377,8 +375,8 @@ public abstract class ThrowableItemEntity extends Projectile
      */
     public void onDeath(@Nullable HitResult hitResult) {
         this.discard();
-        // TODO(网络层/音效): 上游在此处经自定义包播放 death 音效。
-        //  网络层未移植且音效属原作受限素材，此处留空。
+        // Audited limitation: upstream broadcasts an ARR death-sound asset here. The index network
+        // layer is complete, but this code-only port deliberately neither redistributes nor requests that asset.
     }
 
     @Override

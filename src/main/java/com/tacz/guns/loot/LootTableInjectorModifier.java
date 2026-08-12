@@ -25,40 +25,15 @@ import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 枪械战利品注入：把枪包定义的 {@code loot_injection} 追加到原版战利品表的产出里。
+ * 枪械战利品注入：把枪包定义的 {@code loot_injection} 追加到原版战利品表产出。
  *
- * <h2>第 39 轮：解除封印，并更正上一版 TODO 的判断</h2>
- * 旧 TODO 写的是「26.2 的战利品表由 HolderGetter/LootContext 解析，
- * <b>无法</b>从 {@code ServerLevel.registryAccess()} 取得，会在方块掉落时崩溃」。
- * 本轮逐个方法核对 26.2 字节码，结论是<b>这句话只对了一半</b>：
- * <ul>
- *   <li>{@code ServerLevel#registryAccess()} —— <b>确实已不存在</b>（近似只剩
- *       {@code recipeAccess}），照抄 1.21.1 的写法必然编译失败；</li>
- *   <li>但 {@code MinecraftServer#registryAccess()} <b>仍然存在</b>，返回
- *       {@code RegistryAccess$Frozen}；而 {@code RegistryAccess} 上
- *       {@code lookupOrThrow(ResourceKey)} → {@code Registry} 与
- *       {@code Registry#getKey(Object)} → {@code Identifier} 也都在。</li>
- * </ul>
- * 也就是说「{@code context.getLevel().getServer().registryAccess()}」这条链
- * <b>是通的</b> —— 崩溃的原因不是 API 没了，而是当年直接写了
- * {@code ServerLevel#registryAccess()}。反查 ID 这个思路本身可以继续用，
- * 不必像 TODO 说的那样搬到资源加载路径去重做。
+ * <p>26.1.2 的战利品表属于 {@code RELOADABLE} registry layer，不在
+ * {@code MinecraftServer#registryAccess()} 中。最终实现从枪包已经声明的少量目标 ID
+ * 出发，经 {@code server.reloadableRegistries().lookup()} 正向查表并用实例身份确认当前表，
+ * 不再尝试从值反查 ID。解析失败时保持原版掉落，绝不影响方块掉落主流程。</p>
  *
- * <h2>本轮实际修掉的两个问题</h2>
- * <ol>
- *   <li><b>{@code ID_CACHE} 内存泄漏。</b> 原来用 {@link HashMap} 且以
- *       {@code LootTable} 实例为<b>强引用</b>键。战利品表在每次
- *       {@code /reload}、切换存档、重载资源包时都会整体重建，
- *       旧表实例被这个 static map 一直攥着，永远不会被回收。
- *       改为 {@link WeakHashMap} + {@code synchronizedMap}：
- *       表实例一旦无人引用即可回收；加锁是因为战利品生成可能发生在
- *       服务端多个线程上。</li>
- *   <li><b>{@code getLevel()} 可能为 null。</b> {@code LootContext#getLevel()}
- *       实际是 {@code params.getLevel()}（字节码确认），而 {@code LootParams}
- *       的 {@code level} 字段由构造器直接写入，理论上非空；但战利品表也可能
- *       被数据生成 / 第三方 mod 在无世界的环境下驱动。这里加一道防御，
- *       任何一环拿不到就原样返回，绝不让注入逻辑把主流程带崩。</li>
- * </ol>
+ * <p>表实例到 ID 的缓存使用同步 {@link WeakHashMap}：数据包重载后旧表可被回收，
+ * 非目标表也通过哨兵缓存，避免在热路径重复解析。</p>
  */
 public class LootTableInjectorModifier {
     /**
@@ -135,37 +110,11 @@ public class LootTableInjectorModifier {
     }
 
     /**
-     * 反查战利品表的注册 ID。
+     * 在 reloadable loot-table registry 中解析当前表的 ID。
      *
-     * <h2>第 40 轮：上一轮用 {@code server.registryAccess()} 是错的，已实测崩溃</h2>
-     * 崩溃日志（挖方块 / 水流冲毁方块时必现）：
-     * <pre>
-     * IllegalStateException: Missing registry: ResourceKey[minecraft:root / minecraft:loot_table]
-     *   at RegistryAccess.lookupOrThrow(RegistryAccess.java:22)
-     *   at LootTableInjectorModifier.resolveId
-     * </pre>
-     *
-     * <p>上一轮我只核对了「{@code MinecraftServer#registryAccess()} 这个方法存在」，
-     * <b>没有核对「战利品表是否真的在这个 RegistryAccess 里」</b>—— 这是两回事。
-     * 26.2 的注册表分层（{@code RegistryLayer} 枚举）为：
-     * {@code STATIC} / {@code WORLDGEN} / {@code DIMENSIONS} / {@code RELOADABLE}。
-     * {@code server.registryAccess()} 只覆盖前三层，
-     * 而战利品表属于<b>随数据包重载</b>的 {@code RELOADABLE} 层，
-     * 由独立的 {@code ReloadableServerRegistries.Holder} 持有
-     * （{@code MinecraftServer#reloadableRegistries()}）。
-     * 所以那条 TODO 说的「无法从 registryAccess 取得」<b>完全正确</b>，是我推翻错了。</p>
-     *
-     * <h2>为什么改成「正查」而不是继续反查</h2>
-     * {@code reloadableRegistries().lookup()} 返回的是 {@link HolderLookup.Provider}，
-     * 它只能按 key 取值，<b>没有</b>由值反查 key 的方法
-     * （{@code HolderLookup} 上只有 {@code key()}，返回的是注册表自身的 key）。
-     * 虽然可以用 {@code listElements()} 全表遍历来反查，但那是 O(n) 且要处理缓存失效。
-     *
-     * <p>更稳的做法是掉头：<b>我们本来就知道要注入哪些表</b>——
-     * {@code LootInjectionManager} 的 {@code injections} 正是以「目标表 ID」为键的 Map。
-     * 于是这里只需拿枪包声明过的那几个 ID（默认枪包只有 1 个：
-     * {@code minecraft:chests/spawn_bonus_chest}）去正查，比对实例是否相同即可。
-     * 候选集通常只有个位数，且完全避开了「注册表不存在」这类运行时假设。</p>
+     * <p>{@link HolderLookup.Provider} 只提供 key → value 查询，不能由值反查 key；但枪包管理器
+     * 本来就持有全部目标 ID。这里只遍历这些通常为个位数的候选，正向取表并比较实例，
+     * 避免全注册表 O(n) 扫描，也避免错误访问不含 loot table 的静态 registry layer。</p>
      *
      * @return 查不到时返回 {@code null}，调用方会原样跳过注入
      */

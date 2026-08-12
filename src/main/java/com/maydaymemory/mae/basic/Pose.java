@@ -1,7 +1,7 @@
 package com.maydaymemory.mae.basic;
 
 /**
- * Stub for mae Pose interface (library not yet available for 26.2).
+ * Minimal legacy MAE pose contract retained for TACZ animation-source compatibility.
  */
 public interface Pose {
 }

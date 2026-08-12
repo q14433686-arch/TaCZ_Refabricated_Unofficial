@@ -5,7 +5,7 @@ import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.client.Camera;
 
 /**
- * Stub for simplebedrockmodel ViewportEvent (library not yet available for 26.2)
+ * Local compatibility event replacing the legacy SimpleBedrockModel viewport callback.
  */
 public class ViewportEvent {
 

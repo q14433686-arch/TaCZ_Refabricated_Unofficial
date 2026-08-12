@@ -14,9 +14,8 @@ import net.minecraft.world.entity.player.PlayerModelPart;
 
 @Environment(EnvType.CLIENT)
 public final class RenderHelper {
-// TODO[26.1.2]: BufferUploader removed     // 26.1.2 迁移: blit/innerBlit 使用的 Tesselator/BufferUploader/RenderSystem.setShader 已全部移除
-    // 26.1.2 使用延迟渲染管线 (SubmitNodeCollector)，不再支持即时模式渲染
-    // 如需 2D blit 渲染，请通过 GuiGraphics 或 SubmitNodeCollector.submitCustomGeometry 实现
+    // BufferUploader-era helpers were removed during the completed 26.1.2 Feature Rendering
+    // migration. GUI work uses GuiGraphics and model work uses SubmitNodeCollector.
 
     /**
      * @deprecated Feature rendering is delayed in 26.1.2. Enabling stencil while a

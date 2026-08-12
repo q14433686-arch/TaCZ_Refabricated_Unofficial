@@ -45,8 +45,12 @@ HOTFIX2 本轮新增 / 修复：
   无法摘除完成态 fade-out modifier 的缺陷，改用可自动摘除的 fade-in-to-null 过渡。
 - **PAL 趴姿退出后手臂旋转累积**：在 TACZ 趴姿切回站姿的边界丢弃趴姿 fade 快照并重置
   四个 controller 的播放态（保留 rotation adjustment），避免后续切枪/重新持枪继承趴姿角度。
-- **曳光弹出生点取整与枪口漂移**：实体生成包改发精确 double 坐标；第一人称枪口
-  以手部入口基座矩阵归一回视图空间，再按相机旋转写入世界轴。
+- **上游小功能复核**：恢复 Controllable 0.26 的按键/震动和 Shoulder Surfing 5.x 的自适应
+  持枪视角；用 Carry On 2.10 的官方 block tag 禁止搬运 TACZ 复杂方块。
+- **枪械经验等级的真实状态**：这不是移植漏项；官方 1.20.1 与 Refabricated 1.21.1 都只有
+  永远返回 0 的预留 API，没有经验写入、升级管理器或发包调用。工具提示不再显示误导性的 `0 (MAX)`。
+- **曳光弹出生点精度**：实体生成包改发精确 double 坐标；曾试验的第一人称枪口世界偏移
+  因实测把弹体抬到枪口上方而完整回退，当前不再宣称该试验已解决枪口漂移。
 - **ADS 开枪/换弹斜向固定侧偏**：动画约束按入口基座的逆变换恢复旧版坐标契约，
   消除随朝向出现的二倍角偏移。
 - **枪械法线重复变换**：已经过 normal matrix 的法线改写裸值，修复平视过暗与光照方向错误。
@@ -75,6 +79,9 @@ HOTFIX2 本轮新增 / 修复：
 - **工作台预览模型可缩放/旋转**：走 `PictureInPictureRenderer` 离屏渲染再合回 GUI
   （26.1.2 两参 `renderToTexture` 签名适配，`+/-/R` 按钮恢复生效）。
 
+上游文件、资源、可选依赖与 TODO 的最终人工复核见
+[`docs/UPSTREAM_GAPS_AND_TODO_AUDIT_26_1_2.md`](docs/UPSTREAM_GAPS_AND_TODO_AUDIT_26_1_2.md)。
+
 以下 Beta-2 引入的内容继续保留：
 
 - **中高倍镜镜内裁剪**：不再在 `CustomGeometryRenderer` 的顶点提交阶段直接改 GL 状态；
@@ -89,6 +96,12 @@ HOTFIX2 本轮新增 / 修复：
 
 当前已知重点限制：
 
+- **LRTactical 仍有已核实的边缘展示缺口**：按 Identifier 分类的自定义冷却没有客户端物品栏
+  遮罩，效果云专属 tooltip 未迁移；原作受限授权的手雷弹跳/死亡音效不随本仓库分发。
+  服务端冷却、索引同步、五种投掷类型、近战、消耗品和遥控起爆不受这些展示缺口影响。
+- **部分可选兼容仍不可恢复**：KubeJS 26.1.2 只有 NeoForge 构建；Accelerated Rendering
+  没有 26.1.2 Feature Rendering API。ImmediatelyFast 可正常安装，但旧的 HUD batching API
+  已删除，因此本仓库不再调用其旧专用钩子。
 - **PIP / 二次世界渲染不默认启用**：此前验证显示 26.1.2 地形渲染、RenderTarget 与光影 pass
   耦合很深，已暂停作为主线方案。
 - **LRTactical 仍是部分内置移植**：flash shield 等上游模块仍未完整移植。
@@ -139,6 +152,9 @@ HOTFIX2 本轮新增 / 修复：
 | 加载器 | Fabric Loader 0.19.3+ |
 | Fabric API | 0.155.2+26.1.2 |
 | 可选光影验证 | Iris 1.11.2 + Sodium 0.9.1 |
+| 可选手柄兼容 | Controllable 0.26.0（及其 Framework 依赖） |
+| 可选肩后视角 | Shoulder Surfing 5.0.10+ |
+| 可选搬运兼容 | Carry On 2.10.0+ |
 
 构建：
 

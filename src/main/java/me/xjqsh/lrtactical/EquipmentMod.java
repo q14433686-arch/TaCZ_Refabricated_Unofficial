@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * LRTactical（LesRaisins Tactical Equipements）的 Fabric 26.2 移植。
+ * LRTactical（LesRaisins Tactical Equipements）的 Fabric 26.1.2 非官方移植。
  *
  * <h2>移植来源与授权</h2>
  * <ul>
@@ -25,8 +25,8 @@ import org.slf4j.LoggerFactory;
  * 不打包、不分发原作的贴图 / 模型 / 音效。
  *
  * <p>这在架构上是可行的：LRTactical 的内容<b>完全由数据驱动</b> ——
- * 代码只注册 5 个「空壳」物品（throwable / melee / consumable / flash_shield / detonator），
- * 具体有哪些手雷、哪把刀，全部来自数据包中的 {@code data/<ns>/index/*}。
+ * 代码注册 throwable / melee / consumable / detonator 四个基础物品，具体有哪些手雷、
+ * 哪把刀，全部来自数据包中的 {@code data/<ns>/index/*}。原作 flash shield 尚未移植。
  * 因此本移植的定位是<b>纯前置框架</b>，由第三方内容包（「刀包」）提供实际内容。
  *
  * <h2>与本仓库主体（TACZ）的关系</h2>
@@ -108,6 +108,6 @@ public final class EquipmentMod {
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS
                 .register(me.xjqsh.lrtactical.network.LrNetworkHandler::syncToPlayer);
 
-        LOGGER.info("LRTactical (unofficial 26.2 port) initialized");
+        LOGGER.info("LRTactical (unofficial 26.1.2 port) initialized");
     }
 }

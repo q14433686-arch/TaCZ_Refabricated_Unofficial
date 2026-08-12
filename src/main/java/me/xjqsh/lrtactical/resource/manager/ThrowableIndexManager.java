@@ -39,9 +39,9 @@ import java.util.Map;
  *       故这里查表走 {@code ModRegistries.getThrowableType}。</li>
  * </ul>
  *
- * <p><b>暂未实现网络同步</b>：上游会把原始 JSON 存进 {@code networkCache} 发给客户端。
- * 网络层尚未移植，此处省略。后果：<b>专用服务器上客户端拿不到索引</b>，
- * 单人游戏与局域网主机不受影响（同一 JVM 共享数据）。已如实标注，待网络层补齐。
+ * <p><b>网络同步已实现</b>：解析成功的原始 JSON 存入 {@code networkCache}，由
+ * {@code ServerMessageSyncLrPack} 在登录和数据包重载时发给客户端；客户端再走同一个
+ * {@link #parse} 重建索引。专用服务器与单人游戏因此使用同一套定义。
  */
 public class ThrowableIndexManager extends com.tacz.guns.resource.manager.JsonDataManager<ThrowableIndex<?, ?>> {
     public ThrowableIndexManager(Gson gson) {

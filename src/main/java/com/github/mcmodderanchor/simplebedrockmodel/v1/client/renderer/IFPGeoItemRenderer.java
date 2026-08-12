@@ -7,7 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import javax.annotation.Nullable;
 
 /**
- * Stub for simplebedrockmodel IFPGeoItemRenderer (library not yet available for 26.2).
+ * Legacy SimpleBedrockModel API shim used by TACZ's collector-backed item renderer.
  */
 public interface IFPGeoItemRenderer {
     long getPutAwayDuration(ItemStack stack);

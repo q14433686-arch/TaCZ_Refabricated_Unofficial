@@ -4,7 +4,7 @@ import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 
 /**
- * Stub for simplebedrockmodel RenderTickEvent (library not yet available for 26.2)
+ * Local compatibility event replacing the legacy SimpleBedrockModel render-tick callback.
  */
 public class RenderTickEvent {
     public final Phase phase;

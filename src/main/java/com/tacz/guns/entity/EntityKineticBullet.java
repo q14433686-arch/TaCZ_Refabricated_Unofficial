@@ -385,11 +385,12 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
             Entity core
     ) {
         public static MaybeMultipartEntity of(Entity hitPart) {
-            // TODO
-            var core = /*(hitPart instanceof PartEntity<?> part)
-                    ? part.getParent()
-                    :*/ hitPart;
-            return new MaybeMultipartEntity(hitPart, core);
+            /*
+             * NeoForge exposes a generic PartEntity#getParent contract; Fabric/Minecraft does not.
+             * Keep the hit entity as its own core rather than reflectively guessing mod-specific
+             * parent fields. Vanilla multipart entities forward damage from their part themselves.
+             */
+            return new MaybeMultipartEntity(hitPart, hitPart);
         }
     }
 
@@ -436,7 +437,8 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
                 serverLevel.sendParticles(ParticleTypes.LAVA, entity.getX(), entity.getY() + entity.getEyeHeight(), entity.getZ(), 1, 0, 0, 0, 0);
             }
         }
-        // TODO 暴击判定（不是爆头）暴击判定内部逻辑，需要输出一个是否暴击的 flag
+        // TACZ 1.1.8 has no gun-data field or event result for a separate random critical hit.
+        // Headshots are the only projectile critical multiplier currently defined by the schema.
         if (headshot) {
             // 默认爆头伤害是 1x
             damage *= headShotMultiplier;

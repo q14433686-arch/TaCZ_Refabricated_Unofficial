@@ -1,7 +1,7 @@
 package com.maydaymemory.mae.basic;
 
 /**
- * Stub for mae DummyPose (library not yet available for 26.2).
+ * Identity implementation of the legacy MAE pose contract used by TACZ.
  */
 public class DummyPose implements Pose {
     public static final DummyPose INSTANCE = new DummyPose();

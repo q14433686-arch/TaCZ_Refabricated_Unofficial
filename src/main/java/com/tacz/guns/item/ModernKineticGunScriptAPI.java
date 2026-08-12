@@ -840,7 +840,8 @@ public class ModernKineticGunScriptAPI {
         return 0f;
     }
 
-    // TODO: 测试检查 enum 值是否可以直接在 lua 中调用，以简化这个功能为下面那个方法
+    // Keep the numeric form as part of the gun-pack Lua ABI. LuaJ can wrap Java enums, but external
+    // packs already use stable primitive values and removing this bridge would be a compatibility break.
     public int getBoltByInt() {
         Bolt bolt = gunIndex.getGunData().getBolt();
         if (bolt == Bolt.MANUAL_ACTION) {

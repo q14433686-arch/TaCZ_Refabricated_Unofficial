@@ -1,7 +1,6 @@
 package com.tacz.guns.client.model.functional;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
@@ -11,19 +10,16 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.LightCoordsUtil;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.apache.commons.lang3.StringUtils;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 public class TextShowRender implements IFunctionalSubmitter {
-    private final BedrockModel bedrockModel;
     private final TextShow textShow;
     private final ItemStack gunStack;
 
     public TextShowRender(BedrockModel bedrockModel, TextShow textShow, ItemStack gunStack) {
-        this.bedrockModel = bedrockModel;
+        // Keep BedrockModel in the constructor contract used by gun-pack model registration. Text
+        // itself is emitted as an immutable collector task and needs no mutable model reference.
         this.textShow = textShow;
         this.gunStack = gunStack;
     }
@@ -61,19 +57,5 @@ public class TextShowRender implements IFunctionalSubmitter {
             collector.submitText(taskPose, -xOffset, -font.lineHeight / 2f, sequence, shadow,
                     Font.DisplayMode.NORMAL, packedLight, color, 0, 0);
         });
-    }
-
-    @Override
-    public void render(PoseStack poseStack, VertexConsumer vertexBuffer, ItemDisplayContext transformType, int light, int overlay) {
-        if (!transformType.firstPerson()) {
-            return;
-        }
-        String text = PapiManager.getTextShow(textShow.getTextKey(), gunStack);
-        if (StringUtils.isBlank(text)) {
-            return;
-        }
-        // 26.2: Font.drawInBatch and MultiBufferSource removed.
-        // Text rendering on gun models needs re-implementation with new rendering API.
-        // TODO: Re-implement text rendering using SubmitNodeCollector.submitCustomGeometry or Font.prepareText
     }
 }
