@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 
 /**
- * Legacy SimpleBedrockModel animation API shim retained by the 26.1.2 item bridge.
+ * active minimal ABI replacement
  */
 public interface IFPAnimationInstance {
     ItemStack currentItem();
