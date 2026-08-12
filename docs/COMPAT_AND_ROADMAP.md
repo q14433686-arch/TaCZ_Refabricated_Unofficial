@@ -1680,3 +1680,36 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
   2. 持枪趴下 → 切到非枪物品站起 → 再切回枪；
   并确认 ①不再需要切第一/第三人称来清污染 ②开火/换弹/近战/固定手型/普通
   移动动画全部正常。一句 PASS/异常即可。
+- **第 1 轮在体裁决（用户）：「人家修好了，你没修好」** —— 26.1.2 构建按
+  上述协议通过，26.2 构建（含第 1 轮 1:1 移植）仍复现。同码不同效。
+- **第 2 轮：同码不同效逐文件取证 + tick 级观测点 + 全链路探针**
+  - **取证**（两侧 commit 级比对）：PalAnimationManager 全字节相同；
+    PAL 依赖同为 modrinth 1.2.5；InnerThirdPersonManager /
+    HumanoidModelMixin / PlayerModelMixin / PlayerAnimatorCompat /
+    ItemInHandRendererMixin、趴姿系统（LocalPlayerCrawl/LivingEntityCrawl/
+    PlayerMixin）全部 zero-diff；两侧全树 PAL/probe 接触面只有邻居多一个
+    Iris 手部相位谓词（其深度架构专属，本案无关）。**结论：差异不在
+    TACZ/PAL 代码，只能在 vanilla 26.2 的渲染驱动时机。**
+  - **机制性解释（最可信）**：第 1 轮修复的边界观测全靠渲染驱动
+    （`HumanoidModel.setupAnim → InnerThirdPersonManager → play/stopAll`）
+    或切枪事件。而 26.2 第一人称下本地玩家本体不渲染、手部渲染的
+    `AvatarRenderState` 恒 `ageInTicks == 0`（PlayerModelMixin 第 0 帧守卫
+    直接 return）⇒ **第一人称全程对本地玩家不产生任何 play()/stopAll()
+    调用**，`LAST_PRONE_STATE` 从未被写入过 `true`，趴→站边界恒观测不到，
+    复位永不触发（切到非枪物品后同样无实体渲染驱动）。26.2 的机制性修复：
+    **`PalAnimationManager.init()` 内补一个 `END_CLIENT_TICK` 观测**
+    （本地玩家非空才读姿势与配置），与渲染路径共享同一张
+    LAST_PRONE_STATE——非边界 tick 只是一次幂等 map put；边界复位
+    从此「下一 tick 必然发生」，不再依赖「恰好有渲染/切枪」。
+    开关 `PalProneTickObserver`（默认开，false 秒回第 1 轮形态）。
+  - **同码不同效定位探针（r2，临时）**：init 标记行
+    `[TACZ Case10] PAL prone-exit fix probe r2 loaded`（日志没这行 =
+    测的 jar 不含修复）；`observe`/`transition` 行只在首次见到玩家与
+    趴姿翻转瞬间各打一条，附 source（tick/play/stopAll/gunDraw）与
+    playerHash；趴→站边界打 `edgeReset applied` + 四个 controller 的
+    复位前快照（active/triggered/curAnimHash）。三岔口判定：
+    ① 连标记行都没有 → jar 陈旧；② 有标记行但趴起全程无 transition →
+    观测链确实喂不进状态；③ transition/edgeReset 齐全画面仍污染 →
+    复位在 26.2 的 PAL 1.2.5 上不生效，带 controller 明细再查下一段。
+  - 用户协议：构建后跑原两条复测路径（含趴/起/切枪各 2~3 次即可），
+    把日志里所有含 `[TACZ Case10]` 的行连画面结论一起回传。

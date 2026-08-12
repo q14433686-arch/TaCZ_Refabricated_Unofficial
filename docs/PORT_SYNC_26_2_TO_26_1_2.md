@@ -539,3 +539,26 @@ RenderType，开镜时内环被（hull 略偏大的）掩码啃掉——这正�
 - `6c0d004`（preserve visible depth during cleanup）为深度孔径架构专属
   （ScopeDepthCopyState/ScopeRenderTypes/scope_depth_cleanup.fsh），26.2 无对应物，
   **不移植**，仅此记录。
+## 附录 E —— PAL 趴姿修复在 26.2 失效：同码不同效取证与 tick 级观测（2026-08-12）
+
+用户在体验决：你们的构建按协议修好，我们的构建（已含 `e43a3a9d` 逐字直贴）仍复现。
+两侧逐文件取证结论：**TACZ/PAL 侧零差异**（PalAnimationManager 逐字节相同、
+PAL 同为 modrinth 1.2.5、InnerThirdPersonManager / HumanoidModelMixin /
+PlayerModelMixin / PlayerAnimatorCompat / ItemInHandRendererMixin / 趴姿系统
+全部 zero-diff）。差异只剩 vanilla 26.2 与 26.1.2 的渲染驱动时机：
+
+- 26.2 第一人称本地玩家本体不渲染；手部渲染的 AvatarRenderState 在我们这边恒
+  `ageInTicks == 0`（PlayerModelMixin 第 0 帧守卫 return）⇒ 第一人称全程不产生
+  play()/stopAll() 调用 ⇒ 你们的「渲染驱动」边界观测对 26.2 本地玩家形同虚设，
+  LAST_PRONE_STATE 从未写过 true，趴→站边界永不触发。
+- 请你们同测确认：26.1.2 第一人称下手部渲染是否带非零 ageInTicks（若是，即解释了
+  「同码不同效」——你们的观测链恰好在第一人称也有驱动）。
+
+本轮起的 26.2 处置（对你们同样适用、建议回流）：
+`PalAnimationManager.init()` 内注册 `END_CLIENT_TICK`，本地玩家非空时直读其姿势
+调 `discardProneTransitionOnStand(player, "tick")`，与渲染路径共享 LAST_PRONE_STATE
+（幂等 map put，无主从冲突）。边界复位从「碰巧有渲染/切枪才发生」变为
+「下一 tick 必然发生」。开关 `PalProneTickObserver`（默认开，false=第 1 轮形态）。
+另带 r2 探针（init 标记行 + observe/transition + 趴→站 edgeReset 四 controller
+明细），用于三岔口判定：jar 陈旧 / 观测链未触发 / 复位不生效。若你们复现了
+第一人称下观测链确实不触发，这套 tick 观测 + 探针可以直接照抄。

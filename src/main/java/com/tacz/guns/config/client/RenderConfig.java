@@ -20,6 +20,8 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue SCOPE_OCULAR_RING_FIX;
     /** 低倍/红点通道（含组合镜低倍组）激活时，镜身不做目镜掩码裁剪（上游 renderSight 无条件绘制镜身）。默认<b>开启</b>。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_SIGHT_CLIP_FIX;
+    /** 【案例⑩ 第 2 轮】PAL 趴姿退出按客户端 tick 观测（不依赖实体是否被渲染）。默认<b>开启</b>；false 回到仅渲染驱动的第 1 轮形态。 */
+    public static ForgeConfigSpec.BooleanValue PAL_PRONE_TICK_OBSERVER;
     public static ForgeConfigSpec.BooleanValue GUN_HUD_ENABLE;
     public static ForgeConfigSpec.BooleanValue KILL_AMOUNT_ENABLE;
     public static ForgeConfigSpec.DoubleValue KILL_AMOUNT_DURATION_SECOND;
@@ -156,6 +158,17 @@ public class RenderConfig {
                         "draws the sight body unconditionally; our clip nibbled the sight's own inner frame.",
                         "Default on; set false to restore legacy clipping on sights too.")
                 .define("ScopeSightClipFix", true);
+
+        // 【案例⑩ 第 2 轮】PAL 趴姿状态污染的观测点升级。
+        // 第 1 轮移植 26.1.2 的「渲染/事件驱动」观测，在 26.2 第一人称下对本地玩家
+        // 不产生任何调用（本体不渲染；手部渲染恒 ageInTicks==0 被 mixin 守卫短路），
+        // 边界永远观测不到。改为客户端 tick 直读本地玩家姿势，
+        // 边界复位必然在下一 tick 发生。false = 秒回第 1 轮（仅渲染/事件驱动）。
+        PAL_PRONE_TICK_OBSERVER = builder
+                .comment("[FIX] Observe TACZ prone->stand edges on the client tick so PAL prone state",
+                        "is reset even when no player-entity render runs (first-person on 26.2).",
+                        "Default on; set false to revert to render-driven observation only.")
+                .define("PalProneTickObserver", true);
 
         builder.comment("Whether or not to display the gun's HUD");
         GUN_HUD_ENABLE = builder.define("GunHUDEnable", true);
