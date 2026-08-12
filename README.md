@@ -50,7 +50,8 @@ HOTFIX2 本轮新增 / 修复：
 - **枪械法线重复变换**：已经过 normal matrix 的法线改写裸值，修复平视过暗与光照方向错误。
 - **镜内视模、目镜黑边与枪口火光**：复用 26.1.2 的深度孔径副本做屏幕空间反向裁剪；
   枪身、非瞄具配件、火光大面片和 energy-swirl 辉光只保留在目镜外；物理 `ocular_ring`
-  在 depth cleanup 后独立重画，避免所有中高倍镜的内圈黑边被 aperture 错裁。
+  在 cleanup 后独立重画；cleanup 只恢复仍由 invisible ocular 占据的像素，保留可见镜体深度，
+  避免 Iris 的水、粒子和云覆盖低倍镜内部。
 
 此前 HOTFIX 主要新增 / 修复（逐项明细见 `docs/BACKPORT_FROM_26_2_APPLIED.md`）：
 

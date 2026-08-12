@@ -163,8 +163,11 @@ public final class ScopeRenderTypes {
     private static RenderType createDepthCleanupType(Identifier texture) {
         RenderSetup setup = RenderSetup.builder(DEPTH_CLEANUP_PIPELINE)
                 .withTexture("Sampler0", texture)
-                // Satisfy RenderPass validation; ScopeDepthCopyState replaces this binding with backup depth.
+                // Satisfy RenderPass validation; ScopeDepthCopyState replaces these placeholders
+                // with world/aperture/post-body depth copies at the actual draw boundary.
                 .withTexture(ScopeDepthCopyState.SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.POST_BODY_SAMPLER_UNIFORM, texture)
                 .useLightmap()
                 .useOverlay()
                 .createRenderSetup();
@@ -301,6 +304,8 @@ public final class ScopeRenderTypes {
         builder.withFragmentShader(Identifier.fromNamespaceAndPath(
                 GunMod.MOD_ID, "core/scope_depth_cleanup"));
         builder.withSampler(ScopeDepthCopyState.SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.POST_BODY_SAMPLER_UNIFORM);
 
         ColorTargetState sourceColor = source.getColorTargetState();
         builder.withColorTargetState(new ColorTargetState(

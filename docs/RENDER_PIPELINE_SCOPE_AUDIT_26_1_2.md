@@ -440,6 +440,22 @@ snapshot，并在 cleanup 后、reticle 前单独提交。选择 cleanup 后重�
 是因为本方案的 cleanup 会恢复整个 ocular footprint 的世界深度；后画才能同时恢复镜框颜色与
 近处深度，避免后续水、雾和透明粒子覆盖它。未开镜、第三人称以及没有 `ocular_ring` 的模型不变。
 
+### 6.11 Iris 水/粒子/云覆盖低倍镜内部：选择性 depth cleanup
+
+旧 cleanup 在 ocular 几何覆盖的每个像素无条件写回世界深度。scope body 虽然已经把可见内部零件
+画进颜色和近处 hand depth，但 cleanup 随后把这些零件的深度也抹成世界深度；Iris 后续绘制水、
+粒子和云时便会通过深度测试，叠到已经画好的镜体颜色上。关闭光影时后续 pass 较少，因而症状
+通常只在开启光影并面对水面/云层时出现。
+
+修复在 cleanup draw 边界额外复制一份 post-body depth，并逐像素与 aperture depth 比较：
+
+- 两者完全相等：该像素仍只有 invisible ocular，安全恢复为 pre-hand 世界深度；
+- 两者不同：scope body 写入了更近的可见深度，cleanup `discard`，保留 hand depth；
+- post-body copy 或 sampler 不可用：退回 mode 1 的旧式无条件恢复，优先保证水/雾不会被整块孔径挡住。
+
+vanilla cleanup shader 与 Iris HAND dormant branch 使用同一 mode 2 规则；比较的是两张同格式、
+NEAREST 采样的私有 depth copy，因此采用精确相等判断，不用会误吞一个 depth 量化步长的 epsilon。
+
 七条 custom pipeline 都在 `TaCZFabricClient#onInitializeClient` 提前注册。最小
 `GlCommandEncoder` mixin 负责 backup/aperture-copy/cleanup/mask 的 sampler 绑定；可选 Iris mixin
 补两条 dormant fragment branch。RenderType 构造器通过 Access Widener 开放，用于同步标记

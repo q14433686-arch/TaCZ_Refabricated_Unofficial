@@ -54,6 +54,8 @@ public final class ScopeDepthCopyState {
     public static final String MASK_WORLD_SAMPLER_UNIFORM = "tacz_WorldDepthSampler";
     /** All mask implementations read the post-ocular aperture depth from this sampler. */
     public static final String APERTURE_SAMPLER_UNIFORM = "tacz_ApertureDepthSampler";
+    /** Cleanup reads depth after the scope body draw to preserve visible hand geometry. */
+    public static final String POST_BODY_SAMPLER_UNIFORM = "tacz_PostBodyDepthSampler";
 
     private static final ThreadLocal<Operation> CURRENT = ThreadLocal.withInitial(() -> Operation.NONE);
 
@@ -61,6 +63,8 @@ public final class ScopeDepthCopyState {
     private static final DepthTextureTarget WORLD_TARGET = new DepthTextureTarget();
     /** Depth copied at the body boundary: world depth plus only the ocular differences (step 3). */
     private static final DepthTextureTarget APERTURE_TARGET = new DepthTextureTarget();
+    /** Depth after the body draw; differs from APERTURE_TARGET where visible scope geometry survived. */
+    private static final DepthTextureTarget POST_BODY_TARGET = new DepthTextureTarget();
 
     private static int backupSourceFbo;
     /** FBO bound while the ocular aperture drew; retained for diagnostics only. */
@@ -91,10 +95,11 @@ public final class ScopeDepthCopyState {
     private static boolean useIrisPreHandDepth;
     private static boolean loggedIrisPreHandDepth;
     private static boolean loggedApertureActive;
+    private static boolean loggedSelectiveRestoreActive;
     private static boolean loggedMaskActiveIris;
     private static boolean loggedMaskActiveVanilla;
 
-    private static final List<OverriddenUnit> OVERRIDDEN_UNITS = new ArrayList<>(2);
+    private static final List<OverriddenUnit> OVERRIDDEN_UNITS = new ArrayList<>(3);
     private static boolean loggedActive;
     /**
      * Reasons already logged. A strict "last reason only" dedup floods the log when a degraded
@@ -264,23 +269,55 @@ public final class ScopeDepthCopyState {
         // Under Iris the cleanup program is the shared HAND shader: a mask flag left over from a
         // reticle draw must never survive into the restore draw (and vice versa below).
         zeroUniform(program, MASK_MODE_UNIFORM);
+
+        int destinationFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+        DepthInfo destination = inspectDepthAttachment();
+        DepthIdentity currentDepth = captureDepthIdentity();
+
+        // Capture depth AFTER the scope body. Comparing it with APERTURE_TARGET lets the cleanup
+        // distinguish untouched invisible-ocular pixels from visible scope geometry that wrote a
+        // nearer depth. The old unconditional restore erased both, allowing later Iris water,
+        // particles and clouds to composite over low-power sight internals.
+        boolean selectiveRestore = maskValid
+                && destination != null
+                && destination.width() == APERTURE_TARGET.width()
+                && destination.height() == APERTURE_TARGET.height()
+                && destination.internalFormat() == APERTURE_TARGET.internalFormat()
+                && apertureDepthIdentity != null
+                && apertureDepthIdentity.equals(currentDepth)
+                && copyCurrentDepth(POST_BODY_TARGET, "post-scope-body depth");
+
+        int apertureLocation = GL20.glGetUniformLocation(program, APERTURE_SAMPLER_UNIFORM);
+        int postBodyLocation = GL20.glGetUniformLocation(program, POST_BODY_SAMPLER_UNIFORM);
+        if (selectiveRestore && (apertureLocation < 0 || postBodyLocation < 0)) {
+            selectiveRestore = false;
+            logFailure("cleanup shader has no selective depth-preservation samplers; using legacy restore");
+        }
+        if (selectiveRestore && !loggedSelectiveRestoreActive) {
+            loggedSelectiveRestoreActive = true;
+            GunMod.LOGGER.info("[TACZ Scope] Selective depth cleanup active; visible scope depth will survive world restore.");
+        }
+
         if (useIrisPreHandDepth) {
             int irisDepthLocation = GL20.glGetUniformLocation(program, IRIS_WORLD_DEPTH_UNIFORM);
             if (modeLocation < 0 || irisDepthLocation < 0) {
                 logFailure("Iris cleanup shader has no depthtex2 restore branch");
                 return false;
             }
-            // Iris' ProgramSamplers has already bound depthtex2 to the pre-hand depth copy.
-            GL20.glUniform1i(modeLocation, 1);
+            if (selectiveRestore) {
+                int apertureUnit = bindDepthTexture(1, APERTURE_TARGET.texture());
+                int postBodyUnit = bindDepthTexture(2, POST_BODY_TARGET.texture());
+                GL20.glUniform1i(apertureLocation, apertureUnit);
+                GL20.glUniform1i(postBodyLocation, postBodyUnit);
+            }
+            // Mode 2 preserves body depth; mode 1 is the old fail-safe unconditional restore.
+            GL20.glUniform1i(modeLocation, selectiveRestore ? 2 : 1);
             backupValid = false;
             return true;
         }
 
-        int destinationFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-        DepthInfo destination = inspectDepthAttachment();
-        // Same shared-depth rule as the aperture copy: Iris may be on a twin framebuffer, its
-        // depth attachment identity must match the surface the world backup was blitted from.
-        DepthIdentity currentDepth = captureDepthIdentity();
+        // Same shared-depth rule as the aperture copy: a different FBO is allowed only when it
+        // carries the same depth attachment. Vanilla additionally validates the world backup format.
         if (worldDepthIdentity == null || !worldDepthIdentity.equals(currentDepth)
                 || destination == null
                 || destination.width() != WORLD_TARGET.width()
@@ -298,10 +335,18 @@ public final class ScopeDepthCopyState {
             return false;
         }
 
-        int textureUnit = bindDepthTexture(1, WORLD_TARGET.texture());
-
-        GL20.glUniform1i(samplerLocation, textureUnit);
-        GL20.glUniform1i(modeLocation, 1);
+        if (selectiveRestore) {
+            int apertureUnit = bindDepthTexture(1, APERTURE_TARGET.texture());
+            int postBodyUnit = bindDepthTexture(2, POST_BODY_TARGET.texture());
+            int worldUnit = bindDepthTexture(3, WORLD_TARGET.texture());
+            GL20.glUniform1i(apertureLocation, apertureUnit);
+            GL20.glUniform1i(postBodyLocation, postBodyUnit);
+            GL20.glUniform1i(samplerLocation, worldUnit);
+        } else {
+            int worldUnit = bindDepthTexture(1, WORLD_TARGET.texture());
+            GL20.glUniform1i(samplerLocation, worldUnit);
+        }
+        GL20.glUniform1i(modeLocation, selectiveRestore ? 2 : 1);
         backupValid = false;
         return true;
     }
