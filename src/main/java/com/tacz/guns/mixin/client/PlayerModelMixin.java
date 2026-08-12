@@ -2,8 +2,6 @@ package com.tacz.guns.mixin.client;
 
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.animation.third.InnerThirdPersonManager;
-import com.tacz.guns.compat.playeranimator.PlayerAnimatorCompat;
-import com.tacz.guns.compat.playeranimator.pal.PalAnimationManager;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -113,14 +111,6 @@ public class PlayerModelMixin extends HumanoidModel<AvatarRenderState> {
                     this.head,
                     renderState.walkAnimationSpeed
             );
-            // 【案例⑩ 在体探针 · r3 · 临时】采样点位于 PAL 自身注入之前，
-            // 采样内容 = vanilla 刚写完的手臂欧拉值 + PAL 四 controller 激活态。
-            // 节流 1 秒一条、仅本地玩家，正常游玩时几乎不产出；画面脏住期每秒一条。
-            // 必须用 isInstalled() 门禁：PAL 类在 PAL 缺席的运行时不可触达
-            // （与 PlayerAnimatorCompat.playAnimation 既有写法同一惰性解析前提）。
-            if (PlayerAnimatorCompat.isInstalled()) {
-                PalAnimationManager.case10PollutionProbe(livingEntity, this.rightArm, this.leftArm);
-            }
         }
 
         // 【第 8 轮】此处<b>刻意不再</b>同步袖子姿态。

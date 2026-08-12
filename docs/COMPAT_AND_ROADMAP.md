@@ -1650,100 +1650,25 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
     完整；③hamr/vudu/mk5hd：红点组不裁、筒镜组恢复裁剪；④elcan/views=[2,2] 的
     低倍视组属筒镜通道 = 维持裁剪（其内环靠第一轮 ocular_ring 修复保完整）。
 
-#### 案例⑩：PAL 趴姿（TACZ 强制 Pose.SWIMMING）消退后动画状态污染 —— 26.1.2 邻链修复 1:1 直贴（2026-08-12 立案，当日移植，待用户复测）
+#### 案例⑩：PAL 趴姿退出后第三人称手臂错形 —— 已知未解决（2026-08-12 按用户指示挂起，仅记录现象）
 
-- **案例⑨ 状态先记**：第 1~3 轮（ocular_ring 独立路径 / sight 通道撤裁 /
-  判别器 flag 化纠错）用户复测 **PASS**，案例⑨ 结案（因端口沿用合并条目，
-  不再单开结案行）。
-- **邻链修复（commit `e43a3a9d` / PR #39，在体验证）**：PAL 1.2.5 的 fade 以
-  「携带离场骨骼变换快照的 modifier」实现；TACZ 趴姿片段与站姿片段坐标轴
-  不同、手臂偏移差异大 ⇒ 趴姿 fade 快照跨过趴→站边界滞留后，后续 draw/fade
-  会拿旧快照当起点，反复循环还会**累积**旧欧拉旋转，只能切第一/第三人称
-  之类无关渲染重置模型才解。修复内容（逐字直贴，PR 基线与 26.2 该文件
-  **逐字节相同**，`git apply` 零冲突）：
-  1. 新增 `discardProneTransitionOnStand`：WeakHashMap 追踪每玩家趴姿态，
-     `play()`/`stopAll()`/切枪三入口在**趴→站边界**对四个 controller
-     执行「只删 AbstractFadeModifier + stopTriggeredAnimation + stop +
-     forceAnimationReset」——刻意**不动** ROTATION 的 SafeAdjustmentModifier
-     （保住 rotation adjustment、不引回初始化 NPE），不碰未跨边界的普通 fade；
-  2. `playNamed` 的「同 clip 抑制」加 `controller.isActive()` 门控——已停止
-     但记录同 clip 的 controller 可以重播（开火/换弹等一次性动画可重启）；
-  3. 切枪不再对 ROTATION 层做 stop（只 lower/loop-upper/once-upper，8 tick
-     安全 fade-in-to-null 路径不变）——对齐旧 PlayerAnimator 契约。
-  PAL 版本两侧同为 1.2.5（我们 `gradle.properties: player_animation_lib=1.2.5`），
-  API 面一致，直贴不存在版本风险。
-- **不适用条目记录**：同 PR 的 `6c0d004`（preserve visible depth during cleanup）
-  是深度孔径架构专属（ScopeDepthCopyState/ScopeRenderTypes/scope_depth_cleanup.fsh），
-  26.2 掩码架构无对应物，**不移植**。
-- **待用户复测**（沿邻链协议，两条路径各 5~10 次）：
-  1. 持枪趴下 → 按趴姿键站起 → 切枪/重新持枪；
-  2. 持枪趴下 → 切到非枪物品站起 → 再切回枪；
-  并确认 ①不再需要切第一/第三人称来清污染 ②开火/换弹/近战/固定手型/普通
-  移动动画全部正常。一句 PASS/异常即可。
-- **第 1 轮在体裁决（用户）：「人家修好了，你没修好」** —— 26.1.2 构建按
-  上述协议通过，26.2 构建（含第 1 轮 1:1 移植）仍复现。同码不同效。
-- **第 2 轮：同码不同效逐文件取证 + tick 级观测点 + 全链路探针**
-  - **取证**（两侧 commit 级比对）：PalAnimationManager 全字节相同；
-    PAL 依赖同为 modrinth 1.2.5；InnerThirdPersonManager /
-    HumanoidModelMixin / PlayerModelMixin / PlayerAnimatorCompat /
-    ItemInHandRendererMixin、趴姿系统（LocalPlayerCrawl/LivingEntityCrawl/
-    PlayerMixin）全部 zero-diff；两侧全树 PAL/probe 接触面只有邻居多一个
-    Iris 手部相位谓词（其深度架构专属，本案无关）。**结论：差异不在
-    TACZ/PAL 代码，只能在 vanilla 26.2 的渲染驱动时机。**
-  - **机制性解释（最可信）**：第 1 轮修复的边界观测全靠渲染驱动
-    （`HumanoidModel.setupAnim → InnerThirdPersonManager → play/stopAll`）
-    或切枪事件。而 26.2 第一人称下本地玩家本体不渲染、手部渲染的
-    `AvatarRenderState` 恒 `ageInTicks == 0`（PlayerModelMixin 第 0 帧守卫
-    直接 return）⇒ **第一人称全程对本地玩家不产生任何 play()/stopAll()
-    调用**，`LAST_PRONE_STATE` 从未被写入过 `true`，趴→站边界恒观测不到，
-    复位永不触发（切到非枪物品后同样无实体渲染驱动）。26.2 的机制性修复：
-    **`PalAnimationManager.init()` 内补一个 `END_CLIENT_TICK` 观测**
-    （本地玩家非空才读姿势与配置），与渲染路径共享同一张
-    LAST_PRONE_STATE——非边界 tick 只是一次幂等 map put；边界复位
-    从此「下一 tick 必然发生」，不再依赖「恰好有渲染/切枪」。
-    开关 `PalProneTickObserver`（默认开，false 秒回第 1 轮形态）。
-  - **同码不同效定位探针（r2，临时）**：init 标记行
-    `[TACZ Case10] PAL prone-exit fix probe r2 loaded`（日志没这行 =
-    测的 jar 不含修复）；`observe`/`transition` 行只在首次见到玩家与
-    趴姿翻转瞬间各打一条，附 source（tick/play/stopAll/gunDraw）与
-    playerHash；趴→站边界打 `edgeReset applied` + 四个 controller 的
-    复位前快照（active/triggered/curAnimHash）。三岔口判定：
-    ① 连标记行都没有 → jar 陈旧；② 有标记行但趴起全程无 transition →
-    观测链确实喂不进状态；③ transition/edgeReset 齐全画面仍污染 →
-    复位在 26.2 的 PAL 1.2.5 上不生效，带 controller 明细再查下一段。
-  - 用户协议：构建后跑原两条复测路径（含趴/起/切枪各 2~3 次即可），
-    把日志里所有含 `[TACZ Case10]` 的行连画面结论一起回传。
+> 本节**只记录在体观察到的现象与最终代码状态**，不含机制推测；请勿据本节文字
+> 推断根因，后来者应自行取证。
 
-- **第 2 轮在体复测 + 解剖三问（用户实测）**：
-  - r2 探针证：tick 观测链正常捕获趴/起边界，`edgeReset applied` 每次都真实执行，
-    复位时 lower/loop_upper/rotation 均 active 且带 clip、once_upper 静止——
-    **「观测链断」「jar 陈旧」两案排除**。
-  - 但画面裁决：**仍污染、同旧样**——复位真实执行却无效 ⇒ **fade 快照/
-    controller 播放态不是 26.2 上污染的载体**（邻居 e43a3a9d 的机制叙述对
-    26.2 不成立，尽管对 26.1.2 是经验正确的）。
-  - 解剖三问：出现位置=**第三人称看自己**；持续性=**一直脏、直到切视角**；
-    触发条件=**必须趴姿过一次**（站着反复切枪不出现）。
-- **第 3 轮：PAL 1.2.5 源码级重取证（推翻 fade 载体说）**
-  - 关键事实：PAL 发布按 MC 分构建但 `v1.2.5+26.2` 与 `v1.2.5+26.1`
-    **指向同一 commit（6b2e002b）**——49 个 minecraft 模块文件 + core 全部
-    文件两侧逐字节相同，「PAL 分版不同」假设排除。
-  - 读 PAL 渲染路径源码（PlayerModelMixin/AvatarAnimManager/AnimationStack/
-    LivingEntityRendererMixin）确认：① `pal$updatePart` 每渲染帧先
-    `RenderUtil.copyVanillaPart(part, bone)` —— **bone 每帧都从 vanilla 姿态
-    重播种**，跨帧不可能累积；② stack 非 active 时 `pal$resetAll` 是 PAL 刻意
-    的 no-op，**inactive 后 PAL 对模型零写入**，逐帧显示 vanilla pose。
-    ⇒ PAL 的逐帧求值机**结构性不可能**持有「恒脏」状态——污染是**每帧被
-    重新喂数据的**（不一定是 PAL 喂的）。
-  - 例外通道：`LivingEntityRendererMixin#doTranslations` 在活动帧会对 poseStack
-    施加 **body 平移/旋转**（位置错形式脏）——不影响手臂欧拉持久性，先备查。
-- **第 3 轮探针 r3（脏帧采样器）**：`PlayerModelMixin` 尾部（**PAL 注入点之前**，
-  priority 对方 2001 我方默认 1000 先执行）新增 `case10PollutionProbe`——采样
-  vanilla 刚写完的 armR/armL 欧拉值 + 四 controller active/triggered/animHash +
-  pose/swimming/lie。仅本地玩家、一秒一条。
-  **两案互斥判读**：手臂值干净 + 某层 active → PAL 层逐帧重喂（animHash 定位
-  clip，下轮断根）；手臂值已脏 + 全层 inactive → vanilla 管线每帧按实体数据
-  重写脏姿 → 查爬姿状态机/26.2 实体数据（与 PAL 无关）。
-  缓解注意：探针调用以 `PlayerAnimatorCompat.isInstalled()` 门禁——PAL 类在
-  缺席运行时不可触达（沿用 PlayerAnimatorCompat.playAnimation 的既有惰性解析前例）。
-  - 用户协议：趴→站让画面变脏 → 第三人称站着不动 5~10 秒 → 把该时段的
-    `[TACZ Case10] probe` 行整段回传。
+- **现象（用户在体观察）**：
+  1. 环境含 Player Animation Library 1.2.5，持枪、第三人称看自己；
+  2. 趴下（TACZ 强制趴姿）再站起，随后切枪/重新持枪，手臂出现错形
+     （停留在趴姿一类的异常角度）；
+  3. 错形**持续注视不自行恢复**，切换第一/第三人称视角后恢复正常；
+  4. 不趴姿、站着反复切枪**不会**触发——必须先趴姿过一次。
+- **已做过的处置与实际结果（事实记录）**：
+  - 26.2 移植了 26.1.2 侧 PR #39 的 `e43a3a9d`（趴→站边界重置四个 PAL
+    controller 的播放态与 fade modifier，保留 rotation adjustment）；
+    该移植与 26.1.2 侧相关代码**逐字节相同**，PAL 依赖两侧同为 modrinth
+    1.2.5（两版 tag 指向同一 commit）。**同码两侧，在体结果不同**：
+    26.1.2 构建用户实测通过，26.2 构建实测现象依旧——此结果仅作事实登记。
+  - 26.2 曾短期叠加「客户端 tick 级趴姿观测 + 日志探针」（5711aaa/9065061），
+    实测后已按用户指示**整体移除**；现仅保留 `e43a3a9d` 的 1:1 移植本体。
+- **当前状态**：未解决，挂起。相关配置面无本案开关（PalProneTickObserver
+  已随探针实验一并撤除）。待出现新的在体证据（可复现条件变化 / 录屏 /
+  新日志来源）再立案。

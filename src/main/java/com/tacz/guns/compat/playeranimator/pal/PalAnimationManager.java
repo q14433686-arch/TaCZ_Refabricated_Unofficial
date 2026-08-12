@@ -1,6 +1,5 @@
 package com.tacz.guns.compat.playeranimator.pal;
 
-import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.event.common.GunDrawEvent;
@@ -11,7 +10,6 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.compat.playeranimator.AnimationName;
 import com.tacz.guns.compat.playeranimator.PlayerAnimatorCompat;
-import com.tacz.guns.config.client.RenderConfig;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
 import com.zigythebird.playeranim.api.PlayerAnimationAccess;
 import com.zigythebird.playeranim.api.PlayerAnimationFactory;
@@ -20,9 +18,7 @@ import com.zigythebird.playeranimcore.animation.layered.modifier.AbstractFadeMod
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import com.zigythebird.playeranimcore.easing.EasingType;
 import com.zigythebird.playeranimcore.enums.PlayState;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
@@ -57,32 +53,6 @@ public final class PalAnimationManager {
         GunReloadEvent.CALLBACK.register(manager::onReload);
         GunMeleeEvent.CALLBACK.register(manager::onMelee);
         GunDrawEvent.CALLBACK.register(manager::onDraw);
-
-        // 【案例⑩ 第 2 轮】tick 级趴姿观测点。
-        //
-        // 26.1.2（含 e43a3a9d）与 26.2（本文件第 1 轮 1:1 移植）逐字节同码，
-        // 在体结果却相反（26.1.2 修好 / 26.2 未好）。逐文件比对后 PAL 链全同，
-        // 最可信的机制性解释只在 vanilla 渲染驱动这一条：
-        //   26.2 第一人称下本地玩家本体不渲染，手部渲染的 AvatarRenderState
-        //   又恒处于 ageInTicks == 0（PlayerModelMixin 第 0 帧守卫直接 return），
-        //   于是 FIRST PERSON 全程不会产生任何 play()/stopAll() 调用 ——
-        //   第 1 轮「渲染驱动」的边界观测对本地玩家形同虚设，
-        //   LAST_PRONE_STATE 从未被写进过 true，趴→站边界永远观测不到。
-        //   而 InnerThirdPersonManager 又只在实体被渲染时才会被调用。
-        // 修复形态：客户端 tick 直接观测本地玩家姿势，使「趴→站」边界的
-        // 控制态复位从【恰好有渲染/切枪事件才发生】变为【边界的下一 tick 必然发生】。
-        // 与渲染路径共享同一张 LAST_PRONE_STATE，非边界 tick 只是一次 map put，
-        // 幂等、零互斥问题（同在主客户端线程）。
-        // 开关 RenderConfig#PAL_PRONE_TICK_OBSERVER 默认开启，false 秒回第 1 轮形态。
-        // 注意：config 在进世界前未加载，故先判 player != null 再读配置。
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player == null || !RenderConfig.PAL_PRONE_TICK_OBSERVER.get()) {
-                return;
-            }
-            discardProneTransitionOnStand(client.player, "tick");
-        });
-        // 【案例⑩ 在体探针 · r2 · 临时】标记行——运行日志里没这行 = 测试的 jar 不含本修复。
-        GunMod.LOGGER.info("[TACZ Case10] PAL prone-exit fix probe r2 loaded (tick observer registered)");
     }
 
     private static void registerController(Identifier id, int priority) {
@@ -105,14 +75,14 @@ public final class PalAnimationManager {
     }
 
     public static void play(AbstractClientPlayer player, GunDisplayInstance display, float limbSwingAmount) {
-        discardProneTransitionOnStand(player, "play");
+        discardProneTransitionOnStand(player);
         playLower(player, display, limbSwingAmount);
         playUpper(player, display, limbSwingAmount);
         playNamed(player, display, PlayerAnimatorCompat.ROTATION_ANIMATION, AnimationName.EMPTY, true);
     }
 
     public static void stopAll(AbstractClientPlayer player, int fadeTicks) {
-        discardProneTransitionOnStand(player, "stopAll");
+        discardProneTransitionOnStand(player);
         stop(player, PlayerAnimatorCompat.LOWER_ANIMATION, fadeTicks);
         stop(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION, fadeTicks);
         stop(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION, fadeTicks);
@@ -222,23 +192,9 @@ public final class PalAnimationManager {
      * and controller playback state. The permanent rotation adjustment modifier is deliberately
      * retained, as are ordinary fade transitions that do not cross this incompatible pose edge.</p>
      */
-    private static void discardProneTransitionOnStand(AbstractClientPlayer player, String source) {
+    private static void discardProneTransitionOnStand(AbstractClientPlayer player) {
         boolean prone = isPlayerLie(player);
         Boolean wasProne = LAST_PRONE_STATE.put(player, prone);
-        // 【案例⑩ 在体探针 · r2 · 临时】只在「第一次见到该玩家」与「趴姿实际翻转」
-        // 各打一条，常态玩法不刷日志。用它判定 26.1.2/26.2 同码不同效的三岔口：
-        //   ① 日志里连 init 标记行都没有  → 测试的 jar 不含修复（构建/拉取陈旧）；
-        //   ② 有标记行，但趴/起全程没有 transition 行 → 观测点确实喂不进状态
-        //      （渲染驱动路径在 26.2 第一人称下不触发）；tick 观测点就是为此加的；
-        //   ③ transition 与 edgeReset 明细都齐全、画面却仍污染 → 复位在 26.2 的
-        //      PAL 1.2.5 上不生效，需要带下面的 controller 明细再往下查。
-        if (wasProne == null) {
-            GunMod.LOGGER.info("[TACZ Case10] observe source={} firstSeen prone={} playerHash={}",
-                    source, prone, System.identityHashCode(player));
-        } else if (wasProne.booleanValue() != prone) {
-            GunMod.LOGGER.info("[TACZ Case10] transition source={} was={} nowProne={} playerHash={}",
-                    source, wasProne, prone, System.identityHashCode(player));
-        }
         if (!Boolean.TRUE.equals(wasProne) || prone) {
             return;
         }
@@ -248,22 +204,13 @@ public final class PalAnimationManager {
         resetAtProneExit(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION);
         resetAtProneExit(player, PlayerAnimatorCompat.ROTATION_ANIMATION);
         FADING_OUT.remove(player);
-        GunMod.LOGGER.info("[TACZ Case10] edgeReset applied source={} playerHash={}",
-                source, System.identityHashCode(player));
     }
 
     private static void resetAtProneExit(AbstractClientPlayer player, Identifier controllerId) {
         PlayerAnimationController controller = controller(player, controllerId);
         if (controller == null) {
-            // 【探针】controller 缺失本身就说明 PAL 的 layer 还没挂上该玩家。
-            GunMod.LOGGER.info("[TACZ Case10]   reset {} -> controller == null", controllerId);
             return;
         }
-        // 【探针】复位前快照：controller 是否活着 / 是否还在播一次性动作 / 当前 clip 实例。
-        // curAnimHash 恒为 0 = getCurrentAnimationInstance() 返回 null（identityHashCode 对 null 返 0）。
-        GunMod.LOGGER.info("[TACZ Case10]   reset {} -> active={} triggered={} curAnimHash={}",
-                controllerId, controller.isActive(), controller.isPlayingTriggeredAnimation(),
-                System.identityHashCode(controller.getCurrentAnimationInstance()));
         // Do not use removeAllModifiers(): ROTATION owns SafeAdjustmentModifier for its lifetime.
         controller.removeModifierIf(AbstractFadeModifier.class::isInstance);
         controller.stopTriggeredAnimation();
@@ -329,53 +276,6 @@ public final class PalAnimationManager {
         return layer instanceof PlayerAnimationController controller ? controller : null;
     }
 
-    /** 【案例⑩ 在体探针 · r3 · 临时】最近一次采样的系统毫秒。 */
-    private static long CASE10_LAST_PROBE_MS = 0L;
-
-    /**
-     * 【案例⑩ 在体探针 · r3 · 临时】第三人称 setupAnim 尾部的「脏帧采样器」。
-     *
-     * <p>裁决逻辑（两案互斥，由一条日志直接区分）：</p>
-     * <ul>
-     *   <li>本采样点位于 PAL 自身注入（priority 2001）<b>之前</b>，读到的是 vanilla
-     *       刚写完、PAL 尚未碰的手臂欧拉值。若画面脏而<b>这里干净</b>、且某 controller
-     *       active=true —— 脏源 = PAL 层在逐帧重喂（看是哪个 clip）；</li>
-     *   <li>若<b>这里就脏</b>且各 controller 全 inactive —— 脏由 vanilla 渲染管线
-     *       每帧根据实体/渲染态数据重新写出，载体在实体数据（pose/swim flag/攻击摆臂…），
-     *       与 PAL 无关，去查爬姿状态机与 26.2 渲染态字段。</li>
-     * </ul>
-     * 仅采本地玩家、一秒一条，不刷日志。画面脏住的全程中理论上一秒一行的量。
-     */
-    public static void case10PollutionProbe(LivingEntity entity, ModelPart rightArm, ModelPart leftArm) {
-        if (!(entity instanceof AbstractClientPlayer player) || Minecraft.getInstance().player != player) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        if (now - CASE10_LAST_PROBE_MS < 1000L) {
-            return;
-        }
-        CASE10_LAST_PROBE_MS = now;
-        GunMod.LOGGER.info(
-                "[TACZ Case10] probe pose={} swimming={} lie={} armR=[{},{},{}] armL=[{},{},{}] lower={} loopU={} onceU={} rot={}",
-                player.getPose(), player.isSwimming(), isPlayerLie(player),
-                rightArm.xRot, rightArm.yRot, rightArm.zRot,
-                leftArm.xRot, leftArm.yRot, leftArm.zRot,
-                case10Describe(controller(player, PlayerAnimatorCompat.LOWER_ANIMATION)),
-                case10Describe(controller(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION)),
-                case10Describe(controller(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION)),
-                case10Describe(controller(player, PlayerAnimatorCompat.ROTATION_ANIMATION)));
-    }
-
-    /** 【案例⑩ 在体探针 · r3 · 临时】单个 controller 的一行摘要。 */
-    private static String case10Describe(PlayerAnimationController controller) {
-        if (controller == null) {
-            return "null";
-        }
-        return "active=" + controller.isActive()
-                + ",triggered=" + controller.isPlayingTriggeredAnimation()
-                + ",animHash=" + System.identityHashCode(controller.getCurrentAnimationInstance());
-    }
-
     private static boolean isFlying(AbstractClientPlayer player) {
         return !player.onGround() && player.getAbilities().flying;
     }
@@ -437,7 +337,7 @@ public final class PalAnimationManager {
         }
         if (event.getCurrentGunItem().getItem() instanceof IGun
                 && event.getPreviousGunItem().getItem() instanceof IGun) {
-            discardProneTransitionOnStand(player, "gunDraw");
+            discardProneTransitionOnStand(player);
             // Match the legacy PlayerAnimator contract: gun draws restart the authored animation
             // layers, not ROTATION. ROTATION is an always-current view adjustment and fading it on
             // every draw creates needless snapshots of the prone/standing axis change.
