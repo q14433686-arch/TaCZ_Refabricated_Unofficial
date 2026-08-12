@@ -1,10 +1,10 @@
 package me.xjqsh.lrtactical.client.tooltip;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import me.xjqsh.lrtactical.util.TooltipLine;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
@@ -55,14 +55,14 @@ public abstract class AbstractClientItemTooltip implements ClientTooltipComponen
         if (this.description == null) {
             return List.of();
         }
-        return Screen.hasShiftDown() || this.description.size() <= MAX_VISIBLE_DESC_LINES
+        return isShiftDown() || this.description.size() <= MAX_VISIBLE_DESC_LINES
                 ? this.description
                 : this.description.subList(0, MAX_VISIBLE_DESC_LINES);
     }
 
     private List<Component> visibleLines() {
         List<Component> output = new ArrayList<>(this.normalLines);
-        boolean collapseEffects = !Screen.hasShiftDown()
+        boolean collapseEffects = !isShiftDown()
                 && this.effectLines.size() > MAX_VISIBLE_EFFECT_LINES;
         if (collapseEffects) {
             output.addAll(this.effectLines.subList(0, MAX_VISIBLE_EFFECT_LINES));
@@ -71,10 +71,16 @@ public abstract class AbstractClientItemTooltip implements ClientTooltipComponen
         } else {
             output.addAll(this.effectLines);
         }
-        if (!Screen.hasShiftDown() && hasCollapsedContent()) {
+        if (!isShiftDown() && hasCollapsedContent()) {
             output.add(Component.translatable("tooltip.lrtactical.shift_hint"));
         }
         return output;
+    }
+
+    private static boolean isShiftDown() {
+        Minecraft minecraft = Minecraft.getInstance();
+        return InputConstants.isKeyDown(minecraft.getWindow(), InputConstants.KEY_LSHIFT)
+                || InputConstants.isKeyDown(minecraft.getWindow(), InputConstants.KEY_RSHIFT);
     }
 
     @Override
