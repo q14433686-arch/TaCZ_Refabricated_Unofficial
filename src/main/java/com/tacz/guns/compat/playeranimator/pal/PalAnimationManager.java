@@ -22,6 +22,7 @@ import com.zigythebird.playeranimcore.easing.EasingType;
 import com.zigythebird.playeranimcore.enums.PlayState;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
@@ -326,6 +327,53 @@ public final class PalAnimationManager {
     private static PlayerAnimationController controller(AbstractClientPlayer player, Identifier id) {
         var layer = PlayerAnimationAccess.getPlayerAnimationLayer(player, id);
         return layer instanceof PlayerAnimationController controller ? controller : null;
+    }
+
+    /** 【案例⑩ 在体探针 · r3 · 临时】最近一次采样的系统毫秒。 */
+    private static long CASE10_LAST_PROBE_MS = 0L;
+
+    /**
+     * 【案例⑩ 在体探针 · r3 · 临时】第三人称 setupAnim 尾部的「脏帧采样器」。
+     *
+     * <p>裁决逻辑（两案互斥，由一条日志直接区分）：</p>
+     * <ul>
+     *   <li>本采样点位于 PAL 自身注入（priority 2001）<b>之前</b>，读到的是 vanilla
+     *       刚写完、PAL 尚未碰的手臂欧拉值。若画面脏而<b>这里干净</b>、且某 controller
+     *       active=true —— 脏源 = PAL 层在逐帧重喂（看是哪个 clip）；</li>
+     *   <li>若<b>这里就脏</b>且各 controller 全 inactive —— 脏由 vanilla 渲染管线
+     *       每帧根据实体/渲染态数据重新写出，载体在实体数据（pose/swim flag/攻击摆臂…），
+     *       与 PAL 无关，去查爬姿状态机与 26.2 渲染态字段。</li>
+     * </ul>
+     * 仅采本地玩家、一秒一条，不刷日志。画面脏住的全程中理论上一秒一行的量。
+     */
+    public static void case10PollutionProbe(LivingEntity entity, ModelPart rightArm, ModelPart leftArm) {
+        if (!(entity instanceof AbstractClientPlayer player) || Minecraft.getInstance().player != player) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now - CASE10_LAST_PROBE_MS < 1000L) {
+            return;
+        }
+        CASE10_LAST_PROBE_MS = now;
+        GunMod.LOGGER.info(
+                "[TACZ Case10] probe pose={} swimming={} lie={} armR=[{},{},{}] armL=[{},{},{}] lower={} loopU={} onceU={} rot={}",
+                player.getPose(), player.isSwimming(), isPlayerLie(player),
+                rightArm.xRot, rightArm.yRot, rightArm.zRot,
+                leftArm.xRot, leftArm.yRot, leftArm.zRot,
+                case10Describe(controller(player, PlayerAnimatorCompat.LOWER_ANIMATION)),
+                case10Describe(controller(player, PlayerAnimatorCompat.LOOP_UPPER_ANIMATION)),
+                case10Describe(controller(player, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION)),
+                case10Describe(controller(player, PlayerAnimatorCompat.ROTATION_ANIMATION)));
+    }
+
+    /** 【案例⑩ 在体探针 · r3 · 临时】单个 controller 的一行摘要。 */
+    private static String case10Describe(PlayerAnimationController controller) {
+        if (controller == null) {
+            return "null";
+        }
+        return "active=" + controller.isActive()
+                + ",triggered=" + controller.isPlayingTriggeredAnimation()
+                + ",animHash=" + System.identityHashCode(controller.getCurrentAnimationInstance());
     }
 
     private static boolean isFlying(AbstractClientPlayer player) {

@@ -1713,3 +1713,37 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
     复位在 26.2 的 PAL 1.2.5 上不生效，带 controller 明细再查下一段。
   - 用户协议：构建后跑原两条复测路径（含趴/起/切枪各 2~3 次即可），
     把日志里所有含 `[TACZ Case10]` 的行连画面结论一起回传。
+
+- **第 2 轮在体复测 + 解剖三问（用户实测）**：
+  - r2 探针证：tick 观测链正常捕获趴/起边界，`edgeReset applied` 每次都真实执行，
+    复位时 lower/loop_upper/rotation 均 active 且带 clip、once_upper 静止——
+    **「观测链断」「jar 陈旧」两案排除**。
+  - 但画面裁决：**仍污染、同旧样**——复位真实执行却无效 ⇒ **fade 快照/
+    controller 播放态不是 26.2 上污染的载体**（邻居 e43a3a9d 的机制叙述对
+    26.2 不成立，尽管对 26.1.2 是经验正确的）。
+  - 解剖三问：出现位置=**第三人称看自己**；持续性=**一直脏、直到切视角**；
+    触发条件=**必须趴姿过一次**（站着反复切枪不出现）。
+- **第 3 轮：PAL 1.2.5 源码级重取证（推翻 fade 载体说）**
+  - 关键事实：PAL 发布按 MC 分构建但 `v1.2.5+26.2` 与 `v1.2.5+26.1`
+    **指向同一 commit（6b2e002b）**——49 个 minecraft 模块文件 + core 全部
+    文件两侧逐字节相同，「PAL 分版不同」假设排除。
+  - 读 PAL 渲染路径源码（PlayerModelMixin/AvatarAnimManager/AnimationStack/
+    LivingEntityRendererMixin）确认：① `pal$updatePart` 每渲染帧先
+    `RenderUtil.copyVanillaPart(part, bone)` —— **bone 每帧都从 vanilla 姿态
+    重播种**，跨帧不可能累积；② stack 非 active 时 `pal$resetAll` 是 PAL 刻意
+    的 no-op，**inactive 后 PAL 对模型零写入**，逐帧显示 vanilla pose。
+    ⇒ PAL 的逐帧求值机**结构性不可能**持有「恒脏」状态——污染是**每帧被
+    重新喂数据的**（不一定是 PAL 喂的）。
+  - 例外通道：`LivingEntityRendererMixin#doTranslations` 在活动帧会对 poseStack
+    施加 **body 平移/旋转**（位置错形式脏）——不影响手臂欧拉持久性，先备查。
+- **第 3 轮探针 r3（脏帧采样器）**：`PlayerModelMixin` 尾部（**PAL 注入点之前**，
+  priority 对方 2001 我方默认 1000 先执行）新增 `case10PollutionProbe`——采样
+  vanilla 刚写完的 armR/armL 欧拉值 + 四 controller active/triggered/animHash +
+  pose/swimming/lie。仅本地玩家、一秒一条。
+  **两案互斥判读**：手臂值干净 + 某层 active → PAL 层逐帧重喂（animHash 定位
+  clip，下轮断根）；手臂值已脏 + 全层 inactive → vanilla 管线每帧按实体数据
+  重写脏姿 → 查爬姿状态机/26.2 实体数据（与 PAL 无关）。
+  缓解注意：探针调用以 `PlayerAnimatorCompat.isInstalled()` 门禁——PAL 类在
+  缺席运行时不可触达（沿用 PlayerAnimatorCompat.playAnimation 的既有惰性解析前例）。
+  - 用户协议：趴→站让画面变脏 → 第三人称站着不动 5~10 秒 → 把该时段的
+    `[TACZ Case10] probe` 行整段回传。
