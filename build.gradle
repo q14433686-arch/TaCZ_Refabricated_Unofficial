@@ -185,9 +185,8 @@ dependencies {
     // Carry On
     // compileOnly "curse.maven:carry-on-274259:${carry_on_id}"
 
-    // Player Animation Lib — 26.2：KosmX(dev.kosmx.playerAnim) 无 26.2 构建；modrinth 的
-    // player-animation-library 是 zigythebird 的不兼容分支。compat/playeranimator 暂排除，待迁移到可用 API。
-    // PAL is optional at runtime, but compile its 26.2 API for the isolated compat implementation.
+    // Player Animation Lib — 26.2：KosmX(dev.kosmx.playerAnim) 无 26.2 构建；现已将第三人称
+    // 四层动画语义迁移到 zigythebird PAL 1.2.5。PAL 运行时可选，只编译其隔离兼容实现所需 API。
     compileOnly "maven.modrinth:player-animation-library:${player_animation_lib}"
 
     // KubeJS
@@ -273,7 +272,8 @@ sourceSets {
             exclude 'com/tacz/guns/compat/controllable/ControllableInner.java'
             // KubeJS：dev.latvian.kubejs 无 26.2 Fabric 构建，核心 KubeJSGunEventPoster/GunMod 改为禁用态门面
             exclude 'com/tacz/guns/compat/kubejs/**'
-            // Player Animator(KosmX dev.kosmx.playerAnim)：无 26.2 构建；保留门面 PlayerAnimatorCompat/AnimationName/PlayerAnimatorLoader
+            // 仅排除已被 PAL 实现替代、且硬依赖 KosmX API 的旧 animation 包/资产管理器；
+            // PlayerAnimatorCompat 门面与 compat/playeranimator/pal/** 均正常参与编译。
             exclude 'com/tacz/guns/compat/playeranimator/animation/**'
             exclude 'com/tacz/guns/compat/playeranimator/PlayerAnimatorAssetManager.java'
             // Optifine：非 Fabric，待评估永久废弃

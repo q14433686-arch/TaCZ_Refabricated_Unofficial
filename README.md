@@ -45,6 +45,10 @@ Beta 1 主要新增 / 修复：
   渲染类型，避免随玩家朝向在 vanilla/Iris 下反向变亮变暗。
 - **LRTactical 继续作为内置兼容层**：throwable、melee、detonator/C4、consumable 基础流程保留；
   Fabric 元数据继续通过 `provides: ["lrtactical"]` 提供依赖标识。
+- **通用第一人称动画让出层已接入**：普通物品保留 First-person Model、Punchy、Hide Hands、
+  SkyHands、Viewmodel Changer 与 swing 类 Mod 的行为；持有实际可渲染的 TACZ/LRTactical
+  枪、手雷或刀时自动交还给 TACZ viewmodel。实现与测试矩阵见
+  [`docs/FIRST_PERSON_ANIMATION_COMPAT_26_2.md`](docs/FIRST_PERSON_ANIMATION_COMPAT_26_2.md)。
 - **曳光弹显示做了阶段性修复**：恢复上游 `energySwirl` 渲染类型、满亮 block light，并让
   第一人称枪口视觉偏移按每发子弹缓存。弹道/命中本身未改。
 

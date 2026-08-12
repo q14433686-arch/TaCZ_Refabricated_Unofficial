@@ -2,6 +2,7 @@ package com.tacz.guns.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.compat.ar.ARCompat;
+import com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -48,12 +49,20 @@ public final class RenderHelper {
         }
         AvatarRenderer<?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getPlayerRenderer(player);
         var skinTexture = player.getSkin().body().texturePath();
-        if (hand == HumanoidArm.RIGHT) {
-            renderer.renderRightHand(matrixStack, collector, combinedLight, skinTexture,
-                    player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
-        } else {
-            renderer.renderLeftHand(matrixStack, collector, combinedLight, skinTexture,
-                    player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
+        // NEA normally raises this guard from ItemInHandRenderer#renderPlayerArm. TACZ calls
+        // AvatarRenderer directly, so bridge the same guard to keep third-person smoothing and
+        // action poses from being layered over the authored gun-hand bones.
+        FirstPersonAnimationCompat.beginDirectArmRender();
+        try {
+            if (hand == HumanoidArm.RIGHT) {
+                renderer.renderRightHand(matrixStack, collector, combinedLight, skinTexture,
+                        player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
+            } else {
+                renderer.renderLeftHand(matrixStack, collector, combinedLight, skinTexture,
+                        player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
+            }
+        } finally {
+            FirstPersonAnimationCompat.endDirectArmRender();
         }
     }
 
