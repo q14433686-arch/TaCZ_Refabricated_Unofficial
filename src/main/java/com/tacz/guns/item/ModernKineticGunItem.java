@@ -584,6 +584,12 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         });
     }
 
+    /*
+     * Weapon leveling is only a reserved API in TACZ 1.1.8: the official 1.20.1 tree and the
+     * Refabricated 1.21.1 tree both return zero here, never write GunLevelExp, and never send the
+     * level-up packet. A max level of zero is therefore the explicit "progression disabled" value,
+     * not a missing piece of this 26.1.2 port.
+     */
     @Override
     public int getLevel(int exp) {
         return 0;

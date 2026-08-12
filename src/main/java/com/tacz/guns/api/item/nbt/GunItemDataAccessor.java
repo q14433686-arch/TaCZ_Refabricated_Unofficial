@@ -181,11 +181,10 @@ public interface GunItemDataAccessor extends IGun {
     default int getExpCurrentLevel(ItemStack gun) {
         int exp = getExp(gun);
         int level = getLevel(exp);
-        if (level <= 0) {
-            return exp;
-        } else {
-            return exp - getExp(level - 1);
-        }
+        // getExp(level) is documented as the cumulative threshold at which this level starts.
+        // The inherited level - 1 subtraction was inconsistent with getExpToNextLevel() and would
+        // over-count one whole level as soon as a future gun implementation enables progression.
+        return Math.max(0, exp - getExp(level));
     }
 
     @Override

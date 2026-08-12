@@ -58,7 +58,7 @@ public class ClientGunTooltip implements ClientTooltipComponent {
     private MutableComponent headShotMultiplier;
     private MutableComponent weight;
     private MutableComponent tips;
-    private MutableComponent levelInfo;
+    private @Nullable MutableComponent levelInfo;
     private @Nullable MutableComponent packInfo;
 
     private int maxWidth;
@@ -84,7 +84,8 @@ public class ClientGunTooltip implements ClientTooltipComponent {
             height += 24;
         }
         if (shouldShow(GunTooltipPart.BASE_INFO)) {
-            height += 34;
+            // TACZ 1.1.8 reserves the level API but disables it with maxLevel == 0.
+            height += this.levelInfo == null ? 24 : 34;
         }
         if (shouldShow(GunTooltipPart.EXTRA_DAMAGE_INFO)) {
             height += 34;
@@ -156,17 +157,22 @@ public class ClientGunTooltip implements ClientTooltipComponent {
 
 
         if (shouldShow(GunTooltipPart.BASE_INFO)) {
-            int expToNextLevel = iGun.getExpToNextLevel(gun);
-            int expCurrentLevel = iGun.getExpCurrentLevel(gun);
-            int level = iGun.getLevel(gun);
-            if (level >= iGun.getMaxLevel()) {
-                String levelText = String.format("%d (MAX)", level);
-                this.levelInfo = Component.translatable("tooltip.tacz.gun.level").append(Component.literal(levelText).withStyle(style -> style.withColor(0xAA00AA)));
-            } else {
-                String levelText = String.format("%d (%.1f%%)", level, expCurrentLevel / (expToNextLevel + expCurrentLevel) * 100f);
-                this.levelInfo = Component.translatable("tooltip.tacz.gun.level").append(Component.literal(levelText).withStyle(style -> style.withColor(0xFFFF55)));
+            int maxLevel = iGun.getMaxLevel();
+            if (maxLevel > 0) {
+                int expToNextLevel = iGun.getExpToNextLevel(gun);
+                int expCurrentLevel = iGun.getExpCurrentLevel(gun);
+                int level = iGun.getLevel(gun);
+                if (level >= maxLevel) {
+                    String levelText = String.format("%d (MAX)", level);
+                    this.levelInfo = Component.translatable("tooltip.tacz.gun.level").append(Component.literal(levelText).withStyle(style -> style.withColor(0xAA00AA)));
+                } else {
+                    int levelSpan = expToNextLevel + expCurrentLevel;
+                    float progress = levelSpan > 0 ? expCurrentLevel * 100F / levelSpan : 0F;
+                    String levelText = String.format("%d (%.1f%%)", level, progress);
+                    this.levelInfo = Component.translatable("tooltip.tacz.gun.level").append(Component.literal(levelText).withStyle(style -> style.withColor(0xFFFF55)));
+                }
+                this.maxWidth = Math.max(font.width(this.levelInfo), this.maxWidth);
             }
-            this.maxWidth = Math.max(font.width(this.levelInfo), this.maxWidth);
 
             String tabKey = "tacz.type." + gunIndex.getType() + ".name";
             this.gunType = Component.translatable("tooltip.tacz.gun.type").append(Component.translatable(tabKey).withStyle(style -> style.withColor(0x55FFFF)));
@@ -260,9 +266,11 @@ public class ClientGunTooltip implements ClientTooltipComponent {
         if (shouldShow(GunTooltipPart.BASE_INFO)) {
             yOffset += 4;
 
-            // 等级信息
-            graphics.text(font, this.levelInfo, pX, yOffset, 0xFF777777);
-            yOffset += 10;
+            // 等级 API 在上游默认实现中处于禁用态（maxLevel == 0），不要显示误导性的 0 (MAX)。
+            if (this.levelInfo != null) {
+                graphics.text(font, this.levelInfo, pX, yOffset, 0xFF777777);
+                yOffset += 10;
+            }
 
             // 枪械类型
             if (this.gunType != null) {
