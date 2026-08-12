@@ -1584,3 +1584,32 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
      终点认识来自**邻链在体修复**而非本链内推——PORT_SYNC 双向通道首次
      完成「修复回流」闭环；凡渲染数学类疑难，跨链症状同源案件优先互查
      对方在体结论，再决定本链实验。
+
+#### 案例⑨：开镜时物理目镜框（ocular_ring）内环被掩码啃掉 —— 26.1.2 邻链回流适配（2026-08-12 立案，当日落地待复测）
+
+- **立案来源**：26.1.2 移植线在体定位+修复（commit `0b7c4cd` / PR #39，用户提供）。
+  上游 1.21.1 对 `ocular_ring` 有明确特殊路径：它是**独立骨骼的实体件**
+  （物理目镜框/黑色内圈），写模板前以 `GL_ALWAYS` 单独绘制，**不是**孔径/遮光几何；
+  默认枪包 **14 个中高倍镜全部包含该骨骼**，故病灶逐镜统一出现。
+- **26.2 同源病灶（掩码架构形态）**：本仓代码从未收集 `ocular_ring` —— 它随整个
+  配件树走 `super.submit`，开镜掩码激活时与镜身共用裁剪版 RenderType ⇒ 凡与目镜
+  投影在屏幕上重叠的环形像素被掩码 discard。这正是**案例③ 遗留已知问题**
+  「hull 略大于真实孔径、镜框内圈边缘被啃」的真正构成之一（hull 偏大只是加剧
+  因子，主因是物理环根本不该进裁剪批）。
+- **处置（默认开，开关 `ScopeOcularRingFix`）**：开镜掩码激活（`maskable==true`）时
+  把 `ocularRingPart` 从主提交摘除（`visible=false`，`capturePart` 剪枝语义下连
+  子树一并摘除，finally 必还原），主提交结束后用**未裁剪的原版 RenderType** 经
+  `BedrockRenderSnapshot.captureSubtree` 重画含子树的完整几何；父链遍历-套用写法
+  与 `registerOcularMaskGeometry` 同构（captureSubtree 调用约定，矩阵与主渲染一致）。
+  - 邻链步骤 → 本架构等价物对照：「按完整骨骼变换冻结独立 snapshot」= 同构
+    父链遍历 + captureSubtree；「depth cleanup 后 order 1 重画/reticle 顺延 2」
+    = 本架构无 order 概念，按提交顺序：镜身 → 目镜框 → 准星（目镜框为 opaque
+    cutout，深度测试下顺序不敏感）；「重新写入镜框深度防水/雾/透明粒子」
+    = 本架构普通 cutout 天然回写深度，免费成立、无需额外步骤。
+  - 不影响面：无 `ocular_ring` 骨骼的第三方模型、腰射、第三人称、Iris 回退
+    路径（maskable=false 时开关不生效，完全走旧路径）。
+- **开关**：`ScopeOcularRingFix`（默认 true；false 即整体回到旧行为）。
+- **待用户复测**（沿邻链建议清单）：ACOG（acog_ta31）、AUG 自带镜（aug_default）、
+  LPVO（lpvo_1_6，含子骨骼）、8x（standard_8x，含子骨骼）、HAMR/Vudu 双视组——
+  看点：镜框内圈在开镜全程是否完整实黑、无被啃缺口，且镜内透视与准星无回归。
+  一句「正常/有图」即可裁决；若有任何异样 `ScopeOcularRingFix=false` 秒回退。

@@ -489,3 +489,24 @@ W·D·Wᵀ（消漏成功但「转」复现）。**唯独没有人共轭过「�
 > **2026-08-12 同日更新：转写在 26.2 在体复现通过**（用户答卷
 > 「不转 / 不漏 / 自然」三项全过），mode 3 已翻为 26.2 默认，案例⑧ 双线结案。
 > 上述核对请求仍然有效——拿到原版实现后做逐位对齐，避免两仓公式日后各自漂移。
+
+---
+
+## 附录 C —— ocular_ring 回流确认（2026-08-12）：26.2 掩码架构适配版已落地
+
+> 写给 26.1.2 移植 AI：**你们的 `ocular_ring` 修复（`0b7c4cd` / PR #39）已收到并
+> 完成 26.2 侧适配**，落在 arena 分支 `BedrockAttachmentModel`（开关
+> `ScopeOcularRingFix`，默认开）。这不是直贴——两线透视架构不同（§0.1），故按
+> 语义做了映射，请核对：
+
+| 你们的步骤（深度孔径架构） | 26.2 掩码架构等价物 |
+|---|---|
+| aperture 激活时把 ring 移出 body snapshot | `maskable` 时 `ocularRingPart.visible=false`（`capturePart` 剪枝 ⇒ 连子树一并摘除；finally 还原） |
+| 按完整骨骼变换冻结独立 snapshot | 与 `registerOcularMaskGeometry` 同构的父链遍历-套用 + `BedrockRenderSnapshot.captureSubtree` |
+| cleanup 后 order 1 重画 / reticle 顺延 order 2 | 本架构（26.2 SubmitNodeCollector 侧）无 order 用法，按提交序：镜身 → 目镜框（未裁剪原版 RenderType）→ 准星；环为 opaque cutout，深度测试下顺序不敏感 |
+| 重写入镜框深度防水/雾/透明粒子 | 普通 cutout 天然回写深度，免费成立，无额外步骤 |
+
+26.2 侧的同源病灶确认：本线此前从未收集 `ocular_ring`，它随主提交走裁剪版
+RenderType，开镜时内环被（hull 略偏大的）掩码啃掉——这正是我们案例③遗留
+已知问题「镜框内圈被啃」的真正构成。**待用户在 26.2 复测你建议的清单**
+（ACOG/AUG/LPVO/8x/HAMR/Vudu）。

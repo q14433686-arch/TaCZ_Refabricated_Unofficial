@@ -40,6 +40,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private static final String OCULAR_NODE = "ocular";
     private static final String OCULAR_SIGHT_NODE = "ocular_sight";
     private static final String OCULAR_SCOPE_NODE = "ocular_scope";
+    private static final String OCULAR_RING_NODE = "ocular_ring";
     private static final Pattern LASER_BEAM_PATTERN = Pattern.compile("^laser_beam(_(\\d+))?$");
 
     /**
@@ -123,6 +124,15 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * 但要用它们的屏幕投影生成镜内掩码 —— 这正是上游 stencil 裁剪区域的来源。
      */
     protected final List<BedrockPart> ocularParts = new ArrayList<>();
+    /**
+     * 物理目镜框（镜口黑色实体内圈）。上游 1.21.1 始终以 {@code stencilFunc(ALWAYS)}
+     * 无裁剪独立绘制它——它是实体件，<b>不是</b>孔径/遮光几何；默认枪包 14 个中高倍镜
+     * 全部包含该骨骼（上游弃用旧命名 {@code oculus_ring} 另见邻链审计）。
+     * 26.1.2 在体实证：把它混进「会被 ocular 区域杀掉的批」会逐镜统一啃掉内环
+     * （26.2 掩码架构的同源病灶 = 案例③ 遗留的「镜框内圈边缘被 hull 掩码啃掉」）。
+     * 只在构造时收集引用；摘除/重画与否由开关与开镜状态在 submit 里决定。
+     */
+    protected final @Nullable BedrockPart ocularRingPart;
     protected @Nullable List<List<BedrockPart>> laserBeamPaths;
 
     private @Nullable ItemStack currentGunItem;
@@ -135,6 +145,11 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         super(pojo, version);
         scopeViewPaths = new ArrayList<>();
         laserBeamPaths = new ArrayList<>();
+        // 【案例⑨ · 邻链回流】ocular_ring = 物理目镜框（实体件），上游单独无裁剪绘制。
+        // 只收集引用、不隐藏：腰射 / 第三人称 / 未开镜时它必须随镜身完整出现；
+        // 开镜掩码激活时才摘除主提交、事后用未裁剪 RenderType 重画（见 submit）。
+        ModelRendererWrapper ocularRingWrapper = modelMap.get(OCULAR_RING_NODE);
+        ocularRingPart = ocularRingWrapper == null ? null : ocularRingWrapper.getModelRenderer();
         // 初始化 view 的 node path
         List<BedrockPart> path = getPath(modelMap.get(SCOPE_VIEW_NODE));
         int i = 2;
@@ -594,6 +609,21 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // 案例③（黑环边缘被啃）的真因指向「几何投影掩码略大于真实通光孔径、
         // 吃掉 scope_body 内圈边缘」（上游用固定半径圆，见 PORTING_NOTES §3.5），
         // 留待拿到对照截图+掩码预览后再修。
+        // 【案例⑨ · 26.1.2 → 26.2 邻链回流适配】ocular_ring 物理目镜框的独立路径：
+        // 邻链在体实证（commit 0b7c4cd，含上游语义取证）——它是实体件而非孔径/遮光几何，
+        // 上游 1.21.1 以 stencilFunc(ALWAYS) 无裁剪绘制；混入「会被 ocular 区域杀掉的批」
+        // 会在全部 14 个含该骨骼的镜子上统一啃掉内环。本架构的同源形态 = 这里若让它
+        // 随镜身走裁剪版 RenderType，开镜时内环被 hull 掩码啃掉（案例③ 遗留条目由此定因）。
+        // 等价处置（本架构无深度 order 概念，且掩码只在 shader 端杀片段、无深度写入者）：
+        // 开镜掩码激活时把它从主提交摘除（visible=false 会连子树一起摘除，
+        // 见 BedrockRenderSnapshot.capturePart 的剪枝语义），主提交后用未裁剪的原版
+        // RenderType 重画；普通 opaque cutout 天然回写深度（邻链的「重写入镜框深度
+        // 防水/雾/透明粒子覆盖」语义在本架构免费成立，无需额外步骤）。
+        // 开关 ScopeOcularRingFix = false 即整体回到旧行为（摘除+重画全部跳过）。
+        // 无 ocular_ring 骨骼的第三方模型、腰射、第三人称、Iris 回退路径（maskable=false）
+        // 均不受影响——此时 detaching=false，走原来的主提交。
+        boolean detachOcularRing = maskable && ocularRingPart != null && ocularRingPart.visible
+                && RenderConfig.SCOPE_OCULAR_RING_FIX != null && RenderConfig.SCOPE_OCULAR_RING_FIX.get();
         List<BedrockPart> hiddenOculars = new ArrayList<>();
         if (transformType != null && transformType.firstPerson()) {
             for (BedrockPart ocular : ocularParts) {
@@ -603,13 +633,24 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 }
             }
         }
+        if (detachOcularRing) {
+            ocularRingPart.visible = false; // 主提交摘除（finally 里必还原，anti-lock 跨帧共享对象）
+        }
         try {
             super.submit(poseStack, transformType, collector,
                     resolveBodyRenderType(renderType, texture, maskable), light, overlay);
         } finally {
+            if (detachOcularRing) {
+                ocularRingPart.visible = true;
+            }
             for (BedrockPart ocular : hiddenOculars) {
                 ocular.visible = true;
             }
+        }
+        // 重画物理目镜框（先于下面的准星提交，等价于邻链 ring=order 1 / reticle=order 2 的语义；
+        // 本架构按提交顺序消费，且目镜框是 opaque cutout，深度测试下顺序本来就不敏感）。
+        if (detachOcularRing) {
+            submitOcularRingPlain(poseStack, collector, renderType, transformType, light, overlay);
         }
 
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
@@ -642,6 +683,45 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             for (var entry : laserBeamPaths) {
                 BeamRenderer.renderLaserBeam(attachmentItem, poseStack, transformType, entry, collector);
             }
+        }
+    }
+
+    /**
+     * 【案例⑨】以未裁剪的原版 RenderType 重画物理目镜框（含子树）。
+     *
+     * <p>父链遍历-套用写法与 {@link #registerOcularMaskGeometry} 同构：两者都复刻
+     * {@code BedrockRenderSnapshot.captureSubtree} 的调用约定——rootPose 必须已经
+     * 套用根节点自身及其全部父级变换（自底向上收集祖先 → 自顶向下逐个
+     * {@code translateAndRotateAndScale}），captureSubtree 内部不再对根节点重复套用。
+     * 该约定与主渲染产出的模型矩阵完全一致（registerOcularMaskGeometry 的注释链
+     * 已多轮实测验证）。
+     *
+     * @param renderType 调用点收到的<b>原始</b> RenderType（未走 {@link #resolveBodyRenderType}
+     *                   的裁剪分支），即该配件的正常材质——上游 stencilFunc(ALWAYS) 的等价物。
+     */
+    private void submitOcularRingPlain(PoseStack poseStack, SubmitNodeCollector collector,
+                                       RenderType renderType, ItemDisplayContext transformType,
+                                       int light, int overlay) {
+        if (ocularRingPart == null) {
+            return;
+        }
+        PoseStack ringPose = new PoseStack();
+        ringPose.last().pose().set(poseStack.last().pose());
+        ringPose.last().normal().set(poseStack.last().normal());
+        java.util.List<BedrockPart> ringParents = new java.util.ArrayList<>();
+        for (BedrockPart parent = ocularRingPart.getParent(); parent != null; parent = parent.getParent()) {
+            ringParents.add(0, parent);
+        }
+        for (BedrockPart parent : ringParents) {
+            parent.translateAndRotateAndScale(ringPose);
+        }
+        ocularRingPart.translateAndRotateAndScale(ringPose);
+        com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ringSnapshot =
+                com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(
+                        ocularRingPart, ringPose, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
+        if (!ringSnapshot.isEmpty()) {
+            collector.submitCustomGeometry(new PoseStack(), renderType,
+                    (entryPose, consumer) -> ringSnapshot.write(consumer));
         }
     }
 

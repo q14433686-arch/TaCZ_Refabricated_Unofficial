@@ -308,6 +308,12 @@ Beta 3 Hotfix-2 – public test build of this Fabric port.
   no heading-locked rotation, no diagonal-direction lateral leak, natural
   muzzle feel. Verified in-body on both 26.1.2 and 26.2. Instant fallback:
   ConstraintCompensateMode=0 restores the pre-fix plain form.
+- See-through scopes: the physical ocular_ring (the black eyepiece rim present on all
+  14 mid/high-magnification scopes of the default pack) is now drawn unclipped while
+  aiming, mirroring upstream 1.21.1 stencil-ALWAYS handling — previously it rode the
+  mask-clipped body batch, so the oculus mask nibbled its inner rim. Adapted for the
+  26.2 mask architecture from the sibling 26.1.2 port's verified fix. Instant
+  fallback: ScopeOcularRingFix=false.
 ```
 
 ---

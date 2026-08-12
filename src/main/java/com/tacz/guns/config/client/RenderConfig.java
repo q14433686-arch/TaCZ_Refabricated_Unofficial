@@ -16,6 +16,8 @@ public class RenderConfig {
     /** 【调试】把瞄具目镜掩码贴图画到屏幕左上角，用于排查离屏渲染链路。默认关闭。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_DEBUG;
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_HULL_FILL;
+    /** 开镜掩码激活时，物理目镜框 {@code ocular_ring} 摘除主提交并以未裁剪 RenderType 重画（上游 stencil-ALWAYS 语义）。默认<b>开启</b>。 */
+    public static ForgeConfigSpec.BooleanValue SCOPE_OCULAR_RING_FIX;
     public static ForgeConfigSpec.BooleanValue GUN_HUD_ENABLE;
     public static ForgeConfigSpec.BooleanValue KILL_AMOUNT_ENABLE;
     public static ForgeConfigSpec.DoubleValue KILL_AMOUNT_DURATION_SECOND;
@@ -127,6 +129,19 @@ public class RenderConfig {
                         "fixes sparse-sliver oculars like AUG leaving scope-body fragments inside the sight picture).",
                         "false = legacy raw ocular geometry projection, kept as an instant fallback.")
                 .define("ScopeMaskHullFill", true);
+
+        // 【案例⑨ · 26.1.2 邻链回流适配】ocular_ring 物理目镜框：上游 1.21.1 以
+        // stencilFunc(ALWAYS) 无裁剪独立绘制（实体件，非孔径/遮光几何；默认枪包 14 个
+        // 中高倍镜全有）。26.1.2 在体实证：混入会被 ocular 区域杀掉的批 ⇒ 内环被啃。
+        // 26.2 掩码架构同源病灶 = 案例③ 遗留「镜框内圈被 hull 掩码啃掉」。处置 =
+        // 开镜掩码激活时摘除主提交、事后以未裁剪原版 RenderType 重画（含子树）。
+        // false = 秒回退到旧行为（随主提交走裁剪版）。
+        SCOPE_OCULAR_RING_FIX = builder
+                .comment("[FIX] Draw the physical ocular_ring (scope eyepiece rim) unclipped while aiming;",
+                        "mirrors upstream 1.21.1 stencil-ALWAYS handling (verified in-body on the 26.1.2 port).",
+                        "Without this, the oculus mask nibbles the ring's inner rim on all mid/high-zoom scopes",
+                        "that contain the bone. Set false to revert instantly. Default on.")
+                .define("ScopeOcularRingFix", true);
 
         builder.comment("Whether or not to display the gun's HUD");
         GUN_HUD_ENABLE = builder.define("GunHUDEnable", true);
