@@ -408,11 +408,11 @@ OBJECT_NAME` 比对：`BACKUP` 记录 ocular 写入面的身份，`APERTURE_COPY
 另把失败日志的去重从「仅与上一条比较」换成「按原因集合去重（32 条封顶）」，
 避免降级周期在两个原因间交替时刷日志。
 
-### 6.9 HOTFIX2：cleanup 之后的视模与火光反向裁剪
+### 6.9 R1：cleanup 之后的视模与火光反向裁剪
 
 有序批次还暴露出一个不能只靠 depth-test 解决的时序：scope cleanup 在 order `-1`
 恢复了世界深度，而枪身、非瞄具配件和半透明枪口火光位于默认 order `0`；它们若继续使用
-vanilla RenderType，会在目镜孔内重新通过深度测试。HOTFIX2 不移植 26.2 的离屏颜色掩码，
+vanilla RenderType，会在目镜孔内重新通过深度测试。R1 不移植 26.2 的离屏颜色掩码，
 而直接复用本方案已经生成的两份深度：
 
 - `tacz_ScopeMaskMode = 1`：保留 `apertureDepth < worldDepth - 1e-6` 的镜内像素（reticle）；

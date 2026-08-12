@@ -12,34 +12,40 @@
 | | 说明 |
 |---|---|
 | **是** | 上游 [TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)（1.21.1 分支）的 26.1.2 移植 |
-| **是** | **HOTFIX** 测试构建：已可游玩、可公开测试，但仍不保证无 bug |
+| **是** | **R1** 发布构建：已可游玩，但仍可能存在兼容性问题 |
 | **不是** | TACZ 官方版本，也不隶属于 TACZ Dev Team |
-| **不是** | 内容扩展 —— 除移植必需的改动外，不新增枪械/玩法 |
+| **不是** | 第三方内容整合包 —— 不捆绑额外枪械、刀械美术资源或付费内容 |
 
 **上游项目**
 - 原版 mod：Timeless & Classics Guns: Zero（TACZ Dev Team）
 - 直接移植来源：`Sh1roCu/TACZ-Refabricated` 的 `1.21.1` 分支
 
-### 内置附属：LRTactical（部分代码移植）
+### 已内置 LRTactical（LR）兼容层
 
-本测试构建还**移植并内置了 LesRaisins Tactical Equipements / LRTactical 的部分 GPL-3.0 代码**，
-用于让依赖 `lrtactical` 的战术装备内容包在 26.1.2 Fabric 下有运行框架。
+R1 **移植并内置了 LesRaisins Tactical Equipements / LRTactical 的部分 GPL-3.0 代码**，
+无需再安装单独的 LR 模组。它为依赖 `lrtactical` 的战术装备内容包提供 26.1.2 Fabric
+运行框架，并复用 TACZ 的 ZIP 内容包加载通道。
 
-- 目前内置的是代码与数据驱动框架，不是完整原作资源包；
-- 原作美术资源（贴图、模型、音效）标注为 All Rights Reserved，本仓库不打包、不再分发；
-- Fabric 元数据通过 `provides: ["lrtactical"]` 声明本构建提供该附属接口，方便内容包依赖检查通过；
-- 请不要把 LRTactical 相关问题反馈给原作者，本构建是非官方移植与整合。
+- **支持大多数普通、未加密、采用标准 LR 目录结构的 ZIP 刀包**：直接把 `.zip` 放进
+  `.minecraft/tacz/`，无需解压；包根目录仍须有 `gunpack.meta.json`；
+- 常用近战数据、左右键攻击、冷却/延迟、碰撞体、模型、贴图、动画、脚本与工作台配方
+  已接入；投掷物、消耗品及遥控起爆的基础流程也保留；
+- Fabric 元数据通过 `provides: ["lrtactical"]` 声明本构建提供 LR 依赖标识；
+- 兼容不等于完整复刻：`flash_shield` 等高级模块尚未移植，依赖 TacZ:Arcana 的加密包
+  仍无法加载；
+- 内置的是代码与数据驱动框架，不含原作 All Rights Reserved 的贴图、模型和音效资源；
+- 请不要把本移植的 LR 兼容问题反馈给原作者。
 
 ---
 
-## 2. HOTFIX 状态与已知限制
+## 2. R1 状态与已知限制
 
-HOTFIX 在 Beta-2 的可游玩基线上，按 `26.2(main)` 的 `backport-26.1.2/` 清单回移植了
+R1 在 Beta-2 的可游玩基线上，按 `26.2(main)` 的 `backport-26.1.2/` 清单回移植了
 7 项已在 26.2 验证的修复，并通过签名适配移植补齐了工作台预览模型的缩放/旋转。
-HOTFIX2 又同步了 26.2 后续结案的 PAL、弹道/后坐力、法线与镜内视模裁剪修复。
-它仍然是测试构建，不保证与上游完全等价。
+随后又同步了 26.2 后续结案的 PAL、弹道/后坐力、法线与镜内视模裁剪修复。
+R1 是首个使用发布后缀的公开构建，但仍不保证与上游完全等价，也可能存在未知兼容问题。
 
-HOTFIX2 本轮新增 / 修复：
+R1 主要新增 / 修复：
 
 - **PAL 切枪后第三人称动画永久失效**：规避 Player Animation Library 1.2.5
   无法摘除完成态 fade-out modifier 的缺陷，改用可自动摘除的 fade-in-to-null 过渡。
@@ -59,7 +65,7 @@ HOTFIX2 本轮新增 / 修复：
   在 cleanup 后独立重画；cleanup 只恢复仍由 invisible ocular 占据的像素，保留可见镜体深度，
   避免 Iris 的水、粒子和云覆盖低倍镜内部。
 
-此前 HOTFIX 主要新增 / 修复（逐项明细见 `docs/BACKPORT_FROM_26_2_APPLIED.md`）：
+此前测试版主要新增 / 修复（逐项明细见 `docs/BACKPORT_FROM_26_2_APPLIED.md`）：
 
 - **跨维度后服务端枪械状态不复位**：Fabric 的 `AFTER_ENTITY_CHANGE_LEVEL` 事件
   javadoc 明写不适用于玩家，原实现里玩家一次都没进过 handler；
@@ -89,10 +95,12 @@ HOTFIX2 本轮新增 / 修复：
   Iris 下通过公开的 `assignPipeline(..., HAND)` API 归类自定义管线，并仅向手部 shader 注入默认休眠的恢复/掩码分支。
 - **发光准星修复为真正自发光**：`*_illuminated` 准星改用专用 emissive/no-cardinal-lighting
   渲染类型，避免随玩家朝向在 vanilla/Iris 下反向变亮变暗。
-- **LRTactical 继续作为内置兼容层**：throwable、melee、detonator/C4、consumable 基础流程保留；
-  Fabric 元数据继续通过 `provides: ["lrtactical"]` 提供依赖标识。
-- **曳光弹显示做了阶段性修复**：恢复上游 `energySwirl` 渲染类型与满亮 block light；
-  HOTFIX2 进一步修复了出生坐标取整和第一人称枪口空间换算。弹道/命中逻辑本身未改。
+- **LRTactical 作为内置兼容层**：throwable、melee、detonator/C4、consumable 基础流程保留；
+  Fabric 元数据通过 `provides: ["lrtactical"]` 提供依赖标识，大多数标准未加密 ZIP 刀包
+  可直接由 `.minecraft/tacz/` 加载。
+- **曳光弹显示做了阶段性修复**：恢复上游 `energySwirl` 渲染类型与满亮 block light，
+  并修复实体生成包的坐标取整。第一人称枪口世界偏移试验已因实测位置错误而回退；
+  弹道/命中逻辑本身未改。
 
 当前已知重点限制：
 
@@ -209,7 +217,7 @@ HOTFIX2 本轮新增 / 修复：
 > ℹ️ **关于 `Mod version mismatch`**：枪包 `gunpack.meta.json` 里的
 > `"dependencies": { "tacz": ">=1.0.4" }` 这类约束，会与本模组的版本号比对。
 >
-> 本移植版的版本号是 **`1.1.8+fabric.26.1.2.HOTFIX2`** —— 前面的 `1.1.8` 是所基于的
+> 本移植版的版本号是 **`1.1.8+fabric.26.1.2.R1`** —— 前面的 `1.1.8` 是所基于的
 > 上游版本（Forge 的 `1.1.8-hotfix`），`+` 之后是 SemVer 的**构建元数据**。
 > 按 SemVer 规则，构建元数据**不参与版本比较**，因此它等价于 `1.1.8`，
 > 面向 `1.1.8` 及更早版本的枪包都能正常通过校验。
@@ -252,6 +260,8 @@ Arcana 没有 Fabric / 26.1.2 版本，且其格式与密钥未公开。
 | `README.md`（本文） | 项目说明、免责声明、许可、装包方法 |
 | `PORTING_26_1_2_SUCCESS_REPORT.md` | 26.1.2 降级移植记录（其中渲染结论以最新审计为准） |
 | `docs/RENDER_PIPELINE_SCOPE_AUDIT_26_1_2.md` | vanilla / Fabric / Iris 调度、上游 stencil 与依赖版本审计 |
+| `docs/UPDATE_REPORT_26_1_2_R1.md` | R1 面向用户的更新报告、升级步骤与已知限制 |
+| `docs/publish/` | Modrinth、CurseForge、MC 百科发布文案 |
 
 ---
 
@@ -264,7 +274,7 @@ Arcana 没有 Fabric / 26.1.2 版本，且其格式与密钥未公开。
   雾和粒子既不会被目镜挡掉，也不会无视地形叠在前景上。
   发光准星使用不受 ocular depth 遮挡的 HAND_TRANSLUCENT 管线；纯蚀刻 division 会过滤大面积
   blackout panel 后恢复细线/刻度。客户端配置 `[render]` 下应存在 `ScopeMaskEnable = true`。
-- **手臂仍不做镜内排除**：HOTFIX2 已裁掉镜内的枪身、非瞄具配件与两层枪口火光；
+- **手臂仍不做镜内排除**：R1 已裁掉镜内的枪身、非瞄具配件与两层枪口火光；
   独立玩家手臂提交保持原渲染路径。
 - 三个工作台（`workbench_a/b/c`）的名称取自枪包数据，上下游均未提供内置译名。
 
