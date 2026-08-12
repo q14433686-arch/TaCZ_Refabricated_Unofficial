@@ -71,8 +71,14 @@ public class SlotItemHandler extends Slot {
         return itemHandler;
     }
     
+    /**
+     * Legacy helper retained for external callers only.
+     *
+     * <p>This does not override a 26.2 {@link Slot} method (the superclass has no
+     * {@code isSameInventory}); vanilla never calls it, and the repository has no
+     * internal caller. An earlier comment incorrectly described it as a 26.2 fix.</p>
+     */
     public boolean isSameInventory(Slot other) {
-        // 修复Minecraft 26.2兼容性问题
-        return other instanceof SlotItemHandler && ((SlotItemHandler) other).getItemHandler() == this.itemHandler;
+        return other instanceof SlotItemHandler slot && slot.getItemHandler() == this.itemHandler;
     }
 }

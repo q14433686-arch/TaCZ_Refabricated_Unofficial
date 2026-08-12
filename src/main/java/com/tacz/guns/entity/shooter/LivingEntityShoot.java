@@ -267,7 +267,11 @@ public class LivingEntityShoot {
     }
 
     /**
-     * 消耗备弹 TODO: 需要检查，是否有其他更简单的方法消耗背包内的弹药 (这段是直接从逻辑机 API 里复制过来的)
+     * 消耗射手的备弹。
+     *
+     * <p>已核对调用链：闭膛背包直读上膛时由本类调用；虚拟备弹与物品栏弹药
+     * 分别复用 {@link AbstractGunItem} 的权威扣除函数。这里与脚本 API 有少量
+     * 重复只是重构机会，不是功能未实现。</p>
      */
     public void consumeAmmoFromPlayer(int neededAmount, ItemStack itemStack, boolean needCheckAmmo) {
         if (!(itemStack.getItem() instanceof AbstractGunItem abstractGunItem)) {

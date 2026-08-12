@@ -1,7 +1,7 @@
 {
   "materials": [
     {
-      "item": "minecraft:stick",
+      "item": "#c:rods/wooden",
       "count": 8
     },
     {
@@ -13,7 +13,16 @@
     "type": "custom",
     "group": "tacz:misc",
     "item": {
-      "item": "minecraft:painting",
+      "id": "minecraft:painting",
+      "components": {
+        "minecraft:item_name": {
+          "translate": "item.tacz.painting.blood_strike_1"
+        },
+        "minecraft:entity_data": {
+          "id": "minecraft:painting",
+          "variant": "tacz:blood_strike_1"
+        }
+      },
       "count": 1
     }
   },

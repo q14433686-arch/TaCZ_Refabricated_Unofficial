@@ -207,8 +207,8 @@ world corruption, crashes, data loss, and mod conflicts. Non-commercial project.
 
 | 字段 | 填什么 |
 |---|---|
-| **Display Name** | `TACZ-Refabricated-26.2-1.1.8+fabric.26.2.Beta-2` |
-| **Release Type** | **Alpha** |
+| **Display Name** | `TACZ-Refabricated-26.2-1.1.8+fabric.26.2.R1` |
+| **Release Type** | **Release** |
 | **Game Version** | `26.2` |
 | **Modloader** | `Fabric` |
 | **Java Version** | `Java 25` |
@@ -287,11 +287,10 @@ based on TACZ `1.1.8-hotfix`.
 
 ## ⑤-bis 次回发布用 Changelog 草稿（案例⑧ 正式修复 · 2026-08-12）
 
-> 下一版（Beta 3 Hotfix-2 / Beta 4）发布时用本块替换线上 changelog；
-> §⑤ 里的 Beta 3 Hotfix 块是已发布原文，留档勿动。
+> R1 发布时用本块替换线上 changelog；§⑤ 里的 Beta 3 Hotfix 块是已发布原文，留档勿动。
 
 ```markdown
-Beta 3 Hotfix-2 – public test build of this Fabric port.
+R1 – first release build of this Fabric port.
 
 ### Fixes
 - First-person ADS viewmodel: the diagonal-heading recoil fix shipped in

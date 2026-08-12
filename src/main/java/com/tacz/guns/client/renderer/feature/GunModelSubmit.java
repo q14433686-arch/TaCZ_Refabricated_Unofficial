@@ -8,21 +8,24 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.world.item.ItemDisplayContext;
 
 /**
- * 26.2 Feature Rendering - Gun Model 提交节点
- * <p>
- * 完整迁移自 1.20.1 旧 {@code BedrockModel.render(BufferSource)} 模式到 26.2 新 SubmitNode 模式.
- * <p>
- * 真实 API 来源 (2026-07-21 已拉取):
+ * 26.2 Feature Rendering 的<b>未启用实验节点</b>。
+ *
+ * <p>2026-08-12 调用链复核：唯一构造入口 {@code FeatureRenderCompat#submit}
+ * 全仓零调用；在役路径是 {@code BedrockModel#submit -> submitCustomGeometry}。
+ * 因此本 record 与其 renderer/type 当前不会收到节点，不能描述成“完整迁移”。
+ * 保留它只是将来若整体切换 Fabric FeatureRenderer API 时的脚手。</p>
+ *
+ * <p>原型 API 来源 (2026-07-21 已拉取):</p>
  * <ul>
  *   <li>https://github.com/FabricMC/fabric-api/blob/26.2/fabric-rendering-v1/src/testmodClient/java/net/fabricmc/fabric/test/rendering/client/FeatureRendererTest.java</li>
  *   <li>https://github.com/FabricMC/fabric-api/blob/26.2/fabric-rendering-v1/src/client/java/net/fabricmc/fabric/api/client/rendering/v1/SubmitRenderPhases.java</li>
  * </ul>
  * <p>
- * 关键设计:
+ * 原型设计:
  * <ul>
  *   <li>实现 {@link SubmitNode}, 提供 {@link #featureType()}</li>
- *   <li>由于 TACZ 模型通常半透明 (透明枪械贴图), 用 {@code SOLID} 阶段而非 TRANSLUCENT_* (避免 TranslucentSubmit 接口约束和排序复杂度)</li>
- *   <li>本 record 暂未实现 {@code TranslucentSubmit}, 留待确认 BedrockModel 是否真的需要半透明排序</li>
+ *   <li>原型固定走 {@code SOLID} 阶段且未实现 {@code TranslucentSubmit}；由于整条
+ *       原型链不可达，这目前不是玩家功能缺口。若未来启用该架构，必须重新审视排序。</li>
  * </ul>
  *
  * @param poseStack PoseStack 上下文

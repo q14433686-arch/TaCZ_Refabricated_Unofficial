@@ -63,7 +63,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         // 必须注册：索引只在服务端加载，联机时客机靠这个包才能拿到，
         // 否则创造栏里找不到手雷、名字也只显示通用名「投掷物」。
         me.xjqsh.lrtactical.client.init.ModEntitiesRender.registerParticles();
-        // 致盲遮罩（闪光弹的实际效果所在）
+        // LRTactical HUD：使用/预燃/近战进度，最后叠加闪光弹致盲遮罩。
         me.xjqsh.lrtactical.client.init.ModEntitiesRender.registerHudOverlays();
         // 附属模块 LRTactical 的 display 资源加载器（assets/lrtactical/display/**）。
         // 注意它内部声明了「必须排在 TACZ 的模型/动画/脚本之后」，

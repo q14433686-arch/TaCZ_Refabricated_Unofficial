@@ -34,10 +34,14 @@
     "client.KeyboardHandlerMixin",
     "client.LivingEntityRendererMixin",
     "client.MinecraftMixin",
+    "compat.punchy.PunchyArmRendererMixin",
+    "compat.punchy.PunchyHandEquipStateMachineMixin",
+    "compat.punchy.PunchyHandRenderBobContextMixin",
+    "compat.punchy.PunchyMovementStateMachineMixin",
     "client.MouseHandlerMixin",
     "client.TextureAtlasMixin"
   ],
-  "_comment": "26.2 r33: RenderTargetMixin + AbstractSliderButtonAccessor deleted (targets gone in 26.2). LivingEntityRendererMixin re-enabled: both injection descriptors verified byte-for-byte against the 26.2 jar (extractRenderState(LivingEntity,LivingEntityRenderState,F)V and submit(LivingEntityRenderState,PoseStack,SubmitNodeCollector,CameraRenderState)V). Still unregistered on purpose, see MIXIN_AUDIT_2026-07-27.md.",
+  "_comment": "26.2: compatibility mixins are gated by MixinPlugin using the package segment as the target mod id; Punchy mixins route TACZ viewmodels through Punchy's supported blacklist/handoff semantics.",
   "injectors": {
     "defaultRequire": 1
   }

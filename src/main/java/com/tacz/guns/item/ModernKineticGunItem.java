@@ -584,6 +584,11 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         });
     }
 
+    /**
+     * Upstream 1.21.1 / 1.1.8-hotfix leaves weapon progression as a dormant API
+     * scaffold: there is no XP writer, curve, cap, stat modifier, or level-up packet
+     * sender. Returning zero here is therefore upstream behavior, not a lost port.
+     */
     @Override
     public int getLevel(int exp) {
         return 0;

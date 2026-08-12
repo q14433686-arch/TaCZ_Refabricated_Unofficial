@@ -146,8 +146,10 @@ dependencies {
     // simplebedrockmodel — 需要确认 26.2 兼容版本
     // implementation(include("libs:simplebedrockmodel-fabric:2.3.0.1+mc1.20.1"))
 
-    // MAE (Math Expression Evaluator)
-    implementation("com.maydaymemory:mae:1.1.1") {
+    // MAE (Math Expression Evaluator / animation pose API).
+    // Bundle the real library: the former local Pose/DummyPose stubs omitted
+    // Pose#getBoneTransforms and could cause binary incompatibility with MAE callers.
+    implementation(include("com.maydaymemory:mae:1.1.1")) {
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
         exclude group: 'it.unimi.dsi', module: 'fastutil'
         exclude group: 'org.joml', module: 'joml'
@@ -183,9 +185,8 @@ dependencies {
     // Carry On
     // compileOnly "curse.maven:carry-on-274259:${carry_on_id}"
 
-    // Player Animation Lib — 26.2：KosmX(dev.kosmx.playerAnim) 无 26.2 构建；modrinth 的
-    // player-animation-library 是 zigythebird 的不兼容分支。compat/playeranimator 暂排除，待迁移到可用 API。
-    // PAL is optional at runtime, but compile its 26.2 API for the isolated compat implementation.
+    // Player Animation Lib — 26.2：KosmX(dev.kosmx.playerAnim) 无 26.2 构建；现已将第三人称
+    // 四层动画语义迁移到 zigythebird PAL 1.2.5。PAL 运行时可选，只编译其隔离兼容实现所需 API。
     compileOnly "maven.modrinth:player-animation-library:${player_animation_lib}"
 
     // KubeJS
@@ -212,8 +213,13 @@ dependencies {
     // Zoomify — 26.2 (Modrinth 2.16.1+26.2)
     compileOnly "maven.modrinth:zoomify:${zoomify_version}"
 
-    // ImmediatelyFast
-    // compileOnly "maven.modrinth:immediatelyfast:1.5.1+1.20.4-fabric"
+    // ImmediatelyFast 1.16.x has no public batching API anymore. TACZ's 26.2
+    // SubmitNodeCollector path needs no compile-time bridge; see ImmediatelyFastCompat.
+
+    // Shoulder Surfing Reloaded — 26.2 (plugin API 5.x, optional at runtime)
+    compileOnly("maven.modrinth:shoulder-surfing-reloaded:${shoulder_surfing_version}") {
+        transitive = false
+    }
 
     // REI — 26.2
     compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
@@ -266,7 +272,8 @@ sourceSets {
             exclude 'com/tacz/guns/compat/controllable/ControllableInner.java'
             // KubeJS：dev.latvian.kubejs 无 26.2 Fabric 构建，核心 KubeJSGunEventPoster/GunMod 改为禁用态门面
             exclude 'com/tacz/guns/compat/kubejs/**'
-            // Player Animator(KosmX dev.kosmx.playerAnim)：无 26.2 构建；保留门面 PlayerAnimatorCompat/AnimationName/PlayerAnimatorLoader
+            // 仅排除已被 PAL 实现替代、且硬依赖 KosmX API 的旧 animation 包/资产管理器；
+            // PlayerAnimatorCompat 门面与 compat/playeranimator/pal/** 均正常参与编译。
             exclude 'com/tacz/guns/compat/playeranimator/animation/**'
             exclude 'com/tacz/guns/compat/playeranimator/PlayerAnimatorAssetManager.java'
             // Optifine：非 Fabric，待评估永久废弃

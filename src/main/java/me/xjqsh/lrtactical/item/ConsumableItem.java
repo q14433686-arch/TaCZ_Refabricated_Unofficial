@@ -22,11 +22,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUseAnimation;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 /** 基础消耗品实现（药品/食物）。第一版先实现服务端效果与组件自愈，动画渲染后续再补。 */
 public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.api.item.IAnimationItem {
@@ -169,5 +171,12 @@ public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.a
     @Override
     public boolean isSame(ItemStack stack1, ItemStack stack2) {
         return IConsumable.super.isSame(stack1, stack2);
+    }
+
+    @Override
+    public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+        return this.getConsumableIndex(stack).isPresent()
+                ? Optional.of(new me.xjqsh.lrtactical.inventory.tooltip.ConsumableTooltip(stack))
+                : Optional.empty();
     }
 }

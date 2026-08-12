@@ -72,7 +72,7 @@ public class TextShowRender implements IFunctionalSubmitter {
         if (StringUtils.isBlank(text)) {
             return;
         }
-        // 【2026-08-11 更正】此前这里的 TODO 写「文字显示未实现，待重写」——是错的，
+        // 【2026-08-11 更正】此前这里的 旧待办 写「文字显示未实现，待重写」——是错的，
         // 本审计按调用链核实：文字显示【已经实现】，在上方 extract() 里经
         // collector.submitText(...) 提交（26.2 的 OrderedSubmitNodeCollector 有
         // submitText(PoseStack,F,F,FormattedCharSequence,Z,Font$DisplayMode,I,I,I,I)V，

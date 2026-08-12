@@ -53,7 +53,10 @@ public class ServerMessageLevelUp implements CustomPacketPayload {
         if (player == null) {
             return;
         }
-        // TODO 在完成了枪械升级逻辑后，解封下面的代码
+        // UPSTREAM-INCOMPLETE[gun-level]: this payload has no sender, ModernKineticGunItem
+        // returns 0 for every level/exp query, and GunLevelExp has no writer. The toast body is
+        // preserved as upstream design evidence, not as a port task that can be safely "unsealed"
+        // in isolation; a real implementation first needs an XP source, curve, cap and modifiers.
                 /*
                 if (GunLevelManager.DAMAGE_UP_LEVELS.contains(level)) {
                     Minecraft.getInstance().getToasts().addToast(new GunLevelUpToast(gun,

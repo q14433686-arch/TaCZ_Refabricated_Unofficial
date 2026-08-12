@@ -5,7 +5,9 @@ import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.client.Camera;
 
 /**
- * Stub for simplebedrockmodel ViewportEvent (library not yet available for 26.2)
+ * In-repo 26.2 compatibility implementation of SimpleBedrockModel's viewport events.
+ * CameraMixin/GameRendererMixin emit these events and TACZ listeners consume them; this is
+ * an active replacement API, not an empty stub.
  */
 public class ViewportEvent {
 

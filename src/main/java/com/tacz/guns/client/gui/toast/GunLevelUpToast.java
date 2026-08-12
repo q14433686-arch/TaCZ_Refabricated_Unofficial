@@ -11,6 +11,13 @@ import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nullable;
 
+/**
+ * Renderable form of upstream's planned weapon-level toast.
+ *
+ * <p>The 26.2 rendering port is complete, but the upstream progression system that
+ * would create this toast is not: {@code ServerMessageLevelUp} has no sender and
+ * every level curve method currently returns zero. This class is therefore dormant.</p>
+ */
 @Environment(EnvType.CLIENT)
 public class GunLevelUpToast implements Toast {
     private final Component title;

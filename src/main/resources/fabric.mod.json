@@ -5,8 +5,8 @@
     "lrtactical"
   ],
   "version": "${version}",
-  "name": "[UNOFFICIAL] TaCZ Refabricated (26.2 Beta 3 Hotfix)",
-  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. Beta 3 Hotfix build for Minecraft 26.2 - not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.2.Beta-3-Hotfix' build metadata so gun packs declaring a 'tacz' version requirement continue to load.",
+  "name": "[UNOFFICIAL] TaCZ Refabricated (26.2 R1)",
+  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. R1 for Minecraft 26.2 includes the built-in LRTactical framework and optional first-person animation compatibility handoffs. It is not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.2.R1' build metadata so existing gun-pack version requirements continue to work.",
   "authors": [
     "Sh1roCu"
   ],

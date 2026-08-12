@@ -156,9 +156,8 @@ public abstract class ThrowableItemEntity extends Projectile
     /**
      * 默认物品。
      *
-     * <p>上游返回 {@code ModItems.THROWABLE.get()}。物品层尚未移植，
-     * 故此处声明为抽象，由子类/后续接线提供 —— <b>不</b>临时塞一个错误的占位物品，
-     * 那会在物品层接上后变成难查的静默错误。
+     * <p>物品层现已完成。基类仍把它声明为抽象，是为了让各实体显式选择回退物品；
+     * 当前所有五种实体最终都返回 {@code ModItems.THROWABLE}。这不是未接线状态。
      */
     protected abstract Item getDefaultItem();
 
@@ -186,9 +185,9 @@ public abstract class ThrowableItemEntity extends Projectile
                 if (speed > 0.1) {
                     this.level().playSound(null, result.getLocation().x, result.getLocation().y, result.getLocation().z,
                             event, SoundSource.AMBIENT, 2.0F, 1.0F);
-                    // TODO(音效): 上游此处还会播放 ModSounds.GRENADE_BOUNCE。
-                    //  音效资源属原作 All Rights Reserved 素材，本移植不打包，
-                    //  故只保留方块本身的脚步声。内容包可自行提供弹跳音效。
+                    // 有意差异（非代码待办）：上游还会播放 GRENADE_BOUNCE；该音效
+                    // 属原作 All Rights Reserved 素材，本移植不能打包，故以被撞方块
+                    // 的脚步声提供反馈。内容包若提供自有音效，可另行扩展。
                 }
                 state.onProjectileHit(this.level(), state, blockResult, this);
             }
@@ -377,8 +376,9 @@ public abstract class ThrowableItemEntity extends Projectile
      */
     public void onDeath(@Nullable HitResult hitResult) {
         this.discard();
-        // TODO(网络层/音效): 上游在此处经自定义包播放 death 音效。
-        //  网络层未移植且音效属原作受限素材，此处留空。
+        // 有意差异（非代码待办）：上游经 SCustomSound 播放 display 中声明的
+        // death 音效。本移植未移植通用自定义音效包，且不分发原作 ARR 音源，
+        // 因此生命周期结束时只销毁实体。
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.tacz.guns.compat.shouldersurfing;
 
 import net.fabricmc.loader.api.FabricLoader;
 
+/** Optional facade for Shoulder Surfing Reloaded 5.x on Minecraft 26.2. */
 public final class ShoulderSurfingCompat {
     private static final String MOD_ID = "shouldersurfing";
     private static boolean INSTALLED = false;

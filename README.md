@@ -12,7 +12,7 @@
 | | 说明 |
 |---|---|
 | **是** | 上游 [TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)（1.21.1 分支）的 26.2 移植 |
-| **是** | **Beta 1** 测试构建：已可游玩、可公开测试，但仍不保证无 bug |
+| **是** | **R1** 发布构建：已可游玩，但仍不保证无 bug |
 | **不是** | TACZ 官方版本，也不隶属于 TACZ Dev Team |
 | **不是** | 内容扩展 —— 除移植必需的改动外，不新增枪械/玩法 |
 
@@ -22,7 +22,7 @@
 
 ### 内置附属：LRTactical（部分代码移植）
 
-本测试构建还**移植并内置了 LesRaisins Tactical Equipements / LRTactical 的部分 GPL-3.0 代码**，
+本构建还**移植并内置了 LesRaisins Tactical Equipements / LRTactical 的部分 GPL-3.0 代码**，
 用于让依赖 `lrtactical` 的战术装备内容包在 26.2 Fabric 下有运行框架。
 
 - 目前内置的是代码与数据驱动框架，不是完整原作资源包；
@@ -32,12 +32,12 @@
 
 ---
 
-## 2. Beta 1 状态与已知限制
+## 2. R1 状态与已知限制
 
-Beta 1 在 Alpha 2 可游玩基线之上，重点补齐 Iris/光影下的瞄准镜兼容，并继续完善
-LRTactical 基础闭环。它仍然是测试构建，不保证与上游完全等价。
+R1 在此前公开测试基线之上，重点补齐 Iris/光影下的瞄准镜兼容、LRTactical
+反馈层与可选第一人称动画兼容。它仍不保证与上游完全等价。
 
-Beta 1 主要新增 / 修复：
+R1 主要新增 / 修复：
 
 - **Iris shader pack 下的瞄准镜镜内裁剪基本可用**：在 Iris HAND shader 路径内注入 TACZ
   的 scope mask 分支，避免此前光影下镜身、准星、雾效/自发光层互相冲突的问题；普通非光影路径保持可用。
@@ -45,16 +45,30 @@ Beta 1 主要新增 / 修复：
   渲染类型，避免随玩家朝向在 vanilla/Iris 下反向变亮变暗。
 - **LRTactical 继续作为内置兼容层**：throwable、melee、detonator/C4、consumable 基础流程保留；
   Fabric 元数据继续通过 `provides: ["lrtactical"]` 提供依赖标识。
+- **通用第一人称动画让出层已接入**：普通物品保留 First-person Model、Punchy、Hide Hands、
+  SkyHands、Viewmodel Changer 与 swing 类 Mod 的行为；持有实际可渲染的 TACZ/LRTactical
+  枪、手雷或刀时自动交还给 TACZ viewmodel。实现与测试矩阵见
+  [`docs/FIRST_PERSON_ANIMATION_COMPAT_26_2.md`](docs/FIRST_PERSON_ANIMATION_COMPAT_26_2.md)。
 - **曳光弹显示做了阶段性修复**：恢复上游 `energySwirl` 渲染类型、满亮 block light，并让
   第一人称枪口视觉偏移按每发子弹缓存。弹道/命中本身未改。
 
 当前已知重点限制：
 
+- **上游 `.30-06 孤星 手炮` 的带镜换弹子弹可能被目镜裁剪**：默认枪包把换弹子弹
+  `bullet_in_barrel` 与整个枪身放在同一个 scope-clipped 批次；安装筒镜后，子弹经过目镜
+  投影区域时会和枪身一样被裁掉。官方 1.20.1、直接 Fabric 上游及本移植资源一致，
+  与是否开启光影无关。修复需要拆分动态子树渲染，暂不以未经运行验证的资源偏移硬改。
 - **曳光弹仍可能存在视觉偏移差异**：目前观察到弹道/最终交汇点基本正确，问题集中在挂在
   子弹实体上的曳光几何显示；它不影响命中判定，后续仍需继续细查。
 - **PIP / 二次世界渲染不默认启用**：此前验证显示 26.2 地形渲染、RenderTarget 与光影 pass
   耦合很深，已暂停作为主线方案。
-- **LRTactical 仍是部分内置移植**：flash shield 等上游模块仍未完整移植。
+- **Player Animation Library 有一个低优先级已知问题**：经历 TACZ 趴姿再站起后，
+  稳态持枪姿势正常，但随后切枪时约 8 tick 的第三人称过渡动画仍会带入脏姿态。
+  26.1.2 已解决；26.2 的逐字移植与 GunDraw 硬复位两案均无效，已按用户决定挂起。
+- **LRTactical 仍是部分内置移植**：flash shield 等独立子系统仍未完整移植；
+  但物品 tooltip、使用/预燃进度 HUD 与自定义分类冷却遮罩现已接入 26.2 路径。
+- **枪械“经验等级”是上游未完成的脚手**：当前上游与本移植均没有 XP 获取、
+  等级曲线或等级属性加成；tooltip 的 `0 (MAX)` 不是可工作的等级系统。
 - **需要 TacZ:Arcana 解密能力的加密枪包不支持**，见下文专节。
 
 ---
@@ -151,7 +165,7 @@ Beta 1 主要新增 / 修复：
 > ℹ️ **关于 `Mod version mismatch`**：枪包 `gunpack.meta.json` 里的
 > `"dependencies": { "tacz": ">=1.0.4" }` 这类约束，会与本模组的版本号比对。
 >
-> 本移植版的版本号是 **`1.1.8+fabric.26.2.Beta-2`** —— 前面的 `1.1.8` 是所基于的
+> 本移植版的版本号是 **`1.1.8+fabric.26.2.R1`** —— 前面的 `1.1.8` 是所基于的
 > 上游版本（Forge 的 `1.1.8-hotfix`），`+` 之后是 SemVer 的**构建元数据**。
 > 按 SemVer 规则，构建元数据**不参与版本比较**，因此它等价于 `1.1.8`，
 > 面向 `1.1.8` 及更早版本的枪包都能正常通过校验。
@@ -193,7 +207,9 @@ Arcana 没有 Fabric / 26.2 版本，且其格式与密钥未公开。
 |---|---|
 | `README.md`（本文） | 项目说明、免责声明、许可、装包方法 |
 | `docs/PORTING_NOTES.md` | **移植经验总结** —— 26.2 破坏性变更清单与踩坑记录，面向后续开发者 |
-| `docs/archive/` | 38 份历史过程文档（含已作废结论），**仅供考古**，见下 |
+| `docs/UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md` | 上游文件/功能对齐、枪械等级真相、TODO 真伪与当前剩余缺口 |
+| `docs/LRTACTICAL_FEEDBACK_LAYER_26_2.md` | LRTactical tooltip、使用进度 HUD、分类冷却遮罩的 26.2 实现与 flash shield 评估 |
+| `docs/archive/` | 历史过程文档（含已作废结论），**仅供考古**，见下 |
 
 ### 关于 `docs/archive/`
 
@@ -201,7 +217,8 @@ Arcana 没有 Fabric / 26.2 版本，且其格式与密钥未公开。
 
 - 其中若干份的核心结论**已被后续验证推翻**（相关文件顶部通常带作废声明）；
 - 早期文档之间存在互相矛盾之处；
-- 结论以 `docs/PORTING_NOTES.md` 和**代码里的注释**为准。
+- 当前缺口以 `docs/UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md` 为准；
+  `PORTING_NOTES.md` 记录已验证的 API 经验。**代码注释只能当线索，不能单独当证据**。
 
 保留它们是因为「为什么当初走了弯路」本身有参考价值 ——
 尤其是几次方向性错误（PIP、准直光学补偿、按半径分内外壁）的证伪过程。

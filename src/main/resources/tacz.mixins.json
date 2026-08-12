@@ -23,7 +23,7 @@
     "client.SoundManagerPreparationsMixin",
     "client.StairBlockAccessor"
   ],
-  "_comment": "26.2: ItemInHandRendererMixin and ItemInHandLayerMixin restored against SubmitNodeCollector signatures; PlayerModelMixin applies TACZ/PAL third-person poses from AvatarRenderState.",
+  "_comment": "26.2: ItemInHandRendererMixin owns the submitHandsWithItems call site for TACZ viewmodels, so generic first-person hand transforms yield without affecting ordinary items. PlayerModelMixin applies TACZ/PAL third-person poses from AvatarRenderState.",
   "injectors": {
     "defaultRequire": 1
   }
