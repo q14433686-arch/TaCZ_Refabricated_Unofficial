@@ -9,6 +9,7 @@
   "_comment": "LRTactical (unofficial 26.1.2 port) mixins. Kept separate from tacz.*.mixins.json because those are bound to the cn.sh1rocu.tacz.mixin package.",
   "mixins": [],
   "client": [
+    "client.GuiGraphicsExtractorMixin",
     "client.SoundEngineMixin"
   ],
   "injectors": {

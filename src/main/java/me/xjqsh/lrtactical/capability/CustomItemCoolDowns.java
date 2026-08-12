@@ -2,6 +2,7 @@ package me.xjqsh.lrtactical.capability;
 
 import me.xjqsh.lrtactical.EquipmentMod;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 
@@ -20,9 +21,9 @@ import java.util.Map;
  * <h2>26.2 移植改动</h2>
  * <ul>
  *   <li>{@code ResourceLocation} → {@link Identifier}（26.2 类名变更，全仓统一）；</li>
- *   <li>索引与近战网络层已经完成，但自定义冷却尚无对应 S2C payload。
- *       缺失后果仅是客户端物品栏不显示按 Identifier 分类的冷却遮罩；
- *       服务端权威冷却和实际可用时机不受影响。</li>
+ *   <li>冷却专用 S2C 同步已接入 {@code ServerMessageCustomCooldown}；客户端
+ *       {@code GuiGraphicsExtractorMixin} 在原版 itemCooldown 提取结束后叠加分类遮罩。
+ *       服务端仍是唯一权威，客户端状态只负责反馈。</li>
  * </ul>
  */
 public class CustomItemCoolDowns {
@@ -66,6 +67,10 @@ public class CustomItemCoolDowns {
     }
 
     public void addCooldown(Identifier id, int ticks) {
+        if (ticks <= 0) {
+            removeCooldown(id);
+            return;
+        }
         this.cooldowns.put(id, new CooldownInstance(this.tickCount, this.tickCount + ticks));
         this.onCooldownStarted(id, ticks);
     }
@@ -75,12 +80,17 @@ public class CustomItemCoolDowns {
         this.onCooldownEnded(id);
     }
 
-    // Known limitation: upstream sends SCustomCoolDownMessage from these hooks. This port has no
-    // custom-cooldown payload/overlay yet; server enforcement remains authoritative and complete.
+    /** Server-authoritative start/end updates; client calls do not echo packets. */
     protected void onCooldownStarted(Identifier id, int ticks) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            me.xjqsh.lrtactical.network.LrNetworkHandler.syncCooldown(serverPlayer, id, ticks);
+        }
     }
 
     protected void onCooldownEnded(Identifier id) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            me.xjqsh.lrtactical.network.LrNetworkHandler.syncCooldown(serverPlayer, id, 0);
+        }
     }
 
     public Player getPlayer() {

@@ -32,6 +32,8 @@ public final class LrNetworkHandler {
     public static void registerPayloads() {
         PayloadTypeRegistry.clientboundPlay().register(
                 ServerMessageSyncLrPack.TYPE, ServerMessageSyncLrPack.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(
+                ServerMessageCustomCooldown.TYPE, ServerMessageCustomCooldown.CODEC);
         // C2S：近战攻击请求。serverboundPlay 同样两端都要注册
         // （客户端编码、服务端解码），只在一端注册会报 Unknown payload id。
         PayloadTypeRegistry.serverboundPlay().register(
@@ -49,6 +51,8 @@ public final class LrNetworkHandler {
     public static void registerS2CPackets() {
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncLrPack.TYPE,
                 (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageCustomCooldown.TYPE,
+                (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
     }
 
     /**
@@ -64,5 +68,11 @@ public final class LrNetworkHandler {
                 CommonAssetsManager.get().getThrowableIndexManager().getNetworkCache(),
                 CommonAssetsManager.get().getMeleeIndexManager().getNetworkCache(),
                 CommonAssetsManager.get().getConsumableIndexManager().getNetworkCache()));
+    }
+
+    public static void syncCooldown(ServerPlayer player, net.minecraft.resources.Identifier id,
+                                    int duration) {
+        ServerPlayNetworking.send(player,
+                new ServerMessageCustomCooldown(id, Math.max(0, duration)));
     }
 }

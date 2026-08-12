@@ -2,7 +2,12 @@ package me.xjqsh.lrtactical.item.throwable.flash;
 
 import com.google.gson.annotations.SerializedName;
 import me.xjqsh.lrtactical.item.throwable.ThrowableData;
+import me.xjqsh.lrtactical.util.TooltipLine;
+import me.xjqsh.lrtactical.util.TooltipUtil;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * 闪光弹配置，对应数据包里 {@code "type": "lrtactical:stun"} 的 {@code data} 段。
@@ -23,6 +28,18 @@ public class StunThrowableData extends ThrowableData {
     @NotNull
     public StunData getStunData() {
         return stunData;
+    }
+
+    @Override
+    public List<TooltipLine> getTooltipLines() {
+        List<TooltipLine> lines = super.getTooltipLines();
+        lines.add(TooltipLine.normal(Component.translatable(
+                "tooltip.lrtactical.throwable.stun.radius", TooltipUtil.format(stunData.getRadius()))));
+        lines.add(TooltipLine.normal(Component.translatable(
+                "tooltip.lrtactical.throwable.stun.blind_deafened",
+                TooltipUtil.formatTicks(stunData.getBlind().getMinDuration()),
+                TooltipUtil.formatTicks(stunData.getBlind().getMaxDuration()))));
+        return lines;
     }
 
     public static class StunData {

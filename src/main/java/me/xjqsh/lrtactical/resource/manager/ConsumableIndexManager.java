@@ -72,6 +72,7 @@ public class ConsumableIndexManager extends com.tacz.guns.resource.manager.JsonD
 
     public static ConsumableIndex parse(JsonObject json, Identifier id) throws JsonParseException {
         String name = GsonHelper.getAsString(json, "name", "unknown.lrtactical.name");
+        String tooltip = GsonHelper.getAsString(json, "tooltip", null);
         String baseItemName = GsonHelper.getAsString(json, "base_item", "lrtactical:consumable");
         Identifier baseItemId = Identifier.tryParse(baseItemName);
         if (baseItemId == null) {
@@ -82,6 +83,6 @@ public class ConsumableIndexManager extends com.tacz.guns.resource.manager.JsonD
             throw new JsonParseException("Unknown base_item \"" + baseItemName + "\"");
         }
         JsonObject data = GsonHelper.getAsJsonObject(json, "data");
-        return ConsumableIndex.deserialize(data, name, id, item);
+        return ConsumableIndex.deserialize(data, name, tooltip, id, item);
     }
 }

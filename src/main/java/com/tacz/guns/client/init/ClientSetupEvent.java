@@ -74,6 +74,15 @@ public class ClientSetupEvent {
             if (tooltip instanceof BlockItemTooltip blockItemTooltip) {
                 return new ClientBlockItemTooltip(blockItemTooltip);
             }
+            if (tooltip instanceof me.xjqsh.lrtactical.inventory.tooltip.ThrowableTooltip throwableTooltip) {
+                return new me.xjqsh.lrtactical.client.tooltip.ClientThrowableTooltip(throwableTooltip);
+            }
+            if (tooltip instanceof me.xjqsh.lrtactical.inventory.tooltip.MeleeTooltip meleeTooltip) {
+                return new me.xjqsh.lrtactical.client.tooltip.ClientMeleeTooltip(meleeTooltip);
+            }
+            if (tooltip instanceof me.xjqsh.lrtactical.inventory.tooltip.ConsumableTooltip consumableTooltip) {
+                return new me.xjqsh.lrtactical.client.tooltip.ClientConsumableTooltip(consumableTooltip);
+            }
             return null;
         });
     }

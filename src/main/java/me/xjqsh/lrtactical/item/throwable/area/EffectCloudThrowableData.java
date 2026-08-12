@@ -7,12 +7,16 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import me.xjqsh.lrtactical.item.throwable.ThrowableData;
+import me.xjqsh.lrtactical.util.PotionTooltipUtil;
+import me.xjqsh.lrtactical.util.TooltipLine;
+import me.xjqsh.lrtactical.util.TooltipUtil;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SpellParticleOption;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -51,6 +55,26 @@ public class EffectCloudThrowableData extends ThrowableData {
     @NotNull
     public CloudData getCloudData() {
         return cloud;
+    }
+
+    @Override
+    public List<TooltipLine> getTooltipLines() {
+        List<TooltipLine> lines = super.getTooltipLines();
+        CloudData data = getCloudData();
+        lines.add(TooltipLine.normal(Component.translatable(
+                "tooltip.lrtactical.throwable.cloud.line",
+                TooltipUtil.format(data.getRadius()), TooltipUtil.formatTicks(data.getDuration()))));
+        if (data.isIgnite()) {
+            lines.add(TooltipLine.normal(Component.translatable(
+                    "tooltip.lrtactical.throwable.cloud.ignite",
+                    TooltipUtil.formatTicks(data.getIgniteTime()))));
+        }
+        List<PotionTooltipUtil.EffectWithChance> effects = data.getEffectInstances().stream()
+                .map(effect -> new PotionTooltipUtil.EffectWithChance(effect, 1.0F)).toList();
+        List<Component> effectLines = new ArrayList<>();
+        PotionTooltipUtil.addPotionTooltip(effects, effectLines);
+        effectLines.forEach(line -> lines.add(TooltipLine.collapsible(line)));
+        return lines;
     }
 
     public static class CloudData {
