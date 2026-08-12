@@ -7,7 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import javax.annotation.Nullable;
 
 /**
- * Legacy SimpleBedrockModel API shim used by TACZ's collector-backed item renderer.
+ * active minimal ABI replacement
  */
 public interface IFPGeoItemRenderer {
     long getPutAwayDuration(ItemStack stack);

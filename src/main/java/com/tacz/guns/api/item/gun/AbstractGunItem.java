@@ -178,8 +178,6 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
         if (useInventoryAmmo(gunItem)) {
             return;
         }
-        // 操作对象已从 Player 改为 LivingEntity，以支持非玩家实体
-        // 此外，现在也处理枪膛内的子弹
         int ammoCount = getCurrentAmmoCount(gunItem);
         if (ammoCount <= 0) {
             return;

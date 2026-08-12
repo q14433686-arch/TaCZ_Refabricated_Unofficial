@@ -155,7 +155,7 @@ dependencies {
     // consumes is provided by local compatibility interfaces and the collector-backed renderer.
 
     // MAE (Math Expression Evaluator)
-    implementation("com.maydaymemory:mae:1.1.1") {
+    implementation(include("com.maydaymemory:mae:1.1.1")) {
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
         exclude group: 'it.unimi.dsi', module: 'fastutil'
         exclude group: 'org.joml', module: 'joml'

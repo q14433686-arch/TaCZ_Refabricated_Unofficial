@@ -2,6 +2,9 @@ package cn.sh1rocu.tacz.util.forge;
 
 import com.google.gson.*;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.serialization.JsonOps;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -53,6 +56,17 @@ public class CraftingHelper {
     }
 
     public static ItemStack getItemStack(JsonObject json, boolean readNBT, boolean disallowsAirInRecipe) {
+        if (json.has("id")) {
+            var ops = RegistryOps.create(
+                    JsonOps.INSTANCE,
+                    RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY));
+            ItemStack stack = ItemStack.CODEC.parse(ops, json).getOrThrow();
+            if (disallowsAirInRecipe && stack.is(Items.AIR)) {
+                throw new JsonSyntaxException("Invalid item: minecraft:air");
+            }
+            return stack;
+        }
+
         String itemName = GsonHelper.getAsString(json, "item");
         Item item = getItem(itemName, disallowsAirInRecipe);
         int count = GsonHelper.getAsInt(json, "count", 1);

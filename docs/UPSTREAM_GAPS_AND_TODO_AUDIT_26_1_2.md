@@ -119,13 +119,17 @@ getMaxLevel() -> 0
 | `LivingEntityShoot` | 背包扣弹待找简化方法 | **假/优化备忘**：已统一调用 AbstractGunItem 提取逻辑 | 改成行为说明 |
 | `ModernKineticGunScriptAPI#getBoltByInt` | enum 也许可直接给 Lua | **不是缺口**：整数接口是外部枪包 ABI | 明确保留理由 |
 | `AnimationConstant` | 空 TODO | **不是缺口**：通用预留命名空间，实际常量在 `GunAnimationConstant` | 改成事实说明 |
-| `EntityKineticBullet` multipart | 等待 `PartEntity` | **真但受平台限制**：Fabric/Minecraft 无通用 modded parent 接口 | 去掉误导的 NeoForge 注释，记录 fail-safe 行为 |
+| `EntityKineticBullet` multipart | 等待 `PartEntity` | **部分解决**：通用 modded parent 仍缺，但 vanilla EnderDragon 已特判 | 去掉误导的 NeoForge 注释，记录 fail-safe 行为并增加原版特判 |
 | `EntityKineticBullet` 普通暴击 | 尚未判定 | **上游未设计**：数据 schema/event 没有非爆头暴击字段 | 明确只有 headshot multiplier |
 | `ServerMessageLevelUp` | 等升级逻辑后解封 | **上游未实现**，不是本移植 TODO | 改成协议预留说明，隐藏 0(MAX) |
 | `ControllableCompat` | 没有 26.1.2 版本 | **假/过期**：0.26.0 Fabric 已发布 | 恢复按键、持续射击轮询和震动 |
 | Shoulder Surfing stubs | 没有 26.1.2 版本 | **假/过期**：5.0.10 Fabric 已发布且 API 已改事件总线 | 迁移插件和准星判断 |
 | Carry On exclusions | 没有 26.1.2 版本 | **假/过期**：2.10.0 Fabric 已发布 | 添加官方 block blacklist tag |
 | ImmediatelyFast stub | mod 不存在 | **假/过期**：mod 存在；但旧 batching API 已删除 | 保持无需专用 API 的空门面并更正说明 |
+| MAE basic API stub | MAE不可用 | **假/过期**：本轮已重新打包真实 MAE 1.1.1 消除 ABI 冲突 | 删除假类，使用内联依赖 |
+| 弹药盒染色 | 配方缺失 | **真**：1.21.1 变动导致旧 26.1.x 失效 | 本轮补上 26.1.2 专属数据配方和兼容 tag |
+| Blood Strike 联动画 | 普通画作 | **真**：serializer normalizer 直接丢弃 id 后成分 | 本轮已增加 modern stack component 旁路恢复 |
+| Iris Shadow Pass | 未初始化 | **真**：被废弃的 supplier 门面截断 | 本轮重新接入 26.1.2 的 shadow pass supplier |
 | KubeJS facade | 等 Fabric 版本 | **真**：26.1.2 发布物是 NeoForge-only | 保留原生 TACZ 事件，KubeJS mirror 无操作 |
 | LRT throwable index | 网络未同步 | **假/过期**：已有 cache、S2C payload、登录/重载发送及客户端重建 | 更正文档 |
 | LRT 类型/物品/API | 只完成第一步 | **假/过期**：五种投掷类型、四个基础物品、近战/消耗品/API 均已接线 | 更新类级说明 |
@@ -138,7 +142,7 @@ getMaxLevel() -> 0
 
 - 枪械等级系统是上游未完成 API，不能在没有产品规则的情况下擅自补一套；
 - 非爆头随机暴击没有数据协议；
-- 对 modded multipart entities，Fabric 没有 NeoForge `PartEntity#getParent` 的通用等价物；
+- 对 modded multipart entities，Fabric 没有 NeoForge `PartEntity#getParent` 的通用等价物（但 vanilla EnderDragon 已特判）；
 - Accelerated Rendering 与 Fabric KubeJS 没有可用 26.1.2 目标。
 
 ### 内置 LRTactical

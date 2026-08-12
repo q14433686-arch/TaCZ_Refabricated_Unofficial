@@ -3,6 +3,11 @@ package com.tacz.guns.api.client.animation.interpolator;
 import com.tacz.guns.api.client.animation.AnimationChannelContent;
 import net.minecraft.util.Mth;
 
+/**
+ * 目前只是 linear fallback，不是真 glTF CUBICSPLINE。
+ * loader 的 CUBICSPLINE→SPLINE 与 tangent packing 仍未完成。
+ * 内置 Bedrock 动画不受影响。
+ */
 public class Spline implements Interpolator {
     private AnimationChannelContent content;
 

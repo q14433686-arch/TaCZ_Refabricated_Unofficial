@@ -71,8 +71,10 @@ public class SlotItemHandler extends Slot {
         return itemHandler;
     }
     
+    /**
+     * legacy external helper
+     */
     public boolean isSameInventory(Slot other) {
-        // 修复Minecraft 26.2兼容性问题
         return other instanceof SlotItemHandler && ((SlotItemHandler) other).getItemHandler() == this.itemHandler;
     }
 }

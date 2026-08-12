@@ -1,21 +1,24 @@
 {
   "materials": [
-    {
-      "item": "minecraft:stick",
-      "count": 8
-    },
-    {
-      "item": "#minecraft:wool",
-      "count": 1
-    }
+    {"item":"#c:rods/wooden","count":8},
+    {"item":"#minecraft:wool","count":1}
   ],
   "result": {
-    "type": "custom",
-    "group": "tacz:misc",
+    "type":"custom",
+    "group":"tacz:misc",
     "item": {
-      "item": "minecraft:painting",
-      "count": 1
+      "id":"minecraft:painting",
+      "components": {
+        "minecraft:item_name": {
+          "translate":"item.tacz.painting.blood_strike_1"
+        },
+        "minecraft:entity_data": {
+          "id":"minecraft:painting",
+          "variant":"tacz:blood_strike_1"
+        }
+      },
+      "count":1
     }
   },
-  "type": "tacz:gun_smith_table_crafting"
+  "type":"tacz:gun_smith_table_crafting"
 }

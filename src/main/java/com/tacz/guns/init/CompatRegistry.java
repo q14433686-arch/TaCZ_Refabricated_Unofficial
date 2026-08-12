@@ -1,5 +1,6 @@
 package com.tacz.guns.init;
 
+import com.tacz.guns.compat.iris.IrisCompat;
 import net.fabricmc.loader.api.FabricLoader;
 
 public class CompatRegistry {
@@ -8,8 +9,8 @@ public class CompatRegistry {
     public static final String CARRY_ON_ID = "carryon";
 
     public static void onEnqueue() {
-        // No imperative setup is required here: IrisCompat guards its public API calls and mixins
-        // by mod presence, while Carry On 2.10 consumes data/carryon/tags/blocks/block_blacklist.json.
+        checkModLoad(IRIS, IrisCompat::initCompat);
+        // Carry On 继续只走 data/carryon/tags/blocks/block_blacklist.json
     }
 
     public static void checkModLoad(String modId, Runnable runnable) {

@@ -39,9 +39,11 @@ import java.util.Map;
  *       故这里查表走 {@code ModRegistries.getThrowableType}。</li>
  * </ul>
  *
- * <p><b>网络同步已实现</b>：解析成功的原始 JSON 存入 {@code networkCache}，由
- * {@code ServerMessageSyncLrPack} 在登录和数据包重载时发给客户端；客户端再走同一个
- * {@link #parse} 重建索引。专用服务器与单人游戏因此使用同一套定义。
+ * <h2>网络同步（已实现）</h2>
+ * 原始 JSON 会写入 {@link #networkCache}，由
+ * {@code ServerMessageSyncLrPack} 在登录及数据包重载时发给客户端；客户端再经
+ * {@link #fromNetwork(Map)} 调用同一份 {@link #parse(JsonObject, Identifier)}
+ * 重建索引。旧注释曾写“暂未实现网络同步”，但那在同步包落地后已经过时。
  */
 public class ThrowableIndexManager extends com.tacz.guns.resource.manager.JsonDataManager<ThrowableIndex<?, ?>> {
     public ThrowableIndexManager(Gson gson) {
@@ -116,6 +118,7 @@ public class ThrowableIndexManager extends com.tacz.guns.resource.manager.JsonDa
 
     public static ThrowableIndex<?, ?> parse(JsonObject json, Identifier id) throws JsonParseException {
         String name = GsonHelper.getAsString(json, "name", "unknown.lrtactical.name");
+        String tooltip = GsonHelper.getAsString(json, "tooltip", null);
 
         String typeName = GsonHelper.getAsString(json, "type");
         Identifier typeId = Identifier.tryParse(typeName);
@@ -139,7 +142,7 @@ public class ThrowableIndexManager extends com.tacz.guns.resource.manager.JsonDa
         }
 
         JsonObject data = GsonHelper.getAsJsonObject(json, "data");
-        return deserialize(type, data, name, id, item);
+        return deserialize(type, data, name, tooltip, id, item);
     }
 
     /**
@@ -153,7 +156,7 @@ public class ThrowableIndexManager extends com.tacz.guns.resource.manager.JsonDa
     private static <T extends me.xjqsh.lrtactical.item.throwable.ThrowableData,
             E extends me.xjqsh.lrtactical.entity.ThrowableItemEntity>
     ThrowableIndex<T, E> deserialize(ThrowableType<T, E> type, JsonElement data,
-                                     String name, Identifier id, Item baseItem) {
-        return ThrowableIndex.deserialize(type, data, name, id, baseItem);
+                                     String name, String tooltip, Identifier id, Item baseItem) {
+        return ThrowableIndex.deserialize(type, data, name, tooltip, id, baseItem);
     }
 }

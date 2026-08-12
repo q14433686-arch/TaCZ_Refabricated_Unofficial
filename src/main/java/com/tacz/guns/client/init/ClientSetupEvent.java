@@ -74,6 +74,15 @@ public class ClientSetupEvent {
             if (tooltip instanceof BlockItemTooltip blockItemTooltip) {
                 return new ClientBlockItemTooltip(blockItemTooltip);
             }
+            if (tooltip instanceof me.xjqsh.lrtactical.inventory.tooltip.ThrowableTooltip throwableTooltip) {
+                return new me.xjqsh.lrtactical.client.tooltip.ClientThrowableTooltip(throwableTooltip);
+            }
+            if (tooltip instanceof me.xjqsh.lrtactical.inventory.tooltip.MeleeTooltip meleeTooltip) {
+                return new me.xjqsh.lrtactical.client.tooltip.ClientMeleeTooltip(meleeTooltip);
+            }
+            if (tooltip instanceof me.xjqsh.lrtactical.inventory.tooltip.ConsumableTooltip consumableTooltip) {
+                return new me.xjqsh.lrtactical.client.tooltip.ClientConsumableTooltip(consumableTooltip);
+            }
             return null;
         });
     }
@@ -92,6 +101,8 @@ public class ClientSetupEvent {
     public static void onClientSetup() {
         // 注册自己的的硬编码第三人称动画
         ThirdPersonManager.registerDefault();
+
+        com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat.init();
 
         // 26.2 已解决: ColorProviderRegistry.ITEM 与 ItemProperties 均已移除。
         // 弹药箱染色改由 items/ammo_box.json 模型里的 minecraft:dye tint 完成；
