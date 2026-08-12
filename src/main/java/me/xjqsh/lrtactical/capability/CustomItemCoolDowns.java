@@ -20,10 +20,9 @@ import java.util.Map;
  * <h2>26.2 移植改动</h2>
  * <ul>
  *   <li>{@code ResourceLocation} → {@link Identifier}（26.2 类名变更，全仓统一）；</li>
- *   <li>暂未接入网络同步（原版在 {@code onCooldownStarted/Ended} 里发包给客户端）。
- *       网络层尚未移植，此处留 TODO 而<b>不是静默删掉</b> ——
- *       缺了它的后果是「客户端冷却遮罩不显示」，属于可感知的功能缺失，
- *       必须显式记录，避免日后被当成新 bug 重查。</li>
+ *   <li><b>仍缺少冷却专用同步</b>：LRTactical 的索引/C2S 网络层已经存在，
+ *       但上游 {@code SCustomCoolDownMessage} 与客户端冷却装饰器尚未移植。
+ *       后果是服务端冷却判定正确，客户端物品图标不显示冷却遮罩。</li>
  * </ul>
  */
 public class CustomItemCoolDowns {
@@ -76,9 +75,9 @@ public class CustomItemCoolDowns {
         this.onCooldownEnded(id);
     }
 
-    // TODO(网络层): 上游会在此处向客户端发 SCustomCoolDownMessage 同步冷却。
-    //  网络层尚未移植，暂为空实现。缺失后果：客户端物品栏不显示冷却遮罩
-    //  （服务端判定仍然正确，不会出现「冷却期间还能用」的逻辑漏洞）。
+    // TODO[lr-cooldown-sync]: 移植 SCustomCoolDownMessage，并在 26.2 的
+    // GuiGraphicsExtractor#itemCooldown 路径叠加自定义分类冷却。只发包而不接 GUI
+    // 消费方仍不会出现遮罩。服务端判定现已完整，不存在绕过冷却的逻辑漏洞。
     protected void onCooldownStarted(Identifier id, int ticks) {
     }
 

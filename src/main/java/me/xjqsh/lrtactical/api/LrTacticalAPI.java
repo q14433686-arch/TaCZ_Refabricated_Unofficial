@@ -11,7 +11,9 @@ import java.util.Optional;
 /**
  * LRTactical 的对外查询入口。
  *
- * <p>本步只暴露投掷物相关接口；近战/消耗品随各自子系统移植时再补。
+ * <p>当前公开投掷物、近战、消耗品三类 index 查询，以及投掷物/近战客户端
+ * display 查询。旧注释仍称“只暴露投掷物”，已在 2026-08-12 复核时更正；
+ * 消耗品 display/renderer 仍未移植，因此没有伪造对应查询。
  */
 public final class LrTacticalAPI {
     private LrTacticalAPI() {

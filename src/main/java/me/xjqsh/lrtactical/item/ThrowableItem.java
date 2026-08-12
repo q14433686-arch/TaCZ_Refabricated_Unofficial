@@ -49,18 +49,16 @@ import org.jetbrains.annotations.Nullable;
  *       否则注册期报错 —— 沿用本仓库 {@code ModItems#itemProps} 的做法，
  *       故构造器改为接收 {@code Properties} 而非自己 new。</li>
  *   <li><b>{@code appendHoverText} 签名新增 {@code TooltipDisplay} 参数</b>且改用
- *       {@code Consumer<Component>}。当前仅「效果云手雷」需要 tooltip，
- *       该子类型尚未移植，故<b>暂不覆写</b>，避免写一个空壳。</li>
+ *       {@code Consumer<Component>}。上游实际通过 {@code getTooltipImage} +
+ *       {@code ThrowableTooltip} 展示数据行；这套 tooltip 尚未移植，是当前真实缺口。</li>
  * </ol>
  *
- * <h2>暂缺的能力（如实标注）</h2>
+ * <h2>当前能力边界（2026-08-12 复核）</h2>
  * <ul>
- *   <li><b>动画</b>：上游实现 {@code IAnimationItem} 并接 TACZ 的
- *       {@code AnimateGeoItemRenderer}，属客户端渲染层，本步不涉及；</li>
- *   <li><b>遥控起爆</b>：依赖尚未移植的 {@code DetonatorItem}；</li>
- *   <li><b>投掷索引</b>：{@link IThrowable#getThrowableIndex} 目前恒为空
- *       （资源层未移植），因此<b>本步的物品可以持有、但还投不出东西</b>。
- *       这是预期内的中间态，接上资源层即可工作。</li>
+ *   <li><b>已完成</b>：五种投掷类型、索引联机同步、Bedrock/Lua 动画渲染、
+ *       遥控起爆器与 C4 所有权判定；旧注释把它们写成“尚未移植”已经过时。</li>
+ *   <li><b>仍缺</b>：物品 tooltip、使用进度 HUD，以及自定义分类冷却的客户端遮罩。
+ *       这些只影响反馈层，不影响服务端投掷与伤害判定。</li>
  * </ul>
  */
 public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api.item.IAnimationItem, cn.sh1rocu.tacz.api.extension.IItem {
@@ -124,8 +122,9 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
      * 服务端 {@code ServerPlayerGameMode#useItem} 再真正执行一次。
      * 两端<b>各自独立</b>地决定要不要 {@code startUsingItem}。
      *
-     * <p>而冷却数据 {@link CustomItemCoolDowns} 是<b>纯服务端状态</b>
-     * （网络层未移植，客户端那份表永远是空的，见 {@code ModCapabilities}）。
+     * <p>而冷却数据 {@link CustomItemCoolDowns} 目前仍是<b>纯服务端状态</b>
+     * （LRTactical 通用网络层与索引同步已存在，但冷却专用 payload/GUI 装饰尚未移植；
+     * 客户端那份表因此为空，见 {@code ModCapabilities}）。
      * 因此旧写法必然分叉：
      * <ul>
      *   <li><b>服务端</b>：冷却中 → 不 {@code startUsingItem}；</li>
@@ -313,13 +312,10 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
      *
      * <p>26.2 该方法返回 {@code boolean}（见类注释第 3 点）。
      *
-     * <p>【本轮修复】客户端<b>无条件返回 true</b>。
-     * 单人游戏下客户端与服务端共用同一份索引，但<b>专用服务器上客户端可能查不到</b>
-     * （索引在 {@code data/} 下，由服务端数据包提供；网络同步尚未移植）。
-     * 若客户端因索引为空而返回 {@code false}，两端对「这次释放是否有效」的判断就会分叉，
-     * 重新引入 {@link #use} 注释里描述的卡死。
-     * 客户端本来就不生成实体，返回值只用于告诉引擎「这次释放已处理」，
-     * 因此无条件放行是安全的 —— 真正投不投出由服务端决定。
+     * <p>客户端<b>无条件返回 true</b>。索引现已通过
+     * {@code ServerMessageSyncLrPack} 同步，通常两端都有数据；但客户端本来就不生成
+     * 权威实体，返回值只用于告诉引擎“这次释放已处理”。即使数据包重载/登录时序使
+     * 客户端短暂查不到索引，也不应让两端对释放结果分叉；真正投不投出由服务端决定。
      */
     @Override
     public boolean releaseUsing(@NotNull ItemStack stack, @NotNull Level level,

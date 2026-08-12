@@ -287,8 +287,9 @@ public class LocalPlayerShoot {
                 ClientPlayNetworking.send(new ClientMessagePlayerShoot(data.clientShootTimestamp - data.clientBaseTimestamp, chargeProgress));
             }
 
-            // todo 需要检查
-            // 播放声音和状态机触发需要从异步线程上传到主线程执行，否则会引起cme
+            // 已核实：本段运行在 ScheduledExecutorService 线程，而动画状态机、声音
+            // 与 Fabric 事件都属于客户端主线程状态；必须经 Minecraft 的事件循环提交，
+            // 否则会并发修改集合。这里不是未完成分支。
             ((BlockableEventLoopAccessor) Minecraft.getInstance()).tacz$submitAsync(() -> {
                 // 触发击发事件
                 var event = new GunFireEvent(player, mainHandItem, LogicalSide.CLIENT);

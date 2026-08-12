@@ -146,8 +146,10 @@ dependencies {
     // simplebedrockmodel — 需要确认 26.2 兼容版本
     // implementation(include("libs:simplebedrockmodel-fabric:2.3.0.1+mc1.20.1"))
 
-    // MAE (Math Expression Evaluator)
-    implementation("com.maydaymemory:mae:1.1.1") {
+    // MAE (Math Expression Evaluator / animation pose API).
+    // Bundle the real library: the former local Pose/DummyPose stubs omitted
+    // Pose#getBoneTransforms and could cause binary incompatibility with MAE callers.
+    implementation(include("com.maydaymemory:mae:1.1.1")) {
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
         exclude group: 'it.unimi.dsi', module: 'fastutil'
         exclude group: 'org.joml', module: 'joml'
@@ -212,8 +214,13 @@ dependencies {
     // Zoomify — 26.2 (Modrinth 2.16.1+26.2)
     compileOnly "maven.modrinth:zoomify:${zoomify_version}"
 
-    // ImmediatelyFast
-    // compileOnly "maven.modrinth:immediatelyfast:1.5.1+1.20.4-fabric"
+    // ImmediatelyFast 1.16.x has no public batching API anymore. TACZ's 26.2
+    // SubmitNodeCollector path needs no compile-time bridge; see ImmediatelyFastCompat.
+
+    // Shoulder Surfing Reloaded — 26.2 (plugin API 5.x, optional at runtime)
+    compileOnly("maven.modrinth:shoulder-surfing-reloaded:${shoulder_surfing_version}") {
+        transitive = false
+    }
 
     // REI — 26.2
     compileOnly "dev.architectury:architectury-fabric:${architectury_version}"

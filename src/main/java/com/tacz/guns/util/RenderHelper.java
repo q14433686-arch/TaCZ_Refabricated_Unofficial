@@ -1,6 +1,5 @@
 package com.tacz.guns.util;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.compat.ar.ARCompat;
 import net.fabricmc.api.EnvType;
@@ -14,22 +13,7 @@ import net.minecraft.world.entity.player.PlayerModelPart;
 
 @Environment(EnvType.CLIENT)
 public final class RenderHelper {
-// TODO[26.2]: BufferUploader removed     // 26.2 迁移: blit/innerBlit 使用的 Tesselator/BufferUploader/RenderSystem.setShader 已全部移除
-    // 26.2 使用延迟渲染管线 (SubmitNodeCollector)，不再支持即时模式渲染
-    // 如需 2D blit 渲染，请通过 GuiGraphics 或 SubmitNodeCollector.submitCustomGeometry 实现
-
-    public static void enableItemEntityStencilTest() {
-        // 26.2 Vulkan 兼容: 原 GL11.GL_STENCIL_TEST 在 Vulkan 后端不可用
-        // 暂时改为 no-op，后续需通过 GpuFormat.D24_UNORM_S8_UINT + RenderPipeline depth/stencil state 重实现
-        // 如果需要支持 OpenGL 后端，可在此检测后端类型：
-        // boolean isVulkan = Minecraft.getInstance().getGpuDevice().getDeviceInfo().backendName().contains("vulkan");
-        RenderSystem.assertOnRenderThread();
-        // no-op for now
-    }
-
-    public static void disableItemEntityStencilTest() {
-        RenderSystem.assertOnRenderThread();
-        // no-op for Vulkan compatibility
+    private RenderHelper() {
     }
 
     /**

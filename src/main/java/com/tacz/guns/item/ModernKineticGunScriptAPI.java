@@ -840,7 +840,10 @@ public class ModernKineticGunScriptAPI {
         return 0f;
     }
 
-    // TODO: 测试检查 enum 值是否可以直接在 lua 中调用，以简化这个功能为下面那个方法
+    // Compatibility API, not an unfinished implementation: existing gun-pack Lua can
+    // compare this stable integer without importing/coercing a Java enum userdata.
+    // Keep both forms; removing getBoltByInt() would break old scripts even though
+    // getBolt() is usable by Java-aware Lua code.
     public int getBoltByInt() {
         Bolt bolt = gunIndex.getGunData().getBolt();
         if (bolt == Bolt.MANUAL_ACTION) {

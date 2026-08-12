@@ -7,7 +7,11 @@ import net.minecraft.world.item.ItemStack;
 import javax.annotation.Nullable;
 
 /**
- * Stub for simplebedrockmodel IFPGeoItemRenderer (library not yet available for 26.2).
+ * Minimal ABI compatibility surface from SimpleBedrockModel.
+ *
+ * <p>The upstream library has no 26.2 build, but TACZ's own renderer implements these
+ * lifecycle methods and current call sites use them. “Minimal interface” does not mean
+ * the methods are no-ops.</p>
  */
 public interface IFPGeoItemRenderer {
     long getPutAwayDuration(ItemStack stack);

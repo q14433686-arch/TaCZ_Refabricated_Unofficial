@@ -4,7 +4,8 @@ import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 
 /**
- * Stub for simplebedrockmodel RenderTickEvent (library not yet available for 26.2)
+ * Active in-repo replacement for SimpleBedrockModel's render-tick event on 26.2.
+ * GameRendererMixin emits START/END and animation/crosshair listeners subscribe to EVENT.
  */
 public class RenderTickEvent {
     public final Phase phase;

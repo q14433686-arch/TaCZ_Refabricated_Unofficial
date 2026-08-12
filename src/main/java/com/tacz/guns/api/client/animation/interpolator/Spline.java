@@ -3,6 +3,18 @@ package com.tacz.guns.api.client.animation.interpolator;
 import com.tacz.guns.api.client.animation.AnimationChannelContent;
 import net.minecraft.util.Mth;
 
+/**
+ * UPSTREAM-INCOMPLETE[gltf-cubic-spline]: defensive linear fallback for an unfinished
+ * upstream interpolator.
+ *
+ * <p>This is not a true glTF CUBICSPLINE implementation. The loader also maps the JSON
+ * token with {@code Enum.valueOf} to an enum named {@code SPLINE}, and its value packing
+ * does not preserve glTF's in-tangent/value/out-tangent triplets through rotation
+ * conversion. Consequently bundled TACZ assets (all Bedrock animations) do not use this
+ * path; third-party glTF CUBICSPLINE data remains unsupported. Keeping a finite linear
+ * fallback is safer than upstream's identity/null stub, but must not be reported as a
+ * completed spline implementation.</p>
+ */
 public class Spline implements Interpolator {
     private AnimationChannelContent content;
 
@@ -17,7 +29,7 @@ public class Spline implements Interpolator {
             return new float[]{0, 0, 0, 1};
         }
         
-        // 简单线性插值作为基础实现
+        // Explicit fallback only; see class-level audit note.
         float[] start = content.values[indexFrom];
         float[] end = content.values[indexTo];
         

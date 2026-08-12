@@ -1,8 +1,6 @@
 package com.tacz.guns.compat.iris.legacy;
 
-/**
- * 26.2 迁移: Iris 已不兼容 Vulkan，legacy 兼容层改为 no-op
- */
+/** Legacy Iris reflection bridge retained for versions below the 1.7 API split. */
 public final class IrisCompatLegacy {
     public static boolean isRenderShadow() {
         // 反射调用 ShadowRenderingState.areShadowsCurrentlyBeingRendered() 避免硬依赖

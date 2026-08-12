@@ -1,5 +1,10 @@
-# 全量待办 / 技术债 / 兼容缺口盘点（2026-08-11 · 复核版）
+# 全量待办 / 技术债 / 兼容缺口盘点（2026-08-11 · 历史复核版）
 
+> **已被 2026-08-12 的源码/上游差分审计取代。** 本文对 PAL、Shoulder Surfing、
+> ImmediatelyFast、LRTactical 网络同步与枪械等级脚手的若干结论已经过时；当前结论见
+> [`UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md`](UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md)。
+> 保留本文只为追踪当时的判断，不再作为待办清单。
+>
 > 范围：`src/main/java` 全量 grep（TODO/FIXME/XXX/HACK + 中文「暂未/未实现/禁用/回退/待」语义）+
 > `compat/` 全目录过目 + docs 已知事项对照。
 >

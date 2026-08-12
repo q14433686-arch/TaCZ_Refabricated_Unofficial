@@ -1,8 +1,6 @@
 package com.tacz.guns.compat.iris.newly;
 
-/**
- * 26.2 迁移: Iris 新版兼容层改为 no-op
- */
+/** Iris 1.7+ reflection bridge; no hard Iris dependency is loaded when absent. */
 public final class IrisCompatNewly {
     public static boolean isRenderShadow() {
         try {

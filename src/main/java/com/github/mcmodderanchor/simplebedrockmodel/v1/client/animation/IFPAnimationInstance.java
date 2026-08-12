@@ -6,7 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 
 /**
- * Stub for simplebedrockmodel IFPAnimationInstance (library not yet available for 26.2).
+ * Minimal ABI compatibility surface for the unavailable 26.2 SimpleBedrockModel build.
+ * AnimateGeoItemRenderer supplies a real implementation backed by TACZ's state machine.
  */
 public interface IFPAnimationInstance {
     ItemStack currentItem();

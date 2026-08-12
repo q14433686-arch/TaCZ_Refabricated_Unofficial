@@ -11,16 +11,10 @@ import me.xjqsh.lrtactical.item.throwable.explode.ExplodeType;
  * <p>数据包里写 {@code "type": "lrtactical:explode"}，加载器据此在这里查表，
  * 找到对应的解析器与实体工厂。
  *
- * <h2>本步只注册 explode 一种</h2>
- * 上游共有 5 种（explode / sticky / smoke / stun / effect_cloud），
- * 其余四种各自依赖尚未移植的实体类
- * （{@code StickyGrenadeEntity} / {@code SmokeGrenadeEntity} /
- * {@code StunGrenadeEntity} / {@code EffectCloudGrenadeEntity}）。
- *
- * <p>按「一次只引入一个变量」的原则，<b>不预先注册指向不存在实体的类型</b> ——
- * 那会让数据包里写了这些 type 的定义在加载时抛异常，
- * 而错误信息会指向类型注册表，掩盖真正的原因（实体没移植）。
- * 现状下这些 type 会得到明确的 "Unknown throwable type" 日志，语义清晰。
+ * <h2>当前注册状态（2026-08-12 复核）</h2>
+ * 上游五种投掷类型（explode / sticky / smoke / stun / effect_cloud）及其实体均已注册；
+ * 旧类注释仍停留在“本步只注册 explode”的早期中间态，已与下方静态字段明显矛盾。
+ * 近战另注册上游唯一的 {@code normal} 类型。
  */
 public final class ModCustomTypes {
     public static final ThrowableType<ExplodeThrowableData, GrenadeEntity> EXPLODE =

@@ -289,7 +289,8 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             //   之后屏幕上 = MV·(C·B·X·p) = MV·(B·MV)⁻¹·B·X·p = X·p
             // 即图像恒等于「基座归一化后的 authored 局部内容」，与 Iris/上游观感逐位一致，
             // 与朝向完全解耦。一次捕获期 3 次矩阵乘法，开销可忽略。
-            // 并行开关：RenderConfig.HAND_VIEW_LOCK_FIX（默认 true；false = 秒回退旧行为）。
+            // 实验开关：RenderConfig.HAND_VIEW_LOCK_FIX（经在体否决后默认 false；
+            // 仅保留用于复现实验，详见 RenderConfig）。
             // Iris 手部渲染激活时本 fix 恒为恒等矩阵，保持豁免、行为零变化。
             if (RenderConfig.HAND_VIEW_LOCK_FIX != null && RenderConfig.HAND_VIEW_LOCK_FIX.get()
                     && !IrisCompat.isHandRendererActive()) {
