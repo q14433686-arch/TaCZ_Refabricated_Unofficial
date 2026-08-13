@@ -940,7 +940,7 @@ scope_late_ocular_ring     GL_ALWAYS + depthWrite=true
 
 ### 三、R9 验收
 
-1. 确认 mod 版本为 `1.1.8+fabric.1.21.11.R9`；
+1. 确认 mod 版本为 `1.1.8+fabric.1.21.11.R1`；
 2. 开启 Complementary Reimagined，在有雾环境下用中高倍镜 ADS；
 3. 日志应出现：
    `Queued reticle for Iris HAND_TRANSLUCENT.` 与
@@ -1062,7 +1062,7 @@ final hook 只对 Iris `1.10.7+mc1.21.11` 启用；其 `finalizeLevelRendering` 
 
 ### 四、R11 验收
 
-1. 确认版本 `1.1.8+fabric.1.21.11.R11`；
+1. 确认版本 `1.1.8+fabric.1.21.11.R1`；
 2. 开启 Complementary Reimagined，在截图所示浓雾环境中使用中高倍镜；
 3. 日志必须依次出现：
 
