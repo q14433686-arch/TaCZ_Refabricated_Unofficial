@@ -162,13 +162,23 @@ gunpack.meta.json
 ```
 
 R1 会在**枪包加载时**把该目录映射到 1.21.11 所需的 `recipe/`，并将该结果转换为
-`id` + `components.minecraft:custom_data`。这会保留 `BlockId`，让枪械、弹药和配件
-重新按该枪包自己的工作台 filter 与页签处理，而不是因丢失身份而误落到同一外形的默认
-工作台或 LRTactical 工作台中。
+`id` + `components.minecraft:custom_data`。同时会把旧的 `{ "tag": ... }` /
+`{ "item": ... }` 材料对象与 `forge:nbt` / `forge:partial_nbt` 条件材料转换为
+1.21.11/Fabric 可解析的形式。这会保留 `BlockId`，让枪械、弹药和配件重新按该枪包自己的
+工作台 filter 与页签处理，而不是因丢失身份而误落到同一外形的默认工作台或 LRTactical
+工作台中。
 
 这项兼容只处理标准原版配方的旧目录与结果数据；不会猜测或修复已经在旧版本中合成、
 但缺少 `BlockId` 的工作台物品/方块——物理工作台外形不足以唯一确定它原本属于哪个枪包。
 更新后请重新合成一次受影响的自制工作台。
+
+安装 JEI 或 REI 时，客户端收到服务端枪包缓存后会自动刷新对应的分类、催化剂和显示项；
+不需要手动重载资源包。日志会出现：
+
+```text
+[TACZ Recipe Viewer] Refreshing after gun-pack sync (... table(s), ... recipe(s)).
+[TACZ Recipe Viewer] JEI/REI refresh completed.
+```
 
 ### 版本约束
 

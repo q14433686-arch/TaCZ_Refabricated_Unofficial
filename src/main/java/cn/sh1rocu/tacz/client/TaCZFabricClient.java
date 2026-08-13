@@ -12,6 +12,7 @@ import com.tacz.guns.api.event.common.EntityKillByGunEvent;
 import com.tacz.guns.api.event.common.GunFireEvent;
 import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.event.*;
+import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.init.ClientSetupEvent;
 import com.tacz.guns.client.init.ModContainerScreen;
 import com.tacz.guns.client.init.ModEntitiesRender;
@@ -111,6 +112,9 @@ public class TaCZFabricClient implements ClientModInitializer {
 
     private void subscribeEvents() {
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> CommonRegistry.onLoadComplete());
+        // The S2C gun-pack cache can arrive after JEI/REI's first recipe pass. Defer the
+        // optional viewer reload to END_CLIENT_TICK so initial packet ordering is complete.
+        ClientTickEvents.END_CLIENT_TICK.register(RecipeViewerReloadBridge::tick);
 
         RenderTickEvent.EVENT.register(RefitTransform::tickInterpolation);
 

@@ -85,9 +85,17 @@ public class DelegatingPackResources extends AbstractPackResources {
             });
             delegate.listResources(type, resourceNamespace, legacyPath, (legacyLocation, supplier) -> {
                 Identifier modernLocation = toModernRecipeLocation(legacyLocation);
-                if (modernLocation != null && currentLocations.add(modernLocation)) {
-                    resourceOutput.accept(modernLocation,
-                            migrateRecipeResultIfNeeded(type, modernLocation, supplier));
+                if (modernLocation == null || currentLocations.contains(modernLocation)) {
+                    return;
+                }
+                // recipes/ also contains TACZ's own legacy table recipes. Those remain in the
+                // TableRecipeManager-only legacy path; only actual vanilla recipes may be aliased
+                // into recipe/ for Minecraft's recipe loader.
+                IoSupplier<InputStream> migrated =
+                        LegacyGunPackRecipeMigrator.migrateLegacyVanillaRecipe(modernLocation, supplier);
+                if (migrated != null) {
+                    currentLocations.add(modernLocation);
+                    resourceOutput.accept(modernLocation, migrated);
                 }
             });
         }
@@ -119,12 +127,19 @@ public class DelegatingPackResources extends AbstractPackResources {
         for (PackResources pack : getCandidatePacks(type, location)) {
             // Prefer the current path in each pack, then transparently fall back to the old plural
             // path. Doing this per pack preserves the aggregate pack's existing priority order.
-            IoSupplier<InputStream> ioSupplier = pack.getResource(type, location);
-            if (ioSupplier == null && legacyLocation != null) {
-                ioSupplier = pack.getResource(type, legacyLocation);
+            IoSupplier<InputStream> currentSupplier = pack.getResource(type, location);
+            if (currentSupplier != null) {
+                return migrateRecipeResultIfNeeded(type, location, currentSupplier);
             }
-            if (ioSupplier != null) {
-                return migrateRecipeResultIfNeeded(type, location, ioSupplier);
+            if (legacyLocation != null) {
+                IoSupplier<InputStream> legacySupplier = pack.getResource(type, legacyLocation);
+                if (legacySupplier != null) {
+                    IoSupplier<InputStream> migrated =
+                            LegacyGunPackRecipeMigrator.migrateLegacyVanillaRecipe(location, legacySupplier);
+                    if (migrated != null) {
+                        return migrated;
+                    }
+                }
             }
         }
 

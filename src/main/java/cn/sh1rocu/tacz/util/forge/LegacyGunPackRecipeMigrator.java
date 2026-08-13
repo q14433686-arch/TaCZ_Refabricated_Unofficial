@@ -2,12 +2,14 @@ package cn.sh1rocu.tacz.util.forge;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.Strictness;
 import com.google.gson.stream.JsonReader;
 import com.mojang.serialization.JsonOps;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.crafting.GunSmithTableIngredient;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.IoSupplier;
@@ -76,6 +78,32 @@ public final class LegacyGunPackRecipeMigrator {
     }
 
     /**
+     * Eagerly adapts an old plural-directory entry only when it is a standard vanilla recipe.
+     *
+     * <p>{@code data/<namespace>/recipes/} also contains TACZ's own
+     * {@code tacz:gun_smith_table_crafting} files. Those are loaded by {@code TableRecipeManager}'s
+     * dedicated legacy scan and must <em>not</em> be exposed to vanilla's {@code recipe/} loader:
+     * their legacy counted-material ingredient schema is intentionally parsed by TACZ Gson code,
+     * not vanilla's modern {@code Ingredient.CODEC}. Returning {@code null} keeps such entries on
+     * that dedicated path while allowing old vanilla workbench recipes through.
+     */
+    public static IoSupplier<InputStream> migrateLegacyVanillaRecipe(Identifier recipeLocation,
+                                                                       IoSupplier<InputStream> source) {
+        try (InputStream input = source.get()) {
+            byte[] originalBytes = input.readAllBytes();
+            if (!isVanillaResultRecipe(originalBytes)) {
+                return null;
+            }
+            byte[] migratedBytes = migrate(recipeLocation, originalBytes);
+            return () -> new ByteArrayInputStream(migratedBytes);
+        } catch (IOException | RuntimeException exception) {
+            GunMod.LOGGER.warn("Could not inspect legacy gun-pack recipe {}; it will stay on TACZ's legacy path.",
+                    recipeLocation, exception);
+            return null;
+        }
+    }
+
+    /**
      * Performs a best-effort migration and returns the original bytes on malformed or unsupported
      * data. A bad third-party recipe must still be reported by vanilla's normal recipe error path;
      * this compatibility layer must not turn it into an unrelated load failure.
@@ -92,15 +120,16 @@ public final class LegacyGunPackRecipeMigrator {
                 return originalBytes;
             }
 
+            boolean changed = migrateIngredients(recipe);
             JsonElement resultElement = recipe.get("result");
-            if (resultElement == null || !resultElement.isJsonObject()) {
-                return originalBytes;
+            if (resultElement != null && resultElement.isJsonObject()) {
+                changed |= migrateResult(resultElement.getAsJsonObject());
             }
 
-            if (!migrateResult(resultElement.getAsJsonObject())) {
+            if (!changed) {
                 return originalBytes;
             }
-            GunMod.LOGGER.debug("Migrated legacy gun-pack recipe result {} to data components", recipeLocation);
+            GunMod.LOGGER.debug("Migrated legacy gun-pack recipe {} to 1.21.11 data components/ingredients", recipeLocation);
             return GSON.toJson(root).getBytes(StandardCharsets.UTF_8);
         } catch (IOException | RuntimeException exception) {
             GunMod.LOGGER.warn("Could not migrate legacy gun-pack recipe {}; leaving its JSON unchanged: {}",
@@ -117,12 +146,101 @@ public final class LegacyGunPackRecipeMigrator {
         }
     }
 
+    private static boolean isVanillaResultRecipe(byte[] bytes) {
+        try {
+            JsonElement root = parse(bytes);
+            return root != null && root.isJsonObject() && isVanillaResultRecipe(root.getAsJsonObject());
+        } catch (IOException | RuntimeException ignored) {
+            return false;
+        }
+    }
+
     private static boolean isVanillaResultRecipe(JsonObject recipe) {
         JsonElement type = recipe.get("type");
         return type != null
                 && type.isJsonPrimitive()
                 && type.getAsJsonPrimitive().isString()
                 && VANILLA_RESULT_RECIPE_TYPES.contains(type.getAsString());
+    }
+
+    /**
+     * Converts the pre-1.21 ingredient object form used by old workbench recipes.
+     *
+     * <p>For example, the supplied GunpowderRevolution table recipe uses
+     * {@code {"tag":"forge:ingots/iron"}} in a shaped key and Apocalypse uses
+     * {@code {"type":"forge:nbt", ...}} to transform one custom table into another.
+     * 1.21.11 accepts {@code "#forge:ingots/iron"} and Fabric's registered custom-ingredient
+     * shape instead. Reuse {@link GunSmithTableIngredient#normalizeLegacyIngredientJson(JsonElement)}
+     * so normal table construction and TACZ's own counted-material recipes keep exactly the same
+     * legacy conversion contract.
+     */
+    private static boolean migrateIngredients(JsonObject recipe) {
+        String type = recipe.get("type").getAsString();
+        return switch (type) {
+            case "minecraft:crafting_shaped" -> migrateShapedKey(recipe);
+            case "minecraft:crafting_shapeless" -> migrateIngredientArray(recipe, "ingredients");
+            case "minecraft:smelting", "minecraft:blasting", "minecraft:smoking",
+                    "minecraft:campfire_cooking", "minecraft:stonecutting" ->
+                    migrateIngredient(recipe, "ingredient");
+            case "minecraft:smithing_transform" -> {
+                boolean changed = migrateIngredient(recipe, "template");
+                changed |= migrateIngredient(recipe, "base");
+                changed |= migrateIngredient(recipe, "addition");
+                yield changed;
+            }
+            default -> false;
+        };
+    }
+
+    private static boolean migrateShapedKey(JsonObject recipe) {
+        JsonElement keyElement = recipe.get("key");
+        if (keyElement == null || !keyElement.isJsonObject()) {
+            return false;
+        }
+        JsonObject key = keyElement.getAsJsonObject();
+        JsonObject migrated = new JsonObject();
+        boolean changed = false;
+        for (Map.Entry<String, JsonElement> entry : key.entrySet()) {
+            JsonElement normalized = GunSmithTableIngredient.normalizeLegacyIngredientJson(entry.getValue());
+            changed |= normalized != entry.getValue();
+            migrated.add(entry.getKey(), normalized);
+        }
+        if (changed) {
+            recipe.add("key", migrated);
+        }
+        return changed;
+    }
+
+    private static boolean migrateIngredientArray(JsonObject recipe, String field) {
+        JsonElement ingredientsElement = recipe.get(field);
+        if (ingredientsElement == null || !ingredientsElement.isJsonArray()) {
+            return false;
+        }
+        JsonArray ingredients = ingredientsElement.getAsJsonArray();
+        JsonArray migrated = new JsonArray(ingredients.size());
+        boolean changed = false;
+        for (JsonElement ingredient : ingredients) {
+            JsonElement normalized = GunSmithTableIngredient.normalizeLegacyIngredientJson(ingredient);
+            changed |= normalized != ingredient;
+            migrated.add(normalized);
+        }
+        if (changed) {
+            recipe.add(field, migrated);
+        }
+        return changed;
+    }
+
+    private static boolean migrateIngredient(JsonObject recipe, String field) {
+        JsonElement ingredient = recipe.get(field);
+        if (ingredient == null) {
+            return false;
+        }
+        JsonElement normalized = GunSmithTableIngredient.normalizeLegacyIngredientJson(ingredient);
+        if (normalized == ingredient) {
+            return false;
+        }
+        recipe.add(field, normalized);
+        return true;
     }
 
     /**

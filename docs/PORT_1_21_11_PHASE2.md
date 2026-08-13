@@ -649,7 +649,8 @@ apertureDepth < worldDepth - TACZ_MASK_EPSILON   // 1.0e-6
 `HumanoidModelMixin` 没有注册在任何 mixin config 里，属于死代码，不会在运行期应用。
 旧枪包工作台结果所需的 `nbt` 兼容不再尝试注入这个已消失的方法：改由
 `DelegatingPackResources` 在读取枪包配方时转换为原生 `components.minecraft:custom_data`，
-并兼容旧的 `data/<ns>/recipes/` 目录。
+同时归一旧的 ingredient 对象 / `forge:nbt` 写法，并兼容旧的
+`data/<ns>/recipes/` 目录。
 
 ---
 

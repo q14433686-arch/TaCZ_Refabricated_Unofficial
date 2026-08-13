@@ -5,9 +5,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
+import cn.sh1rocu.tacz.util.forge.CraftingHelper;
 import com.tacz.guns.GunMod;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +88,7 @@ public class GunSmithTableIngredient {
                 this.ingredient = Ingredient.CODEC.parse(
                         RegistryOps.create(JsonOps.INSTANCE,
                                 RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY)),
-                        normalizeLegacy(raw)
+                        normalizeLegacyIngredientJson(raw)
                 ).getOrThrow();
                 this.rawItem = null;
             } catch (RuntimeException e) {
@@ -136,7 +138,7 @@ public class GunSmithTableIngredient {
      *
      * @return 规范化后的元素；本就是新写法时<b>原样返回</b>，不做任何改动
      */
-    private static JsonElement normalizeLegacy(JsonElement raw) {
+    public static JsonElement normalizeLegacyIngredientJson(JsonElement raw) {
         if (raw.isJsonObject()) {
             JsonObject obj = raw.getAsJsonObject();
             // 【带 type 的自定义 Ingredient】改写成 Fabric 的自定义 Ingredient 格式。
@@ -150,13 +152,15 @@ public class GunSmithTableIngredient {
             //   Fabric: {"fabric:type":"forge:partial_nbt","items":["tacz:modern_kinetic_gun"],
             //            "nbt":{"GunId":"hamster:coltm1892"}}
             //
-            // 两处差异都是硬性的（均经源码确认）：
+            // 硬性差异如下（均经 Serializer 源码确认）：
             //   1. 判别键必须是 "fabric:type"（CustomIngredientImpl.TYPE_KEY 常量），
             //      Ingredient.CODEC 由 Fabric 的 IngredientMixin 用
             //      CustomIngredientImpl.CODEC.dispatch(TYPE_KEY, ...) 接管；
-            //   2. 我们的 Serializer 声明的字段名是 "items" 且为【列表】
-            //      （holderByNameCodec().listOf().fieldOf("items")），而 Forge 写的是
-            //      单数 "item" 字符串。
+            //   2. forge:partial_nbt 的 Serializer 用 items【列表】+ nbt；旧 Forge 写的是
+            //      单数 item 字符串；
+            //   3. forge:nbt（StrictNBTIngredient）则是 ItemStack.MAP_CODEC，必须改成
+            //      id + components.minecraft:custom_data，不能错误套用 partial_nbt 的
+            //      items + nbt 形状。
             //
             // 语义完全保持不变：仍然是「必须是带该 NBT 的那件物品」，
             // 不放宽成「任意 TACZ 枪械」—— 这正是之前刻意不转换的理由，
@@ -184,7 +188,7 @@ public class GunSmithTableIngredient {
             JsonArray out = new JsonArray(src.size());
             boolean changed = false;
             for (JsonElement e : src) {
-                JsonElement n = normalizeLegacy(e);
+                JsonElement n = normalizeLegacyIngredientJson(e);
                 changed |= n != e;
                 out.add(n);
             }
@@ -204,7 +208,8 @@ public class GunSmithTableIngredient {
             java.util.Set.of("forge:partial_nbt", "forge:nbt");
 
     /**
-     * 把 Forge 写法的自定义 Ingredient 改写为 Fabric 写法。见 {@link #normalizeLegacy} 中的说明。
+     * 把 Forge 写法的自定义 Ingredient 改写为 Fabric 写法。见
+     * {@link #normalizeLegacyIngredientJson(JsonElement)} 中的说明。
      *
      * @return 改写后的对象；类型不受支持时<b>原样返回</b>
      */
@@ -217,17 +222,25 @@ public class GunSmithTableIngredient {
         if (!SUPPORTED_CUSTOM_INGREDIENTS.contains(type)) {
             return obj;
         }
+        if ("forge:partial_nbt".equals(type)) {
+            return normalizePartialNbtIngredient(obj, type);
+        }
+        // StrictNBTIngredient serializes an ItemStack, not the items+nbt form used by
+        // PartialNBTIngredient. This distinction is essential for old recipes that transform
+        // one BlockId-bearing TACZ workbench into another.
+        return normalizeStrictNbtIngredient(obj, type);
+    }
 
+    private static JsonElement normalizePartialNbtIngredient(JsonObject obj, String type) {
         JsonObject out = new JsonObject();
-        // Fabric 的判别键，见 CustomIngredientImpl.TYPE_KEY。
         out.add("fabric:type", new JsonPrimitive(type));
         for (java.util.Map.Entry<String, JsonElement> entry : obj.entrySet()) {
             String key = entry.getKey();
             if ("type".equals(key)) {
                 continue;
             }
-            // 单数 item(字符串) -> 复数 items(列表)，对齐 Serializer 声明的字段。
-            // 若原文已经写了 items，则原样保留，不重复包装。
+            // PartialNBTIngredient.Serializer declares items as a list. Forge's old schema uses
+            // a single item string, so wrap it while retaining the exact partial-NBT semantics.
             if ("item".equals(key) && !obj.has("items")) {
                 JsonArray items = new JsonArray(1);
                 items.add(entry.getValue());
@@ -237,6 +250,36 @@ public class GunSmithTableIngredient {
             out.add(key, entry.getValue());
         }
         return out;
+    }
+
+    private static JsonElement normalizeStrictNbtIngredient(JsonObject obj, String type) {
+        JsonElement item = obj.get("item");
+        JsonElement nbt = obj.get("nbt");
+        if (item == null || !item.isJsonPrimitive() || !item.getAsJsonPrimitive().isString() || nbt == null) {
+            return obj;
+        }
+        try {
+            JsonElement customData = NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, CraftingHelper.getNBT(nbt));
+            if (!customData.isJsonObject()) {
+                return obj;
+            }
+            JsonObject out = new JsonObject();
+            out.add("fabric:type", new JsonPrimitive(type));
+            // StrictNBTIngredient.Serializer#getCodec is ItemStack.MAP_CODEC.
+            out.add("id", item.deepCopy());
+            JsonElement count = obj.get("count");
+            if (count != null) {
+                out.add("count", count.deepCopy());
+            }
+            JsonObject components = new JsonObject();
+            components.add("minecraft:custom_data", customData);
+            out.add("components", components);
+            return out;
+        } catch (RuntimeException ignored) {
+            // Preserve malformed data so the normal Ingredient codec reports the original issue;
+            // never silently weaken a strict-NBT requirement into a broad item match.
+            return obj;
+        }
     }
 
     /** 供必须拿到非空值的场合（如网络编码）使用。 */
