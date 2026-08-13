@@ -1014,3 +1014,63 @@ put-away 等直接音效仍保持严格缺失警告。
 `GunSmithTableRecipe#isSpecial()` 现返回 true，和原版动态 special recipe 一样从 recipe-book
 placement/display 路径排除。TACZ 工作台配方及材料校验未改变；R10 真机应验证工作台仍能正常
 合成一条弹药、一把枪和一个配件。
+
+---
+
+## R11：Iris final composite 之后的 3D reticle overlay（2026-08-13）
+
+R10 的 Complementary 截图推翻了 R9 的最后假设：即使 late reticle/rim 写入近处深度，雾仍使其
+半透明。这表明该雾不是随后读取可写 `depthtex0` 的普通 pass，而是使用 pre-hand 或其它 immutable
+深度输入的 screen-space composite。继续更改 `HAND_TRANSLUCENT` 深度测试不会改变它。
+
+### 一、时序边界
+
+Iris 1.10.7 的 `IrisRenderingPipeline#finalizeLevelRendering()` 顺序是：
+
+```text
+isRenderingWorld = false
+compositeRenderer.renderAll()
+finalPassRenderer.renderFinalPass()
+return
+```
+
+`isRenderingWorld=false` 之后 Iris 不再用 shader-pack `ExtendedShader` 替换普通核心
+RenderPipeline。R11 在这个方法 TAIL 注入，不是绘制 HUD：它恢复 `HAND_SOLID` 时冻结的手部
+projection/model-view，并用同一份 `BedrockRenderSnapshot` 提交 reticle 和 ocular ring。因此几何位置、
+视差、ADS、后坐、枪械晃动和模型纹理都保持不变；只是颜色真正落在 shader-pack 最终结果之后。
+
+### 二、final overlay 的 aperture mask
+
+final pass 时 Iris 已不再绑定 hand shader 的 `depthtex2`，不能直接沿用 R8 的 Iris sampler。R11 在
+solid BACKUP draw 发现 final reticle 已排队时，额外 blit 一份私有的 pre-ocular world depth；最终
+无雾 reticle shader 同时采样该副本与已有 aperture depth copy。它不依赖 final framebuffer 当前深度，
+所以 `ScopeDepthCopyState` 对 final shader 使用独立 `tacz_ScopeFinalOverlay` 标记并跳过“当前 FBO
+必须仍是 aperture 来源”的普通保护，而仍在缺少任一私有副本时 fail-closed。
+
+新增 shader：
+
+```text
+assets/tacz/shaders/core/scope_reticle_final.fsh  # aperture mask + 无 apply_fog
+assets/tacz/shaders/core/scope_ring_final.fsh     # 物理镜框 + 无 apply_fog
+```
+
+### 三、版本与回退
+
+final hook 只对 Iris `1.10.7+mc1.21.11` 启用；其 `finalizeLevelRendering` 字节码已逐项核对。
+其它 Iris 版本不启用该分支，继续 R8/R9 的 `HAND_TRANSLUCENT` fallback，优先保证不出现 invisibility
+或 FBO 生命周期错误。
+
+### 四、R11 验收
+
+1. 确认版本 `1.1.8+fabric.1.21.11.R11`；
+2. 开启 Complementary Reimagined，在截图所示浓雾环境中使用中高倍镜；
+3. 日志必须依次出现：
+
+   ```text
+   Queued reticle for Iris post-composite overlay.
+   Final overlay masked by private world/aperture depth copies.
+   Rendered reticle and ocular rim after Iris final composite.
+   ```
+
+4. 准星与 `ocular_ring` 不应再被雾洗淡；镜内的真实远景仍必须保留 Complementary 雾；
+5. 验证镜框继续盖住准星边缘，以及水下/隔水/雨天没有引入回归。

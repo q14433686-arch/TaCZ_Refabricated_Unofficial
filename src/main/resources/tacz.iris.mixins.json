@@ -6,10 +6,11 @@
   "plugin": "com.tacz.guns.mixin.client.iris.IrisCompatMixinPlugin",
   "client": [
     "IrisDepthRestoreShaderMixin",
-    "IrisHandRendererReticlePassMixin"
+    "IrisHandRendererReticlePassMixin",
+    "IrisFinalScopeOverlayMixin"
   ],
   "injectors": {
     "defaultRequire": 0
   },
-  "_comment": "阶段 9/R8/R9 Iris 集成。Iris 改为 modCompileOnly 后编译期可见：ShaderCreator.link 的第 5 次 createShader(ordinal=4)是 fragment；HandRenderer.renderTranslucent 在 isAnyHandTranslucent() 为 false 时会提前 endFrame，R8 仅在存在冻结的 scope reticle 时强制晚期 HAND_TRANSLUCENT pass 并在其 own collector/endBatch 链路内提交；R9 的 late-only pipeline 在世界透明结束后写前景深度，以免 Complementary 等后处理雾把 reticle 当远景。required=false + IrisCompatMixinPlugin 的 isModLoaded 双重兜底，未装 Iris 不受影响。"
+  "_comment": "阶段 9/R8-R11 Iris 集成。ShaderCreator.link 的第 5 次 createShader(ordinal=4)是 fragment；R8 为冻结 scope reticle 强制 HAND_TRANSLUCENT，R9 写 late foreground depth；Complementary 仍使用不可覆盖的 post-composite 雾深度后，R11 仅对经审计的 Iris 1.10.7 在 IrisRenderingPipeline.finalizeLevelRendering TAIL 重画同一份 3D 快照，使用 no-fog vanilla fragments。required=false + IrisCompatMixinPlugin 的 isModLoaded 双重兜底，未装 Iris 不受影响。"
 }

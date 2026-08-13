@@ -7,6 +7,7 @@ import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.BeamRenderer;
 import com.tacz.guns.client.render.scope.IReticleRenderer;
 import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
+import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
 import com.tacz.guns.client.render.scope.ScopeLateReticleState;
 import com.tacz.guns.client.render.scope.ScopeNodeSet;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
@@ -618,8 +619,14 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 && texture != null
                 && !ocularSnapshots.isEmpty()
                 && !bodySnapshot.isEmpty();
+        boolean deferReticleToIrisFinalOverlay = orderedScopeSequence
+                && IrisCompat.isRenderingSolidHandPass()
+                && IrisCompat.supportsFinalScopeOverlay();
+        // Keep the R8/R9 hand-translucent path as a fallback for Iris versions whose final hook
+        // was not bytecode-audited. The verified 1.10.7 path goes past final composite instead.
         boolean deferReticleToIrisTranslucent = orderedScopeSequence
-                && IrisCompat.isRenderingSolidHandPass();
+                && IrisCompat.isRenderingSolidHandPass()
+                && !deferReticleToIrisFinalOverlay;
 
         if (orderedScopeSequence) {
             PoseStack identity = new PoseStack();
@@ -653,7 +660,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             // Without Iris deferral, keep the established order: reticle(1) then opaque rim(2).
             // With deferral, hold the rim until we know a reticle snapshot was actually queued;
             // it will then follow that snapshot in HAND_TRANSLUCENT and still cover edge spill.
-            if (!deferReticleToIrisTranslucent
+            if (!deferReticleToIrisTranslucent && !deferReticleToIrisFinalOverlay
                     && ocularRingSnapshot != null && !ocularRingSnapshot.isEmpty()) {
                 collector.order(SCOPE_OCULAR_RING_ORDER).submitCustomGeometry(identity, renderType,
                         (entryPose, consumer) -> ocularRingSnapshot.write(consumer));
@@ -664,11 +671,11 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     (entryPose, consumer) -> bodySnapshot.write(consumer));
         }
 
-        // Render Reticle. Iris HAND_SOLID freezes only immutable snapshots here. Its optional
-        // HandRenderer mixin emits them after world translucency in HAND_TRANSLUCENT. R9 selects
-        // late-only depth-writing pipelines there, so post-processing fog sees surviving reticle
-        // pixels as foreground; vanilla and non-shader Iris paths continue to submit immediately.
-        int deferredReticlesBefore = ScopeLateReticleState.pendingReticleCount();
+        // Render Reticle. Iris HAND_SOLID freezes only immutable snapshots here. Iris 1.10.7's
+        // verified final-overlay path submits them after all shader-pack composites; older Iris
+        // versions retain the R8/R9 HAND_TRANSLUCENT fallback. Vanilla remains immediate.
+        int lateReticlesBefore = ScopeLateReticleState.pendingReticleCount();
+        int finalReticlesBefore = ScopeFinalOverlayState.pendingReticleCount();
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
             ScopeNodeSet active = filterReticleByActiveView(reticleNodes);
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
@@ -676,19 +683,25 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 boolean etchedOnly = active.hasEtched() && !active.hasIlluminated() && texture != null;
                 RenderType baseReticleType;
                 if (etchedOnly) {
-                    baseReticleType = deferReticleToIrisTranslucent
-                            ? ScopeRenderTypes.lateEtchedReticle(texture)
-                            : ScopeRenderTypes.etchedReticle(texture);
+                    if (deferReticleToIrisFinalOverlay) {
+                        baseReticleType = ScopeRenderTypes.finalEtchedReticle(texture);
+                    } else if (deferReticleToIrisTranslucent) {
+                        baseReticleType = ScopeRenderTypes.lateEtchedReticle(texture);
+                    } else {
+                        baseReticleType = ScopeRenderTypes.etchedReticle(texture);
+                    }
                 } else {
                     baseReticleType = renderType;
                 }
                 RenderType baseIlluminatedType;
                 if (texture == null) {
                     baseIlluminatedType = renderType;
+                } else if (deferReticleToIrisFinalOverlay) {
+                    baseIlluminatedType = ScopeRenderTypes.finalVisibleReticle(texture);
+                } else if (deferReticleToIrisTranslucent) {
+                    baseIlluminatedType = ScopeRenderTypes.lateVisibleReticle(texture);
                 } else {
-                    baseIlluminatedType = deferReticleToIrisTranslucent
-                            ? ScopeRenderTypes.lateVisibleReticle(texture)
-                            : ScopeRenderTypes.visibleReticle(texture);
+                    baseIlluminatedType = ScopeRenderTypes.visibleReticle(texture);
                 }
 
                 // Pure etched trees are CPU-filtered to retain thin marks and discard large blackout panels.
@@ -697,20 +710,27 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                         poseStack, collector.order(SCOPE_RETICLE_ORDER),
                         transformType, baseReticleType, baseIlluminatedType,
                         light, overlay, currentAimingProgress(), etchedOnly,
-                        deferReticleToIrisTranslucent), active);
+                        deferReticleToIrisTranslucent, deferReticleToIrisFinalOverlay), active);
             }
         }
 
-        if (deferReticleToIrisTranslucent
+        if ((deferReticleToIrisTranslucent || deferReticleToIrisFinalOverlay)
                 && ocularRingSnapshot != null && !ocularRingSnapshot.isEmpty()) {
-            if (ScopeLateReticleState.pendingReticleCount() > deferredReticlesBefore) {
-                // The late ring has its own HAND_TRANSLUCENT pipeline. It is intentionally queued
-                // after the reticle so it remains the final physical occluder at the lens boundary.
+            boolean queuedFinal = deferReticleToIrisFinalOverlay
+                    && ScopeFinalOverlayState.pendingReticleCount() > finalReticlesBefore;
+            boolean queuedLate = deferReticleToIrisTranslucent
+                    && ScopeLateReticleState.pendingReticleCount() > lateReticlesBefore;
+            if (queuedFinal) {
+                // The final rim is deliberately after final reticle geometry, preserving physical
+                // lens-edge occlusion without giving Complementary another fog/composite pass.
+                ScopeFinalOverlayState.queueOcularRing(
+                        ocularRingSnapshot, ScopeRenderTypes.finalOcularRing(texture));
+            } else if (queuedLate) {
                 ScopeLateReticleState.queueOcularRing(
                         ocularRingSnapshot, ScopeRenderTypes.lateOcularRing(texture));
             } else {
                 // No visible reticle this frame (for example during fade-in): preserve the normal
-                // solid-pass rim rather than forcing an otherwise unnecessary translucent hand pass.
+                // solid-pass rim rather than forcing an otherwise unnecessary deferred pass.
                 collector.order(SCOPE_OCULAR_RING_ORDER).submitCustomGeometry(new PoseStack(), renderType,
                         (entryPose, consumer) -> ocularRingSnapshot.write(consumer));
             }

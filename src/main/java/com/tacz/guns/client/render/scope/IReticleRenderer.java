@@ -74,6 +74,9 @@ public interface IReticleRenderer {
      * @param deferToIrisTranslucent true 时只冻结快照，交由
      *                                {@link ScopeLateReticleState} 在 Iris 的较晚
      *                                {@code HAND_TRANSLUCENT} pass 提交。
+     * @param deferToIrisFinalOverlay true 时保留同一份 3D 快照，交由
+     *                                {@link ScopeFinalOverlayState} 在 Iris final composite
+     *                                之后提交，以避开不可覆盖的屏幕空间雾。
      */
     record Context(PoseStack poseStack,
                    OrderedSubmitNodeCollector collector,
@@ -84,6 +87,7 @@ public interface IReticleRenderer {
                    int overlay,
                    float aimingProgress,
                    boolean maskActive,
-                   boolean deferToIrisTranslucent) {
+                   boolean deferToIrisTranslucent,
+                   boolean deferToIrisFinalOverlay) {
     }
 }

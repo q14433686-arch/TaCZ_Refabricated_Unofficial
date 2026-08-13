@@ -20,8 +20,9 @@ import java.util.List;
  * it. The solid pass freezes the original reticle/ring model snapshots here. An Iris-only mixin
  * then forces one late hand pass, submits these snapshots after world translucency, and lets the
  * existing hand collector perform the real draw at its normal {@code endBatch()} boundary. R9 uses
- * dedicated late pipelines there to write foreground depth only after world translucency is done,
- * so screen-space fog/composite does not reuse the scope's restored world depth.</p>
+ * dedicated late pipelines there to write foreground depth only after world translucency is done.
+ * R11 routes the audited Iris 1.10.7 path onward to {@link ScopeFinalOverlayState}, because some
+ * shader packs still apply fog in a later composite that ignores mutable hand depth.</p>
  *
  * <p>This class never keeps mutable {@code BedrockPart}s, poses or item stacks. A queued snapshot
  * has already captured ADS, recoil and view-bob transforms, so moving its submission does not
@@ -112,6 +113,10 @@ public final class ScopeLateReticleState {
                               BedrockRenderSnapshot snapshot,
                               RenderType renderType) {
         if (snapshot.isEmpty()) {
+            return;
+        }
+        if (context.deferToIrisFinalOverlay()) {
+            ScopeFinalOverlayState.queueReticle(snapshot, renderType);
             return;
         }
         if (context.deferToIrisTranslucent()) {

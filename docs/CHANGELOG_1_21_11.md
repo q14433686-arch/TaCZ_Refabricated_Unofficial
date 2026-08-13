@@ -5,6 +5,35 @@
 
 ---
 
+## R11
+
+**修复：Complementary 在 R9 late hand 之后仍雾化准星/目镜黑边**
+
+R10 实机截图确认 R9 的前景深度写入仍不足：Complementary 的剩余雾来自
+`HAND_TRANSLUCENT` 之后的 screen-space composite，读取不可被该 hand draw 改写的深度输入。
+因此不再继续调整 hand pipeline 的深度状态。
+
+R11 保留 solid pass 中原有 aperture、body、depth cleanup 与 3D 快照；仅对已核实的
+Iris 1.10.7，把 reticle/rim 的最终颜色提交移动到
+`IrisRenderingPipeline#finalizeLevelRendering()` 的 TAIL：
+
+- Iris 所有 composite/final pass 已完成，core RenderPipeline 不再被 shader pack 替换；
+- 复用固化的 hand projection、model-view、原始 Bedrock snapshot、ADS、后坐、晃动和 aperture mask；
+- 使用新的无雾 `scope_reticle_final.fsh` / `scope_ring_final.fsh`，不是 HUD 或第二次世界渲染；
+- 为 final reticle 在 solid hand 阶段额外保存私有 world-depth copy，保证最终 aperture mask
+  不依赖 Iris 已解绑的 `depthtex2`；
+- 其他 Iris 版本仍回退 R8/R9 的 `HAND_TRANSLUCENT` 路径，避免未审计内部时序导致准星消失。
+
+R11 实机开镜日志应包含：
+
+```text
+[TACZ Scope] Queued reticle for Iris post-composite overlay.
+[TACZ Scope] Final overlay masked by private world/aperture depth copies.
+[TACZ Scope] Rendered reticle and ocular rim after Iris final composite.
+```
+
+---
+
 ## R10
 
 **修复：1.21.11 数据包、实体 tag、默认枪包复合音效与工作台 recipe-book 噪声**

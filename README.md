@@ -4,7 +4,7 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 1.21.11 Fabric**（经由本仓库的 26.1.2 分支）。
-直接上游的版本号为 `0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.1.21.11.R10`**。
+直接上游的版本号为 `0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.1.21.11.R11`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
@@ -13,7 +13,7 @@
 · [直接上游](https://github.com/Sh1roCu/TACZ-Refabricated/tree/1.21.1)
 · [原始 TaCZ 项目](https://github.com/MCModderAnchor/TACZ)
 
-> 仓库源码已使用 R10 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R11 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
 
 ---
 
@@ -24,9 +24,9 @@
 | Minecraft | **1.21.11** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **21+**（注意：26.x 分支要求 Java 25，本分支是 21） |
-| Fabric API | **0.141.6+**；R10 构建使用 **0.141.6+1.21.11** |
+| Fabric API | **0.141.6+**；R11 构建使用 **0.141.6+1.21.11** |
 | Forge Config API Port | **21.11.1+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.1.21.11.R10`** |
+| 本 mod | **`1.1.8+fabric.1.21.11.R11`** |
 
 > 1.21.11 是**混淆**版本，构建使用 Loom 的 remap 模式（`net.fabricmc.fabric-loom-remap`）
 > 与官方 Mojang 映射；26.x 分支则是非混淆的。这个差异是本分支绝大多数移植工作的来源。
@@ -152,7 +152,7 @@ gunpack.meta.json
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.1.21.11.R10` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.1.21.11.R11` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容

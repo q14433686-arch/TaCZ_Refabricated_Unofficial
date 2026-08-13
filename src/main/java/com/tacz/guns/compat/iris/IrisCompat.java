@@ -184,6 +184,17 @@ public final class IrisCompat {
     }
 
     /**
+     * The post-composite overlay hook is bytecode-audited specifically against Iris 1.10.7 for
+     * Minecraft 1.21.11. Other Iris lines retain the HAND_TRANSLUCENT fallback instead of risking
+     * an invisible reticle when internal final-render timing changes.
+     */
+    public static boolean supportsFinalScopeOverlay() {
+        return FabricLoader.getInstance().getModContainer(CompatRegistry.IRIS)
+                .map(container -> container.getMetadata().getVersion().getFriendlyString().startsWith("1.10.7"))
+                .orElse(false);
+    }
+
+    /**
      * @return whether the active Iris hand renderer is currently extracting its solid pass.
      *         A scope reticle is frozen only in this pass and emitted later by the Iris-only
      *         {@code HAND_TRANSLUCENT} bridge.
