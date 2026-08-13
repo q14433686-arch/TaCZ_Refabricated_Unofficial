@@ -7,9 +7,11 @@ import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.BeamRenderer;
 import com.tacz.guns.client.render.scope.IReticleRenderer;
 import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
+import com.tacz.guns.client.render.scope.ScopeLateReticleState;
 import com.tacz.guns.client.render.scope.ScopeNodeSet;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
+import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.client.model.functional.TextShowRender;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
@@ -609,14 +611,22 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             }
         }
 
-        // Submit ordered aperture/body/reticle batches. The aperture uses an ordinary RenderPipeline depth
-        // state, so it remains inside vanilla/Iris scheduling and does not alter framebuffer attachments.
-        if (apertureActive && texture != null && !ocularSnapshots.isEmpty() && !bodySnapshot.isEmpty()) {
+        // Submit the aperture/body/cleanup sequence in HAND_SOLID. Under an active Iris shader
+        // pack, only reticle color and its physical ocular rim move to the later HAND_TRANSLUCENT
+        // boundary; all 3D snapshots below retain the original ADS/recoil/view-bob transform.
+        boolean orderedScopeSequence = apertureActive
+                && texture != null
+                && !ocularSnapshots.isEmpty()
+                && !bodySnapshot.isEmpty();
+        boolean deferReticleToIrisTranslucent = orderedScopeSequence
+                && IrisCompat.isRenderingSolidHandPass();
+
+        if (orderedScopeSequence) {
             PoseStack identity = new PoseStack();
             RenderType apertureWriter = ScopeRenderTypes.depthAperture(texture);
             OrderedSubmitNodeCollector apertureCollector = collector.order(SCOPE_APERTURE_ORDER);
             apertureCollector.submitCustomGeometry(identity, apertureWriter, (entryPose, consumer) -> {
-                for (com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
+                for (BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
                     ocularSnap.write(consumer);
                 }
             });
@@ -640,12 +650,11 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                         }
                     });
 
-            // Upstream 1.21.1 renders ocular_ring with stencil disabled. In the depth fallback it
-            // must be redrawn after cleanup: drawing it in the body batch lets the invisible ocular
-            // kill its inner pixels, while drawing it before cleanup would lose its depth again.
-            // It is also submitted AFTER the reticle (see SCOPE_OCULAR_RING_ORDER) so the opaque
-            // rim hides reticle fragments that spill past the ocular edge.
-            if (ocularRingSnapshot != null && !ocularRingSnapshot.isEmpty()) {
+            // Without Iris deferral, keep the established order: reticle(1) then opaque rim(2).
+            // With deferral, hold the rim until we know a reticle snapshot was actually queued;
+            // it will then follow that snapshot in HAND_TRANSLUCENT and still cover edge spill.
+            if (!deferReticleToIrisTranslucent
+                    && ocularRingSnapshot != null && !ocularRingSnapshot.isEmpty()) {
                 collector.order(SCOPE_OCULAR_RING_ORDER).submitCustomGeometry(identity, renderType,
                         (entryPose, consumer) -> ocularRingSnapshot.write(consumer));
             }
@@ -655,7 +664,10 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     (entryPose, consumer) -> bodySnapshot.write(consumer));
         }
 
-        // Render Reticle
+        // Render Reticle. Iris HAND_SOLID freezes only immutable snapshots here. Its optional
+        // HandRenderer mixin emits them after world translucency in HAND_TRANSLUCENT, while vanilla
+        // and non-shader Iris paths continue to submit immediately.
+        int deferredReticlesBefore = ScopeLateReticleState.pendingReticleCount();
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
             ScopeNodeSet active = filterReticleByActiveView(reticleNodes);
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
@@ -669,14 +681,27 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                         : ScopeRenderTypes.visibleReticle(texture);
 
                 // Pure etched trees are CPU-filtered to retain thin marks and discard large blackout panels.
-                // Both etched and illuminated reticles render after the exact world-depth restore, sample the
-                // world-depth backup and the ocular aperture copy per pixel, and only keep fragments where
-                // ocularDepth < worldDepth - epsilon — the true screen-space ocular mask. Surviving pixels
-                // still write near hand depth so later water/fog/particle passes cannot cover them.
+                // Both renderers sample world/aperture depth per pixel and only retain the ocular interior.
                 reticle.submitReticle(new IReticleRenderer.Context(
                         poseStack, collector.order(SCOPE_RETICLE_ORDER),
                         transformType, baseReticleType, baseIlluminatedType,
-                        light, overlay, currentAimingProgress(), etchedOnly), active);
+                        light, overlay, currentAimingProgress(), etchedOnly,
+                        deferReticleToIrisTranslucent), active);
+            }
+        }
+
+        if (deferReticleToIrisTranslucent
+                && ocularRingSnapshot != null && !ocularRingSnapshot.isEmpty()) {
+            if (ScopeLateReticleState.pendingReticleCount() > deferredReticlesBefore) {
+                // The late ring has its own HAND_TRANSLUCENT pipeline. It is intentionally queued
+                // after the reticle so it remains the final physical occluder at the lens boundary.
+                ScopeLateReticleState.queueOcularRing(
+                        ocularRingSnapshot, ScopeRenderTypes.lateOcularRing(texture));
+            } else {
+                // No visible reticle this frame (for example during fade-in): preserve the normal
+                // solid-pass rim rather than forcing an otherwise unnecessary translucent hand pass.
+                collector.order(SCOPE_OCULAR_RING_ORDER).submitCustomGeometry(new PoseStack(), renderType,
+                        (entryPose, consumer) -> ocularRingSnapshot.write(consumer));
             }
         }
 

@@ -119,15 +119,8 @@ public final class EtchedReticleRenderer implements IReticleRenderer {
             }
         }
 
-        if (!snapshot.isEmpty()) {
-            // 快照矩阵已含完整入参 pose，必须从单位矩阵提交，否则根变换叠加两次。
-            PoseStack identity = new PoseStack();
-            ctx.collector().submitCustomGeometry(
-                    identity, ctx.baseRenderType(),
-                    // 遮光板剔除的规则与阈值见 ReticleMarkFilter —— 与发光准星共用同一把尺，
-                    // 避免任何一条路径在 mask 降级时把大面外露。
-                    (entryPose, consumer) -> snapshot.writeFiltered(
-                            consumer, ReticleMarkFilter::isThinMark));
-        }
+        // 快照矩阵已含完整入参 pose，必须从单位矩阵提交，否则根变换叠加两次。
+        // Iris HAND_SOLID 下则只冻结该快照，稍后在 HAND_TRANSLUCENT 写入同一份几何。
+        ScopeLateReticleState.submitReticle(ctx, snapshot, ctx.baseRenderType());
     }
 }

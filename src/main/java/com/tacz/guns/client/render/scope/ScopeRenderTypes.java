@@ -31,6 +31,7 @@ public final class ScopeRenderTypes {
     private static final Map<Identifier, RenderType> DEPTH_CLEANUPS = new HashMap<>();
     private static final Map<Identifier, RenderType> ETCHED_RETICLES = new HashMap<>();
     private static final Map<Identifier, RenderType> VISIBLE_RETICLES = new HashMap<>();
+    private static final Map<Identifier, RenderType> LATE_OCULAR_RINGS = new HashMap<>();
     private static final Map<Identifier, RenderType> VIEWMODEL_CUTOUT_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_TRANSLUCENT_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_SWIRL_TYPES = new HashMap<>();
@@ -87,6 +88,12 @@ public final class ScopeRenderTypes {
      */
     private static final RenderPipeline VISIBLE_RETICLE_PIPELINE = createVisibleReticlePipeline();
 
+    /**
+     * Opaque physical ocular rim submitted after a deferred Iris reticle. It keeps ordinary cutout
+     * material state but is classified as {@code HAND_TRANSLUCENT} so it reaches the late hand pass.
+     */
+    private static final RenderPipeline LATE_OCULAR_RING_PIPELINE = createLateOcularRingPipeline();
+
     /** Entity cutout plus an outside-aperture mask for the gun body and non-scope attachments. */
     private static final RenderPipeline VIEWMODEL_CUTOUT_PIPELINE = createViewmodelCutoutPipeline();
 
@@ -106,6 +113,10 @@ public final class ScopeRenderTypes {
     /** Starts extraction of one first-person gun; prevents a previous frame's aperture from clipping fire. */
     public static void beginViewmodelSubmission() {
         apertureScheduledForViewmodel = false;
+        // A queued Iris reticle is consumed before the next solid hand submission. Clearing here
+        // also guarantees that a skipped/aborted previous hand pass cannot leak geometry into a
+        // later gun or frame.
+        ScopeLateReticleState.beginSolidSubmission();
     }
 
     /** @return whether this gun submission queued a valid depth-aperture sequence before its FX. */
@@ -139,6 +150,15 @@ public final class ScopeRenderTypes {
 
     public static RenderType visibleReticle(Identifier texture) {
         return VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createVisibleReticleType);
+    }
+
+    /**
+     * Returns the physical ocular-ring type for the late Iris reticle pass. This is deliberately
+     * separate from the normal entity-cutout type: Iris must select {@code HAND_TRANSLUCENT} even
+     * though the rim itself remains opaque cutout geometry.
+     */
+    public static RenderType lateOcularRing(Identifier texture) {
+        return LATE_OCULAR_RINGS.computeIfAbsent(texture, ScopeRenderTypes::createLateOcularRingType);
     }
 
     /**
@@ -243,6 +263,20 @@ public final class ScopeRenderTypes {
                 base,
                 ScopeDepthCopyState.Operation.MASK
         );
+    }
+
+    private static RenderType createLateOcularRingType(Identifier texture) {
+        // Bytecode-equivalent to RenderTypes.entityCutout(texture, true). The pipeline differs
+        // only in Iris classification, so the opaque rim retains its vanilla material state while
+        // being submitted after the world translucent pass.
+        RenderSetup setup = RenderSetup.builder(LATE_OCULAR_RING_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .useLightmap()
+                .useOverlay()
+                .affectsCrumbling()
+                .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
+                .createRenderSetup();
+        return RenderType.create("tacz_scope_late_ocular_ring", setup);
     }
 
     private static RenderType createViewmodelCutoutType(Identifier texture) {
@@ -372,7 +406,9 @@ public final class ScopeRenderTypes {
 
         RenderPipeline pipeline = RenderPipelines.register(builder.build());
         FORCE_ALWAYS_DEPTH_PIPELINES.add(pipeline);
-        IrisCompat.assignPipelineToIris(pipeline, "HAND", "scope_etched_reticle");
+        // The snapshot is deferred to Iris' late hand pass; mapping it to HandWater makes both
+        // etched and illuminated reticles use the same HAND_TRANSLUCENT boundary under shaders.
+        IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_etched_reticle");
         return pipeline;
     }
 
@@ -394,6 +430,15 @@ public final class ScopeRenderTypes {
         RenderPipeline pipeline = RenderPipelines.register(builder.build());
         FORCE_ALWAYS_DEPTH_PIPELINES.add(pipeline);
         IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_visible_reticle");
+        return pipeline;
+    }
+
+    private static RenderPipeline createLateOcularRingPipeline() {
+        RenderPipeline pipeline = RenderPipelines.register(clonePipeline(
+                RenderPipelines.ENTITY_CUTOUT,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_late_ocular_ring")
+        ).build());
+        IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_late_ocular_ring");
         return pipeline;
     }
 

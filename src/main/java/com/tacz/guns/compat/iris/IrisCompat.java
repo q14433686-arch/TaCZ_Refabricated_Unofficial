@@ -10,6 +10,7 @@ import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.HashSet;
@@ -183,6 +184,25 @@ public final class IrisCompat {
     }
 
     /**
+     * @return whether the active Iris hand renderer is currently extracting its solid pass.
+     *         A scope reticle is frozen only in this pass and emitted later by the Iris-only
+     *         {@code HAND_TRANSLUCENT} bridge.
+     */
+    public static boolean isRenderingSolidHandPass() {
+        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS) || !isUsingRenderPack()) {
+            return false;
+        }
+        try {
+            Class<?> handRendererClass = Class.forName("net.irisshaders.iris.pathways.HandRenderer");
+            Object instance = handRendererClass.getField("INSTANCE").get(null);
+            return (Boolean) handRendererClass.getMethod("isActive").invoke(instance)
+                    && (Boolean) handRendererClass.getMethod("isRenderingSolid").invoke(instance);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /**
      * Mirrors Iris' own {@code MixinItemInHandRenderer#iris$skipTranslucentHands} phase gate for
      * TACZ' cancellable first-person renderer.
      *
@@ -211,12 +231,31 @@ public final class IrisCompat {
                 return true;
             }
             boolean renderingSolid = (Boolean) handRendererClass.getMethod("isRenderingSolid").invoke(instance);
-            boolean itemTranslucent = (Boolean) handRendererClass.getMethod("isHandTranslucent", ItemStack.class)
-                    .invoke(instance, stack);
+            boolean itemTranslucent = isMainHandTranslucent(handRendererClass, instance, stack);
             return renderingSolid != itemTranslucent;
         } catch (Throwable ignored) {
             // Fail open: a broken optional Iris reflection bridge must not make the held item vanish.
             return true;
+        }
+    }
+
+    /**
+     * Iris 1.10.7 classifies a hand by {@link InteractionHand}, not by {@link ItemStack}. The
+     * old ItemStack-only reflection lookup always failed on 1.21.11 and consequently failed open,
+     * causing TACZ to re-submit the full opaque gun during a translucent hand pass. Keep the old
+     * overload as a compatibility fallback for other Iris lines.
+     */
+    private static boolean isMainHandTranslucent(Class<?> handRendererClass,
+                                                  Object instance,
+                                                  ItemStack stack) throws ReflectiveOperationException {
+        try {
+            return (Boolean) handRendererClass
+                    .getMethod("isHandTranslucent", InteractionHand.class)
+                    .invoke(instance, InteractionHand.MAIN_HAND);
+        } catch (NoSuchMethodException ignored) {
+            return (Boolean) handRendererClass
+                    .getMethod("isHandTranslucent", ItemStack.class)
+                    .invoke(instance, stack);
         }
     }
 

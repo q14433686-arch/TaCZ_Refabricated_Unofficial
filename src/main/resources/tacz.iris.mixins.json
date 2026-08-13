@@ -5,10 +5,11 @@
   "compatibilityLevel": "JAVA_21",
   "plugin": "com.tacz.guns.mixin.client.iris.IrisCompatMixinPlugin",
   "client": [
-    "IrisDepthRestoreShaderMixin"
+    "IrisDepthRestoreShaderMixin",
+    "IrisHandRendererReticlePassMixin"
   ],
   "injectors": {
     "defaultRequire": 0
   },
-  "_comment": "阶段 9 已恢复(2026-08-13)。Iris 改为 modCompileOnly 后编译期可见，注入点已对 Iris 1.10.7 逐条核实：ShaderCreator.link 存在，其内 createShader 第 5 次调用(ordinal=4)即 FRAGMENT，create/createFallback/createFallbackShadow/createShadow 均汇聚到该 link；name 为 ShaderKey.getName()=小写枚举名(hand_cutout 等)。required=false + IrisCompatMixinPlugin 的 isModLoaded 双重兜底，未装 Iris 不受影响。"
+  "_comment": "阶段 9/R8 Iris 集成。Iris 改为 modCompileOnly 后编译期可见：ShaderCreator.link 的第 5 次 createShader(ordinal=4)是 fragment；HandRenderer.renderTranslucent 在 isAnyHandTranslucent() 为 false 时会提前 endFrame，R8 仅在存在冻结的 scope reticle 时强制晚期 HAND_TRANSLUCENT pass，并在其 own collector/endBatch 链路内提交。required=false + IrisCompatMixinPlugin 的 isModLoaded 双重兜底，未装 Iris 不受影响。"
 }

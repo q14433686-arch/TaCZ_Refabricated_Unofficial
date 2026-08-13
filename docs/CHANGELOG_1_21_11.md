@@ -5,7 +5,7 @@
 
 ---
 
-## R7 后续修订（未发布）
+## R8
 
 **运行期修复：`GlRenderPipeline.info()` 不能经由反射调用**
 
@@ -28,12 +28,30 @@
 “只写颜色、不写深度”的结果很接近。因此本次反射问题是确定的运行期 Bug，但不能把它
 单独当作 BSL 水面、雾或 composite 覆盖准星的完整根因。
 
-准星仍被 Iris 分类为手部几何：蚀刻准星走 `HAND_CUTOUT`，发光准星走
-`HAND_TRANSLUCENT`。Iris hand fragment shader 或更晚的 shader-pack composite 阶段
-仍可能对已画出的准星颜色应用水、雾或后处理。若修复反射后问题仍存在，下一步应将
-“准星提交”从普通枪体的 solid hand submission 中局部解耦，放在更晚的 hand/translucent
-边界绘制，再由镜框覆盖溢出部分；必须保留原有 3D 模型、ADS/晃动、ocular mask，且不能
-退化为 HUD、PIP 或第二次世界渲染。
+先前蚀刻准星走 `HAND_CUTOUT`，发光准星走 `HAND_TRANSLUCENT`；它们仍属于
+shader pack 的 hand geometry，而不是最终 HUD。实机 BSL 回归确认：反射修复后水雾仍会覆盖
+准星，因此按既定第二步实施局部时序重构。
+
+**修复：将准星与 ocular rim 延后到 Iris `HAND_TRANSLUCENT`**
+
+Iris 1.10.7 的 `HandRenderer#renderTranslucent` 会在“没有原版半透明手持方块”时直接返回；
+TACZ 枪不是 `BlockItem`，所以不能只改 pipeline 分类。现在 solid hand pass 仅冻结不可变的
+reticle/rim `BedrockRenderSnapshot`：完整保留原 3D 模型、ADS、后坐、晃动和 ocular mask。
+新的 Iris-only mixin 在存在待提交准星时强制运行一次 late hand pass，并在 Iris 设置
+`HAND_TRANSLUCENT` phase 后、其自身 `endBatch()` 前将快照交给原本的 hand collector。
+
+- 蚀刻与发光准星都映射为 `HAND_TRANSLUCENT`（Iris `HandWater`）；
+- 物理 `ocular_ring` 使用独立的 late cutout pipeline，按更高 order 在准星后绘制，继续覆盖边缘溢出；
+- cleanup、world-depth backup 和 aperture mask 仍留在 `HAND_SOLID`，不会重绘世界或转成 HUD/PIP；
+- 同时修正 Iris 1.10.7 的 `isHandTranslucent(InteractionHand)` 反射签名，避免 late pass 中完整枪体被
+  fail-open 地重复提交。
+
+启用 BSL 且实际开镜后，日志应依次出现：
+
+```text
+[TACZ Scope] Queued reticle for Iris HAND_TRANSLUCENT.
+[TACZ Scope] Deferred reticle and ocular rim to Iris HAND_TRANSLUCENT.
+```
 
 **实机回归清单**：无光影、BSL、水下、隔水看目标、浓雾、雨天；日志中不应再出现
 `Cannot read GlRenderPipeline.info()` 或 `reticle depth override disabled`。
@@ -62,7 +80,7 @@
 - encoder mixin 删除 `_depthMask(true)`，只保留 `_enableDepthTest` + `_depthFunc(GL_ALWAYS)`。
 
 语义变为「恒通过深度测试 + 不写深度」。这确保准星不会破坏恢复后的深度，但当时将它
-直接归因为“已修复光影雾/水覆盖准星”是过度结论；完整修正见本文件顶部的 R7 后续修订。
+直接归因为“已修复光影雾/水覆盖准星”是过度结论；完整修正见本文件顶部的 R8。
 
 **文档**：README 从 26.1.2 全面更新到 1.21.11（版本、Java 21、依赖、混淆说明、
 移植章节）；补充 `.gitignore`；删除误提交的 `latest.log`。
