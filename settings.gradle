@@ -11,6 +11,12 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
+    plugins {
+        // 1.21.11 is obfuscated -> the *-remap* plugin id.
+        // (net.fabricmc.fabric-loom without the suffix is the non-obfuscated 26.1+ plugin,
+        //  and the bare legacy `fabric-loom` id resolves to whichever mode Loom guesses.)
+        id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+    }
 }
 
 rootProject.name = 'TACZ-Refabricated'

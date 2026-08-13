@@ -148,18 +148,19 @@ public final class IrisCompat {
         boolean ok = true;
         ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT,
                 new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT_CULL,
-                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout_cull");
+        // 1.21.11 没有 ENTITY_CUTOUT_CULL；cull 与否在这一版是 ENTITY_CUTOUT(默认 cull)
+        // 与 ENTITY_CUTOUT_NO_CULL 的区别（26.1 反过来，把默认那条叫 _CULL）。
+        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT_NO_CULL,
+                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout_no_cull");
         ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT,
                 new String[]{"HAND_TRANSLUCENT"}, "entity_translucent");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_CULL,
-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_cull");
+
         ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE,
                 new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_emissive");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_CUTOUT,
-                new String[]{"HAND_CUTOUT", "HAND"}, "item_cutout");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_TRANSLUCENT,
-                new String[]{"HAND_TRANSLUCENT"}, "item_translucent");
+        // 1.21.11 没有独立的 ITEM_CUTOUT / ITEM_TRANSLUCENT 管线（26.1 才拆出来），
+        // 手持物品走的就是上面的 ENTITY_* 管线；唯一额外的一条是这个：
+        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_ENTITY_TRANSLUCENT_CULL,
+                new String[]{"HAND_TRANSLUCENT"}, "item_entity_translucent_cull");
 
         commonEntityPipelinesAssigned = ok;
     }

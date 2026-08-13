@@ -11,7 +11,7 @@ import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.gun.GunHeatData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
@@ -68,7 +68,7 @@ public class HeatBarOverlay {
     /** 随热度平滑伸缩的整体缩放，带迟滞。与上游同为 static，跨帧保留。 */
     private static float heatScale = 0.25f;
 
-    public static void render(GuiGraphicsExtractor graphics, float partialTick) {
+    public static void render(GuiGraphics graphics, float partialTick) {
         if (!RenderConfig.GUN_HUD_ENABLE.get()) {
             return;
         }
@@ -114,7 +114,7 @@ public class HeatBarOverlay {
         poseStack.popMatrix();
     }
 
-    public static void renderOverheat(float heatPercentage, GuiGraphicsExtractor graphics, int w, int h,
+    public static void renderOverheat(float heatPercentage, GuiGraphics graphics, int w, int h,
                                       boolean locked, int tickCount) {
         // 热度条本体：从中心偏左 30px 起，最长 60px
         int barColor = getHeatColor(heatPercentage, locked, tickCount);
@@ -133,7 +133,7 @@ public class HeatBarOverlay {
         Font font = Minecraft.getInstance().fontFilterFishy;
         String percentString = locked ? "!OVERHEAT!" : HEAT_FORMAT_PERCENT.format(heatPercentage);
         int color = locked ? (tickCount % 20 < 10 ? 0xFFFF0000 : 0xFFFFFF00) : 0xFFFFFFFF;
-        graphics.text(font, percentString, w / 2 - (font.width(percentString) / 2), h / 2 + 38, color, true);
+        graphics.drawString(font, percentString, w / 2 - (font.width(percentString) / 2), h / 2 + 38, color, true);
     }
 
     public static int getHeatColor(float percent, boolean locked, int tickCount) {

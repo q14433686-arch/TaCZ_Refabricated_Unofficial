@@ -4,7 +4,7 @@ import me.xjqsh.lrtactical.init.ModEffects;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 
@@ -21,7 +21,7 @@ import net.minecraft.world.effect.MobEffectInstance;
  *       这里的 alpha 本来就是动态计算的，但仍要确保它<b>永不为 0</b> ——
  *       否则不是「淡出」而是「突然消失」。</li>
  *   <li>渲染入口是 {@code HudElementRegistry.addLast} +
- *       {@code GuiGraphicsExtractor}（1.21.1 是 {@code GuiGraphics}），
+ *       {@code GuiGraphics}（1.21.1 是 {@code GuiGraphics}），
  *       照抄本仓库 {@code GunHudOverlay} 等 5 个 overlay 的既有写法。</li>
  *   <li>上游还手工调了 {@code RenderSystem.disableDepthTest/enableBlend} 等状态。
  *       26.2 的 {@code fill} 走的是 {@code RenderPipeline} 体系，
@@ -43,7 +43,7 @@ public final class BlindnessOverlay {
     private BlindnessOverlay() {
     }
 
-    public static void render(GuiGraphicsExtractor graphics, float partialTick) {
+    public static void render(GuiGraphics graphics, float partialTick) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (mc.level == null || player == null) {

@@ -2,7 +2,7 @@ package com.tacz.guns.client.gui.components.smith;
 
 import com.tacz.guns.GunMod;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -23,7 +23,7 @@ public class ResultButton extends Button {
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor gui, int pMouseX, int pMouseY, float pPartialTick) {
+    protected void renderContents(GuiGraphics gui, int pMouseX, int pMouseY, float pPartialTick) {
         if (isSelected) {
             if (isHoveredOrFocused()) {
                 gui.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.getX() - 1, this.getY() - 1, 52, 229, this.width + 2, this.height + 2, 256, 256);
@@ -38,7 +38,7 @@ public class ResultButton extends Button {
             }
         }
         Minecraft mc = Minecraft.getInstance();
-        gui.item(stack, this.getX() + 1, this.getY());
+        gui.renderItem(stack, this.getX() + 1, this.getY());
 
         // 第 15 轮：防止长名称溢出按钮（按钮宽 94，图标占到 x+20，右侧留 2px 余量）。
         // 原先直接整串绘制，像 ".30-06 孤星 手炮" 这类长名会画到按钮外面去。
@@ -49,7 +49,7 @@ public class ResultButton extends Button {
             // 用原版的 plainSubstrByWidth 截断并补省略号，注意要给 "..." 预留宽度
             name = mc.font.plainSubstrByWidth(name, maxWidth - mc.font.width("...")) + "...";
         }
-        gui.text(mc.font, name, this.getX() + 20, this.getY() + 4, 0xFFFFFFFF);
+        gui.drawString(mc.font, name, this.getX() + 20, this.getY() + 4, 0xFFFFFFFF);
     }
 
     @Override

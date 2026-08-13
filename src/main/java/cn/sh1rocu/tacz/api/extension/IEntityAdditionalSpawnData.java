@@ -32,7 +32,7 @@ public interface IEntityAdditionalSpawnData {
             );
 
     static void registerPayload() {
-        PayloadTypeRegistry.clientboundPlay().register(EXTRA_DATA_TYPE, EXTRA_DATA_CODEC);
+        PayloadTypeRegistry.playS2C().register(EXTRA_DATA_TYPE, EXTRA_DATA_CODEC);
     }
 
     void readSpawnData(FriendlyByteBuf buf);
@@ -79,7 +79,7 @@ public interface IEntityAdditionalSpawnData {
             buf.readBytes(data);
             buf.release();
             ExtraSpawnDataPayload payload = new ExtraSpawnDataPayload(entity.getId(), data);
-            var extraPacket = ServerPlayNetworking.createClientboundPacket(payload);
+            var extraPacket = ServerPlayNetworking.createS2CPacket(payload);
             return new ClientboundBundlePacket(List.of(base, extraPacket));
         }
         return base;

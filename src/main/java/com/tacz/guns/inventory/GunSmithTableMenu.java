@@ -12,7 +12,7 @@ import com.tacz.guns.resource.filter.RecipeFilter;
 import com.tacz.guns.resource.index.CommonBlockIndex;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
-import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,8 +27,9 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public class GunSmithTableMenu extends AbstractContainerMenu {
-    // 26.2: 使用 ExtendedMenuType 配合 StreamCodec 传递 Identifier 数据
-    public static final ExtendedMenuType<GunSmithTableMenu, Identifier> TYPE = new ExtendedMenuType<>(
+    // 1.21.11 / FAPI 0.141: ExtendedScreenHandlerType（26.1 把它改名为 ExtendedMenuType）
+    // 配合 StreamCodec 传递 Identifier 数据；构造器形状两版一致。
+    public static final ExtendedScreenHandlerType<GunSmithTableMenu, Identifier> TYPE = new ExtendedScreenHandlerType<>(
             (windowId, inv, data) -> new GunSmithTableMenu(windowId, inv, data),
             Identifier.STREAM_CODEC);
 

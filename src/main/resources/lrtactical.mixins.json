@@ -2,14 +2,14 @@
   "required": true,
   "minVersion": "0.8",
   "package": "me.xjqsh.lrtactical.mixin",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "mixinextras": {
     "minVersion": "0.5.0"
   },
   "_comment": "LRTactical (unofficial 26.1.2 port) mixins. Kept separate from tacz.*.mixins.json because those are bound to the cn.sh1rocu.tacz.mixin package.",
   "mixins": [],
   "client": [
-    "client.GuiGraphicsExtractorMixin",
+    "client.GuiGraphicsMixin",
     "client.SoundEngineMixin"
   ],
   "injectors": {

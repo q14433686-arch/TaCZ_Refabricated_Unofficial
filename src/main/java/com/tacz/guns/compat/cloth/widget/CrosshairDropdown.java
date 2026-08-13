@@ -3,7 +3,7 @@ package com.tacz.guns.compat.cloth.widget;
 import com.tacz.guns.client.renderer.crosshair.CrosshairType;
 import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
@@ -19,13 +19,13 @@ public class CrosshairDropdown {
             return null;
         }, id -> Component.literal(id.toString())) {
             @Override
-            public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int x, int y, int width, int height, float delta) {
+            public void render(GuiGraphics graphics, int mouseX, int mouseY, int x, int y, int width, int height, float delta) {
                 this.textFieldWidget.setX(x + 4);
                 this.textFieldWidget.setY(y + 6);
                 this.textFieldWidget.setWidth(width - 4 - 20);
                 this.textFieldWidget.setEditable(this.getParent().isEditable());
                 this.textFieldWidget.setTextColor(this.getPreferredTextColor());
-                this.textFieldWidget.extractRenderState(graphics, mouseX, mouseY, delta);
+                this.textFieldWidget.render(graphics, mouseX, mouseY, delta);
 
                 Identifier location = CrosshairType.getTextureLocation(this.value);
                 graphics.blit(location, x + width - 18, y + 2, 0, 0, 16, 16, 16, 16);
@@ -39,7 +39,7 @@ public class CrosshairDropdown {
             public DropdownBoxEntry.SelectionCellElement<CrosshairType> create(CrosshairType selection) {
                 return new DropdownBoxEntry.DefaultSelectionCellElement<>(selection, this.toTextFunction) {
                     @Override
-                    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int x, int y, int width, int height, float delta) {
+                    public void render(GuiGraphics graphics, int mouseX, int mouseY, int x, int y, int width, int height, float delta) {
                         this.rendering = true;
                         this.x = x;
                         this.y = y;
@@ -51,7 +51,7 @@ public class CrosshairDropdown {
                         }
                         FormattedCharSequence text = this.toTextFunction.apply(this.r).getVisualOrderText();
                         int color = isHover ? 0xffffff : 0x888888;
-                        graphics.text(Minecraft.getInstance().font, text, (int) (x + 6 + 18), (int) (y + 6), color, false);
+                        graphics.drawString(Minecraft.getInstance().font, text, (int) (x + 6 + 18), (int) (y + 6), color, false);
 
                         Identifier location = CrosshairType.getTextureLocation(this.r);
                         graphics.blit(location, x + 4, y + 2, 0, 0, 16, 16, 16, 16);

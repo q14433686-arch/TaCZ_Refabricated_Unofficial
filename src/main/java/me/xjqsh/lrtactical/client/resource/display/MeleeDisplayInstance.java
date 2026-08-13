@@ -15,7 +15,7 @@ import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
 import me.xjqsh.lrtactical.api.animation.BaseAnimationStateContext;
 import me.xjqsh.lrtactical.client.audio.ICustomSoundSupplier;
 import me.xjqsh.lrtactical.client.renderer.model.CustomBedrockModel;
-import net.minecraft.client.resources.model.cuboid.ItemTransforms;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -2,7 +2,7 @@ package com.tacz.guns.network;
 
 import com.tacz.guns.GunMod;
 import net.fabricmc.api.EnvType;
-import net.fabricmc.fabric.api.networking.v1.FriendlyByteBufs;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking;
 import net.fabricmc.loader.api.FabricLoader;
@@ -27,7 +27,7 @@ public class HandshakeNetworking {
                 try {
                     Class<? extends IHandshakeMessage> packetClass = packetInfo.packetClass;
                     IHandshakeMessage packet = packetClass.getDeclaredConstructor().newInstance();
-                    FriendlyByteBuf buf = FriendlyByteBufs.create();
+                    FriendlyByteBuf buf = PacketByteBufs.create();
                     packet.write(buf);
                     sender.sendPacket(packet.getId(), buf);
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException |

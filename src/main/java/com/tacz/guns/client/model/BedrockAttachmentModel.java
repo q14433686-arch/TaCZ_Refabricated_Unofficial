@@ -60,9 +60,23 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private static final int SCOPE_APERTURE_ORDER = -3;
     private static final int SCOPE_BODY_ORDER = -2;
     private static final int SCOPE_DEPTH_CLEANUP_ORDER = -1;
-    /** Physical ocular rim: draw after depth cleanup so the aperture cannot punch holes in it. */
-    private static final int SCOPE_OCULAR_RING_ORDER = 1;
-    private static final int SCOPE_RETICLE_ORDER = 2;
+    private static final int SCOPE_RETICLE_ORDER = 1;
+    /**
+     * Physical ocular rim: after depth cleanup so the aperture cannot punch holes in it, and
+     * <b>after the reticle</b> so the opaque rim covers any reticle fragment that spills past
+     * the ocular edge.
+     * <p>
+     * 【准星溢出镜框的修复 / 2026-08-13 实机反馈】原先 rim=1、reticle=2，准星画在镜框【之后】。
+     * 准星的镜内判据用的是 {@code APERTURE_TARGET}，而它是在 order -2（body 绘制边界）就
+     * 快照好的 —— 那时 rim 根本还没画，掩码里没有镜框的任何信息，于是压在镜框上的准星像素
+     * 通过了判据，表现为准星"漏"出目镜、贴到镜框上（有无光影都会出现，因为这与深度测试
+     * 函数、与 Iris 都无关，纯粹是绘制顺序问题）。
+     * <p>
+     * 上游 1.21.1 的顺序本来就是「先准星、后 ocular_ring」，用不透明的镜框盖住溢出部分；
+     * 移植时把两者调换了。这里改回上游顺序即可，无需调整掩码 epsilon
+     * （盲目放大 epsilon 会连镜内准星一起裁掉，是更糟的做法）。
+     */
+    private static final int SCOPE_OCULAR_RING_ORDER = 2;
 
     /**
      * 发光准星节点。凡是名字以 {@code _illuminated} 结尾的，
@@ -629,6 +643,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             // Upstream 1.21.1 renders ocular_ring with stencil disabled. In the depth fallback it
             // must be redrawn after cleanup: drawing it in the body batch lets the invisible ocular
             // kill its inner pixels, while drawing it before cleanup would lose its depth again.
+            // It is also submitted AFTER the reticle (see SCOPE_OCULAR_RING_ORDER) so the opaque
+            // rim hides reticle fragments that spill past the ocular edge.
             if (ocularRingSnapshot != null && !ocularRingSnapshot.isEmpty()) {
                 collector.order(SCOPE_OCULAR_RING_ORDER).submitCustomGeometry(identity, renderType,
                         (entryPose, consumer) -> ocularRingSnapshot.write(consumer));

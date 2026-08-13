@@ -63,7 +63,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
     }
 
     @Override
-    public void submit(BulletRenderState state, PoseStack poseStack, SubmitNodeCollector collector, net.minecraft.client.renderer.state.level.CameraRenderState cameraState) {
+    public void submit(BulletRenderState state, PoseStack poseStack, SubmitNodeCollector collector, net.minecraft.client.renderer.state.CameraRenderState cameraState) {
         EntityKineticBullet bullet = state.bullet;
         if (bullet == null) return;
         float partialTicks = state.partialTicks;

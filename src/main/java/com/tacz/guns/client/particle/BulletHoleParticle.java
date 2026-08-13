@@ -12,7 +12,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SingleQuadParticle;
-import net.minecraft.client.renderer.state.level.QuadParticleRenderState;
+import net.minecraft.client.renderer.state.QuadParticleRenderState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -72,10 +72,10 @@ public class BulletHoleParticle extends SingleQuadParticle {
         Level world = minecraft.level;
         if (world != null) {
             BlockState state = world.getBlockState(pos);
-            return minecraft.getModelManager().getBlockStateModelSet().getParticleMaterial(state).sprite();
+            return minecraft.getModelManager().getBlockModelShaper().getParticleIcon(state);
         }
         // Fallback: should not normally happen
-        return minecraft.getModelManager().getBlockStateModelSet().missingModel().particleMaterial().sprite();
+        return minecraft.getModelManager().getBlockModelShaper().getParticleIcon(net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
     }
 
     private int getLifetimeFromConfig(ClientLevel world) {
@@ -190,9 +190,16 @@ public class BulletHoleParticle extends SingleQuadParticle {
         return ParticleRenderType.SINGLE_QUADS;
     }
 
+    /**
+     * {@code SingleQuadParticle.Layer} 在 1.21.11 里的常量是
+     * {@code TERRAIN / ITEMS / OPAQUE / TRANSLUCENT}（javap 确认），
+     * 没有 26.1 的 {@code TRANSLUCENT_TERRAIN} 合并常量。
+     * 弹孔贴在方块表面、取自方块图集，且需要半透明混合，
+     * 因此对应到这一版就是 {@code TERRAIN}（其 record 的 translucent 标志为 true）。
+     */
     @Override
     protected Layer getLayer() {
-        return Layer.TRANSLUCENT_TERRAIN;
+        return Layer.TERRAIN;
     }
 
     private boolean shouldRemove() {

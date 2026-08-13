@@ -1,25 +1,22 @@
-# Gradle / Loom
+# Gradle / build output
 .gradle/
 build/
 out/
+dist/
+run/
 
 # IDE
 .idea/
 *.iml
 .vscode/
 
-# Minecraft development runs and logs
-run/
-runs/
-runClient*.log
-runServer*.log
-logs/
-crash-reports/
-
-# Local Java/tooling
-.java-version
-*.hprof
-
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs / crash reports
+*.log
+crash-reports/
+
+# Local env
+.env

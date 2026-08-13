@@ -18,7 +18,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
  * collector 由框架传入；26.1.2 的基类签名只有两参
  * {@code renderToTexture(PictureInPictureRenderState, PoseStack)}（字节码确认），
  * 且基类构造器要求 {@link MultiBufferSource.BufferSource}，由 Fabric
- * {@code PictureInPictureRendererRegistry.Context#bufferSource()} 提供。</p>
+ * {@code SpecialGuiElementRegistry.Context#bufferSource()} 提供。</p>
  *
  * <p>因此物品渲染状态的提交方式按 vanilla 26.1.2 同版本的
  * {@code OversizedItemRenderer#renderToTexture} 照抄：

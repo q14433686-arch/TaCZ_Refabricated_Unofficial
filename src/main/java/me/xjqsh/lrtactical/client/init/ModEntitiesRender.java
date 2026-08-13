@@ -65,7 +65,7 @@ public final class ModEntitiesRender {
      * （本仓库 {@code BulletHoleParticle} 走的是那条）。
      */
     public static void registerParticles() {
-        net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry.getInstance()
+        net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry.getInstance()
                 .register(me.xjqsh.lrtactical.init.ModParticleTypes.SMOKE_CLOUD,
                         me.xjqsh.lrtactical.client.particle.SmokeCloudParticle.Provider::new);
     }
@@ -133,7 +133,7 @@ public final class ModEntitiesRender {
      * 否则玩家仍能靠 HUD 读信息，失去「致盲」的意义。
      *
      * <p>写法照抄本仓库 {@code ClientSetupEvent} 里 5 个 overlay 的既有注册
-     * （26.2 用 {@code HudElementRegistry} + {@code GuiGraphicsExtractor}，
+     * （26.2 用 {@code HudElementRegistry} + {@code GuiGraphics}，
      * 与 1.21.1 的 {@code GuiGraphics} 不同）。
      */
     public static void registerHudOverlays() {

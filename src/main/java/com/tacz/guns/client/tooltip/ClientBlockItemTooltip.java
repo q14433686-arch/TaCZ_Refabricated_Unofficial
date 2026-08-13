@@ -6,7 +6,7 @@ import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.resource.pojo.PackInfo;
 import com.tacz.guns.inventory.tooltip.BlockItemTooltip;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
@@ -52,20 +52,20 @@ public class ClientBlockItemTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public void extractText(GuiGraphicsExtractor graphics, Font font, int pX, int pY) {
+    public void renderText(GuiGraphics graphics, Font font, int pX, int pY) {
         int yOffset = pY;
         for (Component component : this.components) {
-            graphics.text(font, component, pX, yOffset, 0xFFffaa00);
+            graphics.drawString(font, component, pX, yOffset, 0xFFffaa00);
             yOffset += 10;
         }
         // 枪包名
         if (packInfo != null) {
-            graphics.text(font, this.packInfo, pX, yOffset + 6, 0xFFffffff);
+            graphics.drawString(font, this.packInfo, pX, yOffset + 6, 0xFFffffff);
         }
     }
 
     @Override
-    public void extractImage(Font font, int mouseX, int mouseY, int width, int height, GuiGraphicsExtractor graphics) {
+    public void renderImage(Font font, int mouseX, int mouseY, int width, int height, GuiGraphics graphics) {
     }
 
     private void addText() {

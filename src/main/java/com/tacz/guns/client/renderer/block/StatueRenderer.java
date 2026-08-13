@@ -80,7 +80,7 @@ public class StatueRenderer implements BlockEntityRenderer<StatueBlockEntity, St
     }
 
     @Override
-    public void submit(StatueRenderState state, PoseStack poseStack, SubmitNodeCollector collector, net.minecraft.client.renderer.state.level.CameraRenderState cameraState) {
+    public void submit(StatueRenderState state, PoseStack poseStack, SubmitNodeCollector collector, net.minecraft.client.renderer.state.CameraRenderState cameraState) {
         getModel().ifPresent(model -> {
             int combinedLightIn = state.lightCoords;
             int combinedOverlayIn = OverlayTexture.NO_OVERLAY;

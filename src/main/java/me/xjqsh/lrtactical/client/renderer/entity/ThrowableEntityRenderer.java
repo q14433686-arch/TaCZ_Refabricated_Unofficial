@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -34,7 +34,7 @@ import net.minecraft.world.item.ItemStack;
  *   <tr><td>{@code EntityRenderer<T>}（一个泛型参）</td>
  *       <td>{@code EntityRenderer<T, S extends EntityRenderState>}（两个）</td></tr>
  *   <tr><td>{@code render(entity, yaw, pt, poseStack, bufferSource, light)}</td>
- *       <td><b>拆成两步</b>：{@code extractRenderState(entity, state, pt)} 先在主线程
+ *       <td><b>拆成两步</b>：{@code render(entity, state, pt)} 先在主线程
  *           取快照，{@code submit(state, poseStack, collector, cameraState)} 再提交</td></tr>
  *   <tr><td>{@code getTextureLocation(entity)}</td>
  *       <td><b>已从基类移除</b> —— 上游那个返回 {@code null} 的覆写直接删掉</td></tr>

@@ -39,8 +39,8 @@ public class StrictNBTIngredient implements CustomIngredient {
     }
 
     @Override
-    public Stream<Holder<Item>> items() {
-        return Stream.of(stack.typeHolder());
+    public Stream<Holder<Item>> getMatchingItems() {
+        return Stream.of(stack.getItemHolder());
     }
 
     @Override
@@ -69,7 +69,7 @@ public class StrictNBTIngredient implements CustomIngredient {
         }
 
         @Override
-        public StreamCodec<RegistryFriendlyByteBuf, StrictNBTIngredient> getStreamCodec() {
+        public StreamCodec<RegistryFriendlyByteBuf, StrictNBTIngredient> getPacketCodec() {
             return ItemStack.STREAM_CODEC.map(StrictNBTIngredient::new, ing -> ing.stack);
         }
     }

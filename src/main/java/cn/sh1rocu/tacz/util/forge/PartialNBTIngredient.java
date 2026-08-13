@@ -16,7 +16,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.level.ItemLike;
@@ -68,14 +67,14 @@ public class PartialNBTIngredient implements CustomIngredient {
     }
 
     @Override
-    public Stream<Holder<Item>> items() {
+    public Stream<Holder<Item>> getMatchingItems() {
         return items.stream().map(BuiltInRegistries.ITEM::wrapAsHolder);
     }
 
     /**
      * 让材料格显示<b>带上要求 NBT 的</b>物品，而不是光秃秃的基础物品。
      *
-     * <p>不覆写的话，父接口默认实现只会拿 {@link #items()} 里的裸物品去画 ——
+     * <p>不覆写的话，父接口默认实现只会拿 {@link #getMatchingItems()} 里的裸物品去画 ——
      * 对 TACZ 而言就是一把「空枪 ID」的 {@code tacz:modern_kinetic_gun}，
      * 图标是缺省模型、名字也不对，玩家根本看不出要交什么。
      *
@@ -84,12 +83,12 @@ public class PartialNBTIngredient implements CustomIngredient {
      * 这只影响<b>显示</b>，匹配逻辑仍由 {@link #test} 负责，两者互不干扰。
      */
     @Override
-    public SlotDisplay display() {
+    public SlotDisplay toDisplay() {
         return new SlotDisplay.Composite(items.stream()
                 .map(item -> {
                     ItemStack stack = new ItemStack(item);
                     stack.set(DataComponents.CUSTOM_DATA, CustomData.of(nbt.copy()));
-                    return (SlotDisplay) new SlotDisplay.ItemStackSlotDisplay(ItemStackTemplate.fromNonEmptyStack(stack));
+                    return (SlotDisplay) new SlotDisplay.ItemStackSlotDisplay(stack);
                 })
                 .toList());
     }
@@ -125,7 +124,7 @@ public class PartialNBTIngredient implements CustomIngredient {
         }
 
         @Override
-        public StreamCodec<RegistryFriendlyByteBuf, PartialNBTIngredient> getStreamCodec() {
+        public StreamCodec<RegistryFriendlyByteBuf, PartialNBTIngredient> getPacketCodec() {
             return StreamCodec.composite(
                     ByteBufCodecs.holderRegistry(Registries.ITEM).apply(ByteBufCodecs.list()),
                     ing -> ing.items.stream().map(BuiltInRegistries.ITEM::wrapAsHolder).toList(),

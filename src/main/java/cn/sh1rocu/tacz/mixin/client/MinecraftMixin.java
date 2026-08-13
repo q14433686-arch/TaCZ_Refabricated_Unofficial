@@ -158,7 +158,8 @@ public abstract class MinecraftMixin {
         }
     }
 
-    @Inject(method = "pickBlockOrEntity", at = @At("HEAD"), cancellable = true)
+    // 1.21.11 叫 pickBlock()；26.1 才改名为 pickBlockOrEntity（javap 确认）。
+    @Inject(method = "pickBlock", at = @At("HEAD"), cancellable = true)
     private void tacz$callInteractionPickInput(CallbackInfo ci) {
         if (this.hitResult == null || this.hitResult.getType() == HitResult.Type.MISS) {
             return;

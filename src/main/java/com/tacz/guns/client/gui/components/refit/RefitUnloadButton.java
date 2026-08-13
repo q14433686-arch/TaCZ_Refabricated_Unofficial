@@ -1,7 +1,7 @@
 package com.tacz.guns.client.gui.components.refit;
 
 import com.tacz.guns.client.gui.GunRefitScreen;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
@@ -16,7 +16,7 @@ public class RefitUnloadButton extends Button implements IComponentTooltip {
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor graphics, int pMouseX, int pMouseY, float pPartialTick) {
+    protected void renderContents(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
         int x = getX(), y = getY();
         if (isHoveredOrFocused()) {
             graphics.blit(RenderPipelines.GUI_TEXTURED, GunRefitScreen.UNLOAD_TEXTURE, x, y, 0, 0, width, height, 80, 80, 160, 80);

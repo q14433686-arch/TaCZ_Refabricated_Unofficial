@@ -32,38 +32,38 @@ public class NetworkHandler {
      */
     public static void registerPayloads() {
         // C2S (serverbound play)
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerShoot.TYPE, ClientMessagePlayerShoot.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerReloadGun.TYPE, ClientMessagePlayerReloadGun.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerCancelReload.TYPE, ClientMessagePlayerCancelReload.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerFireSelect.TYPE, ClientMessagePlayerFireSelect.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerAim.TYPE, ClientMessagePlayerAim.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerCrawl.TYPE, ClientMessagePlayerCrawl.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerDrawGun.TYPE, ClientMessagePlayerDrawGun.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessageCraft.TYPE, ClientMessageCraft.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerZoom.TYPE, ClientMessagePlayerZoom.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessageRefitGun.TYPE, ClientMessageRefitGun.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessageUnloadAttachment.TYPE, ClientMessageUnloadAttachment.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerBoltGun.TYPE, ClientMessagePlayerBoltGun.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerMelee.TYPE, ClientMessagePlayerMelee.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessageSyncBaseTimestamp.TYPE, ClientMessageSyncBaseTimestamp.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ClientMessageLaserColor.TYPE, ClientMessageLaserColor.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessagePlayerShoot.TYPE, ClientMessagePlayerShoot.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessagePlayerReloadGun.TYPE, ClientMessagePlayerReloadGun.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessagePlayerCancelReload.TYPE, ClientMessagePlayerCancelReload.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessagePlayerFireSelect.TYPE, ClientMessagePlayerFireSelect.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessagePlayerAim.TYPE, ClientMessagePlayerAim.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessagePlayerCrawl.TYPE, ClientMessagePlayerCrawl.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessagePlayerDrawGun.TYPE, ClientMessagePlayerDrawGun.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessageCraft.TYPE, ClientMessageCraft.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessagePlayerZoom.TYPE, ClientMessagePlayerZoom.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessageRefitGun.TYPE, ClientMessageRefitGun.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessageUnloadAttachment.TYPE, ClientMessageUnloadAttachment.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessagePlayerBoltGun.TYPE, ClientMessagePlayerBoltGun.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessagePlayerMelee.TYPE, ClientMessagePlayerMelee.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessageSyncBaseTimestamp.TYPE, ClientMessageSyncBaseTimestamp.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessageLaserColor.TYPE, ClientMessageLaserColor.CODEC);
         // S2C (clientbound play)
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageSound.TYPE, ServerMessageSound.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageCraft.TYPE, ServerMessageCraft.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageRefreshRefitScreen.TYPE, ServerMessageRefreshRefitScreen.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageSwapItem.TYPE, ServerMessageSwapItem.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageLevelUp.TYPE, ServerMessageLevelUp.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunHurt.TYPE, ServerMessageGunHurt.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunKill.TYPE, ServerMessageGunKill.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageUpdateEntityData.TYPE, ServerMessageUpdateEntityData.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageSyncGunPack.TYPE, ServerMessageSyncGunPack.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunDraw.TYPE, ServerMessageGunDraw.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunFire.TYPE, ServerMessageGunFire.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunFireSelect.TYPE, ServerMessageGunFireSelect.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunMelee.TYPE, ServerMessageGunMelee.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunReload.TYPE, ServerMessageGunReload.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunShoot.TYPE, ServerMessageGunShoot.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ServerMessageSyncBaseTimestamp.TYPE, ServerMessageSyncBaseTimestamp.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageSound.TYPE, ServerMessageSound.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageCraft.TYPE, ServerMessageCraft.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageRefreshRefitScreen.TYPE, ServerMessageRefreshRefitScreen.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageSwapItem.TYPE, ServerMessageSwapItem.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageLevelUp.TYPE, ServerMessageLevelUp.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageGunHurt.TYPE, ServerMessageGunHurt.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageGunKill.TYPE, ServerMessageGunKill.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageUpdateEntityData.TYPE, ServerMessageUpdateEntityData.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageSyncGunPack.TYPE, ServerMessageSyncGunPack.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageGunDraw.TYPE, ServerMessageGunDraw.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageGunFire.TYPE, ServerMessageGunFire.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageGunFireSelect.TYPE, ServerMessageGunFireSelect.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageGunMelee.TYPE, ServerMessageGunMelee.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageGunReload.TYPE, ServerMessageGunReload.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageGunShoot.TYPE, ServerMessageGunShoot.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageSyncBaseTimestamp.TYPE, ServerMessageSyncBaseTimestamp.CODEC);
         // Extra spawn data payload
         IEntityAdditionalSpawnData.registerPayload();
     }
@@ -129,7 +129,7 @@ public class NetworkHandler {
             T packet = reader.apply(buf);
             Connection connection = ((ClientHandshakePacketListenerImplAccessor) handler).getConnection();
             IHandshakeMessage.IResponsePacket responsePacket = packet.handle(connection, listenerAdder);
-            FriendlyByteBuf response = FriendlyByteBufs.create();
+            FriendlyByteBuf response = PacketByteBufs.create();
             if (responsePacket != null) {
                 response.writeIdentifier(responsePacket.getId());
                 responsePacket.write(response);
@@ -166,7 +166,7 @@ public class NetworkHandler {
 
     public static void sendToDimension(CustomPacketPayload message, final Entity centerEntity) {
         if (centerEntity.level() instanceof ServerLevel serverLevel) {
-            for (ServerPlayer player : PlayerLookup.level(serverLevel)) {
+            for (ServerPlayer player : PlayerLookup.world(serverLevel)) {
                 ServerPlayNetworking.send(player, message);
             }
         }

@@ -9,7 +9,7 @@ import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.util.InteractKeyConfigRead;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -56,7 +56,7 @@ import org.apache.commons.lang3.StringUtils;
  *
  * <h2>26.2 侧的两处改写</h2>
  * <ul>
- *   <li>{@code GuiGraphics#drawString} → {@code GuiGraphicsExtractor#text}。</li>
+ *   <li>{@code GuiGraphics#drawString} → {@code GuiGraphics#text}。</li>
  *   <li><b>颜色取值按 26.1.2 的 API 写</b>：26.1.2 的 {@code ChatFormatting#getColor()}
  *       依然存在（已对 26.1.2 jar 字节码确认，返回 {@code Integer}），
  *       与上游 1.21.1 写法一致；而 26.2 补丁用的 {@code TextColor.YELLOW/GRAY}
@@ -68,7 +68,7 @@ import org.apache.commons.lang3.StringUtils;
  * </ul>
  */
 public class InteractKeyTextOverlay {
-    public static void render(GuiGraphicsExtractor graphics, float partialTick) {
+    public static void render(GuiGraphics graphics, float partialTick) {
         if (RenderConfig.DISABLE_INTERACT_HUD_TEXT.get()) {
             return;
         }
@@ -93,7 +93,7 @@ public class InteractKeyTextOverlay {
         }
     }
 
-    private static void renderBlockText(GuiGraphicsExtractor graphics, int width, int height,
+    private static void renderBlockText(GuiGraphics graphics, int width, int height,
                                         BlockHitResult blockHitResult, LocalPlayer player, Minecraft mc) {
         BlockPos blockPos = blockHitResult.getBlockPos();
         BlockState block = player.level().getBlockState(blockPos);
@@ -114,7 +114,7 @@ public class InteractKeyTextOverlay {
         }
     }
 
-    private static void renderEntityText(GuiGraphicsExtractor graphics, int width, int height,
+    private static void renderEntityText(GuiGraphics graphics, int width, int height,
                                          EntityHitResult entityHitResult, Minecraft mc) {
         if (mc.player == null || !IGun.mainHandHoldGun(mc.player)) {
             return;
@@ -135,17 +135,17 @@ public class InteractKeyTextOverlay {
         return item instanceof IGun || item instanceof IAttachment || item instanceof IAmmo;
     }
 
-    private static void renderText(GuiGraphicsExtractor graphics, int width, int height,
+    private static void renderText(GuiGraphics graphics, int width, int height,
                                    Font font, String keyName, boolean willFilterByHand) {
         Component title = Component.translatable("gui.tacz.interact_key.text.desc", StringUtils.capitalize(keyName));
         // 颜色补 alpha：ChatFormatting#getColor 给的是六位色，text() 会把 alpha=0 的整段丢弃。
         // （26.1.2 用上游同款 ChatFormatting；TextColor.YELLOW/GRAY 具名常量是 26.2 才有的。）
-        graphics.text(font, title,
+        graphics.drawString(font, title,
                 (int) ((width - font.width(title)) / 2.0f), (int) (height / 2.0f - 25),
                 0xFF000000 | ChatFormatting.YELLOW.getColor(), false);
         if (willFilterByHand) {
             Component filter = Component.translatable("gui.tacz.interact_key.text.gun_smith_table_filter");
-            graphics.text(font, filter,
+            graphics.drawString(font, filter,
                     (int) ((width - font.width(filter)) / 2.0f), (int) (height / 2.0f - 14),
                     0xFF000000 | ChatFormatting.GRAY.getColor(), false);
         }

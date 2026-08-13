@@ -22,7 +22,7 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.cuboid.ItemTransforms;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -55,7 +55,7 @@ import static net.minecraft.world.item.ItemDisplayContext.GUI;
  *   <tr><td>{@code RenderType.entityCutout}</td>
  *       <td>{@code RenderTypes.entityCutout}（类名多了 s，包也变了）</td></tr>
  *   <tr><td>{@code net.minecraft.client.renderer.block.model.ItemTransforms}</td>
- *       <td>{@code net.minecraft.client.resources.model.cuboid.ItemTransforms}</td></tr>
+ *       <td>{@code net.minecraft.client.renderer.block.model.ItemTransforms}</td></tr>
  *   <tr><td>{@code transform.apply(false, poseStack)}</td>
  *       <td>{@code apply(isLeftHand, poseStack.last())} —— 第二参是
  *           {@code PoseStack.Pose}；且其内部<b>已自带</b>

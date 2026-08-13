@@ -21,7 +21,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
@@ -110,8 +110,8 @@ public class GunRefitScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float pPartialTick) {
-        super.extractRenderState(graphics, mouseX, mouseY, pPartialTick);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float pPartialTick) {
+        super.render(graphics, mouseX, mouseY, pPartialTick);
 
         if (!HIDE_GUN_PROPERTY_DIAGRAMS) {
             GunPropertyDiagrams.draw(graphics, font, 11, 11);
@@ -141,7 +141,7 @@ public class GunRefitScreen extends Screen {
      * </pre>
      * 移植时漏掉了，于是走 vanilla 默认实现，改装界面糊上一层背景模糊。
      *
-     * <p>26.2 的对应方法改名为 {@code extractBlurredBackground(GuiGraphicsExtractor)}，
+     * <p>26.2 的对应方法改名为 {@code renderBlurredBackground(GuiGraphics)}，
      * 调用链（字节码确认）：
      * <pre>
      * Screen#extractBackground
@@ -156,7 +156,7 @@ public class GunRefitScreen extends Screen {
      * 严重影响观察配件外观 —— 这正是上游特意关掉它的原因。
      */
     @Override
-    protected void extractBlurredBackground(GuiGraphicsExtractor graphics) {
+    protected void renderBlurredBackground(GuiGraphics graphics) {
     }
 
     @Override
@@ -282,7 +282,7 @@ public class GunRefitScreen extends Screen {
                             ClientMessageUnloadAttachment message = new ClientMessageUnloadAttachment(inventory.getSelectedSlot(), RefitTransform.getCurrentTransformType());
                             ClientPlayNetworking.send(message);
                         } else {
-                            player.sendSystemMessage(Component.translatable("gui.tacz.gun_refit.unload.no_space"));
+                            player.displayClientMessage(Component.translatable("gui.tacz.gun_refit.unload.no_space"), false);
                         }
                     }
                 });

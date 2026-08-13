@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import me.xjqsh.lrtactical.util.TooltipLine;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
@@ -96,18 +96,18 @@ public abstract class AbstractClientItemTooltip implements ClientTooltipComponen
     }
 
     @Override
-    public void extractText(GuiGraphicsExtractor graphics, Font font, int x, int y) {
+    public void renderText(GuiGraphics graphics, Font font, int x, int y) {
         int yOffset = y;
         List<FormattedCharSequence> description = visibleDescription();
         if (!description.isEmpty()) {
             yOffset += 2;
             for (FormattedCharSequence line : description) {
-                graphics.text(font, line, x, yOffset, 0xFFAAAAAA);
+                graphics.drawString(font, line, x, yOffset, 0xFFAAAAAA);
                 yOffset += LINE_HEIGHT;
             }
         }
         for (Component line : visibleLines()) {
-            graphics.text(font, line, x, yOffset, 0xFFFFAA00);
+            graphics.drawString(font, line, x, yOffset, 0xFFFFAA00);
             yOffset += LINE_HEIGHT;
         }
     }

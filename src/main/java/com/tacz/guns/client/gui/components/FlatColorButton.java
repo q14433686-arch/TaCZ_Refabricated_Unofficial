@@ -2,7 +2,7 @@ package com.tacz.guns.client.gui.components;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 
@@ -32,14 +32,14 @@ public class FlatColorButton extends Button {
         return this;
     }
 
-    public void renderToolTip(GuiGraphicsExtractor graphics, int pMouseX, int pMouseY) {
+    public void renderToolTip(GuiGraphics graphics, int pMouseX, int pMouseY) {
         if (this.isHovered && this.tooltips != null && !this.tooltips.isEmpty()) {
             graphics.setTooltipForNextFrame(Minecraft.getInstance().font, this.tooltips, java.util.Optional.empty(), pMouseX, pMouseY);
         }
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float pPartialTick) {
+    protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float pPartialTick) {
         Minecraft minecraft = Minecraft.getInstance();
         Font font = minecraft.font;
         if (isSelect) {
@@ -53,7 +53,7 @@ public class FlatColorButton extends Button {
             graphics.fillGradient(this.getX() + this.width - 1, this.getY() + 1, this.getX() + this.width, this.getY() + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
             graphics.fillGradient(this.getX(), this.getY() + this.height - 1, this.getX() + this.width, this.getY() + this.height, 0xff_F3EFE0, 0xff_F3EFE0);
         }
-        graphics.centeredText(font, this.getMessage(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, 0xFFF3EFE0);
+        graphics.drawCenteredString(font, this.getMessage(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, 0xFFF3EFE0);
         this.renderToolTip(graphics, mouseX, mouseY);
     }
 

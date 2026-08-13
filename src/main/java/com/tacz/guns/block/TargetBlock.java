@@ -135,7 +135,7 @@ public class TargetBlock extends BaseEntityBlock {
                 if (projectile instanceof EntityKineticBullet bullet) {
                     String formattedDamage = String.format("%.1f", bullet.getDamage(hit.getLocation()));
                     String formattedDistance = String.format("%.2f", hit.getLocation().distanceTo(player.position()));
-                    player.sendOverlayMessage(Component.translatable("message.tacz.target_minecart.hit", formattedDamage, formattedDistance));
+                    player.displayClientMessage(Component.translatable("message.tacz.target_minecart.hit", formattedDamage, formattedDistance), true);
                 }
 
             }

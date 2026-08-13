@@ -69,7 +69,7 @@ public class SmokeCloudParticle extends SingleQuadParticle {
      * 全亮度：烟雾不该在暗处变黑，否则夜战时形同虚设。
      *
      * <p><b>26.2 改名</b>：上游覆写的是 {@code getLightColor(float)}，
-     * 但 26.2 的 {@code Particle} 上<b>只有 {@code getLightCoords(float)}</b>
+     * 但 26.2 的 {@code Particle} 上<b>只有 {@code getLightColor(float)}</b>
      * （字节码逐方法核对确认，全类无 {@code getLightColor}）。
      * 返回值 15728880 = 0xF000F0，即天光/块光都拉满。
      *
@@ -77,7 +77,7 @@ public class SmokeCloudParticle extends SingleQuadParticle {
      * 这里保持同样的可见性 —— 放宽成 public 虽然合法，但没有理由对外暴露。
      */
     @Override
-    protected int getLightCoords(float partialTick) {
+    protected int getLightColor(float partialTick) {
         return 15728880;
     }
 

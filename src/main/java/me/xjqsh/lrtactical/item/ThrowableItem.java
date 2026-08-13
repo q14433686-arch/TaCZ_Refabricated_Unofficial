@@ -52,7 +52,7 @@ import java.util.Optional;
  *       否则注册期报错 —— 沿用本仓库 {@code ModItems#itemProps} 的做法，
  *       故构造器改为接收 {@code Properties} 而非自己 new。</li>
  *   <li>上游 tooltip 走 {@code getTooltipImage}；现已按 26.2 的
- *       {@code ClientTooltipComponent#extractText(GuiGraphicsExtractor,...)} 接回，
+ *       {@code ClientTooltipComponent#renderText(GuiGraphics,...)} 接回，
  *       不再尝试旧 {@code GuiGraphics/MultiBufferSource} 即时绘制。</li>
  * </ol>
  *

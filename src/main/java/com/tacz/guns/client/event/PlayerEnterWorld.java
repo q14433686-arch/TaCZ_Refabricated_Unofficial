@@ -16,17 +16,17 @@ public class PlayerEnterWorld {
     public static void onPlayerEnterWorld(PlayerEvent.PlayerLoggedInEvent event) {
         File[] files = PackConvertor.FOLDER.toFile().listFiles();
         if (files != null && files.length > 0) {
-            event.getEntity().sendSystemMessage(pre(Component.translatable("message.tacz.convert_from_legacy.intro")));
-            event.getEntity().sendSystemMessage(pre(Component.translatable("message.tacz.convert_from_legacy.intro2")));
+            event.getEntity().displayClientMessage(pre(Component.translatable("message.tacz.convert_from_legacy.intro")), false);
+            event.getEntity().displayClientMessage(pre(Component.translatable("message.tacz.convert_from_legacy.intro2")), false);
             Component component = Component.translatable("message.tacz.convert_from_legacy")
                     .append(Component.translatable("message.tacz.convert_from_legacy.button")
                             .withStyle(Style.EMPTY.withColor(0x55FF55)
                                     .withClickEvent(new ClickEvent.RunCommand("/tacz convert"))
                                     .withHoverEvent(new HoverEvent.ShowText(Component.translatable("message.tacz.convert_from_legacy.hover"))
                                     )));
-            event.getEntity().sendSystemMessage(pre(component));
-            event.getEntity().sendSystemMessage(pre(Component.translatable("message.tacz.convert_from_legacy.hint")));
-            event.getEntity().sendSystemMessage(pre(Component.translatable("message.tacz.convert_from_legacy.hide")));
+            event.getEntity().displayClientMessage(pre(component), false);
+            event.getEntity().displayClientMessage(pre(Component.translatable("message.tacz.convert_from_legacy.hint")), false);
+            event.getEntity().displayClientMessage(pre(Component.translatable("message.tacz.convert_from_legacy.hide")), false);
         }
     }
 

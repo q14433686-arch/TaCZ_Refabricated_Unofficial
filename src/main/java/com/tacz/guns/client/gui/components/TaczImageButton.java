@@ -1,6 +1,6 @@
 package com.tacz.guns.client.gui.components;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
@@ -42,7 +42,7 @@ import net.minecraft.resources.Identifier;
  *
  * <h2>26.2 改写点</h2>
  * <ul>
- *   <li>{@code renderWidget(GuiGraphics,...)} → {@code extractContents(GuiGraphicsExtractor,...)}；</li>
+ *   <li>{@code renderWidget(GuiGraphics,...)} → {@code renderContents(GuiGraphics,...)}；</li>
  *   <li>{@code blit(texture,x,y,u,v,w,h,texW,texH)} 的参数顺序变了，
  *       26.2 首参是 {@code RenderPipeline}，且 u/v 为 float；</li>
  *   <li>{@code RenderSystem.enableDepthTest()} 已无必要 —— GUI 管线自带深度状态。</li>
@@ -65,7 +65,7 @@ public class TaczImageButton extends Button {
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor gui, int mouseX, int mouseY, float partialTick) {
+    protected void renderContents(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
         int v = this.yTexStart;
         if (!this.isActive()) {
             v = this.yTexStart + this.yDiffTex * 2;

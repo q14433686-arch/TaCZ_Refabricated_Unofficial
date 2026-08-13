@@ -3,7 +3,7 @@ package com.tacz.guns.client.tooltip;
 import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.inventory.tooltip.AmmoBoxTooltip;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -35,13 +35,13 @@ public class ClientAmmoBoxTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public void extractText(GuiGraphicsExtractor graphics, Font font, int pX, int pY) {
-        graphics.text(font, ammoName, pX + 20, pY + 4, 0xFFffaa00);
-        graphics.text(font, count, pX + 20, pY + 15, 0xFF666666);
+    public void renderText(GuiGraphics graphics, Font font, int pX, int pY) {
+        graphics.drawString(font, ammoName, pX + 20, pY + 4, 0xFFffaa00);
+        graphics.drawString(font, count, pX + 20, pY + 15, 0xFF666666);
     }
 
     @Override
-    public void extractImage(Font pFont, int pX, int pY, int width, int height, GuiGraphicsExtractor graphics) {
-        graphics.item(ammo, pX, pY + 5);
+    public void renderImage(Font pFont, int pX, int pY, int width, int height, GuiGraphics graphics) {
+        graphics.renderItem(ammo, pX, pY + 5);
     }
 }

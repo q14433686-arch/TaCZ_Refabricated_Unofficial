@@ -22,7 +22,7 @@ import java.util.Map;
  * <ul>
  *   <li>{@code ResourceLocation} → {@link Identifier}（26.2 类名变更，全仓统一）；</li>
  *   <li>冷却专用 S2C 同步已接入 {@code ServerMessageCustomCooldown}；客户端
- *       {@code GuiGraphicsExtractorMixin} 在原版 itemCooldown 提取结束后叠加分类遮罩。
+ *       {@code GuiGraphicsMixin} 在原版 renderItemCooldown 提取结束后叠加分类遮罩。
  *       服务端仍是唯一权威，客户端状态只负责反馈。</li>
  * </ul>
  */

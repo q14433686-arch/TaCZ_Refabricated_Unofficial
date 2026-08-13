@@ -24,7 +24,7 @@ import fuzs.forgeconfigapiport.fabric.api.v5.ModConfigEvents;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
-import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -140,12 +140,12 @@ public class TaCZFabric implements ModInitializer {
         ServerTickEvents.END_SERVER_TICK.register(SyncedEntityDataEvent::onServerTick);
 
         // 非玩家生物跨维度（持枪僵尸等）。
-        ServerEntityLevelChangeEvents.AFTER_ENTITY_CHANGE_LEVEL.register(TravelToDimensionEvent::onTravelToDimension);
+        ServerEntityWorldChangeEvents.AFTER_ENTITY_CHANGE_WORLD.register(TravelToDimensionEvent::onTravelToDimension);
         // 玩家跨维度。【必须单独注册】上面那个事件的 javadoc 明写
         // "does not apply to the ServerPlayer"，玩家是被物理移动过去的，
         // 从不触发 AFTER_ENTITY_CHANGE_LEVEL。缺了这一行，
         // 服务端的枪械状态在跨维度后永远不会复位，
         // 表现为「换弹动作连贯但子弹不变」。详见 TravelToDimensionEvent 的类注释。
-        ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register(TravelToDimensionEvent::onPlayerTravelToDimension);
+        ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register(TravelToDimensionEvent::onPlayerTravelToDimension);
     }
 }

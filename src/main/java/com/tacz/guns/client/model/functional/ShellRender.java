@@ -42,9 +42,10 @@ public class ShellRender implements IFunctionalSubmitter {
     }
 
     private static RenderType shellRenderType(ItemDisplayContext displayContext, Identifier texture) {
-        return displayContext.firstPerson()
-                ? RenderTypes.itemCutout(texture)
-                : RenderTypes.entityCutout(texture);
+        // 26.1.2 第一人称走 RenderTypes.itemCutout（26.1 才拆出的 ITEM_CUTOUT 管线），
+        // 1.21.11 没有该管线，手持物品与实体共用 ENTITY_CUTOUT，因此两分支合一。
+        // 保留 displayContext 形参与调用点不变，方便阶段 9 需要区分时再拆开。
+        return RenderTypes.entityCutout(texture);
     }
 
     public void addShell(Vector3f randomVelocity) {

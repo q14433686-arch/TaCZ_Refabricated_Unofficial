@@ -19,7 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
  * </ol>
  *
  * <p><b>为什么 {@code registerPayloads} 必须在公共入口调用</b>：
- * {@code PayloadTypeRegistry.clientboundPlay().register} 是<b>编解码器注册表</b>，
+ * {@code PayloadTypeRegistry.playS2C().register} 是<b>编解码器注册表</b>，
  * 服务端要用它来编码、客户端要用它来解码，缺一端就会在握手/发包时报
  * 「Unknown payload id」。TACZ 侧同样是在 {@code TaCZFabric#onInitialize}
  * （公共入口）里调 {@code registerPayloads}，而不是只在客户端调。
@@ -30,13 +30,13 @@ public final class LrNetworkHandler {
 
     /** 载荷类型注册 —— 必须在<b>公共</b>入口调用（服务端编码 + 客户端解码都依赖它）。 */
     public static void registerPayloads() {
-        PayloadTypeRegistry.clientboundPlay().register(
+        PayloadTypeRegistry.playS2C().register(
                 ServerMessageSyncLrPack.TYPE, ServerMessageSyncLrPack.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(
+        PayloadTypeRegistry.playS2C().register(
                 ServerMessageCustomCooldown.TYPE, ServerMessageCustomCooldown.CODEC);
         // C2S：近战攻击请求。serverboundPlay 同样两端都要注册
         // （客户端编码、服务端解码），只在一端注册会报 Unknown payload id。
-        PayloadTypeRegistry.serverboundPlay().register(
+        PayloadTypeRegistry.playC2S().register(
                 ClientMessagePrepareMeleeAttack.TYPE, ClientMessagePrepareMeleeAttack.CODEC);
     }
 

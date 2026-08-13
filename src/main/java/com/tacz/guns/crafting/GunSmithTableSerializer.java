@@ -170,7 +170,21 @@ public final class GunSmithTableSerializer {
     private GunSmithTableSerializer() {
     }
 
+    /**
+     * 1.21.11 的 {@code RecipeSerializer} 是<b>接口</b>（只有 codec() / streamCodec() 两个抽象方法），
+     * 26.1 才把它变成可直接 new 的 record/类。这里用匿名实现回退，行为完全一致。
+     */
     public static RecipeSerializer<GunSmithTableRecipe> create() {
-        return new RecipeSerializer<>(CODEC, STREAM_CODEC);
+        return new RecipeSerializer<>() {
+            @Override
+            public MapCodec<GunSmithTableRecipe> codec() {
+                return CODEC;
+            }
+
+            @Override
+            public StreamCodec<RegistryFriendlyByteBuf, GunSmithTableRecipe> streamCodec() {
+                return STREAM_CODEC;
+            }
+        };
     }
 }

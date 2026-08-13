@@ -9,13 +9,13 @@ import net.minecraft.world.entity.player.Player;
 public record LuaEntityAccessor(LivingEntity entity) {
     public void sendSystemMessage(Component message) {
         if (entity instanceof Player player) {
-            player.sendSystemMessage(message);
+            player.displayClientMessage(message, false);
         }
     }
 
     public void sendActionBar(Component message) {
         if (entity instanceof Player player) {
-            player.sendOverlayMessage(message);
+            player.displayClientMessage(message, true);
         }
     }
 

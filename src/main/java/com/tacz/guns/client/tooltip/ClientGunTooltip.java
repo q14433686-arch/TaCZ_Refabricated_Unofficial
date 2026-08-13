@@ -22,7 +22,7 @@ import com.tacz.guns.util.AllowAttachmentTagMatcher;
 import com.tacz.guns.util.AttachmentDataUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -238,13 +238,13 @@ public class ClientGunTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public void extractText(GuiGraphicsExtractor graphics, Font font, int pX, int pY) {
+    public void renderText(GuiGraphics graphics, Font font, int pX, int pY) {
         int yOffset = pY;
 
         if (shouldShow(GunTooltipPart.DESCRIPTION) && this.desc != null) {
             yOffset += 2;
             for (FormattedCharSequence sequence : this.desc) {
-                graphics.text(font, sequence, pX, yOffset, 0xFFaaaaaa);
+                graphics.drawString(font, sequence, pX, yOffset, 0xFFaaaaaa);
                 yOffset += 10;
             }
         }
@@ -254,10 +254,10 @@ public class ClientGunTooltip implements ClientTooltipComponent {
             yOffset += 4;
 
             // 弹药名
-            graphics.text(font, this.ammoName, pX + 20, yOffset, 0xFFffaa00);
+            graphics.drawString(font, this.ammoName, pX + 20, yOffset, 0xFFffaa00);
 
             // 弹药数
-            graphics.text(font, this.ammoCountText, pX + 20, yOffset + 10, 0xFF777777);
+            graphics.drawString(font, this.ammoCountText, pX + 20, yOffset + 10, 0xFF777777);
 
             yOffset += 20;
         }
@@ -268,18 +268,18 @@ public class ClientGunTooltip implements ClientTooltipComponent {
 
             // 等级 API 在上游默认实现中处于禁用态（maxLevel == 0），不要显示误导性的 0 (MAX)。
             if (this.levelInfo != null) {
-                graphics.text(font, this.levelInfo, pX, yOffset, 0xFF777777);
+                graphics.drawString(font, this.levelInfo, pX, yOffset, 0xFF777777);
                 yOffset += 10;
             }
 
             // 枪械类型
             if (this.gunType != null) {
-                graphics.text(font, this.gunType, pX, yOffset, 0xFF777777);
+                graphics.drawString(font, this.gunType, pX, yOffset, 0xFF777777);
                 yOffset += 10;
             }
 
             // 伤害
-            graphics.text(font, this.damage, pX, yOffset, 0xFF777777);
+            graphics.drawString(font, this.damage, pX, yOffset, 0xFF777777);
             yOffset += 10;
         }
 
@@ -288,14 +288,14 @@ public class ClientGunTooltip implements ClientTooltipComponent {
             yOffset += 4;
 
             // 穿甲伤害
-            graphics.text(font, this.armorIgnore, pX, yOffset, 0xFFffaa00);
+            graphics.drawString(font, this.armorIgnore, pX, yOffset, 0xFFffaa00);
             yOffset += 10;
 
             // 爆头伤害
-            graphics.text(font, this.headShotMultiplier, pX, yOffset, 0xFFffaa00);
+            graphics.drawString(font, this.headShotMultiplier, pX, yOffset, 0xFFffaa00);
             yOffset += 10;
 
-            graphics.text(font, this.weight, pX, yOffset, 0xFFffffff);
+            graphics.drawString(font, this.weight, pX, yOffset, 0xFFffffff);
             yOffset += 10;
         }
 
@@ -304,7 +304,7 @@ public class ClientGunTooltip implements ClientTooltipComponent {
             yOffset += 4;
 
             // Z 键说明
-            graphics.text(font, this.tips, pX, yOffset, 0xFFffffff);
+            graphics.drawString(font, this.tips, pX, yOffset, 0xFFffffff);
             yOffset += 10;
         }
 
@@ -313,13 +313,13 @@ public class ClientGunTooltip implements ClientTooltipComponent {
             // 枪包名
             if (packInfo != null) {
                 yOffset += 4;
-                graphics.text(font, this.packInfo, pX, yOffset, 0xFFffffff);
+                graphics.drawString(font, this.packInfo, pX, yOffset, 0xFFffffff);
             }
         }
     }
 
     @Override
-    public void extractImage(Font pFont, int pX, int pY, int width, int height, GuiGraphicsExtractor graphics) {
+    public void renderImage(Font pFont, int pX, int pY, int width, int height, GuiGraphics graphics) {
         IGun iGun = IGun.getIGunOrNull(this.gun);
         if (iGun == null) {
             return;
@@ -329,7 +329,7 @@ public class ClientGunTooltip implements ClientTooltipComponent {
             if (shouldShow(GunTooltipPart.DESCRIPTION) && this.desc != null) {
                 yOffset += this.desc.size() * 10 + 2;
             }
-            graphics.item(ammo, pX, yOffset + 4);
+            graphics.renderItem(ammo, pX, yOffset + 4);
         }
     }
 

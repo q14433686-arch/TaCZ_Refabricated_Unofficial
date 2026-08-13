@@ -59,7 +59,7 @@ public class TextShow {
      * <p>枪包 display json 里写的是 {@code "color": "#FFFFFF"} 这样的<b>六位</b>色值，
      * {@code ColorHex.colorTextToRbgInt} 解析出来自然只有 RGB、alpha 为 0。
      * 1.21.1 的 {@code Font#drawInBatch} 对此宽容；但 26.2 的文本渲染
-     * （{@code SubmitNodeCollector#submitText}，与 {@code GuiGraphicsExtractor#text}
+     * （{@code SubmitNodeCollector#submitText}，与 {@code GuiGraphics#text}
      * 同一套判据）遇到 alpha == 0 会<b>直接丢弃整段文字</b>。
      *
      * <p>不补的话，枪身上的文字显示（如 8 倍镜的弹药计数 {@code ammo_count_text}）

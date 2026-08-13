@@ -3,7 +3,7 @@ package com.tacz.guns.compat.cloth.widget;
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Util;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
@@ -45,10 +45,10 @@ public class OpenGunPackDirEntry extends AbstractConfigListEntry<Boolean> {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isHovered, float delta) {
+    public void render(GuiGraphics graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isHovered, float delta) {
         button.setX(x + entryWidth - 150);
         button.setY(y);
-        button.extractRenderState(graphics, mouseX, mouseY, delta);
-        super.extractRenderState(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isHovered, delta);
+        button.render(graphics, mouseX, mouseY, delta);
+        super.render(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isHovered, delta);
     }
 }

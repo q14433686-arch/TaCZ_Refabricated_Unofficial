@@ -79,7 +79,7 @@ public class GunSmithTableRenderer implements BlockEntityRenderer<GunSmithTableB
     }
 
     @Override
-    public void submit(GunSmithTableRenderState state, PoseStack poseStack, SubmitNodeCollector collector, net.minecraft.client.renderer.state.level.CameraRenderState cameraState) {
+    public void submit(GunSmithTableRenderState state, PoseStack poseStack, SubmitNodeCollector collector, net.minecraft.client.renderer.state.CameraRenderState cameraState) {
         ClientBlockIndex index = state.blockIndex;
         if (index == null || !state.isRoot) {
             return;

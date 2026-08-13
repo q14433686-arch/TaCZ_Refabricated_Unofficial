@@ -80,8 +80,16 @@ public class GunSmithTableCategory implements DisplayCategory<GunSmithTableDispl
             if (resolved == null) {
                 return Collections.singletonList(EntryStack.of(VanillaEntryTypes.ITEM, ItemStack.EMPTY));
             }
+            // REI 21.11 没有 EntryIngredients.slotDisplayContext()；
+            // 原版等价物是 SlotDisplayContext.fromLevel(Level)。
+            net.minecraft.client.multiplayer.ClientLevel level =
+                    net.minecraft.client.Minecraft.getInstance().level;
+            if (level == null) {
+                return Collections.singletonList(EntryStack.of(VanillaEntryTypes.ITEM, ItemStack.EMPTY));
+            }
             return resolved.display()
-                    .resolveForStacks(EntryIngredients.slotDisplayContext())
+                    .resolveForStacks(
+                            net.minecraft.world.item.crafting.display.SlotDisplayContext.fromLevel(level))
                     .stream()
                     .map(stack -> EntryStack.of(VanillaEntryTypes.ITEM, stack.copyWithCount(ingredient.getCount())))
                     .toList();

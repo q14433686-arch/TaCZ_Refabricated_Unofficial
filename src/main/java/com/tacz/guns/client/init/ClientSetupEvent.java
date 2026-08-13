@@ -26,8 +26,8 @@ import com.tacz.guns.inventory.tooltip.GunTooltip;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.ClientTooltipComponentCallback;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.TooltipComponentCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.client.KeyMapping;
@@ -46,22 +46,22 @@ public class ClientSetupEvent {
 
     public static void registerKeyMappings() {
         // 注册键位 (26.2: MKB 不可用，直接注册 KeyMapping)
-        KeyMappingHelper.registerKeyMapping(InspectKey.INSPECT_KEY);
-        KeyMappingHelper.registerKeyMapping(ReloadKey.RELOAD_KEY);
-        KeyMappingHelper.registerKeyMapping(ShootKey.SHOOT_KEY);
-        KeyMappingHelper.registerKeyMapping(InteractKey.INTERACT_KEY);
-        KeyMappingHelper.registerKeyMapping(FireSelectKey.FIRE_SELECT_KEY);
-        KeyMappingHelper.registerKeyMapping(AimKey.AIM_KEY);
-        KeyMappingHelper.registerKeyMapping(CrawlKey.CRAWL_KEY);
-        KeyMappingHelper.registerKeyMapping(RefitKey.REFIT_KEY);
-        KeyMappingHelper.registerKeyMapping(ZoomKey.ZOOM_KEY);
-        KeyMappingHelper.registerKeyMapping(MeleeKey.MELEE_KEY);
-        KeyMappingHelper.registerKeyMapping(ConfigKey.OPEN_CONFIG_KEY);
+        KeyBindingHelper.registerKeyBinding(InspectKey.INSPECT_KEY);
+        KeyBindingHelper.registerKeyBinding(ReloadKey.RELOAD_KEY);
+        KeyBindingHelper.registerKeyBinding(ShootKey.SHOOT_KEY);
+        KeyBindingHelper.registerKeyBinding(InteractKey.INTERACT_KEY);
+        KeyBindingHelper.registerKeyBinding(FireSelectKey.FIRE_SELECT_KEY);
+        KeyBindingHelper.registerKeyBinding(AimKey.AIM_KEY);
+        KeyBindingHelper.registerKeyBinding(CrawlKey.CRAWL_KEY);
+        KeyBindingHelper.registerKeyBinding(RefitKey.REFIT_KEY);
+        KeyBindingHelper.registerKeyBinding(ZoomKey.ZOOM_KEY);
+        KeyBindingHelper.registerKeyBinding(MeleeKey.MELEE_KEY);
+        KeyBindingHelper.registerKeyBinding(ConfigKey.OPEN_CONFIG_KEY);
     }
 
     public static void registerClientTooltips() {
-        // 注册文本提示 (26.2: TooltipComponentCallback → ClientTooltipComponentCallback)
-        ClientTooltipComponentCallback.EVENT.register(tooltip -> {
+        // 注册文本提示 (26.2: TooltipComponentCallback → TooltipComponentCallback)
+        TooltipComponentCallback.EVENT.register(tooltip -> {
             if (tooltip instanceof GunTooltip gunTooltip) {
                 return new ClientGunTooltip(gunTooltip);
             }

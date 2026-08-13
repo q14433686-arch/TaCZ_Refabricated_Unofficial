@@ -6,7 +6,7 @@ import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.resource.pojo.PackInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
@@ -42,7 +42,7 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
         // 移植时错把 pY1（= topPos + imageHeight + 1，约 200 左右）当成了第 5 个参数，
         // 于是每一行的高度都变成了两百多像素：
         //   - getNextY() 逐行累加行高 -> 第 2 行往后的 y 直接飞到列表可视区之外；
-        //   - extractListItems 有 `entry.getY() > getBottom() 就跳过` 的剔除，
+        //   - renderListItems 有 `entry.getY() > getBottom() 就跳过` 的剔除，
         //     所以除第一行外<b>什么都画不出来</b>；
         //   - 每个 Entry 又会把自己的 x/y 同步给内部 widget，
         //     结果连点击热区也跟着跑偏 —— 勾选框根本点不中。
@@ -136,14 +136,14 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
     }
 
     @Override
-    public void extractWidgetRenderState(GuiGraphicsExtractor pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
-        this.extractListBackground(pGuiGraphics);
+    public void renderWidget(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
+        this.renderListBackground(pGuiGraphics);
         pGuiGraphics.fill(this.getX(), this.getY(), this.getRight(), this.getBottom(), 0x80000000);
         int i = this.scrollBarX();
         int j = i + 6;
 
         this.enableScissor(pGuiGraphics);
-        this.extractListItems(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
+        this.renderListItems(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
 
         int i2 = this.maxScrollAmount();
         if (i2 > 0) {
@@ -156,7 +156,7 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
             pGuiGraphics.fill(i, k1, j, k1 + j2, -8355712);
             pGuiGraphics.fill(i, k1, j - 1, k1 + j2 - 1, -4144960);
         }
-        this.extractListSeparators(pGuiGraphics);
+        this.renderListSeparators(pGuiGraphics);
     }
 
     public int getRowLeft() {
@@ -180,10 +180,10 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
         }
 
         @Override
-        public void extractContent(GuiGraphicsExtractor pGuiGraphics, int pMouseX, int pMouseY, boolean pHovering, float pPartialTick) {
+        public void renderContent(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, boolean pHovering, float pPartialTick) {
             this.widget.setX(this.getX());
             this.widget.setY(this.getY());
-            this.widget.extractRenderState(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
+            this.widget.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
         }
 
         @Override
@@ -260,7 +260,7 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
         }
 
         @Override
-        protected void extractContents(GuiGraphicsExtractor pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
+        protected void renderContents(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
             Minecraft minecraft = Minecraft.getInstance();
             Font font = minecraft.font;
             Identifier sprite;
@@ -272,11 +272,11 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
             pGuiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, this.getX(), this.getY(), this.width, this.height);
             if (this.showLabel) {
                 // 【本轮修复：勾选框标签（枪包名）不显示】
-                // 14737632 = 0x00E0E0E0，alpha 为 0。26.2 的 GuiGraphicsExtractor#text 第一条指令就是
+                // 14737632 = 0x00E0E0E0，alpha 为 0。26.2 的 GuiGraphics#text 第一条指令就是
                 //     if (ARGB.alpha(color) == 0) return;
                 // （见 docs/PORTING_NOTES.md §1，本项目已因此栽过 4 次）。
                 // 1.21.1 没有这个短路，所以上游照样能画出来。补上 0xFF。
-                pGuiGraphics.text(font, this.getMessage(), this.getX() + 24, this.getY() + (this.height - 8) / 2, 0xFFE0E0E0);
+                pGuiGraphics.drawString(font, this.getMessage(), this.getX() + 24, this.getY() + (this.height - 8) / 2, 0xFFE0E0E0);
             }
         }
     }

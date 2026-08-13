@@ -6,7 +6,7 @@ import com.tacz.guns.client.event.RenderCrosshairEvent;
 import com.tacz.guns.compat.immediatelyfast.ImmediatelyFastCompat;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -20,18 +20,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Mixin(Gui.class)
 public class GuiMixin {
-    @Inject(method = "extractSlot", at = @At("HEAD"))
-    private void tacz$renderHotbarItemPre(GuiGraphicsExtractor context, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack stack, int seed, CallbackInfo ci) {
+    @Inject(method = "renderSlot", at = @At("HEAD"))
+    private void tacz$renderHotbarItemPre(GuiGraphics context, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack stack, int seed, CallbackInfo ci) {
         ImmediatelyFastCompat.renderHotbarItem(stack, true);
     }
 
-    @Inject(method = "extractSlot", at = @At("RETURN"))
-    private void tacz$renderHotbarItemPost(GuiGraphicsExtractor context, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack stack, int seed, CallbackInfo ci) {
+    @Inject(method = "renderSlot", at = @At("RETURN"))
+    private void tacz$renderHotbarItemPost(GuiGraphics context, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack stack, int seed, CallbackInfo ci) {
         ImmediatelyFastCompat.renderHotbarItem(stack, false);
     }
 
-    @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true)
-    private void tacz$onRender(GuiGraphicsExtractor context, DeltaTracker deltaTracker, CallbackInfo ci) {
+    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
+    private void tacz$onRender(GuiGraphics context, DeltaTracker deltaTracker, CallbackInfo ci) {
         AtomicBoolean cancelled = new AtomicBoolean(false);
         PreventsHotbarEvent.onRenderHotbarEvent(cancelled);
         if (cancelled.get()) {
@@ -40,8 +40,8 @@ public class GuiMixin {
     }
 
     // 需要渲染枪械准心时取消原版渲染
-    @Inject(method = "extractCrosshair", at = @At("HEAD"), cancellable = true)
-    private void tacz$renderCrosshair(GuiGraphicsExtractor context, DeltaTracker deltaTracker, CallbackInfo ci) {
+    @Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true)
+    private void tacz$renderCrosshair(GuiGraphics context, DeltaTracker deltaTracker, CallbackInfo ci) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             return;

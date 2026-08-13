@@ -1,5 +1,7 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
+    // 1.21.11 is an obfuscated Minecraft release, so Loom must run in remap mode.
+    // Version comes from gradle.properties (loom_version) via settings.gradle's plugins block.
+    id 'net.fabricmc.fabric-loom-remap'
     id 'maven-publish'
 }
 
@@ -18,17 +20,18 @@ fabricApi {
 
 loom {
     accessWidenerPath = file("src/main/resources/tacz.accesswidener")
-    // From Loom 1.17: mixin AP is no longer enabled by default.
-    // The legacy mixin AP requires mappings, which don't exist in 26.1+.
-    // We must disable it and handle mixins differently.
-    // mixin {
-    //     useLegacyMixinAp = true
-    //     defaultRefmapName = "tacz.refmap.json"
-    // }
+    // 1.21.11 is obfuscated, so mappings exist again and the legacy mixin AP is both
+    // available and REQUIRED: mixin targets written in official Mojang names have to be
+    // translated into intermediary at runtime through a refmap.
+    // (Under 26.1.2 this block was commented out because non-obfuscated Minecraft has no mappings.)
+    mixin {
+        useLegacyMixinAp = true
+        defaultRefmapName = "tacz.refmap.json"
+    }
     runs {
         client {
             // The embedded default pack alone contains >80 MiB of textures, audio, and models.
-            // 384 MiB consistently OOMs during its first resource reload under 26.1.2.
+            // 384 MiB consistently OOMs during its first resource reload.
             vmArg "-Xmx768m"
         }
         server {
@@ -122,29 +125,41 @@ repositories {
 
 dependencies {
     // ================================================================
-    // 从 26.1+: Minecraft 不再混淆，Loom 使用未混淆模式
-    // 因此不再需要 mappings 依赖
-    // modImplementation → implementation (因为不再需要 mod 重映射)
-    // modCompileOnly → compileOnly
-    // modRuntimeOnly → runtimeOnly
-    // modApi → api
+    // 1.21.11 是混淆版本，Loom 回到 remap 模式：
+    //   * 必须声明 mappings（官方 Mojang 映射）
+    //   * mod 依赖必须走 mod* 配置，否则不会被 remap，运行期一定 NoClassDefFound
+    //   * 普通 Java 库继续用 implementation(include(...))
     // ================================================================
 
     // Minecraft & Fabric
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    // No mappings needed — 26.1+ uses unobfuscated Minecraft
-    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    // Opt-in compatibility run. Iris 1.11.2 + Sodium 0.9.1 are the current 26.1.2 pair.
-    // Keep them out of the distributable and normal server/client runs; enable with -PwithIris.
+    // Iris 1.10.7 + Sodium 0.8.13 are the current 1.21.11 Fabric pair.
+    //
+    // Iris is now modCompileOnly (was runtimeOnly behind -PwithIris). Reason: the scope's
+    // Iris integration lives in mixin/client/iris/**, which @Mixin(targets = "...ShaderCreator").
+    // With Iris invisible at compile time the mixin AP reports "target could not be found",
+    // so the whole package had to be excluded -- and with it the hand-shader patching that
+    // makes water/clouds/fog/particles visible inside the ocular under shaders.
+    //
+    // compileOnly keeps Iris OUT of the distributable and off the normal run classpath; the
+    // mixin is additionally gated at runtime by IrisCompatMixinPlugin (isModLoaded("iris"))
+    // and tacz.iris.mixins.json stays required=false, so a user without Iris is unaffected.
+    modCompileOnly "curse.maven:irisshaders-455508:${project.iris_curse_file}"
     if (project.hasProperty("withIris")) {
-        runtimeOnly "curse.maven:irisshaders-455508:${project.iris_curse_file}"
-        runtimeOnly "curse.maven:sodium-394468:${project.sodium_curse_file}"
+        modRuntimeOnly "curse.maven:irisshaders-455508:${project.iris_curse_file}"
+        modRuntimeOnly "curse.maven:sodium-394468:${project.sodium_curse_file}"
     }
 
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     annotationProcessor 'com.google.code.findbugs:jsr305:3.0.2'
+
+    // NOTE: with loom.mixin.useLegacyMixinAp = true, Loom wires the Sponge mixin
+    // annotation processor and the mapping file for it by itself. Do not add a manual
+    // annotationProcessor entry for mixin/mappings here or the refmap is generated twice.
 
     // ============================================================
     // 26.1.2 dependency audit. Optional integrations stay compile-only so they are
@@ -180,10 +195,10 @@ dependencies {
     // ============================================================
 
     // JEI — verified 26.1.2 Fabric release (kept on the previously compiled API line)
-    compileOnly "maven.modrinth:jei:${jei_version}"
+    modCompileOnly "maven.modrinth:jei:${jei_version}"
 
     // Cloth Config — 26.1.x
-    implementation "me.shedaniel.cloth:cloth-config-fabric:${cloth_config_fabric}"
+    modImplementation "me.shedaniel.cloth:cloth-config-fabric:${cloth_config_fabric}"
 
     // Embeddium
     // compileOnly "curse.maven:embeddium-908741:${embeddedt_id}"
@@ -193,13 +208,13 @@ dependencies {
 
     // Player Animation Library (PAL) is optional at runtime. TACZ's isolated PAL 1.2.5
     // implementation replaces the unavailable KosmX API used by the 1.21.1 upstream.
-    compileOnly "maven.modrinth:player-animation-library:${player_animation_lib}"
+    modCompileOnly "maven.modrinth:player-animation-library:${player_animation_lib}"
 
     // MrCrayfish's Controllable 0.26.0 and Shoulder Surfing 5.0.10 both publish
     // Fabric 26.1.2 builds. These restore upstream controller bindings/rumble and
     // adaptive shoulder-camera behavior without making either mod mandatory.
-    compileOnly "curse.maven:controllable-317269:${controllable_curse_file}"
-    compileOnly "maven.modrinth:shoulder-surfing-reloaded:${shoulder_surfing_version}"
+    modCompileOnly "curse.maven:controllable-317269:${controllable_curse_file}"
+    modCompileOnly "maven.modrinth:shoulder-surfing-reloaded:${shoulder_surfing_version}"
 
     // KubeJS
     // compileOnly "dev.latvian.mods:kubejs-fabric:${kubejs_version}"
@@ -215,22 +230,22 @@ dependencies {
 
     // Forge Config API Port - 26.1.2 compatible (ForgeConfigSpec + ForgeConfigRegistry)
     // 26.1.5 Fabric: https://github.com/Fuzss/forge-config-api-port (branch 26.1.x)
-    implementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.1.5"
+    modImplementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.forge_config_api_port}"
     // 备用 (如果上面 maven 仓库不可用): curse.maven:forge-config-api-port-547434:8292030
 
     // ModMenu — 18.0.0-alpha.8 is the published 26.1–26.1.2 build.
-    implementation "maven.modrinth:modmenu:${modmenu_version}"
+    modImplementation "maven.modrinth:modmenu:${modmenu_version}"
 
     // Zoomify — 2.16.0+26.1 supports 26.1–26.1.2.
-    compileOnly "maven.modrinth:zoomify:${zoomify_version}"
+    modCompileOnly "maven.modrinth:zoomify:${zoomify_version}"
 
     // ImmediatelyFast supports 26.1.2, but its old public HUD batching API was removed.
     // TACZ's delayed GuiItemAtlas path needs no direct compile-time integration.
 
     // REI — 26.1.2
-    compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
+    modCompileOnly "dev.architectury:architectury-fabric:${architectury_version}"
+    modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
+    modCompileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
 
     // Spark
     // runtimeOnly "curse.maven:spark-361579:4738953"
@@ -250,6 +265,26 @@ processResources {
     inputs.file bundledSourcesAndResources
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
+    // Any file hand-written under src/main/resources overrides its bundle copy.
+    // DuplicatesStrategy.EXCLUDE already makes the first spec win (the source-set
+    // resources are added before this one), but relying on copy-spec ordering is
+    // fragile: a bundle file that shadows a deliberate fix fails silently at runtime.
+    // Enumerate the overrides and exclude them explicitly instead.
+    //
+    // This exists because assets/tacz/shaders/core/scope_body.vsh in the 26.1.2 bundle
+    // still imports <minecraft:sample_lightmap.glsl>, an include that does not exist in
+    // 1.21.11. ShaderManager NPEs on the missing import, the resource reload aborts with
+    // "Caught error loading resourcepacks", and the client hangs on a black screen.
+    // See docs/verify_shader_imports.py.
+    def overriddenBySource = []
+    def sourceResourceRoot = file("src/main/resources")
+    if (sourceResourceRoot.exists()) {
+        sourceResourceRoot.eachFileRecurse(groovy.io.FileType.FILES) { f ->
+            overriddenBySource << sourceResourceRoot.toPath()
+                    .relativize(f.toPath()).toString().replace(File.separator, "/")
+        }
+    }
+
     from(zipTree(bundledSourcesAndResources)) {
         exclude "META-INF/**"
         exclude "**/*.java"
@@ -257,6 +292,7 @@ processResources {
         exclude "*.mixins.json"
         exclude "tacz.accesswidener"
         exclude "shouldersurfing_plugin.json"
+        overriddenBySource.each { exclude it }
     }
     inputs.property "minecraft_version", project.minecraft_version
     inputs.property "loader_version", project.loader_version
@@ -269,7 +305,8 @@ processResources {
     }
 }
 
-def targetJavaVersion = 25
+// 1.21.11 runs on Java 21 (26.x is the Java 25 line).
+def targetJavaVersion = 21
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"
     if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
@@ -299,15 +336,28 @@ sourceSets {
             // Carry On 2.10 uses a data-tag contract; its old Java config hook is intentionally absent.
             // Accelerated Rendering mixin：随 AR 模块禁用
             exclude 'com/tacz/guns/mixin/client/ar/**'
+            // Iris：阶段 9 已恢复（2026-08-13）。Iris 改为 modCompileOnly，编译期可见，
+            // mixin AP 不再报 "target could not be found"，因此这里不再排除。
+            //
+            // 已对 Iris 1.10.7(1.21.11) 逐条核实注入点：
+            //   * ShaderCreator.link(String,String,String,String,String,String,VertexFormat,boolean) 存在；
+            //   * link 内 createShader 的调用顺序为 VERTEX/GEOMETRY/TESSELATION_CONTROL/
+            //     TESSELATION_EVAL/FRAGMENT，故 @ModifyArgs 的 ordinal = 4 正是 FRAGMENT；
+            //   * create / createFallback / createFallbackShadow / createShadow 四条路径
+            //     全部汇聚到同一个 link，patch 一处即可覆盖；
+            //   * 传入的 name 是 ShaderKey.getName()，其实现为 toString().toLowerCase(ROOT)，
+            //     即 HAND_CUTOUT -> "hand_cutout"，与 tacz$isHandProgram 的小写判据一致。
+            //
+            // 运行期仍由 IrisCompatMixinPlugin 的 isModLoaded("iris") 兜底，
+            // 且 tacz.iris.mixins.json 保持 required=false，未装 Iris 的用户不受影响。
         }
     }
 }
 
 java {
-    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
-    }
+    // Pin the toolchain instead of only raising it: building 1.21.11 with a JDK 25
+    // toolchain would silently link against the wrong class-file/API baseline.
+    toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     withSourcesJar()
 }
 

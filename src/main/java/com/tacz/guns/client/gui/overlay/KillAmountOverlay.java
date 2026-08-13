@@ -4,7 +4,7 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
@@ -31,7 +31,7 @@ import org.joml.Matrix3x2fStack;
  *       {@code pushMatrix/popMatrix}（与 {@code GunSmithTableScreen} 已验证的写法一致）；</li>
  *   <li>{@code RenderSystem.enableBlend()} 等已移除 —— 26.2 的 GUI 文本走
  *       {@code GuiRenderState}，混合由管线自带，不需要手动开关；</li>
- *   <li>颜色<b>必须带 alpha</b>：{@code GuiGraphicsExtractor#text} 的第一条指令就是
+ *   <li>颜色<b>必须带 alpha</b>：{@code GuiGraphics#text} 的第一条指令就是
  *       {@code if (ARGB.alpha(color) == 0) return;}，上游的
  *       {@code Mth.hsvToRgb(...) + (alpha << 24)} 天然满足，这里原样保留。</li>
  * </ul>
@@ -40,7 +40,7 @@ public class KillAmountOverlay {
     private static long killTimestamp = -1L;
     private static int killAmount = 0;
 
-    public static void render(GuiGraphicsExtractor graphics, float partialTick) {
+    public static void render(GuiGraphics graphics, float partialTick) {
         if (!RenderConfig.KILL_AMOUNT_ENABLE.get()) {
             return;
         }
@@ -87,7 +87,7 @@ public class KillAmountOverlay {
             // 先缩放再用 2 倍坐标定位 —— 与上游逐字一致：
             // 缩放 0.5 后，屏幕像素 (x, y) 对应的绘制坐标是 (2x, 2y)。
             poseStack.scale(0.5f, 0.5f);
-            graphics.text(mc.font, text, (int) (width - fontWith / 2.0f), (height - 45) * 2 - 1, color, false);
+            graphics.drawString(mc.font, text, (int) (width - fontWith / 2.0f), (height - 45) * 2 - 1, color, false);
         }
         poseStack.popMatrix();
     }

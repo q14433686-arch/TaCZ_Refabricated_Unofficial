@@ -14,7 +14,7 @@ import mezz.jei.api.recipe.types.IRecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -34,11 +34,11 @@ public class AttachmentQueryCategory implements IRecipeCategory<AttachmentQueryE
     }
 
     @Override
-    public void draw(AttachmentQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+    public void draw(AttachmentQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
         List<ItemStack> extraAllowGunStacks = entry.getExtraAllowGunStacks();
         if (!extraAllowGunStacks.isEmpty()) {
             Font font = Minecraft.getInstance().font;
-            guiGraphics.text(font, Component.translatable("jei.tacz.attachment_query.more"), 128, 134, 0xFF555555, false);
+            guiGraphics.drawString(font, Component.translatable("jei.tacz.attachment_query.more"), 128, 134, 0xFF555555, false);
         }
     }
 

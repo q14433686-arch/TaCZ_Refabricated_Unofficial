@@ -1,0 +1,223 @@
+{
+ "other:Mixin target net.irisshaders.iris.pipeline.programs.ShaderCr": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/mixin/client/iris/IrisDepthRestoreShaderMixin.java"
+  ]
+ },
+ "other:Mixin has no targets": {
+  "errors": 1,
+  "files": [
+   "me/xjqsh/lrtactical/mixin/client/GuiGraphicsExtractorMixin.java"
+  ]
+ },
+ "other:Could not locate @Accessor target pausePartialTick in target": {
+  "errors": 1,
+  "files": [
+   "cn/sh1rocu/tacz/mixin/accessor/MinecraftAccessor.java"
+  ]
+ },
+ "sym:ServerEntityLevelChangeEvents": {
+  "errors": 1,
+  "files": [
+   "cn/sh1rocu/tacz/TaCZFabric.java"
+  ]
+ },
+ "pkg:net.minecraft.client.renderer.state.level": {
+  "errors": 9,
+  "files": [
+   "cn/sh1rocu/tacz/api/event/RenderLivingEvent.java",
+   "cn/sh1rocu/tacz/mixin/client/LivingEntityRendererMixin.java",
+   "com/tacz/guns/client/particle/BulletHoleParticle.java",
+   "com/tacz/guns/client/renderer/block/GunSmithTableRenderer.java",
+   "com/tacz/guns/client/renderer/block/StatueRenderer.java",
+   "com/tacz/guns/client/renderer/block/TargetRenderer.java",
+   "com/tacz/guns/client/renderer/entity/EntityBulletRenderer.java",
+   "com/tacz/guns/mixin/client/GameRendererMixin.java",
+   "me/xjqsh/lrtactical/client/renderer/entity/ThrowableEntityRenderer.java"
+  ]
+ },
+ "sym:CameraRenderState": {
+  "errors": 10,
+  "files": [
+   "cn/sh1rocu/tacz/api/event/RenderLivingEvent.java",
+   "cn/sh1rocu/tacz/mixin/client/LivingEntityRendererMixin.java",
+   "com/tacz/guns/mixin/client/GameRendererMixin.java",
+   "me/xjqsh/lrtactical/client/renderer/entity/ThrowableEntityRenderer.java"
+  ]
+ },
+ "sym:PictureInPictureRendererRegistry": {
+  "errors": 1,
+  "files": [
+   "cn/sh1rocu/tacz/client/TaCZFabricClient.java"
+  ]
+ },
+ "sym:GuiGraphicsExtractor": {
+  "errors": 86,
+  "files": [
+   "cn/sh1rocu/tacz/mixin/client/GuiMixin.java",
+   "com/tacz/guns/client/event/RenderCrosshairEvent.java",
+   "com/tacz/guns/client/gui/GunPackProgressScreen.java",
+   "com/tacz/guns/client/gui/GunRefitScreen.java",
+   "com/tacz/guns/client/gui/GunSmithTableScreen.java",
+   "com/tacz/guns/client/gui/compat/ClothConfigScreen.java",
+   "com/tacz/guns/client/gui/components/FlatColorButton.java",
+   "com/tacz/guns/client/gui/components/GunPackList.java",
+   "com/tacz/guns/client/gui/components/TaczImageButton.java",
+   "com/tacz/guns/client/gui/components/refit/GunAttachmentSlot.java",
+   "com/tacz/guns/client/gui/components/refit/GunPropertyDiagrams.java",
+   "com/tacz/guns/client/gui/components/refit/InventoryAttachmentSlot.java",
+   "com/tacz/guns/client/gui/components/refit/RefitTurnPageButton.java",
+   "com/tacz/guns/client/gui/components/refit/RefitUnloadButton.java",
+   "com/tacz/guns/client/gui/components/smith/ResultButton.java",
+   "com/tacz/guns/client/gui/components/smith/TypeButton.java",
+   "com/tacz/guns/client/gui/overlay/GunHudOverlay.java",
+   "com/tacz/guns/client/gui/overlay/HeatBarOverlay.java",
+   "com/tacz/guns/client/gui/overlay/InteractKeyTextOverlay.java",
+   "com/tacz/guns/client/gui/overlay/KillAmountOverlay.java",
+   "com/tacz/guns/client/gui/toast/GunLevelUpToast.java",
+   "com/tacz/guns/client/tooltip/ClientAmmoBoxTooltip.java",
+   "com/tacz/guns/client/tooltip/ClientAttachmentItemTooltip.java",
+   "com/tacz/guns/client/tooltip/ClientBlockItemTooltip.java",
+   "com/tacz/guns/client/tooltip/ClientGunTooltip.java",
+   "com/tacz/guns/compat/cloth/widget/CrosshairDropdown.java",
+   "com/tacz/guns/compat/cloth/widget/OpenGunPackDirEntry.java",
+   "com/tacz/guns/compat/jei/category/AttachmentQueryCategory.java",
+   "me/xjqsh/lrtactical/client/overlay/BlindnessOverlay.java",
+   "me/xjqsh/lrtactical/client/overlay/UsingProgressOverlay.java",
+   "me/xjqsh/lrtactical/client/tooltip/AbstractClientItemTooltip.java",
+   "me/xjqsh/lrtactical/mixin/client/GuiGraphicsExtractorMixin.java"
+  ]
+ },
+ "sym:ItemStackTemplate": {
+  "errors": 1,
+  "files": [
+   "cn/sh1rocu/tacz/util/forge/PartialNBTIngredient.java"
+  ]
+ },
+ "pkg:net.minecraft.client.resources.model.cuboid": {
+  "errors": 8,
+  "files": [
+   "com/tacz/guns/client/renderer/item/GunSmithTableItemRenderer.java",
+   "com/tacz/guns/client/resource/index/ClientBlockIndex.java",
+   "com/tacz/guns/client/resource/pojo/display/block/BlockTransformParser.java",
+   "me/xjqsh/lrtactical/client/renderer/item/MeleeItemRenderer.java",
+   "me/xjqsh/lrtactical/client/renderer/item/ThrowableItemRendererWrapper.java",
+   "me/xjqsh/lrtactical/client/resource/display/MeleeDisplayInstance.java",
+   "me/xjqsh/lrtactical/client/resource/display/ThrowableDisplayInstance.java"
+  ]
+ },
+ "sym:ItemTransforms": {
+  "errors": 7,
+  "files": [
+   "com/tacz/guns/client/resource/index/ClientBlockIndex.java",
+   "com/tacz/guns/client/resource/pojo/display/block/BlockTransformParser.java",
+   "me/xjqsh/lrtactical/client/resource/display/MeleeDisplayInstance.java",
+   "me/xjqsh/lrtactical/client/resource/display/ThrowableDisplayInstance.java"
+  ]
+ },
+ "pkg:net.fabricmc.fabric.api.menu.v1": {
+  "errors": 2,
+  "files": [
+   "com/tacz/guns/block/entity/GunSmithTableBlockEntity.java",
+   "com/tacz/guns/inventory/GunSmithTableMenu.java"
+  ]
+ },
+ "sym:ExtendedMenuProvider": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/block/entity/GunSmithTableBlockEntity.java"
+  ]
+ },
+ "sym:ExtendedMenuType": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/inventory/GunSmithTableMenu.java"
+  ]
+ },
+ "pkg:net.minecraft.client.renderer.state.gui.pip": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/client/gui/preview/GunPreviewRenderState.java"
+  ]
+ },
+ "sym:PictureInPictureRenderState": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/client/gui/preview/GunPreviewRenderState.java"
+  ]
+ },
+ "pkg:net.fabricmc.fabric.api.client.keymapping.v1": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/client/init/ClientSetupEvent.java"
+  ]
+ },
+ "sym:ClientTooltipComponentCallback": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/client/init/ClientSetupEvent.java"
+  ]
+ },
+ "sym:ParticleProviderRegistry": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/client/init/ParticleFactories.java"
+  ]
+ },
+ "sym:LightCoordsUtil": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/client/model/functional/TextShowRender.java"
+  ]
+ },
+ "sym:QuadParticleRenderState": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/client/particle/BulletHoleParticle.java"
+  ]
+ },
+ "sym:ColorTargetState": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/client/render/scope/ScopeRenderTypes.java"
+  ]
+ },
+ "sym:DepthStencilState": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/client/render/scope/ScopeRenderTypes.java"
+  ]
+ },
+ "sym:CompareOp": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/client/render/scope/ScopeRenderTypes.java"
+  ]
+ },
+ "sym:BlockModelRenderState": {
+  "errors": 2,
+  "files": [
+   "com/tacz/guns/client/renderer/entity/TargetMinecartRenderer.java"
+  ]
+ },
+ "pkg:net.minecraft.client.resources.model.sprite": {
+  "errors": 2,
+  "files": [
+   "com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java",
+   "me/xjqsh/lrtactical/client/renderer/item/LrDynamicItemModel.java"
+  ]
+ },
+ "sym:ItemTransform": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/client/resource/pojo/display/block/BlockTransformParser.java"
+  ]
+ },
+ "sym:FriendlyByteBufs": {
+  "errors": 1,
+  "files": [
+   "com/tacz/guns/network/HandshakeNetworking.java"
+  ]
+ }
+}

@@ -5,8 +5,8 @@
     "lrtactical"
   ],
   "version": "${version}",
-  "name": "[UNOFFICIAL] TaCZ Refabricated (26.1.2 R1)",
-  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. R1 for Minecraft 26.1.2 includes a built-in LRTactical compatibility layer and supports most standard, unencrypted ZIP knife packs. It is not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.1.2.R1' build metadata so existing pack version requirements continue to work.",
+  "name": "[UNOFFICIAL] TaCZ Refabricated (1.21.11 R1)",
+  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. R1 for Minecraft 1.21.11 includes a built-in LRTactical compatibility layer and supports most standard, unencrypted ZIP knife packs. It is not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.1.21.11.R1' build metadata so existing pack version requirements continue to work.",
   "authors": [
     "Sh1roCu"
   ],
@@ -50,16 +50,16 @@
   "accessWidener": "tacz.accesswidener",
   "depends": {
     "fabricloader": ">=${loader_version}",
-    "fabric-api": ">=0.155.2",
+    "fabric-api": ">=0.141.6",
     "minecraft": "${minecraft_version}",
-    "java": ">=25",
-    "forgeconfigapiport": ">=26.1.5"
+    "java": ">=21",
+    "forgeconfigapiport": ">=21.11.1"
   },
   "suggests": {
     "carryon": ">=2.10.0",
-    "controllable": ">=0.26.0",
+    "controllable": ">=0.25.7",
     "shouldersurfing": ">=5.0.0",
-    "iris": ">=1.11.2",
-    "sodium": ">=0.9.1"
+    "iris": ">=1.10.7",
+    "sodium": ">=0.8.13"
   }
 }

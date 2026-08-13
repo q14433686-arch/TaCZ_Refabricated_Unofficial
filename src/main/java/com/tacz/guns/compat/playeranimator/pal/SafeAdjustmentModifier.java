@@ -87,20 +87,21 @@ final class SafeAdjustmentModifier extends AdjustmentModifier {
         this.dataReady = true;
     }
 
+    // PAL 1.1.9（1.21.11 线）的 get3DTransform 返回 PlayerAnimBone，
+    // PAL 1.2.5（26.1.2 线）返回 void。语义不变，这里跟随 1.1.9 把结果透传出去。
     @Override
-    public void get3DTransform(@NotNull PlayerAnimBone bone) {
+    public PlayerAnimBone get3DTransform(@NotNull PlayerAnimBone bone) {
         if (!dataReady) {
             // 父类此时 data == null，直接调用必 NPE。
             // 借它自己的 enabled 短路走「不做调整、只透传」的分支。
             boolean previous = this.enabled;
             this.enabled = false;
             try {
-                super.get3DTransform(bone);
+                return super.get3DTransform(bone);
             } finally {
                 this.enabled = previous;
             }
-            return;
         }
-        super.get3DTransform(bone);
+        return super.get3DTransform(bone);
     }
 }

@@ -34,7 +34,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.PictureInPictureRendererRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.SpecialGuiElementRegistry;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
 
@@ -102,10 +102,10 @@ public class TaCZFabricClient implements ClientModInitializer {
         // GUI 是 extract→绘制两段式，1.21.1 那套直接改 RenderSystem 模型视图矩阵
         // 再 renderStatic 的做法已不存在；带自定义变换的 GUI 3D 绘制只能走 PictureInPictureRenderer。
         // 不注册的话，GunSmithTableScreen 提交的 GunPreviewRenderState 找不到渲染器 -> 预览框空白。
-        // 26.1.2 的 PictureInPictureRenderer 基类构造器要求 MultiBufferSource.BufferSource，
-        // 由 Fabric 的 Context 提供（这一点与 26.2 的无参构造不同，是本回移植的适配点）。
-        PictureInPictureRendererRegistry.register(
-                ctx -> new com.tacz.guns.client.gui.preview.GunPreviewRenderer(ctx.bufferSource()));
+        // PictureInPictureRenderer 基类构造器要求 MultiBufferSource.BufferSource。
+        // FAPI 0.141 的 SpecialGuiElementRegistry.Context 用 vertexConsumers() 提供（26.1 叫 bufferSource()）。
+        SpecialGuiElementRegistry.register(
+                ctx -> new com.tacz.guns.client.gui.preview.GunPreviewRenderer(ctx.vertexConsumers()));
         subscribeEvents();
     }
 

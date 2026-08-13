@@ -12,7 +12,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.block.BlockModelRenderState;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.renderer.entity.AbstractMinecartRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.MinecartRenderState;
@@ -93,7 +93,9 @@ public class TargetMinecartRenderer extends AbstractMinecartRenderer<TargetMinec
      */
     @Override
     protected void submitMinecartContents(MinecartRenderState state,
-                                          BlockModelRenderState blockModelRenderState,
+                                          // 1.21.11 这里是裸 BlockState；26.1 才包装成 BlockModelRenderState。
+                                          // 本实现完全不使用该参数（车厢内容物换成了自定义 Bedrock 模型）。
+                                          BlockState blockState,
                                           PoseStack stack,
                                           SubmitNodeCollector collector,
                                           int packedLight) {

@@ -1,4 +1,4 @@
-accessWidener v2 official
+accessWidener v2 named
 
 # Confirmed against the Minecraft 26.1.2 development jar by compileJava.
 # Keep entries minimal; the remaining 1.21.1 targets must be individually revalidated.
@@ -13,3 +13,12 @@ accessible method net/minecraft/client/renderer/rendertype/RenderType <init> (Lj
 #  && !isMobilityRestricted && !isPassenger && target instanceof LivingEntity && !isSprinting），
 # 直接复用可保证与原版【完全一致】而非行为近似，故开放访问而不是手写一遍条件。
 accessible method net/minecraft/world/entity/player/Player canCriticalAttack (Lnet/minecraft/world/entity/Entity;)Z
+
+# 工作台预览 PIP：需要读取当前 scissor 以与外层裁剪求交，并把 PIP state 提交给 GuiRenderState。
+# 26.1.2 的 GuiGraphicsExtractor 把这两个字段（及 ScissorStack 类）声明为 public；
+# 1.21.11 的 GuiGraphics 里 scissorStack 是 private、guiRenderState 是包级私有、
+# ScissorStack 本身也是包级私有（javap 对 minecraft-merged-1.21.11 逐一确认）。
+# 这里只开放读取所需的最小集合，不改任何行为。
+accessible class net/minecraft/client/gui/GuiGraphics$ScissorStack
+accessible field net/minecraft/client/gui/GuiGraphics scissorStack Lnet/minecraft/client/gui/GuiGraphics$ScissorStack;
+accessible field net/minecraft/client/gui/GuiGraphics guiRenderState Lnet/minecraft/client/gui/render/state/GuiRenderState;

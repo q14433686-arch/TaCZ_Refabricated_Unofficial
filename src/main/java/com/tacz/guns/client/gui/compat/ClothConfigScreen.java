@@ -2,7 +2,7 @@ package com.tacz.guns.client.gui.compat;
 
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineLabel;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
@@ -37,16 +37,16 @@ public class ClothConfigScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor gui, int pMouseX, int pMouseY, float pPartialTick) {
-        this.extractBackground(gui, pMouseX, pMouseY, pPartialTick);
+    public void render(GuiGraphics gui, int pMouseX, int pMouseY, float pPartialTick) {
+        this.renderBackground(gui, pMouseX, pMouseY, pPartialTick);
         int centerX = this.width / 2;
         int centerY = this.height / 4 - 20;
         int lineY = centerY;
         for (var line : this.font.split(Component.translatable("gui.tacz.cloth_config_warning.tips"), 300)) {
-            gui.centeredText(this.font, line, centerX, lineY, 0xFFFFFFFF);
+            gui.drawCenteredString(this.font, line, centerX, lineY, 0xFFFFFFFF);
             lineY += 9;
         }
-        super.extractRenderState(gui, pMouseX, pMouseY, pPartialTick);
+        super.render(gui, pMouseX, pMouseY, pPartialTick);
     }
 
     private void openUrl(String url) {

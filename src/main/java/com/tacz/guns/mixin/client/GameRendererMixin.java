@@ -1,17 +1,19 @@
 package com.tacz.guns.mixin.client;
 
 import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
+import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
 import com.tacz.guns.compat.iris.IrisCompat;
+import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
-import org.joml.Matrix4fc;
+import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** 26.2 bob hooks using CameraRenderState signatures. */
+/** 1.21.11 bob / hand-pass hooks. */
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
     @Shadow @Final private Minecraft minecraft;
@@ -28,18 +30,21 @@ public abstract class GameRendererMixin {
     @Unique
     private boolean tacz$renderingItemInHand;
 
+    // 1.21.11: renderItemInHand(float partialTick, boolean renderHand, Matrix4f projection)
+    // 26.1 的签名是 (CameraRenderState, float, Matrix4fc)——多了 state、少了 boolean、
+    // 且是 Matrix4fc 接口而非 Matrix4f 实现类。三处都要跟着改（javap 核实）。
     @Inject(method = "renderItemInHand", at = @At("HEAD"))
-    private void tacz$beginHandPass(CameraRenderState cameraState,
-                                    float partialTick,
-                                    Matrix4fc projection,
+    private void tacz$beginHandPass(float partialTick,
+                                    boolean renderHand,
+                                    Matrix4f projection,
                                     CallbackInfo ci) {
         this.tacz$renderingItemInHand = true;
     }
 
     @Inject(method = "renderItemInHand", at = @At("RETURN"))
-    private void tacz$endHandPass(CameraRenderState cameraState,
-                                  float partialTick,
-                                  Matrix4fc projection,
+    private void tacz$endHandPass(float partialTick,
+                                  boolean renderHand,
+                                  Matrix4f projection,
                                   CallbackInfo ci) {
         this.tacz$renderingItemInHand = false;
     }
@@ -53,9 +58,10 @@ public abstract class GameRendererMixin {
     }
 
     @Inject(method = "bobHurt", at = @At("HEAD"), cancellable = true)
-    private void tacz$bobHurt(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
+    // 1.21.11: bobHurt(PoseStack, float partialTick)；26.1 是 (CameraRenderState, PoseStack)。
+    // partialTick 由形参直接给出，比原先从 DeltaTracker 现取更准。
+    private void tacz$bobHurt(PoseStack poseStack, float partialTick, CallbackInfo ci) {
         if (minecraft.getCameraEntity() instanceof LocalPlayer player && !player.isDeadOrDying()) {
-            float partialTick = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
             if (GunHurtBobTweak.onHurtBobTweak(player, poseStack, partialTick)) {
                 ci.cancel();
                 return;
@@ -78,7 +84,8 @@ public abstract class GameRendererMixin {
     }
 
     @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
-    private void tacz$bobView(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
+    // 1.21.11: bobView(PoseStack, float partialTick)；26.1 是 (CameraRenderState, PoseStack)。
+    private void tacz$bobView(PoseStack poseStack, float partialTick, CallbackInfo ci) {
         if (this.tacz$isItemInHandBobPass()) {
             RenderItemInHandBobEvent.BobView event = new RenderItemInHandBobEvent.BobView();
             RenderItemInHandBobEvent.VIEW.invoker().post(event);
@@ -108,5 +115,20 @@ public abstract class GameRendererMixin {
                 RenderTickEvent.Phase.END,
                 deltaTracker.getGameTimeDeltaPartialTick(false)
         ));
+    }
+
+    /**
+     * 26.1 的 {@code Camera#calculateFov} / {@code calculateHudFov} 在 1.21.11 不存在；
+     * 这一版 FOV 统一由 {@code GameRenderer#getFov(Camera,float,boolean)} 计算，
+     * 布尔参 true=世界 FOV、false=手部/HUD FOV
+     * （字节码确认：只有 true 分支会读 options.fov() 并乘 fovModifier）。
+     * 因此两个事件在这里按该参数分派，语义与 26.1.2 一致。
+     */
+    @ModifyReturnValue(method = "getFov", at = @At("RETURN"))
+    private float tacz$modifyFov(float original, Camera camera, float partialTick, boolean useFovSetting) {
+        ViewportEvent.ComputeFov event =
+                new ViewportEvent.ComputeFov(camera, partialTick, useFovSetting, original);
+        ViewportEvent.FOV.invoker().onComputeFov(event);
+        return (float) event.getFOV();
     }
 }

@@ -18,7 +18,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
@@ -29,7 +29,7 @@ import org.joml.Matrix3x2fStack;
 import java.text.DecimalFormat;
 
 /**
- * 26.2 HUD implementation using Fabric HudElementRegistry + GuiGraphicsExtractor.
+ * 26.2 HUD implementation using Fabric HudElementRegistry + GuiGraphics.
  */
 public class GunHudOverlay {
     private static final Identifier FIRE_MODE_SEMI =
@@ -51,7 +51,7 @@ public class GunHudOverlay {
 
     private static final int MAX_AMMO_COUNT = 9999;
 
-    public static void render(GuiGraphicsExtractor graphics, float partialTick) {
+    public static void render(GuiGraphics graphics, float partialTick) {
         if (!RenderConfig.GUN_HUD_ENABLE.get()) {
             return;
         }
@@ -127,14 +127,14 @@ public class GunHudOverlay {
         // 当前弹药数 (1.5 倍字号)
         poseStack.pushMatrix();
         poseStack.scale(1.5f, 1.5f);
-        graphics.text(font, currentAmmoCountText,
+        graphics.drawString(font, currentAmmoCountText,
                 (int) ((width - 70) / 1.5f), (int) ((height - 43) / 1.5f), ammoCountColor, false);
         poseStack.popMatrix();
 
         // 备弹数 (0.8 倍字号, 紧跟在当前弹药数右侧)
         poseStack.pushMatrix();
         poseStack.scale(0.8f, 0.8f);
-        graphics.text(font, inventoryAmmoCountText,
+        graphics.drawString(font, inventoryAmmoCountText,
                 (int) ((width - 68 + font.width(currentAmmoCountText) * 1.5f) / 0.8f),
                 (int) ((height - 43) / 0.8f), inventoryAmmoCountColor, false);
         poseStack.popMatrix();
@@ -166,7 +166,7 @@ public class GunHudOverlay {
         }
         poseStack.pushMatrix();
         poseStack.scale(versionScale, versionScale);
-        graphics.text(font, versionLine,
+        graphics.drawString(font, versionLine,
                 (int) ((width - 70) / versionScale), (int) ((height - 29f) / versionScale), 0xFFAAAAAA, false);
         poseStack.popMatrix();
 
