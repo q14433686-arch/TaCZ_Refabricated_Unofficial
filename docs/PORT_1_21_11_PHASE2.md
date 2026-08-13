@@ -644,10 +644,12 @@ apertureDepth < worldDepth - TACZ_MASK_EPSILON   // 1.0e-6
 编译期两条 mixin 警告：
 
 - `HumanoidModelMixin.setupAnim(LivingEntity;FFFFF)V` —— 1.21.11 是 `setupAnim(T)`（单参渲染态）；
-- `ShapedRecipeMixin.itemStackFromJson` —— 该方法已不存在。
+- `ShapedRecipeMixin.itemStackFromJson` —— 该方法已不存在；对应的死源码已移除。
 
-两者**都没有注册在任何 mixin config 里**（`fabric.mod.json` 的 4 个配置中均无），
-属于死代码，不会在运行期应用，因此不会崩。记录在此以免将来有人把它们加回配置。
+`HumanoidModelMixin` 没有注册在任何 mixin config 里，属于死代码，不会在运行期应用。
+旧枪包工作台结果所需的 `nbt` 兼容不再尝试注入这个已消失的方法：改由
+`DelegatingPackResources` 在读取枪包配方时转换为原生 `components.minecraft:custom_data`，
+并兼容旧的 `data/<ns>/recipes/` 目录。
 
 ---
 

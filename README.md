@@ -149,6 +149,27 @@ gunpack.meta.json
 转换器会生成带 `gunpack.meta.json` 的输出；它不能保证自动修复所有旧资源、配方或脚本差异，
 请保留原包备份并检查游戏日志。
 
+### 旧式自制工作台配方
+
+不少 1.20.6 及以前的枪包把自制工作台的原版合成配方放在
+`data/<命名空间>/recipes/`（复数），且用旧结果格式：
+
+```json
+"result": {
+  "item": "tacz:workbench_b",
+  "nbt": { "BlockId": "your_pack:smith_table" }
+}
+```
+
+R1 会在**枪包加载时**把该目录映射到 1.21.11 所需的 `recipe/`，并将该结果转换为
+`id` + `components.minecraft:custom_data`。这会保留 `BlockId`，让枪械、弹药和配件
+重新按该枪包自己的工作台 filter 与页签处理，而不是因丢失身份而误落到同一外形的默认
+工作台或 LRTactical 工作台中。
+
+这项兼容只处理标准原版配方的旧目录与结果数据；不会猜测或修复已经在旧版本中合成、
+但缺少 `BlockId` 的工作台物品/方块——物理工作台外形不足以唯一确定它原本属于哪个枪包。
+更新后请重新合成一次受影响的自制工作台。
+
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
