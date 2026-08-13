@@ -5,6 +5,24 @@
 
 ---
 
+## R12
+
+**审计 + 恢复：LRTactical 爆炸屏幕震动**
+
+对仓库 `26.1.2`、`26.2(main)` 与原始 LRTactical NeoForge 1.21.1 的显式 no-op/TODO
+逐项对照后，确认绝大多数空实现是 ABI 门面、旧 collector API、上游未设计功能或资源授权限制。
+新增 `docs/EXPLICIT_GAPS_AUDIT_R12.md` 记录每项证据与处理边界。
+
+发现并恢复了一个真实功能缺口：爆炸数据里的 `screen_shake_time` /
+`screen_shake_amplitude` 以前从未生效。R12 新增范围限定的 S2C payload、客户端 tick
+衰减状态和 `ViewportEvent.CAMERA` 视觉层；震动在枪械后坐之后叠加，不修改玩家真实朝向，
+不影响服务端爆炸/伤害权威性。
+
+仍未粗暴实现 `destroy_multiplier`：原版 `Level#explode` 会同时影响伤害、击退与方块，
+不能等价替代上游只放大方块射线能量的 `CustomExplosion`。
+
+---
+
 ## R11
 
 **修复：Complementary 在 R9 late hand 之后仍雾化准星/目镜黑边**

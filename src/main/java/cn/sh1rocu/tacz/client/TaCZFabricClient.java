@@ -120,6 +120,10 @@ public class TaCZFabricClient implements ClientModInitializer {
         ViewportEvent.FOV.register(CameraSetupEvent::applyGunModelFovModifying);
         GunFireEvent.CALLBACK.register(CameraSetupEvent::initialCameraRecoil);
         ViewportEvent.CAMERA.register(CameraSetupEvent::applyCameraRecoil);
+        // LRTactical explosion shake is deliberately layered after gun recoil. It changes only
+        // the extracted camera for this frame; player yaw/pitch remains server-authoritative.
+        ViewportEvent.CAMERA.register(me.xjqsh.lrtactical.client.camera.ScreenShakeState::apply);
+        ClientTickEvents.END_CLIENT_TICK.register(me.xjqsh.lrtactical.client.camera.ScreenShakeState::tick);
         ComputeFovModifierEvent.CALLBACK.register(CameraSetupEvent::onComputeMovementFov);
 
         EntityHurtByGunEvent.POST.register(ClientHitMark::onEntityHurt);

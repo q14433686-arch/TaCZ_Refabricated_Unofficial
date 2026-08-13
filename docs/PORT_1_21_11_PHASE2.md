@@ -1074,3 +1074,32 @@ final hook 只对 Iris `1.10.7+mc1.21.11` 启用；其 `finalizeLevelRendering` 
 
 4. 准星与 `ocular_ring` 不应再被雾洗淡；镜内的真实远景仍必须保留 Complementary 雾；
 5. 验证镜框继续盖住准星边缘，以及水下/隔水/雨天没有引入回归。
+
+---
+
+## R12：显式 no-op/TODO 复审与 LRTactical 屏幕震动（2026-08-13）
+
+按用户要求，本轮不再以日志为唯一线索，而是扫描源码中的 `TODO`、`暂未`、`no-op`、空实现与
+常量返回，并与仓库 `26.1.2`（`6c409eea`）、`26.2(main)`（`99b472a`）及 LRTactical
+NeoForge 1.21.1 原始实现逐项对照。
+
+完整分类见 `docs/EXPLICIT_GAPS_AUDIT_R12.md`。结果是：大部分空实现属于已废弃 collector API、
+默认接口、无 payload marker 包、无可用依赖的可选加速门面或上游本身未定义的数据系统，不能机械补齐。
+
+唯一具有完整数据字段、明确原始行为、实际调用点且可安全映射到 Fabric 1.21.11 的缺口是
+LRTactical 爆炸屏幕震动。R12 新增：
+
+```text
+GrenadeEntity.onDeath (server)
+  -> ServerMessageScreenShake
+  -> PlayerLookup.world 范围广播
+  -> ScreenShakeState (client)
+  -> ViewportEvent.CAMERA
+```
+
+震动以 tick 为单位衰减、按距离降低、以平滑包络震荡，并在 TACZ 后坐之后叠加；它不写玩家真实
+yaw/pitch，也不改变服务器伤害、爆炸或命中判定。默认 C4 的 `screen_shake_time=20` /
+`screen_shake_amplitude=55` 现在不再是死数据。
+
+暂时保留 `destroyMultiplier`：把它简单乘到 `Level#explode` 半径会错误地同时放大原版伤害与击退；
+只有重建 1.21.11 `ServerExplosion` 的方块射线层后才能保持上游语义。

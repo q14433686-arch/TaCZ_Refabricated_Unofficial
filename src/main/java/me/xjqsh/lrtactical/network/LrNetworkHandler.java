@@ -5,6 +5,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -34,6 +35,8 @@ public final class LrNetworkHandler {
                 ServerMessageSyncLrPack.TYPE, ServerMessageSyncLrPack.CODEC);
         PayloadTypeRegistry.playS2C().register(
                 ServerMessageCustomCooldown.TYPE, ServerMessageCustomCooldown.CODEC);
+        PayloadTypeRegistry.playS2C().register(
+                ServerMessageScreenShake.TYPE, ServerMessageScreenShake.CODEC);
         // C2S：近战攻击请求。serverboundPlay 同样两端都要注册
         // （客户端编码、服务端解码），只在一端注册会报 Unknown payload id。
         PayloadTypeRegistry.playC2S().register(
@@ -53,6 +56,10 @@ public final class LrNetworkHandler {
                 (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageCustomCooldown.TYPE,
                 (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageScreenShake.TYPE,
+                (msg, ctx) -> ctx.client().execute(() ->
+                        me.xjqsh.lrtactical.client.camera.ScreenShakeState.start(
+                                msg.durationTicks(), msg.radius(), msg.amplitude(), msg.origin())));
     }
 
     /**
@@ -74,5 +81,24 @@ public final class LrNetworkHandler {
                                     int duration) {
         ServerPlayNetworking.send(player,
                 new ServerMessageCustomCooldown(id, Math.max(0, duration)));
+    }
+
+    /** Sends an explosion shake only to players who can actually perceive the blast. */
+    public static void sendScreenShake(ServerLevel level,
+                                       net.minecraft.world.phys.Vec3 origin,
+                                       double radius,
+                                       double durationTicks,
+                                       double amplitude) {
+        if (radius <= 0.0 || durationTicks <= 0.0 || amplitude <= 0.0) {
+            return;
+        }
+        double radiusSqr = radius * radius;
+        ServerMessageScreenShake message = new ServerMessageScreenShake(
+                durationTicks, radius, amplitude, origin);
+        for (ServerPlayer player : PlayerLookup.world(level)) {
+            if (player.distanceToSqr(origin) <= radiusSqr) {
+                ServerPlayNetworking.send(player, message);
+            }
+        }
     }
 }

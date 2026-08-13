@@ -160,3 +160,18 @@ getMaxLevel() -> 0
 > 注：源码中仍有不少“26.2 API 变化”字样，它们记录的是这批代码最初迁移到 Feature
 > Rendering/无混淆 API 时的技术来源，不等于“当前构建目标是 26.2”或“功能未完成”。本轮只改
 > 已被调用链证伪的状态描述，不做无证据的全局版本号替换。
+
+---
+
+## R12 复审补充（2026-08-13）
+
+本表最初写完后，部分 LRTactical 项已在后续 1.21.11 提交中落地，不能再作为当前缺口：
+
+- **自定义冷却遮罩已完成**：`ServerMessageCustomCooldown` 已注册/同步，
+  `me.xjqsh.lrtactical.mixin.client.GuiGraphicsMixin` 在 `renderItemCooldown` TAIL 叠加分类遮罩；
+- **效果云 tooltip 已完成**：`EffectCloudThrowableData#getTooltipLines()` 已显示半径、持续时间、点燃
+  与可折叠药水效果；
+- **爆炸屏幕震动已在 R12 完成**：新增 Fabric S2C payload、范围广播与 `ViewportEvent.CAMERA` 客户端层。
+
+`destroyMultiplier`、`flash_shield`、JSON 自定义尾迹粒子和受限原作音效仍按第 7 节的边界保留；
+具体对照、调用链和 R12 网络实现见 `docs/EXPLICIT_GAPS_AUDIT_R12.md`。
