@@ -4,7 +4,7 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 1.21.11 Fabric**（经由本仓库的 26.1.2 分支）。
-直接上游的版本号为 `0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.1.21.11.R7`**。
+直接上游的版本号为 `0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.1.21.11.R1`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
@@ -13,7 +13,7 @@
 · [直接上游](https://github.com/Sh1roCu/TACZ-Refabricated/tree/1.21.1)
 · [原始 TaCZ 项目](https://github.com/MCModderAnchor/TACZ)
 
-> 仓库源码已使用 R7 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R1 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
 
 ---
 
@@ -24,9 +24,9 @@
 | Minecraft | **1.21.11** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **21+**（注意：26.x 分支要求 Java 25，本分支是 21） |
-| Fabric API | **0.141.6+**；R7 构建使用 **0.141.6+1.21.11** |
+| Fabric API | **0.141.6+**；R1 构建使用 **0.141.6+1.21.11** |
 | Forge Config API Port | **21.11.1+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.1.21.11.R7`** |
+| 本 mod | **`1.1.8+fabric.1.21.11.R1`** |
 
 > 1.21.11 是**混淆**版本，构建使用 Loom 的 remap 模式（`net.fabricmc.fabric-loom-remap`）
 > 与官方 Mojang 映射；26.x 分支则是非混淆的。这个差异是本分支绝大多数移植工作的来源。
@@ -149,10 +149,41 @@ gunpack.meta.json
 转换器会生成带 `gunpack.meta.json` 的输出；它不能保证自动修复所有旧资源、配方或脚本差异，
 请保留原包备份并检查游戏日志。
 
+### 旧式自制工作台配方
+
+不少 1.20.6 及以前的枪包把自制工作台的原版合成配方放在
+`data/<命名空间>/recipes/`（复数），且用旧结果格式：
+
+```json
+"result": {
+  "item": "tacz:workbench_b",
+  "nbt": { "BlockId": "your_pack:smith_table" }
+}
+```
+
+R1 会在**枪包加载时**把该目录映射到 1.21.11 所需的 `recipe/`，并将该结果转换为
+`id` + `components.minecraft:custom_data`。同时会把旧的 `{ "tag": ... }` /
+`{ "item": ... }` 材料对象与 `forge:nbt` / `forge:partial_nbt` 条件材料转换为
+1.21.11/Fabric 可解析的形式。这会保留 `BlockId`，让枪械、弹药和配件重新按该枪包自己的
+工作台 filter 与页签处理，而不是因丢失身份而误落到同一外形的默认工作台或 LRTactical
+工作台中。
+
+这项兼容只处理标准原版配方的旧目录与结果数据；不会猜测或修复已经在旧版本中合成、
+但缺少 `BlockId` 的工作台物品/方块——物理工作台外形不足以唯一确定它原本属于哪个枪包。
+更新后请重新合成一次受影响的自制工作台。
+
+安装 JEI 或 REI 时，客户端收到服务端枪包缓存后会自动刷新对应的分类、催化剂和显示项；
+不需要手动重载资源包。日志会出现：
+
+```text
+[TACZ Recipe Viewer] Refreshing after gun-pack sync (... table(s), ... recipe(s)).
+[TACZ Recipe Viewer] JEI/REI refresh completed.
+```
+
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.1.21.11.R7` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.1.21.11.R1` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容

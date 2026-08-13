@@ -65,14 +65,18 @@ public interface IReticleRenderer {
      * @param light          继承的光照
      * @param overlay        overlay 坐标
      * @param aimingProgress 开镜进度 0~1，可用于淡入淡出
-     */
-    /**
      * @param baseRenderType 准星应当使用的 RenderType。掩码生效时它是「反向裁剪」版
      *                       （只在目镜投影内绘制）；否则是普通的 entityCutout。
      * @param maskActive     本帧目镜掩码是否真的生效。
      *                       <p>{@link EtchedReticleRenderer} 必须看这个标志：
      *                       {@code division} 里混着大块遮光板，只有在掩码把它们裁掉时
      *                       才能安全绘制，否则会糊住屏幕（第 9 轮的教训）。</p>
+     * @param deferToIrisTranslucent true 时只冻结快照，交由
+     *                                {@link ScopeLateReticleState} 在 Iris 的较晚
+     *                                {@code HAND_TRANSLUCENT} pass 提交。
+     * @param deferToIrisFinalOverlay true 时保留同一份 3D 快照，交由
+     *                                {@link ScopeFinalOverlayState} 在 Iris final composite
+     *                                之后提交，以避开不可覆盖的屏幕空间雾。
      */
     record Context(PoseStack poseStack,
                    OrderedSubmitNodeCollector collector,
@@ -82,6 +86,8 @@ public interface IReticleRenderer {
                    int light,
                    int overlay,
                    float aimingProgress,
-                   boolean maskActive) {
+                   boolean maskActive,
+                   boolean deferToIrisTranslucent,
+                   boolean deferToIrisFinalOverlay) {
     }
 }

@@ -31,6 +31,10 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
 
     @Override
     public void registerCategories(CategoryRegistry registry) {
+        // REI reruns client plugin registration after a recipe/resource reload. Keeping ids from
+        // the previous server data leaves stale workbench categories and causes displays to be
+        // attached to the wrong physical table after a gun-pack sync.
+        displays.clear();
         var map = TimelessAPI.getAllCommonBlockIndex();
         for (var entry : map) {
             BlockItem item = entry.getValue().getBlock();

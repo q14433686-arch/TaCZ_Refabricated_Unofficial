@@ -50,6 +50,8 @@ public final class ScopeDepthCopyState {
 
     /** Enables the reticle screen-space mask branch. 0 keeps every ordinary shader dormant. */
     public static final String MASK_MODE_UNIFORM = "tacz_ScopeMaskMode";
+    /** Marks the no-fog post-composite shader, which must use our private world-depth copy. */
+    public static final String FINAL_OVERLAY_UNIFORM = "tacz_ScopeFinalOverlay";
     /** Vanilla mask shaders read the pre-ocular world-depth backup from this sampler. */
     public static final String MASK_WORLD_SAMPLER_UNIFORM = "tacz_WorldDepthSampler";
     /** All mask implementations read the post-ocular aperture depth from this sampler. */
@@ -98,6 +100,7 @@ public final class ScopeDepthCopyState {
     private static boolean loggedSelectiveRestoreActive;
     private static boolean loggedMaskActiveIris;
     private static boolean loggedMaskActiveVanilla;
+    private static boolean loggedMaskActiveFinal;
 
     private static final List<OverriddenUnit> OVERRIDDEN_UNITS = new ArrayList<>(3);
     private static boolean loggedActive;
@@ -139,6 +142,17 @@ public final class ScopeDepthCopyState {
                     useIrisPreHandDepth = true;
                     backupValid = true;
                     maskWorldValid = true;
+                    // R11 final-overlay shaders intentionally run after Iris has stopped binding
+                    // depthtex2. When a frozen final reticle exists, take one private copy now;
+                    // it is the same pre-ocular world depth but remains sampleable after final
+                    // composite. Ordinary Iris paths keep using depthtex2 without this blit.
+                    if (ScopeFinalOverlayState.hasPendingReticles()) {
+                        boolean copied = copyCurrentDepth(WORLD_TARGET, "final-overlay world depth");
+                        worldDepthIdentity = copied ? captureDepthIdentity() : null;
+                        if (!copied) {
+                            maskWorldValid = false;
+                        }
+                    }
                     if (!loggedIrisPreHandDepth) {
                         loggedIrisPreHandDepth = true;
                         GunMod.LOGGER.info("[TACZ Scope] Using Iris depthtex2 as exact pre-hand depth backup.");
@@ -184,6 +198,7 @@ public final class ScopeDepthCopyState {
         }
         zeroUniform(program, MODE_UNIFORM);
         zeroUniform(program, MASK_MODE_UNIFORM);
+        zeroUniform(program, FINAL_OVERLAY_UNIFORM);
     }
 
     private static void zeroUniform(int program, String name) {
@@ -365,25 +380,36 @@ public final class ScopeDepthCopyState {
             // The active program has no mask branch (not a reticle shader); draw it untouched.
             return true;
         }
+        int finalOverlayLocation = GL20.glGetUniformLocation(program, FINAL_OVERLAY_UNIFORM);
+        boolean finalOverlay = finalOverlayLocation >= 0;
         // The mask and restore branches share Iris' HAND shader; never let the restore flag bleed
         // into the reticle draw.
         zeroUniform(program, MODE_UNIFORM);
         if (!maskValid) {
             GL20.glUniform1i(maskLocation, 0);
+            if (finalOverlay) {
+                GL20.glUniform1i(finalOverlayLocation, 0);
+            }
             return true;
         }
 
-        DepthInfo destination = inspectDepthAttachment();
-        DepthIdentity currentDepth = captureDepthIdentity();
-        if (destination == null
-                || destination.width() != APERTURE_TARGET.width()
-                || destination.height() != APERTURE_TARGET.height()
-                || destination.internalFormat() != APERTURE_TARGET.internalFormat()
-                || apertureDepthIdentity == null || !apertureDepthIdentity.equals(currentDepth)) {
-            GL20.glUniform1i(maskLocation, 0);
-            logFailure("scope mask target does not match the aperture copy surface (depth "
-                    + currentDepth + " vs copied " + apertureDepthIdentity + ")");
-            return true;
+        // Final-overlay geometry samples only the two immutable private depth copies. It does not
+        // use or write the destination depth attachment, which may be a post-composite main target
+        // rather than Iris' original hand FBO. Ordinary MASK draws retain the strict identity
+        // guard that prevents stale copies from leaking into unrelated render targets.
+        if (!finalOverlay) {
+            DepthInfo destination = inspectDepthAttachment();
+            DepthIdentity currentDepth = captureDepthIdentity();
+            if (destination == null
+                    || destination.width() != APERTURE_TARGET.width()
+                    || destination.height() != APERTURE_TARGET.height()
+                    || destination.internalFormat() != APERTURE_TARGET.internalFormat()
+                    || apertureDepthIdentity == null || !apertureDepthIdentity.equals(currentDepth)) {
+                GL20.glUniform1i(maskLocation, 0);
+                logFailure("scope mask target does not match the aperture copy surface (depth "
+                        + currentDepth + " vs copied " + apertureDepthIdentity + ")");
+                return true;
+            }
         }
 
         int apertureLocation = GL20.glGetUniformLocation(program, APERTURE_SAMPLER_UNIFORM);
@@ -395,9 +421,9 @@ public final class ScopeDepthCopyState {
             logFailure("reticle shader has no ocular aperture sampler");
             return true;
         }
-        boolean irisWorld = useIrisPreHandDepth && irisWorldLocation >= 0;
-        // The vanilla branch may only bind a world-depth sampler when this cycle actually blitted
-        // the backup; otherwise texture 0 would discard every reticle pixel.
+        boolean irisWorld = !finalOverlay && useIrisPreHandDepth && irisWorldLocation >= 0;
+        // The vanilla branch and final overlay may only bind a world-depth sampler when this cycle
+        // actually owns a private copy; otherwise texture 0 would discard every reticle pixel.
         if (!irisWorld && (worldLocation < 0 || WORLD_TARGET.texture() == 0)) {
             GL20.glUniform1i(maskLocation, 0);
             logFailure("reticle shader has no usable world-depth source for the ocular mask");
@@ -414,9 +440,17 @@ public final class ScopeDepthCopyState {
         }
         // 1 keeps the ocular interior (reticles); 2 discards it (muzzle flash/viewmodel FX).
         GL20.glUniform1i(maskLocation, maskMode);
+        if (finalOverlay) {
+            GL20.glUniform1i(finalOverlayLocation, 1);
+        }
         // Log each mask flavour once: toggling a shader pack switches between them mid-session,
-        // and a single boolean would hide the Iris path ever becoming active.
-        if (irisWorld ? !loggedMaskActiveIris : !loggedMaskActiveVanilla) {
+        // and a single boolean would hide the Iris/final path ever becoming active.
+        if (finalOverlay) {
+            if (!loggedMaskActiveFinal) {
+                loggedMaskActiveFinal = true;
+                GunMod.LOGGER.info("[TACZ Scope] Final overlay masked by private world/aperture depth copies.");
+            }
+        } else if (irisWorld ? !loggedMaskActiveIris : !loggedMaskActiveVanilla) {
             if (irisWorld) {
                 loggedMaskActiveIris = true;
             } else {

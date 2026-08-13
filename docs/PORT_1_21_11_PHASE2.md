@@ -587,21 +587,23 @@ GL_GREATER 要求 new > old  →  near < far 不成立  →  准星像素全部�
 开光影时 Iris 用自己的 HAND 程序和状态，绕开了这条 vanilla 管线状态，
 所以准星反而是好的 —— 完美解释了上面那张对比表的第一行。
 
-**修复**（即 TODO 里写明的正解）：两条 reticle 管线声明为 `NO_DEPTH_TEST`，
-再在已有的 `GlCommandEncoderScopeDepthCopyMixin`（已 hook 在 `drawFromBuffers` HEAD，
-位于 vanilla 应用完管线状态之后、真正 `glDraw*` 之前）补：
+**当时的 R5 初步修复**（即 TODO 里写明的正解）：两条 reticle 管线声明为
+`NO_DEPTH_TEST`，再在已有的 `GlCommandEncoderScopeDepthCopyMixin`（已 hook 在
+`drawFromBuffers` HEAD，位于 vanilla 应用完管线状态之后、真正 `glDraw*` 之前）补：
 
 ```java
 GlStateManager._enableDepthTest();          // 顺序要紧：先 enable
 GlStateManager._depthFunc(GL11.GL_ALWAYS);  // 再设成恒通过
-GlStateManager._depthMask(true);            // 深度写入重新生效
+GlStateManager._depthMask(true);            // R5 的旧实现：后来已删除
 ```
 
-这样就补出了 1.21.11 枚举无法表达的「恒通过 + 仍写深度」。
-识别方式是 `IdentityHashMap` 白名单 `FORCE_ALWAYS_DEPTH_PIPELINES`，
-只对 TACZ 自己那两条管线生效，不碰任何其它绘制。
-`GlRenderPipeline` 是 record，通过其 `info()` 取回 `RenderPipeline`（mixin 里是
-`@Coerce Object`，故用反射 + 缓存 Method）。
+该版本意在补出 1.21.11 枚举无法表达的「恒通过 + 仍写深度」，识别方式为
+`IdentityHashMap` 白名单 `FORCE_ALWAYS_DEPTH_PIPELINES`，只影响 TACZ 自己的两条管线。
+
+**后续更正**：R7 已删除 `_depthMask(true)` 并令两条 reticle 管线保持
+`depthWrite=false`；其后的 `GlRenderPipeline.info()` 反射实现也被确认不适用于混淆运行时。
+当前直接 typed accessor、Iris 晚期准星提交的修复，以及“雾/水覆盖并非已由深度状态完全解释”
+的结论，见本文最后的 **R8 / R9** 两节。
 
 depth-cleanup **保持** `GREATER`（本来就正确，实机也正常）。
 
@@ -642,10 +644,13 @@ apertureDepth < worldDepth - TACZ_MASK_EPSILON   // 1.0e-6
 编译期两条 mixin 警告：
 
 - `HumanoidModelMixin.setupAnim(LivingEntity;FFFFF)V` —— 1.21.11 是 `setupAnim(T)`（单参渲染态）；
-- `ShapedRecipeMixin.itemStackFromJson` —— 该方法已不存在。
+- `ShapedRecipeMixin.itemStackFromJson` —— 该方法已不存在；对应的死源码已移除。
 
-两者**都没有注册在任何 mixin config 里**（`fabric.mod.json` 的 4 个配置中均无），
-属于死代码，不会在运行期应用，因此不会崩。记录在此以免将来有人把它们加回配置。
+`HumanoidModelMixin` 没有注册在任何 mixin config 里，属于死代码，不会在运行期应用。
+旧枪包工作台结果所需的 `nbt` 兼容不再尝试注入这个已消失的方法：改由
+`DelegatingPackResources` 在读取枪包配方时转换为原生 `components.minecraft:custom_data`，
+同时归一旧的 ingredient 对象 / `forge:nbt` 写法，并兼容旧的
+`data/<ns>/recipes/` 目录。
 
 ---
 
@@ -729,54 +734,375 @@ aperture(-3) → body(-2) → depth cleanup(-1) → gun(0) → ocular_ring(1) �
 
 ---
 
-## 光影下准星被雾/水面「覆盖·叠加」—— 准星不该写深度
+## R8：`GlRenderPipeline.info()` 混淆反射故障与 Iris 晚期准星提交（2026-08-13）
 
-### 现象
+R7 将两条 reticle 管线改为 `depthWrite=false`，这仍然是正确的：准星不应覆盖
+`depth-cleanup` 刚恢复的世界深度。但原报告把这项深度保护直接定性为“雾/水覆盖准星”的
+完整根因，是过度结论。后续日志还暴露了一条**确定的、独立的运行期 Bug**。
 
-开光影时准星能显示（R5 已修），但**优先级低于雾效和水面**：
-准星会被这些效果覆盖/叠加上去，看起来像是沉在水雾底下。
+### 一、确定 Bug：反射里的 `info` 不会 remap
 
-### 根因
+`GlCommandEncoderScopeDepthCopyMixin` 的目标形参原先写为：
 
-R5 给两条 reticle 管线的配置是「`NO_DEPTH_TEST` + encoder mixin 强制 `GL_ALWAYS`
-+ `depthWrite=true` + `_depthMask(true)`」。**最后两项是错的。**
-
-整条链路的设计意图是：
-
-```
-aperture(-3)  写入目镜孔径深度
-body(-2)      画镜身
-cleanup(-1)   把目镜区域恢复成【世界远深度】 ← 关键
-                 目的正是告诉 Iris「这里是远处的世界」，
-                 好让水面/雾/云/粒子按世界距离正确合成
-reticle(1)    画准星
-ring(2)       画镜框
+```java
+@Coerce Object glRenderPipeline
 ```
 
-准星带 `depthWrite=true` 绘制时，把自己的**手部近深度**写进了目镜区域，
-等于把 cleanup 刚恢复好的世界深度**覆盖掉**。Iris 随后的 composite 阶段读到的是
-「贴脸的手部表面」，于是按手部距离把雾效/水面叠加上去 —— 就是用户看到的现象。
+之后通过：
 
-无光影时不明显，因为 vanilla 没有这些依赖深度的后处理阶段。
+```java
+glRenderPipeline.getClass().getMethod("info")
+```
 
-### 修复
+读取 pipeline info。`GlRenderPipeline`（运行时 `class_10867`）在源码映射中有 public
+record accessor `info()`；但是 1.21.11 是混淆运行时，实际方法名为 `comp_3801()`。
 
-准星只需要被**看见**，不需要参与后续的遮挡/合成计算：
+普通 Java 调用会由 Loom 处理：`glRenderPipeline.info()` 会在成品中变为正确的运行时调用。
+反射 API 中的 `"info"` 只是普通字符串，Loom 不会修改它。因此旧实现会在运行时寻找一个
+不存在的 `info` 方法，抛 `NoSuchMethodException`，再记录：
 
-- 两条 reticle 管线 `withDepthWrite(false)`；
-- encoder mixin 里删掉 `_depthMask(true)`（它会覆盖管线声明的 depthWrite），
-  只保留 `_enableDepthTest()` + `_depthFunc(GL_ALWAYS)`。
+```text
+[TACZ Scope] Cannot read GlRenderPipeline.info(); reticle depth override disabled.
+```
 
-最终语义：**恒通过深度测试（画得出来）+ 不写深度（不破坏 cleanup 恢复的世界深度）**。
+这与此前 `lambda$loadResources$2` 在混淆版本中失效属于同一类错误：把仅在开发映射中
+成立的名字藏进不参与 remap 的字符串。
 
-顺带说明 Iris 侧注入的 `gl_FragDepth = ...` 也不受影响：`gl_FragDepth` 的写入
-同样受 `glDepthMask` 门控，`depthWrite=false` 会一并抑制。
+### 二、修复：直接使用类型安全 accessor
 
-出厂校验：`javap` 确认成品 jar 的 mixin 里 `_depthMask` 出现 **0** 次，
-`_depthFunc` / `_enableDepthTest` 各保留 1 处。
+mixin 现在保留 `glRenderPass` 的 `@Coerce Object`，但将 pipeline 参数改为真实类型：
 
-### 教训
+```java
+import com.mojang.blaze3d.opengl.GlRenderPipeline;
 
-**「能画出来」和「该不该写深度」是两个独立问题。** R5 为了让准星画出来，
-把深度测试和深度写入一起放开了，其中写入这一半是多余且有害的 ——
-在有后处理的渲染管线（Iris）里，错误的深度不会让画面消失，而是让它被错误地合成。
+private void tacz$copyScopeDepth(
+        @Coerce Object glRenderPass,
+        int baseVertex,
+        int firstIndex,
+        int indexCount,
+        VertexFormat.IndexType indexType,
+        GlRenderPipeline glRenderPipeline,
+        int instanceCount,
+        CallbackInfo ci
+) {
+    // ...
+    tacz$forceAlwaysDepthIfNeeded(glRenderPipeline);
+}
+
+@Unique
+private static void tacz$forceAlwaysDepthIfNeeded(GlRenderPipeline glRenderPipeline) {
+    if (glRenderPipeline == null
+            || !ScopeRenderTypes.needsForcedAlwaysDepth(glRenderPipeline.info())) {
+        return;
+    }
+    GlStateManager._enableDepthTest();
+    GlStateManager._depthFunc(GL11.GL_ALWAYS);
+}
+```
+
+同时删除 `java.lang.reflect.Method`、`tacz$pipelineInfo(...)`、Method 缓存与失败日志；
+`needsForcedAlwaysDepth` 也收紧为 `RenderPipeline` 参数。这样 accessor 调用会进入 Loom
+正常的 remap 链路。
+
+**不要**恢复 `withDepthWrite(true)` 或 `_depthMask(true)`。两条 reticle 管线继续使用：
+
+```text
+GL_ALWAYS（由 encoder mixin 补出）
++ depthWrite=false
+```
+
+这使准星可以写颜色，同时保留 cleanup 恢复的世界深度给后续 pass 使用。
+
+### 三、这项 Bug 不能单独解释水/雾覆盖
+
+反射失败时，reticle 的实际状态是：
+
+```text
+NO_DEPTH_TEST + depthWrite=false
+```
+
+修复后是：
+
+```text
+GL_ALWAYS + depthWrite=false
+```
+
+对“画颜色、但不写深度”而言，两者的可见结果非常接近。所以反射故障是必须修的明确
+运行期 Bug，却不是“BSL 水面/雾为何仍可改变准星颜色”的充分解释。
+
+首次 BSL 回归已经确认反射故障修复后，水雾仍会覆盖准星。因此问题正式归类为
+Iris hand shader 的绘制时序/着色问题，不能再靠重新开启 reticle 深度写入修补。
+
+### 四、R8 局部重构：冻结 3D 快照，延后到 `HAND_TRANSLUCENT`
+
+对 Iris 1.10.7 源码逐项核实：
+
+```text
+HandRenderer.renderSolid()
+  → HAND_SOLID
+  → TACZ 枪 / scope body / cleanup
+  → Iris beginTranslucents()
+  → 世界水面、雾、粒子、天气
+  → HandRenderer.renderTranslucent()
+  → HAND_TRANSLUCENT
+  → composite / final
+```
+
+但 `HandRenderer#renderTranslucent()` 有一个额外门禁：没有原版半透明手持方块时，
+`isAnyHandTranslucent()` 为 false，方法直接 `endFrame()` 返回。TACZ 枪不是 `BlockItem`，
+所以仅把 RenderPipeline 分类改为 `HAND_TRANSLUCENT` 不会实际生成晚期 hand pass。
+
+R8 的实现边界如下：
+
+1. solid pass 保留 aperture、body、depth cleanup；它们仍在原 hand FBO/深度附件里完成；
+2. `BedrockAttachmentModel` 不再在 solid pass 直接提交 reticle，而是冻结已经包含原始
+   3D 位姿、ADS、后坐和晃动的不可变 `BedrockRenderSnapshot`；
+3. `IrisHandRendererReticlePassMixin` 仅在有待提交 reticle 时把
+   `isAnyHandTranslucent()` 的结果提升为 true，使 Iris 运行一次自己的 late hand pass；
+4. 该 mixin 在 Iris 已设为 `HAND_TRANSLUCENT`、但尚未进入其 `endBatch()` 前，将快照
+   提交到 Iris 原有 `SubmitNodeStorage`。实际 GPU draw、FBO、program 和 sampler 仍完全由
+   Iris 正常调度；
+5. 蚀刻和发光 reticle 都映射为 `HAND_TRANSLUCENT`（Iris `HandWater`）；
+   `ocular_ring` 使用独立 late cutout pipeline 且 order 更高，在准星之后重画，继续遮盖边缘溢出；
+6. reticle 继续 `GL_ALWAYS + depthWrite=false`，不覆盖 cleanup 恢复的世界深度。
+
+这不是 HUD、PIP 或第二次世界渲染：移动的是同一份 3D 快照的**提交时机**，不是模型、
+相机或世界的渲染方式。
+
+顺带修正 `IrisCompat#shouldRenderInCurrentHandPhase`：Iris 1.10.7 的实际 API 是
+`isHandTranslucent(InteractionHand)`，旧代码反射 `ItemStack` 参数会失败并 fail-open。
+若 late pass 被触发，这会让完整不透明枪体错误地再提交一次；现优先调用
+`InteractionHand.MAIN_HAND`，只在其他 Iris 线保留旧 `ItemStack` overload 的 fallback。
+
+### 五、R8 实机验收
+
+启用 BSL、实际开镜且超过准星淡入阈值后，日志必须看到：
+
+```text
+[TACZ Scope] Queued reticle for Iris HAND_TRANSLUCENT.
+[TACZ Scope] Deferred reticle and ocular rim to Iris HAND_TRANSLUCENT.
+```
+
+再验证无光影、BSL、水下、隔水看目标、浓雾和雨天。若上述两行出现但水雾仍改写准星，
+剩余根因就在 BSL 的 `HandWater` fragment 或其后的 composite，需要针对 shader-pack
+着色语义继续处理；不能回退到 `depthWrite=true`。
+
+### 六、下一轮日志待办（本次仅记录）
+
+1. **弹药盒染色配方无效**：`data/tacz/recipe/ammo_box_dyed.json` 使用
+   `minecraft:crafting_dye`，而 1.21.11 没有该 recipe serializer，配方不会加载。
+2. **船实体白名单失效**：`minecraft:boat` 与 `minecraft:chest_boat` 已不能作为通用
+   `EntityType` 直接引用；需要改用正确 tag 或所有具体船类型。
+3. **默认枪包音效缺失**：例如 `tacz:aug/aug_reload_empty`、
+   `tacz:aug/aug_reload_tactical`；需核对 bundle、音效索引及资源路径。
+4. **recipe placement 警告**：`can't be placed due to empty ingredients and will be ignored`
+   可能只是 TACZ 自定义工作台不参与原版 recipe-book 自动放置，也可能是
+   `PlacementInfo` 回退不完整。必须在工作台实际合成验证，不能只根据日志忽略。
+
+---
+
+## R9：Complementary 后处理雾的前景深度标记（2026-08-13）
+
+R8 的 `HAND_TRANSLUCENT` 回归截图表明：水面、水体与粒子已经不是影响因素，但中高倍镜的
+reticle 与 ocular 黑边仍会随 Complementary Reimagined 的雾效而半透明。这说明 R8 的提交时序
+已经越过 world translucency，却还没有越过 shader-pack 随后的 screen-space fog/composite。
+
+### 一、为什么 R8 仍会被雾处理
+
+R8 有意保留：
+
+```text
+late reticle: GL_ALWAYS + depthWrite=false
+```
+
+这样不会破坏 solid pass 中 cleanup 恢复的世界深度；但 Complementary 的 post-process 读取
+`depthtex0` 计算雾/景深等屏幕效果。reticle 没有写入自己的近处深度时，该像素仍保留目镜内的
+远处世界深度，后处理自然把已经画好的 reticle 当作远景一并雾化。
+
+这也解释了“与水、粒子无关、只跟雾有关”的观察：世界透明几何已经在 R8 late pass 之前完成，
+剩下的是以深度纹理为输入的全屏效果。
+
+### 二、R9 的受限例外：只在 late pass 写前景深度
+
+不把 `depthWrite=true` 恢复到普通 reticle pipeline。R9 新建了三条只从
+`ScopeLateReticleState` 进入的 Iris late pipeline：
+
+```text
+scope_late_etched_reticle  GL_ALWAYS + depthWrite=true
+scope_late_visible_reticle GL_ALWAYS + depthWrite=true
+scope_late_ocular_ring     GL_ALWAYS + depthWrite=true
+```
+
+它们仍使用同一份 3D 快照、同一 aperture mask、同一 `HAND_TRANSLUCENT` hand collector；唯一差异
+是：在所有 world translucency 都结束之后，将保留下来的 reticle/ring 像素写成手部近深度。
+于是随后的 shader-pack fog/DOF/composite 能把它们识别为前景，而不会错误复用镜内世界的远景深度。
+
+`ocular_ring` 也使用 `GL_ALWAYS`，确保它在 reticle 之后压住边缘溢出；这不会影响已完成的世界
+绘制。`GlCommandEncoderScopeDepthCopyMixin` 仍不调用 `_depthMask(true)`，以免把这个受限例外
+错误扩展到普通/vanilla reticle。
+
+### 三、R9 验收
+
+1. 确认 mod 版本为 `1.1.8+fabric.1.21.11.R1`；
+2. 开启 Complementary Reimagined，在有雾环境下用中高倍镜 ADS；
+3. 日志应出现：
+   `Queued reticle for Iris HAND_TRANSLUCENT.` 与
+   `Deferred reticle and ocular rim to Iris HAND_TRANSLUCENT with late foreground depth.`；
+   并在启动时将 `scope_late_etched_reticle` 或 `scope_late_visible_reticle`、
+   `scope_late_ocular_ring` 分配为 `HAND_TRANSLUCENT`；
+4. 检查准星、目镜内黑边是否恢复不受雾影响，同时确认镜内的**世界**仍正常受雾影响；
+5. 再检查水下、隔水、雨天，确保没有恢复 R7 以前的世界透明效果错误。
+
+若 R9 后仍然雾化，就可确认 fog pass 不读取当前 `depthtex0`，而是使用不可覆盖的 pre-hand/depth
+snapshot；届时下一步才需要把冻结的 3D reticle 画到 Iris final composite 之后，而不是继续调整
+普通 RenderPipeline 深度状态。
+
+---
+
+## R10：剩余启动日志的分类与修复（2026-08-13）
+
+R9 解决 Complementary 雾问题后，启动日志仍有四类此前记录的项目。它们并非同一个根因，
+本轮分别按 1.21.11 的数据/资源语义处理。
+
+### 一、弹药盒染色配方：26.1 serializer 误移植
+
+`minecraft:crafting_dye` 是 26.1 才新增、用来替代 `crafting_special_armordye` 的数据驱动
+serializer；1.21.11 注册表不存在它，因此原 JSON 在 reload 时直接报：
+
+```text
+Unknown registry key ... minecraft:crafting_dye
+```
+
+R10 将 `data/tacz/recipe/ammo_box_dyed.json` 改为只含：
+
+```json
+{"type":"minecraft:crafting_special_armordye"}
+```
+
+这不是降级成固定颜色配方。1.21.11 的 special armor-dye recipe 仍执行原版动态颜色混合；
+`data/minecraft/tags/item/dyeable.json` 已将 `tacz:ammo_box` 加入目标 tag，因此它会复制原 stack
+组件并应用正确的染色组件。
+
+### 二、船：实体类型已经拆分，必须引用 tag
+
+1.21.2 后 `minecraft:boat` / `minecraft:chest_boat` 不再是可直接写入 entity-type tag 的单个
+注册对象。原版提供 `#minecraft:boat` entity-type tag，覆盖普通船、箱船、木筏以及后续变体。
+白名单已从两个裸 ID 改为这一个 tag，避免资源重载丢弃整个 tag 条目。
+
+### 三、默认枪包“缺音效”：聚合 id 不是 OGG 路径
+
+审计默认枪包的 54 个 gun display、346 个 sounds 引用后，发现 AUG 等枪的：
+
+```text
+tacz:aug/aug_reload_empty
+tacz:aug/aug_reload_tactical
+tacz:aug/aug_inspect
+```
+
+是动画动作的聚合容器名；资源实际是 `aug_reload_empty_raise.ogg`、
+`aug_reload_empty_magin.ogg`、`aug_reload_empty_end.ogg` 等 keyframe 片段，动画通道会逐个播放。
+旧代码又尝试播放不存在的单一聚合 OGG，才产生误导性 warning。
+
+R10 只对 reload/inspect 的聚合调用启用“optional container”路径：若单一 OGG 存在仍照常播；
+若不存在则不警告、也不播放虚假的 root sound，保留动画 keyframe 的真实音效。射击、消音、draw、
+put-away 等直接音效仍保持严格缺失警告。
+
+### 四、recipe placement：TACZ 工作台不应进入原版 recipe book
+
+默认枪包的 gun/ammo/attachment 配方使用 `tacz:gun_smith_table_crafting`，材料带有工作台自有的
+数量语义（例如一格 15 铜锭），不能映射到原版 3×3 placement。它们由
+`GunSmithTableMenu` / `CommonAssetsManager` 自己读取和合成；原版 RecipeManager 的 placement
+同步既不参与工作台，也会把 `PlacementInfo.NOT_PLACEABLE` 的空项误记为 “empty ingredients”。
+
+`GunSmithTableRecipe#isSpecial()` 现返回 true，和原版动态 special recipe 一样从 recipe-book
+placement/display 路径排除。TACZ 工作台配方及材料校验未改变；R10 真机应验证工作台仍能正常
+合成一条弹药、一把枪和一个配件。
+
+---
+
+## R11：Iris final composite 之后的 3D reticle overlay（2026-08-13）
+
+R10 的 Complementary 截图推翻了 R9 的最后假设：即使 late reticle/rim 写入近处深度，雾仍使其
+半透明。这表明该雾不是随后读取可写 `depthtex0` 的普通 pass，而是使用 pre-hand 或其它 immutable
+深度输入的 screen-space composite。继续更改 `HAND_TRANSLUCENT` 深度测试不会改变它。
+
+### 一、时序边界
+
+Iris 1.10.7 的 `IrisRenderingPipeline#finalizeLevelRendering()` 顺序是：
+
+```text
+isRenderingWorld = false
+compositeRenderer.renderAll()
+finalPassRenderer.renderFinalPass()
+return
+```
+
+`isRenderingWorld=false` 之后 Iris 不再用 shader-pack `ExtendedShader` 替换普通核心
+RenderPipeline。R11 在这个方法 TAIL 注入，不是绘制 HUD：它恢复 `HAND_SOLID` 时冻结的手部
+projection/model-view，并用同一份 `BedrockRenderSnapshot` 提交 reticle 和 ocular ring。因此几何位置、
+视差、ADS、后坐、枪械晃动和模型纹理都保持不变；只是颜色真正落在 shader-pack 最终结果之后。
+
+### 二、final overlay 的 aperture mask
+
+final pass 时 Iris 已不再绑定 hand shader 的 `depthtex2`，不能直接沿用 R8 的 Iris sampler。R11 在
+solid BACKUP draw 发现 final reticle 已排队时，额外 blit 一份私有的 pre-ocular world depth；最终
+无雾 reticle shader 同时采样该副本与已有 aperture depth copy。它不依赖 final framebuffer 当前深度，
+所以 `ScopeDepthCopyState` 对 final shader 使用独立 `tacz_ScopeFinalOverlay` 标记并跳过“当前 FBO
+必须仍是 aperture 来源”的普通保护，而仍在缺少任一私有副本时 fail-closed。
+
+新增 shader：
+
+```text
+assets/tacz/shaders/core/scope_reticle_final.fsh  # aperture mask + 无 apply_fog
+assets/tacz/shaders/core/scope_ring_final.fsh     # 物理镜框 + 无 apply_fog
+```
+
+### 三、版本与回退
+
+final hook 只对 Iris `1.10.7+mc1.21.11` 启用；其 `finalizeLevelRendering` 字节码已逐项核对。
+其它 Iris 版本不启用该分支，继续 R8/R9 的 `HAND_TRANSLUCENT` fallback，优先保证不出现 invisibility
+或 FBO 生命周期错误。
+
+### 四、R11 验收
+
+1. 确认版本 `1.1.8+fabric.1.21.11.R1`；
+2. 开启 Complementary Reimagined，在截图所示浓雾环境中使用中高倍镜；
+3. 日志必须依次出现：
+
+   ```text
+   Queued reticle for Iris post-composite overlay.
+   Final overlay masked by private world/aperture depth copies.
+   Rendered reticle and ocular rim after Iris final composite.
+   ```
+
+4. 准星与 `ocular_ring` 不应再被雾洗淡；镜内的真实远景仍必须保留 Complementary 雾；
+5. 验证镜框继续盖住准星边缘，以及水下/隔水/雨天没有引入回归。
+
+---
+
+## R12：显式 no-op/TODO 复审与 LRTactical 屏幕震动（2026-08-13）
+
+按用户要求，本轮不再以日志为唯一线索，而是扫描源码中的 `TODO`、`暂未`、`no-op`、空实现与
+常量返回，并与仓库 `26.1.2`（`6c409eea`）、`26.2(main)`（`99b472a`）及 LRTactical
+NeoForge 1.21.1 原始实现逐项对照。
+
+完整分类见 `docs/EXPLICIT_GAPS_AUDIT_R12.md`。结果是：大部分空实现属于已废弃 collector API、
+默认接口、无 payload marker 包、无可用依赖的可选加速门面或上游本身未定义的数据系统，不能机械补齐。
+
+唯一具有完整数据字段、明确原始行为、实际调用点且可安全映射到 Fabric 1.21.11 的缺口是
+LRTactical 爆炸屏幕震动。R12 新增：
+
+```text
+GrenadeEntity.onDeath (server)
+  -> ServerMessageScreenShake
+  -> PlayerLookup.world 范围广播
+  -> ScreenShakeState (client)
+  -> ViewportEvent.CAMERA
+```
+
+震动以 tick 为单位衰减、按距离降低、以平滑包络震荡，并在 TACZ 后坐之后叠加；它不写玩家真实
+yaw/pitch，也不改变服务器伤害、爆炸或命中判定。默认 C4 的 `screen_shake_time=20` /
+`screen_shake_amplitude=55` 现在不再是死数据。
+
+暂时保留 `destroyMultiplier`：把它简单乘到 `Level#explode` 半径会错误地同时放大原版伤害与击退；
+只有重建 1.21.11 `ServerExplosion` 的方块射线层后才能保持上游语义。

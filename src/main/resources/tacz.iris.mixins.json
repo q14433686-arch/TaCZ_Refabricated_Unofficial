@@ -5,10 +5,12 @@
   "compatibilityLevel": "JAVA_21",
   "plugin": "com.tacz.guns.mixin.client.iris.IrisCompatMixinPlugin",
   "client": [
-    "IrisDepthRestoreShaderMixin"
+    "IrisDepthRestoreShaderMixin",
+    "IrisHandRendererReticlePassMixin",
+    "IrisFinalScopeOverlayMixin"
   ],
   "injectors": {
     "defaultRequire": 0
   },
-  "_comment": "阶段 9 已恢复(2026-08-13)。Iris 改为 modCompileOnly 后编译期可见，注入点已对 Iris 1.10.7 逐条核实：ShaderCreator.link 存在，其内 createShader 第 5 次调用(ordinal=4)即 FRAGMENT，create/createFallback/createFallbackShadow/createShadow 均汇聚到该 link；name 为 ShaderKey.getName()=小写枚举名(hand_cutout 等)。required=false + IrisCompatMixinPlugin 的 isModLoaded 双重兜底，未装 Iris 不受影响。"
+  "_comment": "阶段 9/R8-R11 Iris 集成。ShaderCreator.link 的第 5 次 createShader(ordinal=4)是 fragment；R8 为冻结 scope reticle 强制 HAND_TRANSLUCENT，R9 写 late foreground depth；Complementary 仍使用不可覆盖的 post-composite 雾深度后，R11 仅对经审计的 Iris 1.10.7 在 IrisRenderingPipeline.finalizeLevelRendering TAIL 重画同一份 3D 快照，使用 no-fog vanilla fragments。required=false + IrisCompatMixinPlugin 的 isModLoaded 双重兜底，未装 Iris 不受影响。"
 }

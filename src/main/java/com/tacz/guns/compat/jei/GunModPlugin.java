@@ -9,7 +9,6 @@ import com.tacz.guns.compat.jei.category.GunSmithTableCategory;
 import com.tacz.guns.compat.jei.entry.AttachmentQueryEntry;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.init.ModItems;
-import com.tacz.guns.init.ModRecipe;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.recipe.types.IRecipeType;
@@ -18,11 +17,10 @@ import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.world.item.crafting.RecipeHolder;
 
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +41,13 @@ public class GunModPlugin implements IModPlugin {
             BlockItem item = entry.getValue().getBlock();
             ItemStack icon = BlockItemBuilder.create(item).setId(entry.getKey()).build();
             IRecipeType<GunSmithTableRecipe> type = IRecipeType.create(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "gun_smith_table/" + entry.getKey().toString().replace(':', '_')), GunSmithTableRecipe.class);
-            registration.addRecipeCategories(new GunSmithTableCategory(registration.getJeiHelpers().getGuiHelper(), icon, type, item.getName(icon)));
+            // Category registration can happen before ClientIndexManager has rebuilt its cache
+            // from the S2C gun-pack payload. Reading the physical BlockItem name at that point
+            // labels every shared workbench_a/b/c with its generic/default name. The common index
+            // already carries the authoritative translation key and is available on both sides.
+            registration.addRecipeCategories(new GunSmithTableCategory(
+                    registration.getJeiHelpers().getGuiHelper(), icon, type,
+                    Component.translatable(entry.getValue().getPojo().getName())));
             recipeTypeMap.put(entry.getKey(), type);
         }
         registration.addRecipeCategories(new AttachmentQueryCategory(registration.getJeiHelpers().getGuiHelper()));

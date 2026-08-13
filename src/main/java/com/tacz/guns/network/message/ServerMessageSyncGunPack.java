@@ -1,6 +1,7 @@
 package com.tacz.guns.network.message;
 
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.resource.ClientIndexManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.network.CommonNetworkCache;
@@ -45,7 +46,10 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
     @Environment(EnvType.CLIENT)
     public void handle(LocalPlayer player, PacketSender responseSender) {
         boolean remoteConnection = player.connection.getConnection() != null && !player.connection.getConnection().isMemoryConnection();
-        doSync(this, remoteConnection);
+        // Fabric can invoke play-payload receivers off the render/client thread. Both the index
+        // rebuild and recipe-viewer refresh touch client-owned state, so serialize them with the
+        // rest of vanilla's join/reload work before any JEI/REI registration observes the cache.
+        net.minecraft.client.Minecraft.getInstance().execute(() -> doSync(this, remoteConnection));
     }
 
 
@@ -61,5 +65,9 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
         CommonNetworkCache.INSTANCE.fromNetwork(message.cache);
         // 通知客户端重新构建ClientIndex
         ClientIndexManager.reload();
+        // JEI/REI may already have completed their initial recipe registration before this
+        // server-authoritative cache arrives. Queue their coalesced lightweight refresh so
+        // categories and BlockId-sensitive workbench catalysts are rebuilt from this exact data.
+        RecipeViewerReloadBridge.requestReload();
     }
 }

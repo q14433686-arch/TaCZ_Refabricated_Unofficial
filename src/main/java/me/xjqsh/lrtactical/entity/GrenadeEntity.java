@@ -37,11 +37,14 @@ import org.jetbrains.annotations.Nullable;
  * 而不是把上游那 185 行逐行硬翻 —— 后者要重写整个方块破坏循环，
  * 收益为零且极易出错。
  *
- * <p><b>由此丢失的能力</b>（如实记录，不假装等价）：
- * 上游的 {@code screenShakeTime} / {@code screenShakeAmplitude}（爆炸屏幕震动）
- * 依赖尚未实现的专用 {@code SShakeScreenMessage}（索引与近战网络层已经完成），
- * 故这两个字段<b>保留但暂不生效</b>；{@code destroyMultiplier}（破坏力倍率）
- * 同理，原版 {@code explode} 不支持该参数。
+ * <p><b>R12 已恢复的能力</b>：{@code screenShakeTime} /
+ * {@code screenShakeAmplitude} 现在经 Fabric S2C payload 驱动客户端相机震动；它只改
+ * 视觉相机，不影响服务端伤害或爆炸权威性。
+ *
+ * <p><b>仍有意保留的限制</b>：{@code destroyMultiplier}（破坏力倍率）不能安全映射到
+ * 原版 {@code Level#explode}。把它粗暴乘到 radius 会同时放大原版伤害、击退与方块半径，
+ * 与上游只调整方块射线能量的语义不等价；在没有重写 26.1.11 ServerExplosion 方块循环前
+ * 保持 1.0 语义更安全。
  *
  * <b>2. {@code Entity#hurt} 在 26.2 返回 {@code void}，无法照上游那样覆写</b><br>
  * 字节码：{@code hurt(DamageSource,float)V}，而上游覆写的是返回 {@code boolean} 的版本。
@@ -113,6 +116,12 @@ public class GrenadeEntity extends ThrowableItemEntity {
                     (float) this.damage, this.radius,
                     this.destroyBlocks, pos);
 
+            // R12: restore the upstream data-driven visual shake using a small Fabric S2C payload.
+            // It is deliberately sent after the authoritative explosion call: a client may shake,
+            // but cannot create damage or force an explosion by itself.
+            me.xjqsh.lrtactical.network.LrNetworkHandler.sendScreenShake(
+                    serverLevel, pos, this.radius * 2.0, this.screenShakeTime, this.screenShakeAmplitude);
+
             // 26.2: ParticleTypes.FLASH 不再是 SimpleParticleType，而是
             // ParticleType<ColorParticleOption>（字节码泛型签名确认），
             // 即它本身【不是】一个可直接使用的 ParticleOptions，必须先带上颜色构造。
@@ -170,7 +179,7 @@ public class GrenadeEntity extends ThrowableItemEntity {
         this.destroyBlocks = destroyBlocks;
     }
 
-    /** 暂未生效，见类注释第 1 点（依赖未移植的网络层）。 */
+    /** R12 已由 {@code ServerMessageScreenShake} 消费，单位为客户端 game ticks。 */
     public double getScreenShakeTime() {
         return screenShakeTime;
     }
@@ -179,7 +188,7 @@ public class GrenadeEntity extends ThrowableItemEntity {
         this.screenShakeTime = screenShakeTime;
     }
 
-    /** 暂未生效，见类注释第 1 点（依赖未移植的网络层）。 */
+    /** R12 已由 {@code ServerMessageScreenShake} 消费，数值按上游数据约定折算为视觉角度。 */
     public double getScreenShakeAmplitude() {
         return screenShakeAmplitude;
     }
