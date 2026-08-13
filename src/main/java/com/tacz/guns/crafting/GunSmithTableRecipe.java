@@ -47,6 +47,18 @@ public class GunSmithTableRecipe implements Recipe<SingleRecipeInput> {
         return false;
     }
 
+    /**
+     * Gun-smith recipes are consumed exclusively by {@link com.tacz.guns.inventory.GunSmithTableMenu},
+     * not by a vanilla 3×3 crafting grid. Mark them special so RecipeManager does not try to build
+     * recipe-book placement/display data from the custom counted-material list. In 1.21.11 that
+     * attempt reports every such recipe as "can't be placed due to empty ingredients", even though
+     * the gun-smith table resolves {@link #inputs} itself and crafts normally.
+     */
+    @Override
+    public boolean isSpecial() {
+        return true;
+    }
+
     @Override
     public String group() {
         return "";

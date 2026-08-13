@@ -52,8 +52,28 @@ public class SoundPlayManager {
 
     @Nullable
     private static GunSoundInstance playClientSound(Entity entity, @Nullable Identifier name, float volume, float pitch, int distance, boolean mono, int concurrencyLimit, boolean trackEntity, boolean relative) {
+        return playClientSound(entity, name, volume, pitch, distance, mono, concurrencyLimit, trackEntity, relative, false);
+    }
+
+    /**
+     * @param allowAnimationSegments true only for aggregate reload/inspect ids. Default gun packs
+     *                               often provide {@code id_suffix.ogg} keyframe clips instead of
+     *                               a nonexistent monolithic {@code id.ogg}; those clips are played
+     *                               by {@link com.tacz.guns.api.client.animation.ObjectAnimationSoundChannel}.
+     */
+    @Nullable
+    private static GunSoundInstance playClientSound(Entity entity,
+                                                    @Nullable Identifier name,
+                                                    float volume,
+                                                    float pitch,
+                                                    int distance,
+                                                    boolean mono,
+                                                    int concurrencyLimit,
+                                                    boolean trackEntity,
+                                                    boolean relative,
+                                                    boolean allowAnimationSegments) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (name == null || !hasSoundResource(minecraft, name)) {
+        if (name == null || !hasSoundResource(minecraft, name, allowAnimationSegments)) {
             return null;
         }
         if (concurrencyLimit > 0) {
@@ -136,19 +156,25 @@ public class SoundPlayManager {
     }
 
     public static void playReloadSound(LivingEntity entity, GunDisplayInstance display, boolean noAmmo) {
-        if (noAmmo) {
-            tmpSoundInstance = playClientSound(entity, display.getSounds(SoundManager.RELOAD_EMPTY_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
-        } else {
-            tmpSoundInstance = playClientSound(entity, display.getSounds(SoundManager.RELOAD_TACTICAL_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
-        }
+        Identifier sound = display.getSounds(noAmmo ? SoundManager.RELOAD_EMPTY_SOUND : SoundManager.RELOAD_TACTICAL_SOUND);
+        tmpSoundInstance = playCompositeAnimationContainerSound(entity, sound);
     }
 
     public static void playInspectSound(LivingEntity entity, GunDisplayInstance display, boolean noAmmo) {
-        if (noAmmo) {
-            tmpSoundInstance = playClientSound(entity, display.getSounds(SoundManager.INSPECT_EMPTY_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
-        } else {
-            tmpSoundInstance = playClientSound(entity, display.getSounds(SoundManager.INSPECT_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
-        }
+        Identifier sound = display.getSounds(noAmmo ? SoundManager.INSPECT_EMPTY_SOUND : SoundManager.INSPECT_SOUND);
+        tmpSoundInstance = playCompositeAnimationContainerSound(entity, sound);
+    }
+
+    /**
+     * Plays a monolithic reload/inspect clip when it exists. If a gun pack instead supplies the
+     * normal {@code id_suffix.ogg} animation clips, it returns quietly: the animation channel owns
+     * those real sounds, and attempting the absent aggregate id would only emit a false warning.
+     */
+    @Nullable
+    private static GunSoundInstance playCompositeAnimationContainerSound(Entity entity, @Nullable Identifier sound) {
+        return playClientSound(entity, sound, 1.0f, 1.0f,
+                GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get(), false,
+                SoundConfig.DEFAULT_SOUND_CONCURRENCY_LIMIT.get(), true, false, true);
     }
 
     public static void playBoltSound(LivingEntity entity, GunDisplayInstance display) {
@@ -325,16 +351,31 @@ public class SoundPlayManager {
         return entity == Minecraft.getInstance().player;
     }
 
-    private static boolean hasSoundResource(Minecraft minecraft, Identifier soundId) {
+    private static boolean hasSoundResource(Minecraft minecraft,
+                                            Identifier soundId,
+                                            boolean allowAnimationSegments) {
         boolean exists = SOUND_RESOURCE_EXISTS_CACHE.computeIfAbsent(soundId, id -> {
             Identifier soundPath = TACZ_SOUND_LISTER.idToFile(id);
             return minecraft.getResourceManager().getResource(soundPath).isPresent();
         });
-        if (!exists && MISSING_SOUND_WARNED.add(soundId)) {
+        if (exists) {
+            return true;
+        }
+
+        // The default gun pack deliberately encodes reload/inspect audio as many animation
+        // keyframe clips (for example aug_reload_empty_raise.ogg), not a duplicate monolithic
+        // aug_reload_empty.ogg. ObjectAnimationSoundChannel owns those clips. Aggregate
+        // reload/inspect ids are therefore optional containers: a missing one must not look like
+        // a missing gameplay resource or spam a warning each session.
+        if (allowAnimationSegments) {
+            return false;
+        }
+
+        if (MISSING_SOUND_WARNED.add(soundId)) {
             Identifier soundPath = TACZ_SOUND_LISTER.idToFile(soundId);
             GunMod.LOGGER.warn("[TACZ Sound] Missing gun sound resource, skipped. sound={}, path={}", soundId, soundPath);
         }
-        return exists;
+        return false;
     }
 
     private record SoundKey(int entityId, Identifier soundId) {

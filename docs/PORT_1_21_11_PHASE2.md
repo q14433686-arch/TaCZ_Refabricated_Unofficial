@@ -953,3 +953,64 @@ scope_late_ocular_ring     GL_ALWAYS + depthWrite=true
 若 R9 后仍然雾化，就可确认 fog pass 不读取当前 `depthtex0`，而是使用不可覆盖的 pre-hand/depth
 snapshot；届时下一步才需要把冻结的 3D reticle 画到 Iris final composite 之后，而不是继续调整
 普通 RenderPipeline 深度状态。
+
+---
+
+## R10：剩余启动日志的分类与修复（2026-08-13）
+
+R9 解决 Complementary 雾问题后，启动日志仍有四类此前记录的项目。它们并非同一个根因，
+本轮分别按 1.21.11 的数据/资源语义处理。
+
+### 一、弹药盒染色配方：26.1 serializer 误移植
+
+`minecraft:crafting_dye` 是 26.1 才新增、用来替代 `crafting_special_armordye` 的数据驱动
+serializer；1.21.11 注册表不存在它，因此原 JSON 在 reload 时直接报：
+
+```text
+Unknown registry key ... minecraft:crafting_dye
+```
+
+R10 将 `data/tacz/recipe/ammo_box_dyed.json` 改为只含：
+
+```json
+{"type":"minecraft:crafting_special_armordye"}
+```
+
+这不是降级成固定颜色配方。1.21.11 的 special armor-dye recipe 仍执行原版动态颜色混合；
+`data/minecraft/tags/item/dyeable.json` 已将 `tacz:ammo_box` 加入目标 tag，因此它会复制原 stack
+组件并应用正确的染色组件。
+
+### 二、船：实体类型已经拆分，必须引用 tag
+
+1.21.2 后 `minecraft:boat` / `minecraft:chest_boat` 不再是可直接写入 entity-type tag 的单个
+注册对象。原版提供 `#minecraft:boat` entity-type tag，覆盖普通船、箱船、木筏以及后续变体。
+白名单已从两个裸 ID 改为这一个 tag，避免资源重载丢弃整个 tag 条目。
+
+### 三、默认枪包“缺音效”：聚合 id 不是 OGG 路径
+
+审计默认枪包的 54 个 gun display、346 个 sounds 引用后，发现 AUG 等枪的：
+
+```text
+tacz:aug/aug_reload_empty
+tacz:aug/aug_reload_tactical
+tacz:aug/aug_inspect
+```
+
+是动画动作的聚合容器名；资源实际是 `aug_reload_empty_raise.ogg`、
+`aug_reload_empty_magin.ogg`、`aug_reload_empty_end.ogg` 等 keyframe 片段，动画通道会逐个播放。
+旧代码又尝试播放不存在的单一聚合 OGG，才产生误导性 warning。
+
+R10 只对 reload/inspect 的聚合调用启用“optional container”路径：若单一 OGG 存在仍照常播；
+若不存在则不警告、也不播放虚假的 root sound，保留动画 keyframe 的真实音效。射击、消音、draw、
+put-away 等直接音效仍保持严格缺失警告。
+
+### 四、recipe placement：TACZ 工作台不应进入原版 recipe book
+
+默认枪包的 gun/ammo/attachment 配方使用 `tacz:gun_smith_table_crafting`，材料带有工作台自有的
+数量语义（例如一格 15 铜锭），不能映射到原版 3×3 placement。它们由
+`GunSmithTableMenu` / `CommonAssetsManager` 自己读取和合成；原版 RecipeManager 的 placement
+同步既不参与工作台，也会把 `PlacementInfo.NOT_PLACEABLE` 的空项误记为 “empty ingredients”。
+
+`GunSmithTableRecipe#isSpecial()` 现返回 true，和原版动态 special recipe 一样从 recipe-book
+placement/display 路径排除。TACZ 工作台配方及材料校验未改变；R10 真机应验证工作台仍能正常
+合成一条弹药、一把枪和一个配件。

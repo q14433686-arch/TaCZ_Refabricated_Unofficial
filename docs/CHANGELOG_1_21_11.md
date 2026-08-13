@@ -5,6 +5,25 @@
 
 ---
 
+## R10
+
+**修复：1.21.11 数据包、实体 tag、默认枪包复合音效与工作台 recipe-book 噪声**
+
+- `ammo_box_dyed.json` 不再使用 26.1 才新增的 `minecraft:crafting_dye`；1.21.11 改回
+  `minecraft:crafting_special_armordye`。`tacz:ammo_box` 已在 `#minecraft:dyeable`，故继续使用
+  原版的动态颜色混合与 `minecraft:dyed_color`，不会丢失弹药盒已有组件。
+- 交互白名单的裸 `minecraft:boat` / `minecraft:chest_boat` 已改为 `#minecraft:boat`。1.21.2
+  之后船实体类型拆分，原版 entity-type tag 负责覆盖普通船、箱船、木筏及未来变体。
+- 默认枪包的 `reload_*` / `inspect*` 聚合 sound id 并不对应单个 OGG；实际音频是动画 keyframe
+  中的多个 `*_raise`、`*_magin`、`*_end` 等片段。播放代码现在将聚合 id 视作可选容器：有单一
+  OGG 时照常播放；没有时静默交给 `ObjectAnimationSoundChannel` 播放真实片段，不再误报
+  `Missing gun sound resource`，也不伪造/复制音频文件。
+- `GunSmithTableRecipe#isSpecial()` 现在返回 true。枪械工作台材料带数量且不属于原版 3×3 配方，
+  因此不再被 RecipeManager 强制转换为 recipe-book placement；这消除了大量
+  `can't be placed due to empty ingredients` 警告，且不影响 TACZ 工作台自己的材料检查和合成。
+
+---
+
 ## R9
 
 **修复尝试：Complementary Reimagined 的后处理雾仍将晚期准星当作远景**
