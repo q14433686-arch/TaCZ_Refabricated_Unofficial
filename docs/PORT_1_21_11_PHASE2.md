@@ -587,21 +587,23 @@ GL_GREATER 要求 new > old  →  near < far 不成立  →  准星像素全部�
 开光影时 Iris 用自己的 HAND 程序和状态，绕开了这条 vanilla 管线状态，
 所以准星反而是好的 —— 完美解释了上面那张对比表的第一行。
 
-**修复**（即 TODO 里写明的正解）：两条 reticle 管线声明为 `NO_DEPTH_TEST`，
-再在已有的 `GlCommandEncoderScopeDepthCopyMixin`（已 hook 在 `drawFromBuffers` HEAD，
-位于 vanilla 应用完管线状态之后、真正 `glDraw*` 之前）补：
+**当时的 R5 初步修复**（即 TODO 里写明的正解）：两条 reticle 管线声明为
+`NO_DEPTH_TEST`，再在已有的 `GlCommandEncoderScopeDepthCopyMixin`（已 hook 在
+`drawFromBuffers` HEAD，位于 vanilla 应用完管线状态之后、真正 `glDraw*` 之前）补：
 
 ```java
 GlStateManager._enableDepthTest();          // 顺序要紧：先 enable
 GlStateManager._depthFunc(GL11.GL_ALWAYS);  // 再设成恒通过
-GlStateManager._depthMask(true);            // 深度写入重新生效
+GlStateManager._depthMask(true);            // R5 的旧实现：后来已删除
 ```
 
-这样就补出了 1.21.11 枚举无法表达的「恒通过 + 仍写深度」。
-识别方式是 `IdentityHashMap` 白名单 `FORCE_ALWAYS_DEPTH_PIPELINES`，
-只对 TACZ 自己那两条管线生效，不碰任何其它绘制。
-`GlRenderPipeline` 是 record，通过其 `info()` 取回 `RenderPipeline`（mixin 里是
-`@Coerce Object`，故用反射 + 缓存 Method）。
+该版本意在补出 1.21.11 枚举无法表达的「恒通过 + 仍写深度」，识别方式为
+`IdentityHashMap` 白名单 `FORCE_ALWAYS_DEPTH_PIPELINES`，只影响 TACZ 自己的两条管线。
+
+**后续更正**：R7 已删除 `_depthMask(true)` 并令两条 reticle 管线保持
+`depthWrite=false`；其后的 `GlRenderPipeline.info()` 反射实现也被确认不适用于混淆运行时。
+当前直接 typed accessor 的修复、以及“雾/水覆盖并非已由深度状态完全解释”的结论，见本文
+最后的 **R7 后续** 一节。
 
 depth-cleanup **保持** `GREATER`（本来就正确，实机也正常）。
 
@@ -729,54 +731,160 @@ aperture(-3) → body(-2) → depth cleanup(-1) → gun(0) → ocular_ring(1) �
 
 ---
 
-## 光影下准星被雾/水面「覆盖·叠加」—— 准星不该写深度
+## R7 后续：`GlRenderPipeline.info()` 混淆反射故障与 Iris 准星时序（2026-08-13）
 
-### 现象
+R7 将两条 reticle 管线改为 `depthWrite=false`，这仍然是正确的：准星不应覆盖
+`depth-cleanup` 刚恢复的世界深度。但原报告把这项深度保护直接定性为“雾/水覆盖准星”的
+完整根因，是过度结论。后续日志还暴露了一条**确定的、独立的运行期 Bug**。
 
-开光影时准星能显示（R5 已修），但**优先级低于雾效和水面**：
-准星会被这些效果覆盖/叠加上去，看起来像是沉在水雾底下。
+### 一、确定 Bug：反射里的 `info` 不会 remap
 
-### 根因
+`GlCommandEncoderScopeDepthCopyMixin` 的目标形参原先写为：
 
-R5 给两条 reticle 管线的配置是「`NO_DEPTH_TEST` + encoder mixin 强制 `GL_ALWAYS`
-+ `depthWrite=true` + `_depthMask(true)`」。**最后两项是错的。**
-
-整条链路的设计意图是：
-
-```
-aperture(-3)  写入目镜孔径深度
-body(-2)      画镜身
-cleanup(-1)   把目镜区域恢复成【世界远深度】 ← 关键
-                 目的正是告诉 Iris「这里是远处的世界」，
-                 好让水面/雾/云/粒子按世界距离正确合成
-reticle(1)    画准星
-ring(2)       画镜框
+```java
+@Coerce Object glRenderPipeline
 ```
 
-准星带 `depthWrite=true` 绘制时，把自己的**手部近深度**写进了目镜区域，
-等于把 cleanup 刚恢复好的世界深度**覆盖掉**。Iris 随后的 composite 阶段读到的是
-「贴脸的手部表面」，于是按手部距离把雾效/水面叠加上去 —— 就是用户看到的现象。
+之后通过：
 
-无光影时不明显，因为 vanilla 没有这些依赖深度的后处理阶段。
+```java
+glRenderPipeline.getClass().getMethod("info")
+```
 
-### 修复
+读取 pipeline info。`GlRenderPipeline`（运行时 `class_10867`）在源码映射中有 public
+record accessor `info()`；但是 1.21.11 是混淆运行时，实际方法名为 `comp_3801()`。
 
-准星只需要被**看见**，不需要参与后续的遮挡/合成计算：
+普通 Java 调用会由 Loom 处理：`glRenderPipeline.info()` 会在成品中变为正确的运行时调用。
+反射 API 中的 `"info"` 只是普通字符串，Loom 不会修改它。因此旧实现会在运行时寻找一个
+不存在的 `info` 方法，抛 `NoSuchMethodException`，再记录：
 
-- 两条 reticle 管线 `withDepthWrite(false)`；
-- encoder mixin 里删掉 `_depthMask(true)`（它会覆盖管线声明的 depthWrite），
-  只保留 `_enableDepthTest()` + `_depthFunc(GL_ALWAYS)`。
+```text
+[TACZ Scope] Cannot read GlRenderPipeline.info(); reticle depth override disabled.
+```
 
-最终语义：**恒通过深度测试（画得出来）+ 不写深度（不破坏 cleanup 恢复的世界深度）**。
+这与此前 `lambda$loadResources$2` 在混淆版本中失效属于同一类错误：把仅在开发映射中
+成立的名字藏进不参与 remap 的字符串。
 
-顺带说明 Iris 侧注入的 `gl_FragDepth = ...` 也不受影响：`gl_FragDepth` 的写入
-同样受 `glDepthMask` 门控，`depthWrite=false` 会一并抑制。
+### 二、修复：直接使用类型安全 accessor
 
-出厂校验：`javap` 确认成品 jar 的 mixin 里 `_depthMask` 出现 **0** 次，
-`_depthFunc` / `_enableDepthTest` 各保留 1 处。
+mixin 现在保留 `glRenderPass` 的 `@Coerce Object`，但将 pipeline 参数改为真实类型：
 
-### 教训
+```java
+import com.mojang.blaze3d.opengl.GlRenderPipeline;
 
-**「能画出来」和「该不该写深度」是两个独立问题。** R5 为了让准星画出来，
-把深度测试和深度写入一起放开了，其中写入这一半是多余且有害的 ——
-在有后处理的渲染管线（Iris）里，错误的深度不会让画面消失，而是让它被错误地合成。
+private void tacz$copyScopeDepth(
+        @Coerce Object glRenderPass,
+        int baseVertex,
+        int firstIndex,
+        int indexCount,
+        VertexFormat.IndexType indexType,
+        GlRenderPipeline glRenderPipeline,
+        int instanceCount,
+        CallbackInfo ci
+) {
+    // ...
+    tacz$forceAlwaysDepthIfNeeded(glRenderPipeline);
+}
+
+@Unique
+private static void tacz$forceAlwaysDepthIfNeeded(GlRenderPipeline glRenderPipeline) {
+    if (glRenderPipeline == null
+            || !ScopeRenderTypes.needsForcedAlwaysDepth(glRenderPipeline.info())) {
+        return;
+    }
+    GlStateManager._enableDepthTest();
+    GlStateManager._depthFunc(GL11.GL_ALWAYS);
+}
+```
+
+同时删除 `java.lang.reflect.Method`、`tacz$pipelineInfo(...)`、Method 缓存与失败日志；
+`needsForcedAlwaysDepth` 也收紧为 `RenderPipeline` 参数。这样 accessor 调用会进入 Loom
+正常的 remap 链路。
+
+**不要**恢复 `withDepthWrite(true)` 或 `_depthMask(true)`。两条 reticle 管线继续使用：
+
+```text
+GL_ALWAYS（由 encoder mixin 补出）
++ depthWrite=false
+```
+
+这使准星可以写颜色，同时保留 cleanup 恢复的世界深度给后续 pass 使用。
+
+### 三、这项 Bug 不能单独解释水/雾覆盖
+
+反射失败时，reticle 的实际状态是：
+
+```text
+NO_DEPTH_TEST + depthWrite=false
+```
+
+修复后是：
+
+```text
+GL_ALWAYS + depthWrite=false
+```
+
+对“画颜色、但不写深度”而言，两者的可见结果非常接近。所以反射故障是必须修的明确
+运行期 Bug，却不是“BSL 水面/雾为何仍可改变准星颜色”的充分解释。
+
+当前 Iris 分类仍将蚀刻准星送进 `HAND_CUTOUT`，将发光准星送进
+`HAND_TRANSLUCENT`。这意味着它们仍是 shader pack 的 hand geometry，而非最终 HUD：
+
+```text
+HAND_SOLID / HAND_CUTOUT
+  └─ 枪、瞄具、蚀刻准星
+
+世界透明与天气效果
+  └─ 水面、粒子、雾、云
+
+HAND_TRANSLUCENT / composite
+  └─ 发光准星及后续 shader-pack 合成
+```
+
+`IrisDepthRestoreShaderMixin` 目前只做孔径内外裁剪、depth restore、`gl_FragDepth` 和
+mask discard；它不会向 BSL 声明“此像素是准星，禁止应用水雾/后处理”。因而 hand
+fragment shader 或更晚的 composite 仍可能改变已经画好的准星颜色。
+
+### 四、先做小范围回归，再决定是否重构
+
+本次只修确定的 remap 故障。真机需确认日志不再出现上述 `Cannot read ... info()` 与
+`reticle depth override disabled`，并依次测试：
+
+1. 无光影；
+2. BSL；
+3. 水下；
+4. 隔水看目标；
+5. 浓雾；
+6. 雨天。
+
+若问题消失，说明 GL 状态覆写确实影响了 shader 后续阶段；若仍存在，则应将其归类为
+“hand shader 绘制时序/着色”问题，而不是再尝试用深度写入修补。
+
+### 五、若仍存在：下一步的局部重构边界
+
+推荐把准星提交从普通枪体的 solid hand submission 中拆开，在 Iris 更晚的
+hand/translucent 边界单独提交，语义顺序为：
+
+```text
+世界与水雾效果完成
+    ↓
+准星颜色绘制
+    ↓
+镜框最后覆盖准星溢出部分
+```
+
+这不是 HUD，也不是 PIP 或第二次世界渲染。实现必须继续复用原始 3D 准星模型、ocular
+aperture mask、ADS 动画、枪械晃动与镜框遮挡；仅改变准星批次的提交时机。该工作应在
+上述回归确认仍有问题后再做，不能与本次确定 Bug 修复混在一起。
+
+### 六、下一轮日志待办（本次仅记录）
+
+1. **弹药盒染色配方无效**：`data/tacz/recipe/ammo_box_dyed.json` 使用
+   `minecraft:crafting_dye`，而 1.21.11 没有该 recipe serializer，配方不会加载。
+2. **船实体白名单失效**：`minecraft:boat` 与 `minecraft:chest_boat` 已不能作为通用
+   `EntityType` 直接引用；需要改用正确 tag 或所有具体船类型。
+3. **默认枪包音效缺失**：例如 `tacz:aug/aug_reload_empty`、
+   `tacz:aug/aug_reload_tactical`；需核对 bundle、音效索引及资源路径。
+4. **recipe placement 警告**：`can't be placed due to empty ingredients and will be ignored`
+   可能只是 TACZ 自定义工作台不参与原版 recipe-book 自动放置，也可能是
+   `PlacementInfo` 回退不完整。必须在工作台实际合成验证，不能只根据日志忽略。

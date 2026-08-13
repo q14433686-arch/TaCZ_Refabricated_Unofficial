@@ -36,67 +36,31 @@ public final class ScopeRenderTypes {
     private static final Map<Identifier, RenderType> FLASH_SWIRL_TYPES = new HashMap<>();
 
     /**
-     * <b>移植遗留问题（必须实机验证，勿当成已完成的适配）。</b>
+     * 1.21.11 的 {@code DepthTestFunction} 没有 {@code ALWAYS}。
      * <p>
-     * 26.1.2 用 {@code CompareOp.ALWAYS_PASS} 表达「深度测试恒通过、但仍然写深度」。
-     * 1.21.11 的 {@code DepthTestFunction} 只有
-     * {@code NO_DEPTH_TEST / EQUAL / LEQUAL / LESS / GREATER}，<b>没有 ALWAYS</b>。
+     * depth-cleanup 需要把较远的世界深度写回较近的手部深度上方；
+     * {@code GREATER_DEPTH_TEST} 对这一个写深度操作仍是正确的等价比较。
      * <p>
-     * 逐字节码核实（{@code GlCommandEncoder} / {@code GlConst} / {@code GlConst$1}）：
-     * <ul>
-     *   <li>{@code GlCommandEncoder} 对 {@code NO_DEPTH_TEST} 直接
-     *       {@code GlStateManager._disableDepthTest()}，其余分支才是
-     *       {@code _enableDepthTest()} + {@code _depthFunc(GlConst.toGl(f))}；</li>
-     *   <li>switchmap 序号：NO_DEPTH_TEST=1、EQUAL=2、LESS=3、GREATER=4；
-     *       {@code toGl} 对应 1→519(GL_ALWAYS)、2→514(GL_EQUAL)、3→513(GL_LESS)、
-     *       4→516(GL_GREATER)、default→515(GL_LEQUAL)。</li>
-     * </ul>
-     * 也就是说 GL_ALWAYS 只在 {@code NO_DEPTH_TEST} 这一支出现，
-     * 而这一支恰恰会 {@code glDisable(GL_DEPTH_TEST)}；
-     * OpenGL 在深度测试禁用时<b>连深度写入一并丢弃</b>（glDepthMask 失效）。
-     * 所以「恒通过且仍写深度」在 1.21.11 的 pipeline 状态里<b>无法直接表达</b>。
-     * <p>
-     * 这里退而选 {@code GREATER_DEPTH_TEST}(GL_GREATER)：
-     * depth-cleanup 的语义是把<b>更远</b>的世界深度写回近处的手部深度之上，
-     * 新深度 &gt; 旧深度，正好落在 GL_GREATER 通过的区间，且深度写入被保留，
-     * 这一条是语义等价的。
-     * <p>
-     * 但 etched / visible reticle 两条管线原本依赖的是「无条件通过」，
-     * GL_GREATER 会让位于已写入镜面深度<b>之前</b>的准星像素被丢弃。
-     * 若实机出现准星缺失/闪烁，正确解法不是换枚举，而是在既有的
-     * {@code GlCommandEncoderScopeDepthCopyMixin}（已 hook 到 {@code drawFromBuffers} HEAD）
-     * 里，对这几条管线在 vanilla 应用完 pipeline 状态之后补一次
-     * {@code GlStateManager._depthFunc(GL_ALWAYS)}，保持 {@code GL_DEPTH_TEST} 处于启用态。
+     * 两条 reticle 管线则需要无条件通过，且<b>不能</b>覆盖 cleanup 恢复的世界深度。
+     * 它们因此声明 {@code NO_DEPTH_TEST + depthWrite=false}；在真正 draw 边界由
+     * {@code GlCommandEncoderScopeDepthCopyMixin} 仅把深度测试改成
+     * {@code GL_ALWAYS}，不改变深度写入掩码。不要为 reticle 恢复
+     * {@code _depthMask(true)}。
      */
-    // 【实机验证结论 / 2026-08-13】上面的预测成立，GREATER 对 reticle 是错的：
-    //   * 无光影：镜内准星完全不显示；
-    //   * 有光影：准星显示（Iris 走自己的 HAND 程序，管线深度状态被 Iris 覆写，
-    //     所以恰好绕开了这个 bug —— 这正是「有无光影表现相反」的原因）。
-    // 原因：depth-cleanup 把【远】的世界深度写回目镜区域，而准星几何在【近】的手部深度。
-    // GL_GREATER 要求 new > old，near < far 不成立 → 准星像素被全部丢弃。
-    //
-    // 因此按注释里给出的正解处理：
-    //   * depth-cleanup 保留 GREATER（它本来就是「远盖近」，语义等价，实机也正常）；
-    //   * 两条 reticle 管线改用 NO_DEPTH_TEST，并在 GlCommandEncoderScopeDepthCopyMixin
-    //     里于 vanilla 应用完管线状态之后补 _enableDepthTest() + _depthFunc(GL_ALWAYS)，
-    //     从而得到「恒通过 + 仍写深度」这个 1.21.11 枚举无法直接表达的状态。
-    //     （只用 NO_DEPTH_TEST 不行：glDisable(GL_DEPTH_TEST) 会连深度写入一起丢弃。）
     private static final DepthTestFunction ALWAYS_PASS_KEEPING_DEPTH_WRITES =
             DepthTestFunction.GREATER_DEPTH_TEST;
 
     /**
-     * 供 encoder mixin 识别的「需要强制 GL_ALWAYS」的管线集合。
-     * <p>
-     * 这两条管线在 builder 里声明为 {@link DepthTestFunction#NO_DEPTH_TEST}（这样 vanilla
-     * 至少不会写入一个错误的比较函数），随后由 mixin 重新 enable 深度测试并把比较函数
-     * 改成 GL_ALWAYS，使深度写入重新生效。
+     * 供 encoder mixin 识别的「需要强制 GL_ALWAYS」的 reticle 管线集合。
+     * 它们保留 {@code depthWrite=false}；mixin 只重新开启深度测试并改比较函数，
+     * 不会重新开启深度写入。
      */
     private static final Set<RenderPipeline> FORCE_ALWAYS_DEPTH_PIPELINES =
             Collections.newSetFromMap(new IdentityHashMap<>());
 
     /** @return 该管线是否需要 mixin 把深度比较函数强制成 GL_ALWAYS。 */
-    public static boolean needsForcedAlwaysDepth(@Nullable Object pipeline) {
-        return pipeline instanceof RenderPipeline p && FORCE_ALWAYS_DEPTH_PIPELINES.contains(p);
+    public static boolean needsForcedAlwaysDepth(@Nullable RenderPipeline pipeline) {
+        return pipeline != null && FORCE_ALWAYS_DEPTH_PIPELINES.contains(pipeline);
     }
 
     /** Set during extraction when this first-person gun submission actually queued an ocular aperture. */
@@ -118,8 +82,8 @@ public final class ScopeRenderTypes {
     private static final RenderPipeline ETCHED_RETICLE_PIPELINE = createEtchedReticlePipeline();
 
     /**
-     * Small illuminated reticles use the same screen-space ocular mask and still write near hand
-     * depth to protect their surviving pixels from later world translucency.
+     * Small illuminated reticles use the same screen-space ocular mask without replacing the
+     * world depth restored by cleanup.
      */
     private static final RenderPipeline VISIBLE_RETICLE_PIPELINE = createVisibleReticlePipeline();
 
@@ -397,14 +361,12 @@ public final class ScopeRenderTypes {
         // 写回了世界远深度，任何 near<far 的比较都会把它丢掉（实机已证实 GREATER 会让
         // 无光影下的准星完全消失）。声明为 NO_DEPTH_TEST，再由 encoder mixin 还原成 GL_ALWAYS。
         //
-        // 【但深度写入必须关闭 / 2026-08-13 光影实机反馈】
-        // depth-cleanup 刚把目镜区域恢复成【世界远深度】，就是为了让 Iris 之后的
-        // 水面/雾/云/粒子等 composite 阶段知道"这里是远处的世界"。准星若再写入自己的
-        // 【手部近深度】，等于把这份恢复覆盖掉：Iris 会认为该像素是贴脸的手部表面，
-        // 于是把雾效/水面按手部距离叠加上去，表现为准星被"覆盖/叠加"、优先级低于雾和水面。
+        // 【深度写入必须关闭】depth-cleanup 已把目镜区域恢复为世界深度；准星只需显示，
+        // 不应以手部近深度覆盖该结果。depthWrite=false 保证 GL_ALWAYS 只影响本次
+        // 准星颜色绘制，不改变后续 world/composite pass 所读的深度。
         //
-        // 准星只需要被【看见】，不需要参与后续遮挡计算，因此 depthWrite=false：
-        // 恒通过深度测试（画得出来）+ 不写深度（不破坏 cleanup 恢复的世界深度）。
+        // 这只能保证深度恢复不被破坏，不能单独保证 shader pack 的 HAND 或更晚的
+        // composite 阶段不会改变准星颜色；那是独立的绘制时序/着色问题，须实机验证。
         builder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
         builder.withDepthWrite(false);
 
@@ -424,8 +386,8 @@ public final class ScopeRenderTypes {
         builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
         builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
         // The ocular depth writer must not hide the small dot/cross geometry placed behind the lens.
-        // 同 etched reticle：NO_DEPTH_TEST + encoder mixin 强制 GL_ALWAYS，且【不写深度】
-        // （写入手部近深度会覆盖 depth-cleanup 恢复的世界深度，导致 Iris 的雾/水面叠加到准星上）。
+        // 同 etched reticle：NO_DEPTH_TEST + encoder mixin 强制 GL_ALWAYS，且【不写深度】；
+        // 这样不会覆盖 depth-cleanup 恢复的世界深度。
         builder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
         builder.withDepthWrite(false);
 

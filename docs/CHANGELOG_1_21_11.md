@@ -5,18 +5,64 @@
 
 ---
 
+## R7 后续修订（未发布）
+
+**运行期修复：`GlRenderPipeline.info()` 不能经由反射调用**
+
+`GlCommandEncoderScopeDepthCopyMixin` 原先把 `GlRenderPipeline` 收为 `Object`，再用
+`getMethod("info")` 取 record accessor。1.21.11 是混淆运行时：源码里的 `info()`
+在运行时是 `comp_3801()`；反射字符串不会经过 Loom remap，因此这条路径会抛
+`NoSuchMethodException`，并使 reticle 的 `GL_ALWAYS` 覆写被静默停用。
+
+现改为直接接收 `GlRenderPipeline` 并调用 `glRenderPipeline.info()`，使 Loom 将正常的
+方法调用重映射到运行时名称。同时 `needsForcedAlwaysDepth` 改为接收
+`RenderPipeline`，移除反射缓存、失败日志和 `Object` 类型逃逸。
+
+两条 reticle 管线仍保持 `withDepthWrite(false)`；mixin 只执行
+`_enableDepthTest()` 与 `_depthFunc(GL_ALWAYS)`，绝不恢复 `_depthMask(true)`。
+
+**R7 结论修正：深度状态不是“雾/水覆盖准星”的完整解释**
+
+`depthWrite=false` 已保证准星不破坏 depth-cleanup 恢复的世界深度。反射失败时实际为
+`NO_DEPTH_TEST + depthWrite=false`，修复后为 `GL_ALWAYS + depthWrite=false`；两者对
+“只写颜色、不写深度”的结果很接近。因此本次反射问题是确定的运行期 Bug，但不能把它
+单独当作 BSL 水面、雾或 composite 覆盖准星的完整根因。
+
+准星仍被 Iris 分类为手部几何：蚀刻准星走 `HAND_CUTOUT`，发光准星走
+`HAND_TRANSLUCENT`。Iris hand fragment shader 或更晚的 shader-pack composite 阶段
+仍可能对已画出的准星颜色应用水、雾或后处理。若修复反射后问题仍存在，下一步应将
+“准星提交”从普通枪体的 solid hand submission 中局部解耦，放在更晚的 hand/translucent
+边界绘制，再由镜框覆盖溢出部分；必须保留原有 3D 模型、ADS/晃动、ocular mask，且不能
+退化为 HUD、PIP 或第二次世界渲染。
+
+**实机回归清单**：无光影、BSL、水下、隔水看目标、浓雾、雨天；日志中不应再出现
+`Cannot read GlRenderPipeline.info()` 或 `reticle depth override disabled`。
+
+**下一轮待核对（仅记录，尚未改动）**
+
+- `data/tacz/recipe/ammo_box_dyed.json` 使用不存在的 `minecraft:crafting_dye` serializer，
+  当前染色弹药盒配方不会加载；
+- 交互白名单中的 `minecraft:boat` 与 `minecraft:chest_boat` 在 1.21.11 不是可直接引用的
+  通用实体类型，应改为正确 tag 或具体船实体；
+- 默认枪包缺少 `tacz:aug/aug_reload_empty`、`tacz:aug/aug_reload_tactical` 等音效，需要核对
+  bundle、`sounds.json` 和实际资源路径；
+- 大量 recipe placement 的“empty ingredients / ignored”警告需用枪械工作台实际合成验证，
+  再判断是 `PlacementInfo` 的正常回退还是配方数据/实现问题。
+
+---
+
 ## R7
 
-**修复：开光影时准星被雾效/水面「覆盖·叠加」**
+**调整：准星不再写深度，保护 depth-cleanup 恢复的世界深度**
 
-准星管线之前带 `depthWrite=true`，把自己的手部近深度写进了目镜区域，
-覆盖掉 depth-cleanup 刚恢复的世界远深度。Iris 的 composite 阶段因此认为
-该像素是贴脸表面，把雾/水面按手部距离叠加上去。
+准星管线曾带 `depthWrite=true`，会以手部近深度覆盖 depth-cleanup 刚恢复的世界深度。
+因此：
 
 - 两条 reticle 管线改为 `withDepthWrite(false)`；
-- encoder mixin 删掉 `_depthMask(true)`，保留 `_enableDepthTest` + `_depthFunc(GL_ALWAYS)`。
+- encoder mixin 删除 `_depthMask(true)`，只保留 `_enableDepthTest` + `_depthFunc(GL_ALWAYS)`。
 
-语义变为「恒通过深度测试 + 不写深度」。
+语义变为「恒通过深度测试 + 不写深度」。这确保准星不会破坏恢复后的深度，但当时将它
+直接归因为“已修复光影雾/水覆盖准星”是过度结论；完整修正见本文件顶部的 R7 后续修订。
 
 **文档**：README 从 26.1.2 全面更新到 1.21.11（版本、Java 21、依赖、混淆说明、
 移植章节）；补充 `.gitignore`；删除误提交的 `latest.log`。
