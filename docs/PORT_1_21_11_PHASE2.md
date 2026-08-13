@@ -603,7 +603,7 @@ GlStateManager._depthMask(true);            // R5 的旧实现：后来已删除
 **后续更正**：R7 已删除 `_depthMask(true)` 并令两条 reticle 管线保持
 `depthWrite=false`；其后的 `GlRenderPipeline.info()` 反射实现也被确认不适用于混淆运行时。
 当前直接 typed accessor、Iris 晚期准星提交的修复，以及“雾/水覆盖并非已由深度状态完全解释”
-的结论，见本文最后的 **R8** 一节。
+的结论，见本文最后的 **R8 / R9** 两节。
 
 depth-cleanup **保持** `GREATER`（本来就正确，实机也正常）。
 
@@ -895,3 +895,61 @@ R8 的实现边界如下：
 4. **recipe placement 警告**：`can't be placed due to empty ingredients and will be ignored`
    可能只是 TACZ 自定义工作台不参与原版 recipe-book 自动放置，也可能是
    `PlacementInfo` 回退不完整。必须在工作台实际合成验证，不能只根据日志忽略。
+
+---
+
+## R9：Complementary 后处理雾的前景深度标记（2026-08-13）
+
+R8 的 `HAND_TRANSLUCENT` 回归截图表明：水面、水体与粒子已经不是影响因素，但中高倍镜的
+reticle 与 ocular 黑边仍会随 Complementary Reimagined 的雾效而半透明。这说明 R8 的提交时序
+已经越过 world translucency，却还没有越过 shader-pack 随后的 screen-space fog/composite。
+
+### 一、为什么 R8 仍会被雾处理
+
+R8 有意保留：
+
+```text
+late reticle: GL_ALWAYS + depthWrite=false
+```
+
+这样不会破坏 solid pass 中 cleanup 恢复的世界深度；但 Complementary 的 post-process 读取
+`depthtex0` 计算雾/景深等屏幕效果。reticle 没有写入自己的近处深度时，该像素仍保留目镜内的
+远处世界深度，后处理自然把已经画好的 reticle 当作远景一并雾化。
+
+这也解释了“与水、粒子无关、只跟雾有关”的观察：世界透明几何已经在 R8 late pass 之前完成，
+剩下的是以深度纹理为输入的全屏效果。
+
+### 二、R9 的受限例外：只在 late pass 写前景深度
+
+不把 `depthWrite=true` 恢复到普通 reticle pipeline。R9 新建了三条只从
+`ScopeLateReticleState` 进入的 Iris late pipeline：
+
+```text
+scope_late_etched_reticle  GL_ALWAYS + depthWrite=true
+scope_late_visible_reticle GL_ALWAYS + depthWrite=true
+scope_late_ocular_ring     GL_ALWAYS + depthWrite=true
+```
+
+它们仍使用同一份 3D 快照、同一 aperture mask、同一 `HAND_TRANSLUCENT` hand collector；唯一差异
+是：在所有 world translucency 都结束之后，将保留下来的 reticle/ring 像素写成手部近深度。
+于是随后的 shader-pack fog/DOF/composite 能把它们识别为前景，而不会错误复用镜内世界的远景深度。
+
+`ocular_ring` 也使用 `GL_ALWAYS`，确保它在 reticle 之后压住边缘溢出；这不会影响已完成的世界
+绘制。`GlCommandEncoderScopeDepthCopyMixin` 仍不调用 `_depthMask(true)`，以免把这个受限例外
+错误扩展到普通/vanilla reticle。
+
+### 三、R9 验收
+
+1. 确认 mod 版本为 `1.1.8+fabric.1.21.11.R9`；
+2. 开启 Complementary Reimagined，在有雾环境下用中高倍镜 ADS；
+3. 日志应出现：
+   `Queued reticle for Iris HAND_TRANSLUCENT.` 与
+   `Deferred reticle and ocular rim to Iris HAND_TRANSLUCENT with late foreground depth.`；
+   并在启动时将 `scope_late_etched_reticle` 或 `scope_late_visible_reticle`、
+   `scope_late_ocular_ring` 分配为 `HAND_TRANSLUCENT`；
+4. 检查准星、目镜内黑边是否恢复不受雾影响，同时确认镜内的**世界**仍正常受雾影响；
+5. 再检查水下、隔水、雨天，确保没有恢复 R7 以前的世界透明效果错误。
+
+若 R9 后仍然雾化，就可确认 fog pass 不读取当前 `depthtex0`，而是使用不可覆盖的 pre-hand/depth
+snapshot；届时下一步才需要把冻结的 3D reticle 画到 Iris final composite 之后，而不是继续调整
+普通 RenderPipeline 深度状态。

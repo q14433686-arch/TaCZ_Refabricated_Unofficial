@@ -5,6 +5,37 @@
 
 ---
 
+## R9
+
+**修复尝试：Complementary Reimagined 的后处理雾仍将晚期准星当作远景**
+
+R8 已把 reticle/rim 提交延后到 Iris `HAND_TRANSLUCENT`，排除了水面、水体与粒子
+world pass 的覆盖；实机截图确认剩余现象只随雾效出现。原因是 shader pack 的后续
+screen-space fog/composite 仍读取当前深度：R8 late reticle 保持 `depthWrite=false`，因此
+这些像素仍携带 cleanup 恢复的远处世界深度，被后处理雾当作远景颜色处理。
+
+R9 新增仅供 Iris late hand pass 使用的 reticle pipeline：
+
+- 普通/vanilla reticle 仍是 `GL_ALWAYS + depthWrite=false`，绝不破坏世界透明绘制；
+- late etched / illuminated reticle 改为 `GL_ALWAYS + depthWrite=true`；此时水、粒子、
+  天气等 world pass 已全部结束，写入近处深度只会让后续 fog、DOF 与 composite 正确识别前景；
+- late `ocular_ring` 同样改为 `GL_ALWAYS + depthWrite=true`，确保其在准星之后盖住边缘像素，
+  并作为前景参与 post-process 深度判定；
+- `_depthMask(true)` 仍未在 mixin 中硬编码；写入掩码只由这三条 late RenderPipeline 自身声明。
+
+BSL/Complementary 实测时应出现：
+
+```text
+[TACZ Scope] Queued reticle for Iris HAND_TRANSLUCENT.
+[TACZ Scope] Deferred reticle and ocular rim to Iris HAND_TRANSLUCENT with late foreground depth.
+```
+
+并新增 Iris pipeline 分配日志：`scope_late_etched_reticle` 或
+`scope_late_visible_reticle`、以及 `scope_late_ocular_ring` 均应归入
+`HAND_TRANSLUCENT`。
+
+---
+
 ## R8
 
 **运行期修复：`GlRenderPipeline.info()` 不能经由反射调用**
@@ -80,7 +111,7 @@ reticle/rim `BedrockRenderSnapshot`：完整保留原 3D 模型、ADS、后坐�
 - encoder mixin 删除 `_depthMask(true)`，只保留 `_enableDepthTest` + `_depthFunc(GL_ALWAYS)`。
 
 语义变为「恒通过深度测试 + 不写深度」。这确保准星不会破坏恢复后的深度，但当时将它
-直接归因为“已修复光影雾/水覆盖准星”是过度结论；完整修正见本文件顶部的 R8。
+直接归因为“已修复光影雾/水覆盖准星”是过度结论；完整修正见本文件顶部的 R8 / R9。
 
 **文档**：README 从 26.1.2 全面更新到 1.21.11（版本、Java 21、依赖、混淆说明、
 移植章节）；补充 `.gitignore`；删除误提交的 `latest.log`。

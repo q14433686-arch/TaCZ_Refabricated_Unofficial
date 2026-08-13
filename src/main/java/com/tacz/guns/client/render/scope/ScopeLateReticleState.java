@@ -19,7 +19,9 @@ import java.util.List;
  * reach {@code HAND_SOLID}; shader packs may subsequently composite water, fog and particles over
  * it. The solid pass freezes the original reticle/ring model snapshots here. An Iris-only mixin
  * then forces one late hand pass, submits these snapshots after world translucency, and lets the
- * existing hand collector perform the real draw at its normal {@code endBatch()} boundary.</p>
+ * existing hand collector perform the real draw at its normal {@code endBatch()} boundary. R9 uses
+ * dedicated late pipelines there to write foreground depth only after world translucency is done,
+ * so screen-space fog/composite does not reuse the scope's restored world depth.</p>
  *
  * <p>This class never keeps mutable {@code BedrockPart}s, poses or item stacks. A queued snapshot
  * has already captured ADS, recoil and view-bob transforms, so moving its submission does not
@@ -101,7 +103,7 @@ public final class ScopeLateReticleState {
 
         if (!loggedLateSubmit) {
             loggedLateSubmit = true;
-            GunMod.LOGGER.info("[TACZ Scope] Deferred reticle and ocular rim to Iris HAND_TRANSLUCENT.");
+            GunMod.LOGGER.info("[TACZ Scope] Deferred reticle and ocular rim to Iris HAND_TRANSLUCENT with late foreground depth.");
         }
     }
 

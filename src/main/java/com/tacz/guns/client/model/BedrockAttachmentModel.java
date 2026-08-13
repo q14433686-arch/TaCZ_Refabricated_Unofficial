@@ -665,20 +665,31 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         }
 
         // Render Reticle. Iris HAND_SOLID freezes only immutable snapshots here. Its optional
-        // HandRenderer mixin emits them after world translucency in HAND_TRANSLUCENT, while vanilla
-        // and non-shader Iris paths continue to submit immediately.
+        // HandRenderer mixin emits them after world translucency in HAND_TRANSLUCENT. R9 selects
+        // late-only depth-writing pipelines there, so post-processing fog sees surviving reticle
+        // pixels as foreground; vanilla and non-shader Iris paths continue to submit immediately.
         int deferredReticlesBefore = ScopeLateReticleState.pendingReticleCount();
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
             ScopeNodeSet active = filterReticleByActiveView(reticleNodes);
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
             if (reticle != null && !active.isEmpty()) {
                 boolean etchedOnly = active.hasEtched() && !active.hasIlluminated() && texture != null;
-                RenderType baseReticleType = etchedOnly
-                        ? ScopeRenderTypes.etchedReticle(texture)
-                        : renderType;
-                RenderType baseIlluminatedType = texture == null
-                        ? renderType
-                        : ScopeRenderTypes.visibleReticle(texture);
+                RenderType baseReticleType;
+                if (etchedOnly) {
+                    baseReticleType = deferReticleToIrisTranslucent
+                            ? ScopeRenderTypes.lateEtchedReticle(texture)
+                            : ScopeRenderTypes.etchedReticle(texture);
+                } else {
+                    baseReticleType = renderType;
+                }
+                RenderType baseIlluminatedType;
+                if (texture == null) {
+                    baseIlluminatedType = renderType;
+                } else {
+                    baseIlluminatedType = deferReticleToIrisTranslucent
+                            ? ScopeRenderTypes.lateVisibleReticle(texture)
+                            : ScopeRenderTypes.visibleReticle(texture);
+                }
 
                 // Pure etched trees are CPU-filtered to retain thin marks and discard large blackout panels.
                 // Both renderers sample world/aperture depth per pixel and only retain the ocular interior.
