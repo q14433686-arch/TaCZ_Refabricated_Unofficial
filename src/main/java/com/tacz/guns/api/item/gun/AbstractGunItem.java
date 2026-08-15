@@ -150,19 +150,7 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
             return getDummyAmmoAmount(gunItem) > 0;
         }
         // 检查背包内的弹药数量
-        return shooter.tacz$getItemHandler(null).map(cap -> {
-            // 背包检查
-            for (int i = 0; i < cap.getSlots(); i++) {
-                ItemStack checkAmmoStack = cap.getStackInSlot(i);
-                if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(gunItem, checkAmmoStack)) {
-                    return true;
-                }
-                if (checkAmmoStack.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(gunItem, checkAmmoStack)) {
-                    return true;
-                }
-            }
-            return false;
-        }).orElse(false);
+        return shooter.tacz$getItemHandler(null).map(cap -> hasAmmoInInventory(cap, gunItem)).orElse(false);
     }
 
     /**
@@ -270,6 +258,33 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
             }
         }
         return needAmmoCount - cnt;
+    }
+
+    /**
+     * 检查指定的物品处理器（背包）中是否存在可供 {@code gunItem} 使用的弹药。
+     *
+     * <p>此方法是弹药来源检查的<b>稳定扩展点</b>：下游模组（例如 Touhou Little Maid: Tsumugi）
+     * 需要将弹药来源从玩家背包重定向到其它容器时，可以直接 mixin 这个具名方法，而无需绑定
+     * {@code lambda$...$N} 这类会随类内 lambda 增删而漂移的合成名。</p>
+     *
+     * <p>该方法不修改背包内容，只做只读扫描。需要实际扣除弹药时请使用
+     * {@link #findAndExtractInventoryAmmo(IItemHandler, ItemStack, int)}。</p>
+     *
+     * @param itemHandler 目标实体的背包（物品处理器）
+     * @param gunItem     枪械物品
+     * @return 背包中是否存在可用的弹药或弹药箱
+     */
+    public static boolean hasAmmoInInventory(IItemHandler itemHandler, ItemStack gunItem) {
+        for (int i = 0; i < itemHandler.getSlots(); i++) {
+            ItemStack checkAmmoStack = itemHandler.getStackInSlot(i);
+            if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(gunItem, checkAmmoStack)) {
+                return true;
+            }
+            if (checkAmmoStack.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(gunItem, checkAmmoStack)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -431,19 +446,7 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
             return getDummyAmmoAmount(gun) > 0;
         }
         // 检查背包内的弹药数量
-        return shooter.tacz$getItemHandler(null).map(cap -> {
-            // 背包检查
-            for (int i = 0; i < cap.getSlots(); i++) {
-                ItemStack checkAmmoStack = cap.getStackInSlot(i);
-                if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(gun, checkAmmoStack)) {
-                    return true;
-                }
-                if (checkAmmoStack.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(gun, checkAmmoStack)) {
-                    return true;
-                }
-            }
-            return false;
-        }).orElse(false);
+        return shooter.tacz$getItemHandler(null).map(cap -> hasAmmoInInventory(cap, gun)).orElse(false);
     }
 
     /**

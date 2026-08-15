@@ -6,10 +6,9 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
-import com.tacz.guns.api.item.IAmmo;
-import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.api.util.LuaNbtAccessor;
 import com.tacz.guns.client.model.BedrockGunModel;
@@ -181,26 +180,27 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
         if (iGun.useDummyAmmo(currentGunItem)) {
             return iGun.getDummyAmmoAmount(currentGunItem) > 0;
         }
-        return processCameraEntity(entity -> {
-                    if (entity instanceof LivingEntity livingEntity) {
-                        return livingEntity.tacz$getItemHandler(null)
-                                .map(cap -> {
-                                    // 背包检查
-                                    for (int i = 0; i < cap.getSlots(); i++) {
-                                        ItemStack checkAmmoStack = cap.getStackInSlot(i);
-                                        if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(currentGunItem, checkAmmoStack)) {
-                                            return true;
-                                        }
-                                        if (checkAmmoStack.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(currentGunItem, checkAmmoStack)) {
-                                            return true;
-                                        }
-                                    }
-                                    return false;
-                                }).orElse(false);
-                    }
-                    return false;
-                }
-        ).orElse(false);
+        return processCameraEntity(this::hasAmmoToConsumeInEntity).orElse(false);
+    }
+
+    /**
+     * 检查相机实体（通常是玩家）身上是否有可供当前枪械消耗的弹药。
+     *
+     * <p>此方法是从 {@link #hasAmmoToConsume()} 中提取出的<b>具名</b>弹药来源检查入口，
+     * 用于替代原先的合成 lambda（{@code lambda$hasAmmoToConsume$N}）。下游模组（例如
+     * Touhou Little Maid: Tsumugi）需要将弹药来源从玩家背包重定向到其它容器时，可以直接
+     * mixin 此方法或 {@link AbstractGunItem#hasAmmoInInventory}，而无需绑定会漂移的合成名。</p>
+     *
+     * @param entity 相机实体
+     * @return 该实体身上是否有可消耗的弹药
+     */
+    private boolean hasAmmoToConsumeInEntity(Entity entity) {
+        if (entity instanceof LivingEntity livingEntity) {
+            return livingEntity.tacz$getItemHandler(null)
+                    .map(cap -> AbstractGunItem.hasAmmoInInventory(cap, currentGunItem))
+                    .orElse(false);
+        }
+        return false;
     }
 
     /**
