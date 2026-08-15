@@ -7,6 +7,7 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.AmmoAvailability;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
+import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.client.sound.SoundPlayManager;
 import com.tacz.guns.network.message.ClientMessagePlayerBoltGun;
@@ -42,36 +43,45 @@ public class LocalPlayerBolt {
             return;
         }
 
-        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> {
-            IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
-            // 检查 bolt 类型是否是 manual action
-            Bolt boltType = gunData.getBolt();
-            // 膛内/弹匣/直读容器的弹药可用性（统一收敛到 AmmoAvailability，见 AbstractGunItem#checkAmmoAvailability）
-            AmmoAvailability ammo = AbstractGunItem.checkAmmoAvailability(iGun, player, mainHandItem, boltType, gunOperator.needCheckAmmo());
-            boolean hasAmmoInBarrel = ammo.hasAmmoInBarrel;
-            if (boltType != Bolt.MANUAL_ACTION) {
-                return;
-            }
-            // 检查是否有弹药在枪膛内
-            if (hasAmmoInBarrel) {
-                return;
-            }
-            // 检查弹匣内是否有子弹（拉栓路径：枪膛子弹单独判断，见 AmmoAvailability#isNoAmmoToBolt）
-            if (ammo.isNoAmmoToBolt()) {
-                return;
-            }
-            // 锁上状态锁
-            data.lockState(IGunOperator::getSynIsBolting);
-            data.isBolting = true;
-            // 发包通知服务器
-            ClientPlayNetworking.send(new ClientMessagePlayerBoltGun());
-            // 播放动画和音效
-            AnimationStateMachine<?> animationStateMachine = display.getAnimationStateMachine();
-            if (animationStateMachine != null) {
-                SoundPlayManager.playBoltSound(player, display);
-                animationStateMachine.trigger(GunAnimationConstant.INPUT_BOLT);
-            }
-        });
+        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> performBolt(iGun, mainHandItem, gunData, display));
+    }
+
+    /**
+     * 客户端拉栓的门槛 + 触发逻辑（原先是 {@link #bolt()} 里的匿名 lambda）。
+     *
+     * <p>这是客户端「能否/如何开始拉栓」的具名决策点，供下游 mixin/覆写。
+     * 服务端镜像 {@code LivingEntityBolt#performBolt} 的门槛与本方法<b>有意不同</b>
+     * （服务端有射击/换弹/切枪冷却检查），请勿强行合并为同一 API。</p>
+     */
+    protected void performBolt(IGun iGun, ItemStack mainHandItem, GunData gunData, GunDisplayInstance display) {
+        IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
+        // 检查 bolt 类型是否是 manual action
+        Bolt boltType = gunData.getBolt();
+        // 膛内/弹匣/直读容器的弹药可用性（统一收敛到 AmmoAvailability，见 AbstractGunItem#checkAmmoAvailability）
+        AmmoAvailability ammo = AbstractGunItem.checkAmmoAvailability(iGun, player, mainHandItem, boltType, gunOperator.needCheckAmmo());
+        boolean hasAmmoInBarrel = ammo.hasAmmoInBarrel;
+        if (boltType != Bolt.MANUAL_ACTION) {
+            return;
+        }
+        // 检查是否有弹药在枪膛内
+        if (hasAmmoInBarrel) {
+            return;
+        }
+        // 检查弹匣内是否有子弹（拉栓路径：枪膛子弹单独判断，见 AmmoAvailability#isNoAmmoToBolt）
+        if (ammo.isNoAmmoToBolt()) {
+            return;
+        }
+        // 锁上状态锁
+        data.lockState(IGunOperator::getSynIsBolting);
+        data.isBolting = true;
+        // 发包通知服务器
+        ClientPlayNetworking.send(new ClientMessagePlayerBoltGun());
+        // 播放动画和音效
+        AnimationStateMachine<?> animationStateMachine = display.getAnimationStateMachine();
+        if (animationStateMachine != null) {
+            SoundPlayManager.playBoltSound(player, display);
+            animationStateMachine.trigger(GunAnimationConstant.INPUT_BOLT);
+        }
     }
 
     public void tickAutoBolt() {
