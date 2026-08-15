@@ -343,6 +343,19 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (api.getBoltTime() < boltFeedTime) {
             return true;
         }
+        feedChamber(api);
+        return api.getBoltTime() < boltActionTime;
+    }
+
+    /**
+     * 拉栓喂弹：到喂弹时刻后，把一发子弹填入枪膛（原先是 {@link #defaultTickBolt} 里的内联逻辑）。
+     *
+     * <p>这是「拉栓时弹药从哪来」的具名决策点，供下游 mixin/覆写。
+     * 背包直读路径经 {@code consumeAmmoFromPlayer} → {@code AbstractGunItem#extractAmmoFromSource}，
+     * 下游重定向弹药来源时只需覆写后一个入口即可覆盖此路径。
+     * 弹匣路径（removeAmmoFromMagazine）语义不同，保留为独立分支，勿与背包直读合并。</p>
+     */
+    protected void feedChamber(ModernKineticGunScriptAPI api) {
         if (!api.hasAmmoInBarrel()) {
             // 如果是背包直读则检测消耗背包弹药
             if (api.useInventoryAmmo()) {
@@ -353,7 +366,6 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
                 api.setAmmoInBarrel(true);
             }
         }
-        return api.getBoltTime() < boltActionTime;
     }
 
     private ReloadState defaultTickReload(ModernKineticGunScriptAPI api) {
@@ -416,7 +428,30 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         boolean needConsumeAmmo = api.isReloadingNeedConsumeAmmo();
         boolean infinite = data.getReloadData().isInfinite();
         needConsumeAmmo = needConsumeAmmo && !infinite;
-        switch (data.getReloadData().getType()) {
+        consumeAmmoForReload(api, data.getReloadData().getType(), needAmmoCount, needConsumeAmmo);
+        // 如果不是战术换弹，需要将弹匣中的一枚子弹放到枪膛中
+        Bolt boltType = api.getGunIndex().getGunData().getBolt();
+        if (!isTactical && (boltType == Bolt.MANUAL_ACTION || boltType == Bolt.CLOSED_BOLT)) {
+            int i = api.removeAmmoFromMagazine(1);
+            if (i != 0) {
+                api.setAmmoInBarrel(true);
+            }
+        }
+    }
+
+    /**
+     * 换弹补弹：按 {@link FeedType} 决定「从哪里扣弹药、补多少进弹匣」
+     * （原先是 {@link #defaultReloadFinishing} 里的内联 switch）。
+     *
+     * <p>这是「换弹时弹药来源」的具名决策点，供下游 mixin/覆写。
+     * <b>注意：</b>{@code FUEL} 的消耗语义（固定扣 1 个燃料罐、按罐容量补弹）与
+     * {@code MAGAZINE}/{@code INVENTORY}（扣 needAmmoCount、按实际扣减数补弹）<b>有意不同</b>，
+     * 因此这里保留按类型分派的结构，请勿把各分支强行合并成同一条代码路径。
+     * 背包直读分支经 {@code consumeAmmoFromPlayer} → {@code AbstractGunItem#extractAmmoFromSource}，
+     * 下游重定向弹药来源时覆写后一个入口即可。</p>
+     */
+    protected void consumeAmmoForReload(ModernKineticGunScriptAPI api, FeedType feedType, int needAmmoCount, boolean needConsumeAmmo) {
+        switch (feedType) {
             case MAGAZINE -> {
                 if (needConsumeAmmo) {
                     int consumedAmount = api.consumeAmmoFromPlayer(needAmmoCount);
@@ -450,14 +485,6 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
                 } else {
                     api.putAmmoInMagazine(needAmmoCount);
                 }
-            }
-        }
-        // 如果不是战术换弹，需要将弹匣中的一枚子弹放到枪膛中
-        Bolt boltType = api.getGunIndex().getGunData().getBolt();
-        if (!isTactical && (boltType == Bolt.MANUAL_ACTION || boltType == Bolt.CLOSED_BOLT)) {
-            int i = api.removeAmmoFromMagazine(1);
-            if (i != 0) {
-                api.setAmmoInBarrel(true);
             }
         }
     }
