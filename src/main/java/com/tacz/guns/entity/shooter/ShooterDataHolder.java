@@ -11,6 +11,15 @@ import java.util.function.Supplier;
 
 public class ShooterDataHolder {
     /**
+     * 冷却计算的延迟补偿窗口（毫秒）。服务端的射击/切枪/近战冷却在计算时都会减去该值，
+     * 以平衡网络延迟（原为各处硬编码的 5 ms 魔法数，现统一为此常量）。
+     *
+     * <p><b>注意：</b>客户端 {@code LocalPlayerShoot#getCoolDown} <b>有意不应用</b>此窗口，
+     * 这是两端的既有语义差异，不是遗漏——如需统一行为请显式修改两端并回归测试，
+     * 不要试图把两端强行合并进同一个冷却计算 API。</p>
+     */
+    public static final long LATENCY_WINDOW_MS = 5L;
+    /**
      * 基时间戳，用于一些需要精密计算时间的场景。目前只有 shoot 使用。
      */
     public long baseTimestamp = System.currentTimeMillis();

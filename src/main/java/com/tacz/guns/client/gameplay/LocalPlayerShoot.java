@@ -333,6 +333,9 @@ public class LocalPlayerShoot {
     }
 
     private long getCoolDown(IGun iGun, ItemStack mainHandItem, GunData gunData) {
+        // 注意：此处<b>有意不</b>减去 ShooterDataHolder.LATENCY_WINDOW_MS（服务端会减 5 ms 补偿延迟）。
+        // 客户端/服务端冷却语义本就是两条独立路径（另有 charge 的 <50ms 分支依赖本函数），
+        // 请勿把两端强行合并进同一个冷却计算 API。
         FireMode fireMode = iGun.getFireMode(mainHandItem);
         long coolDown;
         if (fireMode == FireMode.BURST) {

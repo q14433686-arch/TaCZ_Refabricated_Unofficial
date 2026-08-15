@@ -336,12 +336,12 @@ public class ModernKineticGunScriptAPI {
         if (fireMode == FireMode.BURST) {
             long coolDown = (long) (gunIndex.getGunData().getBurstData().getMinInterval() * 1000f);
             // 给 5 ms 的窗口时间，以平衡延迟
-            coolDown = coolDown - 5;
+            coolDown = coolDown - ShooterDataHolder.LATENCY_WINDOW_MS;
             return Math.max(coolDown, 0L);
         }
         long coolDown = gunIndex.getGunData().getShootInterval(this.shooter, fireMode, itemStack);
         // 给 5 ms 的窗口时间，以平衡延迟
-        coolDown = coolDown - 5;
+        coolDown = coolDown - ShooterDataHolder.LATENCY_WINDOW_MS;
         return Math.max(coolDown, 0L);
     }
 

@@ -248,14 +248,14 @@ public class LivingEntityShoot {
             return gunIndex.map(index -> {
                 long coolDown = (long) (index.getGunData().getBurstData().getMinInterval() * 1000f) - interval;
                 // 给 5 ms 的窗口时间，以平衡延迟
-                coolDown = coolDown - 5;
+                coolDown = coolDown - ShooterDataHolder.LATENCY_WINDOW_MS;
                 return Math.max(coolDown, 0L);
             }).orElse(-1L);
         }
         return gunIndex.map(index -> {
             long coolDown = index.getGunData().getShootInterval(this.shooter, fireMode, currentGunItem) - interval;
             // 给 5 ms 的窗口时间，以平衡延迟
-            coolDown = coolDown - 5;
+            coolDown = coolDown - ShooterDataHolder.LATENCY_WINDOW_MS;
             return Math.max(coolDown, 0L);
         }).orElse(-1L);
     }

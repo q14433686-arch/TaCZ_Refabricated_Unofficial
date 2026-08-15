@@ -139,7 +139,7 @@ public class LivingEntityMelee {
         float totalCooldownTime = meleeData.getCooldown() + extraCooldownTime;
         long coolDown = (long) (totalCooldownTime * 1000) - (System.currentTimeMillis() - data.meleeTimestamp);
         // 给 5 ms 的窗口时间，以平衡延迟
-        coolDown = coolDown - 5;
+        coolDown = coolDown - ShooterDataHolder.LATENCY_WINDOW_MS;
         if (coolDown < 0) {
             return 0L;
         }
