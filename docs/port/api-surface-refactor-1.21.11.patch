@@ -700,22 +700,28 @@ index d1733d1..58653c0 100644
  
      /**
 diff --git a/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerBolt.java b/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerBolt.java
-index 06bae23..b62fb4a 100644
+index 06bae23..930bc30 100644
 --- a/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerBolt.java
 +++ b/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerBolt.java
-@@ -4,6 +4,8 @@ import com.tacz.guns.api.TimelessAPI;
+@@ -4,7 +4,10 @@ import com.tacz.guns.api.TimelessAPI;
  import com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine;
  import com.tacz.guns.api.entity.IGunOperator;
  import com.tacz.guns.api.item.IGun;
 +import com.tacz.guns.api.item.gun.AbstractGunItem;
 +import com.tacz.guns.api.item.gun.AmmoAvailability;
  import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
++import com.tacz.guns.client.resource.GunDisplayInstance;
  import com.tacz.guns.client.resource.index.ClientGunIndex;
  import com.tacz.guns.client.sound.SoundPlayManager;
-@@ -44,15 +46,9 @@ public class LocalPlayerBolt {
-             IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
-             // 检查 bolt 类型是否是 manual action
-             Bolt boltType = gunData.getBolt();
+ import com.tacz.guns.network.message.ClientMessagePlayerBoltGun;
+@@ -40,42 +43,45 @@ public class LocalPlayerBolt {
+             return;
+         }
+ 
+-        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> {
+-            IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
+-            // 检查 bolt 类型是否是 manual action
+-            Bolt boltType = gunData.getBolt();
 -            // 是否为背包直读
 -            boolean useInventoryAmmo = iGun.useInventoryAmmo(mainHandItem);
 -            // 膛内是否有子弹
@@ -725,25 +731,192 @@ index 06bae23..b62fb4a 100644
 -            // 判断没有子弹的条件 (背包直读且包内没子弹 / 非背包直读且弹匣子弹数 < 1)
 -            boolean noAmmo = useInventoryAmmo && !hasInventoryAmmo ||
 -                    !useInventoryAmmo && iGun.getCurrentAmmoCount(mainHandItem) < 1;
-+            // 膛内/弹匣/直读容器的弹药可用性（统一收敛到 AmmoAvailability，见 AbstractGunItem#checkAmmoAvailability）
-+            AmmoAvailability ammo = AbstractGunItem.checkAmmoAvailability(iGun, player, mainHandItem, boltType, gunOperator.needCheckAmmo());
-+            boolean hasAmmoInBarrel = ammo.hasAmmoInBarrel;
-             if (boltType != Bolt.MANUAL_ACTION) {
-                 return;
-             }
-@@ -60,8 +56,8 @@ public class LocalPlayerBolt {
-             if (hasAmmoInBarrel) {
-                 return;
-             }
+-            if (boltType != Bolt.MANUAL_ACTION) {
+-                return;
+-            }
+-            // 检查是否有弹药在枪膛内
+-            if (hasAmmoInBarrel) {
+-                return;
+-            }
 -            // 检查弹匣内是否有子弹
 -            if (noAmmo) {
-+            // 检查弹匣内是否有子弹（拉栓路径：枪膛子弹单独判断，见 AmmoAvailability#isNoAmmoToBolt）
-+            if (ammo.isNoAmmoToBolt()) {
-                 return;
-             }
-             // 锁上状态锁
+-                return;
+-            }
+-            // 锁上状态锁
+-            data.lockState(IGunOperator::getSynIsBolting);
+-            data.isBolting = true;
+-            // 发包通知服务器
+-            ClientPlayNetworking.send(new ClientMessagePlayerBoltGun());
+-            // 播放动画和音效
+-            AnimationStateMachine<?> animationStateMachine = display.getAnimationStateMachine();
+-            if (animationStateMachine != null) {
+-                SoundPlayManager.playBoltSound(player, display);
+-                animationStateMachine.trigger(GunAnimationConstant.INPUT_BOLT);
+-            }
+-        });
++        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> performBolt(iGun, mainHandItem, gunData, display));
++    }
++
++    /**
++     * 客户端拉栓的门槛 + 触发逻辑（原先是 {@link #bolt()} 里的匿名 lambda）。
++     *
++     * <p>这是客户端「能否/如何开始拉栓」的具名决策点，供下游 mixin/覆写。
++     * 服务端镜像 {@code LivingEntityBolt#performBolt} 的门槛与本方法<b>有意不同</b>
++     * （服务端有射击/换弹/切枪冷却检查），请勿强行合并为同一 API。</p>
++     */
++    protected void performBolt(IGun iGun, ItemStack mainHandItem, GunData gunData, GunDisplayInstance display) {
++        IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
++        // 检查 bolt 类型是否是 manual action
++        Bolt boltType = gunData.getBolt();
++        // 膛内/弹匣/直读容器的弹药可用性（统一收敛到 AmmoAvailability，见 AbstractGunItem#checkAmmoAvailability）
++        AmmoAvailability ammo = AbstractGunItem.checkAmmoAvailability(iGun, player, mainHandItem, boltType, gunOperator.needCheckAmmo());
++        boolean hasAmmoInBarrel = ammo.hasAmmoInBarrel;
++        if (boltType != Bolt.MANUAL_ACTION) {
++            return;
++        }
++        // 检查是否有弹药在枪膛内
++        if (hasAmmoInBarrel) {
++            return;
++        }
++        // 检查弹匣内是否有子弹（拉栓路径：枪膛子弹单独判断，见 AmmoAvailability#isNoAmmoToBolt）
++        if (ammo.isNoAmmoToBolt()) {
++            return;
++        }
++        // 锁上状态锁
++        data.lockState(IGunOperator::getSynIsBolting);
++        data.isBolting = true;
++        // 发包通知服务器
++        ClientPlayNetworking.send(new ClientMessagePlayerBoltGun());
++        // 播放动画和音效
++        AnimationStateMachine<?> animationStateMachine = display.getAnimationStateMachine();
++        if (animationStateMachine != null) {
++            SoundPlayManager.playBoltSound(player, display);
++            animationStateMachine.trigger(GunAnimationConstant.INPUT_BOLT);
++        }
+     }
+ 
+     public void tickAutoBolt() {
+diff --git a/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerReload.java b/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerReload.java
+index 9df0600..e984300 100644
+--- a/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerReload.java
++++ b/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerReload.java
+@@ -35,18 +35,23 @@ public class LocalPlayerReload {
+             return;
+         }
+ 
+-        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> {
+-            // 如果没在换弹，则返回
+-            IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
+-            ReloadState reloadState = gunOperator.getSynReloadState();
+-            if (!reloadState.getStateType().isReloading()) {
+-                return;
+-            }
+-            // 发包通知服务器
+-            ClientPlayNetworking.send(new ClientMessagePlayerCancelReload());
+-            // 执行本地取消换弹逻辑
+-            this.cancelReload(display);
+-        });
++        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> performCancelReload(display));
++    }
++
++    /**
++     * 客户端取消换弹的触发逻辑（原先是 {@link #cancelReload()} 里的匿名 lambda）。
++     */
++    protected void performCancelReload(GunDisplayInstance display) {
++        // 如果没在换弹，则返回
++        IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
++        ReloadState reloadState = gunOperator.getSynReloadState();
++        if (!reloadState.getStateType().isReloading()) {
++            return;
++        }
++        // 发包通知服务器
++        ClientPlayNetworking.send(new ClientMessagePlayerCancelReload());
++        // 执行本地取消换弹逻辑
++        this.cancelReload(display);
+     }
+ 
+     public void reload() {
+@@ -60,37 +65,47 @@ public class LocalPlayerReload {
+         if (gunData == null) {
+             return;
+         }
+-        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> {
+-            // 检查是否为背包直读
+-            if (gunItem.useInventoryAmmo(mainHandItem)) {
+-                return;
+-            }
+-            // 检查状态锁
+-            if (data.clientStateLock) {
+-                return;
+-            }
+-            if (System.currentTimeMillis() - data.clientShootTimestamp < 100) {
+-                return;
+-            }
+-            // 弹药简单检查
+-            boolean canReload = gunItem.canReload(player, mainHandItem);
+-            if (IGunOperator.fromLivingEntity(player).needCheckAmmo() && !canReload) {
+-                return;
+-            }
+-            // 锁上状态锁
+-            data.lockState(operator -> operator.getSynReloadState().getStateType().isReloading());
+-            data.chargeProgress = 0f;
+-            // 触发换弹事件
+-            GunReloadEvent gunReloadEvent = new GunReloadEvent(player, player.getMainHandItem(), LogicalSide.CLIENT);
+-            GunReloadEvent.CALLBACK.invoker().post(gunReloadEvent);
+-            if (gunReloadEvent.isCanceled()) {
+-                return;
+-            }
+-            // 发包通知服务器
+-            ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
+-            // 执行客户端 reload 相关内容
+-            this.doReload(gunItem, display, gunData, mainHandItem);
+-        });
++        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> performReload(gunItem, mainHandItem, gunData, display));
++    }
++
++    /**
++     * 客户端换弹的门槛 + 触发逻辑（原先是 {@link #reload()} 里的匿名 lambda）。
++     *
++     * <p>这是客户端「能否开始换弹」的具名决策点，供下游 mixin/覆写。
++     * <b>注意：</b>服务端 {@code LivingEntityReload#performReload} 的门槛序列与本方法
++     * <b>有意不同</b>（本方法多一个射击后 100ms 保护，且没有服务端的冷却/拉栓检查）——
++     * 两条路径语义各自成立，请勿强行合并成同一个「统一换弹门槛」API。</p>
++     */
++    protected void performReload(AbstractGunItem gunItem, ItemStack mainHandItem, GunData gunData, GunDisplayInstance display) {
++        // 检查是否为背包直读
++        if (gunItem.useInventoryAmmo(mainHandItem)) {
++            return;
++        }
++        // 检查状态锁
++        if (data.clientStateLock) {
++            return;
++        }
++        if (System.currentTimeMillis() - data.clientShootTimestamp < 100) {
++            return;
++        }
++        // 弹药简单检查
++        boolean canReload = gunItem.canReload(player, mainHandItem);
++        if (IGunOperator.fromLivingEntity(player).needCheckAmmo() && !canReload) {
++            return;
++        }
++        // 锁上状态锁
++        data.lockState(operator -> operator.getSynReloadState().getStateType().isReloading());
++        data.chargeProgress = 0f;
++        // 触发换弹事件
++        GunReloadEvent gunReloadEvent = new GunReloadEvent(player, player.getMainHandItem(), LogicalSide.CLIENT);
++        GunReloadEvent.CALLBACK.invoker().post(gunReloadEvent);
++        if (gunReloadEvent.isCanceled()) {
++            return;
++        }
++        // 发包通知服务器
++        ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
++        // 执行客户端 reload 相关内容
++        this.doReload(gunItem, display, gunData, mainHandItem);
+     }
+ 
+     private void doReload(IGun iGun, GunDisplayInstance display, GunData gunData, ItemStack mainHandItem) {
 diff --git a/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerShoot.java b/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerShoot.java
-index c177aa8..c195647 100644
+index c177aa8..a7ceba9 100644
 --- a/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerShoot.java
 +++ b/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerShoot.java
 @@ -10,6 +10,8 @@ import com.tacz.guns.api.entity.ShootResult;
@@ -755,7 +928,37 @@ index c177aa8..c195647 100644
  import com.tacz.guns.api.item.gun.FireMode;
  import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
  import com.tacz.guns.client.resource.GunDisplayInstance;
-@@ -204,19 +206,11 @@ public class LocalPlayerShoot {
+@@ -39,7 +41,28 @@ import java.util.concurrent.atomic.AtomicInteger;
+ import java.util.function.Predicate;
+ 
+ public class LocalPlayerShoot {
+-    private static final Predicate<IGunOperator> SHOOT_LOCKED_CONDITION = operator -> operator.getSynShootCoolDown() > 0;
++    /**
++     * 开火状态锁的<b>身份令牌</b>。
++     *
++     * <p>本字段不仅承载判定逻辑，还承担身份语义：{@code LocalPlayerShoot} 通过
++     * {@code data.lockedCondition != SHOOT_LOCKED_CONDITION} 的<b>引用比较</b>识别
++     * 「当前锁是不是开火锁」。因此下游 mod 若想改变判定，应 mixin/覆写
++     * {@link #isShootLocked(IGunOperator)}，<b>不要</b>替换本字段（替换会破坏引用比较，
++     * 使切枪后开火覆盖其它动作的保护静默失效）。</p>
++     */
++    private static final Predicate<IGunOperator> SHOOT_LOCKED_CONDITION = LocalPlayerShoot::isShootLocked;
++
++    /**
++     * 「是否处于开火冷却」的具名判定。原先是 {@code SHOOT_LOCKED_CONDITION} 里的匿名 lambda
++     * （合成名 {@code lambda$static$N}），现提取为稳定的 public static 方法供下游 mixin。
++     *
++     * @param operator 射击者
++     * @return 同步到的射击冷却是否大于 0
++     */
++    public static boolean isShootLocked(IGunOperator operator) {
++        return operator.getSynShootCoolDown() > 0;
++    }
++
+     private final LocalPlayerDataHolder data;
+     private final LocalPlayer player;
+ 
+@@ -204,19 +227,11 @@ public class LocalPlayerShoot {
          if (gunOperator.getSynMeleeCoolDown() != 0) {
              return ShootResult.IS_MELEE;
          }
@@ -779,7 +982,7 @@ index c177aa8..c195647 100644
              if (playDrySound) {
                  SoundPlayManager.playDryFireSound(player, display);
              }
-@@ -253,68 +247,80 @@ public class LocalPlayerShoot {
+@@ -253,68 +268,80 @@ public class LocalPlayerShoot {
          // 连发计数器
          AtomicInteger count = new AtomicInteger(0);
  
@@ -913,6 +1116,16 @@ index c177aa8..c195647 100644
      }
  
      private boolean useSilenceSound() {
+@@ -327,6 +354,9 @@ public class LocalPlayerShoot {
+     }
+ 
+     private long getCoolDown(IGun iGun, ItemStack mainHandItem, GunData gunData) {
++        // 注意：此处<b>有意不</b>减去 ShooterDataHolder.LATENCY_WINDOW_MS（服务端会减 5 ms 补偿延迟）。
++        // 客户端/服务端冷却语义本就是两条独立路径（另有 charge 的 <50ms 分支依赖本函数），
++        // 请勿把两端强行合并进同一个冷却计算 API。
+         FireMode fireMode = iGun.getFireMode(mainHandItem);
+         long coolDown;
+         if (fireMode == FireMode.BURST) {
 diff --git a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityAmmoCheck.java b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityAmmoCheck.java
 index bd5a4a7..e88e513 100644
 --- a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityAmmoCheck.java
@@ -939,7 +1152,7 @@ index bd5a4a7..e88e513 100644
      private final LivingEntity shooter;
  
 diff --git a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityBolt.java b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityBolt.java
-index 73261a9..41f0122 100644
+index 73261a9..f61dfc0 100644
 --- a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityBolt.java
 +++ b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityBolt.java
 @@ -3,6 +3,7 @@ package com.tacz.guns.entity.shooter;
@@ -950,10 +1163,30 @@ index 73261a9..41f0122 100644
  import com.tacz.guns.resource.index.CommonGunIndex;
  import com.tacz.guns.resource.pojo.data.gun.Bolt;
  import net.minecraft.resources.Identifier;
-@@ -53,15 +54,8 @@ public class LivingEntityBolt {
-             IGunOperator gunOperator = IGunOperator.fromLivingEntity(shooter);
-             // 检查 bolt 类型是否是 manual action
-             Bolt boltType = gunIndex.getGunData().getBolt();
+@@ -33,49 +34,51 @@ public class LivingEntityBolt {
+             return;
+         }
+         Identifier gunId = iGun.getGunId(currentGunItem);
+-        TimelessAPI.getCommonGunIndex(gunId).ifPresent(gunIndex -> {
+-            // 判断是否正在射击冷却
+-            if (shoot.getShootCoolDown() != 0) {
+-                return;
+-            }
+-            // 检查是否正在换弹
+-            if (data.reloadStateType.isReloading()) {
+-                return;
+-            }
+-            // 检查是否在切枪
+-            if (draw.getDrawCoolDown() != 0) {
+-                return;
+-            }
+-            // 检查是否在拉栓
+-            if (data.isBolting) {
+-                return;
+-            }
+-            IGunOperator gunOperator = IGunOperator.fromLivingEntity(shooter);
+-            // 检查 bolt 类型是否是 manual action
+-            Bolt boltType = gunIndex.getGunData().getBolt();
 -            // 是否为背包直读
 -            boolean useInventoryAmmo = iGun.useInventoryAmmo(currentGunItem);
 -            // 膛内是否有子弹
@@ -963,24 +1196,213 @@ index 73261a9..41f0122 100644
 -            // 判断没有子弹的条件 (背包直读且包内没子弹 / 非背包直读且弹匣子弹数 < 1)
 -            boolean noAmmo = useInventoryAmmo && !hasInventoryAmmo ||
 -                    !useInventoryAmmo && iGun.getCurrentAmmoCount(currentGunItem) < 1;
-+            AmmoAvailability ammo = AbstractGunItem.checkAmmoAvailability(iGun, shooter, currentGunItem, boltType, gunOperator.needCheckAmmo());
-+            boolean hasAmmoInBarrel = ammo.hasAmmoInBarrel;
-             if (boltType != Bolt.MANUAL_ACTION) {
-                 return;
-             }
-@@ -69,8 +63,8 @@ public class LivingEntityBolt {
-             if (hasAmmoInBarrel) {
-                 return;
-             }
+-            if (boltType != Bolt.MANUAL_ACTION) {
+-                return;
+-            }
+-            // 检查是否有弹药在枪膛内
+-            if (hasAmmoInBarrel) {
+-                return;
+-            }
 -            // 检查弹匣内是否有子弹
 -            if (noAmmo) {
-+            // 检查弹匣内是否有子弹（拉栓路径：枪膛子弹单独判断，见 AmmoAvailability#isNoAmmoToBolt）
-+            if (ammo.isNoAmmoToBolt()) {
-                 return;
+-                return;
+-            }
+-            data.boltTimestamp = System.currentTimeMillis();
+-            data.isBolting = iGun.startBolt(data, currentGunItem, shooter);
+-        });
++        TimelessAPI.getCommonGunIndex(gunId).ifPresent(gunIndex -> performBolt(iGun, currentGunItem, gunIndex));
++    }
++
++    /**
++     * 服务端拉栓的门槛 + 触发逻辑（原先是 {@link #bolt()} 里的匿名 lambda）。
++     *
++     * <p>这是服务端「能否/如何开始拉栓」的具名决策点，供下游 mixin/覆写。
++     * 客户端镜像 {@code LocalPlayerBolt#performBolt} 的门槛与本方法<b>有意不同</b>
++     * （客户端无射击/换弹/切枪冷却检查，靠状态锁保证互斥），请勿强行合并为同一 API。</p>
++     */
++    protected void performBolt(AbstractGunItem iGun, ItemStack currentGunItem, CommonGunIndex gunIndex) {
++        // 判断是否正在射击冷却
++        if (shoot.getShootCoolDown() != 0) {
++            return;
++        }
++        // 检查是否正在换弹
++        if (data.reloadStateType.isReloading()) {
++            return;
++        }
++        // 检查是否在切枪
++        if (draw.getDrawCoolDown() != 0) {
++            return;
++        }
++        // 检查是否在拉栓
++        if (data.isBolting) {
++            return;
++        }
++        IGunOperator gunOperator = IGunOperator.fromLivingEntity(shooter);
++        // 检查 bolt 类型是否是 manual action
++        Bolt boltType = gunIndex.getGunData().getBolt();
++        AmmoAvailability ammo = AbstractGunItem.checkAmmoAvailability(iGun, shooter, currentGunItem, boltType, gunOperator.needCheckAmmo());
++        boolean hasAmmoInBarrel = ammo.hasAmmoInBarrel;
++        if (boltType != Bolt.MANUAL_ACTION) {
++            return;
++        }
++        // 检查是否有弹药在枪膛内
++        if (hasAmmoInBarrel) {
++            return;
++        }
++        // 检查弹匣内是否有子弹（拉栓路径：枪膛子弹单独判断，见 AmmoAvailability#isNoAmmoToBolt）
++        if (ammo.isNoAmmoToBolt()) {
++            return;
++        }
++        data.boltTimestamp = System.currentTimeMillis();
++        data.isBolting = iGun.startBolt(data, currentGunItem, shooter);
+     }
+ 
+     public void tickBolt() {
+diff --git a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityDrawGun.java b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityDrawGun.java
+index 214b3e2..e60390f 100644
+--- a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityDrawGun.java
++++ b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityDrawGun.java
+@@ -68,7 +68,7 @@ public class LivingEntityDrawGun {
+         return gunIndex.map(index -> {
+             long coolDown = (long) (index.getGunData().getDrawTime() * 1000) - (System.currentTimeMillis() - data.drawTimestamp);
+             // 给 5 ms 的窗口时间，以平衡延迟
+-            coolDown = coolDown - 5;
++            coolDown = coolDown - ShooterDataHolder.LATENCY_WINDOW_MS;
+             if (coolDown < 0) {
+                 return 0L;
              }
-             data.boltTimestamp = System.currentTimeMillis();
+diff --git a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityMelee.java b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityMelee.java
+index e8ebf40..f02adac 100644
+--- a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityMelee.java
++++ b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityMelee.java
+@@ -139,7 +139,7 @@ public class LivingEntityMelee {
+         float totalCooldownTime = meleeData.getCooldown() + extraCooldownTime;
+         long coolDown = (long) (totalCooldownTime * 1000) - (System.currentTimeMillis() - data.meleeTimestamp);
+         // 给 5 ms 的窗口时间，以平衡延迟
+-        coolDown = coolDown - 5;
++        coolDown = coolDown - ShooterDataHolder.LATENCY_WINDOW_MS;
+         if (coolDown < 0) {
+             return 0L;
+         }
+diff --git a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityReload.java b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityReload.java
+index 6a26f39..aa20b3b 100644
+--- a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityReload.java
++++ b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityReload.java
+@@ -35,54 +35,64 @@ public class LivingEntityReload {
+             return;
+         }
+         Identifier gunId = gunItem.getGunId(currentGunItem);
+-        TimelessAPI.getCommonGunIndex(gunId).ifPresent(gunIndex -> {
+-            // 检查是否为背包直读
+-            if (gunItem.useInventoryAmmo(currentGunItem)) {
+-                return;
+-            }
+-            // 检查换弹是否还未完成
+-            if (data.reloadStateType.isReloading()) {
+-                return;
+-            }
+-            // 检查是否正在开火冷却
+-            if (shoot.getShootCoolDown() != 0) {
+-                return;
+-            }
+-            // 检查是否在切枪
+-            if (draw.getDrawCoolDown() != 0) {
+-                return;
+-            }
+-            // 检查是否在拉栓
+-            if (data.isBolting) {
+-                return;
+-            }
+-            // 检查弹药
+-            if (IGunOperator.fromLivingEntity(shooter).needCheckAmmo() && !gunItem.canReload(shooter, currentGunItem)) {
+-                return;
+-            }
+-            // 触发装弹事件
+-            GunReloadEvent gunReloadEvent = new GunReloadEvent(shooter, currentGunItem, LogicalSide.SERVER);
+-            GunReloadEvent.CALLBACK.invoker().post(gunReloadEvent);
+-            if (gunReloadEvent.isCanceled()) {
+-                return;
+-            }
+-            NetworkHandler.sendToTrackingEntity(new ServerMessageGunReload(shooter.getId(), currentGunItem), shooter);
+-            Bolt boltType = gunIndex.getGunData().getBolt();
+-            int ammoCount = gunItem.getCurrentAmmoCount(currentGunItem) + (gunItem.hasBulletInBarrel(currentGunItem) && boltType != Bolt.OPEN_BOLT ? 1 : 0);
+-            if (ammoCount <= 0) {
+-                // 初始化空仓换弹的 tick 的状态
+-                data.reloadStateType = ReloadState.StateType.EMPTY_RELOAD_FEEDING;
+-            } else {
+-                // 初始化战术换弹的 tick 的状态
+-                data.reloadStateType = ReloadState.StateType.TACTICAL_RELOAD_FEEDING;
+-            }
+-            data.reloadTimestamp = System.currentTimeMillis();
+-            // 调用枪械逻辑
+-            if (!gunItem.startReload(data, currentGunItem, shooter)) {
+-                data.reloadStateType = ReloadState.StateType.NOT_RELOADING;
+-                data.reloadTimestamp = -1;
+-            }
+-        });
++        TimelessAPI.getCommonGunIndex(gunId).ifPresent(gunIndex -> performReload(gunItem, currentGunItem, gunIndex));
++    }
++
++    /**
++     * 服务端换弹的门槛 + 触发逻辑（原先是 {@link #reload()} 里的匿名 lambda）。
++     *
++     * <p>这是服务端「能否开始换弹」的具名决策点，供下游 mixin/覆写。
++     * <b>注意：</b>客户端 {@code LocalPlayerReload#performReload} 的门槛序列与本方法
++     * <b>有意不同</b>（客户端多一个射击后 100ms 保护，且没有本方法的冷却/拉栓检查）——
++     * 两条路径语义各自成立，请勿强行合并成同一个「统一换弹门槛」API。</p>
++     */
++    protected void performReload(AbstractGunItem gunItem, ItemStack currentGunItem, CommonGunIndex gunIndex) {
++        // 检查是否为背包直读
++        if (gunItem.useInventoryAmmo(currentGunItem)) {
++            return;
++        }
++        // 检查换弹是否还未完成
++        if (data.reloadStateType.isReloading()) {
++            return;
++        }
++        // 检查是否正在开火冷却
++        if (shoot.getShootCoolDown() != 0) {
++            return;
++        }
++        // 检查是否在切枪
++        if (draw.getDrawCoolDown() != 0) {
++            return;
++        }
++        // 检查是否在拉栓
++        if (data.isBolting) {
++            return;
++        }
++        // 检查弹药
++        if (IGunOperator.fromLivingEntity(shooter).needCheckAmmo() && !gunItem.canReload(shooter, currentGunItem)) {
++            return;
++        }
++        // 触发装弹事件
++        GunReloadEvent gunReloadEvent = new GunReloadEvent(shooter, currentGunItem, LogicalSide.SERVER);
++        GunReloadEvent.CALLBACK.invoker().post(gunReloadEvent);
++        if (gunReloadEvent.isCanceled()) {
++            return;
++        }
++        NetworkHandler.sendToTrackingEntity(new ServerMessageGunReload(shooter.getId(), currentGunItem), shooter);
++        Bolt boltType = gunIndex.getGunData().getBolt();
++        int ammoCount = gunItem.getCurrentAmmoCount(currentGunItem) + (gunItem.hasBulletInBarrel(currentGunItem) && boltType != Bolt.OPEN_BOLT ? 1 : 0);
++        if (ammoCount <= 0) {
++            // 初始化空仓换弹的 tick 的状态
++            data.reloadStateType = ReloadState.StateType.EMPTY_RELOAD_FEEDING;
++        } else {
++            // 初始化战术换弹的 tick 的状态
++            data.reloadStateType = ReloadState.StateType.TACTICAL_RELOAD_FEEDING;
++        }
++        data.reloadTimestamp = System.currentTimeMillis();
++        // 调用枪械逻辑
++        if (!gunItem.startReload(data, currentGunItem, shooter)) {
++            data.reloadStateType = ReloadState.StateType.NOT_RELOADING;
++            data.reloadTimestamp = -1;
++        }
+     }
+ 
+     public void cancelReload() {
 diff --git a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityShoot.java b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityShoot.java
-index b9edb91..95681e8 100644
+index b9edb91..46e79d9 100644
 --- a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityShoot.java
 +++ b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityShoot.java
 @@ -7,6 +7,7 @@ import com.tacz.guns.api.entity.ShootResult;
@@ -1016,6 +1438,23 @@ index b9edb91..95681e8 100644
              return ShootResult.NO_AMMO;
          }
          //Handle Heat Data
+@@ -254,14 +248,14 @@ public class LivingEntityShoot {
+             return gunIndex.map(index -> {
+                 long coolDown = (long) (index.getGunData().getBurstData().getMinInterval() * 1000f) - interval;
+                 // 给 5 ms 的窗口时间，以平衡延迟
+-                coolDown = coolDown - 5;
++                coolDown = coolDown - ShooterDataHolder.LATENCY_WINDOW_MS;
+                 return Math.max(coolDown, 0L);
+             }).orElse(-1L);
+         }
+         return gunIndex.map(index -> {
+             long coolDown = index.getGunData().getShootInterval(this.shooter, fireMode, currentGunItem) - interval;
+             // 给 5 ms 的窗口时间，以平衡延迟
+-            coolDown = coolDown - 5;
++            coolDown = coolDown - ShooterDataHolder.LATENCY_WINDOW_MS;
+             return Math.max(coolDown, 0L);
+         }).orElse(-1L);
+     }
 @@ -278,11 +272,6 @@ public class LivingEntityShoot {
          if (!needCheckAmmo) {
              return;
@@ -1029,8 +1468,107 @@ index b9edb91..95681e8 100644
 +        abstractGunItem.extractAmmoFromSource(shooter, itemStack, neededAmount);
      }
  }
+diff --git a/src/main/java/com/tacz/guns/entity/shooter/ShooterDataHolder.java b/src/main/java/com/tacz/guns/entity/shooter/ShooterDataHolder.java
+index 9ffd356..2c9c243 100644
+--- a/src/main/java/com/tacz/guns/entity/shooter/ShooterDataHolder.java
++++ b/src/main/java/com/tacz/guns/entity/shooter/ShooterDataHolder.java
+@@ -10,6 +10,15 @@ import javax.annotation.Nullable;
+ import java.util.function.Supplier;
+ 
+ public class ShooterDataHolder {
++    /**
++     * 冷却计算的延迟补偿窗口（毫秒）。服务端的射击/切枪/近战冷却在计算时都会减去该值，
++     * 以平衡网络延迟（原为各处硬编码的 5 ms 魔法数，现统一为此常量）。
++     *
++     * <p><b>注意：</b>客户端 {@code LocalPlayerShoot#getCoolDown} <b>有意不应用</b>此窗口，
++     * 这是两端的既有语义差异，不是遗漏——如需统一行为请显式修改两端并回归测试，
++     * 不要试图把两端强行合并进同一个冷却计算 API。</p>
++     */
++    public static final long LATENCY_WINDOW_MS = 5L;
+     /**
+      * 基时间戳，用于一些需要精密计算时间的场景。目前只有 shoot 使用。
+      */
+diff --git a/src/main/java/com/tacz/guns/item/ModernKineticGunItem.java b/src/main/java/com/tacz/guns/item/ModernKineticGunItem.java
+index c2b2b7e..8bd6e8e 100644
+--- a/src/main/java/com/tacz/guns/item/ModernKineticGunItem.java
++++ b/src/main/java/com/tacz/guns/item/ModernKineticGunItem.java
+@@ -343,6 +343,19 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
+         if (api.getBoltTime() < boltFeedTime) {
+             return true;
+         }
++        feedChamber(api);
++        return api.getBoltTime() < boltActionTime;
++    }
++
++    /**
++     * 拉栓喂弹：到喂弹时刻后，把一发子弹填入枪膛（原先是 {@link #defaultTickBolt} 里的内联逻辑）。
++     *
++     * <p>这是「拉栓时弹药从哪来」的具名决策点，供下游 mixin/覆写。
++     * 背包直读路径经 {@code consumeAmmoFromPlayer} → {@code AbstractGunItem#extractAmmoFromSource}，
++     * 下游重定向弹药来源时只需覆写后一个入口即可覆盖此路径。
++     * 弹匣路径（removeAmmoFromMagazine）语义不同，保留为独立分支，勿与背包直读合并。</p>
++     */
++    protected void feedChamber(ModernKineticGunScriptAPI api) {
+         if (!api.hasAmmoInBarrel()) {
+             // 如果是背包直读则检测消耗背包弹药
+             if (api.useInventoryAmmo()) {
+@@ -353,7 +366,6 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
+                 api.setAmmoInBarrel(true);
+             }
+         }
+-        return api.getBoltTime() < boltActionTime;
+     }
+ 
+     private ReloadState defaultTickReload(ModernKineticGunScriptAPI api) {
+@@ -416,7 +428,30 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
+         boolean needConsumeAmmo = api.isReloadingNeedConsumeAmmo();
+         boolean infinite = data.getReloadData().isInfinite();
+         needConsumeAmmo = needConsumeAmmo && !infinite;
+-        switch (data.getReloadData().getType()) {
++        consumeAmmoForReload(api, data.getReloadData().getType(), needAmmoCount, needConsumeAmmo);
++        // 如果不是战术换弹，需要将弹匣中的一枚子弹放到枪膛中
++        Bolt boltType = api.getGunIndex().getGunData().getBolt();
++        if (!isTactical && (boltType == Bolt.MANUAL_ACTION || boltType == Bolt.CLOSED_BOLT)) {
++            int i = api.removeAmmoFromMagazine(1);
++            if (i != 0) {
++                api.setAmmoInBarrel(true);
++            }
++        }
++    }
++
++    /**
++     * 换弹补弹：按 {@link FeedType} 决定「从哪里扣弹药、补多少进弹匣」
++     * （原先是 {@link #defaultReloadFinishing} 里的内联 switch）。
++     *
++     * <p>这是「换弹时弹药来源」的具名决策点，供下游 mixin/覆写。
++     * <b>注意：</b>{@code FUEL} 的消耗语义（固定扣 1 个燃料罐、按罐容量补弹）与
++     * {@code MAGAZINE}/{@code INVENTORY}（扣 needAmmoCount、按实际扣减数补弹）<b>有意不同</b>，
++     * 因此这里保留按类型分派的结构，请勿把各分支强行合并成同一条代码路径。
++     * 背包直读分支经 {@code consumeAmmoFromPlayer} → {@code AbstractGunItem#extractAmmoFromSource}，
++     * 下游重定向弹药来源时覆写后一个入口即可。</p>
++     */
++    protected void consumeAmmoForReload(ModernKineticGunScriptAPI api, FeedType feedType, int needAmmoCount, boolean needConsumeAmmo) {
++        switch (feedType) {
+             case MAGAZINE -> {
+                 if (needConsumeAmmo) {
+                     int consumedAmount = api.consumeAmmoFromPlayer(needAmmoCount);
+@@ -452,14 +487,6 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
+                 }
+             }
+         }
+-        // 如果不是战术换弹，需要将弹匣中的一枚子弹放到枪膛中
+-        Bolt boltType = api.getGunIndex().getGunData().getBolt();
+-        if (!isTactical && (boltType == Bolt.MANUAL_ACTION || boltType == Bolt.CLOSED_BOLT)) {
+-            int i = api.removeAmmoFromMagazine(1);
+-            if (i != 0) {
+-                api.setAmmoInBarrel(true);
+-            }
+-        }
+     }
+ 
+     private void doMelee(LivingEntity user, float gunDistance, float meleeDistance, float rangeAngle, float knockback, float damage, List<EffectData> effects) {
 diff --git a/src/main/java/com/tacz/guns/item/ModernKineticGunScriptAPI.java b/src/main/java/com/tacz/guns/item/ModernKineticGunScriptAPI.java
-index 024d2c0..b4a9cff 100644
+index 024d2c0..a9fcfa2 100644
 --- a/src/main/java/com/tacz/guns/item/ModernKineticGunScriptAPI.java
 +++ b/src/main/java/com/tacz/guns/item/ModernKineticGunScriptAPI.java
 @@ -7,10 +7,9 @@ import com.tacz.guns.api.GunProperty;
@@ -1186,6 +1724,21 @@ index 024d2c0..b4a9cff 100644
          if (boltType == null) {
              return false;
          }
+@@ -329,12 +336,12 @@ public class ModernKineticGunScriptAPI {
+         if (fireMode == FireMode.BURST) {
+             long coolDown = (long) (gunIndex.getGunData().getBurstData().getMinInterval() * 1000f);
+             // 给 5 ms 的窗口时间，以平衡延迟
+-            coolDown = coolDown - 5;
++            coolDown = coolDown - ShooterDataHolder.LATENCY_WINDOW_MS;
+             return Math.max(coolDown, 0L);
+         }
+         long coolDown = gunIndex.getGunData().getShootInterval(this.shooter, fireMode, itemStack);
+         // 给 5 ms 的窗口时间，以平衡延迟
+-        coolDown = coolDown - 5;
++        coolDown = coolDown - ShooterDataHolder.LATENCY_WINDOW_MS;
+         return Math.max(coolDown, 0L);
+     }
+ 
 @@ -546,13 +553,7 @@ public class ModernKineticGunScriptAPI {
          if (useInventoryAmmo() && !isReloadingNeedConsumeAmmo()) {
              return neededAmount;

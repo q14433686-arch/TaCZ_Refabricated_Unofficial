@@ -1,12 +1,12 @@
 # API 表面稳定性重构 —— 26.1.2 / 26.2 同步说明
 
-> 本文记录 `#46` 相关 API 表面稳定性重构（`docs/API_SURFACE_AUDIT.md` + 三个 commit
-> `0950d71`、`c70f177`、`2fe7eb9`）如何同步到 26.1.2 与 26.2 两条版本线。
+> 本文记录 `#46` 相关 API 表面稳定性重构（`docs/API_SURFACE_AUDIT.md` + 各 commit
+> 到本轮 P1⑤–P1⑨ 为止）如何同步到 26.1.2 与 26.2 两条版本线。
 
 ## 结论（一句话）
 
-三条版本线（1.21.11 / 26.1.2 / 26.2）在这批重构触及的 **8 个核心逻辑文件上几乎逐字节一致**，
-因此整份重构可以**几乎原样照搬**；26.2 只有 4 个文件存在「仅注释差异」，需要保留其注释。
+三条版本线（1.21.11 / 26.1.2 / 26.2）在这批重构触及的 **15 个核心逻辑文件上几乎逐字节一致**，
+因此整份重构可以**几乎原样照搬**；26.2 有 7 个文件存在「仅注释差异」，需要保留其注释。
 
 ## 版本线现状（无共同历史）
 
@@ -28,13 +28,19 @@ patch 形式移植：
 | `client/animation/statemachine/GunAnimationStateContext.java` | 相同 | 相同 |
 | `client/gameplay/LocalPlayerShoot.java` | 相同 | **仅注释**（连发调度 `tacz$submitAsync` 处） |
 | `client/gameplay/LocalPlayerBolt.java` | 相同 | 相同 |
+| `client/gameplay/LocalPlayerReload.java` | 相同 | **仅注释**（`doReload` 末尾的 Case⑧ 调试探针，不与改动点重叠） |
 | `entity/shooter/LivingEntityShoot.java` | 相同 | **仅注释**（`consumeAmmoFromPlayer` javadoc） |
 | `entity/shooter/LivingEntityBolt.java` | 相同 | 相同 |
+| `entity/shooter/LivingEntityReload.java` | 相同 | 相同 |
 | `entity/shooter/LivingEntityAmmoCheck.java` | 相同 | 相同 |
+| `entity/shooter/LivingEntityDrawGun.java` | 相同 | **仅注释**（`getDrawCoolDown` 上方大段排查记录，与改动点不重叠） |
+| `entity/shooter/LivingEntityMelee.java` | 相同 | 相同 |
+| `entity/shooter/ShooterDataHolder.java` | 相同 | 相同 |
 | `item/ModernKineticGunScriptAPI.java` | 相同 | **仅注释**（`getBoltByInt` 处） |
+| `item/ModernKineticGunItem.java` | 相同 | **仅注释**（`getLevel/getExp` 处的升级系统说明，与改动点不重叠） |
 
-> 26.2 的差异全部是「审计/复核型注释」，不含任何代码逻辑改动；且与本重构的改动点
-> 除 `LocalPlayerShoot#doShoot` 一处外均不重叠。
+> 26.2 的差异全部是「审计/复核型注释 + 调试探针」，不含任何代码逻辑改动；且与本重构的
+> 改动点除 `LocalPlayerShoot#doShoot` 一处外均不重叠（该处已在 26.2 patch 中保留 26.2 注释）。
 
 ## 如何应用
 
@@ -69,8 +75,9 @@ git apply docs/port/api-surface-refactor-26.2.patch
 ((BlockableEventLoopAccessor) Minecraft.getInstance()).tacz$submitAsync(() -> fireOnce(display, mainHandItem, gunData));
 ```
 
-其余 3 个注释差异（`AbstractGunItem` / `LivingEntityShoot` / `ModernKineticGunScriptAPI`）不与该
-重构的重构点重叠，`git apply --3way` 自动合并、无需手工处理。
+其余 6 个注释差异（`AbstractGunItem` / `LivingEntityShoot` / `ModernKineticGunScriptAPI` /
+`LocalPlayerReload` / `LivingEntityDrawGun` / `ModernKineticGunItem`）不与本轮重构的重构点
+重叠，`git apply --3way` 自动合并、无需手工处理。
 
 ## 移植后验证
 

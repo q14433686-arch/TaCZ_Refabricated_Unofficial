@@ -20,15 +20,15 @@
 | 1.6 | `GunAnimationStateContext#getMaxCharge()` L540 / `getChargeThreshold()` L551 | `processGunData((iGun, gunIndex) -> { var chargeData = ...; ... })` | 蓄力配置读取 | 提取具名方法 |
 | 1.7 | `LocalPlayerShoot#doShoot()`（约 L246–L301） | `scheduleAtFixedRate(() -> { ...过热检查/死亡检查/发包/触发动画与声音... }, delay, period, MILLISECONDS)` | **大段连发射击逻辑**整体塞进异步 lambda；跑在非主线程，还嵌套 `tacz$submitAsync`。下游若要 hook 客户端开火几乎只能绑这个合成名 | 提取 `private void onBurstTick(...)` / `private void fireOnce(...)` |
 | 1.8 | `ModernKineticGunScriptAPI#shootOnce()`（约 L146–L200） | `CycleTaskHelper.addCycleTask(() -> { ...GunFireEvent / reduceAmmoOnce / handleShootHeat / 生成子弹 / 播放声音... }, period, cycles)` | 服务端连发射击逻辑整体在一个 lambda 内 | 提取 `private boolean runShootCycle()` |
-| 1.9 | `LocalPlayerShoot` L37 | `private static final Predicate<IGunOperator> SHOOT_LOCKED_CONDITION = operator -> operator.getSynShootCoolDown() > 0;` | 已是具名静态字段（相对安全），但它是「状态锁条件」这一隐性概念的载体，语义不透明 | 可保持；若要改，抽成具名布尔方法 |
+| 1.9 | `LocalPlayerShoot` L37 | `private static final Predicate<IGunOperator> SHOOT_LOCKED_CONDITION = operator -> operator.getSynShootCoolDown() > 0;` | 已具名静态字段，但它同时是状态锁的<b>身份令牌</b>（`lockState` 用引用比较识别），语义不透明 | ✅ 已提取 `public static boolean isShootLocked(IGunOperator)` 并文档化「勿替换字段、改判定请覆写具名方法」的引用比较约定 |
 | 1.10 | `ModernKineticGunItem` 多个方法（`startBolt/tickBolt/shoot/startReload/tickReload/interruptReload/tickHeat/doBulletSpread/modifyProperty`） | `Optional.ofNullable(gunIndex.getScript()).map(script -> checkFunction(script.get("...")))...` | Lua 派发胶水，非决策逻辑；下游一般不需要碰（会走脚本），风险低 | P2 可提 `invokeScript(String)` helper |
 
 ### 类别 2 — 未暴露、但承担「决策职责」的私有方法
 
 | # | 位置 | 说明 | 脆弱性 | 建议 |
 |---|------|------|--------|------|
-| 2.1 | `ModernKineticGunItem#defaultReloadFinishing(api, isTactical)`（private） | **真正的「从哪里扣弹药、补多少进弹匣」决策**：`switch(reloadData.getType())` 分 MAGAZINE/FUEL/INVENTORY，各自 `consumeAmmoFromPlayer(needAmmoCount)` + `putAmmoInMagazine(...)`，末尾还有膛内补弹 | 下游想「把弹药来源从玩家背包换成女仆背包」最想覆写的入口，目前 `private` 且与 Lua 脚本默认逻辑绑定，无法干净覆写 | 拆出 `protected int extractAmmoForReload(ModernKineticGunScriptAPI api, int needed)` 供覆写；或引入回调 |
-| 2.2 | `ModernKineticGunItem#defaultTickBolt(api)`（private） | 拉栓喂弹：`consumeAmmoFromPlayer(1)` 后 `setAmmoInBarrel(true)` | 同 2.1，弹药来源决策 | 同上 |
+| 2.1 | `ModernKineticGunItem#defaultReloadFinishing(api, isTactical)`（private） | **真正的「从哪里扣弹药、补多少进弹匣」决策**：`switch(reloadData.getType())` 分 MAGAZINE/FUEL/INVENTORY，各自 `consumeAmmoFromPlayer(needAmmoCount)` + `putAmmoInMagazine(...)`，末尾还有膛内补弹 | 下游想「把弹药来源从玩家背包换成女仆背包」最想覆写的入口，原本 `private` 且与 Lua 脚本默认逻辑绑定，无法干净覆写 | ✅ 已提取 `protected void consumeAmmoForReload(api, FeedType, needAmmoCount, needConsumeAmmo)`；FUEL 与 MAGAZINE/INVENTORY 的消耗语义<b>有意不同</b>，分支保留、不合并 |
+| 2.2 | `ModernKineticGunItem#defaultTickBolt(api)`（private） | 拉栓喂弹：`consumeAmmoFromPlayer(1)` 后 `setAmmoInBarrel(true)` | 同 2.1，弹药来源决策 | ✅ 已提取 `protected void feedChamber(ModernKineticGunScriptAPI api)`；背包直读路径经 `extractAmmoFromSource`，弹匣路径语义不同、保留独立分支 |
 | 2.3 | `LivingEntityShoot#isChargeProgressReasonable / getMaxReasonableChargeProgress / validateChargeProgress`（private） | 蓄力进度服务端校验（防作弊） | 决策逻辑，且是安全边界；改动可能被下游误绑 | 至少文档化；暂不强求改 |
 | 2.4 | `LivingEntityAmmoCheck#needCheckAmmo() / consumesAmmoOrNot()` | 「是否需要检查/消耗弹药」的核心决策（创造模式分支） | 类位于 `entity.shooter`（内部包），但逻辑通过 `IGunOperator` 暴露；属于**半暴露**状态 | P2：文档化或迁到 `api` 包作为正式能力 |
 
@@ -38,8 +38,10 @@
 |---|------|----------|------|
 | 3.1 | **「能否开火 / 弹药可用性」五连判定**（`useInventoryAmmo` + `hasAmmoInBarrel` + `hasInventoryAmmo` + `ammoCount` + `noAmmo`） | ① `LivingEntityShoot.shoot()` L112–L121（服务端）② `LocalPlayerShoot.preCheck()` L210–L219（客户端）③ `LivingEntityBolt.bolt()` L57–L64（服务端拉栓）④ `LocalPlayerBolt.bolt()` L54–L61（客户端拉栓）⑤ `ModernKineticGunScriptAPI#reduceAmmoOnce()`（脚本射击） | **最高危**。多处几乎逐行复制；下游替换弹药来源必须全部改到且保持一致性，否则客户端/服务端/拉栓/脚本行为分叉 |
 | 3.2 | 弹药扫描循环（`IAmmo` / `IAmmoBox` instanceof 判断） | 上轮已提取到 `AbstractGunItem#hasAmmoInInventory` 并复用（`canReload` / `hasInventoryAmmo` / `ModernKineticGunScriptAPI#hasAmmoToConsume` / `GunAnimationStateContext#hasAmmoToConsumeInEntity`）。仍残留：`AbstractGunItem#findAndExtractInventoryAmmo`（扣除变体，本应不同）、`GunHudOverlay` L239–L242、`GunSmithTableScreen` L229/L244 | 扣除变体是「读 + 改」，与纯读变体职责不同，需保留；HUD/合成台是显示层，风险低 |
-| 3.3 | 「-5ms 冷却窗口」魔法数 | `LivingEntityShoot.getShootCoolDown` L257/L264、`LivingEntityDrawGun.getDrawCoolDown` L71、`LivingEntityMelee` L142、`ModernKineticGunScriptAPI.getShootInterval` L330/L335；`LocalPlayerShoot.getCoolDown`（无 -5，实现不一致） | 同一「冷却窗口」语义在多处各自硬编码，未来统一调整时容易漏改 |
+| 3.3 | 「-5ms 冷却窗口」魔法数 | 服务端 6 处：`LivingEntityShoot.getShootCoolDown` ×2、`LivingEntityDrawGun.getDrawCoolDown`、`LivingEntityMelee`、`ModernKineticGunScriptAPI.getShootInterval` ×2；客户端 `LocalPlayerShoot.getCoolDown`（无 -5，与服务器不一致） | 同一「冷却窗口」语义在多处各自硬编码，未来统一调整时容易漏改 | ✅ 服务端 6 处收敛为 `ShooterDataHolder.LATENCY_WINDOW_MS`；客户端「无窗口」是<b>既有语义差异</b>，只加注释说明、**没有**强行合并进同一 API，也没有给客户端硬加 -5ms |
 | 3.4 | `consumeAmmoFromPlayer` 两个签名 | `LivingEntityShoot#consumeAmmoFromPlayer(int, ItemStack, boolean)`（void）与 `ModernKineticGunScriptAPI#consumeAmmoFromPlayer(int)`（int） | 下游 issue 表格里**两处都列了**，必须双 mixin；内部都走 `findAndExtractInventoryAmmo` / `findAndExtractDummyAmmo`，但入口不统一 |
+| 3.5 | 换弹门槛序列（client/server 各一份且已漂移） | `LocalPlayerReload#reload`：`useInventoryAmmo → clientStateLock → 射击后100ms → canReload → 事件 → 发包`；`LivingEntityReload#reload`：`useInventoryAmmo → isReloading → 射击冷却 → 切枪冷却 → isBolting → canReload → 事件 → 发包` | 两套门槛不一致；下游只 mixin 一侧会得到分叉行为 | ✅ 各自提取为 `protected performReload(...)`（客户端另有 `performCancelReload`），门槛差异在 javadoc 里互相注明；**有意保持两条独立 API，不合并** |
+| 3.6 | 拉栓动作本体双份 | `LocalPlayerBolt#bolt` / `LivingEntityBolt#bolt`（弹药判定已统一，动作本体仍双份） | 下游 hook 拉栓需要双 mixin | ✅ 各自提取为 `protected performBolt(...)`，差异（服务端有冷却检查、客户端靠状态锁）文档化，保持独立 API |
 
 ---
 
@@ -51,17 +53,20 @@
   - 已提取为 `private boolean hasAmmoToConsumeInEntity(Entity)`，并新增 `AbstractGunItem#hasAmmoInInventory(IItemHandler, ItemStack)` 作为稳定扫描入口。
   - 状态：**完成，无需再动**。
 
-### P1 — 同类高风险，大概率下游也在用
+### P1 — 同类高风险，大概率下游也在用（✅ 全部完成）
 
-1. **类别 3.1「noAmmo 五连判定」多处重复**（最高优先级）。建议抽成共享的值对象 + 命名方法（见第三部分方案 A）。
-2. **类别 2.1/2.2「弹药来源扣减入口」**（`defaultReloadFinishing` / `defaultTickBolt` / 两个 `consumeAmmoFromPlayer`）。建议做成可覆写 protected 方法或回调（方案 B）。
-3. **类别 1.7/1.8 连发射击大 lambda**（`LocalPlayerShoot#doShoot`、`ModernKineticGunScriptAPI#shootOnce`）。提取具名方法（方案 C）。
-4. **类别 1.1–1.6 `GunAnimationStateContext` 其余业务 lambda**（优先级低于 1–3，可分批做）。
+1. **类别 3.1「noAmmo 五连判定」多处重复**（最高优先级）。✅ → `AmmoAvailability` + `AbstractGunItem#checkAmmoAvailability`（方案 A）。
+2. **类别 2.1/2.2「弹药来源扣减入口」**（`defaultReloadFinishing` / `defaultTickBolt` / 两个 `consumeAmmoFromPlayer`）。✅ → `consumeAmmoForReload` / `feedChamber`（换弹/拉栓来源）+ `extractAmmoFromSource`（扣减入口，方案 B）。
+3. **类别 1.7/1.8 连发射击大 lambda**（`LocalPlayerShoot#doShoot`、`ModernKineticGunScriptAPI#shootOnce`）。✅ → `runBurstTick` / `fireOnce` / `runShootCycle`（方案 C）。
+4. **类别 1.1–1.6 `GunAnimationStateContext` 其余业务 lambda**。✅ → 全部具名化（方案 D，见 P1④ 表）。
+5. **类别 3.3 + 客户端冷却语义差异**。✅ → `ShooterDataHolder.LATENCY_WINDOW_MS`；客户端无窗口差异只文档化、不合并。
+6. **类别 3.5/3.6 换弹/拉栓门槛与动作本体**。✅ → client/server 各提取 `performReload` / `performCancelReload` / `performBolt`，保持两条独立 API 并在 javadoc 互注差异。
+7. **类别 1.9 状态锁身份令牌**。✅ → `LocalPlayerShoot#isShootLocked` + 引用比较约定文档化。
 
 ### P2 — 低风险但顺手该改
 
-- 类别 3.3「-5ms 冷却窗口」魔法数 → 提常量/方法。
-- 类别 2.4 `LivingEntityAmmoCheck` → 文档化或迁 `api`。
+- ~~类别 3.3「-5ms 冷却窗口」魔法数 → 提常量/方法。~~ ✅ 已随 P1⑤ 完成。
+- 类别 2.4 `LivingEntityAmmoCheck` → 文档化或迁 `api`（文档化已完成）。
 - 类别 1.10 Lua 派发胶水 → 提 `invokeScript` helper。
 - 类别 3.2 的 HUD/合成台扫描循环 → 复用 helper（注意 client 侧）。
 
@@ -209,6 +214,33 @@ protected boolean hasBulletInBarrel(IGun iGun, GunDisplayInstance display) {
 | `getChargeThreshold()` | `resolveChargeThreshold(IGun, GunDisplayInstance)` |
 
 同时将 `hasAmmoToConsumeInEntity` 由 `private` 提升为 `protected`。
+
+### P1⑤：冷却窗口常量化（3.3）
+
+- 新增 `ShooterDataHolder.LATENCY_WINDOW_MS = 5L`，服务端 6 处 `coolDown - 5` 全部改用它（行为逐位不变）。
+- 客户端 `LocalPlayerShoot#getCoolDown` 历史上就不减窗口：只加注释说明差异，**没有**把两端合并进同一个冷却计算 API，也没有给客户端硬加 -5ms。
+
+### P1⑥：换弹门槛具名化（3.5）
+
+- `LivingEntityReload#reload` → `protected void performReload(AbstractGunItem, ItemStack, CommonGunIndex)`。
+- `LocalPlayerReload#reload` → `protected void performReload(AbstractGunItem, ItemStack, GunData, GunDisplayInstance)`；`#cancelReload` → `protected void performCancelReload(GunDisplayInstance)`。
+- 两端门槛序列有意不同（客户端多 100ms 射击后保护；服务端有冷却/拉栓检查），javadoc 互相注明，**保持独立 API**。
+
+### P1⑦：换弹/拉栓的弹药来源决策具名化（2.1/2.2）
+
+- `ModernKineticGunItem#defaultReloadFinishing` 内联 switch → `protected void consumeAmmoForReload(api, FeedType, needAmmoCount, needConsumeAmmo)`。FUEL 消耗语义与 MAGAZINE/INVENTORY 不同，分支保留不合并。
+- `ModernKineticGunItem#defaultTickBolt` 喂弹块 → `protected void feedChamber(ModernKineticGunScriptAPI)`。背包直读路径经 `consumeAmmoFromPlayer` → `extractAmmoFromSource`，下游覆写后者即可覆盖。
+
+### P1⑧：拉栓动作本体具名化（3.6）
+
+- `LivingEntityBolt#bolt` → `protected void performBolt(AbstractGunItem, ItemStack, CommonGunIndex)`。
+- `LocalPlayerBolt#bolt` → `protected void performBolt(IGun, ItemStack, GunData, GunDisplayInstance)`（补齐了 `GunDisplayInstance` import）。
+- 两端门槛差异（服务端冷却检查 vs 客户端状态锁）文档化，保持独立 API。
+
+### P1⑨：开火状态锁判定具名化（1.9）
+
+- 新增 `public static boolean LocalPlayerShoot#isShootLocked(IGunOperator)`；`SHOOT_LOCKED_CONDITION` 字段改为该方法引用。
+- 字段仍是状态锁的<b>身份令牌</b>（`lockedCondition != SHOOT_LOCKED_CONDITION` 引用比较），javadoc 明确：下游改判定请覆写具名方法，**不要**替换字段。
 
 ### P2（顺手）
 
