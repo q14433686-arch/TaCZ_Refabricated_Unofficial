@@ -3,6 +3,7 @@ package com.tacz.guns.entity.shooter;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
+import com.tacz.guns.api.item.gun.AmmoAvailability;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import net.minecraft.resources.Identifier;
@@ -53,15 +54,8 @@ public class LivingEntityBolt {
             IGunOperator gunOperator = IGunOperator.fromLivingEntity(shooter);
             // 检查 bolt 类型是否是 manual action
             Bolt boltType = gunIndex.getGunData().getBolt();
-            // 是否为背包直读
-            boolean useInventoryAmmo = iGun.useInventoryAmmo(currentGunItem);
-            // 膛内是否有子弹
-            boolean hasAmmoInBarrel = iGun.hasBulletInBarrel(currentGunItem) && boltType != Bolt.OPEN_BOLT;
-            // 背包内是否还有子弹 (创造模式是否消耗背包备弹)
-            boolean hasInventoryAmmo = iGun.hasInventoryAmmo(shooter, currentGunItem, gunOperator.needCheckAmmo());
-            // 判断没有子弹的条件 (背包直读且包内没子弹 / 非背包直读且弹匣子弹数 < 1)
-            boolean noAmmo = useInventoryAmmo && !hasInventoryAmmo ||
-                    !useInventoryAmmo && iGun.getCurrentAmmoCount(currentGunItem) < 1;
+            AmmoAvailability ammo = AbstractGunItem.checkAmmoAvailability(iGun, shooter, currentGunItem, boltType, gunOperator.needCheckAmmo());
+            boolean hasAmmoInBarrel = ammo.hasAmmoInBarrel;
             if (boltType != Bolt.MANUAL_ACTION) {
                 return;
             }
@@ -69,8 +63,8 @@ public class LivingEntityBolt {
             if (hasAmmoInBarrel) {
                 return;
             }
-            // 检查弹匣内是否有子弹
-            if (noAmmo) {
+            // 检查弹匣内是否有子弹（拉栓路径：枪膛子弹单独判断，见 AmmoAvailability#isNoAmmoToBolt）
+            if (ammo.isNoAmmoToBolt()) {
                 return;
             }
             data.boltTimestamp = System.currentTimeMillis();

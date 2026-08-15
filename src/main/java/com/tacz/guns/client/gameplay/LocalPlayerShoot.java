@@ -10,6 +10,8 @@ import com.tacz.guns.api.entity.ShootResult;
 import com.tacz.guns.api.event.common.GunFireEvent;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.gun.AbstractGunItem;
+import com.tacz.guns.api.item.gun.AmmoAvailability;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.resource.GunDisplayInstance;
@@ -204,19 +206,11 @@ public class LocalPlayerShoot {
         if (gunOperator.getSynMeleeCoolDown() != 0) {
             return ShootResult.IS_MELEE;
         }
-        // 判断子弹数
+        // 判断子弹数（统一收敛到 AmmoAvailability，见 AbstractGunItem#checkAmmoAvailability）
         Bolt boltType = gunIndex.getGunData().getBolt();
-        // 是否为背包直读
-        boolean useInventoryAmmo = iGun.useInventoryAmmo(mainHandItem);
-        // 膛内是否有子弹
-        boolean hasAmmoInBarrel = iGun.hasBulletInBarrel(mainHandItem) && boltType != Bolt.OPEN_BOLT;
-        // 是否还有子弹 (创造模式是否消耗背包备弹)
-        boolean hasInventoryAmmo = iGun.hasInventoryAmmo(player, mainHandItem, gunOperator.needCheckAmmo()) || hasAmmoInBarrel;
-        int ammoCount = iGun.getCurrentAmmoCount(mainHandItem) + (hasAmmoInBarrel ? 1 : 0);
-        // 判断没有子弹的条件 (背包直读且包内没子弹 / 非背包直读且总子弹数 < 1)
-        boolean noAmmo = useInventoryAmmo && !hasInventoryAmmo ||
-                !useInventoryAmmo && ammoCount < 1;
-        if (noAmmo) {
+        AmmoAvailability ammo = AbstractGunItem.checkAmmoAvailability(iGun, player, mainHandItem, boltType, gunOperator.needCheckAmmo());
+        boolean hasAmmoInBarrel = ammo.hasAmmoInBarrel;
+        if (ammo.isNoAmmoToShoot()) {
             if (playDrySound) {
                 SoundPlayManager.playDryFireSound(player, display);
             }
@@ -253,68 +247,80 @@ public class LocalPlayerShoot {
         // 连发计数器
         AtomicInteger count = new AtomicInteger(0);
 
-        LocalPlayerDataHolder.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(() -> {
+        LocalPlayerDataHolder.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(
+                () -> runBurstTick(display, iGun, mainHandItem, gunData, maxCount, count, chargeProgress),
+                delay, period, TimeUnit.MILLISECONDS);
+    }
 
-            if (count.get() == 0) {
-                // 转换 isRecord 状态，允许下一个tick的开火检测。
-                data.isShootRecorded = true;
-            }
-            //Handle Heat Data
-            if (gunData.hasHeatData()) {
-                if (iGun.isOverheatLocked(mainHandItem)) {
-                    ScheduledFuture<?> future = (ScheduledFuture<?>) Thread.currentThread();
-                    future.cancel(false); // 取消当前任务
-                    return;
-                }
-            }
-            // 如果达到最大连发次数，或者玩家已经死亡，取消任务
-            if (count.get() >= maxCount || player.isDeadOrDying()) {
+    /**
+     * 连发调度器的单个 tick。原先是 {@code scheduleAtFixedRate} 里的匿名 lambda（合成名
+     * {@code lambda$doShoot$N}），现提取为具名方法，便于下游 mixin 与调试。
+     */
+    private void runBurstTick(GunDisplayInstance display, IGun iGun, ItemStack mainHandItem, GunData gunData, int maxCount, AtomicInteger count, float chargeProgress) {
+        if (count.get() == 0) {
+            // 转换 isRecord 状态，允许下一个tick的开火检测。
+            data.isShootRecorded = true;
+        }
+        //Handle Heat Data
+        if (gunData.hasHeatData()) {
+            if (iGun.isOverheatLocked(mainHandItem)) {
                 ScheduledFuture<?> future = (ScheduledFuture<?>) Thread.currentThread();
                 future.cancel(false); // 取消当前任务
                 return;
             }
+        }
+        // 如果达到最大连发次数，或者玩家已经死亡，取消任务
+        if (count.get() >= maxCount || player.isDeadOrDying()) {
+            ScheduledFuture<?> future = (ScheduledFuture<?>) Thread.currentThread();
+            future.cancel(false); // 取消当前任务
+            return;
+        }
 
-            // 以下逻辑只需要执行一次
-            if (count.get() == 0) {
-                // 如果状态锁正在准备锁定，且不是开火的状态锁，则不允许开火(主要用于防止切枪后开火动作覆盖切枪动作)
-                if (data.clientStateLock && data.lockedCondition != SHOOT_LOCKED_CONDITION && data.lockedCondition != null) {
-                    return;
-                }
-                // 记录新的开火时间戳
-                data.clientLastShootTimestamp = data.clientShootTimestamp;
-                data.clientShootTimestamp = System.currentTimeMillis();
-                // 发送开火的数据包，通知服务器
-                ClientPlayNetworking.send(new ClientMessagePlayerShoot(data.clientShootTimestamp - data.clientBaseTimestamp, chargeProgress));
+        // 以下逻辑只需要执行一次
+        if (count.get() == 0) {
+            // 如果状态锁正在准备锁定，且不是开火的状态锁，则不允许开火(主要用于防止切枪后开火动作覆盖切枪动作)
+            if (data.clientStateLock && data.lockedCondition != SHOOT_LOCKED_CONDITION && data.lockedCondition != null) {
+                return;
             }
+            // 记录新的开火时间戳
+            data.clientLastShootTimestamp = data.clientShootTimestamp;
+            data.clientShootTimestamp = System.currentTimeMillis();
+            // 发送开火的数据包，通知服务器
+            ClientPlayNetworking.send(new ClientMessagePlayerShoot(data.clientShootTimestamp - data.clientBaseTimestamp, chargeProgress));
+        }
 
-            // The burst scheduler runs off-thread. Sound managers, animation state and Fabric event
-            // listeners are client-thread state, so hand them back to Minecraft's event loop to avoid CME.
-            // 播放声音和状态机触发需要从异步线程上传到主线程执行，否则会引起cme
-            ((BlockableEventLoopAccessor) Minecraft.getInstance()).tacz$submitAsync(() -> {
-                // 触发击发事件
-                var event = new GunFireEvent(player, mainHandItem, LogicalSide.CLIENT);
-                GunFireEvent.CALLBACK.invoker().post(event);
-                boolean fire = !event.isCanceled();
-                if (fire) {
-                    // 动画和声音循环播放
-                    AnimationStateMachine<?> animationStateMachine = display.getAnimationStateMachine();
-                    if (animationStateMachine != null) {
-                        animationStateMachine.trigger(GunAnimationConstant.INPUT_SHOOT);
-                    }
-                    // 获取消音
-                    final boolean useSilenceSound = this.useSilenceSound();
-                    // 开火需要打断检视
-                    SoundPlayManager.stopPlayGunSound(display, SoundManager.INSPECT_SOUND);
-                    if (useSilenceSound) {
-                        SoundPlayManager.playSilenceSound(player, display, gunData);
-                    } else {
-                        SoundPlayManager.playShootSound(player, display, gunData);
-                    }
-                }
-            });
+        // The burst scheduler runs off-thread. Sound managers, animation state and Fabric event
+        // listeners are client-thread state, so hand them back to Minecraft's event loop to avoid CME.
+        // 播放声音和状态机触发需要从异步线程上传到主线程执行，否则会引起cme
+        ((BlockableEventLoopAccessor) Minecraft.getInstance()).tacz$submitAsync(() -> fireOnce(display, mainHandItem, gunData));
 
-            count.getAndIncrement();
-        }, delay, period, TimeUnit.MILLISECONDS);
+        count.getAndIncrement();
+    }
+
+    /**
+     * 执行一次客户端击发：触发击发事件、播放动画与声音。原先是 {@code tacz$submitAsync} 里的匿名 lambda。
+     */
+    private void fireOnce(GunDisplayInstance display, ItemStack mainHandItem, GunData gunData) {
+        // 触发击发事件
+        var event = new GunFireEvent(player, mainHandItem, LogicalSide.CLIENT);
+        GunFireEvent.CALLBACK.invoker().post(event);
+        boolean fire = !event.isCanceled();
+        if (fire) {
+            // 动画和声音循环播放
+            AnimationStateMachine<?> animationStateMachine = display.getAnimationStateMachine();
+            if (animationStateMachine != null) {
+                animationStateMachine.trigger(GunAnimationConstant.INPUT_SHOOT);
+            }
+            // 获取消音
+            final boolean useSilenceSound = this.useSilenceSound();
+            // 开火需要打断检视
+            SoundPlayManager.stopPlayGunSound(display, SoundManager.INSPECT_SOUND);
+            if (useSilenceSound) {
+                SoundPlayManager.playSilenceSound(player, display, gunData);
+            } else {
+                SoundPlayManager.playShootSound(player, display, gunData);
+            }
+        }
     }
 
     private boolean useSilenceSound() {

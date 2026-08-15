@@ -9,6 +9,7 @@ import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.event.common.GunFireEvent;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
+import com.tacz.guns.api.item.gun.AmmoAvailability;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.api.util.LuaEntityAccessor;
 import com.tacz.guns.api.util.LuaNbtAccessor;
@@ -146,60 +147,71 @@ public class ModernKineticGunScriptAPI {
         // 连发间隔
         long period = modifyProperty(GunProperties.RuntimeOnly.BURST_SHOOT_INTERVAL, Long.class, fireMode == FireMode.BURST ? gunData.getBurstShootInterval() : 1);
 
-        CycleTaskHelper.addCycleTask(() -> {
-            // 如果射击者死亡，取消射击
-            if (shooter.isDeadOrDying()) {
-                return false;
-            }
-            // 如果武器变了，取消射击
-            if (!shooter.getMainHandItem().equals(itemStack) || shooter.getMainHandItem().isEmpty()) {
-                return false;
-            }
-            // 触发击发事件
-            GunFireEvent gunFireEvent = new GunFireEvent(shooter, itemStack, LogicalSide.SERVER);
-            GunFireEvent.CALLBACK.invoker().post(gunFireEvent);
-            boolean fire = !gunFireEvent.isCanceled();
-            if (fire) {
-                NetworkHandler.sendToTrackingEntity(new ServerMessageGunFire(shooter.getId(), itemStack), shooter);
-                // 削减弹药
-                if (consumeAmmo) {
-                    if (!this.reduceAmmoOnce()) {
-                        return false;
-                    }
-                }
-                //Handle Heat Data
-                if (gunIndex.getGunData().hasHeatData()) {
-                    Optional.ofNullable(gunIndex.getScript())
-                            .map(script -> checkFunction(script.get("handle_shoot_heat")))
-                            .ifPresentOrElse(
-                                    func -> func.call(CoerceJavaToLua.coerce(this)),
-                                    this::handleShootHeat
-                            );
-                }
-                // 获取射击方向（pitch 和 yaw）
-                float pitch = pitchSupplier != null ? pitchSupplier.get() : shooter.getXRot();
-                float yaw = yawSupplier != null ? yawSupplier.get() : shooter.getYRot();
-                // 生成子弹
-                Level world = shooter.level();
-                Identifier ammoId = gunData.getAmmoId();
-                for (int i = 0; i < bulletAmount; i++) {
-                    boolean isTracer = bulletData.hasTracerAmmo() && gunOperator.nextBulletIsTracer(bulletData.getTracerCountInterval());
-                    EntityKineticBullet bullet = new EntityKineticBullet(world, shooter, itemStack, ammoId, gunId,
-                            gunDisplayId, isTracer, gunData, bulletData);
-                    bullet.applyShotgunDamageSpread(bulletAmount);
-                    bullet.setShotDamageMultiplier(shotDamageMultiplier);
-                    abstractGunItem.doBulletSpread(dataHolder, itemStack, shooter, bullet, i, processedSpeed,
-                            inaccuracy, pitch, yaw);
-                    world.addFreshEntity(bullet);
-                }
-                // 播放枪声
-                if (soundDistance > 0) {
-                    String soundId = useSilenceSound ? SoundManager.SILENCE_3P_SOUND : SoundManager.SHOOT_3P_SOUND;
-                    SoundManager.sendSoundToNearby(shooter, soundDistance, gunId, gunDisplayId, soundId, 0.8f, 0.9f + shooter.getRandom().nextFloat() * 0.125f);
+        CycleTaskHelper.addCycleTask(
+                () -> runShootCycle(gunOperator, gunData, bulletData, consumeAmmo, shotDamageMultiplier,
+                        processedSpeed, inaccuracy, bulletAmount, soundDistance, useSilenceSound),
+                period, cycles);
+    }
+
+    /**
+     * 连发循环任务里的单次射击。原先是 {@code CycleTaskHelper.addCycleTask} 里的匿名 lambda
+     * （合成名 {@code lambda$shootOnce$N}），现提取为具名方法，便于下游 mixin 与调试。
+     */
+    private boolean runShootCycle(IGunOperator gunOperator, GunData gunData, BulletData bulletData, boolean consumeAmmo,
+                                  float shotDamageMultiplier, float processedSpeed, float inaccuracy,
+                                  int bulletAmount, int soundDistance, boolean useSilenceSound) {
+        // 如果射击者死亡，取消射击
+        if (shooter.isDeadOrDying()) {
+            return false;
+        }
+        // 如果武器变了，取消射击
+        if (!shooter.getMainHandItem().equals(itemStack) || shooter.getMainHandItem().isEmpty()) {
+            return false;
+        }
+        // 触发击发事件
+        GunFireEvent gunFireEvent = new GunFireEvent(shooter, itemStack, LogicalSide.SERVER);
+        GunFireEvent.CALLBACK.invoker().post(gunFireEvent);
+        boolean fire = !gunFireEvent.isCanceled();
+        if (fire) {
+            NetworkHandler.sendToTrackingEntity(new ServerMessageGunFire(shooter.getId(), itemStack), shooter);
+            // 削减弹药
+            if (consumeAmmo) {
+                if (!this.reduceAmmoOnce()) {
+                    return false;
                 }
             }
-            return true;
-        }, period, cycles);
+            //Handle Heat Data
+            if (gunIndex.getGunData().hasHeatData()) {
+                Optional.ofNullable(gunIndex.getScript())
+                        .map(script -> checkFunction(script.get("handle_shoot_heat")))
+                        .ifPresentOrElse(
+                                func -> func.call(CoerceJavaToLua.coerce(this)),
+                                this::handleShootHeat
+                        );
+            }
+            // 获取射击方向（pitch 和 yaw）
+            float pitch = pitchSupplier != null ? pitchSupplier.get() : shooter.getXRot();
+            float yaw = yawSupplier != null ? yawSupplier.get() : shooter.getYRot();
+            // 生成子弹
+            Level world = shooter.level();
+            Identifier ammoId = gunData.getAmmoId();
+            for (int i = 0; i < bulletAmount; i++) {
+                boolean isTracer = bulletData.hasTracerAmmo() && gunOperator.nextBulletIsTracer(bulletData.getTracerCountInterval());
+                EntityKineticBullet bullet = new EntityKineticBullet(world, shooter, itemStack, ammoId, gunId,
+                        gunDisplayId, isTracer, gunData, bulletData);
+                bullet.applyShotgunDamageSpread(bulletAmount);
+                bullet.setShotDamageMultiplier(shotDamageMultiplier);
+                abstractGunItem.doBulletSpread(dataHolder, itemStack, shooter, bullet, i, processedSpeed,
+                        inaccuracy, pitch, yaw);
+                world.addFreshEntity(bullet);
+            }
+            // 播放枪声
+            if (soundDistance > 0) {
+                String soundId = useSilenceSound ? SoundManager.SILENCE_3P_SOUND : SoundManager.SHOOT_3P_SOUND;
+                SoundManager.sendSoundToNearby(shooter, soundDistance, gunId, gunDisplayId, soundId, 0.8f, 0.9f + shooter.getRandom().nextFloat() * 0.125f);
+            }
+        }
+        return true;
     }
 
     private <T> T modifyProperty(GunProperty<?> property, Class<T> type, T value) {
@@ -235,13 +247,10 @@ public class ModernKineticGunScriptAPI {
         Bolt boltType = TimelessAPI.getCommonGunIndex(abstractGunItem.getGunId(itemStack))
                 .map(index -> index.getGunData().getBolt())
                 .orElse(null);
-        // 膛内是否有子弹
-        boolean hasAmmoInBarrel = abstractGunItem.hasBulletInBarrel(itemStack) && boltType != Bolt.OPEN_BOLT;
-        // 背包内是否还有子弹 (创造模式是否消耗背包备弹)
-        boolean hasInventoryAmmo = abstractGunItem.hasInventoryAmmo(shooter, itemStack, isReloadingNeedConsumeAmmo());
-        // 判断没有子弹的条件 (背包直读且包内没子弹 / 非背包直读且弹匣子弹数 < 1)
-        boolean noAmmo = useInventoryAmmo() && !hasInventoryAmmo ||
-                !useInventoryAmmo() && abstractGunItem.getCurrentAmmoCount(itemStack) < 1;
+        // 膛内/弹匣/直读容器的弹药可用性（统一收敛到 AmmoAvailability，见 AbstractGunItem#checkAmmoAvailability）
+        AmmoAvailability ammo = AbstractGunItem.checkAmmoAvailability(abstractGunItem, shooter, itemStack, boltType, isReloadingNeedConsumeAmmo());
+        boolean hasAmmoInBarrel = ammo.hasAmmoInBarrel;
+        boolean noAmmo = ammo.isNoAmmoToBolt();
         if (boltType == null) {
             return false;
         }
@@ -544,13 +553,7 @@ public class ModernKineticGunScriptAPI {
         if (useInventoryAmmo() && !isReloadingNeedConsumeAmmo()) {
             return neededAmount;
         }
-        if (abstractGunItem.useDummyAmmo(itemStack)) {
-            return abstractGunItem.findAndExtractDummyAmmo(itemStack, neededAmount);
-        } else {
-            return shooter.tacz$getItemHandler(null)
-                    .map(cap -> abstractGunItem.findAndExtractInventoryAmmo(cap, itemStack, neededAmount))
-                    .orElse(0);
-        }
+        return abstractGunItem.extractAmmoFromSource(shooter, itemStack, neededAmount);
     }
 
     /**

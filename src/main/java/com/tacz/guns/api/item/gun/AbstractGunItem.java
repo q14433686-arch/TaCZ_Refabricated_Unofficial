@@ -15,6 +15,7 @@ import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
 import com.tacz.guns.resource.index.CommonGunIndex;
+import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.FeedType;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.util.AllowAttachmentTagMatcher;
@@ -302,6 +303,31 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
     }
 
     /**
+     * 从射击者身上扣减弹药，返回实际扣减的数量。
+     *
+     * <p>这是「弹药来源扣减」的<b>稳定扩展点</b>：服务端射击（{@code LivingEntityShoot#consumeAmmoFromPlayer}）
+     * 与枪械脚本 API（{@code ModernKineticGunScriptAPI#consumeAmmoFromPlayer}）都收敛到此方法。
+     * 下游模组（例如 Touhou Little Maid: Tsumugi）需要把弹药来源从玩家背包重定向到其它容器时，
+     * 只需 mixin 覆写此方法，即可一次性接管所有扣弹路径，无需分别处理两个 {@code consumeAmmoFromPlayer}。</p>
+     *
+     * <p>默认行为与原先完全一致：虚拟备弹走 {@link #findAndExtractDummyAmmo}，否则走
+     * {@code tacz$getItemHandler(null)} + {@link #findAndExtractInventoryAmmo}。</p>
+     *
+     * @param shooter      射击者（弹药来源实体）
+     * @param gun          枪械物品
+     * @param neededAmount 需要扣减的弹药（物品）数量
+     * @return 实际扣减的弹药（物品）数量
+     */
+    public int extractAmmoFromSource(LivingEntity shooter, ItemStack gun, int neededAmount) {
+        if (useDummyAmmo(gun)) {
+            return findAndExtractDummyAmmo(gun, neededAmount);
+        }
+        return shooter.tacz$getItemHandler(null)
+                .map(cap -> findAndExtractInventoryAmmo(cap, gun, neededAmount))
+                .orElse(0);
+    }
+
+    /**
      * 检查枪械是否允许安装指定的物品作为配件
      */
     @Override
@@ -447,6 +473,32 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
         }
         // 检查背包内的弹药数量
         return shooter.tacz$getItemHandler(null).map(cap -> hasAmmoInInventory(cap, gun)).orElse(false);
+    }
+
+    /**
+     * 计算一次「是否有可射击弹药」判定，返回只读结果快照。
+     *
+     * <p>这是「弹药可用性」判定的<b>稳定扩展点</b>：原先服务端射击（{@code LivingEntityShoot}）、
+     * 客户端射击（{@code LocalPlayerShoot}）与服务端拉栓（{@code LivingEntityBolt}）各自内联了
+     * 一套几乎相同的五连判定（{@code useInventoryAmmo / hasAmmoInBarrel / hasInventoryAmmo / ammoCount / noAmmo}）。
+     * 现统一收敛到此方法，返回 {@link AmmoAvailability}，由调用方按需读取字段或调用
+     * {@link AmmoAvailability#isNoAmmoToShoot()} / {@link AmmoAvailability#isNoAmmoToBolt()}。</p>
+     *
+     * <p>该方法无副作用，只做只读计算，行为与原先三处内联逻辑逐字节一致。</p>
+     *
+     * @param iGun          枪械接口（调用方通常已持有）
+     * @param shooter       射击者
+     * @param gun           枪械物品
+     * @param boltType      枪械的 bolt 类型
+     * @param needCheckAmmo 是否需要检查弹药（创造模式等场景为 false）
+     * @return 只读的弹药可用性快照
+     */
+    public static AmmoAvailability checkAmmoAvailability(IGun iGun, LivingEntity shooter, ItemStack gun, Bolt boltType, boolean needCheckAmmo) {
+        boolean useInventoryAmmo = iGun.useInventoryAmmo(gun);
+        boolean hasAmmoInBarrel = iGun.hasBulletInBarrel(gun) && boltType != Bolt.OPEN_BOLT;
+        boolean hasInventoryAmmo = iGun.hasInventoryAmmo(shooter, gun, needCheckAmmo);
+        int magazineAmmoCount = iGun.getCurrentAmmoCount(gun);
+        return new AmmoAvailability(useInventoryAmmo, hasAmmoInBarrel, hasInventoryAmmo, magazineAmmoCount);
     }
 
     /**

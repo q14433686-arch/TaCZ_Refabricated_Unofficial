@@ -7,6 +7,7 @@ import com.tacz.guns.api.entity.ShootResult;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
+import com.tacz.guns.api.item.gun.AmmoAvailability;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.network.NetworkHandler;
@@ -106,19 +107,12 @@ public class LivingEntityShoot {
             return ShootResult.UNKNOWN_FAIL;
         }
         IGunOperator gunOperator = IGunOperator.fromLivingEntity(shooter);
-        // 判断子弹数
+        // 判断子弹数（统一收敛到 AmmoAvailability，见 AbstractGunItem#checkAmmoAvailability）
         Bolt boltType = gunIndex.getGunData().getBolt();
-        // 是否为背包直读
-        boolean useInventoryAmmo = iGun.useInventoryAmmo(currentGunItem);
-        // 膛内是否有子弹
-        boolean hasAmmoInBarrel = iGun.hasBulletInBarrel(currentGunItem) && boltType != Bolt.OPEN_BOLT;
-        // 是否还有子弹 (创造模式是否消耗背包备弹)
-        boolean hasInventoryAmmo = iGun.hasInventoryAmmo(shooter, currentGunItem, gunOperator.needCheckAmmo()) || hasAmmoInBarrel;
-        int ammoCount = iGun.getCurrentAmmoCount(currentGunItem) + (hasAmmoInBarrel ? 1 : 0);
-        // 判断没有子弹的条件 (背包直读且包内没子弹 / 非背包直读且总子弹数 < 1)
-        boolean noAmmo = useInventoryAmmo && !hasInventoryAmmo ||
-                !useInventoryAmmo && ammoCount < 1;
-        if (noAmmo) {
+        AmmoAvailability ammo = AbstractGunItem.checkAmmoAvailability(iGun, shooter, currentGunItem, boltType, gunOperator.needCheckAmmo());
+        boolean useInventoryAmmo = ammo.useInventoryAmmo;
+        boolean hasAmmoInBarrel = ammo.hasAmmoInBarrel;
+        if (ammo.isNoAmmoToShoot()) {
             return ShootResult.NO_AMMO;
         }
         //Handle Heat Data
@@ -278,11 +272,6 @@ public class LivingEntityShoot {
         if (!needCheckAmmo) {
             return;
         }
-        if (abstractGunItem.useDummyAmmo(itemStack)) {
-            abstractGunItem.findAndExtractDummyAmmo(itemStack, neededAmount);
-        } else {
-            shooter.tacz$getItemHandler(null)
-                    .map(cap -> abstractGunItem.findAndExtractInventoryAmmo(cap, itemStack, neededAmount));
-        }
+        abstractGunItem.extractAmmoFromSource(shooter, itemStack, neededAmount);
     }
 }

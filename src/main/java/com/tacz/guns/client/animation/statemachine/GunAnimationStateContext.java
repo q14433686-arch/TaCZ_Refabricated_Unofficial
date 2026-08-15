@@ -80,10 +80,15 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @return 枪膛中是否有子弹。如果是开膛待击的枪械，则此方法返回 false。
      */
     public boolean hasBulletInBarrel() {
-        return processGunData((iGun, gunIndex) -> {
-            Bolt boltType = gunData.getBolt();
-            return boltType != Bolt.OPEN_BOLT && iGun.hasBulletInBarrel(currentGunItem);
-        }).orElse(false);
+        return processGunData(this::isBulletInBarrel).orElse(false);
+    }
+
+    /**
+     * {@link #hasBulletInBarrel()} 的具名实现，供下游 mixin/覆写（原先为合成 lambda）。
+     */
+    protected boolean isBulletInBarrel(IGun iGun, GunDisplayInstance display) {
+        Bolt boltType = gunData.getBolt();
+        return boltType != Bolt.OPEN_BOLT && iGun.hasBulletInBarrel(currentGunItem);
     }
 
     public boolean isOverHeat() {
@@ -101,18 +106,23 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @return 射击间隔
      */
     public long getShootInterval() {
-        return processCameraEntity(entity -> {
-            if (entity instanceof LivingEntity livingEntity) {
-                FireMode fireMode = iGun.getFireMode(currentGunItem);
-                if (fireMode == FireMode.BURST) {
-                    long coolDown = (long) (gunData.getBurstData().getMinInterval() * 1000f);
-                    return Math.max(coolDown, 0L);
-                }
-                long coolDown = gunData.getShootInterval(livingEntity, fireMode, currentGunItem);
+        return processCameraEntity(this::resolveShootInterval).orElse(0L);
+    }
+
+    /**
+     * {@link #getShootInterval()} 的具名实现，供下游 mixin/覆写（原先为合成 lambda）。
+     */
+    protected long resolveShootInterval(Entity entity) {
+        if (entity instanceof LivingEntity livingEntity) {
+            FireMode fireMode = iGun.getFireMode(currentGunItem);
+            if (fireMode == FireMode.BURST) {
+                long coolDown = (long) (gunData.getBurstData().getMinInterval() * 1000f);
                 return Math.max(coolDown, 0L);
             }
-            return 0L;
-        }).orElse(0L);
+            long coolDown = gunData.getShootInterval(livingEntity, fireMode, currentGunItem);
+            return Math.max(coolDown, 0L);
+        }
+        return 0L;
     }
 
     /**
@@ -139,11 +149,16 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @param alpha 需要加上或减少的射击间隔，单位为毫秒。正数即增加射击间隔，负数则是减少。
      */
     public void adjustClientShootInterval(long alpha) {
-        processGunOperator(operator -> {
-            long timestamp = operator.getDataHolder().clientShootTimestamp;
-            operator.getDataHolder().clientShootTimestamp = timestamp + alpha;
-            return null;
-        });
+        processGunOperator(operator -> adjustClientShootInterval(operator, alpha));
+    }
+
+    /**
+     * {@link #adjustClientShootInterval(long)} 的具名实现，供下游 mixin/覆写（原先为合成 lambda）。
+     */
+    protected Void adjustClientShootInterval(IClientPlayerGunOperator operator, long alpha) {
+        long timestamp = operator.getDataHolder().clientShootTimestamp;
+        operator.getDataHolder().clientShootTimestamp = timestamp + alpha;
+        return null;
     }
 
     /**
@@ -194,7 +209,7 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @param entity 相机实体
      * @return 该实体身上是否有可消耗的弹药
      */
-    private boolean hasAmmoToConsumeInEntity(Entity entity) {
+    protected boolean hasAmmoToConsumeInEntity(Entity entity) {
         if (entity instanceof LivingEntity livingEntity) {
             return livingEntity.tacz$getItemHandler(null)
                     .map(cap -> AbstractGunItem.hasAmmoInInventory(cap, currentGunItem))
@@ -258,12 +273,17 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @return 玩家的换弹状态
      */
     public int getReloadStateType() {
-        return processCameraEntity(entity -> {
-            if (entity instanceof LivingEntity livingEntity) {
-                return IGunOperator.fromLivingEntity(livingEntity).getSynReloadState().getStateType().ordinal();
-            }
-            return ReloadState.StateType.NOT_RELOADING.ordinal();
-        }).orElse(ReloadState.StateType.NOT_RELOADING.ordinal());
+        return processCameraEntity(this::resolveReloadStateType).orElse(ReloadState.StateType.NOT_RELOADING.ordinal());
+    }
+
+    /**
+     * {@link #getReloadStateType()} 的具名实现，供下游 mixin/覆写（原先为合成 lambda）。
+     */
+    protected int resolveReloadStateType(Entity entity) {
+        if (entity instanceof LivingEntity livingEntity) {
+            return IGunOperator.fromLivingEntity(livingEntity).getSynReloadState().getStateType().ordinal();
+        }
+        return ReloadState.StateType.NOT_RELOADING.ordinal();
     }
 
     /**
@@ -345,19 +365,31 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @return 玩家当前是否应该斜握枪械
      */
     public boolean shouldSlide() {
-        return processCameraEntity(e -> e.isCrouching() && gunData.canSlide()).orElse(false);
+        return processCameraEntity(this::shouldSlideInEntity).orElse(false);
+    }
+
+    /**
+     * {@link #shouldSlide()} 的具名实现，供下游 mixin/覆写（原先为合成 lambda）。
+     */
+    protected boolean shouldSlideInEntity(Entity entity) {
+        return entity.isCrouching() && gunData.canSlide();
     }
 
     /**
      * 在玩家当前的行走距离打上锚点。此后，getWalkDist() 将返回与此锚点的相对值
      */
     public void anchorWalkDist() {
-        processCameraEntity(entity -> {
-            if (entity instanceof LivingEntity livingEntity) {
-                walkDistAnchor = tacz$walkDistance(livingEntity);
-            }
-            return null;
-        });
+        processCameraEntity(this::anchorWalkDistInEntity);
+    }
+
+    /**
+     * {@link #anchorWalkDist()} 的具名实现，供下游 mixin/覆写（原先为合成 lambda）。
+     */
+    protected Void anchorWalkDistInEntity(Entity entity) {
+        if (entity instanceof LivingEntity livingEntity) {
+            walkDistAnchor = tacz$walkDistance(livingEntity);
+        }
+        return null;
     }
 
     /**
@@ -453,14 +485,19 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      */
 
     public float getWalkDist() {
-        return processCameraEntity(entity -> {
-            if (entity instanceof LivingEntity livingEntity) {
-                // 必须与上游同量纲（moveDist），否则动画速率会快约 6.7 倍。见 tacz$walkDistance。
-                float currentWalkDist = tacz$walkDistance(livingEntity);
-                return currentWalkDist - walkDistAnchor;
-            }
-            return 0f;
-        }).orElse(0f);
+        return processCameraEntity(this::resolveWalkDist).orElse(0f);
+    }
+
+    /**
+     * {@link #getWalkDist()} 的具名实现，供下游 mixin/覆写（原先为合成 lambda）。
+     */
+    protected float resolveWalkDist(Entity entity) {
+        if (entity instanceof LivingEntity livingEntity) {
+            // 必须与上游同量纲（moveDist），否则动画速率会快约 6.7 倍。见 tacz$walkDistance。
+            float currentWalkDist = tacz$walkDistance(livingEntity);
+            return currentWalkDist - walkDistAnchor;
+        }
+        return 0f;
     }
 
     /**
@@ -537,10 +574,15 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @return 当前枪械的最大蓄力值
      */
     public float getMaxCharge() {
-        return processGunData((iGun, gunIndex) -> {
-            var chargeData = gunData.getChargeData(iGun.getFireMode(currentGunItem));
-            return chargeData != null ? chargeData.getMaxCharge() : 0f;
-        }).orElse(0f);
+        return processGunData(this::resolveMaxCharge).orElse(0f);
+    }
+
+    /**
+     * {@link #getMaxCharge()} 的具名实现，供下游 mixin/覆写（原先为合成 lambda）。
+     */
+    protected float resolveMaxCharge(IGun iGun, GunDisplayInstance display) {
+        var chargeData = gunData.getChargeData(iGun.getFireMode(currentGunItem));
+        return chargeData != null ? chargeData.getMaxCharge() : 0f;
     }
 
     /**
@@ -548,10 +590,15 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @return 当前枪械的蓄力触发阈值
      */
     public float getChargeThreshold() {
-        return processGunData((iGun, gunIndex) -> {
-            var chargeData = gunData.getChargeData(iGun.getFireMode(currentGunItem));
-            return chargeData != null ? chargeData.getFireThreshold() : 0f;
-        }).orElse(0f);
+        return processGunData(this::resolveChargeThreshold).orElse(0f);
+    }
+
+    /**
+     * {@link #getChargeThreshold()} 的具名实现，供下游 mixin/覆写（原先为合成 lambda）。
+     */
+    protected float resolveChargeThreshold(IGun iGun, GunDisplayInstance display) {
+        var chargeData = gunData.getChargeData(iGun.getFireMode(currentGunItem));
+        return chargeData != null ? chargeData.getFireThreshold() : 0f;
     }
 
     /**
