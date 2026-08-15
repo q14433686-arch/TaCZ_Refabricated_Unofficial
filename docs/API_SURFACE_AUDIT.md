@@ -2,7 +2,7 @@
 
 > 范围：`com.tacz.guns` 核心逻辑类（`client.animation` / `entity.shooter` / `item` / `api.item.gun` / `api.entity` / `api.item`）
 > 背景：下游项目 **Touhou Little Maid: Tsumugi** 通过 Mixin 注入弹药来源（`#46`），暴露了合成 lambda 名漂移导致的静默失效问题。
-> 状态：**第一步（扫描）**，尚未开始改代码。
+> 状态：**P0 / P1 已完成**（改动清单见文末「附：已完成改动」），P2 与「正式 extension point」为后续建议。
 
 ---
 
