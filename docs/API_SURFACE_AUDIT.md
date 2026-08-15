@@ -36,7 +36,7 @@
 
 | # | 逻辑 | 出现位置 | 危害 |
 |---|------|----------|------|
-| 3.1 | **「能否开火 / 弹药可用性」五连判定**（`useInventoryAmmo` + `hasAmmoInBarrel` + `hasInventoryAmmo` + `ammoCount` + `noAmmo`） | ① `LivingEntityShoot.shoot()` L112–L121（服务端）② `LocalPlayerShoot.preCheck()` L210–L219（客户端）③ `LivingEntityBolt.bolt()` L57–L64（服务端拉栓） | **最高危**。三处几乎逐行复制；下游替换弹药来源必须三处全改且保持一致性，否则客户端/服务端/拉栓行为分叉 |
+| 3.1 | **「能否开火 / 弹药可用性」五连判定**（`useInventoryAmmo` + `hasAmmoInBarrel` + `hasInventoryAmmo` + `ammoCount` + `noAmmo`） | ① `LivingEntityShoot.shoot()` L112–L121（服务端）② `LocalPlayerShoot.preCheck()` L210–L219（客户端）③ `LivingEntityBolt.bolt()` L57–L64（服务端拉栓）④ `LocalPlayerBolt.bolt()` L54–L61（客户端拉栓）⑤ `ModernKineticGunScriptAPI#reduceAmmoOnce()`（脚本射击） | **最高危**。多处几乎逐行复制；下游替换弹药来源必须全部改到且保持一致性，否则客户端/服务端/拉栓/脚本行为分叉 |
 | 3.2 | 弹药扫描循环（`IAmmo` / `IAmmoBox` instanceof 判断） | 上轮已提取到 `AbstractGunItem#hasAmmoInInventory` 并复用（`canReload` / `hasInventoryAmmo` / `ModernKineticGunScriptAPI#hasAmmoToConsume` / `GunAnimationStateContext#hasAmmoToConsumeInEntity`）。仍残留：`AbstractGunItem#findAndExtractInventoryAmmo`（扣除变体，本应不同）、`GunHudOverlay` L239–L242、`GunSmithTableScreen` L229/L244 | 扣除变体是「读 + 改」，与纯读变体职责不同，需保留；HUD/合成台是显示层，风险低 |
 | 3.3 | 「-5ms 冷却窗口」魔法数 | `LivingEntityShoot.getShootCoolDown` L257/L264、`LivingEntityDrawGun.getDrawCoolDown` L71、`LivingEntityMelee` L142、`ModernKineticGunScriptAPI.getShootInterval` L330/L335；`LocalPlayerShoot.getCoolDown`（无 -5，实现不一致） | 同一「冷却窗口」语义在多处各自硬编码，未来统一调整时容易漏改 |
 | 3.4 | `consumeAmmoFromPlayer` 两个签名 | `LivingEntityShoot#consumeAmmoFromPlayer(int, ItemStack, boolean)`（void）与 `ModernKineticGunScriptAPI#consumeAmmoFromPlayer(int)`（int） | 下游 issue 表格里**两处都列了**，必须双 mixin；内部都走 `findAndExtractInventoryAmmo` / `findAndExtractDummyAmmo`，但入口不统一 |
@@ -53,7 +53,7 @@
 
 ### P1 — 同类高风险，大概率下游也在用
 
-1. **类别 3.1「noAmmo 五连判定」三处重复**（最高优先级）。建议抽成共享的值对象 + 命名方法（见第三部分方案 A）。
+1. **类别 3.1「noAmmo 五连判定」多处重复**（最高优先级）。建议抽成共享的值对象 + 命名方法（见第三部分方案 A）。
 2. **类别 2.1/2.2「弹药来源扣减入口」**（`defaultReloadFinishing` / `defaultTickBolt` / 两个 `consumeAmmoFromPlayer`）。建议做成可覆写 protected 方法或回调（方案 B）。
 3. **类别 1.7/1.8 连发射击大 lambda**（`LocalPlayerShoot#doShoot`、`ModernKineticGunScriptAPI#shootOnce`）。提取具名方法（方案 C）。
 4. **类别 1.1–1.6 `GunAnimationStateContext` 其余业务 lambda**（优先级低于 1–3，可分批做）。
@@ -71,7 +71,7 @@
 
 > 原则：纯提取/提方法，**不改任何判断顺序与返回值**；不新增依赖；不改类名/包名/mod id；每一处可独立验证（改完单个方法，换弹/开火/动画仍正常）。
 
-### 方案 A：统一「弹药可用性」判定（针对 3.1，三处去重）
+### 方案 A：统一「弹药可用性」判定（针对 3.1，多处去重）
 
 新增一个不可变判定结果值对象（放在 `api.entity` 或 `entity.shooter`，不破坏既有类名）：
 
@@ -91,15 +91,16 @@ public final class AmmoAvailability {
 ```java
 /** 稳定的「是否有可射击弹药」判定入口，供下游覆写/替换弹药来源。 */
 public AmmoAvailability checkAmmoAvailability(LivingEntity shooter, ItemStack gun) {
-    // 逐行等价于 LivingEntityShoot L112-121 / LocalPlayerShoot L210-219 / LivingEntityBolt L57-64
+    // 逐行等价于 LivingEntityShoot L112-121 / LocalPlayerShoot L210-219 /
+    //              LivingEntityBolt L57-64 / LocalPlayerBolt L54-61
 }
 ```
 
-然后把三处调用点替换为该方法的调用（保持外层 `if (noAmmo)` / `if (noAmmo) return` 等控制流不变）。
+然后把各调用点替换为该方法的调用（保持外层 `if (noAmmo)` / `if (noAmmo) return` 等控制流不变）。
 - 服务端 `LivingEntityShoot` / `LivingEntityBolt`：直接调用。
-- 客户端 `LocalPlayerShoot.preCheck`：调用同一方法（`AbstractGunItem` 在 common 侧，客户端可用），注意保留 `playDrySound` 分支。
+- 客户端 `LocalPlayerShoot.preCheck` / `LocalPlayerBolt.bolt`：调用同一方法（`AbstractGunItem` 在 common 侧，客户端可用），注意保留 `playDrySound` 分支。
 
-> 下游收益：只需覆写/ mixin **一个** `checkAmmoAvailability`，三处判定自动一致。
+> 下游收益：只需覆写/ mixin **一个** `checkAmmoAvailability`，各处判定自动一致。
 
 ### 方案 B：弹药来源扣减做成可覆写入口（针对 2.1/2.2/3.4）
 
@@ -145,7 +146,7 @@ protected boolean hasBulletInBarrel(IGun iGun, GunDisplayInstance display) {
 
 当前项目里「下游必然会去碰、但没有正式暴露」的隐性 API，按优先级：
 
-1. **弹药可用性判定**（3.1 五连判定）—— 换弹/开火/拉栓三处都要知道「还有没有子弹」。下游最可能碰，目前三处硬编码 → 应提成方案 A 的单一入口。
+1. **弹药可用性判定**（3.1 五连判定）—— 换弹/开火/拉栓各处都要知道「还有没有子弹」。下游最可能碰，目前多处硬编码 → 应提成方案 A 的单一入口。
 2. **弹药来源扣减**（2.1/2.2/3.4）—— 「子弹从哪来」是 `#46` 的原始诉求。目前分散在 `defaultReloadFinishing` / `defaultTickBolt` / 两个 `consumeAmmoFromPlayer` → 方案 B。
 3. **状态机查询方法**（`GunAnimationStateContext` 的 `hasBulletInBarrel`/`getShootInterval`/`getReloadStateType` 等）—— 枪包 Lua 脚本和下游动画改动都会碰到 → 方案 D（具名方法）。
 4. **冷却计算**（`getShootCoolDown` / `getDrawCoolDown` / `getShootInterval`）—— 判定「现在能不能开火」，与 1 强相关，且含散落的 `-5ms` 魔法数。
@@ -166,7 +167,7 @@ protected boolean hasBulletInBarrel(IGun iGun, GunDisplayInstance display) {
 
 ### P0（commit `0950d71`）
 
-- `GunAnimationStateContext#hasAmmoToConsume` → 提取 `hasAmmoToConsumeInEntity(Entity)`（具名）。
+- `GunAnimationStateContext#hasAmmoToConsume` → 提取 `hasAmmoToConsumeInEntity(Entity)`（具名，`protected`）。
 - 新增 `AbstractGunItem#hasAmmoInInventory(IItemHandler, ItemStack)`（public static，稳定扫描入口）。
 - 去重 `canReload` / `hasInventoryAmmo` / `ModernKineticGunScriptAPI#hasAmmoToConsume` / `GunAnimationStateContext#hasAmmoToConsumeInEntity` 四处扫描循环。
 
@@ -174,10 +175,11 @@ protected boolean hasBulletInBarrel(IGun iGun, GunDisplayInstance display) {
 
 - 新增值对象 `com.tacz.guns.api.item.gun.AmmoAvailability`（只读快照 + `isNoAmmoToShoot()` / `isNoAmmoToBolt()` 两个具名判定，分别对应射击路径与拉栓路径的两种既有语义）。
 - 新增 `AbstractGunItem#checkAmmoAvailability(IGun, LivingEntity, ItemStack, Bolt, boolean)`（public static，稳定判定入口）。
-- 四处内联判定全部收敛到该入口：
+- 五处内联判定全部收敛到该入口：
   - `LivingEntityShoot.shoot()`（服务端射击）
   - `LocalPlayerShoot.preCheck()`（客户端射击）
   - `LivingEntityBolt.bolt()`（服务端拉栓，走 `isNoAmmoToBolt()`）
+  - `LocalPlayerBolt.bolt()`（客户端拉栓，走 `isNoAmmoToBolt()`）
   - `ModernKineticGunScriptAPI#reduceAmmoOnce()`（脚本射击，走 `isNoAmmoToBolt()`）
 
 ### P1②：弹药来源扣减入口（方案 B）

@@ -4,6 +4,8 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.gun.AbstractGunItem;
+import com.tacz.guns.api.item.gun.AmmoAvailability;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.client.sound.SoundPlayManager;
@@ -44,15 +46,9 @@ public class LocalPlayerBolt {
             IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
             // 检查 bolt 类型是否是 manual action
             Bolt boltType = gunData.getBolt();
-            // 是否为背包直读
-            boolean useInventoryAmmo = iGun.useInventoryAmmo(mainHandItem);
-            // 膛内是否有子弹
-            boolean hasAmmoInBarrel = iGun.hasBulletInBarrel(mainHandItem) && boltType != Bolt.OPEN_BOLT;
-            // 背包内是否还有子弹 (创造模式是否消耗背包备弹)
-            boolean hasInventoryAmmo = iGun.hasInventoryAmmo(player, mainHandItem, gunOperator.needCheckAmmo());
-            // 判断没有子弹的条件 (背包直读且包内没子弹 / 非背包直读且弹匣子弹数 < 1)
-            boolean noAmmo = useInventoryAmmo && !hasInventoryAmmo ||
-                    !useInventoryAmmo && iGun.getCurrentAmmoCount(mainHandItem) < 1;
+            // 膛内/弹匣/直读容器的弹药可用性（统一收敛到 AmmoAvailability，见 AbstractGunItem#checkAmmoAvailability）
+            AmmoAvailability ammo = AbstractGunItem.checkAmmoAvailability(iGun, player, mainHandItem, boltType, gunOperator.needCheckAmmo());
+            boolean hasAmmoInBarrel = ammo.hasAmmoInBarrel;
             if (boltType != Bolt.MANUAL_ACTION) {
                 return;
             }
@@ -60,8 +56,8 @@ public class LocalPlayerBolt {
             if (hasAmmoInBarrel) {
                 return;
             }
-            // 检查弹匣内是否有子弹
-            if (noAmmo) {
+            // 检查弹匣内是否有子弹（拉栓路径：枪膛子弹单独判断，见 AmmoAvailability#isNoAmmoToBolt）
+            if (ammo.isNoAmmoToBolt()) {
                 return;
             }
             // 锁上状态锁

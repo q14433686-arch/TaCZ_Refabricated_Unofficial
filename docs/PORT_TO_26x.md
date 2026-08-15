@@ -5,7 +5,7 @@
 
 ## 结论（一句话）
 
-三条版本线（1.21.11 / 26.1.2 / 26.2）在这批重构触及的 **7 个核心逻辑文件上几乎逐字节一致**，
+三条版本线（1.21.11 / 26.1.2 / 26.2）在这批重构触及的 **8 个核心逻辑文件上几乎逐字节一致**，
 因此整份重构可以**几乎原样照搬**；26.2 只有 4 个文件存在「仅注释差异」，需要保留其注释。
 
 ## 版本线现状（无共同历史）
@@ -27,6 +27,7 @@ patch 形式移植：
 | `api/item/gun/AmmoAvailability.java`（新增） | — | — |
 | `client/animation/statemachine/GunAnimationStateContext.java` | 相同 | 相同 |
 | `client/gameplay/LocalPlayerShoot.java` | 相同 | **仅注释**（连发调度 `tacz$submitAsync` 处） |
+| `client/gameplay/LocalPlayerBolt.java` | 相同 | 相同 |
 | `entity/shooter/LivingEntityShoot.java` | 相同 | **仅注释**（`consumeAmmoFromPlayer` javadoc） |
 | `entity/shooter/LivingEntityBolt.java` | 相同 | 相同 |
 | `entity/shooter/LivingEntityAmmoCheck.java` | 相同 | 相同 |
