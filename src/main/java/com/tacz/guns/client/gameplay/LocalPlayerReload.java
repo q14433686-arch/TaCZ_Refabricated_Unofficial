@@ -35,18 +35,23 @@ public class LocalPlayerReload {
             return;
         }
 
-        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> {
-            // 如果没在换弹，则返回
-            IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
-            ReloadState reloadState = gunOperator.getSynReloadState();
-            if (!reloadState.getStateType().isReloading()) {
-                return;
-            }
-            // 发包通知服务器
-            ClientPlayNetworking.send(new ClientMessagePlayerCancelReload());
-            // 执行本地取消换弹逻辑
-            this.cancelReload(display);
-        });
+        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> performCancelReload(display));
+    }
+
+    /**
+     * 客户端取消换弹的触发逻辑（原先是 {@link #cancelReload()} 里的匿名 lambda）。
+     */
+    protected void performCancelReload(GunDisplayInstance display) {
+        // 如果没在换弹，则返回
+        IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
+        ReloadState reloadState = gunOperator.getSynReloadState();
+        if (!reloadState.getStateType().isReloading()) {
+            return;
+        }
+        // 发包通知服务器
+        ClientPlayNetworking.send(new ClientMessagePlayerCancelReload());
+        // 执行本地取消换弹逻辑
+        this.cancelReload(display);
     }
 
     public void reload() {
@@ -60,37 +65,47 @@ public class LocalPlayerReload {
         if (gunData == null) {
             return;
         }
-        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> {
-            // 检查是否为背包直读
-            if (gunItem.useInventoryAmmo(mainHandItem)) {
-                return;
-            }
-            // 检查状态锁
-            if (data.clientStateLock) {
-                return;
-            }
-            if (System.currentTimeMillis() - data.clientShootTimestamp < 100) {
-                return;
-            }
-            // 弹药简单检查
-            boolean canReload = gunItem.canReload(player, mainHandItem);
-            if (IGunOperator.fromLivingEntity(player).needCheckAmmo() && !canReload) {
-                return;
-            }
-            // 锁上状态锁
-            data.lockState(operator -> operator.getSynReloadState().getStateType().isReloading());
-            data.chargeProgress = 0f;
-            // 触发换弹事件
-            GunReloadEvent gunReloadEvent = new GunReloadEvent(player, player.getMainHandItem(), LogicalSide.CLIENT);
-            GunReloadEvent.CALLBACK.invoker().post(gunReloadEvent);
-            if (gunReloadEvent.isCanceled()) {
-                return;
-            }
-            // 发包通知服务器
-            ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
-            // 执行客户端 reload 相关内容
-            this.doReload(gunItem, display, gunData, mainHandItem);
-        });
+        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> performReload(gunItem, mainHandItem, gunData, display));
+    }
+
+    /**
+     * 客户端换弹的门槛 + 触发逻辑（原先是 {@link #reload()} 里的匿名 lambda）。
+     *
+     * <p>这是客户端「能否开始换弹」的具名决策点，供下游 mixin/覆写。
+     * <b>注意：</b>服务端 {@code LivingEntityReload#performReload} 的门槛序列与本方法
+     * <b>有意不同</b>（本方法多一个射击后 100ms 保护，且没有服务端的冷却/拉栓检查）——
+     * 两条路径语义各自成立，请勿强行合并成同一个「统一换弹门槛」API。</p>
+     */
+    protected void performReload(AbstractGunItem gunItem, ItemStack mainHandItem, GunData gunData, GunDisplayInstance display) {
+        // 检查是否为背包直读
+        if (gunItem.useInventoryAmmo(mainHandItem)) {
+            return;
+        }
+        // 检查状态锁
+        if (data.clientStateLock) {
+            return;
+        }
+        if (System.currentTimeMillis() - data.clientShootTimestamp < 100) {
+            return;
+        }
+        // 弹药简单检查
+        boolean canReload = gunItem.canReload(player, mainHandItem);
+        if (IGunOperator.fromLivingEntity(player).needCheckAmmo() && !canReload) {
+            return;
+        }
+        // 锁上状态锁
+        data.lockState(operator -> operator.getSynReloadState().getStateType().isReloading());
+        data.chargeProgress = 0f;
+        // 触发换弹事件
+        GunReloadEvent gunReloadEvent = new GunReloadEvent(player, player.getMainHandItem(), LogicalSide.CLIENT);
+        GunReloadEvent.CALLBACK.invoker().post(gunReloadEvent);
+        if (gunReloadEvent.isCanceled()) {
+            return;
+        }
+        // 发包通知服务器
+        ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
+        // 执行客户端 reload 相关内容
+        this.doReload(gunItem, display, gunData, mainHandItem);
     }
 
     private void doReload(IGun iGun, GunDisplayInstance display, GunData gunData, ItemStack mainHandItem) {
