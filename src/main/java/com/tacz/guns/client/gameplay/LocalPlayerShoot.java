@@ -41,7 +41,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 public class LocalPlayerShoot {
-    private static final Predicate<IGunOperator> SHOOT_LOCKED_CONDITION = operator -> operator.getSynShootCoolDown() > 0;
+    /**
+     * 开火状态锁的<b>身份令牌</b>。
+     *
+     * <p>本字段不仅承载判定逻辑，还承担身份语义：{@code LocalPlayerShoot} 通过
+     * {@code data.lockedCondition != SHOOT_LOCKED_CONDITION} 的<b>引用比较</b>识别
+     * 「当前锁是不是开火锁」。因此下游 mod 若想改变判定，应 mixin/覆写
+     * {@link #isShootLocked(IGunOperator)}，<b>不要</b>替换本字段（替换会破坏引用比较，
+     * 使切枪后开火覆盖其它动作的保护静默失效）。</p>
+     */
+    private static final Predicate<IGunOperator> SHOOT_LOCKED_CONDITION = LocalPlayerShoot::isShootLocked;
+
+    /**
+     * 「是否处于开火冷却」的具名判定。原先是 {@code SHOOT_LOCKED_CONDITION} 里的匿名 lambda
+     * （合成名 {@code lambda$static$N}），现提取为稳定的 public static 方法供下游 mixin。
+     *
+     * @param operator 射击者
+     * @return 同步到的射击冷却是否大于 0
+     */
+    public static boolean isShootLocked(IGunOperator operator) {
+        return operator.getSynShootCoolDown() > 0;
+    }
+
     private final LocalPlayerDataHolder data;
     private final LocalPlayer player;
 
