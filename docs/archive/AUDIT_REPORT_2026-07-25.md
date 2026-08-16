@@ -1,3 +1,5 @@
+> **历史状态已被 26.2 R2 取代（2026-08-16）：** 本归档中“Carry On 无 26.2 构建/保持 exclude”的结论只记录当时核查，现已由公开的 Carry On Fabric 26.2 2.11.0 和 R2 反射/mixin 兼容层取代。请以 [`../CARRYON_COMPAT.md`](../CARRYON_COMPAT.md) 为当前状态；不要把本归档当作发布兼容性结论。
+
 # TACZ-26.2-V5-source 审计报告（2026-07-25）
 
 > 审计对象：`q14433686-arch/TACZ-26.2-V5-source`，提交 `e4ffee2ba9f5c24e2bd86b941b069f847208650f`。  
