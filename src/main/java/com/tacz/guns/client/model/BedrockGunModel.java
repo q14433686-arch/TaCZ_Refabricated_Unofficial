@@ -13,6 +13,7 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.*;
 import com.tacz.guns.client.model.listener.model.ModelAdditionalMagazineListener;
+import com.tacz.guns.industry.magazine.PhysicalMagazineService;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
@@ -60,6 +61,14 @@ public class BedrockGunModel extends BedrockAnimatedModel {
     private boolean renderMount;
     private ItemStack currentGunItem;
     private int currentExtendMagLevel = 0;
+    /**
+     * Whether the physical-magazine profile says this frame's gun has no carrier inserted.
+     *
+     * <p>Recomputed per frame in {@link #prepareRenderState(ItemStack)} and only ever true when
+     * the gun actually participates in the physical-magazine ruleset, so legacy guns, third-party
+     * packs and the LEGACY profile keep rendering their magazine exactly as before.</p>
+     */
+    private boolean magazineDetached = false;
 
     public BedrockGunModel(BedrockModelPOJO pojo, BedrockVersion version) {
         super(pojo, version);
@@ -97,6 +106,8 @@ public class BedrockGunModel extends BedrockAnimatedModel {
         this.setFunctionalRenderer(MAG_STANDARD, bedrockPart -> extendedMagHiddenRender(bedrockPart, 0));
         // 部分枪械换弹动画播放时，会同时出现两个弹匣，这个就是程序自动渲染另一个弹匣的代码
         this.setFunctionalRenderer(MAG_ADDITIONAL_NODE, this::renderAdditionalMagazine);
+        // 物理弹匣被取下时，隐藏枪身上的弹匣定位组（换弹动画驱动该节点时会重新显示）
+        this.setFunctionalRenderer(MAG_NORMAL_NODE, this::detachedMagazineRender);
         // 默认护木渲染
         this.setFunctionalRenderer(HANDGUARD_DEFAULT_NODE, this::handguardDefaultRender);
         // 战术护木渲染
@@ -252,6 +263,10 @@ public class BedrockGunModel extends BedrockAnimatedModel {
         }
         currentGunItem = gunItem;
         currentExtendMagLevel = 0;
+        // Only guns governed by the physical-magazine ruleset can look unloaded; everything else
+        // (LEGACY profile, third-party packs, internal feeds, belt boxes) is left untouched.
+        magazineDetached = PhysicalMagazineService.usesPhysicalMagazine(gunItem)
+                && !PhysicalMagazineService.hasActiveInstalledMagazine(gunItem);
         adapterToRender.clear();
         // 更新配件物品的缓存，以供渲染使用
         for (AttachmentType type : AttachmentType.values()) {
@@ -366,6 +381,33 @@ public class BedrockGunModel extends BedrockAnimatedModel {
         return null;
     }
 
+    /**
+     * Renders the gun's magazine group only while a carrier is actually installed.
+     *
+     * <p>Gun packs model the detachable magazine as the {@code magazine} group, so the physical
+     * magazine ruleset can reuse that existing geometry to show a real magazine-well-empty gun
+     * instead of a gun that always looks loaded.</p>
+     *
+     * <p>Hiding is deliberately narrow.</p>
+     *
+     * <ul>
+     *   <li>{@link #magazineDetached} is only ever set for guns the profile actually manages.</li>
+     *   <li>Gun packs parent {@code magazine} under {@code mag_and_bullet}/{@code lefthand_and_mag},
+     *       so during a reload this group is the magazine travelling with the hand. While
+     *       {@code additional_magazine} is visible an animation is mid-reload and is positioning
+     *       this geometry, so the group must be drawn or the carrier would pop out of existence
+     *       in the player's hand.</li>
+     * </ul>
+     */
+    @Nullable
+    private IFunctionalRenderer detachedMagazineRender(BedrockPart bedrockPart) {
+        boolean reloadAnimationActive = additionalMagazineNode != null && additionalMagazineNode.visible;
+        if (magazineDetached && !reloadAnimationActive) {
+            bedrockPart.visible = false;
+        }
+        return null;
+    }
+
     @Override
     public AnimationListener supplyListeners(String nodeName, ObjectAnimationChannel.ChannelType type) {
         AnimationListener listener = super.supplyListeners(nodeName, type);
@@ -384,6 +426,12 @@ public class BedrockGunModel extends BedrockAnimatedModel {
         super.cleanAnimationTransform();
         if (additionalMagazineNode != null) {
             additionalMagazineNode.visible = false;
+        }
+        // The detached decision is recomputed from the gun stack on the next prepareRenderState;
+        // restore the group so a shared model never leaks this frame's hidden state to another
+        // entity, view or gun that is not managed by the physical-magazine ruleset.
+        if (magazineNode != null) {
+            magazineNode.visible = true;
         }
     }
 
