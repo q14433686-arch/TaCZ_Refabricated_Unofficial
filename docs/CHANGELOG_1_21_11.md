@@ -25,6 +25,21 @@
 javac 合成的 `lambda$hasAmmoToConsume$...` 名称。假弹、创造模式和无限弹药的现有优先级
 保持不变。接入方式、双端注册要求和契约详见 [`AMMO_SOURCE_API.md`](AMMO_SOURCE_API.md)。
 
+**稳定命名的行为扩展钩子**
+
+将开火、换弹、拉栓和动画路径中原本只能通过 private 方法或合成 lambda 定位的业务阶段，
+提取为 protected 具名方法。主要入口包括：
+
+- `LocalPlayerShoot` 的校验、冷却、连发周期、主线程表现及状态锁判定；
+- `LocalPlayerReload` / `LocalPlayerBolt` 的事务、动画和手动拉栓判定；
+- `LivingEntityShoot` / `LivingEntityReload` / `LivingEntityBolt` 的服务端事务与蓄力校验；
+- `ModernKineticGunScriptAPI` 的射击周期、继续条件、弹丸生成和过热脚本分派；
+- `ModernKineticGunItem` 的默认过热、拉栓和换弹 fallback；
+- `GunAnimationStateContext#getInterpolatedWalkDistance`。
+
+原调用路径、判断和副作用顺序保持不变；射击状态锁仍使用同一个 Predicate 实例进行身份判断。
+这些具名方法用于避免下游绑定 javac 合成名称，不代表合成 `lambda$...` 方法属于兼容 API。
+
 ---
 
 ## R12

@@ -223,7 +223,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
                 );
     }
 
-    private void defaultTickHeat(long heatTimestamp, ItemStack gunItem) {
+    protected void defaultTickHeat(long heatTimestamp, ItemStack gunItem) {
         var iGun = IGun.getIGunOrNull(gunItem);
         if (iGun == null) return;
         TimelessAPI.getCommonGunIndex(iGun.getGunId(gunItem))
@@ -335,7 +335,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
                 });
     }
 
-    private boolean defaultTickBolt(ModernKineticGunScriptAPI api) {
+    protected boolean defaultTickBolt(ModernKineticGunScriptAPI api) {
         GunData gunData = api.getGunIndex().getGunData();
         long boltActionTime = (long) (gunData.getBoltActionTime() * 1000);
         float rawBoltFeedTime = gunData.getBoltFeedTime();
@@ -356,7 +356,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         return api.getBoltTime() < boltActionTime;
     }
 
-    private ReloadState defaultTickReload(ModernKineticGunScriptAPI api) {
+    protected ReloadState defaultTickReload(ModernKineticGunScriptAPI api) {
         CommonGunIndex gunIndex = api.getGunIndex();
         // 获取 ReloadData
         GunData gunData = gunIndex.getGunData();
@@ -410,7 +410,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         return reloadState;
     }
 
-    private void defaultReloadFinishing(ModernKineticGunScriptAPI api, boolean isTactical) {
+    protected void defaultReloadFinishing(ModernKineticGunScriptAPI api, boolean isTactical) {
         GunData data = api.getGunIndex().getGunData();
         int needAmmoCount = api.getNeededAmmoAmount();
         boolean needConsumeAmmo = api.isReloadingNeedConsumeAmmo();
