@@ -24,7 +24,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +57,43 @@ public abstract class AbstractGunSmithTableBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState blockState) {
-        return new GunSmithTableBlockEntity(pos, blockState);
+        // Only the root owns the table identity and menu. Giving an invisible companion
+        // its own block entity also makes Carry On treat that half as an independent block.
+        return isRoot(blockState) ? new GunSmithTableBlockEntity(pos, blockState) : null;
+    }
+
+    /**
+     * Returns the second position of a multi-block table, or {@code null} for a single-block table.
+     * The supplied state is always the root state.
+     */
+    @Nullable
+    public BlockPos getCompanionPos(BlockPos rootPos, BlockState rootState) {
+        return null;
+    }
+
+    /** Returns the state that belongs at {@link #getCompanionPos(BlockPos, BlockState)}. */
+    @Nullable
+    public BlockState getCompanionState(BlockState rootState) {
+        return null;
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        if (level.isClientSide() || state.is(oldState.getBlock()) || !isRoot(state)) {
+            return;
+        }
+
+        BlockPos companionPos = getCompanionPos(pos, state);
+        BlockState companionState = getCompanionState(state);
+        if (companionPos != null && companionState != null
+                && level.getWorldBorder().isWithinBounds(companionPos)
+                && !level.isOutsideBuildHeight(companionPos)
+                && level.getBlockState(companionPos).canBeReplaced()) {
+            // Carry On restores blocks through setBlockAndUpdate and never calls setPlacedBy.
+            // Rebuild the companion here so every block-state placement path remains complete.
+            level.setBlock(companionPos, companionState, Block.UPDATE_ALL);
+        }
     }
 
     @Override
