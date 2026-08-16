@@ -14,7 +14,8 @@
 - 配件工作台保留 `half=lower/upper` 序列化格式，但不再使用会被 Carry On 通用规则拒绝的
   `DoubleBlockHalf` value class；该冲突也存在于官方 TACZ 1.20.1 设计，并非端口遗漏；
 - 从同步的 Carry On 方块实体 NBT 恢复枪包工作台 `BlockId`，修复手持紫黑模型；
-- 只允许拾取 root，显式覆盖 `pickupAllBlocks=true`，不再生成非 root 幽灵方块；
+- 从任一半格发起搬运都会解析到 root，显式覆盖 `pickupAllBlocks=true`，不会打开菜单或生成
+  非 root 幽灵方块；
 - 工作台从 Carry On 黑名单移除，`target` / `statue` 继续保留。
 
 实现依据、兼容边界和游戏内回归矩阵见 [`CARRYON_COMPAT.md`](CARRYON_COMPAT.md)。

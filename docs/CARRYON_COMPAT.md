@@ -59,11 +59,13 @@ class 不再是 `DoubleBlockHalf`，从而不会被 Carry On 2.9.2 的门类属�
 
 1. 非 root 半格不再创建自己的 `GunSmithTableBlockEntity`；只有 root 保存菜单与
    `BlockId`；
-2. `CarryOnPickupHandlerMixin` 在拾取入口按方块状态显式拒绝所有非 root 工作台格。
+2. `CarryOnPickupHandlerMixin` 在拾取入口把 HEAD/UPPER 映射到所属 root，再让 Carry On
+   对 root 执行原有的距离、配置、权限回调、NBT 保存和移除流程。
 
 第二层是必须的：Carry On 的 `pickupAllBlocks=true` 会绕过“必须有方块实体”的默认
-限制。显式入口检查确保该配置开启时也不能搬走 HEAD/UPPER，避免原结构掉落并生成有
-碰撞、不可见的幽灵格。
+限制。入口映射确保从任一半格发起搬运都会拾取完整工作台，而不会搬走 companion、让原
+结构掉落并生成有碰撞但不可见的幽灵格。按下 Carry On 搬运键时成功拾取会消费本次交互，
+因此不会意外打开菜单；未按搬运键的普通右键仍按原行为从任一半格打开菜单。
 
 ## 原子放置边界
 
@@ -101,7 +103,7 @@ mixin target 和反射，不新增依赖库，也不会把 Carry On 打入发行
 | 搬运/放下 `workbench_b` | FOOT/HEAD 两格完整，朝向正确 |
 | 搬运/放下 `workbench_c` | 可以拾取，LOWER/UPPER 两格完整 |
 | 搬运附属枪包的 A/B/C 工作台 | 手持模型不紫黑，放下后 `BlockId`、菜单和模型保持 |
-| 对 B 的 HEAD 或 C 的 UPPER 拾取 | 默认配置及 `pickupAllBlocks=true` 均拒绝；原结构不掉落 |
+| 从 B 的 HEAD 或 C 的 UPPER 发起搬运 | 默认配置及 `pickupAllBlocks=true` 均转为拾取 root；完整结构被搬起，不打开菜单、不生成幽灵格 |
 | companion 被实体方块、权限或高度边界阻挡 | 放置失败，世界无半结构，玩家仍持有工作台 |
 | 生存/创造破坏 root 与非 root | 掉落规则、创造抑制和自定义 `BlockId` 保持原行为 |
 | 未安装 Carry On 启动客户端与服务端 | 可选 mixin 被跳过，TACZ 正常加载 |

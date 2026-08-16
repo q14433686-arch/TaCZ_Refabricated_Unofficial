@@ -8,24 +8,22 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import java.util.function.BiFunction;
-
-/** Prevents invisible companion halves from becoming independently carried ghost blocks. */
+/** Resolves invisible companion halves to their root before Carry On performs a pickup. */
 @Pseudo
 @Mixin(targets = "tschipp.carryon.common.carry.PickupHandler", remap = false)
 public abstract class CarryOnPickupHandlerMixin {
-    @Inject(method = "tryPickUpBlock", at = @At("HEAD"), cancellable = true, require = 0)
-    private static void tacz$rejectNonRootTablePart(ServerPlayer player, BlockPos pos, Level level,
-                                                    BiFunction<BlockState, BlockPos, Boolean> pickupCallback,
-                                                    CallbackInfoReturnable<Boolean> cir) {
+    @ModifyVariable(method = "tryPickUpBlock", at = @At("HEAD"), argsOnly = true,
+            ordinal = 0, require = 0)
+    private static BlockPos tacz$resolveRootTablePart(BlockPos pos, ServerPlayer player,
+                                                       BlockPos originalPos, Level level) {
         BlockState state = level.getBlockState(pos);
         if (state.getBlock() instanceof AbstractGunSmithTableBlock table && !table.isRoot(state)) {
-            // This must be explicit: Carry On's pickupAllBlocks option bypasses its normal
-            // block-entity requirement and would otherwise pick up the invisible half.
-            cir.setReturnValue(false);
+            // Carry On's pickupAllBlocks option bypasses its block-entity requirement. Redirecting
+            // here makes all of its normal checks and removal operate on the real root instead.
+            return table.getRootPos(pos, state);
         }
+        return pos;
     }
 }
