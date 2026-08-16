@@ -4,9 +4,7 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -19,7 +17,6 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * 双方块的枪械工作台，2x1x1
@@ -61,11 +58,17 @@ public class GunSmithTableBlockB extends AbstractGunSmithTableBlock {
     }
 
     @Override
-    public void setPlacedBy(Level worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        super.setPlacedBy(worldIn, pos, state, placer, stack);
-        if (!worldIn.isClientSide()) {
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        // 多方块工作台的「自愈补全」：Carry On 等模组直接用 setBlock/setBlockAndUpdate
+        // 放置方块，不会调用 setPlacedBy，HEAD 半块永远不会生成。把补全逻辑放在
+        // onPlace 里，任何 setBlock 型放置（搬运放置、/setblock、结构方块）都会重建
+        // 完整的两格结构；原版物品放置路径（先 getStateForPlacement 校验）行为不变。
+        if (!level.isClientSide() && state.getValue(PART) == BedPart.FOOT && !state.is(oldState.getBlock())) {
             BlockPos relative = pos.relative(state.getValue(FACING));
-            worldIn.setBlock(relative, state.setValue(PART, BedPart.HEAD), Block.UPDATE_ALL);
+            if (level.getBlockState(relative).canBeReplaced()) {
+                level.setBlock(relative, state.setValue(PART, BedPart.HEAD), Block.UPDATE_ALL);
+            }
         }
     }
 

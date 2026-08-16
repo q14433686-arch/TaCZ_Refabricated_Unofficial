@@ -84,3 +84,18 @@ git apply docs/port/api-surface-refactor-26.2.patch
 与 1.21.11 相同（见 `docs/API_SURFACE_AUDIT.md` 末尾与 `#46` 的测试矩阵）：
 换弹 / 开火 / 拉栓 / 动画四条路径各自等价；重点回归三种 bolt 类型 × 四种供弹方式的组合，
 以及 BURST 连发与创造模式两条分支。
+
+## Carry On 搬运兼容修复：仅 1.21.11 线，不随补丁移植
+
+`docs/CARRYON_COMPAT.md` 记录的四个搬运修复（两格工作台 onPlace 自愈补全、
+`workbench_c` 自定义 `TableHalf` 枚举、非 root 半块不再创建方块实体、手持渲染
+`CarryOnRenderHelperMixin`）**有意不移植到 26.1.2 / 26.2**：
+
+- 26.x 线采用自己的 Carry On 集成（`com.tacz.guns.compat.carryon.BlackList` +
+  `cn.sh1rocu.tacz.mixin.compat.carryon.ConfigLoaderMixin`），在 Carry On 配置加载时
+  把全部 TACZ 方块加入黑名单——搬运整类功能在 26.x 是被有意禁用的，两个补丁文件
+  （api-surface-refactor-*.patch）不含本批改动；
+- `CarryOnRenderHelperMixin` 的注入目标是 Carry On 2.9.x 的
+  `ItemStack getRenderItemStack(Player)`；26.1.2/26.2 的 Carry On（2.10+/2.11+）已改为
+  `ItemStackTemplate` 返回值（渲染处再 `.create()`）。若 26.x 未来也开放搬运支持，
+  需改用 `ItemStackTemplate` 变体（在 template 上补 BlockId 组件），并替换 mixin 回调类型。

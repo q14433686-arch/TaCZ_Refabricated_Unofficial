@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.tacz.guns.mixin.client.carryon",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "com.tacz.guns.mixin.client.carryon.CarryOnCompatMixinPlugin",
+  "client": [
+    "CarryOnRenderHelperMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  },
+  "_comment": "Carry On 兼容：修复搬运 TACZ 工作台时手持模型的缺失贴图（CarryRenderHelper#getRenderItemStack 构造的无 NBT 物品栈缺 BlockId）。required=false + CarryOnCompatMixinPlugin 的 isModLoaded 双重兜底，未装 Carry On 不受影响。"
+}

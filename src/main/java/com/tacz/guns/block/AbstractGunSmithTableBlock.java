@@ -58,7 +58,12 @@ public abstract class AbstractGunSmithTableBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState blockState) {
-        return new GunSmithTableBlockEntity(pos, blockState);
+        // 只有 root（foot/lower）部分持有方块实体。非 root 部分不需要也不持有：
+        // 1) 渲染/菜单/掉落都从 root 方块实体读取（getRootPos）；
+        // 2) Carry On 2.x 默认只搬运「有方块实体的方块」，非 root 部分无方块实体后，
+        //    搬运半块会被拒绝（右击回归打开菜单），避免把 invisible 的 HEAD/UPPER
+        //    半块单独搬走产生「有碰撞箱的空气」幽灵方块。
+        return isRoot(blockState) ? new GunSmithTableBlockEntity(pos, blockState) : null;
     }
 
     @Override
