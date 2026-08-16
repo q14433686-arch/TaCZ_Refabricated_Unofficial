@@ -13,6 +13,7 @@ import com.tacz.guns.item.AmmoItem;
 import com.tacz.guns.item.AttachmentItem;
 import com.tacz.guns.item.GunSmithTableItem;
 import com.tacz.guns.item.MagazineItem;
+import com.tacz.guns.industry.IndustryProfileManager;
 import com.tacz.guns.industry.item.IndustryItemBuilder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -33,15 +34,25 @@ public class ModCreativeTabs {
                 output.acceptAll(GunSmithTableItem.fillItemCategory());
                 output.accept(ModItems.TARGET);
                 output.accept(ModItems.STATUE);
+                // These two keep a plain crafting-table recipe, so they stay listed in every profile.
                 output.accept(ModItems.CARTRIDGE_ASSEMBLY_MACHINE);
                 output.accept(ModItems.INDUSTRIAL_SALVAGE_STATION);
+                output.accept(ModItems.TARGET_MINECART);
+                AmmoBoxItem.fillItemCategory(output);
+                // Industrial stock, tooling and intermediate parts are only obtainable through the
+                // CREATE_FLY profile: every recipe that produces them is a Create recipe gated on
+                // `fabric:all_mods_loaded: ["create"]`. Listing them unconditionally advertised
+                // items that no installation without Create Fly can ever craft. The gate matches
+                // the one the industrial recipe transformers already use, so the tab and the
+                // reachable recipe set stay consistent.
+                if (!IndustryProfileManager.isCreateFlyProfileActive()) {
+                    return;
+                }
                 output.accept(ModItems.INDUSTRIAL_SERVICE_BENCH);
                 output.accept(ModItems.ARMORER_WRENCH);
                 output.accept(ModItems.MAINTENANCE_CLEANING_KIT);
                 output.accept(ModItems.MAGAZINE_POUCH);
                 output.accept(ModItems.MAGAZINE_LOADER);
-                output.accept(ModItems.TARGET_MINECART);
-                AmmoBoxItem.fillItemCategory(output);
                 output.accept(ModItems.CARBON_DUST);
                 output.accept(ModItems.SULFUR_DUST);
                 output.accept(ModItems.CINNABAR_DUST);
