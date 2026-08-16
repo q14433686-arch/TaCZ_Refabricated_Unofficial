@@ -216,7 +216,13 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
                 );
     }
 
-    private void defaultTickHeat(long heatTimestamp, ItemStack gunItem) {
+    /**
+     * 过热的默认 tick 逻辑（枪包脚本未定义 {@code tick_heat} 时走此路径）。
+     *
+     * <p>这是「过热回退 / 锁定」分支的具名决策点（分支本体见 {@link #tickLocked} /
+     * {@link #tickNormal}），protected 供下游 mixin/覆写。默认行为与原先完全一致。</p>
+     */
+    protected void defaultTickHeat(long heatTimestamp, ItemStack gunItem) {
         var iGun = IGun.getIGunOrNull(gunItem);
         if (iGun == null) return;
         TimelessAPI.getCommonGunIndex(iGun.getGunId(gunItem))
@@ -359,7 +365,14 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         }
     }
 
-    private ReloadState defaultTickReload(ModernKineticGunScriptAPI api) {
+    /**
+     * 换弹状态机的默认推进逻辑（枪包脚本未定义 {@code tick_reload} 时走此路径）。
+     *
+     * <p>这是「EMPTY/TACTICAL → FEEDING → FINISHING」状态转换与补弹触发点的具名决策点，
+     * protected 供下游 mixin/覆写。补弹本体见 {@link #consumeAmmoForReload}，
+     * 默认行为与原先完全一致。</p>
+     */
+    protected ReloadState defaultTickReload(ModernKineticGunScriptAPI api) {
         CommonGunIndex gunIndex = api.getGunIndex();
         // 获取 ReloadData
         GunData gunData = gunIndex.getGunData();

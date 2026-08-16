@@ -155,6 +155,14 @@ public class LivingEntityShoot {
     }
 
     // 简单校验，服务端不追踪扳机按住状态，所以只拒绝超过“客户端一直按住蓄力”时理论可达到的最大进度。
+    /**
+     * 蓄力进度的服务端防作弊校验（安全边界）。
+     *
+     * <p>以下四个方法（含 {@link #getMaxReasonableChargeProgress} / {@link #validateChargeProgress}）
+     * 共同构成服务端对客户端上报蓄力进度的信任边界：只接受客户端「一直按住蓄力」在理论时间窗内
+     * 能达到的进度。请<b>不要</b>随意放宽此边界；下游做自定义蓄力武器时，应优先从事件层
+     * （如 {@code GunShootEvent}）接入，而不是改动本组校验。</p>
+     */
     private boolean isChargeProgressReasonable(ChargeData chargeData, float chargeProgress) {
         final float tolerance = 0.001f;
         if (!Float.isFinite(chargeProgress)) {
