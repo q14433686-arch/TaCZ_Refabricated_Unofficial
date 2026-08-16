@@ -5,7 +5,7 @@
 
 ---
 
-## Unreleased
+## 1.1.8+fabric.1.21.11.R2
 
 **新增：内置弹药适配枪械查询（JEI / REI）**
 
@@ -56,6 +56,10 @@ javac 合成的 `lambda$hasAmmoToConsume$...` 名称。假弹、创造模式和�
 - `ModernKineticGunScriptAPI` 的射击周期、继续条件、弹丸生成和过热脚本分派；
 - `ModernKineticGunItem` 的默认过热、拉栓和换弹 fallback；
 - `GunAnimationStateContext#getInterpolatedWalkDistance`。
+
+P2-min 另将 `ModernKineticGunItem` / `ModernKineticGunScriptAPI` 的 Lua 函数解析与 cycle task
+转发提取为 protected 具名 helper，并为默认 reload/heat fallback、弹药动作策略和服务端蓄力
+校验补齐覆写契约；没有扩大已拒绝候选，也没有改变脚本或 gameplay 行为。
 
 原调用路径、判断和副作用顺序保持不变；射击状态锁仍使用同一个 Predicate 实例进行身份判断。
 这些具名方法用于避免下游绑定 javac 合成名称，不代表合成 `lambda$...` 方法属于兼容 API。
