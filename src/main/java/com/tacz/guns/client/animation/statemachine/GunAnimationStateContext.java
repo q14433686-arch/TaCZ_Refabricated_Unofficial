@@ -347,7 +347,7 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
     public void anchorWalkDist() {
         processCameraEntity(entity -> {
             if (entity instanceof LivingEntity livingEntity) {
-                walkDistAnchor = tacz$walkDistance(livingEntity);
+                walkDistAnchor = getInterpolatedWalkDistance(livingEntity);
             }
             return null;
         });
@@ -390,7 +390,7 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * {@code moveDist}（见 {@link IMoveDistTracker}）重建出 {@code walkDistO}，
      * 从而做与上游<b>完全一致</b>的线性插值，兼顾正确量纲与平滑度。</p>
      */
-    private float tacz$walkDistance(LivingEntity livingEntity) {
+    protected float getInterpolatedWalkDistance(LivingEntity livingEntity) {
         // ------------------------------------------------------------------
         // 【首选路径】26.2 官方的 walkDist/walkDistO 继任者：ClientAvatarState
         //
@@ -448,8 +448,8 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
     public float getWalkDist() {
         return processCameraEntity(entity -> {
             if (entity instanceof LivingEntity livingEntity) {
-                // 必须与上游同量纲（moveDist），否则动画速率会快约 6.7 倍。见 tacz$walkDistance。
-                float currentWalkDist = tacz$walkDistance(livingEntity);
+                // 必须与上游同量纲（moveDist），否则动画速率会快约 6.7 倍。见 getInterpolatedWalkDistance。
+                float currentWalkDist = getInterpolatedWalkDistance(livingEntity);
                 return currentWalkDist - walkDistAnchor;
             }
             return 0f;

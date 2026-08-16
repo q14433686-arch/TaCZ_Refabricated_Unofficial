@@ -38,14 +38,14 @@ public class LivingEntityShoot {
     }
 
     public ShootResult shoot(Supplier<Float> pitch, Supplier<Float> yaw, long timestamp) {
-        return shoot(pitch, yaw, timestamp, 0f, false);
+        return shootInternal(pitch, yaw, timestamp, 0f, false);
     }
 
     public ShootResult shoot(Supplier<Float> pitch, Supplier<Float> yaw, long timestamp, float chargeProgress) {
-        return shoot(pitch, yaw, timestamp, chargeProgress, true);
+        return shootInternal(pitch, yaw, timestamp, chargeProgress, true);
     }
 
-    private ShootResult shoot(Supplier<Float> pitch, Supplier<Float> yaw, long timestamp, float chargeProgress, boolean hasChargeContext) {
+    protected ShootResult shootInternal(Supplier<Float> pitch, Supplier<Float> yaw, long timestamp, float chargeProgress, boolean hasChargeContext) {
         if (data.currentGunItem == null) {
             return ShootResult.NOT_DRAW;
         }
@@ -162,7 +162,7 @@ public class LivingEntityShoot {
     }
 
     // 简单校验，服务端不追踪扳机按住状态，所以只拒绝超过“客户端一直按住蓄力”时理论可达到的最大进度。
-    private boolean isChargeProgressReasonable(ChargeData chargeData, float chargeProgress) {
+    protected boolean isChargeProgressReasonable(ChargeData chargeData, float chargeProgress) {
         final float tolerance = 0.001f;
         if (!Float.isFinite(chargeProgress)) {
             return false;
@@ -183,7 +183,7 @@ public class LivingEntityShoot {
         return true;
     }
 
-    private float getMaxReasonableChargeProgress(ChargeData chargeData) {
+    protected float getMaxReasonableChargeProgress(ChargeData chargeData) {
         // 预留少量 tick 余量，用于容忍网络抖动和客户端/服务端调度偏差。
         final float extraTicks = 4f;
         float startProgress = getChargeProgressAfterLastFire(chargeData);
@@ -192,7 +192,7 @@ public class LivingEntityShoot {
         return Math.min(maxProgress, chargeData.getMaxCharge());
     }
 
-    private float getChargeProgressAfterLastFire(ChargeData chargeData) {
+    protected float getChargeProgressAfterLastFire(ChargeData chargeData) {
         if (data.shootTimestamp < 0) {
             return 0f;
         }
@@ -203,7 +203,7 @@ public class LivingEntityShoot {
         return Math.max(0f, data.chargeProgress - chargeData.getDecreaseOnFire());
     }
 
-    private long getChargeElapsedMillis() {
+    protected long getChargeElapsedMillis() {
         if (data.shootTimestamp >= 0) {
             long startTimestamp = data.baseTimestamp + data.shootTimestamp;
             return System.currentTimeMillis() - startTimestamp;
@@ -214,7 +214,7 @@ public class LivingEntityShoot {
         return 0L;
     }
 
-    private float validateChargeProgress(ChargeData chargeData, float chargeProgress, boolean hasChargeContext) {
+    protected float validateChargeProgress(ChargeData chargeData, float chargeProgress, boolean hasChargeContext) {
         if (!hasChargeContext || !Float.isFinite(chargeProgress)) {
             return 0f;
         }
