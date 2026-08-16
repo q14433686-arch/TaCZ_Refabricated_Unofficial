@@ -45,6 +45,7 @@
     "tacz.mixins.json",
     "tacz.fabric.mixins.json",
     "tacz.iris.mixins.json",
+    "tacz.carryon.mixins.json",
     "lrtactical.mixins.json"
   ],
   "accessWidener": "tacz.accesswidener",
@@ -56,7 +57,7 @@
     "forgeconfigapiport": ">=21.11.1"
   },
   "suggests": {
-    "carryon": ">=2.10.0",
+    "carryon": ">=2.9.2",
     "controllable": ">=0.25.7",
     "shouldersurfing": ">=5.0.0",
     "iris": ">=1.10.7",
