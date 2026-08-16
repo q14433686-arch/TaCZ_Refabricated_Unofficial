@@ -81,7 +81,7 @@ public class InventoryEvent {
         // 服务端那侧的后果：ShooterDataHolder#currentGunItem 只在收到
         // ClientMessagePlayerDrawGun 时才赋值，draw 不发它就恒为 null，直接命中
         //     LivingEntityShoot#shoot: if (data.currentGunItem == null) return NOT_DRAW;
-        // 服务端静默拒绝每一次射击 —— 子弹不减、无伤害；而客户端 preCheck 走自己
+        // 服务端静默拒绝每一次射击 —— 子弹不减、无伤害；而客户端 validateClientShoot 走自己
         // 那套状态，于是表现为「能扣扳机、有动画，但什么都没发生」。
         // /tacz reload 能恢复，是因为 ClientIndexManager#reload() 结尾补了一次
         // draw(ItemStack.EMPTY)，正好反证根因在「draw 没发出」。
@@ -108,7 +108,7 @@ public class InventoryEvent {
             // 若对跨维度也照做复位，会凭空触发一次切枪：
             // 服务端 draw() 把 drawTimestamp 推到 now + putAwayTime，
             // getDrawCoolDown() 于是返回 drawTime + putAwayTime（默认枪包约
-            // 0.3+0.3=0.6 秒），期间 preCheck 判 IS_DRAWING、状态锁也不释放；
+            // 0.3+0.3=0.6 秒），期间 validateClientShoot 判 IS_DRAWING、状态锁也不释放；
             // 再叠加下面 20 tick 的延迟补发，合计约 1.6 秒不能开枪
             // —— 这正是「跨维度后一段时间无法操作枪械」的成因。
             //
