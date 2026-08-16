@@ -14,7 +14,7 @@ import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.api.recipe.types.IRecipeType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -38,11 +38,11 @@ public final class AmmoQueryCategory implements IRecipeCategory<AmmoQueryEntry> 
     }
 
     @Override
-    public void draw(AmmoQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics,
+    public void draw(AmmoQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics,
                      double mouseX, double mouseY) {
         if (!entry.getExtraGunStacks().isEmpty()) {
             Font font = Minecraft.getInstance().font;
-            guiGraphics.drawString(font, Component.translatable("jei.tacz.ammo_query.more"),
+            guiGraphics.text(font, Component.translatable("jei.tacz.ammo_query.more"),
                     128, 134, 0xFF555555, false);
         }
     }
