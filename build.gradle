@@ -173,7 +173,7 @@ dependencies {
     // 以下为运行时/编译时 mod 依赖；无 26.2 构建的项保持注释
     // ============================================================
 
-    // JEI — 26.2 (Modrinth 30.13.0.80, compile against full fabric jar which includes API)
+    // JEI — 26.2 (pinned to Modrinth 30.13.0.86; compile against the full Fabric jar, which includes the API)
     compileOnly "maven.modrinth:jei:${jei_version}"
 
     // Cloth Config — 26.2

@@ -4,14 +4,14 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R1`**。
+`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R2`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
 · [直接上游](https://github.com/Sh1roCu/TACZ-Refabricated/tree/1.21.1)
 · [原始 TaCZ 项目](https://github.com/MCModderAnchor/TACZ)
 
-> 仓库源码已使用 R1 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R2 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
 
 ---
 
@@ -22,15 +22,40 @@
 | Minecraft | **26.2** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **25+** |
-| Fabric API | 需要安装；R1 构建使用 **0.155.2+26.2** |
+| Fabric API | 需要安装；R2 构建使用 **0.155.2+26.2** |
 | Forge Config API Port | **26.2.1+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.2.R1`** |
+| 本 mod | **`1.1.8+fabric.26.2.R2`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
+R2 的可选集成（并非硬依赖）如下：
+
+| 可选 mod | R2 核验/建议版本 | 用途 |
+|---|---|---|
+| JEI | 编译 pin **30.13.0.86** | 内置 Ammo Query 与工作台类别 |
+| REI | 编译 pin **26.2.820** | 内置 Ammo Query 与工作台类别 |
+| Carry On | 建议 **>=2.11.0** | A/B/C 多格工作台的搬运兼容 |
+
 ---
 
-## 2. 项目范围
+## 2. R2 新增 API 与功能
+
+- [可替换弹药源 API](docs/AMMO_SOURCE_API.md)：下游可在不混入 TaCZ 内部背包代码的情况下，
+  为特定实体/枪械提供只读查询和服务端消费弹药源；
+- 稳定的具名 gameplay / Lua dispatch hooks，避免扩展依赖编译器生成的 `lambda$...` 名称；
+- [Carry On 2.11 工作台兼容](docs/CARRYON_COMPAT.md)：从任一半格搬运、原子放下多格结构，
+  并在 Carry On 的 26.2 `ItemStackTemplate` 渲染路径恢复枪包 `BlockId`；
+- 内置 JEI/REI **Ammo Query**：从每一种已被加载枪械使用的弹药反查兼容枪械，排序、前 60 项
+  固定显示和 overflow 轮换在两个 viewer 中共享同一份数据；
+- 远程枪包同步完成后合并请求并刷新已安装的 recipe viewer，避免首轮注册早于网络 cache 时
+  显示陈旧类别/查询数据。
+
+完整发布范围、联网核验和未执行的实机矩阵见
+[26.2 R2 release notes](docs/CHANGELOG_26_2_R2.md)。R1 的移植基础和历史说明仍保留在仓库历史中。
+
+---
+
+## 3. 项目范围
 
 本仓库包含：
 
@@ -58,7 +83,7 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 
 ---
 
-## 3. 瞄具渲染：不是 PIP
+## 4. 瞄具渲染：不是 PIP
 
 **TaCZ 直接上游的瞄具不是 Picture-in-Picture，也不会为镜片再渲染一次世界。**
 
@@ -82,7 +107,7 @@ Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码�
 
 ---
 
-## 4. 安装
+## 5. 安装
 
 1. 安装 Minecraft 26.2、Fabric Loader 0.19.3+ 与 Java 25+；
 2. 安装 Fabric API 和 Forge Config API Port 26.2.1+；
@@ -95,7 +120,7 @@ Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码�
 
 ---
 
-## 5. 第三方枪包
+## 6. 第三方枪包
 
 ### 加载目录
 
@@ -146,7 +171,7 @@ gunpack.meta.json
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.2.R1` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.26.2.R2` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容
@@ -161,7 +186,7 @@ gunpack.meta.json
 
 ---
 
-## 6. 当前已知边界
+## 7. 当前已知边界
 
 - LRTactical 是部分兼容框架，`flash_shield` 未实现；第三方包兼容性需要逐包验证。
 - 26.2 的瞄具裁剪是 branch-specific 的掩码实现，不应描述成上游 PIP，也不保证每个 shader pack
@@ -174,7 +199,7 @@ gunpack.meta.json
 
 ---
 
-## 7. 许可与来源
+## 8. 许可与来源
 
 本仓库**不只有一套资产许可，也不应把整个仓库简单概括为“两套许可”**：
 
@@ -191,7 +216,7 @@ gunpack.meta.json
 
 ---
 
-## 8. 从源码构建
+## 9. 从源码构建
 
 需要 Java 25：
 
@@ -203,7 +228,7 @@ gunpack.meta.json
 
 ---
 
-## 9. 反馈
+## 10. 反馈
 
 请在[本仓库 Issues](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)提交：
 
