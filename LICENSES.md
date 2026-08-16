@@ -11,6 +11,8 @@ Unless otherwise stated, the source code in this repository follows the license 
 - TaCZ / Timeless & Classics Guns: Zero code: GPL-3.0, according to the upstream project license.
 - LRTactical / LesRaisins Tactical Equipements code portions: GPL-3.0, according to the upstream project license.
 - Porting changes made in this repository are provided under the same license as the corresponding code they modify.
+- Mayday Animation Engine (MAE) 1.1.1 is bundled as a runtime library under the MIT License
+  (`com.maydaymemory:mae`, https://github.com/286799714/MaydayAnimationEngine).
 
 The root `LICENSE` file is provided for GitHub license detection and applies to the code portions of this repository where applicable.
 

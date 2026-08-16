@@ -10,6 +10,7 @@ import com.tacz.guns.resource.network.DataType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -46,8 +47,14 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
 
     @Environment(EnvType.CLIENT)
     public void handle(LocalPlayer player, PacketSender responseSender) {
-        boolean remoteConnection = player.connection.getConnection() != null && !player.connection.getConnection().isMemoryConnection();
-        doSync(this, remoteConnection);
+        // Network delivery need not be on the client event loop. Cache installation, index rebuilding,
+        // and optional recipe-viewer registration all touch client-owned state, so keep their order
+        // together on Minecraft's executor.
+        Minecraft.getInstance().execute(() -> {
+            boolean remoteConnection = player.connection.getConnection() != null
+                    && !player.connection.getConnection().isMemoryConnection();
+            doSync(this, remoteConnection);
+        });
     }
 
 
@@ -60,6 +67,7 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
         if (remoteConnection) {
             CommonAssetsManager.clearInstance();
         }
+        // Ordering is intentional: viewers must observe the newly installed cache and rebuilt index.
         CommonNetworkCache.INSTANCE.fromNetwork(message.cache);
         // 通知客户端重新构建ClientIndex
         ClientIndexManager.reload();
