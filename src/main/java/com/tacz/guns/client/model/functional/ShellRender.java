@@ -161,7 +161,7 @@ public class ShellRender implements IFunctionalSubmitter {
         if (RenderConfig.DEBUG_DISABLE_SHELL != null && RenderConfig.DEBUG_DISABLE_SHELL.get()) {
             return;
         }
-        if (IrisCompat.isRenderShadow() || !isSelf || !shellContextMatchesCamera(context.displayContext())) {
+        if (IrisCompat.isRenderShadow() || !isSelf) {
             return;
         }
         // 光影手部兼容：把实体管线显式归到 HAND，避免在 Iris hand pass 中不渲染/位置错
@@ -198,7 +198,10 @@ public class ShellRender implements IFunctionalSubmitter {
         ItemDisplayContext displayContext = context.displayContext();
         int light = context.light();
         int overlay = context.overlay();
-        boolean debug = shellDebugEnabled(gunId);
+        // Debug logging only: keep the noise down to the pass the player is actually looking
+        // through. This must never gate rendering itself -- both hand passes can legitimately
+        // run for one frame, and shells belong to whichever pass submitted them.
+        boolean debug = shellDebugEnabled(gunId) && shellContextMatchesCamera(displayContext);
 
         for (Data data : SHELL_QUEUE) {
             if (data.normal == null || data.pose == null) {
@@ -236,6 +239,13 @@ public class ShellRender implements IFunctionalSubmitter {
         }
     }
 
+    /**
+     * Whether this submission's display context matches the active camera perspective.
+     *
+     * <p>Debug-log filter only. It was briefly applied to {@code extract}/{@code render} as well,
+     * which silently suppressed legitimate shell ejection (most visibly for other players, whose
+     * guns are submitted while the local camera is in first person).</p>
+     */
     private static boolean shellContextMatchesCamera(ItemDisplayContext displayContext) {
         boolean cameraFirstPerson = Minecraft.getInstance().options.getCameraType().isFirstPerson();
         return cameraFirstPerson == displayContext.firstPerson();
@@ -337,7 +347,7 @@ public class ShellRender implements IFunctionalSubmitter {
         if (IrisCompat.isRenderShadow()) {
             return;
         }
-        if (!isSelf || !shellContextMatchesCamera(transformType)) {
+        if (!isSelf) {
             return;
         }
         ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();
