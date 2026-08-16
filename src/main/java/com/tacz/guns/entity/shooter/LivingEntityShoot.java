@@ -162,6 +162,13 @@ public class LivingEntityShoot {
     }
 
     // 简单校验，服务端不追踪扳机按住状态，所以只拒绝超过“客户端一直按住蓄力”时理论可达到的最大进度。
+    /**
+     * Enforces the server trust boundary for client-reported charge progress.
+     *
+     * <p>This check must continue to reject non-finite values, progress below the firing threshold, and
+     * progress above the maximum reachable in the server-observed time window. Overrides must not weaken
+     * those constraints or expand the network-jitter tolerance merely to match client-side prediction.</p>
+     */
     protected boolean isChargeProgressReasonable(ChargeData chargeData, float chargeProgress) {
         final float tolerance = 0.001f;
         if (!Float.isFinite(chargeProgress)) {
@@ -183,6 +190,12 @@ public class LivingEntityShoot {
         return true;
     }
 
+    /**
+     * Computes the greatest charge value the client could reasonably have reached.
+     *
+     * <p>The finite jitter allowance is part of the server validation boundary and must not become an
+     * unbounded bypass. The result remains capped by the gun's configured maximum charge.</p>
+     */
     protected float getMaxReasonableChargeProgress(ChargeData chargeData) {
         // 预留少量 tick 余量，用于容忍网络抖动和客户端/服务端调度偏差。
         final float extraTicks = 4f;
@@ -192,6 +205,10 @@ public class LivingEntityShoot {
         return Math.min(maxProgress, chargeData.getMaxCharge());
     }
 
+    /**
+     * Reconstructs the authoritative starting charge after the previous shot.
+     * Delay-charge weapons intentionally reset to zero; other modes retain only configured residual charge.
+     */
     protected float getChargeProgressAfterLastFire(ChargeData chargeData) {
         if (data.shootTimestamp < 0) {
             return 0f;
@@ -203,6 +220,10 @@ public class LivingEntityShoot {
         return Math.max(0f, data.chargeProgress - chargeData.getDecreaseOnFire());
     }
 
+    /**
+     * Returns server-observed elapsed charge time from the last shot or draw timestamp.
+     * Client timestamps must not replace this server-side time source.
+     */
     protected long getChargeElapsedMillis() {
         if (data.shootTimestamp >= 0) {
             long startTimestamp = data.baseTimestamp + data.shootTimestamp;
@@ -214,6 +235,11 @@ public class LivingEntityShoot {
         return 0L;
     }
 
+    /**
+     * Sanitizes accepted charge data before it is stored and used by server-side shooting logic.
+     * Missing context, missing charge data, and non-finite values remain zero; valid values remain clamped
+     * to the configured range. This is a final normalization step, not a replacement for reasonableness checks.
+     */
     protected float validateChargeProgress(ChargeData chargeData, float chargeProgress, boolean hasChargeContext) {
         if (!hasChargeContext || !Float.isFinite(chargeProgress)) {
             return 0f;
