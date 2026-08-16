@@ -3,10 +3,10 @@ package com.tacz.guns.api.item.gun;
 import cn.sh1rocu.tacz.api.extension.IItem;
 import cn.sh1rocu.tacz.util.itemhandler.IItemHandler;
 import cn.sh1rocu.tacz.util.itemhandler.ItemHandlerHelper;
-import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.api.item.*;
+import com.tacz.guns.api.item.ammo.AmmoSourceRegistry;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
@@ -149,20 +149,8 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
         if (useDummyAmmo(gunItem)) {
             return getDummyAmmoAmount(gunItem) > 0;
         }
-        // 检查背包内的弹药数量
-        return shooter.tacz$getItemHandler(null).map(cap -> {
-            // 背包检查
-            for (int i = 0; i < cap.getSlots(); i++) {
-                ItemStack checkAmmoStack = cap.getStackInSlot(i);
-                if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(gunItem, checkAmmoStack)) {
-                    return true;
-                }
-                if (checkAmmoStack.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(gunItem, checkAmmoStack)) {
-                    return true;
-                }
-            }
-            return false;
-        }).orElse(false);
+        // 检查实体注册的弹药来源；未注册时回退到普通背包
+        return AmmoSourceRegistry.hasAmmo(shooter, gunItem);
     }
 
     /**
@@ -248,32 +236,7 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
      * @return 寻找到的弹药 (物品) 数量
      */
     public int findAndExtractInventoryAmmo(IItemHandler itemHandler, ItemStack gunItem, int needAmmoCount) {
-        int cnt = needAmmoCount;
-        // 背包检查
-        for (int i = 0; i < itemHandler.getSlots(); i++) {
-            ItemStack checkAmmoStack = itemHandler.getStackInSlot(i);
-            if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(gunItem, checkAmmoStack)) {
-                ItemStack extractItem = itemHandler.extractItem(i, cnt, false);
-                cnt = cnt - extractItem.getCount();
-                if (cnt <= 0) {
-                    break;
-                }
-            }
-            if (checkAmmoStack.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(gunItem, checkAmmoStack)) {
-                int boxAmmoCount = iAmmoBox.getAmmoCount(checkAmmoStack);
-                int extractCount = Math.min(boxAmmoCount, cnt);
-                int remainCount = boxAmmoCount - extractCount;
-                iAmmoBox.setAmmoCount(checkAmmoStack, remainCount);
-                if (remainCount <= 0) {
-                    iAmmoBox.setAmmoId(checkAmmoStack, DefaultAssets.EMPTY_AMMO_ID);
-                }
-                cnt = cnt - extractCount;
-                if (cnt <= 0) {
-                    break;
-                }
-            }
-        }
-        return needAmmoCount - cnt;
+        return AmmoSourceRegistry.consumeAmmo(itemHandler, gunItem, needAmmoCount);
     }
 
     /**
@@ -434,20 +397,8 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
         if (useDummyAmmo(gun)) {
             return getDummyAmmoAmount(gun) > 0;
         }
-        // 检查背包内的弹药数量
-        return shooter.tacz$getItemHandler(null).map(cap -> {
-            // 背包检查
-            for (int i = 0; i < cap.getSlots(); i++) {
-                ItemStack checkAmmoStack = cap.getStackInSlot(i);
-                if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(gun, checkAmmoStack)) {
-                    return true;
-                }
-                if (checkAmmoStack.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(gun, checkAmmoStack)) {
-                    return true;
-                }
-            }
-            return false;
-        }).orElse(false);
+        // 检查实体注册的弹药来源；未注册时回退到普通背包
+        return AmmoSourceRegistry.hasAmmo(shooter, gun);
     }
 
     /**

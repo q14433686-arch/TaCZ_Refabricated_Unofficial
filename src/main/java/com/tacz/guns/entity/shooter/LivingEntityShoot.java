@@ -6,6 +6,7 @@ import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ShootResult;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.ammo.AmmoSourceRegistry;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.config.sync.SyncConfig;
@@ -284,8 +285,7 @@ public class LivingEntityShoot {
         if (abstractGunItem.useDummyAmmo(itemStack)) {
             abstractGunItem.findAndExtractDummyAmmo(itemStack, neededAmount);
         } else {
-            shooter.tacz$getItemHandler(null)
-                    .map(cap -> abstractGunItem.findAndExtractInventoryAmmo(cap, itemStack, neededAmount));
+            AmmoSourceRegistry.consumeAmmo(shooter, itemStack, neededAmount);
         }
     }
 }
