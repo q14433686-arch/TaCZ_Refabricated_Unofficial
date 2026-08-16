@@ -229,8 +229,7 @@ public class ModernKineticGunScriptAPI {
      * Stable hook for dispatching shoot-heat handling to Lua or the built-in fallback.
      */
     protected void handleShootHeatWithScript() {
-        Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("handle_shoot_heat")))
+        resolveScriptFunction(gunIndex, "handle_shoot_heat")
                 .ifPresentOrElse(
                         func -> func.call(CoerceJavaToLua.coerce(this)),
                         this::handleShootHeat
@@ -707,7 +706,14 @@ public class ModernKineticGunScriptAPI {
      */
     public void safeAsyncTask(LuaValue value, long delayMs, long periodMs, int cycles) {
         LuaFunction func = value.checkfunction();
-        CycleTaskHelper.addCycleTask(() -> func.call().checkboolean(), delayMs, periodMs, cycles);
+        CycleTaskHelper.addCycleTask(() -> runLuaCycleTask(func), delayMs, periodMs, cycles);
+    }
+
+    /**
+     * Executes one Lua cycle callback and returns whether the scheduled cycle should continue.
+     */
+    protected boolean runLuaCycleTask(LuaFunction func) {
+        return func.call().checkboolean();
     }
 
     /**
@@ -912,6 +918,18 @@ public class ModernKineticGunScriptAPI {
         }
     }
 
+
+    /**
+     * Resolves a named Lua function without changing the caller-specific invocation or fallback.
+     *
+     * @param gunIndex gun index whose script is queried; callers already reject {@code null}
+     * @param methodName Lua method name
+     * @return the function, or an empty optional when the script or method is absent
+     */
+    protected Optional<LuaFunction> resolveScriptFunction(CommonGunIndex gunIndex, String methodName) {
+        return Optional.ofNullable(gunIndex.getScript())
+                .map(script -> checkFunction(script.get(methodName)));
+    }
 
     private LuaFunction checkFunction(LuaValue luaValue) {
         if (luaValue.isfunction()) {
