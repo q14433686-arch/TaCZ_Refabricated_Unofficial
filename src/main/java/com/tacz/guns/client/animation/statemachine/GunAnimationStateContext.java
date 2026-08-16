@@ -6,9 +6,8 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
-import com.tacz.guns.api.item.IAmmo;
-import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.ammo.AmmoSourceRegistry;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.api.util.LuaNbtAccessor;
@@ -181,26 +180,20 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
         if (iGun.useDummyAmmo(currentGunItem)) {
             return iGun.getDummyAmmoAmount(currentGunItem) > 0;
         }
-        return processCameraEntity(entity -> {
-                    if (entity instanceof LivingEntity livingEntity) {
-                        return livingEntity.tacz$getItemHandler(null)
-                                .map(cap -> {
-                                    // 背包检查
-                                    for (int i = 0; i < cap.getSlots(); i++) {
-                                        ItemStack checkAmmoStack = cap.getStackInSlot(i);
-                                        if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(currentGunItem, checkAmmoStack)) {
-                                            return true;
-                                        }
-                                        if (checkAmmoStack.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(currentGunItem, checkAmmoStack)) {
-                                            return true;
-                                        }
-                                    }
-                                    return false;
-                                }).orElse(false);
-                    }
-                    return false;
-                }
-        ).orElse(false);
+        return processCameraEntity(this::hasAmmoToConsumeInEntity).orElse(false);
+    }
+
+    /**
+     * Named client-side query used by {@link #hasAmmoToConsume()}.
+     *
+     * <p>Kept as a named protected method so downstream subclasses and mixins never need to bind
+     * to a compiler-generated {@code lambda$hasAmmoToConsume$...} method.</p>
+     */
+    protected boolean hasAmmoToConsumeInEntity(Entity entity) {
+        if (entity instanceof LivingEntity livingEntity) {
+            return AmmoSourceRegistry.hasAmmo(livingEntity, currentGunItem);
+        }
+        return false;
     }
 
     /**
