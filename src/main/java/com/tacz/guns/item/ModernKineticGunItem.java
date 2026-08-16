@@ -71,8 +71,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return false;
         }
-        return Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("start_bolt")))
+        return resolveScriptFunction(gunIndex, "start_bolt")
                 .map(func -> func.call(CoerceJavaToLua.coerce(api)).checkboolean())
                 .orElse(true);
     }
@@ -88,8 +87,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return false;
         }
-        return Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("tick_bolt")))
+        return resolveScriptFunction(gunIndex, "tick_bolt")
                 .map(func -> func.call(CoerceJavaToLua.coerce(api)).checkboolean())
                 .orElseGet(() -> defaultTickBolt(api));
     }
@@ -108,8 +106,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
             return;
         }
 
-        Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("shoot")))
+        resolveScriptFunction(gunIndex, "shoot")
                 .ifPresentOrElse(
                         func -> func.call(CoerceJavaToLua.coerce(api)),
                         () -> api.shootOnce(api.isShootingNeedConsumeAmmo()));
@@ -126,8 +123,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return false;
         }
-        return Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("start_reload")))
+        return resolveScriptFunction(gunIndex, "start_reload")
                 .map(func -> func.call(CoerceJavaToLua.coerce(api)).checkboolean())
                 .orElse(true);
     }
@@ -143,8 +139,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return new ReloadState();
         }
-        return Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("tick_reload")))
+        return resolveScriptFunction(gunIndex, "tick_reload")
                 .map(func -> {
                     ReloadState reloadState = new ReloadState();
                     Varargs varargs = func.invoke(CoerceJavaToLua.coerce(api));
@@ -168,8 +163,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return;
         }
-        Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("interrupt_reload")))
+        resolveScriptFunction(gunIndex, "interrupt_reload")
                 .ifPresent(func -> func.call(CoerceJavaToLua.coerce(api)));
     }
 
@@ -215,8 +209,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return;
         }
-        Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("tick_heat")))
+        resolveScriptFunction(gunIndex, "tick_heat")
                 .ifPresentOrElse(
                         func -> func.call(CoerceJavaToLua.coerce(api), LuaValue.valueOf(heatTimestamp)),
                         () -> defaultTickHeat(heatTimestamp, gunItem)
@@ -276,8 +269,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         var afterDefaultModification = defaultPropertyModification.modify(gunItem, shooter, gunIndex, id, original);
 
         try {
-            return Optional.ofNullable(gunIndex.getScript())
-                    .map(script -> checkFunction(script.get(luaMethodName)))
+            return resolveScriptFunction(gunIndex, luaMethodName)
                     .map(func -> func.call(CoerceJavaToLua.coerce(api), LuaValue.valueOf(id), CoerceJavaToLua.coerce(afterDefaultModification)))
                     .map(luaValue -> type.cast(CoerceLuaToJava.coerce(luaValue, type)))
                     .orElse(afterDefaultModification);
@@ -319,8 +311,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return;
         }
-        Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("calcSpread")))
+        resolveScriptFunction(gunIndex, "calcSpread")
                 .map(func -> func.call(CoerceJavaToLua.coerce(api), LuaValue.valueOf(bulletCnt), LuaValue.valueOf(inaccuracy)))
                 .map(luaValue -> {
                     if (luaValue.istable()) {
@@ -595,6 +586,22 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         } else {
             throw new LuaError("bad argument: function or nil expected, got " + luaValue.typename());
         }
+    }
+
+    /**
+     * 解析枪械脚本中指定名称的方法（脚本为空或方法缺失时返回 empty）。
+     *
+     * <p>这是脚本派发胶水的<b>具名 helper</b>：原先各入口方法里都重复
+     * {@code Optional.ofNullable(gunIndex.getScript()).map(script -> checkFunction(script.get(name)))}
+     * 两步（编译成 {@code lambda$startBolt$N} 这类会漂移的合成名），现统一收敛到此方法。
+     * 该方法只做「查函数」，调用与返回值处理仍留在各调用点，行为与原先完全一致。</p>
+     *
+     * @param gunIndex   枪械索引（调用点已保证非 null）
+     * @param methodName 脚本方法名，例如 {@code "start_bolt"}
+     * @return 找到的 LuaFunction；脚本为空或方法缺失时为 {@link Optional#empty()}
+     */
+    protected Optional<LuaFunction> resolveScriptFunction(CommonGunIndex gunIndex, String methodName) {
+        return Optional.ofNullable(gunIndex.getScript()).map(script -> checkFunction(script.get(methodName)));
     }
 
     @Override

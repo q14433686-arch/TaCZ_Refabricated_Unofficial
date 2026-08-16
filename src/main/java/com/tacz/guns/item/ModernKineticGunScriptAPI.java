@@ -182,8 +182,7 @@ public class ModernKineticGunScriptAPI {
             }
             //Handle Heat Data
             if (gunIndex.getGunData().hasHeatData()) {
-                Optional.ofNullable(gunIndex.getScript())
-                        .map(script -> checkFunction(script.get("handle_shoot_heat")))
+                resolveScriptFunction(gunIndex, "handle_shoot_heat")
                         .ifPresentOrElse(
                                 func -> func.call(CoerceJavaToLua.coerce(this)),
                                 this::handleShootHeat
@@ -678,7 +677,15 @@ public class ModernKineticGunScriptAPI {
      */
     public void safeAsyncTask(LuaValue value, long delayMs, long periodMs, int cycles) {
         LuaFunction func = value.checkfunction();
-        CycleTaskHelper.addCycleTask(() -> func.call().checkboolean(), delayMs, periodMs, cycles);
+        CycleTaskHelper.addCycleTask(() -> runLuaCycleTask(func), delayMs, periodMs, cycles);
+    }
+
+    /**
+     * Lua 循环任务里的单次执行：调用脚本函数并以返回的 boolean 决定是否继续循环
+     * （原先是 {@code CycleTaskHelper.addCycleTask} 里的匿名 lambda {@code lambda$safeAsyncTask$N}）。
+     */
+    protected boolean runLuaCycleTask(LuaFunction func) {
+        return func.call().checkboolean();
     }
 
     /**
@@ -892,5 +899,20 @@ public class ModernKineticGunScriptAPI {
         } else {
             throw new LuaError("bad argument: function or nil expected, got " + luaValue.typename());
         }
+    }
+
+    /**
+     * 解析枪械脚本中指定名称的方法（脚本为空或方法缺失时返回 empty）。
+     *
+     * <p>具名 helper，替换原先
+     * {@code Optional.ofNullable(gunIndex.getScript()).map(script -> checkFunction(script.get(name)))}
+     * 两步胶水（合成 lambda 名会漂移）。只做「查函数」，调用与返回值处理留在调用点。</p>
+     *
+     * @param gunIndex   枪械索引（调用点已保证非 null）
+     * @param methodName 脚本方法名，例如 {@code "handle_shoot_heat"}
+     * @return 找到的 LuaFunction；脚本为空或方法缺失时为 {@link Optional#empty()}
+     */
+    private Optional<LuaFunction> resolveScriptFunction(CommonGunIndex gunIndex, String methodName) {
+        return Optional.ofNullable(gunIndex.getScript()).map(script -> checkFunction(script.get(methodName)));
     }
 }
