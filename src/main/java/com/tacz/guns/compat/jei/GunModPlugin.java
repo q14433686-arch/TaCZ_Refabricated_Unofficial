@@ -4,12 +4,13 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.builder.BlockItemBuilder;
 import com.tacz.guns.api.item.gun.GunItemManager;
+import com.tacz.guns.compat.jei.category.AmmoQueryCategory;
 import com.tacz.guns.compat.jei.category.AttachmentQueryCategory;
 import com.tacz.guns.compat.jei.category.GunSmithTableCategory;
 import com.tacz.guns.compat.jei.entry.AttachmentQueryEntry;
+import com.tacz.guns.compat.recipeviewer.AmmoQueryEntry;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.init.ModItems;
-import com.tacz.guns.init.ModRecipe;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.recipe.types.IRecipeType;
@@ -21,8 +22,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.world.item.crafting.RecipeHolder;
 
 import java.util.HashMap;
 import java.util.List;
@@ -46,15 +45,15 @@ public class GunModPlugin implements IModPlugin {
             registration.addRecipeCategories(new GunSmithTableCategory(registration.getJeiHelpers().getGuiHelper(), icon, type, item.getName(icon)));
             recipeTypeMap.put(entry.getKey(), type);
         }
-        registration.addRecipeCategories(new AttachmentQueryCategory(registration.getJeiHelpers().getGuiHelper()));
+        registration.addRecipeCategories(
+                new AttachmentQueryCategory(registration.getJeiHelpers().getGuiHelper()),
+                new AmmoQueryCategory(registration.getJeiHelpers().getGuiHelper()));
     }
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
         if (Minecraft.getInstance().level == null) return;
-        // 第 12 轮：与 GunSmithTableScreen 一致，改用 CommonAssetsManager.get()。
-        // getInstance() 是纯服务端实例，在多人客户端恒为 null —— JEI 在单人能用
-        // 只是因为同 JVM 共享了服务端实例，连专用服务器时同样会空。
+        // 与 GunSmithTableScreen 一致，改用 CommonAssetsManager.get()。
         List<GunSmithTableRecipe> recipes = new java.util.ArrayList<>();
         for (var e : com.tacz.guns.resource.CommonAssetsManager.get().getAllTableRecipes()) {
             if (e.getValue() != null && e.getValue().getResult() != null) {
@@ -62,9 +61,6 @@ public class GunModPlugin implements IModPlugin {
                 try {
                     r.init();   // 解析 raw result，否则 getResult() 恒为 EMPTY
                 } catch (RuntimeException ex) {
-                    // 单条坏配方绝不能中断整个注册:否则后面一条 addRecipes 都执行不到,
-                    // JEI 里所有工作台配方一起消失。init() 已对 custom 结果降级,
-                    // 这里再兜一层,杜绝其它解析路径(如第三方包触发)复发。
                     GunMod.LOGGER.error("Failed to init gun smith table recipe {} for JEI, skipping it", e.getKey(), ex);
                     continue;
                 }
@@ -83,6 +79,7 @@ public class GunModPlugin implements IModPlugin {
         }
 
         registration.addRecipes(AttachmentQueryCategory.ATTACHMENT_QUERY, AttachmentQueryEntry.getAllAttachmentQueryEntries());
+        registration.addRecipes(AmmoQueryCategory.AMMO_QUERY, AmmoQueryEntry.getAllAmmoQueryEntries());
     }
 
     @Override
@@ -92,9 +89,7 @@ public class GunModPlugin implements IModPlugin {
                 ItemStack stack = BlockItemBuilder.create(blockIndex.getBlock()).setId(entry.getKey()).build();
                 registration.addCraftingStation(entry.getValue(), stack);
             });
-
         }
-
     }
 
     @Override
