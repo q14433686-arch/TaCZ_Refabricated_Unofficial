@@ -11,6 +11,7 @@ import com.tacz.guns.api.event.common.EntityHurtByGunEvent;
 import com.tacz.guns.api.event.common.EntityKillByGunEvent;
 import com.tacz.guns.api.event.common.GunFireEvent;
 import com.tacz.guns.client.animation.screen.RefitTransform;
+import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.event.*;
 import com.tacz.guns.client.init.ClientSetupEvent;
 import com.tacz.guns.client.init.ModContainerScreen;
@@ -137,6 +138,8 @@ public class TaCZFabricClient implements ClientModInitializer {
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, false));
         ClientTickEvents.END_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, true));
+        // Remote gun-pack sync may finish after JEI/REI's initial registration pass.
+        ClientTickEvents.END_CLIENT_TICK.register(RecipeViewerReloadBridge::tick);
         SwapItemWithOffHand.CALLBACK.register(InventoryEvent::onPlayerSwapMainHand);
         ClientPlayerNetworkEvent.LOGGING_OUT.register(InventoryEvent::onPlayerLoggedOut);
 

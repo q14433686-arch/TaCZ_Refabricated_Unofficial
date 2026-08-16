@@ -173,7 +173,7 @@ dependencies {
     // 以下为运行时/编译时 mod 依赖；无 26.2 构建的项保持注释
     // ============================================================
 
-    // JEI — 26.2 (Modrinth 30.13.0.80, compile against full fabric jar which includes API)
+    // JEI — 26.2 (pinned to Modrinth 30.13.0.86; compile against the full Fabric jar, which includes the API)
     compileOnly "maven.modrinth:jei:${jei_version}"
 
     // Cloth Config — 26.2
@@ -260,7 +260,7 @@ tasks.withType(JavaCompile).configureEach {
 //
 // 【已审批的临时排除】以下模块的目标 mod 在 26.2 Fabric 暂无构建（经 Modrinth 核实），
 // 其 API 类不存在、无法编译。用户已批准临时排除，待上游 26.2 移植后回补。
-// 受影响：Accelerated Rendering、Controllable、Carry On、KubeJS、Modern Keybinding(随 controllable)、Optifine。
+// 受影响：Accelerated Rendering、Controllable、KubeJS、Modern Keybinding(随 controllable)、Optifine。
 // 注意：iris/sulkan 兼容按用户要求"两者都要兼容"，不在此排除清单内。
 sourceSets {
     main {
@@ -278,9 +278,6 @@ sourceSets {
             exclude 'com/tacz/guns/compat/playeranimator/PlayerAnimatorAssetManager.java'
             // Optifine：非 Fabric，待评估永久废弃
             exclude 'com/tacz/guns/compat/optifine/**'
-            // Carry On：无 26.2 构建
-            exclude 'com/tacz/guns/compat/carryon/**'
-            exclude 'cn/sh1rocu/tacz/mixin/compat/carryon/**'
             // Accelerated Rendering mixin：随 AR 模块禁用
             exclude 'com/tacz/guns/mixin/client/ar/**'
         }

@@ -1,13 +1,16 @@
 package cn.sh1rocu.tacz.compat.rei;
 
+import cn.sh1rocu.tacz.compat.rei.category.AmmoQueryCategory;
 import cn.sh1rocu.tacz.compat.rei.category.AttachmentQueryCategory;
 import cn.sh1rocu.tacz.compat.rei.category.GunSmithTableCategory;
+import cn.sh1rocu.tacz.compat.rei.display.AmmoQueryDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.AttachmentQueryDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.GunSmithTableDisplay;
 import cn.sh1rocu.tacz.compat.rei.entry.AttachmentQueryEntry;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.builder.BlockItemBuilder;
+import com.tacz.guns.compat.recipeviewer.AmmoQueryEntry;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
@@ -25,7 +28,10 @@ import java.util.Map;
 import java.util.Objects;
 
 public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIClientPlugin {
-    public static final CategoryIdentifier<AttachmentQueryDisplay> ATTACHMENT_QUERY = CategoryIdentifier.of(GunMod.MOD_ID, "plugins/attachment_query");
+    public static final CategoryIdentifier<AttachmentQueryDisplay> ATTACHMENT_QUERY =
+            CategoryIdentifier.of(GunMod.MOD_ID, "plugins/attachment_query");
+    public static final CategoryIdentifier<AmmoQueryDisplay> AMMO_QUERY =
+            CategoryIdentifier.of(GunMod.MOD_ID, "plugins/ammo_query");
 
     public static final Map<Identifier, CategoryIdentifier<GunSmithTableDisplay>> displays = new HashMap<>();
 
@@ -42,6 +48,7 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
             registry.addWorkstations(id, EntryStacks.of(icon));
         }
         registry.add(new AttachmentQueryCategory());
+        registry.add(new AmmoQueryCategory());
     }
 
     @Override
@@ -86,5 +93,7 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
 
         AttachmentQueryEntry.getAllAttachmentQueryEntries().forEach(entry ->
                 registry.add(new AttachmentQueryDisplay(entry)));
+        AmmoQueryEntry.getAllAmmoQueryEntries().forEach(entry ->
+                registry.add(new AmmoQueryDisplay(entry)));
     }
 }
