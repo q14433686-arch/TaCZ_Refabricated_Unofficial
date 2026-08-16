@@ -37,11 +37,12 @@
 | # | 逻辑 | 出现位置 | 危害 |
 |---|------|----------|------|
 | 3.1 | **「能否开火 / 弹药可用性」五连判定**（`useInventoryAmmo` + `hasAmmoInBarrel` + `hasInventoryAmmo` + `ammoCount` + `noAmmo`） | ① `LivingEntityShoot.shoot()` L112–L121（服务端）② `LocalPlayerShoot.preCheck()` L210–L219（客户端）③ `LivingEntityBolt.bolt()` L57–L64（服务端拉栓）④ `LocalPlayerBolt.bolt()` L54–L61（客户端拉栓）⑤ `ModernKineticGunScriptAPI#reduceAmmoOnce()`（脚本射击） | **最高危**。多处几乎逐行复制；下游替换弹药来源必须全部改到且保持一致性，否则客户端/服务端/拉栓/脚本行为分叉 |
-| 3.2 | 弹药扫描循环（`IAmmo` / `IAmmoBox` instanceof 判断） | 上轮已提取到 `AbstractGunItem#hasAmmoInInventory` 并复用（`canReload` / `hasInventoryAmmo` / `ModernKineticGunScriptAPI#hasAmmoToConsume` / `GunAnimationStateContext#hasAmmoToConsumeInEntity`）。仍残留：`AbstractGunItem#findAndExtractInventoryAmmo`（扣除变体，本应不同）、`GunHudOverlay` L239–L242、`GunSmithTableScreen` L229/L244 | 扣除变体是「读 + 改」，与纯读变体职责不同，需保留；HUD/合成台是显示层，风险低 |
+| 3.2 | 弹药扫描循环（`IAmmo` / `IAmmoBox` instanceof 判断） | 上轮已提取到 `AbstractGunItem#hasAmmoInInventory` 并复用（`canReload` / `hasInventoryAmmo` / `ModernKineticGunScriptAPI#hasAmmoToConsume` / `GunAnimationStateContext#hasAmmoToConsumeInEntity`）。仍残留：`AbstractGunItem#findAndExtractInventoryAmmo`（扣除变体，本应不同）、`GunHudOverlay#handleInventoryAmmo`、`GunSmithTableScreen#isSuitableForMainHand` | 扣除变体是「读 + 改」，与纯读变体职责不同，需保留；✅ P2 评估结论：HUD 是**计数**语义（累加数量 + 创造弹药箱封顶，遍历原版 `Inventory`）、合成台是**方向性配方过滤**（`isAmmoOfGun(stack, result)` 与 `(result, stack)` 语义相反，还混有配件匹配）——两者都是**已具名私有方法**、都位于显示层，且语义与 `hasAmmoInInventory(IItemHandler, boolean)` 不兼容，强行合并会污染共享 API。**有意保留，不合并** |
 | 3.3 | 「-5ms 冷却窗口」魔法数 | 服务端 6 处：`LivingEntityShoot.getShootCoolDown` ×2、`LivingEntityDrawGun.getDrawCoolDown`、`LivingEntityMelee`、`ModernKineticGunScriptAPI.getShootInterval` ×2；客户端 `LocalPlayerShoot.getCoolDown`（无 -5，与服务器不一致） | 同一「冷却窗口」语义在多处各自硬编码，未来统一调整时容易漏改 | ✅ 服务端 6 处收敛为 `ShooterDataHolder.LATENCY_WINDOW_MS`；客户端「无窗口」是<b>既有语义差异</b>，只加注释说明、**没有**强行合并进同一 API，也没有给客户端硬加 -5ms |
 | 3.4 | `consumeAmmoFromPlayer` 两个签名 | `LivingEntityShoot#consumeAmmoFromPlayer(int, ItemStack, boolean)`（void）与 `ModernKineticGunScriptAPI#consumeAmmoFromPlayer(int)`（int） | 下游 issue 表格里**两处都列了**，必须双 mixin；内部都走 `findAndExtractInventoryAmmo` / `findAndExtractDummyAmmo`，但入口不统一 |
 | 3.5 | 换弹门槛序列（client/server 各一份且已漂移） | `LocalPlayerReload#reload`：`useInventoryAmmo → clientStateLock → 射击后100ms → canReload → 事件 → 发包`；`LivingEntityReload#reload`：`useInventoryAmmo → isReloading → 射击冷却 → 切枪冷却 → isBolting → canReload → 事件 → 发包` | 两套门槛不一致；下游只 mixin 一侧会得到分叉行为 | ✅ 各自提取为 `protected performReload(...)`（客户端另有 `performCancelReload`），门槛差异在 javadoc 里互相注明；**有意保持两条独立 API，不合并** |
 | 3.6 | 拉栓动作本体双份 | `LocalPlayerBolt#bolt` / `LivingEntityBolt#bolt`（弹药判定已统一，动作本体仍双份） | 下游 hook 拉栓需要双 mixin | ✅ 各自提取为 `protected performBolt(...)`，差异（服务端有冷却检查、客户端靠状态锁）文档化，保持独立 API |
+| 3.7 | 近战配件数据读取双份 | `LocalPlayerMelee#getMeleeData` 与 `LivingEntityMelee#getMeleeData`：同一行 `TimelessAPI.getXxxAttachmentIndex(attachmentId).map(index -> index.getData().getMeleeData())`（仅 `Client`/`Common` 索引不同） | 逻辑重复但语义不同源 | ✅ P2 评估结论：两边本就是**已具名私有方法**、各自读取**不同的索引注册表**（客户端显示索引 vs 通用数据索引），合并需要把两类索引耦合进同一 API，得不偿失。**有意保留，不合并** |
 
 ---
 
@@ -63,12 +64,13 @@
 6. **类别 3.5/3.6 换弹/拉栓门槛与动作本体**。✅ → client/server 各提取 `performReload` / `performCancelReload` / `performBolt`，保持两条独立 API 并在 javadoc 互注差异。
 7. **类别 1.9 状态锁身份令牌**。✅ → `LocalPlayerShoot#isShootLocked` + 引用比较约定文档化。
 
-### P2 — 低风险但顺手该改
+### P2 — 低风险但顺手该改（✅ 本轮已处理）
 
 - ~~类别 3.3「-5ms 冷却窗口」魔法数 → 提常量/方法。~~ ✅ 已随 P1⑤ 完成。
-- 类别 2.4 `LivingEntityAmmoCheck` → 文档化或迁 `api`（文档化已完成）。
-- 类别 1.10 Lua 派发胶水 → 提 `invokeScript` helper。
-- 类别 3.2 的 HUD/合成台扫描循环 → 复用 helper（注意 client 侧）。
+- 类别 2.4 `LivingEntityAmmoCheck` → ✅ 文档化完成（半暴露隐性 API + 两个方法的语义区别）。
+- 类别 1.10 Lua 派发胶水 → ✅ `ModernKineticGunItem#resolveScriptFunction(CommonGunIndex, String)`（protected，9 处派发点收敛）+ `ModernKineticGunScriptAPI` 同构 helper；`safeAsyncTask` 循环 lambda → `protected runLuaCycleTask(LuaFunction)`。
+- 类别 2.3/2.4/2.6 决策方法暴露度 → ✅ `defaultTickReload` / `defaultTickHeat` 提为 `protected` 并加 javadoc；蓄力防作弊校验组（`isChargeProgressReasonable` 等）加安全边界 javadoc，**保持 private**（放宽会削弱防作弊边界，下游应从事件层接入）。
+- 类别 3.2 的 HUD/合成台扫描循环、类别 3.7 近战双份读取 → ✅ 评估结论：**有意保留，不合并**（语义不兼容：计数 vs 布尔、方向性配方过滤、Client/Common 索引不同源；强行复用会污染共享 API）。理由已记录在类别 3 表格。
 
 ---
 
@@ -245,6 +247,13 @@ protected boolean hasBulletInBarrel(IGun iGun, GunDisplayInstance display) {
 ### P2（顺手）
 
 - `LivingEntityAmmoCheck` 增加 javadoc，明确其「半暴露的隐性 API」定位及 `needCheckAmmo` 与 `consumesAmmoOrNot` 的语义区别。
+
+### P2 第二轮：Lua 胶水 / 决策方法暴露度 / 有意保留项
+
+- **1.10 Lua 派发胶水**：新增 `ModernKineticGunItem#resolveScriptFunction(CommonGunIndex, String)`（protected），9 处 `Optional.ofNullable(getScript()).map(script -> checkFunction(script.get(name)))` 两步胶水全部收敛；`ModernKineticGunScriptAPI` 加同构 helper（`handle_shoot_heat` 处），`safeAsyncTask` 循环 lambda → `protected boolean runLuaCycleTask(LuaFunction)`。各调用点的 fallback（`orElse/orElseGet/ifPresentOrElse`）与异常语义保持不变。
+- **2.3/2.4**：`ModernKineticGunItem#defaultTickReload` / `#defaultTickHeat` 由 `private` 提为 `protected` + javadoc（无脚本覆盖时的默认路径具名覆写点）。
+- **2.6**：`LivingEntityShoot` 蓄力防作弊校验组增加安全边界 javadoc，**保持 private**（有意不暴露）。
+- **3.2/3.7 有意保留项**：HUD 计数扫描、合成台方向性配方过滤、近战 Client/Common 双份读取——均已具名且语义不同源，评估后**不合并**（理由见类别 3 表格）。
 - 「-5ms 冷却窗口」魔法数（类别 3.3）与 `checkFunction` 去重（类别 1.10）暂缓，属纯外观改动，风险收益比低，留待后续。
 
 > 所有改动均为「提取/收敛」性质，不改变任何判断顺序、返回值或副作用；未新增依赖，未改动类名/包名/mod id。每处均可独立验证（换弹/开火/拉栓/动画路径各自等价）。
