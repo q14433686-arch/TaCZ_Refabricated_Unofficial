@@ -216,6 +216,12 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
                 );
     }
 
+    /**
+     * Advances the built-in heat cooldown when the gun script does not define {@code tick_heat}.
+     *
+     * <p>Overrides must preserve the distinction between locked and normal cooling, including their
+     * timing checks and heat/lock side effects, unless they intentionally replace that gameplay contract.</p>
+     */
     protected void defaultTickHeat(long heatTimestamp, ItemStack gunItem) {
         var iGun = IGun.getIGunOrNull(gunItem);
         if (iGun == null) return;
@@ -347,6 +353,13 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         return api.getBoltTime() < boltActionTime;
     }
 
+    /**
+     * Advances the built-in reload state machine when the gun script does not define {@code tick_reload}.
+     *
+     * <p>The returned state/countdown and the feeding/finishing transitions are coupled to ammunition
+     * side effects. Overrides must keep those boundaries consistent unless they intentionally replace
+     * the complete default reload contract.</p>
+     */
     protected ReloadState defaultTickReload(ModernKineticGunScriptAPI api) {
         CommonGunIndex gunIndex = api.getGunIndex();
         // 获取 ReloadData
