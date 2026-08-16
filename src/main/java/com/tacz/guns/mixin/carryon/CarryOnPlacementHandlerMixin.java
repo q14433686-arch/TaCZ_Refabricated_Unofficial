@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -22,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.function.BiFunction;
 
 /** Adds the companion-half preflight that Carry On cannot infer from a single saved block state. */
+@Pseudo
 @Mixin(targets = "tschipp.carryon.common.carry.PlacementHandler", remap = false)
 public abstract class CarryOnPlacementHandlerMixin {
     @Inject(method = "tryPlaceBlock", at = @At("HEAD"), cancellable = true, require = 0)
