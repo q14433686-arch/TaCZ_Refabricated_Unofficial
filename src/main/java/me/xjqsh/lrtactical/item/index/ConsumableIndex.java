@@ -16,24 +16,29 @@ public class ConsumableIndex implements ICustomItemIndex {
     private final ConsumableData data;
     private final Identifier id;
     private final String name;
+    private final @Nullable String tooltip;
 
-    private ConsumableIndex(ConsumableData data, String name, Identifier id, Item baseItem) {
+    private ConsumableIndex(ConsumableData data, String name, @Nullable String tooltip,
+                            Identifier id, Item baseItem) {
         this.baseItem = baseItem;
         this.data = data;
         this.id = id;
         this.name = name;
+        this.tooltip = tooltip;
     }
 
     @Nullable
-    public static ConsumableIndex deserialize(JsonElement data, String name, Identifier id, Item baseItem) {
+    public static ConsumableIndex deserialize(JsonElement data, String name, @Nullable String tooltip,
+                                              Identifier id, Item baseItem) {
         ConsumableData consumableData = CommonAssetsManager.GSON.fromJson(data, ConsumableData.class);
         if (consumableData == null) {
             return null;
         }
-        return new ConsumableIndex(consumableData, name, id, baseItem);
+        return new ConsumableIndex(consumableData, name, tooltip, id, baseItem);
     }
 
     public ConsumableData getData() { return data; }
+    @Nullable public String getTooltip() { return tooltip; }
 
     @Override
     public ItemStack createItemStack() {

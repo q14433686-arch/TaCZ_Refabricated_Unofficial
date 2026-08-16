@@ -1,6 +1,13 @@
 package me.xjqsh.lrtactical.item.melee;
 
 import com.google.gson.annotations.SerializedName;
+import me.xjqsh.lrtactical.api.melee.MeleeAction;
+import me.xjqsh.lrtactical.util.TooltipLine;
+import me.xjqsh.lrtactical.util.TooltipUtil;
+import net.minecraft.network.chat.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 一把近战武器的完整配置，对应数据包 {@code index/melee/<name>.json} 的 {@code data} 段。
@@ -58,5 +65,24 @@ public class MeleeWeaponData {
 
     public MeleeToolData getTool() {
         return tool == null ? new MeleeToolData() : tool;
+    }
+
+    public List<TooltipLine> getTooltipLines() {
+        List<TooltipLine> lines = new ArrayList<>();
+        for (MeleeAction action : MeleeAction.values()) {
+            CombatData.MeleeAttackInfo info = attackInfo == null
+                    ? null : attackInfo.getAttackInfo(action);
+            if (info == null) {
+                continue;
+            }
+            String actionKey = action == MeleeAction.LEFT
+                    ? "tooltip.lrtactical.melee.attack_left"
+                    : "tooltip.lrtactical.melee.attack_right";
+            lines.add(TooltipLine.normal(Component.translatable(
+                    "tooltip.lrtactical.melee.action_line", Component.translatable(actionKey),
+                    TooltipUtil.formatFactor(info.getFactor()),
+                    TooltipUtil.formatTicks(info.getCooldown()))));
+        }
+        return lines;
     }
 }

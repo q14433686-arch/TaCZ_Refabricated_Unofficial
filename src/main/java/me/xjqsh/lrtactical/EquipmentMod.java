@@ -24,10 +24,10 @@ import org.slf4j.LoggerFactory;
  * 因此本移植<b>只移植代码（GPL-3.0 允许）</b>，
  * 不打包、不分发原作的贴图 / 模型 / 音效。
  *
- * <p>这在架构上是可行的：LRTactical 的内容<b>完全由数据驱动</b> ——
- * 代码只注册 5 个「空壳」物品（throwable / melee / consumable / flash_shield / detonator），
- * 具体有哪些手雷、哪把刀，全部来自数据包中的 {@code data/<ns>/index/*}。
- * 因此本移植的定位是<b>纯前置框架</b>，由第三方内容包（「刀包」）提供实际内容。
+ * <p>这在架构上是可行的：LRTactical 的内容<b>主要由数据驱动</b> ——
+ * 当前注册 throwable / melee / consumable / detonator 四个承载物品，并已接入各自逻辑；
+ * 具体有哪些手雷、刀与消耗品来自 {@code data/<ns>/index/*}。flash_shield 尚未移植。
+ * 因此本移植的定位是<b>纯前置框架</b>，由第三方内容包提供实际模型与内容。
  *
  * <h2>与本仓库主体（TACZ）的关系</h2>
  * 本包是<b>独立的附属模组代码</b>，与 {@code com.tacz.guns} 并列。

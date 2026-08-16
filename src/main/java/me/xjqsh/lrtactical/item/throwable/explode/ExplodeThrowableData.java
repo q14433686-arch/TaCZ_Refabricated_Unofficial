@@ -2,7 +2,14 @@ package me.xjqsh.lrtactical.item.throwable.explode;
 
 import com.google.gson.annotations.SerializedName;
 import me.xjqsh.lrtactical.item.throwable.ThrowableData;
+import me.xjqsh.lrtactical.util.TooltipLine;
+import me.xjqsh.lrtactical.util.TooltipUtil;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 爆炸类投掷物的配置，对应数据包里 {@code "type": "lrtactical:explode"} 的 {@code data} 段。
@@ -16,6 +23,30 @@ public class ExplodeThrowableData extends ThrowableData {
     @NotNull
     public ExplodeData getExplode() {
         return explode;
+    }
+
+    @Override
+    public List<TooltipLine> getTooltipLines() {
+        List<TooltipLine> lines = super.getTooltipLines();
+        lines.add(TooltipLine.normal(Component.translatable(
+                "tooltip.lrtactical.throwable.explode.line",
+                TooltipUtil.format((float) explode.getDamage()), TooltipUtil.format(explode.getRadius()))));
+        List<Component> traits = new ArrayList<>();
+        if (explode.isDestroyBlocks()) {
+            traits.add(Component.translatable("tooltip.lrtactical.throwable.explode.destroy_blocks"));
+        }
+        if (explode.isRemoteDetonation()) {
+            traits.add(Component.translatable("tooltip.lrtactical.throwable.explode.remote_detonation"));
+        }
+        if (!traits.isEmpty()) {
+            MutableComponent joined = traits.get(0).copy();
+            for (int i = 1; i < traits.size(); i++) {
+                joined.append(", ").append(traits.get(i));
+            }
+            lines.add(TooltipLine.normal(Component.translatable(
+                    "tooltip.lrtactical.throwable.explode.traits", joined)));
+        }
+        return lines;
     }
 
     public static class ExplodeData {

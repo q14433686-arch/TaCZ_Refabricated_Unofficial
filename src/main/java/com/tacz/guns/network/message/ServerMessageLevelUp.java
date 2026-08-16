@@ -55,6 +55,10 @@ public class ServerMessageLevelUp implements CustomPacketPayload {
         if (player == null) {
             return;
         }
+        // NOTE(sync-26.2-main): the release line keeps this body commented out under
+        // UPSTREAM-INCOMPLETE[gun-level], because there the payload has no sender and every
+        // level/exp query returns 0. On this line GunLevelImplementation supplies a real XP
+        // source, curve and cap, so the feedback path stays active here.
         Component subtitle = level >= GunLevelImplementation.MAX_LEVEL
                 ? Component.translatable("toast.tacz.sub.final_level")
                 : Component.translatable(GunLevelImplementation.isHandlingEnabled()

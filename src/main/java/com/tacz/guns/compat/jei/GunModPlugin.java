@@ -4,12 +4,14 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.builder.BlockItemBuilder;
 import com.tacz.guns.api.item.gun.GunItemManager;
+import com.tacz.guns.compat.jei.category.AmmoQueryCategory;
 import com.tacz.guns.compat.jei.category.AttachmentQueryCategory;
 import com.tacz.guns.compat.jei.category.CartridgeAssemblyCategory;
 import com.tacz.guns.compat.jei.category.GunSmithTableCategory;
 import com.tacz.guns.compat.jei.category.GunFeedReferenceCategory;
 import com.tacz.guns.compat.jei.category.IndustryProcessCategory;
 import com.tacz.guns.compat.jei.entry.AttachmentQueryEntry;
+import com.tacz.guns.compat.recipeviewer.AmmoQueryEntry;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.industry.magazine.GunFeedReferenceEntry;
 import com.tacz.guns.industry.recipe.IndustryProcessDefinition;
@@ -76,7 +78,9 @@ public class GunModPlugin implements IModPlugin {
             registration.addRecipeCategories(new GunSmithTableCategory(registration.getJeiHelpers().getGuiHelper(), icon, type, item.getName(icon)));
             recipeTypeMap.put(entry.getKey(), type);
         }
-        registration.addRecipeCategories(new AttachmentQueryCategory(registration.getJeiHelpers().getGuiHelper()));
+        registration.addRecipeCategories(
+                new AttachmentQueryCategory(registration.getJeiHelpers().getGuiHelper()),
+                new AmmoQueryCategory(registration.getJeiHelpers().getGuiHelper()));
         registration.addRecipeCategories(new GunFeedReferenceCategory(registration.getJeiHelpers().getGuiHelper()));
         registration.addRecipeCategories(new CartridgeAssemblyCategory(registration.getJeiHelpers().getGuiHelper()));
     }
@@ -112,7 +116,10 @@ public class GunModPlugin implements IModPlugin {
 
         registerInitialIndustryRecipes(registration);
         registerInitialGunFeedReferences(registration);
-        registration.addRecipes(AttachmentQueryCategory.ATTACHMENT_QUERY, AttachmentQueryEntry.getAllAttachmentQueryEntries());
+        registration.addRecipes(AttachmentQueryCategory.ATTACHMENT_QUERY,
+                AttachmentQueryEntry.getAllAttachmentQueryEntries());
+        registration.addRecipes(AmmoQueryCategory.AMMO_QUERY,
+                AmmoQueryEntry.getAllAmmoQueryEntries());
         registration.addRecipes(CartridgeAssemblyCategory.TYPE,
                 com.tacz.guns.resource.CommonAssetsManager.get().getAllCartridgeAssemblyRecipes().stream()
                         .map(java.util.Map.Entry::getValue)

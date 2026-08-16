@@ -72,8 +72,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return false;
         }
-        return Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("start_bolt")))
+        return resolveScriptFunction(gunIndex, "start_bolt")
                 .map(func -> func.call(CoerceJavaToLua.coerce(api)).checkboolean())
                 .orElse(true);
     }
@@ -89,8 +88,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return false;
         }
-        return Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("tick_bolt")))
+        return resolveScriptFunction(gunIndex, "tick_bolt")
                 .map(func -> func.call(CoerceJavaToLua.coerce(api)).checkboolean())
                 .orElseGet(() -> defaultTickBolt(api));
     }
@@ -109,8 +107,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
             return;
         }
 
-        Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("shoot")))
+        resolveScriptFunction(gunIndex, "shoot")
                 .ifPresentOrElse(
                         func -> func.call(CoerceJavaToLua.coerce(api)),
                         () -> api.shootOnce(api.isShootingNeedConsumeAmmo()));
@@ -127,8 +124,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return false;
         }
-        return Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("start_reload")))
+        return resolveScriptFunction(gunIndex, "start_reload")
                 .map(func -> func.call(CoerceJavaToLua.coerce(api)).checkboolean())
                 .orElse(true);
     }
@@ -144,8 +140,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return new ReloadState();
         }
-        return Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("tick_reload")))
+        return resolveScriptFunction(gunIndex, "tick_reload")
                 .map(func -> {
                     ReloadState reloadState = new ReloadState();
                     Varargs varargs = func.invoke(CoerceJavaToLua.coerce(api));
@@ -169,8 +164,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return;
         }
-        Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("interrupt_reload")))
+        resolveScriptFunction(gunIndex, "interrupt_reload")
                 .ifPresent(func -> func.call(CoerceJavaToLua.coerce(api)));
     }
 
@@ -216,15 +210,20 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return;
         }
-        Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("tick_heat")))
+        resolveScriptFunction(gunIndex, "tick_heat")
                 .ifPresentOrElse(
                         func -> func.call(CoerceJavaToLua.coerce(api), LuaValue.valueOf(heatTimestamp)),
                         () -> defaultTickHeat(heatTimestamp, gunItem)
                 );
     }
 
-    private void defaultTickHeat(long heatTimestamp, ItemStack gunItem) {
+    /**
+     * Advances the built-in heat cooldown when the gun script does not define {@code tick_heat}.
+     *
+     * <p>Overrides must preserve the distinction between locked and normal cooling, including their
+     * timing checks and heat/lock side effects, unless they intentionally replace that gameplay contract.</p>
+     */
+    protected void defaultTickHeat(long heatTimestamp, ItemStack gunItem) {
         var iGun = IGun.getIGunOrNull(gunItem);
         if (iGun == null) return;
         TimelessAPI.getCommonGunIndex(iGun.getGunId(gunItem))
@@ -277,8 +276,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         var afterDefaultModification = defaultPropertyModification.modify(gunItem, shooter, gunIndex, id, original);
 
         try {
-            return Optional.ofNullable(gunIndex.getScript())
-                    .map(script -> checkFunction(script.get(luaMethodName)))
+            return resolveScriptFunction(gunIndex, luaMethodName)
                     .map(func -> func.call(CoerceJavaToLua.coerce(api), LuaValue.valueOf(id), CoerceJavaToLua.coerce(afterDefaultModification)))
                     .map(luaValue -> type.cast(CoerceLuaToJava.coerce(luaValue, type)))
                     .orElse(afterDefaultModification);
@@ -320,8 +318,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         if (gunIndex == null) {
             return;
         }
-        Optional.ofNullable(gunIndex.getScript())
-                .map(script -> checkFunction(script.get("calcSpread")))
+        resolveScriptFunction(gunIndex, "calcSpread")
                 .map(func -> func.call(CoerceJavaToLua.coerce(api), LuaValue.valueOf(bulletCnt), LuaValue.valueOf(inaccuracy)))
                 .map(luaValue -> {
                     if (luaValue.istable()) {
@@ -336,7 +333,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
                 });
     }
 
-    private boolean defaultTickBolt(ModernKineticGunScriptAPI api) {
+    protected boolean defaultTickBolt(ModernKineticGunScriptAPI api) {
         GunData gunData = api.getGunIndex().getGunData();
         long boltActionTime = (long) (gunData.getBoltActionTime() * 1000);
         float rawBoltFeedTime = gunData.getBoltFeedTime();
@@ -357,7 +354,14 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         return api.getBoltTime() < boltActionTime;
     }
 
-    private ReloadState defaultTickReload(ModernKineticGunScriptAPI api) {
+    /**
+     * Advances the built-in reload state machine when the gun script does not define {@code tick_reload}.
+     *
+     * <p>The returned state/countdown and the feeding/finishing transitions are coupled to ammunition
+     * side effects. Overrides must keep those boundaries consistent unless they intentionally replace
+     * the complete default reload contract.</p>
+     */
+    protected ReloadState defaultTickReload(ModernKineticGunScriptAPI api) {
         CommonGunIndex gunIndex = api.getGunIndex();
         // 获取 ReloadData
         GunData gunData = gunIndex.getGunData();
@@ -411,7 +415,7 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         return reloadState;
     }
 
-    private void defaultReloadFinishing(ModernKineticGunScriptAPI api, boolean isTactical) {
+    protected void defaultReloadFinishing(ModernKineticGunScriptAPI api, boolean isTactical) {
         // The entity-level physical reload plan owns all mutations. Default
         // Java reloads and Lua xmag reloads now share the same central feed
         // transition, so no loose ammunition may be consumed here.
@@ -568,6 +572,18 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         return TimelessAPI.getCommonAttachmentIndex(attachmentId).map(index -> index.getData().getMeleeData()).orElse(null);
     }
 
+    /**
+     * Resolves a named Lua function without changing the caller-specific invocation or fallback.
+     *
+     * @param gunIndex gun index whose script is queried; callers already reject {@code null}
+     * @param methodName Lua method name
+     * @return the function, or an empty optional when the script or method is absent
+     */
+    protected Optional<LuaFunction> resolveScriptFunction(CommonGunIndex gunIndex, String methodName) {
+        return Optional.ofNullable(gunIndex.getScript())
+                .map(script -> checkFunction(script.get(methodName)));
+    }
+
     private LuaFunction checkFunction(LuaValue luaValue) {
         if (luaValue.isfunction()) {
             return (LuaFunction) luaValue;
@@ -592,6 +608,14 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
         });
     }
 
+    /**
+     * Upstream 1.21.1 / 1.1.8-hotfix leaves weapon progression as a dormant API scaffold, and the
+     * 26.2 release line still returns zero here for exactly that reason: it has no XP writer,
+     * curve, cap, stat modifier, or level-up packet sender.
+     *
+     * <p>This line does supply those parts through {@link GunLevelImplementation}, so the queries
+     * below are answered from the real curve instead.</p>
+     */
     @Override
     public int getLevel(int exp) {
         return GunLevelImplementation.levelForExperience(exp);

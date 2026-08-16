@@ -1,3 +1,5 @@
 {
-  "entrypoint": "com.tacz.guns.compat.shouldersurfing.ShoulderSurfingPlugin"
+  "entrypoints": [
+    "com.tacz.guns.compat.shouldersurfing.ShoulderSurfingPlugin"
+  ]
 }

@@ -1,6 +1,7 @@
 package com.tacz.guns.network.message;
 
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.compat.RecipeViewerSyncBridge;
 import com.tacz.guns.client.resource.ClientIndexManager;
 import com.tacz.guns.resource.CommonAssetsManager;
@@ -66,5 +67,11 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
         // REI reads it through a live generator; JEI receives a queued runtime
         // addition through this optional bridge after all client indexes exist.
         RecipeViewerSyncBridge.onCommonDataSynchronized();
+        // Synced from the 26.2 release line: the two bridges are complementary rather than
+        // alternatives. The call above is a targeted JEI update for the industry processes
+        // owned by this line; the call below coalesces one JEI/REI plugin reload on the client
+        // tick so guns, workbenches, attachments and ammo-query entries that only exist in a
+        // remote gun pack become visible after the viewers' first registration pass.
+        RecipeViewerReloadBridge.requestReload();
     }
 }

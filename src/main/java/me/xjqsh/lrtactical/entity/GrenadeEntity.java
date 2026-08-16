@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p><b>由此丢失的能力</b>（如实记录，不假装等价）：
  * 上游的 {@code screenShakeTime} / {@code screenShakeAmplitude}（爆炸屏幕震动）
- * 依赖自定义网络包 {@code SShakeScreenMessage}，网络层尚未移植，
+ * 依赖尚未移植的专用包 {@code SShakeScreenMessage}（索引/C2S 通用网络层已经存在），
  * 故这两个字段<b>保留但暂不生效</b>；{@code destroyMultiplier}（破坏力倍率）
  * 同理，原版 {@code explode} 不支持该参数。
  *
@@ -170,7 +170,7 @@ public class GrenadeEntity extends ThrowableItemEntity {
         this.destroyBlocks = destroyBlocks;
     }
 
-    /** 暂未生效，见类注释第 1 点（依赖未移植的网络层）。 */
+    /** 暂未生效，见类注释第 1 点（缺 SShakeScreenMessage/客户端震屏消费方）。 */
     public double getScreenShakeTime() {
         return screenShakeTime;
     }
@@ -179,7 +179,7 @@ public class GrenadeEntity extends ThrowableItemEntity {
         this.screenShakeTime = screenShakeTime;
     }
 
-    /** 暂未生效，见类注释第 1 点（依赖未移植的网络层）。 */
+    /** 暂未生效，见类注释第 1 点（缺 SShakeScreenMessage/客户端震屏消费方）。 */
     public double getScreenShakeAmplitude() {
         return screenShakeAmplitude;
     }

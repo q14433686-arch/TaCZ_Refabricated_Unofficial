@@ -1,5 +1,6 @@
 package com.tacz.guns.init;
 
+import com.tacz.guns.compat.iris.IrisCompat;
 import net.fabricmc.loader.api.FabricLoader;
 
 public class CompatRegistry {
@@ -8,9 +9,13 @@ public class CompatRegistry {
     public static final String CARRY_ON_ID = "carryon";
 
     public static void onEnqueue() {
-        // 26.2: Iris/CarryOn compat temporarily disabled (dependencies not yet available)
-        // checkModLoad(IRIS, IrisCompat::initCompat);
-        // checkModLoad(CARRY_ON_ID, BlackList::addBlackList);
+        // Iris 26.2 is available and the compatibility layer uses reflection only.
+        // This initialization selects the shadow-pass supplier; leaving it commented
+        // made isRenderShadow() permanently false despite the rest of Iris compat running.
+        checkModLoad(IRIS, IrisCompat::initCompat);
+
+        // Carry On still has no compile target in this port; its source package remains
+        // excluded until a compatible 26.2 API is available.
     }
 
     public static void checkModLoad(String modId, Runnable runnable) {

@@ -8,8 +8,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 /**
  * 近战武器物品 —— 一个物品承载所有刀，具体是哪一把由 NBT 决定。
@@ -90,6 +93,13 @@ public class MeleeItem extends Item implements IAnimationItem, IMeleeWeapon, cn.
         return this.getMeleeIndex(stack)
                 .<Component>map(index -> Component.translatable(index.getDescriptionId()))
                 .orElseGet(() -> super.getName(stack));
+    }
+
+    @Override
+    public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+        return this.getMeleeIndex(stack).isPresent()
+                ? Optional.of(new me.xjqsh.lrtactical.inventory.tooltip.MeleeTooltip(stack))
+                : Optional.empty();
     }
 
     /**

@@ -9,13 +9,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Collection;
 
-/** Captures the current RenderPipeline before Iris sets up the shader program. */
+/** Updates TACZ scope-mask uniform mode and texture unit on every render pass draw setup in GlCommandEncoder. */
 @Mixin(targets = "com.mojang.blaze3d.opengl.GlCommandEncoder")
 public abstract class IrisGlCommandEncoderMixin {
-    @Inject(method = "trySetup", at = @At("HEAD"), require = 0)
-    private void tacz$captureScopeRenderPass(@Coerce Object glRenderPass,
+    @Inject(method = "trySetup", at = @At("RETURN"), require = 0)
+    private void tacz$onScopeRenderPassSetup(@Coerce Object glRenderPass,
                                              Collection<String> missingResources,
                                              CallbackInfoReturnable<Boolean> cir) {
-        IrisScopeMaskState.captureRenderPass(glRenderPass);
+        if (cir.getReturnValue() != null && cir.getReturnValue()) {
+            IrisScopeMaskState.applyToGlRenderPass(glRenderPass);
+        }
     }
 }

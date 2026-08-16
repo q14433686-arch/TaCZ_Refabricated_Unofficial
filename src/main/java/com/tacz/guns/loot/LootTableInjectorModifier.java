@@ -27,8 +27,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * 枪械战利品注入：把枪包定义的 {@code loot_injection} 追加到原版战利品表的产出里。
  *
- * <h2>第 39 轮：解除封印，并更正上一版 TODO 的判断</h2>
- * 旧 TODO 写的是「26.2 的战利品表由 HolderGetter/LootContext 解析，
+ * <h2>第 39 轮：解除封印，并更正上一版 旧待办 的判断</h2>
+ * 旧 旧待办 写的是「26.2 的战利品表由 HolderGetter/LootContext 解析，
  * <b>无法</b>从 {@code ServerLevel.registryAccess()} 取得，会在方块掉落时崩溃」。
  * 本轮逐个方法核对 26.2 字节码，结论是<b>这句话只对了一半</b>：
  * <ul>
@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 也就是说「{@code context.getLevel().getServer().registryAccess()}」这条链
  * <b>是通的</b> —— 崩溃的原因不是 API 没了，而是当年直接写了
  * {@code ServerLevel#registryAccess()}。反查 ID 这个思路本身可以继续用，
- * 不必像 TODO 说的那样搬到资源加载路径去重做。
+ * 不必像 旧待办 说的那样搬到资源加载路径去重做。
  *
  * <h2>本轮实际修掉的两个问题</h2>
  * <ol>
@@ -153,7 +153,7 @@ public class LootTableInjectorModifier {
      * 而战利品表属于<b>随数据包重载</b>的 {@code RELOADABLE} 层，
      * 由独立的 {@code ReloadableServerRegistries.Holder} 持有
      * （{@code MinecraftServer#reloadableRegistries()}）。
-     * 所以那条 TODO 说的「无法从 registryAccess 取得」<b>完全正确</b>，是我推翻错了。</p>
+     * 所以那条 旧待办 说的「无法从 registryAccess 取得」<b>完全正确</b>，是我推翻错了。</p>
      *
      * <h2>为什么改成「正查」而不是继续反查</h2>
      * {@code reloadableRegistries().lookup()} 返回的是 {@link HolderLookup.Provider}，

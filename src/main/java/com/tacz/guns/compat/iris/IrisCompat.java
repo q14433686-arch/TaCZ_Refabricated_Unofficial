@@ -13,14 +13,23 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import java.util.function.Supplier;
 
 /**
- * 26.2 迁移: Iris (OpenGL) 不兼容 Vulkan 后端，已被 Sulkan 取代
- * 此类重构为:
- * - 若检测到 Iris (旧后端) -> 保留旧逻辑但使用反射避免硬依赖
- * - 若检测到 Sulkan (Vulkan) -> 使用 Sulkan API (待实现，暂时返回 false)
- * - 否则返回 false (无 shader)
+ * Iris / Sulkan 光影兼容入口（全部经反射，避免硬依赖）。
  *
- * 同时移除对 MultiBufferSource.BufferSource 的直接依赖，因为 26.2 已移除 MultiBufferSource
- * 新增对 SubmitNodeCollector 的兼容
+ * <p>【2026-08-11 更正】本头注原先写「Iris 不兼容 Vulkan 后端、已被 Sulkan 取代、
+ * 26.2 下通常不会加载」——<b>三条全错</b>：Iris 在 26.2 正常在役
+ * （本移植的主测试环境就是 iris 1.11.2+mc26.2，案例①~⑦的诊断全在它上面跑过）；
+ * Sulkan 是给 26.2 内建 Vulkan 后端做光影的<b>另一个独立 Mod</b>（mravatin 开发，
+ * 与 Iris 是并列关系而非取代关系）。</p>
+ *
+ * <p>实际逻辑：</p>
+ * <ul>
+ *   <li>检测到 Iris → 经反射查 {@code IrisApi}/{@code IrisPipelines}（isShaderPackInUse、
+ *       assignPipeline、HandRenderer.ACTIVE 等）；</li>
+ *   <li>检测到 Sulkan → 目前只做到「Mod 存在级」探测（其有无公开 API 未核实），
+ *       存在即走保守回退（如 {@link #shouldDisableScopeMaskUnderShaderPack} 返回 true，
+ *       关闭镜内掩码裁切换取镜身/雾效/自发光完整）；</li>
+ *   <li>都没有 → 返回 false（无光影）。</li>
+ * </ul>
  */
 public final class IrisCompat {
     private static final Version VERSION;
@@ -41,7 +50,8 @@ public final class IrisCompat {
     private static boolean commonEntityPipelinesAssignAttempted = false;
 
     public static void initCompat() {
-        // Iris 检测 (OpenGL only) - 26.2 下通常不会加载
+        // Iris 检测：在役主路径（用户实测环境 iris 1.11.2+mc26.2）。
+        // 按 Iris 版本分派新旧两套反射入口（阈值 1.7.0）。
         FabricLoader.getInstance().getModContainer(CompatRegistry.IRIS).ifPresent(mod -> {
             try {
                 if (mod.getMetadata().getVersion().compareTo(VERSION) >= 0) {
@@ -53,8 +63,8 @@ public final class IrisCompat {
                 IS_RENDER_SHADOW_SUPPER = () -> false;
             }
         });
-        // Sulkan 检测 (Vulkan) - TODO: 实现 Sulkan API 调用
-        // if (FabricLoader.getInstance().isModLoaded("sulkan")) { ... }
+        // Sulkan 侧没有需要预初始化的静态状态：对它的探测是各方法内即时的
+        // FabricLoader.isModLoaded("sulkan") 存在级检查（见下面各方法）。
     }
 
     public static boolean isRenderShadow() {
@@ -127,6 +137,12 @@ public final class IrisCompat {
             }
             return true;
         } catch (Throwable t) {
+            String msg = t.getMessage();
+            Throwable cause = t.getCause();
+            if ((msg != null && msg.contains("already assigned")) || (cause != null && cause.getMessage() != null && cause.getMessage().contains("already assigned"))) {
+                // Pipeline is already assigned to HAND by Iris, which is expected for vanilla pipelines.
+                return true;
+            }
             if (!loggedScopePipelineAssign) {
                 loggedScopePipelineAssign = true;
                 GunMod.LOGGER.warn("[TACZ Scope] Failed to assign custom scope pipelines to Iris; scope mask will fall back under shaders.", t);

@@ -15,6 +15,7 @@ import com.tacz.guns.client.tooltip.ClientBlockItemTooltip;
 import com.tacz.guns.client.tooltip.ClientGunTooltip;
 import com.tacz.guns.compat.ar.ARCompat;
 import com.tacz.guns.compat.controllable.ControllableCompat;
+import com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat;
 import com.tacz.guns.compat.immediatelyfast.ImmediatelyFastCompat;
 import com.tacz.guns.compat.playeranimator.PlayerAnimatorCompat;
 import com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat;
@@ -74,6 +75,15 @@ public class ClientSetupEvent {
             if (tooltip instanceof BlockItemTooltip blockItemTooltip) {
                 return new ClientBlockItemTooltip(blockItemTooltip);
             }
+            if (tooltip instanceof me.xjqsh.lrtactical.inventory.tooltip.ThrowableTooltip throwableTooltip) {
+                return new me.xjqsh.lrtactical.client.tooltip.ClientThrowableTooltip(throwableTooltip);
+            }
+            if (tooltip instanceof me.xjqsh.lrtactical.inventory.tooltip.MeleeTooltip meleeTooltip) {
+                return new me.xjqsh.lrtactical.client.tooltip.ClientMeleeTooltip(meleeTooltip);
+            }
+            if (tooltip instanceof me.xjqsh.lrtactical.inventory.tooltip.ConsumableTooltip consumableTooltip) {
+                return new me.xjqsh.lrtactical.client.tooltip.ClientConsumableTooltip(consumableTooltip);
+            }
             return null;
         });
     }
@@ -105,6 +115,9 @@ public class ClientSetupEvent {
 
 //        // 与 player animator 的兼容
 //       PlayerAnimatorCompat.init();
+
+        // 第一人称身体/手部动画 Mod：持有 TACZ 动画物品时交还 viewmodel 渲染权。
+        FirstPersonAnimationCompat.init();
 
         // 与 Shoulder Surfing Reloaded 的兼容
         ShoulderSurfingCompat.init();

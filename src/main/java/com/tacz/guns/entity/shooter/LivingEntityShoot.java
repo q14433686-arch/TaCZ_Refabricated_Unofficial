@@ -6,6 +6,7 @@ import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ShootResult;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.ammo.AmmoSourceRegistry;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.config.sync.SyncConfig;
@@ -39,14 +40,14 @@ public class LivingEntityShoot {
     }
 
     public ShootResult shoot(Supplier<Float> pitch, Supplier<Float> yaw, long timestamp) {
-        return shoot(pitch, yaw, timestamp, 0f, false);
+        return shootInternal(pitch, yaw, timestamp, 0f, false);
     }
 
     public ShootResult shoot(Supplier<Float> pitch, Supplier<Float> yaw, long timestamp, float chargeProgress) {
-        return shoot(pitch, yaw, timestamp, chargeProgress, true);
+        return shootInternal(pitch, yaw, timestamp, chargeProgress, true);
     }
 
-    private ShootResult shoot(Supplier<Float> pitch, Supplier<Float> yaw, long timestamp, float chargeProgress, boolean hasChargeContext) {
+    protected ShootResult shootInternal(Supplier<Float> pitch, Supplier<Float> yaw, long timestamp, float chargeProgress, boolean hasChargeContext) {
         if (data.currentGunItem == null) {
             return ShootResult.NOT_DRAW;
         }
@@ -172,7 +173,14 @@ public class LivingEntityShoot {
     }
 
     // 简单校验，服务端不追踪扳机按住状态，所以只拒绝超过“客户端一直按住蓄力”时理论可达到的最大进度。
-    private boolean isChargeProgressReasonable(ChargeData chargeData, float chargeProgress) {
+    /**
+     * Enforces the server trust boundary for client-reported charge progress.
+     *
+     * <p>This check must continue to reject non-finite values, progress below the firing threshold, and
+     * progress above the maximum reachable in the server-observed time window. Overrides must not weaken
+     * those constraints or expand the network-jitter tolerance merely to match client-side prediction.</p>
+     */
+    protected boolean isChargeProgressReasonable(ChargeData chargeData, float chargeProgress) {
         final float tolerance = 0.001f;
         if (!Float.isFinite(chargeProgress)) {
             return false;
@@ -193,7 +201,13 @@ public class LivingEntityShoot {
         return true;
     }
 
-    private float getMaxReasonableChargeProgress(ChargeData chargeData) {
+    /**
+     * Computes the greatest charge value the client could reasonably have reached.
+     *
+     * <p>The finite jitter allowance is part of the server validation boundary and must not become an
+     * unbounded bypass. The result remains capped by the gun's configured maximum charge.</p>
+     */
+    protected float getMaxReasonableChargeProgress(ChargeData chargeData) {
         // 预留少量 tick 余量，用于容忍网络抖动和客户端/服务端调度偏差。
         final float extraTicks = 4f;
         float startProgress = getChargeProgressAfterLastFire(chargeData);
@@ -202,7 +216,11 @@ public class LivingEntityShoot {
         return Math.min(maxProgress, chargeData.getMaxCharge());
     }
 
-    private float getChargeProgressAfterLastFire(ChargeData chargeData) {
+    /**
+     * Reconstructs the authoritative starting charge after the previous shot.
+     * Delay-charge weapons intentionally reset to zero; other modes retain only configured residual charge.
+     */
+    protected float getChargeProgressAfterLastFire(ChargeData chargeData) {
         if (data.shootTimestamp < 0) {
             return 0f;
         }
@@ -213,7 +231,11 @@ public class LivingEntityShoot {
         return Math.max(0f, data.chargeProgress - chargeData.getDecreaseOnFire());
     }
 
-    private long getChargeElapsedMillis() {
+    /**
+     * Returns server-observed elapsed charge time from the last shot or draw timestamp.
+     * Client timestamps must not replace this server-side time source.
+     */
+    protected long getChargeElapsedMillis() {
         if (data.shootTimestamp >= 0) {
             long startTimestamp = data.baseTimestamp + data.shootTimestamp;
             return System.currentTimeMillis() - startTimestamp;
@@ -224,7 +246,12 @@ public class LivingEntityShoot {
         return 0L;
     }
 
-    private float validateChargeProgress(ChargeData chargeData, float chargeProgress, boolean hasChargeContext) {
+    /**
+     * Sanitizes accepted charge data before it is stored and used by server-side shooting logic.
+     * Missing context, missing charge data, and non-finite values remain zero; valid values remain clamped
+     * to the configured range. This is a final normalization step, not a replacement for reasonableness checks.
+     */
+    protected float validateChargeProgress(ChargeData chargeData, float chargeProgress, boolean hasChargeContext) {
         if (!hasChargeContext || !Float.isFinite(chargeProgress)) {
             return 0f;
         }
@@ -278,7 +305,11 @@ public class LivingEntityShoot {
     }
 
     /**
-     * 消耗备弹 TODO: 需要检查，是否有其他更简单的方法消耗背包内的弹药 (这段是直接从逻辑机 API 里复制过来的)
+     * 消耗射手的备弹。
+     *
+     * <p>已核对调用链：闭膛背包直读上膛时由本类调用；虚拟备弹与物品栏弹药
+     * 分别复用 {@link AbstractGunItem} 的权威扣除函数。这里与脚本 API 有少量
+     * 重复只是重构机会，不是功能未实现。</p>
      */
     public void consumeAmmoFromPlayer(int neededAmount, ItemStack itemStack, boolean needCheckAmmo) {
         if (!(itemStack.getItem() instanceof AbstractGunItem abstractGunItem)) {
@@ -291,8 +322,7 @@ public class LivingEntityShoot {
         if (abstractGunItem.useDummyAmmo(itemStack)) {
             abstractGunItem.findAndExtractDummyAmmo(itemStack, neededAmount);
         } else {
-            shooter.tacz$getItemHandler(null)
-                    .map(cap -> abstractGunItem.findAndExtractInventoryAmmo(cap, itemStack, neededAmount));
+            AmmoSourceRegistry.consumeAmmo(shooter, itemStack, neededAmount);
         }
     }
 }

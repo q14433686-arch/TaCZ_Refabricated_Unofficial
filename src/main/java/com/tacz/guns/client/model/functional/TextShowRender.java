@@ -72,8 +72,12 @@ public class TextShowRender implements IFunctionalSubmitter {
         if (StringUtils.isBlank(text)) {
             return;
         }
-        // 26.2: Font.drawInBatch and MultiBufferSource removed.
-        // Text rendering on gun models needs re-implementation with new rendering API.
-        // TODO: Re-implement text rendering using SubmitNodeCollector.submitCustomGeometry or Font.prepareText
+        // 【2026-08-11 更正】此前这里的 旧待办 写「文字显示未实现，待重写」——是错的，
+        // 本审计按调用链核实：文字显示【已经实现】，在上方 extract() 里经
+        // collector.submitText(...) 提交（26.2 的 OrderedSubmitNodeCollector 有
+        // submitText(PoseStack,F,F,FormattedCharSequence,Z,Font$DisplayMode,I,I,I,I)V，
+        // 字节码已验证签名逐参一致）。本 render(...) 是旧即时渲染链的复写，
+        // 整条旧链（BedrockModel.renderInto/delegateRenderers）在 26.2 已无任何调用方，
+        // 本方法永远不会被执行，保持空实现即可。
     }
 }

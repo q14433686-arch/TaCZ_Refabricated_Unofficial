@@ -2,6 +2,7 @@ package com.tacz.guns.client.event;
 
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
 import cn.sh1rocu.tacz.api.event.ComputeFovModifierEvent;
+import com.tacz.guns.GunMod;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.event.BeforeRenderHandEvent;
@@ -38,10 +39,17 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 
+import java.util.Locale;
 import java.util.Optional;
 
 @Environment(EnvType.CLIENT)
 public class CameraSetupEvent {
+    /**
+     * 【RecoilDebug 探针】开火时对 pitch/yaw 两条后坐力样条做定点包络采样（毫秒）。
+     * 采样值 = 该发子弹的随机抽取 × 配件/瞄准修正，跨多发求均值即可分辨
+     * 「yaw 样条本身系统性偏置」与「渲染层朝向耦合」（前者此处即现身，后者这里必然干净）。
+     */
+    private static final double[] RECOIL_DEBUG_SAMPLE_MS = {0, 40, 80, 120, 160, 240, 320, 480};
     /**
      * 用于平滑 FOV 变化
      */
@@ -191,11 +199,16 @@ public class CameraSetupEvent {
             // local camera recoil. It does not alter projectile damage or any
             // server-maintenance/fault state.
             aimingRecoilModifier *= GunLevelImplementation.recoilMultiplier(mainHandItem);
-            pitchSplineFunction = gunData.getRecoil().genPitchSplineFunction((float) attachmentRecoilModifier.left().eval(aimingRecoilModifier));
-            yawSplineFunction = gunData.getRecoil().genYawSplineFunction((float) attachmentRecoilModifier.right().eval(aimingRecoilModifier));
+            float pitchMod = (float) attachmentRecoilModifier.left().eval(aimingRecoilModifier);
+            float yawMod = (float) attachmentRecoilModifier.right().eval(aimingRecoilModifier);
+            pitchSplineFunction = gunData.getRecoil().genPitchSplineFunction(pitchMod);
+            yawSplineFunction = gunData.getRecoil().genYawSplineFunction(yawMod);
             shootTimeStamp = System.currentTimeMillis();
             xRotO = 0;
             yRotO = 0;
+            if (RenderConfig.RECOIL_DEBUG.get()) {
+                debugLogRecoilFire(player, aimingRecoilModifier, pitchMod, yawMod, pitchSplineFunction, yawSplineFunction);
+            }
         }
     }
 
@@ -205,16 +218,72 @@ public class CameraSetupEvent {
             return;
         }
         long timeTotal = System.currentTimeMillis() - shootTimeStamp;
+        double dPitch = 0;
+        double dYaw = 0;
         if (pitchSplineFunction != null && pitchSplineFunction.isValidPoint(timeTotal)) {
             double value = pitchSplineFunction.value(timeTotal);
-            player.setXRot(player.getXRot() - (float) (value - xRotO));
+            dPitch = value - xRotO;
+            player.setXRot(player.getXRot() - (float) dPitch);
             xRotO = value;
         }
         if (yawSplineFunction != null && yawSplineFunction.isValidPoint(timeTotal)) {
             double value = yawSplineFunction.value(timeTotal);
-            player.setYRot(player.getYRot() - (float) (value - yRotO));
+            dYaw = value - yRotO;
+            player.setYRot(player.getYRot() - (float) dYaw);
             yRotO = value;
         }
+        // 【RecoilDebug 探针】后坐力对玩家视角的逐帧增量。
+        // 叠加对象是玩家自身 xRot/yRot（自身坐标系，与朝向无关），
+        // 故本通道理论上不可能产生随朝向的固定偏置——若下轮日志在
+        // 对角朝向上量出系统性 dYaw 偏移，说明还有第三处在写玩家旋转。
+        if (RenderConfig.RECOIL_DEBUG.get() && (dPitch != 0 || dYaw != 0)) {
+            GunMod.LOGGER.info(
+                    "[TACZ RecoilDebug] apply t={} dPitch={} dYaw={} player=({},{}) camEvent=({},{}) shader={} irisHand={}",
+                    timeTotal, fmt(dPitch), fmt(dYaw),
+                    fmt(player.getXRot()), fmt(Mth.wrapDegrees(player.getYRot())),
+                    fmt(event.getYaw()), fmt(event.getPitch()),
+                    com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack(),
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
+        }
+    }
+
+    /**
+     * 【RecoilDebug 探针】开火瞬间记录两条后坐力样条在固定时刻的包络值，
+     * 连同配件修正、瞄准进度修正与玩家朝向。多发射击后按朝向分桶对比
+     * yawEnv 均值，直接判定「yaw 后坐力本身是否带系统性偏置」。
+     */
+    private static void debugLogRecoilFire(LocalPlayer player, float aimingRecoilModifier, float pitchMod, float yawMod,
+                                           @javax.annotation.Nullable PolynomialSplineFunction pitchSpline,
+                                           @javax.annotation.Nullable PolynomialSplineFunction yawSpline) {
+        try {
+            GunMod.LOGGER.info(
+                    "[TACZ RecoilDebug] fire facing=({},{}) aimMod={} pmod={} ymod={} pitchEnv=[{}] yawEnv=[{}] shader={} irisHand={}",
+                    fmt(player.getXRot()), fmt(Mth.wrapDegrees(player.getYRot())),
+                    fmt(aimingRecoilModifier), fmt(pitchMod), fmt(yawMod),
+                    sampleSpline(pitchSpline), sampleSpline(yawSpline),
+                    com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack(),
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static String sampleSpline(@javax.annotation.Nullable PolynomialSplineFunction spline) {
+        if (spline == null) {
+            return "null";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < RECOIL_DEBUG_SAMPLE_MS.length; i++) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            double t = RECOIL_DEBUG_SAMPLE_MS[i];
+            sb.append(fmt(spline.isValidPoint(t) ? spline.value(t) : Double.NaN));
+        }
+        return sb.toString();
+    }
+
+    private static String fmt(double v) {
+        return String.format(Locale.ROOT, "%+.4f", v);
     }
 
     public static void onComputeMovementFov(ComputeFovModifierEvent event) {

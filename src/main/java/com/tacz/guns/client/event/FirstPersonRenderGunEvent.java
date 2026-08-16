@@ -33,6 +33,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -121,6 +122,10 @@ public class FirstPersonRenderGunEvent {
         applyGunMovements(model, aimingProgress, partialTicks);
         // 应用各种摄像机定位组的变换（默认持枪、瞄准、改装界面等）
         applyFirstPersonPositioningTransform(poseStack, model, gunItemStack, aimingProgress, refitScreenOpeningProgress);
+        // 【案例⑧ 探针 · 第三轮】分段点 P2：定位 lerp 之后、约束写入之前。
+        // ADS 辑拿显示 chainP1(基座段) 逐位干净而 gunRoot(链末端) 随朝向漂移 0.02~0.05，
+        // 本探针把「定位段 / 约束段」的注入归属当场劈开。
+        GunItemRendererWrapper.debugCase08ChainP2(poseStack);
         // 应用动画约束变换
         applyAnimationConstraintTransform(poseStack, model, aimingProgress * (1 - refitScreenOpeningProgress));
     }
@@ -382,8 +387,131 @@ public class FirstPersonRenderGunEvent {
         // 配合约束系数，计算约束位移需要的反向位移
         Vector3f inverseTranslation = new Vector3f(originTranslation);
         inverseTranslation.sub(animatedTranslation);
+        // 【案例⑧探针 · 采样点1】骨骼链差值（authored 帧），仅在探针开启时分配
+        Vector3f case08Delta = case08DebugOn() ? new Vector3f(inverseTranslation) : null;
         inverseTranslation.mulDirection(poseStack.last().pose());
+        // 【案例⑧探针 · 采样点2】经 mulDirection 进入写入帧的向量 v0
+        Vector3f case08V0 = case08Delta != null ? new Vector3f(inverseTranslation) : null;
+        // 【第 31 轮】mode 2（当前姿态帧共轭）用：与 mulDirection 同一时刻的姿态旋转 P_pre。
+        org.joml.Matrix3f case08PoseFrameR = new org.joml.Matrix3f(poseStack.last().pose());
+        // 【26.2 修复·终版：ADS 开枪/换弹时枪身随朝向整体偏移——
+        //  原始症状：斜向（东南/西南/东北/西北）固定向一侧横移（东南/西北偏左、东北/西南偏右），
+        //  正方向与腰射完全正常，开启 Iris 光影（手部 pass 无基座预乘）时一切正常】
+        //
+        // 坐标系结构（经两轮朝向指纹实测锁定）：
+        // 26.2 vanilla 手部 pass 在 poseStack 进入物品渲染前就预乘了基座 B=R(q)
+        // （view→world 相机基座，含朝向 q；Iris 手部 pass 不预乘，B≈I）。
+        // 而 1.21.1 里该栈从单位阵开始。关键实测事实：本函数写入的 m30..m32 槽位，
+        // 其上方链在提交（ViewSnapshot→几何）时还会再左乘一次 B —— 即
+        //   最终视图位移 = B · v_written
+        // 上游 1.21.1 正确观感（authored）是：最终视图位移 = diag(c) · F · Δ
+        // （F=ZP 翻转等骨骼链内变换，Δ=约束骨骼位移差，c=(ICA_x−1, ICA_y−1, 1−ICA_z)）。
+        //
+        // ——老 bug 的成因——：
+        // mulDirection(pose) 把 Δ 旋进「写入帧」：v0 = B·F·Δ；逐轴乘系数后 v = diag(c)·B·F·Δ；
+        // 提交时再被 B 带一次：最终 = B·diag(c)·B ·(FΔ)。注意是 B·diag·B 而非共轭
+        // （Y 轴旋转让 x/z 之一带负号）：非对角元 = (cx+cz)/2 · sin2θ —— 正方向归零，
+        // 斜向出现按象限对反号的纯横向泄漏，正是最初目击的全部特征。
+        //
+        // ——上一版修复为何反而更糟（26.2 复测确诊）——：
+        // 上一版做了 v = B·diag·Bᵀ·v0（共轭方向写反），净效果 = B²·diag·F·Δ = R(2θ)·authored：
+        // 正南/正北（2θ=0/360°）恰好恒等 → 正常；正东/正西（2θ=±180°）x/z 符号翻转
+        // → 后坐力"向后怼"、换弹跑到右后方；斜向（2θ=±90°）x/z 互换 → 纯平移。
+        // 与用户复测报告逐条吻合，此指纹是本坐标系模型的决定性证据。
+        //
+        // ——正确修复——：
+        // 需要在写入前把向量变到「逆基座」帧：v = Bᵀ·diag(c)·Bᵀ·v0 = Bᵀ·diag(c)·F·Δ，
+        // 提交时被 B 带回：B·v = diag(c)·F·Δ = authored，全朝向与 1.21.1 完全一致；
+        // Iris 下 B≈I，两步均恒等、行为不变。AK47 shoot 的 constraint 位移动画
+        // [0.15, 0.05, 0.4] 给出系数 ≈(−0.85, −0.95, +0.6)，强各向异性，
+        // 故无修复时斜向横移可达 0.1~0.2 视图单位（~2-4°），肉眼显著；换弹动画同样
+        // 驱动 constraint 骨骼，故同路径一并修复。
+        // 【第 31 轮（案例⑧ 定案）约束位移写入的三档形态 —— 用户在场 A/B 实测裁决：
+        //   mode 0 = plain：diag·v0 直写（修复前原版）。用户实测：当前「整体随朝向转」
+        //            病根完全消失；代价 = 四方向斜向后坐力侧漏回来了（8/10 的原案）。
+        //   mode 1 = Bᵀ·diag·Bᵀ 三明治（8/10 终版存档）。用户实测：正朝向整枪随朝向转、
+        //            竖直「跑后方」、后坐过压 —— 即本案全部症状 ⇒ 三明治是该病灶注入源。
+        //   mode 2 = 姿态帧共轭 v = P_post·diag·P_preᵀ·v0。【默认】。推导依据：
+        //            ① plain（mode 0）在全部朝向/竖直的观感都正确 ⇒ 槽位带回乘子 X 满足
+        //               X·(姿态链旋转) = I（至多差一个产生斜向 sin2φ 泄漏的小残差）；
+        //            ② upstream/authored 要求最终视图位移 = diag(c)·F_pre·Δ；
+        //            ③ 唯一两条同时成立且不读任何外部矩阵（B/modelView 都被实测证伪过）
+        //               的写法 = 用当前姿态自身做共轭，各向异性系数被 Fold 进姿态帧内部，
+        //               与朝向/基座结构性解耦；斜向泄漏同型消除。
+        // Iris 手部 pass 基座≈I 时三档逐位等价 ⇒ 恒按 mode 0 执行（保持参照零介入）。
+        // 【第 33 轮判决补记】mode 2 首次真实生效即被用户在体否决——回报
+        // 「①整体随朝向转（复现）/ ②斜向不漏 / ③手感不自然」：斜向侧漏消除，
+        // 证明各向异性归位 authored 帧的思路本身有效，但换帧写入同时把本案
+        // 主症状带了回来 ⇒ mode 2 与 mode 1 并列归档（两枚公式修复全部实证
+        // 注入旋转），默认回落 mode 0 = plain = 用户两次全场实测确认的全消态。
+        // 【第 32 轮修正 · 档位判定唯一信源化】
+        // 第 31 轮的兼容映射「老布尔 ConstraintBaseCompensate=false 强制落 mode 0」
+        // 在现场被证明是配置陷阱：用户在第 30 轮 A/B 时把那枚布尔留在 false，
+        // 随后显式把 ConstraintCompensateMode 设为 2，布尔却静默否决了它——
+        // 用户当轮回报「整体不转 / 斜向漏 / 跟手自然」三项正是 mode 0 plain 的
+        // 已知指纹（斜向漏 = 本案最原始病灶复现），即 mode 2 从未真正运行。
+        // 判定从此只认 ConstraintCompensateMode 一个信源；老布尔保留注册
+        // （旧配置文件不出错），但代码中不再读取。
+        int case08Mode;
+        if (com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE != null) {
+            case08Mode = com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE.get();
+        } else {
+            case08Mode = 3; // 配置未加载完毕时的安全态 = 默认档 3（第 36 轮起在体验证通过）
+        }
+        if (case08Mode < 0 || case08Mode > 3) {
+            case08Mode = 3; // 文件被手改越界时回落默认档，绝不落到未定义形态
+        }
+        int case08EffMode = com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive() ? 0 : case08Mode;
+        // 【第 32 轮】生效档一次性播报：上一轮的静默降级让「这一局跑的到底是哪档」
+        // 完全不可感知、只能猜；每进程首帧约束写入时落一行日志，供不共享日志时自查。
+        if (!case08ModeAnnounced) {
+            case08ModeAnnounced = true;
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ Case08] ConstraintCompensateMode effective={} (config={}, irisHandActive={})",
+                    case08EffMode, case08Mode,
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
+        }
+        // 【第 35 轮 · mode 3 = 26.1.2 在体验证公式的本链转写】
+        // 隔壁 26.1.2 移植线同症修复已在体通过（用户提供其结论；其实现尚未推送，
+        // 以下为按其公式的忠实转写）。核心认识：代码里乘的 D=(ICAx−1, ICAy−1, 1−ICAz)
+        // 与槽位写回 (−x, −y, +z) 合并后的 C=(1−ICAx, 1−ICAy, 1−ICAz) 才是真正的
+        // authored 系数——写回里藏着 Q=diag(−1,−1,+1)。本案三条被拒形态（mode 1/2、
+        // 锁）共轭的全是 D，Q 被留在写入帧；Q 与旋转不可交换 ⇒ 纯偏航出二倍角/象限
+        // 指纹、偏航×俯仰组合出竖直后方/过压 —— 与本案例全部实测指纹逐条吻合。
+        // 隔壁验证链：authored = Wᵀ·v0；constrained = C·authored；world = W·constrained
+        // （W = mulDirection 当帧姿态 3x3 = 本文的 P_pre），此后槽位不再做 Q 翻号。
+        // 转写到本链（槽位写回保持旧约定含 Q）：写入向量
+        //     v = Q·W·C·Wᵀ·v0 = Ŵ·D·Wᵀ·v0     （Ŵ = Q·W·Q；C=Q·D 故 D 行原样沿用）
+        // 即与 mode 2 的唯一差别 = 左半姿态帧由 W_post 换成 Ŵ_pre；纯偏航/纯俯仰下
+        // Ŵ = Wᵀ，形态上等价于「c975748 三明治把入口基座快照换成写入当帧活姿态」——
+        // 三版被拒形态（入口 Bᵀ、活 W、W_post）之外从未测过的第四种排列。
+        // 【状态：26.1.2 + 26.2 双线在体验证通过（第 36 轮用户答卷「不转 / 不漏 /
+        //  自然」三项全过）⇒ 第 36 轮起翻为本仓默认；mode 0 留档可秒回退；
+        //  Iris 手部 pass 恒走 mode 0（基座≈I 时与 plain 逐位一致），不受影响】
+        org.joml.Matrix3f case08QConjW = null;
+        if (case08EffMode == 3) {
+            org.joml.Matrix3f qFlip = new org.joml.Matrix3f();
+            qFlip.m00(-1f);
+            qFlip.m11(-1f); // Q = diag(−1, −1, +1)，m22 保持 +1
+            case08QConjW = new org.joml.Matrix3f(qFlip).mul(case08PoseFrameR).mul(qFlip); // Ŵ = Q·W·Q
+        }
+        org.joml.Matrix3f baseR = new Matrix3f();
+        GunItemRendererWrapper.copyHandBaseRotation(baseR);
+        if (case08EffMode == 1) {
+            inverseTranslation.mulTranspose(baseR);  // Bᵀ·v0：写入帧 → 逆基座（authored）帧
+        } else if (case08EffMode == 2) {
+            inverseTranslation.mulTranspose(case08PoseFrameR);  // P_preᵀ·v0 = F_pre·Δ（姿态自身逆帧）
+        } else if (case08EffMode == 3) {
+            inverseTranslation.mulTranspose(case08PoseFrameR);  // Wᵀ·v0 → authored 帧（隔壁 authored = Bᵀ·rawWorld）
+        }
         inverseTranslation.mul(translationICA.x() - 1, translationICA.y() - 1, 1 - translationICA.z()); // 基岩版模型的旋转导致 xy 轴要反过来
+        if (case08EffMode == 1) {
+            inverseTranslation.mulTranspose(baseR);  // 终版三明治右半（存档形态，勿作默认）
+        } else if (case08EffMode == 3) {
+            inverseTranslation.mul(case08QConjW);    // Ŵ·D·Wᵀ·v0 的左半 = Q 共轭姿态帧（C=Q·D 已含写回翻号）
+        }
+        // mode 2 的右半（P_post·…）必须等下面的约束旋转块执行完、拿到终态 3x3 后再补乘，
+        // 见下方写入前的 mul(new Matrix3f(poseMatrix))。
         // 计算约束旋转需要的反向旋转。因需要插值，获取的是欧拉角
         Vector3f inverseRotation = new Vector3f(rotation);
         inverseRotation.mul(rotationICA.x() - 1, rotationICA.y() - 1, rotationICA.z() - 1);
@@ -395,8 +523,87 @@ public class FirstPersonRenderGunEvent {
         poseStack.translate(-animatedTranslation.x(), -animatedTranslation.y() - 1.5f, -animatedTranslation.z());
         // 约束位移
         Matrix4f poseMatrix = poseStack.last().pose();
+        if (case08EffMode == 2) {
+            // P_post·diag·P_preᵀ·v0 的右半：约束旋转块执行完之后的终态姿态帧。
+            inverseTranslation.mul(new org.joml.Matrix3f(poseMatrix));
+        }
         poseMatrix.m30(poseMatrix.m30() - inverseTranslation.x() * weight);
         poseMatrix.m31(poseMatrix.m31() - inverseTranslation.y() * weight);
         poseMatrix.m32(poseMatrix.m32() + inverseTranslation.z() * weight);
+        // 【案例⑧探针 · 采样点3】最终写入向量 v3 与全部基座数据落日志
+        case08DebugConstraint(case08Delta, case08V0, inverseTranslation, baseR, poseMatrix, weight);
+    }
+
+    // ============================ 案例⑧ 取证探针（2026-08-11） ============================
+    //
+    // 症状（用户六朝向实测）：换弹时「手臂+枪体」作为整体的平移方向随玩家朝向旋转
+    // （北→偏左、南→~正常或偏下、西→偏右、东→偏左、仰视→左上+后方、俯视→后方）；
+    // 后坐力除正北外均「过分向下压」、正南最重；**开 Iris 光影时全部正常**。
+    //
+    // 静态审计已排除（数学或字节码级）：相机后坐力通道（setXRot/setYRot 增量，与朝向无关）、
+    // 普通骨骼动画（模型空间撰写，天然锁视角）、渲染全程的右乘局部复合（26.2 vanilla 手部链
+    // 经官方 jar 字节码核对：pose 预乘 invert(viewRotation)、modelView mul viewRotation，
+    // 提交时 C·base=I，静帧下任何纯右乘变换不可能产生朝向相关平移）。
+    // 唯一帧敏感操作 = 本函数的 m30..m32 绝对槽位写入（不能右乘复合，必须显式做基座归一化）。
+    // 但现状代码（两次 mulTranspose + diag）经数值拟合**注定在 N/S 双干净、E/W 同号**，
+    // 与用户指纹（N 偏、S 净、E/W 异号）不符 —— 说明还有第三处未被静态建模覆盖的写入/错位。
+    //
+    // 本探针把整条链的三个采样点 + 两张基座矩阵一起落日志，六朝向各打一发连点+一次换弹后，
+    // 离线直接算出真实残差旋转的轴与角，一次性锁定错误因子，杜绝再靠脑推改矩阵。
+    private static long case08LastLogMs = 0L;
+
+    // 【第 32 轮】生效档一次性播报的去重门闩（每 JVM 进程只打一行，见上方写入路径）
+    private static boolean case08ModeAnnounced = false;
+
+    private static boolean case08DebugOn() {
+        return com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG != null
+                && com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG.get();
+    }
+
+    private static String c8(double v) {
+        return String.format(java.util.Locale.ROOT, "%+.4f", v);
+    }
+
+    private static void case08DebugConstraint(Vector3f delta, Vector3f v0, Vector3f v3,
+                                              Matrix3f baseR, Matrix4f poseNow, float weight) {
+        try {
+            if (delta == null) {
+                return;
+            }
+            if (delta.lengthSquared() < 1.0e-6 && v3.lengthSquared() < 1.0e-6) {
+                return; // 静帧不打，避免刷屏
+            }
+            long now = System.currentTimeMillis();
+            if (now - case08LastLogMs < 150L) {
+                return;
+            }
+            case08LastLogMs = now;
+            LocalPlayer player = Minecraft.getInstance().player;
+            float fy = player == null ? Float.NaN : Mth.wrapDegrees(player.getYRot());
+            float fx = player == null ? Float.NaN : player.getXRot();
+            Matrix4f mv = com.mojang.blaze3d.systems.RenderSystem.getModelViewMatrixCopy();
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ Case08] ms={} facing=({},{}) w={} d=({},{},{}) v0=({},{},{}) v3=({},{},{}) "
+                            + "B=[{},{},{} {},{},{} {},{},{}] P=[{},{},{} {},{},{} {},{},{}] Pt=({},{},{}) "
+                            + "MV=[{},{},{} {},{},{} {},{},{}] irisHand={} pack={}",
+                    now,
+                    c8(fx), c8(fy), c8(weight),
+                    c8(delta.x()), c8(delta.y()), c8(delta.z()),
+                    c8(v0.x()), c8(v0.y()), c8(v0.z()),
+                    c8(v3.x()), c8(v3.y()), c8(v3.z()),
+                    c8(baseR.m00()), c8(baseR.m01()), c8(baseR.m02()),
+                    c8(baseR.m10()), c8(baseR.m11()), c8(baseR.m12()),
+                    c8(baseR.m20()), c8(baseR.m21()), c8(baseR.m22()),
+                    c8(poseNow.m00()), c8(poseNow.m01()), c8(poseNow.m02()),
+                    c8(poseNow.m10()), c8(poseNow.m11()), c8(poseNow.m12()),
+                    c8(poseNow.m20()), c8(poseNow.m21()), c8(poseNow.m22()),
+                    c8(poseNow.m30()), c8(poseNow.m31()), c8(poseNow.m32()),
+                    c8(mv.m00()), c8(mv.m01()), c8(mv.m02()),
+                    c8(mv.m10()), c8(mv.m11()), c8(mv.m12()),
+                    c8(mv.m20()), c8(mv.m21()), c8(mv.m22()),
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive(),
+                    com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack());
+        } catch (Throwable ignored) {
+        }
     }
 }

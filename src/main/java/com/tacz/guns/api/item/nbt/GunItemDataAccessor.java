@@ -40,6 +40,10 @@ public interface GunItemDataAccessor extends IGun {
     String COMPONENTS_TAG = "components";
     /** {@code DataComponents.CUSTOM_DATA.toString()} 的值，已实测确认。 */
     String CUSTOM_DATA_KEY = "minecraft:custom_data";
+    /**
+     * Reserved by upstream's unfinished weapon-level API. Current upstream and this
+     * port only read it; no production code writes XP or applies level bonuses.
+     */
     String GUN_EXP_TAG = "GunLevelExp";
     String GUN_DUMMY_AMMO = "DummyAmmo";
     String GUN_MAX_DUMMY_AMMO = "MaxDummyAmmo";

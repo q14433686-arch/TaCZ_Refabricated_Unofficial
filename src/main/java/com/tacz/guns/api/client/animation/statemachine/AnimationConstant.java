@@ -5,5 +5,9 @@ package com.tacz.guns.api.client.animation.statemachine;
  * 中的方法使用的参数全部为基本类型，以方便脚本对它们的调用。
  */
 public class AnimationConstant {
-    // todo
+    /*
+     * Intentionally empty upstream extension point. LuaAnimationConstant reflects public
+     * fields from this class; TACZ currently defines all concrete gun-state constants in
+     * GunAnimationConstant instead, so the resulting base library has no entries.
+     */
 }

@@ -11,6 +11,7 @@ import com.tacz.guns.api.event.common.EntityHurtByGunEvent;
 import com.tacz.guns.api.event.common.EntityKillByGunEvent;
 import com.tacz.guns.api.event.common.GunFireEvent;
 import com.tacz.guns.client.animation.screen.RefitTransform;
+import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.event.*;
 import com.tacz.guns.client.init.ClientSetupEvent;
 import com.tacz.guns.client.init.ModContainerScreen;
@@ -63,7 +64,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         // 必须注册：索引只在服务端加载，联机时客机靠这个包才能拿到，
         // 否则创造栏里找不到手雷、名字也只显示通用名「投掷物」。
         me.xjqsh.lrtactical.client.init.ModEntitiesRender.registerParticles();
-        // 致盲遮罩（闪光弹的实际效果所在）
+        // LRTactical HUD：使用/预燃/近战进度，最后叠加闪光弹致盲遮罩。
         me.xjqsh.lrtactical.client.init.ModEntitiesRender.registerHudOverlays();
         // 附属模块 LRTactical 的 display 资源加载器（assets/lrtactical/display/**）。
         // 注意它内部声明了「必须排在 TACZ 的模型/动画/脚本之后」，
@@ -137,6 +138,8 @@ public class TaCZFabricClient implements ClientModInitializer {
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, false));
         ClientTickEvents.END_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, true));
+        // Remote gun-pack sync may finish after JEI/REI's initial registration pass.
+        ClientTickEvents.END_CLIENT_TICK.register(RecipeViewerReloadBridge::tick);
         SwapItemWithOffHand.CALLBACK.register(InventoryEvent::onPlayerSwapMainHand);
         ClientPlayerNetworkEvent.LOGGING_OUT.register(InventoryEvent::onPlayerLoggedOut);
 

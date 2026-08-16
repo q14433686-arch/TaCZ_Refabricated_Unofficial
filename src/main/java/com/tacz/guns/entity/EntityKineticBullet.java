@@ -55,6 +55,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
@@ -403,10 +404,13 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
             Entity core
     ) {
         public static MaybeMultipartEntity of(Entity hitPart) {
-            // TODO
-            var core = /*(hitPart instanceof PartEntity<?> part)
-                    ? part.getParent()
-                    :*/ hitPart;
+            // Forge's generic PartEntity abstraction does not exist on Fabric, but the only
+            // vanilla multipart hit target has an explicit, public parentMob field in 26.2.
+            // Keep damage routed through the hit part (it delegates to the dragon), while
+            // kill events, knockback and invulnerability bookkeeping use the parent entity.
+            Entity core = hitPart instanceof EnderDragonPart dragonPart
+                    ? dragonPart.parentMob
+                    : hitPart;
             return new MaybeMultipartEntity(hitPart, core);
         }
     }
@@ -454,7 +458,10 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
                 serverLevel.sendParticles(ParticleTypes.LAVA, entity.getX(), entity.getY() + entity.getEyeHeight(), entity.getZ(), 1, 0, 0, 0, 0);
             }
         }
-        // TODO 暴击判定（不是爆头）暴击判定内部逻辑，需要输出一个是否暴击的 flag
+        // UPSTREAM-INCOMPLETE[gun-critical]: this is distinct from headshots. The current
+        // event/network payloads carry no critical flag and upstream defines no roll or
+        // multiplier, so there is no behavior that can be restored locally without first
+        // designing a public API and wire-format change.
         if (headshot) {
             // 默认爆头伤害是 1x
             damage *= headShotMultiplier;

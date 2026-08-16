@@ -126,7 +126,7 @@ public final class ModEntitiesRender {
     }
 
     /**
-     * HUD 覆盖层注册。
+     * HUD 覆盖层注册。先登记使用/预燃/近战进度，最后登记致盲。
      *
      * <p>用 {@code addLast} 让致盲遮罩画在<b>所有 HUD 元素之上</b> ——
      * 被闪到时物品栏、血条也应该一起被白屏盖住，
@@ -137,6 +137,12 @@ public final class ModEntitiesRender {
      * 与 1.21.1 的 {@code GuiGraphics} 不同）。
      */
     public static void registerHudOverlays() {
+        net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.addLast(
+                net.minecraft.resources.Identifier.fromNamespaceAndPath(
+                        me.xjqsh.lrtactical.EquipmentMod.MOD_ID, "using_progress"),
+                (graphics, deltaTracker) ->
+                        me.xjqsh.lrtactical.client.overlay.UsingProgressOverlay.render(
+                                graphics, deltaTracker.getRealtimeDeltaTicks()));
         net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.addLast(
                 net.minecraft.resources.Identifier.fromNamespaceAndPath(
                         me.xjqsh.lrtactical.EquipmentMod.MOD_ID, "blindness"),

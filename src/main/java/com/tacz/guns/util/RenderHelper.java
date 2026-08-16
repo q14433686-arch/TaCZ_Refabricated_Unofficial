@@ -1,8 +1,8 @@
 package com.tacz.guns.util;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.compat.ar.ARCompat;
+import com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -14,22 +14,7 @@ import net.minecraft.world.entity.player.PlayerModelPart;
 
 @Environment(EnvType.CLIENT)
 public final class RenderHelper {
-// TODO[26.2]: BufferUploader removed     // 26.2 迁移: blit/innerBlit 使用的 Tesselator/BufferUploader/RenderSystem.setShader 已全部移除
-    // 26.2 使用延迟渲染管线 (SubmitNodeCollector)，不再支持即时模式渲染
-    // 如需 2D blit 渲染，请通过 GuiGraphics 或 SubmitNodeCollector.submitCustomGeometry 实现
-
-    public static void enableItemEntityStencilTest() {
-        // 26.2 Vulkan 兼容: 原 GL11.GL_STENCIL_TEST 在 Vulkan 后端不可用
-        // 暂时改为 no-op，后续需通过 GpuFormat.D24_UNORM_S8_UINT + RenderPipeline depth/stencil state 重实现
-        // 如果需要支持 OpenGL 后端，可在此检测后端类型：
-        // boolean isVulkan = Minecraft.getInstance().getGpuDevice().getDeviceInfo().backendName().contains("vulkan");
-        RenderSystem.assertOnRenderThread();
-        // no-op for now
-    }
-
-    public static void disableItemEntityStencilTest() {
-        RenderSystem.assertOnRenderThread();
-        // no-op for Vulkan compatibility
+    private RenderHelper() {
     }
 
     /**
@@ -64,12 +49,20 @@ public final class RenderHelper {
         }
         AvatarRenderer<?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getPlayerRenderer(player);
         var skinTexture = player.getSkin().body().texturePath();
-        if (hand == HumanoidArm.RIGHT) {
-            renderer.renderRightHand(matrixStack, collector, combinedLight, skinTexture,
-                    player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
-        } else {
-            renderer.renderLeftHand(matrixStack, collector, combinedLight, skinTexture,
-                    player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
+        // NEA normally raises this guard from ItemInHandRenderer#renderPlayerArm. TACZ calls
+        // AvatarRenderer directly, so bridge the same guard to keep third-person smoothing and
+        // action poses from being layered over the authored gun-hand bones.
+        FirstPersonAnimationCompat.beginDirectArmRender();
+        try {
+            if (hand == HumanoidArm.RIGHT) {
+                renderer.renderRightHand(matrixStack, collector, combinedLight, skinTexture,
+                        player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
+            } else {
+                renderer.renderLeftHand(matrixStack, collector, combinedLight, skinTexture,
+                        player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
+            }
+        } finally {
+            FirstPersonAnimationCompat.endDirectArmRender();
         }
     }
 

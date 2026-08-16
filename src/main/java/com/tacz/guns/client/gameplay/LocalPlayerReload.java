@@ -38,18 +38,23 @@ public class LocalPlayerReload {
             return;
         }
 
-        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> {
-            // 如果没在换弹，则返回
-            IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
-            ReloadState reloadState = gunOperator.getSynReloadState();
-            if (!reloadState.getStateType().isReloading()) {
-                return;
-            }
-            // 发包通知服务器
-            ClientPlayNetworking.send(new ClientMessagePlayerCancelReload());
-            // 执行本地取消换弹逻辑
-            this.cancelReload(display);
-        });
+        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(this::cancelReloadWithDisplay);
+    }
+
+    /**
+     * Stable client-side reload-cancellation hook after display data has been resolved.
+     */
+    protected void cancelReloadWithDisplay(GunDisplayInstance display) {
+        // 如果没在换弹，则返回
+        IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
+        ReloadState reloadState = gunOperator.getSynReloadState();
+        if (!reloadState.getStateType().isReloading()) {
+            return;
+        }
+        // 发包通知服务器
+        ClientPlayNetworking.send(new ClientMessagePlayerCancelReload());
+        // 执行本地取消换弹逻辑
+        this.triggerClientReloadCancelAnimation(display);
     }
 
     public void reload() {
@@ -63,53 +68,62 @@ public class LocalPlayerReload {
         if (gunData == null) {
             return;
         }
-
-        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> {
-            // 检查是否为背包直读
-            if (gunItem.useInventoryAmmo(mainHandItem)) {
-                return;
-            }
-            // 检查状态锁
-            if (data.clientStateLock) {
-                return;
-            }
-            if (System.currentTimeMillis() - data.clientShootTimestamp < 100) {
-                return;
-            }
-            // Match the server-side sneak + reload eject path without playing a
-            // reload animation client-side. This includes an installed en-bloc
-            // clip as well as a detachable magazine; the server owns the
-            // inventory transaction and synchronises the changed gun stack.
-            if (player.isShiftKeyDown() && (PhysicalMagazineService.usesPhysicalMagazine(mainHandItem)
-                    || EnBlocClipService.usesEnBlocClip(mainHandItem))) {
-                ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
-                return;
-            }
-            // 弹药简单检查
-            boolean canReload = gunItem.canReload(player, mainHandItem);
-            if (IGunOperator.fromLivingEntity(player).needCheckAmmo() && !canReload) {
-                return;
-            }
-            // 锁上状态锁
-            data.lockState(operator -> operator.getSynReloadState().getStateType().isReloading());
-            data.chargeProgress = 0f;
-            // 触发换弹事件
-            GunReloadEvent gunReloadEvent = new GunReloadEvent(player, player.getMainHandItem(), LogicalSide.CLIENT);
-            GunReloadEvent.CALLBACK.invoker().post(gunReloadEvent);
-            if (gunReloadEvent.isCanceled()) {
-                return;
-            }
-            // Predict only the audited animation route. The server separately
-            // resolves and validates its physical source reservation.
-            IndustryReloadRouteClientState.preview(player, mainHandItem);
-            // 发包通知服务器
-            ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
-            // 执行客户端 reload 相关内容
-            this.doReload(gunItem, display, gunData, mainHandItem);
-        });
+        TimelessAPI.getGunDisplay(mainHandItem)
+                .ifPresent(display -> reloadWithDisplay(gunItem, display, gunData, mainHandItem));
     }
 
-    private void doReload(IGun iGun, GunDisplayInstance display, GunData gunData, ItemStack mainHandItem) {
+    /**
+     * Stable client-side reload hook after display data has been resolved.
+     */
+    protected void reloadWithDisplay(AbstractGunItem gunItem, GunDisplayInstance display, GunData gunData, ItemStack mainHandItem) {
+        // 检查是否为背包直读
+        if (gunItem.useInventoryAmmo(mainHandItem)) {
+            return;
+        }
+        // 检查状态锁
+        if (data.clientStateLock) {
+            return;
+        }
+        if (System.currentTimeMillis() - data.clientShootTimestamp < 100) {
+            return;
+        }
+        // Match the server-side sneak + reload eject path without playing a
+        // reload animation client-side. This includes an installed en-bloc
+        // clip as well as a detachable magazine; the server owns the
+        // inventory transaction and synchronises the changed gun stack.
+        if (player.isShiftKeyDown() && (PhysicalMagazineService.usesPhysicalMagazine(mainHandItem)
+                || EnBlocClipService.usesEnBlocClip(mainHandItem))) {
+            ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
+            return;
+        }
+        // 弹药简单检查
+        boolean canReload = gunItem.canReload(player, mainHandItem);
+        if (IGunOperator.fromLivingEntity(player).needCheckAmmo() && !canReload) {
+            return;
+        }
+        // 锁上状态锁
+        data.lockState(this::isReloadLockActive);
+        data.chargeProgress = 0f;
+        // 触发换弹事件
+        GunReloadEvent gunReloadEvent = new GunReloadEvent(player, player.getMainHandItem(), LogicalSide.CLIENT);
+        GunReloadEvent.CALLBACK.invoker().post(gunReloadEvent);
+        if (gunReloadEvent.isCanceled()) {
+            return;
+        }
+        // Predict only the audited animation route. The server separately
+        // resolves and validates its physical source reservation.
+        IndustryReloadRouteClientState.preview(player, mainHandItem);
+        // 发包通知服务器
+        ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
+        // 执行客户端 reload 相关内容
+        this.triggerClientReloadAnimation(gunItem, display, gunData, mainHandItem);
+    }
+
+    protected boolean isReloadLockActive(IGunOperator operator) {
+        return operator.getSynReloadState().getStateType().isReloading();
+    }
+
+    protected void triggerClientReloadAnimation(IGun iGun, GunDisplayInstance display, GunData gunData, ItemStack mainHandItem) {
         var animationStateMachine = display.getAnimationStateMachine();
         if (animationStateMachine != null) {
             Bolt boltType = gunData.getBolt();
@@ -123,10 +137,19 @@ public class LocalPlayerReload {
             SoundPlayManager.stopPlayGunSound();
             SoundPlayManager.playReloadSound(player, display, noAmmo);
             animationStateMachine.trigger(GunAnimationConstant.INPUT_RELOAD);
+            // 【案例⑧ 探针】换弹开始标记：gated by RecoilDebug，给逐帧探针序列提供相位零点
+            if (com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG != null
+                    && com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG.get()) {
+                com.tacz.guns.GunMod.LOGGER.info(
+                        "[TACZ Case08] RELOAD_START ms={} facing=({},{})",
+                        System.currentTimeMillis(),
+                        String.format(java.util.Locale.ROOT, "%.4f", player.getXRot()),
+                        String.format(java.util.Locale.ROOT, "%.4f", net.minecraft.util.Mth.wrapDegrees(player.getYRot())));
+            }
         }
     }
 
-    private void cancelReload(GunDisplayInstance display) {
+    protected void triggerClientReloadCancelAnimation(GunDisplayInstance display) {
         var animationStateMachine = display.getAnimationStateMachine();
         if (animationStateMachine != null) {
             animationStateMachine.trigger(GunAnimationConstant.INPUT_CANCEL_RELOAD);

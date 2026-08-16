@@ -25,11 +25,10 @@ import java.util.Optional;
 /**
  * 近战武器 —— 用「同一个物品 id + NBT」承载多把不同的刀。
  *
- * <h2>本步（第 2 步）只提供「身份」相关能力</h2>
- * 攻击逻辑（{@code collectTargets} / {@code attack} / {@code performAttack}）
- * 属于第 3 步，<b>此处刻意不声明</b> ——
- * 先放一堆抽象方法会逼着 {@code MeleeItem} 写空实现，
- * 而空实现会让调用方误以为功能已就绪（PORTING_NOTES 9.1 的教训）。
+ * <h2>当前能力（2026-08-12 复核）</h2>
+ * 身份、动作配置、服务端索敌、伤害/暴击/附魔后效与耐久结算均已在本接口实现；
+ * 旧注释仍声称“只提供身份、攻击逻辑留到第 3 步”，与下方
+ * {@link #performAttack} 的在役实现矛盾，现已更正。
  *
  * <h2>26.2 移植要点</h2>
  * NBT 读取 API 全面变化（与 {@code IThrowable} 同源，字节码确认）：

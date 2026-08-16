@@ -100,12 +100,15 @@ public class BedrockCubePerFace implements BedrockCube {
                 // 26.2 迁移: 使用新 VertexConsumer API
                 Vector4f vector4f = new Vector4f(x, y, z, 1.0F);
                 vector4f.mul(matrix4f);
+                // 法线已在上面经 matrix3f 变换过一次，必须写裸值：
+                // setNormal(Pose,…) 会再乘一次 pose.transformNormal（26.2 字节码确认），
+                // 曾导致枪械光照方向错误（见 BedrockCubeBox#compile 注释）。
                 consumer.addVertex(vector4f.x(), vector4f.y(), vector4f.z())
                         .setColor(red, green, blue, alpha)
                         .setUv(vertex.u, vertex.v)
                         .setOverlay(overlay)
                         .setLight(light)
-                        .setNormal(pose, nx, ny, nz);
+                        .setNormal(nx, ny, nz);
             }
         }
     }

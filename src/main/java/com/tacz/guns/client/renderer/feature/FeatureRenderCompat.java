@@ -30,6 +30,13 @@ public final class FeatureRenderCompat {
     private FeatureRenderCompat() {
     }
 
+    // 【2026-08-11 核实 · 死脚手警示】本类的 submit(...) 全仓<b>零调用方</b>：
+    // BedrockModel.submit 走的是 collector.submitCustomGeometry 直接提交，
+    // 从未经过本兼容层。因此 GunModelSubmit 只在本类里被实例化、
+    // GunModelFeatureRenderer 虽在客户端 init 注册了其 TYPE，但没有任何节点
+    // 会被实际喂给它 ——  renderer/feature/ 整包目前是「注册了但永不触发」的死脚手。
+    // 保留无害；若启用 Feature Rendering 自定义节点，先接本类的调用链。
+
     /**
      * 提交 GunModelSubmit 到 collector
      *

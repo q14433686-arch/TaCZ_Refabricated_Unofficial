@@ -20,11 +20,10 @@ import net.minecraft.world.item.Item;
  * 带上注册键，否则注册期直接报错。故此处提供 {@link #itemProps(String)} helper，
  * 与 TACZ 侧同名方法作用相同。
  *
- * <h2>本步只注册 THROWABLE 一个物品</h2>
- * 上游还有 {@code melee / consumable / flash_shield / detonator} 四个，
- * 分别依赖近战子系统、消耗品子系统与遥控起爆，均未移植。
- * 按「一次只引入一个变量」的原则，此处<b>不预先注册空壳物品</b> ——
- * 注册了却没有对应逻辑，只会在创造栏里多出无法使用的道具。
+ * <h2>当前注册状态（2026-08-12 复核）</h2>
+ * {@code throwable / melee / consumable / detonator} 均已注册并有对应逻辑；
+ * 旧注释仍停留在“只注册 THROWABLE”的早期步骤，已经过时。上游五个基础物品中
+ * 只剩 {@code flash_shield} 尚未移植，因此没有预注册一个不可用空壳。
  */
 public final class ModItems {
     public static final ThrowableItem THROWABLE =

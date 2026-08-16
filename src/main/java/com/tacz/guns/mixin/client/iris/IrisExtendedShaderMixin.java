@@ -9,11 +9,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.HashMap;
 
-/** Binds TACZ's per-draw scope mask sampler for patched Iris hand shaders. */
+/** Initializes TACZ scope-mask uniforms to 0 when Iris sets up an ExtendedShader program. */
 @Mixin(targets = "net.irisshaders.iris.pipeline.programs.ExtendedShader", remap = false)
 public abstract class IrisExtendedShaderMixin {
     @Inject(method = "iris$setupState", at = @At("RETURN"), require = 0)
     private void tacz$setupScopeMaskUniforms(HashMap<?, ?> samplers, GpuTextureView albedoTex, CallbackInfo ci) {
-        IrisScopeMaskState.applyToShaderProgram((Object) this, samplers);
+        IrisScopeMaskState.resetShaderProgram((Object) this);
     }
 }

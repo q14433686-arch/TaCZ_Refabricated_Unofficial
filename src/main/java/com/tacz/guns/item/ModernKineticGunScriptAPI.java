@@ -7,8 +7,7 @@ import com.tacz.guns.api.GunProperty;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.event.common.GunFireEvent;
-import com.tacz.guns.api.item.IAmmo;
-import com.tacz.guns.api.item.IAmmoBox;
+import com.tacz.guns.api.item.ammo.AmmoSourceRegistry;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.FireMode;
@@ -162,99 +161,150 @@ public class ModernKineticGunScriptAPI {
         // 连发间隔
         long period = modifyProperty(GunProperties.RuntimeOnly.BURST_SHOOT_INTERVAL, Long.class, fireMode == FireMode.BURST ? gunData.getBurstShootInterval() : 1);
 
-        CycleTaskHelper.addCycleTask(() -> {
-            // 如果射击者死亡，取消射击
-            if (shooter.isDeadOrDying()) {
+        CycleTaskHelper.addCycleTask(
+                () -> runShootCycle(consumeAmmo, gunData, bulletData, gunOperator, shotDamageMultiplier,
+                        inaccuracy, soundDistance, useSilenceSound, processedSpeed, bulletAmount),
+                period, cycles);
+    }
+
+    /**
+     * Stable hook for one execution of the server-side shoot cycle.
+     */
+    protected boolean runShootCycle(boolean consumeAmmo, GunData gunData, BulletData bulletData,
+                                    IGunOperator gunOperator, float shotDamageMultiplier, float inaccuracy,
+                                    int soundDistance, boolean useSilenceSound, float processedSpeed, int bulletAmount) {
+        if (!canContinueShootCycle()) {
+            return false;
+        }
+        // A delayed burst/Lua cycle must honour the same server fault as
+        // the normal shoot entry point before it can emit an event, play a
+        // fire sound, or consume an additional round.
+        if (consumeAmmo && IndustryMaintenanceService.isJammed(itemStack)) {
+            return false;
+        }
+        // 触发击发事件
+        GunFireEvent gunFireEvent = new GunFireEvent(shooter, itemStack, LogicalSide.SERVER);
+        GunFireEvent.CALLBACK.invoker().post(gunFireEvent);
+        boolean fire = !gunFireEvent.isCanceled();
+        if (fire) {
+            // Capture the real top/chambered profile before the existing
+            // count mutation removes it. The server, not a client NBT hint,
+            // owns this identity for projectile, case and damage behavior.
+            Identifier firedAmmoId = RoundProfileService.peekFiredAmmo(itemStack, gunData);
+            AmmoProfileDefinition ammoProfile = AmmoProfileService.resolve(firedAmmoId);
+            int profileBulletAmount = ammoProfile.getProjectileCountOverride() > 0
+                    ? ammoProfile.getProjectileCountOverride() : bulletAmount;
+            float profileSpeed = Mth.clamp(processedSpeed * ammoProfile.getSpeedMultiplier(), 0.0F, Float.MAX_VALUE);
+            NetworkHandler.sendToTrackingEntity(new ServerMessageGunFire(shooter.getId(), itemStack), shooter);
+            // 削减弹药
+            if (consumeAmmo && !this.reduceAmmoOnce()) {
                 return false;
             }
-            // 如果武器变了，取消射击
-            if (!shooter.getMainHandItem().equals(itemStack) || shooter.getMainHandItem().isEmpty()) {
-                return false;
+            if (consumeAmmo) {
+                RoundProfileService.clearChamberIfEmpty(itemStack);
             }
-            // A delayed burst/Lua cycle must honour the same server fault as
-            // the normal shoot entry point before it can emit an event, play a
-            // fire sound, or consume an additional round.
-            if (consumeAmmo && IndustryMaintenanceService.isJammed(itemStack)) {
-                return false;
+            // Apply the gun's real HeatData before C.3 maintenance
+            // accounting. Free/creative shots retain their prior heat
+            // semantics, but only a real consumed round records wear.
+            if (gunIndex.getGunData().hasHeatData()) {
+                handleShootHeatWithScript();
             }
-            // 触发击发事件
-            GunFireEvent gunFireEvent = new GunFireEvent(shooter, itemStack, LogicalSide.SERVER);
-            GunFireEvent.CALLBACK.invoker().post(gunFireEvent);
-            boolean fire = !gunFireEvent.isCanceled();
-            if (fire) {
-                // Capture the real top/chambered profile before the existing
-                // count mutation removes it. The server, not a client NBT hint,
-                // owns this identity for projectile, case and damage behavior.
-                Identifier firedAmmoId = RoundProfileService.peekFiredAmmo(itemStack, gunData);
-                AmmoProfileDefinition ammoProfile = AmmoProfileService.resolve(firedAmmoId);
-                int profileBulletAmount = ammoProfile.getProjectileCountOverride() > 0
-                        ? ammoProfile.getProjectileCountOverride() : bulletAmount;
-                float profileSpeed = Mth.clamp(processedSpeed * ammoProfile.getSpeedMultiplier(), 0.0F, Float.MAX_VALUE);
-                NetworkHandler.sendToTrackingEntity(new ServerMessageGunFire(shooter.getId(), itemStack), shooter);
-                // 削减弹药
-                if (consumeAmmo && !this.reduceAmmoOnce()) {
-                    return false;
-                }
-                if (consumeAmmo) {
-                    RoundProfileService.clearChamberIfEmpty(itemStack);
-                }
-                // Apply the gun's real HeatData before C.3 maintenance
-                // accounting. Free/creative shots retain their prior heat
-                // semantics, but only a real consumed round records wear.
-                if (gunIndex.getGunData().hasHeatData()) {
-                    Optional.ofNullable(gunIndex.getScript())
-                            .map(script -> checkFunction(script.get("handle_shoot_heat")))
-                            .ifPresentOrElse(
-                                    func -> func.call(CoerceJavaToLua.coerce(this)),
-                                    this::handleShootHeat
-                            );
-                }
-                if (consumeAmmo) {
-                    // A feed fault is evaluated only after this exact real
-                    // round was consumed. C.3 now sees the just-updated native
-                    // heat amount, while a fault can still stop only a later
-                    // trigger pull and never becomes a fake client-side shot.
-                    IndustryMaintenanceService.ShotOutcome maintenance =
-                            IndustryMaintenanceService.recordSuccessfulShotOutcome(shooter, itemStack);
-                    // The client shell model is only cosmetic. Once a real
-                    // round has been consumed, emit the data-declared case on
-                    // the server so it can be picked up and reconditioned.
-                    SpentCartridgeService.ejectAfterFiring(shooter, firedAmmoId);
-                    // Installed en-bloc clips remain in gun NBT until the last
-                    // real round has left the gun, then return as an empty
-                    // reusable clip rather than disappearing.
-                    EnBlocClipService.ejectIfEmpty(shooter, itemStack);
-                    if (maintenance.faultCreated() && shooter instanceof ServerPlayer player) {
-                        // C.2 feed and C.4 service faults both need the actual
-                        // server stack immediately, never a client-created
-                        // status flag or a predicted extra round.
-                        NetworkHandler.sendToClientPlayer(new ServerMessageMaintenanceGunState(itemStack), player);
-                    }
-                }
-                // 获取射击方向（pitch 和 yaw）
-                float pitch = pitchSupplier != null ? pitchSupplier.get() : shooter.getXRot();
-                float yaw = yawSupplier != null ? yawSupplier.get() : shooter.getYRot();
-                // 生成子弹
-                Level world = shooter.level();
-                for (int i = 0; i < profileBulletAmount; i++) {
-                    boolean isTracer = bulletData.hasTracerAmmo() && gunOperator.nextBulletIsTracer(bulletData.getTracerCountInterval());
-                    EntityKineticBullet bullet = new EntityKineticBullet(world, shooter, itemStack, firedAmmoId, gunId,
-                            gunDisplayId, isTracer, gunData, bulletData);
-                    bullet.applyShotgunDamageSpread(profileBulletAmount);
-                    bullet.applyAmmoProfile(ammoProfile);
-                    bullet.setShotDamageMultiplier(shotDamageMultiplier);
-                    abstractGunItem.doBulletSpread(dataHolder, itemStack, shooter, bullet, i, profileSpeed,
-                            inaccuracy, pitch, yaw);
-                    world.addFreshEntity(bullet);
-                }
-                // 播放枪声
-                if (soundDistance > 0) {
-                    String soundId = useSilenceSound ? SoundManager.SILENCE_3P_SOUND : SoundManager.SHOOT_3P_SOUND;
-                    SoundManager.sendSoundToNearby(shooter, soundDistance, gunId, gunDisplayId, soundId, 0.8f, 0.9f + shooter.getRandom().nextFloat() * 0.125f);
+            if (consumeAmmo) {
+                // A feed fault is evaluated only after this exact real
+                // round was consumed. C.3 now sees the just-updated native
+                // heat amount, while a fault can still stop only a later
+                // trigger pull and never becomes a fake client-side shot.
+                IndustryMaintenanceService.ShotOutcome maintenance =
+                        IndustryMaintenanceService.recordSuccessfulShotOutcome(shooter, itemStack);
+                // The client shell model is only cosmetic. Once a real
+                // round has been consumed, emit the data-declared case on
+                // the server so it can be picked up and reconditioned.
+                SpentCartridgeService.ejectAfterFiring(shooter, firedAmmoId);
+                // Installed en-bloc clips remain in gun NBT until the last
+                // real round has left the gun, then return as an empty
+                // reusable clip rather than disappearing.
+                EnBlocClipService.ejectIfEmpty(shooter, itemStack);
+                if (maintenance.faultCreated() && shooter instanceof ServerPlayer player) {
+                    // C.2 feed and C.4 service faults both need the actual
+                    // server stack immediately, never a client-created
+                    // status flag or a predicted extra round.
+                    NetworkHandler.sendToClientPlayer(new ServerMessageMaintenanceGunState(itemStack), player);
                 }
             }
-            return true;
-        }, period, cycles);
+            // 获取射击方向（pitch 和 yaw）
+            float pitch = pitchSupplier != null ? pitchSupplier.get() : shooter.getXRot();
+            float yaw = yawSupplier != null ? yawSupplier.get() : shooter.getYRot();
+            // 生成子弹
+            spawnProjectiles(gunData, bulletData, gunOperator, shotDamageMultiplier, inaccuracy,
+                    profileSpeed, profileBulletAmount, pitch, yaw, firedAmmoId, ammoProfile);
+            // 播放枪声
+            if (soundDistance > 0) {
+                String soundId = useSilenceSound ? SoundManager.SILENCE_3P_SOUND : SoundManager.SHOOT_3P_SOUND;
+                SoundManager.sendSoundToNearby(shooter, soundDistance, gunId, gunDisplayId, soundId, 0.8f, 0.9f + shooter.getRandom().nextFloat() * 0.125f);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Stable continuation check for a scheduled server-side shoot cycle.
+     */
+    protected boolean canContinueShootCycle() {
+        // 如果射击者死亡，取消射击
+        if (shooter.isDeadOrDying()) {
+            return false;
+        }
+        // 如果武器变了，取消射击
+        return shooter.getMainHandItem().equals(itemStack) && !shooter.getMainHandItem().isEmpty();
+    }
+
+    /**
+     * Stable server-side projectile creation hook for one shot.
+     *
+     * <p>Release-line signature: it fires the gun's declared ammunition. This line resolves the
+     * actually chambered round first, so the overload below carries that identity.</p>
+     */
+    protected void spawnProjectiles(GunData gunData, BulletData bulletData, IGunOperator gunOperator,
+                                    float shotDamageMultiplier, float inaccuracy, float processedSpeed,
+                                    int bulletAmount, float pitch, float yaw) {
+        Identifier ammoId = gunData.getAmmoId();
+        spawnProjectiles(gunData, bulletData, gunOperator, shotDamageMultiplier, inaccuracy, processedSpeed,
+                bulletAmount, pitch, yaw, ammoId, AmmoProfileService.resolve(ammoId));
+    }
+
+    /**
+     * Projectile creation for the round this gun actually fed, including its audited profile.
+     *
+     * @param firedAmmoId the round identity resolved before the count mutation removed it
+     * @param ammoProfile the audited profile applied to every projectile of this shot
+     */
+    protected void spawnProjectiles(GunData gunData, BulletData bulletData, IGunOperator gunOperator,
+                                    float shotDamageMultiplier, float inaccuracy, float processedSpeed,
+                                    int bulletAmount, float pitch, float yaw, Identifier firedAmmoId,
+                                    AmmoProfileDefinition ammoProfile) {
+        Level world = shooter.level();
+        for (int i = 0; i < bulletAmount; i++) {
+            boolean isTracer = bulletData.hasTracerAmmo() && gunOperator.nextBulletIsTracer(bulletData.getTracerCountInterval());
+            EntityKineticBullet bullet = new EntityKineticBullet(world, shooter, itemStack, firedAmmoId, gunId,
+                    gunDisplayId, isTracer, gunData, bulletData);
+            bullet.applyShotgunDamageSpread(bulletAmount);
+            bullet.applyAmmoProfile(ammoProfile);
+            bullet.setShotDamageMultiplier(shotDamageMultiplier);
+            abstractGunItem.doBulletSpread(dataHolder, itemStack, shooter, bullet, i, processedSpeed,
+                    inaccuracy, pitch, yaw);
+            world.addFreshEntity(bullet);
+        }
+    }
+
+    /**
+     * Stable hook for dispatching shoot-heat handling to Lua or the built-in fallback.
+     */
+    protected void handleShootHeatWithScript() {
+        resolveScriptFunction(gunIndex, "handle_shoot_heat")
+                .ifPresentOrElse(
+                        func -> func.call(CoerceJavaToLua.coerce(this)),
+                        this::handleShootHeat
+                );
     }
 
     private <T> T modifyProperty(GunProperty<?> property, Class<T> type, T value) {
@@ -646,11 +696,8 @@ public class ModernKineticGunScriptAPI {
         }
         if (abstractGunItem.useDummyAmmo(itemStack)) {
             return abstractGunItem.findAndExtractDummyAmmo(itemStack, neededAmount);
-        } else {
-            return shooter.tacz$getItemHandler(null)
-                    .map(cap -> abstractGunItem.findAndExtractInventoryAmmo(cap, itemStack, neededAmount))
-                    .orElse(0);
         }
+        return AmmoSourceRegistry.consumeAmmo(shooter, itemStack, neededAmount);
     }
 
     /**
@@ -681,19 +728,7 @@ public class ModernKineticGunScriptAPI {
         if (abstractGunItem.useDummyAmmo(itemStack)) {
             return abstractGunItem.getDummyAmmoAmount(itemStack) > 0;
         }
-        return shooter.tacz$getItemHandler(null).map(cap -> {
-            // 背包检查
-            for (int i = 0; i < cap.getSlots(); i++) {
-                ItemStack checkAmmoStack = cap.getStackInSlot(i);
-                if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(itemStack, checkAmmoStack)) {
-                    return true;
-                }
-                if (checkAmmoStack.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(itemStack, checkAmmoStack)) {
-                    return true;
-                }
-            }
-            return false;
-        }).orElse(false);
+        return AmmoSourceRegistry.hasAmmo(shooter, itemStack);
     }
 
     /**
@@ -862,7 +897,14 @@ public class ModernKineticGunScriptAPI {
      */
     public void safeAsyncTask(LuaValue value, long delayMs, long periodMs, int cycles) {
         LuaFunction func = value.checkfunction();
-        CycleTaskHelper.addCycleTask(() -> func.call().checkboolean(), delayMs, periodMs, cycles);
+        CycleTaskHelper.addCycleTask(() -> runLuaCycleTask(func), delayMs, periodMs, cycles);
+    }
+
+    /**
+     * Executes one Lua cycle callback and returns whether the scheduled cycle should continue.
+     */
+    protected boolean runLuaCycleTask(LuaFunction func) {
+        return func.call().checkboolean();
     }
 
     /**
@@ -1022,7 +1064,10 @@ public class ModernKineticGunScriptAPI {
         return 0f;
     }
 
-    // TODO: 测试检查 enum 值是否可以直接在 lua 中调用，以简化这个功能为下面那个方法
+    // Compatibility API, not an unfinished implementation: existing gun-pack Lua can
+    // compare this stable integer without importing/coercing a Java enum userdata.
+    // Keep both forms; removing getBoltByInt() would break old scripts even though
+    // getBolt() is usable by Java-aware Lua code.
     public int getBoltByInt() {
         Bolt bolt = gunIndex.getGunData().getBolt();
         if (bolt == Bolt.MANUAL_ACTION) {
@@ -1075,6 +1120,18 @@ public class ModernKineticGunScriptAPI {
         }
     }
 
+
+    /**
+     * Resolves a named Lua function without changing the caller-specific invocation or fallback.
+     *
+     * @param gunIndex gun index whose script is queried; callers already reject {@code null}
+     * @param methodName Lua method name
+     * @return the function, or an empty optional when the script or method is absent
+     */
+    protected Optional<LuaFunction> resolveScriptFunction(CommonGunIndex gunIndex, String methodName) {
+        return Optional.ofNullable(gunIndex.getScript())
+                .map(script -> checkFunction(script.get(methodName)));
+    }
 
     private LuaFunction checkFunction(LuaValue luaValue) {
         if (luaValue.isfunction()) {

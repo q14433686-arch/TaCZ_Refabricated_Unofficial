@@ -1,10 +1,12 @@
 package cn.sh1rocu.tacz.compat.rei;
 
+import cn.sh1rocu.tacz.compat.rei.category.AmmoQueryCategory;
 import cn.sh1rocu.tacz.compat.rei.category.AttachmentQueryCategory;
 import cn.sh1rocu.tacz.compat.rei.category.CartridgeAssemblyCategory;
 import cn.sh1rocu.tacz.compat.rei.category.GunSmithTableCategory;
 import cn.sh1rocu.tacz.compat.rei.category.GunFeedReferenceCategory;
 import cn.sh1rocu.tacz.compat.rei.category.IndustryProcessCategory;
+import cn.sh1rocu.tacz.compat.rei.display.AmmoQueryDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.AttachmentQueryDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.CartridgeAssemblyDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.GunSmithTableDisplay;
@@ -16,6 +18,7 @@ import cn.sh1rocu.tacz.compat.rei.entry.AttachmentQueryEntry;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.builder.BlockItemBuilder;
+import com.tacz.guns.compat.recipeviewer.AmmoQueryEntry;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.industry.recipe.IndustryProcessMachine;
 import com.tacz.guns.init.ModItems;
@@ -36,7 +39,10 @@ import java.util.List;
 import java.util.Map;
 
 public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIClientPlugin {
-    public static final CategoryIdentifier<AttachmentQueryDisplay> ATTACHMENT_QUERY = CategoryIdentifier.of(GunMod.MOD_ID, "plugins/attachment_query");
+    public static final CategoryIdentifier<AttachmentQueryDisplay> ATTACHMENT_QUERY =
+            CategoryIdentifier.of(GunMod.MOD_ID, "plugins/attachment_query");
+    public static final CategoryIdentifier<AmmoQueryDisplay> AMMO_QUERY =
+            CategoryIdentifier.of(GunMod.MOD_ID, "plugins/ammo_query");
     public static final CategoryIdentifier<CartridgeAssemblyDisplay> CARTRIDGE_ASSEMBLY =
             CategoryIdentifier.of(GunMod.MOD_ID, "industry/cartridge_assembly_machine");
     /** Read-only relationship category: ammunition/carrier inputs → exact gun. */
@@ -70,6 +76,7 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
             registry.addWorkstations(id, EntryStacks.of(icon));
         }
         registry.add(new AttachmentQueryCategory());
+        registry.add(new AmmoQueryCategory());
         registry.add(new GunFeedReferenceCategory());
         registry.add(new CartridgeAssemblyCategory());
         registry.addWorkstations(CARTRIDGE_ASSEMBLY, EntryStacks.of(ModItems.CARTRIDGE_ASSEMBLY_MACHINE.getDefaultInstance()));
@@ -132,6 +139,8 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
 
         AttachmentQueryEntry.getAllAttachmentQueryEntries().forEach(entry ->
                 registry.add(new AttachmentQueryDisplay(entry)));
+        AmmoQueryEntry.getAllAmmoQueryEntries().forEach(entry ->
+                registry.add(new AmmoQueryDisplay(entry)));
 
         // IndustryProcessDisplayGenerator supplies Create process displays live
         // above. It intentionally replaces a one-time static cache snapshot.
