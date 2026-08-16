@@ -5,6 +5,28 @@
 
 ---
 
+## Unreleased
+
+**下游兼容 API：可替换实体弹药源（Issue #46）**
+
+新增公共 `com.tacz.guns.api.item.ammo` API。下游模组可向
+`AmmoSourceRegistry.EVENT` 注册 provider，由自有库存实现无副作用的弹药查询与有界消耗，
+不再需要 mixin TaCZ 的高层弹药方法。provider 按注册顺序匹配，首个非 `null` 结果生效；
+未匹配时继续使用原有实体 `IItemHandler`，原版 `IAmmo` / `IAmmoBox` 行为不变。
+
+以下旧兼容目标现在统一经过 registry：
+
+- `AbstractGunItem#canReload` / `hasInventoryAmmo`；
+- `LivingEntityShoot#consumeAmmoFromPlayer`；
+- `ModernKineticGunScriptAPI#consumeAmmoFromPlayer` / `hasAmmoToConsume`；
+- `GunAnimationStateContext#hasAmmoToConsume`。
+
+动画上下文另新增稳定命名的 protected 方法 `hasAmmoToConsumeInEntity(Entity)`，避免依赖
+javac 合成的 `lambda$hasAmmoToConsume$...` 名称。假弹、创造模式和无限弹药的现有优先级
+保持不变。接入方式、双端注册要求和契约详见 [`AMMO_SOURCE_API.md`](AMMO_SOURCE_API.md)。
+
+---
+
 ## R12
 
 **审计 + 恢复：LRTactical 爆炸屏幕震动**

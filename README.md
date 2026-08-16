@@ -256,6 +256,7 @@ R1 会在**枪包加载时**把该目录映射到 1.21.11 所需的 `recipe/`，
 |---|---|
 | `docs/PORT_1_21_11_PHASE1.md` | 构建文件迁移（Loom remap 模式、依赖版本、mixin 配置） |
 | `docs/PORT_1_21_11_PHASE2.md` | 编译错误族、逐次启动崩溃与渲染问题的完整定位记录 |
+| `docs/AMMO_SOURCE_API.md` | 下游模组替换实体弹药源的公共 API、示例与兼容约定 |
 | `docs/verify_mixin_targets.py` | 校验所有 mixin 目标与 `@Inject` 处理函数签名 |
 | `docs/verify_shader_imports.py` | 校验所有自定义 shader 的 `#moj_import` 目标真实存在 |
 
@@ -295,7 +296,25 @@ python3 docs/verify_shader_imports.py   # 16 条 #moj_import
 
 ---
 
-## 10. 反馈
+## 10. 下游弹药源 API
+
+需要让女仆、载具或其他自定义实体库存为枪械供弹的模组，不再需要 mixin
+`AbstractGunItem`、`LivingEntityShoot`、`ModernKineticGunScriptAPI` 或客户端动画 lambda。
+请在 common 初始化阶段向 `AmmoSourceRegistry.EVENT` 注册 `AmmoSourceProvider`；首个返回
+非 `null` 的 provider 接管该实体/枪械组合，否则自动回退到 TaCZ 的标准实体库存。
+
+`hasAmmo` 会同时用于客户端预测/动画与服务端判断，所以注册必须覆盖物理客户端和服务端，
+并且查询不能修改库存；实际 `consumeAmmo` 仍由权威游戏逻辑调用。假弹、创造模式和无限弹药
+规则仍由 TaCZ 原调用点处理，不应在 provider 中重复实现。
+
+完整契约、示例及迁移范围见
+[`docs/AMMO_SOURCE_API.md`](docs/AMMO_SOURCE_API.md)。今后若修改该 API 或文档列出的旧弹药
+调用点，会在 1.21.11 changelog / release notes 中明确说明；javac 生成的 `lambda$...` 名称
+不属于兼容 API。
+
+---
+
+## 11. 反馈
 
 请在[本仓库 Issues](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)提交：
 
