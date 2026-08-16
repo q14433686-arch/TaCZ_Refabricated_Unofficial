@@ -7,8 +7,7 @@ import com.tacz.guns.api.GunProperty;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.event.common.GunFireEvent;
-import com.tacz.guns.api.item.IAmmo;
-import com.tacz.guns.api.item.IAmmoBox;
+import com.tacz.guns.api.item.ammo.AmmoSourceRegistry;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.FireMode;
@@ -148,60 +147,93 @@ public class ModernKineticGunScriptAPI {
         // 连发间隔
         long period = modifyProperty(GunProperties.RuntimeOnly.BURST_SHOOT_INTERVAL, Long.class, fireMode == FireMode.BURST ? gunData.getBurstShootInterval() : 1);
 
-        CycleTaskHelper.addCycleTask(() -> {
-            // 如果射击者死亡，取消射击
-            if (shooter.isDeadOrDying()) {
-                return false;
-            }
-            // 如果武器变了，取消射击
-            if (!shooter.getMainHandItem().equals(itemStack) || shooter.getMainHandItem().isEmpty()) {
-                return false;
-            }
-            // 触发击发事件
-            GunFireEvent gunFireEvent = new GunFireEvent(shooter, itemStack, LogicalSide.SERVER);
-            GunFireEvent.CALLBACK.invoker().post(gunFireEvent);
-            boolean fire = !gunFireEvent.isCanceled();
-            if (fire) {
-                NetworkHandler.sendToTrackingEntity(new ServerMessageGunFire(shooter.getId(), itemStack), shooter);
-                // 削减弹药
-                if (consumeAmmo) {
-                    if (!this.reduceAmmoOnce()) {
-                        return false;
-                    }
-                }
-                //Handle Heat Data
-                if (gunIndex.getGunData().hasHeatData()) {
-                    Optional.ofNullable(gunIndex.getScript())
-                            .map(script -> checkFunction(script.get("handle_shoot_heat")))
-                            .ifPresentOrElse(
-                                    func -> func.call(CoerceJavaToLua.coerce(this)),
-                                    this::handleShootHeat
-                            );
-                }
-                // 获取射击方向（pitch 和 yaw）
-                float pitch = pitchSupplier != null ? pitchSupplier.get() : shooter.getXRot();
-                float yaw = yawSupplier != null ? yawSupplier.get() : shooter.getYRot();
-                // 生成子弹
-                Level world = shooter.level();
-                Identifier ammoId = gunData.getAmmoId();
-                for (int i = 0; i < bulletAmount; i++) {
-                    boolean isTracer = bulletData.hasTracerAmmo() && gunOperator.nextBulletIsTracer(bulletData.getTracerCountInterval());
-                    EntityKineticBullet bullet = new EntityKineticBullet(world, shooter, itemStack, ammoId, gunId,
-                            gunDisplayId, isTracer, gunData, bulletData);
-                    bullet.applyShotgunDamageSpread(bulletAmount);
-                    bullet.setShotDamageMultiplier(shotDamageMultiplier);
-                    abstractGunItem.doBulletSpread(dataHolder, itemStack, shooter, bullet, i, processedSpeed,
-                            inaccuracy, pitch, yaw);
-                    world.addFreshEntity(bullet);
-                }
-                // 播放枪声
-                if (soundDistance > 0) {
-                    String soundId = useSilenceSound ? SoundManager.SILENCE_3P_SOUND : SoundManager.SHOOT_3P_SOUND;
-                    SoundManager.sendSoundToNearby(shooter, soundDistance, gunId, gunDisplayId, soundId, 0.8f, 0.9f + shooter.getRandom().nextFloat() * 0.125f);
+        CycleTaskHelper.addCycleTask(
+                () -> runShootCycle(consumeAmmo, gunData, bulletData, gunOperator, shotDamageMultiplier,
+                        inaccuracy, soundDistance, useSilenceSound, processedSpeed, bulletAmount),
+                period, cycles);
+    }
+
+    /**
+     * Stable hook for one execution of the server-side shoot cycle.
+     */
+    protected boolean runShootCycle(boolean consumeAmmo, GunData gunData, BulletData bulletData,
+                                    IGunOperator gunOperator, float shotDamageMultiplier, float inaccuracy,
+                                    int soundDistance, boolean useSilenceSound, float processedSpeed, int bulletAmount) {
+        if (!canContinueShootCycle()) {
+            return false;
+        }
+        // 触发击发事件
+        GunFireEvent gunFireEvent = new GunFireEvent(shooter, itemStack, LogicalSide.SERVER);
+        GunFireEvent.CALLBACK.invoker().post(gunFireEvent);
+        boolean fire = !gunFireEvent.isCanceled();
+        if (fire) {
+            NetworkHandler.sendToTrackingEntity(new ServerMessageGunFire(shooter.getId(), itemStack), shooter);
+            // 削减弹药
+            if (consumeAmmo) {
+                if (!this.reduceAmmoOnce()) {
+                    return false;
                 }
             }
-            return true;
-        }, period, cycles);
+            //Handle Heat Data
+            if (gunIndex.getGunData().hasHeatData()) {
+                handleShootHeatWithScript();
+            }
+            // 获取射击方向（pitch 和 yaw）
+            float pitch = pitchSupplier != null ? pitchSupplier.get() : shooter.getXRot();
+            float yaw = yawSupplier != null ? yawSupplier.get() : shooter.getYRot();
+            // 生成子弹
+            spawnProjectiles(gunData, bulletData, gunOperator, shotDamageMultiplier, inaccuracy,
+                    processedSpeed, bulletAmount, pitch, yaw);
+            // 播放枪声
+            if (soundDistance > 0) {
+                String soundId = useSilenceSound ? SoundManager.SILENCE_3P_SOUND : SoundManager.SHOOT_3P_SOUND;
+                SoundManager.sendSoundToNearby(shooter, soundDistance, gunId, gunDisplayId, soundId, 0.8f, 0.9f + shooter.getRandom().nextFloat() * 0.125f);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Stable continuation check for a scheduled server-side shoot cycle.
+     */
+    protected boolean canContinueShootCycle() {
+        // 如果射击者死亡，取消射击
+        if (shooter.isDeadOrDying()) {
+            return false;
+        }
+        // 如果武器变了，取消射击
+        return shooter.getMainHandItem().equals(itemStack) && !shooter.getMainHandItem().isEmpty();
+    }
+
+    /**
+     * Stable server-side projectile creation hook for one shot.
+     */
+    protected void spawnProjectiles(GunData gunData, BulletData bulletData, IGunOperator gunOperator,
+                                    float shotDamageMultiplier, float inaccuracy, float processedSpeed,
+                                    int bulletAmount, float pitch, float yaw) {
+        Level world = shooter.level();
+        Identifier ammoId = gunData.getAmmoId();
+        for (int i = 0; i < bulletAmount; i++) {
+            boolean isTracer = bulletData.hasTracerAmmo() && gunOperator.nextBulletIsTracer(bulletData.getTracerCountInterval());
+            EntityKineticBullet bullet = new EntityKineticBullet(world, shooter, itemStack, ammoId, gunId,
+                    gunDisplayId, isTracer, gunData, bulletData);
+            bullet.applyShotgunDamageSpread(bulletAmount);
+            bullet.setShotDamageMultiplier(shotDamageMultiplier);
+            abstractGunItem.doBulletSpread(dataHolder, itemStack, shooter, bullet, i, processedSpeed,
+                    inaccuracy, pitch, yaw);
+            world.addFreshEntity(bullet);
+        }
+    }
+
+    /**
+     * Stable hook for dispatching shoot-heat handling to Lua or the built-in fallback.
+     */
+    protected void handleShootHeatWithScript() {
+        resolveScriptFunction(gunIndex, "handle_shoot_heat")
+                .ifPresentOrElse(
+                        func -> func.call(CoerceJavaToLua.coerce(this)),
+                        this::handleShootHeat
+                );
     }
 
     private <T> T modifyProperty(GunProperty<?> property, Class<T> type, T value) {
@@ -548,11 +580,8 @@ public class ModernKineticGunScriptAPI {
         }
         if (abstractGunItem.useDummyAmmo(itemStack)) {
             return abstractGunItem.findAndExtractDummyAmmo(itemStack, neededAmount);
-        } else {
-            return shooter.tacz$getItemHandler(null)
-                    .map(cap -> abstractGunItem.findAndExtractInventoryAmmo(cap, itemStack, neededAmount))
-                    .orElse(0);
         }
+        return AmmoSourceRegistry.consumeAmmo(shooter, itemStack, neededAmount);
     }
 
     /**
@@ -568,19 +597,7 @@ public class ModernKineticGunScriptAPI {
         if (abstractGunItem.useDummyAmmo(itemStack)) {
             return abstractGunItem.getDummyAmmoAmount(itemStack) > 0;
         }
-        return shooter.tacz$getItemHandler(null).map(cap -> {
-            // 背包检查
-            for (int i = 0; i < cap.getSlots(); i++) {
-                ItemStack checkAmmoStack = cap.getStackInSlot(i);
-                if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(itemStack, checkAmmoStack)) {
-                    return true;
-                }
-                if (checkAmmoStack.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(itemStack, checkAmmoStack)) {
-                    return true;
-                }
-            }
-            return false;
-        }).orElse(false);
+        return AmmoSourceRegistry.hasAmmo(shooter, itemStack);
     }
 
     /**
@@ -689,7 +706,14 @@ public class ModernKineticGunScriptAPI {
      */
     public void safeAsyncTask(LuaValue value, long delayMs, long periodMs, int cycles) {
         LuaFunction func = value.checkfunction();
-        CycleTaskHelper.addCycleTask(() -> func.call().checkboolean(), delayMs, periodMs, cycles);
+        CycleTaskHelper.addCycleTask(() -> runLuaCycleTask(func), delayMs, periodMs, cycles);
+    }
+
+    /**
+     * Executes one Lua cycle callback and returns whether the scheduled cycle should continue.
+     */
+    protected boolean runLuaCycleTask(LuaFunction func) {
+        return func.call().checkboolean();
     }
 
     /**
@@ -894,6 +918,18 @@ public class ModernKineticGunScriptAPI {
         }
     }
 
+
+    /**
+     * Resolves a named Lua function without changing the caller-specific invocation or fallback.
+     *
+     * @param gunIndex gun index whose script is queried; callers already reject {@code null}
+     * @param methodName Lua method name
+     * @return the function, or an empty optional when the script or method is absent
+     */
+    protected Optional<LuaFunction> resolveScriptFunction(CommonGunIndex gunIndex, String methodName) {
+        return Optional.ofNullable(gunIndex.getScript())
+                .map(script -> checkFunction(script.get(methodName)));
+    }
 
     private LuaFunction checkFunction(LuaValue luaValue) {
         if (luaValue.isfunction()) {

@@ -5,6 +5,67 @@
 
 ---
 
+## 1.1.8+fabric.1.21.11.R2
+
+**新增：内置弹药适配枪械查询（JEI / REI）**
+
+- 新增与 “TaCZ Ammo Query” 同类的内置查询分类，无需再安装单独附属模组；
+- 在 JEI 与 REI 中选择任意 TACZ 弹药，可查看当前已加载枪包中所有使用该弹药的枪械；
+- 两个查看器共用同一份查询数据，支持服务端同步的第三方枪包，并复用现有枪包同步后自动刷新流程；
+- 大型枪包超过单页显示上限时，末格会轮换显示其余枪械。
+
+**修复：Carry On 2.9.2 搬运 TACZ 工作台**
+
+- 双格工作台改在 block-state 放置路径补全 companion，不再依赖 Carry On 不会调用的
+  `setPlacedBy`；放置前会原子检查两格空间，失败时保留搬运数据；
+- 配件工作台保留 `half=lower/upper` 序列化格式，但不再使用会被 Carry On 通用规则拒绝的
+  `DoubleBlockHalf` value class；该冲突也存在于官方 TACZ 1.20.1 设计，并非端口遗漏；
+- 从同步的 Carry On 方块实体 NBT 恢复枪包工作台 `BlockId`，修复手持紫黑模型；
+- 从任一半格发起搬运都会解析到 root，显式覆盖 `pickupAllBlocks=true`，不会打开菜单或生成
+  非 root 幽灵方块；
+- 工作台从 Carry On 黑名单移除，`target` / `statue` 继续保留。
+
+实现依据、兼容边界和游戏内回归矩阵见 [`CARRYON_COMPAT.md`](CARRYON_COMPAT.md)。
+
+**下游兼容 API：可替换实体弹药源（Issue #46）**
+
+新增公共 `com.tacz.guns.api.item.ammo` API。下游模组可向
+`AmmoSourceRegistry.EVENT` 注册 provider，由自有库存实现无副作用的弹药查询与有界消耗，
+不再需要 mixin TaCZ 的高层弹药方法。provider 按注册顺序匹配，首个非 `null` 结果生效；
+未匹配时继续使用原有实体 `IItemHandler`，原版 `IAmmo` / `IAmmoBox` 行为不变。
+
+以下旧兼容目标现在统一经过 registry：
+
+- `AbstractGunItem#canReload` / `hasInventoryAmmo`；
+- `LivingEntityShoot#consumeAmmoFromPlayer`；
+- `ModernKineticGunScriptAPI#consumeAmmoFromPlayer` / `hasAmmoToConsume`；
+- `GunAnimationStateContext#hasAmmoToConsume`。
+
+动画上下文另新增稳定命名的 protected 方法 `hasAmmoToConsumeInEntity(Entity)`，避免依赖
+javac 合成的 `lambda$hasAmmoToConsume$...` 名称。假弹、创造模式和无限弹药的现有优先级
+保持不变。接入方式、双端注册要求和契约详见 [`AMMO_SOURCE_API.md`](AMMO_SOURCE_API.md)。
+
+**稳定命名的行为扩展钩子**
+
+将开火、换弹、拉栓和动画路径中原本只能通过 private 方法或合成 lambda 定位的业务阶段，
+提取为 protected 具名方法。主要入口包括：
+
+- `LocalPlayerShoot` 的校验、冷却、连发周期、主线程表现及状态锁判定；
+- `LocalPlayerReload` / `LocalPlayerBolt` 的事务、动画和手动拉栓判定；
+- `LivingEntityShoot` / `LivingEntityReload` / `LivingEntityBolt` 的服务端事务与蓄力校验；
+- `ModernKineticGunScriptAPI` 的射击周期、继续条件、弹丸生成和过热脚本分派；
+- `ModernKineticGunItem` 的默认过热、拉栓和换弹 fallback；
+- `GunAnimationStateContext#getInterpolatedWalkDistance`。
+
+P2-min 另将 `ModernKineticGunItem` / `ModernKineticGunScriptAPI` 的 Lua 函数解析与 cycle task
+转发提取为 protected 具名 helper，并为默认 reload/heat fallback、弹药动作策略和服务端蓄力
+校验补齐覆写契约；没有扩大已拒绝候选，也没有改变脚本或 gameplay 行为。
+
+原调用路径、判断和副作用顺序保持不变；射击状态锁仍使用同一个 Predicate 实例进行身份判断。
+这些具名方法用于避免下游绑定 javac 合成名称，不代表合成 `lambda$...` 方法属于兼容 API。
+
+---
+
 ## R12
 
 **审计 + 恢复：LRTactical 爆炸屏幕震动**

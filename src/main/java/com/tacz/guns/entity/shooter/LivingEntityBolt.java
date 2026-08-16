@@ -33,49 +33,55 @@ public class LivingEntityBolt {
             return;
         }
         Identifier gunId = iGun.getGunId(currentGunItem);
-        TimelessAPI.getCommonGunIndex(gunId).ifPresent(gunIndex -> {
-            // 判断是否正在射击冷却
-            if (shoot.getShootCoolDown() != 0) {
-                return;
-            }
-            // 检查是否正在换弹
-            if (data.reloadStateType.isReloading()) {
-                return;
-            }
-            // 检查是否在切枪
-            if (draw.getDrawCoolDown() != 0) {
-                return;
-            }
-            // 检查是否在拉栓
-            if (data.isBolting) {
-                return;
-            }
-            IGunOperator gunOperator = IGunOperator.fromLivingEntity(shooter);
-            // 检查 bolt 类型是否是 manual action
-            Bolt boltType = gunIndex.getGunData().getBolt();
-            // 是否为背包直读
-            boolean useInventoryAmmo = iGun.useInventoryAmmo(currentGunItem);
-            // 膛内是否有子弹
-            boolean hasAmmoInBarrel = iGun.hasBulletInBarrel(currentGunItem) && boltType != Bolt.OPEN_BOLT;
-            // 背包内是否还有子弹 (创造模式是否消耗背包备弹)
-            boolean hasInventoryAmmo = iGun.hasInventoryAmmo(shooter, currentGunItem, gunOperator.needCheckAmmo());
-            // 判断没有子弹的条件 (背包直读且包内没子弹 / 非背包直读且弹匣子弹数 < 1)
-            boolean noAmmo = useInventoryAmmo && !hasInventoryAmmo ||
-                    !useInventoryAmmo && iGun.getCurrentAmmoCount(currentGunItem) < 1;
-            if (boltType != Bolt.MANUAL_ACTION) {
-                return;
-            }
-            // 检查是否有弹药在枪膛内
-            if (hasAmmoInBarrel) {
-                return;
-            }
-            // 检查弹匣内是否有子弹
-            if (noAmmo) {
-                return;
-            }
-            data.boltTimestamp = System.currentTimeMillis();
-            data.isBolting = iGun.startBolt(data, currentGunItem, shooter);
-        });
+        TimelessAPI.getCommonGunIndex(gunId)
+                .ifPresent(gunIndex -> boltWithIndex(iGun, currentGunItem, gunIndex));
+    }
+
+    /**
+     * Stable server-side manual-bolt hook after the gun index has been resolved.
+     */
+    protected void boltWithIndex(AbstractGunItem iGun, ItemStack currentGunItem, CommonGunIndex gunIndex) {
+        // 判断是否正在射击冷却
+        if (shoot.getShootCoolDown() != 0) {
+            return;
+        }
+        // 检查是否正在换弹
+        if (data.reloadStateType.isReloading()) {
+            return;
+        }
+        // 检查是否在切枪
+        if (draw.getDrawCoolDown() != 0) {
+            return;
+        }
+        // 检查是否在拉栓
+        if (data.isBolting) {
+            return;
+        }
+        IGunOperator gunOperator = IGunOperator.fromLivingEntity(shooter);
+        // 检查 bolt 类型是否是 manual action
+        Bolt boltType = gunIndex.getGunData().getBolt();
+        // 是否为背包直读
+        boolean useInventoryAmmo = iGun.useInventoryAmmo(currentGunItem);
+        // 膛内是否有子弹
+        boolean hasAmmoInBarrel = iGun.hasBulletInBarrel(currentGunItem) && boltType != Bolt.OPEN_BOLT;
+        // 背包内是否还有子弹 (创造模式是否消耗背包备弹)
+        boolean hasInventoryAmmo = iGun.hasInventoryAmmo(shooter, currentGunItem, gunOperator.needCheckAmmo());
+        // 判断没有子弹的条件 (背包直读且包内没子弹 / 非背包直读且弹匣子弹数 < 1)
+        boolean noAmmo = useInventoryAmmo && !hasInventoryAmmo ||
+                !useInventoryAmmo && iGun.getCurrentAmmoCount(currentGunItem) < 1;
+        if (boltType != Bolt.MANUAL_ACTION) {
+            return;
+        }
+        // 检查是否有弹药在枪膛内
+        if (hasAmmoInBarrel) {
+            return;
+        }
+        // 检查弹匣内是否有子弹
+        if (noAmmo) {
+            return;
+        }
+        data.boltTimestamp = System.currentTimeMillis();
+        data.isBolting = iGun.startBolt(data, currentGunItem, shooter);
     }
 
     public void tickBolt() {

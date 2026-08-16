@@ -6,9 +6,8 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
-import com.tacz.guns.api.item.IAmmo;
-import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.ammo.AmmoSourceRegistry;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.api.util.LuaNbtAccessor;
@@ -181,26 +180,20 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
         if (iGun.useDummyAmmo(currentGunItem)) {
             return iGun.getDummyAmmoAmount(currentGunItem) > 0;
         }
-        return processCameraEntity(entity -> {
-                    if (entity instanceof LivingEntity livingEntity) {
-                        return livingEntity.tacz$getItemHandler(null)
-                                .map(cap -> {
-                                    // 背包检查
-                                    for (int i = 0; i < cap.getSlots(); i++) {
-                                        ItemStack checkAmmoStack = cap.getStackInSlot(i);
-                                        if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(currentGunItem, checkAmmoStack)) {
-                                            return true;
-                                        }
-                                        if (checkAmmoStack.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(currentGunItem, checkAmmoStack)) {
-                                            return true;
-                                        }
-                                    }
-                                    return false;
-                                }).orElse(false);
-                    }
-                    return false;
-                }
-        ).orElse(false);
+        return processCameraEntity(this::hasAmmoToConsumeInEntity).orElse(false);
+    }
+
+    /**
+     * Named client-side query used by {@link #hasAmmoToConsume()}.
+     *
+     * <p>Kept as a named protected method so downstream subclasses and mixins never need to bind
+     * to a compiler-generated {@code lambda$hasAmmoToConsume$...} method.</p>
+     */
+    protected boolean hasAmmoToConsumeInEntity(Entity entity) {
+        if (entity instanceof LivingEntity livingEntity) {
+            return AmmoSourceRegistry.hasAmmo(livingEntity, currentGunItem);
+        }
+        return false;
     }
 
     /**
@@ -354,7 +347,7 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
     public void anchorWalkDist() {
         processCameraEntity(entity -> {
             if (entity instanceof LivingEntity livingEntity) {
-                walkDistAnchor = tacz$walkDistance(livingEntity);
+                walkDistAnchor = getInterpolatedWalkDistance(livingEntity);
             }
             return null;
         });
@@ -397,7 +390,7 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * {@code moveDist}（见 {@link IMoveDistTracker}）重建出 {@code walkDistO}，
      * 从而做与上游<b>完全一致</b>的线性插值，兼顾正确量纲与平滑度。</p>
      */
-    private float tacz$walkDistance(LivingEntity livingEntity) {
+    protected float getInterpolatedWalkDistance(LivingEntity livingEntity) {
         // ------------------------------------------------------------------
         // 【首选路径】26.2 官方的 walkDist/walkDistO 继任者：ClientAvatarState
         //
@@ -455,8 +448,8 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
     public float getWalkDist() {
         return processCameraEntity(entity -> {
             if (entity instanceof LivingEntity livingEntity) {
-                // 必须与上游同量纲（moveDist），否则动画速率会快约 6.7 倍。见 tacz$walkDistance。
-                float currentWalkDist = tacz$walkDistance(livingEntity);
+                // 必须与上游同量纲（moveDist），否则动画速率会快约 6.7 倍。见 getInterpolatedWalkDistance。
+                float currentWalkDist = getInterpolatedWalkDistance(livingEntity);
                 return currentWalkDist - walkDistAnchor;
             }
             return 0f;
