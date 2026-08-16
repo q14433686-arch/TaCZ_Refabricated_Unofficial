@@ -1,6 +1,7 @@
 package com.tacz.guns.network.message;
 
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.resource.ClientIndexManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.network.CommonNetworkCache;
@@ -32,7 +33,7 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
         this.cache = cache;
     }
 
-        public void write(FriendlyByteBuf buf) {
+    public void write(FriendlyByteBuf buf) {
         buf.writeMap(getCache(), FriendlyByteBuf::writeEnum, (buf1, map) ->
                 buf1.writeMap(map, FriendlyByteBuf::writeIdentifier, FriendlyByteBuf::writeUtf));
     }
@@ -45,9 +46,8 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
     @Environment(EnvType.CLIENT)
     public void handle(LocalPlayer player, PacketSender responseSender) {
         boolean remoteConnection = player.connection.getConnection() != null && !player.connection.getConnection().isMemoryConnection();
-        doSync(this, remoteConnection);
+        net.minecraft.client.Minecraft.getInstance().execute(() -> doSync(this, remoteConnection));
     }
-
 
     public Map<DataType, Map<Identifier, String>> getCache() {
         return cache;
@@ -61,5 +61,6 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
         CommonNetworkCache.INSTANCE.fromNetwork(message.cache);
         // 通知客户端重新构建ClientIndex
         ClientIndexManager.reload();
+        RecipeViewerReloadBridge.requestReload();
     }
 }
