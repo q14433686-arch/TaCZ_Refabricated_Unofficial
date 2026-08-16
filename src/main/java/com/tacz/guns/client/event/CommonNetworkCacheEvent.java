@@ -1,5 +1,6 @@
 package com.tacz.guns.client.event;
 
+import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.resource.ClientIndexManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.network.CommonNetworkCache;
@@ -50,6 +51,7 @@ public class CommonNetworkCacheEvent {
         if (handler.getConnection() == null || handler.getConnection().isMemoryConnection()) {
             return;
         }
+        RecipeViewerReloadBridge.clear();
         CommonAssetsManager.clearInstance();
         CommonNetworkCache.INSTANCE.clear();
         ClientIndexManager.clear();
