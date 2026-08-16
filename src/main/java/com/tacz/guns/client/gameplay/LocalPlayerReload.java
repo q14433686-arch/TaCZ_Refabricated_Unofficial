@@ -35,18 +35,23 @@ public class LocalPlayerReload {
             return;
         }
 
-        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> {
-            // 如果没在换弹，则返回
-            IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
-            ReloadState reloadState = gunOperator.getSynReloadState();
-            if (!reloadState.getStateType().isReloading()) {
-                return;
-            }
-            // 发包通知服务器
-            ClientPlayNetworking.send(new ClientMessagePlayerCancelReload());
-            // 执行本地取消换弹逻辑
-            this.cancelReload(display);
-        });
+        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(this::cancelReloadWithDisplay);
+    }
+
+    /**
+     * Stable client-side reload-cancellation hook after display data has been resolved.
+     */
+    protected void cancelReloadWithDisplay(GunDisplayInstance display) {
+        // 如果没在换弹，则返回
+        IGunOperator gunOperator = IGunOperator.fromLivingEntity(player);
+        ReloadState reloadState = gunOperator.getSynReloadState();
+        if (!reloadState.getStateType().isReloading()) {
+            return;
+        }
+        // 发包通知服务器
+        ClientPlayNetworking.send(new ClientMessagePlayerCancelReload());
+        // 执行本地取消换弹逻辑
+        this.triggerClientReloadCancelAnimation(display);
     }
 
     public void reload() {
@@ -60,40 +65,50 @@ public class LocalPlayerReload {
         if (gunData == null) {
             return;
         }
-        TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> {
-            // 检查是否为背包直读
-            if (gunItem.useInventoryAmmo(mainHandItem)) {
-                return;
-            }
-            // 检查状态锁
-            if (data.clientStateLock) {
-                return;
-            }
-            if (System.currentTimeMillis() - data.clientShootTimestamp < 100) {
-                return;
-            }
-            // 弹药简单检查
-            boolean canReload = gunItem.canReload(player, mainHandItem);
-            if (IGunOperator.fromLivingEntity(player).needCheckAmmo() && !canReload) {
-                return;
-            }
-            // 锁上状态锁
-            data.lockState(operator -> operator.getSynReloadState().getStateType().isReloading());
-            data.chargeProgress = 0f;
-            // 触发换弹事件
-            GunReloadEvent gunReloadEvent = new GunReloadEvent(player, player.getMainHandItem(), LogicalSide.CLIENT);
-            GunReloadEvent.CALLBACK.invoker().post(gunReloadEvent);
-            if (gunReloadEvent.isCanceled()) {
-                return;
-            }
-            // 发包通知服务器
-            ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
-            // 执行客户端 reload 相关内容
-            this.doReload(gunItem, display, gunData, mainHandItem);
-        });
+        TimelessAPI.getGunDisplay(mainHandItem)
+                .ifPresent(display -> reloadWithDisplay(gunItem, display, gunData, mainHandItem));
     }
 
-    private void doReload(IGun iGun, GunDisplayInstance display, GunData gunData, ItemStack mainHandItem) {
+    /**
+     * Stable client-side reload hook after display data has been resolved.
+     */
+    protected void reloadWithDisplay(AbstractGunItem gunItem, GunDisplayInstance display, GunData gunData, ItemStack mainHandItem) {
+        // 检查是否为背包直读
+        if (gunItem.useInventoryAmmo(mainHandItem)) {
+            return;
+        }
+        // 检查状态锁
+        if (data.clientStateLock) {
+            return;
+        }
+        if (System.currentTimeMillis() - data.clientShootTimestamp < 100) {
+            return;
+        }
+        // 弹药简单检查
+        boolean canReload = gunItem.canReload(player, mainHandItem);
+        if (IGunOperator.fromLivingEntity(player).needCheckAmmo() && !canReload) {
+            return;
+        }
+        // 锁上状态锁
+        data.lockState(this::isReloadLockActive);
+        data.chargeProgress = 0f;
+        // 触发换弹事件
+        GunReloadEvent gunReloadEvent = new GunReloadEvent(player, player.getMainHandItem(), LogicalSide.CLIENT);
+        GunReloadEvent.CALLBACK.invoker().post(gunReloadEvent);
+        if (gunReloadEvent.isCanceled()) {
+            return;
+        }
+        // 发包通知服务器
+        ClientPlayNetworking.send(new ClientMessagePlayerReloadGun());
+        // 执行客户端 reload 相关内容
+        this.triggerClientReloadAnimation(gunItem, display, gunData, mainHandItem);
+    }
+
+    protected boolean isReloadLockActive(IGunOperator operator) {
+        return operator.getSynReloadState().getStateType().isReloading();
+    }
+
+    protected void triggerClientReloadAnimation(IGun iGun, GunDisplayInstance display, GunData gunData, ItemStack mainHandItem) {
         var animationStateMachine = display.getAnimationStateMachine();
         if (animationStateMachine != null) {
             Bolt boltType = gunData.getBolt();
@@ -119,7 +134,7 @@ public class LocalPlayerReload {
         }
     }
 
-    private void cancelReload(GunDisplayInstance display) {
+    protected void triggerClientReloadCancelAnimation(GunDisplayInstance display) {
         var animationStateMachine = display.getAnimationStateMachine();
         if (animationStateMachine != null) {
             animationStateMachine.trigger(GunAnimationConstant.INPUT_CANCEL_RELOAD);
