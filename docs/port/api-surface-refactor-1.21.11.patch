@@ -1326,10 +1326,18 @@ index e8ebf40..f02adac 100644
              return 0L;
          }
 diff --git a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityReload.java b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityReload.java
-index 6a26f39..aa20b3b 100644
+index 6a26f39..506c366 100644
 --- a/src/main/java/com/tacz/guns/entity/shooter/LivingEntityReload.java
 +++ b/src/main/java/com/tacz/guns/entity/shooter/LivingEntityReload.java
-@@ -35,54 +35,64 @@ public class LivingEntityReload {
+@@ -8,6 +8,7 @@ import com.tacz.guns.api.event.common.GunReloadEvent;
+ import com.tacz.guns.api.item.gun.AbstractGunItem;
+ import com.tacz.guns.network.NetworkHandler;
+ import com.tacz.guns.network.message.event.ServerMessageGunReload;
++import com.tacz.guns.resource.index.CommonGunIndex;
+ import com.tacz.guns.resource.pojo.data.gun.Bolt;
+ import net.minecraft.resources.Identifier;
+ import net.minecraft.world.entity.LivingEntity;
+@@ -35,54 +36,64 @@ public class LivingEntityReload {
              return;
          }
          Identifier gunId = gunItem.getGunId(currentGunItem);
