@@ -1,6 +1,6 @@
-<!-- 此文件按 26.1.2 分支根目录 README.md 的位置和用途编写，可直接复制替换。 -->
+<!-- 此文件按 1.21.11 分支根目录 README.md 的位置和用途编写，可直接复制替换。 -->
 
-# [UNOFFICIAL] TaCZ Refabricated — Minecraft 26.1.2 / Fabric
+# [UNOFFICIAL] TaCZ Refabricated — Minecraft 1.21.11 / Fabric
 
 > **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero) for Minecraft 26.2,
 > 26.1.2 and 1.21.11, with an LRTactical compatibility framework. Not an official TaCZ
@@ -9,11 +9,12 @@
 > **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
-的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.1.2 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.1.2.R2`**。
+的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 1.21.11 Fabric**（经由本仓库的 26.1.2 分支）。
+直接上游的版本号为 `0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.1.21.11.R2`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
+· [1.21.11 源码](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11)
 · [26.1.2 源码](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2)
 · [直接上游](https://github.com/Sh1roCu/TACZ-Refabricated/tree/1.21.1)
 · [原始 TaCZ 项目](https://github.com/MCModderAnchor/TACZ)
@@ -28,30 +29,23 @@
 | **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) | [`26.1.2_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.1.2_R2) |
 | **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) | [`1.21.11_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/1.21.11_R2) |
 
-本页面对应 **26.1.2** 分支。
-
-### 选择你的 Minecraft 版本 / Pick your Minecraft version
-
-| Minecraft | 源码分支 | 最新 Release |
-|---|---|---|
-| **26.2** | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) | [`26.2_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.2_R2) |
-| **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) | [`26.1.2_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.1.2_R2) |
-| **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) | [`1.21.11_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/1.21.11_R2) |
-
-本页面对应 **26.1.2** 分支。
+本页面对应 **1.21.11** 分支。注意本分支要求 **Java 21**，而 26.x 分支要求 Java 25。
 
 ---
 
 ## 1. 支持环境
 
-| 项目 | 26.1.2 分支要求 |
+| 项目 | 1.21.11 分支要求 |
 |---|---|
-| Minecraft | **26.1.2** |
+| Minecraft | **1.21.11** |
 | 加载器 | **Fabric Loader 0.19.3+** |
-| Java | **25+** |
-| Fabric API | **0.155.2+**；R2 构建使用 **0.155.2+26.1.2** |
-| Forge Config API Port | **26.1.5+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.1.2.R2`** |
+| Java | **21+**（注意：26.x 分支要求 Java 25，本分支是 21） |
+| Fabric API | **0.141.6+**；R2 构建使用 **0.141.6+1.21.11** |
+| Forge Config API Port | **21.11.1+，硬依赖** |
+| 本 mod | **`1.1.8+fabric.1.21.11.R2`** |
+
+> 1.21.11 是**混淆**版本，构建使用 Loom 的 remap 模式（`net.fabricmc.fabric-loom-remap`）
+> 与官方 Mojang 映射；26.x 分支则是非混淆的。这个差异是本分支绝大多数移植工作的来源。
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
@@ -61,8 +55,8 @@
 
 本仓库包含：
 
-- TaCZ 的 Fabric 26.1.2 端口及随上游带来的默认枪包；
-- 为 26.x API 改写的网络、资源加载、GUI 和渲染接线；
+- TaCZ 的 Fabric 1.21.11 端口及随上游带来的默认枪包；
+- 为 1.21.11 API 改写的网络、资源加载、GUI 和渲染接线；
 - 一套内置的 **LRTactical 兼容框架**；
 - 若干可选模组的兼容接线。
 
@@ -95,8 +89,8 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 使用 stencil 值控制目镜、镜身、准星和枪体片元；镜片后看到的
 仍是同一次世界渲染。它没有第二台相机，也没有第二次 `renderLevel`。
 
-26.1.2 端口无法沿用上游的即时 stencil 调用与绘制时序，因此使用 branch-specific 的
-**深度孔径**路径：
+1.21.11 端口无法沿用上游的即时 stencil 调用与绘制时序（1.21.11 的 `RenderPipeline`
+没有模板缓冲状态），因此沿用 26.1.2 分支引入的 **深度孔径**路径：
 
 1. 用不可见目镜几何写入孔径深度；
 2. 在镜身绘制前保存并复制所需的世界/孔径深度；
@@ -112,10 +106,10 @@ Iris 有专门的 HAND/depth 接线；其他 shader pack 没有因此自动获�
 
 ## 4. 安装
 
-1. 安装 Minecraft 26.1.2、Fabric Loader 0.19.3+ 与 Java 25+；
-2. 安装 Fabric API 0.155.2+ 和 Forge Config API Port 26.1.5+；
+1. 安装 Minecraft 1.21.11、Fabric Loader 0.19.3+ 与 Java 21+；
+2. 安装 Fabric API 0.141.6+ 和 Forge Config API Port 21.11.1+；
 3. 从 [Releases](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
-   下载明确标注为 **26.1.2 / Fabric** 的构建；
+   下载明确标注为 **1.21.11 / Fabric** 的构建；
 4. 把三个 mod 的 `.jar` 放入 `.minecraft/mods/`；
 5. 启动游戏。第三方枪包按下一节安装。
 
@@ -171,10 +165,42 @@ gunpack.meta.json
 转换器会生成带 `gunpack.meta.json` 的输出；它不能保证自动修复所有旧资源、配方或脚本差异，
 请保留原包备份并检查游戏日志。
 
+### 旧式自制工作台配方
+
+不少 1.20.6 及以前的枪包把自制工作台的原版合成配方放在
+`data/<命名空间>/recipes/`（复数），且用旧结果格式：
+
+```json
+"result": {
+  "item": "tacz:workbench_b",
+  "nbt": { "BlockId": "your_pack:smith_table" }
+}
+```
+
+自 R1 起会在**枪包加载时**把该目录映射到 1.21.11 所需的 `recipe/`，并将该结果转换为
+`id` + `components.minecraft:custom_data`。同时会把旧的 `{ "tag": ... }` /
+`{ "item": ... }` 材料对象与 `forge:nbt` / `forge:partial_nbt` 条件材料转换为
+1.21.11/Fabric 可解析的形式。这会保留 `BlockId`，让枪械、弹药和配件重新按该枪包自己的
+工作台 filter 与页签处理，而不是因丢失身份而误落到同一外形的默认工作台或 LRTactical
+工作台中。
+
+这项兼容只处理标准原版配方的旧目录与结果数据；不会猜测或修复已经在旧版本中合成、
+但缺少 `BlockId` 的工作台物品/方块——物理工作台外形不足以唯一确定它原本属于哪个枪包。
+更新后请重新合成一次受影响的自制工作台。
+
+安装 JEI 或 REI 时，TaCZ 会内置“弹药查询”分类：选择一类 TACZ 弹药即可查看当前枪包中
+所有使用该弹药的枪械，无需另装 TaCZ Ammo Query。客户端收到服务端枪包缓存后会自动刷新
+工作台分类、催化剂、配方以及弹药查询结果；不需要手动重载资源包。日志会出现：
+
+```text
+[TACZ Recipe Viewer] Refreshing after gun-pack sync (... table(s), ... recipe(s)).
+[TACZ Recipe Viewer] JEI/REI refresh completed.
+```
+
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.1.2.R2` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.1.21.11.R2` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容
@@ -182,7 +208,7 @@ gunpack.meta.json
 本仓库不提供 Arcana，也没有实现 Arcana 的 API 或资产保护/加载流程。
 截至 **2026-08-12** 核对，[Arcana 的官方发布页](https://www.curseforge.com/minecraft/mc-mods/tacz-arcana-timeless-and-classics-guns)
 提供的是 **Minecraft 1.20.1 Forge** 文件；因此明确要求 Arcana 的内容不能视为本 Fabric
-26.x 端口的受支持内容。
+1.21.11 端口的受支持内容。
 
 请先查看内容包作者列出的前置依赖。紫黑贴图或模型缺失本身不能证明“这个包一定依赖 Arcana”，
 也可能是目录层级、资源路径、版本谓词或包本身不完整造成的。
@@ -192,7 +218,7 @@ gunpack.meta.json
 ## 6. 当前已知边界
 
 - LRTactical 是部分兼容框架，`flash_shield` 未实现；第三方包兼容性需要逐包验证。
-- 26.1.2 的瞄具裁剪是 branch-specific 的深度孔径实现，不应描述成上游 PIP，也不保证每个
+- 1.21.11 的瞄具裁剪是 branch-specific 的深度孔径实现，不应描述成上游 PIP，也不保证每个
   shader pack 都得到完全相同的结果。
 - 明确依赖 Arcana 的内容不受支持；其他枪包也不能仅凭“能被扫描到”就视为完全兼容。
 
@@ -211,8 +237,8 @@ gunpack.meta.json
 - 其他第三方库、资源和外部内容包可能有各自许可。
 
 详见该分支的
-[`LICENSE`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/blob/26.1.2/LICENSE)
-与 [`LICENSES.md`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/blob/26.1.2/LICENSES.md)。
+[`LICENSE`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/blob/1.21.11/LICENSE)
+与 [`LICENSES.md`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/blob/1.21.11/LICENSES.md)。
 代码许可不会自动覆盖美术资源，本仓库兼容某个第三方内容包也不代表取得、转授或改变了
 该内容包的许可。
 
@@ -222,7 +248,7 @@ gunpack.meta.json
 
 ## 8. 从源码构建
 
-需要 Java 25：
+需要 Java 21：
 
 ```bash
 ./gradlew build
@@ -238,7 +264,76 @@ gunpack.meta.json
 
 ---
 
-## 9. 反馈
+## 9. 1.21.11 移植说明
+
+本分支从 26.1.2 分支移植而来。两者最大的差别是：**1.21.11 是混淆版本，26.x 不是**。
+由此产生的坑贯穿整个移植过程，详见 `docs/`：
+
+| 文档 | 内容 |
+|---|---|
+| `docs/PORT_1_21_11_PHASE1.md` | 构建文件迁移（Loom remap 模式、依赖版本、mixin 配置） |
+| `docs/PORT_1_21_11_PHASE2.md` | 编译错误族、逐次启动崩溃与渲染问题的完整定位记录 |
+| `docs/PORT_R2_TO_26_1_2.md` | 将当前 R2 功能移植到 26.1.2 的独立执行手册 |
+| `docs/PORT_R2_TO_26_2_MAIN.md` | 将当前 R2 功能移植到 26.2(main) 的独立执行手册 |
+| `docs/AMMO_SOURCE_API.md` | 下游模组替换实体弹药源的公共 API、示例与兼容约定 |
+| `docs/verify_mixin_targets.py` | 校验所有 mixin 目标与 `@Inject` 处理函数签名 |
+| `docs/verify_shader_imports.py` | 校验所有自定义 shader 的 `#moj_import` 目标真实存在 |
+
+### 两个校验脚本
+
+编译通过 **不等于** 运行期安全。本移植过程中崩了 5 次，每一次都能编译通过：
+
+```bash
+./gradlew help --no-daemon          # 先填充 Loom 缓存（脚本依赖它反查真实签名）
+python3 docs/verify_mixin_targets.py    # 102 项 / 44 个原版类
+python3 docs/verify_shader_imports.py   # 16 条 #moj_import
+```
+
+`verify_mixin_targets.py` 覆盖四类检查：目标方法名（含继承）、精确描述符、
+`@At(target=...)` 的成员归属、以及 `@Inject` 处理函数的参数列表。
+**`lambda$xxx$N` 形式的目标会直接判错** —— 那是非混淆版本的 javac 合成名，
+在 1.21.11 上必须写成 intermediary 的 `method_NNNNN`。
+
+`verify_shader_imports.py` 用于捕获悬空的 `#moj_import`。这类问题编译期查不出
+（GLSL 不过 javac），mixin 校验也查不出（不是 mixin），但会让 `ShaderManager`
+抛 NPE、整个资源重载失败、客户端**黑屏**。
+
+### 低内存环境构建注意
+
+`./gradlew build` 会在 `remapSourcesJar` 阶段占用大量内存。内存紧张时（约 2 GB 以下）
+用下面这条只产出可用 jar：
+
+```bash
+./gradlew remapJar -x sourcesJar -x remapSourcesJar
+```
+
+`remapJar` 本身也是内存峰值所在。若日志出现
+`Gradle build daemon disappeared unexpectedly`，先确认 `build/libs/` 下是否已生成
+完整 jar（用 `unzip -t` 校验），并删除残留的 `*.jar.tmp` 后重试。
+`gradle.properties` 里的 `org.gradle.jvmargs` 是按 2 GB 沙箱调过的，
+在正常开发机上可以调大。
+
+---
+
+## 10. 下游弹药源 API
+
+需要让女仆、载具或其他自定义实体库存为枪械供弹的模组，不再需要 mixin
+`AbstractGunItem`、`LivingEntityShoot`、`ModernKineticGunScriptAPI` 或客户端动画 lambda。
+请在 common 初始化阶段向 `AmmoSourceRegistry.EVENT` 注册 `AmmoSourceProvider`；首个返回
+非 `null` 的 provider 接管该实体/枪械组合，否则自动回退到 TaCZ 的标准实体库存。
+
+`hasAmmo` 会同时用于客户端预测/动画与服务端判断，所以注册必须覆盖物理客户端和服务端，
+并且查询不能修改库存；实际 `consumeAmmo` 仍由权威游戏逻辑调用。假弹、创造模式和无限弹药
+规则仍由 TaCZ 原调用点处理，不应在 provider 中重复实现。
+
+完整契约、示例及迁移范围见
+[`docs/AMMO_SOURCE_API.md`](docs/AMMO_SOURCE_API.md)。今后若修改该 API 或文档列出的旧弹药
+调用点，会在 1.21.11 changelog / release notes 中明确说明；javac 生成的 `lambda$...` 名称
+不属于兼容 API。
+
+---
+
+## 11. 反馈
 
 请在[本仓库 Issues](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)提交：
 
