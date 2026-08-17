@@ -1,6 +1,7 @@
 name: Version consistency
 
 # 版本一致性守门：改了 gradle.properties 却忘了同步 README 时，PR 会红。
+# 只在 PR 与三条正式分支上把关；功能分支的中间提交不受影响。
 on:
   push:
     branches:
@@ -25,8 +26,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # --strict：不一致时返回 1，让 PR 变红。
+      # 这是「合并前必须收尾」的门禁；本地 pre-commit 只提醒、不阻断。
       - name: 检查当前分支
-        run: bash scripts/check_release_consistency.sh
+        run: bash scripts/check_release_consistency.sh --strict
 
       - name: 失败提示
         if: failure()

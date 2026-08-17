@@ -37,24 +37,40 @@ TaCZ（Timeless & Classics Guns: Zero）的**非官方** Fabric 移植，GPL-3.0
 5. 「选择你的 Minecraft 版本」导航表中指向新 Release tag 的链接
 6. SemVer 说明段里的 `+fabric.<mc>.R<n>` 构建元数据示例
 
-**改完立刻运行自检，通过才算完成：**
+### 允许分步提交，但不允许分支「停在不一致状态」
+
+先改 `gradle.properties`、下一个 commit 再补 README，是**完全正常**的工作方式，
+工具链不会阻止你。约束只有一条：
+
+> **在该分支被合并 / 发布之前，必须回到一致状态。**
+
+**自检命令：**
 
 ```bash
-bash scripts/check_release_consistency.sh          # 当前工作区
-bash scripts/check_release_consistency.sh --all    # 远端三条分支
+bash scripts/check_release_consistency.sh            # 工作区，只报告（恒退出 0）
+bash scripts/check_release_consistency.sh --all      # 远端三条分支
+bash scripts/check_release_consistency.sh --strict   # 发布门禁，不一致则退出 1
 ```
 
-退出码非 0 表示存在不一致，**不得声称任务完成，也不得发布**。
+日常改动用默认模式（不打断节奏）；**合并前与发布前用 `--strict`**，
+它返回非 0 就说明还没收尾，此时**不得声称任务完成，也不得发布**。
 
-除本文件外还有两道自动防线（互为补充，不要依赖任何单独一道）：
+三道自动防线（互为补充）：
 
-- **本地 git hook** — 启用一次即可，之后每次 commit 自动拦截：
-  ```bash
-  git config core.hooksPath .githooks
-  ```
-- **CI** — 模板位于 `docs/publish/ci/consistency.yml`，需由仓库所有者复制到
-  `.github/workflows/consistency.yml`（AI 助手的 token 通常无 `workflows` 权限，无法代劳）。
-  启用后，改动 `gradle.properties` 或 `README.md` 的 push / PR 会自动跑同一个脚本。
+| 层 | 行为 | 用途 |
+|---|---|---|
+| `AGENTS.md`（本文件） | AI 会话开始时自动读取 | 让规则被看见 |
+| `.githooks/pre-commit` | **只提醒，永不阻断** | 分步提交途中不忘事 |
+| CI（`--strict`） | PR 上打红叉 | 合并前的真正门禁 |
+
+启用本地 hook（一次即可）：
+
+```bash
+git config core.hooksPath .githooks
+```
+
+CI 模板位于 `docs/publish/ci/consistency.yml`，需由仓库所有者复制到
+`.github/workflows/consistency.yml`（AI 助手的 token 通常无 `workflows` 权限，无法代劳）。
 
 ### 历史事故（不要重蹈覆辙）
 

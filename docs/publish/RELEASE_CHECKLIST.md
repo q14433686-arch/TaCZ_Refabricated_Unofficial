@@ -19,6 +19,7 @@
 - [ ] 三份根 README 的支持环境表（MC/Loader/Java/Fabric API/Config Port）与 gradle.properties 一致
 - [ ] 版本导航表存在于全部三份 README，且指向本次新 tag
 - [ ] 导航表 6 条链接全部 HTTP 200（见 §3 脚本）
+- [ ] `bash scripts/check_release_consistency.sh --all --strict` 退出码为 0
 - [ ] CHANGELOG 已写，且未声称任何未实际实现的修复
 
 ### 发布时
@@ -89,7 +90,18 @@
 
 ## §3 链接校验（发布前后各跑一次）
 
-在任意分支 checkout 下执行，全部返回 200 才算通过：
+> **分步改动不受影响**：日常提交时 `pre-commit` 只提醒不阻断，
+> 默认模式的脚本也恒返回 0。**合并前 / 发布前**改用 `--strict`，
+> 它返回非 0 即代表尚未收尾。
+
+先跑版本一致性门禁：
+
+```bash
+bash scripts/check_release_consistency.sh --strict        # 工作区
+bash scripts/check_release_consistency.sh --all --strict  # 远端三条分支
+```
+
+再跑链接可达性。在任意分支 checkout 下执行，全部返回 200 才算通过：
 
 ```bash
 BASE=https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial

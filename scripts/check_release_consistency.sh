@@ -4,8 +4,11 @@
 #   bash scripts/check_release_consistency.sh            # 检查本地工作区所在分支
 #   bash scripts/check_release_consistency.sh --all      # 检查远端全部三条分支
 #   bash scripts/check_release_consistency.sh --links    # 额外校验导航表链接可达性
+#   bash scripts/check_release_consistency.sh --strict   # 发布门禁：不一致即退出码 1
 #
-# 退出码 0 = 通过；1 = 发现不一致，必须修复后才能发布。
+# 退出码：
+#   默认（无 --strict）恒为 0——只报告，不阻断。分步提交属正常工作方式。
+#   加 --strict 时，发现不一致返回 1，用于发布前门禁与 CI。
 
 set -uo pipefail
 
@@ -136,6 +139,12 @@ check_links() {
 }
 
 MODE="${1:-}"
+STRICT=0
+for a in "$@"; do
+  [[ "$a" == "--strict" ]] && STRICT=1
+done
+# --strict 可与其他模式组合；单独使用时等价于检查工作区
+[[ "$MODE" == "--strict" ]] && MODE=""
 
 if [[ "$MODE" == "--all" || "$MODE" == "--links" ]]; then
   for b in "${BRANCHES[@]}"; do
@@ -152,8 +161,13 @@ fi
 
 echo
 if [[ $FAIL -ne 0 ]]; then
-  red "版本一致性检查未通过。发布前必须修复上述条目。"
-  red "参考 docs/publish/RELEASE_CHECKLIST.md 与 docs/README_<分支>.md。"
-  exit 1
+  if [[ $STRICT -eq 1 ]]; then
+    red "版本一致性检查未通过（--strict）。发布前必须修复上述条目。"
+    red "参考 docs/publish/RELEASE_CHECKLIST.md 与 docs/README_<分支>.md。"
+    exit 1
+  fi
+  ylw "发现不一致（见上）。若你正分步改动，可稍后再补齐。"
+  ylw "发布前请跑： bash scripts/check_release_consistency.sh --strict"
+  exit 0
 fi
 grn "全部通过。"
