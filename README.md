@@ -1,4 +1,10 @@
+<!-- 此文件按 1.21.11 分支根目录 README.md 的位置和用途编写，可直接复制替换。 -->
+
 # [UNOFFICIAL] TaCZ Refabricated — Minecraft 1.21.11 / Fabric
+
+> **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero) for Minecraft 26.2,
+> 26.1.2 and 1.21.11, with an LRTactical compatibility framework. Not an official TaCZ
+> release; not reviewed or endorsed by the TACZ Dev Team. GPL-3.0.**
 
 > **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
 
@@ -14,6 +20,16 @@
 · [原始 TaCZ 项目](https://github.com/MCModderAnchor/TACZ)
 
 > 仓库源码已使用 R2 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+
+### 选择你的 Minecraft 版本 / Pick your Minecraft version
+
+| Minecraft | 源码分支 | 最新 Release |
+|---|---|---|
+| **26.2** | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) | [`26.2_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.2_R2) |
+| **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) | [`26.1.2_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.1.2_R2) |
+| **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) | [`1.21.11_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/1.21.11_R2) |
+
+本页面对应 **1.21.11** 分支。注意本分支要求 **Java 21**，而 26.x 分支要求 Java 25。
 
 ---
 
@@ -192,7 +208,7 @@ gunpack.meta.json
 本仓库不提供 Arcana，也没有实现 Arcana 的 API 或资产保护/加载流程。
 截至 **2026-08-12** 核对，[Arcana 的官方发布页](https://www.curseforge.com/minecraft/mc-mods/tacz-arcana-timeless-and-classics-guns)
 提供的是 **Minecraft 1.20.1 Forge** 文件；因此明确要求 Arcana 的内容不能视为本 Fabric
-26.x 端口的受支持内容。
+1.21.11 端口的受支持内容。
 
 请先查看内容包作者列出的前置依赖。紫黑贴图或模型缺失本身不能证明“这个包一定依赖 Arcana”，
 也可能是目录层级、资源路径、版本谓词或包本身不完整造成的。
