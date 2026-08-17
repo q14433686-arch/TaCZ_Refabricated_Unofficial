@@ -1,1 +1,82 @@
+name: Bug 反馈 / Bug Report
+description: 崩溃、报错、功能异常
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **提交前请确认**：本仓库是 TaCZ 的非官方 Fabric 移植。
+        请勿将本移植的问题提交给 TaCZ 或 LRTactical 原作者。
 
+  - type: dropdown
+    id: mc_version
+    attributes:
+      label: Minecraft 版本
+      options:
+        - "26.2"
+        - "26.1.2"
+        - "1.21.11"
+    validations:
+      required: true
+
+  - type: input
+    id: mod_version
+    attributes:
+      label: 本 mod 版本
+      description: 见 mods 文件夹内的文件名，例如 1.1.8+fabric.26.2.R2
+      placeholder: "1.1.8+fabric.26.2.R2"
+    validations:
+      required: true
+
+  - type: input
+    id: deps
+    attributes:
+      label: Fabric Loader / Fabric API / Forge Config API Port 版本
+      description: 三个都要填，缺一项无法定位问题
+      placeholder: "Loader 0.19.3 / API 0.155.2+26.2 / Config Port 26.2.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: describe
+    attributes:
+      label: 问题描述与复现步骤
+      placeholder: |
+        1. 拿起 xxx 枪
+        2. 装上 xxx 配件
+        3. 开镜后 ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: minimal
+    attributes:
+      label: 是否已在最小环境复现？
+      description: 最小环境 = 本 mod + Fabric API + Forge Config API Port，不装其他任何 mod
+      options:
+        - "是，最小环境下仍然复现"
+        - "否，只在装了其他 mod 时出现"
+        - "还没测试"
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: 完整 latest.log 或崩溃报告
+      description: 请上传文件或粘贴完整内容，不要只截图报错那一行
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: shader
+    attributes:
+      label: 若使用光影，请注明 Iris / Sodium / 光影包版本
+      placeholder: "未使用光影"
+
+  - type: textarea
+    id: other_mods
+    attributes:
+      label: 其他已安装 mod 与枪包（名称 + 版本）
