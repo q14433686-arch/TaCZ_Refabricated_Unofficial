@@ -1,1 +1,11 @@
-
+blank_issues_enabled: false
+contact_links:
+  - name: TaCZ 原版（Forge/NeoForge）的问题
+    url: https://github.com/MCModderAnchor/TACZ/issues
+    about: 非本移植特有的问题，请提交到 TaCZ 原始项目
+  - name: 上游 1.21.1 Fabric 分支的问题
+    url: https://github.com/Sh1roCu/TACZ-Refabricated/issues
+    about: 若问题在上游 1.21.1 分支同样存在，请提交到上游
+  - name: 下载与版本对照
+    url: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases
+    about: 先确认你下载的构建与 Minecraft 版本匹配
