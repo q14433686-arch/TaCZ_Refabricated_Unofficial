@@ -1,1 +1,60 @@
+name: 内容包 / 兼容性问题
+description: 第三方枪包、战术包或可选 mod 的兼容问题
+title: "[Compat] "
+labels: ["compatibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **请先阅读**：紫黑贴图或模型缺失**不能**证明该包依赖 Arcana，
+        也可能是目录层级、资源路径、版本谓词或包本身不完整造成的。
+        明确依赖 Arcana 的内容不受支持（Arcana 官方仅提供 1.20.1 Forge 文件）。
 
+  - type: dropdown
+    id: mc_version
+    attributes:
+      label: Minecraft 版本
+      options:
+        - "26.2"
+        - "26.1.2"
+        - "1.21.11"
+    validations:
+      required: true
+
+  - type: input
+    id: pack_name
+    attributes:
+      label: 内容包 / mod 的准确名称与版本
+      description: 请给出准确包名和版本号，不要只写「某个枪包」
+    validations:
+      required: true
+
+  - type: input
+    id: pack_source
+    attributes:
+      label: 该包的下载来源链接
+    validations:
+      required: true
+
+  - type: textarea
+    id: pack_deps
+    attributes:
+      label: 该包作者列出的前置依赖
+      description: 请照抄作者发布页写明的依赖列表
+    validations:
+      required: true
+
+  - type: textarea
+    id: symptom
+    attributes:
+      label: 具体表现与复现步骤
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: 完整 latest.log
+      render: text
+    validations:
+      required: true
