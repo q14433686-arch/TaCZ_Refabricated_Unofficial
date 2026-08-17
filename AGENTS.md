@@ -63,11 +63,18 @@ bash scripts/check_release_consistency.sh --strict   # 发布门禁，不一致�
 | `.githooks/pre-commit` | **只提醒，永不阻断** | 分步提交途中不忘事 |
 | CI（`--strict`） | PR 上打红叉 | 合并前的真正门禁 |
 
-启用本地 hook（一次即可）：
+启用本地 hook（**整个仓库只需运行一次，所有分支通用**）：
 
 ```bash
-git config core.hooksPath .githooks
+bash scripts/install-hooks.sh
 ```
+
+它把 hook 装进 `.git/hooks/`，该目录不属于任何分支，切分支照常生效。
+检查脚本本体也只需存在于默认分支 `26.2(main)`——当前分支没有时，hook 会自动
+从默认分支读取。**因此不需要把 `scripts/` 复制到每条分支。**
+
+> 早期版本用 `git config core.hooksPath .githooks`，但 `.githooks/` 本身是分支内容，
+> 切到没有该目录的分支后提醒会静默失效，已弃用。
 
 CI 模板位于 `docs/publish/ci/consistency.yml`，需由仓库所有者复制到
 `.github/workflows/consistency.yml`（AI 助手的 token 通常无 `workflows` 权限，无法代劳）。
