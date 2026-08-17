@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+# pre-commit: 暂存区里若同时/单独改了 gradle.properties 或 README.md，就跑一致性自检。
+changed=$(git diff --cached --name-only)
+case "$changed" in
+  *gradle.properties*|*README.md*)
+    echo "[pre-commit] 检测到版本相关文件改动，运行一致性自检..."
+    if ! bash scripts/check_release_consistency.sh; then
+      echo ""
+      echo "[pre-commit] 版本一致性检查未通过，提交已中止。"
+      echo "[pre-commit] 见 AGENTS.md §1。确需跳过：git commit --no-verify"
+      exit 1
+    fi
+    ;;
+esac
+exit 0
