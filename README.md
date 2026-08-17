@@ -1,5 +1,9 @@
 # [UNOFFICIAL] TaCZ Refabricated — Minecraft 26.2 / Fabric
 
+> **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero) for Minecraft 26.2,
+> 26.1.2 and 1.21.11, with an LRTactical compatibility framework. Not an official TaCZ
+> release; not reviewed or endorsed by the TACZ Dev Team. GPL-3.0.**
+
 > **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
@@ -10,6 +14,17 @@
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
 · [直接上游](https://github.com/Sh1roCu/TACZ-Refabricated/tree/1.21.1)
 · [原始 TaCZ 项目](https://github.com/MCModderAnchor/TACZ)
+
+### 选择你的 Minecraft 版本 / Pick your Minecraft version
+
+| Minecraft | 源码分支 | 最新 Release |
+|---|---|---|
+| **26.2** | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) | [`26.2_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.2_R2) |
+| **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) | [`26.1.2_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.1.2_R2) |
+| **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) | [`1.21.11_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/1.21.11_R2) |
+
+本页面对应 **26.2** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
+具体版本见下方表格与对应 Release 说明。
 
 > 仓库源码已使用 R2 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
 
