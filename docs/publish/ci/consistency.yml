@@ -1,0 +1,35 @@
+name: Version consistency
+
+# 版本一致性守门：改了 gradle.properties 却忘了同步 README 时，PR 会红。
+# 不再用 paths 过滤——漏改 README 的 PR 往往只改了别的文件，过滤会让门禁失效。
+on:
+  push:
+    branches:
+      - '26.2(main)'
+      - '26.1.2'
+      - '1.21.11'
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: consistency-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: README 与 gradle.properties 版本一致性
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 检查当前工作区（--strict）
+        run: bash scripts/check_release_consistency.sh --strict
+
+      - name: 失败提示
+        if: failure()
+        run: |
+          echo "::error::README.md 与 gradle.properties 的版本号不一致。"
+          echo "::error::请参考 AGENTS.md §1 与 docs/publish/RELEASE_CHECKLIST.md 同步以下位置："
+          echo "::error::顶部版本句 / 「已使用 R? 版本号」提示行 / 支持环境表 / 导航表 tag 链接 / SemVer 说明段"

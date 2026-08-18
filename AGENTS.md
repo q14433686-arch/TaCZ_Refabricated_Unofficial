@@ -61,7 +61,8 @@ bash scripts/check_release_consistency.sh --strict   # 发布门禁，不一致�
 |---|---|---|
 | `AGENTS.md`（本文件） | AI 会话开始时自动读取 | 让规则被看见 |
 | `.githooks/pre-commit` | **只提醒，永不阻断** | 分步提交途中不忘事 |
-| CI（`--strict`） | PR 上打红叉 | 合并前的真正门禁 |
+| CI `consistency.yml`（`--strict`） | PR 上打红叉 | 版本文档门禁 |
+| CI `build.yml` | `./gradlew build` + 制品检查 + dedicated `runServer` smoke | 编译/打包门禁；**不是**客户端启动矩阵 |
 
 启用本地 hook（一次即可）：
 
@@ -69,8 +70,12 @@ bash scripts/check_release_consistency.sh --strict   # 发布门禁，不一致�
 git config core.hooksPath .githooks
 ```
 
-CI 模板位于 `docs/publish/ci/consistency.yml`，需由仓库所有者复制到
-`.github/workflows/consistency.yml`（AI 助手的 token 通常无 `workflows` 权限，无法代劳）。
+工作流已在 `.github/workflows/`：
+
+- `consistency.yml`：每次 push / PR 对当前工作区跑 `check_release_consistency.sh --strict`。
+- `build.yml`：Temurin **Java 25** + Gradle wrapper 校验 + `./gradlew build`，确认 `build/libs` 里有可分发 remap jar；随后 `scripts/ci_server_smoke.sh` 拉起 Loom `runServer`，等到日志出现 `Done (` 即停。
+
+**不要把 CI 绿写成「每个 release 都能启动游戏客户端」。** 客户端需要 GPU/窗口，GitHub-hosted runner 做不到；CI 验证的是编译、remap、打包，以及 dedicated server 进程能否进入 `Done`。
 
 ### 历史事故（不要重蹈覆辙）
 
