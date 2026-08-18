@@ -1,18 +1,35 @@
-name: Bug 反馈 / Bug Report
-description: 崩溃、报错、功能异常
+name: 🐞 Bug 反馈 / Bug Report
+description: 崩溃、启动失败、报错或功能异常 / Crash, startup failure or broken feature
 title: "[Bug] "
-labels: ["bug"]
+labels: ["bug", "needs-triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        **提交前请确认**：本仓库是 TaCZ 的非官方 Fabric 移植。
-        请勿将本移植的问题提交给 TaCZ 或 LRTactical 原作者。
+        ## 提交前请确认
+
+        - 本仓库是 **TaCZ 的非官方 Fabric 移植**，只处理移植本身的问题。
+        - 请**不要**把本移植的问题提交给 TaCZ / LRTactical 原作者。
+        - 请先[搜索已有 issue](https://github.com/OWNER/REPO/issues?q=is%3Aissue)，避免重复。
+        - 中文 / English 均可。
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 提交前检查 / Pre-submit checklist
+      options:
+        - label: 我已搜索过 open 与 closed 的 issue，没有找到相同问题
+          required: true
+        - label: 我已更新到最新版本，问题依然存在
+          required: true
+        - label: 我确认问题出现在本 Fabric 移植上，而不是 Forge / NeoForge 版 TaCZ
+          required: true
 
   - type: dropdown
     id: mc_version
     attributes:
       label: Minecraft 版本
+      description: 不在列表中的版本已停止支持，请升级后再复现。
       options:
         - "26.2"
         - "26.1.2"
@@ -24,28 +41,81 @@ body:
     id: mod_version
     attributes:
       label: 本 mod 版本
-      description: 见 mods 文件夹内的文件名，例如 1.1.8+fabric.26.2.R2
+      description: 完整版本号，见 mods 文件夹内的文件名。“最新版”不是有效回答。
       placeholder: "1.1.8+fabric.26.2.R2"
     validations:
       required: true
 
   - type: input
-    id: deps
+    id: loader_version
     attributes:
-      label: Fabric Loader / Fabric API / Forge Config API Port 版本
-      description: 三个都要填，缺一项无法定位问题
-      placeholder: "Loader 0.19.3 / API 0.155.2+26.2 / Config Port 26.2.1"
+      label: Fabric Loader 版本
+      placeholder: "0.19.3"
+    validations:
+      required: true
+
+  - type: input
+    id: api_version
+    attributes:
+      label: Fabric API 版本
+      placeholder: "0.155.2+26.2"
+    validations:
+      required: true
+
+  - type: input
+    id: config_api_version
+    attributes:
+      label: Forge Config API Port 版本
+      placeholder: "26.2.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: side
+    attributes:
+      label: 出现环境 / Side
+      description: 崩溃发生在哪一侧，直接决定排查方向。
+      options:
+        - 单人存档
+        - 局域网联机
+        - 多人服务器（客户端崩溃 / 异常）
+        - 多人服务器（服务端崩溃 / 异常）
     validations:
       required: true
 
   - type: textarea
     id: describe
     attributes:
-      label: 问题描述与复现步骤
+      label: 问题描述
+      description: 分别写清楚“实际发生了什么”和“你期望发生什么”。
       placeholder: |
-        1. 拿起 xxx 枪
-        2. 装上 xxx 配件
-        3. 开镜后 ...
+        实际表现：开镜后准星消失，视角锁死，只能按 Esc 退出。
+        期望表现：开镜后正常显示瞄准镜画面。
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 请从“新建一个存档”开始写，越具体越容易定位。
+      placeholder: |
+        1. 新建创造模式存档
+        2. /give 获取 xxx 枪
+        3. 装上 xxx 配件
+        4. 右键开镜 → 出现问题
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: 复现概率
+      options:
+        - 必现（每次都出现）
+        - 经常（一半以上）
+        - 偶发（少数情况）
+        - 只出现过一次
     validations:
       required: true
 
@@ -53,30 +123,55 @@ body:
     id: minimal
     attributes:
       label: 是否已在最小环境复现？
-      description: 最小环境 = 本 mod + Fabric API + Forge Config API Port，不装其他任何 mod
+      description: 最小环境 = 本 mod + Fabric API + Forge Config API Port，不装其他任何 mod 与光影。
       options:
-        - "是，最小环境下仍然复现"
-        - "否，只在装了其他 mod 时出现"
-        - "还没测试"
-    validations:
-      required: true
-
-  - type: textarea
-    id: log
-    attributes:
-      label: 完整 latest.log 或崩溃报告
-      description: 请上传文件或粘贴完整内容，不要只截图报错那一行
-      render: text
+        - 是，最小环境下仍然复现
+        - 否，只在装了其他 mod 时出现
+        - 还没测试
     validations:
       required: true
 
   - type: input
+    id: log_link
+    attributes:
+      label: 完整日志 / 崩溃报告链接
+      description: >-
+        把完整 latest.log（崩溃时为 crash-reports 内的报告）上传到 https://mclo.gs 或 Gist，
+        然后粘贴链接。只截一行报错无法定位问题。
+      placeholder: "https://mclo.gs/xxxxxxx"
+    validations:
+      required: true
+
+  - type: textarea
+    id: log_excerpt
+    attributes:
+      label: 关键报错片段（选填）
+      description: 可粘贴最关键的堆栈；完整日志仍以上方链接为准。
+      render: text
+
+  - type: input
+    id: gunpack
+    attributes:
+      label: 使用的枪包名称与版本（选填）
+      description: 若问题只在某个枪包上出现，请务必填写——大量“bug”其实来自第三方枪包。
+      placeholder: "官方默认枪包 / XXX 枪包 v1.2"
+
+  - type: input
     id: shader
     attributes:
-      label: 若使用光影，请注明 Iris / Sodium / 光影包版本
+      label: 光影与渲染环境（选填）
+      description: 使用光影时请注明 Iris / Sodium / 光影包版本。
       placeholder: "未使用光影"
 
   - type: textarea
     id: other_mods
     attributes:
-      label: 其他已安装 mod 与枪包（名称 + 版本）
+      label: 其他已安装 mod（选填）
+      description: 名称 + 版本，一行一个；mod 很多时可直接粘贴 mods 文件夹列表。
+      render: text
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: 补充信息（选填）
+      description: 截图、录屏、配置文件可以直接拖拽到此输入框上传。
