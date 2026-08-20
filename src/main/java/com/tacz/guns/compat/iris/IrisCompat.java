@@ -9,6 +9,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -233,6 +234,50 @@ public final class IrisCompat {
             return (Boolean) handRendererClass.getMethod("isActive").invoke(instance);
         } catch (Throwable ignored) {
             return false;
+        }
+    }
+
+    /** {@code HandRenderer.INSTANCE}，与 {@link #handIsRenderingSolidMethod} 一同惰性解析、解析一次。 */
+    @Nullable
+    private static Object handRendererInstance;
+    @Nullable
+    private static java.lang.reflect.Method handIsRenderingSolidMethod;
+    private static boolean handRenderingSolidResolved;
+
+    /**
+     * @return 当前是否处于 Iris 手部渲染的<b>实心</b>那一遍（{@code false} = 半透明那一遍）。
+     *
+     * <p>用来区分两次 {@code renderAllFeatures}：Iris 的 {@code HandRenderer} 一帧跑两遍手部，
+     * 而镜内画中画只能在<b>半透明</b>那遍成立 —— 只有它跑在
+     * {@code beginTranslucents() → deferredRenderer.renderAll()} 之后，
+     * {@code colortex0} 里才有已着色的场景。详见 {@code IrisHandTranslucentMixin}。</p>
+     *
+     * <p><b>句柄必须缓存。</b>本方法由 {@code IrisScopeMaskState.applyToGlRenderPass}
+     * 逐 draw call 调用，每次都 {@code Class.forName} + {@code getMethod} 会在热路径上
+     * 反复走反射查表并产生垃圾。这里解析一次（成功或失败都只试一次），之后只剩一次
+     * {@code invoke}。</p>
+     */
+    public static boolean isHandRenderingSolid() {
+        if (!handRenderingSolidResolved) {
+            handRenderingSolidResolved = true;
+            try {
+                Class<?> handRendererClass = Class.forName("net.irisshaders.iris.pathways.HandRenderer");
+                handRendererInstance = handRendererClass.getField("INSTANCE").get(null);
+                handIsRenderingSolidMethod = handRendererClass.getMethod("isRenderingSolid");
+            } catch (Throwable ignored) {
+                handRendererInstance = null;
+                handIsRenderingSolidMethod = null;
+            }
+        }
+        if (handRendererInstance == null || handIsRenderingSolidMethod == null) {
+            // 解析不到就当作「在实心那遍」—— 保守值，让镜身退回纯 discard（透视 1×），
+            // 而不是去采样一张可能还没着色的 colortex0（那就是黑镜片）。
+            return true;
+        }
+        try {
+            return (Boolean) handIsRenderingSolidMethod.invoke(handRendererInstance);
+        } catch (Throwable ignored) {
+            return true;
         }
     }
 

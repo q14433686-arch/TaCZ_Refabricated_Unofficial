@@ -148,8 +148,63 @@ public final class ScopeMaskRenderer {
             .withPrimitiveTopology(PrimitiveTopology.QUADS)
             .build();
 
+    /**
+     * 凸包顶点的 NDC 合理范围。视口是 [-1,1]，留一倍余量容纳部分出屏的目镜。
+     *
+     * <p>超出即判为近平面伪影：第一人称视模离相机极近，顶点擦过近平面时
+     * w 会小到让 NDC 飙上几百几千，一个这样的点就能把凸包撑满全屏。
+     */
+    private static final float NDC_SANITY_LIMIT = 2.0f;
+
     /** 顶点暂存区。复用同一个，避免每帧分配。 */
     private static final ByteBufferBuilder SCRATCH = new ByteBufferBuilder(4096);
+
+    /**
+     * 本帧目镜几何在 NDC 里的包围盒，{@code {minX, minY, maxX, maxY}}。
+     *
+     * <h3>它是干什么的</h3>
+     * 给镜内画面的合成加一道<b>硬件剪裁</b>。合成本来只靠着色器里的
+     * 「掩码为假就 discard」来约束范围，那是<b>软</b>约束 —— 掩码纹理一旦有任何问题
+     * （没绑上、内容不对、采样坐标错位），discard 就不触发，那张放大的世界会被
+     * <b>整屏</b>糊上去。用户实测到的「放大画面溢出到镜外、和正常画面撞在一起」正是这个形态。
+     *
+     * <p>而目镜几何在屏幕上的包围盒是我们<b>本来就算得出来</b>的东西。
+     * 用它开 scissor，合成就在物理上不可能画到镜片之外 ——
+     * 掩码依旧负责镜片内部的精确形状，scissor 负责「绝不越界」这条底线。
+     * 两道约束一软一硬，任何一道失效都还有另一道兜着。
+     */
+    private static final float[] MASK_BOUNDS_NDC = new float[4];
+    private static boolean maskBoundsValid = false;
+
+    /** 本帧是否算出了可用的目镜屏幕包围盒。 */
+    public static boolean hasMaskBounds() {
+        return maskBoundsValid;
+    }
+
+    /** @return {@code {minX, minY, maxX, maxY}}，NDC 空间；仅在 {@link #hasMaskBounds()} 为真时有效 */
+    public static float[] maskBoundsNdc() {
+        return MASK_BOUNDS_NDC;
+    }
+
+    /**
+     * 把一个 NDC 点并入本帧包围盒。
+     *
+     * <p>已经过 {@link #NDC_SANITY_LIMIT} 过滤，所以近平面伪影不会把盒子撑爆。
+     */
+    private static void accumulateBounds(float ndcX, float ndcY) {
+        if (!maskBoundsValid) {
+            maskBoundsValid = true;
+            MASK_BOUNDS_NDC[0] = ndcX;
+            MASK_BOUNDS_NDC[1] = ndcY;
+            MASK_BOUNDS_NDC[2] = ndcX;
+            MASK_BOUNDS_NDC[3] = ndcY;
+            return;
+        }
+        MASK_BOUNDS_NDC[0] = Math.min(MASK_BOUNDS_NDC[0], ndcX);
+        MASK_BOUNDS_NDC[1] = Math.min(MASK_BOUNDS_NDC[1], ndcY);
+        MASK_BOUNDS_NDC[2] = Math.max(MASK_BOUNDS_NDC[2], ndcX);
+        MASK_BOUNDS_NDC[3] = Math.max(MASK_BOUNDS_NDC[3], ndcY);
+    }
 
     private static boolean failed = false;
     private static boolean loggedSuccess = false;
@@ -168,6 +223,39 @@ public final class ScopeMaskRenderer {
      */
     private static boolean inHandPass = false;
 
+    /**
+     * 本帧掩码 target 里是否真有一张画好的掩码。
+     *
+     * <p>{@link ScopeMaskGeometry} 在 {@link #renderAtPhaseBoundary()} 的 finally 里
+     * 被无条件清空，所以<b>合成阶段没法再靠「清单空不空」判断本帧有没有掩码</b>。
+     * {@code ScopePipRenderer} 紧跟在掩码之后合成镜内画面，需要这个答案。</p>
+     *
+     * <h3>语义是「本帧任意时刻画过」，因此只能<b>每帧</b>清一次</h3>
+     * 早前的实现把它清在「每次手部 pass 开始时」，那在原版下没问题（一帧只有一次手部
+     * {@code renderAllFeatures}），但在 <b>Iris 光影下是错的</b>：
+     * {@code HandRenderer} 一帧里调用两次 —— {@code renderSolid} 与
+     * {@code renderTranslucent}，两次的 {@code ACTIVE} 都是 true（字节码实读）。于是：
+     * <pre>
+     * ① solid       清零 → 目镜几何在册 → 画掩码 → true
+     * ② translucent 清零 → 几何已被 ① 消费掉，清单是空的 → 提前 return → 【false】
+     * </pre>
+     * 每帧结束时恒为 false，{@code ScopePipRenderer} 于是永远看不到掩码，
+     * PIP 在光影下整个不工作、退回整屏变焦 —— 这正是用户实测到的现象。
+     *
+     * <p>改为每帧清一次之后，本标志在一帧之内是<b>单调</b>的（false → true，不会回落），
+     * 「本帧画过没有」这个语义才真正成立。
+     */
+    private static boolean maskDrawnThisFrame = false;
+
+    /**
+     * 上一帧的 {@link #maskDrawnThisFrame} 快照。
+     *
+     * <p>为什么需要它：掩码画在手部渲染里，而两个消费者跑在那之前 ——
+     * FOV 事件在 {@code extract} 阶段、镜内画面的抓取在 {@code renderLevel} 里。
+     * 它们要问的是「上一帧有没有掩码」，读当帧的值只会恒得 false。</p>
+     */
+    private static boolean maskDrawnLastFrame = false;
+
     private ScopeMaskRenderer() {
     }
 
@@ -177,6 +265,51 @@ public final class ScopeMaskRenderer {
 
     public static boolean isInHandPass() {
         return inHandPass || IrisCompat.isHandRendererActive();
+    }
+
+    /**
+     * 每帧开头调用一次，快照上一帧结果并把本帧归零。
+     *
+     * <p>接在 {@code GameRenderer#extract} 的 HEAD 上 —— 那是
+     * {@code Minecraft#runTick} 里 <b>extract(偏移 441) → render(偏移 520)</b>
+     * 这条顺序的最前面，因此本帧所有消费者（FOV 事件、镜内抓取、合成）
+     * 看到的都是同一份、定义明确的状态。</p>
+     *
+     * <p>刻意<b>不</b>放在手部 pass 里：Iris 一帧有两次手部 pass，
+     * 放那儿会被第二次抹掉，见 {@link #maskDrawnThisFrame} 的注释。</p>
+     */
+    public static void beginFrame() {
+        maskDrawnLastFrame = maskDrawnThisFrame;
+        maskDrawnThisFrame = false;
+        compositedThisFrame = false;
+    }
+
+    /** 本帧掩码是否已成功画进 target（供合成阶段判定 —— 它跑在掩码之后）。 */
+    public static boolean hasMaskThisFrame() {
+        return maskDrawnThisFrame;
+    }
+
+    /** 上一帧是否画出过掩码（供 FOV 让位与镜内抓取判定 —— 它们跑在掩码之前）。 */
+    public static boolean hadMaskLastFrame() {
+        return maskDrawnLastFrame;
+    }
+
+    /**
+     * 「镜内画面本帧已经合成过」的一次性闸门。
+     *
+     * <p>同样是 Iris 双手部 pass 惹的：合成若在 solid 与 translucent 两次都跑，
+     * 第二次会把 solid 阶段已经画进孔径的东西（蚀刻准星等）整片覆盖掉。
+     * 只允许本帧第一次手部 pass 合成。</p>
+     */
+    private static boolean compositedThisFrame = false;
+
+    /** @return true 表示本次调用取得了合成资格（每帧只有第一次调用会返回 true） */
+    public static boolean claimCompositeSlot() {
+        if (compositedThisFrame) {
+            return false;
+        }
+        compositedThisFrame = true;
+        return true;
     }
 
     /**
@@ -294,6 +427,9 @@ public final class ScopeMaskRenderer {
                     // 我们的顶点/索引都是从头开始的单批，所以 firstIndex 与 baseVertex 都是 0。
                     pass.drawIndexed(draw.indexCount(), 1, 0, 0, 0);
                 }
+                // 走到这里 pass 已经关闭、绘制已提交 —— 掩码 target 里确实有东西了。
+                // 镜内画中画的合成阶段就等这一位。
+                maskDrawnThisFrame = true;
                 if (!loggedSuccess) {
                     loggedSuccess = true;
                     GunMod.LOGGER.info("[TACZ Scope] Ocular mask drawn: {} indices from {} batches.",
@@ -346,6 +482,10 @@ public final class ScopeMaskRenderer {
     private static MeshData buildMesh() {
         BufferBuilder builder = new BufferBuilder(SCRATCH, PrimitiveTopology.QUADS, DefaultVertexFormat.POSITION);
         boolean hullFill = RenderConfig.SCOPE_MASK_HULL_FILL.get();
+        // 每帧重算目镜屏幕包围盒（供合成阶段开硬件剪裁）。
+        // 无论走凸包还是逐立方体描摹，都要算 —— 那道底线不能只在其中一条路上生效。
+        maskBoundsValid = false;
+        computeMaskBounds();
         for (ScopeMaskGeometry.Entry entry : ScopeMaskGeometry.entries()) {
             if (hullFill && writeHullFill(builder, entry.pose(), entry.cubes())) {
                 continue;
@@ -426,7 +566,22 @@ public final class ScopeMaskRenderer {
                     if (tmp.w <= 1.0e-6f) {
                         continue;
                     }
-                    pts.add(new float[]{tmp.x() / tmp.w, tmp.y() / tmp.w});
+                    float ndcX = tmp.x() / tmp.w;
+                    float ndcY = tmp.y() / tmp.w;
+                    // 【近平面炸包保护】w>0 还不够。瞄具是第一人称视模，离相机只有几厘米，
+                    // 而近平面是 0.05 —— 大幅转身/开镜过渡时，目镜的个别顶点会擦过近平面，
+                    // w 落到 0.001 这种量级，透视除法后 NDC 直接飙到 ±1000。
+                    // 凸包只要吃进一个这样的点就会撑满整个屏幕，掩码于是「全屏为真」，
+                    // 镜内画面被贴得到处都是 —— 用户实测「瞄着假人时完美，转身 190° 后
+                    // 放大的假人跑到镜外还是放大的」正是这个。
+                    //
+                    // 合法的目镜投影不可能离视口这么远，所以超出该范围的点一律判为
+                    // 近平面伪影丢弃。丢到不足 3 点时下面会回退逐立方体描摹（=旧行为），安全。
+                    if (!Float.isFinite(ndcX) || !Float.isFinite(ndcY)
+                            || Math.abs(ndcX) > NDC_SANITY_LIMIT || Math.abs(ndcY) > NDC_SANITY_LIMIT) {
+                        continue;
+                    }
+                    pts.add(new float[]{ndcX, ndcY});
                 }
             }
         }
@@ -479,6 +634,50 @@ public final class ScopeMaskRenderer {
             emitNdcAsQuad(builder, invProj, p0, hull.get(i), hull.get(i + 1));
         }
         return true;
+    }
+
+    /**
+     * 算出本帧全部目镜几何在 NDC 里的包围盒。
+     *
+     * <p>投影矩阵的取法与 {@link #writeHullFill} 完全同源（读同一份投影 UBO），
+     * 所以盒子与掩码画出来的形状严格在同一个坐标系里，不会错位。
+     * 读不到投影就不设包围盒 —— 合成阶段随之跳过剪裁，退回纯掩码约束（= 旧行为）。
+     */
+    private static void computeMaskBounds() {
+        if (ScopeMaskGeometry.isEmpty()) {
+            return;
+        }
+        Matrix4f proj = new Matrix4f();
+        try (GpuBufferSlice.MappedView view = RenderSystem.getProjectionMatrixBuffer().map(true, false)) {
+            proj.set(view.data());
+        } catch (Exception e) {
+            return;
+        }
+        Vector4f tmp = new Vector4f();
+        for (ScopeMaskGeometry.Entry entry : ScopeMaskGeometry.entries()) {
+            for (BedrockCube cube : entry.cubes()) {
+                for (var polygon : cube.getPolygons()) {
+                    if (polygon == null) {
+                        continue;
+                    }
+                    for (var vertex : polygon.vertices) {
+                        tmp.set(vertex.pos.x() / 16.0F, vertex.pos.y() / 16.0F, vertex.pos.z() / 16.0F, 1.0F);
+                        tmp.mul(entry.pose());
+                        tmp.mul(proj);
+                        if (tmp.w <= 1.0e-6f) {
+                            continue;
+                        }
+                        float ndcX = tmp.x() / tmp.w;
+                        float ndcY = tmp.y() / tmp.w;
+                        if (!Float.isFinite(ndcX) || !Float.isFinite(ndcY)
+                                || Math.abs(ndcX) > NDC_SANITY_LIMIT || Math.abs(ndcY) > NDC_SANITY_LIMIT) {
+                            continue;
+                        }
+                        accumulateBounds(ndcX, ndcY);
+                    }
+                }
+            }
+        }
     }
 
     /** 单调链叉积：(b−a)×(c−a) 的 z 分量。 */

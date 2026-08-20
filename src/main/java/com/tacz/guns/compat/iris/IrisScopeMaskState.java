@@ -106,7 +106,6 @@ public final class IrisScopeMaskState {
                 loggedApply = true;
                 GunMod.LOGGER.info("[TACZ Scope] Iris scope-mask bridge active (mode={}, textureUnit={}, textureId={}).", mode, unit, textureId);
             }
-
             GL20C.glUniform1i(modeLocation, mode);
             GL20C.glUniform1i(samplerLocation, unit);
             GL13C.glActiveTexture(GL13C.GL_TEXTURE0 + unit);
@@ -140,7 +139,23 @@ public final class IrisScopeMaskState {
                 return 0;
             }
             String normalized = path.toLowerCase(Locale.ROOT);
-            if (BODY_PIPELINE.equals(normalized) || FLASH_TRANSLUCENT_PIPELINE.equals(normalized)
+            if (BODY_PIPELINE.equals(normalized)) {
+                // 【恒为 1】镜身在孔径内 discard，于是最终画面里孔径那块就是 1× 的世界。
+                //
+                // 镜内的「放大」不在这里做 —— 那是
+                // {@code ScopePipRenderer.compositeAfterLevelUnderShaders()} 的活：
+                // 等 Iris 整条管线跑完，直接在最终画面上把孔径内那 1/Z 的小块放大铺满。
+                // 而「孔径内是干净的 1× 世界、没有枪」正是这里 discard 换来的前提。
+                //
+                // ↓ 以下是被推翻的旧方案，留作路标，别再走一遍 ↓
+                // 曾经让这里返回 3，由注入进 pack 着色器的分支去采样 colortexN。
+                // 两次实测都失败：先是纯黑（HAND_CUTOUT 跑在延迟光照之前，
+                // 那一刻没有任何 colortex 装着已着色的场景），把枪挪进半透明 pass 之后
+                // 又变成「灰噪块 + 黑」（场景色逐 pack 不同，Eclipse 在 colortex2）。
+                // 根子上这条路要求猜中别家 pack 的内部约定，怎么修都是下一次盲猜。
+                return 1;
+            }
+            if (FLASH_TRANSLUCENT_PIPELINE.equals(normalized)
                     || FLASH_SWIRL_PIPELINE.equals(normalized)) {
                 return 1;
             }
