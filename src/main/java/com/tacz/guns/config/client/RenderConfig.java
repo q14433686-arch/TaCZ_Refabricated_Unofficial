@@ -117,6 +117,16 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.DoubleValue SCOPE_PIP_WORLD_ZOOM_SHARE;
     /**
+     * 开镜时持枪晃动的强度倍数（{@code 1.0} = 与改动前一致）。
+     *
+     * <p>晃动本身是「枪跟不上视角转动」的滞后量，腰射与开镜原本一视同仁。
+     * 但开镜后视野被瞄具收窄、镜内还被放大 Z 倍，同样的角度抖动在镜内会被放大同样的倍数
+     * —— 现实里高倍镜正是「越放大越难稳住」。本项让开镜那一档单独可调。
+     *
+     * <p>按开镜进度插值：腰射恒为 1，满开镜取到本值。{@code 0} = 满开镜时完全不晃。
+     */
+    public static ForgeConfigSpec.DoubleValue AIMING_SWAY_INTENSITY;
+    /**
      * 允许在光影包启用时也跑 PIP。默认<b>关闭</b>。
      *
      * <p>关闭是保守默认，不是「已知不兼容」—— 见 {@code ScopePipRenderer} 里的说明。
@@ -397,6 +407,22 @@ public class RenderConfig {
                         "Ignored when ScopePipRerender is on -- that path already renders at native",
                         "resolution, so zooming the world would cost image quality for nothing.")
                 .defineInRange("ScopePipWorldZoomShare", 0.0d, 0.0d, 1.0d);
+        AIMING_SWAY_INTENSITY = builder
+                .comment("How much the gun sways while aiming down sights, as a multiplier.",
+                        "",
+                        "Sway is the gun lagging behind your view when you turn -- it is what makes the",
+                        "sight picture drift and settle. Hip fire is never affected by this setting; the",
+                        "value is blended in by aiming progress, so it reaches full strength only when",
+                        "fully scoped.",
+                        "  0.0 = rock steady once fully aimed, no sway at all",
+                        "  1.0 = the original amount, identical to before this option existed",
+                        "  1.5 = default, noticeably more alive without being hard to aim",
+                        "  3.0+ = heavy, deliberately difficult",
+                        "Worth raising with high-power optics: a narrow field of view (and the PIP lens,",
+                        "which magnifies by the scope's zoom on top) multiplies the same angular wobble,",
+                        "the way real magnified optics get harder to hold steady.",
+                        "The fast-turn safety clamp still applies, so the gun cannot swing off screen.")
+                .defineInRange("AimingSwayIntensity", 1.5d, 0.0d, 5.0d);
         SCOPE_PIP_ALLOW_SHADER_PACKS = builder
                 .comment("Allow the scope picture-in-picture to run while a shader pack is active.",
                         "Off by default as a precaution, NOT because it is known to be broken: under a",

@@ -464,6 +464,58 @@ solid pass 被 cancel、translucent pass 得以提交，
 
 ---
 
+## 2.8 开镜晃动强度（`AimingSwayIntensity`）
+
+### 2.8.1 晃动是什么
+
+不是新加的效果，而是本来就有的「枪跟不上视角转动」的滞后量：
+
+```java
+xRot = player.getViewXRot(partialTick) - lerp(partialTick, player.xBobO, player.xBob);
+```
+
+`getViewXRot` 是当前朝向，`xBob/yBob` 是 vanilla 维护的平滑滞后值，两者之差就是
+「刚才甩了多少」。这个差值驱动 6 个分量：整模型 pitch/yaw 反向旋转各一、
+`rootNode` 的 X/Y 偏移各一、`additionalQuaternion` 的 pitch/yaw 各一。
+
+### 2.8.2 为什么要给开镜单独加一档
+
+原实现对腰射与开镜**一视同仁**。但开镜后视野被瞄具收窄，PIP 更是把镜内又放大了 Z 倍
+—— 同样的角度抖动在镜内被放大成同样倍数的位移。现实里高倍镜正是「越放大越难稳住」，
+而原来的镜内反而显得过于稳定。
+
+按开镜进度插值（**不是**开镜就切换）：`scale = lerp(aimingProgress, 1.0, intensity)`。
+用插值是为了避免抬镜那一瞬幅度突然跳一下 —— 那种跳变比晃动本身更容易被察觉。
+
+| intensity | 腰射 | 满开镜 | 满开镜时最大旋转 / 位移 |
+|---|---|---|---|
+| `0.0` | ×1 | ×0 | 0.00° / 0.0000 |
+| `1.0` | ×1 | ×1 | 1.25° / 0.0521（**与改动前逐位一致**） |
+| `1.5`（默认） | ×1 | ×1.5 | 1.88° / 0.0781 |
+| `3.0` | ×1 | ×3 | 3.75° / 0.1563 |
+
+**腰射手感在任何取值下都不变** —— 进度 0 时插值恒为 1。
+
+### 2.8.3 两处必须同时改
+
+同一套公式在代码里有**两份拷贝**：
+
+| 文件 | 说明 |
+|---|---|
+| `client/renderer/item/GunItemRendererWrapper.java` | **枪械实际走的那一份** |
+| `client/renderer/item/AnimateGeoItemRenderer.java` | 父类的通用实现 |
+
+只改一处的表现是「有的枪改了有的没改」，极难定位。
+缩放系数统一由父类的 `aimingSwayScale()` 提供，避免两边算法漂移。
+
+> `tanh` 饱和限幅保持在缩放**之前**：它防的是快速转身时枪飞出画面，
+> 那道保护必须先生效，缩放只放大限幅后的结果。上表的「最大位移」列就是限幅后的上界。
+
+> lrtactical 的近战 / 投掷物渲染器里也有同样的 sway 公式，但**刻意不动** ——
+> 它们没有瞄具，开镜进度对它们没有意义。
+
+---
+
 ## 3. 配置键（全部在 `config/tacz-client.toml` 的 `[render]` 下）
 
 | 键 | 默认 | 说明 |
@@ -473,6 +525,7 @@ solid pass 被 cancel、translucent pass 得以提交，
 | `ScopePipAllowShaderPacks` | `false` | 允许光影下跑 PIP（目前不出图，见 §2） |
 | `ScopePipSharpness` | `0.5` | 重投影模式的锐化上限（只提升主观锐度） |
 | `ScopePipWorldZoomShare` | `0.0` | 瞄具倍率里由**世界**承担的比例，用来换镜内真实分辨率。见 §2.7。`0.0` = 与改动前逐位等价；`1.0` = 等于关掉 PIP |
+| `AimingSwayIntensity` | `1.5` | 开镜时持枪晃动的强度倍数。见 §2.8。腰射永不受影响；`1.0` = 与改动前逐位一致；`0.0` = 满开镜完全不晃 |
 | `ScopePipMinAimingProgress` | `0.05` | 低于此开镜进度不做 PIP |
 | `ScopePipDebugPaintLens` | `false` | 诊断：把合成实际覆盖到的区域涂成纯品红（整屏变色 = 合成没被掩码约束住） |
 | `ScopePipDebugNoComposite` | `false` | 诊断：跑 PIP 但不合成 |
