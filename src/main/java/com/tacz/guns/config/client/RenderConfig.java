@@ -82,7 +82,88 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue DISABLE_MOVEMENT_ATTRIBUTE_FOV;
     public static ForgeConfigSpec.BooleanValue ENABLE_TACZ_ID_IN_TOOLTIP;
     public static ForgeConfigSpec.BooleanValue BLOCK_ENTITY_TRANSLUCENT;
-    /** 第 18 轮：PIP 镜内渲染 P1 验证开关，默认关闭。 */
+    /**
+     * 瞄准镜「镜内画中画（PIP）」总开关。默认<b>关闭</b>。
+     *
+     * <p>开启后世界 FOV <b>不再</b>整屏变焦（{@code CameraSetupEvent#applyScopeMagnification}
+     * 对装了倍镜的枪整体让位），改为把已画好的世界拷一份、按倍率在屏幕空间重投影，
+     * 再由目镜掩码把这张图贴进镜片孔径 —— 于是镜外保持 1×、只有镜片里是放大的。
+     *
+     * <p>代价是镜内画面来自主画面中心裁切区的放大，高倍镜（6× 以上）会明显变软。
+     * 因为这属于观感取舍而非性能取舍，默认关闭、由玩家自己选。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_ENABLE;
+    /** 开镜进度低于该值时不做 PIP（此时孔径几乎闭合，拷贝纯属浪费）。 */
+    public static ForgeConfigSpec.DoubleValue SCOPE_PIP_MIN_AIMING_PROGRESS;
+    /**
+     * 镜内锐化强度（0 = 关）。
+     *
+     * <p>镜内画面是主画面中心区按倍率放大来的，放大倍数<b>就是</b>瞄具倍率 ——
+     * 6 倍镜就是 6× 放大，必然变软。锐化不能凭空造出细节，但能显著挽回主观锐度。
+     * 实际强度按倍率线性加权（1× 不锐化，6× 及以上取满），所以低倍镜不会被过度处理。
+     */
+    public static ForgeConfigSpec.DoubleValue SCOPE_PIP_SHARPNESS;
+    /**
+     * 瞄具倍率里有多大一份由<b>世界</b>承担（0 = 全归镜内，纯 PIP；1 = 全归世界，等于关掉 PIP）。
+     *
+     * <p>镜内清晰度的硬上限是「屏幕分辨率 ÷ 镜内放大倍数」。倍率是相乘的，
+     * 按 {@code 世界 = Z^share、镜内 = Z^(1-share)} 拆分后总倍率恒为 Z，
+     * 而镜内拿到的真实像素<b>多 Z^share 倍</b>。
+     * 这是唯一能真正增加镜内分辨率（而非仅提升主观锐度）的旋钮。
+     *
+     * <p>刻意用<b>比例</b>而不是绝对倍率上限：后者会被 Z 夹住，
+     * 于是任何 ≥ Z 的取值都让镜内倍率退化成 1（PIP 名存实亡），
+     * 且那个临界点随瞄具倍率漂移 —— 实测中玩家正是撞上了这条。
+     */
+    public static ForgeConfigSpec.DoubleValue SCOPE_PIP_WORLD_ZOOM_SHARE;
+    /**
+     * 开镜时持枪晃动的强度倍数（{@code 1.0} = 与改动前一致）。
+     *
+     * <p>晃动本身是「枪跟不上视角转动」的滞后量，腰射与开镜原本一视同仁。
+     * 但开镜后视野被瞄具收窄、镜内还被放大 Z 倍，同样的角度抖动在镜内会被放大同样的倍数
+     * —— 现实里高倍镜正是「越放大越难稳住」。本项让开镜那一档单独可调。
+     *
+     * <p>按开镜进度插值：腰射恒为 1，满开镜取到本值。{@code 0} = 满开镜时完全不晃。
+     */
+    public static ForgeConfigSpec.DoubleValue AIMING_SWAY_INTENSITY;
+    /**
+     * 允许在光影包启用时也跑 PIP。默认<b>关闭</b>。
+     *
+     * <p>关闭是保守默认，不是「已知不兼容」—— 见 {@code ScopePipRenderer} 里的说明。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_ALLOW_SHADER_PACKS;
+    /**
+     * 镜内画面改用「窄 FOV 把世界再画一遍」，而不是重投影主画面。默认<b>关闭</b>。
+     *
+     * <p>重投影的镜内分辨率上限是「屏幕分辨率 ÷ 倍率」—— 8 倍镜下惨不忍睹。
+     * 本模式的镜内像素是真画出来的，没有那个上限；代价是每帧多跑一遍完整世界渲染。
+     *
+     * <p>已知：与 Sodium 的地形投影快照需要同步（{@code SodiumCompat} 负责）；
+     * 早前的实现还出现过「镜外实体消失」，尚未定位，所以默认关闭、按需自测。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RERENDER;
+    /**
+     * 【诊断】跑完镜内那一遍，但<b>不做合成</b>。
+     *
+     * <p>用来一刀切开「放大画面溢出到镜外」这个症状的两种可能：
+     * <ul>
+     *   <li>画面干净（只有正常世界、镜片里什么都没有）→ 二次渲染是<b>关在离屏 target 里</b>的，
+     *       溢出来自合成/掩码；</li>
+     *   <li>放大画面照样溢出 → 二次渲染<b>漏到主画面</b>了，与合成无关。</li>
+     * </ul>
+     * 两种情况的修法完全不同，靠肉眼看成品是分不出来的。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_NO_COMPOSITE;
+    /**
+     * 【诊断】把镜内那一遍期间的渲染目标解析顺序打进日志（只记前几帧）。
+     * 见 {@code ScopePipTrace} 的类注释 —— 这个症状靠静态分析已经连错四次。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_TRACE;
+    /**
+     * 【诊断】把合成实际覆盖到的区域涂成纯品红。
+     * 整屏变品红 = 合成没被掩码约束住；只有镜片变品红 = 合成是对的，溢出来自别处。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_PAINT_LENS;
 
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
@@ -287,9 +368,103 @@ public class RenderConfig {
         builder.comment("Whether or not to automatically select the gun smith table's held item filter when opening it with a gun, attachment or ammo in main hand");
         AUTO_SELECT_GUN_SMITH_TABLE_FILTER = builder.define("AutoSelectGunSmithTableFilter", true);
 
-        builder.comment("[DEBUG] Enable the scope picture-in-picture (PIP) stage-1 verification. "
-                + "Only creates an off-screen render target and verifies output redirection works; "
-                + "does not yet render the world inside the scope. Default off.");
+        SCOPE_PIP_ENABLE = builder
+                .comment("Magnify only INSIDE the scope lens instead of zooming the whole screen",
+                        "(picture-in-picture). The view around the scope tube stays at 1x.",
+                        "Implemented by reprojecting a copy of the already-rendered frame, so it costs",
+                        "one fullscreen copy and works with Sodium/other terrain renderers.",
+                        "Tradeoff: the lens magnifies a centre crop of the frame, so high-power scopes",
+                        "(6x and up) look noticeably softer than the surrounding view.",
+                        "Requires ScopeMaskEnable and is skipped while a shader pack is active. Default off.")
+                .define("ScopePipEnable", false);
+        SCOPE_PIP_MIN_AIMING_PROGRESS = builder
+                .comment("Skip the picture-in-picture work while the aiming progress is below this value",
+                        "(the ocular aperture is still nearly closed down there).")
+                .defineInRange("ScopePipMinAimingProgress", 0.05d, 0.0d, 1.0d);
+        SCOPE_PIP_SHARPNESS = builder
+                .comment("Sharpening applied to the scope image (0 = off). The lens magnifies a centre crop",
+                        "of the frame by exactly the scope's zoom factor, so high-power optics are soft;",
+                        "sharpening cannot invent detail but recovers a lot of apparent crispness.",
+                        "Strength is scaled by magnification, so low-power optics stay untouched.")
+                .defineInRange("ScopePipSharpness", 0.5d, 0.0d, 1.0d);
+        SCOPE_PIP_WORLD_ZOOM_SHARE = builder
+                .comment("How much of the scope's magnification the WORLD takes, instead of the lens.",
+                        "Trades the purity of PIP for real sharpness inside the lens.",
+                        "",
+                        "The lens magnifies a centre crop of the frame, so at Zx it only has 1/Z of the",
+                        "screen's pixels to work with -- that is the whole reason high-power optics look",
+                        "soft. Zoom factors multiply, so the split is:",
+                        "    world = Z^share      lens = Z^(1-share)      world * lens = Z always",
+                        "The lens gets 'world' times more real pixels to build the image from.",
+                        "",
+                        "  0.0 = the lens does all the work; outside stays 1x (purest PIP, softest)",
+                        "  0.5 = split evenly; the lens image is built from sqrt(Z)x more real pixels",
+                        "  1.0 = the world does all the work (identical to turning PIP off)",
+                        "",
+                        "Total magnification is always exactly the scope's zoom, at every setting --",
+                        "this only moves where it comes from. Scale-independent, so the same value",
+                        "behaves the same on a 2x and an 8x optic.",
+                        "Ignored when ScopePipRerender is on -- that path already renders at native",
+                        "resolution, so zooming the world would cost image quality for nothing.")
+                .defineInRange("ScopePipWorldZoomShare", 0.0d, 0.0d, 1.0d);
+        AIMING_SWAY_INTENSITY = builder
+                .comment("How much the gun sways while aiming down sights, as a multiplier.",
+                        "",
+                        "Sway is the gun lagging behind your view when you turn -- it is what makes the",
+                        "sight picture drift and settle. Hip fire is never affected by this setting; the",
+                        "value is blended in by aiming progress, so it reaches full strength only when",
+                        "fully scoped.",
+                        "  0.0 = rock steady once fully aimed, no sway at all",
+                        "  1.0 = the original amount, identical to before this option existed",
+                        "  1.5 = default, noticeably more alive without being hard to aim",
+                        "  3.0+ = heavy, deliberately difficult",
+                        "Worth raising with high-power optics: a narrow field of view (and the PIP lens,",
+                        "which magnifies by the scope's zoom on top) multiplies the same angular wobble,",
+                        "the way real magnified optics get harder to hold steady.",
+                        "The fast-turn safety clamp still applies, so the gun cannot swing off screen.")
+                .defineInRange("AimingSwayIntensity", 1.5d, 0.0d, 5.0d);
+        SCOPE_PIP_ALLOW_SHADER_PACKS = builder
+                .comment("Allow the scope picture-in-picture to run while a shader pack is active.",
+                        "Off by default as a precaution, NOT because it is known to be broken: under a",
+                        "deferred shader pipeline the captured frame may not be fully shaded yet, and the",
+                        "composite writes raw colour before tonemapping, so the lens could look flat or",
+                        "blown out. Nothing can be corrupted by trying it - turn it on and look.")
+                .define("ScopePipAllowShaderPacks", false);
+        SCOPE_PIP_RERENDER = builder
+                .comment("Draw the scope image by rendering the world a SECOND time with a narrow FOV,",
+                        "instead of reprojecting the already-rendered frame. The lens then has native",
+                        "resolution instead of being capped at screen resolution / zoom, which matters a",
+                        "lot for 6x-8x optics. Costs a full extra world render every frame.",
+                        "EXPERIMENTAL: an earlier attempt made entities vanish from the main view.",
+                        "Default off.")
+                .define("ScopePipRerender", false);
+        SCOPE_PIP_DEBUG_NO_COMPOSITE = builder
+                .comment("[DEBUG] Run the scope pass but skip pasting it into the lens. Use this to tell",
+                        "whether magnified imagery leaking outside the scope comes from the off-screen",
+                        "pass escaping onto the screen, or from the composite/mask not confining it:",
+                        "  clean screen, empty lens -> the off-screen pass is contained; blame the composite",
+                        "  magnified imagery still leaks -> the pass itself is escaping to the main target")
+                .define("ScopePipDebugNoComposite", false);
+        SCOPE_PIP_DEBUG_TRACE = builder
+                .comment("[DEBUG] Log which code resolves which render target during the scope pass,",
+                        "for the first few frames only. Any line marked MAIN between SCOPE-PASS BEGIN",
+                        "and SCOPE-PASS END is imagery escaping onto the screen; anything logged after",
+                        "the vanilla clear means a renderer submits its draws late and cannot be",
+                        "redirected at all.",
+                        "",
+                        "EXPENSIVE. While armed this walks the call stack on every render-target",
+                        "resolve, and Sodium, Voxy and the frame graph all hit that path many times a",
+                        "frame. Leave it off for normal play: it stalls the render thread enough that",
+                        "terrain uploads pile up, and the resulting oversized GPU buffer request can",
+                        "fail outright while exploring. It now disarms itself after a few hundred",
+                        "frames regardless, but there is no reason to pay for it unless you are",
+                        "chasing a scope render bug.")
+                .define("ScopePipDebugTrace", false);
+        SCOPE_PIP_DEBUG_PAINT_LENS = builder
+                .comment("[DEBUG] Paint the area the scope composite actually covers in solid magenta.",
+                        "  whole screen magenta -> the composite is NOT confined by the ocular mask",
+                        "  only the lens magenta -> the composite is fine and the leak is elsewhere")
+                .define("ScopePipDebugPaintLens", false);
 
         builder.comment("Max time the damage counter will reset");
         DAMAGE_COUNTER_RESET_TIME = builder.defineInRange("DamageCounterResetTime", 2000, 10, Integer.MAX_VALUE);

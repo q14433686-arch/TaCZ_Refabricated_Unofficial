@@ -1,6 +1,7 @@
 package com.tacz.guns.mixin.client;
 
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
+import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import org.spongepowered.asm.mixin.Mixin;
@@ -68,5 +69,14 @@ public abstract class FeatureRenderDispatcherMixin {
         // 上一轮的空 pass 探针已证明这个时机安全（实测预览块变绿），
         // 结论固化后探针即删除，不留死代码。
         ScopeMaskRenderer.renderAtPhaseBoundary();
+        // 【镜内画中画】紧跟掩码之后合成。三者的先后关系是硬约束：
+        //
+        //   掩码           -> 知道镜内是哪些像素
+        //   合成（这一句）  -> 那些像素被贴上离屏渲染的放大世界
+        //   executeSolid…  -> 镜身在镜内 discard（PIP 画面得以留住）；
+        //                     准星反向裁剪只画镜内（浮在 PIP 画面之上）
+        //
+        // 往前挪掩码还没就绪，往后挪（比如手持渲染之后）准星会被 PIP 盖掉。
+        ScopePipRenderer.compositeAtPhaseBoundary();
     }
 }

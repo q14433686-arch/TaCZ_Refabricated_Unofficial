@@ -328,16 +328,23 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
                 }
             }
             // 逆转原版施加在手上的延滞效果，改为写入模型动画数据中
+            //
+            // 【这里是枪械实际走的那一份】与父类 AnimateGeoItemRenderer#renderFirstPerson
+            // 里那段是同一套公式的两份拷贝。改晃动手感时<b>两处必须同时改</b>，
+            // 否则只有一半路径生效，表现为「有的枪改了有的没改」。
+            // 缩放系数由父类的 aimingSwayScale 统一提供，避免两边算法漂移。
             float xRotOffset = Mth.lerp(partialTick, player.xBobO, player.xBob);
             float yRotOffset = Mth.lerp(partialTick, player.yBobO, player.yBob);
             float xRot = player.getViewXRot(partialTick) - xRotOffset;
             float yRot = player.getViewYRot(partialTick) - yRotOffset;
-            poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F));
+            float swayScale = aimingSwayScale(player, partialTick);
+            poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F * swayScale));
+            poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F * swayScale));
             BedrockPart rootNode = gunModel.getRootNode();
             if (rootNode != null) {
-                xRot = (float) Math.tanh(xRot / 25) * 25;
-                yRot = (float) Math.tanh(yRot / 25) * 25;
+                // tanh 饱和限幅保持在缩放【之前】：它防的是快速转身时枪飞出画面。
+                xRot = (float) Math.tanh(xRot / 25) * 25 * swayScale;
+                yRot = (float) Math.tanh(yRot / 25) * 25 * swayScale;
                 rootNode.offsetX += yRot * 0.1F / 16F / 3F;
                 rootNode.offsetY += -xRot * 0.1F / 16F / 3F;
                 rootNode.additionalQuaternion.mul(Axis.XP.rotationDegrees(xRot * 0.05F));

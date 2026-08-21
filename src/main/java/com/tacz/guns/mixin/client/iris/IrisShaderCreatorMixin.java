@@ -24,10 +24,12 @@ public abstract class IrisShaderCreatorMixin {
         String patched = tacz$injectScopeMask(source);
         if (patched != source && !tacz$loggedPatch) {
             tacz$loggedPatch = true;
-            GunMod.LOGGER.info("[TACZ Scope] Injecting dormant scope-mask branch into Iris linked fragment shaders.");
+            GunMod.LOGGER.info("[TACZ Scope] Injected the scope-mask clip branch into Iris linked "
+                    + "fragment shaders (discard only; no colortex is sampled).");
         }
         return patched;
     }
+
 
     private static String tacz$injectScopeMask(String source) {
         if (source.contains("tacz_ScopeMaskMode")) {
@@ -41,8 +43,22 @@ public abstract class IrisShaderCreatorMixin {
         if (brace < 0) {
             return source;
         }
-
-        String declarations = "\n// TACZ Iris scope mask bridge: 0=off, 1=body discard-inside, 2=reticle discard-outside\n"
+        // 【这里只做 discard，不写颜色 —— 别再往回加采样了】
+        //
+        // 镜内放大由 {@code ScopePipRenderer.compositeAfterLevelUnderShaders()} 在
+        // Iris 整条管线跑完之后、直接在最终画面上完成。这里的职责只剩一件：
+        // 让镜身在孔径内 discard，于是最终画面里孔径那块是干净的 1× 世界 ——
+        // 那正是后续放大所需要的、不含枪的素材。
+        //
+        // 曾经在这里注入「采样 colortexN 并写颜色」，两次实测都失败：
+        //   ① 采 colortex0 → 纯黑（gbuffers_hand 跑在延迟光照之前，没有已着色的场景）；
+        //   ② 把枪挪进半透明 pass、再按 pack 的 RENDERTARGETS 采 colortex2 → 灰噪块。
+        // 根子上这条路要求猜中别家 pack 的内部缓冲约定，每修一次都是下一次盲猜；
+        // 而且它还引入过一次严重回归：为采样补 colortex 声明时前缀撞名，
+        // 导致 `undefined variable "colortex1"` → Iris 整体禁用光影 → Voxy 视口全 0。
+        // 现在这段注入完全不引用任何 colortex，那类事故从根上消失了。
+        String declarations = "\n// TACZ Iris scope mask bridge: 0=off, 1=body discard-inside, "
+                + "2=reticle discard-outside\n"
                 + "uniform int tacz_ScopeMaskMode;\n"
                 + "uniform sampler2D tacz_ScopeMaskSampler;\n\n";
 

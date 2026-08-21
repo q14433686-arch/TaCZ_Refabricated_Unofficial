@@ -284,6 +284,37 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
     /**
      * 应用状态机的手持物品摄像机动画，暂时只用于玩家
      */
+    /**
+     * 开镜晃动缩放系数：腰射恒为 1，随开镜进度插值到 {@code AimingSwayIntensity}。
+     *
+     * <p>按开镜进度插值而不是「开镜就切换」，是为了避免抬镜那一瞬间晃动幅度突然跳一下 ——
+     * 那种跳变比晃动本身更容易被察觉。
+     *
+     * <p>整体包 try/catch：本方法在每帧的第一人称渲染路径上，
+     * 任何异常（配置尚未加载、玩家状态异常）都不该把持枪渲染带崩，
+     * 兜底返回 1 = 原有手感。
+     *
+     * @return 缩放系数；{@code 1} 表示与改动前完全一致
+     */
+    protected static float aimingSwayScale(LocalPlayer player, float partialTick) {
+        try {
+            if (com.tacz.guns.config.client.RenderConfig.AIMING_SWAY_INTENSITY == null) {
+                return 1.0F;
+            }
+            float intensity = com.tacz.guns.config.client.RenderConfig.AIMING_SWAY_INTENSITY.get().floatValue();
+            if (intensity == 1.0F) {
+                // 常见情形直接短路，省掉一次开镜进度查询。
+                return 1.0F;
+            }
+            float aimingProgress = Mth.clamp(
+                    com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator.fromLocalPlayer(player)
+                            .getClientAimingProgress(partialTick), 0.0F, 1.0F);
+            return Mth.lerp(aimingProgress, 1.0F, intensity);
+        } catch (Throwable ignored) {
+            return 1.0F;
+        }
+    }
+
     public void applyItemInHandCameraAnimation(BeforeRenderHandEvent event, ItemStack stack, LocalPlayer player) {
         applyItemInHandCameraAnimation(event, stack, 1);
     }
@@ -317,16 +348,28 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         M model = getModel(stack);
         if (model != null) {
             poseStack.pushPose();
+            // 【持枪晃动 sway】枪跟不上视角转动的那一份滞后：
+            // getViewXRot 是当前朝向，xBob/yBob 是 vanilla 维护的平滑滞后值，两者之差
+            // 就是「刚才甩了多少」。甩得越快差值越大，枪甩动、镜像也跟着晃。
             float xRotOffset = Mth.lerp(partialTick, player.xBobO, player.xBob);
             float yRotOffset = Mth.lerp(partialTick, player.yBobO, player.yBob);
             float xRot = player.getViewXRot(partialTick) - xRotOffset;
             float yRot = player.getViewYRot(partialTick) - yRotOffset;
-            poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F));
+            // 开镜时把晃动按配置缩放：开镜进度 0 → 恒为 1（腰射手感一点不变），
+            // 满开镜 → 取到 AimingSwayIntensity。默认 1.5 = 比原来更明显一些。
+            //
+            // 为什么值得单独放大：开镜后视野被瞄具收窄（PIP 更是把镜内又放大了 Z 倍），
+            // 同样的角度抖动在镜内被放大成同样倍数的位移 —— 现实里高倍镜正是这样「越放大越难稳住」。
+            // 原实现对开镜与否一视同仁，镜内反而显得过于稳定。
+            float swayScale = aimingSwayScale(player, partialTick);
+            poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F * swayScale));
+            poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F * swayScale));
             BedrockPart rootNode = model.getRootNode();
             if (rootNode != null) {
-                xRot = (float) Math.tanh(xRot / 25) * 25;
-                yRot = (float) Math.tanh(yRot / 25) * 25;
+                // tanh 饱和限幅保持在缩放【之前】：它的作用是防止快速转身时枪飞出画面，
+                // 那道保护必须先生效，缩放只放大限幅后的结果。
+                xRot = (float) Math.tanh(xRot / 25) * 25 * swayScale;
+                yRot = (float) Math.tanh(yRot / 25) * 25 * swayScale;
                 rootNode.offsetX += yRot * 0.1F / 16F / 3F;
                 rootNode.offsetY += -xRot * 0.1F / 16F / 3F;
                 rootNode.additionalQuaternion.mul(Axis.XP.rotationDegrees(xRot * 0.05F));
