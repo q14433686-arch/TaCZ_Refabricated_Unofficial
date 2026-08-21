@@ -14,6 +14,8 @@ import net.minecraft.world.phys.AABB;
 
 @Environment(EnvType.CLIENT)
 public class RenderHeadShotAABB {
+    private static final float LINE_WIDTH = 2.5F;
+
     public static void onRenderEntity(RenderLivingEvent.Post<?, ?, ?> event) {
         // 【第 35 轮修复】补回 F3+B 门禁。
         if (!Minecraft.getInstance().debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES)) {
@@ -73,9 +75,9 @@ public class RenderHeadShotAABB {
     private static void drawEdge(org.joml.Matrix4f matrix, org.joml.Matrix3f normal, com.mojang.blaze3d.vertex.VertexConsumer consumer, double x1, double y1, double z1, double x2, double y2, double z2, float r, float g, float b, float a) {
         org.joml.Vector4f pos = new org.joml.Vector4f((float) x1, (float) y1, (float) z1, 1.0f).mul(matrix);
         org.joml.Vector3f norm = new org.joml.Vector3f((float) (x2 - x1), (float) (y2 - y1), (float) (z2 - z1)).normalize().mul(normal);
-        consumer.addVertex(pos.x(), pos.y(), pos.z()).setColor(r, g, b, a).setNormal(norm.x(), norm.y(), norm.z());
+        consumer.addVertex(pos.x(), pos.y(), pos.z()).setColor(r, g, b, a).setNormal(norm.x(), norm.y(), norm.z()).setLineWidth(LINE_WIDTH);
         
         pos = new org.joml.Vector4f((float) x2, (float) y2, (float) z2, 1.0f).mul(matrix);
-        consumer.addVertex(pos.x(), pos.y(), pos.z()).setColor(r, g, b, a).setNormal(norm.x(), norm.y(), norm.z());
+        consumer.addVertex(pos.x(), pos.y(), pos.z()).setColor(r, g, b, a).setNormal(norm.x(), norm.y(), norm.z()).setLineWidth(LINE_WIDTH);
     }
 }
