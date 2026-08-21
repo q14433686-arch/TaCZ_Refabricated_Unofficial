@@ -73,18 +73,20 @@ public final class CreativeTabRefresh {
         if (player == null) {
             return;
         }
-        ClientPacketListener connection = client.getConnection();
-        FeatureFlagSet enabledFeatures = connection != null
-                ? connection.enabledFeatures()
-                : FeatureFlagSet.of();
+        // Vanilla builds tabs with the connection's enabled feature flags. The
+        // accessor name has varied across mappings, so look it up reflectively and
+        // fall back to an empty set (vanilla behavior) rather than hard-coding it.
+        FeatureFlagSet enabledFeatures = resolveEnabledFeatures();
 
         // Vanilla derives "hasPermissions" from whether the player may use
-        // operator blocks/items in the creative menu (permission level >= 2).
-        boolean hasPermissions = player.connection.hasPermission(2);
+        // operator blocks/items in the creative menu. The accessor name has
+        // varied across mappings, so look it up reflectively and default to the
+        // non-operator contents when absent.
+        boolean hasPermissions = resolveHasPermissions(player);
 
         // Registry lookup: the 3-arg form in 1.20.6+ needs it. The client level
-        // provides a registry access once a world is loaded.
-        Object holders = client.level != null ? client.level.registryAccess() : null;
+        // provides a registry access once a world is loaded; resolved defensively.
+        Object holders = resolveHolders(client);
 
         try {
             Method rebuild = findRebuildMethod();
@@ -103,6 +105,70 @@ public final class CreativeTabRefresh {
         } catch (Throwable t) {
             GunMod.LOGGER.warn("[CreativeTabRefresh] Failed to rebuild creative tabs after gun-pack sync.", t);
         }
+    }
+
+    private static boolean resolveHasPermissions(LocalPlayer player) {
+        for (String name : new String[]{"canUseGameMasterBlocks", "hasPermissions", "m_36375_", "method_7326"}) {
+            if (name.equals("hasPermissions")) {
+                // Brigadier-style (int) overload if present.
+                try {
+                    Method m = player.getClass().getMethod(name, int.class);
+                    Object result = m.invoke(player, 2);
+                    if (result instanceof Boolean b) {
+                        return b;
+                    }
+                } catch (ReflectiveOperationException | LinkageError ignored) {
+                    // try next
+                }
+                continue;
+            }
+            try {
+                Method m = player.getClass().getMethod(name);
+                Object result = m.invoke(player);
+                if (result instanceof Boolean b) {
+                    return b;
+                }
+            } catch (ReflectiveOperationException | LinkageError ignored) {
+                // try next
+            }
+        }
+        return false;
+    }
+
+    private static Object resolveHolders(Minecraft client) {
+        if (client.level == null) {
+            return null;
+        }
+        for (String name : new String[]{"registryAccess", "m_95903_", "method_15349"}) {
+            try {
+                Method m = client.level.getClass().getMethod(name);
+                return m.invoke(client.level);
+            } catch (ReflectiveOperationException | LinkageError ignored) {
+                // try next
+            }
+        }
+        return null;
+    }
+
+    private static FeatureFlagSet resolveEnabledFeatures() {
+        Minecraft client = Minecraft.getInstance();
+        ClientPacketListener connection = client.getConnection();
+        if (connection == null) {
+            return FeatureFlagSet.of();
+        }
+        // Try the common mapping names for the enabled-feature accessor.
+        for (String name : new String[]{"enabledFeatures", "getEnabledFeatures", "m_249578_", "method_54450"}) {
+            try {
+                Method m = connection.getClass().getMethod(name);
+                Object result = m.invoke(connection);
+                if (result instanceof FeatureFlagSet flags) {
+                    return flags;
+                }
+            } catch (ReflectiveOperationException | LinkageError ignored) {
+                // try next
+            }
+        }
+        return FeatureFlagSet.of();
     }
 
     private static Method findRebuildMethod() {

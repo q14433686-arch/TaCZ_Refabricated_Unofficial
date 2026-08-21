@@ -5,6 +5,7 @@ import cn.sh1rocu.tacz.api.event.AddReloadListenerEvent;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.tacz.guns.GunMod;
 import com.tacz.guns.api.vmlib.LuaGunLogicConstant;
 import com.tacz.guns.api.vmlib.LuaLibrary;
 import com.tacz.guns.crafting.GunSmithTableIngredient;
@@ -315,7 +316,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         // 若这里各类目计数为 0，说明服务端的 tacz/ 目录没有加载到枪包（首次启动未释放/目录为空），
         // 客户端就会拿到空索引 -> 所有枪紫黑、名字回退。
         GunMod.LOGGER.info("[GunPackSync] Sending to {}: GUN_INDEX={}, AMMO_INDEX={}, ATTACHMENT_INDEX={}, BLOCK_INDEX={}, GUN_DATA={}, ATTACHMENT_DATA={}, BLOCK_DATA={}, RECIPES={}",
-                player.getGameProfile().getName(),
+                player.getScoreboardName(),
                 cache.getOrDefault(DataType.GUN_INDEX, Map.of()).size(),
                 cache.getOrDefault(DataType.AMMO_INDEX, Map.of()).size(),
                 cache.getOrDefault(DataType.ATTACHMENT_INDEX, Map.of()).size(),
@@ -329,7 +330,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
             NetworkHandler.sendToClientPlayer(message, player);
         } catch (Throwable t) {
             // 序列化阶段（如 writeUtf 超 32767、包过大）会在此抛异常，导致客户端收不到同步包。
-            GunMod.LOGGER.error("[GunPackSync] Failed to send gun pack sync packet to {}", player.getGameProfile().getName(), t);
+            GunMod.LOGGER.error("[GunPackSync] Failed to send gun pack sync packet to {}", player.getScoreboardName(), t);
         }
     }
 
