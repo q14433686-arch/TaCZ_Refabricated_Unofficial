@@ -11,7 +11,6 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
-import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -289,15 +288,21 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
 
     /**
      * 获取枪械的显示名称
+     * <p>
+     * 必须可在双端调用：{@code /give} 回显、容器标题、聊天 hover、命名铁砧等
+     * 服务端路径都会进入 {@link Item#getName(ItemStack)}，因此走 common 索引，
+     * 不得标 {@code @Environment(CLIENT)} 或引用 client-only 的
+     * ClientGunIndex（专服上会触发 NoClassDefFoundError）。
+     * common 与 client 索引读同一份 index json、同一翻译键，
+     * 客户端渲染聊天组件时自行翻译，显示行为不变。
      */
     @Override
     @Nonnull
-    @Environment(EnvType.CLIENT)
     public Component getName(@Nonnull ItemStack stack) {
         Identifier gunId = this.getGunId(stack);
-        Optional<ClientGunIndex> gunIndex = TimelessAPI.getClientGunIndex(gunId);
-        if (gunIndex.isPresent()) {
-            return Component.translatable(gunIndex.get().getName());
+        Optional<CommonGunIndex> gunIndex = TimelessAPI.getCommonGunIndex(gunId);
+        if (gunIndex.isPresent() && gunIndex.get().getPojo().getName() != null) {
+            return Component.translatable(gunIndex.get().getPojo().getName());
         }
         return super.getName(stack);
     }

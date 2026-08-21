@@ -98,14 +98,17 @@ public class AmmoItem extends Item implements AmmoItemDataAccessor, IItem {
     // DataComponents.MAX_STACK_SIZE 组件承担（见构造器与 inventoryTick），
     // 本方法已无任何调用方。
 
+    /**
+     * 必须双端可调用（/give 回显、容器标题、聊天 hover、命名铁砧等服务端路径），
+     * 故走 common 索引，不标 {@code @Environment(CLIENT)}。
+     */
     @Override
     @Nonnull
-    @Environment(EnvType.CLIENT)
     public Component getName(@Nonnull ItemStack stack) {
         Identifier ammoId = this.getAmmoId(stack);
-        Optional<ClientAmmoIndex> ammoIndex = TimelessAPI.getClientAmmoIndex(ammoId);
-        if (ammoIndex.isPresent()) {
-            return Component.translatable(ammoIndex.get().getName());
+        Optional<CommonAmmoIndex> ammoIndex = TimelessAPI.getCommonAmmoIndex(ammoId);
+        if (ammoIndex.isPresent() && ammoIndex.get().getPojo().getName() != null) {
+            return Component.translatable(ammoIndex.get().getPojo().getName());
         }
         return super.getName(stack);
     }

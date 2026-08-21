@@ -5,8 +5,8 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.builder.BlockItemBuilder;
 import com.tacz.guns.api.item.nbt.BlockItemDataAccessor;
 import com.tacz.guns.client.renderer.item.GunSmithTableItemRenderer;
-import com.tacz.guns.client.resource.index.ClientBlockIndex;
 import com.tacz.guns.inventory.tooltip.BlockItemTooltip;
+import com.tacz.guns.resource.index.CommonBlockIndex;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
@@ -43,14 +43,17 @@ public class GunSmithTableItem extends BlockItem implements BlockItemDataAccesso
         return stacks;
     }
 
+    /**
+     * 必须双端可调用（/give 回显、容器标题、聊天 hover、命名铁砧等服务端路径），
+     * 故走 common 索引，不标 {@code @Environment(CLIENT)}。
+     */
     @Override
     @Nonnull
-    @Environment(EnvType.CLIENT)
     public Component getName(@Nonnull ItemStack stack) {
         Identifier blockId = this.getBlockId(stack);
-        Optional<ClientBlockIndex> blockIndex = TimelessAPI.getClientBlockIndex(blockId);
-        if (blockIndex.isPresent()) {
-            return Component.translatable(blockIndex.get().getName());
+        Optional<CommonBlockIndex> blockIndex = TimelessAPI.getCommonBlockIndex(blockId);
+        if (blockIndex.isPresent() && blockIndex.get().getPojo().getName() != null) {
+            return Component.translatable(blockIndex.get().getPojo().getName());
         }
         return super.getName(stack);
     }
