@@ -66,6 +66,20 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
         if (remoteConnection) {
             CommonAssetsManager.clearInstance();
         }
+        // 诊断：连专服时，客户端收到的同步包各类目数量。
+        // 若这里全是 0，问题在服务端没发数据；若数量正常但仍紫黑，问题在客户端
+        // CommonNetworkCache 解析或 ClientIndexManager 重建（见其 warn 日志）。
+        var c = message.cache;
+        GunMod.LOGGER.info("[GunPackSync] Client received (remote={}): GUN_INDEX={}, AMMO_INDEX={}, ATTACHMENT_INDEX={}, BLOCK_INDEX={}, GUN_DATA={}, ATTACHMENT_DATA={}, BLOCK_DATA={}, RECIPES={}",
+                remoteConnection,
+                c.getOrDefault(DataType.GUN_INDEX, Map.of()).size(),
+                c.getOrDefault(DataType.AMMO_INDEX, Map.of()).size(),
+                c.getOrDefault(DataType.ATTACHMENT_INDEX, Map.of()).size(),
+                c.getOrDefault(DataType.BLOCK_INDEX, Map.of()).size(),
+                c.getOrDefault(DataType.GUN_DATA, Map.of()).size(),
+                c.getOrDefault(DataType.ATTACHMENT_DATA, Map.of()).size(),
+                c.getOrDefault(DataType.BLOCK_DATA, Map.of()).size(),
+                c.getOrDefault(DataType.RECIPES, Map.of()).size());
         // Ordering is intentional: viewers must observe the newly installed cache and rebuilt index.
         CommonNetworkCache.INSTANCE.fromNetwork(message.cache);
         // 通知客户端重新构建ClientIndex

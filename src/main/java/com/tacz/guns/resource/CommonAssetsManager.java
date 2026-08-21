@@ -306,11 +306,31 @@ public class CommonAssetsManager implements ICommonResourceProvider {
 
     public static void OnDatapackSync(ServerPlayer player, boolean joined) {
         if (getInstance() == null) {
+            GunMod.LOGGER.warn("[GunPackSync] OnDatapackSync skipped: CommonAssetsManager INSTANCE is null (server-side pack not loaded?)");
             return;
         }
-        ServerMessageSyncGunPack message = new ServerMessageSyncGunPack(getInstance().getNetworkCache());
-        NetworkHandler.sendToClientPlayer(message, player);
-
+        var cache = getInstance().getNetworkCache();
+        // 诊断日志：确认服务端到底加载了多少枪包数据并准备同步给客户端。
+        // 单人/局域网时客户端与内置服务端共用 INSTANCE，不走此包；只有专服才靠它下发。
+        // 若这里各类目计数为 0，说明服务端的 tacz/ 目录没有加载到枪包（首次启动未释放/目录为空），
+        // 客户端就会拿到空索引 -> 所有枪紫黑、名字回退。
+        GunMod.LOGGER.info("[GunPackSync] Sending to {}: GUN_INDEX={}, AMMO_INDEX={}, ATTACHMENT_INDEX={}, BLOCK_INDEX={}, GUN_DATA={}, ATTACHMENT_DATA={}, BLOCK_DATA={}, RECIPES={}",
+                player.getGameProfile().getName(),
+                cache.getOrDefault(DataType.GUN_INDEX, Map.of()).size(),
+                cache.getOrDefault(DataType.AMMO_INDEX, Map.of()).size(),
+                cache.getOrDefault(DataType.ATTACHMENT_INDEX, Map.of()).size(),
+                cache.getOrDefault(DataType.BLOCK_INDEX, Map.of()).size(),
+                cache.getOrDefault(DataType.GUN_DATA, Map.of()).size(),
+                cache.getOrDefault(DataType.ATTACHMENT_DATA, Map.of()).size(),
+                cache.getOrDefault(DataType.BLOCK_DATA, Map.of()).size(),
+                cache.getOrDefault(DataType.RECIPES, Map.of()).size());
+        ServerMessageSyncGunPack message = new ServerMessageSyncGunPack(cache);
+        try {
+            NetworkHandler.sendToClientPlayer(message, player);
+        } catch (Throwable t) {
+            // 序列化阶段（如 writeUtf 超 32767、包过大）会在此抛异常，导致客户端收不到同步包。
+            GunMod.LOGGER.error("[GunPackSync] Failed to send gun pack sync packet to {}", player.getGameProfile().getName(), t);
+        }
     }
 
     public static void reloadAllPack() {
