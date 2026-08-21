@@ -880,6 +880,9 @@ public final class ScopePipRenderer {
         if (!isEnabledForHeldGun()) {
             return;
         }
+        // 让诊断 trace 知道「这一帧真的合成了」—— 光影下没有 SCOPE-PASS，
+        // 只有这里能给它一个可扣预算的信号。见 ScopePipTrace.ARMED_FRAME_LIMIT 的说明。
+        ScopePipTrace.mark("PIP COMPOSITE (screen space, after the Iris pipeline finished)");
         // 【倍率跟着开镜进度走】这条路的素材是最终画面，画面里是有枪的 ——
         // 干净的世界像素只存在于孔径那一块。抬镜过程中瞄具还没移到屏幕中心，
         // 而重投影的采样点恒定绕屏幕中心收缩，此时那块可能还压在枪身上，

@@ -46,10 +46,35 @@ public final class ScopePipTrace {
     /** 单帧内最多记录多少行，防御性上限（正常一帧几十行）。 */
     private static final int LINES_PER_FRAME = 400;
 
+    /**
+     * 【硬性兜底】最多<b>武装</b>这么多帧，之后无论有没有采到样本都永久收摊。
+     *
+     * <h3>为什么必须有这一条 —— 它修的是一次真实的崩溃</h3>
+     * 原来的收摊条件只有 {@link #FRAME_BUDGET}，而预算<b>只在
+     * {@code sawScopePass} 为真的帧才扣</b>，那个标志又只由
+     * {@code renderScopeView}（二次渲染那条路）发出的 {@code SCOPE-PASS BEGIN} 置位。
+     * <b>光影下二次渲染是被硬性拦下的</b>，于是那面旗永远立不起来 ⇒ 预算一分不扣 ⇒
+     * {@code enabled()} 永远为真 ⇒ 整局游戏每帧都在 {@code mainRenderTarget()} 上跑
+     * {@code StackWalker}（每帧最多 400 次，而 Sodium 地形、Voxy、帧图都会调它）。
+     *
+     * <p>后果不是「日志有点多」，而是<b>渲染线程被拖垮</b>：区块构建在工作线程照常堆积，
+     * 渲染线程追不上，{@code processChunkBuildResults} 只好一次性上传巨量结果，
+     * Sodium 的 {@code GlBufferArena.resize} 于是要一口气申请 88 MB
+     * （且扩容期间新旧缓冲并存 ≈ 2 倍），显存直接 {@code GpuOutOfMemoryException}。
+     * 实测：只在<b>四处跑图</b>时触发（那才有大量区块构建），静止测试区完全正常 ——
+     * 这也是它一开始被误判成「显存泄漏」的原因。
+     *
+     * <p>教训：诊断开关的收摊条件<b>绝不能依赖被诊断的那条路自己发信号</b> ——
+     * 那条路不跑，正是你要诊断的情形。所以这里补一个与任何业务逻辑无关的绝对上限。
+     */
+    private static final int ARMED_FRAME_LIMIT = 600;
+
     private static int framesTraced = 0;
+    private static int framesArmed = 0;
     private static int linesThisFrame = 0;
     private static boolean tracingThisFrame = false;
     private static boolean announced = false;
+    private static boolean loggedGiveUp = false;
 
     /**
      * 本帧的行缓冲。
@@ -72,7 +97,10 @@ public final class ScopePipTrace {
     public static boolean enabled() {
         return RenderConfig.SCOPE_PIP_DEBUG_TRACE != null
                 && RenderConfig.SCOPE_PIP_DEBUG_TRACE.get()
-                && framesTraced < FRAME_BUDGET;
+                && framesTraced < FRAME_BUDGET
+                // 与业务逻辑无关的绝对上限，见 ARMED_FRAME_LIMIT ——
+                // 没有它，采不到样本的场景下本开关会一直武装到游戏崩溃。
+                && framesArmed < ARMED_FRAME_LIMIT;
     }
 
     /**
@@ -95,6 +123,19 @@ public final class ScopePipTrace {
         sawScopePass = false;
         linesThisFrame = 0;
         tracingThisFrame = enabled();
+        if (tracingThisFrame) {
+            // 无条件计数：这一帧确实处于武装状态、确实会跑 StackWalker，就得算数。
+            // 绝不能只在「采到样本」时才计 —— 那正是原来那个 bug。
+            framesArmed++;
+        } else if (RenderConfig.SCOPE_PIP_DEBUG_TRACE != null
+                && RenderConfig.SCOPE_PIP_DEBUG_TRACE.get()
+                && framesArmed >= ARMED_FRAME_LIMIT && !loggedGiveUp) {
+            loggedGiveUp = true;
+            GunMod.LOGGER.info("[TACZ Scope][trace] Gave up after {} armed frames without capturing a "
+                            + "scope pass; tracing is now off for this session. Leaving it armed would "
+                            + "stall the render thread badly enough to starve terrain uploads. "
+                            + "Set ScopePipDebugTrace=false to silence this.", framesArmed);
+        }
         if (tracingThisFrame && !announced) {
             announced = true;
             GunMod.LOGGER.info("[TACZ Scope][trace] Armed: will capture {} frames that actually run the "
@@ -108,8 +149,12 @@ public final class ScopePipTrace {
         if (!tracingThisFrame) {
             return;
         }
-        if (what.startsWith("SCOPE-PASS BEGIN")) {
+        if (what.startsWith("SCOPE-PASS BEGIN") || what.startsWith("PIP COMPOSITE")) {
             // 这一帧值得记 —— 结算时才会落盘。
+            //
+            // 必须同时认「PIP COMPOSITE」：光影下走的是屏幕空间合成，
+            // 根本不存在 SCOPE-PASS。只认前者的话，光影下永远采不到样本、
+            // 预算永远扣不掉 —— 那正是拖垮渲染线程、进而撑爆显存的那个 bug。
             sawScopePass = true;
         }
         if (linesThisFrame++ > LINES_PER_FRAME) {

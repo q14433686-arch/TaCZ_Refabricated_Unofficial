@@ -450,7 +450,15 @@ public class RenderConfig {
                         "for the first few frames only. Any line marked MAIN between SCOPE-PASS BEGIN",
                         "and SCOPE-PASS END is imagery escaping onto the screen; anything logged after",
                         "the vanilla clear means a renderer submits its draws late and cannot be",
-                        "redirected at all.")
+                        "redirected at all.",
+                        "",
+                        "EXPENSIVE. While armed this walks the call stack on every render-target",
+                        "resolve, and Sodium, Voxy and the frame graph all hit that path many times a",
+                        "frame. Leave it off for normal play: it stalls the render thread enough that",
+                        "terrain uploads pile up, and the resulting oversized GPU buffer request can",
+                        "fail outright while exploring. It now disarms itself after a few hundred",
+                        "frames regardless, but there is no reason to pay for it unless you are",
+                        "chasing a scope render bug.")
                 .define("ScopePipDebugTrace", false);
         SCOPE_PIP_DEBUG_PAINT_LENS = builder
                 .comment("[DEBUG] Paint the area the scope composite actually covers in solid magenta.",

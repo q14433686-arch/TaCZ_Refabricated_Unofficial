@@ -516,6 +516,70 @@ xRot = player.getViewXRot(partialTick) - lerp(partialTick, player.xBobO, player.
 
 ---
 
+## 2.9 【08:2x 已修】`ScopePipDebugTrace` 会把显存撑爆 —— 一个诊断开关引发的崩溃
+
+### 2.9.1 症状
+
+四处跑图约 90 秒后崩溃：
+
+```
+com.mojang.blaze3d.GpuOutOfMemoryException: Could not allocate buffer of 88106400
+    at ...sodium...GlBufferArena.resize(GlBufferArena.java:66)
+    at ...RenderSectionManager.processChunkBuildResults(...)
+```
+
+**在静止的小测试区完全不复现** —— 只有真正跑图时才炸。
+（也正因如此一开始被误判成「显存泄漏」，查了半天分配点，其实一处都没漏。）
+
+### 2.9.2 真因：预算永远扣不掉，诊断整局常驻
+
+`ScopePipTrace` 本来设计成「只采 3 帧就收摊」：
+
+```java
+enabled()  =  配置为真  &&  framesTraced < FRAME_BUDGET
+framesTraced++ 只发生在 sawScopePass 为真的帧
+sawScopePass 只由 mark("SCOPE-PASS BEGIN") 置位
+mark("SCOPE-PASS BEGIN") 只在 renderScopeView（二次渲染）里发出
+```
+
+而**二次渲染在光影下是被硬性拦下的**（§2.4）。于是：
+
+> 光影下 `sawScopePass` 永远为 false ⇒ `framesTraced` 永远是 0 ⇒
+> `enabled()` 永远为真 ⇒ **整局游戏每帧都在武装状态**。
+
+代价是每帧最多 400 次 `StackWalker.walk()`，而它挂在 `mainRenderTarget()` 上 ——
+Sodium 地形、Voxy、帧图导入全都要调这个方法。
+
+### 2.9.3 从「渲染线程慢」到「显存爆掉」的那一步
+
+这一步是本案最不直观的地方，值得记住：
+
+1. 渲染线程被 StackWalker 拖垮；
+2. 区块构建在**工作线程**上照常进行，不受影响 —— 于是构建结果越堆越多；
+3. 渲染线程终于轮到 `processChunkBuildResults` 时，要**一次性**上传巨量结果；
+4. Sodium 的 `GlBufferArena.resize` 于是要一口气申请 88 MB，
+   而扩容期间**新旧缓冲并存**（≈2 倍）；
+5. 显存给不出 ⇒ `GpuOutOfMemoryException`。
+
+所以「跑图才炸」是必然的：**只有跑图才有大量区块构建**。
+静止时构建队列是空的，渲染线程再慢也堆不出东西来。
+
+### 2.9.4 修法（两条，缺一不可）
+
+1. **绝对上限** `ARMED_FRAME_LIMIT = 600`：无论有没有采到样本，
+   武装满 600 帧就永久收摊并打一行说明。
+   计数在 `beginFrame()` 里**无条件**累加 —— 只要这一帧武装了就算数。
+2. **让光影那条路也能扣预算**：`compositeAfterLevelUnderShaders()` 发出
+   `PIP COMPOSITE`，`mark()` 认它与 `SCOPE-PASS BEGIN` 等价。
+
+> ### 教训（比这个 bug 本身值钱）
+>
+> **诊断开关的收摊条件，绝不能依赖「被诊断的那条路」自己发信号。**
+> 那条路不跑，恰恰是你要诊断的情形 —— 于是最需要它收摊的时候它永不收摊。
+> 任何自限诊断都必须带一个**与业务逻辑完全无关**的绝对上限。
+
+---
+
 ## 3. 配置键（全部在 `config/tacz-client.toml` 的 `[render]` 下）
 
 | 键 | 默认 | 说明 |
@@ -529,7 +593,7 @@ xRot = player.getViewXRot(partialTick) - lerp(partialTick, player.xBobO, player.
 | `ScopePipMinAimingProgress` | `0.05` | 低于此开镜进度不做 PIP |
 | `ScopePipDebugPaintLens` | `false` | 诊断：把合成实际覆盖到的区域涂成纯品红（整屏变色 = 合成没被掩码约束住） |
 | `ScopePipDebugNoComposite` | `false` | 诊断：跑 PIP 但不合成 |
-| `ScopePipDebugTrace` | `false` | 诊断：打印渲染目标解析顺序（只记跑过 PIP 的帧） |
+| `ScopePipDebugTrace` | `false` | 诊断：打印渲染目标解析顺序。**开销极大**，正常游玩务必保持关闭，见 §2.9 |
 
 **推荐给玩家的组合**：`ScopePipEnable=true`、`ScopePipRerender=true`、其余默认。
 
