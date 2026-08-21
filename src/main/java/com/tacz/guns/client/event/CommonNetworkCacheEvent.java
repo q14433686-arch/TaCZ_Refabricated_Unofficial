@@ -1,5 +1,6 @@
 package com.tacz.guns.client.event;
 
+import com.tacz.guns.client.compat.ClientResourceRefreshBridge;
 import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.resource.ClientIndexManager;
 import com.tacz.guns.resource.CommonAssetsManager;
@@ -52,6 +53,7 @@ public class CommonNetworkCacheEvent {
             return;
         }
         RecipeViewerReloadBridge.clear();
+        ClientResourceRefreshBridge.reset();
         CommonAssetsManager.clearInstance();
         CommonNetworkCache.INSTANCE.clear();
         ClientIndexManager.clear();

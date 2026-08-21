@@ -1,6 +1,7 @@
 package com.tacz.guns.network.message;
 
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.compat.ClientResourceRefreshBridge;
 import com.tacz.guns.client.compat.CreativeTabRefresh;
 import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.resource.ClientIndexManager;
@@ -85,10 +86,12 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
         CommonNetworkCache.INSTANCE.fromNetwork(message.cache);
         // 通知客户端重新构建ClientIndex
         ClientIndexManager.reload();
-        // 专服关键：vanilla 在同步包到达之前就构建了一次创造标签，那时 common 索引还是空的，
-        // 导致 TaCZ 创造标签里没有任何枪/弹/配件/工作台（从标签或派生路径拿物品就得到裸物品 -> 紫黑）。
-        // 现在索引已就绪，强制重建创造标签。详见 CreativeTabRefresh 的注释。
-        CreativeTabRefresh.rebuildAfterGunPackSync();
+        // 专服：REI/JEI 等可能在同步包到达前就把物品图标烤进了 GUI atlas（那时索引为空 -> 什么都没画）。
+        // 索引现在就绪了，但 atlas 槽位不会自动失效，需要一次完整资源重载重画（等同 F3+T）。
+        if (remoteConnection) {
+            CreativeTabRefresh.rebuildAfterGunPackSync();
+            ClientResourceRefreshBridge.requestReloadAfterRemoteSync();
+        }
         RecipeViewerReloadBridge.requestReload();
     }
 }
