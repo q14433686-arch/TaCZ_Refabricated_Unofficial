@@ -1,81 +1,55 @@
 package com.tacz.guns.client.event;
 
-import cn.sh1rocu.tacz.api.event.RenderLivingEvent;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.util.HeadShotAABBConfigRead;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.debug.DebugScreenEntries;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
+/**
+ * 爆头判定盒的调试绘制。
+ *
+ * <p>1.21.11 把实体碰撞箱从 {@code SubmitNodeCollector#submitHitbox} /
+ * {@code ShapeRenderer#renderLineBox} 整段换成了 {@link Gizmos}。
+ * 移植时用 {@code submitCustomGeometry(RenderTypes.lines(), ...)} 去补，
+ * 会在「显示爆头范围 + F3+B 碰撞箱」同时开启时把 LINES 几何丢进实体
+ * custom-geometry 管线，直接崩溃。</p>
+ *
+ * <p>正确入口是原版 {@code EntityHitboxDebugRenderer#showHitboxes}：
+ * 那时 per-frame {@code GizmoCollector} 已经挂上，{@link Gizmos#cuboid}
+ * 才会真正被收集并画出来。</p>
+ */
 @Environment(EnvType.CLIENT)
 public class RenderHeadShotAABB {
-    public static void onRenderEntity(RenderLivingEvent.Post<?, ?, ?> event) {
-        // 【第 35 轮修复】补回 F3+B 门禁。
-        if (!Minecraft.getInstance().debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES)) {
+    /** ARGB 不透明黄，与 26.2 {@code submitShapeOutline(..., 0xFFFFFF00, ...)} 一致。 */
+    private static final int HEADSHOT_COLOR = 0xFFFFFF00;
+
+    public static void emitGizmo(Entity entity, float partialTick, boolean inLocalServer) {
+        // 单人世界里原版会对客户端实体和本地服务器实体各画一次碰撞箱。
+        // 爆头范围只跟客户端判定可视化，避免叠两层黄盒。
+        if (inLocalServer || !RenderConfig.HEAD_SHOT_DEBUG_HITBOX.get()) {
             return;
         }
-        if (!RenderConfig.HEAD_SHOT_DEBUG_HITBOX.get() || event.getSubmitNodeCollector() == null || event.getPoseStack() == null) {
+        if (!(entity instanceof LivingEntity living) || !living.isAlive()) {
             return;
         }
-        var renderState = event.getRenderState();
-        Identifier entityId = BuiltInRegistries.ENTITY_TYPE.getKey(renderState.entityType);
-        AABB aabb = HeadShotAABBConfigRead.getAABB(entityId);
+        Identifier entityId = BuiltInRegistries.ENTITY_TYPE.getKey(living.getType());
+        AABB aabb = entityId != null ? HeadShotAABBConfigRead.getAABB(entityId) : null;
         if (aabb == null) {
-            float width = renderState.boundingBoxWidth;
-            float eyeHeight = renderState.eyeHeight;
+            float width = living.getBbWidth();
+            float eyeHeight = living.getEyeHeight();
             // 扩张 0.01，避免和原版显示重合
-            aabb = new AABB(-width / 2, eyeHeight - 0.25, -width / 2, width / 2, eyeHeight + 0.25, width / 2).inflate(0.01);
+            aabb = new AABB(-width / 2.0, eyeHeight - 0.25, -width / 2.0, width / 2.0, eyeHeight + 0.25, width / 2.0)
+                    .inflate(0.01);
         }
-        AABB finalAabb = aabb;
-        event.getSubmitNodeCollector().submitCustomGeometry(event.getPoseStack(), RenderTypes.lines(), (entryPose, consumer) -> {
-            com.mojang.blaze3d.vertex.PoseStack tempPose = new com.mojang.blaze3d.vertex.PoseStack();
-            tempPose.last().pose().set(entryPose.pose());
-            tempPose.last().normal().set(entryPose.normal());
-            drawLineBox(tempPose, consumer, finalAabb, 1.0F, 1.0F, 0.0F, 1.0F);
-        });
-    }
-
-    private static void drawLineBox(com.mojang.blaze3d.vertex.PoseStack poseStack, com.mojang.blaze3d.vertex.VertexConsumer consumer, AABB aabb, float r, float g, float b, float a) {
-        double minX = aabb.minX;
-        double minY = aabb.minY;
-        double minZ = aabb.minZ;
-        double maxX = aabb.maxX;
-        double maxY = aabb.maxY;
-        double maxZ = aabb.maxZ;
-        
-        com.mojang.blaze3d.vertex.PoseStack.Pose pose = poseStack.last();
-        org.joml.Matrix4f matrix = pose.pose();
-        org.joml.Matrix3f normal = pose.normal();
-        
-        drawEdge(matrix, normal, consumer, minX, minY, minZ, maxX, minY, minZ, r, g, b, a);
-        drawEdge(matrix, normal, consumer, minX, minY, minZ, minX, maxY, minZ, r, g, b, a);
-        drawEdge(matrix, normal, consumer, minX, minY, minZ, minX, minY, maxZ, r, g, b, a);
-        
-        drawEdge(matrix, normal, consumer, maxX, maxY, maxZ, minX, maxY, maxZ, r, g, b, a);
-        drawEdge(matrix, normal, consumer, maxX, maxY, maxZ, maxX, minY, maxZ, r, g, b, a);
-        drawEdge(matrix, normal, consumer, maxX, maxY, maxZ, maxX, maxY, minZ, r, g, b, a);
-        
-        drawEdge(matrix, normal, consumer, minX, maxY, minZ, maxX, maxY, minZ, r, g, b, a);
-        drawEdge(matrix, normal, consumer, minX, maxY, minZ, minX, maxY, maxZ, r, g, b, a);
-        
-        drawEdge(matrix, normal, consumer, maxX, minY, minZ, maxX, maxY, minZ, r, g, b, a);
-        drawEdge(matrix, normal, consumer, maxX, minY, minZ, maxX, minY, maxZ, r, g, b, a);
-        
-        drawEdge(matrix, normal, consumer, minX, minY, maxZ, maxX, minY, maxZ, r, g, b, a);
-        drawEdge(matrix, normal, consumer, minX, minY, maxZ, minX, maxY, maxZ, r, g, b, a);
-    }
-
-    private static void drawEdge(org.joml.Matrix4f matrix, org.joml.Matrix3f normal, com.mojang.blaze3d.vertex.VertexConsumer consumer, double x1, double y1, double z1, double x2, double y2, double z2, float r, float g, float b, float a) {
-        org.joml.Vector4f pos = new org.joml.Vector4f((float) x1, (float) y1, (float) z1, 1.0f).mul(matrix);
-        org.joml.Vector3f norm = new org.joml.Vector3f((float) (x2 - x1), (float) (y2 - y1), (float) (z2 - z1)).normalize().mul(normal);
-        consumer.addVertex(pos.x(), pos.y(), pos.z()).setColor(r, g, b, a).setNormal(norm.x(), norm.y(), norm.z());
-        
-        pos = new org.joml.Vector4f((float) x2, (float) y2, (float) z2, 1.0f).mul(matrix);
-        consumer.addVertex(pos.x(), pos.y(), pos.z()).setColor(r, g, b, a).setNormal(norm.x(), norm.y(), norm.z());
+        Vec3 pos = living.getPosition(partialTick);
+        Gizmos.cuboid(aabb.move(pos), GizmoStyle.stroke(HEADSHOT_COLOR));
     }
 }

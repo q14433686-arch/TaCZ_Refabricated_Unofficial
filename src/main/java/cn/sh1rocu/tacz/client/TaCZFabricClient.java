@@ -188,8 +188,6 @@ public class TaCZFabricClient implements ClientModInitializer {
 
         RenderTickEvent.EVENT.register(RenderCrosshairEvent::onRenderTick);
 
-        RenderLivingEvent.POST.register(RenderHeadShotAABB::onRenderEntity);
-
         ClientTickEvents.START_CLIENT_TICK.register(TickAnimationEvent::tickAnimation);
         ClientTickEvents.END_CLIENT_TICK.register(TickAnimationEvent::tickAnimation);
         RenderTickEvent.EVENT.register(TickAnimationEvent::tickAnimation);
