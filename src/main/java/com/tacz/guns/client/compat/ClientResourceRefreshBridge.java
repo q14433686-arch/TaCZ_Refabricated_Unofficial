@@ -47,7 +47,24 @@ public final class ClientResourceRefreshBridge {
 
     /** Called when a remote gun-pack sync has finished rebuilding client indexes. */
     public static void requestReloadAfterRemoteSync() {
-        if (reloadDoneThisConnection || reloadRequested || reloadInProgress) {
+        if (reloadInProgress) {
+            return;
+        }
+        // The server sends the gun-pack sync twice on a dedicated server: once during
+        // the configuration phase (before the client has a world/player) and again
+        // during the play phase after join. The earlier one-shot guard marked the
+        // connection "done" on the config-phase request even though tick() could not
+        // service it (client.level was null), so the play-phase request was silently
+        // dropped and the icons stayed purple/black until a manual F3+T.
+        //
+        // If we are not yet in-world, a prior "done" only ever came from such an
+        // unserviced config-phase request; clear it so the play-phase request can
+        // schedule the reload that actually repaints the icons.
+        Minecraft client = Minecraft.getInstance();
+        if (client.level == null || client.player == null) {
+            reloadDoneThisConnection = false;
+        }
+        if (reloadDoneThisConnection || reloadRequested) {
             return;
         }
         reloadRequested = true;
@@ -60,8 +77,11 @@ public final class ClientResourceRefreshBridge {
             return;
         }
         // Wait until the world is fully loaded; reloading too early can race with
-        // the level/resource lifecycle that is still settling after join.
+        // the level/resource lifecycle that is still settling after join. While we
+        // are still waiting, do NOT treat the connection as "reloaded" — we have
+        // not actually performed it yet.
         if (client.level == null || client.player == null) {
+            reloadDoneThisConnection = false;
             return;
         }
         reloadRequested = false;
