@@ -5,6 +5,20 @@
 
 ---
 
+## 1.1.8+fabric.1.21.11.R2.hotfix
+
+**修复：开启「显示爆头范围」后再打开碰撞箱会崩溃**
+
+1.21.11 已删除 `SubmitNodeCollector#submitHitbox` / `ShapeRenderer#renderLineBox`，
+调试盒改走 `Gizmos`。R2 仍通过实体 `submitCustomGeometry(RenderTypes.lines(), …)`
+画爆头判定盒，与 F3+B 同时开启时会把 LINES 几何送进 custom-geometry 管线并崩溃。
+
+现改为在原版 `EntityHitboxDebugRenderer#showHitboxes` 的 per-frame GizmoCollector
+里发射黄色 `Gizmos.cuboid`。配置项仍只在碰撞箱显示开启时生效；版本号把
+`hotfix` 放在 `+` 构建元数据里，SemVer 核心仍是 `1.1.8`，枪包 `>=1.1.8` 谓词不受影响。
+
+---
+
 ## 1.1.8+fabric.1.21.11.R2
 
 **新增：内置弹药适配枪械查询（JEI / REI）**
