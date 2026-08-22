@@ -135,3 +135,11 @@
 该问题症状是紫黑块、极易被误判为本移植版的 bug，
 且因版本号已对齐 `1.1.8`，这类包反而能通过版本校验、正常建出条目，
 迷惑性更强。提前写入描述可省去发布后大量重复答疑。
+
+三份文案还都包含「专服 REI/JEI 作弊拿取 → 紫黑块 + item.* 原始键」FAQ
+（Modrinth/CurseForge 为英文段落，MC 百科为正文第八节）——
+同样属于"症状像本移植版 bug、实际是 REI 服务端未安装时的 /give 命令兜底
+丢掉了数据组件"的高频问题；起因核到 REI 26.2.820 源码
+（`ClientHelperImpl#tryCheatingEntry` 的 `tagMessage` 硬编码为空，
+`TODO 24w09a` 组件化后未适配）。完整技术推导与源码引用见
+`docs/DEDICATED_SERVER_GETNAME_AUDIT_2026_08_21.md` 第 8、9 节。
