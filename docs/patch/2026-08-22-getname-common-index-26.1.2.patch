@@ -1,0 +1,439 @@
+diff --git a/docs/UPDATE_REPORT_26_1_2_R2.md b/docs/UPDATE_REPORT_26_1_2_R2.md
+index 41b4284..8160d71 100644
+--- a/docs/UPDATE_REPORT_26_1_2_R2.md
++++ b/docs/UPDATE_REPORT_26_1_2_R2.md
+@@ -61,3 +61,25 @@ R2 是 26.1.2 移植线的第 2 个功能迭代。它把 1.21.11 R2 的全套功
+ - [`README.md`](../README.md)：更新版号与功能链接；
+ - [`docs/AMMO_SOURCE_API.md`](AMMO_SOURCE_API.md)：弹药源 API 规范；
+ - [`docs/CARRYON_COMPAT.md`](CARRYON_COMPAT.md)：Carry On 兼容规范与回归矩阵。
++
++## FAQ：专服上 REI/JEI 作弊拿取枪械/弹药/配件显示紫黑块与 `item.*` 原始键（2026-08-22 同步增补）
++
++**症状**：专用服务器上从 REI/JEI 拿取（或 `/give tacz:modern_kinetic_gun` 不带组件）得到的
++枪械、弹药、配件显示缺失贴图，名称为 `item.tacz.modern_kinetic_gun` /
++`item.tacz.attachment` 一类原始键；物品在 REI/JEI 列表内显示正常，单人/局域网正常。
++
++**原因**：TACZ 的枪/弹/配件/工作台物品的内容 id 存放在 `minecraft:custom_data` 组件
++（`GunId` / `AmmoId` / `AttachmentId` / `BlockId`）。服务器未安装 REI 时，REI 作弊给物
++退回客户端拼装的 `/give` 命令，该命令只携带物品注册表 id、组部分恒为空
++（REI `ClientHelperImpl#tryCheatingEntry` 源码 `tagMessage = ""`，`TODO 24w09a`
++标注组件化后未适配），服务端拿到裸物品 → TACZ 读 `tacz:empty` → 名字回退 `item.*`
++（无翻译键）→ 无模型。原版 Forge 与上游 Fabric 移植版行为相同，**非本移植版缺陷**。
++（铁弹药盒仍显示 Iron Ammo Box，恰因其名称键在 mod jar 内。）
++
++**解决**：
++1. 专服安装与客户端同版本的 REI —— 之后作弊走 REI 网络包，组件完整；
++2. 或用 TACZ 自带创造标签页 / 内置弹药查询、配件查询、工作台配方分类拿取；
++3. `/give` 务必附带组件，如
++   `/give @p tacz:modern_kinetic_gun[minecraft:custom_data={GunId:"tacz:ak47"}]`。
++
++JEI 客户端兜底走原版创造槽位包（携带组件）；若仅 JEI 也复现，反馈时附查看器与服务器版本。
+diff --git a/docs/publish/CurseForge.md b/docs/publish/CurseForge.md
+index cf03711..37eedbf 100644
+--- a/docs/publish/CurseForge.md
++++ b/docs/publish/CurseForge.md
+@@ -190,6 +190,42 @@ No TACZ build contains that decryption logic — not the original Forge mod, not
+ upstream Fabric port, and not this one. **This is therefore not a defect in this
+ port and cannot be resolved here.**
+ 
++## FAQ: REI/JEI cheating on a dedicated server gives purple/black items with `item.tacz.*` names
++
++## FAQ: REI/JEI cheating on a dedicated server gives purple/black items with `item.tacz.*` names
++
++**Symptom:** on a dedicated server, items cheated / picked up from REI or JEI
++(and sometimes `/give tacz:modern_kinetic_gun` without components) show
++**missing textures and raw keys** such as `item.tacz.modern_kinetic_gun` or
++`item.tacz.attachment`, while the same items render correctly inside the
++REI/JEI list, and single-player / LAN is fine.
++
++**Cause:** TACZ items are not self-contained: gun, ammo, attachment and
++workbench ids live in the `minecraft:custom_data` component (`GunId` /
++`AmmoId` / `AttachmentId` / `BlockId`). When REI **is not installed on the
++server**, its cheat-give falls back to a client-built `/give` command carrying
++only the item's registry id and an **empty component tag**
++(`ClientHelperImpl#tryCheatingEntry`, `tagMessage = /* TODO 24w09a ... */ ""`).
++The server receives a **bare item**; TACZ then reads `tacz:empty` as the
++content id and falls back to the vanilla `item.*` key with no model. The same
++happens on the original mod — this is REI behaviour, not a port defect. (The
++iron ammo box keeps a real name because its key ships in the mod jar; that is
++the bare-item fallback itself.)
++
++**Fix:**
++
++- **Install the same REI version on the dedicated server** — cheating then uses
++  REI's network packet, which serialises the full item components;
++- or take items from **TACZ's own creative tabs** or the built-in **Ammo /
++  Attachment / Gun Smith Table** recipe categories (entries are built with the
++  required id components);
++- for `/give`, always append components, e.g.
++  `/give @p tacz:modern_kinetic_gun[minecraft:custom_data={GunId:"tacz:ak47"}]`.
++
++JEI's client-side fallback uses the vanilla creative-slot packet, which does
++carry components; if you see the same symptom with JEI alone, please report it
++with the exact viewer and server versions.
++
+ ## Licensing
+ 
+ Two independent licenses apply:
+diff --git a/docs/publish/MCMOD.md b/docs/publish/MCMOD.md
+index b77d64b..769764e 100644
+--- a/docs/publish/MCMOD.md
++++ b/docs/publish/MCMOD.md
+@@ -247,7 +247,45 @@ LRTactical（LR）代码兼容层，可直接加载大多数普通、未加密
+ 
+ ──────────────────────────────
+ 
+-九、许可说明
++八、常见问题：专用服务器上通过 REI/JEI 作弊拿取枪械/弹药/配件
++              显示为紫黑块与 item. 前缀原始键
++
++  症状：专用服务器上从 REI/JEI 点击拿取（或直接执行
++        /give tacz:modern_kinetic_gun，不带数据组件）得到的枪械、弹药、
++        配件显示缺失贴图，名称为 item.tacz.modern_kinetic_gun 或
++        item.tacz.attachment 一类的原始键；但这些物品在 REI/JEI 列表内
++        显示正常，单人游戏与局域网联机也正常。
++
++  原因：TACZ 的枪械/弹药/配件/工作台物品并非自带内容的自足物品，
++        其内容 id 存放于 minecraft:custom_data 数据组件中
++        （GunId / AmmoId / AttachmentId / BlockId）。当专用服务器
++        未安装 REI 时，REI 的作弊给物会退回由客户端拼装的 /give 命令，
++        该命令只携带物品注册表 id，数据组件部分恒为空
++        （ClientHelperImpl#tryCheatingEntry，源码注释 TODO 24w09a
++        标注组件化后未适配）。服务端因此只收到"裸物品"：
++        TACZ 读取内容 id 得到 tacz:empty，名字回退为原版 item.* 键
++        （该键无翻译，故直接显示原始键），也无法解析模型，故显示紫黑块。
++        原版 Forge 模组与上游 Fabric 移植版行为相同，
++        该现象属于 REI 的给物方式所致，并非本移植版缺陷。
++        （铁弹药盒仍能显示名称，是因为其名称键打包在模组 jar 内，
++        恰好证明了服务端收到的是裸物品。）
++
++  解决方法：
++    1. 在专用服务器上安装与客户端相同版本的 REI —— 此后作弊走 REI
++       网络包，物品数据组件完整；
++    2. 或从 TACZ 自带的创造模式标签页、内置的弹药查询 / 配件查询 /
++       枪械工作台配方分类中拿取，这些条目已携带所需内容 id；
++    3. 使用 /give 时请附带数据组件，例如：
++       /give @p tacz:modern_kinetic_gun[minecraft:custom_data={GunId:"tacz:ak47"}]
++
++  JEI 的客户端兜底走原版创造模式槽位包，该包携带数据组件；
++  若仅使用 JEI 仍出现同样现象，请在反馈时附上查看器与服务器版本。
++
++──────────────────────────────
++
++──────────────────────────────
++
++十、许可说明
+ 
+   本项目涉及两套相互独立的许可：
+ 
+@@ -263,14 +301,14 @@ LRTactical（LR）代码兼容层，可直接加载大多数普通、未加密
+ 
+ ──────────────────────────────
+ 
+-十、问题反馈
++十一、问题反馈
+ 
+   本移植版的问题应反馈至本项目的问题追踪页面，而非上游仓库。
+   上游作者没有义务为本移植版提供支持。
+ 
+ ──────────────────────────────
+ 
+-十一、免责声明
++十二、免责声明
+ 
+   本项目按"原样"提供，不附带任何形式的担保。
+   使用本模组造成的后果（包括存档损坏、崩溃、数据丢失、
+diff --git a/docs/publish/Modrinth.md b/docs/publish/Modrinth.md
+index 939022b..52ce039 100644
+--- a/docs/publish/Modrinth.md
++++ b/docs/publish/Modrinth.md
+@@ -191,6 +191,41 @@ No TACZ build includes that decryption — not the original Forge mod, not the
+ upstream Fabric port, and not this one. **This is not a defect in this port and
+ cannot be fixed here.**
+ 
++## FAQ: REI/JEI cheating on a dedicated server gives purple/black items with `item.tacz.*` names
++
++## FAQ: REI/JEI cheating on a dedicated server gives purple/black items with `item.tacz.*` names
++
++**Symptom:** on a dedicated server, items cheated / picked up from REI or JEI
++(and sometimes from `/give tacz:modern_kinetic_gun` without components) show
++**missing textures and raw keys** such as `item.tacz.modern_kinetic_gun` or
++`item.tacz.attachment`, while the same items render fine inside the REI/JEI
++list, and single-player / LAN works.
++
++**Cause:** TACZ items are not vanilla self-contained items: the gun, ammo,
++attachment and workbench ids live in the `minecraft:custom_data` component
++(`GunId` / `AmmoId` / `AttachmentId` / `BlockId`). When REI is **not installed
++on the server**, REI's cheat-give falls back to a client-built `/give` command
++that carries only the item's registry id and an *empty* component tag
++(`ClientHelperImpl#tryCheatingEntry`, `tagMessage = /* TODO 24w09a ... */ ""`).
++The server therefore receives a **bare item**; TACZ reads `tacz:empty` as the
++content id and falls back to the vanilla `item.*` key with no model. The same
++happens on the original mod — this is REI behaviour, not a port defect. (The
++iron ammo box still shows a real name because its key ships inside the mod jar;
++that is exactly the bare-item fallback at work.)
++
++**Fix:**
++- **Install the same REI version on the dedicated server** — REI then uses its
++  network packet, which serialises the full item components.
++- or take items from **TACZ's own creative tabs** or the built-in **Ammo /
++  Attachment / Gun Smith Table** recipe categories (their entries are built
++  with the required id components).
++- For `/give`, always append the components, e.g.
++  `/give @p tacz:modern_kinetic_gun[minecraft:custom_data={GunId:"tacz:ak47"}]`.
++
++JEI's client-side fallback uses the vanilla creative-slot packet, which does
++carry components; if you see the same symptom with JEI alone, please report it
++with the exact viewer and server versions.
++
+ ## Reporting issues
+ 
+ Report issues to this project's issue tracker, not to the original authors — they
+diff --git a/docs/publish/README.md b/docs/publish/README.md
+index 7c87378..6ce2439 100644
+--- a/docs/publish/README.md
++++ b/docs/publish/README.md
+@@ -143,3 +143,12 @@
+ 该问题症状是紫黑块、极易被误判为本移植版的 bug，
+ 且因版本号已对齐 `1.1.8`，这类包反而能通过版本校验、正常建出条目，
+ 迷惑性更强。提前写入描述可省去发布后大量重复答疑。
++
++3. 「专服 REI/JEI 作弊拿取 → 紫黑块 + item.* 原始键」——
++症状像本移植版 bug，实际是 REI 未安装在服务器时作弊给物退回 /give 命令兜底、
++丢掉 minecraft:custom_data 数据组件所致（REI 源码 ClientHelperImpl#tryCheatingEntry
++的 tagMessage 硬编码为空，TODO 24w09a 组件化后未适配）。
++解决：专服安装同版本 REI、用 TACZ 自带创造标签页或内置查询分类拿取、
++/give 附带组件。完整推导见 26.2 分支 docs/DEDICATED_SERVER_GETNAME_AUDIT_2026_08_21.md
++第 8、9 节（含本同步记录文档 docs/PORT_GETNAME_FIX_TO_1211_AND_2612_2026_08_22.md）。
++
+diff --git a/src/main/java/com/tacz/guns/api/item/gun/AbstractGunItem.java b/src/main/java/com/tacz/guns/api/item/gun/AbstractGunItem.java
+index 1a6afdc..6840216 100644
+--- a/src/main/java/com/tacz/guns/api/item/gun/AbstractGunItem.java
++++ b/src/main/java/com/tacz/guns/api/item/gun/AbstractGunItem.java
+@@ -11,7 +11,6 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
+ import com.tacz.guns.api.item.builder.AmmoItemBuilder;
+ import com.tacz.guns.api.item.builder.GunItemBuilder;
+ import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
+-import com.tacz.guns.client.resource.index.ClientGunIndex;
+ import com.tacz.guns.entity.shooter.ShooterDataHolder;
+ import com.tacz.guns.inventory.tooltip.GunTooltip;
+ import com.tacz.guns.resource.index.CommonGunIndex;
+@@ -32,6 +31,7 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
+ import net.minecraft.world.item.Item;
+ import net.minecraft.world.item.ItemStack;
+ 
++import org.apache.commons.lang3.StringUtils;
+ import javax.annotation.Nonnull;
+ import java.util.*;
+ import java.util.function.Supplier;
+@@ -284,16 +284,48 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
+     }
+ 
+     /**
+-     * 获取枪械的显示名称
++     * 获取枪械的显示名称。
++     *
++     * <h2>为什么读 common 索引而不是 client 索引</h2>
++     * {@code Item#getName(ItemStack)} 是<b>双端公共方法</b>：{@code /give} 的回执消息、
++     * 容器标题、铁砧改名、死亡消息、以及别的 mod 在服务端读 {@code ItemStack#getHoverName}
++     * 的路径都会调用它。此前这里挂着 {@code @Environment(EnvType.CLIENT)} 并读
++     * {@code getClientGunIndex}，这在专用服务器上是错的，而且错法与直觉相反：
++     *
++     * <ul>
++     *   <li><b>fabric-loader 会剥离成员上的 {@code @Environment}。</b>
++     *       {@code MinecraftGameProvider#getBuiltinTransforms} 对所有非 Minecraft 的
++     *       mod 类返回 {@code STRIP_ENVIRONMENT}，{@code EnvironmentStrippingData} +
++     *       {@code ClassStripper} 会把环境不匹配的<b>方法/字段整体删掉</b>
++     *       （2026-08-21 读 fabric-loader master 源码确认；loader pin 为 0.19.3）。
++     *       所以专服上这个覆写<b>根本不存在</b>，调用落回 {@code Item#getName}，
++     *       枪械在所有服务端路径上显示的是原版兜底名（如 {@code item.tacz.modern_kinetic_gun}），
++     *       而不是枪包里的名字 —— 这是<b>静默的显示不一致</b>，不是崩服。</li>
++     *   <li>反过来，一旦有人只删注解、不改实现（很容易发生：注解看着像纯文档），
++     *       这行就会在专服上真的去加载
++     *       {@code com.tacz.guns.client.resource.index.ClientGunIndex}，
++     *       那才是 {@code NoClassDefFoundError}。</li>
++     * </ul>
++     *
++     * <p>两种失败模式的根因相同：<b>双端公共方法不该依赖 client 侧索引</b>。
++     * common 与 client 索引读的是同一份 index json、同一个 {@code name} 翻译键
++     * （{@code ClientGunIndex#getName} 也只是把 {@code GunIndexPOJO#getName} 抄一份），
++     * 客户端渲染聊天/GUI 组件时自行翻译，因此客户端显示结果不变、无需 dist 分支，
++     * 而服务端从此拿到与客户端一致的名字。
++     *
++     * <p>多人游戏客户端上 {@code CommonAssetsManager.get()} 会回退到
++     * {@code CommonNetworkCache}（服务端 datapack sync 时下发的同一份 index json），
++     * 因此纯客户端环境同样取得到 common 索引。
+      */
+     @Override
+     @Nonnull
+-    @Environment(EnvType.CLIENT)
+     public Component getName(@Nonnull ItemStack stack) {
+         Identifier gunId = this.getGunId(stack);
+-        Optional<ClientGunIndex> gunIndex = TimelessAPI.getClientGunIndex(gunId);
+-        if (gunIndex.isPresent()) {
+-            return Component.translatable(gunIndex.get().getName());
++        Optional<CommonGunIndex> gunIndex = TimelessAPI.getCommonGunIndex(gunId);
++        if (gunIndex.isPresent() && gunIndex.get().getPojo() != null) {
++            String name = gunIndex.get().getPojo().getName();
++            // 与 ClientGunIndex 的兜底保持一致：名字缺失时显示 no_name 提示键
++            return Component.translatable(StringUtils.isBlank(name) ? "custom.tacz.error.no_name" : name);
+         }
+         return super.getName(stack);
+     }
+diff --git a/src/main/java/com/tacz/guns/item/AmmoItem.java b/src/main/java/com/tacz/guns/item/AmmoItem.java
+index 31aedbf..4fb6819 100644
+--- a/src/main/java/com/tacz/guns/item/AmmoItem.java
++++ b/src/main/java/com/tacz/guns/item/AmmoItem.java
+@@ -6,7 +6,6 @@ import com.tacz.guns.api.item.builder.AmmoItemBuilder;
+ import com.tacz.guns.api.item.nbt.AmmoItemDataAccessor;
+ import com.tacz.guns.client.renderer.item.AmmoItemRenderer;
+ import com.tacz.guns.client.resource.ClientAssetsManager;
+-import com.tacz.guns.client.resource.index.ClientAmmoIndex;
+ import com.tacz.guns.client.resource.pojo.PackInfo;
+ import com.tacz.guns.resource.index.CommonAmmoIndex;
+ import net.fabricmc.api.EnvType;
+@@ -24,6 +23,7 @@ import net.minecraft.world.item.ItemStack;
+ import net.minecraft.world.item.TooltipFlag;
+ import net.minecraft.world.item.component.TooltipDisplay;
+ import net.minecraft.world.level.Level;
++import org.apache.commons.lang3.StringUtils;
+ import org.jetbrains.annotations.Nullable;
+ 
+ import javax.annotation.Nonnull;
+@@ -98,14 +98,27 @@ public class AmmoItem extends Item implements AmmoItemDataAccessor, IItem {
+     // DataComponents.MAX_STACK_SIZE 组件承担（见构造器与 inventoryTick），
+     // 本方法已无任何调用方。
+ 
++    /**
++     * 获取子弹的显示名称。
++     *
++     * <p>{@code Item#getName(ItemStack)} 是双端公共方法（{@code /give} 回执、容器标题、
++     * 铁砧改名等服务端路径都会调用），因此<b>不能</b>读只在客户端存在的
++     * {@code ClientAmmoIndex}：挂 {@code @Environment(CLIENT)} 会被 fabric-loader 在专服上
++     * 把整个方法剥离（枪包名字静默退化成原版兜底名），只删注解不改实现则会
++     * {@code NoClassDefFoundError}。完整推导见
++     * {@link com.tacz.guns.api.item.gun.AbstractGunItem#getName(net.minecraft.world.item.ItemStack)}。
++     *
++     * <p>common/client 两侧索引取的是同一份 index json 的同一个 {@code name} 键，
++     * 客户端显示结果不变。
++     */
+     @Override
+     @Nonnull
+-    @Environment(EnvType.CLIENT)
+     public Component getName(@Nonnull ItemStack stack) {
+         Identifier ammoId = this.getAmmoId(stack);
+-        Optional<ClientAmmoIndex> ammoIndex = TimelessAPI.getClientAmmoIndex(ammoId);
+-        if (ammoIndex.isPresent()) {
+-            return Component.translatable(ammoIndex.get().getName());
++        Optional<CommonAmmoIndex> ammoIndex = TimelessAPI.getCommonAmmoIndex(ammoId);
++        if (ammoIndex.isPresent() && ammoIndex.get().getPojo() != null) {
++            String name = ammoIndex.get().getPojo().getName();
++            return Component.translatable(StringUtils.isBlank(name) ? "custom.tacz.error.no_name" : name);
+         }
+         return super.getName(stack);
+     }
+diff --git a/src/main/java/com/tacz/guns/item/AttachmentItem.java b/src/main/java/com/tacz/guns/item/AttachmentItem.java
+index 8be6986..54ab6a3 100644
+--- a/src/main/java/com/tacz/guns/item/AttachmentItem.java
++++ b/src/main/java/com/tacz/guns/item/AttachmentItem.java
+@@ -7,7 +7,6 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
+ import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
+ import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
+ import com.tacz.guns.client.renderer.item.AttachmentItemRenderer;
+-import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+ import com.tacz.guns.inventory.tooltip.AttachmentItemTooltip;
+ import com.tacz.guns.resource.index.CommonAttachmentIndex;
+ import net.fabricmc.api.EnvType;
+@@ -20,6 +19,7 @@ import net.minecraft.resources.Identifier;
+ import net.minecraft.world.inventory.tooltip.TooltipComponent;
+ import net.minecraft.world.item.Item;
+ import net.minecraft.world.item.ItemStack;
++import org.apache.commons.lang3.StringUtils;
+ import org.jetbrains.annotations.NotNull;
+ 
+ import javax.annotation.Nonnull;
+@@ -34,14 +34,27 @@ public class AttachmentItem extends Item implements AttachmentItemDataAccessor,
+         super(properties.stacksTo(1));
+     }
+ 
++    /**
++     * 获取配件的显示名称。
++     *
++     * <p>{@code Item#getName(ItemStack)} 是双端公共方法（{@code /give} 回执、容器标题、
++     * 铁砧改名等服务端路径都会调用），因此<b>不能</b>读只在客户端存在的
++     * {@code ClientAttachmentIndex}：挂 {@code @Environment(CLIENT)} 会被 fabric-loader 在专服上
++     * 把整个方法剥离（枪包名字静默退化成原版兜底名），只删注解不改实现则会
++     * {@code NoClassDefFoundError}。完整推导见
++     * {@link com.tacz.guns.api.item.gun.AbstractGunItem#getName(net.minecraft.world.item.ItemStack)}。
++     *
++     * <p>common/client 两侧索引取的是同一份 index json 的同一个 {@code name} 键，
++     * 客户端显示结果不变。
++     */
+     @Override
+     @Nonnull
+-    @Environment(EnvType.CLIENT)
+     public Component getName(@Nonnull ItemStack stack) {
+         Identifier attachmentId = this.getAttachmentId(stack);
+-        Optional<ClientAttachmentIndex> attachmentIndex = TimelessAPI.getClientAttachmentIndex(attachmentId);
+-        if (attachmentIndex.isPresent()) {
+-            return Component.translatable(attachmentIndex.get().getName());
++        Optional<CommonAttachmentIndex> attachmentIndex = TimelessAPI.getCommonAttachmentIndex(attachmentId);
++        if (attachmentIndex.isPresent() && attachmentIndex.get().getPojo() != null) {
++            String name = attachmentIndex.get().getPojo().getName();
++            return Component.translatable(StringUtils.isBlank(name) ? "custom.tacz.error.no_name" : name);
+         }
+         return super.getName(stack);
+     }
+diff --git a/src/main/java/com/tacz/guns/item/GunSmithTableItem.java b/src/main/java/com/tacz/guns/item/GunSmithTableItem.java
+index d53f0db..3224072 100644
+--- a/src/main/java/com/tacz/guns/item/GunSmithTableItem.java
++++ b/src/main/java/com/tacz/guns/item/GunSmithTableItem.java
+@@ -5,7 +5,7 @@ import com.tacz.guns.api.TimelessAPI;
+ import com.tacz.guns.api.item.builder.BlockItemBuilder;
+ import com.tacz.guns.api.item.nbt.BlockItemDataAccessor;
+ import com.tacz.guns.client.renderer.item.GunSmithTableItemRenderer;
+-import com.tacz.guns.client.resource.index.ClientBlockIndex;
++import com.tacz.guns.resource.index.CommonBlockIndex;
+ import com.tacz.guns.inventory.tooltip.BlockItemTooltip;
+ import net.fabricmc.api.EnvType;
+ import net.fabricmc.api.Environment;
+@@ -18,6 +18,7 @@ import net.minecraft.world.item.BlockItem;
+ import net.minecraft.world.item.Item;
+ import net.minecraft.world.item.ItemStack;
+ import net.minecraft.world.level.block.Block;
++import org.apache.commons.lang3.StringUtils;
+ import org.jetbrains.annotations.NotNull;
+ 
+ import javax.annotation.Nonnull;
+@@ -43,14 +44,27 @@ public class GunSmithTableItem extends BlockItem implements BlockItemDataAccesso
+         return stacks;
+     }
+ 
++    /**
++     * 获取枪械制造台（方块物品）的显示名称。
++     *
++     * <p>{@code Item#getName(ItemStack)} 是双端公共方法（{@code /give} 回执、容器标题、
++     * 铁砧改名等服务端路径都会调用），因此<b>不能</b>读只在客户端存在的
++     * {@code ClientBlockIndex}：挂 {@code @Environment(CLIENT)} 会被 fabric-loader 在专服上
++     * 把整个方法剥离（枪包名字静默退化成原版兜底名），只删注解不改实现则会
++     * {@code NoClassDefFoundError}。完整推导见
++     * {@link com.tacz.guns.api.item.gun.AbstractGunItem#getName(net.minecraft.world.item.ItemStack)}。
++     *
++     * <p>common/client 两侧索引取的是同一份 index json 的同一个 {@code name} 键，
++     * 客户端显示结果不变。
++     */
+     @Override
+     @Nonnull
+-    @Environment(EnvType.CLIENT)
+     public Component getName(@Nonnull ItemStack stack) {
+         Identifier blockId = this.getBlockId(stack);
+-        Optional<ClientBlockIndex> blockIndex = TimelessAPI.getClientBlockIndex(blockId);
+-        if (blockIndex.isPresent()) {
+-            return Component.translatable(blockIndex.get().getName());
++        Optional<CommonBlockIndex> blockIndex = TimelessAPI.getCommonBlockIndex(blockId);
++        if (blockIndex.isPresent() && blockIndex.get().getPojo() != null) {
++            String name = blockIndex.get().getPojo().getName();
++            return Component.translatable(StringUtils.isBlank(name) ? "custom.tacz.error.no_name" : name);
+         }
+         return super.getName(stack);
+     }

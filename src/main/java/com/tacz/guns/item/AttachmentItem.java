@@ -7,7 +7,6 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
 import com.tacz.guns.client.renderer.item.AttachmentItemRenderer;
-import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.inventory.tooltip.AttachmentItemTooltip;
 import com.tacz.guns.resource.index.CommonAttachmentIndex;
 import net.fabricmc.api.EnvType;
@@ -20,6 +19,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -34,14 +34,27 @@ public class AttachmentItem extends Item implements AttachmentItemDataAccessor, 
         super(properties.stacksTo(1));
     }
 
+    /**
+     * 获取配件的显示名称。
+     *
+     * <p>{@code Item#getName(ItemStack)} 是双端公共方法（{@code /give} 回执、容器标题、
+     * 铁砧改名等服务端路径都会调用），因此<b>不能</b>读只在客户端存在的
+     * {@code ClientAttachmentIndex}：挂 {@code @Environment(CLIENT)} 会被 fabric-loader 在专服上
+     * 把整个方法剥离（枪包名字静默退化成原版兜底名），只删注解不改实现则会
+     * {@code NoClassDefFoundError}。完整推导见
+     * {@link com.tacz.guns.api.item.gun.AbstractGunItem#getName(net.minecraft.world.item.ItemStack)}。
+     *
+     * <p>common/client 两侧索引取的是同一份 index json 的同一个 {@code name} 键，
+     * 客户端显示结果不变。
+     */
     @Override
     @Nonnull
-    @Environment(EnvType.CLIENT)
     public Component getName(@Nonnull ItemStack stack) {
         Identifier attachmentId = this.getAttachmentId(stack);
-        Optional<ClientAttachmentIndex> attachmentIndex = TimelessAPI.getClientAttachmentIndex(attachmentId);
-        if (attachmentIndex.isPresent()) {
-            return Component.translatable(attachmentIndex.get().getName());
+        Optional<CommonAttachmentIndex> attachmentIndex = TimelessAPI.getCommonAttachmentIndex(attachmentId);
+        if (attachmentIndex.isPresent() && attachmentIndex.get().getPojo() != null) {
+            String name = attachmentIndex.get().getPojo().getName();
+            return Component.translatable(StringUtils.isBlank(name) ? "custom.tacz.error.no_name" : name);
         }
         return super.getName(stack);
     }

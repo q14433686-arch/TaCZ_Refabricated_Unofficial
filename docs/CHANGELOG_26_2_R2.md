@@ -82,3 +82,27 @@ metadata，不能写成 `1.1.8-R2`。
 - JEI 和 REI 各自验证 Ammo Query 的第三方包、排序、60 项 overflow、三语资源；
 - 远程同步发生在 viewer 首轮注册后时的刷新、连续同步合并、断线清 pending、轻量 hook 故障的
   单次 fallback 与无 reload loop。
+
+## FAQ：专服上 REI/JEI 作弊拿取枪械/弹药/配件显示紫黑块与 `item.*` 原始键（2026-08-22 增补）
+
+**症状**：专用服务器上从 REI/JEI 拿取（或 `/give tacz:modern_kinetic_gun` 不带组件）得到的
+枪械、弹药、配件显示缺失贴图，名称为 `item.tacz.modern_kinetic_gun` /
+`item.tacz.attachment` 一类原始键；物品在 REI/JEI 列表内显示正常，单人/局域网正常。
+
+**原因**：TACZ 的枪/弹/配件/工作台物品的内容 id 存放在 `minecraft:custom_data` 组件
+（`GunId` / `AmmoId` / `AttachmentId` / `BlockId`）。服务器未安装 REI 时，REI 作弊给物
+退回客户端拼装的 `/give` 命令，该命令只携带物品注册表 id、组部分恒为空
+（REI `ClientHelperImpl#tryCheatingEntry` 源码 `tagMessage = ""`，`TODO 24w09a`
+标注组件化后未适配），服务端拿到裸物品 → TACZ 读 `tacz:empty` → 名字回退 `item.*`
+（无翻译键）→ 无模型。原版 Forge 与上游 Fabric 移植版行为相同，**非本移植版缺陷**。
+（铁弹药盒仍显示 Iron Ammo Box，恰因其名称键在 mod jar 内。）
+
+**解决**：
+1. 专服安装与客户端同版本的 REI —— 之后作弊走 REI 网络包，组件完整；
+2. 或用 TACZ 自带创造标签页 / 内置弹药查询、配件查询、工作台配方分类拿取；
+3. `/give` 务必附带组件，如
+   `/give @p tacz:modern_kinetic_gun[minecraft:custom_data={GunId:"tacz:ak47"}]`。
+
+JEI 客户端兜底走原版创造槽位包（携带组件）；若仅 JEI 也复现，反馈时附查看器与服务器版本。
+完整源码推导见 `docs/DEDICATED_SERVER_GETNAME_AUDIT_2026_08_21.md` 第 8、9 节；
+发布文案已同步（`docs/publish/{Modrinth,CurseForge,MCMOD}.md` 的 FAQ 一节）。
