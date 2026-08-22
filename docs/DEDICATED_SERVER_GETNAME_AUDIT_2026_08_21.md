@@ -300,3 +300,79 @@ REI/JEI 的物品列表条目是**注册表里的裸 ItemStack**（物品查看�
 若需要「REI/JEI 物品列表直接列出全部带 id 的枪械/弹药/配件变体」，是独立的增强项
 （JEI/REI 各需条目注册或 ItemStackProvider，改动与本次 `getName` 修复无关），
 建议单独立项，不混进本轮提交。
+
+---
+
+## 9. 2026-08-22 追根：REI/JEI「列表正常、拿取紫黑、单机/局域网正常」的完整解释
+
+用户补充：在专服上用**正确 `/give` 组件语法**发物品一切正常；但 REI/JEI 里**列表显示正常**
+（有名字有模型），**作弊拿取后**才变紫黑 + `item.*` 原始键；单人游戏/局域网联机没有此问题。
+
+### 9.1 这说明什么（一句话）
+
+> **条目数据在客户端是完整的（所以列表渲染正常），坏的是「客户端 → 专服」的给物通路：
+> 当专用服务器上没有安装 REI 时，REI 的作弊给物退回「客户端拼装 `/give` 命令」的兜底，
+> 而这条兜底把物品的 NBT/数据组件**硬编码为空**，于是服务端只拿到裸物品。**
+
+### 9.2 REI 源码实锤（对应仓库 CHANGELOG 核过的 26.2.820 / 源码 commit 2be20928）
+
+`runtime/src/main/java/me/shedaniel/rei/impl/client/ClientHelperImpl.java#tryCheatingEntry`
+共三条路径，按环境选择：
+
+1. **创造界面 +「抓取」模式**：`menu.setCarried(copy.getValue().copy())` —— 纯客户端，
+   单机/局域网/专服行为一致；
+2. **`ClientHelperImpl.getInstance().canUsePackets()` 为真**：发送
+   `REIPackets.CreateItems` / `CreateItemsGrab`（`ItemStack.OPTIONAL_STREAM_CODEC`，
+   **组件完整**）。`canUsePackets()` 定义为
+   `NetworkManager.canServerReceive(CREATE_ITEMS_PACKET) && ...`——**只有服务器端也装了 REI
+   才为真**。单机/局域网时集成服务器与客户端同 JVM，REI 必然在，所以走这条路 → 正常；
+3. **服务器没装 REI（兜底）**：
+   ```java
+   String tagMessage = /* TODO 24w09a: cheatedStack.copy().getTag() ... */ "";
+   String madeUpCommand = og.replaceAll("{item_identifier}", identifier.toString())
+                             .replaceAll("{nbt}", tagMessage) ...;
+   Minecraft.getInstance().player.connection.sendCommand(...);
+   ```
+   默认模板（`ConfigObjectImpl`：`public String giveCommand =
+   "/give {player_name} {item_identifier}{nbt} {count}"`）最终被替换成
+   `give <玩家> tacz:modern_kinetic_gun 1`——`{item_identifier}` 是 **Item 的注册表 id**
+   （`ItemEntryDefinition#getIdentifier` = `BuiltInRegistries.ITEM.getKey(...)`），
+   `{nbt}` **恒为空**（源码注释 `TODO 24w09a` 明示：1.20.5 组件化后 `getTag()` 不再拼入）。
+
+REI 自己的语言文件也写明该配置项的用途：
+`config.rei.options.cheats.give_command.desc` =
+「当服务器上未安装 REI 时，用于作弊物品的指令」。
+
+### 9.3 为什么这精确复现了用户的每个观测
+
+| 观测 | 解释 |
+| --- | --- |
+| REI/JEI 列表里名字/模型正常 | 列表/分类条目是客户端 `AmmoItemBuilder` / `GunItemBuilder` 等构造的**完整物品**（带 `minecraft:custom_data`），客户端渲染数据齐全 |
+| 拿取后变紫黑、`item.*` 键 | 兜底命令给的是裸物品：`getGunId/...` 读到 `tacz:empty` → `getName` 落回 `super.getName` → `item.tacz.modern_kinetic_gun`（无 lang 键 → 原始键）；`getGunDisplay` 空 → 无模型 → 紫黑 |
+| 只有铁弹药盒「正常」 | 裸 `tacz:ammo_box` 的 `AmmoBoxItem#getName` 走 `getAmmoLevel`=0 → `item.tacz.ammo_box.iron`（**mod jar 自带该键**，服务端可翻译成 "Iron Ammo Box"）—— 它恰恰证明这条路径给的就是裸物品 |
+| 石像/工作台/标靶/标靶车正常 | 普通 `BlockItem`，`block.tacz.*` 键在 mod jar，模型不依赖枪包索引 |
+| 单人/局域网正常 | REI 与集成服务器同 JVM → `canUsePackets()`=true → `CreateItems`（OPTIONAL_STREAM_CODEC）→ 组件完整 |
+| 正确 `/give` 组件语法正常 | 服务端 common 索引、修复后的 `getName`、客户端索引全部工作——因此 **TACZ 侧没有任何缺陷；坏在 REI 的兜底命令无法表达组件** |
+
+### 9.4 零代码修复与验证
+
+1. **在专用服务器上也装与客户端同版本的 REI**（或 JEI）：
+   - REI：`canUsePackets()` 变真 → 走 `CreateItems` 包，组件完整；
+   - JEI 同理：`serverConnection.isJeiOnServer()` 为真 → `PacketGiveItemStack`
+     （`ItemStack.STREAM_CODEC`，组件完整）。JEI 没装在服务端时走的是原版
+     创造背包动作包（`ServerboundSetCreativeModeSlotPacket`，1.20.5+ 也携带组件），
+     理论不受影响；若用户确认 JEI 单独也复现，需另查 26.2 的该包，但 REI 这条已实锤。
+2. 验证步骤：专服装 REI 后，从 REI 的「弹药查询 / 配件查询 / 枪械工作台」分类或
+   TACZ 创造标签页拿一把枪 → 预期名字与模型正常、服务端无 `item.tacz.*` 回退名。
+3. 不想装服务端 REI 的替代用法：直接用 **TACZ 自己的创造标签页**（`ModCreativeTabs`），
+   或把 REI 配置里的「give 命令」交给支持 `{nbt}` 的外部实现（REI 默认 `{nbt}` 恒空，无解）。
+4. 上游跟进：给 REI 提 issue——`ClientHelperImpl#tryCheatingEntry` 的
+   `tagMessage = /* TODO 24w09a: ... */ ""` 从未适配 1.20.5+ 数据组件，
+   兜底 `/give` 命令丢掉了 `minecraft:custom_data`，且超 256 字符时二次清空。
+
+### 9.5 与本次 `getName` 修复的关系（结论）
+
+`getName` 修复解决的是「**同一条 /give 命令或同一个完整物品**在服务端是否显示枪包名」；
+本节的 REI 兜底解决不了——它把物品本身变成了裸物品，属于查看器给物协议的缺陷。
+两者不冲突、不重复：修复仍然必须保留（否则带上组件的物品在专服 `/give` 回执、容器标题、
+铁砧改名等路径仍然会显示原版兜底名），而「REI/JEI 拿取紫黑」需要 9.4 的方案解决。
