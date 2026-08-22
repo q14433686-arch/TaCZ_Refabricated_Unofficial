@@ -6,7 +6,6 @@ import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.api.item.nbt.AmmoItemDataAccessor;
 import com.tacz.guns.client.renderer.item.AmmoItemRenderer;
 import com.tacz.guns.client.resource.ClientAssetsManager;
-import com.tacz.guns.client.resource.index.ClientAmmoIndex;
 import com.tacz.guns.client.resource.pojo.PackInfo;
 import com.tacz.guns.resource.index.CommonAmmoIndex;
 import net.fabricmc.api.EnvType;
@@ -100,12 +99,11 @@ public class AmmoItem extends Item implements AmmoItemDataAccessor, IItem {
 
     @Override
     @Nonnull
-    @Environment(EnvType.CLIENT)
     public Component getName(@Nonnull ItemStack stack) {
         Identifier ammoId = this.getAmmoId(stack);
-        Optional<ClientAmmoIndex> ammoIndex = TimelessAPI.getClientAmmoIndex(ammoId);
-        if (ammoIndex.isPresent()) {
-            return Component.translatable(ammoIndex.get().getName());
+        Optional<CommonAmmoIndex> ammoIndex = TimelessAPI.getCommonAmmoIndex(ammoId);
+        if (ammoIndex.isPresent() && ammoIndex.get().getPojo().getName() != null) {
+            return Component.translatable(ammoIndex.get().getPojo().getName());
         }
         return super.getName(stack);
     }

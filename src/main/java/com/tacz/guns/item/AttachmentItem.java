@@ -7,7 +7,6 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
 import com.tacz.guns.client.renderer.item.AttachmentItemRenderer;
-import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.inventory.tooltip.AttachmentItemTooltip;
 import com.tacz.guns.resource.index.CommonAttachmentIndex;
 import net.fabricmc.api.EnvType;
@@ -36,12 +35,11 @@ public class AttachmentItem extends Item implements AttachmentItemDataAccessor, 
 
     @Override
     @Nonnull
-    @Environment(EnvType.CLIENT)
     public Component getName(@Nonnull ItemStack stack) {
         Identifier attachmentId = this.getAttachmentId(stack);
-        Optional<ClientAttachmentIndex> attachmentIndex = TimelessAPI.getClientAttachmentIndex(attachmentId);
-        if (attachmentIndex.isPresent()) {
-            return Component.translatable(attachmentIndex.get().getName());
+        Optional<CommonAttachmentIndex> attachmentIndex = TimelessAPI.getCommonAttachmentIndex(attachmentId);
+        if (attachmentIndex.isPresent() && attachmentIndex.get().getPojo().getName() != null) {
+            return Component.translatable(attachmentIndex.get().getPojo().getName());
         }
         return super.getName(stack);
     }

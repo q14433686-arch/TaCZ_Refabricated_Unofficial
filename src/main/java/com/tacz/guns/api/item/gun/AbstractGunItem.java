@@ -11,7 +11,6 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
-import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -288,12 +287,11 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
      */
     @Override
     @Nonnull
-    @Environment(EnvType.CLIENT)
     public Component getName(@Nonnull ItemStack stack) {
         Identifier gunId = this.getGunId(stack);
-        Optional<ClientGunIndex> gunIndex = TimelessAPI.getClientGunIndex(gunId);
-        if (gunIndex.isPresent()) {
-            return Component.translatable(gunIndex.get().getName());
+        Optional<CommonGunIndex> gunIndex = TimelessAPI.getCommonGunIndex(gunId);
+        if (gunIndex.isPresent() && gunIndex.get().getPojo().getName() != null) {
+            return Component.translatable(gunIndex.get().getPojo().getName());
         }
         return super.getName(stack);
     }
