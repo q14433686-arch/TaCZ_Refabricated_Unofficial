@@ -11,6 +11,7 @@ import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Method;
 import java.util.function.Supplier;
 
 /**
@@ -80,15 +81,84 @@ public final class IrisCompat {
         return false;
     }
 
+    /**
+     * Iris 反射句柄，解析一次后缓存。
+     *
+     * <h3>为什么值得缓存</h3>
+     * {@link #isUsingRenderPack()} 与 {@link #isHandRendererActive()} 在全仓库有 30+ 个调用点，
+     * 其中好几个是<b>逐帧、甚至一帧多次</b>（手部 pass 判定、bob 事件、掩码与合成的闸门）。
+     * 原来每次都要 {@code Class.forName} + {@code getMethod}：前者走类加载器查表，
+     * 后者会<b>返回一份防御性拷贝</b>（每次都分配一个新的 Method 对象）。
+     * 缓存之后只剩一次 {@code invoke}，热路径上的分配直接归零。
+     */
+    private static boolean irisHandlesResolved;
+    @Nullable
+    private static Object irisApiInstance;
+    @Nullable
+    private static Method mIsShaderPackInUse;
+    @Nullable
+    private static Object handRendererInstance;
+    @Nullable
+    private static Method mHandRendererIsActive;
+
+    private static void resolveIrisHandles() {
+        if (irisHandlesResolved) {
+            return;
+        }
+        irisHandlesResolved = true;
+        try {
+            Class<?> irisApiClass = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+            irisApiInstance = irisApiClass.getMethod("getInstance").invoke(null);
+            mIsShaderPackInUse = irisApiClass.getMethod("isShaderPackInUse");
+        } catch (Throwable ignored) {
+            irisApiInstance = null;
+            mIsShaderPackInUse = null;
+        }
+        try {
+            Class<?> handRendererClass = Class.forName("net.irisshaders.iris.pathways.HandRenderer");
+            handRendererInstance = handRendererClass.getField("INSTANCE").get(null);
+            mHandRendererIsActive = handRendererClass.getMethod("isActive");
+        } catch (Throwable ignored) {
+            handRendererInstance = null;
+            mHandRendererIsActive = null;
+        }
+    }
+
+    /**
+     * 本帧「是否在用光影包」的记忆值。
+     *
+     * <p>这个答案在一帧之内<b>不可能变</b>（切换光影是玩家操作，发生在帧与帧之间），
+     * 而它每帧要被问很多次，所以记一次就够。由 {@link #beginFrame()} 在帧首清空。
+     *
+     * <p>注意<b>不能</b>对 {@link #isHandRendererActive()} 这么做 ——
+     * 那个值在一帧<b>内部</b>就会翻转（手部 pass 开始/结束），记住就错了。
+     */
+    private static byte usingRenderPackThisFrame = -1;
+
+    /** 每帧清一次帧内记忆值。挂在 {@code GameRenderer#extract} 的 HEAD。 */
+    public static void beginFrame() {
+        usingRenderPackThisFrame = -1;
+    }
+
     public static boolean isUsingRenderPack() {
+        if (usingRenderPackThisFrame >= 0) {
+            return usingRenderPackThisFrame != 0;
+        }
+        boolean result = computeUsingRenderPack();
+        usingRenderPackThisFrame = (byte) (result ? 1 : 0);
+        return result;
+    }
+
+    private static boolean computeUsingRenderPack() {
         // Iris 检查 - 使用反射避免硬依赖
         if (FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
+            resolveIrisHandles();
+            if (irisApiInstance == null || mIsShaderPackInUse == null) {
+                return false;
+            }
             try {
-                Class<?> irisApiClass = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
-                Object instance = irisApiClass.getMethod("getInstance").invoke(null);
-                Boolean inUse = (Boolean) irisApiClass.getMethod("isShaderPackInUse").invoke(instance);
-                return inUse;
-            } catch (Exception e) {
+                return (Boolean) mIsShaderPackInUse.invoke(irisApiInstance);
+            } catch (Throwable e) {
                 return false;
             }
         }
@@ -228,20 +298,21 @@ public final class IrisCompat {
         if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS) || !isUsingRenderPack()) {
             return false;
         }
+        resolveIrisHandles();
+        if (handRendererInstance == null || mHandRendererIsActive == null) {
+            return false;
+        }
         try {
-            Class<?> handRendererClass = Class.forName("net.irisshaders.iris.pathways.HandRenderer");
-            Object instance = handRendererClass.getField("INSTANCE").get(null);
-            return (Boolean) handRendererClass.getMethod("isActive").invoke(instance);
+            // 刻意不做帧内缓存：这个值在一帧【内部】就会翻转
+            // （Iris 的 HandRenderer 一帧进出两次），缓存了必错。
+            return (Boolean) mHandRendererIsActive.invoke(handRendererInstance);
         } catch (Throwable ignored) {
             return false;
         }
     }
-
-    /** {@code HandRenderer.INSTANCE}，与 {@link #handIsRenderingSolidMethod} 一同惰性解析、解析一次。 */
+    /** {@code HandRenderer.isRenderingSolid} 的句柄；实例复用上面缓存的 {@link #handRendererInstance}。 */
     @Nullable
-    private static Object handRendererInstance;
-    @Nullable
-    private static java.lang.reflect.Method handIsRenderingSolidMethod;
+    private static Method handIsRenderingSolidMethod;
     private static boolean handRenderingSolidResolved;
 
     /**
@@ -260,12 +331,16 @@ public final class IrisCompat {
     public static boolean isHandRenderingSolid() {
         if (!handRenderingSolidResolved) {
             handRenderingSolidResolved = true;
+            // 实例复用共享缓存，这里只解析自己那一个方法句柄。
+            //
+            // 早前这里自己又解析了一遍实例，并在失败分支里把 handRendererInstance 置空 ——
+            // 那是共享字段，一旦被置空，isHandRendererActive() 也跟着失效，
+            // 手部 pass 判定就此错到底。共享状态只能由它的属主写。
+            resolveIrisHandles();
             try {
-                Class<?> handRendererClass = Class.forName("net.irisshaders.iris.pathways.HandRenderer");
-                handRendererInstance = handRendererClass.getField("INSTANCE").get(null);
-                handIsRenderingSolidMethod = handRendererClass.getMethod("isRenderingSolid");
+                handIsRenderingSolidMethod = Class.forName("net.irisshaders.iris.pathways.HandRenderer")
+                        .getMethod("isRenderingSolid");
             } catch (Throwable ignored) {
-                handRendererInstance = null;
                 handIsRenderingSolidMethod = null;
             }
         }

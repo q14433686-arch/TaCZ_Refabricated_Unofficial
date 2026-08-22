@@ -143,6 +143,16 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RERENDER;
     /**
+     * 二次渲染 + 光影时，是否给镜内那一遍配一套独立的 Iris 管线。
+     *
+     * <p>不隔离的话，Iris 那一整族「上一帧」uniform 会被一帧推进两次，
+     * 主画面的时域效果（TAA、体积云、SSGI）全部失准 —— 表现为拖影、云噪点，
+     * 以及<b>开镜时镜外整屏发糙</b>。隔离的代价是多一套 colortex（显存）。
+     */
+    /** 镜内那一遍的阴影贴图分辨率比例（1.0 = 与主画面相同）。开销按面积走。 */
+    public static ForgeConfigSpec.DoubleValue SCOPE_PIP_SHADOW_SCALE;
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_ISOLATE_PIPELINE;
+    /**
      * 【诊断】跑完镜内那一遍，但<b>不做合成</b>。
      *
      * <p>用来一刀切开「放大画面溢出到镜外」这个症状的两种可能：
@@ -435,9 +445,57 @@ public class RenderConfig {
                         "instead of reprojecting the already-rendered frame. The lens then has native",
                         "resolution instead of being capped at screen resolution / zoom, which matters a",
                         "lot for 6x-8x optics. Costs a full extra world render every frame.",
+                        "",
+                        "This now works with shader packs too. The scope pass runs the shader pipeline",
+                        "to completion first, its finished image is copied aside, and the normal frame",
+                        "then renders over it -- two sequential frames as far as Iris is concerned, so",
+                        "they reuse the same buffers and cost no extra VRAM.",
+                        "Expect roughly HALF the frame rate with shaders on, since the whole pipeline",
+                        "(shadow maps and composite chain included) runs twice. Temporal effects such",
+                        "as TAA advance twice per frame as well, which can show up as ghosting or",
+                        "shimmer; if that bothers you, use ScopePipWorldZoomShare instead.",
+                        "",
                         "EXPERIMENTAL: an earlier attempt made entities vanish from the main view.",
                         "Default off.")
                 .define("ScopePipRerender", false);
+        SCOPE_PIP_SHADOW_SCALE = builder
+                .comment("Shadow map resolution for the scope pass, as a fraction of the pack's own.",
+                        "Only used with ScopePipRerender + ScopePipIsolatePipeline + a shader pack.",
+                        "",
+                        "Iris renders shadows once per world render, so rendering the world twice draws",
+                        "the whole shadow map twice per frame -- often one of the most expensive things",
+                        "in a shader frame. Cost scales with AREA, so 0.5 cuts that pass' shadow work to",
+                        "about a quarter. Rounded down to a power of two, minimum 256.",
+                        "Only the lens is affected; the main view keeps the pack's full shadow map.",
+                        "  1.0 = same as the main view (no saving)",
+                        "  0.5 = default, ~1/4 the shadow cost for the scope pass",
+                        "  0.25 = ~1/16, visibly blockier shadows in the lens",
+                        "Takes effect when the scope pipeline is built, so restart or change dimension.")
+                .defineInRange("ScopePipShadowScale", 0.5d, 0.25d, 1.0d);
+        SCOPE_PIP_ISOLATE_PIPELINE = builder
+                .comment("Give the scope pass its own shader pipeline, so its temporal state cannot",
+                        "corrupt the main view. Only has any effect with ScopePipRerender on and a",
+                        "shader pack active.",
+                        "",
+                        "Iris advances every 'previous frame' value when it is READ, not once per frame.",
+                        "Rendering twice therefore leaves the main view reprojecting against the scope",
+                        "pass's matrices, which breaks TAA, volumetric clouds and SSGI at once: ghosting,",
+                        "shimmering clouds, and a grainy screen outside the scope while aiming (that",
+                        "graininess is temporal accumulation failing, not sharpening).",
+                        "Isolating the pass gives it separate buffers and separate uniforms, so both",
+                        "views stay correct.",
+                        "",
+                        "Costs an extra set of shader buffers (a few hundred MB of VRAM at high",
+                        "resolutions) and a one-time shader compile the first time you aim. Turn this",
+                        "off if VRAM is tight, and the artifacts above come back.",
+                        "Note: in dimensions other than the Overworld the lens may use the pack's",
+                        "fallback shaders, since the pass uses its own dimension id.",
+                        "",
+                        "Voxy is handled alongside this: the scope pass is given its own Voxy viewport",
+                        "too, the same way Voxy already separates the Iris shadow pass. Without that,",
+                        "Voxy's per-view LOD state gets driven by two different projections in one frame",
+                        "and its distant terrain corrupts permanently after the first time you aim.")
+                .define("ScopePipIsolatePipeline", true);
         SCOPE_PIP_DEBUG_NO_COMPOSITE = builder
                 .comment("[DEBUG] Run the scope pass but skip pasting it into the lens. Use this to tell",
                         "whether magnified imagery leaking outside the scope comes from the off-screen",
