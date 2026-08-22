@@ -10,7 +10,9 @@
   "client": [
     "IrisShaderCreatorMixin",
     "IrisGlCommandEncoderMixin",
-    "IrisExtendedShaderMixin"
+    "IrisExtendedShaderMixin",
+    "IrisScopeDimensionMixin",
+    "IrisShadowResolutionMixin"
   ],
   "injectors": {
     "defaultRequire": 0

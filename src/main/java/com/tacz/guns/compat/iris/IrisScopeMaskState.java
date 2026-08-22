@@ -2,6 +2,7 @@ package com.tacz.guns.compat.iris;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.render.scope.ScopeMaskTarget;
 import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL13C;
@@ -33,6 +34,40 @@ public final class IrisScopeMaskState {
     private static boolean loggedFailure;
     private static boolean loggedApply;
 
+    /**
+     * {@code GlRenderPass.pipeline} 字段，按 class 缓存。
+     *
+     * <h3>为什么非缓存不可</h3>
+     * {@link #applyToGlRenderPass} 挂在 {@code GlCommandEncoder.trySetup} 上，
+     * 也就是<b>每一次 draw call 之前</b>都会跑一遍 —— 开着 Sodium + Iris，
+     * 这是每帧成千上万次。原来那版每次都现查：
+     * <pre>
+     * target.getClass().getDeclaredField(name)   // 每次都新建一个 Field 副本
+     * target.getClass().getMethod(name)          // 同上，且要走完整张公共方法表
+     * </pre>
+     * {@code getDeclaredField}/{@code getMethod} <b>每次调用都返回一份防御性拷贝</b>，
+     * 于是每个 draw call 要付 5 次反射查找 + 5 次对象分配 + 5 次 setAccessible 访问检查。
+     * 这笔钱与开不开镜无关，是<b>全程</b>都在付的。
+     */
+    private static Class<?> cachedPassClass;
+    private static Field cachedPipelineField;
+    private static boolean pipelineFieldResolved;
+
+    /**
+     * 「这套 GL 管线对应哪个 mode」的记忆。
+     *
+     * <p>一个 {@code GlRenderPipeline} 实例对应的 RenderPipeline location 是<b>固定</b>的，
+     * 所以判定结果永远不变 —— 逐 draw call 重新用反射取一遍 location、
+     * 再 {@code toLowerCase} 出一个新字符串来比较，纯属白花。
+     * 按实例身份记住即可。
+     */
+    private static final java.util.Map<Object, Integer> MODE_BY_PIPELINE = new java.util.IdentityHashMap<>();
+    /** 管线实例是有限的（几十个）；真出现异常增长就整体丢弃重来，避免无界增长。 */
+    private static final int MODE_CACHE_LIMIT = 512;
+
+    /** {@code GL_MAX_TEXTURE_IMAGE_UNITS} 是驱动常量，问一次就够。 */
+    private static int cachedMaxTextureUnits = -1;
+
     private IrisScopeMaskState() {
     }
 
@@ -62,6 +97,23 @@ public final class IrisScopeMaskState {
     public static void applyToGlRenderPass(Object glRenderPass) {
         try {
             if (glRenderPass == null) {
+                return;
+            }
+            // 【快速路径 —— 本方法每次 draw call 都会被调到】
+            //
+            // mode 只可能在「本帧画了目镜掩码」的帧上变成非 0。既没开镜、上一帧也没开镜，
+            // 就不存在任何需要写的 uniform，也不存在需要擦掉的残留 —— 直接回。
+            //
+            // 为什么「上一帧」也要算进去：Iris 把我们的 scope_body / scope_reticle 管线
+            // 映射到它的 HAND 程序上，也就是<b>同一个 GL program</b> 既画镜身（mode=1）
+            // 也画枪和手（mode=0）。松开右键的<b>那一帧</b>必须照常跑完整流程，
+            // 把这些程序里残留的 mode 擦回 0，否则枪身会带着上一帧的裁剪继续画。
+            // 擦干净之后（再下一帧起）uniform 会一直保持 0，于是可以安心早退。
+            //
+            // 收益：不开镜时，每个 draw call 的开销从「5 次反射 + 2 次 GL 查询」
+            // 降到两次布尔读取。这条路径与开不开镜无关地跑在<b>每一帧</b>上，
+            // 所以这就是「没开镜时帧数也差」的那一份。
+            if (!ScopeMaskRenderer.hasMaskThisFrame() && !ScopeMaskRenderer.hadMaskLastFrame()) {
                 return;
             }
             int mode = resolveMode(glRenderPass);
@@ -100,8 +152,11 @@ public final class IrisScopeMaskState {
                 return;
             }
 
-            int maxUnits = GL11C.glGetInteger(GL20C.GL_MAX_TEXTURE_IMAGE_UNITS);
-            int unit = Math.max(15, maxUnits - 1);
+            // 驱动常量，问一次记住 —— 原来这一句也在逐 draw call 做 GL 查询。
+            if (cachedMaxTextureUnits < 0) {
+                cachedMaxTextureUnits = GL11C.glGetInteger(GL20C.GL_MAX_TEXTURE_IMAGE_UNITS);
+            }
+            int unit = Math.max(15, cachedMaxTextureUnits - 1);
             if (!loggedApply) {
                 loggedApply = true;
                 GunMod.LOGGER.info("[TACZ Scope] Iris scope-mask bridge active (mode={}, textureUnit={}, textureId={}).", mode, unit, textureId);
@@ -116,15 +171,65 @@ public final class IrisScopeMaskState {
         }
     }
 
+    /**
+     * {@code GlRenderPass.pipeline}，字段对象按 class 缓存一次。
+     *
+     * <p>运行期这个 class 实际上恒定，所以「上次是哪个 class」比一下就够，
+     * 不必上 map。见 {@link #cachedPipelineField} 的注释。
+     */
+    private static Field pipelineField(Object glRenderPass) {
+        Class<?> cls = glRenderPass.getClass();
+        if (cls != cachedPassClass || !pipelineFieldResolved) {
+            cachedPassClass = cls;
+            cachedPipelineField = null;
+            for (Class<?> c = cls; c != null && cachedPipelineField == null; c = c.getSuperclass()) {
+                try {
+                    Field f = c.getDeclaredField("pipeline");
+                    f.setAccessible(true);
+                    cachedPipelineField = f;
+                } catch (NoSuchFieldException ignored) {
+                    // 继续往父类找
+                }
+            }
+            pipelineFieldResolved = true;
+        }
+        return cachedPipelineField;
+    }
+
     private static int resolveMode(Object glRenderPass) {
         try {
             if (glRenderPass == null) {
                 return 0;
             }
-            Object glPipeline = readField(glRenderPass, "pipeline");
+            Field pipelineField = pipelineField(glRenderPass);
+            if (pipelineField == null) {
+                return 0;
+            }
+            Object glPipeline = pipelineField.get(glRenderPass);
             if (glPipeline == null) {
                 return 0;
             }
+            // 同一个管线实例的判定结果恒定，记住即可 —— 省掉后面那四次反射
+            // 与一次 toLowerCase 分配。
+            Integer remembered = MODE_BY_PIPELINE.get(glPipeline);
+            if (remembered != null) {
+                return remembered;
+            }
+            int resolved = resolveModeUncached(glPipeline);
+            if (MODE_BY_PIPELINE.size() >= MODE_CACHE_LIMIT) {
+                MODE_BY_PIPELINE.clear();
+            }
+            MODE_BY_PIPELINE.put(glPipeline, resolved);
+            return resolved;
+        } catch (Throwable t) {
+            logOnce("resolve scope render pass", t);
+        }
+        return 0;
+    }
+
+    /** 真正去问「这套管线是不是我们的镜身/准星管线」。只在每个管线实例上跑一次。 */
+    private static int resolveModeUncached(Object glPipeline) {
+        try {
             Object renderPipeline = invokeNoArgs(glPipeline, "info");
             if (renderPipeline == null) {
                 return 0;

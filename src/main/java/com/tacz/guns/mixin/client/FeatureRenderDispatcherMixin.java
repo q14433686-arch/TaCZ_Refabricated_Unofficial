@@ -1,13 +1,18 @@
 package com.tacz.guns.mixin.client;
 
+import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * 在 {@code renderAllFeatures} 的<b>阶段边界</b>插入瞄具掩码 pass。
@@ -54,6 +59,67 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(FeatureRenderDispatcher.class)
 public abstract class FeatureRenderDispatcherMixin {
+
+    /**
+     * 全程<b>只有这一个</b> PreparedFrame 实例，主画面那一遍与镜内那一遍轮流用它。
+     * 正因为是同一个，镜内那遍漏关就会把主画面那遍顶掉。
+     */
+    @Shadow
+    @Final
+    private FeatureRenderDispatcher.PreparedFrame preparedFrame;
+
+    @Unique
+    private static boolean tacz$loggedFrameRecovery;
+
+    /**
+     * 把镜内那一遍失败时漏关的 PreparedFrame 关掉。
+     *
+     * <h2>不做会怎样</h2>
+     * {@code LevelRenderer#render} 是「{@code prepareFrame} → 执行 frame graph →
+     * {@code close}」的直写结构，中间抛异常 {@code close()} 就没了。
+     * 而我们是在同一帧里<b>先</b>驱动一遍 {@code levelRenderer.render} 画镜内画面、
+     * <b>再</b>让 vanilla 画主画面的，于是镜内那遍留下的「在用」标志会把主画面那遍
+     * 直接顶成 {@code IllegalStateException: PreparedFrame already in use}。
+     *
+     * <p>结果就是：{@code ScopePipRenderer} 那边明明捕获了异常、打印了
+     * 「PIP disabled, falling back to whole-screen FOV zoom」，游戏却仍旧崩了，
+     * 而且崩溃报告里<b>只剩这个二次错误</b>，真正的病因（通常在 Voxy 或 Iris 那侧）
+     * 一个字都看不见。修这一处，等于让所有镜内渲染的失败都退回成「这一帧没有 PIP」，
+     * 同时把真实原因完整留在日志里。
+     *
+     * <h2>为什么调 close() 而不是把 context 抹成 null</h2>
+     * {@code close()} 做的是<b>真正的收尾</b>：给每个 FeatureRenderer 调
+     * {@code finishExecute(context)}、给 {@code stagedVertexBuffer} 调 {@code endDraw()}
+     * （与 {@code prepareFrameWithContext} 里的 {@code upload()} 配对）、
+     * 再清掉本帧攒下的 submit 列表。直接抹字段会把这些全跳过 ——
+     * 顶点缓冲一直停在 draw 状态，下一帧照样出问题。
+     *
+     * <h2>为什么只在「刚失败过」时才动它</h2>
+     * 这个标志由 {@code ScopePipRenderer} 在它自己的 catch 里置位，取一次即清。
+     * 正常帧上这里读一个 volatile boolean 就返回，既不改变任何行为，
+     * 也绝不会去碰一个本来就该开着的 frame。
+     */
+    @Inject(method = "prepareFrame", at = @At("HEAD"))
+    private void tacz$releaseFrameLeakedByFailedScopePass(
+            SubmitNodeStorage storage,
+            CallbackInfoReturnable<FeatureRenderDispatcher.PreparedFrame> cir) {
+        if (!ScopePipRenderer.consumePreparedFrameLeak()) {
+            return;
+        }
+        // 失败发生在 prepareFrame 之前（比如投影都没建起来）时这里是 null，
+        // 什么都没漏，直接放行。
+        if (((PreparedFrameAccessor) this.preparedFrame).tacz$context() == null) {
+            return;
+        }
+        this.preparedFrame.close();
+        if (!tacz$loggedFrameRecovery) {
+            tacz$loggedFrameRecovery = true;
+            GunMod.LOGGER.warn("[TACZ Scope] The scope pass left this frame's PreparedFrame open when "
+                    + "it failed; closed it so the main view can still render. The real cause is the "
+                    + "exception logged just above this line - without this recovery the game would "
+                    + "have crashed here with a misleading 'PreparedFrame already in use'.");
+        }
+    }
 
     @Inject(
             method = "renderAllFeatures",

@@ -23,7 +23,11 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.compat.iris.IrisScopePipelineCompat;
+import com.tacz.guns.compat.physicsmod.PhysicsModCompat;
 import com.tacz.guns.compat.sodium.SodiumCompat;
+import com.tacz.guns.compat.voxy.VoxyCompat;
+import com.tacz.guns.compat.voxy.VoxyScopePipelineCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -233,43 +237,183 @@ public final class ScopePipRenderer {
         return redirectTarget;
     }
 
-    private static boolean loggedShaderRerenderBlock = false;
-
     /**
-     * 是否走二次渲染。<b>光影启用时强制否</b>。
+     * 是否走「二次渲染」：用窄 FOV 把世界真画一遍，而不是把主画面重投影。
      *
-     * <h3>为什么光影下必须禁掉二次渲染</h3>
-     * 与 Sodium 那个 {@code hasUpdatedThisFrame} 是同一类病：<b>逐帧状态被驱动了两遍</b>。
-     * 光影下 {@code LevelRenderer#render} 带动的是 Iris 的整条延迟管线 ——
-     * gbuffers、composite 链，以及各 shaderpack 用来做时域累积（TAA）的
-     * {@code colortex} main/alt <b>乒乓翻转</b>。一帧翻两次，下一帧的历史缓冲就取错了源，
-     * 整屏出现噪点、像掉了分辨率。用户实测「开光影后没有 PIP，反而整屏都是噪点、像低分辨率」
-     * 正是这个形态。
+     * <h3>光影下也允许了（原先是硬性拦下）</h3>
+     * 早前的注释说「一帧两次驱动 Iris 会搞乱它的时域/乒乓缓冲」。那个担心针对的是
+     * <b>嵌套</b>调用。实际做法是<b>顺序</b>的两遍完整管线：
+     * 镜内那遍先跑完（{@code beginLevelRendering → … → finalizeLevelRendering} 走完整轮），
+     * 我们把成品拷走，vanilla 那遍再从头跑一次。每一遍对 Iris 而言都是自洽的一帧。
      *
-     * <p>所以这里硬性拦下：光影下即便配置写了 {@code ScopePipRerender=true} 也退回重投影。
-     * 重投影只读一张已完成的颜色缓冲，不驱动任何管线，不会污染时域状态。
+     * <p>而且 Iris 的 {@code RenderTargets} 是<b>一整套、private final</b>（字节码实读），
+     * 两遍复用同一套缓冲 —— 所以这条路<b>不额外占显存</b>，第二遍只是把第一遍的内容覆盖掉。
      *
-     * <p>（重投影在光影下<b>也还不能正常出图</b>，原因不同 ——
-     * 抓取点拿到的主 target 在 Iris 下尚未被 {@code FinalPassRenderer} 写入。
-     * 那是另一件事，见 {@link #inactiveReason()} 里的光影闸门。
-     * 这里只负责一件事：<b>不要把整屏搞坏</b>。）
+     * <p>代价是<b>真实的</b>：整条光影管线（含阴影贴图与 composite 链）跑两遍，
+     * 帧率大约减半；时域效果（TAA、动态模糊）的历史每帧被推进两次，可能出现重影或噪点。
+     * 所以它是玩家自选的开关，不是默认。
      */
     private static boolean rerenderMode() {
-        boolean configured = RenderConfig.SCOPE_PIP_RERENDER != null && RenderConfig.SCOPE_PIP_RERENDER.get();
-        if (configured && IrisCompat.isUsingRenderPack()) {
-            if (!loggedShaderRerenderBlock) {
-                loggedShaderRerenderBlock = true;
-                GunMod.LOGGER.info("[TACZ Scope] ScopePipRerender is ignored while a shader pack is active: "
-                        + "driving the shader pipeline twice per frame corrupts its temporal buffers "
-                        + "(screen-wide noise). Falling back to reprojection.");
-            }
-            return false;
+        return RenderConfig.SCOPE_PIP_RERENDER != null && RenderConfig.SCOPE_PIP_RERENDER.get();
+    }
+
+    /**
+     * 是否正处在「镜内那一遍」的世界渲染调用之中。
+     *
+     * <p>{@code IrisScopeDimensionMixin} 靠它决定要不要把「当前维度」换成瞄具专用的那个 ——
+     * 换掉之后 Iris 会给这一遍配一套<b>独立管线</b>，时域状态与主画面彻底分开。
+     * 严格只在 {@code levelRenderer.render} 那一句的前后置位/清零，窗口越窄越安全。
+     */
+    private static volatile boolean scopePassActive = false;
+
+    /**
+     * 本遍是否还额外用了「独立 Iris 管线」。
+     *
+     * <h3>为什么要跟 {@link #scopePassActive} 分开</h3>
+     * Voxy 的两条兼容策略是<b>互斥</b>的，取哪条正好看这个标志：
+     * <ul>
+     *   <li>隔离<b>开</b> → 场上有两套 Iris 管线，而 {@code VoxyRenderSystem.pipeline}
+     *       是 {@code private final}、构造时就绑死在<b>其中一套</b>上
+     *       （{@code RenderPipelineFactory} 取 {@code getPipelineNullable()} 当场绑定）。
+     *       另一套下的 LOD 必然用错着色器/绘制目标 ⇒ 只能让 Voxy 在镜内那一遍<b>整体缺席</b>。</li>
+     *   <li>隔离<b>关</b> → 只有一套管线，绑定不含糊，于是可以让 Voxy 照常在镜内渲染，
+     *       只把它的<b>视口</b>分开（{@code VoxyScopeViewportMixin}）。</li>
+     * </ul>
+     */
+    private static volatile boolean scopePassIsolated = false;
+
+    /** 这一遍把 Voxy 换到瞄具那套了吗（换了就必须换回来）。 */
+    private static boolean voxySwapped = false;
+    /** 这一遍用的那个 VoxyRenderSystem —— 换回去时必须用同一个实例。 */
+    private static Object voxySystemThisPass;
+
+    /** 供 Iris 兼容层查询：当前是不是镜内那一遍。 */
+    public static boolean isScopePassActive() {
+        return scopePassActive;
+    }
+
+    /**
+     * 是不是正处在镜内那一次 {@code levelRenderer.render} 里面 ——
+     * <b>不分光影开没开</b>。
+     *
+     * <h3>为什么不能复用 {@link #isScopePassActive()}</h3>
+     * 那个标志是 {@code scopePassActive = iris}，<b>只在开光影时</b>为真，
+     * 因为它服务的是「把当前维度换成瞄具维度」这件光影专属的事。
+     * 而「这一帧的提交节点被镜内那一遍吃掉了」这个问题两条路径都有，
+     * 所以需要一个与光影无关的标志。
+     *
+     * @see com.tacz.guns.mixin.client.SimpleFeatureRenderPhaseMixin
+     */
+    public static boolean isInsideScopeLevelRender() {
+        return insideScopeLevelRender;
+    }
+
+    /**
+     * 严格套在镜内那一次 {@code levelRenderer.render} 外面。
+     *
+     * <p>与 {@link #scopePassActive} 的区别见 {@link #isInsideScopeLevelRender()}。
+     */
+    private static volatile boolean insideScopeLevelRender = false;
+
+    /** 供 Voxy 兼容层查询：镜内这一遍是否用了独立的 Iris 管线。 */
+    public static boolean isScopePassIsolated() {
+        return scopePassIsolated;
+    }
+
+    /**
+     * 镜内这一遍要不要让 Voxy「别画」。
+     *
+     * <p>只有在<b>隔离了 Iris 管线、却没能把 Voxy 切到对应的第二套渲染栈</b>时才为真 ——
+     * 那种情况下 Voxy 会用主管线的绘制目标往瞄具管线里画，结果是错乱的远景。
+     * 宁可镜内没有 LOD，也不能画错。
+     *
+     * <p>切换成功时返回 {@code false}：那时 Voxy 用的是绑定瞄具管线的那一套，
+     * <b>画出来是对的</b>，正是我们要的镜内 LOD 远景。
+     */
+    public static boolean shouldSuppressVoxyDraw() {
+        return scopePassIsolated && !voxySwapped;
+    }
+
+    /**
+     * 在帧首把瞄具那套 Iris 管线预先建好，免得它落在第一次开镜的帧中途去编译。
+     *
+     * <p>判据与镜内那一遍一致（要开着二次渲染、开着隔离、且确实在用光影），
+     * 但<b>不看开镜进度</b> —— 预热的全部意义就是赶在开镜之前做完。
+     * 已经建过就是一次引用比较，代价可忽略。
+     */
+    public static void prewarmShaderPipelineIfNeeded() {
+        if (failed || !rerenderMode() || !isolatePipeline()) {
+            return;
         }
-        return configured;
+        if (RenderConfig.SCOPE_PIP_ENABLE == null || !RenderConfig.SCOPE_PIP_ENABLE.get()) {
+            return;
+        }
+        if (!allowShaderPacks()) {
+            return;
+        }
+        IrisScopePipelineCompat.prewarmIfNeeded();
+    }
+
+    /**
+     * 是否给镜内那一遍配独立的 Iris 管线。
+     *
+     * <h3>与 Voxy 的关系（这条查了好几轮，别再兜圈子）</h3>
+     * 隔离本身<b>不是</b>病根。真正的病根是 Voxy 的<b>每视口持续状态</b>
+     * （{@code Viewport.frameId}、层级遮挡遍历、异步节点管理）被同一帧的两个不同投影
+     * 轮流推进 —— 一旦写坏就不会自己复原，表现为镜外远景永久拉丝／错块。
+     *
+     * <p>解法不是「不隔离」，也不是「让 Voxy 在镜内缺席」，而是照 Voxy 自己的先例
+     * 给镜内那一遍<b>单独要一个视口</b>（{@code VoxyScopeViewportMixin}）——
+     * Iris 的阴影通道用的就是这个机制，它与镜内那一遍是同一种「同帧不同投影」的关系。
+     * 这样 Voxy 依旧在镜内渲染（<b>镜内能看到 LOD 远景</b>），两边状态各走各的。
+     */
+    private static boolean isolatePipeline() {
+        return RenderConfig.SCOPE_PIP_ISOLATE_PIPELINE == null
+                || RenderConfig.SCOPE_PIP_ISOLATE_PIPELINE.get();
     }
 
     /** 一旦出过错就永久停用。 */
     private static boolean failed = false;
+
+    /**
+     * 镜内那一遍抛异常了，{@code FeatureRenderDispatcher} 那个「本帧的 PreparedFrame」
+     * 可能还开着没关。
+     *
+     * <h3>为什么必须专门管这件事</h3>
+     * {@code LevelRenderer#render} 的形状是（26.2 字节码实读）：
+     * <pre>
+     * PreparedFrame f = featureRenderDispatcher.prepareFrame(storage);   // line 183，开
+     * frameGraph.execute(...);                                           // line 240，画
+     * f.close();                                                         // 关
+     * </pre>
+     * 中间那句抛出来的话，{@code close()} 就不会被执行 —— 而
+     * {@code FeatureRenderDispatcher} 全程<b>只有一个</b> PreparedFrame 实例
+     * （{@code private final} 字段），它的「在用」标志就是 {@code context != null}。
+     *
+     * <p>于是镜内那一遍一旦失败，紧接着<b>主画面</b>那一遍调 {@code prepareFrame} 时
+     * 就会撞上 {@code begin()} 开头那句：
+     * <pre>if (this.context != null) throw new IllegalStateException("PreparedFrame already in use");</pre>
+     * 我们这边明明已经打印了「PIP disabled, falling back to whole-screen FOV zoom」
+     * 并优雅降级，游戏却还是在下一句崩掉，崩溃报告里只剩这个<b>毫不相干</b>的二次错误。
+     * 玩家看到的「改完区块视距一开镜就崩」，最后杀死进程的就是它。
+     *
+     * <p>所以降级要真的算数，就必须把那个漏掉的 frame 关上。由
+     * {@code FeatureRenderDispatcherMixin} 在下一次 {@code prepareFrame} 的 HEAD 处消费。
+     */
+    private static volatile boolean preparedFrameMayBeLeaked = false;
+
+    /**
+     * 取走并清掉「上一次镜内那一遍失败了」这个一次性标志。
+     *
+     * @return 是否刚发生过一次失败的镜内渲染（即：可能有 PreparedFrame 没关）
+     */
+    public static boolean consumePreparedFrameLeak() {
+        if (!preparedFrameMayBeLeaked) {
+            return false;
+        }
+        preparedFrameMayBeLeaked = false;
+        return true;
+    }
 
     private static boolean loggedFirstCapture = false;
 
@@ -315,6 +459,8 @@ public final class ScopePipRenderer {
      */
     private static String lastReportedGate = "";
     private static int gateChangeCount = 0;
+    /** 已经播报过的闸门理由；每种只说一次，避免开镜/收镜来回刷屏。 */
+    private static final java.util.Set<String> REPORTED_GATES = new java.util.HashSet<>();
     private static final int GATE_LOG_LIMIT = 40;
 
     private static void reportGate(@Nullable String reason) {
@@ -327,6 +473,13 @@ public final class ScopePipRenderer {
             return;
         }
         lastReportedGate = now;
+        // 【每种理由只说一次】特性跑通之后，ACTIVE ↔ 未激活 的来回翻转就是
+        // 玩家正常的抬镜/收镜，一次开镜一行，一局下来能刷上百行，纯粹是噪音。
+        // 而「为什么没生效」这个信息本身仍然有价值 —— 所以按<b>理由</b>去重：
+        // 每种理由（含 ACTIVE）只播报第一次，之后同样的理由再出现多少次都不吭声。
+        if (!REPORTED_GATES.add(now)) {
+            return;
+        }
         gateChangeCount++;
         // 【不做时间限流】第一版按「两秒最多一条」限流，结果把一次【逐帧抖动】
         // 打印成了整齐的两秒间隔，看上去就像玩家在正常地抬镜/收镜 ——
@@ -425,7 +578,34 @@ public final class ScopePipRenderer {
      * <p>取档逻辑与 {@code MouseHandlerMixin#reduceSensitivity} 逐行同源：
      * {@code zoom[zoomNumber % zoom.length]}，组合镜切档自动跟随。
      */
+    /**
+     * 本帧的瞄具倍率记忆值（NaN = 本帧还没算过）。
+     *
+     * <p>这个值一帧内<b>不会变</b>（持有的物品与配件在一帧渲染中是快照），
+     * 而它每帧要被问将近十次：闸门判定、FOV 让位、倍率拆分、合成、窄投影……
+     * 而每次都要读两次 NBT（{@code getAttachmentId} / {@code getAttachmentTag}）
+     * 并走一次 {@code TimelessAPI} 的 Optional 查表 —— 都是有分配的。算一次就够。
+     *
+     * <p>由 {@link #beginFrame()} 在帧首清空。
+     */
+    private static float magnificationThisFrame = Float.NaN;
+
+    /** 每帧清一次帧内记忆值。挂在 {@code GameRenderer#extract} 的 HEAD。 */
+    public static void beginFrame() {
+        magnificationThisFrame = Float.NaN;
+    }
+
     private static float scopeMagnification() {
+        float cached = magnificationThisFrame;
+        if (!Float.isNaN(cached)) {
+            return cached;
+        }
+        float value = computeScopeMagnification();
+        magnificationThisFrame = value;
+        return value;
+    }
+
+    private static float computeScopeMagnification() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) {
             return 1.0f;
@@ -700,7 +880,10 @@ public final class ScopePipRenderer {
             sceneCaptured = false;
             return;
         }
-        TextureTarget pip = ScopePipTarget.getOrCreate(main.width, main.height, mainColor.getFormat(), true);
+        // 光影下不重定向渲染目标，所以离屏纹理只当「拷贝目的地」用，不需要深度附件；
+        // 无光影下我们要把整遍世界画进它，没有深度就没有遮挡关系。
+        boolean iris = IrisCompat.isUsingRenderPack();
+        TextureTarget pip = ScopePipTarget.getOrCreate(main.width, main.height, mainColor.getFormat(), !iris);
         if (pip == null) {
             failed = true;
             sceneCaptured = false;
@@ -711,6 +894,11 @@ public final class ScopePipRenderer {
         // 一个静态槽位，若二次渲染内部（后处理链等）也用了它，我们的还原就会拿到别人的值。
         GpuBufferSlice savedProjection = RenderSystem.getProjectionMatrixBuffer();
         ProjectionType savedProjectionType = RenderSystem.getProjectionType();
+        // 【第三份投影】相机状态里的那一份。必须在 buildNarrowProjection <b>之后</b>再改 ——
+        // 它要从这里反解基准 FOV（读 m11）。
+        Matrix4f savedCameraProjection = new Matrix4f(camera.projectionMatrix);
+        boolean cameraProjectionPatched = false;
+        boolean physicsPatched = false;
         boolean sodiumPatched = false;
         try {
             if (!buildNarrowProjection(camera, pip)) {
@@ -719,10 +907,55 @@ public final class ScopePipRenderer {
             }
             RenderSystem.setProjectionMatrix(projectionBuffer.getBuffer(PROJECTION), ProjectionType.PERSPECTIVE);
             sodiumPatched = SodiumCompat.overrideProjection(NARROW_MATRIX);
+            // 【第三处必须同步的投影 —— 漏了它 Voxy 的 LOD 地形不会跟着放大】
+            //
+            // 一共有三份互不相干的投影来源，缺一处就有一类东西留在宽 FOV：
+            //   ① RenderSystem.setProjectionMatrix        原版路径：实体、粒子、天空
+            //   ② sodium$getProjectionMatrix（快照）      Sodium 地形，**以及 Iris 的 gbuffer 投影**
+            //   ③ CameraRenderState.projectionMatrix     ← 这里
+            //
+            // ③ 是 Voxy 在光影下的取值处（`MixinLevelRenderer.voxy$injectIrisCompat`
+            // 直接 getfield 这个字段，字节码实读）。只改 ①② 的话，近处地形被放大、
+            // 而远处 Voxy LOD 仍是宽 FOV —— 实测正是「近景跟着放大、远景纹丝不动」。
+            //
+            // 就地 set 而不是换引用：这个 Matrix4f 对象被别处持有着，
+            // 换引用改不到那些持有者，就地改再改回来才是对的。
+            camera.projectionMatrix.set(NARROW_MATRIX);
+            cameraProjectionPatched = true;
+            // 【第四处】Physics Mod 自己存了一份投影，草/灯笼/门/旗帜这些可动方块用它。
+            // 不同步的话它们在镜内不放大，还叠在放大后的画面之上。见 PhysicsModCompat。
+            physicsPatched = PhysicsModCompat.overrideProjection(NARROW_MATRIX);
 
             boolean renderSky = !mc.gui.hud.getBossOverlay().shouldCreateWorldFog();
-            ScopePipTrace.mark("SCOPE-PASS BEGIN (redirect active)");
-            redirectTarget = pip;
+            // 【光影下不重定向】Iris 不往 mainRenderTarget() 画世界 —— 它画进自己那套
+            // colortex，最后由 FinalPassRenderer.renderFinalPass() 把成品合成到主帧缓冲
+            // （IrisRenderingPipeline#finalizeLevelRendering 字节码实读）。
+            // 所以镜内那遍要的是「让它照常跑完，然后把主帧缓冲拷走」，
+            // 而不是把它的输出目标换掉 —— 后者只会让重定向落空、还可能把 Iris 弄乱。
+            ScopePipTrace.mark(iris
+                    ? "SCOPE-PASS BEGIN (iris: full pipeline, captured from the main target)"
+                    : "SCOPE-PASS BEGIN (redirect active)");
+            redirectTarget = iris ? null : pip;
+            // 【时域隔离】只在这一段把「当前维度」换成瞄具专用的那个，
+            // 于是 Iris 给镜内这一遍配一套<b>独立的管线</b>（独立的 colortex、
+            // 独立的 previous 系列 uniform）。见 IrisScopeDimensionMixin。
+            scopePassActive = iris;
+            scopePassIsolated = iris && isolatePipeline();
+            // 隔离模式下，把 Voxy 整体切到「绑定瞄具管线」的那第二套渲染栈上，
+            // 于是镜内也能画出 LOD 远景。切不过去（没装 Voxy／建栈失败）就照旧，
+            // 由 VoxyRenderSystemMixin 让它在这一遍不画，至少不会画错。
+            // 【这里只换，绝不建】建栈必须发生在预热那个窗口里 ——
+            // 那时我们主动把瞄具管线设成了「当前管线」，Voxy 才会绑对。
+            // 在这里建过一次，代价是整局崩：重复建会抛 "Pipeline data already bound"，
+            // 而 Voxy 捕获后会调 disableIrisShaders() 把 Iris 整个拆掉，
+            // 主画面下一次 Voxy 绘制就 NPE。教训写在 VoxyScopePipelineCompat 里。
+            voxySystemThisPass = scopePassIsolated ? VoxyCompat.renderSystem() : null;
+            voxySwapped = voxySystemThisPass != null
+                    && VoxyScopePipelineCompat.swapIn(voxySystemThisPass);
+            // 【本帧的提交节点要留给主画面】开着这个标志时，各 FeatureRenderPhase
+            // 在 sortInto 末尾<b>不清空自己</b>，于是紧随其后的主画面那一遍还能
+            // 再取一次同样的实体/方块实体/名牌。详见 SimpleFeatureRenderPhaseMixin。
+            insideScopeLevelRender = true;
             try {
                 mc.levelRenderer.render(
                         allocator,
@@ -735,8 +968,37 @@ public final class ScopePipRenderer {
                         camera.fogData.color,
                         renderSky);
             } finally {
+                // 必须最先清：从这里往后（主画面那一遍）各 phase 要恢复
+                // 「取完就清空」的原样，否则节点会一直堆到下一帧去。
+                insideScopeLevelRender = false;
+                // 必须先关掉：之后任何再问「当前维度」的代码都必须拿到<b>真实</b>维度，
+                // 否则 Iris 在切世界时会把 lastDimension 与当前值比出「维度变了」，
+                // 进而 destroyPipeline() —— 那是整套缓冲重建，正是要避免的抖动。
+                // 先把 Voxy 换回主管线，再清标志 —— 顺序不能反：
+                // swapOut 里读的是「这一遍用的那个 system」，而清标志会让其它兼容层
+                // 立刻恢复常态，两者之间不该有交叉窗口。
+                if (voxySwapped) {
+                    VoxyScopePipelineCompat.swapOut(voxySystemThisPass);
+                    voxySwapped = false;
+                }
+                voxySystemThisPass = null;
+                scopePassActive = false;
+                scopePassIsolated = false;
                 redirectTarget = null;
-                ScopePipTrace.mark("SCOPE-PASS END (redirect cleared)");
+                ScopePipTrace.mark("SCOPE-PASS END");
+            }
+            if (iris) {
+                // 立刻拷走：紧接着 vanilla 那一遍会把主帧缓冲整个重画。
+                // 这一拷贝就是镜内画面 —— 已经过完整光影着色，且是<b>原生分辨率</b>
+                // 用窄 FOV 真画出来的，不是放大出来的。
+                GpuTexture shaded = main.getColorTexture();
+                if (shaded == null || shaded.isClosed()) {
+                    sceneCaptured = false;
+                    return;
+                }
+                RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(
+                        shaded, pip.getColorTexture(), 0, 0, 0, 0, 0,
+                        Math.min(main.width, pip.width), Math.min(main.height, pip.height));
             }
             sceneCaptured = true;
             if (!loggedFirstCapture) {
@@ -748,9 +1010,23 @@ public final class ScopePipRenderer {
         } catch (Exception e) {
             failed = true;
             sceneCaptured = false;
+            // 【降级要真的算数】上面那句 levelRenderer.render 若是在
+            // frame graph 执行途中抛的，本帧的 PreparedFrame 就还开着 ——
+            // 不关掉的话，紧随其后的主画面那一遍会以
+            // "PreparedFrame already in use" 当场崩游戏，把这里的优雅降级变成一句空话。
+            // 见 preparedFrameMayBeLeaked 的注释。
+            preparedFrameMayBeLeaked = true;
             GunMod.LOGGER.error("[TACZ Scope] Scope PIP second-render pass failed; PIP disabled, "
                     + "falling back to whole-screen FOV zoom.", e);
         } finally {
+            if (cameraProjectionPatched) {
+                // 必须还原：这个字段是 vanilla 那一遍以及后续所有消费者共用的。
+                // 留着窄投影会让主画面的 Voxy LOD 也跟着放大 —— 正好是反过来的病。
+                camera.projectionMatrix.set(savedCameraProjection);
+            }
+            if (physicsPatched) {
+                PhysicsModCompat.restoreProjection();
+            }
             if (sodiumPatched) {
                 SodiumCompat.restoreProjection();
             }
@@ -892,6 +1168,12 @@ public final class ScopePipRenderer {
         // 于是「合成结果 == 底下已经画好的 1× 画面」，肉眼零变化；
         // 瞄具归位（progress→1）时才到满倍率。顺带与整屏变焦那条老路的公式一致
         // （CameraSetupEvent 的 1 + (zoom-1)·progress），过渡手感也对得上。
+        if (rerenderMode()) {
+            // 二次渲染：离屏纹理里已经是用窄 FOV【真画出来】的原生分辨率画面，
+            // 屏幕坐标与主画面一一对应。倍率传 1 = 逐像素取用，再放大就是放大两遍。
+            runComposite(1.0f);
+            return;
+        }
         float progress = currentAimingProgress();
         float zoom = Math.max(1.0f, scopeMagnification());
         // 总倍率按进度插值，再除掉世界这一帧已经放大的那一份，剩下的才归镜内。

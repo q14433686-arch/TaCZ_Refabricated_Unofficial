@@ -27,6 +27,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 
@@ -372,12 +373,8 @@ public final class ScopeMaskRenderer {
         }
         try (mesh) {
             MeshData.DrawState draw = mesh.drawState();
-            GpuBuffer vertexBuffer = null;
-            try {
-                vertexBuffer = RenderSystem.getDevice().createBuffer(
-                        () -> "tacz_scope_mask_vertices",
-                        GpuBuffer.USAGE_VERTEX,
-                        mesh.vertexBuffer());
+            {
+                GpuBuffer vertexBuffer = acquireVertexBuffer(mesh.vertexBuffer());
 
                 // 共享的四边形索引缓冲：把 QUADS 展开成三角形。
                 // 用 vanilla 现成的，不必自己生成索引。
@@ -435,14 +432,62 @@ public final class ScopeMaskRenderer {
                     GunMod.LOGGER.info("[TACZ Scope] Ocular mask drawn: {} indices from {} batches.",
                             draw.indexCount(), ScopeMaskGeometry.entries().size());
                 }
-            } finally {
-                if (vertexBuffer != null) {
-                    // 每帧新建、每帧释放。这里不做缓冲池 —— 目镜几何量极小
-                    // （单个瞄具几个 cube），过早优化只会增加生命周期出错的机会。
-                    vertexBuffer.close();
-                }
             }
         }
+    }
+
+    /** 复用的顶点缓冲；只在装不下时才重建。 */
+    @Nullable
+    private static GpuBuffer pooledVertexBuffer;
+    private static int pooledVertexCapacity;
+
+    /**
+     * 取一块装得下 {@code data} 的顶点缓冲，并把数据写进去。
+     *
+     * <h3>为什么改成复用（原来是每帧新建、每帧 close）</h3>
+     * 目镜几何确实很小（实测 144 个索引），但这段路径<b>每帧都跑</b>，
+     * 而且 Iris 下手部 pass 一帧有两次 —— 于是每帧要向驱动申请、又立刻归还
+     * 一到两块 GPU 缓冲。缓冲再小，申请/释放本身也是驱动侧的开销与碎片来源。
+     *
+     * <p>现在只在「现有的装不下」时才重建，稳态下每帧只剩一次
+     * {@code writeToBuffer}。容量只增不减：目镜几何的大小在一局里基本不变，
+     * 留着比反复缩容划算，而且省掉一类「刚缩完又要扩」的抖动。
+     *
+     * <p>不再需要 try/finally 关闭 —— 它的生命周期跟着本类走，
+     * 由 {@link #close()} 统一释放。
+     */
+    private static GpuBuffer acquireVertexBuffer(java.nio.ByteBuffer data) {
+        int needed = data.remaining();
+        if (pooledVertexBuffer == null || pooledVertexCapacity < needed) {
+            if (pooledVertexBuffer != null) {
+                pooledVertexBuffer.close();
+            }
+            pooledVertexBuffer = RenderSystem.getDevice().createBuffer(
+                    () -> "tacz_scope_mask_vertices",
+                    GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST,
+                    data);
+            pooledVertexCapacity = needed;
+            return pooledVertexBuffer;
+        }
+        RenderSystem.getDevice().createCommandEncoder()
+                .writeToBuffer(pooledVertexBuffer.slice(0, needed), data);
+        return pooledVertexBuffer;
+    }
+
+    /**
+     * 释放本类持有的 GPU 资源。
+     *
+     * <p><b>目前没有调用方</b> —— 与 {@link ScopeMaskTarget}/{@link ScopePipTarget} 一样，
+     * 本模块还没接到任何生命周期回调。这不构成泄漏：这里只有<b>一块</b>缓冲，
+     * 复用且容量只增不减（目镜几何大小基本恒定），不会随时间增长。
+     * 留着这个方法是为了将来真接上退出/重载回调时有地方可调。
+     */
+    public static void close() {
+        if (pooledVertexBuffer != null) {
+            pooledVertexBuffer.close();
+            pooledVertexBuffer = null;
+        }
+        pooledVertexCapacity = 0;
     }
 
     /**
