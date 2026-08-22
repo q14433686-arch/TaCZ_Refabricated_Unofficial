@@ -165,9 +165,11 @@ LR 内置框架与 `cn.sh1rocu.*` 扩展里的同类物品方法（`ThrowableIte
    classpath 必然有）；删掉的 import 已确认在文件内无其他引用。
 2. **Fabric 专用服务器复现（修复前）**：起一个 26.2 dedicated + 本 mod（修复前版本），
    装任意枪包，用 `/give @p tacz:modern_kinetic_gun[...]`（26.2 的组件语法，
-   带上枪械 id 数据）发一把枪，记录**服务端回执消息**里显示的是枪包名字还是
-   `item.tacz.modern_kinetic_gun` 这类原版兜底名。
-   按第 2 节推导，**预期是后者，并且不崩服**。
+   **必须带上填充了真实枪 id 的 `minecraft:custom_data`**，写法见第 8 节）发一把枪，
+   记录**服务端回执消息**里显示的是枪包名字还是 `item.tacz.modern_kinetic_gun`
+   这类原版兜底名。按第 2 节推导，**预期是后者，并且不崩服**。
+   ⚠️ 只写 `/give @p tacz:modern_kinetic_gun`（不带组件）测不出本修复——
+   第 8 节说明了原因与正确命令。
 3. **修复后复测**：同样步骤，预期回执显示枪包名字；同时验证
    （a）单人存档、（b）客户端连远程专服 两种环境下 GUI/tooltip 名字与修复前一致，
    （c）弹药 / 配件 / 制造台三类物品同样正确。
@@ -205,3 +207,96 @@ LR 内置框架与 `cn.sh1rocu.*` 扩展里的同类物品方法（`ThrowableIte
   以该分支实际字符串为准，保持逐字符等价。
 * 第 4 节的审计表要在各分支重跑一次 grep：`compat/` 与 `me.xjqsh.lrtactical.*`
   的文件集在三条分支上并不相同。
+
+---
+
+## 8. 2026-08-22 用户专服实测结果的解读（重要）
+
+用户在 26.2 专用服务器上实测（修复后版本）：
+
+- `/give` 不崩服（符合第 2.1 节预期）；
+- 但 `/give` 与 REI/JEI「作弊拿」得到的枪/弹药/配件全是**紫黑片** + `item.` 前缀原始键
+  （如 `item.tacz.modern_kinetic_gun`、`item.tacz.attachment`）；
+- 只有石像、Tacz 枪械工作台、标靶、标靶车、铁弹药盒正常。
+
+**结论：这不是修好的 `getName` 失效，也不是「只删注解」的崩溃路径；这些现象全部来自
+「裸物品」——即 ItemStack 上没有携带 id 的 `minecraft:custom_data`。该行为在修复前、
+修复后、以及上游 1.20.1 上完全相同，属于 TaCZ 的既有语义。**
+
+### 8.1 源码证据链（裸物品 → 回退名 + 无模型）
+
+1. **id 取值**：`GunItemDataAccessor#getGunId`（~L117）与 `AmmoItemDataAccessor#getAmmoId`、
+   `AttachmentItemDataAccessor#getAttachmentId`、`BlockItemDataAccessor#getBlockId` 都只从
+   `ItemNbtUtils.getTag(stack)`（即 `minecraft:custom_data` 组件）里读 id；
+   没有该组件时一律返回 `DefaultAssets.EMPTY_*_ID` = `tacz:empty`。
+2. **名字**：`getName` 用 `tacz:empty` 去查 `Common*Index` 必然为空 → 落回
+   `super.getName(stack)` → `item.tacz.modern_kinetic_gun` / `item.tacz.attachment`。
+   这个 `item.*` 键在 mod 自带 lang 里不存在（默认枪包 lang 用的是
+   `tacz.gun.<id>.name` / `tacz.ammo.<id>.name` / `tacz.attachment.<id>.name` 这类键），
+   所以客户端/服务端都直接显示原始键。作为对照，「铁弹药盒」能显示是因为
+   `item.tacz.ammo_box.iron` 写在 mod jar 的 `assets/tacz/lang/*.json` 里。
+3. **模型**：`TaczDynamicItemModel` 把枪/弹/配件的 26.2 item model 挂到
+   `tacz:dynamic_item`，真正内容由 `AnimateGeoItemRenderer#renderByItem` →
+   `GunItemRendererWrapper#getModel` → `TimelessAPI.getGunDisplay(stack)` 决定；
+   而 `getGunDisplay` 开头就是 `getCommonGunIndex(gunId).isEmpty() → return Optional.empty()`。
+   `tacz:empty` 查不到 → 没有任何几何 → 物品栏/REI/JEI 里只剩 `items/*.json` 那个
+   「粒子贴图 = barrier」的空占位模型 = 紫黑片。
+4. **为什么只有那几个物品正常**：石像/标靶/标靶车/枪械工作台是普通
+   `BlockItem`，模型来自原版方块模型、键来自 mod 自带 `block.tacz.*` lang；
+   铁弹药盒是 `AmmoBoxItem`，名字是写死的 `item.tacz.ammo_box.*` 键——它们都不依赖
+   枪包 index。剩下的枪/弹药/配件全部依赖 index，于是全军覆没。
+
+### 8.2 关键认知修正：物品 id ≠ 枪 id
+
+`tacz:modern_kinetic_gun` 是**物品类**的注册 id（`ModItems.MODERN_KINETIC_GUN`，
+`ModernKineticGunItem` = 「现代动能枪械」这一类枪共用的容器物品），
+**不是**默认枪包里某把枪的索引 id。默认枪包 `data/tacz/index/guns/` 下是
+`tacz:ak47`、`tacz:glock_17`、`tacz:vector45` 等 54 个索引，**没有**
+`modern_kinetic_gun`。因此即使组件里写 `GunId:"tacz:modern_kinetic_gun"` 也会回退。
+（同理弹药为 `tacz:762x39` 等，配件为 `tacz:sight_sro_dot` 等。）
+
+### 8.3 修复后正确的复测命令（26.2 组件语法）
+
+```mcfunction
+# 枪：物品 tacz:modern_kinetic_gun + GunId = tacz:ak47
+/give @p tacz:modern_kinetic_gun[minecraft:custom_data={GunId:"tacz:ak47"}]
+
+# 弹药：物品 tacz:ammo + AmmoId = tacz:762x39
+/give @p tacz:ammo[minecraft:custom_data={AmmoId:"tacz:762x39"}]
+
+# 配件：物品 tacz:attachment + AttachmentId = tacz:sight_sro_dot
+/give @p tacz:attachment[minecraft:custom_data={AttachmentId:"tacz:sight_sro_dot"}]
+
+# 工作台：物品 tacz:workbench_a + BlockId = tacz:gun_smith_table
+/give @p tacz:workbench_a[minecraft:custom_data={BlockId:"tacz:gun_smith_table"}]
+```
+
+预期：
+- 服务端回执不再是 `item.tacz.modern_kinetic_gun`，而是 `tacz.gun.ak47.name`
+  （若服务端语言表里没有枪包 lang，日志显示的是这个键本身——**这仍算通过**，
+  因为键已经换成枪包翻译键；客户端聊天/GUI 一定显示中文/英文枪名）。
+- 客户端拿到后名字与模型都正常：
+  `tacz.gun.ak47.name` → zh_cn「AKM 突击步枪」，模型来自 `display/guns/ak47_display`。
+- 若用了正确组件后**仍然**是 `item.tacz.*`，才说明服务端 common 索引为空
+  （枪包没在服务端加载），需要继续查 `latest.log` 里
+  `GunPackFinder: Start scanning for gun packs in <server>/tacz`、
+  `Found N possible gunpack(s)`、`- tacz_default_gun, Main namespace: tacz` 等行，
+  以及服务端 `.minecraft/tacz/` 目录内容。
+
+### 8.4 REI/JEI 紫黑片说明（上游一致的既有行为 + 可用的替代入口）
+
+REI/JEI 的物品列表条目是**注册表里的裸 ItemStack**（物品查看器只枚举注册的 Item，
+不会给 TACZ 补 id 组件）；上游 1.20.1 的 `GunModPlugin` 也只注册了 subtype 解释器
+与配方分类，**同样不注册带 NBT 的变体条目**。因此裸条目紫黑 + `item.*` 键不是本次
+修复引入，也不是 Fabric 26.2 独有的移植缺陷。
+
+获取「正常物品」的现有路径：
+- TACZ 自己的创造标签页（`ModCreativeTabs` 的 `GUN_PISTOL_TAB` 等，
+  `fillItemCategory` 用 `GunItemBuilder.setId(...)` 构造，带完整 id）；
+- JEI/REI 里 TACZ 自带的 **Ammo Query / Attachment Query / 枪械工作台配方**分类：
+  条目由 `AmmoItemBuilder` / `GunItemBuilder` / `AttachmentItemBuilder` 构造，
+  带 id、可作弊拿取。
+
+若需要「REI/JEI 物品列表直接列出全部带 id 的枪械/弹药/配件变体」，是独立的增强项
+（JEI/REI 各需条目注册或 ItemStackProvider，改动与本次 `getName` 修复无关），
+建议单独立项，不混进本轮提交。
