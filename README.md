@@ -23,11 +23,11 @@
 
 ### 选择你的 Minecraft 版本 / Pick your Minecraft version
 
-| Minecraft | 源码分支 | 最新 Release |
-|---|---|---|
-| **26.2** | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) | [`26.2_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.2_R2) |
-| **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) | [`26.1.2_R2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.1.2_R2) |
-| **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) | |
+| Minecraft | 源码分支 |
+|---|---|
+| **26.2** | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) |
+| **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) |
+| **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) |
 
 本页面对应 **1.21.11** 分支。注意本分支要求 **Java 21**，而 26.x 分支要求 Java 25。
 
