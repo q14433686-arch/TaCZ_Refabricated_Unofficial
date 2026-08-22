@@ -190,6 +190,40 @@ No TACZ build contains that decryption logic — not the original Forge mod, not
 upstream Fabric port, and not this one. **This is therefore not a defect in this
 port and cannot be resolved here.**
 
+## FAQ: REI/JEI cheating on a dedicated server gives purple/black items with `item.tacz.*` names
+
+**Symptom:** on a dedicated server, items cheated / picked up from REI or JEI
+(and sometimes `/give tacz:modern_kinetic_gun` without components) show
+**missing textures and raw keys** such as `item.tacz.modern_kinetic_gun` or
+`item.tacz.attachment`, while the same items render correctly inside the
+REI/JEI list, and single-player / LAN is fine.
+
+**Cause:** TACZ items are not self-contained: gun, ammo, attachment and
+workbench ids live in the `minecraft:custom_data` component (`GunId` /
+`AmmoId` / `AttachmentId` / `BlockId`). When REI **is not installed on the
+server**, its cheat-give falls back to a client-built `/give` command carrying
+only the item's registry id and an **empty component tag**
+(`ClientHelperImpl#tryCheatingEntry`, `tagMessage = /* TODO 24w09a ... */ ""`).
+The server receives a **bare item**; TACZ then reads `tacz:empty` as the
+content id and falls back to the vanilla `item.*` key with no model. The same
+happens on the original mod — this is REI behaviour, not a port defect. (The
+iron ammo box keeps a real name because its key ships in the mod jar; that is
+the bare-item fallback itself.)
+
+**Fix:**
+
+- **Install the same REI version on the dedicated server** — cheating then uses
+  REI's network packet, which serialises the full item components;
+- or take items from **TACZ's own creative tabs** or the built-in **Ammo /
+  Attachment / Gun Smith Table** recipe categories (entries are built with the
+  required id components);
+- for `/give`, always append components, e.g.
+  `/give @p tacz:modern_kinetic_gun[minecraft:custom_data={GunId:"tacz:ak47"}]`.
+
+JEI's client-side fallback uses the vanilla creative-slot packet, which does
+carry components; if you see the same symptom with JEI alone, please report it
+with the exact viewer and server versions.
+
 ## Licensing
 
 Two independent licenses apply:

@@ -11,7 +11,6 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
-import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -32,6 +31,7 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
+import org.apache.commons.lang3.StringUtils;
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.function.Supplier;
@@ -284,16 +284,49 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
     }
 
     /**
-     * 获取枪械的显示名称
+     * 获取枪械的显示名称。
+     *
+     * <h2>为什么读 common 索引而不是 client 索引</h2>
+     * {@code Item#getName(ItemStack)} 是<b>双端公共方法</b>：{@code /give} 的回执消息、
+     * 容器标题、铁砧改名、死亡消息、以及别的 mod 在服务端读 {@code ItemStack#getHoverName}
+     * 的路径都会调用它。此前这里挂着 {@code @Environment(EnvType.CLIENT)} 并读
+     * {@code getClientGunIndex}，这在专用服务器上是错的，而且错法与直觉相反：
+     *
+     * <ul>
+     *   <li><b>fabric-loader 会剥离成员上的 {@code @Environment}。</b>
+     *       {@code MinecraftGameProvider#getBuiltinTransforms} 对所有非 Minecraft 的
+     *       mod 类返回 {@code STRIP_ENVIRONMENT}，{@code EnvironmentStrippingData} +
+     *       {@code ClassStripper} 会把环境不匹配的<b>方法/字段整体删掉</b>
+     *       （2026-08-21 读 fabric-loader master 源码确认；loader pin 为 0.19.3；
+     *       Fabric Wiki「Class loading and transformation」同述）。
+     *       所以专服上这个覆写<b>根本不存在</b>，调用落回 {@code Item#getName}，
+     *       枪械在所有服务端路径上显示的是原版兜底名（如 {@code item.tacz.modern_kinetic_gun}），
+     *       而不是枪包里的名字 —— 这是<b>静默的显示不一致</b>，不是崩服。</li>
+     *   <li>反过来，一旦有人只删注解、不改实现（很容易发生：注解看着像纯文档），
+     *       这行就会在专服上真的去加载
+     *       {@code com.tacz.guns.client.resource.index.ClientGunIndex}，
+     *       那才是 {@code NoClassDefFoundError}。</li>
+     * </ul>
+     *
+     * <p>两种失败模式的根因相同：<b>双端公共方法不该依赖 client 侧索引</b>。
+     * common 与 client 索引读的是同一份 index json、同一个 {@code name} 翻译键
+     * （{@code ClientGunIndex#getName} 也只是把 {@code GunIndexPOJO#getName} 抄一份），
+     * 客户端渲染聊天/GUI 组件时自行翻译，因此客户端显示结果不变、无需 dist 分支，
+     * 而服务端从此拿到与客户端一致的名字。
+     *
+     * <p>多人游戏客户端上 {@code CommonAssetsManager.get()} 会回退到
+     * {@code CommonNetworkCache}（服务端 datapack sync 时下发的同一份 index json），
+     * 因此纯客户端环境同样取得到 common 索引。
      */
     @Override
     @Nonnull
-    @Environment(EnvType.CLIENT)
     public Component getName(@Nonnull ItemStack stack) {
         Identifier gunId = this.getGunId(stack);
-        Optional<ClientGunIndex> gunIndex = TimelessAPI.getClientGunIndex(gunId);
-        if (gunIndex.isPresent()) {
-            return Component.translatable(gunIndex.get().getName());
+        Optional<CommonGunIndex> gunIndex = TimelessAPI.getCommonGunIndex(gunId);
+        if (gunIndex.isPresent() && gunIndex.get().getPojo() != null) {
+            String name = gunIndex.get().getPojo().getName();
+            // 与 ClientGunIndex 的兜底保持一致：名字缺失时显示 no_name 提示键
+            return Component.translatable(StringUtils.isBlank(name) ? "custom.tacz.error.no_name" : name);
         }
         return super.getName(stack);
     }
