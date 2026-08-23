@@ -4,6 +4,13 @@
 **分支**：`26.2(main)`
 **当前 jar**：`build/libs/TACZ-Refabricated-26.2-1.1.8+fabric.26.2.R2.jar`（05:3x 构建，`./gradlew build` 通过）
 
+> **2026-08-23 状态更新**：光影路径已随
+> [PR #66](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/66)
+> （含 `3b42fc9`「光影下镜内改为真实第二世界渲染」）合并进 `26.2(main)`，
+> 以**实验性功能**形式随主线发布，默认关闭（`ScopePipEnable=false`）。
+> 本文「🟡 待实机验证」为 08-21 交接时的状态描述；用户侧开启教程与实验性声明见
+> 根目录 `README.md` §4.2。
+
 > ⚠️ **实测前务必确认 `mods/` 里那个 jar 就是刚构建的那个。**
 > 08-21 有整整两个会话（47366 + 4074 条报错）是在追一个已经改过、但 jar 没换的问题上浪费的；
 > 更早还有一次 R1 盖住 R2。日志里认这一行：`- tacz 1.1.8+fabric.26.2.R2`，
