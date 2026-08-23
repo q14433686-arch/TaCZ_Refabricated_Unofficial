@@ -1,5 +1,9 @@
 # [UNOFFICIAL] TaCZ Refabricated — Minecraft 26.2 / Fabric
 
+[![CurseForge Downloads](https://cf.way2muchnoise.eu/full_1627909_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
+[![CurseForge Versions](https://cf.way2muchnoise.eu/versions/1627909.svg)](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated/files)
+[![GitHub Downloads](https://img.shields.io/github/downloads/q14433686-arch/TaCZ_Refabricated_Unofficial/total?logo=github&label=GitHub%20Downloads)](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
+
 > **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero) for Minecraft 26.2,
 > 26.1.2 and 1.21.11, with an LRTactical compatibility framework. Not an official TaCZ
 > release; not reviewed or endorsed by the TACZ Dev Team. GPL-3.0.**
@@ -11,6 +15,7 @@
 `0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R2-hotfix`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
+· [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
 · [直接上游](https://github.com/Sh1roCu/TACZ-Refabricated/tree/1.21.1)
 · [原始 TaCZ 项目](https://github.com/MCModderAnchor/TACZ)
@@ -98,9 +103,11 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 
 ---
 
-## 4. 瞄具渲染：不是 PIP
+## 4. 瞄具渲染：默认与上游一致，实验性画中画（PIP）可选
 
-**TaCZ 直接上游的瞄具不是 Picture-in-Picture，也不会为镜片再渲染一次世界。**
+### 4.1 默认路径：目镜掩码
+
+**TaCZ 直接上游的瞄具不是 Picture-in-Picture，也不会为镜片再渲染一次世界。这一事实没有变化。**
 
 人工核对直接上游 1.21.1 的提交
 [`d290355`](https://github.com/Sh1roCu/TACZ-Refabricated/commit/d2903554da039d2355920953a81447784a3f2be2)
@@ -108,17 +115,73 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 使用 stencil 值控制目镜、镜身、准星和枪体片元；镜片后看到的
 仍是同一次世界渲染。它没有第二台相机，也没有第二次 `renderLevel`。
 
-26.2 端口无法沿用上游的即时 stencil 调用与绘制时序，因此改为：
+26.2 端口的**默认实现**仍是目镜掩码方案，无法沿用上游的即时 stencil 调用与绘制时序，因此改为：
 
 1. 把目镜几何写入一张离屏**掩码纹理**；
 2. 枪身、相关配件、枪口火光和准星的 shader 采样该掩码并按区域丢弃片元；
 3. 世界场景本身仍只渲染一次。
 
-这里的离屏目标只保存目镜掩码，**不是第二份世界画面**。代码中的
-`PictureInPictureRenderer` 仅用于枪械工作台的 GUI 模型预览，与瞄具实现无关。
+这里的离屏目标只保存目镜掩码，**不是第二份世界画面**。默认配置下「镜内放大」依旧来自
+整屏 FOV 变焦，镜筒周围的画面会跟着放大——与上游行为一致。代码中的
+`PictureInPictureRenderer` 仅用于枪械工作台的 GUI 模型预览，与瞄具实现无关（本节的
+画中画是 `ScopePipRenderer`，二者是两套东西）。
 
 Iris 有单独的 HAND shader 接线；其他 shader pack 仍可能改写自定义管线的最终效果。
 Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码裁剪的普通瞄具几何。
+
+### 4.2 实验性镜内画中画（Scope PIP）：默认关闭，按需开启
+
+26.2 主线最新合并（[PR #66](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/66)）
+新增了可选的镜内画中画：**镜筒外保持 1×，只有镜片内按瞄具倍率放大**。这是对上游行为的
+刻意偏离，属于**实验性功能**：
+
+- **默认完全关闭**（`ScopePipEnable=false`）：不动配置，行为与之前版本完全一致；
+- 两种镜内成像方式：**重投影**（默认；复用已渲染好的主画面，代价小，但高倍镜下镜内偏软）
+  与**二次渲染**（`ScopePipRerender=true`；用窄 FOV 把世界真画一遍，镜内原生分辨率，
+  代价是每帧多一遍完整世界渲染）；
+- 光影包（Iris）下也可用：光影开启时镜内走独立的第二世界渲染通道，需额外开关放行（见下）；
+- 对 Sodium、Voxy、Physics Mod 的投影同步做了专门处理，但兼容面仍在扩大中。
+
+#### 开启教程
+
+编辑 `.minecraft/config/tacz-client.toml` 的 `[render]` 段，改完**重启游戏**生效。
+
+最小开启（无光影环境）：
+
+```toml
+[render]
+ScopePipEnable = true        # 总开关，默认 false
+# ScopeMaskEnable = true     # PIP 依赖目镜掩码定位镜片；该项默认即 true，勿关
+```
+
+高倍镜（6×/8×）建议同时开二次渲染，镜内不再受「屏幕分辨率 ÷ 倍率」的上限约束：
+
+```toml
+ScopePipRerender = true      # 镜内原生分辨率；每帧多一遍完整世界渲染
+```
+
+光影包（Iris）环境还需显式放行；二次渲染 + 光影时建议保持管线隔离默认开启：
+
+```toml
+ScopePipAllowShaderPacks = true   # 默认 false 是保守默认，不是已知不兼容
+# ScopePipIsolatePipeline = true  # 默认 true：镜内那一遍用独立 Iris 管线，避免时域效果污染主画面
+# ScopePipShadowScale = 0.5       # 镜内阴影贴图比例，默认值可省约 3/4 的镜内阴影开销
+```
+
+可选微调：`ScopePipSharpness`（重投影模式镜内锐化，默认 0.5）、
+`ScopePipWorldZoomShare`（把多少倍率还给世界画面：0 = 纯 PIP、1 = 等同关闭，默认 0）、
+`AimingSwayIntensity`（开镜持枪晃动倍率，默认 1.5，高倍镜下可适当调高）。
+
+注意两点：Sulkan 渲染器下目镜掩码本身会回退，PIP 随之无条件停用；若 PIP 运行中出现渲染
+故障，它会在日志报错后自动停用当次会话，把 `ScopePipEnable` 改回 `false` 即完整回到默认行为。
+
+#### 实验性声明
+
+**PIP 是实验性功能，出 bug 完全正常。** 可能出现的问题包括但不限于：高倍镜画质不及预期、
+光影下镜内外色调差异、帧率大幅下降（尤其二次渲染 + 光影，帧率约减半）、以及个别渲染模组
+组合下的画面异常。遇到问题先把 `ScopePipEnable` 改回 `false` 复测，确认与 PIP 相关后再反馈，
+并附上：全部 `ScopePip*` 配置取值、光影包名称、以及 Sodium / Iris / Voxy 等渲染模组版本。
+不打算尝鲜的玩家无需任何操作，默认路径不受该功能影响。
 
 ---
 
@@ -204,8 +267,8 @@ gunpack.meta.json
 ## 7. 当前已知边界
 
 - LRTactical 是部分兼容框架，`flash_shield` 未实现；第三方包兼容性需要逐包验证。
-- 26.2 的瞄具裁剪是 branch-specific 的掩码实现，不应描述成上游 PIP，也不保证每个 shader pack
-  都得到完全相同的结果。
+- 26.2 的瞄具裁剪默认仍是 branch-specific 的掩码实现，不应描述成上游行为；镜内画中画（PIP）
+  是实验性可选开关（见第 4 节），不保证每个 shader pack 与渲染模组组合都得到完全相同的结果。
 - 26.2 的现有实测记录中，Player Animation Library 在经历 TaCZ 趴姿再站起后，下一次切枪的
   短暂第三人称 crossfade 仍可能带入旧姿态；切换完成后的稳态持枪不是该问题。
 - 明确依赖 Arcana 的内容不受支持；其他枪包也不能仅凭“能被扫描到”就视为完全兼容。

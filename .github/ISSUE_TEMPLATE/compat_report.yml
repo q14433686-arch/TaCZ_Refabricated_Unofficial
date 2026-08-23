@@ -6,7 +6,10 @@ body:
   - type: markdown
     attributes:
       value: |
-        **请先阅读**：紫黑贴图或模型缺失**不能**证明该包依赖 Arcana，
+        **请先阅读**：本仓库只处理 **Fabric 移植**的兼容性问题；NeoForge 移植版
+        （[TaCZ_Renovated](https://github.com/q14433686-arch/TaCZ_Renovated)）的兼容问题
+        请到该仓库提交。
+        紫黑贴图或模型缺失**不能**证明该包依赖 Arcana，
         也可能是目录层级、资源路径、版本谓词或包本身不完整造成的。
         明确依赖 Arcana 的内容不受支持（Arcana 官方仅提供 1.20.1 Forge 文件）。
 
