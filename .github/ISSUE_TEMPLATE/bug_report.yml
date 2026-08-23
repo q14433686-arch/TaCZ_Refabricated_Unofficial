@@ -9,8 +9,11 @@ body:
         ## 提交前请确认
 
         - 本仓库是 **TaCZ 的非官方 Fabric 移植**，只处理移植本身的问题。
+        - 使用的是 **NeoForge 移植版**？请改到姊妹项目
+          [TaCZ_Renovated](https://github.com/q14433686-arch/TaCZ_Renovated/issues)
+          提交——本仓库不处理 NeoForge 环境的问题。
         - 请**不要**把本移植的问题提交给 TaCZ / LRTactical 原作者。
-        - 请先[搜索已有 issue](https://github.com/OWNER/REPO/issues?q=is%3Aissue)，避免重复。
+        - 请先[搜索已有 issue](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues?q=is%3Aissue)，避免重复。
         - 中文 / English 均可。
 
   - type: checkboxes
@@ -22,7 +25,7 @@ body:
           required: true
         - label: 我已更新到最新版本，问题依然存在
           required: true
-        - label: 我确认问题出现在本 Fabric 移植上，而不是 Forge / NeoForge 版 TaCZ
+        - label: 我确认问题出现在本 Fabric 移植上，而不是 Forge 原版 TaCZ 或我们的 NeoForge 移植 TaCZ_Renovated
           required: true
 
   - type: dropdown

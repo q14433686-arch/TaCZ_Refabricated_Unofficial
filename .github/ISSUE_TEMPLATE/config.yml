@@ -1,6 +1,9 @@
 blank_issues_enabled: false
 contact_links:
-  - name: TaCZ 原版（Forge/NeoForge）的问题
+  - name: NeoForge 移植版的问题（TaCZ_Renovated）
+    url: https://github.com/q14433686-arch/TaCZ_Renovated/issues
+    about: TaCZ_Renovated 是我们的姊妹非官方 NeoForge 移植（26.1.2+/1.21.11）。NeoForge 环境的问题请到那里提交，两仓库只各自处理自己加载器的问题
+  - name: TaCZ 原版（1.20.1 Forge）的问题
     url: https://github.com/MCModderAnchor/TACZ/issues
     about: 非本移植特有的问题，请提交到 TaCZ 原始项目
   - name: 上游 1.21.1 Fabric 分支的问题
