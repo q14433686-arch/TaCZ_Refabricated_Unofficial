@@ -1,6 +1,9 @@
 <!-- 此文件按 1.21.11 分支根目录 README.md 的位置和用途编写，可直接复制替换。 -->
 
 # [UNOFFICIAL] TaCZ Refabricated — Minecraft 1.21.11 / Fabric
+[![CurseForge Downloads](https://cf.way2muchnoise.eu/full_1627909_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
+[![CurseForge Versions](https://cf.way2muchnoise.eu/versions/1627909.svg)](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated/files)
+[![GitHub Downloads](https://img.shields.io/github/downloads/q14433686-arch/TaCZ_Refabricated_Unofficial/total?logo=github&label=GitHub%20Downloads)](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 
 > **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero) for Minecraft 26.2,
 > 26.1.2 and 1.21.11, with an LRTactical compatibility framework. Not an official TaCZ
