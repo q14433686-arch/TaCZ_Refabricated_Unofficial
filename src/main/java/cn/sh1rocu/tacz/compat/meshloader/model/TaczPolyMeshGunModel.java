@@ -53,16 +53,29 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
     private List<BedrockPart> cachedAdditionalMagazinePath = null;
     private final Map<String, PolyMeshGpuRenderer.BakedBone> bakedBones = new HashMap<>();
     private boolean gpuBaked = false;
+    private boolean loggedFirstSubmit = false;
 
     public TaczPolyMeshGunModel(BedrockModelPOJO pojo, BedrockVersion version) {
         super(pojo, version);
     }
 
+    /**
+     * 7 参只是转发。真正的第一/第三人称入口是下面的 8 参
+     * （{@code GunItemRendererWrapper} 会传入枪身贴图做镜内裁剪）。
+     * 上一版只覆写了 7 参，结果高模路径从未执行 —— 枪体全空。
+     */
     @Override
     public void submit(PoseStack poseStack, ItemStack gunItem, ItemDisplayContext transformType,
                        SubmitNodeCollector collector, RenderType renderType, int light, int overlay) {
+        submit(poseStack, gunItem, transformType, collector, renderType, null, light, overlay);
+    }
+
+    @Override
+    public void submit(PoseStack poseStack, ItemStack gunItem, ItemDisplayContext transformType,
+                       SubmitNodeCollector collector, RenderType renderType,
+                       @javax.annotation.Nullable Identifier gunTexture, int light, int overlay) {
         if (!hasPolyMesh()) {
-            super.submit(poseStack, gunItem, transformType, collector, renderType, light, overlay);
+            super.submit(poseStack, gunItem, transformType, collector, renderType, gunTexture, light, overlay);
             return;
         }
 
@@ -72,14 +85,19 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             polyMeshModel.clearExcludeSubtree();
         }
 
-        super.submit(poseStack, gunItem, transformType, collector, renderType, light, overlay);
+        super.submit(poseStack, gunItem, transformType, collector, renderType, gunTexture, light, overlay);
 
         if (!PolyRenderPolicy.shouldRenderPoly(transformType, poseStack)) {
             return;
         }
 
-        Identifier texture = resolveTexture(gunItem);
+        Identifier texture = gunTexture != null ? gunTexture : resolveTexture(gunItem);
         if (texture == null) {
+            if (!loggedFirstSubmit) {
+                loggedFirstSubmit = true;
+                LOGGER.warn("[TacZMeshLoader] poly submit skipped: no texture (firstPerson={})",
+                        transformType != null && transformType.firstPerson());
+            }
             return;
         }
 
@@ -87,6 +105,15 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         boolean gpuActive = handPass
                 && PolyMeshGpuRenderer.isGpuPathUsable()
                 && ensureBaked(texture);
+        if (!loggedFirstSubmit) {
+            loggedFirstSubmit = true;
+            LOGGER.info("[TacZMeshLoader] poly submit: bones={} verts={} gpu={} firstPerson={} texture={}",
+                    polyMeshModel.getMeshBoneCount(),
+                    polyMeshModel.getTotalVertexCount(),
+                    gpuActive,
+                    handPass,
+                    texture);
+        }
         if (gpuActive) {
             polyMeshModel.visitBones(poseStack, true, (boneName, bonePose) -> {
                 if (polyMeshModel.isTranslucentBone(boneName)) {

@@ -67,8 +67,8 @@ display JSON：
 
 ## 5. 验证状态
 
-沙箱内完成：源码落地、接线、配置、mixin JSON。
-**未执行** `./gradlew build` 与实机加载 mesh 枪包。需要本地验证：
+沙箱内完成：源码落地、接线、配置、mixin JSON；并按用户 2026-08-25 log 修了 8 参 submit 漏覆写。
+**未执行** `./gradlew build`。需要本地验证：
 
 1. 无 mesh 枪包：行为与改动前一致。
 2. `model_type: mesh` + geo：第一人称可见，帧率应明显高于纯 consumer。
