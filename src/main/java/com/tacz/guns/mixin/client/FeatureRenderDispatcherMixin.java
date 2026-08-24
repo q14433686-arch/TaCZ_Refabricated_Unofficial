@@ -145,4 +145,22 @@ public abstract class FeatureRenderDispatcherMixin {
         // 往前挪掩码还没就绪，往后挪（比如手持渲染之后）准星会被 PIP 盖掉。
         ScopePipRenderer.compositeAtPhaseBoundary();
     }
+
+    /**
+     * TacZ Mesh Loader：在对应 pass 的阶段边界把本帧登记的 GPU 烘焙骨骼画到主 target。
+     *
+     * <p>必须按 pass 分流：世界那一次 {@code renderAllFeatures} 只画第三人称/掉落物，
+     * 手部那一次才画第一人称。上一版把第一人称也画进世界 pass，投影/深度都不对。</p>
+     */
+    @Inject(
+            method = "renderAllFeatures",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeAlwaysOnTop()V",
+                    shift = At.Shift.AFTER
+            )
+    )
+    private void tacz$meshGpuAtPhaseBoundary(SubmitNodeStorage storage, CallbackInfo ci) {
+        cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer.renderAtPhaseBoundary();
+    }
 }

@@ -2,6 +2,7 @@ package me.xjqsh.lrtactical.entity;
 
 import me.xjqsh.lrtactical.EquipmentMod;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Rotations;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -84,6 +85,9 @@ public class StickyGrenadeEntity extends GrenadeEntity {
     /** 相对宿主实体的朝向：x=pitch, y=yaw。 */
     private static final EntityDataAccessor<Rotations> STUCK_ROTATION =
             SynchedEntityData.defineId(StickyGrenadeEntity.class, EntityDataSerializers.ROTATIONS);
+    /** 黏附方块表面方向，{@link Direction#get3DDataValue()} 编码；-1 = 未黏在方块上。官方 0.4.3。 */
+    private static final EntityDataAccessor<Byte> STUCK_FACE =
+            SynchedEntityData.defineId(StickyGrenadeEntity.class, EntityDataSerializers.BYTE);
 
     @Nullable
     private BlockPos stuckBlockPos;
@@ -105,6 +109,14 @@ public class StickyGrenadeEntity extends GrenadeEntity {
         builder.define(STUCK_ENTITY_ID, -1);
         builder.define(STUCK_OFFSET, new Rotations(0, 0, 0));
         builder.define(STUCK_ROTATION, new Rotations(0, 0, 0));
+        builder.define(STUCK_FACE, (byte) -1);
+    }
+
+    /** 当前黏附的方块表面；黏在实体上或尚未黏附时返回 null。 */
+    @Nullable
+    public Direction getStuckFace() {
+        byte value = this.entityData.get(STUCK_FACE);
+        return value >= 0 && value <= 5 ? Direction.from3DDataValue(value) : null;
     }
 
     public boolean isSticked() {
@@ -220,6 +232,7 @@ public class StickyGrenadeEntity extends GrenadeEntity {
         // 上游此处还会播 ModSounds.GRENADE_BOUNCE（原作受限音效），本移植不打包。
 
         this.entityData.set(STICKED, true);
+        this.entityData.set(STUCK_FACE, (byte) blockResult.getDirection().get3DDataValue());
         this.setNoGravity(true);
         this.setDeltaMovement(Vec3.ZERO);
         // 稍微嵌进表面一点，避免悬空感
@@ -245,6 +258,7 @@ public class StickyGrenadeEntity extends GrenadeEntity {
         }
 
         this.entityData.set(STICKED, true);
+        this.entityData.set(STUCK_FACE, (byte) -1);
         this.setNoGravity(true);
         this.setDeltaMovement(Vec3.ZERO);
 
@@ -268,6 +282,7 @@ public class StickyGrenadeEntity extends GrenadeEntity {
     private void detach() {
         this.entityData.set(STICKED, false);
         this.entityData.set(STUCK_ENTITY_ID, -1);
+        this.entityData.set(STUCK_FACE, (byte) -1);
         this.setNoGravity(false);
         this.stuckBlockPos = null;
         this.stuckEntityUUID = null;

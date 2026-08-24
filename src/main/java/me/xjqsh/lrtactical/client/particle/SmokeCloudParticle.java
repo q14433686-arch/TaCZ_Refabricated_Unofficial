@@ -8,12 +8,15 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.LightLayer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 烟雾弹的烟雾粒子 —— 大体积、不受重力、无碰撞、全亮度。
+ * 烟雾弹的烟雾粒子 —— 大体积、不受重力、无碰撞；光照跟随环境（官方 0.4.3）。
  *
  * <h2>26.2 移植要点：粒子系统整体重组（均字节码确认）</h2>
  * <table border="1">
@@ -66,19 +69,27 @@ public class SmokeCloudParticle extends SingleQuadParticle {
     }
 
     /**
-     * 全亮度：烟雾不该在暗处变黑，否则夜战时形同虚设。
+     * 光照跟随环境（官方 LR 0.4.3 {@code f5430a6}「烟雾粒子亮度与环境匹配」）。
+     *
+     * <p>原先本移植恒满亮（15728880），夜战里烟雾会自己发光、暴露位置。
+     * 官方 0.4.3 的语义：取粒子当前位置的块光/天光打包。这里逐条对齐 ——
+     * 不加下限钳制、不加邻格兜底（官方就没有；暗处烟雾变暗正是预期行为）。
      *
      * <p><b>26.2 改名</b>：上游覆写的是 {@code getLightColor(float)}，
      * 但 26.2 的 {@code Particle} 上<b>只有 {@code getLightCoords(float)}</b>
      * （字节码逐方法核对确认，全类无 {@code getLightColor}）。
-     * 返回值 15728880 = 0xF000F0，即天光/块光都拉满。
+     * {@code LightTexture.pack} 在 26.2 由 {@code LightCoordsUtil.pack} 承担
+     * （本仓库 {@code TextShowRender} 同款用法）。
      *
      * <p>它在 {@code Particle} 上是 <b>protected</b>（字节码确认），
      * 这里保持同样的可见性 —— 放宽成 public 虽然合法，但没有理由对外暴露。
      */
     @Override
     protected int getLightCoords(float partialTick) {
-        return 15728880;
+        BlockPos pos = BlockPos.containing(this.x, this.y, this.z);
+        int block = this.level.getBrightness(LightLayer.BLOCK, pos);
+        int sky = this.level.getBrightness(LightLayer.SKY, pos);
+        return LightCoordsUtil.pack(block, sky);
     }
 
     @Override

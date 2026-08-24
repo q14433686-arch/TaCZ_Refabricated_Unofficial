@@ -82,6 +82,7 @@ R2 的可选集成（并非硬依赖）如下：
 - TaCZ 的 Fabric 26.2 端口及随上游带来的默认枪包；
 - 为 26.x API 改写的网络、资源加载、GUI 和渲染接线；
 - 一套内置的 **LRTactical 兼容框架**；
+- 一套内置的 **TacZ Mesh Loader [TML]**（GPL-3.0 代码移植，见第 3.1 节）；
 - 若干可选模组的兼容接线。
 
 这不代表本项目是 TaCZ 或 LRTactical 的官方版本，也不代表所有第三方枪包、
@@ -100,6 +101,42 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 - 仓库没有打包原作的完整美术资源集，内容包仍需自带其获准分发的模型、贴图、动画和音效；
 - `provides` 只能满足 Fabric 的依赖 ID 检查，不等于任意 LRTactical 内容包都能直接运行；
 - 本移植产生的问题请反馈到本仓库，不要要求原作者为本端口提供支持。
+
+### 3.1 内置 TacZ Mesh Loader [TML]
+
+本分支把 [VellEagle/TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader)
+`1.21.1_fabric`（v0.1.7，GPL-3.0）内置进同一 jar。`fabric.mod.json` 通过
+`provides: ["taczmeshloader"]` 满足依赖该 id 的枪包检查。
+
+枪包 display 写 `"model_type": "mesh"`，并在资源里提供
+`assets/<ns>/geo_models/<模型路径>.json`（Blockbench Meshy 导出）即可启用
+poly_mesh。没有 geo 文件的普通立方体枪包零影响。
+
+26.2 没有 1.21.1 的即时 VBO 绘制；高面数 mesh（用户实测枪包可达 36 万顶点）
+若每帧在 CPU 上重建，帧时间会被顶点写入直接吃满（用户日志同时观察到动态
+缓冲反复扩容）。本移植的 GPU 路径：
+
+- 每根骨骼的本地顶点**只上传一次**到常驻 `GpuBuffer`，光照按 4 级一档量化
+  烘进顶点 UV2，档位变化时才重烘焙（≥1s 节流）；
+- 每帧只收集骨骼矩阵（O(骨骼)），在 `renderAllFeatures` 阶段边界以
+  **带深度附件**的 pass 画出（第一人称与第三人称/世界各走各的边界）；
+- 片元采样原版光亮度表 —— 枪在暗处会变暗，不再满亮发光；
+- Iris 光影包启用时默认回退 CPU consumer 路径（Iris 接管渲染目标，自建
+  pass 的输出不保证参与最终合成）；`MeshGpuUnderShaders=true` 可实验性强开；
+- geo JSON 解析按文件缓存（用户日志里每把枪曾被重复解析两遍，36 万顶点级
+  JSON 每遍都是秒级）。
+
+配置在 `tacz-client.toml` 的 `[mesh_loader]` 段：`MeshEnable`、`MeshGpuBaking`
+（默认 true）、`MeshGpuUnderShaders`（默认 false，实验性）、`MeshPolyInShadow`
+（默认 false）、`MeshMaxRenderDistance`（默认 48）、`MeshPolyInPreview`、
+`MeshGuiMaxVertices`（默认 65536，GUI/JEI 图标超限只画立方体）。
+GPU 绘制失败会在当次会话自动关掉 `MeshGpuBaking` 并回退 consumer。
+
+**本版尚未编译、尚未实机核验**（编写环境无法运行 `./gradlew build`；所有
+MC API 引用已逐条对照本仓库在役代码与 26.2 反编译源核对）。目镜物体暂不
+支持 mesh（与上游 TML 相同限制）。
+
+更细的评估与前两版失败原因见 [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)。
 
 ---
 
@@ -271,6 +308,9 @@ gunpack.meta.json
   是实验性可选开关（见第 4 节），不保证每个 shader pack 与渲染模组组合都得到完全相同的结果。
 - 26.2 的现有实测记录中，Player Animation Library 在经历 TaCZ 趴姿再站起后，下一次切枪的
   短暂第三人称 crossfade 仍可能带入旧姿态；切换完成后的稳态持枪不是该问题。
+- 内置 TML（poly_mesh）当前版本尚未编译与实机核验；高面数枪包装载后先看日志里的
+  `GPU-baked` / `GPU mesh pass drew` 行，没有这两行说明在走 CPU 回退路径。
+  开着光影包时默认就是 CPU 路径（见 `MeshGpuUnderShaders`）。目镜物体仍不支持 mesh。
 - 明确依赖 Arcana 的内容不受支持；其他枪包也不能仅凭“能被扫描到”就视为完全兼容。
 
 提交兼容问题时请给出实际包名与版本、完整日志和最小复现环境，不要只给缺失贴图截图。
@@ -283,6 +323,7 @@ gunpack.meta.json
 
 - TaCZ 与本端口对应代码使用 GPL-3.0；
 - 移入的 LRTactical 代码部分沿用其 GPL-3.0；
+- 内置的 TacZ Mesh Loader 代码移植自 VellEagle/TacZMeshLoader，GPL-3.0；
 - 默认枪包的 `gunpack_info.json` 声明其资源为 CC BY-NC-ND 4.0；
 - 随 jar 打包的 Mayday Animation Engine 使用 MIT；
 - 其他第三方库、资源和外部内容包可能有各自许可。
