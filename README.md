@@ -82,6 +82,7 @@ R2 的可选集成（并非硬依赖）如下：
 - TaCZ 的 Fabric 26.2 端口及随上游带来的默认枪包；
 - 为 26.x API 改写的网络、资源加载、GUI 和渲染接线；
 - 一套内置的 **LRTactical 兼容框架**；
+- 一套内置的 **TacZ Mesh Loader [TML]**（GPL-3.0 代码移植，见第 3.1 节）；
 - 若干可选模组的兼容接线。
 
 这不代表本项目是 TaCZ 或 LRTactical 的官方版本，也不代表所有第三方枪包、
@@ -100,6 +101,31 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 - 仓库没有打包原作的完整美术资源集，内容包仍需自带其获准分发的模型、贴图、动画和音效；
 - `provides` 只能满足 Fabric 的依赖 ID 检查，不等于任意 LRTactical 内容包都能直接运行；
 - 本移植产生的问题请反馈到本仓库，不要要求原作者为本端口提供支持。
+
+### 3.1 内置 TacZ Mesh Loader [TML]
+
+本分支把 [VellEagle/TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader)
+`1.21.1_fabric`（v0.1.7，GPL-3.0）内置进同一 jar。`fabric.mod.json` 通过
+`provides: ["taczmeshloader"]` 满足依赖该 id 的枪包检查。
+
+枪包 display 写 `"model_type": "mesh"`，并在资源里提供
+`assets/<ns>/geo_models/<模型路径>.json`（Blockbench Meshy 导出）即可启用
+poly_mesh。没有 geo 文件的普通立方体枪包零影响。
+
+26.2 没有 1.21.1 的即时 VBO 绘制，高面数 mesh（实测可达 30 万级顶点）若每帧
+在 CPU 上重建会把帧率打到约 30。本移植的第一人称路径改为：
+
+- 每根骨骼的本地顶点**只上传一次**到常驻 `GpuBuffer`；
+- 每帧只收集骨骼矩阵（O(骨骼)），在手部 `renderAllFeatures` 阶段边界画出；
+- Iris 光影包启用时自动回退 CPU consumer 路径。
+
+配置在 `tacz-client.toml` 的 `[mesh_loader]` 段：`MeshEnable`、`MeshGpuBaking`
+（默认 true）、`MeshPolyInShadow`（默认 false）、`MeshMaxRenderDistance`（默认 48）。
+GPU 绘制失败会在当次会话自动关掉 `MeshGpuBaking` 并回退 consumer。
+
+**未做实机核验。** 目镜物体暂不支持 mesh（与上游 TML 相同限制）。
+
+更细的评估与上一版失败原因见 [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)。
 
 ---
 
@@ -271,6 +297,8 @@ gunpack.meta.json
   是实验性可选开关（见第 4 节），不保证每个 shader pack 与渲染模组组合都得到完全相同的结果。
 - 26.2 的现有实测记录中，Player Animation Library 在经历 TaCZ 趴姿再站起后，下一次切枪的
   短暂第三人称 crossfade 仍可能带入旧姿态；切换完成后的稳态持枪不是该问题。
+- 内置 TML（poly_mesh）尚未做实机核验；高面数枪包请先看日志里的
+  `GPU-baked` / `GPU mesh pass drew` 行。目镜物体仍不支持 mesh。
 - 明确依赖 Arcana 的内容不受支持；其他枪包也不能仅凭“能被扫描到”就视为完全兼容。
 
 提交兼容问题时请给出实际包名与版本、完整日志和最小复现环境，不要只给缺失贴图截图。
@@ -283,6 +311,7 @@ gunpack.meta.json
 
 - TaCZ 与本端口对应代码使用 GPL-3.0；
 - 移入的 LRTactical 代码部分沿用其 GPL-3.0；
+- 内置的 TacZ Mesh Loader 代码移植自 VellEagle/TacZMeshLoader，GPL-3.0；
 - 默认枪包的 `gunpack_info.json` 声明其资源为 CC BY-NC-ND 4.0；
 - 随 jar 打包的 Mayday Animation Engine 使用 MIT；
 - 其他第三方库、资源和外部内容包可能有各自许可。

@@ -3,9 +3,12 @@ package me.xjqsh.lrtactical.client.renderer.entity;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import me.xjqsh.lrtactical.api.LrTacticalAPI;
 import me.xjqsh.lrtactical.client.renderer.item.ThrowableItemRendererWrapper;
 import me.xjqsh.lrtactical.client.renderer.model.CustomBedrockModel;
+import me.xjqsh.lrtactical.entity.StickyGrenadeEntity;
 import me.xjqsh.lrtactical.entity.ThrowableItemEntity;
+import net.minecraft.core.Direction;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -78,6 +81,7 @@ public class ThrowableEntityRenderer
         public ItemStack stack = ItemStack.EMPTY;
         public float yRot;
         public float xRot;
+        public Direction stuckFace;
     }
 
     @Override
@@ -91,6 +95,7 @@ public class ThrowableEntityRenderer
         state.yRot = Mth.lerp(partialTicks, entity.yRotO, entity.getYRot());
         state.xRot = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
         state.stack = entity.getItem();
+        state.stuckFace = entity instanceof StickyGrenadeEntity sticky ? sticky.getStuckFace() : null;
         // ItemDisplayContext.GROUND：与掉落物一致的语义，内容包的 transforms 里
         // "ground" 段正是为这个场景准备的
         this.itemModelResolver.updateForTopItem(
@@ -102,11 +107,19 @@ public class ThrowableEntityRenderer
                        SubmitNodeCollector collector, CameraRenderState cameraState) {
         poseStack.pushPose();
 
-        // 与上游一致的姿态摆放：先抬一点，再按飞行朝向旋转，最后微调到手雷本体中心
-        poseStack.translate(0, 0.15, 0);
+        // 官方 0.4.3：粘附面偏移 + 飞行朝向 + display.entity_transform（默认 Z90）。
+        // 原先这里写死的两段 translate 是在没有 entity_transform 时的补偿，现已交给数据包。
+        if (state.stuckFace != null) {
+            poseStack.translate(
+                    -state.stuckFace.getStepX() * 0.15,
+                    (1 - state.stuckFace.getStepY()) * 0.15,
+                    -state.stuckFace.getStepZ() * 0.15
+            );
+        }
         poseStack.mulPose(Axis.YN.rotationDegrees(state.yRot));
         poseStack.mulPose(Axis.XP.rotationDegrees(state.xRot));
-        poseStack.translate(0, 0.35, -0.15);
+        LrTacticalAPI.getThrowableDisplay(state.stack).ifPresent(display ->
+                display.getEntityTransform().apply(poseStack));
 
         // 见类注释：共享模型上的开关，必须在 submit 期间成对开合
         CustomBedrockModel model = resolveModel(state.stack);

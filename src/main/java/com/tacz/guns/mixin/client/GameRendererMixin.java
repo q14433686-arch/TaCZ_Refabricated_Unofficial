@@ -240,6 +240,7 @@ public abstract class GameRendererMixin {
         IrisCompat.beginFrame();
         ScopePipRenderer.beginFrame();
         ScopeMaskRenderer.beginFrame();
+        cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer.beginFrame();
         // 瞄具那套 Iris 管线在这里预热：extract 在世界渲染之前，不在任何 render pass 内，
         // 也不在镜内那一遍里 —— 是做「编译整份 shaderpack」这种重活的唯一安全位置。
         // 懒加载的话它会落在第一次开镜的那一帧中途，既卡顿又会在帧中途重置全局帧计数。

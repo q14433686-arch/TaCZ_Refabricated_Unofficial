@@ -47,6 +47,7 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
     @Nullable
     private Identifier slotTexture;
     private ItemTransforms transforms = ItemTransforms.NO_TRANSFORMS;
+    private EntityExtraTransform entityTransform = EntityExtraTransform.DEFAULT;
     private Map<String, Identifier> sounds;
 
     private ThrowableDisplayInstance() {
@@ -75,6 +76,14 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
 
     public ItemTransforms getTransforms() {
         return transforms;
+    }
+
+    /**
+     * 飞行实体的额外变换。官方 0.4.3 用来修正部分附属包手雷朝向；
+     * 缺省为绕 Z 轴 90° + 小幅平移。
+     */
+    public EntityExtraTransform getEntityTransform() {
+        return entityTransform;
     }
 
     @Override
@@ -118,6 +127,7 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         display.texture = DisplayPaths.toTexturePath(pojo.textureLocation);
         display.slotTexture = DisplayPaths.toTexturePath(pojo.slotTextureLocation);
         display.transforms = BlockTransformParser.parse(pojo.transforms);
+        display.entityTransform = EntityExtraTransform.parse(pojo.entityTransform);
         display.sounds = Objects.requireNonNullElseGet(pojo.sounds, Maps::newHashMap);
 
         return display;
@@ -136,6 +146,8 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
             Identifier slotTextureLocation,
             @SerializedName("transforms")
             JsonObject transforms,
+            @SerializedName("entity_transform")
+            JsonObject entityTransform,
             @SerializedName("sounds")
             Map<String, Identifier> sounds
     ) {
