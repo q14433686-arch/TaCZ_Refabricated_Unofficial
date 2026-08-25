@@ -1,5 +1,6 @@
 package com.tacz.guns.mixin.client;
 
+import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.render.scope.ScopePipRenderer;
@@ -144,5 +145,24 @@ public abstract class FeatureRenderDispatcherMixin {
         //
         // 往前挪掩码还没就绪，往后挪（比如手持渲染之后）准星会被 PIP 盖掉。
         ScopePipRenderer.compositeAtPhaseBoundary();
+    }
+
+    /**
+     * 第一人称 poly_mesh GPU 绘制：必须在 executeSolid <b>之后</b>。
+     *
+     * <p>关 PR 画在 executeSolid 之前、并且用一张全局 WORLD 表，GUI/掉落物
+     * 会在世界 pass 里被画出去。这里只在手部 pass 消费 HAND_DRAWS，
+     * 世界那次 {@link PolyMeshGpuRenderer#renderAfterSolid()} 会直接清空。</p>
+     */
+    @Inject(
+            method = "renderAllFeatures",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeSolid()V",
+                    shift = At.Shift.AFTER
+            )
+    )
+    private void tacz$polyMeshGpuAfterSolid(SubmitNodeStorage storage, CallbackInfo ci) {
+        PolyMeshGpuRenderer.renderAfterSolid();
     }
 }
