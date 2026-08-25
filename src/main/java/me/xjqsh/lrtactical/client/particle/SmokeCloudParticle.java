@@ -69,19 +69,19 @@ public class SmokeCloudParticle extends SingleQuadParticle {
     }
 
     /**
-     * 全亮度：烟雾不该在暗处变黑，否则夜战时形同虚设。
+     * 官方 0.4.3 不再把烟雾固定写成全亮，而是采样粒子当前所在方块的
+     * 天光和块光。26.2 的方法名是 {@code getLightCoords(float)}（而非旧版
+     * {@code getLightColor(float)}）。
      *
-     * <p><b>26.2 改名</b>：上游覆写的是 {@code getLightColor(float)}，
-     * 但 26.2 的 {@code Particle} 上<b>只有 {@code getLightCoords(float)}</b>
-     * （字节码逐方法核对确认，全类无 {@code getLightColor}）。
-     * 返回值 15728880 = 0xF000F0，即天光/块光都拉满。
-     *
-     * <p>它在 {@code Particle} 上是 <b>protected</b>（字节码确认），
-     * 这里保持同样的可见性 —— 放宽成 public 虽然合法，但没有理由对外暴露。
+     * <p>这里刻意按粒子坐标每次采样，不能缓存生成点的光照：烟雾会移动，
+     * 昼夜、方块光源和区块更新也都会改变结果。</p>
      */
     @Override
     protected int getLightCoords(float partialTick) {
-        return 15728880;
+        BlockPos position = BlockPos.containing(this.x, this.y, this.z);
+        int blockLight = this.level.getBrightness(LightLayer.BLOCK, position);
+        int skyLight = this.level.getBrightness(LightLayer.SKY, position);
+        return LightCoordsUtil.pack(blockLight, skyLight);
     }
 
     @Override
