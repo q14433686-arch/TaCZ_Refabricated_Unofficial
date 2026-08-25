@@ -8,12 +8,15 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.LightLayer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 烟雾弹的烟雾粒子 —— 大体积、不受重力、无碰撞、全亮度。
+ * 烟雾弹的烟雾粒子 —— 大体积、不受重力、无碰撞；光照跟随环境（官方 0.4.3）。
  *
  * <h2>26.2 移植要点：粒子系统整体重组（均字节码确认）</h2>
  * <table border="1">
