@@ -361,15 +361,18 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
             // 为什么值得单独放大：开镜后视野被瞄具收窄（PIP 更是把镜内又放大了 Z 倍），
             // 同样的角度抖动在镜内被放大成同样倍数的位移 —— 现实里高倍镜正是这样「越放大越难稳住」。
             // 原实现对开镜与否一视同仁，镜内反而显得过于稳定。
-            float swayScale = aimingSwayScale(player, partialTick);
-            poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F * swayScale));
-            poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F * swayScale));
+            // Keep the viewmodel sway identical to upstream.  In particular, do not
+            // scale it by aiming progress: the vanilla bob is already magnified by
+            // the ADS projection and applying a second ADS multiplier makes pitch and
+            // roll visibly larger than upstream.
+            poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
+            poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F));
             BedrockPart rootNode = model.getRootNode();
             if (rootNode != null) {
                 // tanh 饱和限幅保持在缩放【之前】：它的作用是防止快速转身时枪飞出画面，
                 // 那道保护必须先生效，缩放只放大限幅后的结果。
-                xRot = (float) Math.tanh(xRot / 25) * 25 * swayScale;
-                yRot = (float) Math.tanh(yRot / 25) * 25 * swayScale;
+                xRot = (float) Math.tanh(xRot / 25) * 25;
+                yRot = (float) Math.tanh(yRot / 25) * 25;
                 rootNode.offsetX += yRot * 0.1F / 16F / 3F;
                 rootNode.offsetY += -xRot * 0.1F / 16F / 3F;
                 rootNode.additionalQuaternion.mul(Axis.XP.rotationDegrees(xRot * 0.05F));

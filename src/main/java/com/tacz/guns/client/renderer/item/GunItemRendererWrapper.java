@@ -337,14 +337,17 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             float yRotOffset = Mth.lerp(partialTick, player.yBobO, player.yBob);
             float xRot = player.getViewXRot(partialTick) - xRotOffset;
             float yRot = player.getViewYRot(partialTick) - yRotOffset;
-            float swayScale = aimingSwayScale(player, partialTick);
-            poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F * swayScale));
-            poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F * swayScale));
+            // Keep the viewmodel sway identical to upstream.  In particular, do not
+            // scale it by aiming progress: the vanilla bob is already magnified by
+            // the ADS projection and applying a second ADS multiplier makes pitch and
+            // roll visibly larger than upstream.
+            poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
+            poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F));
             BedrockPart rootNode = gunModel.getRootNode();
             if (rootNode != null) {
                 // tanh 饱和限幅保持在缩放【之前】：它防的是快速转身时枪飞出画面。
-                xRot = (float) Math.tanh(xRot / 25) * 25 * swayScale;
-                yRot = (float) Math.tanh(yRot / 25) * 25 * swayScale;
+                xRot = (float) Math.tanh(xRot / 25) * 25;
+                yRot = (float) Math.tanh(yRot / 25) * 25;
                 rootNode.offsetX += yRot * 0.1F / 16F / 3F;
                 rootNode.offsetY += -xRot * 0.1F / 16F / 3F;
                 rootNode.additionalQuaternion.mul(Axis.XP.rotationDegrees(xRot * 0.05F));
