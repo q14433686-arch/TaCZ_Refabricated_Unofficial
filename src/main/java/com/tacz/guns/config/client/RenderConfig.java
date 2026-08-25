@@ -432,7 +432,7 @@ public class RenderConfig {
                         "which magnifies by the scope's zoom on top) multiplies the same angular wobble,",
                         "the way real magnified optics get harder to hold steady.",
                         "The fast-turn safety clamp still applies, so the gun cannot swing off screen.")
-                .defineInRange("AimingSwayIntensity", 1.5d, 0.0d, 5.0d);
+                .defineInRange("AimingSwayIntensity", 1.0d, 0.0d, 5.0d);
         SCOPE_PIP_ALLOW_SHADER_PACKS = builder
                 .comment("Allow the scope picture-in-picture to run while a shader pack is active.",
                         "Off by default as a precaution, NOT because it is known to be broken: under a",
