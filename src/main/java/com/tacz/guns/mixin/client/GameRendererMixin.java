@@ -1,6 +1,7 @@
 package com.tacz.guns.mixin.client;
 
 import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
+import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.resource.CrossFrameResourcePool;
 import com.mojang.blaze3d.vertex.PoseStack;
