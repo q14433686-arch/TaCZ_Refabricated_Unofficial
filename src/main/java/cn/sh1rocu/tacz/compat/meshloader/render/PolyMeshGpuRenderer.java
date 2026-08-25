@@ -249,7 +249,9 @@ public final class PolyMeshGpuRenderer {
             return null;
         }
         // ENTITY 顶点单条 ≤ 44B（含对齐余量），多给一点避免 Builder 中途扩容搬移。
-        ByteBufferBuilder scratch = new ByteBufferBuilder(vertexCount * 48L + 1024L);
+        // ByteBufferBuilder 的容量参数是 int（本仓库在役用法同）；按 long 算完再钳回。
+        long capacity = vertexCount * 48L + 1024L;
+        ByteBufferBuilder scratch = new ByteBufferBuilder((int) Math.min(capacity, Integer.MAX_VALUE));
         BufferBuilder builder = new BufferBuilder(scratch, PrimitiveTopology.QUADS, DefaultVertexFormat.ENTITY);
         for (PolyMesh mesh : meshes) {
             mesh.writeRaw(builder, lightKey);

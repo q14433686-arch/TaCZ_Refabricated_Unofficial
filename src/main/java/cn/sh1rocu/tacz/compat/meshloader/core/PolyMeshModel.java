@@ -41,7 +41,7 @@ public class PolyMeshModel {
     private final Set<String> excludedBones = new HashSet<>();
 
     public PolyMeshModel(IPolyMeshBone root, JsonObject rawJson) {
-        this(root, parseMeshMapFromJson(rawJson, null));
+        this(root, parseMeshMapFromJson(rawJson));
     }
 
     /**
