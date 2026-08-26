@@ -347,7 +347,18 @@ public abstract class ThrowableItemEntity extends Projectile
 
         this.setPos(x, y, z);
 
-        if (this.tickCount >= life && life > 0 && !this.level().isClientSide()) {
+        // 【引信到期】life >= 0 才参与超时判定。
+        //
+        // 这里曾写作 life > 0，与 ThrowableItem#onThrow 的
+        // setLife(max(life - cooked, 0)) 直接冲突：预燃（cook）拉满时剩余引信被
+        // clamp 到 0，实体扔出去后 life == 0 永远不满足 life > 0，
+        // 于是「进度条已满的温压/手雷扔出后永不主动爆炸」——只能靠命中或连锁引爆。
+        //
+        // 改为 life >= 0 后：
+        //   life == 0  -> 落地即刻（下一 tick）引爆，符合「引信烧完了」的语义；
+        //   life <  0  -> 仍然永不超时，这是 C4 / 遥控起爆（life_time = -1）
+        //                 赖以存在的约定，必须保留，不能写成 life != 0。
+        if (life >= 0 && this.tickCount >= life && !this.level().isClientSide()) {
             this.onDeath(null);
         }
 

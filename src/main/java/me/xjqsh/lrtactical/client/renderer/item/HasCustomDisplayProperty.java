@@ -74,9 +74,10 @@ public record HasCustomDisplayProperty() implements ConditionalItemModelProperty
                        @Nullable LivingEntity entity,
                        int seed,
                        ItemDisplayContext displayContext) {
-        // 两种物品各查各的通道；都查不到就返回 false → 走原版占位模型
+        // 三类物品各查各的通道；都查不到就返回 false → 走原版占位模型
         return LrTacticalAPI.getMeleeDisplay(stack).isPresent()
-                || LrTacticalAPI.getThrowableDisplay(stack).isPresent();
+                || LrTacticalAPI.getThrowableDisplay(stack).isPresent()
+                || LrTacticalAPI.getConsumableDisplay(stack).isPresent();
     }
 
     @Override

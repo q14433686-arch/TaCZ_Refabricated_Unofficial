@@ -48,10 +48,11 @@ public final class UsingProgressOverlay {
                     throwable.getThrowableIndex(stack).ifPresent(index -> {
                         var data = index.getData();
                         int life = data.getEntityData().getLifeTime();
-                        int maxCookTicks = Math.max(1, (int) (life * 0.9F));
+                        int maxCookTicks = Math.max(1, life);
                         if (data.isCookable() && life > 0 && usingTicks >= data.getPrepareTime()) {
-                            // ThrowableItem detonates in-hand at 90% of life; use that same
-                            // denominator so the warning bar actually reaches full.
+                            // Matches ThrowableItem#onUseTick: in-hand detonation happens at
+                            // prepareTime + the full lifeTime (official 0.4.3), not at 90% of it.
+                            // The bar filling up must coincide with the grenade going off.
                             float cooked = Mth.clamp(
                                     (usingTicks - data.getPrepareTime()) / (float) maxCookTicks,
                                     0.0F, 1.0F);

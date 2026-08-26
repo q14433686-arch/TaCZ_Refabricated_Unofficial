@@ -114,6 +114,7 @@ public final class ModEntitiesRender {
     public static void registerItemRenderers() {
         register(me.xjqsh.lrtactical.init.ModItems.MELEE);
         register(me.xjqsh.lrtactical.init.ModItems.THROWABLE);
+        register(me.xjqsh.lrtactical.init.ModItems.CONSUMABLE);
     }
 
     private static void register(net.minecraft.world.item.Item item) {
