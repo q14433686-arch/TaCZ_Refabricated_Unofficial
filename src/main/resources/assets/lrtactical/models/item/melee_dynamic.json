@@ -1,0 +1,14 @@
+{
+  "_comment": [
+    "动态渲染（lrtactical:dynamic_item）的 base 模型 —— 只提供 particle 贴图与 gui_light，不提供任何几何。",
+    "【必须无 parent】若改成继承 minecraft:item/generated，会静默继承它的 firstperson_righthand 变换",
+    "（rotation [0,-90,25] / translation [1.13,3.2,1.13] / scale 0.68）。",
+    "原版在 special renderer 之前会先施加模型自带的这些偏移，",
+    "于是它们会叠加在本模块自己的第一人称摄像机变换之上 —— 手持模型会被转歪、推远。",
+    "无 parent 的模型才能保持单位变换。"
+  ],
+  "gui_light": "front",
+  "textures": {
+    "particle": "minecraft:item/barrier"
+  }
+}

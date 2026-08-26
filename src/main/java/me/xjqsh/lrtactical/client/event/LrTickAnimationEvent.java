@@ -4,6 +4,7 @@ import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
+import me.xjqsh.lrtactical.client.renderer.item.ConsumableItemRenderer;
 import me.xjqsh.lrtactical.client.renderer.item.MeleeItemRenderer;
 import me.xjqsh.lrtactical.client.renderer.item.ThrowableItemRendererWrapper;
 import net.fabricmc.api.EnvType;
@@ -13,17 +14,20 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * 驱动 LRTactical 物品的<b>待机 / 行走 / 奔跑</b>动画状态转移。
+ * 驱动 LRTactical 物品的动画状态转移。
  *
  * <p>与 TACZ 的 {@code TickAnimationEvent} 是同一件事的两份实现 ——
  * 之所以不能合并，是因为那一份的入口写死了
  * {@code TimelessAPI.getGunDisplay(mainHandItem)}（只认枪械的 display）。
  *
- * <h2>为什么这一步不可省略</h2>
- * 状态机的 {@code trigger(INPUT_IDLE/WALK/RUN)} 必须<b>每 tick</b> 被调用一次。
+ * <h2>为什么近战的位移 tick 不可省略</h2>
+ * 近战状态机的 {@code trigger(INPUT_IDLE/WALK/RUN)} 必须<b>每 tick</b> 被调用一次。
  * 缺了它，动画会永远停在 {@code draw} 结束时的那一帧：
  * 玩家跑动时刀不摆、站定时也不回到 idle 姿势 ——
  * 看起来像「模型卡住了」，但其实模型和动画都加载成功了。
+ *
+ * <p>投掷物<b>刻意不吃</b>这组输入，理由见
+ * {@link #tickAnimation(net.minecraft.client.Minecraft)}。
  *
  * <h2>26.2 差异</h2>
  * <ul>
@@ -44,7 +48,20 @@ public final class LrTickAnimationEvent {
     }
 
     /**
-     * 每客户端 tick：按玩家移动状态推进主手物品的动画状态机。
+     * 每客户端 tick：按玩家移动状态推进<b>近战</b>物品的动画状态机。
+     *
+     * <h2>为什么只发给近战，不发给投掷物</h2>
+     * 上游 LR 的 {@code ClientEventsHandler#tickAnimation} 同样只驱动
+     * {@code MeleeItemRenderer}（与 {@code FlashShieldItemRenderer}，本仓未移植）。
+     * 这不是疏漏，而是必须的：
+     *
+     * <p>{@link GunAnimationConstant#INPUT_IDLE} 的字面量正是 {@code "idle"}，
+     * 而官方手雷脚本把<b>取消拔销</b>写成 {@code trigger("idle")} / {@code input == "idle"}。
+     * 站着不动时每 tick 再补一次 {@code INPUT_IDLE}，会把正在播的 {@code unlock_safe}
+     * 掐断退回 idle，紧接着 {@code isUsing()} 仍为 true 又立刻 {@code start_use} ——
+     * 表现为「静止时拉栓/拔销动画反复抖动，一走动（改发 walk/run）反而正常」。
+     *
+     * <p>投掷物本来也没有位移轨道，少发这组输入不会丢任何动画。
      */
     public static void tickAnimation(Minecraft client) {
         LocalPlayer player = client.player;
@@ -52,11 +69,8 @@ public final class LrTickAnimationEvent {
             return;
         }
         ItemStack mainHandItem = player.getMainHandItem();
-        if (!isLrAnimatedItem(mainHandItem)) {
-            return;
-        }
         var renderer = BuiltinItemRendererRegistry.INSTANCE.get(mainHandItem.getItem());
-        if (!(renderer instanceof AnimateGeoItemRenderer<?, ?> geoRenderer)) {
+        if (!(renderer instanceof MeleeItemRenderer geoRenderer)) {
             return;
         }
         var stateMachine = geoRenderer.getStateMachine(mainHandItem);
@@ -122,6 +136,8 @@ public final class LrTickAnimationEvent {
      */
     private static boolean isLrAnimatedItem(ItemStack stack) {
         var renderer = BuiltinItemRendererRegistry.INSTANCE.get(stack.getItem());
-        return renderer instanceof MeleeItemRenderer || renderer instanceof ThrowableItemRendererWrapper;
+        return renderer instanceof MeleeItemRenderer
+                || renderer instanceof ThrowableItemRendererWrapper
+                || renderer instanceof ConsumableItemRenderer;
     }
 }

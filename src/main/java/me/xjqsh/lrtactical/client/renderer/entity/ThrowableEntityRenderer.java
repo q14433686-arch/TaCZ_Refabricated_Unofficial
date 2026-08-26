@@ -3,8 +3,11 @@ package me.xjqsh.lrtactical.client.renderer.entity;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import me.xjqsh.lrtactical.api.LrTacticalAPI;
 import me.xjqsh.lrtactical.client.renderer.item.ThrowableItemRendererWrapper;
 import me.xjqsh.lrtactical.client.renderer.model.CustomBedrockModel;
+import me.xjqsh.lrtactical.client.resource.display.DisplayTransform;
+import me.xjqsh.lrtactical.client.resource.display.ThrowableDisplayInstance;
 import me.xjqsh.lrtactical.entity.ThrowableItemEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -17,6 +20,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * 飞行中的投掷物实体渲染。
@@ -78,6 +82,12 @@ public class ThrowableEntityRenderer
         public ItemStack stack = ItemStack.EMPTY;
         public float yRot;
         public float xRot;
+        /**
+         * 内容包提供 display 时的官方 {@code entity_transform}；
+         * 没装内容包（走原版物品模型）时为 {@code null}，改用下面的占位姿态。
+         */
+        @Nullable
+        public DisplayTransform.EntityTransform entityTransform;
     }
 
     @Override
@@ -91,6 +101,11 @@ public class ThrowableEntityRenderer
         state.yRot = Mth.lerp(partialTicks, entity.yRotO, entity.getYRot());
         state.xRot = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
         state.stack = entity.getItem();
+        // 姿态在 extract 阶段就查好：submit 可能在别的线程/时刻跑，
+        // 那时再查 display 会撞上资源重载。查到的是不可变 record，快照安全。
+        state.entityTransform = LrTacticalAPI.getThrowableDisplay(state.stack)
+                .map(ThrowableDisplayInstance::getEntityTransform)
+                .orElse(null);
         // ItemDisplayContext.GROUND：与掉落物一致的语义，内容包的 transforms 里
         // "ground" 段正是为这个场景准备的
         this.itemModelResolver.updateForTopItem(
@@ -102,11 +117,22 @@ public class ThrowableEntityRenderer
                        SubmitNodeCollector collector, CameraRenderState cameraState) {
         poseStack.pushPose();
 
-        // 与上游一致的姿态摆放：先抬一点，再按飞行朝向旋转，最后微调到手雷本体中心
-        poseStack.translate(0, 0.15, 0);
-        poseStack.mulPose(Axis.YN.rotationDegrees(state.yRot));
-        poseStack.mulPose(Axis.XP.rotationDegrees(state.xRot));
-        poseStack.translate(0, 0.35, -0.15);
+        if (state.entityTransform != null) {
+            // 官方 0.4.3：先按飞行朝向定向，再套内容包的 entity_transform
+            //（默认 Z90 横躺 + 小偏移）。注意偏航用 YP 而非下面占位分支的 YN ——
+            // 官方那套姿态参数是照着 YP 调的，混用会让手雷左右反着躺。
+            poseStack.mulPose(Axis.YP.rotationDegrees(state.yRot));
+            poseStack.mulPose(Axis.XP.rotationDegrees(state.xRot));
+            state.entityTransform.apply(poseStack);
+        } else {
+            // 没装内容包：保持本移植既有的占位姿态。
+            // 这条路径画的是【原版物品模型】（一张贴片），官方那套为 Bedrock 模型
+            // 调的偏移套上去会让贴片沉进地里，所以刻意不共用。
+            poseStack.translate(0, 0.15, 0);
+            poseStack.mulPose(Axis.YN.rotationDegrees(state.yRot));
+            poseStack.mulPose(Axis.XP.rotationDegrees(state.xRot));
+            poseStack.translate(0, 0.35, -0.15);
+        }
 
         // 见类注释：共享模型上的开关，必须在 submit 期间成对开合
         CustomBedrockModel model = resolveModel(state.stack);

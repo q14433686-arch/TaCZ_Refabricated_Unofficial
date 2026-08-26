@@ -11,7 +11,7 @@ import java.util.Optional;
 /**
  * LRTactical 的对外查询入口。
  *
- * <p>当前同时暴露投掷物、近战、消耗品索引及投掷物/近战客户端展示数据。
+ * <p>当前同时暴露投掷物、近战、消耗品索引及投掷物/近战/消耗品客户端展示数据。
  */
 public final class LrTacticalAPI {
     private LrTacticalAPI() {
@@ -109,5 +109,20 @@ public final class LrTacticalAPI {
         }
         return Optional.ofNullable(me.xjqsh.lrtactical.client.resource.LrClientAssetsManager.INSTANCE
                 .getMeleeDisplay(item.getDisplayId(stack)));
+    }
+
+    /**
+     * 取某个物品堆对应的消耗品<b>客户端展示数据</b>。
+     *
+     * @return 该物品不是消耗品、或内容包没有为它提供 display 时返回 empty
+     */
+    @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
+    public static Optional<me.xjqsh.lrtactical.client.resource.display.ConsumableDisplayInstance>
+    getConsumableDisplay(ItemStack stack) {
+        if (!(stack.getItem() instanceof me.xjqsh.lrtactical.api.item.IConsumable item)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(me.xjqsh.lrtactical.client.resource.LrClientAssetsManager.INSTANCE
+                .getConsumableDisplay(item.getDisplayId(stack)));
     }
 }

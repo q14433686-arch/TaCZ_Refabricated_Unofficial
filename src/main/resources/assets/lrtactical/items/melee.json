@@ -1,0 +1,28 @@
+{
+  "_comment": [
+    "1.21.11 沿用 1.21.4 引入的契约：每个物品都要有 assets/<ns>/items/<name>.json，否则该物品没有任何物品模型定义。",
+    "本分支此前一直缺这份文件（连同 models/item/*.json，属移植遗漏），近战物品因此没有 dynamic_item 分流入口；本次补齐。",
+    "这里用 minecraft:condition 做【有无内容包】的分流：",
+    "  on_true  -> lrtactical:dynamic_item，走 Bedrock 模型 + Lua 动画状态机（内容包提供 display 时）；",
+    "  on_false -> 原版占位模型（本移植刻意不打包上游美术资源，其授权为 All Rights Reserved）。",
+    "属性 lrtactical:has_custom_display 由 HasCustomDisplayProperty 提供，注册点在 ModEntitiesRender#registerItemModels。",
+    "类型与属性的注册必须先于客户端物品 JSON 解码（见 TaCZFabricClient#onInitializeClient），否则解码报「未知类型」。"
+  ],
+  "model": {
+    "type": "minecraft:condition",
+    "property": "lrtactical:has_custom_display",
+    "on_true": {
+      "type": "lrtactical:dynamic_item",
+      "base": "lrtactical:item/melee_dynamic"
+    },
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "lrtactical:item/melee"
+    }
+  },
+  "properties": {
+    "oversized_in_gui": true,
+    "hand_animation_on_swap": false,
+    "swap_animation_scale": 0.0
+  }
+}

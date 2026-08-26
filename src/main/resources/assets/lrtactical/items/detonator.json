@@ -1,0 +1,14 @@
+{
+  "_comment": [
+    "遥控起爆器：没有 Bedrock 模型管线，直接走原版占位模型（见 models/item/detonator.json）。",
+    "本分支此前缺这份文件（移植遗漏），物品没有任何物品模型定义；本次补齐。"
+  ],
+  "model": {
+    "type": "minecraft:model",
+    "model": "lrtactical:item/detonator"
+  },
+  "properties": {
+    "hand_animation_on_swap": false,
+    "swap_animation_scale": 0.0
+  }
+}

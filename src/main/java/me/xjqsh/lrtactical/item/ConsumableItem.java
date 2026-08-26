@@ -30,8 +30,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-/** 基础消耗品实现（药品/食物）。第一版先实现服务端效果与组件自愈，动画渲染后续再补。 */
-public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.api.item.IAnimationItem {
+/**
+ * 基础消耗品实现（药品/食物）。
+ *
+ * <p>服务端效果与组件自愈之外，装了内容包时还会走 Bedrock 模型 + Lua 动画
+ * （{@link me.xjqsh.lrtactical.client.renderer.item.ConsumableItemRenderer}）；
+ * 没装内容包则由 {@code items/consumable.json} 的条件分流回退到原版占位模型。
+ */
+public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.api.item.IAnimationItem,
+        cn.sh1rocu.tacz.api.extension.IItem {
     public ConsumableItem(Properties properties) {
         super(properties.stacksTo(Item.ABSOLUTE_MAX_STACK_SIZE));
     }
@@ -178,5 +185,26 @@ public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.a
         return this.getConsumableIndex(stack).isPresent()
                 ? Optional.of(new me.xjqsh.lrtactical.inventory.tooltip.ConsumableTooltip(stack))
                 : Optional.empty();
+    }
+
+    /**
+     * 自定义渲染器：接入 TACZ 的 Bedrock 模型 + Lua 动画状态机管线。
+     *
+     * <p>说明与注意事项见 {@link me.xjqsh.lrtactical.item.MeleeItem#getCustomRenderer()}。
+     */
+    @Override
+    @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
+    public cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry.DynamicItemRenderer getCustomRenderer() {
+        return me.xjqsh.lrtactical.client.renderer.item.ConsumableItemRenderer.INSTANCE.get();
+    }
+
+    /**
+     * 阻止玩家手臂挥动 —— 使用动作由 Lua 动画状态机负责，vanilla 摆手会与之打架。
+     *
+     * <p>与 {@code MeleeItem} / {@code ThrowableItem} 同样处理。
+     */
+    @Override
+    public boolean tacz$onEntitySwing(ItemStack stack, LivingEntity entity) {
+        return true;
     }
 }
