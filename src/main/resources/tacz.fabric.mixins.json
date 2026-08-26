@@ -34,14 +34,10 @@
     "client.KeyboardHandlerMixin",
     "client.LivingEntityRendererMixin",
     "client.MinecraftMixin",
-    "compat.punchy.PunchyArmRendererMixin",
-    "compat.punchy.PunchyHandEquipStateMachineMixin",
-    "compat.punchy.PunchyHandRenderBobContextMixin",
-    "compat.punchy.PunchyMovementStateMachineMixin",
     "client.MouseHandlerMixin",
     "client.TextureAtlasMixin"
   ],
-  "_comment": "26.2: compatibility mixins are gated by MixinPlugin using the package segment as the target mod id; Punchy mixins route TACZ viewmodels through Punchy's supported blacklist/handoff semantics.",
+  "_comment": "26.2: compatibility mixins are gated by MixinPlugin using the package segment as the target mod id. The Punchy yield mixins moved to tacz.punchy.mixins.json (own PunchyCompatMixinPlugin + required=false, applied only when punchy is installed), mirroring the sister repo's registration.",
   "injectors": {
     "defaultRequire": 1
   }

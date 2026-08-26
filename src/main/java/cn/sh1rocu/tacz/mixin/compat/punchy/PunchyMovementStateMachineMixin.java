@@ -9,7 +9,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Removes Punchy's walk/sprint/camera-lag matrices while TACZ owns the viewmodel. */
+/**
+ * Removes Punchy's walk/sprint/camera-lag matrices while TACZ owns the viewmodel.
+ *
+ * <p>Those matrices are applied to the whole first-person item pose. TACZ already
+ * authors gun+hand motion, so Punchy's extra root/arm swing shows up as an
+ * oversized gun-and-arm sway.</p>
+ */
 @Pseudo
 @Mixin(targets = "punchy.client.state.MovementStateMachine", remap = false)
 public abstract class PunchyMovementStateMachineMixin {

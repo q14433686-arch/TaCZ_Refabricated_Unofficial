@@ -46,6 +46,7 @@
     "tacz.fabric.mixins.json",
     "tacz.iris.mixins.json",
     "tacz.voxy.mixins.json",
+    "tacz.punchy.mixins.json",
     "tacz.carryon.mixins.json",
     "lrtactical.mixins.json"
   ],
@@ -58,6 +59,7 @@
     "forgeconfigapiport": ">=26.2.1"
   },
   "suggests": {
-    "carryon": ">=2.11.0"
+    "carryon": ">=2.11.0",
+    "punchy": "*"
   }
 }

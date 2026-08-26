@@ -56,6 +56,13 @@ R2 的可选集成（并非硬依赖）如下：
 | REI | 编译 pin **26.2.820** | 内置 Ammo Query 与工作台类别 |
 | Carry On | 建议 **>=2.11.0** | A/B/C 多格工作台的搬运兼容 |
 
+第一人称动画类模组（First-person Model / Not Enough Animations / Punchy!）走
+单向让出契约：普通物品仍由对方模组接管，TACZ/LRTactical 的动画视图模型保留自带
+枪械+手部动画。FPM/NEA 的反射桥在未安装时保持 dormant；Punchy 通过可选 mixin
+配置 `tacz.punchy.mixins.json`（检测到 `punchy` 才应用）走其官方物品黑名单/让出
+路径并取消叠加的手臂与行走摆动。未实机验收，不标 PASS；
+细节见 [docs/FIRST_PERSON_ANIMATION_COMPAT_26_2.md](docs/FIRST_PERSON_ANIMATION_COMPAT_26_2.md)。
+
 ---
 
 ## 2. R2 新增 API 与功能

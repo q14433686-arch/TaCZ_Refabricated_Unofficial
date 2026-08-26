@@ -8,7 +8,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Prevents Punchy from submitting its independent arm rig over a TACZ viewmodel. */
+/**
+ * Prevents Punchy from submitting its independent arm rig over a TACZ viewmodel.
+ *
+ * <p>TACZ first-person guns already attach player skin arms at authored
+ * {@code left_hand}/{@code right_hand} locators. Punchy's own first-person arm
+ * pass is a second rig and appears detached from the gun.</p>
+ */
 @Pseudo
 @Mixin(targets = "punchy.client.render.PunchyArmRenderer", remap = false)
 public abstract class PunchyArmRendererMixin {

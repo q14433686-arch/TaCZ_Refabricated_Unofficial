@@ -14,7 +14,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * 驱动 LRTactical 物品的<b>待机 / 行走 / 奔跑</b>动画状态转移。
+ * 驱动 LRTactical 物品的动画状态转移。
  *
  * <p>与 TACZ 的 {@code TickAnimationEvent} 是同一件事的两份实现 ——
  * 之所以不能合并，是因为那一份的入口写死了

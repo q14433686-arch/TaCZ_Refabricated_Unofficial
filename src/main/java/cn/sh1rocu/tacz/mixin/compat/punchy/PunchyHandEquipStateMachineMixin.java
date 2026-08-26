@@ -8,7 +8,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Feeds TACZ animated items through Punchy's supported blacklist transition path. */
+/**
+ * Feeds TACZ animated items through Punchy's supported blacklist transition path.
+ *
+ * <p>Punchy has no public Java "disable this item" API. Its official item blacklist
+ * is the supported handoff: 2.3 added regex blacklist, 2.5 reworked the UI, and
+ * 2.5.8 specifically fixed walk bob for TACZ-blacklisted items.</p>
+ */
 @Pseudo
 @Mixin(targets = "punchy.client.state.HandEquipStateMachine", remap = false)
 public abstract class PunchyHandEquipStateMachineMixin {

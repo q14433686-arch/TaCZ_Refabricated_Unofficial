@@ -106,3 +106,30 @@ metadata，不能写成 `1.1.8-R2`。
 JEI 客户端兜底走原版创造槽位包（携带组件）；若仅 JEI 也复现，反馈时附查看器与服务器版本。
 完整源码推导见 `docs/DEDICATED_SERVER_GETNAME_AUDIT_2026_08_21.md` 第 8、9 节；
 发布文案已同步（`docs/publish/{Modrinth,CurseForge,MCMOD}.md` 的 FAQ 一节）。
+
+---
+
+## 同步：姊妹仓 TaCZ_Renovated `arena/01a03b03-tacz-renovated`（2026-08-26）
+
+以本仓 26.2 Fabric 环境为准，接收姊妹仓（NeoForge 26.2）该分支相对其 `26.2`
+基线（`cc6deec`）的净增量。来源提交：`8431e68`（Punchy 让出）、`ce0d245`
+（投掷物 idle 分流）、`c3acff7`（官方 0.4.3：烟雾环境光 / cook 全引信 /
+`display_offset` / `entity_transform` / 消耗品渲染）、`305bed1`（MeleeDisplay
+record 补组件）、`5f6b9e7` 仅保留温雷 fuse（其余被 `daf2df5` 回退）。
+
+- `16e5fb1` 已落：LR 0.4.3 全套（ConsumableItemRenderer 与 display 通道、
+  环境光烟雾、cook = prepare + 完整 lifeTime、`ThrowableItemEntity` 的
+  `life >= 0` 超时、display 新键、消耗品 `items/consumable.json` 分流）、
+  `FirstPersonAnimationCompat` 的 Punchy 检测日志与契约 javadoc；
+- 本轮补齐（对齐姊妹最终形态）：Punchy 让出 mixin 迁入专用配置
+  `tacz.punchy.mixins.json`（`required=false` + `PunchyCompatMixinPlugin`，
+  检测到 `punchy` 才应用；从 `tacz.fabric.mixins.json` 移出，`fabric.mod.json`
+  注册并在 `suggests` 声明 `punchy`）、四个 mixin 的完整 javadoc、
+  `LrTickAnimationEvent` 类注释、记录文档 `docs/records/`、compile-check 工作流
+  （temurin 25，日志回推 `build-reports/` 供离线沙箱读取）；
+- 明确未同步：被用户复测打回的 Iris 高倍目镜裁剪与开镜 bob 缩放尝试
+  （姊妹仓已回退，负结果与其跨仓审计见
+  `docs/records/SCOPE_IRIS_VIEWLAG_AUDIT_20260826.md`）；neoforge.mods.toml
+  的 optional 依赖（本仓等价物为 `fabric.mod.json` `suggests`）。
+
+未实机验收，不标 PASS。

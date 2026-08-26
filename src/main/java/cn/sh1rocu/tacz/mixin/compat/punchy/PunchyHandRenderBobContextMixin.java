@@ -9,7 +9,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Stops Punchy's sampled walk bob from leaking into TACZ aiming and authored hand motion. */
+/**
+ * Stops Punchy's sampled walk bob from leaking into TACZ aiming and authored hand motion.
+ */
 @Pseudo
 @Mixin(targets = "punchy.client.render.HandRenderBobContext", remap = false)
 public abstract class PunchyHandRenderBobContextMixin {
