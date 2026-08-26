@@ -12,7 +12,7 @@ import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.resource.pojo.display.block.BlockTransformParser;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
-import me.xjqsh.lrtactical.api.animation.ThrowableAnimationStateContext;
+import me.xjqsh.lrtactical.api.animation.ConsumableAnimationStateContext;
 import me.xjqsh.lrtactical.client.audio.ICustomSoundSupplier;
 import me.xjqsh.lrtactical.client.renderer.model.CustomBedrockModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransforms;
@@ -25,34 +25,26 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * 一种投掷物的<b>客户端展示数据</b>。
+ * 消耗品的客户端展示数据。结构与 {@link MeleeDisplayInstance} 平行。
  *
- * <p>结构与 {@link MeleeDisplayInstance} 完全平行，仅动画上下文类型不同
- * （投掷物需要 using/usingTick 来驱动拔销与蓄力动画）。
- * 两处 26.2 移植要点（{@code ItemTransforms} 不可反序列化、legacy 版本判断漏 else）
+ * <p>26.2 移植要点（{@code ItemTransforms} 不可反序列化、legacy 版本判断漏 else）
  * 的详细说明见 {@link MeleeDisplayInstance} 的类注释，此处不重复。
  *
- * <h2>模型类型为什么是 {@link CustomBedrockModel} 而不是 {@code BedrockAnimatedModel}</h2>
- * 上游此处的字段类型写的是 {@code BedrockAnimatedModel}，但实际 {@code new} 的是
- * {@code CustomBedrockModel}。这带来一个直接后果：
- * {@code ThrowableEntityRenderer} 想调 {@code setEntityRendering(true)}
- * （即隐藏 {@code entity_hide} 组）时，必须再做一次 {@code instanceof} 向下转型。
- * 这里把字段类型收紧为实际类型，转型随之消失，
- * {@code entity_hide} 的语义也不会因为某处忘了转型而静默失效。
+ * <p>官方 0.4.3 还有 {@code third_person_animation}（player_animator 层）。
+ * 那一套本轮只调查、不接入，JSON 里出现该字段时直接忽略。
  */
-public class ThrowableDisplayInstance implements ICustomSoundSupplier {
+public class ConsumableDisplayInstance implements ICustomSoundSupplier {
     private Identifier id;
     private CustomBedrockModel model;
-    private LuaAnimationStateMachine<ThrowableAnimationStateContext> stateMachine;
+    private LuaAnimationStateMachine<ConsumableAnimationStateContext> stateMachine;
     private Identifier texture;
     @Nullable
     private Identifier slotTexture;
     private ItemTransforms transforms = ItemTransforms.NO_TRANSFORMS;
     private Vector3f displayOffset = new Vector3f();
-    private DisplayTransform.EntityTransform entityTransform = DisplayTransform.DEFAULT_ENTITY;
     private Map<String, Identifier> sounds;
 
-    private ThrowableDisplayInstance() {
+    private ConsumableDisplayInstance() {
     }
 
     public Identifier getId() {
@@ -63,7 +55,7 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         return model;
     }
 
-    public LuaAnimationStateMachine<ThrowableAnimationStateContext> getStateMachine() {
+    public LuaAnimationStateMachine<ConsumableAnimationStateContext> getStateMachine() {
         return stateMachine;
     }
 
@@ -84,18 +76,14 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         return displayOffset;
     }
 
-    public DisplayTransform.EntityTransform getEntityTransform() {
-        return entityTransform;
-    }
-
     @Override
     public Map<String, Identifier> getSounds() {
         return sounds;
     }
 
     @NotNull
-    public static ThrowableDisplayInstance create(ThrowableDisplay pojo, Identifier id) throws IllegalArgumentException {
-        ThrowableDisplayInstance display = new ThrowableDisplayInstance();
+    public static ConsumableDisplayInstance create(ConsumableDisplay pojo, Identifier id) throws IllegalArgumentException {
+        ConsumableDisplayInstance display = new ConsumableDisplayInstance();
         display.id = id;
 
         Preconditions.checkArgument(pojo != null, "display object is empty");
@@ -107,7 +95,7 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         BedrockModelPOJO modelPOJO = ClientAssetsManager.INSTANCE.getBedrockModelPOJO(pojo.modelLocation);
         Preconditions.checkArgument(modelPOJO != null, "no corresponding model found for " + pojo.modelLocation);
 
-        // 见 MeleeDisplayInstance 类注释：上游此处漏了 else
+        // 见 MeleeDisplayInstance 类注释：上游此处漏了 else，legacy 模型会被 NEW 覆盖
         if (BedrockVersion.isLegacyVersion(modelPOJO)) {
             display.model = new CustomBedrockModel(modelPOJO, BedrockVersion.LEGACY);
         } else {
@@ -121,7 +109,7 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         var script = ClientAssetsManager.INSTANCE.getScript(pojo.stateMachineLocation);
         Preconditions.checkArgument(script != null, "no corresponding state machine found for " + pojo.stateMachineLocation);
 
-        display.stateMachine = new LuaStateMachineFactory<ThrowableAnimationStateContext>()
+        display.stateMachine = new LuaStateMachineFactory<ConsumableAnimationStateContext>()
                 .setController(controller)
                 .setLuaScripts(script)
                 .build();
@@ -130,13 +118,12 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         display.slotTexture = DisplayPaths.toTexturePath(pojo.slotTextureLocation);
         display.transforms = BlockTransformParser.parse(pojo.transforms);
         display.displayOffset = Objects.requireNonNullElseGet(pojo.displayOffset, Vector3f::new);
-        display.entityTransform = DisplayTransform.parseEntityTransform(pojo.entityTransform);
         display.sounds = Objects.requireNonNullElseGet(pojo.sounds, Maps::newHashMap);
 
         return display;
     }
 
-    public record ThrowableDisplay(
+    public record ConsumableDisplay(
             @SerializedName("model")
             Identifier modelLocation,
             @SerializedName("animation")
@@ -151,8 +138,6 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
             JsonObject transforms,
             @SerializedName("display_offset")
             Vector3f displayOffset,
-            @SerializedName("entity_transform")
-            JsonObject entityTransform,
             @SerializedName("sounds")
             Map<String, Identifier> sounds
     ) {

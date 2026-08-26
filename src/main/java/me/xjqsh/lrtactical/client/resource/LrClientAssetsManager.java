@@ -4,8 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonPrimitive;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.resource.serialize.Vector3fSerializer;
+import me.xjqsh.lrtactical.client.resource.display.ConsumableDisplayInstance;
 import me.xjqsh.lrtactical.client.resource.display.MeleeDisplayInstance;
 import me.xjqsh.lrtactical.client.resource.display.ThrowableDisplayInstance;
+import me.xjqsh.lrtactical.client.resource.manager.ConsumableDisplayManager;
 import me.xjqsh.lrtactical.client.resource.manager.MeleeDisplayManager;
 import me.xjqsh.lrtactical.client.resource.manager.ThrowableDisplayManager;
 import net.fabricmc.api.EnvType;
@@ -13,6 +16,7 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,7 +28,7 @@ import java.util.function.Consumer;
  * LRTactical 的<b>客户端</b>资源管理器：所有 display 数据缓存在此。
  *
  * <p>结构对齐 TACZ 的 {@code ClientAssetsManager}，但只管 LRTactical 自己的
- * {@code display/melee} 与 {@code display/throwable} 两类。
+ * {@code display/melee}、{@code display/throwable} 与 {@code display/consumable} 三类。
  * 模型（{@code geo_models}）、动画（{@code animations}）、Lua 脚本（{@code scripts}）
  * <b>刻意不重复加载</b> —— 直接复用 TACZ 的管理器，理由见下。
  *
@@ -77,6 +81,7 @@ public enum LrClientAssetsManager {
             .registerTypeAdapter(Identifier.class,
                     (com.google.gson.JsonSerializer<Identifier>) (src, type, ctx) ->
                             new JsonPrimitive(src.toString()))
+            .registerTypeAdapter(Vector3f.class, new Vector3fSerializer())
             .create();
 
     /**
@@ -108,9 +113,11 @@ public enum LrClientAssetsManager {
     private ThrowableDisplayManager throwableDisplay;
     @Nullable
     private MeleeDisplayManager meleeDisplay;
+    @Nullable
+    private ConsumableDisplayManager consumableDisplay;
 
     /**
-     * 建立并注册两个 display listener。
+     * 建立并注册三个 display listener。
      *
      * <p>调用点在 {@code TaCZFabricClient}，必须与 TACZ 自己的
      * {@code ClientAssetsManager.INSTANCE.reloadAndRegister} 用<b>同一个</b>
@@ -125,9 +132,11 @@ public enum LrClientAssetsManager {
         if (throwableDisplay == null) {
             throwableDisplay = new ThrowableDisplayManager(GSON);
             meleeDisplay = new MeleeDisplayManager(GSON);
+            consumableDisplay = new ConsumableDisplayManager(GSON);
         }
         register.accept(throwableDisplay);
         register.accept(meleeDisplay);
+        register.accept(consumableDisplay);
     }
 
     @Nullable
@@ -152,6 +161,18 @@ public enum LrClientAssetsManager {
             return exact;
         }
         return findUniqueMeleeDisplayByPath(id);
+    }
+
+    @Nullable
+    public ConsumableDisplayInstance getConsumableDisplay(Identifier id) {
+        if (consumableDisplay == null) {
+            return null;
+        }
+        ConsumableDisplayInstance exact = consumableDisplay.getData(id);
+        if (exact != null) {
+            return exact;
+        }
+        return findUniqueConsumableDisplayByPath(id);
     }
 
     /**
@@ -181,6 +202,22 @@ public enum LrClientAssetsManager {
         return match;
     }
 
+    /** 消耗品 display 的 path-only 唯一匹配回退，规则同投掷物。 */
+    @Nullable
+    private ConsumableDisplayInstance findUniqueConsumableDisplayByPath(Identifier id) {
+        ConsumableDisplayInstance match = null;
+        for (var entry : consumableDisplay.getAllData().entrySet()) {
+            if (!entry.getKey().getPath().equals(id.getPath())) {
+                continue;
+            }
+            if (match != null) {
+                return null;
+            }
+            match = entry.getValue();
+        }
+        return match;
+    }
+
     @Nullable
     private MeleeDisplayInstance findUniqueMeleeDisplayByPath(Identifier id) {
         MeleeDisplayInstance match = null;
@@ -197,10 +234,10 @@ public enum LrClientAssetsManager {
     }
 
     /**
-     * 「必须排在这些 listener 之后」的完整清单，供两个 display manager 的
+     * 「必须排在这些 listener 之后」的完整清单，供三个 display manager 的
      * {@code getFabricDependencies()} 直接返回。
      *
-     * <p>集中在此定义，避免两个 manager 各写一份、日后只改其中一份而另一份静默失序。
+     * <p>集中在此定义，避免三个 manager 各写一份、日后只改其中一份而另一份静默失序。
      */
     public static Collection<Identifier> taczAssetDependencies() {
         List<Identifier> deps = new ArrayList<>(TACZ_ASSET_MARKERS.length + 1);

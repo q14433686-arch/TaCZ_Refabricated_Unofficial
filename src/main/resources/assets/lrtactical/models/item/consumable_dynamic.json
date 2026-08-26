@@ -1,0 +1,10 @@
+{
+  "_comment": [
+    "动态渲染（lrtactical:dynamic_item）的 base 模型 —— 只提供 particle 贴图与 gui_light，不提供任何几何。",
+    "必须无 parent，理由见 melee_dynamic.json。"
+  ],
+  "gui_light": "front",
+  "textures": {
+    "particle": "minecraft:item/potion"
+  }
+}

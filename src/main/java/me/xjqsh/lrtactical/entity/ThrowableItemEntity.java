@@ -348,7 +348,10 @@ public abstract class ThrowableItemEntity extends Projectile
 
         this.setPos(x, y, z);
 
-        if (this.tickCount >= life && life > 0 && !this.level().isClientSide()) {
+        // life > 0 used to skip the fuse entirely when a cookable throwable was
+        // released at remaining = 0 (full cook). 0 means "explode now"; only
+        // negative values (C4 / remote charges use -1) stay immortal.
+        if (this.life >= 0 && this.tickCount >= this.life && !this.level().isClientSide()) {
             this.onDeath(null);
         }
 

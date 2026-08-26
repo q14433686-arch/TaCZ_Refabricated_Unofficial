@@ -13,7 +13,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/** 26.2 extracted-GUI implementation of LRTactical's expandable data tooltip. */
+/**
+ * 26.2 extracted-GUI implementation of LRTactical's expandable data tooltip。
+ *
+ * <p>官方 0.4.3 的「可配置自定义描述」就是 index JSON 的 {@code tooltip} 翻译键：
+ * 灰色、宽 300、超过 3 行折叠，Shift 展开。本类已按该契约实现，本轮无需再改。
+ */
 public abstract class AbstractClientItemTooltip implements ClientTooltipComponent {
     private static final int LINE_HEIGHT = 10;
     private static final int MAX_DESC_WIDTH = 300;

@@ -106,7 +106,7 @@ public final class ModEntitiesRender {
      * 把本模块的物品与其自定义渲染器登记进 {@code BuiltinItemRendererRegistry}。
      *
      * <p>TACZ 侧在 {@code TaCZFabricClient} 里是遍历整个物品注册表、挑出
-     * {@code instanceof IItem} 的来注册。LRTactical 的两个物品同样实现了
+     * {@code instanceof IItem} 的来注册。LRTactical 的三个物品同样实现了
      * {@code IItem}，因此<b>会被那段遍历一并覆盖</b> —— 本方法只是把这层依赖
      * 显式化，便于日后 TACZ 侧改写遍历逻辑时不至于静默失效。
      * 重复注册是幂等的（底层是 {@code IdentityHashMap#put}）。
@@ -114,6 +114,7 @@ public final class ModEntitiesRender {
     public static void registerItemRenderers() {
         register(me.xjqsh.lrtactical.init.ModItems.MELEE);
         register(me.xjqsh.lrtactical.init.ModItems.THROWABLE);
+        register(me.xjqsh.lrtactical.init.ModItems.CONSUMABLE);
     }
 
     private static void register(net.minecraft.world.item.Item item) {

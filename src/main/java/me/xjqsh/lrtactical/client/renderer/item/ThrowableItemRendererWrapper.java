@@ -13,6 +13,7 @@ import me.xjqsh.lrtactical.api.LrTacticalAPI;
 import me.xjqsh.lrtactical.api.animation.ThrowableAnimationStateContext;
 import me.xjqsh.lrtactical.client.renderer.JumpSwayUtil;
 import me.xjqsh.lrtactical.client.renderer.model.CustomBedrockModel;
+import me.xjqsh.lrtactical.client.resource.display.DisplayTransform;
 import me.xjqsh.lrtactical.client.resource.display.ThrowableDisplayInstance;
 import me.xjqsh.lrtactical.item.index.ThrowableIndex;
 import me.xjqsh.lrtactical.item.throwable.ThrowableData;
@@ -198,6 +199,8 @@ public class ThrowableItemRendererWrapper
             poseStack.translate(0.5F, 0.5F, 0.5F);
             transforms.getTransform(ctx).apply(BlockTransformParser.isLeftHand(ctx), poseStack.last());
         }
+
+        DisplayTransform.applyOffset(poseStack, display.getDisplayOffset());
 
         poseStack.translate(0.5, 1.5f, 0.5);
         poseStack.mulPose(Axis.ZP.rotationDegrees(180f));

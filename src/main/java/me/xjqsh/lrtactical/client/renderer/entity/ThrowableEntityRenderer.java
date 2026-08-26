@@ -3,8 +3,10 @@ package me.xjqsh.lrtactical.client.renderer.entity;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import me.xjqsh.lrtactical.api.LrTacticalAPI;
 import me.xjqsh.lrtactical.client.renderer.item.ThrowableItemRendererWrapper;
 import me.xjqsh.lrtactical.client.renderer.model.CustomBedrockModel;
+import me.xjqsh.lrtactical.client.resource.display.DisplayTransform;
 import me.xjqsh.lrtactical.entity.ThrowableItemEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -78,6 +80,8 @@ public class ThrowableEntityRenderer
         public ItemStack stack = ItemStack.EMPTY;
         public float yRot;
         public float xRot;
+        /** 有 display 时用官方 entity_transform；没有内容包时为 null，走占位姿态。 */
+        public DisplayTransform.EntityTransform entityTransform;
     }
 
     @Override
@@ -91,6 +95,9 @@ public class ThrowableEntityRenderer
         state.yRot = Mth.lerp(partialTicks, entity.yRotO, entity.getYRot());
         state.xRot = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
         state.stack = entity.getItem();
+        state.entityTransform = LrTacticalAPI.getThrowableDisplay(state.stack)
+                .map(display -> display.getEntityTransform())
+                .orElse(null);
         // ItemDisplayContext.GROUND：与掉落物一致的语义，内容包的 transforms 里
         // "ground" 段正是为这个场景准备的
         this.itemModelResolver.updateForTopItem(
@@ -102,11 +109,18 @@ public class ThrowableEntityRenderer
                        SubmitNodeCollector collector, CameraRenderState cameraState) {
         poseStack.pushPose();
 
-        // 与上游一致的姿态摆放：先抬一点，再按飞行朝向旋转，最后微调到手雷本体中心
-        poseStack.translate(0, 0.15, 0);
-        poseStack.mulPose(Axis.YN.rotationDegrees(state.yRot));
-        poseStack.mulPose(Axis.XP.rotationDegrees(state.xRot));
-        poseStack.translate(0, 0.35, -0.15);
+        if (state.entityTransform != null) {
+            // 官方 0.4.3：飞行朝向之后套 display 的 entity_transform（默认 Z90 + 偏移）
+            poseStack.mulPose(Axis.YP.rotationDegrees(state.yRot));
+            poseStack.mulPose(Axis.XP.rotationDegrees(state.xRot));
+            state.entityTransform.apply(poseStack);
+        } else {
+            // 没装内容包：沿用 26.2 占位姿态，避免原版图标沉到地里
+            poseStack.translate(0, 0.15, 0);
+            poseStack.mulPose(Axis.YN.rotationDegrees(state.yRot));
+            poseStack.mulPose(Axis.XP.rotationDegrees(state.xRot));
+            poseStack.translate(0, 0.35, -0.15);
+        }
 
         // 见类注释：共享模型上的开关，必须在 submit 期间成对开合
         CustomBedrockModel model = resolveModel(state.stack);

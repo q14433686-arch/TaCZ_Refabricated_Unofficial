@@ -30,8 +30,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-/** 基础消耗品实现（药品/食物）。第一版先实现服务端效果与组件自愈，动画渲染后续再补。 */
-public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.api.item.IAnimationItem {
+/** 基础消耗品实现（药品/食物）。服务端效果 + 有内容包时的 Bedrock/Lua 第一人称渲染。 */
+public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.api.item.IAnimationItem,
+        cn.sh1rocu.tacz.api.extension.IItem {
     public ConsumableItem(Properties properties) {
         super(properties.stacksTo(Item.ABSOLUTE_MAX_STACK_SIZE));
     }
@@ -178,5 +179,31 @@ public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.a
         return this.getConsumableIndex(stack).isPresent()
                 ? Optional.of(new me.xjqsh.lrtactical.inventory.tooltip.ConsumableTooltip(stack))
                 : Optional.empty();
+    }
+
+    /**
+     * 自定义渲染器：接入 TACZ 的 Bedrock 模型 + Lua 动画状态机管线。
+     *
+     * <p>{@code IItem} 是本仓库为 Fabric 补的扩展接口（NeoForge 侧对应
+     * {@code IClientItemExtensions#getCustomRenderer}）。返回的实例会在
+     * {@code TaCZFabricClient} 里被登记进 {@code BuiltinItemRendererRegistry}，
+     * 再由客户端物品模型 {@code lrtactical:dynamic_item} 的 SpecialModelRenderer 调用。
+     *
+     * <p><b>没装内容包时不会走到这里</b> —— {@code items/consumable.json} 用
+     * {@code minecraft:condition} + {@code lrtactical:has_custom_display} 做了分流，
+     * 条件为假时直接用原版占位模型。详见 {@code HasCustomDisplayProperty}。
+     */
+    @Override
+    @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
+    public cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry.DynamicItemRenderer getCustomRenderer() {
+        return me.xjqsh.lrtactical.client.renderer.item.ConsumableItemRenderer.INSTANCE.get();
+    }
+
+    /**
+     * 阻止玩家手臂挥动 —— 饮用动作由 Lua 动画状态机负责，vanilla 的摆手会与之打架。
+     */
+    @Override
+    public boolean tacz$onEntitySwing(ItemStack stack, net.minecraft.world.entity.LivingEntity entity) {
+        return true;
     }
 }

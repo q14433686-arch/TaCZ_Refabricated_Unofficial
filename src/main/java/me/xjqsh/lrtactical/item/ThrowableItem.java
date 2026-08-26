@@ -195,7 +195,9 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             return false;
         }
 
-        // 预燃（cook）：按住越久，飞出去后剩余引信越短
+        // 预燃（cook）：按住越久，飞出去后剩余引信越短。
+        // 满进度时 remaining 被夹到 0。0 不是“永不爆炸”，实体首 tick 就会 onDeath；
+        // 只有 C4 这类 life_time = -1 的遥控物才跳过超时引爆。
         if (index.getData().isCookable()) {
             int cooked = ticksUsingItem - index.getData().getPrepareTime();
             throwable.setLife(Math.max(throwable.getLife() - cooked, 0));
@@ -280,10 +282,11 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             if (!data.isCookable()) {
                 return;
             }
-            // 留 10% 余量：手里预燃太久就直接在手上炸
-            int maxCookTime = (int) (data.getEntityData().getLifeTime() * 0.9);
+            // 官方 0.4.3：预燃满 prepare + 完整 lifeTime 才在手上炸。
+            // 26.2 必须先 stopUsingItem 再 onThrow（见方法注释），不能照抄官方的 throw-then-stop。
             int ticksUsingItem = entity.getTicksUsingItem();
-            if (ticksUsingItem >= data.getPrepareTime() + maxCookTime && !level.isClientSide()) {
+            if (ticksUsingItem >= data.getPrepareTime() + data.getEntityData().getLifeTime()
+                    && !level.isClientSide()) {
                 // 顺序至关重要：必须先 stopUsingItem 再 onThrow，理由见方法注释。
                 // 反过来（或改用 releaseUsingItem）会导致无限递归 + 无限生成手雷。
                 //

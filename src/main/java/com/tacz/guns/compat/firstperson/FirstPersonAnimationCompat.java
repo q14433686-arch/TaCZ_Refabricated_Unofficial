@@ -22,11 +22,21 @@ import java.lang.reflect.Proxy;
  * <p>The compatibility contract is intentionally one-way: ordinary items remain under the
  * other mod's control, while a TACZ/LRTactical {@link AnimateGeoItemRenderer} with a loaded
  * model keeps its authored gun/hand animation without a second arm rig being layered over it.</p>
+ *
+ * <ul>
+ *   <li>First-person Model / Not Enough Animations: reflection-only public API bridges. As of
+ *       2026-08-21 they do not publish a matching build for this loader, so those hooks stay
+ *       dormant until a matching build is installed.</li>
+ *   <li>Punchy: no public Java disable API. Optional {@code @Pseudo} mixins route TACZ viewmodels
+ *       through Punchy's supported item-blacklist / yield path. See
+ *       {@code cn.sh1rocu.tacz.mixin.compat.punchy}.</li>
+ * </ul>
  */
 @Environment(EnvType.CLIENT)
 public final class FirstPersonAnimationCompat {
     private static final String FIRST_PERSON_MODEL = "firstperson";
     private static final String NOT_ENOUGH_ANIMATIONS = "notenoughanimations";
+    private static final String PUNCHY = "punchy";
 
     private static boolean fpmRegistrationAttempted;
     private static Object fpmActivationHandler;
@@ -42,6 +52,9 @@ public final class FirstPersonAnimationCompat {
     public static void init() {
         if (FabricLoader.getInstance().isModLoaded(FIRST_PERSON_MODEL)) {
             registerFirstPersonModelHandler();
+        }
+        if (FabricLoader.getInstance().isModLoaded(PUNCHY)) {
+            GunMod.LOGGER.info("Punchy detected; TACZ viewmodels use the blacklist/yield mixins");
         }
     }
 

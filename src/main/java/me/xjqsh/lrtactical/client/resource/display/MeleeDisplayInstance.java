@@ -19,6 +19,7 @@ import net.minecraft.client.resources.model.cuboid.ItemTransforms;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.Map;
 import java.util.Objects;
@@ -68,6 +69,7 @@ public class MeleeDisplayInstance implements ICustomSoundSupplier {
     @Nullable
     private Identifier slotTexture;
     private ItemTransforms transforms = ItemTransforms.NO_TRANSFORMS;
+    private Vector3f displayOffset = new Vector3f();
     private Map<String, Identifier> sounds;
 
     private MeleeDisplayInstance() {
@@ -96,6 +98,10 @@ public class MeleeDisplayInstance implements ICustomSoundSupplier {
 
     public ItemTransforms getTransforms() {
         return transforms;
+    }
+
+    public Vector3f getDisplayOffset() {
+        return displayOffset;
     }
 
     @Override
@@ -139,6 +145,7 @@ public class MeleeDisplayInstance implements ICustomSoundSupplier {
         display.texture = DisplayPaths.toTexturePath(pojo.textureLocation);
         display.slotTexture = DisplayPaths.toTexturePath(pojo.slotTextureLocation);
         display.transforms = BlockTransformParser.parse(pojo.transforms);
+        display.displayOffset = Objects.requireNonNullElseGet(pojo.displayOffset, Vector3f::new);
         display.sounds = Objects.requireNonNullElseGet(pojo.sounds, Maps::newHashMap);
 
         return display;
@@ -162,6 +169,8 @@ public class MeleeDisplayInstance implements ICustomSoundSupplier {
             Identifier slotTextureLocation,
             @SerializedName("transforms")
             JsonObject transforms,
+            @SerializedName("display_offset")
+            Vector3f displayOffset,
             @SerializedName("sounds")
             Map<String, Identifier> sounds
     ) {
