@@ -11,9 +11,10 @@ import java.util.Optional;
 /**
  * LRTactical 的对外查询入口。
  *
- * <p>当前公开投掷物、近战、消耗品三类 index 查询，以及投掷物/近战客户端
- * display 查询。旧注释仍称“只暴露投掷物”，已在 2026-08-12 复核时更正；
- * 消耗品 display/renderer 仍未移植，因此没有伪造对应查询。
+ * <p>当前公开投掷物、近战、消耗品三类 index 查询，以及<b>同样三类</b>客户端
+ * display 查询。历史：旧注释曾称“只暴露投掷物”，2026-08-12 复核更正；
+ * 消耗品的 display 查询是 2026-08-27 同步官方 0.4.3 时才补上的
+ * （此前只有 index，渲染通道缺失，见 {@code ConsumableDisplayInstance} 类注释）。
  */
 public final class LrTacticalAPI {
     private LrTacticalAPI() {
@@ -111,5 +112,22 @@ public final class LrTacticalAPI {
         }
         return Optional.ofNullable(me.xjqsh.lrtactical.client.resource.LrClientAssetsManager.INSTANCE
                 .getMeleeDisplay(item.getDisplayId(stack)));
+    }
+
+    /**
+     * 取某个物品堆对应的消耗品<b>客户端展示数据</b>（官方 0.4.3 新增的通道）。
+     *
+     * @return 该物品不是消耗品、或内容包没有为它提供 display 时返回 empty
+     *         （此时 {@code HasCustomDisplayProperty} 为 false，
+     *         {@code items/consumable.json} 会回退到原版占位模型）
+     */
+    @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
+    public static Optional<me.xjqsh.lrtactical.client.resource.display.ConsumableDisplayInstance>
+    getConsumableDisplay(ItemStack stack) {
+        if (!(stack.getItem() instanceof me.xjqsh.lrtactical.api.item.IConsumable item)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(me.xjqsh.lrtactical.client.resource.LrClientAssetsManager.INSTANCE
+                .getConsumableDisplay(item.getDisplayId(stack)));
     }
 }

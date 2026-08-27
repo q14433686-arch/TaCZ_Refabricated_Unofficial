@@ -30,8 +30,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-/** 基础消耗品实现（药品/食物）。第一版先实现服务端效果与组件自愈，动画渲染后续再补。 */
-public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.api.item.IAnimationItem {
+/**
+ * 基础消耗品实现（药品/食物）：服务端效果 + 组件自愈，以及<b>有内容包时</b>的
+ * Bedrock/Lua 第一人称渲染（官方 0.4.3 通道，见 {@link #getCustomRenderer()}）。
+ */
+public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.api.item.IAnimationItem,
+        cn.sh1rocu.tacz.api.extension.IItem {
     public ConsumableItem(Properties properties) {
         super(properties.stacksTo(Item.ABSOLUTE_MAX_STACK_SIZE));
     }
@@ -59,12 +63,18 @@ public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.a
             return InteractionResult.FAIL;
         }
         ItemStack stack = player.getItemInHand(hand);
-        if (!level.isClientSide()) {
-            CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
-            boolean onCooldown = getCoolDownId(stack).map(coolDowns::isOnCooldown).orElse(false);
-            if (onCooldown) {
-                return InteractionResult.FAIL;
-            }
+        // 【2026-08-27】两端都查冷却，不再只查服务端。
+        // 原来只有服务端查，客户端一律乐观放行 —— 于是「服务端在冷却中、客户端却
+        // startUsingItem」的分叉每次都会发生：客户端走完这轮读条也不会消耗任何东西
+        // （finishUsingItem 的效果段有 !level.isClientSide() 门禁），表现为「读了个空条」。
+        // 客户端这张表由 ServerMessageCustomCooldown 同步、由 PlayerTickEvent.START
+        // 每客户端游戏刻推进（PlayerMixin 注入 Player#tick HEAD，不分端），
+        // 偏差方向是「只会多拒一会儿」，代价远小于分叉。完整论证见
+        // ThrowableItem#use 的方法注释（同一套冷却机制）。
+        CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
+        boolean onCooldown = getCoolDownId(stack).map(coolDowns::isOnCooldown).orElse(false);
+        if (onCooldown) {
+            return InteractionResult.FAIL;
         }
         player.startUsingItem(hand);
         return InteractionResult.CONSUME;
@@ -179,4 +189,34 @@ public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.a
                 ? Optional.of(new me.xjqsh.lrtactical.inventory.tooltip.ConsumableTooltip(stack))
                 : Optional.empty();
     }
+
+    /**
+     * 内容包提供的 Bedrock/Lua 渲染器（官方 0.4.3 通道）。说明见
+     * {@link MeleeItem#getCustomRenderer()}；登记点在
+     * {@code ModEntitiesRender#registerItemRenderers}。
+     *
+     * <p>没装内容包时不会走到这里 —— {@code items/consumable.json} 用
+     * {@code lrtactical:has_custom_display} 分流回原版占位模型。</p>
+     */
+    @Override
+    @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
+    public cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry.DynamicItemRenderer getCustomRenderer() {
+        return me.xjqsh.lrtactical.client.renderer.item.ConsumableItemRenderer.INSTANCE.get();
+    }
+
+    // 【刻意不实现 tacz$onEntitySwing】
+    //
+    // 姊妹仓 TaCZ_Renovated 26.2 的同名类实现了它并返回 true，但它们主 mod 没有
+    // 对应的 LivingEntityMixin（其 ILrItemExtension 注释里写明了这点），
+    // 那份实现在 NeoForge 侧是【死代码】，不产生任何行为。
+    //
+    // 本仓不一样：cn.sh1rocu.tacz.mixin.common.LivingEntityMixin#tacz$swingHand
+    // 真的接了这个钩子，返回 true 会在 LivingEntity#swing 的 HEAD 直接
+    // ci.cancel() —— 挥臂动画被整段吞掉。近战/投掷物这样写是对的
+    // （挥砍/拔销由 Lua 状态机负责，vanilla 摆手会打架）；
+    // 但消耗品的 consumable_state_machine.lua 里【没有任何 attack 分支】
+    // （只有 start_use / stop_use），照抄就会变成「拿着药品左键什么动画都没有」。
+    //
+    // 因此这里保持默认（返回 false，不干预 vanilla 挥臂）。
+    // 若日后给消耗品加了攻击/使用动画，再回来评估是否要接管挥臂。
 }

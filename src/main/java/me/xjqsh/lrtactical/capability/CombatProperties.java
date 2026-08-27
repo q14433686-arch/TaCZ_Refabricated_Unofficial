@@ -10,7 +10,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 近战状态机 —— 冷却、切枪、攻击前摇与位移。
@@ -47,6 +49,15 @@ public class CombatProperties {
     private int lastMaxTick = 0;
     private int lastSelected = 0;
     private int drawingTick = 0;
+    /**
+     * 每类近战动作<b>累计</b>执行的次数（切武器时清零）。
+     *
+     * <p>唯一消费者是内容包 Lua：默认近战脚本用
+     * {@code context:getActionCount("attack_left") % 2 + 1} 在
+     * {@code melee_1 / melee_2} 之间交替，做出连击观感。因此这份计数<b>只服务于表现</b>，
+     * 不参与任何服务端判定 —— 两端各自累计，偏差不会影响伤害或冷却。</p>
+     */
+    private final Map<MeleeAction, Integer> actionCounts = new EnumMap<>(MeleeAction.class);
 
     public CombatProperties(Player entity) {
         this.entity = entity;
@@ -113,6 +124,20 @@ public class CombatProperties {
         lastMaxTick = newCoolDown;
         drawingTick = newCoolDown;
         delayedActions.clear();
+        // 连击计数随「换武器」一起归零：新武器的第一击应当从 melee_1/2 序列的开头重新数起。
+        actionCounts.clear();
+    }
+
+    /**
+     * 某类近战动作自上次切武器以来累计执行的次数，供内容包 Lua 选择连击动画。
+     *
+     * <p>自增点位与姊妹仓 TaCZ_Renovated 26.2 完全一致：在
+     * {@link #preAttack} 的冷却/可用校验通过<b>之后</b>、冷却写入之前自增，
+     * 因此第一击读到 1。默认脚本的 {@code counter % 2 + 1} 于是从
+     * {@code melee_2} 起播 —— 这是两仓共同的行为，本仓不单独偏移它。</p>
+     */
+    public int getActionCount(MeleeAction action) {
+        return actionCounts.getOrDefault(action, 0);
     }
 
     /**
@@ -131,6 +156,10 @@ public class CombatProperties {
         if (coolDownTick > 0 || !weapon.canAttack(stack, action)) {
             return false;
         }
+
+        // 计数放在门禁之后：冷却中或被内容包禁用的动作不消耗连击序号，
+        // 否则连点会把 counter 推高，而实际一次都没打出去。
+        actionCounts.put(action, actionCounts.getOrDefault(action, 0) + 1);
 
         coolDownTick = weapon.getAttackCoolDown(stack, action);
         lastMaxTick = coolDownTick;

@@ -10,6 +10,30 @@
 本 release 保持 `1.1.8` 为 SemVer 核心；`+fabric.26.2.R2` 是不参与版本谓词排序的 build
 metadata，不能写成 `1.1.8-R2`。
 
+## R2-hotfix2（源码状态，尚未发布）
+
+**构建元数据：`1.1.8+fabric.26.2.R2-hotfix2`**（hotfix 序号直接接在 `hotfix` 后面，
+中间不放 `.` / `-` / `_` —— TaCZTweaks 按版本号字符串识别本项目，规矩记在
+`gradle.properties` 注释里）
+
+本轮可核实的两项改动（均为源码级，**未实机验证**）：
+
+- **从姊妹仓 `TaCZ_Renovated` 26.2 同步 LRTactical 官方 0.4.3**：预燃阈值与实体引信
+  （`life >= 0`，温雷满预燃不再永不爆、C4 `-1` 仍不超时）、烟雾粒子改采环境光、
+  移动输入只驱动近战（修静止拉栓抖动）、`display_offset` / `entity_transform`、
+  消耗品 Bedrock/Lua 渲染通道；并补上本仓一直缺失的
+  `CombatProperties#getActionCount`（自带 Lua 一直在调它，运行期 `LuaError`、编译期无感）。
+  刻意**不**同步的条目与理由见 [SYNC_26_2_FROM_RENOVATED_2026_08_27.md](SYNC_26_2_FROM_RENOVATED_2026_08_27.md)。
+- **低倍镜准星恢复目镜约束**：`BedrockAttachmentModel` 把掩码的两个消费者
+  （准星反向裁剪 / 镜身+视模裁剪）拆成 `reticleMaskable` 与 `bodyMaskable`。
+  此前案例⑨ 第二轮的 `ScopeSightClipFix` 用同一个开关把「建掩码」和「准星裁剪」
+  一起关掉，低倍/红点通道的准星因此能溢出镜片。新增开关 `ScopeSightReticleClip`
+  （默认开）可秒回退。详见 `COMPAT_AND_ROADMAP.md` 案例⑨ 第四轮。
+
+> 说明：本节只列本轮**亲手改过并核对过**的内容。相对 tag `26.2_R2_HOTFIX`
+> 的完整差异是 67 个文件（含此前已合并的 scope PIP / 兼容层等工作），
+> 那些改动的记录在各自的文档里，本节不复述、也不代为背书。
+
 ## R2 内容
 
 - **可替换弹药源 API**：新增 `com.tacz.guns.api.item.ammo` 的 `AmmoSource`、

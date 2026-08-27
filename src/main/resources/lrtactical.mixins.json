@@ -10,7 +10,7 @@
   "mixins": [],
   "client": [
     "client.GuiGraphicsExtractorMixin",
-    "client.SoundEngineMixin"
+    "client.SoundInstanceVolumeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

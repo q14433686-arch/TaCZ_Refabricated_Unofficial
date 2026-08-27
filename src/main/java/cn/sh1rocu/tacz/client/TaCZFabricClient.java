@@ -176,6 +176,22 @@ public class TaCZFabricClient implements ClientModInitializer {
         RenderTickEvent.EVENT.register(
                 me.xjqsh.lrtactical.client.event.LrTickAnimationEvent::tickAnimation);
 
+        // 附属模块 LRTactical：「一次按压只消耗一次使用」门禁的每 tick 采样。
+        //
+        // 【必须挂 END，不能挂 START】原版 Minecraft#tick 的顺序是
+        // handleKeybinds(偏移181) → ClientLevel#tickEntities(244) → ClientLevel#tick(379)，
+        // 而「使用结束」发生在实体/世界 tick 里。挂 END 才能在【同一次】tick 内
+        // 采到使用状态的下降沿；下一次 handleKeybinds 已是下一个 tick，
+        // MinecraftUseRestartMixin 因此拦得住，不存在慢一帧的窗口。
+        // 完整病因与时序论证见 UsePressGate 类注释。
+        ClientTickEvents.END_CLIENT_TICK.register(
+                me.xjqsh.lrtactical.client.input.UsePressGate::onClientTick);
+        // 附属模块 LRTactical：分叉兜底 —— 客户端陷进服务端不存在的使用状态时，
+        // 越过「数据允许的最长预燃 + 延迟余量」就本地收手，不至于卡到玩家松手。
+        // 与上面的门禁是「防复发 + 兜底」的组合，理由见 StuckUseRecovery 类注释。
+        ClientTickEvents.END_CLIENT_TICK.register(
+                me.xjqsh.lrtactical.client.input.StuckUseRecovery::onClientTick);
+
         TextureStitchEvent.POST.register(ReloadResourceEvent::onTextureStitchEventPost);
 
         RenderTickEvent.EVENT.register(RenderCrosshairEvent::onRenderTick);

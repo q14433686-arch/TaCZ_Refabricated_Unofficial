@@ -348,7 +348,15 @@ public abstract class ThrowableItemEntity extends Projectile
 
         this.setPos(x, y, z);
 
-        if (this.tickCount >= life && life > 0 && !this.level().isClientSide()) {
+        // 引信超时。判定必须是 life >= 0 && tickCount >= life：
+        //
+        // 旧写法 tickCount >= life && life > 0 把「剩余引信 0」也当成永不爆炸 ——
+        // 而 0 恰恰是满预燃（cook 到进度条满）时被 ThrowableItem#onThrow 夹出来的值
+        // （Math.max(life - cooked, 0)）。症状：温雷进度条满 → 扔出去 → 永不主动爆炸。
+        //
+        // 负值才是真正的「不超时」：遥控起爆物（C4，life_time = -1）靠
+        // DetonatorItem 手动引爆，不能被超时判定吃掉。
+        if (this.life >= 0 && this.tickCount >= this.life && !this.level().isClientSide()) {
             this.onDeath(null);
         }
 

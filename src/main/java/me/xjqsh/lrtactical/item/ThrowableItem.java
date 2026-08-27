@@ -145,14 +145,37 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
      * 玩家总是在手雷还在空中时重试，而那时冷却其实早就结束了。
      * 真正的约束是<b>状态分叉</b>，与实体数量无关 —— 多人游戏同样会复现。
      *
-     * <h2>修法</h2>
-     * <b>只在服务端做冷却判定</b>，客户端一律放行。
-     * 这样两端都会 {@code startUsingItem}（动画一致），
-     * 而是否真的投出由服务端的 {@link #releaseUsing} 说了算 ——
-     * 那里本来就有同一份冷却校验，不会漏判。
+     * <h2>【2026-08-27 更正】修法改成「两端都查各自的表」</h2>
+     * 这里曾长期写着「<b>只在服务端做冷却判定</b>，客户端一律放行」，理由是
+     * 「客户端表可能因包延迟仍为空/已过期，拿它当门禁会让两端分叉」。
+     * <b>那个结论把方向搞反了</b> —— 它恰好制造了它想避免的分叉：
+     * <ul>
+     *   <li>客户端放行 ⇒ 客户端总会 {@code startUsingItem}；</li>
+     *   <li>服务端在冷却中 ⇒ 服务端不 {@code startUsingItem}；</li>
+     *   <li>于是客户端进入一个<b>服务端根本不存在</b>的使用状态，
+     *       而本类 {@link #getUseDuration} 返回 72000，这轮使用永远不会自己结束
+     *       ⇒ 进度条读满后钉住、Lua 停在 {@code using_hold}（姿势定格），
+     *       只能靠松手恢复。这正是用户实测到的现象。</li>
+     * </ul>
      *
-     * <p>这也是原版的通行做法：客户端只做乐观预测，权威判定始终在服务端。
-     * 当前客户端冷却表严格限定为 HUD 数据源，绝不进入本方法的行为门禁。
+     * <p>客户端那份表为什么可以当门禁（逐条核对，不是想当然）：</p>
+     * <ol>
+     *   <li><b>它确实在走</b>：{@code ModCapabilities#init} 把
+     *       {@code coolDowns(player).tick()} 挂在 {@code PlayerTickEvent.START}，
+     *       而 {@code PlayerMixin} 注入的是 {@code Player#tick} 的 HEAD、不分端 ——
+     *       客户端玩家每游戏刻也会走一次（这条至关重要：早先漏掉 tick 调用时
+     *       {@code isOnCooldown} 恒为 true，才造成过「一局只能用一次手雷」）。</li>
+     *   <li><b>偏差方向是安全的</b>：客户端的 {@code startTime} 取自收到
+     *       {@code ServerMessageCustomCooldown} 那一刻的本地 tickCount，
+     *       必然<b>不早于</b>服务端的起点 ⇒ 客户端只会「多拒一会儿」，
+     *       不会「少拒」。多拒一次的代价是玩家再按一下；少拒一次的代价是卡死。</li>
+     *   <li><b>窗口还会被显式收口</b>：服务端冷却到期时 {@code onCooldownEnded}
+     *       会再发一条 {@code duration=0} 的消息，客户端立刻 {@code removeCooldown}，
+     *       两边对齐，多拒窗口≈一个单向延迟。</li>
+     * </ol>
+     *
+     * <p>服务端仍是<b>唯一权威</b>：真正投不投出由 {@link #releaseUsing} 里那份
+     * 服务端判定说了算，这里客户端的判定只负责「别凭空起一轮」。
      */
     @Override
     public @NotNull InteractionResult use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
@@ -160,16 +183,13 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             return InteractionResult.FAIL;
         }
         ItemStack stack = player.getItemInHand(hand);
-        // 客户端同步表只供 HUD；网络延迟下不能作为行为门禁。
-        // 故客户端一律乐观放行，权威判定交给服务端。
-        boolean onCooldown = false;
-        if (!level.isClientSide()) {
-            CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
-            onCooldown = getThrowableIndex(stack)
-                    .map(index -> index.getData().getCooldownCategory())
-                    .map(coolDowns::isOnCooldown)
-                    .orElse(false);
-        }
+        // 两端都查各自那张表（服务端 SERVER_COOL_DOWNS / 客户端 CLIENT_COOL_DOWNS，
+        // 由 ModCapabilities#coolDowns 按端选）。判定依据与偏差方向见方法注释。
+        CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
+        boolean onCooldown = getThrowableIndex(stack)
+                .map(index -> index.getData().getCooldownCategory())
+                .map(coolDowns::isOnCooldown)
+                .orElse(false);
         if (!onCooldown) {
             player.startUsingItem(hand);
         }
@@ -195,7 +215,12 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             return false;
         }
 
-        // 预燃（cook）：按住越久，飞出去后剩余引信越短
+        // 预燃（cook）：按住越久，飞出去后剩余引信越短。
+        //
+        // 官方 0.4.3：夹到 0 就是「立刻炸」，不是「永不炸」。
+        // 实体侧的超时判定是 life >= 0 && tickCount >= life（见 ThrowableItemEntity#tick），
+        // 只有 life_time = -1 的遥控物（本仓 data/lrtactical/index/throwable/test_c4.json）
+        // 才会跳过超时引爆。两处必须一起改：只改本行会让满预燃的手雷落地后永不自爆。
         if (index.getData().isCookable()) {
             int cooked = ticksUsingItem - index.getData().getPrepareTime();
             throwable.setLife(Math.max(throwable.getLife() - cooked, 0));
@@ -280,10 +305,19 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             if (!data.isCookable()) {
                 return;
             }
-            // 留 10% 余量：手里预燃太久就直接在手上炸
-            int maxCookTime = (int) (data.getEntityData().getLifeTime() * 0.9);
+            // 官方 0.4.3：预燃满 prepare + 完整 lifeTime 才在手上炸。
+            //
+            // 旧移植留了 10% 余量（life * 0.9）。HUD 进度条当时用的是同一个 0.9 分母，
+            // 两者彼此自洽，但都与内容包 JSON 里写的 life_time 不一致 ——
+            // 手里能预燃的时长比面板值少 10%。改成完整 lifeTime 后，
+            // 「按住到进度条满」正好等于「剩余引信 0」，与官方 0.4.3 同义。
+            //
+            // 【26.2 顺序不能照抄官方】官方是 throw-then-stop；本仓必须先
+            // stopUsingItem 再 onThrow（否则无限递归 + 无限生成手雷，
+            // 完整调用链见本方法上方注释），所以蓄力 tick 数要提前取好显式传下去。
             int ticksUsingItem = entity.getTicksUsingItem();
-            if (ticksUsingItem >= data.getPrepareTime() + maxCookTime && !level.isClientSide()) {
+            if (ticksUsingItem >= data.getPrepareTime() + data.getEntityData().getLifeTime()
+                    && !level.isClientSide()) {
                 // 顺序至关重要：必须先 stopUsingItem 再 onThrow，理由见方法注释。
                 // 反过来（或改用 releaseUsingItem）会导致无限递归 + 无限生成手雷。
                 //

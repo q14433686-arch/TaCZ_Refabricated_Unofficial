@@ -19,11 +19,23 @@ import net.minecraft.world.effect.MobEffectInstance;
  * <p>与 {@code DeafenState}（压低其他声音）是<b>两件独立的事</b>，
  * 合在一起才是完整的「被震聋」：周围安静下来 + 耳朵里嗡嗡响。
  *
- * <h2>为什么必须豁免自身的消声</h2>
- * {@code SoundEngineMixin} 会压低所有非 UI 音效，而耳鸣声正是在
- * {@code DEAFENED} 生效期间播放的 —— 若不豁免，它会把自己也压到几乎听不见，
- * 变成「什么都听不到」而不是「耳朵在响」。
- * 豁免方式见 {@code DeafenState#isRingingSound}。
+ * <h2>【2026-08-27 改回 {@code SoundSource.PLAYERS}】</h2>
+ * 上一轮为了让消声豁免它，把它改成了 {@code SoundSource.MASTER}（配合
+ * {@code DeafenState#getVolumeFactor} 对 MASTER 的整体放行）。结果<b>耳鸣声听不见了</b>，
+ * 而同一份代码在 1.21.11 用 {@code PLAYERS} 是能听见的（用户实测）。
+ *
+ * <p>26.2 的 {@code SoundEngine#play} 里有一条<b>只在 DEBUG 级别打日志</b>的静默丢弃分支
+ * （字节码 @306–@354）：算出的音量为 0 就直接 {@code return NOT_STARTED}，
+ * 日志默认看不见。音量 =
+ * {@code clamp(getVolume(),0,1) * clamp(options.getSoundSourceVolume(source),0,1)}，
+ * 而 {@code getSoundSourceVolume} = {@code soundSourceVolumes.get(source).get()}。
+ * MASTER 在那张表里的取值我没能从字节码定案 —— 但既然存在这条静默路径，
+ * 就不该把耳鸣声押在 MASTER 上。</p>
+ *
+ * <p>现在改回 {@code PLAYERS}（与 1.21.11 一致、用户实测可闻），
+ * 消声豁免改由 {@code SoundInstanceVolumeMixin} 用 {@code instanceof} 在实例层面做 ——
+ * <b>不再依赖 SoundSource 是哪个类别</b>，也就不存在「改类别就把耳鸣压没」的隐雷。
+ * {@code sounds.json} 里的 {@code "category": "player"} 现在与本类一致了。</p>
  *
  * <h2>26.2 移植要点</h2>
  * <ul>
@@ -48,7 +60,7 @@ public class StunRingingSound extends AbstractTickableSoundInstance {
     private static final float FADE_START_TICKS = 60f;
 
     public StunRingingSound() {
-        super(RINGING, SoundSource.MASTER, RandomSource.create());
+        super(RINGING, SoundSource.PLAYERS, RandomSource.create());
         this.looping = true;
         this.delay = 0;
         this.volume = 1.0F;

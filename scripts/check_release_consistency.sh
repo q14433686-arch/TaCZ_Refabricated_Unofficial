@@ -29,6 +29,12 @@ BASE_URL="${TACZ_BASE_URL:-https://github.com/q14433686-arch/TaCZ_Refabricated_U
 IFS=',' read -r -a BRANCHES <<<"${TACZ_BRANCHES:-26.2(main),26.1.2,1.21.11}"
 DEFAULT_BRANCH="${BRANCHES[0]}"
 
+# 可选的 hotfix 后缀：'R2-hotfix2' 这类发布版的身份写在 build metadata 里。
+# 规矩（见 gradle.properties 注释）：序号【直接】接在 hotfix 后面，中间不放
+# '.' / '-' / '_' 任何分隔符 —— TaCZTweaks 按版本号字符串识别本项目，
+# 且 SemVer 里多一个 '-' 会把后续内容拽进 prerelease 段、破坏 ">=1.1.8" 比较。
+HOTFIX_SUFFIX='(-hotfix[0-9]*)?'
+
 MODE="worktree"
 ONE_BRANCH=""
 DO_LINKS=0
@@ -125,8 +131,13 @@ check_source() {
   say "  ${C_DIM}mod_version = $mod_version  (release = $rel)${C_RST}"
 
   # 0) 版本号本身要合法，且与所在分支的 mc 系列匹配
-  if [[ ! "$mod_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+\+fabric\.[0-9.]+\.R[0-9]+$ ]]; then
-    fail "$name: mod_version '$mod_version' 不符合 x.y.z+fabric.<mc>.R<n> 格式"
+  if [[ ! "$mod_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+\+fabric\.[0-9.]+\.R[0-9]+(-hotfix[0-9]*)?$ ]]; then
+    fail "$name: mod_version '$mod_version' 不符合 x.y.z+fabric.<mc>.R<n>[-hotfix<n>] 格式"
+  elif [[ -n "$series" && ! "$series" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+    # 功能分支 / 会话分支（arena/xxxx、feat/yyy）不是三条发布分支之一，
+    # branch_series 从分支名里抠出来的「系列」是一串无意义的 slug。
+    # 这种情况只提示、不判失败 —— 否则每个 PR 分支都会因为分支名而红。
+    warn "$name: 分支名推导出的系列 '$series' 不是 MC 版本号形态，跳过系列匹配检查"
   elif [[ -n "$series" && "$mod_version" != *"+fabric.$series."* ]]; then
     fail "$name: mod_version 是 '$mod_version'，与所在分支的 MC 系列 '$series' 不匹配"
   else
@@ -135,10 +146,10 @@ check_source() {
 
   # 1) README 正文出现的完整版本号必须唯一，且与 mod_version 相同
   local found n
-  found="$(grep -oE '[0-9]+\.[0-9]+\.[0-9]+\+fabric\.[0-9.]+\.R[0-9]+' <<<"$readme" | sort -u)"
+  found="$(grep -oE "[0-9]+\\.[0-9]+\\.[0-9]+\\+fabric\\.[0-9.]+\\.R[0-9]+${HOTFIX_SUFFIX}" <<<"$readme" | sort -u)"
   n="$(grep -c . <<<"$found")"
   if [[ -z "$found" ]]; then
-    fail "$name: README 中找不到任何 'x.y.z+fabric.<mc>.R<n>' 版本号"
+    fail "$name: README 中找不到任何 'x.y.z+fabric.<mc>.R<n>[-hotfix<n>]' 版本号"
   elif [[ "$n" -gt 1 ]]; then
     fail "$name: README 出现多个版本号：$(tr '\n' ' ' <<<"$found")"
   elif [[ "$found" != "$mod_version" ]]; then
@@ -149,9 +160,10 @@ check_source() {
 
   # 2) 「仓库源码已使用 R? 版本号」提示行
   local hint
-  hint="$(grep -oE '已使用 R[0-9]+ 版本号' <<<"$readme" | grep -oE 'R[0-9]+' | sort -u)"
+  hint="$(grep -oE "已使用 R[0-9]+${HOTFIX_SUFFIX} 版本号" <<<"$readme" \
+          | grep -oE "R[0-9]+${HOTFIX_SUFFIX}" | sort -u)"
   if [[ -z "$hint" ]]; then
-    warn "README 缺少「仓库源码已使用 R? 版本号」提示行"
+    warn "README 缺少「仓库源码已使用 R?[-hotfix?] 版本号」提示行"
   elif [[ "$(grep -c . <<<"$hint")" -gt 1 ]]; then
     fail "$name: 提示行出现多个 release：$(tr '\n' ' ' <<<"$hint")"
   elif [[ "$hint" != "$rel" ]]; then
@@ -162,7 +174,8 @@ check_source() {
 
   # 3) 「R? 构建使用」表格描述
   local tbl
-  tbl="$(grep -oE 'R[0-9]+ 构建使用' <<<"$readme" | grep -oE 'R[0-9]+' | sort -u)"
+  tbl="$(grep -oE "R[0-9]+${HOTFIX_SUFFIX} 构建使用" <<<"$readme" \
+         | grep -oE "R[0-9]+${HOTFIX_SUFFIX}" | sort -u)"
   if [[ -n "$tbl" && "$tbl" != "$rel" ]]; then
     fail "$name: 支持环境表写 '$tbl 构建使用'，但 mod_version 是 '$rel'"
   elif [[ -n "$tbl" ]]; then

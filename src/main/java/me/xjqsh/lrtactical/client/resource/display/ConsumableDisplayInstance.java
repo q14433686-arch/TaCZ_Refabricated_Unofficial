@@ -12,7 +12,7 @@ import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.resource.pojo.display.block.BlockTransformParser;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
-import me.xjqsh.lrtactical.api.animation.ThrowableAnimationStateContext;
+import me.xjqsh.lrtactical.api.animation.ConsumableAnimationStateContext;
 import me.xjqsh.lrtactical.client.audio.ICustomSoundSupplier;
 import me.xjqsh.lrtactical.client.renderer.model.CustomBedrockModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransforms;
@@ -25,36 +25,37 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * 一种投掷物的<b>客户端展示数据</b>。
+ * 一种消耗品（药品 / 食物）的<b>客户端展示数据</b>。结构与 {@link MeleeDisplayInstance} 平行。
  *
- * <p>结构与 {@link MeleeDisplayInstance} 完全平行，仅动画上下文类型不同
- * （投掷物需要 using/usingTick 来驱动拔销与蓄力动画）。
- * 两处 26.2 移植要点（{@code ItemTransforms} 不可反序列化、legacy 版本判断漏 else）
- * 的详细说明见 {@link MeleeDisplayInstance} 的类注释，此处不重复。
+ * <p>由内容包的 {@code assets/<ns>/display/consumable/<name>.json} 反序列化而来，
+ * 加载入口是 {@link me.xjqsh.lrtactical.client.resource.manager.ConsumableDisplayManager}。</p>
  *
- * <h2>模型类型为什么是 {@link CustomBedrockModel} 而不是 {@code BedrockAnimatedModel}</h2>
- * 上游此处的字段类型写的是 {@code BedrockAnimatedModel}，但实际 {@code new} 的是
- * {@code CustomBedrockModel}。这带来一个直接后果：
- * {@code ThrowableEntityRenderer} 想调 {@code setEntityRendering(true)}
- * （即隐藏 {@code entity_hide} 组）时，必须再做一次 {@code instanceof} 向下转型。
- * 这里把字段类型收紧为实际类型，转型随之消失，
- * {@code entity_hide} 的语义也不会因为某处忘了转型而静默失效。
+ * <h2>为什么现在才补上</h2>
+ * 本仓早就打包了 {@code assets/lrtactical/scripts/consumable_state_machine.lua}
+ * 与 {@code data/lrtactical/index/consumable/*}，但一直<b>没有消耗品的渲染通道</b> ——
+ * 服务端效果（{@code ConsumableItem}）能跑，客户端却只能显示原版占位模型，
+ * 那份 Lua 状态机因此是死代码。官方 0.4.3 补齐了消耗品的第一人称 Bedrock/Lua 渲染，
+ * 本轮同步过来，Lua 与 index 才真正接上。
+ *
+ * <h2>官方 0.4.3 里<b>没有</b>照搬的部分</h2>
+ * 官方还有 {@code third_person_animation}（player_animator 层）。姊妹仓
+ * TaCZ_Renovated 的 0.4.3 跟进文档把它列为「只调查、不接入」：需要内容包提供
+ * player_animator 文件，且可能与 TACZ 的 PAL 层抢轨道。本仓同此结论 ——
+ * JSON 里出现该字段时<b>直接忽略</b>，不解析、不报错。
  */
-public class ThrowableDisplayInstance implements ICustomSoundSupplier {
+public class ConsumableDisplayInstance implements ICustomSoundSupplier {
     private Identifier id;
     private CustomBedrockModel model;
-    private LuaAnimationStateMachine<ThrowableAnimationStateContext> stateMachine;
+    private LuaAnimationStateMachine<ConsumableAnimationStateContext> stateMachine;
     private Identifier texture;
     @Nullable
     private Identifier slotTexture;
     private ItemTransforms transforms = ItemTransforms.NO_TRANSFORMS;
-    /** 官方 0.4.3 {@code display_offset}：物品渲染用的方块单位平移。 */
+    /** 官方 0.4.3 {@code display_offset}；未配置时为零向量。 */
     private Vector3f displayOffset = new Vector3f();
-    /** 官方 0.4.3 {@code entity_transform}：手雷<b>飞行实体</b>的姿态，仅投掷物有。 */
-    private DisplayTransform.EntityTransform entityTransform = DisplayTransform.DEFAULT_ENTITY;
     private Map<String, Identifier> sounds;
 
-    private ThrowableDisplayInstance() {
+    private ConsumableDisplayInstance() {
     }
 
     public Identifier getId() {
@@ -65,7 +66,7 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         return model;
     }
 
-    public LuaAnimationStateMachine<ThrowableAnimationStateContext> getStateMachine() {
+    public LuaAnimationStateMachine<ConsumableAnimationStateContext> getStateMachine() {
         return stateMachine;
     }
 
@@ -82,17 +83,8 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         return transforms;
     }
 
-    /** 官方 0.4.3 {@code display_offset}；未配置时为零向量。 */
     public Vector3f getDisplayOffset() {
         return displayOffset;
-    }
-
-    /**
-     * 官方 0.4.3 {@code entity_transform}；未配置时为 {@link DisplayTransform#DEFAULT_ENTITY}。
-     * 供 {@code ThrowableEntityRenderer} 摆放飞行中的手雷。
-     */
-    public DisplayTransform.EntityTransform getEntityTransform() {
-        return entityTransform;
     }
 
     @Override
@@ -100,9 +92,15 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         return sounds;
     }
 
+    /**
+     * 校验并解析。失败一律用 {@code Preconditions} 抛 {@code IllegalArgumentException}，
+     * 由 {@code ConsumableDisplayManager#apply} 逐个 catch —— 一个内容包写错一件消耗品，
+     * 不该让整个资源重载失败。
+     */
     @NotNull
-    public static ThrowableDisplayInstance create(ThrowableDisplay pojo, Identifier id) throws IllegalArgumentException {
-        ThrowableDisplayInstance display = new ThrowableDisplayInstance();
+    public static ConsumableDisplayInstance create(ConsumableDisplay pojo, Identifier id)
+            throws IllegalArgumentException {
+        ConsumableDisplayInstance display = new ConsumableDisplayInstance();
         display.id = id;
 
         Preconditions.checkArgument(pojo != null, "display object is empty");
@@ -114,7 +112,8 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         BedrockModelPOJO modelPOJO = ClientAssetsManager.INSTANCE.getBedrockModelPOJO(pojo.modelLocation);
         Preconditions.checkArgument(modelPOJO != null, "no corresponding model found for " + pojo.modelLocation);
 
-        // 见 MeleeDisplayInstance 类注释：上游此处漏了 else
+        // 见 MeleeDisplayInstance 类注释：legacy 版本必须单独一支，
+        // 否则 format_version 1.10.0 的模型会被按新格式解析而错位/不显示。
         if (BedrockVersion.isLegacyVersion(modelPOJO)) {
             display.model = new CustomBedrockModel(modelPOJO, BedrockVersion.LEGACY);
         } else {
@@ -126,9 +125,10 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         AnimationController controller = Animations.createControllerFromBedrock(animation, display.model);
 
         var script = ClientAssetsManager.INSTANCE.getScript(pojo.stateMachineLocation);
-        Preconditions.checkArgument(script != null, "no corresponding state machine found for " + pojo.stateMachineLocation);
+        Preconditions.checkArgument(script != null,
+                "no corresponding state machine found for " + pojo.stateMachineLocation);
 
-        display.stateMachine = new LuaStateMachineFactory<ThrowableAnimationStateContext>()
+        display.stateMachine = new LuaStateMachineFactory<ConsumableAnimationStateContext>()
                 .setController(controller)
                 .setLuaScripts(script)
                 .build();
@@ -137,13 +137,19 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         display.slotTexture = DisplayPaths.toTexturePath(pojo.slotTextureLocation);
         display.transforms = BlockTransformParser.parse(pojo.transforms);
         display.displayOffset = Objects.requireNonNullElseGet(pojo.displayOffset, Vector3f::new);
-        display.entityTransform = DisplayTransform.parseEntityTransform(pojo.entityTransform);
         display.sounds = Objects.requireNonNullElseGet(pojo.sounds, Maps::newHashMap);
 
         return display;
     }
 
-    public record ThrowableDisplay(
+    /**
+     * display JSON 的原始结构。
+     *
+     * <p>{@code transforms} 用 {@link JsonObject} 而非 {@code ItemTransforms}，
+     * 理由同 {@link MeleeDisplayInstance.MeleeDisplay}（TACZ 的
+     * {@code BlockTransformParser} 才认这套字段名）。</p>
+     */
+    public record ConsumableDisplay(
             @SerializedName("model")
             Identifier modelLocation,
             @SerializedName("animation")
@@ -158,8 +164,6 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
             JsonObject transforms,
             @SerializedName("display_offset")
             Vector3f displayOffset,
-            @SerializedName("entity_transform")
-            JsonObject entityTransform,
             @SerializedName("sounds")
             Map<String, Identifier> sounds
     ) {

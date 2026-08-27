@@ -19,6 +19,7 @@ import net.minecraft.client.resources.model.cuboid.ItemTransforms;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.Map;
 import java.util.Objects;
@@ -68,6 +69,8 @@ public class MeleeDisplayInstance implements ICustomSoundSupplier {
     @Nullable
     private Identifier slotTexture;
     private ItemTransforms transforms = ItemTransforms.NO_TRANSFORMS;
+    /** 官方 0.4.3 {@code display_offset}：方块单位的纯平移，施加在 transforms 之后。 */
+    private Vector3f displayOffset = new Vector3f();
     private Map<String, Identifier> sounds;
 
     private MeleeDisplayInstance() {
@@ -96,6 +99,14 @@ public class MeleeDisplayInstance implements ICustomSoundSupplier {
 
     public ItemTransforms getTransforms() {
         return transforms;
+    }
+
+    /**
+     * 官方 0.4.3 的 {@code display_offset}。内容包没写时为 {@code (0,0,0)}，
+     * 因此调用方可以无条件施加，不必判空。
+     */
+    public Vector3f getDisplayOffset() {
+        return displayOffset;
     }
 
     @Override
@@ -139,6 +150,9 @@ public class MeleeDisplayInstance implements ICustomSoundSupplier {
         display.texture = DisplayPaths.toTexturePath(pojo.textureLocation);
         display.slotTexture = DisplayPaths.toTexturePath(pojo.slotTextureLocation);
         display.transforms = BlockTransformParser.parse(pojo.transforms);
+        // display_offset 可选：没写就是零向量（姊妹仓曾漏掉 record 组件导致编译不过，
+        // 这里 field / getter / record / create 四处一起改）。
+        display.displayOffset = Objects.requireNonNullElseGet(pojo.displayOffset, Vector3f::new);
         display.sounds = Objects.requireNonNullElseGet(pojo.sounds, Maps::newHashMap);
 
         return display;
@@ -162,6 +176,8 @@ public class MeleeDisplayInstance implements ICustomSoundSupplier {
             Identifier slotTextureLocation,
             @SerializedName("transforms")
             JsonObject transforms,
+            @SerializedName("display_offset")
+            Vector3f displayOffset,
             @SerializedName("sounds")
             Map<String, Identifier> sounds
     ) {
