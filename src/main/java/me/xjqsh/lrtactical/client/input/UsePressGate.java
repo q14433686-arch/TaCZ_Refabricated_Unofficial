@@ -5,6 +5,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -58,9 +59,11 @@ import net.minecraft.world.item.ItemStack;
  * <h2>刻意收窄的范围</h2>
  * <ul>
  *   <li>只对 <b>LR 物品</b>（{@link ICustomItem}）生效：原版食物「按住连吃」、
- *       其它模组的长按物品一概不受影响。</li>
+ *       TACZ 枪械与其它模组的长按物品一概不受影响。</li>
  *   <li>只在<b>右键仍按着</b>时拦：{@code startUseItem} 也可能由 TACZ 的
  *       {@code InteractKey} 主动调用，那种情况不该被本门禁挡住。</li>
+ *   <li>只在<b>手里还是同一件物品</b>时拦：使用中途切快捷栏导致的结束不算「用完了」，
+ *       不能把新物品的使用也一起拦住。</li>
  *   <li>投掷物正常投出（松手 → {@code releaseUsing}）时右键已经抬起，
  *       不会上锁，连点投掷的手感不变。</li>
  * </ul>
@@ -110,8 +113,19 @@ public final class UsePressGate {
             lastUsedStack = player.getUseItem();
         } else if (wasUsing) {
             wasUsing = false;
-            // 使用刚结束、而右键还按着、且刚用完的是 LR 物品 → 这次按压算用过了。
-            consumedThisPress = keyDown && lastUsedStack.getItem() instanceof ICustomItem;
+            // 上锁的三个条件，缺一不可：
+            //   ① 右键还按着（松手结束的使用是正常的，连点投掷不能受影响）；
+            //   ② 刚用完的是 LR 物品（原版「按住连吃」与其它模组一概不管）；
+            //   ③ 手里【还是同一件物品】—— 若玩家在使用中途切了快捷栏，
+            //      结束的原因是换物品而不是「用完了」，此时不该拦住新物品的使用。
+            //      比较用 getItem() == 而不是 ItemStack#is(...)：26.2 的 is 只接受
+            //      Predicate（jar 内核对：is(Ljava/util/function/Predicate;)Z，
+            //      没有 is(Item) 重载），直接比 Item 引用最省事也最不容易踩版本差异。
+            Item usedItem = lastUsedStack.getItem();
+            consumedThisPress = keyDown
+                    && usedItem instanceof ICustomItem
+                    && (player.getMainHandItem().getItem() == usedItem
+                        || player.getOffhandItem().getItem() == usedItem);
             lastUsedStack = ItemStack.EMPTY;
         }
         if (!keyDown) {

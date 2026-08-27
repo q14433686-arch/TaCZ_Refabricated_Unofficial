@@ -83,6 +83,7 @@
   而服务端没有「这次按压用过了」的概念 → 换一个方向的分叉。拦在 HEAD 则两头都干净。
 - 收窄范围：只对 LR 物品生效（原版「按住连吃」与其它模组不受影响）；
   只在右键仍按着时拦（TACZ `InteractKey` 主动调 `startUseItem` 不受影响）；
+  只在手里还是同一件物品时拦（使用中途切快捷栏不算「用完了」，不拦新物品）；
   投掷物正常投出时右键已抬起，不上锁，连点投掷手感不变。
 - 回退方式：删掉 `tacz.fabric.mixins.json` 里 `client.MinecraftUseRestartMixin` 一行。
 - 已知边界：内容包把 `use_duration` 写成 0 时，使用在同一个 tick 内起停，
