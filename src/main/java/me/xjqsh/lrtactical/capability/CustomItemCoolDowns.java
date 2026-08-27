@@ -21,9 +21,12 @@ import java.util.Map;
  * <h2>26.2 移植改动</h2>
  * <ul>
  *   <li>{@code ResourceLocation} → {@link Identifier}（26.2 类名变更，全仓统一）；</li>
- *   <li>冷却专用 S2C 同步已接入 {@code ServerMessageCustomCooldown}；客户端
- *       {@code GuiGraphicsMixin} 在原版 renderItemCooldown 提取结束后叠加分类遮罩。
- *       服务端仍是唯一权威，客户端状态只负责反馈。</li>
+     *   <li>冷却专用 S2C 同步已接入 {@code ServerMessageCustomCooldown}；客户端
+     *       {@code GuiGraphicsMixin} 在原版 renderItemCooldown 提取结束后叠加分类遮罩。
+     *       服务端仍是唯一权威（真正投不投出由 {@code releaseUsing} 判定）。
+     *       客户端表除 HUD 外，也作为 {@code ThrowableItem#use} /
+     *       {@code ConsumableItem#use} 的门禁：偏差方向是「只会多拒一会儿」。
+     *       到期时 {@link #onCooldownEnded} 再发 {@code duration=0} 收口窗口。</li>
  * </ul>
  */
 public class CustomItemCoolDowns {

@@ -5,6 +5,32 @@
 
 ---
 
+## 未发版（2026-08-27，叠在 R2-hotfix2 之上，未改版本号）
+
+**跟进：26.2 排查的长按幽灵使用 / 耳鸣资源。任务 C（消声注入点）按该线实测有效，未改。**
+
+来源：`docs/handoff/HANDOFF_TO_1_21_11.md` + `HANDOFF_COMMON_2026_08_27.md`（`26.2(main)`）。
+本分支对照当前树自行核对后再改，没有整文件照搬 26.2 的 `DeafenState`（那边删了 `isRingingSound`，本分支 `SoundEngineMixin` 还在用）。
+
+- **A1** 新增 `UsePressGate` + `MinecraftUseRestartMixin`（注入具名目标 `startUseItem` HEAD）。
+  方法名由本分支已有的 `MinecraftMixin` / `InteractKey` 交叉确认，不是照搬 26.2 字节码偏移。
+- **A2** `ThrowableItem#use` / `ConsumableItem#use` 两端都查各自冷却表；新增 `StuckUseRecovery`
+  （cookable 且 `life_time > 0` 时，越过 prepare+life+20tick 则本地 `stopUsingItem()`，不走 `releaseUsingItem()`）。
+- **B1** `assets/lrtactical/sounds.json` 本来就没有顶层 `_comment`，未改。
+- **B2** 从 `origin/26.2(main)` 取 `stun_ringing.ogg`（28566 B）与自绘 `deafened.png` / `blinded.png`，
+  以及 `scripts/verify_lr_assets.py` / `scripts/gen_effect_icons.py`。
+- **B3** `DeafenState#tick` 接住 `SoundManager#play` 的返回值。1.21.11 确有返回值：
+  yarn `1.21.11+build.4` 为 `SoundSystem.PlayResult`（`STARTED` / `STARTED_SILENTLY` / `NOT_STARTED`），
+  官方映射为 `SoundEngine.PlayResult`。非 `STARTED` 时 WARN 一次。
+- **C** `SoundEngineMixin`（注入 `calculateVolume(SoundInstance)`）**未改**。用户实测本线消声有效。
+
+**验证状态（如实记录）**：`python3 scripts/verify_lr_assets.py --strict` 已通过。
+沙箱无 JDK、无 loom 缓存的 1.21.11 jar，故 `docs/verify_mixin_targets.py` 与 `./gradlew build` 未跑，
+也**没有实机验证**。发版前仍需 remap 构建、跑两个 verify 脚本，并按 handoff 共用核心 §6 做实机清单
+（本线尤其要确认耳鸣声与消声没有退化）。
+
+---
+
 ## 1.1.8+fabric.1.21.11.R2-hotfix2
 
 **回流：26.2 分支的 LR 0.4.3 战术同步（源提交 `630ef87`）**
