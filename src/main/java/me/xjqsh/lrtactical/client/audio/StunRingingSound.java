@@ -19,11 +19,22 @@ import net.minecraft.world.effect.MobEffectInstance;
  * <p>与 {@code DeafenState}（压低其他声音）是<b>两件独立的事</b>，
  * 合在一起才是完整的「被震聋」：周围安静下来 + 耳朵里嗡嗡响。
  *
- * <h2>为什么必须豁免自身的消声</h2>
- * {@code SoundEngineMixin} 会压低所有非 UI 音效，而耳鸣声正是在
- * {@code DEAFENED} 生效期间播放的 —— 若不豁免，它会把自己也压到几乎听不见，
- * 变成「什么都听不到」而不是「耳朵在响」。
- * 豁免方式见 {@code DeafenState#isRingingSound}。
+ * <h2>【硬性约束】必须用 {@code SoundSource.MASTER}，不要改成 PLAYERS</h2>
+ * {@code SoundEngineMixin} 会压低耳鸣期间的音效，而耳鸣声本身就播在这段时间里 ——
+ * 不豁免就会把自己也压到几乎听不见，变成「什么都听不到」而不是「耳朵在响」。
+ *
+ * <p>26.2 的消声注入点是 {@code SoundEngine#calculateVolume(float, SoundSource)}
+ * （内层重载；26.2 的 {@code play()} 只走它，字节码证据见 {@code SoundEngineMixin}），
+ * <b>拿不到 SoundInstance</b>，所以没法再按「是不是耳鸣声」做实例级豁免 ——
+ * 唯一的豁免通道就是 {@link DeafenState#getVolumeFactor} 对
+ * {@code MASTER / MUSIC / UI} 三个类别的整体放行。</p>
+ *
+ * <p>因此：本类构造时传的 {@code SoundSource.MASTER} <b>就是豁免机制本身</b>。
+ * 谁把它改成 {@code PLAYERS}（1.21.11 那条线用的正是 PLAYERS），
+ * 耳鸣声就会被自己的消声压没。注意 {@code sounds.json} 里写的
+ * {@code "category": "player"} 不参与音量计算 —— 26.2 的 {@code play()} 取的是
+ * {@code SoundInstance#getSource()}（字节码 @177 → @189），两者不一致无害，
+ * 但改这里之前请先读 {@code SoundEngineMixin}。</p>
  *
  * <h2>26.2 移植要点</h2>
  * <ul>

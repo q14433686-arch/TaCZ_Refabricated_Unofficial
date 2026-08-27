@@ -50,29 +50,14 @@ public final class DeafenState {
         }
     }
 
-    public static boolean isRingingSound(@org.jetbrains.annotations.Nullable
-                                         net.minecraft.client.resources.sounds.SoundInstance sound) {
-        if (sound == null) return false;
-        if (sound instanceof StunRingingSound) {
-            return true;
-        }
-        try {
-            var locMethod = sound.getClass().getMethod("getLocation");
-            Object loc = locMethod.invoke(sound);
-            if (loc != null) {
-                String s = loc.toString();
-                if (s.contains("ringing") || s.contains("stun_grenade")) {
-                    return true;
-                }
-            }
-        } catch (Throwable ignored) {}
-        try {
-            String ts = sound.toString();
-            if (ts != null && (ts.contains("ringing") || ts.contains("stun_grenade.ringing"))) {
-                return true;
-            }
-        } catch (Throwable ignored) {}
-        String cn = sound.getClass().getName();
-        return cn.contains("StunRinging") || cn.contains("Ringing");
-    }
+    // 【2026-08-27 删除】这里曾有一个 isRingingSound(SoundInstance)：靠 instanceof +
+    // 反射猜 getLocation()/toString() 里的名字来判断「这是不是耳鸣声」，以便豁免消声。
+    //
+    // 删掉的原因：消声的注入点已从 calculateVolume(SoundInstance) 移到
+    // calculateVolume(float, SoundSource)（26.2 里 play() 只走后者，旧注入点对新播放的
+    // 音效完全不生效 —— 详见 SoundEngineMixin 类注释的字节码证据），
+    // 而内层重载拿不到 SoundInstance，实例级豁免已无处可用。
+    //
+    // 现在耳鸣声的豁免完全依赖【它用 SoundSource.MASTER 构造】+ getVolumeFactor
+    // 对 MASTER/MUSIC/UI 的整体放行。这条约束写在 StunRingingSound 的类注释里。
 }
