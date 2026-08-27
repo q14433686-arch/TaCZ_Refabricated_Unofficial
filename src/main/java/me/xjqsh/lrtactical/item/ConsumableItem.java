@@ -63,12 +63,18 @@ public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.a
             return InteractionResult.FAIL;
         }
         ItemStack stack = player.getItemInHand(hand);
-        if (!level.isClientSide()) {
-            CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
-            boolean onCooldown = getCoolDownId(stack).map(coolDowns::isOnCooldown).orElse(false);
-            if (onCooldown) {
-                return InteractionResult.FAIL;
-            }
+        // 【2026-08-27】两端都查冷却，不再只查服务端。
+        // 原来只有服务端查，客户端一律乐观放行 —— 于是「服务端在冷却中、客户端却
+        // startUsingItem」的分叉每次都会发生：客户端走完这轮读条也不会消耗任何东西
+        // （finishUsingItem 的效果段有 !level.isClientSide() 门禁），表现为「读了个空条」。
+        // 客户端这张表由 ServerMessageCustomCooldown 同步、由 PlayerTickEvent.START
+        // 每客户端游戏刻推进（PlayerMixin 注入 Player#tick HEAD，不分端），
+        // 偏差方向是「只会多拒一会儿」，代价远小于分叉。完整论证见
+        // ThrowableItem#use 的方法注释（同一套冷却机制）。
+        CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
+        boolean onCooldown = getCoolDownId(stack).map(coolDowns::isOnCooldown).orElse(false);
+        if (onCooldown) {
+            return InteractionResult.FAIL;
         }
         player.startUsingItem(hand);
         return InteractionResult.CONSUME;

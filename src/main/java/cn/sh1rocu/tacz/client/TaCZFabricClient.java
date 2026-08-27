@@ -186,6 +186,11 @@ public class TaCZFabricClient implements ClientModInitializer {
         // 完整病因与时序论证见 UsePressGate 类注释。
         ClientTickEvents.END_CLIENT_TICK.register(
                 me.xjqsh.lrtactical.client.input.UsePressGate::onClientTick);
+        // 附属模块 LRTactical：分叉兜底 —— 客户端陷进服务端不存在的使用状态时，
+        // 越过「数据允许的最长预燃 + 延迟余量」就本地收手，不至于卡到玩家松手。
+        // 与上面的门禁是「防复发 + 兜底」的组合，理由见 StuckUseRecovery 类注释。
+        ClientTickEvents.END_CLIENT_TICK.register(
+                me.xjqsh.lrtactical.client.input.StuckUseRecovery::onClientTick);
 
         TextureStitchEvent.POST.register(ReloadResourceEvent::onTextureStitchEventPost);
 
