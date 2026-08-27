@@ -110,4 +110,19 @@ public final class LrTacticalAPI {
         return Optional.ofNullable(me.xjqsh.lrtactical.client.resource.LrClientAssetsManager.INSTANCE
                 .getMeleeDisplay(item.getDisplayId(stack)));
     }
+
+    /**
+     * 取某个物品堆对应的消耗品<b>客户端展示数据</b>。
+     *
+     * @return 该物品不是消耗品、或内容包没有为它提供 display 时返回 empty
+     */
+    @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
+    public static Optional<me.xjqsh.lrtactical.client.resource.display.ConsumableDisplayInstance>
+    getConsumableDisplay(ItemStack stack) {
+        if (!(stack.getItem() instanceof me.xjqsh.lrtactical.api.item.IConsumable item)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(me.xjqsh.lrtactical.client.resource.LrClientAssetsManager.INSTANCE
+                .getConsumableDisplay(item.getDisplayId(stack)));
+    }
 }

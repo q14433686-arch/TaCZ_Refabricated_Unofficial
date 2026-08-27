@@ -195,10 +195,17 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             return false;
         }
 
-        // 预燃（cook）：按住越久，飞出去后剩余引信越短
-        if (index.getData().isCookable()) {
+        // 预燃（cook）：按住越久，飞出去后剩余引信越短。
+        //
+        // 【必须先排除 life < 0】ThrowableItemEntity#tick 现在按 life >= 0 判超时，
+        // 负数 = 「永不自燃」（C4 / 遥控起爆的 life_time = -1）。
+        // 若照旧无条件 clamp 到 0，C4 一旦被标成 cookable 就会被这一行从 -1 抬成 0，
+        // 落地下一 tick 立刻自爆 —— 遥控起爆整个失效。
+        if (index.getData().isCookable() && throwable.getLife() >= 0) {
             int cooked = ticksUsingItem - index.getData().getPrepareTime();
-            throwable.setLife(Math.max(throwable.getLife() - cooked, 0));
+            if (cooked > 0) {
+                throwable.setLife(Math.max(throwable.getLife() - cooked, 0));
+            }
         }
         level.addFreshEntity(throwable);
 
@@ -280,8 +287,20 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             if (!data.isCookable()) {
                 return;
             }
-            // 留 10% 余量：手里预燃太久就直接在手上炸
-            int maxCookTime = (int) (data.getEntityData().getLifeTime() * 0.9);
+            // 官方 0.4.3：手上引爆的门槛是 prepareTime + 完整 lifeTime，没有 10% 余量。
+            //
+            // 旧写法 lifeTime * 0.9 是本移植自加的保险，代价是引信最后 10% 永远走不到：
+            // 玩家把进度条按满也只消耗掉 90% 的引信，剩下的 10% 又被
+            // onThrow 的 clamp 归零，两处一起制造了「满进度扔出去不炸」。
+            // 与 ThrowableItemEntity#tick 的 life >= 0 是同一个修复的两半。
+            int maxCookTime = data.getEntityData().getLifeTime();
+            if (maxCookTime <= 0) {
+                // life_time <= 0 = 「没有引信」（C4/遥控起爆写的是 -1）。
+                // 这类投掷物不存在「烧完就在手上炸」，直接不参与本判定。
+                // 旧的 *0.9 写法在 -1 上会算出 0，反而让 C4 一到 prepareTime 就炸；
+                // UsingProgressOverlay 的红条同样要求 life > 0，两边口径至此一致。
+                return;
+            }
             int ticksUsingItem = entity.getTicksUsingItem();
             if (ticksUsingItem >= data.getPrepareTime() + maxCookTime && !level.isClientSide()) {
                 // 顺序至关重要：必须先 stopUsingItem 再 onThrow，理由见方法注释。
