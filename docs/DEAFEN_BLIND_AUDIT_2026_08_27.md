@@ -146,15 +146,18 @@ ogg 是用户提供的 Freesound 素材，本轮**没有**跨分支复制 ——
 2. **必须同时改**：`StunRingingSound` 的 `SoundSource.PLAYERS` → `MASTER`。
    只改 mixin 不改这里，耳鸣声会被自己压没。
 3. **要移**：`textures/mob_effect/deafened.png` + `blinded.png`（直接从 26.2 拷）。
-4. **待定**：`sounds.json` + `stun_ringing.ogg`。ogg 是用户提供的素材，
-   跨分支复制前请确认授权口径（26.2 的 `sounds.json` 注释写的是 Freesound 公开素材）。
+4. **要移**：`sounds.json` + `sounds/stun_ringing.ogg`（这条线两个都没有，所以耳鸣声一定不响）。
+   **注意 `sounds.json` 不要带顶层 `_comment`** —— 26.2 会把整个文件反序列化失败。
+   搬完跑 `python3 scripts/verify_lr_assets.py --strict` 自查。
+   ogg 是用户提供的 Freesound 公开/CC 素材（出处见第三轮那节），跨分支复制前确认授权口径。
 
 ### → `1.21.11`（本仓）
 
 1. **不要动 mixin**。同一份源码在这条线上是**有效**的（用户实测 + 跨分支同源代码比对），
    说明 1.21.1 的 `play` 走的是外层重载。要改先用同样的字节码方法核对，别照搬 26.2 的结论。
 2. **要移**：两张效果图标（当前都是紫黑块）。
-3. **待定**：ogg（同上）。
+3. **要移**：`sounds/stun_ringing.ogg`（这条线缺音源文件；`sounds.json` 本身已有且写法正确）。
+   搬完同样跑 `verify_lr_assets.py`。
 4. 若日后要统一三条线的耳鸣声豁免方式，注意这条线用的是 `PLAYERS`，
    豁免依赖的是外层重载能拿到 `SoundInstance` —— 与 26.x 的机制不同，不要机械对齐。
 
@@ -163,7 +166,9 @@ ogg 是用户提供的 Freesound 素材，本轮**没有**跨分支复制 ——
 1. **要移**：mixin 注入点（其 `SoundEngineMixin` 与本仓修复前逐字节相同，同一个病）。
 2. 该仓 `StunRingingSound` 用的是什么 `SoundSource` 本轮**没查**（只确认了它没有
    `assets/lrtactical` 下的 textures/sounds），移植时一并核对。
-3. **要移**：两张效果图标；`sounds.json` + ogg 同样待授权确认。
+3. **要移**：两张效果图标；`sounds.json`（**不带顶层 `_comment`**）+ ogg。
+   该仓 `assets/lrtactical` 下目前 textures/ 与 sounds/ 都是空的。
+4. 建议把 `scripts/verify_lr_assets.py` 一起搬过去（只依赖 stdlib 与文件布局）。
 
 ---
 
@@ -222,6 +227,64 @@ ogg 是用户提供的 Freesound 素材，本轮**没有**跨分支复制 ——
   `SoundManager#play` 是否有同样的返回值**未核对**，回移前先确认签名。
 - **→ 姊妹仓 26.2**：同 26.2 的三处。
 
+## 追加：真正的根因 —— `sounds.json` 顶层的 `_comment`（同日第三轮）
+
+用户带回了第二轮加的那行告警：
+
+```
+[Render thread/WARN]: [LRTactical] Stun ringing sound did not start:
+    result=NOT_STARTED id=lrtactical:entity.stun_grenade.ringing
+```
+
+`NOT_STARTED` 把范围缩到 `play()` 的几条分支，而其中「找不到音效定义 →
+`EMPTY_SOUND` → NOT_STARTED」（@116–@152）与下面这个结构差异对上了：
+
+**26.2 的 `SoundManager` 把 `assets/<ns>/sounds.json` 整体按
+`Map<String, SoundEventRegistration>` 用 Gson `fromJson` 反序列化**
+（`SoundManager` 常量池里可直接看到
+`TypeToken<Map<String,SoundEventRegistration>>` 与 `fromJson`）。
+也就是说**顶层的每个键都会被当成音效 id**。而我们的文件是：
+
+```json
+{
+  "_comment": "Sound index for LRTactical. The tinnitus clip was supplied by ...",
+  "entity.stun_grenade.ringing": { "category": "player", "sounds": [ ... ] }
+}
+```
+
+`_comment` 的值是**字符串**，不是 `SoundEventRegistration` 对象 →
+反序列化失败 → **整个文件作废** → `lrtactical` 命名空间一个音效定义都没有 →
+`getSoundEvent(id)` 返回 null → `resolve` 置 `EMPTY_SOUND` → `NOT_STARTED`。
+
+**与 1.21.11 的对照刚好印证**：那条线的 `sounds.json` **没有 `_comment`**
+（就一个 `entity.stun_grenade.ringing` 条目），所以它能响。
+这也解释了为什么这个坑只在 26.2 上出现——文件内容不同，不是引擎不同。
+
+> 注意别把这个结论外推到别的资源文件：`items/*.json`、`models/item/*.json` 里的
+> `_comment` 是**对象内部**的字段，无害。`sounds.json` 的顶层是 map，性质完全不同。
+
+### 修法
+
+1. **删掉 `sounds.json` 顶层的 `_comment`**（信息搬到本文，不丢）。
+   原文记录在此：音源是用户提供的 Freesound 公开/CC 素材，已转成 OGG Vorbis
+   （Minecraft 不接受 wav/mp3），并做了等功率交叉淡化处理成可循环片段。
+2. **新增 `scripts/verify_lr_assets.py`**，把这类「静默失效」变成可自查项：
+   - `sounds.json` 顶层是否存在非对象值（就是这个坑）；
+   - 每个 `sounds[].name` 指向的 `.ogg` 是否真的存在（26.1.2 / 1.21.11 都缺）；
+   - `ModEffects` 注册的每个效果是否有 `textures/mob_effect/<id>.png`（紫黑块）。
+   已做过反向验证：把修复前的文件放回去，脚本 `--strict` 退出 1 并指名 `_comment`。
+3. **把已知坑写进那行 WARN**，下次不用再从头查。
+
+### 对前两轮结论的修正
+
+- 第二轮怀疑的「MASTER 在 `soundSourceVolumes` 里取到 0 → 静默丢弃」**没有得到证实**，
+  现在看**不是**本次不响的原因（真正原因是定义根本没加载，与音量无关）。
+  不过第二轮的三处改动仍然保留，理由各自独立成立：
+  `PLAYERS` 与 1.21.11 一致且用户实测可闻；`getVolume()` 注入点覆盖更全、
+  且让豁免不再依赖 SoundSource 类别；`PlayResult` 告警正是这次定位到根因的原因。
+- 教训记两条：**①「仓库里缺文件」和「用户实机缺文件」是两回事**（第一轮的错）；
+  **② 静默失败必须先变成可见失败，才谈得上定位**（第二轮加的那行 WARN 值回本次全部成本）。
+
 ## 验证状态（如实）
 
 **已核对**：26.2 `SoundEngine` 的 `play` / `calculateVolume` 调用图（两种独立方法互证）；
@@ -235,9 +298,15 @@ ogg 是用户提供的 Freesound 素材，本轮**没有**跨分支复制 ——
 `SoundManager#play` 返回 `SoundEngine$PlayResult`（常量 STARTED/STARTED_SILENTLY/NOT_STARTED）、
 `SoundSource` 常量表（MASTER/MUSIC/PLAYERS/UI 等均在）。
 
+**第三轮新增核对**：`SoundManager` 常量池中的
+`TypeToken<Map<String,SoundEventRegistration>>` 与 `fromJson`（即 sounds.json 的整体解析方式）；
+`play()` 中「定义为空 → `EMPTY_SOUND` → NOT_STARTED」的分支（@116–@152）；
+`verify_lr_assets.py` 对修复前/后两个文件的双向验证（前者退出 1，后者退出 0）。
+
 **未做**：编译与实机（沙箱无 JDK、Maven/Fabric 源不可达）。所以
-①「耳鸣声这次能听见」仍是**待实机确认**的结论，不是已验证事实；
-②`soundSourceVolumes` 里 MASTER 的取值没定案；
+①「删掉 `_comment` 后耳鸣声就能响」仍是**待实机确认**的结论——机制是从解析方式推出的，
+我没有真的跑一次 Gson；
+②`soundSourceVolumes` 里 MASTER 的取值没定案（已不是本问题的关键）；
 ③1.21.1 的 `SoundEngine` 未逐条核对。
 若这次仍听不见，日志里现在会有一行 `[LRTactical] Stun ringing sound did not start: result=...`
 ——把那行贴出来就能直接定位（`NOT_STARTED` = 被引擎拒了，多半是资源或音量；
