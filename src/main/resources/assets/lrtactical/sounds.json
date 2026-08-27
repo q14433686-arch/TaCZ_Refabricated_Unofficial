@@ -1,0 +1,11 @@
+{
+  "entity.stun_grenade.ringing": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "lrtactical:stun_ringing",
+        "stream": false
+      }
+    ]
+  }
+}
