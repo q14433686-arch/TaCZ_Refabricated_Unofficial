@@ -5,6 +5,23 @@
 
 ---
 
+## 1.1.8+fabric.1.21.11.R2-hotfix2（跟进：长按幽灵使用 + 耳鸣资源）
+
+**源码级闭环，未实机验证。** 版本号未改（并入当前 `R2-hotfix2`）。
+任务来源是 `26.2(main)` 的跨分支 handoff（`docs/handoff/`，本分支当时没有那份目录）。
+**任务 C（换耳鸣消声注入点）按该线指示未做**：用户此前实测 1.21.11 消声与耳鸣声有效，
+`SoundEngineMixin` / `StunRingingSound` 的 `SoundSource` 均未改。
+
+- **A1** 新增 `UsePressGate` + `MinecraftUseRestartMixin`：右键没松手时，LR 物品用完后不再被原版 `startUseItem` 自动重开一轮。mixin 目标是具名方法 `startUseItem`（本分支 `MinecraftMixin` / `InteractKey` 已使用同一方法）。
+- **A2** `ThrowableItem#use` / `ConsumableItem#use` 改为两端都查各自冷却表；新增 `StuckUseRecovery`，可预燃投掷物越过 `prepare+life+20tick` 时本地 `stopUsingItem()`（不是 `releaseUsingItem()`）。
+- **B1** `assets/lrtactical/sounds.json` 已无顶层 `_comment`，未改。
+- **B2** 从 `26.2(main)` 取 `stun_ringing.ogg`、`deafened.png`、`blinded.png` 及 `scripts/verify_lr_assets.py` / `gen_effect_icons.py`。
+- **B3** `DeafenState#tick` 接住 `SoundManager#play` 的返回值。Yarn 1.21.11+build.4 确认该方法返回 `SoundSystem.PlayResult`（本分支 Mojmap 为 `SoundEngine.PlayResult`：`STARTED` / `STARTED_SILENTLY` / `NOT_STARTED`）；非 `STARTED` 时 WARN 一次。`isRingingSound` **保留**（本线仍靠它豁免消声，不能照搬 26.2 删掉该方法的改法）。
+
+**验证**：`python3 scripts/verify_lr_assets.py --strict` 已跑。`docs/verify_mixin_targets.py` 需要 loom 缓存的 1.21.11 merged jar，本环境没有。未 `./gradlew build`、未实机。发版前仍需编译、mixin 校验，以及 handoff 共用核心 §6 的实机清单（其中消声/耳鸣声是回归项，不得退化）。
+
+---
+
 ## 1.1.8+fabric.1.21.11.R2-hotfix2
 
 **回流：26.2 分支的 LR 0.4.3 战术同步（源提交 `630ef87`）**

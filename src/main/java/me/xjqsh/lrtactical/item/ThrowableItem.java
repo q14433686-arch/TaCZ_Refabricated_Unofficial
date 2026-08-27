@@ -126,33 +126,47 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
      * 两端<b>各自独立</b>地决定要不要 {@code startUsingItem}。
      *
      * <p>冷却的<b>判定</b>仍是纯服务端权威；客户端表现在由
-     * {@code ServerMessageCustomCooldown} 同步，仅用于图标遮罩。这里仍不能用客户端
-     * 预测结果拒绝 {@code startUsingItem}，否则网络延迟会让两端分叉。
-     * 因此旧写法必然分叉：
+     * {@code ServerMessageCustomCooldown} 同步。两端必须对「要不要进入使用」
+     * 做出相同决定，否则会分叉：
      * <ul>
      *   <li><b>服务端</b>：冷却中 → 不 {@code startUsingItem}；</li>
-     *   <li><b>客户端</b>：显示表可能因包延迟仍为空/已过期 → 照常
-     *       {@code startUsingItem}，进入“使用中”。</li>
+     *   <li><b>客户端</b>：若一律乐观放行 → 照常 {@code startUsingItem}。</li>
      * </ul>
      *
      * <p>客户端一旦进入「使用中」，{@code LivingEntity#startUsingItem} 开头那句
      * {@code if (isUsingItem()) return;}（字节码 offset 14-20 确认）
      * 就会<b>吞掉之后所有的右键</b>；而松手时服务端没有 {@code useItem} 可释放，
-     * 状态再也回不到一致，表现为「右键彻底没反应」。
+     * 状态再也回不到一致。本类 {@link #getUseDuration} 又返回 72000，
+     * 这轮凭空使用永远不会自己结束 ⇒ 进度条钉在末尾、姿势定格。
      *
      * <p>之所以看起来像「世界上只允许存在一颗手雷」，是因为示例配置里
      * {@code life_time}=60 tick(3秒) <b>远大于</b> {@code cooldown}=20 tick(1秒)：
      * 玩家总是在手雷还在空中时重试，而那时冷却其实早就结束了。
      * 真正的约束是<b>状态分叉</b>，与实体数量无关 —— 多人游戏同样会复现。
      *
-     * <h2>修法</h2>
-     * <b>只在服务端做冷却判定</b>，客户端一律放行。
-     * 这样两端都会 {@code startUsingItem}（动画一致），
-     * 而是否真的投出由服务端的 {@link #releaseUsing} 说了算 ——
-     * 那里本来就有同一份冷却校验，不会漏判。
+     * <h2>【2026-08-27 更正】修法改成「两端都查各自的表」</h2>
+     * 这里曾长期写着「<b>只在服务端做冷却判定</b>，客户端一律放行」，理由是
+     * 「客户端表可能因包延迟仍为空/已过期，拿它当门禁会让两端分叉」。
+     * <b>那个结论把方向搞反了</b> —— 它恰好制造了它想避免的分叉。
      *
-     * <p>这也是原版的通行做法：客户端只做乐观预测，权威判定始终在服务端。
-     * 当前客户端冷却表严格限定为 HUD 数据源，绝不进入本方法的行为门禁。
+     * <p>客户端那份表为什么可以当门禁（逐条核对，不是想当然）：</p>
+     * <ol>
+     *   <li><b>它确实在走</b>：{@code ModCapabilities#init} 把
+     *       {@code coolDowns(player).tick()} 挂在 {@code PlayerTickEvent.START}，
+     *       而 {@code PlayerMixin} 注入的是 {@code Player#tick} 的 HEAD、不分端 ——
+     *       客户端玩家每游戏刻也会走一次（这条至关重要：早先漏掉 tick 调用时
+     *       {@code isOnCooldown} 恒为 true，才造成过「一局只能用一次手雷」）。</li>
+     *   <li><b>偏差方向是安全的</b>：客户端的 {@code startTime} 取自收到
+     *       {@code ServerMessageCustomCooldown} 那一刻的本地 tickCount，
+     *       必然<b>不早于</b>服务端的起点 ⇒ 客户端只会「多拒一会儿」，
+     *       不会「少拒」。多拒一次的代价是玩家再按一下；少拒一次的代价是卡死。</li>
+     *   <li><b>窗口还会被显式收口</b>：服务端冷却到期时 {@code onCooldownEnded}
+     *       会再发一条 {@code duration=0} 的消息，客户端立刻 {@code removeCooldown}，
+     *       两边对齐，多拒窗口≈一个单向延迟。</li>
+     * </ol>
+     *
+     * <p>服务端仍是<b>唯一权威</b>：真正投不投出由 {@link #releaseUsing} 里那份
+     * 服务端判定说了算，这里客户端的判定只负责「别凭空起一轮」。
      */
     @Override
     public @NotNull InteractionResult use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
@@ -160,16 +174,13 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             return InteractionResult.FAIL;
         }
         ItemStack stack = player.getItemInHand(hand);
-        // 客户端同步表只供 HUD；网络延迟下不能作为行为门禁。
-        // 故客户端一律乐观放行，权威判定交给服务端。
-        boolean onCooldown = false;
-        if (!level.isClientSide()) {
-            CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
-            onCooldown = getThrowableIndex(stack)
-                    .map(index -> index.getData().getCooldownCategory())
-                    .map(coolDowns::isOnCooldown)
-                    .orElse(false);
-        }
+        // 两端都查各自那张表（服务端 SERVER_COOL_DOWNS / 客户端 CLIENT_COOL_DOWNS，
+        // 由 ModCapabilities#coolDowns 按端选）。判定依据与偏差方向见方法注释。
+        CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
+        boolean onCooldown = getThrowableIndex(stack)
+                .map(index -> index.getData().getCooldownCategory())
+                .map(coolDowns::isOnCooldown)
+                .orElse(false);
         if (!onCooldown) {
             player.startUsingItem(hand);
         }
