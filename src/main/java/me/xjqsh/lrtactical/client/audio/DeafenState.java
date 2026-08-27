@@ -20,6 +20,8 @@ public final class DeafenState {
     }
 
     private static StunRingingSound ringing;
+    /** 只在第一次播放失败时告警，之后闭嘴（否则会每个 tick 刷一行）。 */
+    private static boolean playFailureWarned;
 
     public static float getVolumeFactor(SoundSource source) {
         if (source == SoundSource.MASTER || source == SoundSource.MUSIC || source == SoundSource.UI) {
@@ -46,18 +48,29 @@ public final class DeafenState {
         }
         if (ringing == null || !mc.getSoundManager().isActive(ringing)) {
             ringing = new StunRingingSound();
-            mc.getSoundManager().play(ringing);
+            // 26.2 的 SoundManager#play 有返回值，而且失败路径里有一条【只在 DEBUG 级别
+            // 打日志】的静默丢弃（音量算出 0 就直接 NOT_STARTED）。耳鸣声听不见时
+            // 默认日志里什么都看不到 —— 上一轮就是因此排查了很久。
+            // 所以这里把结果接住，非 STARTED 就 WARN 一次（只一次，避免刷屏）。
+            var result = mc.getSoundManager().play(ringing);
+            if (result != net.minecraft.client.sounds.SoundEngine.PlayResult.STARTED
+                    && !playFailureWarned) {
+                playFailureWarned = true;
+                me.xjqsh.lrtactical.EquipmentMod.LOGGER.warn(
+                        "[LRTactical] Stun ringing sound did not start: result={} id={} "
+                                + "(check assets/lrtactical/sounds.json + sounds/stun_ringing.ogg "
+                                + "and the '{}' volume slider)",
+                        result, StunRingingSound.RINGING_ID,
+                        net.minecraft.sounds.SoundSource.PLAYERS.getName());
+            }
         }
     }
 
     // 【2026-08-27 删除】这里曾有一个 isRingingSound(SoundInstance)：靠 instanceof +
     // 反射猜 getLocation()/toString() 里的名字来判断「这是不是耳鸣声」，以便豁免消声。
     //
-    // 删掉的原因：消声的注入点已从 calculateVolume(SoundInstance) 移到
-    // calculateVolume(float, SoundSource)（26.2 里 play() 只走后者，旧注入点对新播放的
-    // 音效完全不生效 —— 详见 SoundEngineMixin 类注释的字节码证据），
-    // 而内层重载拿不到 SoundInstance，实例级豁免已无处可用。
-    //
-    // 现在耳鸣声的豁免完全依赖【它用 SoundSource.MASTER 构造】+ getVolumeFactor
-    // 对 MASTER/MUSIC/UI 的整体放行。这条约束写在 StunRingingSound 的类注释里。
+    // 现在不需要它了：消声注入点是 AbstractSoundInstance#getVolume()
+    // （见 SoundInstanceVolumeMixin 的类注释，里面有三次搬迁的完整字节码证据），
+    // 那里 this 就是音效实例，直接 instanceof StunRingingSound 即可豁免 ——
+    // 既不用反射猜名字，也不依赖耳鸣声用哪个 SoundSource。
 }

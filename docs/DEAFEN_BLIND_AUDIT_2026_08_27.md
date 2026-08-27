@@ -53,7 +53,11 @@ calculateVolume(SoundInstance)F 的调用方【只有两个】：
 （1.21.1 那条线的 `play` 走的是外层重载；1.21.1 的 jar 本地没有，
 这一句是从「同代码 + 用户实测有效」推出来的，未逐条核对。）
 
-### 修法（已在 26.2 落地）
+> **本节记录的是第一轮修法。当晚用户实测：消声生效了，但耳鸣声听不见 ——
+> 于是有了第二轮，最终落地的注入点是 `AbstractSoundInstance#getVolume()`。
+> 见文末「追加：耳鸣声听不见」一节。两轮的证据都保留，别只看前半段。**
+
+### 修法（第一轮，已被第二轮取代）
 
 注入点从外层重载改为**内层** `calculateVolume(FLnet/minecraft/sounds/SoundSource;)F`。
 内层才是 26.2 真正的单一收敛点：`play` 直接调它，`tickInGameSound` 与
@@ -62,21 +66,13 @@ calculateVolume(SoundInstance)F 的调用方【只有两个】：
 **不要两处都挂**：外层会转调内层，两处都乘系数等于压两次（0.01 × 0.01），
 耳鸣期间会近乎全静音。
 
-### 【硬性约束】耳鸣声必须继续用 `SoundSource.MASTER`
+### ~~【硬性约束】耳鸣声必须继续用 `SoundSource.MASTER`~~（**已作废**）
 
-内层重载只有 `(float, SoundSource)`，**拿不到 `SoundInstance`**，
-所以原来那个 `DeafenState#isRingingSound`（靠 `instanceof` + 反射猜名字）已无处可用，
-**已删除**。现在耳鸣声的豁免完全依赖：
-
-- `StunRingingSound` 用 `SoundSource.MASTER` 构造；
-- `DeafenState#getVolumeFactor` 对 `MASTER / MUSIC / UI` 整体放行。
-
-谁把 `MASTER` 改成 `PLAYERS`（**1.21.11 与 26.1.2 用的正是 `PLAYERS`**），
-耳鸣声就会被自己的消声压没。两处注释都已写明。
-
-`sounds.json` 里的 `"category": "player"` 不参与音量计算 ——
-26.2 的 `play()` 取的是 `SoundInstance#getSource()`（@177 → @189），
-两者不一致无害，故未改动该文件。
+> 第一轮把耳鸣声的豁免挂在「它用 `SoundSource.MASTER` 构造」上，并把这条写成硬约束。
+> **当晚实测：耳鸣声听不见了。** 该约束连同 MASTER 一起被第二轮撤掉，
+> 豁免改为在 `AbstractSoundInstance#getVolume()` 里用 `instanceof` 做实例级判断。
+> 保留这段作废记录，是为了说明「为什么不能把豁免押在 SoundSource 类别上」——
+> 见文末「追加：耳鸣声听不见」。
 
 ### 顺带记录：淡入淡出的既有设计（未改）
 
@@ -124,9 +120,15 @@ python3 scripts/gen_effect_icons.py --force          # 覆盖
 ### 顺带发现：耳鸣音源文件只有 26.2 有
 
 `assets/lrtactical/sounds/stun_ringing.ogg` **只存在于 26.2**，
-1.21.11 与 26.1.2 都只有 `sounds.json`（1.21.11）或连 `sounds.json` 都没有（26.1.2），
-没有 ogg。也就是说那两条线上「耳鸣声」本身也是缺资源的
-（1.21.11 上用户听到的「生效」更可能指**消声**那半边，而不是蜂鸣声）。
+1.21.11 与 26.1.2 都没有这个文件（1.21.11 只有 `sounds.json`，26.1.2 连 `sounds.json` 都没有）。
+
+> **【已撤回的推断】** 本文初版据此写了一句「1.21.11 上用户听到的『生效』更可能指消声
+> 那半边，而不是蜂鸣声」。**这句是错的**：用户随后实测 1.21.11，**确实有耳鸣声**。
+> 仓库里没有那个 ogg，但实机有声 —— 说明用户测试用的 1.21.11 客户端里的音源不来自
+> 本仓的工作树（可能是本地未提交的文件、资源包，或另一处构建产物）。
+> 我没法从这个仓库里查证是哪种，**不再猜测**；能确定的只有「1.21.11 实机有耳鸣声」这个事实。
+> 教训：仓库里缺文件 ≠ 用户实机缺文件，别拿前者否定后者的实测。
+
 ogg 是用户提供的 Freesound 素材，本轮**没有**跨分支复制 —— 见下面的移植清单。
 
 ---
@@ -165,6 +167,61 @@ ogg 是用户提供的 Freesound 素材，本轮**没有**跨分支复制 ——
 
 ---
 
+## 追加：耳鸣声听不见（同日第二轮）
+
+用户实测第一轮的结果：**消声生效了，但耳鸣蜂鸣声依旧听不见**；
+并且实测 1.21.11 **确实有耳鸣声**（推翻本文上面那句已撤回的推断）。
+
+### 定位
+
+26.2 `SoundEngine#play` 的字节码里有一条**只在 DEBUG 级别打日志**的静默丢弃分支：
+
+```
+@306  if (volume > 0) goto 355
+@310  SoundInstance.canStartSilent()
+@320  SoundSource.MUSIC
+@338  LOGGER.debug("Skipped playing sound {}, volume was zero.")
+@351  return NOT_STARTED          ← 默认日志级别下完全看不见
+```
+
+而音量 = `clamp(getVolume(),0,1) * clamp(options.getSoundSourceVolume(source),0,1)`
+（`calculateVolume(F,SoundSource)` 的实现），
+`Options#getSoundSourceVolume` = `soundSourceVolumes.get(source).get().floatValue()`
+（`getSoundSourceOptionInstance` 就是 `Objects.requireNonNull(map.get(source))`）。
+
+第一轮为了豁免消声，把耳鸣声改成了 `SoundSource.MASTER` —— 如果 MASTER 在这张表里
+取到 0，就会走进上面那条静默分支，表现正是「不报错、也不响」。
+**MASTER 在该表中的取值我没能从字节码定案**（`soundSourceVolumes` 的填充点在
+流/lambda 里，没继续挖）。但结论不依赖它：既然存在这条静默路径，
+就不该把耳鸣声押在 MASTER 上。1.21.11 用的是 `PLAYERS` 且实机可闻。
+
+### 最终修法（三处）
+
+1. **`StunRingingSound`：`SoundSource.MASTER` → `PLAYERS`**（与 1.21.11 一致、用户实测可闻）。
+   `sounds.json` 里的 `"category": "player"` 现在也与之一致了。
+2. **消声注入点搬到 `AbstractSoundInstance#getVolume()`**
+   （新 mixin `SoundInstanceVolumeMixin`，删除 `SoundEngineMixin`）。理由：
+   - **覆盖完整**：`play()` 在 @154 取 `getVolume()` 再交给 @189 的
+     `calculateVolume(F,SoundSource)`；`calculateVolume(SoundInstance)` 的实现也就是
+     `calculateVolume(getVolume(), getSource())`。三条路径（新播放 / tick 更新 / 改滑条）
+     全都读它，一处即全覆盖，且不会像「内外两层都挂」那样把系数乘两次。
+   - **拿得到实例**：`this` 就是音效实例，`instanceof StunRingingSound` 即可豁免 ——
+     不再依赖 SoundSource 是哪个类别，「改类别就把耳鸣压没」的隐雷随之消失。
+   - 已知边界：只覆盖 `AbstractSoundInstance` 的子类（原版与绝大多数模组）；
+     直接实现 `SoundInstance` 接口的音效不会被消声，可接受的降级。
+3. **让失败可见**：`DeafenState#tick` 接住 `SoundManager#play` 的返回值
+   （`PlayResult.STARTED / STARTED_SILENTLY / NOT_STARTED`），非 `STARTED` 就 **WARN 一次**。
+   上一轮之所以排查很久，正是因为唯一的线索是一条 DEBUG 日志。
+
+### 跨分支清单据此更新
+
+- **→ 26.1.2**：`SoundInstanceVolumeMixin`（而非第一轮的 `calculateVolume` 方案）；
+  它的 `StunRingingSound` 本来就是 `PLAYERS`，**不用改类别**。
+- **→ 1.21.11**：消声 mixin **仍然不要动**（该线实测有效）；
+  但 `DeafenState#tick` 的 PlayResult 告警值得回移 —— 1.21.1 的
+  `SoundManager#play` 是否有同样的返回值**未核对**，回移前先确认签名。
+- **→ 姊妹仓 26.2**：同 26.2 的三处。
+
 ## 验证状态（如实）
 
 **已核对**：26.2 `SoundEngine` 的 `play` / `calculateVolume` 调用图（两种独立方法互证）；
@@ -172,15 +229,31 @@ ogg 是用户提供的 Freesound 素材，本轮**没有**跨分支复制 ——
 三条分支 + 姊妹仓的资源文件清单；`SoundEngineMixin` 跨分支同源性；
 `StunRingingSound` 各分支的 `SoundSource`；新 PNG 的解码回读（18×18 RGBA、颜色全部已知）。
 
-**未做**：编译与实机（沙箱无 JDK、Maven/Fabric 源不可达）。
-所以「耳鸣期间所有声音都被压低、耳鸣声本身清晰」这一条**仍需实机确认**；
-1.21.1 的 `SoundEngine` 未逐条核对。
+**第二轮新增核对**：`SoundEngine#play` 全部分支（含 @306 的静默丢弃）、
+`Options#getSoundSourceVolume` / `getSoundSourceOptionInstance` 的实现、
+`AbstractSoundInstance#getVolume()F` 存在且为 public 非 final、
+`SoundManager#play` 返回 `SoundEngine$PlayResult`（常量 STARTED/STARTED_SILENTLY/NOT_STARTED）、
+`SoundSource` 常量表（MASTER/MUSIC/PLAYERS/UI 等均在）。
 
-## 复测清单（26.2）
+**未做**：编译与实机（沙箱无 JDK、Maven/Fabric 源不可达）。所以
+①「耳鸣声这次能听见」仍是**待实机确认**的结论，不是已验证事实；
+②`soundSourceVolumes` 里 MASTER 的取值没定案；
+③1.21.1 的 `SoundEngine` 未逐条核对。
+若这次仍听不见，日志里现在会有一行 `[LRTactical] Stun ringing sound did not start: result=...`
+——把那行贴出来就能直接定位（`NOT_STARTED` = 被引擎拒了，多半是资源或音量；
+没有这行 = 根本没走到播放，问题在 `DeafenState#tick` 或效果同步）。
 
-1. 扔闪光弹被震到：**枪声/脚步声/环境音应立刻明显变闷**（此前只有部分声音变闷）；
-2. 耳鸣蜂鸣声应当**清晰可闻**，且不随消声一起被压掉（若听不见，先查
-   `StunRingingSound` 是否还是 `SoundSource.MASTER`）；
+## 复测清单（26.2，第二轮之后的最终状态）
+
+1. 扔闪光弹被震到：**枪声/脚步声/环境音应立刻明显变闷**（第一轮已实测生效，
+   换注入点后需再确认没退化）；
+2. **耳鸣蜂鸣声应当清晰可闻**，且不随消声一起被压掉。
+   若仍听不见：看日志里有没有
+   `[LRTactical] Stun ringing sound did not start: result=...`
+   —— `NOT_STARTED` 说明被引擎拒了（资源/音量），**没有这行**说明根本没走到播放
+   （问题在 `DeafenState#tick` 或 DEAFENED 效果没同步到客户端）；
 3. 耳鸣结束前约 5 秒音量线性恢复，不应「啪」地一下跳回；
 4. 效果列表 / HUD 上 `blinded` 与 `deafened` 两个图标**都不是紫黑块**；
-5. 调音量滑条时不应出现异常（`refreshCategoryVolume` 也走同一个收敛点）。
+5. 调音量滑条时不应出现异常（三条路径现在共用 `getVolume()` 这一个收敛点）；
+6. 把「玩家」音量滑条拉到 0 时耳鸣声会消失 —— 这是改用 `PLAYERS` 的预期行为，
+   不是 bug（1.21.11 同样如此）。
