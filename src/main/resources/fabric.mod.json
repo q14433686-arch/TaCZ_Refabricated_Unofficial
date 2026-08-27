@@ -5,8 +5,8 @@
     "lrtactical"
   ],
   "version": "${version}",
-  "name": "[UNOFFICIAL] TaCZ Refabricated (1.21.11 R2-hotfix)",
-  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. R2-hotfix for Minecraft 1.21.11 keeps the R2 ammunition/gameplay hooks, Carry On workbench compatibility, and built-in JEI/REI ammo queries, and draws headshot debug boxes through Gizmos so F3+B no longer crashes. It is not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.1.21.11.R2-hotfix' build metadata so existing pack version requirements continue to work.",
+  "name": "[UNOFFICIAL] TaCZ Refabricated (1.21.11 R2-hotfix2)",
+  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. R2-hotfix2 for Minecraft 1.21.11 keeps the R2 ammunition/gameplay hooks, Carry On workbench compatibility, built-in JEI/REI ammo queries and the R2-hotfix Gizmos-based headshot debug boxes, and adds the LR 0.4.3 tactical sync backported from the 26.2 branch: cooked-fuse detonation timing, melee-only idle animation input, ambient-lit smoke clouds, display_offset/entity_transform content-pack transforms, a content-pack-driven consumable renderer, and the restored LRTactical item model JSONs. It is not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.1.21.11.R2-hotfix2' build metadata so existing pack version requirements continue to work.",
   "authors": [
     "Sh1roCu"
   ],

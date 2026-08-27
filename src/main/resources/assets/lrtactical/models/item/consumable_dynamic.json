@@ -1,0 +1,11 @@
+{
+  "_comment": [
+    "动态渲染（lrtactical:dynamic_item）的 base 模型 —— 只提供 particle 贴图与 gui_light，不提供任何几何。",
+    "【必须无 parent】理由与 melee_dynamic.json 完全相同（继承 minecraft:item/generated 会静默带入",
+    "firstperson_righthand 变换，叠加在本模块自己的第一人称摄像机变换之上，手持模型被转歪推远）。"
+  ],
+  "gui_light": "front",
+  "textures": {
+    "particle": "minecraft:item/potion"
+  }
+}

@@ -5,6 +5,38 @@
 
 ---
 
+## 1.1.8+fabric.1.21.11.R2-hotfix2
+
+**回流：26.2 分支的 LR 0.4.3 战术同步（源提交 `630ef87`）**
+
+全部改动落在 LRTactical 层，不碰瞄准镜架构；逐项取舍与适配论证见
+[`SYNC_LR_043_1_21_11_2026_08_26.md`](SYNC_LR_043_1_21_11_2026_08_26.md)。
+
+- 投掷物引信：预燃（cook）拉满后扔出不再「永不自爆」——实体超时判定改为
+  `life >= 0`，手上引爆门槛与 HUD 红条改为完整 `lifeTime`（官方 0.4.3，无 10% 余量）；
+  C4 / 遥控起爆（`life_time = -1`）的两道防线保留，遥控起爆语义不变。
+- 投掷物不再吃到近战的 `INPUT_IDLE`：静止拔销时 `unlock_safe` 不再被每 tick 掐断抖动
+  （官方手雷脚本用字面量 `"idle"` 表示取消拔销）。
+- 烟雾粒子由全亮改为环境光采样（天光/块光 + 邻格扫描 + 保底 2），夜里/洞内不再自发光；
+  覆写方法保留本分支的 `getLightColor` 名字（26.2 已改名 `getLightCoords`）。
+- 内容包新增 `display_offset` 与 `entity_transform` 支持（`DisplayTransform`），
+  `GSON` 注册 `Vector3f` 适配器；无内容包时飞行姿态与手持渲染不变。
+- 消耗品在内容包提供 display 时走 Bedrock 模型 + Lua 动画
+  （`ConsumableItemRenderer` 及配套 display/manager），并接入 `IItem` 扩展点。
+- 补齐此前缺失的 `assets/lrtactical/items/*.json` 与 `models/item/*.json`
+  （移植遗漏，非版本契约差异）：近战/投掷物/起爆器/消耗品自此才有物品模型定义，
+  无内容包时渲染原版占位图标，占位纹理全部复用原版材质。
+
+明确不含：Iris 高倍目镜裁剪、ADS bob 缩放（姊妹仓回退项）、`third_person_animation`
+（刻意降级，Gson 静默忽略该字段）。
+
+**验证状态（如实记录）**：本轮回流在编写环境中未编译、未实机验证（沙箱无 JDK、
+无 Maven/Mojang 网络）；已做逐文件与源提交比对及静态符号核对，
+且本批未新增/修改任何 mixin、未触碰任何 shader。发版前仍需
+`./gradlew build`（含 remap 阶段）、`docs/verify_*.py` 与上文档中的实机复测清单。
+
+---
+
 ## 1.1.8+fabric.1.21.11.R2-hotfix
 
 **修复：开启「显示爆头范围」后再打开碰撞箱会崩溃**

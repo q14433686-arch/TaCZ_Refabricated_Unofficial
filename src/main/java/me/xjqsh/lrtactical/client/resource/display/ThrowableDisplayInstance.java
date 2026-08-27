@@ -19,6 +19,7 @@ import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.Map;
 import java.util.Objects;
@@ -47,6 +48,8 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
     @Nullable
     private Identifier slotTexture;
     private ItemTransforms transforms = ItemTransforms.NO_TRANSFORMS;
+    private Vector3f displayOffset = new Vector3f();
+    private DisplayTransform.EntityTransform entityTransform = DisplayTransform.DEFAULT_ENTITY;
     private Map<String, Identifier> sounds;
 
     private ThrowableDisplayInstance() {
@@ -75,6 +78,22 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
 
     public ItemTransforms getTransforms() {
         return transforms;
+    }
+
+    /** 官方 0.4.3 的 {@code display_offset}，语义见 {@link MeleeDisplayInstance#getDisplayOffset()}。 */
+    public Vector3f getDisplayOffset() {
+        return displayOffset;
+    }
+
+    /**
+     * 官方 0.4.3 的 {@code entity_transform}：<b>飞行中</b>的手雷姿态。
+     *
+     * <p>只被 {@code ThrowableEntityRenderer} 读取，与手持渲染无关。
+     * 内容包没写时是 {@link DisplayTransform#DEFAULT_ENTITY}（横躺 Z90），
+     * 因此该 getter 永不返回 {@code null}。
+     */
+    public DisplayTransform.EntityTransform getEntityTransform() {
+        return entityTransform;
     }
 
     @Override
@@ -118,6 +137,8 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
         display.texture = DisplayPaths.toTexturePath(pojo.textureLocation);
         display.slotTexture = DisplayPaths.toTexturePath(pojo.slotTextureLocation);
         display.transforms = BlockTransformParser.parse(pojo.transforms);
+        display.displayOffset = Objects.requireNonNullElseGet(pojo.displayOffset, Vector3f::new);
+        display.entityTransform = DisplayTransform.parseEntityTransform(pojo.entityTransform);
         display.sounds = Objects.requireNonNullElseGet(pojo.sounds, Maps::newHashMap);
 
         return display;
@@ -136,6 +157,10 @@ public class ThrowableDisplayInstance implements ICustomSoundSupplier {
             Identifier slotTextureLocation,
             @SerializedName("transforms")
             JsonObject transforms,
+            @SerializedName("display_offset")
+            Vector3f displayOffset,
+            @SerializedName("entity_transform")
+            JsonObject entityTransform,
             @SerializedName("sounds")
             Map<String, Identifier> sounds
     ) {
