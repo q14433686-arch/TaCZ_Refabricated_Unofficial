@@ -117,42 +117,14 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
     /**
      * 右键开始「拔销」。
      *
-     * <h2>【本轮修复】为什么两端必须做出<b>相同</b>的决定</h2>
-     * 这里曾是「投出一颗后就再也投不出、必须等它炸掉」的根因。
+     * <p>这里必须让客户端与服务端对“能不能开始这一轮使用”做出尽量一致的决定。
+     * 否则客户端会先本地进入 using，服务端再因冷却拒绝，最终留下一个服务端并不存在的
+     * 假使用状态：读条卡死、姿势定格，直到玩家松手。</p>
      *
-     * <p>客户端 {@code MultiPlayerGameMode#useItem} 会<b>本地预测</b>执行一次
-     * {@code ItemStack#use}（字节码确认走 {@code startPrediction}），
-     * 服务端 {@code ServerPlayerGameMode#useItem} 再真正执行一次。
-     * 两端<b>各自独立</b>地决定要不要 {@code startUsingItem}。
-     *
-     * <p>冷却的<b>判定</b>仍是纯服务端权威；客户端表现在由
-     * {@code ServerMessageCustomCooldown} 同步，仅用于图标遮罩。这里仍不能用客户端
-     * 预测结果拒绝 {@code startUsingItem}，否则网络延迟会让两端分叉。
-     * 因此旧写法必然分叉：
-     * <ul>
-     *   <li><b>服务端</b>：冷却中 → 不 {@code startUsingItem}；</li>
-     *   <li><b>客户端</b>：显示表可能因包延迟仍为空/已过期 → 照常
-     *       {@code startUsingItem}，进入“使用中”。</li>
-     * </ul>
-     *
-     * <p>客户端一旦进入「使用中」，{@code LivingEntity#startUsingItem} 开头那句
-     * {@code if (isUsingItem()) return;}（字节码 offset 14-20 确认）
-     * 就会<b>吞掉之后所有的右键</b>；而松手时服务端没有 {@code useItem} 可释放，
-     * 状态再也回不到一致，表现为「右键彻底没反应」。
-     *
-     * <p>之所以看起来像「世界上只允许存在一颗手雷」，是因为示例配置里
-     * {@code life_time}=60 tick(3秒) <b>远大于</b> {@code cooldown}=20 tick(1秒)：
-     * 玩家总是在手雷还在空中时重试，而那时冷却其实早就结束了。
-     * 真正的约束是<b>状态分叉</b>，与实体数量无关 —— 多人游戏同样会复现。
-     *
-     * <h2>修法</h2>
-     * <b>只在服务端做冷却判定</b>，客户端一律放行。
-     * 这样两端都会 {@code startUsingItem}（动画一致），
-     * 而是否真的投出由服务端的 {@link #releaseUsing} 说了算 ——
-     * 那里本来就有同一份冷却校验，不会漏判。
-     *
-     * <p>这也是原版的通行做法：客户端只做乐观预测，权威判定始终在服务端。
-     * 当前客户端冷却表严格限定为 HUD 数据源，绝不进入本方法的行为门禁。
+     * <p>因此这里改成两端都查询各自那张冷却表：服务端查权威表，客户端查由
+     * {@code ServerMessageCustomCooldown} 驱动、并由 {@code ModCapabilities#init}
+     * 每 tick 推进的镜像表。客户端镜像表的偏差方向只会是“多拒一会儿”，
+     * 不会“少拒一次”导致再次分叉。</p>
      */
     @Override
     public @NotNull InteractionResult use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
@@ -160,16 +132,11 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             return InteractionResult.FAIL;
         }
         ItemStack stack = player.getItemInHand(hand);
-        // 客户端同步表只供 HUD；网络延迟下不能作为行为门禁。
-        // 故客户端一律乐观放行，权威判定交给服务端。
-        boolean onCooldown = false;
-        if (!level.isClientSide()) {
-            CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
-            onCooldown = getThrowableIndex(stack)
-                    .map(index -> index.getData().getCooldownCategory())
-                    .map(coolDowns::isOnCooldown)
-                    .orElse(false);
-        }
+        CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
+        boolean onCooldown = getThrowableIndex(stack)
+                .map(index -> index.getData().getCooldownCategory())
+                .map(coolDowns::isOnCooldown)
+                .orElse(false);
         if (!onCooldown) {
             player.startUsingItem(hand);
         }

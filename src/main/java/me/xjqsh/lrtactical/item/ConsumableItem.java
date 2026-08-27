@@ -66,12 +66,10 @@ public class ConsumableItem extends Item implements IConsumable, com.tacz.guns.a
             return InteractionResult.FAIL;
         }
         ItemStack stack = player.getItemInHand(hand);
-        if (!level.isClientSide()) {
-            CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
-            boolean onCooldown = getCoolDownId(stack).map(coolDowns::isOnCooldown).orElse(false);
-            if (onCooldown) {
-                return InteractionResult.FAIL;
-            }
+        CustomItemCoolDowns coolDowns = ModCapabilities.coolDowns(player);
+        boolean onCooldown = getCoolDownId(stack).map(coolDowns::isOnCooldown).orElse(false);
+        if (onCooldown) {
+            return InteractionResult.FAIL;
         }
         player.startUsingItem(hand);
         return InteractionResult.CONSUME;

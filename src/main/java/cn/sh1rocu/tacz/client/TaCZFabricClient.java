@@ -177,6 +177,13 @@ public class TaCZFabricClient implements ClientModInitializer {
         RenderTickEvent.EVENT.register(
                 me.xjqsh.lrtactical.client.event.LrTickAnimationEvent::tickAnimation);
 
+        // 先做兜底停用，再让 UsePressGate 在同一个 END tick 采到下降沿并上锁，
+        // 这样下一次 handleKeybinds 不会立刻把 LR 物品重开一轮假使用。
+        ClientTickEvents.END_CLIENT_TICK.register(
+                me.xjqsh.lrtactical.client.input.StuckUseRecovery::onClientTick);
+        ClientTickEvents.END_CLIENT_TICK.register(
+                me.xjqsh.lrtactical.client.input.UsePressGate::onClientTick);
+
         TextureStitchEvent.POST.register(ReloadResourceEvent::onTextureStitchEventPost);
 
         RenderTickEvent.EVENT.register(RenderCrosshairEvent::onRenderTick);
