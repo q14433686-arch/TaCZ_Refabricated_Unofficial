@@ -3,10 +3,13 @@ package me.xjqsh.lrtactical.api.animation;
 import cn.sh1rocu.tacz.api.extension.IMoveDistTracker;
 import com.tacz.guns.client.animation.statemachine.ItemAnimationStateContext;
 import me.xjqsh.lrtactical.api.item.IThrowable;
+import me.xjqsh.lrtactical.api.melee.MeleeAction;
+import me.xjqsh.lrtactical.init.ModCapabilities;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Optional;
@@ -127,6 +130,41 @@ public class BaseAnimationStateContext extends ItemAnimationStateContext {
     public boolean isInputJumping() {
         return Optional.ofNullable(Minecraft.getInstance().player)
                 .map(player -> player.input.keyPresses.jump()).orElse(false);
+    }
+
+    /**
+     * 某个近战攻击动作已连续进行的次数。
+     *
+     * <p>默认近战脚本（{@code assets/lrtactical/scripts/default_melee_state_machine.lua}）
+     * 用它在 {@code melee_1 / melee_2} 之间取模切换连击动画。</p>
+     *
+     * <p><b>这个方法的存在与否是运行期契约，不是编译期契约。</b>
+     * LuaJ 把本对象包成 {@code JavaInstance}，查不到同名成员时返回 {@code NIL}，
+     * 而 {@code NIL} 被当函数调用会抛 {@code LuaError}；调用链
+     * （{@code MeleeAttackKeys} → {@code AnimateGeoItemRenderer#triggerAnimation}
+     * → {@code AnimationStateMachine#trigger} → Lua）上<b>没有任何 catch</b>，
+     * 于是「Java 侧少一个方法」= 装了内容包的玩家一按左键轻击就炸。
+     * 本仓曾长期缺这个方法而编译全绿 —— 因此新增/改名脚本调用的方法前，
+     * 先跑 {@code python3 scripts/verify_lr_lua_context_api.py --strict}。</p>
+     *
+     * @param action 脚本里的动作字面量（{@code attack_left} / {@code attack_right}）
+     * @return 不是近战动作、或当前相机实体不是玩家时返回 0
+     */
+    public int getActionCount(String action) {
+        MeleeAction meleeAction = switch (action) {
+            case "attack_left" -> MeleeAction.LEFT;
+            case "attack_right" -> MeleeAction.RIGHT;
+            default -> null;
+        };
+        if (meleeAction == null) {
+            return 0;
+        }
+        return processCameraEntity(entity -> {
+            if (entity instanceof Player player) {
+                return ModCapabilities.combatProperties(player).getActionCount(meleeAction);
+            }
+            return 0;
+        }).orElse(0);
     }
 
     /**

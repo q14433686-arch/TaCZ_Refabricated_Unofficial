@@ -114,6 +114,8 @@ public final class ModEntitiesRender {
     public static void registerItemRenderers() {
         register(me.xjqsh.lrtactical.init.ModItems.MELEE);
         register(me.xjqsh.lrtactical.init.ModItems.THROWABLE);
+        // 官方 0.4.3：消耗品也有自己的 Bedrock/Lua 渲染通道
+        register(me.xjqsh.lrtactical.init.ModItems.CONSUMABLE);
     }
 
     private static void register(net.minecraft.world.item.Item item) {

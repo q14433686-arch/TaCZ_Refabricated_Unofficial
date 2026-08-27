@@ -4,8 +4,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonPrimitive;
 import com.tacz.guns.GunMod;
+import me.xjqsh.lrtactical.client.resource.display.ConsumableDisplayInstance;
 import me.xjqsh.lrtactical.client.resource.display.MeleeDisplayInstance;
 import me.xjqsh.lrtactical.client.resource.display.ThrowableDisplayInstance;
+import me.xjqsh.lrtactical.client.resource.manager.ConsumableDisplayManager;
 import me.xjqsh.lrtactical.client.resource.manager.MeleeDisplayManager;
 import me.xjqsh.lrtactical.client.resource.manager.ThrowableDisplayManager;
 import net.fabricmc.api.EnvType;
@@ -24,7 +26,7 @@ import java.util.function.Consumer;
  * LRTactical 的<b>客户端</b>资源管理器：所有 display 数据缓存在此。
  *
  * <p>结构对齐 TACZ 的 {@code ClientAssetsManager}，但只管 LRTactical 自己的
- * {@code display/melee} 与 {@code display/throwable} 两类。
+ * {@code display/melee}、{@code display/throwable} 与 {@code display/consumable} 三类。
  * 模型（{@code geo_models}）、动画（{@code animations}）、Lua 脚本（{@code scripts}）
  * <b>刻意不重复加载</b> —— 直接复用 TACZ 的管理器，理由见下。
  *
@@ -68,6 +70,14 @@ public enum LrClientAssetsManager {
      * 外部包无法实例化；transforms 改由 {@code BlockTransformParser} 在
      * {@code create()} 阶段解析，POJO 里存原始 {@code JsonObject}。
      * 详见 {@link MeleeDisplayInstance} 的类注释。
+     *
+     * <p><b>但必须注册 {@code Vector3f}</b>：官方 0.4.3 的 {@code display_offset}
+     * 是一个三元素数组，反序列化目标类型是 {@code org.joml.Vector3f}。
+     * 不注册适配器时 Gson 会退化到反射构造 —— joml 的 {@code Vector3f} 有公开无参构造
+     * 与公开 {@code x/y/z} 字段，理论上也能凑合，但那依赖 joml 的内部字段名，
+     * 且与 TACZ 自己的 display 解析走的是两套规则。这里复用 TACZ 的
+     * {@code Vector3fSerializer}（它同时实现 {@code JsonDeserializer} 与
+     * {@code JsonSerializer}），与 TACZ 侧行为完全一致。
      */
     public static final Gson GSON = new GsonBuilder()
             .setStrictness(com.google.gson.Strictness.LENIENT)
@@ -77,6 +87,8 @@ public enum LrClientAssetsManager {
             .registerTypeAdapter(Identifier.class,
                     (com.google.gson.JsonSerializer<Identifier>) (src, type, ctx) ->
                             new JsonPrimitive(src.toString()))
+            .registerTypeAdapter(org.joml.Vector3f.class,
+                    new com.tacz.guns.client.resource.serialize.Vector3fSerializer())
             .create();
 
     /**
@@ -108,6 +120,8 @@ public enum LrClientAssetsManager {
     private ThrowableDisplayManager throwableDisplay;
     @Nullable
     private MeleeDisplayManager meleeDisplay;
+    @Nullable
+    private ConsumableDisplayManager consumableDisplay;
 
     /**
      * 建立并注册两个 display listener。
@@ -125,9 +139,11 @@ public enum LrClientAssetsManager {
         if (throwableDisplay == null) {
             throwableDisplay = new ThrowableDisplayManager(GSON);
             meleeDisplay = new MeleeDisplayManager(GSON);
+            consumableDisplay = new ConsumableDisplayManager(GSON);
         }
         register.accept(throwableDisplay);
         register.accept(meleeDisplay);
+        register.accept(consumableDisplay);
     }
 
     @Nullable
@@ -154,6 +170,18 @@ public enum LrClientAssetsManager {
         return findUniqueMeleeDisplayByPath(id);
     }
 
+    @Nullable
+    public ConsumableDisplayInstance getConsumableDisplay(Identifier id) {
+        if (consumableDisplay == null) {
+            return null;
+        }
+        ConsumableDisplayInstance exact = consumableDisplay.getData(id);
+        if (exact != null) {
+            return exact;
+        }
+        return findUniqueConsumableDisplayByPath(id);
+    }
+
     /**
      * 兼容部分组合枪包把 LRTactical 的 data 与 assets 放在不同命名空间的旧打包方式。
      *
@@ -170,6 +198,22 @@ public enum LrClientAssetsManager {
     private ThrowableDisplayInstance findUniqueThrowableDisplayByPath(Identifier id) {
         ThrowableDisplayInstance match = null;
         for (var entry : throwableDisplay.getAllData().entrySet()) {
+            if (!entry.getKey().getPath().equals(id.getPath())) {
+                continue;
+            }
+            if (match != null) {
+                return null;
+            }
+            match = entry.getValue();
+        }
+        return match;
+    }
+
+    /** 消耗品 display 的 path-only 唯一匹配回退，规则与投掷物完全一致（含「不唯一则不回退」）。 */
+    @Nullable
+    private ConsumableDisplayInstance findUniqueConsumableDisplayByPath(Identifier id) {
+        ConsumableDisplayInstance match = null;
+        for (var entry : consumableDisplay.getAllData().entrySet()) {
             if (!entry.getKey().getPath().equals(id.getPath())) {
                 continue;
             }

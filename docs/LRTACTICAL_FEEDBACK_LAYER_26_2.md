@@ -21,7 +21,9 @@
 `GuiGraphicsExtractor`：
 
 - 白条：准备/使用进度；
-- 红条：可预燃投掷物的引信进度，分母与本移植“90% life 时手上爆炸”的真实逻辑一致；
+- 红条：可预燃投掷物的引信进度。分母与 `ThrowableItem#onUseTick` 的引爆阈值**必须同步**：
+  2026-08-27 同步官方 0.4.3 后两边都改成完整 `life_time`（此前是 `life_time * 0.9`，
+  见 `docs/SYNC_26_2_FROM_RENOVATED_2026_08_27.md`）；
 - 绿条与文本：toggle consumable；
 - 近战冷却恢复进度；
 - 潜行减速投掷提示没有复制原作 ARR 箭头贴图，改用四行 `fill` 画几何箭头。

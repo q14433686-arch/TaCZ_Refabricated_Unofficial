@@ -8,12 +8,15 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.LightLayer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 烟雾弹的烟雾粒子 —— 大体积、不受重力、无碰撞、全亮度。
+ * 烟雾弹的烟雾粒子 —— 大体积、不受重力、无碰撞，按环境光采样（下限 2）。
  *
  * <h2>26.2 移植要点：粒子系统整体重组（均字节码确认）</h2>
  * <table border="1">
@@ -66,19 +69,53 @@ public class SmokeCloudParticle extends SingleQuadParticle {
     }
 
     /**
-     * 全亮度：烟雾不该在暗处变黑，否则夜战时形同虚设。
+     * 环境光采样（官方 0.4.3）：天光/块光各自下限 2；两者都 ≤2 时再扫六个邻格取较大值。
      *
-     * <p><b>26.2 改名</b>：上游覆写的是 {@code getLightColor(float)}，
-     * 但 26.2 的 {@code Particle} 上<b>只有 {@code getLightCoords(float)}</b>
-     * （字节码逐方法核对确认，全类无 {@code getLightColor}）。
-     * 返回值 15728880 = 0xF000F0，即天光/块光都拉满。
+     * <p><b>为什么不再返回 0xF000F0</b>：旧移植把烟雾写成全亮度，理由是「暗处不该变黑」。
+     * 代价是夜里/室内的烟幕自己发光，看起来像一团白雾贴在画面上，
+     * 与官方观感不符 —— 官方 0.4.3 用的正是「采环境光 + 下限 2」这套折中：
+     * 暗处仍然看得见烟，但不会自发光。</p>
      *
-     * <p>它在 {@code Particle} 上是 <b>protected</b>（字节码确认），
-     * 这里保持同样的可见性 —— 放宽成 public 虽然合法，但没有理由对外暴露。
+     * <p><b>26.2 方法名</b>：上游覆写的是 {@code getLightColor(float)}，
+     * 26.2 的 {@code Particle} 上只有 {@code getLightCoords(float)}
+     * （本仓已核对：{@code protected int getLightCoords(F)I}），且在 {@code Particle}
+     * 上是 <b>protected</b> —— 这里保持同样的可见性。</p>
+     *
+     * <p><b>为什么不用 {@code LevelRenderer.getLightColor}</b>：26.2 该重载的签名已迁走。
+     * 改为自己打包：{@code sky << 20 | block << 4} 就是原版 light coords 的排布，
+     * 亮度值来自 {@code Level#getBrightness(LightLayer, BlockPos)}
+     * （该方法不在 {@code Level} 上声明，是 {@code BlockAndLightGetter} 的默认方法，
+     * 经 {@code LevelAccessor → LevelReader} 继承而来；参数顺序是先 {@code LightLayer}
+     * 后 {@code BlockPos}，均已按本地 26.2 jar 字节码核对）。</p>
      */
     @Override
     protected int getLightCoords(float partialTick) {
-        return 15728880;
+        BlockPos pos = BlockPos.containing(this.x, this.y, this.z);
+        int packed = packedLight(pos);
+        int sky = packed >> 20 & 15;
+        int block = packed >> 4 & 15;
+        if (sky <= 2) {
+            sky = 2;
+        }
+        if (block <= 2) {
+            block = 2;
+        }
+        // 两个通道都贴在下限时才扫邻格：烟幕中心往往是暗格，但边缘常紧邻亮格，
+        // 取邻格最大值能让烟不至于在暗处整块发黑。
+        if (sky <= 2 && block <= 2) {
+            for (Direction direction : Direction.values()) {
+                int neighbor = packedLight(pos.relative(direction));
+                sky = Math.max(sky, neighbor >> 20 & 15);
+                block = Math.max(block, neighbor >> 4 & 15);
+            }
+        }
+        return sky << 20 | block << 4;
+    }
+
+    private int packedLight(BlockPos pos) {
+        int block = this.level.getBrightness(LightLayer.BLOCK, pos);
+        int sky = this.level.getBrightness(LightLayer.SKY, pos);
+        return sky << 20 | block << 4;
     }
 
     @Override

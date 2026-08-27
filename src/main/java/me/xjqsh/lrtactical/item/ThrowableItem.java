@@ -195,7 +195,12 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             return false;
         }
 
-        // 预燃（cook）：按住越久，飞出去后剩余引信越短
+        // 预燃（cook）：按住越久，飞出去后剩余引信越短。
+        //
+        // 官方 0.4.3：夹到 0 就是「立刻炸」，不是「永不炸」。
+        // 实体侧的超时判定是 life >= 0 && tickCount >= life（见 ThrowableItemEntity#tick），
+        // 只有 life_time = -1 的遥控物（本仓 data/lrtactical/index/throwable/test_c4.json）
+        // 才会跳过超时引爆。两处必须一起改：只改本行会让满预燃的手雷落地后永不自爆。
         if (index.getData().isCookable()) {
             int cooked = ticksUsingItem - index.getData().getPrepareTime();
             throwable.setLife(Math.max(throwable.getLife() - cooked, 0));
@@ -280,10 +285,19 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             if (!data.isCookable()) {
                 return;
             }
-            // 留 10% 余量：手里预燃太久就直接在手上炸
-            int maxCookTime = (int) (data.getEntityData().getLifeTime() * 0.9);
+            // 官方 0.4.3：预燃满 prepare + 完整 lifeTime 才在手上炸。
+            //
+            // 旧移植留了 10% 余量（life * 0.9）。HUD 进度条当时用的是同一个 0.9 分母，
+            // 两者彼此自洽，但都与内容包 JSON 里写的 life_time 不一致 ——
+            // 手里能预燃的时长比面板值少 10%。改成完整 lifeTime 后，
+            // 「按住到进度条满」正好等于「剩余引信 0」，与官方 0.4.3 同义。
+            //
+            // 【26.2 顺序不能照抄官方】官方是 throw-then-stop；本仓必须先
+            // stopUsingItem 再 onThrow（否则无限递归 + 无限生成手雷，
+            // 完整调用链见本方法上方注释），所以蓄力 tick 数要提前取好显式传下去。
             int ticksUsingItem = entity.getTicksUsingItem();
-            if (ticksUsingItem >= data.getPrepareTime() + maxCookTime && !level.isClientSide()) {
+            if (ticksUsingItem >= data.getPrepareTime() + data.getEntityData().getLifeTime()
+                    && !level.isClientSide()) {
                 // 顺序至关重要：必须先 stopUsingItem 再 onThrow，理由见方法注释。
                 // 反过来（或改用 releaseUsingItem）会导致无限递归 + 无限生成手雷。
                 //

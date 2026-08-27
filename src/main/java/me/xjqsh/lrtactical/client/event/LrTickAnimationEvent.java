@@ -4,6 +4,7 @@ import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
+import me.xjqsh.lrtactical.client.renderer.item.ConsumableItemRenderer;
 import me.xjqsh.lrtactical.client.renderer.item.MeleeItemRenderer;
 import me.xjqsh.lrtactical.client.renderer.item.ThrowableItemRendererWrapper;
 import net.fabricmc.api.EnvType;
@@ -13,7 +14,8 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * 驱动 LRTactical 物品的<b>待机 / 行走 / 奔跑</b>动画状态转移。
+ * 驱动 LRTactical 物品的动画状态转移：<b>移动输入只给近战</b>，
+ * 第三人称的 {@code visualUpdate} 覆盖近战 / 投掷物 / 消耗品三类。
  *
  * <p>与 TACZ 的 {@code TickAnimationEvent} 是同一件事的两份实现 ——
  * 之所以不能合并，是因为那一份的入口写死了
@@ -44,7 +46,29 @@ public final class LrTickAnimationEvent {
     }
 
     /**
-     * 每客户端 tick：按玩家移动状态推进主手物品的动画状态机。
+     * 每客户端 tick：按玩家移动状态推进<b>近战</b>状态机。
+     *
+     * <p>官方 LR 的 {@code ClientEventsHandler#tickAnimation} 只给
+     * {@code MeleeItemRenderer} / {@code FlashShieldItemRenderer} 发
+     * {@code INPUT_IDLE/WALK/RUN}。本仓战略遗弃 flash_shield（见
+     * {@code docs/LRTACTICAL_FEEDBACK_LAYER_26_2.md}），因此这里只驱动近战。</p>
+     *
+     * <h2>【本轮修复】为什么不能把同一组输入打给投掷物</h2>
+     * 官方手雷脚本把「取消拔销」写成 {@code trigger("idle")} / {@code input == "idle"}，
+     * 而 {@link GunAnimationConstant#INPUT_IDLE} 的字面量正是 {@code "idle"}。
+     * 旧移植对<b>所有</b> LR 物品每 tick 广播一次移动输入，于是玩家站着不动时：
+     * 每 tick 补一发 {@code INPUT_IDLE} → 正在播的 {@code unlock_safe} 被掐掉退回 idle
+     * → {@code isUsing()} 仍为 true 又立刻 {@code start_use} —— 表现为<b>静止时拉栓反复抖动</b>，
+     * 一走动（改发 walk/run）反而正常。本仓自带的
+     * {@code default_grenade_state_machine.lua} 同样把 {@code idle} 用作取消分支，
+     * 因此这个 bug 在 Fabric 侧同样存在，不是姊妹仓独有。
+     *
+     * <p>投掷物的状态推进由 {@code ThrowableItemRendererWrapper} 的
+     * {@code renderFirstPerson}（每帧 {@code stateMachine.update()}）/ 下面第三人称那条
+     * {@code visualUpdate} 路径负责，不需要移动输入。
+     * <b>取消拔销也不会因此失效</b>：手雷脚本的 {@code using.update} 自己会在
+     * {@code not context:isUsing()} 时 {@code trigger("idle")}，取消信号是脚本内部产生的，
+     * 不依赖外部广播 —— 外部广播的那一发恰恰是多余且有害的那一发。</p>
      */
     public static void tickAnimation(Minecraft client) {
         LocalPlayer player = client.player;
@@ -52,11 +76,8 @@ public final class LrTickAnimationEvent {
             return;
         }
         ItemStack mainHandItem = player.getMainHandItem();
-        if (!isLrAnimatedItem(mainHandItem)) {
-            return;
-        }
         var renderer = BuiltinItemRendererRegistry.INSTANCE.get(mainHandItem.getItem());
-        if (!(renderer instanceof AnimateGeoItemRenderer<?, ?> geoRenderer)) {
+        if (!(renderer instanceof MeleeItemRenderer geoRenderer)) {
             return;
         }
         var stateMachine = geoRenderer.getStateMachine(mainHandItem);
@@ -113,15 +134,18 @@ public final class LrTickAnimationEvent {
     }
 
     /**
-     * 只处理本模块的物品。
+     * 只处理本模块的物品。<b>仅第三人称那条 {@code visualUpdate} 路径用它</b> ——
+     * 上面的移动输入路径已收窄成只认近战（理由见该方法的注释）。
      *
-     * <p>按<b>渲染器类型</b>判定而不是物品类型：这样将来新增消耗品/防爆盾时，
-     * 只要它们复用同一套渲染器基类就自动纳入，不必回头改这里；
+     * <p>按<b>渲染器类型</b>判定而不是物品类型：将来新增防爆盾之类的物品时，
+     * 只要它复用同一套渲染器基类就自动纳入，不必回头改这里；
      * 同时也天然排除了 TACZ 自己的枪械（它们由 TACZ 的 {@code TickAnimationEvent} 负责，
      * 两边都处理会导致状态机<b>每 tick 被 trigger 两次</b>）。
      */
     private static boolean isLrAnimatedItem(ItemStack stack) {
         var renderer = BuiltinItemRendererRegistry.INSTANCE.get(stack.getItem());
-        return renderer instanceof MeleeItemRenderer || renderer instanceof ThrowableItemRendererWrapper;
+        return renderer instanceof MeleeItemRenderer
+                || renderer instanceof ThrowableItemRendererWrapper
+                || renderer instanceof ConsumableItemRenderer;
     }
 }
