@@ -20,6 +20,15 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue SCOPE_OCULAR_RING_FIX;
     /** 低倍/红点通道（含组合镜低倍组）激活时，镜身不做目镜掩码裁剪（上游 renderSight 无条件绘制镜身）。默认<b>开启</b>。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_SIGHT_CLIP_FIX;
+    /**
+     * 低倍/红点通道激活时，<b>准星仍然</b>被约束在目镜投影内（reticle-only mask）。默认<b>开启</b>。
+     *
+     * <p>与 {@link #SCOPE_SIGHT_CLIP_FIX} 是两件独立的事：上游 {@code renderSight}
+     * 不裁镜身，但<b>照样</b>调 {@code renderOcularStencil} + {@code renderDivisionOnly}
+     * （{@code stencilFunc(GL_EQUAL, i+1)}）把分划限制在目镜区域内。
+     * 关掉本开关 = 回到「低倍通道整帧不建掩码、准星可溢出镜片」的旧行为。</p>
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_SIGHT_RETICLE_CLIP;
     public static ForgeConfigSpec.BooleanValue GUN_HUD_ENABLE;
     public static ForgeConfigSpec.BooleanValue KILL_AMOUNT_ENABLE;
     public static ForgeConfigSpec.DoubleValue KILL_AMOUNT_DURATION_SECOND;
@@ -247,6 +256,18 @@ public class RenderConfig {
                         "draws the sight body unconditionally; our clip nibbled the sight's own inner frame.",
                         "Default on; set false to restore legacy clipping on sights too.")
                 .define("ScopeSightClipFix", true);
+
+        // 【案例⑨ 第四轮】ScopeSightClipFix 只该关掉【镜身】裁剪，却顺带关掉了掩码本身，
+        // 于是低倍/红点通道的准星失去目镜约束（上游 renderSight 仍然 renderOcularStencil
+        // + renderDivisionOnly(stencilFunc EQUAL i+1)）。两个消费者拆开后，本开关单独控制
+        // 「低倍通道是否仍建 reticle-only 掩码」。false = 旧行为（低倍准星可溢出镜片）。
+        SCOPE_SIGHT_RETICLE_CLIP = builder
+                .comment("[FIX] Keep constraining the reticle inside the ocular while aiming through a",
+                        "low-power/red-dot sight (reticle-only mask, body left unclipped).",
+                        "Upstream 1.21.1 renderSight still writes the ocular stencil and draws the",
+                        "division with stencilFunc(GL_EQUAL, i+1); only the body clip is skipped there.",
+                        "Default on; set false to restore the uncontained low-power reticle.")
+                .define("ScopeSightReticleClip", true);
 
         builder.comment("Whether or not to display the gun's HUD");
         GUN_HUD_ENABLE = builder.define("GunHUDEnable", true);

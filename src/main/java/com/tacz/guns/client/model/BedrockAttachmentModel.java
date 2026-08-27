@@ -569,9 +569,24 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // 否则腰射状态下瞄具中间就是个洞，这不是上游的行为。
         // 上游同样把裁剪半径乘上 aimingProgress（renderOcularAndDivision:
         // `rad *= getClientAimingProgress(...)`），进度为 0 时半径归零 = 不裁剪。
-        boolean maskable = transformType != null && transformType.firstPerson()
+        //
+        // 【案例⑨ 第四轮 · 掩码有两个独立消费者，必须分开判定】
+        //   ① 准星约束（reticle containment）：低倍 sight 与高倍筒镜【都要】；
+        //   ② 镜外视模裁剪（镜身/枪身/配件/火光）：【只有】高倍筒镜通道要。
+        // 第二轮之前这里只有一个 maskable 同时喂给两者，于是 ScopeSightClipFix
+        // 关掉镜身裁剪时，把「建掩码」和「准星反向裁剪」一起关掉了 ——
+        // 低倍镜准星因此失去目镜约束（用户报的「准星被限制在目镜内失效」）。
+        // 上游 renderSight 的原文（archive/SCOPE_UPSTREAM_TRUTH §4，逐行核对）：
+        //     renderOcularStencil(...);   // 目镜写模板     ← 照样做
+        //     renderDivisionOnly(...);    // stencilFunc(EQUAL, i+1) 画分划 ← 照样裁
+        //     if (scopeBodyPath != null) renderTempPart(...);  // 镜身无条件画 ← 只有这步不裁
+        boolean reticleMaskable = RenderConfig.SCOPE_MASK_ENABLE != null
+                && RenderConfig.SCOPE_MASK_ENABLE.get()
+                && transformType != null && transformType.firstPerson()
                 && !ocularParts.isEmpty()
                 && currentAimingProgress() > AIM_CLIP_START;
+        boolean bodyMaskable = reticleMaskable;
+
         // 【案例⑨ 第二轮 · sight（低倍/红点通道）激活时镜身不做掩码裁剪】
         // 上游事实（SCOPE_UPSTREAM_TRUTH §4，逐行核对 renderSight / renderBoth）：
         // 低倍链【没有】圆形 INVERT 模板、scope_body 无条件绘制；组合镜只对筒镜组
@@ -580,11 +595,19 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // 缺口——用户报告的慢性病灶「低倍镜（含组合镜低倍组）的边的内部某些部分
         // 被错误裁切」即此。sight 组目镜本就被 shouldDrawOcularBlackout 恒隐藏
         // （恒掏空 = 透视窗），撤掉镜身裁剪后观感 = 上游 r34 语义：窗内是世界、
-        // 窗框完整，两者都不依赖掩码。开关 false = 旧行为（sight 也裁）。
-        if (maskable && RenderConfig.SCOPE_SIGHT_CLIP_FIX != null
+        // 窗框完整。开关 false = 旧行为（sight 也裁镜身）。
+        boolean sightChannel = RenderConfig.SCOPE_SIGHT_CLIP_FIX != null
                 && RenderConfig.SCOPE_SIGHT_CLIP_FIX.get()
-                && !activeGroupIsScope()) {
-            maskable = false;
+                && !activeGroupIsScope();
+        if (sightChannel) {
+            bodyMaskable = false;
+            // 上游 renderSight 仍然把分划限制在目镜模板内，所以 sight 通道【照样】
+            // 建掩码、照样反向裁剪准星（reticle-only mask）。
+            // 开关 ScopeSightReticleClip=false 才回到「整帧不建掩码」的旧行为。
+            if (RenderConfig.SCOPE_SIGHT_RETICLE_CLIP == null
+                    || !RenderConfig.SCOPE_SIGHT_RETICLE_CLIP.get()) {
+                reticleMaskable = false;
+            }
         }
         // 光影开启时禁用 26.2 的离屏掩码裁剪，退回普通瞄具几何。
         //
@@ -593,10 +616,18 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // 两者同时启用时，镜内会缺失经验球、蜘蛛/末影人眼睛等自发光层与雾效，甚至镜身本身被裁没。
         // 这不是崩溃类问题，但比“镜内见到镜筒内壁”的降级更糟，所以有光影时先走安全回退。
         boolean shaderMaskUnsafe = IrisCompat.shouldDisableScopeMaskUnderShaderPack();
-        if (maskable && !shaderMaskUnsafe) {
+        if (shaderMaskUnsafe) {
+            reticleMaskable = false;
+            bodyMaskable = false;
+        }
+        if (reticleMaskable) {
             registerOcularMaskGeometry(poseStack);
-        } else if (shaderMaskUnsafe) {
-            maskable = false;
+            if (bodyMaskable) {
+                // 其余视模组件（枪身 / 非瞄具配件 / 枪口火光）是【另外】查这个开关的，
+                // 与「本帧有没有几何」分开 —— 否则低倍那张 reticle-only 掩码会把
+                // 枪身在镜片投影内啃出洞来。
+                ScopeMaskGeometry.enableViewmodelClip();
+            }
         }
 
         // 目镜（ocular*）参与 super.submit 时，要按上游规则决定<b>画不画黑片</b>。
@@ -634,9 +665,10 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // RenderType 重画；普通 opaque cutout 天然回写深度（邻链的「重写入镜框深度
         // 防水/雾/透明粒子覆盖」语义在本架构免费成立，无需额外步骤）。
         // 开关 ScopeOcularRingFix = false 即整体回到旧行为（摘除+重画全部跳过）。
-        // 无 ocular_ring 骨骼的第三方模型、腰射、第三人称、Iris 回退路径（maskable=false）
-        // 均不受影响——此时 detaching=false，走原来的主提交。
-        boolean detachOcularRing = maskable && ocularRingPart != null && ocularRingPart.visible
+        // 无 ocular_ring 骨骼的第三方模型、腰射、第三人称、Iris 回退路径与低倍 sight
+        // 通道均不受影响——此时 bodyMaskable=false，走原来的主提交
+        // （摘环是为了不让【镜身裁剪】啃掉环的内圈，镜身不裁就无需摘）。
+        boolean detachOcularRing = bodyMaskable && ocularRingPart != null && ocularRingPart.visible
                 && RenderConfig.SCOPE_OCULAR_RING_FIX != null && RenderConfig.SCOPE_OCULAR_RING_FIX.get();
         List<BedrockPart> hiddenOculars = new ArrayList<>();
         if (transformType != null && transformType.firstPerson()) {
@@ -652,7 +684,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         }
         try {
             super.submit(poseStack, transformType, collector,
-                    resolveBodyRenderType(renderType, texture, maskable), light, overlay);
+                    resolveBodyRenderType(renderType, texture, bodyMaskable), light, overlay);
         } finally {
             if (detachOcularRing) {
                 ocularRingPart.visible = true;
@@ -682,8 +714,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 //
                 // 注意方向别搞反：镜身是「盖到就 discard」，准星是「没盖到才 discard」。
                 // 两者共用同一张掩码、同一份 shader，靠 SCOPE_MASK_INVERT 区分。
-                RenderType reticleType = resolveReticleRenderType(renderType, texture, maskable);
-                RenderType illuminatedReticleType = resolveIlluminatedReticleRenderType(renderType, texture, maskable);
+                RenderType reticleType = resolveReticleRenderType(renderType, texture, reticleMaskable);
+                RenderType illuminatedReticleType =
+                        resolveIlluminatedReticleRenderType(renderType, texture, reticleMaskable);
                 // maskActive：本帧准星是否真的走了反向裁剪。
                 // EtchedReticleRenderer 依赖它决定敢不敢画 division（内含大块遮光板）。
                 boolean maskActive = reticleType != renderType;
@@ -809,12 +842,14 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      *
      * @param original 调用方给的原始 RenderType（{@code RenderTypes.entityCutout(贴图)}）
      * @param texture  该瞄具的贴图；为 {@code null} 时无法构造等价的裁剪版，直接退回
-     * @param maskable 本帧是否登记了目镜几何（第一人称 + 该瞄具确实有目镜）
+     * @param bodyMaskable 本帧【镜身】是否走掩码裁剪（第一人称 + 该瞄具确实有目镜
+     *                     + 当前通道是筒镜）。低倍 sight 通道为 {@code false}：
+     *                     上游 renderSight 无条件画镜身。
      */
     private RenderType resolveBodyRenderType(RenderType original,
                                              @Nullable Identifier texture,
-                                             boolean maskable) {
-        if (!maskable) {
+                                             boolean bodyMaskable) {
+        if (!bodyMaskable) {
             // 第三人称，或这个配件压根没有目镜（如握把、消音器）—— 不需要裁剪。
             return original;
         }
@@ -839,14 +874,28 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     /**
      * 决定准星用哪个 RenderType：被约束在镜内的，还是原样。
      *
-     * <p>前置条件与 {@link #resolveBodyRenderType} <b>完全相同</b>，只是最终
-     * 换成反向裁剪的那一版。两者必须同进同退：若镜身裁了而准星没裁，
-     * 准星会飘在镜外；若准星裁了而镜身没裁，镜内又会被镜身糊住。
+     * <h2>【第四轮更正】它与 {@link #resolveBodyRenderType} <b>不再</b>同进同退</h2>
+     * 本方法早年的注释写着「两者必须同进同退：若镜身裁了而准星没裁，准星会飘在镜外；
+     * 若准星裁了而镜身没裁，镜内又会被镜身糊住」。<b>后半句不成立</b>，正是它把
+     * 两个独立消费者绑成了一个开关：
+     * <ul>
+     *   <li>「镜内被镜身糊住」的前提是镜身几何挡在准星前面。低倍 sight 通道的目镜
+     *       由 {@link #shouldDrawOcularBlackout} 恒隐藏（恒掏空=透视窗），
+     *       镜身只有窗框、不覆盖窗口内部，挡不住准星；</li>
+     *   <li>上游自己就是分开的：{@code renderSight} 不裁镜身，却照样
+     *       {@code renderOcularStencil} + {@code renderDivisionOnly}（archive/
+     *       SCOPE_UPSTREAM_TRUTH §4 逐行核对）。</li>
+     * </ul>
+     * 所以这里的前置条件是 {@code reticleMaskable}（第一人称 + 有目镜 + 开镜进度达标
+     * + 光影安全），<b>与当前是低倍还是高倍通道无关</b>。
+     *
+     * <p>深度次序不受本开关影响：无论裁不裁，准星都在 {@code super.submit} 之后提交、
+     * 深度状态与原来一致，本轮只是多了一层「镜外 discard」。</p>
      */
     private RenderType resolveReticleRenderType(RenderType original,
                                                 @Nullable Identifier texture,
-                                                boolean maskable) {
-        if (!maskable || texture == null || !RenderConfig.SCOPE_MASK_ENABLE.get()) {
+                                                boolean reticleMaskable) {
+        if (!reticleMaskable || texture == null || !RenderConfig.SCOPE_MASK_ENABLE.get()) {
             return original;
         }
         if (!ScopeMaskTextureHandle.syncToMaskTarget()) {
@@ -858,11 +907,11 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     /** 发光准星使用不受方向光影响的专用 RenderType，避免随玩家朝向变亮/变暗。 */
     private RenderType resolveIlluminatedReticleRenderType(RenderType original,
                                                           @Nullable Identifier texture,
-                                                          boolean maskable) {
+                                                          boolean reticleMaskable) {
         if (texture == null) {
             return original;
         }
-        if (!maskable || !RenderConfig.SCOPE_MASK_ENABLE.get()) {
+        if (!reticleMaskable || !RenderConfig.SCOPE_MASK_ENABLE.get()) {
             return ScopeBodyRenderTypes.emissive(texture);
         }
         if (!ScopeMaskTextureHandle.syncToMaskTarget()) {

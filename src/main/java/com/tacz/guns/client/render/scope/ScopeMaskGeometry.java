@@ -55,6 +55,19 @@ public final class ScopeMaskGeometry {
 
     private static final List<Entry> ENTRIES = new ArrayList<>();
 
+    /**
+     * 本帧的掩码是否<b>也</b>用来裁剪枪身 / 非瞄具配件 / 枪口火光。
+     *
+     * <p>为什么需要它（案例⑨ 第四轮）：掩码现在有<b>两个独立消费者</b> ——
+     * ①准星约束（低倍 sight 与高倍筒镜都要）、②镜外视模裁剪（只有高倍筒镜通道要）。
+     * 低倍 sight 通道会生成 <b>reticle-only</b> 掩码，而上游 {@code renderSight}
+     * 不裁镜身/枪身/配件/火光；若调用点只看「本帧有没有几何」，就会拿着这张
+     * 只为准星准备的掩码去把枪身在镜片投影内啃出一个洞。</p>
+     *
+     * <p>与 {@link #ENTRIES} 同生命周期：{@link #clear()} 里一起复位，避免跨帧泄漏。</p>
+     */
+    private static boolean viewmodelClipEnabled;
+
     private ScopeMaskGeometry() {
     }
 
@@ -73,7 +86,23 @@ public final class ScopeMaskGeometry {
         return ENTRIES.isEmpty();
     }
 
+    /**
+     * 打开「本次视模提交内，掩码也用于裁剪枪身/配件/火光」（OR 语义：
+     * 一帧内可能有多个瞄具提交，任何一个要求裁剪就算数）。
+     *
+     * <p>调用点是 {@code BedrockAttachmentModel#submit}，且只在<b>镜身也走裁剪</b>
+     * （高倍筒镜通道）时调用。</p>
+     */
+    public static void enableViewmodelClip() {
+        viewmodelClipEnabled = true;
+    }
+
+    public static boolean isViewmodelClipEnabled() {
+        return viewmodelClipEnabled;
+    }
+
     public static void clear() {
         ENTRIES.clear();
+        viewmodelClipEnabled = false;
     }
 }

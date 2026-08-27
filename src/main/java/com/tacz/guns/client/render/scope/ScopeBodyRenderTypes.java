@@ -351,11 +351,17 @@ public final class ScopeBodyRenderTypes {
     }
 
     /**
-     * 「本帧第一人称视模上，目镜掩码是否就绪可裁」的统一判定。
+     * 「本帧第一人称视模上，目镜掩码是否就绪<b>且允许裁视模</b>」的统一判定。
      *
      * <p>供火光这类【不想换镜像身贴图管线、只想换个同源裁剪版】的调用点使用。
      * 与 {@link #clipForViewmodel} 的前置条件完全同一份：任一不满足务必退回
      * 原版渲染类型。</p>
+     *
+     * <p><b>「有几何」不等于「可以裁视模」</b>（案例⑨ 第四轮）：低倍 sight 通道
+     * 会生成 reticle-only 掩码（只为准星约束服务），而上游 {@code renderSight}
+     * 不裁镜身/枪身/配件/火光。因此这里必须同时看到
+     * {@link ScopeMaskGeometry#isViewmodelClipEnabled()} 才允许换 outside-mask 类型 ——
+     * 否则枪身会在低倍镜片投影内被啃出一个洞。</p>
      */
     public static boolean maskReadyForViewmodel(boolean appliesToFirstPersonViewmodel) {
         if (!appliesToFirstPersonViewmodel) {
@@ -367,7 +373,8 @@ public final class ScopeBodyRenderTypes {
         if (IrisCompat.shouldDisableScopeMaskUnderShaderPack()) {
             return false;
         }
-        if (com.tacz.guns.client.render.scope.ScopeMaskGeometry.isEmpty()) {
+        if (com.tacz.guns.client.render.scope.ScopeMaskGeometry.isEmpty()
+                || !com.tacz.guns.client.render.scope.ScopeMaskGeometry.isViewmodelClipEnabled()) {
             return false;
         }
         return ScopeMaskTextureHandle.syncToMaskTarget();

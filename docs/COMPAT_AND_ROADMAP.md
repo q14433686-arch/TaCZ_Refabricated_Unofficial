@@ -1652,6 +1652,51 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
     与第二轮一致）；②AUG 默认/ACOG/8x/lpvo 高倍：恢复裁剪（镜内透光）、黑环
     完整；③hamr/vudu/mk5hd：红点组不裁、筒镜组恢复裁剪；④elcan/views=[2,2] 的
     低倍视组属筒镜通道 = 维持裁剪（其内环靠第一轮 ocular_ring 修复保完整）。
+  - **第四轮（2026-08-27，用户报「低倍镜准星被限制在目镜内失效，原因未知，历史可能久远」）**
+    ⇒ 第二轮的修复**过冲**：它想关掉的只是【镜身】裁剪，实际关掉的是整个掩码。
+    - **根因（代码级）**：`BedrockAttachmentModel#submit` 里只有**一个** `maskable`
+      同时喂给两个独立消费者 —— ①`resolveReticleRenderType` /
+      `resolveIlluminatedReticleRenderType`（准星反向裁剪）②`resolveBodyRenderType`
+      （镜身裁剪）＋ `registerOcularMaskGeometry`（建掩码）。第二轮那句
+      `maskable = false` 于是把三者一起关掉：低倍 sight 通道**当帧不建掩码**，
+      准星退回未裁剪的 `entityCutout` / `emissive`，可以溢出镜片、像贴纸一样
+      固定在屏幕上不随镜框缩放。
+    - **上游事实（archive/SCOPE_UPSTREAM_TRUTH_2026-07-27 §4，`renderSight` L334-356
+      逐行）**：低倍链**照样**调 `renderOcularStencil(...)` 写目镜模板、
+      **照样**调 `renderDivisionOnly(...)`（内部 `stencilFunc(GL_EQUAL, i+1)`）把分划
+      限制在目镜区域内；**只有** `scope_body` 是无条件绘制。也就是说
+      「镜身不裁」与「准星要裁」在上游本来就是两件事。
+    - **旧注释里的错误前提**：`resolveReticleRenderType` 曾写「两者必须同进同退：
+      若准星裁了而镜身没裁，镜内又会被镜身糊住」。后半句不成立 —— 低倍 sight 的
+      目镜由 `shouldDrawOcularBlackout` 恒隐藏（恒掏空＝透视窗），镜身只剩窗框、
+      不覆盖窗口内部，挡不住准星；且准星本来就在 `super.submit` **之后**提交，
+      深度状态与裁剪与否无关。该注释已就地更正。
+    - **修复**：拆成 `reticleMaskable` / `bodyMaskable` 两个判定。
+      `reticleMaskable` = `ScopeMaskEnable` + 第一人称 + 有目镜 + 开镜进度达标；
+      `bodyMaskable` 在此基础上，sight 通道（`ScopeSightClipFix` && `!activeGroupIsScope()`）
+      置 false。掩码几何按 `reticleMaskable` 登记；新增
+      `ScopeMaskGeometry#enableViewmodelClip()`，**只在 `bodyMaskable` 时**打开，
+      `ScopeBodyRenderTypes#maskReadyForViewmodel` 增加这一条前置 ——
+      否则那张只为准星准备的 reticle-only 掩码会被枪身/配件/火光
+      （`BedrockGunModel` / `AttachmentRender` / `MuzzleFlashRender` 三个调用点）
+      拿去把镜片投影内的枪身啃出洞。`clear()` 与几何同生命周期复位。
+      顺带把 `ScopeMaskEnable` 提到掩码登记之前（关开关时不再白建掩码），
+      `detachOcularRing` 改挂 `bodyMaskable`（摘环只为躲镜身裁剪，镜身不裁就无需摘）。
+    - **开关**：`ScopeSightReticleClip`（默认开；false ＝ 回到「低倍整帧不建掩码、
+      准星可溢出」的旧行为）。`ScopeSightClipFix=false` 仍可独立把镜身裁剪也打开。
+    - **同源互证**：姊妹仓 `TaCZ_Renovated` 26.2 已独立做过同一处拆分
+      （其 `WP262_3_EVIDENCE.md` 明写「当前 HEAD 仍待用户重建复测」，
+      CHANGELOG 记为「低倍使用 reticle-only mask，高倍使用完整 mask」）。
+      本轮实现与其布尔逻辑等价，差异只有：本仓多一个回退开关、注释为中文。
+    - **验证状态（如实）**：源码级闭环 + 与姊妹仓逐条对照；**本仓未实机复测**
+      （开发环境无 JDK/依赖源，无法编译更无法进游戏）。
+    - **第四轮复测清单**：①纯红点/全息（`sight_exp3` 等）：准星**只在窗口内**出现，
+      窗口外无残点；窗框仍完整无缺口（第二轮的修复不能回归）；
+      ②hamr/vudu/mk5hd 低倍组：同上；切到筒镜组后恢复完整镜身裁剪；
+      ③低倍通道下**枪身/护木/配件/枪口火光不应在镜片投影内被啃出洞**
+      （这是 `enableViewmodelClip` 那条前置要守的线，若出现空洞即该开关未生效）；
+      ④AUG 默认/ACOG/8x/lpvo 高倍：与第三轮一致，无回归；
+      ⑤`ScopeSightReticleClip=false` 应能一键回到今天的行为。
 
 #### 案例⑩：PAL 趴姿后「切枪过渡动画」姿态脏 —— 26.2 挂起（2026-08-12）
 
