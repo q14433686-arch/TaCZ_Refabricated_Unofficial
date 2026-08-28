@@ -29,6 +29,20 @@ metadata，不能写成 `1.1.8-R2`。
   此前案例⑨ 第二轮的 `ScopeSightClipFix` 用同一个开关把「建掩码」和「准星裁剪」
   一起关掉，低倍/红点通道的准星因此能溢出镜片。新增开关 `ScopeSightReticleClip`
   （默认开）可秒回退。详见 `COMPAT_AND_ROADMAP.md` 案例⑨ 第四轮。
+- **镜内裁剪消除对 mixin 注册顺序的依赖（加固，非 bug 修复）**：
+  `IrisGlCommandEncoderMixin` 在 `trySetup` 的 **HEAD** 记下当前 `GlRenderPass`；
+  `IrisExtendedShaderMixin` 在 `iris$setupState` RETURN 由「无条件写 `tacz_ScopeMaskMode=0`」
+  改为按记下的 pass 写正确 mode（`applyToShaderProgram`）；`IrisScopeMaskState` 删掉
+  「`GL_CURRENT_PROGRAM` 为 0 时从 `pipeline.program()` 取 programId」那条静默无效退回分支，
+  并把 `trySetup` RETURN 与 `iris$setupState` RETURN 两个写入点抽成共用的
+  `writeScopeMaskState`，保证「最后跑的那个」写同一套状态。`applyToShaderProgram`
+  写前校验 `GL_CURRENT_PROGRAM == programId`，不一致跳过并一次性告警。
+  背景：tacz 与 Iris 都往 `GlCommandEncoder#trySetup` 的同一 RETURN 点注入，二者处理器的
+  先后由 mixin config 注册顺序决定；tacz 在前时是坏行（mode 被 Iris 重绑程序写回 0）。
+  本仓用户**未**报过镜内裁切失效、当前也**未**发作，本次只消除这个顺序依赖，
+  **不**声称修好了任何用户反馈的现象。详细取证与「当前落在哪一行」的实机回填位见
+  [SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md](SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md)。
+  （均为源码级，**未实机验证**：本执行环境无 JDK，未编译、未跑游戏。）
 
 > 说明：本节只列本轮**亲手改过并核对过**的内容。相对 tag `26.2_R2_HOTFIX`
 > 的完整差异是 67 个文件（含此前已合并的 scope PIP / 兼容层等工作），
