@@ -103,12 +103,26 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 
 ## 5. 验证清单
 
-### 5.1 编译（CI 闭环）
+### 5.1 编译（CI 闭环）——当前被凭据权限卡住
 
 沙箱无 JDK 且 Maven CDN 不可达（2026-08-29 复测：pypi/npm/GitHub 主域可达，
-Adoptium/Maven Central/镜像站全部 000）。编译验证走 `compile-check.yml`
-CI 闭环：push 触发 → Actions 跑 `./gradlew compileJava` →
-日志 commit 回推分支 → 沙箱 `git pull` 读取。
+Adoptium/Maven Central/镜像站全部 000）。原计划的编译验证走 `compile-check.yml`
+CI 闭环：push 触发 → Actions 跑 `./gradlew compileJava` → 日志写回分支。
+
+**2026-08-30 实测：沙箱 GitHub 凭据没有 `workflows` 权限**——
+push 含工作流文件的 commit 被拒（`refusing to allow a GitHub App to
+create or update workflow`），`workflow_dispatch` 也 403。
+工作流文件暂存于 [`docs/ci/compile-check.yml`](ci/compile-check.yml)（v3：
+日志经 Contents API 写回，修复 v2 的 git push 竞争）。要打通编译验证，
+仓库所有者二选一：
+
+1. 在 GitHub 网页端把 `docs/ci/compile-check.yml` 复制为本分支的
+   `.github/workflows/compile-check.yml`（之后每次 push 自动编译并把
+   日志写到 `build-reports/compile-java.log`）；或
+2. 本地 `./gradlew compileJava` 直接验证。
+
+在此之前，本轮代码只做过**静态核对**（每个引用的 HEAD 方法/字段逐一
+grep 确认存在 + javalang 语法解析通过），**没有编译过**。
 
 ### 5.2 实机（本地）
 
