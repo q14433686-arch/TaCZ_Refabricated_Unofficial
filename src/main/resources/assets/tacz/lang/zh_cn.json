@@ -60,6 +60,8 @@
   "config.tacz.client.render.enable_translucent.desc": "是否在渲染枪械工作台/雕像时启用半透明。！开启此项会导致额外的性能开销！",
   "config.tacz.client.render.scope_pip_enable": "瞄具画中画（PIP）",
   "config.tacz.client.render.scope_pip_enable.desc": "启用倍镜镜内画中画放大效果。开启后开镜时镜外保持 1x 视野、仅目镜内放大目标。",
+  "config.tacz.client.render.scope_pip_min_magnification": "PIP 最低启用倍率",
+  "config.tacz.client.render.scope_pip_min_magnification.desc": "当前档位倍率达到该值才启用画中画，低于则回退经典全屏变焦。低倍镜（2x-3x）全屏变焦观感本就自然，跳过 PIP 可省下其每帧开销。组合镜按当前所选档位判定。1.0 = 所有倍镜都启用 PIP。",
   "config.tacz.client.render.scope_pip_rerender": "PIP 二次渲染模式",
   "config.tacz.client.render.scope_pip_rerender.desc": "开启后以真实窄 FOV 再画一遍世界，提供高精原生分辨率（对 6x-8x 倍镜极清晰）。关闭则为重投影模式（几乎零开销）。",
   "config.tacz.client.render.scope_pip_resolution_scale": "PIP 渲染分辨率缩放",

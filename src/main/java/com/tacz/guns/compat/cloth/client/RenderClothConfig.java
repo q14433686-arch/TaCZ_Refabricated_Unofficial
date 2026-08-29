@@ -101,6 +101,10 @@ public class RenderClothConfig {
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_enable.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_ENABLE::set).build());
 
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_min_magnification"), RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION.get())
+                .setMin(1.0).setMax(100.0).setDefaultValue(4.0).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_min_magnification.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION::set).build());
+
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_rerender"), RenderConfig.SCOPE_PIP_RERENDER.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_rerender.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_RERENDER::set).build());
