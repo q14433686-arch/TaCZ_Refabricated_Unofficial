@@ -85,6 +85,17 @@ public class RenderConfig {
      * 缩放会经 (B·MV)⁻¹ 烙进基座。默认开启；置 false 可单独回退本步而不动第 28 轮主修复。
      */
     public static ForgeConfigSpec.BooleanValue HAND_VIEW_LOCK_NORMALIZE;
+    /**
+     * 【光影枪身闪烁 · 实验开关】Iris 26.x 的 {@code HandRenderer} 一帧跑两遍手部
+     * （renderSolid + renderTranslucent），Iris 自己会在半透明遍里取消实心物品
+     * （{@code iris$skipTranslucentHands}），但 TACZ 用 WrapOperation 替换了
+     * {@code submitArmWithItem} 调用点，该取消对 TACZ 视模永远不生效 ⇒ 枪身
+     * （entityCutout）被提交进两遍（gbuffers_hand + gbuffers_hand_water）、动画状态机
+     * 一帧推进两次。labPBR/SEUS PBR 光影对 hand water 遍的照明与实心遍不同，
+     * 两层叠加即表现为枪身反射光源时的整块明暗闪烁。开启后视模只提交实心遍，
+     * 复刻 Iris 对普通实心物品的语义。默认关闭，供 A/B 验证。
+     */
+    public static ForgeConfigSpec.BooleanValue IRIS_HAND_PHASE_SPLIT_FIX;
     public static ForgeConfigSpec.BooleanValue DISABLE_INTERACT_HUD_TEXT;
     public static ForgeConfigSpec.BooleanValue AUTO_SELECT_GUN_SMITH_TABLE_FILTER;
     public static ForgeConfigSpec.IntValue DAMAGE_COUNTER_RESET_TIME;
@@ -358,6 +369,22 @@ public class RenderConfig {
                         "26.2 keeps that matrix compat-only for the hand pass, so this lock was reverted to",
                         "OFF by default after in-body rebuttal. Enable only for A/B experiments.")
                 .define("HandViewLockFix", false);
+
+        // 【光影枪身闪烁 · 实验开关】证据链见字段声明处的完整注释。要点：
+        // Iris HandRenderer 一帧两遍手部 pass（实心 + 半透明）；Iris 对实心物品在半透明遍
+        // 有 submitArmWithItem HEAD 取消，但 TACZ 替换了该调用点，取消落空 ⇒ 枪身被画两遍
+        // （gbuffers_hand + gbuffers_hand_water）。labPBR/SEUS PBR 下两遍照明不同 ⇒ 反射光源处
+        // 整块明暗闪烁。开启 = 视模只走实心遍（枪口火光/抛壳随之只走实心遍，实心遍同样属于
+        // HAND program，之前的水面层叠加只是重复绘制）。默认 false 保守起步，用户 A/B 验证
+        // 通过后再翻默认。
+        IRIS_HAND_PHASE_SPLIT_FIX = builder
+                .comment("[EXPERIMENT] Submit TACZ first-person viewmodels only to the Iris solid hand pass",
+                        "(gbuffers_hand), skipping the translucent hand pass (gbuffers_hand_water) where",
+                        "Iris's own solid-item cancellation never applies because TACZ replaces the",
+                        "submitArmWithItem call. With labPBR/SEUS PBR shader packs the duplicate water-pass",
+                        "copy is lit differently and shows up as whole-body brightness flicker on light",
+                        "reflections. OFF by default until verified in-body; enable to A/B test.")
+                .define("IrisHandPhaseSplitFix", false);
 
         // 第 32 轮起：本布尔已不再被任何代码读取（原 legacy 否决映射证明是配置陷阱，
         // 会把用户显式设置的 ConstraintCompensateMode 静默降级）。保留注册仅为
