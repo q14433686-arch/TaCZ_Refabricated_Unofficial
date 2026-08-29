@@ -5,7 +5,9 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 /**
  * 瞄具专用 Iris 管线的「维度 id」与<b>预热</b>。
@@ -43,6 +45,7 @@ public final class IrisScopePipelineCompat {
     private static Method getPipelineNullable;
     private static Method preparePipeline;
     private static Method getCurrentDimension;
+    private static Field pipelinesMapField;
     private static boolean handlesResolved;
     private static boolean handlesFailed;
 
@@ -117,12 +120,142 @@ public final class IrisScopePipelineCompat {
             Class<?> manager = getPipelineManager.getReturnType();
             getPipelineNullable = manager.getMethod("getPipelineNullable");
             preparePipeline = manager.getMethod("preparePipeline", Class.forName(NAMESPACED_ID));
+            // Iris 的 PipelineManager 里只有一个 Map 字段（pipelinesPerDimension），
+            // 这里按类型找而不是按名找，名字变了也不至于抓空。
+            for (Field field : manager.getDeclaredFields()) {
+                if (Map.class.isAssignableFrom(field.getType())) {
+                    pipelinesMapField = field;
+                    break;
+                }
+            }
+            if (pipelinesMapField != null) {
+                pipelinesMapField.setAccessible(true);
+            }
         } catch (Throwable t) {
             handlesFailed = true;
             GunMod.LOGGER.warn("[TACZ Scope] Could not resolve Iris' pipeline manager; the scope "
                     + "pipeline will be built lazily on first aim (expect one stutter).", t);
         }
         return !handlesFailed;
+    }
+
+    /** 瞄具那套管线的实例；还没建（或拿不到）时返回 null。仅供诊断/实验读取。 */
+    public static Object scopePipeline() {
+        if (!resolveHandles() || pipelinesMapField == null) {
+            return null;
+        }
+        Object id = scopeDimensionId();
+        if (id == null) {
+            return null;
+        }
+        try {
+            Object manager = getPipelineManager.invoke(null);
+            if (manager == null) {
+                return null;
+            }
+            Map<?, ?> pipelines = (Map<?, ?>) pipelinesMapField.get(manager);
+            return pipelines.get(id);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    /** 主管线实例；仅供诊断/实验读取。 */
+    public static Object mainPipeline() {
+        if (!resolveHandles()) {
+            return null;
+        }
+        try {
+            Object manager = getPipelineManager.invoke(null);
+            return manager == null ? null : getPipelineNullable.invoke(manager);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    /** 当前管线表里有多少套管线（诊断：正常应恒为 1 或 2）。 */
+    public static int pipelineMapSize() {
+        if (!resolveHandles() || pipelinesMapField == null) {
+            return -1;
+        }
+        try {
+            Object manager = getPipelineManager.invoke(null);
+            if (manager == null) {
+                return -1;
+            }
+            return ((Map<?, ?>) pipelinesMapField.get(manager)).size();
+        } catch (Throwable ignored) {
+            return -1;
+        }
+    }
+
+    /** 「释放失败过就不再重试」的一次性标志：释放不成功就保持管线活着，别每帧折腾。 */
+    private static boolean releaseFailed;
+
+    /**
+     * 【光影下开镜帧率持续衰减 · 实验开关的配套】空闲时销毁瞄具那套 Iris 管线，
+     * 释放它占用的<b>全部</b> GPU 资源（colortex/gbuffer/阴影图/SSBO/程序，见
+     * {@code IrisRenderingPipeline#destroy} 逐项实读）。
+     *
+     * <p>背景：用户报告「距第一次开镜的时间越长、开镜帧数越低；与是否持续开镜无关；
+     * 重进存档重置；仅 {@code ScopePipIsolatePipeline=true}」。姊妹分支的 CPU 侧结构
+     * 探针（管线身份、map 大小、SSBO 数、Blaze3D 保留集合）全部无果 —— 这强烈指向
+     * <b>每 scope pass 在瞄具管线的保留 GPU 状态里累积</b>（CPU 侧看不见）。本方法把
+     * 那套管线整份销毁，下一帧开镜时由 {@link #prewarmIfNeeded()} 重建：
+     * <ul>
+     *   <li>若开启空闲释放后衰减消失 ⇒ 累积源确实在瞄具管线的保留资源里；</li>
+     *   <li>若衰减依旧 ⇒ 累积源在主管线 / 驱动层 / shaderpack 的进程级状态里。</li>
+     * </ul>
+     *
+     * <p>只在「不在镜内那一遍、且处于 extract 的安全位置」调用（见 ScopePipRenderer）。
+     * 销毁后顺手失效预热状态与 Voxy 第二套栈（它绑的就是这套管线）。</p>
+     *
+     * @return 真的销毁了瞄具管线时返回 true
+     */
+    public static boolean releaseScopePipelineIfPresent() {
+        if (releaseFailed) {
+            return false;
+        }
+        if (!FabricLoader.getInstance().isModLoaded("iris") || !IrisCompat.isUsingRenderPack()) {
+            return false;
+        }
+        Object id = scopeDimensionId();
+        if (id == null || !resolveHandles() || pipelinesMapField == null) {
+            return false;
+        }
+        try {
+            Object manager = getPipelineManager.invoke(null);
+            if (manager == null) {
+                return false;
+            }
+            Map<?, ?> pipelines = (Map<?, ?>) pipelinesMapField.get(manager);
+            Object scope = pipelines.get(id);
+            if (scope == null) {
+                return false;
+            }
+            scope.getClass().getMethod("destroy").invoke(scope);
+            pipelines.remove(id);
+            // PipelineManager.pipeline 若正指着被销毁的那套，指回主管线，
+            // 别让后续任何 getPipelineNullable() 的消费者拿到已释放的管线。
+            Object current = getPipelineNullable.invoke(manager);
+            if (current == scope) {
+                Object real = getCurrentDimension.invoke(null);
+                if (real != null) {
+                    preparePipeline.invoke(manager, real);
+                }
+            }
+            // 预热状态与 Voxy 第二套栈都随这套管线一起失效。
+            prewarmedAgainst = null;
+            voxyStackSettled = false;
+            com.tacz.guns.compat.voxy.VoxyScopePipelineCompat.onRendererRebuilt();
+            GunMod.LOGGER.info("[TACZ Scope] Released the idle scope-pass Iris pipeline to reclaim GPU memory.");
+            return true;
+        } catch (Throwable t) {
+            releaseFailed = true;
+            GunMod.LOGGER.warn("[TACZ Scope] Failed to release the idle scope pipeline; keeping it alive "
+                    + "for this session (releasing will not be retried).", t);
+            return false;
+        }
     }
 
     /**

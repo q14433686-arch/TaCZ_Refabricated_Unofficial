@@ -339,7 +339,13 @@ public final class ScopePipRenderer {
      *
      * <p>判据与镜内那一遍一致（要开着二次渲染、开着隔离、且确实在用光影），
      * 但<b>不看开镜进度</b> —— 预热的全部意义就是赶在开镜之前做完。
-     * 已经建过就是一次引用比较，代价可忽略。
+     * 已经建过就是一次引用比较，代价可忽略。</p>
+     *
+     * <p>【空闲释放实验】{@code ScopePipReleaseIdlePipeline} 开启时，连续空闲超过
+     * {@code ScopePipIdleReleaseDelayFrames} 帧就销毁瞄具管线释放 GPU 资源，
+     * 空闲期间不再预热（否则释放完当帧就被重建，等于白释放）；
+     * 玩家重新开镜的那一帧 extract 里重建 —— 见
+     * {@link IrisScopePipelineCompat#releaseScopePipelineIfPresent}。</p>
      */
     public static void prewarmShaderPipelineIfNeeded() {
         if (failed || !rerenderMode() || !isolatePipeline()) {
@@ -351,7 +357,40 @@ public final class ScopePipRenderer {
         if (!allowShaderPacks()) {
             return;
         }
+        if (releaseIdlePipeline()) {
+            if (currentAimingProgress() <= minAimingProgress()) {
+                if (++idleReleaseFrames >= idleReleaseDelayFrames()) {
+                    IrisScopePipelineCompat.releaseScopePipelineIfPresent();
+                }
+                // 空闲期间不预热：预热会立刻重建刚释放的管线。
+                return;
+            }
+            idleReleaseFrames = 0;
+        }
         IrisScopePipelineCompat.prewarmIfNeeded();
+    }
+
+    /**
+     * 【光影下开镜帧率持续衰减 · 实验开关】空闲时释放瞄具管线。见
+     * {@link IrisScopePipelineCompat#releaseScopePipelineIfPresent} 的完整背景。
+     */
+    private static boolean releaseIdlePipeline() {
+        return RenderConfig.SCOPE_PIP_RELEASE_IDLE_PIPELINE != null
+                && RenderConfig.SCOPE_PIP_RELEASE_IDLE_PIPELINE.get();
+    }
+
+    private static int idleReleaseFrames = 0;
+
+    private static int idleReleaseDelayFrames() {
+        return RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES == null
+                ? 120 : RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES.get();
+    }
+
+    /** 本会话累计跑过多少次镜内那一遍（诊断探针用）。 */
+    private static int scopePassCount = 0;
+
+    public static int scopePassCount() {
+        return scopePassCount;
     }
 
     /**
@@ -1001,6 +1040,7 @@ public final class ScopePipRenderer {
                         Math.min(main.width, pip.width), Math.min(main.height, pip.height));
             }
             sceneCaptured = true;
+            scopePassCount++;
             if (!loggedFirstCapture) {
                 loggedFirstCapture = true;
                 GunMod.LOGGER.info("[TACZ Scope] Scope PIP second-render pass active: {}x{} at {}x "

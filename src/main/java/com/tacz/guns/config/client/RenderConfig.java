@@ -195,6 +195,24 @@ public class RenderConfig {
      * 整屏变品红 = 合成没被掩码约束住；只有镜片变品红 = 合成是对的，溢出来自别处。
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_PAINT_LENS;
+    /**
+     * 【实验 · 光影下开镜帧率衰减】空闲时销毁瞄具那套 Iris 管线（释放其全部 GPU 资源），
+     * 玩家重新开镜时再重建。用于验证「衰减随 scope pass 次数累积、重进存档重置」的累积源
+     * 是否在瞄具管线的保留 GPU 状态里。开启后每次重新开镜会付一次管线重建（shaderpack
+     * 编译）成本。默认关；见 ScopePipRenderer#prewarmShaderPipelineIfNeeded 与
+     * IrisScopePipelineCompat#releaseScopePipelineIfPresent。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RELEASE_IDLE_PIPELINE;
+    /**
+     * 【实验配套】空闲释放前要连续空闲多少帧（默认 120 ≈ 2 秒 @60fps），
+     * 防开镜/收镜过渡噪声把管线反复拆建。
+     */
+    public static ForgeConfigSpec.IntValue SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES;
+    /**
+     * 【诊断】每 600 帧打一次瞄具/主管线各自的 GPU 纹理字节数与 scope pass 累计数，
+     * 量化「衰减是否随 scope pass 次数在显存侧累积」。默认关。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_GPU_MEM;
 
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
@@ -572,6 +590,23 @@ public class RenderConfig {
                         "  whole screen magenta -> the composite is NOT confined by the ocular mask",
                         "  only the lens magenta -> the composite is fine and the leak is elsewhere")
                 .define("ScopePipDebugPaintLens", false);
+        SCOPE_PIP_RELEASE_IDLE_PIPELINE = builder
+                .comment("[EXPERIMENT] Destroy the scope pass' isolated Iris pipeline while not aiming, to",
+                        "release its full GPU resources; it is rebuilt (with a shaderpack compile cost) on the",
+                        "next aim. Tests whether the shader-pack aiming FPS decay that accumulates since the",
+                        "first ADS and resets on world rejoin lives in the scope pipeline's retained GPU state.",
+                        "See docs/SCOPE_PIP_FPS_DECAY_INVESTIGATION_2026_08_29.md.")
+                .define("ScopePipReleaseIdlePipeline", false);
+        SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES = builder
+                .comment("[EXPERIMENT] Consecutive idle frames before the idle scope pipeline is released",
+                        "(default 120 ~ 2s at 60fps; keeps aim transitions from thrashing the pipeline).")
+                .defineInRange("ScopePipIdleReleaseDelayFrames", 120, 1, Integer.MAX_VALUE);
+        SCOPE_PIP_DEBUG_GPU_MEM = builder
+                .comment("[DEBUG] Every 600 frames log the scope/main Iris pipelines' retained GPU texture",
+                        "bytes and the lifetime scope pass count. Quantifies whether the decay accumulates",
+                        "on the GPU side (the CPU-side structure probes on the sister branch all came back flat).",
+                        "If your MC has no GpuTexture#getMemorySize the byte fields log -1; also watch F3 VRAM.")
+                .define("ScopePipDebugGpuMem", false);
 
         builder.comment("Max time the damage counter will reset");
         DAMAGE_COUNTER_RESET_TIME = builder.defineInRange("DamageCounterResetTime", 2000, 10, Integer.MAX_VALUE);
