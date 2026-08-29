@@ -98,6 +98,8 @@ public class TaCZFabricClient implements ClientModInitializer {
         });
         // 26.2 Feature Rendering: 注册 TACZ 自定义 FeatureRenderers
         TaczFeatureRenderers.register();
+        // 内置 TacZ Mesh Loader：注册 model_type=mesh 与 geo 解析缓存失效监听器
+        cn.sh1rocu.tacz.compat.meshloader.TaczMeshyIntegration.onClientSetup();
         // 枪械工作台左侧「旋转预览模型」的 PIP 渲染器。
         // 26.2 的 GUI 是 extract→绘制两段式，1.21.1 那套直接改 RenderSystem 模型视图矩阵
         // 再 renderStatic 的做法已不存在；带自定义变换的 GUI 3D 绘制只能走 PictureInPictureRenderer。

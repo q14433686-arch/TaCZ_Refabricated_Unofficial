@@ -1,5 +1,6 @@
 package com.tacz.guns.config;
 
+import cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig;
 import com.tacz.guns.config.client.*;
 import net.minecraftforge.common.ForgeConfigSpec;
 
@@ -11,6 +12,7 @@ public class ClientConfig {
         ResourceConfig.init(builder);
         SoundConfig.init(builder);
         ZoomConfig.init(builder);
+        MeshyConfig.init(builder);
         return builder.build();
     }
 }
