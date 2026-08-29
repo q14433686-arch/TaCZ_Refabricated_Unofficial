@@ -696,7 +696,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // 重画物理目镜框（先于下面的准星提交，等价于邻链 ring=order 1 / reticle=order 2 的语义；
         // 本架构按提交顺序消费，且目镜框是 opaque cutout，深度测试下顺序本来就不敏感）。
         if (detachOcularRing) {
-            submitOcularRingPlain(poseStack, collector, renderType, transformType, light, overlay);
+            submitOcularRingPlain(poseStack, collector, renderType, texture, transformType, light, overlay);
         }
 
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
@@ -747,7 +747,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      *                   的裁剪分支），即该配件的正常材质——上游 stencilFunc(ALWAYS) 的等价物。
      */
     private void submitOcularRingPlain(PoseStack poseStack, SubmitNodeCollector collector,
-                                       RenderType renderType, ItemDisplayContext transformType,
+                                       RenderType renderType, @Nullable Identifier texture,
+                                       ItemDisplayContext transformType,
                                        int light, int overlay) {
         if (ocularRingPart == null) {
             return;
@@ -766,9 +767,23 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ringSnapshot =
                 com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(
                         ocularRingPart, ringPose, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
-        if (!ringSnapshot.isEmpty()) {
-            collector.submitCustomGeometry(new PoseStack(), renderType,
-                    (entryPose, consumer) -> ringSnapshot.write(consumer));
+        if (ringSnapshot.isEmpty()) {
+            return;
+        }
+        collector.submitCustomGeometry(new PoseStack(), renderType,
+                (entryPose, consumer) -> ringSnapshot.write(consumer));
+        // 【光影 + PIP 遮光环半透明修复】光影下 PIP 的合成排在 LevelRenderer#render
+        // 返回处 = 手持之【后】，上面这份正常提交会被合成整片盖掉（露出放大的世界，
+        // 对着光源时目视为「遮光环变半透明」）。此时再排一份快照到
+        // ScopeFinalOverlayState，等 compositeAfterLevelUnderShaders() 之后
+        // 用无雾管线重画 —— 恢复无光影路径「目镜框在合成之上」的语序。
+        // 只在光影合成路径真的会跑时排队（wantsIrisComposite 逐条件把关），
+        // 其余路径（无光影 / 未开 PIP / 关 AllowShaderPacks / 第三人称）逐位不变。
+        if (texture != null
+                && com.tacz.guns.client.render.scope.ScopePipRenderer.wantsIrisComposite()) {
+            com.tacz.guns.client.render.scope.ScopeFinalOverlayState.queueOcularRing(
+                    ringSnapshot,
+                    com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.finalOcularRing(texture));
         }
     }
 

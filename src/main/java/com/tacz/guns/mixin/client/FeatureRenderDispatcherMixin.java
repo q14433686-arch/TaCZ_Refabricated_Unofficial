@@ -162,6 +162,10 @@ public abstract class FeatureRenderDispatcherMixin {
         //
         // 往前挪掩码还没就绪，往后挪（比如手持渲染之后）准星会被 PIP 盖掉。
         ScopePipRenderer.compositeAtPhaseBoundary();
+        // 【光影后置目镜框 · 坑 B】手持投影/模型视图必须在这里（阶段边界，
+        // 与掩码同点）抓 —— submit 阶段 RenderSystem 里挂的还是世界那套矩阵，
+        // 拿去画目镜框会整个飘出画面。内部自判手部 pass + 队列非空，无光影零开销。
+        com.tacz.guns.client.render.scope.ScopeFinalOverlayState.capturePhaseBoundaryTransform();
     }
 
     /**

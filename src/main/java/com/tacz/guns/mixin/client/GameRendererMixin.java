@@ -157,6 +157,12 @@ public abstract class GameRendererMixin {
         // Iris 管线已经收工，主 target 里是最终画面 —— 直接在它上面做镜内放大。
         // 无光影时这一句立即返回（合成仍在阶段边界完成，那里才能让准星盖在 PIP 之上）。
         ScopePipRenderer.compositeAfterLevelUnderShaders();
+        // 【光影后置目镜框】必须紧跟在合成之后（同一注入点内）：光影下合成排在
+        // 手持之后、会把物理目镜框盖掉，这里把帧内排队的 ocular_ring 快照用
+        // 无雾管线重画回来。不能挂 finalizeLevelRendering TAIL —— 那跑在
+        // LevelRenderer#render 内部、早于本合成，挂那里等于没延后。
+        // 队列为空（无光影/未排队）时立即返回。
+        com.tacz.guns.client.render.scope.ScopeFinalOverlayState.renderAfterLevelComposite();
     }
 
     /**
@@ -244,6 +250,9 @@ public abstract class GameRendererMixin {
         ScopeMaskRenderer.beginFrame();
         // poly_mesh GPU 绘制表：与掩码同点归零，一帧内单调累积、手部 pass 消费。
         PolyMeshGpuRenderer.beginFrame();
+        // 光影后置目镜框队列：帧首清空，残留快照绝不许画到下一帧
+        //（某帧排了队但没走到合成点时，这里兜底）。
+        com.tacz.guns.client.render.scope.ScopeFinalOverlayState.beginFrame();
         // 瞄具那套 Iris 管线在这里预热：extract 在世界渲染之前，不在任何 render pass 内，
         // 也不在镜内那一遍里 —— 是做「编译整份 shaderpack」这种重活的唯一安全位置。
         // 懒加载的话它会落在第一次开镜的那一帧中途，既卡顿又会在帧中途重置全局帧计数。
