@@ -16,6 +16,7 @@
 | **B2** ogg + 两张效果图标 + 两个脚本 | ❌ 缺 | `git show` 取，命令见共用核心 §2.B2 |
 | **B3** `DeafenState#tick` 接住 `PlayResult` 并 WARN | ❌ 缺 | 照抄 |
 | **C** 耳鸣消声注入点 → `AbstractSoundInstance#getVolume()` | ⚠️ **先核对再改** | 见下 |
+| **H1** 光影 PBR 第一人称枪身闪烁修复（`IrisHandPhaseSplitFix`） | ❌ 缺 | 从 `origin/26.2(main)` 的 `arena/01a04d12` 取证移植；26.2 侧**在体 A/B 验证 PASS**。取证文档：`docs/IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md`。移植前先核对你这一支的差异（见下「特殊注意 2」） |
 
 ## 你这一支的特殊注意
 
@@ -69,6 +70,28 @@ hotfix 序号规矩：直接接在 `hotfix` 后面（`R2-hotfix3`），中间不
   `cn/sh1rocu/tacz/client/TaCZFabricClient.java`，你可以照同样位置）。
   **必须是 END**：原版 `Minecraft#tick` 里 `handleKeybinds` 先于实体/世界 tick，
   挂 END 才能在同一次 tick 内采到使用状态的下降沿。
+
+### 6. 任务 H1（光影 PBR 第一人称枪身闪烁）移植前必核清单
+
+来源分支（26.2）改动仅两处：`RenderConfig` 新增 `IRIS_HAND_PHASE_SPLIT_FIX`
+（`[FIX]`，默认 true），以及 `ItemInHandRendererMixin` 半透明遍早退闸门
+（`IrisCompat.isHandRendererActive() && !IrisCompat.isHandRenderingSolid()` 时
+不提交视模）。取证与验证记录见来源分支的
+`docs/IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md`（26.2 侧在体 PASS）。
+
+移植到 26.1.2 前，**逐项核对**（不要照搬）：
+
+1. **vanilla 方法名**：26.2 是 `submitHandsWithItems(float, PoseStack,
+   SubmitNodeCollector, LocalPlayer, int)`；26.1.2 可能是旧的
+   `renderHandsWithItems`（本仓 26.2 mixin 注释明确写过「26.2 迁移:
+   renderHandsWithItems → submitHandsWithItems」）。注入点与
+   `@WrapOperation(target = "…submitArmWithItem…")` 描述符都要改。
+2. **Iris 版本能力**：先核对你配的 Iris 构建（26.1.2 线）是否同样存在
+   `net.irisshaders.iris.pathways.HandRenderer`（`INSTANCE` / `isActive()` /
+   `isRenderingSolid()`）。没有该类 = 没有双遍手部 pass = 该缺陷不存在，
+   **不要移植**。你这一支的 `IrisCompat` 若只有 1.7.0 前的老接口，也要补句柄。
+3. **在体验证**：同款协议 —— Complementary + labPBR/SEUS PBR 下枪身反射光源处
+   是否闪烁；开关 true/false A/B。没有实机条件就**明说**。
 
 ## 交付前
 
