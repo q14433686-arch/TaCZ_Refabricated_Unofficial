@@ -17,8 +17,8 @@ Iris 26.x 的 `HandRenderer` 一帧跑两遍手部 pass（实心 + 半透明）�
 TACZ 视模永远不生效 ⇒ 枪身（`entityCutout`）每帧被提交两遍：实心遍画进
 `gbuffers_hand`，半透明遍画进 `gbuffers_hand_water`。光影包在这两个 program 里对
 PBR 材质的照明不同（labPBR/SEUS PBR 开启时差异可见），两层叠加即为用户目击的闪烁。
-本仓新增 `IrisHandPhaseSplitFix`（默认 **false** 的 `[EXPERIMENT]` 开关）让视模
-只提交实心遍。**是否确为本案根因，须用户在体 A/B 验证后裁决。**
+本仓新增 `IrisHandPhaseSplitFix`（`[EXPERIMENT]` 开关，**默认 true**，应用户要求便于实测；
+尚未实机验证）让视模只提交实心遍。**是否确为本案根因，须用户在体 A/B 验证后裁决。**
 
 ---
 
@@ -91,7 +91,7 @@ PBR 关闭时两个 program 对不透明物体照明接近 ⇒ 不可见；labPB
 
 | 文件 | 改动 |
 |---|---|
-| `src/main/java/com/tacz/guns/config/client/RenderConfig.java` | 新增 `IRIS_HAND_PHASE_SPLIT_FIX`（`[EXPERIMENT]`，默认 `false`），字段与 builder 两处注释记录完整证据链。 |
+| `src/main/java/com/tacz/guns/config/client/RenderConfig.java` | 新增 `IRIS_HAND_PHASE_SPLIT_FIX`（`[EXPERIMENT]`，**默认 `true`**，应用户要求便于实测），字段与 builder 两处注释记录完整证据链。 |
 | `src/main/java/com/tacz/guns/mixin/client/ItemInHandRendererMixin.java` | 在 `tacz$submitArmWithAnimatedItem` 主手 TACZ 视模分支里，半透明遍早退：`IRIS_HAND_PHASE_SPLIT_FIX.get() && IrisCompat.isHandRendererActive() && !IrisCompat.isHandRenderingSolid()` 时 `return`，视模只提交实心遍。 |
 
 改动语义 = 复刻 Iris 对普通实心物品的行为（`iris$skipTranslucentHands`）。
@@ -115,11 +115,11 @@ program；此前水面遍的重复叠加是多余绘制）。掩码登记、scop
 
 ## 4. 验证协议（用户 A/B）
 
-1. 改 `config/tacz*.toml`（Forge Config API Port 生成的配置）
-   `[render] IrisHandPhaseSplitFix = true`，重启进世界；
+1. `[render] IrisHandPhaseSplitFix` 现**默认 true**（`config/tacz*.toml`，
+   Forge Config API Port 生成），直接进世界即可；
 2. 开 Complementary 光影 + labPBR（或 SEUS PBR），站在有光源/阳光反射处看枪身：
    - 闪烁是否消失？（主判据）
-   - 关回 false 是否复现？（对照）
+   - 改成 false 重启是否复现？（对照）
 3. 观察回归面：枪口火光、抛壳、开镜镜内裁切/PIP、换弹动画、FPS 是否正常。
 4. 附加观察：开关开启后帧率是否回升（双遍提交被去掉）。
 
