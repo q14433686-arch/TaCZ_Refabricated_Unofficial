@@ -72,7 +72,7 @@ public abstract class SimpleFeatureRenderPhaseMixin {
             cancellable = true
     )
     private void tacz$keepSubmitsForTheMainPass(FeatureRenderPhase.Output output, CallbackInfo ci) {
-        if (ScopePipRenderer.isInsideScopeLevelRender()) {
+        if (ScopePipRenderer.shouldPreserveSubmits()) {
             // 节点已经拷进镜内那一遍的 PreparedFrame 了，这里只是跳过「清空自己」。
             // clear() 是本方法的最后一句，所以 cancel 与「跳过它」完全等价。
             ci.cancel();

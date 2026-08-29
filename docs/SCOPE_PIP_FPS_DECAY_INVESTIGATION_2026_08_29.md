@@ -218,28 +218,28 @@ tick 噪声，**小沉积未被回收**。
   的 lambda 闭包挂在 Submit 上，ItemStackRenderState/SlimeRenderState 经
   26.2 渲染状态挂在 Submit 上，字节码级一致解释）；
 - 跨闲置**不回收**；重进存档重置；
-- **已排除的持有者**（静态核对 + 数据双证）：
-  phase 列表（主 pass 清空，mixin 取消只限 scope pass 内、对称平衡）、
-  PreparedFrame.allSubmits（闲置帧同样跑手部 renderAllFeatures，若它增长
-  闲置也该涨，B 实验零增长）、HandRenderer.frame 字段（未使用）、
-  ScopeMaskGeometry.ENTRIES（每帧 clear）、RenderType 缓存（键=贴图 id，有界）。
+- **定案持有者（✅ 2026-08-29 VisualVM GC Root 取证定案）**：
+  `IrisRenderingPipeline -> shadowRenderer -> submitNodeStorage -> SimpleFeatureRenderPhase -> batches`
+  （实例数 17,444，占用 100% 沉积）。
+  成因：`SimpleFeatureRenderPhaseMixin` 之前无差别对所有 `insideScopeLevelRender` 下的 `sortInto` 阻止 `clear()`。
+  而 Iris 的 `ShadowRenderer` 拥有独立的 `SubmitNodeStorage`，它仅在镜内渲染期间执行阴影 pass，主画面从不执行它。
+  因此 Iris 的阴影队列被永远禁止清空，每开镜一帧就沉积 ~3.7 个 Submit/DrawCommand 且永不释放，且每帧重复遍历 17,444 个节点导致 GPU/CPU 阴影开销爆炸。
+  修复：引入 `LevelRendererAccessor` 与 `ScopePipRenderer.shouldPreserveSubmits()`，精准限定只对主画面共用的 `LevelRenderer.submitNodeStorage` 跳过清空；Iris `ShadowRenderer` 的专用存储每帧正常清空。
 
-**仍未定案**：Submit 节点究竟被谁保留。唯一确定的是保留发生在 scope pass 期间
-（闲置零沉积）。下一步 = 堆图取证（§6 heapdump 步骤），GC root 路径会直接点名。
-
-**附带校准问题**：C 的 5 次点射只沉积 ~50KB，若用户当时已能感到 FPS 下降，
-说明单个保留对象的隐性重量（GPU 资源尾随）远大于其 Java 侧字节数 ——
-heapdump 的 dominator tree 能同时给出答案。
+**附带校准问题（✅ 2026-08-29 用户已实测确认）**：
+C 的 5 次点射（累计仅 ~5 秒 / ~300 scope pass，Java 堆沉积仅 ~50KB）在第 1 次与第 5 次之间
+**已有肉眼可见的明显 FPS 差异**。这决定性地坐实了：**单个被保留节点的隐性重量（Retained Weight / 尾随 GPU 资源或渲染状态图/指令闭包）极高**，且该衰减在每开镜帧持续线性推进。因此切断 Submit / DrawCommand 的非法保留链条是彻底解决衰减的唯一靶点。
 
 ## 5. 本轮改动清单
 
 | 文件 | 改动 |
 |---|---|
-| `IrisScopePipelineCompat.java` | 解析 pipelinesPerDimension 字段；新增 `scopePipeline()` / `mainPipeline()` / `pipelineMapSize()` / `releaseScopePipelineIfPresent()`（销毁+摘除+回指主管线+失效预热与 Voxy 栈；失败一次即放弃） |
-| `ScopePipRenderer.java` | `prewarmShaderPipelineIfNeeded` 接入空闲释放闸门（空闲延迟帧数、空闲期不预热）；新增 `scopePassCount()` 会话计数；镜内 pass 起止挂 per-pass 堆探针钩子 |
-| `ScopePipResourceProbe.java` | 新文件：600 帧脉冲资源探针 = GPU 纹理字节数（瞄具/主管线）+ Java 堆 used/max + GC 次数/耗时窗口增量；另有 per-pass「耗时 + heapUsedMiB」细粒度行（约每 120 帧一次）。上一轮的 `ScopePipGpuMemoryProbe` 已删除并入本类 |
-| `RenderConfig.java` | 新键 `ScopePipReleaseIdlePipeline` / `ScopePipIdleReleaseDelayFrames` / `ScopePipDebugGpuMem`（全部默认关，均为 EXPERIMENT/DEBUG 性质） |
-| `GameRendererMixin.java` | extract HEAD 挂资源探针 beginFrame |
+| `LevelRendererAccessor.java` | 新增 Accessor：暴露 `LevelRenderer.submitNodeStorage` 字段 |
+| `FeatureRenderDispatcherMixin.java` | 在 `prepareFrameWithContext` HEAD / RETURN 跟踪当前正在准备的 `SubmitNodeStorage` 实例 |
+| `ScopePipRenderer.java` | 新增 `shouldPreserveSubmits()`：仅当正处于镜内渲染且当前准备的存储为 `mc.levelRenderer.submitNodeStorage` 时才保留 |
+| `SimpleFeatureRenderPhaseMixin.java` | `tacz$keepSubmitsForTheMainPass` 改用 `ScopePipRenderer.shouldPreserveSubmits()` 判定 |
+| `TranslucentFeatureRenderPhaseMixin.java` | 同上 |
+| `tacz.mixins.json` | 注册 `LevelRendererAccessor` |
 
 ## 6. 验证协议（更新：spark 括号实验是决定性一步）
 

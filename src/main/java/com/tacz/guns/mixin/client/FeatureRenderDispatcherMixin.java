@@ -4,6 +4,7 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.feature.FeatureFrameContext;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -119,6 +120,22 @@ public abstract class FeatureRenderDispatcherMixin {
                     + "exception logged just above this line - without this recovery the game would "
                     + "have crashed here with a misleading 'PreparedFrame already in use'.");
         }
+    }
+
+    @Inject(method = "prepareFrameWithContext", at = @At("HEAD"))
+    private void tacz$trackPreparingStorage(
+            FeatureFrameContext context,
+            SubmitNodeStorage storage,
+            CallbackInfoReturnable<FeatureRenderDispatcher.PreparedFrame> cir) {
+        ScopePipRenderer.setCurrentPreparingStorage(storage);
+    }
+
+    @Inject(method = "prepareFrameWithContext", at = @At("RETURN"))
+    private void tacz$resetPreparingStorage(
+            FeatureFrameContext context,
+            SubmitNodeStorage storage,
+            CallbackInfoReturnable<FeatureRenderDispatcher.PreparedFrame> cir) {
+        ScopePipRenderer.setCurrentPreparingStorage(null);
     }
 
     @Inject(

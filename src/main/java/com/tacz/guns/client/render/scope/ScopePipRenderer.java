@@ -29,6 +29,7 @@ import com.tacz.guns.compat.sodium.SodiumCompat;
 import com.tacz.guns.compat.voxy.VoxyCompat;
 import com.tacz.guns.compat.voxy.VoxyScopePipelineCompat;
 import com.tacz.guns.config.client.RenderConfig;
+import com.tacz.guns.mixin.client.LevelRendererAccessor;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -38,6 +39,7 @@ import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.Projection;
 import net.minecraft.client.renderer.ProjectionMatrixBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.client.renderer.state.GameRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -314,6 +316,50 @@ public final class ScopePipRenderer {
      * <p>与 {@link #scopePassActive} 的区别见 {@link #isInsideScopeLevelRender()}。
      */
     private static volatile boolean insideScopeLevelRender = false;
+
+    /**
+     * 当前由 {@code FeatureRenderDispatcher.prepareFrame} 正在准备的 {@link SubmitNodeStorage}。
+     * 仅在镜内渲染期间供 {@link #shouldPreserveSubmits()} 校验。
+     */
+    private static volatile SubmitNodeStorage currentPreparingStorage = null;
+
+    public static void setCurrentPreparingStorage(SubmitNodeStorage storage) {
+        currentPreparingStorage = storage;
+    }
+
+    /**
+     * 当前正在 drain 的 {@link net.minecraft.client.renderer.feature.phase.FeatureRenderPhase}
+     * 是否应该跳过清空自己（即保留给随后的主画面那一遍渲染）。
+     *
+     * <p>仅在同时满足以下条件时返回 {@code true}：
+     * <ol>
+     *   <li>正处于镜内二次渲染期间（{@link #insideScopeLevelRender} 为真）；</li>
+     *   <li>当前正在准备的 {@link SubmitNodeStorage} <b>正是主画面的 {@code LevelRenderer.submitNodeStorage}</b>。</li>
+     * </ol>
+     * Iris 的 {@code ShadowRenderer.submitNodeStorage} 等专用阴影/辅助存储<b>绝不</b>被保留，
+     * 必须在每帧阴影渲染后正常清空，否则会导致提交节点随开镜帧数无限沉积并拖垮 FPS。
+     *
+     * @see com.tacz.guns.mixin.client.SimpleFeatureRenderPhaseMixin
+     * @see com.tacz.guns.mixin.client.TranslucentFeatureRenderPhaseMixin
+     */
+    public static boolean shouldPreserveSubmits() {
+        if (!insideScopeLevelRender) {
+            return false;
+        }
+        SubmitNodeStorage current = currentPreparingStorage;
+        if (current == null) {
+            return false;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || mc.levelRenderer == null) {
+            return false;
+        }
+        try {
+            return current == ((LevelRendererAccessor) mc.levelRenderer).tacz$getSubmitNodeStorage();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
 
     /** 供 Voxy 兼容层查询：镜内这一遍是否用了独立的 Iris 管线。 */
     public static boolean isScopePassIsolated() {
@@ -1010,6 +1056,7 @@ public final class ScopePipRenderer {
             } finally {
                 // 必须最先清：从这里往后（主画面那一遍）各 phase 要恢复
                 // 「取完就清空」的原样，否则节点会一直堆到下一帧去。
+                currentPreparingStorage = null;
                 insideScopeLevelRender = false;
                 // 必须先关掉：之后任何再问「当前维度」的代码都必须拿到<b>真实</b>维度，
                 // 否则 Iris 在切世界时会把 lastDimension 与当前值比出「维度变了」，
