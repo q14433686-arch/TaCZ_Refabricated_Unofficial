@@ -240,7 +240,7 @@
   "config.tacz.client.render.scope_pip_rerender": "PIP Second-Render Pass",
   "config.tacz.client.render.scope_pip_rerender.desc": "Render the world a second time with a narrow FOV for native crisp resolution (ideal for 6x-8x optics). Disabling uses screen re-projection with near-zero overhead.",
   "config.tacz.client.render.scope_pip_resolution_scale": "PIP Render Resolution Scale",
-  "config.tacz.client.render.scope_pip_resolution_scale.desc": "Render resolution scale for the second-render pass (0.25 to 1.0). Default is 0.75 (~56% pixels), significantly reducing GPU cost while retaining high sharpness.",
+  "config.tacz.client.render.scope_pip_resolution_scale.desc": "Effective in non-shader second-render mode. Render resolution scale (0.25 to 1.0, default 0.75 / ~56% pixels). Greatly reduces GPU cost while maintaining sharpness. Under shaders, please use [PIP Shader Shadow Scale] instead.",
   "config.tacz.client.render.scope_pip_shadow_scale": "PIP Shader Shadow Scale",
   "config.tacz.client.render.scope_pip_shadow_scale.desc": "Shadow map resolution fraction for the scope pass under shaders (0.25 to 1.0). Default 0.5 cuts shadow rendering cost to 1/4 without affecting the main view.",
   "config.tacz.client.render.scope_pip_allow_shader_packs": "Allow PIP with Shader Packs",

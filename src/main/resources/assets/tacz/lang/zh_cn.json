@@ -63,7 +63,7 @@
   "config.tacz.client.render.scope_pip_rerender": "PIP 二次渲染模式",
   "config.tacz.client.render.scope_pip_rerender.desc": "开启后以真实窄 FOV 再画一遍世界，提供高精原生分辨率（对 6x-8x 倍镜极清晰）。关闭则为重投影模式（几乎零开销）。",
   "config.tacz.client.render.scope_pip_resolution_scale": "PIP 渲染分辨率缩放",
-  "config.tacz.client.render.scope_pip_resolution_scale.desc": "二次渲染模式下的渲染分辨率比例（0.25 ~ 1.0）。默认 0.75（~56% 像素），大幅降低 GPU 渲染开销的同时维持清晰度。",
+  "config.tacz.client.render.scope_pip_resolution_scale.desc": "仅在非光影二次渲染模式下生效。渲染分辨率比例（0.25 ~ 1.0），默认 0.75（~56% 像素），大幅降低 GPU 渲染开销的同时维持清晰度。光影下请使用【PIP 光影阴影缩放】控制性能。",
   "config.tacz.client.render.scope_pip_shadow_scale": "PIP 光影阴影缩放",
   "config.tacz.client.render.scope_pip_shadow_scale.desc": "光影下镜内阴影贴图的分辨率比例（0.25 ~ 1.0）。默认 0.5（阴影开销降至 1/4），不影响主画面画质。",
   "config.tacz.client.render.scope_pip_allow_shader_packs": "允许在光影下开启 PIP",
