@@ -59,6 +59,15 @@ public final class PolyMeshSnapshot {
 
     private void write(List<Command> commands, VertexConsumer consumer, int overlay,
                        float red, float green, float blue, float alpha) {
+        // 【PIP 二次渲染 × mesh 的白付成本】光影下镜内那一遍会把保留的提交节点
+        // 重放一遍（SimpleFeatureRenderPhaseMixin），Iris 又把手部（枪）画在
+        // LevelRenderer.render 内部 —— 于是本回调在镜内那一遍再跑一次，
+        // 每个 poly 顶点再做一遍 CPU 变换。但合成只取镜片孔径内的像素，
+        // 而孔径内枪身本来就被目镜掩码 discard —— 那一遍画出的 poly 没有任何
+        // 像素能到达屏幕。跳过是纯赚：主画面那一遍照常写（本方法会被再调一次）。
+        if (com.tacz.guns.client.render.scope.ScopePipRenderer.isInsideScopeLevelRender()) {
+            return;
+        }
         PoseStack scratch = new PoseStack();
         for (Command command : commands) {
             PoseStack.Pose pose = scratch.last();
