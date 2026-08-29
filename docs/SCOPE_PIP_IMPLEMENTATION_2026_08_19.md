@@ -245,6 +245,7 @@ TRIANGLES，偏移 1120-1142 实读）之上加三个 layout：
 |---|---|---|
 | `ScopePipEnable` | `false` | 总开关 |
 | `ScopePipMinAimingProgress` | `0.05` | 低于该开镜进度不做 PIP |
+| `ScopePipMinMagnification` | `4.0` | 当前档位倍率低于该值时不做 PIP，回整屏变焦（2026-08-30 增；低倍镜整屏变焦观感本就自然，不值得付 PIP 每帧成本；组合镜按当前档位判定，1.0 = 所有倍镜都 PIP） |
 | `ScopePipSharpness` | `0.5` | 镜内锐化上限（0 = 关），实际强度按倍率加权 |
 | `ScopePipAllowShaderPacks` | `false` | 允许光影包启用时也跑 PIP，见 §7.3 |
 
