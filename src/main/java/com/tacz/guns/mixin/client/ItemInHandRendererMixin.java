@@ -7,6 +7,8 @@ import com.tacz.guns.api.client.event.BeforeRenderHandEvent;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat;
+import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
@@ -131,6 +133,23 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
         // Animated TACZ/LRTactical items are main-hand viewmodels. Preserve the previous
         // behavior of suppressing a custom animated item placed in the offhand.
         if (hand == InteractionHand.OFF_HAND) {
+            return;
+        }
+
+        // 【光影枪身闪烁 · 实验开关】Iris 26.x HandRenderer 一帧跑两遍手部 pass：
+        // renderSolid（→ gbuffers_hand）与 renderTranslucent（→ gbuffers_hand_water）。
+        // Iris 对实心物品的半透明遍取消放在 submitArmWithItem 的 HEAD
+        // （iris$skipTranslucentHands），但 TACZ 用 WrapOperation 替换了
+        // submitArmWithItem 的调用点本身，该取消对 TACZ 视模<b>永远不生效</b>：
+        // 枪身（entityCutout）会被提交进两遍、动画状态机一帧推进两次。
+        // 光影包的 hand water 遍在 labPBR/SEUS PBR 下与实心遍照明不同，
+        // 两层叠加 = 枪身反射光源处的整块明暗闪烁（仅第一人称、仅 PBR 开启）。
+        // 开启后：视模只提交实心遍，复刻 Iris 对普通实心物品的语义；
+        // 枪口火光/抛壳/掩码登记均在实心遍完成（它们本就指派到 HAND program），
+        // 画中画（PIP）在掩码之后合成，不依赖半透明遍的枪身提交。
+        if (RenderConfig.IRIS_HAND_PHASE_SPLIT_FIX != null && RenderConfig.IRIS_HAND_PHASE_SPLIT_FIX.get()
+                && IrisCompat.isHandRendererActive()
+                && !IrisCompat.isHandRenderingSolid()) {
             return;
         }
 

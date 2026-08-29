@@ -16,6 +16,7 @@
 | **B2** ogg + 两张效果图标 + 两个脚本 | ❌ 缺 | `git show` 取，命令见共用核心 §2.B2 |
 | **B3** `DeafenState#tick` 接住 `PlayResult` 并 WARN | ❌ 缺 | 照抄 |
 | **C** 耳鸣消声注入点 → `AbstractSoundInstance#getVolume()` | ⚠️ **先核对再改** | 见下 |
+| **H1** 光影 PBR 第一人称枪身闪烁修复（`IrisHandPhaseSplitFix`） | ✅ **已有等价闸门，无需移植** | 已核实 `origin/26.1.2` @ `e7db2c2`：`IrisCompat.shouldRenderInCurrentHandPhase(ItemStack)`（IrisCompat.java L201）已接入 `ItemInHandRendererMixin` L124，语义与 26.2 修复一致。见下「特殊注意 §6」 |
 
 ## 你这一支的特殊注意
 
@@ -69,6 +70,23 @@ hotfix 序号规矩：直接接在 `hotfix` 后面（`R2-hotfix3`），中间不
   `cn/sh1rocu/tacz/client/TaCZFabricClient.java`，你可以照同样位置）。
   **必须是 END**：原版 `Minecraft#tick` 里 `handleKeybinds` 先于实体/世界 tick，
   挂 END 才能在同一次 tick 内采到使用状态的下降沿。
+
+### 6. 任务 H1（光影 PBR 第一人称枪身闪烁）——已核实：无需移植
+
+2026-08-29 对 `origin/26.1.2` @ `e7db2c2` 的核实结论：
+
+- `IrisCompat.java` L201 已有 `shouldRenderInCurrentHandPhase(ItemStack)`：
+  逐行镜像 Iris 的 `MixinItemInHandRenderer#iris$skipTranslucentHands` 相位闸门
+  （含 `isHandTranslucent(ItemStack)` 反射变体），失败时 fail-open（不吞物品）；
+- `ItemInHandRendererMixin.java` L124 已在 WrapOperation 的 TACZ 视模分支里调用它，
+  半透明遍不提交实心视模 —— 与 26.2 侧 `IrisHandPhaseSplitFix`（本会话修复，
+  在体 PASS）语义一致；
+- 用户 2026-08-29 实测该支（Complementary + labPBR/SEUS PBR）**未发现闪烁**，
+  与静态结论互洽。
+
+**不要**把 26.2 的 `IRIS_HAND_PHASE_SPLIT_FIX` 再移植过来——重复闸门无收益，
+还多一个配置键。若日后该支复现闪烁，再回头对比
+`docs/IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md` 的取证链。
 
 ## 交付前
 

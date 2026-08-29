@@ -41,7 +41,7 @@ public abstract class TranslucentFeatureRenderPhaseMixin {
             cancellable = true
     )
     private void tacz$keepSubmitsForTheMainPass(FeatureRenderPhase.Output output, CallbackInfo ci) {
-        if (ScopePipRenderer.isInsideScopeLevelRender()) {
+        if (ScopePipRenderer.shouldPreserveSubmits()) {
             ci.cancel();
         }
     }

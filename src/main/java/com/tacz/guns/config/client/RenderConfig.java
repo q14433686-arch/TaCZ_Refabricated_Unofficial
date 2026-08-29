@@ -85,6 +85,18 @@ public class RenderConfig {
      * 缩放会经 (B·MV)⁻¹ 烙进基座。默认开启；置 false 可单独回退本步而不动第 28 轮主修复。
      */
     public static ForgeConfigSpec.BooleanValue HAND_VIEW_LOCK_NORMALIZE;
+    /**
+     * 【光影枪身闪烁 · 修复】Iris 26.x 的 {@code HandRenderer} 一帧跑两遍手部
+     * （renderSolid + renderTranslucent），Iris 自己会在半透明遍里取消实心物品
+     * （{@code iris$skipTranslucentHands}），但 TACZ 用 WrapOperation 替换了
+     * {@code submitArmWithItem} 调用点，该取消对 TACZ 视模永远不生效 ⇒ 枪身
+     * （entityCutout）被提交进两遍（gbuffers_hand + gbuffers_hand_water）、动画状态机
+     * 一帧推进两次。labPBR/SEUS PBR 光影对 hand water 遍的照明与实心遍不同，
+     * 两层叠加即表现为枪身反射光源时的整块明暗闪烁。开启后视模只提交实心遍，
+     * 复刻 Iris 对普通实心物品的语义。默认开启；2026-08-29 用户在体 A/B 验证 PASS
+     * （Complementary + labPBR/SEUS PBR 下枪身闪烁消失），关回 false 可秒回退。
+     */
+    public static ForgeConfigSpec.BooleanValue IRIS_HAND_PHASE_SPLIT_FIX;
     public static ForgeConfigSpec.BooleanValue DISABLE_INTERACT_HUD_TEXT;
     public static ForgeConfigSpec.BooleanValue AUTO_SELECT_GUN_SMITH_TABLE_FILTER;
     public static ForgeConfigSpec.IntValue DAMAGE_COUNTER_RESET_TIME;
@@ -152,6 +164,11 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RERENDER;
     /**
+     * 二次渲染（非光影模式）下镜内画面的渲染分辨率比例（1.0 = 屏幕原生分辨率）。
+     * 默认 0.75。开销按面积走（0.75x 相当于仅渲染 ~56% 像素），显著减轻二次渲染开销。
+     */
+    public static ForgeConfigSpec.DoubleValue SCOPE_PIP_RESOLUTION_SCALE;
+    /**
      * 二次渲染 + 光影时，是否给镜内那一遍配一套独立的 Iris 管线。
      *
      * <p>不隔离的话，Iris 那一整族「上一帧」uniform 会被一帧推进两次，
@@ -183,6 +200,24 @@ public class RenderConfig {
      * 整屏变品红 = 合成没被掩码约束住；只有镜片变品红 = 合成是对的，溢出来自别处。
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_PAINT_LENS;
+    /**
+     * 【实验 · 光影下开镜帧率衰减】空闲时销毁瞄具那套 Iris 管线（释放其全部 GPU 资源），
+     * 玩家重新开镜时再重建。用于验证「衰减随 scope pass 次数累积、重进存档重置」的累积源
+     * 是否在瞄具管线的保留 GPU 状态里。开启后每次重新开镜会付一次管线重建（shaderpack
+     * 编译）成本。默认关；见 ScopePipRenderer#prewarmShaderPipelineIfNeeded 与
+     * IrisScopePipelineCompat#releaseScopePipelineIfPresent。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RELEASE_IDLE_PIPELINE;
+    /**
+     * 【实验配套】空闲释放前要连续空闲多少帧（默认 120 ≈ 2 秒 @60fps），
+     * 防开镜/收镜过渡噪声把管线反复拆建。
+     */
+    public static ForgeConfigSpec.IntValue SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES;
+    /**
+     * 【诊断】每 600 帧打一次瞄具/主管线各自的 GPU 纹理字节数与 scope pass 累计数，
+     * 量化「衰减是否随 scope pass 次数在显存侧累积」。默认关。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_GPU_MEM;
 
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
@@ -359,6 +394,22 @@ public class RenderConfig {
                         "OFF by default after in-body rebuttal. Enable only for A/B experiments.")
                 .define("HandViewLockFix", false);
 
+        // 【光影枪身闪烁 · 修复】证据链见字段声明处的完整注释。要点：
+        // Iris HandRenderer 一帧两遍手部 pass（实心 + 半透明）；Iris 对实心物品在半透明遍
+        // 有 submitArmWithItem HEAD 取消，但 TACZ 替换了该调用点，取消落空 ⇒ 枪身被画两遍
+        // （gbuffers_hand + gbuffers_hand_water）。labPBR/SEUS PBR 下两遍照明不同 ⇒ 反射光源处
+        // 整块明暗闪烁。开启 = 视模只走实心遍（枪口火光/抛壳随之只走实心遍，实心遍同样属于
+        // HAND program，之前的水面层叠加只是重复绘制）。默认 true；2026-08-29 用户在体 A/B
+        // 验证 PASS。若出现回归，关回 false 即秒回退旧行为。
+        IRIS_HAND_PHASE_SPLIT_FIX = builder
+                .comment("[FIX] Submit TACZ first-person viewmodels only to the Iris solid hand pass",
+                        "(gbuffers_hand), skipping the translucent hand pass (gbuffers_hand_water) where",
+                        "Iris's own solid-item cancellation never applies because TACZ replaces the",
+                        "submitArmWithItem call. With labPBR/SEUS PBR shader packs the duplicate water-pass",
+                        "copy is lit differently and shows up as whole-body brightness flicker on light",
+                        "reflections. Default ON; verified in-body PASS (2026-08-29). Set false to revert.")
+                .define("IrisHandPhaseSplitFix", true);
+
         // 第 32 轮起：本布尔已不再被任何代码读取（原 legacy 否决映射证明是配置陷阱，
         // 会把用户显式设置的 ConstraintCompensateMode 静默降级）。保留注册仅为
         // 兼容旧配置文件；档位一律用 ConstraintCompensateMode。
@@ -479,6 +530,13 @@ public class RenderConfig {
                         "EXPERIMENTAL: an earlier attempt made entities vanish from the main view.",
                         "Default off.")
                 .define("ScopePipRerender", false);
+        SCOPE_PIP_RESOLUTION_SCALE = builder
+                .comment("Render resolution scale for the scope pass in rerender mode (1.0 = native resolution).",
+                        "Default 0.75 (~56% pixels of full frame), greatly reducing the GPU rendering cost of the scope view.",
+                        "  1.0 = native resolution (sharpest, highest cost)",
+                        "  0.75 = default (~56% pixels, high clarity with noticeable performance saving)",
+                        "  0.5 = 50% resolution (25% pixels, maximum performance, softer image)")
+                .defineInRange("ScopePipResolutionScale", 0.75d, 0.25d, 1.0d);
         SCOPE_PIP_SHADOW_SCALE = builder
                 .comment("Shadow map resolution for the scope pass, as a fraction of the pack's own.",
                         "Only used with ScopePipRerender + ScopePipIsolatePipeline + a shader pack.",
@@ -544,6 +602,23 @@ public class RenderConfig {
                         "  whole screen magenta -> the composite is NOT confined by the ocular mask",
                         "  only the lens magenta -> the composite is fine and the leak is elsewhere")
                 .define("ScopePipDebugPaintLens", false);
+        SCOPE_PIP_RELEASE_IDLE_PIPELINE = builder
+                .comment("[EXPERIMENT] Destroy the scope pass' isolated Iris pipeline while not aiming, to",
+                        "release its full GPU resources; it is rebuilt (with a shaderpack compile cost) on the",
+                        "next aim. Tests whether the shader-pack aiming FPS decay that accumulates since the",
+                        "first ADS and resets on world rejoin lives in the scope pipeline's retained GPU state.",
+                        "See docs/SCOPE_PIP_FPS_DECAY_INVESTIGATION_2026_08_29.md.")
+                .define("ScopePipReleaseIdlePipeline", false);
+        SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES = builder
+                .comment("[EXPERIMENT] Consecutive idle frames before the idle scope pipeline is released",
+                        "(default 120 ~ 2s at 60fps; keeps aim transitions from thrashing the pipeline).")
+                .defineInRange("ScopePipIdleReleaseDelayFrames", 120, 1, Integer.MAX_VALUE);
+        SCOPE_PIP_DEBUG_GPU_MEM = builder
+                .comment("[DEBUG] Every 600 frames log the scope/main Iris pipelines' retained GPU texture",
+                        "bytes and the lifetime scope pass count. Quantifies whether the decay accumulates",
+                        "on the GPU side (the CPU-side structure probes on the sister branch all came back flat).",
+                        "If your MC has no GpuTexture#getMemorySize the byte fields log -1; also watch F3 VRAM.")
+                .define("ScopePipDebugGpuMem", false);
 
         builder.comment("Max time the damage counter will reset");
         DAMAGE_COUNTER_RESET_TIME = builder.defineInRange("DamageCounterResetTime", 2000, 10, Integer.MAX_VALUE);

@@ -16,7 +16,8 @@ metadata，不能写成 `1.1.8-R2`。
 中间不放 `.` / `-` / `_` —— TaCZTweaks 按版本号字符串识别本项目，规矩记在
 `gradle.properties` 注释里）
 
-本轮可核实的两项改动（均为源码级，**未实机验证**）：
+本轮可核实的三项改动（其中「光影 PBR 枪身闪烁修复」已在体 A/B 验证 PASS，
+其余两项为源码级、**未实机验证**）：
 
 - **从姊妹仓 `TaCZ_Renovated` 26.2 同步 LRTactical 官方 0.4.3**：预燃阈值与实体引信
   （`life >= 0`，温雷满预燃不再永不爆、C4 `-1` 仍不超时）、烟雾粒子改采环境光、
@@ -43,6 +44,16 @@ metadata，不能写成 `1.1.8-R2`。
   **不**声称修好了任何用户反馈的现象。详细取证与「当前落在哪一行」的实机回填位见
   [SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md](SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md)。
   （均为源码级，**未实机验证**：本执行环境无 JDK，未编译、未跑游戏。）
+- **光影 PBR 下第一人称枪身闪烁修复（在体 A/B 验证 PASS）**：
+  Iris 26.x 的 `HandRenderer` 一帧跑两遍手部 pass（实心 + 半透明），Iris 对实心物品的
+  半透明遍取消注入在 `submitArmWithItem` HEAD；本仓用 `@WrapOperation` 替换了该调用点，
+  取消对 TACZ 视模永不生效 ⇒ 枪身每帧被提交进 `gbuffers_hand` 与 `gbuffers_hand_water`
+  两遍、动画状态机一帧推进两次。labPBR/SEUS PBR 光影下两遍照明不同，叠加表现为
+  「反射光源时枪身整块明暗闪烁」（用户报告：Complementary + Iris 1.11.2+mc26.2，
+  仅第一人称、仅 PBR 开启时出现）。新增开关 `IrisHandPhaseSplitFix`（`[FIX]`，
+  **默认开**）：视模只提交实心遍，复刻 Iris 对普通实心物品的语义；`false` 秒回退。
+  2026-08-29 用户回报 **PASS**。证据链与验证记录见
+  [IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md](IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md)。
 
 > 说明：本节只列本轮**亲手改过并核对过**的内容。相对 tag `26.2_R2_HOTFIX`
 > 的完整差异是 67 个文件（含此前已合并的 scope PIP / 兼容层等工作），

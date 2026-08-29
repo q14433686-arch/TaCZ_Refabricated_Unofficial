@@ -95,5 +95,38 @@ public class RenderClothConfig {
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.enable_translucent"), RenderConfig.BLOCK_ENTITY_TRANSLUCENT.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.enable_translucent.desc"))
                 .setSaveConsumer(RenderConfig.BLOCK_ENTITY_TRANSLUCENT::set).build());
+
+        // ================= Scope PIP 画中画配置 =================
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_enable"), RenderConfig.SCOPE_PIP_ENABLE.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_enable.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_ENABLE::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_rerender"), RenderConfig.SCOPE_PIP_RERENDER.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_rerender.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_RERENDER::set).build());
+
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_resolution_scale"), RenderConfig.SCOPE_PIP_RESOLUTION_SCALE.get())
+                .setMin(0.25).setMax(1.0).setDefaultValue(0.75).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_resolution_scale.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_RESOLUTION_SCALE::set).build());
+
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_shadow_scale"), RenderConfig.SCOPE_PIP_SHADOW_SCALE.get())
+                .setMin(0.25).setMax(1.0).setDefaultValue(0.5).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_shadow_scale.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_SHADOW_SCALE::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_allow_shader_packs"), RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_allow_shader_packs.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_isolate_pipeline"), RenderConfig.SCOPE_PIP_ISOLATE_PIPELINE.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_isolate_pipeline.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_ISOLATE_PIPELINE::set).build());
+
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_world_zoom_share"), RenderConfig.SCOPE_PIP_WORLD_ZOOM_SHARE.get())
+                .setMin(0.0).setMax(1.0).setDefaultValue(0.0).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_world_zoom_share.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_WORLD_ZOOM_SHARE::set).build());
+
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_sharpness"), RenderConfig.SCOPE_PIP_SHARPNESS.get())
+                .setMin(0.0).setMax(1.0).setDefaultValue(0.5).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_sharpness.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_SHARPNESS::set).build());
     }
 }

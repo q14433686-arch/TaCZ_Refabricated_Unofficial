@@ -29,6 +29,7 @@ import com.tacz.guns.compat.sodium.SodiumCompat;
 import com.tacz.guns.compat.voxy.VoxyCompat;
 import com.tacz.guns.compat.voxy.VoxyScopePipelineCompat;
 import com.tacz.guns.config.client.RenderConfig;
+import com.tacz.guns.mixin.client.LevelRendererAccessor;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -38,6 +39,7 @@ import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.Projection;
 import net.minecraft.client.renderer.ProjectionMatrixBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.client.renderer.state.GameRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -315,6 +317,50 @@ public final class ScopePipRenderer {
      */
     private static volatile boolean insideScopeLevelRender = false;
 
+    /**
+     * 当前由 {@code FeatureRenderDispatcher.prepareFrame} 正在准备的 {@link SubmitNodeStorage}。
+     * 仅在镜内渲染期间供 {@link #shouldPreserveSubmits()} 校验。
+     */
+    private static volatile SubmitNodeStorage currentPreparingStorage = null;
+
+    public static void setCurrentPreparingStorage(SubmitNodeStorage storage) {
+        currentPreparingStorage = storage;
+    }
+
+    /**
+     * 当前正在 drain 的 {@link net.minecraft.client.renderer.feature.phase.FeatureRenderPhase}
+     * 是否应该跳过清空自己（即保留给随后的主画面那一遍渲染）。
+     *
+     * <p>仅在同时满足以下条件时返回 {@code true}：
+     * <ol>
+     *   <li>正处于镜内二次渲染期间（{@link #insideScopeLevelRender} 为真）；</li>
+     *   <li>当前正在准备的 {@link SubmitNodeStorage} <b>正是主画面的 {@code LevelRenderer.submitNodeStorage}</b>。</li>
+     * </ol>
+     * Iris 的 {@code ShadowRenderer.submitNodeStorage} 等专用阴影/辅助存储<b>绝不</b>被保留，
+     * 必须在每帧阴影渲染后正常清空，否则会导致提交节点随开镜帧数无限沉积并拖垮 FPS。
+     *
+     * @see com.tacz.guns.mixin.client.SimpleFeatureRenderPhaseMixin
+     * @see com.tacz.guns.mixin.client.TranslucentFeatureRenderPhaseMixin
+     */
+    public static boolean shouldPreserveSubmits() {
+        if (!insideScopeLevelRender) {
+            return false;
+        }
+        SubmitNodeStorage current = currentPreparingStorage;
+        if (current == null) {
+            return false;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || mc.levelRenderer == null) {
+            return false;
+        }
+        try {
+            return current == ((LevelRendererAccessor) mc.levelRenderer).tacz$getSubmitNodeStorage();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     /** 供 Voxy 兼容层查询：镜内这一遍是否用了独立的 Iris 管线。 */
     public static boolean isScopePassIsolated() {
         return scopePassIsolated;
@@ -339,7 +385,13 @@ public final class ScopePipRenderer {
      *
      * <p>判据与镜内那一遍一致（要开着二次渲染、开着隔离、且确实在用光影），
      * 但<b>不看开镜进度</b> —— 预热的全部意义就是赶在开镜之前做完。
-     * 已经建过就是一次引用比较，代价可忽略。
+     * 已经建过就是一次引用比较，代价可忽略。</p>
+     *
+     * <p>【空闲释放实验】{@code ScopePipReleaseIdlePipeline} 开启时，连续空闲超过
+     * {@code ScopePipIdleReleaseDelayFrames} 帧就销毁瞄具管线释放 GPU 资源，
+     * 空闲期间不再预热（否则释放完当帧就被重建，等于白释放）；
+     * 玩家重新开镜的那一帧 extract 里重建 —— 见
+     * {@link IrisScopePipelineCompat#releaseScopePipelineIfPresent}。</p>
      */
     public static void prewarmShaderPipelineIfNeeded() {
         if (failed || !rerenderMode() || !isolatePipeline()) {
@@ -351,7 +403,40 @@ public final class ScopePipRenderer {
         if (!allowShaderPacks()) {
             return;
         }
+        if (releaseIdlePipeline()) {
+            if (currentAimingProgress() <= minAimingProgress()) {
+                if (++idleReleaseFrames >= idleReleaseDelayFrames()) {
+                    IrisScopePipelineCompat.releaseScopePipelineIfPresent();
+                }
+                // 空闲期间不预热：预热会立刻重建刚释放的管线。
+                return;
+            }
+            idleReleaseFrames = 0;
+        }
         IrisScopePipelineCompat.prewarmIfNeeded();
+    }
+
+    /**
+     * 【光影下开镜帧率持续衰减 · 实验开关】空闲时释放瞄具管线。见
+     * {@link IrisScopePipelineCompat#releaseScopePipelineIfPresent} 的完整背景。
+     */
+    private static boolean releaseIdlePipeline() {
+        return RenderConfig.SCOPE_PIP_RELEASE_IDLE_PIPELINE != null
+                && RenderConfig.SCOPE_PIP_RELEASE_IDLE_PIPELINE.get();
+    }
+
+    private static int idleReleaseFrames = 0;
+
+    private static int idleReleaseDelayFrames() {
+        return RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES == null
+                ? 120 : RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES.get();
+    }
+
+    /** 本会话累计跑过多少次镜内那一遍（诊断探针用）。 */
+    private static int scopePassCount = 0;
+
+    public static int scopePassCount() {
+        return scopePassCount;
     }
 
     /**
@@ -883,7 +968,10 @@ public final class ScopePipRenderer {
         // 光影下不重定向渲染目标，所以离屏纹理只当「拷贝目的地」用，不需要深度附件；
         // 无光影下我们要把整遍世界画进它，没有深度就没有遮挡关系。
         boolean iris = IrisCompat.isUsingRenderPack();
-        TextureTarget pip = ScopePipTarget.getOrCreate(main.width, main.height, mainColor.getFormat(), !iris);
+        float scale = iris ? 1.0f : (float) resolutionScale();
+        int targetWidth = Math.max(1, Math.round(main.width * scale));
+        int targetHeight = Math.max(1, Math.round(main.height * scale));
+        TextureTarget pip = ScopePipTarget.getOrCreate(targetWidth, targetHeight, mainColor.getFormat(), !iris);
         if (pip == null) {
             failed = true;
             sceneCaptured = false;
@@ -900,6 +988,7 @@ public final class ScopePipRenderer {
         boolean cameraProjectionPatched = false;
         boolean physicsPatched = false;
         boolean sodiumPatched = false;
+        ScopePipResourceProbe.onScopePassBegin();
         try {
             if (!buildNarrowProjection(camera, pip)) {
                 sceneCaptured = false;
@@ -970,6 +1059,7 @@ public final class ScopePipRenderer {
             } finally {
                 // 必须最先清：从这里往后（主画面那一遍）各 phase 要恢复
                 // 「取完就清空」的原样，否则节点会一直堆到下一帧去。
+                currentPreparingStorage = null;
                 insideScopeLevelRender = false;
                 // 必须先关掉：之后任何再问「当前维度」的代码都必须拿到<b>真实</b>维度，
                 // 否则 Iris 在切世界时会把 lastDimension 与当前值比出「维度变了」，
@@ -1001,6 +1091,7 @@ public final class ScopePipRenderer {
                         Math.min(main.width, pip.width), Math.min(main.height, pip.height));
             }
             sceneCaptured = true;
+            scopePassCount++;
             if (!loggedFirstCapture) {
                 loggedFirstCapture = true;
                 GunMod.LOGGER.info("[TACZ Scope] Scope PIP second-render pass active: {}x{} at {}x "
@@ -1019,6 +1110,7 @@ public final class ScopePipRenderer {
             GunMod.LOGGER.error("[TACZ Scope] Scope PIP second-render pass failed; PIP disabled, "
                     + "falling back to whole-screen FOV zoom.", e);
         } finally {
+            ScopePipResourceProbe.onScopePassEnd();
             if (cameraProjectionPatched) {
                 // 必须还原：这个字段是 vanilla 那一遍以及后续所有消费者共用的。
                 // 留着窄投影会让主画面的 Voxy LOD 也跟着放大 —— 正好是反过来的病。
@@ -1313,6 +1405,11 @@ public final class ScopePipRenderer {
      */
     private static boolean irisOwnsLens() {
         return IrisCompat.isUsingRenderPack();
+    }
+
+    public static double resolutionScale() {
+        return RenderConfig.SCOPE_PIP_RESOLUTION_SCALE == null
+                ? 0.75d : RenderConfig.SCOPE_PIP_RESOLUTION_SCALE.get();
     }
 
     private static boolean allowShaderPacks() {
