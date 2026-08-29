@@ -1,5 +1,6 @@
 package com.tacz.guns.compat.cloth.client;
 
+import cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig;
 import com.tacz.guns.client.renderer.crosshair.CrosshairType;
 import com.tacz.guns.compat.cloth.widget.CrosshairDropdown;
 import com.tacz.guns.config.client.RenderConfig;
@@ -132,5 +133,14 @@ public class RenderClothConfig {
         render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_sharpness"), RenderConfig.SCOPE_PIP_SHARPNESS.get())
                 .setMin(0.0).setMax(1.0).setDefaultValue(0.5).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_sharpness.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_SHARPNESS::set).build());
+
+        // ================= Mesh Loader（poly_mesh）配置 =================
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_baking"), MeshyConfig.GPU_BAKING.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_baking.desc"))
+                .setSaveConsumer(MeshyConfig.GPU_BAKING::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders"), MeshyConfig.GPU_UNDER_SHADERS.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders.desc"))
+                .setSaveConsumer(MeshyConfig.GPU_UNDER_SHADERS::set).build());
     }
 }

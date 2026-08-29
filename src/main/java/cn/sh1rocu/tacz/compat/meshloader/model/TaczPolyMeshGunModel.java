@@ -3,9 +3,11 @@ package cn.sh1rocu.tacz.compat.meshloader.model;
 import cn.sh1rocu.tacz.compat.meshloader.api.IPolyMeshBone;
 import cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig;
 import cn.sh1rocu.tacz.compat.meshloader.config.PolyRenderPolicy;
+import cn.sh1rocu.tacz.compat.meshloader.core.PolyMesh;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshModel;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshSnapshot;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshSupport;
+import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.other.GunModelTypeManager;
@@ -22,16 +24,19 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix4f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * 支持 poly_mesh 的枪械模型（安全子集：纯 collector 路径，无 GPU 烘焙）。
+ * 支持 poly_mesh 的枪械模型。
  *
  * <h2>弹匣（关 PR #70 的教训）</h2>
  * 上游 TML 在 {@code loadPolyMesh} 之后把 {@code additional_magazine} 的
@@ -44,17 +49,17 @@ import java.util.Optional;
  * <ol>
  *   <li>exclude {@code additional_magazine} 子树，避免主遍历把它画在错误位置；</li>
  *   <li>{@code super.submit} 照常走立方体 + {@code IMirrorGeometry}；</li>
- *   <li>主 poly（含 {@code magazine}）走 collector；</li>
+ *   <li>主 poly（含 {@code magazine}）走 GPU（第一人称手部 pass、无光影）
+ *       或 collector（其余一切场景）；</li>
  *   <li>{@code additional_magazine.visible} 时在该节点变换下再提交 magazine /
  *       additional_magazine 的 poly（与上游 TML 的 {@code renderSubtreeDirect} 同构）。</li>
  * </ol>
  *
- * <h2>性能边界（如实声明，见 docs/MESH_LOADER.md）</h2>
- * <p>collector 路径每帧对每个可见 poly 顶点做一次 CPU 变换 + 逐顶点
- * VertexConsumer 调用。36 万顶点级高模在第一人称<b>仍然有帧率成本</b> ——
- * 本轮内置只保证「能用、不劣化无 mesh 场景、GUI/世界有预算闸门」；
- * O(顶点)→O(骨骼) 的 GPU 路径按 docs/TML_PERF_DIRECTIONS_2026_08_29.md
- * 的顺序另行提交。</p>
+ * <h2>GPU 路径（O(顶点)→O(骨骼)，见 {@link PolyMeshGpuRenderer}）</h2>
+ * <p>{@code shouldSubmitGpu}=true 时顶点常驻 GPU（骨骼本地系 + light 烘进顶点），
+ * 每帧只登记「骨骼矩阵 + 纹理 + VBO」，绘制发生在手部 executeSolid 之后。
+ * translucent 骨骼不烘（混合顺序交给 collector 的排序），换弹 additional_magazine
+ * 恒走 collector（矩阵语义不同且不是顶点热点）。</p>
  *
  * <p>移植自 VellEagle/TacZMeshLoader 1.21.1_fabric (GPL-3.0)。</p>
  */
@@ -69,6 +74,10 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
     private boolean cachedHasMagMesh = false;
     private boolean cachedHasAdditionalMagMesh = false;
     private List<BedrockPart> cachedAdditionalMagazinePath = null;
+    private final Map<String, PolyMeshGpuRenderer.BakedBone> bakedBones = new HashMap<>();
+    private int bakedLightKey = -1;
+    private long lastRebakeMs = 0L;
+    private boolean gpuBaked = false;
     private boolean loggedFirstSubmit = false;
     private boolean loggedGuiVertexCap = false;
     private boolean loggedWorldVertexCap = false;
@@ -121,16 +130,36 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             return;
         }
 
+        boolean gpu = PolyMeshGpuRenderer.shouldSubmitGpu() && ensureBaked(texture, light);
         if (!loggedFirstSubmit) {
             loggedFirstSubmit = true;
-            LOGGER.info("[TacZMeshLoader] poly submit: bones={} verts={} firstPerson={} texture={}",
+            LOGGER.info("[TacZMeshLoader] poly submit: bones={} verts={} gpu={} firstPerson={} texture={}",
                     polyMeshModel.getMeshBoneCount(),
                     polyMeshModel.getTotalVertexCount(),
+                    gpu,
                     transformType != null && transformType.firstPerson(),
                     texture);
         }
 
-        submitPolyMesh(polyMeshModel.capture(poseStack, light), collector, texture, overlay);
+        if (gpu) {
+            // GPU：每骨骼登记一条「矩阵 + VBO」。visitor 返回 true 继续下潜 ——
+            // 返回 false 是「剪掉子树」而不是「这根不画」（关 PR #33 的坑）。
+            polyMeshModel.visitBones(poseStack, true, (boneName, bonePose) -> {
+                if (polyMeshModel.isTranslucentBone(boneName)) {
+                    return true;
+                }
+                PolyMeshGpuRenderer.BakedBone baked = bakedBones.get(boneName);
+                if (baked != null) {
+                    PolyMeshGpuRenderer.submitBone(new Matrix4f(bonePose.last().pose()), texture, baked);
+                }
+                return true;
+            });
+            // translucent 骨骼仍走 collector（排序混合），cutout 已由 GPU 覆盖。
+            PolyMeshSnapshot translucentOnly = polyMeshModel.capture(poseStack, light, this::isGpuBone);
+            submitPolyMeshTranslucent(translucentOnly, collector, texture, overlay);
+        } else {
+            submitPolyMesh(polyMeshModel.capture(poseStack, light), collector, texture, overlay);
+        }
 
         submitAdditionalMagazinePoly(poseStack, collector, texture, overlay, light);
     }
@@ -141,6 +170,9 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
      *
      * <p>captureSubtree 的矩阵语义与上游 TML {@code renderSubtreeDirect} 一致：
      * 该节点及其祖先的变换先由调用方乘进 pose，根骨骼自身不再套变换。</p>
+     *
+     * <p><b>始终走 collector</b>：换弹弹匣不是 36 万顶点热点，且 mirrorRoot
+     * 的矩阵语义与 visitBones 不同 —— 硬套 GPU 路径会把枪树变换乘两遍。</p>
      */
     private void submitAdditionalMagazinePoly(PoseStack poseStack, SubmitNodeCollector collector,
                                               Identifier texture, int overlay, int light) {
@@ -170,6 +202,11 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
                     GunModelConstant.MAG_ADDITIONAL_NODE, magazinePose, light, true),
                     collector, texture, overlay);
         }
+    }
+
+    /** 该骨骼的 cutout 是否已由 GPU 覆盖（capture 时跳过，避免画两遍）。 */
+    private boolean isGpuBone(String boneName) {
+        return bakedBones.containsKey(boneName) && !polyMeshModel.isTranslucentBone(boneName);
     }
 
     private boolean withinContextBudget(ItemDisplayContext transformType) {
@@ -202,6 +239,77 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
                     total, cap);
         }
         return false;
+    }
+
+    private void submitPolyMeshTranslucent(PolyMeshSnapshot snapshot, SubmitNodeCollector collector,
+                                           Identifier texture, int overlay) {
+        if (!snapshot.hasTranslucent()) {
+            return;
+        }
+        collector.submitCustomGeometry(new PoseStack(), RenderTypes.entityTranslucent(texture),
+                (entryPose, consumer) -> snapshot.writeTranslucent(consumer, overlay));
+    }
+
+    /**
+     * 确保当前光照档的骨骼 VBO 已就绪。
+     *
+     * <p>光照被 {@link PolyMeshGpuRenderer#quantizeLight} 量化成 4 级档位烘进顶点；
+     * 跨档才重烘，且有 1 秒节流 —— 光照剧变（进出洞穴）最多滞后 1 秒，
+     * 换来的是稳态零重烘。illuminated 骨骼恒烘 FULL_BRIGHT，与 collector 语义一致。</p>
+     */
+    private boolean ensureBaked(Identifier texture, int currentLight) {
+        if (polyMeshModel == null) {
+            return false;
+        }
+        int lightKey = PolyMeshGpuRenderer.quantizeLight(currentLight);
+        if (gpuBaked) {
+            if (lightKey == bakedLightKey) {
+                return true;
+            }
+            long now = System.currentTimeMillis();
+            if (now - lastRebakeMs < 1000L) {
+                // 节流窗口内先用旧光照档画，避免闪烁边界上逐帧重烘。
+                return true;
+            }
+            releaseBaked();
+        }
+        boolean allOk = true;
+        for (Map.Entry<String, List<PolyMesh>> entry : polyMeshModel.getMeshMap().entrySet()) {
+            String boneName = entry.getKey();
+            if (polyMeshModel.isTranslucentBone(boneName)) {
+                continue;
+            }
+            int boneLight = polyMeshModel.isIlluminatedBone(boneName)
+                    ? PolyMeshGpuRenderer.FULL_BRIGHT : lightKey;
+            PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight);
+            if (baked == null) {
+                allOk = false;
+                continue;
+            }
+            bakedBones.put(boneName, baked);
+        }
+        gpuBaked = allOk && !bakedBones.isEmpty();
+        if (gpuBaked) {
+            bakedLightKey = lightKey;
+            lastRebakeMs = System.currentTimeMillis();
+            LOGGER.info("[TacZMeshLoader] GPU-baked {} bones ({} vertices) for {} at quantized light {}",
+                    bakedBones.size(), polyMeshModel.getTotalVertexCount(), texture,
+                    Integer.toHexString(lightKey));
+        } else {
+            // 部分失败宁可整体回 collector：半 GPU 半 collector 的 cutout 集合
+            // 难以对账（哪根骨骼谁画的说不清），干脆二选一。
+            releaseBaked();
+        }
+        return gpuBaked;
+    }
+
+    private void releaseBaked() {
+        for (PolyMeshGpuRenderer.BakedBone baked : bakedBones.values()) {
+            baked.close();
+        }
+        bakedBones.clear();
+        gpuBaked = false;
+        bakedLightKey = -1;
     }
 
     private void submitPolyMesh(PolyMeshSnapshot snapshot, SubmitNodeCollector collector,
@@ -237,6 +345,8 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
     }
 
     public void loadPolyMesh(Identifier geoPath) {
+        // 换模型必须先放掉旧 VBO —— 资源重载会走到这里，不放就泄漏 GPU 内存。
+        releaseBaked();
         try {
             this.cachedRootChildren = null;
             this.polyMeshModel = PolyMeshSupport.load(geoPath, () -> {
