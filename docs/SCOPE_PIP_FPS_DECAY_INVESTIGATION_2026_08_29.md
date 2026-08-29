@@ -33,24 +33,34 @@
 | SodiumWorldRenderer 集合增长 | 反射扫描 | 无果 |
 | Voxy doTraversal/视口切换 | 计时+计数 | 无果（且用户卸载 Voxy 复现） |
 | 第二遍渲染是否被闸门拦下 | lastBlockedGate | 无果 |
+| **GPU 显存耗尽** | 用户排除 | GPU 独占 16G / 可用 ~14G，衰减在几秒-几十秒量级，
+  吃满 14G 不现实；且真爆显存在本仓有案底 = 直接 `GpuOutOfMemoryException`
+  崩游戏（见 `ScopePipTrace` 类注释），不是优雅降到 7fps 稳住 |
 
-**探针没覆盖的一格：GPU 侧字节数。** 上面的结构探针数的是「条目数」，
-不是「显存字节数」。每 scope pass 若在瞄具管线的保留状态里留下若干纹理/缓冲
-（而不是往集合里塞对象），条目数不变、字节数在涨 —— 全部探针都会显示正常。
+**探针没覆盖的两格：GPU 侧字节数（非条目数）、Java 堆与 GC。**
+前者已在本轮探针补齐；后者是头号新嫌疑（见 §2）。
 
-## 2. 假设排序
+## 2. 假设排序（2026-08-29 依用户 16G 显存信息重排）
 
-- **H1（头号）每 scope pass 在瞄具管线的保留 GPU 状态里累积资源**。
-  机理猜测：独立管线自身的 colortex/gbuffer/阴影/自定义图像里，某一张（几张）在
-  每次 `beginLevelRendering → finalizeLevelRendering` 轮里被「新建后没释放」，
-  旧的被持有者引用着（Iris 的 RenderTargets/GlImage/ShaderStorageBufferHolder 都是
-  「持有即保留」语义）。重进存档 → `destroyPipeline()` 整套释放 → 重置 ✓；
-  空闲不恢复（占着）✓；地板（显存/分配压力）✓；CPU 探针全平 ✓；
-  仅 isolate=true（只有这条路径存在第二套管线）✓。
-- **H2 累积源在主管线 / 驱动层 / shaderpack 进程级状态**，瞄具管线只是触发器
-  （比如把某计数器推过了临界点）。若空闲释放实验后衰减依旧，就落到这里。
-- **H3 PreparedFrame/SubmitNode 内部列表增长**（姊妹分支扫描的是「字段是集合」，
-  没扫 POJO 里的列表）。排在 H1 之后，因为「仅 isolate=true」这条对不上。
+用户补充（关键修正）：「衰减与开镜时长无关，只与距第一次开镜的时间有关」。
+若严格成立，**按 pass 数累积的所有假设（包括 GPU 逐 pass 泄漏）全部出局**
+——持续开镜一分钟（数千个 pass）与只开一瞬间，衰减速度应差几个数量级。
+所以累积按**墙钟/帧数**走。加上 16G 显存排除项，重排如下：
+
+- **H1（头号，本轮新晋）Java 堆持续增长 → GC 饱和**。7fps 地板不崩溃、
+  重进存档重置、与开镜时长无关 —— 全部是 GC 时间占比爬升的经典签名。
+  每帧（或每开镜帧）在 Java 堆里漏一点（1 字节/帧，60000 帧/20 分钟就是 60KB
+  级别的慢火，或更大），GC 越来越频繁，渲染线程被暂停的比例越来越高。
+  姊妹分支扫了若干具体集合，**从未量过堆本身**。
+- **H2（降级）每 scope pass 在瞄具管线保留 GPU 状态里累积资源**。
+  与「开镜时长无关」冲突，除非用户对衰减速率的感受不精确；保留为第二顺位，
+  由 GPU 字节探针裁决。
+- **H3（队列积压反馈）无任何泄漏**：第一次开镜把帧率砍半（整条光影管线跑两遍），
+  直接打破积压平衡（区块构建/上传/光照任务追不上渲染），积压单调增长、GC 压力
+  随之上升；「隔一会再开镜从上次的位置继续掉」是因为积压从未被消化（空闲时
+  积压有上限，一旦到顶……此说弱在：空闲时积压应被消化掉一部分）。
+- **H4 累积源在主管线 / 驱动层 / shaderpack 进程级状态**，瞄具管线只是触发器。
+  若空闲释放实验后衰减依旧，落到这里或 H3。
 
 ## 3. 本轮新增的实验装置
 
@@ -61,35 +71,46 @@
 `WorldRenderingPipeline#destroy()` 逐项释放 + 从 pipelinesPerDimension 摘除 +
 失效预热状态与 Voxy 第二套栈）；重新开镜的 extract 里由预热重建。
 
-- **判读**：开启后衰减消失 ⇒ H1 坐实（累积源在瞄具管线保留资源里）；
-  衰减依旧 ⇒ H2/H3，转下一轮。
+- **判读（对应重排后的假设）**：开启后衰减消失 ⇒ 累积源在瞄具管线的保留状态里
+  （GPU 资源或 Voxy 栈，H2）；衰减依旧 ⇒ 源在主管线/堆/队列（H1/H3/H4），
+  此开关对堆泄漏无效（堆增长与管线无关）。
 - **代价**：每次重新开镜付一次 shaderpack 编译（预热在同一帧 extract 完成，
   不落在渲染中途）；重建会重置全局 SystemTimeUniforms 帧计数（对 pack 的
   frameCounter 类效果是相位跳变，观感无害）。这是实验装置，不是成品方案。
 
-### 3.2 `ScopePipDebugGpuMem`（诊断，默认 false）
+### 3.2 `ScopePipDebugGpuMem`（诊断，默认 false；已扩充为资源探针）
 
-每 600 帧打一行：scope pass 累计次数、管线表大小、瞄具/主管线各自的
-**GPU 纹理字节数**（反射遍历对象图求和，深度 3、身份去重、预算封顶）。
+每 600 帧打一行（`[TACZ Scope][probe]`）：
+- scope pass 累计次数、管线表大小、瞄具/主管线各自的 **GPU 纹理字节数**
+  （反射遍历对象图求和，深度 3、身份去重、预算封顶）；
+- **Java 堆**：`heapUsedMiB` / `heapMaxMiB`；
+- **GC**：本窗口的 GC 次数增量 `gcCountDelta` 与累计耗时增量 `gcTimeDeltaMs`。
 
-- **判读**：scopePasses 涨且 scopePipelineTextureMiB 同步涨 ⇒ 瞄具管线在逐 pass
-  累积 GPU 纹理，H1 直接坐实；两条曲线不相关 ⇒ 看 mainPipelineTextureMiB。
-- `getMemorySize` 拿不到时字节列记 -1（此时以 F3 显存占用为准）。
+- **判读**：
+  - `heapUsedMiB` 随 frame 单调爬升、`gcTimeDeltaMs` 同步涨 ⇒ **H1 坐实**（堆泄漏/
+    GC 饱和），这正是「7fps 地板不崩溃」的直接解释；
+  - scopePasses 涨且 scopePipelineTextureMiB 同步涨 ⇒ H2；
+  - 全平 ⇒ H3/H4，转「积压反馈」调查。
+- `getMemorySize` 拿不到时字节列记 -1；堆/GC 数据直接读 JDK API，恒有效。
 
-### 3.3 零代码观察：F3 显存曲线
+### 3.3 零代码观察：F3 双曲线
 
-衰减进行中盯 F3 右上角 GPU 内存：**持续爬升 → 显存压力**（H1 的直接旁证）；
-平稳 → 累积在 CPU/驱动不可见处。
+衰减进行中盯 F3 右上角的**两**条曲线：
+- **Mem%（第 2 行左侧，Java 堆）**：持续爬升、到达高水位后反复触发 GC
+  → H1 的现场目击（比探针更细粒度）；
+- **GPU 内存**：持续爬升 → H2 的旁证；平稳 → 与 H2 无关。
+（16G 显存背景下，GPU 曲线预期平稳——它只需要证明自己「没涨」即可。）
 
 ## 4. 还想要的旧数据
 
-姊妹分支的 pulse 日志（`[TACZ Scope][pulse] ...`）里其实已有决定性信息：
-`avgScopeMs / avgMainRenderMs / avgCompositeMs` 三个每 600 帧窗口均值 +
-`sinceFirstScopeS`。请把「第一次开镜后、衰减明显时」的几行 pulse 贴出来：
-
-- `avgScopeMs` 随窗口涨、`avgMainRenderMs` 平 ⇒ 增长在镜内那一遍内部；
-- `avgMainRenderMs` 也涨 ⇒ 整帧都被拖累（更指向显存/驱动压力）；
-- 两者都平 ⇒ 增长在被探针漏掉的边角（H3）。
+1. 姊妹分支的 pulse 日志（`[TACZ Scope][pulse] ...`）：
+   `avgScopeMs / avgMainRenderMs / avgCompositeMs` + `sinceFirstScopeS`。
+   把「第一次开镜后、衰减明显时」的几行贴出来：
+   - `avgScopeMs` 随窗口涨、`avgMainRenderMs` 平 ⇒ 增长在镜内那一遍内部；
+   - `avgMainRenderMs` 也涨 ⇒ 整帧都被拖累（GC/驱动压力都会长这样）；
+   - 两者都平 ⇒ 增长在被探针漏掉的边角（H3）。
+2. **F3 的 Mem%（Java 堆）历史观察**：衰减时堆是否爬到高水位反复 GC？
+   这条比任何探针都先到 —— 若明显爬升，H1 几乎当场定案。
 
 ## 5. 本轮改动清单
 
@@ -97,19 +118,24 @@
 |---|---|
 | `IrisScopePipelineCompat.java` | 解析 pipelinesPerDimension 字段；新增 `scopePipeline()` / `mainPipeline()` / `pipelineMapSize()` / `releaseScopePipelineIfPresent()`（销毁+摘除+回指主管线+失效预热与 Voxy 栈；失败一次即放弃） |
 | `ScopePipRenderer.java` | `prewarmShaderPipelineIfNeeded` 接入空闲释放闸门（空闲延迟帧数、空闲期不预热）；新增 `scopePassCount()` 会话计数 |
-| `ScopePipGpuMemoryProbe.java` | 新文件：600 帧脉冲 GPU 纹理字节数探针（默认关） |
+| `ScopePipResourceProbe.java` | 新文件：600 帧脉冲资源探针 = GPU 纹理字节数（瞄具/主管线）+ Java 堆 used/max + GC 次数/耗时窗口增量（默认关）。上一轮的 `ScopePipGpuMemoryProbe` 已删除并入本类 |
 | `RenderConfig.java` | 新键 `ScopePipReleaseIdlePipeline` / `ScopePipIdleReleaseDelayFrames` / `ScopePipDebugGpuMem`（全部默认关，均为 EXPERIMENT/DEBUG 性质） |
-| `GameRendererMixin.java` | extract HEAD 挂 GPU 探针 beginFrame |
+| `GameRendererMixin.java` | extract HEAD 挂资源探针 beginFrame |
 
 ## 6. 验证协议
 
 1. 复现基线：`ScopePipRerender=true`、`ScopePipIsolatePipeline=true`、
    `ScopePipAllowShaderPacks=true`，Complementary + labPBR；开镜若干次确认衰减。
-2. `ScopePipDebugGpuMem=true` 跑一轮衰减，收集 gpu-probe 行（判据见 §3.2）。
+   **全程第一件事：盯 F3 Mem%（Java 堆）** —— 是否爬高水位反复 GC（判据 §3.3）。
+2. `ScopePipDebugGpuMem=true` 跑一轮衰减，收集 `[probe]` 行（判据 §3.2）：
+   看 `heapUsedMiB` 曲线与 `gcTimeDeltaMs`，以及两条 pipelineTextureMiB。
 3. `ScopePipReleaseIdlePipeline=true`（延迟默认 120 帧）再跑一轮：
    - 每次开镜会话是否都从「满血」开始（判据 §3.1）；
    - 重新开镜的编译停顿是否可接受；
    - 连续快速开收镜（< 延迟窗口）是否出现反复拆建抖动。
-4. 全程记录 F3 显存。
+4. 全程记录 F3 显存（预期平稳；它只需要证明自己没涨）。
+
+**优先序**：先做第 1 步（零配置、零风险、信息量最大）。若 Mem% 明显爬升，
+H1 当场定案，再决定第 2/3 步是否必要。
 
 没有实机条件就**明说**；定位前不得把任何一步写成修复。

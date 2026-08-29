@@ -7,7 +7,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
-import com.tacz.guns.client.render.scope.ScopePipGpuMemoryProbe;
+import com.tacz.guns.client.render.scope.ScopePipResourceProbe;
 import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import com.tacz.guns.client.render.scope.ScopePipTrace;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
@@ -246,7 +246,7 @@ public abstract class GameRendererMixin {
         // 懒加载的话它会落在第一次开镜的那一帧中途，既卡顿又会在帧中途重置全局帧计数。
         ScopePipRenderer.prewarmShaderPipelineIfNeeded();
         // 【诊断】GPU 纹理字节数脉冲探针（默认关）。
-        ScopePipGpuMemoryProbe.beginFrame();
+        ScopePipResourceProbe.beginFrame();
         ScopePipTrace.beginFrame();
     }
 

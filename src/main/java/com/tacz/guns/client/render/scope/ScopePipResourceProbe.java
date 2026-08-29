@@ -7,6 +7,8 @@ import com.tacz.guns.config.client.RenderConfig;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -17,34 +19,38 @@ import java.util.IdentityHashMap;
 import java.util.Set;
 
 /**
- * 【诊断】按帧脉冲统计瞄具/主管线各自持有的<b>GPU 纹理字节数</b>。
+ * 【诊断】按帧脉冲统计瞄具/主管线各自的 GPU 纹理字节数 + <b>Java 堆与 GC</b>。
  *
- * <h2>为什么需要它 —— 姊妹分支探针没覆盖的那一格</h2>
+ * <h2>为什么需要它 —— 姊妹分支探针没覆盖的两格</h2>
  * 「光影下开镜帧率随时间衰减、重进存档重置」这个症状（{@code ScopePipIsolatePipeline=true}），
- * 姊妹分支已经把 CPU 侧能数的都数过了：管线身份是否每帧重建、pipelinesPerDimension 大小、
- * 激活 SSBO 数量、Blaze3D 保留集合、SodiumWorldRenderer 集合 —— 全部无果。
- * 而「显存侧」从来没有被量化过：每 scope pass 若在瞄具管线里留下一点 GPU 资源
- * （新纹理/新缓冲/新图像），CPU 侧的任何结构计数都看不见它，只有字节数会说话。
+ * 姊妹分支把 CPU 侧能数的结构都数过了（管线身份、pipelinesPerDimension 大小、
+ * 激活 SSBO 数量与字节、Blaze3D 保留集合、SodiumWorldRenderer 集合）—— 全部无果。
+ * 但有<b>两格从来没有被量化过</b>：
+ * <ol>
+ *   <li><b>GPU 侧字节数</b>：结构探针数的是「条目数」不是「字节数」；</li>
+ *   <li><b>Java 堆与 GC</b>：用户实测「衰减与开镜时长无关、只与距第一次开镜的时间有关，
+ *       7fps 地板、不崩溃、重进存档重置」—— 这是<b>堆持续增长 → GC 饱和</b>的经典签名，
+ *       而不是显存耗尽（显存耗尽在本仓有案底：直接 {@code GpuOutOfMemoryException} 崩游戏，
+ *       见 {@code ScopePipTrace} 类注释）。</li>
+ * </ol>
  *
- * <p>衰减的观感也与显存压力吻合：帧率一路下滑到 ~7 的地板、重进存档（Iris
- * destroyPipeline 整套释放）立刻重置、空闲时不复原（占着就是占着）。</p>
+ * <p>判读（每 600 帧一行）：</p>
+ * <ul>
+ *   <li>scopePasses 涨且 scopePipelineTextureMiB 同步涨 ⇒ 瞄具管线在逐 pass 累积 GPU 纹理
+ *       （但用户「与开镜时长无关」的观察与此矛盾，需先验证）；</li>
+ *   <li>heapUsedMiB 随 frame 单调爬升、gcTimeMs 窗口增量同步涨 ⇒ 堆泄漏/GC 饱和，
+ *       继续用 F3 的 Mem% 与 gcTime 曲线定位触发点；</li>
+ *   <li>两列都平 ⇒ 既不是 GPU 纹理也不是堆，转队列积压反馈（首镜砍半帧率 → 积压 → 地板）。</li>
+ * </ul>
  *
- * <h2>它数什么</h2>
- * 反射走一遍瞄具管线 / 主管线的对象图（深度受限、身份去重），
- * 把所有 {@link GpuTexture} 的 {@code getMemorySize()} 加起来。每 600 帧打一行：
- * scope pass 累计次数、管线表大小、两套管线的纹理字节数。
- *
- * <p>判读：scopePasses 单调涨、scopePipelineTextureMiB 也跟着单调涨 ⇒ 瞄具管线在
- * 逐 pass 累积 GPU 纹理 ⇒ 根因坐实；两者不相关则转向主管线 / 驱动层。</p>
- *
- * <p>若运行环境没有 {@code GpuTexture#getMemorySize}（方法反射拿不到），字节数记 -1，
- * 此时请配合 F3 右上角的显存占用目测。</p>
+ * <p>字节数取 {@code GpuTexture#getMemorySize}（反射），版本没有该方法的记 -1，
+ * 此时以 F3 右上角显存为准。堆数据直接读 {@link Runtime} 与 GC MXBean，无需权限。</p>
  *
  * <p>只在 {@code ScopePipDebugGpuMem} 打开时工作，默认关闭。每 600 帧一次、预算封顶，
  * 稳态开销可忽略。</p>
  */
 @Environment(EnvType.CLIENT)
-public final class ScopePipGpuMemoryProbe {
+public final class ScopePipResourceProbe {
 
     private static final int PULSE_FRAMES = 600;
     private static final int MAX_DEPTH = 3;
@@ -52,10 +58,12 @@ public final class ScopePipGpuMemoryProbe {
 
     private static int frameCounter = 0;
     private static long lastScopePasses = 0;
+    private static long lastGcCount = -1;
+    private static long lastGcTimeMs = -1;
     private static Method getMemorySizeMethod;
     private static boolean memorySizeResolved;
 
-    private ScopePipGpuMemoryProbe() {
+    private ScopePipResourceProbe() {
     }
 
     /** 挂在 {@code GameRenderer#extract} HEAD（与瞄具其它帧首归零一起）。 */
@@ -73,11 +81,26 @@ public final class ScopePipGpuMemoryProbe {
             Object main = IrisScopePipelineCompat.mainPipeline();
             long scopeMiB = scope == null ? -1L : sumTextureBytes(scope) / (1024L * 1024L);
             long mainMiB = main == null ? -1L : sumTextureBytes(main) / (1024L * 1024L);
-            GunMod.LOGGER.info("[TACZ Scope][gpu-probe] frame={} scopePasses={} (delta={}) pipelineMapSize={} "
-                            + "scopePipelineTextureMiB={} mainPipelineTextureMiB={}",
-                    frameCounter, scopePasses, scopePasses - lastScopePasses, mapSize, scopeMiB, mainMiB);
+            Runtime runtime = Runtime.getRuntime();
+            long heapUsedMiB = (runtime.totalMemory() - runtime.freeMemory()) / (1024L * 1024L);
+            long heapMaxMiB = runtime.maxMemory() / (1024L * 1024L);
+            long gcCount = 0;
+            long gcTimeMs = 0;
+            for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
+                gcCount += bean.getCollectionCount();
+                gcTimeMs += bean.getCollectionTime();
+            }
+            long gcCountDelta = lastGcCount < 0 ? 0 : gcCount - lastGcCount;
+            long gcTimeDeltaMs = lastGcTimeMs < 0 ? 0 : gcTimeMs - lastGcTimeMs;
+            GunMod.LOGGER.info("[TACZ Scope][probe] frame={} scopePasses={} (delta={}) pipelineMapSize={} "
+                            + "scopePipelineTextureMiB={} mainPipelineTextureMiB={} "
+                            + "heapUsedMiB={} heapMaxMiB={} gcCountDelta={} gcTimeDeltaMs={}",
+                    frameCounter, scopePasses, scopePasses - lastScopePasses, mapSize, scopeMiB, mainMiB,
+                    heapUsedMiB, heapMaxMiB, gcCountDelta, gcTimeDeltaMs);
+            lastGcCount = gcCount;
+            lastGcTimeMs = gcTimeMs;
         } catch (Throwable t) {
-            GunMod.LOGGER.warn("[TACZ Scope][gpu-probe] Pulse failed; probing is best-effort.", t);
+            GunMod.LOGGER.warn("[TACZ Scope][probe] Pulse failed; probing is best-effort.", t);
         }
         lastScopePasses = scopePasses;
     }
