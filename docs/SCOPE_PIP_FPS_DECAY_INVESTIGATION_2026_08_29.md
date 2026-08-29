@@ -185,6 +185,52 @@
 第二条为真：衰减靠开镜活动推进，「与开镜时长无关」修正为「与开镜会话/次数有关」
 （§0 已更新）。沉积按会话发生、闲置保留，重进存档才释放。
 
+### 4.5 实验 C/A 差值：每开镜帧沉积的保留渲染状态（2026-08-29 用户提交）
+
+四份快照：C#1(09:12) → C#2(09:12, 5×1s 点射) → C#3(09:15, 闲置 2 分钟) →
+A(09:16, 60s 连续开镜；基线≈C#3，无重进，Climate$Parameter 上行证明期间有走动)。
+
+**C 括号（5 次点射 ≈ 300 scope pass）**：全部类增长 < 0.2MB，低于 top-137
+可见阈值（~380KB）——沉积量太小，看不到不等于没有（按 A 的速率推算应沉积
+~1,100 个 ≈ 50KB，恰好沉在阈值下）。C#2→C#3 闲置期只有 CHM$Node +6,884 等
+tick 噪声，**小沉积未被回收**。
+
+**A 括号（60s ≈ 3,300-3,600 scope pass）**：出现一组高度同步的新类，且数量
+互为比例：
+
+| 类 | 60s 增量 | 每 pass 沉积率 | 备注 |
+|---|---|---|---|
+| `ItemStackRenderState` | +13,296 | ~3.7 | 与下方 Layer 数**严格相等** |
+| `ItemStackRenderState$LayerRenderState` | +13,296 | ~3.7 | 每个 state 恰 1 层 |
+| `BedrockRenderSnapshot$DrawCommand`（**TACZ**） | +13,300 | ~3.7 | 枪模快照绘制命令 |
+| `ModelFeatureRenderer$Submit` | +11,082 | ~3.1 | 提交节点 |
+| `org.joml.Matrix4f` | +27,529 | ~7.7 | ≈2× DrawCommand（pose + 快照/掩码矩阵） |
+| `org.joml.Matrix3f` | +15,185 | ~4.2 | ≈1× DrawCommand（normal） |
+| `Optional` | +27,113 | ~7.5 | 与 Matrix4f 同阶 |
+| `SlimeRenderState` | +2,397 | ~0.67 | 实体渲染状态（视域内少量实体） |
+
+**结论（指纹）**：
+- 沉积率 ∝ **开镜帧数**（A 的 60s 沉积 ≈ C 的 5×1s 的 12 倍 ≈ 帧数比 12 倍）——
+  对「与开镜时长无关」的最终修正：**与闲置时长无关，与累计开镜帧数成正比**；
+- 沉积对象 = 每次 scope pass 的**提交节点及其载荷**（枪模 DrawCommand、
+  ItemStackRenderState、实体渲染状态、矩阵）——Submit 节点被保留时，
+  上面整张对象图一起被保留（DrawCommand 经 `collector.submitCustomGeometry`
+  的 lambda 闭包挂在 Submit 上，ItemStackRenderState/SlimeRenderState 经
+  26.2 渲染状态挂在 Submit 上，字节码级一致解释）；
+- 跨闲置**不回收**；重进存档重置；
+- **已排除的持有者**（静态核对 + 数据双证）：
+  phase 列表（主 pass 清空，mixin 取消只限 scope pass 内、对称平衡）、
+  PreparedFrame.allSubmits（闲置帧同样跑手部 renderAllFeatures，若它增长
+  闲置也该涨，B 实验零增长）、HandRenderer.frame 字段（未使用）、
+  ScopeMaskGeometry.ENTRIES（每帧 clear）、RenderType 缓存（键=贴图 id，有界）。
+
+**仍未定案**：Submit 节点究竟被谁保留。唯一确定的是保留发生在 scope pass 期间
+（闲置零沉积）。下一步 = 堆图取证（§6 heapdump 步骤），GC root 路径会直接点名。
+
+**附带校准问题**：C 的 5 次点射只沉积 ~50KB，若用户当时已能感到 FPS 下降，
+说明单个保留对象的隐性重量（GPU 资源尾随）远大于其 Java 侧字节数 ——
+heapdump 的 dominator tree 能同时给出答案。
+
 ## 5. 本轮改动清单
 
 | 文件 | 改动 |
@@ -226,7 +272,19 @@ A ≫ C（≈12 倍）⇒ 按开镜帧数沉积。两者指向不同的代码点
 **可选佐证**：`/spark profiler start --thread render --only-allocations`，
 开镜 10-20 秒，`/spark profiler stop` —— 分配热点站点（≠保留对象，只作旁证）。
 
-**优先序**：C 第一（3 分钟、直接点名泄漏类）；A 第二（定沉积粒度）。
-两份/三份 heapsummary 直接贴 spark 链接即可。
+**优先序（2026-08-29 更新：C/A 已执行，§4.5 已给出指纹）**：
+- **堆图取证（决定性，下一步做这个）**：
+  1. 重进存档 → 连续开镜 60-120 秒积累沉积 → `/spark heapdump`，按提示上传；
+  2. 下载 spark 给的 .hprof，用 VisualVM（File → Load）或 Eclipse MAT 打开；
+  3. 找到类 `com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot$DrawCommand`
+     （或 `net.minecraft.client.renderer.item.ItemStackRenderState`），
+     任选一个实例 → **Show nearest GC root** → 截图/复制整条引用链发我。
+     **那条链就是泄漏持有者**，类名+字段名出来即可圈定修复点；
+  4. 顺带看 MAT 的 dominator tree（若用 MAT）：DrawCommand 的 retained size
+     能同时回答 §4.5 末尾的「隐性重量」问题。
+- 校准问题：C 的 5 次点射时第 1 次与第 5 次的 FPS 读数（验证 ~50KB 沉积
+  是否已可感知）。
+- 若 heapdump 不方便：我这边可以加装「WeakReference 存活率 + 静态根 BFS
+  反向可达」探针，在游戏内自动指出持有者候选（下一轮）。
 
 没有实机条件就**明说**；定位前不得把任何一步写成修复。
