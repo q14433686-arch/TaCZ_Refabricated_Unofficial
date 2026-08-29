@@ -16,7 +16,7 @@
 | **B2** ogg + 两张效果图标 + 两个脚本 | ❌ 缺 | `git show` 取，命令见共用核心 §2.B2 |
 | **B3** `DeafenState#tick` 接住 `PlayResult` 并 WARN | ❌ 缺 | 照抄 |
 | **C** 耳鸣消声注入点 → `AbstractSoundInstance#getVolume()` | ⚠️ **先核对再改** | 见下 |
-| **H1** 光影 PBR 第一人称枪身闪烁修复（`IrisHandPhaseSplitFix`） | ❌ 缺 | 从 `origin/26.2(main)` 的 `arena/01a04d12` 取证移植；26.2 侧**在体 A/B 验证 PASS**。取证文档：`docs/IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md`。移植前先核对你这一支的差异（见下「特殊注意 2」） |
+| **H1** 光影 PBR 第一人称枪身闪烁修复（`IrisHandPhaseSplitFix`） | ✅ **已有等价闸门，无需移植** | 已核实 `origin/26.1.2` @ `e7db2c2`：`IrisCompat.shouldRenderInCurrentHandPhase(ItemStack)`（IrisCompat.java L201）已接入 `ItemInHandRendererMixin` L124，语义与 26.2 修复一致。见下「特殊注意 §6」 |
 
 ## 你这一支的特殊注意
 
@@ -71,27 +71,22 @@ hotfix 序号规矩：直接接在 `hotfix` 后面（`R2-hotfix3`），中间不
   **必须是 END**：原版 `Minecraft#tick` 里 `handleKeybinds` 先于实体/世界 tick，
   挂 END 才能在同一次 tick 内采到使用状态的下降沿。
 
-### 6. 任务 H1（光影 PBR 第一人称枪身闪烁）移植前必核清单
+### 6. 任务 H1（光影 PBR 第一人称枪身闪烁）——已核实：无需移植
 
-来源分支（26.2）改动仅两处：`RenderConfig` 新增 `IRIS_HAND_PHASE_SPLIT_FIX`
-（`[FIX]`，默认 true），以及 `ItemInHandRendererMixin` 半透明遍早退闸门
-（`IrisCompat.isHandRendererActive() && !IrisCompat.isHandRenderingSolid()` 时
-不提交视模）。取证与验证记录见来源分支的
-`docs/IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md`（26.2 侧在体 PASS）。
+2026-08-29 对 `origin/26.1.2` @ `e7db2c2` 的核实结论：
 
-移植到 26.1.2 前，**逐项核对**（不要照搬）：
+- `IrisCompat.java` L201 已有 `shouldRenderInCurrentHandPhase(ItemStack)`：
+  逐行镜像 Iris 的 `MixinItemInHandRenderer#iris$skipTranslucentHands` 相位闸门
+  （含 `isHandTranslucent(ItemStack)` 反射变体），失败时 fail-open（不吞物品）；
+- `ItemInHandRendererMixin.java` L124 已在 WrapOperation 的 TACZ 视模分支里调用它，
+  半透明遍不提交实心视模 —— 与 26.2 侧 `IrisHandPhaseSplitFix`（本会话修复，
+  在体 PASS）语义一致；
+- 用户 2026-08-29 实测该支（Complementary + labPBR/SEUS PBR）**未发现闪烁**，
+  与静态结论互洽。
 
-1. **vanilla 方法名**：26.2 是 `submitHandsWithItems(float, PoseStack,
-   SubmitNodeCollector, LocalPlayer, int)`；26.1.2 可能是旧的
-   `renderHandsWithItems`（本仓 26.2 mixin 注释明确写过「26.2 迁移:
-   renderHandsWithItems → submitHandsWithItems」）。注入点与
-   `@WrapOperation(target = "…submitArmWithItem…")` 描述符都要改。
-2. **Iris 版本能力**：先核对你配的 Iris 构建（26.1.2 线）是否同样存在
-   `net.irisshaders.iris.pathways.HandRenderer`（`INSTANCE` / `isActive()` /
-   `isRenderingSolid()`）。没有该类 = 没有双遍手部 pass = 该缺陷不存在，
-   **不要移植**。你这一支的 `IrisCompat` 若只有 1.7.0 前的老接口，也要补句柄。
-3. **在体验证**：同款协议 —— Complementary + labPBR/SEUS PBR 下枪身反射光源处
-   是否闪烁；开关 true/false A/B。没有实机条件就**明说**。
+**不要**把 26.2 的 `IRIS_HAND_PHASE_SPLIT_FIX` 再移植过来——重复闸门无收益，
+还多一个配置键。若日后该支复现闪烁，再回头对比
+`docs/IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md` 的取证链。
 
 ## 交付前
 

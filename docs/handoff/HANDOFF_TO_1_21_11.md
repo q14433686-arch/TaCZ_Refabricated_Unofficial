@@ -16,7 +16,7 @@
 | **B2** ogg + 两张效果图标 + 两个脚本 | ❌ 缺 | `git show` 取，命令见共用核心 §2.B2 |
 | **B3** `DeafenState#tick` 接住 `PlayResult` 并 WARN | ❌ 缺 | 照抄。**但先确认 1.21.1 的 `SoundManager#play` 也有返回值**（见下） |
 | **C** 耳鸣消声注入点 | 🚫 **禁止改动** | 见下，这是本文件最重要的一条 |
-| **H1** 光影 PBR 第一人称枪身闪烁修复（`IrisHandPhaseSplitFix`） | ⚠️ **先核对是否适用再移植** | 26.2 侧在体 A/B 验证 PASS；但 1.21.1 的 Iris 可能是老版本（无 `pathways.HandRenderer` 双遍手部 pass），见下「特殊注意 7」 |
+| **H1** 光影 PBR 第一人称枪身闪烁修复（`IrisHandPhaseSplitFix`） | ✅ **已有等价闸门，无需移植** | 已核实 `origin/1.21.11` @ `b336663`：`IrisCompat.shouldRenderInCurrentHandPhase`（IrisCompat.java L201）已接入 `ItemInHandRendererMixin` L124，含 Iris 1.10.7 的 `isHandTranslucent(InteractionHand)` 适配。见下「特殊注意 §7」 |
 
 ## 你这一支的特殊注意
 
@@ -77,25 +77,23 @@
 
 你已经是 `R2-hotfix2`。发版规则同 `26.1.2` 那份提示词的第 4 条。
 
-### 7. 任务 H1（光影 PBR 第一人称枪身闪烁）——先核对是否适用
+### 7. 任务 H1（光影 PBR 第一人称枪身闪烁）——已核实：无需移植
 
-26.2 侧修复的前提是 **Iris 26.x 的 `HandRenderer` 一帧两遍手部 pass**
-（`renderSolid` + `renderTranslucent`，各自调一次手部提交），取证见来源分支的
-`docs/IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md`（26.2 在体 PASS）。
+2026-08-29 对 `origin/1.21.11` @ `b336663` 的核实结论：
 
-移植到 1.21.11 前逐项核对：
+- `IrisCompat.java` L201 已有 `shouldRenderInCurrentHandPhase(ItemStack)`：
+  逐行镜像 Iris 的 `iris$skipTranslucentHands` 相位闸门；`isMainHandTranslucent`
+  对 Iris 1.10.7 走 `isHandTranslucent(InteractionHand)` 反射、其他 Iris 线
+  回退 `isHandTranslucent(ItemStack)`，失败时 fail-open（不吞物品）；
+- `ItemInHandRendererMixin.java` L124 已在 WrapOperation 的 TACZ 视模分支里调用它
+  —— 与 26.2 侧 `IrisHandPhaseSplitFix`（本会话修复，在体 PASS）语义一致；
+- 用户 2026-08-29 实测该支（Complementary + labPBR/SEUS PBR）**未发现闪烁**，
+  与静态结论互洽。
 
-1. **Iris 版本能力（决定要不要移植）**：核对你这一支配的 Iris（1.21.1 线，1.7.x/1.8.x
-   时代）是否包含 `net.irisshaders.iris.pathways.HandRenderer`（`INSTANCE`/`isActive()`/
-   `isRenderingSolid()`）。**没有该类 = 没有双遍手部 pass = 该缺陷在你这一支不存在，
-   不要移植**（避免把 26.x 的结论照搬到 1.21.1）。
-2. **混淆映射（AGENTS.md §3 铁律）**：若要移植，mixin 目标不得用
-   `submitHandsWithItems` 这类运行时名——26.2 才改的名字，1.21.1 是
-   `renderHandsWithItems`，在 Loom remap 模式下必须写 intermediary 的
-   `method_NNNNN`；改完必跑 `python3 docs/verify_mixin_targets.py`。
-   **编译通过不等于运行期安全。**
-3. **在体验证**：同款协议（Complementary + labPBR/SEUS PBR、开关 A/B）。没有实机
-   条件就**明说**，不得把 26.2 的 PASS 写成 1.21.11 的结论。
+**不要**把 26.2 的 `IRIS_HAND_PHASE_SPLIT_FIX` 移植过来——重复闸门无收益。
+（此前的「1.21.1 Iris 可能没有 HandRenderer」担忧已不成立：该支的闸门本身就按
+`pathways.HandRenderer` 反射，代码存在且用户实测正常。）若日后该支复现闪烁，
+再回头对比 `docs/IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md` 的取证链。
 
 ## 交付前
 

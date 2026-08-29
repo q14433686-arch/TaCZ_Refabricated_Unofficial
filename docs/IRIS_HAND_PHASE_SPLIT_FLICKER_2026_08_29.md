@@ -130,9 +130,19 @@ program；此前水面遍的重复叠加是多余绘制）。掩码登记、scop
 ## 5. 裁决后的后续
 
 - ✅ **已执行**：验证通过 → 默认保持 `true`、注释升级 `[FIX]`（沿用
-  `ScopeOcularRingFix` 的「Default on」惯例）；26.1.2 / 1.21.11 两条分支的移植
-  提示已写进各自的 handoff 文件（`docs/handoff/HANDOFF_TO_26_1_2.md`、
-  `docs/handoff/HANDOFF_TO_1_21_11.md`），本会话分支不跨分支改代码。
+  `ScopeOcularRingFix` 的「Default on」惯例）。
+- ✅ **已核实：其余五个分支无需移植**（2026-08-29 静态核对 + 用户实测互洽）：
+  | 分支 | 闸门 | 接入点 | 用户实测 |
+  |---|---|---|---|
+  | Fabric `26.1.2` @ `e7db2c2` | `IrisCompat.shouldRenderInCurrentHandPhase` | `ItemInHandRendererMixin` L124 | 无闪烁 |
+  | Fabric `1.21.11` @ `b336663` | 同款（含 Iris 1.10.7 `isHandTranslucent(InteractionHand)` 适配） | `ItemInHandRendererMixin` L124 | 无闪烁 |
+  | NeoForge `26.2` @ `d0c69a8` | `ShaderCompat` → `IrisCompat.shouldRenderInCurrentHandPhase` | `ItemInHandRendererMixin` L126 | 无闪烁 |
+  | NeoForge `26.1.2` @ `a3d3241` | 同款 | `ItemInHandRendererMixin` L124 | 无闪烁 |
+  | NeoForge `1.21.11` @ `e3d9dd5` | 同款 | `ItemInHandRendererMixin` L124 | 无闪烁 |
+  这五个分支的闸门逐行镜像 Iris 的 `iris$skipTranslucentHands`（含
+  `isHandTranslucent` 判定，比本修复更完整；对 TACZ 枪械两者语义一致，枪械
+  恒非 BlockItem 恒不透明）。**只有 Fabric `26.2(main)`（本会话基线）缺失该闸门**，
+  本次修复即针对它。各分支的 handoff 文件已相应更新，不再要求移植。
 - **备用路线（若日后回归）**：
   - 枪口火光/抛壳在实心遍异常 → 拆细闸门，只跳过枪身实体提交，functional
     渲染器（火光/抛壳）保持半透明遍提交；

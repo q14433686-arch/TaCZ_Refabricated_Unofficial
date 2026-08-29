@@ -30,6 +30,7 @@ git show FETCH_HEAD:<path>
 | **B1** `assets/lrtactical/sounds.json` | ❌ **三条线全都没有这个文件** | 新建，逐字节照抄共用核心 §2.B1，**顶层不要 `_comment`** |
 | **B2** ogg + 两张效果图标 + 两个脚本 | ❌ 三条线全缺 | 你们 `assets/lrtactical` 下 **textures/ 与 sounds/ 都是空的**，所以两个效果图标现在都是紫黑块 |
 | **B3** `DeafenState#tick` 接住 `PlayResult` 并 WARN | ❌ 全缺 | 26.x 两条线可直接照抄；1.21.11 先确认返回类型 |
+| **H1** 光影 PBR 第一人称枪身闪烁（Fabric 26.2 的 `IrisHandPhaseSplitFix`） | ✅ **三条线已有等价闸门，无需移植** | 已核实：三条线 `ShaderCompat#shouldRenderInCurrentHandPhase` 均委托 `IrisCompat#shouldRenderInCurrentHandPhase`（镜像 Iris 的 `iris$skipTranslucentHands`），且都已在 `ItemInHandRendererMixin` 视模分支接入（26.2 L126、26.1.2/1.21.11 L124）。用户实测三条线均未发现闪烁。**不要**再加 Fabric 26.2 的开关 |
 
 **LR 0.4.3 那批三条线都已经有了**（cook=`prepare+life`、`life>=0` 引信、
 idle 只给近战、`ConsumableItemRenderer`、`DisplayTransform`、`getActionCount`）——
