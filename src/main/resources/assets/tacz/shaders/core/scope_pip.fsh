@@ -146,8 +146,9 @@ void main() {
     vec2 center = vec2(0.5);
     vec2 sceneUv = center + (texCoord - center) / magnification;
 
-    // 重建：双三次而不是双线性，理由见 sampleCatmullRom 的注释。
-    vec3 color = sampleCatmullRom(InSampler, sceneUv, ScreenSize);
+    // 重建：双三次而不是双线性，基于 InSampler 真实尺寸进行采样
+    vec2 inTexSize = vec2(textureSize(InSampler, 0));
+    vec3 color = sampleCatmullRom(InSampler, sceneUv, inTexSize);
 
     // 【锐化】按倍率加权的钝化蒙版（unsharp mask）。
     //
@@ -155,12 +156,12 @@ void main() {
     // 强度随倍率从 1× 的 0 线性升到 6× 的满值，超过 6× 保持满值。
     // 这样 ACOG 不会被过度处理，8 倍镜也不会锐化不足。
     //
-    // 抽头取在【源图】的相邻像素上（1/ScreenSize），即「先锐化再放大」：
+    // 抽头取在【源图】的相邻像素上（1/inTexSize），即「先锐化再放大」：
     // 高频细节本来就只存在于源图的采样率上，在放大后的坐标系里做邻域
     // 只会放大插值产生的伪细节，而且每个抽头都要再跑一遍 Catmull-Rom，不划算。
     float sharpenAmount = ColorModulator.g * clamp((magnification - 1.0) / 5.0, 0.0, 1.0);
     if (sharpenAmount > 0.001) {
-        vec2 texel = 1.0 / ScreenSize;
+        vec2 texel = 1.0 / inTexSize;
         vec3 blur = texture(InSampler, sceneUv + vec2( texel.x, 0.0)).rgb
                   + texture(InSampler, sceneUv + vec2(-texel.x, 0.0)).rgb
                   + texture(InSampler, sceneUv + vec2(0.0,  texel.y)).rgb

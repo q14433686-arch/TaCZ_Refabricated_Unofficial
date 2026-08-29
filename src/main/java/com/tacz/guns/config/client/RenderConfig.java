@@ -164,6 +164,11 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RERENDER;
     /**
+     * 二次渲染（非光影模式）下镜内画面的渲染分辨率比例（1.0 = 屏幕原生分辨率）。
+     * 默认 0.75。开销按面积走（0.75x 相当于仅渲染 ~56% 像素），显著减轻二次渲染开销。
+     */
+    public static ForgeConfigSpec.DoubleValue SCOPE_PIP_RESOLUTION_SCALE;
+    /**
      * 二次渲染 + 光影时，是否给镜内那一遍配一套独立的 Iris 管线。
      *
      * <p>不隔离的话，Iris 那一整族「上一帧」uniform 会被一帧推进两次，
@@ -525,6 +530,13 @@ public class RenderConfig {
                         "EXPERIMENTAL: an earlier attempt made entities vanish from the main view.",
                         "Default off.")
                 .define("ScopePipRerender", false);
+        SCOPE_PIP_RESOLUTION_SCALE = builder
+                .comment("Render resolution scale for the scope pass in rerender mode (1.0 = native resolution).",
+                        "Default 0.75 (~56% pixels of full frame), greatly reducing the GPU rendering cost of the scope view.",
+                        "  1.0 = native resolution (sharpest, highest cost)",
+                        "  0.75 = default (~56% pixels, high clarity with noticeable performance saving)",
+                        "  0.5 = 50% resolution (25% pixels, maximum performance, softer image)")
+                .defineInRange("ScopePipResolutionScale", 0.75d, 0.25d, 1.0d);
         SCOPE_PIP_SHADOW_SCALE = builder
                 .comment("Shadow map resolution for the scope pass, as a fraction of the pack's own.",
                         "Only used with ScopePipRerender + ScopePipIsolatePipeline + a shader pack.",
