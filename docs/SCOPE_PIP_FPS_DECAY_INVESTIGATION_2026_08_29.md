@@ -143,6 +143,25 @@
 
 分配热点 ≠ 保留对象，heapsummary 才是主判据。
 
+### 4.3 spark 堆摘要差值分析（08:41 → 08:42，间隔 1 分钟）
+
+用户提交两份 spark heapsummary（FIgvdblgnd → uuEbT01EKZ），top 类逐一做差：
+
+| 类 | Δ实例 | Δ大小 | 判读 |
+|---|---|---|---|
+| `PalettedContainer`(+6,153) / `ThreadingDetector`(+6,153) / `Semaphore`/`ReentrantLock`(+6,1xx) / `LevelChunkSection`(+2,976) | 同步增长 | ~1MB | **纯区块加载**：`ThreadingDetector` 实例数恒等于 2×`LevelChunkSection`（每 section 两个 paletted container 各带锁/检测器）——走动载入 ~3k 个 section 的正常噪声 |
+| `long[]` / `byte[]` / `int[]` / `Object[]` / `ArrayList` | +824 / +9,968 / +1,596 / +4,940 / +14,852 | 合计 ~6MB | 与区块加载同源（顶点/索引/调色板缓冲），无独立异常 |
+| **全部 TACZ 模型/动画数据**：`BakedQuad`、`BedrockVertex`、`FaceItem`、`CubesItem`、`FaceUVsItem`、`AnimationKeyframes$Keyframe`、`Float`、`ModelPart$Vertex` | **恒 0（个别 −100 级）** | 0 | **模型/动画数据完全不涨**，排除 TACZ 资源缓存泄漏 |
+| `org.antlr.v4.runtime.CommonToken` | 恒 264,133 | 0 | 静态保留（Iris 的 shader AST；antlr 非本仓依赖），不涨 |
+
+**结论**：这一分钟窗口是「走动载入区块」的噪声，没有覆盖到 scope 衰减的累积过程；
+任何可疑类都没有出现量级异常的增长。方法本身已被验证灵敏（ThreadingDetector
+恒等式精确成立），所以下一步不是换方法，而是**把窗口对准衰减过程**（见 §6 实验 B/A）。
+
+绝对量级备注：`long[]` 总占用 562MB / 85k 实例（平均 6.6KB），静态不涨；
+`byte[]` 138MB。两数在两次快照间都只随区块加载微涨，不是当前主嫌，但若
+闲置括号实验里它们随墙钟增长，嫌疑立刻上升。
+
 ## 5. 本轮改动清单
 
 | 文件 | 改动 |
@@ -153,23 +172,33 @@
 | `RenderConfig.java` | 新键 `ScopePipReleaseIdlePipeline` / `ScopePipIdleReleaseDelayFrames` / `ScopePipDebugGpuMem`（全部默认关，均为 EXPERIMENT/DEBUG 性质） |
 | `GameRendererMixin.java` | extract HEAD 挂资源探针 beginFrame |
 
-## 6. 验证协议
+## 6. 验证协议（更新：spark 括号实验是决定性一步）
 
-1. **spark 堆摘要差值（决定性，零代码）**：进世界、第一次开镜后立刻
-   `/spark heapsummary` 存下输出 → 玩到衰减明显 → 再跑一次 → 贴两次输出。
-   **涨幅最大的类 = 泄漏对象**（见 §4.2）。
-2. 复现基线：`ScopePipRerender=true`、`ScopePipIsolatePipeline=true`、
-   `ScopePipAllowShaderPacks=true`，ComplementaryUnbound + labPBR；
-   同时盯 F3 Mem% 是否爬高水位反复 GC（判据 §3.3）。
-3. `ScopePipDebugGpuMem=true` 跑一轮衰减，收集 `[probe]` 行（判据 §3.2）：
-   看 per-pass「耗时 + heapUsedMiB」配对与窗口 `gcTimeDeltaMs`。
-4. `ScopePipReleaseIdlePipeline=true`（延迟默认 120 帧）再跑一轮：
-   - 每次开镜会话是否都从「满血」开始（判据 §3.1）；
-   - 重新开镜的编译停顿是否可接受；
-   - 连续快速开收镜（< 延迟窗口）是否出现反复拆建抖动。
-5. 全程记录 F3 显存（预期平稳；它只需要证明自己没涨）。
+**实验 B（闲置括号 —— 先做，回答「不碰瞄具堆涨不涨」）：**
 
-**优先序**：先做第 1 步（spark 已装、零改动、直接点名泄漏类）。
-堆摘要贴回来之后，修复方向立刻收敛，再决定第 3/4 步是否必要。
+1. 重进存档（重置衰减状态），原地站 30 秒等一切settled，**不要走动**；
+2. 开镜一次（触发衰减时钟），关镜；
+3. `/spark heapsummary` → 存输出 #1；
+4. **原地不动、不开镜，站 3-5 分钟**，全程盯 F3 Mem%：不碰瞄具时堆涨不涨？
+5. `/spark heapsummary` → 存输出 #2；
+6. 最后开镜一次看帧率（应已衰减）。
+
+**判读**：站桩不动 ⇒ 区块加载噪声为零 ⇒ #2−#1 的差值就是「纯墙钟泄漏」：
+涨幅最大的类直接点名。若堆不涨而开镜帧率仍衰减 ⇒ 不是堆机制，转回 §2 的 H3/H4。
+
+**实验 A（连续开镜括号 —— 回答「开镜期间堆涨多少」）：**
+
+1. 重进存档；`/spark heapsummary` → #1；
+2. 连续开镜 60 秒（收放无所谓，多数时间保持开镜）；
+3. `/spark heapsummary` → #2。
+
+**判读**：Δ 最大的类 = 每次 scope pass 的分配产物；与 B 对照即可分离
+「每 pass 累积」与「每墙钟累积」两个来源。
+
+**可选佐证**：`/spark profiler start --thread render --only-allocations`，
+开镜 10-20 秒，`/spark profiler stop` —— 分配热点站点（≠保留对象，
+只作旁证）。
+
+**优先序**：B 第一（回答最关键的机制问题）。两份 heapsummary 直接贴链接即可。
 
 没有实机条件就**明说**；定位前不得把任何一步写成修复。
