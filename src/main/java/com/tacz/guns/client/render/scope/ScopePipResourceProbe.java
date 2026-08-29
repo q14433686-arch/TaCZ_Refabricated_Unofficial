@@ -62,8 +62,38 @@ public final class ScopePipResourceProbe {
     private static long lastGcTimeMs = -1;
     private static Method getMemorySizeMethod;
     private static boolean memorySizeResolved;
+    private static long scopePassStartNs = 0;
+    private static long lastScopeHeapLogFrame = -1000;
 
     private ScopePipResourceProbe() {
+    }
+
+    /** 镜内那一遍开始（renderScopeView 调用点）；只记时间，开销一次 nanoTime。 */
+    public static void onScopePassBegin() {
+        if (RenderConfig.SCOPE_PIP_DEBUG_GPU_MEM != null && RenderConfig.SCOPE_PIP_DEBUG_GPU_MEM.get()) {
+            scopePassStartNs = System.nanoTime();
+        }
+    }
+
+    /**
+     * 镜内那一遍结束；每约 120 帧打一行「本次 pass 耗时 + 当前堆占用」，
+     * 给出比 600 帧窗口均值更细的 (pass 耗时, heap) 配对曲线 —— 判「衰减是
+     * GC 拖累还是 pass 自身变贵」就用这两列的走势。
+     */
+    public static void onScopePassEnd() {
+        if (scopePassStartNs == 0) {
+            return;
+        }
+        long start = scopePassStartNs;
+        scopePassStartNs = 0;
+        if (frameCounter - lastScopeHeapLogFrame < 120) {
+            return;
+        }
+        lastScopeHeapLogFrame = frameCounter;
+        Runtime runtime = Runtime.getRuntime();
+        long heapUsedMiB = (runtime.totalMemory() - runtime.freeMemory()) / (1024L * 1024L);
+        GunMod.LOGGER.info("[TACZ Scope][probe] scopePass#{} took {}ms, heapUsedMiB={}",
+                ScopePipRenderer.scopePassCount(), (System.nanoTime() - start) / 1_000_000L, heapUsedMiB);
     }
 
     /** 挂在 {@code GameRenderer#extract} HEAD（与瞄具其它帧首归零一起）。 */

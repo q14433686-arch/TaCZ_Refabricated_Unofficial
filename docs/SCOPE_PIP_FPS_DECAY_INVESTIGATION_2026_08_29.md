@@ -101,41 +101,75 @@
 - **GPU 内存**：持续爬升 → H2 的旁证；平稳 → 与 H2 无关。
 （16G 显存背景下，GPU 曲线预期平稳——它只需要证明自己「没涨」即可。）
 
-## 4. 还想要的旧数据
+## 4. 已获得的旧数据
 
-1. 姊妹分支的 pulse 日志（`[TACZ Scope][pulse] ...`）：
-   `avgScopeMs / avgMainRenderMs / avgCompositeMs` + `sinceFirstScopeS`。
-   把「第一次开镜后、衰减明显时」的几行贴出来：
-   - `avgScopeMs` 随窗口涨、`avgMainRenderMs` 平 ⇒ 增长在镜内那一遍内部；
-   - `avgMainRenderMs` 也涨 ⇒ 整帧都被拖累（GC/驱动压力都会长这样）；
-   - 两者都平 ⇒ 增长在被探针漏掉的边角（H3）。
-2. **F3 的 Mem%（Java 堆）历史观察**：衰减时堆是否爬到高水位反复 GC？
-   这条比任何探针都先到 —— 若明显爬升，H1 几乎当场定案。
+### 4.1 用户 latest.log 分析（`26.2(main)` @ `79b6e4c`，2026-08-29，ComplementaryUnbound_r5.8.1）
+
+2 分钟会话、两次短暂开镜（53 次 + 20 次 scope pass）。全部 32 行 pulse 的关键列：
+
+| 指标 | 走势 | 结论 |
+|---|---|---|
+| `avgMainRenderMs` | 全程 1-2ms 平坦 | 主渲染**未**退化 |
+| `avgScopeMs` | 12 → 20ms，两次开镜间 35 秒**未开镜**纯墙钟流逝 | 镜内那遍在不开镜的时间段里变贵（样本 20，弱） |
+| `pipelinesPerDimension` | 恒 2 | 无管线膨胀 |
+| `activeSSBOs / MiB` | 恒 0 | 无 SSBO 泄漏 |
+| `irisSlowPath` / `voxyBuilds` | 恒 5 / 2 | 一次性事件，无每帧重建 |
+| scope 管线集合字段 | 全平坦 | 无结构增长 |
+| `avgCompositeMs` / `avgVoxyTraversalMs` | 0 / 0 | 合成与 Voxy 遍历都不是成本源 |
+
+**推论**：泄漏不在任何被数过的结构里；用户已确认堆爬高水位反复 GC。
+统一画像：Java 堆 live-set 自第一次开镜起增长 → 镜内那遍（完整第二遍管线，
+比主渲染重一个量级）最先显形；主渲染 2ms 尚扛得住。**必须直接看堆内容。**
+
+### 4.2 决定性工具已在用户包里：spark
+
+日志里有 spark 的线程（`spark-monitoring-*`）。下一步直接用它的堆摘要做
+**两次快照差值**，把泄漏类点出来：
+
+```
+/spark heapsummary     ← 第一次开镜后立刻跑一次，存下输出
+（玩到衰减明显）
+/spark heapsummary     ← 再跑一次
+```
+
+比较两次输出里按类分组的占用：**涨幅最大的类 = 泄漏对象**（实例数暴涨的类
+同理）。文本输出可直接贴回来。可选佐证：
+
+```
+/spark profiler start --thread render --only-allocations
+（开镜 10-20 秒）
+/spark profiler stop    ← 看分配热点站点
+```
+
+分配热点 ≠ 保留对象，heapsummary 才是主判据。
 
 ## 5. 本轮改动清单
 
 | 文件 | 改动 |
 |---|---|
 | `IrisScopePipelineCompat.java` | 解析 pipelinesPerDimension 字段；新增 `scopePipeline()` / `mainPipeline()` / `pipelineMapSize()` / `releaseScopePipelineIfPresent()`（销毁+摘除+回指主管线+失效预热与 Voxy 栈；失败一次即放弃） |
-| `ScopePipRenderer.java` | `prewarmShaderPipelineIfNeeded` 接入空闲释放闸门（空闲延迟帧数、空闲期不预热）；新增 `scopePassCount()` 会话计数 |
-| `ScopePipResourceProbe.java` | 新文件：600 帧脉冲资源探针 = GPU 纹理字节数（瞄具/主管线）+ Java 堆 used/max + GC 次数/耗时窗口增量（默认关）。上一轮的 `ScopePipGpuMemoryProbe` 已删除并入本类 |
+| `ScopePipRenderer.java` | `prewarmShaderPipelineIfNeeded` 接入空闲释放闸门（空闲延迟帧数、空闲期不预热）；新增 `scopePassCount()` 会话计数；镜内 pass 起止挂 per-pass 堆探针钩子 |
+| `ScopePipResourceProbe.java` | 新文件：600 帧脉冲资源探针 = GPU 纹理字节数（瞄具/主管线）+ Java 堆 used/max + GC 次数/耗时窗口增量；另有 per-pass「耗时 + heapUsedMiB」细粒度行（约每 120 帧一次）。上一轮的 `ScopePipGpuMemoryProbe` 已删除并入本类 |
 | `RenderConfig.java` | 新键 `ScopePipReleaseIdlePipeline` / `ScopePipIdleReleaseDelayFrames` / `ScopePipDebugGpuMem`（全部默认关，均为 EXPERIMENT/DEBUG 性质） |
 | `GameRendererMixin.java` | extract HEAD 挂资源探针 beginFrame |
 
 ## 6. 验证协议
 
-1. 复现基线：`ScopePipRerender=true`、`ScopePipIsolatePipeline=true`、
-   `ScopePipAllowShaderPacks=true`，Complementary + labPBR；开镜若干次确认衰减。
-   **全程第一件事：盯 F3 Mem%（Java 堆）** —— 是否爬高水位反复 GC（判据 §3.3）。
-2. `ScopePipDebugGpuMem=true` 跑一轮衰减，收集 `[probe]` 行（判据 §3.2）：
-   看 `heapUsedMiB` 曲线与 `gcTimeDeltaMs`，以及两条 pipelineTextureMiB。
-3. `ScopePipReleaseIdlePipeline=true`（延迟默认 120 帧）再跑一轮：
+1. **spark 堆摘要差值（决定性，零代码）**：进世界、第一次开镜后立刻
+   `/spark heapsummary` 存下输出 → 玩到衰减明显 → 再跑一次 → 贴两次输出。
+   **涨幅最大的类 = 泄漏对象**（见 §4.2）。
+2. 复现基线：`ScopePipRerender=true`、`ScopePipIsolatePipeline=true`、
+   `ScopePipAllowShaderPacks=true`，ComplementaryUnbound + labPBR；
+   同时盯 F3 Mem% 是否爬高水位反复 GC（判据 §3.3）。
+3. `ScopePipDebugGpuMem=true` 跑一轮衰减，收集 `[probe]` 行（判据 §3.2）：
+   看 per-pass「耗时 + heapUsedMiB」配对与窗口 `gcTimeDeltaMs`。
+4. `ScopePipReleaseIdlePipeline=true`（延迟默认 120 帧）再跑一轮：
    - 每次开镜会话是否都从「满血」开始（判据 §3.1）；
    - 重新开镜的编译停顿是否可接受；
    - 连续快速开收镜（< 延迟窗口）是否出现反复拆建抖动。
-4. 全程记录 F3 显存（预期平稳；它只需要证明自己没涨）。
+5. 全程记录 F3 显存（预期平稳；它只需要证明自己没涨）。
 
-**优先序**：先做第 1 步（零配置、零风险、信息量最大）。若 Mem% 明显爬升，
-H1 当场定案，再决定第 2/3 步是否必要。
+**优先序**：先做第 1 步（spark 已装、零改动、直接点名泄漏类）。
+堆摘要贴回来之后，修复方向立刻收敛，再决定第 3/4 步是否必要。
 
 没有实机条件就**明说**；定位前不得把任何一步写成修复。

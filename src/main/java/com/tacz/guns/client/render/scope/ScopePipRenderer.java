@@ -939,6 +939,7 @@ public final class ScopePipRenderer {
         boolean cameraProjectionPatched = false;
         boolean physicsPatched = false;
         boolean sodiumPatched = false;
+        ScopePipResourceProbe.onScopePassBegin();
         try {
             if (!buildNarrowProjection(camera, pip)) {
                 sceneCaptured = false;
@@ -1059,6 +1060,7 @@ public final class ScopePipRenderer {
             GunMod.LOGGER.error("[TACZ Scope] Scope PIP second-render pass failed; PIP disabled, "
                     + "falling back to whole-screen FOV zoom.", e);
         } finally {
+            ScopePipResourceProbe.onScopePassEnd();
             if (cameraProjectionPatched) {
                 // 必须还原：这个字段是 vanilla 那一遍以及后续所有消费者共用的。
                 // 留着窄投影会让主画面的 Voxy LOD 也跟着放大 —— 正好是反过来的病。
