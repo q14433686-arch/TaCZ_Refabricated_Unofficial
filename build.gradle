@@ -398,34 +398,29 @@ publishing {
 tasks.register('dumpRenderApi') {
     doLast {
         def cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
-        // [class, grep-regex-or-null, showPrivateMembers]
+        // [class, grep-regex-or-null, extra-javap-flags]
         def probes = [
-            ['net.minecraft.client.renderer.LevelRenderer', 'render\\(|renderLevel', false],
-            ['net.minecraft.client.renderer.GameRenderer', 'renderLevel|renderItemInHand|getProjectionMatrix|mainRenderTarget', false],
-            ['com.mojang.blaze3d.systems.RenderSystem', 'Projection|projection|outputColor|outputDepth', false],
-            ['net.minecraft.client.Minecraft', 'getMainRenderTarget|getFrameTarget|levelRenderer|getDeltaTracker', false],
-            ['net.minecraft.client.renderer.state.CameraRenderState', null, true],
-            ['com.mojang.blaze3d.pipeline.RenderTarget', null, true],
-            ['com.mojang.blaze3d.pipeline.TextureTarget', null, true],
-            ['com.mojang.blaze3d.Projection', null, true],
-            ['com.mojang.blaze3d.ProjectionType', null, true],
-            ['com.mojang.blaze3d.buffers.ProjectionMatrixBuffer', null, true],
-            ['com.mojang.blaze3d.buffers.GpuBufferSlice', null, true],
-            ['com.mojang.blaze3d.resource.GraphicsResourceAllocator', null, false],
-            ['com.mojang.blaze3d.textures.GpuTexture', 'getWidth|getHeight|getFormat|view', false],
-            ['com.mojang.blaze3d.textures.TextureFormat', null, false],
-            ['net.minecraft.client.Camera', 'getPosition|getRotation|projection|view', false],
-            ['net.minecraft.client.DeltaTracker', null, false],
-            ['net.minecraft.client.renderer.fog.FogRenderer', 'getBuffer|FogMode', false],
+            // round 2a: public member lists
+            ['net.minecraft.client.renderer.GameRenderer', null, []],
+            ['net.minecraft.client.renderer.LevelRenderer', 'render', []],
+            ['net.minecraft.client.Camera', null, []],
+            ['com.mojang.blaze3d.buffers.GpuBuffer', null, ['-p']],
+            ['com.mojang.blaze3d.buffers.BufferUploader', null, []],
+            ['com.mojang.blaze3d.buffers.BufferSource', null, []],
+            ['com.mojang.blaze3d.systems.RenderSystem', 'Buffer|upload|Projection|ModelView|Shader|outputColor|outputDepth|setShader|setProjection', []],
+            // round 2b: bytecode greps to find the projection-upload and target-selection mechanisms
+            ['net.minecraft.client.renderer.GameRenderer', 'setProjectionMatrix|BufferUploader|getProjectionMatrixBuffer|getProjectionMatrix|projectionBuffer', ['-c', '-p']],
+            ['net.minecraft.client.renderer.LevelRenderer', 'getMainRenderTarget|mainRenderTarget|outputColorTextureOverride|outputDepthTextureOverride|getColorTextureView|getDepthTextureView', ['-c', '-p']],
+            ['com.mojang.blaze3d.pipeline.RenderTarget', 'outputColorTextureOverride|outputDepthTextureOverride|bindWrite|createBuffers', ['-c', '-p']],
         ]
         probes.each { entry ->
             def cls = entry[0]
             def grep = entry[1]
-            def priv = entry[2]
-            println "===== javap ${cls} ====="
+            def flags = entry[2]
+            println "===== javap ${cls} ${flags.join(' ')} ====="
             try {
                 def cmd = ['javap', '-classpath', cp]
-                if (priv) cmd << '-p'
+                flags.each { cmd << it }
                 cmd << cls
                 def proc = new ProcessBuilder(cmd).redirectErrorStream(false).start()
                 def out = proc.inputStream.getText('UTF-8')
