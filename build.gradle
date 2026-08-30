@@ -398,44 +398,85 @@ publishing {
 tasks.register('dumpRenderApi') {
     doLast {
         def cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
-        // [class, grep-regex-or-null, extra-javap-flags]
-        def probes = [
-            // round 2a: public member lists
-            ['net.minecraft.client.renderer.GameRenderer', null, []],
-            ['net.minecraft.client.renderer.LevelRenderer', 'render', []],
-            ['net.minecraft.client.Camera', null, []],
-            ['com.mojang.blaze3d.buffers.GpuBuffer', null, ['-p']],
-            ['com.mojang.blaze3d.buffers.BufferUploader', null, []],
-            ['com.mojang.blaze3d.buffers.BufferSource', null, []],
-            ['com.mojang.blaze3d.systems.RenderSystem', 'Buffer|upload|Projection|ModelView|Shader|outputColor|outputDepth|setShader|setProjection', []],
-            // round 2b: bytecode greps to find the projection-upload and target-selection mechanisms
-            ['net.minecraft.client.renderer.GameRenderer', 'setProjectionMatrix|BufferUploader|getProjectionMatrixBuffer|getProjectionMatrix|projectionBuffer', ['-c', '-p']],
-            ['net.minecraft.client.renderer.LevelRenderer', 'getMainRenderTarget|mainRenderTarget|outputColorTextureOverride|outputDepthTextureOverride|getColorTextureView|getDepthTextureView', ['-c', '-p']],
-            ['com.mojang.blaze3d.pipeline.RenderTarget', 'outputColorTextureOverride|outputDepthTextureOverride|bindWrite|createBuffers', ['-c', '-p']],
-        ]
-        probes.each { entry ->
-            def cls = entry[0]
-            def grep = entry[1]
-            def flags = entry[2]
-            println "===== javap ${cls} ${flags.join(' ')} ====="
-            try {
-                def cmd = ['javap', '-classpath', cp]
-                flags.each { cmd << it }
-                cmd << cls
-                def proc = new ProcessBuilder(cmd).redirectErrorStream(false).start()
-                def out = proc.inputStream.getText('UTF-8')
-                def err = proc.errorStream.getText('UTF-8')
-                proc.waitFor()
-                if (grep != null) {
-                    out = out.readLines().findAll { line -> line.find(grep) != null }.join('\n')
+
+        def runJavap = { String cls, List flags ->
+            def cmd = ['javap', '-classpath', cp]
+            flags.each { cmd << it }
+            cmd << cls
+            def proc = new ProcessBuilder(cmd).redirectErrorStream(false).start()
+            def out = proc.inputStream.getText('UTF-8')
+            def err = proc.errorStream.getText('UTF-8')
+            proc.waitFor()
+            return [out, err]
+        }
+
+        // Print javap output split into blank-line-delimited blocks, keeping only blocks whose
+        // first line matches firstRe or whose body matches bodyRe. Used to extract whole method bodies.
+        def printBlocks = { String cls, List flags, String firstRe, String bodyRe, int maxLines ->
+            println "===== ${cls} ${flags.join(' ')} [blocks first=${firstRe} body=${bodyRe}] ====="
+            def (out, err) = runJavap(cls, flags)
+            if (err.trim()) { println('javap stderr: ' + err.trim()); return }
+            def lines = out.readLines()
+            def block = []
+            def flush = {
+                if (!block.isEmpty()) {
+                    def head = block[0].trim()
+                    def body = block.join('\n')
+                    def firstOk = (firstRe == null) || (head ==~ firstRe)
+                    def bodyOk = (bodyRe == null) || (body.find(bodyRe) != null)
+                    if (firstOk || bodyOk) {
+                        def shown = block
+                        if (maxLines > 0 && shown.size() > maxLines) {
+                            shown = shown.take(maxLines) + ["... [${block.size() - maxLines} more lines truncated]"]
+                        }
+                        println(shown.join('\n'))
+                        println('-----')
+                    }
                 }
-                println(out ?: '(no matching members / class not found)')
-                if (err.trim()) {
-                    println('javap stderr: ' + err.trim())
-                }
-            } catch (Throwable e) {
-                println('javap failed for ' + cls + ': ' + e.toString())
+                block = []
             }
+            lines.each { line ->
+                if (line.trim().isEmpty()) { flush() } else { block << line }
+            }
+            flush()
+        }
+
+        // (a) How GameRenderer.renderLevel assembles the LevelRenderer.renderLevel args,
+        //     and how the projection matrix is built/uploaded.
+        printBlocks('net.minecraft.client.renderer.GameRenderer', ['-c', '-p'],
+                /.*(void renderLevel\(net\.minecraft\.client\.DeltaTracker\);|org\.joml\.Matrix4f getProjectionMatrix\(float\);|void render\(net\.minecraft\.client\.DeltaTracker, boolean\);).*/,
+                /LevelRenderer\.renderLevel|setProjectionMatrix|BufferUploader|FogRenderer|getProjectionMatrix/, 0)
+
+        // (b) LevelRenderer.renderLevel prologue: how the output target override is chosen.
+        printBlocks('net.minecraft.client.renderer.LevelRenderer', ['-c', '-p'],
+                /.*void renderLevel\(.*GraphicsResourceAllocator.*;.*/,
+                /outputColorTextureOverride|getMainRenderTarget/, 220)
+
+        // (c) RenderSystem full members (projection buffer + upload helpers).
+        println '===== com.mojang.blaze3d.systems.RenderSystem -p ====='
+        def (rsOut, rsErr) = runJavap('com.mojang.blaze3d.systems.RenderSystem', ['-p'])
+        println(rsOut ?: '(none)')
+        if (rsErr.trim()) { println('stderr: ' + rsErr.trim()) }
+
+        // (d) FogRenderer + FogMode.
+        println '===== net.minecraft.client.renderer.fog.FogRenderer -p ====='
+        def (frOut, frErr) = runJavap('net.minecraft.client.renderer.fog.FogRenderer', ['-p'])
+        println(frOut ?: '(none)')
+        if (frErr.trim()) { println('stderr: ' + frErr.trim()) }
+        println '===== net.minecraft.client.renderer.fog.FogRenderer$FogMode -p ====='
+        def (fmOut, fmErr) = runJavap('net.minecraft.client.renderer.fog.FogRenderer$FogMode', ['-p'])
+        println(fmOut ?: '(none)')
+        if (fmErr.trim()) { println('stderr: ' + fmErr.trim()) }
+
+        // (e) Existence probes for candidate uploader / fog-data / state classes.
+        ['com.mojang.blaze3d.vertex.BufferUploader',
+         'net.minecraft.client.renderer.fog.FogData',
+         'net.minecraft.client.renderer.fog.FogParameters',
+         'net.minecraft.client.renderer.state.LevelRenderState',
+         'net.minecraft.client.renderer.CameraRenderState',
+         'com.mojang.blaze3d.buffers.GpuBufferSlice'].each { cls ->
+            def (out2, err2) = runJavap(cls, [])
+            println "===== ${cls} ===== ${err2.trim().empty ? 'FOUND' : 'NOT FOUND'}"
         }
     }
 }
