@@ -11,5 +11,9 @@
 | 2 | （同工作 refab 侧，无独立 handoff，直接开工） | refab 1.21.11 → refab 26.1.2 | **DONE**(`9a4e71f` @ refab arena/01a05170) | 附文档 `SCOPE_FINAL_OVERLAY_BACKPORT_26_1_2_2026_08_30.md`；待实测/并入 |
 | 3 | renov `docs/handoff/HANDOFF_DEPTH_PIP_1_21_11_20260830.md`（1.21.11 深度版 PIP 设计） | renov 26.2 → renov 1.21.11 | **OPEN** | 维护者决定：renov 1.21.11 等 refab 1.21.11 定稿后一并同步 |
 | 4 | renov `docs/handoff/HANDOFF_SCOPE_MASK_ORDER_INDEPENDENCE.md` + `scope-mask-order-independence.patch` | renov 26.2 → refab 26.2 | **需核对** | 疑似已被 refab `26.2(main)` 的 `SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md` 一轮覆盖；下次触碰掩码代码时核对后改 DONE/DECLINED |
-| 5 | refab `docs/SCOPE_PIP_RERENDER_1211_PORT_PLAN_20260830.md`（rerender 跨纪元移植计划） | refab 26.2(main) → refab 1.21.11 | **CLAIMED**(arena/01a052b2) | TEMP 字节码诊断第 7 轮；是否继续受治理提案 §1 裁决影响 |
+| 5 | refab `docs/SCOPE_PIP_RERENDER_1211_PORT_PLAN_20260830.md`（rerender 跨纪元移植计划） | refab 26.2(main) → refab 1.21.11 | **DECLINED**（2026-08-30 维护者裁定） | Iris 兼容需拆现有渲染逻辑重写离屏渲染，成本不可接受 → 不定期暂停。收尾动作见 `SYNC_GUIDE_REFAB_1211_20260830.md` §0 |
 | 6 | refab `docs/HANDOFF_26_2_AUDIT_TO_26_1_2_2026_08_12.md` 等两份 08-12 存量 | refab 26.2 → refab 26.1.2 | **需核对** | 08-12 的老 handoff，26.1.2 后续有 R2 发版，可能已消化；清账时核对 |
+| 7 | refab `docs/lineage/SYNC_GUIDE_REFAB_1211_20260830.md`（1.21.11 暂停收尾 + 可同步项） | refab 26.2 → refab 1.21.11 | **OPEN** | 动画两连修可搬（基线已核实逐字相同）；TEMP 剥离 + Step1-3 收口合并 |
+| 8 | refab `docs/lineage/SYNC_GUIDE_REFAB_2612_20260830.md`（26.1.2 双向补课路线） | refab 26.2 + refab 1.21.11 → refab 26.1.2 | **OPEN** | 五步路线：CI→05170 并入→动画修→等 1.21.11 收口→深度 PIP 整包 |
+| 9 | refab `docs/lineage/SYNC_GUIDE_RENOV_262_20260830.md`（renov 主线 04ea3 补差清单） | refab 26.2 → renov 26.2(04ea3) | **OPEN** | 动画修最优先；PIP 终态对表（防 PR#82 泄漏 bug 潜伏）；裁手/裁字；meshloader 二段式 |
+
