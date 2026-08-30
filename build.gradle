@@ -424,24 +424,19 @@ tasks.register('dumpRenderApi') {
             def priv = entry[2]
             println "===== javap ${cls} ====="
             try {
-                def sout = new ByteArrayOutputStream()
-                def serr = new ByteArrayOutputStream()
                 def cmd = ['javap', '-classpath', cp]
                 if (priv) cmd << '-p'
                 cmd << cls
-                project.exec {
-                    commandLine cmd
-                    standardOutput = sout
-                    errorOutput = serr
-                    ignoreExitValue = true
-                }
-                def out = sout.toString('UTF-8')
+                def proc = new ProcessBuilder(cmd).redirectErrorStream(false).start()
+                def out = proc.inputStream.getText('UTF-8')
+                def err = proc.errorStream.getText('UTF-8')
+                proc.waitFor()
                 if (grep != null) {
                     out = out.readLines().findAll { line -> line.find(grep) != null }.join('\n')
                 }
                 println(out ?: '(no matching members / class not found)')
-                if (serr.size() > 0) {
-                    println('javap stderr: ' + serr.toString('UTF-8').trim())
+                if (err.trim()) {
+                    println('javap stderr: ' + err.trim())
                 }
             } catch (Throwable e) {
                 println('javap failed for ' + cls + ': ' + e.toString())
