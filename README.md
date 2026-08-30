@@ -73,6 +73,17 @@ R2 的可选集成（并非硬依赖）如下：
 完整发布范围、联网核验和未执行的实机矩阵见
 [26.2 R2 release notes](docs/CHANGELOG_26_2_R2.md)。R1 的移植基础和历史说明仍保留在仓库历史中。
 
+R2-hotfix2 之后、尚未随发布打包的主线增量（源码已在本仓库，均实机 PASS）：
+
+- **内置 TML**（见第 3 节与 [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）;
+- **镜内裁剪三件套**：光影下开镜时，第一人称手臂、瞄具挂载文字（如 MK5HD
+  弹药计数）与准星一样被裁剪在目镜圆孔内，不再穿出镜筒;
+- **瞄具文字内容修复**：枪包把显示串直接内联在 `text_key`（如 `%ammo_count%`）
+  时不再出现 `Format error: ...` 前缀（26.2 移植期 `I18n.get` 误用回归）;
+- **检视动画修复**：开镜时触发检视不再不可打断（开火/换弹可正常打断）;
+- PIP 若干修复与新配置项（倍率下限闸门、`ScopePipRerenderInterval`、
+  `ScopePipShadowScale` 热应用等，均已接入游戏内配置界面）。
+
 ---
 
 ## 3. 项目范围
@@ -82,8 +93,11 @@ R2 的可选集成（并非硬依赖）如下：
 - TaCZ 的 Fabric 26.2 端口及随上游带来的默认枪包；
 - 为 26.x API 改写的网络、资源加载、GUI 和渲染接线；
 - 一套内置的 **LRTactical 兼容框架**；
-- 内置的 **TacZ Mesh Loader [TML] 安全子集**（`model_type: "mesh"` poly_mesh 渲染，
-  移植自 VellEagle/TacZMeshLoader，GPL-3.0；范围与已知性能边界见
+- 内置的 **TacZ Mesh Loader [TML]**（`model_type: "mesh"` 高模 poly_mesh 渲染，
+  移植自 VellEagle 的 [TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader)，GPL-3.0。
+  含第一人称 GPU 静态烘焙——高模枪的逐顶点 CPU 变换成本归零，光影下同样生效；
+  世界语境有近距全模豁免与顶点预算保护。依赖外置 TML 的枪包在本 mod 下
+  视为依赖满足（`provides: ["taczmeshloader"]`）。范围、配置与已知边界见
   [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）；
 - 若干可选模组的兼容接线。
 
@@ -275,6 +289,12 @@ gunpack.meta.json
 - 26.2 的现有实测记录中，Player Animation Library 在经历 TaCZ 趴姿再站起后，下一次切枪的
   短暂第三人称 crossfade 仍可能带入旧姿态；切换完成后的稳态持枪不是该问题。
 - 明确依赖 Arcana 的内容不受支持；其他枪包也不能仅凭“能被扫描到”就视为完全兼容。
+- 镜内文字裁剪对 ttf/unihex 灰度字体（第三方资源包替换默认字体时）回退 vanilla
+  管线：文字照常显示但不参与镜内裁剪，属可接受降级。
+- TML 高模（poly_mesh）：世界语境（第三人称/掉落物/展示台）在
+  `MeshWorldFullDetailDistance`（默认 16 格）内始终画全模，超出后受
+  `MeshWorldMaxVertices` 顶点预算保护（超预算只画立方体）；这是刻意的
+  远近取舍，不是渲染缺失。mesh 目镜不支持（与外置 TML 一致）。
 
 提交兼容问题时请给出实际包名与版本、完整日志和最小复现环境，不要只给缺失贴图截图。
 

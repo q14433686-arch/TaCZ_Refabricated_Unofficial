@@ -1,13 +1,16 @@
-# 内置 TacZ Mesh Loader [TML] —— 安全子集（第 0 步）
+# 内置 TacZ Mesh Loader [TML]
 
 > 代码移植自 [VellEagle/TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader)
-> `1.21.1_fabric` v0.1.7，GPL-3.0。不是官方 TacZ 附属。
+> `1.21.1_fabric` v0.1.7，作者 VellEagle，GPL-3.0。不是官方 TacZ 附属。
+> 署名与许可详情见仓库根 [`LICENSES.md`](../LICENSES.md)。
 >
-> **状态：源码完成，等待 CI 编译验证与实机验证。**
-> 按 AGENTS.md §2：本文没有一句「已实测修好」。
+> **状态（2026-08-30）：安全子集 + GPU 静态烘焙均已实机 PASS。**
+> 实测覆盖：无光影第一人称、光影下第一人称（vanilla RenderType 路线）、
+> 世界语境近距全模（第三人称/掉落物/展示台）、光影开关切换（烘焙世代失效）。
 >
 > 路线图见 [`TML_PERF_DIRECTIONS_2026_08_29.md`](TML_PERF_DIRECTIONS_2026_08_29.md)。
-> 本轮是其中的**第 0 步**：从干净基线重新内置「不含 GPU 赌注」的部分。
+> 已完成其中的第 0 步（安全子集）与第 1 步（无光影 GPU 路径），
+> 且光影下也经由 vanilla RenderType 路线拿到了 GPU 收益（原方向 1 的替代实现）。
 
 ## 0. 与四个关闭 PR 的关系（为什么这是第五次、以及为什么这次砍掉了 GPU）
 
@@ -49,13 +52,26 @@
   光影下省一半顶点成本。
 - **加载告警**：超 `MeshMaxModelVertices` 的模型加载时警告枪包作者。
 
-### 明确不包含（后续步骤，见路线图）
+### GPU 静态烘焙（第 1 步，已实装并实机 PASS）
 
-- **GPU 静态烘焙 / 逐骨骼 VBO**（路线图第 1 步）——关闭 PR 四次翻车的部分，
-  等无光影 PoC 通过后单独提交。**因此本轮对 36 万顶点级高模的第一人称
-  帧率成本没有量级改善**，只有闸门和缓存级别的削减。这是如实声明。
-- 光影下的 `assignPipeline(HAND)` 路线（路线图方向 1，依赖上一条）。
-- 姿态缓存 / 三角形配对（路线图方向 2）。
+安全子集落地后追加，**仅第一人称手部 pass**（`ScopeMaskRenderer.isInHandPass()`
+判定，规避关闭 PR 的世界 pass 泄漏形态）：
+
+- 顶点常驻骨骼本地空间的逐骨骼 VBO，每帧只上传 O(骨骼) 个矩阵，
+  36 万顶点级高模的第一人称 CPU 变换成本从 O(顶点) 归零;
+- 光照按 4 级量化烘进 UV2，跨档才重烘（1 秒节流）;
+- **光影下同样走 GPU**：默认经 vanilla RenderType 管道
+  （`RenderType.prepare()` + `drawFromBuffer`，管线是 Iris 已按 HAND program
+  接管的 ENTITY_CUTOUT）——枪体拿到光影光照，顶点仍在常驻 VBO;
+  `MeshGpuUnderShaders=true` 可强制裸 GPU pass（诊断用，无光影光照）;
+- **光影开关翻转时烘焙缓存立即失效重烘**（烘焙世代号机制，绕过光照节流）——
+  否则旧 VBO 被新管线按错位 stride 解读，模型拉伸（实测复现过并修复 PASS）;
+- GPU 绘制失败自动回退 collector 路径并停用本会话 GPU（不崩不糊）。
+
+### 明确不包含（后续方向，见路线图）
+
+- 姿态缓存 / 三角形配对（路线图方向 2，collector 兜底路径的常数优化）。
+- 导入期焊接/索引化/自动 LOD（路线图方向 4）。
 - mesh 目镜（上游 TML 同样不支持：ocular 物体必须用立方体）。
 
 ## 2. 弹匣链路（关 PR #70 的架构缺口，本轮的处理）
@@ -104,34 +120,18 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 | `MeshWorldFullDetailDistance` | 16 | 该距离（格）内世界 poly 免顶点预算画全模（0=关闭豁免；已接 Cloth Config 界面） |
 | `MeshMaxModelVertices` | 120000 | 加载时告警阈值（不影响渲染） |
 | `MeshLogStats` | true | 加载统计日志 |
-
-**注意没有 `MeshGpuBaking` 等键**——GPU 路径本轮不存在，
-不注册「没人读的配置」（本仓有 HandViewLockFix 配置陷阱案底）。
+| `MeshGpuBaking` | true | 第一人称 GPU 静态烘焙总开关（已接 Cloth Config 界面） |
+| `MeshGpuUnderShaders` | false | 光影下强制裸 GPU pass（诊断用：绕过光影管线，枪体无光影光照） |
 
 ## 5. 验证清单
 
-### 5.1 编译（CI 闭环）——当前被凭据权限卡住
+### 5.1 编译（CI 闭环）——已打通
 
-沙箱无 JDK 且 Maven CDN 不可达（2026-08-29 复测：pypi/npm/GitHub 主域可达，
-Adoptium/Maven Central/镜像站全部 000）。原计划的编译验证走 `compile-check.yml`
-CI 闭环：push 触发 → Actions 跑 `./gradlew compileJava` → 日志写回分支。
+`.github/workflows/compile-check.yml` 已由仓库所有者放入分支，每次 push
+自动跑 `./gradlew compileJava` 并把日志写回 `build-reports/compile-java.log`。
+本文档涉及的全部提交均 CI 编译绿。
 
-**2026-08-30 实测：沙箱 GitHub 凭据没有 `workflows` 权限**——
-push 含工作流文件的 commit 被拒（`refusing to allow a GitHub App to
-create or update workflow`），`workflow_dispatch` 也 403。
-工作流文件暂存于 [`docs/ci/compile-check.yml`](ci/compile-check.yml)（v3：
-日志经 Contents API 写回，修复 v2 的 git push 竞争）。要打通编译验证，
-仓库所有者二选一：
-
-1. 在 GitHub 网页端把 `docs/ci/compile-check.yml` 复制为本分支的
-   `.github/workflows/compile-check.yml`（之后每次 push 自动编译并把
-   日志写到 `build-reports/compile-java.log`）；或
-2. 本地 `./gradlew compileJava` 直接验证。
-
-在此之前，本轮代码只做过**静态核对**（每个引用的 HEAD 方法/字段逐一
-grep 确认存在 + javalang 语法解析通过），**没有编译过**。
-
-### 5.2 实机（本地）
+### 5.2 实机（下列 1-7 项 + GPU 各路径均已实测 PASS，2026-08-30）
 
 1. **无 mesh 枪包回归**：行为应与改动前一致（默认包全立方体，mixin 注入点
    都是 TAIL + geo 存在性检查，无 geo 时零行为差异）。
@@ -149,7 +149,11 @@ grep 确认存在 + javalang 语法解析通过），**没有编译过**。
 
 ### 5.3 已知边界（如实）
 
-- 36 万顶点级高模第一人称**仍有帧率成本**（每帧 O(顶点) CPU 变换 +
-  逐顶点 VertexConsumer 调用）。这是路线图第 1/2 步要解决的，本轮不解决。
-- PIP 二次渲染（`ScopePipRerender=true`）时镜内那遍会重放 collector 回调，
-  poly 成本 ×2。降级方案在路线图方向 3，待镜内行为实机确认后做。
+- 第一人称的 O(顶点) CPU 成本已由 GPU 烘焙消除（无光影与光影下均生效）;
+  **世界语境（第三人称/掉落物/展示台）仍走 collector**，近距全模豁免范围内
+  的高模枪每帧仍有 O(顶点) CPU 变换成本——这是「眼前能看到完整高模」的
+  代价，预算与距离闸门保护远处/密集场景。
+- PIP 二次渲染（`ScopePipRerender=true`）时镜内那遍的 poly 提交已跳过
+  （纯白付的成本，镜内孔径本就不该有枪件）。
+- 在两个不同光影包之间直接切换（不经过关闭状态）不触发烘焙世代失效；
+  理论上格式补丁不变、无需重烘，若实测出现拉伸请回报（把包名变化也挂进检测即可）。
