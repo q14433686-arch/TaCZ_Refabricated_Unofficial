@@ -36,8 +36,9 @@ import javax.annotation.Nullable;
  *       等价物是 {@link PerspectiveProjectionMatrixBuffer#getBuffer(Matrix4f)} ——
  *       内部 Std140 打包 + {@code CommandEncoder.writeToBuffer} 上传，再
  *       {@code RenderSystem.setProjectionMatrix(slice, PERSPECTIVE)}。</li>
- *   <li>26.2 的 {@code TextureTarget(String, int, int, boolean, GpuFormat)} 五参构造在本版本
- *       是四参 {@code TextureTarget(String, int, int, boolean)}（无显式格式）。</li>
+ *   <li>离屏 target 等价物（26.2 的 {@code ScopePipTarget} 及其离屏 FBO）在 B1 用不到 ——
+ *       采用「拷主目标」方案，窄 FOV 成品先画进主目标再拷走；真正的离屏重定向
+ *       （{@code LevelTargetBundle} 替换）留给 B2，对应构造/格式差异届时再 javap 核实。</li>
  * </ul>
  *
  * <h2>B1 裁剪：拷贝主目标，不重定向</h2>
@@ -152,7 +153,7 @@ public final class ScopePipRerender {
             return false;
         }
 
-        // 近平面取 vanilla 常量（GameRenderer.PROJECTION_Z_NEAR），远平面取当前深度。
+        // 近平面取 vanilla 字面量 0.05f（getProjectionMatrix 字节码里的 ldc 常量），远平面取当前深度。
         float aspect = (float) main.width / (float) main.height;
         float depthFar = mc.gameRenderer.getDepthFar();
         NARROW_MATRIX.identity().perspective((float) Math.toRadians(narrowFov), aspect, PROJECTION_Z_NEAR, depthFar);
