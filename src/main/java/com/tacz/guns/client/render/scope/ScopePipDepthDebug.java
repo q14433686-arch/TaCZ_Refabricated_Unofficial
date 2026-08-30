@@ -1,5 +1,7 @@
 package com.tacz.guns.client.render.scope;
 
+import com.mojang.blaze3d.opengl.GlTexture;
+import com.mojang.blaze3d.opengl.GlTextureView;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
@@ -11,8 +13,6 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.texture.GlTexture;
-import net.minecraft.client.texture.GlTextureView;
 import net.minecraft.resources.Identifier;
 
 import java.util.OptionalInt;
@@ -193,7 +193,8 @@ public final class ScopePipDepthDebug {
         @Override
         public void close() {
             // Never release the borrowed texture; ScopeDepthCopyState owns and reuses it.
-            this.closed = true;
+            // Deliberately no-op (and nothing clears the inherited closed flag, because this
+            // texture must remain bindable for as long as the frame uses it).
         }
     }
 
@@ -208,11 +209,7 @@ public final class ScopePipDepthDebug {
 
         @Override
         public void close() {
-        }
-
-        @Override
-        public boolean isClosed() {
-            return false;
+            // Never mark this view closed or release the borrowed texture.
         }
     }
 }

@@ -77,21 +77,25 @@ Iris 下 `renderItemInHand` 被 HandRenderer 绕开（既有注释 + `IrisHandRe
   若整屏被涂品红，说明判据/绑定失败，这正是要看的。
 - **失败即停用**：`pipeline()`、`renderAfterHand` 都在 try/catch 里；一旦异常 `failed=true`，之后每帧直接返回，
   不影响普通渲染。Step 2 不接入任何整屏变焦 / 覆盖 flush 逻辑。
-- **生命周期**：`ImportedDepthTexture.close()` 置 `closed=true` 但不删 GL 纹理；`ImportedDepthTextureView.close()`
-  与 `isClosed()` 均 no-op，阻止任何路径对私有深度拷贝执行 refcount 释放。
+- **生命周期**：`ImportedDepthTexture.close()` 与 `ImportedDepthTextureView.close()` 均为 no-op；
+  子类不触碰 superclass 的 `closed`/`isClosed()`，只依赖 `AutoCloseable.close()` 这个稳定方法名，
+  从而不依赖官方映射下私有字段/方法的具体拼写，且绝不释放私有深度拷贝。
 
 ## 4. 未验证项（必须实机确认）
 
-0. **官方映射下 `GlTexture` / `GlTextureView` 的包路径。**
-   本实现 import 了 `net.minecraft.client.texture.GlTexture` / `net.minecraft.client.texture.GlTextureView`。
-   该包路径来自 Yarn 命名空间；本分支用 `loom.officialMojangMappings()`，包名可能不同
-   （本仓库的证据表明 `RenderPipelines` 的官方包是 `net.minecraft.client.renderer`，而 Yarn 是
-   `net.minecraft.client.gl`）。若 compileJava 报“找不到类”，先只改这两个 import；
-   若仍然不准，则改用 26.2 的 `AbstractTexture` + `TextureManager` 包装方案过渡。
-1. **`RenderPipelines.ENTITY_OUTLINE_BLIT` 在 1.21.11 官方映射下是否存在且字段名一致。**
-   本分支现有代码只引用过 `GUI_TEXTURED / ENTITY_CUTOUT / ENTITY_TRANSLUCENT(_EMISSIVE) / ENERGY_SWIRL`；
-   26.2 的 26.x 常量集合与 1.21.11 官方映射并非完全一致。若编译失败，把 `ScopePipDepthDebug.pipeline()` 里
-   的 `ENTITY_OUTLINE_BLIT` 换成 `GUI_TEXTURED` 即可（本分支已知存在）。
+0. **官方映射下 `GlTexture` / `GlTextureView` 的包路径 — 已修复。**
+   你首次 `build` 的编译错误正是 Yarn 包不存在：`net.minecraft.client.texture.*`。
+   依据官方 Mojang 映射（`com.mojang.blaze3d.opengl` 包内有 `GlCommandEncoder/GlRenderPass/GlProgram`，
+   Mojang 的 `client.txt` 亦把 `GlTexture` 列为该包），本实现已把两个 import 改为
+   ```java
+   import com.mojang.blaze3d.opengl.GlTexture;
+   import com.mojang.blaze3d.opengl.GlTextureView;
+   ```
+   同时子类 `close()` 统一 no-op、不再引用 superclass 的 `closed`/`isClosed`，避免映射拼写差异。
+1. **`RenderPipelines.ENTITY_OUTLINE_BLIT` 是否存在 — 首次编译已确认存在。**
+   你的编译日志里除上述 import 错误外，没有针对 `ENTITY_OUTLINE_BLIT`、`bindTexture`、`getSamplerCache`
+   的“cannot find symbol”，说明这些类型/字段在官方映射下均已解析。若后续还有问题，
+   备选是把 `ScopePipDepthDebug.pipeline()` 里的 `ENTITY_OUTLINE_BLIT` 换成 `GUI_TEXTURED`（本分支已知存在）。
 2. **`ImportedDepthTexture` + `ImportedDepthTextureView` 能否被 `GlCommandEncoder` 正确绑定。**
    构造器是 protected（子类可用），但实际 `bindTexture` 走的是 `view.texture().getGlId()`；
    需要实机确认。
