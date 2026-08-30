@@ -85,7 +85,7 @@ draw 调用该怎么写」。1.21.11 恰好同时具备两者所需。
 | `RenderSystem.getDevice().createBuffer(name, GpuBuffer.USAGE_VERTEX, meshData.vertexBuffer())` | 同（`createBuffer(Supplier<String>, int, ByteBuffer)` 存在） |
 | `pass.setVertexBuffer(0, bone.vertexBuffer.slice())` | `pass.setVertexBuffer(0, bone.vertexBuffer)` —— 1.21.11 的 `setVertexBuffer(int, GpuBuffer)` 收整块 `GpuBuffer`，**不要** `.slice()`（`.slice()` 返回 `GpuBufferSlice`，签名不符） |
 | `RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS)` → `pass.setIndexBuffer(...)` → `pass.drawIndexed(...)` | `getSequentialBuffer(VertexFormat.Mode.QUADS)` 存在；`PrimitiveTopology` 换 `VertexFormat.Mode.QUADS`。**`drawIndexed` 参数序不同（见下）** |
-| `RenderSystem.bindDefaultUniforms(pass)` + `getDynamicUniforms().writeTransform(model, WHITE)` | `bindDefaultUniforms(pass)` 同；`writeTransform` 是**四参**：`writeTransform(Matrix4fc modelView, Vector4fc colorModulator, Vector3fc modelOffset, Matrix4fc textureMat)`（26.2 两参版不存在；第三参是 modelOffset 不是 lightDir，手部传 `(0,0,0)`，第四参传单位阵） |
+| `RenderSystem.bindDefaultUniforms(pass)` + `getDynamicUniforms().writeTransform(model, WHITE)` | `bindDefaultUniforms(pass)` 同；`writeTransform` 是**四参**：`writeTransform(Matrix4fc modelView, Vector4fc colorModulator, Vector3fc modelOffset, Matrix4fc textureMat)`（26.2 两参版不存在；第三参是 modelOffset 不是 lightDir，手部传 `(0,0,0)`，第四参传单位阵）。**必须在 open render pass 之前调用**：`writeTransform` 会 map DynamicTransforms UBO，1.21.11 的 `mapBuffer` 在 pass 打开时抛 `Close the existing render pass before performing additional commands`（26.2 允许 pass 内写、1.21.11 不允许）——同理顺序索引缓冲 `AutoStorageIndexBuffer.getBuffer(n)` 首次/扩容时也 map，须在 pass 外预热 |
 
 > **`drawIndexed` 参数序（1.21.11 实核，与 26.2 不同）**：`drawIndexed(int baseVertex, int firstIndex, int count, int instanceCount)`
 > —— 依据 yarn 1.21.11 `GlCommandEncoder#drawBoundObjectWithRenderPass(baseVertex, firstIndex, count, indexType, instanceCount)` 逐参对齐。
@@ -137,6 +137,7 @@ draw 调用该怎么写」。1.21.11 恰好同时具备两者所需。
 - [x] 26.2 `PolyMeshGpuRenderer` 源码全文核对。
 - [x] **第 0 步落地**：collector 安全子集 + 预算闸门 + 弹匣补画 + Screen/ShaderStateTracker + 半透明拆分（`de9b285` → `bc047a7`，CI 绿）。
 - [x] **第 1 步落地（编译绿，运行期待实机）**：无光影 GPU 静态烘焙（`PolyMeshGpuRenderer` + `TaczPolyMeshGunModel.ensureBaked` + `GameRendererMixin` 挂点 + 配置/语言键），提交 `1c0193b`（CI `33336848343` success）。
+- [x] **实机首测定位并修复运行时崩溃（待复测）**：烘焙/提交正常，但 `drawList` 在 open render pass 内调 `writeTransform` 抛 `IllegalStateException: Close the existing render pass before performing additional commands`（`GpuBuffer.mapBuffer`）。修复 = 全部 `writeTransform` 提到开 pass 之前、顺序索引缓冲在 pass 外预热到本帧最大 indexCount。**修复只过了编译，尚未实机复测。**
 - [ ] 光影下 `assignPipeline(HAND)` PoC —— 未开始（真难点，第 2 步）。
 - [ ] 全部运行期行为 —— 未验证（本沙箱无客户端，实机清单见 MESH_LOADER.md §5）。
 

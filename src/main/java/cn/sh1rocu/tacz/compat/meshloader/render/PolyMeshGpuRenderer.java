@@ -3,6 +3,7 @@ package cn.sh1rocu.tacz.compat.meshloader.render;
 import cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMesh;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
@@ -32,6 +33,7 @@ import org.joml.Vector4f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;
@@ -324,6 +326,26 @@ public final class PolyMeshGpuRenderer {
             byTexture.computeIfAbsent(entry.texture(), k -> new ArrayList<>()).add(entry);
         }
 
+        // 1.21.11 关键差异：DynamicUniforms.writeTransform 会 map DynamicTransforms UBO
+        // （GpuBuffer.mapBuffer），而 open render pass 期间禁止任何 map 指令 —— 26.2 允许
+        // 在 pass 内写、1.21.11 直接抛 "Close the existing render pass before performing
+        // additional commands"。所以所有骨骼变换必须在开 pass 之前写进 UBO、拿到 slice。
+        Map<DrawEntry, GpuBufferSlice> transformByEntry = new IdentityHashMap<>();
+        int maxIndexCount = 0;
+        for (DrawEntry entry : draws) {
+            Matrix4f mv = new Matrix4f(handModelView).mul(entry.model());
+            transformByEntry.put(entry, RenderSystem.getDynamicUniforms().writeTransform(
+                    mv, WHITE, ZERO_OFFSET, IDENTITY_TEXTURE_MATRIX));
+            maxIndexCount = Math.max(maxIndexCount, entry.bone().indexCount);
+        }
+
+        // 顺序索引缓冲也是懒分配：getBuffer(n) 在首次/扩容时会 map+写索引，同样必须在
+        // pass 外先触发一次（预热到本帧最大 indexCount），进 pass 后 getBuffer 只返回
+        // 既有 GpuBuffer、不再 map。
+        RenderSystem.AutoStorageIndexBuffer indices =
+                RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
+        indices.getBuffer(maxIndexCount);
+
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
         // renderItemInHand RETURN 不在任何 render pass 内，createRenderPass 断言安全。
         // 颜色 OptionalInt.empty() = 不清屏，深度 OptionalDouble.empty() = 不清深度。
@@ -352,13 +374,8 @@ public final class PolyMeshGpuRenderer {
                 pass.bindTexture("Sampler0", textureView, linearSampler);
 
                 for (DrawEntry entry : group.getValue()) {
-                    Matrix4f mv = new Matrix4f(handModelView).mul(entry.model());
-                    pass.setUniform("DynamicTransforms",
-                            RenderSystem.getDynamicUniforms().writeTransform(
-                                    mv, WHITE, ZERO_OFFSET, IDENTITY_TEXTURE_MATRIX));
+                    pass.setUniform("DynamicTransforms", transformByEntry.get(entry));
                     pass.setVertexBuffer(0, entry.bone().vertexBuffer);
-                    RenderSystem.AutoStorageIndexBuffer indices =
-                            RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
                     pass.setIndexBuffer(indices.getBuffer(entry.bone().indexCount), indices.type());
                     // 1.21.11 drawIndexed(baseVertex, firstIndex, count, instanceCount)：
                     // 顺序索引缓冲 0..count-1，故 baseVertex=0、firstIndex=0、单实例。
