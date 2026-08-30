@@ -78,6 +78,7 @@ public final class ScopePipRenderState {
     private static boolean loggedCapture;
     private static boolean loggedCaptureFailure;
     private static boolean loggedComposite;
+    private static boolean loggedNoComposite;
 
     // Borrowed depth copies (same wrap-first approach as ScopePipDepthDebug). The depth textures
     // are owned by ScopeDepthCopyState and must never be released by this class.
@@ -141,8 +142,10 @@ public final class ScopePipRenderState {
     public static boolean suppressesWorldFovZoom(float partialTicks) {
         // The Iris check is a stable per-session fact, not a mid-frame capture outcome: when a shader
         // pack is active the lens is deliberately not drawn, so the old whole-screen FOV zoom must
-        // stay on rather than leaving the world at 1x with no PIP picture.
-        return isEnabled() && !IrisCompat.isUsingRenderPack() && currentZoom() > 1 && isAimingStarted(partialTicks);
+        // stay on rather than leaving the world at 1x with no PIP picture. Min magnification keeps
+        // low-power scopes on the classic whole-screen zoom (PIP costs softness with no payoff there).
+        return isEnabled() && !IrisCompat.isUsingRenderPack()
+                && currentZoom() >= minMagnification() && isAimingStarted(partialTicks);
     }
 
     /**
@@ -178,6 +181,13 @@ public final class ScopePipRenderState {
         return RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS == null
                 ? DEFAULT_MIN_AIMING_PROGRESS
                 : RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS.get().floatValue();
+    }
+
+    /** 低于该倍率的瞄具不走 PIP，回落到旧整屏变焦。 */
+    private static float minMagnification() {
+        return RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION == null
+                ? 4.0f
+                : RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION.get().floatValue();
     }
 
     /** 开镜时世界要多放大多少倍的下限（满开镜目标）。 */
@@ -221,6 +231,11 @@ public final class ScopePipRenderState {
         return RenderConfig.SCOPE_PIP_SHARPNESS == null
                 ? 0.0f
                 : Mth.clamp(RenderConfig.SCOPE_PIP_SHARPNESS.get().floatValue(), 0.0f, 1.0f);
+    }
+
+    private static boolean debugNoComposite() {
+        return RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE != null
+                && RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get();
     }
 
     private static boolean debugPaintLens() {
@@ -291,6 +306,11 @@ public final class ScopePipRenderState {
             sceneCaptured = false;
             return;
         }
+        if (currentZoom() < minMagnification()) {
+            // Low-power scopes keep the classic whole-screen zoom; see ScopePipMinMagnification.
+            sceneCaptured = false;
+            return;
+        }
         if (!isAiming(mc)) {
             sceneCaptured = false;
             return;
@@ -350,6 +370,17 @@ public final class ScopePipRenderState {
         }
         var main = mc.getMainRenderTarget();
         if (main == null || main.getColorTextureView() == null) {
+            return;
+        }
+        if (debugNoComposite()) {
+            // Diagnostic: capture path already proved the offscreen/lens plumbing; skip only the
+            // composite so an overflow can be attributed to either capture or compositing.
+            if (!loggedNoComposite) {
+                loggedNoComposite = true;
+                GunMod.LOGGER.info(
+                        "[TACZ Scope] Step3 debug no-composite: captured {}x world but skipped "
+                                + "the {}x lens draw.", (int) worldZoomTarget(), (int) lensZoom());
+            }
             return;
         }
         try {

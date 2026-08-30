@@ -39,6 +39,14 @@ public class RenderConfig {
     /** 开镜进度低于该值时不做 PIP（此时孔径几乎闭合，拷贝纯属浪费）。 */
     public static ForgeConfigSpec.DoubleValue SCOPE_PIP_MIN_AIMING_PROGRESS;
     /**
+     * 瞄具倍率低于该值时不做 PIP，改走原来的整屏变焦。
+     *
+     * <p>低倍镜（2×/3×）的整屏变焦本来就自然，PIP 却照付全屏拷贝成本并让镜内变软；
+     * 高倍镜才是 PIP 的目标场景。组合镜按<b>当前档位</b>判定，切到低倍档自动回整屏变焦，
+     * 切回高倍档自动回 PIP。</p>
+     */
+    public static ForgeConfigSpec.DoubleValue SCOPE_PIP_MIN_MAGNIFICATION;
+    /**
      * 瞄具倍率里有多大一份由<b>世界</b>承担（0 = 全归镜内，纯 PIP；1 = 全归世界，等于关掉 PIP）。
      *
      * <p>镜内画面是主画面中心区按倍率放大来的，放大倍数<b>就是</b>瞄具倍率。
@@ -57,6 +65,13 @@ public class RenderConfig {
      * 所以低倍镜不会被过度处理。</p>
      */
     public static ForgeConfigSpec.DoubleValue SCOPE_PIP_SHARPNESS;
+    /**
+     * 【诊断】抓取照常进行，但<b>不做合成</b>。
+     *
+     * <p>用来区分「放大画面溢出到镜外」的两种成因：什么都不画仍溢出 → 抓取/离屏路径漏到主画面；
+     * 镜片为空 → 溢出来自合成/掩码。默认关闭。</p>
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_NO_COMPOSITE;
     /**
      * 【诊断】把 PIP 合成实际覆盖到的区域涂成纯品红。
      *
@@ -136,13 +151,21 @@ public class RenderConfig {
         SCOPE_PIP_MIN_AIMING_PROGRESS = builder.comment(
                         "Do not run PIP below this aiming progress; the aperture is nearly closed anyway.")
                 .defineInRange("ScopePipMinAimingProgress", 0.05, 0.0, 1.0);
+        SCOPE_PIP_MIN_MAGNIFICATION = builder.comment(
+                        "Scopes below this magnification keep the classic whole-screen zoom because "
+                                + "PIP's softness/cost is not worth it at low power.")
+                .defineInRange("ScopePipMinMagnification", 4.0, 1.0, 100.0);
         SCOPE_PIP_WORLD_ZOOM_SHARE = builder.comment(
                         "How much of the scope zoom is applied to the world (0.0 = pure PIP, 1.0 = old "
                                 + "whole-screen zoom). World = Z^share and lens = Z^(1-share).")
                 .defineInRange("ScopePipWorldZoomShare", 0.0, 0.0, 1.0);
         SCOPE_PIP_SHARPNESS = builder.comment(
                         "Lens sharpening strength (0 = off). Weighted by zoom: negligible at 1x, full at 6x+.")
-                .defineInRange("ScopePipSharpness", 0.0, 0.0, 1.0);
+                .defineInRange("ScopePipSharpness", 0.5, 0.0, 1.0);
+        SCOPE_PIP_DEBUG_NO_COMPOSITE = builder.comment(
+                        "Diagnostic: still capture, but skip the composite. If the magnified image still "
+                                + "overflows, the leak is in the capture/offscreen path, not the composite.")
+                .define("ScopePipDebugNoComposite", false);
         SCOPE_PIP_DEBUG_PAINT_LENS = builder.comment(
                         "Diagnostic: paint the PIP composite coverage solid magenta (lens only when the "
                                 + "mask is correct, the whole screen when the composite leaks).")

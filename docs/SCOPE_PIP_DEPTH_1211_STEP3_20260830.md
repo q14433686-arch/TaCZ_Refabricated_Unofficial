@@ -35,7 +35,7 @@
 | `src/main/resources/assets/tacz/shaders/core/scope_pip.fsh` | 新增：重采样 + 孔径 discard |
 | `build.gradle` | `runClient` 增加 `-Dtacz.scope.pip.enable` 开关 |
 | `src/main/java/.../ScopePipDepthDebug.java` | Step 3 启用时让位（不覆盖真实 PIP） |
-| `src/main/java/.../config/client/RenderConfig.java` | 新增 `ScopePipEnable / MinAimingProgress / WorldZoomShare / Sharpness / DebugPaintLens` |
+| `src/main/java/.../config/client/RenderConfig.java` | 新增 `ScopePipEnable / MinAimingProgress / MinMagnification / WorldZoomShare / Sharpness / DebugNoComposite / DebugPaintLens` |
 | `src/main/java/.../compat/cloth/client/RenderClothConfig.java` | ModMenu/Cloth 界面接入上述配置项 |
 | `src/main/resources/assets/tacz/lang/{en_us,zh_cn}.json` | 配置项界面翻译 |
 
@@ -79,7 +79,8 @@ Step 2 在 RETURN 合成（孔径深度拷贝此刻已完成），抓取则必�
 调用。开着 PIP、未用光影（Iris）、当前持有 >1× 瞄具且**本地玩家已开始抬枪
 （aim progress > 0）**时，`applyScopeMagnification` 不再整屏放大，而是按配置
 `ScopePipWorldZoomShare` 只把“世界应承担的那一份”喂给 FOV；默认 `share=0` 时等价于保持
-基础 FOV。
+基础 FOV。门还要求倍率 ≥ `ScopePipMinMagnification`（默认 4×）：低倍镜直接回到旧整屏变焦，
+免得 PIP 既糊又白付全屏拷贝成本。
 
 键点一：**不要**再以 `sceneCaptured` 为依据。`sceneCaptured` 是 `renderItemInHand` HEAD 写出的
 “本帧抓图是否成功”，而 FOV 计算发生在同一帧更早/更晚的位置，这条标志在开镜/收镜过渡中
@@ -180,8 +181,10 @@ PIP 永久失败（`failed=true`）或未开（`isEnabled()=false`）时该查�
    ```
 2. **打包后的模组 / 第三方启动器**：在 ModMenu 里打开 PIP（或 JVM 参数加
    `-Dtacz.scope.pip.enable=true`）。
-3. 相关配置项（皆为可选）：`ScopePipWorldZoomShare`（默认 0）、`ScopePipSharpness`（默认 0）、
-   `ScopePipMinAimingProgress`（默认 0.05）、`ScopePipDebugPaintLens`（默认关）。
+3. 相关配置项（皆为可选）：`ScopePipMinAimingProgress`（默认 0.05）、
+   `ScopePipMinMagnification`（默认 4.0，低于该倍率走整屏变焦）、`ScopePipWorldZoomShare`（默认 0）、
+   `ScopePipSharpness`（默认 0.5）、`ScopePipDebugNoComposite`（默认关）、
+   `ScopePipDebugPaintLens`（默认关）。
 4. 进游戏：**不要开任何光影**（Iris 会跳过本步），拿一个 6× / 8× 的镜，**抬到满开镜**。
 5. 观察（对照 Step 2 的品红形状）：镜片内现在应显示**放大的世界画面**，而不是品红；
    - 镜片外（镜身、屏幕四周）应为正常 1× 世界（默认 share=0；调高 `WorldZoomShare` 会相应变焦）；
@@ -218,6 +221,8 @@ PIP 永久失败（`failed=true`）或未开（`isEnabled()=false`）时该查�
 - [ ] 进入/退出开镜时世界 POV **无短暂跳变**；默认配置下镜外全程 1×。
 - [ ] `WorldZoomShare > 0` 时，镜外按比例变焦、镜内仍补足到总倍率；满开镜总倍率不变。
 - [ ] `Sharpness>0` 时镜内更锐且无溢出到镜外。
+- [ ] 低于 `MinMagnification` 的倍镜走旧整屏变焦；高于才走 PIP。
+- [ ] `DebugNoComposite` 开启时镜片为空、无合成日志之外无异常。
 - [ ] 开镜/收镜后无残留；关闭 PIP 配置后立刻恢复旧行为。
 - [ ] 满开镜时倍率与瞄具标称一致。
 

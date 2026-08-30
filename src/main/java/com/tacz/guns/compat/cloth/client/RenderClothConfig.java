@@ -64,14 +64,21 @@ public class RenderClothConfig {
                 .setMin(0.0).setMax(1.0).setDefaultValue(0.05)
                 .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_min_aiming_progress.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS::set).build());
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_min_magnification"), RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION.get())
+                .setMin(1.0).setMax(100.0).setDefaultValue(4.0)
+                .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_min_magnification.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION::set).build());
         render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_world_zoom_share"), RenderConfig.SCOPE_PIP_WORLD_ZOOM_SHARE.get())
                 .setMin(0.0).setMax(1.0).setDefaultValue(0.0)
                 .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_world_zoom_share.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_WORLD_ZOOM_SHARE::set).build());
         render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_sharpness"), RenderConfig.SCOPE_PIP_SHARPNESS.get())
-                .setMin(0.0).setMax(1.0).setDefaultValue(0.0)
+                .setMin(0.0).setMax(1.0).setDefaultValue(0.5)
                 .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_sharpness.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_SHARPNESS::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_debug_no_composite"), RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_debug_no_composite.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE::set).build());
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_debug_paint_lens"), RenderConfig.SCOPE_PIP_DEBUG_PAINT_LENS.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_debug_paint_lens.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_DEBUG_PAINT_LENS::set).build());

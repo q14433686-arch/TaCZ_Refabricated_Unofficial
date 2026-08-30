@@ -4,10 +4,14 @@
   "config.tacz.client.render.scope_pip_enable.desc": "在镜片内显示真正放大的世界画面，镜外保持 1×。默认关闭；高倍镜下镜内画面会明显变软。",
   "config.tacz.client.render.scope_pip_min_aiming_progress": "PIP 最小开镜进度",
   "config.tacz.client.render.scope_pip_min_aiming_progress.desc": "低于该开镜进度时跳过 PIP（此时孔径几乎闭合，拷贝纯属浪费）。",
+  "config.tacz.client.render.scope_pip_min_magnification": "PIP 最小倍率",
+  "config.tacz.client.render.scope_pip_min_magnification.desc": "瞄具倍率低于该值时改走旧整屏变焦；低倍镜用 PIP 只增加变软与开销，不值得。",
   "config.tacz.client.render.scope_pip_world_zoom_share": "世界分担倍率比例",
   "config.tacz.client.render.scope_pip_world_zoom_share.desc": "瞄具倍率中有多少由世界承担。0 = 纯 PIP（镜外始终 1×，镜内最软）；1 = 旧整屏变焦（最锐，等于关闭 PIP）。",
   "config.tacz.client.render.scope_pip_sharpness": "镜内锐化",
   "config.tacz.client.render.scope_pip_sharpness.desc": "镜内放大画面的钝化蒙版锐化强度。按倍率加权：1× 为 0，6× 及以上取满。",
+  "config.tacz.client.render.scope_pip_debug_no_composite": "诊断：跳过 PIP 合成",
+  "config.tacz.client.render.scope_pip_debug_no_composite.desc": "仅诊断用：照常抓取但不做合成。若放大画面仍溢出，说明漏在抓取/离屏路径；若镜片为空，则溢出来自合成/掩码。",
   "config.tacz.client.render.scope_pip_debug_paint_lens": "诊断：把 PIP 覆盖区涂成品红",
   "config.tacz.client.render.scope_pip_debug_paint_lens.desc": "仅诊断用：把 PIP 合成实际覆盖到的区域涂成品红。整屏变品红 = 合成漏出；只有镜片品红 = 合成范围正确。"
 }

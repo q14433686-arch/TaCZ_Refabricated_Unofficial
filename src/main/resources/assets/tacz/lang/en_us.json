@@ -4,10 +4,14 @@
   "config.tacz.client.render.scope_pip_enable.desc": "Use a real magnified picture inside the scope lens while the world outside stays 1x. Default off; high zoom lenses are visibly softer.",
   "config.tacz.client.render.scope_pip_min_aiming_progress": "PIP Min Aiming Progress",
   "config.tacz.client.render.scope_pip_min_aiming_progress.desc": "Aim progress below which PIP is skipped; the aperture is nearly closed anyway.",
+  "config.tacz.client.render.scope_pip_min_magnification": "PIP Min Magnification",
+  "config.tacz.client.render.scope_pip_min_magnification.desc": "Scopes below this magnification keep the classic whole-screen zoom; PIP costs too much softness below this point.",
   "config.tacz.client.render.scope_pip_world_zoom_share": "World Zoom Share",
   "config.tacz.client.render.scope_pip_world_zoom_share.desc": "How much of the scope zoom is applied to the world. 0 = pure PIP (world always 1x, softest lens). 1 = old whole-screen zoom (sharpest, equals disabling PIP).",
   "config.tacz.client.render.scope_pip_sharpness": "Lens Sharpening",
   "config.tacz.client.render.scope_pip_sharpness.desc": "Unsharp-mask strength for the magnified lens. Weighted by zoom: 0 at 1x, full at 6x and above.",
+  "config.tacz.client.render.scope_pip_debug_no_composite": "Debug: Skip PIP Composite",
+  "config.tacz.client.render.scope_pip_debug_no_composite.desc": "Diagnostic only: still capture, but do not composite. If the magnified image still overflows, the leak is in the capture/offscreen path.",
   "config.tacz.client.render.scope_pip_debug_paint_lens": "Debug: Paint PIP Coverage Magenta",
   "config.tacz.client.render.scope_pip_debug_paint_lens.desc": "Diagnostic only: paints the PIP composite coverage solid magenta. Whole screen = composite leaking; lens only = composite is correct."
 }
