@@ -172,12 +172,36 @@ public class AnimationStateContext {
     /**
      * 将动画停止。停止后的动画关键帧不会再影响模型。
      *
+     * <h3>过渡链上的新动画也必须一并停止（2026-08-30 修复「开镜检视不可打断」）</h3>
+     * {@code runAnimation} 带过渡时长启动动画时，新 runner 是挂在旧 runner 的
+     * {@code transitionTo} 上的 —— 过渡完成前（常见 0.2 秒），
+     * {@code getAnimation(track)} 返回的仍是<b>旧</b> runner。只停它的话，
+     * 正在过渡进来的新动画毫发无损，过渡结束后照常转正、播完全程。
+     *
+     * <p>实锤案例：开镜时检视。脚本的 {@code inspect.transition} 里
+     * 「{@code aimingProgress > 0} 就 stopAnimation + 回 idle」的打断分支，
+     * 会被每 tick 的移动类输入（IDLE/WALK/RUN）在检视启动后 ≤50ms 内触发 ——
+     * 必然落在 0.2 秒过渡窗口内，于是 stop 停的是轨道上早已停止的旧残骸，
+     * 检视动画成了无主的僵尸：状态机已回 idle，所有挂在 inspect 态上的打断手段
+     * （射击停止分支、切模式分支、isCharging break out）全部失联，
+     * 动画一路播完，只有切枪/丢枪（直接往该轨道 runAnimation 顶掉它）能救。
+     *
+     * <p>修法与本类 {@link #isStopped(int)} 的既有语义对齐 —— 那边早就写了
+     * 「有 transitionTo 就看 transitionTo」。这里对 transitionTo 调 stop：
+     * 过渡本身让它自然走完（向新动画的末帧收敛，视觉上平滑回位，不做硬切），
+     * 转正的是一个已停止的 runner，与「动画自然播完」落在同一状态，
+     * 下游 {@code isStopped} 判定、脚本的 RETREAT 机制全都照常成立。</p>
+     *
      * @param track 轨道在控制器中的指针
      */
     public void stopAnimation(int track) {
         var stateMachine = checkStateMachine();
         ObjectAnimationRunner runner = stateMachine.getAnimationController().getAnimation(track);
         if (runner != null) {
+            ObjectAnimationRunner transitionTo = runner.getTransitionTo();
+            if (transitionTo != null) {
+                transitionTo.stop();
+            }
             runner.stop();
         }
     }
