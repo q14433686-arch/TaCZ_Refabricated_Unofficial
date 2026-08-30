@@ -223,6 +223,10 @@ public final class ScopePipRenderState {
      * 满开镜时镜外世界应放大的倍数：{@code Z^share}（{@code share=0} 恒为 1，即纯 PIP）。
      */
     public static float worldZoomTarget() {
+        // 二次渲染模式镜内像素是真画出来的，没有分辨率上限，世界放大只会白牺牲镜外画质。
+        if (ScopePipRerender.worldZoomForcedToOne()) {
+            return 1.0f;
+        }
         float zoom = currentZoom();
         if (zoom <= 1.0f) {
             return 1.0f;
@@ -370,6 +374,11 @@ public final class ScopePipRenderState {
      * gun has not been rasterized into it yet, so this copy is exactly the clean lens source.</p>
      */
     public static void captureScene(Minecraft mc) {
+        if (ScopePipRerender.rerenderMode()) {
+            // 二次渲染模式：镜内画面由 ScopePipRerender.renderScopeView 在 renderLevel 的
+            // 镜内那遍之后拷好。这里再拷一次会用宽视场的手前画面覆盖窄视场成品。
+            return;
+        }
         if (!isEnabled() || failed || mc == null) {
             sceneCaptured = false;
             return;
@@ -442,6 +451,18 @@ public final class ScopePipRenderState {
 
     /**
      * Copies the current main color texture into the reusable off-screen scene target. Shared by
+     * the pre-hand (vanilla), post-final-composite (Iris) and the second-render
+     * ({@link ScopePipRerender}) capture paths so the target sizing, format reuse and failure
+     * handling stay identical.
+     *
+     * @return {@code true} on success, with {@code sceneCaptured} set accordingly.
+     */
+    public static boolean captureSceneFromMain(Minecraft mc) {
+        return copyMainColor(mc);
+    }
+
+    /**
+     * Copies the current main color texture into the reusable off-screen scene target. Shared by
      * the pre-hand (vanilla) and post-final-composite (Iris) capture paths so the target sizing,
      * format reuse and failure handling stay identical.
      *
@@ -493,7 +514,8 @@ public final class ScopePipRenderState {
             // composite. The vanilla hand-pass RETURN never sees a shader-pack frame.
             return;
         }
-        compositeScene(mc);
+        // 二次渲染模式镜内画面已按窄 FOV 画好（倍率 1），重投影模式才需要 lensZoom()。
+        compositeScene(mc, compositeZoom());
     }
 
     /**
@@ -528,12 +550,21 @@ public final class ScopePipRenderState {
         if (progress < IRIS_FULL_AIM_THRESHOLD) {
             return;
         }
-        compositeScene(mc);
+        // Iris 路径永远是「整屏重投影」，倍率走 lensZoom()；二次渲染只支持无光影路径。
+        compositeScene(mc, lensZoom());
     }
 
     /** Shared composite body (vanilla and Iris call sites). */
     private static void compositeScene(Minecraft mc) {
         compositeScene(mc, lensZoom());
+    }
+
+    /**
+     * 合成倍率：二次渲染模式下镜内画面已是窄 FOV 真画（屏幕坐标一一对应），倍率恒 1；
+     * 重投影模式则是 {@link #lensZoom()}（世界放大后镜内只需再补的那一份）。
+     */
+    private static float compositeZoom() {
+        return ScopePipRerender.rerenderMode() ? ScopePipRerender.compositeZoom() : lensZoom();
     }
 
     /** Composite body with an explicit lens zoom (the Iris path reuses the same stable zoom value). */

@@ -3,12 +3,15 @@ package com.tacz.guns.mixin.client;
 import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
 import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
 import com.tacz.guns.client.render.scope.ScopePipDepthDebug;
 import com.tacz.guns.client.render.scope.ScopePipRenderState;
+import com.tacz.guns.client.render.scope.ScopePipRerender;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.Camera;
@@ -16,13 +19,16 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
 import org.joml.Matrix4f;
+import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 1.21.11 bob / hand-pass hooks. */
@@ -128,6 +134,35 @@ public abstract class GameRendererMixin {
                 ci.cancel();
             }
         }
+    }
+
+    /**
+     * 镜内二次渲染（ScopePipRerender）的注入点：vanilla 在 {@code renderLevel} 里只调一次
+     * {@code LevelRenderer#renderLevel(...)}，这里先跑窄 FOV 的镜内那遍并拷走成品，
+     * 再原样直通宽 FOV 的 vanilla 那遍覆盖主目标。关着该特性时等价于零开销直通。
+     *
+     * <p>1.21.11 的 10 参签名（javap 核实）：{@code renderLevel(GraphicsResourceAllocator,
+     * DeltaTracker, boolean, Camera, Matrix4f, Matrix4f, Matrix4f, GpuBufferSlice, Vector4f,
+     * boolean)}；三个矩阵依次是视图旋转、投影、裁剪投影，倒数第二是雾缓冲、最后两个参数
+     * 是雾颜色与 renderSky。</p>
+     */
+    @Redirect(method = "renderLevel", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/LevelRenderer;renderLevel(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lnet/minecraft/client/DeltaTracker;ZLnet/minecraft/client/Camera;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Vector4f;Z)V"))
+    private void tacz$scopeRenderLevel(LevelRenderer levelRenderer,
+                                       GraphicsResourceAllocator allocator,
+                                       DeltaTracker deltaTracker,
+                                       boolean blockOutline,
+                                       Camera camera,
+                                       Matrix4f viewMatrix,
+                                       Matrix4f projectionMatrix,
+                                       Matrix4f cullingMatrix,
+                                       GpuBufferSlice fogBuffer,
+                                       Vector4f fogColor,
+                                       boolean renderSky) {
+        ScopePipRerender.renderScopeView(levelRenderer, allocator, deltaTracker, blockOutline,
+                camera, viewMatrix, projectionMatrix, cullingMatrix, fogBuffer, fogColor, renderSky);
+        levelRenderer.renderLevel(allocator, deltaTracker, blockOutline, camera,
+                viewMatrix, projectionMatrix, cullingMatrix, fogBuffer, fogColor, renderSky);
     }
 
     @Inject(method = "render", at = @At("HEAD"))
