@@ -49,10 +49,13 @@ Step 2 在 RETURN 合成（孔径深度拷贝此刻已完成），抓取则必�
 
 ### 2.2 离屏颜色 target
 
-`SceneColorTarget`：`glGenTextures` + `glTexImage2D(GL_RGBA8)` + 无深度 FBO，
-`glBlitFramebuffer(COLOR_BUFFER_BIT)` 从当前 draw FBO 拷入。用
-`GlTexture`/`GlTextureView` 子类包装成可绑定的 `GpuTextureView` —— 与 Step 2
-已验证的裸 GL 深度纹理绑定手法同源。
+`SceneColorTarget`：`glGenTextures` + `glTexImage2D(GL_RGBA8)`，不建 FBO。
+抓取直接走 `CommandEncoder.copyTextureToTexture(main.getColorTexture(), scene, ...)` ——
+与 26.2 `ScopePipRenderer.captureScene` 同一条已被实机验证的路径。这样抓取不依赖
+`renderItemInHand` HEAD 那一刻当前绑定的是哪个 FBO（用旧版 `glBlitFramebuffer` 从
+“当前 draw FBO”拷，恰好会拷错/拷空，导致只有 FOV 被抑制、镜头却没贴图 —— 这就是
+“里外都 1×”的根因）。用 `GlTexture`/`GlTextureView` 子类包装成可绑定的
+`GpuTextureView` —— 与 Step 2 已验证的裸 GL 深度纹理绑定手法同源。
 
 ### 2.3 合成管线
 
@@ -65,8 +68,11 @@ Step 2 在 RETURN 合成（孔径深度拷贝此刻已完成），抓取则必�
 ### 2.4 FOV 抑制
 
 `ScopePipRenderState.suppressesWorldFovZoom()` 被 `CameraSetupEvent#applyScopeMagnification`
-调用。开着 PIP 且有 >1× 瞄具时，`applyScopeMagnification` 直接 `return`（保持基础 FOV）。
-它每帧都问，不缓存：PIP 一旦失败即自动回到旧的整屏变焦。
+调用。开着 PIP、将有镜内画面（`sceneCaptured` 为真）且有 >1× 瞄具时，
+`applyScopeMagnification` 直接 `return`（保持基础 FOV）。它每帧都问，不缓存：
+PIP 一旦失败或没有抓到画面就自动回到旧的整屏变焦。
+关键点是 **当且仅当本帧确有可合成的镜内画面时才抑制 FOV**；旧版只查“PIP 开启”，
+于是抓图失败的帧会变成“镜外 1×、镜内也 1×”——这正是本次实机的症状，已修。
 
 ### 2.5 为什么仍然跳过 Iris
 
@@ -91,11 +97,12 @@ Step 2 在 RETURN 合成（孔径深度拷贝此刻已完成），抓取则必�
 
 ## 4. 未验证项（必须实机确认）
 
-1. **主 target 颜色格式 ≠ RGBA8**：本步 target 固定 `GL_RGBA8`，`glBlitFramebuffer` 对
-   源/目标颜色格式不兼容可能报错 → 合成直接失败。若日志出现
-   `Step3 scene capture failed`，请发错误码，我再把 target 格式改成从主颜色纹理动态取。
-2. **`renderItemInHand` HEAD 时当前 draw FBO 是否就是主 target**：是则抓取成功；不是则
-   `sourceFbo==0`/blit 失败，PIP 不启用。需实机日志确认。
+1. **主 target 颜色格式 ≠ RGBA8**：本步 target 直接读 `main.getColorTexture().getFormat()`
+   并用同格式建离屏纹理，因此格式不匹配的窗口已收窄。若报
+   `Step3 could not capture ... falling back`，说明主颜色格式不在
+   `RGBA8/RED8` 白名单内，请发日志。
+2. **`copyTextureToTexture` 的格式/usage 校验**：26.2 已实测同一条 API，风险较低；
+   仍需实机确认官方映射下目标 `GlTexture` 包装能被接受。
 3. **`withShaderDefine(..., float)` 在官方映射下编译为 `#define`**：本分支 `ScopeRenderTypes`
    已用 `withShaderDefine`，应可编译；但 float 形式未经实际构建验证。
 4. **镜内分辨率在 8× 下较糊**：这是重投影的固有上限，本步未做 Catmull-Rom/锐化。
@@ -129,7 +136,9 @@ Step 2 在 RETURN 合成（孔径深度拷贝此刻已完成），抓取则必�
 [TACZ Scope] Step3 composite painted the 6x lens (...)
 ```
 
-如果没有第一条 → 抓取被跳过（没有瞄准 / Iris / `sourceFbo==0`）。
+如果没有第一条 → 抓取被跳过（没有瞄准 / Iris / 主颜色纹理为空）。
+如果日志出现 `Step3 could not capture a clean pre-hand world this frame ... falling back`
+且画面“里外都 1×”，说明抓图失败导致 FOV 抑制也回退；回传该日志。
 如果只有第一条、没有第二条 → 合成失败，回传 `Step3 composite failed` 异常栈。
 
 ---

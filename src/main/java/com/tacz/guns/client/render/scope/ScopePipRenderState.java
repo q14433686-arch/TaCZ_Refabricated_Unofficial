@@ -72,6 +72,7 @@ public final class ScopePipRenderState {
     private static boolean failed;
     private static boolean sceneCaptured;
     private static boolean loggedCapture;
+    private static boolean loggedCaptureFailure;
     private static boolean loggedComposite;
 
     // Borrowed depth copies (same wrap-first approach as ScopePipDepthDebug). The depth textures
@@ -99,7 +100,10 @@ public final class ScopePipRenderState {
      * the player to the existing whole-screen FOV zoom on the very next frame.</p>
      */
     public static boolean suppressesWorldFovZoom() {
-        return isEnabled() && currentZoom() > 1;
+        // Only take the world FOV away when there is actually a captured frame to composite.
+        // If capture fails, the old whole-screen zoom must resume on the next frame; gating on
+        // sceneCaptured is what keeps "PIP is broken" from silently turning into "nothing zooms".
+        return isEnabled() && currentZoom() > 1 && sceneCaptured;
     }
 
     /** The steady-state scope zoom for the local player, or 1 when there is no scope. */
@@ -153,20 +157,26 @@ public final class ScopePipRenderState {
             return;
         }
         var main = mc.getMainRenderTarget();
-        if (main == null || main.getColorTextureView() == null) {
+        if (main == null || main.getColorTexture() == null) {
             sceneCaptured = false;
             return;
         }
-        int width = main.getColorTextureView().getWidth(0);
-        int height = main.getColorTextureView().getHeight(0);
+        GpuTexture source = main.getColorTexture();
+        if (source.isClosed()) {
+            sceneCaptured = false;
+            return;
+        }
+        int width = source.getWidth(0);
+        int height = source.getHeight(0);
         if (width <= 0 || height <= 0) {
             sceneCaptured = false;
             return;
         }
         try {
-            SceneColorTarget target = sceneTarget(width, height);
-            if (target == null || !target.copyFromCurrentDrawFramebuffer()) {
+            SceneColorTarget target = sceneTarget(width, height, source.getFormat());
+            if (target == null || !target.copyFrom(source)) {
                 sceneCaptured = false;
+                logCaptureFailure();
                 return;
             }
             if (!loggedCapture) {
@@ -243,6 +253,15 @@ public final class ScopePipRenderState {
         }
     }
 
+    private static void logCaptureFailure() {
+        if (!loggedCaptureFailure) {
+            loggedCaptureFailure = true;
+            GunMod.LOGGER.warn(
+                    "[TACZ Scope] Step3 could not capture a clean pre-hand world this frame; "
+                            + "PIP is not painting. Falling back to whole-screen FOV zoom.");
+        }
+    }
+
     private static RenderPipeline pipeline() {
         int zoom = Math.max(1, Math.round(currentZoom()));
         if (pipeline == null || builtZoom != zoom) {
@@ -296,21 +315,28 @@ public final class ScopePipRenderState {
         return SceneColorTarget.instance;
     }
 
-    /** Ensures a suitably-sized scene target exists (called on capture; composite reads it back). */
-    private static SceneColorTarget sceneTarget(int width, int height) {
+    /**
+     * Ensures a suitably-sized scene target exists (called on capture; composite reads it back).
+     * The format must match the source's {@code TextureFormat} because
+     * {@code CommandEncoder#copyTextureToTexture} checks src/dst format equality.
+     */
+    private static SceneColorTarget sceneTarget(int width, int height, TextureFormat format) {
         if (failed) {
             return null;
         }
         if (SceneColorTarget.instance == null || SceneColorTarget.instance.width() != width
-                || SceneColorTarget.instance.height() != height) {
+                || SceneColorTarget.instance.height() != height
+                || SceneColorTarget.instance.format() != format) {
             SceneColorTarget.close();
             int w = Math.max(1, width);
             int h = Math.max(1, height);
-            SceneColorTarget.instance = new SceneColorTarget(w, h);
-            if (failed) {
-                SceneColorTarget.close();
+            SceneColorTarget instance = new SceneColorTarget(w, h, format);
+            if (!instance.usable()) {
+                instance.close();
+                SceneColorTarget.instance = null;
                 return null;
             }
+            SceneColorTarget.instance = instance;
         }
         return SceneColorTarget.instance;
     }
@@ -345,51 +371,48 @@ public final class ScopePipRenderState {
     }
 
     /**
-     * A real off-screen RGBA copy of the pre-hand world color, with a depth-less FBO used only as
-     * the blit destination. Its GlTexture wrapper is how the RenderPass can bind it as a sampler.
+     * A real off-screen color copy of the pre-hand world. Uses the same no-FBO
+     * {@code CommandEncoder#copyTextureToTexture} approach that the 26.2 {@code ScopePipRenderer}
+     * already uses, so the capture never depends on which FBO is bound at hand-pass start.
      */
     private static final class SceneColorTarget {
         private static SceneColorTarget instance;
-        private final int framebuffer;
         private final int texture;
         private final int width;
         private final int height;
-        // Wrapper types grow a strong reference back to the raw GL ids so they stay valid.
+        private final TextureFormat format;
+        // Wrapper types keep a strong reference back to the raw GL id so it stays valid.
         private final ImportedSceneTexture wrappedTexture;
         private final ImportedSceneTextureView wrappedView;
 
-        SceneColorTarget(int width, int height) {
+        private final boolean usableFormat;
+
+        SceneColorTarget(int width, int height, TextureFormat format) {
             this.width = width;
             this.height = height;
-            this.framebuffer = GL30.glGenFramebuffers();
+            this.format = format;
+            int internalFormat = glInternalFormat(format);
+            this.usableFormat = internalFormat != 0;
             this.texture = GL11.glGenTextures();
             int previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.texture);
-            GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL30.GL_RGBA8,
-                    width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE,
-                    (java.nio.ByteBuffer) null);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTexture);
-
-            int previousRead = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
-            int previousDraw = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.framebuffer);
-            GL30.glFramebufferTexture2D(
-                    GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0,
-                    GL11.GL_TEXTURE_2D, this.texture, 0);
-            GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
-            int status = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
-            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, previousRead);
-            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, previousDraw);
-            if (status != GL30.GL_FRAMEBUFFER_COMPLETE) {
-                failed = true;
+            if (internalFormat != 0) {
+                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, internalFormat,
+                        width, height, 0, glExternalFormat(format), glType(format),
+                        (java.nio.ByteBuffer) null);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
             }
-
-            this.wrappedTexture = new ImportedSceneTexture(this.texture, this.width, this.height, "tacz_scope_pip_scene");
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTexture);
+            this.wrappedTexture = new ImportedSceneTexture(this.texture, this.width, this.height,
+                    this.format, "tacz_scope_pip_scene");
             this.wrappedView = new ImportedSceneTextureView(this.wrappedTexture);
+        }
+
+        boolean usable() {
+            return usableFormat && !failed;
         }
 
         int width() {
@@ -400,6 +423,10 @@ public final class ScopePipRenderState {
             return this.height;
         }
 
+        TextureFormat format() {
+            return this.format;
+        }
+
         int textureId() {
             return this.texture;
         }
@@ -408,51 +435,62 @@ public final class ScopePipRenderState {
             return this.wrappedView;
         }
 
-        boolean copyFromCurrentDrawFramebuffer() {
-            if (failed) {
+        boolean copyFrom(GpuTexture source) {
+            if (failed || source == null || source.isClosed()) {
                 return false;
             }
-            int sourceFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-            if (sourceFbo == 0) {
-                return false;
-            }
-            int previousRead = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
-            int previousDraw = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, sourceFbo);
-            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, this.framebuffer);
-            GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
-            GL30.glBlitFramebuffer(
-                    0, 0, width, height,
-                    0, 0, width, height,
-                    GL11.GL_COLOR_BUFFER_BIT,
-                    GL11.GL_NEAREST);
-            int error = GL11.glGetError();
-            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, previousRead);
-            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, previousDraw);
-            return error == GL11.GL_NO_ERROR;
+            clearGlErrors();
+            CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+            // (source, target, mipLevel, dstX, dstY, srcX, srcY, width, height)
+            encoder.copyTextureToTexture(
+                    source, this.wrappedTexture, 0,
+                    0, 0, 0, 0, width, height);
+            return GL11.glGetError() == GL11.GL_NO_ERROR;
         }
 
         static void close() {
             if (instance != null) {
                 int tex = instance.texture;
-                int fbo = instance.framebuffer;
                 if (GL11.glIsTexture(tex)) {
                     GL11.glDeleteTextures(tex);
                 }
-                if (GL30.glIsFramebuffer(fbo)) {
-                    GL30.glDeleteFramebuffers(fbo);
-                }
                 instance = null;
+            }
+        }
+
+        static int glInternalFormat(TextureFormat format) {
+            if (format == TextureFormat.RGBA8) {
+                return GL30.GL_RGBA8;
+            }
+            if (format == TextureFormat.RED8) {
+                return GL30.GL_R8;
+            }
+            return 0;
+        }
+
+        static int glExternalFormat(TextureFormat format) {
+            if (format == TextureFormat.RED8) {
+                return GL11.GL_RED;
+            }
+            return GL11.GL_RGBA;
+        }
+
+        static int glType(TextureFormat format) {
+            return GL11.GL_UNSIGNED_BYTE;
+        }
+
+        static void clearGlErrors() {
+            while (GL11.glGetError() != GL11.GL_NO_ERROR) {
+                // drain stale errors so the copy result is attributable
             }
         }
     }
 
     /** Wraps the raw scene GL texture so {@code RenderPass} can bind it as a sampler. */
     private static final class ImportedSceneTexture extends GlTexture {
-        ImportedSceneTexture(int glId, int width, int height, String label) {
-            super(GpuTexture.USAGE_TEXTURE_BINDING | GpuTexture.USAGE_RENDER_ATTACHMENT
-                    | GpuTexture.USAGE_COPY_DST, label, TextureFormat.RGBA8,
-                    width, height, 1, 1, glId);
+        ImportedSceneTexture(int glId, int width, int height, TextureFormat format, String label) {
+            super(GpuTexture.USAGE_TEXTURE_BINDING | GpuTexture.USAGE_COPY_DST,
+                    label, format, width, height, 1, 1, glId);
         }
 
         @Override
