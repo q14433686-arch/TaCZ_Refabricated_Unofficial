@@ -153,6 +153,16 @@ public final class PolyMeshGpuRenderer {
     /** 手部 pass 进行中（由 GameRendererMixin 在 renderItemInHand HEAD/RETURN 设置）。 */
     private static boolean inHandPass = false;
     /**
+     * 手部 pass 的 model-view（= 相机基座 B 的逆 Bᵀ），在 <b>submit 当刻</b>捕获。
+     *
+     * <p>renderItemInHand RETURN 时 ModelView 栈已被 vanilla 还原，不能再现取 ——
+     * 现取到的是 I/V 之类的错矩阵，乘进 pose 就是「相对人物世界位置恒定 / 朝向恒北」
+     * 老 bug。而 submit 当刻（renderFirstPerson → visitBones → submitBone 期间）
+     * getModelViewMatrix() = Bᵀ，与 ScopeFinalOverlayState.captureHandTransform
+     * 捕获的是同一份、已被 reticle 路径实测验证。</p>
+     */
+    private static Matrix4f handModelView;
+    /**
      * 烘焙世代号：光影包开关每翻转一次 +1（{@link #beginFrame} 逐帧检测）。
      *
      * <p>烘焙产物依赖当时的光影状态——Iris 激活时会扩展实体顶点格式（附加属性、
@@ -250,6 +260,11 @@ public final class PolyMeshGpuRenderer {
         if (bone == null) {
             return;
         }
+        if (handModelView == null) {
+            // 此刻仍在本帧手部 pass 内：getModelViewMatrix() = Bᵀ（相机基座逆）。
+            // 这里捕获并带到 drawList，绕开 RETURN 时已被还原的 ModelView 栈。
+            handModelView = new Matrix4f(RenderSystem.getModelViewMatrix());
+        }
         HAND_DRAWS.add(new DrawEntry(new Matrix4f(bonePose), texture, bone));
     }
 
@@ -264,6 +279,7 @@ public final class PolyMeshGpuRenderer {
         }
         HAND_DRAWS.clear();
         drawnThisFrame = false;
+        handModelView = null;
     }
 
     /** 当前烘焙世代号。烘焙缓存持有者在 submit 时比对，不匹配须立即重烘。 */
@@ -316,10 +332,22 @@ public final class PolyMeshGpuRenderer {
         GpuTextureView lightmapView = resolveLightmap(mc);
         GpuSampler linearSampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
 
-        // 手部立方体尚未 flush，但 MV 与稍后 collector flush 时一致（renderItemInHand
-        // 已在内部 push/pop 自己的 camera matrix，RETURN 后 MV 回到 renderAllFeatures
-        // 将用的同一份）。取一次全体通用，每骨骼再乘 pose。
-        Matrix4f handModelView = new Matrix4f(RenderSystem.getModelViewMatrix());
+        // 【相对人物世界位置恒定 / 朝向恒北 bug 的修复】
+        // 1.21.11 手部 pass 的提交 pose（entry.model()）已<b>预乘相机基座</b>
+        //   B = camera.rotation()（view→world），即 rawWorld = B · H · F · chain：
+        // collector 路径把这整份 pose 烘进顶点，flush 时 ModelViewMat = 手部 pass
+        // 当刻的 getModelViewMatrix() = Bᵀ，乘起来 Bᵀ·B = I，得到 screen = H·F·chain。
+        // GPU 路径顶点留在骨骼本地，必须写 mv = Bᵀ × entry.model()；只写 entry.model()
+        // （或乘一个 RETURN 时刻的错矩阵）B 就没被抵消 —— 枪不随视角转、相对人物世界
+        // 位置恒定，正是那个老 bug 的实测症状。
+        //
+        // 关键：Bᵀ 只能在 submit 当刻捕获（此时 getModelViewMatrix() = Bᵀ，见
+        // ScopeFinalOverlayState.captureHandTransform 同一时点）；renderItemInHand
+        // RETURN 时 ModelView 栈已被 vanilla 还原，现取到的是 I/V 之类的错矩阵。
+        // 因此 handModelView 在 submitBone 里存好，这里不再现取。
+        Matrix4f handMv = handModelView != null
+                ? handModelView
+                : new Matrix4f(RenderSystem.getModelViewMatrix());
 
         Map<Identifier, List<DrawEntry>> byTexture = new HashMap<>();
         for (DrawEntry entry : draws) {
@@ -333,7 +361,8 @@ public final class PolyMeshGpuRenderer {
         Map<DrawEntry, GpuBufferSlice> transformByEntry = new IdentityHashMap<>();
         int maxIndexCount = 0;
         for (DrawEntry entry : draws) {
-            Matrix4f mv = new Matrix4f(handModelView).mul(entry.model());
+            // ModelViewMat = Bᵀ × pose_submit（乘序同 vanilla：顶点先套 pose 再进相机系）。
+            Matrix4f mv = new Matrix4f(handMv).mul(entry.model());
             transformByEntry.put(entry, RenderSystem.getDynamicUniforms().writeTransform(
                     mv, WHITE, ZERO_OFFSET, IDENTITY_TEXTURE_MATRIX));
             maxIndexCount = Math.max(maxIndexCount, entry.bone().indexCount);
