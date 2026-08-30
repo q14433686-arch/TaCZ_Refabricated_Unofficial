@@ -71,6 +71,11 @@ public final class ScopeFinalOverlayState {
         return !PENDING_RETICLES.isEmpty();
     }
 
+    /** @return whether anything (reticle or bare physical rim) waits to be drawn after the final cover. */
+    public static boolean hasPendingOverlay() {
+        return !PENDING_RETICLES.isEmpty() || !PENDING_RINGS.isEmpty();
+    }
+
     static void queueReticle(BedrockRenderSnapshot snapshot, RenderType renderType) {
         if (snapshot.isEmpty()) {
             return;
@@ -154,7 +159,8 @@ public final class ScopeFinalOverlayState {
             renderBuffers.bufferSource().endBatch();
             if (!loggedRendered) {
                 loggedRendered = true;
-                GunMod.LOGGER.info("[TACZ Scope] Rendered reticle and ocular rim after Iris final composite.");
+                GunMod.LOGGER.info("[TACZ Scope] Rendered deferred reticle and ocular rim after the final cover ({} reticles, {} rims).",
+                        reticles.size(), rings.size());
             }
         } catch (RuntimeException e) {
             // Optional Iris integration must not turn a shader-pack edge case into a client crash.

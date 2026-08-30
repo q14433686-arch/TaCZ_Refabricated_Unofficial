@@ -127,6 +127,20 @@ PIP 永久失败（`failed=true`）或未开（`isEnabled()=false`）时该查�
 - `GameRendererMixin` 在 RETURN 先 `compositeAfterHand()` 画镜内画面，再
   `ScopeFinalOverlayState.renderAfterFinalComposite()` 把准星、遮光罩画回镜片上方。
 
+`shouldDeferReticleOverlay()` **不用 `sceneCaptured` 判定**，而与
+`suppressesWorldFovZoom()` 共用同一稳定逐帧判定（PIP 已开 + 非 Iris + 倍率达标 +
+插值开镜进度 > 0）。`sceneCaptured` 是手部 pass HEAD 写入的帧内状态，用它做延迟判定
+在下列情况会造成“本帧合成活跃、但准星/遮光罩仍走了旧 solid pass”的错位：
+- 捕捉成功但 `BedrockAttachmentModel` 提交发生在标志写入之前；
+- 该帧捕捉失败（`sceneCaptured=false`），但手部 RETURN 仍会画准星/遮光罩；
+- 其他绕过 `captureScene` 的手部渲染入口。
+
+改用稳定逐帧判定后，只要本帧 PIP 必然接管 FOV（即必然在 hand-pass 末尾合成镜片），
+准星/遮光罩就一定被挪到后合成覆盖层；本帧没有 PIP 时该判定为 false，仍走原顺序。
+
+`GameRendererMixin` 的刷新条件也扩展为 `hasPendingOverlay() || (PIP 已开且非 Iris)`，
+即使判定在合成前后被重算，已排队的准星/遮光罩也不会滞留在镜片下方。
+
 净效果：镜内画面在下，准星、遮光罩在上，符合真实光路。非 PIP 帧/非第一人称/不瞄准时
 `shouldDeferReticleOverlay()` 为 false，仍走原来的 solid-pass 顺序；Iris 路径不受影响
 （PIP 在 Iris 下显式跳过，本步的 overlay 刷新只在 vanilla 生效）。
@@ -218,6 +232,15 @@ PIP 永久失败（`failed=true`）或未开（`isEnabled()=false`）时该查�
 - [ ] 镜片内是放大的世界，镜外默认 1×（`WorldZoomShare=0`），镜内无枪/手。
 - [ ] 镜内画面上**能看到准星（分划）轮廓**，不再被镜内画面盖住。
 - [ ] 镜片边缘的**物理遮光罩（黑圈）**仍在上层，不再被盖住。
+- [ ] 若仍未盖住，看日志对照（`compositeAfterHand` 后刷新延迟准星/遮光罩）：
+      - `[TACZ Scope] Queued reticle for post-composite overlay (Iris or PIP lens).`
+        —— 已进入延迟队列；
+      - `[TACZ Scope] Rendered deferred reticle and ocular rim after the final cover (N reticles, M rims).`
+        —— 已在合成后真正重画；
+      - 只见第二句不见第一句：`shouldDeferReticleOverlay()` 在提交时为 false，
+        该帧准星/遮光罩走了普通 solid pass，被合成盖住（稳定判定已改为与 FOV 抑制同源）；
+      - 只见第一句不见第二句：`renderAfterFinalComposite()` 未在合成后触发，
+        查 `GameRenderer` 的 RETURN 刷新条件。
 - [ ] 进入/退出开镜时世界 POV **无短暂跳变**；默认配置下镜外全程 1×。
 - [ ] `WorldZoomShare > 0` 时，镜外按比例变焦、镜内仍补足到总倍率；满开镜总倍率不变。
 - [ ] `Sharpness>0` 时镜内更锐且无溢出到镜外。

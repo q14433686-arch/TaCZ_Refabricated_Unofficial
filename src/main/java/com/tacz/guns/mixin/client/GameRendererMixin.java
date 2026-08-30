@@ -63,7 +63,11 @@ public abstract class GameRendererMixin {
         // so flush that overlay NOW, after the lens, restoring the physical order: picture, then
         // crosshair, then shade. The method no-ops when nothing was queued, and it is only reached
         // on the vanilla path here (Iris drives its own post-composite flush and PIP is skipped there).
-        if (ScopePipRenderState.isEnabled() && !IrisCompat.isUsingRenderPack()) {
+        // hasPendingOverlay() also guards the transient where the reticle/rim were queued a moment
+        // before isEnabled() was re-evaluated (for example during a slow aim transition), so nothing
+        // stays stranded under the lens.
+        if (ScopeFinalOverlayState.hasPendingOverlay()
+                || (ScopePipRenderState.isEnabled() && !IrisCompat.isUsingRenderPack())) {
             ScopeFinalOverlayState.renderAfterFinalComposite();
         }
         // Step 2 (depth PIP diagnostic): paint the lens magenta when the debug system property is

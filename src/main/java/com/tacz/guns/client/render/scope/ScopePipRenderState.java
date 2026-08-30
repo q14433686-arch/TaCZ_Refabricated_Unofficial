@@ -154,9 +154,21 @@ public final class ScopePipRenderState {
      * so the normal solid-pass reticle/rim would already be under it. Deferring those two overlays
      * to {@link ScopeFinalOverlayState} restores the physical lens order (crosshair and shade on top
      * of the picture) without moving the composite into the middle of the hand batch.
+     *
+     * <p>This deliberately uses the <b>same stable per-frame gate</b> as {@link #suppressesWorldFovZoom}
+     * rather than {@link #sceneCaptured}. {@code sceneCaptured} is written at the hand-pass HEAD and
+     * is the input to the composite, so gating the reticle/rim on it is normally consistent. But the
+     * submit of the scope model can run before that flag is set on a frame where the capture fails or
+     * the model is submitted through a path that bypasses {@code captureScene}; in that case the
+     * reticle/rim stay in the ordinary solid pass and the composite at hand-pass RETURN covers them
+     * exactly as reported. The stable gate answers "is PIP taking over the FOV this frame", which is
+     * the same condition under which a lens picture is guaranteed to be composited at the end of the
+     * hand pass, so deferring under it cannot leave the reticle/rim stranded in the wrong layer.</p>
      */
     public static boolean shouldDeferReticleOverlay() {
-        return isEnabled() && !IrisCompat.isUsingRenderPack() && sceneCaptured;
+        float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        return isEnabled() && !IrisCompat.isUsingRenderPack()
+                && currentZoom() >= minMagnification() && isAimingStarted(partialTicks);
     }
 
     /** The steady-state scope zoom for the local player, or 1 when there is no scope. */
