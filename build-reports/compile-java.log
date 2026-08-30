@@ -1,4 +1,4 @@
-commit: a28a78c00b1d6d3c93a86ab5ad0021fda6117169
+commit: ae6f7fc0c6ae4eb6fe23956217375e90e89c58b5
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -39,12 +39,12 @@ Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
 Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
@@ -77,154 +77,176 @@ Note: Recompile with -Xlint:unchecked for details.
 6 warnings
 
 > Task :dumpRenderApi
-===== javap net.minecraft.client.renderer.LevelRenderer =====
-  public void renderLevel(com.mojang.blaze3d.resource.GraphicsResourceAllocator, net.minecraft.client.DeltaTracker, boolean, net.minecraft.client.Camera, org.joml.Matrix4f, org.joml.Matrix4f, org.joml.Matrix4f, com.mojang.blaze3d.buffers.GpuBufferSlice, org.joml.Vector4f, boolean);
-===== javap net.minecraft.client.renderer.GameRenderer =====
+===== javap net.minecraft.client.renderer.GameRenderer  =====
+Compiled from "GameRenderer.java"
+public class net.minecraft.client.renderer.GameRenderer implements net.minecraft.world.waypoints.TrackedWaypoint$Projector,java.lang.AutoCloseable {
+  public static final int MAX_BLUR_RADIUS;
+  public static final float PROJECTION_Z_NEAR;
+  public static final float PROJECTION_3D_HUD_Z_FAR;
+  public final net.minecraft.client.renderer.ItemInHandRenderer itemInHandRenderer;
+  protected final net.minecraft.client.renderer.CubeMap cubeMap;
+  protected final net.minecraft.client.renderer.PanoramaRenderer panorama;
+  final net.minecraft.client.gui.render.state.GuiRenderState guiRenderState;
+  public net.minecraft.client.renderer.GameRenderer(net.minecraft.client.Minecraft, net.minecraft.client.renderer.ItemInHandRenderer, net.minecraft.client.renderer.RenderBuffers, net.minecraft.client.renderer.block.BlockRenderDispatcher);
+  public void close();
+  public net.minecraft.client.renderer.SubmitNodeStorage getSubmitNodeStorage();
+  public net.minecraft.client.renderer.feature.FeatureRenderDispatcher getFeatureRenderDispatcher();
+  public net.minecraft.client.renderer.state.LevelRenderState getLevelRenderState();
+  public void setRenderBlockOutline(boolean);
+  public void setPanoramicScreenshotParameters(net.minecraft.client.renderer.PanoramicScreenshotParameters);
+  public net.minecraft.client.renderer.PanoramicScreenshotParameters getPanoramicScreenshotParameters();
+  public boolean isPanoramicMode();
+  public void clearPostEffect();
+  public void togglePostEffect();
+  public void checkEntityPostEffect(net.minecraft.world.entity.Entity);
+  public void processBlurEffect();
+  public void preloadUiShader(net.minecraft.server.packs.resources.ResourceProvider);
+  public void tick();
+  public net.minecraft.resources.Identifier currentPostEffect();
+  public void resize(int, int);
+  public void pick(float);
   public org.joml.Matrix4f getProjectionMatrix(float);
+  public float getDepthFar();
+  public static float getNightVisionScale(net.minecraft.world.entity.LivingEntity, float);
+  public void render(net.minecraft.client.DeltaTracker, boolean);
+  public void updateCamera(net.minecraft.client.DeltaTracker);
   public void renderLevel(net.minecraft.client.DeltaTracker);
-===== javap com.mojang.blaze3d.systems.RenderSystem =====
+  public void resetData();
+  public void displayItemActivation(net.minecraft.world.item.ItemStack);
+  public net.minecraft.client.Minecraft getMinecraft();
+  public float getDarkenWorldAmount(float);
+  public float getRenderDistance();
+  public net.minecraft.client.Camera getMainCamera();
+  public net.minecraft.client.renderer.LightTexture lightTexture();
+  public net.minecraft.client.renderer.texture.OverlayTexture overlayTexture();
+  public net.minecraft.world.phys.Vec3 projectPointToScreen(net.minecraft.world.phys.Vec3);
+  public double projectHorizonToScreen();
+  public net.minecraft.client.renderer.GlobalSettingsUniform getGlobalSettingsUniform();
+  public com.mojang.blaze3d.platform.Lighting getLighting();
+  public void setLevel(net.minecraft.client.multiplayer.ClientLevel);
+  public net.minecraft.client.renderer.PanoramaRenderer getPanorama();
+  static {};
+}
+
+===== javap net.minecraft.client.renderer.LevelRenderer  =====
+public class net.minecraft.client.renderer.LevelRenderer implements net.minecraft.server.packs.resources.ResourceManagerReloadListener,java.lang.AutoCloseable {
+  public final net.minecraft.client.renderer.debug.DebugRenderer debugRenderer;
+  public final net.minecraft.client.renderer.debug.GameTestBlockHighlightRenderer gameTestBlockHighlightRenderer;
+  public net.minecraft.client.renderer.LevelRenderer(net.minecraft.client.Minecraft, net.minecraft.client.renderer.entity.EntityRenderDispatcher, net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher, net.minecraft.client.renderer.RenderBuffers, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.client.renderer.feature.FeatureRenderDispatcher);
+  public net.minecraft.client.renderer.chunk.SectionRenderDispatcher getSectionRenderDispatcher();
+  public static net.minecraft.client.renderer.culling.Frustum offsetFrustum(net.minecraft.client.renderer.culling.Frustum);
+  public void addRecentlyCompiledSection(net.minecraft.client.renderer.chunk.SectionRenderDispatcher$RenderSection);
+  public void renderLevel(com.mojang.blaze3d.resource.GraphicsResourceAllocator, net.minecraft.client.DeltaTracker, boolean, net.minecraft.client.Camera, org.joml.Matrix4f, org.joml.Matrix4f, org.joml.Matrix4f, com.mojang.blaze3d.buffers.GpuBufferSlice, org.joml.Vector4f, boolean);
+  public static int getLightColor(net.minecraft.client.renderer.LevelRenderer$BrightnessGetter, net.minecraft.world.level.BlockAndTintGetter, net.minecraft.world.level.block.state.BlockState, net.minecraft.core.BlockPos);
+  public it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.client.renderer.chunk.SectionRenderDispatcher$RenderSection> getVisibleSections();
+  public net.minecraft.client.renderer.SectionOcclusionGraph getSectionOcclusionGraph();
+  public net.minecraft.client.renderer.culling.Frustum getCapturedFrustum();
+  public net.minecraft.client.renderer.CloudRenderer getCloudRenderer();
+===== javap net.minecraft.client.Camera  =====
+Compiled from "Camera.java"
+public class net.minecraft.client.Camera implements net.minecraft.world.waypoints.TrackedWaypoint$Camera {
+  public net.minecraft.client.Camera();
+  public void setup(net.minecraft.world.level.Level, net.minecraft.world.entity.Entity, boolean, boolean, float);
+  public void tick();
+  protected void move(float, float, float);
+  protected void setRotation(float, float);
+  protected void setPosition(double, double, double);
+  protected void setPosition(net.minecraft.world.phys.Vec3);
+  public net.minecraft.world.phys.Vec3 position();
+  public net.minecraft.core.BlockPos blockPosition();
+  public float xRot();
+  public float yRot();
+  public float yaw();
+  public org.joml.Quaternionf rotation();
+  public net.minecraft.world.entity.Entity entity();
+  public boolean isInitialized();
+  public boolean isDetached();
+  public net.minecraft.world.attribute.EnvironmentAttributeProbe attributeProbe();
+  public net.minecraft.client.Camera$NearPlane getNearPlane();
+  public net.minecraft.world.level.material.FogType getFluidInCamera();
+  public org.joml.Vector3fc forwardVector();
+  public org.joml.Vector3fc upVector();
+  public org.joml.Vector3fc leftVector();
+  public void reset();
+  public float getPartialTickTime();
+  static {};
+}
+
+===== javap com.mojang.blaze3d.buffers.GpuBuffer -p =====
+Compiled from "GpuBuffer.java"
+public abstract class com.mojang.blaze3d.buffers.GpuBuffer implements java.lang.AutoCloseable {
+  public static final int USAGE_MAP_READ;
+  public static final int USAGE_MAP_WRITE;
+  public static final int USAGE_HINT_CLIENT_STORAGE;
+  public static final int USAGE_COPY_DST;
+  public static final int USAGE_COPY_SRC;
+  public static final int USAGE_VERTEX;
+  public static final int USAGE_INDEX;
+  public static final int USAGE_UNIFORM;
+  public static final int USAGE_UNIFORM_TEXEL_BUFFER;
+  private final int usage;
+  private final long size;
+  public com.mojang.blaze3d.buffers.GpuBuffer(int, long);
+  public long size();
+  public int usage();
+  public abstract boolean isClosed();
+  public abstract void close();
+  public com.mojang.blaze3d.buffers.GpuBufferSlice slice(long, long);
+  public com.mojang.blaze3d.buffers.GpuBufferSlice slice();
+}
+
+===== javap com.mojang.blaze3d.buffers.BufferUploader  =====
+(no matching members / class not found)
+javap stderr: Error: class not found: com.mojang.blaze3d.buffers.BufferUploader
+===== javap com.mojang.blaze3d.buffers.BufferSource  =====
+(no matching members / class not found)
+javap stderr: Error: class not found: com.mojang.blaze3d.buffers.BufferSource
+===== javap com.mojang.blaze3d.systems.RenderSystem  =====
   public static com.mojang.blaze3d.textures.GpuTextureView outputColorTextureOverride;
   public static com.mojang.blaze3d.textures.GpuTextureView outputDepthTextureOverride;
+  public static void setShaderFog(com.mojang.blaze3d.buffers.GpuBufferSlice);
+  public static com.mojang.blaze3d.buffers.GpuBufferSlice getShaderFog();
+  public static void setShaderLights(com.mojang.blaze3d.buffers.GpuBufferSlice);
+  public static com.mojang.blaze3d.buffers.GpuBufferSlice getShaderLights();
+  public static void initRenderer(long, int, boolean, com.mojang.blaze3d.shaders.ShaderSource, boolean);
   public static void setProjectionMatrix(com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.ProjectionType);
   public static void backupProjectionMatrix();
   public static void restoreProjectionMatrix();
   public static com.mojang.blaze3d.buffers.GpuBufferSlice getProjectionMatrixBuffer();
+  public static org.joml.Matrix4f getModelViewMatrix();
+  public static org.joml.Matrix4fStack getModelViewStack();
+  public static com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer getSequentialBuffer(com.mojang.blaze3d.vertex.VertexFormat$Mode);
+  public static void setGlobalSettingsUniform(com.mojang.blaze3d.buffers.GpuBuffer);
+  public static com.mojang.blaze3d.buffers.GpuBuffer getGlobalSettingsUniform();
   public static com.mojang.blaze3d.ProjectionType getProjectionType();
-===== javap net.minecraft.client.Minecraft =====
-  public final net.minecraft.client.renderer.LevelRenderer levelRenderer;
-  public com.mojang.blaze3d.pipeline.RenderTarget getMainRenderTarget();
-  public net.minecraft.client.DeltaTracker getDeltaTracker();
-===== javap net.minecraft.client.renderer.state.CameraRenderState =====
-Compiled from "CameraRenderState.java"
-public class net.minecraft.client.renderer.state.CameraRenderState implements net.fabricmc.fabric.api.client.rendering.v1.FabricRenderState {
-  public net.minecraft.core.BlockPos blockPos;
-  public net.minecraft.world.phys.Vec3 pos;
-  public boolean initialized;
-  public net.minecraft.world.phys.Vec3 entityPos;
-  public org.joml.Quaternionf orientation;
-  public net.minecraft.client.renderer.state.CameraRenderState();
-}
-
-===== javap com.mojang.blaze3d.pipeline.RenderTarget =====
-Compiled from "RenderTarget.java"
-public abstract class com.mojang.blaze3d.pipeline.RenderTarget {
-  private static int UNNAMED_RENDER_TARGETS;
-  public int width;
-  public int height;
-  protected final java.lang.String label;
-  public final boolean useDepth;
-  protected com.mojang.blaze3d.textures.GpuTexture colorTexture;
-  protected com.mojang.blaze3d.textures.GpuTextureView colorTextureView;
-  protected com.mojang.blaze3d.textures.GpuTexture depthTexture;
-  protected com.mojang.blaze3d.textures.GpuTextureView depthTextureView;
-  public com.mojang.blaze3d.pipeline.RenderTarget(java.lang.String, boolean);
-  public void resize(int, int);
-  public void destroyBuffers();
-  public void copyDepthFrom(com.mojang.blaze3d.pipeline.RenderTarget);
+===== javap net.minecraft.client.renderer.GameRenderer -c -p =====
+  public org.joml.Matrix4f getProjectionMatrix(float);
+      88: invokevirtual #1460               // Method getProjectionMatrix:(F)Lorg/joml/Matrix4f;
+     342: invokestatic  #1507               // Method com/mojang/blaze3d/systems/RenderSystem.setProjectionMatrix:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V
+     485: invokevirtual #1539               // Method getProjectionMatrixForCulling:(F)Lorg/joml/Matrix4f;
+     591: invokestatic  #1507               // Method com/mojang/blaze3d/systems/RenderSystem.setProjectionMatrix:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V
+  private org.joml.Matrix4f getProjectionMatrixForCulling(float);
+      27: invokevirtual #1460               // Method getProjectionMatrix:(F)Lorg/joml/Matrix4f;
+      11: invokevirtual #1460               // Method getProjectionMatrix:(F)Lorg/joml/Matrix4f;
+===== javap net.minecraft.client.renderer.LevelRenderer -c -p =====
+      15: invokevirtual #433                // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+      18: invokevirtual #437                // Method com/mojang/blaze3d/pipeline/RenderTarget.getColorTextureView:()Lcom/mojang/blaze3d/textures/GpuTextureView;
+     485: invokevirtual #433                // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+     498: invokevirtual #433                // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+     510: invokevirtual #433                // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+      31: invokevirtual #437                // Method com/mojang/blaze3d/pipeline/RenderTarget.getColorTextureView:()Lcom/mojang/blaze3d/textures/GpuTextureView;
+      34: putstatic     #2423               // Field com/mojang/blaze3d/systems/RenderSystem.outputColorTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
+      46: invokevirtual #2426               // Method com/mojang/blaze3d/pipeline/RenderTarget.getDepthTextureView:()Lcom/mojang/blaze3d/textures/GpuTextureView;
+      49: putstatic     #2429               // Field com/mojang/blaze3d/systems/RenderSystem.outputDepthTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
+      68: invokevirtual #433                // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+     115: putstatic     #2423               // Field com/mojang/blaze3d/systems/RenderSystem.outputColorTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
+     119: putstatic     #2429               // Field com/mojang/blaze3d/systems/RenderSystem.outputDepthTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
+     175: invokevirtual #433                // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+       4: invokevirtual #433                // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+===== javap com.mojang.blaze3d.pipeline.RenderTarget -c -p =====
+      10: invokevirtual #73                 // Method createBuffers:(II)V
   public void createBuffers(int, int);
-  public void blitToScreen();
-  public void blitAndBlendToTexture(com.mojang.blaze3d.textures.GpuTextureView);
-  public com.mojang.blaze3d.textures.GpuTexture getColorTexture();
-  public com.mojang.blaze3d.textures.GpuTextureView getColorTextureView();
-  public com.mojang.blaze3d.textures.GpuTexture getDepthTexture();
-  public com.mojang.blaze3d.textures.GpuTextureView getDepthTextureView();
-  private static java.lang.String method_71167();
-  private java.lang.String method_67768();
-  private java.lang.String method_67767();
-  static {};
-}
-
-===== javap com.mojang.blaze3d.pipeline.TextureTarget =====
-Compiled from "TextureTarget.java"
-public class com.mojang.blaze3d.pipeline.TextureTarget extends com.mojang.blaze3d.pipeline.RenderTarget {
-  public com.mojang.blaze3d.pipeline.TextureTarget(java.lang.String, int, int, boolean);
-}
-
-===== javap com.mojang.blaze3d.Projection =====
-(no matching members / class not found)
-javap stderr: Error: class not found: com.mojang.blaze3d.Projection
-===== javap com.mojang.blaze3d.ProjectionType =====
-Compiled from "ProjectionType.java"
-public final class com.mojang.blaze3d.ProjectionType extends java.lang.Enum<com.mojang.blaze3d.ProjectionType> {
-  public static final com.mojang.blaze3d.ProjectionType PERSPECTIVE;
-  public static final com.mojang.blaze3d.ProjectionType ORTHOGRAPHIC;
-  private final com.mojang.blaze3d.vertex.VertexSorting vertexSorting;
-  private final com.mojang.blaze3d.ProjectionType$LayeringTransform layeringTransform;
-  private static final com.mojang.blaze3d.ProjectionType[] $VALUES;
-  public static com.mojang.blaze3d.ProjectionType[] values();
-  public static com.mojang.blaze3d.ProjectionType valueOf(java.lang.String);
-  private com.mojang.blaze3d.ProjectionType(com.mojang.blaze3d.vertex.VertexSorting, com.mojang.blaze3d.ProjectionType$LayeringTransform);
-  public com.mojang.blaze3d.vertex.VertexSorting vertexSorting();
-  public void applyLayeringTransform(org.joml.Matrix4f, float);
-  private static void method_65048(org.joml.Matrix4f, float);
-  private static void method_65049(org.joml.Matrix4f, float);
-  private static com.mojang.blaze3d.ProjectionType[] $values();
-  static {};
-}
-
-===== javap com.mojang.blaze3d.buffers.ProjectionMatrixBuffer =====
-(no matching members / class not found)
-javap stderr: Error: class not found: com.mojang.blaze3d.buffers.ProjectionMatrixBuffer
-===== javap com.mojang.blaze3d.buffers.GpuBufferSlice =====
-Compiled from "GpuBufferSlice.java"
-public final class com.mojang.blaze3d.buffers.GpuBufferSlice extends java.lang.Record {
-  private final com.mojang.blaze3d.buffers.GpuBuffer buffer;
-  private final long offset;
-  private final long length;
-  public com.mojang.blaze3d.buffers.GpuBufferSlice(com.mojang.blaze3d.buffers.GpuBuffer, long, long);
-  public com.mojang.blaze3d.buffers.GpuBufferSlice slice(long, long);
-  public final java.lang.String toString();
-  public final int hashCode();
-  public final boolean equals(java.lang.Object);
-  public com.mojang.blaze3d.buffers.GpuBuffer buffer();
-  public long offset();
-  public long length();
-}
-
-===== javap com.mojang.blaze3d.resource.GraphicsResourceAllocator =====
-Compiled from "GraphicsResourceAllocator.java"
-public interface com.mojang.blaze3d.resource.GraphicsResourceAllocator {
-  public static final com.mojang.blaze3d.resource.GraphicsResourceAllocator UNPOOLED;
-  public abstract <T> T acquire(com.mojang.blaze3d.resource.ResourceDescriptor<T>);
-  public abstract <T> void release(com.mojang.blaze3d.resource.ResourceDescriptor<T>, T);
-  static {};
-}
-
-===== javap com.mojang.blaze3d.textures.GpuTexture =====
-  public int getWidth(int);
-  public int getHeight(int);
-  public com.mojang.blaze3d.textures.TextureFormat getFormat();
-===== javap com.mojang.blaze3d.textures.TextureFormat =====
-Compiled from "TextureFormat.java"
-public final class com.mojang.blaze3d.textures.TextureFormat extends java.lang.Enum<com.mojang.blaze3d.textures.TextureFormat> {
-  public static final com.mojang.blaze3d.textures.TextureFormat RGBA8;
-  public static final com.mojang.blaze3d.textures.TextureFormat RED8;
-  public static final com.mojang.blaze3d.textures.TextureFormat RED8I;
-  public static final com.mojang.blaze3d.textures.TextureFormat DEPTH32;
-  public static com.mojang.blaze3d.textures.TextureFormat[] values();
-  public static com.mojang.blaze3d.textures.TextureFormat valueOf(java.lang.String);
-  public int pixelSize();
-  public boolean hasColorAspect();
-  public boolean hasDepthAspect();
-  static {};
-}
-
-===== javap net.minecraft.client.Camera =====
-(no matching members / class not found)
-===== javap net.minecraft.client.DeltaTracker =====
-Compiled from "DeltaTracker.java"
-public interface net.minecraft.client.DeltaTracker {
-  public static final net.minecraft.client.DeltaTracker ZERO;
-  public static final net.minecraft.client.DeltaTracker ONE;
-  public abstract float getGameTimeDeltaTicks();
-  public abstract float getGameTimeDeltaPartialTick(boolean);
-  public abstract float getRealtimeDeltaTicks();
-  static {};
-}
-
-===== javap net.minecraft.client.renderer.fog.FogRenderer =====
-  public com.mojang.blaze3d.buffers.GpuBufferSlice getBuffer(net.minecraft.client.renderer.fog.FogRenderer$FogMode);
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788098607921.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788098935959.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -234,7 +256,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 44s
+BUILD SUCCESSFUL in 1m 57s
 2 actionable tasks: 2 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
