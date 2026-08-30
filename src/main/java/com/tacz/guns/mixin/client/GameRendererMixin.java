@@ -6,6 +6,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
+import com.tacz.guns.client.render.scope.ScopePipDepthDebug;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.Camera;
@@ -47,6 +48,11 @@ public abstract class GameRendererMixin {
                                   Matrix4f projection,
                                   CallbackInfo ci) {
         this.tacz$renderingItemInHand = false;
+        // Step 2 (depth PIP diagnostic): after the vanilla hand pass the aperture depth copy is
+        // complete, so paint the lens magenta when the debug system property is set. This is a
+        // no-op in normal play. It deliberately runs after the hand draw and before GUI overlays;
+        // Iris paths are skipped by ScopePipDepthDebug itself.
+        ScopePipDepthDebug.renderAfterHand(this.minecraft);
     }
 
     @Unique

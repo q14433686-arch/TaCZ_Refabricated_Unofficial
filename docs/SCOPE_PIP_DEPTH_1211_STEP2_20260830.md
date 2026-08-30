@@ -1,0 +1,135 @@
+# 1.21.11 深度版镜内画中画（PIP）原型 — Step 2: 只涂纯品红的全屏判据
+
+日期: 2026-08-30
+分支: `arena/01a0518d-tacz-refabricated-unofficial` (1.21.11, depth-aperture 架构)
+前置: Step 1（`ScopeDepthCopyState` 访问器）已实现，等你实机确认后再动 Step 3。
+本文档是 Step 2 的源码级实现与实机确认步骤。
+
+## 0. 本步目标
+
+写一个「全屏 pass，只用孔径判据涂纯品红」的诊断：
+- 采样 `tacz_WorldDepthSampler` 与 `tacz_ApertureDepthSampler`；
+- 判据与 `scope_reticle_mask.fsh` 逐行一致：`if (!(ad < wd - 1.0e-6)) discard;`;
+- 命中孔径的像素输出 `vec4(1,0,1,1)`；
+- 实机看「只有瞄具镜片被涂成品红」，即认为孔径判据 + 深度拷贝链路通了。
+
+**默认关闭。** 只有 JVM 启动参数 `-Dtacz.scope.pip.debug.paint=true` 才会启用。
+
+## 1. 改了哪些文件
+
+| 文件 | 性质 |
+|---|---|
+| `src/main/java/.../ScopePipDepthDebug.java` | 新增：诊断 pass（懒加载管线 + 裸 GL 深度纹理→GpuTextureView 包装 + 帧末绘制） |
+| `src/main/java/.../GameRendererMixin.java` | 在 `renderItemInHand` RETURN 调 `ScopePipDepthDebug.renderAfterHand(...)` |
+| `src/main/resources/assets/tacz/shaders/core/scope_pip_debug.vsh` | 新增：gl_VertexID 全屏三角形 |
+| `src/main/resources/assets/tacz/shaders/core/scope_pip_debug.fsh` | 新增：孔径判据 + 品红输出 |
+| `docs/SCOPE_PIP_DEPTH_1211_STEP1_20260830.md` | 已存在（Step 1） |
+
+未改：`ScopeDepthCopyState` 的 mask/restore 逻辑、`ScopeFinalOverlayState` 的 flush 时机、
+`ScopeLateReticleState`、任何配置项。Step 2 在正常模式下对画面零影响。
+
+## 2. 取证
+
+### 2.1 1.21.11 的 RenderPass / GpuTextureView API（Yarn docs 1.21.11 确认）
+
+- `RenderPass.bindTexture(String, @Nullable GpuTextureView, @Nullable GpuSampler)`。
+- `GpuDevice.createTextureView(GpuTexture)` / `(GpuTexture,int,int)` 存在，
+  但**只能接收由 `createTexture(...)` 创建的 `GpuTexture`**。
+- `GlTexture` 在 1.21.11 有 **protected** 构造器
+  `GlTexture(int usage, String label, TextureFormat format, int width, int height, int depthOrLayers, int mipLevels, int glId)`。
+- `GlTextureView` 有 **protected** 构造器 `GlTextureView(GlTexture, int baseMipLevel, int mipLevels)`。
+- `RenderSystem.getSamplerCache()` 存在；`SamplerCache.get(FilterMode)` 存在。
+- `CommandEncoder.createRenderPass(Supplier<String>, GpuTextureView, OptionalInt)` 存在。
+- `RenderPipeline.Builder` 是**扁平 setter**：`withVertexShader/withFragmentShader/withVertexFormat/withSampler/withCull/withoutBlend/withColorWrite`；
+  没有 26.2 的 `ColorTargetState` / `DepthStencilState` 聚合对象。
+
+### 2.2 本分支私有深度纹理是裸 GL，不是 GpuTexture
+
+`ScopeDepthCopyState.DepthTextureTarget` 用 `glGenTextures` + `glTexImage2D` + `glFramebufferTexture`，
+没有 `GpuTexture` 对象。**没有公开 API 能把已有 GL int 包成 `GpuTexture`。**
+因此 Step 2 采用「子类借用」：`ImportedDepthTexture extends GlTexture`、`ImportedDepthTextureView extends GlTextureView`，
+两者 `close()` 都故意 no-op，明确不拥有私有深度纹理，绝不释放 `ScopeDepthCopyState` 的资源。
+
+### 2.3 为什么不用 `pass.bindTexture` 的前置条件绕开问题
+
+26.2 的 `ScopeMaskTextureHandle` 用 `AbstractTexture` + `TextureManager.register` 走 RenderType/vanilla 绑定；
+这正是你交接里说「准星那条路绑进 RenderType 走 vanilla 绑定」的那条路。Step 2 要的是我们自己的
+裸 `RenderPass`，所以不能用 TextureManager 方案，只能在本类里造 `GpuTextureView`。
+
+### 2.4 时序
+
+用手持后置（与 26.2 相反）。挂在 `GameRenderer#renderItemInHand` RETURN：
+- 该时刻目镜已光栅化、`APERTURE_COPY` 已完成；
+- 该时刻主 target 已有手持画面；
+- 随后才有 GUI/HUD，所以品红诊断能直接盖在画面上被看到。
+
+Iris 下 `renderItemInHand` 被 HandRenderer 绕开（既有注释 + `IrisHandRendererReticlePassMixin`），
+而 Iris depthtex2 桥接未证实，所以 Step 2 **显式跳过 shader pack**，只跑 vanilla。
+
+## 3. 自审（源码级）
+
+- **管线不声明深度**：在 `RenderPipeline.Builder` 上刻意**不调用** `withDepthTestFunction` / `withDepthWrite`，
+  让深度状态保持在 Builder 的 Optional 默认值，从而不向 `createRenderPass` 要深度附件。
+  这与 26.2 踩过的「不要 DepthStencilState」一致——1.21.11 没有该聚合对象，等价表达就是不设深度 setter。
+- **不写 alpha**：直接输出 `fragColor.a = 1.0`。诊断 stage 无后续用 alpha 的必要；管线 `withColorWrite(true)`
+  只表示写颜色。
+- **不开 scissor**：Step 2 是验收「判据本身」，故意不加屏幕包围盒剪裁，避免 sccissor 掩盖判据错误。
+  若整屏被涂品红，说明判据/绑定失败，这正是要看的。
+- **失败即停用**：`pipeline()`、`renderAfterHand` 都在 try/catch 里；一旦异常 `failed=true`，之后每帧直接返回，
+  不影响普通渲染。Step 2 不接入任何整屏变焦 / 覆盖 flush 逻辑。
+- **生命周期**：`ImportedDepthTexture.close()` 置 `closed=true` 但不删 GL 纹理；`ImportedDepthTextureView.close()`
+  与 `isClosed()` 均 no-op，阻止任何路径对私有深度拷贝执行 refcount 释放。
+
+## 4. 未验证项（必须实机确认）
+
+0. **官方映射下 `GlTexture` / `GlTextureView` 的包路径。**
+   本实现 import 了 `net.minecraft.client.texture.GlTexture` / `net.minecraft.client.texture.GlTextureView`。
+   该包路径来自 Yarn 命名空间；本分支用 `loom.officialMojangMappings()`，包名可能不同
+   （本仓库的证据表明 `RenderPipelines` 的官方包是 `net.minecraft.client.renderer`，而 Yarn 是
+   `net.minecraft.client.gl`）。若 compileJava 报“找不到类”，先只改这两个 import；
+   若仍然不准，则改用 26.2 的 `AbstractTexture` + `TextureManager` 包装方案过渡。
+1. **`RenderPipelines.ENTITY_OUTLINE_BLIT` 在 1.21.11 官方映射下是否存在且字段名一致。**
+   本分支现有代码只引用过 `GUI_TEXTURED / ENTITY_CUTOUT / ENTITY_TRANSLUCENT(_EMISSIVE) / ENERGY_SWIRL`；
+   26.2 的 26.x 常量集合与 1.21.11 官方映射并非完全一致。若编译失败，把 `ScopePipDepthDebug.pipeline()` 里
+   的 `ENTITY_OUTLINE_BLIT` 换成 `GUI_TEXTURED` 即可（本分支已知存在）。
+2. **`ImportedDepthTexture` + `ImportedDepthTextureView` 能否被 `GlCommandEncoder` 正确绑定。**
+   构造器是 protected（子类可用），但实际 `bindTexture` 走的是 `view.texture().getGlId()`；
+   需要实机确认。
+3. **Packed depth-stencil 标记为 `TextureFormat.DEPTH32` 是否影响采样。**
+   私有深度拷贝内部格式可能是 `GL_DEPTH24_STENCIL8`，而包装层诚实报告 `DEPTH32`。
+   采样 `.r` 理论上仍取 depth 分量；若实机整屏品红/全黑/报错，则需反馈。
+4. **裸 `RenderPass` 下 `depthtex2`（Iris）不可绑**：Step 2 跳过 Iris，未解决。
+5. **`core/screenquad` 在 1.21.11 存在且无 snippet 也能编译**：本 step 直接引用 `minecraft:core/screenquad`，
+   未在本地编译验证（沙箱无 JDK / merged jar）。
+
+## 5. 实机确认步骤
+
+1. 编译并运行 1.21.11 客户端，**不带**启动参数：
+   - 确认准星、镜身、镜外世界与改动前逐帧一致，无品红、无日志错误。
+2. 再带参数启动：
+   ```
+   <launcher> -Dtacz.scope.pip.debug.paint=true
+   ```
+   - 开一个 6× / 8× 倍镜并抬镜到满开镜；
+   - 观察：**目镜镜片内应为纯品红**；
+   - 镜片外（镜身、视野边缘、屏幕四周）不得出现品红；
+   - 观察是否能看到「只有孔径被涂」的准确形状（圆形/椭圆，边缘与镜身孔径一致）。
+3. 若整屏品红 → 判定/绑定失败，回传日志（`[TACZ Scope] Step2 ...`）。
+4. 若镜片没被涂色 → `available()` 为 false（无备份）或纹理绑定失败，回传日志。
+
+## 6. 回归复测清单（Step 2 在 debug 开启/关闭两种状态下）
+
+### 关闭（默认）
+- [ ] 无品红，普通开镜画面与 Step 1 完全一致。
+- [ ] `ScopeFinalOverlayState` 未改，Iris TAIL 仍正常 flush。
+- [ ] `ScopeLateReticleState` 旧路径未受影响。
+- [ ] 控制台无新增 `[TACZ Scope] Step2 ...` 日志。
+
+### 开启（仅 vanilla / 无光影）
+- [ ] 只有孔径是品红，镜外无泄漏。
+- [ ] 关闭 debug 后立刻恢复正常，无残留。
+- [ ] 开/收镜过程中品红形状与正在瞄准的目镜孔径同步。
+
+### Iris（无论 debug 开关）
+- [ ] Step 2 显式跳过 Iris，日志出现一次 `skipped under a shader pack`（仅 debug 开启时）。
+- [ ] 不开 debug 时 Iris 路径零改动。
