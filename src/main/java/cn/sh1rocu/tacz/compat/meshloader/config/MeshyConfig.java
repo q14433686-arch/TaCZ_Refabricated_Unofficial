@@ -57,10 +57,12 @@ public final class MeshyConfig {
                 "Falls back to the collector path if the GPU pass fails.");
         GPU_BAKING = builder.define("MeshGpuBaking", true);
 
-        builder.comment("EXPERIMENTAL: keep the first-person GPU mesh pass while an Iris",
-                "shader pack is enabled. The custom pass bypasses the shader pipeline,",
-                "so the gun body will NOT receive shader-pack lighting.",
-                "Default false: shader packs use the collector bulk path.");
+        builder.comment("Shader packs: force the RAW GPU pass (custom pipeline) instead of the",
+                "default vanilla-RenderType route. The default route feeds the resident VBOs",
+                "through RenderType.prepare()/drawFromBuffer with the ENTITY_CUTOUT pipeline,",
+                "which Iris intercepts into its HAND program - gun body gets shader lighting.",
+                "true = bypass the shader pipeline entirely (NO shader lighting on the gun;",
+                "diagnostic fallback in case the default route misbehaves with some pack).");
         GPU_UNDER_SHADERS = builder.define("MeshGpuUnderShaders", false);
 
         builder.comment("Vertex budget for poly_mesh in GUI/FIXED/HEAD. Icons above this",

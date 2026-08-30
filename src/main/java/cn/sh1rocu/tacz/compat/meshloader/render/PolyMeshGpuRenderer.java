@@ -26,10 +26,14 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.rendertype.PreparedRenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.joml.Vector4f;
 
 import java.util.ArrayList;
@@ -134,9 +138,15 @@ public final class PolyMeshGpuRenderer {
     private static final List<DrawEntry> HAND_DRAWS = new ArrayList<>();
 
     private static boolean loggedFirstDraw = false;
-    private static boolean loggedShaderPackFallback = false;
+    private static boolean loggedFirstIrisDraw = false;
     private static boolean gpuDisabledThisSession = false;
     private static boolean lightmapUnavailable;
+    /**
+     * 本帧已画过。Iris 的 HandRenderer 一帧跑两次 renderAllFeatures
+     * （solid 与 translucent，两次都会重新 submit），不挡的话同一批骨骼
+     * 会被画两遍 —— 不透明几何画两遍视觉无差但白付一倍顶点成本。
+     */
+    private static boolean drawnThisFrame = false;
 
     private PolyMeshGpuRenderer() {
     }
@@ -162,16 +172,20 @@ public final class PolyMeshGpuRenderer {
         if (gpuDisabledThisSession || !MeshyConfig.GPU_BAKING.get()) {
             return false;
         }
-        if (IrisCompat.isUsingRenderPack() && !MeshyConfig.GPU_UNDER_SHADERS.get()) {
-            if (!loggedShaderPackFallback) {
-                loggedShaderPackFallback = true;
-                LOGGER.info("[TacZMeshLoader] Shader pack active: first-person poly guns use the collector path. "
-                        + "High-poly guns will cost frame time. Set MeshGpuUnderShaders=true to try the "
-                        + "experimental GPU pass (gun body will NOT receive shader-pack lighting).");
-            }
-            return false;
-        }
+        // 光影下 GPU 路径默认【走 vanilla RenderType 管道】而非自定义 pass：
+        // RenderType.prepare() + PreparedRenderType.drawFromBuffer() 用的是
+        // entityCutout 的 RenderPipeline —— 该管线已由
+        // IrisCompat.assignCommonEntityPipelinesToHandIfNeeded() 归入 Iris HAND
+        // program（抛壳/火光同一条兼容链路），Iris 按管线拦截，枪体因此拿到
+        // 光影光照。顶点常驻 VBO 不变，每帧仍只写 O(骨骼) 个 DynamicTransforms。
+        // MeshGpuUnderShaders=true 时改走自定义 pass（绕开光影管线，无光影光照，
+        // 但绘制语义与无光影路径逐位一致 —— 留作排查光影兼容问题的对照组）。
         return true;
+    }
+
+    /** 本帧是否该走「vanilla RenderType 管道」变体（光影激活且未强制自定义 pass）。 */
+    private static boolean useRenderTypeRoute() {
+        return IrisCompat.isUsingRenderPack() && !MeshyConfig.GPU_UNDER_SHADERS.get();
     }
 
     /**
@@ -228,6 +242,7 @@ public final class PolyMeshGpuRenderer {
     /** 挂在 {@code GameRenderer#extract} HEAD（与 ScopeMaskRenderer.beginFrame 同点）。 */
     public static void beginFrame() {
         HAND_DRAWS.clear();
+        drawnThisFrame = false;
     }
 
     /**
@@ -242,14 +257,87 @@ public final class PolyMeshGpuRenderer {
         if (HAND_DRAWS.isEmpty()) {
             return;
         }
+        if (drawnThisFrame) {
+            // Iris 第二次手部 pass（renderTranslucent）的重复 submit：跳过。
+            HAND_DRAWS.clear();
+            return;
+        }
         try {
-            drawList(HAND_DRAWS);
+            if (useRenderTypeRoute()) {
+                drawListViaRenderType(HAND_DRAWS);
+            } else {
+                drawList(HAND_DRAWS);
+            }
+            drawnThisFrame = true;
         } catch (Exception e) {
             LOGGER.error("[TacZMeshLoader] GPU mesh pass failed; falling back to collector path for this session.", e);
             gpuDisabledThisSession = true;
             MeshyConfig.GPU_BAKING.set(false);
         } finally {
             HAND_DRAWS.clear();
+        }
+    }
+
+    /**
+     * 【光影路径】vanilla RenderType 管道变体：常驻 VBO + 官方 prepare()/drawFromBuffer。
+     *
+     * <h2>为什么这条路在 Iris 下能拿到光影光照</h2>
+     * Iris 按 {@code RenderPipeline} 对象拦截绘制（本仓证据链：抛壳/火光用 vanilla
+     * ENTITY_CUTOUT 提交，经 {@code assignCommonEntityPipelinesToHandIfNeeded()}
+     * 归入 HAND program 后光影下渲染正确）。这里用 {@code RenderTypes.entityCutout}
+     * —— 管线正是那条链路已注册的 ENTITY_CUTOUT，Iris 对它的接管方式与 vanilla
+     * 立方体/collector poly 完全一致。
+     *
+     * <h2>每骨骼矩阵怎么进去（字节码依据：RenderType.prepare() 偏移 55-58）</h2>
+     * prepare() 内部 {@code getModelViewMatrixCopy() -> writeDynamicTransforms(mv)}
+     * —— 从 ModelView 栈顶取矩阵。所以把 {@code MV_hand × pose_bone} 压栈 →
+     * prepare() → 弹栈，每骨骼得到一份独立的 DynamicTransforms 切片，
+     * 顶点仍留在骨骼本地系的常驻 VBO 里，零 CPU 变换。
+     *
+     * <p>{@code drawFromBuffer(vb, ib, type, 0, 0, indexCount)} 的参数序按其字节码
+     * {@code drawIndexed(arg6, 1, arg5, arg4, 0)} 与已实测正确的
+     * {@code drawIndexed(indexCount, 1, 0, 0, 0)} 对齐：arg6=indexCount，其余置 0。</p>
+     *
+     * <h2>视觉对齐</h2>
+     * entityCutout = PER_FACE_LIGHTING + overlay + lightmap，与 collector 路径
+     * 同一 RenderType —— 无光影时两条路视觉逐位一致；顶点里 UV1=NO_OVERLAY、
+     * UV2=量化光照，语义同 collector 写入。
+     */
+    private static void drawListViaRenderType(List<DrawEntry> draws) {
+        IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
+        Matrix4fStack mvStack = RenderSystem.getModelViewStack();
+
+        Map<Identifier, List<DrawEntry>> byTexture = new HashMap<>();
+        for (DrawEntry entry : draws) {
+            byTexture.computeIfAbsent(entry.texture(), k -> new ArrayList<>()).add(entry);
+        }
+
+        long totalIndices = 0;
+        for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
+            RenderType renderType = RenderTypes.entityCutout(group.getKey());
+            for (DrawEntry entry : group.getValue()) {
+                // MV = MV_hand(栈顶) × pose_bone。压栈让 prepare() 自己取，
+                // 弹栈还原 —— 不污染后续 executeTranslucent 的矩阵状态。
+                mvStack.pushMatrix();
+                mvStack.mul(entry.model());
+                PreparedRenderType prepared;
+                try {
+                    prepared = renderType.prepare();
+                } finally {
+                    mvStack.popMatrix();
+                }
+                RenderSystem.AutoStorageIndexBuffer indices =
+                        RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
+                GpuBuffer indexBuffer = indices.getBuffer(entry.bone().indexCount);
+                prepared.drawFromBuffer(entry.bone().vertexBuffer, indexBuffer, indices.type(),
+                        0, 0, entry.bone().indexCount);
+                totalIndices += entry.bone().indexCount;
+            }
+        }
+        if (!loggedFirstIrisDraw) {
+            loggedFirstIrisDraw = true;
+            LOGGER.info("[TacZMeshLoader] GPU mesh pass (RenderType route, shader-pack compatible) drew {} bones "
+                    + "({} indices) on hand pass.", draws.size(), totalIndices);
         }
     }
 
