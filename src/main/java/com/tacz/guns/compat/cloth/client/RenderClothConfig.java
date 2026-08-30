@@ -76,6 +76,9 @@ public class RenderClothConfig {
                 .setMin(0.0).setMax(1.0).setDefaultValue(0.5)
                 .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_sharpness.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_SHARPNESS::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_allow_shader_packs"), RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_allow_shader_packs.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS::set).build());
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_debug_no_composite"), RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_debug_no_composite.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE::set).build());

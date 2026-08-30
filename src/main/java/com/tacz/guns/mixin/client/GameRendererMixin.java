@@ -65,9 +65,12 @@ public abstract class GameRendererMixin {
         // on the vanilla path here (Iris drives its own post-composite flush and PIP is skipped there).
         // hasPendingOverlay() also guards the transient where the reticle/rim were queued a moment
         // before isEnabled() was re-evaluated (for example during a slow aim transition), so nothing
-        // stays stranded under the lens.
-        if (ScopeFinalOverlayState.hasPendingOverlay()
-                || (ScopePipRenderState.isEnabled() && !IrisCompat.isUsingRenderPack())) {
+        // stays stranded under the lens. The whole flush is vanilla-only: under a shader pack Iris
+        // drives its own post-final-composite flush (IrisFinalScopeOverlayMixin), and flushing from
+        // renderItemInHand would draw the reticle/rim before Iris' composite passes.
+        if (!IrisCompat.isUsingRenderPack()
+                && (ScopeFinalOverlayState.hasPendingOverlay()
+                || ScopePipRenderState.isEnabled())) {
             ScopeFinalOverlayState.renderAfterFinalComposite();
         }
         // Step 2 (depth PIP diagnostic): paint the lens magenta when the debug system property is

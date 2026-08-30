@@ -35,14 +35,17 @@
 | `src/main/resources/assets/tacz/shaders/core/scope_pip.fsh` | 新增：重采样 + 孔径 discard |
 | `build.gradle` | `runClient` 增加 `-Dtacz.scope.pip.enable` 开关 |
 | `src/main/java/.../ScopePipDepthDebug.java` | Step 3 启用时让位（不覆盖真实 PIP） |
-| `src/main/java/.../config/client/RenderConfig.java` | 新增 `ScopePipEnable / MinAimingProgress / MinMagnification / WorldZoomShare / Sharpness / DebugNoComposite / DebugPaintLens` |
+| `src/main/java/.../config/client/RenderConfig.java` | 新增 `ScopePipEnable / MinAimingProgress / MinMagnification / WorldZoomShare / Sharpness / AllowShaderPacks / DebugNoComposite / DebugPaintLens` |
 | `src/main/java/.../compat/cloth/client/RenderClothConfig.java` | ModMenu/Cloth 界面接入上述配置项 |
-| `src/main/resources/assets/tacz/lang/{en_us,zh_cn}.json` | 配置项界面翻译 |
+| `src/main/resources/assets/tacz/lang/{en_us,zh_cn}.json` | 配置项界面翻译（PIP 键 + 上游全量键合并修复） |
+| `src/main/java/.../mixin/client/iris/IrisFinalScopeOverlayMixin.java` | Iris 成品帧抓取 + PIP 合成 + 后合成准星刷新 |
+| `src/main/java/.../ScopeDepthCopyState.java` | Iris PIP 路径强制私有世界深度拷贝 |
 
-未改：`ScopeDepthCopyState` 深度备份/恢复链路、`ScopeLateReticleState`、Iris 路径主体。
+未改：`ScopeLateReticleState`、Iris 镜身/手部主体。
 `ScopeFinalOverlayState` 仅新增两个非破坏性扩展：裸遮光罩也可排队（自动抓取手部
 transform）、空准星时允许仅含遮光罩的刷新；这两种都是原逻辑的能力超集，非 PIP/Iris 时行为不变。
-默认配置（PIP 关）下零影响；开启时只走 vanilla / 无光影路径。
+默认配置（PIP 关）下零影响；无光影时走 vanilla 抓取-合成；**Iris 下默认仍然跳过**，
+玩家显式打开 `ScopePipAllowShaderPacks` 时才走成品帧屏幕空间合成（见 §2.6/§2.7）。
 
 ---
 
@@ -105,8 +108,10 @@ Step 2 在 RETURN 合成（孔径深度拷贝此刻已完成），抓取则必�
 无缝衔接。`cacheMuzzlePosition` 还直接读 `WORLD_FOV_DYNAMICS.get()` 当 level FOV，保持该状态
 同步也让镜口偏移与镜外画面一致。
 
-`IrisCompat.isUsingRenderPack()` 也保留在门里：它在整个会话内稳定为真/假。开着光影时本步
-明确不画镜片，因此若照常抑制 FOV 就会变成“镜外 1×、镜内无画面”，必须让旧整屏变焦继续工作。
+`IrisCompat.isUsingRenderPack()` 仍保留在门里，但语义变为「未打开 `ScopePipAllowShaderPacks`
+时，光影下不抑制」。开着光影却不允许 PIP 时本步不画镜片，因此若照常抑制 FOV 就会变成
+“镜外 1×、镜内无画面”，必须让旧整屏变焦继续工作。玩家显式打开允许后，`irisCompatible()`
+变为真，光影下也走 PIP 的成品帧合成路径（见 §2.7）。
 
 PIP 永久失败（`failed=true`）或未开（`isEnabled()=false`）时该查询自然为 false，自动回落到
 旧的整屏 FOV 变焦，不存在“镜外 1×、镜内也 1×”的兜底缺口。
@@ -142,14 +147,38 @@ PIP 永久失败（`failed=true`）或未开（`isEnabled()=false`）时该查�
 即使判定在合成前后被重算，已排队的准星/遮光罩也不会滞留在镜片下方。
 
 净效果：镜内画面在下，准星、遮光罩在上，符合真实光路。非 PIP 帧/非第一人称/不瞄准时
-`shouldDeferReticleOverlay()` 为 false，仍走原来的 solid-pass 顺序；Iris 路径不受影响
-（PIP 在 Iris 下显式跳过，本步的 overlay 刷新只在 vanilla 生效）。
+`shouldDeferReticleOverlay()` 为 false，仍走原来的 solid-pass 顺序。
 
-### 2.6 为什么仍然跳过 Iris
+`GameRendererMixin` 的刷新现在只对 vanilla 生效：`!IrisCompat.isUsingRenderPack() &&
+(hasPendingOverlay() || PIP 已开)`。光影下无论在哪个时机调用都被挡回来，避免把 Iris 的
+延迟准星提前刷到 Iris composite pass 之前。
 
-本步沿用 Step 2 的结论：Iris 的 depthtex2/final-composite 桥接尚未完成，且 Iris 把手部
-渲染搬进了 `LevelRenderer#render` 内部，`renderItemInHand` HEAD 抓不到「干净世界」。
-因此本步只在 vanilla / 无光影路径跑。
+### 2.6 默认仍然跳过 Iris
+
+默认（`ScopePipAllowShaderPacks=false`）沿用 Step 2 的结论：Iris 把手部渲染搬进了
+`LevelRenderer#render` 内部，`renderItemInHand` HEAD 抓不到「干净世界」，因此不画镜片、
+FOV 走旧整屏变焦。`irisCompatible()` 在光影下为 false，`captureScene`/`suppressesWorldFovZoom`/
+`shouldDeferReticleOverlay` 都不进入 PIP 分支。
+
+### 2.7 显式开启光影 PIP（`ScopePipAllowShaderPacks=true`，默认关）
+
+参考 26.2 分支的成品帧屏幕空间方案，按我们的 1.21.11 能力适配（**不抄其代码**）：
+
+1. **抓取点从 `renderItemInHand` HEAD 挪到 `IrisRenderingPipeline#finalizeLevelRendering` TAIL。**
+   这时 Iris 已完成全部 composite/final（包括手部），主 target 里就是逐 pack 一致的成品帧。
+   镜身已在孔径内被深度裁剪，孔径区域本来就是干净的 1× 世界，所以镜内重投影采样
+   `center + (uv-center)/Z` 只覆盖孔径内部，采到的全是干净世界，没有 pack 相关 colortex 猜测。
+2. **门限**：只在该帧 `aimingProgress >= 0.995`（接近满开镜）时抓取+合成。因为成品帧包含枪/手，
+   开镜滑动时采样区会压到 viewmodel；我们没有 26.2 的 ColorModulator 动态 uniform 通路，
+   把 zoom 作为 `#define` 每帧重建管线会泄漏/卡顿，所以宁愿满开镜才生效，避免镜内放大出一把枪。
+3. **准星/遮光罩**仍复用 `ScopeFinalOverlayState`：`IrisFinalScopeOverlayMixin` 在 TAIL 先
+   `captureSceneAfterIrisFinal`、再 `compositeAfterIrisFinal`、最后
+   `renderAfterFinalComposite()`，成品帧 → 镜内画面 → 准星/遮光罩的顺序成立。
+4. **世界深度**：`ScopeDepthCopyState.BACKUP` 在本帧 PIP 光影路径下强制拷一份私有世界深度
+   （`ScopePipRenderState.needsIrisWorldDepthCopy()`），因为 Iris 在 final 之后不再绑定 `depthtex2`，
+   而合成要读我们的私有拷贝才能做孔径 mask。孔径深度本就是在镜身边界拷的，本就私有可读。
+5. **安全网**：所有光影 PIP 判定都同时要求 `IrisCompat.supportsFinalScopeOverlay()`（当前只对
+   已字节码审计的 Iris 1.10.7 为真）；其余 Iris 版本即使打开开关也走原整屏变焦，绝不盲试。
 
 ---
 
@@ -249,6 +278,16 @@ PIP 永久失败（`failed=true`）或未开（`isEnabled()=false`）时该查�
 - [ ] 开镜/收镜后无残留；关闭 PIP 配置后立刻恢复旧行为。
 - [ ] 满开镜时倍率与瞄具标称一致。
 
-### Iris（无论开关）
+### Iris（默认，`AllowShaderPacks=false`）
 - [ ] Step 3 显式跳过；`Step3 capture` 日志不出现。
-- [ ] Iris 路径零改动。
+- [ ] Iris 路径零改动；准星/遮光罩仍走已实机通过的 Iris final-overlay 控制路径。
+- [ ] 镜外 FOV 仍走旧整屏变焦（不会被误判成 PIP 而变成镜外 1×）。
+
+### Iris（显式开启 `AllowShaderPacks=true`，待实机验证）
+- [ ] 满开镜后镜片内出现放大世界，镜外默认 1×；准星/遮光罩仍在镜片上方。
+- [ ] 开镜滑动途中镜片保持现状（本步刻意等到 aim progress ≥ 0.995 才合成，避免镜内扫到 viewmodel）。
+- [ ] 镜内颜色与镜外一致（成品帧屏幕空间合成，无 colortex 猜测）。
+- [ ] 日志出现 `Step3 captured a ... Iris finished frame for ...x PIP` 与随后的
+      `Step3 composite painted ...`，且没有 `failed` / 异常栈。
+- [ ] 若镜片没画面：先看是否出现 `Step3 could not capture ...`（抓取失败）或
+      `Step3 composite failed`（合成失败），回传对应日志。

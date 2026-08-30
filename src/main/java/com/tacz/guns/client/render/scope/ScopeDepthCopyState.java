@@ -173,7 +173,11 @@ public final class ScopeDepthCopyState {
                     // depthtex2. When a frozen final reticle exists, take one private copy now;
                     // it is the same pre-ocular world depth but remains sampleable after final
                     // composite. Ordinary Iris paths keep using depthtex2 without this blit.
-                    if (ScopeFinalOverlayState.hasPendingReticles()) {
+                    // The PIP path also needs it: the lens composite runs after finalizeLevelRendering,
+                    // so a bare-rim frame (or any frame where the reticle was not queued) must still
+                    // force the private copy or the composite has no world depth to mask against.
+                    if (ScopeFinalOverlayState.hasPendingReticles()
+                            || ScopePipRenderState.needsIrisWorldDepthCopy()) {
                         boolean copied = copyCurrentDepth(WORLD_TARGET, "final-overlay world depth");
                         worldDepthIdentity = copied ? captureDepthIdentity() : null;
                         if (!copied) {

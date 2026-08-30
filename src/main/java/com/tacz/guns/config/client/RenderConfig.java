@@ -66,6 +66,20 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.DoubleValue SCOPE_PIP_SHARPNESS;
     /**
+     * 是否允许在 Iris 光影包开启时运行 PIP。
+     *
+     * <p>无光影时我们在手部绘制<b>之前</b>抓一份干净的世界色；有光影时这份抓取点不再成立
+     * （世界画进 Iris 自己的 gbuffer/composite 链，主 target 此时还不是成品）。适配原则是
+     * 改在 {@code IrisRenderingPipeline#finalizeLevelRendering()} 之后抓<b>最终成品帧</b>：
+     * 镜身已经在孔径内被裁剪，孔径区域本来就是干净的 1× 世界，直接在成品帧上做屏幕空间
+     * 重投影即可，镜内外颜色必然一致。</p>
+     *
+     * <p>代价：成品帧里镜内可用的真实像素上限仍是「屏幕 ÷ 倍率」，且要在 Iris 所有
+     * composite/final pass 之后再开一张全屏 pass，高倍镜会更软、开销多一小截。所以默认
+     * <b>关闭</b>（保持旧的整屏变焦），由玩家按需开启。</p>
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_ALLOW_SHADER_PACKS;
+    /**
      * 【诊断】抓取照常进行，但<b>不做合成</b>。
      *
      * <p>用来区分「放大画面溢出到镜外」的两种成因：什么都不画仍溢出 → 抓取/离屏路径漏到主画面；
@@ -162,6 +176,12 @@ public class RenderConfig {
         SCOPE_PIP_SHARPNESS = builder.comment(
                         "Lens sharpening strength (0 = off). Weighted by zoom: negligible at 1x, full at 6x+.")
                 .defineInRange("ScopePipSharpness", 0.5, 0.0, 1.0);
+        SCOPE_PIP_ALLOW_SHADER_PACKS = builder.comment(
+                        "Allow the scope picture-in-picture to run while an Iris shader pack is active. "
+                                + "Off by default because the capture point moves to after Iris' final composite, "
+                                + "so the lens is a screen-space reprojection of the finished frame (slightly softer "
+                                + "under high magnification). Turn it on to test with your pack.")
+                .define("ScopePipAllowShaderPacks", false);
         SCOPE_PIP_DEBUG_NO_COMPOSITE = builder.comment(
                         "Diagnostic: still capture, but skip the composite. If the magnified image still "
                                 + "overflows, the leak is in the capture/offscreen path, not the composite.")

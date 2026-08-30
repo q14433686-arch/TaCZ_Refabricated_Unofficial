@@ -17,7 +17,6 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
@@ -49,11 +48,16 @@ import java.util.OptionalInt;
  *   <li><b>No aim-progress ramp yet.</b> The magnification is the steady-state scope zoom
  *       ({@code IGun#getAimingZoom}); it is correct only at full ADS. The
  *       {@code 1 + (Z - 1) * progress} ramping is a later step.</li>
- *   <li><b>Vanilla / no shader pack only.</b> Iris is skipped exactly like Step 2 (the Iris
- *       depthtex2/final-composite wiring is still a later step).</li>
+ *   <li><b>Vanilla / no shader pack by default.</b> Iris is skipped unless
+ *       {@code ScopePipAllowShaderPacks} is on, because the pre-hand capture point is not valid
+ *       under a shader pack. When allowed, the capture moves to the end of Iris'
+ *       {@code finalizeLevelRendering()} ({@link #captureAndCompositeAfterIrisFinal}) where the
+ *       main target already contains iris' finished frame; the aperture is already clean world
+ *       because the scope body is clipped, so the same screen-space reprojection works there.</li>
  *   <li><b>Configurable.</b> {@code RenderConfig.SCOPE_PIP_*} exposes enable / minimum progress /
- *       world-zoom share / lens sharpening / debug-paint in the ModMenu config screen; the legacy
- *       dev JVM property {@code -Dtacz.scope.pip.enable=true} still works as an override.</li>
+ *       minimum magnification / world-zoom share / sharpness / allow shader packs / debug-paint in
+ *       the ModMenu config screen; the legacy dev JVM property
+ *       {@code -Dtacz.scope.pip.enable=true} still works as an override.</li>
  *   <li><b>No Catmull-Rom.</b> Hardware bilinear + a configurable 5-tap unsharp mask only.</li>
  * </ul>
  *
@@ -68,6 +72,11 @@ public final class ScopePipRenderState {
     public static final String ENABLE_PROPERTY = "tacz.scope.pip.enable";
     private static final String SCENE_SAMPLER_UNIFORM = "tacz_SceneColorSampler";
     private static final float DEFAULT_MIN_AIMING_PROGRESS = 0.05f;
+    /**
+     * Iris finished-frame recomposition only paints once the aperture is essentially centred.
+     * Before this the source region can overlap the viewmodel (see compositeAfterIrisFinal).
+     */
+    private static final float IRIS_FULL_AIM_THRESHOLD = 0.995f;
 
     private static RenderPipeline pipeline;
     private static int builtLensZoom1k = -1;
@@ -140,11 +149,12 @@ public final class ScopePipRenderState {
      * and let a residual zoom pulse through (the remaining exit POV jump).</p>
      */
     public static boolean suppressesWorldFovZoom(float partialTicks) {
-        // The Iris check is a stable per-session fact, not a mid-frame capture outcome: when a shader
-        // pack is active the lens is deliberately not drawn, so the old whole-screen FOV zoom must
-        // stay on rather than leaving the world at 1x with no PIP picture. Min magnification keeps
-        // low-power scopes on the classic whole-screen zoom (PIP costs softness with no payoff there).
-        return isEnabled() && !IrisCompat.isUsingRenderPack()
+        // Without a shader pack the lens is drawn on the vanilla hand-pass RETURN and the world
+        // must stay at 1x. With a shader pack the lens is drawn after Iris' final composite, but
+        // only when the player explicitly opted in (ScopePipAllowShaderPacks); otherwise Iris
+        // keeps the classic whole-screen FOV zoom because there is no PIP picture to take its
+        // place. Min magnification keeps low-power scopes on the classic whole-screen zoom too.
+        return isEnabled() && irisCompatible()
                 && currentZoom() >= minMagnification() && isAimingStarted(partialTicks);
     }
 
@@ -167,7 +177,7 @@ public final class ScopePipRenderState {
      */
     public static boolean shouldDeferReticleOverlay() {
         float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        return isEnabled() && !IrisCompat.isUsingRenderPack()
+        return isEnabled() && irisCompatible()
                 && currentZoom() >= minMagnification() && isAimingStarted(partialTicks);
     }
 
@@ -245,6 +255,48 @@ public final class ScopePipRenderState {
                 : Mth.clamp(RenderConfig.SCOPE_PIP_SHARPNESS.get().floatValue(), 0.0f, 1.0f);
     }
 
+    private static boolean allowShaderPacks() {
+        return RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS != null
+                && RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get();
+    }
+
+    /**
+     * Whether the post-final-composite Iris variant is active on this frame.
+     *
+     * <p>Used by {@code ScopeDepthCopyState} at the BACKUP draw boundary to decide whether a
+     * private pre-ocular world-depth copy is mandatory. Without it the composite at
+     * {@code finalizeLevelRendering} would lose the world depth (Iris stops binding depthtex2 after
+     * its final passes) and silently skip the lens while the world stayed at 1x.</p>
+     */
+    public static boolean needsIrisWorldDepthCopy() {
+        if (!isEnabled() || failed || !IrisCompat.isUsingRenderPack()
+                || !allowShaderPacks() || !IrisCompat.supportsFinalScopeOverlay()) {
+            return false;
+        }
+        if (currentZoom() < minMagnification()) {
+            return false;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null) {
+            return false;
+        }
+        float progress = currentAimingProgress(mc,
+                Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+        return progress >= IRIS_FULL_AIM_THRESHOLD;
+    }
+
+    /**
+     * PIP may take this frame's FOV/lens path when Iris is not active, or when the player opted
+     * into the post-final-composite Iris variant AND that variant is the one the final-overlay mixin
+     * was bytecode-audited against. On unverified Iris lines the old whole-screen zoom stays on.
+     * Stable per-frame fact, not a mid-frame capture outcome, so the world POV never oscillates
+     * between whole-screen zoom and PIP while a shader pack is enabled.
+     */
+    private static boolean irisCompatible() {
+        return !IrisCompat.isUsingRenderPack()
+                || (allowShaderPacks() && IrisCompat.supportsFinalScopeOverlay());
+    }
+
     private static boolean debugNoComposite() {
         return RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE != null
                 && RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get();
@@ -287,19 +339,27 @@ public final class ScopePipRenderState {
     }
 
     private static boolean isAiming(Minecraft mc) {
-        if (mc.player == null) {
-            return false;
+        return currentAimingProgress(mc, 0.0f) > minAimingProgress();
+    }
+
+    /**
+     * Client-side interpolated aim progress for the local player (or the synced progress for a
+     * non-local entity). Uses the same formula as {@code CameraSetupEvent.applyScopeMagnification}.
+     */
+    private static float currentAimingProgress(Minecraft mc, float partialTicks) {
+        if (mc == null || mc.player == null) {
+            return 0.0f;
         }
         ItemStack stack = KeepingItemRenderer.getRenderer().getCurrentItem();
         if (!(stack.getItem() instanceof IGun)) {
-            return false;
+            return 0.0f;
         }
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(mc.player);
         if (operator == null) {
             IGunOperator entityOperator = IGunOperator.fromLivingEntity(mc.player);
-            return entityOperator != null && entityOperator.getSynAimingProgress() > minAimingProgress();
+            return entityOperator == null ? 0.0f : entityOperator.getSynAimingProgress();
         }
-        return operator.getClientAimingProgress(0.0f) > minAimingProgress();
+        return Mth.clamp(operator.getClientAimingProgress(partialTicks), 0.0f, 1.0f);
     }
 
     /**
@@ -327,42 +387,99 @@ public final class ScopePipRenderState {
             sceneCaptured = false;
             return;
         }
+        if (!copyMainColor(mc)) {
+            return;
+        }
+        if (!loggedCapture) {
+            loggedCapture = true;
+            GunMod.LOGGER.info(
+                    "[TACZ Scope] Step3 captured a {}x{} clean pre-hand world for {}x PIP.",
+                    sceneTarget().width(), sceneTarget().height(), (int) currentZoom());
+        }
+    }
+
+    /**
+     * Captures the <b>finished</b> frame for the Iris path. Called at the end of
+     * {@code IrisRenderingPipeline#finalizeLevelRendering()}: the main target at that instant
+     * holds Iris' fully composited/tone-mapped frame, and the aperture region is already a clean
+     * 1x world because the scope body was depth-clipped by the invisible ocular. Reprojecting this
+     * frame therefore shows exactly the same world pixels that the player would see outside the
+     * lens, with no pack-specific colortex guessing (the reference 26.2 branch proves this concept
+     * for its own Iris pipeline; ours uses the same finished-frame property on 1.21.11).
+     */
+    public static void captureSceneAfterIrisFinal(Minecraft mc) {
+        if (!isEnabled() || failed || mc == null) {
+            sceneCaptured = false;
+            return;
+        }
+        if (!IrisCompat.isUsingRenderPack() || !allowShaderPacks()
+                || !IrisCompat.supportsFinalScopeOverlay()) {
+            sceneCaptured = false;
+            return;
+        }
+        if (currentZoom() < minMagnification()) {
+            sceneCaptured = false;
+            return;
+        }
+        // The finished-frame source only safely covers the lens at essentially full ADS; before
+        // that the centre region can overlap the viewmodel. Keep the capture and the composite on
+        // the same threshold so a deferred reticle/rim is not queued for a lens that will not paint.
+        float progress = currentAimingProgress(mc,
+                Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+        if (progress < IRIS_FULL_AIM_THRESHOLD) {
+            sceneCaptured = false;
+            return;
+        }
+        if (copyMainColor(mc)) {
+            if (!loggedCapture) {
+                loggedCapture = true;
+                GunMod.LOGGER.info(
+                        "[TACZ Scope] Step3 captured a {}x{} Iris finished frame for {}x PIP.",
+                        sceneTarget().width(), sceneTarget().height(), (int) currentZoom());
+            }
+        }
+    }
+
+    /**
+     * Copies the current main color texture into the reusable off-screen scene target. Shared by
+     * the pre-hand (vanilla) and post-final-composite (Iris) capture paths so the target sizing,
+     * format reuse and failure handling stay identical.
+     *
+     * @return {@code true} on success, with {@code sceneCaptured} set accordingly.
+     */
+    private static boolean copyMainColor(Minecraft mc) {
         var main = mc.getMainRenderTarget();
         if (main == null || main.getColorTexture() == null) {
             sceneCaptured = false;
-            return;
+            return false;
         }
         GpuTexture source = main.getColorTexture();
         if (source.isClosed()) {
             sceneCaptured = false;
-            return;
+            return false;
         }
         int width = source.getWidth(0);
         int height = source.getHeight(0);
         if (width <= 0 || height <= 0) {
             sceneCaptured = false;
-            return;
+            return false;
         }
         try {
             SceneColorTarget target = sceneTarget(width, height, source.getFormat());
             if (target == null || !target.copyFrom(source)) {
                 sceneCaptured = false;
                 logCaptureFailure();
-                return;
-            }
-            if (!loggedCapture) {
-                loggedCapture = true;
-                GunMod.LOGGER.info(
-                        "[TACZ Scope] Step3 captured a {}x{} clean pre-hand world for {}x PIP.",
-                        target.width(), target.height(), (int) currentZoom());
+                return false;
             }
             sceneCaptured = true;
+            return true;
         } catch (Exception e) {
             failed = true;
             sceneCaptured = false;
             GunMod.LOGGER.error(
                     "[TACZ Scope] Step3 scene capture failed; PIP disabled, "
                             + "falling back to whole-screen FOV zoom.", e);
+            return false;
         }
     }
 
@@ -372,8 +489,55 @@ public final class ScopePipRenderState {
             return;
         }
         if (IrisCompat.isUsingRenderPack()) {
+            // Iris owns the output path here; compositeAfterIrisFinal does the work after the final
+            // composite. The vanilla hand-pass RETURN never sees a shader-pack frame.
             return;
         }
+        compositeScene(mc);
+    }
+
+    /**
+     * Composites the captured finished frame into the lens after Iris' final composite.
+     *
+     * <p>Called by {@code IrisFinalScopeOverlayMixin} right after
+     * {@link #captureSceneAfterIrisFinal(Minecraft)} and before
+     * {@link ScopeFinalOverlayState#renderAfterFinalComposite()}, restoring the physical order under
+     * a shader pack: finished shader frame -> magnified lens picture -> reticle/crosshair -> ocular
+     * shade. The aperture/world depth copies used by the mask were made during the hand pass and are
+     * private GL textures, so they remain sampleable after Iris has finished binding depthtex2.</p>
+     */
+    public static void compositeAfterIrisFinal(Minecraft mc) {
+        if (!isEnabled() || failed || !sceneCaptured || mc == null) {
+            return;
+        }
+        if (!IrisCompat.isUsingRenderPack() || !allowShaderPacks()
+                || !IrisCompat.supportsFinalScopeOverlay()) {
+            return;
+        }
+        // Under a shader pack we capture the FINISHED frame, which includes the gun/hands. The
+        // screen-space reprojection samples the screen centre, so it must only run once the
+        // aperture is centred and the scope body has already been clipped out of it (otherwise the
+        // lens would magnify the viewmodel during the slide-in). We do NOT ramp the zoom per frame
+        // here: the zoom is baked into the pipeline as a #define, so a per-frame ramp would rebuild
+        // the pipeline (and leak) every transition frame. Our 1.21.11 RenderPass API, unlike the
+        // reference's ColorModulator uniform path, is not verified for per-frame uniform writes, so
+        // the stable full-zoom pipeline plus a full-ADS gate is the safer adaptation. If that proves
+        // too poppy, the next step is a verified dynamic-uniform pipeline, not a per-frame register.
+        float progress = currentAimingProgress(mc,
+                Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+        if (progress < IRIS_FULL_AIM_THRESHOLD) {
+            return;
+        }
+        compositeScene(mc);
+    }
+
+    /** Shared composite body (vanilla and Iris call sites). */
+    private static void compositeScene(Minecraft mc) {
+        compositeScene(mc, lensZoom());
+    }
+
+    /** Composite body with an explicit lens zoom (the Iris path reuses the same stable zoom value). */
+    private static void compositeScene(Minecraft mc, float compositeZoom) {
         ScopeDepthCopyState.DepthHandle world = ScopeDepthCopyState.worldDepthTarget();
         ScopeDepthCopyState.DepthHandle aperture = ScopeDepthCopyState.apertureDepthTarget();
         if (!world.available() || !aperture.available()
@@ -391,7 +555,7 @@ public final class ScopePipRenderState {
                 loggedNoComposite = true;
                 GunMod.LOGGER.info(
                         "[TACZ Scope] Step3 debug no-composite: captured {}x world but skipped "
-                                + "the {}x lens draw.", (int) worldZoomTarget(), (int) lensZoom());
+                                + "the {}x lens draw.", (int) worldZoomTarget(), (int) compositeZoom);
             }
             return;
         }
@@ -408,7 +572,7 @@ public final class ScopePipRenderState {
                     () -> "tacz_scope_pip_composite",
                     main.getColorTextureView(),
                     OptionalInt.empty())) {
-                pass.setPipeline(pipeline());
+                pass.setPipeline(pipeline(compositeZoom));
                 pass.bindTexture(SCENE_SAMPLER_UNIFORM,
                         scene.view(),
                         RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
@@ -425,7 +589,7 @@ public final class ScopePipRenderState {
                 GunMod.LOGGER.info(
                         "[TACZ Scope] Step3 composite painted the {}x lens from a {}-magnified world "
                                 + "(total {}x; scene tex={}, world tex={}, aperture tex={}).",
-                        (int) lensZoom(), (int) worldZoomTarget(), (int) currentZoom(),
+                        (int) compositeZoom, (int) worldZoomTarget(), (int) currentZoom(),
                         scene.textureId(), world.textureId(), aperture.textureId());
             }
         } catch (Exception e) {
@@ -446,9 +610,9 @@ public final class ScopePipRenderState {
         }
     }
 
-    private static RenderPipeline pipeline() {
-        float lensZoomValue = Math.max(1.0f, lensZoom());
-        int lensZoom1k = (int) Math.round(lensZoomValue * 1000.0f);
+    private static RenderPipeline pipeline(float lensZoomValue) {
+        float clampedZoom = Math.max(1.0f, lensZoomValue);
+        int lensZoom1k = (int) Math.round(clampedZoom * 1000.0f);
         int sharpness1k = (int) Math.round(sharpness() * 1000.0f);
         boolean paintLens = debugPaintLens();
         if (pipeline == null || builtLensZoom1k != lensZoom1k
@@ -462,7 +626,7 @@ public final class ScopePipRenderState {
                                     "minecraft", "core/screenquad"))
                             .withFragmentShader(Identifier.fromNamespaceAndPath(
                                     GunMod.MOD_ID, "core/scope_pip"))
-                            .withShaderDefine("TACZ_PIP_ZOOM", lensZoomValue)
+                            .withShaderDefine("TACZ_PIP_ZOOM", clampedZoom)
                             .withShaderDefine("TACZ_PIP_SHARPNESS", sharpness())
                             .withShaderDefine("TACZ_PIP_PAINT_LENS", paintLens ? 1.0f : 0.0f)
                             .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode())
