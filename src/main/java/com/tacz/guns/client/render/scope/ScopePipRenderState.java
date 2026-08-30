@@ -506,7 +506,7 @@ public final class ScopePipRenderState {
 
     /** Composites the captured scene into the lens after the hand pass has finished. */
     public static void compositeAfterHand(Minecraft mc) {
-        if (!isEnabled() || failed || !sceneCaptured || mc == null) {
+        if (!isEnabled() || failed || mc == null) {
             return;
         }
         if (IrisCompat.isUsingRenderPack()) {
@@ -515,6 +515,17 @@ public final class ScopePipRenderState {
             return;
         }
         // 二次渲染模式镜内画面已按窄 FOV 画好（倍率 1），重投影模式才需要 lensZoom()。
+        // 二次渲染的 sceneCaptured（本类字段）由 renderLevel 里的窄 FOV 那遍写入，退出开镜后
+        // 无人把它清回 false —— 若继续用它做闸门，会拿上一帧残留的镜内贴片逐帧合成到屏幕上
+        // （退出后屏幕空间残留一块贴片）。必须改看每帧在 renderScopeView 顶部重置的
+        // ScopePipRerender.hasScene()。
+        if (ScopePipRerender.rerenderMode()) {
+            if (!ScopePipRerender.hasScene()) {
+                return;
+            }
+        } else if (!sceneCaptured) {
+            return;
+        }
         compositeScene(mc, compositeZoom());
     }
 
