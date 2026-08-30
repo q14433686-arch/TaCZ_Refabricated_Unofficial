@@ -387,3 +387,53 @@ publishing {
         }
     }
 }
+
+// TEMP: dump mesh-rendering API surface (TML GPU feasibility probe). Remove before release.
+tasks.register('dumpMeshApi') {
+    doLast {
+        def cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
+
+        def javapP = { String cls ->
+            def proc = new ProcessBuilder(['javap', '-classpath', cp, '-p', cls]).redirectErrorStream(true).start()
+            def txt = proc.inputStream.getText('UTF-8')
+            proc.waitFor()
+            return txt
+        }
+
+        // Full signature dump for small classes / interfaces.
+        ['com.mojang.blaze3d.vertex.VertexBuffer',
+         'com.mojang.blaze3d.vertex.MeshData',
+         'com.mojang.blaze3d.vertex.Tesselator',
+         'com.mojang.blaze3d.vertex.ByteBufferBuilder',
+         'com.mojang.blaze3d.systems.RenderPass',
+         'com.mojang.blaze3d.pipeline.RenderPipeline$Builder',
+         'com.mojang.blaze3d.systems.GpuDevice',
+         'com.mojang.blaze3d.buffers.GpuBuffer',
+         'com.mojang.blaze3d.vertex.DefaultVertexFormat',
+         'net.minecraft.client.renderer.BindGroupLayouts'].each { cls ->
+            def txt = javapP(cls)
+            if (txt.contains('not found') || txt.toLowerCase().contains('exception') || txt.contains('class file')) {
+                println "===== MISSING ${cls} =====\n" + txt.readLines().take(2).join('\n')
+            } else {
+                println "===== ${cls} =====\n" + txt
+            }
+        }
+
+        // Filtered dumps for huge classes.
+        def grep = { String title, String cls, List<String> needles ->
+            def txt = javapP(cls)
+            println "===== ${title} (filtered) ====="
+            txt.readLines().each { line ->
+                needles.each { n -> if (line.contains(n)) println '  ' + line.trim() }
+            }
+        }
+        grep('RenderSystem', 'com.mojang.blaze3d.systems.RenderSystem',
+            ['getDynamicUniforms', 'bindDefaultUniforms', 'getSequentialBuffer', 'getDevice',
+             'getModelViewMatrix', 'getProjectionMatrix', 'getShader', 'getModelViewStack'])
+        grep('RenderPipelines', 'net.minecraft.client.renderer.RenderPipelines',
+            ['MATRICES_FOG_SNIPPET', 'ENTITY', 'SCREEN_QUAD', 'register'])
+        grep('RenderType', 'net.minecraft.client.renderer.RenderType',
+            ['entityCutoutNoCull', 'entityTranslucentCull', 'setupRenderState', 'clearRenderState'])
+    }
+}
+compileJava.finalizedBy dumpMeshApi
