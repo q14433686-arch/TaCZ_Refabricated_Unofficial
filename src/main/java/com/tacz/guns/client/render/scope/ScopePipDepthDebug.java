@@ -111,9 +111,11 @@ public final class ScopePipDepthDebug {
                 // Aperture test is a binary depth comparison, so NEAREST (never LINEAR).
                 // Clamp-to-edge is the default address mode for SamplerCache.get(FilterMode).
                 pass.bindTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM,
-                        worldBinding, RenderSystem.getSamplerCache().get(FilterMode.NEAREST));
+                        worldBinding,
+                        RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
                 pass.bindTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM,
-                        apertureBinding, RenderSystem.getSamplerCache().get(FilterMode.NEAREST));
+                        apertureBinding,
+                        RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
                 pass.draw(0, 3);
             }
             if (!loggedQueued) {

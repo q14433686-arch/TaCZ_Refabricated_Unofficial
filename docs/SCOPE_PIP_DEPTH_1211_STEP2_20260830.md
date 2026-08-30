@@ -38,7 +38,9 @@
 - `GlTexture` 在 1.21.11 有 **protected** 构造器
   `GlTexture(int usage, String label, TextureFormat format, int width, int height, int depthOrLayers, int mipLevels, int glId)`。
 - `GlTextureView` 有 **protected** 构造器 `GlTextureView(GlTexture, int baseMipLevel, int mipLevels)`。
-- `RenderSystem.getSamplerCache()` 存在；`SamplerCache.get(FilterMode)` 存在。
+- `RenderSystem.getSamplerCache()` 存在；官方 Mojang 映射下取最近邻采样器用
+  `SamplerCache.getClampToEdge(FilterMode.NEAREST)`（Yarn 名 `SamplerCache.get(FilterMode)`）。
+  完整签名是 `getSampler(AddressMode, AddressMode, FilterMode, FilterMode, boolean)`。
 - `CommandEncoder.createRenderPass(Supplier<String>, GpuTextureView, OptionalInt)` 存在。
 - `RenderPipeline.Builder` 是**扁平 setter**：`withVertexShader/withFragmentShader/withVertexFormat/withSampler/withCull/withoutBlend/withColorWrite`；
   没有 26.2 的 `ColorTargetState` / `DepthStencilState` 聚合对象。
@@ -92,18 +94,20 @@ Iris 下 `renderItemInHand` 被 HandRenderer 绕开（既有注释 + `IrisHandRe
    import com.mojang.blaze3d.opengl.GlTextureView;
    ```
    同时子类 `close()` 统一 no-op、不再引用 superclass 的 `closed`/`isClosed`，避免映射拼写差异。
-1. **`RenderPipelines.ENTITY_OUTLINE_BLIT` 是否存在 — 首次编译已确认存在。**
-   你的编译日志里除上述 import 错误外，没有针对 `ENTITY_OUTLINE_BLIT`、`bindTexture`、`getSamplerCache`
-   的“cannot find symbol”，说明这些类型/字段在官方映射下均已解析。若后续还有问题，
-   备选是把 `ScopePipDepthDebug.pipeline()` 里的 `ENTITY_OUTLINE_BLIT` 换成 `GUI_TEXTURED`（本分支已知存在）。
-2. **`ImportedDepthTexture` + `ImportedDepthTextureView` 能否被 `GlCommandEncoder` 正确绑定。**
+1. **`SamplerCache.get(FilterMode)` 在官方映射下不存在 — 已修复。**
+   第二次编译只剩这两处：“method get(FilterMode) in class SamplerCache”。
+   官方 Mojang 命名为 `SamplerCache.getClampToEdge(FilterMode)`（见 §2.1），
+   已把两处 `bindTexture` 的采样器改为 `getClampToEdge(FilterMode.NEAREST)`。
+2. **`RenderPipelines.ENTITY_OUTLINE_BLIT` 是否存在 — 两次编译均未报错，已确认存在。**
+   备选仍为 `GUI_TEXTURED`（本分支已知存在），仅在需要退回时启用。
+3. **`ImportedDepthTexture` + `ImportedDepthTextureView` 能否被 `GlCommandEncoder` 正确绑定。**
    构造器是 protected（子类可用），但实际 `bindTexture` 走的是 `view.texture().getGlId()`；
    需要实机确认。
-3. **Packed depth-stencil 标记为 `TextureFormat.DEPTH32` 是否影响采样。**
+4. **Packed depth-stencil 标记为 `TextureFormat.DEPTH32` 是否影响采样。**
    私有深度拷贝内部格式可能是 `GL_DEPTH24_STENCIL8`，而包装层诚实报告 `DEPTH32`。
    采样 `.r` 理论上仍取 depth 分量；若实机整屏品红/全黑/报错，则需反馈。
-4. **裸 `RenderPass` 下 `depthtex2`（Iris）不可绑**：Step 2 跳过 Iris，未解决。
-5. **`core/screenquad` 在 1.21.11 存在且无 snippet 也能编译**：本 step 直接引用 `minecraft:core/screenquad`，
+5. **裸 `RenderPass` 下 `depthtex2`（Iris）不可绑**：Step 2 跳过 Iris，未解决。
+6. **`core/screenquad` 在 1.21.11 存在且无 snippet 也能编译**：本 step 直接引用 `minecraft:core/screenquad`，
    未在本地编译验证（沙箱无 JDK / merged jar）。
 
 ## 5. 实机确认步骤
