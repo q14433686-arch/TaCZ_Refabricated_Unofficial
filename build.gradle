@@ -410,73 +410,81 @@ tasks.register('dumpRenderApi') {
             return [out, err]
         }
 
-        // Print javap output split into blank-line-delimited blocks, keeping only blocks whose
-        // first line matches firstRe or whose body matches bodyRe. Used to extract whole method bodies.
-        def printBlocks = { String cls, List flags, String firstRe, String bodyRe, int maxLines ->
-            println "===== ${cls} ${flags.join(' ')} [blocks first=${firstRe} body=${bodyRe}] ====="
+        // Split javap -c output into method blocks: a block starts at a 2-space-indented line that
+        // contains '(' and ends with ';' (a method header). Returns list of line-lists.
+        def methodBlocks = { String cls, List flags ->
             def (out, err) = runJavap(cls, flags)
-            if (err.trim()) { println('javap stderr: ' + err.trim()); return }
-            def lines = out.readLines()
-            def block = []
-            def flush = {
-                if (!block.isEmpty()) {
-                    def head = block[0].trim()
-                    def body = block.join('\n')
-                    def firstOk = (firstRe == null) || (head ==~ firstRe)
-                    def bodyOk = (bodyRe == null) || (body.find(bodyRe) != null)
-                    if (firstOk || bodyOk) {
-                        def shown = block
-                        if (maxLines > 0 && shown.size() > maxLines) {
-                            shown = shown.take(maxLines) + ["... [${block.size() - maxLines} more lines truncated]"]
-                        }
-                        println(shown.join('\n'))
-                        println('-----')
-                    }
+            if (err.trim()) { println('javap stderr: ' + err.trim()); return [] }
+            def blocks = []
+            def cur = null
+            out.readLines().each { line ->
+                if (line ==~ /^  .+\(.*\);.*$/) {
+                    if (cur != null) blocks << cur
+                    cur = [line]
+                } else if (cur != null) {
+                    cur << line
+                } else {
+                    cur = [line]
                 }
-                block = []
             }
-            lines.each { line ->
-                if (line.trim().isEmpty()) { flush() } else { block << line }
-            }
-            flush()
+            if (cur != null) blocks << cur
+            return blocks
         }
 
-        // (a) How GameRenderer.renderLevel assembles the LevelRenderer.renderLevel args,
-        //     and how the projection matrix is built/uploaded.
-        printBlocks('net.minecraft.client.renderer.GameRenderer', ['-c', '-p'],
-                /.*(void renderLevel\(net\.minecraft\.client\.DeltaTracker\);|org\.joml\.Matrix4f getProjectionMatrix\(float\);|void render\(net\.minecraft\.client\.DeltaTracker, boolean\);).*/,
-                /LevelRenderer\.renderLevel|setProjectionMatrix|BufferUploader|FogRenderer|getProjectionMatrix/, 0)
+        def findMethod = { List blocks, String name ->
+            blocks.find { it[0].contains(name) }
+        }
 
-        // (b) LevelRenderer.renderLevel prologue: how the output target override is chosen.
-        printBlocks('net.minecraft.client.renderer.LevelRenderer', ['-c', '-p'],
-                /.*void renderLevel\(.*GraphicsResourceAllocator.*;.*/,
-                /outputColorTextureOverride|getMainRenderTarget/, 220)
+        def dumpContext = { String title, List block, String anchor, int before, int after ->
+            println "===== ${title} ====="
+            int idx = block.findIndexOf { it.contains(anchor) }
+            if (idx < 0) {
+                println "anchor '${anchor}' NOT FOUND in this method (${block.size()} lines); dumping whole method:"
+                println block.join('\n')
+                return
+            }
+            int from = Math.max(0, idx - before)
+            int to = Math.min(block.size() - 1, idx + after)
+            for (int i = from; i <= to; i++) { println block[i] }
+        }
 
-        // (c) RenderSystem full members (projection buffer + upload helpers).
-        println '===== com.mojang.blaze3d.systems.RenderSystem -p ====='
-        def (rsOut, rsErr) = runJavap('com.mojang.blaze3d.systems.RenderSystem', ['-p'])
-        println(rsOut ?: '(none)')
-        if (rsErr.trim()) { println('stderr: ' + rsErr.trim()) }
+        // (a) GameRenderer.renderLevel: exact LevelRenderer.renderLevel arg assembly.
+        def grBlocks = methodBlocks('net.minecraft.client.renderer.GameRenderer', ['-c', '-p'])
+        def grRenderLevel = findMethod(grBlocks, 'void renderLevel(')
+        if (grRenderLevel != null) {
+            dumpContext('GameRenderer.renderLevel -> LevelRenderer.renderLevel call site',
+                    grRenderLevel, 'LevelRenderer.renderLevel', 70, 4)
+        } else {
+            println '===== GameRenderer.renderLevel method NOT FOUND ====='
+        }
 
-        // (d) FogRenderer + FogMode.
-        println '===== net.minecraft.client.renderer.fog.FogRenderer -p ====='
-        def (frOut, frErr) = runJavap('net.minecraft.client.renderer.fog.FogRenderer', ['-p'])
-        println(frOut ?: '(none)')
-        if (frErr.trim()) { println('stderr: ' + frErr.trim()) }
-        println '===== net.minecraft.client.renderer.fog.FogRenderer$FogMode -p ====='
-        def (fmOut, fmErr) = runJavap('net.minecraft.client.renderer.fog.FogRenderer$FogMode', ['-p'])
-        println(fmOut ?: '(none)')
-        if (fmErr.trim()) { println('stderr: ' + fmErr.trim()) }
+        // (b) GameRenderer.getProjectionMatrix(float): how the projection matrix is computed/uploaded.
+        def grProj = findMethod(grBlocks, 'Matrix4f getProjectionMatrix(float)')
+        if (grProj != null) {
+            println '===== GameRenderer.getProjectionMatrix(float) full ====='
+            println grProj.join('\n')
+        }
 
-        // (e) Existence probes for candidate uploader / fog-data / state classes.
-        ['com.mojang.blaze3d.vertex.BufferUploader',
-         'net.minecraft.client.renderer.fog.FogData',
-         'net.minecraft.client.renderer.fog.FogParameters',
-         'net.minecraft.client.renderer.state.LevelRenderState',
-         'net.minecraft.client.renderer.CameraRenderState',
-         'com.mojang.blaze3d.buffers.GpuBufferSlice'].each { cls ->
-            def (out2, err2) = runJavap(cls, [])
-            println "===== ${cls} ===== ${err2.trim().empty ? 'FOUND' : 'NOT FOUND'}"
+        // (c) PerspectiveProjectionMatrixBuffer + Cached variant: the projection upload helper.
+        println '===== net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer -p ====='
+        def (ppb, ppbErr) = runJavap('net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer', ['-p'])
+        println(ppb ?: '(none)')
+        if (ppbErr.trim()) { println('stderr: ' + ppbErr.trim()) }
+        println '===== PerspectiveProjectionMatrixBuffer -c -p ====='
+        def (ppbc, ppbcErr) = runJavap('net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer', ['-c', '-p'])
+        println(ppbc ?: '(none)')
+        if (ppbcErr.trim()) { println('stderr: ' + ppbcErr.trim()) }
+        println '===== net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer -p ====='
+        def (cpb, cpbErr) = runJavap('net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer', ['-p'])
+        println(cpb ?: '(none)')
+        if (cpbErr.trim()) { println('stderr: ' + cpbErr.trim()) }
+
+        // (d) LevelRenderer.renderLevel prologue (first 90 lines): how the 3 Matrix4f + fog args are used.
+        def lrBlocks = methodBlocks('net.minecraft.client.renderer.LevelRenderer', ['-c', '-p'])
+        def lrRenderLevel = findMethod(lrBlocks, 'void renderLevel(')
+        if (lrRenderLevel != null) {
+            println "===== LevelRenderer.renderLevel prologue (${Math.min(90, lrRenderLevel.size())} of ${lrRenderLevel.size()} lines) ====="
+            println lrRenderLevel.take(90).join('\n')
         }
     }
 }
