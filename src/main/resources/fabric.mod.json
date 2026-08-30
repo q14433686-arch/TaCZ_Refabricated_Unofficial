@@ -6,8 +6,8 @@
     "taczmeshloader"
   ],
   "version": "${version}",
-  "name": "[UNOFFICIAL] TaCZ Refabricated (26.2 R2-hotfix2)",
-  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. R2 for Minecraft 26.2 adds the stable replaceable-ammunition and named gameplay-hook surfaces, Carry On 2.11 workbench compatibility, built-in JEI/REI Ammo Query, post-sync recipe-viewer refreshes, and a built-in port of VellEagle's TacZ Mesh Loader [TML] for high-poly 'mesh' gun models (provides 'taczmeshloader'). It is not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.2.R2-hotfix2' build metadata so existing gun-pack version requirements continue to work.",
+  "name": "[UNOFFICIAL] TaCZ Refabricated (26.2 R3)",
+  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. R3 for Minecraft 26.2 adds a built-in port of VellEagle's TacZ Mesh Loader [TML] for high-poly 'mesh' gun models with first-person GPU static baking (provides 'taczmeshloader'), in-scope clipping of arms/reticle/sight text under shaders, plus scope text, inspect-animation and PIP fixes; R2 previously added the stable replaceable-ammunition and named gameplay-hook surfaces, Carry On 2.11 workbench compatibility, built-in JEI/REI Ammo Query, and post-sync recipe-viewer refreshes. It is not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.2.R3' build metadata so existing gun-pack version requirements continue to work.",
   "authors": [
     "Sh1roCu"
   ],

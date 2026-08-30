@@ -12,7 +12,7 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R2-hotfix2`**。
+`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R3`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
@@ -31,7 +31,7 @@
 本页面对应 **26.2** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
 具体版本见下方表格与对应 Release 说明。
 
-> 仓库源码已使用 R2-hotfix2 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R3 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
 
 ---
 
@@ -42,9 +42,9 @@
 | Minecraft | **26.2** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **25+** |
-| Fabric API | 需要安装；R2-hotfix2 构建使用 **0.155.2+26.2** |
+| Fabric API | 需要安装；R3 构建使用 **0.155.2+26.2** |
 | Forge Config API Port | **26.2.1+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.2.R2-hotfix2`** |
+| 本 mod | **`1.1.8+fabric.26.2.R3`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
@@ -73,7 +73,7 @@ R2 的可选集成（并非硬依赖）如下：
 完整发布范围、联网核验和未执行的实机矩阵见
 [26.2 R2 release notes](docs/CHANGELOG_26_2_R2.md)。R1 的移植基础和历史说明仍保留在仓库历史中。
 
-R2-hotfix2 之后、尚未随发布打包的主线增量（源码已在本仓库，均实机 PASS）：
+**R3**（当前源码版本）相对 R2-hotfix2 的增量（均实机 PASS）：
 
 - **内置 TML**（见第 3 节与 [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）;
 - **镜内裁剪三件套**：光影下开镜时，第一人称手臂、瞄具挂载文字（如 MK5HD
@@ -266,7 +266,7 @@ gunpack.meta.json
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.2.R2-hotfix2` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.26.2.R3` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容
