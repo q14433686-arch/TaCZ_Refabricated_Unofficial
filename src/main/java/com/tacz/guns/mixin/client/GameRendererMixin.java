@@ -6,6 +6,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
+import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
 import com.tacz.guns.client.render.scope.ScopePipDepthDebug;
 import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
@@ -57,6 +58,14 @@ public abstract class GameRendererMixin {
         // paste the captured pre-hand world into the lens at the scope zoom. Step 2's magenta
         // diagnostic is deferred to later so the two never overwrite the same pixels.
         ScopePipRenderState.compositeAfterHand(this.minecraft);
+        // When the PIP lens is active the normal solid-pass reticle and ocular shade were already
+        // covered by the composite. The scope submitted them through ScopeFinalOverlayState instead,
+        // so flush that overlay NOW, after the lens, restoring the physical order: picture, then
+        // crosshair, then shade. The method no-ops when nothing was queued, and it is only reached
+        // on the vanilla path here (Iris drives its own post-composite flush and PIP is skipped there).
+        if (ScopePipRenderState.isEnabled() && !IrisCompat.isUsingRenderPack()) {
+            ScopeFinalOverlayState.renderAfterFinalComposite();
+        }
         // Step 2 (depth PIP diagnostic): paint the lens magenta when the debug system property is
         // set and Step 3 is not active. No-op in normal play; Iris paths are skipped by the debug.
         ScopePipDepthDebug.renderAfterHand(this.minecraft);

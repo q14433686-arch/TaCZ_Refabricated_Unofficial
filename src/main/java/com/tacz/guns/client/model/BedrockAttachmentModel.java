@@ -10,6 +10,7 @@ import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
 import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
 import com.tacz.guns.client.render.scope.ScopeLateReticleState;
 import com.tacz.guns.client.render.scope.ScopeNodeSet;
+import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
 import com.tacz.guns.compat.iris.IrisCompat;
@@ -619,9 +620,15 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 && texture != null
                 && !ocularSnapshots.isEmpty()
                 && !bodySnapshot.isEmpty();
+        // Step 3 (real PIP lens) must sit below the reticle and physical ocular shade, otherwise the
+        // lens picture overwrites both. When the PIP composite is active this frame we therefore run
+        // the reticle/rim through the post-composite overlay even without Iris; normal vanilla stays
+        // in its established immediate solid-pass order.
+        boolean pipDefersReticle = ScopePipRenderState.shouldDeferReticleOverlay();
         boolean deferReticleToIrisFinalOverlay = orderedScopeSequence
-                && IrisCompat.isRenderingSolidHandPass()
-                && IrisCompat.supportsFinalScopeOverlay();
+                && ((IrisCompat.isRenderingSolidHandPass()
+                        && IrisCompat.supportsFinalScopeOverlay())
+                        || pipDefersReticle);
         // Keep the R8/R9 hand-translucent path as a fallback for Iris versions whose final hook
         // was not bytecode-audited. The verified 1.10.7 path goes past final composite instead.
         boolean deferReticleToIrisTranslucent = orderedScopeSequence
@@ -728,6 +735,11 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             } else if (queuedLate) {
                 ScopeLateReticleState.queueOcularRing(
                         ocularRingSnapshot, ScopeRenderTypes.lateOcularRing(texture));
+            } else if (pipDefersReticle) {
+                // PIP lens paints at the hand-pass end no matter whether a reticle was queued, so a
+                // bare physical shade must also be re-drawn after it (otherwise the lens covers it).
+                ScopeFinalOverlayState.queueOcularRing(
+                        ocularRingSnapshot, ScopeRenderTypes.finalOcularRing(texture));
             } else {
                 // No visible reticle this frame (for example during fade-in): preserve the normal
                 // solid-pass rim rather than forcing an otherwise unnecessary deferred pass.

@@ -95,15 +95,29 @@ public final class ScopePipRenderState {
     /**
      * Whether {@code CameraSetupEvent#applyScopeMagnification} should leave the world FOV alone.
      *
-     * <p>True only while PIP is neither disabled nor failed and the held gun is a real magnifying
-     * scope. It is a query, never a cached flag, so a mid-session failure automatically returns
-     * the player to the existing whole-screen FOV zoom on the very next frame.</p>
+     * <p>True while PIP is neither disabled nor failed, the held gun is a real magnifying scope and
+     * the player is entering/holding ADS. This is deliberately a <b>stable per-frame query</b> based
+     * on the client aim state, <b>not</b> on {@link #sceneCaptured}: that flag is written mid-frame
+     * at the hand-pass HEAD, so gating the FOV on it made the world POV jump while the player was
+     * entering/leaving ADS. The whole-screen zoom must be removed for the whole transition, not only
+     * on frames where the lens capture happened to be written before the FOV was computed.</p>
      */
     public static boolean suppressesWorldFovZoom() {
-        // Only take the world FOV away when there is actually a captured frame to composite.
-        // If capture fails, the old whole-screen zoom must resume on the next frame; gating on
-        // sceneCaptured is what keeps "PIP is broken" from silently turning into "nothing zooms".
-        return isEnabled() && currentZoom() > 1 && sceneCaptured;
+        // The Iris check is a stable per-session fact, not a mid-frame capture outcome: when a shader
+        // pack is active the lens is deliberately not drawn, so the old whole-screen FOV zoom must
+        // stay on rather than leaving the world at 1x with no PIP picture.
+        return isEnabled() && !IrisCompat.isUsingRenderPack() && currentZoom() > 1 && isAimingStarted();
+    }
+
+    /**
+     * Whether the ordered scope reticle and physical ocular rim must be drawn after the PIP lens
+     * composite. When the real PIP lens is active it owns the aperture pixels at the hand-pass end,
+     * so the normal solid-pass reticle/rim would already be under it. Deferring those two overlays
+     * to {@link ScopeFinalOverlayState} restores the physical lens order (crosshair and shade on top
+     * of the picture) without moving the composite into the middle of the hand batch.
+     */
+    public static boolean shouldDeferReticleOverlay() {
+        return isEnabled() && !IrisCompat.isUsingRenderPack() && sceneCaptured;
     }
 
     /** The steady-state scope zoom for the local player, or 1 when there is no scope. */
@@ -118,6 +132,24 @@ public final class ScopePipRenderState {
         }
         float zoom = iGun.getAimingZoom(stack);
         return zoom > 1.0f ? zoom : 1.0f;
+    }
+
+    /** Stable per-frame check: has ADS begun at all (used by the FOV suppression gate). */
+    private static boolean isAimingStarted() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) {
+            return false;
+        }
+        ItemStack stack = KeepingItemRenderer.getRenderer().getCurrentItem();
+        if (!(stack.getItem() instanceof IGun)) {
+            return false;
+        }
+        IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(mc.player);
+        if (operator == null) {
+            IGunOperator entityOperator = IGunOperator.fromLivingEntity(mc.player);
+            return entityOperator != null && entityOperator.getSynAimingProgress() > 0.0f;
+        }
+        return operator.getClientAimingProgress(0.0f) > 0.0f;
     }
 
     private static boolean isAiming(Minecraft mc) {

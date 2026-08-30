@@ -26,15 +26,18 @@
 
 | 文件 | 性质 |
 |---|---|
-| `src/main/java/.../ScopePipRenderState.java` | 新增：抓取 + 合成 + FOV 抑制查询 + 离屏颜色 target |
-| `src/main/java/.../mixin/client/GameRendererMixin.java` | HEAD 抓取、RETURN 合成两个调用 |
+| `src/main/java/.../ScopePipRenderState.java` | 新增：抓取 + 合成 + FOV 抑制查询 + 准星/遮光罩延迟判定 + 离屏颜色 target |
+| `src/main/java/.../mixin/client/GameRendererMixin.java` | HEAD 抓取、RETURN 合成、RETURN 刷新延迟准星/遮光罩 |
 | `src/main/java/.../client/event/CameraSetupEvent.java` | `applyScopeMagnification` 抑制整屏 FOV 变焦 |
+| `src/main/java/.../client/model/BedrockAttachmentModel.java` | 本帧 PIP 合成开着时，准星/遮光罩改走后合成覆盖层 |
 | `src/main/resources/assets/tacz/shaders/core/scope_pip.fsh` | 新增：重采样 + 孔径 discard |
 | `build.gradle` | `runClient` 增加 `-Dtacz.scope.pip.enable` 开关 |
 | `src/main/java/.../ScopePipDepthDebug.java` | Step 3 启用时让位（不覆盖真实 PIP） |
 
-未改：`ScopeDepthCopyState` 深度备份/恢复链路、`ScopeFinalOverlayState`、`ScopeLateReticleState`、
-Iris 路径、配置项。正常模式（不带 `-Dtacz.scope.pip.enable=true`）下零影响。
+未改：`ScopeDepthCopyState` 深度备份/恢复链路、`ScopeLateReticleState`、Iris 路径主体、
+配置项。`ScopeFinalOverlayState` 仅新增两个非破坏性扩展：裸遮光罩也可排队（自动抓取手部
+transform）、空准星时允许仅含遮光罩的刷新；这两种都是原逻辑的能力超集，非 PIP/Iris 时行为不变。
+正常模式（不带 `-Dtacz.scope.pip.enable=true`）下零影响。
 
 ---
 
@@ -68,13 +71,42 @@ Step 2 在 RETURN 合成（孔径深度拷贝此刻已完成），抓取则必�
 ### 2.4 FOV 抑制
 
 `ScopePipRenderState.suppressesWorldFovZoom()` 被 `CameraSetupEvent#applyScopeMagnification`
-调用。开着 PIP、将有镜内画面（`sceneCaptured` 为真）且有 >1× 瞄具时，
-`applyScopeMagnification` 直接 `return`（保持基础 FOV）。它每帧都问，不缓存：
-PIP 一旦失败或没有抓到画面就自动回到旧的整屏变焦。
-关键点是 **当且仅当本帧确有可合成的镜内画面时才抑制 FOV**；旧版只查“PIP 开启”，
-于是抓图失败的帧会变成“镜外 1×、镜内也 1×”——这正是本次实机的症状，已修。
+调用。开着 PIP、未用光影（Iris）、当前持有 >1× 瞄具且**本地玩家已开始抬枪
+（aim progress > 0）**时，`applyScopeMagnification` 直接 `return`（保持基础 FOV）。
 
-### 2.5 为什么仍然跳过 Iris
+键点：**不要**再以 `sceneCaptured` 为依据。`sceneCaptured` 是 `renderItemInHand` HEAD 写出的
+“本帧抓图是否成功”，而 FOV 计算发生在同一帧更早/更晚的位置，这条标志在开镜/收镜过渡中
+会时真时假，导致世界 POV 短暂跳变（本次实机症状 3）。改用稳定的**每帧 aim-start 查询**
+（`IClientPlayerGunOperator#getClientAimingProgress(0) > 0`）。它只在真正退出 ADS、progress
+归零时才放回旧的整屏变焦，而那个时刻旧的变焦倍率本来就 ≈1×，所以进出镜理论上无可见 POV 跳变。
+
+`IrisCompat.isUsingRenderPack()` 也保留在门里：它在整个会话内稳定为真/假。开着光影时本步
+明确不画镜片，因此若照常抑制 FOV 就会变成“镜外 1×、镜内无画面”，必须让旧整屏变焦继续工作。
+
+PIP 永久失败（`failed=true`）或未开（`isEnabled()=false`）时该查询自然为 false，自动回落到
+旧的整屏 FOV 变焦，不存在“镜外 1×、镜内也 1×”的兜底缺口。
+
+### 2.5 合成在镜身/孔径之后、但必须在准星和遮光罩之前
+
+第一次实机把合成放在 `renderItemInHand` RETURN，结果输入顺序是：
+孔径(-3) → 镜身(-2) → 深度恢复(-1) → 准星(1) → 遮光罩(2) → **合成被最后画**。
+于是镜内画面把准星和遮光罩盖住了（本次实机症状 1/2）。
+
+为不动复合管线（它仍是在手部 pass 结束时以 `RenderPass` 覆盖镜内像素）并保持 vanilla
+判定顺序，本步改为**当本帧 PIP 合成活跃时，把准星和物理遮光罩从常规 solid pass 挪到
+“合成之后”的覆盖层**：
+
+- `BedrockAttachmentModel` 里 `pipDefersReticle = ScopePipRenderState.shouldDeferReticleOverlay()`
+  为真时，令 `deferReticleToIrisFinalOverlay = true`，复用 `ScopeFinalOverlayState`
+  （其 `final*` 管线本就用无雾 vanilla fragment + 私有世界/孔径深度 mask，天然适合此刻）；
+- `GameRendererMixin` 在 RETURN 先 `compositeAfterHand()` 画镜内画面，再
+  `ScopeFinalOverlayState.renderAfterFinalComposite()` 把准星、遮光罩画回镜片上方。
+
+净效果：镜内画面在下，准星、遮光罩在上，符合真实光路。非 PIP 帧/非第一人称/不瞄准时
+`shouldDeferReticleOverlay()` 为 false，仍走原来的 solid-pass 顺序；Iris 路径不受影响
+（PIP 在 Iris 下显式跳过，本步的 overlay 刷新只在 vanilla 生效）。
+
+### 2.6 为什么仍然跳过 Iris
 
 本步沿用 Step 2 的结论：Iris 的 depthtex2/final-composite 桥接尚未完成，且 Iris 把手部
 渲染搬进了 `LevelRenderer#render` 内部，`renderItemInHand` HEAD 抓不到「干净世界」。
@@ -127,7 +159,9 @@ PIP 一旦失败或没有抓到画面就自动回到旧的整屏变焦。
 4. 观察（对照 Step 2 的品红形状）：镜片内现在应显示**放大的世界画面**，而不是品红；
    - 镜片外（镜身、屏幕四周）应为正常 1× 世界；
    - 镜内**不应出现枪 / 手**（抓取发生在手部绘制前）；
-   - 镜内缩放倍数应与瞄具标称倍率一致（6× 镜应明显放大中心画面）。
+   - 镜内缩放倍数应与瞄具标称倍率一致（6× 镜应明显放大中心画面）；
+   - 镜内画面上**能看到准星分划**，镜片边缘的**物理遮光罩黑圈**也在上层（不被镜内画面盖住）；
+   - 反复进入/退出开镜，世界 POV **不出现短暂跳变**。
 5. 无参数重启：确认整屏 FOV 变焦（旧行为）恢复，且无残留。
 
 日志应各出现一次：
@@ -152,6 +186,9 @@ PIP 一旦失败或没有抓到画面就自动回到旧的整屏变焦。
 
 ### 开启（仅 vanilla / 无光影）
 - [ ] 镜片内是放大的世界，镜外 1×，镜内无枪/手。
+- [ ] 镜内画面上**能看到准星（分划）轮廓**，不再被镜内画面盖住。
+- [ ] 镜片边缘的**物理遮光罩（黑圈）**仍在上层，不再被盖住。
+- [ ] 进入/退出开镜时世界 POV **无短暂跳变**；镜外全程 1×。
 - [ ] 开镜/收镜后无残留；关掉参数立刻恢复旧行为。
 - [ ] 满开镜时倍率与瞄具标称一致。
 

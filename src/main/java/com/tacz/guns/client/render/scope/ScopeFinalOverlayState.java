@@ -20,13 +20,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Draws frozen scope reticle/rim geometry after Iris has completed every composite and final pass.
+ * Draws frozen scope reticle/rim geometry after the last thing that could cover it.
  *
- * <p>Some shader packs, including Complementary Reimagined, apply a screen-space fog pass after
- * {@code HAND_TRANSLUCENT} and sample a pre-hand or otherwise immutable world depth snapshot. A
- * late hand depth write cannot affect that input. This state therefore keeps the original 3D
- * snapshots and the exact hand projection/model-view transform, but delays their actual vanilla
- * pipeline draw until {@code IrisRenderingPipeline#finalizeLevelRendering()} has returned.</p>
+ * <p>Two call sites share this path:</p>
+ * <ul>
+ *   <li>Iris post-composite: some shader packs, including Complementary Reimagined, apply a
+ *       screen-space fog pass after {@code HAND_TRANSLUCENT} and sample a pre-hand or otherwise
+ *       immutable world depth snapshot; a late hand depth write cannot affect that input. This
+ *       state keeps the original 3D snapshots and the exact hand projection/model-view transform,
+ *       but delays their actual vanilla pipeline draw until
+ *       {@code IrisRenderingPipeline#finalizeLevelRendering()} has returned.</li>
+ *   <li>Vanilla PIP lens: {@code GameRenderer} calls {@link #renderAfterFinalComposite()} right
+ *       after the Step-3 composite, restoring physical lens order (picture -> reticle/crosshair ->
+ *       ocular shade) without moving the composite into the middle of the hand batch.</li>
+ * </ul>
  *
  * <p>This is not a HUD crosshair: vertices remain the original Bedrock model geometry with ADS,
  * recoil and view-bob already frozen into their snapshots. Only the final color submission moves
@@ -75,19 +82,35 @@ public final class ScopeFinalOverlayState {
         PENDING_RETICLES.add(new ReticleDraw(snapshot, renderType));
         if (!loggedQueued) {
             loggedQueued = true;
-            GunMod.LOGGER.info("[TACZ Scope] Queued reticle for Iris post-composite overlay.");
+            GunMod.LOGGER.info("[TACZ Scope] Queued reticle for post-composite overlay (Iris or PIP lens).");
         }
     }
 
     public static void queueOcularRing(BedrockRenderSnapshot snapshot, RenderType renderType) {
         if (!snapshot.isEmpty()) {
+            // Normally a ring is queued only after a reticle captured the hand transform, but the
+            // PIP lens can also defer a bare rim (scope with shade and no visible reticle, or a
+            // reticle filtered out during fade-in). Capture here so a ring-only queue can flush too.
+            captureHandTransform();
+            if (handTransform == null) {
+                return;
+            }
             PENDING_RINGS.add(new RingDraw(snapshot, renderType));
         }
     }
 
-    /** Called by the Iris-only final-pipeline mixin after shader-pack final compositing. */
+    /**
+     * Draws deferred reticle/rim geometry after the last thing that could cover it.
+     *
+     * <p>Two call sites share this path:</p>
+     * <ul>
+     *   <li>Iris: called by the final-pipeline mixin after all shader-pack composite/final passes.</li>
+     *   <li>Vanilla PIP: called by {@code GameRenderer} right after the Step-3 lens composite, so the
+     *       crosshair and shade sit above the magnified picture instead of being covered by it.</li>
+     * </ul>
+     */
     public static void renderAfterFinalComposite() {
-        if (PENDING_RETICLES.isEmpty() || handTransform == null) {
+        if ((PENDING_RETICLES.isEmpty() && PENDING_RINGS.isEmpty()) || handTransform == null) {
             return;
         }
         RenderSystem.assertOnRenderThread();
