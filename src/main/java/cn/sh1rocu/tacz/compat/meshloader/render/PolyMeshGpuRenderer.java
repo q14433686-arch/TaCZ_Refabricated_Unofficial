@@ -267,6 +267,17 @@ public final class PolyMeshGpuRenderer {
         GpuTextureView lightmapView = resolveLightmap(mc);
         GpuSampler linearSampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
 
+        // 【朝向恒北 bug 的修复 · 字节码依据】RenderType.prepare() 偏移 55-58：
+        //     getModelViewMatrixCopy() -> writeDynamicTransforms(mv)
+        // vanilla 画 collector 提交是【两层】变换：顶点里烘 submit 时的 pose，
+        // 绘制时 ModelViewMat = RenderSystem 当刻的 MV（手部 pass = 相机旋转/俯仰
+        // /视模那套）。GPU 路径顶点在骨骼本地系、pose 写进 DynamicTransforms，
+        // 若只写 entry.model() 就丢了 MV_draw 这一层 —— 枪位置对（pose 带平移）
+        // 但朝向恒北、俯仰为平（相机旋转全在丢的那层里），实测症状完全吻合。
+        // 本方法跑在手部 renderAllFeatures 的 executeSolid 之后、同一调用内，
+        // MV 与 prepareFrame 时一致，取一次全体通用。
+        Matrix4f handModelView = RenderSystem.getModelViewMatrixCopy();
+
         Map<Identifier, List<DrawEntry>> byTexture = new HashMap<>();
         for (DrawEntry entry : draws) {
             byTexture.computeIfAbsent(entry.texture(), k -> new ArrayList<>()).add(entry);
@@ -301,8 +312,11 @@ public final class PolyMeshGpuRenderer {
                 pass.bindTexture("Sampler0", textureView, linearSampler);
 
                 for (DrawEntry entry : group.getValue()) {
+                    // ModelViewMat = MV_draw * pose_submit（乘序同 vanilla：顶点先套
+                    // pose 再进相机系）。scratch 每骨骼重算，不污染 entry.model()。
+                    Matrix4f mv = new Matrix4f(handModelView).mul(entry.model());
                     pass.setUniform("DynamicTransforms",
-                            RenderSystem.getDynamicUniforms().writeTransform(entry.model(), WHITE));
+                            RenderSystem.getDynamicUniforms().writeTransform(mv, WHITE));
                     pass.setVertexBuffer(0, entry.bone().vertexBuffer.slice());
                     RenderSystem.AutoStorageIndexBuffer indices =
                             RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
