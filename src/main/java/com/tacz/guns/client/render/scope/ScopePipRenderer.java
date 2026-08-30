@@ -687,7 +687,26 @@ public final class ScopePipRenderer {
     /** 每帧清一次帧内记忆值。挂在 {@code GameRenderer#extract} 的 HEAD。 */
     public static void beginFrame() {
         magnificationThisFrame = Float.NaN;
+        frameIndex++;
     }
+
+    /**
+     * 帧序号，仅在 {@link #beginFrame()} 递增 —— 也就是 GameRenderer.extract 的 HEAD，
+     * 每帧恰好一次。给「隔帧渲染」当时间轴用；用它而不是自己数 render 调用，
+     * 是因为 render 侧的调用次数在光影下不是一帧一次（Iris 的手部 pass 一帧两趟）。
+     */
+    private static long frameIndex = 0;
+
+    /** 上一次真正跑完镜内那一遍的帧序号；从未跑过 = Long.MIN_VALUE。 */
+    private static long lastScopePassFrame = Long.MIN_VALUE;
+
+    /**
+     * 那一遍画进的是第几代离屏 target（{@link ScopePipTarget#generation()}）。
+     *
+     * <p>隔帧复用的前提是「上一帧的成品还躺在同一张纹理里」——
+     * 窗口缩放触发 target 重建后，新纹理内容未定义，代数对不上就必须重画。
+     */
+    private static int lastScopePassGeneration = -1;
 
     private static float scopeMagnification() {
         float cached = magnificationThisFrame;
@@ -915,6 +934,17 @@ public final class ScopePipRenderer {
                 loggedFirstCapture = true;
                 GunMod.LOGGER.info("[TACZ Scope] Scope PIP active: reprojecting a {}x{} scene copy at {}x magnification.",
                         w, h, scopeMagnification());
+                // 【把「旋钮为什么没反应」变成一行可读的事实】重投影模式不存在
+                // 第二遍渲染，ScopePipResolutionScale 在这条路上无物可缩 ——
+                // 玩家调它没反应不是 bug，是作用域如此。只在旋钮偏离 1.0 时说，
+                // 且每局一次（跟着 loggedFirstCapture 走）。
+                if (resolutionScale() < 0.999d) {
+                    GunMod.LOGGER.info("[TACZ Scope] Note: ScopePipResolutionScale ({}) has no effect in "
+                                    + "reprojection mode -- the lens is a resample of the already-rendered main "
+                                    + "frame, so there is no second render to downscale. It only applies with "
+                                    + "ScopePipRerender=true and no shader pack.",
+                            resolutionScale());
+                }
             }
         } catch (Exception e) {
             failed = true;
@@ -988,6 +1018,33 @@ public final class ScopePipRenderer {
         if (pip == null) {
             failed = true;
             sceneCaptured = false;
+            return;
+        }
+
+        // 【隔帧渲染 · ScopePipRerenderInterval】距上次真跑不足 N 帧，就直接复用
+        // 离屏纹理里躺着的上一帧成品 —— 合成阶段照常执行，只有「世界那一遍」被省掉。
+        //
+        // 这是光影下唯一砍得到大头的杠杆：帧率对半的根因是整条 Iris 管线每帧跑两遍，
+        // N=2 时那份额外开销直接减半，而镜外主画面永远满帧率。
+        //
+        // 复用的前提有两个，缺一必须重画：
+        //   1. 代数一致 —— getOrCreate 刚因窗口缩放/光影切换重建过 target 的话，
+        //      新纹理内容是未定义的，端出去就是花屏；
+        //   2. 帧差 < N —— frameIndex 只在 extract HEAD 递增，每帧恰一次，
+        //      不受 Iris 一帧两趟手部 pass 的影响。
+        //
+        // 收镜再开镜不强制重画：闸门（aimingProgress ≤ min）期间本方法根本不会走到
+        // 这里，lastScopePassFrame 停在旧值，帧差早已 ≥ N，自然落到重画分支。
+        // lastScopePassFrame >= 0 挡首帧：初始哨兵是 Long.MIN_VALUE，
+        // frameIndex - MIN_VALUE 会【上溢成负数】、误判成「帧差 < N」——
+        // 代数守卫（-1 != 首次分配后的 >=1）虽恰好也能挡住，但不能靠巧合。
+        int interval = rerenderInterval();
+        if (interval > 1
+                && lastScopePassFrame >= 0
+                && lastScopePassGeneration == ScopePipTarget.generation()
+                && frameIndex - lastScopePassFrame < interval) {
+            sceneCaptured = true;
+            ScopePipTrace.mark("SCOPE-PASS SKIPPED (ScopePipRerenderInterval reuse)");
             return;
         }
 
@@ -1105,11 +1162,26 @@ public final class ScopePipRenderer {
             }
             sceneCaptured = true;
             scopePassCount++;
+            // 隔帧渲染的书签：本帧真跑了、成品在这一代 target 里。
+            lastScopePassFrame = frameIndex;
+            lastScopePassGeneration = ScopePipTarget.generation();
             if (!loggedFirstCapture) {
                 loggedFirstCapture = true;
                 GunMod.LOGGER.info("[TACZ Scope] Scope PIP second-render pass active: {}x{} at {}x "
                                 + "(sodium terrain projection synced: {}).",
                         pip.width, pip.height, scopeMagnification(), sodiumPatched);
+                // 【旋钮作用域播报 · 每局一次】上面那行的 WxH 就是缩放是否生效的铁证：
+                // 无光影 + scale=0.75 时它应当是主帧缓冲的 3/4。光影下则被强制 1.0 ——
+                // Iris 画进自己那套 colortex，这张离屏纹理只是成品的拷贝目的地，
+                // 缩小它省不掉 Iris 那遍的任何真实开销。把这件事明说，免得玩家
+                // 调了没反应以为是 bug。
+                if (iris && resolutionScale() < 0.999d) {
+                    GunMod.LOGGER.info("[TACZ Scope] Note: ScopePipResolutionScale ({}) is forced to 1.0 under "
+                                    + "shader packs -- Iris renders into its own buffers at native size and this "
+                                    + "offscreen target is only a copy destination. To cut the scope pass cost "
+                                    + "under shaders, use ScopePipShadowScale and/or ScopePipRerenderInterval.",
+                            resolutionScale());
+                }
             }
         } catch (Exception e) {
             failed = true;
@@ -1428,6 +1500,12 @@ public final class ScopePipRenderer {
     public static double resolutionScale() {
         return RenderConfig.SCOPE_PIP_RESOLUTION_SCALE == null
                 ? 0.75d : RenderConfig.SCOPE_PIP_RESOLUTION_SCALE.get();
+    }
+
+    /** 镜内那一遍每 N 帧才真跑一次（1 = 每帧）。见 RenderConfig.SCOPE_PIP_RERENDER_INTERVAL。 */
+    private static int rerenderInterval() {
+        return RenderConfig.SCOPE_PIP_RERENDER_INTERVAL == null
+                ? 1 : RenderConfig.SCOPE_PIP_RERENDER_INTERVAL.get();
     }
 
     private static boolean allowShaderPacks() {

@@ -118,6 +118,10 @@ public class RenderClothConfig {
                 .setMin(0.25).setMax(1.0).setDefaultValue(0.5).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_shadow_scale.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_SHADOW_SCALE::set).build());
 
+        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.scope_pip_rerender_interval"), RenderConfig.SCOPE_PIP_RERENDER_INTERVAL.get())
+                .setMin(1).setMax(4).setDefaultValue(1).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_rerender_interval.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_RERENDER_INTERVAL::set).build());
+
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_allow_shader_packs"), RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_allow_shader_packs.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS::set).build());

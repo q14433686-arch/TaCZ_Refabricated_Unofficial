@@ -55,6 +55,17 @@ public final class ScopePipTarget {
     /** 一旦出过错就永久停用，避免每帧刷屏或反复抛异常。 */
     private static boolean failed = false;
 
+    /**
+     * 重建代数：每次真正 new 一个 target 就 +1。
+     *
+     * <p>给「隔帧渲染」（ScopePipRerenderInterval）用的：复用上一帧的镜内画面
+     * 前提是那张画面还躺在<b>同一个</b>纹理里 —— 窗口缩放/格式变化触发重建后，
+     * 新纹理里是未定义内容，绝不能当「上一帧」端出去。比较代数比比较引用可靠：
+     * 引用相等无法区分「同一个对象」与「销毁后恰好复用了同地址」这种理论坑，
+     * 而代数单调递增，语义就是「第几次分配」。
+     */
+    private static int generation = 0;
+
     private ScopePipTarget() {
     }
 
@@ -83,6 +94,7 @@ public final class ScopePipTarget {
                 // 重投影模式存的是一张已完成的二维图像，不需要深度；
                 // 二次渲染模式跑的是完整的世界渲染，没有深度附件就没有遮挡关系。
                 target = new TextureTarget("tacz_scope_pip", w, h, needsDepth, format);
+                generation++;
                 lastWidth = w;
                 lastHeight = h;
                 lastFormat = format;
@@ -102,6 +114,11 @@ public final class ScopePipTarget {
     @Nullable
     public static TextureTarget current() {
         return failed ? null : target;
+    }
+
+    /** 当前 target 是第几次分配出来的。target 为 null 时也照常返回，调用方自行搭配 current() 判空。 */
+    public static int generation() {
+        return generation;
     }
 
     public static void close() {

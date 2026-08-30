@@ -176,8 +176,31 @@ public class RenderConfig {
     /**
      * 二次渲染（非光影模式）下镜内画面的渲染分辨率比例（1.0 = 屏幕原生分辨率）。
      * 默认 0.75。开销按面积走（0.75x 相当于仅渲染 ~56% 像素），显著减轻二次渲染开销。
+     *
+     * <p>【作用域必读】只有「二次渲染 + 无光影」这一种组合消费它：
+     * <ul>
+     *   <li>重投影模式（默认）下无效 —— 镜内是已画好的主画面的放大采样，
+     *       根本不存在可以降分辨率的第二遍渲染，降采样拷贝只糊不省；</li>
+     *   <li>光影下强制 1.0 —— Iris 画进自己那套 colortex，我们的离屏 target
+     *       只是成品的拷贝目的地，缩小它省不掉 Iris 那遍的任何真实开销。
+     *       光影下的开销杠杆是 {@link #SCOPE_PIP_SHADOW_SCALE} 与
+     *       {@link #SCOPE_PIP_RERENDER_INTERVAL}。</li>
+     * </ul>
+     * 两条不消费它的路径都会打一次性日志明说（见 ScopePipRenderer）。
      */
     public static ForgeConfigSpec.DoubleValue SCOPE_PIP_RESOLUTION_SCALE;
+    /**
+     * 二次渲染模式下，镜内那一遍世界每 N 帧才真正渲染一次，其余帧复用上一帧的镜内画面。
+     *
+     * <p>这是<b>光影下唯一能砍到大头的杠杆</b>：光影 + 二次渲染的帧率对半，根因是
+     * 整条 Iris 管线（阴影贴图、gbuffer、composite 链）每帧跑两遍 —— 降低离屏
+     * target 分辨率救不了它（见 {@link #SCOPE_PIP_RESOLUTION_SCALE} 的作用域说明），
+     * 但「每两帧才跑第二遍」能把那份额外开销直接减半。
+     *
+     * <p>代价：转动视角时镜内画面滞后 N-1 帧（N=2 时为一帧，接近难以察觉）。
+     * 镜外主画面永远满帧率。掩码/剪裁是逐帧的，只有镜内<b>内容</b>滞后。
+     */
+    public static ForgeConfigSpec.IntValue SCOPE_PIP_RERENDER_INTERVAL;
     /**
      * 二次渲染 + 光影时，是否给镜内那一遍配一套独立的 Iris 管线。
      *
@@ -554,8 +577,29 @@ public class RenderConfig {
                         "Default 0.75 (~56% pixels of full frame), greatly reducing the GPU rendering cost of the scope view.",
                         "  1.0 = native resolution (sharpest, highest cost)",
                         "  0.75 = default (~56% pixels, high clarity with noticeable performance saving)",
-                        "  0.5 = 50% resolution (25% pixels, maximum performance, softer image)")
+                        "  0.5 = 50% resolution (25% pixels, maximum performance, softer image)",
+                        "",
+                        "SCOPE: only consumed by ScopePipRerender=true WITHOUT a shader pack.",
+                        " - Reprojection mode (ScopePipRerender=false) ignores it: the lens is a resample",
+                        "   of the already-rendered main frame; there is no second render to downscale.",
+                        " - Under shader packs it is forced to 1.0: Iris renders into its own buffers at",
+                        "   native size and our offscreen target is only a copy destination; shrinking it",
+                        "   saves nothing. Use ScopePipShadowScale / ScopePipRerenderInterval instead.")
                 .defineInRange("ScopePipResolutionScale", 0.75d, 0.25d, 1.0d);
+        SCOPE_PIP_RERENDER_INTERVAL = builder
+                .comment("In rerender mode, actually render the scope world pass only every N frames and",
+                        "reuse the previous lens image in between. 1 = every frame (default).",
+                        "",
+                        "This is the lever that actually helps under shader packs: the half-rate cost",
+                        "there comes from running the whole Iris pipeline (shadow map, gbuffers,",
+                        "composites) twice per frame. Lowering the offscreen resolution cannot touch",
+                        "that, but rendering the scope pass every 2nd frame halves the extra cost.",
+                        "Trade-off: while turning the camera the lens content lags N-1 frames behind",
+                        "(barely noticeable at 2). The main view always runs at full frame rate.",
+                        "  1 = every frame (no saving)",
+                        "  2 = half the scope-pass cost, ~1 frame of lens lag",
+                        "  3-4 = bigger savings, visible lens stutter")
+                .defineInRange("ScopePipRerenderInterval", 1, 1, 4);
         SCOPE_PIP_SHADOW_SCALE = builder
                 .comment("Shadow map resolution for the scope pass, as a fraction of the pack's own.",
                         "Only used with ScopePipRerender + ScopePipIsolatePipeline + a shader pack.",
