@@ -15,10 +15,12 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -49,26 +51,28 @@ import java.util.OptionalInt;
  *       {@code 1 + (Z - 1) * progress} ramping is a later step.</li>
  *   <li><b>Vanilla / no shader pack only.</b> Iris is skipped exactly like Step 2 (the Iris
  *       depthtex2/final-composite wiring is still a later step).</li>
- *   <li><b>No config key.</b> It is a JVM property, {@code -Dtacz.scope.pip.enable=true}, for the
- *       same reason Step 2 is. Config alignment is a later step.</li>
- *   <li><b>No Catmull-Rom / sharpening.</b> Nearest/linear hardware sampling only for now.</li>
+ *   <li><b>Configurable.</b> {@code RenderConfig.SCOPE_PIP_*} exposes enable / minimum progress /
+ *       world-zoom share / lens sharpening / debug-paint in the ModMenu config screen; the legacy
+ *       dev JVM property {@code -Dtacz.scope.pip.enable=true} still works as an override.</li>
+ *   <li><b>No Catmull-Rom.</b> Hardware bilinear + a configurable 5-tap unsharp mask only.</li>
  * </ul>
  *
- * <h2>Whole-screen FOV zoom suppression</h2>
+ * <h2>Whole-screen FOV zoom replacement</h2>
  * {@link #suppressesWorldFovZoom(float)} is consulted by {@code CameraSetupEvent#applyScopeMagnification}
- * so the world outside the lens stays at 1× while the lens shows the {@code Z}-magnified scene.
- * If PIP fails or is disabled this returns false and the existing whole-screen FOV zoom resumes.
+ * so the camera does <b>not</b> apply the old full-screen zoom; instead the caller applies
+ * {@code ScopePipWorldZoomShare} of it (0 = world stays 1×, 1 = full whole-screen zoom) and the lens
+ * shows the {@code Z}-magnified re-projection. If PIP fails or is disabled this returns false and the
+ * existing whole-screen FOV zoom resumes unchanged.
  */
 public final class ScopePipRenderState {
     public static final String ENABLE_PROPERTY = "tacz.scope.pip.enable";
     private static final String SCENE_SAMPLER_UNIFORM = "tacz_SceneColorSampler";
-    private static final float MIN_AIMING_PROGRESS = 0.05f;
-
-    private static final boolean ENABLED =
-            Boolean.parseBoolean(System.getProperty(ENABLE_PROPERTY, "false"));
+    private static final float DEFAULT_MIN_AIMING_PROGRESS = 0.05f;
 
     private static RenderPipeline pipeline;
-    private static int builtZoom = -1;
+    private static int builtLensZoom1k = -1;
+    private static int builtSharpness1k = -1;
+    private static boolean builtPaintLens;
     private static boolean failed;
     private static boolean sceneCaptured;
     private static boolean loggedCapture;
@@ -87,37 +91,52 @@ public final class ScopePipRenderState {
     private ScopePipRenderState() {
     }
 
-    /** Read once at class-load so the build exception never escapes hot paths. */
+    /**
+     * PIP is active when the dev JVM property (-Dtacz.scope.pip.enable) <b>or</b> the in-game config
+     * toggle (RenderConfig.SCOPE_PIP_ENABLE) is on, and the runtime has not permanently failed. The
+     * config is read lazily (it is still <b>null</b> before {@code ClientConfig.init}), so keep the
+     * null guard: a null field means "config not loaded yet", not "disabled".
+     */
     public static boolean isEnabled() {
-        return ENABLED && !failed;
+        return (devPropertyEnabled() || configEnabled()) && !failed;
+    }
+
+    private static boolean devPropertyEnabled() {
+        return Boolean.parseBoolean(System.getProperty(ENABLE_PROPERTY, "false"));
+    }
+
+    private static boolean configEnabled() {
+        return RenderConfig.SCOPE_PIP_ENABLE != null && RenderConfig.SCOPE_PIP_ENABLE.get();
     }
 
     /**
-     * One-line explanation for diagnostics when Step 3 did not paint: which JVM property was seen at
-     * class-load and whether the runtime marked the pipeline failed.
+     * One-line explanation for diagnostics when Step 3 did not paint: which dev JVM property was seen,
+     * what the in-game config currently says, and whether the runtime marked the pipeline failed.
      */
     public static String enablePropertySummary() {
-        return "(enable=" + System.getProperty(ENABLE_PROPERTY, "<unset>")
-                + ", classLoadedEnabled=" + ENABLED
+        return "(devProperty=" + System.getProperty(ENABLE_PROPERTY, "<unset>")
+                + ", config=" + (RenderConfig.SCOPE_PIP_ENABLE != null ? RenderConfig.SCOPE_PIP_ENABLE.get() : false)
                 + ", failed=" + failed + ")";
     }
 
     /**
-     * Whether {@code CameraSetupEvent#applyScopeMagnification} should leave the world FOV alone.
+     * Whether {@code CameraSetupEvent#applyScopeMagnification} should take the PIP path instead of
+     * the old whole-screen zoom. When true the caller applies only {@code ScopePipWorldZoomShare} of
+     * the zoom to the world (default 0 = world unchanged).
      *
      * <p>True while PIP is neither disabled nor failed, the held gun is a real magnifying scope and
      * the player is entering/holding ADS. This is deliberately a <b>stable per-frame query</b> based
      * on the client aim state, <b>not</b> on {@link #sceneCaptured}: that flag is written mid-frame
      * at the hand-pass HEAD, so gating the FOV on it made the world POV jump while the player was
-     * entering/leaving ADS. The whole-screen zoom must be removed for the whole transition, not only
+     * entering/leaving ADS. The whole-screen zoom must be replaced for the whole transition, not only
      * on frames where the lens capture happened to be written before the FOV was computed.</p>
      *
      * <p>{@code partialTicks} must be the <b>same</b> frame partial-tick that
      * {@code CameraSetupEvent#applyScopeMagnification} uses for its own fallback zoom, because the
-     * suppression gate is literally asking "would this frame apply a non-1x whole-screen zoom?".
-     * A fixed tick value does not answer that: {@code partialTicks=1} reads the current tick, which
-     * reaches 0 one tick before the interpolated value on the exit boundary, so the gate dropped one
-     * frame early and let a residual zoom pulse through (the remaining exit POV jump).</p>
+     * gate is literally asking "would this frame apply a non-1x whole-screen zoom?". A fixed tick
+     * value does not answer that: {@code partialTicks=1} reads the current tick, which reaches 0 one
+     * tick before the interpolated value on the exit boundary, so the gate dropped one frame early
+     * and let a residual zoom pulse through (the remaining exit POV jump).</p>
      */
     public static boolean suppressesWorldFovZoom(float partialTicks) {
         // The Iris check is a stable per-session fact, not a mid-frame capture outcome: when a shader
@@ -149,6 +168,64 @@ public final class ScopePipRenderState {
         }
         float zoom = iGun.getAimingZoom(stack);
         return zoom > 1.0f ? zoom : 1.0f;
+    }
+
+    // ------------------------------------------------------------------
+    // 游戏内配置读取（配置可能尚未加载，带 null 兜底）
+    // ------------------------------------------------------------------
+
+    private static float minAimingProgress() {
+        return RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS == null
+                ? DEFAULT_MIN_AIMING_PROGRESS
+                : RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS.get().floatValue();
+    }
+
+    /** 开镜时世界要多放大多少倍的下限（满开镜目标）。 */
+    private static float worldZoomShare() {
+        return RenderConfig.SCOPE_PIP_WORLD_ZOOM_SHARE == null
+                ? 0.0f
+                : Mth.clamp(RenderConfig.SCOPE_PIP_WORLD_ZOOM_SHARE.get().floatValue(), 0.0f, 1.0f);
+    }
+
+    /**
+     * 满开镜时镜外世界应放大的倍数：{@code Z^share}（{@code share=0} 恒为 1，即纯 PIP）。
+     */
+    public static float worldZoomTarget() {
+        float zoom = currentZoom();
+        if (zoom <= 1.0f) {
+            return 1.0f;
+        }
+        float share = worldZoomShare();
+        return share <= 0.0f ? 1.0f : (float) Math.pow(zoom, share);
+    }
+
+    /**
+     * 镜内相对已放大世界的再放大倍数：{@code Z / Z^share = Z^(1-share)}。
+     */
+    public static float lensZoom() {
+        float zoom = currentZoom();
+        float world = worldZoomTarget();
+        return world <= 0.0f ? Math.max(1.0f, zoom) : Math.max(1.0f, zoom / world);
+    }
+
+    /**
+     * 某帧开镜进度下，世界实际应放大的倍数。与 {@code CameraSetupEvent} 的回落分支同式：
+     * {@code 1 + (worldZoomTarget - 1) * progress}。
+     */
+    public static float worldZoomAtProgress(float aimingProgress) {
+        float target = worldZoomTarget();
+        return 1.0f + (target - 1.0f) * Mth.clamp(aimingProgress, 0.0f, 1.0f);
+    }
+
+    private static float sharpness() {
+        return RenderConfig.SCOPE_PIP_SHARPNESS == null
+                ? 0.0f
+                : Mth.clamp(RenderConfig.SCOPE_PIP_SHARPNESS.get().floatValue(), 0.0f, 1.0f);
+    }
+
+    private static boolean debugPaintLens() {
+        return RenderConfig.SCOPE_PIP_DEBUG_PAINT_LENS != null
+                && RenderConfig.SCOPE_PIP_DEBUG_PAINT_LENS.get();
     }
 
     /**
@@ -193,9 +270,9 @@ public final class ScopePipRenderState {
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(mc.player);
         if (operator == null) {
             IGunOperator entityOperator = IGunOperator.fromLivingEntity(mc.player);
-            return entityOperator != null && entityOperator.getSynAimingProgress() > MIN_AIMING_PROGRESS;
+            return entityOperator != null && entityOperator.getSynAimingProgress() > minAimingProgress();
         }
-        return operator.getClientAimingProgress(0.0f) > MIN_AIMING_PROGRESS;
+        return operator.getClientAimingProgress(0.0f) > minAimingProgress();
     }
 
     /**
@@ -303,8 +380,10 @@ public final class ScopePipRenderState {
             if (!loggedComposite) {
                 loggedComposite = true;
                 GunMod.LOGGER.info(
-                        "[TACZ Scope] Step3 composite painted the {}x lens (scene tex={}, world tex={}, aperture tex={}).",
-                        (int) currentZoom(), scene.textureId(), world.textureId(), aperture.textureId());
+                        "[TACZ Scope] Step3 composite painted the {}x lens from a {}-magnified world "
+                                + "(total {}x; scene tex={}, world tex={}, aperture tex={}).",
+                        (int) lensZoom(), (int) worldZoomTarget(), (int) currentZoom(),
+                        scene.textureId(), world.textureId(), aperture.textureId());
             }
         } catch (Exception e) {
             failed = true;
@@ -325,8 +404,12 @@ public final class ScopePipRenderState {
     }
 
     private static RenderPipeline pipeline() {
-        int zoom = Math.max(1, Math.round(currentZoom()));
-        if (pipeline == null || builtZoom != zoom) {
+        float lensZoomValue = Math.max(1.0f, lensZoom());
+        int lensZoom1k = (int) Math.round(lensZoomValue * 1000.0f);
+        int sharpness1k = (int) Math.round(sharpness() * 1000.0f);
+        boolean paintLens = debugPaintLens();
+        if (pipeline == null || builtLensZoom1k != lensZoom1k
+                || builtSharpness1k != sharpness1k || builtPaintLens != paintLens) {
             RenderPipeline source = RenderPipelines.ENTITY_OUTLINE_BLIT;
             pipeline = RenderPipelines.register(
                     RenderPipeline.builder()
@@ -336,7 +419,9 @@ public final class ScopePipRenderState {
                                     "minecraft", "core/screenquad"))
                             .withFragmentShader(Identifier.fromNamespaceAndPath(
                                     GunMod.MOD_ID, "core/scope_pip"))
-                            .withShaderDefine("TACZ_PIP_ZOOM", (float) zoom)
+                            .withShaderDefine("TACZ_PIP_ZOOM", lensZoomValue)
+                            .withShaderDefine("TACZ_PIP_SHARPNESS", sharpness())
+                            .withShaderDefine("TACZ_PIP_PAINT_LENS", paintLens ? 1.0f : 0.0f)
                             .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode())
                             .withSampler(SCENE_SAMPLER_UNIFORM)
                             .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM)
@@ -346,7 +431,9 @@ public final class ScopePipRenderState {
                             .withColorWrite(true)
                             // No depth in/out: this is a pure screen-space overwrite inside the lens.
                             .build());
-            builtZoom = zoom;
+            builtLensZoom1k = lensZoom1k;
+            builtSharpness1k = sharpness1k;
+            builtPaintLens = paintLens;
         }
         return pipeline;
     }

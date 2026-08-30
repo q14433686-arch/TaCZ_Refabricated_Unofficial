@@ -102,13 +102,23 @@ public class CameraSetupEvent {
             // value is one frame out of phase at one side of the transition and still caused the
             // exit POV jump.
             if (ScopePipRenderState.suppressesWorldFovZoom((float) event.getPartialTick())) {
-                // Step 3 (real PIP): only the lens magnetically magnifies; the world outside stays
-                // 1x, so the camera FOV must not be narrowed by the old whole-screen zoom. Still keep
-                // the smoother tracking the live base FOV (incl. sprint FOV) while suppressed: a bare
-                // return freezes it at the pre-ADS value, and when sprint's base FOV moves during ADS
-                // the gate re-enable on exit snaps from that stale state to the live base POV.
+                // Step 3 (real PIP): the lens owns the scope zoom, but part of it may be assigned to
+                // the world by ScopePipWorldZoomShare. Apply exactly that share using the same
+                // progress formula as the non-PIP fallback below, and keep WORLD_FOV_DYNAMICS tracking
+                // it (sprint's moving base FOV must not snap on exit). With the default share=0 this
+                // reduces to "keep the live base FOV" — the previous suppression behavior.
+                float aimingProgress;
+                if (livingEntity instanceof LocalPlayer localPlayer) {
+                    IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
+                    aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
+                } else {
+                    IGunOperator gunOperator = IGunOperator.fromLivingEntity(livingEntity);
+                    aimingProgress = gunOperator.getSynAimingProgress();
+                }
+                float worldZoom = ScopePipRenderState.worldZoomAtProgress(aimingProgress);
                 float baseFov = (float) event.getFOV();
-                event.setFOV(WORLD_FOV_DYNAMICS.update(baseFov));
+                float fov = WORLD_FOV_DYNAMICS.update((float) MathUtil.magnificationToFov(worldZoom, baseFov));
+                event.setFOV(fov);
                 return;
             }
             if (livingEntity instanceof LocalPlayer localPlayer) {
