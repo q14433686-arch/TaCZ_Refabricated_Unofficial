@@ -33,6 +33,14 @@ public final class ScopeRenderTypes {
     private static final Map<Identifier, RenderType> VIEWMODEL_CUTOUT_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_TRANSLUCENT_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_SWIRL_TYPES = new HashMap<>();
+    /** Iris late-pass reticles: write near depth only after all world translucency has completed. */
+    private static final Map<Identifier, RenderType> LATE_ETCHED_RETICLES = new HashMap<>();
+    private static final Map<Identifier, RenderType> LATE_VISIBLE_RETICLES = new HashMap<>();
+    private static final Map<Identifier, RenderType> LATE_OCULAR_RINGS = new HashMap<>();
+    /** Iris final-overlay types: draw after every shader-pack composite/final pass. */
+    private static final Map<Identifier, RenderType> FINAL_ETCHED_RETICLES = new HashMap<>();
+    private static final Map<Identifier, RenderType> FINAL_VISIBLE_RETICLES = new HashMap<>();
+    private static final Map<Identifier, RenderType> FINAL_OCULAR_RINGS = new HashMap<>();
 
     /** Set during extraction when this first-person gun submission actually queued an ocular aperture. */
     private static boolean apertureScheduledForViewmodel;
@@ -67,6 +75,31 @@ public final class ScopeRenderTypes {
     /** Vanilla energy-swirl states plus the same outside-aperture mask for the glow layer. */
     private static final RenderPipeline FLASH_SWIRL_PIPELINE = createFlashSwirlPipeline();
 
+    /**
+     * R9 Iris-only foreground versions. They are submitted after world transparency, so their near
+     * depth is safe and prevents post-processing fog from treating reticle pixels as distant world.
+     * 26.1.2 的 {@link CompareOp} 枚举直接有 {@code ALWAYS_PASS}（1.21.11 的
+     * {@code DepthTestFunction} 没有，才需要 NO_DEPTH_TEST + encoder mixin 临时改写），
+     * 因此这里在管线层一步到位，不需要 1.21.11 的 FORCE_ALWAYS 白名单机制。
+     */
+    private static final RenderPipeline LATE_ETCHED_RETICLE_PIPELINE = createLateEtchedReticlePipeline();
+    private static final RenderPipeline LATE_VISIBLE_RETICLE_PIPELINE = createLateVisibleReticlePipeline();
+
+    /**
+     * Opaque physical ocular rim submitted after a deferred Iris reticle. It keeps ordinary cutout
+     * material state but is classified as {@code HAND_TRANSLUCENT} so it reaches the late hand pass.
+     */
+    private static final RenderPipeline LATE_OCULAR_RING_PIPELINE = createLateOcularRingPipeline();
+
+    /**
+     * Final-overlay variants use no-fog vanilla fragments after Iris has stopped overriding core
+     * pipelines. They retain the same model geometry and aperture mask, but cannot be touched by
+     * shader-pack post-processing.
+     */
+    private static final RenderPipeline FINAL_ETCHED_RETICLE_PIPELINE = createFinalEtchedReticlePipeline();
+    private static final RenderPipeline FINAL_VISIBLE_RETICLE_PIPELINE = createFinalVisibleReticlePipeline();
+    private static final RenderPipeline FINAL_OCULAR_RING_PIPELINE = createFinalOcularRingPipeline();
+
     private ScopeRenderTypes() {
     }
 
@@ -77,6 +110,11 @@ public final class ScopeRenderTypes {
     /** Starts extraction of one first-person gun; prevents a previous frame's aperture from clipping fire. */
     public static void beginViewmodelSubmission() {
         apertureScheduledForViewmodel = false;
+        // A queued Iris reticle is consumed before the next solid hand submission. Clearing here
+        // also guarantees that a skipped/aborted previous hand pass cannot leak geometry into a
+        // later gun or frame.
+        ScopeLateReticleState.beginSolidSubmission();
+        ScopeFinalOverlayState.beginSolidSubmission();
     }
 
     /** @return whether this gun submission queued a valid depth-aperture sequence before its FX. */
@@ -110,6 +148,40 @@ public final class ScopeRenderTypes {
 
     public static RenderType visibleReticle(Identifier texture) {
         return VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createVisibleReticleType);
+    }
+
+    /** Iris-only late etched reticle: writes foreground depth after world translucency. */
+    public static RenderType lateEtchedReticle(Identifier texture) {
+        return LATE_ETCHED_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createLateEtchedReticleType);
+    }
+
+    /** Iris-only late illuminated reticle: writes foreground depth after world translucency. */
+    public static RenderType lateVisibleReticle(Identifier texture) {
+        return LATE_VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createLateVisibleReticleType);
+    }
+
+    /**
+     * Returns the physical ocular-ring type for the late Iris reticle pass. This is deliberately
+     * separate from the normal entity-cutout type: Iris must select {@code HAND_TRANSLUCENT} even
+     * though the rim itself remains opaque cutout geometry.
+     */
+    public static RenderType lateOcularRing(Identifier texture) {
+        return LATE_OCULAR_RINGS.computeIfAbsent(texture, ScopeRenderTypes::createLateOcularRingType);
+    }
+
+    /** Final post-composite etched reticle; only selected for the audited Iris 26.1 (1.11.x) path. */
+    public static RenderType finalEtchedReticle(Identifier texture) {
+        return FINAL_ETCHED_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createFinalEtchedReticleType);
+    }
+
+    /** Final post-composite illuminated reticle; only selected for the audited Iris 26.1 (1.11.x) path. */
+    public static RenderType finalVisibleReticle(Identifier texture) {
+        return FINAL_VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createFinalVisibleReticleType);
+    }
+
+    /** Final post-composite physical rim, emitted after final reticle geometry. */
+    public static RenderType finalOcularRing(Identifier texture) {
+        return FINAL_OCULAR_RINGS.computeIfAbsent(texture, ScopeRenderTypes::createFinalOcularRingType);
     }
 
     /**
@@ -214,6 +286,101 @@ public final class ScopeRenderTypes {
                 base,
                 ScopeDepthCopyState.Operation.MASK
         );
+    }
+
+    private static RenderType createLateEtchedReticleType(Identifier texture) {
+        RenderSetup setup = RenderSetup.builder(LATE_ETCHED_RETICLE_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
+                .useLightmap()
+                .useOverlay()
+                .createRenderSetup();
+        RenderType base = RenderType.create("tacz_scope_late_etched_reticle_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_late_etched_reticle",
+                base,
+                ScopeDepthCopyState.Operation.MASK
+        );
+    }
+
+    private static RenderType createLateVisibleReticleType(Identifier texture) {
+        RenderSetup setup = RenderSetup.builder(LATE_VISIBLE_RETICLE_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
+                .useOverlay()
+                .affectsCrumbling()
+                .sortOnUpload()
+                .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
+                .createRenderSetup();
+        RenderType base = RenderType.create("tacz_scope_late_visible_reticle_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_late_visible_reticle",
+                base,
+                ScopeDepthCopyState.Operation.MASK
+        );
+    }
+
+    private static RenderType createLateOcularRingType(Identifier texture) {
+        // Bytecode-equivalent to RenderTypes.entityCutout(texture, true). The pipeline differs
+        // only in Iris classification, so the opaque rim retains its vanilla material state while
+        // being submitted after the world translucent pass.
+        RenderSetup setup = RenderSetup.builder(LATE_OCULAR_RING_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .useLightmap()
+                .useOverlay()
+                .affectsCrumbling()
+                .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
+                .createRenderSetup();
+        return RenderType.create("tacz_scope_late_ocular_ring", setup);
+    }
+
+    private static RenderType createFinalEtchedReticleType(Identifier texture) {
+        RenderSetup setup = RenderSetup.builder(FINAL_ETCHED_RETICLE_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
+                .useLightmap()
+                .useOverlay()
+                .createRenderSetup();
+        RenderType base = RenderType.create("tacz_scope_final_etched_reticle_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_final_etched_reticle",
+                base,
+                ScopeDepthCopyState.Operation.MASK
+        );
+    }
+
+    private static RenderType createFinalVisibleReticleType(Identifier texture) {
+        RenderSetup setup = RenderSetup.builder(FINAL_VISIBLE_RETICLE_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
+                .useOverlay()
+                .affectsCrumbling()
+                .sortOnUpload()
+                .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
+                .createRenderSetup();
+        RenderType base = RenderType.create("tacz_scope_final_visible_reticle_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_final_visible_reticle",
+                base,
+                ScopeDepthCopyState.Operation.MASK
+        );
+    }
+
+    private static RenderType createFinalOcularRingType(Identifier texture) {
+        // Bytecode-equivalent to RenderTypes.entityCutout(texture, true), but with the no-fog
+        // final fragment and no depth-sampler placeholders: the ring is unmasked foreground.
+        RenderSetup setup = RenderSetup.builder(FINAL_OCULAR_RING_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .useLightmap()
+                .useOverlay()
+                .affectsCrumbling()
+                .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
+                .createRenderSetup();
+        return RenderType.create("tacz_scope_final_ocular_ring", setup);
     }
 
     private static RenderType createViewmodelCutoutType(Identifier texture) {
@@ -353,6 +520,102 @@ public final class ScopeRenderTypes {
         RenderPipeline pipeline = RenderPipelines.register(builder.build());
         IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_visible_reticle");
         return pipeline;
+    }
+
+    /**
+     * R9 late etched reticle. It differs from the ordinary reticle only in depth writes: this
+     * pipeline runs after Iris world translucency, so surviving masked pixels may safely become
+     * foreground depth for post-processing fog/composite.
+     */
+    private static RenderPipeline createLateEtchedReticlePipeline() {
+        RenderPipeline source = RenderPipelines.ENTITY_CUTOUT;
+        RenderPipeline.Builder builder = clonePipeline(source,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_late_etched_reticle"));
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_reticle_mask"));
+        builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+        // 延后 pass 里世界半透明已经画完，幸存的掩码像素可以放心写成近景深度，
+        // 让后续屏幕空间雾/合成把它们当前景（对应 1.21.11 的 NO_DEPTH_TEST + depthWrite=true，
+        // 加 encoder mixin 强制 GL_ALWAYS；26.1.2 直接声明 ALWAYS_PASS 即可）。
+        builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true));
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_late_etched_reticle");
+        return pipeline;
+    }
+
+    /** See {@link #createLateEtchedReticlePipeline()}; the source state remains emissive/translucent. */
+    private static RenderPipeline createLateVisibleReticlePipeline() {
+        RenderPipeline source = RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE;
+        RenderPipeline.Builder builder = clonePipeline(source,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_late_visible_reticle"));
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_reticle_mask"));
+        builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+        builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true));
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_late_visible_reticle");
+        return pipeline;
+    }
+
+    private static RenderPipeline createLateOcularRingPipeline() {
+        RenderPipeline source = RenderPipelines.ENTITY_CUTOUT;
+        RenderPipeline.Builder builder = clonePipeline(source,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_late_ocular_ring"));
+        // The rim must win over any reticle edge pixel drawn immediately before it. It is a late
+        // foreground layer, so ALWAYS_PASS + depthWrite=true is safe here and also marks it near
+        // for shader-pack post-processing. Fragment shader保持源管线的 entity.fsh（无遮罩分支）。
+        builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true));
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_late_ocular_ring");
+        return pipeline;
+    }
+
+    /**
+     * Final overlay is drawn after {@code IrisRenderingPipeline} sets isRenderingWorld=false, so
+     * this core pipeline is intentionally not assigned to an Iris program. Its fragment omits
+     * vanilla fog while retaining the ocular screen-space mask uniforms; depth test stays
+     * ALWAYS_PASS but writes nothing (the post-composite depth must not be disturbed).
+     */
+    private static RenderPipeline createFinalEtchedReticlePipeline() {
+        RenderPipeline source = RenderPipelines.ENTITY_CUTOUT;
+        RenderPipeline.Builder builder = clonePipeline(source,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_final_etched_reticle"));
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_reticle_final"));
+        builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+        builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false));
+
+        return RenderPipelines.register(builder.build());
+    }
+
+    private static RenderPipeline createFinalVisibleReticlePipeline() {
+        RenderPipeline source = RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE;
+        RenderPipeline.Builder builder = clonePipeline(source,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_final_visible_reticle"));
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_reticle_final"));
+        builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+        builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false));
+
+        return RenderPipelines.register(builder.build());
+    }
+
+    private static RenderPipeline createFinalOcularRingPipeline() {
+        RenderPipeline source = RenderPipelines.ENTITY_CUTOUT;
+        RenderPipeline.Builder builder = clonePipeline(source,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_final_ocular_ring"));
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_ring_final"));
+        builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false));
+
+        return RenderPipelines.register(builder.build());
     }
 
     private static RenderPipeline createViewmodelCutoutPipeline() {

@@ -5,9 +5,12 @@
   "compatibilityLevel": "JAVA_17",
   "plugin": "com.tacz.guns.mixin.client.iris.IrisCompatMixinPlugin",
   "client": [
-    "IrisDepthRestoreShaderMixin"
+    "IrisDepthRestoreShaderMixin",
+    "IrisHandRendererReticlePassMixin",
+    "IrisFinalScopeOverlayMixin"
   ],
   "injectors": {
     "defaultRequire": 0
-  }
+  },
+  "_comment": "Iris 26.1 (1.11.x, MC 26.1.2) 集成。IrisHandRendererReticlePassMixin 为冻结的 scope 准星快照强制一次较晚的 HAND_TRANSLUCENT 手部 pass（注入点=renderTranslucent 的 setPhase 之后、endFrame 冲刷之前；门=ItemInHandRenderer.iris$isAnyHandTranslucent）；IrisFinalScopeOverlayMixin 在 IrisRenderingPipeline.finalizeLevelRendering TAIL（全部 composite/final 之后）用无雾 vanilla 片元重画同一份 3D 快照。两个手部 mixin 均 require=0，门控另受 IrisCompat 版本闸（1.11.x）限制；required=false + IrisCompatMixinPlugin 的 isModLoaded 双重兜底，未装 Iris 不受影响。"
 }
