@@ -300,6 +300,7 @@ public final class ScopeBodyRenderTypes {
      * 用无上限的 HashMap 不会有内存问题。
      */
     private static final Map<Identifier, RenderType> BODY_CACHE = new HashMap<>();
+    private static final Map<Identifier, RenderType> ARM_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> RETICLE_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> RETICLE_EMISSIVE_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> EMISSIVE_CACHE = new HashMap<>();
@@ -367,6 +368,42 @@ public final class ScopeBodyRenderTypes {
         ensureIrisCompatibility();
         return FLASH_TRANSLUCENT_CACHE.computeIfAbsent(texture,
                 tex -> create("tacz_scope_flash_translucent_clipped", FLASH_TRANSLUCENT_CLIPPED_PIPELINE, tex, true));
+    }
+
+    /**
+     * 第一人称手臂的「镜内 discard」版 {@code entityTranslucent}。
+     *
+     * <h2>为什么手臂要单独一个入口（镜内裁手一案）</h2>
+     * 手臂的提交发生在 {@code AvatarRenderer#renderHand} <b>内部</b>——字节码实读：
+     * <pre>collector.submitModelPart(arm, pose, RenderTypes.entityTranslucent(skin), light, NO_OVERLAY, null)</pre>
+     * RenderType 是 vanilla 自己挑的（玩家皮肤含半透明二层袖，必须 translucent），
+     * 我们无法像枪身那样在调用点直接换 —— 由 {@code RenderHelper} 用
+     * collector 代理把这次提交的 RenderType 原地替换成本方法的返回值。
+     *
+     * <p><b>管线复用</b> {@link #FLASH_TRANSLUCENT_CLIPPED_PIPELINE}：它就是
+     * vanilla {@code ENTITY_TRANSLUCENT} 管线的逐项抄本 + SCOPE_MASK 三件套，
+     * 火光与手臂在管线状态上无差别（同 blend、同 snippet、同 define）。
+     * 但 <b>RenderSetup 不能复用</b> {@code create(...)} 助手：vanilla
+     * {@code entityTranslucent} 的 setup（lambda$static$12 字节码实读）比
+     * entityCutout 多 {@code affectsCrumbling() + sortOnUpload()} 两项 ——
+     * 半透明批次不 sortOnUpload 会出现二层袖压一层臂的错序。照抄补齐。</p>
+     *
+     * <p>调用方须先过 {@link #maskReadyForViewmodel}，任一不满足退回
+     * vanilla {@code entityTranslucent} —— 与枪身/火光同一失败哲学：
+     * 特性坏掉最多回到「镜内见手臂」的现状，绝不画错模型。</p>
+     */
+    public static RenderType armClipped(Identifier skinTexture) {
+        ensureIrisCompatibility();
+        return ARM_CACHE.computeIfAbsent(skinTexture,
+                tex -> RenderType.create("tacz_scope_arm_clipped",
+                        RenderSetup.builder(FLASH_TRANSLUCENT_CLIPPED_PIPELINE)
+                                .withTexture("Sampler0", tex)
+                                .withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
+                                .useLightmap()
+                                .useOverlay()
+                                .affectsCrumbling()
+                                .sortOnUpload()
+                                .createRenderSetup()));
     }
 
     /**
