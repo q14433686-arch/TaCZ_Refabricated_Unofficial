@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  *
  * <p>移植自 VellEagle/TacZMeshLoader 1.21.1_fabric (GPL-3.0)。</p>
  */
-@Mixin(GunDisplayInstance.class)
+@Mixin(value = GunDisplayInstance.class, remap = false)
 public class GunDisplayInstanceMixin {
 
     @Shadow

@@ -32,7 +32,7 @@ import java.lang.reflect.Field;
  *
  * <p>移植自 VellEagle/TacZMeshLoader 1.21.1_fabric (GPL-3.0)。</p>
  */
-@Mixin(ClientAttachmentIndex.class)
+@Mixin(value = ClientAttachmentIndex.class, remap = false)
 public class ClientAttachmentIndexMixin {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("TacZMeshLoader");

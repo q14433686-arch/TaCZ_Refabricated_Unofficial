@@ -387,3 +387,47 @@ publishing {
         }
     }
 }
+
+// TEMP: dump step-1 GPU API surface for the TML no-shaders baking port.
+// Wired as a compileJava FINALIZER so the existing compile-check.yml (which only
+// invokes `./gradlew compileJava`) captures it into build-reports/compile-java.log
+// without needing a workflow edit (the CI GitHub App lacks `workflows` permission).
+// Remove before release (same lifecycle as the previous dumpMeshApi probe).
+tasks.register('dumpStep1Api') {
+    doLast {
+        def cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
+        def javap = { String cls, String... flags ->
+            def cmd = ['javap'] + (flags as List) + ['-classpath', cp, cls]
+            def proc = new ProcessBuilder(cmd).redirectErrorStream(true).start()
+            def txt = proc.inputStream.getText('UTF-8')
+            proc.waitFor()
+            return txt
+        }
+        def dump = { String cls, String... flags ->
+            println "===== ${cls} (${flags.join(' ')}) ====="
+            println javap(cls, *flags)
+            println ''
+        }
+        // Signatures for the classes the no-shaders GPU renderer touches.
+        ['com.mojang.blaze3d.systems.CommandEncoder',
+         'net.minecraft.client.renderer.DynamicUniforms',
+         'com.mojang.blaze3d.vertex.BufferBuilder',
+         'com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer',
+         'net.minecraft.client.renderer.feature.FeatureRenderDispatcher',
+         'net.minecraft.client.renderer.RenderTarget',
+         'net.minecraft.client.renderer.LightTexture',
+         'net.minecraft.client.renderer.RenderPipelines',
+         'com.mojang.blaze3d.pipeline.RenderPipeline',
+         'com.mojang.blaze3d.vertex.MeshData',
+         'net.minecraft.client.renderer.rendertype.RenderType',
+         'net.minecraft.client.renderer.rendertype.PreparedRenderType'].each { cls ->
+            dump(cls, '-p')
+        }
+        // Bytecode for FeatureRenderDispatcher.renderAllFeatures so we can find the
+        // solid/translucent phase boundary to hook the GPU hand pass into.
+        dump('net.minecraft.client.renderer.feature.FeatureRenderDispatcher', '-p', '-c')
+    }
+}
+
+// Run the API probe after every compileJava (CI captures STDOUT into the log).
+tasks.named('compileJava').configure { finalizedBy('dumpStep1Api') }
