@@ -55,7 +55,7 @@ import java.util.OptionalInt;
  * </ul>
  *
  * <h2>Whole-screen FOV zoom suppression</h2>
- * {@link #suppressesWorldFovZoom()} is consulted by {@code CameraSetupEvent#applyScopeMagnification}
+ * {@link #suppressesWorldFovZoom(float)} is consulted by {@code CameraSetupEvent#applyScopeMagnification}
  * so the world outside the lens stays at 1× while the lens shows the {@code Z}-magnified scene.
  * If PIP fails or is disabled this returns false and the existing whole-screen FOV zoom resumes.
  */
@@ -111,12 +111,19 @@ public final class ScopePipRenderState {
      * at the hand-pass HEAD, so gating the FOV on it made the world POV jump while the player was
      * entering/leaving ADS. The whole-screen zoom must be removed for the whole transition, not only
      * on frames where the lens capture happened to be written before the FOV was computed.</p>
+     *
+     * <p>{@code partialTicks} must be the <b>same</b> frame partial-tick that
+     * {@code CameraSetupEvent#applyScopeMagnification} uses for its own fallback zoom, because the
+     * suppression gate is literally asking "would this frame apply a non-1x whole-screen zoom?".
+     * A fixed tick value does not answer that: {@code partialTicks=1} reads the current tick, which
+     * reaches 0 one tick before the interpolated value on the exit boundary, so the gate dropped one
+     * frame early and let a residual zoom pulse through (the remaining exit POV jump).</p>
      */
-    public static boolean suppressesWorldFovZoom() {
+    public static boolean suppressesWorldFovZoom(float partialTicks) {
         // The Iris check is a stable per-session fact, not a mid-frame capture outcome: when a shader
         // pack is active the lens is deliberately not drawn, so the old whole-screen FOV zoom must
         // stay on rather than leaving the world at 1x with no PIP picture.
-        return isEnabled() && !IrisCompat.isUsingRenderPack() && currentZoom() > 1 && isAimingStarted();
+        return isEnabled() && !IrisCompat.isUsingRenderPack() && currentZoom() > 1 && isAimingStarted(partialTicks);
     }
 
     /**
@@ -147,14 +154,18 @@ public final class ScopePipRenderState {
     /**
      * Stable per-frame check: has ADS begun at all (used by the FOV suppression gate).
      *
-     * <p>This must read the <b>current-tick</b> progress ({@code partialTicks=1}), not
-     * {@code partialTicks=0}. {@code LocalPlayerAim#getClientAimingProgress(0)} returns the
-     * <b>previous</b> tick's value, while {@code CameraSetupEvent} interpolates with the frame's
-     * {@code partialTick}. On the entering/leaving boundary those two disagree, so gating on the old
-     * value let a one-frame pulse of the old whole-screen zoom through (the POV jump). Current-tick
-     * progress is monotonic across the whole transition, so the world POV stays fixed at 1x.</p>
+     * <p>This must use the <b>same {@code partialTicks}</b> that {@code CameraSetupEvent}'s fallback
+     * zoom uses. If the gate reads a fixed tick value ({@code 0} = previous tick, {@code 1} =
+     * current tick) it answers "is the player aiming on that tick", not "would this frame try to
+     * apply a whole-screen zoom?". On the entering boundary the interpolated value can be > 0 while
+     * the previous tick is still 0; on the exit boundary the current tick is already 0 while the
+     * interpolated value is still > 0. Either mismatch leaked one frame of the old whole-screen zoom
+     * — the previous-tick gate on entry, the current-tick gate on exit. The interpolated progress is
+     * exactly the factor the fallback zoom uses, so gating on "interpolated progress > 0" keeps the
+     * world POV at 1x for the whole transition and drops to the fallback only when it would be a
+     * 1x no-op.</p>
      */
-    private static boolean isAimingStarted() {
+    private static boolean isAimingStarted(float partialTicks) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) {
             return false;
@@ -168,7 +179,7 @@ public final class ScopePipRenderState {
             IGunOperator entityOperator = IGunOperator.fromLivingEntity(mc.player);
             return entityOperator != null && entityOperator.getSynAimingProgress() > 0.0f;
         }
-        return operator.getClientAimingProgress(1.0f) > 0.0f;
+        return operator.getClientAimingProgress(partialTicks) > 0.0f;
     }
 
     private static boolean isAiming(Minecraft mc) {

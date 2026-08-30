@@ -97,7 +97,11 @@ public class CameraSetupEvent {
                 return;
             }
             float zoom = iGun.getAimingZoom(stack);
-            if (ScopePipRenderState.suppressesWorldFovZoom()) {
+            // Gate on the same interpolated progress the fallback below uses (frame partial-tick),
+            // so a boundary frame cannot "fall through" with a non-1x aim value. A fixed 0/1 tick
+            // value is one frame out of phase at one side of the transition and still caused the
+            // exit POV jump.
+            if (ScopePipRenderState.suppressesWorldFovZoom((float) event.getPartialTick())) {
                 // Step 3 (real PIP): only the lens magnetically magnifies; the world outside stays
                 // 1x, so the camera FOV must not be narrowed by the old whole-screen zoom.
                 return;

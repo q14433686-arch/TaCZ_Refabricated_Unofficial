@@ -78,12 +78,16 @@ Step 2 在 RETURN 合成（孔径深度拷贝此刻已完成），抓取则必�
 “本帧抓图是否成功”，而 FOV 计算发生在同一帧更早/更晚的位置，这条标志在开镜/收镜过渡中
 会时真时假，导致世界 POV 短暂跳变（本次实机症状 3）。
 
-键点二：aim-start 查询要用**当前 tick 的 progress（`partialTicks=1`）**，不能用
-`partialTicks=0`。`LocalPlayerAim#getClientAimingProgress(0)` 返回的是**上一 tick** 的值；
-而 `CameraSetupEvent#applyScopeMagnification` 用 `event.getPartialTick()` 插值。进入/离开 ADS
-的边界帧上两者不一致，门就会放走一帧旧整屏变焦 —— 这正是把 `sceneCaptured` 改成
-aim-start 查询后仍残留的 POV 跳变根因。`partialTicks=1` 得到的是当前 tick 的单调 progress，
-整段过渡中门始终为真，世界 POV 保持 1×。
+键点二：aim-start 查询必须用**和 FOV 回落分支完全相同的插值 progress**，即把帧的
+`event.getPartialTick()` 透传给门，而不是固定 `partialTicks=0` 或 `partialTicks=1`。
+`LocalPlayerAim#getClientAimingProgress(0)` 是上一 tick、`(1)` 是当前 tick，而
+`CameraSetupEvent#applyScopeMagnification` 的回落分支用 `event.getPartialTick()` 插值：
+- 进入边界，上一 tick 可能是 0、插值已 > 0 → 固定 `0` 提前放走变焦；
+- 退出边界，当前 tick 已到 0、插值仍 > 0 → 固定 `1` 也提前放走一帧残余变焦。
+
+两次实机分别踩到这两个方向后，正确做法是门本身回答“本帧是否要应用非 1× 整屏变焦”，
+因此直接用同一 `partialTicks` 查询 `getClientAimingProgress`，progress > 0 即抑制；progress
+为 0 时回落分支算出的倍率就是 1×、不产生跳变。
 
 `IrisCompat.isUsingRenderPack()` 也保留在门里：它在整个会话内稳定为真/假。开着光影时本步
 明确不画镜片，因此若照常抑制 FOV 就会变成“镜外 1×、镜内无画面”，必须让旧整屏变焦继续工作。
