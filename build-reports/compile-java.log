@@ -1,4 +1,4 @@
-commit: 6990a14d41a37d25b76be2a3a4d9a2046300aa4a
+commit: 944b12bbce8bcd3ae54eda34b65a4581f2d19484
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -40,11 +40,11 @@ Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
 Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
@@ -75,249 +75,7 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 6 warnings
-
-> Task :dumpMeshApi
-===== MISSING com.mojang.blaze3d.vertex.VertexBuffer =====
-Error: class not found: com.mojang.blaze3d.vertex.VertexBuffer
-===== com.mojang.blaze3d.vertex.MeshData =====
-Compiled from "MeshData.java"
-public class com.mojang.blaze3d.vertex.MeshData implements java.lang.AutoCloseable {
-  private final com.mojang.blaze3d.vertex.ByteBufferBuilder$Result vertexBuffer;
-  private com.mojang.blaze3d.vertex.ByteBufferBuilder$Result indexBuffer;
-  private final com.mojang.blaze3d.vertex.MeshData$DrawState drawState;
-  public com.mojang.blaze3d.vertex.MeshData(com.mojang.blaze3d.vertex.ByteBufferBuilder$Result, com.mojang.blaze3d.vertex.MeshData$DrawState);
-  private static com.mojang.blaze3d.vertex.CompactVectorArray unpackQuadCentroids(java.nio.ByteBuffer, int, com.mojang.blaze3d.vertex.VertexFormat);
-  public java.nio.ByteBuffer vertexBuffer();
-  public java.nio.ByteBuffer indexBuffer();
-  public com.mojang.blaze3d.vertex.MeshData$DrawState drawState();
-  public com.mojang.blaze3d.vertex.MeshData$SortState sortQuads(com.mojang.blaze3d.vertex.ByteBufferBuilder, com.mojang.blaze3d.vertex.VertexSorting);
-  public void close();
-}
-
-===== com.mojang.blaze3d.vertex.Tesselator =====
-Compiled from "Tesselator.java"
-public class com.mojang.blaze3d.vertex.Tesselator {
-  private static final int MAX_BYTES;
-  private final com.mojang.blaze3d.vertex.ByteBufferBuilder buffer;
-  private static com.mojang.blaze3d.vertex.Tesselator instance;
-  public static void init();
-  public static com.mojang.blaze3d.vertex.Tesselator getInstance();
-  public com.mojang.blaze3d.vertex.Tesselator(int);
-  public com.mojang.blaze3d.vertex.Tesselator();
-  public com.mojang.blaze3d.vertex.BufferBuilder begin(com.mojang.blaze3d.vertex.VertexFormat$Mode, com.mojang.blaze3d.vertex.VertexFormat);
-  public void clear();
-}
-
-===== com.mojang.blaze3d.vertex.ByteBufferBuilder =====
-Compiled from "ByteBufferBuilder.java"
-public class com.mojang.blaze3d.vertex.ByteBufferBuilder implements java.lang.AutoCloseable {
-  private static final com.mojang.jtracy.MemoryPool MEMORY_POOL;
-  private static final org.slf4j.Logger LOGGER;
-  private static final org.lwjgl.system.MemoryUtil$MemoryAllocator ALLOCATOR;
-  private static final long DEFAULT_MAX_CAPACITY;
-  private static final int MAX_GROWTH_SIZE;
-  private static final int BUFFER_FREED_GENERATION;
-  long pointer;
-  private long capacity;
-  private final long maxCapacity;
-  private long writeOffset;
-  private long nextResultOffset;
-  private int resultCount;
-  private int generation;
-  public com.mojang.blaze3d.vertex.ByteBufferBuilder(int, long);
-  public com.mojang.blaze3d.vertex.ByteBufferBuilder(int);
-  public static com.mojang.blaze3d.vertex.ByteBufferBuilder exactlySized(int);
-  public long reserve(int);
-  private void ensureCapacity(long);
-  private void resize(long);
-  public com.mojang.blaze3d.vertex.ByteBufferBuilder$Result build();
-  public void clear();
-  public void discard();
-  boolean isValid(int);
-  void freeResult();
-  private void discardResults();
-  public void close();
-  private void checkOpen();
-  static {};
-}
-
-===== com.mojang.blaze3d.systems.RenderPass =====
-Compiled from "RenderPass.java"
-public interface com.mojang.blaze3d.systems.RenderPass extends java.lang.AutoCloseable {
-  public abstract void pushDebugGroup(java.util.function.Supplier<java.lang.String>);
-  public abstract void popDebugGroup();
-  public abstract void setPipeline(com.mojang.blaze3d.pipeline.RenderPipeline);
-  public abstract void bindTexture(java.lang.String, com.mojang.blaze3d.textures.GpuTextureView, com.mojang.blaze3d.textures.GpuSampler);
-  public abstract void setUniform(java.lang.String, com.mojang.blaze3d.buffers.GpuBuffer);
-  public abstract void setUniform(java.lang.String, com.mojang.blaze3d.buffers.GpuBufferSlice);
-  public abstract void enableScissor(int, int, int, int);
-  public abstract void disableScissor();
-  public abstract void setVertexBuffer(int, com.mojang.blaze3d.buffers.GpuBuffer);
-  public abstract void setIndexBuffer(com.mojang.blaze3d.buffers.GpuBuffer, com.mojang.blaze3d.vertex.VertexFormat$IndexType);
-  public abstract void drawIndexed(int, int, int, int);
-  public abstract <T> void drawMultipleIndexed(java.util.Collection<com.mojang.blaze3d.systems.RenderPass$Draw<T>>, com.mojang.blaze3d.buffers.GpuBuffer, com.mojang.blaze3d.vertex.VertexFormat$IndexType, java.util.Collection<java.lang.String>, T);
-  public abstract void draw(int, int);
-  public abstract void close();
-}
-
-===== com.mojang.blaze3d.pipeline.RenderPipeline$Builder =====
-Compiled from "RenderPipeline.java"
-public class com.mojang.blaze3d.pipeline.RenderPipeline$Builder implements net.fabricmc.fabric.api.client.rendering.v1.FabricRenderPipeline$Builder {
-  private static int nextPipelineSortKey;
-  private java.util.Optional<net.minecraft.resources.Identifier> location;
-  private java.util.Optional<net.minecraft.resources.Identifier> fragmentShader;
-  private java.util.Optional<net.minecraft.resources.Identifier> vertexShader;
-  private java.util.Optional<net.minecraft.client.renderer.ShaderDefines$Builder> definesBuilder;
-  private java.util.Optional<java.util.List<java.lang.String>> samplers;
-  private java.util.Optional<java.util.List<com.mojang.blaze3d.pipeline.RenderPipeline$UniformDescription>> uniforms;
-  private java.util.Optional<com.mojang.blaze3d.platform.DepthTestFunction> depthTestFunction;
-  private java.util.Optional<com.mojang.blaze3d.platform.PolygonMode> polygonMode;
-  private java.util.Optional<java.lang.Boolean> cull;
-  private java.util.Optional<java.lang.Boolean> writeColor;
-  private java.util.Optional<java.lang.Boolean> writeAlpha;
-  private java.util.Optional<java.lang.Boolean> writeDepth;
-  private java.util.Optional<com.mojang.blaze3d.platform.LogicOp> colorLogic;
-  private java.util.Optional<com.mojang.blaze3d.pipeline.BlendFunction> blendFunction;
-  private java.util.Optional<com.mojang.blaze3d.vertex.VertexFormat> vertexFormat;
-  private java.util.Optional<com.mojang.blaze3d.vertex.VertexFormat$Mode> vertexFormatMode;
-  private float depthBiasScaleFactor;
-  private float depthBiasConstant;
-  com.mojang.blaze3d.pipeline.RenderPipeline$Builder();
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withLocation(java.lang.String);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withLocation(net.minecraft.resources.Identifier);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withFragmentShader(java.lang.String);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withFragmentShader(net.minecraft.resources.Identifier);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withVertexShader(java.lang.String);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withVertexShader(net.minecraft.resources.Identifier);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withShaderDefine(java.lang.String);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withShaderDefine(java.lang.String, int);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withShaderDefine(java.lang.String, float);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withSampler(java.lang.String);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withUniform(java.lang.String, com.mojang.blaze3d.shaders.UniformType);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withUniform(java.lang.String, com.mojang.blaze3d.shaders.UniformType, com.mojang.blaze3d.textures.TextureFormat);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withDepthTestFunction(com.mojang.blaze3d.platform.DepthTestFunction);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withPolygonMode(com.mojang.blaze3d.platform.PolygonMode);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withCull(boolean);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withBlend(com.mojang.blaze3d.pipeline.BlendFunction);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withoutBlend();
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withColorWrite(boolean);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withColorWrite(boolean, boolean);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withDepthWrite(boolean);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withColorLogic(com.mojang.blaze3d.platform.LogicOp);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withVertexFormat(com.mojang.blaze3d.vertex.VertexFormat, com.mojang.blaze3d.vertex.VertexFormat$Mode);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withDepthBias(float, float);
-  void withSnippet(com.mojang.blaze3d.pipeline.RenderPipeline$Snippet);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Snippet buildSnippet();
-  public com.mojang.blaze3d.pipeline.RenderPipeline build();
-  private void lambda$withSnippet$1(java.util.List);
-  private void lambda$withSnippet$0(java.util.List);
-}
-
-===== com.mojang.blaze3d.systems.GpuDevice =====
-Compiled from "GpuDevice.java"
-public interface com.mojang.blaze3d.systems.GpuDevice {
-  public abstract com.mojang.blaze3d.systems.CommandEncoder createCommandEncoder();
-  public abstract com.mojang.blaze3d.textures.GpuSampler createSampler(com.mojang.blaze3d.textures.AddressMode, com.mojang.blaze3d.textures.AddressMode, com.mojang.blaze3d.textures.FilterMode, com.mojang.blaze3d.textures.FilterMode, int, java.util.OptionalDouble);
-  public abstract com.mojang.blaze3d.textures.GpuTexture createTexture(java.util.function.Supplier<java.lang.String>, int, com.mojang.blaze3d.textures.TextureFormat, int, int, int, int);
-  public abstract com.mojang.blaze3d.textures.GpuTexture createTexture(java.lang.String, int, com.mojang.blaze3d.textures.TextureFormat, int, int, int, int);
-  public abstract com.mojang.blaze3d.textures.GpuTextureView createTextureView(com.mojang.blaze3d.textures.GpuTexture);
-  public abstract com.mojang.blaze3d.textures.GpuTextureView createTextureView(com.mojang.blaze3d.textures.GpuTexture, int, int);
-  public abstract com.mojang.blaze3d.buffers.GpuBuffer createBuffer(java.util.function.Supplier<java.lang.String>, int, long);
-  public abstract com.mojang.blaze3d.buffers.GpuBuffer createBuffer(java.util.function.Supplier<java.lang.String>, int, java.nio.ByteBuffer);
-  public abstract java.lang.String getImplementationInformation();
-  public abstract java.util.List<java.lang.String> getLastDebugMessages();
-  public abstract boolean isDebuggingEnabled();
-  public abstract java.lang.String getVendor();
-  public abstract java.lang.String getBackendName();
-  public abstract java.lang.String getVersion();
-  public abstract java.lang.String getRenderer();
-  public abstract int getMaxTextureSize();
-  public abstract int getUniformOffsetAlignment();
-  public default com.mojang.blaze3d.pipeline.CompiledRenderPipeline precompilePipeline(com.mojang.blaze3d.pipeline.RenderPipeline);
-  public abstract com.mojang.blaze3d.pipeline.CompiledRenderPipeline precompilePipeline(com.mojang.blaze3d.pipeline.RenderPipeline, com.mojang.blaze3d.shaders.ShaderSource);
-  public abstract void clearPipelineCache();
-  public abstract java.util.List<java.lang.String> getEnabledExtensions();
-  public abstract int getMaxSupportedAnisotropy();
-  public abstract void close();
-}
-
-===== com.mojang.blaze3d.buffers.GpuBuffer =====
-Compiled from "GpuBuffer.java"
-public abstract class com.mojang.blaze3d.buffers.GpuBuffer implements java.lang.AutoCloseable {
-  public static final int USAGE_MAP_READ;
-  public static final int USAGE_MAP_WRITE;
-  public static final int USAGE_HINT_CLIENT_STORAGE;
-  public static final int USAGE_COPY_DST;
-  public static final int USAGE_COPY_SRC;
-  public static final int USAGE_VERTEX;
-  public static final int USAGE_INDEX;
-  public static final int USAGE_UNIFORM;
-  public static final int USAGE_UNIFORM_TEXEL_BUFFER;
-  private final int usage;
-  private final long size;
-  public com.mojang.blaze3d.buffers.GpuBuffer(int, long);
-  public long size();
-  public int usage();
-  public abstract boolean isClosed();
-  public abstract void close();
-  public com.mojang.blaze3d.buffers.GpuBufferSlice slice(long, long);
-  public com.mojang.blaze3d.buffers.GpuBufferSlice slice();
-}
-
-===== com.mojang.blaze3d.vertex.DefaultVertexFormat =====
-Compiled from "DefaultVertexFormat.java"
-public class com.mojang.blaze3d.vertex.DefaultVertexFormat {
-  public static final com.mojang.blaze3d.vertex.VertexFormat EMPTY;
-  public static final com.mojang.blaze3d.vertex.VertexFormat BLOCK;
-  public static final com.mojang.blaze3d.vertex.VertexFormat NEW_ENTITY;
-  public static final com.mojang.blaze3d.vertex.VertexFormat PARTICLE;
-  public static final com.mojang.blaze3d.vertex.VertexFormat POSITION;
-  public static final com.mojang.blaze3d.vertex.VertexFormat POSITION_COLOR;
-  public static final com.mojang.blaze3d.vertex.VertexFormat POSITION_COLOR_NORMAL;
-  public static final com.mojang.blaze3d.vertex.VertexFormat POSITION_COLOR_LIGHTMAP;
-  public static final com.mojang.blaze3d.vertex.VertexFormat POSITION_TEX;
-  public static final com.mojang.blaze3d.vertex.VertexFormat POSITION_TEX_COLOR;
-  public static final com.mojang.blaze3d.vertex.VertexFormat POSITION_COLOR_TEX_LIGHTMAP;
-  public static final com.mojang.blaze3d.vertex.VertexFormat POSITION_TEX_LIGHTMAP_COLOR;
-  public static final com.mojang.blaze3d.vertex.VertexFormat POSITION_TEX_COLOR_NORMAL;
-  public static final com.mojang.blaze3d.vertex.VertexFormat POSITION_COLOR_LINE_WIDTH;
-  public static final com.mojang.blaze3d.vertex.VertexFormat POSITION_COLOR_NORMAL_LINE_WIDTH;
-  public com.mojang.blaze3d.vertex.DefaultVertexFormat();
-  static {};
-}
-
-===== MISSING net.minecraft.client.renderer.BindGroupLayouts =====
-Error: class not found: net.minecraft.client.renderer.BindGroupLayouts
-===== RenderSystem (filtered) =====
-  public static com.mojang.blaze3d.buffers.GpuBufferSlice getShaderFog();
-  public static com.mojang.blaze3d.buffers.GpuBufferSlice getShaderLights();
-  public static com.mojang.blaze3d.buffers.GpuBufferSlice getProjectionMatrixBuffer();
-  public static org.joml.Matrix4f getModelViewMatrix();
-  public static org.joml.Matrix4fStack getModelViewStack();
-  public static com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer getSequentialBuffer(com.mojang.blaze3d.vertex.VertexFormat$Mode);
-  public static com.mojang.blaze3d.systems.GpuDevice getDevice();
-  public static net.minecraft.client.renderer.DynamicUniforms getDynamicUniforms();
-  public static void bindDefaultUniforms(com.mojang.blaze3d.systems.RenderPass);
-===== RenderPipelines (filtered) =====
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet MATRICES_FOG_SNIPPET;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet ENTITY_SNIPPET;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet ENTITY_EMISSIVE_SNIPPET;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_SOLID;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_SOLID_Z_OFFSET_FORWARD;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_CUTOUT;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_CUTOUT_NO_CULL;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_CUTOUT_NO_CULL_Z_OFFSET;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_TRANSLUCENT;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_TRANSLUCENT_EMISSIVE;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_SMOOTH_CUTOUT;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_NO_OUTLINE;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_DECAL;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_SHADOW;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ITEM_ENTITY_TRANSLUCENT_CULL;
-  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_OUTLINE_BLIT;
-  public static com.mojang.blaze3d.pipeline.RenderPipeline register(com.mojang.blaze3d.pipeline.RenderPipeline);
-===== RenderType (filtered) =====
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788106654389.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788106955821.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -327,8 +85,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 39s
-2 actionable tasks: 2 executed
+BUILD SUCCESSFUL in 1m 33s
+1 actionable task: 1 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
 == job status: success ==
