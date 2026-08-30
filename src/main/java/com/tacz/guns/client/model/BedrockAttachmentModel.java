@@ -442,50 +442,45 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     /**
      * 添加枪械自定义的文本显示。
      *
-     * <h2>为什么这里要判断开镜进度</h2>
-     * 瞄具上的文字（如 MK5HD 的弹药计数与 "AMMO" 标签）走
-     * {@code SubmitNodeCollector#submitText} 的 <b>vanilla 字体管线</b>，
-     * 用不了我们给镜身/准星写的 {@code scope_body.fsh}
-     * （那是 {@code entityCutout} 的变体，靠 {@code SCOPE_MASK_INVERT}
-     * 采样掩码做 discard）。也就是说<b>无法把它裁进镜内</b>。
+     * <h2>历史：从「开镜门禁」到「掩码裁剪」（镜内文字一案，两阶段）</h2>
+     * 瞄具上的文字（如 MK5HD 的弹药计数与 "AMMO" 标签）此前走
+     * {@code SubmitNodeCollector#submitText} 的 vanilla 字体管线 ——
+     * RenderType 由 {@code GlyphRenderTypes} 三件套在
+     * {@code TextFeatureRenderer} 内部写死（字节码实读），调用方无注入点，
+     * 所以第一阶段只能加「开镜到 0.35 才显示」的门禁兜着（治标）：
+     * MK5HD 的文字节点落在目镜边缘附近（文字 y=22.375 vs 目镜 y=21.875），
+     * 稍不对轴就穿出圆孔。上游 stencil 版同样不裁文字，但它的圆孔与镜身
+     * 严丝合缝、溢出不明显；我们的屏幕空间掩码边界更"硬"，露出来很扎眼。
      *
-     * <p>实测 MK5HD 的两个文字节点位于世界坐标 {@code y=22.375}，
-     * 而其筒镜目镜 {@code ocular_scope_2} 在 {@code y=21.875} ——
-     * 文字比目镜中心高 0.5、且 X 偏左 0.75，正好落在目镜边缘附近，
-     * 开镜后就露到圆孔外面（用户实测：「文字不像准星那样只在镜内出现，而是会溢出」）。
+     * <p>第二阶段（本轮）治本：26.2 的 {@code Font#prepareText → visit}
+     * 后门允许徒手拿到字形几何，{@code ScopeTextSubmitter} 把它们塞进
+     * {@code scope_text} 裁剪管线（语义同准星的 SCOPE_MASK_INVERT：
+     * 只保留镜内）。文字从此与准星同族 —— 被目镜投影约束，不再溢出。</p>
      *
-     * <h2>上游是什么行为</h2>
-     * 上游 {@code renderScope} 的顺序是
-     * <pre>
-     * stencilFunc(GL_ALWAYS, 0);          // 先【关掉】裁剪
-     * disableItemEntityStencilTest();
-     * super.render(...);                  // 文字在这里才画
-     * </pre>
-     * 即<b>上游同样不裁剪这些文字</b>。所以严格说这不是移植缺陷，
-     * 但上游靠 stencil 时圆孔与镜身严丝合缝，溢出不明显；
-     * 我们的掩码是屏幕空间的，边界更"硬"，一露出来就很扎眼。
+     * <h2>门禁为什么还留着</h2>
+     * <ul>
+     *   <li><b>掩码可用时</b>它是文字的「出现时机」：掩码的圆孔在开镜早期
+     *       很小甚至没有（掩码几何登记也是开镜后才发生），过早提交只是
+     *       整段被 discard 的无用功；0.35 与准星 FADE_IN_START 同值，
+     *       文字与准星同步出现，观感一致。</li>
+     *   <li><b>掩码不可用时</b>（配置关/光影/target 失败）它就是第一阶段
+     *       的全部语义 —— {@code ScopeTextSubmitter#submit} 返回 false，
+     *       {@code TextShowRender} 回退 vanilla submitText，门禁保证
+     *       回退路径仍然是「开镜才显示」的已验证行为。</li>
+     * </ul>
      *
-     * <h2>做法</h2>
-     * 与准星保持一致：<b>只在开镜时显示</b>。
-     * 复用 {@link IlluminatedReticleRenderer} 那条 {@code FADE_IN_START = 0.35}
-     * 的判据 —— 未开镜时本就看不到镜内，文字自然也不该出现；
-     * 开镜后视线对准光轴，文字落在圆孔内，不会溢出。
-     *
-     * <p>这是<b>保守做法</b>：不碰字体管线、不碰掩码链路，
-     * 只在提交前加一道门禁。代价是腰射时看不到瞄具上的弹药计数 ——
-     * 但那本来也是「凑到镜前才看得清」的信息，符合直觉。
-     *
-     * <p>注意只对<b>瞄具</b>生效：{@code BedrockGunModel} 里同名方法不加此门禁，
-     * 枪身上的文字（如弹匣计数）本就该常显。
+     * <p>注意只对<b>瞄具</b>生效：{@code BedrockGunModel} 里同名方法
+     * 既不加门禁也不开裁剪（clipToScopeMask=false）——
+     * 枪身上的文字（如弹匣计数）本就该常显、也不在镜筒上。</p>
      */
     public void setTextShowList(Map<String, TextShow> textShowList) {
         textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name,
                 bedrockPart -> {
-                    // 未开镜（或刚开始开镜）时不提交，避免文字溢出到镜孔之外。
+                    // 未开镜（或刚开始开镜）时不提交，见 javadoc「门禁为什么还留着」。
                     if (currentAimingProgress() <= TEXT_SHOW_AIM_START) {
                         return null;
                     }
-                    return new TextShowRender(this, textShow, currentGunItem);
+                    return new TextShowRender(this, textShow, currentGunItem, true);
                 }));
     }
 
