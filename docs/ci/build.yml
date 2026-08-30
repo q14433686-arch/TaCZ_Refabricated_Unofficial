@@ -90,7 +90,10 @@ jobs:
       - name: Upload jars
         uses: actions/upload-artifact@v4
         with:
-          name: TACZ-Refabricated-${{ github.ref_name }}-${{ github.sha }}
+          # 注意:artifact 名不能含 '/' 等字符,所以这里不能用 github.ref_name
+          # (arena/xxx 带斜杠,首跑 2026-08-31 就是这样失败的)。分支名在 run
+          # 页面本来就有,名字里只放 sha 前缀即可。
+          name: TACZ-Refabricated-${{ github.sha }}
           path: |
             build/libs/*.jar
             !build/libs/*-sources.jar
