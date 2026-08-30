@@ -1,4 +1,4 @@
-commit: 95afcac4c52e3d940e8948be50d9d433531baa47
+commit: de9b285f7da3951a024a38cab8a9acd13e9639f3
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -67,357 +67,662 @@ Cannot remap valueFormatter because it does not exist in any of the targets [] o
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisDepthRestoreShaderMixin.java:23: warning: Mixin target net.irisshaders.iris.pipeline.programs.ShaderCreator is public and should be specified in value
 @Mixin(targets = "net.irisshaders.iris.pipeline.programs.ShaderCreator", remap = false)
 ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/GunDisplayInstanceMixin.java:39: error: Unable to locate obfuscation mapping for @Inject target checkTextureAndModel
-    @Inject(method = "checkTextureAndModel", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/GunDisplayInstanceMixin.java:49: error: Unable to locate obfuscation mapping for @Inject target checkLod
-    @Inject(method = "checkLod", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAttachmentIndexMixin.java:40: error: Unable to locate obfuscation mapping for @Inject target checkTextureAndModel
-    @Inject(method = "checkTextureAndModel", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAttachmentIndexMixin.java:64: error: Unable to locate obfuscation mapping for @Inject target checkLod
-    @Inject(method = "checkLod", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAmmoIndexMixin.java:32: error: Unable to locate obfuscation mapping for @Inject target checkTextureAndModel
-    @Inject(method = "checkTextureAndModel", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAmmoIndexMixin.java:37: error: Unable to locate obfuscation mapping for @Inject target checkAmmoEntity
-    @Inject(method = "checkAmmoEntity", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAmmoIndexMixin.java:46: error: Unable to locate obfuscation mapping for @Inject target checkShell
-    @Inject(method = "checkShell", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientBlockIndexMixin.java:30: error: Unable to locate obfuscation mapping for @Inject target checkModel
-    @Inject(method = "checkModel", at = @At("TAIL"))
-    ^
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/HumanoidModelMixin.java:68: warning: Cannot find target method "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" for @Inject.method="setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" in net.minecraft.client.model.HumanoidModel
     @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At(value = "TAIL"))
     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/GunDisplayInstanceMixin.java:33: warning: Unable to locate obfuscation mapping for @Shadow field
-    @Shadow
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/GunDisplayInstanceMixin.java:36: warning: Unable to locate obfuscation mapping for @Shadow field
-    @Shadow
-    ^
-8 errors
-8 warnings
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+6 warnings
 
-> Task :compileJava FAILED
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788120066200.json
+> Task :dumpStep1Api
+===== com.mojang.blaze3d.systems.CommandEncoder (-p) =====
+Compiled from "CommandEncoder.java"
+public interface com.mojang.blaze3d.systems.CommandEncoder {
+  public abstract com.mojang.blaze3d.systems.RenderPass createRenderPass(java.util.function.Supplier<java.lang.String>, com.mojang.blaze3d.textures.GpuTextureView, java.util.OptionalInt);
+  public abstract com.mojang.blaze3d.systems.RenderPass createRenderPass(java.util.function.Supplier<java.lang.String>, com.mojang.blaze3d.textures.GpuTextureView, java.util.OptionalInt, com.mojang.blaze3d.textures.GpuTextureView, java.util.OptionalDouble);
+  public abstract void clearColorTexture(com.mojang.blaze3d.textures.GpuTexture, int);
+  public abstract void clearColorAndDepthTextures(com.mojang.blaze3d.textures.GpuTexture, int, com.mojang.blaze3d.textures.GpuTexture, double);
+  public abstract void clearColorAndDepthTextures(com.mojang.blaze3d.textures.GpuTexture, int, com.mojang.blaze3d.textures.GpuTexture, double, int, int, int, int);
+  public abstract void clearDepthTexture(com.mojang.blaze3d.textures.GpuTexture, double);
+  public abstract void writeToBuffer(com.mojang.blaze3d.buffers.GpuBufferSlice, java.nio.ByteBuffer);
+  public abstract com.mojang.blaze3d.buffers.GpuBuffer$MappedView mapBuffer(com.mojang.blaze3d.buffers.GpuBuffer, boolean, boolean);
+  public abstract com.mojang.blaze3d.buffers.GpuBuffer$MappedView mapBuffer(com.mojang.blaze3d.buffers.GpuBufferSlice, boolean, boolean);
+  public abstract void copyToBuffer(com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.buffers.GpuBufferSlice);
+  public abstract void writeToTexture(com.mojang.blaze3d.textures.GpuTexture, com.mojang.blaze3d.platform.NativeImage);
+  public abstract void writeToTexture(com.mojang.blaze3d.textures.GpuTexture, com.mojang.blaze3d.platform.NativeImage, int, int, int, int, int, int, int, int);
+  public abstract void writeToTexture(com.mojang.blaze3d.textures.GpuTexture, java.nio.ByteBuffer, com.mojang.blaze3d.platform.NativeImage$Format, int, int, int, int, int, int);
+  public abstract void copyTextureToBuffer(com.mojang.blaze3d.textures.GpuTexture, com.mojang.blaze3d.buffers.GpuBuffer, long, java.lang.Runnable, int);
+  public abstract void copyTextureToBuffer(com.mojang.blaze3d.textures.GpuTexture, com.mojang.blaze3d.buffers.GpuBuffer, long, java.lang.Runnable, int, int, int, int, int);
+  public abstract void copyTextureToTexture(com.mojang.blaze3d.textures.GpuTexture, com.mojang.blaze3d.textures.GpuTexture, int, int, int, int, int, int, int);
+  public abstract void presentTexture(com.mojang.blaze3d.textures.GpuTextureView);
+  public abstract com.mojang.blaze3d.buffers.GpuFence createFence();
+  public abstract com.mojang.blaze3d.systems.GpuQuery timerQueryBegin();
+  public abstract void timerQueryEnd(com.mojang.blaze3d.systems.GpuQuery);
+}
+
+
+===== net.minecraft.client.renderer.DynamicUniforms (-p) =====
+Compiled from "DynamicUniforms.java"
+public class net.minecraft.client.renderer.DynamicUniforms implements java.lang.AutoCloseable {
+  public static final int TRANSFORM_UBO_SIZE;
+  public static final int CHUNK_SECTION_UBO_SIZE;
+  private static final int INITIAL_CAPACITY;
+  private final net.minecraft.client.renderer.DynamicUniformStorage<net.minecraft.client.renderer.DynamicUniforms$Transform> transforms;
+  private final net.minecraft.client.renderer.DynamicUniformStorage<net.minecraft.client.renderer.DynamicUniforms$ChunkSectionInfo> chunkSections;
+  public net.minecraft.client.renderer.DynamicUniforms();
+  public void reset();
+  public void close();
+  public com.mojang.blaze3d.buffers.GpuBufferSlice writeTransform(org.joml.Matrix4fc, org.joml.Vector4fc, org.joml.Vector3fc, org.joml.Matrix4fc);
+  public com.mojang.blaze3d.buffers.GpuBufferSlice[] writeTransforms(net.minecraft.client.renderer.DynamicUniforms$Transform...);
+  public com.mojang.blaze3d.buffers.GpuBufferSlice[] writeChunkSections(net.minecraft.client.renderer.DynamicUniforms$ChunkSectionInfo...);
+  static {};
+}
+
+
+===== com.mojang.blaze3d.vertex.BufferBuilder (-p) =====
+Compiled from "BufferBuilder.java"
+public class com.mojang.blaze3d.vertex.BufferBuilder implements com.mojang.blaze3d.vertex.VertexConsumer {
+  private static final int MAX_VERTEX_COUNT;
+  private static final long NOT_BUILDING;
+  private static final long UNKNOWN_ELEMENT;
+  private static final boolean IS_LITTLE_ENDIAN;
+  private final com.mojang.blaze3d.vertex.ByteBufferBuilder buffer;
+  private long vertexPointer;
+  private int vertices;
+  private final com.mojang.blaze3d.vertex.VertexFormat format;
+  private final com.mojang.blaze3d.vertex.VertexFormat$Mode mode;
+  private final boolean fastFormat;
+  private final boolean fullFormat;
+  private final int vertexSize;
+  private final int initialElementsToFill;
+  private final int[] offsetsByElement;
+  private int elementsToFill;
+  private boolean building;
+  public com.mojang.blaze3d.vertex.BufferBuilder(com.mojang.blaze3d.vertex.ByteBufferBuilder, com.mojang.blaze3d.vertex.VertexFormat$Mode, com.mojang.blaze3d.vertex.VertexFormat);
+  public com.mojang.blaze3d.vertex.MeshData build();
+  public com.mojang.blaze3d.vertex.MeshData buildOrThrow();
+  private void ensureBuilding();
+  private com.mojang.blaze3d.vertex.MeshData storeMesh();
+  private long beginVertex();
+  private long beginElement(com.mojang.blaze3d.vertex.VertexFormatElement);
+  private void endLastVertex();
+  private static void putRgba(long, int);
+  private static void putPackedUv(long, int);
+  public com.mojang.blaze3d.vertex.VertexConsumer addVertex(float, float, float);
+  public com.mojang.blaze3d.vertex.VertexConsumer setColor(int, int, int, int);
+  public com.mojang.blaze3d.vertex.VertexConsumer setColor(int);
+  public com.mojang.blaze3d.vertex.VertexConsumer setUv(float, float);
+  public com.mojang.blaze3d.vertex.VertexConsumer setUv1(int, int);
+  public com.mojang.blaze3d.vertex.VertexConsumer setOverlay(int);
+  public com.mojang.blaze3d.vertex.VertexConsumer setUv2(int, int);
+  public com.mojang.blaze3d.vertex.VertexConsumer setLight(int);
+  private com.mojang.blaze3d.vertex.VertexConsumer uvShort(short, short, com.mojang.blaze3d.vertex.VertexFormatElement);
+  public com.mojang.blaze3d.vertex.VertexConsumer setNormal(float, float, float);
+  public com.mojang.blaze3d.vertex.VertexConsumer setLineWidth(float);
+  private static byte normalIntValue(float);
+  public void addVertex(float, float, float, int, float, float, int, int, float, float, float);
+  static {};
+}
+
+
+===== com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer (-p) =====
+Compiled from "RenderSystem.java"
+public final class com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer {
+  private final int vertexStride;
+  private final int indexStride;
+  private final com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer$IndexGenerator generator;
+  private com.mojang.blaze3d.buffers.GpuBuffer buffer;
+  private com.mojang.blaze3d.vertex.VertexFormat$IndexType type;
+  private int indexCount;
+  com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer(int, int, com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer$IndexGenerator);
+  public boolean hasStorage(int);
+  public com.mojang.blaze3d.buffers.GpuBuffer getBuffer(int);
+  private void ensureStorage(int);
+  private it.unimi.dsi.fastutil.ints.IntConsumer intConsumer(java.nio.ByteBuffer);
+  public com.mojang.blaze3d.vertex.VertexFormat$IndexType type();
+  private static void method_31923(java.nio.ByteBuffer, int);
+  private static java.lang.String method_68689();
+}
+
+
+===== net.minecraft.client.renderer.feature.FeatureRenderDispatcher (-p) =====
+Compiled from "FeatureRenderDispatcher.java"
+public class net.minecraft.client.renderer.feature.FeatureRenderDispatcher implements java.lang.AutoCloseable {
+  private final net.minecraft.client.renderer.SubmitNodeStorage submitNodeStorage;
+  private final net.minecraft.client.renderer.block.BlockRenderDispatcher blockRenderDispatcher;
+  private final net.minecraft.client.renderer.MultiBufferSource$BufferSource bufferSource;
+  private final net.minecraft.client.resources.model.AtlasManager atlasManager;
+  private final net.minecraft.client.renderer.OutlineBufferSource outlineBufferSource;
+  private final net.minecraft.client.renderer.MultiBufferSource$BufferSource crumblingBufferSource;
+  private final net.minecraft.client.gui.Font font;
+  private final net.minecraft.client.renderer.feature.ShadowFeatureRenderer shadowFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.FlameFeatureRenderer flameFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.ModelFeatureRenderer modelFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.ModelPartFeatureRenderer modelPartFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.NameTagFeatureRenderer nameTagFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.TextFeatureRenderer textFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.LeashFeatureRenderer leashFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.ItemFeatureRenderer itemFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.CustomFeatureRenderer customFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.BlockFeatureRenderer blockFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.ParticleFeatureRenderer particleFeatureRenderer;
+  public net.minecraft.client.renderer.feature.FeatureRenderDispatcher(net.minecraft.client.renderer.SubmitNodeStorage, net.minecraft.client.renderer.block.BlockRenderDispatcher, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.resources.model.AtlasManager, net.minecraft.client.renderer.OutlineBufferSource, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.gui.Font);
+  public void renderAllFeatures();
+  public void endFrame();
+  public net.minecraft.client.renderer.SubmitNodeStorage getSubmitNodeStorage();
+  public void close();
+}
+
+
+===== net.minecraft.client.renderer.RenderTarget (-p) =====
+Error: class not found: net.minecraft.client.renderer.RenderTarget
+
+
+===== net.minecraft.client.renderer.LightTexture (-p) =====
+Compiled from "LightTexture.java"
+public class net.minecraft.client.renderer.LightTexture implements java.lang.AutoCloseable {
+  public static final int FULL_BRIGHT;
+  public static final int FULL_SKY;
+  public static final int FULL_BLOCK;
+  private static final int TEXTURE_SIZE;
+  private static final int LIGHTMAP_UBO_SIZE;
+  private final com.mojang.blaze3d.textures.GpuTexture texture;
+  private final com.mojang.blaze3d.textures.GpuTextureView textureView;
+  private boolean updateLightTexture;
+  private float blockLightRedFlicker;
+  private final net.minecraft.client.renderer.GameRenderer renderer;
+  private final net.minecraft.client.Minecraft minecraft;
+  private final net.minecraft.client.renderer.MappableRingBuffer ubo;
+  private final net.minecraft.util.RandomSource randomSource;
+  public net.minecraft.client.renderer.LightTexture(net.minecraft.client.renderer.GameRenderer, net.minecraft.client.Minecraft);
+  public com.mojang.blaze3d.textures.GpuTextureView getTextureView();
+  public void close();
+  public void tick();
+  private float calculateDarknessScale(net.minecraft.world.entity.LivingEntity, float, float);
+  public void updateLightTexture(float);
+  public static float getBrightness(net.minecraft.world.level.dimension.DimensionType, int);
+  public static float getBrightness(float, int);
+  public static int pack(int, int);
+  public static int block(int);
+  public static int sky(int);
+  public static int lightCoordsWithEmission(int, int);
+  private static java.lang.String method_71310();
+  private static java.lang.String method_71311();
+  static {};
+}
+
+
+===== net.minecraft.client.renderer.RenderPipelines (-p) =====
+Compiled from "RenderPipelines.java"
+public class net.minecraft.client.renderer.RenderPipelines {
+  private static final java.util.Map<net.minecraft.resources.Identifier, com.mojang.blaze3d.pipeline.RenderPipeline> PIPELINES_BY_LOCATION;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet MATRICES_PROJECTION_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet FOG_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GLOBALS_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet MATRICES_FOG_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet MATRICES_FOG_LIGHT_DIR_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GENERIC_BLOCKS_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet TERRAIN_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet BLOCK_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet ENTITY_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet ENTITY_EMISSIVE_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet BEACON_BEAM_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet TEXT_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet END_PORTAL_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet CLOUDS_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet LINES_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet DEBUG_FILLED_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet PARTICLE_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet WEATHER_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GUI_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GUI_TEXTURED_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GUI_TEXT_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet OUTLINE_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet POST_PROCESSING_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline SOLID_BLOCK;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline SOLID_TERRAIN;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline WIREFRAME;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline CUTOUT_BLOCK;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline CUTOUT_TERRAIN;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TRANSLUCENT_TERRAIN;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TRIPWIRE_BLOCK;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TRIPWIRE_TERRAIN;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TRANSLUCENT_MOVING_BLOCK;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ARMOR_CUTOUT_NO_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ARMOR_DECAL_CUTOUT_NO_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ARMOR_TRANSLUCENT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_SOLID;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_SOLID_Z_OFFSET_FORWARD;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_CUTOUT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_CUTOUT_NO_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_CUTOUT_NO_CULL_Z_OFFSET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_TRANSLUCENT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_TRANSLUCENT_EMISSIVE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_SMOOTH_CUTOUT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_NO_OUTLINE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline BREEZE_WIND;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENERGY_SWIRL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline EYES;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_DECAL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_SHADOW;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ITEM_ENTITY_TRANSLUCENT_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline BEACON_BEAM_OPAQUE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline BEACON_BEAM_TRANSLUCENT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DRAGON_EXPLOSION_ALPHA;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline LEASH;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline WATER_MASK;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GLINT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline CRUMBLING;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_TEXT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT_BACKGROUND;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT_INTENSITY;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_TEXT_INTENSITY;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT_POLYGON_OFFSET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT_SEE_THROUGH;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT_BACKGROUND_SEE_THROUGH;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT_INTENSITY_SEE_THROUGH;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline LIGHTNING;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DRAGON_RAYS;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DRAGON_RAYS_DEPTH;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline END_PORTAL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline END_GATEWAY;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline FLAT_CLOUDS;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline CLOUDS;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline LINES;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline LINES_TRANSLUCENT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline SECONDARY_BLOCK_OUTLINE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DEBUG_POINTS;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DEBUG_FILLED_BOX;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DEBUG_QUADS;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DEBUG_TRIANGLE_FAN;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline WORLD_BORDER;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline OPAQUE_PARTICLE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TRANSLUCENT_PARTICLE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline WEATHER_DEPTH_WRITE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline WEATHER_NO_DEPTH_WRITE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline SKY;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline END_SKY;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline SUNRISE_SUNSET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline STARS;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline CELESTIAL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_INVERT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_TEXT_HIGHLIGHT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_TEXTURED;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_TEXTURED_PREMULTIPLIED_ALPHA;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline BLOCK_SCREEN_EFFECT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline FIRE_SCREEN_EFFECT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_OPAQUE_TEXTURED_BACKGROUND;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_NAUSEA_OVERLAY;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline VIGNETTE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline CROSSHAIR;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline MOJANG_LOGO;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_OUTLINE_BLIT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TRACY_BLIT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline PANORAMA;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline OUTLINE_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline OUTLINE_NO_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline LIGHTMAP;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet ANIMATE_SPRITE_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ANIMATE_SPRITE_BLIT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ANIMATE_SPRITE_INTERPOLATE;
+  public net.minecraft.client.renderer.RenderPipelines();
+  public static com.mojang.blaze3d.pipeline.RenderPipeline register(com.mojang.blaze3d.pipeline.RenderPipeline);
+  public static java.util.List<com.mojang.blaze3d.pipeline.RenderPipeline> getStaticPipelines();
+  static {};
+}
+
+
+===== com.mojang.blaze3d.pipeline.RenderPipeline (-p) =====
+Compiled from "RenderPipeline.java"
+public class com.mojang.blaze3d.pipeline.RenderPipeline implements net.fabricmc.fabric.api.client.rendering.v1.FabricRenderPipeline {
+  private final net.minecraft.resources.Identifier location;
+  private final net.minecraft.resources.Identifier vertexShader;
+  private final net.minecraft.resources.Identifier fragmentShader;
+  private final net.minecraft.client.renderer.ShaderDefines shaderDefines;
+  private final java.util.List<java.lang.String> samplers;
+  private final java.util.List<com.mojang.blaze3d.pipeline.RenderPipeline$UniformDescription> uniforms;
+  private final com.mojang.blaze3d.platform.DepthTestFunction depthTestFunction;
+  private final com.mojang.blaze3d.platform.PolygonMode polygonMode;
+  private final boolean cull;
+  private final com.mojang.blaze3d.platform.LogicOp colorLogic;
+  private final java.util.Optional<com.mojang.blaze3d.pipeline.BlendFunction> blendFunction;
+  private final boolean writeColor;
+  private final boolean writeAlpha;
+  private final boolean writeDepth;
+  private final com.mojang.blaze3d.vertex.VertexFormat vertexFormat;
+  private final com.mojang.blaze3d.vertex.VertexFormat$Mode vertexFormatMode;
+  private final float depthBiasScaleFactor;
+  private final float depthBiasConstant;
+  private final int sortKey;
+  private static int sortKeySeed;
+  protected com.mojang.blaze3d.pipeline.RenderPipeline(net.minecraft.resources.Identifier, net.minecraft.resources.Identifier, net.minecraft.resources.Identifier, net.minecraft.client.renderer.ShaderDefines, java.util.List<java.lang.String>, java.util.List<com.mojang.blaze3d.pipeline.RenderPipeline$UniformDescription>, java.util.Optional<com.mojang.blaze3d.pipeline.BlendFunction>, com.mojang.blaze3d.platform.DepthTestFunction, com.mojang.blaze3d.platform.PolygonMode, boolean, boolean, boolean, boolean, com.mojang.blaze3d.platform.LogicOp, com.mojang.blaze3d.vertex.VertexFormat, com.mojang.blaze3d.vertex.VertexFormat$Mode, float, float, int);
+  public int getSortKey();
+  public static void updateSortKeySeed();
+  public java.lang.String toString();
+  public com.mojang.blaze3d.platform.DepthTestFunction getDepthTestFunction();
+  public com.mojang.blaze3d.platform.PolygonMode getPolygonMode();
+  public boolean isCull();
+  public com.mojang.blaze3d.platform.LogicOp getColorLogic();
+  public java.util.Optional<com.mojang.blaze3d.pipeline.BlendFunction> getBlendFunction();
+  public boolean isWriteColor();
+  public boolean isWriteAlpha();
+  public boolean isWriteDepth();
+  public float getDepthBiasScaleFactor();
+  public float getDepthBiasConstant();
+  public net.minecraft.resources.Identifier getLocation();
+  public com.mojang.blaze3d.vertex.VertexFormat getVertexFormat();
+  public com.mojang.blaze3d.vertex.VertexFormat$Mode getVertexFormatMode();
+  public net.minecraft.resources.Identifier getVertexShader();
+  public net.minecraft.resources.Identifier getFragmentShader();
+  public net.minecraft.client.renderer.ShaderDefines getShaderDefines();
+  public java.util.List<java.lang.String> getSamplers();
+  public java.util.List<com.mojang.blaze3d.pipeline.RenderPipeline$UniformDescription> getUniforms();
+  public boolean wantsDepthTexture();
+  public static com.mojang.blaze3d.pipeline.RenderPipeline$Builder builder(com.mojang.blaze3d.pipeline.RenderPipeline$Snippet...);
+}
+
+
+===== com.mojang.blaze3d.vertex.MeshData (-p) =====
+Compiled from "MeshData.java"
+public class com.mojang.blaze3d.vertex.MeshData implements java.lang.AutoCloseable {
+  private final com.mojang.blaze3d.vertex.ByteBufferBuilder$Result vertexBuffer;
+  private com.mojang.blaze3d.vertex.ByteBufferBuilder$Result indexBuffer;
+  private final com.mojang.blaze3d.vertex.MeshData$DrawState drawState;
+  public com.mojang.blaze3d.vertex.MeshData(com.mojang.blaze3d.vertex.ByteBufferBuilder$Result, com.mojang.blaze3d.vertex.MeshData$DrawState);
+  private static com.mojang.blaze3d.vertex.CompactVectorArray unpackQuadCentroids(java.nio.ByteBuffer, int, com.mojang.blaze3d.vertex.VertexFormat);
+  public java.nio.ByteBuffer vertexBuffer();
+  public java.nio.ByteBuffer indexBuffer();
+  public com.mojang.blaze3d.vertex.MeshData$DrawState drawState();
+  public com.mojang.blaze3d.vertex.MeshData$SortState sortQuads(com.mojang.blaze3d.vertex.ByteBufferBuilder, com.mojang.blaze3d.vertex.VertexSorting);
+  public void close();
+}
+
+
+===== net.minecraft.client.renderer.rendertype.RenderType (-p) =====
+Compiled from "RenderType.java"
+public class net.minecraft.client.renderer.rendertype.RenderType {
+  private static final int MEGABYTE;
+  public static final int BIG_BUFFER_SIZE;
+  public static final int SMALL_BUFFER_SIZE;
+  public static final int TRANSIENT_BUFFER_SIZE;
+  private final net.minecraft.client.renderer.rendertype.RenderSetup state;
+  private final java.util.Optional<net.minecraft.client.renderer.rendertype.RenderType> outline;
+  protected final java.lang.String name;
+  public net.minecraft.client.renderer.rendertype.RenderType(java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup);
+  public static net.minecraft.client.renderer.rendertype.RenderType create(java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup);
+  public java.lang.String toString();
+  public void draw(com.mojang.blaze3d.vertex.MeshData);
+  public int bufferSize();
+  public com.mojang.blaze3d.vertex.VertexFormat format();
+  public com.mojang.blaze3d.vertex.VertexFormat$Mode mode();
+  public java.util.Optional<net.minecraft.client.renderer.rendertype.RenderType> outline();
+  public boolean isOutline();
+  public com.mojang.blaze3d.pipeline.RenderPipeline pipeline();
+  public boolean affectsCrumbling();
+  public boolean canConsolidateConsecutiveGeometry();
+  public boolean sortOnUpload();
+  private java.lang.String method_75941();
+  private static net.minecraft.client.renderer.rendertype.RenderType method_75939(net.minecraft.client.renderer.rendertype.RenderSetup, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding);
+}
+
+
+===== net.minecraft.client.renderer.rendertype.PreparedRenderType (-p) =====
+Error: class not found: net.minecraft.client.renderer.rendertype.PreparedRenderType
+
+
+===== net.minecraft.client.renderer.feature.FeatureRenderDispatcher (-p -c) =====
+Compiled from "FeatureRenderDispatcher.java"
+public class net.minecraft.client.renderer.feature.FeatureRenderDispatcher implements java.lang.AutoCloseable {
+  private final net.minecraft.client.renderer.SubmitNodeStorage submitNodeStorage;
+
+  private final net.minecraft.client.renderer.block.BlockRenderDispatcher blockRenderDispatcher;
+
+  private final net.minecraft.client.renderer.MultiBufferSource$BufferSource bufferSource;
+
+  private final net.minecraft.client.resources.model.AtlasManager atlasManager;
+
+  private final net.minecraft.client.renderer.OutlineBufferSource outlineBufferSource;
+
+  private final net.minecraft.client.renderer.MultiBufferSource$BufferSource crumblingBufferSource;
+
+  private final net.minecraft.client.gui.Font font;
+
+  private final net.minecraft.client.renderer.feature.ShadowFeatureRenderer shadowFeatureRenderer;
+
+  private final net.minecraft.client.renderer.feature.FlameFeatureRenderer flameFeatureRenderer;
+
+  private final net.minecraft.client.renderer.feature.ModelFeatureRenderer modelFeatureRenderer;
+
+  private final net.minecraft.client.renderer.feature.ModelPartFeatureRenderer modelPartFeatureRenderer;
+
+  private final net.minecraft.client.renderer.feature.NameTagFeatureRenderer nameTagFeatureRenderer;
+
+  private final net.minecraft.client.renderer.feature.TextFeatureRenderer textFeatureRenderer;
+
+  private final net.minecraft.client.renderer.feature.LeashFeatureRenderer leashFeatureRenderer;
+
+  private final net.minecraft.client.renderer.feature.ItemFeatureRenderer itemFeatureRenderer;
+
+  private final net.minecraft.client.renderer.feature.CustomFeatureRenderer customFeatureRenderer;
+
+  private final net.minecraft.client.renderer.feature.BlockFeatureRenderer blockFeatureRenderer;
+
+  private final net.minecraft.client.renderer.feature.ParticleFeatureRenderer particleFeatureRenderer;
+
+  public net.minecraft.client.renderer.feature.FeatureRenderDispatcher(net.minecraft.client.renderer.SubmitNodeStorage, net.minecraft.client.renderer.block.BlockRenderDispatcher, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.resources.model.AtlasManager, net.minecraft.client.renderer.OutlineBufferSource, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.gui.Font);
+    Code:
+       0: aload_0
+       1: invokespecial #57                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: new           #59                 // class net/minecraft/client/renderer/feature/ShadowFeatureRenderer
+       8: dup
+       9: invokespecial #60                 // Method net/minecraft/client/renderer/feature/ShadowFeatureRenderer."<init>":()V
+      12: putfield      #62                 // Field shadowFeatureRenderer:Lnet/minecraft/client/renderer/feature/ShadowFeatureRenderer;
+      15: aload_0
+      16: new           #64                 // class net/minecraft/client/renderer/feature/FlameFeatureRenderer
+      19: dup
+      20: invokespecial #65                 // Method net/minecraft/client/renderer/feature/FlameFeatureRenderer."<init>":()V
+      23: putfield      #67                 // Field flameFeatureRenderer:Lnet/minecraft/client/renderer/feature/FlameFeatureRenderer;
+      26: aload_0
+      27: new           #69                 // class net/minecraft/client/renderer/feature/ModelFeatureRenderer
+      30: dup
+      31: invokespecial #70                 // Method net/minecraft/client/renderer/feature/ModelFeatureRenderer."<init>":()V
+      34: putfield      #72                 // Field modelFeatureRenderer:Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer;
+      37: aload_0
+      38: new           #74                 // class net/minecraft/client/renderer/feature/ModelPartFeatureRenderer
+      41: dup
+      42: invokespecial #75                 // Method net/minecraft/client/renderer/feature/ModelPartFeatureRenderer."<init>":()V
+      45: putfield      #77                 // Field modelPartFeatureRenderer:Lnet/minecraft/client/renderer/feature/ModelPartFeatureRenderer;
+      48: aload_0
+      49: new           #79                 // class net/minecraft/client/renderer/feature/NameTagFeatureRenderer
+      52: dup
+      53: invokespecial #80                 // Method net/minecraft/client/renderer/feature/NameTagFeatureRenderer."<init>":()V
+      56: putfield      #82                 // Field nameTagFeatureRenderer:Lnet/minecraft/client/renderer/feature/NameTagFeatureRenderer;
+      59: aload_0
+      60: new           #84                 // class net/minecraft/client/renderer/feature/TextFeatureRenderer
+      63: dup
+      64: invokespecial #85                 // Method net/minecraft/client/renderer/feature/TextFeatureRenderer."<init>":()V
+      67: putfield      #87                 // Field textFeatureRenderer:Lnet/minecraft/client/renderer/feature/TextFeatureRenderer;
+      70: aload_0
+      71: new           #89                 // class net/minecraft/client/renderer/feature/LeashFeatureRenderer
+      74: dup
+      75: invokespecial #90                 // Method net/minecraft/client/renderer/feature/LeashFeatureRenderer."<init>":()V
+      78: putfield      #92                 // Field leashFeatureRenderer:Lnet/minecraft/client/renderer/feature/LeashFeatureRenderer;
+      81: aload_0
+      82: new           #94                 // class net/minecraft/client/renderer/feature/ItemFeatureRenderer
+      85: dup
+      86: invokespecial #95                 // Method net/minecraft/client/renderer/feature/ItemFeatureRenderer."<init>":()V
+      89: putfield      #97                 // Field itemFeatureRenderer:Lnet/minecraft/client/renderer/feature/ItemFeatureRenderer;
+      92: aload_0
+      93: new           #99                 // class net/minecraft/client/renderer/feature/CustomFeatureRenderer
+      96: dup
+      97: invokespecial #100                // Method net/minecraft/client/renderer/feature/CustomFeatureRenderer."<init>":()V
+     100: putfield      #102                // Field customFeatureRenderer:Lnet/minecraft/client/renderer/feature/CustomFeatureRenderer;
+     103: aload_0
+     104: new           #104                // class net/minecraft/client/renderer/feature/BlockFeatureRenderer
+     107: dup
+     108: invokespecial #105                // Method net/minecraft/client/renderer/feature/BlockFeatureRenderer."<init>":()V
+     111: putfield      #107                // Field blockFeatureRenderer:Lnet/minecraft/client/renderer/feature/BlockFeatureRenderer;
+     114: aload_0
+     115: new           #109                // class net/minecraft/client/renderer/feature/ParticleFeatureRenderer
+     118: dup
+     119: invokespecial #110                // Method net/minecraft/client/renderer/feature/ParticleFeatureRenderer."<init>":()V
+     122: putfield      #112                // Field particleFeatureRenderer:Lnet/minecraft/client/renderer/feature/ParticleFeatureRenderer;
+     125: aload_0
+     126: aload_1
+     127: putfield      #114                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+     130: aload_0
+     131: aload_2
+     132: putfield      #116                // Field blockRenderDispatcher:Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;
+     135: aload_0
+     136: aload_3
+     137: putfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     140: aload_0
+     141: aload         4
+     143: putfield      #120                // Field atlasManager:Lnet/minecraft/client/resources/model/AtlasManager;
+     146: aload_0
+     147: aload         5
+     149: putfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
+     152: aload_0
+     153: aload         6
+     155: putfield      #124                // Field crumblingBufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     158: aload_0
+     159: aload         7
+     161: putfield      #126                // Field font:Lnet/minecraft/client/gui/Font;
+     164: return
+
+  public void renderAllFeatures();
+    Code:
+       0: aload_0
+       1: getfield      #114                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+       4: invokevirtual #135                // Method net/minecraft/client/renderer/SubmitNodeStorage.getSubmitsPerOrder:()Lit/unimi/dsi/fastutil/ints/Int2ObjectAVLTreeMap;
+       7: invokevirtual #141                // Method it/unimi/dsi/fastutil/ints/Int2ObjectAVLTreeMap.values:()Lit/unimi/dsi/fastutil/objects/ObjectCollection;
+      10: invokeinterface #147,  1          // InterfaceMethod it/unimi/dsi/fastutil/objects/ObjectCollection.iterator:()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
+      15: astore_1
+      16: aload_1
+      17: invokeinterface #155,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      22: ifeq          202
+      25: aload_1
+      26: invokeinterface #159,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      31: checkcast     #161                // class net/minecraft/client/renderer/SubmitNodeCollection
+      34: astore_2
+      35: aload_0
+      36: getfield      #62                 // Field shadowFeatureRenderer:Lnet/minecraft/client/renderer/feature/ShadowFeatureRenderer;
+      39: aload_2
+      40: aload_0
+      41: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+      44: invokevirtual #165                // Method net/minecraft/client/renderer/feature/ShadowFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
+      47: aload_0
+      48: getfield      #72                 // Field modelFeatureRenderer:Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer;
+      51: aload_2
+      52: aload_0
+      53: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+      56: aload_0
+      57: getfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
+      60: aload_0
+      61: getfield      #124                // Field crumblingBufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+      64: invokevirtual #168                // Method net/minecraft/client/renderer/feature/ModelFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/OutlineBufferSource;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
+      67: aload_0
+      68: getfield      #77                 // Field modelPartFeatureRenderer:Lnet/minecraft/client/renderer/feature/ModelPartFeatureRenderer;
+      71: aload_2
+      72: aload_0
+      73: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+      76: aload_0
+      77: getfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
+      80: aload_0
+      81: getfield      #124                // Field crumblingBufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+      84: invokevirtual #169                // Method net/minecraft/client/renderer/feature/ModelPartFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/OutlineBufferSource;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
+      87: aload_0
+      88: getfield      #67                 // Field flameFeatureRenderer:Lnet/minecraft/client/renderer/feature/FlameFeatureRenderer;
+      91: aload_2
+      92: aload_0
+      93: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+      96: aload_0
+      97: getfield      #120                // Field atlasManager:Lnet/minecraft/client/resources/model/AtlasManager;
+     100: invokevirtual #172                // Method net/minecraft/client/renderer/feature/FlameFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/resources/model/AtlasManager;)V
+     103: aload_0
+     104: getfield      #82                 // Field nameTagFeatureRenderer:Lnet/minecraft/client/renderer/feature/NameTagFeatureRenderer;
+     107: aload_2
+     108: aload_0
+     109: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     112: aload_0
+     113: getfield      #126                // Field font:Lnet/minecraft/client/gui/Font;
+     116: invokevirtual #175                // Method net/minecraft/client/renderer/feature/NameTagFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/gui/Font;)V
+     119: aload_0
+     120: getfield      #87                 // Field textFeatureRenderer:Lnet/minecraft/client/renderer/feature/TextFeatureRenderer;
+     123: aload_2
+     124: aload_0
+     125: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     128: invokevirtual #176                // Method net/minecraft/client/renderer/feature/TextFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
+     131: aload_0
+     132: getfield      #92                 // Field leashFeatureRenderer:Lnet/minecraft/client/renderer/feature/LeashFeatureRenderer;
+     135: aload_2
+     136: aload_0
+     137: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     140: invokevirtual #177                // Method net/minecraft/client/renderer/feature/LeashFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
+     143: aload_0
+     144: getfield      #97                 // Field itemFeatureRenderer:Lnet/minecraft/client/renderer/feature/ItemFeatureRenderer;
+     147: aload_2
+     148: aload_0
+     149: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     152: aload_0
+     153: getfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
+     156: invokevirtual #180                // Method net/minecraft/client/renderer/feature/ItemFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/OutlineBufferSource;)V
+     159: aload_0
+     160: getfield      #107                // Field blockFeatureRenderer:Lnet/minecraft/client/renderer/feature/BlockFeatureRenderer;
+     163: aload_2
+     164: aload_0
+     165: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     168: aload_0
+     169: getfield      #116                // Field blockRenderDispatcher:Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;
+     172: aload_0
+     173: getfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
+     176: invokevirtual #183                // Method net/minecraft/client/renderer/feature/BlockFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;Lnet/minecraft/client/renderer/OutlineBufferSource;)V
+     179: aload_0
+     180: getfield      #102                // Field customFeatureRenderer:Lnet/minecraft/client/renderer/feature/CustomFeatureRenderer;
+     183: aload_2
+     184: aload_0
+     185: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     188: invokevirtual #184                // Method net/minecraft/client/renderer/feature/CustomFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
+     191: aload_0
+     192: getfield      #112                // Field particleFeatureRenderer:Lnet/minecraft/client/renderer/feature/ParticleFeatureRenderer;
+     195: aload_2
+     196: invokevirtual #187                // Method net/minecraft/client/renderer/feature/ParticleFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;)V
+     199: goto          16
+     202: aload_0
+     203: getfield      #114                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+     206: invokevirtual #190                // Method net/minecraft/client/renderer/SubmitNodeStorage.clear:()V
+     209: return
+
+  public void endFrame();
+    Code:
+       0: aload_0
+       1: getfield      #112                // Field particleFeatureRenderer:Lnet/minecraft/client/renderer/feature/ParticleFeatureRenderer;
+       4: invokevirtual #195                // Method net/minecraft/client/renderer/feature/ParticleFeatureRenderer.endFrame:()V
+       7: return
+
+  public net.minecraft.client.renderer.SubmitNodeStorage getSubmitNodeStorage();
+    Code:
+       0: aload_0
+       1: getfield      #114                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+       4: areturn
+
+  public void close();
+    Code:
+       0: aload_0
+       1: getfield      #112                // Field particleFeatureRenderer:Lnet/minecraft/client/renderer/feature/ParticleFeatureRenderer;
+       4: invokevirtual #200                // Method net/minecraft/client/renderer/feature/ParticleFeatureRenderer.close:()V
+       7: return
+}
+
+
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788120682091.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
-> Compilation failed; see the compiler output below.
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/GlCommandEncoderScopeDepthCopyMixin.java:20: warning: Mixin target com.mojang.blaze3d.opengl.GlCommandEncoder is public and should be specified in value
-  @Mixin(targets = "com.mojang.blaze3d.opengl.GlCommandEncoder")
-  ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/SoundManagerPreparationsMixin.java:16: warning: Mixin target net.minecraft.client.sounds.SoundManager$Preparations is public and should be specified in value
-  @Mixin(targets = "net.minecraft.client.sounds.SoundManager$Preparations")
-  ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisFinalScopeOverlayMixin.java:25: warning: Mixin target net.irisshaders.iris.pipeline.IrisRenderingPipeline is public and should be specified in value
-  @Mixin(targets = "net.irisshaders.iris.pipeline.IrisRenderingPipeline", remap = false)
-  ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisHandRendererReticlePassMixin.java:22: warning: Mixin target net.irisshaders.iris.pathways.HandRenderer is public and should be specified in value
-  @Mixin(targets = "net.irisshaders.iris.pathways.HandRenderer", remap = false)
-  ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisDepthRestoreShaderMixin.java:23: warning: Mixin target net.irisshaders.iris.pipeline.programs.ShaderCreator is public and should be specified in value
-  @Mixin(targets = "net.irisshaders.iris.pipeline.programs.ShaderCreator", remap = false)
-  ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/HumanoidModelMixin.java:68: warning: Cannot find target method "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" for @Inject.method="setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" in net.minecraft.client.model.HumanoidModel
-      @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At(value = "TAIL"))
-      ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/GunDisplayInstanceMixin.java:33: warning: Unable to locate obfuscation mapping for @Shadow field
-      @Shadow
-      ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/GunDisplayInstanceMixin.java:36: warning: Unable to locate obfuscation mapping for @Shadow field
-      @Shadow
-      ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/GunDisplayInstanceMixin.java:39: error: Unable to locate obfuscation mapping for @Inject target checkTextureAndModel
-      @Inject(method = "checkTextureAndModel", at = @At("TAIL"))
-      ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/GunDisplayInstanceMixin.java:49: error: Unable to locate obfuscation mapping for @Inject target checkLod
-      @Inject(method = "checkLod", at = @At("TAIL"))
-      ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAttachmentIndexMixin.java:40: error: Unable to locate obfuscation mapping for @Inject target checkTextureAndModel
-      @Inject(method = "checkTextureAndModel", at = @At("TAIL"))
-      ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAttachmentIndexMixin.java:64: error: Unable to locate obfuscation mapping for @Inject target checkLod
-      @Inject(method = "checkLod", at = @At("TAIL"))
-      ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAmmoIndexMixin.java:32: error: Unable to locate obfuscation mapping for @Inject target checkTextureAndModel
-      @Inject(method = "checkTextureAndModel", at = @At("TAIL"))
-      ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAmmoIndexMixin.java:37: error: Unable to locate obfuscation mapping for @Inject target checkAmmoEntity
-      @Inject(method = "checkAmmoEntity", at = @At("TAIL"))
-      ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAmmoIndexMixin.java:46: error: Unable to locate obfuscation mapping for @Inject target checkShell
-      @Inject(method = "checkShell", at = @At("TAIL"))
-      ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientBlockIndexMixin.java:30: error: Unable to locate obfuscation mapping for @Inject target checkModel
-      @Inject(method = "checkModel", at = @At("TAIL"))
-      ^
-  8 errors
-  8 warnings
-
-* Try:
-> Check your code and dependencies to fix the compilation error(s)
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-
-* Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
-	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)
-	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
-	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
-	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
-	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
-	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
-	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
-	at org.gradle.execution.plan.DefaultNodeExecutor.executeLocalTaskNode(DefaultNodeExecutor.java:55)
-	at org.gradle.execution.plan.DefaultNodeExecutor.execute(DefaultNodeExecutor.java:34)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:355)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:343)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:339)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:339)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:328)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
-	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:146)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:131)
-	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$11(DefaultBuildLifecycleController.java:323)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:304)
-	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$9(StateTransitionController.java:215)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:45)
-	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:215)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:314)
-	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$runAndReleaseLocks$0(DefaultWorkerLeaseService.java:300)
-	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAndReleaseLocks(DefaultWorkerLeaseService.java:298)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocksAcquired(DefaultWorkerLeaseService.java:294)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:286)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:130)
-	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:182)
-	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:199)
-	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
-	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:199)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/GlCommandEncoderScopeDepthCopyMixin.java:20: warning: Mixin target com.mojang.blaze3d.opengl.GlCommandEncoder is public and should be specified in value
-@Mixin(targets = "com.mojang.blaze3d.opengl.GlCommandEncoder")
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/SoundManagerPreparationsMixin.java:16: warning: Mixin target net.minecraft.client.sounds.SoundManager$Preparations is public and should be specified in value
-@Mixin(targets = "net.minecraft.client.sounds.SoundManager$Preparations")
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisFinalScopeOverlayMixin.java:25: warning: Mixin target net.irisshaders.iris.pipeline.IrisRenderingPipeline is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.pipeline.IrisRenderingPipeline", remap = false)
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisHandRendererReticlePassMixin.java:22: warning: Mixin target net.irisshaders.iris.pathways.HandRenderer is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.pathways.HandRenderer", remap = false)
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisDepthRestoreShaderMixin.java:23: warning: Mixin target net.irisshaders.iris.pipeline.programs.ShaderCreator is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.pipeline.programs.ShaderCreator", remap = false)
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/GunDisplayInstanceMixin.java:39: error: Unable to locate obfuscation mapping for @Inject target checkTextureAndModel
-    @Inject(method = "checkTextureAndModel", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/GunDisplayInstanceMixin.java:49: error: Unable to locate obfuscation mapping for @Inject target checkLod
-    @Inject(method = "checkLod", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAttachmentIndexMixin.java:40: error: Unable to locate obfuscation mapping for @Inject target checkTextureAndModel
-    @Inject(method = "checkTextureAndModel", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAttachmentIndexMixin.java:64: error: Unable to locate obfuscation mapping for @Inject target checkLod
-    @Inject(method = "checkLod", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAmmoIndexMixin.java:32: error: Unable to locate obfuscation mapping for @Inject target checkTextureAndModel
-    @Inject(method = "checkTextureAndModel", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAmmoIndexMixin.java:37: error: Unable to locate obfuscation mapping for @Inject target checkAmmoEntity
-    @Inject(method = "checkAmmoEntity", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientAmmoIndexMixin.java:46: error: Unable to locate obfuscation mapping for @Inject target checkShell
-    @Inject(method = "checkShell", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/ClientBlockIndexMixin.java:30: error: Unable to locate obfuscation mapping for @Inject target checkModel
-    @Inject(method = "checkModel", at = @At("TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/HumanoidModelMixin.java:68: warning: Cannot find target method "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" for @Inject.method="setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" in net.minecraft.client.model.HumanoidModel
-    @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At(value = "TAIL"))
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/GunDisplayInstanceMixin.java:33: warning: Unable to locate obfuscation mapping for @Shadow field
-    @Shadow
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/mixin/GunDisplayInstanceMixin.java:36: warning: Unable to locate obfuscation mapping for @Shadow field
-    @Shadow
-    ^
-8 errors
-8 warnings
-	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:89)
-	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:50)
-	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.delegateAndHandleErrors(NormalizingJavaCompiler.java:98)
-	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.execute(NormalizingJavaCompiler.java:52)
-	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.execute(NormalizingJavaCompiler.java:38)
-	at org.gradle.api.internal.tasks.compile.AnnotationProcessorDiscoveringCompiler.execute(AnnotationProcessorDiscoveringCompiler.java:52)
-	at org.gradle.api.internal.tasks.compile.AnnotationProcessorDiscoveringCompiler.execute(AnnotationProcessorDiscoveringCompiler.java:38)
-	at org.gradle.api.internal.tasks.compile.ModuleApplicationNameWritingCompiler.execute(ModuleApplicationNameWritingCompiler.java:46)
-	at org.gradle.api.internal.tasks.compile.ModuleApplicationNameWritingCompiler.execute(ModuleApplicationNameWritingCompiler.java:36)
-	at org.gradle.jvm.toolchain.internal.DefaultToolchainJavaCompiler.execute(DefaultToolchainJavaCompiler.java:57)
-	at org.gradle.api.tasks.compile.JavaCompile.lambda$createToolchainCompiler$3(JavaCompile.java:206)
-	at org.gradle.api.internal.tasks.compile.CleaningJavaCompiler.execute(CleaningJavaCompiler.java:53)
-	at org.gradle.api.internal.tasks.compile.incremental.IncrementalCompilerFactory.lambda$createRebuildAllCompiler$0(IncrementalCompilerFactory.java:55)
-	at org.gradle.api.internal.tasks.compile.incremental.SelectiveCompiler.execute(SelectiveCompiler.java:70)
-	at org.gradle.api.internal.tasks.compile.incremental.SelectiveCompiler.execute(SelectiveCompiler.java:44)
-	at org.gradle.api.internal.tasks.compile.incremental.IncrementalResultStoringCompiler.execute(IncrementalResultStoringCompiler.java:66)
-	at org.gradle.api.internal.tasks.compile.incremental.IncrementalResultStoringCompiler.execute(IncrementalResultStoringCompiler.java:52)
-	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler$1.call(CompileJavaBuildOperationReportingCompiler.java:64)
-	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler$1.call(CompileJavaBuildOperationReportingCompiler.java:48)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler.execute(CompileJavaBuildOperationReportingCompiler.java:48)
-	at org.gradle.api.tasks.compile.JavaCompile.performCompilation(JavaCompile.java:224)
-	at org.gradle.api.tasks.compile.JavaCompile.performIncrementalCompilation(JavaCompile.java:165)
-	at org.gradle.api.tasks.compile.JavaCompile.compile(JavaCompile.java:150)
-	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
-	at org.gradle.api.internal.project.taskfactory.IncrementalTaskAction.doExecute(IncrementalTaskAction.java:45)
-	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)
-	at org.gradle.api.internal.project.taskfactory.IncrementalTaskAction.execute(IncrementalTaskAction.java:26)
-	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)
-	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:259)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:244)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:227)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:210)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:176)
-	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:167)
-	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:47)
-	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:137)
-	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:134)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:134)
-	at org.gradle.internal.execution.steps.ExecuteStep$Mutable.execute(ExecuteStep.java:80)
-	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
-	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
-	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
-	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)
-	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)
-	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:67)
-	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:39)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)
-	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)
-	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
-	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
-	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:39)
-	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:28)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
-	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:76)
-	at org.gradle.internal.Either$Right.fold(Either.java:176)
-	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
-	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)
-	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)
-	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:46)
-	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:35)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
-	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:70)
-	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:32)
-	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
-	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
-	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
-	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)
-	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)
-	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:99)
-	at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)
-	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)
-	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)
-	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)
-	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)
-	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:90)
-	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
-	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
-	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)
-	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)
-	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)
-	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)
-	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)
-	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
-	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
-	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
-	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
-	... 61 more
-
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
 
@@ -425,7 +730,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 2m 9s
-1 actionable task: 1 executed
+BUILD SUCCESSFUL in 1m 49s
+2 actionable tasks: 2 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
-== job status: failure ==
+== job status: success ==
