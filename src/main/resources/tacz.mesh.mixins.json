@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "cn.sh1rocu.tacz.compat.meshloader.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "GunDisplayInstanceMixin",
+    "ClientAttachmentIndexMixin",
+    "ClientAmmoIndexMixin",
+    "ClientBlockIndexMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

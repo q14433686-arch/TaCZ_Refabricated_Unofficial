@@ -2,7 +2,8 @@
   "schemaVersion": 1,
   "id": "tacz",
   "provides": [
-    "lrtactical"
+    "lrtactical",
+    "taczmeshloader"
   ],
   "version": "${version}",
   "name": "[UNOFFICIAL] TaCZ Refabricated (1.21.11 R2-hotfix2)",
@@ -46,6 +47,7 @@
     "tacz.fabric.mixins.json",
     "tacz.iris.mixins.json",
     "tacz.carryon.mixins.json",
+    "tacz.mesh.mixins.json",
     "lrtactical.mixins.json"
   ],
   "accessWidener": "tacz.accesswidener",

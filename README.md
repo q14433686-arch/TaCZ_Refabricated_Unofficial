@@ -61,6 +61,9 @@
 - TaCZ 的 Fabric 1.21.11 端口及随上游带来的默认枪包；
 - 为 1.21.11 API 改写的网络、资源加载、GUI 和渲染接线；
 - 一套内置的 **LRTactical 兼容框架**；
+- 内置的 **TacZ Mesh Loader [TML] 安全子集**（`model_type: "mesh"` poly_mesh 渲染，
+  移植自 VellEagle/TacZMeshLoader，GPL-3.0；范围与已知性能边界见
+  [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）；
 - 若干可选模组的兼容接线。
 
 这不代表本项目是 TaCZ 或 LRTactical 的官方版本，也不代表所有第三方枪包、
@@ -235,6 +238,7 @@ gunpack.meta.json
 
 - TaCZ 与本端口对应代码使用 GPL-3.0；
 - 移入的 LRTactical 代码部分沿用其 GPL-3.0；
+- 移入的 TacZ Mesh Loader 代码部分沿用其 GPL-3.0（来源 VellEagle/TacZMeshLoader）；
 - 默认枪包的 `gunpack_info.json` 声明其资源为 CC BY-NC-ND 4.0；
 - 随 jar 打包的 Mayday Animation Engine 使用 MIT；
 - 其他第三方库、资源和外部内容包可能有各自许可。
