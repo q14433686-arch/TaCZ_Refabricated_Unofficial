@@ -387,3 +387,66 @@ publishing {
         }
     }
 }
+
+// =====================================================================
+// TEMPORARY diagnostic (REMOVE BEFORE RELEASE): dump the 1.21.11 render
+// API signatures via javap. It runs after compileJava (finalizedBy), so its
+// stdout lands in the CI compile log (build-reports/compile-java.log) and is
+// readable from a network-restricted sandbox through the Contents API.
+// It never affects compilation.
+// =====================================================================
+tasks.register('dumpRenderApi') {
+    doLast {
+        def cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
+        // [class, grep-regex-or-null, showPrivateMembers]
+        def probes = [
+            ['net.minecraft.client.renderer.LevelRenderer', 'render\\(|renderLevel', false],
+            ['net.minecraft.client.renderer.GameRenderer', 'renderLevel|renderItemInHand|getProjectionMatrix|mainRenderTarget', false],
+            ['com.mojang.blaze3d.systems.RenderSystem', 'Projection|projection|outputColor|outputDepth', false],
+            ['net.minecraft.client.Minecraft', 'getMainRenderTarget|getFrameTarget|levelRenderer|getDeltaTracker', false],
+            ['net.minecraft.client.renderer.state.CameraRenderState', null, true],
+            ['com.mojang.blaze3d.pipeline.RenderTarget', null, true],
+            ['com.mojang.blaze3d.pipeline.TextureTarget', null, true],
+            ['com.mojang.blaze3d.Projection', null, true],
+            ['com.mojang.blaze3d.ProjectionType', null, true],
+            ['com.mojang.blaze3d.buffers.ProjectionMatrixBuffer', null, true],
+            ['com.mojang.blaze3d.buffers.GpuBufferSlice', null, true],
+            ['com.mojang.blaze3d.resource.GraphicsResourceAllocator', null, false],
+            ['com.mojang.blaze3d.textures.GpuTexture', 'getWidth|getHeight|getFormat|view', false],
+            ['com.mojang.blaze3d.textures.TextureFormat', null, false],
+            ['net.minecraft.client.Camera', 'getPosition|getRotation|projection|view', false],
+            ['net.minecraft.client.DeltaTracker', null, false],
+            ['net.minecraft.client.renderer.fog.FogRenderer', 'getBuffer|FogMode', false],
+        ]
+        probes.each { entry ->
+            def cls = entry[0]
+            def grep = entry[1]
+            def priv = entry[2]
+            println "===== javap ${cls} ====="
+            try {
+                def sout = new ByteArrayOutputStream()
+                def serr = new ByteArrayOutputStream()
+                def cmd = ['javap', '-classpath', cp]
+                if (priv) cmd << '-p'
+                cmd << cls
+                exec {
+                    commandLine cmd
+                    standardOutput = sout
+                    errorOutput = serr
+                    ignoreExitValue = true
+                }
+                def out = sout.toString('UTF-8')
+                if (grep != null) {
+                    out = out.readLines().findAll { line -> line.find(grep) != null }.join('\n')
+                }
+                println(out ?: '(no matching members / class not found)')
+                if (serr.size() > 0) {
+                    println('javap stderr: ' + serr.toString('UTF-8').trim())
+                }
+            } catch (Throwable e) {
+                println('javap failed for ' + cls + ': ' + e.toString())
+            }
+        }
+    }
+}
+compileJava.finalizedBy dumpRenderApi
