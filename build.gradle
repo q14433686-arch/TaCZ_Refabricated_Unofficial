@@ -485,20 +485,28 @@ tasks.register('dumpRenderApi') {
         println(cpb ?: '(none)')
         if (cpbErr.trim()) { println('stderr: ' + cpbErr.trim()) }
 
-        // (d) LevelRenderer.renderLevel: where each of the 3 Matrix4f args is consumed, plus tail.
+        // (d) LevelRenderer: which methods read getMainRenderTarget / write the output override,
+        //     and how LevelTargetBundle is fed (pre-captured textures vs read-at-render-time).
         def lrBlocks = methodBlocks('net.minecraft.client.renderer.LevelRenderer', ['-c', '-p'])
-        def lrRenderLevel = findMethod(lrBlocks, 'void renderLevel(')
-        if (lrRenderLevel != null) {
-            println "===== LevelRenderer.renderLevel arg-consumers (aload 5/6/7) ====="
-            lrRenderLevel.eachWithIndex { line, i ->
-                if (line =~ /aload\s+(5|6|7)\b/ && !(line.contains('// Field'))) {
-                    println line
-                    if (i + 1 < lrRenderLevel.size()) { println '    ' + lrRenderLevel[i + 1].trim() }
-                }
+        println '===== LevelRenderer method inventory ===='
+        lrBlocks.each { println '  ' + it[0].trim() }
+        println '===== LevelRenderer methods referencing outputColorTextureOverride / getMainRenderTarget ===='
+        lrBlocks.each { block ->
+            def body = block.join('\n')
+            if (body.contains('outputColorTextureOverride') || body.contains('getMainRenderTarget')) {
+                println '----- ' + block[0].trim() + ' (' + block.size() + ' lines) -----'
+                def shown = block.size() > 120 ? block.take(120) + ['... [capped]'] : block
+                println shown.join('\n')
             }
-            println "===== LevelRenderer.renderLevel tail (last 40 of ${lrRenderLevel.size()} lines) ====="
-            println lrRenderLevel.drop(Math.max(0, lrRenderLevel.size() - 40)).join('\n')
         }
+        println '===== net.minecraft.client.renderer.LevelTargetBundle -p ====='
+        def (ltb, ltbErr) = runJavap('net.minecraft.client.renderer.LevelTargetBundle', ['-p'])
+        println(ltb ?: '(none)')
+        if (ltbErr.trim()) { println('stderr: ' + ltbErr.trim()) }
+        println '===== LevelTargetBundle -c -p ====='
+        def (ltbc, ltbcErr) = runJavap('net.minecraft.client.renderer.LevelTargetBundle', ['-c', '-p'])
+        println(ltbc ?: '(none)')
+        if (ltbcErr.trim()) { println('stderr: ' + ltbcErr.trim()) }
     }
 }
 compileJava.finalizedBy dumpRenderApi
