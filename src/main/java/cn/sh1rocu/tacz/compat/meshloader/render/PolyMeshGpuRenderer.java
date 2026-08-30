@@ -250,6 +250,19 @@ public final class PolyMeshGpuRenderer {
      * 世界那次直接清空残留（理论上不应有）。
      */
     public static void renderAfterSolid() {
+        // 【PIP 二次渲染 × 光影 —— 必须最先挡】Iris 把手部渲染搬进
+        // LevelRenderer.render 内部，于是镜内那一遍也有自己的手部 pass，
+        // 本方法会先于主画面那一遍被调到。不挡的话：
+        //   1. 镜内那一遍把 HAND_DRAWS 消费掉并置 drawnThisFrame=true；
+        //   2. 主画面那一遍重新 submit 的条目被 drawnThisFrame 闸门拦下；
+        //   ⇒ 主画面上 mesh 枪件整个消失（只在开镜 + ScopePipRerender + 光影时触发）。
+        // 这里清空本遍的提交、不画也不占用 drawnThisFrame —— 主画面那一遍
+        // 会重新 submit 一份并正常绘制。镜内内容不受损：合成只取镜片孔径内
+        // 的像素，孔径里本来就该是干净的世界画面，不该有枪件。
+        if (com.tacz.guns.client.render.scope.ScopePipRenderer.isInsideScopeLevelRender()) {
+            HAND_DRAWS.clear();
+            return;
+        }
         if (!ScopeMaskRenderer.isInHandPass()) {
             HAND_DRAWS.clear();
             return;

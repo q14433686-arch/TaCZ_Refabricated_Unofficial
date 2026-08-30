@@ -1,6 +1,7 @@
 package com.tacz.guns.compat.iris;
 
 import com.tacz.guns.GunMod;
+import com.tacz.guns.config.client.RenderConfig;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
@@ -193,6 +194,35 @@ public final class IrisScopePipelineCompat {
     private static boolean releaseFailed;
 
     /**
+     * 当前活着的瞄具管线是按哪个 ScopePipShadowScale 建的；NaN = 还没建过。
+     *
+     * <p>阴影贴图分辨率是管线<b>构造时</b>读 {@code PackShadowDirectives.getResolution()}
+     * 一次性定死的（构造器里 {@code shadowMapResolution = getResolution()} 捕获成字段，
+     * 此后 ShadowRenderTargets / ShadowRenderer 全用这份快照）。所以配置改了而管线
+     * 还活着 = 改了等于没改 —— 用户实测「貌似不生效」的最可能成因。记下建管线时的值，
+     * {@link #prewarmIfNeeded()} 每帧比对，变了就销毁重建，让旋钮热生效。</p>
+     */
+    private static double appliedShadowScale = Double.NaN;
+
+    /**
+     * 本次 preparePipeline 构建期间，IrisShadowResolutionMixin 是否真的拦到过
+     * {@code getResolution()}。该 mixin 是 {@code require = 0} 的软注入 ——
+     * Iris 内部类名/方法变了它会<b>静默</b>失效，游戏照常跑、缩放悄悄不生效。
+     * 构建前清零、构建后检查，把静默失效变成一行明确的告警。
+     */
+    private static volatile boolean shadowHookRanDuringBuild;
+
+    /** 由 {@code IrisShadowResolutionMixin} 在构造窗口内拦到 getResolution() 时回调。 */
+    public static void noteShadowResolutionIntercepted() {
+        shadowHookRanDuringBuild = true;
+    }
+
+    private static double wantedShadowScale() {
+        return RenderConfig.SCOPE_PIP_SHADOW_SCALE == null
+                ? 1.0d : RenderConfig.SCOPE_PIP_SHADOW_SCALE.get();
+    }
+
+    /**
      * 【光影下开镜帧率持续衰减 · 实验开关的配套】空闲时销毁瞄具那套 Iris 管线，
      * 释放它占用的<b>全部</b> GPU 资源（colortex/gbuffer/阴影图/SSBO/程序，见
      * {@code IrisRenderingPipeline#destroy} 逐项实读）。
@@ -247,6 +277,7 @@ public final class IrisScopePipelineCompat {
             // 预热状态与 Voxy 第二套栈都随这套管线一起失效。
             prewarmedAgainst = null;
             voxyStackSettled = false;
+            appliedShadowScale = Double.NaN;
             com.tacz.guns.compat.voxy.VoxyScopePipelineCompat.onRendererRebuilt();
             GunMod.LOGGER.info("[TACZ Scope] Released the idle scope-pass Iris pipeline to reclaim GPU memory.");
             return true;
@@ -285,6 +316,26 @@ public final class IrisScopePipelineCompat {
                 // 抢在它前面预热会让「当前管线」指向瞄具那套，把这一帧的主画面画错。
                 return;
             }
+            // 【ScopePipShadowScale 热生效】阴影分辨率是管线构造时一次性定死的
+            // （见 appliedShadowScale 的注释）——配置变了而旧管线还活着，就先销毁它，
+            // 让下面的重建按新值走。放在快速路径之前：否则「已就绪」直接短路，
+            // 改配置永远等到下次进世界才生效。
+            if (prewarmedAgainst == mainPipeline
+                    && !Double.isNaN(appliedShadowScale)
+                    && Math.abs(appliedShadowScale - wantedShadowScale()) > 1.0e-3) {
+                GunMod.LOGGER.info("[TACZ Scope] ScopePipShadowScale changed ({} -> {}); rebuilding the "
+                                + "scope pipeline so the new shadow map size takes effect.",
+                        appliedShadowScale, wantedShadowScale());
+                if (releaseScopePipelineIfPresent()) {
+                    // 释放成功已把 prewarmedAgainst/appliedShadowScale 清零，
+                    // 下面自然落进慢路径按新值重建。
+                } else {
+                    // 释放失败（或该路径被熔断）：把「已应用值」改记为目标值，
+                    // 停止重试 —— 否则这个分支每帧都进，日志刷屏。
+                    // 旧管线继续用旧阴影尺寸，等下次自然重建（切维度/重载光影）再生效。
+                    appliedShadowScale = wantedShadowScale();
+                }
+            }
             // 【稳态快速路径】本方法逐帧都会被调到，所以「已经全部就绪」这条必须最便宜。
             // 主管线没换人、且 Voxy 那套也建好了 —— 直接回，不去碰任何 Voxy 反射。
             //
@@ -311,6 +362,10 @@ public final class IrisScopePipelineCompat {
                 return;
             }
             Object realDimension = getCurrentDimension.invoke(null);
+            // 「这次是真构建还是缓存命中」—— 决定下面对阴影 mixin 的核验是否有意义：
+            // 缓存命中不会读 getResolution()，拿它去核验只会误报。
+            boolean wasAbsent = pipelinesMapField != null
+                    && !((Map<?, ?>) pipelinesMapField.get(manager)).containsKey(id);
             // 打开窗口：把瞄具那套设成「当前管线」。第一次会真的编译，之后是缓存命中。
             //
             // 这个窗口<b>同时</b>是「瞄具管线正在构造」的唯一时机 —— 阴影贴图的分辨率
@@ -318,10 +373,26 @@ public final class IrisScopePipelineCompat {
             // 且此后由采样器一路捕获使用。所以要给镜内那一遍配一张更小的阴影图，
             // 只有在这里做才来得及。见 IrisShadowResolutionMixin。
             buildingScopePipeline = true;
+            shadowHookRanDuringBuild = false;
             try {
                 preparePipeline.invoke(manager, id);
             } finally {
                 buildingScopePipeline = false;
+            }
+            if (wasAbsent) {
+                appliedShadowScale = wantedShadowScale();
+                // 【把静默失效变成明确告警】IrisShadowResolutionMixin 是 require=0 的
+                // 软注入，Iris 改内部类名它就悄悄不生效 —— 缩放旋钮随之变成空转。
+                // 真构建过却一次都没拦到 getResolution()，就是这种情况
+                //（阴影被 pack 完全禁用时构造器也不会读它，那时缩放本来就无意义）。
+                if (!shadowHookRanDuringBuild && wantedShadowScale() < 0.999d) {
+                    GunMod.LOGGER.warn("[TACZ Scope] ScopePipShadowScale is set to {} but the shadow "
+                                    + "resolution hook never ran while building the scope pipeline. Either "
+                                    + "this pack has shadows disabled (then the knob is moot), or the Iris "
+                                    + "internals moved and the mixin no longer applies -- the scope pass is "
+                                    + "using the pack's FULL shadow resolution.",
+                            wantedShadowScale());
+                }
             }
             try {
                 // 【只能在这个窗口里建】Voxy 的 RenderPipelineFactory 取的正是

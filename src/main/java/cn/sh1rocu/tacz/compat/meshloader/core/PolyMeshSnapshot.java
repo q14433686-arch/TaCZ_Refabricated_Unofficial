@@ -59,15 +59,15 @@ public final class PolyMeshSnapshot {
 
     private void write(List<Command> commands, VertexConsumer consumer, int overlay,
                        float red, float green, float blue, float alpha) {
-        // 【PIP 二次渲染 × mesh 的白付成本】光影下镜内那一遍会把保留的提交节点
-        // 重放一遍（SimpleFeatureRenderPhaseMixin），Iris 又把手部（枪）画在
-        // LevelRenderer.render 内部 —— 于是本回调在镜内那一遍再跑一次，
-        // 每个 poly 顶点再做一遍 CPU 变换。但合成只取镜片孔径内的像素，
-        // 而孔径内枪身本来就被目镜掩码 discard —— 那一遍画出的 poly 没有任何
-        // 像素能到达屏幕。跳过是纯赚：主画面那一遍照常写（本方法会被再调一次）。
-        if (com.tacz.guns.client.render.scope.ScopePipRenderer.isInsideScopeLevelRender()) {
-            return;
-        }
+        // 【2026-08-30 撤回】这里曾按 isInsideScopeLevelRender() 在镜内那一遍早退，
+        // 省掉重放时的第二遍 CPU 顶点变换。撤回理由（用户裁决）：
+        //   1. GPU 烘焙路线落地后，mesh 枪的主流路径根本不走本方法的 CPU compile，
+        //      这个优化保护的成本已经不存在；
+        //   2. 它让镜内那一遍与主画面那一遍的内容出现分叉（那一遍缺 poly 部件），
+        //      而「孔径内反正被 discard」的论证只覆盖掩码/合成全部正常的情况 ——
+        //      多一个行为分叉点就多一类难排查的镜内异常。
+        // 仍走 collector 的少数场景（GPU_BAKING=false / 会话降级）恢复为两遍照写：
+        // 行为简单、两遍一致，性能损失只在开镜 + PIP 二次渲染的窗口内。
         PoseStack scratch = new PoseStack();
         for (Command command : commands) {
             PoseStack.Pose pose = scratch.last();
