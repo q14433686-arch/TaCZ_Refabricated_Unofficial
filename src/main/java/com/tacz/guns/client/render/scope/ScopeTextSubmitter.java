@@ -124,7 +124,9 @@ public final class ScopeTextSubmitter {
             return false;
         }
         if (com.tacz.guns.compat.iris.IrisCompat.shouldDisableScopeMaskUnderShaderPack()) {
-            // 光影下掩码整体停用，target 里可能是陈旧内容 —— 采样它会裁错位置。
+            // 该门只对无掩码桥的渲染器（sulkan）关闸；Iris 下返回 false ——
+            // 掩码照常渲染，裁剪由注入进 pack HAND 着色器的 mode 分支执行
+            // （见 ScopeTextRenderTypes.ensureIrisCompatibility 的注释）。
             return false;
         }
         if (!ScopeMaskTextureHandle.syncToMaskTarget()) {

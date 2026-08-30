@@ -27,6 +27,7 @@ public final class IrisScopeMaskState {
     private static final String FLASH_SWIRL_PIPELINE = "pipeline/scope_flash_swirl_clipped";
     private static final String RETICLE_PIPELINE = "pipeline/scope_reticle_clipped";
     private static final String RETICLE_EMISSIVE_PIPELINE = "pipeline/scope_reticle_emissive_clipped";
+    private static final String TEXT_PIPELINE = "pipeline/scope_text_clipped";
     private static final String MASK_SAMPLER = "ScopeMaskSampler";
     private static final String UNIFORM_MODE = "tacz_ScopeMaskMode";
     private static final String UNIFORM_SAMPLER = "tacz_ScopeMaskSampler";
@@ -339,6 +340,14 @@ public final class IrisScopeMaskState {
                 return 1;
             }
             if (RETICLE_PIPELINE.equals(normalized) || RETICLE_EMISSIVE_PIPELINE.equals(normalized)) {
+                return 2;
+            }
+            if (TEXT_PIPELINE.equals(normalized)) {
+                // 【镜内文字，2026-08-30 补】与准星同侧：discard 镜外、只留镜内。
+                // 光影下我们自己的 scope_text.fsh 不会运行（assignPipeline 之后
+                // Iris 用 pack 的 HAND 着色器替换整条管线），裁剪只能靠注入分支
+                // 的 mode=2。此前这里没有该管线的映射 → mode 恒 0 → MK5HD 等
+                // 瞄具的镜内文字在光影下不裁切（用户实测截图，2026-08-30）。
                 return 2;
             }
         } catch (Throwable t) {

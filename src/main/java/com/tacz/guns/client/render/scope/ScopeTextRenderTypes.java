@@ -98,7 +98,15 @@ public final class ScopeTextRenderTypes {
     /**
      * 与 {@code ScopeBodyRenderTypes#ensureIrisCompatibility} 同一约定：
      * 让 Iris 把这条管线归到第一人称手部程序，避免光影下被判为未知管线。
-     * （实际上光影包激活时掩码整体禁用、走不到这里，这是双保险。）
+     *
+     * <p>【光影下的裁剪由谁执行】assignPipeline 之后 Iris 用 pack 的 HAND
+     * 着色器整条替换本管线 —— 我们的 scope_text.fsh 在光影下<b>不会运行</b>，
+     * SCOPE_MASK 分支形同虚设。真正生效的是 IrisShaderCreatorMixin 注入的
+     * {@code tacz_ScopeMaskMode} 分支，而它按管线 location 查 mode：
+     * {@code IrisScopeMaskState.resolveModeUncached} 里必须有
+     * {@code pipeline/scope_text_clipped → 2}（与准星同侧，镜外 discard）的
+     * 映射。2026-08-30 用户实测（MK5HD + 光影）抓到的「镜内文字不裁切」
+     * 正是该映射缺失：mode 恒 0，注入分支永不 discard。</p>
      */
     private static void ensureIrisCompatibility() {
         if (irisAssignmentAttempted) {
