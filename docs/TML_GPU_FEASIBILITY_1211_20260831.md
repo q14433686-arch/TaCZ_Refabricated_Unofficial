@@ -83,12 +83,15 @@ draw 调用该怎么写」。1.21.11 恰好同时具备两者所需。
 | `.withDepthStencilState(DepthStencilState.DEFAULT)` | `.withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST).withDepthWrite(true)`（等价值） |
 | `.withColorTargetState(ColorTargetState.DEFAULT)` | `.withColorWrite(true)` |
 | `RenderSystem.getDevice().createBuffer(name, GpuBuffer.USAGE_VERTEX, meshData.vertexBuffer())` | 同（`createBuffer(Supplier<String>, int, ByteBuffer)` 存在） |
-| `pass.setVertexBuffer(0, bone.vertexBuffer.slice())` | 同 |
-| `RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS)` → `pass.setIndexBuffer(...)` → `pass.drawIndexed(...)` | 同（`getSequentialBuffer(Mode)` 存在；`PrimitiveTopology` 换 `VertexFormat.Mode.QUADS`） |
-| `RenderSystem.bindDefaultUniforms(pass)` + `getDynamicUniforms().writeTransform(model, WHITE)` | 同（两者都在） |
+| `pass.setVertexBuffer(0, bone.vertexBuffer.slice())` | `pass.setVertexBuffer(0, bone.vertexBuffer)` —— 1.21.11 的 `setVertexBuffer(int, GpuBuffer)` 收整块 `GpuBuffer`，**不要** `.slice()`（`.slice()` 返回 `GpuBufferSlice`，签名不符） |
+| `RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS)` → `pass.setIndexBuffer(...)` → `pass.drawIndexed(...)` | `getSequentialBuffer(VertexFormat.Mode.QUADS)` 存在；`PrimitiveTopology` 换 `VertexFormat.Mode.QUADS`。**`drawIndexed` 参数序不同（见下）** |
+| `RenderSystem.bindDefaultUniforms(pass)` + `getDynamicUniforms().writeTransform(model, WHITE)` | `bindDefaultUniforms(pass)` 同；`writeTransform` 是**四参**：`writeTransform(Matrix4fc modelView, Vector4fc colorModulator, Vector3fc modelOffset, Matrix4fc textureMat)`（26.2 两参版不存在；第三参是 modelOffset 不是 lightDir，手部传 `(0,0,0)`，第四参传单位阵） |
 
-> 注：`RenderPass` 有 `drawIndexed(int indexCount, int instanceCount, int firstIndex, int baseVertex)`，
-> 与 26.2 的 `drawIndexed(int, int, int, int)` 同签名 —— 逐骨骼 draw 的形状一致。
+> **`drawIndexed` 参数序（1.21.11 实核，与 26.2 不同）**：`drawIndexed(int baseVertex, int firstIndex, int count, int instanceCount)`
+> —— 依据 yarn 1.21.11 `GlCommandEncoder#drawBoundObjectWithRenderPass(baseVertex, firstIndex, count, indexType, instanceCount)` 逐参对齐。
+> 顺序索引缓冲 0..count-1 时单实例调用即 `drawIndexed(0, 0, indexCount, 1)`。26.2 的
+> `drawIndexed(indexCount, 1, 0, 0, 0)`（五参）不存在，机械移植必须改写。
+> `createRenderPass` 用五参重载：`createRenderPass(labelGetter, colorView, OptionalInt.empty(), depthView, OptionalDouble.empty())`（不清色不清深度，深度附着主深度缓冲）。
 
 ---
 
@@ -129,9 +132,23 @@ draw 调用该怎么写」。1.21.11 恰好同时具备两者所需。
 
 ## 6. 验证状态（如实）
 
-- [x] 1.21.11 API 面实读（本表 §2，`javap -p`）。
+- [x] 1.21.11 API 面实读（本表 §2，`javap -p` + yarn 1.21.11 命名逐参对齐）。
 - [x] 上游 TML `1.21.1_fabric` 源码全文核对（`PolyMesh`/`PolyMeshModel`/render 四件套）。
 - [x] 26.2 `PolyMeshGpuRenderer` 源码全文核对。
-- [ ] **无光影 GPU 烘焙的 1.21.11 落地 —— 未开始**（本文只论证可行性，未写实现）。
-- [ ] 光影下 `assignPipeline(HAND)` PoC —— 未开始（真难点）。
-- [ ] 全部运行期行为 —— 未验证（本沙箱无客户端）。
+- [x] **第 0 步落地**：collector 安全子集 + 预算闸门 + 弹匣补画 + Screen/ShaderStateTracker + 半透明拆分（`de9b285` → `bc047a7`，CI 绿）。
+- [x] **第 1 步落地（编译绿，运行期待实机）**：无光影 GPU 静态烘焙（`PolyMeshGpuRenderer` + `TaczPolyMeshGunModel.ensureBaked` + `GameRendererMixin` 挂点 + 配置/语言键），提交 `1c0193b`（CI `33336848343` success）。
+- [ ] 光影下 `assignPipeline(HAND)` PoC —— 未开始（真难点，第 2 步）。
+- [ ] 全部运行期行为 —— 未验证（本沙箱无客户端，实机清单见 MESH_LOADER.md §5）。
+
+### 6.1 第 1 步的注入点（与 26.2 不同，已按 1.21.11 实况重定位）
+
+26.2 把 `renderAfterSolid()` 挂在 `FeatureRenderDispatcher.renderAllFeatures` 的
+`executeSolid` 之后（1.21.11 无 executeSolid 拆分）。1.21.11 改为：
+
+- `PolyMeshGpuRenderer.beginFrame()` → `GameRenderer#render` HEAD（帧首清表 + 光影开关翻转 bump 世代号）。
+- `setInHandPass(true/false)` → `GameRenderer#renderItemInHand` HEAD/RETURN（`shouldSubmitGpu` 只认这个门，不认 `transformType.firstPerson()` —— 后者对「第一人称上下文画 GUI」也返回 true，正是关 PR 世界 pass 泄漏的入口）。
+- `renderAfterSolid()`（真正 drawList）→ `renderItemInHand` RETURN：此时手部投影已设、深度已清、手部立方体还没 flush（deferred collector），MV 栈已 pop 回 `V`（视矩阵）。GPU 骨骼在此画，opaque + 深度写，与稍后 flush 的手部立方体/translucent 骨骼由深度缓冲自洽排序。
+
+`handModelView = getModelViewMatrix()`（RETURN 时 = 视矩阵 V），每骨骼 `mv = V × pose_bone`；
+`pose_bone` 含 `invert(V)`，相乘消掉 V —— 与 collector「顶点烘 pose、MV 当刻」的等价性、
+以及 26.2 「朝向恒北」修复的矩阵语义逐位一致。

@@ -1,22 +1,24 @@
-# 内置 TacZ Mesh Loader [TML] —— 安全子集（第 0 步）
+# 内置 TacZ Mesh Loader [TML] —— 安全子集 + 无光影 GPU 烘焙（第 0 + 1 步）
 
 > 代码移植自 [VellEagle/TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader)
 > `1.21.1_fabric` v0.1.7，GPL-3.0。不是官方 TacZ 附属。
 >
-> **状态：源码完成，等待 CI 编译验证与实机验证。**
+> **状态：第 0 步（collector 安全子集）与第 1 步（无光影第一人称 GPU 静态烘焙）
+> 源码完成、CI 编译通过；运行期行为（换弹无双影、GUI 不卡死、无光影 GPU 真实帧率）
+> 待实机验证。**
 > 按 AGENTS.md §2：本文没有一句「已实测修好」。
 >
 > 可行性论证与分步计划见
 > [`TML_GPU_FEASIBILITY_1211_20260831.md`](TML_GPU_FEASIBILITY_1211_20260831.md)。
-> 本轮是其中的**第 0 步**：从当前 1.21.11 基线内置「不含 GPU 赌注」的部分。
+> 已落地第 0 步与第 1 步（无光影 GPU）；第 2 步（光影 `assignPipeline(HAND)`）单独立项。
 
 ## 0. 与四个关闭 PR 的关系（为什么这是第五次、以及为什么这次砍掉了 GPU）
 
 | 版本 | 结局 | 教训（本轮如何处置） |
 |---|---|---|
-| PR #33 | 关 | GPU 画在世界 pass + 不可信矩阵 + `visitBones` skip 剪子树 → **第 0 步无 GPU 路径，问题不存在** |
-| PR #69 | 关 | 光影一开整条回退 CPU；声称做了的代码没做 → 本轮如实声明 CPU 路径是常态而非回退 |
-| PR #70 | 关 | 全局 WORLD_DRAWS 表泄漏进世界 pass；弹匣没接 `IMirrorGeometry` → **无 GPU 表；弹匣链路照搬已修正的架构（见 §2）** |
+| PR #33 | 关 | GPU 画在世界 pass + 不可信矩阵 + `visitBones` skip 剪子树 → **第 1 步 GPU 表只收手部 pass（`renderItemInHand` HEAD/RETURN 门禁），不认 `firstPerson()` 上下文** |
+| PR #69 | 关 | 光影一开整条回退 CPU；声称做了的代码没做 → 第 1 步如实：无光影走 GPU、光影回退 collector（`GPU_UNDER_SHADERS` 仅诊断强开） |
+| PR #70 | 关 | 全局 WORLD_DRAWS 表泄漏进世界 pass；弹匣没接 `IMirrorGeometry` → GPU 表只有 `HAND_DRAWS` 且仅手部消费；弹匣链路照搬已修正的架构（见 §2） |
 | PR #71/#72 | 关 | 架构收敛但被要求从干净基线重做 → 本轮**逐文件对照 1.21.11 HEAD 重新落地**，只保留三轮教训打磨过的安全子集 |
 
 维护者关闭 #72 的意见是「不应以重做名义复用已关闭的分支」。本轮的处理方式：
@@ -44,19 +46,31 @@
 - **半透明拆分**：骨骼名含 `translucent` 的骨骼单独走 `entityTranslucent`
   提交（排序混合），其余走 `entityCutout`。
 - **阴影 pass 默认跳过 poly**（`MeshPolyInShadow=false`）：立方体已提供影子形状。
-- **状态追踪基建**（纯 CPU，为第 1 步 GPU 路径铺路）：
+- **状态追踪基建**（纯 CPU，第 1 步 GPU 路径的地基）：
   - `ScreenRenderTracker`：用 Fabric `ScreenEvents` 精确检测「正在画 GUI screen
     的瞬间」（而非「菜单开着」），避免菜单开着时世界内无关渲染被误伤；
   - `ShaderStateTracker`：用 `RenderTickEvent`（START 相位）检测 Iris 光影包
     开关翻转，弱引用失效全部已注册模型的 VBO 缓存。
 - **加载告警**：超 `MeshMaxModelVertices` 的模型加载时警告枪包作者。
 
+### 第 1 步新增（无光影第一人称 GPU 静态烘焙，见可行性文档 §6.1）
+
+- **`PolyMeshGpuRenderer`**：逐骨骼常驻 VBO（顶点留在骨骼本地系、光按 4 级
+  量化烘进 UV2），每帧只上传 O(骨骼) 个 `DynamicTransforms`，在
+  `renderItemInHand` RETURN 用自定义 `RenderPass` 画。`GPU mesh pass drew N bones`
+  日志即验收锚点。世界/GUI/第三人称/掉落物仍全走 collector。
+- **光照分档缓存**：`ensureBaked` 4 级 quantize + 1s 节流；illuminated 骨骼恒烘
+  `FULL_BRIGHT`；光影包开关翻转 bump 烘焙世代号 → 持缓存的模型立即重烘
+  （26.2 `9f7412e` 的修法，绕开 1s 节流）。
+- **失效与降级**：GPU pass 抛异常 → 本会话自禁用并写回 `MeshGpuBaking=false`，
+  永久回退 collector（与 26.2 语义一致）；换模型 `releaseBaked()` 防泄漏。
+- **配置**：`MeshGpuBaking`（默认 true）、`MeshGpuUnderShaders`（诊断强开）、
+  `MeshWorldFullDetailDistance`；cloth UI + en/zh 语言键已接。
+
 ### 明确不包含（后续步骤，见可行性文档 §5）
 
-- **GPU 静态烘焙 / 逐骨骼 VBO**（第 1 步）——关闭 PR 四次翻车的部分，
-  等无光影 PoC 通过后单独提交。**因此本轮对 36 万顶点级高模的第一人称
-  帧率成本没有量级改善**，只有闸门和缓存级别的削减。这是如实声明。
-- 光影下的 GPU 照明（`assignPipeline(HAND)`，第 2 步）。
+- 光影下的 GPU 照明（`assignPipeline(HAND)`，第 2 步）——第 1 步光影下默认回退
+  collector（第 1 步无 `RenderType.prepare()` 的光影 route，1.21.11 也没有该 API）。
 - 姿态缓存 / 三角形配对 / LOD（远期方向）。
 - mesh 目镜（上游 TML 同样不支持：ocular 物体必须用立方体）。
 
@@ -107,9 +121,11 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 | `MeshWorldFullDetailDistance` | 16 | 世界语境近距全模豁免距离（0=关闭豁免） |
 | `MeshMaxModelVertices` | 120000 | 加载时告警阈值（不影响渲染） |
 | `MeshLogStats` | true | 加载统计日志 |
+| `MeshGpuBaking` | true | 无光影第一人称 GPU 静态烘焙（第 1 步）。关闭→永久 collector；运行期异常也会自写 false |
+| `MeshGpuUnderShaders` | false | 诊断强开：光影下也走 GPU（光照不保证，仅供排查）。默认 false = 光影回退 collector |
 
-**注意没有 `MeshGpuBaking` 等键**——GPU 路径第 0 步不存在，
-不注册「没人读的配置」。
+> GPU 路径只接管**无光影 + 第一人称手部**语境；世界/GUI/第三人称/掉落物
+> 无论开关如何一律走 collector（第 1 步范围，见可行性文档 §6.1）。
 
 ## 5. 验证清单
 
@@ -134,9 +150,28 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 8. 枪匠桌预览 / 物品栏内嵌展示：近距高模枪在 GUI 语境按 GUI 预算闸门处理，
    世界展示台雕像 / 物品框在近距按全模豁免正常显示。
 
-### 5.3 已知边界（如实）
+### 5.3 第 1 步 GPU 烘焙（实机，无光影）
 
-- 36 万顶点级高模第一人称**仍有帧率成本**（每帧 O(顶点) CPU 变换 +
-  逐顶点 VertexConsumer 调用）。这是第 1 步 GPU 烘焙要解决的，本轮不解决。
+1. 配置确认 `MeshGpuBaking=true`、`MeshGpuUnderShaders=false`（默认）。
+2. 无光影 + 高模 mesh 枪（36 万顶点级）第一人称：日志出现
+   `GPU mesh pass drew N bones`（N > 0），且 spark 热点里逐顶点 collector
+   开销消失（`#24 蒙皮/骨骼烘焙` 相关热点下降）。
+3. 无光影 + 低模/立方体枪：无 `GPU mesh pass` 日志行或 N=0，行为不变。
+4. 开光影（Complementary 系）：GPU 日志停发（回退 collector），枪身照明正常
+   （与立方体同一 `entityCutout` + HAND program 路径）。
+5. 换弹（纯 mesh 弹匣）：全程无双影——GPU 骨骼在深度缓冲里与稍后 flush 的
+   手部立方体/translucent 骨骼自洽排序，无双影才代表 §6.1 注入点正确。
+6. GUI 不卡死：JEI/物品栏打开时 GPU 不接管（`ScreenRenderTracker` 门禁），
+   无 `GPU mesh pass` 行。
+7. F5 / 掉落物 / 展示框：不触发 GPU（仅手部语境），走 collector，位置正确。
+8. 光影包开关翻转：`ShaderStateTracker` bump 烘焙世代号，切回无光影后 GPU
+   立即重烘、枪身光照档位正确（验证 26.2 `9f7412e` 修法的移植）。
+9. `MeshGpuBaking` 运行时手动设 false → 立即回退 collector；再设 true 恢复。
+
+### 5.4 已知边界（如实）
+
+- 第 1 步 GPU 只覆盖**无光影 + 第一人称手部**；世界/GUI/第三人称/掉落物仍走
+  collector（36 万顶点级第三人称/掉落物仍有 CPU 成本，属后续步骤）。
+- 光影下第 1 步默认回退 collector（`assignPipeline(HAND)` = 第 2 步，未做）。
 - PIP 二次渲染（`ScopePipRerender=true`）时镜内那遍会重放 collector 回调，
   poly 成本 ×2。降级方案见路线图方向 3，待镜内行为实机确认后做。
