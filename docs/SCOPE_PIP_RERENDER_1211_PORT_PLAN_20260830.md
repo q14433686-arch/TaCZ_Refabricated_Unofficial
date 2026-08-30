@@ -1,5 +1,11 @@
 # 1.21.11 分支：PIP 二次渲染 + 分辨率缩放 移植方案（ScopePipRerender / ScopePipResolutionScale）
 
+> STATUS: DECLINED（2026-08-30 维护者裁定：Iris 兼容需重写离屏渲染，无限期暂停）
+>
+> 本文档本体保留：26.2 文件清单（§2）与 API 断点事实表（§3.1）是将来若重启移植的起点。
+> 已完成的 Step1-3 + 8 项配置（含 B2 的两个 rerender 配置项、B1 的 vanilla-only 二次渲染
+> 与残留贴片修复）保持现状；暂停的是「光影下二次渲染 + 分辨率缩放真正降采样」这条线。
+
 日期: 2026-08-30
 分支: `arena/01a052b2-tacz-refabricated-unofficial`（1.21.11，depth-aperture 架构）
 目标: 把 `26.2(main)` 的「二次渲染 + 分辨率缩放」移植到本分支，并接入局内配置（Cloth/ModMenu）。
