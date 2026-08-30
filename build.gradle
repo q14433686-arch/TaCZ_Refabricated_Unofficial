@@ -485,25 +485,30 @@ tasks.register('dumpRenderApi') {
         println(cpb ?: '(none)')
         if (cpbErr.trim()) { println('stderr: ' + cpbErr.trim()) }
 
-        // (d) LevelRenderer: which methods read getMainRenderTarget / write the output override,
-        //     and how LevelTargetBundle is fed (pre-captured textures vs read-at-render-time).
+        // (d) Nail the redirect: who WRITES outputColorTextureOverride in LevelRenderer, who READS
+        //     it (RenderSystem internals), and how LevelTargetBundle is fed.
         def lrBlocks = methodBlocks('net.minecraft.client.renderer.LevelRenderer', ['-c', '-p'])
         println '===== LevelRenderer method inventory ===='
         lrBlocks.each { println '  ' + it[0].trim() }
-        println '===== LevelRenderer methods referencing outputColorTextureOverride / getMainRenderTarget ===='
+        println '===== LevelRenderer methods writing outputColorTextureOverride ====='
         lrBlocks.each { block ->
             def body = block.join('\n')
-            if (body.contains('outputColorTextureOverride') || body.contains('getMainRenderTarget')) {
+            if (body.contains('outputColorTextureOverride')) {
                 println '----- ' + block[0].trim() + ' (' + block.size() + ' lines) -----'
-                def shown = block.size() > 120 ? block.take(120) + ['... [capped]'] : block
+                def shown = block.size() > 60 ? block.take(60) + ['... [capped]'] : block
                 println shown.join('\n')
             }
         }
-        println '===== net.minecraft.client.renderer.LevelTargetBundle -p ====='
-        def (ltb, ltbErr) = runJavap('net.minecraft.client.renderer.LevelTargetBundle', ['-p'])
-        println(ltb ?: '(none)')
-        if (ltbErr.trim()) { println('stderr: ' + ltbErr.trim()) }
-        println '===== LevelTargetBundle -c -p ====='
+        println '===== RenderSystem internals reading outputColorTextureOverride ====='
+        def (rs2, rs2Err) = runJavap('com.mojang.blaze3d.systems.RenderSystem', ['-c', '-p'])
+        if (rs2Err.trim()) { println('stderr: ' + rs2Err.trim()) } else {
+            rs2.readLines().eachWithIndex { line, i ->
+                if (line.contains('outputColorTextureOverride') || line.contains('outputDepthTextureOverride')) {
+                    println "  [${i}] ${line.trim()}"
+                }
+            }
+        }
+        println '===== net.minecraft.client.renderer.LevelTargetBundle -c -p ====='
         def (ltbc, ltbcErr) = runJavap('net.minecraft.client.renderer.LevelTargetBundle', ['-c', '-p'])
         println(ltbc ?: '(none)')
         if (ltbcErr.trim()) { println('stderr: ' + ltbcErr.trim()) }
