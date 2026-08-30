@@ -134,7 +134,16 @@ public final class ScopePipRenderState {
         return zoom > 1.0f ? zoom : 1.0f;
     }
 
-    /** Stable per-frame check: has ADS begun at all (used by the FOV suppression gate). */
+    /**
+     * Stable per-frame check: has ADS begun at all (used by the FOV suppression gate).
+     *
+     * <p>This must read the <b>current-tick</b> progress ({@code partialTicks=1}), not
+     * {@code partialTicks=0}. {@code LocalPlayerAim#getClientAimingProgress(0)} returns the
+     * <b>previous</b> tick's value, while {@code CameraSetupEvent} interpolates with the frame's
+     * {@code partialTick}. On the entering/leaving boundary those two disagree, so gating on the old
+     * value let a one-frame pulse of the old whole-screen zoom through (the POV jump). Current-tick
+     * progress is monotonic across the whole transition, so the world POV stays fixed at 1x.</p>
+     */
     private static boolean isAimingStarted() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) {
@@ -149,7 +158,7 @@ public final class ScopePipRenderState {
             IGunOperator entityOperator = IGunOperator.fromLivingEntity(mc.player);
             return entityOperator != null && entityOperator.getSynAimingProgress() > 0.0f;
         }
-        return operator.getClientAimingProgress(0.0f) > 0.0f;
+        return operator.getClientAimingProgress(1.0f) > 0.0f;
     }
 
     private static boolean isAiming(Minecraft mc) {
