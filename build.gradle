@@ -413,40 +413,39 @@ tasks.register('dumpStep1Api') {
         // (The earlier 12-class + FeatureRenderDispatcher bytecode dumps are already
         //  captured in the step-0 success log; re-dumping would only push the total
         //  past the CI head-200/tail-800 trim and lose the middle sections.)
-        ['com.mojang.blaze3d.systems.RenderPass',
-         'net.minecraft.client.renderer.DynamicUniforms$Transform',
-         'com.mojang.blaze3d.vertex.DefaultVertexFormat',
-         'com.mojang.blaze3d.platform.DepthTestFunction',
-         'com.mojang.blaze3d.vertex.VertexFormat$Mode',
-         'com.mojang.blaze3d.buffers.GpuBuffer',
-         'com.mojang.blaze3d.pipeline.RenderTarget',
-         'net.minecraft.client.renderer.RenderSystem'].each { cls ->
+        ['com.mojang.blaze3d.systems.RenderSystem',
+         'com.mojang.blaze3d.systems.GpuDevice'].each { cls ->
             dump(cls, '-p')
         }
 
-        // Extract the renderItemInHand method body from GameRenderer bytecode: we need to
-        // know whether the vanilla hand pass draws inside it (renderAllFeatures) or only
-        // submits, to place the GPU cutout pass at the correct phase boundary.
-        def fullGameRenderer = javap('net.minecraft.client.renderer.GameRenderer', '-p', '-c')
-        def lines = fullGameRenderer.readLines()
-        def out = []
-        def capturing = false
-        for (int i = 0; i < lines.size(); i++) {
-            def line = lines[i]
-            if (!capturing) {
-                if (line.contains('renderItemInHand') && line.trim().endsWith(';')) {
-                    capturing = true
+        // Extract a single method body from javap -p -c output. A method header is a line
+        // starting with exactly two spaces and ending in ");" (fields end in ';' without
+        // parens, bytecode lines are indented 8+ spaces, class header ends in '{').
+        def extractMethod = { String cls, String methodName ->
+            def full = javap(cls, '-p', '-c')
+            def lines = full.readLines()
+            def out = []
+            def capturing = false
+            for (int i = 0; i < lines.size(); i++) {
+                def line = lines[i]
+                def isHeader = line ==~ /^  [a-zA-Z].*\);$/
+                if (!capturing) {
+                    if (isHeader && line.contains(methodName)) {
+                        capturing = true
+                    }
+                }
+                if (capturing) {
+                    if (out.size() > 0 && isHeader && !line.contains(methodName)) {
+                        break
+                    }
+                    out << line
                 }
             }
-            if (capturing) {
-                out << line
-                if (out.size() > 1 && line != out[0] && line.trim().endsWith(';') && !line.contains('renderItemInHand')) {
-                    break
-                }
-            }
+            return out.isEmpty() ? '(method block not found in javap output)' : out.join('\n')
         }
+
         println "===== net.minecraft.client.renderer.GameRenderer#renderItemInHand (-p -c) ====="
-        println(out.isEmpty() ? '(method block not found in javap output)' : out.join('\n'))
+        println extractMethod('net.minecraft.client.renderer.GameRenderer', 'renderItemInHand')
         println ''
     }
 }
