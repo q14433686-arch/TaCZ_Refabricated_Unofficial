@@ -2,10 +2,12 @@ package cn.sh1rocu.tacz.compat.meshloader.core;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
@@ -141,6 +143,25 @@ public class PolyMesh {
                     .setOverlay(overlay)
                     .setLight(light)
                     .setNormal(tnx, tny, tnz);
+        }
+    }
+
+    /**
+     * GPU 烘焙：顶点保持<b>骨骼本地</b>坐标写入，变换交给绘制时的
+     * DynamicTransforms.ModelViewMat（{@code PolyMeshGpuRenderer} 每骨骼写一次）。
+     * light 直接烘进 UV2 —— GPU 路径靠 {@code quantizeLight} + 重烘节流吸收光照变化。
+     */
+    public void writeRaw(BufferBuilder builder, int light) {
+        if (vertexCount == 0) {
+            return;
+        }
+        for (int i = 0; i < vertexCount; i++) {
+            builder.addVertex(bakedX[i], bakedY[i], bakedZ[i])
+                    .setColor(1f, 1f, 1f, 1f)
+                    .setUv(bakedU[i], bakedV[i])
+                    .setOverlay(OverlayTexture.NO_OVERLAY)
+                    .setLight(light)
+                    .setNormal(bakedNX[i], bakedNY[i], bakedNZ[i]);
         }
     }
 

@@ -18,6 +18,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 /**
  * poly_mesh 模型：骨骼树 + 每骨骼网格 + 快照采集。
@@ -122,9 +124,18 @@ public class PolyMeshModel {
     }
 
     public PolyMeshSnapshot capture(PoseStack rootPose, int light) {
+        return capture(rootPose, light, null);
+    }
+
+    /**
+     * @param skipBones 命中的骨骼不写入快照（GPU 路径下 cutout 由 GPU 负责，
+     *                  collector 只补 translucent）。只跳过该骨骼自身的网格，
+     *                  子树仍继续遍历 —— 不能借 visitor 剪枝语义表达「不画」。
+     */
+    public PolyMeshSnapshot capture(PoseStack rootPose, int light, Predicate<String> skipBones) {
         List<PolyMeshSnapshot.Command> cutout = new ArrayList<>();
         List<PolyMeshSnapshot.Command> translucent = new ArrayList<>();
-        captureBone(root, rootPose, light, true, cutout, translucent);
+        captureBone(root, rootPose, light, true, skipBones, cutout, translucent);
         return new PolyMeshSnapshot(cutout, translucent);
     }
 
@@ -138,9 +149,40 @@ public class PolyMeshModel {
         if (mirrorRoot) {
             captureBoneMirrored(bone, rootPose, light, cutout, translucent);
         } else {
-            captureBone(bone, rootPose, light, false, cutout, translucent);
+            captureBone(bone, rootPose, light, false, null, cutout, translucent);
         }
         return new PolyMeshSnapshot(cutout, translucent);
+    }
+
+    /**
+     * 遍历骨骼树（GPU 路径按骨骼登记绘制项用）。回调在骨骼变换已压入
+     * poseStack 之后触发。visitor 返回 false = 不要继续往下走（不是「这根不画」）。
+     */
+    public void visitBones(PoseStack poseStack, boolean checkExcluded, BiPredicate<String, PoseStack> visitor) {
+        visitBone(root, poseStack, checkExcluded, visitor);
+    }
+
+    private void visitBone(IPolyMeshBone bone, PoseStack poseStack, boolean checkExcluded,
+                           BiPredicate<String, PoseStack> visitor) {
+        if (!bone.isVisible()) {
+            return;
+        }
+        if (!meshAncestorBones.contains(bone.getName())) {
+            return;
+        }
+        if (checkExcluded && !excludedBones.isEmpty() && excludedBones.contains(bone.getName())) {
+            return;
+        }
+
+        poseStack.pushPose();
+        bone.applyTransform(poseStack);
+        boolean descend = visitor.test(bone.getName(), poseStack);
+        if (descend) {
+            for (IPolyMeshBone child : bone.getChildren()) {
+                visitBone(child, poseStack, checkExcluded, visitor);
+            }
+        }
+        poseStack.popPose();
     }
 
     /**
@@ -158,11 +200,12 @@ public class PolyMeshModel {
         }
         drawBoneMeshes(bone, poseStack, light, cutout, translucent);
         for (IPolyMeshBone child : bone.getChildren()) {
-            captureBone(child, poseStack, light, false, cutout, translucent);
+            captureBone(child, poseStack, light, false, null, cutout, translucent);
         }
     }
 
     private void captureBone(IPolyMeshBone bone, PoseStack poseStack, int light, boolean checkExcluded,
+                             Predicate<String> skipBones,
                              List<PolyMeshSnapshot.Command> cutout, List<PolyMeshSnapshot.Command> translucent) {
         if (!bone.isVisible()) {
             return;
@@ -176,9 +219,11 @@ public class PolyMeshModel {
 
         poseStack.pushPose();
         bone.applyTransform(poseStack);
-        drawBoneMeshes(bone, poseStack, light, cutout, translucent);
+        if (skipBones == null || !skipBones.test(bone.getName())) {
+            drawBoneMeshes(bone, poseStack, light, cutout, translucent);
+        }
         for (IPolyMeshBone child : bone.getChildren()) {
-            captureBone(child, poseStack, light, checkExcluded, cutout, translucent);
+            captureBone(child, poseStack, light, checkExcluded, skipBones, cutout, translucent);
         }
         poseStack.popPose();
     }
@@ -291,13 +336,15 @@ public class PolyMeshModel {
     }
 
     /**
-     * {@code ShaderStateTracker} 的失效钩子：光影包开关翻转时被调用，
-     * 释放本模型持有的 GPU 烘焙缓存（常驻 VBO 依赖当时的光影状态）。
+     * {@code ShaderStateTracker} 的失效钩子：光影包开关翻转时被调用。
      *
-     * <p>第 0 步（纯 collector 路径）没有任何 GPU 烘焙缓存，此方法为空操作；
-     * 第 1 步 GPU 静态烘焙落地时，这里接入对应模型的 VBO 释放逻辑。</p>
+     * <p>第 1 步的 GPU 静态烘焙缓存由 {@code PolyMeshGpuRenderer#beginFrame} 的
+     * 烘焙世代号（bakeGeneration）机制失效——持有 VBO 的 {@code TaczPolyMeshGunModel}
+     * 在 submit 时比对世代号、不匹配立即重烘（见 26.2 {@code 9f7412e} 的修法）。
+     * 本方法因此保持空操作：真正的失效链路不经过这里，保留仅为将来若需要
+     * 按模型粒度主动释放时接入。</p>
      */
     public void invalidateVboCache() {
-        // 第 0 步：collector 路径无 VBO，无需处理。
+        // 第 1 步：GPU 缓存的失效走 bakeGeneration（PolyMeshGpuRenderer.beginFrame）。
     }
 }

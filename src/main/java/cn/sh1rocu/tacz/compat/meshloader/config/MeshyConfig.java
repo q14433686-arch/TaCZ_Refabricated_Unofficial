@@ -5,13 +5,12 @@ import net.minecraftforge.common.ForgeConfigSpec;
 /**
  * TacZ Mesh Loader 客户端配置。挂在 TACZ 的 {@code ClientConfig} 上。
  *
- * <h2>范围（第 0 步：安全子集）</h2>
- * <p>本步内置只包含 collector（VertexConsumer）渲染路径 + 解析缓存 +
- * 顶点预算闸门 + 世界语境近距全模豁免；<b>没有</b> GPU 静态烘焙 ——
- * 关闭的 PR #33/#69/#70/#71/#72 里 GPU 路径四次翻车（世界 pass 泄漏 /
- * 深度声明 / 光影回退语义），GPU 路径按 docs/TML_GPU_FEASIBILITY_1211_20260831.md
- * 的 §5 计划在第 1 步（无光影 PoC 通过后）单独落地。因此这里没有
- * MeshGpuBaking 等键，避免出现「注册了但没人读」的配置陷阱。</p>
+ * <h2>范围</h2>
+ * <p>collector（VertexConsumer）渲染路径 + 解析缓存 + 顶点预算闸门，
+ * 外加第一人称 GPU 静态烘焙（{@code MeshGpuBaking}，见
+ * {@code PolyMeshGpuRenderer} —— 只收手部 pass，规避关 PR
+ * #33/#69/#70/#71 的世界 pass 泄漏）。光影下默认回退 collector，
+ * {@code MeshGpuUnderShaders} 是实验性强开（第 2 步落地）。</p>
  */
 public final class MeshyConfig {
 
@@ -20,6 +19,8 @@ public final class MeshyConfig {
     public static ForgeConfigSpec.DoubleValue MAX_RENDER_DISTANCE;
     public static ForgeConfigSpec.BooleanValue POLY_IN_PREVIEW;
     public static ForgeConfigSpec.BooleanValue LOG_STATS;
+    public static ForgeConfigSpec.BooleanValue GPU_BAKING;
+    public static ForgeConfigSpec.BooleanValue GPU_UNDER_SHADERS;
     public static ForgeConfigSpec.IntValue GUI_MAX_VERTICES;
     public static ForgeConfigSpec.IntValue WORLD_MAX_VERTICES;
     public static ForgeConfigSpec.DoubleValue WORLD_FULL_DETAIL_DISTANCE;
@@ -48,6 +49,21 @@ public final class MeshyConfig {
 
         builder.comment("Log poly_mesh statistics (bone/vertex counts) when models load.");
         LOG_STATS = builder.define("MeshLogStats", true);
+
+        builder.comment("GPU static baking for FIRST-PERSON only: vertices stay in bone-local",
+                "space in a resident VBO; each frame uploads O(bones) matrices instead of",
+                "transforming every vertex on the CPU.",
+                "World/GUI/drops stay on the collector path so they cannot leak into",
+                "the world pass (that was the closed PRs' wrong-screenshot bug).",
+                "Falls back to the collector path if the GPU pass fails.");
+        GPU_BAKING = builder.define("MeshGpuBaking", true);
+
+        builder.comment("Shader packs: by default the GPU path is DISABLED and mesh guns fall",
+                "back to the collector path (the shader-compatible RenderType route is step 2).",
+                "true = force the RAW custom pass even under a shader pack, bypassing the",
+                "shader pipeline entirely (gun body gets NO shader lighting). Diagnostic only.",
+                "With no shader pack active this switch has no effect.");
+        GPU_UNDER_SHADERS = builder.define("MeshGpuUnderShaders", false);
 
         builder.comment("Vertex budget for poly_mesh in GUI/FIXED/HEAD. Icons above this",
                 "budget render cube-only (or the pack's LOD model when present).",

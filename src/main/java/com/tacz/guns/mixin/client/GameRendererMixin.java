@@ -2,6 +2,7 @@ package com.tacz.guns.mixin.client;
 
 import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
+import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
@@ -48,6 +49,9 @@ public abstract class GameRendererMixin {
                                     Matrix4f projection,
                                     CallbackInfo ci) {
         this.tacz$renderingItemInHand = true;
+        // poly_mesh GPU：进入 vanilla 手部 pass —— shouldSubmitGpu 据此只收
+        // 第一人称手部骨骼，避免世界/GUI 泄漏（关 PR WORLD_DRAWS 的坑）。
+        PolyMeshGpuRenderer.setInHandPass(true);
         // Step 3 (real PIP): before the gun/hand is drawn, copy the already-rendered world color
         // into a private off-screen target. The lens will later sample this so no gun/hand appears
         // inside it. No-op unless -Dtacz.scope.pip.enable=true.
@@ -60,6 +64,11 @@ public abstract class GameRendererMixin {
                                   Matrix4f projection,
                                   CallbackInfo ci) {
         this.tacz$renderingItemInHand = false;
+        // poly_mesh GPU：手部 submit 已结束、投影已设、深度已清，在 collector 的
+        // 延迟 flush（renderLevel 末尾 renderAllFeatures）之前画 GPU 骨骼。
+        // 先画再清 hand-pass 标志（renderAfterSolid 内部判 isInHandPass）。
+        PolyMeshGpuRenderer.renderAfterSolid();
+        PolyMeshGpuRenderer.setInHandPass(false);
         // Step 3 (real PIP): after the hand pass the aperture/world depth copies are complete, so
         // paste the captured pre-hand world into the lens at the scope zoom. Step 2's magenta
         // diagnostic is deferred to later so the two never overwrite the same pixels.
@@ -167,6 +176,8 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "render", at = @At("HEAD"))
     private void tacz$renderTickStart(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
+        // poly_mesh GPU：帧首归零绘制表 + 检测光影开关翻转（烘焙世代号）。
+        PolyMeshGpuRenderer.beginFrame();
         RenderTickEvent.EVENT.invoker().onRenderTick(new RenderTickEvent(
                 RenderTickEvent.Phase.START,
                 deltaTracker.getGameTimeDeltaPartialTick(false)
