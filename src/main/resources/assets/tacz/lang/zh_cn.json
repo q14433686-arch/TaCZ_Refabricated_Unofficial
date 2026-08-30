@@ -82,6 +82,8 @@
   "config.tacz.client.render.mesh_gpu_baking.desc": "把第一人称 poly_mesh 枪模烘焙进常驻显存缓冲，每帧只上传骨骼矩阵。对 10 万顶点以上的高模枪械可大幅降低 CPU 开销。世界/GUI/掉落物不受影响。GPU 绘制失败时自动回退 CPU 路径。",
   "config.tacz.client.render.mesh_gpu_under_shaders": "Mesh GPU：光影下强制裸绘制（诊断用）",
   "config.tacz.client.render.mesh_gpu_under_shaders.desc": "开启光影包时，GPU 烘焙的 mesh 枪默认经由原版 RenderType 管道绘制，Iris 会像对待普通枪械一样为其套光影光照。打开本项则强制走裸 GPU 绘制：完全绕过光影管线（枪体无光影光照）。仅用于排查默认路径与个别光影包的兼容问题。",
+  "config.tacz.client.render.mesh_world_full_detail_distance": "Mesh 世界全模距离",
+  "config.tacz.client.render.mesh_world_full_detail_distance.desc": "在此距离（格）内，世界中的高模 mesh 枪械（第三人称、掉落物、展示框、展示台）始终以完整精度渲染，不受顶点预算限制。若无此豁免，未提供 LOD 低模的高模枪会在玩家眼前直接退化为纯立方体。超出该距离后顶点预算照常生效。0 = 关闭豁免。",
   "config.tacz.client.resource": "资源",
   "config.tacz.client.resource.enable_lazy_client_asset_load": "客户端资源懒加载",
   "config.tacz.client.resource.enable_lazy_client_asset_load.desc": "按需构建模型、动画状态机等较重的客户端资源。背包物品会尽量在后台预热。",

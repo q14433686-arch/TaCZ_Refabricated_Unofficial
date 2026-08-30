@@ -23,6 +23,7 @@ public final class MeshyConfig {
     public static ForgeConfigSpec.BooleanValue GPU_UNDER_SHADERS;
     public static ForgeConfigSpec.IntValue GUI_MAX_VERTICES;
     public static ForgeConfigSpec.IntValue WORLD_MAX_VERTICES;
+    public static ForgeConfigSpec.DoubleValue WORLD_FULL_DETAIL_DISTANCE;
     public static ForgeConfigSpec.IntValue MAX_MODEL_VERTICES;
 
     public static void init(ForgeConfigSpec.Builder builder) {
@@ -71,8 +72,16 @@ public final class MeshyConfig {
         GUI_MAX_VERTICES = builder.defineInRange("MeshGuiMaxVertices", 65536, 0, 10_000_000);
 
         builder.comment("Vertex budget for poly_mesh in third-person / dropped-item / frame",
-                "contexts. Above this budget only cubes are drawn. 0 = unlimited.");
+                "contexts. Above this budget only cubes are drawn. 0 = unlimited.",
+                "Within MeshWorldFullDetailDistance the budget is waived entirely.");
         WORLD_MAX_VERTICES = builder.defineInRange("MeshWorldMaxVertices", 120000, 0, 10_000_000);
+
+        builder.comment("Within this distance (blocks), in-world poly_mesh (third-person,",
+                "dropped items, item frames, display statues) always renders in full detail,",
+                "ignoring the vertex budgets above. High-poly guns without a pack-provided",
+                "LOD model would otherwise vanish to cube-only right in front of the player.",
+                "Beyond this distance the budgets apply as usual. 0 = no exemption.");
+        WORLD_FULL_DETAIL_DISTANCE = builder.defineInRange("MeshWorldFullDetailDistance", 16.0, 0.0, 1024.0);
 
         builder.comment("Soft warning threshold logged once per geo at load time.",
                 "Does not change rendering; tells pack authors the model is too dense.");

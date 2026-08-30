@@ -146,5 +146,9 @@ public class RenderClothConfig {
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders"), MeshyConfig.GPU_UNDER_SHADERS.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders.desc"))
                 .setSaveConsumer(MeshyConfig.GPU_UNDER_SHADERS::set).build());
+
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.mesh_world_full_detail_distance"), MeshyConfig.WORLD_FULL_DETAIL_DISTANCE.get())
+                .setMin(0.0).setMax(1024.0).setDefaultValue(16.0).setTooltip(Component.translatable("config.tacz.client.render.mesh_world_full_detail_distance.desc"))
+                .setSaveConsumer(MeshyConfig.WORLD_FULL_DETAIL_DISTANCE::set).build());
     }
 }

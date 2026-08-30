@@ -18,6 +18,7 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
+import com.tacz.guns.util.RenderDistance;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -126,7 +127,7 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             return;
         }
 
-        if (!withinContextBudget(transformType)) {
+        if (!withinContextBudget(transformType, poseStack)) {
             return;
         }
 
@@ -209,13 +210,27 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         return bakedBones.containsKey(boneName) && !polyMeshModel.isTranslucentBone(boneName);
     }
 
-    private boolean withinContextBudget(ItemDisplayContext transformType) {
+    private boolean withinContextBudget(ItemDisplayContext transformType, PoseStack poseStack) {
         if (transformType == ItemDisplayContext.GUI
                 || transformType == ItemDisplayContext.FIXED
                 || transformType == ItemDisplayContext.HEAD) {
+            // FIXED/HEAD 是双面语境：既出现在枪匠桌 GUI 预览（100ms 时间戳内），
+            // 也出现在世界里的展示台雕像/物品展示框/背枪。只有世界侧允许按
+            // 相机距离豁免——展示台上的高模枪正是走 FIXED 被 GUI 预算拦掉的。
+            if (transformType != ItemDisplayContext.GUI
+                    && !RenderDistance.isGuiRender()
+                    && PolyRenderPolicy.withinFullDetailDistance(poseStack)) {
+                return true;
+            }
             return withinVertexBudget(MeshyConfig.GUI_MAX_VERTICES.get(), true);
         }
         if (transformType != null && !transformType.firstPerson()) {
+            // 近距离全模豁免：眼前的第三人称/掉落物/展示台（NONE/GROUND/
+            // THIRD_PERSON_*）不受顶点预算限制，否则无 LOD 的高模枪在玩家
+            // 面前直接整层消失、只剩立方体。预算只保护远处/密集场景。
+            if (PolyRenderPolicy.withinFullDetailDistance(poseStack)) {
+                return true;
+            }
             return withinVertexBudget(MeshyConfig.WORLD_MAX_VERTICES.get(), false);
         }
         return true;
