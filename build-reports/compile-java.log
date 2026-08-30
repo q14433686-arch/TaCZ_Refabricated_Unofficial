@@ -42,3 +42,5 @@ BUILD SUCCESSFUL in 59s
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
 == job status: success ==
+
+== job status: cancelled ==
