@@ -429,7 +429,7 @@ tasks.register('dumpRenderApi') {
                 def cmd = ['javap', '-classpath', cp]
                 if (priv) cmd << '-p'
                 cmd << cls
-                exec {
+                project.exec {
                     commandLine cmd
                     standardOutput = sout
                     errorOutput = serr
