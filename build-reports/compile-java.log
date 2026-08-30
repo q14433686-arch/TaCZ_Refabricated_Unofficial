@@ -1,4 +1,4 @@
-commit: a51442591c2ed3502057b4603962becf574884d6
+commit: 30b31a810047c05e667e354a2e5d1a810ad080d3
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -36,7 +36,6 @@ Cannot remap lambda$addMainPass$1 because it does not exist in any of the target
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
@@ -45,6 +44,7 @@ Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the tar
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
 Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
@@ -78,40 +78,40 @@ Note: Recompile with -Xlint:unchecked for details.
 
 > Task :dumpRenderApi
 ===== javap net.minecraft.client.renderer.LevelRenderer =====
-javap failed for net.minecraft.client.renderer.LevelRenderer: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@218c4752] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for net.minecraft.client.renderer.LevelRenderer: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@552a5526] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap net.minecraft.client.renderer.GameRenderer =====
-javap failed for net.minecraft.client.renderer.GameRenderer: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@2d8aa599] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for net.minecraft.client.renderer.GameRenderer: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@67457401] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap com.mojang.blaze3d.systems.RenderSystem =====
-javap failed for com.mojang.blaze3d.systems.RenderSystem: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@4652ed45] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for com.mojang.blaze3d.systems.RenderSystem: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@74df750b] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap net.minecraft.client.Minecraft =====
-javap failed for net.minecraft.client.Minecraft: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@3fa4a1d8] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for net.minecraft.client.Minecraft: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@29582f21] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap net.minecraft.client.renderer.state.CameraRenderState =====
-javap failed for net.minecraft.client.renderer.state.CameraRenderState: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@7f853154] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for net.minecraft.client.renderer.state.CameraRenderState: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@23180c5f] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap com.mojang.blaze3d.pipeline.RenderTarget =====
-javap failed for com.mojang.blaze3d.pipeline.RenderTarget: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@7dbe550] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for com.mojang.blaze3d.pipeline.RenderTarget: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@333aee4e] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap com.mojang.blaze3d.pipeline.TextureTarget =====
-javap failed for com.mojang.blaze3d.pipeline.TextureTarget: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@56b2182b] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for com.mojang.blaze3d.pipeline.TextureTarget: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@50653020] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap com.mojang.blaze3d.Projection =====
-javap failed for com.mojang.blaze3d.Projection: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@4c82d944] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for com.mojang.blaze3d.Projection: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@68d1d513] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap com.mojang.blaze3d.ProjectionType =====
-javap failed for com.mojang.blaze3d.ProjectionType: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@1a5b5e11] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for com.mojang.blaze3d.ProjectionType: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@3903eb01] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap com.mojang.blaze3d.buffers.ProjectionMatrixBuffer =====
-javap failed for com.mojang.blaze3d.buffers.ProjectionMatrixBuffer: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@4c7e24a] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for com.mojang.blaze3d.buffers.ProjectionMatrixBuffer: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@d1ded75] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap com.mojang.blaze3d.buffers.GpuBufferSlice =====
-javap failed for com.mojang.blaze3d.buffers.GpuBufferSlice: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@5e55536f] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for com.mojang.blaze3d.buffers.GpuBufferSlice: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@31be9435] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap com.mojang.blaze3d.resource.GraphicsResourceAllocator =====
-javap failed for com.mojang.blaze3d.resource.GraphicsResourceAllocator: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@1e3e3562] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for com.mojang.blaze3d.resource.GraphicsResourceAllocator: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@5d13e14e] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap com.mojang.blaze3d.textures.GpuTexture =====
-javap failed for com.mojang.blaze3d.textures.GpuTexture: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@4a53be7b] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for com.mojang.blaze3d.textures.GpuTexture: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@74b05b03] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap com.mojang.blaze3d.textures.TextureFormat =====
-javap failed for com.mojang.blaze3d.textures.TextureFormat: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@71bdd0c9] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for com.mojang.blaze3d.textures.TextureFormat: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@1868bb4b] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap net.minecraft.client.Camera =====
-javap failed for net.minecraft.client.Camera: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@5073bba] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for net.minecraft.client.Camera: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@3ff9796b] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap net.minecraft.client.DeltaTracker =====
-javap failed for net.minecraft.client.DeltaTracker: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@6a7d8b5d] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
+javap failed for net.minecraft.client.DeltaTracker: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@46d30c2a] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
 ===== javap net.minecraft.client.renderer.fog.FogRenderer =====
-javap failed for net.minecraft.client.renderer.fog.FogRenderer: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@3d0a500f] on task ':dumpRenderApi' of type org.gradle.api.DefaultTask.
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788098242310.json
+javap failed for net.minecraft.client.renderer.fog.FogRenderer: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@4ed2cfd3] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788098428153.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -121,8 +121,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 29s
+BUILD SUCCESSFUL in 1m 33s
 2 actionable tasks: 2 executed
-Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
 == job status: success ==
