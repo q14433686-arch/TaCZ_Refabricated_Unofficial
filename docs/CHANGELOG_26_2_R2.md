@@ -10,7 +10,34 @@
 本 release 保持 `1.1.8` 为 SemVer 核心；`+fabric.26.2.R2` 是不参与版本谓词排序的 build
 metadata，不能写成 `1.1.8-R2`。
 
-## R2-hotfix2（源码状态，尚未发布）
+## R3（源码状态，2026-08-31 起）
+
+**构建元数据：`1.1.8+fabric.26.2.R3`**
+
+R2-hotfix2 之后的主线增量，全部经维护者实机验证 PASS（A 卡 + Iris 环境；
+NV 卡未实测，征测点见 Release 说明）：
+
+- **内置 TacZ Mesh Loader（TML）**：VellEagle 的 mesh 高模附属内置移植
+  （GPL-3.0，`provides: taczmeshloader`），含本仓原创的第一人称 GPU 静态烘焙
+  （逐骨骼常驻 VBO、光照 4 级量化烘焙、光影下走 vanilla RenderType 管道、
+  光影开关翻转触发重烘、GPU 失败自动回退 collector）、世界语境顶点预算门
+  与 16 格近距全模豁免。文档：[MESH_LOADER.md](MESH_LOADER.md)。
+- **镜内裁剪三件套**：光影下开镜时第一人称手臂、瞄具挂载文字（如 MK5HD
+  弹药计数）与准星一致地裁剪在目镜圆孔内。
+- **瞄具文字 `Format error:` 前缀修复**：26.2 的 `I18n.get` 是格式化接口，
+  枪包把显示串内联进 `text_key`（含 `%` 字符）时触发格式化异常；改用
+  `Language.getInstance().getOrDefault` 纯查表，等价上游 1.20.1 语义。
+- **检视动画修复**：开镜时触发检视不再不可打断（`stopAnimation` 漏掉
+  transition 中的 runner + 同触发器后继动画被误停，两案连修）。
+- **PIP 修复与新配置**：倍率下限闸门 `ScopePipMinMagnification`（默认 4.0）、
+  `ScopePipRerenderInterval`、`ScopePipShadowScale` 热应用、镜内那遍跳过
+  poly 顶点提交；新配置均接入游戏内 Cloth Config 界面（中英文条目齐备）。
+- 元数据：`fabric.mod.json` 新增 `contributors`（TACZ Dev Team / LesRaisins /
+  VellEagle）；`LICENSES.md` 的 TML 条目钉死到来源版本 `1.21.1_fabric` v0.1.7。
+
+---
+
+## R2-hotfix2（已发布）
 
 **构建元数据：`1.1.8+fabric.26.2.R2-hotfix2`**（hotfix 序号直接接在 `hotfix` 后面，
 中间不放 `.` / `-` / `_` —— TaCZTweaks 按版本号字符串识别本项目，规矩记在
@@ -24,7 +51,7 @@ metadata，不能写成 `1.1.8-R2`。
   移动输入只驱动近战（修静止拉栓抖动）、`display_offset` / `entity_transform`、
   消耗品 Bedrock/Lua 渲染通道；并补上本仓一直缺失的
   `CombatProperties#getActionCount`（自带 Lua 一直在调它，运行期 `LuaError`、编译期无感）。
-  刻意**不**同步的条目与理由见 [SYNC_26_2_FROM_RENOVATED_2026_08_27.md](SYNC_26_2_FROM_RENOVATED_2026_08_27.md)。
+  刻意**不**同步的条目与理由见 [SYNC_26_2_FROM_RENOVATED_2026_08_27.md](investigations/SYNC_26_2_FROM_RENOVATED_2026_08_27.md)。
 - **低倍镜准星恢复目镜约束**：`BedrockAttachmentModel` 把掩码的两个消费者
   （准星反向裁剪 / 镜身+视模裁剪）拆成 `reticleMaskable` 与 `bodyMaskable`。
   此前案例⑨ 第二轮的 `ScopeSightClipFix` 用同一个开关把「建掩码」和「准星裁剪」
@@ -42,7 +69,7 @@ metadata，不能写成 `1.1.8-R2`。
   先后由 mixin config 注册顺序决定；tacz 在前时是坏行（mode 被 Iris 重绑程序写回 0）。
   本仓用户**未**报过镜内裁切失效、当前也**未**发作，本次只消除这个顺序依赖，
   **不**声称修好了任何用户反馈的现象。详细取证与「当前落在哪一行」的实机回填位见
-  [SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md](SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md)。
+  [SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md](investigations/SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md)。
   （均为源码级，**未实机验证**：本执行环境无 JDK，未编译、未跑游戏。）
 - **光影 PBR 下第一人称枪身闪烁修复（在体 A/B 验证 PASS）**：
   Iris 26.x 的 `HandRenderer` 一帧跑两遍手部 pass（实心 + 半透明），Iris 对实心物品的
@@ -53,7 +80,7 @@ metadata，不能写成 `1.1.8-R2`。
   仅第一人称、仅 PBR 开启时出现）。新增开关 `IrisHandPhaseSplitFix`（`[FIX]`，
   **默认开**）：视模只提交实心遍，复刻 Iris 对普通实心物品的语义；`false` 秒回退。
   2026-08-29 用户回报 **PASS**。证据链与验证记录见
-  [IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md](IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md)。
+  [IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md](investigations/IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md)。
 
 > 说明：本节只列本轮**亲手改过并核对过**的内容。相对 tag `26.2_R2_HOTFIX`
 > 的完整差异是 67 个文件（含此前已合并的 scope PIP / 兼容层等工作），

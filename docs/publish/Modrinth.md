@@ -219,8 +219,8 @@ world corruption, crashes, data loss and mod conflicts. Non-commercial project.
 
 | 字段 | 填什么 |
 |---|---|
-| **Version name** | `1.1.8+fabric.26.2.R1` |
-| **Version number** | `1.1.8+fabric.26.2.R1` |
+| **Version name** | `1.1.8+fabric.26.2.R3` |
+| **Version number** | `1.1.8+fabric.26.2.R3` |
 | **Release channel** | **Release** |
 | **Loaders** | `Fabric` |
 | **Game versions** | `26.2` |
@@ -295,6 +295,10 @@ based on TACZ `1.1.8-hotfix`.
 ---
 
 ## ⑤-bis 次回发布用 Changelog 草稿（案例⑧ 正式修复 · 2026-08-12）
+
+> **2026-08-31 注**：版本号已前进到 R3（GitHub/CurseForge 线上已到 R2-hotfix2）。
+> 实际发布时以 `docs/CHANGELOG_26_2_R2.md` 的 R3 段为准重写本块；
+> 下方 R1 草稿保留为当时的行文范式参考。
 
 > R1 发布时用本块替换线上 changelog；§⑤ 里的 Beta 3 Hotfix 块是已发布原文，留档勿动。
 

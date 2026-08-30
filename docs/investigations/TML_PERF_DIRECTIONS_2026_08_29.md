@@ -14,7 +14,7 @@
 > - **方向 3.3（GUI/掉落物体验）**：以「近距全模豁免」形态完成（`f70867d`，
 >   世界语境 16 格内免预算画全模，LOD 机制经查本体已有、meshloader 已接）;
 > - **方向 2（collector 常数因子）与方向 4/5**：未做，仍是本文所述的候选。
-> 当前文档见 [`MESH_LOADER.md`](MESH_LOADER.md)。以下为 08-29 原文，仅存档。
+> 当前文档见 [`MESH_LOADER.md`](../MESH_LOADER.md)。以下为 08-29 原文，仅存档。
 
 > 分支：`arena/01a04e96-tacz-refabricated-unofficial`
 > 性质：**方向讨论稿，不含任何实现。** 所有「已核实」条目均给出出处；

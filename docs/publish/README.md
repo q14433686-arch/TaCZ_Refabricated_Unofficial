@@ -39,7 +39,7 @@
 —— 前者含版本号与游戏名，后者含版本号与 filler data，**都会被驳回**。
 
 > 这同时解决了「以后移植到别的 MC 版本会很尴尬」的问题：
-> 项目名长期稳定，版本信息由**文件名**（`TACZ-Refabricated-26.2-1.1.8+fabric.26.2.R1.jar`）
+> 项目名长期稳定，版本信息由**文件名**（`TACZ-Refabricated-26.2-1.1.8+fabric.26.2.R3.jar`）
 > 和**版本号字段**承载 —— 这正是 CurseForge 规则里说的
 > "belongs in ... relevant **file tagging**"。
 
@@ -121,7 +121,7 @@
 
 | 项 | 值 |
 |---|---|
-| 模组版本号 | `1.1.8+fabric.26.2.R1` |
+| 模组版本号 | `1.1.8+fabric.26.2.R3` |
 | Minecraft | `26.2` |
 | Fabric Loader | `>=0.19.3` |
 | Fabric API | `0.155.2+26.2` |
@@ -142,4 +142,4 @@
 丢掉了数据组件"的高频问题；起因核到 REI 26.2.820 源码
 （`ClientHelperImpl#tryCheatingEntry` 的 `tagMessage` 硬编码为空，
 `TODO 24w09a` 组件化后未适配）。完整技术推导与源码引用见
-`docs/DEDICATED_SERVER_GETNAME_AUDIT_2026_08_21.md` 第 8、9 节。
+`docs/investigations/DEDICATED_SERVER_GETNAME_AUDIT_2026_08_21.md` 第 8、9 节。

@@ -8,7 +8,7 @@
 > 实测覆盖：无光影第一人称、光影下第一人称（vanilla RenderType 路线）、
 > 世界语境近距全模（第三人称/掉落物/展示台）、光影开关切换（烘焙世代失效）。
 >
-> 路线图见 [`TML_PERF_DIRECTIONS_2026_08_29.md`](TML_PERF_DIRECTIONS_2026_08_29.md)。
+> 路线图见 [`TML_PERF_DIRECTIONS_2026_08_29.md`](investigations/TML_PERF_DIRECTIONS_2026_08_29.md)。
 > 已完成其中的第 0 步（安全子集）与第 1 步（无光影 GPU 路径），
 > 且光影下也经由 vanilla RenderType 路线拿到了 GPU 收益（原方向 1 的替代实现）。
 

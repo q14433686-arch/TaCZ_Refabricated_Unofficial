@@ -1,10 +1,14 @@
 name: compile-check
 
-# 编译验证闭环（v3）：
+# 编译验证闭环（v4）：
 # 依赖下载与编译在 GitHub Actions（外网畅通）执行；
-# 编译日志通过 GitHub Contents API 写回本分支（build-reports/compile-java.log），
-# 供网络受限的沙箱用 `gh api contents` 直接读取 —— 绕开 Actions 日志 blob 域不可达的限制。
+# arena/** 分支上，编译日志通过 GitHub Contents API 写回本分支
+# （build-reports/compile-java.log），供网络受限的沙箱用 `gh api contents`
+# 直接读取 —— 绕开 Actions 日志 blob 域不可达的限制。
 # v2 用 git commit+push 回推，曾因 rebase/push 竞争 5 次失败；v3 改用 API 单文件写入。
+# v4（2026-08-31）：补主分支盲区 —— 此前只有 arena/** 触发，PR 合并进
+# 26.2(main) 等主分支的合并 commit 从来没人编译过。现在主分支 push 与 PR 也编译，
+# 但【只有 arena/** 才回推日志】（主分支不能被 CI 提交污染，状态看 Actions 即可）。
 
 permissions:
   contents: write
@@ -13,10 +17,21 @@ on:
   push:
     branches:
       - 'arena/**'
+      - '26.2(main)'
+      - '26.1.2'
+      - '1.21.11'
     # 防止“日志回推 commit”再次触发本流程造成死循环
     paths-ignore:
       - 'build-reports/**'
+  pull_request:
+    paths-ignore:
+      - 'build-reports/**'
   workflow_dispatch:
+
+concurrency:
+  # 同一分支的过期 run 直接取消，省配额（push 连发时只编最新的）
+  group: compile-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   compile:
@@ -39,7 +54,8 @@ jobs:
           ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
 
       - name: Push compile log back via contents API
-        if: always()
+        # 只在 arena/** 的 push 上回推 —— 主分支与 PR 不产生 ci-log commit
+        if: always() && github.event_name == 'push' && startsWith(github.ref_name, 'arena/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
