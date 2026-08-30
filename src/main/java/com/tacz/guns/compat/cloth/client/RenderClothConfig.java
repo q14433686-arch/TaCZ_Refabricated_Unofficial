@@ -60,6 +60,13 @@ public class RenderClothConfig {
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_enable"), RenderConfig.SCOPE_PIP_ENABLE.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_enable.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_ENABLE::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_rerender"), RenderConfig.SCOPE_PIP_RERENDER.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_rerender.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_RERENDER::set).build());
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_resolution_scale"), RenderConfig.SCOPE_PIP_RESOLUTION_SCALE.get())
+                .setMin(0.25).setMax(1.0).setDefaultValue(0.75)
+                .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_resolution_scale.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_RESOLUTION_SCALE::set).build());
         render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_min_aiming_progress"), RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS.get())
                 .setMin(0.0).setMax(1.0).setDefaultValue(0.05)
                 .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_min_aiming_progress.desc"))

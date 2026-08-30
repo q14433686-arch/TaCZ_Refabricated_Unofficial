@@ -80,6 +80,25 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_ALLOW_SHADER_PACKS;
     /**
+     * 【实验】用窄 FOV 把世界<b>二次渲染</b>一遍作为镜内画面，取代屏幕空间重投影。
+     *
+     * <p>重投影路径的镜内分辨率被锁死为「屏幕分辨率 ÷ 倍率」，高倍镜必然变软；
+     * 二次渲染用窄 FOV 真画一遍，镜内是<b>原生分辨率</b>，代价是每帧多跑一遍世界渲染。
+     * 与 26.2 的 {@code ScopePipRerender} 同名同义。</p>
+     *
+     * <p><b>注意</b>：本分支当前只实现无光影（vanilla）路径；Iris 光影下仍走现有
+     * 屏幕空间成品帧合成，此开关暂不生效（见配置 tooltip）。默认关闭。</p>
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RERENDER;
+    /**
+     * 二次渲染模式下，镜内那遍的渲染分辨率（1.0 = 原生分辨率）。
+     *
+     * <p>调低可显著减少第二遍世界渲染的 GPU 开销（0.5 = 25% 像素），代价是镜内更软。
+     * 仅当 {@link #SCOPE_PIP_RERENDER} 开启时生效。与 26.2 的
+     * {@code ScopePipResolutionScale} 同名同义。</p>
+     */
+    public static ForgeConfigSpec.DoubleValue SCOPE_PIP_RESOLUTION_SCALE;
+    /**
      * 【诊断】抓取照常进行，但<b>不做合成</b>。
      *
      * <p>用来区分「放大画面溢出到镜外」的两种成因：什么都不画仍溢出 → 抓取/离屏路径漏到主画面；
@@ -182,6 +201,18 @@ public class RenderConfig {
                                 + "so the lens is a screen-space reprojection of the finished frame (slightly softer "
                                 + "under high magnification). Turn it on to test with your pack.")
                 .define("ScopePipAllowShaderPacks", false);
+        SCOPE_PIP_RERENDER = builder.comment(
+                        "Draw the scope image by rendering the world a SECOND time with a narrow FOV, "
+                                + "instead of reprojecting the already-rendered frame. The lens then has native "
+                                + "resolution (the reprojection path is capped at screen resolution / zoom). "
+                                + "Costs a full extra world render every frame. Experimental; default off. "
+                                + "This port currently implements only the vanilla (no-shader-pack) path.")
+                .define("ScopePipRerender", false);
+        SCOPE_PIP_RESOLUTION_SCALE = builder.comment(
+                        "Render resolution scale for the scope pass in rerender mode (1.0 = native). "
+                                + "Lower values reduce the GPU cost of the second world render at the price "
+                                + "of a softer lens. Only used when ScopePipRerender is on.")
+                .defineInRange("ScopePipResolutionScale", 0.75d, 0.25d, 1.0d);
         SCOPE_PIP_DEBUG_NO_COMPOSITE = builder.comment(
                         "Diagnostic: still capture, but skip the composite. If the magnified image still "
                                 + "overflows, the leak is in the capture/offscreen path, not the composite.")
