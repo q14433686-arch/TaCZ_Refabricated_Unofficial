@@ -59,6 +59,7 @@ public final class ScopePipDepthDebug {
     private static boolean failed;
     private static boolean loggedQueued;
     private static boolean loggedSkippedIris;
+    private static boolean loggedAndDisabled;
 
     // Cached wrappers around the two private depth textures. The raw gl id does not change while
     // the main target size stays stable, so these are built once and reused.
@@ -81,6 +82,14 @@ public final class ScopePipDepthDebug {
         // not overwrite it when both system properties happen to be set.
         if (ScopePipRenderState.isEnabled()) {
             return;
+        }
+        if (!loggedAndDisabled) {
+            loggedAndDisabled = true;
+            GunMod.LOGGER.warn(
+                    "[TACZ Scope] Step2 magenta debug is ON ({}) but Step3 is not active {}; "
+                            + "painting magenta. Property effective at startup: {}.",
+                    DEBUG_PROPERTY, ScopePipRenderState.enablePropertySummary(),
+                    System.getProperty(DEBUG_PROPERTY, "<unset>"));
         }
         if (IrisCompat.isUsingRenderPack()) {
             if (!loggedSkippedIris) {

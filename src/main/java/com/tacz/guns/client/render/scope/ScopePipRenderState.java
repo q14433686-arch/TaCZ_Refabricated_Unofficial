@@ -93,6 +93,16 @@ public final class ScopePipRenderState {
     }
 
     /**
+     * One-line explanation for diagnostics when Step 3 did not paint: which JVM property was seen at
+     * class-load and whether the runtime marked the pipeline failed.
+     */
+    public static String enablePropertySummary() {
+        return "(enable=" + System.getProperty(ENABLE_PROPERTY, "<unset>")
+                + ", classLoadedEnabled=" + ENABLED
+                + ", failed=" + failed + ")";
+    }
+
+    /**
      * Whether {@code CameraSetupEvent#applyScopeMagnification} should leave the world FOV alone.
      *
      * <p>True while PIP is neither disabled nor failed, the held gun is a real magnifying scope and
