@@ -1,4 +1,4 @@
-commit: f0288126483f66a6d237f6cdb5ed22c4e50665a4
+commit: 514274ca5d4624d04bbe8d7a3b9b2eaf5689bdf3
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -40,8 +40,8 @@ Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
@@ -261,6 +261,109 @@ public class com.mojang.blaze3d.vertex.MeshData implements java.lang.AutoCloseab
 }
 
 
+===== com.mojang.blaze3d.vertex.MeshData$DrawState (-p) =====
+Compiled from "MeshData.java"
+public final class com.mojang.blaze3d.vertex.MeshData$DrawState extends java.lang.Record {
+  private final com.mojang.blaze3d.vertex.VertexFormat format;
+  private final int vertexCount;
+  private final int indexCount;
+  private final com.mojang.blaze3d.vertex.VertexFormat$Mode mode;
+  private final com.mojang.blaze3d.vertex.VertexFormat$IndexType indexType;
+  public com.mojang.blaze3d.vertex.MeshData$DrawState(com.mojang.blaze3d.vertex.VertexFormat, int, int, com.mojang.blaze3d.vertex.VertexFormat$Mode, com.mojang.blaze3d.vertex.VertexFormat$IndexType);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public com.mojang.blaze3d.vertex.VertexFormat format();
+  public int vertexCount();
+  public int indexCount();
+  public com.mojang.blaze3d.vertex.VertexFormat$Mode mode();
+  public com.mojang.blaze3d.vertex.VertexFormat$IndexType indexType();
+}
+
+
+===== com.mojang.blaze3d.vertex.ByteBufferBuilder (-p) =====
+Compiled from "ByteBufferBuilder.java"
+public class com.mojang.blaze3d.vertex.ByteBufferBuilder implements java.lang.AutoCloseable {
+  private static final com.mojang.jtracy.MemoryPool MEMORY_POOL;
+  private static final org.slf4j.Logger LOGGER;
+  private static final org.lwjgl.system.MemoryUtil$MemoryAllocator ALLOCATOR;
+  private static final long DEFAULT_MAX_CAPACITY;
+  private static final int MAX_GROWTH_SIZE;
+  private static final int BUFFER_FREED_GENERATION;
+  long pointer;
+  private long capacity;
+  private final long maxCapacity;
+  private long writeOffset;
+  private long nextResultOffset;
+  private int resultCount;
+  private int generation;
+  public com.mojang.blaze3d.vertex.ByteBufferBuilder(int, long);
+  public com.mojang.blaze3d.vertex.ByteBufferBuilder(int);
+  public static com.mojang.blaze3d.vertex.ByteBufferBuilder exactlySized(int);
+  public long reserve(int);
+  private void ensureCapacity(long);
+  private void resize(long);
+  public com.mojang.blaze3d.vertex.ByteBufferBuilder$Result build();
+  public void clear();
+  public void discard();
+  boolean isValid(int);
+  void freeResult();
+  private void discardResults();
+  public void close();
+  private void checkOpen();
+  static {};
+}
+
+
+===== net.minecraft.client.renderer.RenderPipelines (grep: Snippet|register|ENTITY_CUTOUT|ENTITY_TRANSLUCENT|MATRICES) =====
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet MATRICES_PROJECTION_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet FOG_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GLOBALS_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet MATRICES_FOG_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet MATRICES_FOG_LIGHT_DIR_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GENERIC_BLOCKS_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet TERRAIN_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet BLOCK_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet ENTITY_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet ENTITY_EMISSIVE_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet BEACON_BEAM_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet TEXT_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet END_PORTAL_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet CLOUDS_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet LINES_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet DEBUG_FILLED_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet PARTICLE_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet WEATHER_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GUI_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GUI_TEXTURED_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GUI_TEXT_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet OUTLINE_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet POST_PROCESSING_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_CUTOUT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_CUTOUT_NO_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_CUTOUT_NO_CULL_Z_OFFSET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_TRANSLUCENT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_TRANSLUCENT_EMISSIVE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ITEM_ENTITY_TRANSLUCENT_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet ANIMATE_SPRITE_SNIPPET;
+  public static com.mojang.blaze3d.pipeline.RenderPipeline register(com.mojang.blaze3d.pipeline.RenderPipeline);
+
+===== net.minecraft.client.renderer.GameRenderer (grep: ightTexture|ainRenderTarget|evelLightmap|RenderTarget|DynamicUniforms) =====
+  private final net.minecraft.client.renderer.LightTexture lightTexture;
+  public net.minecraft.client.renderer.LightTexture lightTexture();
+
+===== net.minecraft.client.renderer.LightTexture (grep: Texture|pack|light|TextureView) =====
+Compiled from "LightTexture.java"
+public class net.minecraft.client.renderer.LightTexture implements java.lang.AutoCloseable {
+  private final com.mojang.blaze3d.textures.GpuTexture texture;
+  private final com.mojang.blaze3d.textures.GpuTextureView textureView;
+  private boolean updateLightTexture;
+  public net.minecraft.client.renderer.LightTexture(net.minecraft.client.renderer.GameRenderer, net.minecraft.client.Minecraft);
+  public com.mojang.blaze3d.textures.GpuTextureView getTextureView();
+  public void updateLightTexture(float);
+  public static int pack(int, int);
+  public static int lightCoordsWithEmission(int, int);
+
 ===== net.minecraft.client.renderer.ItemInHandRenderer#renderHandsWithItems (-p -c) =====
   public void renderHandsWithItems(float, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.SubmitNodeCollector, net.minecraft.client.player.LocalPlayer, int);
     Code:
@@ -406,7 +509,7 @@ public class com.mojang.blaze3d.vertex.MeshData implements java.lang.AutoCloseab
      297: return
 
 
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788123347469.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788123628132.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -416,7 +519,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 55s
+BUILD SUCCESSFUL in 2m 1s
 2 actionable tasks: 2 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
