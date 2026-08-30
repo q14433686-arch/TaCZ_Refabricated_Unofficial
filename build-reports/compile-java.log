@@ -1,4 +1,4 @@
-commit: 30b31a810047c05e667e354a2e5d1a810ad080d3
+commit: a28a78c00b1d6d3c93a86ab5ad0021fda6117169
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -78,40 +78,153 @@ Note: Recompile with -Xlint:unchecked for details.
 
 > Task :dumpRenderApi
 ===== javap net.minecraft.client.renderer.LevelRenderer =====
-javap failed for net.minecraft.client.renderer.LevelRenderer: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@552a5526] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+  public void renderLevel(com.mojang.blaze3d.resource.GraphicsResourceAllocator, net.minecraft.client.DeltaTracker, boolean, net.minecraft.client.Camera, org.joml.Matrix4f, org.joml.Matrix4f, org.joml.Matrix4f, com.mojang.blaze3d.buffers.GpuBufferSlice, org.joml.Vector4f, boolean);
 ===== javap net.minecraft.client.renderer.GameRenderer =====
-javap failed for net.minecraft.client.renderer.GameRenderer: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@67457401] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+  public org.joml.Matrix4f getProjectionMatrix(float);
+  public void renderLevel(net.minecraft.client.DeltaTracker);
 ===== javap com.mojang.blaze3d.systems.RenderSystem =====
-javap failed for com.mojang.blaze3d.systems.RenderSystem: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@74df750b] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+  public static com.mojang.blaze3d.textures.GpuTextureView outputColorTextureOverride;
+  public static com.mojang.blaze3d.textures.GpuTextureView outputDepthTextureOverride;
+  public static void setProjectionMatrix(com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.ProjectionType);
+  public static void backupProjectionMatrix();
+  public static void restoreProjectionMatrix();
+  public static com.mojang.blaze3d.buffers.GpuBufferSlice getProjectionMatrixBuffer();
+  public static com.mojang.blaze3d.ProjectionType getProjectionType();
 ===== javap net.minecraft.client.Minecraft =====
-javap failed for net.minecraft.client.Minecraft: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@29582f21] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+  public final net.minecraft.client.renderer.LevelRenderer levelRenderer;
+  public com.mojang.blaze3d.pipeline.RenderTarget getMainRenderTarget();
+  public net.minecraft.client.DeltaTracker getDeltaTracker();
 ===== javap net.minecraft.client.renderer.state.CameraRenderState =====
-javap failed for net.minecraft.client.renderer.state.CameraRenderState: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@23180c5f] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+Compiled from "CameraRenderState.java"
+public class net.minecraft.client.renderer.state.CameraRenderState implements net.fabricmc.fabric.api.client.rendering.v1.FabricRenderState {
+  public net.minecraft.core.BlockPos blockPos;
+  public net.minecraft.world.phys.Vec3 pos;
+  public boolean initialized;
+  public net.minecraft.world.phys.Vec3 entityPos;
+  public org.joml.Quaternionf orientation;
+  public net.minecraft.client.renderer.state.CameraRenderState();
+}
+
 ===== javap com.mojang.blaze3d.pipeline.RenderTarget =====
-javap failed for com.mojang.blaze3d.pipeline.RenderTarget: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@333aee4e] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+Compiled from "RenderTarget.java"
+public abstract class com.mojang.blaze3d.pipeline.RenderTarget {
+  private static int UNNAMED_RENDER_TARGETS;
+  public int width;
+  public int height;
+  protected final java.lang.String label;
+  public final boolean useDepth;
+  protected com.mojang.blaze3d.textures.GpuTexture colorTexture;
+  protected com.mojang.blaze3d.textures.GpuTextureView colorTextureView;
+  protected com.mojang.blaze3d.textures.GpuTexture depthTexture;
+  protected com.mojang.blaze3d.textures.GpuTextureView depthTextureView;
+  public com.mojang.blaze3d.pipeline.RenderTarget(java.lang.String, boolean);
+  public void resize(int, int);
+  public void destroyBuffers();
+  public void copyDepthFrom(com.mojang.blaze3d.pipeline.RenderTarget);
+  public void createBuffers(int, int);
+  public void blitToScreen();
+  public void blitAndBlendToTexture(com.mojang.blaze3d.textures.GpuTextureView);
+  public com.mojang.blaze3d.textures.GpuTexture getColorTexture();
+  public com.mojang.blaze3d.textures.GpuTextureView getColorTextureView();
+  public com.mojang.blaze3d.textures.GpuTexture getDepthTexture();
+  public com.mojang.blaze3d.textures.GpuTextureView getDepthTextureView();
+  private static java.lang.String method_71167();
+  private java.lang.String method_67768();
+  private java.lang.String method_67767();
+  static {};
+}
+
 ===== javap com.mojang.blaze3d.pipeline.TextureTarget =====
-javap failed for com.mojang.blaze3d.pipeline.TextureTarget: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@50653020] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+Compiled from "TextureTarget.java"
+public class com.mojang.blaze3d.pipeline.TextureTarget extends com.mojang.blaze3d.pipeline.RenderTarget {
+  public com.mojang.blaze3d.pipeline.TextureTarget(java.lang.String, int, int, boolean);
+}
+
 ===== javap com.mojang.blaze3d.Projection =====
-javap failed for com.mojang.blaze3d.Projection: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@68d1d513] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+(no matching members / class not found)
+javap stderr: Error: class not found: com.mojang.blaze3d.Projection
 ===== javap com.mojang.blaze3d.ProjectionType =====
-javap failed for com.mojang.blaze3d.ProjectionType: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@3903eb01] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+Compiled from "ProjectionType.java"
+public final class com.mojang.blaze3d.ProjectionType extends java.lang.Enum<com.mojang.blaze3d.ProjectionType> {
+  public static final com.mojang.blaze3d.ProjectionType PERSPECTIVE;
+  public static final com.mojang.blaze3d.ProjectionType ORTHOGRAPHIC;
+  private final com.mojang.blaze3d.vertex.VertexSorting vertexSorting;
+  private final com.mojang.blaze3d.ProjectionType$LayeringTransform layeringTransform;
+  private static final com.mojang.blaze3d.ProjectionType[] $VALUES;
+  public static com.mojang.blaze3d.ProjectionType[] values();
+  public static com.mojang.blaze3d.ProjectionType valueOf(java.lang.String);
+  private com.mojang.blaze3d.ProjectionType(com.mojang.blaze3d.vertex.VertexSorting, com.mojang.blaze3d.ProjectionType$LayeringTransform);
+  public com.mojang.blaze3d.vertex.VertexSorting vertexSorting();
+  public void applyLayeringTransform(org.joml.Matrix4f, float);
+  private static void method_65048(org.joml.Matrix4f, float);
+  private static void method_65049(org.joml.Matrix4f, float);
+  private static com.mojang.blaze3d.ProjectionType[] $values();
+  static {};
+}
+
 ===== javap com.mojang.blaze3d.buffers.ProjectionMatrixBuffer =====
-javap failed for com.mojang.blaze3d.buffers.ProjectionMatrixBuffer: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@d1ded75] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+(no matching members / class not found)
+javap stderr: Error: class not found: com.mojang.blaze3d.buffers.ProjectionMatrixBuffer
 ===== javap com.mojang.blaze3d.buffers.GpuBufferSlice =====
-javap failed for com.mojang.blaze3d.buffers.GpuBufferSlice: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@31be9435] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+Compiled from "GpuBufferSlice.java"
+public final class com.mojang.blaze3d.buffers.GpuBufferSlice extends java.lang.Record {
+  private final com.mojang.blaze3d.buffers.GpuBuffer buffer;
+  private final long offset;
+  private final long length;
+  public com.mojang.blaze3d.buffers.GpuBufferSlice(com.mojang.blaze3d.buffers.GpuBuffer, long, long);
+  public com.mojang.blaze3d.buffers.GpuBufferSlice slice(long, long);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public com.mojang.blaze3d.buffers.GpuBuffer buffer();
+  public long offset();
+  public long length();
+}
+
 ===== javap com.mojang.blaze3d.resource.GraphicsResourceAllocator =====
-javap failed for com.mojang.blaze3d.resource.GraphicsResourceAllocator: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@5d13e14e] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+Compiled from "GraphicsResourceAllocator.java"
+public interface com.mojang.blaze3d.resource.GraphicsResourceAllocator {
+  public static final com.mojang.blaze3d.resource.GraphicsResourceAllocator UNPOOLED;
+  public abstract <T> T acquire(com.mojang.blaze3d.resource.ResourceDescriptor<T>);
+  public abstract <T> void release(com.mojang.blaze3d.resource.ResourceDescriptor<T>, T);
+  static {};
+}
+
 ===== javap com.mojang.blaze3d.textures.GpuTexture =====
-javap failed for com.mojang.blaze3d.textures.GpuTexture: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@74b05b03] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+  public int getWidth(int);
+  public int getHeight(int);
+  public com.mojang.blaze3d.textures.TextureFormat getFormat();
 ===== javap com.mojang.blaze3d.textures.TextureFormat =====
-javap failed for com.mojang.blaze3d.textures.TextureFormat: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@1868bb4b] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+Compiled from "TextureFormat.java"
+public final class com.mojang.blaze3d.textures.TextureFormat extends java.lang.Enum<com.mojang.blaze3d.textures.TextureFormat> {
+  public static final com.mojang.blaze3d.textures.TextureFormat RGBA8;
+  public static final com.mojang.blaze3d.textures.TextureFormat RED8;
+  public static final com.mojang.blaze3d.textures.TextureFormat RED8I;
+  public static final com.mojang.blaze3d.textures.TextureFormat DEPTH32;
+  public static com.mojang.blaze3d.textures.TextureFormat[] values();
+  public static com.mojang.blaze3d.textures.TextureFormat valueOf(java.lang.String);
+  public int pixelSize();
+  public boolean hasColorAspect();
+  public boolean hasDepthAspect();
+  static {};
+}
+
 ===== javap net.minecraft.client.Camera =====
-javap failed for net.minecraft.client.Camera: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@3ff9796b] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+(no matching members / class not found)
 ===== javap net.minecraft.client.DeltaTracker =====
-javap failed for net.minecraft.client.DeltaTracker: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@46d30c2a] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
+Compiled from "DeltaTracker.java"
+public interface net.minecraft.client.DeltaTracker {
+  public static final net.minecraft.client.DeltaTracker ZERO;
+  public static final net.minecraft.client.DeltaTracker ONE;
+  public abstract float getGameTimeDeltaTicks();
+  public abstract float getGameTimeDeltaPartialTick(boolean);
+  public abstract float getRealtimeDeltaTicks();
+  static {};
+}
+
 ===== javap net.minecraft.client.renderer.fog.FogRenderer =====
-javap failed for net.minecraft.client.renderer.fog.FogRenderer: org.gradle.internal.metaobject.AbstractDynamicObject$CustomMessageMissingMethodException: Could not find method exec() for arguments [build_1xuydquisrha81uorfjpb33xa$_run_closure12$_closure58$_closure60$_closure61@4ed2cfd3] on root project 'TACZ-Refabricated' of type org.gradle.api.Project.
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788098428153.json
+  public com.mojang.blaze3d.buffers.GpuBufferSlice getBuffer(net.minecraft.client.renderer.fog.FogRenderer$FogMode);
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788098607921.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -121,7 +234,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 33s
+BUILD SUCCESSFUL in 1m 44s
 2 actionable tasks: 2 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
 == job status: success ==
