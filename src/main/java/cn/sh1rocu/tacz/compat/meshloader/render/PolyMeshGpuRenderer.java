@@ -147,6 +147,18 @@ public final class PolyMeshGpuRenderer {
      * 会被画两遍 —— 不透明几何画两遍视觉无差但白付一倍顶点成本。
      */
     private static boolean drawnThisFrame = false;
+    /**
+     * 烘焙世代号：光影包开关每翻转一次 +1（{@link #beginFrame} 逐帧检测）。
+     *
+     * <p>烘焙产物依赖当时的光影状态——Iris 激活时会扩展实体顶点格式
+     * （附加属性、stride 变化），经 {@code BufferBuilder} 写出的常驻 VBO
+     * 布局随之不同；切换光影后用新管线按新 stride 解读旧 buffer，
+     * 属性错位表现为<b>模型拉伸</b>（用户实测：站着不动开关光影必现，
+     * 光照跨档触发重烘后“自愈”）。持有烘焙缓存的模型在 submit 时比对
+     * 世代号，不匹配立即重烘——不受光照档节流约束。</p>
+     */
+    private static int bakeGeneration = 0;
+    private static boolean lastShaderPackState = false;
 
     private PolyMeshGpuRenderer() {
     }
@@ -241,8 +253,20 @@ public final class PolyMeshGpuRenderer {
 
     /** 挂在 {@code GameRenderer#extract} HEAD（与 ScopeMaskRenderer.beginFrame 同点）。 */
     public static void beginFrame() {
+        boolean shaders = IrisCompat.isUsingRenderPack();
+        if (shaders != lastShaderPackState) {
+            lastShaderPackState = shaders;
+            bakeGeneration++;
+            LOGGER.info("[TacZMeshLoader] Shader pack state changed (active={}); mesh bake generation -> {}",
+                    shaders, bakeGeneration);
+        }
         HAND_DRAWS.clear();
         drawnThisFrame = false;
+    }
+
+    /** 当前烘焙世代号。烘焙缓存持有者在 submit 时比对，不匹配须立即重烘。 */
+    public static int getBakeGeneration() {
+        return bakeGeneration;
     }
 
     /**
