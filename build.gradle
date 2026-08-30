@@ -408,37 +408,46 @@ tasks.register('dumpStep1Api') {
             println javap(cls, *flags)
             println ''
         }
-        // Signatures for the classes the no-shaders GPU renderer touches.
-        ['com.mojang.blaze3d.systems.CommandEncoder',
-         'net.minecraft.client.renderer.DynamicUniforms',
-         'com.mojang.blaze3d.vertex.BufferBuilder',
-         'com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer',
-         'net.minecraft.client.renderer.feature.FeatureRenderDispatcher',
-         'net.minecraft.client.renderer.RenderTarget',
-         'net.minecraft.client.renderer.LightTexture',
-         'net.minecraft.client.renderer.RenderPipelines',
-         'com.mojang.blaze3d.pipeline.RenderPipeline',
-         'com.mojang.blaze3d.vertex.MeshData',
-         'net.minecraft.client.renderer.rendertype.RenderType',
-         'net.minecraft.client.renderer.rendertype.PreparedRenderType',
-         // Step-1 additions: custom render pass + pipeline recipe + hand-pass hook.
-         'com.mojang.blaze3d.systems.RenderPass',
+        // ---- Step-1 focused additions (kept under the CI log 1000-line trim) ----
+        // Custom render-pass surface + pipeline recipe + hand-pass hook points.
+        // (The earlier 12-class + FeatureRenderDispatcher bytecode dumps are already
+        //  captured in the step-0 success log; re-dumping would only push the total
+        //  past the CI head-200/tail-800 trim and lose the middle sections.)
+        ['com.mojang.blaze3d.systems.RenderPass',
          'net.minecraft.client.renderer.DynamicUniforms$Transform',
          'com.mojang.blaze3d.vertex.DefaultVertexFormat',
          'com.mojang.blaze3d.platform.DepthTestFunction',
          'com.mojang.blaze3d.vertex.VertexFormat$Mode',
          'com.mojang.blaze3d.buffers.GpuBuffer',
-         'net.minecraft.client.renderer.RenderSystem',
-         'net.minecraft.client.Minecraft',
-         'net.minecraft.client.renderer.GameRenderer'].each { cls ->
+         'com.mojang.blaze3d.pipeline.RenderTarget',
+         'net.minecraft.client.renderer.RenderSystem'].each { cls ->
             dump(cls, '-p')
         }
-        // Bytecode for FeatureRenderDispatcher.renderAllFeatures so we can find the
-        // solid/translucent phase boundary to hook the GPU hand pass into.
-        dump('net.minecraft.client.renderer.feature.FeatureRenderDispatcher', '-p', '-c')
-        // Bytecode for GameRenderer.renderItemInHand: locate the submit/draw boundary of
-        // the vanilla hand pass (where the GPU cutout draw must be injected).
-        dump('net.minecraft.client.renderer.GameRenderer', '-c')
+
+        // Extract the renderItemInHand method body from GameRenderer bytecode: we need to
+        // know whether the vanilla hand pass draws inside it (renderAllFeatures) or only
+        // submits, to place the GPU cutout pass at the correct phase boundary.
+        def fullGameRenderer = javap('net.minecraft.client.renderer.GameRenderer', '-p', '-c')
+        def lines = fullGameRenderer.readLines()
+        def out = []
+        def capturing = false
+        for (int i = 0; i < lines.size(); i++) {
+            def line = lines[i]
+            if (!capturing) {
+                if (line.contains('renderItemInHand') && line.trim().endsWith(';')) {
+                    capturing = true
+                }
+            }
+            if (capturing) {
+                out << line
+                if (out.size() > 1 && line != out[0] && line.trim().endsWith(';') && !line.contains('renderItemInHand')) {
+                    break
+                }
+            }
+        }
+        println "===== net.minecraft.client.renderer.GameRenderer#renderItemInHand (-p -c) ====="
+        println(out.isEmpty() ? '(method block not found in javap output)' : out.join('\n'))
+        println ''
     }
 }
 
