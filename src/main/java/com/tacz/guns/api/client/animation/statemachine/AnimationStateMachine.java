@@ -72,6 +72,21 @@ public class AnimationStateMachine<T extends AnimationStateContext> {
     }
 
     /**
+     * 本次 {@link #trigger} 开始前的 runner 出生序号快照；-1 = 当前不在 trigger 里。
+     *
+     * <p>唯一消费者是 {@code AnimationStateContext#stopAnimation} 的
+     * 「不得处决本次 trigger 刚启动的后继动画」规则（完整论证见那边的 javadoc）：
+     * 序号大于此快照的 runner 必然是本次 trigger 的 transition/entry 里
+     * {@code runAnimation} 新生的，exit 收尾的 stop 对它们豁免。</p>
+     */
+    private long triggerSpawnFloor = -1;
+
+    /** @return 本次 trigger 开始前的出生序号快照；不在 trigger 里时为 -1 */
+    public long getTriggerSpawnFloor() {
+        return triggerSpawnFloor;
+    }
+
+    /**
      * 对状态机进行一次输入，可能触发状态转移。
      *
      * @param condition 输入
@@ -80,16 +95,24 @@ public class AnimationStateMachine<T extends AnimationStateContext> {
         if (context == null || currentStates == null) {
             return;
         }
-        // 迭代状态列表，如果需要状态转移，则将转移后的状态替换进列表
-        ListIterator<AnimationState<T>> iterator = currentStates.listIterator();
-        while (iterator.hasNext()) {
-            AnimationState<T> state = iterator.next();
-            AnimationState<T> nextState = state.transition(context, condition);
-            if (nextState != null) {
-                state.exitAction(context);
-                iterator.set(nextState);
-                nextState.entryAction(context);
+        // 【快照 + 栈式恢复】脚本的 update/entry 里会再调 context:trigger（重入），
+        // 恢复成外层的快照而不是无脑清 -1，否则内层返回后外层的豁免规则就失效了。
+        long prevFloor = triggerSpawnFloor;
+        triggerSpawnFloor = com.tacz.guns.api.client.animation.ObjectAnimationRunner.spawnCounter();
+        try {
+            // 迭代状态列表，如果需要状态转移，则将转移后的状态替换进列表
+            ListIterator<AnimationState<T>> iterator = currentStates.listIterator();
+            while (iterator.hasNext()) {
+                AnimationState<T> state = iterator.next();
+                AnimationState<T> nextState = state.transition(context, condition);
+                if (nextState != null) {
+                    state.exitAction(context);
+                    iterator.set(nextState);
+                    nextState.entryAction(context);
+                }
             }
+        } finally {
+            triggerSpawnFloor = prevFloor;
         }
     }
 
