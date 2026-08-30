@@ -219,11 +219,19 @@ CI 挂 `dumpRenderApi`（`finalizedBy compileJava`）用 `javap` 把 §3 全部�
 
 ## 5. 裁剪 / 降级策略（诚实标注）
 
-- **本轮目标**：vanilla（无光影）rerender + `ScopePipResolutionScale`，默认**关闭**，行为与
-  现状完全一致（零回归）。
-- **Iris 下**：rerender 开关暂不生效，保持现有「屏幕空间成品帧合成」路径（`ScopePipRenderState`
-  的 `captureSceneAfterIrisFinal`），即「光影下分辨率缩放暂不可用」—— 需在配置 tooltip 里写明。
-- **Sodium / Voxy / PhysicsMod / Iris 隔离**：整体后置；这些 mod 在场时 rerender 行为未验证
+> **决策记录（2026-08-30，用户确认）**：光影下的二次渲染**暂不实现**，先以文档 + 配置 tooltip
+> 说明为准；等 B5（离屏 target 重定向）前置落地后再评估。tooltip 说明已写入
+> `assets/tacz/lang/{en_us,zh_cn}.json` 的 `scope_pip_rerender.desc`（光影下开关不生效、
+> 仍走屏幕空间路径）与 `scope_pip_resolution_scale.desc`（尚未接线、暂不生效）。
+
+- **本轮目标**：vanilla（无光影）rerender，默认**关闭**，行为与现状完全一致（零回归）。
+  `ScopePipResolutionScale` 本轮**只读不生效**（tooltip 已如实标注）。
+- **Iris 下（技术原因，非遗漏）**：Iris 的世界渲染不写主目标 colortex，`renderLevel` 那遍之后
+  主目标里没有窄 FOV 成品可拷，因此「窄 FOV 那遍画进主目标再拷走」这条路在光影下根本不成立。
+  当前实现因此在 `IrisCompat.isUsingRenderPack()` 时跳过二次渲染，保持现有「屏幕空间成品帧合成」
+  路径（`ScopePipRenderState.captureSceneAfterIrisFinal`）。要支持光影下二次渲染必须先做
+  B5 离屏重定向（把窄 FOV 那遍画进独立 target），再针对 1.21.11 Iris 重新审计 26.2 的管线兼容。
+- **Sodium / Voxy / PhysicsMod 隔离**：整体后置；这些 mod 在场时 rerender 行为未验证
   （沿用 26.2 文档里「与 Sodium 二次渲染有实体消失史」的警示，默认关）。
 - **不做**：`ScopePipShadowScale` / `ScopePipIsolatePipeline` / `ScopePipDebugTrace` /
   `ScopePipReleaseIdlePipeline` / `ScopePipIdleReleaseDelayFrames` / `ScopePipDebugGpuMem`
