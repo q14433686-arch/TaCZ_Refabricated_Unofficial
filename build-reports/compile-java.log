@@ -1,4 +1,4 @@
-commit: dcd70dae70614d3e4277dde7170a8848a8576d6a
+commit: 53ef35cfb0ec013bf051b6e717d36f8d05b69e77
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -30,8 +30,8 @@ Cannot remap enumClass because it does not exist in any of the targets [] or the
 Cannot remap push because it does not exist in any of the targets [net/minecraft/class_287]
 Cannot remap ingredientListRenderer because it does not exist in any of the targets [] or their parents.
 Cannot remap lambda$submit$0 because it does not exist in any of the targets [net/minecraft/class_840]
-Cannot remap lambda$tick$1 because it does not exist in any of the targets [net/minecraft/class_4897]
 Cannot remap buffers because it does not exist in any of the targets [] or their parents.
+Cannot remap lambda$tick$1 because it does not exist in any of the targets [net/minecraft/class_4897]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
@@ -42,9 +42,9 @@ Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targ
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
 Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
@@ -153,6 +153,48 @@ Note: Recompile with -Xlint:unchecked for details.
      507: ldc_w         #1548               // String hand
      510: invokeinterface #1226,  2         // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
      515: aload_0
+===== GameRenderer.renderLevel projection upload section =====
+     269: fdiv
+     270: getstatic     #1484               // Field net/minecraft/util/Mth.SQRT_OF_TWO:F
+     273: fconst_2
+     274: fdiv
+     275: invokespecial #1486               // Method org/joml/Vector3f."<init>":(FFF)V
+     278: astore        14
+     280: aload_0
+     281: getfield      #541                // Field spinningEffectTime:F
+     284: fload_2
+     285: aload_0
+     286: getfield      #539                // Field spinningEffectSpeed:F
+     289: fmul
+     290: fadd
+     291: ldc_w         #912                // float 0.017453292f
+     294: fmul
+     295: fstore        15
+     297: aload         7
+     299: fload         15
+     301: aload         14
+     303: invokevirtual #1490               // Method org/joml/Matrix4f.rotate:(FLorg/joml/Vector3fc;)Lorg/joml/Matrix4f;
+     306: pop
+     307: aload         7
+     309: fconst_1
+     310: fload         13
+     312: fdiv
+     313: fconst_1
+     314: fconst_1
+     315: invokevirtual #1494               // Method org/joml/Matrix4f.scale:(FFF)Lorg/joml/Matrix4f;
+     318: pop
+     319: aload         7
+     321: fload         15
+     323: fneg
+     324: aload         14
+     326: invokevirtual #1490               // Method org/joml/Matrix4f.rotate:(FLorg/joml/Vector3fc;)Lorg/joml/Matrix4f;
+     329: pop
+     330: aload_0
+     331: getfield      #225                // Field levelProjectionMatrixBuffer:Lnet/minecraft/client/renderer/PerspectiveProjectionMatrixBuffer;
+     334: aload         7
+     336: invokevirtual #1497               // Method net/minecraft/client/renderer/PerspectiveProjectionMatrixBuffer.getBuffer:(Lorg/joml/Matrix4f;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;
+     339: getstatic     #1503               // Field com/mojang/blaze3d/ProjectionType.PERSPECTIVE:Lcom/mojang/blaze3d/ProjectionType;
+     342: invokestatic  #1507               // Method com/mojang/blaze3d/systems/RenderSystem.setProjectionMatrix:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V
 ===== GameRenderer.getProjectionMatrix(float) full =====
   public org.joml.Matrix4f getProjectionMatrix(float);
     Code:
@@ -298,98 +340,59 @@ public class net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuff
   private static java.lang.String method_71096(java.lang.String);
 }
 
-===== LevelRenderer.renderLevel prologue (90 of 430 lines) =====
-  public void renderLevel(com.mojang.blaze3d.resource.GraphicsResourceAllocator, net.minecraft.client.DeltaTracker, boolean, net.minecraft.client.Camera, org.joml.Matrix4f, org.joml.Matrix4f, org.joml.Matrix4f, com.mojang.blaze3d.buffers.GpuBufferSlice, org.joml.Vector4f, boolean);
-    Code:
-       0: aload_2
-       1: iconst_0
-       2: invokeinterface #865,  2          // InterfaceMethod net/minecraft/client/DeltaTracker.getGameTimeDeltaPartialTick:(Z)F
-       7: fstore        11
-       9: aload_0
-      10: getfield      #312                // Field levelRenderState:Lnet/minecraft/client/renderer/state/LevelRenderState;
-      13: aload_0
-      14: getfield      #459                // Field level:Lnet/minecraft/client/multiplayer/ClientLevel;
-      17: invokevirtual #869                // Method net/minecraft/client/multiplayer/ClientLevel.getGameTime:()J
-      20: putfield      #873                // Field net/minecraft/client/renderer/state/LevelRenderState.gameTime:J
-      23: aload_0
-      24: getfield      #300                // Field blockEntityRenderDispatcher:Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderDispatcher;
-      27: aload         4
-      29: invokevirtual #878                // Method net/minecraft/client/renderer/blockentity/BlockEntityRenderDispatcher.prepare:(Lnet/minecraft/client/Camera;)V
-      32: aload_0
-      33: getfield      #298                // Field entityRenderDispatcher:Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;
-      36: aload         4
-      38: aload_0
-      39: getfield      #296                // Field minecraft:Lnet/minecraft/client/Minecraft;
-      42: getfield      #882                // Field net/minecraft/client/Minecraft.crosshairPickEntity:Lnet/minecraft/world/entity/Entity;
-      45: invokevirtual #885                // Method net/minecraft/client/renderer/entity/EntityRenderDispatcher.prepare:(Lnet/minecraft/client/Camera;Lnet/minecraft/world/entity/Entity;)V
-      48: invokestatic  #690                // Method net/minecraft/util/profiling/Profiler.get:()Lnet/minecraft/util/profiling/ProfilerFiller;
-      51: astore        12
-      53: aload         12
-      55: ldc_w         #887                // String populateLightUpdates
-      58: invokeinterface #697,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.push:(Ljava/lang/String;)V
-      63: aload_0
-      64: getfield      #459                // Field level:Lnet/minecraft/client/multiplayer/ClientLevel;
-      67: invokevirtual #890                // Method net/minecraft/client/multiplayer/ClientLevel.pollLightUpdates:()V
-      70: aload         12
-      72: ldc_w         #892                // String runLightUpdates
-      75: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
-      80: aload_0
-      81: getfield      #459                // Field level:Lnet/minecraft/client/multiplayer/ClientLevel;
-      84: invokevirtual #758                // Method net/minecraft/client/multiplayer/ClientLevel.getChunkSource:()Lnet/minecraft/client/multiplayer/ClientChunkCache;
-      87: invokevirtual #899                // Method net/minecraft/client/multiplayer/ClientChunkCache.getLightEngine:()Lnet/minecraft/world/level/lighting/LevelLightEngine;
-      90: invokevirtual #903                // Method net/minecraft/world/level/lighting/LevelLightEngine.runLightUpdates:()I
-      93: pop
-      94: aload         12
-      96: ldc_w         #904                // String prepareCullFrustum
-      99: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
-     104: aload         4
-     106: invokevirtual #555                // Method net/minecraft/client/Camera.position:()Lnet/minecraft/world/phys/Vec3;
-     109: astore        13
-     111: aload_0
+===== LevelRenderer.renderLevel arg-consumers (aload 5/6/7) =====
      112: aload         5
+    114: aload         7
      114: aload         7
-     116: aload         13
-     118: invokevirtual #906                // Method prepareCullFrustum:(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/client/renderer/culling/Frustum;
-     121: astore        14
-     123: aload         12
-     125: ldc_w         #907                // String cullTerrain
-     128: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
-     133: aload_0
-     134: aload         4
-     136: aload         14
-     138: aload_0
-     139: getfield      #296                // Field minecraft:Lnet/minecraft/client/Minecraft;
-     142: getfield      #454                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
-     145: invokevirtual #912                // Method net/minecraft/client/player/LocalPlayer.isSpectator:()Z
-     148: invokevirtual #914                // Method cullTerrain:(Lnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/culling/Frustum;Z)V
-     151: aload         12
-     153: ldc_w         #916                // String compileSections
-     156: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
-     161: aload_0
-     162: aload         4
-     164: invokevirtual #918                // Method compileSections:(Lnet/minecraft/client/Camera;)V
-     167: aload         12
-     169: ldc_w         #920                // String extract
-     172: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
-     177: aload         12
-     179: ldc_w         #922                // String entities
-     182: invokeinterface #697,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.push:(Ljava/lang/String;)V
-     187: aload_0
-     188: aload         4
-     190: aload         14
-     192: aload_2
-     193: aload_0
-     194: getfield      #312                // Field levelRenderState:Lnet/minecraft/client/renderer/state/LevelRenderState;
-     197: invokevirtual #926                // Method extractVisibleEntities:(Lnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/culling/Frustum;Lnet/minecraft/client/DeltaTracker;Lnet/minecraft/client/renderer/state/LevelRenderState;)V
-     200: aload         12
-     202: ldc_w         #928                // String blockEntities
-     205: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
-     210: aload_0
-     211: aload         4
-     213: fload         11
-     215: aload_0
-     216: getfield      #312                // Field levelRenderState:Lnet/minecraft/client/renderer/state/LevelRenderState;
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788099740006.json
+    116: aload         13
+     457: aload         5
+    459: invokevirtual #1002               // Method org/joml/Matrix4fStack.mul:(Lorg/joml/Matrix4fc;)Lorg/joml/Matrix4f;
+     721: aload         5
+    723: aload         8
+     966: aload         5
+    968: invokevirtual #1194               // Method addLateDebugPass:(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/state/CameraRenderState;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Matrix4f;)V
+===== LevelRenderer.renderLevel tail (last 40 of 430 lines) =====
+     936: ifnull        954
+     939: aload         20
+     941: aload         16
+     943: iload         17
+     945: iload         18
+     947: aload_0
+     948: getfield      #262                // Field targets:Lnet/minecraft/client/renderer/LevelTargetBundle;
+     951: invokevirtual #1113               // Method net/minecraft/client/renderer/PostChain.addToFrame:(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;IILnet/minecraft/client/renderer/PostChain$TargetBundle;)V
+     954: aload_0
+     955: aload         16
+     957: aload_0
+     958: getfield      #312                // Field levelRenderState:Lnet/minecraft/client/renderer/state/LevelRenderState;
+     961: getfield      #1178               // Field net/minecraft/client/renderer/state/LevelRenderState.cameraRenderState:Lnet/minecraft/client/renderer/state/CameraRenderState;
+     964: aload         8
+     966: aload         5
+     968: invokevirtual #1194               // Method addLateDebugPass:(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/state/CameraRenderState;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Matrix4f;)V
+     971: aload         12
+     973: ldc_w         #1196               // String executeFrameGraph
+     976: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
+     981: aload         16
+     983: aload_1
+     984: new           #19                 // class net/minecraft/client/renderer/LevelRenderer$1
+     987: dup
+     988: aload_0
+     989: aload         12
+     991: invokespecial #1199               // Method net/minecraft/client/renderer/LevelRenderer$1."<init>":(Lnet/minecraft/client/renderer/LevelRenderer;Lnet/minecraft/util/profiling/ProfilerFiller;)V
+     994: invokevirtual #1203               // Method com/mojang/blaze3d/framegraph/FrameGraphBuilder.execute:(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder$Inspector;)V
+     997: aload_0
+     998: getfield      #262                // Field targets:Lnet/minecraft/client/renderer/LevelTargetBundle;
+    1001: invokevirtual #1204               // Method net/minecraft/client/renderer/LevelTargetBundle.clear:()V
+    1004: aload         15
+    1006: invokevirtual #1207               // Method org/joml/Matrix4fStack.popMatrix:()Lorg/joml/Matrix4fStack;
+    1009: pop
+    1010: aload         12
+    1012: invokeinterface #737,  1          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.pop:()V
+    1017: aload_0
+    1018: getfield      #312                // Field levelRenderState:Lnet/minecraft/client/renderer/state/LevelRenderState;
+    1021: invokevirtual #1210               // Method net/minecraft/client/renderer/state/LevelRenderState.reset:()V
+    1024: return
+
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788100010339.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -399,7 +402,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 42s
+BUILD SUCCESSFUL in 1m 35s
 2 actionable tasks: 2 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
