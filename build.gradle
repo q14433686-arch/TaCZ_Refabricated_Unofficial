@@ -420,12 +420,25 @@ tasks.register('dumpStep1Api') {
          'com.mojang.blaze3d.pipeline.RenderPipeline',
          'com.mojang.blaze3d.vertex.MeshData',
          'net.minecraft.client.renderer.rendertype.RenderType',
-         'net.minecraft.client.renderer.rendertype.PreparedRenderType'].each { cls ->
+         'net.minecraft.client.renderer.rendertype.PreparedRenderType',
+         // Step-1 additions: custom render pass + pipeline recipe + hand-pass hook.
+         'com.mojang.blaze3d.systems.RenderPass',
+         'net.minecraft.client.renderer.DynamicUniforms$Transform',
+         'com.mojang.blaze3d.vertex.DefaultVertexFormat',
+         'com.mojang.blaze3d.platform.DepthTestFunction',
+         'com.mojang.blaze3d.vertex.VertexFormat$Mode',
+         'com.mojang.blaze3d.buffers.GpuBuffer',
+         'net.minecraft.client.renderer.RenderSystem',
+         'net.minecraft.client.Minecraft',
+         'net.minecraft.client.renderer.GameRenderer'].each { cls ->
             dump(cls, '-p')
         }
         // Bytecode for FeatureRenderDispatcher.renderAllFeatures so we can find the
         // solid/translucent phase boundary to hook the GPU hand pass into.
         dump('net.minecraft.client.renderer.feature.FeatureRenderDispatcher', '-p', '-c')
+        // Bytecode for GameRenderer.renderItemInHand: locate the submit/draw boundary of
+        // the vanilla hand pass (where the GPU cutout draw must be injected).
+        dump('net.minecraft.client.renderer.GameRenderer', '-c')
     }
 }
 
