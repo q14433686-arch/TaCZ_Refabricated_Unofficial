@@ -417,9 +417,23 @@ tasks.register('dumpStep1Api') {
          'com.mojang.blaze3d.pipeline.RenderPipeline',
          'com.mojang.blaze3d.pipeline.RenderPipeline$Builder',
          'com.mojang.blaze3d.vertex.BufferBuilder',
-         'com.mojang.blaze3d.vertex.MeshData'].each { cls ->
+         'com.mojang.blaze3d.vertex.MeshData',
+         'com.mojang.blaze3d.vertex.MeshData$DrawState',
+         'com.mojang.blaze3d.vertex.ByteBufferBuilder'].each { cls ->
             dump(cls, '-p')
         }
+
+        // Grep-reduce the big classes so the CI log trim does not eat the middle.
+        def dumpGrep = { String cls, String pattern ->
+            def txt = javap(cls, '-p')
+            def kept = txt.readLines().findAll { it =~ pattern }
+            println "===== ${cls} (grep: ${pattern}) ====="
+            kept.each { println it }
+            println ''
+        }
+        dumpGrep('net.minecraft.client.renderer.RenderPipelines', 'Snippet|register|ENTITY_CUTOUT|ENTITY_TRANSLUCENT|MATRICES')
+        dumpGrep('net.minecraft.client.renderer.GameRenderer', 'ightTexture|ainRenderTarget|evelLightmap|RenderTarget|DynamicUniforms')
+        dumpGrep('net.minecraft.client.renderer.LightTexture', 'Texture|pack|light|TextureView')
 
         // Extract a single method body from javap -p -c output. A method header is a line
         // starting with exactly two spaces and ending in ");" (fields end in ';' without
