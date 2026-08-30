@@ -112,13 +112,26 @@ Iris 下 `renderItemInHand` 被 HandRenderer 绕开（既有注释 + `IrisHandRe
 
 ## 5. 实机确认步骤
 
+> **注意：品红诊断不是 TACZ 配置文件里的选项。** `tacz-client` 配置里没有也不可能出现
+> `ScopeDebugPaint` 或类似字段；它是 JVM 属性 `-Dtacz.scope.pip.debug.paint=true`。
+> 没在配置文件里找到是正常的。
+
 1. 编译并运行 1.21.11 客户端，**不带**启动参数：
    - 确认准星、镜身、镜外世界与改动前逐帧一致，无品红、无日志错误。
-2. 再带参数启动：
-   ```
-   <launcher> -Dtacz.scope.pip.debug.paint=true
-   ```
-   - 开一个 6× / 8× 倍镜并抬镜到满开镜；
+2. 再带参数启动（二选一）：
+
+   - **源码/开发环境（本仓库）**：先确保 `gradlew build` 通过，然后
+     ```bat
+     gradlew runClient -PtaczScopeDebug=true
+     ```
+     已把该 JVM 属性接入 `build.gradle` 的 `loom.runs.client`（`vmArg`）。
+   - **打包后的模组 / 第三方启动器**：在启动器的 JVM/虚拟机参数里加
+     ```
+     -Dtacz.scope.pip.debug.paint=true
+     ```
+     不要把该参数写进 TACZ 配置文件。
+
+3. 进游戏：**不要开任何光影/着色器包**（Iris 会跳过此诊断），开一个 6× / 8× 倍镜并抬镜到满开镜；
    - 观察：**目镜镜片内应为纯品红**；
    - 镜片外（镜身、视野边缘、屏幕四周）不得出现品红；
    - 观察是否能看到「只有孔径被涂」的准确形状（圆形/椭圆，边缘与镜身孔径一致）。

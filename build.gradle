@@ -33,6 +33,9 @@ loom {
             // The embedded default pack alone contains >80 MiB of textures, audio, and models.
             // 384 MiB consistently OOMs during its first resource reload.
             vmArg "-Xmx768m"
+            // Step 2 lens diagnostic. Enable with: gradlew runClient -PtaczScopeDebug=true
+            // (The TACZ client config file does NOT contain this switch; it is a JVM property.)
+            vmArg "-Dtacz.scope.pip.debug.paint=${providers.gradleProperty('taczScopeDebug').getOrElse('false')}"
         }
         server {
             vmArg "-Xmx384m"
