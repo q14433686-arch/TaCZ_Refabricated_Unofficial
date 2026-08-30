@@ -384,12 +384,12 @@ public final class PolyMeshGpuRenderer {
             }
             if (!loggedFirstDraw) {
                 loggedFirstDraw = true;
-                long indices = 0;
+                long indexTotal = 0;
                 for (DrawEntry entry : draws) {
-                    indices += entry.bone().indexCount;
+                    indexTotal += entry.bone().indexCount;
                 }
                 LOGGER.info("[TacZMeshLoader] GPU mesh pass drew {} bones ({} indices) on hand pass, lit={}",
-                        draws.size(), indices, lit);
+                        draws.size(), indexTotal, lit);
             }
         }
     }
