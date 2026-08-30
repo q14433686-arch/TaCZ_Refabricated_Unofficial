@@ -89,6 +89,13 @@ Step 2 在 RETURN 合成（孔径深度拷贝此刻已完成），抓取则必�
 因此直接用同一 `partialTicks` 查询 `getClientAimingProgress`，progress > 0 即抑制；progress
 为 0 时回落分支算出的倍率就是 1×、不产生跳变。
 
+键点三：抑制期间**不能裸 `return`**，否则 `WORLD_FOV_DYNAMICS` 停在抬枪前的旧值。疾跑等
+动态 FOV 会在 ADS 过程中持续变化；退出那个门重新放行的一帧会从旧值跳到当前 base FOV，
+即实机看到的“疾跑时退出瞄准仍跳变”。因此抑制分支仍要把当前 `event.getFOV()`（含疾跑 FOV、
+不含 TACZ 整屏倍率）喂给 `WORLD_FOV_DYNAMICS` 并写回平滑结果：镜外保持 1×，同时 smoother
+的状态始终跟随实时 base FOV，退出时无缝衔接。`cacheMuzzlePosition` 还直接读
+`WORLD_FOV_DYNAMICS.get()` 当 level FOV，保持该状态同步也让镜口偏移与镜外画面一致。
+
 `IrisCompat.isUsingRenderPack()` 也保留在门里：它在整个会话内稳定为真/假。开着光影时本步
 明确不画镜片，因此若照常抑制 FOV 就会变成“镜外 1×、镜内无画面”，必须让旧整屏变焦继续工作。
 

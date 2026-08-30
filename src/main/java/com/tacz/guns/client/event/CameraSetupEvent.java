@@ -103,7 +103,12 @@ public class CameraSetupEvent {
             // exit POV jump.
             if (ScopePipRenderState.suppressesWorldFovZoom((float) event.getPartialTick())) {
                 // Step 3 (real PIP): only the lens magnetically magnifies; the world outside stays
-                // 1x, so the camera FOV must not be narrowed by the old whole-screen zoom.
+                // 1x, so the camera FOV must not be narrowed by the old whole-screen zoom. Still keep
+                // the smoother tracking the live base FOV (incl. sprint FOV) while suppressed: a bare
+                // return freezes it at the pre-ADS value, and when sprint's base FOV moves during ADS
+                // the gate re-enable on exit snaps from that stale state to the live base POV.
+                float baseFov = (float) event.getFOV();
+                event.setFOV(WORLD_FOV_DYNAMICS.update(baseFov));
                 return;
             }
             if (livingEntity instanceof LocalPlayer localPlayer) {
