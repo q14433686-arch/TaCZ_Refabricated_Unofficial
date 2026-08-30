@@ -413,8 +413,11 @@ tasks.register('dumpStep1Api') {
         // (The earlier 12-class + FeatureRenderDispatcher bytecode dumps are already
         //  captured in the step-0 success log; re-dumping would only push the total
         //  past the CI head-200/tail-800 trim and lose the middle sections.)
-        ['com.mojang.blaze3d.systems.RenderSystem',
-         'com.mojang.blaze3d.systems.GpuDevice'].each { cls ->
+        ['com.mojang.blaze3d.systems.CommandEncoder',
+         'com.mojang.blaze3d.systems.DynamicUniforms',
+         'com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer',
+         'net.minecraft.client.renderer.SubmitNodeStorage',
+         'net.minecraft.client.renderer.SubmitNodeCollector'].each { cls ->
             dump(cls, '-p')
         }
 
@@ -444,8 +447,11 @@ tasks.register('dumpStep1Api') {
             return out.isEmpty() ? '(method block not found in javap output)' : out.join('\n')
         }
 
-        println "===== net.minecraft.client.renderer.GameRenderer#renderItemInHand (-p -c) ====="
-        println extractMethod('net.minecraft.client.renderer.GameRenderer', 'renderItemInHand')
+        println "===== net.minecraft.client.renderer.GameRenderer#renderLevel (-p -c) ====="
+        println extractMethod('net.minecraft.client.renderer.GameRenderer', 'renderLevel')
+        println ''
+        println "===== net.minecraft.client.renderer.feature.FeatureRenderDispatcher#renderAllFeatures (-p -c) ====="
+        println extractMethod('net.minecraft.client.renderer.feature.FeatureRenderDispatcher', 'renderAllFeatures')
         println ''
     }
 }
