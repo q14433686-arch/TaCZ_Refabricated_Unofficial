@@ -139,7 +139,7 @@ draw 调用该怎么写」。1.21.11 恰好同时具备两者所需。
 - [x] **第 1 步落地（编译绿，运行期待实机）**：无光影 GPU 静态烘焙（`PolyMeshGpuRenderer` + `TaczPolyMeshGunModel.ensureBaked` + `GameRendererMixin` 挂点 + 配置/语言键），提交 `1c0193b`（CI `33336848343` success）。
 - [x] **实机首测定位并修复运行时崩溃（待复测）**：烘焙/提交正常，但 `drawList` 在 open render pass 内调 `writeTransform` 抛 `IllegalStateException: Close the existing render pass before performing additional commands`（`GpuBuffer.mapBuffer`）。修复 = 全部 `writeTransform` 提到开 pass 之前、顺序索引缓冲在 pass 外预热到本帧最大 indexCount。**修复只过了编译，尚未实机复测。**
 - [x] **「相对人物世界位置恒定 / 朝向恒北」老 bug 修复（编译绿，待实机）**：矩阵语义修正见 §6.1。`mv` 改在 submit 当刻捕获的 `Bᵀ` 上乘 `pose_submit`（原代码在 RETURN 现取 `getModelViewMatrix()`，已非 Bᵀ）。提交 `ca08b1c`，CI 编译绿；运行期朝向/位置待实机确认。
-- [ ] 光影下 `assignPipeline(HAND)` PoC —— 未开始（真难点，第 2 步）。
+- [x] **第 2 步 PoC 脚手架落地（编译绿，运行期待实机）**：`assignMeshPipelinesToHand()` 把 LIT/EMISSIVE 登记进 Iris HAND program；`shouldSubmitGpu()` 在光影下改认 `IrisCompat.isRenderingSolidHandPass()`；新增 `IrisMeshGpuPassMixin`（`HandRenderer#renderSolid` TAIL，require=0）补光影下的绘制点。全部由 `MeshGpuUnderShaders=true` 强开，默认光影下仍回退 collector。**核心假设（Iris 1.10.7 是否按 assignPipeline(HAND) 拦截自定义 RenderPass 并路由进 gbuffers_hand）尚未实机验证，见 §6.2。**
 - [ ] 全部运行期行为 —— 未验证（本沙箱无客户端，实机清单见 MESH_LOADER.md §5）。
 
 ### 6.1 第 1 步的注入点（与 26.2 不同，已按 1.21.11 实况重定位）
@@ -162,3 +162,40 @@ draw 调用该怎么写」。1.21.11 恰好同时具备两者所需。
   （`ScopeFinalOverlayState.captureHandTransform` 同一时点，reticle 路径已实测），
   `renderItemInHand` RETURN 时 ModelView 栈已被 vanilla 还原，现取是 I/V 之类的错矩阵。
   只写 `pose_submit` 或乘错矩阵，B 没被抵消 = 「相对人物世界位置恒定 / 朝向恒北」老 bug。
+
+### 6.2 第 2 步 PoC：assignPipeline(HAND) 的机制、脚手架与待验证假设
+
+**为什么 26.2 的现成答案搬不过来。** 26.2 光影路径（`drawListViaRenderType`）用
+`RenderType.prepare()` + `PreparedRenderType.drawFromBuffer()`，把常驻 VBO 经 entityCutout
+管线（已 `assignCommonEntityPipelinesToHandIfNeeded()` 归入 HAND）画出去，Iris 按管线拦截、
+给枪体光影光照。**1.21.11 没有 `RenderType.prepare()` / `PreparedRenderType`**（§2.2），
+所以 1.21.11 的光影路径没有现成的「用 HAND 管线画常驻 VBO」入口。
+
+**本仓已证的先例。** scope reticle 是「自定义管线 → `IrisApi.assignPipeline(HAND)` → Iris
+按管线路由进 HAND program」这条链路的**实机 PASS**：`ScopeRenderTypes` 里 `scope_viewmodel_cutout`
+等管线都 `assignPipelineToIris(..., "HAND", ...)`，经 collector 提交后在光影下渲染正确。
+也就是说「assignPipeline(HAND) 机制本身」在本仓已被 scope 证明；剩下唯一未验证的是
+**「自定义 RenderPass（非 collector）画的 VBO 是否同样被 Iris 拦截」**。
+
+**本次脚手架做的事（全部 `MeshGpuUnderShaders=true` 才生效，默认无变化）：**
+
+1. `assignMeshPipelinesToHand()`：把 `LIT_PIPELINE`/`EMISSIVE_PIPELINE` 登记进 HAND（幂等、
+   反射保护，无 Iris 时 no-op）。
+2. `shouldSubmitGpu()`：光影下改认 `IrisCompat.isRenderingSolidHandPass()`（vanilla 的
+   `renderItemInHand` 被 Iris 绕过、`inHandPass` 恒 false）。
+3. `IrisMeshGpuPassMixin`：`HandRenderer#renderSolid` TAIL 调 `renderAfterSolid()`，补光影下
+   的绘制点（soft require=0，未装 Iris 不加载）。
+
+**实机验证清单（第 2 步验收 = 下面第 1 条成立）：**
+
+1. 开 Iris + 任意光影包 + `MeshGpuUnderShaders=true`，第一人称 mesh 枪：枪体是否出现？
+   是否有 gbuffers_hand 光影照明（对照 collector 回退时的效果）？日志是否有
+   `GPU mesh pass drew N bones`？
+2. 若枪体消失/无光照：先看日志是否 `GPU mesh pass failed; falling back to collector` ——
+   若是，说明 TAIL 时已不在合法 render-pass 边界（`createRenderPass` 抛了），把注入点前移到
+   `renderSolid` 内「vanilla 手部提交之后、Iris endBatch 之前」（按字节码定位，对齐 reticle
+   mixin 在 `renderTranslucent` 的挂钩语义）。
+3. 若枪体出现但无光照：说明 Iris 1.10.7 不拦截自定义 RenderPass，或拦截了但 TAIL 时 phase
+   已离开 HAND_SOLID —— 此时结论就是「1.21.11 必须走 collector 提交（如 scope reticle），
+   光影下零 CPU 的常驻 VBO 路线需要等 26.x 的 `drawFromBuffer` 等价物」，PoC 以失败收尾、
+   光影下维持 collector 回退（不劣化）。
