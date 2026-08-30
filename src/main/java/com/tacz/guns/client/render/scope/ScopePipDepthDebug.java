@@ -77,6 +77,11 @@ public final class ScopePipDepthDebug {
         if (!ENABLED || failed || mc == null) {
             return;
         }
+        // Step 3 is the real PIP composite and owns the lens pixels; the magenta diagnostic must
+        // not overwrite it when both system properties happen to be set.
+        if (ScopePipRenderState.isEnabled()) {
+            return;
+        }
         if (IrisCompat.isUsingRenderPack()) {
             if (!loggedSkippedIris) {
                 loggedSkippedIris = true;

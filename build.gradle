@@ -36,6 +36,9 @@ loom {
             // Step 2 lens diagnostic. Enable with: gradlew runClient -PtaczScopeDebug=true
             // (The TACZ client config file does NOT contain this switch; it is a JVM property.)
             vmArg "-Dtacz.scope.pip.debug.paint=${providers.gradleProperty('taczScopeDebug').getOrElse('false')}"
+            // Step 3 real scope PIP. Enable with: gradlew runClient -PtaczScopePip=true
+            // (JVM property, not a config-file option; same reason as Step 2.)
+            vmArg "-Dtacz.scope.pip.enable=${providers.gradleProperty('taczScopePip').getOrElse('false')}"
         }
         server {
             vmArg "-Xmx384m"

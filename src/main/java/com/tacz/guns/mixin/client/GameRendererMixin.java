@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
 import com.tacz.guns.client.render.scope.ScopePipDepthDebug;
+import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.Camera;
@@ -40,6 +41,10 @@ public abstract class GameRendererMixin {
                                     Matrix4f projection,
                                     CallbackInfo ci) {
         this.tacz$renderingItemInHand = true;
+        // Step 3 (real PIP): before the gun/hand is drawn, copy the already-rendered world color
+        // into a private off-screen target. The lens will later sample this so no gun/hand appears
+        // inside it. No-op unless -Dtacz.scope.pip.enable=true.
+        ScopePipRenderState.captureScene(this.minecraft);
     }
 
     @Inject(method = "renderItemInHand", at = @At("RETURN"))
@@ -48,10 +53,12 @@ public abstract class GameRendererMixin {
                                   Matrix4f projection,
                                   CallbackInfo ci) {
         this.tacz$renderingItemInHand = false;
-        // Step 2 (depth PIP diagnostic): after the vanilla hand pass the aperture depth copy is
-        // complete, so paint the lens magenta when the debug system property is set. This is a
-        // no-op in normal play. It deliberately runs after the hand draw and before GUI overlays;
-        // Iris paths are skipped by ScopePipDepthDebug itself.
+        // Step 3 (real PIP): after the hand pass the aperture/world depth copies are complete, so
+        // paste the captured pre-hand world into the lens at the scope zoom. Step 2's magenta
+        // diagnostic is deferred to later so the two never overwrite the same pixels.
+        ScopePipRenderState.compositeAfterHand(this.minecraft);
+        // Step 2 (depth PIP diagnostic): paint the lens magenta when the debug system property is
+        // set and Step 3 is not active. No-op in normal play; Iris paths are skipped by the debug.
         ScopePipDepthDebug.renderAfterHand(this.minecraft);
     }
 

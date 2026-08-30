@@ -14,6 +14,7 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
 import com.tacz.guns.api.modifier.ParameterizedCachePair;
+import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
@@ -96,6 +97,11 @@ public class CameraSetupEvent {
                 return;
             }
             float zoom = iGun.getAimingZoom(stack);
+            if (ScopePipRenderState.suppressesWorldFovZoom()) {
+                // Step 3 (real PIP): only the lens magnetically magnifies; the world outside stays
+                // 1x, so the camera FOV must not be narrowed by the old whole-screen zoom.
+                return;
+            }
             if (livingEntity instanceof LocalPlayer localPlayer) {
                 IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
                 float aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
