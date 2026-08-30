@@ -138,6 +138,7 @@ draw 调用该怎么写」。1.21.11 恰好同时具备两者所需。
 - [x] **第 0 步落地**：collector 安全子集 + 预算闸门 + 弹匣补画 + Screen/ShaderStateTracker + 半透明拆分（`de9b285` → `bc047a7`，CI 绿）。
 - [x] **第 1 步落地（编译绿，运行期待实机）**：无光影 GPU 静态烘焙（`PolyMeshGpuRenderer` + `TaczPolyMeshGunModel.ensureBaked` + `GameRendererMixin` 挂点 + 配置/语言键），提交 `1c0193b`（CI `33336848343` success）。
 - [x] **实机首测定位并修复运行时崩溃（待复测）**：烘焙/提交正常，但 `drawList` 在 open render pass 内调 `writeTransform` 抛 `IllegalStateException: Close the existing render pass before performing additional commands`（`GpuBuffer.mapBuffer`）。修复 = 全部 `writeTransform` 提到开 pass 之前、顺序索引缓冲在 pass 外预热到本帧最大 indexCount。**修复只过了编译，尚未实机复测。**
+- [x] **「相对人物世界位置恒定 / 朝向恒北」老 bug 修复（编译绿，待实机）**：矩阵语义修正见 §6.1。`mv` 改在 submit 当刻捕获的 `Bᵀ` 上乘 `pose_submit`（原代码在 RETURN 现取 `getModelViewMatrix()`，已非 Bᵀ）。提交 `ca08b1c`，CI 编译绿；运行期朝向/位置待实机确认。
 - [ ] 光影下 `assignPipeline(HAND)` PoC —— 未开始（真难点，第 2 步）。
 - [ ] 全部运行期行为 —— 未验证（本沙箱无客户端，实机清单见 MESH_LOADER.md §5）。
 
@@ -150,6 +151,14 @@ draw 调用该怎么写」。1.21.11 恰好同时具备两者所需。
 - `setInHandPass(true/false)` → `GameRenderer#renderItemInHand` HEAD/RETURN（`shouldSubmitGpu` 只认这个门，不认 `transformType.firstPerson()` —— 后者对「第一人称上下文画 GUI」也返回 true，正是关 PR 世界 pass 泄漏的入口）。
 - `renderAfterSolid()`（真正 drawList）→ `renderItemInHand` RETURN：此时手部投影已设、深度已清、手部立方体还没 flush（deferred collector），MV 栈已 pop 回 `V`（视矩阵）。GPU 骨骼在此画，opaque + 深度写，与稍后 flush 的手部立方体/translucent 骨骼由深度缓冲自洽排序。
 
-`handModelView = getModelViewMatrix()`（RETURN 时 = 视矩阵 V），每骨骼 `mv = V × pose_bone`；
-`pose_bone` 含 `invert(V)`，相乘消掉 V —— 与 collector「顶点烘 pose、MV 当刻」的等价性、
-以及 26.2 「朝向恒北」修复的矩阵语义逐位一致。
+矩阵语义（**实测修正**，本段最初写「RETURN 时 MV = 视矩阵 V」是错的，正是新 bug 的来源）：
+
+- 1.21.11 手部 pass 的提交 pose（`entry.model()`）**预乘相机基座** `B = camera.rotation()`
+  （view→world），即 `rawWorld = B · H · F · chain`（`H·F` = hurt/view bob 与骨骼链，见
+  `FirstPersonRenderGunEvent.applyAnimationConstraintTransform` 的注释推导）。
+- collector 路径把这份 pose 烘进顶点，flush 时 ModelViewMat = **手部 pass 当刻**的
+  `getModelViewMatrix()` = `Bᵀ`（`screen = Bᵀ · world`），`Bᵀ·B = I` 相消。
+- GPU 路径顶点留骨骼本地，须写 `mv = Bᵀ × pose_submit`；**Bᵀ 只能在 submit 当刻捕获**
+  （`ScopeFinalOverlayState.captureHandTransform` 同一时点，reticle 路径已实测），
+  `renderItemInHand` RETURN 时 ModelView 栈已被 vanilla 还原，现取是 I/V 之类的错矩阵。
+  只写 `pose_submit` 或乘错矩阵，B 没被抵消 = 「相对人物世界位置恒定 / 朝向恒北」老 bug。
