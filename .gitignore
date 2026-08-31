@@ -23,3 +23,7 @@ crash-reports/
 # OS
 .DS_Store
 Thumbs.db
+
+# Java crash logs / any stray run logs at repo root (review 2026-09-01 §4)
+*.log
+hs_err_pid*.log
