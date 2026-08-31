@@ -107,8 +107,10 @@ levelRenderer.extractLevel(mc.getDeltaTracker(), mc.gameRenderer.getMainCamera()
 窗口缩放后复用陈旧画面）+ `ScopePipRerender` 的闸门顺序（闸门全过 → 判 `interval>1 && 距上次真渲<N &&
 代数未变 && 上次抓帧仍在` → 复用；真渲成功记帧号+代数；任何闸门失败清 `sceneCaptured`）。
 
-我们的现状（`grep` 实测）：`ScopePipRerender` 210 行里**没有** interval；`RenderConfig` 里没有
-`SCOPE_PIP_RERENDER_INTERVAL`；`ScopePipRenderState`/`ScopePipRerender` 两边都**没有**任何 `generation`
+配置面实测对比（两边 `RenderConfig` 的 `SCOPE_PIP_*` 字段集合）：他们 11 个、我们 10 个，
+**唯一差异就是 `SCOPE_PIP_RERENDER_INTERVAL`**（我们的 20 个 `scope_pip_*` lang 键 = 10 键×2，也不缺别的）
+⇒ 加 C 不需要动 lang 之外的任何配置面设施。
+`ScopePipRerender` 210 行里**没有** interval；`ScopePipRenderState`/`ScopePipRerender` 两边都**没有**任何 `generation`
 概念（`grep -n generation` 0 命中）。我们的 B1 走「拷主目标」（`ScopePipRerender` 类注释），
 `resolutionScale()` 只读不生效；默认路径是 `ScopePipRenderState` 的屏幕空间重投影 ⇒ 代数守卫要挂在哪
 得先选：
@@ -126,7 +128,7 @@ levelRenderer.extractLevel(mc.getDeltaTracker(), mc.gameRenderer.getMainCamera()
 `99ccb8c8` 加的 `ScopePipRenderState`(922) / `ScopePipRerender`(235) / `ScopePipDepthDebug`(237) /
 `scope_pip.fsh` / `scope_pip_debug.*`、`297f127a` 的接线（`CameraSetupEvent` FOV 让位、
 `GameRendererMixin`、`IrisFinalScopeOverlayMixin`）、`0a77ef52` 的 bare-rim 延迟、`8ea41c2d` 的
-`DepthHandle` 只读快照、`bf42f3a3` 的 12 键配置面与 lang —— **全部是我们树上的东西**（他们 commit
+`DepthHandle` 只读快照、`bf42f3a3` 的配置面与 lang（我们只缺 interval 一个键，见 §3） —— **全部是我们树上的东西**（他们 commit
 标题自己写了 "from 1.21.1x line (1211)"）。两边逐文件对比后唯一实质差异仍是纪元适配那一层
 （`DefaultVertexFormat.ENTITY`↔`NEW_ENTITY`、`Lightmap` 内联打包、frame-graph 的
 `DepthStencilState/ColorTargetState`），没有"他们想到了我们没想到"的内容 —— **A/B/C 之外没有可搬项**。

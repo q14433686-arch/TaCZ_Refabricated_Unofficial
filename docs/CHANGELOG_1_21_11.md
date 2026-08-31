@@ -9,8 +9,9 @@
 
 - 新增 `docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md`：逐提交核他们 `0a77ef52`…`8aca7374`，
   可加项只有三条（A 窄遍后的状态重提取/清提交节点、B 镜内文字掩码裁剪、C 隔帧 `ScopePipRerenderInterval`），
-  其余（`ScopePipRenderState` 922 行、`ScopePipDepthDebug`、12 键配置面与 lang、`DepthHandle` 只读快照、
-  FOV/hand-pass/Iris 接线）都是**从我们这棵树搬走的**，回搬等于空转。
+  其余（`ScopePipRenderState` 922 行、`ScopePipDepthDebug`、`DepthHandle` 只读快照、FOV/hand-pass/Iris
+  接线）都是**从我们这棵树搬走的**，回搬等于空转；配置面逐字段比对：他们 11 个 `SCOPE_PIP_*` 键、我们 10 个，
+  唯一差异正是 C 那条 `SCOPE_PIP_RERENDER_INTERVAL`。
 - **撤回一条我自己写错的技术论断**：上一轮我在镜内文字那节写「文字走字体管线 ⇒ 会被镜筒深度剔掉 ⇒
   等价于 26.2 的掩码裁剪」。他们用实机否证了这条（`e1c550ee` 的动机正是它不成立）：`submitText` 下游是
   vanilla 字体管线，**不吃**孔径深度 ⇒ **立即路径与延迟路径都会溢出圆孔**。已同步改口的三处：
