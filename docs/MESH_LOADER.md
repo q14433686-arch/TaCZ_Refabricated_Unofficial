@@ -685,6 +685,13 @@ color target 集合与原版 `ENTITY_CUTOUT` 不一致」那一类（需要拿 I
 —— pose 必须留在栈上直到该次绘制执行完。同一个手法我方在镜内覆盖层里早已在用：`client/render/scope/ScopeFinalOverlayState.java:165-214`
 （`modelView.pushMatrix()` + `set(...)` 罩住整段 flush，`finally` 里 `popMatrix()`），本次只是把它搬到逐 entry 的绘制上。
 
+**与两条控制观察自洽**（任何解释都必须过这一关）：① 「不属于 TML 的模型都没这问题」——本文件里
+collector 路径写的是 `pose.normal()` 变换后的法线（`PolyMesh.java:199` 取 `Matrix3f n = pose.normal()`、
+`221` 写 `setNormal(tnx, tny, tnz)`），pose 已经烘进顶点，栈顶有没有 pose 层都与它无关；
+只有 GPU 烘焙那条走 `writeRaw` 裸写（`240` 行 `setNormal(bakedNX, bakedNY, bakedNZ)`，类注释里写明
+「`setNormal` 不再传 Pose，否则法线矩阵会被乘两次」）——正是「指望绘制当刻那个矩阵补上旋转」的设计。
+② 「关掉光影现象即消失」——vanilla 侧不读法线（下面第一条），与光影无关的 EMISSIVE 语义那条（§5.10）
+是**另一个**病灶，别混：那条解释的是「挡住天体的那块反而亮」，本条解释的是「高光朝向/光源关系不对」。
 **不受牵连的两条**（所以这批改落在没装光影包时是纯空转）：
 ① 本文件 §5.10 与 vanilla 路径都带 `NO_CARDINAL_LIGHTING`，核心 entity shader 那条分支不读法线；
 ② collector 路径把 pose 烘进顶点，栈顶是什么都不影响它的法线。
