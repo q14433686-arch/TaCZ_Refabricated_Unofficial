@@ -11,8 +11,12 @@
 >   （run 33414214423）。
 > - **齐平自查通过**：`python3 docs/check_mesh_config_parity.py`
 >   → 18 TOML ↔ 18 Cloth ↔ 36 语言键，键/字段绑定/默认值/区间/en·zh 全对齐。
-> - **运行期行为全部未验证**：本分支没有实机环境，§5 的每一条都按
+> - **运行期行为全部未验证**：本分支没有实机环境，§7 的每一条都按
 >   「待实机」对待；本文不写任何 PASS。
+> - **已按 1211 复核修正**（`SYNC_REVIEW_2612_TML_PORT_20260901.md`）：
+>   世界表消费钩子补注册（复核 §1）、两个被引用的语言键补齐（§2）、孤儿 AR
+>   mixin 配置删除（§3）、仓库卫生（§4）、SoundEngineMixin 保持不注册但换成
+>   26.1.2 官方名（§5）；复核回礼与本仓回应见 `TML_GPU_PORT_2612_20260901.md` §6。
 >
 > 1211 侧的设计论证与字节码取证链随本仓一并带入（见文末「背景文档」），
 > 其中针对 1.21.11 的注入点结论**不可**直接搬到 26.1.2 —— 26.1.2 的注入点
@@ -149,6 +153,8 @@
 - [ ] 明暗变化照明跟着变；`Assigned mesh_entity_hand to the Iris HAND program.` 只出现一次；
 - [ ] 对着天空/太阳/月亮转视角：枪身挡住天体的部分**不得**跟着亮（§3 的现象；
       若出现，先查 `lightmap view is unavailable` 那行 INFO）；
+- [ ] 深度状态健全性（复核 §8 要求）：进屋隔着墙看枪——墙前的枪被墙挡住、
+      枪不被墙后面的东西穿透（即深度测试没变成 ALWAYS/NEVER）；
 - [ ] Iris 卸载 / 换光影包 / F3+T：只回 collector，不崩不黑屏。
 
 ### 5.4 第 3 步（世界语境，`MeshGpuWorld=true`）
@@ -161,6 +167,10 @@
       `Assigned mesh_entity_world to the Iris ENTITIES program.` + 夜晚变暗、
       进照明块变亮 + §5.3 的「挡天体不继承自发光」；
 - [ ] 任一组合没生效时先查 `GPU world submit refused: <原因>` 行。
+
+- [ ] GUI 时机（复核 §8 要求）：打开/关闭任意 Screen 的瞬间，第一人称常驻 VBO
+      枪模不应在 extract 阶段之后才更新、也不应残留上一帧（ScreenRenderTracker
+      的 beforeExtract/afterExtract 改名适配的实机确认）；
 
 ### 5.5 收尾
 - [ ] 本文件状态块改写成实机结论（没验的写「待实机」）；
@@ -198,7 +208,51 @@
 - `MeshPolyInShadow` 保持 false。
 - 不「顺手修」绕序（见 §4 Q10）。
 
-## 8. 背景文档（1211/26.2 侧证据链，随本仓带入；其中的 1.21.11 注入点结论
+## 8. 枪包怎么用（枪包作者看这里）
+
+display JSON：
+
+```json
+{
+  "model_type": "mesh",
+  "model": "mypack:gun/mygun_geo",
+  "texture": "mypack:gun/uv/mygun",
+  "animation": "mypack:mygun"
+}
+```
+
+并提供 `assets/mypack/geo_models/gun/mygun_geo.json`（Meshy 插件导出的
+poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件 / 弹药
+（物品、掉落实体、抛壳）/ 方块只要模型旁存在同名 geo 就会替换
+（`model_type` 通道是枪专属约定，其余走「同名 geo 存在即替换」）。
+目镜物体不支持 mesh（与上游 TML 相同的限制：ocular 必须用立方体）。
+
+`fabric.mod.json` 的 `provides: ["taczmeshloader"]` —— 依赖外置 TML 的枪包
+在本 mod 下视为依赖满足。
+
+geo 侧 `poly_mesh` 数组挂在骨骼上，支持 `normalized_uvs`；
+骨骼名含 `translucent` 走半透明提交、以 `_illuminated` 结尾按自发光光照烘焙
+（见 §5 配置表）。改用法线/绕序相关开关后需 F3+T 重载资源才生效
+（值在模型解析期读一次）。
+
+## 9. 弹匣链路（关 PR #70 的架构缺口，架构约束记录）
+
+`BedrockGunModel` 把 `additional_magazine` 的 FunctionalRenderer 设为返回
+`IMirrorGeometry`（指向 `magazine` 节点），快照遍历器原生处理立方体镜像。
+
+poly 部分：`TaczPolyMeshGunModel#submit` 里
+
+1. 主遍历 `setExcludeSubtree(additional_magazine)`——否则换弹中它会出现在两个位置；
+2. `super.submit` 照常（立方体 + IMirrorGeometry）；
+3. 主 poly 快照提交（含 `magazine`）；
+4. `additional_magazine.visible` 时，把该节点到根的变换链乘进新 PoseStack，
+   `captureSubtree(mirrorRoot=true)` 补画 `magazine` / `additional_magazine`
+   的 poly（mirrorRoot=true = 根骨骼自身变换不再套用，因为已在变换链里）。
+
+半透明部件与弹匣**永远走 collector**（§6 边界）——这两条就是关 PR #70
+「纯 mesh 枪的弹匣会丢」教训的正面形态。
+
+## 10. 背景文档（1211/26.2 侧证据链，随本仓带入；其中的 1.21.11 注入点结论
 已被本仓 `TML_GPU_PORT_2612_20260901.md` 的 26.1.2 取证取代）
 
 - [`TML_GPU_FEASIBILITY_1211_20260831.md`](TML_GPU_FEASIBILITY_1211_20260831.md)
