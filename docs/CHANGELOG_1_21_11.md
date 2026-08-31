@@ -5,7 +5,7 @@
 
 ---
 
-## 镜内 `text_show` 文本缺失（2026-09-01，代码修复：三个文件；版本号未变）
+## 镜内 `text_show` 文本缺失（2026-09-01，代码修复：六个文件；版本号未变）
 
 - **症状**：MK5 / MK5HD 的镜内弹药计数在 1.21.11 线**从不显示**（不是位置偏、不是偶发丢帧）。
   根因不在字体管线：`BedrockAttachmentModel.submit` 的深度孔径路径自己 capture + 自己按
@@ -31,6 +31,24 @@
 - 明确**未验证**：本轮只有代码改动与 CI 编译，**没跑实机**。四格剧本（掩码开/关 × Iris 开/关 + PIP）
   与日志判据写在 `docs/lineage/SCOPE_TEXT_SHOW_1211_20260901.md` §4；已知残留也写在那里（延迟覆盖层那一格
   文字不参与镜筒深度测试 ⇒ 贴边计数仍可能溢出，真要裁需移植 26.2 的 `ScopeTextSubmitter`）。
+### 同日第二处根因：`PapiManager` 把「查表」写成了「格式化」（与 26.2 的 `ec51f556` 同源）
+
+- 维护者指出「和 26.2 近期修的 BUG 一模一样」成立：本分支 `model/papi/PapiManager.java:28` 用的是
+  **`I18n.get(textKey)`**。1.21.11 的 `I18n.get` 经 CI javap 实测是「`Language.getOrDefault` →
+  `String.format` → catch `IllegalFormatException` ⇒ 返回 `"Format error: " + 原文`」。枪包的
+  `textKey` 常是内联显示串（MK5HD 用 `"%ammo_count%"`）⇒ 查表落空后 `%a` 被当格式说明符 ⇒
+  镜内出现「Format error: … 末尾一个弹药数」；含 `%` 的译文（`%s发`）同炸。
+- 修法与 26.2 一致：`Language.getInstance().getOrDefault(textKey)`（纯查表、不格式化）。该成员在
+  **我们这代**的存在性由同一次 javap 证实（探针输出在 `build-reports/compile-java.log`，TEMP 块已删），
+  不是"照抄一个可能不存在的 API"。
+- **同一形扩散到 tooltip，且 26.2 漏了两处**：`ClientAttachmentItemTooltip:165`、`ClientBlockItemTooltip:75`
+  也是 `I18n.get(tooltipKey)`，下游立刻 `split` 换行 + `Component.literal` ⇒ 从不需要格式化 ⇒ 本分支三处
+  一起收；26.2 至今只改了 `PapiManager`，26.1.2 三处全未改（已按 §9 第 7 项回给他们）。
+- **两条根因是叠加的**：① flush 缺失 ⇒ 文字根本不出现；② 格式化 ⇒ 出现但是脏。26.2 只有 ②（他们 body 走
+  `super.submit` 天然带 flush）⇒ 症状是「有字但脏」；本分支两个都有、① 在前 ⇒ 「什么都没有」。
+  ⇒ 只移植 26.2 那条对本分支无效，只修 ① 会立刻暴露 ②。取证与三仓分布表见
+  `docs/lineage/SCOPE_TEXT_SHOW_1211_20260901.md` §5。
+
 - 顺带修文档 bug：`docs/RENDER_PIPELINE_SCOPE_AUDIT_26_1_2.md` §6.1 把 order `1`/`2` 两行的内容写反了
   （代码常量是 `SCOPE_RETICLE_ORDER=1`、`SCOPE_OCULAR_RING_ORDER=2`），已对齐并在 §5.11 补记本条缺陷。
 - 版本号**未动**（仍是 `1.1.8+fabric.1.21.11.R3`）⇒ 按 AGENTS §1，README 那 6 处不需要跟改。

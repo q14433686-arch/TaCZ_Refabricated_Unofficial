@@ -247,6 +247,13 @@ printf '\n*.log\nhs_err_pid*.log\n' >> .gitignore   # 一行 *.log 就盖住 lat
    并回两处差别（`else` 分支的 flush 要挪出 `!bodySnapshot.isEmpty()` 门；`ocularRingSnapshot` 的任务
    也要 flush）—— 细节与我们补的四格实机剧本在 `docs/lineage/SCOPE_TEXT_SHOW_1211_20260901.md`。
    你们若已经跑过 A/B/C/D 那四格，请把结论给我们：我们这边**只做了静态闭合与编译**，没跑实机。
+7. **`PapiManager.getTextShow` 你们仍是 `I18n.get(textKey)`（`model/papi/PapiManager.java:28`）** —— 26.2 已在
+   `ec51f556` 修掉，本分支同日也修了。`I18n.get` 是**格式化**接口（1.21.11 的 javap 实测：
+   `Language.getOrDefault` → `String.format` → catch `IllegalFormatException` 返回 `"Format error: " + 原文`），
+   枪包内联串 `%ammo_count%` 会被 `%a` 炸掉 ⇒ **你们刚补的 flush 一生效，镜内就会显示「Format error: … 30」**。
+   请同步成 `Language.getInstance().getOrDefault(textKey)`。同形还有两处（`ClientAttachmentItemTooltip:165`、
+   `ClientBlockItemTooltip:75`，下游是 `split` 换行 + `Component.literal`，从不需要格式化）——**26.2 也没改这两处**，
+   值得三方一起收。取证、三仓分布表与我们这边的连带结论见 `docs/lineage/SCOPE_TEXT_SHOW_1211_20260901.md` §5。
 
 你们若把 §1 修完并跑过第 3 步，请把结论同时抄给 26.2（账本 L-2 那条线）：他们的 `drawList` 是
 **硬绑 `mainRenderTarget()`**（审查 A1）且光影下 GPU 默认开 ⇒ 同一个"没接线/接错线"类问题在他们那边

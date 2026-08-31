@@ -141,7 +141,66 @@ scope RenderType，vanilla 字体管线不在也不该在 —— 文字要的正
 
 ---
 
-## 5. 与 26.1.2 的往来
+## 5. 第二个根因：`PapiManager` 把「查表」写成了「格式化」（2026-09-01 同日补修）
+
+维护者指出「镜内文字这个 BUG 和 26.2 近期修的一模一样」。核完代码，这句话**成立**，而且答案与渲染架构无关：
+
+- 26.2 在 `ec51f556`（2026-08-30）修的就是 `PapiManager.getTextShow` —— 从 `I18n.get(textKey)`
+  换成 `Language.getInstance().getOrDefault(textKey)`；
+- 本分支的 `PapiManager.java:28` 当时**仍是** `I18n.get(textKey)`（`grep -n` 可自查）⇒ 同一个 bug，
+  因为这一行是两条分支从同一祖先**逐字继承**的共享代码，不在 aperture / stencil / collector 任何一层的架构差异里。
+  所以「架构不同却症状相同」不是巧合，而是「bug 根本不在架构那一层」。
+
+### 5.1 `I18n.get` 在 1.21.11 上到底做什么（javap 实测，不是引用 26.2 的结论）
+
+本沙箱没有 JDK/MC jar，所以结论走 CI 的 javap 通道（TEMP 探针在 `build.gradle`，输出已由
+`ci-log` 提交 `03a3fa2` 落进 `build-reports/compile-java.log`，第 85-128 行；探针块本轮已删除）：
+
+```
+public static String get(String, Object...):
+   0: getstatic     language:Lnet/minecraft/locale/Language;
+   4: invokevirtual Language.getOrDefault:(Ljava/lang/String;)Ljava/lang/String;
+   7: astore_2                                  // s = 查表结果（键不存在时就是键本身）
+  13: invokestatic  String.format:(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)
+  Exception table: 8-16 -> 17 Class java/util/IllegalFormatException
+  19: invokedynamic makeConcatWithConstants(String)   // "Format error: " + s
+```
+
+⇒ **查表之后必过 `String.format`**，`%` 触发的 `IllegalFormatException` 被 catch 成 `"Format error: " + 原文`。
+MK5HD 的 `textKey` 是内联串 `"%ammo_count%"`：查表落空 → 原样返回 → `String.format` 把 `%a` 当格式说明符
+→ 返回 `"Format error: %ammo_count%"` → 之后的占位符替换又在这串尾部补上真实弹药数 ⇒
+**镜内显示「Format error: … 30」**。含 `%` 的正常译文（如 `%s发`）同样炸。
+`Language#getInstance()` / `#getOrDefault(String)` 在 1.21.11 的存在性也由同一次 javap 证实（第 80-84 行），
+所以修复用的 API 与 26.2 完全一致，不是"照抄了一个可能不存在的成员"。
+
+### 5.2 两条 bug 是叠加的，不是一条
+
+| | 症状 | 本分支状态 |
+|---|---|---|
+| ① `functionalTasks` 没 flush（§1-§2） | 文字**完全不出现** | 已修（`1cfa42b`） |
+| ② `I18n.get` 当格式串（§5） | 文字出现但被 `"Format error: …"` 污染 | 已修（`c9b8ba1`） |
+
+26.2 只有 ②（他们的 body 走 `super.submit` ⇒ ① 天然不成立），所以他们的症状是「有字但脏」；
+本分支两个都有，① 在前 ⇒ 表现为「什么都没有」。**只做②的移植对本分支无效**（照抄他们的补丁会留下
+「修了但还是不显示」）；只做①则会立刻暴露 ②。这就是维护者看到"一模一样"却"不知道哪里有问题"的原因：
+本分支需要先补自己独有的那一条，再对齐他们那一条。
+
+### 5.3 同一形在本仓/兄弟仓的分布（逐文件 `grep` 实测，别按"应该只有 text_show"理解）
+
+| 位置 | 1.21.11（本分支） | 26.2 `arena/01a04e96` | 26.1.2 `arena/01a05170` |
+|---|---|---|---|
+| `model/papi/PapiManager.getTextShow` | 已改 `getOrDefault` | 已改（`ec51f556`） | **仍是 `I18n.get(textKey)`（`:28`）** |
+| `client/tooltip/ClientAttachmentItemTooltip` | 已改 | **仍是 `I18n.get(tooltipKey)`（`:165`）** | 仍是 |
+| `client/tooltip/ClientBlockItemTooltip` | 已改 | **仍是（`:75`）** | 仍是 |
+
+两处 tooltip 的下游就是 `text.split("\n")` → 逐行 `Component.literal(s)` ⇒ **从来不需要格式化**，
+纯查表才是本意；枪包把 `tooltip_key` 写成内联串（含 `%`，例如"伤害 +20%"）时同样会变 "Format error"。
+⇒ 本分支是三处一起收的；26.2 只收了一处；26.1.2 三处都还在（他们刚补的 flush 会把 ② 立刻显出来）。
+已按 §9 的口径把这张表回给两兄弟分支。
+
+---
+
+## 6. 与 26.1.2 的往来
 
 - 他们已提交同一修复（`c290a1f3` + `74eb0ad2`），报告里给的「掩码开/关 × Iris 开/关按 STEP 剧本复核」
   我们照抄成 §4，并注明本分支的 STEP 文档是 `docs/SCOPE_PIP_DEPTH_1211_STEP1/2/3_20260830.md`

@@ -396,47 +396,4 @@ if (project.hasProperty('meshProbe')) {
     apply from: 'scripts/mesh_render_probe.gradle'
 }
 
-// TEMP (2026-09-01 v2, in-lens text_show "Format error" 修复的前置取证): the sandbox has no JDK and no
-// Minecraft jar, so whether net.minecraft.locale.Language#getInstance()/#getOrDefault(String) exist on
-// 1.21.11 - and that I18n.get really runs String.format over the RAW looked-up string (the whole reason
-// pack text like "%ammo_count%" comes back as "Format error: %ammo_count%") - can only be read from the
-// real compile classpath inside CI. Delete this block once build-reports/compile-java.log has the answer.
-tasks.register('dumpLangLookupProbe') {
-    doLast {
-        try {
-            def cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
-            def javapExe = 'javap'
-            for (String home : [System.getProperty('java.home'), System.getenv('JAVA_HOME')]) {
-                if (!home) { continue }
-                def candidate = new File(new File(home), 'bin/javap')
-                if (candidate.exists()) { javapExe = candidate.absolutePath; break }
-            }
-            def dump = { String cls, boolean code, List needles ->
-                def cmd = [javapExe, '-classpath', cp, '-p'] + (code ? ['-c'] : []) + [cls]
-                def proc = new ProcessBuilder(cmd).redirectErrorStream(false).start()
-                def out = proc.inputStream.getText('UTF-8')
-                def err = proc.errorStream.getText('UTF-8')
-                proc.waitFor()
-                println "===== javap ${code ? '-c -p ' : '-p '}${cls} ====="
-                if (!out?.trim()) { println "(no output) ${(err ?: '').trim()}"; return }
-                out.readLines().each { line ->
-                    if (!line.trim()) { return }
-                    if (needles.isEmpty() || needles.any { n -> line.contains(n) }) { println '  ' + line.trim() }
-                }
-            }
-            dump('net.minecraft.locale.Language', false, ['getInstance', 'getOrDefault', 'has'])
-            // v2: print I18n.get's WHOLE body unfiltered. Round 1 proved lookup-then-String.format
-            // but its needle filter hid whether a try/catch exists - i.e. whether a pack text like
-            // "%ammo_count%" returns "Format error: ..." (26.2's era) or THROWS here (1.21.11).
-            // That distinction decides what the in-lens-text symptom actually is on this branch.
-            dump('net.minecraft.client.resources.language.I18n', true, [])
-            // Where does the "Format error: " prefix come from on this era? Suspect: TranslatableContents
-            // (vanilla's own guard), not I18n. Dump its format handling.
-            dump('net.minecraft.network.chat.contents.TranslatableContents', true, ['Format error', 'format', 'IllegalFormat', 'athrow', 'getOrDefault'])
-        } catch (Throwable t) {
-            println "(lang probe failed, ignored: ${t})"
-        }
-    }
-}
-compileJava.finalizedBy('dumpLangLookupProbe')
 
