@@ -337,3 +337,80 @@ publishing {
         }
     }
 }
+
+// ================================================================
+// TEMP-DIAGNOSTIC round 5 (scope-PIP in-mirror entity view-space) - REMOVE.
+// On-device: with ScopePipRerender=true the narrow-FOV in-mirror world renders
+// magnified correctly but ENTITIES behave as if their view space is absolute
+// (not relativized to the mirror camera); 26.2 / 1.21.11 sisters do not have
+// this. Static analysis says both passes get their own MV stack (renderLevel
+// @45) and our narrow projection covers both channels (RenderSystem slot +
+// CameraRenderState.projectionMatrix), so the missing fact must be WHERE
+// entity submit nodes are created and WHICH matrices they capture. Probe:
+// full bodies of LevelRenderer.renderLevel + addMainPass lambda +
+// GameRenderer.renderLevel + renderItemInHand + every
+// FeatureRenderDispatcher method, plus field/signature tables of
+// CameraRenderState / SubmitNodeStorage / LevelRenderState.
+tasks.named("compileJava") {
+    doLast {
+        def javapBin = new File(System.getProperty("java.home"), "bin/javap").absolutePath
+        File mcJar = null
+        for (def cfgName in ["runtimeClasspath", "compileClasspath"]) {
+            try {
+                configurations.getByName(cfgName).files.each { f ->
+                    if (f.name.contains("minecraft") && f.name.endsWith(".jar") && mcJar == null) mcJar = f
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        if (mcJar == null) {
+            println "PROBE5: no minecraft jar found on the classpath"
+            return
+        }
+        println "=== MC5 ${mcJar.name}"
+        def fullDump = { String cls, String keepWhat ->
+            def out = new StringBuilder()
+            def err = new StringBuilder()
+            def proc = [javapBin, "-p", "-c", "-classpath", mcJar.absolutePath, cls].execute()
+            proc.consumeProcessOutput(out, err)
+            proc.waitFor()
+            if (err.length() > 0 && out.length() == 0) {
+                println "JAVAP5-ERR ${cls}: ${err.toString().trim()}"
+                return
+            }
+            boolean keep = false
+            println "----- BEGIN5 ${cls}"
+            out.toString().eachLine { line ->
+                if (line =~ /^  (public|private|protected|static|final|synchronized|net\.|java\.).*\(/) {
+                    keep = (line =~ keepWhat) as boolean
+                    if (keep) println line
+                } else if (keep) {
+                    println line
+                }
+            }
+            println "----- END5 ${cls}"
+        }
+        def sigDump = { String cls ->
+            def out = new StringBuilder()
+            def err = new StringBuilder()
+            def proc = [javapBin, "-p", "-classpath", mcJar.absolutePath, cls].execute()
+            proc.consumeProcessOutput(out, err)
+            proc.waitFor()
+            if (err.length() > 0 && out.length() == 0) {
+                println "JAVAP5-ERR ${cls}: ${err.toString().trim()}"
+                return
+            }
+            println "----- BEGIN5SIG ${cls}"
+            println out.toString()
+            println "----- END5SIG ${cls}"
+        }
+        fullDump("net.minecraft.client.renderer.LevelRenderer",
+                /(renderLevel\(com\.mojang\.blaze3d\.resource|lambda.addMainPass)/)
+        fullDump("net.minecraft.client.renderer.GameRenderer",
+                /(renderLevel\(net\.minecraft\.client\.DeltaTracker|renderItemInHand\(net\.minecraft)/)
+        fullDump("net.minecraft.client.renderer.feature.FeatureRenderDispatcher", /.*/)
+        sigDump("net.minecraft.client.renderer.state.level.CameraRenderState")
+        sigDump("net.minecraft.client.renderer.SubmitNodeStorage")
+        sigDump("net.minecraft.client.renderer.state.level.LevelRenderState")
+    }
+}
