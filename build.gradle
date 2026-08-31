@@ -339,6 +339,83 @@ publishing {
 }
 
 // ================================================================
+// TEMP-DIAGNOSTIC round 5b (scope-PIP entity submission + draw-time matrix) - REMOVE.
+// Round 5 answered: MV stack is per-pass (renderLevel @45-63 push+mul(viewMatrix)),
+// projection slot is set by GameRenderer @297-303 (vanilla ProjectionMatrixBuffer),
+// renderSolidFeatures consumes SubmitNodeStorage per pass into bufferSource.
+// Still missing: (1) WHO fills SubmitNodeStorage for entities and WHEN
+// (extractLevel once per frame vs per pass) - our 512b re-extract fixes the
+// wide pass, so extraction-time submission is suspected; (2) which matrix the
+// batched draws read at draw time (RenderSystem.getModelViewMatrix singular
+// vs the Matrix4fStack). Dump extractLevel + submitModel + renderSolid +
+// RenderSystem surface + a body-filtered renderLevel tail.
+tasks.named("compileJava") {
+    doLast {
+        def javapBin = new File(System.getProperty("java.home"), "bin/javap").absolutePath
+        File mcJar = null
+        for (def cfgName in ["runtimeClasspath", "compileClasspath"]) {
+            try {
+                configurations.getByName(cfgName).files.each { f ->
+                    if (f.name.contains("minecraft") && f.name.endsWith(".jar") && mcJar == null) mcJar = f
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        if (mcJar == null) {
+            println "PROBE5B: no minecraft jar found on the classpath"
+            return
+        }
+        println "=== MC5B ${mcJar.name}"
+        def filteredDump = { String cls, String keepMethods, String keepBody ->
+            def out = new StringBuilder()
+            def err = new StringBuilder()
+            def proc = [javapBin, "-p", "-c", "-classpath", mcJar.absolutePath, cls].execute()
+            proc.consumeProcessOutput(out, err)
+            proc.waitFor()
+            if (err.length() > 0 && out.length() == 0) {
+                println "JAVAP5B-ERR ${cls}: ${err.toString().trim()}"
+                return
+            }
+            boolean keep = false
+            println "----- BEGIN5B ${cls}"
+            out.toString().eachLine { line ->
+                if (line =~ /^  (public|private|protected|static|final|synchronized|net\.|java\.).*\(/) {
+                    keep = (line =~ keepMethods) as boolean
+                    if (keep) println line
+                } else if (keep) {
+                    if (keepBody == null || (line =~ keepBody) as boolean) println line
+                }
+            }
+            println "----- END5B ${cls}"
+        }
+        def sigDump = { String cls ->
+            def out = new StringBuilder()
+            def err = new StringBuilder()
+            def proc = [javapBin, "-p", "-classpath", mcJar.absolutePath, cls].execute()
+            proc.consumeProcessOutput(out, err)
+            proc.waitFor()
+            if (err.length() > 0 && out.length() == 0) {
+                println "JAVAP5B-ERR ${cls}: ${err.toString().trim()}"
+                return
+            }
+            println "----- BEGIN5B ${cls}"
+            println out.toString()
+            println "----- END5B ${cls}"
+        }
+        // renderLevel tail: only call/graph-relevant instructions (avoids the log budget).
+        filteredDump("net.minecraft.client.renderer.LevelRenderer",
+                /(renderLevel\(com\.mojang\.blaze3d\.resource|extractLevel\()/,
+                /(invokevirtual|invokeinterface|invokedynamic|invokestatic|getfield|putfield|ldc)/)
+        filteredDump("net.minecraft.client.renderer.SubmitNodeStorage",
+                /(submitModel\(|submitItem\(|submitCustomGeometry\(|clear\(\()/, null)
+        filteredDump("net.minecraft.client.renderer.feature.ModelFeatureRenderer",
+                /(renderSolid\()/, null)
+        sigDump("com.mojang.blaze3d.systems.RenderSystem")
+        sigDump("net.minecraft.client.renderer.entity.EntityRenderDispatcher")
+    }
+}
+
+// ================================================================
 // TEMP-DIAGNOSTIC round 5 (scope-PIP in-mirror entity view-space) - REMOVE.
 // On-device: with ScopePipRerender=true the narrow-FOV in-mirror world renders
 // magnified correctly but ENTITIES behave as if their view space is absolute
