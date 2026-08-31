@@ -70,6 +70,10 @@ public class RenderClothConfig {
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_isolate_pipeline"), RenderConfig.SCOPE_PIP_ISOLATE_PIPELINE.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_isolate_pipeline.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_ISOLATE_PIPELINE::set).build());
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_shadow_scale"), RenderConfig.SCOPE_PIP_SHADOW_SCALE.get())
+                .setMin(0.25).setMax(1.0).setDefaultValue(0.5)
+                .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_shadow_scale.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_SHADOW_SCALE::set).build());
         render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_resolution_scale"), RenderConfig.SCOPE_PIP_RESOLUTION_SCALE.get())
                 .setMin(0.25).setMax(1.0).setDefaultValue(0.75)
                 .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_resolution_scale.desc"))

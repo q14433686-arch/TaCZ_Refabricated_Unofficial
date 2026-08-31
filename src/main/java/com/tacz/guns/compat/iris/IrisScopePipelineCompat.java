@@ -71,6 +71,51 @@ public final class IrisScopePipelineCompat {
     private static Object prewarmedAgainst;
     private static boolean loggedPrewarm;
 
+    /**
+     * 是否正处在「瞄具那套 Iris 管线的构造过程」之中。
+     *
+     * <p>只有这一小段窗口里，{@code PackShadowDirectives.getResolution()} 的返回值
+     * 才会决定<b>瞄具管线</b>那张阴影贴图的尺寸（{@code IrisShadowResolutionMixin}
+     * 据此改小）。窗口之外必须恢复原值，否则会把主画面的阴影一起改小。</p>
+     */
+    private static volatile boolean buildingScopePipeline;
+
+    /** 由 {@code IrisShadowResolutionMixin} 查询。 */
+    public static boolean isBuildingScopePipeline() {
+        return buildingScopePipeline;
+    }
+
+    /** 「释放失败过就不再重试」的一次性标志：释放不成功就保持管线活着，别每帧折腾。 */
+    private static boolean releaseFailed;
+
+    /**
+     * 当前活着的瞄具管线是按哪个 ScopePipShadowScale 建的；NaN = 还没建过。
+     *
+     * <p>阴影贴图分辨率是管线<b>构造时</b>读 {@code PackShadowDirectives.getResolution()}
+     * 一次性定死的，此后 ShadowRenderTargets / ShadowRenderer 全用这份快照。所以配置改了
+     * 而管线还活着 = 改了等于没改。记下建管线时的值，{@link #prewarmIfNeeded()} 每帧比对，
+     * 变了就销毁重建，让旋钮热生效。</p>
+     */
+    private static double appliedShadowScale = Double.NaN;
+
+    /**
+     * 本次 preparePipeline 构建期间，IrisShadowResolutionMixin 是否真的拦到过
+     * {@code getResolution()}。该 mixin 是 {@code require = 0} 的软注入 ——
+     * Iris 内部类名/方法变了它会<b>静默</b>失效，游戏照常跑、缩放悄悄不生效。
+     * 构建前清零、构建后检查，把静默失效变成一行明确的告警。
+     */
+    private static volatile boolean shadowHookRanDuringBuild;
+
+    /** 由 {@code IrisShadowResolutionMixin} 在构造窗口内拦到 getResolution() 时回调。 */
+    public static void noteShadowResolutionIntercepted() {
+        shadowHookRanDuringBuild = true;
+    }
+
+    private static double wantedShadowScale() {
+        return RenderConfig.SCOPE_PIP_SHADOW_SCALE == null
+                ? 1.0d : RenderConfig.SCOPE_PIP_SHADOW_SCALE.get();
+    }
+
     private IrisScopePipelineCompat() {
     }
 
@@ -137,6 +182,67 @@ public final class IrisScopePipelineCompat {
     }
 
     /**
+     * 当前活着的瞄具管线若存在则整份销毁，释放它占用的<b>全部</b> GPU 资源
+     * （colortex/gbuffer/阴影图/SSBO/程序，见 {@code IrisRenderingPipeline#destroy}）。
+     *
+     * <p>两个用途：①{@code ScopePipShadowScale} 改动后的热重建（旧管线必须先死，
+     * 新值才能在构造时被读走）；②空闲释放实验（{@code ScopePipReleaseIdlePipeline}）——
+     * 26.2 查明「光影下开镜帧率自首次 ADS 起持续衰减、重进存档重置」强烈指向
+     * <b>每 scope pass 在瞄具管线的保留 GPU 状态里累积</b>（CPU 侧探针全平），
+     * 空闲时整份销毁、下次开镜由 {@link #prewarmIfNeeded()} 重建即可清零。</p>
+     *
+     * <p>只在「不在镜内那一遍、且处于帧内世界渲染前的安全位置」调用。销毁后顺手失效
+     * 预热状态。</p>
+     *
+     * @return 真的销毁了瞄具管线时返回 true
+     */
+    public static boolean releaseScopePipelineIfPresent() {
+        if (releaseFailed) {
+            return false;
+        }
+        if (!FabricLoader.getInstance().isModLoaded("iris") || !IrisCompat.isUsingRenderPack()) {
+            return false;
+        }
+        Object id = scopeDimensionId();
+        if (id == null || !resolveHandles() || pipelinesMapField == null) {
+            return false;
+        }
+        try {
+            Object manager = getPipelineManager.invoke(null);
+            if (manager == null) {
+                return false;
+            }
+            @SuppressWarnings("unchecked")
+            Map<Object, Object> pipelines = (Map<Object, Object>) (Map<?, ?>) pipelinesMapField.get(manager);
+            Object scope = pipelines.get(id);
+            if (scope == null) {
+                return false;
+            }
+            scope.getClass().getMethod("destroy").invoke(scope);
+            pipelines.remove(id);
+            // PipelineManager.pipeline 若正指着被销毁的那套，指回主管线，
+            // 别让后续任何 getPipelineNullable() 的消费者拿到已释放的管线。
+            Object current = getPipelineNullable.invoke(manager);
+            if (current == scope) {
+                Object real = getCurrentDimension.invoke(null);
+                if (real != null) {
+                    preparePipeline.invoke(manager, real);
+                }
+            }
+            // 预热状态随这套管线一起失效。
+            prewarmedAgainst = null;
+            appliedShadowScale = Double.NaN;
+            GunMod.LOGGER.info("[TACZ Scope] Released the idle scope-pass Iris pipeline to reclaim GPU memory.");
+            return true;
+        } catch (Throwable t) {
+            releaseFailed = true;
+            GunMod.LOGGER.warn("[TACZ Scope] Failed to release the idle scope pipeline; keeping it alive "
+                    + "for this session (releasing will not be retried).", t);
+            return false;
+        }
+    }
+
+    /**
      * 若还没预热过，就在<b>当前这一帧的安全位置</b>把瞄具管线建好。
      *
      * <p>由 {@code GameRendererMixin} 的 render HEAD 调用 —— 那里在世界渲染<b>之前</b>，
@@ -165,13 +271,62 @@ public final class IrisScopePipelineCompat {
                 // 抢在它前面预热会让「当前管线」指向瞄具那套，把这一帧的主画面画错。
                 return;
             }
+            // 【ScopePipShadowScale 热生效】阴影分辨率是管线构造时一次性定死的 ——
+            // 配置变了而旧管线还活着，就先销毁它，让下面的重建按新值走。
+            // 放在快速路径之前：否则「已就绪」直接短路，改配置永远等到下次进世界才生效。
+            if (prewarmedAgainst == mainPipeline
+                    && !Double.isNaN(appliedShadowScale)
+                    && Math.abs(appliedShadowScale - wantedShadowScale()) > 1.0e-3) {
+                GunMod.LOGGER.info("[TACZ Scope] ScopePipShadowScale changed ({} -> {}); rebuilding the "
+                                + "scope pipeline so the new shadow map size takes effect.",
+                        appliedShadowScale, wantedShadowScale());
+                if (releaseScopePipelineIfPresent()) {
+                    // 释放成功已把 prewarmedAgainst/appliedShadowScale 清零，
+                    // 下面自然落进慢路径按新值重建。
+                } else {
+                    // 释放失败（或该路径被熔断）：把「已应用值」改记为目标值，
+                    // 停止重试 —— 否则这个分支每帧都进，日志刷屏。
+                    // 旧管线继续用旧阴影尺寸，等下次自然重建（切维度/重载光影）再生效。
+                    appliedShadowScale = wantedShadowScale();
+                }
+            }
             // 【稳态快速路径】本方法逐帧都会被调到，「已就绪」必须最便宜。
             if (prewarmedAgainst == mainPipeline) {
                 return;
             }
             Object realDimension = getCurrentDimension.invoke(null);
+            // 「这次是真构建还是缓存命中」—— 决定下面对阴影 mixin 的核验是否有意义：
+            // 缓存命中不会读 getResolution()，拿它去核验只会误报。
+            boolean wasAbsent = pipelinesMapField != null
+                    && !((Map<?, ?>) pipelinesMapField.get(manager)).containsKey(id);
             // 打开窗口：把瞄具那套设成「当前管线」。第一次会真的编译，之后是缓存命中。
-            preparePipeline.invoke(manager, id);
+            //
+            // 这个窗口<b>同时</b>是「瞄具管线正在构造」的唯一时机 —— 阴影贴图的分辨率
+            // 就是在构造里读 PackShadowDirectives.getResolution() 定下来的，且此后由
+            // 采样器一路捕获使用。所以要给镜内那一遍配一张更小的阴影图，只有在这里做
+            // 才来得及。见 IrisShadowResolutionMixin。
+            buildingScopePipeline = true;
+            shadowHookRanDuringBuild = false;
+            try {
+                preparePipeline.invoke(manager, id);
+            } finally {
+                buildingScopePipeline = false;
+            }
+            if (wasAbsent) {
+                appliedShadowScale = wantedShadowScale();
+                // 【把静默失效变成明确告警】IrisShadowResolutionMixin 是 require=0 的
+                // 软注入，Iris 改内部类名它就悄悄不生效 —— 缩放旋钮随之变成空转。
+                // 真构建过却一次都没拦到 getResolution()，就是这种情况
+                //（阴影被 pack 完全禁用时构造器也不会读它，那时缩放本来就无意义）。
+                if (!shadowHookRanDuringBuild && wantedShadowScale() < 0.999d) {
+                    GunMod.LOGGER.warn("[TACZ Scope] ScopePipShadowScale is set to {} but the shadow "
+                                    + "resolution hook never ran while building the scope pipeline. Either "
+                                    + "this pack has shadows disabled (then the knob is moot), or the Iris "
+                                    + "internals moved and the mixin no longer applies -- the scope pass is "
+                                    + "using the pack's FULL shadow resolution.",
+                            wantedShadowScale());
+                }
+            }
             try {
                 // 【必须】把当前管线指回主管线，否则这一帧的主画面会用瞄具那套渲染。
                 // 放 finally：上面抛了也绝不能把「当前管线」留在瞄具那套上。

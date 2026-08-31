@@ -8,10 +8,11 @@
     "IrisDepthRestoreShaderMixin",
     "IrisHandRendererReticlePassMixin",
     "IrisFinalScopeOverlayMixin",
-    "IrisScopeDimensionMixin"
+    "IrisScopeDimensionMixin",
+    "IrisShadowResolutionMixin"
   ],
   "injectors": {
     "defaultRequire": 0
   },
-  "_comment": "Iris 26.1 (1.11.x, MC 26.1.2) 集成。IrisHandRendererReticlePassMixin 为冻结的 scope 准星快照强制一次较晚的 HAND_TRANSLUCENT 手部 pass（注入点=renderTranslucent 的 setPhase 之后、endFrame 冲刷之前；门=ItemInHandRenderer.iris$isAnyHandTranslucent）；IrisFinalScopeOverlayMixin 在 IrisRenderingPipeline.finalizeLevelRendering TAIL（全部 composite/final 之后）用无雾 vanilla 片元重画同一份 3D 快照。两个手部 mixin 均 require=0，门控另受 IrisCompat 版本闸（1.11.x）限制；required=false + IrisCompatMixinPlugin 的 isModLoaded 双重兜底，未装 Iris 不受影响。 IrisScopeDimensionMixin 在 Iris.getCurrentDimension HEAD 为镜内那一遍改答瞄具专用维度 id（tacz:scope_pip），使 Iris 为其单独建一套管线（时域隔离，26.2 同名移植；门=ScopePipRerender.isScopePassIsolated）。"
+  "_comment": "Iris 26.1 (1.11.x, MC 26.1.2) 集成。IrisHandRendererReticlePassMixin 为冻结的 scope 准星快照强制一次较晚的 HAND_TRANSLUCENT 手部 pass（注入点=renderTranslucent 的 setPhase 之后、endFrame 冲刷之前；门=ItemInHandRenderer.iris$isAnyHandTranslucent）；IrisFinalScopeOverlayMixin 在 IrisRenderingPipeline.finalizeLevelRendering TAIL（全部 composite/final 之后）用无雾 vanilla 片元重画同一份 3D 快照。两个手部 mixin 均 require=0，门控另受 IrisCompat 版本闸（1.11.x）限制；required=false + IrisCompatMixinPlugin 的 isModLoaded 双重兜底，未装 Iris 不受影响。 IrisScopeDimensionMixin 在 Iris.getCurrentDimension HEAD 为镜内那一遍改答瞄具专用维度 id（tacz:scope_pip），使 Iris 为其单独建一套管线（时域隔离，26.2 同名移植；门=ScopePipRerender.isScopePassIsolated）。 IrisShadowResolutionMixin 在 PackShadowDirectives.getResolution RETURN 上仅在瞄具管线构造窗口内把阴影贴图按 ScopePipShadowScale 缩小（26.2 同名移植；静默失效由 IrisScopePipelineCompat 的构建后核验变成明确告警）。"
 }

@@ -113,6 +113,13 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_ISOLATE_PIPELINE;
     /**
+     * 镜内那一遍的阴影贴图分辨率比例（1.0 = 与光影包自身一致）。开销按面积走：
+     * 0.5 = 镜内那遍的阴影只花 1/4 的代价，画质损失只落在镜内。
+     * 仅当 {@link #SCOPE_PIP_RERENDER}+{@link #SCOPE_PIP_ISOLATE_PIPELINE}+光影齐备时生效；
+     * 阴影分辨率在瞄具管线构造时一次定死，改动后由预热逻辑销毁重建热生效。
+     */
+    public static ForgeConfigSpec.DoubleValue SCOPE_PIP_SHADOW_SCALE;
+    /**
      * 二次渲染模式下，镜内那遍的渲染分辨率（1.0 = 原生分辨率）。
      *
      * <p>调低可显著减少第二遍世界渲染的 GPU 开销（0.5 = 25% 像素），代价是镜内更软。
@@ -249,6 +256,15 @@ public class RenderConfig {
                         "resolutions) and a one-time shader compile the first time you aim. Turn this ",
                         "off if VRAM is tight, and the artifacts above come back.")
                 .define("ScopePipIsolatePipeline", true);
+        SCOPE_PIP_SHADOW_SCALE = builder.comment(
+                        "Shadow map resolution for the scope pass, as a fraction of the pack's own.",
+                        "Only used with ScopePipRerender + ScopePipIsolatePipeline + a shader pack.",
+                        "",
+                        "Iris renders shadows once per world render, so rendering the world twice",
+                        "doubles that cost; it scales with area, so 0.5 cuts the scope pass' shadow",
+                        "work to about 25%. Only the lens is affected. Takes effect when the scope",
+                        "pipeline is (re)built; the pipeline is rebuilt automatically on change.")
+                .defineInRange("ScopePipShadowScale", 0.5d, 0.25d, 1.0d);
         SCOPE_PIP_RESOLUTION_SCALE = builder.comment(
                         "Render resolution scale for the scope pass in rerender mode (1.0 = native). "
                                 + "Lower values reduce the GPU cost of the second world render at the price "
