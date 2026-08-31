@@ -1,0 +1,77 @@
+# Scope PIP 光影二次渲染（26.2 Iris 母版）26.1.2 移植记录 — 2026-09-01
+
+> **立项裁定（用户，2026-09-01）**：「直接做，不想留代差——R 系列代表正式版；最难的母版
+> 已被 26.2 做出来了；光影下的旧 PIP 可以抛弃，或统一成它的离屏渲染（更现代）」。
+> 本轮先落「光影下二次渲染」全链；vanilla 路径（重投影/B1/深度孔径/掩码/文字）保持现状
+> 不动（已实机 PASS）。1211 线同项是 DECLINED 状态（其维护者裁定），与本线无关。
+> **编译已过（CI）；运行期行为全部未验证，待实机。**
+
+## 0. 旧路 vs 新路
+
+| | 旧（本轮之前） | 新（本轮） |
+|---|---|---|
+| 无光影 | 重投影 / B1 二次渲染（拷主目标） | **不变** |
+| 光影（Iris） | 重投影成品帧变体（`ALLOW_SHADER_PACKS`，默认关）；B1 **硬拒** | **B1 二次渲染**：窄遍跑完整 Iris 管线，`ALLOW_SHADER_PACKS` 同一门（默认关雷区不绕），时域隔离默认开 |
+
+B1 旧硬拒的理由（「光影下主目标里没有窄 FOV 的成品可拷」）**作废**：Iris 的成品是在
+`LevelRenderer.renderLevel` 内部尾段的 `finalizeLevelRendering()` 合成到主帧缓冲的，
+发生在该调用返回**之前**——窄遍返回后拷主目标的时机对光影同样成立（26.2 正是这么拷的）。
+
+## 1. 移植映射（26.2 → 本线）
+
+| 26.2 母版 | 本线落地 | 说明 |
+|---|---|---|
+| `IrisScopeDimensionMixin`（`Iris.getCurrentDimension` HEAD 改答 `tacz:scope_pip`） | 同名移植，门=`ScopePipRerender.isScopePassIsolated()` | 借 Iris 按维度缓存管线机制给镜内一遍独立 colortex/程序/previous 族；管线归 Iris 的 map 管，切维度/重载光影一并回收，不漏显存。require=0：Iris 内部改名→静默退化为共用管线（伪影回归，不崩） |
+| `IrisScopePipelineCompat`（维度 id + 预热 + Voxy 第二套栈 + ShadowScale + 空闲释放） | **裁剪版**：维度 id + 句柄解析 + `prewarmIfNeeded` | 裁掉：Voxy（本线无 Voxy compat）、ShadowScale 阴影降采样、空闲释放（FPS 衰减调查线未随移植）。预热调用点=本线已有的 `GameRenderer.render` HEAD（26.2 用 extract HEAD，同为「世界渲染前的空档」，本注入点已实机验证过） |
+| `ScopePipRenderer` 光影分支（不重定向，跑完拷主帧缓冲） | `ScopePipRerender` 光影分支 | 拷贝时机与 vanilla 分支同点（`captureSceneFromMain`，`copyMainColor` 无闸公共路径） |
+| `SodiumCompat.overrideProjection`（Sodium 地形 + **Iris gbuffer 投影** 同源快照） | **上一轮已移植**（`3d8432f`） | 光影下 Iris 的 gbuffer 投影也读 Sodium 快照——本轮直接复用 |
+| 抓取/合成在 `finalizeLevelRendering` TAIL | **已有**（`IrisFinalScopeOverlayMixin` + `captureSceneAfterIrisFinal`/`compositeAfterIrisFinal`） | rerender 模式下：抓取守卫直接 return（窄遍自己拷过），合成照常（倍率分流 `compositeZoom()`=1） |
+| 配置 `ScopePipIsolatePipeline`（默认 true） | 同名同默认 + Cloth 条目 + lang en/zh | `ScopePipAllowShaderPacks`（默认 false）沿用为光影 opt-in 总闸 |
+| 性能杠杆 `ScopePipRerenderInterval` | **已有**（`8aca737`） | 光影下整条管线跑两遍的砍半开关；ShadowScale 待后续轮 |
+
+## 2. 接线细节（互踩点逐一处理）
+
+1. **`captureScene`（手部 HEAD 干净帧抓取）**：已有 `rerenderMode()` 早退，不覆盖窄遍成品。
+2. **`captureSceneAfterIrisFinal`（光影成品帧抓取）**：**本轮新增** `rerenderMode()` 守卫——
+   刻意不清 `sceneCaptured`（紧随其后的合成还要用它）。没有这条守卫，宽遍的 finalize TAIL
+   会用宽视场成品覆盖镜内窄视场成品。
+3. **`compositeAfterIrisFinal`**：倍率改走 `compositeZoom()` 分流（重投影=lensZoom()、
+   二次渲染=1）。`IRIS_FULL_AIM_THRESHOLD`（≈开满镜）门保留：光影下的镜内画面含
+   in-level 手部，未开满时中心区可能叠着 viewmodel（与重投影光影变体同一适配）。
+4. **隔离标志**：`scopePassIsolated` 只在窄遍前置位、finally **最先**清——之后任何
+   「问当前维度」的代码都拿真实值；切世界（ClientLevel 切换）才触发 Iris 重建主管线，
+   逐帧标志够不着它。
+5. **`prewarmIfNeeded` 指回主管线**：建/取瞄具管线后必须用真实维度再 `preparePipeline`
+   一次（缓存命中）把「当前管线」指回去，finally 保证；漏掉=整帧主画面用瞄具管线渲染。
+6. **Sodium 三通道**：窄投影的第三通道（Sodium 快照）对光影同样必要（26.2：Sodium 快照
+   同时是 Iris gbuffer 投影来源）——上一轮的 `overrideProjection`/`restoreProjection`/
+   `resetChunkUniformUpload` 序列原样覆盖光影分支。
+
+## 3. 已知风险 / 降级矩阵（运行期未验证）
+
+| 情形 | 表现 |
+|---|---|
+| `getCurrentDimension` 在 Iris 26.1 签名/名字不同 | mixin require=0 静默不生效 → 镜内与主画面共用管线 → 拖影/云噪点/镜外发糙三伪影（首帧日志无 "own Iris pipeline" 行即此情形） |
+| 26.1 Iris 的 finalizeLevelRendering 不在 renderLevel 内部（与 26.2 不同构） | 窄遍返回后主目标还没成品 → 镜内空/垃圾画面。修法（预案）：抓取点后移到 `IrisFinalScopeOverlayMixin` TAIL（管线已在本轮备好，改动≈5 行） |
+| `preparePipeline`/`getPipelineNullable` 改名 | 反射失败 log-once warn → 退懒加载（首次开镜卡一次） |
+| 显存不足 | 关 `ScopePipIsolatePipeline`（伪影自负）；总闸 `ScopePipAllowShaderPacks` 关=整条光影 PIP 关 |
+| 下界/末地开镜 | pack 按 fallback 目录（`world0 *` 档）选着色器，镜内可能用主世界的着色器（26.2 同款取舍） |
+
+## 4. 验收剧本（实机）
+
+- [ ] `ScopePipRerender=true` + `ScopePipAllowShaderPacks=true` + 光影：开镜镜内为**原生分辨率
+      窄 FOV** 画面（地形/实体同一套比例——Sodium 快照已同步），镜外恒 1×；
+- [ ] 时域健康：无整屏拖影、体积云无噪点闪烁、开镜时镜外不发糙（=隔离生效；首帧日志应有
+      "own Iris pipeline (tacz:scope_pip)" 与 "Pre-built the scope pass' Iris pipeline"）；
+- [ ] 未开满镜时镜内为 1× 世界（IRIS_FULL_AIM_THRESHOLD 门的已知取舍），开满出现镜内画面；
+- [ ] 收镜/开镜循环无残留贴片；主画面地形在收镜帧立刻回宽 FOV（Sodium uniform 闸已重开）；
+- [ ] `ScopePipIsolatePipeline=false`：功能仍在，但出现上述三伪影（用于判别隔离是否必要）；
+- [ ] 无光影全矩阵回归：重投影/B1/掩码/文字与此前一致（本轮未动 vanilla 路径）；
+- [ ] 首次开镜卡顿应已挪到进世界后一次性（预热生效；若仍卡在首次开镜=预热反射失败，看 warn）。
+
+## 5. 开放事项
+
+- `ScopePipShadowScale`（阴影降采样）与空闲释放（FPS 衰减调查线）未随移植——性能问题出现时
+  以 26.2 为母版补。
+- Voxy 镜内 LOD（第二套渲染栈）未移植。
+- 1211 线的 SodiumCompat 转发文本：用户裁定「一会再说」，未写。
