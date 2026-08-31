@@ -486,3 +486,6 @@ tasks.register('dumpFeatureDispatcherApi') {
             }
         } else { println('(none)'); if (rse2.trim()) println('stderr: ' + rse2.trim()) }
 
+    }
+}
+compileJava.finalizedBy dumpFeatureDispatcherApi
