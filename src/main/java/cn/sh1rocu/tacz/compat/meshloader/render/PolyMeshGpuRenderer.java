@@ -574,7 +574,7 @@ public final class PolyMeshGpuRenderer {
             return;
         }
         // 只在「正在跑一次 LevelRenderer#renderLevel」时消费：防未知调用点（见
-        // {@link #levelRenderActive}）。注意这条检查必须在记存活证明<b>之前</b> ——
+        // {@link #levelRenderActive}）。注意这条检查必须在记存活证明之前 ——
         // 若 GameRendererMixin 那个注入点失效，宁可不画也不能把「钩子活着」的假象记进去。
         if (!levelRenderActive) {
             return;
@@ -756,8 +756,8 @@ public final class PolyMeshGpuRenderer {
             drawList(HAND_DRAWS, irisFlush, false);
         } catch (Exception | LinkageError e) {
             // LinkageError：光影下这条路径依赖 Iris 的 flush 时机，方法缺失也要能自愈回 collector。
-            // 只置内存标志、<b>不回写配置</b>（R3 起；第 1 步沿用了 26.2 的
-            // {@code MeshyConfig.GPU_BAKING.set(false)}，那条有两个问题：绘制线程里改配置
+            // 只置内存标志、不回写配置（R3 起；第 1 步沿用了 26.2 的
+            // MeshyConfig.GPU_BAKING.set(false)，那条有两个问题：绘制线程里改配置
             // 可能触发磁盘写；而且用户重启后会看到「GPU 烘焙自己关了」。世界表那边
             // 一开始就是分表 + 阈值语义，见 renderAtWorldFlush。理由详见
             // docs/REVIEW_UPSTREAM_TML_GPU_262_20260831.md A2。）
@@ -871,13 +871,13 @@ public final class PolyMeshGpuRenderer {
         }
 
         // 【同一条不变量的第三例，2026-09-01 维护者实机定位】纹理视图必须在 createRenderPass
-        // <b>之前</b>解析完。TextureManager#getTexture 对<b>未加载</b>的纹理会同步懒加载
-        // （{@code registerAndLoad -> ReloadableTexture#apply -> CommandEncoder#writeToTexture}），
+        // 之前解析完。TextureManager#getTexture 对未加载的纹理会同步懒加载
+        // （registerAndLoad -> ReloadableTexture#apply -> CommandEncoder#writeToTexture），
         // 而 writeToTexture 属于「pass 打开期间禁止的命令」类 ⇒ 放进 pass 体内就直接抛
-        // {@code Close the existing render pass before performing additional commands}。
+        // Close the existing render pass before performing additional commands。
         // 首版把它写在逐组 bind 循环里，炸点与 UBO 切片那条完全同源。
         // 为什么只有「全部件都走 GPU」的高模包（duyupack 的 kar98un 这类）会踩：只要有任何一个部件
-        // 走过 collector，那张 UV 就早已在 pass 外被请求过；全 GPU 包里<b>首个请求者就是我们自己</b>
+        // 走过 collector，那张 UV 就早已在 pass 外被请求过；全 GPU 包里首个请求者就是我们自己
         // ⇒ 逐帧抛、逐帧回退，而纹理永远没机会在 pass 外完成加载（表现即贴图错误 + 日志连着同一条）。
         Map<Identifier, GpuTextureView> viewsByTexture = new HashMap<>();
         for (Identifier texture : byTexture.keySet()) {
@@ -937,9 +937,9 @@ public final class PolyMeshGpuRenderer {
                     // 光影包里的 gl_NormalMatrix（被 Iris 改名 iris_NormalMat）**不来自**上面那份
                     // DynamicTransforms 快照，而是 Iris 在【绘制执行那一刻】读 RenderSystem MV 栈顶
                     // 的逆转置（Iris 源码 ExtendedShader#iris$setupState：
-                    // {@code RenderSystem.getModelViewMatrixCopy().invert(t).transpose3x3(normalMatrix)}；
+                    // RenderSystem.getModelViewMatrixCopy().invert(t).transpose3x3(normalMatrix)；
                     // 1.21.11 上的触发点是 GlCommandEncoder#executeDraw -> trySetup，每次绘制都过一遍）。
-                    // 本仓骨骼顶点法线是骨骼本地系（{@code PolyMesh#writeRaw} 裸写 setNormal），
+                    // 本仓骨骼顶点法线是骨骼本地系（PolyMesh#writeRaw 裸写 setNormal），
                     // 全部旋转都靠这一个矩阵补上：栈顶少了 pose_bone 那一层，平行光/反射就按
                     // 本地法线算 —— 表现即「反光/高光偏一侧、与光源关系不对」。
                     // 位置不受影响：ModelViewMat 走 DynamicTransforms 快照，上面已按 entry 写好。
@@ -959,24 +959,25 @@ public final class PolyMeshGpuRenderer {
                     }
                 }
             }
-            boolean already = worldPass ? loggedFirstWorldDraw : loggedFirstDraw;
-            if (!already) {
-                if (worldPass) {
-                    loggedFirstWorldDraw = true;
-                } else {
-                    loggedFirstDraw = true;
-                }
-                long indexTotal = 0;
-                for (DrawEntry entry : drawable) {
-                    indexTotal += entry.bone().indexCount;
-                }
-                LOGGER.info("[TacZMeshLoader] GPU mesh pass drew {} bones ({} indices) in {} {} flush:"
-                                + " lit={}, colorView={}, depthView={}, vertexFormat={}",
-                        drawable.size(), indexTotal, irisFlush ? "Iris" : "vanilla",
-                        worldPass ? "world" : "hand", lit,
-                        System.identityHashCode(colorView), System.identityHashCode(depthView),
-                        passFormat);
+        }
+        // 判据日志放在 pass 关闭之后：pass 体内只留 bind/draw/scissor（见类注释那条不变量）。
+        boolean already = worldPass ? loggedFirstWorldDraw : loggedFirstDraw;
+        if (!already) {
+            if (worldPass) {
+                loggedFirstWorldDraw = true;
+            } else {
+                loggedFirstDraw = true;
             }
+            long indexTotal = 0;
+            for (DrawEntry entry : drawable) {
+                indexTotal += entry.bone().indexCount;
+            }
+            LOGGER.info("[TacZMeshLoader] GPU mesh pass drew {} bones ({} indices) in {} {} flush:"
+                            + " lit={}, colorView={}, depthView={}, vertexFormat={}",
+                    drawable.size(), indexTotal, irisFlush ? "Iris" : "vanilla",
+                    worldPass ? "world" : "hand", lit,
+                    System.identityHashCode(colorView), System.identityHashCode(depthView),
+                    passFormat);
         }
     }
 
