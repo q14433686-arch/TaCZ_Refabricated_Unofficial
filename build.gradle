@@ -339,13 +339,12 @@ publishing {
 }
 
 // ================================================================
-// TEMP-DIAGNOSTIC (config persistence probe, 2026-09-01) — REMOVE AFTER USE.
-// On-device report: client config resets on every relaunch on 26.1.2 only
-// (1.21.11 / 26.2 are fine). The save path is Cloth save consumers ->
-// ForgeConfigAPIPort ConfigValue.set -> FCAP's backing file config. Dump the
-// FCAP/Cloth class inventory and the relevant bytecode into the build log
-// (build-reports/compile-java.log) so the broken link can be located without
-// a local JDK. Same technique as the 1.21.11 branch's I18n javap probe.
+// TEMP-DIAGNOSTIC round 2 (config persistence probe, 2026-09-01) - REMOVE.
+// Round 1 established: FCAP v26.1.5 uses the NeoForge-style ConfigTracker
+// (LoadedConfig + in-memory SynchronizedConfig, NO autosave in readConfig),
+// and its ForgeConfigSpec exposes a public save(). Round 2 extracts the exact
+// method bodies: ConfigValue.set (does it persist?), ForgeConfigSpec.save /
+// acceptConfig, LoadedConfig, ModConfig.setConfig, and Cloth's save hooks.
 tasks.named("compileJava") {
     doLast {
         def javapBin = new File(System.getProperty("java.home"), "bin/javap").absolutePath
@@ -361,39 +360,45 @@ tasks.named("compileJava") {
             }
             found.unique { it.absolutePath }
         }
-        def javap = { File jar, String cls, boolean code ->
-            def cmd = [javapBin, code ? "-p" : "-p"]
-            if (code) cmd << "-c"
+        def javapFiltered = { File jar, String cls, List regexes, boolean signatureOnly ->
+            def cmd = [javapBin, "-p"]
+            if (!signatureOnly) cmd << "-c"
             cmd << ["-classpath", jar.absolutePath, cls]
-            def flat = cmd.flatten()
             def out = new StringBuilder()
             def err = new StringBuilder()
-            def proc = flat.execute()
+            def proc = cmd.flatten().execute()
             proc.consumeProcessOutput(out, err)
             proc.waitFor()
-            println out.toString()
-            if (err.length() > 0) println "JAVAP-ERR ${cls}: ${err}"
-        }
-        jarsFor("forgeconfigapiport").each { File jar ->
-            println "=== FCAP-JAR ${jar.name}"
-            def names = []
-            new java.util.zip.ZipFile(jar).entries().each { e ->
-                if (e.name.endsWith(".class")) names << e.name
+            if (err.length() > 0) {
+                println "JAVAP-ERR ${cls}: ${err}"
+                return
             }
-            println "FCAP-CLASSES-BEGIN"
-            names.sort().each { println "FCAP ${it}" }
-            println "FCAP-CLASSES-END"
-            javap(jar, "net.minecraftforge.common.ForgeConfigSpec", false)
-            javap(jar, 'net.minecraftforge.common.ForgeConfigSpec$ConfigValue', true)
-            names.findAll { it.contains("ConfigTracker") || it.contains("FileTypeHandler") }.sort().each { cn ->
-                def cls = cn.replace(".class", "").replace("/", ".")
-                javap(jar, cls, true)
+            println "----- BEGIN ${cls}"
+            boolean keep = false
+            out.toString().eachLine { line ->
+                boolean isDecl = (line =~ /^\s{2}(public|private|protected|static|final|synchronized|net\.|java\.).*\(/)
+                if (isDecl) {
+                    keep = signatureOnly || regexes.any { rx -> line =~ rx }
+                }
+                if (keep) println line
             }
+            println "----- END ${cls}"
         }
-        jarsFor("cloth-config").each { File jar ->
-            println "=== CLOTH-JAR ${jar.name}"
-            javap(jar, "me.shedaniel.clothconfig2.gui.ClothConfigScreen", false)
+        def fcapJar = jarsFor("forgeconfigapiport")
+        def clothJar = jarsFor("cloth-config")
+        fcapJar.each { File jar ->
+            println "=== FCAP2 ${jar.name}"
+            javapFiltered(jar, 'net.minecraftforge.common.ForgeConfigSpec$ConfigValue', [/set/, /get\(/, /save/], false)
+            javapFiltered(jar, "net.minecraftforge.common.ForgeConfigSpec", [/save/, /acceptConfig/, /setConfig/], false)
+            javapFiltered(jar, "net.neoforged.fml.config.LoadedConfig", [/./], false)
+            javapFiltered(jar, "net.neoforged.fml.config.ModConfig", [/setConfig/, /save/], false)
+            javapFiltered(jar, "fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry", [/./], true)
         }
-        println "=== PROBE-DONE"
+        clothJar.each { File jar ->
+            println "=== CLOTH2 ${jar.name}"
+            javapFiltered(jar, "me.shedaniel.clothconfig2.api.ConfigBuilder", [/./], true)
+            javapFiltered(jar, "me.shedaniel.clothconfig2.gui.ClothConfigScreen", [/save/, /removed/, /onClose/, /onClose/, /quit/], false)
+        }
+        println "=== PROBE2-DONE"
     }
 }
