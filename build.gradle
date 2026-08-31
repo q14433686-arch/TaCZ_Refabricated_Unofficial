@@ -339,6 +339,76 @@ publishing {
 }
 
 // ================================================================
+// TEMP-DIAGNOSTIC round 6 (do feature nodes capture the projection slice at
+// submit time?) - REMOVE. Working hypothesis for the in-mirror absolute-view
+// entities: 26.1.2 feature/entity submit nodes capture a projection
+// GpuBufferSlice when they are CREATED (once per frame at extract), while the
+// terrain path binds the live RenderSystem slot per pass - so the narrow pass
+// draws entities with the wide/extract-time projection. The ci-log keeper
+// only preserves ~175 lines of fresh output per run, so this probe prints
+// ONLY: SubmitNodeStorage.submitModel/submitItem bodies, then
+// ModelFeatureRenderer.renderSolid body, then RenderSystem signatures -
+// in that order.
+tasks.named("compileJava") {
+    doLast {
+        def javapBin = new File(System.getProperty("java.home"), "bin/javap").absolutePath
+        File mcJar = null
+        for (def cfgName in ["runtimeClasspath", "compileClasspath"]) {
+            try {
+                configurations.getByName(cfgName).files.each { f ->
+                    if (f.name.contains("minecraft") && f.name.endsWith(".jar") && mcJar == null) mcJar = f
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        if (mcJar == null) {
+            println "PROBE6: no minecraft jar found on the classpath"
+            return
+        }
+        println "=== MC6 ${mcJar.name}"
+        def bodyDump = { String cls, String keepMethods ->
+            def out = new StringBuilder()
+            def err = new StringBuilder()
+            def proc = [javapBin, "-p", "-c", "-classpath", mcJar.absolutePath, cls].execute()
+            proc.consumeProcessOutput(out, err)
+            proc.waitFor()
+            if (err.length() > 0 && out.length() == 0) {
+                println "JAVAP6-ERR ${cls}: ${err.toString().trim()}"
+                return
+            }
+            boolean keep = false
+            println "----- BEGIN6 ${cls}"
+            out.toString().eachLine { line ->
+                if (line =~ /^  (public|private|protected|static|final|synchronized|net\.|java\.).*\(/) {
+                    keep = (line =~ keepMethods) as boolean
+                    if (keep) println line
+                } else if (keep) {
+                    println line
+                }
+            }
+            println "----- END6 ${cls}"
+        }
+        def sigDump = { String cls ->
+            def out = new StringBuilder()
+            def err = new StringBuilder()
+            def proc = [javapBin, "-p", "-classpath", mcJar.absolutePath, cls].execute()
+            proc.consumeProcessOutput(out, err)
+            proc.waitFor()
+            if (err.length() > 0 && out.length() == 0) {
+                println "JAVAP6-ERR ${cls}: ${err.toString().trim()}"
+                return
+            }
+            println "----- BEGIN6SIG ${cls}"
+            println out.toString()
+            println "----- END6SIG ${cls}"
+        }
+        bodyDump("net.minecraft.client.renderer.SubmitNodeStorage", /(submitModel\(|submitItem\(|submitCustomGeometry\()/)
+        bodyDump("net.minecraft.client.renderer.feature.ModelFeatureRenderer", /(renderSolid\(|renderTranslucent\()/)
+        sigDump("com.mojang.blaze3d.systems.RenderSystem")
+    }
+}
+
+// ================================================================
 // TEMP-DIAGNOSTIC round 5b (scope-PIP entity submission + draw-time matrix) - REMOVE.
 // Round 5 answered: MV stack is per-pass (renderLevel @45-63 push+mul(viewMatrix)),
 // projection slot is set by GameRenderer @297-303 (vanilla ProjectionMatrixBuffer),
