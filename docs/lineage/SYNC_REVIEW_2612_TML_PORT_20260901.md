@@ -243,6 +243,10 @@ printf '\n*.log\nhs_err_pid*.log\n' >> .gitignore   # 一行 *.log 就盖住 lat
 4. §7 那一格实验：`MirrorReverseWinding=true` 与 `InvertNormals=true` 观感是否几乎相同 ——
    这决定我们 §6 的解释要不要再改一次；
 5. Q9 的样本统计（哪怕只有一把枪包：面的叉积 × (面中心−质心) 点积的正负比例）。
+6. **镜内 `text_show` 那条（你们 `c290a1f3`+`74eb0ad2`）**：我们已按你们的口径在本分支落地，
+   并回两处差别（`else` 分支的 flush 要挪出 `!bodySnapshot.isEmpty()` 门；`ocularRingSnapshot` 的任务
+   也要 flush）—— 细节与我们补的四格实机剧本在 `docs/lineage/SCOPE_TEXT_SHOW_1211_20260901.md`。
+   你们若已经跑过 A/B/C/D 那四格，请把结论给我们：我们这边**只做了静态闭合与编译**，没跑实机。
 
 你们若把 §1 修完并跑过第 3 步，请把结论同时抄给 26.2（账本 L-2 那条线）：他们的 `drawList` 是
 **硬绑 `mainRenderTarget()`**（审查 A1）且光影下 GPU 默认开 ⇒ 同一个"没接线/接错线"类问题在他们那边

@@ -5,6 +5,36 @@
 
 ---
 
+## 镜内 `text_show` 文本缺失（2026-09-01，代码修复：三个文件；版本号未变）
+
+- **症状**：MK5 / MK5HD 的镜内弹药计数在 1.21.11 线**从不显示**（不是位置偏、不是偶发丢帧）。
+  根因不在字体管线：`BedrockAttachmentModel.submit` 的深度孔径路径自己 capture + 自己按
+  `SCOPE_APERTURE/BODY/DEPTH_CLEANUP/OCULAR_RING` 重放几何，**没有走 `super.submit(...)`**，
+  于是 `BedrockModel.java:381` 那句 `snapshot.submitFunctionalTasks(collector)` 被整个绕开；
+  而 `capturePart` 遇到 `IFunctionalSubmitter` 时**只**把任务塞进 `functionalTasks` 就 return
+  （几何不采集）⇒ `TextShowRender.extract` 的 `submitText` 任务无人 flush，静默消失。
+  静态证据三条（本篇全部可复算）：`submitFunctionalTasks` 全仓仅 1 个调用点；26.2 的
+  `BedrockAttachmentModel.submit` 第 681 行确有 `super.submit(...)`（所以我方独立确认了"26.2 没这个洞"，
+  不是转述）；本仓 `find` 无 `ScopeTextSubmitter`/`scope_text.*sh` ⇒ 26.2 的 `9d036594` 是**镜内裁剪**、
+  与存在性无关，两边修法不可互换。
+- **修法**（按 26.1.2 已提交的 `c290a1f3`+`74eb0ad2` 口径，另加两处差别）：`BedrockRenderSnapshot` 加
+  只读 `functionalTasks()`；瞄具两条分支都补 flush —— 非延迟走 `collector` 默认 `order(0)`
+  （cleanup `-1` 与准星 `1` 之间，文字被镜筒深度剔掉即等价掩码裁剪），`deferReticleToIrisFinalOverlay`
+  时经 `ScopeFinalOverlayState.queueFunctionalTask` 与准星/镜框同族推迟、在 reticle 之前用
+  `task.submit(submitNodes)` 提交（`OrderedSubmitNodeCollector` 不是 `SubmitNodeCollector`，
+  这正是 26.1.2 第一版编译失败的原因；本仓旁证是 `GunPreviewRenderer.java:91`）。
+  **差别①**：`else` 分支我们把 flush 放在 `!bodySnapshot.isEmpty()` 门**外**（`isEmpty()` 只看几何 ⇒
+  他们那边「只有文字没有本体几何」的快照仍会丢）；**差别②**：`ocularRingSnapshot` 的任务也 flush
+  （镜框子树下的文字此前两处快照都拿不到）。
+- 明确**未验证**：本轮只有代码改动与 CI 编译，**没跑实机**。四格剧本（掩码开/关 × Iris 开/关 + PIP）
+  与日志判据写在 `docs/lineage/SCOPE_TEXT_SHOW_1211_20260901.md` §4；已知残留也写在那里（延迟覆盖层那一格
+  文字不参与镜筒深度测试 ⇒ 贴边计数仍可能溢出，真要裁需移植 26.2 的 `ScopeTextSubmitter`）。
+- 顺带修文档 bug：`docs/RENDER_PIPELINE_SCOPE_AUDIT_26_1_2.md` §6.1 把 order `1`/`2` 两行的内容写反了
+  （代码常量是 `SCOPE_RETICLE_ORDER=1`、`SCOPE_OCULAR_RING_ORDER=2`），已对齐并在 §5.11 补记本条缺陷。
+- 版本号**未动**（仍是 `1.1.8+fabric.1.21.11.R3`）⇒ 按 AGENTS §1，README 那 6 处不需要跟改。
+
+---
+
 ## 给 26.1.2 的移植复核（2026-09-01，只读复核；本分支代码无改动）
 
 - 新增 `docs/lineage/SYNC_REVIEW_2612_TML_PORT_20260901.md`：把 26.1.2 那版 TML/GPU 移植**按代码**核了一遍
