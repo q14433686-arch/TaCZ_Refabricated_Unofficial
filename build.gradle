@@ -474,6 +474,20 @@ tasks.register('dumpFeatureDispatcherApi') {
         println(sncl ?: '(none)')
         if (sncle.trim()) { println('stderr: ' + sncle.trim()) }
 
+        println '===== net.minecraft.client.renderer.MultiBufferSource$BufferSource -p ====='
+        def (bss, bsse) = runJavap('net.minecraft.client.renderer.MultiBufferSource$BufferSource', ['-p'])
+        println(bss ?: '(none)')
+        if (bsse.trim()) { println('stderr: ' + bsse.trim()) }
+
+        def bsb = methodBlocks('net.minecraft.client.renderer.MultiBufferSource$BufferSource', ['-c', '-p'])
+        ['endBatch', 'endLastBatch', 'draw', 'flush'].each { name ->
+            def b = findMethod(bsb, name)
+            if (b != null) {
+                println "===== MultiBufferSource\$BufferSource.${name} full (${b.size()} lines) ====="
+                println b.join('\n')
+            }
+        }
+
         def (rs2, rse2) = runJavap('com.mojang.blaze3d.systems.RenderSystem', ['-p'])
         println '===== RenderSystem (filtered) ====='
         if (rs2) {
