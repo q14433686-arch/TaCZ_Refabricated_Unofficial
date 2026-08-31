@@ -19,6 +19,7 @@
 | A7 | `drawList` :~600（`handModelView`） | 低-中 | 世界表复用**名字与注释都写着手部**的方法，前置条件没写成断言 |
 | A8 | :147 / :341 | 低 | 降级完全静默；`beginFrame` 挂 `GameRenderer#extract` 的跨帧含义没写明 |
 | A9 | :174 / :176 | 低 | 每帧标志靠 `beginFrame` 复位，对「钩子与 beginFrame 的相对顺序」敏感 |
+| A11 | `config/MeshyConfig.java`（`MeshPolyInShadow` 默认 false）+ `config/PolyRenderPolicy` 的唯一消费点 | 中-高（仅光影下） | poly 几何因此从不进 Iris 的阴影图 ⇒ 光影包把高模表面当成「完全露天」，枪身盖住太阳/月亮的那一块反而被点亮 |
 | A10 | `core/PolyMesh.java` :31-35 + :67-99 | **高（仅光影下显形）** | `poly_mesh` 位置按 Y 轴镜像但绕序从不跟着反转 ⇒ 烘焙法线与 `gl_FrontFacing` 相互矛盾；另 `FORCE_FLAT_SHADING` 恒 true ⇒ 枪包的 `normals` 从不消费 |
 
 **先说好的**（本仓第 3 步直接吸收，已在 `MESH_LOADER.md` 致谢）：按量化光照档做 LRU、被逐出
@@ -204,6 +205,31 @@ int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());   // :373
 枪包与所有准星点，配置归属应该是 `ClientConfig`）。26.2 若要跟，建议一次性把两层都收进
 `ClientConfig` 的一个键，别只改 poly 层 —— 否则一把枪的两半会一个跟天空走、一个不跟。
 
+## A11（中-高，只在光影下）：`MeshPolyInShadow=false` 让 poly 表面在阴影图里不存在
+
+维护者报的现象：开光影后，**高模枪挡住太阳/月亮的那部分模型反而继承了天体的自发光亮度**；
+其它自发光物品、非 TML 的模型都没这问题。
+
+- **机制**：光影包判断「这个表面晒得到太阳」不看屏幕遮挡，而是拿片元世界位置查**阴影图**
+  （Iris 阴影遍渲染出来的 `shadowtex0/1`）。不在阴影图里的表面按构造就是「完全露天」
+  ⇒ `sunEmissive`/高光整份打上去 ⇒ 挡住太阳的那块反而发亮。
+- **TML 侧为什么会命中**：`MeshPolyInShadow` 的唯一消费点是 `PolyRenderPolicy#shouldRenderPoly`
+  （`isRenderShadow() && !POLY_IN_SHADOW ⇒ return false`），默认 false ⇒ 阴影遍里 poly 一个都不提交，
+  阴影图里只剩**立方体层**。高模包的意义就是 poly 表面比立方体外壳大且细 ⇒ 超出立方体的那些面
+  等于不在阴影图里 ⇒ 「只有高模部分吃太阳光」「非 TML 模型没这问题」两条同时被解释。
+  上游这句注释（「立方体已经提供阴影形状」）把「有个影子」和「逐面遮挡」混为一谈了。
+- **本仓现状**：**代码未改**，只把这个 finding 与 A/B/C 判别矩阵写进 `docs/MESH_LOADER.md` §5.9，
+  等维护者的实机结果再决定是不是把默认翻成 true（`PolyMeshGpuRenderer` 已经核实：GPU 世界表在
+  阴影遍是**拒收**的（`shouldSubmitGpuWorld` 里 `isRenderShadow() ⇒ false`）⇒ 开这个键只会多一遍
+  collector 的 CPU 顶点变换，不会与常驻 VBO 叠加）。
+- **对 26.2 的建议**：同一个键、同一个默认值、同一个消费点 ⇒ 你们那边现象应当一模一样。
+  先跑判别（都在局内即时生效，不用重启）：① `MeshPolyInShadow=true` 看世界语境（第三人称 / 掉落物 /
+  展示框）的枪是否不再吃光；② 若无效，把光影下的 GPU 键关掉（你们那边是总闸/分表）看是否变好
+  —— ①有效 ⇒ 阴影图这条成立，建议默认改 true 并把代价写进配置注释；②有效 ⇒ 是我们自建 pass 与
+  Iris frame graph 的时序问题，与阴影图无关。
+- **边界**：自己的第一人称手部几何**不经过** Iris 的阴影遍（它渲染实体，第一人称手不是实体），
+  所以纯第一人称那一半多半修不动，那是包对 `gbuffers_hand` 的 exposure 惯例。
+
 ## 时序对照（本仓 ↔ 上游）
 
 | 事项 | 上游 26.2 | 本仓 1.21.11 |
@@ -227,6 +253,7 @@ int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());   // :373
 5. 静默降级补一行原因日志（A8）——这条本仓已有实现可以直接搬。
 6. **A10 续集**（`_illuminated` 的天空光）：上面那段可直接搬，键名与默认值保持一致
    （`MeshPolyIlluminatedRealSky`=true），并建议连同 `BedrockPart#render` 一起收进 `ClientConfig`。
-7. **A10**（法线/绕序）：`PolyMesh` 那三行改动 + 三个配置开关本仓已实现并过了编译，可直接搬；
+7. **A11**（阴影图 / `MeshPolyInShadow`）：默认值 + 那句注释建议一起改；判别法与依据见上面那节。
+8. **A10**（法线/绕序）：`PolyMesh` 那三行改动 + 三个配置开关本仓已实现并过了编译，可直接搬；
    搬之前请也确认你们这边 `entityCutout` 类 render type 的剔除状态 —— 本仓沙箱里没 Loom jar，
    这一条没能核实，所以修复被写成「开关可回退」而不是「默认改完就算完」。

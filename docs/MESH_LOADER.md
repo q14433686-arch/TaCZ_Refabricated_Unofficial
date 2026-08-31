@@ -176,7 +176,7 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 | `MeshPolyInvertNormals` | false | 烘焙法线再整体取反一次。若高光仍在错误一侧，用它与上一项做二选一（它修不动 front/back 与剔除） |
 | `MeshPolyPreferPackNormals` | false | 改用枪包自带的逐顶点法线（平滑着色）而非每面一条平面法线。上游一直强制平面着色；枪包没写 `normals` 时无变化 |
 | `MeshPolyIlluminatedRealSky` | **true**（2026-08-31 补） | `*_illuminated` 骨骼原本恒烘 (block=15, sky=15)；光影包把 sky 读成「看得见天空」⇒ 屋顶墙都遮不住太阳/月亮。开着时**仅在装了光影包**把 sky 换成环境真值、block 仍 15（洞里照样看得见）。无光影下逐字不变。详见 §5.8 |
-| `MeshPolyInShadow` | false | 阴影 pass 是否画 poly |
+| `MeshPolyInShadow` | false | 阴影 pass 是否画 poly。**注意**：这也是「poly 几何进不进光影包的阴影图」的唯一开关 ⇒ 关掉时光影包会把高模表面当成「完全露天」，见 §5.9（正在评估改成默认 true） |
 | `MeshMaxRenderDistance` | 48 | 世界 poly 距离（0=不限） |
 | `MeshPolyInPreview` | true | GUI/FIXED/HEAD 是否画 poly |
 | `MeshGuiMaxVertices` | 65536 | GUI 顶点预算（0=不限） |
@@ -231,6 +231,10 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 10. **太阳/月亮会不会照穿屋顶**（§5.8）：站在屋里或夜里、让枪身对着光源方向，看枪是否仍按「露天」
     的亮度被照明。`MeshPolyIlluminatedRealSky=true` 之后应当变成「被屋顶给的 sky 值压住」；
     若仍然亮，说明亮度来源不是 sky 分量（多半是光影包对手部 pass 不做阴影测试，见 §5.8 末尾）。
+11. **挡住天体的那块模型是否继承天体亮度**（§5.9，A/B/C 三步）：A `MeshPolyInShadow=true` →
+    看第三人称/掉落物/展示框的枪；B 再把 `MeshGpuWorldUnderShaders`（必要时连
+    `MeshGpuUnderShaders`）关掉；C 两步都没用就归到包侧手部 exposure 惯例。三个开关都是每帧读值，
+    不用重启、不用 F3+T。这一步的结果决定「`MeshPolyInShadow` 要不要翻默认」。
 
 ### 5.3 第 1 步 GPU 烘焙（实机，无光影）
 
@@ -424,3 +428,49 @@ sky 真值不是新采的：上游传进来的那个 light 就是相机方块位
 是包侧惯例，不是本分支的缺陷；两边都不对 ⇒ 回头查那个枪包到底给哪些骨骼起了 `_illuminated` 名字
 （加载统计日志里有现成计数：`poly_mesh stats for <geo>: … (translucent=…, illuminated=…)`，
 `illuminated` 非 0 才说明这条路径参与了你看到的现象）。
+
+### 5.9 「枪身盖住太阳/月亮那一块反而发亮」：poly 没进阴影图（2026-08-31 第三轮，**未修，待判别**）
+
+维护者把现象说清楚了：**不是屋顶**。是开光影后，高模枪的几何*本身*挡在太阳/月亮前面时，
+**挡着的那部分模型会继承那颗天体的自发光亮度**；其它自发光物品、以及不属于 TML 的模型都没这问题。
+
+**当前最合理解释（静态可推，未实机）**：光影包判断「这个表面晒得到太阳吗」不是看屏幕遮挡，
+而是拿片元的世界位置去查**阴影图**（`shadowtex0/1`，由 Iris 的阴影遍渲染进 `RenderPass`）。
+一个**不在阴影图里**的表面，按构造就是「完全露天」⇒ 太阳/月亮的 `sunEmissive`/高光整份打上去
+⇒ 看起来正是「枪身挡住太阳的那块被太阳点亮」。
+
+而我们这一层恰好从来进不了那张图：`MeshPolyInShadow` 的**唯一**消费点是
+`PolyRenderPolicy#shouldRenderPoly`（`isRenderShadow() && !POLY_IN_SHADOW ⇒ return false`），
+默认 false ⇒ 阴影遍里 poly 部件一个都不提交 ⇒ 阴影图里只有**立方体那层**。高模包的意义就是
+poly 表面比立方体外壳大、比它细，于是**超出立方体的那些面**在阴影图里等于不存在 ⇒
+「只有高模部分会吃太阳光」与「非 TML 的模型没这问题」两条同时被解释（后者全部图元都在阴影图里）。
+
+**这条解释的边界**（必须写清楚，否则会被当成结论）：
+`IrisCompat.isRenderShadow()` 为真的那一遍是 Iris 的阴影遍，它渲染的是**实体**（以及方块）；
+**自己的第一人称手部几何根本不经过这一遍**（手部不是实体）。所以：
+- 第三/两人称手持、掉落物、展示框/展示台 ⇒ `MeshPolyInShadow=true` 应当能修（poly 由 collector
+  提交进阴影遍，路径已核实存在，且是每帧读值 ⇒ 不用重启、也不用 F3+T）；
+- 纯第一人称 ⇒ 多半修不动，那是包侧对手部几何的 exposure 处理（很多包对 `gbuffers_hand`
+  干脆不做阴影测试，因为它没有可用的世界位置）。
+
+**判别矩阵**（三步，全是局内即时生效的开关，按顺序做，每步只看「挡住太阳那块还亮不亮」）：
+
+| # | 操作 | 结果 ⇒ 结论 |
+|---|---|---|
+| A | `MeshPolyInShadow=true` | 世界语境的枪不亮了、第一人称仍亮 ⇒ 上面那条解释成立；我把默认改成 true 并写下代价 |
+| B | 再把 `MeshGpuWorldUnderShaders=false`（必要时连 `MeshGpuUnderShaders=false`） | 若 A 没用、这步才有用 ⇒ 问题在**我们自建 pass 与 Iris frame graph 的时序/附着关系**，与阴影图无关（下一步要查的就是这个） |
+| C | A、B 都没用 | 是包侧对常驻几何/手部的 exposure 惯例；本分支能做的只有减少差异（例如不再自开 pass），不是「修 bug」 |
+
+**代价说明**（为什么不无脑默认 true）：`MeshPolyInShadow` 只在**装了光影包**时有意义
+（`isRenderShadow()` 无 Iris 时恒 false ⇒ 这个键对无光影用户是彻底的 no-op）；有意义的那批用户
+要付「每把枪在阴影遍里多提交一层 poly」的成本 —— 这正是当初把它关掉的唯一理由（上游注释写的是
+「立方体已经提供阴影形状」，但立方体只保证*有个影子*，保证不了*逐面遮挡*）。阴影遍走的是
+collector，与 GPU 主画面路径不叠加，所以代价只有「多一遍 CPU 顶点变换」这一项。
+
+**与上一轮的区别**（别把两件事混成一个）：§5.8 那条讲的是「`_illuminated` 骨骼恒烘 sky=15 ⇒
+包把它读成『看得见天空』」，那是**烘焙进顶点的光照值**；本节讲的是**阴影图里没有这个几何**。
+两者独立，前者已经改（`MeshPolyIlluminatedRealSky`），本节待上面的 A/B/C 判别后再决定改哪里。
+
+**待补的实测材料**（我这边没有光影环境）：A/B/C 每步的「挡住太阳那块亮不亮」，
+外加日志里这两行有没有出现：`Assigned mesh_entity_world to the Iris ENTITIES program.`（世界 GPU 生效）
+与 `Level lightmap view unavailable; GPU path falls back to EMISSIVE.`（EMISSIVE 兜底参与过）。

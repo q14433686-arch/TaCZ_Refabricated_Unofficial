@@ -51,6 +51,11 @@ src/main/java/cn/sh1rocu/tacz/compat/meshloader/            # 20 个文件
 src/main/resources/tacz.mesh.mixins.json                       # package = ...meshloader.mixin，4 条 client mixin
 ```
 
+> ⚠️ 已知**未修**的同族问题（别当 bug 新开）：`MeshPolyInShadow=false` 让 poly 几何从不进 Iris 的
+> 阴影图 ⇒ 光影包把高模表面当成「完全露天」，于是「枪身挡住太阳/月亮那一块反而被点亮」。判别法与
+> 机制在 `docs/MESH_LOADER.md` §5.9、给上游的论证在审查文档 A11；本分支在等实机结果再决定翻默认值。
+> 你们那边默认值、消费点、`shouldSubmitGpuWorld` 的阴影遍拒收都是同一套 ⇒ 结论可以直接复用。
+
 > ⚠️ `config/PolyRenderPolicy.java` 里还有 `MeshPolyIlluminatedRealSky`（默认 true）：`_illuminated`
 > 骨骼原本恒烘 `0xF000F0`（block=15 且 sky=15），光影包把 sky 读成「看得见天空」⇒ 屋顶遮不住太阳/月亮。
 > 该项**只在装了光影包时**把 sky 换成环境真值、block 保持 15；无光影下逐字不变。三条消费路径
