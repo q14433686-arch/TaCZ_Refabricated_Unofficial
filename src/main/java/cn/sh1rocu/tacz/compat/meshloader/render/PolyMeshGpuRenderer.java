@@ -359,6 +359,53 @@ public final class PolyMeshGpuRenderer {
         return IrisCompat.supportsHandFlushHook();
     }
 
+    /**
+     * 诊断用：世界语境 submit 被拒的<b>第一条</b>原因；门闸全放行时返回 null。
+     *
+     * <p>{@link #shouldSubmitGpuWorld()} 的语义是「静默回退 collector」—— 那是正确行为
+     * （宁可不优化也不能画错），代价是「光影下世界路径没生效」这类问题在现场日志里一个字
+     * 都不留。调用方只在门闸<b>已经返回 false</b> 之后才进来，所以逐条重判的成本只发生在
+     * 被拒时（每帧最多一次，且与门闸同序）。</p>
+     */
+    public static String worldSubmitBlocker() {
+        if (gpuWorldDisabledThisSession) {
+            return "world path disabled by the failure guard (see the earlier ERROR with the stack trace)";
+        }
+        if (!MeshyConfig.GPU_WORLD.get()) {
+            return "MeshGpuWorld=false";
+        }
+        if (gpuDisabledThisSession) {
+            return "GPU path disabled by the master failure guard";
+        }
+        if (!MeshyConfig.GPU_BAKING.get()) {
+            return "MeshGpuBaking=false (master switch)";
+        }
+        if (!worldFlushAlive()) {
+            return "the world flush hook (FeatureRenderDispatcher#renderAllFeatures RETURN) has not run in this or the previous frame";
+        }
+        if (inHandPass) {
+            return "inside the first-person hand pass (its model-view is not the level one)";
+        }
+        if (ScreenRenderTracker.isRenderingScreen()) {
+            return "screen/GUI extraction";
+        }
+        if (ScopePipRerender.isInsideScopeLevelRender()) {
+            return "inside the scope PIP re-render pass";
+        }
+        if (IrisCompat.isRenderShadow()) {
+            return "shadow pass";
+        }
+        if (IrisCompat.isUsingRenderPack()) {
+            if (!MeshyConfig.GPU_WORLD_UNDER_SHADERS.get()) {
+                return "shaders are on and MeshGpuWorldUnderShaders=false (the default)";
+            }
+            if (!IrisCompat.supportsHandFlushHook()) {
+                return "shaders are on but the audited Iris hand-flush hook is unavailable";
+            }
+        }
+        return null;
+    }
+
     /** 总闸：{@code MeshGpuBaking} 打开且本会话没被异常禁用。两条路（手部/世界）共用。 */
     private static boolean gpuMasterUsable() {
         return !gpuDisabledThisSession && MeshyConfig.GPU_BAKING.get();

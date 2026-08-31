@@ -52,10 +52,15 @@
   `dumpHandFlushApi` 增加 `IrisProgram` **全量常量**输出（已据此把世界这条钉成 `ENTITIES`）。
   两个任务都在 try/catch 内、发布前删。
 
-**验证状态（如实记录）**：**编译 ✅（CI `BUILD SUCCESSFUL`，无 error、无本仓新增告警）+
-静态审计 ✅（读的是 CI 上 1.21.11 / Iris 1.10.7 的真实 classpath）；第 3 步没有任何实机结论。**
-待实机清单见 `MESH_LOADER.md` §5.5 与上述文档 §4 末；其中最要紧的一条是
-「他人手持的 mesh 枪必须随相机正确移动」——那是隔壁同题材改动踩到的坑。
+- **世界 GPU 被拒时留原因**：`PolyMeshGpuRenderer#worldSubmitBlocker` 逐条重判门闸给出第一条
+  命中原因，`TaczPolyMeshGunModel#noteWorldSkip` 按原因去重打一条 INFO。静默回退 collector 仍是
+  正确行为，但「光影下世界路径没生效」这类问题此前在 latest.log 里一个字都不留，无法定位。
+
+**验证状态（如实记录）**：**编译 ✅（CI 多次 `BUILD SUCCESSFUL`，无 error、无本仓新增告警）+
+静态审计 ✅（读的是 CI 上 1.21.11 / Iris 1.10.7 的真实 classpath）。2026-08-31 维护者实机第一轮：
+无光影下世界路径 PASS —— 最要紧那条「他人手持的 mesh 枪必须随相机正确移动」（隔壁同题材改动
+踩到的坑）未复现；光影下世界路径回退 collector（`MeshGpuWorldUnderShaders` 默认关，本轮尚无
+「开着它实测」的结论），其余清单条目（掉落物、展示框、预算解耦、GUI/镜内不泄漏、显存）未逐项回报。**
 
 ---
 

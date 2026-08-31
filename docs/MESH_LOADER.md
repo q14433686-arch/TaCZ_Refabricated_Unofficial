@@ -1,14 +1,17 @@
-# 内置 TacZ Mesh Loader [TML] —— 安全子集 + GPU 烘焙（第 0/1 步 + 第 2 步 v2 已实机 PASS；第 3 步世界语境待实机）
+# 内置 TacZ Mesh Loader [TML] —— 安全子集 + GPU 烘焙（第 0/1/2 步与第 3 步（无光影）已实机 PASS；第 3 步光影下失效，待诊断）
 
 > 代码移植自 [VellEagle/TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader)
 > `1.21.1_fabric` v0.1.7，GPL-3.0。不是官方 TacZ 附属。
 >
 > **状态：第 0 步（collector 安全子集）、第 1 步（无光影第一人称 GPU 静态烘焙）与第 2 步 v2
 >（光影下把手部 pass 开进 Iris 自己的手部 flush）均已实机 PASS。第 3 步（世界语境常驻 VBO，
-> `MeshGpuWorld`，见下方「第 3 步新增」与可行性文档）源码完成、待 CI 编译 + 待实机。
+> `MeshGpuWorld`，见下方「第 3 步新增」与可行性文档）：<b>无光影下已实机 PASS</b>（维护者
+> 2026-08-31 报告：邻居分支那两个坑——世界空间固定 + 烘焙时机过窄——未复现）；
+> **光影下世界路径失效**（表现为回退 collector），已补一次性原因日志待诊断，见 §5.6。
 > 两条光影下的开关（`MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders`）仍是实验性、默认关。**
 > 按 AGENTS.md §2：第 0/1/2 步的实机 PASS 是维护者 2026-08-31 报告的（换弹无双影、
-> 光影下常驻 VBO 收 `gbuffers_hand` 照明）；**第 3 步没有任何实机结论** —— 本文对它
+> 光影下常驻 VBO 收 `gbuffers_hand` 照明）；**第 3 步：无光影已实机 PASS、光影下失效**——
+> 本文对它
 > 只写「源码完成 + 静态审计」。
 >
 > 可行性论证与分步计划见
@@ -255,6 +258,7 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 
 1. **多人视角**：他人手持的 mesh 枪必须随相机正确移动 —— 「钉在视角方向上 / 转身时漂」
    就是隔壁 26.2 分支踩到的那条坑；出现即说明 MV 取自了错误的时刻，别再挪烘焙时机。
+   → **2026-08-31 维护者无光影实机：未复现**（这条是第 3 步的主验收项）。
 2. **预算解耦**：近处高模纯 mesh 枪不因预算整把消失；日志出现
    `GPU world-baked N bones (M vertices) at quantized light …`。
 3. **光照打摆防护**：明暗边界上一排掉落枪时，`GPU world-baked` 只在前两次是 info 级；
@@ -262,7 +266,17 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 4. **不泄漏**：开背包 / 枪匠桌 / 热栏 / 开镜（F3+T 也来一次）之后，世界里不多画、
    GUI 内不少画、不崩；显存不随重载单调增长（走延迟释放池）。
 
+光影那一条（第 5 项，`MeshGpuWorldUnderShaders=true`）实测**失效**：世界路径回退 collector，
+且当时日志里没有任何原因（静默回退是设计）。已补 `GPU world submit refused: <reason>` 诊断，
+详见 §5.6。
+
 ### 5.6 已知边界（如实）
+- **光影下世界 GPU 路径失效（2026-08-31 维护者实机报告）**：表现为回退 collector（无光影时
+  一切正常）。根因未定位，先补了诊断：`TaczPolyMeshGunModel` 在被门闸拒收时按「原因去重」打
+  一条 INFO（`GPU world submit refused: <reason>`），`PolyMeshGpuRenderer#worldSubmitBlocker`
+  逐条重判门闸并给出第一条命中项；绘制侧异常本来就有 `LOGGER.error(..., e)` 带栈。
+  拿到 `refused:` 那行还是那条 ERROR，就能分清是「没提交」还是「画的时候抛异常」。
+  在此之前 `MeshGpuWorldUnderShaders` 保持默认 false（原版路径不受影响）。
 
 - 第 1 步 GPU 只覆盖**无光影 + 第一人称手部**；世界/GUI/第三人称/掉落物仍走
   collector（36 万顶点级第三人称/掉落物仍有 CPU 成本，属后续步骤）。

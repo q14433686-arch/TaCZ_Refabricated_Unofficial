@@ -107,6 +107,9 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
      */
     private final java.util.LinkedHashMap<Integer, Map<String, PolyMeshGpuRenderer.BakedBone>> worldBakedByLight =
             new java.util.LinkedHashMap<>(8, 0.75f, true);
+    private static String worldSkipReason = null;
+    private static int worldSkipCount = 0;
+
     private int worldBakedGeneration = -1;
     private VertexFormat worldBakedFormat = null;
     /** 世界烘焙日志只在前两次用 info（光照档来回切时逐次 info 会刷屏）。 */
@@ -167,8 +170,18 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         // ② PolyMeshGpuRenderer.shouldSubmitGpuWorld —— 手部/Screen 提取/镜内/阴影/
         //    光影未放行 逐个拒收，并要求世界 flush 钩子的存活证明。
         Map<String, PolyMeshGpuRenderer.BakedBone> worldBaked = null;
-        if (!gpu && isWorldGpuContext(transformType) && PolyMeshGpuRenderer.shouldSubmitGpuWorld()) {
-            worldBaked = ensureWorldBaked(light);
+        if (!gpu && isWorldGpuContext(transformType)) {
+            if (PolyMeshGpuRenderer.shouldSubmitGpuWorld()) {
+                worldBaked = ensureWorldBaked(light);
+                if (worldBaked == null && worldBakedByLight.isEmpty()) {
+                    noteWorldSkip("bake refused: per-frame bake budget exhausted, or the bake failed"
+                            + " for the current vertex format (see the earlier [TacZMeshLoader] lines)");
+                }
+            } else if (worldBakedByLight.isEmpty()) {
+                // 门闸拒收本来是静默的（正确行为，但现场不留痕迹），这里补一行原因。
+                String blocker = PolyMeshGpuRenderer.worldSubmitBlocker();
+                noteWorldSkip(blocker != null ? blocker : "world gate closed");
+            }
         }
 
         // 顶点预算只保护【collector 路径】—— 它防的是 O(顶点) 的 CPU 提交成本。GPU 路径
@@ -354,6 +367,29 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
      * @return 该光照档的骨骼 VBO 表；无法就绪（额度耗尽 / 烘焙失败）返回 null，调用方回退 collector。
      */
     @Nullable
+    /**
+     * 「世界 GPU 被拒」的一次性原因日志：同一原因只记一次，原因切换时补一行累计次数。
+     *
+     * <p>为什么要有：{@code shouldSubmitGpuWorld()} 静默回退 collector 是<b>正确</b>的
+     * （宁可不优化也不能画错），但它让「光影下世界路径怎么没生效」这种问题在 latest.log 里
+     * 一个字都不留，只能靠加日志复现。放在静态字段上 = 全模型共用一条，不会每把枪各刷一行。
+     * 级别用 INFO：既不该被当成错误（多半是配置/语境使然），又默认可见。</p>
+     */
+    private static void noteWorldSkip(String reason) {
+        if (reason.equals(worldSkipReason)) {
+            worldSkipCount++;
+            return;
+        }
+        if (worldSkipReason != null) {
+            LOGGER.info("[TacZMeshLoader] previous GPU world-submit refusal \"{}\" lasted {} submission(s)",
+                    worldSkipReason, worldSkipCount);
+        }
+        worldSkipReason = reason;
+        worldSkipCount = 1;
+        LOGGER.info("[TacZMeshLoader] GPU world submit refused: {} (mesh guns keep the collector path)"
+                + " -- not an error unless you expected the world GPU path", reason);
+    }
+
     private Map<String, PolyMeshGpuRenderer.BakedBone> ensureWorldBaked(int currentLight) {
         if (polyMeshModel == null) {
             return null;

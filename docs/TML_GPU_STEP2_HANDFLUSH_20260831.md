@@ -386,6 +386,14 @@ ItemInHandRenderer.renderHandsWithItems                                         
 
 ### 4.3 待实机（世界路径，`MeshGpuWorld=true` 默认即开）
 
+> **2026-08-31 维护者实机（第一轮）**：无光影下**通过** —— 清单第 1 条（他人手持的枪相对视角
+> 固定 / 转身漂移，即 26.2 分支踩到的那条坑）未复现，第 2/3/4 条未报异常。
+> **光影下世界路径失效**（回退 collector），当时日志里没有任何原因可看 —— 静默回退是设计使然，
+> 但这条组合是「实验性 + 未验证」，没有原因就没法定位。已补
+> `TaczPolyMeshGunModel#noteWorldSkip` + `PolyMeshGpuRenderer#worldSubmitBlocker`：被门闸拒收时
+> 按原因去重打一条 INFO（`GPU world submit refused: …`），下一轮拿那一行（或那条带栈的
+> `GPU world mesh pass failed` ERROR）即可分辨「没提交」还是「画时抛异常」。
+
 - [ ] 多人/其他玩家手持 mesh 枪：位置**随相机移动正确**（这条就是隔壁踩的坑），
       不钉在屏幕某处、不随转身漂。
 - [ ] 掉落物 / 展示框 / 展示台雕像：位置与投影正确；近处高模枪**不再因预算整把消失**。
