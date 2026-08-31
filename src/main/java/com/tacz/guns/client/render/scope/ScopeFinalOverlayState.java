@@ -71,6 +71,11 @@ public final class ScopeFinalOverlayState {
         return !PENDING_RETICLES.isEmpty();
     }
 
+    /** @return whether anything (reticle or bare physical rim) waits to be drawn after the final cover. */
+    public static boolean hasPendingOverlay() {
+        return !PENDING_RETICLES.isEmpty() || !PENDING_RINGS.isEmpty();
+    }
+
     static void queueReticle(BedrockRenderSnapshot snapshot, RenderType renderType) {
         if (snapshot.isEmpty()) {
             return;
@@ -82,19 +87,35 @@ public final class ScopeFinalOverlayState {
         PENDING_RETICLES.add(new ReticleDraw(snapshot, renderType));
         if (!loggedQueued) {
             loggedQueued = true;
-            GunMod.LOGGER.info("[TACZ Scope] Queued reticle for Iris post-composite overlay.");
+            GunMod.LOGGER.info("[TACZ Scope] Queued reticle for post-composite overlay (Iris or PIP lens).");
         }
     }
 
     public static void queueOcularRing(BedrockRenderSnapshot snapshot, RenderType renderType) {
         if (!snapshot.isEmpty()) {
+            // Normally a ring is queued only after a reticle captured the hand transform, but the
+            // PIP lens can also defer a bare rim (scope with shade and no visible reticle, or a
+            // reticle filtered out during fade-in). Capture here so a ring-only queue can flush too.
+            captureHandTransform();
+            if (handTransform == null) {
+                return;
+            }
             PENDING_RINGS.add(new RingDraw(snapshot, renderType));
         }
     }
 
-    /** Called by the Iris-only final-pipeline mixin after shader-pack final compositing. */
+    /**
+     * Draws deferred reticle/rim geometry after the last thing that could cover it.
+     *
+     * <p>Two call sites share this path:</p>
+     * <ul>
+     *   <li>Iris: called by the final-pipeline mixin after all shader-pack composite/final passes.</li>
+     *   <li>Vanilla PIP: called by {@code GameRenderer} right after the Step-3 lens composite, so the
+     *       crosshair and shade sit above the magnified picture instead of being covered by it.</li>
+     * </ul>
+     */
     public static void renderAfterFinalComposite() {
-        if (PENDING_RETICLES.isEmpty() || handTransform == null) {
+        if ((PENDING_RETICLES.isEmpty() && PENDING_RINGS.isEmpty()) || handTransform == null) {
             return;
         }
         RenderSystem.assertOnRenderThread();
@@ -138,7 +159,8 @@ public final class ScopeFinalOverlayState {
             renderBuffers.bufferSource().endBatch();
             if (!loggedRendered) {
                 loggedRendered = true;
-                GunMod.LOGGER.info("[TACZ Scope] Rendered reticle and ocular rim after Iris final composite.");
+                GunMod.LOGGER.info("[TACZ Scope] Rendered deferred reticle and ocular rim after the final cover ({} reticles, {} rims).",
+                        reticles.size(), rings.size());
             }
         } catch (RuntimeException e) {
             // Optional Iris integration must not turn a shader-pack edge case into a client crash.
