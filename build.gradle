@@ -443,27 +443,46 @@ tasks.register('dumpFeatureDispatcherApi') {
             }
         }
 
-        println '===== net.minecraft.client.renderer.SubmitNodeStorage -p ====='
-        def (sns, snse) = runJavap('net.minecraft.client.renderer.SubmitNodeStorage', ['-p'])
-        println(sns ?: '(none)')
-        if (snse.trim()) { println('stderr: ' + snse.trim()) }
+        def fdBlocks2 = methodBlocks('net.minecraft.client.renderer.feature.CustomFeatureRenderer', ['-c', '-p'])
+        ['void render('].each { name ->
+            def b = findMethod(fdBlocks2, name)
+            if (b != null) {
+                println "===== CustomFeatureRenderer.render full (${b.size()} lines) ====="
+                println b.join('\n')
+            } else {
+                println '===== CustomFeatureRenderer.render NOT FOUND ====='
+            }
+        }
 
-        println '===== net.minecraft.client.renderer.SubmitNodeCollector -p ====='
-        def (snc, snce) = runJavap('net.minecraft.client.renderer.SubmitNodeCollector', ['-p'])
-        println(snc ?: '(none)')
-        if (snce.trim()) { println('stderr: ' + snce.trim()) }
+        println '===== net.minecraft.client.renderer.feature.CustomFeatureRenderer -p ====='
+        def (cfr, cfre) = runJavap('net.minecraft.client.renderer.feature.CustomFeatureRenderer', ['-p'])
+        println(cfr ?: '(none)')
+        if (cfre.trim()) { println('stderr: ' + cfre.trim()) }
 
-        def (rs, rse) = runJavap('com.mojang.blaze3d.systems.RenderSystem', ['-p'])
+        println '===== net.minecraft.client.renderer.feature.ItemFeatureRenderer -p ====='
+        def (ifr, ifre) = runJavap('net.minecraft.client.renderer.feature.ItemFeatureRenderer', ['-p'])
+        println(ifr ?: '(none)')
+        if (ifre.trim()) { println('stderr: ' + ifre.trim()) }
+
+        println '===== net.minecraft.client.renderer.feature.FeatureRenderer -p ====='
+        def (fr, fre) = runJavap('net.minecraft.client.renderer.feature.FeatureRenderer', ['-p'])
+        println(fr ?: '(none)')
+        if (fre.trim()) { println('stderr: ' + fre.trim()) }
+
+        println '===== net.minecraft.client.renderer.SubmitNodeCollection -p ====='
+        def (sncl, sncle) = runJavap('net.minecraft.client.renderer.SubmitNodeCollection', ['-p'])
+        println(sncl ?: '(none)')
+        if (sncle.trim()) { println('stderr: ' + sncle.trim()) }
+
+        def (rs2, rse2) = runJavap('com.mojang.blaze3d.systems.RenderSystem', ['-p'])
         println '===== RenderSystem (filtered) ====='
-        if (rs) {
-            rs.readLines().each { line ->
+        if (rs2) {
+            rs2.readLines().each { line ->
                 ['outputColor', 'outputDepth', 'createRenderPass', 'bindDefaultUniforms', 'getModelView',
                  'getDevice', 'getDynamicUniforms', 'getColorTextureView', 'getDepthTextureView',
                  'RenderPass'].each { n ->
                     if (line.contains(n)) println '  ' + line.trim()
                 }
             }
-        } else { println('(none)'); if (rse.trim()) println('stderr: ' + rse.trim()) }
-    }
-}
-compileJava.finalizedBy dumpFeatureDispatcherApi
+        } else { println('(none)'); if (rse2.trim()) println('stderr: ' + rse2.trim()) }
+
