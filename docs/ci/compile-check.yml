@@ -1,0 +1,84 @@
+# 待上线：本文件是 .github/workflows/compile-check.yml 的替换件（v4）。
+# 沙箱凭据（GitHub App）没有 workflows 权限，推不动正式件：
+#   ! [remote rejected] ... refusing to allow a GitHub App to create or update workflow
+#     `.github/workflows/compile-check.yml` without `workflows` permission
+# 所以按 docs/ci/README.md 的约定由维护者粘贴上线。上线前，本分支的 CI 仍是旧版
+# （只有 arena/** 触发、没有 concurrency、主分支/PR 不编译）。
+
+name: compile-check
+
+# 编译验证闭环（1.21.11 分支，v4：对齐 26.2 侧 2026-08-31 的 compile-check v4）。
+#
+# 依赖下载与编译在 GitHub Actions（外网畅通）执行；arena/** 工作分支上，编译日志
+# 通过 GitHub Contents API 写回本分支（build-reports/compile-java.log），供网络受限的
+# 沙箱用 `gh api contents` 直接读取 —— 绕开 Actions 日志 blob 域不可达的限制。
+#
+# v2 用 git commit+push 回推，曾因 rebase/push 竞争 5 次失败；v3 改用 API 单文件写入。
+# v4（从 26.2 侧回流）：补主分支盲区 —— 此前只有 arena/** 触发，PR 合并进 `1.21.11`
+# 长期分支的合并 commit 从来没人编译过。现在主分支 push 与 PR 也编译，但【只有 arena/**
+# 才回推日志】（主分支不能被 CI 提交污染，状态看 Actions 即可）。
+# 另加 concurrency：同一分支连发 push 时取消过期 run，省配额。
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - 'arena/**'
+      - '1.21.11'
+    # 防止“日志回推 commit”再次触发本流程造成死循环
+    paths-ignore:
+      - 'build-reports/**'
+  pull_request:
+    paths-ignore:
+      - 'build-reports/**'
+  workflow_dispatch:
+
+concurrency:
+  group: compile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: compileJava
+        run: |
+          mkdir -p build-reports
+          echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
+          ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
+
+      - name: Push compile log back via contents API
+        # 只有 arena/** 回推：主分支的提交历史必须干净
+        if: always() && startsWith(github.ref, 'refs/heads/arena/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # 日志可能很大，只保留头 200 行 + 尾 800 行
+          LOG=build-reports/compile-java.log
+          LINES=$(wc -l < "$LOG")
+          if [ "$LINES" -gt 1000 ]; then
+            { head -n 200 "$LOG"; echo "...[truncated ${LINES} lines total]..."; tail -n 800 "$LOG"; } > /tmp/log-trimmed
+            mv /tmp/log-trimmed "$LOG"
+          fi
+          echo "" >> "$LOG"
+          echo "== job status: ${{ job.status }} ==" >> "$LOG"
+          BRANCH="${{ github.ref_name }}"
+          SHA=$(gh api "repos/${{ github.repository }}/contents/$LOG?ref=$BRANCH" --jq .sha 2>/dev/null || true)
+          ARGS=(-X PUT "repos/${{ github.repository }}/contents/$LOG"
+                -f message="ci-log: compile result (${{ job.status }}) for ${{ github.sha }}"
+                -f branch="$BRANCH"
+                -f content="$(base64 -w0 "$LOG")")
+          if [ -n "$SHA" ]; then ARGS+=(-f sha="$SHA"); fi
+          gh api "${ARGS[@]}" --jq .commit.sha

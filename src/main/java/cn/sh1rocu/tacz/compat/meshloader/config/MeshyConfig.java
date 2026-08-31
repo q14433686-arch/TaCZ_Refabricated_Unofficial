@@ -11,8 +11,9 @@ import net.minecraftforge.common.ForgeConfigSpec;
  * 手部 pass（第 1/2 步）与世界 pass（第 3 步，{@code MeshGpuWorld}）各一张表、
  * 各自在自己的 flush 处消费；GUI / 预览 / 镜内 / 阴影由<b>提交侧</b>闸门挡在表外
  * —— 关 PR #33/#69/#70/#71 的「世界 pass 泄漏」正是提交侧没闸门 + 绘制时矩阵取自
- * 错误时刻两件事叠出来的。光影下两条路都默认关（{@code MeshGpuUnderShaders} /
- * {@code MeshGpuWorldUnderShaders}，均为实验性），详见
+ * 错误时刻两件事叠出来的。光影下两条路（{@code MeshGpuUnderShaders} /
+ * {@code MeshGpuWorldUnderShaders}）自 R3 起默认开 —— 两条都在 2026-08-31 由维护者实机 PASS；
+ * 失联/异常时仍然各自静默回 collector，所以「默认开」的下界是「和关着一样」。详见
  * {@code docs/TML_GPU_STEP2_HANDFLUSH_20260831.md}。</p>
  */
 public final class MeshyConfig {
@@ -66,15 +67,14 @@ public final class MeshyConfig {
                 "Falls back to the collector path if the GPU pass fails.");
         GPU_BAKING = builder.define("MeshGpuBaking", true);
 
-        builder.comment("EXPERIMENTAL: keep the GPU-baked mesh gun on the resident-VBO path when a",
-                "shader pack is active. The pass is then opened inside Iris' own hand flush, so it",
-                "lands in the gbuffer and is lit by the pack's gbuffers_hand program (the pipeline is",
-                "registered with IrisApi.assignPipeline(HAND)); requires an audited Iris 1.10.x and",
-                "silently falls back to the collector path if the flush hook is not live.",
-                "Off by default: the collector path already gets correct shader lighting, this only",
-                "removes the per-frame CPU vertex transform. See",
-                "docs/TML_GPU_STEP2_HANDFLUSH_20260831.md.");
-        GPU_UNDER_SHADERS = builder.define("MeshGpuUnderShaders", false);
+        builder.comment("Keep the GPU-baked mesh gun on the resident-VBO path when a shader pack is",
+                "active. The pass is opened inside Iris' own hand flush, so it lands in the gbuffer",
+                "and is lit by the pack's gbuffers_hand program (the pipeline is registered with",
+                "IrisApi.assignPipeline(HAND)). Needs an audited Iris 1.10.x; if the flush hook is",
+                "not live the path refuses submissions and the gun keeps the collector route - that",
+                "fallback is why this can default to on. In-game PASS with a shader pack 2026-08-31.",
+                "See docs/TML_GPU_STEP2_HANDFLUSH_20260831.md.");
+        GPU_UNDER_SHADERS = builder.define("MeshGpuUnderShaders", true);
 
         builder.comment("GPU static baking for WORLD contexts too: third-person guns held by",
                 "other players, dropped items, item frames and display statues draw from the same",
@@ -88,13 +88,13 @@ public final class MeshyConfig {
                 "flush hook is not live.");
         GPU_WORLD = builder.define("MeshGpuWorld", true);
 
-        builder.comment("EXPERIMENTAL: also keep world mesh guns on the resident-VBO path under a",
-                "shader pack. The world pass is then lit through the pack's entity program: the",
-                "custom pipeline is registered with IrisApi.assignPipeline(IrisProgram.ENTITIES)",
-                "(constant audited against the Iris 1.10.7 jar via CI javap). Off by default simply",
-                "because that combination has never been run in-game -- the collector path already",
-                "gets correct shader lighting in the world pass, so this only saves CPU time.");
-        GPU_WORLD_UNDER_SHADERS = builder.define("MeshGpuWorldUnderShaders", false);
+        builder.comment("Also keep world mesh guns on the resident-VBO path under a shader pack.",
+                "The world pass is lit through the pack's entity program: the custom pipeline is",
+                "registered with IrisApi.assignPipeline(IrisProgram.ENTITIES) (constant audited",
+                "against the Iris 1.10.7 jar via CI javap - EMISSIVE_ENTITIES is deliberately not",
+                "used). In-game PASS 2026-08-31. Like the hand path it needs the audited Iris flush",
+                "hook and refuses submissions when that hook is not live.");
+        GPU_WORLD_UNDER_SHADERS = builder.define("MeshGpuWorldUnderShaders", true);
 
         builder.comment("How many quantized light levels of baked world VBOs to keep per gun model",
                 "(LRU). Upstream TML caches 8 unquantized levels; this port quantizes light first",

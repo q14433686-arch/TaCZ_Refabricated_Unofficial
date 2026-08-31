@@ -314,7 +314,7 @@ public final class PolyMeshGpuRenderer {
      *       镜内那遍若真有 mod 补提交，pose 语义未知，宁可拒收（消费侧对镜内的处理见
      *       {@link #renderAtWorldFlush}）；</li>
      *   <li><b>不在</b>阴影 pass —— Iris 阴影遍的投影/MV 是太阳视角，登记进主视角的表必画错；</li>
-     *   <li>光影下额外要求 {@code MeshGpuWorldUnderShaders}（默认关，见 {@link #worldGpuAllowed}）。</li>
+     *   <li>光影下额外要求 {@code MeshGpuWorldUnderShaders}（R3 起默认开，见 {@link #worldGpuAllowed}）。</li>
      * </ul>
      */
     public static boolean shouldSubmitGpuWorld() {
@@ -346,8 +346,9 @@ public final class PolyMeshGpuRenderer {
      * （{@code gbuffers_entities}）正是我们想要的照明；但本仓的 GPU 走的是<b>自建管线</b>
      * {@code tacz:pipeline/mesh_entity}，它不在 Iris 的 coreShaderMap 里 ⇒ 不登记就只能拿
      * 原版程序（无光影照明）。登记用的常量已用 CI javap 核实为 {@code IrisProgram.ENTITIES}
-     * （见 {@code IrisCompat#assignMeshPipelineToEntity}）；仍然默认关，是因为这个组合
-     * 没跑过实机，不是因为签名未知。</p>
+     * （见 {@code IrisCompat#assignMeshPipelineToEntity}；{@code EMISSIVE_ENTITIES} 不可拿来当
+     * 「全亮」用，那条枚举值服务的是别的语义）。这条组合已于 2026-08-31 实机 PASS，
+     * R3 起默认开；当时的顾虑只是「签名未知」这一项，而它早已审掉。</p>
      */
     private static boolean worldGpuAllowed() {
         if (!IrisCompat.isUsingRenderPack()) {
@@ -417,8 +418,8 @@ public final class PolyMeshGpuRenderer {
         }
         if (IrisCompat.isUsingRenderPack()) {
             // 第 2 步 v2：光影下的 GPU 路径只在「绘制发生在 Iris 自己那次手部 flush 之内」
-            // 时成立（见类注释）。这一步是实验性的，默认关；且必须 Iris 版本已审计 +
-            // 钩子存活证明通过（shouldSubmitGpu 里查），三条缺一不可。
+            // 时成立（见类注释）。R3 起默认开，但三条仍缺一不可：本开关 + Iris 版本已审计 +
+            // 钩子存活证明通过（shouldSubmitGpu 里查）。
             if (!MeshyConfig.GPU_UNDER_SHADERS.get()) {
                 return false;
             }
@@ -706,10 +707,14 @@ public final class PolyMeshGpuRenderer {
             drawList(HAND_DRAWS, irisFlush, false);
         } catch (Exception | LinkageError e) {
             // LinkageError：光影下这条路径依赖 Iris 的 flush 时机，方法缺失也要能自愈回 collector。
+            // 只置内存标志、<b>不回写配置</b>（R3 起；第 1 步沿用了 26.2 的
+            // {@code MeshyConfig.GPU_BAKING.set(false)}，那条有两个问题：绘制线程里改配置
+            // 可能触发磁盘写；而且用户重启后会看到「GPU 烘焙自己关了」。世界表那边
+            // 一开始就是分表 + 阈值语义，见 renderAtWorldFlush。理由详见
+            // docs/REVIEW_UPSTREAM_TML_GPU_262_20260831.md A2。）
             LOGGER.error("[TacZMeshLoader] GPU mesh hand flush failed (irisFlush={}); "
                     + "falling back to collector path for this session.", irisFlush, e);
             gpuDisabledThisSession = true;
-            MeshyConfig.GPU_BAKING.set(false);
         } finally {
             HAND_DRAWS.clear();
         }

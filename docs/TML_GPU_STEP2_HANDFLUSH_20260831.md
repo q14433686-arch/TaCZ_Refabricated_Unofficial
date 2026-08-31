@@ -384,18 +384,22 @@ ItemInHandRenderer.renderHandsWithItems                                         
   **世界**路径关掉（`gpuWorldDisabledThisSession`），手部路径不受牵连 —— 世界那一次 flush
   的环境比手部复杂（次级 frame-graph 节点可能正嵌在别的 pass 里），一处失败不该赔上另一处。
 
-### 4.3 待实机（世界路径，`MeshGpuWorld=true` 默认即开）
+### 4.3 实机结论与剩余待验项（世界路径，`MeshGpuWorld=true` 默认即开）
 
-> **2026-08-31 维护者实机（第一轮）**：无光影下**通过** —— 清单第 1 条（他人手持的枪相对视角
-> 固定 / 转身漂移，即 26.2 分支踩到的那条坑）未复现，第 2/3/4 条未报异常。
-> **光影下世界路径失效**（回退 collector），当时日志里没有任何原因可看 —— 静默回退是设计使然，
-> 但这条组合是「实验性 + 未验证」，没有原因就没法定位。已补
-> `TaczPolyMeshGunModel#noteWorldSkip` + `PolyMeshGpuRenderer#worldSubmitBlocker`：被门闸拒收时
-> 按原因去重打一条 INFO（`GPU world submit refused: …`），下一轮拿那一行（或那条带栈的
-> `GPU world mesh pass failed` ERROR）即可分辨「没提交」还是「画时抛异常」。
+> **2026-08-31 维护者实机（两轮）**：
+> - 第一轮（无光影）：通过 —— 清单第 1 条（他人手持的枪相对视角固定 / 转身漂移，即 26.2 分支
+>   踩到的那条坑）未复现，第 2/3/4 条未报异常。同轮报「光影下世界路径失效」，核实为
+>   **当时默认关**（`MeshGpuWorldUnderShaders=false`，按设计回退 collector）。
+> - 第二轮（打开该键 + 诊断）：**一遍过**。因此 R3 起两条光影开关（`MeshGpuUnderShaders` /
+>   `MeshGpuWorldUnderShaders`）默认 true。
+>
+> 诊断留在原位：静默回退是正确行为，但「世界路径怎么没生效」必须在日志里能答。
+> 机制是 `TaczPolyMeshGunModel#noteWorldSkip` + `PolyMeshGpuRenderer#worldSubmitBlocker`
+> （门闸已返回 false 才逐条重判），按原因去重各打一行 INFO，下次别的 mod 改了渲染结构时
+> 靠它即可分辨「没提交」还是「画时抛异常」。
 
-- [ ] 多人/其他玩家手持 mesh 枪：位置**随相机移动正确**（这条就是隔壁踩的坑），
-      不钉在屏幕某处、不随转身漂。
+- [x] 多人/其他玩家手持 mesh 枪：位置**随相机移动正确**（这条就是隔壁踩的坑），
+      不钉在屏幕某处、不随转身漂。 → **2026-08-31 维护者两轮实机均通过**（第二轮含光影）。
 - [ ] 掉落物 / 展示框 / 展示台雕像：位置与投影正确；近处高模枪**不再因预算整把消失**。
 - [ ] 明暗边界上的一排掉落枪：日志只出现前两次
       `GPU world-baked … level(s) cached`，不逐帧刷；稳态后 spark 里 `writeCutout` 不再是热点。
@@ -403,8 +407,8 @@ ItemInHandRenderer.renderHandsWithItems                                         
 - [ ] 开背包 / 枪匠桌 / 热栏：世界里的枪不受影响（`ScreenRenderTracker` + 语境闸门），
       GUI 内的预览照旧 collector（不受 GPU 路径影响）。
 - [ ] 开镜（PIP 二次渲染，仅无光影）：镜内与镜外**都有** mesh 枪，且不重复计数。
-- [ ] 装 Iris：世界 mesh 枪自动回 collector（`MeshGpuWorldUnderShaders` 默认关）。
-- [ ] 光影下手动打开 `MeshGpuWorldUnderShaders`：日志应有
+- [ ] 装 Iris：世界 mesh 枪在 `MeshGpuWorldUnderShaders=false` 时自动回 collector（R3 起该键默认 **true**，所以这条现在测的是「关掉它仍能干净回退」）。
+- [x] 光影下 `MeshGpuWorldUnderShaders`（R3 起默认开）：日志应有
       `[TACZ Iris] Assigned mesh_entity_world to the Iris ENTITIES program.`，且世界里的 mesh 枪
       **受光影照明**（夜里变暗、有明暗层次），不是发白也不是全黑；
       `Mesh bake vertex format` 相关行只在切包那一帧出现。

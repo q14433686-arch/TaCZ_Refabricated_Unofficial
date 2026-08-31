@@ -1,0 +1,187 @@
+# 上游（refab 26.2 / `arena/01a04e96`）TML GPU 实现审查
+
+> 审查对象：`arena/01a04e96-tacz-refabricated-unofficial` @ `587763c`（该分支 HEAD）。
+> 方式：**只读静态审查** —— 读的是 `git show 587763c:<path>`，本仓不碰那条分支。
+> 因此下面所有结论都只到「代码/注释/字节码论证层面」，**没有任何一条声称已在上游实机验证**；
+> 上游的**手部路径已实机 PASS**（维护者报告），本文不质疑那条。
+> 行号都是那份文件里的行号（`PolyMeshGpuRenderer.java` 共 693 行）。
+
+## 0. 摘要
+
+| # | 位置（上游） | 严重度 | 一句话 |
+|---|---|---|---|
+| A1 | `drawList` :586 | 高 | 输出目标硬绑 `mainRenderTarget()`，全文件 0 处渲染目标覆盖检查 |
+| A2 | :428-429 / :465-466 / :489-490 | 高 | 一次绘制异常 ⇒ 关**总闸** + **回写配置文件**（渲染线程里） |
+| A3 | :425 / :463 / :487 / :670 | 中高 | `catch (Exception)` 不接 `LinkageError`，跨版本 `NoSuchMethodError` 会直穿渲染循环 |
+| A4 | :252-268 + :521-541 | 中 | 光影下世界表复用**已归入 Iris HAND 程序**的 `ENTITY_CUTOUT` 管线 |
+| A5 | :97 / :113 / :295 | 中 | 烘焙格式硬编码 `DefaultVertexFormat.ENTITY`，只有世代号一层保护 |
+| A6 | :373 | 中 | 每帧烘焙额度 = `max(4, LRU 容量)`：一个旋钮当两个用 |
+| A7 | `drawList` :~600（`handModelView`） | 低-中 | 世界表复用**名字与注释都写着手部**的方法，前置条件没写成断言 |
+| A8 | :147 / :341 | 低 | 降级完全静默；`beginFrame` 挂 `GameRenderer#extract` 的跨帧含义没写明 |
+| A9 | :174 / :176 | 低 | 每帧标志靠 `beginFrame` 复位，对「钩子与 beginFrame 的相对顺序」敏感 |
+
+**先说好的**（本仓第 3 步直接吸收，已在 `MESH_LOADER.md` 致谢）：按量化光照档做 LRU、被逐出
+VBO 进延迟释放池下一帧才 close、每帧烘焙额度防「逐出-重烘打摆」这三件事是上游先做的，
+思路正确，本仓只是把旋钮解耦并把失效判定做得更早。
+
+---
+
+## A1（高）输出目标：硬绑 `mainRenderTarget()`，且不看渲染目标覆盖
+
+```java
+RenderTarget mainTarget = mc.gameRenderer.mainRenderTarget();          // :586
+GpuTextureView colorView = mainTarget.getColorTextureView();           // :590
+...encoder.createRenderPass(() -> "tacz_mesh_gpu", colorView, ...)     // :618
+```
+
+`drawList` 是**两张表共用**的（世界路径在 :424 / :457 调它）。全文件搜
+`outputColorTextureOverride` / `isBoundFboOverride` / 任何 override —— **0 处**。
+
+为什么这是隐患而不是风格问题：
+
+1. 上游自己在 `FeatureRenderDispatcherMixin` 的注释里记着 **r51 事故**：给某个 RenderType 配了
+   不同 outputTarget，于是「主 target → 掩码 target → 主 target」的切换被零散穿插进 solid
+   阶段内部，触发 `VK_ERROR_DEVICE_LOST`。硬绑主 target 并在**阶段边界之外**开一个
+   `RenderPass`，与那次事故是同一族动作——只是因为我们总在某个 `renderAllFeatures` 的收尾处，
+   有没有撞上取决于当刻主画面 target 是否就是当前绑定目标。
+2. 世界那一次 `renderAllFeatures` 在 26.2/1.21.11 都**不止一个调用点**：1.21.11 实测有三个
+   （主通道节点、always-on-top/粒子离屏节点、`ItemInHandRenderer#renderHandsWithItems`），
+   其中第二个调用点会 `RenderSystem.setOutputColorTextureOverride(...)`。上游的
+   `worldDrawnThisFrame` 只保证「一帧画一次」，不保证「画在正确的那一遍里」——第一次命中的
+   就可能是一次带 override 的离屏遍。
+3. :414 的注释说「无光影时 `mainRenderTarget()` 已被重定向到 pip target」——那是**镜内那一遍**
+   的机制；一旦某个版本/某个 mod 改用 override 而不是真的换掉 `mainRenderTarget()` 对象，
+   这里就会画进主画面（镜内该有枪的地方没枪、主画面多出枪）。
+
+本仓的做法（1.21.11 实测过的机制）：世界 flush 里
+`if (RenderSystem.outputColorTextureOverride != null) return;`（跳过这一遍，不清表），
+并且解析目标时 `outputColorTextureOverride != null ? override : mainRenderTarget()` ——
+即**跟着当前绑定走**，而不是跟着「主画面」这个名字走。
+
+> 给上游的最小修法：`drawList` 开头加 override 检查 + 目标取自 override；
+> `WORLD_DRAWS` 的消费点加一句「本遍是否是带 override 的那一遍」的门。
+
+## A2（高）异常处理：把总闸和配置文件一起写了
+
+三处 catch 全是同一套（:427-429 镜内、:464-466 世界、:488-490 手部）：
+
+```java
+gpuDisabledThisSession = true;
+MeshyConfig.GPU_BAKING.set(false);
+```
+
+三个问题：
+
+1. **范围过大**：世界 pass 抛异常，把 `GPU_BAKING`（第一人称 + 世界共用的总闸）关掉 —— 已经
+   实机 PASS 的手部路径被一条从未验证的世界路径连坐。
+2. **渲染线程回写配置**：`set(false)` 会让 ForgeConfig 的 spec 变 dirty；如果该 mod 的
+   配置保存策略是即时/周期性 flush，就是渲染线程触发磁盘写（而且**重启后仍是关的**，用户
+   看到的是「GPU 烘焙自己关了」，得去 TOML 里找回来）。
+3. **一处小 bug**：镜内那处 catch（:425-431）顺手 `WORLD_DRAWS.clear()`，而同一方法里世界
+   那条刻意「跳过不清表」（:446-448 的注释解释了为什么不能清）—— 镜内异常时反而把主画面
+   那遍要用的条目清了。
+
+本仓的做法（R3 起，两条路一致）：分表禁用（`gpuDisabledThisSession` /
+`gpuWorldDisabledThisSession` 各自独立）、
+**连续 30 次**才算病理（单次抖动不自关）、`catch (Exception | LinkageError)`、
+**从不**回写配置（只改内存标志；`MESH_LOADER.md` 的表格里那句「运行期异常也会自写 false」是
+   第 1 步沿用上游的残留，**R3 已把这条从本仓代码里删掉**（手部 catch 只置
+   `gpuDisabledThisSession`），文档同步改掉）。
+
+## A3（中高）`catch (Exception)` 漏掉链接错误
+
+渲染路径上最常见的失败模式恰恰是链接类：Iris / Sodium / 别的渲染 mod 升级后方法签名变了 ⇒
+`NoSuchMethodError` / `NoClassDefFoundError`，都是 `Error` 不是 `Exception`。
+上游的降级网捕不到它，于是「一次跨版本兼容问题」表现为**游戏崩**而不是「回退 collector」。
+本仓两条路都是 `catch (Exception | LinkageError)`。
+
+## A4（中）光影下世界表用的是 HAND 程序登记的管线
+
+链路：`useRenderTypeRoute()`（:268）= `isUsingRenderPack() && !GPU_UNDER_SHADERS` —— 也就是
+**开着光影且没强开自定义 pass 时的默认路径**，两张表共用。手部那条在绘制前先调
+`IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()`（:521-523）把
+`ENTITY_CUTOUT` 管线归入 Iris 的 **HAND** program；世界那条（:537-541）刻意不调，理由是
+
+> 世界 pass 里 ENTITY_CUTOUT 就是 vanilla 世界实体在用的管线，Iris 对它的默认接管
+> （`gbuffers_entities` 链路）正是我们想要的；这里主动去动管线归属反而可能干扰别的实体。
+
+问题在于「归入 HAND」是**按 pipeline 对象**登记的、不是按 pass 段的：手部那遍每帧都先跑，
+等世界那遍用同一个 `RenderTypes.entityCutout(...)` 时，那条 pipeline 已经被归到
+`IrisProgram.HAND` 了。于是光影下的世界 mesh 枪拿的是 `gbuffers_hand` 的照明与状态
+（不是 `gbuffers_entities`）。这会同时带来两个方向的可疑现象：光影作者写在
+`gbuffers_hand` 里的专属逻辑（视手上浮、手部雾/裁剪平面）被套到世界物体上，
+而实体专属的阴影/照明（`gbuffers_entities` + shadowmap）拿不到。
+
+**必须实机验证才能定性**（本文只指出与注释自相矛盾的地方）。若确认，修法两条：
+① 世界路径不共用 `entityCutout`，改自定义管线 + `IrisApi.assignPipeline(pipeline, ENTITIES)`；
+② 或者在世界 pass 绘制前把该 pipeline 归还 ENTITY 程序（但要防「别的 mod 也在用」的副作用）。
+本仓走的是 ①（`IrisCompat#assignMeshPipelineToEntity` → `ENTITIES`，常量已按 Iris 1.10.7 jar
+用 CI javap 审过：**没有** `ENTITY` 也没有 `MAIN`；`EMISSIVE_ENTITIES` 不能拿来当「全亮」用）。
+
+## A5（中）烘焙格式写死
+
+`bakeBone(...)` 里 `new BufferBuilder(scratch, QUADS, DefaultVertexFormat.ENTITY)`（:295），
+而管线侧 `withVertexBinding(0, DefaultVertexFormat.ENTITY)`（:97 / :113）。
+光影激活时 Iris 会**扩展实体顶点格式**（附加属性、stride 变化），经 `BufferBuilder` 写出的
+常驻 VBO 布局随之不同 —— 上游已经用 `bakeGeneration`（:180-189，逐帧检测光影开关翻转）
+兜住了「开关光影必现的模型拉伸」，但格式的**唯一来源**仍是这个硬编码常量：
+
+- 别的 mod 也扩展 `DefaultVertexFormat.ENTITY` 时，世代号不会变（只认光影开关）⇒ 旧 buffer
+  按新 stride 解读；
+- `GPU_UNDER_SHADERS`（自定义 pass）与光影状态组合出第三种期望格式时同理。
+
+本仓做法：`bakeBone(meshes, lightKey, format)` 把格式做成入参，消费侧 `bakeFormat()`
+一变就整代失效（`MESH_LOADER.md` §5.4 记过这条根因），并把「按错 stride 解读 = 模型拉伸」
+写成注释留在两处。
+
+## A6（中）一个旋钮当两个用
+
+```java
+int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());   // :373
+```
+
+`GPU_LIGHT_CACHE_SIZE` 同时是「每模型缓存几档光照」（显存语义）和「本帧还能烘几根」（
+防打摆额度）的上限，而且额度下限写死 4。后果：想省显存把容量调到 1 的用户，额度仍是 4；
+大模型场景想把额度调大，只能连带把 LRU 撑大（白花显存）。本仓：额度走独立入参
+`tryReserveBake(cap)`，`MeshGpuLightCacheSize` 只管容量，1..16。
+
+## A7/A8/A9（低到中，一起说）
+
+- **A7** `drawList` 内部变量叫 `handModelView`、注释写「本方法跑在**手部** renderAllFeatures 的
+  `executeSolid` 之后……取一次全体通用」，但世界表也调它（:424/:457）。「两层变换定理」
+  （顶点里烘 pose、绘制时再乘当刻 MV）在两个 pass 里都成立，成立的是**前提**：
+  消费时刻的 MV 必须是这批几何将被比较的那套 MV。前提没写成断言 ⇒ 改手部时静默改到世界。
+  建议至少改成 `drawList(draws, Pass pass)`，把「这次是哪个 pass」显式化。
+  （本仓在 1.21.11 上就撞到过这条前提的**反例**：`GameRenderer#renderItemInHand` 会在
+  `renderHandsWithItems` 前后 push/pop model-view，那一刻的「世界 MV」是错的。上游若把
+  世界表挂到与手部同一个入口，症状就是维护者报的「相对视角固定」。本仓因此把世界消费点
+  单独放在 `FeatureRenderDispatcher#renderAllFeatures` 的 RETURN，并且 `inHandPass` 时整段跳过。）
+- **A8** 降级全静默：门闸拒收不打日志、`beginFrame` 每帧清表 ⇒ 「世界路径怎么没生效」在
+  `latest.log` 里一个字都不留。本仓 R3 补了 `worldSubmitBlocker()` + 按原因去重的一行 INFO
+  （见 `CHANGELOG_1_21_11.md` R3 段），这个成本很低，值得上游同样加。
+- **A9** `drawnThisFrame` / `worldDrawnThisFrame` 是布尔，靠 `beginFrame` 复位。当一帧里
+  `GameRenderer#extract` 没跑（暂停、别的 mod 直接调 `LevelRenderer#render`、镜内重渲染那遍
+  自己的一轮），标志会跨帧残留。本仓用帧号比对（`lastWorldFlushFrame == frameId || frameId-1`），
+  对「钩子与 beginFrame 谁先谁后」不敏感。
+
+## 时序对照（本仓 ↔ 上游）
+
+| 事项 | 上游 26.2 | 本仓 1.21.11 |
+|---|---|---|
+| 手部消费点 | 手部 `renderAllFeatures` 的 `executeSolid` 之后（`@WrapOperation`） | `HandRenderer#endRender` RETURN（Iris 自己那次 flush **之后**） |
+| 世界消费点 | `renderAllFeatures`：非手部、非镜内、非阴影 | `FeatureRenderDispatcher#renderAllFeatures` RETURN，另加 `inHandPass` / `isInsideScopeLevelRender` / `isRenderShadow` / `outputColorTextureOverride` / `levelRenderActive` 五道门 |
+| 「一帧一次」实现 | 布尔 + `beginFrame` 复位 | 帧号比对（`consumedFrame`） |
+| 光影照明 | 复用 `RenderTypes.entityCutout` + `prepare()`（管线归 HAND，见 A4） | 自建管线 + `IrisApi.assignPipeline(ENTITIES)` |
+| 失败半径 | 总闸 + 回写配置 | 分表 + 30 次阈值 + 不回写 |
+| 烘焙格式 | 硬编码 ENTITY + 世代号 | 格式入参，格式变即整代失效 |
+| 为什么不能直接互相抄 | —— | 1.21.11 **没有** `PreparedFrame#executeSolid` / `RenderType#prepare()` / `drawFromBuffer`（CI javap 核实），26.2 那套压栈取 MV 的机制在这边不存在；反过来本仓的 `HandRenderer` 注入点在 26.2 上也与手部 pass 结构不匹配 |
+
+## 建议给上游的动作（按性价比排序）
+
+1. `drawList` 加渲染目标 override 处理（A1）——改动最小、能同时摘掉一个 `VK_ERROR_DEVICE_LOST`
+   类别的风险。
+2. 失败处理改成「分表 + 阈值 + 不回写配置」（A2），并 `catch (Exception | LinkageError)`（A3）。
+3. 光影下世界表的管线归属做一次实机对表（A4）：同一把掉落枪，分别在 `gbuffers_entities`
+   与 `gbuffers_hand` 照明差异明显的包（夜晚/暗巷）下看亮度是否随世界走。
+4. 格式入参（A5）与额度/容量解耦（A6）。
+5. 静默降级补一行原因日志（A8）——这条本仓已有实现可以直接搬。

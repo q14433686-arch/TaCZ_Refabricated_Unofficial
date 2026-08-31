@@ -1,18 +1,17 @@
-# 内置 TacZ Mesh Loader [TML] —— 安全子集 + GPU 烘焙（第 0/1/2 步与第 3 步（无光影）已实机 PASS；第 3 步光影下失效，待诊断）
+# 内置 TacZ Mesh Loader [TML] —— 安全子集 + GPU 烘焙（第 0/1/2/3 步全实机 PASS；R3 起四项开关默认全开）
 
 > 代码移植自 [VellEagle/TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader)
 > `1.21.1_fabric` v0.1.7，GPL-3.0。不是官方 TacZ 附属。
 >
-> **状态：第 0 步（collector 安全子集）、第 1 步（无光影第一人称 GPU 静态烘焙）与第 2 步 v2
->（光影下把手部 pass 开进 Iris 自己的手部 flush）均已实机 PASS。第 3 步（世界语境常驻 VBO，
-> `MeshGpuWorld`，见下方「第 3 步新增」与可行性文档）：<b>无光影下已实机 PASS</b>（维护者
-> 2026-08-31 报告：邻居分支那两个坑——世界空间固定 + 烘焙时机过窄——未复现）；
-> **光影下世界路径失效**（表现为回退 collector），已补一次性原因日志待诊断，见 §5.6。
-> 两条光影下的开关（`MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders`）仍是实验性、默认关。**
-> 按 AGENTS.md §2：第 0/1/2 步的实机 PASS 是维护者 2026-08-31 报告的（换弹无双影、
-> 光影下常驻 VBO 收 `gbuffers_hand` 照明）；**第 3 步：无光影已实机 PASS、光影下失效**——
-> 本文对它
-> 只写「源码完成 + 静态审计」。
+> **状态：第 0/1/2 步与第 3 步（世界语境常驻 VBO `MeshGpuWorld`）全部实机 PASS。**
+> 第 3 步的两条重点验收项（他人手持的 mesh 枪必须随相机正确移动 = 26.2 分支踩到的那个坑；
+> 光影组合 `MeshGpuWorldUnderShaders=true`）由维护者 2026-08-31 **一遍过**。
+> 因此 R3 起四个 GPU 开关（`MeshGpuBaking` / `MeshGpuWorld` / `MeshGpuUnderShaders` /
+> `MeshGpuWorldUnderShaders`）**默认全开**；每一项仍保留「钩子失联/异常 ⇒ 静默回退 collector」，
+> 并且被拒时按原因去重打一行 INFO（`GPU world submit refused: …`）。**
+> 按 AGENTS.md §2：以上实机 PASS 均为**维护者 2026-08-31 报告**（换弹无双影、光影下常驻 VBO
+> 收 `gbuffers_hand` 照明、世界语境含光影一遍过）；本文不替他们补任何未回报条目的结论 ——
+> §5.5 / §5.6 仍是逐条清单，未回报的条目按「未验证」对待。
 >
 > 可行性论证与分步计划见
 > [`TML_GPU_FEASIBILITY_1211_20260831.md`](TML_GPU_FEASIBILITY_1211_20260831.md)。
@@ -64,18 +63,25 @@
 
 - **`PolyMeshGpuRenderer`**：逐骨骼常驻 VBO（顶点留在骨骼本地系、光按 4 级
   量化烘进 UV2），每帧只上传 O(骨骼) 个 `DynamicTransforms`，在
-  `renderItemInHand` RETURN 用自定义 `RenderPass` 画。`GPU mesh pass drew N bones`
-  日志即验收锚点。世界/GUI/第三人称/掉落物仍全走 collector。
+  自定义 `RenderPass` 画，`GPU mesh pass drew N bones` 日志即验收锚点。
+  （**第 1 步**当时挂在 `GameRenderer#renderItemInHand` 的 RETURN —— 那个时机在光影下
+  与 Iris 自己的手部 flush 不一致，第 2 步 v2 才把绘制点搬进 `ItemInHandRendererMixin`
+  的 flush 钩子里；GUI 语境在两步里都始终走 collector，世界/第三人称/掉落物自第 3 步起进
+  常驻 VBO。）
 - **光照分档缓存**：`ensureBaked` 4 级 quantize + 1s 节流；illuminated 骨骼恒烘
   `FULL_BRIGHT`；光影包开关翻转 bump 烘焙世代号 → 持缓存的模型立即重烘
   （26.2 `9f7412e` 的修法，绕开 1s 节流）。
-- **失效与降级**：GPU pass 抛异常 → 本会话自禁用并写回 `MeshGpuBaking=false`，
-  永久回退 collector（与 26.2 语义一致）；换模型 `releaseBaked()` 防泄漏。
-- **配置**：`MeshGpuBaking`（默认 true）、`MeshGpuUnderShaders`（光影下实验性常驻
-  VBO，默认 false）、
-  `MeshWorldFullDetailDistance`；cloth UI + en/zh 语言键已接。
+- **失效与降级**：GPU pass 抛异常 → `catch (Exception | LinkageError)` →
+  置 `gpuDisabledThisSession`，本会话回退 collector，**不回写配置文件**（R3 起；第 1 步
+  沿用了 26.2 的 `MeshyConfig.GPU_BAKING.set(false)`，理由与两处差异见
+  `REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A2）。世界表另有独立标志与「连续 30 次」阈值，
+  两张表互不连坐；换模型 `releaseBaked()` / `releaseWorldBaked()` 防泄漏。
+- **配置**：`MeshGpuBaking`（默认 true）、`MeshGpuUnderShaders`（光影下常驻 VBO，
+  第 2 步 v2 起默认 true）、`MeshWorldFullDetailDistance`。R3 起 **14 项 TML 配置全部**
+  接进局内 cloth 面板 + en/zh 语言键（TOML 能改的局内都能改，`setDefaultValue` 与
+  `MeshyConfig` 的默认值逐字对齐）。
 
-### 第 2 步 v2 新增（光影下的常驻 VBO，**默认关闭、待实机**）
+### 第 2 步 v2 新增（光影下的常驻 VBO，**R3 起默认开启、实机 PASS**）
 
 - **绘制点整体搬迁**：1.21.11 的手部几何在 `ItemInHandRenderer#renderHandsWithItems` 末尾
   就 `renderAllFeatures()` + `endBatch()` flush（不是延迟到世界渲染末尾），Iris 也是 hook
@@ -110,10 +116,9 @@
   若照旧先过预算闸门，「16 格外高模枪整把消失」的老毛病就没解决。
 - **镜内那一遍（PIP 二次渲染）**：画但**不清表**、不占本帧消费标志（提交每帧只登记一次，
   这里清了主画面就没得画；collector 在镜内那遍照常重放，两遍内容必须一致）。
-- **光影**：默认不走（`MeshGpuWorldUnderShaders=false`）。世界那一次 flush 里要受光需要把自建
+- **光影**（`MeshGpuWorldUnderShaders`，R3 起默认 true）：世界那一次 flush 里要受光需要把自建
   管线登记进 Iris 的实体 program，常量已由 CI javap 核实为 **`IrisProgram.ENTITIES`**
-  （全量枚举见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §4.2）；默认关只剩「这套组合没跑过实机」
-  一条理由。
+  （全量枚举见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §4.2）；这条组合已于 2026-08-31 实机 PASS。
   隔壁 26.2 分支靠 `RenderTypes.entityCutout` + `RenderType#prepare()` 天然落在 Iris 已接管的
   `ENTITY_CUTOUT` 上 —— **这一点两个分支不等价，不要照抄**。
 - 完整证据（1.21.11 三个 `renderAllFeatures` 调用点、MV 归属、`EntityRenderDispatcher` 的
@@ -122,7 +127,8 @@
 
 ### 明确不包含（后续步骤，见可行性文档 §5）
 
-- 光影下常驻 VBO 的**实机验收**（第 2 步 v2 只有编译期证据，见上）。
+- 光影下常驻 VBO 的实机验收：第 2/3 步均已 PASS，**剩下的空洞是「性能量化」**
+  （高模多人场景下 GPU vs collector 的帧时间差值本仓从没测过，只有「不卡」的定性报告）。
 - 姿态缓存 / 三角形配对 / LOD（远期方向）。
 - mesh 目镜（上游 TML 同样不支持：ocular 物体必须用立方体）。
 
@@ -173,15 +179,19 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 | `MeshWorldFullDetailDistance` | 16 | 世界语境近距全模豁免距离（0=关闭豁免） |
 | `MeshMaxModelVertices` | 120000 | 加载时告警阈值（不影响渲染） |
 | `MeshLogStats` | true | 加载统计日志 |
-| `MeshGpuBaking` | true | 第一人称 GPU 静态烘焙（第 1 步）。关闭→永久 collector；运行期异常也会自写 false |
-| `MeshGpuUnderShaders` | false | 实验性（第 2 步 v2）：光影下也走常驻 VBO，pass 开在 Iris 自己那次手部 flush 之内。需 Iris 1.10.x；钩子失联自动回 collector。默认 false = 光影走 collector |
+| `MeshGpuBaking` | true | 第一人称 GPU 静态烘焙（第 1 步）总闸。运行期异常**只改内存标志**（`gpuDisabledThisSession`），不回写配置文件 —— 26.2 那边是 `MeshyConfig.GPU_BAKING.set(false)`，本分支刻意不这么做（理由见 `REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A2） |
+| `MeshGpuUnderShaders` | **true**（R3 起） | 第 2 步 v2：光影下也走常驻 VBO，pass 开在 Iris 自己那次手部 flush 之内。需 Iris 1.10.x；钩子失联自动回 collector。2026-08-31 实机 PASS |
 | `MeshGpuWorld` | true | 世界语境也走常驻 VBO（第 3 步）：他人手持 / 掉落物 / 展示框 / 雕像。GUI/预览/镜内/阴影在提交侧拒收；钩子失联自动回 collector |
-| `MeshGpuWorldUnderShaders` | false | 实验性：光影下的世界 GPU 路径（自建管线登记进 `IrisProgram.ENTITIES`，常量已审计）。默认 false = 光影下世界走 collector（照明本来就正确；这条只是没跑过实机） |
+| `MeshGpuWorldUnderShaders` | **true**（R3 起） | 光影下的世界 GPU 路径（自建管线登记进 `IrisProgram.ENTITIES`，常量已审计）。2026-08-31 实机 PASS；失联/异常仍自动回 collector |
 | `MeshGpuLightCacheSize` | 4 | 世界 GPU 每模型缓存的量化光照档数（LRU，1-16）。每档显存 ≈ 模型顶点数；上游 TML 按未量化光照缓存 8 档 |
 
-> GPU 路径只接管**第一人称手部**语境；世界/GUI/第三人称/掉落物无论开关如何一律走
-> collector（第 1 步范围）。光影下还需 `MeshGpuUnderShaders` + 已审计 Iris + 存活证明
-> 三条同时成立（第 2 步 v2，见 `TML_GPU_STEP2_HANDFLUSH_20260831.md`）。
+> 第 3 步之后 GPU 路径覆盖**第一人称手部 + 世界语境**（他人手持 / 掉落物 / 展示框 / 展示台）。
+> **GUI 语境、半透明部件与弹匣永远走 collector**（按语境与材质在提交侧分流，见 §5.6）。
+> 光影下的两条各自还要求「已审计 Iris + 对应 flush 钩子的存活证明」同时成立
+> （第 2/3 步，见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §3-§4）。
+>
+> 14 项都在 `tacz-client.toml` 的 `[mesh_loader]` 段，并且全部接进了局内「渲染」页（Cloth）；
+> 两边默认值/键位齐平由 `docs/ci/build.yml` 里的静态校验把关（清单见 `docs/ci/README.md`）。
 
 ## 5. 验证清单
 
@@ -254,11 +264,11 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 
 ### 5.5 第 3 步：世界语境常驻 VBO（实机，`MeshGpuWorld=true` 默认即开）
 
-逐条清单见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §4 末「待实机」。最关键的四条：
+逐条清单见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §4.3（已含实机结论）。最关键的几条：
 
 1. **多人视角**：他人手持的 mesh 枪必须随相机正确移动 —— 「钉在视角方向上 / 转身时漂」
    就是隔壁 26.2 分支踩到的那条坑；出现即说明 MV 取自了错误的时刻，别再挪烘焙时机。
-   → **2026-08-31 维护者无光影实机：未复现**（这条是第 3 步的主验收项）。
+   → **2026-08-31 维护者两轮实机均未复现**（无光影 + 光影组合；这条是第 3 步的主验收项）。
 2. **预算解耦**：近处高模纯 mesh 枪不因预算整把消失；日志出现
    `GPU world-baked N bones (M vertices) at quantized light …`。
 3. **光照打摆防护**：明暗边界上一排掉落枪时，`GPU world-baked` 只在前两次是 info 级；
@@ -266,20 +276,26 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 4. **不泄漏**：开背包 / 枪匠桌 / 热栏 / 开镜（F3+T 也来一次）之后，世界里不多画、
    GUI 内不少画、不崩；显存不随重载单调增长（走延迟释放池）。
 
-光影那一条（第 5 项，`MeshGpuWorldUnderShaders=true`）实测**失效**：世界路径回退 collector，
-且当时日志里没有任何原因（静默回退是设计）。已补 `GPU world submit refused: <reason>` 诊断，
-详见 §5.6。
+5. **光影组合**（`MeshGpuWorldUnderShaders=true`，R3 起默认）：日志出现
+   `Assigned mesh_entity_world to the Iris ENTITIES program.`，世界里的 mesh 枪**受光影照明**
+   （夜里变暗、进照明块变亮），不发白也不全黑 → **2026-08-31 维护者一遍过**。
+   上一轮那条「失效」回报是当时默认关所致的正常回退（详见 §5.6）。
+   诊断键 `GPU world submit refused: <reason>` 留在原位，服务于将来「别的 mod 改了渲染结构」
+   这类情况。
 
 ### 5.6 已知边界（如实）
-- **光影下世界 GPU 路径失效（2026-08-31 维护者实机报告）**：表现为回退 collector（无光影时
-  一切正常）。根因未定位，先补了诊断：`TaczPolyMeshGunModel` 在被门闸拒收时按「原因去重」打
-  一条 INFO（`GPU world submit refused: <reason>`），`PolyMeshGpuRenderer#worldSubmitBlocker`
-  逐条重判门闸并给出第一条命中项；绘制侧异常本来就有 `LOGGER.error(..., e)` 带栈。
-  拿到 `refused:` 那行还是那条 ERROR，就能分清是「没提交」还是「画的时候抛异常」。
-  在此之前 `MeshGpuWorldUnderShaders` 保持默认 false（原版路径不受影响）。
+- **光影下世界 GPU 路径**：上一轮报的「失效」经核实是**默认关**（当时
+  `MeshGpuWorldUnderShaders=false` ⇒ 光影下世界语境按设计走 collector，不是缺陷）。维护者随后
+  打开该键复测：2026-08-31 **一遍过**（含 `Assigned mesh_entity_world to the Iris ENTITIES
+  program.` 那条）。R3 起该键默认 true。诊断日志留在原位，它以后要服务的场景是「别的 mod 改了
+  渲染结构」：`TaczPolyMeshGunModel` 被门闸拒收时按原因去重打一条 INFO
+  （`GPU world submit refused: <reason>`），`PolyMeshGpuRenderer#worldSubmitBlocker` 逐条重判
+  门闸给出第一条命中项；绘制侧异常本来就有带栈的 `LOGGER.error`。拿到 `refused:` 行还是那条
+  ERROR，就能分清「没提交」与「画的时候抛异常」。
 
-- 第 1 步 GPU 只覆盖**无光影 + 第一人称手部**；世界/GUI/第三人称/掉落物仍走
-  collector（36 万顶点级第三人称/掉落物仍有 CPU 成本，属后续步骤）。
+- 第 1 步的 GPU 覆盖范围只有「无光影 + 第一人称手部」；**世界/第三人称/掉落物自第 3 步起
+  进常驻 VBO，GUI 语境永久留在 collector**（那是设计边界，不是未完成项）。
+  36 万顶点级第三人称/掉落物的 CPU 成本问题即由此消解，但**帧时间收益没有量化数字**。
 - 光影下第 1 步默认回退 collector（`assignPipeline(HAND)` = 第 2 步，未做）。
 - PIP 二次渲染（`ScopePipRerender=true`）时镜内那遍会重放 collector 回调，
   poly 成本 ×2。降级方案见路线图方向 3，待镜内行为实机确认后做。

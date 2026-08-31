@@ -5,7 +5,71 @@
 
 ---
 
-## 未发版（2026-08-31，TML 第 3 步：世界语境常驻 VBO（`MeshGpuWorld`）；未改版本号）
+## 1.1.8+fabric.1.21.11.R3（2026-08-31，R3 收口轮；版本号已改）
+
+**本轮之上不再有独立的「未发版」段**：下面两条（TML 第 3 步、第 2 步 v2 收尾）连同本轮
+一起构成 R3 的内容。`mod_version` 从 `1.1.8+fabric.1.21.11.R2-hotfix2` 改为
+**`1.1.8+fabric.1.21.11.R3`**（去掉 `-hotfix` 后缀，与 26.2 侧 `5bb13af` 的 `R3` 做法一致；
+SemVer 核心仍是 `1.1.8`，构建元数据不参与比较，见 `gradle.properties` 注释）。
+
+- **实机状态更新**：第 3 步（世界语境常驻 VBO）维护者**两轮实机通过** —— 第一轮无光影
+  （26.2 那条「相对视角固定」的坑未复现），第二轮打开 `MeshGpuWorldUnderShaders` 后
+  **一遍过**（含 `Assigned mesh_entity_world to the Iris ENTITIES program.` 那条）。
+  上一轮报的「光影下失效」经核实是**当时默认关**，不是缺陷。
+- **默认值**：`MeshGpuUnderShaders` 与 `MeshGpuWorldUnderShaders` 由 false 改为 **true**
+  （`MeshGpuBaking` / `MeshGpuWorld` 本来就是 true）→ 四项 GPU 开关默认全开。
+  回退语义不变：钩子失联/绘制异常 ⇒ 分表静默回 collector，`catch (Exception | LinkageError)`，
+  **从不回写配置文件**。
+- **局内可配置（胶水轮次）**：`MeshyConfig` 的 **14 项全部**接进 Cloth「渲染」页 ——
+  新增 `MeshEnable` / `MeshPolyInPreview` / `MeshPolyInShadow` / `MeshLogStats` /
+  `MeshMaxRenderDistance` / `MeshGuiMaxVertices` / `MeshWorldMaxVertices` /
+  `MeshMaxModelVertices` 八条（此前只有 6 条）。逐条核对：`setDefaultValue` 与 TOML 默认值
+  一致、范围取自 `defineInRange` 不擅自收窄、en/zh 28 个 `config.tacz.client.render.mesh_*`
+  键齐平。这 8 项全部是**每帧/每次提交读值**（`shouldRenderPoly` / 预算判定 / 日志开关），
+  所以局内改立即生效，不存在「需要重启」的假选项。
+- **失败降级去掉配置回写（行为变更）**：第 1 步的手部 catch 沿用了 26.2 的
+  `MeshyConfig.GPU_BAKING.set(false)`，本轮删掉，只置内存标志 `gpuDisabledThisSession`。
+  两个理由：绘制线程里改配置可能触发磁盘写；且用户重启后会看到「GPU 烘焙自己关了」
+  而不知其因。世界表本来就是「分表 + 连续 30 次阈值 + 不回写」，现在两条路语义一致、
+  互不连坐。（对照论证：`REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A2。）
+- **TEMP 剥离**：`build.gradle` 里两段 `TEMP …` 诊断任务（`dumpHandFlushApi` /
+  `dumpWorldFlushProbe`，靠 `compileJava.finalizedBy` 搭 CI 便车输出 javap）改成
+  **`scripts/mesh_render_probe.gradle` + `-PmeshProbe` 显式开**，默认零成本、发布无遗留；
+  用法与「换 MC 版本只改哪三处」写在 [`TML_GPU_PROBE_TOOL_20260831.md`](TML_GPU_PROBE_TOOL_20260831.md)。
+  这一步同时做掉了 26.2 侧指导文档 `SYNC_GUIDE_REFAB_1211_20260830.md` §0.1 对本分支的要求。
+- **CI 对齐 26.2 的 v4（暂存件，未上线）**：`docs/ci/compile-check.yml` 是正式件的替换版，补
+  `1.21.11` 主分支 push + `pull_request` 触发、`concurrency` 取消过期 run、**日志回推只在
+  arena/\*\***。实测本沙箱凭据推不动 `.github/workflows/`（GitHub App 无 `workflows` 权限，
+  远端直接 `remote rejected`），所以本分支正式件仍是旧版，等维护者粘贴；
+  新建件 `build.yml`（全量 build + jar artifact + 四个静态校验）与 `consistency.yml` 放在
+  `docs/ci/`（沙箱 token 无 `workflows` 权限，按 AGENTS.md §1 由维护者粘贴上线），
+  清单见 [`docs/ci/README.md`](ci/README.md)。Java 用 21（26.x 是 25）。
+- **顺手抓到并删掉一个孤儿 mixin 配置**：`tacz.compat.acceleratedrendering.mixins.json`
+  在 1.21.11 上既没有对应的 `BedrockPartMixin` / `ARCompatMixinPlugin` 类，也不在任何
+  `fabric.mod.json` 的 `mixins` 数组里（本分支 AR 兼容是 `ARCompat` 空壳：AR 只发到 1.21.1、
+  其 API 面向旧的即时实体渲染器，这条理由写在该类注释里）⇒ 永不生效。26.2 侧同名配置**有**
+  实现，所以这条只适用于本纪元。新增的那条「mixin 配置注册性」校验就是为了它。
+- **文档**：`docs/README.md`（按 26.2 那轮的「现在 vs 当时」判据做索引；**存量文件不搬目录**，
+  因为跨分支账本按根路径互相引用，搬动会让别的分支的引用变幽灵）；
+  `docs/lineage/HANDOFF_LEDGER.md`（本分支副本，回填上游指向本分支的 4 行 + 新开 L-1…L-5）；
+  `docs/lineage/SYNC_GUIDE_1211_TO_2612_TML_GPU_20260831.md`（给 26.1.2 的 TML 整包移植指导：
+  文件清单、五条不可谈判不变量、26.1.2 必须先实测的 Q1-Q6、分步验收清单）；
+  `docs/REVIEW_UPSTREAM_TML_GPU_262_20260831.md`（对 26.2 GPU 层的只读审查 A1-A9）。
+  `MESH_LOADER.md` 里两处**已被第 3 步推翻的旧表述**同时改掉：
+  「GPU 路径只接管第一人称手部语境」和「运行期异常也会自写 `false`」（后者是 26.2 的做法）。
+- **核实无需搬的**：26.2 指导文档 §1.1 的「检视动画两连修」（`4aa8d7b` + `12d6f3c`）
+  本分支**已有等价实现**（`AnimationStateContext#stopAnimation` 的出生序号判据、
+  `ObjectAnimationRunner.SPAWN_COUNTER`、`AnimationStateMachine#trigger` 的栈式快照逐一核到）。
+
+**验证状态（如实记录）**：`bash scripts/check_release_consistency.sh --strict` 本地通过
+（6 ok / 0 fail / 1 warn：arena 分支名不是 MC 系列，属预期跳过）；`docs/ci/build.yml` 里那
+四个静态校验在写入时对本源码树逐个跑过，全绿；en/zh 语言键与 Cloth 条目、TOML 默认值的齐平
+用脚本核过（14 ↔ 14 ↔ 28）。**默认值翻转本身没有再跑实机**：翻的是两个已被实机 PASS 覆盖的
+开关，回退路径未变，但「新玩家首开即为 GPU 路径」这一整体形态尚未实测。
+
+---
+
+## TML 第 3 步：世界语境常驻 VBO（`MeshGpuWorld`）——内容归入上面的 R3
 
 把第 2 步 v2 的同一手法搬到世界那一次 flush：**常驻 VBO + 每帧只上传 O(骨骼) 个矩阵**，
 覆盖他人手持 / 掉落物 / 展示框 / 展示台雕像。依据与逐条 javap 见
@@ -57,14 +121,15 @@
   正确行为，但「光影下世界路径没生效」这类问题此前在 latest.log 里一个字都不留，无法定位。
 
 **验证状态（如实记录）**：**编译 ✅（CI 多次 `BUILD SUCCESSFUL`，无 error、无本仓新增告警）+
-静态审计 ✅（读的是 CI 上 1.21.11 / Iris 1.10.7 的真实 classpath）。2026-08-31 维护者实机第一轮：
-无光影下世界路径 PASS —— 最要紧那条「他人手持的 mesh 枪必须随相机正确移动」（隔壁同题材改动
-踩到的坑）未复现；光影下世界路径回退 collector（`MeshGpuWorldUnderShaders` 默认关，本轮尚无
-「开着它实测」的结论），其余清单条目（掉落物、展示框、预算解耦、GUI/镜内不泄漏、显存）未逐项回报。**
+静态审计 ✅（读的是 CI 上 1.21.11 / Iris 1.10.7 的真实 classpath）+ 实机 ✅（2026-08-31 维护者两轮：
+无光影与含光影 `MeshGpuWorldUnderShaders=true` 均通过，最要紧那条「他人手持的 mesh 枪必须随相机
+正确移动」（隔壁同题材改动踩到的坑）未复现）。**当时**那条「光影下世界路径失效」的回报经核实是
+默认关（R3 起默认开）。清单其余条目（掉落物与展示框逐条、预算解耦、GUI/镜内不泄漏、显存曲线）
+未逐项回报，仍按未验证对待。
 
 ---
 
-## 未发版（2026-08-31，TML 第 2 步 v2：mesh GPU pass 开进手部 flush；未改版本号）
+## TML 第 2 步 v2：mesh GPU pass 开进手部 flush ——内容归入上面的 R3
 
 > **2026-08-31 更新：本节描述的实机验收由维护者报告 PASS**（含光影下常驻 VBO 正常受光、
 > 无光影回归不退化）。因此第 0/1/2 步不再是「仅编译通过」。`MeshGpuUnderShaders` 仍保持
@@ -118,7 +183,7 @@
 
 ---
 
-## 未发版（2026-08-27，叠在 R2-hotfix2 之上，未改版本号）
+## 2026-08-27 轮（叠在 R2-hotfix2 之上）——内容归入上面的 R3
 
 **跟进：26.2 排查的长按幽灵使用 / 耳鸣资源。任务 C（消声注入点）按该线实测有效，未改。**
 
