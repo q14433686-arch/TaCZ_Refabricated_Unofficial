@@ -22,6 +22,24 @@ NV 卡未实测，征测点见 Release 说明）：
   （逐骨骼常驻 VBO、光照 4 级量化烘焙、光影下走 vanilla RenderType 管道、
   光影开关翻转触发重烘、GPU 失败自动回退 collector）、世界语境顶点预算门
   与 16 格近距全模豁免。文档：[MESH_LOADER.md](MESH_LOADER.md)。
+- **世界语境 GPU 烘焙（多人高模枪帧数保卫战）**：其他玩家第三人称手持、
+  掉落物、展示框、展示台雕像共用常驻 VBO，每枪每帧只传 O(骨骼) 矩阵；
+  光照按量化档 LRU 缓存（`MeshGpuLightCacheSize`）+ 每帧烘焙额度
+  （`MeshGpuBakeBudgetPerFrame`）防逐出-重烘打摆 + 逐出 VBO 延迟一帧释放。
+  两轮实机返修已含：世界消费点钉在 `PreparedFrame.executeSolid` RETURN
+  （MV 栈顶=viewRotation，字节码取证）、Iris 法线矩阵取自绘制时刻 MV 栈
+  （弹栈时机后移）。**光影下世界枪照明待实测**，异常时游戏内关
+  `MeshGpuWorld` 即回到 R3 前行为。
+- **姊妹分支审查回合（A1-A10）**：吸收 1.21.11 分支对本仓 GPU 层的静态审查
+  ——异常降级分表化（世界失败不连坐手部）+ 不再从渲染线程回写配置文件 +
+  `LinkageError` 也接住（跨版本兼容问题回退而非崩溃）+ 渲染目标 override
+  防御 + 顶点格式 stride 哨兵 + 烘焙额度独立旋钮；`PolyMesh` 退化面不再写
+  零法线（光影下 NaN 随机高光）。诊断开关三件
+  （`MeshPolyMirrorReverseWinding`/`MeshPolyInvertNormals`/
+  `MeshPolyPreferPackNormals`）与 `IlluminatedRealSky` **默认全关**——
+  绕序反转与 RealSky 均被姊妹分支实机否证为默认值（详见
+  MESH_LOADER.md §5.2-ter），保留为按包诊断项。A4/A9 两条以
+  Iris 26.2 源码证据驳回，证据链在代码注释里。
 - **镜内裁剪三件套**：光影下开镜时第一人称手臂、瞄具挂载文字（如 MK5HD
   弹药计数）与准星一致地裁剪在目镜圆孔内。
 - **瞄具文字 `Format error:` 前缀修复**：26.2 的 `I18n.get` 是格式化接口，

@@ -222,8 +222,8 @@ b4cb497 已修**——审查与修复赛跑，基线早于修复）：
 | A7 handModelView 误导 | 部分误读+采纳 | 「挂错入口」指 587763c，b4cb497 已修（executeSolid RETURN，栈顶=viewRotation）；变量改名 `drawModelView`，前置条件写成两 pass 对照注释 |
 | A8 静默降级 | 采纳（轻量） | 烘焙额度耗尽补一次性 INFO |
 | A9 布尔标志跨帧残留 | **不采纳** | 26.2 `Minecraft#runTick` 的 extract(441)→render(520) 是无条件顺序（字节码），beginFrame 必然逐帧先行；帧号机制为不存在的前提付复杂度 |
-| A10 镜像绕序+法线 | **采纳** | PolyMesh 重写：镜像时发射序倒转（对照物=本仓 BedrockPolygon 的 mirror 处理）、退化面回退枪包法线/确定值（绝不写零向量）、三开关 `MeshPolyMirrorReverseWinding`(true)/`MeshPolyInvertNormals`(false)/`MeshPolyPreferPackNormals`(false)，构造期读取、资源重载生效 |
-| A10 续 `_illuminated` 天空光 | **采纳，且按其 26.2 建议做两层** | 新 `IlluminatedRealSky`（`RenderConfig`，默认 true）：光影下 block=15、sky=环境真值；立方体层（BedrockPart）与 poly 层（collector+GPU 烘焙）走同一个 `IlluminatedLights.resolve()`，一把枪两半行为一致 |
+| A10 镜像绕序+法线 | **部分采纳（绕序默认关）** | PolyMesh 重写落地，但「镜像时反转绕序」**已被姊妹 1.21.11 分支实机否证**：collector 走 entityCutout（剔背面），反转后被剔掉的是朝外的面 ⇒ 整枪近乎全黑（同包同光影拿 Forge 原版对照，「关着才对」）。真实枪包的绕序本就与镜像自洽。留下的实改：退化面不写零法线（防 NaN 随机高光）+ 三开关 `MeshPolyMirrorReverseWinding`(**false**)/`MeshPolyInvertNormals`(false)/`MeshPolyPreferPackNormals`(false)，构造期读取、资源重载生效 |
+| A10 续 `_illuminated` 天空光 | **采纳机制，默认关** | 新 `IlluminatedRealSky`（`RenderConfig`，**默认 false**）：光影下 block=15、sky=环境真值；立方体层（BedrockPart）与 poly 层（collector+GPU 烘焙）走同一个 `IlluminatedLights.resolve()`，两半一致。默认关的依据：姊妹分支 A/B 实测把「继承日月亮度」症状追到了别的根因（它们的自开 GPU pass），本开关在那边没起效 —— 保留为诊断项，等有人复现「开了就好」再考虑默认开 |
 
 全部新配置已接 Cloth Config 界面 + 双语言键。以上均为静态验证（编译级），
 光影下的实机验证并入 §5.2-bis 第 6 项。

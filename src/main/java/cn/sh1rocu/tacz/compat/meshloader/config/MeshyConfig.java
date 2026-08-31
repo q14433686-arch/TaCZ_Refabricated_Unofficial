@@ -27,7 +27,6 @@ public final class MeshyConfig {
     public static ForgeConfigSpec.BooleanValue POLY_MIRROR_REVERSE_WINDING;
     public static ForgeConfigSpec.BooleanValue POLY_INVERT_NORMALS;
     public static ForgeConfigSpec.BooleanValue POLY_PREFER_PACK_NORMALS;
-    public static ForgeConfigSpec.BooleanValue POLY_ILLUMINATED_REAL_SKY;
     public static ForgeConfigSpec.IntValue GUI_MAX_VERTICES;
     public static ForgeConfigSpec.IntValue WORLD_MAX_VERTICES;
     public static ForgeConfigSpec.DoubleValue WORLD_FULL_DETAIL_DISTANCE;
@@ -119,14 +118,14 @@ public final class MeshyConfig {
                 "Does not change rendering; tells pack authors the model is too dense.");
         MAX_MODEL_VERTICES = builder.defineInRange("MeshMaxModelVertices", 120000, 0, 10_000_000);
 
-        builder.comment("poly_mesh positions are Y-mirrored at load; a single-axis mirror flips",
-                "every face's front/back. Upstream TML never reverses the emit winding to",
-                "match, so baked outward normals contradict gl_FrontFacing - invisible in",
-                "vanilla (no culling, entity shader ignores normals) but shader packs that",
-                "do 'normal *= gl_FrontFacing ? 1 : -1' put highlights on the wrong side.",
-                "true = reverse winding on mirrored meshes (matches how TACZ's own",
-                "BedrockPolygon handles mirror). Requires resource reload to take effect.");
-        POLY_MIRROR_REVERSE_WINDING = builder.define("MeshPolyMirrorReverseWinding", true);
+        builder.comment("Reverse the emit winding of Y-mirrored poly meshes. DEFAULT OFF -",
+                "the sister 1.21.11 branch field-tested ON and got near-black guns: the",
+                "collector path's entityCutout culls backfaces, and with reversal the",
+                "culled side is the outward one (same-pack/same-shader Forge control",
+                "confirmed 'off is correct' - real packs' winding is already consistent",
+                "with the mirror). Kept as a diagnostic toggle only.",
+                "Requires resource reload to take effect.");
+        POLY_MIRROR_REVERSE_WINDING = builder.define("MeshPolyMirrorReverseWinding", false);
 
         builder.comment("Diagnostic: flip all baked poly_mesh normals. Only for testing packs",
                 "whose meshes were authored inside-out. Requires resource reload.");
@@ -139,14 +138,7 @@ public final class MeshyConfig {
                 "Requires resource reload.");
         POLY_PREFER_PACK_NORMALS = builder.define("MeshPolyPreferPackNormals", false);
 
-        builder.comment("'_illuminated' bones are forced to full brightness 0xF000F0 - both the",
-                "block AND the sky light column maxed. Vanilla needs both (the lightmap",
-                "multiplies the two columns), but shader packs read sky=15 as 'this surface",
-                "can see the sky', so glowing sights inherit sun/moon lighting at night.",
-                "true = when a shader pack is active, keep block=15 but use the real",
-                "environment sky light for poly_mesh illuminated bones. Cube-layer",
-                "illuminated bones are unaffected (that convention belongs to TACZ core).");
-        POLY_ILLUMINATED_REAL_SKY = builder.define("MeshPolyIlluminatedRealSky", true);
+
 
         builder.pop();
     }

@@ -265,8 +265,11 @@ public class RenderConfig {
                 "so glowing parts inherit sun/moon lighting at night. true = when a shader",
                 "pack is active, keep block=15 but use the real environment sky light.",
                 "Applies to both the cube layer and the poly_mesh layer so the two halves",
-                "of one gun stay consistent. No effect without a shader pack.");
-        ILLUMINATED_REAL_SKY = builder.define("IlluminatedRealSky", true);
+                "of one gun stay consistent. No effect without a shader pack.",
+                "DEFAULT OFF for release: the sister branch's A/B test traced its",
+                "sun/moon symptom to a different root cause, so this stays opt-in",
+                "until someone reproduces the symptom with this toggle fixing it.");
+        ILLUMINATED_REAL_SKY = builder.define("IlluminatedRealSky", false);
 
         builder.comment("How far to display the lod model, 0 means always display");
         GUN_LOD_RENDER_DISTANCE = builder.defineInRange("GunLodRenderDistance", 0, 0, Integer.MAX_VALUE);
