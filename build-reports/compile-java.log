@@ -1,4 +1,4 @@
-commit: 9626fe7c507af2edfe9b7ffc1dd4898ac704eb79
+commit: 99e505f62cdfe07b52376cd0fbdea6769dd28ef4
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -21,87 +21,7 @@ Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
-=== MC4 minecraft-merged-9d5daa536c-26.1.2.jar
------ BEGIN4 net.minecraft.client.renderer.feature.FeatureRenderDispatcher
-  public void renderSolidFeatures();
-  public void renderTranslucentFeatures();
-  public void renderTranslucentParticles();
-  public void renderAllFeatures();
-         1: invokevirtual #220                // Method renderSolidFeatures:()V
-         5: invokevirtual #222                // Method renderTranslucentFeatures:()V
-         9: invokevirtual #224                // Method renderTranslucentParticles:()V
------ END4 net.minecraft.client.renderer.feature.FeatureRenderDispatcher
------ BEGIN4 net.minecraft.client.renderer.GameRenderer
-  private void renderItemInHand(net.minecraft.client.renderer.state.level.CameraRenderState, float, org.joml.Matrix4fc);
-         9: getfield      #256                // Field featureRenderDispatcher:Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;
-        12: invokevirtual #709                // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderAllFeatures:()V
-        57: invokestatic  #731                // Method com/mojang/blaze3d/systems/RenderSystem.getModelViewStack:()Lorg/joml/Matrix4fStack;
-  public void renderLevel(net.minecraft.client.DeltaTracker);
-       303: invokestatic  #1451               // Method com/mojang/blaze3d/systems/RenderSystem.setProjectionMatrix:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V
-       488: invokestatic  #1451               // Method com/mojang/blaze3d/systems/RenderSystem.setProjectionMatrix:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V
-       491: invokestatic  #425                // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/blaze3d/systems/GpuDevice;
-       567: getfield      #256                // Field featureRenderDispatcher:Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;
-       570: invokevirtual #709                // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderAllFeatures:()V
-       595: invokestatic  #1510               // Method com/mojang/blaze3d/systems/RenderSystem.setShaderFog:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V
-  private static void lambda$takeAutoScreenshot$0(java.nio.file.Path, com.mojang.blaze3d.platform.NativeImage);
-  private static void lambda$takeAutoScreenshot$1(com.mojang.blaze3d.platform.NativeImage, java.nio.file.Path);
-  private void lambda$tryTakeScreenshotIfNeeded$0(java.nio.file.Path);
-  private void lambda$renderActiveTextDebug$0(net.minecraft.client.renderer.state.gui.GuiRenderState, net.minecraft.client.renderer.state.gui.GuiTextRenderState);
-  private java.lang.String lambda$extractGui$2() throws java.lang.Exception;
-  private java.lang.String lambda$extractGui$1() throws java.lang.Exception;
-  private java.lang.String lambda$extractGui$0() throws java.lang.Exception;
-  private static java.lang.String lambda$preloadUiShader$0(net.minecraft.server.packs.resources.ResourceProvider, net.minecraft.resources.Identifier, com.mojang.blaze3d.shaders.ShaderType);
------ END4 net.minecraft.client.renderer.GameRenderer
------ BEGIN4 net.minecraft.client.renderer.LevelRenderer
-  public void renderLevel(com.mojang.blaze3d.resource.GraphicsResourceAllocator, net.minecraft.client.DeltaTracker, boolean, net.minecraft.client.renderer.state.level.CameraRenderState, org.joml.Matrix4fc, com.mojang.blaze3d.buffers.GpuBufferSlice, org.joml.Vector4f, boolean, net.minecraft.client.renderer.chunk.ChunkSectionsToRender);
-        45: invokestatic  #915                // Method com/mojang/blaze3d/systems/RenderSystem.getModelViewStack:()Lorg/joml/Matrix4fStack;
-  private static java.util.SortedSet lambda$destroyBlockProgress$0(long);
-  private static void lambda$addSkyPass$0(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.level.SkyRenderState, net.minecraft.client.renderer.SkyRenderer);
-         1: invokestatic  #2464               // Method com/mojang/blaze3d/systems/RenderSystem.setShaderFog:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V
-  private static void lambda$prepareChunkRenders$1(int, com.mojang.blaze3d.buffers.GpuBufferSlice[], com.mojang.blaze3d.systems.RenderPass$UniformUploader);
-  private static java.util.List lambda$prepareChunkRenders$0(int);
-  private void lambda$addLateDebugPass$0(com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.resource.ResourceHandle, net.minecraft.client.renderer.state.level.CameraRenderState, org.joml.Matrix4fc);
-         1: invokestatic  #2464               // Method com/mojang/blaze3d/systems/RenderSystem.setShaderFog:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V
-        34: putstatic     #2543               // Field com/mojang/blaze3d/systems/RenderSystem.outputColorTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
-        49: putstatic     #2549               // Field com/mojang/blaze3d/systems/RenderSystem.outputDepthTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
-        73: invokestatic  #2557               // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/blaze3d/systems/GpuDevice;
-       111: putstatic     #2543               // Field com/mojang/blaze3d/systems/RenderSystem.outputColorTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
-       115: putstatic     #2549               // Field com/mojang/blaze3d/systems/RenderSystem.outputDepthTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
-  private void lambda$addWeatherPass$0(com.mojang.blaze3d.buffers.GpuBufferSlice, int);
-         1: invokestatic  #2464               // Method com/mojang/blaze3d/systems/RenderSystem.setShaderFog:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V
-  private void lambda$addCloudsPass$0(int, net.minecraft.client.CloudStatus, float, int, net.minecraft.world.phys.Vec3, long, float);
-  private void lambda$addMainPass$0(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.level.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, net.minecraft.client.renderer.chunk.ChunkSectionsToRender, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, org.joml.Matrix4fc);
-         1: invokestatic  #2464               // Method com/mojang/blaze3d/systems/RenderSystem.setShaderFog:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V
-        77: invokestatic  #2557               // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/blaze3d/systems/GpuDevice;
-       155: invokestatic  #2557               // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/blaze3d/systems/GpuDevice;
-       261: ldc_w         #2674               // String renderSolidFeatures
-       270: getfield      #320                // Field featureRenderDispatcher:Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;
-       273: invokevirtual #2676               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderSolidFeatures:()V
-       378: ldc_w         #2685               // String renderTranslucentFeatures
-       387: getfield      #320                // Field featureRenderDispatcher:Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;
-       390: invokevirtual #2687               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderTranslucentFeatures:()V
-       522: getfield      #320                // Field featureRenderDispatcher:Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;
-       525: invokevirtual #2709               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderTranslucentParticles:()V
-       534: getfield      #320                // Field featureRenderDispatcher:Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;
-       537: invokevirtual #2712               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.clearSubmitNodes:()V
-  private void lambda$renderLevel$0(org.joml.Vector4f);
-         8: invokestatic  #2557               // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/blaze3d/systems/GpuDevice;
------ END4 net.minecraft.client.renderer.LevelRenderer
------ BEGIN4 net.minecraft.client.renderer.ItemInHandRenderer
-  public void renderHandsWithItems(float, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.SubmitNodeCollector, net.minecraft.client.player.LocalPlayer, int);
-       278: invokevirtual #640                // Method net/minecraft/client/renderer/GameRenderer.getFeatureRenderDispatcher:()Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;
-       281: invokevirtual #645                // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderAllFeatures:()V
-  private static void lambda$renderMap$0(int, com.mojang.blaze3d.vertex.PoseStack$Pose, com.mojang.blaze3d.vertex.VertexConsumer);
------ END4 net.minecraft.client.renderer.ItemInHandRenderer
------ BEGIN4 net.minecraft.client.renderer.LevelRenderer$1
------ END4 net.minecraft.client.renderer.LevelRenderer$1
------ BEGIN4 net.minecraft.client.renderer.LevelRenderer$BrightnessGetter
-  private static int lambda$static$0(net.minecraft.world.level.BlockAndLightGetter, net.minecraft.core.BlockPos);
------ END4 net.minecraft.client.renderer.LevelRenderer$BrightnessGetter
------ BEGIN4 net.minecraft.client.renderer.LevelRenderer$FinalizedGizmos
------ END4 net.minecraft.client.renderer.LevelRenderer$FinalizedGizmos
-=== PROBE4-DONE
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788206683221.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788206927508.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -111,7 +31,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 4s
+BUILD SUCCESSFUL in 1m 16s
 1 actionable task: 1 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
