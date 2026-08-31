@@ -27,11 +27,20 @@
   `TextRenderable` 自带 `textureView()` 与 `render(Matrix4f, VertexConsumer, int, boolean)` ⇒ 按页分组反而更省事；
   `shaders/core/` 里没有 `rendertype_text.json`（管线由 Java 侧 `RenderSetup` 定义），本 era 的
   `rendertype_text.fsh/.vsh` 原文已随探针打出并抄进评估篇，作为 `scope_text_final.fsh` 的克隆底版。
-- 挂了 TEMP javap 探针（v3→v4）（`build.gradle`，`compileJava.finalizedBy`）：查 1.21.11 是否
-  存在 `LevelRenderer#extractLevel` + `LevelRenderState#reset`（决定 A 要不要抄重提取）、
-  `SubmitNodeStorage#clear`、字体侧 `Font#prepareText`/`PreparedText#visit`/`GlyphVisitor`/
-  `TextRenderable$Styled`/`RenderPipelines.TEXT`（决定 B 能不能落），并顺带从编译类路径的 jar 里 dump
-  本 era 的 `rendertype_text.fsh/.vsh/.json` 原文（克隆掩码着色器的底版）。结论回来后再决定实现，探针块随即删除。
+- 挂了 TEMP javap 探针（`build.gradle`，`compileJava.finalizedBy`，v3→v4→v5 三轮，结论到手即删）。
+  **v4 把 A 的依据收紧、B 的做法定型**：本世代 `state.LevelRenderState#reset()` 确实存在并被调用
+  （`LevelRenderState.reset:()V` 在字节码 @1021），但 `WeatherEffectRenderer.extractRenderState` @295、
+  `SkyRenderer.extractRenderState` @327、`WorldBorderRenderer.extract` @376、`ParticleEngine.extract` @814
+  与它在**同一个方法体的单调偏移序列**里 ⇒ 本世代是"每次调用自填自清"，不是 26.1.2 的"先 extract 后 render"
+  两段式 ⇒ A 仍判**不加**（方法名归属由 v5 的带上下文 dump 钉死，若不在 `renderLevel` 里则 A 重开）；
+  另 `LevelRenderer` 自带 `private final SubmitNodeStorage submitNodeStorage` 并在同一方法体内两次调
+  `renderAllFeatures()` ⇒ 窄遍的提交在窄遍内部就冲掉，不会攒给主遍 ⇒ 他们的 `clear()` 对我们仍是空操作。
+  B 侧零件全部对上我们树上现成写法（`clonePipeline(RenderPipelines.TEXT)` + `withFragmentShader` +
+  既有两条深度 uniform + `RenderSetup.builder(...).withTexture(...)` + `RenderType.create(name, setup)` +
+  `DepthCopyRenderType(Operation.MASK)` + `assignPipelineToIris("HAND_TRANSLUCENT")`），落地清单见评估篇 §2.2；
+  `AbstractTexture`（三个 protected 字段 + `getTextureView()`）与 `TextureManager#register(Identifier, AbstractTexture)`
+  证明他们的"壳纹理"在本世代同样可行。v5 只欠 `RenderSetup$RenderSetupBuilder` 的 `withTexture` 重载表
+  （有吃 `GpuTextureView` 的重载就省掉壳纹理）。
 - 他们 `3e4eeb16` 把 `MeshGpuUnderShaders`/`MeshGpuWorldUnderShaders` 默认改回 ON（R3）——与我们这边的
   B 测结论相反（`9c29572` 退回 false）。本轮**不跟**，已回问其实测数据；账本 L-11 记了这个来回。
 

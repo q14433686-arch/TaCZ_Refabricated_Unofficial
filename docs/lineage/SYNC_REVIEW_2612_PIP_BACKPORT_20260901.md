@@ -52,6 +52,21 @@ PIP 的窄 FOV 遍在主遍**之前**多调一次 `renderLevel` ⇒ 把袋子消
 - `SubmitNodeStorage` 同时有 `public void clear()` 与 `public void endFrame()`；而**我们自己的**
   `mixin/client/FeatureRenderDispatcherMixin` 类注释里已有一条字节码记录：
   「`renderAllFeatures()` 自身以 `submitNodeStorage.clear()` 收尾」。
+- 探针 v4（同一条 javap 通道，多跑了一轮 `-c`）把两边都收紧了一点，**结论不变但依据要写准**：
+  - `state.LevelRenderState` **确实**有 `public void reset()`，且在 `LevelRenderer` 的字节码里被调用
+    （`1021: invokevirtual …LevelRenderState.reset:()V`）⇒ 「一次性燃料」这个机制我们世代**也有**；
+  - 关键差别在前半段：同一个方法体的偏移序列里，
+    `295 WeatherEffectRenderer.extractRenderState → 327 SkyRenderer.extractRenderState →
+    376 WorldBorderRenderer.extract → 814 ParticleEngine.extract → 1021 reset()` 是**单调递增后归零**的
+    （归零说明这些偏移全在**同一个**方法体里）⇒ 本世代是「每次调用自填 + 自清」，而不是 26.1.2 的
+    「先 extract 一段、后 render 一段」两段式 ⇒ 窄遍自填自清，主遍再自填自清，**饿不着**；
+  - `LevelRenderer` 自己也持有 `private final SubmitNodeStorage submitNodeStorage`，并在同一个方法体里
+    **两次**调 `FeatureRenderDispatcher.renderAllFeatures()`（主通道一次、粒子节点一次）⇒ 窄遍的提交在
+    窄遍内部就冲掉了，不会攒到主遍变成重影/半透明加倍；他们的 `LevelRendererAccessor` 在我们这边技术上
+    可行（字段名可访问），只是没有要防的东西。
+  - ⚠ 「同一个方法体 = `renderLevel`」这一步目前是从偏移归零规律推的，方法名归属要等 v5 的**带上下文**
+    dump（v5 已把 needle 命中行连同前 9 行的方法签名一起打出来）⇒ 若归属不在 `renderLevel` 而在别处，
+    A 的判定**重开**。
 
 ⇒ **判定：A 不加。** 他们的第 2 步（重提取）在我们世代结构上不成立 —— 没有"主遍之前一次性填好、消费即清空"
 的相位；他们的第 1 步（清提交节点）对我们是空操作 —— 窄遍自己那次 `renderAllFeatures()` 已经 clear 过。
@@ -140,10 +155,24 @@ void main() {
 `.vsh` 用 vanilla `rendertype_text.vsh`（含 `Sampler2` 光照纹理那行，别漏 —— 我们的 `scope_*` 着色器不写 UV2，
 但文字走 `DefaultVertexFormat` 的那条要带）。
 
-**还缺的事实**（探针 v4 在问，本轮已把 TEMP 块改成 v4）：本世代 `RenderPipelines` 里 TEXT 那族的常量名、
-`RenderSetup`/`RenderPipeline` 能不能挂额外 `Sampler2D`（`tacz_ScopeWorldDepth` 那两条在我们 reticle 管线里
-是**怎么**挂的，照着抄即可，但要先确认 API 形状）、`AbstractTexture`/`TextureManager` 是否支撑"壳纹理"绑定
-（若 1.21.11 的 `RenderType` 已改为直接吃 `GpuTextureView`，那连壳纹理都不需要 —— 可能比他们更省事）。
+### 2.2 探针 v4 之后的落地清单（B 的全部零件在我们树上都有对应物）
+
+v4 把 B 剩下的疑问基本清掉了，**逐条映射**如下（左：他们 1.20.1 世代的做法；右：我们树上现成的同款设施）：
+
+| 部件 | 1.21.11 实测 | 我们要写的 |
+|---|---|---|
+| 克隆源管线 | `net.minecraft.client.renderer.RenderPipelines.TEXT` 存在（类型是 `RenderPipeline`，同族还有 `TEXT_BACKGROUND`/`TEXT_INTENSITY`/`TEXT_SEE_THROUGH`） | 用我们自己的 `clonePipeline(TEXT, Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_text_final"))` |
+| 换着色器 | `RenderPipeline.Builder#withFragmentShader(Identifier)` —— 我们的 `createEtchedReticlePipeline()` 正是这么指向 `core/scope_reticle_mask` 的 | `withFragmentShader(... "core/scope_text_final")` + 新增那个 fsh |
+| 挂两个深度采样器 | `Builder#withSampler(String)`（我们用 `ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM` / `APERTURE_SAMPLER_UNIFORM`） | 同一对 uniform 常量，**不需要新 uniform** |
+| 绑纹理 | `RenderSetup.builder(pipeline).withTexture("Sampler0", Identifier)` + `.useLightmap().useOverlay()` → `RenderType.create(name, setup)` | `maskedText(pageAtlasId)`：`Sampler0` 绑图集页、两条深度采样器绑占位纹理，再由 `DepthCopyRenderType(..., Operation.MASK)` 在 draw 时换成活的深度拷贝 —— **和蚀刻准星一模一样** |
+| Iris 归类 | `IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_text")` 是树上现成调用 | 一行 |
+| 页→可绑定对象 | `AbstractTexture` 只有 `getTexture()/getTextureView()/getSampler()` + 三个 protected 字段；`TextureManager#register(Identifier, AbstractTexture)` 存在 | 他们的"壳 `AbstractTexture` + 每帧刷新指向"在我们世代**同样成立**（protected `textureView` 可直接赋值）；若 v5 证明 `RenderSetupBuilder` 有吃 `GpuTextureView` 的重载，连壳纹理都省了 |
+| 有效性闸门 | `ScopeDepthCopyState` 已有 `worldDepthTarget()/apertureDepthTarget()` 与 `Operation.MASK` 的重绑流程 | 加一个"本帧是否走完备份+孔径拷贝周期"的判据，掩码不可用即 `submit` 返回 false |
+| 接入点 | 我们的 `TextShowRender` 与他们改前逐字同形 | 照抄他们的 `clipToScopeMask` 旗 + 失败回退 vanilla `submitText` |
+
+⇒ 新增文件实际只有 **1 个 shader + 1 个类**（`ScopeTextSubmitter`，约 150-180 行），其余都是既有类各加一段。
+**v5 只剩一件事**：`RenderSetup$RenderSetupBuilder` 的全部 `withTexture` 重载（决定要不要壳纹理），
+顺带把 A 的方法归属钉死。
 
 ---
 

@@ -409,7 +409,7 @@ if (project.hasProperty('meshProbe')) {
 // AbstractTexture/TextureManager 能否支撑「图集页→壳纹理」绑定，外加把 A 的结论钉在 renderLevel 的
 // 字节码上（提取与 clear 的真实调用位置）。输出进 build-reports/compile-java.log（CI 会 commit 回来），
 // 结论到手即删除本块。
-tasks.register('dumpPipPortProbeV4') {
+tasks.register('dumpPipPortProbeV5') {
     doLast {
         try {
             def cpFiles = sourceSets.main.compileClasspath.files.collect { it.absolutePath }
@@ -463,14 +463,45 @@ tasks.register('dumpPipPortProbeV4') {
                     }
                 }
             }
+            def dumpCtx = { String cls, String regex, int back ->
+                def proc = new ProcessBuilder([javapExe, '-classpath', cp, '-p', '-c', cls]).redirectErrorStream(false).start()
+                def out = proc.inputStream.getText('UTF-8')
+                proc.waitFor()
+                println "===== javap -c ${cls} (needle 命中行 + 前 ${back} 行) ====="
+                if (!out?.trim()) {
+                    println '(no output)'
+                    return
+                }
+                def lines = out.readLines()
+                def keep = new boolean[lines.size()]
+                def pat = java.util.regex.Pattern.compile(regex)
+                lines.eachWithIndex { line, idx ->
+                    if (pat.matcher(line).find()) {
+                        def from = Math.max(0, idx - back)
+                        for (int k = from; k <= idx && k < lines.size(); k++) {
+                            keep[k] = true
+                        }
+                    }
+                }
+                lines.eachWithIndex { line, idx ->
+                    if (keep[idx]) {
+                        println '  ' + lines[idx].replaceAll(/^\s+/, '').take(190)
+                    }
+                }
+            }
             // ---- A: 把「renderLevel 自己完成提取、不留残袋」钉死在字节码上 ----
             dumpC('net.minecraft.client.renderer.LevelRenderer', ['.extract', 'LevelRenderState.reset',
                     'submitNodeStorage', 'renderAllFeatures', 'clear()'])
             dump('net.minecraft.client.renderer.state.LevelRenderState', [])
+            dumpCtx('net.minecraft.client.renderer.LevelRenderer',
+                    '(LevelRenderState\\.reset|extractVisible|extractBlock|WeatherEffectRenderer\\.extract|SkyRenderer\\.extract|submitNodeStorage\\.clear|renderAllFeatures)', 9)
             dump('net.minecraft.client.renderer.GameRenderer', ['renderLevel', 'extract', 'featureRenderDispatcher'])
             // ---- B: 本世代 TEXT 管线与 RenderSetup 能力面 ----
             dump('net.minecraft.client.renderer.RenderPipelines', [])
             dump('net.minecraft.client.renderer.rendertype.RenderSetup', [])
+            dump('net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder', [])
+            dump('net.minecraft.client.renderer.rendertype.RenderSetup$TextureAndSampler', [])
+            dump('net.minecraft.client.renderer.rendertype.RenderType', ['text', 'Text', 'TextureView', 'sprite'])
             dump('com.mojang.blaze3d.pipeline.RenderPipeline', [])
             dump('net.minecraft.client.gui.Font$DisplayMode', [])
             dump('net.minecraft.client.renderer.texture.AbstractTexture', [])
@@ -514,7 +545,7 @@ tasks.register('dumpPipPortProbeV4') {
         }
     }
 }
-compileJava.finalizedBy('dumpPipPortProbeV4')
+compileJava.finalizedBy('dumpPipPortProbeV5')
 
 
 
