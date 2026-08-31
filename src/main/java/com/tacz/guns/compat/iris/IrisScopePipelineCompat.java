@@ -70,6 +70,8 @@ public final class IrisScopePipelineCompat {
     /** 已经为哪一套主管线预热过。主管线换了（重载光影包/切维度）就要重来。 */
     private static Object prewarmedAgainst;
     private static boolean loggedPrewarm;
+    /** Voxy 那一套是否已经尘埃落定（建好了，或确定用不上）。稳态快速路径就看它。 */
+    private static boolean voxyStackSettled;
 
     /**
      * 是否正处在「瞄具那套 Iris 管线的构造过程」之中。
@@ -114,6 +116,21 @@ public final class IrisScopePipelineCompat {
     private static double wantedShadowScale() {
         return RenderConfig.SCOPE_PIP_SHADOW_SCALE == null
                 ? 1.0d : RenderConfig.SCOPE_PIP_SHADOW_SCALE.get();
+    }
+
+    /**
+     * {@code LevelExtractor.allChanged()} 真的执行了 —— 也就是 Voxy 刚把整个
+     * {@code VoxyRenderSystem} 拆了重建（改区块视距、F3+A、切资源包都会走到这里）。
+     *
+     * <p>光靠 {@link #prewarmIfNeeded()} 是发现不了的：它的稳态快速路径盯的是
+     * <b>Iris 主管线</b>有没有换人，而 {@code allChanged()} 根本不碰 Iris 管线，
+     * 于是 {@code voxyStackSettled} 一直是 true，逐帧直接返回，
+     * 永远不会去问一句「Voxy 还是原来那个吗」。必须由这条事件打破快速路径。</p>
+     */
+    public static void onLevelRendererReload() {
+        // 顺序：先把已经失效的那一套还回去，再把状态机打回「需要重新检查」。
+        com.tacz.guns.compat.voxy.VoxyScopePipelineCompat.onRendererRebuilt();
+        voxyStackSettled = false;
     }
 
     private IrisScopePipelineCompat() {
@@ -229,9 +246,11 @@ public final class IrisScopePipelineCompat {
                     preparePipeline.invoke(manager, real);
                 }
             }
-            // 预热状态随这套管线一起失效。
+            // 预热状态随这套管线一起失效；Voxy 第二套栈绑的就是这套管线，一并失效。
             prewarmedAgainst = null;
             appliedShadowScale = Double.NaN;
+            voxyStackSettled = false;
+            com.tacz.guns.compat.voxy.VoxyScopePipelineCompat.onRendererRebuilt();
             GunMod.LOGGER.info("[TACZ Scope] Released the idle scope-pass Iris pipeline to reclaim GPU memory.");
             return true;
         } catch (Throwable t) {
@@ -290,8 +309,26 @@ public final class IrisScopePipelineCompat {
                     appliedShadowScale = wantedShadowScale();
                 }
             }
-            // 【稳态快速路径】本方法逐帧都会被调到，「已就绪」必须最便宜。
-            if (prewarmedAgainst == mainPipeline) {
+            // 【稳态快速路径】本方法逐帧都会被调到，所以「已经全部就绪」这条必须最便宜。
+            // 主管线没换人、且 Voxy 那套也建好了 —— 直接回，不去碰任何 Voxy 反射。
+            if (prewarmedAgainst != mainPipeline) {
+                voxyStackSettled = false;
+            }
+            if (prewarmedAgainst == mainPipeline && voxyStackSettled) {
+                return;
+            }
+
+            // 慢路径：只有还没就绪时才走。Voxy 的第二套栈可能要等它自己先建好，
+            // 所以这里每帧问一次 —— 光看「管线预热过没有」会漏掉
+            // 「预热那一刻 Voxy 还没就绪」的情况。
+            Object voxy = com.tacz.guns.compat.voxy.VoxyCompat.renderSystem();
+            boolean voxyUsable = voxy != null
+                    && com.tacz.guns.compat.voxy.VoxyScopePipelineCompat.isAvailable();
+            boolean needVoxyStack = voxyUsable
+                    && !com.tacz.guns.compat.voxy.VoxyScopePipelineCompat.isBuiltFor(voxy);
+            if (prewarmedAgainst == mainPipeline && !needVoxyStack) {
+                // 没装 Voxy、或它那套用不上 —— 记下来，以后走快速路径。
+                voxyStackSettled = true;
                 return;
             }
             Object realDimension = getCurrentDimension.invoke(null);
@@ -309,6 +346,15 @@ public final class IrisScopePipelineCompat {
             shadowHookRanDuringBuild = false;
             try {
                 preparePipeline.invoke(manager, id);
+                try {
+                    // 【只能在这个窗口里建】Voxy 的 RenderPipelineFactory 取的正是
+                    // 「当前管线」，错过这里就会绑到主管线上，等于白建。
+                    if (needVoxyStack) {
+                        com.tacz.guns.compat.voxy.VoxyScopePipelineCompat.ensureBuilt(voxy);
+                    }
+                } catch (Throwable ignored) {
+                    // Voxy 那侧失败只影响镜内有没有 LOD，不该拖累管线预热本身
+                }
             } finally {
                 buildingScopePipeline = false;
             }

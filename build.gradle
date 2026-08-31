@@ -337,3 +337,33 @@ publishing {
         }
     }
 }
+
+// ================================================================
+// TEMP-DIAGNOSTIC round 8 (does 26.1.2 have LevelExtractor?) - REMOVE.
+// The 26.2 LevelExtractorScopePassMixin guards the Voxy second stack against
+// mid-scope-pass renderer reloads (view distance change etc.) and notifies
+// IrisScopePipelineCompat.onLevelRendererReload. Whether 26.1.2 has
+// net.minecraft.client.renderer.extract.LevelExtractor#allChanged is
+// unverified; the ci-log keeper preserves the head of fresh output, so print
+// exactly one javap existence line.
+tasks.named("compileJava") {
+    doLast {
+        def javapBin = new File(System.getProperty("java.home"), "bin/javap").absolutePath
+        File mcJar = null
+        for (def cfgName in ["runtimeClasspath", "compileClasspath"]) {
+            try {
+                configurations.getByName(cfgName).files.each { f ->
+                    if (f.name.contains("minecraft") && f.name.endsWith(".jar") && mcJar == null) mcJar = f
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        if (mcJar == null) {
+            println "PROBE8: no minecraft jar found on the classpath"
+            return
+        }
+        def proc = [javapBin, "-classpath", mcJar.absolutePath, "net.minecraft.client.renderer.extract.LevelExtractor"].execute()
+        proc.consumeProcessOutput(System.out, System.err)
+        proc.waitFor()
+    }
+}

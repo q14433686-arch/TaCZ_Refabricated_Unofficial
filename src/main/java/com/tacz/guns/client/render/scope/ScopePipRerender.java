@@ -8,6 +8,8 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.compat.iris.IrisScopePipelineCompat;
 import com.tacz.guns.compat.sodium.SodiumCompat;
+import com.tacz.guns.compat.voxy.VoxyCompat;
+import com.tacz.guns.compat.voxy.VoxyScopePipelineCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.util.math.MathUtil;
 import net.minecraft.client.DeltaTracker;
@@ -96,6 +98,10 @@ public final class ScopePipRerender {
      * 专用维度 id；只在窄遍的前后置位，切世界时早已清零，不会触发「维度变了重建主管线」。
      */
     private static boolean scopePassIsolated = false;
+    /** 本帧镜内那遍正在使用的 Voxy 渲染系统（换绑期间持有，finally 换回）。 */
+    private static Object voxySystemThisPass;
+    /** 本帧是否已把 Voxy 换绑到瞄具那套（与 {@link #voxySystemThisPass} 配对）。 */
+    private static boolean voxySwapped = false;
 
     /** 隔帧渲染的帧计次：每次「闸门全过的渲染尝试」+1（闸门失败不计，失败后强制真渲一次）。 */
     private static int scopeFrameCounter;
@@ -147,6 +153,17 @@ public final class ScopePipRerender {
     /** 本帧镜内那遍是否正跑在瞄具专用的 Iris 管线上（{@code IrisScopeDimensionMixin} 的门）。 */
     public static boolean isScopePassIsolated() {
         return scopePassIsolated;
+    }
+
+    /**
+     * 镜内那一遍是否应当让 Voxy <b>坐过</b>这一遍不画：隔离开了、但第二套 Voxy 渲染栈
+     * 没换上去（没建好/建失败/已失效）。Voxy 的渲染栈逐管线绑定且终生只有一个，
+     * 在第二套 Iris 管线下强画必然用错绘制目标——某一侧远景永久错乱；
+     * 坐过只是镜内没 LOD，主画面永远正确。要镜内有 LOD 而不要时域伪影，
+     * 等 Voxy 栈建好（预热逻辑会在主管线就绪后自动建）。
+     */
+    public static boolean shouldSuppressVoxyDraw() {
+        return scopePassIsolated && !voxySwapped;
     }
 
     /** 本帧是否有可用的镜内画面（供合成阶段与 FOV 让位查询）。 */
@@ -314,6 +331,15 @@ public final class ScopePipRerender {
                     && IrisScopePipelineCompat.scopeDimensionId() != null) {
                 scopePassIsolated = true;
             }
+            // 【Voxy 第二套栈】只换，绝不在这里建（建栈必须发生在预热的构造窗口里，
+            // 那时瞄具管线才是「当前管线」；在这里建过一次的代价是整局崩 ——
+            // "Pipeline data already bound" 会被 Voxy 捕获并顺手 disableIrisShaders()，
+            // 主画面下一次 Voxy 绘制就 NPE，教训写在 VoxyScopePipelineCompat 里）。
+            // 切不过去（没装 Voxy／没建好）就由 shouldSuppressVoxyDraw 让它这一遍坐过，
+            // 至少不会画错。
+            voxySystemThisPass = scopePassIsolated ? VoxyCompat.renderSystem() : null;
+            voxySwapped = voxySystemThisPass != null
+                    && VoxyScopePipelineCompat.swapIn(voxySystemThisPass);
             // 26.1.2 的 renderLevel 没有投影参数：着色器走 RenderSystem 投影槽（上一行），
             // 其余消费点读 cameraState.projectionMatrix —— 临时改写成窄矩阵，等价于 1.21.11
             // 把窄矩阵当第 6 参传入 renderLevel。
@@ -363,6 +389,13 @@ public final class ScopePipRerender {
                     + "falling back to screen-space reprojection / whole-screen FOV zoom.", e);
             return false;
         } finally {
+            // 必须先换回 Voxy、再清隔离标志：swapOut 里读的是「这一遍用的那个 system」，
+            // 而清标志会让其它兼容层立刻恢复常态，两者之间不该有交叉窗口（26.2 同序）。
+            if (voxySwapped) {
+                VoxyScopePipelineCompat.swapOut(voxySystemThisPass);
+                voxySwapped = false;
+            }
+            voxySystemThisPass = null;
             // 必须最先清（26.2 同序）：从这里往后任何再问「当前维度」的代码都必须拿到真实值。
             scopePassIsolated = false;
             scopePassActive = false;
