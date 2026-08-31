@@ -618,7 +618,8 @@ CommandEncoder#writeToTexture`，而 `writeToTexture` 属于「pass 打开期间
 pass 体内只对已解析的视图 `bindTexture` —— pass 体内除既有 draw/bind 命令外零外部调用（顺手把 lightmap 的
 `getSamplerCache()` 也提了出去）；② `resolveTextureView` 的失败日志改 **per-texture log-once**
 （`loggedTextureFailures`），原来是每次失败一条 ERROR，逐帧重试就刷屏；③ 结构其余不动，
-资源重载后视图逐帧重新解析，因此**不需要额外失效逻辑**。
+资源重载后视图逐帧重新解析，因此**不需要额外失效逻辑**；唯一附带的一处：那条"首帧判据日志"从 pass 体内挪到
+`pass` 关闭之后，让"体内只留 bind/draw/scissor"这条不变量**字面**成立（只改日志时序，同帧、绘制内容不变）。
 
 **同批自查（结论：只有这一处）**：全仓其余自建/嵌入式绘制点都不进 `registerAndLoad` 那条懒加载路 ——
 ① 镜内覆盖层的几何走 `ScopeFinalOverlayState` 的 collector flush，纹理由 vanilla 在各自批次里解析；
