@@ -108,6 +108,39 @@ public final class ScopeDepthCopyState {
         return maskValid;
     }
 
+    /**
+     * 帧首失效整帧掩码周期闸（收紧 {@link #isMaskCycleValid()} 的时效边界）。
+     *
+     * <p>{@code maskValid} 只在 BACKUP/APERTURE_COPY 两处翻转：瞄具某帧不提交（未开镜）
+     * 时，它带着上一帧——往往是退镜帧、髋部镜孔位置——的真值跨帧滞留。poly_mesh 手部
+     * 管线的孔外剔除拿它当闸门，就会在腰射态按「退镜那一刻的镜孔」把枪身裁出一个洞
+     * （实机 2026-09-01：目镜初始/退出位置出现目镜形状和大小的透视面，穿透枪体与配件）。
+     * 在 GameRenderer.render 的 HEAD 处调用本方法，闸门即收紧为「本帧手部阶段确有完整
+     * 掩码周期」；当帧的 BACKUP→APERTURE_COPY 会照常把它翻回真，当帧内全部消费者
+     * （mesh 剔除、PIP 合成、终局叠加）都晚于手部阶段，不受影响。</p>
+     */
+    public static void onClientFrameStart() {
+        RenderSystem.assertOnRenderThread();
+        maskValid = false;
+        backupValid = false;
+        maskWorldValid = false;
+    }
+
+    /**
+     * 非 RenderType 绘制路径（poly_mesh GPU 手部批次）的 MASK_OUTSIDE 准备。
+     *
+     * <p>与 vanilla 的 {@code DepthCopyRenderType} 完全同构：{@link #begin} 记录操作，
+     * {@link #beforeDraw()} 在「当前已绑定的 program」上跑 {@code prepareMaskDraw(mode 2)}
+     * —— 身份守卫、绑定 aperture 拷贝单元、置 {@code tacz_ScopeMaskMode=2}。Iris 下这
+     * 正是打补丁的 hand ExtendedShader（IrisDepthRestoreShaderMixin 注入的休眠分支），
+     * world 深度按既有路线取 depthtex2；掩码失效或 program 无该 uniform 时 mode 恒 0
+     * = 不裁剪（fail-open），与 vanilla 语义一致。调用方绘制完成后必须配对
+     * {@link #end()} 归还被占用的纹理单元。</p>
+     */
+    public static void beginExternalMaskOutsideDraw() {
+        RenderSystem.assertOnRenderThread();
+        begin(Operation.MASK_OUTSIDE);
+        beforeDraw();
 
     }
 

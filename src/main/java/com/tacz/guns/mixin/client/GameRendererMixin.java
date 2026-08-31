@@ -7,6 +7,7 @@ import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
+import com.tacz.guns.client.render.scope.ScopeDepthCopyState;
 import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
 import com.tacz.guns.client.render.scope.ScopePipDepthDebug;
 import com.tacz.guns.client.render.scope.ScopePipRenderState;
@@ -158,6 +159,9 @@ public abstract class GameRendererMixin {
         // 必须先于 RenderTickEvent 分发：ShaderStateTracker（START 相位）会把当帧光影状态
         // 交给 PolyRenderPolicy 缓存，两者的先后要与 1211 分支一致。
         PolyMeshGpuRenderer.beginFrame();
+        // 目镜掩码周期闸按帧失效（ScopeDepthCopyState#onClientFrameStart）：瞄具本帧不
+        // 提交时，上一帧的 maskValid 真值不得跨帧供给 poly_mesh 手部剔除等帧内消费者。
+        ScopeDepthCopyState.onClientFrameStart();
         RenderTickEvent.EVENT.invoker().onRenderTick(new RenderTickEvent(
                 RenderTickEvent.Phase.START,
                 deltaTracker.getGameTimeDeltaPartialTick(false)
