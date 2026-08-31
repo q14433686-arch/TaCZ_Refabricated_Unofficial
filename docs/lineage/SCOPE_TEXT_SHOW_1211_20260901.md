@@ -118,10 +118,17 @@ scope RenderType，vanilla 字体管线不在也不该在 —— 文字要的正
 
 前置：装 MK5 与 MK5HD 的枪包，`gun` 上镜，进第一人称。判据统一是**镜内应出现弹药计数文本**。
 
+两条**日志判据**（不必靠肉眼，每局各最多一条）：
+
+- 立即提交那一格（A / B / E）：`[TACZ Scope] Flushed 1 in-lens text task(s) in the solid hand pass (scopeMask=true)`
+  —— `scopeMask` 就是 `SCOPE_MASK_ENABLE`，可以直接确认自己站在剧本的哪一格；
+- 延迟覆盖层那一格（C / D）：`[TACZ Scope] Rendered deferred reticle, ocular rim and scope text after the
+  final cover (N reticles, M rims, K texts).`，**K ≥ 1** 才算文字真的走到了覆盖层。
+
 | # | 条件 | 期望 | 若不符 |
 |---|---|---|---|
-| A | 无光影，`SCOPE_MASK_ENABLE=true`（默认） | 开镜进度过 0.35 后文字出现在镜内，**不越过镜筒边缘**（被深度剔掉） | 若完全没有文字 ⇒ 查 `TextShow` 是否配在 attachment display 上、`PapiManager` 是否返回空串 |
-| B | 无光影，`SCOPE_MASK_ENABLE=false` | 文字常显（可能在镜筒外也看得到，属预期） | — |
+| A | 无光影，`SCOPE_MASK_ENABLE=true`（默认） | 开镜进度过 0.35 后文字出现在镜内，**不越过镜筒边缘**（被深度剔掉）；日志有 `Flushed N in-lens text task(s) … (scopeMask=true)` | 日志有、屏幕无 ⇒ 文字在但被镜筒深度整段剔了（位置问题，不是本条）；日志也没有 ⇒ 查 `TextShow` 是否配在 attachment display 上、`PapiManager` 是否返回空串 |
+| B | 无光影，`SCOPE_MASK_ENABLE=false` | 文字常显（可能在镜筒外也看得到，属预期）；日志 `… (scopeMask=false)` | 走到 `else` 分支，正是 §2.2 差别① 那一格 ⇒ 若这里没文字而 A 有，说明只有 text 的快照又被 `isEmpty()` 门挡了（本分支已挪出门外） |
 | C | 有光影（Iris 已审计的 final-overlay 路径），PIP 关 | 文字与准星同批出现，不被雾/后处理盖掉；日志出现一次 `[TACZ Scope] Rendered deferred reticle, ocular rim and scope text after the final cover (N reticles, M rims, K texts)` 且 **K ≥ 1** | K=0 ⇒ 说明 `deferReticleToIrisFinalOverlay` 没成立，走了立即提交；再看是否与 §3 残留 ② 一致 |
 | D | 有光影 + `ScopePipAllowShaderPacks=true` | 镜内画面之上叠文字，文字在准星**之下**（准星压住文字） | 顺序反了 ⇒ 检查 `renderAfterFinalComposite()` 里 texts 是否在 reticle 之前 |
 | E | 无光影 + PIP 开（`SCOPE_PIP_RERENDER` 那套） | 同 D；`GameRendererMixin` 的 flush 门（`hasPendingOverlay()` 或 `isEnabled()` 任一成立）兜住 | 文字完全不见 ⇒ 检查 `PENDING_TEXT` 是否被 `beginSolidSubmission()` 提前清掉 |

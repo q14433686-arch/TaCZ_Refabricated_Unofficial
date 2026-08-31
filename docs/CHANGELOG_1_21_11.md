@@ -26,6 +26,8 @@
   **差别①**：`else` 分支我们把 flush 放在 `!bodySnapshot.isEmpty()` 门**外**（`isEmpty()` 只看几何 ⇒
   他们那边「只有文字没有本体几何」的快照仍会丢）；**差别②**：`ocularRingSnapshot` 的任务也 flush
   （镜框子树下的文字此前两处快照都拿不到）。
+- 附**日志判据**（`submitScopeText` 每局一次 INFO，带 `scopeMask=` 直接标明剧本的哪一格；延迟那格由
+  `ScopeFinalOverlayState` 报 `{} texts` 计数），这样验收不必只靠肉眼判断「镜里有没有字」。
 - 明确**未验证**：本轮只有代码改动与 CI 编译，**没跑实机**。四格剧本（掩码开/关 × Iris 开/关 + PIP）
   与日志判据写在 `docs/lineage/SCOPE_TEXT_SHOW_1211_20260901.md` §4；已知残留也写在那里（延迟覆盖层那一格
   文字不参与镜筒深度测试 ⇒ 贴边计数仍可能溢出，真要裁需移植 26.2 的 `ScopeTextSubmitter`）。

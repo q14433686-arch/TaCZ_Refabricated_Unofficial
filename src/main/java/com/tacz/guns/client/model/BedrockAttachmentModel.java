@@ -685,12 +685,12 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             // ocularSnapshots / ocularRingSnapshot 一并兜底：第三方镜的 text_show 节点可能挂在
             // ocular 或镜框子树下 —— 那时 bodySnapshot 因为对应部件被临时隐藏而拿不到它。每份快照
             // 的任务只在这里 flush 一次，不会因为 aperture/cleanup 两次几何重放而重复提交。
-            submitScopeText(bodySnapshot, collector, deferReticleToIrisFinalOverlay);
+            submitScopeText(bodySnapshot, collector, deferReticleToIrisFinalOverlay, scopeMaskEnabled);
             for (BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
-                submitScopeText(ocularSnap, collector, deferReticleToIrisFinalOverlay);
+                submitScopeText(ocularSnap, collector, deferReticleToIrisFinalOverlay, scopeMaskEnabled);
             }
             if (ocularRingSnapshot != null) {
-                submitScopeText(ocularRingSnapshot, collector, deferReticleToIrisFinalOverlay);
+                submitScopeText(ocularRingSnapshot, collector, deferReticleToIrisFinalOverlay, scopeMaskEnabled);
             }
 
             // Without Iris deferral, keep the established order: reticle(1) then opaque rim(2).
@@ -714,7 +714,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             // isEmpty() 只看 drawCommands，所以「只有 text_show、没有本体几何」的快照必须写在
             // 这个门【外面】才 flush 得掉 —— 这也是与 26.1.2 那版补丁的唯一差别（他们把 flush 放在
             // if (!bodySnapshot.isEmpty()) 里面，那种快照在他们那边仍会被丢掉）。
-            bodySnapshot.submitFunctionalTasks(collector);
+            submitScopeText(bodySnapshot, collector, false, scopeMaskEnabled);
         }
 
         // Render Reticle. Iris HAND_SOLID freezes only immutable snapshots here. Iris 1.10.7's
@@ -794,21 +794,39 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         }
     }
 
+    /** 一次性确认「补回来的 flush 真的跑到了」，见 `docs/lineage/SCOPE_TEXT_SHOW_1211_20260901.md` §4。 */
+    private static boolean loggedScopeTextImmediateFlush;
+
     /**
      * 把一份快照里冻结的 functional 任务（实际就是镜内文字的字体提交）交出去。
      *
      * @param deferToFinalOverlay 与准星/镜框同族推迟到 post-composite 覆盖层；否则立刻按
      *                            collector 默认 order 提交
+     * @param scopeMaskEnabled    仅用于日志：让四格剧本（掩码开/关 × 光影开/关）能靠日志判定，
+     *                            不依赖肉眼看出「这次是不是走了孔径那条路」
      */
     private static void submitScopeText(BedrockRenderSnapshot snapshot,
                                         SubmitNodeCollector collector,
-                                        boolean deferToFinalOverlay) {
-        for (IFunctionalSubmitter.SubmitTask task : snapshot.functionalTasks()) {
+                                        boolean deferToFinalOverlay,
+                                        boolean scopeMaskEnabled) {
+        List<IFunctionalSubmitter.SubmitTask> tasks = snapshot.functionalTasks();
+        if (tasks.isEmpty()) {
+            return;
+        }
+        for (IFunctionalSubmitter.SubmitTask task : tasks) {
             if (deferToFinalOverlay) {
                 ScopeFinalOverlayState.queueFunctionalTask(task);
             } else {
                 task.submit(collector);
             }
+        }
+        // 延迟那一格由 ScopeFinalOverlayState 自己报数（含 texts 计数），这里只报立即提交那一格；
+        // 每局一次，避免刷屏。看到这条日志就说明任务没再被丢掉，与「镜内到底有没有字」解耦。
+        if (!deferToFinalOverlay && !loggedScopeTextImmediateFlush) {
+            loggedScopeTextImmediateFlush = true;
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ Scope] Flushed {} in-lens text task(s) in the solid hand pass (scopeMask={}).",
+                    tasks.size(), scopeMaskEnabled);
         }
     }
 
