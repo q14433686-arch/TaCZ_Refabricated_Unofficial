@@ -455,7 +455,8 @@ tasks.register('dumpHandFlushApi') {
                 def cur = null
                 def blocks = []
                 out.readLines().each { line ->
-                    if (line ==~ /^\s+\S.*\(.*\).*$/ && !line.contains('Code:')) {
+                    // a member signature line: exactly two leading spaces, ends with ');'
+                    if (line ==~ /^  [^ ].*\);\s*$/) {
                         if (cur != null) {
                             blocks << cur
                         }
@@ -473,8 +474,11 @@ tasks.register('dumpHandFlushApi') {
                     return
                 }
                 found.each { b ->
-                    def returns = b.count { it.trim() == 'return' }
-                    println "  --- ${b[0].trim()}  (${b.size()} lines, ${returns} x bare 'return') ---"
+                    def returns = b.count { it =~ /:\s+return\s*$/ }
+                    def flush = b.findIndexOf { it.contains('renderAllFeatures') }
+                    def batch = b.findIndexOf { it.contains('endBatch') }
+                    println "  --- ${b[0].trim()}  (${b.size()} lines, ${returns} x 'return'," +
+                            " renderAllFeatures at line ${flush}, endBatch at line ${batch}) ---"
                     println b.join('\n')
                 }
             }
@@ -484,11 +488,13 @@ tasks.register('dumpHandFlushApi') {
             dumpMethod('net.minecraft.client.renderer.ItemInHandRenderer', 'renderHandsWithItems')
 
             // 2. blaze3d surface the mesh pass calls directly (target selection + scissor + uniforms).
-            dumpMethod('net.minecraft.client.renderer.RenderType', 'draw')
+            dumpMethod('net.minecraft.client.renderer.rendertype.RenderType', 'draw')
+            dumpMethod('net.minecraft.client.renderer.MultiBufferSource$BufferSource', 'endBatch')
             dumpMembers('com.mojang.blaze3d.systems.RenderPass',
                     ['enableScissor', 'setUniform', 'setVertexBuffer', 'setIndexBuffer', 'drawIndexed',
                      'setPipeline', 'bindTexture', 'close'])
-            dumpMembers('com.mojang.blaze3d.systems.ScissorState', ['enabled', 'getX', 'getY', 'getWidth', 'getHeight'])
+            dumpMembers('com.mojang.blaze3d.systems.ScissorState',
+                    ['enabled', 'public int x()', 'public int y()', 'width()', 'height()'])
             dumpMembers('com.mojang.blaze3d.pipeline.RenderTarget', ['useDepth', 'getColorTextureView', 'getDepthTextureView'])
             dumpMembers('com.mojang.blaze3d.systems.RenderSystem',
                     ['outputColorTextureOverride', 'outputDepthTextureOverride', 'getScissorStateForRenderTypeDraws',
