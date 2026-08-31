@@ -63,11 +63,15 @@ src/main/resources/tacz.mesh.mixins.json                       # package = ...me
 > （`PolyMeshModel#drawBoneMeshes` / `ensureBaked` / `ensureWorldBaked`）都走同一个入口，别只接一条。
 > 立方体层的同一硬编码（`BedrockPart#render` 的 `15728880`）本分支刻意没动 —— 见审查文档 A10 续集。
 
-> ⚠️ `core/PolyMesh.java` 与 `config/MeshyConfig.java` 里含 R3 追加的**法线/绕序修复**（上游审查
-> A10）：镜像时反转发射绕序 + 三个配置开关（`MeshPolyMirrorReverseWinding` /
-> `MeshPolyInvertNormals` / `MeshPolyPreferPackNormals`）。整包取文件时它会自动带过来，
+> ⚠️ `core/PolyMesh.java` 与 `config/MeshyConfig.java` 里含 R3 追加的法线相关改动（上游审查 A10），
+> 但**其中「镜像时反转发射绕序」那一条已被维护者实机否证**，现在 `MeshPolyMirrorReverseWinding`
+> **默认 false**。留着的是三个开关（`MeshPolyMirrorReverseWinding` / `MeshPolyInvertNormals` /
+> `MeshPolyPreferPackNormals`）与「退化面不写零法线」。整包取文件时它们会自动带过来，
 > **别**在你们那边把 `FORCE_FLAT_SHADING` 恢复成编译期常量、也别把 `normals` 数组的解析删掉 ——
 > 「无光影 PASS」从来不构成对法线的验证（原版实体程序不读 `va_normal`）。
+> 为什么默认关掉反转：collector 那条走 `RenderTypes.entityCutout`，它**剔背面** ⇒ 绕序一反转，被剔掉的
+> 是朝外的面，高模枪整把近乎全黑（2026-08-31 与 Forge 原版同包同光影对照过）。详见
+> `docs/MESH_LOADER.md` §5.7 与本指导 §3 Q7。
 
 ### 1.2 GPU 层牵动的既有文件（这几处才是「本分支特有」的知识密度）
 
@@ -171,7 +175,7 @@ Iris `HandRenderer` 有自己的 `SubmitNodeStorage`/`FeatureRenderDispatcher` �
 | Q4 | `IrisProgram` 的**全量常量**（别猜名字） | 无 `ENTITY`、无 `MAIN`，有 `ENTITIES` / `ENTITIES_TRANSLUCENT` / `EMISSIVE_ENTITIES` | 常量不存在时 `assignPipeline` 只打 WARN、枪不发光照（静默错误，最难查） |
 | Q5 | `GameRenderer#renderItemInHand`（或等价方法）是否在 `renderHandsWithItems` 前后 push/pop model-view | 是 ⇒ 世界钩子必须 `inHandPass` 跳过 | 若否，世界/手部可以共用消费点，但门 2 仍要留 |
 | Q6 | 光影激活时 `DefaultVertexFormat.ENTITY` 被 Iris 扩展成什么、stride 是否随之变 | 会变 ⇒ 世代号必须同时认「光影开关」与「消费格式」 | 不变则世代号可以简单些，但别去掉 |
-| Q7 | 光影包是否按 `gl_FrontFacing` 取反顶点法线（`normal *= gl_FrontFacing ? 1.0 : -1.0` 一类写法），以及你们那边 poly 用的 `RenderTypes.entityCutout` 开不开背面剔除 | 自研 GPU 管线两条都 `.withCull(false)`（可静态核实）；collector 的 `entityCutout` 剔除状态**本沙箱无法核实**（没有 Loom jar） | 若开剔除 ⇒ 绕序修复（`MeshPolyMirrorReverseWinding`）是必须的，且第一次实机就该看面有没有消失；若光影包不看 facing ⇒ 这一项对你们无观感影响，但数据层的不自洽仍然留着 |
+| Q7 | 光影包是否按 `gl_FrontFacing` 取反顶点法线（`normal *= gl_FrontFacing ? 1.0 : -1.0` 一类写法），以及你们那边 poly 用的 `RenderTypes.entityCutout` 开不开背面剔除 | **已答（实机替代证据）**：自研 GPU 管线两条都 `.withCull(false)`（静态可核），collector 的 `entityCutout` **剔背面** —— 沙箱里仍然没 Loom jar 核不了字节码，但「只把绕序反转就整枪全黑、关掉与 Forge 原版逐字一致」这组对照只有这一种解释；`entityCutout` 与 `entityCutoutNoCull` 成对存在，名字差一个 NoCull，与此一致 | 推论 ⇒ **绕序不要反转**（反了就把朝外的面剔掉）。`gl_FrontFacing` 与朝外法线不自洽这件事在数据层仍然真实存在，但要闭合它得先动剔除（`entityCutoutNoCull` = 行为改动，双面会遮内部件）或从数据反推绕序，两者都需要实机，本分支都没做 |
 
 **Q4 是最容易翻车的一条**：猜错常量不会崩，只会「光影下这把枪照明不对 + 一行 WARN」，
 很容易误判成渲染逻辑错。
@@ -231,8 +235,10 @@ Iris `HandRenderer` 有自己的 `SubmitNodeStorage`/`FeatureRenderDispatcher` �
 - [ ] 配置 18 项 ↔ Cloth 18 条 ↔ 语言键 36 个，三方齐平：`python3 docs/check_mesh_config_parity.py`
   （脚本已随本仓附上，键集合 / 字段绑定 / 默认值 / `defineInRange`↔`setMin·setMax` / 语言键 /
   en·zh 齐平六项一起查，非 0 退出即失败）；
-- [ ] 光影下按 `docs/MESH_LOADER.md` §5.7 那张矩阵跑一遍法线/绕序，回报「哪一格看着对」——
-  本分支只做到静态 + 编译，**没有**光影实机；
+- [ ] 光影下的法线/绕序矩阵（`docs/MESH_LOADER.md` §5.7）**本分支已跑过一轮**：结论是三项全 false
+  （= 与上游逐字相同）才对，`MeshPolyMirrorReverseWinding` 因此退回默认关。你们只需确认移植后
+  「关掉它」的那一格仍然与你们的原版观感一致；顺手的话再跑 `MeshPolyPreferPackNormals=true`
+  （纯美观项，与剔除无关，没人验过）；
 - [ ] 在 `docs/lineage/HANDOFF_LEDGER.md` 上把你们认领的行改成 `DONE(<sha>)`，并回填「与指导文档不一致之处」。
 
 ---

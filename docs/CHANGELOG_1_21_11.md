@@ -12,6 +12,25 @@
 **`1.1.8+fabric.1.21.11.R3`**（去掉 `-hotfix` 后缀，与 26.2 侧 `5bb13af` 的 `R3` 做法一致；
 SemVer 核心仍是 `1.1.8`，构建元数据不参与比较，见 `gradle.properties` 注释）。
 
+- **第五轮（同日）：维护者复测 PASS + `MeshPolyMirrorReverseWinding` 退回 false**：
+  ① **PASS**（本轮 jar、光影下两键为新默认 false）：「枪身挡住太阳/月亮那块继承自发光亮度」消失。
+  按 AGENTS.md §2 把边界写清：这条验证的是**默认退回**（光影下全程 collector），**不**验证第四轮那条
+  代码修法 —— EMISSIVE 闩锁当时是否真的参与，仍取决于老日志里有没有 `lightmap` 那行 WARN
+  （判据表在 `MESH_LOADER.md` §5.10，两键打开再进一次光影即可自证，局内即时生效）。
+  ② 退回 collector 之后显形的新问题：高模枪在光影下近乎全黑、高光只剩远侧。维护者拿**同枪包同光影的
+  Forge 原版**做对照（两张截图）。根因是第四轮之外另一条我按推导做出的修复：`MeshPolyMirrorReverseWinding`
+  （把镜像后的发射绕序整体反转）—— 推理只讲通了 `gl_FrontFacing` 那一半，没算到 **collector 用的
+  `RenderTypes.entityCutout` 剔背面**：绕序一反转，被剔掉的是朝外的面，留下里侧 ⇒ 里朝外。
+  与上游 `587763c` 的 `PolyMesh` 逐字对比核过：位置、法线（都是 `D·n`）、UV、三角形展开完全相同，
+  **只差绕序这一位** ⇒ 关掉它即与上游/Forge 观感逐字等价（这一条是静态可证的，不依赖观感判断）。
+  默认值随之退回 **false**（TOML / Cloth `setDefaultValue` / en·zh 语言键三处齐改，parity 脚本通过）；
+  开关与实现都保留，`MESH_LOADER.md` §5.7 那张矩阵已按实机填好（第 4 格 = 新默认，第 1 格标 ❌）。
+  **注意这条不是「反光问题修好了」**：绕序退回 false 之后，§5.7 最初那个症状（光影下高光像在错误一侧）
+  回到「与上游一致」的状态，也就是仍然没人修好、只是不再比上游更糟；想继续只有两个不碰剔除的选项
+  （`MeshPolyPreferPackNormals` / `MeshPolyInvertNormals`，都是 F3+T 生效的观感判断）。
+  与绕序无关、确实留下的两条：退化面不再写零法线（避免包里 `normalize()` 出 NaN 的随机高光）、
+  `MeshPolyPreferPackNormals`（上游本就有这条分支，被常量编译掉）。真正想「两头都对」需要
+  collector 换 `entityCutoutNoCull` 或从数据反推绕序 —— **都没做**，需要实机，见 §5.7 末。
 - **第四轮：B 命中 —— 光影下的两个 GPU 开关退回默认关 + 修掉一条 EMISSIVE 永久降级（本轮）**：
   上一条留下的 A/B/C 判别维护者跑完了：**A（`MeshPolyInShadow=true`）无效**，
   **B（把光影下的 `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 关掉）有效**，且第一人称、

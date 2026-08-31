@@ -47,7 +47,7 @@
   "config.tacz.client.render.mesh_poly_illuminated_real_sky": "Mesh Poly：自发光骨骼沿用真实天空光",
   "config.tacz.client.render.mesh_poly_illuminated_real_sky.desc": "名字以 *_illuminated 结尾的骨骼会按「block 与 sky 都拉满」烘焙，这是为了让它在黑洞里也看得见（原版光照图是两列相乘，sky=0 基本就是黑的）。但光影包把 sky 分量读成「这个表面看得见天空」，于是这部分永远遮不住太阳/月亮，枪身会一直跟着天空亮度走。打开后（且仅在装了光影包时）sky 改用周围环境的真实值、block 仍是 15。默认关：这条是按对报告的早期理解写的，真正的原因后来证明是另一件事；如果你确实想让自发光部件不再声称自己晒得到天空，就打开它。",
   "config.tacz.client.render.mesh_poly_mirror_reverse_winding": "Mesh Poly：镜像时反转绕序",
-  "config.tacz.client.render.mesh_poly_mirror_reverse_winding.desc": "poly 格式在单个轴上镜像了位置，于是每个面的朝外一侧变成了背面。原版实体程序不读顶点法线，所以这事只在装光影包时显形：按 gl_FrontFacing 翻法线的光影会把枪照成里外反了，高光落在背面那一侧。反转发射绕序正是原版 TaCZ 立方体镜像路径的做法。下次重新解析网格（F3+T）时生效。",
+  "config.tacz.client.render.mesh_poly_mirror_reverse_winding.desc": "有一轮曾默认打开、现已退回关：绕序一反转，普通（collector）路径就被背面剔除挡掉了朝外的面 —— 枪会画成里朝外、近乎全黑。关掉才和原版 TML / Forge 的观感一致。GPU 烘焙那条路自己关了剔除，所以在那边绕序差异只是细微变化、不是致命；只想对比时可以打开。",
   "config.tacz.client.render.mesh_poly_invert_normals": "Mesh Poly：烘焙法线整体取反",
   "config.tacz.client.render.mesh_poly_invert_normals.desc": "在烘出来的法线上再整体取反一次。如果高光还是在错误的一侧，就把这一项和上面那项分别试一次：绕序不反转时它等价于 R3 之前的观感，但它修不动背面剔除和 gl_FrontFacing，绕序那一项才修得动。F3+T 生效。",
   "config.tacz.client.render.mesh_poly_prefer_pack_normals": "Mesh Poly：优先使用枪包法线",
