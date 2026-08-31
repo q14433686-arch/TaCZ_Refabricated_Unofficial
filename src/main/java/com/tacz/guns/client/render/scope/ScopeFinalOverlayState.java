@@ -66,6 +66,26 @@ public final class ScopeFinalOverlayState {
         handTransform = null;
     }
 
+    /**
+     * Discards the pending deferred overlays <b>without drawing them</b>.
+     *
+     * <p>Rerender mode: the narrow mirror pass runs the same {@code finalizeLevelRendering}
+     * tail hook as the wide pass (it fires once per world render, and there are two per frame).
+     * Compositing/drawing overlays inside the narrow pass is pure contamination — the paste
+     * lands on the main target only to be overwritten by the wide pass, and worse, the
+     * subsequent {@code renderScopeView} capture would copy the previous lens picture plus the
+     * ocular shade INTO the new lens image, feeding the composite back into itself (on-device:
+     * lens frozen at the first full-ADS frame, shade copy-pasted every frame while moving,
+     * 2026-09-01). The narrow pass must only render the narrow-FOV world; the wide pass
+     * re-queues its own overlays and flushes them at its own finalize as usual.</p>
+     */
+    public static void discardPendingOverlays() {
+        PENDING_RETICLES.clear();
+        PENDING_RINGS.clear();
+        PENDING_TEXT.clear();
+        handTransform = null;
+    }
+
     public static int pendingReticleCount() {
         return PENDING_RETICLES.size();
     }

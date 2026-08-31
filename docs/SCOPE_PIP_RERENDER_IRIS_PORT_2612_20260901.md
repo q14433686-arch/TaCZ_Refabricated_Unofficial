@@ -75,3 +75,25 @@ B1 旧硬拒的理由（「光影下主目标里没有窄 FOV 的成品可拷」
   以 26.2 为母版补。
 - Voxy 镜内 LOD（第二套渲染栈）未移植。
 - 1211 线的 SodiumCompat 转发文本：用户裁定「一会再说」，未写。
+
+## 6. 实机首测与反馈回路修复（2026-09-01，ComplementaryUnbound r5.8.1）
+
+**实测症状**：只正确放大一帧；随后镜内容冻结在开镜那一刻；移动时遮光罩在镜内逐帧
+「复制粘贴」累积；帧率照常减半（窄遍确实每帧在跑）。
+
+**根因（字节码拓扑+症状互证）**：`finalizeLevelRendering` 在**每一遍** renderLevel 内部
+都会执行——一帧共两次（窄遍尾部一次、宽遍尾部一次）。窄遍尾部的钩子会把上一帧的镜内
+合成画面+遮光罩画上主目标；随后 `renderScopeView` 的「拷主目标」把这份残留连新窄帧一起
+拷走 ⇒ 合成结果回灌自身：帧 1 干净（首帧无东西可回灌），帧 2 起镜内容恒等于上一帧
+（冻结）且遮光罩逐帧叠加（复制粘贴）。
+
+**修复（本节随附提交）**：
+- `IrisFinalScopeOverlayMixin`：注入体头部加 `ScopePipRerender.isInsideScopeLevelRender()`
+  守卫——窄遍里跳过抓取/合成/覆盖层三连，改为丢弃当次累积的延迟队列
+  （`ScopeFinalOverlayState.discardPendingOverlays()`）；宽遍自己的 finalize 照常三连
+  （那时 `scopePassActive` 已复位、`sceneCaptured` 已由窄遍拷贝就绪）。
+- 顺带修正认知：窄遍里的合成/覆盖层本来就会被宽遍的主 pass 清屏+整幅重画覆盖，
+  从来就是纯浪费+污染源，跳过没有视觉损失。
+
+**未触发预案**：§3 第二行（finalize 在 renderLevel 之外）——实测 finalize 时机正确，
+成品帧存在，抓取点无需后移。
