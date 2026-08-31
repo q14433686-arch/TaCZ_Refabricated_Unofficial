@@ -10,6 +10,7 @@ import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
 import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
 import com.tacz.guns.client.render.scope.ScopeLateReticleState;
 import com.tacz.guns.client.render.scope.ScopeNodeSet;
+import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
 import com.tacz.guns.compat.iris.IrisCompat;
@@ -63,9 +64,23 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private static final int SCOPE_APERTURE_ORDER = -3;
     private static final int SCOPE_BODY_ORDER = -2;
     private static final int SCOPE_DEPTH_CLEANUP_ORDER = -1;
-    /** Physical ocular rim: draw after depth cleanup so the aperture cannot punch holes in it. */
-    private static final int SCOPE_OCULAR_RING_ORDER = 1;
-    private static final int SCOPE_RETICLE_ORDER = 2;
+    private static final int SCOPE_RETICLE_ORDER = 1;
+    /**
+     * Physical ocular rim: after depth cleanup so the aperture cannot punch holes in it, and
+     * <b>after the reticle</b> so the opaque rim covers any reticle fragment that spills past
+     * the ocular edge.
+     * <p>
+     * 【准星溢出镜框的修复 / 2026-08-13 实机反馈】原先 rim=1、reticle=2，准星画在镜框【之后】。
+     * 准星的镜内判据用的是 {@code APERTURE_TARGET}，而它是在 order -2（body 绘制边界）就
+     * 快照好的 —— 那时 rim 根本还没画，掩码里没有镜框的任何信息，于是压在镜框上的准星像素
+     * 通过了判据，表现为准星"漏"出目镜、贴到镜框上（有无光影都会出现，因为这与深度测试
+     * 函数、与 Iris 都无关，纯粹是绘制顺序问题）。
+     * <p>
+     * 上游 1.21.1 的顺序本来就是「先准星、后 ocular_ring」，用不透明的镜框盖住溢出部分；
+     * 移植时把两者调换了。这里改回上游顺序即可，无需调整掩码 epsilon
+     * （盲目放大 epsilon 会连镜内准星一起裁掉，是更糟的做法）。
+     */
+    private static final int SCOPE_OCULAR_RING_ORDER = 2;
 
     /**
      * 发光准星节点。凡是名字以 {@code _illuminated} 结尾的，
@@ -606,9 +621,15 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 && texture != null
                 && !ocularSnapshots.isEmpty()
                 && !bodySnapshot.isEmpty();
+        // Step 3 (real PIP lens) must sit below the reticle and physical ocular shade, otherwise the
+        // lens picture overwrites both. When the PIP composite is active this frame we therefore run
+        // the reticle/rim through the post-composite overlay even without Iris; normal vanilla stays
+        // in its established immediate solid-pass order.
+        boolean pipDefersReticle = ScopePipRenderState.shouldDeferReticleOverlay();
         boolean deferReticleToIrisFinalOverlay = orderedScopeSequence
-                && IrisCompat.isRenderingSolidHandPass()
-                && IrisCompat.supportsFinalScopeOverlay();
+                && ((IrisCompat.isRenderingSolidHandPass()
+                        && IrisCompat.supportsFinalScopeOverlay())
+                        || pipDefersReticle);
         // Keep the R8/R9 hand-translucent path as a fallback for Iris versions whose final hook
         // was not bytecode-audited. The verified Iris 26.1 (1.11.x) path goes past final composite.
         boolean deferReticleToIrisTranslucent = orderedScopeSequence
@@ -647,7 +668,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             // Upstream 1.21.1 renders ocular_ring with stencil disabled. In the depth fallback it
             // must be redrawn after cleanup: drawing it in the body batch lets the invisible ocular
             // kill its inner pixels, while drawing it before cleanup would lose its depth again.
-            // Without Iris deferral, keep the established order: ocular rim(1) then reticle(2).
+            // Without Iris deferral, keep the established order: reticle(1) then opaque rim(2).
             // With deferral, hold the rim until we know a reticle snapshot was actually queued;
             // it will then follow that snapshot in HAND_TRANSLUCENT / after the final composite
             // and still cover edge spill there (queued rim draws strictly after queued reticles).
@@ -719,6 +740,11 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             } else if (queuedLate) {
                 ScopeLateReticleState.queueOcularRing(
                         ocularRingSnapshot, ScopeRenderTypes.lateOcularRing(texture));
+            } else if (pipDefersReticle) {
+                // PIP lens paints at the hand-pass end no matter whether a reticle was queued, so a
+                // bare physical shade must also be re-drawn after it (otherwise the lens covers it).
+                ScopeFinalOverlayState.queueOcularRing(
+                        ocularRingSnapshot, ScopeRenderTypes.finalOcularRing(texture));
             } else {
                 // No visible reticle this frame (for example during fade-in): preserve the normal
                 // solid-pass rim rather than forcing an otherwise unnecessary deferred pass.

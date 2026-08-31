@@ -7,6 +7,10 @@ import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
+import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
+import com.tacz.guns.client.render.scope.ScopePipDepthDebug;
+import com.tacz.guns.client.render.scope.ScopePipRenderState;
+import com.tacz.guns.client.render.scope.ScopePipRerender;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.DeltaTracker;
@@ -48,6 +52,10 @@ public abstract class GameRendererMixin {
         // PolyMeshGpuRenderer#renderAtWorldFlush 的 inHandPass 门正确拒收，不会误记
         // 世界钩子的存活证明。
         PolyMeshGpuRenderer.setInHandPass(true);
+        // Step 3 (real PIP): before the gun/hand is drawn, copy the already-rendered world color
+        // into a private off-screen target. The lens will later sample this so no gun/hand appears
+        // inside it. No-op unless the config toggle or -Dtacz.scope.pip.enable is on.
+        ScopePipRenderState.captureScene(this.minecraft);
     }
 
     @Inject(method = "renderItemInHand", at = @At("RETURN"))
@@ -65,6 +73,28 @@ public abstract class GameRendererMixin {
         // ModelView 已被还原、目标覆写已退出，光影下那次 flush 也已经过去，
         // 画在这里只会得到「位置恒定」或「整把枪消失」。
         PolyMeshGpuRenderer.setInHandPass(false);
+        // Step 3 (real PIP): after the hand pass the aperture/world depth copies are complete, so
+        // paste the captured pre-hand world into the lens at the scope zoom. Step 2's magenta
+        // diagnostic is deferred to later so the two never overwrite the same pixels.
+        ScopePipRenderState.compositeAfterHand(this.minecraft);
+        // When the PIP lens is active the normal solid-pass reticle and ocular shade were already
+        // covered by the composite. The scope submitted them through ScopeFinalOverlayState instead,
+        // so flush that overlay NOW, after the lens, restoring the physical order: picture, then
+        // crosshair, then shade. The method no-ops when nothing was queued, and it is only reached
+        // on the vanilla path here (Iris drives its own post-composite flush and PIP is skipped there).
+        // hasPendingOverlay() also guards the transient where the reticle/rim were queued a moment
+        // before isEnabled() was re-evaluated (for example during a slow aim transition), so nothing
+        // stays stranded under the lens. The whole flush is vanilla-only: under a shader pack Iris
+        // drives its own post-final-composite flush (IrisFinalScopeOverlayMixin), and flushing from
+        // renderItemInHand would draw the reticle/rim before Iris' composite passes.
+        if (!IrisCompat.isUsingRenderPack()
+                && (ScopeFinalOverlayState.hasPendingOverlay()
+                || ScopePipRenderState.isEnabled())) {
+            ScopeFinalOverlayState.renderAfterFinalComposite();
+        }
+        // Step 2 (depth PIP diagnostic): paint the lens magenta when the debug system property is
+        // set and Step 3 is not active. No-op in normal play; Iris paths are skipped by the debug.
+        ScopePipDepthDebug.renderAfterHand(this.minecraft);
     }
 
     @Unique
@@ -148,8 +178,9 @@ public abstract class GameRendererMixin {
      * CameraRenderState, Matrix4fc, GpuBufferSlice, Vector4f, boolean, ChunkSectionsToRender)}
      * 只有 <b>一次</b> 调用（@412），世界那一次 feature flush 在同方法尾部 @570
      * （renderItemInHand @517 → ScreenEffectRenderer → renderAllFeatures @570 → endBatch @575）。
-     * 1211 分支用于镜内 PIP 二次渲染的 {@code ScopePipRerender} 在 26.1.2 无对应物，
-     * 这里退化为纯 try/finally 直通；PIP 深度线移植落地时在这里恢复二次渲染调用。</p>
+     * 1211 分支用于镜内 PIP 二次渲染的 {@code ScopePipRerender} 已随 PIP 深度线移植恢复：
+     * 先跑窄 FOV 的镜内那遍并拷走成品，再原样直通宽 FOV 的 vanilla 那遍覆盖主目标；
+     * 特性关闭时 {@link ScopePipRerender#renderScopeView} 自身在闸门处返回，等价于零开销直通。</p>
      *
      * <p>1211 用 @Redirect 的先例已验证可行（Iris 26.1 的 {@code MixinGameRenderer}
      * 对 {@code renderLevel} 只有 TAIL 的 @Inject、对 {@code renderItemInHand} 里
@@ -171,7 +202,10 @@ public abstract class GameRendererMixin {
         // GUI 侧的 renderAllFeatures 调用（GuiEntityRenderer 等）误入世界表消费点。
         PolyMeshGpuRenderer.setLevelRenderActive(true);
         try {
-            // 26.1.2 无镜内二次渲染：原样直通（1211 在这里先跑 ScopePipRerender.renderScopeView）。
+            // 镜内二次渲染（PIP B1）：默认关闭；开启且闸门全过时先用窄 FOV 画一遍世界
+            // 并拷走成品，然后 vanilla 那遍宽 FOV 重画覆盖主目标。
+            ScopePipRerender.renderScopeView(levelRenderer, allocator, deltaTracker, blockOutline,
+                    cameraState, viewMatrix, fogBuffer, fogColor, renderSky, chunkSectionsToRender);
             levelRenderer.renderLevel(allocator, deltaTracker, blockOutline, cameraState,
                     viewMatrix, fogBuffer, fogColor, renderSky, chunkSectionsToRender);
         } finally {

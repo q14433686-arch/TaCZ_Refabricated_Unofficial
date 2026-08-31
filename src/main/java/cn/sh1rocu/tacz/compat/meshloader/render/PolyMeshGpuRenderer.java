@@ -23,6 +23,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.render.scope.ScopePipRerender;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -533,17 +534,16 @@ public final class PolyMeshGpuRenderer {
     /**
      * 「当前是否在开镜镜内那一遍 LevelRenderer 二次渲染里」。
      *
-     * <p><b>26.1.2 适配（重要）</b>：1211 源这里调
-     * {@code ScopePipRerender.isInsideScopeLevelRender()}（其 PIP 纪元设施）。26.1.2 尚无
-     * 镜内二次渲染（无 {@code GameRenderer#renderLevel → LevelRenderer#renderLevel} 的
-     * PIP redirect，{@code ScopePipRerender} 不存在），按「纪元差异文档化」裁定为常 false：
-     * 门闸退化为「世界表每帧照常消费一次」。等 052b2 的 PIP 深度线移植落地时，这里必须
-     * 换回真实标志——届时 {@link #shouldSubmitGpuWorld} 的拒收分支与
-     * {@link #renderAtWorldFlush} 的「画但不清表、不占消费标志」分支会自动恢复语义，
-     * 两个调用点已按原形保留。</p>
+     * <p><b>26.1.2 适配（已随 PIP 深度线移植闭合）</b>：1211 源这里调
+     * {@code ScopePipRerender.isInsideScopeLevelRender()}（其 PIP 纪元设施）。此前 26.1.2
+     * 无镜内二次渲染，按「纪元差异文档化」裁定为常 false；现在 {@code ScopePipRerender}
+     * 已移植（{@code GameRendererMixin} 的 PIP redirect 先跑窄 FOV 那遍），换回真实标志——
+     * {@link #shouldSubmitGpuWorld} 的拒收分支与 {@link #renderAtWorldFlush} 的
+     * 「画但不清表、不占消费标志」分支自动恢复 1211 语义。标志默认 false
+     * （{@code ScopePipRerender} 默认关闭、镜内那遍不跑），主画面路径行为不变。</p>
      */
     private static boolean isInsideScopeLevelRender() {
-        return false;
+        return ScopePipRerender.isInsideScopeLevelRender();
     }
 
     /** 世界钩子的存活证明（帧语义同手部，见 {@link #lastHandFlushFrame}）。 */

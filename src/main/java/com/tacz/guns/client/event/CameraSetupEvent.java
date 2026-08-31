@@ -14,6 +14,7 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
 import com.tacz.guns.api.modifier.ParameterizedCachePair;
+import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
@@ -96,6 +97,30 @@ public class CameraSetupEvent {
                 return;
             }
             float zoom = iGun.getAimingZoom(stack);
+            // Gate on the same interpolated progress the fallback below uses (frame partial-tick),
+            // so a boundary frame cannot "fall through" with a non-1x aim value. A fixed 0/1 tick
+            // value is one frame out of phase at one side of the transition and still caused the
+            // exit POV jump.
+            if (ScopePipRenderState.suppressesWorldFovZoom((float) event.getPartialTick())) {
+                // Step 3 (real PIP): the lens owns the scope zoom, but part of it may be assigned to
+                // the world by ScopePipWorldZoomShare. Apply exactly that share using the same
+                // progress formula as the non-PIP fallback below, and keep WORLD_FOV_DYNAMICS tracking
+                // it (sprint's moving base FOV must not snap on exit). With the default share=0 this
+                // reduces to "keep the live base FOV" — the previous suppression behavior.
+                float aimingProgress;
+                if (livingEntity instanceof LocalPlayer localPlayer) {
+                    IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
+                    aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
+                } else {
+                    IGunOperator gunOperator = IGunOperator.fromLivingEntity(livingEntity);
+                    aimingProgress = gunOperator.getSynAimingProgress();
+                }
+                float worldZoom = ScopePipRenderState.worldZoomAtProgress(aimingProgress);
+                float baseFov = (float) event.getFOV();
+                float fov = WORLD_FOV_DYNAMICS.update((float) MathUtil.magnificationToFov(worldZoom, baseFov));
+                event.setFOV(fov);
+                return;
+            }
             if (livingEntity instanceof LocalPlayer localPlayer) {
                 IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
                 float aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
