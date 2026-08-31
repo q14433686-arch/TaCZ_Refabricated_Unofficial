@@ -226,8 +226,8 @@ public final class PolyMeshGpuRenderer {
      *   <li><b>不在</b>镜内那一遍（PIP 二次渲染）—— 防御性闸门：提交都发生在
      *       extract 阶段（镜内那遍开始之前），正常流程根本走不进这个分支；
      *       万一有 mod 在镜内窗口里补提交，pose 语义未知，宁可拒收。
-     *       镜内那遍怎么消费世界表见 {@link #renderAfterSolid}（画但不清表，
-     *       与 collector 的两遍一致裁定同构）；</li>
+     *       镜内那遍怎么消费世界表见 {@link #renderWorldAfterSolid}
+     *       （画但不清表，与 collector 的两遍一致裁定同构）；</li>
      *   <li><b>不在</b>阴影 pass —— Iris 阴影遍的投影/MV 是太阳视角，
      *       登记进主视角的表必然画错；{@code MeshPolyInShadow=false} 时提交
      *       在 {@code PolyRenderPolicy} 就被拦了，这里是 true 时的第二道保险。</li>
@@ -352,6 +352,9 @@ public final class PolyMeshGpuRenderer {
         drawnThisFrame = false;
         worldDrawnThisFrame = false;
         bakesThisFrame = 0;
+        // LevelRendererWorldPassMixin 的 RETURN 注入在异常路径不触发，
+        // 括号标志可能泄漏 —— 每帧兜底归零。
+        insideLevelRender = false;
         if (!DEFERRED_RELEASE.isEmpty()) {
             // 上一帧被逐出的 VBO：绘制已经结束（上一帧帧末），现在关是安全的。
             for (BakedBone bone : DEFERRED_RELEASE) {
@@ -400,73 +403,22 @@ public final class PolyMeshGpuRenderer {
         //
         if (com.tacz.guns.client.render.scope.ScopePipRenderer.isInsideScopeLevelRender()) {
             HAND_DRAWS.clear();
-            // ===== 镜内那一遍的【世界】pass：画，但不清表、不占帧标志 =====
-            //
-            // 时序事实（SimpleFeatureRenderPhaseMixin 的「节点留给主画面」机制）：
-            // 镜内 levelRenderer.render 跑在主画面那一遍【之前】，且共用同一批
-            // 提交节点 —— WORLD_DRAWS 是在 extract 阶段登记的（每帧只登记一次），
-            // 这里清了主画面就没了（世界 mesh 枪一开镜就消失）。
-            //
-            // 为什么画而不是跳过：collector 路径在镜内那一遍是照常重放的
-            // （PolyMeshSnapshot 的 2026-08-30 撤回注释 —— 维护者裁定两遍必须
-            // 内容一致，镜内不许出现「缺 poly 部件」的行为分叉）。GPU 表遵循
-            // 同一裁定：镜内那一遍用镜内当刻的 MV/投影/渲染目标照画一遍。
-            // 无光影时 mainRenderTarget() 已被重定向到 pip target、MV 是镜内
-            // 世界那套 —— 两层变换定理不区分是哪一遍。
-            if (!ScopeMaskRenderer.isInHandPass()
-                    && !IrisCompat.isRenderShadow()
-                    && !WORLD_DRAWS.isEmpty()) {
-                try {
-                    if (useRenderTypeRoute()) {
-                        drawWorldListViaRenderType(WORLD_DRAWS);
-                    } else {
-                        drawList(WORLD_DRAWS);
-                    }
-                } catch (Exception e) {
-                    LOGGER.error("[TacZMeshLoader] GPU world mesh pass failed (in-scope); "
-                            + "falling back to collector path for this session.", e);
-                    gpuDisabledThisSession = true;
-                    MeshyConfig.GPU_BAKING.set(false);
-                    WORLD_DRAWS.clear();
-                }
-            }
             return;
         }
         if (!ScopeMaskRenderer.isInHandPass()) {
-            // ===== 世界那一次 renderAllFeatures =====
-            //
-            // 时序事实（与手部同一注入点 FeatureRenderDispatcherMixin，字节码依据同）：
-            // executeSolid 刚返回，立方体/地形深度已就绪，当前不在任何 render pass 内，
-            // RenderSystem 的 MV/投影是世界那套 —— 正是世界枪 GPU 绘制需要的环境。
-            //
-            // 阴影 pass：只跳过、【不清表】—— 若 Iris 的阴影遍也走到这条注入点，
-            // 它发生在主 gbuffers 遍之前，清表等于把主画面的条目扔了
-            // （提交只在 extract 阶段发生一次，不会补）。
-            if (IrisCompat.isRenderShadow()) {
-                return;
-            }
-            if (WORLD_DRAWS.isEmpty()) {
-                return;
-            }
-            if (worldDrawnThisFrame) {
-                // 一帧多次世界 renderAllFeatures 的重复消费：跳过。
-                WORLD_DRAWS.clear();
-                return;
-            }
-            try {
-                if (useRenderTypeRoute()) {
-                    drawWorldListViaRenderType(WORLD_DRAWS);
-                } else {
-                    drawList(WORLD_DRAWS);
-                }
-                worldDrawnThisFrame = true;
-            } catch (Exception e) {
-                LOGGER.error("[TacZMeshLoader] GPU world mesh pass failed; falling back to collector path for this session.", e);
-                gpuDisabledThisSession = true;
-                MeshyConfig.GPU_BAKING.set(false);
-            } finally {
-                WORLD_DRAWS.clear();
-            }
+            // 非手部的 renderAllFeatures：GUI 图集（GuiItemAtlas /
+            // PictureInPictureRenderer）或 renderLevel 偏移 560 的收尾调用。
+            // 世界表【不在这里】消费 —— MV-PROBE v2 字节码取证：26.2 的世界
+            // 实体 pass 根本不经过 renderAllFeatures（LevelRenderer.render 的
+            // 帧图 lambda 直调 PreparedFrame.executeSolid，lambda$addMainPass$0
+            // 偏移 177），而 renderLevel 560 处 MV 栈已 popMatrix 回单位阵
+            // （LevelRenderer.render 内 30-45 push+mul(viewRotation)、591 pop、
+            // 560 在 render 返回之后）—— 首版世界烘焙就是在这里被消费的，
+            // 单位阵 MV = 丢相机旋转层 = 「枪固定在视角空间」（实测症状，
+            // 与第一人称 0ea0fb6 丢 MV_draw 是同一个病）。
+            // 世界的正确消费点在 renderWorldAfterSolid
+            // （PreparedFrameSolidMixin，executeSolid RETURN，MV 栈顶=viewRotation）。
+            HAND_DRAWS.clear();
             return;
         }
         if (HAND_DRAWS.isEmpty()) {
@@ -490,6 +442,99 @@ public final class PolyMeshGpuRenderer {
             MeshyConfig.GPU_BAKING.set(false);
         } finally {
             HAND_DRAWS.clear();
+        }
+    }
+
+    /**
+     * 「此刻在不在 LevelRenderer.render 里」—— 世界消费点的调用者判据，
+     * 由 {@code LevelRendererWorldPassMixin} 在 render 的 HEAD/RETURN 置位。
+     * RETURN 在异常路径不触发（镜内那遍的失败被上层捕获），
+     * {@link #beginFrame} 每帧兜底归零。
+     */
+    private static boolean insideLevelRender = false;
+
+    public static void setInsideLevelRender(boolean value) {
+        insideLevelRender = value;
+    }
+
+    /**
+     * 世界 poly_mesh GPU 表的消费点。挂在 {@code PreparedFrame.executeSolid}
+     * 的 RETURN（{@code PreparedFrameSolidMixin}）。
+     *
+     * <h2>为什么是这里（MV-PROBE v2 字节码取证，minecraft-merged-26.2）</h2>
+     * <ul>
+     *   <li>26.2 世界实体 pass = {@code LevelRenderer.render} 帧图的
+     *       {@code lambda$addMainPass$0} <b>直调</b> executeSolid（偏移 177），
+     *       不经过 renderAllFeatures —— 首版挂错了地方；</li>
+     *   <li>{@code LevelRenderer.render} 开头（30-45）
+     *       {@code getModelViewStack().pushMatrix(); mul(viewRotation)}，
+     *       帧图执行（572）在 popMatrix（591）之前 ——
+     *       <b>本方法执行时 MV 栈顶恰好是 viewRotation</b>，
+     *       两个绘制核心（drawList / drawViaRenderTypeCore）从栈顶取 MV_draw
+     *       的既有逻辑在这里天然正确，与手部 pass 完全同构。</li>
+     * </ul>
+     *
+     * <h2>executeSolid 的四类调用者怎么分流</h2>
+     * <ul>
+     *   <li><b>手部 renderAllFeatures</b>（vanilla renderItemInHand 185 /
+     *       Iris HandRenderer）：{@code isInHandPass} 拒收 —— 手部有自己的表；</li>
+     *   <li><b>GUI renderAllFeatures</b>（GuiItemAtlas /
+     *       PictureInPictureRenderer / renderLevel 560 的收尾调用）：
+     *       {@code insideLevelRender=false} 拒收；</li>
+     *   <li><b>镜内那遍</b>（我们自己驱动的 levelRenderer.render，也在括号内）：
+     *       照画但<b>不清表、不占帧标志</b> —— 维护者 08-30 裁定两遍内容必须
+     *       一致（collector 也是两遍照画）；WORLD_DRAWS 在 extract 阶段登记、
+     *       每帧只一份，镜内清了主画面就没了。无光影时 mainRenderTarget()
+     *       已重定向到 pip target、MV 栈顶是镜内那遍自己 push 的 viewRotation
+     *       （同一个 render 方法、同一段字节码）—— 语义自动正确；</li>
+     *   <li><b>主世界帧图</b>：消费 + 置帧标志 + 清表。</li>
+     * </ul>
+     *
+     * <p>阴影 pass（Iris 有自己的渲染循环，理论到不了这里）：只跳过、
+     * <b>不清表</b> —— 它若真跑到，也发生在主 gbuffers 遍之前，
+     * 清表等于把主画面的条目扔了。</p>
+     *
+     * <p>时机安全性：executeSolid 内部逐 phase 开/关各自的 render pass，
+     * RETURN 处不在任何 pass 内，createRenderPass 断言安全；
+     * 立方体/地形深度已就绪，GPU poly 同一张 depth view 深度测试即正确遮挡。</p>
+     */
+    public static void renderWorldAfterSolid() {
+        if (!insideLevelRender) {
+            return;
+        }
+        if (ScopeMaskRenderer.isInHandPass()) {
+            // Iris 把手部 renderAllFeatures 搬进 LevelRenderer.render 内部，
+            // 括号内也可能出现手部的 executeSolid —— 那是手部表的事，这里不碰。
+            return;
+        }
+        if (IrisCompat.isRenderShadow()) {
+            return;
+        }
+        if (WORLD_DRAWS.isEmpty()) {
+            return;
+        }
+        boolean inScopePass = com.tacz.guns.client.render.scope.ScopePipRenderer.isInsideScopeLevelRender();
+        if (!inScopePass && worldDrawnThisFrame) {
+            // 主世界重复消费（防御性；正常一帧只有一次主世界帧图）。
+            WORLD_DRAWS.clear();
+            return;
+        }
+        try {
+            if (useRenderTypeRoute()) {
+                drawWorldListViaRenderType(WORLD_DRAWS);
+            } else {
+                drawList(WORLD_DRAWS);
+            }
+            if (!inScopePass) {
+                worldDrawnThisFrame = true;
+                WORLD_DRAWS.clear();
+            }
+            // 镜内那遍：表保留原样，主画面那遍再消费。
+        } catch (Exception e) {
+            LOGGER.error("[TacZMeshLoader] GPU world mesh pass failed; falling back to collector path for this session.", e);
+            gpuDisabledThisSession = true;
+            MeshyConfig.GPU_BAKING.set(false);
+            WORLD_DRAWS.clear();
         }
     }
 

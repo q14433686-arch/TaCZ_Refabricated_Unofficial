@@ -72,8 +72,14 @@
 ### 世界语境 GPU 烘焙（第 2 步，已实装，**待实机验证**）
 
 第三人称（其他玩家手持）/掉落物/展示框/展示台雕像共用同一套常驻 VBO，
-每把枪每帧登记 O(骨骼) 个矩阵进世界表（`WORLD_DRAWS`），在世界那次
-`renderAllFeatures` 的 `executeSolid` 之后统一绘制——多人满屏高模枪的
+每把枪每帧登记 O(骨骼) 个矩阵进世界表（`WORLD_DRAWS`），在世界帧图的
+`PreparedFrame.executeSolid` RETURN 处统一绘制（**首版曾挂在
+renderAllFeatures 上 —— MV-PROBE v2 字节码取证证明 26.2 的世界实体 pass
+不经过它**：LevelRenderer.render 的帧图 lambda 直调 executeSolid（偏移 177），
+而 renderLevel 偏移 560 那次 renderAllFeatures 在 MV 栈 pop 之后执行，
+在那里画 = 丢相机旋转层 = 枪固定在视角空间，实测复现；正确消费点处
+MV 栈顶恰为 viewRotation（render 内 30-45 push、591 pop、帧图执行 572
+在两者之间），与手部两层变换完全同构）——多人满屏高模枪的
 CPU 成本从「每帧每枪 O(顶点)」降到「每帧每枪 O(骨骼)」。上游 TML 本就对
 一切非 GUI 场景走 VBO（`useVBO = !isRenderingScreen()`），本步是其 26.2
 submit/collector 架构下的等价物。要点：
