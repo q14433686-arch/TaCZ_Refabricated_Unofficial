@@ -95,6 +95,20 @@ public final class ScopeDepthCopyState {
         return APERTURE_TARGET.snapshot();
     }
 
+    /**
+     * Whether the current frame completed a full mask cycle (world backup + aperture copy),
+     * i.e. the depth textures {@link #prepareMaskDraw} binds are this frame's live data.
+     *
+     * <p>Scope text uses this as its "mask available" gate (26.1.2's {@code e1c550ee} added the
+     * same accessor for the same reason, and 26.2's {@code ScopeTextSubmitter} checked its own
+     * target sync the same way): when this returns false the deferred text submission falls back
+     * to vanilla {@code submitText} instead of sampling a stale aperture copy, which would clip
+     * glyphs at last frame's lens position.</p>
+     */
+    public static boolean isMaskCycleValid() {
+        return maskValid;
+    }
+
     private static int backupSourceFbo;
     /** FBO bound while the ocular aperture drew; retained for diagnostics only. */
     private static int ocularSourceFbo;

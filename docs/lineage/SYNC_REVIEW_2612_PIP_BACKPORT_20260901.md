@@ -9,7 +9,7 @@ success），以及他们自写的取证文档 `docs/SCOPE_PIP_STATE_REEXTRACT_A
 | 项 | 他们那轮的提交 | 我们能不能加 | 结论 |
 |---|---|---|---|
 | A. PIP 窄遍之后的**逐帧状态重提取 + 清提交节点** | `0bf4c482`（+新 `LevelRendererAccessor` mixin） | **不加**（javap 已判：本世代 `renderLevel` 自带提取、`renderAllFeatures` 自带 `clear()`），但结论与依据已写进我们的类注释 | 见 §1 |
-| B. 镜内文字**掩码裁剪** | `e1c550ee`（`ScopeTextSubmitter` + `scope_text_final.fsh` + `ScopeRenderTypes.maskedText` + `clipToScopeMask` 旗） | **能加，但必须改写**：本世代 `GlyphVisitor` 不是他们那个带坐标的 `accept`（§2.1 有实测签名表）；这是"文字溢出圆孔"的唯一正解 | 见 §2 |
+| B. 镜内文字**掩码裁剪** | `e1c550ee`（`ScopeTextSubmitter` + `scope_text_final.fsh` + `ScopeRenderTypes.maskedText` + `clipToScopeMask` 旗） | **本轮已按本世代 API 改写并落地**（§2.3），编译门待 CI；实机一格未验 | 见 §2、§2.3 |
 | C. `ScopePipRerenderInterval` 隔帧渲染 | `8aca7374`（源自 26.2） | 能加，成本很小，但**要排在 A 之后** | 见 §3 |
 | D. `ScopePipRenderState` / `ScopePipDepthDebug` / PIP 配置面 / `DepthHandle` 只读快照 | `99ccb8c8`、`297f127a`、`bf42f3a3`、`8ea41c2d` | **不需要**：这些本来就是 1.21.11 的东西，他们是从我们这棵树上搬过去的 | 见 §4 |
 | E. 「光影下两个 GPU 键默认 ON」 | `3e4eeb16` | **不要跟**：我们这边的 B 测结论相反 | 见 §5 |
@@ -179,6 +179,35 @@ v4 把 B 剩下的疑问基本清掉了，**逐条映射**如下（左：他们 
 | 接入点 | 我们的 `TextShowRender` 与他们改前逐字同形 | 照抄他们的 `clipToScopeMask` 旗 + 失败回退 vanilla `submitText` |
 
 ⇒ 新增文件实际只有 **1 个 shader + 1 个类**（`ScopeTextSubmitter`，约 150-180 行），其余都是既有类各加一段。
+
+### 2.3 本轮落地情况（2026-09-01，B 已按 §2.2 写完；**只有 CI 编译级证据，无任何实机结论**）
+
+| 文件 | 改了什么 |
+|---|---|
+| `client/render/scope/ScopeTextSubmitter.java`（新增） | `prepareText → visit(acceptGlyph/acceptEffect)` 收集 renderable → 按 `textureView()` 分组 → 每组一个 `ScopeRenderTypes.maskedText(pageId)` 一次 `submitCustomGeometry`；`PageHandle` 壳纹理每帧刷新指向；门禁 = `ScopeDepthCopyState.isMaskCycleValid()`，false ⇒ `submit` 返回 false |
+| `resources/assets/tacz/shaders/core/scope_text_final.fsh`（新增） | 本 era `rendertype_text.fsh` 的逐行克隆（§2.1 那份原文）+ `tacz_ScopeFinalOverlay`/`tacz_ScopeMaskMode` 两段，语义与 `scope_reticle_final.fsh` 同构；**故意不带 fog**（同一理由：这批几何在 post-composite 或镜内序列里画，世界雾 uniform 已不描述冻结的手部变换） |
+| `client/render/scope/ScopeRenderTypes.java` | `MASKED_TEXT_PIPELINE = clonePipeline(RenderPipelines.TEXT) + withFragmentShader(core/scope_text_final) + 两条深度 sampler + assignPipelineToIris("HAND_TRANSLUCENT")`；`maskedText(Identifier)` + `createMaskedTextType`（`Sampler0`+两条占位深度+`useLightmap()`，外层 `DepthCopyRenderType(MASK)`）；按页缓存一张 `MASKED_TEXT_TYPES` |
+| `client/render/scope/ScopeDepthCopyState.java` | 只加一个 `public static boolean isMaskCycleValid()`（返回既有 `maskValid`），注释写明"陈旧掩码宁可不裁"的回退语义 |
+| `client/model/functional/TextShowRender.java` | 加 `clipToScopeMask` 旗 + 四参构造（三参重载保留 ⇒ 枪包侧不受影响）；任务体走"掩码优先、失败回退 vanilla" |
+| `client/model/BedrockAttachmentModel.java` | 瞄具 `setTextShowList` 传 `true`；两处注释改写（门禁的理由从"防溢出"改成"腰射时镜内画面不存在"，裁剪由掩码管线负责） |
+| `client/model/BedrockGunModel.java` | 枪身 `setTextShowList` 显式传 `false` |
+
+与 26.1.2 那版的**三处有意偏离**：
+1. visitor 用 `acceptGlyph`/`acceptEffect`（他们那个 `accept(r,x,y,w)` 在本世代不存在）；位置交给
+   `prepareText` 的 x/y（我们不再自己算），字形坐标由 `TextRenderable#render` 自己带；
+2. `PageHandle.point()` 只填 `textureView` 与 `sampler`，**不碰** `texture` 字段 —— 本世代的绑定链路是
+   `RenderSetup(Identifier) → TextureManager#getTexture(id).getTextureView()`（`PolyMeshGpuRenderer` 里
+   已有同款读法），不依赖 `GpuTextureView#texture()` 是否存在（少一个未验证符号）；
+3. 加了**一条 log-once**：`[TACZ Scope] In-scope text is now clipped to the ocular aperture mask (N font
+   page group(s)).` —— 验收剧本需要"确实走了掩码管线"的可观测判据，否则"文字在镜内"与"回退了 vanilla"
+   在屏幕上可能长得一样。
+
+**已知未覆盖的两处**（写清，不留模糊）：
+- 资源包重载后字体页 view 更换、而 `MASKED_TEXT_TYPES`/`PAGE_HANDLES` 是缓存：他们的实现同样如此，
+  本分支沿用，**未验**；若实机发现重载后文字消失，修法是把 RenderType 缓存键改成"页 view 的代数"或在
+  `ResourceManager` 重载事件里清两张表；
+- `Font.DisplayMode.SEE_THROUGH`/`POLYGON_OFFSET` 两族没有掩码版本 ⇒ 瞄具文字若将来支持穿透模式，
+  需要再克隆一族 `TEXT_SEE_THROUGH`（现在不需要：`TextShowRender` 只用 NORMAL）。
 **v5 已答的最后一件事**：`RenderSetup$RenderSetupBuilder` 的公开纹理入口只有
 `withTexture(String, Identifier)` 与 `withTexture(String, Identifier, Supplier<GpuSampler>)` 两个
 （`RenderSetup$TextureAndSampler` 是 `record(GpuTextureView, GpuSampler)`，但只在
@@ -256,5 +285,5 @@ protected 字段（javap 实测）⇒ 空壳子类可以直接赋字段，不需
 - 沙箱里没有 JDK、没有 MC jar，所有世代事实只能走 CI 通道：v3/v4/v5 三轮探针（`build.gradle` 的 TEMP 块）
   已把上面这些事实全部取回，**TEMP 块本轮已删除**，`build.gradle` 回到只剩
   `-PmeshProbe` 那条 opt-in 通道的状态（AGENTS：不许把每帧跑的探针留在树里）。
-- 未做（下一轮的直接工作，条件已齐）：B 的六个改动点（§2.2 那张表就是施工单）与 C。
-  B 不需要再等任何事实；它需要的是**你的优先级判断**，因为动的是字体绘制与一条新的 `RenderType` 族。
+- B 的六个改动点**本轮已写完**（§2.3），证据只到"CI 编译通过"；C 仍未动（等你的优先级决定，
+  以及 §1 那条 PIP 双遍风险的实机结果）。

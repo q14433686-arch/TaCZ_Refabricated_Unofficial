@@ -5,7 +5,37 @@
 
 ---
 
-## 评估 26.1.2 本轮 PIP 回移植（2026-09-01，本分支只改了文档与探针；代码无功能改动）
+## 镜内文字裁剪（2026-09-01，B 落地：7 个文件；版本号未变；**实机未验证**）
+
+- 按维护者"动"的指示，把 26.1.2 `e1c550ee` 的**语义**移植到本世代（不是搬代码）：镜内 `text_show`
+  文字现在会被目镜孔径掩码裁剪。新增 `client/render/scope/ScopeTextSubmitter.java` 与
+  `assets/tacz/shaders/core/scope_text_final.fsh`；`ScopeRenderTypes` 加 `MASKED_TEXT_PIPELINE`
+  （`clonePipeline(RenderPipelines.TEXT)` + 换 fsh + 两条既有深度 sampler + `assignPipelineToIris`
+  `HAND_TRANSLUCENT`）与按字体页缓存的 `maskedText(Identifier)`（外层 `DepthCopyRenderType(MASK)`）；
+  `ScopeDepthCopyState` 只加一个 `isMaskCycleValid()`；`TextShowRender` 加 `clipToScopeMask` 旗
+  （瞄具侧 true、枪身 false，三参构造保留 ⇒ 枪包 API 不变）；`BedrockAttachmentModel` /
+  `BedrockGunModel` 各改一行注册。
+- **三处刻意偏离 26.1.2**（都因为本世代 API 不同，逐条有 javap 依据，见评估篇 §2.1）：
+  ① visitor 用本世代的 `acceptGlyph(TextRenderable$Styled)` / `acceptEffect(TextRenderable)`，
+  不再是他们覆写的 `accept(r,x,y,w)`，位置交给 `prepareText` 的 x/y，字形坐标由
+  `TextRenderable#render(Matrix4f, VertexConsumer, int, boolean)` 自带；
+  ② `PageHandle`（字体页壳纹理）只填 `textureView` 与 `sampler`、**不碰** `texture` 字段 —— 本世代绑定
+  链路是 `RenderSetup(Identifier) → TextureManager#getTexture(id).getTextureView()`，少依赖一个未验证符号；
+  ③ 新增一条 log-once（`In-scope text is now clipped to the ocular aperture mask (N font page group(s))`），
+  否则"走了掩码"与"回退 vanilla"在屏幕上无法区分。
+- 失败语义与 26.2/26.1.2 一致：**掩码不可用就回退 vanilla `submitText`**（宁可贴边溢出，不丢字、不画错）。
+  反向风险也写进剧本：着色器在 `tacz_ScopeFinalOverlay == 0` 时丢弃全部像素 ⇒ 若某天文字整个消失，
+  第一嫌疑人是这条丢弃路径（镜内文字篇 §4 剧本 A 的"若不符"格已这么写）。
+- 两处已知未覆盖，明写不糊：① 字体图集页换 view 后 `MASKED_TEXT_TYPES` / `PAGE_HANDLES` 仍按 id 缓存
+  （与 26.1.2 同源设计）⇒ 新增剧本 F 专测 F5 重载；② `DisplayMode.SEE_THROUGH` / `POLYGON_OFFSET`
+  没有掩码版本（瞄具文字只用 NORMAL，本轮不需要）。
+- 同步：镜内文字篇 §3 残留①改为"已落地待实机"，§4 剧本 A 恢复"贴边被裁"这条判据并加掩码日志判据、
+  加剧本 F；评估篇加 §2.3 施工清单；账本 L-11 的 B 改为"已落地待实机"。AGENTS §2：本轮证据只到
+  "CI 编译通过"，**不含任何实机或性能结论**。
+
+---
+
+## 评估 26.1.2 本轮 PIP 回移植（2026-09-01，评估 + 探针那一半；B 的实现见上一节）
 
 - 新增 `docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md`：逐提交核他们 `0a77ef52`…`8aca7374`，
   可加项只有三条（A 窄遍后的状态重提取/清提交节点、B 镜内文字掩码裁剪、C 隔帧 `ScopePipRerenderInterval`），

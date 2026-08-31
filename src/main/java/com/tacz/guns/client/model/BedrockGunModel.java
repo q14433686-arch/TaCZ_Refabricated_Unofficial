@@ -241,7 +241,8 @@ public class BedrockGunModel extends BedrockAnimatedModel {
      * 添加枪械自定义的文本显示
      */
     public void setTextShowList(Map<String, TextShow> textShowList) {
-        textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name, bedrockPart -> new TextShowRender(this, textShow, currentGunItem)));
+        // 枪身文字（非瞄具 ocular 子树）不走目镜掩码：vanilla 管线按场景内容正常处理。
+        textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name, bedrockPart -> new TextShowRender(this, textShow, currentGunItem, false)));
     }
 
     /** Prepares all stack-dependent visibility state before an immediate render or snapshot extraction. */

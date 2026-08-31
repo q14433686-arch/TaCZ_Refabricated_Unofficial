@@ -457,11 +457,13 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * 与准星保持一致：<b>只在开镜时显示</b>。
      * 复用 {@link IlluminatedReticleRenderer} 那条 {@code FADE_IN_START = 0.35}
      * 的判据 —— 未开镜时本就看不到镜内，文字自然也不该出现；
-     * 开镜后视线对准光轴，文字落在圆孔内，不会溢出。
+     * 开镜后视线对准光轴，镜内画面本来就只画圆孔内的部分。
      *
-     * <p>这是<b>保守做法</b>：不碰字体管线、不碰掩码链路，
-     * 只在提交前加一道门禁。代价是腰射时看不到瞄具上的弹药计数 ——
-     * 但那本来也是「凑到镜前才看得清」的信息，符合直觉。
+     * <p><b>2026-09-01 更新：这道门禁不再是唯一的防线。</b>本方法构造 {@link TextShowRender} 时传
+     * {@code clipToScopeMask = true}，于是瞄具文字在 flush 时走 {@code ScopeTextSubmitter} 的孔径深度
+     * 掩码管线（1.21.11 侧等价物 = 双深度拷贝 + {@code tacz_ScopeMaskMode} 分支），溢出圆孔的像素被
+     * 丢弃；掩码周期未就绪时自动回退 vanilla {@code submitText}。门禁本身<b>保留</b>，理由与裁剪无关：
+     * 腰射时镜内画面并不存在，把弹药计数画在枪身外侧并不是我们想要的观感（准星也用同一条 0.35 判据）。
      *
      * <p>注意只对<b>瞄具</b>生效：{@code BedrockGunModel} 里同名方法不加此门禁，
      * 枪身上的文字（如弹匣计数）本就该常显。
@@ -469,11 +471,15 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     public void setTextShowList(Map<String, TextShow> textShowList) {
         textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name,
                 bedrockPart -> {
-                    // 未开镜（或刚开始开镜）时不提交，避免文字溢出到镜孔之外。
+                    // 未开镜（或刚开始开镜）时不提交：那时镜内画面不存在（裁剪后文字会整条被丢弃，
+                    // 反而像"文字消失"）；与准星共用同一条 0.35 判据。
                     if (currentAimingProgress() <= TEXT_SHOW_AIM_START) {
                         return null;
                     }
-                    return new TextShowRender(this, textShow, currentGunItem);
+                    // 瞄具上的文字需要裁进目镜掩码（26.2 9d036594 的语义，26.1.2 用 e1c550ee 移植，
+                    // 本分支同一轮落地）：flush 时优先走 ScopeTextSubmitter 的孔径深度掩码管线；
+                    // 掩码周期未就绪时自动回退 vanilla submitText（不丢字、不画错）。
+                    return new TextShowRender(this, textShow, currentGunItem, true);
                 }));
     }
 
@@ -679,8 +685,10 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             // 26.2 的镜内掩码裁剪」——那句**已被 26.1.2 的实机证伪**（他们据此在 e1c550ee 改成掩码
             // 裁剪）：submitText 下游是 vanilla 字体管线（TextFeatureRenderer → GlyphRenderTypes 写死的
             // RenderType），不吃 scope body 写入的孔径深度，所以镜孔外的像素照画。本文件因此**只**保证
-            // 层序正确，不保证裁剪；裁剪需要 ScopeTextSubmitter + maskedText 那条路（评估见
-            // docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md §B）。
+            // 层序正确。裁剪自本轮起由 ScopeTextSubmitter + ScopeRenderTypes.maskedText 负责：瞄具文字
+            // 构造时带 clipToScopeMask=true，任务执行时若本帧掩码周期有效（ScopeDepthCopyState
+            // #isMaskCycleValid）就走掩码管线、溢出圆孔的像素被丢弃；否则回退 vanilla submitText。
+            // 评估与本世代的 API 对照见 docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md §2。
             // 也不要"顺手"给字体开 GL_ALWAYS：GlCommandEncoderScopeDepthCopyMixin 的白名单只覆盖 TACZ
             // 自己的 scope RenderType，给 vanilla 文本开只会把溢出问题变成穿透问题。
             //
