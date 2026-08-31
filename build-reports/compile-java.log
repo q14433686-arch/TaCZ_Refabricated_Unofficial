@@ -1,4 +1,4 @@
-commit: 6562b592559284013f34d84743145b1fe05ce67f
+commit: 18e4553afe424fe243cf0cf1930ff877c6ca69b8
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -75,7 +75,147 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 6 warnings
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788203108284.json
+
+> Task :dumpPipPortProbeV3
+===== javap -p net.minecraft.client.renderer.LevelRenderer =====
+  private final net.minecraft.client.renderer.state.LevelRenderState levelRenderState;
+  public net.minecraft.client.renderer.LevelRenderer(net.minecraft.client.Minecraft, net.minecraft.client.renderer.entity.EntityRenderDispatcher, net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher, net.minecraft.client.renderer.RenderBuffers, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.client.renderer.feature.FeatureRenderDispatcher);
+  public void renderLevel(com.mojang.blaze3d.resource.GraphicsResourceAllocator, net.minecraft.client.DeltaTracker, boolean, net.minecraft.client.Camera, org.joml.Matrix4f, org.joml.Matrix4f, org.joml.Matrix4f, com.mojang.blaze3d.buffers.GpuBufferSlice, org.joml.Vector4f, boolean);
+  private void addMainPass(com.mojang.blaze3d.framegraph.FrameGraphBuilder, net.minecraft.client.renderer.culling.Frustum, org.joml.Matrix4f, com.mojang.blaze3d.buffers.GpuBufferSlice, boolean, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.client.DeltaTracker, net.minecraft.util.profiling.ProfilerFiller);
+  private void extractVisibleEntities(net.minecraft.client.Camera, net.minecraft.client.renderer.culling.Frustum, net.minecraft.client.DeltaTracker, net.minecraft.client.renderer.state.LevelRenderState);
+  private void submitEntities(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.client.renderer.SubmitNodeCollector);
+  private void extractVisibleBlockEntities(net.minecraft.client.Camera, float, net.minecraft.client.renderer.state.LevelRenderState);
+  private void submitBlockEntities(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.client.renderer.SubmitNodeStorage);
+  private void extractBlockDestroyAnimation(net.minecraft.client.Camera, net.minecraft.client.renderer.state.LevelRenderState);
+  private void renderBlockDestroyAnimation(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.renderer.state.LevelRenderState);
+  private void extractBlockOutline(net.minecraft.client.Camera, net.minecraft.client.renderer.state.LevelRenderState);
+  private void renderBlockOutline(net.minecraft.client.renderer.MultiBufferSource$BufferSource, com.mojang.blaze3d.vertex.PoseStack, boolean, net.minecraft.client.renderer.state.LevelRenderState);
+  private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle);
+===== javap -p net.minecraft.client.renderer.LevelRenderState =====
+(no output) Error: class not found: net.minecraft.client.renderer.LevelRenderState
+===== javap -p net.minecraft.client.renderer.GameRenderer =====
+  public void renderLevel(net.minecraft.client.DeltaTracker);
+  private void extractCamera(float);
+===== javap -p net.minecraft.client.renderer.SubmitNodeStorage =====
+  public void clear();
+  public void endFrame();
+===== javap -p net.minecraft.client.gui.Font =====
+  public void drawInBatch(java.lang.String, float, float, int, boolean, org.joml.Matrix4f, net.minecraft.client.renderer.MultiBufferSource, net.minecraft.client.gui.Font$DisplayMode, int, int);
+  public void drawInBatch(net.minecraft.network.chat.Component, float, float, int, boolean, org.joml.Matrix4f, net.minecraft.client.renderer.MultiBufferSource, net.minecraft.client.gui.Font$DisplayMode, int, int);
+  public void drawInBatch(net.minecraft.util.FormattedCharSequence, float, float, int, boolean, org.joml.Matrix4f, net.minecraft.client.renderer.MultiBufferSource, net.minecraft.client.gui.Font$DisplayMode, int, int);
+  public net.minecraft.client.gui.Font$PreparedText prepareText(java.lang.String, float, float, int, boolean, int);
+  public net.minecraft.client.gui.Font$PreparedText prepareText(net.minecraft.util.FormattedCharSequence, float, float, int, boolean, boolean, int);
+===== javap -p net.minecraft.client.gui.Font$PreparedText =====
+  Compiled from "Font.java"
+  public interface net.minecraft.client.gui.Font$PreparedText {
+  public abstract void visit(net.minecraft.client.gui.Font$GlyphVisitor);
+  public abstract net.minecraft.client.gui.navigation.ScreenRectangle bounds();
+  }
+===== javap -p net.minecraft.client.gui.Font$GlyphVisitor =====
+  Compiled from "Font.java"
+  public interface net.minecraft.client.gui.Font$GlyphVisitor {
+  public static net.minecraft.client.gui.Font$GlyphVisitor forMultiBufferSource(net.minecraft.client.renderer.MultiBufferSource, org.joml.Matrix4f, net.minecraft.client.gui.Font$DisplayMode, int);
+  public default void acceptGlyph(net.minecraft.client.gui.font.TextRenderable$Styled);
+  public default void acceptEffect(net.minecraft.client.gui.font.TextRenderable);
+  public default void acceptEmptyArea(net.minecraft.client.gui.font.EmptyArea);
+  }
+===== javap -p net.minecraft.client.gui.font.TextRenderable =====
+  Compiled from "TextRenderable.java"
+  public interface net.minecraft.client.gui.font.TextRenderable {
+  public abstract void render(org.joml.Matrix4f, com.mojang.blaze3d.vertex.VertexConsumer, int, boolean);
+  public abstract net.minecraft.client.renderer.rendertype.RenderType renderType(net.minecraft.client.gui.Font$DisplayMode);
+  public abstract com.mojang.blaze3d.textures.GpuTextureView textureView();
+  public abstract com.mojang.blaze3d.pipeline.RenderPipeline guiPipeline();
+  public abstract float left();
+  public abstract float top();
+  public abstract float right();
+  public abstract float bottom();
+  }
+===== javap -p net.minecraft.client.gui.font.TextRenderable$Styled =====
+  Compiled from "TextRenderable.java"
+  public interface net.minecraft.client.gui.font.TextRenderable$Styled extends net.minecraft.client.gui.font.ActiveArea,net.minecraft.client.gui.font.TextRenderable {
+  public default float activeLeft();
+  public default float activeTop();
+  public default float activeRight();
+  public default float activeBottom();
+  }
+===== javap -p com.mojang.blaze3d.pipeline.RenderPipelines =====
+(no output) Error: class not found: com.mojang.blaze3d.pipeline.RenderPipelines
+===== javap -p net.minecraft.client.renderer.RenderType =====
+(no output) Error: class not found: net.minecraft.client.renderer.RenderType
+===== shader sources from the compile classpath =====
+----- assets/minecraft/shaders/core/rendertype_text_intensity.fsh (from minecraft-merged-bdc1f10070-1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2.jar) -----
+  #version 330
+  
+  #moj_import <minecraft:fog.glsl>
+  #moj_import <minecraft:dynamictransforms.glsl>
+  
+  uniform sampler2D Sampler0;
+  
+  in float sphericalVertexDistance;
+  in float cylindricalVertexDistance;
+  in vec4 vertexColor;
+  in vec2 texCoord0;
+  
+  out vec4 fragColor;
+  
+  void main() {
+      vec4 color = texture(Sampler0, texCoord0).rrrr * vertexColor * ColorModulator;
+      if (color.a < 0.1) {
+          discard;
+      }
+      fragColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
+  }
+----- assets/minecraft/shaders/core/rendertype_text.vsh (from minecraft-merged-bdc1f10070-1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2.jar) -----
+  #version 330
+  
+  #moj_import <minecraft:fog.glsl>
+  #moj_import <minecraft:dynamictransforms.glsl>
+  #moj_import <minecraft:projection.glsl>
+  
+  in vec3 Position;
+  in vec4 Color;
+  in vec2 UV0;
+  in ivec2 UV2;
+  
+  uniform sampler2D Sampler2;
+  
+  out float sphericalVertexDistance;
+  out float cylindricalVertexDistance;
+  out vec4 vertexColor;
+  out vec2 texCoord0;
+  
+  void main() {
+      gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
+  
+      sphericalVertexDistance = fog_spherical_distance(Position);
+      cylindricalVertexDistance = fog_cylindrical_distance(Position);
+      vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);
+      texCoord0 = UV0;
+  }
+----- assets/minecraft/shaders/core/rendertype_text.fsh (from minecraft-merged-bdc1f10070-1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2.jar) -----
+  #version 330
+  
+  #moj_import <minecraft:fog.glsl>
+  #moj_import <minecraft:dynamictransforms.glsl>
+  
+  uniform sampler2D Sampler0;
+  
+  in float sphericalVertexDistance;
+  in float cylindricalVertexDistance;
+  in vec4 vertexColor;
+  in vec2 texCoord0;
+  
+  out vec4 fragColor;
+  
+  void main() {
+      vec4 color = texture(Sampler0, texCoord0) * vertexColor * ColorModulator;
+      if (color.a < 0.1) {
+          discard;
+      }
+      fragColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
+  }
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788204326924.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -85,8 +225,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 37s
-1 actionable task: 1 executed
+BUILD SUCCESSFUL in 1m 54s
+2 actionable tasks: 2 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
 == job status: success ==
