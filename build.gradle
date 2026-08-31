@@ -396,12 +396,20 @@ if (project.hasProperty('meshProbe')) {
     apply from: 'scripts/mesh_render_probe.gradle'
 }
 
-// TEMP (2026-09-01 v3, 26.1.2 PIP 回移植评估的前置取证). 沙箱无 JDK / 无 MC jar，两件事只能靠 CI 的
-// 真编译类路径回答：(A) 1.21.11 的 LevelRenderer 有没有「每帧一次 extract + 一次性状态袋」那套
-// (决定要不要抄 0bf4c482 的重提取)，(B) 1.21.11 的字体/管线 API 是否与 26.1.2 同形
-// (决定 ScopeTextSubmitter 能不能落)，以及本 era rendertype_text.fsh 的原文（克隆掩码着色器要用）。
-// 输出进 build-reports/compile-java.log（CI 会 commit 回来）。结论到手后删除本块。
-tasks.register('dumpPipPortProbeV3') {
+// TEMP (2026-09-01 v4, 26.1.2 PIP 回移植评估的取证续集). v3 已答出两件事：1.21.11 的 LevelRenderer 没有
+// extractLevel（extractVisibleEntities / extractVisibleBlockEntities / extractBlockOutline /
+// extractBlockDestroyAnimation 都是私有且以 LevelRenderState 为入参），GameRenderer 只有
+// renderLevel(DeltaTracker) + private extractCamera(float) ⇒ 26.1.2 那条「窄遍把一次性状态袋烧光」的修法
+// 在我们世代结构上不成立（详见 docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md §1）。v3 还答出：
+// 本世代 Font$GlyphVisitor 是 acceptGlyph(TextRenderable$Styled) / acceptEffect(TextRenderable) 两个方法，
+// **不是** 26.1.2 那个带 (x, y, width) 的 accept ⇒ 他们的 ScopeTextSubmitter 原样落不过来的第一处；
+// 而 TextRenderable 自带 left/top/right/bottom/textureView()/render(mat, vc, light, depthWrite)，
+// 位置由 renderable 自己带 ⇒ 我们这边反而更简单（不必自己算 x/y/w）。
+// v4 补 B 剩下的事实：本世代 TEXT 管线常量名、RenderSetup/RenderPipeline 的构建能力面、
+// AbstractTexture/TextureManager 能否支撑「图集页→壳纹理」绑定，外加把 A 的结论钉在 renderLevel 的
+// 字节码上（提取与 clear 的真实调用位置）。输出进 build-reports/compile-java.log（CI 会 commit 回来），
+// 结论到手即删除本块。
+tasks.register('dumpPipPortProbeV4') {
     doLast {
         try {
             def cpFiles = sourceSets.main.compileClasspath.files.collect { it.absolutePath }
@@ -437,22 +445,40 @@ tasks.register('dumpPipPortProbeV3') {
                     }
                 }
             }
-            // ---- A: 逐帧状态袋是否存在 ----
-            dump('net.minecraft.client.renderer.LevelRenderer', ['extractLevel', 'renderLevel', 'LevelRenderState'])
-            dump('net.minecraft.client.renderer.LevelRenderState', [])
-            dump('net.minecraft.client.renderer.GameRenderer', ['extract', 'renderLevel'])
-            dump('net.minecraft.client.renderer.SubmitNodeStorage', ['clear', 'endFrame'])
-            // ---- B: 字体级 API 同形性 ----
-            dump('net.minecraft.client.gui.Font', ['prepareText', 'DisplayMode'])
-            dump('net.minecraft.client.gui.Font$PreparedText', [])
-            dump('net.minecraft.client.gui.Font$GlyphVisitor', [])
-            dump('net.minecraft.client.gui.font.TextRenderable', [])
-            dump('net.minecraft.client.gui.font.TextRenderable$Styled', [])
-            dump('com.mojang.blaze3d.pipeline.RenderPipelines', ['TEXT'])
-            dump('net.minecraft.client.renderer.RenderType', ['text', 'Text'])
+            def dumpC = { String cls, List needles ->
+                def proc = new ProcessBuilder([javapExe, '-classpath', cp, '-p', '-c', cls]).redirectErrorStream(false).start()
+                def out = proc.inputStream.getText('UTF-8')
+                proc.waitFor()
+                println "===== javap -c ${cls} ====="
+                if (!out?.trim()) {
+                    println '(no output)'
+                    return
+                }
+                out.readLines().each { line ->
+                    if (!line.trim()) {
+                        return
+                    }
+                    if (needles.any { n -> line.contains(n) }) {
+                        println '  ' + line.trim()
+                    }
+                }
+            }
+            // ---- A: 把「renderLevel 自己完成提取、不留残袋」钉死在字节码上 ----
+            dumpC('net.minecraft.client.renderer.LevelRenderer', ['.extract', 'LevelRenderState.reset',
+                    'submitNodeStorage', 'renderAllFeatures', 'clear()'])
+            dump('net.minecraft.client.renderer.state.LevelRenderState', [])
+            dump('net.minecraft.client.renderer.GameRenderer', ['renderLevel', 'extract', 'featureRenderDispatcher'])
+            // ---- B: 本世代 TEXT 管线与 RenderSetup 能力面 ----
+            dump('net.minecraft.client.renderer.RenderPipelines', [])
+            dump('net.minecraft.client.renderer.rendertype.RenderSetup', [])
+            dump('com.mojang.blaze3d.pipeline.RenderPipeline', [])
+            dump('net.minecraft.client.gui.Font$DisplayMode', [])
+            dump('net.minecraft.client.renderer.texture.AbstractTexture', [])
+            dump('net.minecraft.client.renderer.texture.TextureManager', ['register', 'setTexture', 'getTextures'])
+            dump('com.mojang.blaze3d.platform.TextureUtil', ['FILTER', 'prepareTexture'])
             // ---- B 的另一半：本 era 的 rendertype_text 原文（克隆掩码 fsh 的底版）----
             println '===== shader sources from the compile classpath ====='
-            def wanted = ['rendertype_text.fsh', 'rendertype_text.vsh', 'rendertype_text.json', 'rendertype_text_intensity.fsh']
+            def wanted = ['rendertype_text_see_through.fsh', 'rendertype_text.json', 'rendertype_text_intensity.json']
             def seen = [] as Set
             for (String path : cpFiles) {
                 def f = new File(path)
@@ -488,7 +514,7 @@ tasks.register('dumpPipPortProbeV3') {
         }
     }
 }
-compileJava.finalizedBy('dumpPipPortProbeV3')
+compileJava.finalizedBy('dumpPipPortProbeV4')
 
 
 

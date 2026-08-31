@@ -18,7 +18,16 @@
   `BedrockAttachmentModel` 的 flush 注释（现在只承诺"层序正确"）、
   `docs/lineage/SCOPE_TEXT_SHOW_1211_20260901.md` §2 与 §3 残留①（范围从"延迟那一格"放大到"全部"）、
   §4 剧本 A 格的期望（删掉"不越过镜筒边缘"这一条判据，改为"贴边溢出属待加项 B，不算 flush 回归"）。
-- 挂了 TEMP javap 探针 `dumpPipPortProbeV3`（`build.gradle`，`compileJava.finalizedBy`）：查 1.21.11 是否
+- 探针 v3 已回（CI 编译类路径 javap）：**A 判"不加"**——本世代 `LevelRenderer` 没有 `extractLevel`，
+  提取是 `renderLevel` 内部私有步骤且以 `state.LevelRenderState` 为入参，`GameRenderer` 亦无独立 extract 阶段，
+  而 `renderAllFeatures()` 自带 `submitNodeStorage.clear()`（与我们 `FeatureRenderDispatcherMixin` 的字节码记录一致）
+  ⇒ 他们那两步对我们要么是空操作要么无对应物；`ScopePipRerender` 类注释里"把防护留给后续阶段"已改写为这组结论。
+  **B 需要改写**：`Font#prepareText` 七参同形，但本世代 `Font$GlyphVisitor` 是
+  `acceptGlyph(TextRenderable$Styled)`/`acceptEffect(TextRenderable)`，没有他们覆写的 `accept(r,x,y,w)`；
+  `TextRenderable` 自带 `textureView()` 与 `render(Matrix4f, VertexConsumer, int, boolean)` ⇒ 按页分组反而更省事；
+  `shaders/core/` 里没有 `rendertype_text.json`（管线由 Java 侧 `RenderSetup` 定义），本 era 的
+  `rendertype_text.fsh/.vsh` 原文已随探针打出并抄进评估篇，作为 `scope_text_final.fsh` 的克隆底版。
+- 挂了 TEMP javap 探针（v3→v4）（`build.gradle`，`compileJava.finalizedBy`）：查 1.21.11 是否
   存在 `LevelRenderer#extractLevel` + `LevelRenderState#reset`（决定 A 要不要抄重提取）、
   `SubmitNodeStorage#clear`、字体侧 `Font#prepareText`/`PreparedText#visit`/`GlyphVisitor`/
   `TextRenderable$Styled`/`RenderPipelines.TEXT`（决定 B 能不能落），并顺带从编译类路径的 jar 里 dump

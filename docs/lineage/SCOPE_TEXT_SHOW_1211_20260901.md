@@ -113,8 +113,8 @@ scope RenderType，vanilla 字体管线不在也不该在 —— 但**别据此�
   ① **镜内文字当前没有任何裁剪**（上一版把范围写小了，只说延迟那一格）：字体管线不吃孔径深度 ⇒
   **立即路径与延迟路径都会溢出圆孔**，延迟格只是更明显。贴边数据（26.2 记过 MK5HD 文本在
   `y=22.375`、目镜 `y=21.875`）说明这不是理论风险；正解 = 26.2 `9d036594` 的语义 + 本分支的掩码管线
-  （`ScopeTextSubmitter` + `maskedText`），本分支**未移植**，评估与成本见
-  `docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md` §B；
+  （`ScopeTextSubmitter` + `maskedText`），本分支**未移植**；评估、逐项成本与本世代的签名差异（`GlyphVisitor` 不带走坐标的 `accept`）见
+  `docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md` §2 与 §2.1；
   ② `deferReticleToIrisTranslucent`（未审计的旧 Iris 回退路径）保持**立即提交**，文字可能被光影包
   后处理盖掉一层 —— 与准星在那条回退路径上的既有取舍一致。
   ③ 掩码 `SCOPE_MASK_ENABLE=false` 时不成立 `orderedScopeSequence`，走 `else` 分支 ⇒ 文字常显（不裁），

@@ -52,8 +52,23 @@ import javax.annotation.Nullable;
  *
  * <p><b>已知的运行时风险（编译通过 ≠ 运行安全）</b>：一帧内驱动两次
  * {@code LevelRenderer#renderLevel} 会推进两遍区块编译/实体提取等逐帧状态，
- * 26.2 已经记录过「镜外实体偶发消失」且未查明根因（详见其类注释第三条）。
- * 26.2 为此默认关闭本开关；本移植同样默认关闭，并把提交节点保留等防护留给后续阶段。</p>
+ * 26.2 已经记录过「镜外实体偶发消失」且未查明根因（详见其类注释第三条）。26.2 为此默认关闭本开关，
+ * 本移植同样默认关闭。</p>
+ *
+ * <p><b>26.1.2 那条「窄遍把一次性状态袋烧光」的防护，本世代结构上不需要</b>（2026-09-01 javap 实测，
+ * 依据是 CI 编译类路径上的 {@code minecraft-merged-…-1.21.11-…jar}，不是照抄 26.2 的结论）：
+ * 那边 26.1.2 是 {@code GameRenderer#extract → LevelRenderer#extractLevel} 先把实体/区块/雾写进
+ * {@code LevelRenderState}，{@code renderLevel} 只消费并在尾部 {@code reset()} ⇒ 窄遍消费完，主遍拿到空袋，
+ * 镜外实体与太阳/雾/天气一起消失。本世代没有这一步：{@code LevelRenderer} 里<b>没有</b> {@code extractLevel}
+ * （{@code extractVisibleEntities} / {@code extractVisibleBlockEntities} / {@code extractBlockOutline} /
+ * {@code extractBlockDestroyAnimation} 全是私有方法且以 {@code state.LevelRenderState} 为入参，在
+ * {@code renderLevel} 内部各自调用），{@code GameRenderer} 侧只有 {@code renderLevel(DeltaTracker)} 与
+ * 一个 {@code private extractCamera(float)} ⇒ 每次 {@code renderLevel} 自带提取，第二遍不会饿着第一遍之后
+ * 的主遍。提交节点同理：{@code renderAllFeatures()} 自身以 {@code submitNodeStorage.clear()} 收尾
+ * （见 {@code com.tacz.guns.mixin.client.FeatureRenderDispatcherMixin} 的字节码记录），
+ * 所以 26.1.2 为防「主遍叠加重影」补的那次 {@code clear()} 对我们是空操作 ——
+ * <b>不加，也不欠</b>。仍待实机的只有本段开头那条泛化的「双遍逐帧状态」风险，见
+ * {@code docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md} §1。</p>
  */
 public final class ScopePipRerender {
     private static final float PROJECTION_Z_NEAR = 0.05f;
