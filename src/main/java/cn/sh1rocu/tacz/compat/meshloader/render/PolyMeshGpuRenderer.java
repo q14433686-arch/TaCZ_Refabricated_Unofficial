@@ -24,6 +24,7 @@ import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeDepthCopyState;
+import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.render.scope.ScopePipRerender;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.fabricmc.api.EnvType;
