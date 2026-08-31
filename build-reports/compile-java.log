@@ -1,4 +1,4 @@
-commit: 441ff4b3777006c38f571fafb21e102201afb1ee
+commit: b45ed7d15e885a45a9311b81282fc0e0293b22b5
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -39,12 +39,12 @@ Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
 Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
@@ -198,41 +198,7 @@ Note: Recompile with -Xlint:unchecked for details.
          358: invokestatic  #2581               // Method net/minecraft/client/renderer/Sheets.cutoutBlockSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
          361: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
          364: aload         19
-...[truncated 1001 lines total]...
-         350: invokestatic  #2578               // Method net/minecraft/client/renderer/Sheets.solidBlockSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
-         353: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
-         356: aload         19
-         358: invokestatic  #2581               // Method net/minecraft/client/renderer/Sheets.cutoutBlockSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
-         361: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
-         364: aload         19
-         366: invokestatic  #2584               // Method net/minecraft/client/renderer/Sheets.bedSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
-         369: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
-         372: aload         19
-  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4206 ---
-         358: invokestatic  #2581               // Method net/minecraft/client/renderer/Sheets.cutoutBlockSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
-         361: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
-         364: aload         19
-         366: invokestatic  #2584               // Method net/minecraft/client/renderer/Sheets.bedSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
-         369: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
-         372: aload         19
-         374: invokestatic  #2587               // Method net/minecraft/client/renderer/Sheets.shulkerBoxSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
-         377: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
-         380: aload         19
-  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4209 ---
-         366: invokestatic  #2584               // Method net/minecraft/client/renderer/Sheets.bedSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
-         369: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
-         372: aload         19
-         374: invokestatic  #2587               // Method net/minecraft/client/renderer/Sheets.shulkerBoxSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
-         377: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
-         380: aload         19
-         382: invokestatic  #2590               // Method net/minecraft/client/renderer/Sheets.signSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
-         385: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
-         388: aload         19
-  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4212 ---
-         374: invokestatic  #2587               // Method net/minecraft/client/renderer/Sheets.shulkerBoxSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
-         377: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
-         380: aload         19
-         382: invokestatic  #2590               // Method net/minecraft/client/renderer/Sheets.signSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+...[truncated 1035 lines total]...
          385: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
          388: aload         19
          390: invokestatic  #2593               // Method net/minecraft/client/renderer/Sheets.hangingSignSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
@@ -963,10 +929,44 @@ Note: Recompile with -Xlint:unchecked for details.
   public abstract int getMinorApiRevision();
   public abstract boolean isShaderPackInUse();
   public abstract void assignPipeline(com.mojang.blaze3d.pipeline.RenderPipeline, net.irisshaders.iris.api.v0.IrisProgram);
-===== javap -p net.irisshaders.iris.api.v0.IrisProgram (filtered: HAND, EMISSIVE, MAIN) =====
+===== javap -p net.irisshaders.iris.api.v0.IrisProgram (filtered: ) =====
+  Compiled from "IrisProgram.java"
+  public final class net.irisshaders.iris.api.v0.IrisProgram extends java.lang.Enum<net.irisshaders.iris.api.v0.IrisProgram> {
+  public static final net.irisshaders.iris.api.v0.IrisProgram BASIC;
+  public static final net.irisshaders.iris.api.v0.IrisProgram TEXTURED;
+  public static final net.irisshaders.iris.api.v0.IrisProgram TERRAIN;
+  public static final net.irisshaders.iris.api.v0.IrisProgram TERRAIN_SOLID;
+  public static final net.irisshaders.iris.api.v0.IrisProgram TERRAIN_CUTOUT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram TRANSLUCENT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram SKY_BASIC;
+  public static final net.irisshaders.iris.api.v0.IrisProgram SKY_TEXTURED;
+  public static final net.irisshaders.iris.api.v0.IrisProgram ARMOR_GLINT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram ENTITIES;
+  public static final net.irisshaders.iris.api.v0.IrisProgram ENTITIES_TRANSLUCENT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram CLOUDS;
+  public static final net.irisshaders.iris.api.v0.IrisProgram BLOCK;
+  public static final net.irisshaders.iris.api.v0.IrisProgram BLOCK_TRANSLUCENT;
   public static final net.irisshaders.iris.api.v0.IrisProgram HAND;
   public static final net.irisshaders.iris.api.v0.IrisProgram HAND_TRANSLUCENT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram PARTICLES;
+  public static final net.irisshaders.iris.api.v0.IrisProgram PARTICLES_TRANSLUCENT;
   public static final net.irisshaders.iris.api.v0.IrisProgram EMISSIVE_ENTITIES;
+  public static final net.irisshaders.iris.api.v0.IrisProgram BEACON_BEAM;
+  public static final net.irisshaders.iris.api.v0.IrisProgram LINES;
+  private static final net.irisshaders.iris.api.v0.IrisProgram[] $VALUES;
+  public static net.irisshaders.iris.api.v0.IrisProgram[] values();
+  public static net.irisshaders.iris.api.v0.IrisProgram valueOf(java.lang.String);
+  private net.irisshaders.iris.api.v0.IrisProgram();
+  private static net.irisshaders.iris.api.v0.IrisProgram[] $values();
+  static {};
+  }
+===== javap -p net.minecraft.client.renderer.feature.FeatureRenderDispatcher (filtered: public, protected) =====
+  public class net.minecraft.client.renderer.feature.FeatureRenderDispatcher implements java.lang.AutoCloseable {
+  public net.minecraft.client.renderer.feature.FeatureRenderDispatcher(net.minecraft.client.renderer.SubmitNodeStorage, net.minecraft.client.renderer.block.BlockRenderDispatcher, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.resources.model.AtlasManager, net.minecraft.client.renderer.OutlineBufferSource, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.gui.Font);
+  public void renderAllFeatures();
+  public void endFrame();
+  public net.minecraft.client.renderer.SubmitNodeStorage getSubmitNodeStorage();
+  public void close();
 ===== javap -p net.irisshaders.iris.vertices.IrisVertexFormats (filtered: ENTITY, TERRAIN, HAND) =====
   public static final com.mojang.blaze3d.vertex.VertexFormatElement ENTITY_ELEMENT;
   public static final com.mojang.blaze3d.vertex.VertexFormatElement ENTITY_ID_ELEMENT;
@@ -986,7 +986,7 @@ Note: Recompile with -Xlint:unchecked for details.
   public static boolean isRenderingLevel;
   public static boolean renderWithExtendedVertexFormat;
   public static boolean safeToMultiply;
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788175662907.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788176605607.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -996,7 +996,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 57s
+BUILD SUCCESSFUL in 2m 13s
 3 actionable tasks: 3 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
