@@ -5,6 +5,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 
 public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue ENABLE_LASER_FADE_OUT;
+    public static ForgeConfigSpec.BooleanValue ILLUMINATED_REAL_SKY;
     public static ForgeConfigSpec.IntValue GUN_LOD_RENDER_DISTANCE;
     public static ForgeConfigSpec.IntValue BULLET_HOLE_PARTICLE_LIFE;
     public static ForgeConfigSpec.DoubleValue BULLET_HOLE_PARTICLE_FADE_THRESHOLD;
@@ -257,6 +258,15 @@ public class RenderConfig {
 
         builder.comment("Whether or not apply fadeout effect on the laser beam. Close this may improve laser performance under some shaders.");
         ENABLE_LASER_FADE_OUT = builder.define("EnableLaserFadeOut", true);
+
+        builder.comment("'_illuminated' bones (glowing sights, tritium dots) are forced to full",
+                "brightness 0xF000F0 - both the block AND sky light columns maxed. Vanilla",
+                "needs both, but shader packs read sky=15 as 'this surface can see the sky',",
+                "so glowing parts inherit sun/moon lighting at night. true = when a shader",
+                "pack is active, keep block=15 but use the real environment sky light.",
+                "Applies to both the cube layer and the poly_mesh layer so the two halves",
+                "of one gun stay consistent. No effect without a shader pack.");
+        ILLUMINATED_REAL_SKY = builder.define("IlluminatedRealSky", true);
 
         builder.comment("How far to display the lod model, 0 means always display");
         GUN_LOD_RENDER_DISTANCE = builder.defineInRange("GunLodRenderDistance", 0, 0, Integer.MAX_VALUE);

@@ -205,6 +205,29 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 7. 开镜（PIP）：镜内那遍世界枪仍在（不消失、不双影）;
 8. 光影开关翻转：世界枪不拉伸（世代号失效链路与第一人称共用）。
 
+### 5.2-ter 下游 1.21.11 分支审查（A1-A10）处置记录（2026-08-31）
+
+下游分支对本仓 587763c 做了 10 条静态审查。逐条核实后处置如下
+（**A7 所指的「世界表挂错入口」在其审查基线 587763c 上属实，
+b4cb497 已修**——审查与修复赛跑，基线早于修复）：
+
+| # | 判定 | 处置 |
+|---|---|---|
+| A1 输出目标不看 override | 采纳（防御性） | 手部消费点带 override 跳过+清表；世界消费点跳过**不清表**；26.2 字节码：vanilla 只在 addAlwaysOnTopPass 设 override，防的是 mod |
+| A2 总闸+回写配置 | **采纳全部三点** | 分表禁用（world 独立标志）、不再回写 `GPU_BAKING`、镜内 catch 误清世界表一并消除 |
+| A3 漏接 LinkageError | 采纳 | 两处 catch 均改 `Exception \| LinkageError` |
+| A4 世界表被归入 HAND | **误读，已核实驳回** | Iris 26.2 `IrisPipelines`：ENTITY_CUTOUT 映射到 `getCutout(p)` 逐 draw 动态判 `HandRenderer.isActive()`；且 `assignPipeline` 对静态表已有的管线抛 "already assigned"（我们当成功吞掉= no-op）。世界 pass 时 HandRenderer 非活跃 ⇒ 必落 ENTITIES_CUTOUT_DIFFUSE。证据链写进 drawWorldListViaRenderType javadoc |
+| A5 格式硬编码 | 部分采纳 | 加 `ENTITY.getVertexSize()` 逐帧哨兵（stride 变即整代失效）；全参数化在 26.2 收益低不做 |
+| A6 额度/容量一钮两用 | 采纳 | 新 `MeshGpuBakeBudgetPerFrame`（1..64，默认 4），额度与 LRU 容量解耦 |
+| A7 handModelView 误导 | 部分误读+采纳 | 「挂错入口」指 587763c，b4cb497 已修（executeSolid RETURN，栈顶=viewRotation）；变量改名 `drawModelView`，前置条件写成两 pass 对照注释 |
+| A8 静默降级 | 采纳（轻量） | 烘焙额度耗尽补一次性 INFO |
+| A9 布尔标志跨帧残留 | **不采纳** | 26.2 `Minecraft#runTick` 的 extract(441)→render(520) 是无条件顺序（字节码），beginFrame 必然逐帧先行；帧号机制为不存在的前提付复杂度 |
+| A10 镜像绕序+法线 | **采纳** | PolyMesh 重写：镜像时发射序倒转（对照物=本仓 BedrockPolygon 的 mirror 处理）、退化面回退枪包法线/确定值（绝不写零向量）、三开关 `MeshPolyMirrorReverseWinding`(true)/`MeshPolyInvertNormals`(false)/`MeshPolyPreferPackNormals`(false)，构造期读取、资源重载生效 |
+| A10 续 `_illuminated` 天空光 | **采纳，且按其 26.2 建议做两层** | 新 `IlluminatedRealSky`（`RenderConfig`，默认 true）：光影下 block=15、sky=环境真值；立方体层（BedrockPart）与 poly 层（collector+GPU 烘焙）走同一个 `IlluminatedLights.resolve()`，一把枪两半行为一致 |
+
+全部新配置已接 Cloth Config 界面 + 双语言键。以上均为静态验证（编译级），
+光影下的实机验证并入 §5.2-bis 第 6 项。
+
 ### 5.3 已知边界（如实）
 
 - 第一人称与世界语境的 O(顶点) CPU 成本均已由 GPU 烘焙消除（世界侧待实测）;

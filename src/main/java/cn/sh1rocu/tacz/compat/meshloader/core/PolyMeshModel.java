@@ -238,7 +238,9 @@ public class PolyMeshModel {
         if (meshes == null || meshes.isEmpty()) {
             return;
         }
-        int actualLight = (bone.isIlluminated() || illuminatedBones.contains(bone.getName())) ? FULL_BRIGHT : light;
+        // 光影下发光骨骼 sky 列走环境真值（IlluminatedRealSky，与立方体层同一开关）。
+        int actualLight = (bone.isIlluminated() || illuminatedBones.contains(bone.getName()))
+                ? com.tacz.guns.util.IlluminatedLights.resolve(light) : light;
         PolyMeshSnapshot.Command command = new PolyMeshSnapshot.Command(
                 new Matrix4f(poseStack.last().pose()),
                 new Matrix3f(poseStack.last().normal()),

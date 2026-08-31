@@ -60,8 +60,9 @@ public class BedrockPart {
     public void render(PoseStack poseStack, ItemDisplayContext transformType, VertexConsumer consumer, int light, int overlay, float red, float green, float blue, float alpha) {
         int cubePackedLight = light;
         if (illuminated) {
-            // 最大亮度
-            cubePackedLight = 15728880;
+            // 最大亮度；光影下 sky 列走环境真值（IlluminatedRealSky），
+            // 否则夜里发光件会继承太阳/月亮亮度。与 poly_mesh 层同一开关。
+            cubePackedLight = com.tacz.guns.util.IlluminatedLights.resolve(light);
         }
         if (this.visible) {
             if (!this.cubes.isEmpty() || !this.children.isEmpty()) {

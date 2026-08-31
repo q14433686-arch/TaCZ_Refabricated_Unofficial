@@ -151,6 +151,26 @@ public class RenderClothConfig {
                 .setMin(1).setMax(16).setDefaultValue(4).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_light_cache_size.desc"))
                 .setSaveConsumer(MeshyConfig.GPU_LIGHT_CACHE_SIZE::set).build());
 
+        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.mesh_gpu_bake_budget"), MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME.get())
+                .setMin(1).setMax(64).setDefaultValue(4).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_bake_budget.desc"))
+                .setSaveConsumer(MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_mirror_reverse_winding"), MeshyConfig.POLY_MIRROR_REVERSE_WINDING.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_mirror_reverse_winding.desc"))
+                .setSaveConsumer(MeshyConfig.POLY_MIRROR_REVERSE_WINDING::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_prefer_pack_normals"), MeshyConfig.POLY_PREFER_PACK_NORMALS.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_prefer_pack_normals.desc"))
+                .setSaveConsumer(MeshyConfig.POLY_PREFER_PACK_NORMALS::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_invert_normals"), MeshyConfig.POLY_INVERT_NORMALS.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_invert_normals.desc"))
+                .setSaveConsumer(MeshyConfig.POLY_INVERT_NORMALS::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.illuminated_real_sky"), RenderConfig.ILLUMINATED_REAL_SKY.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.illuminated_real_sky.desc"))
+                .setSaveConsumer(RenderConfig.ILLUMINATED_REAL_SKY::set).build());
+
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders"), MeshyConfig.GPU_UNDER_SHADERS.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders.desc"))
                 .setSaveConsumer(MeshyConfig.GPU_UNDER_SHADERS::set).build());

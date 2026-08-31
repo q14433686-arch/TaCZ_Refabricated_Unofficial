@@ -163,8 +163,16 @@ public final class PolyMeshGpuRenderer {
 
     private static boolean loggedFirstDraw = false;
     private static boolean loggedFirstWorldDraw = false;
+    private static boolean loggedBakeBudget = false;
     private static boolean loggedFirstIrisDraw = false;
+    /**
+     * 分表禁用（下游审查 A2 采纳）：手部与世界各自独立降级 ——
+     * 世界路径出异常不连坐已实机 PASS 的手部路径，反之亦然。
+     * <b>只改内存标志，绝不回写配置文件</b>：渲染线程 set() 会把 ForgeConfig
+     * spec 弄 dirty 触发磁盘写，且重启后仍是关的（用户得去 TOML 里找回来）。
+     */
     private static boolean gpuDisabledThisSession = false;
+    private static boolean gpuWorldDisabledThisSession = false;
     private static boolean lightmapUnavailable;
     /**
      * 本帧已画过。Iris 的 HandRenderer 一帧跑两次 renderAllFeatures
@@ -188,6 +196,8 @@ public final class PolyMeshGpuRenderer {
      */
     private static int bakeGeneration = 0;
     private static boolean lastShaderPackState = false;
+    /** ENTITY 顶点格式的字节 stride 哨兵（A5：光影开关之外的格式变化也要触发整代失效）。 */
+    private static int lastEntityStride = -1;
 
     private PolyMeshGpuRenderer() {
     }
@@ -234,7 +244,7 @@ public final class PolyMeshGpuRenderer {
      * </ul>
      */
     public static boolean shouldSubmitGpuWorld() {
-        if (!isGpuPathUsable() || !MeshyConfig.GPU_WORLD.get()) {
+        if (!isGpuPathUsable() || gpuWorldDisabledThisSession || !MeshyConfig.GPU_WORLD.get()) {
             return false;
         }
         if (ScopeMaskRenderer.isInHandPass()) {
@@ -347,6 +357,18 @@ public final class PolyMeshGpuRenderer {
             LOGGER.info("[TacZMeshLoader] Shader pack state changed (active={}); mesh bake generation -> {}",
                     shaders, bakeGeneration);
         }
+        // 【A5 · 第二道格式哨兵】世代号原来只认光影开关翻转；若有别的 mod 也
+        // 改写 ENTITY 顶点格式（stride 变化），旧 VBO 会被按新 stride 解读
+        // （= 模型拉伸）。逐帧比对格式字节数，变了立刻整代失效。
+        int stride = DefaultVertexFormat.ENTITY.getVertexSize();
+        if (stride != lastEntityStride) {
+            if (lastEntityStride != -1) {
+                bakeGeneration++;
+                LOGGER.info("[TacZMeshLoader] ENTITY vertex format stride changed ({} -> {}); "
+                        + "mesh bake generation -> {}", lastEntityStride, stride, bakeGeneration);
+            }
+            lastEntityStride = stride;
+        }
         HAND_DRAWS.clear();
         WORLD_DRAWS.clear();
         drawnThisFrame = false;
@@ -373,8 +395,17 @@ public final class PolyMeshGpuRenderer {
      * 下一帧额度重置，缓存逐帧收敛到稳态。</p>
      */
     public static boolean tryReserveBake() {
-        int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());
-        if (bakesThisFrame >= cap) {
+        // 额度与 LRU 容量解耦（下游审查 A6 采纳）：容量是显存语义、额度是
+        // 每帧 CPU/上传成本语义，一个旋钮当两个用会让「省显存调容量到 1」
+        // 的用户额度仍被顶到 4、想调大额度的用户白花显存撑 LRU。
+        if (bakesThisFrame >= MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME.get()) {
+            if (!loggedBakeBudget) {
+                loggedBakeBudget = true;
+                LOGGER.info("[TacZMeshLoader] World bake budget ({} per frame) exhausted; overflow guns use the "
+                        + "collector path this frame and converge over the next frames. Raise "
+                        + "MeshGpuBakeBudgetPerFrame if this scene is typical for you. (logged once)",
+                        MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME.get());
+            }
             return false;
         }
         bakesThisFrame++;
@@ -424,6 +455,15 @@ public final class PolyMeshGpuRenderer {
         if (HAND_DRAWS.isEmpty()) {
             return;
         }
+        if (RenderSystem.outputColorTextureOverride != null) {
+            // 【A1 · 渲染目标覆盖防御】26.2 字节码：override 只在
+            // addAlwaysOnTopPass 的 lambda 里设置（世界帧图，且随后复位），
+            // vanilla 手部 renderAllFeatures 收尾处不应有 override —— 但别的
+            // mod 可以在任何时刻设置它。带着 override 画 = 枪画进未知离屏
+            // target。跳过并清表（下一帧手部 pass 会重新 submit）。
+            HAND_DRAWS.clear();
+            return;
+        }
         if (drawnThisFrame) {
             // Iris 第二次手部 pass（renderTranslucent）的重复 submit：跳过。
             HAND_DRAWS.clear();
@@ -436,10 +476,13 @@ public final class PolyMeshGpuRenderer {
                 drawList(HAND_DRAWS);
             }
             drawnThisFrame = true;
-        } catch (Exception e) {
-            LOGGER.error("[TacZMeshLoader] GPU mesh pass failed; falling back to collector path for this session.", e);
+        } catch (Exception | LinkageError e) {
+            // LinkageError 也要接（下游审查 A3 采纳）：渲染路径上最常见的失败
+            // 恰是链接类 —— Iris/Sodium 升级后签名变了抛 NoSuchMethodError，
+            // 那是 Error 不是 Exception，漏接 = 崩游戏而不是回退 collector。
+            // 只置内存标志、不回写配置（A2，理由见字段注释）。
+            LOGGER.error("[TacZMeshLoader] GPU hand mesh pass failed; falling back to collector path for this session.", e);
             gpuDisabledThisSession = true;
-            MeshyConfig.GPU_BAKING.set(false);
         } finally {
             HAND_DRAWS.clear();
         }
@@ -513,6 +556,12 @@ public final class PolyMeshGpuRenderer {
         if (WORLD_DRAWS.isEmpty()) {
             return;
         }
+        if (RenderSystem.outputColorTextureOverride != null) {
+            // 【A1】带 override 的 executeSolid（26.2 里 vanilla 不存在这种组合，
+            // 防的是 mod 注入的离屏遍）：跳过且【不清表】—— 条目属于其后
+            // 真正的主世界遍。
+            return;
+        }
         boolean inScopePass = com.tacz.guns.client.render.scope.ScopePipRenderer.isInsideScopeLevelRender();
         if (!inScopePass && worldDrawnThisFrame) {
             // 主世界重复消费（防御性；正常一帧只有一次主世界帧图）。
@@ -530,10 +579,12 @@ public final class PolyMeshGpuRenderer {
                 WORLD_DRAWS.clear();
             }
             // 镜内那遍：表保留原样，主画面那遍再消费。
-        } catch (Exception e) {
-            LOGGER.error("[TacZMeshLoader] GPU world mesh pass failed; falling back to collector path for this session.", e);
-            gpuDisabledThisSession = true;
-            MeshyConfig.GPU_BAKING.set(false);
+        } catch (Exception | LinkageError e) {
+            // 分表禁用（A2）：世界路径失败只关世界闸，不连坐手部；
+            // 不回写配置；LinkageError 一并接住（A3）。
+            LOGGER.error("[TacZMeshLoader] GPU world mesh pass failed; disabling the world GPU path for this session "
+                    + "(first-person GPU baking unaffected).", e);
+            gpuWorldDisabledThisSession = true;
             WORLD_DRAWS.clear();
         }
     }
@@ -575,6 +626,18 @@ public final class PolyMeshGpuRenderer {
 
     /**
      * 【光影 · 世界 pass】RenderType 管道变体。
+     *
+     * <h2>「管线被归入 HAND 后世界枪也走 HAND」是误读（下游审查 A4 · 已核实驳回）</h2>
+     * Iris 26.2 的 {@code IrisPipelines} 静态表把 vanilla ENTITY_CUTOUT 映射到
+     * {@code getCutout(p)} —— 一个<b>逐 draw 求值</b>的函数：
+     * {@code HandRenderer.INSTANCE.isActive()} 时给 HAND_CUTOUT_DIFFUSE，
+     * 否则给 ENTITIES_CUTOUT_DIFFUSE（gbuffers_entities）。分派是按「绘制那一刻
+     * 在不在手部」动态判的，不是按管线对象一锤定音。而且
+     * {@code IrisPipelines.assignPipeline} 对已在静态表里的管线直接抛
+     * "Shader already assigned" —— 我们 IrisCompat 把该异常当成功吞掉，
+     * 即那次 assign 对 vanilla 管线本来就是 no-op。世界枪在世界 pass 里
+     * 消费（HandRenderer 非活跃）⇒ 必然落 entities 程序。（源码依据：
+     * IrisPipelines.java 26.2 分支 assignToMain/getCutout/assignPipeline 三段。）
      *
      * <p>与手部变体唯一的语义差异：<b>不调</b>
      * {@code assignCommonEntityPipelinesToHandIfNeeded()} —— 那是手部 pass 的
@@ -663,13 +726,19 @@ public final class PolyMeshGpuRenderer {
         // 【朝向恒北 bug 的修复 · 字节码依据】RenderType.prepare() 偏移 55-58：
         //     getModelViewMatrixCopy() -> writeDynamicTransforms(mv)
         // vanilla 画 collector 提交是【两层】变换：顶点里烘 submit 时的 pose，
-        // 绘制时 ModelViewMat = RenderSystem 当刻的 MV（手部 pass = 相机旋转/俯仰
-        // /视模那套）。GPU 路径顶点在骨骼本地系、pose 写进 DynamicTransforms，
-        // 若只写 entry.model() 就丢了 MV_draw 这一层 —— 枪位置对（pose 带平移）
-        // 但朝向恒北、俯仰为平（相机旋转全在丢的那层里），实测症状完全吻合。
-        // 本方法跑在手部 renderAllFeatures 的 executeSolid 之后、同一调用内，
-        // MV 与 prepareFrame 时一致，取一次全体通用。
-        Matrix4f handModelView = RenderSystem.getModelViewMatrixCopy();
+        // 绘制时 ModelViewMat = RenderSystem 当刻的 MV。GPU 路径顶点在骨骼本地系、
+        // pose 写进 DynamicTransforms，若只写 entry.model() 就丢了 MV_draw 这一层
+        // —— 枪位置对（pose 带平移）但朝向恒北、俯仰为平，实测症状完全吻合。
+        //
+        // 【前置条件 · A7】本方法被手部/世界两张表共用，两层变换定理在两个 pass
+        // 都成立的前提是：调用时刻的 MV 栈顶必须正是这批 pose 所属 pass 的 MV_draw。
+        //   手部：renderItemInHand 在 renderAllFeatures 前后 push/pop arg3
+        //        （字节码 96-110/190），executeSolid 后消费 ⇒ 栈顶 = 手部 MV ✓
+        //   世界：LevelRenderer.render 在帧图前后 push/pop viewRotation
+        //        （30-45/591），executeSolid RETURN 消费 ⇒ 栈顶 = viewRotation ✓
+        // 挂错消费点（如 renderLevel 偏移 560，栈已 pop）= 首版「枪固定在
+        // 视角空间」事故。改消费点必须重新验证这条前提。
+        Matrix4f drawModelView = RenderSystem.getModelViewMatrixCopy();
 
         Map<Identifier, List<DrawEntry>> byTexture = new HashMap<>();
         for (DrawEntry entry : draws) {
@@ -707,7 +776,7 @@ public final class PolyMeshGpuRenderer {
                 for (DrawEntry entry : group.getValue()) {
                     // ModelViewMat = MV_draw * pose_submit（乘序同 vanilla：顶点先套
                     // pose 再进相机系）。scratch 每骨骼重算，不污染 entry.model()。
-                    Matrix4f mv = new Matrix4f(handModelView).mul(entry.model());
+                    Matrix4f mv = new Matrix4f(drawModelView).mul(entry.model());
                     pass.setUniform("DynamicTransforms",
                             RenderSystem.getDynamicUniforms().writeTransform(mv, WHITE));
                     pass.setVertexBuffer(0, entry.bone().vertexBuffer.slice());

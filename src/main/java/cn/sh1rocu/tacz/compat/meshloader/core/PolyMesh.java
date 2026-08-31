@@ -18,9 +18,21 @@ import org.joml.Matrix4f;
  * 以裸坐标写入，{@code setNormal} <b>不再</b>传 Pose（26.2 的
  * {@code setNormal(Pose,FFF)} 会再乘一次法线矩阵）。</p>
  *
+ * <h2>镜像绕序（下游 1.21.11 分支审查 A10，2026-08-31 采纳）</h2>
+ * <p>位置烘焙做了 Y 轴镜像（{@code FLIP_MODEL_Y}），单轴镜像 det&lt;0 ⇒ 每个面的
+ * 正反面互换。上游 TML 原始代码<b>不</b>反转发射绕序，于是「烘焙法线朝外」与
+ * 「gl_FrontFacing 判为背面」同时成立 —— 原版管线不受影响（GPU 路径
+ * NO_CARDINAL_LIGHTING 不读法线；两条路径的 RenderType 均不剔除背面），但光影包
+ * 常见的 {@code normal *= gl_FrontFacing ? 1 : -1} 双面自洽写法会把朝外法线取反，
+ * 高光/反射跑到错误一侧。修复对照物是本仓 {@code BedrockPolygon}：mirror 时
+ * <b>反转顶点顺序</b> + 翻转被镜像轴的法线分量 —— poly_mesh 此前只做了后半截。
+ * 绕序反转后：变换后绕序叉积 = det(D)·D·n 再取反 = +D·n = 烘焙法线，两者一致。
+ * 无光影视觉零变化（无剔除 + 法线值不变），因此默认开启；
+ * {@code MeshPolyMirrorReverseWinding=false} 可回退。</p>
+ *
  * <p>三角形按上游 TML 语义展开为「第 4 顶点重复第 3 顶点」的退化 quad
  * （QUADS 拓扑下的标准三角形表达）。纯三角网格因此多付 ~33% 顶点；
- * 导入期三角形配对是后续性能方向（docs/TML_PERF_DIRECTIONS_2026_08_29.md 方向 2），
+ * 导入期三角形配对是后续性能方向（docs/investigations/TML_PERF_DIRECTIONS_2026_08_29.md 方向 2），
  * 本轮保持与上游一致的展开方式，先保正确性。</p>
  *
  * <p>移植自 VellEagle/TacZMeshLoader 1.21.1_fabric (GPL-3.0)。</p>
@@ -31,8 +43,6 @@ public class PolyMesh {
     private static final boolean FLIP_MODEL_X       = false;
     private static final boolean FLIP_MODEL_Y       = true;
     private static final boolean FLIP_UV_V          = true;
-    private static final boolean FORCE_FLAT_SHADING = true;
-    private static final boolean INVERT_FLAT_NORMAL = false;
 
     private final float[] bakedX, bakedY, bakedZ;
     private final float[] bakedNX, bakedNY, bakedNZ;
@@ -41,6 +51,17 @@ public class PolyMesh {
 
     public PolyMesh(JsonObject meshObj, float texWidth, float texHeight, float[] absPivot) {
         float pivotX = absPivot[0], pivotY = absPivot[1], pivotZ = absPivot[2];
+
+        // 构造期读一次配置（PolyMeshSupport 的解析缓存以 geo 为键，改配置需资源重载生效）。
+        final boolean reverseWinding = readToggle(
+                cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig.POLY_MIRROR_REVERSE_WINDING, true);
+        final boolean invertNormals = readToggle(
+                cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig.POLY_INVERT_NORMALS, false);
+        final boolean preferPackNormals = readToggle(
+                cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig.POLY_PREFER_PACK_NORMALS, false);
+        // 位置做了奇数次轴镜像才需要反转绕序（当前 Y 一次 = 奇数）。
+        final boolean mirrored = FLIP_MODEL_X ^ FLIP_MODEL_Y;
+        final boolean reverse = mirrored && reverseWinding;
 
         boolean normalizedUvs = meshObj.has("normalized_uvs") && meshObj.get("normalized_uvs").getAsBoolean();
         float[][] positions = parse2DArray(meshObj.getAsJsonArray("positions"), 3);
@@ -64,45 +85,78 @@ public class PolyMesh {
             if (poly.length < 3) {
                 continue;
             }
+            // 平坦法线：从【原始顶点顺序】求叉积（绕序反转不影响它 ——
+            // 详见类注释的数学推导，反转后两者恰好自洽）。
             float faceNx = 0, faceNy = 0, faceNz = 0;
-            if (FORCE_FLAT_SHADING) {
+            boolean faceDegenerate = true;
+            {
                 float[] v0 = positions[poly[0][0]], v1 = positions[poly[1][0]], v2 = positions[poly[2][0]];
                 float ux = v1[0] - v0[0], uy = v1[1] - v0[1], uz = v1[2] - v0[2];
                 float vx = v2[0] - v0[0], vy = v2[1] - v0[1], vz = v2[2] - v0[2];
-                faceNx = INVERT_FLAT_NORMAL ? vy * uz - vz * uy : uy * vz - uz * vy;
-                faceNy = INVERT_FLAT_NORMAL ? vz * ux - vx * uz : uz * vx - ux * vz;
-                faceNz = INVERT_FLAT_NORMAL ? vx * uy - vy * ux : ux * vy - uy * vx;
+                faceNx = uy * vz - uz * vy;
+                faceNy = uz * vx - ux * vz;
+                faceNz = ux * vy - uy * vx;
                 float len = (float) Math.sqrt(faceNx * faceNx + faceNy * faceNy + faceNz * faceNz);
                 if (len > 1e-6f) {
                     faceNx /= len;
                     faceNy /= len;
                     faceNz /= len;
+                    faceDegenerate = false;
                 }
             }
             int drawCount = (poly.length == 3) ? 4 : poly.length;
             for (int i = 0; i < drawCount; i++) {
-                int srcIdx = (poly.length == 3 && i == 3) ? 2 : i;
+                // 绕序反转 = 发射序整体倒过来（quad 的逆循环仍是同一个 quad）。
+                int emitIdx = reverse ? (drawCount - 1 - i) : i;
+                int srcIdx = (poly.length == 3 && emitIdx == 3) ? 2 : emitIdx;
                 int[] vi = poly[srcIdx];
                 float[] pos = positions[vi[0]];
                 float[] uv = uvs[vi[2]];
                 bakedX[vIdx] = (FLIP_MODEL_X ? -(pos[0] - pivotX) : (pos[0] - pivotX)) / 16.0f;
                 bakedY[vIdx] = (FLIP_MODEL_Y ? -(pos[1] - pivotY) : (pos[1] - pivotY)) / 16.0f;
                 bakedZ[vIdx] = (pos[2] - pivotZ) / 16.0f;
-                if (FORCE_FLAT_SHADING) {
-                    bakedNX[vIdx] = FLIP_MODEL_X ? -faceNx : faceNx;
-                    bakedNY[vIdx] = FLIP_MODEL_Y ? -faceNy : faceNy;
-                    bakedNZ[vIdx] = faceNz;
+
+                float nx, ny, nz;
+                float[] packNormal = (vi[1] >= 0 && vi[1] < normals.length && normals[vi[1]].length >= 3)
+                        ? normals[vi[1]] : null;
+                if (preferPackNormals && packNormal != null) {
+                    // 枪包自带的（可平滑）法线。上游 FORCE_FLAT_SHADING 恒 true，
+                    // normals 数组解析后从不消费 —— 曲面在光影下呈棱角状高光（审查 A10 第二条）。
+                    nx = packNormal[0]; ny = packNormal[1]; nz = packNormal[2];
+                } else if (!faceDegenerate) {
+                    nx = faceNx; ny = faceNy; nz = faceNz;
+                } else if (packNormal != null) {
+                    // 三点共线的退化面：叉积为零向量，光影里 normalize() 出 NaN
+                    // （表现为随机高光）。退回枪包法线。
+                    nx = packNormal[0]; ny = packNormal[1]; nz = packNormal[2];
                 } else {
-                    float[] n = normals[vi[1]];
-                    bakedNX[vIdx] = FLIP_MODEL_X ? -n[0] : n[0];
-                    bakedNY[vIdx] = FLIP_MODEL_Y ? -n[1] : n[1];
-                    bakedNZ[vIdx] = n[2];
+                    // 连枪包法线都没有：写确定方向，绝不写零向量。
+                    nx = 0f; ny = 1f; nz = 0f;
                 }
+                float outNx = FLIP_MODEL_X ? -nx : nx;
+                float outNy = FLIP_MODEL_Y ? -ny : ny;
+                float outNz = nz;
+                if (invertNormals) {
+                    outNx = -outNx; outNy = -outNy; outNz = -outNz;
+                }
+                bakedNX[vIdx] = outNx;
+                bakedNY[vIdx] = outNy;
+                bakedNZ[vIdx] = outNz;
+
                 bakedU[vIdx] = normalizedUvs ? uv[0] : (uv[0] / texWidth);
                 float v = normalizedUvs ? uv[1] : (uv[1] / texHeight);
                 bakedV[vIdx] = FLIP_UV_V ? 1.0f - v : v;
                 vIdx++;
             }
+        }
+    }
+
+    /** 配置尚未加载时（理论上不发生：资源加载晚于 mod init）退回默认值。 */
+    private static boolean readToggle(net.minecraftforge.common.ForgeConfigSpec.BooleanValue value, boolean fallback) {
+        try {
+            return value.get();
+        } catch (Throwable t) {
+            return fallback;
         }
     }
 

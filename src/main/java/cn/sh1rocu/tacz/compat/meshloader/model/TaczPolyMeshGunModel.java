@@ -376,8 +376,11 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             if (polyMeshModel.isTranslucentBone(boneName)) {
                 continue;
             }
+            // 光影下发光骨骼 sky 列走环境真值（IlluminatedRealSky，两层同一开关）。
+            // resolve 依赖 lightKey 的 sky 列 —— 烘焙缓存本就按 lightKey 分档，
+            // 每档各烘各的，缓存正确性不受影响。
             int boneLight = polyMeshModel.isIlluminatedBone(boneName)
-                    ? PolyMeshGpuRenderer.FULL_BRIGHT : lightKey;
+                    ? com.tacz.guns.util.IlluminatedLights.resolve(lightKey) : lightKey;
             PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight);
             if (baked == null) {
                 allOk = false;
@@ -447,8 +450,11 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             if (polyMeshModel.isTranslucentBone(boneName)) {
                 continue;
             }
+            // 光影下发光骨骼 sky 列走环境真值（IlluminatedRealSky，两层同一开关）。
+            // resolve 依赖 lightKey 的 sky 列 —— 烘焙缓存本就按 lightKey 分档，
+            // 每档各烘各的，缓存正确性不受影响。
             int boneLight = polyMeshModel.isIlluminatedBone(boneName)
-                    ? PolyMeshGpuRenderer.FULL_BRIGHT : lightKey;
+                    ? com.tacz.guns.util.IlluminatedLights.resolve(lightKey) : lightKey;
             PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight);
             if (baked == null) {
                 allOk = false;
