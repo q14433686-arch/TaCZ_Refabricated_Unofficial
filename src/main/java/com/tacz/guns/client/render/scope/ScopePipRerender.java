@@ -6,6 +6,7 @@ import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.compat.sodium.SodiumCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.util.math.MathUtil;
 import net.minecraft.client.DeltaTracker;
@@ -43,10 +44,15 @@ import javax.annotation.Nullable;
  *       {@code RenderSystem.setProjectionMatrix(slice, PERSPECTIVE)}。</li>
  *   <li>基准 FOV 从 {@code cameraState.projectionMatrix}（26.1.2 由 GameRenderer 每帧写入的
  *       {@code Matrix4f} 公有字段）的 m11 反解；远平面取 {@code cameraState.depthFar}（26.1.2
- *       无 {@code GameRenderer#getDepthFar}）。窄投影按下述双通道同时生效：
- *       {@code RenderSystem} 投影槽（着色器 UBO 消费）+ 临时改写
- *       {@code cameraState.projectionMatrix}（等价于 1.21.11 把窄矩阵当第 6 参传入；
- *       两处都在 finally 里还原）。</li>
+ *       无 {@code GameRenderer#getDepthFar}）。窄投影按下述通道同时生效：
+ *       ① {@code RenderSystem} 投影槽（原版路径：实体/粒子/天空）；② 临时改写
+ *       {@code cameraState.projectionMatrix}（等价于 1.21.11 把窄矩阵当第 6 参传入）；
+ *       ③ Sodium 的私有投影快照（{@link SodiumCompat#overrideProjection}，Sodium 地形
+ *       只认它自己包住 vanilla renderLevel 里 {@code getBuffer} 抓的那份，自建 buffer
+ *       实例的窄投影到不了那个调用点）。全部在 finally 还原；③ 还原后还要
+ *       {@link SodiumCompat#resetChunkUniformUpload} 重开它的区块 uniform 上传闸
+ *       （一帧两遍世界渲染时镜内遍先到会把闸关上，主遍会被早退挡掉而沿用镜内的
+ *       uniform —— 26.2 记录过的「镜内画面溢出到镜外」的真因）。</li>
  *   <li>裁剪锥（{@code cameraState.cullFrustum}）保持宽视场不动 —— 与 1.21.11 让
  *       {@code cullingMatrix} 参数保持宽视场同一语义（宽视锥 = 超集，结果正确，只稍费一点）。</li>
  *   <li>离屏 target 等价物（26.2 的 {@code ScopePipTarget} 及其离屏 FBO）在 B1 用不到 ——
@@ -235,9 +241,16 @@ public final class ScopePipRerender {
         ProjectionType savedProjectionType = RenderSystem.getProjectionType();
         SAVED_CAMERA_PROJECTION.set(cameraState.projectionMatrix);
 
+        boolean sodiumPatched = false;
         scopePassActive = true;
         try {
             RenderSystem.setProjectionMatrix(projectionBuffer.getBuffer(NARROW_MATRIX), ProjectionType.PERSPECTIVE);
+            // 【第三处投影通道 · Sodium 地形】Sodium 的地形不读 RenderSystem 槽位，只认它
+            // 包住 vanilla renderLevel 里 ProjectionMatrixBuffer#getBuffer 抓走的私有快照
+            // （我们的窄投影走自建 buffer 实例，到不了那个调用点）。不就地改写它的快照，
+            // 镜内地形留在宽 FOV、原版实体走窄槽位 —— 两套比例糊在一起，实机表现即
+            // 「镜内实体相对镜内世界错位/独立于视界」。26.2 同名 compat 的移植。
+            sodiumPatched = SodiumCompat.overrideProjection(NARROW_MATRIX);
             // 26.1.2 的 renderLevel 没有投影参数：着色器走 RenderSystem 投影槽（上一行），
             // 其余消费点读 cameraState.projectionMatrix —— 临时改写成窄矩阵，等价于 1.21.11
             // 把窄矩阵当第 6 参传入 renderLevel。
@@ -275,8 +288,9 @@ public final class ScopePipRerender {
             if (sceneCaptured && !loggedFirst) {
                 loggedFirst = true;
                 GunMod.LOGGER.info("[TACZ Scope] Scope PIP second-render pass active: {}x{} narrow-FOV world "
-                                + "at {}x magnification (resolution scale {}x not yet wired).",
-                        main.width, main.height, magnification, resolutionScale());
+                                + "at {}x magnification (resolution scale {}x not yet wired; sodium terrain "
+                                + "projection synced: {}).",
+                        main.width, main.height, magnification, resolutionScale(), sodiumPatched);
             }
             return sceneCaptured;
         } catch (Throwable e) {
@@ -289,6 +303,15 @@ public final class ScopePipRerender {
             scopePassActive = false;
             // 必须还原：留窄投影会让 vanilla 那遍的整个世界被放大 —— 正好是反过来的病。
             cameraState.projectionMatrix.set(SAVED_CAMERA_PROJECTION);
+            if (sodiumPatched) {
+                // Sodium 快照同理必须还原，主画面那遍地形才能回到宽 FOV。
+                SodiumCompat.restoreProjection();
+            }
+            // 【关键】把 Sodium「本帧区块 uniform 已上传」的闸重新打开（26.2 同名语义）：
+            // 镜内那遍先到，上传后就把闸关了；vanilla 那遍的 update() 会被早退挡掉，
+            // 主画面地形继续沿用镜内那遍的 uniform。放在 finally：哪怕窄遍中途抛异常，
+            // 也绝不能把主画面留在错误的投影上。
+            SodiumCompat.resetChunkUniformUpload();
             RenderSystem.setProjectionMatrix(savedProjection, savedProjectionType);
         }
     }
