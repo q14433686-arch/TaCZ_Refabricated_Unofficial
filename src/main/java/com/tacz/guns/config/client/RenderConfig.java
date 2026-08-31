@@ -120,6 +120,15 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.DoubleValue SCOPE_PIP_SHADOW_SCALE;
     /**
+     * 【实验】不开镜连续 {@link #SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES} 帧后销毁瞄具专用
+     * Iris 管线释放其全部 GPU 资源，下次开镜由预热重建（带一次着色器编译成本）。
+     * 26.2 的 FPS 衰减调查线：光影下「开镜帧率自首次 ADS 起持续衰减、重进存档重置」
+     * 强烈指向瞄具管线保留 GPU 状态里的逐 pass 累积，空闲销毁即清零。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RELEASE_IDLE_PIPELINE;
+    /** 空闲释放前需连续空闲的帧数（默认 120 ≈ 60fps 下 2 秒，避免进出镜抖动式重建）。 */
+    public static ForgeConfigSpec.IntValue SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES;
+    /**
      * 二次渲染模式下，镜内那遍的渲染分辨率（1.0 = 原生分辨率）。
      *
      * <p>调低可显著减少第二遍世界渲染的 GPU 开销（0.5 = 25% 像素），代价是镜内更软。
@@ -265,6 +274,17 @@ public class RenderConfig {
                         "work to about 25%. Only the lens is affected. Takes effect when the scope",
                         "pipeline is (re)built; the pipeline is rebuilt automatically on change.")
                 .defineInRange("ScopePipShadowScale", 0.5d, 0.25d, 1.0d);
+        SCOPE_PIP_RELEASE_IDLE_PIPELINE = builder.comment(
+                        "[EXPERIMENT] Destroy the scope pass' isolated Iris pipeline while not aiming, to",
+                        "release its full GPU resources; it is rebuilt (with a shaderpack compile cost) on",
+                        "the next aim. Tests whether the shader-pack aiming FPS decay that accumulates",
+                        "since the first ADS and resets on world rejoin lives in the scope pipeline's",
+                        "retained GPU state.")
+                .define("ScopePipReleaseIdlePipeline", false);
+        SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES = builder.comment(
+                        "[EXPERIMENT] Consecutive idle frames before the idle scope pipeline is released",
+                        "(default 120 ~ 2s at 60fps; keeps aim transitions from thrashing the pipeline).")
+                .defineInRange("ScopePipIdleReleaseDelayFrames", 120, 1, Integer.MAX_VALUE);
         SCOPE_PIP_RESOLUTION_SCALE = builder.comment(
                         "Render resolution scale for the scope pass in rerender mode (1.0 = native). "
                                 + "Lower values reduce the GPU cost of the second world render at the price "

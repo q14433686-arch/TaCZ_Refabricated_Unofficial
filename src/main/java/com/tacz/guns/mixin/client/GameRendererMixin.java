@@ -11,7 +11,6 @@ import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
 import com.tacz.guns.client.render.scope.ScopePipDepthDebug;
 import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.render.scope.ScopePipRerender;
-import com.tacz.guns.compat.iris.IrisScopePipelineCompat;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.DeltaTracker;
@@ -150,11 +149,11 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "render", at = @At("HEAD"))
     private void tacz$renderTickStart(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
-        // scope pip 光影二次渲染（26.2 同名语义）：帧首安全位预热瞄具专用 Iris 管线 ——
-        // 这里在世界渲染之前、不在任何 render pass 内。预热把「整套 shaderpack 编译」从
-        // 第一次开镜的那一帧挪到进世界后的一次性卡顿；不预热的话那次编译会落在镜内那遍
-        // 中途，preparePipeline 的全局帧计数/计时器 reset 会把时域效果当场打乱。
-        IrisScopePipelineCompat.prewarmIfNeeded();
+        // scope pip 光影二次渲染（26.2 同名语义）：帧首安全位预热瞄具专用 Iris 管线，
+        // 并按需执行空闲释放实验（ScopePipReleaseIdlePipeline）。预热把「整套 shaderpack
+        // 编译」从第一次开镜的那一帧挪到进世界后的一次性卡顿；不预热的话那次编译会落在
+        // 镜内那遍中途，preparePipeline 的全局帧计数/计时器 reset 会把时域效果当场打乱。
+        ScopePipRerender.prewarmShaderPipelineIfNeeded();
         // poly_mesh GPU：帧首归零绘制表 + 检测光影开关翻转（烘焙世代号）+ 释放延迟释放池。
         // 必须先于 RenderTickEvent 分发：ShaderStateTracker（START 相位）会把当帧光影状态
         // 交给 PolyRenderPolicy 缓存，两者的先后要与 1211 分支一致。

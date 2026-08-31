@@ -159,6 +159,41 @@ public final class ScopePipRerender {
         return 1.0f;
     }
 
+    /** 空闲释放的连续空闲帧计数（{@code ScopePipReleaseIdlePipeline}）。 */
+    private static int idleReleaseFrames = 0;
+
+    /**
+     * 帧首调用（{@code GameRendererMixin} 的 render HEAD）：预热瞄具专用 Iris 管线，
+     * 并在开启 {@code ScopePipReleaseIdlePipeline} 时按连续空闲帧数释放它。
+     *
+     * <p>判据与镜内那一遍一致（二次渲染 + 光影 opt-in + 隔离），但<b>不看开镜进度</b> ——
+     * 预热的全部意义就是赶在第一次开镜之前把 shaderpack 编译做完。空闲期间不预热：
+     * 预热会立刻重建刚释放的管线，等于白释放；玩家重新开镜的那一帧走到预热分支重建。</p>
+     */
+    public static void prewarmShaderPipelineIfNeeded() {
+        if (failed || !rerenderMode() || !IrisScopePipelineCompat.isolatePipelineEnabled()) {
+            return;
+        }
+        if (!ScopePipRenderState.shaderRerenderAllowed()) {
+            return;
+        }
+        if (RenderConfig.SCOPE_PIP_RELEASE_IDLE_PIPELINE != null
+                && RenderConfig.SCOPE_PIP_RELEASE_IDLE_PIPELINE.get()) {
+            int delay = RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES == null
+                    ? 120 : RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES.get();
+            float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+            if (!ScopePipRenderState.suppressesWorldFovZoom(partialTicks)) {
+                if (++idleReleaseFrames >= delay) {
+                    IrisScopePipelineCompat.releaseScopePipelineIfPresent();
+                }
+                // 空闲期间不预热：预热会立刻重建刚释放的管线。
+                return;
+            }
+            idleReleaseFrames = 0;
+        }
+        IrisScopePipelineCompat.prewarmIfNeeded();
+    }
+
     /**
      * 镜内那遍世界渲染。由 {@code GameRendererMixin} 在
      * {@code GameRenderer#renderLevel} 里 {@code LevelRenderer#renderLevel} 那次调用之前注入；

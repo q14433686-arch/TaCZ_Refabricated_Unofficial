@@ -74,6 +74,12 @@ public class RenderClothConfig {
                 .setMin(0.25).setMax(1.0).setDefaultValue(0.5)
                 .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_shadow_scale.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_SHADOW_SCALE::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_release_idle_pipeline"), RenderConfig.SCOPE_PIP_RELEASE_IDLE_PIPELINE.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_release_idle_pipeline.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_RELEASE_IDLE_PIPELINE::set).build());
+        render.addEntry(entryBuilder.startIntSlider(Component.translatable("config.tacz.client.render.scope_pip_idle_release_delay_frames"), RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES.get(), 1, 600)
+                .setDefaultValue(120).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_idle_release_delay_frames.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES::set).build());
         render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_resolution_scale"), RenderConfig.SCOPE_PIP_RESOLUTION_SCALE.get())
                 .setMin(0.25).setMax(1.0).setDefaultValue(0.75)
                 .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_resolution_scale.desc"))
