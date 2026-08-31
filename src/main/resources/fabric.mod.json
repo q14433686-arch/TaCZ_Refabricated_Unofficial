@@ -6,8 +6,8 @@
     "taczmeshloader"
   ],
   "version": "${version}",
-  "name": "[UNOFFICIAL] TaCZ Refabricated (26.1.2 R2-hotfix)",
-  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. R2 for Minecraft 26.1.2 adds a replaceable ammunition source API, stable gameplay behavior hooks, multi-block workbench Carry On compatibility, and built-in JEI/REI Ammo Query integration with automatic reload bridge. It is not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.1.2.R2-hotfix' build metadata so existing pack version requirements continue to work.",
+  "name": "[UNOFFICIAL] TaCZ Refabricated (26.1.2 R3)",
+  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. R3 for Minecraft 26.1.2 adds the depth-aperture scope picture-in-picture (PIP), the mesh-GPU world/hand paths under shader packs (on by default), and in-scope ammo-counter text; R2 added a replaceable ammunition source API, stable gameplay behavior hooks, multi-block workbench Carry On compatibility, and built-in JEI/REI Ammo Query integration with automatic reload bridge. It is not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.1.2.R3' build metadata so existing pack version requirements continue to work.",
   "authors": [
     "Sh1roCu"
   ],
