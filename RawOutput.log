@@ -1,0 +1,500 @@
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1343)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:991)
+	at knot//net.minecraft.client.main.Main.main(Main.java:248)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[06:59:33] [Render thread/INFO]: Registering recipes: tacz:jei took 78.18 milliseconds
+[06:59:33] [Render thread/INFO]: Registering recipes: jei:internal took 23.74 milliseconds
+[06:59:33] [Render thread/INFO]: Registering recipes took 315.4 milliseconds
+[06:59:33] [Render thread/INFO]: Registering recipes transfer handlers...
+[06:59:33] [Render thread/INFO]: Registering recipes transfer handlers took 1.406 milliseconds
+[06:59:33] [Render thread/INFO]: Building runtime...
+[06:59:33] [Render thread/INFO]: Registering gui handlers...
+[06:59:33] [Render thread/INFO]: Registering gui handlers took 5.454 milliseconds
+[06:59:33] [Render thread/INFO]: Registering Runtime...
+[06:59:33] [Render thread/INFO]: Starting JEI GUI
+[06:59:33] [Render thread/INFO]: Building ingredient list...
+[06:59:33] [Render thread/INFO]: Building ingredient list took 14.71 milliseconds
+[06:59:33] [Render thread/INFO]: Building ingredient filter...
+[06:59:33] [Render thread/INFO]: Adding 2070 ingredients
+[06:59:33] [Render thread/INFO]: Added 2070 ingredients
+[06:59:33] [Render thread/INFO]: Building ingredient filter took 74.13 milliseconds
+[06:59:33] [Render thread/INFO]: Registering Runtime: jei:fabric_gui took 140.6 milliseconds
+[06:59:33] [Render thread/INFO]: Registering Runtime took 140.9 milliseconds
+[06:59:33] [Render thread/INFO]: Building runtime took 149.5 milliseconds
+[06:59:33] [Render thread/INFO]: Sending Runtime...
+[06:59:33] [Render thread/INFO]: Sending Runtime took 138.6 microseconds
+[06:59:33] [Render thread/INFO]: Starting JEI took 599.2 milliseconds
+[06:59:33] [Render thread/INFO]: Loaded 71 advancements
+[06:59:34] [tacz-client-asset-preload-1/INFO]: [TacZMeshLoader] poly_mesh stats for tacz:geo_models/gun/lod/spr15hb.json: 0 bones, 0 vertices (translucent=0, illuminated=0, mag=false, additionalMag=false)
+[06:59:34] [Render thread/INFO]: [TACZ Recipe Viewer] Refreshing after gun-pack sync (4 table(s), 196 recipe(s)).
+[06:59:34] [Render thread/INFO]: Stopping JEI
+[06:59:34] [Render thread/INFO]: Stopping JEI
+[06:59:34] [Render thread/INFO]: Sending Runtime Unavailable...
+[06:59:34] [Render thread/INFO]: Stopping JEI GUI
+[06:59:34] [Render thread/INFO]: Sending Runtime Unavailable took 271.8 microseconds
+[06:59:34] [Render thread/INFO]: Starting JEI...
+[06:59:34] [Render thread/INFO]: Configuring JEI...
+[06:59:34] [Render thread/INFO]: Configuring JEI took 115.8 microseconds
+[06:59:34] [Render thread/INFO]: Registering item subtypes...
+[06:59:34] [Render thread/INFO]: Registering item subtypes took 151.3 microseconds
+[06:59:34] [Render thread/INFO]: Registering fluid subtypes...
+[06:59:34] [Render thread/INFO]: Registering fluid subtypes took 86.10 microseconds
+[06:59:34] [Render thread/INFO]: Registering ingredients...
+[06:59:34] [Render thread/INFO]: Registering ingredients: jei:minecraft took 19.53 milliseconds
+[06:59:34] [Render thread/INFO]: Registering ingredients took 20.08 milliseconds
+[06:59:34] [Render thread/INFO]: Registering extra ingredients...
+[06:59:34] [Render thread/INFO]: Registering extra ingredients took 128.4 microseconds
+[06:59:34] [Render thread/INFO]: Registering search ingredient aliases...
+[06:59:34] [Render thread/INFO]: Registering search ingredient aliases took 66.60 microseconds
+[06:59:34] [Render thread/INFO]: Registering slot display interpreters...
+[06:59:34] [Render thread/INFO]: Registering slot display interpreters took 86.10 microseconds
+[06:59:34] [Render thread/INFO]: Registering Mod Info...
+[06:59:34] [Render thread/INFO]: Registering Mod Info took 91.20 microseconds
+[06:59:34] [Render thread/INFO]: Registering advanced search...
+[06:59:34] [Render thread/INFO]: Registering advanced search took 69.20 microseconds
+[06:59:34] [Render thread/INFO]: Registering categories...
+[06:59:34] [Render thread/INFO]: Registering categories took 649.1 microseconds
+[06:59:34] [Render thread/INFO]: Registering vanilla category extensions...
+[06:59:34] [Render thread/INFO]: Registering vanilla category extensions took 77.80 microseconds
+[06:59:34] [Render thread/INFO]: Registering recipe catalysts...
+[06:59:34] [Render thread/INFO]: Registering recipe catalysts took 119.9 microseconds
+[06:59:34] [Render thread/INFO]: Building recipe registry...
+[06:59:34] [Render thread/INFO]: Building recipe registry took 272.1 microseconds
+[06:59:34] [Render thread/INFO]: Registering advanced plugins...
+[06:59:34] [Render thread/INFO]: Registering advanced plugins took 91.70 microseconds
+[06:59:34] [Render thread/INFO]: Registering recipes...
+[06:59:34] [Render thread/INFO]: Registering recipes: jei:minecraft took 111.7 milliseconds
+[06:59:34] [Render thread/INFO]: Registering recipes: tacz:jei took 19.06 milliseconds
+[06:59:34] [Render thread/INFO]: Registering recipes: jei:internal took 14.92 milliseconds
+[06:59:34] [Render thread/INFO]: Registering recipes took 146.7 milliseconds
+[06:59:34] [Render thread/INFO]: Registering recipes transfer handlers...
+[06:59:34] [Render thread/INFO]: Registering recipes transfer handlers took 218.1 microseconds
+[06:59:34] [Render thread/INFO]: Building runtime...
+[06:59:34] [Render thread/INFO]: Registering gui handlers...
+[06:59:34] [Render thread/INFO]: Registering gui handlers took 183.9 microseconds
+[06:59:34] [Render thread/INFO]: Registering Runtime...
+[06:59:34] [Render thread/INFO]: Starting JEI GUI
+[06:59:34] [Render thread/INFO]: Building ingredient list...
+[06:59:34] [Render thread/INFO]: Building ingredient list took 6.067 milliseconds
+[06:59:34] [Render thread/INFO]: Building ingredient filter...
+[06:59:34] [Render thread/INFO]: Adding 2101 ingredients
+[06:59:34] [Render thread/INFO]: Added 2101 ingredients
+[06:59:34] [Render thread/INFO]: Building ingredient filter took 33.58 milliseconds
+[06:59:34] [Render thread/INFO]: Registering Runtime: jei:fabric_gui took 43.91 milliseconds
+[06:59:34] [Render thread/INFO]: Registering Runtime took 44.20 milliseconds
+[06:59:34] [Render thread/INFO]: Building runtime took 44.65 milliseconds
+[06:59:34] [Render thread/INFO]: Sending Runtime...
+[06:59:34] [Render thread/INFO]: Sending Runtime took 151.8 microseconds
+[06:59:34] [Render thread/INFO]: Starting JEI took 218.4 milliseconds
+[06:59:34] [Render thread/INFO]: [TACZ Recipe Viewer] JEI/REI refresh completed.
+[06:59:34] [Render thread/WARN]: Error while parsing the block ID map entry for "block.10104":
+[06:59:34] [Render thread/WARN]: - The block minecraft:stone_slab has no property with the name variant, ignoring!
+[06:59:34] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Flushing download stream
+[06:59:34] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Shutting down rendering
+[06:59:34] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Shutting down render pipeline
+[06:59:34] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Flushing download stream
+[06:59:34] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Render shutdown completed
+[06:59:34] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Creating Voxy render system
+[06:59:34] [Render thread/INFO]: [me.cx.vy.ct.ce.RenderPipelineFactory]: Creating voxy iris render pipeline
+[06:59:34] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Voxy render system created with 4294966272 geometry capacity, using pipeline 'IrisVoxyRenderPipeline' with renderer 'MDICSectionRenderer'
+[06:59:34] [Render thread/INFO]: Stopping worker threads
+[06:59:34] [Render thread/INFO]: Started 10 worker threads
+[06:59:34] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 2 reached during a single frame. New capacity will be 4.
+[06:59:34] [Render thread/INFO]: [TacZMeshLoader] attachment poly_mesh stats for tacz:geo_models/attachment/scope_mk5hd_geo.json: 0 bones, 0 vertices
+[06:59:34] [Render thread/INFO]: [TacZMeshLoader] attachment poly_mesh stats for tacz:geo_models/attachment/lod/scope_mk5hd.json: 0 bones, 0 vertices
+[06:59:34] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/entity_cutout: HAND_CUTOUT
+[06:59:34] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/entity_cutout_cull: HAND_CUTOUT
+[06:59:34] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/entity_translucent: HAND_TRANSLUCENT
+[06:59:34] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/entity_translucent_cull: HAND_TRANSLUCENT
+[06:59:34] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/entity_translucent_emissive: HAND_TRANSLUCENT
+[06:59:34] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/item_cutout: HAND_CUTOUT
+[06:59:34] [Render thread/WARN]: Found perfect program match for minecraft:pipeline/item_translucent: HAND_TRANSLUCENT
+[06:59:34] [Render thread/INFO]: [TacZMeshLoader] ammo poly_mesh stats for tacz:geo_models/ammo/556x45.json: 0 bones, 0 vertices
+[06:59:34] [Render thread/INFO]: [TacZMeshLoader] ammo poly_mesh stats for tacz:geo_models/shell/556x45_shell.json: 0 bones, 0 vertices
+[06:59:34] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 4 reached during a single frame. New capacity will be 8.
+[06:59:34] [Render thread/INFO]: Created: 2048x2048x4 minecraft:textures/atlas/blocks_n.png-atlas
+[06:59:34] [Render thread/INFO]: Created: 2048x2048x4 minecraft:textures/atlas/blocks_s.png-atlas
+[06:59:34] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 8 reached during a single frame. New capacity will be 16.
+[06:59:35] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/items_n.png-atlas
+[06:59:35] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/items_s.png-atlas
+[06:59:35] [tacz-client-asset-preload-1/INFO]: [TacZMeshLoader] poly_mesh stats for duyupack:geo_models/gun/ak_enact.json: 20 bones, 365848 vertices (translucent=0, illuminated=0, mag=true, additionalMag=false)
+[06:59:35] [tacz-client-asset-preload-1/WARN]: [TacZMeshLoader] duyupack:geo_models/gun/ak_enact.json has 365848 vertices (MeshMaxModelVertices=120000). Expect first-person frame cost on the CPU path; GUI/world contexts are capped.
+[06:59:35] [tacz-client-asset-preload-1/INFO]: [TacZMeshLoader] poly_mesh stats for duyupack:geo_models/gun/kar98un.json: 21 bones, 43064 vertices (translucent=0, illuminated=0, mag=true, additionalMag=false)
+[06:59:35] [tacz-client-asset-preload-1/INFO]: [TacZMeshLoader] poly_mesh stats for tacz:geo_models/gun/lod/aug.json: 0 bones, 0 vertices (translucent=0, illuminated=0, mag=false, additionalMag=false)
+[06:59:35] [tacz-client-asset-preload-1/INFO]: [TacZMeshLoader] poly_mesh stats for tacz:geo_models/gun/lod/deagle.json: 0 bones, 0 vertices (translucent=0, illuminated=0, mag=false, additionalMag=false)
+[06:59:35] [tacz-client-asset-preload-1/INFO]: [TacZMeshLoader] attachment poly_mesh stats for tacz:geo_models/attachment/scope_vudu_geo.json: 0 bones, 0 vertices
+[06:59:35] [tacz-client-asset-preload-1/INFO]: [TacZMeshLoader] attachment poly_mesh stats for tacz:geo_models/attachment/lod/scope_vudu.json: 0 bones, 0 vertices
+[06:59:36] [Render thread/INFO]: Creating pipeline for dimension tacz:scope_pip
+[06:59:36] [Render thread/INFO]: [TACZ Scope] Scope pass gets a 1024x1024 shadow map instead of 2048x2048. The shadow pass runs once per world render, so rendering twice per frame doubled it; cost scales with area, so this cuts that pass' shadow work to about 25%. Only the lens is affected.
+[06:59:36] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Flushing download stream
+[06:59:36] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Shutting down rendering
+[06:59:36] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Shutting down render pipeline
+[06:59:36] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Flushing download stream
+[06:59:36] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Render shutdown completed
+[06:59:36] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Creating Voxy render system
+[06:59:36] [Render thread/INFO]: [me.cx.vy.ct.ce.RenderPipelineFactory]: Creating voxy iris render pipeline
+[06:59:36] [Render thread/INFO]: [me.cx.vy.ct.ce.VoxyRenderSystem]: Voxy render system created with 4294966272 geometry capacity, using pipeline 'IrisVoxyRenderPipeline' with renderer 'MDICSectionRenderer'
+[06:59:36] [Render thread/INFO]: Stopping worker threads
+[06:59:36] [Render thread/INFO]: Started 10 worker threads
+[06:59:36] [Render thread/INFO]: [TACZ Scope] Pre-built the scope pass' Iris pipeline now, so the first time you aim does not stall while the shader pack compiles.
+[06:59:36] [Render thread/INFO]: [TACZ Scope] Sodium terrain projection is being synced for the scope pass.
+[06:59:36] [Render thread/INFO]: [TACZ Scope] Scope pass is using its own Iris pipeline (tacz:scope_pip) so its temporal state stays separate from the main view.
+[06:59:36] [Render thread/WARN]: Error while parsing the block ID map entry for "block.10104":
+[06:59:36] [Render thread/WARN]: - The block minecraft:stone_slab has no property with the name variant, ignoring!
+[06:59:36] [Render thread/INFO]: [TACZ Scope] Suppressed a full renderer reload requested during the scope pass. Iris asks for it once when a pipeline first renders, and it would make Voxy rebind itself to the scope pipeline for the rest of the session, permanently corrupting distant terrain in the main view. The block-id state it refreshes is global and already set by the main pipeline.
+[06:59:36] [Render thread/INFO]: [TACZ Scope] Voxy will render the scope pass into its own viewport, the same way it already handles the Iris shadow pass. Distant LOD terrain shows in the lens without disturbing the main view's LOD state.
+[06:59:36] [Render thread/INFO]: [TACZ Scope] Voxy is sitting out the scope pass while that pass uses its own Iris pipeline. Voxy binds to a single Iris pipeline for its lifetime, so it cannot draw correctly under a second one. The lens will not show distant LOD terrain; the main view stays correct. Set ScopePipIsolatePipeline=false to get LOD in the lens instead, at the cost of temporal artifacts.
+[06:59:36] [Render thread/INFO]: [TACZ Scope] Scope PIP second-render pass active: 2560x1417 narrow-FOV world at 5.0x magnification (resolution scale 0.75x not yet wired; sodium terrain projection synced: true).
+[06:59:36] [Render thread/INFO]: [TACZ Scope] Sodium chunk uniforms will be re-uploaded for the main pass (this is what kept the main view on the scope pass's uniforms).
+[06:59:36] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 16 reached during a single frame. New capacity will be 32.
+[06:59:37] [Server thread/INFO]: Saving and pausing game...
+[06:59:37] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:overworld
+[06:59:37] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_nether
+[06:59:37] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_end
+[06:59:37] [Render thread/INFO]: [TACZ Scope] Released the idle scope-pass Iris pipeline to reclaim GPU memory.
+[06:59:37] [Render thread/ERROR]: Unreported exception thrown!
+java.lang.IllegalStateException: Tried to use destroyed RenderTargets
+	at knot//net.irisshaders.iris.targets.RenderTargets.getOrCreate(RenderTargets.java:120)
+	at knot//net.irisshaders.iris.samplers.IrisSamplers.lambda$addRenderTargetSamplers$0(IrisSamplers.java:62)
+	at knot//me.cortex.voxy.client.iris.IrisVoxyRenderPipelineData.lambda$createImageSet$1(IrisVoxyRenderPipelineData.java:542)
+	at knot//me.cortex.voxy.client.core.IrisVoxyRenderPipeline.doBindings(IrisVoxyRenderPipeline.java:210)
+	at knot//me.cortex.voxy.client.core.IrisVoxyRenderPipeline.setupAndBindOpaque(IrisVoxyRenderPipeline.java:217)
+	at knot//me.cortex.voxy.client.core.rendering.section.backend.mdic.MDICSectionRenderer.renderTerrain(MDICSectionRenderer.java:195)
+	at knot//me.cortex.voxy.client.core.rendering.section.backend.mdic.MDICSectionRenderer.renderOpaque(MDICSectionRenderer.java:225)
+	at knot//me.cortex.voxy.client.core.rendering.section.backend.mdic.MDICSectionRenderer.renderOpaque(MDICSectionRenderer.java:45)
+	at knot//me.cortex.voxy.client.core.AbstractRenderPipeline.runPipeline(AbstractRenderPipeline.java:113)
+	at knot//me.cortex.voxy.client.core.VoxyRenderSystem.renderOpaque(VoxyRenderSystem.java:309)
+	at knot//net.caffeinemc.mods.sodium.client.render.chunk.DefaultChunkRenderer.doRender(DefaultChunkRenderer.java:1071)
+	at knot//net.caffeinemc.mods.sodium.client.render.chunk.DefaultChunkRenderer.handler$cic000$voxy$injectRender(DefaultChunkRenderer.java:1056)
+	at knot//net.caffeinemc.mods.sodium.client.render.chunk.DefaultChunkRenderer.render(DefaultChunkRenderer.java:109)
+	at knot//net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer.renderLayer(SodiumWorldRenderer.java:307)
+	at knot//net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer.drawChunkLayer(SodiumWorldRenderer.java:297)
+	at knot//net.minecraft.client.renderer.chunk.ChunkSectionsToRender.handler$caj000$sodium$renderGroup(ChunkSectionsToRender.java:541)
+	at knot//net.minecraft.client.renderer.chunk.ChunkSectionsToRender.renderGroup(ChunkSectionsToRender.java)
+	at knot//net.minecraft.client.renderer.LevelRenderer.mixinextras$bridge$renderGroup$173(LevelRenderer.java)
+	at knot//net.minecraft.client.renderer.LevelRenderer.wrapOperation$bco000$fabric-rendering-v1$wrapRenderOpaqueTerrain(LevelRenderer.java:2637)
+	at knot//net.minecraft.client.renderer.LevelRenderer.mixinextras$bridge$wrapOperation$bco000$fabric-rendering-v1$wrapRenderOpaqueTerrain$177(LevelRenderer.java)
+	at knot//net.minecraft.client.renderer.LevelRenderer.wrapOperation$bii000$iris$beginTerrainLayer(LevelRenderer.java:4268)
+	at knot//net.minecraft.client.renderer.LevelRenderer.lambda$addMainPass$0(LevelRenderer.java:671)
+	at knot//com.mojang.blaze3d.framegraph.FrameGraphBuilder.execute(FrameGraphBuilder.java:67)
+	at knot//net.minecraft.client.renderer.LevelRenderer.renderLevel(LevelRenderer.java:556)
+	at knot//net.minecraft.client.renderer.GameRenderer.redirect$cdk000$tacz$scopeRenderLevel(GameRenderer.java:5639)
+	at knot//net.minecraft.client.renderer.GameRenderer.mixinextras$bridge$redirect$cdk000$tacz$scopeRenderLevel$96(GameRenderer.java)
+	at knot//net.minecraft.client.renderer.GameRenderer.wrapOperation$bip000$iris$renderLevel(GameRenderer.java:3029)
+	at knot//net.minecraft.client.renderer.GameRenderer.wrapOperation$bip000$iris$renderLevel$mixinextras$bridge$84(GameRenderer.java)
+	at knot//net.minecraft.client.renderer.GameRenderer.renderLevel(GameRenderer.java:730)
+	at knot//net.minecraft.client.renderer.GameRenderer.render(GameRenderer.java:443)
+	at knot//net.minecraft.client.Minecraft.renderFrame(Minecraft.java:1433)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1378)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:991)
+	at knot//net.minecraft.client.main.Main.main(Main.java:248)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+---- Minecraft Crash Report ----
+// Who set us up the TNT?
+
+Time: 2026-09-01 06:59:38
+Description: Unexpected error
+
+java.lang.IllegalStateException: Tried to use destroyed RenderTargets
+	at knot//net.irisshaders.iris.targets.RenderTargets.getOrCreate(RenderTargets.java:120)
+	at knot//net.irisshaders.iris.samplers.IrisSamplers.lambda$addRenderTargetSamplers$0(IrisSamplers.java:62)
+	at knot//me.cortex.voxy.client.iris.IrisVoxyRenderPipelineData.lambda$createImageSet$1(IrisVoxyRenderPipelineData.java:542)
+	at knot//me.cortex.voxy.client.core.IrisVoxyRenderPipeline.doBindings(IrisVoxyRenderPipeline.java:210)
+	at knot//me.cortex.voxy.client.core.IrisVoxyRenderPipeline.setupAndBindOpaque(IrisVoxyRenderPipeline.java:217)
+	at knot//me.cortex.voxy.client.core.rendering.section.backend.mdic.MDICSectionRenderer.renderTerrain(MDICSectionRenderer.java:195)
+	at knot//me.cortex.voxy.client.core.rendering.section.backend.mdic.MDICSectionRenderer.renderOpaque(MDICSectionRenderer.java:225)
+	at knot//me.cortex.voxy.client.core.rendering.section.backend.mdic.MDICSectionRenderer.renderOpaque(MDICSectionRenderer.java:45)
+	at knot//me.cortex.voxy.client.core.AbstractRenderPipeline.runPipeline(AbstractRenderPipeline.java:113)
+	at knot//me.cortex.voxy.client.core.VoxyRenderSystem.renderOpaque(VoxyRenderSystem.java:309)
+	at knot//net.caffeinemc.mods.sodium.client.render.chunk.DefaultChunkRenderer.doRender(DefaultChunkRenderer.java:1071)
+	at knot//net.caffeinemc.mods.sodium.client.render.chunk.DefaultChunkRenderer.handler$cic000$voxy$injectRender(DefaultChunkRenderer.java:1056)
+	at knot//net.caffeinemc.mods.sodium.client.render.chunk.DefaultChunkRenderer.render(DefaultChunkRenderer.java:109)
+	at knot//net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer.renderLayer(SodiumWorldRenderer.java:307)
+	at knot//net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer.drawChunkLayer(SodiumWorldRenderer.java:297)
+	at knot//net.minecraft.client.renderer.chunk.ChunkSectionsToRender.handler$caj000$sodium$renderGroup(ChunkSectionsToRender.java:541)
+	at knot//net.minecraft.client.renderer.chunk.ChunkSectionsToRender.renderGroup(ChunkSectionsToRender.java)
+	at knot//net.minecraft.client.renderer.LevelRenderer.mixinextras$bridge$renderGroup$173(LevelRenderer.java)
+	at knot//net.minecraft.client.renderer.LevelRenderer.wrapOperation$bco000$fabric-rendering-v1$wrapRenderOpaqueTerrain(LevelRenderer.java:2637)
+	at knot//net.minecraft.client.renderer.LevelRenderer.mixinextras$bridge$wrapOperation$bco000$fabric-rendering-v1$wrapRenderOpaqueTerrain$177(LevelRenderer.java)
+	at knot//net.minecraft.client.renderer.LevelRenderer.wrapOperation$bii000$iris$beginTerrainLayer(LevelRenderer.java:4268)
+	at knot//net.minecraft.client.renderer.LevelRenderer.lambda$addMainPass$0(LevelRenderer.java:671)
+	at knot//com.mojang.blaze3d.framegraph.FrameGraphBuilder.execute(FrameGraphBuilder.java:67)
+	at knot//net.minecraft.client.renderer.LevelRenderer.renderLevel(LevelRenderer.java:556)
+	at knot//net.minecraft.client.renderer.GameRenderer.redirect$cdk000$tacz$scopeRenderLevel(GameRenderer.java:5639)
+	at knot//net.minecraft.client.renderer.GameRenderer.mixinextras$bridge$redirect$cdk000$tacz$scopeRenderLevel$96(GameRenderer.java)
+	at knot//net.minecraft.client.renderer.GameRenderer.wrapOperation$bip000$iris$renderLevel(GameRenderer.java:3029)
+	at knot//net.minecraft.client.renderer.GameRenderer.wrapOperation$bip000$iris$renderLevel$mixinextras$bridge$84(GameRenderer.java)
+	at knot//net.minecraft.client.renderer.GameRenderer.renderLevel(GameRenderer.java:730)
+	at knot//net.minecraft.client.renderer.GameRenderer.render(GameRenderer.java:443)
+	at knot//net.minecraft.client.Minecraft.renderFrame(Minecraft.java:1433)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1378)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:991)
+	at knot//net.minecraft.client.main.Main.main(Main.java:248)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at knot//net.irisshaders.iris.targets.RenderTargets.getOrCreate(RenderTargets.java:120)
+	at knot//net.irisshaders.iris.samplers.IrisSamplers.lambda$addRenderTargetSamplers$0(IrisSamplers.java:62)
+	at knot//me.cortex.voxy.client.iris.IrisVoxyRenderPipelineData.lambda$createImageSet$1(IrisVoxyRenderPipelineData.java:542)
+	at knot//me.cortex.voxy.client.core.IrisVoxyRenderPipeline.doBindings(IrisVoxyRenderPipeline.java:210)
+	at knot//me.cortex.voxy.client.core.IrisVoxyRenderPipeline.setupAndBindOpaque(IrisVoxyRenderPipeline.java:217)
+	at knot//me.cortex.voxy.client.core.rendering.section.backend.mdic.MDICSectionRenderer.renderTerrain(MDICSectionRenderer.java:195)
+	at knot//me.cortex.voxy.client.core.rendering.section.backend.mdic.MDICSectionRenderer.renderOpaque(MDICSectionRenderer.java:225)
+	at knot//me.cortex.voxy.client.core.rendering.section.backend.mdic.MDICSectionRenderer.renderOpaque(MDICSectionRenderer.java:45)
+	at knot//me.cortex.voxy.client.core.AbstractRenderPipeline.runPipeline(AbstractRenderPipeline.java:113)
+	at knot//me.cortex.voxy.client.core.VoxyRenderSystem.renderOpaque(VoxyRenderSystem.java:309)
+	at knot//net.caffeinemc.mods.sodium.client.render.chunk.DefaultChunkRenderer.doRender(DefaultChunkRenderer.java:1071)
+	at knot//net.caffeinemc.mods.sodium.client.render.chunk.DefaultChunkRenderer.handler$cic000$voxy$injectRender(DefaultChunkRenderer.java:1056)
+	at knot//net.caffeinemc.mods.sodium.client.render.chunk.DefaultChunkRenderer.render(DefaultChunkRenderer.java:109)
+	at knot//net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer.renderLayer(SodiumWorldRenderer.java:307)
+	at knot//net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer.drawChunkLayer(SodiumWorldRenderer.java:297)
+	at knot//net.minecraft.client.renderer.chunk.ChunkSectionsToRender.handler$caj000$sodium$renderGroup(ChunkSectionsToRender.java:541)
+	at knot//net.minecraft.client.renderer.chunk.ChunkSectionsToRender.renderGroup(ChunkSectionsToRender.java)
+	at knot//net.minecraft.client.renderer.LevelRenderer.mixinextras$bridge$renderGroup$173(LevelRenderer.java)
+	at knot//net.minecraft.client.renderer.LevelRenderer.wrapOperation$bco000$fabric-rendering-v1$wrapRenderOpaqueTerrain(LevelRenderer.java:2637)
+	at knot//net.minecraft.client.renderer.LevelRenderer.mixinextras$bridge$wrapOperation$bco000$fabric-rendering-v1$wrapRenderOpaqueTerrain$177(LevelRenderer.java)
+	at knot//net.minecraft.client.renderer.LevelRenderer.wrapOperation$bii000$iris$beginTerrainLayer(LevelRenderer.java:4268)
+	at knot//net.minecraft.client.renderer.LevelRenderer.lambda$addMainPass$0(LevelRenderer.java:671)
+	at knot//com.mojang.blaze3d.framegraph.FrameGraphBuilder.execute(FrameGraphBuilder.java:67)
+	at knot//net.minecraft.client.renderer.LevelRenderer.renderLevel(LevelRenderer.java:556)
+	at knot//net.minecraft.client.renderer.GameRenderer.redirect$cdk000$tacz$scopeRenderLevel(GameRenderer.java:5639)
+	at knot//net.minecraft.client.renderer.GameRenderer.mixinextras$bridge$redirect$cdk000$tacz$scopeRenderLevel$96(GameRenderer.java)
+	at knot//net.minecraft.client.renderer.GameRenderer.wrapOperation$bip000$iris$renderLevel(GameRenderer.java:3029)
+	at knot//net.minecraft.client.renderer.GameRenderer.wrapOperation$bip000$iris$renderLevel$mixinextras$bridge$84(GameRenderer.java)
+	at knot//net.minecraft.client.renderer.GameRenderer.renderLevel(GameRenderer.java:730)
+	at knot//net.minecraft.client.renderer.GameRenderer.render(GameRenderer.java:443)
+
+-- Uptime --
+Details:
+	JVM uptime: 39.477s
+	Wall uptime: 32.632s
+	High-res time: 30.979s
+	Client ticks: 470 ticks / 23.500s
+Stacktrace:
+	at knot//net.minecraft.client.Minecraft.fillReport(Minecraft.java:2529)
+	at knot//net.minecraft.client.Minecraft.emergencySaveAndCrash(Minecraft.java:1047)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:1015)
+	at knot//net.minecraft.client.main.Main.main(Main.java:248)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+
+-- Affected level --
+Details:
+	All players: 1 total; LocalPlayer{name=GOOSTL, id=55, pos=(109.93877602015853, -60.0, 143.8100909148094), mode=CREATIVE, permission=owner}
+	Chunk stats: 961, 637
+	Level dimension: minecraft:overworld
+	Level time: 125847 game time, 156197 day time
+	Level spawn location: World: (0,-60,0), Section: (at 0,4,0 in 0,-4,0; chunk contains blocks 0,-64,0 to 15,319,15), Region: (0,0; contains chunks 0,0 to 31,31, blocks 0,-64,0 to 511,319,511)
+	Server brand: fabric
+	Server type: Integrated singleplayer server
+	Tracked entity count: 105
+	Client weather: Raining: false, thundering: false
+
+-- Last reload --
+Details:
+	Reload number: 1
+	Reload reason: initial
+	Finished: Yes
+	Packs: vanilla, carryon, cloth-config, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-language-kotlin, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, forgeconfigapiport, iris, jei, modmenu, org_apache_commons_commons-math3, placeholder-api, player_animation_library, reeses-sodium-options, resourcify, sodium, tacz, voxy, yet_another_config_lib_v3, tacz_resources
+
+-- System Details --
+Details:
+	Minecraft Version: 26.1.2
+	Minecraft Version ID: 26.1.2
+	Operating System: Windows 11 (amd64) version 10.0
+	Java Version: 25.0.3, Eclipse Adoptium
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode, sharing), Eclipse Adoptium
+	Memory: 634298032 bytes (604 MiB) / 2013265920 bytes (1920 MiB) up to 8388608000 bytes (8000 MiB)
+	Memory (heap): init: 512MiB, used: 1280MiB, committed: 1920MiB, max: 8000MiB
+	Memory (non-head): init: 007MiB, used: 287MiB, committed: 304MiB, max: 000MiB
+	CPUs: 16
+	Processor Vendor: AuthenticAMD
+	Processor Name: AMD Ryzen 7 7700 8-Core Processor              
+	Identifier: AuthenticAMD Family 25 Model 97 Stepping 2
+	Microarchitecture: Zen 3
+	Frequency (GHz): 3.79
+	Number of physical packages: 1
+	Number of physical CPUs: 8
+	Number of logical CPUs: 16
+	Graphics card #0 name: AMD  Radeon RX 7800 XT
+	Graphics card #0 vendor: Advanced Micro Devices, Inc.
+	Graphics card #0 VRAM (MiB): 16368.00
+	Graphics card #0 deviceId: VideoController1
+	Graphics card #0 versionInfo: 32.0.31041.1004
+	Graphics card #1 name: AMD Radeon(TM) Graphics
+	Graphics card #1 vendor: Advanced Micro Devices, Inc.
+	Graphics card #1 VRAM (MiB): 512.00
+	Graphics card #1 deviceId: VideoController2
+	Graphics card #1 versionInfo: 32.0.21045.5002
+	Memory slot #0 capacity (MiB): 16384.00
+	Memory slot #0 clockSpeed (GHz): 4.80
+	Memory slot #0 type: DDR5
+	Memory slot #1 capacity (MiB): 16384.00
+	Memory slot #1 clockSpeed (GHz): 4.80
+	Memory slot #1 type: DDR5
+	Virtual memory max (MiB): 64605.93
+	Virtual memory used (MiB): 34145.93
+	Swap memory total (MiB): 32784.00
+	Swap memory used (MiB): 3730.94
+	Space in storage for jna.tmpdir (MiB): available: 450487.16, total: 684062.94
+	Space in storage for org.lwjgl.system.SharedLibraryExtractPath (MiB): available: 450487.16, total: 684062.94
+	Space in storage for io.netty.native.workdir (MiB): available: 450487.16, total: 684062.94
+	Space in storage for java.io.tmpdir (MiB): available: 109002.73, total: 269803.38
+	Space in storage for workdir (MiB): available: 450487.16, total: 684062.94
+	JVM Flags: 13 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -XX:-OmitStackTraceInFastThrow -Xmx7987m -XX:+UnlockExperimentalVMOptions -XX:+UseCompactObjectHeaders -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:G1HeapRegionSize=32M -XX:MaxGCPauseMillis=50 -XX:+PerfDisableSharedMem -XX:MinHeapFreeRatio=25 -XX:MaxHeapFreeRatio=40
+	Debug Flags: 0 total; 
+	Fabric Mods: 
+		architectury: Architectury 20.0.12
+		carryon: Carry On 2.10.0
+		cloth-config: Cloth Config v26.1 26.1.154
+			cloth-basic-math: cloth-basic-math 0.6.1
+		fabric-api: Fabric API 0.155.2+26.1.2
+			fabric-api-base: Fabric API Base 2.0.3+ece063234c
+			fabric-api-lookup-api-v1: Fabric API Lookup API (v1) 2.0.12+d5a053b64c
+			fabric-biome-api-v1: Fabric Biome API (v1) 18.0.5+2fa62b4e4c
+			fabric-block-api-v1: Fabric Block API (v1) 3.0.2+ec56b6014c
+			fabric-block-getter-api-v2: Fabric BlockGetter API (v2) 2.0.6+ec56b6014c
+			fabric-command-api-v2: Fabric Command API (v2) 3.0.5+e2bdee784c
+			fabric-content-registries-v0: Fabric Content Registries (v0) 11.3.0+0082c9664c
+			fabric-convention-tags-v2: Fabric Convention Tags (v2) 4.6.2+4f11f7994c
+			fabric-crash-report-info-v1: Fabric Crash Report Info (v1) 1.0.3+9f78a5a84c
+			fabric-creative-tab-api-v1: Fabric Creative Tab API (v1) 5.0.11+d871b99e4c
+			fabric-data-attachment-api-v1: Fabric Data Attachment API (v1) 2.2.9+44a0bd1d4c
+			fabric-data-generation-api-v1: Fabric Data Generation API (v1) 24.3.3+cda368334c
+			fabric-debug-api-v1: Fabric Debug API (v1) 1.0.1+c792624d4c
+			fabric-dimensions-v1: Fabric Dimensions API (v1) 5.1.7+ad343a8d4c
+			fabric-entity-events-v1: Fabric Entity Events (v1) 5.0.2+e2bdee784c
+			fabric-events-interaction-v0: Fabric Events Interaction (v0) 5.2.2+07b380be4c
+			fabric-game-rule-api-v1: Fabric Game Rule API (v1) 4.0.5+d871b99e4c
+			fabric-item-api-v1: Fabric Item API (v1) 14.3.0+6d1aaa724c
+			fabric-key-mapping-api-v1: Fabric Key Mapping API (v1) 2.0.4+e2bdee784c
+			fabric-lifecycle-events-v1: Fabric Lifecycle Events (v1) 4.1.1+df84eb3d4c
+			fabric-loot-api-v3: Fabric Loot API (v3) 3.0.12+00a1fba64c
+			fabric-menu-api-v1: Fabric Menu API (v1) 2.0.14+d871b99e4c
+			fabric-message-api-v1: Fabric Message API (v1) 7.0.5+dae8ce3e4c
+			fabric-model-loading-api-v1: Fabric Model Loading API (v1) 8.0.11+c80601bb4c
+			fabric-networking-api-v1: Fabric Networking API (v1) 6.3.1+554860db4c
+			fabric-object-builder-api-v1: Fabric Object Builder API (v1) 23.1.0+abb459f14c
+			fabric-particles-v1: Fabric Particles (v1) 5.0.15+b61fef434c
+			fabric-permission-api-v1: Fabric Permission API (v1) 1.0.2+7437387b4c
+			fabric-recipe-api-v1: Fabric Recipe API (v1) 9.0.16+be4b75ae4c
+			fabric-registry-sync-v0: Fabric Registry Sync (v0) 7.1.0+2fa62b4e4c
+			fabric-renderer-api-v1: Fabric Renderer API (v1) 13.0.8+c80601bb4c
+			fabric-renderer-indigo: Fabric Renderer - Indigo 8.1.5+1403e82c4c
+			fabric-rendering-fluids-v1: Fabric Rendering Fluids (v1) 6.0.1+d871b99e4c
+			fabric-rendering-v1: Fabric Rendering (v1) 23.3.1+e9207d814c
+			fabric-resource-conditions-api-v1: Fabric Resource Conditions API (v1) 6.1.0+83dd0ba34c
+			fabric-resource-loader-v0: Fabric Resource Loader (v0) 3.3.17+4fc5413f4c
+			fabric-resource-loader-v1: Fabric Resource Loader (v1) 2.0.10+7c44c7324c
+			fabric-screen-api-v1: Fabric Screen API (v1) 5.1.0+981dd9b24c
+			fabric-serialization-api-v1: Fabric Serialization API (v1) 2.0.3+11a26f314c
+			fabric-sound-api-v1: Fabric Sound API (v1) 2.0.4+11a26f314c
+			fabric-tag-api-v1: Fabric Tag API (v1) 2.1.1+371cf5db4c
+			fabric-transfer-api-v1: Fabric Transfer API (v1) 8.0.6+357ea7334c
+			fabric-transitive-access-wideners-v1: Fabric Transitive Access Wideners (v1) 8.1.3+3ff549fb4c
+		fabric-language-kotlin: Fabric Language Kotlin 1.13.13+kotlin.2.4.10
+			org_jetbrains_kotlin_kotlin-reflect: kotlin-reflect 2.4.10
+			org_jetbrains_kotlin_kotlin-stdlib: kotlin-stdlib 2.4.10
+			org_jetbrains_kotlin_kotlin-stdlib-jdk7: kotlin-stdlib-jdk7 2.4.10
+			org_jetbrains_kotlin_kotlin-stdlib-jdk8: kotlin-stdlib-jdk8 2.4.10
+			org_jetbrains_kotlinx_atomicfu-jvm: atomicfu-jvm 0.33.0
+			org_jetbrains_kotlinx_kotlinx-coroutines-core-jvm: kotlinx-coroutines-core-jvm 1.11.0
+			org_jetbrains_kotlinx_kotlinx-coroutines-jdk8: kotlinx-coroutines-jdk8 1.11.0
+			org_jetbrains_kotlinx_kotlinx-datetime-jvm: kotlinx-datetime-jvm 0.8.0
+			org_jetbrains_kotlinx_kotlinx-io-bytestring-jvm: kotlinx-io-bytestring-jvm 0.9.1
+			org_jetbrains_kotlinx_kotlinx-io-core-jvm: kotlinx-io-core-jvm 0.9.1
+			org_jetbrains_kotlinx_kotlinx-serialization-cbor-jvm: kotlinx-serialization-cbor-jvm 1.11.0
+			org_jetbrains_kotlinx_kotlinx-serialization-core-jvm: kotlinx-serialization-core-jvm 1.11.0
+			org_jetbrains_kotlinx_kotlinx-serialization-json-jvm: kotlinx-serialization-json-jvm 1.11.0
+		fabricloader: Fabric Loader 0.19.3
+			mixinextras: MixinExtras 0.5.4
+		forgeconfigapiport: Forge Config API Port 26.1.5
+			com_electronwill_night-config_core: core 3.8.3
+			com_electronwill_night-config_toml: toml 3.8.3
+		iris: Iris 1.11.3+mc26.1.2
+			io_github_douira_glsl-transformer: glsl-transformer 3.0.0-pre3
+			org_anarres_jcpp: jcpp 1.4.14
+			org_antlr_antlr4-runtime: antlr4-runtime 4.13.1
+		java: OpenJDK 64-Bit Server VM 25
+		jei: Just Enough Items 29.29.0.77
+		minecraft: Minecraft 26.1.2
+		modmenu: Mod Menu 18.0.0
+		mousetweaks: Mouse Tweaks 2.31
+		placeholder-api: Placeholder API 3.0.0+26.1
+		player_animation_library: Player Animation Library 1.2.5+mc.26.1
+			com_zigythebird_mochafloats: mochafloats 5.0.0
+			org_redlance_common-utils_services: services 1.2.8
+		reeses-sodium-options: Reese's Sodium Options 2.2.3+mc26.1.2
+		resourcify: Resourcify 1.8.5
+		sodium: Sodium 0.9.1+mc26.1.2
+		tacz: [UNOFFICIAL] TaCZ Refabricated (26.1.2 R3) 1.1.8+fabric.26.1.2.R3
+			com_github_figuramc_luaj_luaj-core: luaj-core 3.0.8-figura
+			com_github_figuramc_luaj_luaj-jse: luaj-jse 3.0.8-figura
+			com_maydaymemory_mae: mae 1.1.1
+			org_apache_bcel_bcel: bcel 6.6.1
+			org_apache_commons_commons-math3: commons-math3 3.6.1
+		voxy: Voxy 0.2.18-beta
+			org_apache_commons_commons-pool2: commons-pool2 2.12.0
+			org_lwjgl_lwjgl-lmdb: lwjgl-lmdb 3.4.1
+			org_lwjgl_lwjgl-lmdb_natives-linux: lwjgl-lmdb 3.4.1
+			org_lwjgl_lwjgl-lmdb_natives-windows: lwjgl-lmdb 3.4.1
+			org_lwjgl_lwjgl-zstd: lwjgl-zstd 3.4.1
+			org_lwjgl_lwjgl-zstd_natives-linux: lwjgl-zstd 3.4.1
+			org_lwjgl_lwjgl-zstd_natives-windows: lwjgl-zstd 3.4.1
+			org_lz4_lz4-java: lz4-java 1.8.0
+			org_rocksdb_rocksdbjni: rocksdbjni 10.2.1
+			org_tukaani_xz: xz 1.10
+			redis_clients_jedis: jedis 5.1.0
+		yet_another_config_lib_v3: YetAnotherConfigLib 3.9.6+26.1-fabric
+			com_twelvemonkeys_common_common-image: common-image 3.12.0
+			com_twelvemonkeys_common_common-io: common-io 3.12.0
+			com_twelvemonkeys_common_common-lang: common-lang 3.12.0
+			com_twelvemonkeys_imageio_imageio-core: imageio-core 3.12.0
+			com_twelvemonkeys_imageio_imageio-metadata: imageio-metadata 3.12.0
+			com_twelvemonkeys_imageio_imageio-webp: imageio-webp 3.12.0
+			org_quiltmc_parsers_gson: gson 0.2.1
+			org_quiltmc_parsers_json: json 0.2.1
+	Loaded Shaderpack: ComplementaryUnbound_r5.8.1.zip
+		Profile: Custom (+2 options changed by user)
+	Launched Version: 26.1.2-Fabric 0.19.3 测试2
+	Launcher name: PCL
+	Backend library: LWJGL version 3.4.1-snapshot
+	Backend API: AMD  Radeon RX 7800 XT GL version 3.3.0 Core Profile Context 26.8.1.260810, ATI Technologies Inc.
+	Window size: 2560x1417
+	GFLW Platform: win32
+	Render Extensions: GL_ARB_buffer_storage, GL_KHR_debug, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+	GL debug messages: 
+	Is Modded: Definitely; Client brand changed to 'fabric'; Server brand changed to 'fabric'
+	Universe: 400921fb54442d18
+	Type: Integrated Server
+	Transparency: regular
+	Render Distance: 12/12 chunks
+	Resource Packs: vanilla, carryon (incompatible), cloth-config, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-language-kotlin, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, forgeconfigapiport (incompatible), iris, jei (incompatible), modmenu, org_apache_commons_commons-math3, placeholder-api, player_animation_library, reeses-sodium-options, resourcify (incompatible), sodium, tacz, voxy, yet_another_config_lib_v3 (incompatible), tacz_resources
+	Sound Cache: 405178 bytes in 8 buffers
+	Current Language: zh_cn
+	Locale: zh_CN
+	System encoding: GBK
+	File encoding: UTF-8
+	CPU: 16x AMD Ryzen 7 7700 8-Core Processor 
+	Server Running: true
+	Player Count: 1 / 8; [ServerPlayer['GOOSTL'/55, l='ServerLevel[新的世界]', x=109.94, y=-60.00, z=143.81]]
+	Active Data Packs: vanilla, carryon (incompatible), fabric-convention-tags-v2, tacz, tacz_resources
+	Available Data Packs: carryon (incompatible), fabric-convention-tags-v2, minecart_improvements, redstone_experiments, tacz, tacz_resources, trade_rebalance, vanilla
+	Enabled Feature Flags: minecraft:vanilla
+	World Generation: Stable
+	World Seed: 5333100768512706697
+	Suppressed Exceptions: ~~NONE~~
+#@!@# Game crashed! Crash report saved to: #@!@# D:\DOWLOD\.minecraft\versions\26.1.2-Fabric 0.19.3 测试2\crash-reports\crash-2026-09-01_06.59.38-client.txt
