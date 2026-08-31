@@ -196,6 +196,12 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
    （不逐帧重烘）;
 6. 光影：世界 mesh 枪照明与立方体一致（gbuffers_entities 接管）——
    **本项风险最高**，异常时 `MeshGpuWorld=false` 回退并回报;
+   **已修一发（法线/反光）**：光影包的 `gl_NormalMatrix` 是 Iris 在
+   **绘制执行那一刻**从 RenderSystem MV 栈顶取逆转置
+   （`ExtendedShader.iris$setupState` 26.2 源码实读），不走 prepare() 快照
+   —— 首版在 prepare() 后就弹栈，法线丢掉 pose_bone 旋转层 ⇒ 反光的
+   光源关系错乱（实测复现）；现弹栈移到 drawFromBuffer 之后，重点复测
+   反光方向是否与立方体部件一致;
 7. 开镜（PIP）：镜内那遍世界枪仍在（不消失、不双影）;
 8. 光影开关翻转：世界枪不拉伸（世代号失效链路与第一人称共用）。
 
