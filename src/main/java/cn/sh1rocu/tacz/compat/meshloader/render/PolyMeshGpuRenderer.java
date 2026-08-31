@@ -23,6 +23,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.render.scope.ScopeDepthCopyState;
 import com.tacz.guns.client.render.scope.ScopePipRerender;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.fabricmc.api.EnvType;
@@ -156,6 +157,42 @@ public final class PolyMeshGpuRenderer {
                     .withColorTargetState(new ColorTargetState(java.util.Optional.empty(),
                             ColorTargetState.WRITE_COLOR))
                     .build());
+
+    /**
+     * 手部 lit 管线的「孔外掩码」变体：片元着色器换成 {@code core/mesh_entity_scope_clip}
+     * （scope_flash_clip 的 mode-2 硬编码克隆），加采本帧目镜序列的两份私有深度拷贝，
+     * 镜孔内且比目镜远的片元直接 discard —— 与 vanilla 第一人称枪身的
+     * {@code ScopeRenderTypes.clipForViewmodel} 同一语义（该包装对 mesh GPU 表从未生效，
+     * 高模枪身在镜内不被目镜裁剪，实机 2026-09-01）。仅在 {@code ScopeDepthCopyState
+     * .isMaskCycleValid()}（本帧确有完整目镜掩码周期）时由 drawList 选用，其余一切语境
+     * 仍走普通管线 —— 比 vanilla 的 uniform 失败回退更早、更便宜。
+     */
+    private static final RenderPipeline LIT_PIPELINE_CLIP = makeLitClipPipeline();
+
+    private static RenderPipeline makeLitClipPipeline() {
+        RenderPipeline pipeline = RenderPipelines.register(
+                RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+                        .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/mesh_entity_scope_clip"))
+                        .withVertexShader("core/entity")
+                        .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/mesh_entity_scope_clip"))
+                        .withShaderDefine("ALPHA_CUTOUT", 0.1F)
+                        .withShaderDefine("NO_OVERLAY")
+                        .withShaderDefine("NO_CARDINAL_LIGHTING")
+                        .withSampler("Sampler0")
+                        .withSampler("Sampler2")
+                        .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM)
+                        .withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM)
+                        .withCull(false)
+                        .withVertexFormat(DefaultVertexFormat.ENTITY, VertexFormat.Mode.QUADS)
+                        .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true))
+                        .withColorTargetState(new ColorTargetState(java.util.Optional.empty(),
+                                ColorTargetState.WRITE_COLOR))
+                        .build());
+        // 与 ScopeRenderTypes 的 viewmodel-cutout 同一机制：光影下登记进 Iris 的 hand program，
+        // 让常驻 VBO 的孔外剔除批次收 gbuffers_hand 照明。
+        IrisCompat.assignPipelineToIris(pipeline, "HAND", "mesh_entity_scope_clip");
+        return pipeline;
+    }
 
     private static final RenderPipeline EMISSIVE_PIPELINE = RenderPipelines.register(
             RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
@@ -835,7 +872,17 @@ public final class PolyMeshGpuRenderer {
 
         GpuTextureView lightmapView = resolveLightmap(mc);
         boolean lit = lightmapView != null;
-        RenderPipeline pipeline = lit ? LIT_PIPELINE : EMISSIVE_PIPELINE;
+        // 【目镜裁剪】仅手部表（!worldPass）且本帧确有完整目镜掩码周期时，lit 批次换用
+        // 孔外剔除变体并绑定两份实时深度拷贝；其余（世界表/GUI/无镜/掩码失效）一律普通
+        // 管线 —— 失败语义 = 与今日完全相同的未裁剪外观，不会更糟。
+        boolean apertureClip = false;
+        RenderPipeline pipeline;
+        if (lit && !worldPass && ScopeDepthCopyState.isMaskCycleValid()) {
+            pipeline = LIT_PIPELINE_CLIP;
+            apertureClip = true;
+        } else {
+            pipeline = lit ? LIT_PIPELINE : EMISSIVE_PIPELINE;
+        }
         GpuSampler linearSampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
 
         if (irisFlush) {
@@ -957,6 +1004,24 @@ public final class PolyMeshGpuRenderer {
             if (lit) {
                 pass.bindTexture("Sampler2", lightmapView,
                         RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+            }
+            if (apertureClip) {
+                // 本帧目镜序列的两份私有深度拷贝（world=目镜写入前、aperture=目镜写入后）。
+                // 片元着色器按「孔内且比目镜远 → discard」裁掉镜内枪身，与 vanilla
+                // viewmodel 的 MASK_OUTSIDE 分支同一比较式。
+                var worldDepth = ScopeDepthCopyState.worldDepthTarget();
+                var apertureDepth = ScopeDepthCopyState.apertureDepthTarget();
+                var worldView = ScopePipRenderState.worldDepthViewFor(worldDepth);
+                var apertureView = ScopePipRenderState.apertureDepthViewFor(apertureDepth);
+                if (worldView != null && apertureView != null) {
+                    pass.bindTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, worldView,
+                            RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                    pass.bindTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, apertureView,
+                            RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                } else {
+                    // 视图取不到（理论不可达：maskValid 蕴含 handles 可用）→ 保底换回普通管线。
+                    pass.setPipeline(lit ? LIT_PIPELINE : EMISSIVE_PIPELINE);
+                }
             }
 
             for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
