@@ -337,3 +337,69 @@ publishing {
         }
     }
 }
+
+// ================================================================
+// TEMP-DIAGNOSTIC round 4 (mesh-GPU world-flush topology probe) - REMOVE.
+// On-device: (1) without shader packs third-person/dropped mesh guns are never
+// GPU-baked; (2) with shader packs they bake but stick to view space. Hypothesis:
+// our world-GPU consumer hooks FeatureRenderDispatcher.renderAllFeatures RETURN,
+// whose 26.1.2 call sites are the hand-pass tail (rejected by inHandPass) and
+// GameRenderer.renderLevel @570 (AFTER renderItemInHand - outside the
+// levelRenderActive window and with a hand-contaminated MV slot). The real
+// world-solid site is renderSolidFeatures inside LevelRenderer's main-pass
+// lambda. Probe: dump the flush call graph + RenderSystem model-view/override
+// writes so the rewire lands on bytecode facts, not guesses.
+tasks.named("compileJava") {
+    doLast {
+        def javapBin = new File(System.getProperty("java.home"), "bin/javap").absolutePath
+        File mcJar = null
+        for (def cfgName in ["runtimeClasspath", "compileClasspath"]) {
+            try {
+                configurations.getByName(cfgName).files.each { f ->
+                    if (f.name.contains("minecraft") && f.name.endsWith(".jar") && mcJar == null) mcJar = f
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        if (mcJar == null) {
+            println "PROBE4: no minecraft jar found on the classpath"
+            return
+        }
+        println "=== MC4 ${mcJar.name}"
+        def interesting = ~/(FeatureRenderDispatcher|renderSolidFeatures|renderAllFeatures|renderTranslucentFeatures|renderTranslucentParticles|outputColorTextureOverride|outputDepthTextureOverride|ModelViewMatrix|modelViewMatrix|RenderSystem\.(set|get)|setShaderFog|ldc\/w|invokevirtual.*RenderSystem|invokestatic.*RenderSystem)/
+        def dump = { String cls ->
+            def out = new StringBuilder()
+            def err = new StringBuilder()
+            def proc = [javapBin, "-p", "-c", "-classpath", mcJar.absolutePath, cls].execute()
+            proc.consumeProcessOutput(out, err)
+            proc.waitFor()
+            if (err.length() > 0 && out.length() == 0) {
+                println "JAVAP4-ERR ${cls}: ${err.toString().trim()}"
+                return
+            }
+            boolean keep = false
+            println "----- BEGIN4 ${cls}"
+            out.toString().eachLine { line ->
+                if (line =~ /^  (public|private|protected|static|final|synchronized|net\.|java\.).*\(/) {
+                    keep = line =~ /(renderLevel|renderItemInHand|renderHandsWithItems|renderAllFeatures|renderSolidFeatures|renderTranslucent|lambda)/
+                    if (keep) println line
+                } else if (keep && line =~ interesting) {
+                    println line
+                }
+            }
+            println "----- END4 ${cls}"
+        }
+        dump "net.minecraft.client.renderer.feature.FeatureRenderDispatcher"
+        dump "net.minecraft.client.renderer.GameRenderer"
+        dump "net.minecraft.client.renderer.LevelRenderer"
+        dump "net.minecraft.client.renderer.ItemInHandRenderer"
+        def names = []
+        new java.util.zip.ZipFile(mcJar).entries().each { e ->
+            if (e.name.startsWith("net/minecraft/client/renderer/LevelRenderer\$") && e.name.endsWith(".class")) {
+                names << e.name.replace(".class", "").replace("/", ".")
+            }
+        }
+        names.sort().each { dump it }
+        println "=== PROBE4-DONE"
+    }
+}
