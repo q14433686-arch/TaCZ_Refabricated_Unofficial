@@ -348,6 +348,8 @@
   "config.tacz.client.render.scope_pip_min_magnification.desc": "瞄具倍率低于该值时改走旧整屏变焦；低倍镜用 PIP 只增加变软与开销，不值得。",
   "config.tacz.client.render.scope_pip_rerender": "镜内二次渲染（实验）",
   "config.tacz.client.render.scope_pip_rerender.desc": "用窄 FOV 把世界再渲染一遍作为镜内画面，取代屏幕空间重投影。镜内获得原生分辨率（不再受「屏幕÷倍率」限制），代价是每帧多跑一遍世界渲染。实验性；当前移植只实现无光影路径——光影（Iris）下此开关不生效，仍走现有屏幕空间重投影。",
+  "config.tacz.client.render.scope_pip_rerender_interval": "镜内二次渲染间隔（帧）",
+  "config.tacz.client.render.scope_pip_rerender_interval.desc": "二次渲染模式下，镜内那遍世界每 N 帧才真正渲染一次，其余帧复用上一帧的镜内画面。把第二遍世界渲染的开销直接减半（N=2）或降至四分之一（N=4），代价是镜内内容滞后 N-1 帧（N=2 时一帧，接近难以察觉）；镜外主画面永远满帧率。默认 1 = 每帧都渲染（关闭复用）。",
   "config.tacz.client.render.scope_pip_resolution_scale": "镜内渲染分辨率",
   "config.tacz.client.render.scope_pip_resolution_scale.desc": "二次渲染时镜内那遍的渲染分辨率（1.0 = 原生）。当前移植尚未接线：镜内那遍暂以原生分辨率渲染，改动此项暂不生效。仅当开启镜内二次渲染时才有意义。",
   "config.tacz.client.render.scope_pip_sharpness": "镜内锐化",

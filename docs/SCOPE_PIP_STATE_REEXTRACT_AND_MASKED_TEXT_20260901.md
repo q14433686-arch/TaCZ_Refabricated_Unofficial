@@ -119,7 +119,68 @@ renderable，按图集页分组，经壳 AbstractTexture（PageHandle）绑定�
   等价于 26.2 的掩码裁剪」的注释**作废重写**（该论断被实机证伪）。
 - 给 1.21.11 的同步文本相应句子作废（见本次会话交付的修订版文本）。
 
-## 3. 验收矩阵（实机前全标「未验证」）
+## 3. 「全量移植 26.2 掩码方案 + PIP」决策记录（2026-09-01 维护者问询）
+
+问：本轮是否全套移植了 26.2 的目镜掩码方案？既然能走，能否全量移植（含 PIP）？
+
+答：**没有全套移植，也不应全套移植**；本轮把 `9d036594` 的**语义**嫁接进本分支既有的
+深度孔径架构（沿用「移植语义而非代码」总则）。26.2 掩码栈 vs 本分支的逐项对齐：
+
+| 26.2（纹理掩码栈） | 本分支（深度孔径栈） | 状态 |
+|---|---|---|
+| `ScopeMaskTarget`(纹理) + `ScopeMaskRenderer`(773 行) + `ScopeMaskGeometry` + `ScopeMaskTextureHandle` | `ScopeDepthCopyState`（世界备份+孔径双深度拷贝）+ 各着色器 `tacz_ScopeMaskMode` 分支 | 等价能力，各自纪元的实现 |
+| scope_body 镜内 discard（镜身挖洞） | `DEPTH_APERTURE`+`APERTURE_COPY`+`RESTORE` 三步（孔径写入/身体边界拷贝/精确恢复） | 已有 |
+| 准星 SCOPE_MASK_INVERT / SCOPE_MASK | `MASK`/`MASK_OUTSIDE` 双模式（etched/visible/final 三族） | 已有 |
+| 镜内文字（`9d036594`+`c4eb4e2`） | `ScopeTextSubmitter`+`maskedText`（本轮） | 本轮补齐 |
+| 枪口闪光 MASK_OUTSIDE | `FLASH_TRANSLUCENT/SWIRL` | 已有 |
+
+**不换架构的理由**：①能力面对等，替换零收益；②26.2 栈骑在 26.2 纪元机器上
+（`LevelExtractor`、`BindGroupLayout` 采样器布局、同代 Iris/Voxy compat），
+每一件都要对 26.1.2 jar 重新字节码核实；③PIP 镜孔在 26.1.2 需要**深度**语义
+（挖洞+深度恢复保护世界半透明），纹理掩码不提供——只换掩码不搬 26.2 的
+render-target PIP 反而丢能力；④在运行期验证刚落地的修复时换地基，回归归因不可能。
+
+**PIP「全量」的真实差距**（读 `coord-262` 的 `ScopePipRenderer/Target/Trace` 后）：
+26.2 的 PIP = 重投影（默认，即本分支 `ScopePipRenderState`）+ 二次渲染（实验，默认关，
+即本分支 `ScopePipRerender` B1）+ 三件我们没有的东西：
+
+1. **`ScopePipRerenderInterval` 隔帧渲染** —— ✅ 本轮已移植（见 §4）：26.2 同名同默认
+   （1=每帧，范围 1-4），画布代数守卫对齐其 `ScopePipTarget.generation()`。
+2. **Sodium 投影快照 compat** —— ❌ 暂缓：26.2 反编译 Sodium 0.9.1 才查清
+   （`sodium$getProjectionMatrix` 不看 `RenderSystem` 槽）；26.1.2 代的 Sodium
+   版本/字节码未审计，本沙盒当前无法核实（jar 已随工作区重置丢失、无网无 JDK）。
+   若用户环境无 Sodium 则无此需求。
+3. **Iris/Voxy 管线隔离（第二套渲染栈、8 个额外 mixin）** —— ❌ 不在范围：26.2 为
+   「光影下二次渲染」建全套隔离栈；本分支 B1 硬拒 Iris（`isUsingRenderPack` 直接
+   return false），该面本就锁在 `SCOPE_PIP_ALLOW_SHADER_PACKS`（默认 false）之后。
+
+**重要旁证**：26.2 `ScopePipRenderer` 类注释自述「一帧内两次驱动 LevelRenderer#render
+会打乱某处的逐帧状态 → 镜外的实体与部分物件整个消失。**这一条至今未查清**」——
+与本轮实机反馈同病；本分支已定位根因（`LevelRenderState.reset()` @560 +
+每帧一次 `extractLevel`）并修复（§0）。该结论可作为 26.2 侧的候选根因回赠
+（需对 26.2 jar 复核其提取器时序后才可断言）。
+
+### 环境阻塞声明
+
+本轮后期 merged jar（`.gradle/loom-cache`）随工作区重置丢失，沙盒无 JDK、无外网
+（curl 恒 000），任何新的 26.2↔26.1.2 API 对应关系都无法字节码核实——这是
+Sodium compat 等暂缓项的硬阻塞。恢复途径：维护者本地跑一次 `./gradlew genSources`
+（或任意触发 loom 缓存的任务）后同步，或下一个有外网的会话重建。
+
+## 4. 隔帧渲染（ScopePipRerenderInterval）移植明细
+
+- `RenderConfig.SCOPE_PIP_RERENDER_INTERVAL`：键名 `ScopePipRerenderInterval`、
+  默认 1、范围 1-4（与 26.2 `defineInRange` 逐字对齐）；Cloth 滑条 + lang ×4 键。
+- `ScopePipRenderState.sceneTargetGeneration()`：离屏画布重建代数（26.2
+  `ScopePipTarget.generation()` 语义：比较代数不比较引用）。
+- `ScopePipRerender`：闸门全过后先判 `interval>1 && 距上次真渲 <N 帧 && 代数未变
+  && 上次抓帧仍在` → 直接复用（不开第二次 renderLevel、无需状态重提取、
+  `sceneCaptured` 保活）；真渲成功后记录帧号+代数。任何闸门失败即清
+  `sceneCaptured`（退出开镜当帧停止合成，无残留贴片）。
+- 已知取舍（26.2 同款）：镜内**内容**滞后 N-1 帧；掩码/合成/准星层次逐帧照常；
+  默认 1 时行为与本轮修复版逐比特一致。
+
+## 5. 验收矩阵（实机前全标「未验证」）
 
 1. `ScopePipRerender=true` + 开镜：镜外实体/太阳/雾/天气/粒子与无 PIP 时一致；
    镜内窄 FOV 画面不变；无重影/半透明加倍。
@@ -130,3 +191,6 @@ renderable，按图集页分组，经壳 AbstractTexture（PageHandle）绑定�
    的帧生效，普通帧走原路径）。
 5. 多页字体/资源包字体：`PageHandle` 壳按页分组、资源重载后指向刷新；
    TTF 灰度图集字体若异常走回退路径（26.2 同款可接受降级）。
+6. 隔帧渲染：`ScopePipRerenderInterval=2/4` 时镜内内容滞后 N-1 帧但镜外满帧率；
+   窗口缩放后复用立即失效（代数守卫）、下一帧真渲；退出开镜当帧无残留贴片；
+   默认 1 时行为与逐帧渲染完全一致。

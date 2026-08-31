@@ -91,6 +91,18 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RERENDER;
     /**
+     * 二次渲染模式下，镜内那一遍世界每 N 帧才真正渲染一次，其余帧复用上一帧的镜内画面。
+     *
+     * <p>二次渲染的代价是一整个额外世界渲染；「每两帧才跑第二遍」把这份开销直接减半
+     * （N=4 则减到 1/4）。代价：转动视角时镜内<b>内容</b>滞后 N-1 帧（N=2 时一帧，
+     * 接近难以察觉）；镜外主画面永远满帧率，掩码/合成/准星层次逐帧照常。
+     * 默认 1 = 每帧都渲染（即关闭隔帧复用）。与 26.2 的
+     * {@code ScopePipRerenderInterval} 同名同义同默认；仅当
+     * {@link #SCOPE_PIP_RERENDER} 开启时生效。窗口缩放/格式变化会使复用失效
+     * （离屏画布代数守卫，见 {@code ScopePipRenderState} 的 generation）。</p>
+     */
+    public static ForgeConfigSpec.IntValue SCOPE_PIP_RERENDER_INTERVAL;
+    /**
      * 二次渲染模式下，镜内那遍的渲染分辨率（1.0 = 原生分辨率）。
      *
      * <p>调低可显著减少第二遍世界渲染的 GPU 开销（0.5 = 25% 像素），代价是镜内更软。
@@ -208,6 +220,12 @@ public class RenderConfig {
                                 + "Costs a full extra world render every frame. Experimental; default off. "
                                 + "This port currently implements only the vanilla (no-shader-pack) path.")
                 .define("ScopePipRerender", false);
+        SCOPE_PIP_RERENDER_INTERVAL = builder.comment(
+                        "Rerender mode: truly render the narrow-FOV scope world only every N frames; ",
+                        "other frames reuse the previous lens image. Halves (N=2) or quarters (N=4) the ",
+                        "cost of the second world render; the lens CONTENT lags N-1 frames while the ",
+                        "main view stays full-rate. Default 1 = render every frame (no reuse).")
+                .defineInRange("ScopePipRerenderInterval", 1, 1, 4);
         SCOPE_PIP_RESOLUTION_SCALE = builder.comment(
                         "Render resolution scale for the scope pass in rerender mode (1.0 = native). "
                                 + "Lower values reduce the GPU cost of the second world render at the price "

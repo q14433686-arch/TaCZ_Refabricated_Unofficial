@@ -744,8 +744,19 @@ public final class ScopePipRenderState {
                 return null;
             }
             SceneColorTarget.instance = instance;
+            // 新画布 = 新代数：离屏纹理内容是未定义的，隔帧复用闸门（ScopePipRerender 的
+            // interval）据此丢弃上一帧的镜内画面 —— 26.2 的 ScopePipTarget.generation()
+            // 同一语义（比较代数而非引用：引用相等无法区分同对象与销毁后恰好复用同地址）。
+            sceneTargetGeneration++;
         }
         return SceneColorTarget.instance;
+    }
+
+    private static int sceneTargetGeneration;
+
+    /** 离屏镜内画布的重建代数：真正 new 过一次就 +1，供隔帧复用判断画面是否还躺在同一块纹理里。 */
+    public static int sceneTargetGeneration() {
+        return sceneTargetGeneration;
     }
 
     /**

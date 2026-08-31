@@ -84,6 +84,13 @@ public final class ScopePipRerender {
     /** 镜内那一遍是否正在执行（防重入）。 */
     private static boolean scopePassActive = false;
 
+    /** 隔帧渲染的帧计次：每次「闸门全过的渲染尝试」+1（闸门失败不计，失败后强制真渲一次）。 */
+    private static int scopeFrameCounter;
+    /** 上次真渲时的 {@link #scopeFrameCounter} 值。 */
+    private static int lastRenderFrame = Integer.MIN_VALUE;
+    /** 上次真渲时的离屏画布代数（{@link ScopePipRenderState#sceneTargetGeneration()}）。 */
+    private static int lastRenderGeneration = -1;
+
     @Nullable
     private static ProjectionMatrixBuffer projectionBuffer;
     /** 窄投影矩阵，复用避免每帧分配。 */
@@ -105,6 +112,15 @@ public final class ScopePipRerender {
     public static double resolutionScale() {
         return RenderConfig.SCOPE_PIP_RESOLUTION_SCALE == null
                 ? 0.75d : RenderConfig.SCOPE_PIP_RESOLUTION_SCALE.get();
+    }
+
+    /**
+     * 隔帧渲染间隔 N：镜内那遍世界每 N 帧真渲一次，其余帧复用上一帧画面。
+     * 默认 1 = 每帧（关闭复用）。与 26.2 的 {@code ScopePipRerenderInterval} 同名同默认。
+     */
+    private static int rerenderInterval() {
+        return RenderConfig.SCOPE_PIP_RERENDER_INTERVAL == null
+                ? 1 : RenderConfig.SCOPE_PIP_RERENDER_INTERVAL.get();
     }
 
     /**
@@ -130,7 +146,8 @@ public final class ScopePipRerender {
      * {@code GameRenderer#renderLevel} 里 {@code LevelRenderer#renderLevel} 那次调用之前注入；
      * 本方法先把世界用窄 FOV 画进主目标、拷走，随后 vanilla 那遍再用宽 FOV 重画覆盖。
      *
-     * @return 是否执行了镜内那遍（调用方据以决定 scene 是否已就绪）
+     * @return 本帧镜内画面是否可用 —— 真渲成功，或隔帧复用命中（{@code hasScene()} 同步为真）；
+     *         调用方可忽略返回值，合成阶段以 {@link #hasScene()} 为准
      */
     public static boolean renderScopeView(LevelRenderer levelRenderer,
                                           GraphicsResourceAllocator allocator,
@@ -142,28 +159,53 @@ public final class ScopePipRerender {
                                           Vector4f fogColor,
                                           boolean renderSky,
                                           ChunkSectionsToRender chunkSectionsToRender) {
-        sceneCaptured = false;
         if (failed || !rerenderMode() || scopePassActive) {
+            sceneCaptured = false;
             return false;
         }
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.player == null || mc.level == null) {
+            sceneCaptured = false;
             return false;
         }
         // B1 只支持无光影路径：光影下整条世界渲染走 Iris 自己的 colortex，
         // 主目标里没有窄 FOV 的成品可拷，这条路留到后续阶段。
         if (IrisCompat.isUsingRenderPack()) {
+            sceneCaptured = false;
             return false;
         }
         // 与重投影共用同一道「PIP 是否本帧接管镜头」的闸门（含开镜进度/倍率/掩码通道）。
         float partialTicks = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         if (!ScopePipRenderState.suppressesWorldFovZoom(partialTicks)) {
+            sceneCaptured = false;
             return false;
         }
         float magnification = ScopePipRenderState.currentZoom();
         if (magnification <= 1.0f) {
+            sceneCaptured = false;
             return false;
         }
+
+        var main = mc.getMainRenderTarget();
+        if (main == null || main.width <= 0 || main.height <= 0) {
+            sceneCaptured = false;
+            return false;
+        }
+
+        // 【隔帧渲染 · ScopePipRerenderInterval】26.2 同名配置的移植（默认 1 = 每帧，
+        // 范围 1-4）：距上次真跑不足 N 帧时直接复用上一帧的镜内画面 —— 不开第二次
+        // renderLevel（也就无需状态重提取，vanilla 遍不受任何影响），sceneCaptured
+        // 保持 true，合成阶段照常贴上一次的窄 FOV 成品。代数守卫：窗口缩放/格式变化
+        // 会重建离屏画布（sceneTargetGeneration++），新画布里是未定义内容，绝不能当
+        // 「上一帧」端出去 —— 比较「上次真渲时的代数」与「当前代数」即可拦下。
+        scopeFrameCounter++;
+        int interval = rerenderInterval();
+        if (interval > 1 && sceneCaptured
+                && lastRenderGeneration == ScopePipRenderState.sceneTargetGeneration()
+                && scopeFrameCounter - lastRenderFrame < interval) {
+            return true;
+        }
+        sceneCaptured = false;
 
         // 从宽投影矩阵反解基准 FOV：m11 = 1/tan(fovY/2) 是恒等式，与纵横比/近远平面无关。
         // 26.1.2 的投影不在参数表里，源是 cameraState.projectionMatrix（GameRenderer 每帧写入）。
@@ -174,11 +216,6 @@ public final class ScopePipRerender {
         double baseFov = Math.toDegrees(2.0 * Math.atan(1.0 / m11));
         double narrowFov = MathUtil.magnificationToFov(magnification, baseFov);
         if (!Double.isFinite(narrowFov) || narrowFov <= 0.0) {
-            return false;
-        }
-
-        var main = mc.getMainRenderTarget();
-        if (main == null || main.width <= 0 || main.height <= 0) {
             return false;
         }
 
@@ -211,6 +248,11 @@ public final class ScopePipRerender {
                     viewMatrix, fogBuffer, fogColor, renderSky, chunkSectionsToRender);
             // 立刻拷走：紧随其后的 vanilla 那遍会整屏重画主目标。
             sceneCaptured = ScopePipRenderState.captureSceneFromMain(mc);
+            if (sceneCaptured) {
+                // 记录「上次真渲」的帧号与画布代数，供隔帧复用闸门判断（见方法中段）。
+                lastRenderFrame = scopeFrameCounter;
+                lastRenderGeneration = ScopePipRenderState.sceneTargetGeneration();
+            }
 
             // 26.1.2 专属的逐帧状态修复（1.21.11 无此问题，见类注释差异清单）：
             // LevelRenderer.renderLevel 尾部会调用 LevelRenderState.reset()（字节码 @560），
