@@ -596,6 +596,53 @@ color target 集合与原版 `ENTITY_CUTOUT` 不一致」那一类（需要拿 I
 
 ---
 
+### 5.11 GPU pass 体内不得触发纹理懒加载（2026-09-01 维护者实机定位；本分支同日修）
+
+**症状原话（维护者）**：「某些高模枪贴图错误」「你日志里连续三条就是逐帧重试」——duyupack 的 kar98un
+这类**全部件都走 GPU** 的模型才会出现；普通枪至少有一个部件走 collector。
+
+**根因**：`PolyMeshGpuRenderer#drawList` 把 `resolveTextureView`（内部是
+`TextureManager#getTexture(id).getTextureView()`）放在了**已打开的 render pass 里面**（逐组 bind 循环中）。
+`getTexture` 对**未加载**的纹理会同步懒加载：`registerAndLoad → ReloadableTexture#apply →
+CommandEncoder#writeToTexture`，而 `writeToTexture` 属于「pass 打开期间禁止的命令」类 ⇒ 直接抛
+`Close the existing render pass before performing additional commands`。
+这与本函数里「DynamicTransforms 切片必须 pass 前写」「顺序索引缓冲必须预热」是**同一条不变量**，
+只是纹理这一路当时漏了。
+
+**为什么只有全 GPU 高模包会踩**：只要有任何一个部件被 collector 画过，那张 UV 就早已在 pass 外被请求过；
+全部件走 GPU 时**首个请求者就是我们自己** ⇒ 在 pass 内解析必炸 → 被 `catch` 吞掉、回退 missing texture
+（表现＝贴图错），而且这次炸之后纹理永远没机会在 pass 外完成加载 ⇒ 下一帧再炸、逐帧重试（日志里那三条）。
+
+**本分支的修法（同日，与 26.1.2 的 `2ae4c29` 同一形状）**：
+① 所有组的纹理视图（含 missing 回退）在 `createRenderPass` **之前**解析进 `viewsByTexture`，
+pass 体内只对已解析的视图 `bindTexture` —— pass 体内除既有 draw/bind 命令外零外部调用（顺手把 lightmap 的
+`getSamplerCache()` 也提了出去）；② `resolveTextureView` 的失败日志改 **per-texture log-once**
+（`loggedTextureFailures`），原来是每次失败一条 ERROR，逐帧重试就刷屏；③ 结构其余不动，
+资源重载后视图逐帧重新解析，因此**不需要额外失效逻辑**。
+
+**同批自查（结论：只有这一处）**：全仓其余自建/嵌入式绘制点都不进 `registerAndLoad` 那条懒加载路 ——
+① 镜内覆盖层的几何走 `ScopeFinalOverlayState` 的 collector flush，纹理由 vanilla 在各自批次里解析；
+② `ScopeTextSubmitter.pageId(...)` 只在 **submit 期**（任何 pass 之外）调一次
+`TextureManager#register(id, shell)`（put 语义、不加载；壳重写 `close()` 也不拥有纹理），
+每帧只是重指 `textureView`/`sampler`，所以后续 `RenderSetup(Identifier) → getTexture(id).getTextureView()`
+命中的是**已注册对象**，不会走懒加载分支 —— 这条"先注册、绘制期只读"正是本不变量的正面写法；
+③ `ScopePipDepthDebug`/`ScopePipRenderState` bind 的是 `RenderTarget.getColorTextureView()` /
+`getDepthTextureView()`（缓存读）。**注意**：若哪天 `TextureManager#register` 在升级中变成
+`registerAndLoad` 语义，②要一起重查（届时与账本 L-16 一起回看）。
+
+**证据级别**：根因与两条判别 = 维护者实机（日志里连着同一条 = 逐帧重试；「普通枪至少有一个部件走 collector
+⇒ 贴图早被加载，所以没事」是这条根因的对照面）；我方这份改动 = 同一根因的机械落地 + CI 编译门，
+**实机待验**（判别见下）。按 AGENTS §2：不写「已修好」，写「已按实锤根因同批修」。
+另注：这与 §5.10 的「关掉光影下两键即消失」不是同一条证据 —— 那条查的是 EMISSIVE 照明语义，本条查的是
+pass 内懒加载，两者症状与修法都不同，别互相顶替。
+
+**判别法（接手者跑这个）**：duyupack 的 kar98un（或任意"全部件走 GPU"的高模包）+ `MeshGpuBaking=true`
++ `MeshGpuWorld=true`，第一/第三人称各看一次：**贴图应正常**且日志里不再出现
+`Failed to resolve texture view` 与 `GPU world mesh pass failed`；把光影关掉再看一次（应与开启前一致）。
+若仍报 `Close the existing render pass...`，说明还有第二个 pass 内懒加载入口，届时把栈贴回来即可定位。
+
+---
+
 ## 6. 未修 BUG 记录：poly 绕序 × 背面剔除（2026-08-31 立项；本分支只做了规避）
 
 **状态**：**OPEN / 不修**。本分支只把触发器退回默认关（`MeshPolyMirrorReverseWinding=false` ⇒ 与上游、

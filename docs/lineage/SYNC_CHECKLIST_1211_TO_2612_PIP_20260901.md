@@ -65,6 +65,8 @@
 1. `renderSolidFeatures` / `renderAllFeatures` 在 26.1.2 的**调用点全表**（你们探针 round 4 已有）；
 2. 你们用来区分"贴视空间"与"绕序×剔除相互抵消"的**两个开关组合 + 三条日志**，写成可复制的判据。
 
+**GPU pass 体内不得触发纹理懒加载（你们 `2ae4c29` 的同一条，我方同日已落地）**：我方核对过本分支 `PolyMeshGpuRenderer#drawList`，与你们修前逐字相同（`resolveTextureView` 在 `try (RenderPass …)` 体内）。现已把逐组视图（含 missing 回退）整批提到 `createRenderPass` 之前解析、pass 体内只 `bindTexture`，并把 lightmap 的 `getSamplerCache()` 一并提出；失败日志改 per-texture log-once。**请把这条同时转给 26.2**：他们那版的 `resolveTextureView` 也在 pass 内、**未修**，只是"总有 collector 兄弟部件先把纹理请求掉"把它藏住了 —— 一旦出现「全部件走 GPU」的包（duyupack kar98un 这类）就会以「贴图错误 + 逐帧同一条 ERROR」复现。证据级别：你们与我们的定位 = 实机；我方改动 = 编译门 + 待实机。
+
 **同日更新（2026-09-01，你们 26.2 的 `83daf16`）**：那条"光影下反光/高光偏一侧"既不是"贴在视空间"、
 也不是绕序×剔除抵消，根因在**法线矩阵的读取时刻** —— Iris 的 `ExtendedShader#iris$setupState` 里
 `gl_NormalMatrix`（被 `VanillaCoreTransformer` 改名 `iris_NormalMat`）取的是

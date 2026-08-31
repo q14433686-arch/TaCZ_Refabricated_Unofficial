@@ -107,6 +107,7 @@
 | FCAP 配置落盘那一类改动 | 我方是 `fuzs.forgeconfigapiport` 21.11.1，你们不用 FCAP；Fabric 侧那条"配置重启被重置"是 26.1.x 世代的 FCAP 断桥问题，与本世代无关 |
 | 全部 TML / mesh GPU 相关（`MeshGpu*` 两键默认值之争、`FeatureRenderDispatcher` 消费点、`MeshPoly*` 三键） | 你们 `1.21.11` 线没有 meshloader 包 |
 | 我方 `.github/workflows/` 的状态 | 你们已装 `consistency.yml`；我方这边那份模板要由仓库所有者粘贴，我方不代改 |
+| 我方新踩的「GPU pass 体内不得触发 `TextureManager#getTexture` 懒加载」（2026-09-01） | 对你们当前是**非项**：你们 `1.21.11` 线不自建常驻 VBO pass（`meshloader`/`PolyMesh` 0 命中）。但**若将来搬 GPU 路径**，这条不变量必须与代码一起搬：`getTexture` 对未加载纹理会同步 `registerAndLoad → ReloadableTexture#apply → CommandEncoder#writeToTexture`，而 `writeToTexture` 在 pass 打开期间禁止 ⇒ 纹理视图 / UBO 切片 / 索引缓冲预热都必须落在 `createRenderPass` 之前。你们的镜内路径目前干净（bind 的是 `RenderTarget` 的缓存视图），可作为「不碰懒加载」的正面样板 |
 
 ## 6. 反向：我方需要你们回的 / 可提供的
 

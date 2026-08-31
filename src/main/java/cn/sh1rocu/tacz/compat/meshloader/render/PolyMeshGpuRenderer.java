@@ -36,11 +36,13 @@ import org.joml.Vector4f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
+import java.util.Set;
 
 /**
  * poly_mesh 的 GPU 静态烘焙渲染器。
@@ -110,6 +112,13 @@ import java.util.OptionalInt;
  * + Fog），shader 用 vanilla {@code core/entity}：defines 取 {@code ALPHA_CUTOUT 0.1 +
  * NO_OVERLAY + NO_CARDINAL_LIGHTING}（顶点色直通 + lightmap 采样，与 collector 的
  * entityCutout 视觉差异只有 overlay）。lightmap 拿不到时退化 EMISSIVE 管线。</p>
+ *
+ * <p><b>pass 体内不变量</b>：{@link #drawList} 自建 {@code RenderPass}，体内只允许 bind/draw/scissor 这类
+ * 记录型命令 —— 任何会 {@code map} 缓冲、写纹理或触发懒加载的调用都必须挪到 {@code createRenderPass}
+ * 之前。这条不变量在本文件里有三例（都付过学费）：DynamicTransforms 切片要提前写、顺序索引缓冲要
+ * 预热到本帧最大 indexCount、纹理视图要整批先解析（{@code TextureManager#getTexture} 对未加载纹理
+ * 会同步 {@code registerAndLoad -> CommandEncoder#writeToTexture}，在 pass 内直接抛
+ * "Close the existing render pass before performing additional commands"）。</p>
  *
  * <p>光影下把这两条管线经 {@code IrisApi.assignPipeline(pipeline, IrisProgram.HAND)} 登记到
  * Iris 的 hand program（{@code ShaderKey.findBestMatch} 会因 {@code ALPHA_CUTOUT} +
@@ -232,6 +241,14 @@ public final class PolyMeshGpuRenderer {
     private static boolean gpuDisabledThisSession = false;
     private static boolean loggedUnderShadersNoop = false;
     private static boolean loggedFormatMismatch = false;
+    /**
+     * {@link #resolveTextureView} 失败去重：<b>每张纹理只报一条</b>。
+     *
+     * <p>以前是每次失败一条 ERROR：解析失败会逐帧重试（视图永远拿不到），于是日志里连着同一条刷屏
+     * —— 维护者 2026-09-01 实机就是「连续三条」那个样子。纹理 id 数量有限，这个集合不需要失效逻辑；
+     * 资源重载后同一 id 若再失败不再重复刷日志（这是判据日志，不是遥测）。</p>
+     */
+    private static final Set<Identifier> loggedTextureFailures = new HashSet<>();
     /** 只是日志去重：以前是一次性闩锁，会把一次瞬时取空变成整会话 EMISSIVE（已改掉，见 resolveLightmap）。 */
     private static boolean loggedLightmapFailure;
     /** {@link #gpuMasterUsable()} 因「光影 + 取不到 lightmap」拒收时的去重标志（每次拒收只报一行）。 */
@@ -783,6 +800,8 @@ public final class PolyMeshGpuRenderer {
         boolean lit = lightmapView != null;
         RenderPipeline pipeline = lit ? LIT_PIPELINE : EMISSIVE_PIPELINE;
         GpuSampler linearSampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
+        // lightmap 的 sampler 也在这里取好：pass 体内只留 bind/draw（见下方不变量注释）。
+        GpuSampler nearestSampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
 
         if (irisFlush) {
             // 自建管线不在 Iris 的 coreShaderMap 里，默认只能拿原版程序（= 无光影光照）。
@@ -851,6 +870,26 @@ public final class PolyMeshGpuRenderer {
             maxIndexCount = Math.max(maxIndexCount, entry.bone().indexCount);
         }
 
+        // 【同一条不变量的第三例，2026-09-01 维护者实机定位】纹理视图必须在 createRenderPass
+        // <b>之前</b>解析完。TextureManager#getTexture 对<b>未加载</b>的纹理会同步懒加载
+        // （{@code registerAndLoad -> ReloadableTexture#apply -> CommandEncoder#writeToTexture}），
+        // 而 writeToTexture 属于「pass 打开期间禁止的命令」类 ⇒ 放进 pass 体内就直接抛
+        // {@code Close the existing render pass before performing additional commands}。
+        // 首版把它写在逐组 bind 循环里，炸点与 UBO 切片那条完全同源。
+        // 为什么只有「全部件都走 GPU」的高模包（duyupack 的 kar98un 这类）会踩：只要有任何一个部件
+        // 走过 collector，那张 UV 就早已在 pass 外被请求过；全 GPU 包里<b>首个请求者就是我们自己</b>
+        // ⇒ 逐帧抛、逐帧回退，而纹理永远没机会在 pass 外完成加载（表现即贴图错误 + 日志连着同一条）。
+        Map<Identifier, GpuTextureView> viewsByTexture = new HashMap<>();
+        for (Identifier texture : byTexture.keySet()) {
+            GpuTextureView view = resolveTextureView(texture);
+            if (view == null) {
+                view = resolveTextureView(MissingTextureAtlasSprite.getLocation());
+            }
+            if (view != null) {
+                viewsByTexture.put(texture, view);
+            }
+        }
+
         // 顺序索引缓冲也是懒分配：getBuffer(n) 在首次/扩容时会 map+写索引，同样必须在
         // pass 外先触发一次（预热到本帧最大 indexCount），进 pass 后 getBuffer 只返回
         // 既有 GpuBuffer、不再 map。
@@ -879,15 +918,12 @@ public final class PolyMeshGpuRenderer {
             }
             RenderSystem.bindDefaultUniforms(pass);
             if (lit) {
-                pass.bindTexture("Sampler2", lightmapView,
-                        RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                pass.bindTexture("Sampler2", lightmapView, nearestSampler);
             }
 
             for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
-                GpuTextureView textureView = resolveTextureView(group.getKey());
-                if (textureView == null) {
-                    textureView = resolveTextureView(MissingTextureAtlasSprite.getLocation());
-                }
+                // pass 体内只做「取已解析好的视图 + bind」，不再碰 TextureManager（见上方不变量注释）。
+                GpuTextureView textureView = viewsByTexture.get(group.getKey());
                 if (textureView == null) {
                     continue;
                 }
@@ -948,7 +984,11 @@ public final class PolyMeshGpuRenderer {
         try {
             return Minecraft.getInstance().getTextureManager().getTexture(texture).getTextureView();
         } catch (Exception e) {
-            LOGGER.error("[TacZMeshLoader] Failed to resolve texture view for {}", texture, e);
+            // 逐帧重试的失败只报一条，否则日志被同一条堆栈刷满（见 loggedTextureFailures）。
+            if (loggedTextureFailures.add(texture)) {
+                LOGGER.error("[TacZMeshLoader] Failed to resolve texture view for {} (further failures"
+                        + " for this id are suppressed); falling back to the missing-texture view.", texture, e);
+            }
             return null;
         }
     }

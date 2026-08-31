@@ -5,6 +5,46 @@
 
 ---
 
+## 高模枪贴图错误：GPU pass 体内触发纹理懒加载 —— 按 26.1.2 `2ae4c29` 的实机定位同批修（2026-09-01 第五则）
+
+**维护者原话（不改写成机制描述）**：「`drawList` 把 `resolveTextureView` 放在了**打开的 render pass 里面**
+（逐组 bind 循环中）。`TextureManager.getTexture` 对**未加载**的纹理会同步懒加载：
+`registerAndLoad → ReloadableTexture.apply → CommandEncoder.writeToTexture`——而 `writeToTexture`
+属于「pass 打开期间禁止的命令」类，直接抛 `Close the existing render pass...`。这正是我们同函数里
+UBO/索引缓冲「必须 pass 前写」注释的同一条不变量，只是纹理解析漏了。」判别面原话：「duyupack 的 kar98un
+这类『全部件都走 GPU』的模型……我们的 GPU pass 就是该纹理的**首个请求者** ⇒ 每帧在 pass 内炸 → catch 回退
+missing texture → 贴图错误……且炸后纹理永远没机会在 pass 外完成加载，每帧重试每帧炸（你日志里连续三条就是
+逐帧重试）。普通枪至少有一个部件走 collector，贴图早被加载，所以没事。」
+
+**我方核对（读自己的代码）**：`PolyMeshGpuRenderer#drawList` 的逐组 bind 循环里确实有
+`resolveTextureView(group.getKey())`，失败后还有 `resolveTextureView(MissingTextureAtlasSprite…)`，
+两处都在 `try (RenderPass pass = encoder.createRenderPass(…))` **体内**；同函数上方已有两条同族注释
+（`writeTransform` 必须 pass 前写、`indices.getBuffer(maxIndexCount)` 必须预热），漏的正是纹理这一路。
+`catch (Exception)` 把抛错吞成回退 ⇒ 与「贴图错但不崩、日志逐帧同一条」的表现一致。
+
+**修复（按 AGENTS「修 BUG 的不能做成可开关」，不加键）**：
+① 逐组视图（含 missing 回退）在 `createRenderPass` **之前**解析进 `Map<Identifier, GpuTextureView> viewsByTexture`，
+pass 体内只做 `viewsByTexture.get(…)` + `bindTexture`；② lightmap 用的
+`RenderSystem.getSamplerCache().getClampToEdge(NEAREST)` 一并提到 pass 外（同一条「体内零外部调用」）；
+③ `resolveTextureView` 失败日志改 **per-texture log-once**（新 `loggedTextureFailures`），不再逐帧刷屏；
+④ 结构其余不动，视图逐帧重解析 ⇒ 无需额外失效逻辑（资源重载后自然生效）。类 javadoc 里把这条不变量写成
+正式条款（本文件三例：UBO 切片 / 索引缓冲预热 / 纹理视图批解析）。
+
+**同批自查（结论：全仓只有这一处）**：`ScopeFinalOverlayState` 走 collector flush（纹理由 vanilla 在 pass 外解析）、
+`ScopeTextSubmitter` 只在注册期 `getTextureManager().register(id, shell)`、`ScopePipDepthDebug` /
+`ScopePipRenderState` bind 的是 `RenderTarget.getColorTextureView()`/`getDepthTextureView()`（缓存读，非懒加载路径）。
+
+**三方共有 + 转告**：26.1.2 已修（`2ae4c29`）；**26.2 未修** —— 其 `resolveTextureView` 与我方逐字相同、仍在 pass 内，
+只是"总有 collector 兄弟部件先把纹理请求掉"把它藏住了；姊妹 NeoForge `1.21.11` 线**非项**（`meshloader`/`PolyMesh`
+0 命中，不自建常驻 VBO pass）⇒ 两份清单各记一句：请 26.1.2 把这条同时转给 26.2；姊妹那份写"若将来搬 GPU 路径，
+这条不变量必须一起搬"。我方 `docs/MESH_LOADER.md` 新开 **§5.11**，账本新增 **L-16**。
+
+**证据级别（按 §2）**：根因 = 维护者**实机**（连续三条 ERROR + 逐帧重试的日志形状）；我方改动 = 同一根因的机械落地
++ CI 编译门，**实机待验** ⇒ 只写"已按实锤根因同批修"。判别法在 §5.11（duyupack kar98un + 两键开，看贴图与
+`Failed to resolve texture view` / `GPU world mesh pass failed` 两条日志是否绝迹）。本轮未改 `gradle.properties` 版本号。
+
+---
+
 ## 光影下 mesh 枪「反光/高光偏一侧」：按 26.2 `83daf16` 的定案根因同批修复（2026-09-01 第四则）
 
 **来源与维护者原话**（不改写成机制描述）：「26.1.2 → 1.21.11 同步 · mesh GPU 法线 · 2026-09-01 ——
