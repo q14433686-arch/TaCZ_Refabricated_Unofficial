@@ -97,3 +97,33 @@ B1 旧硬拒的理由（「光影下主目标里没有窄 FOV 的成品可拷」
 
 **未触发预案**：§3 第二行（finalize 在 renderLevel 之外）——实测 finalize 时机正确，
 成品帧存在，抓取点无需后移。
+
+## 7. 性能与 Voxy 补全（2026-09-01 第二批，用户裁定「都移植一下」）
+
+实测反馈「帧率比 26.2 掉得更狠」⇒ 补齐此前裁剪的三件：
+
+| 件 | 提交 | 说明 |
+|---|---|---|
+| `ScopePipShadowScale` | 本批 | 阴影每帧被画两遍是大头；0.5 = 镜内那遍阴影约 25% 代价，仅镜内受损。构造窗口拦截 `getResolution` + 每帧比对热重建 + 静默失效告警 |
+| 空闲释放 | 本批 | `ScopePipReleaseIdlePipeline`（默认 false）+ `ScopePipIdleReleaseDelayFrames`（默认 120）：26.2 FPS 衰减调查线的实验杠杆——瞄具管线保留 GPU 状态逐 pass 累积的清零手段 |
+| Voxy 适配 | 本批 | `VoxyCompat`/`VoxyScopePipelineCompat`（第二套 Voxy 渲染栈：逐帧换绑 pipeline/viewportSelector/traversal.pipeline；身份判据所有权；"Pipeline data already bound" 先查后建防整局崩）+ 3 个 voxy mixin（镜内专用视口/隔离未换绑时坐过/节点 tick 每帧一次）+ 插件门注册 |
+
+**26.1.2 拓扑差异（javap 实证）**：26.2 的重载钩子入口 `LevelExtractor.allChanged` 在本世代
+不存在（probe r8：class not found）；等价物是 **`LevelRenderer.allChanged()`**（本世代还在
+LevelRenderer 本尊，probe r8b javap 确认 public void allChanged()）。落地为
+`LevelRendererAllChangedScopePassMixin`：镜内那遍期间取消（Iris 首渲染会请求一次 full
+reload，否则 Voxy 会重绑到瞄具管线并永久污染主画面远景）；货真价实的重载则通知
+`IrisScopePipelineCompat.onLevelRendererReload()`（归还并打回 Voxy 第二套栈的重建状态）。
+**已注册**（tacz.mixins.json，类/方法均已字节码确认）。
+
+**仍裁剪**：`ScopePipDebugGpuMem`/`ScopePipDebugTrace`（诊断线，非性能件）——需要时按 26.2 补。
+
+### 验收补充（实机）
+- [ ] 光影+二次渲染开镜：帧率与 26.2 同场景相当（ShadowScale 默认 0.5 生效；日志
+      "Scope pass gets a ...x... shadow map" 一行 + "Pre-built" 行）；
+- [ ] 改 `ScopePipShadowScale` 数值：日志 "ScopePipShadowScale changed ... rebuilding"，
+      无需重进世界；
+- [ ] 装 Voxy：镜内有 LOD 远景且主画面远景不错乱；改区块视距后镜内 LOD 仍正常
+      （allChanged 钩子在开镜中会取消、镜外会重建第二套栈）；
+- [ ] `ScopePipReleaseIdlePipeline=true`：久置后开镜帧率不衰减（或衰减消失）——
+      这是实验判定，非修复承诺。
