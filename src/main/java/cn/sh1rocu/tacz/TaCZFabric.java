@@ -65,14 +65,15 @@ public class TaCZFabric implements ModInitializer {
 
         // spec 引用交给 ConfigPersist：FCAP v26.1.5 的 ConfigValue.set 只改内存、
         // ForgeConfigSpec.save() 在新架构下是 no-op，Cloth 保存后的落盘由
-        // ConfigPersist.saveAll() 走 LoadedConfig.save() 闭合（根因见该类 javadoc）。
+        // ConfigPersist.saveAll() 显式写回 TOML 闭合（根因见该类 javadoc）。
+        // 文件名用 Forge 惯例 <modid>-<type>.toml 显式钉死（与 FCAP 默认命名一致）。
         ForgeConfigSpec commonSpec = CommonConfig.init();
-        ConfigPersist.record(ModConfig.Type.COMMON, commonSpec);
-        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.COMMON, commonSpec);
+        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.COMMON, commonSpec,
+                ConfigPersist.record(ModConfig.Type.COMMON, commonSpec));
         ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.SERVER, ServerConfig.init());
         ForgeConfigSpec clientSpec = ClientConfig.init();
-        ConfigPersist.record(ModConfig.Type.CLIENT, clientSpec);
-        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.CLIENT, clientSpec);
+        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.CLIENT, clientSpec,
+                ConfigPersist.record(ModConfig.Type.CLIENT, clientSpec));
 
         GunMod.setup();
 

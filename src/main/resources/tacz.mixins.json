@@ -17,15 +17,14 @@
     "client.GlCommandEncoderScopeDepthCopyMixin",
     "client.ItemInHandLayerMixin",
     "client.ItemInHandRendererMixin",
+    "client.ForgeConfigSpecAccessor",
     "client.LevelRendererAccessor",
     "client.LanguageMixin",
     "client.LocalPlayerMixin",
     "client.MouseHandlerMixin",
     "client.PlayerModelMixin",
     "client.SoundManagerPreparationsMixin",
-    "client.StairBlockAccessor",
-    "client.ConfigTrackerAccessor",
-    "client.ModConfigAccessor"
+    "client.StairBlockAccessor"
   ],
   "_comment": "26.1.2: ItemInHandRendererMixin and ItemInHandLayerMixin restored against SubmitNodeCollector signatures; PlayerModelMixin applies TACZ/PAL third-person poses from AvatarRenderState.",
   "injectors": {

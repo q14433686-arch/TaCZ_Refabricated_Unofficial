@@ -39,16 +39,20 @@ FCAP v26.1.5 把 **NeoForge 的新配置架构**（`LoadedConfig` record + 显�
 
 `Cloth 的 ConfigBuilder.setSavingRunnable`（保存流程最后一步）→ `ConfigPersist.saveAll()`：
 
-- `mixin/client/ConfigTrackerAccessor`：`@Accessor("INSTANCE")` + `@Accessor("configsByMod")`
-  → 拿 FCAP `ConfigTracker` 单例与本 mod 的 `ModConfig` 列表（文件路径零猜测）。
-- `mixin/client/ModConfigAccessor`：`@Accessor("loadedConfig")` → record 本体。
-- `ConfigPersist.saveAll()`：对 CLIENT/COMMON 逐条 `LoadedConfig.save()` ——
-  FCAP 自己的正规保存（写盘 + 配置重载事件），SERVER（世界生命周期所有物，面板不编辑）不动。
-- `TaCZFabric#onInitialize`：把 COMMON/CLIENT spec 引用交给 `ConfigPersist.record`。
+- **首选实现（`LoadedConfig.save()`，FCAP 官方保存路径）被编译事实否决**：
+  `LoadedConfig` 类与 `ModConfig.loadedConfig` 字段都是**包私有**（CI 编译错实录），
+  签名都无法从外部引用。
+- **落地实现**：注册时用带文件名的 `register` 重载把文件钉死在 Forge 惯例名
+  （`tacz-client.toml` / `tacz-common.toml`，= FCAP 默认命名）；新 accessor
+  `client.ForgeConfigSpecAccessor`（`@Accessor("childConfig")`，声明类型是公开的
+  nightconfig `Config`）取出内存配置（`set()` 已把新值写进去），`TomlWriter` 显式写回。
+  注释保留（SynchronizedConfig 带注释解析）。SERVER（世界生命周期所有物，面板不编辑）不动。
+- `TaCZFabric#onInitialize`：COMMON/CLIENT 注册行改为显式文件名 + `ConfigPersist.record`。
 
-已知边界：`setSavingRunnable` 是否在全部 entry 保存回调之后执行以 Cloth 实现为准
+已知边界：①`setSavingRunnable` 是否在全部 entry 保存回调之后执行以 Cloth 实现为准
 （ClothConfigScreen.save() → AbstractTabbedConfigScreen.save()，实机确认项）；
-若用户用 FCAP 自身配置改过默认 config 目录，`LoadedConfig.path` 仍由 FCAP 管理，不受影响。
+②若用户用 FCAP 自身配置改过默认 config 目录，我们写的是 FabricLoader 的 configDir
+（= FCAP 默认目录），改过目录的极端场景需实机复核。
 
 ## 3. 与「V烘焙/世界烘焙默认开」的关系
 

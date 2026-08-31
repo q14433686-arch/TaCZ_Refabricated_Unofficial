@@ -1,14 +1,18 @@
 package com.tacz.guns.config;
 
+import com.electronwill.nightconfig.core.Config;
+import com.electronwill.nightconfig.toml.TomlWriter;
 import com.tacz.guns.GunMod;
-import com.tacz.guns.mixin.client.ConfigTrackerAccessor;
-import com.tacz.guns.mixin.client.ModConfigAccessor;
+import com.tacz.guns.mixin.client.ForgeConfigSpecAccessor;
+import net.fabricmc.loader.api.FabricLoader;
 import net.neoforged.fml.config.ModConfig;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Map;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Cloth 配置界面保存后的显式落盘 —— 修复「每次重进游戏配置被重置」（26.1.2 独有）。
@@ -26,65 +30,85 @@ import java.util.Map;
  *   <li>于是没有任何环节把改后的值写回 TOML：重启读回旧文件 = 「配置重置」。
  *       1.21.11（FCAP v21.11.1）与 26.2（v26.2.1）无此病 —— 它们还是旧架构/已修桥。</li>
  * </ol>
+ * FCAP 自带的正规保存函数 {@code LoadedConfig.save()} 不可达：{@code LoadedConfig} 与
+ * {@code ModConfig.loadedConfig} 都是包私有（编译实录，第一个修复提交被 CI 拒）。
  *
- * <h2>修法</h2>
- * Cloth 的保存流程最后会执行 {@code ConfigBuilder#setSavingRunnable} 的回调；
- * 这里对 CLIENT/COMMON 两条配置找到 FCAP 实际使用的 {@code ModConfig}，取出其
- * {@code loadedConfig} 并调 {@link net.neoforged.fml.config.LoadedConfig#save()} ——
- * 这是 FCAP 自己的正规保存函数（写 {@code path()}、锁内触发配置重载事件），
- * 文件路径由 FCAP 管理，零猜测。注册处的 spec 引用由 {@code TaCZFabric} 传入。
+ * <h2>修法（本类）</h2>
+ * 注册时用带文件名的 {@code register} 重载把文件钉在 Forge 惯例名
+ * （{@code tacz-client.toml} / {@code tacz-common.toml}，与 FCAP 默认命名一致）；
+ * Cloth 的保存流程最后一步（{@code ConfigBuilder#setSavingRunnable}）调
+ * {@link #saveAll()}：Accessor 取出 {@code childConfig}（set() 已把新值写进去），
+ * {@code TomlWriter} 显式写回注册名对应的 TOML —— 注释保留（SynchronizedConfig
+ * 是带注释解析的）。SERVER 配置是世界生命周期所有物、面板不编辑，不在此处理。
  */
 public final class ConfigPersist {
+    /** Forge/FCAP 的默认命名惯例：{@code <modid>-<type>.toml}（显式注册，防默认规则变动）。 */
+    private static String fileName(ModConfig.Type type) {
+        return GunMod.MOD_ID + "-" + type.toString().toLowerCase(java.util.Locale.ROOT) + ".toml";
+    }
+
     @Nullable
-    private static ForgeConfigSpec clientSpec;
+    private static volatile Path clientFile;
     @Nullable
-    private static ForgeConfigSpec commonSpec;
+    private static volatile ForgeConfigSpec clientSpec;
+    @Nullable
+    private static volatile Path commonFile;
+    @Nullable
+    private static volatile ForgeConfigSpec commonSpec;
 
     private ConfigPersist() {
     }
 
-    /** Registration hook: called from {@code TaCZFabric#onInitialize} for each spec we register. */
-    public static void record(ModConfig.Type type, ForgeConfigSpec spec) {
+    /**
+     * Registration hook: called from {@code TaCZFabric#onInitialize} before each
+     * {@code ConfigRegistry.register} for the specs the Cloth screen can edit.
+     *
+     * @return the explicit file name to pass into that {@code register} overload.
+     */
+    public static String record(ModConfig.Type type, ForgeConfigSpec spec) {
+        String name = fileName(type);
+        Path file = FabricLoader.getInstance().getConfigDir().resolve(name);
         switch (type) {
-            case CLIENT -> clientSpec = spec;
-            case COMMON -> commonSpec = spec;
+            case CLIENT -> {
+                clientFile = file;
+                clientSpec = spec;
+            }
+            case COMMON -> {
+                commonFile = file;
+                commonSpec = spec;
+            }
             default -> {
                 // SERVER configs are owned by the (integrated) server lifecycle and are never
                 // edited from the Cloth screen; they keep FCAP's own save path.
             }
         }
+        return name;
     }
 
     /**
-     * Persists every spec this mod registered through FCAP whose values the Cloth screen can
-     * edit (CLIENT + COMMON). Safe to call on any thread the Cloth save flow runs on; each
-     * failure is logged and skipped so one broken file cannot take the others down.
+     * Persists the CLIENT and COMMON specs after the Cloth screen saved its entries.
+     * Each failure is logged and skipped so one broken file cannot take the other down.
      */
     public static void saveAll() {
-        Map<String, List<ModConfig>> byMod = ((ConfigTrackerAccessor) (Object) ConfigTrackerAccessor.tacz$getInstance())
-                .tacz$getConfigsByMod();
-        List<ModConfig> ours = byMod == null ? null : byMod.get(GunMod.MOD_ID);
-        if (ours == null) {
+        save(clientSpec, clientFile, "client");
+        save(commonSpec, commonFile, "common");
+    }
+
+    private static void save(@Nullable ForgeConfigSpec spec, @Nullable Path file, String label) {
+        if (spec == null || file == null || !spec.isLoaded()) {
             return;
         }
-        for (ModConfig config : ours) {
-            ForgeConfigSpec spec = switch (config.getType()) {
-                case CLIENT -> clientSpec;
-                case COMMON -> commonSpec;
-                default -> null;
-            };
-            if (spec == null) {
-                continue;
+        try {
+            Config child = ((ForgeConfigSpecAccessor) (Object) spec).tacz$getChildConfig();
+            if (child == null) {
+                return;
             }
-            try {
-                var loaded = ((ModConfigAccessor) config).tacz$getLoadedConfig();
-                if (loaded != null) {
-                    loaded.save();
-                }
-            } catch (Throwable t) {
-                GunMod.LOGGER.warn("[TACZ] Failed to persist {} config after the Cloth screen saved it.",
-                        config.getType(), t);
+            Files.createDirectories(file.toAbsolutePath().getParent());
+            try (Writer writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+                new TomlWriter().write(child, writer);
             }
+        } catch (Throwable t) {
+            GunMod.LOGGER.warn("[TACZ] Failed to persist the {} config after the Cloth screen saved it.", label, t);
         }
     }
 }
