@@ -143,6 +143,18 @@ public class RenderClothConfig {
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders.desc"))
                 .setSaveConsumer(MeshyConfig.GPU_UNDER_SHADERS::set).build());
 
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_world"), MeshyConfig.GPU_WORLD.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_world.desc"))
+                .setSaveConsumer(MeshyConfig.GPU_WORLD::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_world_under_shaders"), MeshyConfig.GPU_WORLD_UNDER_SHADERS.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_world_under_shaders.desc"))
+                .setSaveConsumer(MeshyConfig.GPU_WORLD_UNDER_SHADERS::set).build());
+
+        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.mesh_gpu_light_cache_size"), MeshyConfig.GPU_LIGHT_CACHE_SIZE.get())
+                .setMin(1).setMax(16).setDefaultValue(4).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_light_cache_size.desc"))
+                .setSaveConsumer(MeshyConfig.GPU_LIGHT_CACHE_SIZE::set).build());
+
         render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.mesh_world_full_detail_distance"), MeshyConfig.WORLD_FULL_DETAIL_DISTANCE.get())
                 .setMin(0.0).setMax(1024.0).setDefaultValue(16.0).setTooltip(Component.translatable("config.tacz.client.render.mesh_world_full_detail_distance.desc"))
                 .setSaveConsumer(MeshyConfig.WORLD_FULL_DETAIL_DISTANCE::set).build());

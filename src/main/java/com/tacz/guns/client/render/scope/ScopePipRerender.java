@@ -86,6 +86,14 @@ public final class ScopePipRerender {
                 ? 0.75d : RenderConfig.SCOPE_PIP_RESOLUTION_SCALE.get();
     }
 
+    /**
+     * 镜内那一遍世界渲染是否正在执行。除防重入外，也给「按 pass 分流」的渲染闸门用：
+     * 例如 poly_mesh 的 GPU 世界表在这一遍画但不清表（提交每帧只发生一次，清了主画面就没得画）。
+     */
+    public static boolean isInsideScopeLevelRender() {
+        return scopePassActive;
+    }
+
     /** 本帧是否有可用的镜内画面（供合成阶段与 FOV 让位查询）。 */
     public static boolean hasScene() {
         return sceneCaptured && !failed;

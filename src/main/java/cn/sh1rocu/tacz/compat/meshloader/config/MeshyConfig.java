@@ -7,11 +7,13 @@ import net.minecraftforge.common.ForgeConfigSpec;
  *
  * <h2>范围</h2>
  * <p>collector（VertexConsumer）渲染路径 + 解析缓存 + 顶点预算闸门，
- * 外加第一人称 GPU 静态烘焙（{@code MeshGpuBaking}，见
- * {@code PolyMeshGpuRenderer} —— 只收手部 pass，规避关 PR
- * #33/#69/#70/#71 的世界 pass 泄漏）。光影下默认回退 collector；
- * {@code MeshGpuUnderShaders} 是实验性开关（第 2 步 v2：把 pass 开在
- * Iris 自己那次手部 flush 之内，见 {@code docs/TML_GPU_STEP2_HANDFLUSH_20260831.md}）。</p>
+ * 外加 GPU 静态烘焙（{@code MeshGpuBaking} 起总闸，见 {@code PolyMeshGpuRenderer}）：
+ * 手部 pass（第 1/2 步）与世界 pass（第 3 步，{@code MeshGpuWorld}）各一张表、
+ * 各自在自己的 flush 处消费；GUI / 预览 / 镜内 / 阴影由<b>提交侧</b>闸门挡在表外
+ * —— 关 PR #33/#69/#70/#71 的「世界 pass 泄漏」正是提交侧没闸门 + 绘制时矩阵取自
+ * 错误时刻两件事叠出来的。光影下两条路都默认关（{@code MeshGpuUnderShaders} /
+ * {@code MeshGpuWorldUnderShaders}，均为实验性），详见
+ * {@code docs/TML_GPU_STEP2_HANDFLUSH_20260831.md}。</p>
  */
 public final class MeshyConfig {
 
@@ -22,6 +24,9 @@ public final class MeshyConfig {
     public static ForgeConfigSpec.BooleanValue LOG_STATS;
     public static ForgeConfigSpec.BooleanValue GPU_BAKING;
     public static ForgeConfigSpec.BooleanValue GPU_UNDER_SHADERS;
+    public static ForgeConfigSpec.BooleanValue GPU_WORLD;
+    public static ForgeConfigSpec.BooleanValue GPU_WORLD_UNDER_SHADERS;
+    public static ForgeConfigSpec.IntValue GPU_LIGHT_CACHE_SIZE;
     public static ForgeConfigSpec.IntValue GUI_MAX_VERTICES;
     public static ForgeConfigSpec.IntValue WORLD_MAX_VERTICES;
     public static ForgeConfigSpec.DoubleValue WORLD_FULL_DETAIL_DISTANCE;
@@ -51,11 +56,13 @@ public final class MeshyConfig {
         builder.comment("Log poly_mesh statistics (bone/vertex counts) when models load.");
         LOG_STATS = builder.define("MeshLogStats", true);
 
-        builder.comment("GPU static baking for FIRST-PERSON only: vertices stay in bone-local",
+        builder.comment("Master switch for GPU static baking: vertices stay in bone-local",
                 "space in a resident VBO; each frame uploads O(bones) matrices instead of",
                 "transforming every vertex on the CPU.",
-                "World/GUI/drops stay on the collector path so they cannot leak into",
-                "the world pass (that was the closed PRs' wrong-screenshot bug).",
+                "First-person hands always use it when this is on; in-world contexts need",
+                "MeshGpuWorld too. GUI/preview/shadow/in-scope submits are refused at the",
+                "submit side, so they can never leak into the world pass (that was the",
+                "closed PRs' wrong-screenshot bug).",
                 "Falls back to the collector path if the GPU pass fails.");
         GPU_BAKING = builder.define("MeshGpuBaking", true);
 
@@ -68,6 +75,33 @@ public final class MeshyConfig {
                 "removes the per-frame CPU vertex transform. See",
                 "docs/TML_GPU_STEP2_HANDFLUSH_20260831.md.");
         GPU_UNDER_SHADERS = builder.define("MeshGpuUnderShaders", false);
+
+        builder.comment("GPU static baking for WORLD contexts too: third-person guns held by",
+                "other players, dropped items, item frames and display statues draw from the same",
+                "resident VBOs (O(bones) matrix uploads per gun per frame instead of transforming",
+                "every vertex on the CPU). This is what makes a server full of high-poly mesh guns",
+                "playable. Light is served by a small per-light-level VBO cache per model",
+                "(MeshGpuLightCacheSize). The pass is opened right after the world's own feature",
+                "flush, so it uses the same model-view matrix the collector batches were about to",
+                "use -- GUI contexts never enter this table (see PolyMeshGpuRenderer).",
+                "Requires MeshGpuBaking; falls back to the collector path if the pass fails or the",
+                "flush hook is not live.");
+        GPU_WORLD = builder.define("MeshGpuWorld", true);
+
+        builder.comment("EXPERIMENTAL: also keep world mesh guns on the resident-VBO path under a",
+                "shader pack. The world pass is then lit through the pack's entity program, which",
+                "needs the custom pipeline registered with IrisApi.assignPipeline; the Iris program",
+                "constant for level entities is not audited on this branch yet, so an unlit gun is",
+                "the expected worst case. Off by default: the collector path already gets correct",
+                "shader lighting in the world pass.");
+        GPU_WORLD_UNDER_SHADERS = builder.define("MeshGpuWorldUnderShaders", false);
+
+        builder.comment("How many quantized light levels of baked world VBOs to keep per gun model",
+                "(LRU). Upstream TML caches 8 unquantized levels; this port quantizes light first",
+                "(4 steps for block/sky each), so 4 levels cover nearly every scene. Every cached",
+                "level costs GPU memory proportional to the model's vertex count.",
+                "First-person baking is unaffected (it keeps a single level).");
+        GPU_LIGHT_CACHE_SIZE = builder.defineInRange("MeshGpuLightCacheSize", 4, 1, 16);
 
         builder.comment("Vertex budget for poly_mesh in GUI/FIXED/HEAD. Icons above this",
                 "budget render cube-only (or the pack's LOD model when present).",

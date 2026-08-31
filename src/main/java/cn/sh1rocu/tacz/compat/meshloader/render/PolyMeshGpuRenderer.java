@@ -21,6 +21,7 @@ import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.client.render.scope.ScopePipRerender;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -41,8 +42,17 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 /**
- * poly_mesh 的 GPU 静态烘焙渲染器 —— <b>仅第一人称手部 pass</b>（第 1 步：无光影；
- * 第 2 步 v2：光影下改画进 Iris 自己的手部 flush）。
+ * poly_mesh 的 GPU 静态烘焙渲染器。
+ *
+ * <ul>
+ *   <li><b>第 1 步</b>：无光影第一人称手部；</li>
+ *   <li><b>第 2 步 v2</b>：光影下把手部 pass 改画进 Iris 自己的那次手部 flush
+ *       （{@code docs/TML_GPU_STEP2_HANDFLUSH_20260831.md}）；</li>
+ *   <li><b>第 3 步</b>：世界语境（第三人称手持 / 掉落物 / 展示框 / 展示台雕像）——
+ *       {@link #WORLD_DRAWS} 表 + {@link #renderAtWorldFlush()}，消费点是
+ *       {@code FeatureRenderDispatcher#renderAllFeatures} 的返回处（见本文
+ *       「世界绘制点」一节与 {@code docs/TML_GPU_STEP2_HANDFLUSH_20260831.md} §4）。</li>
+ * </ul>
  *
  * <h2>为什么前几次内置失败、这次怎么改</h2>
  * <p>顶点留在骨骼本地坐标、绘制时把骨骼矩阵写进 DynamicTransforms.ModelViewMat，
@@ -56,8 +66,11 @@ import java.util.OptionalInt;
  *   <li><b>弹匣</b>：没接 {@code IMirrorGeometry}，纯 mesh 弹匣在主路径里被漏画。</li>
  * </ol>
  *
- * <p>这次 GPU 表<b>只收第一人称手部 pass 当时登记的骨骼</b>，且只在手部 flush 里绘制。
- * 世界/GUI 全部走 collector。</p>
+ * <p>所以硬伤从来不是「有一张世界表」，而是<b>提交侧没有语境闸门</b> + <b>绘制时矩阵取自
+ * 错误的时刻</b>。第 3 步的世界表因此把闸门全放在 submit 上
+ * （{@link #shouldSubmitGpuWorld}：GUI / Screen 内嵌预览 / 镜内那遍 / 阴影 / 手部 pass
+ * 逐个拒收），绘制侧则与手部同构：只在「刚 flush 完本帧几何、MV 还是这批几何将要用的那一份」
+ * 的时刻画。GUI 语境一律不进 GPU（正交投影的 pose 与世界的不是同一套代数）。</p>
  *
  * <h2>绘制点：手部几何「当次 flush」之后，不是 renderLevel 末尾</h2>
  * <p>1.21.11 的手部几何不是延迟到世界渲染末尾统一 flush 的：{@code ItemInHandRenderer#renderHandsWithItems}
@@ -181,7 +194,40 @@ public final class PolyMeshGpuRenderer {
     /** 仅第一人称手部。世界/GUI 禁止写入。 */
     private static final List<DrawEntry> HAND_DRAWS = new ArrayList<>();
 
+    /**
+     * 世界语境（第三人称手持 / 掉落物 / 展示框 / 展示台雕像）的登记表。
+     *
+     * <p>与手部表同构，但消费点是<b>世界那一次</b> {@code FeatureRenderDispatcher#renderAllFeatures}
+     * 的返回处（{@code ItemInHandRendererMixin} 那次是手部，两表互不消费）。防泄漏全部在
+     * <b>提交侧</b>（{@link #shouldSubmitGpuWorld}）：GUI / Screen 内嵌预览 / 镜内那遍 /
+     * 阴影 pass / 手部 pass 的 submit 进不了这张表，消费侧只负责「在正确的 pass 用正确的
+     * ModelView 画正确的表」。</p>
+     *
+     * <p>为什么绘制点选在 {@code renderAllFeatures} 返回处：1.21.11 的
+     * {@code LevelRenderer} 主通道里那一段是（CI javap 实测，见 docs/TML_GPU_STEP2_HANDFLUSH
+     * §4）{@code popPush("renderFeatures") -> renderAllFeatures() -> bufferSource.endLastBatch()}，
+     * 即地形深度已就绪、本帧立方体/实体几何还压在 builder 里等 {@code endLastBatch}；
+     * 此刻 {@code RenderSystem.getModelViewMatrix()} 正是那些批次待会儿在 {@code RenderType#draw}
+     * 里要写进 {@code DynamicTransforms.ModelViewMat} 的<b>同一个值</b>（1.21.11 的
+     * {@code RenderType#draw} 就是在 draw 当刻现取 {@code getModelViewMatrix()}）。
+     * 「GPU 骨骼用 flush 当刻的 MV + submit 当刻的骨骼 pose」与 collector
+     * 「pose 烘进顶点 + flush 当刻 MV」因此逐帧等价 —— 这正是隔壁 26.2 分支踩的
+     * 「相对视角固定」坑的解法：MV 不能取自别的时刻。</p>
+     */
+    private static final List<DrawEntry> WORLD_DRAWS = new ArrayList<>();
+
+    /**
+     * 延迟释放池：世界 LRU 缓存被逐出/作废的 VBO 先进这里，下一帧 {@link #beginFrame} 才 close。
+     *
+     * <p>不能当场 close：同帧内两个实体共享同一模型实例，甲 submit 已把某光照档的 VBO 登记进
+     * {@link #WORLD_DRAWS}，乙随后触发 LRU 逐出同一档 —— 当场 close 等于让本帧帧末引用已销毁
+     * 的 buffer。绘制永远发生在本帧提交之后、下一帧 {@code beginFrame} 之前，所以「下一帧再关」
+     * 是最小充分延迟。</p>
+     */
+    private static final List<BakedBone> DEFERRED_RELEASE = new ArrayList<>();
+
     private static boolean loggedFirstDraw = false;
+    private static boolean loggedFirstWorldDraw = false;
     private static boolean gpuDisabledThisSession = false;
     private static boolean loggedUnderShadersNoop = false;
     private static boolean loggedFormatMismatch = false;
@@ -198,6 +244,18 @@ public final class PolyMeshGpuRenderer {
      */
     private static int lastHandFlushFrame = Integer.MIN_VALUE;
     private static int frameId = 0;
+    /** 最近一次「世界 flush 绘制钩子」真正跑过的帧号（{@link #WORLD_DRAWS} 的存活证明）。 */
+    private static int lastWorldFlushFrame = Integer.MIN_VALUE;
+    /** 本帧是否已经消费（画 + 清）过世界表。镜内那一遍画但不清，所以不能复用存活证明。 */
+    private static int worldConsumedFrame = Integer.MIN_VALUE;
+    private static int bakesThisFrame = 0;
+    /**
+     * 世界钩子连续失败计数：达到阈值只关<b>世界</b>路径，手部那条不受牵连
+     * （世界 pass 的环境比手部复杂，且镜内/always-on-top 这类次级 pass 可能正卡在
+     * 别的 render pass 里 —— 那种情况下反复抛异常比回 collector 慢得多，也更吵）。
+     */
+    private static int worldConsecutiveFailures = 0;
+    private static boolean gpuWorldDisabledThisSession = false;
     /**
      * 烘焙世代号：光影包开关每翻转一次 +1（{@link #beginFrame} 逐帧检测）。
      *
@@ -238,8 +296,75 @@ public final class PolyMeshGpuRenderer {
         return inHandPass;
     }
 
+    /**
+     * 当前这次<b>世界语境</b> submit 是否该走 GPU（登记进 {@link #WORLD_DRAWS}）。
+     *
+     * <p>提交侧闸门 —— 关 PR 世界表泄漏的每个入口都在这里逐个封死：</p>
+     * <ul>
+     *   <li>{@code MeshGpuWorld} 打开、GPU 路径本会话可用、<b>世界</b> flush 钩子存活
+     *       （{@link #worldFlushAlive()}，与手部同一手法：钩子失联就回 collector，
+     *       最坏是这一帧没吃到 GPU，绝不会「整把枪消失」）；</li>
+     *   <li><b>不在</b>手部 pass —— 手部有自己的表与自己的 flush 时刻；</li>
+     *   <li><b>不在</b> Screen 提取窗口 —— {@link ScreenRenderTracker} 框住 {@code Screen}
+     *       的 extract 阶段，背包人偶 / 枪匠桌预览这类 GUI 内嵌 3D 的 submit 全在里面；
+     *       它们的 pose 带 GUI 投影，落进世界表就是「枪画进世界」事故。
+     *       刻意<b>不用</b> {@code RenderDistance.isGuiRender()} 那种 100ms 时间戳窗口
+     *       （开着菜单时世界提取也会命中 ⇒ 一开背包全场景 mesh 枪跌回 collector）；</li>
+     *   <li><b>不在</b>镜内那一遍（PIP 二次渲染）—— 防御性：提交只在世界提取阶段发生一次，
+     *       镜内那遍若真有 mod 补提交，pose 语义未知，宁可拒收（消费侧对镜内的处理见
+     *       {@link #renderAtWorldFlush}）；</li>
+     *   <li><b>不在</b>阴影 pass —— Iris 阴影遍的投影/MV 是太阳视角，登记进主视角的表必画错；</li>
+     *   <li>光影下额外要求 {@code MeshGpuWorldUnderShaders}（默认关，见 {@link #worldGpuAllowed}）。</li>
+     * </ul>
+     */
+    public static boolean shouldSubmitGpuWorld() {
+        if (gpuWorldDisabledThisSession || !MeshyConfig.GPU_WORLD.get() || !gpuMasterUsable()) {
+            return false;
+        }
+        if (!worldFlushAlive()) {
+            return false;
+        }
+        if (inHandPass) {
+            return false;
+        }
+        if (ScreenRenderTracker.isRenderingScreen()) {
+            return false;
+        }
+        if (ScopePipRerender.isInsideScopeLevelRender()) {
+            return false;
+        }
+        if (IrisCompat.isRenderShadow()) {
+            return false;
+        }
+        return worldGpuAllowed();
+    }
+
+    /**
+     * 光影下的世界 GPU 路径是否放行。
+     *
+     * <p>世界那一次 flush 里，Iris 对 {@code ENTITY_CUTOUT} 那条 vanilla 管线的默认接管
+     * （{@code gbuffers_entities}）正是我们想要的照明；但本仓的 GPU 走的是<b>自建管线</b>
+     * {@code tacz:pipeline/mesh_entity}，它不在 Iris 的 coreShaderMap 里 ⇒ 不登记就只能拿
+     * 原版程序（无光影照明）。登记用的 Iris program 常量名尚未逐条审计（手部那条用的是
+     * {@code HAND}，已实机 PASS），所以这条默认关。</p>
+     */
+    private static boolean worldGpuAllowed() {
+        if (!IrisCompat.isUsingRenderPack()) {
+            return true;
+        }
+        if (!MeshyConfig.GPU_WORLD_UNDER_SHADERS.get()) {
+            return false;
+        }
+        return IrisCompat.supportsHandFlushHook();
+    }
+
+    /** 总闸：{@code MeshGpuBaking} 打开且本会话没被异常禁用。两条路（手部/世界）共用。 */
+    private static boolean gpuMasterUsable() {
+        return !gpuDisabledThisSession && MeshyConfig.GPU_BAKING.get();
+    }
+
     public static boolean isGpuPathUsable() {
-        if (gpuDisabledThisSession || !MeshyConfig.GPU_BAKING.get()) {
+        if (!gpuMasterUsable()) {
             return false;
         }
         if (IrisCompat.isUsingRenderPack()) {
@@ -265,6 +390,112 @@ public final class PolyMeshGpuRenderer {
     /** 本帧或上一帧刚跑过手部 flush 绘制钩子 —— 说明这次 GPU submit 有配对的绘制点。 */
     private static boolean handFlushAlive() {
         return lastHandFlushFrame == frameId || lastHandFlushFrame == frameId - 1;
+    }
+
+    /** 世界语境版本：调用方必须已通过 {@link #shouldSubmitGpuWorld} 闸门。 */
+    public static void submitBoneWorld(Matrix4f bonePose, Identifier texture, BakedBone bone) {
+        if (bone == null) {
+            return;
+        }
+        WORLD_DRAWS.add(new DrawEntry(new Matrix4f(bonePose), texture, bone));
+    }
+
+    /**
+     * 把被 LRU 逐出 / 作废的烘焙骨骼交给延迟释放池（下一帧才 close）。
+     * 见 {@link #DEFERRED_RELEASE}：本帧可能已有 {@link #WORLD_DRAWS} 条目引用它。
+     */
+    public static void releaseDeferred(BakedBone bone) {
+        if (bone != null) {
+            DEFERRED_RELEASE.add(bone);
+        }
+    }
+
+    /**
+     * 申请一次「本帧烘焙额度」。
+     *
+     * <p>病理场景：同帧出现的世界实体横跨的量化光照档数超过 LRU 容量（比如一排掉落枪
+     * 摆在明暗边界上），没有额度闸门就会每帧「逐出-重烘」打摆 —— 烘焙风暴比 collector
+     * 还慢。额度用完后本帧余下的枪回退 collector，下一帧额度重置，缓存逐帧收敛到稳态。</p>
+     */
+    public static boolean tryReserveBake(int cachedLevels) {
+        if (bakesThisFrame >= Math.max(4, cachedLevels)) {
+            return false;
+        }
+        bakesThisFrame++;
+        return true;
+    }
+
+    /** 世界钩子的存活证明（帧语义同手部，见 {@link #lastHandFlushFrame}）。 */
+    private static boolean worldFlushAlive() {
+        return lastWorldFlushFrame == frameId || lastWorldFlushFrame == frameId - 1;
+    }
+
+    /**
+     * 世界那一次 feature flush 之后的绘制钩子，由 {@code FeatureRenderDispatcherMixin}
+     * 在 {@code renderAllFeatures} 的 RETURN 调用（{@code require=0}）。
+     *
+     * <p><b>与手部钩子的分工</b>：{@code renderAllFeatures()} 在 1.21.11 有三个调用点
+     * （CI javap：{@code LevelRenderer} 两处 + {@code ItemInHandRenderer#renderHandsWithItems}
+     * 一处）。本钩子按语境分流：手部那次交回 {@link #renderAtHandFlush()}（它必须等
+     * {@code endBatch()} 之后，见 {@code ItemInHandRendererMixin}），本方法只认世界那两次。</p>
+     *
+     * <p><b>不清表的情形</b>：镜内那一遍（PIP 二次渲染）与阴影 pass —— 提交每帧只发生一次，
+     * 在这里清了主画面就没得画了（表现即「一开镜世界 mesh 枪消失」）。镜内那遍照常画一遍：
+     * collector 在镜内那遍是重放的，两遍内容必须一致（本仓 2026-08-30 的既有裁定）。</p>
+     */
+    public static void renderAtWorldFlush() {
+        if (inHandPass) {
+            // 手部那一次 renderAllFeatures 不归这里管（表由 ItemInHandRendererMixin 的钩子在
+            // endBatch 之后消费），也**不能**在这里记存活证明 —— 否则世界钩子失灵时，手部的
+            // 调用点会把「世界钩子活着」这个假象维持下去，世界 submit 就会跳过 collector。
+            return;
+        }
+        if (IrisCompat.isRenderShadow()) {
+            // 阴影遍的投影/MV 是太阳视角：既不画也不清（条目属于随后的主画面那一遍）。
+            return;
+        }
+        // 1.21.11 的 always-on-top / gizmo 那一遍会在自己的 frame-graph 节点里把
+        // outputColor/DepthTextureOverride 设成离屏 target 再调 renderAllFeatures
+        // （CI javap：LevelRenderer.method_75413 里那两处 putstatic）。那一遍既不该画枪
+        // （枪不是 always-on-top 内容），也不该在此处开 render pass（可能嵌在别的 pass 里）。
+        if (RenderSystem.outputColorTextureOverride != null) {
+            return;
+        }
+        // 走到这里就是「本帧真正有一个世界 feature flush 的调用点」—— 记存活证明。
+        lastWorldFlushFrame = frameId;
+        boolean insideScope = ScopePipRerender.isInsideScopeLevelRender();
+        if (WORLD_DRAWS.isEmpty() || worldConsumedFrame == frameId) {
+            return;
+        }
+        if (!gpuMasterUsable() || !worldGpuAllowed()) {
+            WORLD_DRAWS.clear();
+            return;
+        }
+        try {
+            drawList(WORLD_DRAWS, IrisCompat.isUsingRenderPack(), true);
+            worldConsecutiveFailures = 0;
+            if (!insideScope) {
+                worldConsumedFrame = frameId;
+            }
+        } catch (Exception | LinkageError e) {
+            // 次级 pass 嵌在别的 render pass 里时 createRenderPass 会抛；这属于环境不适配，
+            // 只关世界路径（手部不受牵连），并清空本帧残留避免反复撞同一处。
+            WORLD_DRAWS.clear();
+            worldConsecutiveFailures++;
+            if (worldConsecutiveFailures >= 30) {
+                gpuWorldDisabledThisSession = true;
+                LOGGER.error("[TacZMeshLoader] GPU world mesh pass failed {} times in a row; "
+                        + "disabling the world GPU path for this session (hand path unaffected).",
+                        worldConsecutiveFailures, e);
+            } else if (worldConsecutiveFailures == 1) {
+                LOGGER.warn("[TacZMeshLoader] GPU world mesh pass failed; skipping world GPU draws "
+                        + "until it recovers ({} so far).", worldConsecutiveFailures, e);
+            }
+        } finally {
+            if (!insideScope) {
+                WORLD_DRAWS.clear();
+            }
+        }
     }
 
     /** 由 GameRendererMixin 在 renderItemInHand HEAD/RETURN 调用。 */
@@ -360,6 +591,15 @@ public final class PolyMeshGpuRenderer {
                     shaders, bakeGeneration);
         }
         HAND_DRAWS.clear();
+        WORLD_DRAWS.clear();
+        bakesThisFrame = 0;
+        if (!DEFERRED_RELEASE.isEmpty()) {
+            // 上一帧被逐出的 VBO：绘制已经结束（上一帧帧末），现在关是安全的。
+            for (BakedBone bone : DEFERRED_RELEASE) {
+                bone.close();
+            }
+            DEFERRED_RELEASE.clear();
+        }
     }
 
     /** 当前烘焙世代号。烘焙缓存持有者在 submit 时比对，不匹配须立即重烘。 */
@@ -395,7 +635,7 @@ public final class PolyMeshGpuRenderer {
         }
         boolean irisFlush = IrisCompat.isUsingRenderPack();
         try {
-            drawList(HAND_DRAWS, irisFlush);
+            drawList(HAND_DRAWS, irisFlush, false);
         } catch (Exception | LinkageError e) {
             // LinkageError：光影下这条路径依赖 Iris 的 flush 时机，方法缺失也要能自愈回 collector。
             LOGGER.error("[TacZMeshLoader] GPU mesh hand flush failed (irisFlush={}); "
@@ -407,7 +647,7 @@ public final class PolyMeshGpuRenderer {
         }
     }
 
-    private static void drawList(List<DrawEntry> draws, boolean irisFlush) {
+    private static void drawList(List<DrawEntry> draws, boolean irisFlush, boolean worldPass) {
         Minecraft mc = Minecraft.getInstance();
         RenderTarget mainTarget = mc.getMainRenderTarget();
         if (mainTarget == null) {
@@ -441,11 +681,14 @@ public final class PolyMeshGpuRenderer {
 
         if (irisFlush) {
             // 自建管线不在 Iris 的 coreShaderMap 里，默认只能拿原版程序（= 无光影光照）。
-            // 登记进 HAND program 后 Iris 会按光影包的 gbuffers_hand 为这条管线编译程序，
-            // 与 collector 路径下 entityCutout 得到的照明一致。两条管线都登记：lightmap
-            // 视图何时不可用是运行期才决定的，届时不能才发现 EMISSIVE 没分配。
+            // 登记进对应 program 后 Iris 会按光影包的 gbuffers_hand / gbuffers_entities 为
+            // 这条管线编译程序，与 collector 路径下 entityCutout 得到的照明一致。
             // 幂等且失败无害（IrisCompat 内部缓存 + 吞异常）。
-            IrisCompat.assignMeshPipelineToHand(pipeline);
+            if (worldPass) {
+                IrisCompat.assignMeshPipelineToEntity(pipeline);
+            } else {
+                IrisCompat.assignMeshPipelineToHand(pipeline);
+            }
         }
 
         // 烘焙格式必须与 pass 消费端的格式一致：Iris 激活时 pipeline.getVertexFormat()
@@ -552,15 +795,21 @@ public final class PolyMeshGpuRenderer {
                     pass.drawIndexed(0, 0, entry.bone().indexCount, 1);
                 }
             }
-            if (!loggedFirstDraw) {
-                loggedFirstDraw = true;
+            boolean already = worldPass ? loggedFirstWorldDraw : loggedFirstDraw;
+            if (!already) {
+                if (worldPass) {
+                    loggedFirstWorldDraw = true;
+                } else {
+                    loggedFirstDraw = true;
+                }
                 long indexTotal = 0;
                 for (DrawEntry entry : drawable) {
                     indexTotal += entry.bone().indexCount;
                 }
-                LOGGER.info("[TacZMeshLoader] GPU mesh pass drew {} bones ({} indices) in {} hand flush:"
+                LOGGER.info("[TacZMeshLoader] GPU mesh pass drew {} bones ({} indices) in {} {} flush:"
                                 + " lit={}, colorView={}, depthView={}, vertexFormat={}",
-                        drawable.size(), indexTotal, irisFlush ? "Iris" : "vanilla", lit,
+                        drawable.size(), indexTotal, irisFlush ? "Iris" : "vanilla",
+                        worldPass ? "world" : "hand", lit,
                         System.identityHashCode(colorView), System.identityHashCode(depthView),
                         passFormat);
             }

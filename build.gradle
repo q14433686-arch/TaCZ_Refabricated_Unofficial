@@ -421,6 +421,7 @@ tasks.register('dumpHandFlushApi') {
 
             // javap's own declaration line for every member whose signature contains one of the needles.
             def dumpMembers = { String cls, List needles ->
+                // needles == [] -> print the whole member list (for enum constants etc.)
                 def (out, err) = runJavap(cls, ['-p'])
                 println "===== javap -p ${cls} (filtered: ${needles.join(', ')}) ====="
                 if (!out?.trim()) {
@@ -432,7 +433,7 @@ tasks.register('dumpHandFlushApi') {
                     if (!line.trim()) {
                         return
                     }
-                    if (needles.any { n -> line.contains(n) }) {
+                    if (needles.isEmpty() || needles.any { n -> line.contains(n) }) {
                         println '  ' + line.trim()
                         hits++
                     }
@@ -511,7 +512,12 @@ tasks.register('dumpHandFlushApi') {
             dumpMembers('net.irisshaders.iris.pathways.HandRenderer',
                     ['endRender', 'renderSolid', 'renderTranslucent', 'isActive', 'isRenderingSolid', 'setupGlState'])
             dumpMembers('net.irisshaders.iris.api.v0.IrisApi', ['assignPipeline', 'getMinorApiRevision', 'isShaderPackInUse'])
-            dumpMembers('net.irisshaders.iris.api.v0.IrisProgram', ['HAND', 'EMISSIVE', 'MAIN'])
+            // Full constant list (empty needle list = no filter): the world GPU path needs the
+            // program constant for level entities, and guessing it is exactly what this task exists
+            // to avoid.
+            dumpMembers('net.irisshaders.iris.api.v0.IrisProgram', [])
+            dumpMembers('net.minecraft.client.renderer.feature.FeatureRenderDispatcher',
+                    ['public', 'protected'])
             dumpMembers('net.irisshaders.iris.vertices.IrisVertexFormats', ['ENTITY', 'TERRAIN', 'HAND'])
             dumpMembers('net.irisshaders.iris.pipeline.programs.ShaderKey', ['HAND_CUTOUT', 'HAND_TRANSLUCENT'])
             dumpMembers('net.irisshaders.iris.pipeline.IrisPipelines', ['assignPipeline', 'getPipeline'])

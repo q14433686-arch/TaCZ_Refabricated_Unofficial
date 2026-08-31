@@ -1,17 +1,20 @@
-# 内置 TacZ Mesh Loader [TML] —— 安全子集 + GPU 烘焙（第 0 + 1 步；第 2 步 v2 待实机）
+# 内置 TacZ Mesh Loader [TML] —— 安全子集 + GPU 烘焙（第 0/1 步 + 第 2 步 v2 已实机 PASS；第 3 步世界语境待实机）
 
 > 代码移植自 [VellEagle/TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader)
 > `1.21.1_fabric` v0.1.7，GPL-3.0。不是官方 TacZ 附属。
 >
-> **状态：第 0 步（collector 安全子集）与第 1 步（无光影第一人称 GPU 静态烘焙）
-> 源码完成、CI 编译通过；第 2 步 v2（光影下把 pass 开进 Iris 自己的手部 flush）源码完成、
-> 待 CI 编译 + 待实机。运行期行为（换弹无双影、GUI 不卡死、无光影 GPU 真实帧率、
-> 光影下 GPU 是否真收到 `gbuffers_hand` 照明）全部待实机验证。**
-> 按 AGENTS.md §2：本文没有一句「已实测修好」。
+> **状态：第 0 步（collector 安全子集）、第 1 步（无光影第一人称 GPU 静态烘焙）与第 2 步 v2
+>（光影下把手部 pass 开进 Iris 自己的手部 flush）均已实机 PASS。第 3 步（世界语境常驻 VBO，
+> `MeshGpuWorld`，见下方「第 3 步新增」与可行性文档）源码完成、待 CI 编译 + 待实机。
+> 两条光影下的开关（`MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders`）仍是实验性、默认关。**
+> 按 AGENTS.md §2：第 0/1/2 步的实机 PASS 是维护者 2026-08-31 报告的（换弹无双影、
+> 光影下常驻 VBO 收 `gbuffers_hand` 照明）；**第 3 步没有任何实机结论** —— 本文对它
+> 只写「源码完成 + 静态审计」。
 >
 > 可行性论证与分步计划见
 > [`TML_GPU_FEASIBILITY_1211_20260831.md`](TML_GPU_FEASIBILITY_1211_20260831.md)。
-> 已落地第 0 步与第 1 步（无光影 GPU）；第 2 步（光影 `assignPipeline(HAND)`）单独立项。
+> 分步：第 0 步 collector 安全子集 → 第 1 步无光影手部 GPU → 第 2 步 v2 光影手部 GPU →
+> 第 3 步世界语境 GPU（本轮）。
 
 ## 0. 与四个关闭 PR 的关系（为什么这是第五次、以及为什么这次砍掉了 GPU）
 
@@ -89,6 +92,29 @@
   collector；绘制抛错 → 本会话禁用。详见
   [`TML_GPU_STEP2_HANDFLUSH_20260831.md`](TML_GPU_STEP2_HANDFLUSH_20260831.md) §2.4。
 
+### 第 3 步新增（世界语境常驻 VBO：第三人称 / 掉落物 / 展示框 / 雕像）
+
+- **同一条手法，换一次 flush**：1.21.11 的世界几何是 `LevelRenderer` frame-graph 主通道里
+  `renderAllFeatures()` 写 builder + 紧随的 `endLastBatch()` 真 draw；GPU 骨骼挂在
+  `FeatureRenderDispatcher#renderAllFeatures` 的 **RETURN**（`require=0`，见
+  `FeatureRenderDispatcherMixin`），ModelView 现取 flush 当刻那份 —— 与手部第 2 步同构。
+- **提交侧闸门**（`shouldSubmitGpuWorld` + `isWorldGpuContext`）：GUI/`FIXED_GUI`* 语境、
+  Screen 提取窗口、`FIXED`/`HEAD` 命中枪匠桌标记、镜内那遍、阴影 pass、手部 pass 全部拒收；
+  另需「世界 flush 钩子存活证明」（钩子失联 ⇒ 下一帧自动回 collector，不会丢枪）。
+- **多光照档 LRU**（`MeshGpuLightCacheSize`，默认 4 档）+ 每帧烘焙额度 + **延迟释放池**
+  （本帧可能已有条目引用被逐出的 VBO，下一帧 `beginFrame` 才 close）。
+- **顶点预算只挡 collector**：GPU 每帧只传 O(骨骼) 个矩阵，预算对它没有保护对象；
+  若照旧先过预算闸门，「16 格外高模枪整把消失」的老毛病就没解决。
+- **镜内那一遍（PIP 二次渲染）**：画但**不清表**、不占本帧消费标志（提交每帧只登记一次，
+  这里清了主画面就没得画；collector 在镜内那遍照常重放，两遍内容必须一致）。
+- **光影**：默认不走（`MeshGpuWorldUnderShaders=false`）。世界那一次 flush 里要受光需要把自建
+  管线登记进 Iris 的实体 program，而 `IrisProgram` 的常量名尚未在本分支审计。
+  隔壁 26.2 分支靠 `RenderTypes.entityCutout` + `RenderType#prepare()` 天然落在 Iris 已接管的
+  `ENTITY_CUTOUT` 上 —— **这一点两个分支不等价，不要照抄**。
+- 完整证据（1.21.11 三个 `renderAllFeatures` 调用点、MV 归属、`EntityRenderDispatcher` 的
+  相机相对平移）、与隔壁分支的差异、待验清单：
+  [`TML_GPU_STEP2_HANDFLUSH_20260831.md`](TML_GPU_STEP2_HANDFLUSH_20260831.md) §4。
+
 ### 明确不包含（后续步骤，见可行性文档 §5）
 
 - 光影下常驻 VBO 的**实机验收**（第 2 步 v2 只有编译期证据，见上）。
@@ -144,6 +170,9 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 | `MeshLogStats` | true | 加载统计日志 |
 | `MeshGpuBaking` | true | 第一人称 GPU 静态烘焙（第 1 步）。关闭→永久 collector；运行期异常也会自写 false |
 | `MeshGpuUnderShaders` | false | 实验性（第 2 步 v2）：光影下也走常驻 VBO，pass 开在 Iris 自己那次手部 flush 之内。需 Iris 1.10.x；钩子失联自动回 collector。默认 false = 光影走 collector |
+| `MeshGpuWorld` | true | 世界语境也走常驻 VBO（第 3 步）：他人手持 / 掉落物 / 展示框 / 雕像。GUI/预览/镜内/阴影在提交侧拒收；钩子失联自动回 collector |
+| `MeshGpuWorldUnderShaders` | false | 实验性：光影下的世界 GPU 路径（需把自建管线登记进 Iris 实体 program，常量名待审计）。默认 false = 光影下世界走 collector（照明本来就正确） |
+| `MeshGpuLightCacheSize` | 4 | 世界 GPU 每模型缓存的量化光照档数（LRU，1-16）。每档显存 ≈ 模型顶点数；上游 TML 按未量化光照缓存 8 档 |
 
 > GPU 路径只接管**第一人称手部**语境；世界/GUI/第三人称/掉落物无论开关如何一律走
 > collector（第 1 步范围）。光影下还需 `MeshGpuUnderShaders` + 已审计 Iris + 存活证明
@@ -218,7 +247,20 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 8. **非 1.10.x 的 Iris**（如 1.11/旧版）：只 WARN 一次
    `needs the audited Iris hand-flush hook`，渲染行为与默认一致。
 
-### 5.4 已知边界（如实）
+### 5.5 第 3 步：世界语境常驻 VBO（实机，`MeshGpuWorld=true` 默认即开）
+
+逐条清单见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §4 末「待实机」。最关键的四条：
+
+1. **多人视角**：他人手持的 mesh 枪必须随相机正确移动 —— 「钉在视角方向上 / 转身时漂」
+   就是隔壁 26.2 分支踩到的那条坑；出现即说明 MV 取自了错误的时刻，别再挪烘焙时机。
+2. **预算解耦**：近处高模纯 mesh 枪不因预算整把消失；日志出现
+   `GPU world-baked N bones (M vertices) at quantized light …`。
+3. **光照打摆防护**：明暗边界上一排掉落枪时，`GPU world-baked` 只在前两次是 info 级；
+   逐帧刷说明 LRU 容量不够（调 `MeshGpuLightCacheSize`）或场景确实跨太多档。
+4. **不泄漏**：开背包 / 枪匠桌 / 热栏 / 开镜（F3+T 也来一次）之后，世界里不多画、
+   GUI 内不少画、不崩；显存不随重载单调增长（走延迟释放池）。
+
+### 5.6 已知边界（如实）
 
 - 第 1 步 GPU 只覆盖**无光影 + 第一人称手部**；世界/GUI/第三人称/掉落物仍走
   collector（36 万顶点级第三人称/掉落物仍有 CPU 成本，属后续步骤）。

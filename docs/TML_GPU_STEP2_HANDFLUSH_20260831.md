@@ -288,9 +288,111 @@ ShaderKey.findBestMatch(pipeline, ProgramId.fromAPI(program)))` → `coreShaderM
 
 ---
 
-## 4. 明确不做
+## 4. 第 3 步：世界语境的常驻 VBO（同一手法搬到 `LevelRenderer` 那次 flush）
+
+> 起因：隔壁分支 `arena/01a04e96-…`（**MC 26.2**）先做了世界语境 GPU 烘焙，
+> 实测出「枪固定在视角方向上」+「烘焙时机太局限」——与本文 §2.1 记录的**第 1 步手部症状同一形态**。
+> 本节记录 1.21.11 侧的证据与做法，并把可迁移的诊断结论写清楚。
+
+### 7.1 两个分支的架构差异（为什么不能照搬）
+
+| | 26.2（隔壁分支） | 1.21.11（本分支） |
+|---|---|---|
+| 世界渲染入口 | `net.minecraft.client.GameRenderer` → `LevelRenderer#render(...)` | `renderer.GameRenderer#renderLevel(DeltaTracker)` → `LevelRenderer#renderLevel(GraphicsResourceAllocator, DeltaTracker, boolean, Camera, Matrix4f, Matrix4f, Matrix4f, GpuBufferSlice, Vector4f, boolean)` |
+| feature 渲染 | `FeatureRenderDispatcher#prepareFrame(storage)` → `PreparedFrame.executeSolid()/executeTranslucent…`（solid/translucent **有拆分**，可分别在两个相位之后画） | **没有** `prepareFrame`/`executeSolid`：只有 `renderAllFeatures()`，逐个调 feature renderer，末尾 `submitNodeStorage.clear()`（本轮 `dumpWorldFlushProbe` 实测其尾部：`202: getfield submitNodeStorage / 206: SubmitNodeStorage.clear() / 209: return`） |
+| 谁真正 draw | `executeSolid` 内部（`StagedVertexBuffer` 直接绘） | `renderAllFeatures()` **只是写 builder**；真正 draw 是紧随其后的 `MultiBufferSource$BufferSource#endLastBatch()` |
+| 常驻 VBO 的画法 | `RenderType.prepare()` 压栈取 MV + `drawFromBuffer()`（26.2 有这两个 API） | 两者都不存在（可行性文档 §2.2）⇒ 只能**自己开 pass**，即本文 §1.2 的那套复刻 |
+
+`renderAllFeatures()` 在 1.21.11 的**全部三个调用点**（`dumpWorldFlushProbe` 输出，注意 1.21.11 的
+frame-graph 节点被编成 `method_NNNNN` 这种 intermediary 名的合成私有方法，所以只dump调用、不去 patch 它们）：
+
+```
+LevelRenderer.method_62214(GpuBufferSlice, LevelRenderState, ProfilerFiller, Matrix4f, ...)   // 主通道
+   298: profiler.popPush("renderFeatures")
+   310: featureRenderDispatcher.renderAllFeatures()
+   313: bufferSource.endLastBatch()                 <-- 实体/feature 几何在这里才 draw
+   321: checkPoseStack(poseStack)
+   326+: bufferSource.endBatch(RenderTypes.solidMovingBlock()) / endBatch(endPortal()) / ...
+
+LevelRenderer.method_62213(GpuBufferSlice, ResourceHandle, ResourceHandle)                      // 次级（particles/always-on-top 一类）
+   44: particlesRenderState.submit(storage, cameraRenderState)
+   51: featureRenderDispatcher.renderAllFeatures()
+   58: particlesRenderState.reset()
+
+ItemInHandRenderer.renderHandsWithItems                                                          // 手部（已由第 2 步 v2 处理）
+   281: renderAllFeatures()   294: bufferSource.endBatch()
+```
+
+### 7.2 本分支的做法与理由
+
+* **消费点**：`FeatureRenderDispatcher#renderAllFeatures` 的 `@At("RETURN")`（`require=0`），
+  新方法 `PolyMeshGpuRenderer#renderAtWorldFlush`。它同时命中主通道与次级那一次，
+  靠三条语境判据分流：`inHandPass` 直接返回（手部的表由 `ItemInHandRendererMixin` 在
+  `endBatch()` 之后消费，**不能在这里记存活证明**，否则世界钩子死了也会被手部调用点维持住）、
+  `IrisCompat.isRenderShadow()` 跳过不清表、
+  **`RenderSystem.outputColorTextureOverride != null` 跳过**（次级/离屏那一遍会把 override 设成
+  它自己的 `ResourceHandle` 目标 —— `LevelRenderer.method_75413` 里那两处 `putstatic` 是证据 ——
+  在那里开 pass 既画错地方又可能嵌在别的 pass 里）。
+* **时机差**：本钩子在 `endLastBatch()` **之前**，所以是「地形深度已就绪、实体几何还压在
+  builder 里」。这不破坏正确性：两侧都是 opaque + 深度写；而 mesh 枪自己的半透明部件仍走
+  collector，恰好被这次 `endLastBatch()` 画在我们之后（顺序反而更自然）。
+* **MV 语义（隔壁那条 bug 的正解）**：1.21.11 的 `RenderType#draw` 是
+  `0: RenderSystem.getModelViewStack() … 34: RenderSystem.getModelViewMatrix() → writeTransform`，
+  即 **collector 那批几何用的是「它自己 draw 当刻」的栈顶 MV**（`LevelRenderer#renderLevel`
+  在 `setupFrameGraph` 处 `pushMatrix()`，主通道节点就在这次 push 的范围内跑）。
+  因此 GPU pass 也必须在**同一时刻**现取 `getModelViewMatrix()`，再乘 submit 当刻的骨骼 pose；
+  任何「在别的时刻把 MV/pose 烘在一起」的做法都会把相机平移丢掉一半 ——
+  表现就是「几何跟着相机走 / 世界空间里钉死」。
+  实体 pose 侧：`EntityRenderDispatcher#submit(state, cameraRenderState, x, y, z, poseStack, collector)`
+  里的 `poseStack.translate(doubles…)` 传入的 x/y/z 已是相机相对
+  （另有 `Vec3.x/y/z().negate()` 的 translate 包在 pushPose/popPose 里）⇒
+  「pose 带平移、MV 只带旋转」这个代数在世界语境同样成立。
+* **烘焙时机（第二条 bug）**：世界表用**每模型的多光照档 LRU**
+  （`MeshGpuLightCacheSize`，默认 4）+ 每帧烘焙额度 + **延迟释放**（本帧 `WORLD_DRAWS` 可能已引用
+  被逐出的 VBO，下一帧 `beginFrame` 才 close）；并且**顶点预算只挡 collector**
+  （预算防的是 O(顶点) 的 CPU 提交成本，GPU 路径没有这个成本；若照旧先过预算闸门，
+  「16 格外高模枪整把消失」的老毛病就没解决）。提交侧闸门 `shouldSubmitGpuWorld()`
+  逐个封死：GUI 语境（`ItemDisplayContext` 名以 `GUI`/`FIXED_GUI` 开头的一律不收 —— 热栏图标在
+  HUD 提取时**没有 Screen**，`ScreenRenderTracker` 抓不到）、`FIXED`/`HEAD` 双面语境补
+  `RenderDistance.isGuiRender()`（已改为 public）、Screen 提取窗口、镜内那遍、阴影 pass、
+  以及手部 pass。
+* **镜内那一遍（PIP 二次渲染）**：**画，但不清表、不占 `worldConsumedFrame`**。
+  提交每帧只发生一次（`beginFrame` 清表、提取阶段登记），这里清了主画面就没得画；
+  而 collector 在镜内那遍是照常重放的（本仓 2026-08-30 的既有裁定：两遍内容必须一致）。
+  `ScopePipRerender#isInsideScopeLevelRender()` 是这次为此暴露出来的现成标志。
+* **光影**：世界 GPU 默认**只在没有光影包时启用**。光影下需要把自建管线
+  `tacz:pipeline/mesh_entity` 归入 Iris 的实体 program 才能受光，而 `IrisProgram` 里
+  对应常量名在本分支尚未审计（`dumpHandFlushApi` 现在会打全量常量表）——
+  所以另开 `MeshGpuWorldUnderShaders`（**默认 false**）。隔壁分支那边是靠
+  26.2 的 `RenderTypes.entityCutout(tex)` 现成管线走 `prepare()`，天然落在 Iris 已接管的
+  `ENTITY_CUTOUT` 上，这一点两个分支不等价，别照抄。
+* **失败自愈分级**：世界钩子抛 `Exception | LinkageError` 只累计计数，连续 30 次才把
+  **世界**路径关掉（`gpuWorldDisabledThisSession`），手部路径不受牵连 —— 世界那一次 flush
+  的环境比手部复杂（次级 frame-graph 节点可能正嵌在别的 pass 里），一处失败不该赔上另一处。
+
+### 7.3 待实机（世界路径，`MeshGpuWorld=true` 默认即开）
+
+- [ ] 多人/其他玩家手持 mesh 枪：位置**随相机移动正确**（这条就是隔壁踩的坑），
+      不钉在屏幕某处、不随转身漂。
+- [ ] 掉落物 / 展示框 / 展示台雕像：位置与投影正确；近处高模枪**不再因预算整把消失**。
+- [ ] 明暗边界上的一排掉落枪：日志只出现前两次
+      `GPU world-baked … level(s) cached`，不逐帧刷；稳态后 spark 里 `writeCutout` 不再是热点。
+- [ ] F3+T 重载：不泄漏（`loadPolyMesh` 走 `releaseWorldBaked()` → 延迟释放池）。
+- [ ] 开背包 / 枪匠桌 / 热栏：世界里的枪不受影响（`ScreenRenderTracker` + 语境闸门），
+      GUI 内的预览照旧 collector（不受 GPU 路径影响）。
+- [ ] 开镜（PIP 二次渲染，仅无光影）：镜内与镜外**都有** mesh 枪，且不重复计数。
+- [ ] 装 Iris：世界 mesh 枪自动回 collector（`MeshGpuWorldUnderShaders` 默认关）。
+- [ ] 光影下手动打开 `MeshGpuWorldUnderShaders`：先看日志里 `IrisProgram` 常量名与本仓
+      用的候选是否命中（`[TACZ Iris] Assigned mesh_entity_world to the Iris … program.`）；
+      没命中就是「画得出来但不受光」，属预期，不许当成已修。
+
+---
+
+## 5. 明确不做
 
 * 不 mixin Iris 内部类（`HandRenderer` / `GlCommandEncoder` / `RenderPass`）。
 * 不 patch `RenderType#draw`（全局热点，且错误注入会拖垮所有光影用户）。
 * 光影下的 translucent 骨骼仍走 collector（混合顺序交给 Iris）。
 * 阴影 pass、弹匣补画、预算闸门、格式量化/焊接等第 0 步语义一律不动。
+
+---

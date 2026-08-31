@@ -5,7 +5,57 @@
 
 ---
 
+## 未发版（2026-08-31，TML 第 3 步：世界语境常驻 VBO（`MeshGpuWorld`）；未改版本号）
+
+把第 2 步 v2 的同一手法搬到世界那一次 flush：**常驻 VBO + 每帧只上传 O(骨骼) 个矩阵**，
+覆盖他人手持 / 掉落物 / 展示框 / 展示台雕像。依据与逐条 javap 见
+[`TML_GPU_STEP2_HANDFLUSH_20260831.md`](TML_GPU_STEP2_HANDFLUSH_20260831.md) §4。
+
+- **消费点**：新增 `client.FeatureRenderDispatcherMixin` —— `@Inject(renderAllFeatures, RETURN)`
+  （`require=0`）。1.21.11 该方法有三个调用点（实测：`LevelRenderer` 主通道节点
+  `method_62214`、次级节点 `method_62213`、`ItemInHandRenderer#renderHandsWithItems`），
+  本钩子按语境分流：手部那次仍由 `ItemInHandRendererMixin` 在 `endBatch()` 之后消费，
+  阴影遍与 `outputColorTextureOverride != null`（离屏帧图节点）跳过且不清表。
+- **MV 语义（这是隔壁 26.2 分支同类改动出「相对视角钉死」的原因）**：1.21.11 的
+  `RenderType#draw` 是 `getModelViewStack()` + `34: getModelViewMatrix()` 现取，即
+  collector 那批几何用的是**它自己 draw 当刻**的栈顶；所以 GPU pass 也必须在同一时刻现取，
+  绝不能在别的时机把 MV 与 pose 烘在一起。`EntityRenderDispatcher#submit` 传入的 x/y/z
+  已是相机相对（另有 `Vec3.negate()` 的 translate 包在 pushPose/popPose 内），
+  「pose 带平移、MV 只带旋转」在世界语境同样成立。
+- **烘焙时机不再局限**：每模型 **多光照档 LRU**（`MeshGpuLightCacheSize` 默认 4）+ 每帧烘焙额度
+  + 延迟释放池（本帧 `WORLD_DRAWS` 可能已引用被逐出的 VBO，下一帧才 close）；
+  烘焙日志只有前两次是 info，避免逐帧刷屏。
+- **顶点预算只挡 collector**（`TaczPolyMeshGunModel#submit` 顺序调整）：GPU 路径没有 O(顶点)
+  的 CPU 成本可保护，照旧先过预算就等于「16 格外高模枪整把消失」没解决。
+- **提交侧闸门**：`PolyMeshGpuRenderer#shouldSubmitGpuWorld`（总闸 + `MeshGpuWorld` + 世界钩子
+  存活证明 + 非手部 / 非 Screen 提取 / 非镜内 / 非阴影 + 光影需 `MeshGpuWorldUnderShaders`）
+  与 `TaczPolyMeshGunModel#isWorldGpuContext`（`GUI`/`FIXED_GUI`* 一律拒收；`FIXED`/`HEAD`
+  再按 `RenderDistance.isGuiRender()` 挡枪匠桌预览）。
+- **镜内那一遍（PIP 二次渲染）**：画但不清表、不占本帧消费标志（提交每帧只登记一次）。
+  `ScopePipRerender#isInsideScopeLevelRender()` 为此从私有标志改为公开读取。
+- **光影下默认不走**：世界 GPU 要受光需要把 `tacz:pipeline/mesh_entity` 登记进 Iris 的实体
+  program，`IrisProgram` 常量名本分支还没审计 ⇒ 新加 `MeshGpuWorldUnderShaders`（默认 false），
+  `IrisCompat#assignMeshPipelineToEntity` 目前按候选名试探、失败无害。
+  （隔壁分支用现成 `RenderTypes.entityCutout` + `RenderType#prepare()` 天然落在 Iris 已接管的
+  管线上；1.21.11 **没有** `prepare()`/`drawFromBuffer()`，两条路不等价，见可行性文档 §2.2。）
+- `RenderDistance#isGuiRender` 由 private 改 public（只读时间戳判定，无行为变化）。
+- 配置：`MeshGpuWorld`（true）、`MeshGpuWorldUnderShaders`（false）、`MeshGpuLightCacheSize`（4），
+  全部接 Cloth Config + en_us / zh_cn 文案（parity 已核）。
+- TEMP 脚手架：`dumpWorldFlushProbe`（带上下文的字节码探针，回答「谁 flush、谁拥有 MV 栈」）；
+  `dumpHandFlushApi` 增加 `IrisProgram` **全量常量**输出，用于把上面那个候选名钉死。两个任务
+  都在 try/catch 内、发布前删。
+
+**验证状态（如实记录）**：**编译 + 静态审计（CI javap）为准，第 3 步没有任何实机结论。**
+待实机清单见 `MESH_LOADER.md` §5.5 与上述文档 §4 末；其中最要紧的一条是
+「他人手持的 mesh 枪必须随相机正确移动」——那是隔壁同题材改动踩到的坑。
+
+---
+
 ## 未发版（2026-08-31，TML 第 2 步 v2：mesh GPU pass 开进手部 flush；未改版本号）
+
+> **2026-08-31 更新：本节描述的实机验收由维护者报告 PASS**（含光影下常驻 VBO 正常受光、
+> 无光影回归不退化）。因此第 0/1/2 步不再是「仅编译通过」。`MeshGpuUnderShaders` 仍保持
+> 默认关闭 —— 它是实验位，别的机器/别的 Iris 小版本上的表现不在本报告范围内。
 
 **只做了一件事：把「常驻 VBO 在什么时刻画」这个决定改对，并据此把光影下的路径打通到可实机验证的程度。
 全部证据与逐条 javap 见 [`TML_GPU_STEP2_HANDFLUSH_20260831.md`](TML_GPU_STEP2_HANDFLUSH_20260831.md)。**
