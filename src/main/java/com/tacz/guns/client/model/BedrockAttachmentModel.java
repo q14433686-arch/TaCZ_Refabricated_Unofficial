@@ -473,7 +473,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     if (currentAimingProgress() <= TEXT_SHOW_AIM_START) {
                         return null;
                     }
-                    return new TextShowRender(this, textShow, currentGunItem);
+                    // 瞄具上的文字需要裁进目镜掩码（26.2 9d036594 语义）：延迟覆盖层 flush 时
+                    // 走 ScopeTextSubmitter 的孔径深度裁剪管线；掩码不可用时自动回退 vanilla。
+                    return new TextShowRender(this, textShow, currentGunItem, true);
                 }));
     }
 
@@ -669,12 +671,14 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             // 【镜内文字（弹药计数等）】bodySnapshot 的 capture 已把 text_show 节点的提交任务
             // 冻结进 functionalTasks（TextShowRender.extract），但上面 write(...) 只重放几何 ——
             // 任务若不显式 flush 就整个丢掉（这就是 26.1.2/1.21.11 镜内一直没有弹药文本的根因；
-            // 26.2 的 super.submit 路径天然带 flush，所以那边一直有）。默认（无光影、无 PIP）：
-            // 立即提交，默认 order(0) 落在 cleanup(-1) 之后、准星(1)之前；文字顶点被镜筒深度
-            // 正常剔除 —— 深度孔径架构里这等价于 26.2 的掩码裁剪（「移植语义而非代码」）。
+            // 26.2 的 super.submit 路径天然带 flush，所以那边一直有）。
+            // 裁剪语义（26.2 9d036594 的移植，勿再以「镜筒深度剔除」为由收尾 —— 该论断已被
+            // 实机证伪：TextShowRender 的 vanilla 文本管线不吃 scope body 深度）：瞄具文字
+            // 构造时带 clipToScopeMask=true，任务执行时优先走 ScopeTextSubmitter 的孔径深度
+            // 掩码管线（溢出圆孔的像素被丢弃）；掩码周期未就绪时自动回退 vanilla submitText。
             // 延迟覆盖层激活时（PIP 镜内画面 / 已审计 Iris 的 final-overlay）：文字与准星/镜框
             // 同族推迟，否则会被镜内放大画面或光影包后处理盖掉。R8/R9 HAND_TRANSLUCENT 回退
-            // 路径保持立即提交（该回退本就服务于未审计 Iris 版本，文字按场景内容处理）。
+            // 路径保持立即提交（该回退本就服务于未审计 Iris 版本）。
             // ocularSnapshots 的任务一并兜底：第三方镜的 text_show 节点可能挂在 ocular 子树下
             // （那时 bodySnapshot 因 ocular 临时隐藏而拿不到它）；每份快照的任务只 flush 这一次，
             // 不会因 aperture/cleanup 的两次几何重放而重复。

@@ -100,6 +100,22 @@ public final class ScopeRenderTypes {
     private static final RenderPipeline FINAL_VISIBLE_RETICLE_PIPELINE = createFinalVisibleReticlePipeline();
     private static final RenderPipeline FINAL_OCULAR_RING_PIPELINE = createFinalOcularRingPipeline();
 
+    /**
+     * Masked <b>text</b> pipeline for the post-composite overlay (in-scope ammo counters).
+     *
+     * <p>Bytecode-equivalent to vanilla {@link RenderPipelines#TEXT} (the pipeline behind
+     * {@code RenderTypes.text}, i.e. {@code WORLD_TEXT_SNIPPET + core/text}) with the fragment
+     * shader swapped for {@code core/scope_text_final} — that shader is a line-for-line clone of
+     * 26.1.2's {@code rendertype_text.fsh} plus the ocular depth mask and the final-overlay flag.
+     * This is the 26.1.2 depth-aperture counterpart of 26.2's {@code ScopeTextRenderTypes}
+     * (commit {@code 9d036594} + its {@code c4eb4e2} follow-up), reimplemented with the same
+     * {@code clonePipeline} machinery as the reticle pipelines instead of a snippet rebuild.</p>
+     */
+    private static final RenderPipeline MASKED_TEXT_PIPELINE = createMaskedTextPipeline();
+
+    /** Per-font-atlas-page masked text types (key = the shell page identifier). */
+    private static final Map<Identifier, RenderType> MASKED_TEXT_TYPES = new HashMap<>();
+
     private ScopeRenderTypes() {
     }
 
@@ -148,6 +164,37 @@ public final class ScopeRenderTypes {
 
     public static RenderType visibleReticle(Identifier texture) {
         return VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createVisibleReticleType);
+    }
+
+    /**
+     * Masked text type bound to one font-atlas page (see {@link com.tacz.guns.client.render.scope.ScopeTextSubmitter}).
+     *
+     * <p>Setup mirrors vanilla text's ({@code Sampler0 = the glyph page, useLightmap}) plus the
+     * two placeholder depth-sampler bindings that {@link ScopeDepthCopyState} replaces with the
+     * live world/aperture copies at the draw boundary. The wrapped {@code Operation.MASK} gives
+     * the type the exact same draw-boundary masking the etched reticle uses, so the glyphs only
+     * survive inside the true ocular footprint.</p>
+     */
+    public static RenderType maskedText(Identifier pageId) {
+        return MASKED_TEXT_TYPES.computeIfAbsent(pageId, ScopeRenderTypes::createMaskedTextType);
+    }
+
+    private static RenderType createMaskedTextType(Identifier pageId) {
+        RenderSetup setup = RenderSetup.builder(MASKED_TEXT_PIPELINE)
+                .withTexture("Sampler0", pageId)
+                // Placeholder bindings satisfy RenderPass validation; ScopeDepthCopyState rebinds
+                // both samplers to the live world/aperture depth copies when the mask draw runs.
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, pageId)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, pageId)
+                // Vanilla text's RenderSetup is exactly Sampler0 + useLightmap (no overlay).
+                .useLightmap()
+                .createRenderSetup();
+        RenderType base = RenderType.create("tacz_scope_masked_text", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_masked_text",
+                base,
+                ScopeDepthCopyState.Operation.MASK
+        );
     }
 
     /** Iris-only late etched reticle: writes foreground depth after world translucency. */
@@ -657,6 +704,29 @@ public final class ScopeRenderTypes {
 
         RenderPipeline pipeline = RenderPipelines.register(builder.build());
         IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_flash_swirl");
+        return pipeline;
+    }
+
+    private static RenderPipeline createMaskedTextPipeline() {
+        // Source of truth: vanilla's world-text pipeline (RenderTypes.text -> RenderPipelines.TEXT,
+        // core/text vsh+fsh, WORLD_TEXT snippet, POSITION_TEX_LIGHTMAP_COLOR quads). clonePipeline
+        // copies the vertex format/mode, defines, uniforms and depth state verbatim; only the
+        // fragment shader and the two depth-mask samplers are ours (scope_text_final.fsh comment
+        // documents the shader). Depth state stays TEXT's own — 26.2's clipped-text pipeline made
+        // the same choice (its WORLD_TEXT_SNIPPET base was kept untouched).
+        RenderPipeline.Builder builder = clonePipeline(
+                RenderPipelines.TEXT,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_masked_text"));
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_text_final"));
+        builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        // Classified as HAND_TRANSLUCENT (text is translucent material) so Iris maps it to the
+        // first-person hand program instead of rejecting an unknown pipeline. Same double-safety
+        // posture as the reticle: the mask machinery still binds its own depth copies.
+        IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_masked_text");
         return pipeline;
     }
 
