@@ -20,6 +20,8 @@ public final class MeshyConfig {
     public static ForgeConfigSpec.BooleanValue POLY_IN_PREVIEW;
     public static ForgeConfigSpec.BooleanValue LOG_STATS;
     public static ForgeConfigSpec.BooleanValue GPU_BAKING;
+    public static ForgeConfigSpec.BooleanValue GPU_WORLD;
+    public static ForgeConfigSpec.IntValue GPU_LIGHT_CACHE_SIZE;
     public static ForgeConfigSpec.BooleanValue GPU_UNDER_SHADERS;
     public static ForgeConfigSpec.IntValue GUI_MAX_VERTICES;
     public static ForgeConfigSpec.IntValue WORLD_MAX_VERTICES;
@@ -57,6 +59,24 @@ public final class MeshyConfig {
                 "the world pass (that was the closed PRs' wrong-screenshot bug).",
                 "Falls back to the collector path if the GPU pass fails.");
         GPU_BAKING = builder.define("MeshGpuBaking", true);
+
+        builder.comment("GPU static baking for WORLD contexts too: third-person guns held by",
+                "other players, dropped items, item frames and display statues draw from",
+                "the same resident VBOs, uploading O(bones) matrices per gun per frame",
+                "instead of transforming every vertex on the CPU. This is what makes",
+                "multiplayer with many high-poly mesh guns playable. Light is handled by",
+                "a small per-light-level VBO cache (see MeshGpuLightCacheSize).",
+                "Under shader packs world guns draw via the vanilla RenderType route",
+                "(same mechanism as first-person). Requires MeshGpuBaking.",
+                "Falls back to the collector path if the GPU pass fails.");
+        GPU_WORLD = builder.define("MeshGpuWorld", true);
+
+        builder.comment("How many quantized light levels of baked world VBOs to keep per gun",
+                "model (LRU). Upstream TML uses 8 unquantized levels; we quantize light",
+                "to a coarse grid first, so even 4 covers nearly all scenes. Each cached",
+                "level costs GPU memory proportional to the model's vertex count.",
+                "First-person baking is unaffected (it keeps a single level).");
+        GPU_LIGHT_CACHE_SIZE = builder.defineInRange("MeshGpuLightCacheSize", 4, 1, 16);
 
         builder.comment("Shader packs: force the RAW GPU pass (custom pipeline) instead of the",
                 "default vanilla-RenderType route. The default route feeds the resident VBOs",

@@ -14,7 +14,6 @@
   "commands.tacz.config.server_shoot_network_check.disabled": "§a§l[TACZ]§r 服务端射击网络检查已关闭",
   "commands.tacz.config.server_shoot_cooldown_check.enabled": "§a§l[TACZ]§r 服务端射击冷却检查已启用",
   "commands.tacz.config.server_shoot_cooldown_check.disabled": "§a§l[TACZ]§r 服务端射击冷却检查已关闭\n §6警告: 关闭此项会导致服务端完全不计算枪械开火冷却，这将导致潜在的作弊可能。你仅应该在经常完全无法开火的时候尝试关闭它。",
-
   "config.tacz.open_gunpack_folder": "打开枪包文件夹",
   "config.tacz.client.key": "按键",
   "config.tacz.client.key.hold_to_aim": "长按瞄准",
@@ -80,6 +79,10 @@
   "config.tacz.client.render.scope_pip_sharpness.desc": "重投影画面的抗模糊锐化强度（0.0 ~ 1.0）。",
   "config.tacz.client.render.mesh_gpu_baking": "Mesh 模型 GPU 烘焙",
   "config.tacz.client.render.mesh_gpu_baking.desc": "把第一人称 poly_mesh 枪模烘焙进常驻显存缓冲，每帧只上传骨骼矩阵。对 10 万顶点以上的高模枪械可大幅降低 CPU 开销。世界/GUI/掉落物不受影响。GPU 绘制失败时自动回退 CPU 路径。",
+  "config.tacz.client.render.mesh_gpu_world": "Mesh GPU 烘焙：世界场景",
+  "config.tacz.client.render.mesh_gpu_world.desc": "把 GPU 烘焙扩展到世界中的枪械：其他玩家第三人称手持、掉落物、展示框与展示台雕像共用同一套常驻显存缓冲，每把枪每帧只上传骨骼矩阵。多人游戏中满屏高模 mesh 枪时的帧数正靠它保住。不同光照由小型分档缓存处理（见光照缓存档数）。需要开启 Mesh 模型 GPU 烘焙。GPU 绘制失败时自动回退 CPU 路径。",
+  "config.tacz.client.render.mesh_gpu_light_cache_size": "Mesh GPU 世界光照缓存档数",
+  "config.tacz.client.render.mesh_gpu_light_cache_size.desc": "每个枪模保留多少个量化光照档的世界烘焙缓冲（LRU 淘汰）。同屏处于不同光照下的枪各需一份烘焙副本；4 档已覆盖绝大多数场景。每档占用与模型顶点数成正比的显存。第一人称烘焙不受影响。",
   "config.tacz.client.render.mesh_gpu_under_shaders": "Mesh GPU：光影下强制裸绘制（诊断用）",
   "config.tacz.client.render.mesh_gpu_under_shaders.desc": "开启光影包时，GPU 烘焙的 mesh 枪默认经由原版 RenderType 管道绘制，Iris 会像对待普通枪械一样为其套光影光照。打开本项则强制走裸 GPU 绘制：完全绕过光影管线（枪体无光影光照）。仅用于排查默认路径与个别光影包的兼容问题。",
   "config.tacz.client.render.mesh_world_full_detail_distance": "Mesh 世界全模距离",

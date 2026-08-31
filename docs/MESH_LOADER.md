@@ -4,9 +4,10 @@
 > `1.21.1_fabric` v0.1.7，作者 VellEagle，GPL-3.0。不是官方 TacZ 附属。
 > 署名与许可详情见仓库根 [`LICENSES.md`](../LICENSES.md)。
 >
-> **状态（2026-08-30）：安全子集 + GPU 静态烘焙均已实机 PASS。**
-> 实测覆盖：无光影第一人称、光影下第一人称（vanilla RenderType 路线）、
-> 世界语境近距全模（第三人称/掉落物/展示台）、光影开关切换（烘焙世代失效）。
+> **状态（2026-08-31）：安全子集 + 第一人称 GPU 静态烘焙已实机 PASS（08-30）；
+> 世界语境 GPU 烘焙（第 2 步）已实装、待实机验证（验证矩阵见 §5.2-bis）。**
+> 已实测覆盖：无光影第一人称、光影下第一人称（vanilla RenderType 路线）、
+> 世界语境近距全模（collector 路径）、光影开关切换（烘焙世代失效）。
 >
 > 路线图见 [`TML_PERF_DIRECTIONS_2026_08_29.md`](investigations/TML_PERF_DIRECTIONS_2026_08_29.md)。
 > 已完成其中的第 0 步（安全子集）与第 1 步（无光影 GPU 路径），
@@ -68,6 +69,33 @@
   否则旧 VBO 被新管线按错位 stride 解读，模型拉伸（实测复现过并修复 PASS）;
 - GPU 绘制失败自动回退 collector 路径并停用本会话 GPU（不崩不糊）。
 
+### 世界语境 GPU 烘焙（第 2 步，已实装，**待实机验证**）
+
+第三人称（其他玩家手持）/掉落物/展示框/展示台雕像共用同一套常驻 VBO，
+每把枪每帧登记 O(骨骼) 个矩阵进世界表（`WORLD_DRAWS`），在世界那次
+`renderAllFeatures` 的 `executeSolid` 之后统一绘制——多人满屏高模枪的
+CPU 成本从「每帧每枪 O(顶点)」降到「每帧每枪 O(骨骼)」。上游 TML 本就对
+一切非 GUI 场景走 VBO（`useVBO = !isRenderingScreen()`），本步是其 26.2
+submit/collector 架构下的等价物。要点：
+
+- **光照按量化档 LRU 缓存**（`MeshGpuLightCacheSize`，默认 4 档）：同屏
+  不同光照的枪各用各的档；逐出的 VBO 延迟一帧释放（本帧绘制表可能还引用）；
+  每帧新烘焙有额度闸门，病理场景（同帧光照档数超容量）回退 collector
+  而不是逐帧「逐出-重烘」打摆;
+- **提交侧防泄漏闸门**（关 PR #33/#69/#70/#71 的每个泄漏入口逐个封死）：
+  GUI 语境按 transformType 拒收（热栏图标无 Screen，事件拦不住）；Screen
+  内嵌 3D 预览（背包人偶/枪匠桌）用 Fabric ScreenEvents 精确框住 extract
+  窗口拦截（不用 100ms 时间戳窗口——那会「一开背包全场景跌回 collector」，
+  上游 TML 记载过的同款事故）；镜内那遍、阴影 pass、手部 pass 各自拒收;
+- **镜内 PIP 二次渲染**：世界表在镜内那遍照画但不清表（与 collector 的
+  「两遍内容一致」裁定同构），主画面那遍再正常消费;
+- 光影下走与第一人称相同的 vanilla RenderType 管道；世界 pass 里
+  ENTITY_CUTOUT 由 Iris 按 gbuffers_entities 链路接管（**此点未实测**，
+  若个别包异常，`MeshGpuWorld=false` 一键回到纯 collector 现状）;
+- 顶点预算（`MeshWorldMaxVertices`）只对 collector 回退路径生效——GPU
+  路径没有 O(顶点) 提交成本，预算对它没有保护对象；这同时意味着 16 格外
+  的纯 mesh 枪不再整层消失。
+
 ### 明确不包含（后续方向，见路线图）
 
 - 姿态缓存 / 三角形配对（路线图方向 2，collector 兜底路径的常数优化）。
@@ -121,6 +149,8 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 | `MeshMaxModelVertices` | 120000 | 加载时告警阈值（不影响渲染） |
 | `MeshLogStats` | true | 加载统计日志 |
 | `MeshGpuBaking` | true | 第一人称 GPU 静态烘焙总开关（已接 Cloth Config 界面） |
+| `MeshGpuWorld` | true | 世界语境（第三人称/掉落物/展示框/展示台）GPU 烘焙（需 MeshGpuBaking；已接 Cloth Config 界面） |
+| `MeshGpuLightCacheSize` | 4 | 每枪模保留的世界烘焙光照档数（LRU；已接 Cloth Config 界面） |
 | `MeshGpuUnderShaders` | false | 光影下强制裸 GPU pass（诊断用：绕过光影管线，枪体无光影光照） |
 
 ## 5. 验证清单
@@ -147,12 +177,26 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
    阴影里枪影仍在（立方体提供）。
 7. 资源重载（F3+T）：poly 仍正常（解析缓存失效并重建）。
 
+### 5.2-bis 世界 GPU 烘焙的待验证矩阵（2026-08-31 实装，全部**未实测**）
+
+1. 无光影：掉落一把高模 mesh 枪 → 位置/贴图/光照正确，日志出现
+   `GPU world-baked ... bones` 与 `GPU world mesh pass ... drew`;
+2. 第三人称（F5 或第二个客户端）：手持高模枪正确，换弹/开火动画正常
+   （逐骨骼矩阵天然跟随动画）;
+3. 展示台雕像/物品展示框：位置与投影正确;
+4. 打开背包/枪匠桌：GUI 预览照常（collector），**同屏世界里的 mesh 枪不消失
+   也不掉帧**（ScreenRenderTracker 只拦 Screen 提取窗口）;
+5. 明暗差异场景（洞口/火把旁）放多把枪：各枪光照正确，日志烘焙次数收敛
+   （不逐帧重烘）;
+6. 光影：世界 mesh 枪照明与立方体一致（gbuffers_entities 接管）——
+   **本项风险最高**，异常时 `MeshGpuWorld=false` 回退并回报;
+7. 开镜（PIP）：镜内那遍世界枪仍在（不消失、不双影）;
+8. 光影开关翻转：世界枪不拉伸（世代号失效链路与第一人称共用）。
+
 ### 5.3 已知边界（如实）
 
-- 第一人称的 O(顶点) CPU 成本已由 GPU 烘焙消除（无光影与光影下均生效）;
-  **世界语境（第三人称/掉落物/展示台）仍走 collector**，近距全模豁免范围内
-  的高模枪每帧仍有 O(顶点) CPU 变换成本——这是「眼前能看到完整高模」的
-  代价，预算与距离闸门保护远处/密集场景。
+- 第一人称与世界语境的 O(顶点) CPU 成本均已由 GPU 烘焙消除（世界侧待实测）;
+  collector 仅剩三类场景：GUI/Screen 预览、translucent 骨骼、GPU 失败回退。
 - PIP 二次渲染（`ScopePipRerender=true`）时镜内那遍的 poly 提交已跳过
   （纯白付的成本，镜内孔径本就不该有枪件）。
 - 在两个不同光影包之间直接切换（不经过关闭状态）不触发烘焙世代失效；

@@ -24,6 +24,9 @@ public final class TaczMeshyIntegration {
 
     public static void onClientSetup() {
         TaczPolyMeshGunModel.register();
+        // 世界 GPU 路径的 GUI 精确闸门（Screen extract 窗口探测），
+        // 语义与上游 TML 的 ScreenRenderTracker 一致。
+        cn.sh1rocu.tacz.compat.meshloader.render.ScreenRenderTracker.register();
         registerReloadListener();
     }
 

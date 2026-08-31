@@ -169,12 +169,14 @@ public abstract class FeatureRenderDispatcherMixin {
     }
 
     /**
-     * 第一人称 poly_mesh GPU 绘制：必须在 executeSolid <b>之后</b>。
+     * poly_mesh GPU 绘制：必须在 executeSolid <b>之后</b>。
      *
-     * <p>关 PR 画在 executeSolid 之前、并且用一张全局 WORLD 表，GUI/掉落物
-     * 会在世界 pass 里被画出去。这里只在手部 pass 消费 HAND_DRAWS
-     * （{@code renderAfterSolid} 内部判 {@code isInHandPass}），世界那次
-     * 直接把残留清空。</p>
+     * <p>两张表、同一个注入点，按 pass 分流（{@code renderAfterSolid} 内部判
+     * {@code isInHandPass} / 镜内 / 阴影）：手部 pass 消费 HAND_DRAWS，
+     * 世界 pass 消费 WORLD_DRAWS。与关 PR 的全局表不同，防泄漏靠<b>提交侧</b>
+     * 闸门（{@code shouldSubmitGpu} / {@code shouldSubmitGpuWorld}）——
+     * GUI/Screen 预览/镜内/阴影的 submit 根本进不了表，这里只负责
+     * 「在正确的 pass 用正确的 MV 画正确的表」。</p>
      *
      * <p>时机安全性与上面掩码同理：executeSolid 返回后不在任何 render pass 内，
      * {@code createRenderPass} 的 isInRenderPass 断言不会触发；且立方体几何
