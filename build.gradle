@@ -523,3 +523,90 @@ tasks.register('dumpHandFlushApi') {
     }
 }
 compileJava.finalizedBy dumpHandFlushApi
+
+// TEMP (world-context GPU baking probe): same channel as dumpHandFlushApi -- the sandbox has no JDK,
+// so the only way to read the real 1.21.11 renderer is to javap it inside CI and have the
+// compile-check workflow push the log back. This one answers the three questions the world table
+// hinges on: (1) where does LevelRenderer actually flush the collector geometry it collected,
+// (2) what is RenderSystem's model-view stack at that moment (is it still the view rotation the
+// batches were drawn with, or already restored), (3) does anything else override the render target
+// around there. Remove once the fix lands.
+tasks.register('dumpWorldFlushProbe') {
+    doLast {
+        // Diagnostics must never break the build: a finalizedBy failure would fail compileJava.
+        try {
+            def cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
+            def javapExe = 'javap'
+            for (String home : [System.getProperty('java.home'), System.getenv('JAVA_HOME')]) {
+                if (!home) {
+                    continue
+                }
+                def candidate = new File(new File(home), 'bin/javap')
+                if (candidate.exists()) {
+                    javapExe = candidate.absolutePath
+                    break
+                }
+            }
+
+            // Walk `javap -c -p <class>` and report only the instructions that mention one of the
+            // needles, tagged with the enclosing method and a few lines of context. That keeps the
+            // log small while still proving *ordering* (which call comes first) -- ordering is the
+            // whole question here, so a filtered member list would not be enough.
+            def probe = { String cls, List needles, int context ->
+                def cmd = [javapExe, '-classpath', cp, '-c', '-p', cls]
+                def proc = new ProcessBuilder(cmd).redirectErrorStream(false).start()
+                def out = proc.inputStream.getText('UTF-8')
+                def err = proc.errorStream.getText('UTF-8')
+                proc.waitFor()
+                println "===== [W-PROBE] ${cls} (needles: ${needles.join(', ')}) ====="
+                if (!out?.trim()) {
+                    println "  (no output) ${(err ?: '').trim()}"
+                    return
+                }
+                def lines = out.readLines()
+                def current = '<class>'
+                def hits = 0
+                lines.eachWithIndex { line, idx ->
+                    if (line ==~ /^  [^ ].*\);\s*$/) {
+                        current = line.trim()
+                        return
+                    }
+                    if (needles.any { n -> line.contains(n) }) {
+                        hits++
+                        int from = Math.max(0, idx - context)
+                        int to = Math.min(lines.size() - 1, idx + context)
+                        println "  --- in ${current} @${idx} ---"
+                        (from..to).each { j -> println '    ' + lines[j] }
+                    }
+                }
+                if (hits == 0) {
+                    println "  (no instruction matched)"
+                }
+            }
+
+            // 1. Where is the world's feature/collector flush, relative to the entity translucent
+            //    endBatch calls, the shadow pass and the method's own return?
+            probe('net.minecraft.client.renderer.LevelRenderer',
+                    ['renderAllFeatures', 'endBatch', 'getModelViewStack', 'setupRender',
+                     'outputColorTextureOverride', 'outputDepthTextureOverride'], 4)
+
+            // 2. Who owns the model-view stack around the level render (this decides whether a
+            //    pass opened at the world flush still gets the same ModelViewMat the batches used).
+            probe('net.minecraft.client.renderer.GameRenderer',
+                    ['getModelViewStack', 'setModelViewMatrix', 'renderLevel', 'viewRotation',
+                     'popMatrix', 'pushMatrix', 'lastRenderProjectionMatrix'], 3)
+
+            // 3. The dispatch side: entity poses are camera-relative, so the flush-time MV must be
+            //    rotation-only. Verify what EntityRenderDispatcher actually multiplies.
+            probe('net.minecraft.client.renderer.entity.EntityRenderDispatcher',
+                    ['subtract', 'translate', 'getModelViewStack', 'position'], 3)
+
+            // 4. FeatureRenderDispatcher: the full method list (small) + which phases exist.
+            probe('net.minecraft.client.renderer.feature.FeatureRenderDispatcher',
+                    ['renderAllFeatures', 'executeSolid', 'execute', 'prepareFrame', 'clear'], 2)
+        } catch (Throwable t) {
+            println "> dumpWorldFlushProbe failed (harmless, diagnostics only): ${t}"
+        }
+    }
+}
+compileJava.finalizedBy dumpWorldFlushProbe
