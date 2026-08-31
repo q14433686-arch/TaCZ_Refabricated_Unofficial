@@ -570,7 +570,18 @@ public final class ScopePipRenderState {
      * private GL textures, so they remain sampleable after Iris has finished binding depthtex2.</p>
      */
     public static void compositeAfterIrisFinal(Minecraft mc) {
-        if (!isEnabled() || failed || !sceneCaptured || mc == null) {
+        if (!isEnabled() || failed || mc == null) {
+            return;
+        }
+        if (ScopePipRerender.rerenderMode() && !ScopePipRerender.hasScene()) {
+            // 二次渲染模式：改看每帧在 renderScopeView 顶部重置的 hasScene()。本类的
+            // sceneCaptured 在窄遍停跑后无人清回 false（与 compositeAfterHand 同一滞留问题）
+            // —— 若用它做闸门，退出开镜后会把 scene target 里上一帧的旧画面作为最上层
+            // 贴片逐帧合成（实机：开关镜触发、静止不动的「截图」贴屏，2026-09-01）。
+            // 上一轮的「开镜即接管」拆掉了全 ADS 门这道意外的护栏，此病遂显形。
+            return;
+        }
+        if (!sceneCaptured) {
             return;
         }
         if (!IrisCompat.isUsingRenderPack() || !allowShaderPacks()
@@ -713,6 +724,26 @@ public final class ScopePipRenderState {
             builtPaintLens = paintLens;
         }
         return pipeline;
+    }
+
+    /**
+     * A {@link GpuTextureView} over this frame's pre-ocular world depth copy (id-cached). For the
+     * mesh-GPU hand body's outside-aperture clip, which binds the same live copies the composite
+     * samples. Returns {@code null} when the handle is not available.
+     */
+    public static GpuTextureView worldDepthViewFor(ScopeDepthCopyState.DepthHandle handle) {
+        if (!handle.available()) {
+            return null;
+        }
+        return worldView(handle);
+    }
+
+    /** See {@link #worldDepthViewFor(ScopeDepthCopyState.DepthHandle)}. */
+    public static GpuTextureView apertureDepthViewFor(ScopeDepthCopyState.DepthHandle handle) {
+        if (!handle.available()) {
+            return null;
+        }
+        return apertureView(handle);
     }
 
     private static ImportedDepthTextureView worldView(ScopeDepthCopyState.DepthHandle handle) {
