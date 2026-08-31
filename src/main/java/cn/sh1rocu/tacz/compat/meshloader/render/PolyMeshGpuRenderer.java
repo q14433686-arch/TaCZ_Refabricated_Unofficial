@@ -32,6 +32,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -915,6 +916,8 @@ public final class PolyMeshGpuRenderer {
         indices.getBuffer(maxIndexCount);
 
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+        // 法线修复用的 MV 栈（见下方 per-draw 的 push/pop 注释；26.2 83daf16 同理移植）。
+        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
         // 这里不在任何 render pass 内（原版每个批次自己 createRenderPass + close），
         // createRenderPass 的断言安全。
         // 颜色 OptionalInt.empty() = 不清屏，深度 OptionalDouble.empty() = 不清深度。
@@ -948,12 +951,30 @@ public final class PolyMeshGpuRenderer {
                 pass.bindTexture("Sampler0", textureView, linearSampler);
 
                 for (DrawEntry entry : group.getValue()) {
-                    pass.setUniform("DynamicTransforms", transformByEntry.get(entry));
-                    pass.setVertexBuffer(0, entry.bone().vertexBuffer);
-                    pass.setIndexBuffer(indices.getBuffer(entry.bone().indexCount), indices.type());
-                    // 1.21.11 drawIndexed(baseVertex, firstIndex, count, instanceCount)：
-                    // 顺序索引缓冲 0..count-1，故 baseVertex=0、firstIndex=0、单实例。
-                    pass.drawIndexed(0, 0, entry.bone().indexCount, 1);
+                    // 【法线修复 · 26.2 83daf16 同理移植】绘制执行期间把该骨骼的 pose 压到
+                    // RenderSystem MV 栈顶（栈顶 = flushMV × pose_bone），画完立即弹出。
+                    // 位置走的是 prepare/writeTransform 的 DynamicTransforms 快照（早已正确），
+                    // 但光影包的 gl_NormalMatrix（被 Iris 改名 iris_NormalMat）不来自快照 ——
+                    // Iris 26.x ExtendedShader.iris$setupState 在【绘制执行那一刻】读
+                    // getModelViewMatrixCopy() 的栈顶做逆转置（iris_ModelViewMatInverse 同源）。
+                    // 我们的顶点法线是骨骼本地系裸写（writeRaw），指望这个矩阵补上全部旋转；
+                    // 不压栈时 setupState 读到的栈顶只有相机 MV，pose_bone 的旋转层丢失 ⇒
+                    // 法线仍朝骨骼本地方向 ⇒ 光影的平行光/反射按错误法线算（「反光的光源
+                    // 关系不对」，26.2 用户实测同症状）。vanilla 无光影路径不受此病影响，
+                    // 且 pass 内没有别的消费者读这个栈 —— 无条件压/弹保持「栈顶 = 该次
+                    // draw 的真实 MV」这一不变量。
+                    modelViewStack.pushMatrix();
+                    modelViewStack.mul(entry.model());
+                    try {
+                        pass.setUniform("DynamicTransforms", transformByEntry.get(entry));
+                        pass.setVertexBuffer(0, entry.bone().vertexBuffer);
+                        pass.setIndexBuffer(indices.getBuffer(entry.bone().indexCount), indices.type());
+                        // 1.21.11 drawIndexed(baseVertex, firstIndex, count, instanceCount)：
+                        // 顺序索引缓冲 0..count-1，故 baseVertex=0、firstIndex=0、单实例。
+                        pass.drawIndexed(0, 0, entry.bone().indexCount, 1);
+                    } finally {
+                        modelViewStack.popMatrix();
+                    }
                 }
             }
             boolean already = worldPass ? loggedFirstWorldDraw : loggedFirstDraw;
