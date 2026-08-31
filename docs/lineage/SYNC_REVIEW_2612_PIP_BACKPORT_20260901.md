@@ -64,9 +64,17 @@ PIP 的窄 FOV 遍在主遍**之前**多调一次 `renderLevel` ⇒ 把袋子消
     **两次**调 `FeatureRenderDispatcher.renderAllFeatures()`（主通道一次、粒子节点一次）⇒ 窄遍的提交在
     窄遍内部就冲掉了，不会攒到主遍变成重影/半透明加倍；他们的 `LevelRendererAccessor` 在我们这边技术上
     可行（字段名可访问），只是没有要防的东西。
-  - ⚠ 「同一个方法体 = `renderLevel`」这一步目前是从偏移归零规律推的，方法名归属要等 v5 的**带上下文**
-    dump（v5 已把 needle 命中行连同前 9 行的方法签名一起打出来）⇒ 若归属不在 `renderLevel` 而在别处，
-    A 的判定**重开**。
+  - v5 把这段偏移序列的上下文也打了出来（命中行 + 前 9 行），能看见 `197 extractVisibleEntities` /
+    `219 extractVisibleBlockEntities` / `239 extractBlockOutline` / `259 extractBlockDestroyAnimation` /
+    `292 getfield levelRenderState.weatherRenderState` / `324 …skyRenderState` 一路到
+    `1001 LevelTargetBundle.clear()` / `1021 LevelRenderState.reset()`，中间夹着
+    `ProfilerFiller.push("entities"/"blockEntities"/"blockOutline"/"blockBreaking")` —— 这是渲染主入口的
+    轮廓，不是某个只在分支里走的私有方法；
+  - ⚠ 严谨说明：needle 上下文窗口没把方法签名行带进来，所以「这个方法体就叫 `renderLevel`」仍是
+    **交叉推证**（dump 的类头是 `net.minecraft.client.renderer.LevelRenderer`；填袋与清袋在同一段偏移里；
+    本类清单里除 `renderLevel` 外没有第二个含 `targets.clear()` 尾部的入口）。**判定的强度不依赖方法名**：
+    要害是"填 + 清"发生在 LevelRenderer 自己的一次调用链内 ⇒ 换遍数不会饿着主遍。若日后有人实机发现
+    `SCOPE_PIP_RERENDER=true` 时镜外内容缺失，这条判据要重新过一遍（按 AGENTS §3，编译与 javap 都不等于运行时安全）。
 
 ⇒ **判定：A 不加。** 他们的第 2 步（重提取）在我们世代结构上不成立 —— 没有"主遍之前一次性填好、消费即清空"
 的相位；他们的第 1 步（清提交节点）对我们是空操作 —— 窄遍自己那次 `renderAllFeatures()` 已经 clear 过。
@@ -171,8 +179,17 @@ v4 把 B 剩下的疑问基本清掉了，**逐条映射**如下（左：他们 
 | 接入点 | 我们的 `TextShowRender` 与他们改前逐字同形 | 照抄他们的 `clipToScopeMask` 旗 + 失败回退 vanilla `submitText` |
 
 ⇒ 新增文件实际只有 **1 个 shader + 1 个类**（`ScopeTextSubmitter`，约 150-180 行），其余都是既有类各加一段。
-**v5 只剩一件事**：`RenderSetup$RenderSetupBuilder` 的全部 `withTexture` 重载（决定要不要壳纹理），
-顺带把 A 的方法归属钉死。
+**v5 已答的最后一件事**：`RenderSetup$RenderSetupBuilder` 的公开纹理入口只有
+`withTexture(String, Identifier)` 与 `withTexture(String, Identifier, Supplier<GpuSampler>)` 两个
+（`RenderSetup$TextureAndSampler` 是 `record(GpuTextureView, GpuSampler)`，但只在
+`RenderSetup#getTextures()` 侧暴露，没有"直接塞 view"的 builder 重载）
+⇒ **他们的壳纹理方案在本世代是必需的，不是历史包袱**：照 `PageHandle` 那套
+`register(Identifier, AbstractTexture 子类)` + 每帧把 protected `textureView`/`sampler` 字段指向当前图集页。
+`AbstractTexture` 在本世代只有 `getTexture()/getTextureView()/getSampler()` 三个 public 读口 + 同名
+protected 字段（javap 实测）⇒ 空壳子类可以直接赋字段，不需要 `prepareTexture`
+（`com.mojang.blaze3d.platform.TextureUtil` 在本世代**没有** FILTER/prepareTexture 相关公开成员，探针打空）。
+另外 `Font$DisplayMode` = `NORMAL / SEE_THROUGH / POLYGON_OFFSET` ⇒ 若要覆盖"穿透方块"的文字，
+管线要从 `TEXT_SEE_THROUGH` 再克隆一族；镜内 `text_show` 不需要，先只做 `TEXT` 一族即可。
 
 ---
 
@@ -236,4 +253,8 @@ v4 把 B 剩下的疑问基本清掉了，**逐条映射**如下（左：他们 
   挂探针 v3 并把 A 判死（javap 级依据，见 §1.2）；把 v3 的结论落进 `ScopePipRerender` 类注释，让那条
   "防护留给后续阶段"的欠账结案（注释改动，零行为变化，实机结论一概不给）；把 B 的形状按 v3 结果重写
   （§2.1）；把 v3 的 TEMP 块升级为 v4 继续问 B 剩下的三件事。
-- 沙箱里没有 JDK、没有 MC jar，所有世代事实只能走 CI 通道 ⇒ 探针块的存在期就是"下一轮"，结论到手即删。
+- 沙箱里没有 JDK、没有 MC jar，所有世代事实只能走 CI 通道：v3/v4/v5 三轮探针（`build.gradle` 的 TEMP 块）
+  已把上面这些事实全部取回，**TEMP 块本轮已删除**，`build.gradle` 回到只剩
+  `-PmeshProbe` 那条 opt-in 通道的状态（AGENTS：不许把每帧跑的探针留在树里）。
+- 未做（下一轮的直接工作，条件已齐）：B 的六个改动点（§2.2 那张表就是施工单）与 C。
+  B 不需要再等任何事实；它需要的是**你的优先级判断**，因为动的是字体绘制与一条新的 `RenderType` 族。
