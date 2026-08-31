@@ -93,6 +93,14 @@ public final class ScopePipRenderState {
      * Before this the source region can overlap the viewmodel (see compositeAfterIrisFinal).
      */
     private static final float IRIS_FULL_AIM_THRESHOLD = 0.995f;
+    /**
+     * 二次渲染合成在开镜滑入中开始显示的进度阈（远低于重投影路径的
+     * {@link #IRIS_FULL_AIM_THRESHOLD}：窄 FOV 真画没有「中心叠着 viewmodel」的约束，
+     * 只需避开开/退镜边界的枪身位置——开镜第 1 帧/退镜末帧的镜孔掩码还在髋部枪身
+     * 上，那时合成会把镜内画面贴片在枪身上闪现一下（实机 2026-09-01）。滑入途中
+     * 镜内即有画面的裁定不受影响：阈值只遮掉贴着枪身的那一小段）。
+     */
+    private static final float RERENDER_REVEAL_THRESHOLD = 0.35f;
 
     private static RenderPipeline pipeline;
     private static int builtLensZoom1k = -1;
@@ -554,6 +562,11 @@ public final class ScopePipRenderState {
             if (!ScopePipRerender.hasScene()) {
                 return;
             }
+            // 开/退镜边界闪一下（实机 2026-09-01）：见 RERENDER_REVEAL_THRESHOLD。
+            if (currentAimingProgress(mc, mc.getDeltaTracker()
+                    .getGameTimeDeltaPartialTick(false)) < RERENDER_REVEAL_THRESHOLD) {
+                return;
+            }
         } else if (!sceneCaptured) {
             return;
         }
@@ -583,6 +596,13 @@ public final class ScopePipRenderState {
             return;
         }
         if (!sceneCaptured) {
+            return;
+        }
+        // 同 compositeAfterHand 的滑入显示阈：只约束二次渲染分支（重投影分支在下方
+        // 沿用 IRIS_FULL_AIM_THRESHOLD 全 ADS 门，不动）。
+        if (ScopePipRerender.rerenderMode()
+                && currentAimingProgress(mc, Minecraft.getInstance().getDeltaTracker()
+                        .getGameTimeDeltaPartialTick(false)) < RERENDER_REVEAL_THRESHOLD) {
             return;
         }
         if (!IrisCompat.isUsingRenderPack() || !allowShaderPacks()
