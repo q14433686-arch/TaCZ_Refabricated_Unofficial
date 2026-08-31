@@ -605,21 +605,41 @@ public final class PolyMeshGpuRenderer {
         for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
             RenderType renderType = RenderTypes.entityCutout(group.getKey());
             for (DrawEntry entry : group.getValue()) {
-                // MV = MV_draw(栈顶) × pose_bone。压栈让 prepare() 自己取，
-                // 弹栈还原 —— 不污染后续 executeTranslucent 的矩阵状态。
+                // MV = MV_draw(栈顶) × pose_bone。压栈让 prepare() 自己取。
+                //
+                // 【弹栈必须在 drawFromBuffer 之后 —— 法线病灶】首版在 prepare()
+                // 后立即弹栈，位置对但光照/反光全错。根因（Iris 26.2
+                // ExtendedShader.iris$setupState 源码实读）：
+                //
+                //   if (normalMat > -1) {
+                //       tempF = RenderSystem.getModelViewMatrixCopy()
+                //           .invert(tempMatrix4f).transpose3x3(normalMatrix).get(tempF);
+                //       IrisRenderSystem.uniformMatrix3fv(normalMat, false, tempF);
+                //   }
+                //
+                // 光影包的 gl_NormalMatrix（被 Iris 改名 iris_NormalMat）不来自
+                // prepare() 快照的 DynamicTransforms，而是【绘制执行那一刻】的
+                // RenderSystem MV 栈顶的逆转置（iris_ModelViewMatInverse 同源）。
+                // 我们的顶点法线是骨骼本地系（writeRaw 裸写），指望这个矩阵补上
+                // 全部旋转 —— 弹早了，setupState 读到的栈顶只剩 MV_draw，
+                // pose_bone 的旋转层丢失 ⇒ 法线仍朝骨骼本地方向 ⇒ 光影的
+                // 平行光/反射按错误法线算 ⇒「反光的光源关系不对」（实测症状）。
+                // 位置不受影响：ModelViewMat 走的是 prepare() 快照，早已正确。
+                //
+                // vanilla 无光影路径不受此病影响：核心 entity shader 的
+                // NO_CARDINAL_LIGHTING 分支根本不用法线。
                 mvStack.pushMatrix();
                 mvStack.mul(entry.model());
-                PreparedRenderType prepared;
                 try {
-                    prepared = renderType.prepare();
+                    PreparedRenderType prepared = renderType.prepare();
+                    RenderSystem.AutoStorageIndexBuffer indices =
+                            RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
+                    GpuBuffer indexBuffer = indices.getBuffer(entry.bone().indexCount);
+                    prepared.drawFromBuffer(entry.bone().vertexBuffer, indexBuffer, indices.type(),
+                            0, 0, entry.bone().indexCount);
                 } finally {
                     mvStack.popMatrix();
                 }
-                RenderSystem.AutoStorageIndexBuffer indices =
-                        RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
-                GpuBuffer indexBuffer = indices.getBuffer(entry.bone().indexCount);
-                prepared.drawFromBuffer(entry.bone().vertexBuffer, indexBuffer, indices.type(),
-                        0, 0, entry.bone().indexCount);
                 totalIndices += entry.bone().indexCount;
             }
         }
