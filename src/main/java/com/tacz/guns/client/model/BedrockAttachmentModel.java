@@ -673,10 +673,16 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             // 381 行），所以那边一直有；本分支把 body 改成自己按序重放之后，这一句被绕开了。
             //
             // 非延迟情形用 collector 的默认 order(0)：落在 depthCleanup(-1) 之后、准星
-            // (SCOPE_RETICLE_ORDER=1) 之前。文字走 vanilla 字体管线，被镜筒深度正常剔除 ——
-            // 在深度孔径这套架构里就等价于 26.2 的镜内掩码裁剪（对齐的是语义不是代码）。
-            // 注意不要"顺手"给字体也开 GL_ALWAYS：GlCommandEncoderScopeDepthCopyMixin 那份白名单
-            // 只覆盖 TACZ 自己的 scope RenderType，vanilla 文本管线不在里面，也不该在。
+            // (SCOPE_RETICLE_ORDER=1) 之前，保证「镜内画面 → 文字 → 准星 → 镜框」的物理层序。
+            //
+            // 【2026-09-01 更正】这里曾经写「文字走 vanilla 字体管线，会被镜筒深度剔掉，因此等价于
+            // 26.2 的镜内掩码裁剪」——那句**已被 26.1.2 的实机证伪**（他们据此在 e1c550ee 改成掩码
+            // 裁剪）：submitText 下游是 vanilla 字体管线（TextFeatureRenderer → GlyphRenderTypes 写死的
+            // RenderType），不吃 scope body 写入的孔径深度，所以镜孔外的像素照画。本文件因此**只**保证
+            // 层序正确，不保证裁剪；裁剪需要 ScopeTextSubmitter + maskedText 那条路（评估见
+            // docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md §B）。
+            // 也不要"顺手"给字体开 GL_ALWAYS：GlCommandEncoderScopeDepthCopyMixin 的白名单只覆盖 TACZ
+            // 自己的 scope RenderType，给 vanilla 文本开只会把溢出问题变成穿透问题。
             //
             // 延迟覆盖层激活时（PIP 镜内画面 / 已审计过 final-overlay 的 Iris）与准星、镜框同族
             // 推迟，否则会被镜内放大画面或光影包后处理盖掉；R8/R9 的 HAND_TRANSLUCENT 回退路径

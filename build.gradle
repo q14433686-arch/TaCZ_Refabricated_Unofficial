@@ -396,4 +396,99 @@ if (project.hasProperty('meshProbe')) {
     apply from: 'scripts/mesh_render_probe.gradle'
 }
 
+// TEMP (2026-09-01 v3, 26.1.2 PIP 回移植评估的前置取证). 沙箱无 JDK / 无 MC jar，两件事只能靠 CI 的
+// 真编译类路径回答：(A) 1.21.11 的 LevelRenderer 有没有「每帧一次 extract + 一次性状态袋」那套
+// (决定要不要抄 0bf4c482 的重提取)，(B) 1.21.11 的字体/管线 API 是否与 26.1.2 同形
+// (决定 ScopeTextSubmitter 能不能落)，以及本 era rendertype_text.fsh 的原文（克隆掩码着色器要用）。
+// 输出进 build-reports/compile-java.log（CI 会 commit 回来）。结论到手后删除本块。
+tasks.register('dumpPipPortProbeV3') {
+    doLast {
+        try {
+            def cpFiles = sourceSets.main.compileClasspath.files.collect { it.absolutePath }
+            def cp = cpFiles.join(File.pathSeparator)
+            def javapExe = 'javap'
+            for (String home : [System.getProperty('java.home'), System.getenv('JAVA_HOME')]) {
+                if (!home) {
+                    continue
+                }
+                def candidate = new File(new File(home), 'bin/javap')
+                if (candidate.exists()) {
+                    javapExe = candidate.absolutePath
+                    break
+                }
+            }
+            def dump = { String cls, List needles ->
+                def cmd = [javapExe, '-classpath', cp, '-p'] + [cls]
+                def proc = new ProcessBuilder(cmd).redirectErrorStream(false).start()
+                def out = proc.inputStream.getText('UTF-8')
+                def err = proc.errorStream.getText('UTF-8')
+                proc.waitFor()
+                println "===== javap -p ${cls} ====="
+                if (!out?.trim()) {
+                    println "(no output) ${(err ?: '').trim()}"
+                    return
+                }
+                out.readLines().each { line ->
+                    if (!line.trim()) {
+                        return
+                    }
+                    if (needles.isEmpty() || needles.any { n -> line.contains(n) }) {
+                        println '  ' + line.trim()
+                    }
+                }
+            }
+            // ---- A: 逐帧状态袋是否存在 ----
+            dump('net.minecraft.client.renderer.LevelRenderer', ['extractLevel', 'renderLevel', 'LevelRenderState'])
+            dump('net.minecraft.client.renderer.LevelRenderState', [])
+            dump('net.minecraft.client.renderer.GameRenderer', ['extract', 'renderLevel'])
+            dump('net.minecraft.client.renderer.SubmitNodeStorage', ['clear', 'endFrame'])
+            // ---- B: 字体级 API 同形性 ----
+            dump('net.minecraft.client.gui.Font', ['prepareText', 'DisplayMode'])
+            dump('net.minecraft.client.gui.Font$PreparedText', [])
+            dump('net.minecraft.client.gui.Font$GlyphVisitor', [])
+            dump('net.minecraft.client.gui.font.TextRenderable', [])
+            dump('net.minecraft.client.gui.font.TextRenderable$Styled', [])
+            dump('com.mojang.blaze3d.pipeline.RenderPipelines', ['TEXT'])
+            dump('net.minecraft.client.renderer.RenderType', ['text', 'Text'])
+            // ---- B 的另一半：本 era 的 rendertype_text 原文（克隆掩码 fsh 的底版）----
+            println '===== shader sources from the compile classpath ====='
+            def wanted = ['rendertype_text.fsh', 'rendertype_text.vsh', 'rendertype_text.json', 'rendertype_text_intensity.fsh']
+            def seen = [] as Set
+            for (String path : cpFiles) {
+                def f = new File(path)
+                if (!f.isFile() || !(f.name.endsWith('.jar'))) {
+                    continue
+                }
+                try {
+                    def zip = new java.util.zip.ZipFile(f)
+                    try {
+                        def entries = zip.entries()
+                        while (entries.hasMoreElements()) {
+                            def e = entries.nextElement()
+                            def nm = e.name
+                            if (nm.contains('shaders/core/') && wanted.any { w -> nm.endsWith(w) } && !seen.contains(nm)) {
+                                seen.add(nm)
+                                println "----- ${nm} (from ${f.name}) -----"
+                                def text = zip.getInputStream(e).getText('UTF-8')
+                                text.readLines().each { ln -> println '  ' + ln }
+                            }
+                        }
+                    } finally {
+                        zip.close()
+                    }
+                } catch (Throwable ignored) {
+                    // 非 jar 条目或损坏 jar：诊断不能把构建拖红
+                }
+            }
+            if (seen.isEmpty()) {
+                println '(no shader core entries found on the compile classpath - jar layout changed?)'
+            }
+        } catch (Throwable t) {
+            println "(pip port probe failed, ignored: ${t})"
+        }
+    }
+}
+compileJava.finalizedBy('dumpPipPortProbeV3')
+
+
 

@@ -93,8 +93,14 @@ storage）。本仓 `SubmitNodeStorage` 就是 collector 这件事有现成旁�
 （`BedrockGunModel`）本来就走 `BedrockModel.submit`，不受影响。
 
 顺带核过、**不需要**动的：`GlCommandEncoderScopeDepthCopyMixin` 的 `GL_ALWAYS` 白名单只匹配 TACZ 自己的
-scope RenderType，vanilla 字体管线不在也不该在 —— 文字要的正是「被镜筒深度剔掉」这个行为
-（本分支的孔径架构里它就等价于 26.2 的掩码裁剪）。
+scope RenderType，vanilla 字体管线不在也不该在 —— 但**别据此以为文字会被裁进镜孔**：
+
+**（2026-09-01 更正）本节上一版在这里断言「文字要的正是被镜筒深度剔掉这个行为，在本分支的孔径架构里
+等价于 26.2 的掩码裁剪」。该论断已被 26.1.2 的实机证伪，他们据此在 `e1c550ee` 改走掩码裁剪。原因：
+`submitText` 下游是 vanilla 字体管线（`TextFeatureRenderer` → `GlyphRenderTypes` 三件套写死 RenderType），
+**不吃** scope body 写入的孔径深度 ⇒ 镜孔外的像素照画。所以本轮 flush 只保证「层序正确」（画面→文字→
+准星→镜框），不保证「裁进镜孔」；裁剪是 §B 待加项，见
+`docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md`。）**
 
 ---
 
@@ -102,11 +108,13 @@ scope RenderType，vanilla 字体管线不在也不该在 —— 文字要的正
 
 - **静态层面已闭合**：`submitFunctionalTasks` 从「全仓 1 处、且不在瞄具路径」变成「瞄具两条分支都覆盖」；
   任务来源、采集点、丢失点、修复点四处都能对上代码（§1）。
-- **实机未验证实机**：本轮只做了代码改动与 CI 编译。下面 §4 是验收剧本，**没跑过之前不要宣称已修好**。
+- **实机未验证**：本轮只做了代码改动与 CI 编译。下面 §4 是验收剧本，**没跑过之前不要宣称已修好**。
 - **已知残留（不是本轮范围）**：
-  ① 延迟覆盖层那一格（Iris final-overlay / PIP）里文字在**覆盖层阶段**画，镜筒深度已不参与 ⇒
-  贴边的计数（26.2 记过 MK5HD 文本在 `y=22.375`、目镜 `y=21.875`）**仍可能溢出圆孔边缘**；
-  要真正裁掉需要把 26.2 的 `ScopeTextSubmitter` + `scope_text.*sh` 那套移植过来，本分支现在没有。
+  ① **镜内文字当前没有任何裁剪**（上一版把范围写小了，只说延迟那一格）：字体管线不吃孔径深度 ⇒
+  **立即路径与延迟路径都会溢出圆孔**，延迟格只是更明显。贴边数据（26.2 记过 MK5HD 文本在
+  `y=22.375`、目镜 `y=21.875`）说明这不是理论风险；正解 = 26.2 `9d036594` 的语义 + 本分支的掩码管线
+  （`ScopeTextSubmitter` + `maskedText`），本分支**未移植**，评估与成本见
+  `docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md` §B；
   ② `deferReticleToIrisTranslucent`（未审计的旧 Iris 回退路径）保持**立即提交**，文字可能被光影包
   后处理盖掉一层 —— 与准星在那条回退路径上的既有取舍一致。
   ③ 掩码 `SCOPE_MASK_ENABLE=false` 时不成立 `orderedScopeSequence`，走 `else` 分支 ⇒ 文字常显（不裁），
@@ -127,7 +135,7 @@ scope RenderType，vanilla 字体管线不在也不该在 —— 文字要的正
 
 | # | 条件 | 期望 | 若不符 |
 |---|---|---|---|
-| A | 无光影，`SCOPE_MASK_ENABLE=true`（默认） | 开镜进度过 0.35 后文字出现在镜内，**不越过镜筒边缘**（被深度剔掉）；日志有 `Flushed N in-lens text task(s) … (scopeMask=true)` | 日志有、屏幕无 ⇒ 文字在但被镜筒深度整段剔了（位置问题，不是本条）；日志也没有 ⇒ 查 `TextShow` 是否配在 attachment display 上、`PapiManager` 是否返回空串 |
+| A | 无光影，`SCOPE_MASK_ENABLE=true`（默认） | 开镜进度过 0.35 后文字出现在镜内，层序为画面→文字→准星→镜框；日志有 `Flushed N in-lens text task(s) … (scopeMask=true)` | ⚠ 上一版此处「不越过镜筒边缘（被深度剔掉）」**作废**：没有机制会剔它 ⇒ 贴边溢出属 §B 待加项，不是 flush 回归 |
 | B | 无光影，`SCOPE_MASK_ENABLE=false` | 文字常显（可能在镜筒外也看得到，属预期）；日志 `… (scopeMask=false)` | 走到 `else` 分支，正是 §2.2 差别① 那一格 ⇒ 若这里没文字而 A 有，说明只有 text 的快照又被 `isEmpty()` 门挡了（本分支已挪出门外） |
 | C | 有光影（Iris 已审计的 final-overlay 路径），PIP 关 | 文字与准星同批出现，不被雾/后处理盖掉；日志出现一次 `[TACZ Scope] Rendered deferred reticle, ocular rim and scope text after the final cover (N reticles, M rims, K texts)` 且 **K ≥ 1** | K=0 ⇒ 说明 `deferReticleToIrisFinalOverlay` 没成立，走了立即提交；再看是否与 §3 残留 ② 一致 |
 | D | 有光影 + `ScopePipAllowShaderPacks=true` | 镜内画面之上叠文字，文字在准星**之下**（准星压住文字） | 顺序反了 ⇒ 检查 `renderAfterFinalComposite()` 里 texts 是否在 reticle 之前 |

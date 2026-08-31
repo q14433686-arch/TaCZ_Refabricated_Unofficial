@@ -5,6 +5,28 @@
 
 ---
 
+## 评估 26.1.2 本轮 PIP 回移植（2026-09-01，本分支只改了文档与探针；代码无功能改动）
+
+- 新增 `docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md`：逐提交核他们 `0a77ef52`…`8aca7374`，
+  可加项只有三条（A 窄遍后的状态重提取/清提交节点、B 镜内文字掩码裁剪、C 隔帧 `ScopePipRerenderInterval`），
+  其余（`ScopePipRenderState` 922 行、`ScopePipDepthDebug`、12 键配置面与 lang、`DepthHandle` 只读快照、
+  FOV/hand-pass/Iris 接线）都是**从我们这棵树搬走的**，回搬等于空转。
+- **撤回一条我自己写错的技术论断**：上一轮我在镜内文字那节写「文字走字体管线 ⇒ 会被镜筒深度剔掉 ⇒
+  等价于 26.2 的掩码裁剪」。他们用实机否证了这条（`e1c550ee` 的动机正是它不成立）：`submitText` 下游是
+  vanilla 字体管线，**不吃**孔径深度 ⇒ **立即路径与延迟路径都会溢出圆孔**。已同步改口的三处：
+  `BedrockAttachmentModel` 的 flush 注释（现在只承诺"层序正确"）、
+  `docs/lineage/SCOPE_TEXT_SHOW_1211_20260901.md` §2 与 §3 残留①（范围从"延迟那一格"放大到"全部"）、
+  §4 剧本 A 格的期望（删掉"不越过镜筒边缘"这一条判据，改为"贴边溢出属待加项 B，不算 flush 回归"）。
+- 挂了 TEMP javap 探针 `dumpPipPortProbeV3`（`build.gradle`，`compileJava.finalizedBy`）：查 1.21.11 是否
+  存在 `LevelRenderer#extractLevel` + `LevelRenderState#reset`（决定 A 要不要抄重提取）、
+  `SubmitNodeStorage#clear`、字体侧 `Font#prepareText`/`PreparedText#visit`/`GlyphVisitor`/
+  `TextRenderable$Styled`/`RenderPipelines.TEXT`（决定 B 能不能落），并顺带从编译类路径的 jar 里 dump
+  本 era 的 `rendertype_text.fsh/.vsh/.json` 原文（克隆掩码着色器的底版）。结论回来后再决定实现，探针块随即删除。
+- 他们 `3e4eeb16` 把 `MeshGpuUnderShaders`/`MeshGpuWorldUnderShaders` 默认改回 ON（R3）——与我们这边的
+  B 测结论相反（`9c29572` 退回 false）。本轮**不跟**，已回问其实测数据；账本 L-11 记了这个来回。
+
+---
+
 ## 镜内 `text_show` 文本缺失（2026-09-01，代码修复：六个文件；版本号未变）
 
 - **症状**：MK5 / MK5HD 的镜内弹药计数在 1.21.11 线**从不显示**（不是位置偏、不是偶发丢帧）。
@@ -19,7 +41,9 @@
   与存在性无关，两边修法不可互换。
 - **修法**（按 26.1.2 已提交的 `c290a1f3`+`74eb0ad2` 口径，另加两处差别）：`BedrockRenderSnapshot` 加
   只读 `functionalTasks()`；瞄具两条分支都补 flush —— 非延迟走 `collector` 默认 `order(0)`
-  （cleanup `-1` 与准星 `1` 之间，文字被镜筒深度剔掉即等价掩码裁剪），`deferReticleToIrisFinalOverlay`
+  （cleanup `-1` 与准星 `1` 之间，**只保证层序**）；同轮我写的「文字被镜筒深度剔掉即等价掩码裁剪」
+  已**撤回**：26.1.2 实机证伪该论断（他们 `e1c550ee` 改走掩码裁剪）⇒ 字体管线不吃孔径深度，文字会溢出圆孔。
+  详见 `SCOPE_TEXT_SHOW_1211_20260901.md` §2/§3 与 §B 待加项，`deferReticleToIrisFinalOverlay`
   时经 `ScopeFinalOverlayState.queueFunctionalTask` 与准星/镜框同族推迟、在 reticle 之前用
   `task.submit(submitNodes)` 提交（`OrderedSubmitNodeCollector` 不是 `SubmitNodeCollector`，
   这正是 26.1.2 第一版编译失败的原因；本仓旁证是 `GunPreviewRenderer.java:91`）。
