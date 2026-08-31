@@ -1,4 +1,4 @@
-commit: 27b7292191728f0ba41531af552f249a95250811
+commit: a70ad4021a2bcf3c95de90eb2472f61aab11eec3
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -21,6 +21,82 @@ Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
+=== MC7 minecraft-merged-9d5daa536c-26.1.2.jar
+----- BEGIN7 net.minecraft.client.renderer.LevelRenderer
+  private void addMainPass(com.mojang.blaze3d.framegraph.FrameGraphBuilder, net.minecraft.client.renderer.culling.Frustum, org.joml.Matrix4fc, com.mojang.blaze3d.buffers.GpuBufferSlice, boolean, net.minecraft.client.renderer.state.level.LevelRenderState, net.minecraft.client.DeltaTracker, net.minecraft.util.profiling.ProfilerFiller, net.minecraft.client.renderer.chunk.ChunkSectionsToRender);
+         4: invokevirtual #988                // Method com/mojang/blaze3d/framegraph/FrameGraphBuilder.addPass:(Ljava/lang/String;)Lcom/mojang/blaze3d/framegraph/FramePass;
+        22: invokeinterface #994,  2          // InterfaceMethod com/mojang/blaze3d/framegraph/FramePass.readsAndWrites:(Lcom/mojang/blaze3d/resource/ResourceHandle;)Lcom/mojang/blaze3d/resource/ResourceHandle;
+        53: invokeinterface #994,  2          // InterfaceMethod com/mojang/blaze3d/framegraph/FramePass.readsAndWrites:(Lcom/mojang/blaze3d/resource/ResourceHandle;)Lcom/mojang/blaze3d/resource/ResourceHandle;
+        84: invokeinterface #994,  2          // InterfaceMethod com/mojang/blaze3d/framegraph/FramePass.readsAndWrites:(Lcom/mojang/blaze3d/resource/ResourceHandle;)Lcom/mojang/blaze3d/resource/ResourceHandle;
+       115: invokeinterface #994,  2          // InterfaceMethod com/mojang/blaze3d/framegraph/FramePass.readsAndWrites:(Lcom/mojang/blaze3d/resource/ResourceHandle;)Lcom/mojang/blaze3d/resource/ResourceHandle;
+       146: invokeinterface #994,  2          // InterfaceMethod com/mojang/blaze3d/framegraph/FramePass.readsAndWrites:(Lcom/mojang/blaze3d/resource/ResourceHandle;)Lcom/mojang/blaze3d/resource/ResourceHandle;
+       185: invokeinterface #994,  2          // InterfaceMethod com/mojang/blaze3d/framegraph/FramePass.readsAndWrites:(Lcom/mojang/blaze3d/resource/ResourceHandle;)Lcom/mojang/blaze3d/resource/ResourceHandle;
+       262: invokedynamic #1263,  0           // InvokeDynamic #3:run:(Lnet/minecraft/client/renderer/LevelRenderer;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/state/level/LevelRenderState;Lnet/minecraft/util/profiling/ProfilerFiller;Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;Lcom/mojang/blaze3d/resource/ResourceHandle;Lcom/mojang/blaze3d/resource/ResourceHandle;Lcom/mojang/blaze3d/resource/ResourceHandle;Lcom/mojang/blaze3d/resource/ResourceHandle;Lcom/mojang/blaze3d/resource/ResourceHandle;ZLorg/joml/Matrix4fc;)Ljava/lang/Runnable;
+       267: invokeinterface #1015,  2         // InterfaceMethod com/mojang/blaze3d/framegraph/FramePass.executes:(Ljava/lang/Runnable;)V
+  private void lambda$addMainPass$0(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.level.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, net.minecraft.client.renderer.chunk.ChunkSectionsToRender, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, org.joml.Matrix4fc);
+         1: invokestatic  #2464               // Method com/mojang/blaze3d/systems/RenderSystem.setShaderFog:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V
+        15: invokevirtual #718                // Method net/minecraft/world/phys/Vec3.x:()D
+        22: invokevirtual #725                // Method net/minecraft/world/phys/Vec3.y:()D
+        29: invokevirtual #728                // Method net/minecraft/world/phys/Vec3.z:()D
+        38: invokeinterface #715,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.push:(Ljava/lang/String;)V
+        77: invokestatic  #2557               // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/blaze3d/systems/GpuDevice;
+        94: invokestatic  #2623               // Method java/util/OptionalDouble.empty:()Ljava/util/OptionalDouble;
+        97: invokevirtual #2627               // Method com/mojang/blaze3d/systems/GpuDevice.createSampler:(Lcom/mojang/blaze3d/textures/AddressMode;Lcom/mojang/blaze3d/textures/AddressMode;Lcom/mojang/blaze3d/textures/FilterMode;Lcom/mojang/blaze3d/textures/FilterMode;ILjava/util/OptionalDouble;)Lcom/mojang/blaze3d/textures/GpuSampler;
+       112: invokevirtual #2637               // Method net/minecraft/client/renderer/chunk/ChunkSectionsToRender.renderGroup:(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V
+       122: invokevirtual #2641               // Method net/minecraft/client/renderer/GameRenderer.getLighting:()Lcom/mojang/blaze3d/platform/Lighting;
+       128: invokevirtual #2649               // Method com/mojang/blaze3d/platform/Lighting.setupFor:(Lcom/mojang/blaze3d/platform/Lighting$Entry;)V
+       132: invokevirtual #421                // Method shouldShowEntityOutlines:()Z
+       145: invokeinterface #2391,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+       155: invokestatic  #2557               // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/blaze3d/systems/GpuDevice;
+       158: invokevirtual #2563               // Method com/mojang/blaze3d/systems/GpuDevice.createCommandEncoder:()Lcom/mojang/blaze3d/systems/CommandEncoder;
+       163: invokevirtual #2652               // Method com/mojang/blaze3d/pipeline/RenderTarget.getColorTexture:()Lcom/mojang/blaze3d/textures/GpuTexture;
+       169: invokevirtual #2567               // Method com/mojang/blaze3d/pipeline/RenderTarget.getDepthTexture:()Lcom/mojang/blaze3d/textures/GpuTexture;
+       173: invokevirtual #2656               // Method com/mojang/blaze3d/systems/CommandEncoder.clearColorAndDepthTextures:(Lcom/mojang/blaze3d/textures/GpuTexture;ILcom/mojang/blaze3d/textures/GpuTexture;D)V
+       189: invokevirtual #2540               // Method net/minecraft/client/renderer/RenderBuffers.bufferSource:()Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+       198: invokevirtual #2659               // Method net/minecraft/client/renderer/RenderBuffers.crumblingBufferSource:()Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+       207: invokeinterface #877,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
+       220: invokevirtual #2663               // Method submitEntities:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/state/level/LevelRenderState;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V
+       231: invokevirtual #2665               // Method submitBlockEntities:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/state/level/LevelRenderState;Lnet/minecraft/client/renderer/SubmitNodeStorage;)V
+       246: invokevirtual #2670               // Method net/minecraft/client/renderer/state/level/ParticlesRenderState.submit:(Lnet/minecraft/client/renderer/SubmitNodeStorage;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V
+       257: invokevirtual #2672               // Method submitBlockDestroyAnimation:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/LevelRenderState;)V
+       264: invokeinterface #877,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
+       273: invokevirtual #2676               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderSolidFeatures:()V
+       278: invokevirtual #2679               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+       282: invokeinterface #755,  1          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.pop:()V
+       290: invokevirtual #2579               // Method checkPoseStack:(Lcom/mojang/blaze3d/vertex/PoseStack;)V
+       300: invokeinterface #2391,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+       310: invokeinterface #2391,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+       318: invokevirtual #2683               // Method com/mojang/blaze3d/pipeline/RenderTarget.copyDepthFrom:(Lcom/mojang/blaze3d/pipeline/RenderTarget;)V
+       328: invokeinterface #2391,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+       338: invokeinterface #2391,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+       346: invokevirtual #2683               // Method com/mojang/blaze3d/pipeline/RenderTarget.copyDepthFrom:(Lcom/mojang/blaze3d/pipeline/RenderTarget;)V
+       356: invokeinterface #2391,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+       366: invokeinterface #2391,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+       374: invokevirtual #2683               // Method com/mojang/blaze3d/pipeline/RenderTarget.copyDepthFrom:(Lcom/mojang/blaze3d/pipeline/RenderTarget;)V
+       381: invokeinterface #715,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.push:(Ljava/lang/String;)V
+       390: invokevirtual #2687               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderTranslucentFeatures:()V
+       395: invokevirtual #2679               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+       400: invokevirtual #2679               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+       404: invokeinterface #755,  1          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.pop:()V
+       413: invokevirtual #2691               // Method net/minecraft/client/renderer/RenderBuffers.outlineBufferSource:()Lnet/minecraft/client/renderer/OutlineBufferSource;
+       416: invokevirtual #2696               // Method net/minecraft/client/renderer/OutlineBufferSource.endOutlineBatch:()V
+       431: invokevirtual #2698               // Method renderBlockOutline:(Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lcom/mojang/blaze3d/vertex/PoseStack;ZLnet/minecraft/client/renderer/state/level/LevelRenderState;)V
+       436: invokevirtual #2679               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+       440: invokevirtual #2700               // Method finalizeGizmoCollection:()V
+       447: invokevirtual #2702               // Method net/minecraft/client/renderer/LevelRenderer$FinalizedGizmos.standardPrimitives:()Lnet/minecraft/client/renderer/gizmos/DrawableGizmoPrimitives;
+       460: invokevirtual #2577               // Method net/minecraft/client/renderer/gizmos/DrawableGizmoPrimitives.render:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/renderer/state/level/CameraRenderState;Lorg/joml/Matrix4fc;)V
+       465: invokevirtual #2679               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+       471: invokevirtual #2579               // Method checkPoseStack:(Lcom/mojang/blaze3d/vertex/PoseStack;)V
+       478: invokeinterface #715,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.push:(Ljava/lang/String;)V
+       492: invokevirtual #2637               // Method net/minecraft/client/renderer/chunk/ChunkSectionsToRender.renderGroup:(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V
+       507: invokevirtual #2698               // Method renderBlockOutline:(Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lcom/mojang/blaze3d/vertex/PoseStack;ZLnet/minecraft/client/renderer/state/level/LevelRenderState;)V
+       512: invokevirtual #2679               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+       516: invokeinterface #755,  1          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.pop:()V
+       525: invokevirtual #2709               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderTranslucentParticles:()V
+       530: invokevirtual #2679               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+       537: invokevirtual #2712               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.clearSubmitNodes:()V
+       544: invokevirtual #2713               // Method net/minecraft/client/renderer/state/level/ParticlesRenderState.reset:()V
+----- END7
 === MC6 minecraft-merged-9d5daa536c-26.1.2.jar
 ----- BEGIN6 net.minecraft.client.renderer.SubmitNodeStorage
   public <S> void submitModel(net.minecraft.client.model.Model<? super S>, S, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.rendertype.RenderType, int, int, int, net.minecraft.client.renderer.texture.TextureAtlasSprite, int, net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay);
@@ -122,83 +198,7 @@ public class com.mojang.blaze3d.systems.RenderSystem {
   private static com.mojang.blaze3d.buffers.GpuBufferSlice shaderLightDirections;
   private static com.mojang.blaze3d.buffers.GpuBufferSlice projectionMatrixBuffer;
   private static com.mojang.blaze3d.buffers.GpuBufferSlice savedProjectionMatrixBuffer;
-  private static java.lang.String apiDescription;
-  private static final java.util.concurrent.atomic.AtomicLong pollEventsWaitStart;
-  private static final java.util.concurrent.atomic.AtomicBoolean pollingEvents;
-  private static final net.minecraft.util.ArrayListDeque<com.mojang.blaze3d.systems.RenderSystem$GpuAsyncTask> PENDING_FENCES;
-  public static com.mojang.blaze3d.textures.GpuTextureView outputColorTextureOverride;
-  public static com.mojang.blaze3d.textures.GpuTextureView outputDepthTextureOverride;
-  private static com.mojang.blaze3d.buffers.GpuBuffer globalSettingsUniform;
-  private static net.minecraft.client.renderer.DynamicUniforms dynamicUniforms;
-  private static final com.mojang.blaze3d.systems.ScissorState scissorStateForRenderTypeDraws;
-  private static final com.mojang.blaze3d.systems.SamplerCache samplerCache;
-  public com.mojang.blaze3d.systems.RenderSystem();
-  public static com.mojang.blaze3d.systems.SamplerCache getSamplerCache();
-  public static void initRenderThread();
-  public static boolean isOnRenderThread();
-  public static void assertOnRenderThread();
-  private static java.lang.IllegalStateException constructThreadException();
-  public static void pollEvents();
-  public static boolean isFrozenAtPollEvents();
-  public static void flipFrame(com.mojang.blaze3d.TracyFrameCapture);
-  public static void setShaderFog(com.mojang.blaze3d.buffers.GpuBufferSlice);
-  public static com.mojang.blaze3d.buffers.GpuBufferSlice getShaderFog();
-  public static void setShaderLights(com.mojang.blaze3d.buffers.GpuBufferSlice);
-  public static com.mojang.blaze3d.buffers.GpuBufferSlice getShaderLights();
-  public static void enableScissorForRenderTypeDraws(int, int, int, int);
-  public static void disableScissorForRenderTypeDraws();
-  public static com.mojang.blaze3d.systems.ScissorState getScissorStateForRenderTypeDraws();
-  public static java.lang.String getBackendDescription();
-  public static java.lang.String getApiDescription();
-  public static net.minecraft.util.TimeSource$NanoTimeSource initBackendSystem(com.mojang.blaze3d.platform.BackendOptions);
-  public static void initRenderer(com.mojang.blaze3d.systems.GpuDevice);
-  public static void setErrorCallback(org.lwjgl.glfw.GLFWErrorCallbackI);
-  public static void setupDefaultState();
-  public static void setProjectionMatrix(com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.ProjectionType);
-  public static void backupProjectionMatrix();
-  public static void restoreProjectionMatrix();
-  public static com.mojang.blaze3d.buffers.GpuBufferSlice getProjectionMatrixBuffer();
-  public static org.joml.Matrix4f getModelViewMatrix();
-  public static org.joml.Matrix4fStack getModelViewStack();
-  public static com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer getSequentialBuffer(com.mojang.blaze3d.vertex.VertexFormat$Mode);
-  public static void setGlobalSettingsUniform(com.mojang.blaze3d.buffers.GpuBuffer);
-  public static com.mojang.blaze3d.buffers.GpuBuffer getGlobalSettingsUniform();
-  public static com.mojang.blaze3d.ProjectionType getProjectionType();
-  public static void queueFencedTask(java.lang.Runnable);
-  public static void executePendingTasks();
-  public static com.mojang.blaze3d.systems.GpuDevice getDevice();
-  public static com.mojang.blaze3d.systems.GpuDevice tryGetDevice();
-  public static net.minecraft.client.renderer.DynamicUniforms getDynamicUniforms();
-  public static void bindDefaultUniforms(com.mojang.blaze3d.systems.RenderPass);
-  private static void lambda$static$1(it.unimi.dsi.fastutil.ints.IntConsumer, int);
-  private static void lambda$static$0(it.unimi.dsi.fastutil.ints.IntConsumer, int);
-  static {};
-}
-
------ END6SIG com.mojang.blaze3d.systems.RenderSystem
-=== MC5B minecraft-merged-9d5daa536c-26.1.2.jar
------ BEGIN5B net.minecraft.client.renderer.LevelRenderer
-  public void renderLevel(com.mojang.blaze3d.resource.GraphicsResourceAllocator, net.minecraft.client.DeltaTracker, boolean, net.minecraft.client.renderer.state.level.CameraRenderState, org.joml.Matrix4fc, com.mojang.blaze3d.buffers.GpuBufferSlice, org.joml.Vector4f, boolean, net.minecraft.client.renderer.chunk.ChunkSectionsToRender);
-         2: invokeinterface #896,  2          // InterfaceMethod net/minecraft/client/DeltaTracker.getGameTimeDeltaPartialTick:(Z)F
-        10: getfield      #318                // Field levelRenderState:Lnet/minecraft/client/renderer/state/level/LevelRenderState;
-        14: getfield      #452                // Field level:Lnet/minecraft/client/multiplayer/ClientLevel;
-        17: invokevirtual #900                // Method net/minecraft/client/multiplayer/ClientLevel.getGameTime:()J
-        20: putfield      #904                // Field net/minecraft/client/renderer/state/level/LevelRenderState.gameTime:J
-        23: invokestatic  #708                // Method net/minecraft/util/profiling/Profiler.get:()Lnet/minecraft/util/profiling/ProfilerFiller;
-        30: getfield      #907                // Field net/minecraft/client/renderer/state/level/CameraRenderState.cullFrustum:Lnet/minecraft/client/renderer/culling/Frustum;
-        37: ldc_w         #909                // String setupFrameGraph
-        40: invokeinterface #715,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.push:(Ljava/lang/String;)V
-        45: invokestatic  #915                // Method com/mojang/blaze3d/systems/RenderSystem.getModelViewStack:()Lorg/joml/Matrix4fStack;
-        52: invokevirtual #920                // Method org/joml/Matrix4fStack.pushMatrix:()Lorg/joml/Matrix4fStack;
-        60: invokevirtual #924                // Method org/joml/Matrix4fStack.mul:(Lorg/joml/Matrix4fc;)Lorg/joml/Matrix4f;
-        74: getfield      #260                // Field targets:Lnet/minecraft/client/renderer/LevelTargetBundle;
-        79: ldc_w         #927                // String main
-        83: getfield      #296                // Field minecraft:Lnet/minecraft/client/Minecraft;
-        86: invokevirtual #425                // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
-        89: invokevirtual #931                // Method com/mojang/blaze3d/framegraph/FrameGraphBuilder.importExternal:(Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/blaze3d/resource/ResourceHandle;
-        92: putfield      #934                // Field net/minecraft/client/renderer/LevelTargetBundle.main:Lcom/mojang/blaze3d/resource/ResourceHandle;
-        96: getfield      #296                // Field minecraft:Lnet/minecraft/client/Minecraft;
-...[truncated 1827 lines total]...
+...[truncated 1903 lines total]...
        547: return
 
 ----- END5 net.minecraft.client.renderer.LevelRenderer
@@ -986,7 +986,7 @@ public class net.minecraft.client.renderer.state.level.LevelRenderState implemen
 }
 
 ----- END5SIG net.minecraft.client.renderer.state.level.LevelRenderState
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788212784759.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788212939199.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -996,7 +996,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 27s
+BUILD SUCCESSFUL in 1m 26s
 1 actionable task: 1 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
