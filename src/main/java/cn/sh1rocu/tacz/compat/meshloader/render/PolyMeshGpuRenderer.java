@@ -73,10 +73,12 @@ import java.util.OptionalInt;
  * NO_OVERLAY + NO_CARDINAL_LIGHTING}（顶点色直通 + lightmap 采样，与 collector 的
  * entityCutout 视觉差异只有 overlay）。lightmap 拿不到时退化 EMISSIVE 管线。</p>
  *
- * <p>第 2 步（光影 PoC）：把 LIT/EMISSIVE 管线经 {@code IrisCompat.assignPipelineToIris}
- * 登记进 Iris HAND program（{@link #assignMeshPipelinesToHand()}），并让 GPU 路径在光影下
- * 也能识别 Iris 的手部 pass（{@link #shouldSubmitGpu()} + {@code IrisMeshGpuPassMixin}）。
- * 默认仍回退 collector（{@code MeshGpuUnderShaders=false}）；强开后的实机表现待验证。</p>
+ * <p>第 2 步（光影 PoC）<b>结论（实测 + Iris 源码核对）</b>：本渲染器只画到主渲染目标，
+ * 而 Iris 的 gbuffers_hand 只在 collector flush（{@code FeatureRenderDispatcher.renderAllFeatures}）
+ * 里绑定、且 1.21.11 没有 26.2 的 {@code drawFromBuffer} 能把常驻 VBO 塞进那次 flush ——
+ * 所以光影下本 GPU 路径进不了光影管线，强开只会让枪消失（collector 被跳过、VBO 又画不进
+ * gbuffer）。因此光影下始终回退 collector（assignPipeline(HAND) 对 mesh 枪体已经通过
+ * collector 的 entityCutout 路线生效）。机制与下一步方向见 {@code TML_GPU_FEASIBILITY} §6.2。</p>
  *
  * <p>移植自 VellEagle/TacZMeshLoader 1.21.1_fabric (GPL-3.0)；GPU 路径按 26.2
  * {@code 8191f6b}/{@code 0ea0fb6}/{@code 9f7412e} 机械移植到 1.21.11 改名映射。</p>
@@ -150,6 +152,7 @@ public final class PolyMeshGpuRenderer {
 
     private static boolean loggedFirstDraw = false;
     private static boolean gpuDisabledThisSession = false;
+    private static boolean loggedUnderShadersNoop = false;
     private static boolean lightmapUnavailable;
     /** 本帧已画过（vanilla 每帧一次手部 pass；保留此闸门以兼容 Iris 二次 pass 的未来接入）。 */
     private static boolean drawnThisFrame = false;
@@ -182,9 +185,9 @@ public final class PolyMeshGpuRenderer {
      * 当前这次 submit 是否该走 GPU。必须同时满足：
      * <ul>
      *   <li>配置打开且本会话未因异常关闭；</li>
-     *   <li>无光影，或光影下 {@code MeshGpuUnderShaders=true}（第 2 步 PoC）；</li>
-     *   <li><b>现在就在手部 pass 里</b>——vanilla 用 {@code inHandPass}、Iris 用
-     *       {@code isRenderingSolidHandPass()}——而不是
+     *   <li><b>无光影</b>（第 2 步 PoC 结论：1.21.11 的 GPU 常驻 VBO 进不了 Iris
+     *       gbuffers_hand，光影下始终回退 collector，见可行性文档 §6.2）；</li>
+     *   <li><b>现在就在 vanilla 手部 pass 里</b>——而不是
      *       {@code transformType.firstPerson()}。后者对「用第一人称上下文画 GUI」
      *       这类路径也会为 true，正是关 PR WORLD_DRAWS 泄漏的入口。</li>
      * </ul>
@@ -193,36 +196,27 @@ public final class PolyMeshGpuRenderer {
         if (!isGpuPathUsable()) {
             return false;
         }
-        // 无光影：vanilla renderItemInHand 的 inHandPass 门。光影（Iris）：
-        // renderItemInHand 被 Iris 绕过、inHandPass 恒 false，改认 Iris 自己的
-        // solid hand pass 标志。两者都只认「手部 pass 当刻」，不认
-        // transformType.firstPerson()（「第一人称上下文画 GUI」也会为 true，
-        // 正是关 PR WORLD_DRAWS 泄漏的入口）。
-        return inHandPass || IrisCompat.isRenderingSolidHandPass();
+        return inHandPass;
     }
 
     public static boolean isGpuPathUsable() {
         if (gpuDisabledThisSession || !MeshyConfig.GPU_BAKING.get()) {
             return false;
         }
-        // 第 2 步 PoC：光影下默认仍回退 collector；MeshGpuUnderShaders=true 时
-        // 允许在光影下手部 pass 走自定义 pass。LIT/EMISSIVE 管线经
-        // assignMeshPipelinesToHand() 登记进 Iris HAND program（见 drawList），
-        // 能否拿到 gbuffers_hand 光照取决于 Iris 1.10.7 对自定义 pass 的拦截
-        // 行为 —— 这是 PoC 要实机验证的核心假设，尚未验证。
-        return !IrisCompat.isUsingRenderPack() || MeshyConfig.GPU_UNDER_SHADERS.get();
-    }
-
-    /** 把 mesh 管线登记进 Iris HAND program（第 2 步 PoC，幂等、反射保护，无 Iris 时 no-op）。 */
-    private static boolean meshPipelinesAssigned = false;
-
-    private static void assignMeshPipelinesToHand() {
-        if (meshPipelinesAssigned) {
-            return;
+        // 光影（Iris）下 GPU 路径不可用：自定义 RenderPass 只会画到主渲染目标，而
+        // Iris 的 gbuffers_hand 只在 collector flush（renderAllFeatures）里绑定、且
+        // 1.21.11 没有 26.2 的 drawFromBuffer 能把常驻 VBO 塞进那次 flush（§6.2）。
+        // 光影下回退 collector：那条路经 assignCommonEntityPipelinesToHandIfNeeded()
+        // 已把 entityCutout 归入 HAND，枪体本来就有光影光照。
+        if (IrisCompat.isUsingRenderPack()) {
+            if (MeshyConfig.GPU_UNDER_SHADERS.get() && !loggedUnderShadersNoop) {
+                loggedUnderShadersNoop = true;
+                LOGGER.warn("[TacZMeshLoader] MeshGpuUnderShaders=true has no effect on 1.21.11: "
+                        + "the GPU VBO route cannot reach Iris' gbuffers_hand; keeping the collector path.");
+            }
+            return false;
         }
-        meshPipelinesAssigned = true;
-        IrisCompat.assignPipelineToIris(LIT_PIPELINE, "HAND", "mesh_entity");
-        IrisCompat.assignPipelineToIris(EMISSIVE_PIPELINE, "HAND", "mesh_entity_emissive");
+        return true;
     }
 
     /** 由 GameRendererMixin 在 renderItemInHand HEAD/RETURN 调用。 */
@@ -310,18 +304,13 @@ public final class PolyMeshGpuRenderer {
     }
 
     /**
-     * 在手部 pass 末尾绘制。vanilla 的调用点是 {@code renderItemInHand} 的 RETURN
-     * （手部 flush 之前）；Iris 的调用点是 {@code HandRenderer#renderSolid} 的 TAIL
-     * （{@code IrisMeshGpuPassMixin}，第 2 步 PoC）。
+     * 在手部 pass 的 RETURN 点绘制（{@code renderItemInHand} 之后、手部 flush 之前）。
      *
      * <p>不画的情况：不在手部 pass、本帧已画过、清单为空、或本会话 GPU 已降级。
      * 无论成败，末尾都清空当帧清单。</p>
      */
     public static void renderAfterSolid() {
-        // vanilla：renderItemInHand RETURN 时 inHandPass 仍为 true；Iris：由
-        // IrisMeshGpuPassMixin 在 HandRenderer#renderSolid 末尾调用，此时
-        // isRenderingSolidHandPass() 为 true。两者都不成立 = 不在手部 pass。
-        if (!inHandPass && !IrisCompat.isRenderingSolidHandPass()) {
+        if (!inHandPass) {
             HAND_DRAWS.clear();
             return;
         }
@@ -347,9 +336,6 @@ public final class PolyMeshGpuRenderer {
 
     private static void drawList(List<DrawEntry> draws) {
         Minecraft mc = Minecraft.getInstance();
-        // 第 2 步 PoC：把 LIT/EMISSIVE 登记进 Iris HAND program（幂等）。无 Iris
-        // 或分配失败都是 no-op；是否真能拿到光影光照待实机验证。
-        assignMeshPipelinesToHand();
         RenderTarget mainTarget = mc.getMainRenderTarget();
         if (mainTarget == null) {
             return;

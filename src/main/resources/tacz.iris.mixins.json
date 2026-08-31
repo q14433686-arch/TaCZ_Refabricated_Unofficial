@@ -7,8 +7,7 @@
   "client": [
     "IrisDepthRestoreShaderMixin",
     "IrisHandRendererReticlePassMixin",
-    "IrisFinalScopeOverlayMixin",
-    "IrisMeshGpuPassMixin"
+    "IrisFinalScopeOverlayMixin"
   ],
   "injectors": {
     "defaultRequire": 0

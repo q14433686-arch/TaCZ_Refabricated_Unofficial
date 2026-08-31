@@ -58,11 +58,13 @@ public final class MeshyConfig {
                 "Falls back to the collector path if the GPU pass fails.");
         GPU_BAKING = builder.define("MeshGpuBaking", true);
 
-        builder.comment("Shader packs: by default the GPU path is DISABLED and mesh guns fall",
-                "back to the collector path (the shader-compatible RenderType route is step 2).",
-                "true = force the RAW custom pass even under a shader pack, bypassing the",
-                "shader pipeline entirely (gun body gets NO shader lighting). Diagnostic only.",
-                "With no shader pack active this switch has no effect.");
+        builder.comment("Shader packs: the GPU path is always DISABLED under shaders on 1.21.11.",
+                "The resident-VBO pass draws to the main render target only, while Iris binds",
+                "gbuffers_hand only during its collector flush (and 1.21.11 has no 26.2",
+                "drawFromBuffer to inject a VBO into that flush), so enabling it would just",
+                "make the gun vanish. See docs/TML_GPU_FEASIBILITY_1211_20260831.md 6.2.",
+                "This switch is currently a no-op: mesh guns always fall back to the collector",
+                "path under shaders (which already receives shader lighting via Iris HAND).");
         GPU_UNDER_SHADERS = builder.define("MeshGpuUnderShaders", false);
 
         builder.comment("Vertex budget for poly_mesh in GUI/FIXED/HEAD. Icons above this",
