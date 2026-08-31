@@ -337,31 +337,3 @@ publishing {
         }
     }
 }
-
-// ================================================================
-// TEMP-DIAGNOSTIC round 3 (config persistence probe, 2026-09-01) - REMOVE.
-// Round 2 proved the break: ConfigValue.set only mutates the in-memory
-// childConfig, and ForgeConfigSpec.save() persists only when childConfig is
-// a NightConfig FileConfig - FCAP v26.1.5's ConfigTracker loads TOML into an
-// in-memory SynchronizedConfig, so save() is a silent no-op. Round 3 dumps
-// ConfigRegistryImpl.register to learn the default config FILE NAME (needed
-// so our explicit-registration fix keeps the user's existing files).
-tasks.named("compileJava") {
-    doLast {
-        def javapBin = new File(System.getProperty("java.home"), "bin/javap").absolutePath
-        configurations.getByName("runtimeClasspath").files.findAll {
-            it.name.toLowerCase().contains("forgeconfigapiport")
-        }.each { File jar ->
-            println "=== FCAP3 ${jar.name}"
-            def proc = [javapBin, "-p", "-c", "-classpath", jar.absolutePath,
-                        "fuzs.forgeconfigapiport.fabric.impl.core.ConfigRegistryImpl"].execute()
-            def out = new StringBuilder()
-            def err = new StringBuilder()
-            proc.consumeProcessOutput(out, err)
-            proc.waitFor()
-            println out.toString()
-            if (err.length() > 0) println "JAVAP-ERR: ${err}"
-        }
-        println "=== PROBE3-DONE"
-    }
-}

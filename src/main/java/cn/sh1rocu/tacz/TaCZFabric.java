@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.event.server.AmmoHitBlockEvent;
 import com.tacz.guns.config.ClientConfig;
+import com.tacz.guns.config.ConfigPersist;
 import com.tacz.guns.config.CommonConfig;
 import com.tacz.guns.config.PreLoadConfig;
 import com.tacz.guns.config.ServerConfig;
@@ -35,6 +36,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.fml.config.ModConfig;
+import net.minecraftforge.common.ForgeConfigSpec;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
@@ -61,9 +63,16 @@ public class TaCZFabric implements ModInitializer {
         // 确保配置文件加载，这个阶段将比标准的forge配置文件加载早
         PreLoadConfig.init();
 
-        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.COMMON, CommonConfig.init());
+        // spec 引用交给 ConfigPersist：FCAP v26.1.5 的 ConfigValue.set 只改内存、
+        // ForgeConfigSpec.save() 在新架构下是 no-op，Cloth 保存后的落盘由
+        // ConfigPersist.saveAll() 走 LoadedConfig.save() 闭合（根因见该类 javadoc）。
+        ForgeConfigSpec commonSpec = CommonConfig.init();
+        ConfigPersist.record(ModConfig.Type.COMMON, commonSpec);
+        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.COMMON, commonSpec);
         ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.SERVER, ServerConfig.init());
-        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.CLIENT, ClientConfig.init());
+        ForgeConfigSpec clientSpec = ClientConfig.init();
+        ConfigPersist.record(ModConfig.Type.CLIENT, clientSpec);
+        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.CLIENT, clientSpec);
 
         GunMod.setup();
 
