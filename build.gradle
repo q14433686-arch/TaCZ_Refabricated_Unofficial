@@ -479,10 +479,26 @@ tasks.register('dumpFeatureDispatcherApi') {
         println(bss ?: '(none)')
         if (bsse.trim()) { println('stderr: ' + bsse.trim()) }
 
-        println '===== MultiBufferSource$BufferSource -c -p (full) ====='
-        def (bsc, bsce) = runJavap('net.minecraft.client.renderer.MultiBufferSource$BufferSource', ['-c', '-p'])
-        println(bsc ?: '(none)')
-        if (bsce.trim()) { println('stderr: ' + bsce.trim()) }
+        println '===== net.minecraft.client.renderer.rendertype.RenderType -p ====='
+        def (rtp, rtpe) = runJavap('net.minecraft.client.renderer.rendertype.RenderType', ['-p'])
+        if (rtp) {
+            rtp.readLines().each { line ->
+                ['draw', 'pipeline', 'createRenderPass', 'setup', 'Mode', 'format', 'sortOnUpload'].each { n ->
+                    if (line.contains(n)) println '  ' + line.trim()
+                }
+            }
+        } else { println('(none)'); if (rtpe.trim()) println('stderr: ' + rtpe.trim()) }
+
+        def rtb = methodBlocks('net.minecraft.client.renderer.rendertype.RenderType', ['-c', '-p'])
+        ['void draw(', 'createRenderPass'].each { name ->
+            def b = findMethod(rtb, name)
+            if (b != null) {
+                println "===== RenderType.${name.trim()} full (${b.size()} lines) ====="
+                println b.join('\n')
+            } else {
+                println "===== RenderType.${name.trim()} NOT FOUND ====="
+            }
+        }
 
         def (rs2, rse2) = runJavap('com.mojang.blaze3d.systems.RenderSystem', ['-p'])
         println '===== RenderSystem (filtered) ====='
