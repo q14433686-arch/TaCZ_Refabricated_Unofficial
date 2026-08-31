@@ -368,9 +368,7 @@ tasks.named("compileJava") {
         proc.consumeProcessOutput(out, System.err)
         proc.waitFor()
         out.toString().eachLine { line ->
-            if ((line =~ /extract/i) as boolean || (line =~ /LevelRenderer\$|SectionRender/ i) as boolean) {
-                if ((line =~ /extract/i) as boolean) println line
-            }
+            if ((line =~ /extract/) as boolean) println line
         }
         println "=== JAR8 LevelRenderer reload-ish methods:"
         def proc2 = [javapBin, "-classpath", mcJar.absolutePath, "net.minecraft.client.renderer.LevelRenderer"].execute()
