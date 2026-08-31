@@ -63,20 +63,22 @@ import java.util.OptionalInt;
  * <p>1.21.11 的手部几何不是延迟到世界渲染末尾统一 flush 的：{@code ItemInHandRenderer#renderHandsWithItems}
  * 自己就以 {@code featureRenderDispatcher.renderAllFeatures()} + {@code bufferSource.endBatch()}
  * 收尾（Iris 正是通过 {@code @WrapWithCondition}/{@code @WrapOperation} 这两个调用来接管手部绘制，
- * 见 {@code MixinItemInHandRenderer}）。字节码审计另见 {@code TML_GPU_STEP2_HANDFLUSH} §1：
+ * 见 {@code MixinItemInHandRenderer}）。CI 上的 1.21.11 字节码核实：该方法共 143 行、只有
+ * <b>1 个 return</b>，那两个 flush 调用就是倒数第二/最后一条指令（{@code TML_GPU_STEP2_HANDFLUSH} §3）。
+ * 同一次审计的另一条：
  * {@code FeatureRenderDispatcher#renderAllFeatures} 里<b>根本没有</b> {@code RenderPass} 这个局部变量，
  * 它只是逐个调用各 feature renderer；每个批次真正的 {@code RenderPass} 在
  * {@code RenderType#draw(MeshData)} 内部创建（局部槽位 13），并按
  * {@code RenderSystem.outputColorTextureOverride / outputDepthTextureOverride} 解析输出目标。</p>
  *
- * <p>因此本仓把绘制点放在<b>本方法返回处</b>（= 那次 flush 的紧后，仍手在同一条栈上）：
+ * <p>因此本仓把绘制点放在<b>本方法返回处</b>（= 那次 flush 的紧后，仍在同一条栈上）：
  * {@code ItemInHandRendererMixin#tacz$drawMeshGpuAfterHandFeatureFlush}，
  * {@code @Inject(renderHandsWithItems, RETURN)}，{@code require=0}。</p>
  * <ul>
  *   <li>无光影：此处 ModelView / Projection 与原版刚用过的完全一致 —— 不再需要在 submit
  *       时刻偷拍 {@code Bᵀ}（第 1 步「相对人物世界位置恒定」bug 的根源，正是在
  *       {@code renderItemInHand} RETURN 现取已被还原的矩阵）。</li>
- *   <li>光影：Iris 用 {@code @WrapWithCondition}/​{@code @WrapOperation} 把上面那两个 flush
+ *   <li>光影：Iris 用 {@code @WrapWithCondition}/{@code @WrapOperation} 把上面那两个 flush
  *       调用换成它自己的 {@code HandRenderer#endRender()}，并且它是从
  *       {@code iris$renderHandsWithCustomRenderer} → <b>同一个</b> {@code renderHandsWithItems}
  *       进来的，所以同一个注入点天然落在 Iris 的 {@code HAND_SOLID} 阶段内：gbuffer 还绑着、

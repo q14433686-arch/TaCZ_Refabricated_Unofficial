@@ -201,6 +201,9 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
    `BufferBuilder` 对未知分量的默认填充、以及 Iris 侧 `HandRenderer#endRender` /
    `IrisApi.assignPipeline` / `IrisVertexFormats.ENTITY` / `ShaderKey.HAND_CUTOUT` 全部存在。
    **任一条不成立就不要进实机**，先改注入点。
+   —— 2026-08-31 已完成：除「`BufferBuilder` 对 Iris 多出分量的默认填充」这一条（观感级，
+   需实机看）之外全部 ✅，`renderHandsWithItems` 实测 143 行、**单个 return**、尾部
+   `renderAllFeatures()` + `endBatch()`，详见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §3。
 2. 光影（Complementary Reimagined）+ `MeshGpuUnderShaders=true`：日志出现
    `GPU mesh pass drew N bones (...) in Iris hand flush: lit=true, ...`，
    并且**枪可见**（第 2 步 PoC 的失败形态是整把枪消失 → 若复现，说明 pass 没进 gbuffer）。

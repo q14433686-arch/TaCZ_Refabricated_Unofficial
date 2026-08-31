@@ -40,9 +40,18 @@
   （javap 逐项核对 `renderHandsWithItems` flush 结构、`RenderPass`/`ScissorState`/`RenderTarget`
   成员、`BufferBuilder` 对未知分量的默认填充、Iris 侧 `HandRenderer#endRender` 等；发布前删）。
 
-**验证状态（如实记录）**：本轮**未编译、未实机**。沙箱无 JDK / 无 loom 缓存，编译与 javap 审计
-依赖 push 后 `compile-check.yml` 回推的 `build-reports/compile-java.log`；光影下 GPU 是否真收
-`gbuffers_hand` 照明、无光影回归是否不退化，均须按 `MESH_LOADER.md` §5.3 / §5.4 实机确认。
+**验证状态（如实记录）**：**编译 ✅（CI 两次 `BUILD SUCCESSFUL`，无 error、无新告警）+ 静态审计 ✅；实机未做。**
+沙箱无 JDK / 无 loom 缓存，编译与 javap 审计走 `compile-check.yml` 回推的 `build-reports/compile-java.log`，
+逐条结论见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §3。最关键的一条是本轮全部前提的正证：
+1.21.11 的 `ItemInHandRenderer#renderHandsWithItems` 共 143 行、**只有 1 个 `return`**，尾部指令
+正是 `getFeatureRenderDispatcher().renderAllFeatures()` + `renderBuffers().bufferSource().endBatch()`
+—— 所以 `@At("RETURN")` 必然命中且必在那次 flush 之后，也不存在「提前 return 绕过钩子」。
+`RenderPass` / `ScissorState` / `RenderTarget` / `RenderSystem` / `BufferBuilder` 与 Iris 的
+`HandRenderer#endRender`、`IrisApi#assignPipeline`、`IrisVertexFormats.ENTITY`、`ShaderKey.HAND_CUTOUT`、
+`ImmediateState.safeToMultiply` 逐项存在且签名与调用一致。
+顺带记下一个包名变化：`RenderType` 在 1.21.11 位于 `net.minecraft.client.renderer.rendertype`
+（脚手架第一版按旧包名查所以 `class not found`，已修）。
+光影下 GPU 是否真收 `gbuffers_hand` 照明、无光影回归是否退化，仍须按 `MESH_LOADER.md` §5.3 / §5.4 实机确认。
 
 ---
 

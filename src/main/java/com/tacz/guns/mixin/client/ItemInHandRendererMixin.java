@@ -54,7 +54,9 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
      *
      * <p>1.21.11 的手部几何不是延迟到世界渲染末尾统一 flush 的 —— {@code renderHandsWithItems}
      * 末尾就是 {@code featureRenderDispatcher.renderAllFeatures()} + {@code bufferSource.endBatch()}
-     * （Iris 也恰恰是 hook 这两个调用来接管手部绘制）。在这里画 GPU 骨骼的意义：</p>
+     * （Iris 也恰恰是 hook 这两个调用来接管手部绘制）。已用 CI 上 1.21.11 的真实字节码核实：
+     * 该方法共 143 行、<b>只有 1 个 return</b>，那两个 flush 调用就是倒数第二条与最后一条指令，
+     * 故本注入点必然命中且必然在 flush 之后。在这里画 GPU 骨骼的意义：</p>
      * <ul>
      *   <li>ModelView / Projection / 输出目标覆写都是「刚被原版手部批次用过」的那一份，
      *       不需要在任何调用点之外偷拍矩阵；</li>

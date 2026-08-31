@@ -31,6 +31,8 @@
    （Iris 正是 hook 这两个调用接管手部绘制，§1.3）。所以在**本方法自己的 RETURN** 画 GPU 骨骼，
    一次注入同时覆盖两条路：无光影 = 原版刚 flush 完；光影 = Iris 刚 `endRender()` flush 完、
    仍在 `HAND_SOLID` 阶段内。**不 mixin Iris 内部类，不 patch `RenderType#draw` 全局热点。**
+   （该结构已由 CI 上 1.21.11 的真实字节码逐条核实：`renderHandsWithItems` 共 143 行、
+   **只有 1 个 `return`**、尾部正是 `renderAllFeatures()` + `endBatch()` —— 见 §3 第 1 条。）
 4. 光影下再配 `IrisApi.assignPipeline(pipeline, IrisProgram.HAND)`（scope reticle 已实机 PASS
    过的同一机制），让常驻 VBO 收 `gbuffers_hand` 照明。
 5. 安全底线：`MeshGpuUnderShaders` **默认关**；三层门禁（配置 + Iris 1.10.x 版本审计 +
@@ -235,34 +237,54 @@ ShaderKey.findBestMatch(pipeline, ProgramId.fromAPI(program)))` → `coreShaderM
 
 ---
 
-## 3. 已知未证实的点（必须由 CI javap + 实机收口）
+## 3. 静态审计结果（CI 已完成，2026-08-31）
 
-`build.gradle` 的 `dumpHandFlushApi`（TEMP，发布前删）会把下列每一项从**真实依赖**里打出来，
-逐条对齐本仓的调用；本轮提交后先看这份日志，再谈实机：
+沙箱无 JDK，所以 `build.gradle` 里的 TEMP task `dumpHandFlushApi` 把每一项都从 **CI 上真实的
+1.21.11 + Iris 1.10.7 编译 classpath** 里 javap 出来，日志即 `build-reports/compile-java.log`。
+两次 push（`ba3e7bd`、`0fdd481`）均 `BUILD SUCCESSFUL`，除本仓既有告警外**无 error、无新告警**。
 
-- [ ] `ItemInHandRenderer#renderHandsWithItems` 反编译全文：确认它确实以
-      `renderAllFeatures()` + `endBatch()` 收尾，且 **RETURN 的个数**（决定 `@At("RETURN")`
-      是否覆盖了带外路径；多于 1 个时我们的钩子会在每个返回点跑一次，幂等由「画完即清单」保证）。
-- [ ] `RenderPass` / `ScissorState` / `RenderTarget` / `RenderSystem` 成员签名
-      （`enableScissor`、`outputDepthTextureOverride`、`useDepth`、`getScissorStateForRenderTypeDraws`…）。
-- [ ] `BufferBuilder` / `VertexFormat`：确认 `addVertex(...)` 对**格式里不认识的分量**
-      走默认值填充（`Defaults`）——这是「按 Iris 扩展格式烘焙」不会写出未初始化字节的前提。
-- [ ] Iris：`HandRenderer` 的 `endRender/renderSolid/isActive/isRenderingSolid`、
-      `IrisApi.assignPipeline`、`IrisVertexFormats.ENTITY`、`ShaderKey.HAND_CUTOUT`、
-      `ImmediateState.safeToMultiply` 全在 1.10.7 里存在。
+- [x] **`ItemInHandRenderer#renderHandsWithItems` 的结构（本轮全部前提）**：
+      `143 lines, 1 x 'return'`，尾部指令逐字为
+      ```
+      278: GameRenderer.getFeatureRenderDispatcher()
+      281: FeatureRenderDispatcher.renderAllFeatures()V
+      288: Minecraft.renderBuffers()
+      291: RenderBuffers.bufferSource() -> MultiBufferSource$BufferSource
+      294: MultiBufferSource$BufferSource.endBatch()V
+      297: return
+      ```
+      ⇒ 那次 flush **就在方法末尾**，且**只有一个 return**。所以 `@At(value="RETURN")`
+      恰好命中一次、且必在 flush 之后；不存在「提前 return 绕过钩子」的路径。
+      （`@At("TAIL")` 在此等价，但 return 数一变就只覆盖最后一条，故选 RETURN。）
+- [x] blaze3d 成员全部存在且签名与调用一致：
+      `RenderPass`: `setPipeline(RenderPipeline)` / `bindTexture(String, GpuTextureView, GpuSampler)` /
+      `setUniform(String, GpuBufferSlice)` / `enableScissor(IIII)` / `setVertexBuffer(int, GpuBuffer)` /
+      `setIndexBuffer(GpuBuffer, VertexFormat$IndexType)` / `drawIndexed(IIII)` / `close()`；
+      `ScissorState`: `enabled()` + `x()/y()/width()/height()`（record 风格访问器，无 getter 前缀）；
+      `RenderTarget`: `public final boolean useDepth` + `getColorTextureView()/getDepthTextureView()`；
+      `RenderSystem`: `outputColorTextureOverride` / `outputDepthTextureOverride`
+      （均 `public static GpuTextureView`）、`getScissorStateForRenderTypeDraws()`、
+      `bindDefaultUniforms(RenderPass)`、`getSequentialBuffer(Mode)`、`getModelViewMatrix()`、`getDevice()`。
+- [x] 烘焙端：`BufferBuilder(ByteBufferBuilder, VertexFormat$Mode, VertexFormat)` 公开构造器存在，
+      `addVertex(float,float,float)` 返回 `VertexConsumer` ⇒ `PolyMesh#writeRaw` 可以按任意格式写
+      （第 1 步写死 `NEW_ENTITY`，本轮改成传入 `bakeFormat()` 的结果）。
+- [x] **`RenderType` 的包名在 1.21.11 变了**：`net.minecraft.client.renderer.rendertype.RenderType`
+      （第一版脚手架按老包名查，直接 `class not found`；已修）。`RenderType#draw(MeshData)`
+      `227 lines, 1 x 'return'`，与本仓复刻的指令序一致。
+- [x] Iris 侧：`pathways.HandRenderer` 有 `public void endRender()`、`public boolean isActive()`、
+      `public boolean isRenderingSolid()`、`renderSolid(Matrix4fc, float, Camera, GameRenderer,
+      WorldRenderingPipeline)`；`api.v0.IrisApi` 有 `assignPipeline(RenderPipeline, IrisProgram)` +
+      `getMinorApiRevision()`；`IrisProgram.HAND` 存在（另有 `HAND_TRANSLUCENT`、`EMISSIVE_ENTITIES`，
+      所以 `assignPipelineToIris(..., "HAND", ...)` 用的枚举名是对的）；
+      `vertices.IrisVertexFormats.ENTITY`、`pipeline.programs.ShaderKey.HAND_CUTOUT{,_BRIGHT,_DIFFUSE}`、
+      `pipeline.IrisPipelines.assignPipeline(RenderPipeline, ShaderKey)`、
+      `vertices.ImmediateState.{isRenderingLevel, renderWithExtendedVertexFormat, safeToMultiply}` 全在。
 
-运行期未验证清单（沙箱无客户端，按 `MESH_LOADER.md` §5）：
-
-- [ ] 无光影回归：`GPU mesh pass drew N bones in vanilla hand flush` 出现；枪不随视角漂移、
-      不拉伸；换弹 / 配件 / 高光骨骼正常。
-- [ ] 光影（Complementary Reimagined + Bloom 类包各一）+ `MeshGpuUnderShaders=true`：
-      枪**可见**、**收光影照明**（夜里变暗、手电/发光块有反应）、不拉伸、不半透；
-      日志 `... in Iris hand flush: lit=true, vertexFormat=...`。
-- [ ] 光影下**关掉**该开关：行为与第 1 步一致（collector 绘制、有光影光照）。
-- [ ] 运行中开/关光影包、切包：不崩、不残留拉伸模型（世代号 + 格式双校验）。
-- [ ] 第三人称 / 展示框 / 掉落物 / 枪匠桌 GUI：不变（仍 collector，且被预算闸门保护）。
-- [ ] 高模枪 spark：光影下 `PolyMesh#writeCutout` 不再是热点（这是本步唯一收益）。
-- [ ] 装了非 1.10.x 的 Iris：只 WARN 一次，渲染不变。
+- [ ] **仍未证实（只有实机能答）**：`VertexFormat` 里比 `NEW_ENTITY` 多的那些分量
+      （`at_mid_block` / `at_tangent` 等）在 `BufferBuilder.addVertex` 写不到时是否按
+      `VertexFormatElement` 的默认值补齐 —— javap 的 `-p` 过滤看不到填充逻辑，且这是**观感级**
+      风险（最坏是切线/中点为 0，表现为法线贴图/光滑照明异常），不是崩溃级：
+      格式与 stride 的一致性由 `BakedBone.format` 比对保证。
 
 ---
 
