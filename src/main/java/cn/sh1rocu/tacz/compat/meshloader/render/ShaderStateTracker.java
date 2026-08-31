@@ -1,6 +1,7 @@
 package cn.sh1rocu.tacz.compat.meshloader.render;
 
 import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
+import cn.sh1rocu.tacz.compat.meshloader.config.PolyRenderPolicy;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshModel;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.fabricmc.api.EnvType;
@@ -46,6 +47,9 @@ public final class ShaderStateTracker {
             if (registeredModels.isEmpty()) return;
 
             boolean currentState = IrisCompat.isUsingRenderPack();
+            // 顺带把「现在有没有光影」交给配置层缓存：只在光影下改行为的开关（见
+            // PolyRenderPolicy#illuminatedLight）每帧/每骨都要读它，不能让它们自己去反射查 Iris。
+            PolyRenderPolicy.setShadersActive(currentState);
 
             if (lastShaderState == null) {
                 lastShaderState = currentState;

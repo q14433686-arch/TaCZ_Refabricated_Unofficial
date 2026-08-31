@@ -194,6 +194,16 @@ int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());   // :373
   `bakedN*`，数据层修一次两条都修好；而且 `withCull(false)` 之外还有阴影 pass 等消费者，
   在 shader 侧补偿会把不自洽留在数据里。
 
+**A10 的续集（26.2 那边同一个 `MeshyConfig` 该加的第二项）**：维护者接着报「光影下高模枪遮不住
+太阳/月亮，枪身继承天空亮度」。这条不在 `PolyMesh.java` 里，而在**光照值**：`_illuminated` 骨骼被
+硬写成 `0xF000F0`（block=15 **且** sky=15）。这数字在 26.2 与本仓的 `PolyMeshModel` /
+`BedrockPart#render` 里逐字相同 ⇒ 同样是共享缺陷，只是它属于 TACZ 本体的约定而非 TML 的新增。
+无光影下必须两列都拉满（原版光照图是 block 列与 sky 列相乘），但光影包把 sky 读成「这表面看得见天空」
+⇒ 常亮被翻译成「太阳月亮永远照得到」。本分支的处理：新增 `MeshPolyIlluminatedRealSky`（默认 true），
+**只在装了光影包时**把 sky 换成环境真值、block 仍 15；只覆盖 poly 层，立方体层刻意没动（影响面是所有
+枪包与所有准星点，配置归属应该是 `ClientConfig`）。26.2 若要跟，建议一次性把两层都收进
+`ClientConfig` 的一个键，别只改 poly 层 —— 否则一把枪的两半会一个跟天空走、一个不跟。
+
 ## 时序对照（本仓 ↔ 上游）
 
 | 事项 | 上游 26.2 | 本仓 1.21.11 |
@@ -215,6 +225,8 @@ int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());   // :373
    与 `gbuffers_hand` 照明差异明显的包（夜晚/暗巷）下看亮度是否随世界走。
 4. 格式入参（A5）与额度/容量解耦（A6）。
 5. 静默降级补一行原因日志（A8）——这条本仓已有实现可以直接搬。
-6. **A10**（法线/绕序）：`PolyMesh` 那三行改动 + 三个配置开关本仓已实现并过了编译，可直接搬；
+6. **A10 续集**（`_illuminated` 的天空光）：上面那段可直接搬，键名与默认值保持一致
+   （`MeshPolyIlluminatedRealSky`=true），并建议连同 `BedrockPart#render` 一起收进 `ClientConfig`。
+7. **A10**（法线/绕序）：`PolyMesh` 那三行改动 + 三个配置开关本仓已实现并过了编译，可直接搬；
    搬之前请也确认你们这边 `entityCutout` 类 render type 的剔除状态 —— 本仓沙箱里没 Loom jar，
    这一条没能核实，所以修复被写成「开关可回退」而不是「默认改完就算完」。

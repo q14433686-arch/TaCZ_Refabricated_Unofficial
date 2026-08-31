@@ -292,7 +292,10 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
      * 确保当前光照档的骨骼 VBO 已就绪。
      *
      * <p>光照被 {@link PolyMeshGpuRenderer#quantizeLight} 量化成 4 级档位烘进顶点；
-     * 跨档才重烘，且有 1 秒节流。illuminated 骨骼恒烘 FULL_BRIGHT，与 collector 语义一致。</p>
+     * 跨档才重烘，且有 1 秒节流。illuminated 骨骼的光照值走
+     * {@link PolyRenderPolicy#illuminatedLight(int)}，与 collector 语义一致：无光影时恒
+     * FULL_BRIGHT，装光影包时 sky 换成环境真值（光影状态翻转本来就会让烘焙世代失效重烘，
+     * 见 {@code ShaderStateTracker}，所以这里不需要额外失效逻辑）。</p>
      */
     private boolean ensureBaked(Identifier texture, int currentLight) {
         if (polyMeshModel == null) {
@@ -324,8 +327,10 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             if (polyMeshModel.isTranslucentBone(boneName)) {
                 continue;
             }
+            // 与 collector 同源：装了光影包时自发光骨骼的 sky 用环境真值
+            // （PolyRenderPolicy#illuminatedLight），否则光影包会读成「永远晒得到太阳月亮」
             int boneLight = polyMeshModel.isIlluminatedBone(boneName)
-                    ? PolyMeshGpuRenderer.FULL_BRIGHT : lightKey;
+                    ? PolyRenderPolicy.illuminatedLight(lightKey) : lightKey;
             PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight, bakeFormat);
             if (baked == null) {
                 allOk = false;
@@ -419,8 +424,10 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             if (polyMeshModel.isTranslucentBone(boneName)) {
                 continue;
             }
+            // 与 collector 同源：装了光影包时自发光骨骼的 sky 用环境真值
+            // （PolyRenderPolicy#illuminatedLight），否则光影包会读成「永远晒得到太阳月亮」
             int boneLight = polyMeshModel.isIlluminatedBone(boneName)
-                    ? PolyMeshGpuRenderer.FULL_BRIGHT : lightKey;
+                    ? PolyRenderPolicy.illuminatedLight(lightKey) : lightKey;
             PolyMeshGpuRenderer.BakedBone baked =
                     PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight, bakeFormat);
             if (baked == null) {

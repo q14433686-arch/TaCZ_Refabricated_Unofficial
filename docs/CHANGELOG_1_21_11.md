@@ -28,6 +28,22 @@ SemVer 核心仍是 `1.1.8`，构建元数据不参与比较，见 `gradle.prope
   一致、范围取自 `defineInRange` 不擅自收窄、en/zh 28 个 `config.tacz.client.render.mesh_*`
   键齐平。这 8 项全部是**每帧/每次提交读值**（`shouldRenderPoly` / 预算判定 / 日志开关），
   所以局内改立即生效，不存在「需要重启」的假选项。
+- **高模枪「遮不住太阳/月亮」（同日第二轮，配置 17 → 18 项）**：维护者反馈反光改好后剩下的问题是
+  「光影下枪身会继承太阳/月亮的亮度，屋顶墙遮不住」。根因不在法线，而在**烘焙进去的光照值**：
+  骨骼名以 `_illuminated` 结尾 = 自发光，本仓与上游 TACZ 都硬写成 `0xF000F0`（block=15 **且** sky=15；
+  立方体层 `BedrockPart#render` 与 poly 层 `PolyMeshModel` 同一个数）。无光影下这是对的（原版光照图
+  是两列**相乘**，sky=0 基本就是黑的，光靠 block 拉满不亮）；但光影包把 **sky 读成「这表面看得见天空」**，
+  于是「常亮」= 「永远晒得到太阳月亮」，且该值沿子骨骼继承 ⇒ 顶层一个骨骼叫 `*_illuminated`，整把枪跟着露天。
+  新增 `MeshPolyIlluminatedRealSky`（默认 true）：**仅在装了光影包时**把 sky 换成环境真值、block 保持 15
+  —— 洞里照样看得见，但不再声称晒得到太阳；**无光影下逐字保持上游行为**（判据第一条件是 `isUsingRenderPack`，
+  静态可证）。三条消费路径（collector / GPU 手部 / GPU 世界）统一走 `PolyRenderPolicy#illuminatedLight`；
+  光影状态用 `ShaderStateTracker` 每帧推进的缓存布尔（`IrisCompat.isUsingRenderPack()` 每次要
+  `Class.forName`+`getMethod`，不能放在每帧每骨的路径上）。开关值改了按 F3+T；烘焙世代本来就随光影状态翻转失效。
+  **刻意没动的两半**（写清楚，别当成已全改）：立方体层的同一硬编码属于 TACZ 本体、影响所有枪包与所有准星点，
+  合理归属是 `ClientConfig`，本轮没碰；EMISSIVE 兜底是「无条件全亮」与本条可区分（日志有 WARN）。
+  若拨开关观感不变，亮度来源就不是我们烘的 sky 值而是**光影包对手部 pass 不做阴影测试**（判别法与依据见
+  `MESH_LOADER.md` §5.8 末段）。**证据边界**：同样只到静态 + CI； sky=15 被包读成太阳暴露这件事
+  依赖具体光影包的实现，需要维护者实机确认。
 - **光影下的反光 / 法线（同日追查轮，配置由 14 项增至 17 项）**：维护者报「装光影后反射光源很怪」，
   查 `core/PolyMesh.java` 得到两条**静态可证**的缺陷：
   ① `poly_mesh` 的位置相对 pivot 在 Y 轴取反（`FLIP_MODEL_Y=true`），单轴镜像 = det<0 的合同变换

@@ -44,6 +44,8 @@
   "config.tacz.client.render.enable_translucent.desc": "是否在渲染枪械工作台/雕像时启用半透明。！开启此项会导致额外的性能开销！",
   "config.tacz.client.render.mesh_enable": "Mesh 加载器（poly_mesh）总开关",
   "config.tacz.client.render.mesh_enable.desc": "内置 mesh 加载器总开关。关掉后 mesh 枪包只画立方体、不画 poly 部件，行为等价于没装加载器。已加载的模型仍保留，两种状态都不需要重启。",
+  "config.tacz.client.render.mesh_poly_illuminated_real_sky": "Mesh Poly：自发光骨骼沿用真实天空光",
+  "config.tacz.client.render.mesh_poly_illuminated_real_sky.desc": "名字以 *_illuminated 结尾的骨骼会按「block 与 sky 都拉满」烘焙，这是为了让它在黑洞里也看得见（原版光照图是两列相乘，sky=0 基本就是黑的）。但光影包把 sky 分量读成「这个表面看得见天空」，于是这部分永远遮不住太阳/月亮，枪身会一直跟着天空亮度走。打开后（且仅在装了光影包时）sky 改用周围环境的真实值、block 仍是 15：洞里照样看得见，但不会隔着天花板晒到太阳。改完按 F3+T 重载。",
   "config.tacz.client.render.mesh_poly_mirror_reverse_winding": "Mesh Poly：镜像时反转绕序",
   "config.tacz.client.render.mesh_poly_mirror_reverse_winding.desc": "poly 格式在单个轴上镜像了位置，于是每个面的朝外一侧变成了背面。原版实体程序不读顶点法线，所以这事只在装光影包时显形：按 gl_FrontFacing 翻法线的光影会把枪照成里外反了，高光落在背面那一侧。反转发射绕序正是原版 TaCZ 立方体镜像路径的做法。下次重新解析网格（F3+T）时生效。",
   "config.tacz.client.render.mesh_poly_invert_normals": "Mesh Poly：烘焙法线整体取反",

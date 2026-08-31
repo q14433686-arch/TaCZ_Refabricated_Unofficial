@@ -2,6 +2,7 @@ package cn.sh1rocu.tacz.compat.meshloader.config;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.compat.iris.IrisCompat;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.joml.Matrix4f;
 
@@ -13,6 +14,47 @@ import org.joml.Matrix4f;
 public final class PolyRenderPolicy {
 
     private PolyRenderPolicy() {
+    }
+
+    /** 与 {@code PolyMeshModel.FULL_BRIGHT} / {@code BedrockPart#render} 的 15728880 同一个值。 */
+    private static final int FULL_BRIGHT_LIGHT = 0xF000F0;
+
+    /**
+     * 「自发光」部件（骨骼名以 {@code _illuminated} 结尾）该用什么光照值。
+     *
+     * <p>上游语义是硬编码 {@code 0xF000F0}（block=15 且 sky=15）：{@code BedrockPart#render}
+     * 与 {@code PolyMeshModel} 都是这个数。无光影下这是对的 —— 原版光照图把 block 列与 sky 列
+     * <b>相乘</b>，sky 给 0 就基本全黑，所以想「不受环境光、永远看得见」必须两边都拉满。</p>
+     *
+     * <p>但光影包把 <b>sky 分量读成「这块表面看得见天空」</b>：常亮 15 等于告诉光影包
+     * 「太阳/月亮永远照得到我」⇒ 屋顶、墙都遮不住，枪身在白天/夜里都按天空亮度被照明。
+     * {@code MeshPolyIlluminatedRealSky} 打开且<b>装了光影包</b>时，sky 用环境真值、block 仍保 15
+     * —— 洞里照样看得见，但不再声称自己晒得到太阳。无光影下逐字保持上游行为。</p>
+     *
+     * @param ambientLight 该次提交拿到的环境光照值（真值来源）
+     */
+    public static int illuminatedLight(int ambientLight) {
+        if (!MeshyConfig.POLY_ILLUMINATED_REAL_SKY.get() || !shadersActive()) {
+            return FULL_BRIGHT_LIGHT;
+        }
+        return LightTexture.pack(15, (ambientLight >>> 20) & 0xF);
+    }
+
+    /**
+     * 光影包状态缓存，由 {@code ShaderStateTracker} 每帧（START 相位）写入。
+     * null = 还没采过样（加载期首帧、或一个 mesh 模型都没注册过）：那种情况下退回直接查一次，
+     * 而不是假设「没光影」—— 否则自发光部件会先按无光影烘一次，等状态翻转又要重烘。
+     */
+    private static volatile Boolean shadersActive;
+
+    static boolean shadersActive() {
+        Boolean cached = shadersActive;
+        return cached != null ? cached : IrisCompat.isUsingRenderPack();
+    }
+
+    /** 只给 {@code ShaderStateTracker} 用。 */
+    public static void setShadersActive(boolean active) {
+        shadersActive = active;
     }
 
     public static boolean shouldRenderPoly(ItemDisplayContext transformType, PoseStack poseStack) {

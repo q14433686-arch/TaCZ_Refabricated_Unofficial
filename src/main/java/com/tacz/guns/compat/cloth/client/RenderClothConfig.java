@@ -135,7 +135,7 @@ public class RenderClothConfig {
                 .setSaveConsumer(RenderConfig.BLOCK_ENTITY_TRANSLUCENT::set).build());
 
         // ================= Mesh Loader（poly_mesh）配置 =================
-        // 全部 17 项都接进来了（R3 起的「胶水」轮次，法线三项是同一天补的）：TOML 里能改的，局内也能改。
+        // 全部 18 项都接进来了（R3 起的「胶水」轮次，法线三项与自发光 sky 那一项是同一天补的）：TOML 里能改的，局内也能改。
         // 每条的 setDefaultValue 与 MeshyConfig 的 define/defineInRange 默认值逐字对齐 ——
         // Cloth 的「重置为默认」读的是这里，不是 TOML，两边写歪就会出现「重置后行为变了」。
         // 范围同理取自 defineInRange：刻意不收窄成 UI 好看的区间，否则枪包作者需要的
@@ -155,6 +155,10 @@ public class RenderClothConfig {
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_prefer_pack_normals"), MeshyConfig.POLY_PREFER_PACK_NORMALS.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_prefer_pack_normals.desc"))
                 .setSaveConsumer(MeshyConfig.POLY_PREFER_PACK_NORMALS::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_illuminated_real_sky"), MeshyConfig.POLY_ILLUMINATED_REAL_SKY.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_illuminated_real_sky.desc"))
+                .setSaveConsumer(MeshyConfig.POLY_ILLUMINATED_REAL_SKY::set).build());
 
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_in_preview"), MeshyConfig.POLY_IN_PREVIEW.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_in_preview.desc"))

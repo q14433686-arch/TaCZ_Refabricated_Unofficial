@@ -77,8 +77,8 @@
   `REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A2）。世界表另有独立标志与「连续 30 次」阈值，
   两张表互不连坐；换模型 `releaseBaked()` / `releaseWorldBaked()` 防泄漏。
 - **配置**：`MeshGpuBaking`（默认 true）、`MeshGpuUnderShaders`（光影下常驻 VBO，
-  第 2 步 v2 起默认 true）、`MeshWorldFullDetailDistance`。R3 起 **17 项 TML 配置全部**（14 项
-  是 R3 收口那轮接进来的，法线/绕序 3 项是同日的反光追查轮次补的）
+  第 2 步 v2 起默认 true）、`MeshWorldFullDetailDistance`。R3 起 **18 项 TML 配置全部**（14 项
+  是 R3 收口那轮接进来的，法线/绕序 3 项与自发光 sky 那 1 项是同日的光影追查轮次补的）
   接进局内 cloth 面板 + en/zh 语言键（TOML 能改的局内都能改，`setDefaultValue` 与
   `MeshyConfig` 的默认值逐字对齐）。
 
@@ -175,6 +175,7 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 | `MeshPolyMirrorReverseWinding` | **true**（2026-08-31 补） | poly 位置在单轴镜像 ⇒ 每个面正反面互换；反转发射绕序使其与朝外法线一致（与 `BedrockPolygon` 对 mirror 的处理同构）。只在光影下有意义，改了按 F3+T。详见 §5.7 |
 | `MeshPolyInvertNormals` | false | 烘焙法线再整体取反一次。若高光仍在错误一侧，用它与上一项做二选一（它修不动 front/back 与剔除） |
 | `MeshPolyPreferPackNormals` | false | 改用枪包自带的逐顶点法线（平滑着色）而非每面一条平面法线。上游一直强制平面着色；枪包没写 `normals` 时无变化 |
+| `MeshPolyIlluminatedRealSky` | **true**（2026-08-31 补） | `*_illuminated` 骨骼原本恒烘 (block=15, sky=15)；光影包把 sky 读成「看得见天空」⇒ 屋顶墙都遮不住太阳/月亮。开着时**仅在装了光影包**把 sky 换成环境真值、block 仍 15（洞里照样看得见）。无光影下逐字不变。详见 §5.8 |
 | `MeshPolyInShadow` | false | 阴影 pass 是否画 poly |
 | `MeshMaxRenderDistance` | 48 | 世界 poly 距离（0=不限） |
 | `MeshPolyInPreview` | true | GUI/FIXED/HEAD 是否画 poly |
@@ -194,7 +195,7 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 > 光影下的两条各自还要求「已审计 Iris + 对应 flush 钩子的存活证明」同时成立
 > （第 2/3 步，见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §3-§4）。
 >
-> 17 项都在 `tacz-client.toml` 的 `[mesh_loader]` 段，并且全部接进了局内「渲染」页（Cloth）；
+> 18 项都在 `tacz-client.toml` 的 `[mesh_loader]` 段，并且全部接进了局内「渲染」页（Cloth）；
 > 两边默认值/键位齐平由 **`python3 docs/check_mesh_config_parity.py`** 把关（零依赖：键集合、字段绑定、
 > 默认值、`defineInRange` ↔ `setMin/setMax`、语言键存在性、en/zh 齐平，六项一起查；R3 反光轮次加，
 > 注入四类错误都实测报出，不是摆设）。`docs/ci/build.yml`（待上线）里对应的那步就是跑它；
@@ -227,6 +228,9 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 9. **光影下的反光/法线**（§5.7 那张矩阵）：`MeshPolyMirrorReverseWinding` 默认 true 是本轮的修复，
    但它**只做到静态** —— 请在装了光影包的存档里按矩阵跑一遍并回报「哪一格看着对」。
    无光影的第 0-3 轮 PASS 不构成对这一项的验证（原版实体程序不读 `va_normal`）。
+10. **太阳/月亮会不会照穿屋顶**（§5.8）：站在屋里或夜里、让枪身对着光源方向，看枪是否仍按「露天」
+    的亮度被照明。`MeshPolyIlluminatedRealSky=true` 之后应当变成「被屋顶给的 sky 值压住」；
+    若仍然亮，说明亮度来源不是 sky 分量（多半是光影包对手部 pass 不做阴影测试，见 §5.8 末尾）。
 
 ### 5.3 第 1 步 GPU 烘焙（实机，无光影）
 
@@ -369,3 +373,54 @@ GPU 部件（第一人称 / 第三人称 / 掉落物）**是否一起错**？一
 **沙箱内无法核实**（无 Loom jar，反编译不了）。如果 poly 面消失/镂空，就是它开了剔除 ——
 关掉 `MeshPolyMirrorReverseWinding` 即可，并请回报。上游 26.2 `587763c` 的 `PolyMesh` 与本仓
 逐字相同 ⇒ 同一缺陷，见 `REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A10。
+
+### 5.8 高模枪「遮不住太阳/月亮」：自发光部件的天空光（2026-08-31 第二轮）
+
+**症状**（维护者报）：光影下高模枪不会遮住太阳/月亮 —— 枪身会跟着天空的亮度被照明，屋顶和墙遮不住它。
+
+**根因**（这次不在法线上，而在**烘焙进去的光照值**）：枪包里骨骼名以 `_illuminated` 结尾 =
+「自发光 / 不受环境光」，本仓与上游 TACZ 的做法都是把它的 packed light 硬写成 `0xF000F0`
+（block=15 **且** sky=15）：`BedrockPart#render`（立方体层，代码注释就写着「最大亮度」）与
+`PolyMeshModel`（poly 层）是同一个数字。无光影下这是**对的**：原版光照图是 block 列与 sky 列
+**相乘**的，只把 block 拉满、sky 给 0，结果基本是黑的 —— 想「不受环境光」必须两列都拉满。
+
+问题在光影包那一侧的语义：包里普遍把 **sky 分量读成「这个表面看得见天空」**，并据此决定太阳/月亮的
+直射光与高光（很多包对 sky=15 干脆不去查阴影图）。于是「常亮」被翻译成「永远晒得到太阳月亮」
+⇒ 正是维护者看到的现象。而且这个值**沿子骨骼继承**（`BedrockPart#render` 往下传 `cubePackedLight`，
+`PolyMeshModel#buildIlluminatedBones` 往下传 `parentIlluminated`），所以顶层一个骨骼被命名成
+`*_illuminated`，整把枪都跟着「露天」。
+
+**修法**（第 18 项 `MeshPolyIlluminatedRealSky`，默认 true）：只在**装了光影包时**把 sky 换成环境真值、
+block 保持 15 ⇒ 洞里照样看得见，但不再声称自己晒得到太阳。无光影下逐字保持上游行为（这一点是静态可证的：
+判据里第一个条件就是 `isUsingRenderPack`）。三条消费路径同源：
+
+| 路径 | 位置 |
+|---|---|
+| collector（半透明部件 / GUI / 镜内 / 弹匣 / GPU 回退） | `PolyMeshModel#drawBoneMeshes` |
+| GPU 第一人称手部烘焙 | `TaczPolyMeshGunModel#ensureBaked` |
+| GPU 世界烘焙（第三人称 / 掉落物 / 展示框） | `TaczPolyMeshGunModel#ensureWorldBaked` |
+
+三处都调 `PolyRenderPolicy#illuminatedLight`（值在配置里，光影状态由 `ShaderStateTracker` 每帧推进一个
+缓存布尔 —— 反射查 Iris 的 `isShaderPackInUse` 每次都要 `Class.forName` + `getMethod`，不能放在
+每帧每骨的路径上；缓存还没写过时才直接查一次）。光影状态翻转本来就会让烘焙世代失效重烘，
+所以这里不需要额外的失效逻辑；**开关值本身**改了要按 `F3+T`（poly 的光照在解析/烘焙定型）。
+sky 真值不是新采的：上游传进来的那个 light 就是相机方块位置的光照，本分支没有另加采样，
+所以「头顶有屋顶 ⇒ sky=0」这件事本来就在那一位里。
+
+**刻意没动的两半**（不让这一轮牵连过广）：
+
+1. **立方体层**（`BedrockPart#render` 里的 `15728880`）：那是 TACZ 本体的行为，影响所有枪包与所有
+   `_illuminated` 准星点 / 激光，配置的合理归属是 `ClientConfig` 而不是 `[mesh_loader]`。
+   若你发现**低模/立方体那半边照样晒得到太阳**，要改的就是那一处 —— 那一次得连着 26.2 一起改，
+   我不建议只改一半（本分支这样切，也是为了让你能判断只改 poly 层够不够）。
+2. **EMISSIVE 兜底**：`lightmap` 视图拿不到时整条 GPU 路退到 EMISSIVE 管线（会打一条 WARN
+   `Level lightmap view unavailable; GPU path falls back to EMISSIVE.`）。那是「无条件全亮」而不是
+   「跟天空走」，与本条现象可区分：日志里没有这条 WARN 就说明兜底没参与。
+
+**如果开关拨来拨去观感都不变**：那亮度来源就不是我们烘的 sky 值，而是光影包对**手部 pass** 的态度 ——
+第一人称几何不在世界的深度/阴影体系里（手部 pass 用另一套投影，包里 `IS_HAND` 分支常常直接不做阴影
+测试），于是手持部分本来就不可能被自己遮住。判别：第三人称看同一把枪（世界 pass，走
+`gbuffers_entities` + 我们的 `IrisProgram.ENTITIES` 登记）—— 第三人称下正常、只有第一人称不对 ⇒
+是包侧惯例，不是本分支的缺陷；两边都不对 ⇒ 回头查那个枪包到底给哪些骨骼起了 `_illuminated` 名字
+（加载统计日志里有现成计数：`poly_mesh stats for <geo>: … (translucent=…, illuminated=…)`，
+`illuminated` 非 0 才说明这条路径参与了你看到的现象）。

@@ -1,6 +1,7 @@
 package cn.sh1rocu.tacz.compat.meshloader.core;
 
 import cn.sh1rocu.tacz.compat.meshloader.api.IPolyMeshBone;
+import cn.sh1rocu.tacz.compat.meshloader.config.PolyRenderPolicy;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -32,6 +33,12 @@ import java.util.function.Predicate;
 @Environment(EnvType.CLIENT)
 public class PolyMeshModel {
 
+    /**
+     * 上游遗留的「最大亮度」常量；实际取值现在统一走
+     * {@link cn.sh1rocu.tacz.compat.meshloader.config.PolyRenderPolicy#illuminatedLight(int)}
+     * （光影下会把 sky 换成环境真值，见 docs/MESH_LOADER.md §5.8）。保留常量是为了与上游对齐、
+     * 也让别人一眼看出「原本用的是这个数」。
+     */
     public static final int FULL_BRIGHT = 15728880;
 
     private final IPolyMeshBone root;
@@ -234,7 +241,10 @@ public class PolyMeshModel {
         if (meshes == null || meshes.isEmpty()) {
             return;
         }
-        int actualLight = (bone.isIlluminated() || illuminatedBones.contains(bone.getName())) ? FULL_BRIGHT : light;
+        // 自发光部件：无光影下就是上游的 (15,15)；装了光影包时 sky 用环境真值，
+        // 免得「常亮」被光影包读成「晒得到太阳月亮」（屋顶遮不住）。见 PolyRenderPolicy#illuminatedLight。
+        int actualLight = (bone.isIlluminated() || illuminatedBones.contains(bone.getName()))
+                ? PolyRenderPolicy.illuminatedLight(light) : light;
         PolyMeshSnapshot.Command command = new PolyMeshSnapshot.Command(
                 new Matrix4f(poseStack.last().pose()),
                 new Matrix3f(poseStack.last().normal()),

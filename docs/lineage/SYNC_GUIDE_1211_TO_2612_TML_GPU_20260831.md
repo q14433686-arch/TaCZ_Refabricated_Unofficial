@@ -51,6 +51,12 @@ src/main/java/cn/sh1rocu/tacz/compat/meshloader/            # 20 个文件
 src/main/resources/tacz.mesh.mixins.json                       # package = ...meshloader.mixin，4 条 client mixin
 ```
 
+> ⚠️ `config/PolyRenderPolicy.java` 里还有 `MeshPolyIlluminatedRealSky`（默认 true）：`_illuminated`
+> 骨骼原本恒烘 `0xF000F0`（block=15 且 sky=15），光影包把 sky 读成「看得见天空」⇒ 屋顶遮不住太阳/月亮。
+> 该项**只在装了光影包时**把 sky 换成环境真值、block 保持 15；无光影下逐字不变。三条消费路径
+> （`PolyMeshModel#drawBoneMeshes` / `ensureBaked` / `ensureWorldBaked`）都走同一个入口，别只接一条。
+> 立方体层的同一硬编码（`BedrockPart#render` 的 `15728880`）本分支刻意没动 —— 见审查文档 A10 续集。
+
 > ⚠️ `core/PolyMesh.java` 与 `config/MeshyConfig.java` 里含 R3 追加的**法线/绕序修复**（上游审查
 > A10）：镜像时反转发射绕序 + 三个配置开关（`MeshPolyMirrorReverseWinding` /
 > `MeshPolyInvertNormals` / `MeshPolyPreferPackNormals`）。整包取文件时它会自动带过来，
@@ -67,9 +73,9 @@ src/main/resources/tacz.mesh.mixins.json                       # package = ...me
 | `com/tacz/guns/compat/iris/IrisCompat.java` | 反射面：`isUsingRenderPack / isRenderShadow / supportsHandFlushHook / assignMeshPipelineToEntity`（**全部反射，不产生硬依赖**） |
 | `com/tacz/guns/client/render/scope/ScopePipRerender.java` | `isInsideScopeLevelRender()` 从私有标志改为 public（世界路径要按它拒收/「画但不清表」） |
 | `com/tacz/guns/util/RenderDistance.java` | `isGuiRender()` 改 public（世界语境按 transformType 挡 GUI 预览） |
-| `com/tacz/guns/compat/cloth/client/RenderClothConfig.java` | 17 项 TML 配置全部接进局内面板（R3「胶水」14 项 + 反光轮次 3 项法线开关） |
+| `com/tacz/guns/compat/cloth/client/RenderClothConfig.java` | 18 项 TML 配置全部接进局内面板（R3「胶水」14 项 + 反光轮次 3 项法线开关 + 自发光天空光 1 项） |
 | `src/main/resources/fabric.mod.json` | `mixins` 数组加 `tacz.mesh.mixins.json`；`provides` 加 `taczmeshloader` |
-| `src/main/resources/assets/tacz/lang/{en_us,zh_cn}.json` | 34 个 `config.tacz.client.render.mesh_*` 键（17 项 × 标题+说明；R3 法线轮次 +3 项） |
+| `src/main/resources/assets/tacz/lang/{en_us,zh_cn}.json` | 36 个 `config.tacz.client.render.mesh_*` 键（18 项 × 标题+说明） |
 | `com/tacz/guns/config/ClientConfig.java` | 若你们的 TML 入口注册挂在配置上，照抄本分支的接线点 |
 
 ### 1.3 顺手要带的文档
@@ -190,7 +196,7 @@ Iris `HandRenderer` 有自己的 `SubmitNodeStorage`/`FeatureRenderDispatcher` �
 
 ### 5.5 全部完成后
 - [ ] `docs/MESH_LOADER.md` 的状态块改成你们自己的实机结论（AGENTS.md §2：没验的就写「待实机」）；
-- [ ] 配置 17 项 ↔ Cloth 17 条 ↔ 语言键 34 个，三方齐平：`python3 docs/check_mesh_config_parity.py`
+- [ ] 配置 18 项 ↔ Cloth 18 条 ↔ 语言键 36 个，三方齐平：`python3 docs/check_mesh_config_parity.py`
   （脚本已随本仓附上，键集合 / 字段绑定 / 默认值 / `defineInRange`↔`setMin·setMax` / 语言键 /
   en·zh 齐平六项一起查，非 0 退出即失败）；
 - [ ] 光影下按 `docs/MESH_LOADER.md` §5.7 那张矩阵跑一遍法线/绕序，回报「哪一格看着对」——

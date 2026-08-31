@@ -22,6 +22,7 @@ public final class MeshyConfig {
     public static ForgeConfigSpec.BooleanValue POLY_MIRROR_REVERSE_WINDING;
     public static ForgeConfigSpec.BooleanValue POLY_INVERT_NORMALS;
     public static ForgeConfigSpec.BooleanValue POLY_PREFER_PACK_NORMALS;
+    public static ForgeConfigSpec.BooleanValue POLY_ILLUMINATED_REAL_SKY;
     public static ForgeConfigSpec.BooleanValue POLY_IN_SHADOW;
     public static ForgeConfigSpec.DoubleValue MAX_RENDER_DISTANCE;
     public static ForgeConfigSpec.BooleanValue POLY_IN_PREVIEW;
@@ -59,6 +60,20 @@ public final class MeshyConfig {
         POLY_MIRROR_REVERSE_WINDING = builder.define("MeshPolyMirrorReverseWinding", true);
         POLY_INVERT_NORMALS = builder.define("MeshPolyInvertNormals", false);
         POLY_PREFER_PACK_NORMALS = builder.define("MeshPolyPreferPackNormals", false);
+
+        builder.comment("Bones whose name ends with _illuminated (self-lit reticles, lasers,",
+                "mesh bodies authored that way) are baked at max block AND max sky light -",
+                "that is how vanilla TaCZ's BedrockPart#render does it, and it is what keeps",
+                "those parts visible in a pitch dark cave (vanilla multiplies the block and sky",
+                "columns of the lightmap, so sky=0 would render them black).",
+                "Shader packs read the *sky* nibble as 'this surface can see the sun/moon', so a",
+                "constant 15 means no roof or wall can ever shade them: the gun body inherits the",
+                "sky brightness day and night. With this on (and only while a shader pack is",
+                "active), the sky nibble comes from the surrounding light instead, while block",
+                "stays at 15 - still visible in the dark, no longer sun-lit through a ceiling.",
+                "Applies to the poly layer; reload with F3+T (the GPU bake regenerates when the",
+                "shader state flips.");
+        POLY_ILLUMINATED_REAL_SKY = builder.define("MeshPolyIlluminatedRealSky", true);
 
         builder.comment("Whether to render poly_mesh during shadow passes.",
                 "Default false: the cube body already provides shadow shapes,",
