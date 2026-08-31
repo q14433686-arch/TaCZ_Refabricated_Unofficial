@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.ProjectionMatrixBuffer;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import com.tacz.guns.mixin.client.LevelRendererAccessor;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector4f;
@@ -62,13 +63,16 @@ import javax.annotation.Nullable;
  * 输出重定向（那是 B2 的事），换来的限制是镜内那遍仍以<b>主目标全分辨率</b>渲染，
  * {@link #resolutionScale()} 当前只读不生效，等到 B2 重定向落地才真正降采样。</p>
  *
- * <p><b>已知的运行时风险（编译通过 ≠ 运行安全）</b>：一帧内驱动两次
- * {@code LevelRenderer#renderLevel} 会推进两遍区块编译/实体提取等逐帧状态，
- * 26.2 已经记录过「镜外实体偶发消失」且未查明根因（详见其类注释第三条）。
- * 26.2 为此默认关闭本开关；本移植同样默认关闭，并把提交节点保留等防护留给后续阶段。
- * 另一未验证点：26.1.2 的 {@code LevelRenderer#renderLevel} 内部还有
- * {@code LevelRenderState#reset()} 与 FrameGraph 执行，二次执行对逐帧状态的影响同样
- * 只能在实机上检验。</p>
+ * <p><b>26.1.2 逐帧共享状态（已定位并修复，运行时待实机验证）</b>：一帧内驱动两次
+ * {@code LevelRenderer#renderLevel} 的最大风险在 26.1.2 的新架构上是确定性的 ——
+ * {@code LevelRenderer#renderLevel} 尾部调用 {@code LevelRenderState#reset()}（字节码 @560），
+ * 而 {@code GameRenderer#extract → LevelRenderer#extractLevel}（public，字节码 @103）
+ * 每帧只提取一次实体/天空/天气/粒子等状态到这个共享袋子里。窄遍消费完就 reset，
+ * vanilla 主遍拿到空状态 —— 实机表现为「镜外实体、太阳、雾全部不渲染」
+ * （1.21.11 的 renderLevel 参数显式传入、无共享状态袋，故同代无此病）。
+ * 修复：窄遍结束后清掉遗留提交节点并重跑 {@code extractLevel}（见
+ * {@link #renderScopeView} 中段注释）。26.2 记录过的「镜外实体偶发消失」（其类注释第三条）
+ * 属同一架构病灶的另一表现 —— 26.2 的重定向变体没有做重提取，那部分仍在。</p>
  */
 public final class ScopePipRerender {
     private static final float PROJECTION_Z_NEAR = 0.05f;
@@ -207,6 +211,25 @@ public final class ScopePipRerender {
                     viewMatrix, fogBuffer, fogColor, renderSky, chunkSectionsToRender);
             // 立刻拷走：紧随其后的 vanilla 那遍会整屏重画主目标。
             sceneCaptured = ScopePipRenderState.captureSceneFromMain(mc);
+
+            // 26.1.2 专属的逐帧状态修复（1.21.11 无此问题，见类注释差异清单）：
+            // LevelRenderer.renderLevel 尾部会调用 LevelRenderState.reset()（字节码 @560），
+            // 而 GameRenderer.extract → LevelRenderer.extractLevel 每帧只提取一次的实体/
+            // 方块实体/天空（太阳）/天气/粒子/方块高亮/worldBorder/cloudColor/区块准备状态
+            // 全部存放在同一个 LevelRenderState 里 —— 上面这遍窄 FOV 的 renderLevel 已经
+            // 把共享状态消费并清空。若不补救，随后的 vanilla 主遍拿到空状态：镜外实体、
+            // 太阳、雾、天气、粒子全部消失（实机反馈的回归；extractLevel 的调用方与
+            // reset() 调用点均已字节码定位）。补救两步：
+            // ①清掉窄遍遗留的提交节点 —— 主遍内的 renderSolidFeatures 消费过的节点已移除，
+            //   但窄遍中断/未消费的残件会在 vanilla 遍唯一的 renderAllFeatures flush 处
+            //   叠加成重影/半透明加倍；
+            // ②用 vanilla 同源参数（extract 的 float 与此处同一 DeltaTracker 快照语义）
+            //   重跑 public 的 extractLevel 重填全部逐帧状态 —— extractLevel 内部重建
+            //   ChunkSectionsToRender 并写回 levelRenderState，vanilla 的 GameRenderer
+            //   正是从该字段读取本次 renderLevel 的实参。
+            ((LevelRendererAccessor) levelRenderer).tacz$getSubmitNodeStorage().clear();
+            levelRenderer.extractLevel(deltaTracker, mc.gameRenderer.getMainCamera(), partialTicks);
+
             if (sceneCaptured && !loggedFirst) {
                 loggedFirst = true;
                 GunMod.LOGGER.info("[TACZ Scope] Scope PIP second-render pass active: {}x{} narrow-FOV world "

@@ -17,6 +17,7 @@
     "client.GlCommandEncoderScopeDepthCopyMixin",
     "client.ItemInHandLayerMixin",
     "client.ItemInHandRendererMixin",
+    "client.LevelRendererAccessor",
     "client.LanguageMixin",
     "client.LocalPlayerMixin",
     "client.MouseHandlerMixin",
