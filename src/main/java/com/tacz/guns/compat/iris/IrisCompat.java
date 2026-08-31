@@ -195,6 +195,37 @@ public final class IrisCompat {
     }
 
     /**
+     * Whether the active Iris line exposes the hand-flush timing the mesh GPU path relies on.
+     *
+     * <p>The mesh GPU pass under a shader pack is drawn from {@code ItemInHandRenderer#renderHandsWithItems}
+     * immediately after the flush that Iris replaces there ({@code HandRenderer#endRender()} calls
+     * {@code FeatureRenderDispatcher#renderAllFeatures()} + {@code BufferSource#endBatch()}). That
+     * replacement pair is what was audited for Iris 1.10.x on 1.21.11; other Iris lines keep the
+     * mesh guns on the collector path. A stale assumption here would only cost a frame (the
+     * submit-side liveness proof in {@code PolyMeshGpuRenderer} falls back to the collector), but
+     * an audited version gate is the cheaper guarantee.</p>
+     */
+    public static boolean supportsHandFlushHook() {
+        return FabricLoader.getInstance().getModContainer(CompatRegistry.IRIS)
+                .map(container -> container.getMetadata().getVersion().getFriendlyString().startsWith("1.10."))
+                .orElse(false);
+    }
+
+    /**
+     * Classify the mesh renderer's own pipeline as Iris' hand program so the resident-VBO pass,
+     * which never goes through a vanilla {@code RenderType}, still receives shader-pack lighting.
+     *
+     * <p>{@code IrisApi.assignPipeline} maps a {@link RenderPipeline} to an Iris program; Iris'
+     * {@code ShaderKey.findBestMatch} picks {@code HAND_CUTOUT} for our pipeline because it declares
+     * {@code ALPHA_CUTOUT} and the (possibly Iris-extended) entity vertex format. Failures are
+     * swallowed the same way as the scope pipelines: without the assignment the gun still draws,
+     * just with vanilla lighting.</p>
+     */
+    public static boolean assignMeshPipelineToHand(RenderPipeline pipeline) {
+        return assignPipelineToIris(pipeline, "HAND", "mesh_entity_hand");
+    }
+
+    /**
      * @return whether the active Iris hand renderer is currently extracting its solid pass.
      *         A scope reticle is frozen only in this pass and emitted later by the Iris-only
      *         {@code HAND_TRANSLUCENT} bridge.

@@ -1,11 +1,12 @@
-# 内置 TacZ Mesh Loader [TML] —— 安全子集 + 无光影 GPU 烘焙（第 0 + 1 步）
+# 内置 TacZ Mesh Loader [TML] —— 安全子集 + GPU 烘焙（第 0 + 1 步；第 2 步 v2 待实机）
 
 > 代码移植自 [VellEagle/TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader)
 > `1.21.1_fabric` v0.1.7，GPL-3.0。不是官方 TacZ 附属。
 >
 > **状态：第 0 步（collector 安全子集）与第 1 步（无光影第一人称 GPU 静态烘焙）
-> 源码完成、CI 编译通过；运行期行为（换弹无双影、GUI 不卡死、无光影 GPU 真实帧率）
-> 待实机验证。**
+> 源码完成、CI 编译通过；第 2 步 v2（光影下把 pass 开进 Iris 自己的手部 flush）源码完成、
+> 待 CI 编译 + 待实机。运行期行为（换弹无双影、GUI 不卡死、无光影 GPU 真实帧率、
+> 光影下 GPU 是否真收到 `gbuffers_hand` 照明）全部待实机验证。**
 > 按 AGENTS.md §2：本文没有一句「已实测修好」。
 >
 > 可行性论证与分步计划见
@@ -64,13 +65,33 @@
   （26.2 `9f7412e` 的修法，绕开 1s 节流）。
 - **失效与降级**：GPU pass 抛异常 → 本会话自禁用并写回 `MeshGpuBaking=false`，
   永久回退 collector（与 26.2 语义一致）；换模型 `releaseBaked()` 防泄漏。
-- **配置**：`MeshGpuBaking`（默认 true）、`MeshGpuUnderShaders`（诊断强开）、
+- **配置**：`MeshGpuBaking`（默认 true）、`MeshGpuUnderShaders`（光影下实验性常驻
+  VBO，默认 false）、
   `MeshWorldFullDetailDistance`；cloth UI + en/zh 语言键已接。
+
+### 第 2 步 v2 新增（光影下的常驻 VBO，**默认关闭、待实机**）
+
+- **绘制点整体搬迁**：1.21.11 的手部几何在 `ItemInHandRenderer#renderHandsWithItems` 末尾
+  就 `renderAllFeatures()` + `endBatch()` flush（不是延迟到世界渲染末尾），Iris 也是 hook
+  这两个调用接管手部绘制。因此 GPU 骨骼改画在**该方法 RETURN**（`ItemInHandRendererMixin#
+  tacz$drawMeshGpuAfterHandFeatureFlush`，`require=0`）—— 一个注入点同时覆盖无光影与光影，
+  ModelView / Projection / 输出目标覆写都是「刚被原版手部批次用过」的那一份。
+  第 1 步在 `renderItemInHand` RETURN 现取矩阵的做法随之删除（那正是「相对人物世界位置恒定」
+  的成因）。
+- **光影下**：`MeshGpuUnderShaders=true` 时 pass 开在 Iris `HAND_SOLID` 阶段内
+  （Iris 的 `HandRenderer#endRender` 就发生在我们这个 RETURN 之前），输出目标按
+  `RenderType#draw` 同款规则解析 → 落在 gbuffer；管线经
+  `IrisApi.assignPipeline(pipeline, IrisProgram.HAND)` 收 `gbuffers_hand` 照明。
+  **不 mixin Iris 内部类、不 patch `RenderType#draw`。**
+- **顶点格式跟随**：烘焙用 `LIT_PIPELINE.getVertexFormat()`（Iris 会把它换成
+  `IrisVertexFormats.ENTITY`），格式记进 `BakedBone`，变了立即重烘 + 绘制端二次校验。
+- **三层回退**：配置关 / 非 Iris 1.10.x / 上一帧没跑到 flush 钩子（存活证明）→ 全部回
+  collector；绘制抛错 → 本会话禁用。详见
+  [`TML_GPU_STEP2_HANDFLUSH_20260831.md`](TML_GPU_STEP2_HANDFLUSH_20260831.md) §2.4。
 
 ### 明确不包含（后续步骤，见可行性文档 §5）
 
-- 光影下的 GPU 照明（`assignPipeline(HAND)`，第 2 步）——第 1 步光影下默认回退
-  collector（第 1 步无 `RenderType.prepare()` 的光影 route，1.21.11 也没有该 API）。
+- 光影下常驻 VBO 的**实机验收**（第 2 步 v2 只有编译期证据，见上）。
 - 姿态缓存 / 三角形配对 / LOD（远期方向）。
 - mesh 目镜（上游 TML 同样不支持：ocular 物体必须用立方体）。
 
@@ -121,11 +142,12 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 | `MeshWorldFullDetailDistance` | 16 | 世界语境近距全模豁免距离（0=关闭豁免） |
 | `MeshMaxModelVertices` | 120000 | 加载时告警阈值（不影响渲染） |
 | `MeshLogStats` | true | 加载统计日志 |
-| `MeshGpuBaking` | true | 无光影第一人称 GPU 静态烘焙（第 1 步）。关闭→永久 collector；运行期异常也会自写 false |
-| `MeshGpuUnderShaders` | false | 诊断强开：光影下也走 GPU（光照不保证，仅供排查）。默认 false = 光影回退 collector |
+| `MeshGpuBaking` | true | 第一人称 GPU 静态烘焙（第 1 步）。关闭→永久 collector；运行期异常也会自写 false |
+| `MeshGpuUnderShaders` | false | 实验性（第 2 步 v2）：光影下也走常驻 VBO，pass 开在 Iris 自己那次手部 flush 之内。需 Iris 1.10.x；钩子失联自动回 collector。默认 false = 光影走 collector |
 
-> GPU 路径只接管**无光影 + 第一人称手部**语境；世界/GUI/第三人称/掉落物
-> 无论开关如何一律走 collector（第 1 步范围，见可行性文档 §6.1）。
+> GPU 路径只接管**第一人称手部**语境；世界/GUI/第三人称/掉落物无论开关如何一律走
+> collector（第 1 步范围）。光影下还需 `MeshGpuUnderShaders` + 已审计 Iris + 存活证明
+> 三条同时成立（第 2 步 v2，见 `TML_GPU_STEP2_HANDFLUSH_20260831.md`）。
 
 ## 5. 验证清单
 
@@ -154,19 +176,44 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 
 1. 配置确认 `MeshGpuBaking=true`、`MeshGpuUnderShaders=false`（默认）。
 2. 无光影 + 高模 mesh 枪（36 万顶点级）第一人称：日志出现
-   `GPU mesh pass drew N bones`（N > 0），且 spark 热点里逐顶点 collector
-   开销消失（`#24 蒙皮/骨骼烘焙` 相关热点下降）。
+   `GPU mesh pass drew N bones (...) in vanilla hand flush`（N > 0），且 spark 热点里
+   逐顶点 collector 开销消失（`#24 蒙皮/骨骼烘焙` 相关热点下降）。
 3. 无光影 + 低模/立方体枪：无 `GPU mesh pass` 日志行或 N=0，行为不变。
 4. 开光影（Complementary 系）：GPU 日志停发（回退 collector），枪身照明正常
    （与立方体同一 `entityCutout` + HAND program 路径）。
-5. 换弹（纯 mesh 弹匣）：全程无双影——GPU 骨骼在深度缓冲里与稍后 flush 的
-   手部立方体/translucent 骨骼自洽排序，无双影才代表 §6.1 注入点正确。
+5. 换弹（纯 mesh 弹匣）：全程无双影。当前绘制点在**手部批次 flush 之后**（同一条
+   栈上），GPU 骨骼与手臂/立方体的遮挡由深度测试决定（LEQUAL + 深度写），无双影
+   才代表注入点正确；若出现「手臂穿过枪身/枪穿过手臂」的顺序性穿帮，说明还需要
+   把绘制点提到 flush 之前（`@At("HEAD")` 包住那两个调用）而不是继续挪矩阵。
 6. GUI 不卡死：JEI/物品栏打开时 GPU 不接管（`ScreenRenderTracker` 门禁），
    无 `GPU mesh pass` 行。
 7. F5 / 掉落物 / 展示框：不触发 GPU（仅手部语境），走 collector，位置正确。
 8. 光影包开关翻转：`ShaderStateTracker` bump 烘焙世代号，切回无光影后 GPU
    立即重烘、枪身光照档位正确（验证 26.2 `9f7412e` 修法的移植）。
 9. `MeshGpuBaking` 运行时手动设 false → 立即回退 collector；再设 true 恢复。
+
+### 5.4 第 2 步 v2：光影下的常驻 VBO（实机，`MeshGpuUnderShaders=true`）
+
+默认关，需要手工打开；打开前请先读 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §3。
+
+1. **先看 CI 日志**：`build-reports/compile-java.log` 里 `> Task :dumpHandFlushApi`
+   段确认 `ItemInHandRenderer.renderHandsWithItems` 的 flush 结构、`RenderPass` 成员、
+   `BufferBuilder` 对未知分量的默认填充、以及 Iris 侧 `HandRenderer#endRender` /
+   `IrisApi.assignPipeline` / `IrisVertexFormats.ENTITY` / `ShaderKey.HAND_CUTOUT` 全部存在。
+   **任一条不成立就不要进实机**，先改注入点。
+2. 光影（Complementary Reimagined）+ `MeshGpuUnderShaders=true`：日志出现
+   `GPU mesh pass drew N bones (...) in Iris hand flush: lit=true, ...`，
+   并且**枪可见**（第 2 步 PoC 的失败形态是整把枪消失 → 若复现，说明 pass 没进 gbuffer）。
+3. 照明正确性：走进暗室枪应变暗、对着发光方块/手电应有明暗变化；与旁边立方体枪对比
+   不应明显更亮或更暗（`HAND_CUTOUT` 生效的判据）。
+4. 不应拉伸/乱飞：`vertexFormat` 日志值应与 `IrisVertexFormats.ENTITY` 一致，
+   且 `Mesh bake vertex format changed underneath` 只在切包那一帧出现。
+5. 运行中开关光影包各 3 次：无崩溃、无残留（世代号 + 格式双校验）；关掉开关后立即回
+   collector（`entityCutout` + HAND program 照明本来就正确）。
+6. 换弹 + 半透明骨骼：与 §5.3 第 5 条同判据。
+7. spark：`PolyMesh#writeCutout` / `writeTranslucent` 在第一人称不再是热点。
+8. **非 1.10.x 的 Iris**（如 1.11/旧版）：只 WARN 一次
+   `needs the audited Iris hand-flush hook`，渲染行为与默认一致。
 
 ### 5.4 已知边界（如实）
 

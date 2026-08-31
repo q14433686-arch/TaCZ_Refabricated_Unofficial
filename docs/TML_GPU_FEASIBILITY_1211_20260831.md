@@ -145,11 +145,16 @@ draw 调用该怎么写」。1.21.11 恰好同时具备两者所需。
 ### 6.1 第 1 步的注入点（与 26.2 不同，已按 1.21.11 实况重定位）
 
 26.2 把 `renderAfterSolid()` 挂在 `FeatureRenderDispatcher.renderAllFeatures` 的
-`executeSolid` 之后（1.21.11 无 executeSolid 拆分）。1.21.11 改为：
+`executeSolid` 之后（1.21.11 无 executeSolid 拆分）。1.21.11 当时改为（**已被本文 §6.3
+的审计推翻，见该节**）：
 
 - `PolyMeshGpuRenderer.beginFrame()` → `GameRenderer#render` HEAD（帧首清表 + 光影开关翻转 bump 世代号）。
 - `setInHandPass(true/false)` → `GameRenderer#renderItemInHand` HEAD/RETURN（`shouldSubmitGpu` 只认这个门，不认 `transformType.firstPerson()` —— 后者对「第一人称上下文画 GUI」也返回 true，正是关 PR 世界 pass 泄漏的入口）。
 - `renderAfterSolid()`（真正 drawList）→ `renderItemInHand` RETURN：此时手部投影已设、深度已清、手部立方体还没 flush（deferred collector），MV 栈已 pop 回 `V`（视矩阵）。GPU 骨骼在此画，opaque + 深度写，与稍后 flush 的手部立方体/translucent 骨骼由深度缓冲自洽排序。
+  - **⚠ 该段的「手部还没 flush（deferred collector）」是错的**：1.21.11 的
+    `ItemInHandRenderer#renderHandsWithItems` 末尾自己就 `renderAllFeatures()` + `endBatch()`
+    （Iris 也正是 hook 这两个调用接管手部绘制）。绘制点已迁到那次 flush 的紧后，
+    见 §6.3 与新文档 `TML_GPU_STEP2_HANDFLUSH_20260831.md`。
 
 矩阵语义（**实测修正**，本段最初写「RETURN 时 MV = 视矩阵 V」是错的，正是新 bug 的来源）：
 
@@ -200,3 +205,23 @@ Iris 分支；`isGpuPathUsable()` 恢复「光影下恒 false」，并保留 `Me
 pass（并把 LIT/EMISSIVE 归入 HAND）。风险高：需先字节码审计 1.21.11 的 flush 结构与 Iris
 1.10.7 的 endBatch 时机，且错误注入会拖垮所有光影用户，因此只能 `require=0 + fallback`
 小心翼翼地做，收益仅是光影下的 CPU 顶点变换开销。
+
+### 6.3 §6.2「下一步方向」的审计结果与改道（2026-08-31 第二轮）
+
+§6.2 结尾提的「mixin 进 `FeatureRenderDispatcher.renderAllFeatures()`，用 MixinExtras `@Local`
+捕获那次 flush 的 `RenderPass pass`」**经字节码审计后作废**：1.21.11 的 `renderAllFeatures()`
+里没有 `RenderPass` 局部变量（也没有 `renderSolidFeatures`/`renderTranslucentFeatures`），
+`RenderPass` 是每个批次在自己的 `RenderType#draw(MeshData)` 里创建即关闭的；而
+`RenderType#draw` 解析输出目标时优先读 `RenderSystem.outputColorTextureOverride` /
+`outputDepthTextureOverride`，Iris 1.10.7 则用 `MixinGlCommandEncoder` 拦掉 pass 创建期的
+`glBindFramebuffer` 来代管 framebuffer ——**所以不必借别人的 pass，在自己的 pass 里按原版同款
+规则选目标即可落进 gbuffer**。
+
+绘制点也换到 `ItemInHandRenderer#renderHandsWithItems` 的 RETURN（那次 flush 的紧后、仍在
+Iris `HAND_SOLID` 阶段内），一个注入点同时覆盖有/无光影，且不 mixin Iris 内部类。
+§6.2 的「光影下零 CPU 变换不可行」结论**只适用于在 vanilla 手部调用点之外开 pass 的画法**，
+不再成立为原理性限制；但它在 1.21.11 上仍然没有实机 PASS 记录，因此保持
+`MeshGpuUnderShaders` 默认关闭 + 三层回退。
+
+实现依据、逐条证据与待验证清单：[`TML_GPU_STEP2_HANDFLUSH_20260831.md`](TML_GPU_STEP2_HANDFLUSH_20260831.md)。
+

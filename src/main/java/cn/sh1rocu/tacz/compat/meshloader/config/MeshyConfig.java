@@ -9,8 +9,9 @@ import net.minecraftforge.common.ForgeConfigSpec;
  * <p>collector（VertexConsumer）渲染路径 + 解析缓存 + 顶点预算闸门，
  * 外加第一人称 GPU 静态烘焙（{@code MeshGpuBaking}，见
  * {@code PolyMeshGpuRenderer} —— 只收手部 pass，规避关 PR
- * #33/#69/#70/#71 的世界 pass 泄漏）。光影下默认回退 collector，
- * {@code MeshGpuUnderShaders} 是实验性强开（第 2 步落地）。</p>
+ * #33/#69/#70/#71 的世界 pass 泄漏）。光影下默认回退 collector；
+ * {@code MeshGpuUnderShaders} 是实验性开关（第 2 步 v2：把 pass 开在
+ * Iris 自己那次手部 flush 之内，见 {@code docs/TML_GPU_STEP2_HANDFLUSH_20260831.md}）。</p>
  */
 public final class MeshyConfig {
 
@@ -58,13 +59,14 @@ public final class MeshyConfig {
                 "Falls back to the collector path if the GPU pass fails.");
         GPU_BAKING = builder.define("MeshGpuBaking", true);
 
-        builder.comment("Shader packs: the GPU path is always DISABLED under shaders on 1.21.11.",
-                "The resident-VBO pass draws to the main render target only, while Iris binds",
-                "gbuffers_hand only during its collector flush (and 1.21.11 has no 26.2",
-                "drawFromBuffer to inject a VBO into that flush), so enabling it would just",
-                "make the gun vanish. See docs/TML_GPU_FEASIBILITY_1211_20260831.md 6.2.",
-                "This switch is currently a no-op: mesh guns always fall back to the collector",
-                "path under shaders (which already receives shader lighting via Iris HAND).");
+        builder.comment("EXPERIMENTAL: keep the GPU-baked mesh gun on the resident-VBO path when a",
+                "shader pack is active. The pass is then opened inside Iris' own hand flush, so it",
+                "lands in the gbuffer and is lit by the pack's gbuffers_hand program (the pipeline is",
+                "registered with IrisApi.assignPipeline(HAND)); requires an audited Iris 1.10.x and",
+                "silently falls back to the collector path if the flush hook is not live.",
+                "Off by default: the collector path already gets correct shader lighting, this only",
+                "removes the per-frame CPU vertex transform. See",
+                "docs/TML_GPU_STEP2_HANDFLUSH_20260831.md.");
         GPU_UNDER_SHADERS = builder.define("MeshGpuUnderShaders", false);
 
         builder.comment("Vertex budget for poly_mesh in GUI/FIXED/HEAD. Icons above this",

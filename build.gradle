@@ -388,130 +388,132 @@ publishing {
     }
 }
 
-// TEMP (step-2 PoC, renderAllFeatures @Local route): dump FeatureRenderDispatcher bytecode so the
-// hand-flush RenderPass local can be located precisely. Runs after compileJava (finalizedBy);
-// its stdout lands in the CI compile log. Remove before release.
-tasks.register('dumpFeatureDispatcherApi') {
+// TEMP (step 2 v2, "draw inside the hand flush" route): the sandbox has no JDK, no loom cache and
+// no Minecraft/Iris jars, so every vanilla + Iris member this feature calls can only be read from
+// the real compile classpath inside CI. This task javap-dumps exactly those members; its stdout
+// lands in build-reports/compile-java.log, which the compile-check workflow commits back to the
+// branch. Remove before release.
+tasks.register('dumpHandFlushApi') {
     doLast {
-        def cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
-
-        def runJavap = { String cls, List flags ->
-            def cmd = ['javap', '-classpath', cp]
-            flags.each { cmd << it }
-            cmd << cls
-            def proc = new ProcessBuilder(cmd).redirectErrorStream(false).start()
-            def out = proc.inputStream.getText('UTF-8')
-            def err = proc.errorStream.getText('UTF-8')
-            proc.waitFor()
-            return [out, err]
-        }
-
-        def methodBlocks = { String cls, List flags ->
-            def (out, err) = runJavap(cls, flags)
-            if (err.trim()) { println('javap stderr: ' + err.trim()); return [] }
-            def blocks = []
-            def cur = null
-            out.readLines().each { line ->
-                if (line ==~ /^  .+\(.*\);.*$/) {
-                    if (cur != null) blocks << cur
-                    cur = [line]
-                } else if (cur != null) {
-                    cur << line
-                } else {
-                    cur = [line]
+        // Diagnostics must never break the build: a finalizedBy failure would fail compileJava.
+        try {
+            def cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
+            def javapExe = 'javap'
+            for (String home : [System.getProperty('java.home'), System.getenv('JAVA_HOME')]) {
+                if (!home) {
+                    continue
+                }
+                def candidate = new File(new File(home), 'bin/javap')
+                if (candidate.exists()) {
+                    javapExe = candidate.absolutePath
+                    break
                 }
             }
-            if (cur != null) blocks << cur
-            return blocks
-        }
 
-        def findMethod = { List blocks, String name -> blocks.find { it[0].contains(name) } }
-
-        println '===== net.minecraft.client.renderer.feature.FeatureRenderDispatcher -p ====='
-        def (fdp, fdpe) = runJavap('net.minecraft.client.renderer.feature.FeatureRenderDispatcher', ['-p'])
-        println(fdp ?: '(none)')
-        if (fdpe.trim()) { println('stderr: ' + fdpe.trim()) }
-
-        def fdBlocks = methodBlocks('net.minecraft.client.renderer.feature.FeatureRenderDispatcher', ['-c', '-p'])
-        ['void renderAllFeatures', 'renderSolidFeatures', 'renderTranslucentFeatures'].each { name ->
-            def b = findMethod(fdBlocks, name)
-            if (b != null) {
-                println "===== FeatureRenderDispatcher.${name} full (${b.size()} lines) ====="
-                println b.join('\n')
-            } else {
-                println "===== FeatureRenderDispatcher.${name} NOT FOUND ====="
+            def runJavap = { String cls, List flags ->
+                def cmd = [javapExe, '-classpath', cp] + flags + [cls]
+                def proc = new ProcessBuilder(cmd).redirectErrorStream(false).start()
+                def out = proc.inputStream.getText('UTF-8')
+                def err = proc.errorStream.getText('UTF-8')
+                proc.waitFor()
+                return [out, err]
             }
-        }
 
-        def fdBlocks2 = methodBlocks('net.minecraft.client.renderer.feature.CustomFeatureRenderer', ['-c', '-p'])
-        ['void render('].each { name ->
-            def b = findMethod(fdBlocks2, name)
-            if (b != null) {
-                println "===== CustomFeatureRenderer.render full (${b.size()} lines) ====="
-                println b.join('\n')
-            } else {
-                println '===== CustomFeatureRenderer.render NOT FOUND ====='
-            }
-        }
-
-        println '===== net.minecraft.client.renderer.feature.CustomFeatureRenderer -p ====='
-        def (cfr, cfre) = runJavap('net.minecraft.client.renderer.feature.CustomFeatureRenderer', ['-p'])
-        println(cfr ?: '(none)')
-        if (cfre.trim()) { println('stderr: ' + cfre.trim()) }
-
-        println '===== net.minecraft.client.renderer.feature.ItemFeatureRenderer -p ====='
-        def (ifr, ifre) = runJavap('net.minecraft.client.renderer.feature.ItemFeatureRenderer', ['-p'])
-        println(ifr ?: '(none)')
-        if (ifre.trim()) { println('stderr: ' + ifre.trim()) }
-
-        println '===== net.minecraft.client.renderer.feature.FeatureRenderer -p ====='
-        def (fr, fre) = runJavap('net.minecraft.client.renderer.feature.FeatureRenderer', ['-p'])
-        println(fr ?: '(none)')
-        if (fre.trim()) { println('stderr: ' + fre.trim()) }
-
-        println '===== net.minecraft.client.renderer.SubmitNodeCollection -p ====='
-        def (sncl, sncle) = runJavap('net.minecraft.client.renderer.SubmitNodeCollection', ['-p'])
-        println(sncl ?: '(none)')
-        if (sncle.trim()) { println('stderr: ' + sncle.trim()) }
-
-        println '===== net.minecraft.client.renderer.MultiBufferSource$BufferSource -p ====='
-        def (bss, bsse) = runJavap('net.minecraft.client.renderer.MultiBufferSource$BufferSource', ['-p'])
-        println(bss ?: '(none)')
-        if (bsse.trim()) { println('stderr: ' + bsse.trim()) }
-
-        println '===== net.minecraft.client.renderer.rendertype.RenderType -p ====='
-        def (rtp, rtpe) = runJavap('net.minecraft.client.renderer.rendertype.RenderType', ['-p'])
-        if (rtp) {
-            rtp.readLines().each { line ->
-                ['draw', 'pipeline', 'createRenderPass', 'setup', 'Mode', 'format', 'sortOnUpload'].each { n ->
-                    if (line.contains(n)) println '  ' + line.trim()
+            // javap's own declaration line for every member whose signature contains one of the needles.
+            def dumpMembers = { String cls, List needles ->
+                def (out, err) = runJavap(cls, ['-p'])
+                println "===== javap -p ${cls} (filtered: ${needles.join(', ')}) ====="
+                if (!out?.trim()) {
+                    println "(no output) ${(err ?: '').trim()}"
+                    return
+                }
+                def hits = 0
+                out.readLines().each { line ->
+                    if (!line.trim()) {
+                        return
+                    }
+                    if (needles.any { n -> line.contains(n) }) {
+                        println '  ' + line.trim()
+                        hits++
+                    }
+                }
+                if (hits == 0) {
+                    println '  (no member matched)'
                 }
             }
-        } else { println('(none)'); if (rtpe.trim()) println('stderr: ' + rtpe.trim()) }
 
-        def rtb = methodBlocks('net.minecraft.client.renderer.rendertype.RenderType', ['-c', '-p'])
-        ['void draw(', 'createRenderPass'].each { name ->
-            def b = findMethod(rtb, name)
-            if (b != null) {
-                println "===== RenderType.${name.trim()} full (${b.size()} lines) ====="
-                println b.join('\n')
-            } else {
-                println "===== RenderType.${name.trim()} NOT FOUND ====="
-            }
-        }
-
-        def (rs2, rse2) = runJavap('com.mojang.blaze3d.systems.RenderSystem', ['-p'])
-        println '===== RenderSystem (filtered) ====='
-        if (rs2) {
-            rs2.readLines().each { line ->
-                ['outputColor', 'outputDepth', 'createRenderPass', 'bindDefaultUniforms', 'getModelView',
-                 'getDevice', 'getDynamicUniforms', 'getColorTextureView', 'getDepthTextureView',
-                 'RenderPass'].each { n ->
-                    if (line.contains(n)) println '  ' + line.trim()
+            // Full bytecode of every overload of one method: what matters here is the *order* of the
+            // calls inside it, plus how many plain `return` instructions exist (@At("RETURN") hooks
+            // all of them, @At("TAIL") only the last one).
+            def dumpMethod = { String cls, String name ->
+                def (out, err) = runJavap(cls, ['-c', '-p'])
+                println "===== javap -c -p ${cls}#${name} ====="
+                if (!out?.trim()) {
+                    println "(no output) ${(err ?: '').trim()}"
+                    return
+                }
+                def cur = null
+                def blocks = []
+                out.readLines().each { line ->
+                    if (line ==~ /^\s+\S.*\(.*\).*$/ && !line.contains('Code:')) {
+                        if (cur != null) {
+                            blocks << cur
+                        }
+                        cur = [line]
+                    } else if (cur != null) {
+                        cur << line
+                    }
+                }
+                if (cur != null) {
+                    blocks << cur
+                }
+                def found = blocks.findAll { it[0].contains(' ' + name + '(') }
+                if (found.isEmpty()) {
+                    println "  NOT FOUND among ${blocks.size()} members"
+                    return
+                }
+                found.each { b ->
+                    def returns = b.count { it.trim() == 'return' }
+                    println "  --- ${b[0].trim()}  (${b.size()} lines, ${returns} x bare 'return') ---"
+                    println b.join('\n')
                 }
             }
-        } else { println('(none)'); if (rse2.trim()) println('stderr: ' + rse2.trim()) }
 
+            // 1. The premise of the new draw point: renderHandsWithItems must itself end with
+            //    renderAllFeatures() + BufferSource#endBatch(), and RETURN has to cover every path.
+            dumpMethod('net.minecraft.client.renderer.ItemInHandRenderer', 'renderHandsWithItems')
+
+            // 2. blaze3d surface the mesh pass calls directly (target selection + scissor + uniforms).
+            dumpMethod('net.minecraft.client.renderer.RenderType', 'draw')
+            dumpMembers('com.mojang.blaze3d.systems.RenderPass',
+                    ['enableScissor', 'setUniform', 'setVertexBuffer', 'setIndexBuffer', 'drawIndexed',
+                     'setPipeline', 'bindTexture', 'close'])
+            dumpMembers('com.mojang.blaze3d.systems.ScissorState', ['enabled', 'getX', 'getY', 'getWidth', 'getHeight'])
+            dumpMembers('com.mojang.blaze3d.pipeline.RenderTarget', ['useDepth', 'getColorTextureView', 'getDepthTextureView'])
+            dumpMembers('com.mojang.blaze3d.systems.RenderSystem',
+                    ['outputColorTextureOverride', 'outputDepthTextureOverride', 'getScissorStateForRenderTypeDraws',
+                     'bindDefaultUniforms', 'getSequentialBuffer', 'getDynamicUniforms', 'getModelViewMatrix', 'getDevice'])
+
+            // 3. Can a BufferBuilder write an arbitrary (Iris-extended) format, i.e. does
+            //    addVertex() fill in the components the mesh does not supply?
+            dumpMembers('com.mojang.blaze3d.vertex.BufferBuilder', ['BufferBuilder(', 'addVertex', 'putBulkData', 'defaults'])
+            dumpMembers('com.mojang.blaze3d.vertex.VertexFormat',
+                    ['Defaults', 'getVertexFormatElements', 'getVertexSize', 'getIndexType', 'elements'])
+            dumpMembers('com.mojang.blaze3d.vertex.DefaultVertexFormat', ['NEW_ENTITY'])
+
+            // 4. The Iris side: hand flush entry points, program assignment, extended formats.
+            dumpMembers('net.irisshaders.iris.pathways.HandRenderer',
+                    ['endRender', 'renderSolid', 'renderTranslucent', 'isActive', 'isRenderingSolid', 'setupGlState'])
+            dumpMembers('net.irisshaders.iris.api.v0.IrisApi', ['assignPipeline', 'getMinorApiRevision', 'isShaderPackInUse'])
+            dumpMembers('net.irisshaders.iris.api.v0.IrisProgram', ['HAND', 'EMISSIVE', 'MAIN'])
+            dumpMembers('net.irisshaders.iris.vertices.IrisVertexFormats', ['ENTITY', 'TERRAIN', 'HAND'])
+            dumpMembers('net.irisshaders.iris.pipeline.programs.ShaderKey', ['HAND_CUTOUT', 'HAND_TRANSLUCENT'])
+            dumpMembers('net.irisshaders.iris.pipeline.IrisPipelines', ['assignPipeline', 'getPipeline'])
+            dumpMembers('net.irisshaders.iris.vertices.ImmediateState',
+                    ['renderWithExtendedVertexFormat', 'isRenderingLevel', 'safeToMultiply', 'skipExtension'])
+        } catch (Throwable t) {
+            println "> dumpHandFlushApi failed (harmless, diagnostics only): ${t}"
+        }
     }
 }
-compileJava.finalizedBy dumpFeatureDispatcherApi
+compileJava.finalizedBy dumpHandFlushApi

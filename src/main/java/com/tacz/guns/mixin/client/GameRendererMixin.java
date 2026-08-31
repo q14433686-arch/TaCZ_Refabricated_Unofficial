@@ -64,10 +64,12 @@ public abstract class GameRendererMixin {
                                   Matrix4f projection,
                                   CallbackInfo ci) {
         this.tacz$renderingItemInHand = false;
-        // poly_mesh GPU：手部 submit 已结束、投影已设、深度已清，在 collector 的
-        // 延迟 flush（renderLevel 末尾 renderAllFeatures）之前画 GPU 骨骼。
-        // 先画再清 hand-pass 标志（renderAfterSolid 内部判 isInHandPass）。
-        PolyMeshGpuRenderer.renderAfterSolid();
+        // poly_mesh GPU 的绘制不在此处：1.21.11 的手部几何是在
+        // ItemInHandRenderer#renderHandsWithItems 末尾自己 flush 的（不是延迟到
+        // renderLevel 末尾），所以 GPU 骨骼必须画进那次 flush 的紧后 ——
+        // 见 ItemInHandRendererMixin#tacz$drawMeshGpuAfterHandFeatureFlush。在这里的
+        // ModelView 已被还原、目标覆写已退出，
+        // 光影下那次 flush 也已经过去，画在这里只会得到「位置恒定」或「整把枪消失」。
         PolyMeshGpuRenderer.setInHandPass(false);
         // Step 3 (real PIP): after the hand pass the aperture/world depth copies are complete, so
         // paste the captured pre-hand world into the lens at the scope zoom. Step 2's magenta

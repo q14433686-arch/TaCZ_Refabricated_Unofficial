@@ -11,6 +11,7 @@ import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
 import cn.sh1rocu.tacz.compat.meshloader.render.ScreenRenderTracker;
 import cn.sh1rocu.tacz.compat.meshloader.render.ShaderStateTracker;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.other.GunModelTypeManager;
 import com.tacz.guns.client.model.BedrockGunModel;
@@ -86,6 +87,11 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
     private final Map<String, PolyMeshGpuRenderer.BakedBone> bakedBones = new HashMap<>();
     private int bakedLightKey = -1;
     private int bakedGeneration = -1;
+    /**
+     * 这批 VBO 烘焙时用的顶点格式（{@link PolyMeshGpuRenderer#bakeFormat()}）。
+     * 光影激活时它是 Iris 的扩展实体格式，与 NEW_ENTITY 的 stride 不同，格式一变必须重烘。
+     */
+    private VertexFormat bakedFormat = null;
     private long lastRebakeMs = 0L;
     private boolean gpuBaked = false;
     private boolean loggedFirstSubmit = false;
@@ -200,9 +206,11 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         }
         int lightKey = PolyMeshGpuRenderer.quantizeLight(currentLight);
         int generation = PolyMeshGpuRenderer.getBakeGeneration();
+        VertexFormat bakeFormat = PolyMeshGpuRenderer.bakeFormat();
         if (gpuBaked) {
-            if (generation != bakedGeneration) {
-                // 光影包开关翻转：旧 VBO 在切换后的实体顶点格式下属性错位（模型拉伸），
+            if (generation != bakedGeneration || bakeFormat != bakedFormat) {
+                // 光影包开关翻转、或 pass 实际消费的顶点格式变了（Iris 会在光影激活时把
+                // NEW_ENTITY 换成扩展实体格式）：旧 VBO 按新 stride 解读就是模型拉伸，
                 // 必须立即重烘，不受 1 秒光照节流约束。
                 releaseBaked();
             } else if (lightKey == bakedLightKey) {
@@ -224,7 +232,7 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             }
             int boneLight = polyMeshModel.isIlluminatedBone(boneName)
                     ? PolyMeshGpuRenderer.FULL_BRIGHT : lightKey;
-            PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight);
+            PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight, bakeFormat);
             if (baked == null) {
                 allOk = false;
                 continue;
@@ -235,6 +243,7 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         if (gpuBaked) {
             bakedLightKey = lightKey;
             bakedGeneration = generation;
+            bakedFormat = bakeFormat;
             lastRebakeMs = System.currentTimeMillis();
             LOGGER.info("[TacZMeshLoader] GPU-baked {} bones ({} vertices) for {} at quantized light {}",
                     bakedBones.size(), polyMeshModel.getTotalVertexCount(), texture,
@@ -254,6 +263,7 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         gpuBaked = false;
         bakedLightKey = -1;
         bakedGeneration = -1;
+        bakedFormat = null;
     }
 
     /**

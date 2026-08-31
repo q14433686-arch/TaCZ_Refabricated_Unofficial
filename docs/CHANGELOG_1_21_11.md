@@ -5,6 +5,47 @@
 
 ---
 
+## 未发版（2026-08-31，TML 第 2 步 v2：mesh GPU pass 开进手部 flush；未改版本号）
+
+**只做了一件事：把「常驻 VBO 在什么时刻画」这个决定改对，并据此把光影下的路径打通到可实机验证的程度。
+全部证据与逐条 javap 见 [`TML_GPU_STEP2_HANDFLUSH_20260831.md`](TML_GPU_STEP2_HANDFLUSH_20260831.md)。**
+
+- **审计推翻了上一轮留的 TODO 前提**：`FeatureRenderDispatcher#renderAllFeatures`（1.21.11）
+  里根本没有 `RenderPass` 局部变量，也没有 `renderSolidFeatures` / `renderTranslucentFeatures`；
+  pass 是每个批次在 `RenderType#draw(MeshData)` 内部创建即关闭的。所以「mixin renderAllFeatures
+  + `@Local` 捕获 flush pass」这条路**不成立**，已作废并记档（`TML_GPU_FEASIBILITY` §6.3）。
+- **改道**：`RenderType#draw` 的输出目标是
+  `RenderSystem.outputColorTextureOverride` / `outputDepthTextureOverride` 优先，且 Iris 1.10.7
+  用 `MixinGlCommandEncoder` 代管 pass 创建期的 framebuffer 绑定 —— 于是**自己按同款规则开
+  pass** 就能在世界渲染阶段内落进 gbuffer，不需要借别人的 pass。
+- **绘制点搬迁**：`PolyMeshGpuRenderer.renderAfterSolid()`（`GameRenderer#renderItemInHand`
+  RETURN）→ `renderAtHandFlush()`（`ItemInHandRenderer#renderHandsWithItems` 的 RETURN，
+  `require=0`）。1.21.11 的手部几何本来就在这个方法末尾 `renderAllFeatures()` + `endBatch()`
+  flush（Iris 亦是从同一方法进来、用 `HandRenderer#endRender` 替换那两个调用），一个注入点
+  同时覆盖有/无光影两条路。**不再 mixin Iris 内部类，也不再 patch `RenderType#draw`。**
+- **顺带修掉一个由构造决定的错**：第 1 步为绕开「RETURN 时 ModelView 已被还原」而在 submit
+  时刻偷拍 `Bᵀ` 的做法删掉了 —— 现在 ModelView / Projection / 目标覆写取的都是刚被原版手部
+  批次用过的那一份，GPU 与 collector 逐帧等价不再依赖时点巧合。
+- **顶点格式跟随**：Iris 的 `MixinRenderPipeline` 会在光影激活时把 `NEW_ENTITY` 换成
+  `IrisVertexFormats.ENTITY`（stride 不同）。烘焙改为按 `LIT_PIPELINE.getVertexFormat()`
+  当刻返回值写，格式记进 `BakedBone`，`ensureBaked` 比对 + 绘制端二次校验，不一致跳过当帧
+  并 bump 世代号（避免「拉伸的枪模」按错 stride 解读 buffer）。
+- **光影路径**：`MeshGpuUnderShaders` 从「恒 no-op 的诊断位」改成实际生效的实验开关
+  （**默认仍为 false**）：需 Iris 1.10.x（`IrisCompat.supportsHandFlushHook()`）+
+  `IrisApi.assignPipeline(pipeline, IrisProgram.HAND)`，并有**钩子存活证明**兜底 ——
+  上一帧没真正跑到 flush 钩子就不允许跳过 collector，杜绝第 2 步 PoC 的「枪整体消失」。
+- 文档：`MESH_LOADER.md` 配置表与 §5.3/新增 §5.4 实机清单、`TML_GPU_FEASIBILITY` §6.1 更正
+  + 新 §6.3、`PolyMeshGpuRenderer` / `MeshyConfig` / en_us / zh_cn 文案同步。
+- 诊断脚手架：`build.gradle` 的 TEMP task 由 `dumpFeatureDispatcherApi` 换成 `dumpHandFlushApi`
+  （javap 逐项核对 `renderHandsWithItems` flush 结构、`RenderPass`/`ScissorState`/`RenderTarget`
+  成员、`BufferBuilder` 对未知分量的默认填充、Iris 侧 `HandRenderer#endRender` 等；发布前删）。
+
+**验证状态（如实记录）**：本轮**未编译、未实机**。沙箱无 JDK / 无 loom 缓存，编译与 javap 审计
+依赖 push 后 `compile-check.yml` 回推的 `build-reports/compile-java.log`；光影下 GPU 是否真收
+`gbuffers_hand` 照明、无光影回归是否不退化，均须按 `MESH_LOADER.md` §5.3 / §5.4 实机确认。
+
+---
+
 ## 未发版（2026-08-27，叠在 R2-hotfix2 之上，未改版本号）
 
 **跟进：26.2 排查的长按幽灵使用 / 耳鸣资源。任务 C（消声注入点）按该线实测有效，未改。**
