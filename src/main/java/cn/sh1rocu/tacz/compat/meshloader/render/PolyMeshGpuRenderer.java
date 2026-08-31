@@ -553,12 +553,27 @@ public final class PolyMeshGpuRenderer {
 
     /**
      * 世界那一次 feature flush 之后的绘制钩子，由 {@code FeatureRenderDispatcherMixin}
-     * 在 {@code renderAllFeatures} 的 RETURN 调用（{@code require=0}）。
+     * 在 {@code renderSolidFeatures} 的 RETURN 调用（{@code require=0}）。
      *
-     * <p><b>与手部钩子的分工</b>：{@code renderAllFeatures()} 在 1.21.11 有三个调用点
-     * （CI javap：{@code LevelRenderer} 两处 + {@code ItemInHandRenderer#renderHandsWithItems}
-     * 一处）。本钩子按语境分流：手部那次交回 {@link #renderAtHandFlush()}（它必须等
-     * {@code endBatch()} 之后，见 {@code ItemInHandRendererMixin}），本方法只认世界那两次。</p>
+     * <p><b>26.1.2 消费点拓扑（CI 探针 round 4 字节码实锤，2026-09-01）</b>：1211 的世界
+     * flush 是 frame-graph 主 pass 节点里的 {@code renderAllFeatures()}；26.1.2 拆开了 ——
+     * 主 pass lambda（{@code LevelRenderer#renderLevel} 内）依次
+     * {@code renderSolidFeatures() → renderTranslucentFeatures() → renderTranslucentParticles()
+     * → clearSubmitNodes()}，而 {@code renderAllFeatures()} 只剩手部尾（被 inHandPass 拒）
+     * 与 {@code GameRenderer#renderLevel} 尾部（窗口外，被 levelRenderActive 拒）两个站位。
+     * 消费点因此必须挂在主 pass 的 {@code renderSolidFeatures} RETURN：同一时刻、同一
+     * MV 槽（26.1.2 的 {@code RenderType#draw} 绘制时刻现取）、同一输出目标与深度状态，
+     * 与 collector「pose 烘进顶点 + 同一份 MV」逐帧等价。挂 {@code renderAllFeatures}
+     * 的旧消费点曾造成两个实机症状：vanilla 世界表永不消费（存活证明永不记录 →
+     * 提交侧永久回退 collector = 第三人称/掉落物形态不烘焙）；Iris 26.1 把手部搬进
+     * Level 内部后其 flush 落在窗口内但 MV 槽已被手部污染 = 烘焙粘在视界空间。</p>
+     *
+     * <p><b>与手部钩子的分工</b>：手部表由 {@code ItemInHandRendererMixin} 的钩子在
+     * {@code endBatch()} 之后消费（{@code renderAtHandFlush()}）；{@code renderAllFeatures}
+     * 的各站位会经由其内部的 {@code renderSolidFeatures} 触发本钩子，但分别被
+     * {@code inHandPass} / {@code !levelRenderActive} 拒收且不记存活证明；
+     * Iris 的 in-level 手部点由 {@code worldConsumedFrame} 首消费守卫跳过
+     * （主 pass 必然先跑、先消费）。</p>
      *
      * <p><b>不清表的情形</b>：镜内那一遍（PIP 二次渲染）与阴影 pass —— 提交每帧只发生一次，
      * 在这里清了主画面就没得画了（表现即「一开镜世界 mesh 枪消失」）。镜内那遍照常画一遍：
@@ -863,12 +878,15 @@ public final class PolyMeshGpuRenderer {
             return;
         }
 
-        // ModelViewMat：直接取 flush 当刻的 getModelViewMatrix()。绘制点就在原版/ Iris
-        // 那次手部 flush 的紧后，两份矩阵是同一个值 —— 这正是 collector 路径烘进顶点的
-        // pose 稍前所乘的那份，所以「GPU 顶点留骨骼本地 + mv = MV × pose」与 collector
-        // 「pose 烘进顶点 + MV 原样」逐帧等价。（第 1 步曾在 renderItemInHand RETURN
-        // 现取已被还原的栈，才有「相对人物世界位置恒定」老 bug；现在不存在这个时刻差。）
-        Matrix4f handMv = new Matrix4f(RenderSystem.getModelViewMatrix());
+        // ModelViewMat：直接取 flush 当刻的 getModelViewMatrix()。手部路径的绘制点在
+        // 原版/Iris 那次手部 flush 的紧后、世界路径（26.1.2）在主 pass 的
+        // renderSolidFeatures 紧后 —— 两者都满足「与 collector 批次同一时刻、同一份槽值」
+        // （26.1.2 的 RenderType#draw 在绘制时刻现取该槽），所以「GPU 顶点留骨骼本地 +
+        // mv = MV × pose」与 collector「pose 烘进顶点 + MV 原样」逐帧等价。
+        // （第 1 步曾在 renderItemInHand RETURN 现取已被还原的栈，才有「相对人物世界位置
+        // 恒定」老 bug；1.21.11 侧同样防范了世界路径的这类时刻差 —— 消费点必须在世界
+        // 几何自己的 flush 处，26.1.2 拓扑下的落地见 renderAtWorldFlush 的 javadoc。）
+        Matrix4f flushMv = new Matrix4f(RenderSystem.getModelViewMatrix());
 
         Map<Identifier, List<DrawEntry>> byTexture = new HashMap<>();
         for (DrawEntry entry : drawable) {
@@ -883,7 +901,7 @@ public final class PolyMeshGpuRenderer {
         int maxIndexCount = 0;
         for (DrawEntry entry : drawable) {
             // ModelViewMat = 手部 MV × pose_submit（乘序同 vanilla：顶点先套 pose 再进相机系）。
-            Matrix4f mv = new Matrix4f(handMv).mul(entry.model());
+            Matrix4f mv = new Matrix4f(flushMv).mul(entry.model());
             transformByEntry.put(entry, RenderSystem.getDynamicUniforms().writeTransform(
                     mv, WHITE, ZERO_OFFSET, IDENTITY_TEXTURE_MATRIX));
             maxIndexCount = Math.max(maxIndexCount, entry.bone().indexCount);
