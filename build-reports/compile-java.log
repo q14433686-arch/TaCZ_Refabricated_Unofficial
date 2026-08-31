@@ -1,4 +1,4 @@
-commit: 262b94d82316bacdff2131a3c636fe33efc18c36
+commit: 9d27782f218e3de5f088bf21aba67ca34288dd2e
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -12,290 +12,340 @@ For more details see https://docs.gradle.org/9.5.1/release-notes.html
 
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788166255282.json
+
+> Configure project :
+Fabric Loom: 1.17.19
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using of the official minecraft mappings is at your own risk!
+Please make sure to read and understand the following license:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# (c) 2020 Microsoft Corporation. These mappings are provided "as-is" and you bear the risk of using them. You may copy and use the mappings for development purposes, but you may not redistribute the mappings complete and unmodified. Microsoft makes no warranties, express or implied, with respect to the mappings provided here.  Use and modification of this document or the source code (in any form) of Minecraft: Java Edition is governed by the Minecraft End User License Agreement available at https://account.mojang.com/documents/minecraft_eula.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Cannot remap modifiers because it does not exist in any of the targets [] or their parents.
+Cannot remap navigation because it does not exist in any of the targets [] or their parents.
+Cannot remap ingredientGrid because it does not exist in any of the targets [] or their parents.
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap enumClass because it does not exist in any of the targets [] or their parents.
+Cannot remap push because it does not exist in any of the targets [net/minecraft/class_287]
+Cannot remap ingredientListRenderer because it does not exist in any of the targets [] or their parents.
+Cannot remap lambda$submit$0 because it does not exist in any of the targets [net/minecraft/class_840]
+Cannot remap lambda$tick$1 because it does not exist in any of the targets [net/minecraft/class_4897]
+Cannot remap buffers because it does not exist in any of the targets [] or their parents.
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
+Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
+Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
+Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
+Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap valueFormatter because it does not exist in any of the targets [] or their parents.
+
+> Task :compileJava
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/GlCommandEncoderScopeDepthCopyMixin.java:20: warning: Mixin target com.mojang.blaze3d.opengl.GlCommandEncoder is public and should be specified in value
+@Mixin(targets = "com.mojang.blaze3d.opengl.GlCommandEncoder")
+^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/SoundManagerPreparationsMixin.java:16: warning: Mixin target net.minecraft.client.sounds.SoundManager$Preparations is public and should be specified in value
+@Mixin(targets = "net.minecraft.client.sounds.SoundManager$Preparations")
+^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisFinalScopeOverlayMixin.java:25: warning: Mixin target net.irisshaders.iris.pipeline.IrisRenderingPipeline is public and should be specified in value
+@Mixin(targets = "net.irisshaders.iris.pipeline.IrisRenderingPipeline", remap = false)
+^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisHandRendererReticlePassMixin.java:22: warning: Mixin target net.irisshaders.iris.pathways.HandRenderer is public and should be specified in value
+@Mixin(targets = "net.irisshaders.iris.pathways.HandRenderer", remap = false)
+^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisDepthRestoreShaderMixin.java:23: warning: Mixin target net.irisshaders.iris.pipeline.programs.ShaderCreator is public and should be specified in value
+@Mixin(targets = "net.irisshaders.iris.pipeline.programs.ShaderCreator", remap = false)
+^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/HumanoidModelMixin.java:68: warning: Cannot find target method "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" for @Inject.method="setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" in net.minecraft.client.model.HumanoidModel
+    @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At(value = "TAIL"))
+    ^
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+6 warnings
+
+> Task :dumpFeatureDispatcherApi
+===== net.minecraft.client.renderer.feature.FeatureRenderDispatcher -p =====
+Compiled from "FeatureRenderDispatcher.java"
+public class net.minecraft.client.renderer.feature.FeatureRenderDispatcher implements java.lang.AutoCloseable {
+  private final net.minecraft.client.renderer.SubmitNodeStorage submitNodeStorage;
+  private final net.minecraft.client.renderer.block.BlockRenderDispatcher blockRenderDispatcher;
+  private final net.minecraft.client.renderer.MultiBufferSource$BufferSource bufferSource;
+  private final net.minecraft.client.resources.model.AtlasManager atlasManager;
+  private final net.minecraft.client.renderer.OutlineBufferSource outlineBufferSource;
+  private final net.minecraft.client.renderer.MultiBufferSource$BufferSource crumblingBufferSource;
+  private final net.minecraft.client.gui.Font font;
+  private final net.minecraft.client.renderer.feature.ShadowFeatureRenderer shadowFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.FlameFeatureRenderer flameFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.ModelFeatureRenderer modelFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.ModelPartFeatureRenderer modelPartFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.NameTagFeatureRenderer nameTagFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.TextFeatureRenderer textFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.LeashFeatureRenderer leashFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.ItemFeatureRenderer itemFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.CustomFeatureRenderer customFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.BlockFeatureRenderer blockFeatureRenderer;
+  private final net.minecraft.client.renderer.feature.ParticleFeatureRenderer particleFeatureRenderer;
+  public net.minecraft.client.renderer.feature.FeatureRenderDispatcher(net.minecraft.client.renderer.SubmitNodeStorage, net.minecraft.client.renderer.block.BlockRenderDispatcher, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.resources.model.AtlasManager, net.minecraft.client.renderer.OutlineBufferSource, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.gui.Font);
+  public void renderAllFeatures();
+  public void endFrame();
+  public net.minecraft.client.renderer.SubmitNodeStorage getSubmitNodeStorage();
+  public void close();
+}
+
+===== FeatureRenderDispatcher.void renderAllFeatures full (103 lines) =====
+  public void renderAllFeatures();
+    Code:
+       0: aload_0
+       1: getfield      #114                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+       4: invokevirtual #135                // Method net/minecraft/client/renderer/SubmitNodeStorage.getSubmitsPerOrder:()Lit/unimi/dsi/fastutil/ints/Int2ObjectAVLTreeMap;
+       7: invokevirtual #141                // Method it/unimi/dsi/fastutil/ints/Int2ObjectAVLTreeMap.values:()Lit/unimi/dsi/fastutil/objects/ObjectCollection;
+      10: invokeinterface #147,  1          // InterfaceMethod it/unimi/dsi/fastutil/objects/ObjectCollection.iterator:()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
+      15: astore_1
+      16: aload_1
+      17: invokeinterface #155,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      22: ifeq          202
+      25: aload_1
+      26: invokeinterface #159,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      31: checkcast     #161                // class net/minecraft/client/renderer/SubmitNodeCollection
+      34: astore_2
+      35: aload_0
+      36: getfield      #62                 // Field shadowFeatureRenderer:Lnet/minecraft/client/renderer/feature/ShadowFeatureRenderer;
+      39: aload_2
+      40: aload_0
+      41: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+      44: invokevirtual #165                // Method net/minecraft/client/renderer/feature/ShadowFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
+      47: aload_0
+      48: getfield      #72                 // Field modelFeatureRenderer:Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer;
+      51: aload_2
+      52: aload_0
+      53: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+      56: aload_0
+      57: getfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
+      60: aload_0
+      61: getfield      #124                // Field crumblingBufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+      64: invokevirtual #168                // Method net/minecraft/client/renderer/feature/ModelFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/OutlineBufferSource;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
+      67: aload_0
+      68: getfield      #77                 // Field modelPartFeatureRenderer:Lnet/minecraft/client/renderer/feature/ModelPartFeatureRenderer;
+      71: aload_2
+      72: aload_0
+      73: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+      76: aload_0
+      77: getfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
+      80: aload_0
+      81: getfield      #124                // Field crumblingBufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+      84: invokevirtual #169                // Method net/minecraft/client/renderer/feature/ModelPartFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/OutlineBufferSource;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
+      87: aload_0
+      88: getfield      #67                 // Field flameFeatureRenderer:Lnet/minecraft/client/renderer/feature/FlameFeatureRenderer;
+      91: aload_2
+      92: aload_0
+      93: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+      96: aload_0
+      97: getfield      #120                // Field atlasManager:Lnet/minecraft/client/resources/model/AtlasManager;
+     100: invokevirtual #172                // Method net/minecraft/client/renderer/feature/FlameFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/resources/model/AtlasManager;)V
+     103: aload_0
+     104: getfield      #82                 // Field nameTagFeatureRenderer:Lnet/minecraft/client/renderer/feature/NameTagFeatureRenderer;
+     107: aload_2
+     108: aload_0
+     109: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     112: aload_0
+     113: getfield      #126                // Field font:Lnet/minecraft/client/gui/Font;
+     116: invokevirtual #175                // Method net/minecraft/client/renderer/feature/NameTagFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/gui/Font;)V
+     119: aload_0
+     120: getfield      #87                 // Field textFeatureRenderer:Lnet/minecraft/client/renderer/feature/TextFeatureRenderer;
+     123: aload_2
+     124: aload_0
+     125: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     128: invokevirtual #176                // Method net/minecraft/client/renderer/feature/TextFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
+     131: aload_0
+     132: getfield      #92                 // Field leashFeatureRenderer:Lnet/minecraft/client/renderer/feature/LeashFeatureRenderer;
+     135: aload_2
+     136: aload_0
+     137: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     140: invokevirtual #177                // Method net/minecraft/client/renderer/feature/LeashFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
+     143: aload_0
+     144: getfield      #97                 // Field itemFeatureRenderer:Lnet/minecraft/client/renderer/feature/ItemFeatureRenderer;
+     147: aload_2
+     148: aload_0
+     149: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     152: aload_0
+     153: getfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
+     156: invokevirtual #180                // Method net/minecraft/client/renderer/feature/ItemFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/OutlineBufferSource;)V
+     159: aload_0
+     160: getfield      #107                // Field blockFeatureRenderer:Lnet/minecraft/client/renderer/feature/BlockFeatureRenderer;
+     163: aload_2
+     164: aload_0
+     165: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     168: aload_0
+     169: getfield      #116                // Field blockRenderDispatcher:Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;
+     172: aload_0
+     173: getfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
+     176: invokevirtual #183                // Method net/minecraft/client/renderer/feature/BlockFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;Lnet/minecraft/client/renderer/OutlineBufferSource;)V
+     179: aload_0
+     180: getfield      #102                // Field customFeatureRenderer:Lnet/minecraft/client/renderer/feature/CustomFeatureRenderer;
+     183: aload_2
+     184: aload_0
+     185: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     188: invokevirtual #184                // Method net/minecraft/client/renderer/feature/CustomFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
+     191: aload_0
+     192: getfield      #112                // Field particleFeatureRenderer:Lnet/minecraft/client/renderer/feature/ParticleFeatureRenderer;
+     195: aload_2
+     196: invokevirtual #187                // Method net/minecraft/client/renderer/feature/ParticleFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;)V
+     199: goto          16
+     202: aload_0
+     203: getfield      #114                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+     206: invokevirtual #190                // Method net/minecraft/client/renderer/SubmitNodeStorage.clear:()V
+     209: return
+
+===== FeatureRenderDispatcher.renderSolidFeatures NOT FOUND =====
+===== FeatureRenderDispatcher.renderTranslucentFeatures NOT FOUND =====
+===== CustomFeatureRenderer.render full (45 lines) =====
+  public void render(net.minecraft.client.renderer.SubmitNodeCollection, net.minecraft.client.renderer.MultiBufferSource$BufferSource);
+    Code:
+       0: aload_1
+       1: invokevirtual #53                 // Method net/minecraft/client/renderer/SubmitNodeCollection.getCustomGeometrySubmits:()Lnet/minecraft/client/renderer/feature/CustomFeatureRenderer$Storage;
+       4: astore_3
+       5: aload_3
+       6: getfield      #57                 // Field net/minecraft/client/renderer/feature/CustomFeatureRenderer$Storage.customGeometrySubmits:Ljava/util/Map;
+       9: invokeinterface #61,  1           // InterfaceMethod java/util/Map.entrySet:()Ljava/util/Set;
+      14: invokeinterface #67,  1           // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+      19: astore        4
+      21: aload         4
+      23: invokeinterface #73,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      28: ifeq          121
+      31: aload         4
+      33: invokeinterface #77,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      38: checkcast     #14                 // class java/util/Map$Entry
+      41: astore        5
+      43: aload_2
+      44: aload         5
+      46: invokeinterface #80,  1           // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+      51: checkcast     #82                 // class net/minecraft/client/renderer/rendertype/RenderType
+      54: invokevirtual #86                 // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.getBuffer:(Lnet/minecraft/client/renderer/rendertype/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+      57: astore        6
+      59: aload         5
+      61: invokeinterface #89,  1           // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
+      66: checkcast     #91                 // class java/util/List
+      69: invokeinterface #92,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      74: astore        7
+      76: aload         7
+      78: invokeinterface #73,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      83: ifeq          118
+      86: aload         7
+      88: invokeinterface #77,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      93: checkcast     #24                 // class net/minecraft/client/renderer/SubmitNodeStorage$CustomGeometrySubmit
+      96: astore        8
+      98: aload         8
+     100: invokevirtual #98                 // Method net/minecraft/client/renderer/SubmitNodeStorage$CustomGeometrySubmit.customGeometryRenderer:()Lnet/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer;
+     103: aload         8
+     105: invokevirtual #102                // Method net/minecraft/client/renderer/SubmitNodeStorage$CustomGeometrySubmit.pose:()Lcom/mojang/blaze3d/vertex/PoseStack$Pose;
+     108: aload         6
+     110: invokeinterface #105,  3          // InterfaceMethod net/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer.render:(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V
+     115: goto          76
+     118: goto          21
+     121: return
+}
+===== net.minecraft.client.renderer.feature.CustomFeatureRenderer -p =====
+Compiled from "CustomFeatureRenderer.java"
+public class net.minecraft.client.renderer.feature.CustomFeatureRenderer {
+  public net.minecraft.client.renderer.feature.CustomFeatureRenderer();
+  public void render(net.minecraft.client.renderer.SubmitNodeCollection, net.minecraft.client.renderer.MultiBufferSource$BufferSource);
+}
+
+===== net.minecraft.client.renderer.feature.ItemFeatureRenderer -p =====
+Compiled from "ItemFeatureRenderer.java"
+public class net.minecraft.client.renderer.feature.ItemFeatureRenderer {
+  private final com.mojang.blaze3d.vertex.PoseStack poseStack;
+  public net.minecraft.client.renderer.feature.ItemFeatureRenderer();
+  public void render(net.minecraft.client.renderer.SubmitNodeCollection, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.renderer.OutlineBufferSource);
+}
+
+===== net.minecraft.client.renderer.feature.FeatureRenderer -p =====
+(none)
+stderr: Error: class not found: net.minecraft.client.renderer.feature.FeatureRenderer
+===== net.minecraft.client.renderer.SubmitNodeCollection -p =====
+Compiled from "SubmitNodeCollection.java"
+public class net.minecraft.client.renderer.SubmitNodeCollection implements net.minecraft.client.renderer.OrderedSubmitNodeCollector {
+  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$ShadowSubmit> shadowSubmits;
+  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$FlameSubmit> flameSubmits;
+  private final net.minecraft.client.renderer.feature.NameTagFeatureRenderer$Storage nameTagSubmits;
+  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$TextSubmit> textSubmits;
+  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$LeashSubmit> leashSubmits;
+  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$BlockSubmit> blockSubmits;
+  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$MovingBlockSubmit> movingBlockSubmits;
+  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$BlockModelSubmit> blockModelSubmits;
+  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$ItemSubmit> itemSubmits;
+  private final java.util.List<net.minecraft.client.renderer.SubmitNodeCollector$ParticleGroupRenderer> particleGroupRenderers;
+  private final net.minecraft.client.renderer.feature.ModelFeatureRenderer$Storage modelSubmits;
+  private final net.minecraft.client.renderer.feature.ModelPartFeatureRenderer$Storage modelPartSubmits;
+  private final net.minecraft.client.renderer.feature.CustomFeatureRenderer$Storage customGeometrySubmits;
+  private final net.minecraft.client.renderer.SubmitNodeStorage submitNodeStorage;
+  private boolean wasUsed;
+  public net.minecraft.client.renderer.SubmitNodeCollection(net.minecraft.client.renderer.SubmitNodeStorage);
+  public void submitShadow(com.mojang.blaze3d.vertex.PoseStack, float, java.util.List<net.minecraft.client.renderer.entity.state.EntityRenderState$ShadowPiece>);
+  public void submitNameTag(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.world.phys.Vec3, int, net.minecraft.network.chat.Component, boolean, int, double, net.minecraft.client.renderer.state.CameraRenderState);
+  public void submitText(com.mojang.blaze3d.vertex.PoseStack, float, float, net.minecraft.util.FormattedCharSequence, boolean, net.minecraft.client.gui.Font$DisplayMode, int, int, int, int);
+  public void submitFlame(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.entity.state.EntityRenderState, org.joml.Quaternionf);
+  public void submitLeash(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.entity.state.EntityRenderState$LeashState);
+  public <S> void submitModel(net.minecraft.client.model.Model<? super S>, S, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.rendertype.RenderType, int, int, int, net.minecraft.client.renderer.texture.TextureAtlasSprite, int, net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay);
+  public void submitModelPart(net.minecraft.client.model.geom.ModelPart, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.rendertype.RenderType, int, int, net.minecraft.client.renderer.texture.TextureAtlasSprite, boolean, boolean, int, net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay, int);
+  public void submitBlock(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.world.level.block.state.BlockState, int, int, int);
+  public void submitMovingBlock(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.block.MovingBlockRenderState);
+  public void submitBlockModel(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.rendertype.RenderType, net.minecraft.client.renderer.block.model.BlockStateModel, float, float, float, int, int, int);
+  public void submitItem(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.world.item.ItemDisplayContext, int, int, int, int[], java.util.List<net.minecraft.client.renderer.block.model.BakedQuad>, net.minecraft.client.renderer.rendertype.RenderType, net.minecraft.client.renderer.item.ItemStackRenderState$FoilType);
+  public void submitCustomGeometry(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.rendertype.RenderType, net.minecraft.client.renderer.SubmitNodeCollector$CustomGeometryRenderer);
+  public void submitParticleGroup(net.minecraft.client.renderer.SubmitNodeCollector$ParticleGroupRenderer);
+  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$ShadowSubmit> getShadowSubmits();
+  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$FlameSubmit> getFlameSubmits();
+  public net.minecraft.client.renderer.feature.NameTagFeatureRenderer$Storage getNameTagSubmits();
+  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$TextSubmit> getTextSubmits();
+  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$LeashSubmit> getLeashSubmits();
+  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$BlockSubmit> getBlockSubmits();
+  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$MovingBlockSubmit> getMovingBlockSubmits();
+  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$BlockModelSubmit> getBlockModelSubmits();
+  public net.minecraft.client.renderer.feature.ModelPartFeatureRenderer$Storage getModelPartSubmits();
+  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$ItemSubmit> getItemSubmits();
+  public java.util.List<net.minecraft.client.renderer.SubmitNodeCollector$ParticleGroupRenderer> getParticleGroupRenderers();
+  public net.minecraft.client.renderer.feature.ModelFeatureRenderer$Storage getModelSubmits();
+  public net.minecraft.client.renderer.feature.CustomFeatureRenderer$Storage getCustomGeometrySubmits();
+  public boolean wasUsed();
+  public void clear();
+  public void endFrame();
+}
+
+===== RenderSystem (filtered) =====
+  public static com.mojang.blaze3d.textures.GpuTextureView outputColorTextureOverride;
+  public static com.mojang.blaze3d.textures.GpuTextureView outputDepthTextureOverride;
+  public static org.joml.Matrix4f getModelViewMatrix();
+  public static org.joml.Matrix4fStack getModelViewStack();
+  public static com.mojang.blaze3d.systems.GpuDevice getDevice();
+  public static net.minecraft.client.renderer.DynamicUniforms getDynamicUniforms();
+  public static void bindDefaultUniforms(com.mojang.blaze3d.systems.RenderPass);
+  public static void bindDefaultUniforms(com.mojang.blaze3d.systems.RenderPass);
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788166338044.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
-FAILURE: Build failed with an exception.
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
 
-* Where:
-Build file '/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build.gradle' line: 489
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
 
-* What went wrong:
-Could not compile build file '/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build.gradle'.
-> startup failed:
-  build file '/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build.gradle': 489: Unexpected input: '('dumpFeatureDispatcherApi') {\n    doLast {\n        def cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)\n\n        def runJavap = { String cls, List flags ->\n            def cmd = ['javap', '-classpath', cp]\n            flags.each { cmd << it }\n            cmd << cls\n            def proc = new ProcessBuilder(cmd).redirectErrorStream(false).start()\n            def out = proc.inputStream.getText('UTF-8')\n            def err = proc.errorStream.getText('UTF-8')\n            proc.waitFor()\n            return [out, err]\n        }\n\n        def methodBlocks = { String cls, List flags ->\n            def (out, err) = runJavap(cls, flags)\n            if (err.trim()) { println('javap stderr: ' + err.trim()); return [] }\n            def blocks = []\n            def cur = null\n            out.readLines().each { line ->\n                if (line ==~ /^  .+\(.*\);.*$/) {\n                    if (cur != null) blocks << cur\n                    cur = [line]\n                } else if (cur != null) {\n                    cur << line\n                } else {\n                    cur = [line]\n                }\n            }\n            if (cur != null) blocks << cur\n            return blocks\n        }\n\n        def findMethod = { List blocks, String name -> blocks.find { it[0].contains(name) } }\n\n        println '===== net.minecraft.client.renderer.feature.FeatureRenderDispatcher -p ====='\n        def (fdp, fdpe) = runJavap('net.minecraft.client.renderer.feature.FeatureRenderDispatcher', ['-p'])\n        println(fdp ?: '(none)')\n        if (fdpe.trim()) { println('stderr: ' + fdpe.trim()) }\n\n        def fdBlocks = methodBlocks('net.minecraft.client.renderer.feature.FeatureRenderDispatcher', ['-c', '-p'])\n        ['void renderAllFeatures', 'renderSolidFeatures', 'renderTranslucentFeatures'].each { name ->\n            def b = findMethod(fdBlocks, name)\n            if (b != null) {\n                println "===== FeatureRenderDispatcher.${name} full (${b.size()} lines) ====="\n                println b.join('\n')\n            } else {\n                println "===== FeatureRenderDispatcher.${name} NOT FOUND ====="\n            }\n        }\n\n        def fdBlocks2 = methodBlocks('net.minecraft.client.renderer.feature.CustomFeatureRenderer', ['-c', '-p'])\n        ['void render('].each { name ->\n            def b = findMethod(fdBlocks2, name)\n            if (b != null) {\n                println "===== CustomFeatureRenderer.render full (${b.size()} lines) ====="\n                println b.join('\n')\n            } else {\n                println '===== CustomFeatureRenderer.render NOT FOUND ====='\n            }\n        }\n\n        println '===== net.minecraft.client.renderer.feature.CustomFeatureRenderer -p ====='\n        def (cfr, cfre) = runJavap('net.minecraft.client.renderer.feature.CustomFeatureRenderer', ['-p'])\n        println(cfr ?: '(none)')\n        if (cfre.trim()) { println('stderr: ' + cfre.trim()) }\n\n        println '===== net.minecraft.client.renderer.feature.ItemFeatureRenderer -p ====='\n        def (ifr, ifre) = runJavap('net.minecraft.client.renderer.feature.ItemFeatureRenderer', ['-p'])\n        println(ifr ?: '(none)')\n        if (ifre.trim()) { println('stderr: ' + ifre.trim()) }\n\n        println '===== net.minecraft.client.renderer.feature.FeatureRenderer -p ====='\n        def (fr, fre) = runJavap('net.minecraft.client.renderer.feature.FeatureRenderer', ['-p'])\n        println(fr ?: '(none)')\n        if (fre.trim()) { println('stderr: ' + fre.trim()) }\n\n        println '===== net.minecraft.client.renderer.SubmitNodeCollection -p ====='\n        def (sncl, sncle) = runJavap('net.minecraft.client.renderer.SubmitNodeCollection', ['-p'])\n        println(sncl ?: '(none)')\n        if (sncle.trim()) { println('stderr: ' + sncle.trim()) }\n\n        def (rs2, rse2) = runJavap('com.mojang.blaze3d.systems.RenderSystem', ['-p'])\n        println '===== RenderSystem (filtered) ====='\n        if (rs2) {\n            rs2.readLines().each { line ->\n                ['outputColor', 'outputDepth', 'createRenderPass', 'bindDefaultUniforms', 'getModelView',\n                 'getDevice', 'getDynamicUniforms', 'getColorTextureView', 'getDepthTextureView',\n                 'RenderPass'].each { n ->\n                    if (line.contains(n)) println '  ' + line.trim()\n                }\n            }\n        } else { println('(none)'); if (rse2.trim()) println('stderr: ' + rse2.trim()) }\n\n' @ line 489, column 1.
-  1 error
+For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
+BUILD SUCCESSFUL in 1m 59s
+2 actionable tasks: 2 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
-* Try:
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-> Get more help at https://help.gradle.org.
-
-* Exception is:
-org.gradle.groovy.scripts.ScriptCompilationException: Could not compile build file '/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build.gradle'.
-	at org.gradle.groovy.scripts.internal.DefaultScriptCompilationHandler.wrapCompilationFailure(DefaultScriptCompilationHandler.java:222)
-	at org.gradle.groovy.scripts.internal.DefaultScriptCompilationHandler.compileScript(DefaultScriptCompilationHandler.java:169)
-	at org.gradle.groovy.scripts.internal.DefaultScriptCompilationHandler.compileToDir(DefaultScriptCompilationHandler.java:119)
-	at org.gradle.groovy.scripts.internal.BuildOperationBackedScriptCompilationHandler$2.run(BuildOperationBackedScriptCompilationHandler.java:54)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.groovy.scripts.internal.BuildOperationBackedScriptCompilationHandler.compileToDir(BuildOperationBackedScriptCompilationHandler.java:51)
-	at org.gradle.groovy.scripts.internal.GroovyScriptClassCompiler$GroovyScriptCompilationAndInstrumentation.compile(GroovyScriptClassCompiler.java:300)
-	at org.gradle.internal.scripts.BuildScriptCompilationAndInstrumentation.execute(BuildScriptCompilationAndInstrumentation.java:140)
-	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:167)
-	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:47)
-	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:137)
-	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:134)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:134)
-	at org.gradle.internal.execution.steps.ExecuteStep$Immutable.execute(ExecuteStep.java:49)
-	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
-	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
-	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
-	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)
-	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)
-	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)
-	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)
-	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
-	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
-	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
-	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:76)
-	at org.gradle.internal.Either$Right.fold(Either.java:176)
-	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
-	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)
-	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)
-	at org.gradle.internal.execution.steps.NeverUpToDateStep.execute(NeverUpToDateStep.java:35)
-	at org.gradle.internal.execution.steps.NeverUpToDateStep.execute(NeverUpToDateStep.java:23)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
-	at org.gradle.internal.execution.steps.ResolveImmutableCachingStateStep.executeDelegate(ResolveImmutableCachingStateStep.java:45)
-	at org.gradle.internal.execution.steps.ResolveImmutableCachingStateStep.executeDelegate(ResolveImmutableCachingStateStep.java:25)
-	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
-	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
-	at org.gradle.internal.execution.steps.ValidateStep$Immutable.executeDelegate(ValidateStep.java:61)
-	at org.gradle.internal.execution.steps.ValidateStep$Immutable.executeDelegate(ValidateStep.java:47)
-	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:99)
-	at org.gradle.internal.execution.steps.ValidateStep$Immutable.execute(ValidateStep.java:47)
-	at org.gradle.internal.execution.steps.CaptureImmutableStateBeforeExecutionStep.execute(CaptureImmutableStateBeforeExecutionStep.java:45)
-	at org.gradle.internal.execution.steps.CaptureImmutableStateBeforeExecutionStep.execute(CaptureImmutableStateBeforeExecutionStep.java:26)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
-	at org.gradle.internal.execution.steps.AssignImmutableWorkspaceStep.executeInWorkspace(AssignImmutableWorkspaceStep.java:233)
-	at org.gradle.internal.execution.steps.AssignImmutableWorkspaceStep.lambda$loadOrCreateWorkspace$2(AssignImmutableWorkspaceStep.java:149)
-	at org.gradle.cache.internal.DefaultFineGrainedPersistentCache.withFileLock(DefaultFineGrainedPersistentCache.java:126)
-	at org.gradle.cache.internal.DefaultCacheFactory$ReferenceTrackingFineGrainedCache.withFileLock(DefaultCacheFactory.java:294)
-	at org.gradle.internal.execution.workspace.impl.CacheBasedImmutableWorkspaceProvider$1.withFileLock(CacheBasedImmutableWorkspaceProvider.java:71)
-	at org.gradle.internal.execution.steps.AssignImmutableWorkspaceStep.loadOrCreateWorkspace(AssignImmutableWorkspaceStep.java:141)
-	at org.gradle.internal.execution.steps.AssignImmutableWorkspaceStep.lambda$execute$0(AssignImmutableWorkspaceStep.java:115)
-	at org.gradle.internal.execution.workspace.impl.CacheBasedImmutableWorkspaceProvider$1.getOrCompute(CacheBasedImmutableWorkspaceProvider.java:89)
-	at org.gradle.internal.execution.steps.AssignImmutableWorkspaceStep.execute(AssignImmutableWorkspaceStep.java:115)
-	at org.gradle.internal.execution.steps.AssignImmutableWorkspaceStep.execute(AssignImmutableWorkspaceStep.java:80)
-	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:38)
-	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
-	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
-	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
-	at org.gradle.groovy.scripts.internal.GroovyScriptClassCompiler.doCompile(GroovyScriptClassCompiler.java:172)
-	at org.gradle.groovy.scripts.internal.GroovyScriptClassCompiler.compile(GroovyScriptClassCompiler.java:134)
-	at org.gradle.groovy.scripts.internal.CrossBuildInMemoryCachingScriptClassCache.getOrCompile(CrossBuildInMemoryCachingScriptClassCache.java:56)
-	at org.gradle.groovy.scripts.internal.BuildScopeInMemoryCachingScriptClassCompiler.compile(BuildScopeInMemoryCachingScriptClassCompiler.java:50)
-	at org.gradle.groovy.scripts.DefaultScriptCompilerFactory$ScriptCompilerImpl.compile(DefaultScriptCompilerFactory.java:49)
-	at org.gradle.configuration.DefaultScriptPluginFactory$ScriptPluginImpl.apply(DefaultScriptPluginFactory.java:117)
-	at org.gradle.configuration.BuildOperationScriptPlugin$1.run(BuildOperationScriptPlugin.java:68)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.configuration.BuildOperationScriptPlugin.lambda$apply$0(BuildOperationScriptPlugin.java:65)
-	at org.gradle.internal.code.DefaultUserCodeApplicationContext.apply(DefaultUserCodeApplicationContext.java:44)
-	at org.gradle.configuration.BuildOperationScriptPlugin.apply(BuildOperationScriptPlugin.java:65)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$ProjectStateImpl.lambda$applyToMutableState$0(DefaultProjectStateRegistry.java:443)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$ProjectStateImpl.lambda$fromMutableState$1(DefaultProjectStateRegistry.java:450)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$ProjectStateImpl.runWithModelLock(DefaultProjectStateRegistry.java:466)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$ProjectStateImpl.fromMutableState(DefaultProjectStateRegistry.java:450)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$ProjectStateImpl.applyToMutableState(DefaultProjectStateRegistry.java:442)
-	at org.gradle.configuration.project.BuildScriptProcessor.execute(BuildScriptProcessor.java:46)
-	at org.gradle.configuration.project.BuildScriptProcessor.execute(BuildScriptProcessor.java:27)
-	at org.gradle.configuration.project.ConfigureActionsProjectEvaluator.evaluate(ConfigureActionsProjectEvaluator.java:35)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator$EvaluateProject.lambda$run$0(LifecycleProjectEvaluator.java:109)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$ProjectStateImpl.lambda$applyToMutableState$0(DefaultProjectStateRegistry.java:443)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$ProjectStateImpl.lambda$fromMutableState$1(DefaultProjectStateRegistry.java:450)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$runAndReleaseLocks$0(DefaultWorkerLeaseService.java:300)
-	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAndReleaseLocks(DefaultWorkerLeaseService.java:298)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocksAcquired(DefaultWorkerLeaseService.java:294)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$withReplacedLocks$4(DefaultWorkerLeaseService.java:450)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:372)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withReplacedLocks(DefaultWorkerLeaseService.java:449)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$ProjectStateImpl.runWithModelLock(DefaultProjectStateRegistry.java:471)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$ProjectStateImpl.fromMutableState(DefaultProjectStateRegistry.java:450)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$ProjectStateImpl.applyToMutableState(DefaultProjectStateRegistry.java:442)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator$EvaluateProject.run(LifecycleProjectEvaluator.java:100)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator.evaluate(LifecycleProjectEvaluator.java:72)
-	at org.gradle.api.internal.project.DefaultProject.evaluateUnchecked(DefaultProject.java:796)
-	at org.gradle.api.internal.project.ProjectLifecycleController.lambda$ensureSelfConfigured$2(ProjectLifecycleController.java:93)
-	at org.gradle.internal.model.StateTransitionController.lambda$doTransition$15(StateTransitionController.java:293)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:304)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:292)
-	at org.gradle.internal.model.StateTransitionController.lambda$maybeTransitionIfNotCurrentlyTransitioning$11(StateTransitionController.java:237)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:35)
-	at org.gradle.internal.model.StateTransitionController.maybeTransitionIfNotCurrentlyTransitioning(StateTransitionController.java:233)
-	at org.gradle.api.internal.project.ProjectLifecycleController.ensureSelfConfigured(ProjectLifecycleController.java:93)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$ProjectStateImpl.ensureConfigured(DefaultProjectStateRegistry.java:408)
-	at org.gradle.execution.TaskPathProjectEvaluator.configure(TaskPathProjectEvaluator.java:71)
-	at org.gradle.execution.TaskPathProjectEvaluator.configureHierarchy(TaskPathProjectEvaluator.java:85)
-	at org.gradle.configuration.DefaultProjectsPreparer.prepareProjects(DefaultProjectsPreparer.java:50)
-	at org.gradle.configuration.BuildTreePreparingProjectsPreparer.prepareProjects(BuildTreePreparingProjectsPreparer.java:65)
-	at org.gradle.configuration.BuildOperationFiringProjectsPreparer$ConfigureBuild.run(BuildOperationFiringProjectsPreparer.java:52)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.configuration.BuildOperationFiringProjectsPreparer.prepareProjects(BuildOperationFiringProjectsPreparer.java:40)
-	at org.gradle.initialization.VintageBuildModelController.lambda$prepareProjects$2(VintageBuildModelController.java:83)
-	at org.gradle.internal.model.StateTransitionController.lambda$doTransition$15(StateTransitionController.java:293)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:304)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:292)
-	at org.gradle.internal.model.StateTransitionController.lambda$transitionIfNotPreviously$12(StateTransitionController.java:251)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:35)
-	at org.gradle.internal.model.StateTransitionController.transitionIfNotPreviously(StateTransitionController.java:247)
-	at org.gradle.initialization.VintageBuildModelController.prepareProjects(VintageBuildModelController.java:83)
-	at org.gradle.initialization.VintageBuildModelController.prepareToScheduleTasks(VintageBuildModelController.java:70)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$prepareToScheduleTasks$7(DefaultBuildLifecycleController.java:185)
-	at org.gradle.internal.model.StateTransitionController.lambda$doTransition$15(StateTransitionController.java:293)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:304)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:292)
-	at org.gradle.internal.model.StateTransitionController.lambda$maybeTransition$10(StateTransitionController.java:228)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:35)
-	at org.gradle.internal.model.StateTransitionController.maybeTransition(StateTransitionController.java:224)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.prepareToScheduleTasks(DefaultBuildLifecycleController.java:183)
-	at org.gradle.internal.buildtree.DefaultBuildTreeWorkPreparer.scheduleRequestedTasks(DefaultBuildTreeWorkPreparer.java:35)
-	at org.gradle.internal.cc.impl.barrier.BarrierAwareBuildTreeWorkPreparer.scheduleRequestedTasks$lambda$0(BarrierAwareBuildTreeWorkPreparer.kt:34)
-	at org.gradle.internal.cc.impl.barrier.VintageConfigurationTimeActionRunner.runConfigurationTimeAction(VintageConfigurationTimeActionRunner.kt:48)
-	at org.gradle.internal.cc.impl.barrier.BarrierAwareBuildTreeWorkPreparer.scheduleRequestedTasks(BarrierAwareBuildTreeWorkPreparer.kt:33)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController$scheduleAndRunRequestedTasks$1$finalizedGraph$1.call(VintageBuildTreeWorkController.kt:37)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController$scheduleAndRunRequestedTasks$1$finalizedGraph$1.call(VintageBuildTreeWorkController.kt:37)
-	at org.gradle.internal.Try.ofFailable(Try.java:46)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController$scheduleAndRunRequestedTasks$1.apply(VintageBuildTreeWorkController.kt:37)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController$scheduleAndRunRequestedTasks$1.apply(VintageBuildTreeWorkController.kt:36)
-	at org.gradle.composite.internal.DefaultIncludedBuildTaskGraph.withNewWorkGraph(DefaultIncludedBuildTaskGraph.java:115)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController.scheduleAndRunRequestedTasks(VintageBuildTreeWorkController.kt:36)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.lambda$scheduleAndRunTasks$1(DefaultBuildTreeLifecycleController.java:76)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.lambda$runBuild$5(DefaultBuildTreeLifecycleController.java:121)
-	at org.gradle.internal.model.StateTransitionController.lambda$transition$7(StateTransitionController.java:207)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:304)
-	at org.gradle.internal.model.StateTransitionController.lambda$transition$8(StateTransitionController.java:207)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:45)
-	at org.gradle.internal.model.StateTransitionController.transition(StateTransitionController.java:207)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.runBuild(DefaultBuildTreeLifecycleController.java:118)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.scheduleAndRunTasks(DefaultBuildTreeLifecycleController.java:76)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.scheduleAndRunTasks(DefaultBuildTreeLifecycleController.java:71)
-	at org.gradle.tooling.internal.provider.ExecuteBuildActionRunner.run(ExecuteBuildActionRunner.java:31)
-	at org.gradle.launcher.exec.ChainingBuildActionRunner.run(ChainingBuildActionRunner.java:35)
-	at org.gradle.internal.buildtree.ProblemReportingBuildActionRunner.run(ProblemReportingBuildActionRunner.java:54)
-	at org.gradle.launcher.exec.BuildOutcomeReportingBuildActionRunner.run(BuildOutcomeReportingBuildActionRunner.java:83)
-	at org.gradle.tooling.internal.provider.FileSystemWatchingBuildActionRunner.run(FileSystemWatchingBuildActionRunner.java:135)
-	at org.gradle.launcher.exec.BuildCompletionNotifyingBuildActionRunner.run(BuildCompletionNotifyingBuildActionRunner.java:65)
-	at org.gradle.launcher.exec.RootBuildLifecycleBuildActionExecutor.lambda$execute$0(RootBuildLifecycleBuildActionExecutor.java:101)
-	at org.gradle.composite.internal.DefaultRootBuildState.run(DefaultRootBuildState.java:126)
-	at org.gradle.launcher.exec.RootBuildLifecycleBuildActionExecutor.execute(RootBuildLifecycleBuildActionExecutor.java:101)
-	at org.gradle.launcher.exec.BuildTreeLifecycleBuildActionExecutor.runRootBuildAction(BuildTreeLifecycleBuildActionExecutor.java:104)
-	at org.gradle.launcher.exec.BuildTreeLifecycleBuildActionExecutor.execute(BuildTreeLifecycleBuildActionExecutor.java:74)
-	at org.gradle.launcher.exec.RunAsBuildOperationBuildActionExecutor$2.call(RunAsBuildOperationBuildActionExecutor.java:65)
-	at org.gradle.launcher.exec.RunAsBuildOperationBuildActionExecutor$2.call(RunAsBuildOperationBuildActionExecutor.java:61)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.launcher.exec.RunAsBuildOperationBuildActionExecutor.execute(RunAsBuildOperationBuildActionExecutor.java:61)
-	at org.gradle.launcher.exec.RunAsWorkerThreadBuildActionExecutor.lambda$execute$0(RunAsWorkerThreadBuildActionExecutor.java:36)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$runAndReleaseLocks$0(DefaultWorkerLeaseService.java:300)
-	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAndReleaseLocks(DefaultWorkerLeaseService.java:298)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocksAcquired(DefaultWorkerLeaseService.java:294)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:286)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:130)
-	at org.gradle.launcher.exec.RunAsWorkerThreadBuildActionExecutor.execute(RunAsWorkerThreadBuildActionExecutor.java:36)
-	at org.gradle.tooling.internal.provider.continuous.ContinuousBuildActionExecutor.execute(ContinuousBuildActionExecutor.java:110)
-	at org.gradle.tooling.internal.provider.SubscribableBuildActionExecutor.execute(SubscribableBuildActionExecutor.java:64)
-	at org.gradle.internal.session.DefaultBuildSessionContext.execute(DefaultBuildSessionContext.java:46)
-	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor$ActionImpl.apply(BuildSessionLifecycleBuildActionExecutor.java:106)
-	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor$ActionImpl.apply(BuildSessionLifecycleBuildActionExecutor.java:94)
-	at org.gradle.internal.session.BuildSessionState.run(BuildSessionState.java:73)
-	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor.execute(BuildSessionLifecycleBuildActionExecutor.java:67)
-	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor.execute(BuildSessionLifecycleBuildActionExecutor.java:45)
-	at org.gradle.internal.buildprocess.execution.StartParamsValidatingActionExecutor.execute(StartParamsValidatingActionExecutor.java:57)
-	at org.gradle.internal.buildprocess.execution.StartParamsValidatingActionExecutor.execute(StartParamsValidatingActionExecutor.java:32)
-	at org.gradle.internal.buildprocess.execution.SessionFailureReportingActionExecutor.execute(SessionFailureReportingActionExecutor.java:51)
-	at org.gradle.internal.buildprocess.execution.SessionFailureReportingActionExecutor.execute(SessionFailureReportingActionExecutor.java:39)
-	at org.gradle.internal.buildprocess.execution.SetupLoggingActionExecutor.execute(SetupLoggingActionExecutor.java:47)
-	at org.gradle.internal.buildprocess.execution.SetupLoggingActionExecutor.execute(SetupLoggingActionExecutor.java:31)
-	at org.gradle.launcher.daemon.server.exec.ExecuteBuild.doBuild(ExecuteBuild.java:70)
-	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.WatchForDisconnection.execute(WatchForDisconnection.java:39)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.ResetDeprecationLogger.execute(ResetDeprecationLogger.java:29)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.RequestStopIfSingleUsedDaemon.execute(RequestStopIfSingleUsedDaemon.java:35)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.ForwardClientInput.lambda$execute$0(ForwardClientInput.java:40)
-	at org.gradle.internal.daemon.clientinput.ClientInputForwarder.forwardInput(ClientInputForwarder.java:80)
-	at org.gradle.launcher.daemon.server.exec.ForwardClientInput.execute(ForwardClientInput.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.LogAndCheckHealth.execute(LogAndCheckHealth.java:53)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.LogToClient.doBuild(LogToClient.java:63)
-	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.EstablishBuildEnvironment.doBuild(EstablishBuildEnvironment.java:84)
-	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.StartBuildOrRespondWithBusy$1.run(StartBuildOrRespondWithBusy.java:52)
-	at org.gradle.launcher.daemon.server.DaemonStateCoordinator.lambda$runCommand$0(DaemonStateCoordinator.java:321)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-Caused by: org.codehaus.groovy.control.MultipleCompilationErrorsException: startup failed:
-build file '/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build.gradle': 489: Unexpected input: '('dumpFeatureDispatcherApi') {\n    doLast {\n        def cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)\n\n        def runJavap = { String cls, List flags ->\n            def cmd = ['javap', '-classpath', cp]\n            flags.each { cmd << it }\n            cmd << cls\n            def proc = new ProcessBuilder(cmd).redirectErrorStream(false).start()\n            def out = proc.inputStream.getText('UTF-8')\n            def err = proc.errorStream.getText('UTF-8')\n            proc.waitFor()\n            return [out, err]\n        }\n\n        def methodBlocks = { String cls, List flags ->\n            def (out, err) = runJavap(cls, flags)\n            if (err.trim()) { println('javap stderr: ' + err.trim()); return [] }\n            def blocks = []\n            def cur = null\n            out.readLines().each { line ->\n                if (line ==~ /^  .+\(.*\);.*$/) {\n                    if (cur != null) blocks << cur\n                    cur = [line]\n                } else if (cur != null) {\n                    cur << line\n                } else {\n                    cur = [line]\n                }\n            }\n            if (cur != null) blocks << cur\n            return blocks\n        }\n\n        def findMethod = { List blocks, String name -> blocks.find { it[0].contains(name) } }\n\n        println '===== net.minecraft.client.renderer.feature.FeatureRenderDispatcher -p ====='\n        def (fdp, fdpe) = runJavap('net.minecraft.client.renderer.feature.FeatureRenderDispatcher', ['-p'])\n        println(fdp ?: '(none)')\n        if (fdpe.trim()) { println('stderr: ' + fdpe.trim()) }\n\n        def fdBlocks = methodBlocks('net.minecraft.client.renderer.feature.FeatureRenderDispatcher', ['-c', '-p'])\n        ['void renderAllFeatures', 'renderSolidFeatures', 'renderTranslucentFeatures'].each { name ->\n            def b = findMethod(fdBlocks, name)\n            if (b != null) {\n                println "===== FeatureRenderDispatcher.${name} full (${b.size()} lines) ====="\n                println b.join('\n')\n            } else {\n                println "===== FeatureRenderDispatcher.${name} NOT FOUND ====="\n            }\n        }\n\n        def fdBlocks2 = methodBlocks('net.minecraft.client.renderer.feature.CustomFeatureRenderer', ['-c', '-p'])\n        ['void render('].each { name ->\n            def b = findMethod(fdBlocks2, name)\n            if (b != null) {\n                println "===== CustomFeatureRenderer.render full (${b.size()} lines) ====="\n                println b.join('\n')\n            } else {\n                println '===== CustomFeatureRenderer.render NOT FOUND ====='\n            }\n        }\n\n        println '===== net.minecraft.client.renderer.feature.CustomFeatureRenderer -p ====='\n        def (cfr, cfre) = runJavap('net.minecraft.client.renderer.feature.CustomFeatureRenderer', ['-p'])\n        println(cfr ?: '(none)')\n        if (cfre.trim()) { println('stderr: ' + cfre.trim()) }\n\n        println '===== net.minecraft.client.renderer.feature.ItemFeatureRenderer -p ====='\n        def (ifr, ifre) = runJavap('net.minecraft.client.renderer.feature.ItemFeatureRenderer', ['-p'])\n        println(ifr ?: '(none)')\n        if (ifre.trim()) { println('stderr: ' + ifre.trim()) }\n\n        println '===== net.minecraft.client.renderer.feature.FeatureRenderer -p ====='\n        def (fr, fre) = runJavap('net.minecraft.client.renderer.feature.FeatureRenderer', ['-p'])\n        println(fr ?: '(none)')\n        if (fre.trim()) { println('stderr: ' + fre.trim()) }\n\n        println '===== net.minecraft.client.renderer.SubmitNodeCollection -p ====='\n        def (sncl, sncle) = runJavap('net.minecraft.client.renderer.SubmitNodeCollection', ['-p'])\n        println(sncl ?: '(none)')\n        if (sncle.trim()) { println('stderr: ' + sncle.trim()) }\n\n        def (rs2, rse2) = runJavap('com.mojang.blaze3d.systems.RenderSystem', ['-p'])\n        println '===== RenderSystem (filtered) ====='\n        if (rs2) {\n            rs2.readLines().each { line ->\n                ['outputColor', 'outputDepth', 'createRenderPass', 'bindDefaultUniforms', 'getModelView',\n                 'getDevice', 'getDynamicUniforms', 'getColorTextureView', 'getDepthTextureView',\n                 'RenderPass'].each { n ->\n                    if (line.contains(n)) println '  ' + line.trim()\n                }\n            }\n        } else { println('(none)'); if (rse2.trim()) println('stderr: ' + rse2.trim()) }\n\n' @ line 489, column 1.
-1 error
-
-	at org.gradle.groovy.scripts.internal.DefaultScriptCompilationHandler.compileScript(DefaultScriptCompilationHandler.java:167)
-	... 251 more
-
-
-BUILD FAILED in 13s
-
-== job status: failure ==
+== job status: success ==
