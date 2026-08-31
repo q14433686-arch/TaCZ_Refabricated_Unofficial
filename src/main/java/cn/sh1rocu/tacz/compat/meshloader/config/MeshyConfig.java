@@ -12,9 +12,14 @@ import net.minecraftforge.common.ForgeConfigSpec;
  * 各自在自己的 flush 处消费；GUI / 预览 / 镜内 / 阴影由<b>提交侧</b>闸门挡在表外
  * —— 关 PR #33/#69/#70/#71 的「世界 pass 泄漏」正是提交侧没闸门 + 绘制时矩阵取自
  * 错误时刻两件事叠出来的。光影下两条路（{@code MeshGpuUnderShaders} /
- * {@code MeshGpuWorldUnderShaders}）自 R3 起默认开 —— 两条都在 2026-08-31 由维护者实机 PASS；
- * 失联/异常时仍然各自静默回 collector，所以「默认开」的下界是「和关着一样」。详见
- * {@code docs/TML_GPU_STEP2_HANDFLUSH_20260831.md}。</p>
+ * {@code MeshGpuWorldUnderShaders}）曾经自 R3 起默认开，<b>R3 发版前又改回默认关</b>：维护者实机
+ * 发现「高模枪挡住太阳/月亮的那部分几何会继承天体的自发光亮度」，且只有把这两个键关掉才消失
+ * （第一人称、第三人称、展示台三种语境一致）⇒ 光影下的常驻 VBO 路径与光影包的照明语义仍然不
+ * 等价，代码保留、默认值退回。附带修掉一条相关缺陷：以前「拿不到 lightmap」会一次性闩锁并把
+ * 整条路退化到 {@code EMISSIVE} 管线，而那条管线在光影包眼里是「自发光、不受阴影」；现在
+ * 光影下拿不到 lightmap 直接退回 collector（见 {@code PolyMeshGpuRenderer#gpuMasterUsable}）。
+ * 失联/异常时两条路也各自静默回 collector。详见 {@code docs/TML_GPU_STEP2_HANDFLUSH_20260831.md}
+ * 与 {@code docs/MESH_LOADER.md} §5.9-§5.10。</p>
  */
 public final class MeshyConfig {
 
@@ -72,8 +77,11 @@ public final class MeshyConfig {
                 "active), the sky nibble comes from the surrounding light instead, while block",
                 "stays at 15 - still visible in the dark, no longer sun-lit through a ceiling.",
                 "Applies to the poly layer; reload with F3+T (the GPU bake regenerates when the",
-                "shader state flips.");
-        POLY_ILLUMINATED_REAL_SKY = builder.define("MeshPolyIlluminatedRealSky", true);
+                "shader state flips).",
+                "Default off: this was written against an early reading of the shader report and the",
+                "actual cause turned out to be something else (see docs/MESH_LOADER.md 5.9), so it",
+                "stays an opt-in until somebody confirms it looks better with a pack on.");
+        POLY_ILLUMINATED_REAL_SKY = builder.define("MeshPolyIlluminatedRealSky", false);
 
         builder.comment("Whether to render poly_mesh during shadow passes.",
                 "Default false: the cube body already provides shadow shapes,",
@@ -106,10 +114,14 @@ public final class MeshyConfig {
                 "active. The pass is opened inside Iris' own hand flush, so it lands in the gbuffer",
                 "and is lit by the pack's gbuffers_hand program (the pipeline is registered with",
                 "IrisApi.assignPipeline(HAND)). Needs an audited Iris 1.10.x; if the flush hook is",
-                "not live the path refuses submissions and the gun keeps the collector route - that",
-                "fallback is why this can default to on. In-game PASS with a shader pack 2026-08-31.",
+                "not live the path refuses submissions and the gun keeps the collector route.",
+                "OFF by default again: R3 turned it on after an in-game pass, but the maintainer then",
+                "saw mesh gun geometry inherit the sun/moon brightness wherever it covered them, and",
+                "only turning this (and MeshGpuWorldUnderShaders) off removed it - so under a shader",
+                "pack the resident-VBO path is not lighting-equivalent yet. The code stays for A/B",
+                "testing; see docs/MESH_LOADER.md 5.9-5.10.",
                 "See docs/TML_GPU_STEP2_HANDFLUSH_20260831.md.");
-        GPU_UNDER_SHADERS = builder.define("MeshGpuUnderShaders", true);
+        GPU_UNDER_SHADERS = builder.define("MeshGpuUnderShaders", false);
 
         builder.comment("GPU static baking for WORLD contexts too: third-person guns held by",
                 "other players, dropped items, item frames and display statues draw from the same",
@@ -127,9 +139,11 @@ public final class MeshyConfig {
                 "The world pass is lit through the pack's entity program: the custom pipeline is",
                 "registered with IrisApi.assignPipeline(IrisProgram.ENTITIES) (constant audited",
                 "against the Iris 1.10.7 jar via CI javap - EMISSIVE_ENTITIES is deliberately not",
-                "used). In-game PASS 2026-08-31. Like the hand path it needs the audited Iris flush",
-                "hook and refuses submissions when that hook is not live.");
-        GPU_WORLD_UNDER_SHADERS = builder.define("MeshGpuWorldUnderShaders", true);
+                "used). Like the hand path it needs the audited Iris flush hook and refuses",
+                "submissions when that hook is not live. OFF by default for the same reason as",
+                "MeshGpuUnderShaders (geometry inheriting the sun/moon brightness under a shader",
+                "pack; the world contexts showed it the same way, e.g. display stands).");
+        GPU_WORLD_UNDER_SHADERS = builder.define("MeshGpuWorldUnderShaders", false);
 
         builder.comment("How many quantized light levels of baked world VBOs to keep per gun model",
                 "(LRU). Upstream TML caches 8 unquantized levels; this port quantizes light first",

@@ -231,7 +231,8 @@ public final class PolyMeshGpuRenderer {
     private static boolean gpuDisabledThisSession = false;
     private static boolean loggedUnderShadersNoop = false;
     private static boolean loggedFormatMismatch = false;
-    private static boolean lightmapUnavailable;
+    /** 只是日志去重：以前是一次性闩锁，会把一次瞬时取空变成整会话 EMISSIVE（已改掉，见 resolveLightmap）。 */
+    private static boolean loggedLightmapFailure;
     /** 手部 pass 进行中（由 GameRendererMixin 在 renderItemInHand HEAD/RETURN 设置）。 */
     private static boolean inHandPass = false;
     /**
@@ -396,6 +397,11 @@ public final class PolyMeshGpuRenderer {
         if (IrisCompat.isRenderShadow()) {
             return "shadow pass";
         }
+        if (IrisCompat.isUsingRenderPack() && !lightmapResolvable()) {
+            return "shaders are on but the level lightmap view is unavailable"
+                    + " (the only fallback would be the EMISSIVE pipeline, which shader packs"
+                    + " light as self-illuminated/unshadowed - see gpuMasterUsable)";
+        }
         if (IrisCompat.isUsingRenderPack()) {
             if (!MeshyConfig.GPU_WORLD_UNDER_SHADERS.get()) {
                 return "shaders are on and MeshGpuWorldUnderShaders=false (the default)";
@@ -407,9 +413,23 @@ public final class PolyMeshGpuRenderer {
         return null;
     }
 
-    /** 总闸：{@code MeshGpuBaking} 打开且本会话没被异常禁用。两条路（手部/世界）共用。 */
+    /**
+     * 总闸：{@code MeshGpuBaking} 打开、本会话没被异常禁用，并且<b>光影下能拿到 lightmap</b>。
+     * 两条路（手部/世界）共用，所以这一条同时保护两边。
+     *
+     * <p>最后那一项是 2026-08-31 加的：拿不到 lightmap 时唯一可用的退化是 EMISSIVE 管线，
+     * 而它在光影包里是「自发光、不受阴影」的语义 —— 维护者报的「枪身挡住太阳/月亮那一块反而
+     * 继承天体亮度」正是这种照明语义的样子（判别：关掉光影下的 GPU 键现象即消失）。与其用错
+     * 语义画，不如这一帧退回 collector（照明由包按正常 entityCutout 路径给）。</p>
+     */
     private static boolean gpuMasterUsable() {
-        return !gpuDisabledThisSession && MeshyConfig.GPU_BAKING.get();
+        if (gpuDisabledThisSession || !MeshyConfig.GPU_BAKING.get()) {
+            return false;
+        }
+        if (IrisCompat.isUsingRenderPack() && !lightmapResolvable()) {
+            return false;
+        }
+        return true;
     }
 
     public static boolean isGpuPathUsable() {
@@ -898,20 +918,41 @@ public final class PolyMeshGpuRenderer {
         }
     }
 
-    private static GpuTextureView resolveLightmap(Minecraft mc) {
-        if (lightmapUnavailable) {
-            return null;
+    /**
+     * 当刻能否拿到世界光照贴图的视图。{@code getTextureView()} 是缓存读，可以每帧查。
+     *
+     * <p>光影下这个值是<b>门闸</b>的一部分（{@link #gpuMasterUsable()}）：拿不到 lightmap 时我们
+     * 只会退化到 {@code EMISSIVE_PIPELINE}，而那条管线在光影包眼里是「自发光、不受阴影」——
+     * 表现正是几何「继承」天空/天体的亮度（维护者 2026-08-31 实机：把光影下的 GPU 键关掉，现象
+     * 立刻消失）。那种退化不是外观降级，是**换了一种照明语义**，所以宁可不进 GPU、留给 collector。</p>
+     */
+    private static boolean lightmapResolvable() {
+        try {
+            return Minecraft.getInstance().gameRenderer.lightTexture().getTextureView() != null;
+        } catch (Throwable t) {
+            return false;
         }
+    }
+
+    private static GpuTextureView resolveLightmap(Minecraft mc) {
         try {
             GpuTextureView view = mc.gameRenderer.lightTexture().getTextureView();
             if (view == null) {
-                lightmapUnavailable = true;
-                LOGGER.warn("[TacZMeshLoader] Level lightmap view unavailable; GPU path falls back to EMISSIVE.");
+                if (!loggedLightmapFailure) {
+                    loggedLightmapFailure = true;
+                    LOGGER.warn("[TacZMeshLoader] Level lightmap view unavailable;"
+                            + " drawing this frame with the EMISSIVE pipeline (no lightmap sampling).");
+                }
+            } else {
+                loggedLightmapFailure = false;
             }
             return view;
         } catch (Throwable t) {
-            lightmapUnavailable = true;
-            LOGGER.warn("[TacZMeshLoader] Failed to read level lightmap; GPU path falls back to EMISSIVE.", t);
+            if (!loggedLightmapFailure) {
+                loggedLightmapFailure = true;
+                LOGGER.warn("[TacZMeshLoader] Failed to read level lightmap;"
+                        + " drawing this frame with the EMISSIVE pipeline (no lightmap sampling).", t);
+            }
             return null;
         }
     }

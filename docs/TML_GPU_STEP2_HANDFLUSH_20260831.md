@@ -391,7 +391,8 @@ ItemInHandRenderer.renderHandsWithItems                                         
 >   踩到的那条坑）未复现，第 2/3/4 条未报异常。同轮报「光影下世界路径失效」，核实为
 >   **当时默认关**（`MeshGpuWorldUnderShaders=false`，按设计回退 collector）。
 > - 第二轮（打开该键 + 诊断）：**一遍过**。因此 R3 起两条光影开关（`MeshGpuUnderShaders` /
->   `MeshGpuWorldUnderShaders`）默认 true。
+>   `MeshGpuWorldUnderShaders`）默认 true。（**R3 发版前又退回默认 false**：维护者实机发现光影下常驻 VBO 的几何会「继承」太阳/月亮
+>   的自发光亮度，只有关掉这两项才消失；连带修掉 EMISSIVE 一次性闩锁。见 `MESH_LOADER.md` §5.10）。
 >
 > 诊断留在原位：静默回退是正确行为，但「世界路径怎么没生效」必须在日志里能答。
 > 机制是 `TaczPolyMeshGunModel#noteWorldSkip` + `PolyMeshGpuRenderer#worldSubmitBlocker`
@@ -407,11 +408,16 @@ ItemInHandRenderer.renderHandsWithItems                                         
 - [ ] 开背包 / 枪匠桌 / 热栏：世界里的枪不受影响（`ScreenRenderTracker` + 语境闸门），
       GUI 内的预览照旧 collector（不受 GPU 路径影响）。
 - [ ] 开镜（PIP 二次渲染，仅无光影）：镜内与镜外**都有** mesh 枪，且不重复计数。
-- [ ] 装 Iris：世界 mesh 枪在 `MeshGpuWorldUnderShaders=false` 时自动回 collector（R3 起该键默认 **true**，所以这条现在测的是「关掉它仍能干净回退」）。
-- [x] 光影下 `MeshGpuWorldUnderShaders`（R3 起默认开）：日志应有
+- [ ] 装 Iris：世界 mesh 枪在 `MeshGpuWorldUnderShaders=false`（**这就是当前默认**）时自动回 collector，
+      不留残影、不双份。
+- [x] 光影下 `MeshGpuWorldUnderShaders`（当时是 R3 的默认开；**现默认关**，需手工打开）：日志应有
       `[TACZ Iris] Assigned mesh_entity_world to the Iris ENTITIES program.`，且世界里的 mesh 枪
       **受光影照明**（夜里变暗、有明暗层次），不是发白也不是全黑；
       `Mesh bake vertex format` 相关行只在切包那一帧出现。
+      —— 那次 PASS 覆盖的是几何/位置与「收得到 `gbuffers_*` 照明」，**不覆盖**「自建管线在包里的
+      照明语义是否与 collector 等价」；同一天晚些时候的 B 项实验发现光影下常驻 VBO 的几何会
+      「继承」太阳/月亮的自发光亮度、只有关掉这两键才消失 ⇒ 默认退回 false，
+      连带修掉 EMISSIVE 一次性闩锁，见 `MESH_LOADER.md` §5.10。
 
 ---
 

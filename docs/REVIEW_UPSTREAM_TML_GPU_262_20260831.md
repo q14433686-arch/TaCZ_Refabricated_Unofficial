@@ -19,7 +19,8 @@
 | A7 | `drawList` :~600（`handModelView`） | 低-中 | 世界表复用**名字与注释都写着手部**的方法，前置条件没写成断言 |
 | A8 | :147 / :341 | 低 | 降级完全静默；`beginFrame` 挂 `GameRenderer#extract` 的跨帧含义没写明 |
 | A9 | :174 / :176 | 低 | 每帧标志靠 `beginFrame` 复位，对「钩子与 beginFrame 的相对顺序」敏感 |
-| A11 | `config/MeshyConfig.java`（`MeshPolyInShadow` 默认 false）+ `config/PolyRenderPolicy` 的唯一消费点 | 中-高（仅光影下） | poly 几何因此从不进 Iris 的阴影图 ⇒ 光影包把高模表面当成「完全露天」，枪身盖住太阳/月亮的那一块反而被点亮 |
+| A11 | `config/MeshyConfig.java`（`MeshPolyInShadow` 默认 false）+ `config/PolyRenderPolicy` 的唯一消费点 | ~~中-高~~ **实机否证** | poly 几何确实不进 Iris 阴影图，但打开这个键**不改变**「枪身盖住天体那块被点亮」⇒ 只作排除记录，不改默认值 |
+| A12 | `PolyMeshGpuRenderer`（`resolveLightmap` / `EMISSIVE_PIPELINE` / `assignPipeline`） | **高（仅光影下）** | lightmap 视图取不到一次 ⇒ 整会话固定在带 `withShaderDefine("EMISSIVE")` 的管线上，并被登记进 Iris 的 HAND/ENTITIES 程序 ⇒ 包按「自发光 / 不查阴影」画，产生「挡住天体却继承天体亮度」；本仓已去闩锁 + 光影下拒收 |
 | A10 | `core/PolyMesh.java` :31-35 + :67-99 | **高（仅光影下显形）** | `poly_mesh` 位置按 Y 轴镜像但绕序从不跟着反转 ⇒ 烘焙法线与 `gl_FrontFacing` 相互矛盾；另 `FORCE_FLAT_SHADING` 恒 true ⇒ 枪包的 `normals` 从不消费 |
 
 **先说好的**（本仓第 3 步直接吸收，已在 `MESH_LOADER.md` 致谢）：按量化光照档做 LRU、被逐出
@@ -200,12 +201,16 @@ int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());   // :373
 硬写成 `0xF000F0`（block=15 **且** sky=15）。这数字在 26.2 与本仓的 `PolyMeshModel` /
 `BedrockPart#render` 里逐字相同 ⇒ 同样是共享缺陷，只是它属于 TACZ 本体的约定而非 TML 的新增。
 无光影下必须两列都拉满（原版光照图是 block 列与 sky 列相乘），但光影包把 sky 读成「这表面看得见天空」
-⇒ 常亮被翻译成「太阳月亮永远照得到」。本分支的处理：新增 `MeshPolyIlluminatedRealSky`（默认 true），
+⇒ 常亮被翻译成「太阳月亮永远照得到」。本分支的处理：新增 `MeshPolyIlluminatedRealSky`（**现默认 false** —— 见 A12：它针对的是另一个被误读的症状），
 **只在装了光影包时**把 sky 换成环境真值、block 仍 15；只覆盖 poly 层，立方体层刻意没动（影响面是所有
 枪包与所有准星点，配置归属应该是 `ClientConfig`）。26.2 若要跟，建议一次性把两层都收进
 `ClientConfig` 的一个键，别只改 poly 层 —— 否则一把枪的两半会一个跟天空走、一个不跟。
 
-## A11（中-高，只在光影下）：`MeshPolyInShadow=false` 让 poly 表面在阴影图里不存在
+## A11（~~中-高，只在光影下~~ **已被实机否证，仅保留为排除记录**）：`MeshPolyInShadow=false` 让 poly 表面在阴影图里不存在
+
+> **2026-08-31 维护者实机：把 `MeshPolyInShadow` 打开没有任何变化；关掉光影下的 GPU 两个开关才恢复。**
+> 所以这条**不是**「挡住天体那块发亮」的成因，真因见 **A12**。下面整段作为排除记录保留（机制本身在静态上
+> 仍然成立 —— poly 确实不进阴影图，只是它不产生那个可见后果；「阴影形状由立方体层承担」也没变）。
 
 维护者报的现象：开光影后，**高模枪挡住太阳/月亮的那部分模型反而继承了天体的自发光亮度**；
 其它自发光物品、非 TML 的模型都没这问题。
@@ -218,10 +223,9 @@ int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());   // :373
   阴影图里只剩**立方体层**。高模包的意义就是 poly 表面比立方体外壳大且细 ⇒ 超出立方体的那些面
   等于不在阴影图里 ⇒ 「只有高模部分吃太阳光」「非 TML 模型没这问题」两条同时被解释。
   上游这句注释（「立方体已经提供阴影形状」）把「有个影子」和「逐面遮挡」混为一谈了。
-- **本仓现状**：**代码未改**，只把这个 finding 与 A/B/C 判别矩阵写进 `docs/MESH_LOADER.md` §5.9，
-  等维护者的实机结果再决定是不是把默认翻成 true（`PolyMeshGpuRenderer` 已经核实：GPU 世界表在
-  阴影遍是**拒收**的（`shouldSubmitGpuWorld` 里 `isRenderShadow() ⇒ false`）⇒ 开这个键只会多一遍
-  collector 的 CPU 顶点变换，不会与常驻 VBO 叠加）。
+- **本仓现状**：**代码不改**，`MeshPolyInShadow` 保持 false；判别矩阵与最终结论在 `docs/MESH_LOADER.md`
+  §5.9 / §5.10。已核实开这个键不会与常驻 VBO 叠加（`shouldSubmitGpuWorld` 在阴影遍拒收），所以它
+  对无光影用户是彻底 no-op —— 但也**仅此而已**，别把它当修法。
 - **对 26.2 的建议**：同一个键、同一个默认值、同一个消费点 ⇒ 你们那边现象应当一模一样。
   先跑判别（都在局内即时生效，不用重启）：① `MeshPolyInShadow=true` 看世界语境（第三人称 / 掉落物 /
   展示框）的枪是否不再吃光；② 若无效，把光影下的 GPU 键关掉（你们那边是总闸/分表）看是否变好
@@ -229,6 +233,41 @@ int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());   // :373
   Iris frame graph 的时序问题，与阴影图无关。
 - **边界**：自己的第一人称手部几何**不经过** Iris 的阴影遍（它渲染实体，第一人称手不是实体），
   所以纯第一人称那一半多半修不动，那是包对 `gbuffers_hand` 的 exposure 惯例。
+
+## A12（高，只在光影下）：GPU 路径的 `EMISSIVE` 兜底是一条**一次性永久**降级，而且它会改变照明语义
+
+A11 被否证之后，B（关掉光影下的 GPU 开关）命中，把范围收窄到**我们自己开的那个 pass**。本仓
+`PolyMeshGpuRenderer` 里这条链每一环都在源码里，26.2 那边形态一样（同一个 EMISSIVE/LIT 二选一，
+lightmap 取不到时同样退化）：
+
+```
+resolveLightmap() 取不到 lightmap 视图 -> lightmapUnavailable = true      <- 一次性闩锁，整会话不重试
+  -> pipeline = lit ? LIT_PIPELINE : EMISSIVE_PIPELINE                    <- 从此恒 EMISSIVE
+  -> EMISSIVE_PIPELINE 带 .withShaderDefine("EMISSIVE")                     <- 关键
+  -> if (irisFlush) assignMeshPipelineTo{Entity,Hand}(pipeline)            <- 把**这条**管线登记进包
+  -> 包按 #ifdef EMISSIVE 走「自发光 / 不查阴影」分支
+  -> 现象：几何盖住天体，自己却「继承」天体亮度；第一/第三人称/展示台一致；只影响 TML 模型
+```
+
+- **为什么正好是这个现象**：EMISSIVE 在光影包里就是「这东西自己亮、别给它算遮挡」的旗子（准星点、
+  发光方块走的就是它）。打上它之后包不查阴影图、也不把天体光当被遮挡的量 ⇒ 观感即「模型挡住了太阳，
+  但挡住的那块和太阳一样亮」。collector 那条走 `RenderTypes.entityCutout`，包按普通实体几何处理，
+  所以「其它自发光物品没事」「非 TML 模型没事」两条负控制同时成立 —— 这是本条比 A11 强的地方。
+- **触发条件不是「有没有光影」，而是「那一帧 lightmap 视图取不取到」**：
+  `mc.gameRenderer.lightTexture().getTextureView()` 在光影（尤其 deferred / 自建光照图）下最容易返回
+  null 或抛异常，所以缺陷看起来「只在开光影时出现」，实际是「只在光影让 lightmap 视图取不到时出现」。
+  原代码**只要失败过一次就整局固定在 EMISSIVE**，且只 WARN 一次（日志里容易被滚掉）。
+- **本仓已改（两条，都不依赖具体光影包）**：① 去闩锁，每帧重试（`getTextureView()` 是缓存读），日志只去重；
+  ② 光影下真取不到 lightmap 就**整条拒收**（`gpuMasterUsable()` 加
+  `isUsingRenderPack() && !lightmapResolvable()`），退回 collector —— 兜底不该换照明语义，宁可不进 GPU。
+  世界路径 `GPU world submit refused:` 补了同一原因串。
+- **对 26.2 的建议**：
+  1. 去掉闩锁；顺手把同类「一次性状态位」都扫一遍（`BONE_BUFFER_CAPACITY` 那族）；
+  2. 光影下的两个 GPU 键**保持 false**（本仓 R3 一度翻成 true，同日退回），并把「光影 + GPU」的实机判据
+     从「能不能收到 `gbuffers_*` 照明」改成「挡住天体的那块亮不亮」—— 前者过了不代表后者过；
+  3. 想彻底收口，判据仍是日志里那行 WARN：出现过 ⇒ 本条就是成因；从没出现过 ⇒ 剩下「自建管线的
+     MRT / color target 集合与 `ENTITY_CUTOUT` 不一致」这条**未排除**分支（沙箱里没光影包、没有可反编译的
+     Loom jar，本仓同样没排除）。**别把 A12 读成「上游照抄这两条就算修完」。**
 
 ## 时序对照（本仓 ↔ 上游）
 
@@ -251,9 +290,12 @@ int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());   // :373
    与 `gbuffers_hand` 照明差异明显的包（夜晚/暗巷）下看亮度是否随世界走。
 4. 格式入参（A5）与额度/容量解耦（A6）。
 5. 静默降级补一行原因日志（A8）——这条本仓已有实现可以直接搬。
-6. **A10 续集**（`_illuminated` 的天空光）：上面那段可直接搬，键名与默认值保持一致
-   （`MeshPolyIlluminatedRealSky`=true），并建议连同 `BedrockPart#render` 一起收进 `ClientConfig`。
-7. **A11**（阴影图 / `MeshPolyInShadow`）：默认值 + 那句注释建议一起改；判别法与依据见上面那节。
+6. **A10 续集**（`_illuminated` 的天空光）：推导本身仍成立（`0xF000F0` 的 sky nibble 会被包读成「露天」），
+   但**默认值请保持 false** —— 那条是按我对症状的误读写的，维护者报的不是它，B 实验也证明它不影响那个现象。
+   键名与三条消费点可以照搬；`BedrockPart#render` 那半仍然没动。
+7. ~~A11 默认值 + 注释一起改~~ → **A11 已被实机否证，别翻那个默认值**；该翻的是 **A12**（光影下两个
+   GPU 键保持 false + 去掉 EMISSIVE 闩锁）。A11 那句注释可以补一行「阴影形状够用、逐面遮挡不够用，
+   但实测不显形」，免得下一个人再走一遍。
 8. **A10**（法线/绕序）：`PolyMesh` 那三行改动 + 三个配置开关本仓已实现并过了编译，可直接搬；
    搬之前请也确认你们这边 `entityCutout` 类 render type 的剔除状态 —— 本仓沙箱里没 Loom jar，
    这一条没能核实，所以修复被写成「开关可回退」而不是「默认改完就算完」。

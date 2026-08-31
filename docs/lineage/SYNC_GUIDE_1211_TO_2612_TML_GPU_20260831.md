@@ -18,8 +18,8 @@ TML（内置 mesh loader）起源于 26.2 线，**但请不要以 26.2 的 GPU �
 |---|---|---|
 | 第 0 步 collector 安全子集 | 有 | 有（同一族，逐条对齐过） |
 | 第 1 步 无光影第一人称常驻 VBO | 有 | 有，**实机 PASS** |
-| 第 2 步 光影下常驻 VBO | 有 | 有，**实机 PASS**（`MeshGpuUnderShaders` R3 起默认开） |
-| 第 3 步 世界语境常驻 VBO | 有，**实机踩坑**：几何相对视角固定 + 烘焙时机过窄 | 有，**实机 PASS**（含光影组合，2026-08-31 一遍过） |
+| 第 2 步 光影下常驻 VBO | 有 | 有，**几何/位置实机 PASS**；但同一天发现它会「继承」太阳/月亮的自发光 ⇒ **R3 发版前默认退回关**（见 §1.4） |
+| 第 3 步 世界语境常驻 VBO | 有，**实机踩坑**：几何相对视角固定 + 烘焙时机过窄 | 有，**实机 PASS**（含光影组合，2026-08-31 一遍过；那次 PASS 不覆盖照明语义，见 §1.4） |
 | 失败半径 | 一处异常 → 关总闸 + 回写配置文件 | 分表禁用 + 连续 30 次阈值 + **从不**回写配置 |
 | 渲染目标 | 硬绑 `mainRenderTarget()` | 跟 `RenderSystem.outputColorTextureOverride` 解析，带 override 的那一遍直接跳过 |
 | 光影下的管线归属 | 复用 `RenderTypes.entityCutout`（该管线已被归入 Iris **HAND** 程序） | 自建管线 + `IrisApi.assignPipeline(IrisProgram.ENTITIES)` |
@@ -51,12 +51,13 @@ src/main/java/cn/sh1rocu/tacz/compat/meshloader/            # 20 个文件
 src/main/resources/tacz.mesh.mixins.json                       # package = ...meshloader.mixin，4 条 client mixin
 ```
 
-> ⚠️ 已知**未修**的同族问题（别当 bug 新开）：`MeshPolyInShadow=false` 让 poly 几何从不进 Iris 的
-> 阴影图 ⇒ 光影包把高模表面当成「完全露天」，于是「枪身挡住太阳/月亮那一块反而被点亮」。判别法与
-> 机制在 `docs/MESH_LOADER.md` §5.9、给上游的论证在审查文档 A11；本分支在等实机结果再决定翻默认值。
-> 你们那边默认值、消费点、`shouldSubmitGpuWorld` 的阴影遍拒收都是同一套 ⇒ 结论可以直接复用。
+> ⚠️ 同族问题**已被排除**的一条（别再去翻它）：`MeshPolyInShadow=false` 让 poly 几何从不进 Iris 的
+> 阴影图，静态上看确实像「枪身挡住太阳/月亮那一块反而被点亮」的成因，判别法与论证写在
+> `docs/MESH_LOADER.md` §5.9、给上游的版本是审查文档 A11。**实机 A/B 已否证**：打开它没用，
+> 关掉光影下的 GPU 两个开关才有用 ⇒ 根因在我们自开的那个 pass（§1.4 / `MESH_LOADER.md` §5.10）。
+> 本分支保持 `false`，你们那边同理；如果你们要翻，前提是先复现出「只有阴影遍缺几何」的判别。
 
-> ⚠️ `config/PolyRenderPolicy.java` 里还有 `MeshPolyIlluminatedRealSky`（默认 true）：`_illuminated`
+> ⚠️ `config/PolyRenderPolicy.java` 里还有 `MeshPolyIlluminatedRealSky`（**默认 false**，理由见 §1.4）：`_illuminated`
 > 骨骼原本恒烘 `0xF000F0`（block=15 且 sky=15），光影包把 sky 读成「看得见天空」⇒ 屋顶遮不住太阳/月亮。
 > 该项**只在装了光影包时**把 sky 换成环境真值、block 保持 15；无光影下逐字不变。三条消费路径
 > （`PolyMeshModel#drawBoneMeshes` / `ensureBaked` / `ensureWorldBaked`）都走同一个入口，别只接一条。
@@ -94,7 +95,24 @@ src/main/resources/tacz.mesh.mixins.json                       # package = ...me
 
 ---
 
-## 2. 五条不可谈判的设计不变量
+### 1.4 ⚠ 两个「光影下走 GPU」的默认值：别照本分支任何一版抄成 true
+
+R3 一度把 `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 翻成 true，当天晚上又退回 false —— 中间
+只隔了一次 A/B。原因写在 `docs/MESH_LOADER.md` §5.10：开着这两键时，**高模枪挡住太阳/月亮的部分会
+「继承」天体的自发光亮度**（第一人称 / 第三人称 / 展示台三种语境都中），走 collector 就没有；
+本分支的嫌疑是 `EMISSIVE_PIPELINE` 那条兜底（自建管线带 `withShaderDefine("EMISSIVE")`，还把它登记进
+`IrisProgram.HAND/ENTITIES` ⇒ 包按「自发光 / 不查阴影」画）。已做两步：
+
+1. **默认值**：两键一律 `false`；`MeshPolyIlluminatedRealSky` 同样 false（它是同一天我按误读的症状写的，
+   不是维护者报的问题，别默认开）；
+2. **连带缺陷（这个建议照抄）**：`resolveLightmap` 以前一旦取不到 lightmap 视图就**永久**把整条 GPU 路
+   降级到 EMISSIVE；现在改成每帧重试 + 只在光影下真取不到时整条拒收（`gpuMasterUsable()`），
+   并在 `worldSubmitBlocker` 里给出原因串。这样「兜底 = 换照明语义」不再可能发生。
+
+移植时请顺手确认你们那边的 `resolveLightmap` 等价物没有同类闩锁（26.2 有同款）。
+
+
+## 2. 六条不可谈判的设计不变量
 
 搬的时候最容易被「顺手简化」掉的就是这五条，每一条都是踩出来的：
 
@@ -115,9 +133,15 @@ src/main/resources/tacz.mesh.mixins.json                       # package = ...me
    1..16），烘焙发生在**提交侧**（哪一档出现就烘哪一档），世代号同时认「光影开关翻转」和
    「消费格式变化」；淘汰的 VBO 进延迟释放池，`beginFrame` 里才 close（同一帧内可能还有
    条目引用它）。**别把「额度」和「容量」做成一个旋钮**（审查文档 A6）。
+
 5. **失败半径 = 一张表**。世界表异常只关世界（`gpuWorldDisabledThisSession`），手部表异常只关
    手部，`GPU_BAKING` 只在总闸层面被用户手动关。连续 30 次才算病理（抗抖动）。
    `catch (Exception | LinkageError)`。绝不 `MeshyConfig.*.set(false)`。
+
+6. **光影下的兜底不能改变照明语义**。自建管线一旦在 `RenderPipeline` 上写了 `withShaderDefine("EMISSIVE")`，
+   光影包就把它当「自发光 / 不查阴影」的几何画 —— 而 `assignPipeline` 登记的正是这条管线，于是「挡住天体
+   却继承天体亮度」。所以：lightmap 取不到时**不许**永久降级成 EMISSIVE（本分支 R3 之后已改成每帧重试 +
+   光影下取不到就整条拒收回 collector）；新增管线定义时，任何 shader define 都要问一遍「包会因此少算什么」。
 
 另外三条边界，别当 bug 修：半透明部件与弹匣**永远**留在 collector；镜内那一遍
 「画但不清表、不占本帧消费标志」；GUI / 内嵌预览 / 阴影在**提交侧**按 transformType 拒收
@@ -186,6 +210,8 @@ Iris `HandRenderer` 有自己的 `SubmitNodeStorage`/`FeatureRenderDispatcher` �
 - [ ] 光影下第一人称枪**位置/朝向**随相机与视角正确变化，转身不漂；
 - [ ] 明暗变化（进屋/挖掉脚下光源）枪体照明跟着变，且 `Assigned mesh_entity to the Iris HAND program.` 之类日志只出现一次；
 - [ ] 开光影后 vanilla 手部（空手/剑）不受影响；`IrisHandRendererReticlePassMixin` 相关的镜内 reticle 仍正常；
+- [ ] **对着天空 / 太阳 / 月亮转视角**：枪身挡住天体的那部分**不得**跟着亮起来（本分支 §1.4 退回默认关的
+  就是这个现象）。若出现，先查 `Level lightmap view unavailable` 那行 WARN 在不在，在就是 EMISSIVE 兜底；
 - [ ] 把 Iris 卸载 / 换光影包 / F3+T：都只回退 collector，不崩、不黑屏。
 
 ### 5.4 第 3 步（世界语境，本分支实机 PASS 的那两条重点）
@@ -196,6 +222,7 @@ Iris `HandRenderer` 有自己的 `SubmitNodeStorage`/`FeatureRenderDispatcher` �
 - [ ] 开背包 / 枪匠台 / 热栏 / 开镜（F3+T 也来一次）：世界里不多画、GUI 内不少画；
 - [ ] 光影组合：`MeshGpuWorldUnderShaders=true` 时看到
   `Assigned mesh_entity_world to the Iris ENTITIES program.`，且夜晚变暗、进照明块变亮；
+  **并**补 §5.3 那条「挡天体不继承自发光」—— 本分支这两键后来退回默认 false 就是因为漏了这一步；
 - [ ] 任一光影/其它 mod 组合下若世界路径没生效，**先查** `GPU world submit refused: <原因>` 这一行
   （本分支 R3 加的诊断；每种原因只打一次）。没有原因 = 门闸静默拒收，那是设计，但没法排查。
 

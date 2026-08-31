@@ -12,12 +12,33 @@
 **`1.1.8+fabric.1.21.11.R3`**（去掉 `-hotfix` 后缀，与 26.2 侧 `5bb13af` 的 `R3` 做法一致；
 SemVer 核心仍是 `1.1.8`，构建元数据不参与比较，见 `gradle.properties` 注释）。
 
+- **第四轮：B 命中 —— 光影下的两个 GPU 开关退回默认关 + 修掉一条 EMISSIVE 永久降级（本轮）**：
+  上一条留下的 A/B/C 判别维护者跑完了：**A（`MeshPolyInShadow=true`）无效**，
+  **B（把光影下的 `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 关掉）有效**，且第一人称、
+  第三人称、展示台三种语境表现一致。⇒ 「poly 不进阴影图」这个解释被**否证**（`MeshPolyInShadow` 保持
+  false，不为一个无效解释付每帧阴影遍的成本；§5.9 保留作排除记录），根因落在**我们自开的那个 GPU pass**
+  与光影包照明语义的关系上：`EMISSIVE_PIPELINE` 带 `withShaderDefine("EMISSIVE")`，而且被
+  `IrisApi.assignPipeline` 登记进 `IrisProgram.HAND/ENTITIES` ⇒ 包按「自发光 / 不查阴影」画这条几何，
+  正是「挡住天体却继承天体亮度」的样子。由此修掉一条**独立的真缺陷**：`resolveLightmap` 以前一旦
+  `getTextureView()` 返回 null 或抛异常就把 `lightmapUnavailable` **永久**置真（只 WARN 一次，整会话不再
+  重试），此后每一帧都走 EMISSIVE。改法：① 去闩锁，每帧重试（`getTextureView()` 是缓存读），日志只去重；
+  ② 光影下真取不到 lightmap 就**整条拒收**（`gpuMasterUsable()`），退回 collector 由包正常照明 ——
+  兜底不该改变照明语义，宁可不进 GPU；`GPU world submit refused:` 补了这个原因串。
+  **默认值随之退回**：`MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` = **false**（`MeshPolyIlluminatedRealSky`
+  同样 false —— 它是上一轮我按误读的症状写的，不是维护者报的问题，见 §5.8 的定性块）。TOML 默认值只影响
+  新档：老档里已被翻成 true 的用户需要在 Cloth 里手动关，或删掉 `[mesh_loader]` 段。
+  **证据边界**（AGENTS.md §2）：现象与 A/B 结论来自维护者实机；本轮的代码改动只到静态 + CI，
+  「EMISSIVE 兜底是否就是你那次的实际路径」取决于日志里有没有那行 WARN —— 已在 §5.10 给出这条查证，
+  没有它就还剩「自建管线 MRT/color target 集合与 `ENTITY_CUTOUT` 不一致」这条未排除的分支。
+  **两项开关没有删**：修好之后想重测，局内打开即可（每帧读值，不用重启）。
 - **实机状态更新**：第 3 步（世界语境常驻 VBO）维护者**两轮实机通过** —— 第一轮无光影
   （26.2 那条「相对视角固定」的坑未复现），第二轮打开 `MeshGpuWorldUnderShaders` 后
   **一遍过**（含 `Assigned mesh_entity_world to the Iris ENTITIES program.` 那条）。
   上一轮报的「光影下失效」经核实是**当时默认关**，不是缺陷。
 - **默认值**：`MeshGpuUnderShaders` 与 `MeshGpuWorldUnderShaders` 由 false 改为 **true**
   （`MeshGpuBaking` / `MeshGpuWorld` 本来就是 true）→ 四项 GPU 开关默认全开。
+  （**已被上面那条撤销**：维护者随后测出光影下常驻 VBO 会「继承」天体自发光，这两项同日退回默认 false；
+  当时的 PASS 只覆盖几何/位置与「收得到 `gbuffers_*` 照明」，没覆盖「照明语义是否与 collector 等价」。）
   回退语义不变：钩子失联/绘制异常 ⇒ 分表静默回 collector，`catch (Exception | LinkageError)`，
   **从不回写配置文件**。
 - **局内可配置（胶水轮次）**：`MeshyConfig` 的 **14 项全部**接进 Cloth「渲染」页
@@ -45,7 +66,8 @@ SemVer 核心仍是 `1.1.8`，构建元数据不参与比较，见 `gradle.prope
   立方体层 `BedrockPart#render` 与 poly 层 `PolyMeshModel` 同一个数）。无光影下这是对的（原版光照图
   是两列**相乘**，sky=0 基本就是黑的，光靠 block 拉满不亮）；但光影包把 **sky 读成「这表面看得见天空」**，
   于是「常亮」= 「永远晒得到太阳月亮」，且该值沿子骨骼继承 ⇒ 顶层一个骨骼叫 `*_illuminated`，整把枪跟着露天。
-  新增 `MeshPolyIlluminatedRealSky`（默认 true）：**仅在装了光影包时**把 sky 换成环境真值、block 保持 15
+  新增 `MeshPolyIlluminatedRealSky`（当时默认 true，**现已退回 false**：它针对的是我误读出来的症状，
+  真正的原因见下面第四轮那条）：**仅在装了光影包时**把 sky 换成环境真值、block 保持 15
   —— 洞里照样看得见，但不再声称晒得到太阳；**无光影下逐字保持上游行为**（判据第一条件是 `isUsingRenderPack`，
   静态可证）。三条消费路径（collector / GPU 手部 / GPU 世界）统一走 `PolyRenderPolicy#illuminatedLight`；
   光影状态用 `ShaderStateTracker` 每帧推进的缓存布尔（`IrisCompat.isUsingRenderPack()` 每次要
