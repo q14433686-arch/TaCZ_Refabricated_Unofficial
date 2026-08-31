@@ -362,8 +362,23 @@ tasks.named("compileJava") {
             println "PROBE8: no minecraft jar found on the classpath"
             return
         }
-        def proc = [javapBin, "-classpath", mcJar.absolutePath, "net.minecraft.client.renderer.extract.LevelExtractor"].execute()
-        proc.consumeProcessOutput(System.out, System.err)
+        println "=== JAR8 extract classes:"
+        def proc = ["jar", "tf", mcJar.absolutePath].execute()
+        def out = new StringBuilder()
+        proc.consumeProcessOutput(out, System.err)
         proc.waitFor()
+        out.toString().eachLine { line ->
+            if ((line =~ /extract/i) as boolean || (line =~ /LevelRenderer\$|SectionRender/ i) as boolean) {
+                if ((line =~ /extract/i) as boolean) println line
+            }
+        }
+        println "=== JAR8 LevelRenderer reload-ish methods:"
+        def proc2 = [javapBin, "-classpath", mcJar.absolutePath, "net.minecraft.client.renderer.LevelRenderer"].execute()
+        def out2 = new StringBuilder()
+        proc2.consumeProcessOutput(out2, System.err)
+        proc2.waitFor()
+        out2.toString().eachLine { line ->
+            if ((line =~ /(reload|allChanged|setShader|onRenderTarget|resize|setLevel)/) as boolean) println line
+        }
     }
 }
