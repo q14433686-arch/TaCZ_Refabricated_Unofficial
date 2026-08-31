@@ -41,7 +41,7 @@ SemVer 核心仍是 `1.1.8`，构建元数据不参与比较，见 `gradle.prope
   `1.21.11` 主分支 push + `pull_request` 触发、`concurrency` 取消过期 run、**日志回推只在
   arena/\*\***。实测本沙箱凭据推不动 `.github/workflows/`（GitHub App 无 `workflows` 权限，
   远端直接 `remote rejected`），所以本分支正式件仍是旧版，等维护者粘贴；
-  新建件 `build.yml`（全量 build + jar artifact + 四个静态校验）与 `consistency.yml` 放在
+  新建件 `docs/ci/build.yml`（全量 build + jar artifact + 四个静态校验）与 `docs/ci/consistency.yml` 放在
   `docs/ci/`（沙箱 token 无 `workflows` 权限，按 AGENTS.md §1 由维护者粘贴上线），
   清单见 [`docs/ci/README.md`](ci/README.md)。Java 用 21（26.x 是 25）。
 - **顺手抓到并删掉一个孤儿 mixin 配置**：`tacz.compat.acceleratedrendering.mixins.json`

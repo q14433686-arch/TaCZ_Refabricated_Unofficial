@@ -1,6 +1,8 @@
 # 跨分支/跨仓 Handoff 登记账本（refab **1.21.11** 分支副本）
 
-> 用法见 26.2 侧的 `docs/lineage/SYNC_GOVERNANCE_PROPOSAL.md` §4-§5。状态：
+> 用法见 **26.2 分支上的** `docs/lineage/SYNC_GOVERNANCE_PROPOSAL.md` §4-§5（那份以及下面几份
+> `SYNC_GUIDE_*` 只存在于 `arena/01a04e96`，本分支没有副本 —— 读法：
+> `gh api -H "Accept: application/vnd.github.raw" "repos/q14433686-arch/TaCZ_Refabricated_Unofficial/contents/<路径>?ref=arena/01a04e96-tacz-refabricated-unofficial"`）。状态：
 > `OPEN`（待认领）/ `CLAIMED(分支)`（进行中）/ `DONE(commit)` / `DECLINED(原因)` / `需核对`。
 > 本文件是 `arena/01a04e96`（26.2）上同名账本的**分支副本**：各行状态由本分支回填，
 > 上游那份不动；两边不一致时，**涉及 1.21.11 的行以本副本为准**，其余以正式账本为准。
@@ -10,9 +12,9 @@
 
 | # | handoff / 计划文档 | 方向 | 状态 | 本分支核对（2026-08-31） |
 |---|---|---|---|---|
-| 7 | `docs/lineage/SYNC_GUIDE_REFAB_1211_20260830.md`（1.21.11 暂停收尾 + 可同步项） | 26.2 → 1.21.11 | **DONE**（本轮收口，见下） | §0.1 TEMP 剥离 → 探针已固化成 `scripts/mesh_render_probe.gradle`（默认不接入，`-PmeshProbe` 显式开），`build.gradle` 里不再有任何 TEMP 块；§0.2 `SCOPE_PIP_RERENDER_1211_PORT_PLAN_20260830.md` 顶部 `STATUS: DECLINED` 已在；§0.3 `SCOPE_PIP_RERENDER` 默认 false 已在；§1.1 检视动画两连修（`4aa8d7b`+`12d6f3c`）**已在**（`AnimationStateContext#stopAnimation` 的出生序号判据、`ObjectAnimationRunner.SPAWN_COUNTER`、`AnimationStateMachine#trigger` 的栈式快照三处逐一核到，无需搬）；§1.2 的结论被本分支推翻，见 §2 |
+| 7 | **26.2 上的** `docs/lineage/SYNC_GUIDE_REFAB_1211_20260830.md`（1.21.11 暂停收尾 + 可同步项） | 26.2 → 1.21.11 | **DONE**（本轮收口，见下） | §0.1 TEMP 剥离 → 探针已固化成 `scripts/mesh_render_probe.gradle`（默认不接入，`-PmeshProbe` 显式开），`build.gradle` 里不再有任何 TEMP 块；§0.2 `docs/SCOPE_PIP_RERENDER_1211_PORT_PLAN_20260830.md` 顶部 `STATUS: DECLINED` 已在；§0.3 `SCOPE_PIP_RERENDER` 默认 false 已在；§1.1 检视动画两连修（`4aa8d7b`+`12d6f3c`）**已在**（`AnimationStateContext#stopAnimation` 的出生序号判据、`ObjectAnimationRunner.SPAWN_COUNTER`、`AnimationStateMachine#trigger` 的栈式快照三处逐一核到，无需搬）；§1.2 的结论被本分支推翻，见 §2 |
 | 5 | `docs/SCOPE_PIP_RERENDER_1211_PORT_PLAN_20260830.md` | 26.2(main) → 1.21.11 | **DECLINED**（维护者 2026-08-30 裁定） | 本分支已带 `STATUS: DECLINED` 头；半成品按裁定 (a) 保留、默认锁 false |
-| 8 | `docs/lineage/SYNC_GUIDE_REFAB_2612_20260830.md` 第 4 步「等 1.21.11 收口」 | 26.1.2 ← 本分支 | **READY** | 本分支 R3 已把 TML 第 0/1/2/3 步连同实机结论与注入点事实整理成 `SYNC_GUIDE_1211_TO_2612_TML_GPU_20260831.md`，26.1.2 可以按它开工 |
+| 8 | **26.2 上的** `docs/lineage/SYNC_GUIDE_REFAB_2612_20260830.md` 第 4 步「等 1.21.11 收口」 | 26.1.2 ← 本分支 | **READY** | 本分支 R3 已把 TML 第 0/1/2/3 步连同实机结论与注入点事实整理成 `SYNC_GUIDE_1211_TO_2612_TML_GPU_20260831.md`，26.1.2 可以按它开工 |
 
 ## 2. 本分支新开的行
 

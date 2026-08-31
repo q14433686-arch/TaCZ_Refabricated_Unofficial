@@ -191,7 +191,7 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 > （第 2/3 步，见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §3-§4）。
 >
 > 14 项都在 `tacz-client.toml` 的 `[mesh_loader]` 段，并且全部接进了局内「渲染」页（Cloth）；
-> 两边默认值/键位齐平由 `docs/ci/build.yml` 里的静态校验把关（清单见 `docs/ci/README.md`）。
+> 两边默认值/键位齐平由 `docs/ci/build.yml`（待上线）里的静态校验把关，清单见 `docs/ci/README.md`；在它上线之前，用本文件 §4 的表格 + `docs/CHANGELOG_1_21_11.md` 里那条自审脚本自查。
 
 ## 5. 验证清单
 

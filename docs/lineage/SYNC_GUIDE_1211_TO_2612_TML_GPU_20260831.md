@@ -68,7 +68,7 @@ src/main/resources/tacz.mesh.mixins.json                       # package = ...me
 
 ### 1.3 顺手要带的文档
 
-`docs/MESH_LOADER.md`（状态块 + 配置表 + §5 验证清单）、
+`../MESH_LOADER.md`（状态块 + 配置表 + §5 验证清单）、
 `docs/TML_GPU_FEASIBILITY_1211_20260831.md`（可行性与「为什么这样设计」）、
 `docs/TML_GPU_STEP2_HANDFLUSH_20260831.md`（手部/世界两条路的字节码取证链，§4 是世界那半）、
 `docs/TML_GPU_PROBE_TOOL_20260831.md`（**先读这篇，见 §3**）、
