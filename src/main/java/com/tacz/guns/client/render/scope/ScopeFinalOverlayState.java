@@ -43,8 +43,6 @@ import java.util.List;
 public final class ScopeFinalOverlayState {
     private static final int FINAL_RETICLE_ORDER = 20_000;
     private static final int FINAL_OCULAR_RING_ORDER = 20_001;
-    /** Scope-model text (ammo counters etc.): above the lens picture, under the reticle. */
-    private static final int FINAL_TEXT_ORDER = 19_000;
 
     private static final List<ReticleDraw> PENDING_RETICLES = new ArrayList<>();
     private static final List<RingDraw> PENDING_RINGS = new ArrayList<>();
@@ -166,12 +164,13 @@ public final class ScopeFinalOverlayState {
         RenderSystem.outputColorTextureOverride = minecraft.getMainRenderTarget().getColorTextureView();
         RenderSystem.outputDepthTextureOverride = minecraft.getMainRenderTarget().getDepthTextureView();
         try {
-            // Scope text first (order 19_000): above the lens picture, below reticle/rim.
-            if (!texts.isEmpty()) {
-                OrderedSubmitNodeCollector textCollector = submitNodes.order(FINAL_TEXT_ORDER);
-                for (IFunctionalSubmitter.SubmitTask task : texts) {
-                    task.submit(textCollector);
-                }
+            // Scope text first: the tasks are submitted straight through the storage itself
+            // (26.1.2's SubmitNodeStorage IS a SubmitNodeCollector; the OrderedSubmitNodeCollector
+            // returned by order(int) is NOT one, so a task.submit(collector.order(...)) does not
+            // even type-check). This lands text in the storage's default order bucket, i.e.
+            // before reticle (20_000) / rim (20_001) - picture -> text -> reticle -> shade.
+            for (IFunctionalSubmitter.SubmitTask task : texts) {
+                task.submit(submitNodes);
             }
 
             OrderedSubmitNodeCollector reticleCollector = submitNodes.order(FINAL_RETICLE_ORDER);
