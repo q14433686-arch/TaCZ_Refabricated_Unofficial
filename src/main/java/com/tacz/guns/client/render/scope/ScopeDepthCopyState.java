@@ -108,6 +108,9 @@ public final class ScopeDepthCopyState {
         return maskValid;
     }
 
+
+    }
+
     private static int backupSourceFbo;
     /** FBO bound while the ocular aperture drew; retained for diagnostics only. */
     private static int ocularSourceFbo;

@@ -1006,58 +1006,82 @@ public final class PolyMeshGpuRenderer {
                 pass.bindTexture("Sampler2", lightmapView,
                         RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             }
+            // 【目镜裁剪 · 路线分流】无光影：自研 fsh（mesh_entity_scope_clip，即
+            // scope_flash_clip 的 mode-2 硬编码克隆）直接生效，用 RenderPass 采样器绑定
+            // 两份私有深度拷贝（2026-09-01 实机验证：枪身正确被目镜裁剪）。光影：Iris 的
+            // GlCommandEncoder#trySetup 会把管线替换成打补丁的 gbuffers_hand
+            // ExtendedShader（IrisDepthRestoreShaderMixin 注入的休眠 tacz_ScopeMaskMode
+            // 分支），自研 fsh 根本不参与绘制 —— 实机同日：光影下枪身不被裁剪。改走
+            // vanilla RenderType 同款 GL-uniform 路线（beginExternalMaskOutsideDraw =
+            // prepareMaskDraw(mode 2)：身份守卫 + 绑 aperture 拷贝单元 + 置 mode，world
+            // 深度用 Iris 的 depthtex2）；注入分支缺失/掩码失效时 mode 恒 0 = 不裁剪，
+            // 失败语义与「今日的未裁剪外观」一致。
+            boolean meshMaskRouteActive = false;
             if (apertureClip) {
-                // 本帧目镜序列的两份私有深度拷贝（world=目镜写入前、aperture=目镜写入后）。
-                // 片元着色器按「孔内且比目镜远 → discard」裁掉镜内枪身，与 vanilla
-                // viewmodel 的 MASK_OUTSIDE 分支同一比较式。
-                var worldDepth = ScopeDepthCopyState.worldDepthTarget();
-                var apertureDepth = ScopeDepthCopyState.apertureDepthTarget();
-                var worldView = ScopePipRenderState.worldDepthViewFor(worldDepth);
-                var apertureView = ScopePipRenderState.apertureDepthViewFor(apertureDepth);
-                if (worldView != null && apertureView != null) {
-                    pass.bindTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, worldView,
-                            RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-                    pass.bindTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, apertureView,
-                            RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                if (irisFlush) {
+                    ScopeDepthCopyState.beginExternalMaskOutsideDraw();
+                    meshMaskRouteActive = true;
                 } else {
-                    // 视图取不到（理论不可达：maskValid 蕴含 handles 可用）→ 保底换回普通管线。
-                    pass.setPipeline(lit ? LIT_PIPELINE : EMISSIVE_PIPELINE);
+                    // 本帧目镜序列的两份私有深度拷贝（world=目镜写入前、aperture=目镜写入后）。
+                    // 片元着色器按「孔内且比目镜远 → discard」裁掉镜内枪身，与 vanilla
+                    // viewmodel 的 MASK_OUTSIDE 分支同一比较式。
+                    var worldDepth = ScopeDepthCopyState.worldDepthTarget();
+                    var apertureDepth = ScopeDepthCopyState.apertureDepthTarget();
+                    var worldView = ScopePipRenderState.worldDepthViewFor(worldDepth);
+                    var apertureView = ScopePipRenderState.apertureDepthViewFor(apertureDepth);
+                    if (worldView != null && apertureView != null) {
+                        pass.bindTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, worldView,
+                                RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                        pass.bindTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, apertureView,
+                                RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                    } else {
+                        // 视图取不到（理论不可达：maskValid 蕴含 handles 可用）→ 保底换回普通管线。
+                        pass.setPipeline(lit ? LIT_PIPELINE : EMISSIVE_PIPELINE);
+                    }
                 }
             }
 
-            for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
-                GpuTextureView textureView = viewsByTexture.get(group.getKey());
-                if (textureView == null) {
-                    // pass 外解析失败（连 missing 视图都拿不到）：跳过该组，下一帧重试。
-                    continue;
-                }
-                pass.bindTexture("Sampler0", textureView, linearSampler);
-
-                for (DrawEntry entry : group.getValue()) {
-                    // 【法线修复 · 26.2 83daf16 同理移植】绘制执行期间把该骨骼的 pose 压到
-                    // RenderSystem MV 栈顶（栈顶 = flushMV × pose_bone），画完立即弹出。
-                    // 位置走的是 prepare/writeTransform 的 DynamicTransforms 快照（早已正确），
-                    // 但光影包的 gl_NormalMatrix（被 Iris 改名 iris_NormalMat）不来自快照 ——
-                    // Iris 26.x ExtendedShader.iris$setupState 在【绘制执行那一刻】读
-                    // getModelViewMatrixCopy() 的栈顶做逆转置（iris_ModelViewMatInverse 同源）。
-                    // 我们的顶点法线是骨骼本地系裸写（writeRaw），指望这个矩阵补上全部旋转；
-                    // 不压栈时 setupState 读到的栈顶只有相机 MV，pose_bone 的旋转层丢失 ⇒
-                    // 法线仍朝骨骼本地方向 ⇒ 光影的平行光/反射按错误法线算（「反光的光源
-                    // 关系不对」，26.2 用户实测同症状）。vanilla 无光影路径不受此病影响，
-                    // 且 pass 内没有别的消费者读这个栈 —— 无条件压/弹保持「栈顶 = 该次
-                    // draw 的真实 MV」这一不变量。
-                    modelViewStack.pushMatrix();
-                    modelViewStack.mul(entry.model());
-                    try {
-                        pass.setUniform("DynamicTransforms", transformByEntry.get(entry));
-                        pass.setVertexBuffer(0, entry.bone().vertexBuffer);
-                        pass.setIndexBuffer(indices.getBuffer(entry.bone().indexCount), indices.type());
-                        // 1.21.11 drawIndexed(baseVertex, firstIndex, count, instanceCount)：
-                        // 顺序索引缓冲 0..count-1，故 baseVertex=0、firstIndex=0、单实例。
-                        pass.drawIndexed(0, 0, entry.bone().indexCount, 1);
-                    } finally {
-                        modelViewStack.popMatrix();
+            try {
+                for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
+                    GpuTextureView textureView = viewsByTexture.get(group.getKey());
+                    if (textureView == null) {
+                        // pass 外解析失败（连 missing 视图都拿不到）：跳过该组，下一帧重试。
+                        continue;
                     }
+                    pass.bindTexture("Sampler0", textureView, linearSampler);
+
+                    for (DrawEntry entry : group.getValue()) {
+                        // 【法线修复 · 26.2 83daf16 同理移植】绘制执行期间把该骨骼的 pose 压到
+                        // RenderSystem MV 栈顶（栈顶 = flushMV × pose_bone），画完立即弹出。
+                        // 位置走的是 prepare/writeTransform 的 DynamicTransforms 快照（早已正确），
+                        // 但光影包的 gl_NormalMatrix（被 Iris 改名 iris_NormalMat）不来自快照 ——
+                        // Iris 26.x ExtendedShader.iris$setupState 在【绘制执行那一刻】读
+                        // getModelViewMatrixCopy() 的栈顶做逆转置（iris_ModelViewMatInverse 同源）。
+                        // 我们的顶点法线是骨骼本地系裸写（writeRaw），指望这个矩阵补上全部旋转；
+                        // 不压栈时 setupState 读到的栈顶只有相机 MV，pose_bone 的旋转层丢失 ⇒
+                        // 法线仍朝骨骼本地方向 ⇒ 光影的平行光/反射按错误法线算（「反光的光源
+                        // 关系不对」，26.2 用户实测同症状）。vanilla 无光影路径不受此病影响，
+                        // 且 pass 内没有别的消费者读这个栈 —— 无条件压/弹保持「栈顶 = 该次
+                        // draw 的真实 MV」这一不变量。
+                        modelViewStack.pushMatrix();
+                        modelViewStack.mul(entry.model());
+                        try {
+                            pass.setUniform("DynamicTransforms", transformByEntry.get(entry));
+                            pass.setVertexBuffer(0, entry.bone().vertexBuffer);
+                            pass.setIndexBuffer(indices.getBuffer(entry.bone().indexCount), indices.type());
+                            // 1.21.11 drawIndexed(baseVertex, firstIndex, count, instanceCount)：
+                            // 顺序索引缓冲 0..count-1，故 baseVertex=0、firstIndex=0、单实例。
+                            pass.drawIndexed(0, 0, entry.bone().indexCount, 1);
+                        } finally {
+                            modelViewStack.popMatrix();
+                        }
+                    }
+                }
+            } finally {
+                // 与 ScopeRenderTypes 的 setup/clear 配对同构：归还被 bindDepthTexture
+                // 占用的纹理单元并清 CURRENT（GL-uniform 路线）；fsh 路线为 no-op。
+                if (meshMaskRouteActive) {
+                    ScopeDepthCopyState.end();
                 }
             }
             boolean already = worldPass ? loggedFirstWorldDraw : loggedFirstDraw;
