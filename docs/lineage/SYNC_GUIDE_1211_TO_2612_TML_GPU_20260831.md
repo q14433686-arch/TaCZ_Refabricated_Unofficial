@@ -94,7 +94,10 @@ src/main/resources/tacz.mesh.mixins.json                       # package = ...me
 `docs/TML_GPU_FEASIBILITY_1211_20260831.md`（可行性与「为什么这样设计」）、
 `docs/TML_GPU_STEP2_HANDFLUSH_20260831.md`（手部/世界两条路的字节码取证链，§4 是世界那半）、
 `docs/TML_GPU_PROBE_TOOL_20260831.md`（**先读这篇，见 §3**）、
-`docs/REVIEW_UPSTREAM_TML_GPU_262_20260831.md`（A10 就是本指导 §3 Q7 的出处）、
+`docs/REVIEW_UPSTREAM_TML_GPU_262_20260831.md`（A10 就是本指导 §3 Q7/Q8 的出处；**A10 的绕序那半
+已被实机否证**，别照搬），以及 `../MESH_LOADER.md` **§6「未修 BUG 记录：poly 绕序 × 背面剔除」**
+（症状原话、Complementary Unbound 环境、四步复现、三层来源、三个选项与代价 —— §1.6 让你们自己决定的
+就是它，带过去当你们那侧的立项起点）；
 `docs/check_mesh_config_parity.py`（齐平自查脚本；§6 要跑的就是它，不带过去那条 CI 步骤就是空跑）。
 
 ---
@@ -114,6 +117,61 @@ R3 一度把 `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 翻成 true，�
    并在 `worldSubmitBlocker` 里给出原因串。这样「兜底 = 换照明语义」不再可能发生。
 
 移植时请顺手确认你们那边的 `resolveLightmap` 等价物没有同类闩锁（26.2 有同款）。
+
+
+### 1.6 ⚠ 一个请你们**自己决定**的 bug：poly 绕序 × 背面剔除（本分支没修，只有规避）
+
+这条和上面几条不一样：**我没有方案要交给你们**，因为你们的渲染层与 1.21.11 差得很远，
+而这个问题恰好是「数据层不自洽」与「消费层剔除状态」相互抵消的结果 —— 后一半只在具体的
+提交路径上成立。先把你们的进度钉住（2026-08-31 我核过）：`mod_version=1.1.8+fabric.26.1.2.R2-hotfix2`、
+`src/main/java/cn/sh1rocu/tacz/compat/meshloader/` **不存在**（`gh api contents` 404）、
+`docs/` 里没有 `lineage/`，最近的活动是 08-30 的动画两连修 + `compile-check-2612.yml`，
+`UPSTREAM_GAPS_AND_TODO_AUDIT_26_1_2.md` 里也还没有 TML 条目 ⇒ **这个 bug 对你们还不是现症**，
+它是「你们取整包那天必须一并决定的一个设计点」。
+
+**症状**（原话，别转述成机制）：高模枪在光影下近乎全黑、只有远侧内壁有高光，第一人称/第三人称/展示台一致；
+与同枪包的 Forge 原版并排最明显。光影包 = **Complementary Shaders - Unbound**。
+
+**你们手上有一个我们没有的优势**：`docs/RENDER_PIPELINE_SCOPE_AUDIT_26_1_2.md` 里你们已经写过
+「`ScopeRenderTypes` 从 vanilla `ENTITY_CUTOUT` **克隆 pipeline，并只修改若干状态**」——也就是说
+**26.1.2 上某个 render type/pipeline 的剔除状态，你们是能静态读到的**（1.21.11 这边我只能靠实机反推：
+沙箱里没有可反编译的 Loom jar）。所以请不要照抄我们的结论，直接回答自己那两个问题：
+
+- 若你们那边 `ENTITY_CUTOUT` 系（或你们给 poly 选的那条）**剔背面**：那么「镜像位置但不反转绕序」
+  要么已经是自洽的（枪包按 Bedrock 习惯导出，从外看 CW ⇒ 镜像成 CCW-from-outside），要么就是
+  原版也带着同一个不自洽。**两种情况下都不要去「修」绕序** —— 我们试过，见下面「我们踩的坑」。
+- 若**不剔**：那这个 bug 在你们那边只会以「高光偏一侧」的形态出现（更轻），修法空间与我们也不同。
+
+**我们踩的坑（这条是本节真正要传达的）**：我上一轮把「`FLIP_MODEL_Y` 是 det<0 的合同变换 ⇒ 正反面互换
+⇒ 发射顺序应当整体反转」做成了默认开的开关，推理只讲通了 `gl_FrontFacing` 那一半，漏了「collector 用的
+`RenderTypes.entityCutout` 剔背面 ⇒ 反转之后被剔掉的是**朝外**的面」。同时它在我们两条自研 GPU 管线
+（`.withCull(false)`）上几乎看不出来 —— 也就是说**同一个改动在两条路上敏感度不同**，第 0-3 轮那些
+「光影下 PASS」全都是走 GPU 路时得到的。最后是靠维护者把 GPU 键关掉、高模退回 collector 才显形，
+再靠「与原版只差绕序这一位」的静态对比定案退回。
+
+**给你们的复现（搬完第 0 步就能跑，不需要 GPU 层，约 3 分钟）**：
+① 高模 mesh 枪 + Complementary Unbound（或你们常用的那个 deferred 包）；② 把
+`MeshPolyMirrorReverseWinding`（如果你们把三个开关一起取了）打开 → `F3+T` → 看是否变全黑/镂空；
+③ 关掉 → `F3+T` → 应当与你们的原版观感一致。**关键的第 ④ 步我们自己都没做**：绕着枪看有没有
+「看穿外壳看到内壁」的镂空 —— 有 ⇒ 是剔面；只有明暗不对 ⇒ 那条路其实不剔背面，我们的整份解释要重做。
+你们既然能静态核剔除状态，这一步可以直接用静态结论替代。
+
+**三个选项与代价（请你们选，别让我们选）**：① poly 那条路改用不剔背面的 render type
+（双面会开始遮内部件、半透明叠加会变，所有 poly 语境要整轮重验）；② 不猜约定，从数据反推绕序
+（面叉积 vs「面中心 − 质心」点积，逐面决定；凹形与薄板会误判，需要一批真枪包）；③ 维持与上游一致、
+只把事实写进文档（本分支选这个）。**如果你们选 ③，那本节对你们的全部要求就是「别顺手修」**。
+
+**别照抄清单**（生硬搬过来只会把你们带进我们踩过的坑）：
+`MeshPolyMirrorReverseWinding=true` 这个默认值（已在本分支实机否证）；§5.7 旧版「镜像必须反转绕序」
+那段论证（原文保留在 `docs/MESH_LOADER.md` §5.7/§6 里是**作为反例**）；`MeshPolyIlluminatedRealSky`
+与光影下两个 GPU 键的默认值（见 §1.4）；以及我们 1.21.11 的一切注入点事实（纪元差异见 §4，
+你们那份审计文档比我这份更可信）。**值得搬的只有两件事**：「退化面别写零法线」（零向量在包里
+`normalize()` 出 NaN ⇒ 随机高光，静态可证）与「把 `FORCE_FLAT_SHADING` 从常量变成配置、
+`normals` 数组的解析留着」。
+
+需要你们回给的东西已并进 §3 的 Q8–Q10。上游 26.2 侧同一件事记在
+`docs/REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A10（他们的 `PolyMesh` 与我们改前逐字相同 ⇒
+同一抵消状态，别在那里「顺手修好」）。
 
 
 ## 2. 六条不可谈判的设计不变量
@@ -153,7 +211,7 @@ R3 一度把 `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 翻成 true，�
 
 ---
 
-## 3. 26.1.2 上必须先测、不能照抄的七件事
+## 3. 26.1.2 上必须先测、不能照抄的十件事
 
 本分支的结论全部来自 **1.21.11（混淆）+ Iris 1.10.7** 的 CI javap 实测；26.2 的结论来自
 26.2。**26.1.2 是第三种组合**（Mojang 正式名 + frame-graph/submit-node 时代），
@@ -163,9 +221,11 @@ R3 一度把 `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 翻成 true，�
 Iris `HandRenderer` 有自己的 `SubmitNodeStorage`/`FeatureRenderDispatcher` 且
 `endRender()` 里是 `renderAllFeatures()` → `endBatch()`。
 
-**还没核实、且决定设计的**七个问题 —— 用 `scripts/mesh_render_probe.gradle`
+**还没核实、且决定设计的**十个问题。分工不一样：Q1-Q6 用 `scripts/mesh_render_probe.gradle`
 （`docs/TML_GPU_PROBE_TOOL_20260831.md` 讲了怎么改类名/成员名、怎么让输出落进
-`build-reports/compile-java.log` 让沙箱读回）逐条回答：
+`build-reports/compile-java.log` 让沙箱读回）；Q7/Q8 在你们那边是**能静态读到的**（pipeline 可克隆
+⇒ 剔除状态可见），这点比我们强，别退回到「看观感猜」；Q9 要拿真实枪包算一次点积（见 §1.6）；
+Q10 是你们的决定，不是测量。逐条回答：
 
 | # | 问题 | 本分支（1.21.11）的答案 | 若 26.1.2 不同，怎么办 |
 |---|---|---|---|
@@ -176,6 +236,9 @@ Iris `HandRenderer` 有自己的 `SubmitNodeStorage`/`FeatureRenderDispatcher` �
 | Q5 | `GameRenderer#renderItemInHand`（或等价方法）是否在 `renderHandsWithItems` 前后 push/pop model-view | 是 ⇒ 世界钩子必须 `inHandPass` 跳过 | 若否，世界/手部可以共用消费点，但门 2 仍要留 |
 | Q6 | 光影激活时 `DefaultVertexFormat.ENTITY` 被 Iris 扩展成什么、stride 是否随之变 | 会变 ⇒ 世代号必须同时认「光影开关」与「消费格式」 | 不变则世代号可以简单些，但别去掉 |
 | Q7 | 光影包是否按 `gl_FrontFacing` 取反顶点法线（`normal *= gl_FrontFacing ? 1.0 : -1.0` 一类写法），以及你们那边 poly 用的 `RenderTypes.entityCutout` 开不开背面剔除 | **已答（实机替代证据）**：自研 GPU 管线两条都 `.withCull(false)`（静态可核），collector 的 `entityCutout` **剔背面** —— 沙箱里仍然没 Loom jar 核不了字节码，但「只把绕序反转就整枪全黑、关掉与 Forge 原版逐字一致」这组对照只有这一种解释；`entityCutout` 与 `entityCutoutNoCull` 成对存在，名字差一个 NoCull，与此一致 | 推论 ⇒ **绕序不要反转**（反了就把朝外的面剔掉）。`gl_FrontFacing` 与朝外法线不自洽这件事在数据层仍然真实存在，但要闭合它得先动剔除（`entityCutoutNoCull` = 行为改动，双面会遮内部件）或从数据反推绕序，两者都需要实机，本分支都没做 |
+| Q8 | 你们给 poly（以及任何 poly 衍生几何）选的那条提交路径，**背面剔除状态**是什么？（26.1.2 上 `ENTITY_CUTOUT` 系的 pipeline 是可见的，你们已经能克隆它 ⇒ 也能读到它的 cull 状态） | 1.21.11 上我们**只能反推**（无 Loom jar）：`entityCutout` 与 `entityCutoutNoCull` 成对存在，且「只把绕序反转就整枪全黑」这个实机结果只与「前者剔背面」相容 | 剔 ⇒ 绕序保持与上游一致（不要反转），并按 §1.6 第 ④ 步确认；不剔 ⇒ 我们这份解释在你们那边不适用，别搬 §5.7 的旧论证 |
+| Q9 | 你们那边枪包 `poly_mesh` 的**绕序约定**到底是从外侧看 CCW 还是 CW（导出工具决定，不是我们能选的）：拿一个已知好的枪包，对一个面算 `cross(v1-v0, v2-v0)`，与「面中心 − 模型质心」做点积，符号一致 = 从外看 CCW | 我们**没有核**（这是全节最想要的三个样本，一批真实枪包，别只看一把） | 若多数面是 CW（Bedrock 习惯），那「镜像后不自洽」根本不存在，本条整个作废；若 CCW ⇒ 不自洽真实存在，但仍要先决定 Q10 |
+| Q10 | 承接 Q8/Q9：若不自洽确实存在且你们的消费层剔背面，你们打算怎么办（§1.6 的三个选项：改不剔面 / 逐面反推绕序 / 维持现状并只写文档） | 本分支选**第三个**（规避 + 立项记录），因为我们没有光影实机，也不想在同一处再赌一次 | 选哪个都行，**但请把选择与证据写进你们自己的文档**；不要「顺手」把绕序反转做成默认开——我们实测的那次后果是整枪变黑 |
 
 **Q4 是最容易翻车的一条**：猜错常量不会崩，只会「光影下这把枪照明不对 + 一行 WARN」，
 很容易误判成渲染逻辑错。
@@ -278,7 +341,9 @@ python3 docs/check_mesh_config_parity.py
 
 ## 8. 搬完之后请回给我的东西
 
-1. 一张表：§3 的 Q1-Q6 在 26.1.2 上的实测答案（尤其 Q3：有没有 `prepare()`/`drawFromBuffer`）。
+1. 一张表：§3 的 Q1-Q6 在 26.1.2 上的实测答案（尤其 Q3：有没有 `prepare()`/`drawFromBuffer`），
+   外加 **Q7/Q8 的剔除状态**（你们静态可读，这条对我们也有价值：本分支只能反推）、
+   Q9 的点积结论（几个枪包、符号统计）与 Q10 你们选了哪个选项 + 为什么。
 2. §5.4 前两条的实机结论（过 / 不过 + 日志片段）。
 3. 你们为 26.1.2 改写的注入点差异说明——我要据此更新本分支的 `MESH_LOADER.md`「已知边界」，
    并把可通用的部分回流给 26.2（账本 L-2）。

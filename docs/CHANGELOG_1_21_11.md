@@ -31,6 +31,16 @@ SemVer 核心仍是 `1.1.8`，构建元数据不参与比较，见 `gradle.prope
   与绕序无关、确实留下的两条：退化面不再写零法线（避免包里 `normalize()` 出 NaN 的随机高光）、
   `MeshPolyPreferPackNormals`（上游本就有这条分支，被常量编译掉）。真正想「两头都对」需要
   collector 换 `entityCutoutNoCull` 或从数据反推绕序 —— **都没做**，需要实机，见 §5.7 末。
+  **已立项记录（不再猜、也不再「顺手修」）**：光影包名确认为 **Complementary Shaders - Unbound**；
+  `MESH_LOADER.md` 新开 **§6「未修 BUG 记录：poly 绕序 × 背面剔除」** —— 症状原话、环境与变量、四步复现
+  （含我们自己唯一没做的那步：绕着枪看有没有「看穿外壳」的镂空）、三层来源与「为什么会互相抵消」、
+  三个候选修法各要付什么。状态 **OPEN / 不修**：本分支只有规避（默认值退回与上游一致），数据层那个
+  不自洽仍在，最初那条「高光像在错误一侧」也仍在。
+  给 26.1.2 的同步写成 `lineage/SYNC_GUIDE_1211_TO_2612_TML_GPU_20260831.md` **§1.6 + §3 Q8-Q10**：
+  他们那边还没有 TML（`meshloader` 目录 404、版本仍 `1.1.8+fabric.26.1.2.R2-hotfix2`、`UPSTREAM_GAPS`
+  里没有 TML 条目），且 26.1.2 渲染层与 1.21.11 差得远（`RenderType#draw` 每批自建 `RenderPass`、
+  `ScopeRenderTypes` 直接克隆 `ENTITY_CUTOUT` ⇒ **剔除状态他们能静态读到**，我们只能反推）。所以那节的
+  要求是「你们自己决定 + 别照抄我们任何一版做法（含那个开关键名）」，不是搬实现；§3 从七件事扩到十件。
 - **第四轮：B 命中 —— 光影下的两个 GPU 开关退回默认关 + 修掉一条 EMISSIVE 永久降级（本轮）**：
   上一条留下的 A/B/C 判别维护者跑完了：**A（`MeshPolyInShadow=true`）无效**，
   **B（把光影下的 `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 关掉）有效**，且第一人称、

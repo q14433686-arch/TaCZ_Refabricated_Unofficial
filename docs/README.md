@@ -14,7 +14,7 @@
 
 | 文件 | 内容 |
 |---|---|
-| `MESH_LOADER.md` | 内置 TML（mesh 高模加载 + GPU 静态烘焙第 0/1/2/3 步 + 光影下法线/绕序 §5.7 + 自发光部件天空光 §5.8 + 光影下「继承天体自发光」的判别与否证 §5.9/§5.10）的当前状态、18 项配置、边界、验证清单 |
+| `MESH_LOADER.md` | 内置 TML（mesh 高模加载 + GPU 静态烘焙第 0/1/2/3 步 + 光影下法线/绕序 §5.7 + 自发光部件天空光 §5.8 + 光影下「继承天体自发光」的判别与否证 §5.9/§5.10 + **§6 未修 BUG 记录：poly 绕序 × 背面剔除** （症状原话 / Complementary Unbound 环境 / 四步复现 / 三层来源 / 三个候选修法）的当前状态、18 项配置、边界、验证清单 |
 | `CHANGELOG_1_21_11.md` | 本分支相对 26.1.2 的变更记录，按交付轮次倒序；**R3 段在顶部追加**（R3 段末尾已含「第四轮」：光影下两个 GPU 开关退回默认关 + EMISSIVE 闩锁修复） |
 | `AMMO_SOURCE_API.md` | 下游模组替换实体弹药源的公共 API |
 | `CARRYON_COMPAT.md` | Carry On 工作台兼容 |
@@ -25,8 +25,8 @@
 
 | 文件 | 内容 |
 |---|---|
-| `lineage/HANDOFF_LEDGER.md` | 同步账本（本分支副本）：上游指向本分支的行的核对结果 + 本分支新开的行（L-1…L-5） |
-| `lineage/SYNC_GUIDE_1211_TO_2612_TML_GPU_20260831.md` | 给 26.1.2 的 TML/GPU 移植指导（含 26.1.2 必须先实测的 Q1-Q6） |
+| `lineage/HANDOFF_LEDGER.md` | 同步账本（本分支副本）：上游指向本分支的行的核对结果 + 本分支新开的行（L-1…L-8b，含那条**未修 bug 的立项行**） |
+| `lineage/SYNC_GUIDE_1211_TO_2612_TML_GPU_20260831.md` | 给 26.1.2 的 TML/GPU 移植指导：默认值警告（§1.4）、**必须他们自己决定的未修 bug（§1.6）**、六条不变量、26.1.2 要先实测/先回答的 Q1-Q10 |
 
 ## 3. 取证与审计（完结即归档，不再更新；引用前先看文件头状态）
 
@@ -35,7 +35,7 @@
 | `TML_GPU_FEASIBILITY_1211_20260831.md` | GPU 静态烘焙在 1.21.11 上的可行性论证与逐条 javap |
 | `TML_GPU_STEP2_HANDFLUSH_20260831.md` | 第 2 步（光影手部 flush）与第 3 步（世界语境）的取证链：§1-§3 手部、§4 世界（4.1 事实 / 4.2 设计 / 4.3 实机结论） |
 | `TML_GPU_PROBE_TOOL_20260831.md` | `scripts/mesh_render_probe.gradle` 的用法：沙箱没有 JDK 时，怎么靠 CI 的 javap 通道核实成员名与时机 |
-| `REVIEW_UPSTREAM_TML_GPU_262_20260831.md` | 对 26.2 GPU 层的只读审查（A1-A9），含「哪些能互相印证、哪些不可跨纪元照抄」 |
+| `REVIEW_UPSTREAM_TML_GPU_262_20260831.md` | 对 26.2 GPU 层的只读审查（A1-A12，其中 A11 已被实机否证、A10 的一半被本仓自己否证），含「哪些能互相印证、哪些不可跨纪元照抄」 |
 | `SCOPE_PIP_DEPTH_1211_STEP1_20260830.md`、`SCOPE_PIP_DEPTH_1211_STEP2_20260830.md`、`SCOPE_PIP_DEPTH_1211_STEP3_20260830.md` | 深度版 PIP 三步的实现记录 |
 | `SCOPE_PIP_RERENDER_1211_PORT_PLAN_20260830.md` | **STATUS: DECLINED**（维护者 2026-08-30 裁定）；本体保留作重启起点 |
 | `PORT_1_21_11_PHASE1.md` / `PORT_1_21_11_PHASE2.md` | 从 26.1.2 移植到 1.21.11 的构建迁移与错误族定位记录 |

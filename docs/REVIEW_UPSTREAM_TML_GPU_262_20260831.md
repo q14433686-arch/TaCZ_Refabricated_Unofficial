@@ -176,7 +176,14 @@ int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());   // :373
 > （`D·n` 是朝外方向，`gl_FrontFacing` 与它相反），但**结论应当是「别动绕序」**，而不是「反转绕序」。
 > 真正值得上游做的是下面第 2 条（丢弃枪包 `normals`）与「别写零法线」这两件；若要彻底闭合正反面，
 > 得先决定 `entityCutout` vs `entityCutoutNoCull`（行为改动）或从数据反推绕序，两者都需要实机。
-> 本仓现状：`MeshPolyMirrorReverseWinding` 默认 **false**（开关保留，见 `docs/MESH_LOADER.md` §5.7）。
+> 本仓现状：`MeshPolyMirrorReverseWinding` 默认 **false**（开关保留，见 `docs/MESH_LOADER.md` §5.7），
+> 并且这条已经写成**立项记录**：`docs/MESH_LOADER.md` **§6「未修 BUG 记录：poly 绕序 × 背面剔除」**
+> —— 环境（光影包 = **Complementary Shaders - Unbound**）、四步复现、三层来源（数据层绕序约定 /
+> 消费层剔除状态 / 包层 facing 写法）、三个候选修法与代价。状态 OPEN/不修。
+> **对 26.2 的态度也一样**：这不是「照抄本仓的修法」，因为你们的光影下主路是 GPU 常驻 VBO
+> （且 `drawList` 硬绑渲染目标 = A1），第 2 层的敏感度与形态都和我们不同 —— 请先回答你们自己那两个
+> 问题（poly 走的那条 pipeline 剔不剔背面；枪包绕序约定是 CCW 还是 CW，可用点积统计一批真枪包），
+> 再决定要不要动。别把「反转绕序」当修复搬进 26.2。
 
 
 **先说清一件事**：上游与本仓这段是**逐字相同**的（`587763c:…/core/PolyMesh.java` 的
