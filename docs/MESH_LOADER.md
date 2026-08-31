@@ -52,9 +52,9 @@
 | `MeshPolyInPreview` | `true` | GUI/FIXED/HEAD 预览语境是否画 |
 | `MeshLogStats` | `true` | 模型加载统计日志（按 geo 去重） |
 | `MeshGpuBaking` | `true` | GPU 静态烘焙总闸；失败自动回 collector |
-| `MeshGpuUnderShaders` | **`false`** | 光影下手部也走常驻 VBO（§3 的照明语义问题） |
+| `MeshGpuUnderShaders` | **`true`** | 光影下手部也走常驻 VBO（R3 定稿；§3 的亮度继承是已知取舍） |
 | `MeshGpuWorld` | `true` | 世界语境也走常驻 VBO |
-| `MeshGpuWorldUnderShaders` | **`false`** | 光影下世界也走常驻 VBO（§3） |
+| `MeshGpuWorldUnderShaders` | **`true`** | 光影下世界也走常驻 VBO（R3 定稿；同 §3 取舍） |
 | `MeshGpuLightCacheSize` | `4`（1..16） | 世界 LRU 的光照档容量 |
 | `MeshGuiMaxVertices` | `65536`（0..1e7） | GUI 预览顶点预算，超出只画立方体 |
 | `MeshWorldMaxVertices` | `120000`（0..1e7） | 世界语境顶点预算 |
@@ -103,15 +103,18 @@
 - **scope PIP**：26.1.2 无镜内二次渲染 ⇒ `isInsideScopeLevelRender()`
   暂为常 false 门（代码里两处调用点按原形保留，PIP 深度线移植时恢复）。
 
-## 3. 光影下的两条键为什么默认 false（1211 实机结论，原样保留）
+## 3. 光影下的两条键默认值（R3 定稿：默认开，2026-09-01 维护者裁定）
 
 1211 维护者实机：开着 `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 时，
 **高模枪挡住太阳/月亮的那部分几何会「继承」天体的自发光亮度**（第一人称 /
-第三人称 / 展示台三种语境一致），只有把这两键关掉才消失 ⇒ 光影下的常驻 VBO
-路径与光影包的照明语义还不等价。连带修掉的缺陷（已随移植保留）：以前
-「拿不到 lightmap」会一次性闩锁、把整条路永久退化到 EMISSIVE 管线（在光影包
-眼里 = 自发光、不受阴影）；现在是每帧重试 + 光影下真取不到就**整条拒收**
-回 collector（`gpuMasterUsable()` + `worldSubmitBlocker()` 原因串）。
+第三人称 / 展示台三种语境一致），只有把这两键关掉才消失。该现象因此一度
+把两键改回默认关；**R3 定稿改回默认开**——常驻 VBO 在光影下的收益仍胜过
+每帧 CPU 重变换，亮度继承是已知、可观测、随时可以整键关闭回退的取舍，
+不再作为默认关的理由（需要回退的玩家把两键关掉即可）。连带修掉的缺陷
+（已随移植保留）：以前「拿不到 lightmap」会一次性闩锁、把整条路永久退化到
+EMISSIVE 管线（在光影包眼里 = 自发光、不受阴影）；现在是每帧重试 + 光影下
+真取不到就**整条拒收**回 collector（`gpuMasterUsable()` +
+`worldSubmitBlocker()` 原因串）。
 
 26.1.2 上这两键的对应实测**还没做**（§5.3/§5.4 复测矩阵的第一优先项）。
 

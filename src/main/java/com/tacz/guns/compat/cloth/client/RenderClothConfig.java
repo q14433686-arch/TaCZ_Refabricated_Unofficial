@@ -194,7 +194,7 @@ public class RenderClothConfig {
                 .setSaveConsumer(MeshyConfig.GPU_BAKING::set).build());
 
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders"), MeshyConfig.GPU_UNDER_SHADERS.get())
-                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders.desc"))
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders.desc"))
                 .setSaveConsumer(MeshyConfig.GPU_UNDER_SHADERS::set).build());
 
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_world"), MeshyConfig.GPU_WORLD.get())
@@ -202,7 +202,7 @@ public class RenderClothConfig {
                 .setSaveConsumer(MeshyConfig.GPU_WORLD::set).build());
 
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_world_under_shaders"), MeshyConfig.GPU_WORLD_UNDER_SHADERS.get())
-                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_world_under_shaders.desc"))
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_world_under_shaders.desc"))
                 .setSaveConsumer(MeshyConfig.GPU_WORLD_UNDER_SHADERS::set).build());
 
         render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.mesh_gpu_light_cache_size"), MeshyConfig.GPU_LIGHT_CACHE_SIZE.get())

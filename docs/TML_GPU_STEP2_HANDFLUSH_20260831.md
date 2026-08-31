@@ -1,5 +1,9 @@
 # 第 2 步 v2 —— 把 mesh GPU pass 开进「手部 flush 之内」（2026-08-31）
 
+> **【2026-09-01 R3 定稿更新】** 本文档写作时的「`MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders`
+> 默认关」结论**已过时**：R3 定稿把两键改回**默认开**（维护者裁定；亮度继承问题作为已知取舍保留，
+> 见 `MESH_LOADER.md` §3 与 `MeshyConfig` 注释）。下文所有「默认 false / 当前默认」字样按写作时点读。
+
 > 接手说明：上一轮留下的待办原文是
 > 「mixin 进 `FeatureRenderDispatcher.renderAllFeatures()`/`renderSolidFeatures()`，用 MixinExtras
 > `@Local` 捕获那次 flush 的 `RenderPass pass`，在 vanilla 几何画完后把 `HAND_DRAWS` 画进同一
