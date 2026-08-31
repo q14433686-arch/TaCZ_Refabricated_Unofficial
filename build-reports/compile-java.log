@@ -1,4 +1,4 @@
-commit: 9d27782f218e3de5f088bf21aba67ca34288dd2e
+commit: 23f0e3add658b99d324de1c0613d4cc55adfd258
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -325,6 +325,59 @@ public class net.minecraft.client.renderer.SubmitNodeCollection implements net.m
   public void endFrame();
 }
 
+===== net.minecraft.client.renderer.MultiBufferSource$BufferSource -p =====
+Compiled from "MultiBufferSource.java"
+public class net.minecraft.client.renderer.MultiBufferSource$BufferSource implements net.minecraft.client.renderer.MultiBufferSource {
+  protected final com.mojang.blaze3d.vertex.ByteBufferBuilder sharedBuffer;
+  protected final java.util.SequencedMap<net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.ByteBufferBuilder> fixedBuffers;
+  protected final java.util.Map<net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.BufferBuilder> startedBuilders;
+  protected net.minecraft.client.renderer.rendertype.RenderType lastSharedType;
+  protected net.minecraft.client.renderer.MultiBufferSource$BufferSource(com.mojang.blaze3d.vertex.ByteBufferBuilder, java.util.SequencedMap<net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.ByteBufferBuilder>);
+  public com.mojang.blaze3d.vertex.VertexConsumer getBuffer(net.minecraft.client.renderer.rendertype.RenderType);
+  public void endLastBatch();
+  public void endBatch();
+  public void endBatch(net.minecraft.client.renderer.rendertype.RenderType);
+  private void endBatch(net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.BufferBuilder);
+}
+
+===== MultiBufferSource$BufferSource.endBatch full (22 lines) =====
+  public void endBatch();
+    Code:
+       0: aload_0
+       1: invokevirtual #103                // Method endLastBatch:()V
+       4: aload_0
+       5: getfield      #50                 // Field fixedBuffers:Ljava/util/SequencedMap;
+       8: invokeinterface #107,  1          // InterfaceMethod java/util/SequencedMap.keySet:()Ljava/util/Set;
+      13: invokeinterface #113,  1          // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+      18: astore_1
+      19: aload_1
+      20: invokeinterface #118,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      25: ifeq          46
+      28: aload_1
+      29: invokeinterface #122,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      34: checkcast     #65                 // class net/minecraft/client/renderer/rendertype/RenderType
+      37: astore_2
+      38: aload_0
+      39: aload_2
+      40: invokevirtual #94                 // Method endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+      43: goto          19
+      46: return
+
+===== MultiBufferSource$BufferSource.endLastBatch full (14 lines) =====
+  public void endLastBatch();
+    Code:
+       0: aload_0
+       1: getfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
+       4: ifnull        20
+       7: aload_0
+       8: aload_0
+       9: getfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
+      12: invokevirtual #94                 // Method endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+      15: aload_0
+      16: aconst_null
+      17: putfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
+      20: return
+
 ===== RenderSystem (filtered) =====
   public static com.mojang.blaze3d.textures.GpuTextureView outputColorTextureOverride;
   public static com.mojang.blaze3d.textures.GpuTextureView outputDepthTextureOverride;
@@ -334,7 +387,7 @@ public class net.minecraft.client.renderer.SubmitNodeCollection implements net.m
   public static net.minecraft.client.renderer.DynamicUniforms getDynamicUniforms();
   public static void bindDefaultUniforms(com.mojang.blaze3d.systems.RenderPass);
   public static void bindDefaultUniforms(com.mojang.blaze3d.systems.RenderPass);
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788166338044.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788166540596.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -344,7 +397,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 59s
+BUILD SUCCESSFUL in 1m 46s
 2 actionable tasks: 2 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
