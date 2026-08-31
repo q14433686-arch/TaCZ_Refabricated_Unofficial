@@ -1,4 +1,4 @@
-commit: 7e72bdbe726d4c6337c5ec70236d892ce74e42be
+commit: ba3e7bd5b0822b3436ceb4d0b213c031d227552c
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -39,12 +39,12 @@ Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
 Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
@@ -76,515 +76,86 @@ Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 6 warnings
 
-> Task :dumpFeatureDispatcherApi
-===== net.minecraft.client.renderer.feature.FeatureRenderDispatcher -p =====
-Compiled from "FeatureRenderDispatcher.java"
-public class net.minecraft.client.renderer.feature.FeatureRenderDispatcher implements java.lang.AutoCloseable {
-  private final net.minecraft.client.renderer.SubmitNodeStorage submitNodeStorage;
-  private final net.minecraft.client.renderer.block.BlockRenderDispatcher blockRenderDispatcher;
-  private final net.minecraft.client.renderer.MultiBufferSource$BufferSource bufferSource;
-  private final net.minecraft.client.resources.model.AtlasManager atlasManager;
-  private final net.minecraft.client.renderer.OutlineBufferSource outlineBufferSource;
-  private final net.minecraft.client.renderer.MultiBufferSource$BufferSource crumblingBufferSource;
-  private final net.minecraft.client.gui.Font font;
-  private final net.minecraft.client.renderer.feature.ShadowFeatureRenderer shadowFeatureRenderer;
-  private final net.minecraft.client.renderer.feature.FlameFeatureRenderer flameFeatureRenderer;
-  private final net.minecraft.client.renderer.feature.ModelFeatureRenderer modelFeatureRenderer;
-  private final net.minecraft.client.renderer.feature.ModelPartFeatureRenderer modelPartFeatureRenderer;
-  private final net.minecraft.client.renderer.feature.NameTagFeatureRenderer nameTagFeatureRenderer;
-  private final net.minecraft.client.renderer.feature.TextFeatureRenderer textFeatureRenderer;
-  private final net.minecraft.client.renderer.feature.LeashFeatureRenderer leashFeatureRenderer;
-  private final net.minecraft.client.renderer.feature.ItemFeatureRenderer itemFeatureRenderer;
-  private final net.minecraft.client.renderer.feature.CustomFeatureRenderer customFeatureRenderer;
-  private final net.minecraft.client.renderer.feature.BlockFeatureRenderer blockFeatureRenderer;
-  private final net.minecraft.client.renderer.feature.ParticleFeatureRenderer particleFeatureRenderer;
-  public net.minecraft.client.renderer.feature.FeatureRenderDispatcher(net.minecraft.client.renderer.SubmitNodeStorage, net.minecraft.client.renderer.block.BlockRenderDispatcher, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.resources.model.AtlasManager, net.minecraft.client.renderer.OutlineBufferSource, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.gui.Font);
-  public void renderAllFeatures();
-  public void endFrame();
-  public net.minecraft.client.renderer.SubmitNodeStorage getSubmitNodeStorage();
-  public void close();
-}
-
-===== FeatureRenderDispatcher.void renderAllFeatures full (103 lines) =====
-  public void renderAllFeatures();
+> Task :dumpHandFlushApi
+===== javap -c -p net.minecraft.client.renderer.ItemInHandRenderer#renderHandsWithItems =====
+  --- public void renderHandsWithItems(float, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.SubmitNodeCollector, net.minecraft.client.player.LocalPlayer, int);  (4 lines, 0 x bare 'return') ---
+  public void renderHandsWithItems(float, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.SubmitNodeCollector, net.minecraft.client.player.LocalPlayer, int);
     Code:
-       0: aload_0
-       1: getfield      #114                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
-       4: invokevirtual #135                // Method net/minecraft/client/renderer/SubmitNodeStorage.getSubmitsPerOrder:()Lit/unimi/dsi/fastutil/ints/Int2ObjectAVLTreeMap;
-       7: invokevirtual #141                // Method it/unimi/dsi/fastutil/ints/Int2ObjectAVLTreeMap.values:()Lit/unimi/dsi/fastutil/objects/ObjectCollection;
-      10: invokeinterface #147,  1          // InterfaceMethod it/unimi/dsi/fastutil/objects/ObjectCollection.iterator:()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
-      15: astore_1
-      16: aload_1
-      17: invokeinterface #155,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-      22: ifeq          202
-      25: aload_1
-      26: invokeinterface #159,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-      31: checkcast     #161                // class net/minecraft/client/renderer/SubmitNodeCollection
-      34: astore_2
-      35: aload_0
-      36: getfield      #62                 // Field shadowFeatureRenderer:Lnet/minecraft/client/renderer/feature/ShadowFeatureRenderer;
-      39: aload_2
-      40: aload_0
-      41: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
-      44: invokevirtual #165                // Method net/minecraft/client/renderer/feature/ShadowFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
-      47: aload_0
-      48: getfield      #72                 // Field modelFeatureRenderer:Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer;
-      51: aload_2
-      52: aload_0
-      53: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
-      56: aload_0
-      57: getfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
-      60: aload_0
-      61: getfield      #124                // Field crumblingBufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
-      64: invokevirtual #168                // Method net/minecraft/client/renderer/feature/ModelFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/OutlineBufferSource;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
-      67: aload_0
-      68: getfield      #77                 // Field modelPartFeatureRenderer:Lnet/minecraft/client/renderer/feature/ModelPartFeatureRenderer;
-      71: aload_2
-      72: aload_0
-      73: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
-      76: aload_0
-      77: getfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
-      80: aload_0
-      81: getfield      #124                // Field crumblingBufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
-      84: invokevirtual #169                // Method net/minecraft/client/renderer/feature/ModelPartFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/OutlineBufferSource;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
-      87: aload_0
-      88: getfield      #67                 // Field flameFeatureRenderer:Lnet/minecraft/client/renderer/feature/FlameFeatureRenderer;
-      91: aload_2
-      92: aload_0
-      93: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
-      96: aload_0
-      97: getfield      #120                // Field atlasManager:Lnet/minecraft/client/resources/model/AtlasManager;
-     100: invokevirtual #172                // Method net/minecraft/client/renderer/feature/FlameFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/resources/model/AtlasManager;)V
-     103: aload_0
-     104: getfield      #82                 // Field nameTagFeatureRenderer:Lnet/minecraft/client/renderer/feature/NameTagFeatureRenderer;
-     107: aload_2
-     108: aload_0
-     109: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
-     112: aload_0
-     113: getfield      #126                // Field font:Lnet/minecraft/client/gui/Font;
-     116: invokevirtual #175                // Method net/minecraft/client/renderer/feature/NameTagFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/gui/Font;)V
-     119: aload_0
-     120: getfield      #87                 // Field textFeatureRenderer:Lnet/minecraft/client/renderer/feature/TextFeatureRenderer;
-     123: aload_2
-     124: aload_0
-     125: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
-     128: invokevirtual #176                // Method net/minecraft/client/renderer/feature/TextFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
-     131: aload_0
-     132: getfield      #92                 // Field leashFeatureRenderer:Lnet/minecraft/client/renderer/feature/LeashFeatureRenderer;
-     135: aload_2
-     136: aload_0
-     137: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
-     140: invokevirtual #177                // Method net/minecraft/client/renderer/feature/LeashFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
-     143: aload_0
-     144: getfield      #97                 // Field itemFeatureRenderer:Lnet/minecraft/client/renderer/feature/ItemFeatureRenderer;
-     147: aload_2
-     148: aload_0
-     149: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
-     152: aload_0
-     153: getfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
-     156: invokevirtual #180                // Method net/minecraft/client/renderer/feature/ItemFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/OutlineBufferSource;)V
-     159: aload_0
-     160: getfield      #107                // Field blockFeatureRenderer:Lnet/minecraft/client/renderer/feature/BlockFeatureRenderer;
-     163: aload_2
-     164: aload_0
-     165: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
-     168: aload_0
-     169: getfield      #116                // Field blockRenderDispatcher:Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;
-     172: aload_0
-     173: getfield      #122                // Field outlineBufferSource:Lnet/minecraft/client/renderer/OutlineBufferSource;
-     176: invokevirtual #183                // Method net/minecraft/client/renderer/feature/BlockFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;Lnet/minecraft/client/renderer/OutlineBufferSource;)V
-     179: aload_0
-     180: getfield      #102                // Field customFeatureRenderer:Lnet/minecraft/client/renderer/feature/CustomFeatureRenderer;
-     183: aload_2
-     184: aload_0
-     185: getfield      #118                // Field bufferSource:Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
-     188: invokevirtual #184                // Method net/minecraft/client/renderer/feature/CustomFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V
-     191: aload_0
-     192: getfield      #112                // Field particleFeatureRenderer:Lnet/minecraft/client/renderer/feature/ParticleFeatureRenderer;
-     195: aload_2
-     196: invokevirtual #187                // Method net/minecraft/client/renderer/feature/ParticleFeatureRenderer.render:(Lnet/minecraft/client/renderer/SubmitNodeCollection;)V
-     199: goto          16
-     202: aload_0
-     203: getfield      #114                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
-     206: invokevirtual #190                // Method net/minecraft/client/renderer/SubmitNodeStorage.clear:()V
-     209: return
-
-===== FeatureRenderDispatcher.renderSolidFeatures NOT FOUND =====
-===== FeatureRenderDispatcher.renderTranslucentFeatures NOT FOUND =====
-===== CustomFeatureRenderer.render full (45 lines) =====
-  public void render(net.minecraft.client.renderer.SubmitNodeCollection, net.minecraft.client.renderer.MultiBufferSource$BufferSource);
-    Code:
-       0: aload_1
-       1: invokevirtual #53                 // Method net/minecraft/client/renderer/SubmitNodeCollection.getCustomGeometrySubmits:()Lnet/minecraft/client/renderer/feature/CustomFeatureRenderer$Storage;
-       4: astore_3
-       5: aload_3
-       6: getfield      #57                 // Field net/minecraft/client/renderer/feature/CustomFeatureRenderer$Storage.customGeometrySubmits:Ljava/util/Map;
-       9: invokeinterface #61,  1           // InterfaceMethod java/util/Map.entrySet:()Ljava/util/Set;
-      14: invokeinterface #67,  1           // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
-      19: astore        4
-      21: aload         4
-      23: invokeinterface #73,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
-      28: ifeq          121
-      31: aload         4
-      33: invokeinterface #77,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-      38: checkcast     #14                 // class java/util/Map$Entry
-      41: astore        5
-      43: aload_2
-      44: aload         5
-      46: invokeinterface #80,  1           // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
-      51: checkcast     #82                 // class net/minecraft/client/renderer/rendertype/RenderType
-      54: invokevirtual #86                 // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.getBuffer:(Lnet/minecraft/client/renderer/rendertype/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;
-      57: astore        6
-      59: aload         5
-      61: invokeinterface #89,  1           // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
-      66: checkcast     #91                 // class java/util/List
-      69: invokeinterface #92,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
-      74: astore        7
-      76: aload         7
-      78: invokeinterface #73,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
-      83: ifeq          118
-      86: aload         7
-      88: invokeinterface #77,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-      93: checkcast     #24                 // class net/minecraft/client/renderer/SubmitNodeStorage$CustomGeometrySubmit
-      96: astore        8
-      98: aload         8
-     100: invokevirtual #98                 // Method net/minecraft/client/renderer/SubmitNodeStorage$CustomGeometrySubmit.customGeometryRenderer:()Lnet/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer;
-     103: aload         8
-     105: invokevirtual #102                // Method net/minecraft/client/renderer/SubmitNodeStorage$CustomGeometrySubmit.pose:()Lcom/mojang/blaze3d/vertex/PoseStack$Pose;
-     108: aload         6
-     110: invokeinterface #105,  3          // InterfaceMethod net/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer.render:(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V
-     115: goto          76
-     118: goto          21
-     121: return
-}
-===== net.minecraft.client.renderer.feature.CustomFeatureRenderer -p =====
-Compiled from "CustomFeatureRenderer.java"
-public class net.minecraft.client.renderer.feature.CustomFeatureRenderer {
-  public net.minecraft.client.renderer.feature.CustomFeatureRenderer();
-  public void render(net.minecraft.client.renderer.SubmitNodeCollection, net.minecraft.client.renderer.MultiBufferSource$BufferSource);
-}
-
-===== net.minecraft.client.renderer.feature.ItemFeatureRenderer -p =====
-Compiled from "ItemFeatureRenderer.java"
-public class net.minecraft.client.renderer.feature.ItemFeatureRenderer {
-  private final com.mojang.blaze3d.vertex.PoseStack poseStack;
-  public net.minecraft.client.renderer.feature.ItemFeatureRenderer();
-  public void render(net.minecraft.client.renderer.SubmitNodeCollection, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.renderer.OutlineBufferSource);
-}
-
-===== net.minecraft.client.renderer.feature.FeatureRenderer -p =====
-(none)
-stderr: Error: class not found: net.minecraft.client.renderer.feature.FeatureRenderer
-===== net.minecraft.client.renderer.SubmitNodeCollection -p =====
-Compiled from "SubmitNodeCollection.java"
-public class net.minecraft.client.renderer.SubmitNodeCollection implements net.minecraft.client.renderer.OrderedSubmitNodeCollector {
-  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$ShadowSubmit> shadowSubmits;
-  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$FlameSubmit> flameSubmits;
-  private final net.minecraft.client.renderer.feature.NameTagFeatureRenderer$Storage nameTagSubmits;
-  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$TextSubmit> textSubmits;
-  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$LeashSubmit> leashSubmits;
-  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$BlockSubmit> blockSubmits;
-  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$MovingBlockSubmit> movingBlockSubmits;
-  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$BlockModelSubmit> blockModelSubmits;
-  private final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$ItemSubmit> itemSubmits;
-  private final java.util.List<net.minecraft.client.renderer.SubmitNodeCollector$ParticleGroupRenderer> particleGroupRenderers;
-  private final net.minecraft.client.renderer.feature.ModelFeatureRenderer$Storage modelSubmits;
-  private final net.minecraft.client.renderer.feature.ModelPartFeatureRenderer$Storage modelPartSubmits;
-  private final net.minecraft.client.renderer.feature.CustomFeatureRenderer$Storage customGeometrySubmits;
-  private final net.minecraft.client.renderer.SubmitNodeStorage submitNodeStorage;
-  private boolean wasUsed;
-  public net.minecraft.client.renderer.SubmitNodeCollection(net.minecraft.client.renderer.SubmitNodeStorage);
-  public void submitShadow(com.mojang.blaze3d.vertex.PoseStack, float, java.util.List<net.minecraft.client.renderer.entity.state.EntityRenderState$ShadowPiece>);
-  public void submitNameTag(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.world.phys.Vec3, int, net.minecraft.network.chat.Component, boolean, int, double, net.minecraft.client.renderer.state.CameraRenderState);
-  public void submitText(com.mojang.blaze3d.vertex.PoseStack, float, float, net.minecraft.util.FormattedCharSequence, boolean, net.minecraft.client.gui.Font$DisplayMode, int, int, int, int);
-  public void submitFlame(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.entity.state.EntityRenderState, org.joml.Quaternionf);
-  public void submitLeash(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.entity.state.EntityRenderState$LeashState);
-  public <S> void submitModel(net.minecraft.client.model.Model<? super S>, S, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.rendertype.RenderType, int, int, int, net.minecraft.client.renderer.texture.TextureAtlasSprite, int, net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay);
-  public void submitModelPart(net.minecraft.client.model.geom.ModelPart, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.rendertype.RenderType, int, int, net.minecraft.client.renderer.texture.TextureAtlasSprite, boolean, boolean, int, net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay, int);
-  public void submitBlock(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.world.level.block.state.BlockState, int, int, int);
-  public void submitMovingBlock(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.block.MovingBlockRenderState);
-  public void submitBlockModel(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.rendertype.RenderType, net.minecraft.client.renderer.block.model.BlockStateModel, float, float, float, int, int, int);
-  public void submitItem(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.world.item.ItemDisplayContext, int, int, int, int[], java.util.List<net.minecraft.client.renderer.block.model.BakedQuad>, net.minecraft.client.renderer.rendertype.RenderType, net.minecraft.client.renderer.item.ItemStackRenderState$FoilType);
-  public void submitCustomGeometry(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.rendertype.RenderType, net.minecraft.client.renderer.SubmitNodeCollector$CustomGeometryRenderer);
-  public void submitParticleGroup(net.minecraft.client.renderer.SubmitNodeCollector$ParticleGroupRenderer);
-  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$ShadowSubmit> getShadowSubmits();
-  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$FlameSubmit> getFlameSubmits();
-  public net.minecraft.client.renderer.feature.NameTagFeatureRenderer$Storage getNameTagSubmits();
-  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$TextSubmit> getTextSubmits();
-  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$LeashSubmit> getLeashSubmits();
-  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$BlockSubmit> getBlockSubmits();
-  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$MovingBlockSubmit> getMovingBlockSubmits();
-  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$BlockModelSubmit> getBlockModelSubmits();
-  public net.minecraft.client.renderer.feature.ModelPartFeatureRenderer$Storage getModelPartSubmits();
-  public java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$ItemSubmit> getItemSubmits();
-  public java.util.List<net.minecraft.client.renderer.SubmitNodeCollector$ParticleGroupRenderer> getParticleGroupRenderers();
-  public net.minecraft.client.renderer.feature.ModelFeatureRenderer$Storage getModelSubmits();
-  public net.minecraft.client.renderer.feature.CustomFeatureRenderer$Storage getCustomGeometrySubmits();
-  public boolean wasUsed();
-  public void clear();
-  public void endFrame();
-}
-
-===== net.minecraft.client.renderer.MultiBufferSource$BufferSource -p =====
-Compiled from "MultiBufferSource.java"
-public class net.minecraft.client.renderer.MultiBufferSource$BufferSource implements net.minecraft.client.renderer.MultiBufferSource {
-  protected final com.mojang.blaze3d.vertex.ByteBufferBuilder sharedBuffer;
-  protected final java.util.SequencedMap<net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.ByteBufferBuilder> fixedBuffers;
-  protected final java.util.Map<net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.BufferBuilder> startedBuilders;
-  protected net.minecraft.client.renderer.rendertype.RenderType lastSharedType;
-  protected net.minecraft.client.renderer.MultiBufferSource$BufferSource(com.mojang.blaze3d.vertex.ByteBufferBuilder, java.util.SequencedMap<net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.ByteBufferBuilder>);
-  public com.mojang.blaze3d.vertex.VertexConsumer getBuffer(net.minecraft.client.renderer.rendertype.RenderType);
-  public void endLastBatch();
-  public void endBatch();
-  public void endBatch(net.minecraft.client.renderer.rendertype.RenderType);
-  private void endBatch(net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.BufferBuilder);
-}
-
-===== net.minecraft.client.renderer.rendertype.RenderType -p =====
-  public void draw(com.mojang.blaze3d.vertex.MeshData);
-  public com.mojang.blaze3d.vertex.VertexFormat format();
-  public com.mojang.blaze3d.vertex.VertexFormat$Mode mode();
-  public com.mojang.blaze3d.pipeline.RenderPipeline pipeline();
-  public boolean sortOnUpload();
-===== RenderType.void draw( full (227 lines) =====
-  public void draw(com.mojang.blaze3d.vertex.MeshData);
-    Code:
-       0: invokestatic  #168                // Method com/mojang/blaze3d/systems/RenderSystem.getModelViewStack:()Lorg/joml/Matrix4fStack;
-       3: astore_2
-       4: aload_0
-       5: getfield      #75                 // Field state:Lnet/minecraft/client/renderer/rendertype/RenderSetup;
-       8: getfield      #172                // Field net/minecraft/client/renderer/rendertype/RenderSetup.layeringTransform:Lnet/minecraft/client/renderer/rendertype/LayeringTransform;
-      11: invokevirtual #178                // Method net/minecraft/client/renderer/rendertype/LayeringTransform.getModifier:()Ljava/util/function/Consumer;
-      14: astore_3
-      15: aload_3
-      16: ifnull        31
-      19: aload_2
-      20: invokevirtual #183                // Method org/joml/Matrix4fStack.pushMatrix:()Lorg/joml/Matrix4fStack;
-      23: pop
-      24: aload_3
-      25: aload_2
-      26: invokeinterface #189,  2          // InterfaceMethod java/util/function/Consumer.accept:(Ljava/lang/Object;)V
-      31: invokestatic  #193                // Method com/mojang/blaze3d/systems/RenderSystem.getDynamicUniforms:()Lnet/minecraft/client/renderer/DynamicUniforms;
-      34: invokestatic  #197                // Method com/mojang/blaze3d/systems/RenderSystem.getModelViewMatrix:()Lorg/joml/Matrix4f;
-      37: new           #199                // class org/joml/Vector4f
-      40: dup
-      41: fconst_1
-      42: fconst_1
-      43: fconst_1
-      44: fconst_1
-      45: invokespecial #202                // Method org/joml/Vector4f."<init>":(FFFF)V
-      48: new           #204                // class org/joml/Vector3f
-      51: dup
-      52: invokespecial #205                // Method org/joml/Vector3f."<init>":()V
-      55: aload_0
-      56: getfield      #75                 // Field state:Lnet/minecraft/client/renderer/rendertype/RenderSetup;
-      59: getfield      #209                // Field net/minecraft/client/renderer/rendertype/RenderSetup.textureTransform:Lnet/minecraft/client/renderer/rendertype/TextureTransform;
-      62: invokevirtual #214                // Method net/minecraft/client/renderer/rendertype/TextureTransform.getMatrix:()Lorg/joml/Matrix4f;
-      65: invokevirtual #220                // Method net/minecraft/client/renderer/DynamicUniforms.writeTransform:(Lorg/joml/Matrix4fc;Lorg/joml/Vector4fc;Lorg/joml/Vector3fc;Lorg/joml/Matrix4fc;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;
-      68: astore        4
-      70: aload_0
-      71: getfield      #75                 // Field state:Lnet/minecraft/client/renderer/rendertype/RenderSetup;
-      74: invokevirtual #224                // Method net/minecraft/client/renderer/rendertype/RenderSetup.getTextures:()Ljava/util/Map;
-      77: astore        5
-      79: aload_1
-      80: astore        6
-      82: aload_0
-      83: getfield      #75                 // Field state:Lnet/minecraft/client/renderer/rendertype/RenderSetup;
-      86: getfield      #228                // Field net/minecraft/client/renderer/rendertype/RenderSetup.pipeline:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
-      89: invokevirtual #234                // Method com/mojang/blaze3d/pipeline/RenderPipeline.getVertexFormat:()Lcom/mojang/blaze3d/vertex/VertexFormat;
-      92: aload_1
-      93: invokevirtual #238                // Method com/mojang/blaze3d/vertex/MeshData.vertexBuffer:()Ljava/nio/ByteBuffer;
-      96: invokevirtual #242                // Method com/mojang/blaze3d/vertex/VertexFormat.uploadImmediateVertexBuffer:(Ljava/nio/ByteBuffer;)Lcom/mojang/blaze3d/buffers/GpuBuffer;
-      99: astore        7
-     101: aload_1
-     102: invokevirtual #245                // Method com/mojang/blaze3d/vertex/MeshData.indexBuffer:()Ljava/nio/ByteBuffer;
-     105: ifnonnull     144
-     108: aload_1
-     109: invokevirtual #249                // Method com/mojang/blaze3d/vertex/MeshData.drawState:()Lcom/mojang/blaze3d/vertex/MeshData$DrawState;
-     112: invokevirtual #253                // Method com/mojang/blaze3d/vertex/MeshData$DrawState.mode:()Lcom/mojang/blaze3d/vertex/VertexFormat$Mode;
-     115: invokestatic  #257                // Method com/mojang/blaze3d/systems/RenderSystem.getSequentialBuffer:(Lcom/mojang/blaze3d/vertex/VertexFormat$Mode;)Lcom/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer;
-     118: astore        10
-     120: aload         10
-     122: aload_1
-     123: invokevirtual #249                // Method com/mojang/blaze3d/vertex/MeshData.drawState:()Lcom/mojang/blaze3d/vertex/MeshData$DrawState;
-     126: invokevirtual #261                // Method com/mojang/blaze3d/vertex/MeshData$DrawState.indexCount:()I
-     129: invokevirtual #265                // Method com/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer.getBuffer:(I)Lcom/mojang/blaze3d/buffers/GpuBuffer;
-     132: astore        8
-     134: aload         10
-     136: invokevirtual #269                // Method com/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer.type:()Lcom/mojang/blaze3d/vertex/VertexFormat$IndexType;
-     139: astore        9
-     141: goto          172
-     144: aload_0
-     145: getfield      #75                 // Field state:Lnet/minecraft/client/renderer/rendertype/RenderSetup;
-     148: getfield      #228                // Field net/minecraft/client/renderer/rendertype/RenderSetup.pipeline:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
-     151: invokevirtual #234                // Method com/mojang/blaze3d/pipeline/RenderPipeline.getVertexFormat:()Lcom/mojang/blaze3d/vertex/VertexFormat;
-     154: aload_1
-     155: invokevirtual #245                // Method com/mojang/blaze3d/vertex/MeshData.indexBuffer:()Ljava/nio/ByteBuffer;
-     158: invokevirtual #276                // Method com/mojang/blaze3d/vertex/VertexFormat.uploadImmediateIndexBuffer:(Ljava/nio/ByteBuffer;)Lcom/mojang/blaze3d/buffers/GpuBuffer;
-     161: astore        8
-     163: aload_1
-     164: invokevirtual #249                // Method com/mojang/blaze3d/vertex/MeshData.drawState:()Lcom/mojang/blaze3d/vertex/MeshData$DrawState;
-     167: invokevirtual #279                // Method com/mojang/blaze3d/vertex/MeshData$DrawState.indexType:()Lcom/mojang/blaze3d/vertex/VertexFormat$IndexType;
-     170: astore        9
-     172: aload_0
-     173: getfield      #75                 // Field state:Lnet/minecraft/client/renderer/rendertype/RenderSetup;
-     176: getfield      #283                // Field net/minecraft/client/renderer/rendertype/RenderSetup.outputTarget:Lnet/minecraft/client/renderer/rendertype/OutputTarget;
-     179: invokevirtual #289                // Method net/minecraft/client/renderer/rendertype/OutputTarget.getRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
-     182: astore        10
-     184: getstatic     #293                // Field com/mojang/blaze3d/systems/RenderSystem.outputColorTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
-     187: ifnull        196
-     190: getstatic     #293                // Field com/mojang/blaze3d/systems/RenderSystem.outputColorTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
-     193: goto          201
-     196: aload         10
-     198: invokevirtual #299                // Method com/mojang/blaze3d/pipeline/RenderTarget.getColorTextureView:()Lcom/mojang/blaze3d/textures/GpuTextureView;
-     201: astore        11
-     203: aload         10
-     205: getfield      #305                // Field com/mojang/blaze3d/pipeline/RenderTarget.useDepth:Z
-     208: ifeq          231
-     211: getstatic     #308                // Field com/mojang/blaze3d/systems/RenderSystem.outputDepthTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
-     214: ifnull        223
-     217: getstatic     #308                // Field com/mojang/blaze3d/systems/RenderSystem.outputDepthTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
-     220: goto          232
-     223: aload         10
-     225: invokevirtual #311                // Method com/mojang/blaze3d/pipeline/RenderTarget.getDepthTextureView:()Lcom/mojang/blaze3d/textures/GpuTextureView;
-     228: goto          232
-     231: aconst_null
-     232: astore        12
-     234: invokestatic  #315                // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/blaze3d/systems/GpuDevice;
-     237: invokeinterface #321,  1          // InterfaceMethod com/mojang/blaze3d/systems/GpuDevice.createCommandEncoder:()Lcom/mojang/blaze3d/systems/CommandEncoder;
-     242: aload_0
-     243: invokedynamic #332,  0            // InvokeDynamic #2:get:(Lnet/minecraft/client/renderer/rendertype/RenderType;)Ljava/util/function/Supplier;
-     248: aload         11
-     250: invokestatic  #337                // Method java/util/OptionalInt.empty:()Ljava/util/OptionalInt;
-     253: aload         12
-     255: invokestatic  #342                // Method java/util/OptionalDouble.empty:()Ljava/util/OptionalDouble;
-     258: invokeinterface #348,  6          // InterfaceMethod com/mojang/blaze3d/systems/CommandEncoder.createRenderPass:(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPass;
-     263: astore        13
-     265: aload         13
-     267: aload_0
-     268: getfield      #75                 // Field state:Lnet/minecraft/client/renderer/rendertype/RenderSetup;
-     271: getfield      #228                // Field net/minecraft/client/renderer/rendertype/RenderSetup.pipeline:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
-     274: invokeinterface #354,  2          // InterfaceMethod com/mojang/blaze3d/systems/RenderPass.setPipeline:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;)V
-     279: invokestatic  #358                // Method com/mojang/blaze3d/systems/RenderSystem.getScissorStateForRenderTypeDraws:()Lcom/mojang/blaze3d/systems/ScissorState;
-     282: astore        14
-     284: aload         14
-     286: invokevirtual #364                // Method com/mojang/blaze3d/systems/ScissorState.enabled:()Z
-     289: ifeq          319
-     292: aload         13
-     294: aload         14
-     296: invokevirtual #367                // Method com/mojang/blaze3d/systems/ScissorState.x:()I
-     299: aload         14
-     301: invokevirtual #370                // Method com/mojang/blaze3d/systems/ScissorState.y:()I
-     304: aload         14
-     306: invokevirtual #373                // Method com/mojang/blaze3d/systems/ScissorState.width:()I
-     309: aload         14
-     311: invokevirtual #376                // Method com/mojang/blaze3d/systems/ScissorState.height:()I
-     314: invokeinterface #380,  5          // InterfaceMethod com/mojang/blaze3d/systems/RenderPass.enableScissor:(IIII)V
-     319: aload         13
-     321: invokestatic  #384                // Method com/mojang/blaze3d/systems/RenderSystem.bindDefaultUniforms:(Lcom/mojang/blaze3d/systems/RenderPass;)V
-     324: aload         13
-     326: ldc_w         #386                // String DynamicTransforms
-     329: aload         4
-     331: invokeinterface #390,  3          // InterfaceMethod com/mojang/blaze3d/systems/RenderPass.setUniform:(Ljava/lang/String;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V
-     336: aload         13
-     338: iconst_0
-     339: aload         7
-     341: invokeinterface #394,  3          // InterfaceMethod com/mojang/blaze3d/systems/RenderPass.setVertexBuffer:(ILcom/mojang/blaze3d/buffers/GpuBuffer;)V
-     346: aload         5
-     348: invokeinterface #398,  1          // InterfaceMethod java/util/Map.entrySet:()Ljava/util/Set;
-     353: invokeinterface #404,  1          // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
-     358: astore        15
-     360: aload         15
-     362: invokeinterface #409,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-     367: ifeq          428
-     370: aload         15
-     372: invokeinterface #412,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-     377: checkcast     #34                 // class java/util/Map$Entry
-     380: astore        16
-     382: aload         13
-     384: aload         16
-     386: invokeinterface #415,  1          // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
-     391: checkcast     #143                // class java/lang/String
-     394: aload         16
-     396: invokeinterface #418,  1          // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
-     401: checkcast     #39                 // class net/minecraft/client/renderer/rendertype/RenderSetup$TextureAndSampler
-     404: invokevirtual #421                // Method net/minecraft/client/renderer/rendertype/RenderSetup$TextureAndSampler.textureView:()Lcom/mojang/blaze3d/textures/GpuTextureView;
-     407: aload         16
-     409: invokeinterface #418,  1          // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
-     414: checkcast     #39                 // class net/minecraft/client/renderer/rendertype/RenderSetup$TextureAndSampler
-     417: invokevirtual #425                // Method net/minecraft/client/renderer/rendertype/RenderSetup$TextureAndSampler.sampler:()Lcom/mojang/blaze3d/textures/GpuSampler;
-     420: invokeinterface #429,  4          // InterfaceMethod com/mojang/blaze3d/systems/RenderPass.bindTexture:(Ljava/lang/String;Lcom/mojang/blaze3d/textures/GpuTextureView;Lcom/mojang/blaze3d/textures/GpuSampler;)V
-     425: goto          360
-     428: aload         13
-     430: aload         8
-     432: aload         9
-     434: invokeinterface #433,  3          // InterfaceMethod com/mojang/blaze3d/systems/RenderPass.setIndexBuffer:(Lcom/mojang/blaze3d/buffers/GpuBuffer;Lcom/mojang/blaze3d/vertex/VertexFormat$IndexType;)V
-     439: aload         13
-     441: iconst_0
-     442: iconst_0
-     443: aload_1
-     444: invokevirtual #249                // Method com/mojang/blaze3d/vertex/MeshData.drawState:()Lcom/mojang/blaze3d/vertex/MeshData$DrawState;
-     447: invokevirtual #261                // Method com/mojang/blaze3d/vertex/MeshData$DrawState.indexCount:()I
-     450: iconst_1
-     451: invokeinterface #436,  5          // InterfaceMethod com/mojang/blaze3d/systems/RenderPass.drawIndexed:(IIII)V
-     456: aload         13
-     458: ifnull        500
-     461: aload         13
-     463: invokeinterface #439,  1          // InterfaceMethod com/mojang/blaze3d/systems/RenderPass.close:()V
-     468: goto          500
-     471: astore        14
-     473: aload         13
-     475: ifnull        497
-     478: aload         13
-     480: invokeinterface #439,  1          // InterfaceMethod com/mojang/blaze3d/systems/RenderPass.close:()V
-     485: goto          497
-     488: astore        15
-     490: aload         14
-     492: aload         15
-     494: invokevirtual #443                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
-     497: aload         14
-     499: athrow
-     500: aload         6
-     502: ifnull        540
-     505: aload         6
-     507: invokevirtual #444                // Method com/mojang/blaze3d/vertex/MeshData.close:()V
-     510: goto          540
-     513: astore        7
-     515: aload         6
-     517: ifnull        537
-     520: aload         6
-     522: invokevirtual #444                // Method com/mojang/blaze3d/vertex/MeshData.close:()V
-     525: goto          537
-     528: astore        8
-     530: aload         7
-     532: aload         8
-     534: invokevirtual #443                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
-     537: aload         7
-     539: athrow
-     540: aload_3
-     541: ifnull        549
-     544: aload_2
-     545: invokevirtual #447                // Method org/joml/Matrix4fStack.popMatrix:()Lorg/joml/Matrix4fStack;
-     548: pop
-     549: return
-    Exception table:
-       from    to  target type
-         265   456   471   Class java/lang/Throwable
-         478   485   488   Class java/lang/Throwable
-          82   500   513   Class java/lang/Throwable
-         520   525   528   Class java/lang/Throwable
-
-===== RenderType.createRenderPass NOT FOUND =====
-===== RenderSystem (filtered) =====
+       0: aload         4
+       2: fload_1
+===== javap -c -p net.minecraft.client.renderer.RenderType#draw =====
+(no output) Error: class not found: net.minecraft.client.renderer.RenderType
+===== javap -p com.mojang.blaze3d.systems.RenderPass (filtered: enableScissor, setUniform, setVertexBuffer, setIndexBuffer, drawIndexed, setPipeline, bindTexture, close) =====
+  public abstract void setPipeline(com.mojang.blaze3d.pipeline.RenderPipeline);
+  public abstract void bindTexture(java.lang.String, com.mojang.blaze3d.textures.GpuTextureView, com.mojang.blaze3d.textures.GpuSampler);
+  public abstract void setUniform(java.lang.String, com.mojang.blaze3d.buffers.GpuBuffer);
+  public abstract void setUniform(java.lang.String, com.mojang.blaze3d.buffers.GpuBufferSlice);
+  public abstract void enableScissor(int, int, int, int);
+  public abstract void setVertexBuffer(int, com.mojang.blaze3d.buffers.GpuBuffer);
+  public abstract void setIndexBuffer(com.mojang.blaze3d.buffers.GpuBuffer, com.mojang.blaze3d.vertex.VertexFormat$IndexType);
+  public abstract void drawIndexed(int, int, int, int);
+  public abstract void close();
+===== javap -p com.mojang.blaze3d.systems.ScissorState (filtered: enabled, getX, getY, getWidth, getHeight) =====
+  private boolean enabled;
+  public boolean enabled();
+===== javap -p com.mojang.blaze3d.pipeline.RenderTarget (filtered: useDepth, getColorTextureView, getDepthTextureView) =====
+  public final boolean useDepth;
+  public com.mojang.blaze3d.textures.GpuTextureView getColorTextureView();
+  public com.mojang.blaze3d.textures.GpuTextureView getDepthTextureView();
+===== javap -p com.mojang.blaze3d.systems.RenderSystem (filtered: outputColorTextureOverride, outputDepthTextureOverride, getScissorStateForRenderTypeDraws, bindDefaultUniforms, getSequentialBuffer, getDynamicUniforms, getModelViewMatrix, getDevice) =====
   public static com.mojang.blaze3d.textures.GpuTextureView outputColorTextureOverride;
   public static com.mojang.blaze3d.textures.GpuTextureView outputDepthTextureOverride;
+  public static com.mojang.blaze3d.systems.ScissorState getScissorStateForRenderTypeDraws();
   public static org.joml.Matrix4f getModelViewMatrix();
-  public static org.joml.Matrix4fStack getModelViewStack();
+  public static com.mojang.blaze3d.systems.RenderSystem$AutoStorageIndexBuffer getSequentialBuffer(com.mojang.blaze3d.vertex.VertexFormat$Mode);
   public static com.mojang.blaze3d.systems.GpuDevice getDevice();
   public static net.minecraft.client.renderer.DynamicUniforms getDynamicUniforms();
   public static void bindDefaultUniforms(com.mojang.blaze3d.systems.RenderPass);
-  public static void bindDefaultUniforms(com.mojang.blaze3d.systems.RenderPass);
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788166938374.json
+===== javap -p com.mojang.blaze3d.vertex.BufferBuilder (filtered: BufferBuilder(, addVertex, putBulkData, defaults) =====
+  public com.mojang.blaze3d.vertex.BufferBuilder(com.mojang.blaze3d.vertex.ByteBufferBuilder, com.mojang.blaze3d.vertex.VertexFormat$Mode, com.mojang.blaze3d.vertex.VertexFormat);
+  public com.mojang.blaze3d.vertex.VertexConsumer addVertex(float, float, float);
+  public void addVertex(float, float, float, int, float, float, int, int, float, float, float);
+===== javap -p com.mojang.blaze3d.vertex.VertexFormat (filtered: Defaults, getVertexFormatElements, getVertexSize, getIndexType, elements) =====
+  private final java.util.List<com.mojang.blaze3d.vertex.VertexFormatElement> elements;
+  private final int elementsMask;
+  public int getVertexSize();
+===== javap -p com.mojang.blaze3d.vertex.DefaultVertexFormat (filtered: NEW_ENTITY) =====
+  public static final com.mojang.blaze3d.vertex.VertexFormat NEW_ENTITY;
+===== javap -p net.irisshaders.iris.pathways.HandRenderer (filtered: endRender, renderSolid, renderTranslucent, isActive, isRenderingSolid, setupGlState) =====
+  private com.mojang.blaze3d.vertex.PoseStack setupGlState(net.minecraft.client.renderer.GameRenderer, net.minecraft.client.Camera, org.joml.Matrix4fc, float);
+  public void renderSolid(org.joml.Matrix4fc, float, net.minecraft.client.Camera, net.minecraft.client.renderer.GameRenderer, net.irisshaders.iris.pipeline.WorldRenderingPipeline);
+  public void renderTranslucent(org.joml.Matrix4fc, float, net.minecraft.client.Camera, net.minecraft.client.renderer.GameRenderer, net.irisshaders.iris.pipeline.WorldRenderingPipeline);
+  public boolean isActive();
+  public boolean isRenderingSolid();
+  public void endRender();
+===== javap -p net.irisshaders.iris.api.v0.IrisApi (filtered: assignPipeline, getMinorApiRevision, isShaderPackInUse) =====
+  public abstract int getMinorApiRevision();
+  public abstract boolean isShaderPackInUse();
+  public abstract void assignPipeline(com.mojang.blaze3d.pipeline.RenderPipeline, net.irisshaders.iris.api.v0.IrisProgram);
+===== javap -p net.irisshaders.iris.api.v0.IrisProgram (filtered: HAND, EMISSIVE, MAIN) =====
+  public static final net.irisshaders.iris.api.v0.IrisProgram HAND;
+  public static final net.irisshaders.iris.api.v0.IrisProgram HAND_TRANSLUCENT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram EMISSIVE_ENTITIES;
+===== javap -p net.irisshaders.iris.vertices.IrisVertexFormats (filtered: ENTITY, TERRAIN, HAND) =====
+  public static final com.mojang.blaze3d.vertex.VertexFormatElement ENTITY_ELEMENT;
+  public static final com.mojang.blaze3d.vertex.VertexFormatElement ENTITY_ID_ELEMENT;
+  public static final com.mojang.blaze3d.vertex.VertexFormat TERRAIN;
+  public static final com.mojang.blaze3d.vertex.VertexFormat ENTITY;
+===== javap -p net.irisshaders.iris.pipeline.programs.ShaderKey (filtered: HAND_CUTOUT, HAND_TRANSLUCENT) =====
+  public static final net.irisshaders.iris.pipeline.programs.ShaderKey HAND_CUTOUT;
+  public static final net.irisshaders.iris.pipeline.programs.ShaderKey HAND_CUTOUT_BRIGHT;
+  public static final net.irisshaders.iris.pipeline.programs.ShaderKey HAND_CUTOUT_DIFFUSE;
+  public static final net.irisshaders.iris.pipeline.programs.ShaderKey HAND_TRANSLUCENT;
+===== javap -p net.irisshaders.iris.pipeline.IrisPipelines (filtered: assignPipeline, getPipeline) =====
+  public static net.irisshaders.iris.pipeline.programs.ShaderKey getPipeline(net.irisshaders.iris.pipeline.IrisRenderingPipeline, com.mojang.blaze3d.pipeline.RenderPipeline);
+  public static void assignPipeline(com.mojang.blaze3d.pipeline.RenderPipeline, net.irisshaders.iris.pipeline.programs.ShaderKey);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$assignPipeline$107(net.irisshaders.iris.pipeline.programs.ShaderKey, java.lang.Object);
+===== javap -p net.irisshaders.iris.vertices.ImmediateState (filtered: renderWithExtendedVertexFormat, isRenderingLevel, safeToMultiply, skipExtension) =====
+  public static final java.lang.ThreadLocal<java.lang.Boolean> skipExtension;
+  public static boolean isRenderingLevel;
+  public static boolean renderWithExtendedVertexFormat;
+  public static boolean safeToMultiply;
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788173816404.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -594,7 +165,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 39s
+BUILD SUCCESSFUL in 1m 42s
 2 actionable tasks: 2 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
