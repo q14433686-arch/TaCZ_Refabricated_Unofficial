@@ -258,3 +258,24 @@ printf '\n*.log\nhs_err_pid*.log\n' >> .gitignore   # 一行 *.log 就盖住 lat
 你们若把 §1 修完并跑过第 3 步，请把结论同时抄给 26.2（账本 L-2 那条线）：他们的 `drawList` 是
 **硬绑 `mainRenderTarget()`**（审查 A1）且光影下 GPU 默认开 ⇒ 同一个"没接线/接错线"类问题在他们那边
 后果更直接。
+
+---
+
+## 10. 本篇收口（2026-09-01，我方按你们 tip `7562abcb` 逐项独立复查，不看自述）
+
+| 本篇条目 | 你们现状（读文件核实） | 判定 |
+|---|---|---|
+| §3 P0 孤儿 mixin 配置 | `df20224f` 已删 | 关闭 |
+| §4 P1 仓库卫生（`.idea`/`.gradle`/`latest.log`） | `5b1e96e7` 已 untrack | 关闭 |
+| §5 P1 `client.SoundEngineMixin` 未注册 + `lambda$xxx$N` 目标 | `81466418` 已注册并换正式名 | 关闭 |
+| §6 发布号与 README 同步 | `3e4eeb16` 起一致 | 关闭 |
+| §9 第 6 项 镜内文字两根因（`PapiManager` 误用 `I18n.get`） | 你们 `PapiManager` 已是 `Language.getInstance().getOrDefault(...)`，注释里还引了我方 javap | 关闭 |
+| §9 第 6 项 连带：两处 tooltip 同源 | `ClientBlockItemTooltip:79`、`ClientAttachmentItemTooltip:169` 均已纯查表 | 关闭（顺带：26.2 那边仍未改，值得三方一起收） |
+| §9 第 7 项 光影下 `MeshGpuUnderShaders`/`MeshGpuWorldUnderShaders` 默认值 | 你们 `3e4eeb16` 选择 ON，我方 B 测后维持 false | **开放** —— 把你们"开更好"的实测数据（帧时间、有无黑枪/EMISSIVE 降级）给我们，我方立刻重评 |
+
+新增两条待办也写在收口里，不再在本篇追：① 我方镜内文字裁剪已 **实机 PASS**（无光影 A 格 + 重载 F 格，
+2026-09-01），细节与我们建议你们补的三件小事在 `docs/lineage/SYNC_CHECKLIST_1211_TO_2612_PIP_20260901.md` §1-§2；
+② 你们 `99e505f6` 关于"世界 GPU 消费点"的四点位表，我方按同一份证据要重核**我们自己**的
+`FeatureRenderDispatcherMixin` 注入点，请求写在同步清单 §5（账本 L-12）。
+
+**本篇到此不再更新**，后续跨分支沟通一律走 `docs/lineage/SYNC_CHECKLIST_1211_TO_2612_PIP_20260901.md`。

@@ -30,6 +30,7 @@
 | `lineage/SYNC_REVIEW_2612_TML_PORT_20260901.md` | 复核篇（指导的回执）：按代码核 26.1.2 已提交的 TML 移植 @ `79a6391` —— 3 条 P0（mixin 漏注册 ⇒ 世界 GPU 表静默失效、lang 曾被整文件覆盖、孤儿 AR compat 配置）+ P1 卫生项 + 他们回的 Q8/Q9/Q10 + 请他们回我们的 5 项，每条附可复算命令 |
 | `lineage/SCOPE_TEXT_SHOW_1211_20260901.md` | 镜内 `text_show`（MK5/MK5HD 弹药计数）的**两条叠加根因**与修法：① `functionalTasks` 在瞄具深度孔径路径上没被 flush（⇒ 完全不出现）；② `PapiManager` 用 `I18n.get` 把查表当格式化（⇒ 出现但是 `Format error:`；26.2 的 `ec51f556` 同源，同形两处 tooltip 一并收）；含与 26.1.2 补丁的两处差别、三仓分布表、javap 取证、**尚未跑**的四格实机剧本与两条日志判据 |
 | `lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md` | 评估 26.1.2 那轮 PIP 回移植（`0a77ef52`…`8aca7374`）对本分支的可用性：可加项只有 3 条 —— A 窄遍后的状态重提取/清提交节点（我们的类注释里挂着的欠账）、B 镜内文字掩码裁剪（`ScopeTextSubmitter`+`maskedText`，唯一能让"贴边不溢出"成立的解）、C 隔帧渲染 interval；其余是回搬我们自己；含判定 A/B 所需的 javap 探针与逐项成本/验收 |
+| `lineage/SYNC_CHECKLIST_1211_TO_2612_PIP_20260901.md` | 发给 26.1.2 的同步清单（本分支 → 他们）：镜内文字掩码裁剪在本世代实机 PASS 的可用结论、建议他们补的三件小事（log-once 判据 / 重载剧本 / fail-closed 失败模式）、我方三条"不必对齐"判定（重提取防护、FCAP 配置落盘世代边界、隔帧 interval）、我方请回 7 项的逐项关闭复查，以及我方反过来向他们索取的"世界 GPU 消费点四点位表"（关系我方仍未修的"反光/高光偏一侧"） |
 
 ## 3. 取证与审计（完结即归档，不再更新；引用前先看文件头状态）
 

@@ -111,10 +111,12 @@ scope RenderType，vanilla 字体管线不在也不该在 —— 但**别据此�
 - **实机未验证**：本轮只做了代码改动与 CI 编译。下面 §4 是验收剧本，**没跑过之前不要宣称已修好**。
 - **已知残留（不是本轮范围）**：
   ① ~~**镜内文字当前没有任何裁剪**~~ → **同日已落地**（`ScopeTextSubmitter` + `maskedText` +
-  `scope_text_final.fsh` + `clipToScopeMask` 旗 + `isMaskCycleValid` 门禁），**只过了 CI 编译，一格实机未跑**；（上一版把范围写小了，只说延迟那一格）：字体管线不吃孔径深度 ⇒
+  `scope_text_final.fsh` + `clipToScopeMask` 旗 + `isMaskCycleValid` 门禁）；CI 编译绿（`d076cf5` →
+  ci-log `8a2f399`），**维护者 2026-09-01 实机 PASS**（覆盖剧本 A「无光影、贴边被裁」与剧本 F「F5 重载
+  后仍正常」两格；光影格 C/D 与 PIP 格 E 是否同批 PASS 待维护者一句明确）；（上一版把范围写小了，只说延迟那一格）：字体管线不吃孔径深度 ⇒
   **立即路径与延迟路径都会溢出圆孔**，延迟格只是更明显。贴边数据（26.2 记过 MK5HD 文本在
   `y=22.375`、目镜 `y=21.875`）说明这不是理论风险；正解 = 26.2 `9d036594` 的语义 + 本分支的掩码管线
-  （`ScopeTextSubmitter` + `maskedText`），本分支**未移植**；评估、逐项成本与本世代的签名差异（`GlyphVisitor` 不带走坐标的 `accept`）见
+  （`ScopeTextSubmitter` + `maskedText`），本分支已移植并 PASS；评估、逐项成本与本世代的签名差异（`GlyphVisitor` 不带走坐标的 `accept`）见
   `docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md` §2、§2.1 与 §2.3（施工清单与三处有意偏离）；
   ② `deferReticleToIrisTranslucent`（未审计的旧 Iris 回退路径）保持**立即提交**，文字可能被光影包
   后处理盖掉一层 —— 与准星在那条回退路径上的既有取舍一致。

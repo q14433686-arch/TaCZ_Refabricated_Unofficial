@@ -180,7 +180,7 @@ v4 把 B 剩下的疑问基本清掉了，**逐条映射**如下（左：他们 
 
 ⇒ 新增文件实际只有 **1 个 shader + 1 个类**（`ScopeTextSubmitter`，约 150-180 行），其余都是既有类各加一段。
 
-### 2.3 本轮落地情况（2026-09-01，B 已按 §2.2 写完；**只有 CI 编译级证据，无任何实机结论**）
+### 2.3 落地情况（2026-09-01 写完并按 §2.2 逐项落地；CI 编译绿 + 维护者实机 PASS）
 
 | 文件 | 改了什么 |
 |---|---|
@@ -202,12 +202,18 @@ v4 把 B 剩下的疑问基本清掉了，**逐条映射**如下（左：他们 
    page group(s)).` —— 验收剧本需要"确实走了掩码管线"的可观测判据，否则"文字在镜内"与"回退了 vanilla"
    在屏幕上可能长得一样。
 
+**实机结果（维护者 2026-09-01 报 PASS）**：无光影剧本 A 格 —— 文字在镜内、层序正确、**贴边字形被圆孔
+裁掉**；剧本 F —— F5 重载资源包后文字仍在且仍被裁剪 ⇒ 下面第一条"按 id 缓存遇到字体页 view 更换"的风险
+在本世代**未复现**（它仍是缓存设计的历史包袱，不是"已修"；日后改字体图集实现要重看）。光影格 C/D 与
+PIP 格 E 是否同批 PASS，待维护者一句明确再改状态；在那之前那三格仍按"未验"读。
+
 **已知未覆盖的两处**（写清，不留模糊）：
-- 资源包重载后字体页 view 更换、而 `MASKED_TEXT_TYPES`/`PAGE_HANDLES` 是缓存：他们的实现同样如此，
-  本分支沿用，**未验**；若实机发现重载后文字消失，修法是把 RenderType 缓存键改成"页 view 的代数"或在
-  `ResourceManager` 重载事件里清两张表；
+
+- 资源包重载后字体页 view 更换、而 `MASKED_TEXT_TYPES`/`PAGE_HANDLES` 是缓存：26.1.2 的实现同样如此，
+  本分支沿用；实机剧本 F 已 PASS（未复现），但**这不等于缓存被修好**，只是这一代的 view 生命周期没踩到；
 - `Font.DisplayMode.SEE_THROUGH`/`POLYGON_OFFSET` 两族没有掩码版本 ⇒ 瞄具文字若将来支持穿透模式，
   需要再克隆一族 `TEXT_SEE_THROUGH`（现在不需要：`TextShowRender` 只用 NORMAL）。
+
 **v5 已答的最后一件事**：`RenderSetup$RenderSetupBuilder` 的公开纹理入口只有
 `withTexture(String, Identifier)` 与 `withTexture(String, Identifier, Supplier<GpuSampler>)` 两个
 （`RenderSetup$TextureAndSampler` 是 `record(GpuTextureView, GpuSampler)`，但只在
