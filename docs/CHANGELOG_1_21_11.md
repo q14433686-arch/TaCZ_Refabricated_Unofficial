@@ -5,13 +5,52 @@
 
 ---
 
+## 姊妹对象更正：同步清单改写为发给 NeoForge 项目的 1.21.11 分支（新增第二份清单，第一份保留并更正收件人）2026-09-01
+
+**维护者一句话纠正**：上一节的"同步清单"对象写错了 —— 姊妹指的是隔壁
+**NeoForge 项目 `q14433686-arch/TaCZ_Renovated` 的 `1.21.11` 分支**（tip `e3d9dd5c`，MC 1.21.11 /
+NeoForge 21.11.45 / `mod_version=1.1.8+neoforge.1.21.11.R1-hotfix`），不是我方仓库的 Fabric 26.1.2 线。
+⇒ 按"我方全部真实 commit 的剩余确认项 / 改动 / 新增"**重新核对对方树**后重写。
+上一份**没有作废**（它写的正是 Fabric 26.1.2）：保留原文件、标题更正为"给 Fabric 侧 26.1.2 线"；
+新事实另立新文件。两份各自的"你们"不同，**别互相代签**。
+
+**对方现状实测七条（全部静态读码，逐文件 `gh api` + grep，不看对方自述）**：
+① 对方 `client/renderer/snapshot/BedrockRenderSnapshot.java:93` 已有 `submitFunctionalTasks`，
+但 `client/model/BedrockAttachmentModel` 的瞄具序列里**一个调用点都没有** ⇒ **根因一在姊妹线上同样存在**；
+② `ScopeFinalOverlayState`（205 行）无 `PENDING_TEXT`/`queueFunctionalTask` ⇒ 延迟格即使补了①仍会丢文字；
+③ `client/model/papi/PapiManager#getTextShow` 仍是 `I18n.get(textKey)` ⇒ **根因二同样存在**
+（症状会从"没字"变成"Format error:"脏字）；④ `TextShowRender` 61 行旧形无 `clipToScopeMask`、
+无 `ScopeTextSubmitter`、`shaders/core/` 无 `scope_text_final.fsh`、`ScopeDepthCopyState` 只有私有 `maskValid`
+⇒ 掩码裁剪整族（我方 `d076cf5` 六文件）适用；⑤ 对方 `RenderConfig` 只有 `SCOPE_MASK_ENABLE`、
+全仓 `ScopePip*` 0 命中 ⇒ 我方 PIP 两条结论对他们是**非项**；⑥ 全仓 `meshloader`/`PolyMesh` 0 命中
+⇒ 我方**全部** TML/mesh GPU 项（含仍未结的 L-12、L-8b）对他们非项；⑦ 对方 iris 设施齐
+（`IrisCompat#assignPipelineToIris(RenderPipeline,String,String)`、`GlCommandEncoderScopeDepthCopyMixin`、
+`tacz.iris.mixins.json`）且映射命名与我方一致（同用 `Identifier`）⇒ 可近逐字移植。
+
+**新文档** `docs/lineage/SYNC_CHECKLIST_1211_NEOFORGE_SISTER_20260901.md`：
+§1 对方现状表；§2 P0-a 四处改动 + 两个坑（`OrderedSubmitNodeCollector` 递错类型编译不过 = 26.1.2 首版挂因；
+立即分支 flush 必须挪出 `!bodySnapshot.isEmpty()` 门外）+ 判据日志；§3 P0-b（**只给语义**，
+成员名要求对方按他们 AGENTS §3 红线 2 自证，我方 `Language#getInstance().getOrDefault` 不可照抄）
++ 两处 tooltip 同源（26.2 仍未改，建议三方一起收）；§4 掩码裁剪的文件映射表 + 本世代四个渲染 API 事实
+（含"**没有** `withTexture(String, Supplier)` 重载 ⇒ 必须注册壳纹理"）+ 两条失败语义 +
+"深度剔除等价裁剪"这条我方**已撤回的错误**明写出来，防止对方重走；§5 别同步清单（PIP 两键、FCAP、
+全部 mesh、我方 CI 状态）；§6 对方可直接 `git show` 我方哪三个提交；§7 我方 31 个真实提交的剩余项
+与"哪些不必等我们"；§8 双向纪律（mixin 分包注册、TEMP 探针同轮删、`--strict`、表格审计）。
+`docs/README.md` 索引加行。
+
+**边界**：本轮**未动任何代码**、未改版本号；"对方还没做 X"= 读对方文件所得，不等于我方替对方验证过任何做法；
+我方 PASS 对他们是**旁证**，按对方 AGENTS §4 口径不能升级成对方的 ✅。
+
+---
+
 ## 镜内文字裁剪实机 PASS + 给 26.1.2 的同步清单（2026-09-01 同日收尾）
 
 - **维护者报 PASS**，覆盖本轮验收清单的两格：无光影剧本 A（文字在镜内、层序正确、**贴边字形被圆孔裁掉**）
   与新增的剧本 F（F5 重载资源包后文字仍在且仍被裁剪）。据此收口的三处：镜内文字篇 §3 残留① 与 §4 A 格
   改为 PASS 记录、评估篇 §2.3 加"实机结果"段（并明确"重载未复现 ≠ 缓存设计被修好"）、账本 L-10/L-11 状态。
   光影格 C/D 与 PIP 格 E **是否同批 PASS 未明确** ⇒ 那三格继续按"未验"读，不跟着改口径。
-- 新增 `docs/lineage/SYNC_CHECKLIST_1211_TO_2612_PIP_20260901.md`（发给 26.1.2 的同步清单），内容按"能不能直接用"排：
+- 新增 `docs/lineage/SYNC_CHECKLIST_1211_TO_2612_PIP_20260901.md`（**发给同仓库 Fabric 26.1.2 线**的同步清单
+  —— 该文件里"你们"指 Fabric 26.1.2，不是姊妹 NeoForge 项目；姊妹对象的清单见上一节），内容按"能不能直接用"排：
   §1 我方可直接采信的结论（含两条**不必对齐**的判定：他们 `0bf4c482` 的重提取在 1.21.11 结构上无对应物；
   他们 `58831e4f` 的 FCAP `save()` no-op 配置重置病在 21.11.1 上不存在，我方**不跟**，也防止后人把
   `ConfigPersist` + 两个 accessor mixin 当对齐项搬过来）；§2 建议他们补的三件小事（log-once 判据、
