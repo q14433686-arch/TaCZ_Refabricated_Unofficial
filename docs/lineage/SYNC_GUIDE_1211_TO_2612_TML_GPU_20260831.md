@@ -3,6 +3,13 @@
 > 写给 `arena/01a05170-tacz-refabricated-unofficial`（= refab **26.1.2** 分支）的下一位 agent / 维护者。
 > 首刊 2026-08-31，对应本分支 R3。账本行见 `docs/lineage/HANDOFF_LEDGER.md` L-1。
 >
+> **⚠ 2026-09-01 更新：本篇的前提已过期 —— 你们已经移植并提交了**（`9ed6b938` 起到 `79a6391`）。
+> 本篇所有「26.1.2 上 `compat/meshloader/` 不存在」「这个 bug 对你们还不是现症」的句子都**不要照读**；
+> 请改读复核篇 `docs/lineage/SYNC_REVIEW_2612_TML_PORT_20260901.md`：它按代码（不是按文档）核了你们已提交
+> 的那版，列出 3 条 P0，最要紧的是 §4 那张 mixin 注册表漏了一行 —— `client.FeatureRenderDispatcherMixin`
+> 未注册 ⇒ 第 3 步（世界 GPU 表）整条静默失效。你们在复核篇 §7 回的 Q8/Q9/Q10 也已收进本仓
+> （Q8 把我们 `docs/MESH_LOADER.md` §5.7/§6 的解释改写了）。
+>
 > **本文的前提已经核实过**（不是猜的）：
 > 26.1.2 分支上 `src/main/java/cn/sh1rocu/tacz/compat/meshloader/` 有 **0 个文件**、
 > `docs/` 里没有 `MESH_LOADER.md` —— 也就是**TML 整条线在 26.1.2 上还不存在**，
@@ -127,6 +134,11 @@ R3 一度把 `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 翻成 true，�
 `src/main/java/cn/sh1rocu/tacz/compat/meshloader/` **不存在**（`gh api contents` 404）、
 `docs/` 里没有 `lineage/`，最近的活动是 08-30 的动画两连修 + `compile-check-2612.yml`，
 `UPSTREAM_GAPS_AND_TODO_AUDIT_26_1_2.md` 里也还没有 TML 条目 ⇒ **这个 bug 对你们还不是现症**，
+>
+> **上面那段是 2026-08-31 的状态，已过期。** 2026-09-01 核到：`compat/meshloader/` 有 20 个 java 文件、
+> `docs/MESH_LOADER.md` 你们自己写了一份（§0-§8），也就是这个设计点**你们已经决定过**（那份文档的
+> Q8/Q9/Q10），而答案改写了我们 §5.7 的解释。请把本节当作**交接记录**读，进度与结论以
+> `docs/lineage/SYNC_REVIEW_2612_TML_PORT_20260901.md` 为准。
 它是「你们取整包那天必须一并决定的一个设计点」。
 
 **症状**（原话，别转述成机制）：高模枪在光影下近乎全黑、只有远侧内壁有高光，第一人称/第三人称/展示台一致；

@@ -5,6 +5,31 @@
 
 ---
 
+## 给 26.1.2 的移植复核（2026-09-01，只读复核；本分支代码无改动）
+
+- 新增 `docs/lineage/SYNC_REVIEW_2612_TML_PORT_20260901.md`：把 26.1.2 那版 TML/GPU 移植**按代码**核了一遍
+  （取他们 `arena/01a05170` @ `79a6391` 整棵树），每条都附可复算命令。三条 P0：
+  ① **世界 GPU 表整条没接线** —— `FeatureRenderDispatcherMixin`（`renderAtWorldFlush()` 的唯一调用者）
+  存在但**没写进任何 `*.mixins.json`** ⇒ 第 3 步永远静默不生效，`require = 0` 又把"目标找不到"也静音，
+  表现与"设计上的静默回退"完全一样；② **lang 曾被整文件覆盖**（我按 commit 数出移植轮 `tacz/en_us.json`
+  只剩 36 个键、`item.*`/`tooltip.*` 全空 ⇒ 就是维护者看到的"物品名/选项名变成 raw key"），`79a6391`
+  已救回 334 键，但**仍缺 2 个被他们代码引用的键**（`attribute.name.tacz.bullet_resistance` ←
+  `ModAttributes.java:16`、`commands.tacz.arguments.enum.invalid` ← `EnumArgument.java:35`）；
+  ③ 孤儿 `tacz.compat.acceleratedrendering.mixins.json` 且它引用的 `BedrockPartMixin` 不存在（我们那条
+  L-5 的反面）。另有 P1：`latest.log`/`.idea`/`.gradle` 被 track、`lrtactical.mixins.json` 少注册
+  `client.SoundEngineMixin`（且那文件里还留着 1.21.11 的 `method_19757`）、README 对 mesh 零提及、
+  他们重写的 `docs/MESH_LOADER.md` 丢了「枪包怎么用」「弹匣链路」两节。
+- **他们回给我们的 Q8 改写了我们的解释**：26.1.2 用字节码核到他们那版 `RenderPipelines.ENTITY_CUTOUT`
+  显式 `.withCull(false)` ⇒ §5.7/§6 里「collector 剔背面 ⇒ 绕序一反转就把朝外的面剔掉」这一支降级为
+  未排除的次要分支；主解释改为**「光影包按 `gl_FrontFacing` 取反法线」是承重的**（上游那对组合 = "错两次
+  对"，单方面反转发射顺序等于又翻一次 ⇒ 朝光面变暗、亮的是远侧内壁，图像上与剔面不可分）。
+  判别法同步换成"`InvertNormals=true` 与 `MirrorReverseWinding=true` 两格是否几乎相同"（§6 第 ④ 步），
+  仍未跑。Q9（枪包绕序约定）双方都还没测；Q10 他们与我们同选 ③（维持与上游一致、只记录不修）。
+  证据边界：他们那条是**他们版本的字节码**，1.21.11 的 `ENTITY_CUTOUT` 剔除状态我们至今没核实过，
+  所以旧的剔面分支保留而不删除。
+
+---
+
 ## 1.1.8+fabric.1.21.11.R3（2026-08-31，R3 收口轮；版本号已改）
 
 **本轮之上不再有独立的「未发版」段**：下面两条（TML 第 3 步、第 2 步 v2 收尾）连同本轮
