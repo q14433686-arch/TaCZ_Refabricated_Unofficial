@@ -312,3 +312,71 @@ publishing {
         }
     }
 }
+
+// ============================================================================
+// 【临时诊断探针 · 用完即删】世界 pass 的 ModelView 语义字节码取证
+//
+// 世界 GPU 烘焙（9687e91）实测出现与第一人称「朝向恒北」同款症状。
+// 第一人称当年的根因是丢了 MV_draw 层（0ea0fb6 修复）；当时的 MV_draw 取自
+// 手部 pass 的 RenderSystem 栈顶 —— 世界 pass 我未经取证沿用了同一假设。
+// 本探针回答三个问题：
+//   1. 世界那次 renderAllFeatures 期间 RenderSystem MV 栈里是什么？
+//      （GameRenderer.renderLevel / LevelRenderer.render 有没有碰 MV 栈）
+//   2. LevelRenderer.render 的 viewRotationMatrix 参数流向哪里？
+//   3. PreparedFrame.executeSolid 里引擎自己的绘制从哪拿矩阵？
+// 输出走 compileJava 的 CI 日志回推通道（finalizedBy）。
+// ============================================================================
+tasks.register("taczMvProbe") {
+    doLast {
+        def jar = configurations.compileClasspath.files.find {
+            it.name.startsWith("minecraft-merged")
+        }
+        if (jar == null) {
+            println "[MV-PROBE] minecraft-merged jar not found on compileClasspath"
+            return
+        }
+        println "[MV-PROBE] jar: ${jar.name}"
+        def probe = { String cls, List<String> fullMethods, String grepPattern ->
+            def proc = ["javap", "-c", "-p", "-classpath", jar.absolutePath, cls].execute()
+            def text = proc.inputStream.getText("UTF-8")
+            proc.waitFor()
+            println "==== [MV-PROBE] ${cls}"
+            String method = "?"
+            boolean dumping = false
+            text.readLines().each { line ->
+                String t = line.trim()
+                if (line =~ /^\s{2}\S.*\(.*\)/ && !t.startsWith("descriptor")) {
+                    method = t
+                    dumping = fullMethods.any { fm -> t.contains(fm) }
+                    if (dumping) println "---- FULL ${t}"
+                } else if (dumping) {
+                    if (t == "Code:" || line =~ /^\s+\d+:/) println line
+                } else if (grepPattern != null && line =~ grepPattern) {
+                    println "HIT [${method}] ${t}"
+                }
+            }
+        }
+        probe("net.minecraft.client.GameRenderer",
+              ["renderItemInHand("],
+              /ModelView|viewRotation|Matrix4fStack|writeTransform/)
+        probe("net.minecraft.client.renderer.LevelRenderer",
+              [],
+              /ModelView|viewRotation|RenderSystem|FeatureFrameContext|prepareFrame|renderAllFeatures|Matrix4fc/)
+        probe("net.minecraft.client.renderer.feature.FeatureRenderDispatcher",
+              [],
+              /ModelView|Matrix|Transform|RenderSystem/)
+        probe('net.minecraft.client.renderer.feature.FeatureRenderDispatcher$PreparedFrame',
+              ["executeSolid("],
+              /ModelView|Matrix|Transform|RenderSystem/)
+        probe("net.minecraft.client.renderer.extract.LevelExtractor",
+              [],
+              /viewRotation|rotationMatrix|Matrix4f/)
+        def proc2 = ["javap", "-p", "-classpath", jar.absolutePath,
+                     "net.minecraft.client.renderer.feature.FeatureFrameContext"].execute()
+        println "==== [MV-PROBE] FeatureFrameContext members"
+        println proc2.inputStream.getText("UTF-8")
+        proc2.waitFor()
+        println "[MV-PROBE] done"
+    }
+}
+compileJava.finalizedBy("taczMvProbe")
