@@ -2,6 +2,7 @@ package com.tacz.guns.client.model;
 
 import com.mojang.blaze3d.vertex.*;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
+import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.BeamRenderer;
@@ -665,6 +666,34 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                         }
                     });
 
+            // 【镜内文字（弹药计数等）】bodySnapshot 的 capture 已把 text_show 节点的提交任务
+            // 冻结进 functionalTasks（TextShowRender.extract），但上面 write(...) 只重放几何 ——
+            // 任务若不显式 flush 就整个丢掉（这就是 26.1.2/1.21.11 镜内一直没有弹药文本的根因；
+            // 26.2 的 super.submit 路径天然带 flush，所以那边一直有）。默认（无光影、无 PIP）：
+            // 立即提交，默认 order(0) 落在 cleanup(-1) 之后、准星(1)之前；文字顶点被镜筒深度
+            // 正常剔除 —— 深度孔径架构里这等价于 26.2 的掩码裁剪（「移植语义而非代码」）。
+            // 延迟覆盖层激活时（PIP 镜内画面 / 已审计 Iris 的 final-overlay）：文字与准星/镜框
+            // 同族推迟，否则会被镜内放大画面或光影包后处理盖掉。R8/R9 HAND_TRANSLUCENT 回退
+            // 路径保持立即提交（该回退本就服务于未审计 Iris 版本，文字按场景内容处理）。
+            // ocularSnapshots 的任务一并兜底：第三方镜的 text_show 节点可能挂在 ocular 子树下
+            // （那时 bodySnapshot 因 ocular 临时隐藏而拿不到它）；每份快照的任务只 flush 这一次，
+            // 不会因 aperture/cleanup 的两次几何重放而重复。
+            if (deferReticleToIrisFinalOverlay) {
+                for (IFunctionalSubmitter.SubmitTask textTask : bodySnapshot.functionalTasks()) {
+                    ScopeFinalOverlayState.queueFunctionalTask(textTask);
+                }
+                for (BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
+                    for (IFunctionalSubmitter.SubmitTask textTask : ocularSnap.functionalTasks()) {
+                        ScopeFinalOverlayState.queueFunctionalTask(textTask);
+                    }
+                }
+            } else {
+                bodySnapshot.submitFunctionalTasks(collector);
+                for (BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
+                    ocularSnap.submitFunctionalTasks(collector);
+                }
+            }
+
             // Upstream 1.21.1 renders ocular_ring with stencil disabled. In the depth fallback it
             // must be redrawn after cleanup: drawing it in the body batch lets the invisible ocular
             // kill its inner pixels, while drawing it before cleanup would lose its depth again.
@@ -681,6 +710,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             PoseStack identity = new PoseStack();
             collector.submitCustomGeometry(identity, renderType,
                     (entryPose, consumer) -> bodySnapshot.write(consumer));
+            // 非镜内序列（腰射 / 非第一人称 / 无孔径贴图）：同样不能丢任务。文字工厂在
+            // 未开镜时返回 null，所以这里通常为空；带文字但无 ocular 骨骼的第三方瞄具靠它兜底。
+            bodySnapshot.submitFunctionalTasks(collector);
         }
 
         // Render Reticle. Iris HAND_SOLID freezes only immutable snapshots here. The audited

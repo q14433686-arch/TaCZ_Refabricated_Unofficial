@@ -96,6 +96,15 @@ public final class BedrockRenderSnapshot {
         }
     }
 
+    /**
+     * Immutable view of the collector tasks captured with this snapshot (scope-model text show
+     * etc.). Read-only: submit via {@link #submitFunctionalTasks(SubmitNodeCollector)} or forward
+     * to a deferred overlay; the list itself is already a defensive copy from the constructor.
+     */
+    public List<IFunctionalSubmitter.SubmitTask> functionalTasks() {
+        return this.functionalTasks;
+    }
+
     public void write(VertexConsumer consumer) {
         writeFiltered(consumer, cube -> true);
     }

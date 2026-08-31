@@ -5,6 +5,7 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
@@ -42,9 +43,12 @@ import java.util.List;
 public final class ScopeFinalOverlayState {
     private static final int FINAL_RETICLE_ORDER = 20_000;
     private static final int FINAL_OCULAR_RING_ORDER = 20_001;
+    /** Scope-model text (ammo counters etc.): above the lens picture, under the reticle. */
+    private static final int FINAL_TEXT_ORDER = 19_000;
 
     private static final List<ReticleDraw> PENDING_RETICLES = new ArrayList<>();
     private static final List<RingDraw> PENDING_RINGS = new ArrayList<>();
+    private static final List<IFunctionalSubmitter.SubmitTask> PENDING_TEXT = new ArrayList<>();
     private static @Nullable HandTransform handTransform;
     private static @Nullable RenderBuffers renderBuffers;
     private static @Nullable SubmitNodeStorage submitNodes;
@@ -60,6 +64,7 @@ public final class ScopeFinalOverlayState {
     public static void beginSolidSubmission() {
         PENDING_RETICLES.clear();
         PENDING_RINGS.clear();
+        PENDING_TEXT.clear();
         handTransform = null;
     }
 
@@ -73,7 +78,22 @@ public final class ScopeFinalOverlayState {
 
     /** @return whether anything (reticle or bare physical rim) waits to be drawn after the final cover. */
     public static boolean hasPendingOverlay() {
-        return !PENDING_RETICLES.isEmpty() || !PENDING_RINGS.isEmpty();
+        return !PENDING_RETICLES.isEmpty() || !PENDING_RINGS.isEmpty() || !PENDING_TEXT.isEmpty();
+    }
+
+    /**
+     * Queues one scope-model functional task (in practice a {@code TextShowRender} ammo-counter
+     * submit) for the post-composite flush, mirroring {@link #queueOcularRing}. Scope text rides
+     * the same deferral as the reticle/rim so the PIP lens picture (drawn at the hand-pass end)
+     * or a shader pack's post passes cannot cover it: physical order becomes picture -> text ->
+     * reticle -> shade. The hand transform is captured here so a text-only queue can flush too.
+     */
+    public static void queueFunctionalTask(IFunctionalSubmitter.SubmitTask task) {
+        captureHandTransform();
+        if (handTransform == null) {
+            return;
+        }
+        PENDING_TEXT.add(task);
     }
 
     static void queueReticle(BedrockRenderSnapshot snapshot, RenderType renderType) {
@@ -115,7 +135,8 @@ public final class ScopeFinalOverlayState {
      * </ul>
      */
     public static void renderAfterFinalComposite() {
-        if ((PENDING_RETICLES.isEmpty() && PENDING_RINGS.isEmpty()) || handTransform == null) {
+        if ((PENDING_RETICLES.isEmpty() && PENDING_RINGS.isEmpty() && PENDING_TEXT.isEmpty())
+                || handTransform == null) {
             return;
         }
         RenderSystem.assertOnRenderThread();
@@ -126,9 +147,11 @@ public final class ScopeFinalOverlayState {
 
         List<ReticleDraw> reticles = List.copyOf(PENDING_RETICLES);
         List<RingDraw> rings = List.copyOf(PENDING_RINGS);
+        List<IFunctionalSubmitter.SubmitTask> texts = List.copyOf(PENDING_TEXT);
         HandTransform transform = handTransform;
         PENDING_RETICLES.clear();
         PENDING_RINGS.clear();
+        PENDING_TEXT.clear();
         handTransform = null;
 
         GpuBufferSlice previousProjection = RenderSystem.getProjectionMatrixBuffer();
@@ -143,6 +166,14 @@ public final class ScopeFinalOverlayState {
         RenderSystem.outputColorTextureOverride = minecraft.getMainRenderTarget().getColorTextureView();
         RenderSystem.outputDepthTextureOverride = minecraft.getMainRenderTarget().getDepthTextureView();
         try {
+            // Scope text first (order 19_000): above the lens picture, below reticle/rim.
+            if (!texts.isEmpty()) {
+                OrderedSubmitNodeCollector textCollector = submitNodes.order(FINAL_TEXT_ORDER);
+                for (IFunctionalSubmitter.SubmitTask task : texts) {
+                    task.submit(textCollector);
+                }
+            }
+
             OrderedSubmitNodeCollector reticleCollector = submitNodes.order(FINAL_RETICLE_ORDER);
             for (ReticleDraw draw : reticles) {
                 reticleCollector.submitCustomGeometry(new PoseStack(), draw.renderType(),
@@ -159,8 +190,8 @@ public final class ScopeFinalOverlayState {
             renderBuffers.bufferSource().endBatch();
             if (!loggedRendered) {
                 loggedRendered = true;
-                GunMod.LOGGER.info("[TACZ Scope] Rendered deferred reticle and ocular rim after the final cover ({} reticles, {} rims).",
-                        reticles.size(), rings.size());
+                GunMod.LOGGER.info("[TACZ Scope] Rendered deferred reticle and ocular rim after the final cover ({} reticles, {} rims, {} texts).",
+                        reticles.size(), rings.size(), texts.size());
             }
         } catch (RuntimeException e) {
             // Optional Iris integration must not turn a shader-pack edge case into a client crash.
