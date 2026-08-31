@@ -1,4 +1,4 @@
-commit: 411a9b0a6cf0a13b18fa0609d755227fe3490ded
+commit: 6562b592559284013f34d84743145b1fe05ce67f
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -75,66 +75,7 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 6 warnings
-
-> Task :dumpLangLookupProbe
-===== javap -p net.minecraft.locale.Language =====
-  public static net.minecraft.locale.Language getInstance();
-  public java.lang.String getOrDefault(java.lang.String);
-  public abstract java.lang.String getOrDefault(java.lang.String, java.lang.String);
-  public abstract boolean has(java.lang.String);
-===== javap -c -p net.minecraft.client.resources.language.I18n =====
-  Compiled from "I18n.java"
-  public class net.minecraft.client.resources.language.I18n {
-  private static volatile net.minecraft.locale.Language language;
-  private net.minecraft.client.resources.language.I18n();
-  Code:
-  0: aload_0
-  1: invokespecial #20                 // Method java/lang/Object."<init>":()V
-  4: return
-  static void setLanguage(net.minecraft.locale.Language);
-  Code:
-  0: aload_0
-  1: putstatic     #26                 // Field language:Lnet/minecraft/locale/Language;
-  4: return
-  public static java.lang.String get(java.lang.String, java.lang.Object...);
-  Code:
-  0: getstatic     #26                 // Field language:Lnet/minecraft/locale/Language;
-  3: aload_0
-  4: invokevirtual #38                 // Method net/minecraft/locale/Language.getOrDefault:(Ljava/lang/String;)Ljava/lang/String;
-  7: astore_2
-  8: getstatic     #44                 // Field java/util/Locale.ROOT:Ljava/util/Locale;
-  11: aload_2
-  12: aload_1
-  13: invokestatic  #50                 // Method java/lang/String.format:(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
-  16: areturn
-  17: astore_3
-  18: aload_2
-  19: invokedynamic #61,  0             // InvokeDynamic #0:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
-  24: areturn
-  Exception table:
-  from    to  target type
-  8    16    17   Class java/util/IllegalFormatException
-  public static boolean exists(java.lang.String);
-  Code:
-  0: getstatic     #26                 // Field language:Lnet/minecraft/locale/Language;
-  3: aload_0
-  4: invokevirtual #71                 // Method net/minecraft/locale/Language.has:(Ljava/lang/String;)Z
-  7: ireturn
-  static {};
-  Code:
-  0: invokestatic  #76                 // Method net/minecraft/locale/Language.getInstance:()Lnet/minecraft/locale/Language;
-  3: putstatic     #26                 // Field language:Lnet/minecraft/locale/Language;
-  6: return
-  }
-===== javap -c -p net.minecraft.network.chat.contents.TranslatableContents =====
-  34: invokevirtual #198                // Method net/minecraft/locale/Language.getOrDefault:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-  45: invokevirtual #201                // Method net/minecraft/locale/Language.getOrDefault:(Ljava/lang/String;)Ljava/lang/String;
-  70: athrow
-  203: athrow
-  246: athrow
-  273: athrow
-  22: athrow
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788202834979.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788203108284.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -144,8 +85,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 49s
-2 actionable tasks: 2 executed
+BUILD SUCCESSFUL in 1m 37s
+1 actionable task: 1 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
 == job status: success ==
