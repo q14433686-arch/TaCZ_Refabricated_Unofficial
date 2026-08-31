@@ -337,3 +337,63 @@ publishing {
         }
     }
 }
+
+// ================================================================
+// TEMP-DIAGNOSTIC (config persistence probe, 2026-09-01) — REMOVE AFTER USE.
+// On-device report: client config resets on every relaunch on 26.1.2 only
+// (1.21.11 / 26.2 are fine). The save path is Cloth save consumers ->
+// ForgeConfigAPIPort ConfigValue.set -> FCAP's backing file config. Dump the
+// FCAP/Cloth class inventory and the relevant bytecode into the build log
+// (build-reports/compile-java.log) so the broken link can be located without
+// a local JDK. Same technique as the 1.21.11 branch's I18n javap probe.
+tasks.named("compileJava") {
+    doLast {
+        def javapBin = new File(System.getProperty("java.home"), "bin/javap").absolutePath
+        def jarsFor = { String part ->
+            def found = []
+            for (def cfgName in ["runtimeClasspath", "compileClasspath"]) {
+                try {
+                    configurations.getByName(cfgName).files.findAll {
+                        it.name.toLowerCase().contains(part)
+                    }.each { found << it }
+                } catch (Throwable ignored) {
+                }
+            }
+            found.unique { it.absolutePath }
+        }
+        def javap = { File jar, String cls, boolean code ->
+            def cmd = [javapBin, code ? "-p" : "-p"]
+            if (code) cmd << "-c"
+            cmd << ["-classpath", jar.absolutePath, cls]
+            def flat = cmd.flatten()
+            def out = new StringBuilder()
+            def err = new StringBuilder()
+            def proc = flat.execute()
+            proc.consumeProcessOutput(out, err)
+            proc.waitFor()
+            println out.toString()
+            if (err.length() > 0) println "JAVAP-ERR ${cls}: ${err}"
+        }
+        jarsFor("forgeconfigapiport").each { File jar ->
+            println "=== FCAP-JAR ${jar.name}"
+            def names = []
+            new java.util.zip.ZipFile(jar).entries().each { e ->
+                if (e.name.endsWith(".class")) names << e.name
+            }
+            println "FCAP-CLASSES-BEGIN"
+            names.sort().each { println "FCAP ${it}" }
+            println "FCAP-CLASSES-END"
+            javap(jar, "net.minecraftforge.common.ForgeConfigSpec", false)
+            javap(jar, 'net.minecraftforge.common.ForgeConfigSpec$ConfigValue', true)
+            names.findAll { it.contains("ConfigTracker") || it.contains("FileTypeHandler") }.sort().each { cn ->
+                def cls = cn.replace(".class", "").replace("/", ".")
+                javap(jar, cls, true)
+            }
+        }
+        jarsFor("cloth-config").each { File jar ->
+            println "=== CLOTH-JAR ${jar.name}"
+            javap(jar, "me.shedaniel.clothconfig2.gui.ClothConfigScreen", false)
+        }
+        println "=== PROBE-DONE"
+    }
+}
