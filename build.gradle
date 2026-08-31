@@ -341,14 +341,15 @@ tasks.register("taczMvProbe") {
             zf.entries().each { e ->
                 if (!e.name.endsWith(".class")) return
                 byte[] b = zf.getInputStream(e).getBytes()
-                outer:
-                for (int p = 0; p <= b.length - needle.length; p++) {
-                    for (int q = 0; q < needle.length; q++) {
-                        if (b[p+q] != needle[q]) continue outer
+                boolean found = false
+                for (int p = 0; !found && p <= b.length - needle.length; p++) {
+                    boolean match = true
+                    for (int q = 0; match && q < needle.length; q++) {
+                        if (b[p+q] != needle[q]) match = false
                     }
-                    println "[SCAN] renderAllFeatures referenced by: ${e.name}"
-                    break
+                    if (match) found = true
                 }
+                if (found) println "[SCAN] renderAllFeatures referenced by: ${e.name}"
             }
         } finally { zf.close() }
 
