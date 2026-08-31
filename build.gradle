@@ -339,6 +339,55 @@ publishing {
 }
 
 // ================================================================
+// TEMP-DIAGNOSTIC round 7 (the main-pass lambda body) - REMOVE. Round 6 showed
+// SubmitNodeStorage/submit* only pass the PoseStack through and
+// ModelFeatureRenderer.renderSolid just iterates into bufferSource, so the
+// per-pass entity submission (26.2's sortInto analogue) must live in
+// lambda$addMainPass$0 - the one body never seen (round 5 lost it to the log
+// budget). Its PoseStack construction + any RenderSystem/projection reads are
+// the last unknowns for the in-mirror absolute-view entities. Body filter
+// keeps only call instructions so the ~175-line ci-log head budget holds.
+tasks.named("compileJava") {
+    doLast {
+        def javapBin = new File(System.getProperty("java.home"), "bin/javap").absolutePath
+        File mcJar = null
+        for (def cfgName in ["runtimeClasspath", "compileClasspath"]) {
+            try {
+                configurations.getByName(cfgName).files.each { f ->
+                    if (f.name.contains("minecraft") && f.name.endsWith(".jar") && mcJar == null) mcJar = f
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        if (mcJar == null) {
+            println "PROBE7: no minecraft jar found on the classpath"
+            return
+        }
+        println "=== MC7 ${mcJar.name}"
+        def out = new StringBuilder()
+        def err = new StringBuilder()
+        def proc = [javapBin, "-p", "-c", "-classpath", mcJar.absolutePath, "net.minecraft.client.renderer.LevelRenderer"].execute()
+        proc.consumeProcessOutput(out, err)
+        proc.waitFor()
+        if (err.length() > 0 && out.length() == 0) {
+            println "JAVAP7-ERR: ${err.toString().trim()}"
+            return
+        }
+        boolean keep = false
+        println "----- BEGIN7 net.minecraft.client.renderer.LevelRenderer"
+        out.toString().eachLine { line ->
+            if (line =~ /^  (public|private|protected|static|final|synchronized|net\.|java\.).*\(/) {
+                keep = ((line =~ /lambda.addMainPass|addMainPass\(com/) as boolean)
+                if (keep) println line
+            } else if (keep) {
+                if ((line =~ /invokevirtual|invokedynamic|invokestatic|invokeinterface/) as boolean) println line
+            }
+        }
+        println "----- END7"
+    }
+}
+
+// ================================================================
 // TEMP-DIAGNOSTIC round 6 (do feature nodes capture the projection slice at
 // submit time?) - REMOVE. Working hypothesis for the in-mirror absolute-view
 // entities: 26.1.2 feature/entity submit nodes capture a projection
