@@ -6,6 +6,7 @@ import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.compat.iris.IrisScopePipelineCompat;
 import com.tacz.guns.compat.sodium.SodiumCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.util.math.MathUtil;
@@ -89,6 +90,12 @@ public final class ScopePipRerender {
     private static boolean sceneCaptured = false;
     /** 镜内那一遍是否正在执行（防重入）。 */
     private static boolean scopePassActive = false;
+    /**
+     * 本帧镜内那遍是否正在使用<b>独立的 Iris 管线</b>（时域隔离）。
+     * {@code IrisScopeDimensionMixin} 据此在 {@code Iris.getCurrentDimension()} 改答瞄具
+     * 专用维度 id；只在窄遍的前后置位，切世界时早已清零，不会触发「维度变了重建主管线」。
+     */
+    private static boolean scopePassIsolated = false;
 
     /** 隔帧渲染的帧计次：每次「闸门全过的渲染尝试」+1（闸门失败不计，失败后强制真渲一次）。 */
     private static int scopeFrameCounter;
@@ -137,6 +144,11 @@ public final class ScopePipRerender {
         return scopePassActive;
     }
 
+    /** 本帧镜内那遍是否正跑在瞄具专用的 Iris 管线上（{@code IrisScopeDimensionMixin} 的门）。 */
+    public static boolean isScopePassIsolated() {
+        return scopePassIsolated;
+    }
+
     /** 本帧是否有可用的镜内画面（供合成阶段与 FOV 让位查询）。 */
     public static boolean hasScene() {
         return sceneCaptured && !failed;
@@ -174,9 +186,18 @@ public final class ScopePipRerender {
             sceneCaptured = false;
             return false;
         }
-        // B1 只支持无光影路径：光影下整条世界渲染走 Iris 自己的 colortex，
-        // 主目标里没有窄 FOV 的成品可拷，这条路留到后续阶段。
-        if (IrisCompat.isUsingRenderPack()) {
+        // 光影分支（26.2 母版移植，2026-09-01 用户裁定立项）：Iris 的成品是在 renderLevel
+        // 内部的 finalizeLevelRendering() 合成到主帧缓冲的 —— 仍发生在本调用返回之前，
+        // 所以「窄遍返回后拷主目标」的时机对光影同样成立（旧注释「主目标里没有成品可拷」
+        // 作废）。前提三条，缺一退回旧行为（整条让路、经典整屏变焦）：
+        // ①玩家显式 opt-in（ScopePipAllowShaderPacks，默认 false 的雷区不绕）；
+        // ②Iris 26.1 支持 final-overlay 钩子（supportsFinalScopeOverlay = Iris 1.11 门）；
+        // ③时域隔离可用（IrisScopeDimensionMixin + IrisScopePipelineCompat 预热；Iris 的
+        //   「上一帧」族 uniform 读一次推进一次，一帧两遍会把主画面的 TAA/体积云/SSGI
+        //   全部打上镜内那遍的矩阵 —— 整屏拖影/云噪点闪烁/镜外发糙，26.2 实测三症状同源；
+        //   隔离开关被用户关掉时属于「知情降级」，伪影自负）。
+        boolean iris = IrisCompat.isUsingRenderPack();
+        if (iris && !ScopePipRenderState.shaderRerenderAllowed()) {
             sceneCaptured = false;
             return false;
         }
@@ -251,6 +272,13 @@ public final class ScopePipRerender {
             // 镜内地形留在宽 FOV、原版实体走窄槽位 —— 两套比例糊在一起，实机表现即
             // 「镜内实体相对镜内世界错位/独立于视界」。26.2 同名 compat 的移植。
             sodiumPatched = SodiumCompat.overrideProjection(NARROW_MATRIX);
+            // 时域隔离（仅光影）：置位后 IrisScopeDimensionMixin 会在 Iris 查询当前维度时
+            // 改答瞄具专用 id，让 Iris 为这一遍建/取独立管线。置位失败（id 反射不出来）=
+            // 与主画面共用管线，时域伪影回归但不崩 —— 与 26.2 的 isolatePipeline() 同语义。
+            if (iris && IrisScopePipelineCompat.isolatePipelineEnabled()
+                    && IrisScopePipelineCompat.scopeDimensionId() != null) {
+                scopePassIsolated = true;
+            }
             // 26.1.2 的 renderLevel 没有投影参数：着色器走 RenderSystem 投影槽（上一行），
             // 其余消费点读 cameraState.projectionMatrix —— 临时改写成窄矩阵，等价于 1.21.11
             // 把窄矩阵当第 6 参传入 renderLevel。
@@ -300,6 +328,8 @@ public final class ScopePipRerender {
                     + "falling back to screen-space reprojection / whole-screen FOV zoom.", e);
             return false;
         } finally {
+            // 必须最先清（26.2 同序）：从这里往后任何再问「当前维度」的代码都必须拿到真实值。
+            scopePassIsolated = false;
             scopePassActive = false;
             // 必须还原：留窄投影会让 vanilla 那遍的整个世界被放大 —— 正好是反过来的病。
             cameraState.projectionMatrix.set(SAVED_CAMERA_PROJECTION);

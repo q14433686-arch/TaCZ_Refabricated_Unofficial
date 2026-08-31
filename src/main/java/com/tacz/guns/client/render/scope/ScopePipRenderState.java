@@ -311,6 +311,15 @@ public final class ScopePipRenderState {
      * Stable per-frame fact, not a mid-frame capture outcome, so the world POV never oscillates
      * between whole-screen zoom and PIP while a shader pack is enabled.
      */
+    /**
+     * 光影下的二次渲染是否被允许：{@code ScopePipAllowShaderPacks} 显式 opt-in（默认 false
+     * 的雷区不绕）且 final-overlay 钩子可用（Iris 1.11 门）。由 {@link ScopePipRerender} 的
+     * 光影分支使用；与 {@link #irisCompatible()} 的差别是不含「光影未启用」这一恒真项。
+     */
+    public static boolean shaderRerenderAllowed() {
+        return allowShaderPacks() && IrisCompat.supportsFinalScopeOverlay();
+    }
+
     private static boolean irisCompatible() {
         return !IrisCompat.isUsingRenderPack()
                 || (allowShaderPacks() && IrisCompat.supportsFinalScopeOverlay());
@@ -434,6 +443,12 @@ public final class ScopePipRenderState {
     public static void captureSceneAfterIrisFinal(Minecraft mc) {
         if (!isEnabled() || failed || mc == null) {
             sceneCaptured = false;
+            return;
+        }
+        if (ScopePipRerender.rerenderMode()) {
+            // 二次渲染模式（无光影/光影同理）：镜内画面由 ScopePipRerender 在窄遍返回后拷好。
+            // 这里再拷会用宽视场的成品帧覆盖窄视场成品 —— 与 captureScene 的守卫同款语义；
+            // 刻意不清 sceneCaptured：紧随其后的 compositeAfterIrisFinal 还要拿它合成镜内画面。
             return;
         }
         if (!IrisCompat.isUsingRenderPack() || !allowShaderPacks()
@@ -576,8 +591,9 @@ public final class ScopePipRenderState {
         if (progress < IRIS_FULL_AIM_THRESHOLD) {
             return;
         }
-        // Iris 路径永远是「整屏重投影」，倍率走 lensZoom()；二次渲染只支持无光影路径。
-        compositeScene(mc, lensZoom());
+        // 倍率分流：重投影=整屏重投影的 lensZoom()；二次渲染（含光影）=窄 FOV 真画，
+        // 屏幕坐标一一对应，恒 1（compositeZoom() 内部按模式分流）。
+        compositeScene(mc, compositeZoom());
     }
 
     /** 合成倍率：二次渲染模式下镜内画面已是窄 FOV 真画（屏幕坐标一一对应），倍率恒 1；
