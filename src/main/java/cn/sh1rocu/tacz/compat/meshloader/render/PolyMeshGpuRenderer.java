@@ -345,8 +345,9 @@ public final class PolyMeshGpuRenderer {
      * <p>世界那一次 flush 里，Iris 对 {@code ENTITY_CUTOUT} 那条 vanilla 管线的默认接管
      * （{@code gbuffers_entities}）正是我们想要的照明；但本仓的 GPU 走的是<b>自建管线</b>
      * {@code tacz:pipeline/mesh_entity}，它不在 Iris 的 coreShaderMap 里 ⇒ 不登记就只能拿
-     * 原版程序（无光影照明）。登记用的 Iris program 常量名尚未逐条审计（手部那条用的是
-     * {@code HAND}，已实机 PASS），所以这条默认关。</p>
+     * 原版程序（无光影照明）。登记用的常量已用 CI javap 核实为 {@code IrisProgram.ENTITIES}
+     * （见 {@code IrisCompat#assignMeshPipelineToEntity}）；仍然默认关，是因为这个组合
+     * 没跑过实机，不是因为签名未知。</p>
      */
     private static boolean worldGpuAllowed() {
         if (!IrisCompat.isUsingRenderPack()) {
@@ -425,6 +426,20 @@ public final class PolyMeshGpuRenderer {
         return true;
     }
 
+    /**
+     * 是否正在执行一次 {@code LevelRenderer#renderLevel(...)}。世界表的消费必须落在它里面 ——
+     * {@code renderAllFeatures()} 是公开 API，任何别的语境（GUI/HUD 补 flush、别的 mod 自己调）
+     * 命中我们的钩子时，投影与目标都不是世界那套；把消费点圈在「一次世界渲染内部」，
+     * 未知调用点最坏也只是「这一帧世界 GPU 没画」而不是「把枪画进 GUI」。
+     * 由 {@code GameRendererMixin#tacz$scopeRenderLevel} 用 try/finally 维护（该注入点
+     * 本来就存在，为镜内二次渲染而设，同时罩住镜内那遍与主画面那遍）。
+     */
+    private static boolean levelRenderActive = false;
+
+    public static void setLevelRenderActive(boolean value) {
+        levelRenderActive = value;
+    }
+
     /** 世界钩子的存活证明（帧语义同手部，见 {@link #lastHandFlushFrame}）。 */
     private static boolean worldFlushAlive() {
         return lastWorldFlushFrame == frameId || lastWorldFlushFrame == frameId - 1;
@@ -459,6 +474,12 @@ public final class PolyMeshGpuRenderer {
         // （CI javap：LevelRenderer.method_75413 里那两处 putstatic）。那一遍既不该画枪
         // （枪不是 always-on-top 内容），也不该在此处开 render pass（可能嵌在别的 pass 里）。
         if (RenderSystem.outputColorTextureOverride != null) {
+            return;
+        }
+        // 只在「正在跑一次 LevelRenderer#renderLevel」时消费：防未知调用点（见
+        // {@link #levelRenderActive}）。注意这条检查必须在记存活证明<b>之前</b> ——
+        // 若 GameRendererMixin 那个注入点失效，宁可不画也不能把「钩子活着」的假象记进去。
+        if (!levelRenderActive) {
             return;
         }
         // 走到这里就是「本帧真正有一个世界 feature flush 的调用点」—— 记存活证明。

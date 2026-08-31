@@ -89,11 +89,11 @@ public final class MeshyConfig {
         GPU_WORLD = builder.define("MeshGpuWorld", true);
 
         builder.comment("EXPERIMENTAL: also keep world mesh guns on the resident-VBO path under a",
-                "shader pack. The world pass is then lit through the pack's entity program, which",
-                "needs the custom pipeline registered with IrisApi.assignPipeline; the Iris program",
-                "constant for level entities is not audited on this branch yet, so an unlit gun is",
-                "the expected worst case. Off by default: the collector path already gets correct",
-                "shader lighting in the world pass.");
+                "shader pack. The world pass is then lit through the pack's entity program: the",
+                "custom pipeline is registered with IrisApi.assignPipeline(IrisProgram.ENTITIES)",
+                "(constant audited against the Iris 1.10.7 jar via CI javap). Off by default simply",
+                "because that combination has never been run in-game -- the collector path already",
+                "gets correct shader lighting in the world pass, so this only saves CPU time.");
         GPU_WORLD_UNDER_SHADERS = builder.define("MeshGpuWorldUnderShaders", false);
 
         builder.comment("How many quantized light levels of baked world VBOs to keep per gun model",

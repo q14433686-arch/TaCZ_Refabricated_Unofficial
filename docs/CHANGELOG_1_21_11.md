@@ -33,19 +33,27 @@
   再按 `RenderDistance.isGuiRender()` 挡枪匠桌预览）。
 - **镜内那一遍（PIP 二次渲染）**：画但不清表、不占本帧消费标志（提交每帧只登记一次）。
   `ScopePipRerender#isInsideScopeLevelRender()` 为此从私有标志改为公开读取。
+- **消费语境圈定**：`PolyMeshGpuRenderer#setLevelRenderActive` —— 世界表只在正在跑
+  `LevelRenderer#renderLevel` 期间消费（标志由既有的 `GameRendererMixin#tacz$scopeRenderLevel`
+  `@Redirect` 用 try/finally 维护，不新增 mixin）。`renderAllFeatures()` 是公开 API，别的 mod
+  自己调它时投影/目标都不是世界那套；圈定之后「未知调用点」最坏只是这一帧不画，
+  而且这条检查排在记存活证明之前 ⇒ 注入点失效时不会误报「钩子还活着」。
 - **光影下默认不走**：世界 GPU 要受光需要把 `tacz:pipeline/mesh_entity` 登记进 Iris 的实体
-  program，`IrisProgram` 常量名本分支还没审计 ⇒ 新加 `MeshGpuWorldUnderShaders`（默认 false），
-  `IrisCompat#assignMeshPipelineToEntity` 目前按候选名试探、失败无害。
+  program：`IrisProgram` 全量常量表已由 `dumpHandFlushApi` 打全 ⇒ 世界这条用 **`ENTITIES`**
+  （**没有** `ENTITY`/`MAIN`；按候选名试探只会留一条 WARN 并让枪不受光。`EMISSIVE_ENTITIES`
+  亦不可误用 —— 本仓的 EMISSIVE 管线只是不采光照图，不是恒最亮）。
+  新加 `MeshGpuWorldUnderShaders`（默认 false，理由只剩「没跑过实机」）。
   （隔壁分支用现成 `RenderTypes.entityCutout` + `RenderType#prepare()` 天然落在 Iris 已接管的
   管线上；1.21.11 **没有** `prepare()`/`drawFromBuffer()`，两条路不等价，见可行性文档 §2.2。）
 - `RenderDistance#isGuiRender` 由 private 改 public（只读时间戳判定，无行为变化）。
 - 配置：`MeshGpuWorld`（true）、`MeshGpuWorldUnderShaders`（false）、`MeshGpuLightCacheSize`（4），
   全部接 Cloth Config + en_us / zh_cn 文案（parity 已核）。
 - TEMP 脚手架：`dumpWorldFlushProbe`（带上下文的字节码探针，回答「谁 flush、谁拥有 MV 栈」）；
-  `dumpHandFlushApi` 增加 `IrisProgram` **全量常量**输出，用于把上面那个候选名钉死。两个任务
-  都在 try/catch 内、发布前删。
+  `dumpHandFlushApi` 增加 `IrisProgram` **全量常量**输出（已据此把世界这条钉成 `ENTITIES`）。
+  两个任务都在 try/catch 内、发布前删。
 
-**验证状态（如实记录）**：**编译 + 静态审计（CI javap）为准，第 3 步没有任何实机结论。**
+**验证状态（如实记录）**：**编译 ✅（CI `BUILD SUCCESSFUL`，无 error、无本仓新增告警）+
+静态审计 ✅（读的是 CI 上 1.21.11 / Iris 1.10.7 的真实 classpath）；第 3 步没有任何实机结论。**
 待实机清单见 `MESH_LOADER.md` §5.5 与上述文档 §4 末；其中最要紧的一条是
 「他人手持的 mesh 枪必须随相机正确移动」——那是隔壁同题材改动踩到的坑。
 

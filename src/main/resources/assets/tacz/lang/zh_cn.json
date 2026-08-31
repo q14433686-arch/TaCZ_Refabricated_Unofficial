@@ -49,7 +49,7 @@
   "config.tacz.client.render.mesh_gpu_world": "Mesh GPU：世界语境（第三人称 / 掉落物 / 展示框）",
   "config.tacz.client.render.mesh_gpu_world.desc": "让其他玩家手持的 mesh 枪、掉落物、展示框与展示台雕像继续走常驻显存路径：每把枪每帧只上传 O(骨骼) 个矩阵，而不是在 CPU 上逐顶点变换。这是「服务器上一屋子高模 mesh 枪还能跑得动」的关键。 绘制 pass 开在世界自己那次 feature flush 之后，因此用的就是 collector 那批几何将要用的同一份 ModelView；GUI、GUI 内嵌预览、镜内那一遍与阴影 pass 在提交侧就被拒收，继续走 collector。不同光照档的 VBO 会缓存（见 MeshGpuLightCacheSize）。若 flush 钩子不再触发，会自动回退 collector。",
   "config.tacz.client.render.mesh_gpu_world_under_shaders": "Mesh GPU：光影下的世界语境（实验性）",
-  "config.tacz.client.render.mesh_gpu_world_under_shaders.desc": "实验性：开启光影包时，世界里的 mesh 枪也保持常驻显存路径，并由光影包的实体 program 照明。默认关闭：collector 路径在世界 pass 里本来就能拿到正确的光影照明，这个开关只省 CPU；而且「把自建管线归类成光影的实体 program」所用的 Iris 常量在本分支尚未逐条审计（最坏表现是枪不受光）。需要已审计的 Iris 1.10.x 手部 flush 分支。",
+  "config.tacz.client.render.mesh_gpu_world_under_shaders.desc": "实验性：开启光影包时，世界里的 mesh 枪也保持常驻显存路径，并由光影包的实体 program 照明（自建管线登记用 IrisApi.assignPipeline(IrisProgram.ENTITIES)，常量已对 Iris 1.10.7 审计过）。默认关只是因为这套组合没跑过实机 —— collector 路径在世界 pass 里本来就受光正确，这个开关只省 CPU。",
   "config.tacz.client.render.mesh_gpu_light_cache_size": "Mesh GPU：世界光照缓存档数",
   "config.tacz.client.render.mesh_gpu_light_cache_size.desc": "每把枪模型保留多少档「量化光照」的世界 VBO（LRU，1-16）。上游 TML 按未量化光照缓存 8 档；本移植先把光照量化（方块光/天空光各 4 级步进），所以 4 档几乎覆盖所有场景。每档的显存开销与模型顶点数成正比。第一人称烘焙不受影响，它只保留单档。",
   "config.tacz.client.render.mesh_world_full_detail_distance": "Mesh 世界全模距离",

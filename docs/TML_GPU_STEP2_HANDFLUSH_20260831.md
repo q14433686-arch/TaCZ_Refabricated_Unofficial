@@ -294,7 +294,7 @@ ShaderKey.findBestMatch(pipeline, ProgramId.fromAPI(program)))` → `coreShaderM
 > 实测出「枪固定在视角方向上」+「烘焙时机太局限」——与本文 §2.1 记录的**第 1 步手部症状同一形态**。
 > 本节记录 1.21.11 侧的证据与做法，并把可迁移的诊断结论写清楚。
 
-### 7.1 两个分支的架构差异（为什么不能照搬）
+### 4.1 两个分支的架构差异（为什么不能照搬）
 
 | | 26.2（隔壁分支） | 1.21.11（本分支） |
 |---|---|---|
@@ -323,7 +323,7 @@ ItemInHandRenderer.renderHandsWithItems                                         
    281: renderAllFeatures()   294: bufferSource.endBatch()
 ```
 
-### 7.2 本分支的做法与理由
+### 4.2 本分支的做法与理由
 
 * **消费点**：`FeatureRenderDispatcher#renderAllFeatures` 的 `@At("RETURN")`（`require=0`），
   新方法 `PolyMeshGpuRenderer#renderAtWorldFlush`。它同时命中主通道与次级那一次，
@@ -361,16 +361,30 @@ ItemInHandRenderer.renderHandsWithItems                                         
   而 collector 在镜内那遍是照常重放的（本仓 2026-08-30 的既有裁定：两遍内容必须一致）。
   `ScopePipRerender#isInsideScopeLevelRender()` 是这次为此暴露出来的现成标志。
 * **光影**：世界 GPU 默认**只在没有光影包时启用**。光影下需要把自建管线
-  `tacz:pipeline/mesh_entity` 归入 Iris 的实体 program 才能受光，而 `IrisProgram` 里
-  对应常量名在本分支尚未审计（`dumpHandFlushApi` 现在会打全量常量表）——
-  所以另开 `MeshGpuWorldUnderShaders`（**默认 false**）。隔壁分支那边是靠
+  `tacz:pipeline/mesh_entity` 归入 Iris 的实体 program 才能受光。`IrisProgram` 的
+  **全量常量表**已由 `dumpHandFlushApi` 从 Iris 1.10.7 jar 打全：
+  `BASIC / TEXTURED / TERRAIN / TERRAIN_SOLID / TERRAIN_CUTOUT / TRANSLUCENT / SKY_BASIC /
+  SKY_TEXTURED / ARMOR_GLINT / ENTITIES / ENTITIES_TRANSLUCENT / CLOUDS / BLOCK /
+  BLOCK_TRANSLUCENT / HAND / HAND_TRANSLUCENT / PARTICLES / PARTICLES_TRANSLUCENT /
+  EMISSIVE_ENTITIES / BEACON_BEAM / LINES`
+  ⇒ 世界这条用 **`ENTITIES`**（**没有** `ENTITY`，也没有 `MAIN`；按候选名试探的写法只会留一条
+  WARN 并让枪不受光）。`EMISSIVE_ENTITIES` 不能挂在 `EMISSIVE_PIPELINE` 上：那条管线只是
+  「不采光照图」，不等于「恒最亮」。机制已就绪，仍**默认关**
+  （`MeshGpuWorldUnderShaders=false`）—— 理由从「常量未审计」改成「这套组合没跑过实机」。隔壁分支那边是靠
   26.2 的 `RenderTypes.entityCutout(tex)` 现成管线走 `prepare()`，天然落在 Iris 已接管的
   `ENTITY_CUTOUT` 上，这一点两个分支不等价，别照抄。
+* **消费语境圈定**：`levelRenderActive` —— 世界表只在「正在跑一次
+  `LevelRenderer#renderLevel(...)`」期间消费。标志由**既有**注入点
+  `GameRendererMixin#tacz$scopeRenderLevel`（镜内二次渲染的 `@Redirect`）用 try/finally 维护，
+  因此同时罩住镜内那遍与主画面那遍，且不新增 mixin。为什么需要：
+  `FeatureRenderDispatcher#renderAllFeatures()` 是**公开 API**，别的 mod 或未来的 GUI 补 flush
+  都可能自己调它；那时投影/目标都不是世界那套，画出去就是「枪出现在 GUI 里」。检查放在
+  记存活证明**之前** ⇒ 该注入点若失效，宁可不画也不把「钩子活着」的假象记进去。
 * **失败自愈分级**：世界钩子抛 `Exception | LinkageError` 只累计计数，连续 30 次才把
   **世界**路径关掉（`gpuWorldDisabledThisSession`），手部路径不受牵连 —— 世界那一次 flush
   的环境比手部复杂（次级 frame-graph 节点可能正嵌在别的 pass 里），一处失败不该赔上另一处。
 
-### 7.3 待实机（世界路径，`MeshGpuWorld=true` 默认即开）
+### 4.3 待实机（世界路径，`MeshGpuWorld=true` 默认即开）
 
 - [ ] 多人/其他玩家手持 mesh 枪：位置**随相机移动正确**（这条就是隔壁踩的坑），
       不钉在屏幕某处、不随转身漂。
@@ -382,9 +396,10 @@ ItemInHandRenderer.renderHandsWithItems                                         
       GUI 内的预览照旧 collector（不受 GPU 路径影响）。
 - [ ] 开镜（PIP 二次渲染，仅无光影）：镜内与镜外**都有** mesh 枪，且不重复计数。
 - [ ] 装 Iris：世界 mesh 枪自动回 collector（`MeshGpuWorldUnderShaders` 默认关）。
-- [ ] 光影下手动打开 `MeshGpuWorldUnderShaders`：先看日志里 `IrisProgram` 常量名与本仓
-      用的候选是否命中（`[TACZ Iris] Assigned mesh_entity_world to the Iris … program.`）；
-      没命中就是「画得出来但不受光」，属预期，不许当成已修。
+- [ ] 光影下手动打开 `MeshGpuWorldUnderShaders`：日志应有
+      `[TACZ Iris] Assigned mesh_entity_world to the Iris ENTITIES program.`，且世界里的 mesh 枪
+      **受光影照明**（夜里变暗、有明暗层次），不是发白也不是全黑；
+      `Mesh bake vertex format` 相关行只在切包那一帧出现。
 
 ---
 

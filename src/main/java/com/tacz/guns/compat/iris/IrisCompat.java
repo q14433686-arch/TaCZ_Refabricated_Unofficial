@@ -229,14 +229,21 @@ public final class IrisCompat {
      * Same classification for the <b>world</b> mesh pass: the resident-VBO pipeline should be lit
      * by the pack's entity program instead of falling back to the vanilla one.
      *
-     * <p>The candidate names are tried in order and any failure is swallowed (the pipeline then
-     * keeps vanilla lighting), because the {@code IrisProgram} constant for level entities has not
-     * been pinned down by an audit yet the way {@code HAND} has -- {@code dumpHandFlushApi} in
-     * build.gradle prints the whole enum so a later round can narrow this list to the exact name.
-     * That is also why {@code MeshGpuWorldUnderShaders} stays off by default.</p>
+     * <p>The constant is {@code IrisProgram.ENTITIES}; the full enum of the Iris 1.10.7 jar on the
+     * 1.21.11 classpath was dumped by {@code dumpHandFlushApi}, and it exposes {@code BASIC},
+     * {@code TERRAIN*}, {@code ENTITIES}, {@code ENTITIES_TRANSLUCENT}, {@code EMISSIVE_ENTITIES},
+     * {@code HAND}, {@code HAND_TRANSLUCENT}, {@code PARTICLES*}, {@code BLOCK*}, {@code CLOUDS},
+     * {@code SKY_*}, {@code ARMOR_GLINT}, {@code BEACON_BEAM}, {@code LINES}, {@code TEXTURED},
+     * {@code TRANSLUCENT} -- there is no {@code ENTITY}/{@code MAIN}, so an earlier guess would
+     * simply have logged one warning and left the gun unlit. {@code EMISSIVE_ENTITIES} is
+     * deliberately <b>not</b> used for this renderer's unlit fallback pipeline: that pipeline only
+     * skips the lightmap texture, it does not mean "always full bright".</p>
+     *
+     * <p>{@code MeshGpuWorldUnderShaders} still defaults to false: the constant is now known, but
+     * the combination has never been run in-game.</p>
      */
     public static boolean assignMeshPipelineToEntity(RenderPipeline pipeline) {
-        return assignPipelineToIrisAny(pipeline, new String[]{"ENTITY", "MAIN"}, "mesh_entity_world");
+        return assignPipelineToIrisAny(pipeline, new String[]{"ENTITIES"}, "mesh_entity_world");
     }
 
     /**

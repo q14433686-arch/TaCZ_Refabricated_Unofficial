@@ -170,10 +170,18 @@ public abstract class GameRendererMixin {
                                        GpuBufferSlice fogBuffer,
                                        Vector4f fogColor,
                                        boolean renderSky) {
-        ScopePipRerender.renderScopeView(levelRenderer, allocator, deltaTracker, blockOutline,
-                camera, viewMatrix, projectionMatrix, cullingMatrix, fogBuffer, fogColor, renderSky);
-        levelRenderer.renderLevel(allocator, deltaTracker, blockOutline, camera,
-                viewMatrix, projectionMatrix, cullingMatrix, fogBuffer, fogColor, renderSky);
+        // poly_mesh 世界 GPU：把「本帧正在跑世界渲染」这件事告诉渲染器（世界表的消费点
+        // 挂在 renderAllFeatures 的 RETURN 上，那个 API 是公开的，必须圈定语境才安全）。
+        // try/finally：世界渲染中途抛异常也不能把标志卡在 true。
+        PolyMeshGpuRenderer.setLevelRenderActive(true);
+        try {
+            ScopePipRerender.renderScopeView(levelRenderer, allocator, deltaTracker, blockOutline,
+                    camera, viewMatrix, projectionMatrix, cullingMatrix, fogBuffer, fogColor, renderSky);
+            levelRenderer.renderLevel(allocator, deltaTracker, blockOutline, camera,
+                    viewMatrix, projectionMatrix, cullingMatrix, fogBuffer, fogColor, renderSky);
+        } finally {
+            PolyMeshGpuRenderer.setLevelRenderActive(false);
+        }
     }
 
     @Inject(method = "render", at = @At("HEAD"))

@@ -108,7 +108,9 @@
 - **镜内那一遍（PIP 二次渲染）**：画但**不清表**、不占本帧消费标志（提交每帧只登记一次，
   这里清了主画面就没得画；collector 在镜内那遍照常重放，两遍内容必须一致）。
 - **光影**：默认不走（`MeshGpuWorldUnderShaders=false`）。世界那一次 flush 里要受光需要把自建
-  管线登记进 Iris 的实体 program，而 `IrisProgram` 的常量名尚未在本分支审计。
+  管线登记进 Iris 的实体 program，常量已由 CI javap 核实为 **`IrisProgram.ENTITIES`**
+  （全量枚举见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §4.2）；默认关只剩「这套组合没跑过实机」
+  一条理由。
   隔壁 26.2 分支靠 `RenderTypes.entityCutout` + `RenderType#prepare()` 天然落在 Iris 已接管的
   `ENTITY_CUTOUT` 上 —— **这一点两个分支不等价，不要照抄**。
 - 完整证据（1.21.11 三个 `renderAllFeatures` 调用点、MV 归属、`EntityRenderDispatcher` 的
@@ -171,7 +173,7 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 | `MeshGpuBaking` | true | 第一人称 GPU 静态烘焙（第 1 步）。关闭→永久 collector；运行期异常也会自写 false |
 | `MeshGpuUnderShaders` | false | 实验性（第 2 步 v2）：光影下也走常驻 VBO，pass 开在 Iris 自己那次手部 flush 之内。需 Iris 1.10.x；钩子失联自动回 collector。默认 false = 光影走 collector |
 | `MeshGpuWorld` | true | 世界语境也走常驻 VBO（第 3 步）：他人手持 / 掉落物 / 展示框 / 雕像。GUI/预览/镜内/阴影在提交侧拒收；钩子失联自动回 collector |
-| `MeshGpuWorldUnderShaders` | false | 实验性：光影下的世界 GPU 路径（需把自建管线登记进 Iris 实体 program，常量名待审计）。默认 false = 光影下世界走 collector（照明本来就正确） |
+| `MeshGpuWorldUnderShaders` | false | 实验性：光影下的世界 GPU 路径（自建管线登记进 `IrisProgram.ENTITIES`，常量已审计）。默认 false = 光影下世界走 collector（照明本来就正确；这条只是没跑过实机） |
 | `MeshGpuLightCacheSize` | 4 | 世界 GPU 每模型缓存的量化光照档数（LRU，1-16）。每档显存 ≈ 模型顶点数；上游 TML 按未量化光照缓存 8 档 |
 
 > GPU 路径只接管**第一人称手部**语境；世界/GUI/第三人称/掉落物无论开关如何一律走
