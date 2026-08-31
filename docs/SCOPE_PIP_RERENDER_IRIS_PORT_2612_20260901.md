@@ -127,3 +127,39 @@ reload，否则 Voxy 会重绑到瞄具管线并永久污染主画面远景）�
       （allChanged 钩子在开镜中会取消、镜外会重建第二套栈）；
 - [ ] `ScopePipReleaseIdlePipeline=true`：久置后开镜帧率不衰减（或衰减消失）——
       这是实验判定，非修复承诺。
+
+## 8. 实机 ESC 崩溃 RCA + 开镜节奏变更（2026-09-01，RawOutput.log 实证）
+
+### 8.1 崩溃链（`IllegalStateException: Tried to use destroyed RenderTargets`）
+
+```
+prewarm: preparePipeline(tacz:scope_pip)   ← scope 管线成为「当前管线」
+  └ 管线构建触发 LevelRenderer.allChanged
+     └ 取消门只认「镜内遍期间」→ 放行
+        └ Voxy 系统恰在此刻全量重建（log: Shutting down → Creating Voxy render system）
+           └ 重建出的 Voxy 主栈绑到 scope 管线（"Creating voxy iris render pipeline"）
+ESC 暂停 → 空闲释放 destroy scope 管线（RenderTargets 一并销毁）
+  └ 宽遍地形 → Voxy（主栈仍绑 scope 管线）→ getOrCreate(已销毁 RTs) → 崩
+```
+
+修复三道：
+1. **allChanged 取消门扩到 `isBuildingScopePipeline()` 窗口**（预热的 preparePipeline
+   全程）：窗口内的 full reload 一律取消（block-id 状态全局、主管线早已设好；被取消的
+   重载没有执行，无需通知 Voxy 兼容层）。重绑路径就此关闭。
+2. **释放前身份兜底**（`VoxyScopePipelineCompat.isMainStackBoundTo`）：主 Voxy 栈若仍绑着
+   scope 管线，拒绝释放并熔断本会话——宁可少一次释放，不赌整局崩溃。
+3. （既有）释放时 `onRendererRebuilt` 已先归还第二套栈。
+
+### 8.2 开镜节奏：开镜即接管（用户裁定，母版实机行为优先于其文档声明）
+
+`compositeAfterIrisFinal` 的 `IRIS_FULL_AIM_THRESHOLD`（≈开满镜）门只保留给**重投影成品帧**
+变体（它采样屏幕中心，滑入途中中心区叠着 viewmodel）。二次渲染（含光影）的合成只是把
+窄 FOV 真画等位贴回，无此约束——`rerenderMode()` 下跳过该门，开镜即出现镜内画面
+（26.2 母版实机行为）。lang 的 rerender 描述同步去掉 full-ADS 子句。
+
+### 8.3 实机回归点
+- [ ] 开镜+ESC 反复：不再崩溃（三道修复后，重绑与销毁路径均closed）；
+- [ ] 光影二次渲染：滑入途中镜内即有画面（开镜即接管），镜外 1×；
+- [ ] 装Voxy：预热线程不再出现 "Shutting down/Creating Voxy render system" 夹在
+      "Creating pipeline for dimension tacz:scope_pip" 之后；
+- [ ] 空闲释放（若开启）：日志 "Released" 后主画面 Voxy 远景照常、不崩。

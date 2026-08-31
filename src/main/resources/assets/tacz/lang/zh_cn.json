@@ -347,7 +347,7 @@
   "config.tacz.client.render.scope_pip_min_magnification": "PIP 最小倍率",
   "config.tacz.client.render.scope_pip_min_magnification.desc": "瞄具倍率低于该值时改走旧整屏变焦；低倍镜用 PIP 只增加变软与开销，不值得。",
   "config.tacz.client.render.scope_pip_rerender": "镜内二次渲染（实验）",
-  "config.tacz.client.render.scope_pip_rerender.desc": "用窄 FOV 把世界再渲染一遍作为镜内画面，取代屏幕空间重投影。镜内获得原生分辨率（不再受「屏幕÷倍率」限制），代价是每帧多跑一遍世界渲染。实验性。无光影可直接用；光影（Iris）下开启 ScopePipAllowShaderPacks 后同样可用（ScopePipIsolatePipeline 开启时镜内那一遍使用独立 Iris 管线；镜内画面在接近开满镜时才出现，首次开镜可能因编译着色器卡顿一次）。",
+  "config.tacz.client.render.scope_pip_rerender.desc": "用窄 FOV 把世界再渲染一遍作为镜内画面，取代屏幕空间重投影。镜内获得原生分辨率（不再受「屏幕÷倍率」限制），代价是每帧多跑一遍世界渲染。实验性。无光影可直接用；光影（Iris）下开启 ScopePipAllowShaderPacks 后同样可用（ScopePipIsolatePipeline 开启时镜内那一遍使用独立 Iris 管线；开镜即接管，首次开镜可能因编译着色器卡顿一次）。",
   "config.tacz.client.render.scope_pip_isolate_pipeline": "镜内专用光影管线（时域隔离）",
   "config.tacz.client.render.scope_pip_shadow_scale": "镜内阴影贴图分辨率比例",
   "config.tacz.client.render.scope_pip_shadow_scale.desc": "镜内那一遍的阴影贴图分辨率，相对光影包自身设定的比例。Iris 每渲染一遍世界就画一遍阴影，一帧画两遍等于翻倍；阴影开销按面积走，0.5 即镜内那遍的阴影只花约 25% 的代价，画质损失只落在镜内。在瞄具管线（重）建时生效，改动后管线自动重建。仅当「镜内二次渲染」+「镜内专用光影管线」+光影包齐备时使用。",

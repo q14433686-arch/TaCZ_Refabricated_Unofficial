@@ -235,6 +235,18 @@ public final class IrisScopePipelineCompat {
             if (scope == null) {
                 return false;
             }
+            // 【最后一道闸 · 实机崩溃修复 2026-09-01】若主 Voxy 渲染栈当前绑的就是这套
+            // 管线（正常情况下不可能 —— allChanged 取消门已堵住重绑路径；这里是兜底），
+            // 销毁它等于把主画面的 LOD 绘制推向已销毁的 RenderTargets。拒绝释放并熔断，
+            // 保住的是整局不崩，代价只是本次释放没执行。
+            if (com.tacz.guns.compat.voxy.VoxyScopePipelineCompat.isMainStackBoundTo(scope)) {
+                releaseFailed = true;
+                GunMod.LOGGER.warn("[TACZ Scope] Refusing to release the scope pipeline: the main Voxy "
+                        + "render stack is still bound to it (rebind path that should have been closed "
+                        + "was hit). Releasing would crash the main view; idle release is disabled for "
+                        + "this session.");
+                return false;
+            }
             scope.getClass().getMethod("destroy").invoke(scope);
             pipelines.remove(id);
             // PipelineManager.pipeline 若正指着被销毁的那套，指回主管线，

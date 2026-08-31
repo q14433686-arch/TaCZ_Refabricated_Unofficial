@@ -35,6 +35,18 @@ public abstract class LevelRendererAllChangedScopePassMixin {
 
     @Inject(method = "allChanged", at = @At("HEAD"), cancellable = true)
     private void tacz$noFullReloadDuringScopePass(CallbackInfo ci) {
+        if (IrisScopePipelineCompat.isBuildingScopePipeline()) {
+            // 【实机崩溃修复 2026-09-01】预热的 preparePipeline 窗口内，scope 管线是
+            // 「当前管线」，而管线构建本身会触发一次 allChanged —— 此时放行 = Voxy 系统
+            // 若恰在此刻全量重建，会把主栈绑到 scope 管线上；之后空闲释放销毁 scope
+            // 管线，主 Voxy 栈就攥着一堆已销毁的 RenderTargets，宽遍地形一画即崩
+            // （log 实证：prewarm "Creating pipeline for dimension tacz:scope_pip" 之后的
+            // "Shutting down/Creating Voxy render system" 与最终 IllegalStateException
+            // Tried to use destroyed RenderTargets）。block-id 状态是全局且早已设好，
+            // 取消没有副作用。被取消的重载没有执行，也无需通知 Voxy 兼容层。
+            ci.cancel();
+            return;
+        }
         if (!ScopePipRerender.isInsideScopeLevelRender()) {
             // 这是一次<b>货真价实</b>的重载（玩家改了区块视距、按了 F3+A、换了资源包）。
             IrisScopePipelineCompat.onLevelRendererReload();

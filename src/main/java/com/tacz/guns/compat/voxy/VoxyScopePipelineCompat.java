@@ -111,6 +111,29 @@ public final class VoxyScopePipelineCompat {
         return resolveOnce() && !unavailable;
     }
 
+    /**
+     * 主 Voxy 渲染栈当前绑的 Iris 管线是否就是 {@code irisPipeline}。
+     *
+     * <p>这是「绝不能销毁那套 Iris 管线」的判据：Iris 的管线被销毁后，绑着它的
+     * Voxy 栈在下次绘制时会摸到已销毁的 RenderTargets（实机崩溃 2026-09-01）。
+     * 查不出来时返回 {@code false} —— 宁可放行销毁，也不要因为保护性检查本身
+     * 失败而把释放功能整个废掉。</p>
+     */
+    public static boolean isMainStackBoundTo(Object irisPipeline) {
+        if (irisPipeline == null) {
+            return false;
+        }
+        try {
+            Object voxySystem = com.tacz.guns.compat.voxy.VoxyCompat.renderSystem();
+            if (voxySystem == null || !resolveOnce() || unavailable) {
+                return false;
+            }
+            return fPipeline.get(voxySystem) == irisPipeline;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     /** 第二套渲染栈是否已经为这个 {@code VoxyRenderSystem} 建好且仍然有效。 */
     public static boolean isBuiltFor(Object voxySystem) {
         if (scopePipeline == null || voxySystem == null || builtForSystem != voxySystem) {

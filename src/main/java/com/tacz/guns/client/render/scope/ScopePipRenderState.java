@@ -588,7 +588,10 @@ public final class ScopePipRenderState {
         // too poppy, the next step is a verified dynamic-uniform pipeline, not a per-frame register.
         float progress = currentAimingProgress(mc,
                 Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
-        if (progress < IRIS_FULL_AIM_THRESHOLD) {
+        // 全 ADS 门只属于「重投影成品帧」变体：它采样屏幕中心，滑入途中中心区还叠着
+        // viewmodel。二次渲染的镜内画面是窄 FOV 真画、合成只是等位贴回 —— 没有这个约束，
+        // 开镜即接管（26.2 母版实机行为，用户实测裁定优先于其文档声明；2026-09-01）。
+        if (!ScopePipRerender.rerenderMode() && progress < IRIS_FULL_AIM_THRESHOLD) {
             return;
         }
         // 倍率分流：重投影=整屏重投影的 lensZoom()；二次渲染（含光影）=窄 FOV 真画，
