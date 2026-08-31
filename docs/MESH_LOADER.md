@@ -77,7 +77,8 @@
   `REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A2）。世界表另有独立标志与「连续 30 次」阈值，
   两张表互不连坐；换模型 `releaseBaked()` / `releaseWorldBaked()` 防泄漏。
 - **配置**：`MeshGpuBaking`（默认 true）、`MeshGpuUnderShaders`（光影下常驻 VBO，
-  第 2 步 v2 起默认 true）、`MeshWorldFullDetailDistance`。R3 起 **14 项 TML 配置全部**
+  第 2 步 v2 起默认 true）、`MeshWorldFullDetailDistance`。R3 起 **17 项 TML 配置全部**（14 项
+  是 R3 收口那轮接进来的，法线/绕序 3 项是同日的反光追查轮次补的）
   接进局内 cloth 面板 + en/zh 语言键（TOML 能改的局内都能改，`setDefaultValue` 与
   `MeshyConfig` 的默认值逐字对齐）。
 
@@ -171,6 +172,9 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 | 键 | 默认 | 含义 |
 |---|---|---|
 | `MeshEnable` | true | 总开关（关掉后仅立方体渲染，行为同无 TML） |
+| `MeshPolyMirrorReverseWinding` | **true**（2026-08-31 补） | poly 位置在单轴镜像 ⇒ 每个面正反面互换；反转发射绕序使其与朝外法线一致（与 `BedrockPolygon` 对 mirror 的处理同构）。只在光影下有意义，改了按 F3+T。详见 §5.7 |
+| `MeshPolyInvertNormals` | false | 烘焙法线再整体取反一次。若高光仍在错误一侧，用它与上一项做二选一（它修不动 front/back 与剔除） |
+| `MeshPolyPreferPackNormals` | false | 改用枪包自带的逐顶点法线（平滑着色）而非每面一条平面法线。上游一直强制平面着色；枪包没写 `normals` 时无变化 |
 | `MeshPolyInShadow` | false | 阴影 pass 是否画 poly |
 | `MeshMaxRenderDistance` | 48 | 世界 poly 距离（0=不限） |
 | `MeshPolyInPreview` | true | GUI/FIXED/HEAD 是否画 poly |
@@ -190,8 +194,11 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 > 光影下的两条各自还要求「已审计 Iris + 对应 flush 钩子的存活证明」同时成立
 > （第 2/3 步，见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §3-§4）。
 >
-> 14 项都在 `tacz-client.toml` 的 `[mesh_loader]` 段，并且全部接进了局内「渲染」页（Cloth）；
-> 两边默认值/键位齐平由 `docs/ci/build.yml`（待上线）里的静态校验把关，清单见 `docs/ci/README.md`；在它上线之前，用本文件 §4 的表格 + `docs/CHANGELOG_1_21_11.md` 里那条自审脚本自查。
+> 17 项都在 `tacz-client.toml` 的 `[mesh_loader]` 段，并且全部接进了局内「渲染」页（Cloth）；
+> 两边默认值/键位齐平由 **`python3 docs/check_mesh_config_parity.py`** 把关（零依赖：键集合、字段绑定、
+> 默认值、`defineInRange` ↔ `setMin/setMax`、语言键存在性、en/zh 齐平，六项一起查；R3 反光轮次加，
+> 注入四类错误都实测报出，不是摆设）。`docs/ci/build.yml`（待上线）里对应的那步就是跑它；
+> 清单见 `docs/ci/README.md`。
 
 ## 5. 验证清单
 
@@ -212,9 +219,14 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 5. 高模包：JEI 打开一屏图标——应看到 `poly preview suppressed in GUI` 且不卡死。
 6. 光影（Complementary 系）：poly 枪身正常照明（走 vanilla entityCutout 提交，
    Iris 按 HAND program 处理，与立方体同一路径）；阴影里枪影仍在（立方体提供）。
+   注意这一条只覆盖「画得出来、明暗不脱节」，**不覆盖法线朝向**（无光影时原版程序根本不读
+   `va_normal`）；反光侧的判定见 §5.7。
 7. 资源重载（F3+T）：poly 仍正常（解析缓存失效并重建）。
 8. 枪匠桌预览 / 物品栏内嵌展示：近距高模枪在 GUI 语境按 GUI 预算闸门处理，
    世界展示台雕像 / 物品框在近距按全模豁免正常显示。
+9. **光影下的反光/法线**（§5.7 那张矩阵）：`MeshPolyMirrorReverseWinding` 默认 true 是本轮的修复，
+   但它**只做到静态** —— 请在装了光影包的存档里按矩阵跑一遍并回报「哪一格看着对」。
+   无光影的第 0-3 轮 PASS 不构成对这一项的验证（原版实体程序不读 `va_normal`）。
 
 ### 5.3 第 1 步 GPU 烘焙（实机，无光影）
 
@@ -299,3 +311,61 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 - 光影下第 1 步默认回退 collector（`assignPipeline(HAND)` = 第 2 步，未做）。
 - PIP 二次渲染（`ScopePipRerender=true`）时镜内那遍会重放 collector 回调，
   poly 成本 ×2。降级方案见路线图方向 3，待镜内行为实机确认后做。
+
+### 5.7 光影下的反光与法线（2026-08-31 追查轮）
+
+**症状**（维护者报）：装光影包后枪的反射光源「关系不对」，高光像落在错误的一侧。
+
+**静态根因**（`core/PolyMesh.java` 两条都是真缺陷，且**只在光影下显形**）：
+
+1. **镜像没有配套反转绕序。** `poly_mesh` 的位置相对 pivot 在 Y 轴取反（`FLIP_MODEL_Y=true`）。
+   单轴镜像是 det<0 的合同变换 ⇒ **每个面的正反面互换**。烘焙法线本身没错：它是
+   「原始顺序的叉积 × 翻转符号」= `D·n`，即镜像后的**朝外**法线（`BedrockPolygon` 对
+   `mirror` 的处理是「反转顶点顺序 + 只把被镜像轴的分量取反」，与本仓立方体路径一致）。
+   错在**绕序从未反转**：法线说「朝外」，`gl_FrontFacing` 说「背面」。原版实体程序不读
+   `va_normal` ⇒ 无光影下这条不可见，所以第 0-3 轮的实机 PASS **不能**当作「法线正确」的证据；
+   装上 Iris 后，包里 `gbuffers_entities`/`gbuffers_hand` 的常见写法
+   `normal *= gl_FrontFacing ? 1.0 : -1.0`（为双面几何自洽而做）会把我们那条朝外法线取反
+   ⇒ 高光/反射跑到错误一侧。与症状吻合。
+2. **`FORCE_FLAT_SHADING` 恒 `true` ⇒ 枪包写的 `normals` 数组从未被消费**（解析出来后直接丢弃）。
+   后果是每个面一条平面法线，枪管、护木这类曲面在光影下呈棱角状高光。
+
+**修法**（落在数据层 ⇒ GPU 与 collector 两条路一起修好：两者共用同一份 `bakedN*` 数组，
+`PolyMesh#compile` 只是在其上再乘 `pose.normal()`；因此**没有**去 shader 侧补偿）：
+
+- 面顶点先按 QUADS 展开成发射顺序（三角形 `[0,1,2]` → `[0,1,2,2]`），需要时整体倒序 ⇒ `[2,2,1,0]`：
+  退化三角形在前，有效三角形 `(2,1,0)` 朝向正好相反。**展开与反绕序因此可以分开做，不用特例。**
+- 平面法线**仍从原始（未翻转）顺序**求叉积再乘 `D`：发射顺序反过来只改变「哪一面算正面」，
+  不改变朝外方向；跟着发射顺序走等于把 `D` 乘两遍，法线会翻回错误的一侧（实现时踩过一次，代码里留了注释）。
+- 退化面（三点共线、叉积长度 ≤1e-6）不再写零向量：先退回枪包法线，没有就写 `(0, NORMAL_SY, 0)`。
+  零向量在光影里 `normalize()` 出 NaN，表现是那一面带随机高光。
+- 三个开关（`MeshyConfig`）：`MeshPolyMirrorReverseWinding`（**true** = 修复本身）、
+  `MeshPolyInvertNormals`（false）、`MeshPolyPreferPackNormals`（false）。
+  值在 `PolyMesh` 构造里读一次 ⇒ 只在**重新解析网格**时生效，局内改完按 `F3+T`
+  （`TaczMeshyIntegration` 注册的 CLIENT_RESOURCES reload 监听会清 `PolyMeshSupport.PARSE_CACHE`，
+  这条失效路径已静态核实）。
+
+**证据边界**（AGENTS.md §2）：本轮**只到静态**。已证 = 代码路径与上面那几条推导、两条自研管线
+`.withCull(false)`（⇒ 反转绕序不会让 GPU 路径的面消失）、`PARSE_CACHE` 失效时机、
+17 项 ↔ Cloth ↔ en/zh 语言键齐平、CI 编译通过。**未证 = 光影下的实际观感**，请按矩阵各跑一次
+（每格一次 F3+T）：
+
+| MirrorReverseWinding | InvertNormals | PreferPackNormals | 预期 |
+|---|---|---|---|
+| true | false | false | **R3 默认**：法线与 front/back 自洽，高光应在朝外一侧；曲面仍偏棱角 |
+| true | false | **true** | 上一行 + 枪管/护木这类曲面变平滑（仅当枪包写了 `normals` 才有变化） |
+| false | true | false | 只靠取反补偿：光影观感与第 1 格相同，但 front/back 仍与朝外侧相反（开了剔除的 pass 会露里侧）——不是首选 |
+| false | false | false | **R3 之前**：你说的症状应当在同一格复现（这一格是「问题还在」的对照组） |
+
+若第 1 格反而比第 4 格差、第 3 格才对，说明这个包对绕序的约定与我推的相反 —— 请连包名一起回报，
+我把默认值改回并在这里写下真实的剔除/facing 状态。
+
+**判别实验（数据层 vs 消费层）**：collector 独占的部件（半透明部件、弹匣、GUI 预览、镜内）与
+GPU 部件（第一人称 / 第三人称 / 掉落物）**是否一起错**？一起错 ⇒ 就是这份共享的 `bakedN*` 数据
+（本轮假设）。只有 GPU 那两侧错 ⇒ 去查提交侧用 `mat3(ModelViewMat)` 而非逆转置的差异
+（只有非均匀骨骼缩放才会显形），本轮没动那块。
+
+**已知风险**：collector 用的 `RenderTypes.entityCutout(...)` 在本 MC 版本是否开背面剔除，
+**沙箱内无法核实**（无 Loom jar，反编译不了）。如果 poly 面消失/镂空，就是它开了剔除 ——
+关掉 `MeshPolyMirrorReverseWinding` 即可，并请回报。上游 26.2 `587763c` 的 `PolyMesh` 与本仓
+逐字相同 ⇒ 同一缺陷，见 `REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A10。

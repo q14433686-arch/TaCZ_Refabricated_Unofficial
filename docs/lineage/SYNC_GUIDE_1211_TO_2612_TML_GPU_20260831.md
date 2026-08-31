@@ -51,6 +51,12 @@ src/main/java/cn/sh1rocu/tacz/compat/meshloader/            # 20 个文件
 src/main/resources/tacz.mesh.mixins.json                       # package = ...meshloader.mixin，4 条 client mixin
 ```
 
+> ⚠️ `core/PolyMesh.java` 与 `config/MeshyConfig.java` 里含 R3 追加的**法线/绕序修复**（上游审查
+> A10）：镜像时反转发射绕序 + 三个配置开关（`MeshPolyMirrorReverseWinding` /
+> `MeshPolyInvertNormals` / `MeshPolyPreferPackNormals`）。整包取文件时它会自动带过来，
+> **别**在你们那边把 `FORCE_FLAT_SHADING` 恢复成编译期常量、也别把 `normals` 数组的解析删掉 ——
+> 「无光影 PASS」从来不构成对法线的验证（原版实体程序不读 `va_normal`）。
+
 ### 1.2 GPU 层牵动的既有文件（这几处才是「本分支特有」的知识密度）
 
 | 文件 | 为什么要改 |
@@ -61,9 +67,9 @@ src/main/resources/tacz.mesh.mixins.json                       # package = ...me
 | `com/tacz/guns/compat/iris/IrisCompat.java` | 反射面：`isUsingRenderPack / isRenderShadow / supportsHandFlushHook / assignMeshPipelineToEntity`（**全部反射，不产生硬依赖**） |
 | `com/tacz/guns/client/render/scope/ScopePipRerender.java` | `isInsideScopeLevelRender()` 从私有标志改为 public（世界路径要按它拒收/「画但不清表」） |
 | `com/tacz/guns/util/RenderDistance.java` | `isGuiRender()` 改 public（世界语境按 transformType 挡 GUI 预览） |
-| `com/tacz/guns/compat/cloth/client/RenderClothConfig.java` | 14 项 TML 配置全部接进局内面板（R3 那轮「胶水」） |
+| `com/tacz/guns/compat/cloth/client/RenderClothConfig.java` | 17 项 TML 配置全部接进局内面板（R3「胶水」14 项 + 反光轮次 3 项法线开关） |
 | `src/main/resources/fabric.mod.json` | `mixins` 数组加 `tacz.mesh.mixins.json`；`provides` 加 `taczmeshloader` |
-| `src/main/resources/assets/tacz/lang/{en_us,zh_cn}.json` | 28 个 `config.tacz.client.render.mesh_*` 键（14 项 × 标题+说明） |
+| `src/main/resources/assets/tacz/lang/{en_us,zh_cn}.json` | 34 个 `config.tacz.client.render.mesh_*` 键（17 项 × 标题+说明；R3 法线轮次 +3 项） |
 | `com/tacz/guns/config/ClientConfig.java` | 若你们的 TML 入口注册挂在配置上，照抄本分支的接线点 |
 
 ### 1.3 顺手要带的文档
@@ -72,7 +78,8 @@ src/main/resources/tacz.mesh.mixins.json                       # package = ...me
 `docs/TML_GPU_FEASIBILITY_1211_20260831.md`（可行性与「为什么这样设计」）、
 `docs/TML_GPU_STEP2_HANDFLUSH_20260831.md`（手部/世界两条路的字节码取证链，§4 是世界那半）、
 `docs/TML_GPU_PROBE_TOOL_20260831.md`（**先读这篇，见 §3**）、
-`docs/REVIEW_UPSTREAM_TML_GPU_262_20260831.md`。
+`docs/REVIEW_UPSTREAM_TML_GPU_262_20260831.md`（A10 就是本指导 §3 Q7 的出处）、
+`docs/check_mesh_config_parity.py`（齐平自查脚本；§6 要跑的就是它，不带过去那条 CI 步骤就是空跑）。
 
 ---
 
@@ -107,7 +114,7 @@ src/main/resources/tacz.mesh.mixins.json                       # package = ...me
 
 ---
 
-## 3. 26.1.2 上必须先测、不能照抄的六件事
+## 3. 26.1.2 上必须先测、不能照抄的七件事
 
 本分支的结论全部来自 **1.21.11（混淆）+ Iris 1.10.7** 的 CI javap 实测；26.2 的结论来自
 26.2。**26.1.2 是第三种组合**（Mojang 正式名 + frame-graph/submit-node 时代），
@@ -117,7 +124,7 @@ src/main/resources/tacz.mesh.mixins.json                       # package = ...me
 Iris `HandRenderer` 有自己的 `SubmitNodeStorage`/`FeatureRenderDispatcher` 且
 `endRender()` 里是 `renderAllFeatures()` → `endBatch()`。
 
-**还没核实、且决定设计的**六个问题 —— 用 `scripts/mesh_render_probe.gradle`
+**还没核实、且决定设计的**七个问题 —— 用 `scripts/mesh_render_probe.gradle`
 （`docs/TML_GPU_PROBE_TOOL_20260831.md` 讲了怎么改类名/成员名、怎么让输出落进
 `build-reports/compile-java.log` 让沙箱读回）逐条回答：
 
@@ -129,6 +136,7 @@ Iris `HandRenderer` 有自己的 `SubmitNodeStorage`/`FeatureRenderDispatcher` �
 | Q4 | `IrisProgram` 的**全量常量**（别猜名字） | 无 `ENTITY`、无 `MAIN`，有 `ENTITIES` / `ENTITIES_TRANSLUCENT` / `EMISSIVE_ENTITIES` | 常量不存在时 `assignPipeline` 只打 WARN、枪不发光照（静默错误，最难查） |
 | Q5 | `GameRenderer#renderItemInHand`（或等价方法）是否在 `renderHandsWithItems` 前后 push/pop model-view | 是 ⇒ 世界钩子必须 `inHandPass` 跳过 | 若否，世界/手部可以共用消费点，但门 2 仍要留 |
 | Q6 | 光影激活时 `DefaultVertexFormat.ENTITY` 被 Iris 扩展成什么、stride 是否随之变 | 会变 ⇒ 世代号必须同时认「光影开关」与「消费格式」 | 不变则世代号可以简单些，但别去掉 |
+| Q7 | 光影包是否按 `gl_FrontFacing` 取反顶点法线（`normal *= gl_FrontFacing ? 1.0 : -1.0` 一类写法），以及你们那边 poly 用的 `RenderTypes.entityCutout` 开不开背面剔除 | 自研 GPU 管线两条都 `.withCull(false)`（可静态核实）；collector 的 `entityCutout` 剔除状态**本沙箱无法核实**（没有 Loom jar） | 若开剔除 ⇒ 绕序修复（`MeshPolyMirrorReverseWinding`）是必须的，且第一次实机就该看面有没有消失；若光影包不看 facing ⇒ 这一项对你们无观感影响，但数据层的不自洽仍然留着 |
 
 **Q4 是最容易翻车的一条**：猜错常量不会崩，只会「光影下这把枪照明不对 + 一行 WARN」，
 很容易误判成渲染逻辑错。
@@ -182,44 +190,35 @@ Iris `HandRenderer` 有自己的 `SubmitNodeStorage`/`FeatureRenderDispatcher` �
 
 ### 5.5 全部完成后
 - [ ] `docs/MESH_LOADER.md` 的状态块改成你们自己的实机结论（AGENTS.md §2：没验的就写「待实机」）；
-- [ ] 配置 14 项 ↔ Cloth 14 条 ↔ 语言键 28 个，三方齐平（脚本见下）；
+- [ ] 配置 17 项 ↔ Cloth 17 条 ↔ 语言键 34 个，三方齐平：`python3 docs/check_mesh_config_parity.py`
+  （脚本已随本仓附上，键集合 / 字段绑定 / 默认值 / `defineInRange`↔`setMin·setMax` / 语言键 /
+  en·zh 齐平六项一起查，非 0 退出即失败）；
+- [ ] 光影下按 `docs/MESH_LOADER.md` §5.7 那张矩阵跑一遍法线/绕序，回报「哪一格看着对」——
+  本分支只做到静态 + 编译，**没有**光影实机；
 - [ ] 在 `docs/lineage/HANDOFF_LEDGER.md` 上把你们认领的行改成 `DONE(<sha>)`，并回填「与指导文档不一致之处」。
 
 ---
 
 ## 6. 配置 / 语言键 / 局内面板的齐平脚本
 
-R3 那轮把「TOML 里能改的」全部接进了局内面板。齐平性用这条命令自查（无外部依赖）：
+R3 那轮把「TOML 里能改的」全部接进了局内面板。齐平性用仓库里的脚本自查（零依赖，非 0 退出即失败）：
 
 ```bash
-python3 - <<'EOF'
-import re, json, glob
-cfg = open('src/main/java/cn/sh1rocu/tacz/compat/meshloader/config/MeshyConfig.java', encoding='utf-8').read()
-toml = set(re.findall(r'define(?:InRange)?\("(\w+)"', cfg))
-cloth_file = 'src/main/java/com/tacz/guns/compat/cloth/client/RenderClothConfig.java'
-cloth = set(re.findall(r'MeshyConfig\.([A-Z_0-9]+)\.get\(\)', open(cloth_file, encoding='utf-8').read()))
-lang = {}
-for ns in ('en_us', 'zh_cn'):
-    d = json.load(open('src/main/resources/assets/tacz/lang/%s.json' % ns, encoding='utf-8'))
-    lang[ns] = {k for k in d if 'client.render.mesh_' in k}
-title = {k for k in lang['en_us'] if not k.endswith('.desc')}
-key_tail = {t.rsplit('.', 1)[1] for t in title}
-snake = {re.sub(r'(?<!^)(?=[A-Z])', '_', f).lower() for f in cloth}
-print('toml', len(toml), 'cloth', len(cloth), 'lang titles', len(title))
-print('cloth 里没有的 toml 字段名(蛇形对照):', sorted(snake ^ key_tail))
-print('缺 desc 的键:', sorted(t for t in title if t + '.desc' not in lang['en_us']))
-print('en/zh 不齐平:', sorted(lang['en_us'] ^ lang['zh_cn']))
-# 期望：三个集合全空，且 toml/cloth/标题数三者相等
-EOF
+python3 docs/check_mesh_config_parity.py
 ```
 
-两条硬约定（本分支踩过）：
-- `setDefaultValue(...)` 必须与 `MeshyConfig` 的 `define` 默认值**逐字相同**——Cloth 的
-  「重置为默认」读的是这里，不是 TOML，写歪就会出现「重置后行为变了」；
-- 语言键的 `*.desc` 在你们的仓库里是**单行**约定；用 python 写 JSON 时用
-  `json.dumps(value)`，别手写 `\n`（本分支写出过字面量 `\n` 的 bug）。
+它查六件事：`MeshyConfig` 里每个 `builder.define*("Key", …)` **恰好**有一条 Cloth 引用；那条引用绑的
+**字段名**与 toml 键是同一个选项（按 `FIELD = builder.define("Key")` 配对 —— `MeshEnable` ↔
+`ENABLE_MESH` 这种命名不机械，别用蛇形转换去猜）；`setDefaultValue` 与 toml 默认值一致；
+`startIntField/startDoubleField` 的 `setMin/setMax` 与 `defineInRange` 区间一致；每个键的
+`config.tacz.client.render.<snake(key)>` 与 `.desc` 都在；en/zh 的 `config.tacz.client.render.*`
+键集合完全相同。
 
----
+> 上一版这里是一段内联的 `python3 - <<EOF` 正则脚本，**它的蛇形转换是错的**
+> （`re.sub(r"(?<!^)(?=[A-Z])", "_", "GPU_BAKING")` 会在每个大写字母前插下划线），
+> 于是「期望差集为空」永远达不到、真正该报的错反而混在噪声里。已换成上面那份文件并加了
+> 四类错误的注入实测（默认值 / 字段绑错 / 范围收窄 / 缺 `.desc` 键，四类都被准确报出）。
+> 26.1.2 若沿用内联版请一并替换。
 
 ## 7. 本分支明确不做的事（你们也别顺手做）
 

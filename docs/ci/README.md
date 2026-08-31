@@ -15,13 +15,13 @@ permission`（整个 push 一起失败，不是只忽略那个文件）。所以
 | 文件 | 状态 | 内容 |
 |---|---|---|
 | `compile-check.yml` | **待上线（替换 `.github/workflows/compile-check.yml`）** | 补主分支 `1.21.11` push + PR 触发；日志回推**只**在 arena/**；`concurrency` 取消过期 run |
-| `build.yml` | **待上线（新建 `.github/workflows/build.yml`）** | 全量 `gradlew build` + jar 上传为 artifact（14 天）；外加四个静态校验：mixin 配置完整性、mixin 配置注册性（孤儿配置）、en/zh 语言键齐平、版本一致性。artifact 名只用 sha（arena 分支名带 `/` 是非法 artifact 字符——26.2 侧首跑就是这样红的） |
+| `build.yml` | **待上线（新建 `.github/workflows/build.yml`）** | 全量 `gradlew build` + jar 上传为 artifact（14 天）；外加五个静态校验：mixin 配置完整性、mixin 配置注册性（孤儿配置）、en/zh 语言键齐平、`[mesh_loader]` 配置↔Cloth↔语言键齐平（调 `docs/check_mesh_config_parity.py`）、版本一致性。artifact 名只用 sha（arena 分支名带 `/` 是非法 artifact 字符——26.2 侧首跑就是这样红的） |
 | `consistency.yml` | **待上线（新建 `.github/workflows/consistency.yml`）** | AGENTS.md §1 的守门：只碰 `gradle.properties` / `README.md` / `fabric.mod.json` 时也触发；arena 分支一起守（等合并后再守就晚了）。脚本本体按 §1 只在默认分支，本流程自带「取不到就跳过」的回退 |
 
 上线动作：GitHub 网页 → 仓库 → `.github/workflows/` → 对应文件 →
 Edit（或 Add file → Create new file）→ 粘贴本目录同名文件全文 → 提交到目标分支。
 
-**四个静态校验在写入时已对本分支源码树本地跑过，全绿**（2026-08-31）。
+**五个静态校验在写入时已对本分支源码树本地跑过，全绿**（2026-08-31）。法线/绕序那次往 `MeshyConfig` 加了 3 项，就是这条校验把「Cloth 少一条 / 默认值写歪」这类错误挡在编译之前的；脚本本体做过四类错误的注入实测（默认值 / 字段绑错 / 范围收窄 / 缺 `.desc` 语言键 ⇒ 全部准确报出）。
 其中「mixin 配置注册性」这条当场抓出并清掉了一个历史遗留：
 `tacz.compat.acceleratedrendering.mixins.json` 在 1.21.11 分支上没有对应的 mixin/plugin 类、
 也没被任何 `fabric.mod.json` 注册（本分支的 AR 兼容是 `ARCompat` 空壳，理由写在该类注释里），

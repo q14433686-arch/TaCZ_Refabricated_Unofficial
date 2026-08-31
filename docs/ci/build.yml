@@ -113,6 +113,18 @@ jobs:
           sys.exit(1 if bad else 0)
           EOF
 
+      - name: "Mesh config parity ([mesh_loader] TOML <-> Cloth 面板 <-> en/zh)"
+        run: |
+          # R3 反光轮次起：Cloth 面板是「TOML 里能改的局内也能改」的承诺的兑现处，
+          # 而它同时读三处（define 的键名 / 字段绑定 / setDefaultValue·setMin·setMax）。
+          # 三边靠人眼对齐必然歪，所以固化成脚本；脚本随源码走，这里只做调用。
+          if [ -f docs/check_mesh_config_parity.py ]; then
+            python3 docs/check_mesh_config_parity.py
+          else
+            echo "::error::docs/check_mesh_config_parity.py 不存在（被删了？这条校验就失去意义了）"
+            exit 1
+          fi
+
       - name: Version consistency (与 consistency.yml 同一脚本，arena 分支也守门)
         run: |
           SCRIPT=scripts/check_release_consistency.sh

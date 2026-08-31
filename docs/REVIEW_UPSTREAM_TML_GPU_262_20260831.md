@@ -19,6 +19,7 @@
 | A7 | `drawList` :~600（`handModelView`） | 低-中 | 世界表复用**名字与注释都写着手部**的方法，前置条件没写成断言 |
 | A8 | :147 / :341 | 低 | 降级完全静默；`beginFrame` 挂 `GameRenderer#extract` 的跨帧含义没写明 |
 | A9 | :174 / :176 | 低 | 每帧标志靠 `beginFrame` 复位，对「钩子与 beginFrame 的相对顺序」敏感 |
+| A10 | `core/PolyMesh.java` :31-35 + :67-99 | **高（仅光影下显形）** | `poly_mesh` 位置按 Y 轴镜像但绕序从不跟着反转 ⇒ 烘焙法线与 `gl_FrontFacing` 相互矛盾；另 `FORCE_FLAT_SHADING` 恒 true ⇒ 枪包的 `normals` 从不消费 |
 
 **先说好的**（本仓第 3 步直接吸收，已在 `MESH_LOADER.md` 致谢）：按量化光照档做 LRU、被逐出
 VBO 进延迟释放池下一帧才 close、每帧烘焙额度防「逐出-重烘打摆」这三件事是上游先做的，
@@ -164,6 +165,35 @@ int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());   // :373
   自己的一轮），标志会跨帧残留。本仓用帧号比对（`lastWorldFlushFrame == frameId || frameId-1`），
   对「钩子与 beginFrame 谁先谁后」不敏感。
 
+## A10（高，但只在光影下显形）：`PolyMesh` 的镜像没有反转绕序 + 枪包法线被丢弃
+
+**先说清一件事**：上游与本仓这段是**逐字相同**的（`587763c:…/core/PolyMesh.java` 的
+:31-35 常量与 :67-99 的叉积/写回逻辑，与本仓改前一致），所以这一条既是给上游的审查意见，
+也是本仓自己的修复来源 —— 不是「上游写歪了我们抄对了」。
+
+- **机制**：位置烘焙成 `p′ = D(p − pivot)`，`D = diag(1, −1, 1)`（`FLIP_MODEL_X=false` /
+  `FLIP_MODEL_Y=true`）。单轴镜像 `det(D) < 0` ⇒ 每个面的**正反面互换**（数学上是确定的，
+  不依赖光影）。而烘焙进 `bakedN*` 的是「**原始顺序**的叉积 × 翻转符号」= `D·n`，也就是镜像后
+  该面的**朝外**法线 —— 方向本身是对的。错在绕序没有配套反转：于是「法线朝外」与
+  「`gl_FrontFacing` 说这是背面」同时成立。原版实体程序不读 `va_normal` ⇒ **无光影下这条完全不可见**；
+  光影包里 `gbuffers_entities` / `gbuffers_hand` 的常见写法 `normal *= gl_FrontFacing ? 1.0 : -1.0`
+  （为双面几何自洽而做）会把这条朝外法线取反 ⇒ 高光/反射出现在错误一侧。
+- **对照物就在仓库里**：`com/tacz/guns/client/model/bedrock/BedrockPolygon` 处理 `mirror` 的方式是
+  **反转顶点顺序** + 只把被镜像轴的分量取反（`normal.mul(-1, 1, 1)`，前置 `direction.step()`）。
+  `poly_mesh` 这条路径缺了前半截。
+- **第二条**：`FORCE_FLAT_SHADING` 恒 `true` ⇒ `normals` 数组在 :47 附近解析出来后从不使用，
+  曲面（枪管、护木、瞄具外壳）在光影下呈每面一条法线的棱角状高光。平滑与否不该由加载器决定。
+- **顺带**：三点共线的退化面叉积长度为 0 ⇒ 写进缓冲的是零向量，光影里 `normalize()` 出 NaN，
+  表现是那一面带随机高光。
+- **本仓已改（可作为上游直接搬的补丁）**：`PolyMesh` 里把「发射顺序展开（三角形→QUADS 重复第 3 顶点）」
+  与「镜像时整体倒序」分开做，法线仍从原始顺序求叉积；退化面退回枪包法线、没有就写确定方向；
+  三个行为收到 `MeshyConfig`：`MeshPolyMirrorReverseWinding`(true) / `MeshPolyInvertNormals`(false) /
+  `MeshPolyPreferPackNormals`(false)，在构造期读一次（改了要重载资源）。判定矩阵与「哪些只到静态、
+  哪些待实机」写在 `docs/MESH_LOADER.md` §5.7（本仓分支）。
+- **为什么没有直接在 shader 侧把法线取反**：两条消费路径（常驻 VBO 与 collector）共用同一份
+  `bakedN*`，数据层修一次两条都修好；而且 `withCull(false)` 之外还有阴影 pass 等消费者，
+  在 shader 侧补偿会把不自洽留在数据里。
+
 ## 时序对照（本仓 ↔ 上游）
 
 | 事项 | 上游 26.2 | 本仓 1.21.11 |
@@ -185,3 +215,6 @@ int cap = Math.max(4, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());   // :373
    与 `gbuffers_hand` 照明差异明显的包（夜晚/暗巷）下看亮度是否随世界走。
 4. 格式入参（A5）与额度/容量解耦（A6）。
 5. 静默降级补一行原因日志（A8）——这条本仓已有实现可以直接搬。
+6. **A10**（法线/绕序）：`PolyMesh` 那三行改动 + 三个配置开关本仓已实现并过了编译，可直接搬；
+   搬之前请也确认你们这边 `entityCutout` 类 render type 的剔除状态 —— 本仓沙箱里没 Loom jar，
+   这一条没能核实，所以修复被写成「开关可回退」而不是「默认改完就算完」。

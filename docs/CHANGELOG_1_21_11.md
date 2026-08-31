@@ -20,13 +20,35 @@ SemVer 核心仍是 `1.1.8`，构建元数据不参与比较，见 `gradle.prope
   （`MeshGpuBaking` / `MeshGpuWorld` 本来就是 true）→ 四项 GPU 开关默认全开。
   回退语义不变：钩子失联/绘制异常 ⇒ 分表静默回 collector，`catch (Exception | LinkageError)`，
   **从不回写配置文件**。
-- **局内可配置（胶水轮次）**：`MeshyConfig` 的 **14 项全部**接进 Cloth「渲染」页 ——
+- **局内可配置（胶水轮次）**：`MeshyConfig` 的 **14 项全部**接进 Cloth「渲染」页
+  （本段「反光 / 法线」那条又补了 3 项 ⇒ 现在 17 项）——
   新增 `MeshEnable` / `MeshPolyInPreview` / `MeshPolyInShadow` / `MeshLogStats` /
   `MeshMaxRenderDistance` / `MeshGuiMaxVertices` / `MeshWorldMaxVertices` /
   `MeshMaxModelVertices` 八条（此前只有 6 条）。逐条核对：`setDefaultValue` 与 TOML 默认值
   一致、范围取自 `defineInRange` 不擅自收窄、en/zh 28 个 `config.tacz.client.render.mesh_*`
   键齐平。这 8 项全部是**每帧/每次提交读值**（`shouldRenderPoly` / 预算判定 / 日志开关），
   所以局内改立即生效，不存在「需要重启」的假选项。
+- **光影下的反光 / 法线（同日追查轮，配置由 14 项增至 17 项）**：维护者报「装光影后反射光源很怪」，
+  查 `core/PolyMesh.java` 得到两条**静态可证**的缺陷：
+  ① `poly_mesh` 的位置相对 pivot 在 Y 轴取反（`FLIP_MODEL_Y=true`），单轴镜像 = det<0 的合同变换
+  ⇒ 每个面的正反面互换；而烘焙法线是「原始顺序叉积 × 翻转符号」= 镜像后的**朝外**法线 —— 方向没错，
+  错在**绕序从没跟着反转**，于是法线说「朝外」、`gl_FrontFacing` 说「背面」。原版实体程序不读
+  `va_normal` ⇒ 无光影下不可见（**所以第 0-3 轮的实机 PASS 不能当作法线已验证**）；Iris 包里
+  `normal *= gl_FrontFacing ? 1.0 : -1.0` 的常规写法会把那条朝外法线取反 ⇒ 高光落在错误一侧。
+  ② `FORCE_FLAT_SHADING` 恒 true ⇒ 枪包写的 `normals` 数组解析出来直接丢，曲面（枪管/护木）呈棱角状高光。
+  修法落在**数据层**（GPU 与 collector 共用同一份 `bakedN*` 数组 ⇒ 两条路一起修好，没有去 shader 侧补偿）：
+  镜像时反转发射绕序（与 `BedrockPolygon` 对 `mirror` 的处理同构）；平面法线仍从**未翻转的原始顺序**求
+  叉积（跟着发射顺序走等于把 `D` 乘两遍）；退化面（叉积长度 ≤1e-6）不再写零向量，避免光影里
+  `normalize()` 出 NaN；新增 `MeshPolyMirrorReverseWinding`(**true** = 修复本身) /
+  `MeshPolyInvertNormals`(false) / `MeshPolyPreferPackNormals`(false) 三项供局内 A/B，值在 `PolyMesh`
+  构造里读一次 ⇒ 按 `F3+T` 生效（`TaczMeshyIntegration` 的 CLIENT_RESOURCES reload 监听清
+  `PolyMeshSupport.PARSE_CACHE`，已核实）。三项同时接进 Cloth + en/zh（17 ↔ 17 ↔ 34，齐平改用
+  **`docs/check_mesh_config_parity.py`** 把关，替代上一轮那条正则写歪的临时脚本）。
+  **证据边界（AGENTS.md §2）**：只到静态 + CI 编译；两条自研管线 `.withCull(false)` 已核实
+  ⇒ 反转绕序不会让 GPU 路径丢面，但 collector 的 `RenderTypes.entityCutout` 在本 MC 版本的剔除状态
+  沙箱内无法核实（无 Loom jar）。**光影下观感待维护者实机**，判定矩阵、判别实验（数据层 vs 消费层）
+  与回退方法见 `MESH_LOADER.md` §5.7。上游 26.2 `587763c` 的 `PolyMesh` 与本仓逐字相同 ⇒ 同一缺陷
+  （`REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A10），26.1.2 合入 TML 时要一并带上。
 - **失败降级去掉配置回写（行为变更）**：第 1 步的手部 catch 沿用了 26.2 的
   `MeshyConfig.GPU_BAKING.set(false)`，本轮删掉，只置内存标志 `gpuDisabledThisSession`。
   两个理由：绘制线程里改配置可能触发磁盘写；且用户重启后会看到「GPU 烘焙自己关了」

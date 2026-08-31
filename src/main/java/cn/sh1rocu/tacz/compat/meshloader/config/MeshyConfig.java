@@ -19,6 +19,9 @@ import net.minecraftforge.common.ForgeConfigSpec;
 public final class MeshyConfig {
 
     public static ForgeConfigSpec.BooleanValue ENABLE_MESH;
+    public static ForgeConfigSpec.BooleanValue POLY_MIRROR_REVERSE_WINDING;
+    public static ForgeConfigSpec.BooleanValue POLY_INVERT_NORMALS;
+    public static ForgeConfigSpec.BooleanValue POLY_PREFER_PACK_NORMALS;
     public static ForgeConfigSpec.BooleanValue POLY_IN_SHADOW;
     public static ForgeConfigSpec.DoubleValue MAX_RENDER_DISTANCE;
     public static ForgeConfigSpec.BooleanValue POLY_IN_PREVIEW;
@@ -39,6 +42,23 @@ public final class MeshyConfig {
         builder.comment("Master switch for TacZ Mesh Loader poly_mesh rendering.",
                 "Cube-only rendering is unaffected.");
         ENABLE_MESH = builder.define("MeshEnable", true);
+
+        builder.comment("poly_mesh only: these three decide how mesh normals/winding are baked.",
+                "They only matter with a shader pack installed (vanilla's entity program",
+                "ignores va_normal), and they take effect when models are re-parsed (F3+T).",
+                "MeshPolyMirrorReverseWinding: the poly format mirrors positions on one axis",
+                "(Y), which makes every face's outward side become the back side. Shader packs",
+                "that flip normals by gl_FrontFacing then light the gun inside-out. Reversing the",
+                "winding on mirror is what vanilla TaCZ's own Bedrock cube path does for mirrors,",
+                "so this stays on; turn it off only if a pack was authored for the old winding.",
+                "MeshPolyInvertNormals: extra global negation of the baked normals. Try it if",
+                "specular still shows on the wrong side with the option above at both settings.",
+                "MeshPolyPreferPackNormals: use the per-vertex normals shipped in the pack",
+                "(smooth shading) instead of one flat normal per face. Default off because that",
+                "is what upstream does; packs with authored normals look noticeably better on.");
+        POLY_MIRROR_REVERSE_WINDING = builder.define("MeshPolyMirrorReverseWinding", true);
+        POLY_INVERT_NORMALS = builder.define("MeshPolyInvertNormals", false);
+        POLY_PREFER_PACK_NORMALS = builder.define("MeshPolyPreferPackNormals", false);
 
         builder.comment("Whether to render poly_mesh during shadow passes.",
                 "Default false: the cube body already provides shadow shapes,",

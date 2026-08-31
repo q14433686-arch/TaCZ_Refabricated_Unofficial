@@ -135,7 +135,7 @@ public class RenderClothConfig {
                 .setSaveConsumer(RenderConfig.BLOCK_ENTITY_TRANSLUCENT::set).build());
 
         // ================= Mesh Loader（poly_mesh）配置 =================
-        // 全部 14 项都接进来了（R3 起的「胶水」轮次）：TOML 里能改的，局内也能改。
+        // 全部 17 项都接进来了（R3 起的「胶水」轮次，法线三项是同一天补的）：TOML 里能改的，局内也能改。
         // 每条的 setDefaultValue 与 MeshyConfig 的 define/defineInRange 默认值逐字对齐 ——
         // Cloth 的「重置为默认」读的是这里，不是 TOML，两边写歪就会出现「重置后行为变了」。
         // 范围同理取自 defineInRange：刻意不收窄成 UI 好看的区间，否则枪包作者需要的
@@ -143,6 +143,18 @@ public class RenderClothConfig {
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_enable"), MeshyConfig.ENABLE_MESH.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_enable.desc"))
                 .setSaveConsumer(MeshyConfig.ENABLE_MESH::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_mirror_reverse_winding"), MeshyConfig.POLY_MIRROR_REVERSE_WINDING.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_mirror_reverse_winding.desc"))
+                .setSaveConsumer(MeshyConfig.POLY_MIRROR_REVERSE_WINDING::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_invert_normals"), MeshyConfig.POLY_INVERT_NORMALS.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_invert_normals.desc"))
+                .setSaveConsumer(MeshyConfig.POLY_INVERT_NORMALS::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_prefer_pack_normals"), MeshyConfig.POLY_PREFER_PACK_NORMALS.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_prefer_pack_normals.desc"))
+                .setSaveConsumer(MeshyConfig.POLY_PREFER_PACK_NORMALS::set).build());
 
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_in_preview"), MeshyConfig.POLY_IN_PREVIEW.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_in_preview.desc"))
