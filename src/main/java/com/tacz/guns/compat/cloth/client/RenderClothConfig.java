@@ -57,6 +57,43 @@ public class RenderClothConfig {
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.scope_mask_enable.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_MASK_ENABLE::set).build());
 
+        // ===== Scope PIP 画中画配置 =====
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_enable"), RenderConfig.SCOPE_PIP_ENABLE.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_enable.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_ENABLE::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_rerender"), RenderConfig.SCOPE_PIP_RERENDER.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_rerender.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_RERENDER::set).build());
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_resolution_scale"), RenderConfig.SCOPE_PIP_RESOLUTION_SCALE.get())
+                .setMin(0.25).setMax(1.0).setDefaultValue(0.75)
+                .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_resolution_scale.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_RESOLUTION_SCALE::set).build());
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_min_aiming_progress"), RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS.get())
+                .setMin(0.0).setMax(1.0).setDefaultValue(0.05)
+                .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_min_aiming_progress.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS::set).build());
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_min_magnification"), RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION.get())
+                .setMin(1.0).setMax(100.0).setDefaultValue(4.0)
+                .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_min_magnification.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION::set).build());
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_world_zoom_share"), RenderConfig.SCOPE_PIP_WORLD_ZOOM_SHARE.get())
+                .setMin(0.0).setMax(1.0).setDefaultValue(0.0)
+                .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_world_zoom_share.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_WORLD_ZOOM_SHARE::set).build());
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_sharpness"), RenderConfig.SCOPE_PIP_SHARPNESS.get())
+                .setMin(0.0).setMax(1.0).setDefaultValue(0.5)
+                .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_sharpness.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_SHARPNESS::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_allow_shader_packs"), RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_allow_shader_packs.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_debug_no_composite"), RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_debug_no_composite.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_debug_paint_lens"), RenderConfig.SCOPE_PIP_DEBUG_PAINT_LENS.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_debug_paint_lens.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_DEBUG_PAINT_LENS::set).build());
+
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.kill_amount_enable"), RenderConfig.KILL_AMOUNT_ENABLE.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.kill_amount_enable.desc"))
                 .setSaveConsumer(RenderConfig.KILL_AMOUNT_ENABLE::set).build());
