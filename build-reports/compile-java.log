@@ -1,4 +1,4 @@
-commit: 372537487dce1ad1a8e151d9a2d6bd01807cd5bf
+commit: 109eb0b31636ad0f2aa0971f0f6a05f362353ea4
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -40,11 +40,11 @@ Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
 Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
@@ -76,146 +76,279 @@ Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 6 warnings
 
-> Task :dumpPipPortProbeV3
-===== javap -p net.minecraft.client.renderer.LevelRenderer =====
-  private final net.minecraft.client.renderer.state.LevelRenderState levelRenderState;
-  public net.minecraft.client.renderer.LevelRenderer(net.minecraft.client.Minecraft, net.minecraft.client.renderer.entity.EntityRenderDispatcher, net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher, net.minecraft.client.renderer.RenderBuffers, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.client.renderer.feature.FeatureRenderDispatcher);
-  public void renderLevel(com.mojang.blaze3d.resource.GraphicsResourceAllocator, net.minecraft.client.DeltaTracker, boolean, net.minecraft.client.Camera, org.joml.Matrix4f, org.joml.Matrix4f, org.joml.Matrix4f, com.mojang.blaze3d.buffers.GpuBufferSlice, org.joml.Vector4f, boolean);
-  private void addMainPass(com.mojang.blaze3d.framegraph.FrameGraphBuilder, net.minecraft.client.renderer.culling.Frustum, org.joml.Matrix4f, com.mojang.blaze3d.buffers.GpuBufferSlice, boolean, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.client.DeltaTracker, net.minecraft.util.profiling.ProfilerFiller);
-  private void extractVisibleEntities(net.minecraft.client.Camera, net.minecraft.client.renderer.culling.Frustum, net.minecraft.client.DeltaTracker, net.minecraft.client.renderer.state.LevelRenderState);
-  private void submitEntities(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.client.renderer.SubmitNodeCollector);
-  private void extractVisibleBlockEntities(net.minecraft.client.Camera, float, net.minecraft.client.renderer.state.LevelRenderState);
-  private void submitBlockEntities(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.client.renderer.SubmitNodeStorage);
-  private void extractBlockDestroyAnimation(net.minecraft.client.Camera, net.minecraft.client.renderer.state.LevelRenderState);
-  private void renderBlockDestroyAnimation(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.MultiBufferSource$BufferSource, net.minecraft.client.renderer.state.LevelRenderState);
-  private void extractBlockOutline(net.minecraft.client.Camera, net.minecraft.client.renderer.state.LevelRenderState);
-  private void renderBlockOutline(net.minecraft.client.renderer.MultiBufferSource$BufferSource, com.mojang.blaze3d.vertex.PoseStack, boolean, net.minecraft.client.renderer.state.LevelRenderState);
-  private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle);
-===== javap -p net.minecraft.client.renderer.LevelRenderState =====
-(no output) Error: class not found: net.minecraft.client.renderer.LevelRenderState
+> Task :dumpPipPortProbeV4
+===== javap -c net.minecraft.client.renderer.LevelRenderer =====
+  private final net.minecraft.client.renderer.SubmitNodeStorage submitNodeStorage;
+  265: putfield      #310                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+  295: invokevirtual #955                // Method net/minecraft/client/renderer/WeatherEffectRenderer.extractRenderState:(Lnet/minecraft/world/level/Level;IFLnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/state/WeatherRenderState;)V
+  327: invokevirtual #964                // Method net/minecraft/client/renderer/SkyRenderer.extractRenderState:(Lnet/minecraft/client/multiplayer/ClientLevel;FLnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/state/SkyRenderState;)V
+  376: invokevirtual #977                // Method net/minecraft/client/renderer/WorldBorderRenderer.extract:(Lnet/minecraft/world/level/border/WorldBorder;FLnet/minecraft/world/phys/Vec3;DLnet/minecraft/client/renderer/state/WorldBorderRenderState;)V
+  814: invokevirtual #1127               // Method net/minecraft/client/particle/ParticleEngine.extract:(Lnet/minecraft/client/renderer/state/ParticlesRenderState;Lnet/minecraft/client/renderer/culling/Frustum;Lnet/minecraft/client/Camera;F)V
+  1021: invokevirtual #1210               // Method net/minecraft/client/renderer/state/LevelRenderState.reset:()V
+  6: invokevirtual #1715               // Method net/minecraft/client/renderer/entity/EntityRenderDispatcher.extractEntity:(Lnet/minecraft/world/entity/Entity;F)Lnet/minecraft/client/renderer/entity/state/EntityRenderState;
+  34: getfield      #310                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+  51: invokevirtual #2482               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderAllFeatures:()V
+  271: getfield      #310                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+  291: getfield      #310                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+  310: invokevirtual #2482               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderAllFeatures:()V
+===== javap -p net.minecraft.client.renderer.state.LevelRenderState =====
+  Compiled from "LevelRenderState.java"
+  public class net.minecraft.client.renderer.state.LevelRenderState implements net.fabricmc.fabric.api.client.rendering.v1.FabricRenderState {
+  public net.minecraft.client.renderer.state.CameraRenderState cameraRenderState;
+  public final java.util.List<net.minecraft.client.renderer.entity.state.EntityRenderState> entityRenderStates;
+  public final java.util.List<net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState> blockEntityRenderStates;
+  public boolean haveGlowingEntities;
+  public net.minecraft.client.renderer.state.BlockOutlineRenderState blockOutlineRenderState;
+  public final java.util.List<net.minecraft.client.renderer.state.BlockBreakingRenderState> blockBreakingRenderStates;
+  public final net.minecraft.client.renderer.state.WeatherRenderState weatherRenderState;
+  public final net.minecraft.client.renderer.state.WorldBorderRenderState worldBorderRenderState;
+  public final net.minecraft.client.renderer.state.SkyRenderState skyRenderState;
+  public long gameTime;
+  public net.minecraft.client.renderer.state.LevelRenderState();
+  public void reset();
+  }
 ===== javap -p net.minecraft.client.renderer.GameRenderer =====
+  private final net.minecraft.client.renderer.feature.FeatureRenderDispatcher featureRenderDispatcher;
   public void renderLevel(net.minecraft.client.DeltaTracker);
   private void extractCamera(float);
-===== javap -p net.minecraft.client.renderer.SubmitNodeStorage =====
-  public void clear();
-  public void endFrame();
-===== javap -p net.minecraft.client.gui.Font =====
-  public void drawInBatch(java.lang.String, float, float, int, boolean, org.joml.Matrix4f, net.minecraft.client.renderer.MultiBufferSource, net.minecraft.client.gui.Font$DisplayMode, int, int);
-  public void drawInBatch(net.minecraft.network.chat.Component, float, float, int, boolean, org.joml.Matrix4f, net.minecraft.client.renderer.MultiBufferSource, net.minecraft.client.gui.Font$DisplayMode, int, int);
-  public void drawInBatch(net.minecraft.util.FormattedCharSequence, float, float, int, boolean, org.joml.Matrix4f, net.minecraft.client.renderer.MultiBufferSource, net.minecraft.client.gui.Font$DisplayMode, int, int);
-  public net.minecraft.client.gui.Font$PreparedText prepareText(java.lang.String, float, float, int, boolean, int);
-  public net.minecraft.client.gui.Font$PreparedText prepareText(net.minecraft.util.FormattedCharSequence, float, float, int, boolean, boolean, int);
-===== javap -p net.minecraft.client.gui.Font$PreparedText =====
+===== javap -p net.minecraft.client.renderer.RenderPipelines =====
+  Compiled from "RenderPipelines.java"
+  public class net.minecraft.client.renderer.RenderPipelines {
+  private static final java.util.Map<net.minecraft.resources.Identifier, com.mojang.blaze3d.pipeline.RenderPipeline> PIPELINES_BY_LOCATION;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet MATRICES_PROJECTION_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet FOG_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GLOBALS_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet MATRICES_FOG_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet MATRICES_FOG_LIGHT_DIR_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GENERIC_BLOCKS_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet TERRAIN_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet BLOCK_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet ENTITY_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet ENTITY_EMISSIVE_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet BEACON_BEAM_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet TEXT_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet END_PORTAL_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet CLOUDS_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet LINES_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet DEBUG_FILLED_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet PARTICLE_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet WEATHER_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GUI_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GUI_TEXTURED_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet GUI_TEXT_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet OUTLINE_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet POST_PROCESSING_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline SOLID_BLOCK;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline SOLID_TERRAIN;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline WIREFRAME;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline CUTOUT_BLOCK;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline CUTOUT_TERRAIN;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TRANSLUCENT_TERRAIN;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TRIPWIRE_BLOCK;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TRIPWIRE_TERRAIN;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TRANSLUCENT_MOVING_BLOCK;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ARMOR_CUTOUT_NO_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ARMOR_DECAL_CUTOUT_NO_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ARMOR_TRANSLUCENT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_SOLID;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_SOLID_Z_OFFSET_FORWARD;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_CUTOUT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_CUTOUT_NO_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_CUTOUT_NO_CULL_Z_OFFSET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_TRANSLUCENT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_TRANSLUCENT_EMISSIVE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_SMOOTH_CUTOUT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_NO_OUTLINE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline BREEZE_WIND;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENERGY_SWIRL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline EYES;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_DECAL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_SHADOW;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ITEM_ENTITY_TRANSLUCENT_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline BEACON_BEAM_OPAQUE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline BEACON_BEAM_TRANSLUCENT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DRAGON_EXPLOSION_ALPHA;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline LEASH;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline WATER_MASK;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GLINT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline CRUMBLING;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_TEXT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT_BACKGROUND;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT_INTENSITY;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_TEXT_INTENSITY;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT_POLYGON_OFFSET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT_SEE_THROUGH;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT_BACKGROUND_SEE_THROUGH;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TEXT_INTENSITY_SEE_THROUGH;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline LIGHTNING;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DRAGON_RAYS;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DRAGON_RAYS_DEPTH;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline END_PORTAL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline END_GATEWAY;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline FLAT_CLOUDS;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline CLOUDS;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline LINES;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline LINES_TRANSLUCENT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline SECONDARY_BLOCK_OUTLINE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DEBUG_POINTS;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DEBUG_FILLED_BOX;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DEBUG_QUADS;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline DEBUG_TRIANGLE_FAN;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline WORLD_BORDER;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline OPAQUE_PARTICLE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TRANSLUCENT_PARTICLE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline WEATHER_DEPTH_WRITE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline WEATHER_NO_DEPTH_WRITE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline SKY;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline END_SKY;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline SUNRISE_SUNSET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline STARS;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline CELESTIAL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_INVERT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_TEXT_HIGHLIGHT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_TEXTURED;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_TEXTURED_PREMULTIPLIED_ALPHA;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline BLOCK_SCREEN_EFFECT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline FIRE_SCREEN_EFFECT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_OPAQUE_TEXTURED_BACKGROUND;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline GUI_NAUSEA_OVERLAY;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline VIGNETTE;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline CROSSHAIR;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline MOJANG_LOGO;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ENTITY_OUTLINE_BLIT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline TRACY_BLIT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline PANORAMA;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline OUTLINE_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline OUTLINE_NO_CULL;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline LIGHTMAP;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline$Snippet ANIMATE_SPRITE_SNIPPET;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ANIMATE_SPRITE_BLIT;
+  public static final com.mojang.blaze3d.pipeline.RenderPipeline ANIMATE_SPRITE_INTERPOLATE;
+  public net.minecraft.client.renderer.RenderPipelines();
+  public static com.mojang.blaze3d.pipeline.RenderPipeline register(com.mojang.blaze3d.pipeline.RenderPipeline);
+  public static java.util.List<com.mojang.blaze3d.pipeline.RenderPipeline> getStaticPipelines();
+  static {};
+  }
+===== javap -p net.minecraft.client.renderer.rendertype.RenderSetup =====
+  Compiled from "RenderSetup.java"
+  public final class net.minecraft.client.renderer.rendertype.RenderSetup {
+  final com.mojang.blaze3d.pipeline.RenderPipeline pipeline;
+  final java.util.Map<java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding> textures;
+  final net.minecraft.client.renderer.rendertype.TextureTransform textureTransform;
+  final net.minecraft.client.renderer.rendertype.OutputTarget outputTarget;
+  final net.minecraft.client.renderer.rendertype.RenderSetup$OutlineProperty outlineProperty;
+  final boolean useLightmap;
+  final boolean useOverlay;
+  final boolean affectsCrumbling;
+  final boolean sortOnUpload;
+  final int bufferSize;
+  final net.minecraft.client.renderer.rendertype.LayeringTransform layeringTransform;
+  net.minecraft.client.renderer.rendertype.RenderSetup(com.mojang.blaze3d.pipeline.RenderPipeline, java.util.Map<java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding>, boolean, boolean, net.minecraft.client.renderer.rendertype.LayeringTransform, net.minecraft.client.renderer.rendertype.OutputTarget, net.minecraft.client.renderer.rendertype.TextureTransform, net.minecraft.client.renderer.rendertype.RenderSetup$OutlineProperty, boolean, boolean, int);
+  public java.lang.String toString();
+  public static net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder builder(com.mojang.blaze3d.pipeline.RenderPipeline);
+  public java.util.Map<java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup$TextureAndSampler> getTextures();
+  }
+===== javap -p com.mojang.blaze3d.pipeline.RenderPipeline =====
+  Compiled from "RenderPipeline.java"
+  public class com.mojang.blaze3d.pipeline.RenderPipeline implements net.fabricmc.fabric.api.client.rendering.v1.FabricRenderPipeline {
+  private final net.minecraft.resources.Identifier location;
+  private final net.minecraft.resources.Identifier vertexShader;
+  private final net.minecraft.resources.Identifier fragmentShader;
+  private final net.minecraft.client.renderer.ShaderDefines shaderDefines;
+  private final java.util.List<java.lang.String> samplers;
+  private final java.util.List<com.mojang.blaze3d.pipeline.RenderPipeline$UniformDescription> uniforms;
+  private final com.mojang.blaze3d.platform.DepthTestFunction depthTestFunction;
+  private final com.mojang.blaze3d.platform.PolygonMode polygonMode;
+  private final boolean cull;
+  private final com.mojang.blaze3d.platform.LogicOp colorLogic;
+  private final java.util.Optional<com.mojang.blaze3d.pipeline.BlendFunction> blendFunction;
+  private final boolean writeColor;
+  private final boolean writeAlpha;
+  private final boolean writeDepth;
+  private final com.mojang.blaze3d.vertex.VertexFormat vertexFormat;
+  private final com.mojang.blaze3d.vertex.VertexFormat$Mode vertexFormatMode;
+  private final float depthBiasScaleFactor;
+  private final float depthBiasConstant;
+  private final int sortKey;
+  private static int sortKeySeed;
+  protected com.mojang.blaze3d.pipeline.RenderPipeline(net.minecraft.resources.Identifier, net.minecraft.resources.Identifier, net.minecraft.resources.Identifier, net.minecraft.client.renderer.ShaderDefines, java.util.List<java.lang.String>, java.util.List<com.mojang.blaze3d.pipeline.RenderPipeline$UniformDescription>, java.util.Optional<com.mojang.blaze3d.pipeline.BlendFunction>, com.mojang.blaze3d.platform.DepthTestFunction, com.mojang.blaze3d.platform.PolygonMode, boolean, boolean, boolean, boolean, com.mojang.blaze3d.platform.LogicOp, com.mojang.blaze3d.vertex.VertexFormat, com.mojang.blaze3d.vertex.VertexFormat$Mode, float, float, int);
+  public int getSortKey();
+  public static void updateSortKeySeed();
+  public java.lang.String toString();
+  public com.mojang.blaze3d.platform.DepthTestFunction getDepthTestFunction();
+  public com.mojang.blaze3d.platform.PolygonMode getPolygonMode();
+  public boolean isCull();
+  public com.mojang.blaze3d.platform.LogicOp getColorLogic();
+  public java.util.Optional<com.mojang.blaze3d.pipeline.BlendFunction> getBlendFunction();
+  public boolean isWriteColor();
+  public boolean isWriteAlpha();
+  public boolean isWriteDepth();
+  public float getDepthBiasScaleFactor();
+  public float getDepthBiasConstant();
+  public net.minecraft.resources.Identifier getLocation();
+  public com.mojang.blaze3d.vertex.VertexFormat getVertexFormat();
+  public com.mojang.blaze3d.vertex.VertexFormat$Mode getVertexFormatMode();
+  public net.minecraft.resources.Identifier getVertexShader();
+  public net.minecraft.resources.Identifier getFragmentShader();
+  public net.minecraft.client.renderer.ShaderDefines getShaderDefines();
+  public java.util.List<java.lang.String> getSamplers();
+  public java.util.List<com.mojang.blaze3d.pipeline.RenderPipeline$UniformDescription> getUniforms();
+  public boolean wantsDepthTexture();
+  public static com.mojang.blaze3d.pipeline.RenderPipeline$Builder builder(com.mojang.blaze3d.pipeline.RenderPipeline$Snippet...);
+  }
+===== javap -p net.minecraft.client.gui.Font$DisplayMode =====
   Compiled from "Font.java"
-  public interface net.minecraft.client.gui.Font$PreparedText {
-  public abstract void visit(net.minecraft.client.gui.Font$GlyphVisitor);
-  public abstract net.minecraft.client.gui.navigation.ScreenRectangle bounds();
+  public final class net.minecraft.client.gui.Font$DisplayMode extends java.lang.Enum<net.minecraft.client.gui.Font$DisplayMode> {
+  public static final net.minecraft.client.gui.Font$DisplayMode NORMAL;
+  public static final net.minecraft.client.gui.Font$DisplayMode SEE_THROUGH;
+  public static final net.minecraft.client.gui.Font$DisplayMode POLYGON_OFFSET;
+  private static final net.minecraft.client.gui.Font$DisplayMode[] $VALUES;
+  public static net.minecraft.client.gui.Font$DisplayMode[] values();
+  public static net.minecraft.client.gui.Font$DisplayMode valueOf(java.lang.String);
+  private net.minecraft.client.gui.Font$DisplayMode();
+  private static net.minecraft.client.gui.Font$DisplayMode[] $values();
+  static {};
   }
-===== javap -p net.minecraft.client.gui.Font$GlyphVisitor =====
-  Compiled from "Font.java"
-  public interface net.minecraft.client.gui.Font$GlyphVisitor {
-  public static net.minecraft.client.gui.Font$GlyphVisitor forMultiBufferSource(net.minecraft.client.renderer.MultiBufferSource, org.joml.Matrix4f, net.minecraft.client.gui.Font$DisplayMode, int);
-  public default void acceptGlyph(net.minecraft.client.gui.font.TextRenderable$Styled);
-  public default void acceptEffect(net.minecraft.client.gui.font.TextRenderable);
-  public default void acceptEmptyArea(net.minecraft.client.gui.font.EmptyArea);
+===== javap -p net.minecraft.client.renderer.texture.AbstractTexture =====
+  Compiled from "AbstractTexture.java"
+  public abstract class net.minecraft.client.renderer.texture.AbstractTexture implements java.lang.AutoCloseable {
+  protected com.mojang.blaze3d.textures.GpuTexture texture;
+  protected com.mojang.blaze3d.textures.GpuTextureView textureView;
+  protected com.mojang.blaze3d.textures.GpuSampler sampler;
+  public net.minecraft.client.renderer.texture.AbstractTexture();
+  public void close();
+  public com.mojang.blaze3d.textures.GpuTexture getTexture();
+  public com.mojang.blaze3d.textures.GpuTextureView getTextureView();
+  public com.mojang.blaze3d.textures.GpuSampler getSampler();
   }
-===== javap -p net.minecraft.client.gui.font.TextRenderable =====
-  Compiled from "TextRenderable.java"
-  public interface net.minecraft.client.gui.font.TextRenderable {
-  public abstract void render(org.joml.Matrix4f, com.mojang.blaze3d.vertex.VertexConsumer, int, boolean);
-  public abstract net.minecraft.client.renderer.rendertype.RenderType renderType(net.minecraft.client.gui.Font$DisplayMode);
-  public abstract com.mojang.blaze3d.textures.GpuTextureView textureView();
-  public abstract com.mojang.blaze3d.pipeline.RenderPipeline guiPipeline();
-  public abstract float left();
-  public abstract float top();
-  public abstract float right();
-  public abstract float bottom();
-  }
-===== javap -p net.minecraft.client.gui.font.TextRenderable$Styled =====
-  Compiled from "TextRenderable.java"
-  public interface net.minecraft.client.gui.font.TextRenderable$Styled extends net.minecraft.client.gui.font.ActiveArea,net.minecraft.client.gui.font.TextRenderable {
-  public default float activeLeft();
-  public default float activeTop();
-  public default float activeRight();
-  public default float activeBottom();
-  }
-===== javap -p com.mojang.blaze3d.pipeline.RenderPipelines =====
-(no output) Error: class not found: com.mojang.blaze3d.pipeline.RenderPipelines
-===== javap -p net.minecraft.client.renderer.RenderType =====
-(no output) Error: class not found: net.minecraft.client.renderer.RenderType
+===== javap -p net.minecraft.client.renderer.texture.TextureManager =====
+  public void registerAndLoad(net.minecraft.resources.Identifier, net.minecraft.client.renderer.texture.ReloadableTexture);
+  public void registerForNextReload(net.minecraft.resources.Identifier);
+  public void register(net.minecraft.resources.Identifier, net.minecraft.client.renderer.texture.AbstractTexture);
+===== javap -p com.mojang.blaze3d.platform.TextureUtil =====
 ===== shader sources from the compile classpath =====
------ assets/minecraft/shaders/core/rendertype_text_intensity.fsh (from minecraft-merged-bdc1f10070-1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2.jar) -----
+----- assets/minecraft/shaders/core/rendertype_text_see_through.fsh (from minecraft-merged-bdc1f10070-1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2.jar) -----
   #version 330
   
-  #moj_import <minecraft:fog.glsl>
   #moj_import <minecraft:dynamictransforms.glsl>
   
   uniform sampler2D Sampler0;
   
-  in float sphericalVertexDistance;
-  in float cylindricalVertexDistance;
   in vec4 vertexColor;
   in vec2 texCoord0;
   
   out vec4 fragColor;
   
   void main() {
-      vec4 color = texture(Sampler0, texCoord0).rrrr * vertexColor * ColorModulator;
+      vec4 color = texture(Sampler0, texCoord0) * vertexColor;
       if (color.a < 0.1) {
           discard;
       }
-      fragColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
+      fragColor = color * ColorModulator;
   }
------ assets/minecraft/shaders/core/rendertype_text.vsh (from minecraft-merged-bdc1f10070-1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2.jar) -----
-  #version 330
-  
-  #moj_import <minecraft:fog.glsl>
-  #moj_import <minecraft:dynamictransforms.glsl>
-  #moj_import <minecraft:projection.glsl>
-  
-  in vec3 Position;
-  in vec4 Color;
-  in vec2 UV0;
-  in ivec2 UV2;
-  
-  uniform sampler2D Sampler2;
-  
-  out float sphericalVertexDistance;
-  out float cylindricalVertexDistance;
-  out vec4 vertexColor;
-  out vec2 texCoord0;
-  
-  void main() {
-      gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
-  
-      sphericalVertexDistance = fog_spherical_distance(Position);
-      cylindricalVertexDistance = fog_cylindrical_distance(Position);
-      vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);
-      texCoord0 = UV0;
-  }
------ assets/minecraft/shaders/core/rendertype_text.fsh (from minecraft-merged-bdc1f10070-1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2.jar) -----
-  #version 330
-  
-  #moj_import <minecraft:fog.glsl>
-  #moj_import <minecraft:dynamictransforms.glsl>
-  
-  uniform sampler2D Sampler0;
-  
-  in float sphericalVertexDistance;
-  in float cylindricalVertexDistance;
-  in vec4 vertexColor;
-  in vec2 texCoord0;
-  
-  out vec4 fragColor;
-  
-  void main() {
-      vec4 color = texture(Sampler0, texCoord0) * vertexColor * ColorModulator;
-      if (color.a < 0.1) {
-          discard;
-      }
-      fragColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
-  }
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788204358857.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788204747411.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -225,7 +358,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 33s
+BUILD SUCCESSFUL in 1m 52s
 2 actionable tasks: 2 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
