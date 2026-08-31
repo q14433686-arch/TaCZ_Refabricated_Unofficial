@@ -67,6 +67,9 @@ public class RenderClothConfig {
         render.addEntry(entryBuilder.startIntSlider(Component.translatable("config.tacz.client.render.scope_pip_rerender_interval"), RenderConfig.SCOPE_PIP_RERENDER_INTERVAL.get(), 1, 4)
                 .setDefaultValue(1).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_rerender_interval.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_RERENDER_INTERVAL::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_pip_isolate_pipeline"), RenderConfig.SCOPE_PIP_ISOLATE_PIPELINE.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_isolate_pipeline.desc"))
+                .setSaveConsumer(RenderConfig.SCOPE_PIP_ISOLATE_PIPELINE::set).build());
         render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.scope_pip_resolution_scale"), RenderConfig.SCOPE_PIP_RESOLUTION_SCALE.get())
                 .setMin(0.25).setMax(1.0).setDefaultValue(0.75)
                 .setTooltip(Component.translatable("config.tacz.client.render.scope_pip_resolution_scale.desc"))

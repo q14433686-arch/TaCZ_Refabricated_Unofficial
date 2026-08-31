@@ -103,6 +103,16 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.IntValue SCOPE_PIP_RERENDER_INTERVAL;
     /**
+     * 光影下二次渲染时，是否给镜内那一遍配<b>独立的 Iris 管线</b>（时域隔离）。
+     *
+     * <p>Iris 的所有「上一帧」值（previous 矩阵、previous 相机位置）都是<b>读一次推进一次</b>，
+     * 一帧跑两遍世界渲染会让主画面拿到镜内那遍的矩阵做时域重投影——实测三症状同源：
+     * 整屏拖影、体积云噪点闪烁、开镜时镜外整屏发糙。隔离=借 Iris 按维度缓存管线的机制
+     * 给镜内一遍单独一套 colortex/程序/previous 族（26.2 {@code ScopePipIsolatePipeline}
+     * 同名同默认）。代价：多一套光影缓冲（高分辨率下数百 MB 显存）+ 首次开镜一次性着色器编译。</p>
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_ISOLATE_PIPELINE;
+    /**
      * 二次渲染模式下，镜内那遍的渲染分辨率（1.0 = 原生分辨率）。
      *
      * <p>调低可显著减少第二遍世界渲染的 GPU 开销（0.5 = 25% 像素），代价是镜内更软。
@@ -218,7 +228,9 @@ public class RenderConfig {
                                 + "instead of reprojecting the already-rendered frame. The lens then has native "
                                 + "resolution (the reprojection path is capped at screen resolution / zoom). "
                                 + "Costs a full extra world render every frame. Experimental; default off. "
-                                + "This port currently implements only the vanilla (no-shader-pack) path.")
+                                + "Works without a shader pack, and under an Iris pack once "
+                                + "ScopePipAllowShaderPacks is on (the scope pass then runs on its own "
+                                + "Iris pipeline when ScopePipIsolatePipeline is on).")
                 .define("ScopePipRerender", false);
         SCOPE_PIP_RERENDER_INTERVAL = builder.comment(
                         "Rerender mode: truly render the narrow-FOV scope world only every N frames; ",
@@ -226,6 +238,17 @@ public class RenderConfig {
                         "cost of the second world render; the lens CONTENT lags N-1 frames while the ",
                         "main view stays full-rate. Default 1 = render every frame (no reuse).")
                 .defineInRange("ScopePipRerenderInterval", 1, 1, 4);
+        SCOPE_PIP_ISOLATE_PIPELINE = builder.comment(
+                        "Rerender mode under a shader pack: give the scope pass its own Iris pipeline, ",
+                        "so its temporal state cannot corrupt the main view. Iris advances every 'previous ",
+                        "frame' value when it is READ, so rendering the world twice would otherwise leave ",
+                        "the main view reprojecting against the scope pass's matrices (ghosting, ",
+                        "shimmering clouds, grainy screen outside the scope while aiming).",
+                        "",
+                        "Costs an extra set of shader buffers (up to a few hundred MB of VRAM at high ",
+                        "resolutions) and a one-time shader compile the first time you aim. Turn this ",
+                        "off if VRAM is tight, and the artifacts above come back.")
+                .define("ScopePipIsolatePipeline", true);
         SCOPE_PIP_RESOLUTION_SCALE = builder.comment(
                         "Render resolution scale for the scope pass in rerender mode (1.0 = native). "
                                 + "Lower values reduce the GPU cost of the second world render at the price "
