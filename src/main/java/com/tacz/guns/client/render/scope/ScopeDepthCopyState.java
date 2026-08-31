@@ -68,6 +68,33 @@ public final class ScopeDepthCopyState {
     /** Depth after the body draw; differs from APERTURE_TARGET where visible scope geometry survived. */
     private static final DepthTextureTarget POST_BODY_TARGET = new DepthTextureTarget();
 
+    /**
+     * Read-only snapshot of the exact pre-ocular world-depth copy, intended for the depth-based
+     * PIP composite phase.
+     *
+     * <p><b>Accessor-only (Step 1).</b> This method creates no resources and never mutates the
+     * copy; it currently only lets the PIP/composite code observe the raw GL depth texture and
+     * its dimensions/format. The actual {@link com.mojang.blaze3d.textures.GpuTextureView}
+     * binding path is still an open/verified-by-runtime item (see the handoff doc).</p>
+     *
+     * @return immutable handle; {@link DepthHandle#available()} is false before the first BACKUP
+     *         / APERTURE_COPY cycle has allocated or blitted into the target.
+     */
+    public static DepthHandle worldDepthTarget() {
+        return WORLD_TARGET.snapshot();
+    }
+
+    /**
+     * Read-only snapshot of the aperture depth copy (world + ocular near-depth, copied at the
+     * boundary between the invisible ocular draw and the scope-body draw).
+     *
+     * <p><b>Accessor-only (Step 1).</b> Same lifetime/reentrancy contract as
+     * {@link #worldDepthTarget()}: this is a value snapshot, not the live target.</p>
+     */
+    public static DepthHandle apertureDepthTarget() {
+        return APERTURE_TARGET.snapshot();
+    }
+
     private static int backupSourceFbo;
     /** FBO bound while the ocular aperture drew; retained for diagnostics only. */
     private static int ocularSourceFbo;
@@ -603,6 +630,30 @@ public final class ScopeDepthCopyState {
     private record OverriddenUnit(int unit, int previousBinding) {
     }
 
+    /**
+     * Immutable, accessor-only view of one of {@code ScopeDepthCopyState}'s private depth copies.
+     *
+     * <p>The composite/PIP phase must not hold the live {@link #framebuffer()} or
+     * {@link #textureId()} beyond the render thread frame in which it is consumed; the copy
+     * targets are reallocated/rebound in place on cross-frame FBO/format changes. Do not call
+     * {@code glDelete*}, {@code glFramebufferTexture}, or otherwise mutate what this handle
+     * points at — ownership stays inside {@link ScopeDepthCopyState}.</p>
+     */
+    public record DepthHandle(int textureId, int framebuffer, int width, int height,
+                              int internalFormat, boolean available) {
+
+        public DepthHandle {
+            // Normalize hidden invalid states: zero texture + zero framebuffer is "no copy yet".
+            if (textureId == 0 && framebuffer == 0 && (width != 0 || height != 0 || internalFormat != 0)) {
+                throw new IllegalArgumentException("inconsistent depth handle: zero GL ids with nonzero size");
+            }
+        }
+
+        public boolean available() {
+            return available && textureId != 0;
+        }
+    }
+
     /** A private sampleable depth texture plus the depth-only FBO wrapped around it. */
     private static final class DepthTextureTarget {
         private int framebuffer;
@@ -629,6 +680,17 @@ public final class ScopeDepthCopyState {
 
         int internalFormat() {
             return this.internalFormat;
+        }
+
+        DepthHandle snapshot() {
+            return new DepthHandle(
+                    this.texture,
+                    this.framebuffer,
+                    this.width,
+                    this.height,
+                    this.internalFormat,
+                    this.texture != 0 && this.width > 0 && this.height > 0
+            );
         }
 
         boolean ensure(DepthInfo depth) {
