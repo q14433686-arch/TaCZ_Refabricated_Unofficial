@@ -1,4 +1,4 @@
-commit: cb3956499028b2ae85b44579f3028c4d7177704b
+commit: c9b8ba1d72a6c8dc7a0c67a9aecb1f338fd13940
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -75,7 +75,28 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 6 warnings
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788201888222.json
+
+> Task :dumpLangLookupProbe
+===== javap -p net.minecraft.locale.Language =====
+  public static net.minecraft.locale.Language getInstance();
+  public java.lang.String getOrDefault(java.lang.String);
+  public abstract java.lang.String getOrDefault(java.lang.String, java.lang.String);
+  public abstract boolean has(java.lang.String);
+===== javap -p net.minecraft.client.resources.language.I18n =====
+  public static java.lang.String get(java.lang.String, java.lang.Object...);
+  public static boolean exists(java.lang.String);
+===== javap -c -p net.minecraft.client.resources.language.I18n =====
+  private static volatile net.minecraft.locale.Language language;
+  static void setLanguage(net.minecraft.locale.Language);
+  1: putstatic     #26                 // Field language:Lnet/minecraft/locale/Language;
+  0: getstatic     #26                 // Field language:Lnet/minecraft/locale/Language;
+  4: invokevirtual #38                 // Method net/minecraft/locale/Language.getOrDefault:(Ljava/lang/String;)Ljava/lang/String;
+  13: invokestatic  #50                 // Method java/lang/String.format:(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+  0: getstatic     #26                 // Field language:Lnet/minecraft/locale/Language;
+  4: invokevirtual #71                 // Method net/minecraft/locale/Language.has:(Ljava/lang/String;)Z
+  0: invokestatic  #76                 // Method net/minecraft/locale/Language.getInstance:()Lnet/minecraft/locale/Language;
+  3: putstatic     #26                 // Field language:Lnet/minecraft/locale/Language;
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788202629084.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -85,8 +106,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 53s
-1 actionable task: 1 executed
+BUILD SUCCESSFUL in 1m 55s
+2 actionable tasks: 2 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
 == job status: success ==
