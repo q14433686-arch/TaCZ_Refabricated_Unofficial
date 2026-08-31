@@ -918,6 +918,25 @@ public final class PolyMeshGpuRenderer {
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
         // 法线修复用的 MV 栈（见下方 per-draw 的 push/pop 注释；26.2 83daf16 同理移植）。
         Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
+
+        // 【纹理解析必须在开 pass 之前】与上面「UBO/索引缓冲 pass 前写」同一条不变量：
+        // resolveTextureView → TextureManager.getTexture 对未加载的纹理会同步懒加载
+        // （registerAndLoad → ReloadableTexture.apply → CommandEncoder.writeToTexture），
+        // 而 writeToTexture 在打开的 render pass 里被拒（"Close the existing render pass
+        // before performing additional commands"，维护者实机：duyupack kar98un 这类
+        // 「全部件都走 GPU、collector 从不请求其 UV 贴图」的高模枪，GPU pass 就是该纹理
+        // 的首个请求者 ⇒ 每帧在 pass 内炸 ⇒ 贴图错误）。解析结果（含 missing 回退）
+        // 在 pass 外求好，pass 内只做 bindTexture。
+        Map<Identifier, GpuTextureView> viewsByTexture = new HashMap<>();
+        for (Identifier textureId : byTexture.keySet()) {
+            GpuTextureView view = resolveTextureView(textureId);
+            if (view == null) {
+                view = resolveTextureView(MissingTextureAtlasSprite.getLocation());
+            }
+            if (view != null) {
+                viewsByTexture.put(textureId, view);
+            }
+        }
         // 这里不在任何 render pass 内（原版每个批次自己 createRenderPass + close），
         // createRenderPass 的断言安全。
         // 颜色 OptionalInt.empty() = 不清屏，深度 OptionalDouble.empty() = 不清深度。
@@ -941,11 +960,9 @@ public final class PolyMeshGpuRenderer {
             }
 
             for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
-                GpuTextureView textureView = resolveTextureView(group.getKey());
+                GpuTextureView textureView = viewsByTexture.get(group.getKey());
                 if (textureView == null) {
-                    textureView = resolveTextureView(MissingTextureAtlasSprite.getLocation());
-                }
-                if (textureView == null) {
+                    // pass 外解析失败（连 missing 视图都拿不到）：跳过该组，下一帧重试。
                     continue;
                 }
                 pass.bindTexture("Sampler0", textureView, linearSampler);
@@ -998,11 +1015,18 @@ public final class PolyMeshGpuRenderer {
         }
     }
 
+    /** 已记录过解析失败的纹理：同一条每帧 ERROR 刷屏没有增量信息（log-once）。 */
+    private static final java.util.Set<Identifier> LOGGED_TEXTURE_FAILURES = new java.util.HashSet<>();
+
     private static GpuTextureView resolveTextureView(Identifier texture) {
         try {
             return Minecraft.getInstance().getTextureManager().getTexture(texture).getTextureView();
         } catch (Exception e) {
-            LOGGER.error("[TacZMeshLoader] Failed to resolve texture view for {}", texture, e);
+            // 调用约定：本方法必须在 render pass 之外调用（见 drawList 中段的懒加载说明）。
+            if (LOGGED_TEXTURE_FAILURES.add(texture)) {
+                LOGGER.error("[TacZMeshLoader] Failed to resolve texture view for {};"
+                        + " the group falls back to the missing texture until this succeeds.", texture, e);
+            }
             return null;
         }
     }
