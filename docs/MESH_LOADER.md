@@ -538,8 +538,18 @@ resolveLightmap() 取不到 lightmap 视图  ->  lightmapUnavailable = true     
 color target 集合与原版 `ENTITY_CUTOUT` 不一致」那一类（需要拿 Iris 的 `ExtendedRenderPipeline` /
 `MixinRenderPipeline` 逐条对表，沙箱里既没有光影包也没有可反编译的 Loom jar，做不了）。
 所以本轮只做了两件有证据的事：**默认值退回**（`MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders`
-都回 false，代码保留供 A/B）+ **上面那条连带缺陷**（去闩锁、光影下拿不到 lightmap 就整条拒收，
-`GPU world submit refused:` 也补了这个原因串）。
+都回 false，代码保留供 A/B）+ **上面那条连带缺陷**（去闩锁、光影下拿不到 lightmap 就整条拒收）。
+
+**下一轮的判据**（把两键手工打开再进一次光影，其余不动）：
+
+| 日志 | 结论 | 下一步 |
+|---|---|---|
+| 出现 `GPU path refused while a shader pack is active: the level lightmap view is unavailable`（手/通用）或 `GPU world submit refused: shaders are on but the level lightmap view is unavailable`（世界），且**现象消失** | 兜底就是成因，本轮修法命中 | 剩下的问题是「怎么在光影下稳定拿到 lightmap 视图」，另开一轮，别急着把默认改回 true |
+| 两行都没有（lightmap 解析正常）、现象**回来了** | EMISSIVE 被排除 | 只剩「自建管线的 MRT / color target 集合与 `ENTITY_CUTOUT` 不一致」：需要你再给一个**非 deferred / compatibility 档**的包做对照（那个档通常不受影响），我再去对 Iris 的 `ExtendedRenderPipeline` |
+| 两行都没有、现象也**没有** | 说明它其实只跟「老配置里那两键 = true」有关 | 检查 `tacz-client.toml`：默认值改动**只影响新生成的配置**，老档里手工开过的仍是 true |
+
+新加的两行日志都是去重的一次性输出（`loggedLightmapRefusal` / `loggedLightmapFailure` 会在状态恢复时复位），
+不会逐帧刷。第一人称以前是静默拒收（审查 A8 那条），现在也能从日志判定了。
 
 **同步影响**：26.2 那边光影下的 GPU 路径是**默认开**的，而且他们的 `drawList` 更硬
 （直接绑 `mc.gameRenderer.mainRenderTarget()`，完全不看 override = 审查 A1），所以同一个现象在

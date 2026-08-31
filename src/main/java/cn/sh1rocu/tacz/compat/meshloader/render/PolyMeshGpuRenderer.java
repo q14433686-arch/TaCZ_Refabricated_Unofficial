@@ -233,6 +233,8 @@ public final class PolyMeshGpuRenderer {
     private static boolean loggedFormatMismatch = false;
     /** 只是日志去重：以前是一次性闩锁，会把一次瞬时取空变成整会话 EMISSIVE（已改掉，见 resolveLightmap）。 */
     private static boolean loggedLightmapFailure;
+    /** {@link #gpuMasterUsable()} 因「光影 + 取不到 lightmap」拒收时的去重标志（每次拒收只报一行）。 */
+    private static boolean loggedLightmapRefusal;
     /** 手部 pass 进行中（由 GameRendererMixin 在 renderItemInHand HEAD/RETURN 设置）。 */
     private static boolean inHandPass = false;
     /**
@@ -427,8 +429,17 @@ public final class PolyMeshGpuRenderer {
             return false;
         }
         if (IrisCompat.isUsingRenderPack() && !lightmapResolvable()) {
+            // 这条不打出来的话，第一人称那一半就只能靠「现象没消失」来推断（世界路径另有
+            // GPU world submit refused: 那行）。每帧都拒收，所以只报一次，恢复可解析时复位。
+            if (!loggedLightmapRefusal) {
+                loggedLightmapRefusal = true;
+                LOGGER.info("[TacZMeshLoader] GPU path refused while a shader pack is active: the level"
+                        + " lightmap view is unavailable, and the only fallback (EMISSIVE) would change"
+                        + " the lighting semantics. Staying on the collector route.");
+            }
             return false;
         }
+        loggedLightmapRefusal = false;
         return true;
     }
 

@@ -260,7 +260,9 @@ resolveLightmap() 取不到 lightmap 视图 -> lightmapUnavailable = true      <
 - **本仓已改（两条，都不依赖具体光影包）**：① 去闩锁，每帧重试（`getTextureView()` 是缓存读），日志只去重；
   ② 光影下真取不到 lightmap 就**整条拒收**（`gpuMasterUsable()` 加
   `isUsingRenderPack() && !lightmapResolvable()`），退回 collector —— 兜底不该换照明语义，宁可不进 GPU。
-  世界路径 `GPU world submit refused:` 补了同一原因串。
+  世界路径 `GPU world submit refused:` 补了同一原因串；手/通用那条原本**静默**，现在有一行去重 INFO
+  `GPU path refused while a shader pack is active: the level lightmap view is unavailable`（两个标志都在状态
+  恢复时复位）。判据表在 `docs/MESH_LOADER.md` §5.10，26.2 若照抄，日志字符串建议原样保留，方便互相回贴。
 - **对 26.2 的建议**：
   1. 去掉闩锁；顺手把同类「一次性状态位」都扫一遍（`BONE_BUFFER_CAPACITY` 那族）；
   2. 光影下的两个 GPU 键**保持 false**（本仓 R3 一度翻成 true，同日退回），并把「光影 + GPU」的实机判据

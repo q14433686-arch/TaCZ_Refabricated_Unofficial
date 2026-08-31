@@ -23,7 +23,10 @@ SemVer 核心仍是 `1.1.8`，构建元数据不参与比较，见 `gradle.prope
   `getTextureView()` 返回 null 或抛异常就把 `lightmapUnavailable` **永久**置真（只 WARN 一次，整会话不再
   重试），此后每一帧都走 EMISSIVE。改法：① 去闩锁，每帧重试（`getTextureView()` 是缓存读），日志只去重；
   ② 光影下真取不到 lightmap 就**整条拒收**（`gpuMasterUsable()`），退回 collector 由包正常照明 ——
-  兜底不该改变照明语义，宁可不进 GPU；`GPU world submit refused:` 补了这个原因串。
+  兜底不该改变照明语义，宁可不进 GPU；`GPU world submit refused:` 补了这个原因串，手/通用那条以前是
+  **静默**拒收（第一人称无法从日志判定），现在也有一行去重的 INFO
+  `GPU path refused while a shader pack is active: the level lightmap view is unavailable`
+  （两行都在状态恢复时复位，不逐帧刷）。下一轮判据表在 `MESH_LOADER.md` §5.10。
   **默认值随之退回**：`MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` = **false**（`MeshPolyIlluminatedRealSky`
   同样 false —— 它是上一轮我按误读的症状写的，不是维护者报的问题，见 §5.8 的定性块）。TOML 默认值只影响
   新档：老档里已被翻成 true 的用户需要在 Cloth 里手动关，或删掉 `[mesh_loader]` 段。
