@@ -1,4 +1,4 @@
-commit: 23f0e3add658b99d324de1c0613d4cc55adfd258
+commit: 21531445021fd0a682753f8c8a2d820dd6b4d5dc
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -36,7 +36,6 @@ Cannot remap lambda$addMainPass$1 because it does not exist in any of the target
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
@@ -45,6 +44,7 @@ Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the tar
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
 Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
@@ -340,7 +340,118 @@ public class net.minecraft.client.renderer.MultiBufferSource$BufferSource implem
   private void endBatch(net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.BufferBuilder);
 }
 
-===== MultiBufferSource$BufferSource.endBatch full (22 lines) =====
+===== MultiBufferSource$BufferSource -c -p (full) =====
+Compiled from "MultiBufferSource.java"
+public class net.minecraft.client.renderer.MultiBufferSource$BufferSource implements net.minecraft.client.renderer.MultiBufferSource {
+  protected final com.mojang.blaze3d.vertex.ByteBufferBuilder sharedBuffer;
+
+  protected final java.util.SequencedMap<net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.ByteBufferBuilder> fixedBuffers;
+
+  protected final java.util.Map<net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.BufferBuilder> startedBuilders;
+
+  protected net.minecraft.client.renderer.rendertype.RenderType lastSharedType;
+
+  protected net.minecraft.client.renderer.MultiBufferSource$BufferSource(com.mojang.blaze3d.vertex.ByteBufferBuilder, java.util.SequencedMap<net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.ByteBufferBuilder>);
+    Code:
+       0: aload_0
+       1: invokespecial #41                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: new           #43                 // class java/util/HashMap
+       8: dup
+       9: invokespecial #44                 // Method java/util/HashMap."<init>":()V
+      12: putfield      #46                 // Field startedBuilders:Ljava/util/Map;
+      15: aload_0
+      16: aload_1
+      17: putfield      #48                 // Field sharedBuffer:Lcom/mojang/blaze3d/vertex/ByteBufferBuilder;
+      20: aload_0
+      21: aload_2
+      22: putfield      #50                 // Field fixedBuffers:Ljava/util/SequencedMap;
+      25: return
+
+  public com.mojang.blaze3d.vertex.VertexConsumer getBuffer(net.minecraft.client.renderer.rendertype.RenderType);
+    Code:
+       0: aload_0
+       1: getfield      #46                 // Field startedBuilders:Ljava/util/Map;
+       4: aload_1
+       5: invokeinterface #61,  2           // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+      10: checkcast     #63                 // class com/mojang/blaze3d/vertex/BufferBuilder
+      13: astore_2
+      14: aload_2
+      15: ifnull        33
+      18: aload_1
+      19: invokevirtual #69                 // Method net/minecraft/client/renderer/rendertype/RenderType.canConsolidateConsecutiveGeometry:()Z
+      22: ifne          33
+      25: aload_0
+      26: aload_1
+      27: aload_2
+      28: invokevirtual #73                 // Method endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder;)V
+      31: aconst_null
+      32: astore_2
+      33: aload_2
+      34: ifnull        39
+      37: aload_2
+      38: areturn
+      39: aload_0
+      40: getfield      #50                 // Field fixedBuffers:Ljava/util/SequencedMap;
+      43: aload_1
+      44: invokeinterface #76,  2           // InterfaceMethod java/util/SequencedMap.get:(Ljava/lang/Object;)Ljava/lang/Object;
+      49: checkcast     #78                 // class com/mojang/blaze3d/vertex/ByteBufferBuilder
+      52: astore_3
+      53: aload_3
+      54: ifnull        77
+      57: new           #63                 // class com/mojang/blaze3d/vertex/BufferBuilder
+      60: dup
+      61: aload_3
+      62: aload_1
+      63: invokevirtual #82                 // Method net/minecraft/client/renderer/rendertype/RenderType.mode:()Lcom/mojang/blaze3d/vertex/VertexFormat$Mode;
+      66: aload_1
+      67: invokevirtual #86                 // Method net/minecraft/client/renderer/rendertype/RenderType.format:()Lcom/mojang/blaze3d/vertex/VertexFormat;
+      70: invokespecial #89                 // Method com/mojang/blaze3d/vertex/BufferBuilder."<init>":(Lcom/mojang/blaze3d/vertex/ByteBufferBuilder;Lcom/mojang/blaze3d/vertex/VertexFormat$Mode;Lcom/mojang/blaze3d/vertex/VertexFormat;)V
+      73: astore_2
+      74: goto          117
+      77: aload_0
+      78: getfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
+      81: ifnull        92
+      84: aload_0
+      85: aload_0
+      86: getfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
+      89: invokevirtual #94                 // Method endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+      92: new           #63                 // class com/mojang/blaze3d/vertex/BufferBuilder
+      95: dup
+      96: aload_0
+      97: getfield      #48                 // Field sharedBuffer:Lcom/mojang/blaze3d/vertex/ByteBufferBuilder;
+     100: aload_1
+     101: invokevirtual #82                 // Method net/minecraft/client/renderer/rendertype/RenderType.mode:()Lcom/mojang/blaze3d/vertex/VertexFormat$Mode;
+     104: aload_1
+     105: invokevirtual #86                 // Method net/minecraft/client/renderer/rendertype/RenderType.format:()Lcom/mojang/blaze3d/vertex/VertexFormat;
+     108: invokespecial #89                 // Method com/mojang/blaze3d/vertex/BufferBuilder."<init>":(Lcom/mojang/blaze3d/vertex/ByteBufferBuilder;Lcom/mojang/blaze3d/vertex/VertexFormat$Mode;Lcom/mojang/blaze3d/vertex/VertexFormat;)V
+     111: astore_2
+     112: aload_0
+     113: aload_1
+     114: putfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
+     117: aload_0
+     118: getfield      #46                 // Field startedBuilders:Ljava/util/Map;
+     121: aload_1
+     122: aload_2
+     123: invokeinterface #98,  3           // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     128: pop
+     129: aload_2
+     130: areturn
+
+  public void endLastBatch();
+    Code:
+       0: aload_0
+       1: getfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
+       4: ifnull        20
+       7: aload_0
+       8: aload_0
+       9: getfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
+      12: invokevirtual #94                 // Method endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+      15: aload_0
+      16: aconst_null
+      17: putfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
+      20: return
+
   public void endBatch();
     Code:
        0: aload_0
@@ -363,20 +474,59 @@ public class net.minecraft.client.renderer.MultiBufferSource$BufferSource implem
       43: goto          19
       46: return
 
-===== MultiBufferSource$BufferSource.endLastBatch full (14 lines) =====
-  public void endLastBatch();
+  public void endBatch(net.minecraft.client.renderer.rendertype.RenderType);
     Code:
        0: aload_0
-       1: getfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
-       4: ifnull        20
-       7: aload_0
-       8: aload_0
-       9: getfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
-      12: invokevirtual #94                 // Method endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
-      15: aload_0
-      16: aconst_null
-      17: putfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
-      20: return
+       1: getfield      #46                 // Field startedBuilders:Ljava/util/Map;
+       4: aload_1
+       5: invokeinterface #125,  2          // InterfaceMethod java/util/Map.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+      10: checkcast     #63                 // class com/mojang/blaze3d/vertex/BufferBuilder
+      13: astore_2
+      14: aload_2
+      15: ifnull        24
+      18: aload_0
+      19: aload_1
+      20: aload_2
+      21: invokevirtual #73                 // Method endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder;)V
+      24: return
+
+  private void endBatch(net.minecraft.client.renderer.rendertype.RenderType, com.mojang.blaze3d.vertex.BufferBuilder);
+    Code:
+       0: aload_2
+       1: invokevirtual #129                // Method com/mojang/blaze3d/vertex/BufferBuilder.build:()Lcom/mojang/blaze3d/vertex/MeshData;
+       4: astore_3
+       5: aload_3
+       6: ifnull        53
+       9: aload_1
+      10: invokevirtual #132                // Method net/minecraft/client/renderer/rendertype/RenderType.sortOnUpload:()Z
+      13: ifeq          48
+      16: aload_0
+      17: getfield      #50                 // Field fixedBuffers:Ljava/util/SequencedMap;
+      20: aload_1
+      21: aload_0
+      22: getfield      #48                 // Field sharedBuffer:Lcom/mojang/blaze3d/vertex/ByteBufferBuilder;
+      25: invokeinterface #135,  3          // InterfaceMethod java/util/SequencedMap.getOrDefault:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      30: checkcast     #78                 // class com/mojang/blaze3d/vertex/ByteBufferBuilder
+      33: astore        4
+      35: aload_3
+      36: aload         4
+      38: invokestatic  #141                // Method com/mojang/blaze3d/systems/RenderSystem.getProjectionType:()Lcom/mojang/blaze3d/ProjectionType;
+      41: invokevirtual #147                // Method com/mojang/blaze3d/ProjectionType.vertexSorting:()Lcom/mojang/blaze3d/vertex/VertexSorting;
+      44: invokevirtual #151                // Method com/mojang/blaze3d/vertex/MeshData.sortQuads:(Lcom/mojang/blaze3d/vertex/ByteBufferBuilder;Lcom/mojang/blaze3d/vertex/VertexSorting;)Lcom/mojang/blaze3d/vertex/MeshData$SortState;
+      47: pop
+      48: aload_1
+      49: aload_3
+      50: invokevirtual #155                // Method net/minecraft/client/renderer/rendertype/RenderType.draw:(Lcom/mojang/blaze3d/vertex/MeshData;)V
+      53: aload_1
+      54: aload_0
+      55: getfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
+      58: invokevirtual #159                // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+      61: ifeq          69
+      64: aload_0
+      65: aconst_null
+      66: putfield      #91                 // Field lastSharedType:Lnet/minecraft/client/renderer/rendertype/RenderType;
+      69: return
+}
 
 ===== RenderSystem (filtered) =====
   public static com.mojang.blaze3d.textures.GpuTextureView outputColorTextureOverride;
@@ -387,7 +537,7 @@ public class net.minecraft.client.renderer.MultiBufferSource$BufferSource implem
   public static net.minecraft.client.renderer.DynamicUniforms getDynamicUniforms();
   public static void bindDefaultUniforms(com.mojang.blaze3d.systems.RenderPass);
   public static void bindDefaultUniforms(com.mojang.blaze3d.systems.RenderPass);
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788166540596.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788166693988.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -397,7 +547,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 46s
+BUILD SUCCESSFUL in 1m 57s
 2 actionable tasks: 2 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
