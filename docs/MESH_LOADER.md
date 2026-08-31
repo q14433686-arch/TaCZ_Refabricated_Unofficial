@@ -660,10 +660,39 @@ color target 集合与原版 `ENTITY_CUTOUT` 不一致」那一类（需要拿 I
 |---|---|---|
 | ① collector 换成 `RenderTypes.entityCutoutNoCull` | 所有 poly 语境的剔除状态 | 双面几何会开始遮挡内部件、半透明叠加也会变；掉落物 / 展示框 / 弹匣 / GUI 要整轮重验（§5.2 清单） |
 | ② 从数据反推绕序（面叉积与「面中心 − 模型质心」点积，逐面决定是否反转） | `PolyMesh` 构造函数，两条路一起 | 凹形与薄板会误判；需要一批真实枪包做统计，不能拿一把枪定结论 |
-| ③ 维持现状（当前） | —— | 与上游观感一致；第 1 层不自洽留在数据层，代价就是最初那条「高光偏一侧」**仍未修** |
+| ③ 维持现状（当前） | —— | 与上游观感一致；第 1 层不自洽留在数据层（近全黑风险仍在）。最初那条「高光偏一侧」**已另有确认根因**：法线矩阵的读取时刻，见下面 §6.1，与本表的三层不是一回事 |
 
 **接手者需要的材料**：Iris 与光影包的版本号、上面第 4 步的镂空判别、以及若选 ①：改完之后
 第一人称 / 第三人称 / 展示框 + 一把带半透明部件的枪的截图。
+
+### 6.1 另一条已定案根因：光影包的 `gl_NormalMatrix` 读取时刻（2026-09-01，随 26.2 `83daf16` 同步）
+
+**症状**：GPU 路径画出的 mesh 枪在光影包下**反光/高光偏一侧**、与光源的相对关系不对
+（维护者 2026-09-01 从 26.1.2 线转来 26.2 的实锤，机制对 Iris 1.10/1.11 同样成立）。
+
+**机制**：光影包引用的 `gl_NormalMatrix`（Iris 经 `VanillaCoreTransformer` 改名 `iris_NormalMat`）
+**不来自** DynamicTransforms 快照，而是 Iris 在**绘制执行那一刻**读 RenderSystem 的 MV 栈顶求逆转置
+（`ExtendedShader#iris$setupState`：`RenderSystem.getModelViewMatrixCopy().invert(…).transpose3x3(…)`；
+1.21.11 的触发点是 `GlCommandEncoder#executeDraw → trySetup`，逐次绘制都会过）。
+本文件的 GPU 路径把顶点**留在骨骼本地系**（`PolyMesh#writeRaw` 裸写 `setNormal`），
+法线的全部旋转就指望这一个矩阵补上 ⇒ 栈顶没有 pose 层时，平行光/反射按骨骼本地法线计算。
+**位置不受影响**：`ModelViewMat` 走 `writeTransform` 写好的 DynamicTransforms 切片，一直是错的时刻无关正确的。
+
+**我方与 26.2 的形状差别**：他们首版是「压栈 → `prepare()` → 立刻弹栈 → 再 `drawFromBuffer`」，弹早了；
+我方 `PolyMeshGpuRenderer#drawList` 则**从未压过栈**（只在 pass 外写切片、pass 内 `setUniform` 换 slice），
+所以病灶更彻底。同批修法：每次绘制的 `pass.drawIndexed(…)` 整段包在
+`mvStack.pushMatrix(); mvStack.mul(entry.model()); … finally { mvStack.popMatrix(); }` 里
+—— pose 必须留在栈上直到该次绘制执行完。同一个手法我方在镜内覆盖层里早已在用：`client/render/scope/ScopeFinalOverlayState.java:165-214`
+（`modelView.pushMatrix()` + `set(...)` 罩住整段 flush，`finally` 里 `popMatrix()`），本次只是把它搬到逐 entry 的绘制上。
+
+**不受牵连的两条**（所以这批改落在没装光影包时是纯空转）：
+① 本文件 §5.10 与 vanilla 路径都带 `NO_CARDINAL_LIGHTING`，核心 entity shader 那条分支不读法线；
+② collector 路径把 pose 烘进顶点，栈顶是什么都不影响它的法线。
+
+**证据级别**：机制 = 26.2 实机实锤（`83daf16`）；我方代码 = 静态推导 + CI 编译门，**实机待验** ——
+按本仓库 AGENTS §2，"病灶一致 + 修法同批"不等于"我方已修好"。
+**判别法**（接手者跑这个就够）：同光影包同枪，慢慢水平转视角，看高光是否**跟着枪身表面**走；
+`MeshGpuBaking=false` 时同一段应无变化（那时走 collector，本来就没这个病灶）。
 
 **交叉引用**：§5.7（矩阵已按实机回填，第 4 格 = 现状）、§5.10（光影下两键退回 false 与那次 PASS 的边界）、
 `docs/REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A10（上游侧已按本节缩小建议）、

@@ -30,6 +30,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -857,6 +858,8 @@ public final class PolyMeshGpuRenderer {
                 RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
         indices.getBuffer(maxIndexCount);
 
+        // 光影包读法线矩阵的时刻见下方 draw 前的注释 —— 这里先取一次栈句柄。
+        Matrix4fStack mvStack = RenderSystem.getModelViewStack();
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
         // 这里不在任何 render pass 内（原版每个批次自己 createRenderPass + close），
         // createRenderPass 的断言安全。
@@ -894,9 +897,30 @@ public final class PolyMeshGpuRenderer {
                     pass.setUniform("DynamicTransforms", transformByEntry.get(entry));
                     pass.setVertexBuffer(0, entry.bone().vertexBuffer);
                     pass.setIndexBuffer(indices.getBuffer(entry.bone().indexCount), indices.type());
-                    // 1.21.11 drawIndexed(baseVertex, firstIndex, count, instanceCount)：
-                    // 顺序索引缓冲 0..count-1，故 baseVertex=0、firstIndex=0、单实例。
-                    pass.drawIndexed(0, 0, entry.bone().indexCount, 1);
+                    // 【法线病灶 · 26.2 的 83daf16 同源，机制对 Iris 1.10/1.11 同样成立】
+                    // 光影包里的 gl_NormalMatrix（被 Iris 改名 iris_NormalMat）**不来自**上面那份
+                    // DynamicTransforms 快照，而是 Iris 在【绘制执行那一刻】读 RenderSystem MV 栈顶
+                    // 的逆转置（Iris 源码 ExtendedShader#iris$setupState：
+                    // {@code RenderSystem.getModelViewMatrixCopy().invert(t).transpose3x3(normalMatrix)}；
+                    // 1.21.11 上的触发点是 GlCommandEncoder#executeDraw -> trySetup，每次绘制都过一遍）。
+                    // 本仓骨骼顶点法线是骨骼本地系（{@code PolyMesh#writeRaw} 裸写 setNormal），
+                    // 全部旋转都靠这一个矩阵补上：栈顶少了 pose_bone 那一层，平行光/反射就按
+                    // 本地法线算 —— 表现即「反光/高光偏一侧、与光源关系不对」。
+                    // 位置不受影响：ModelViewMat 走 DynamicTransforms 快照，上面已按 entry 写好。
+                    // 所以 pose 必须留在栈上直到 drawIndexed 真正执行完，不能像首版那样只喂
+                    // 快照就弹栈。vanilla（无光影）不受牵连：两条管线都带 NO_CARDINAL_LIGHTING，
+                    // 核心 entity shader 那条分支不读法线 ⇒ 没装光影包时这段是纯空转。
+                    // 与 26.2 的差别只在形状：他们那版走 RenderType#prepare + drawFromBuffer，
+                    // 我们把整段绘制包在 push/finally-pop 里（同本仓 ScopeFinalOverlayState 的既有手法）。
+                    mvStack.pushMatrix();
+                    try {
+                        mvStack.mul(entry.model());
+                        // 1.21.11 drawIndexed(baseVertex, firstIndex, count, instanceCount)：
+                        // 顺序索引缓冲 0..count-1，故 baseVertex=0、firstIndex=0、单实例。
+                        pass.drawIndexed(0, 0, entry.bone().indexCount, 1);
+                    } finally {
+                        mvStack.popMatrix();
+                    }
                 }
             }
             boolean already = worldPass ? loggedFirstWorldDraw : loggedFirstDraw;

@@ -60,11 +60,25 @@
 
 我方 1.21.11 的消费点正是 `renderAllFeatures` RETURN（`mixin/client/FeatureRenderDispatcherMixin`），
 依据是我方自己那条字节码记录（主通道一次、粒子节点一次、手部尾一次），**但没有你们那张四点位表**。
-同时我方有一条仍未修的立项：光影下"反光/高光偏一侧"（账本 L-8b、`docs/MESH_LOADER.md` 那节），
-症状与你们说的"贴在视空间"高度相似。⇒ 请你们回两样东西：
+⇒ 请你们回两样东西：
 
 1. `renderSolidFeatures` / `renderAllFeatures` 在 26.1.2 的**调用点全表**（你们探针 round 4 已有）；
 2. 你们用来区分"贴视空间"与"绕序×剔除相互抵消"的**两个开关组合 + 三条日志**，写成可复制的判据。
+
+**同日更新（2026-09-01，你们 26.2 的 `83daf16`）**：那条"光影下反光/高光偏一侧"既不是"贴在视空间"、
+也不是绕序×剔除抵消，根因在**法线矩阵的读取时刻** —— Iris 的 `ExtendedShader#iris$setupState` 里
+`gl_NormalMatrix`（被 `VanillaCoreTransformer` 改名 `iris_NormalMat`）取的是
+`RenderSystem.getModelViewMatrixCopy().invert(…).transpose3x3(…)`，即**绘制执行那一刻**的 MV 栈顶逆转置，
+**不吃** `prepare()` / DynamicTransforms 快照。poly 的顶点法线是骨骼本地系（`PolyMesh#writeRaw` 裸写），
+整条旋转就指望这个矩阵 ⇒ 栈顶少了 pose 层，光照/反射按本地法线算；位置不受影响（`ModelViewMat` 走快照）。
+我方这边的形状比你们修前那版更裸：`PolyMeshGpuRenderer#drawList` **从来没有**往 MV 栈压过 pose
+（只在 pass 外 `writeTransform` 写 DynamicTransforms 切片、pass 内 `setUniform` 换 slice），
+所以本分支同步为：每条绘制的 `pass.drawIndexed(…)` 前后 `mvStack.pushMatrix(); mvStack.mul(entry.model()); … finally mvStack.popMatrix();`
+—— pose 留在栈上过完整次绘制才弹。**请你们自查 26.1.2 的 `drawList`**：若你们也是"压栈 → `prepare()` → 立刻弹栈 → 再绘制"，
+那就是 `83daf16` 修前的样子；1.21.11 上的触发点是 `GlCommandEncoder#executeDraw → trySetup`（每次绘制都过一遍，
+我方审计记录在 `docs/RENDER_PIPELINE_SCOPE_AUDIT_26_1_2.md` §…"Iris 在 `GlCommandEncoder#trySetup` 中把
+vanilla/custom `RenderPipeline` 替换为 `ExtendedShader`"那一行），所以逐 entry 压栈在本世代同样成立。
+证据级别：机制 = 你们 26.2 的**实机实锤**；我方这一改动 = 静态推导 + 编译门，**实机未验**。
 
 我方会拿它在 1.21.11 上对表：若主通道那次 `renderAllFeatures` 并非"世界 solid flush"（而是更晚的合并点），
 我们也会把消费点挪走；这一步**在挪之前不下任何结论**。

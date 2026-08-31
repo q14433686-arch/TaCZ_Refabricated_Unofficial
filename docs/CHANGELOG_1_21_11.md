@@ -5,6 +5,53 @@
 
 ---
 
+## 光影下 mesh 枪「反光/高光偏一侧」：按 26.2 `83daf16` 的定案根因同批修复（2026-09-01 第四则）
+
+**来源与维护者原话**（不改写成机制描述）：「26.1.2 → 1.21.11 同步 · mesh GPU 法线 · 2026-09-01 ——
+根因（26.2 `83daf16` 实锤，机制对 Iris 1.10/1.11 同样成立）：光影包 `gl_NormalMatrix` = Iris 在绘制执行时刻
+读 RenderSystem MV 栈顶的逆转置，不吃 DynamicTransforms 快照；GPU 路径顶点法线是骨骼本地系，栈顶没有 pose 层
+⇒ 法线朝向错 ⇒ 反光/平行光关系错。修法：`drawList` 每次绘制前 `getModelViewStack().pushMatrix();
+mul(entry.model());`、`finally popMatrix()`——位置切片不动（快照已对），vanilla 路径零影响。」
+
+**我方核到的本分支形状（读自己的代码，不照抄 26.2 的叙述）**：本分支的 GPU mesh 渲染器是
+`src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java`（970 行，
+**不是** 26.2 的 `com/tacz/guns/client/model/poly_mesh/*` 布局 —— 全仓 grep 确认我方 docs 里也没误用那边的类名），
+它有同名结构 `DrawEntry(Matrix4f model, Identifier texture, BakedBone bone)` 与 `private static void drawList(...)`。
+差别在形状更裸：**26.2 首版是「压栈 → `prepare()` → 立刻弹栈 → 绘制」，我方是「从来没压过栈」**
+—— 只在开 pass 前 `RenderSystem.getDynamicUniforms().writeTransform(mv, …)` 逐 entry 写切片、pass 内
+`pass.setUniform("DynamicTransforms", slice)`，`RenderSystem.getModelViewStack()` 全程未动
+（全仓唯一动栈的是 `ScopeFinalOverlayState`，它用的是正确的「罩住整段绘制再 pop」手法）。
+法线侧：`PolyMesh#writeRaw` 确实裸写 `.setNormal(bakedNX, bakedNY, bakedNZ)`（骨骼本地系），
+故本世代同样命中该病灶，且比他们更早、更彻底。
+
+**落地（唯一一处代码改动，`drawList` 的逐 entry 循环）**：把 `pass.drawIndexed(0, 0, indexCount, 1)` 整段包进
+`mvStack.pushMatrix(); try { mvStack.mul(entry.model()); …; } finally { mvStack.popMatrix(); }`
+（`mvStack = RenderSystem.getModelViewStack()`，句柄提到纹理分组循环外取一次；新增 `import org.joml.Matrix4fStack`）。
+乘序 `MV_flush × pose` 与已写好的 DynamicTransforms 切片同源，二者逐帧等价 ⇒ **位置不变**；
+`finally` 保证异常路径不污染后续 `endLastBatch`/别的 mod 的绘制。
+**不加配置键**：按本仓 AGENTS「修 BUG 的不能做成可开关」，且这是可证伪的病灶修复，不是实验路径。
+
+**为什么 vanilla（无光影）确实是零影响**（我方自己核的，不是照搬他们的结论）：`LIT_PIPELINE` 与
+`EMISSIVE_PIPELINE` 都带 `NO_CARDINAL_LIGHTING` define，vanilla `core/entity` 那条分支不读法线；
+光影下 Iris 会按 `tacz:pipeline/mesh_entity` 登记的 program（`IrisCompat#assignMeshPipelineToHand` /
+`assignMeshPipelineToEntity`）换成包自己的程序，法线才走 `gl_NormalMatrix` —— 正是本改动的受益路径。
+1.21.11 的逐绘制触发点为 `GlCommandEncoder#executeDraw → trySetup`（我方既有审计：
+`docs/RENDER_PIPELINE_SCOPE_AUDIT_26_1_2.md`「Iris 在 `GlCommandEncoder#trySetup` 中把 vanilla/custom
+`RenderPipeline` 替换为 `ExtendedShader`」），且我们逐 entry `setUniform` 会弄脏状态 ⇒ 每次绘制都重过 setupState
+⇒ 逐 entry 压栈在本世代成立，不是把 26.2 的 `RenderType#prepare` 形状生搬。
+
+**同时更正我方文档里的两处错误归因**：① 曾把「反光/高光偏一侧」挂在 L-8b（绕序 × 剔除抵消）名下 ——
+两者是不同的病灶，绕序不自洽本身仍未修；② 曾猜它与 L-12「世界 GPU 消费点/贴视空间」同源 —— 现撤销这条旁证，
+四点位表照旧要。**账本新增 L-15**（已落地待实机）、L-8b/L-12 两行同步更正；`docs/MESH_LOADER.md` 新开
+**§6.1**（机制、两代形状差别、两条不受牵连、判别法：转视角看高光是否跟枪身走 + `MeshGpuBaking=false` 时不应有变化）；
+发给 Fabric 26.1.2 的清单里加一条「请自查你们 26.1.2 的 `drawList` 是不是 `83daf16` 修前那个弹早了的形状」。
+
+**证据级别（按 §2 写死）**：机制 = 26.2 **实机实锤**；我方本次 = 静态推导 + CI 编译门，**实机未验** ⇒
+账本与 §6.1 都写「已同修、待实机」，不写「已修好」；沙箱无 Loom 依赖与 Iris jar，Iris 侧读栈时刻引用的是
+26.2 提交的源码摘录 + 我方既有审计，未在本沙箱重跑 javap。本轮未改 `gradle.properties` 版本号。
+
+---
+
 ## 姊妹对象更正：同步清单改写为发给 NeoForge 项目的 1.21.11 分支（新增第二份清单，第一份保留并更正收件人）2026-09-01
 
 **维护者一句话纠正**：上一节的"同步清单"对象写错了 —— 姊妹指的是隔壁
