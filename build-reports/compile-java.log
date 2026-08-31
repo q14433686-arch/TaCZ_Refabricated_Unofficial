@@ -1,4 +1,4 @@
-commit: 61d98c246697321aae25add7ef24147e9003982f
+commit: 9f73b5bfaff352c9d9cc082467c32051927d48c7
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -21,367 +21,126 @@ Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
-=== FCAP2 forgeconfigapiport-fabric-26.1.5.jar
------ BEGIN net.minecraftforge.common.ForgeConfigSpec$ConfigValue
-  public T get();
+=== FCAP3 forgeconfigapiport-fabric-26.1.5.jar
+Compiled from "ConfigRegistryImpl.java"
+public final class fuzs.forgeconfigapiport.fabric.impl.core.ConfigRegistryImpl implements fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry {
+  public fuzs.forgeconfigapiport.fabric.impl.core.ConfigRegistryImpl();
     Code:
          0: aload_0
-         1: getfield      #41                 // Field spec:Lnet/minecraftforge/common/ForgeConfigSpec;
-         4: ldc           #45                 // String Cannot get config value before spec is built
-         6: invokestatic  #47                 // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
-         9: pop
-        10: getstatic     #53                 // Field fuzs/forgeconfigapiport/impl/services/CommonAbstractions.INSTANCE:Lfuzs/forgeconfigapiport/impl/services/CommonAbstractions;
-        13: invokeinterface #59,  1           // InterfaceMethod fuzs/forgeconfigapiport/impl/services/CommonAbstractions.isDevelopmentEnvironment:()Z
-        18: ifeq          41
-        21: aload_0
-        22: getfield      #41                 // Field spec:Lnet/minecraftforge/common/ForgeConfigSpec;
-        25: getfield      #63                 // Field net/minecraftforge/common/ForgeConfigSpec.childConfig:Lcom/electronwill/nightconfig/core/Config;
-        28: ifnonnull     41
-        31: new           #69                 // class java/lang/IllegalStateException
-        34: dup
-        35: ldc           #71                 // String Cannot get config value before config is loaded.\nThis error is currently only thrown in the development environment, to avoid breaking published mods.\nIn a future version, this will also throw in the production environment.\n
-        37: invokespecial #73                 // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
-        40: athrow
-        41: aload_0
-        42: getfield      #41                 // Field spec:Lnet/minecraftforge/common/ForgeConfigSpec;
-        45: getfield      #63                 // Field net/minecraftforge/common/ForgeConfigSpec.childConfig:Lcom/electronwill/nightconfig/core/Config;
-        48: ifnonnull     61
-        51: aload_0
-        52: getfield      #21                 // Field defaultSupplier:Ljava/util/function/Supplier;
-        55: invokeinterface #76,  1           // InterfaceMethod java/util/function/Supplier.get:()Ljava/lang/Object;
-        60: areturn
-        61: aload_0
-        62: getfield      #9                  // Field cachedValue:Ljava/lang/Object;
-        65: ifnonnull     91
-        68: aload_0
-        69: aload_0
-        70: aload_0
-        71: getfield      #41                 // Field spec:Lnet/minecraftforge/common/ForgeConfigSpec;
-        74: getfield      #63                 // Field net/minecraftforge/common/ForgeConfigSpec.childConfig:Lcom/electronwill/nightconfig/core/Config;
-        77: aload_0
-        78: getfield      #17                 // Field path:Ljava/util/List;
-        81: aload_0
-        82: getfield      #21                 // Field defaultSupplier:Ljava/util/function/Supplier;
-        85: invokevirtual #82                 // Method getRaw:(Lcom/electronwill/nightconfig/core/Config;Ljava/util/List;Ljava/util/function/Supplier;)Ljava/lang/Object;
-        88: putfield      #9                  // Field cachedValue:Ljava/lang/Object;
-        91: aload_0
-        92: getfield      #9                  // Field cachedValue:Ljava/lang/Object;
-        95: areturn
-
-  public void save();
-    Code:
-         0: aload_0
-         1: getfield      #41                 // Field spec:Lnet/minecraftforge/common/ForgeConfigSpec;
-         4: ldc           #92                 // String Cannot save config value before spec is built
-         6: invokestatic  #47                 // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
-         9: pop
-        10: aload_0
-        11: getfield      #41                 // Field spec:Lnet/minecraftforge/common/ForgeConfigSpec;
-        14: getfield      #63                 // Field net/minecraftforge/common/ForgeConfigSpec.childConfig:Lcom/electronwill/nightconfig/core/Config;
-        17: ldc           #94                 // String Cannot save config value without assigned Config object present
-        19: invokestatic  #47                 // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
-        22: pop
-        23: aload_0
-        24: getfield      #41                 // Field spec:Lnet/minecraftforge/common/ForgeConfigSpec;
-        27: invokevirtual #96                 // Method net/minecraftforge/common/ForgeConfigSpec.save:()V
-        30: return
-
-  public void set(T);
-    Code:
-         0: aload_0
-         1: getfield      #41                 // Field spec:Lnet/minecraftforge/common/ForgeConfigSpec;
-         4: ldc           #99                 // String Cannot set config value before spec is built
-         6: invokestatic  #47                 // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
-         9: pop
-        10: aload_0
-        11: getfield      #41                 // Field spec:Lnet/minecraftforge/common/ForgeConfigSpec;
-        14: getfield      #63                 // Field net/minecraftforge/common/ForgeConfigSpec.childConfig:Lcom/electronwill/nightconfig/core/Config;
-        17: ldc           #101                // String Cannot set config value without assigned Config object present
-        19: invokestatic  #47                 // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
-        22: pop
-        23: aload_0
-        24: getfield      #41                 // Field spec:Lnet/minecraftforge/common/ForgeConfigSpec;
-        27: getfield      #63                 // Field net/minecraftforge/common/ForgeConfigSpec.childConfig:Lcom/electronwill/nightconfig/core/Config;
-        30: aload_0
-        31: getfield      #17                 // Field path:Ljava/util/List;
-        34: aload_1
-        35: invokeinterface #103,  3          // InterfaceMethod com/electronwill/nightconfig/core/Config.set:(Ljava/util/List;Ljava/lang/Object;)Ljava/lang/Object;
-        40: pop
-        41: aload_0
-        42: aload_1
-        43: putfield      #9                  // Field cachedValue:Ljava/lang/Object;
-        46: return
-
------ END net.minecraftforge.common.ForgeConfigSpec$ConfigValue
------ BEGIN net.minecraftforge.common.ForgeConfigSpec
-  public void setConfig(com.electronwill.nightconfig.core.CommentedConfig);
-    Code:
-         0: aload_0
-         1: aload_1
-         2: putfield      #32                 // Field childConfig:Lcom/electronwill/nightconfig/core/Config;
-         5: aload_1
-         6: ifnull        93
-         9: aload_0
-        10: aload_1
-        11: invokevirtual #36                 // Method isCorrect:(Lcom/electronwill/nightconfig/core/CommentedConfig;)Z
-        14: ifne          93
-        17: aload_1
-        18: instanceof    #40                 // class com/electronwill/nightconfig/core/file/FileConfig
-        21: ifeq          41
-        24: aload_1
-        25: checkcast     #40                 // class com/electronwill/nightconfig/core/file/FileConfig
-        28: invokeinterface #42,  1           // InterfaceMethod com/electronwill/nightconfig/core/file/FileConfig.getNioPath:()Ljava/nio/file/Path;
-        33: invokeinterface #46,  1           // InterfaceMethod java/nio/file/Path.toString:()Ljava/lang/String;
-        38: goto          47
-        41: aload_1
-        42: invokeinterface #52,  1           // InterfaceMethod com/electronwill/nightconfig/core/CommentedConfig.toString:()Ljava/lang/String;
-        47: astore_2
-        48: getstatic     #55                 // Field LOGGER:Lorg/apache/logging/log4j/Logger;
-        51: ldc           #59                 // String Configuration file {} is not correct. Correcting
-        53: aload_2
-        54: invokeinterface #61,  3           // InterfaceMethod org/apache/logging/log4j/Logger.warn:(Ljava/lang/String;Ljava/lang/Object;)V
-        59: aload_0
-        60: aload_1
-        61: invokedynamic #67,  0             // InvokeDynamic #0:onCorrect:()Lcom/electronwill/nightconfig/core/ConfigSpec$CorrectionListener;
-        66: invokedynamic #71,  0             // InvokeDynamic #1:onCorrect:()Lcom/electronwill/nightconfig/core/ConfigSpec$CorrectionListener;
-        71: invokevirtual #72                 // Method correct:(Lcom/electronwill/nightconfig/core/CommentedConfig;Lcom/electronwill/nightconfig/core/ConfigSpec$CorrectionListener;Lcom/electronwill/nightconfig/core/ConfigSpec$CorrectionListener;)I
-        74: pop
-        75: aload_1
-        76: instanceof    #40                 // class com/electronwill/nightconfig/core/file/FileConfig
-        79: ifeq          93
-        82: aload_1
-        83: checkcast     #40                 // class com/electronwill/nightconfig/core/file/FileConfig
-        86: astore_3
-        87: aload_3
-        88: invokeinterface #76,  1           // InterfaceMethod com/electronwill/nightconfig/core/file/FileConfig.save:()V
-        93: aload_0
-        94: invokevirtual #80                 // Method afterReload:()V
-        97: return
-
-  public void acceptConfig(com.electronwill.nightconfig.core.CommentedConfig);
-    Code:
-         0: aload_0
-         1: aload_1
-         2: invokevirtual #83                 // Method setConfig:(Lcom/electronwill/nightconfig/core/CommentedConfig;)V
-         5: return
-
-  public void save();
-    Code:
-         0: aload_0
-         1: getfield      #32                 // Field childConfig:Lcom/electronwill/nightconfig/core/Config;
-         4: ldc           #129                // String Cannot save config value without assigned Config object present
-         6: invokestatic  #131                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
-         9: pop
-        10: aload_0
-        11: getfield      #32                 // Field childConfig:Lcom/electronwill/nightconfig/core/Config;
-        14: astore_2
-        15: aload_2
-        16: instanceof    #40                 // class com/electronwill/nightconfig/core/file/FileConfig
-        19: ifeq          33
-        22: aload_2
-        23: checkcast     #40                 // class com/electronwill/nightconfig/core/file/FileConfig
-        26: astore_1
-        27: aload_1
-        28: invokeinterface #76,  1           // InterfaceMethod com/electronwill/nightconfig/core/file/FileConfig.save:()V
-        33: return
-
-  private static void lambda$setConfig$1(com.electronwill.nightconfig.core.ConfigSpec$CorrectionAction, java.util.List, java.lang.Object, java.lang.Object);
-    Code:
-         0: getstatic     #55                 // Field LOGGER:Lorg/apache/logging/log4j/Logger;
-         3: ldc_w         #279                // String The comment on key {} does not match the spec. This may create a backup.
-         6: getstatic     #281                // Field DOT_JOINER:Lcom/google/common/base/Joiner;
-         9: aload_1
-        10: invokevirtual #285                // Method com/google/common/base/Joiner.join:(Ljava/lang/Iterable;)Ljava/lang/String;
-        13: invokeinterface #291,  3          // InterfaceMethod org/apache/logging/log4j/Logger.debug:(Ljava/lang/String;Ljava/lang/Object;)V
-        18: return
-
-  private static void lambda$setConfig$0(com.electronwill.nightconfig.core.ConfigSpec$CorrectionAction, java.util.List, java.lang.Object, java.lang.Object);
-    Code:
-         0: getstatic     #55                 // Field LOGGER:Lorg/apache/logging/log4j/Logger;
-         3: ldc_w         #294                // String Incorrect key {} was corrected from {} to its default, {}. {}
-         6: getstatic     #281                // Field DOT_JOINER:Lcom/google/common/base/Joiner;
-         9: aload_1
-        10: invokevirtual #285                // Method com/google/common/base/Joiner.join:(Ljava/lang/Iterable;)Ljava/lang/String;
-        13: aload_2
-        14: aload_3
-        15: aload_2
-        16: aload_3
-        17: if_acmpne     26
-        20: ldc_w         #296                // String This seems to be an error.
-        23: goto          29
-        26: ldc_w         #298                // String
-        29: invokeinterface #300,  6          // InterfaceMethod org/apache/logging/log4j/Logger.warn:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
-        34: return
-
-  static {};
-    Code:
-         0: invokestatic  #303                // Method org/apache/logging/log4j/LogManager.getLogger:()Lorg/apache/logging/log4j/Logger;
-         3: putstatic     #55                 // Field LOGGER:Lorg/apache/logging/log4j/Logger;
-         6: ldc_w         #309                // String \r\n
-         9: invokestatic  #311                // Method java/util/regex/Pattern.compile:(Ljava/lang/String;)Ljava/util/regex/Pattern;
-        12: putstatic     #246                // Field WINDOWS_NEWLINE:Ljava/util/regex/Pattern;
-        15: ldc_w         #256                // String \n
-        18: invokestatic  #315                // Method com/google/common/base/Joiner.on:(Ljava/lang/String;)Lcom/google/common/base/Joiner;
-        21: putstatic     #319                // Field LINE_JOINER:Lcom/google/common/base/Joiner;
-        24: ldc_w         #322                // String .
-        27: invokestatic  #315                // Method com/google/common/base/Joiner.on:(Ljava/lang/String;)Lcom/google/common/base/Joiner;
-        30: putstatic     #281                // Field DOT_JOINER:Lcom/google/common/base/Joiner;
-        33: bipush        46
-        35: invokestatic  #324                // Method com/google/common/base/Splitter.on:(C)Lcom/google/common/base/Splitter;
-        38: putstatic     #269                // Field DOT_SPLITTER:Lcom/google/common/base/Splitter;
-        41: return
-}
------ END net.minecraftforge.common.ForgeConfigSpec
------ BEGIN net.neoforged.fml.config.LoadedConfig
-  net.neoforged.fml.config.LoadedConfig(com.electronwill.nightconfig.core.CommentedConfig, java.nio.file.Path, net.neoforged.fml.config.ModConfig);
-    Code:
-         0: aload_0
-         1: invokespecial #1                  // Method java/lang/Record."<init>":()V
-         4: aload_0
-         5: aload_1
-         6: putfield      #7                  // Field config:Lcom/electronwill/nightconfig/core/CommentedConfig;
-         9: aload_0
-        10: aload_2
-        11: putfield      #13                 // Field path:Ljava/nio/file/Path;
-        14: aload_0
-        15: aload_3
-        16: putfield      #17                 // Field modConfig:Lnet/neoforged/fml/config/ModConfig;
-        19: return
-
-  public void save();
-    Code:
-         0: aload_0
-         1: getfield      #13                 // Field path:Ljava/nio/file/Path;
-         4: ifnull        18
-         7: aload_0
-         8: getfield      #13                 // Field path:Ljava/nio/file/Path;
-        11: aload_0
-        12: getfield      #7                  // Field config:Lcom/electronwill/nightconfig/core/CommentedConfig;
-        15: invokestatic  #21                 // Method net/neoforged/fml/config/ConfigTracker.writeConfig:(Ljava/nio/file/Path;Lcom/electronwill/nightconfig/core/UnmodifiableCommentedConfig;)V
-        18: aload_0
-        19: getfield      #17                 // Field modConfig:Lnet/neoforged/fml/config/ModConfig;
-        22: getfield      #27                 // Field net/neoforged/fml/config/ModConfig.lock:Ljava/util/concurrent/locks/Lock;
-        25: invokeinterface #33,  1           // InterfaceMethod java/util/concurrent/locks/Lock.lock:()V
-        30: aload_0
-        31: getfield      #17                 // Field modConfig:Lnet/neoforged/fml/config/ModConfig;
-        34: invokestatic  #37                 // Method fuzs/forgeconfigapiport/fabric/impl/core/ModConfigEventsHelper.onReloading:(Lnet/neoforged/fml/config/ModConfig;)V
-        37: aload_0
-        38: getfield      #17                 // Field modConfig:Lnet/neoforged/fml/config/ModConfig;
-        41: getfield      #27                 // Field net/neoforged/fml/config/ModConfig.lock:Ljava/util/concurrent/locks/Lock;
-        44: invokeinterface #43,  1           // InterfaceMethod java/util/concurrent/locks/Lock.unlock:()V
-        49: goto          67
-        52: astore_1
-        53: aload_0
-        54: getfield      #17                 // Field modConfig:Lnet/neoforged/fml/config/ModConfig;
-        57: getfield      #27                 // Field net/neoforged/fml/config/ModConfig.lock:Ljava/util/concurrent/locks/Lock;
-        60: invokeinterface #43,  1           // InterfaceMethod java/util/concurrent/locks/Lock.unlock:()V
-        65: aload_1
-        66: athrow
-        67: return
-      Exception table:
-         from    to  target type
-            30    37    52   any
-
-  public final java.lang.String toString();
-    Code:
-         0: aload_0
-         1: invokedynamic #46,  0             // InvokeDynamic #0:toString:(Lnet/neoforged/fml/config/LoadedConfig;)Ljava/lang/String;
-         6: areturn
-
-  public final int hashCode();
-    Code:
-         0: aload_0
-         1: invokedynamic #50,  0             // InvokeDynamic #0:hashCode:(Lnet/neoforged/fml/config/LoadedConfig;)I
-         6: ireturn
-
-  public final boolean equals(java.lang.Object);
-    Code:
-         0: aload_0
-         1: aload_1
-         2: invokedynamic #54,  0             // InvokeDynamic #0:equals:(Lnet/neoforged/fml/config/LoadedConfig;Ljava/lang/Object;)Z
-         7: ireturn
-
-  public com.electronwill.nightconfig.core.CommentedConfig config();
-    Code:
-         0: aload_0
-         1: getfield      #7                  // Field config:Lcom/electronwill/nightconfig/core/CommentedConfig;
-         4: areturn
-
-  public java.nio.file.Path path();
-    Code:
-         0: aload_0
-         1: getfield      #13                 // Field path:Ljava/nio/file/Path;
-         4: areturn
-
-  public net.neoforged.fml.config.ModConfig modConfig();
-    Code:
-         0: aload_0
-         1: getfield      #17                 // Field modConfig:Lnet/neoforged/fml/config/ModConfig;
-         4: areturn
-}
------ END net.neoforged.fml.config.LoadedConfig
------ BEGIN net.neoforged.fml.config.ModConfig
------ END net.neoforged.fml.config.ModConfig
------ BEGIN fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry
-  public abstract void register(java.lang.String, net.neoforged.fml.config.ModConfig$Type, net.neoforged.fml.config.IConfigSpec);
-  public abstract void register(java.lang.String, net.neoforged.fml.config.ModConfig$Type, net.neoforged.fml.config.IConfigSpec, java.lang.String);
-  public abstract void register(java.lang.String, net.neoforged.fml.config.ModConfig$Type, net.minecraftforge.fml.config.IConfigSpec<?>);
-  public abstract void register(java.lang.String, net.neoforged.fml.config.ModConfig$Type, net.minecraftforge.fml.config.IConfigSpec<?>, java.lang.String);
-  static {};
-}
------ END fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry
-=== CLOTH2 cloth-config-fabric-26.1.154.jar
------ BEGIN me.shedaniel.clothconfig2.api.ConfigBuilder
-  public static me.shedaniel.clothconfig2.api.ConfigBuilder create();
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder setFallbackCategory(me.shedaniel.clothconfig2.api.ConfigCategory);
-  public abstract net.minecraft.client.gui.screens.Screen getParentScreen();
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder setParentScreen(net.minecraft.client.gui.screens.Screen);
-  public abstract net.minecraft.network.chat.Component getTitle();
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder setTitle(net.minecraft.network.chat.Component);
-  public abstract boolean isEditable();
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder setEditable(boolean);
-  public abstract me.shedaniel.clothconfig2.api.ConfigCategory getOrCreateCategory(net.minecraft.network.chat.Component);
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder removeCategory(net.minecraft.network.chat.Component);
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder removeCategoryIfExists(net.minecraft.network.chat.Component);
-  public abstract boolean hasCategory(net.minecraft.network.chat.Component);
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder setShouldTabsSmoothScroll(boolean);
-  public abstract boolean isTabsSmoothScrolling();
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder setShouldListSmoothScroll(boolean);
-  public abstract boolean isListSmoothScrolling();
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder setDoesConfirmSave(boolean);
-  public abstract boolean doesConfirmSave();
-  public default me.shedaniel.clothconfig2.api.ConfigBuilder setDoesProcessErrors(boolean);
-  public default boolean doesProcessErrors();
-  public abstract net.minecraft.resources.Identifier getDefaultBackgroundTexture();
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder setDefaultBackgroundTexture(net.minecraft.resources.Identifier);
-  public abstract java.lang.Runnable getSavingRunnable();
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder setSavingRunnable(java.lang.Runnable);
-  public abstract java.util.function.Consumer<net.minecraft.client.gui.screens.Screen> getAfterInitConsumer();
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder setAfterInitConsumer(java.util.function.Consumer<net.minecraft.client.gui.screens.Screen>);
-  public default me.shedaniel.clothconfig2.api.ConfigBuilder alwaysShowTabs();
-  public abstract void setGlobalized(boolean);
-  public abstract void setGlobalizedExpanded(boolean);
-  public abstract boolean isAlwaysShowTabs();
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder setAlwaysShowTabs(boolean);
-  public abstract me.shedaniel.clothconfig2.api.ConfigBuilder setTransparentBackground(boolean);
-  public default me.shedaniel.clothconfig2.api.ConfigBuilder transparentBackground();
-  public default me.shedaniel.clothconfig2.api.ConfigBuilder solidBackground();
-  public default me.shedaniel.clothconfig2.impl.ConfigEntryBuilderImpl getEntryBuilder();
-  public default me.shedaniel.clothconfig2.api.ConfigEntryBuilder entryBuilder();
-  public abstract net.minecraft.client.gui.screens.Screen build();
-  public abstract boolean hasTransparentBackground();
-}
------ END me.shedaniel.clothconfig2.api.ConfigBuilder
------ BEGIN me.shedaniel.clothconfig2.gui.ClothConfigScreen
-  public void save();
-    Code:
-         0: aload_0
-         1: invokespecial #724                // Method me/shedaniel/clothconfig2/gui/AbstractTabbedConfigScreen.save:()V
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
          4: return
 
------ END me.shedaniel.clothconfig2.gui.ClothConfigScreen
-=== PROBE2-DONE
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788204789744.json
+  public void register(java.lang.String, net.neoforged.fml.config.ModConfig$Type, net.neoforged.fml.config.IConfigSpec);
+    Code:
+         0: aload_3
+         1: invokeinterface #7,  1            // InterfaceMethod net/neoforged/fml/config/IConfigSpec.isEmpty:()Z
+         6: ifeq          24
+         9: getstatic     #13                 // Field fuzs/forgeconfigapiport/impl/ForgeConfigAPIPort.LOGGER:Lorg/slf4j/Logger;
+        12: ldc           #19                 // String Attempted to register an empty config for type {} on mod {}
+        14: aload_2
+        15: aload_1
+        16: invokeinterface #21,  4           // InterfaceMethod org/slf4j/Logger.debug:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+        21: goto          34
+        24: getstatic     #27                 // Field net/neoforged/fml/config/ConfigTracker.INSTANCE:Lnet/neoforged/fml/config/ConfigTracker;
+        27: aload_2
+        28: aload_3
+        29: aload_1
+        30: invokevirtual #33                 // Method net/neoforged/fml/config/ConfigTracker.registerConfig:(Lnet/neoforged/fml/config/ModConfig$Type;Lnet/neoforged/fml/config/IConfigSpec;Ljava/lang/String;)Lnet/neoforged/fml/config/ModConfig;
+        33: pop
+        34: return
+
+  public void register(java.lang.String, net.neoforged.fml.config.ModConfig$Type, net.neoforged.fml.config.IConfigSpec, java.lang.String);
+    Code:
+         0: aload_3
+         1: invokeinterface #7,  1            // InterfaceMethod net/neoforged/fml/config/IConfigSpec.isEmpty:()Z
+         6: ifeq          39
+         9: getstatic     #13                 // Field fuzs/forgeconfigapiport/impl/ForgeConfigAPIPort.LOGGER:Lorg/slf4j/Logger;
+        12: ldc           #37                 // String Attempted to register an empty config for type {} on mod {} using file name {}
+        14: iconst_3
+        15: anewarray     #2                  // class java/lang/Object
+        18: dup
+        19: iconst_0
+        20: aload_2
+        21: aastore
+        22: dup
+        23: iconst_1
+        24: aload_1
+        25: aastore
+        26: dup
+        27: iconst_2
+        28: aload         4
+        30: aastore
+        31: invokeinterface #39,  3           // InterfaceMethod org/slf4j/Logger.debug:(Ljava/lang/String;[Ljava/lang/Object;)V
+        36: goto          51
+        39: getstatic     #27                 // Field net/neoforged/fml/config/ConfigTracker.INSTANCE:Lnet/neoforged/fml/config/ConfigTracker;
+        42: aload_2
+        43: aload_3
+        44: aload_1
+        45: aload         4
+        47: invokevirtual #42                 // Method net/neoforged/fml/config/ConfigTracker.registerConfig:(Lnet/neoforged/fml/config/ModConfig$Type;Lnet/neoforged/fml/config/IConfigSpec;Ljava/lang/String;Ljava/lang/String;)Lnet/neoforged/fml/config/ModConfig;
+        50: pop
+        51: return
+
+  public void register(java.lang.String, net.neoforged.fml.config.ModConfig$Type, net.minecraftforge.fml.config.IConfigSpec<?>);
+    Code:
+         0: aload_3
+         1: invokeinterface #45,  1           // InterfaceMethod net/minecraftforge/fml/config/IConfigSpec.isEmpty:()Z
+         6: ifeq          24
+         9: getstatic     #13                 // Field fuzs/forgeconfigapiport/impl/ForgeConfigAPIPort.LOGGER:Lorg/slf4j/Logger;
+        12: ldc           #19                 // String Attempted to register an empty config for type {} on mod {}
+        14: aload_2
+        15: aload_1
+        16: invokeinterface #21,  4           // InterfaceMethod org/slf4j/Logger.debug:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+        21: goto          41
+        24: getstatic     #27                 // Field net/neoforged/fml/config/ConfigTracker.INSTANCE:Lnet/neoforged/fml/config/ConfigTracker;
+        27: aload_2
+        28: new           #48                 // class fuzs/forgeconfigapiport/fabric/impl/core/ForgeConfigSpecAdapter
+        31: dup
+        32: aload_3
+        33: invokespecial #50                 // Method fuzs/forgeconfigapiport/fabric/impl/core/ForgeConfigSpecAdapter."<init>":(Lnet/minecraftforge/fml/config/IConfigSpec;)V
+        36: aload_1
+        37: invokevirtual #33                 // Method net/neoforged/fml/config/ConfigTracker.registerConfig:(Lnet/neoforged/fml/config/ModConfig$Type;Lnet/neoforged/fml/config/IConfigSpec;Ljava/lang/String;)Lnet/neoforged/fml/config/ModConfig;
+        40: pop
+        41: return
+
+  public void register(java.lang.String, net.neoforged.fml.config.ModConfig$Type, net.minecraftforge.fml.config.IConfigSpec<?>, java.lang.String);
+    Code:
+         0: aload_3
+         1: invokeinterface #45,  1           // InterfaceMethod net/minecraftforge/fml/config/IConfigSpec.isEmpty:()Z
+         6: ifeq          39
+         9: getstatic     #13                 // Field fuzs/forgeconfigapiport/impl/ForgeConfigAPIPort.LOGGER:Lorg/slf4j/Logger;
+        12: ldc           #37                 // String Attempted to register an empty config for type {} on mod {} using file name {}
+        14: iconst_3
+        15: anewarray     #2                  // class java/lang/Object
+        18: dup
+        19: iconst_0
+        20: aload_2
+        21: aastore
+        22: dup
+        23: iconst_1
+        24: aload_1
+        25: aastore
+        26: dup
+        27: iconst_2
+        28: aload         4
+        30: aastore
+        31: invokeinterface #39,  3           // InterfaceMethod org/slf4j/Logger.debug:(Ljava/lang/String;[Ljava/lang/Object;)V
+        36: goto          58
+        39: getstatic     #27                 // Field net/neoforged/fml/config/ConfigTracker.INSTANCE:Lnet/neoforged/fml/config/ConfigTracker;
+        42: aload_2
+        43: new           #48                 // class fuzs/forgeconfigapiport/fabric/impl/core/ForgeConfigSpecAdapter
+        46: dup
+        47: aload_3
+        48: invokespecial #50                 // Method fuzs/forgeconfigapiport/fabric/impl/core/ForgeConfigSpecAdapter."<init>":(Lnet/minecraftforge/fml/config/IConfigSpec;)V
+        51: aload_1
+        52: aload         4
+        54: invokevirtual #42                 // Method net/neoforged/fml/config/ConfigTracker.registerConfig:(Lnet/neoforged/fml/config/ModConfig$Type;Lnet/neoforged/fml/config/IConfigSpec;Ljava/lang/String;Ljava/lang/String;)Lnet/neoforged/fml/config/ModConfig;
+        57: pop
+        58: return
+}
+
+=== PROBE3-DONE
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788204989548.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -391,7 +150,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 16s
+BUILD SUCCESSFUL in 1m 26s
 1 actionable task: 1 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
