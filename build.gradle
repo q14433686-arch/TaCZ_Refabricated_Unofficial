@@ -387,3 +387,83 @@ publishing {
         }
     }
 }
+
+// TEMP (step-2 PoC, renderAllFeatures @Local route): dump FeatureRenderDispatcher bytecode so the
+// hand-flush RenderPass local can be located precisely. Runs after compileJava (finalizedBy);
+// its stdout lands in the CI compile log. Remove before release.
+tasks.register('dumpFeatureDispatcherApi') {
+    doLast {
+        def cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
+
+        def runJavap = { String cls, List flags ->
+            def cmd = ['javap', '-classpath', cp]
+            flags.each { cmd << it }
+            cmd << cls
+            def proc = new ProcessBuilder(cmd).redirectErrorStream(false).start()
+            def out = proc.inputStream.getText('UTF-8')
+            def err = proc.errorStream.getText('UTF-8')
+            proc.waitFor()
+            return [out, err]
+        }
+
+        def methodBlocks = { String cls, List flags ->
+            def (out, err) = runJavap(cls, flags)
+            if (err.trim()) { println('javap stderr: ' + err.trim()); return [] }
+            def blocks = []
+            def cur = null
+            out.readLines().each { line ->
+                if (line ==~ /^  .+\(.*\);.*$/) {
+                    if (cur != null) blocks << cur
+                    cur = [line]
+                } else if (cur != null) {
+                    cur << line
+                } else {
+                    cur = [line]
+                }
+            }
+            if (cur != null) blocks << cur
+            return blocks
+        }
+
+        def findMethod = { List blocks, String name -> blocks.find { it[0].contains(name) } }
+
+        println '===== net.minecraft.client.renderer.feature.FeatureRenderDispatcher -p ====='
+        def (fdp, fdpe) = runJavap('net.minecraft.client.renderer.feature.FeatureRenderDispatcher', ['-p'])
+        println(fdp ?: '(none)')
+        if (fdpe.trim()) { println('stderr: ' + fdpe.trim()) }
+
+        def fdBlocks = methodBlocks('net.minecraft.client.renderer.feature.FeatureRenderDispatcher', ['-c', '-p'])
+        ['void renderAllFeatures', 'renderSolidFeatures', 'renderTranslucentFeatures'].each { name ->
+            def b = findMethod(fdBlocks, name)
+            if (b != null) {
+                println "===== FeatureRenderDispatcher.${name} full (${b.size()} lines) ====="
+                println b.join('\n')
+            } else {
+                println "===== FeatureRenderDispatcher.${name} NOT FOUND ====="
+            }
+        }
+
+        println '===== net.minecraft.client.renderer.SubmitNodeStorage -p ====='
+        def (sns, snse) = runJavap('net.minecraft.client.renderer.SubmitNodeStorage', ['-p'])
+        println(sns ?: '(none)')
+        if (snse.trim()) { println('stderr: ' + snse.trim()) }
+
+        println '===== net.minecraft.client.renderer.SubmitNodeCollector -p ====='
+        def (snc, snce) = runJavap('net.minecraft.client.renderer.SubmitNodeCollector', ['-p'])
+        println(snc ?: '(none)')
+        if (snce.trim()) { println('stderr: ' + snce.trim()) }
+
+        def (rs, rse) = runJavap('com.mojang.blaze3d.systems.RenderSystem', ['-p'])
+        println '===== RenderSystem (filtered) ====='
+        if (rs) {
+            rs.readLines().each { line ->
+                ['outputColor', 'outputDepth', 'createRenderPass', 'bindDefaultUniforms', 'getModelView',
+                 'getDevice', 'getDynamicUniforms', 'getColorTextureView', 'getDepthTextureView',
+                 'RenderPass'].each { n ->
+                    if (line.contains(n)) println '  ' + line.trim()
+                }
+            }
+        } else { println('(none)'); if (rse.trim()) println('stderr: ' + rse.trim()) }
+    }
+}
+compileJava.finalizedBy dumpFeatureDispatcherApi
