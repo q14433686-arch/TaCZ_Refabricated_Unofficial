@@ -1,4 +1,4 @@
-commit: ffda50791b30d43b693a2272095e9b33c3567e6e
+commit: 441ff4b3777006c38f571fafb21e102201afb1ee
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
 
@@ -37,14 +37,14 @@ Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the t
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
-Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
 Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
@@ -75,6 +75,388 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 6 warnings
+
+> Task :dumpWorldFlushProbe
+===== [W-PROBE] net.minecraft.client.renderer.LevelRenderer (needles: renderAllFeatures, endBatch, getModelViewStack, setupRender, outputColorTextureOverride, outputDepthTextureOverride) =====
+  --- in public void renderLevel(com.mojang.blaze3d.resource.GraphicsResourceAllocator, net.minecraft.client.DeltaTracker, boolean, net.minecraft.client.Camera, org.joml.Matrix4f, org.joml.Matrix4f, org.joml.Matrix4f, com.mojang.blaze3d.buffers.GpuBufferSlice, org.joml.Vector4f, boolean); @1138 ---
+         431: invokevirtual #985                // Method net/minecraft/client/renderer/debug/GameTestBlockHighlightRenderer.emitGizmos:()V
+         434: aload         12
+         436: ldc_w         #987                // String setupFrameGraph
+         439: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
+         444: invokestatic  #993                // Method com/mojang/blaze3d/systems/RenderSystem.getModelViewStack:()Lorg/joml/Matrix4fStack;
+         447: astore        15
+         449: aload         15
+         451: invokevirtual #998                // Method org/joml/Matrix4fStack.pushMatrix:()Lorg/joml/Matrix4fStack;
+         454: pop
+  --- in private void method_75413(com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.resource.ResourceHandle, net.minecraft.client.renderer.state.CameraRenderState, org.joml.Matrix4f); @3938 ---
+          22: aload_2
+          23: invokeinterface #2272,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+          28: checkcast     #321                // class com/mojang/blaze3d/pipeline/RenderTarget
+          31: invokevirtual #437                // Method com/mojang/blaze3d/pipeline/RenderTarget.getColorTextureView:()Lcom/mojang/blaze3d/textures/GpuTextureView;
+          34: putstatic     #2423               // Field com/mojang/blaze3d/systems/RenderSystem.outputColorTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
+          37: aload_2
+          38: invokeinterface #2272,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+          43: checkcast     #321                // class com/mojang/blaze3d/pipeline/RenderTarget
+          46: invokevirtual #2426               // Method com/mojang/blaze3d/pipeline/RenderTarget.getDepthTextureView:()Lcom/mojang/blaze3d/textures/GpuTextureView;
+  --- in private void method_75413(com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.resource.ResourceHandle, net.minecraft.client.renderer.state.CameraRenderState, org.joml.Matrix4f); @3943 ---
+          37: aload_2
+          38: invokeinterface #2272,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+          43: checkcast     #321                // class com/mojang/blaze3d/pipeline/RenderTarget
+          46: invokevirtual #2426               // Method com/mojang/blaze3d/pipeline/RenderTarget.getDepthTextureView:()Lcom/mojang/blaze3d/textures/GpuTextureView;
+          49: putstatic     #2429               // Field com/mojang/blaze3d/systems/RenderSystem.outputDepthTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
+          52: aload_0
+          53: getfield      #294                // Field finalizedGizmos:Lnet/minecraft/client/renderer/LevelRenderer$FinalizedGizmos;
+          56: invokevirtual #2433               // Method net/minecraft/client/renderer/LevelRenderer$FinalizedGizmos.alwaysOnTopPrimitives:()Lnet/minecraft/client/renderer/gizmos/DrawableGizmoPrimitives;
+          59: invokevirtual #2434               // Method net/minecraft/client/renderer/gizmos/DrawableGizmoPrimitives.isEmpty:()Z
+  --- in private void method_75413(com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.resource.ResourceHandle, net.minecraft.client.renderer.state.CameraRenderState, org.joml.Matrix4f); @3969 ---
+         106: invokevirtual #2458               // Method net/minecraft/client/renderer/gizmos/DrawableGizmoPrimitives.render:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/renderer/state/CameraRenderState;Lorg/joml/Matrix4f;)V
+         109: aload         6
+         111: invokevirtual #1709               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endLastBatch:()V
+         114: aconst_null
+         115: putstatic     #2423               // Field com/mojang/blaze3d/systems/RenderSystem.outputColorTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
+         118: aconst_null
+         119: putstatic     #2429               // Field com/mojang/blaze3d/systems/RenderSystem.outputDepthTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
+         122: aload_0
+         123: aload         5
+  --- in private void method_75413(com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.resource.ResourceHandle, net.minecraft.client.renderer.state.CameraRenderState, org.joml.Matrix4f); @3971 ---
+         111: invokevirtual #1709               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endLastBatch:()V
+         114: aconst_null
+         115: putstatic     #2423               // Field com/mojang/blaze3d/systems/RenderSystem.outputColorTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
+         118: aconst_null
+         119: putstatic     #2429               // Field com/mojang/blaze3d/systems/RenderSystem.outputDepthTextureOverride:Lcom/mojang/blaze3d/textures/GpuTextureView;
+         122: aload_0
+         123: aload         5
+         125: invokevirtual #2460               // Method checkPoseStack:(Lcom/mojang/blaze3d/vertex/PoseStack;)V
+         128: return
+  --- in private void method_62216(com.mojang.blaze3d.buffers.GpuBufferSlice, int, float); @4011 ---
+          61: fload_3
+          62: f2d
+          63: invokevirtual #2467               // Method net/minecraft/client/renderer/WorldBorderRenderer.render:(Lnet/minecraft/client/renderer/state/WorldBorderRenderState;Lnet/minecraft/world/phys/Vec3;DD)V
+          66: aload         4
+          68: invokevirtual #2470               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+          71: return
+    
+      private void method_62205(int, net.minecraft.client.CloudStatus, float, net.minecraft.world.phys.Vec3, long, float);
+        Code:
+  --- in private void method_62213(com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4050 ---
+          41: getfield      #1178               // Field net/minecraft/client/renderer/state/LevelRenderState.cameraRenderState:Lnet/minecraft/client/renderer/state/CameraRenderState;
+          44: invokevirtual #2479               // Method net/minecraft/client/renderer/state/ParticlesRenderState.submit:(Lnet/minecraft/client/renderer/SubmitNodeStorage;Lnet/minecraft/client/renderer/state/CameraRenderState;)V
+          47: aload_0
+          48: getfield      #314                // Field featureRenderDispatcher:Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;
+          51: invokevirtual #2482               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderAllFeatures:()V
+          54: aload_0
+          55: getfield      #223                // Field particlesRenderState:Lnet/minecraft/client/renderer/state/ParticlesRenderState;
+          58: invokevirtual #2483               // Method net/minecraft/client/renderer/state/ParticlesRenderState.reset:()V
+          61: return
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4183 ---
+         298: ldc_w         #2561               // String renderFeatures
+         301: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
+         306: aload_0
+         307: getfield      #314                // Field featureRenderDispatcher:Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;
+         310: invokevirtual #2482               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderAllFeatures:()V
+         313: aload         19
+         315: invokevirtual #1709               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endLastBatch:()V
+         318: aload_0
+         319: aload         18
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4191 ---
+         319: aload         18
+         321: invokevirtual #2460               // Method checkPoseStack:(Lcom/mojang/blaze3d/vertex/PoseStack;)V
+         324: aload         19
+         326: invokestatic  #2564               // Method net/minecraft/client/renderer/rendertype/RenderTypes.solidMovingBlock:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         329: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         332: aload         19
+         334: invokestatic  #2570               // Method net/minecraft/client/renderer/rendertype/RenderTypes.endPortal:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         337: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         340: aload         19
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4194 ---
+         326: invokestatic  #2564               // Method net/minecraft/client/renderer/rendertype/RenderTypes.solidMovingBlock:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         329: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         332: aload         19
+         334: invokestatic  #2570               // Method net/minecraft/client/renderer/rendertype/RenderTypes.endPortal:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         337: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         340: aload         19
+         342: invokestatic  #2573               // Method net/minecraft/client/renderer/rendertype/RenderTypes.endGateway:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         345: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         348: aload         19
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4197 ---
+         334: invokestatic  #2570               // Method net/minecraft/client/renderer/rendertype/RenderTypes.endPortal:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         337: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         340: aload         19
+         342: invokestatic  #2573               // Method net/minecraft/client/renderer/rendertype/RenderTypes.endGateway:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         345: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         348: aload         19
+         350: invokestatic  #2578               // Method net/minecraft/client/renderer/Sheets.solidBlockSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         353: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         356: aload         19
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4200 ---
+         342: invokestatic  #2573               // Method net/minecraft/client/renderer/rendertype/RenderTypes.endGateway:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         345: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         348: aload         19
+         350: invokestatic  #2578               // Method net/minecraft/client/renderer/Sheets.solidBlockSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         353: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         356: aload         19
+         358: invokestatic  #2581               // Method net/minecraft/client/renderer/Sheets.cutoutBlockSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         361: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         364: aload         19
+...[truncated 1001 lines total]...
+         350: invokestatic  #2578               // Method net/minecraft/client/renderer/Sheets.solidBlockSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         353: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         356: aload         19
+         358: invokestatic  #2581               // Method net/minecraft/client/renderer/Sheets.cutoutBlockSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         361: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         364: aload         19
+         366: invokestatic  #2584               // Method net/minecraft/client/renderer/Sheets.bedSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         369: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         372: aload         19
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4206 ---
+         358: invokestatic  #2581               // Method net/minecraft/client/renderer/Sheets.cutoutBlockSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         361: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         364: aload         19
+         366: invokestatic  #2584               // Method net/minecraft/client/renderer/Sheets.bedSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         369: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         372: aload         19
+         374: invokestatic  #2587               // Method net/minecraft/client/renderer/Sheets.shulkerBoxSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         377: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         380: aload         19
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4209 ---
+         366: invokestatic  #2584               // Method net/minecraft/client/renderer/Sheets.bedSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         369: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         372: aload         19
+         374: invokestatic  #2587               // Method net/minecraft/client/renderer/Sheets.shulkerBoxSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         377: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         380: aload         19
+         382: invokestatic  #2590               // Method net/minecraft/client/renderer/Sheets.signSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         385: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         388: aload         19
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4212 ---
+         374: invokestatic  #2587               // Method net/minecraft/client/renderer/Sheets.shulkerBoxSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         377: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         380: aload         19
+         382: invokestatic  #2590               // Method net/minecraft/client/renderer/Sheets.signSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         385: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         388: aload         19
+         390: invokestatic  #2593               // Method net/minecraft/client/renderer/Sheets.hangingSignSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         393: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         396: aload         19
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4215 ---
+         382: invokestatic  #2590               // Method net/minecraft/client/renderer/Sheets.signSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         385: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         388: aload         19
+         390: invokestatic  #2593               // Method net/minecraft/client/renderer/Sheets.hangingSignSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         393: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         396: aload         19
+         398: invokestatic  #2596               // Method net/minecraft/client/renderer/Sheets.chestSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         401: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         404: aload_0
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4218 ---
+         390: invokestatic  #2593               // Method net/minecraft/client/renderer/Sheets.hangingSignSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         393: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         396: aload         19
+         398: invokestatic  #2596               // Method net/minecraft/client/renderer/Sheets.chestSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         401: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         404: aload_0
+         405: getfield      #302                // Field renderBuffers:Lnet/minecraft/client/renderer/RenderBuffers;
+         408: invokevirtual #2600               // Method net/minecraft/client/renderer/RenderBuffers.outlineBufferSource:()Lnet/minecraft/client/renderer/OutlineBufferSource;
+         411: invokevirtual #2605               // Method net/minecraft/client/renderer/OutlineBufferSource.endOutlineBatch:()V
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4251 ---
+         465: aload         18
+         467: invokevirtual #2460               // Method checkPoseStack:(Lcom/mojang/blaze3d/vertex/PoseStack;)V
+         470: aload         19
+         472: invokestatic  #2615               // Method net/minecraft/client/renderer/Sheets.translucentItemSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         475: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         478: aload         19
+         480: invokestatic  #2618               // Method net/minecraft/client/renderer/Sheets.bannerSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         483: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         486: aload         19
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4254 ---
+         472: invokestatic  #2615               // Method net/minecraft/client/renderer/Sheets.translucentItemSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         475: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         478: aload         19
+         480: invokestatic  #2618               // Method net/minecraft/client/renderer/Sheets.bannerSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         483: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         486: aload         19
+         488: invokestatic  #2621               // Method net/minecraft/client/renderer/Sheets.shieldSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         491: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         494: aload         19
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4257 ---
+         480: invokestatic  #2618               // Method net/minecraft/client/renderer/Sheets.bannerSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         483: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         486: aload         19
+         488: invokestatic  #2621               // Method net/minecraft/client/renderer/Sheets.shieldSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         491: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         494: aload         19
+         496: invokestatic  #2624               // Method net/minecraft/client/renderer/rendertype/RenderTypes.armorEntityGlint:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         499: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         502: aload         19
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4260 ---
+         488: invokestatic  #2621               // Method net/minecraft/client/renderer/Sheets.shieldSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         491: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         494: aload         19
+         496: invokestatic  #2624               // Method net/minecraft/client/renderer/rendertype/RenderTypes.armorEntityGlint:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         499: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         502: aload         19
+         504: invokestatic  #2627               // Method net/minecraft/client/renderer/rendertype/RenderTypes.glint:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         507: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         510: aload         19
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4263 ---
+         496: invokestatic  #2624               // Method net/minecraft/client/renderer/rendertype/RenderTypes.armorEntityGlint:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         499: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         502: aload         19
+         504: invokestatic  #2627               // Method net/minecraft/client/renderer/rendertype/RenderTypes.glint:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         507: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         510: aload         19
+         512: invokestatic  #2630               // Method net/minecraft/client/renderer/rendertype/RenderTypes.glintTranslucent:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         515: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         518: aload         19
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4266 ---
+         504: invokestatic  #2627               // Method net/minecraft/client/renderer/rendertype/RenderTypes.glint:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         507: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         510: aload         19
+         512: invokestatic  #2630               // Method net/minecraft/client/renderer/rendertype/RenderTypes.glintTranslucent:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         515: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         518: aload         19
+         520: invokestatic  #2633               // Method net/minecraft/client/renderer/rendertype/RenderTypes.entityGlint:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         523: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         526: aload_3
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4269 ---
+         512: invokestatic  #2630               // Method net/minecraft/client/renderer/rendertype/RenderTypes.glintTranslucent:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         515: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         518: aload         19
+         520: invokestatic  #2633               // Method net/minecraft/client/renderer/rendertype/RenderTypes.entityGlint:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         523: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         526: aload_3
+         527: ldc_w         #2635               // String destroyProgress
+         530: invokeinterface #697,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.push:(Ljava/lang/String;)V
+         535: aload_0
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4279 ---
+         538: aload         20
+         540: aload_2
+         541: invokevirtual #2637               // Method renderBlockDestroyAnimation:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/state/LevelRenderState;)V
+         544: aload         20
+         546: invokevirtual #2470               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+         549: aload_3
+         550: invokeinterface #737,  1          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.pop:()V
+         555: aload_0
+         556: aload         18
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4287 ---
+         556: aload         18
+         558: invokevirtual #2460               // Method checkPoseStack:(Lcom/mojang/blaze3d/vertex/PoseStack;)V
+         561: aload         19
+         563: invokestatic  #2640               // Method net/minecraft/client/renderer/rendertype/RenderTypes.waterMask:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         566: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         569: aload         19
+         571: invokevirtual #2470               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+         574: aload         8
+         576: ifnull        602
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4289 ---
+         561: aload         19
+         563: invokestatic  #2640               // Method net/minecraft/client/renderer/rendertype/RenderTypes.waterMask:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+         566: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+         569: aload         19
+         571: invokevirtual #2470               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+         574: aload         8
+         576: ifnull        602
+         579: aload         8
+         581: invokeinterface #2272,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+  --- in private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle); @4324 ---
+         654: iconst_1
+         655: aload_2
+         656: invokevirtual #2607               // Method renderBlockOutline:(Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lcom/mojang/blaze3d/vertex/PoseStack;ZLnet/minecraft/client/renderer/state/LevelRenderState;)V
+         659: aload         19
+         661: invokevirtual #2470               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+         664: aload_3
+         665: invokeinterface #737,  1          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.pop:()V
+         670: return
+    
+===== [W-PROBE] net.minecraft.client.renderer.GameRenderer (needles: getModelViewStack, setModelViewMatrix, renderLevel, viewRotation, popMatrix, pushMatrix, lastRenderProjectionMatrix) =====
+  --- in private void renderItemInHand(float, boolean, org.joml.Matrix4f); @1015 ---
+          46: invokespecial #836                // Method org/joml/Matrix4f."<init>":()V
+          49: invokevirtual #839                // Method org/joml/Matrix4f.invert:(Lorg/joml/Matrix4f;)Lorg/joml/Matrix4f;
+          52: invokevirtual #842                // Method com/mojang/blaze3d/vertex/PoseStack.mulPose:(Lorg/joml/Matrix4fc;)V
+          55: invokestatic  #846                // Method com/mojang/blaze3d/systems/RenderSystem.getModelViewStack:()Lorg/joml/Matrix4fStack;
+          58: astore        5
+          60: aload         5
+          62: invokevirtual #851                // Method org/joml/Matrix4fStack.pushMatrix:()Lorg/joml/Matrix4fStack;
+  --- in private void renderItemInHand(float, boolean, org.joml.Matrix4f); @1018 ---
+          55: invokestatic  #846                // Method com/mojang/blaze3d/systems/RenderSystem.getModelViewStack:()Lorg/joml/Matrix4fStack;
+          58: astore        5
+          60: aload         5
+          62: invokevirtual #851                // Method org/joml/Matrix4fStack.pushMatrix:()Lorg/joml/Matrix4fStack;
+          65: aload_3
+          66: invokevirtual #855                // Method org/joml/Matrix4fStack.mul:(Lorg/joml/Matrix4fc;)Lorg/joml/Matrix4f;
+          69: pop
+  --- in private void renderItemInHand(float, boolean, org.joml.Matrix4f); @1078 ---
+         194: invokevirtual #896                // Method net/minecraft/client/renderer/entity/EntityRenderDispatcher.getPackedLightCoords:(Lnet/minecraft/world/entity/Entity;F)I
+         197: invokevirtual #900                // Method net/minecraft/client/renderer/ItemInHandRenderer.renderHandsWithItems:(FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/player/LocalPlayer;I)V
+         200: aload         5
+         202: invokevirtual #903                // Method org/joml/Matrix4fStack.popMatrix:()Lorg/joml/Matrix4fStack;
+         205: pop
+         206: aload         4
+         208: invokevirtual #906                // Method com/mojang/blaze3d/vertex/PoseStack.popPose:()V
+  --- in public void render(net.minecraft.client.DeltaTracker, boolean); @1293 ---
+         307: invokeinterface #588,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.push:(Ljava/lang/String;)V
+         312: aload_0
+         313: aload_1
+         314: invokevirtual #1037               // Method renderLevel:(Lnet/minecraft/client/DeltaTracker;)V
+         317: aload_0
+         318: invokevirtual #1040               // Method tryTakeScreenshotIfNeeded:()V
+         321: aload_0
+  --- in public void renderLevel(net.minecraft.client.DeltaTracker); @2079 ---
+         497: iconst_1
+         498: goto          502
+         501: iconst_0
+         502: invokevirtual #1546               // Method net/minecraft/client/renderer/LevelRenderer.renderLevel:(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lnet/minecraft/client/DeltaTracker;ZLnet/minecraft/client/Camera;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Vector4f;Z)V
+         505: aload         4
+         507: ldc_w         #1548               // String hand
+         510: invokeinterface #1226,  2         // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
+===== [W-PROBE] net.minecraft.client.renderer.entity.EntityRenderDispatcher (needles: subtract, translate, getModelViewStack, position) =====
+  --- in public <S extends net.minecraft.client.renderer.entity.state.EntityRenderState> void submit(S, net.minecraft.client.renderer.state.CameraRenderState, double, double, double, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.SubmitNodeCollector); @306 ---
+          51: dload         13
+          53: dload         15
+          55: dload         17
+          57: invokevirtual #326                // Method com/mojang/blaze3d/vertex/PoseStack.translate:(DDD)V
+          60: aload         11
+          62: aload_1
+          63: aload         9
+  --- in public <S extends net.minecraft.client.renderer.entity.state.EntityRenderState> void submit(S, net.minecraft.client.renderer.state.CameraRenderState, double, double, double, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.SubmitNodeCollector); @340 ---
+         126: aload         12
+         128: invokevirtual #317                // Method net/minecraft/world/phys/Vec3.z:()D
+         131: dneg
+         132: invokevirtual #326                // Method com/mojang/blaze3d/vertex/PoseStack.translate:(DDD)V
+         135: aload_1
+         136: getfield      #362                // Field net/minecraft/client/renderer/entity/state/EntityRenderState.shadowPieces:Ljava/util/List;
+         139: invokeinterface #368,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+  --- in public <S extends net.minecraft.client.renderer.entity.state.EntityRenderState> void submit(S, net.minecraft.client.renderer.state.CameraRenderState, double, double, double, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.SubmitNodeCollector); @365 ---
+         185: aload         12
+         187: invokevirtual #317                // Method net/minecraft/world/phys/Vec3.z:()D
+         190: dneg
+         191: invokevirtual #326                // Method com/mojang/blaze3d/vertex/PoseStack.translate:(DDD)V
+         194: aload         9
+         196: invokevirtual #378                // Method com/mojang/blaze3d/vertex/PoseStack.popPose:()V
+         199: goto          249
+  --- in public double distanceToSqr(net.minecraft.world.entity.Entity); @421 ---
+        Code:
+           0: aload_0
+           1: getfield      #224                // Field camera:Lnet/minecraft/client/Camera;
+           4: invokevirtual #407                // Method net/minecraft/client/Camera.position:()Lnet/minecraft/world/phys/Vec3;
+           7: aload_1
+           8: invokevirtual #408                // Method net/minecraft/world/entity/Entity.position:()Lnet/minecraft/world/phys/Vec3;
+          11: invokevirtual #411                // Method net/minecraft/world/phys/Vec3.distanceToSqr:(Lnet/minecraft/world/phys/Vec3;)D
+  --- in public double distanceToSqr(net.minecraft.world.entity.Entity); @423 ---
+           1: getfield      #224                // Field camera:Lnet/minecraft/client/Camera;
+           4: invokevirtual #407                // Method net/minecraft/client/Camera.position:()Lnet/minecraft/world/phys/Vec3;
+           7: aload_1
+           8: invokevirtual #408                // Method net/minecraft/world/entity/Entity.position:()Lnet/minecraft/world/phys/Vec3;
+          11: invokevirtual #411                // Method net/minecraft/world/phys/Vec3.distanceToSqr:(Lnet/minecraft/world/phys/Vec3;)D
+          14: dreturn
+    
+===== [W-PROBE] net.minecraft.client.renderer.feature.FeatureRenderDispatcher (needles: renderAllFeatures, executeSolid, execute, prepareFrame, clear) =====
+  --- in public void renderAllFeatures(); @220 ---
+         202: aload_0
+         203: getfield      #114                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+         206: invokevirtual #190                // Method net/minecraft/client/renderer/SubmitNodeStorage.clear:()V
+         209: return
+    
 
 > Task :dumpHandFlushApi
 ===== javap -c -p net.minecraft.client.renderer.ItemInHandRenderer#renderHandsWithItems =====
@@ -604,7 +986,7 @@ Note: Recompile with -Xlint:unchecked for details.
   public static boolean isRenderingLevel;
   public static boolean renderWithExtendedVertexFormat;
   public static boolean safeToMultiply;
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788174359094.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788175662907.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -614,8 +996,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 42s
-2 actionable tasks: 2 executed
+BUILD SUCCESSFUL in 1m 57s
+3 actionable tasks: 3 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
 == job status: success ==
