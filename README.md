@@ -89,9 +89,9 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 
 ---
 
-## 3. 瞄具渲染：不是 PIP
+## 3. 瞄具渲染：默认路径不是 PIP，且另有可选的 PIP 二次渲染
 
-**TaCZ 直接上游的瞄具不是 Picture-in-Picture，也不会为镜片再渲染一次世界。**
+**TaCZ 直接上游 1.21.1 的瞄具不是 Picture-in-Picture，也不会为镜片再渲染一次世界。**
 
 人工核对直接上游 1.21.1 的提交
 [`d290355`](https://github.com/Sh1roCu/TACZ-Refabricated/commit/d2903554da039d2355920953a81447784a3f2be2)
@@ -100,15 +100,33 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 仍是同一次世界渲染。它没有第二台相机，也没有第二次 `renderLevel`。
 
 1.21.11 端口无法沿用上游的即时 stencil 调用与绘制时序（1.21.11 的 `RenderPipeline`
-没有模板缓冲状态），因此沿用 26.1.2 分支引入的 **深度孔径**路径：
+没有模板缓冲状态），因此沿用 26.1.2 分支引入的 **深度孔径 / 屏幕空间重投影**默认路径：
 
 1. 用不可见目镜几何写入孔径深度；
 2. 在镜身绘制前保存并复制所需的世界/孔径深度；
 3. 枪身、相关配件、枪口火光和准星按孔径关系过滤；
 4. 完成后恢复对应的世界深度。
 
-这套流程仍只使用同一次世界渲染，**不是第二份世界画面**。代码中的
-`PictureInPictureRenderer` 仅用于枪械工作台的 GUI 模型预览，与瞄具实现无关。
+这套默认路径仍然只使用同一次世界渲染，镜片画面是**已渲染成品帧的屏幕空间重投影**，
+**不是第二份世界画面**。代码中的 vanilla `PictureInPictureRenderer` 仅用于枪械工作台的
+GUI 模型预览，与瞄具实现无关。
+
+**但本分支额外提供可选的真正 PIP 二次渲染**（默认全部关闭，开启后才会出现第二台相机 /
+第二次 `renderLevel`）：
+
+- `ScopePipEnable`（默认关）：开启第一人称镜内画中画。
+- `ScopePipRerender`（默认关，实验性）：在 PIP 开启时，用窄 FOV 把世界**真画第二遍**作为
+  镜内画面（默认每帧真渲一次；`ScopePipRerenderInterval` 可改为每 N 帧一次并在中间帧复用）。
+  这个分支目前把第二遍画进主目标，所以 `ScopePipResolutionScale`（默认 0.75）是**只读未生效**
+  的配置位；真正降采样要等离屏 target 重定向（`docs/SCOPE_PIP_RERENDER_1211_PORT_PLAN`
+  的 B5），届时再按 0.75 缩放。
+- Iris 光影下需要 `ScopePipAllowShaderPacks`（默认关）先放行，再由
+  `ScopePipIsolatePipeline`（默认 true）给镜内那遍独立管线；Sodium/Voxy 由本分支就地补丁。
+- 详见 [`docs/SCOPE_PIP_RERENDER_1211_PORT_PLAN_20260830.md`](docs/SCOPE_PIP_RERENDER_1211_PORT_PLAN_20260830.md)
+  与 `RenderConfig` 中相应键的注释。
+
+所以“本端口永远只渲染一次世界”这句话只在默认路径下成立；装包后若开镜仍用屏幕空间重投影，
+就是上面两个 PIP 键都还没开。
 
 Iris 有专门的 HAND/depth 接线；其他 shader pack 没有因此自动获得兼容保证。
 
