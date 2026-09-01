@@ -601,13 +601,15 @@ public final class ScopePipRenderState {
         if (!sceneCaptured) {
             return;
         }
-        // 一帧「截图」贴屏（实机 2026-09-01，与上面的滞留贴屏同源不同窗）：本钩子
-        // （finalizeLevelRendering）跑在本帧手部阶段之前，合成用的镜孔/世界深度拷贝
-        // 永远是上一帧的。连续开镜中两者只差一帧、无感；但开镜第 1 帧（或任何中断后
-        // 恢复）上一帧没有掩码周期，手头是上一段开镜遗留的拷贝——遗留镜孔在哪，
-        // 镜内画面就按那个位置贴出去，随机位置闪现一帧、随后掩码收敛自愈。只允许
-        // 「上一帧确有周期」时合成（hadMaskCycleLastFrame），边界帧 fail-closed。
-        if (!ScopeDepthCopyState.hadMaskCycleLastFrame()) {
+        // 一帧「截图」贴屏（实机 2026-09-01）：掩码周期失败的帧里，深度拷贝纹理仍是
+        // 上一段开镜的遗留（handle 依旧 available），合成若照跑就把镜内画面按遗留镜孔
+        // 的位置贴出去——随机位置闪现一帧、下一帧周期恢复即自愈。只允许「本帧确有完整
+        // 周期」时合成：Iris 26.1 把手部搬进了 LevelRenderer#renderLevel 内部（本仓
+        // 世界钩子 javadoc 的字节码结论），finalizeLevelRendering 与本合成因此跑在
+        // 同一 Level 遍的手部阶段之后，拷贝是本帧的；周期失败的帧 fail-closed ——
+        // 宁可一帧不画镜内画面，不贴陈旧截图。（曾误判「终局钩子在手部之前」而用
+        // 上一帧闸 hadMaskCycleLastFrame，导致光影下合成永不放行——二次渲染整体失效。）
+        if (!ScopeDepthCopyState.hasMaskCycleThisFrame()) {
             return;
         }
         if (!IrisCompat.isUsingRenderPack() || !allowShaderPacks()
