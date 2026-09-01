@@ -164,6 +164,20 @@ public final class ScopePipRerender {
         return true;
     }
 
+    /** 隔帧渲染的帧计次：每次"闸门全过的渲染尝试"+1（闸门失败不计，失败后强制重渲）。 */
+    private static int scopeFrameCounter;
+    private static int lastRenderFrame = Integer.MIN_VALUE;
+    private static int lastRenderGeneration = -1;
+
+    /**
+     * 镜内那遍世界每 N 帧真渲一次，其余帧复用上一帧画面。默认 1 = 每帧（关闭复用）。
+     * 与 26.1.2 的 {@code ScopePipRerenderInterval} 同名同默认同范围。
+     */
+    private static int rerenderInterval() {
+        return RenderConfig.SCOPE_PIP_RERENDER_INTERVAL == null
+                ? 1 : RenderConfig.SCOPE_PIP_RERENDER_INTERVAL.get();
+    }
+
     private static boolean loggedShaderRefusal;
     private static boolean scopePassIsolated;
     private static int idleReleaseFrames;
@@ -252,6 +266,19 @@ public final class ScopePipRerender {
             return false;
         }
 
+        // 【隔帧渲染 · ScopePipRerenderInterval】每 N 帧真跑一遍窄遍，其余帧直接把上一帧的镜内
+        // 成品当作本帧结果（完全不进 renderLevel ⇒ vanilla 遍不受影响、也无需状态重提取）。
+        // 代数守卫：窗口缩放/格式变化会重建离屏画布（sceneTargetGeneration++），新画布里内容是
+        // 未定义的，绝不能当成"上一帧"端出去 —— 比"上次真渲时的代数"与"当前代数"即可拦下。
+        scopeFrameCounter++;
+        int interval = rerenderInterval();
+        if (interval > 1 && sceneCaptured
+                && lastRenderGeneration == ScopePipRenderState.sceneTargetGeneration()
+                && scopeFrameCounter - lastRenderFrame < interval) {
+            return true;
+        }
+        sceneCaptured = false;
+
         // 从宽投影矩阵反解基准 FOV：m11 = 1/tan(fovY/2) 是恒等式，与纵横比/近远平面无关。
         float m11 = projectionMatrix.m11();
         if (!Float.isFinite(m11) || m11 <= 1.0e-4f) {
@@ -302,6 +329,11 @@ public final class ScopePipRerender {
                     viewMatrix, NARROW_MATRIX, cullingMatrix, fogBuffer, fogColor, renderSky);
             // 立刻拷走：紧随其后的 vanilla 那遍会整屏重画主目标。
             sceneCaptured = ScopePipRenderState.captureSceneFromMain(mc);
+            if (sceneCaptured) {
+                // 记录「上次真渲」的帧号与画布代数，供上面的隔帧复用闸门判断。
+                lastRenderFrame = scopeFrameCounter;
+                lastRenderGeneration = ScopePipRenderState.sceneTargetGeneration();
+            }
             if (sceneCaptured && !loggedFirst) {
                 loggedFirst = true;
                 GunMod.LOGGER.info("[TACZ Scope] Scope PIP second-render pass active: {}x{} narrow-FOV world "

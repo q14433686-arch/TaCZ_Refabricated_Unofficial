@@ -843,6 +843,13 @@ public final class ScopePipRenderState {
     }
 
     /** Allocates (and remembers) the reusable scene color copy sized to the main color target. */
+    private static int sceneTargetGeneration;
+
+    /** 离屏镜内画布的重建代数：真正 new 过一次就 +1，供隔帧复用判断画面是否还有效。 */
+    public static int sceneTargetGeneration() {
+        return sceneTargetGeneration;
+    }
+
     private static SceneColorTarget sceneTarget() {
         if (failed || SceneColorTarget.instance == null) {
             return null;
@@ -871,7 +878,12 @@ public final class ScopePipRenderState {
                 SceneColorTarget.instance = null;
                 return null;
             }
+
             SceneColorTarget.instance = instance;
+                // 新画布 = 新代数：离屏纹理内容是未定义的，隔帧复用闸门（ScopePipRerender 的 interval）据此
+                // 丢弃"上一帧"的镜内画面。26.2 的 ScopePipTarget.generation() 同一语义（比代数不比引用：
+                // 引用相等区分不了"同一个对象"与"销毁后恰好复用同一实例"）。
+                sceneTargetGeneration++;
         }
         return SceneColorTarget.instance;
     }

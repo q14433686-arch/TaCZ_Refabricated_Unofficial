@@ -94,6 +94,8 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RELEASE_IDLE_PIPELINE;
     /** 连续多少帧不在镜内才做空闲释放（避免「释放—重建」来回抖）。 */
     public static ForgeConfigSpec.IntValue SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES;
+    /** 镜内那遍世界每 N 帧真渲一次，其余帧复用上一帧成品（1 = 每帧，关闭复用）。 */
+    public static ForgeConfigSpec.IntValue SCOPE_PIP_RERENDER_INTERVAL;
     /**
      * 【实验】用窄 FOV 把世界<b>二次渲染</b>一遍作为镜内画面，取代屏幕空间重投影。
      *
@@ -227,10 +229,11 @@ public class RenderConfig {
                         "Costs an extra set of shader buffers (up to a few hundred MB of VRAM at high "
                                 + "resolutions) and a one-time shader compile the first time you aim. "
                                 + "Turn it off if VRAM is tight, and the artifacts above come back. "
-                                + "While this is on, the scope pass is still refused if a Sodium or Voxy "
-                                + "install is detected: this branch has no projection-snapshot / second "
-                                + "render-stack compat for either, and running the pass without them draws "
-                                + "the lens world at the wrong FOV.")
+                                + "Sodium needs no opt-in: its terrain projection snapshot and its "
+                                + "once-per-frame chunk-uniform gate are synced in place (SodiumCompat). "
+                                + "With Voxy installed the scope pass swaps onto a second Voxy render "
+                                + "stack; if that stack cannot be built the lens simply has no LOD while "
+                                + "the main view stays correct.")
                 .define("ScopePipIsolatePipeline", true);
         SCOPE_PIP_SHADOW_SCALE = builder.comment(
                         "Shadow map resolution for the scope pass, as a fraction of the pack's own. "
@@ -257,12 +260,25 @@ public class RenderConfig {
                                 + "above runs. Too low and the pipeline is torn down and rebuilt while you "
                                 + "are tap-scoping.")
                 .defineInRange("ScopePipIdleReleaseDelayFrames", 120, 30, 1200);
+        SCOPE_PIP_RERENDER_INTERVAL = builder.comment(
+                        "Rerender mode: truly render the narrow-FOV scope world only every N frames; the "
+                                + "frames in between reuse the previous scope picture (no second renderLevel "
+                                + "at all, so no state re-extraction and the vanilla pass is untouched). "
+                                + "The lens CONTENT lags N-1 frames while the main view stays full-rate.",
+                        "",
+                        "Default 1 = render every frame (no reuse). This trades lens freshness for the cost "
+                                + "of the second world render; the off-screen canvas is invalidated by "
+                                + "generation, so a window resize never makes a stale buffer get reused.")
+                .defineInRange("ScopePipRerenderInterval", 1, 1, 4);
         SCOPE_PIP_RERENDER = builder.comment(
                         "Draw the scope image by rendering the world a SECOND time with a narrow FOV, "
                                 + "instead of reprojecting the already-rendered frame. The lens then has native "
                                 + "resolution (the reprojection path is capped at screen resolution / zoom). "
                                 + "Costs a full extra world render every frame. Experimental; default off. "
-                                + "This port currently implements only the vanilla (no-shader-pack) path.")
+                                + "Works without a shader pack, and under an Iris pack once "
+                                + "ScopePipAllowShaderPacks is on (the scope pass then runs on its own Iris "
+                                + "pipeline when ScopePipIsolatePipeline is on, and Sodium/Voxy are patched "
+                                + "in place so neither the lens nor the main view is corrupted).")
                 .define("ScopePipRerender", false);
         SCOPE_PIP_RESOLUTION_SCALE = builder.comment(
                         "Render resolution scale for the scope pass in rerender mode (1.0 = native). "
