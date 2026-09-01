@@ -25,6 +25,9 @@ public class OverwriteCommand {
     private static int setOverwrite(CommandContext<CommandSourceStack> context) {
         boolean enable = BoolArgumentType.getBool(context, ENABLE);
         PreLoadConfig.override.set(!enable);
+        // 这条命令绕过了 Cloth 面板的 savingRunnable，而 DefaultPackDebug 是 pre 配置里的键：
+        // 不显式落盘的话，命令行改完重启就回默认（同一个病根的另一条入口）。
+        com.tacz.guns.config.ConfigPersist.saveAll();
         if (context.getSource().getEntity() instanceof ServerPlayer serverPlayer) {
             if (PreLoadConfig.override.get()) {
                 serverPlayer.sendSystemMessage(Component.translatable("commands.tacz.reload.overwrite_off"));

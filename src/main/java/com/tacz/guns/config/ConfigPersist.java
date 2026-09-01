@@ -1,6 +1,8 @@
 package com.tacz.guns.config;
 
+import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.Config;
+import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import com.electronwill.nightconfig.toml.TomlWriter;
 import com.tacz.guns.GunMod;
@@ -14,7 +16,11 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * 配置落盘的显式收尾 —— 修「重启后配置回到默认」。
@@ -89,6 +95,12 @@ public final class ConfigPersist {
      *
      * @return Forge 惯例的显式文件名
      */
+    /** 一份要落盘的 (spec, 文件, 标签)。注册顺序即保存顺序。 */
+    private record Target(ForgeConfigSpec spec, Path file, String label) {
+    }
+
+    private static final List<Target> TARGETS = new CopyOnWriteArrayList<>();
+
     public static String record(ModConfig.Type type, ForgeConfigSpec spec) {
         String name = fileName(type);
         Path file = FabricLoader.getInstance().getConfigDir().resolve(name);
@@ -105,38 +117,117 @@ public final class ConfigPersist {
                 // SERVER 配置由（集成）服务器生命周期持有，Cloth 面板从不编辑它。
             }
         }
+        if (spec != null) {
+            TARGETS.add(new Target(spec, file, type.toString().toLowerCase(Locale.ROOT)));
+        }
         return name;
+    }
+
+    /**
+     * 非标准命名的那份配置也要落盘：{@code PreLoadConfig} 的 {@code tacz-pre.toml} 里装着
+     * {@code DefaultPackDebug}，而 Cloth 面板 {@code OtherClothConfig} 编辑的正是它 —— 不在本表里，
+     * 那个开关就永远写不回去（"重启后配置回默认"在本线的第二个具体来源）。
+     *
+     * @param fileName 已经钉死的注册文件名（与 {@code ConfigRegistry.register} 的第 4 参同一个值）
+     */
+    public static String recordNamed(ForgeConfigSpec spec, String fileName) {
+        Path file = FabricLoader.getInstance().getConfigDir().resolve(fileName);
+        TARGETS.add(new Target(spec, file, fileName));
+        return fileName;
     }
 
     /**
      * 把 CLIENT 与 COMMON 两份 spec 落盘。单个文件失败只记日志并跳过，不连带拖垮另一份。
      */
     public static void saveAll() {
-        save(clientSpec, clientFile, "client");
-        save(commonSpec, commonFile, "common");
+        // 两条旧字段仍保留（供外部按类型单独取用），但落盘以 TARGETS 为准：
+        // 它包含 PreLoadConfig 这类非标准命名的注册。
+        if (TARGETS.isEmpty()) {
+            save(clientSpec, clientFile, "client");
+            save(commonSpec, commonFile, "common");
+            return;
+        }
+        for (Target t : TARGETS) {
+            save(t.spec(), t.file(), t.label());
+        }
     }
 
     private static void save(@Nullable ForgeConfigSpec spec, @Nullable Path file, String label) {
-        if (spec == null || file == null || !spec.isLoaded()) {
+        if (spec == null || file == null) {
             return;
         }
         try {
             Config child = ((ForgeConfigSpecAccessor) (Object) spec).tacz$getChildConfig();
             if (child == null) {
+                // 【以前这里是静默 return】spec 还没被 FCAP 载进来时，面板改的值只存在于内存，
+                // 我们无配置可写 ⇒ 必须说一声，否则"配置不持久化"与"FCAP 没加载"两种病看起来一模一样。
+                GunMod.LOGGER.warn("[TACZ] Could not persist the {} config: its spec has no in-memory "
+                        + "config yet (FCAP has not loaded it). Values stay effective this session only.",
+                        label);
                 return;
             }
-            if (child instanceof FileConfig) {
-                // 旧架构：spec 自己会写（autosave/FileConfig 都在），交给它，避免我们绕过它的注释策略。
-                spec.save();
+            if (child instanceof FileConfig fileConfig) {
+                // 旧架构：它自己会写（autosave/FileConfig 都在），交回给它，保留它的注释与格式。
+                fileConfig.save();
                 return;
             }
-            Files.createDirectories(file.toAbsolutePath().getParent());
-            try (Writer writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
-                new TomlWriter().write(child, writer);
+            if (Files.exists(file)) {
+                // 先把值并进已有文件再存：CommentedFileConfig 会保留原文件的注释、键顺序与
+                // 未被子句覆盖的条目；直接 TomlWriter 覆盖会把用户文件里的注释整片抹掉。
+                CommentedFileConfig merged = CommentedFileConfig.builder(file)
+                        .preserveInsertionOrder()
+                        .build();
+                try {
+                    merged.load();
+                    copyInto(child, merged, java.util.Collections.emptyList());
+                    merged.save();
+                } finally {
+                    merged.close();
+                }
+                return;
             }
+            // 文件还不存在（首启或被删）：新建，走原子替换。
+            writeAtomic(child, file);
         } catch (Throwable t) {
             GunMod.LOGGER.warn("[TACZ] Failed to persist the {} config after saving it. The values stay "
                     + "effective for this session but will revert to the file's contents on next launch.", label, t);
+        }
+    }
+
+    /** 递归把内存配置的叶子值写进目标（路径列表 → 值），中间表自动创建。 */
+    private static void copyInto(Config from, CommentedConfig to, List<String> prefix) {
+        for (Map.Entry<String, Object> e : from.valueMap().entrySet()) {
+            List<String> path = new ArrayList<>(prefix.size() + 1);
+            path.addAll(prefix);
+            path.add(e.getKey());
+            Object v = e.getValue();
+            if (v instanceof Config sub) {
+                copyInto(sub, to, path);
+            } else {
+                to.set(path, v);
+            }
+        }
+    }
+
+    /**
+     * 原子写：先写同目录临时文件再 ATOMIC_MOVE 替换。
+     *
+     * <p>原来直接对目标文件 {@code newBufferedWriter} 会<b>先截断</b>：这一刻若 JVM 被杀/掉电，
+     * 留下的是空文件 —— 下次启动读回"什么都没有" = 全部配置回到默认，而且再也找不回来。
+     * 配置不持久化最坏的那种形态就是它。</p>
+     */
+    private static void writeAtomic(Config child, Path file) throws java.io.IOException {
+        Path dir = file.toAbsolutePath().getParent();
+        Files.createDirectories(dir);
+        Path tmp = Files.createTempFile(dir, file.getFileName().toString(), ".tmp");
+        try (Writer writer = Files.newBufferedWriter(tmp, StandardCharsets.UTF_8)) {
+            new TomlWriter().write(child, writer);
+        }
+        try {
+            Files.move(tmp, file, java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+            Files.move(tmp, file, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         }
     }
 }
