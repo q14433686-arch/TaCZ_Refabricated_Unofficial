@@ -80,6 +80,21 @@ R2-hotfix2 之后的主线增量。除下列条目各自标注「**待实测**�
   `MESH_LOADER.md` §5.2-bis 第 13 项。附带两条常驻 log-once（镜内首次
   登记+绘制、镜内也有提交），把「镜内有没有走 GPU 烘焙」从靠帧率反推
   变成日志事实。**根因已由实机日志证明，修复效果待实测。**
+- **mesh 枪身目镜裁剪修复（此前从未生效）**：高模枪身在镜内不按孔径裁剪
+  （枪管穿进镜片画面）。根因是**时序**：启用判据 `maskReadyForViewmodel()` 问的是
+  `ScopeMaskGeometry` 的当场状态，而 `ScopeMaskRenderer.renderAtPhaseBoundary()`
+  在 `finally` 里无条件清空它（防掩码粘住），清空点在 `executeSolid` 之前、
+  mesh 手部表的绘制点在其之后 ⇒ 绘制期判定**恒 false**，自实装起从未裁过
+  （立方体枪身/手臂/火光在 submit 期判定，一直正常，所以只有 mesh 缺裁）。
+  维护者报的「只在开二次渲染时被高倍镜裁切」是**假象**：二次渲染的镜内画面
+  本来就不含视模，枪身在镜内「消失」看着像被裁了。修法：`ScopeMaskRenderer`
+  在掩码画成、清空几何之前记一份帧快照 `viewmodelClipMaskThisFrame`；
+  `ScopeBodyRenderTypes` 增绘制期变体 `maskReadyForViewmodelAtDraw()` /
+  `clipForViewmodelAtDraw()`（其余闸门逐条保留，与立方体同开同关）；
+  `PolyMeshGpuRenderer` 两处绘制期判据换用变体，并在裁剪首次生效时打一行
+  log-once `GPU hand mesh pass: ocular clip ACTIVE`。与 26.2 Neo 姊妹线
+  （`99253c5`）同因同修。**根因为静态闭环（时序穷举），修复效果待实测**；
+  记录：`investigations/BUG_MESHGUNBODY_SCOPE_CLIP_RERENDER_2026_09_02.md`。
 - **配置持久化修复（FCAP 26.x 保存断桥）**：Cloth 界面保存只改内存、
   从不写回 TOML（`ConfigValue.set` 不落盘 + `ForgeConfigSpec.save()` 在
   新架构下恒 no-op），重启即「配置重置」；现于保存流程末尾显式调 FCAP

@@ -257,6 +257,29 @@ public final class ScopeMaskRenderer {
      */
     private static boolean maskDrawnLastFrame = false;
 
+    /**
+     * 本帧「掩码<b>也</b>用于裁剪视模」的快照 —— 专供<b>绘制期</b>判据使用。
+     *
+     * <h3>为什么必须有这一位（mesh 枪身裁剪从未生效一案）</h3>
+     * 「掩码是否可用于裁视模」的原始事实存在 {@code ScopeMaskGeometry} 里
+     * （{@code ENTRIES} 非空 + {@code viewmodelClipEnabled}），而
+     * {@link #renderAtPhaseBoundary()} 在 {@code finally} 里<b>无条件</b>把它清空
+     * （防收起瞄具后掩码粘住）。清空发生在 {@code executeSolid} <b>之前</b>，
+     * 于是所有跑在 executeSolid <b>之后</b>的消费者读到的恒是「空」：
+     * <pre>
+     * submit 期（几何在册）  → 立方体枪身/手臂/火光  ⇒ 判定 true，裁剪一直正常
+     * 阶段边界              → 画掩码 → finally 清空
+     * executeSolid 之后     → mesh GPU 手部表        ⇒ 判定【恒 false】，从未裁过
+     * </pre>
+     * 因此在掩码画成的那一刻把结论<b>快照</b>下来：绘制期改问这一位，
+     * 与 submit 期同开同关。语义与 {@link #maskDrawnThisFrame} 一致 ——
+     * 每帧开头复位、帧内单调（false → true）。
+     *
+     * <p>只在 {@link #drawMask} 的<b>成功路径</b>上置位：掩码没真画进 target 时
+     * 让绘制期继续走未裁剪管线，最坏回到「镜内见枪身」，绝不因裁剪特性画错模型。</p>
+     */
+    private static boolean viewmodelClipMaskThisFrame = false;
+
     private ScopeMaskRenderer() {
     }
 
@@ -283,6 +306,7 @@ public final class ScopeMaskRenderer {
         maskDrawnLastFrame = maskDrawnThisFrame;
         maskDrawnThisFrame = false;
         compositedThisFrame = false;
+        viewmodelClipMaskThisFrame = false;
     }
 
     /** 本帧掩码是否已成功画进 target（供合成阶段判定 —— 它跑在掩码之后）。 */
@@ -293,6 +317,17 @@ public final class ScopeMaskRenderer {
     /** 上一帧是否画出过掩码（供 FOV 让位与镜内抓取判定 —— 它们跑在掩码之前）。 */
     public static boolean hadMaskLastFrame() {
         return maskDrawnLastFrame;
+    }
+
+    /**
+     * 本帧画成的那张掩码<b>是否也用于裁剪视模</b>（供 executeSolid 之后的
+     * 绘制期判据使用 —— 那时 {@code ScopeMaskGeometry} 已被清空，问不到原始事实）。
+     *
+     * <p>与 {@code ScopeMaskGeometry.isViewmodelClipEnabled()} 的区别只在<b>时机</b>：
+     * 后者是 submit 期的当场事实，前者是它在掩码画成那一刻的帧快照。</p>
+     */
+    public static boolean isViewmodelClipMaskThisFrame() {
+        return viewmodelClipMaskThisFrame;
     }
 
     /**
@@ -368,6 +403,8 @@ public final class ScopeMaskRenderer {
         if (mesh == null) {
             // 没有可画的几何：仍然开一次 pass 把掩码清空。
             // 否则上一帧的白色形状会残留在纹理里（target 不会自己变黑）。
+            // 掩码内容为空 ⇒ 本帧不该再声称「可裁视模」。
+            viewmodelClipMaskThisFrame = false;
             clearOnly(target);
             return;
         }
@@ -427,6 +464,10 @@ public final class ScopeMaskRenderer {
                 // 走到这里 pass 已经关闭、绘制已提交 —— 掩码 target 里确实有东西了。
                 // 镜内画中画的合成阶段就等这一位。
                 maskDrawnThisFrame = true;
+                // 【必须在 renderAtPhaseBoundary 的 finally 清空几何之前记下】
+                // 这一位是 executeSolid 之后那些绘制期判据的唯一事实来源，
+                // 见 viewmodelClipMaskThisFrame 的类内说明。
+                viewmodelClipMaskThisFrame = ScopeMaskGeometry.isViewmodelClipEnabled();
                 if (!loggedSuccess) {
                     loggedSuccess = true;
                     GunMod.LOGGER.info("[TACZ Scope] Ocular mask drawn: {} indices from {} batches.",

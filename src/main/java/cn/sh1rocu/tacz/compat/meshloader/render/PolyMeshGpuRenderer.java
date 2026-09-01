@@ -130,10 +130,19 @@ public final class PolyMeshGpuRenderer {
      * 就得到与 LIT_PIPELINE 语义一致、只多一步「孔径内 discard」的管线。
      * 掩码纹理在 pass 内直接绑定，与镜身/火光同一张、同一帧语义。</p>
      *
-     * <p>启用判据复用 {@code ScopeBodyRenderTypes.maskReadyForViewmodel(true)} ——
-     * 与 collector 枪身裁剪<b>同一份</b>前置（掩码开关/光影回退/低倍 sight 的
+     * <p>启用判据用 {@code ScopeBodyRenderTypes.maskReadyForViewmodelAtDraw()} ——
+     * 与 collector 枪身裁剪<b>同一组</b>前置（掩码开关/光影回退/低倍 sight 的
      * reticle-only 掩码不许裁枪身/掩码 target 就绪），两条路径的裁剪行为
-     * 永远同时开关，不会出现「立方体裁了 mesh 没裁」的分叉。</p>
+     * 同开同关，不会出现「立方体裁了 mesh 没裁」的分叉。</p>
+     *
+     * <p><b>为什么是 AtDraw 变体（2026-09-02 修复：裁剪自实装起从未生效）</b>：
+     * 初版直接调 submit 期那个 {@code maskReadyForViewmodel(true)}，但它问的是
+     * {@code ScopeMaskGeometry} 的当场状态，而 {@code ScopeMaskRenderer.renderAtPhaseBoundary()}
+     * 在 {@code finally} 里无条件清空几何（防掩码粘住），清空点在 {@code executeSolid}
+     * <b>之前</b>、本类的绘制点在其<b>之后</b> ⇒ {@code isEmpty()} 恒 true ⇒
+     * 判定恒 false ⇒ 从未裁过。AtDraw 变体改问 {@code ScopeMaskRenderer} 的帧快照
+     * （掩码画成那一刻记下的 {@code isViewmodelClipEnabled}），其余闸门逐条相同。
+     * 姊妹线（26.2 Neo）同架构同移植同病，同法同修。</p>
      *
      * <p>光影下不走本管线（useRenderTypeRoute 走 RenderType 路线），那一侧由
      * clipForViewmodel 替换 renderType 覆盖（见 drawViaRenderTypeCore）。</p>
@@ -172,6 +181,25 @@ public final class PolyMeshGpuRenderer {
     }
 
     public record DrawEntry(Matrix4f model, Identifier texture, BakedBone bone) {
+    }
+
+    /**
+     * 「镜内裁剪真的生效了」的一次性播报。
+     *
+     * <p>为什么值得单独一行：这条判据曾经<b>恒 false</b>（判定时机在几何被清空之后），
+     * 而「没裁」在画面上极难与「镜内画面本来就不含视模」区分 —— 二次渲染那一遍
+     * 渲染的是不含视模的整幅世界，枪身在镜内「消失」看着正像裁掉了。有了这一行，
+     * 「裁剪是否生效」在日志里就是直接事实，不必靠观感反推。</p>
+     */
+    private static boolean loggedOcularClipActive = false;
+
+    private static void logOcularClipActiveOnce(String route) {
+        if (!loggedOcularClipActive) {
+            loggedOcularClipActive = true;
+            LOGGER.info("[TacZMeshLoader] GPU hand mesh pass: ocular clip ACTIVE ({} route) - the "
+                    + "draw-time gate read ScopeMaskRenderer's per-frame viewmodel-clip snapshot, so "
+                    + "in-lens mesh gun pixels are discarded like the cube gun body. (logged once)", route);
+        }
     }
 
     /** 仅第一人称手部。世界/GUI 禁止写入。 */
@@ -789,16 +817,24 @@ public final class PolyMeshGpuRenderer {
         long totalIndices = 0;
         for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
             // 【开镜 mesh 枪身裁剪 · 光影侧】与 collector 枪身完全同一份机制：
-            // clipForViewmodel 在掩码就绪时把 entityCutout 换成 scope_body_clipped
+            // 掩码就绪时把 entityCutout 换成 scope_body_clipped
             // （= entityCutout 配方 + SCOPE_MASK discard，视觉逐状态一致）。
             // 该管线已由 assignScopePipelineToHand 归入 Iris HAND program，
             // IrisScopeMaskState 对它写 tacz_ScopeMaskMode=1 —— 立方体枪身在
             // 光影下裁剪正确走的就是这条已实证链路，mesh 只是同车。
             // 掩码不就绪/未开镜时原样返回 entityCutout，行为与改动前逐位相同。
-            RenderType renderType = handPass
-                    ? com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipForViewmodel(
-                            RenderTypes.entityCutout(group.getKey()), group.getKey(), true)
-                    : RenderTypes.entityCutout(group.getKey());
+            //
+            // 【2026-09-02 修复】改用 AtDraw 变体（判据问帧快照而非已被清空的
+            // ScopeMaskGeometry），与自定义 pass 那一路同因同修。
+            RenderType vanillaType = RenderTypes.entityCutout(group.getKey());
+            RenderType renderType = vanillaType;
+            if (handPass) {
+                renderType = com.tacz.guns.client.render.scope.ScopeBodyRenderTypes
+                        .clipForViewmodelAtDraw(vanillaType, group.getKey());
+                if (renderType != vanillaType) {
+                    logOcularClipActiveOnce("RenderType");
+                }
+            }
             for (DrawEntry entry : group.getValue()) {
                 // MV = MV_draw(栈顶) × pose_bone。压栈让 prepare() 自己取。
                 //
@@ -898,20 +934,26 @@ public final class PolyMeshGpuRenderer {
 
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
 
-        // 【开镜 mesh 枪身裁剪】与 collector 枪身的 clipForViewmodel 同一份判据
-        // （maskReadyForViewmodel）：掩码可用 + 允许裁视模时，手部表换用
-        // SCOPE_MASK 变体管线，孔径内的 mesh 枪身像素 discard —— 修掉
-        // 「mesh 枪管穿进镜内画面」（5.2-bis 第 9 项）。仅手部表：世界枪不裁
-        // （它们本来就该出现在镜内画面里，与 collector 的世界枪一致）。
+        // 【开镜 mesh 枪身裁剪】与 collector 枪身的 clipForViewmodel 同一组闸门：
+        // 掩码可用 + 允许裁视模时，手部表换用 SCOPE_MASK 变体管线，孔径内的 mesh
+        // 枪身像素 discard —— 修掉「mesh 枪管穿进镜内画面」（5.2-bis 第 9 项）。
+        // 仅手部表：世界枪不裁（它们本来就该出现在镜内画面里，与 collector 的世界枪一致）。
         // EMISSIVE 回退档不裁：lightmap 都拿不到的会话已在降级态，宁简勿繁。
+        //
+        // 【2026-09-02 修复】判据换成 AtDraw 变体：本方法跑在 executeSolid 之后，
+        // 而 ScopeMaskGeometry 已在阶段边界（executeSolid 之前）被无条件清空，
+        // 原来那句 maskReadyForViewmodel(true) 恒返回 false —— 裁剪从未生效。
         boolean clipAgainstOcular = draws == HAND_DRAWS
                 && lightmapView != null
-                && com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.maskReadyForViewmodel(true);
+                && com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.maskReadyForViewmodelAtDraw();
         GpuTextureView maskView = null;
         if (clipAgainstOcular) {
             RenderTarget maskTarget = com.tacz.guns.client.render.scope.ScopeMaskTarget.current();
             maskView = maskTarget != null ? maskTarget.getColorTextureView() : null;
             clipAgainstOcular = maskView != null;
+        }
+        if (clipAgainstOcular) {
+            logOcularClipActiveOnce("custom pass");
         }
 
         // 阶段边界不在任何 render pass 内（FeatureRenderDispatcherMixin 的字节码分析），

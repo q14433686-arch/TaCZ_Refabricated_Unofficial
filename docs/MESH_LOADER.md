@@ -216,13 +216,42 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 9. 全 GPU 提交的枪（每个可见部件都走 GPU 表）贴图正常不紫黑
    （05170 实机踩坑 `2ae4c29` 的移植验证：纹理已改为 pass 外预解析）。
 
-**第 9 项（2026-09-01 已实装，待实测）**：开镜时 GPU 路径画的 mesh 枪身
-目镜裁剪。修法按本仓掩码语义（非 05170 的深度孔径架构）：无光影裸 pass 用
-新 `LIT_CLIPPED_PIPELINE`（core/scope_body + SCOPE_MASK，pass 内绑掩码）；
-光影 RenderType 路线把手部表的 entityCutout 过一遍 `clipForViewmodel`
-（与 collector 枪身同一份替换，scope_body_clipped 的 Iris 链路已被立方体
-实证）；两路共用 `maskReadyForViewmodel(true)` 判据，与立方体裁剪同开同关；
-世界表不裁。验证点：开镜 mesh 枪管不穿镜、松开右键枪身完整、低倍 sight 不啃洞。
+**第 9 项（2026-09-01 实装但从未生效；2026-09-02 修复，待实测）**：
+开镜时 GPU 路径画的 mesh 枪身目镜裁剪。实装形态：无光影裸 pass 用新
+`LIT_CLIPPED_PIPELINE`（core/scope_body + SCOPE_MASK，pass 内绑掩码）；
+光影 RenderType 路线把手部表的 entityCutout 过一遍裁剪版替换
+（`scope_body_clipped` 的 Iris 链路已被立方体实证）；世界表不裁。
+
+**为什么一直没生效（时序把判据静默禁用）**：两路的启用判据当时都调
+`ScopeBodyRenderTypes.maskReadyForViewmodel(true)`，它问的是 `ScopeMaskGeometry`
+的**当场**状态；而 `ScopeMaskRenderer.renderAtPhaseBoundary()` 在 `finally` 里
+**无条件清空**该清单（entries + viewmodelClip flag，防收起瞄具后掩码粘住），
+清空点在 `executeSolid` **之前**，mesh 手部表的绘制点在其**之后**：
+
+| 时刻 | 谁在判定 | `ScopeMaskGeometry` | 结果 |
+|---|---|---|---|
+| submit 期 | 立方体枪身 / 手臂 / 火光 | 在册 | true ⇒ 一直正常 |
+| 阶段边界 | 画掩码 → `finally` 清空 | — | — |
+| `executeSolid` 之后 | mesh GPU 手部表 | **已空** | **恒 false ⇒ 从未裁过** |
+
+所以症状是「mesh 枪身在**所有**形态都没裁」（主画面枪管一直穿进镜片画面）。
+维护者 2026-09-02 报的「只在开二次渲染时被高倍镜裁切」是**假象**：二次渲染的
+镜内画面本来就是**不含视模**的整幅世界渲染，枪身在镜内「消失」看着正像被裁了。
+
+**修法（与 26.2 Neo 姊妹线同因同修，`99253c5`）**：给绘制期一份帧快照。
+`ScopeMaskRenderer` 在 `drawMask` 成功路径上、`finally` 清空**之前**记下
+`isViewmodelClipEnabled`（`viewmodelClipMaskThisFrame`，`beginFrame` 复位）；
+`ScopeBodyRenderTypes` 增绘制期变体 `maskReadyForViewmodelAtDraw()` /
+`clipForViewmodelAtDraw()`（同义闸门，只把「掩码就绪」改问帧快照）；
+`PolyMeshGpuRenderer` 两处绘制期判据换用变体。低倍 reticle-only 不裁、
+光影回退、配置关、熔断四条闸门逐条保留，与立方体**同开同关**。
+裁剪首次生效打一行 log-once：`GPU hand mesh pass: ocular clip ACTIVE`。
+
+**验证点**：高倍镜 + mesh 枪，枪身/配件与立方体一样被孔径裁掉 ——
+**重投影、二次渲染、PIP 关的经典整屏变焦三种形态都裁**；镜内画面干净、
+收镜后枪身完整、光影下同行为；日志出现**一次** `ocular clip ACTIVE`
+（出现即证明判据不再恒 false）。低倍 sight 不啃洞。
+完整记录：[`investigations/BUG_MESHGUNBODY_SCOPE_CLIP_RERENDER_2026_09_02.md`](investigations/BUG_MESHGUNBODY_SCOPE_CLIP_RERENDER_2026_09_02.md)。
 
 **第 10 项（2026-09-01 已实装，实机 PASS 2026-09-02）**：配置持久化
 （FCAP 保存断桥）。Cloth 界面改任意配置 → 保存退出 → 重启：值保留。

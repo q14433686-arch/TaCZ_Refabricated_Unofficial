@@ -470,6 +470,57 @@ public final class ScopeBodyRenderTypes {
         return ScopeMaskTextureHandle.syncToMaskTarget();
     }
 
+    /**
+     * {@link #maskReadyForViewmodel} 的<b>绘制期</b>变体 —— 给跑在
+     * {@code executeSolid} <b>之后</b>的调用点用（目前只有 mesh 的 GPU 手部表）。
+     *
+     * <h2>为什么不能直接复用上面那个</h2>
+     * 上面那个问的是 {@code ScopeMaskGeometry} 的<b>当场</b>状态，而
+     * {@code ScopeMaskRenderer.renderAtPhaseBoundary()} 在 {@code finally} 里
+     * 无条件清空几何（防掩码粘住），清空点就在 {@code executeSolid} 之前。
+     * 于是绘制期读到的 {@code isEmpty()} 恒为 true、判定<b>恒 false</b> ——
+     * mesh 枪身裁剪自实装起从未生效过（症状：主画面枪管一直穿进镜片画面；
+     * 而二次渲染的镜内画面本来就不含视模，枪身「消失」看着像裁了，掩盖了病情）。
+     *
+     * <p>本变体把「掩码就绪」改问 {@code ScopeMaskRenderer} 的<b>帧快照</b>
+     * {@link ScopeMaskRenderer#isViewmodelClipMaskThisFrame()}（掩码画成那一刻
+     * 记下的 {@code isViewmodelClipEnabled}）。其余闸门逐条与 submit 期版本相同 ——
+     * 配置关、光影回退、低倍 reticle-only 掩码不许裁枪身、掩码 target 未就绪，
+     * 一个都不少，两条路径因此<b>同开同关</b>。</p>
+     */
+    public static boolean maskReadyForViewmodelAtDraw() {
+        if (!com.tacz.guns.config.client.RenderConfig.SCOPE_MASK_ENABLE.get()) {
+            return false;
+        }
+        if (IrisCompat.shouldDisableScopeMaskUnderShaderPack()) {
+            return false;
+        }
+        if (!ScopeMaskRenderer.isViewmodelClipMaskThisFrame()) {
+            return false;
+        }
+        return ScopeMaskTextureHandle.syncToMaskTarget();
+    }
+
+    /**
+     * {@link #clipForViewmodel} 的<b>绘制期</b>变体：判据换成
+     * {@link #maskReadyForViewmodelAtDraw()}，其余语义逐位相同
+     * （不满足条件原样返回 {@code original}）。
+     *
+     * <p>调用点必须确实是第一人称手持视模的绘制 —— 本变体不再收 {@code applies}
+     * 参数，因为绘制期的调用点只有 mesh 的手部表（世界表刻意不裁：
+     * 世界枪本就该出现在镜内画面里）。</p>
+     */
+    public static RenderType clipForViewmodelAtDraw(RenderType original,
+                                                    @javax.annotation.Nullable Identifier texture) {
+        if (texture == null) {
+            return original;
+        }
+        if (!maskReadyForViewmodelAtDraw()) {
+            return original;
+        }
+        return clipped(texture);
+    }
+
     private static RenderType create(String name, RenderPipeline pipeline, Identifier tex, boolean bindMask) {
         var builder = RenderSetup.builder(pipeline)
                 // Sampler0 = 瞄具自身贴图。r52 教训：管线声明的每个 sampler
