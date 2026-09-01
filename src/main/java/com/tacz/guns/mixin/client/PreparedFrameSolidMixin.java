@@ -47,9 +47,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  *       {@code isInHandPass} 拒收；</li>
  *   <li>GUI 的 renderAllFeatures（GuiItemAtlas / PictureInPictureRenderer）——
  *       {@code insideLevelRender} 为 false 拒收；</li>
- *   <li>镜内那遍 LevelRenderer.render 的帧图 —— 照画（两遍内容一致裁定），
- *       不清表不占帧标志，主画面那遍再正常消费；</li>
- *   <li>主世界帧图 —— 消费 + 清表。</li>
+ *   <li>镜内那遍 LevelRenderer.render 的帧图 —— <b>各自提交、各自画、画完即清</b>
+ *       （2026-09-02 实机改判：每一遍 render 都会把本帧提交节点重画一次，
+ *       镜内那遍因此有自己的一份表），但不占 {@code worldDrawnThisFrame}；</li>
+ *   <li>主世界帧图 —— 消费 + 置帧标志 + 清表。</li>
  * </ul>
  *
  * <p>时机安全性：executeSolid 内部逐 phase 开/关自己的 render pass，

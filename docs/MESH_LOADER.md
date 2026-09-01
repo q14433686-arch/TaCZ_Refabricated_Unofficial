@@ -92,9 +92,11 @@ submit/collector 架构下的等价物。要点：
   GUI 语境按 transformType 拒收（热栏图标无 Screen，事件拦不住）；Screen
   内嵌 3D 预览（背包人偶/枪匠桌）用 Fabric ScreenEvents 精确框住 extract
   窗口拦截（不用 100ms 时间戳窗口——那会「一开背包全场景跌回 collector」，
-  上游 TML 记载过的同款事故）；镜内那遍、阴影 pass、手部 pass 各自拒收;
-- **镜内 PIP 二次渲染**：世界表在镜内那遍照画但不清表（与 collector 的
-  「两遍内容一致」裁定同构），主画面那遍再正常消费;
+  上游 TML 记载过的同款事故）；阴影 pass、手部 pass 各自拒收
+  （**镜内那遍不再拒收** —— 2026-09-02 实机推翻，见 §5.2-bis 第 13 项）;
+- **镜内 PIP 二次渲染**：每一遍 `LevelRenderer#render` 都会把本帧提交节点
+  重画一次，所以镜内那遍与主画面那遍**各自登记、各自画、画完即清**
+  （与 collector 的「两遍内容一致」裁定同构）;
 - 光影下走与第一人称相同的 vanilla RenderType 管道；世界 pass 里
   ENTITY_CUTOUT 由 Iris 按 gbuffers_entities 链路接管（**此点未实测**，
   若个别包异常，`MeshGpuWorld=false` 一键回到纯 collector 现状）;
@@ -202,7 +204,8 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
    —— 首版在 prepare() 后就弹栈，法线丢掉 pose_bone 旋转层 ⇒ 反光的
    光源关系错乱（实测复现）；现弹栈移到 drawFromBuffer 之后，重点复测
    反光方向是否与立方体部件一致;
-7. 开镜（PIP）：镜内那遍世界枪仍在（不消失、不双影）;
+7. 开镜（PIP）：镜内那遍世界枪仍在（不消失、不双影），**且镜内也是高模**
+   （超 `MeshWorldMaxVertices` 的枪在镜内不应退化成立方体 —— §5.2-bis 第 13 项）;
 8. 光影开关翻转：世界枪不拉伸（世代号失效链路与第一人称共用）。
 9. 全 GPU 提交的枪（每个可见部件都走 GPU 表）贴图正常不紫黑
    （05170 实机踩坑 `2ae4c29` 的移植验证：纹理已改为 pass 外预解析）。
@@ -233,53 +236,62 @@ JEI/工作台里「附属包要另一包的枪/配件」的配方材料格应正
 物品并可合成；latest.log 不再出现 `Failed to resolve gun smith table
 ingredient`（tacz:nbt 形态）。
 
-**第 13 项（2026-09-01 裁定：姊妹线修复<b>不移植</b>，改为加观测点；实机未验）**：
-「二次渲染时视野内高模枪在镜内不烘焙」。1.21.11 的 `237dc153` 与 26.1.2 的
-`db360639` 已按同一根因修好：它们那两条线的 `LevelRenderer#renderLevel`
-**每调用一次就重新提交一遍世界几何**，于是镜内那遍会重新走一次
-`TaczPolyMeshGunModel.submit`，被 `shouldSubmitGpuWorld()` 里
-`isInsideScopeLevelRender()` 那条防御性闸门拒收 ⇒ 镜内那遍只能回
-collector + 顶点预算 ⇒ 高模枪被打成裸立方体，而主画面那遍照常 GPU 烘焙。
-它们的修法是「删闸门 + 镜内那遍画完也清表（主遍会重新提交一份）」。
+**第 13 项（2026-09-02 已实装，实机已证「镜内那遍会重新提交」，修复效果待实测）**：
+「二次渲染时视野内高模枪在镜内不烘焙」。**结论：与 1.21.11 `237dc153` /
+26.1.2 `db360639` 同因同修** —— 姊妹线那条修复适用于本线，已移植。
 
-**本线（26.2）不成立，逐条证据：**
+**先记一次错判（不要重蹈）**：本项第一次裁定（2026-09-01）说「26.2 的世界提交
+只发生在 extract 阶段、每帧一次，镜内那遍只是重画同一批节点，所以那条镜内闸门
+不可达、姊妹线修法不适用」。该裁定由**本仓自己加的哨兵日志在用户实机
+latest.log 里打印出来而被推翻**：
 
-| # | 证据 | 出处 |
-|---|---|---|
-| 1 | 26.2 的世界提交（含实体模型渲染）在**本帧 extract 阶段一次完成**，`LevelRenderer#render` 只是绘制阶段 —— 镜内那遍**复用** extract 那一批提交节点，闸门只在提交时过一次 | 本文档 `PolyRenderPolicy.detailZoom()` 的既有结论（第 11 项那次实机回报写的）；`PolyMeshGpuRenderer.renderWorldAfterSolid` javadoc |
-| 2 | 镜内那遍会把 `SubmitNodeStorage` **抽干**（`sortInto` 末尾 `clear()`），主画面那遍因此拿不到节点 —— 本仓为此专门取消那次 `clear()`。**若每一遍 render 都重新提交，这个 bug 与这个 mixin 都不会存在** | `SimpleFeatureRenderPhaseMixin` / `TranslucentFeatureRenderPhaseMixin` 头注释（字节码实读）；PR#82 帧率衰减调查 §4.5 |
-| 3 | 26.1.2 分支**没有**这两个 mixin（`git ls-tree` 核对）—— 正是因为它每遍各自提交，不存在「被抽干」问题 | `origin/arena/01a05db3-…` 的 `mixin/client/` 文件清单 |
-| 4 | `LevelRenderer#render` 的签名吃的是 `CameraRenderState`（提取产物）+ `DeltaTracker`，`SubmitNodeStorage` 是 `LevelRenderer` 上的**字段**（由 extract 填、由每遍 render 抽） | `GameRendererMixin` 的注入 target 字符串；`LevelRendererAccessor` |
-| 5 | 26.2 的 GUI 内嵌 3D（背包人偶/枪匠桌）submit 落在 **Screen 的 extract 窗口**（Fabric API 26.2 把 render 事件改名 extract）—— 模型提交属于 extract 阶段 | `ScreenRenderTracker` 头注释 |
-| 6 | 帧内顺序：`Minecraft#runTick` extract(441) → render(520)；二次渲染那一遍注入在 `renderLevel` 里 `LevelRenderer#render` 调用的 BEFORE ⇒ **在 extract 之后** | `GameRendererMixin.tacz$beginScopeFrame` / `tacz$renderScopePipView` |
+```
+[TacZMeshLoader] A world mesh submit was attempted inside the scope PIP re-render
+pass and was rejected. …（logged once）
+```
 
-⇒ 本线上那条镜内闸门**在正常流程里不可达**（它自己的注释早就这么写着），
-删掉换不到任何东西；而照抄「镜内画完清表」的那半会让主画面那遍拿到**空表**
-—— 开着 `ScopePipRerender` 开镜时**镜外那遍拿到空表：世界 mesh 枪的 poly 层
-整层不画、只剩立方体**（正是原报告那个观感，只是换到了镜外），
-比原报告严重得多。**故不移植行为改动。**
+同一份日志里还缺了「镜内画上世界表」那条 —— 两件事合起来正好是自洽的：
+镜内那遍的提交被拒收 ⇒ 世界表在那一遍是**空的** ⇒ 消费点被 `WORLD_DRAWS.isEmpty()`
+早退 ⇒ 镜内没有 GPU 世界绘制 ⇒ 镜内只能看 collector 的立方体档。
 
-**本轮实际落地的（观测点，非行为改动）：**
+**错在哪**：把「extract 阶段产出**提交节点**」误读成「extract 阶段完成**模型提交**」。
+两者不是一回事：
 
-- `renderWorldAfterSolid`：镜内那遍首次画上世界表时 log-once
-  `GPU world mesh pass active inside the scope PIP re-render pass: drew N world
-  entries …` —— 把「镜内到底有没有走 GPU 烘焙」从**靠帧率反推**变成日志事实；
-- `shouldSubmitGpuWorld`：镜内分支加 log-once 哨兵。它一旦被打印出来，就说明
-  「提交每帧一次」这条本线前提被打破（MC 后续把提交挪回 render 阶段，或某个 mod
-  在镜内那遍里重新渲染实体），**那时**姊妹线那条修复才适用于本线；
-- `drawList` 的首画日志改为报**真实表名**（此前无论画哪张表都写 "on hand pass"），
-  并让世界表在自定义 pass 上的首画单独记一次（原来会被更早的手部首画吃掉）。
+| 层 | 什么时候发生 | 每帧几次 | 证据 |
+|---|---|---|---|
+| 提交**节点**（`SubmitNodeStorage` 里的 `Submit`，载荷是 `ItemStackRenderState` / `GunModelSubmit` / `BedrockRenderSnapshot$DrawCommand`） | extract 阶段 | **一次** | PR#82 帧率衰减调查 §4.5 的 VisualVM 指纹（GC Root：`shadowRenderer -> submitNodeStorage -> SimpleFeatureRenderPhase -> batches`）；`SimpleFeatureRenderPhaseMixin`（镜内那遍抽干节点会让主遍没得画，所以取消 `clear()`） |
+| 把节点**画出来**那一步 —— 枪模的 `submit`（也就是 `shouldSubmitGpuWorld()` 的调用点）就在这里面 | **每一遍** `LevelRenderer#render` 各跑一次 | **每遍一次**（开二次渲染 = 两次） | 用户 2026-09-02 实机 latest.log 的哨兵行；`GunModelFeatureRenderer.buildGroup(...)` 是 feature renderer（绘制期跑，不是提取期）；`StatueRenderer`/`GunSmithTableRenderer` 用 `extractRenderState` 产状态、绘制期才渲染 |
 
-**本线若仍复现「镜内是立方体」，按这个顺序查**（都不是二次渲染的锅）：
-先看上面那条 log-once 有没有出现 —— 出现了就说明镜内在走 GPU 烘焙，问题在
-**提交侧**（第 11 项的开镜距离补偿是否生效：`MeshMaxRenderDistance` 48 /
-`MeshWorldFullDetailDistance` 16 / `MeshWorldMaxVertices`），或烘焙额度/LRU
-（`MeshGpuBakeBudgetPerFrame` 默认 4、`MeshGpuLightCacheSize` 默认 4 档，
-病理场景下逐帧收敛需要几帧）；没出现则是消费侧（看有没有
-`GPU world mesh pass failed` 把世界闸整局关掉）。
+两件事同时成立、互不矛盾：`SimpleFeatureRenderPhaseMixin` 保住的是**节点**
+（主遍还要把同一批节点再画一次），而我们的绘制表是**每遍各自登记**的。
+上次裁定只看到第一行、把它当成了第二行。
 
-**证据级别**：静态读码 + 本仓既有字节码取证 + 26.1.2/1.21.11 的实机回报；
-**本线实机未验**（沙箱无 java/JDK 也无 MC 依赖源，编译走 CI 闭环）。
+**修法（与姊妹线同形）**：
+
+- `shouldSubmitGpuWorld()` 删除 `isInsideScopeLevelRender()` 拒收（原地留一段
+  说明为什么删）；镜内那遍于是照常登记世界 GPU 表；
+- `renderWorldAfterSolid()` 镜内那遍**画完即清表**（它有自己的表；不清的话
+  主遍会把镜内那次登记的条目再叠画一遍 —— 白付一倍顶点开销、半透明骨骼叠加加倍），
+  `worldDrawnThisFrame` 仍只在主遍置位（那是主世界遍的重复消费防线）；
+- 两条 log-once 留作常驻观测点：镜内那遍首次「登记 + 绘制」（`GPU world mesh
+  pass active inside the scope PIP re-render pass: drew N world entries …`）
+  与首次发现「镜内也有提交」（`World mesh submits are produced inside the scope
+  PIP re-render pass on 26.2 too …`）；`drawList` 的首画日志改报真实表名
+  （此前画世界表也写 "on hand pass"），世界表在自定义 pass 上的首画单独记一次。
+
+**验收点（实测时看这几条）**：4x 以上开镜 + `ScopePipRerender=true`，视野里放
+一把超 `MeshWorldMaxVertices`（12 万顶点）的 mesh 枪（用户的是 duyupack
+`ak_enact` 365848 顶点 / `p90un` 491184 顶点）：镜内应为高模而非立方体；
+两条 log-once 都应出现；主画面镜外仍是高模（不消失、不双影）；开关光影都验一遍。
+
+**顺带发现（另案，未修）**：同一份日志里世界语境的贴图解析与第一人称不同源 ——
+第一人称拿到 `duyupack:textures/gun/uv/ak_enact.png`，世界语境回退到
+`GunDisplayInstance.getModelTexture()` 给的 `duyupack:textures/gun/ak_enact.png`
+（少了 `/uv/`），紧跟一条 `Missing resource duyupack:textures/gun/ak_enact.png`
+⇒ 世界 mesh 枪会用 missing-texture 兜底贴图。与本项无关，待单独处理。
+
+**证据级别**：根因与「镜内会重新提交」= 用户实机日志直接证明；修复效果本身
+**待实测**（沙箱无 java/JDK 与 MC 依赖源，编译走 CI 闭环）。
 
 ### 5.2-ter 下游 1.21.11 分支审查（A1-A10）处置记录（2026-08-31）
 

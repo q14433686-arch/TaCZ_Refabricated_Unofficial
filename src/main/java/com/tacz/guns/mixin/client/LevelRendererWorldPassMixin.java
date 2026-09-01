@@ -18,9 +18,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * 其余三类都在括号外。</p>
  *
  * <p>镜内那一遍是我们自己调的 {@code mc.levelRenderer.render}，同样会进这个
- * 括号 —— 正确：镜内世界枪就该在那一遍画（两遍内容一致裁定），
- * {@code renderWorldAfterSolid} 内部再按 {@code isInsideScopeLevelRender}
- * 区分「画而不清表」。</p>
+ * 括号 —— 正确：镜内世界枪就该在那一遍画。{@code renderWorldAfterSolid}
+ * 内部再按 {@code isInsideScopeLevelRender} 区分「画完即清表、但不占帧标志」
+ * ——两遍各自提交、各自消费（2026-09-02 实机改判，见该方法 javadoc）。</p>
  *
  * <p>RETURN 注入在异常路径不触发（镜内那遍的失败被 ScopePipRenderer 捕获），
  * 标志可能泄漏到帧尾 —— {@code PolyMeshGpuRenderer.beginFrame} 每帧兜底归零，
