@@ -159,8 +159,21 @@ public final class ScopeRenderTypes {
      * <p>失败哲学照旧：任一条件不满足即不裁，回到「手臂/火光正常画」的行为。</p>
      */
     public static boolean viewmodelFxClipApplies() {
-        return apertureScheduledForViewmodel
-                && ScopePipRenderState.currentZoom() >= ScopePipRenderState.minMagnification();
+        return apertureScheduledForViewmodel && magnificationSupportsLensClip();
+    }
+
+    /**
+     * 【低倍镜不裁】倍率下限：当前倍率是否够到「镜内有放大画面」那条线。
+     *
+     * <p>取 {@link ScopePipRenderState#currentZoom()}（{@code IGun#getAimingZoom}，组合镜按
+     * <b>当前档位</b>）与 {@link ScopePipRenderState#minMagnification()}（{@code
+     * ScopePipMinMagnification}，默认 4×）比较 —— 本线对「低倍镜 vs 高倍镜」的成文分界。</p>
+     *
+     * <p>单独拆出来是因为 mesh GPU 的枪身批次不经过 {@code apertureScheduledForViewmodel}
+     * （它看 {@link ScopeDepthCopyState#hasMaskCycleThisFrame()}），但要守同一条倍率线。</p>
+     */
+    public static boolean magnificationSupportsLensClip() {
+        return ScopePipRenderState.currentZoom() >= ScopePipRenderState.minMagnification();
     }
 
     /**
@@ -257,11 +270,18 @@ public final class ScopeRenderTypes {
     }
 
     /**
-     * Replaces an ordinary first-person gun/attachment cutout type only after an ocular was queued.
-     * All other contexts and failed aperture cycles retain the caller's original behavior.
+     * Replaces an ordinary first-person gun/attachment cutout type only after an ocular was queued
+     * <b>and</b> the scope is at/above {@code ScopePipMinMagnification}.
+     *
+     * <p>与手臂 / 火光同一条倍率线（{@link #viewmodelFxClipApplies()}）：枪身、配件这一刀
+     * 与它们<b>同性质</b> —— 都是「给镜内画面让位」，不是「把镜片挖透」。镜片本体在
+     * {@code AIM_CLIP_START} 之后就已经从可见 body 移到 invisible depth writer 了
+     * （{@code BedrockAttachmentModel#currentAimingProgress} 的注释），与倍率无关。
+     * 所以低倍镜（含组合镜低倍档）一样不该裁：没有放大画面可让位，裁掉的是枪身自己，
+     * 观感就是枪身上破了个洞。All other contexts retain the caller's original behavior.</p>
      */
     public static RenderType clipForViewmodel(RenderType original, Identifier texture, boolean applies) {
-        if (!applies || !apertureScheduledForViewmodel) {
+        if (!applies || !viewmodelFxClipApplies()) {
             return original;
         }
         // Gun displays may opt into entityTranslucent; retain that blend/sort recipe rather than

@@ -46,7 +46,8 @@
 | M-7 | 每帧烘焙额度与 LRU 容量解耦（独立键 `MeshGpuBakeBudgetPerFrame`，默认 4） | 26.2（下游审查 A6 采纳）→ 26.1.2 | **已落地待实机** | 本线原为 `Math.max(4, cap)`；新默认 4 与旧行为一致，属保守改动；已同步 Cloth 条目与中英语言键 |
 | M-8 | 字体页缓存 × 资源重载的清空入口 | 1.21.11 `SYNC_CHECKLIST` §2-2 → 26.1.2 | **登记未做** | 接线点要挑、又只能靠实机验证；隐患已写进 `ScopeTextSubmitter` javadoc，不在本轮做一个未验的运行期改动 |
 | M-9 | 镜内裁手：第一人称手臂在目镜孔径内 discard | 26.2 `94179d4b` → 26.1.2（深度孔径复刻） | **已落地待实机** | 直接复用本线火光裁剪管线 `flashTranslucentClipped`（`entityTranslucent` + `MASK_OUTSIDE`，`affectsCrumbling/sortOnUpload` 本就齐备、已登记 Iris `HAND_TRANSLUCENT`）；手臂 RenderType 由 `AvatarRenderer` 内部选定 ⇒ 用 `SubmitNodeCollector` 动态代理原地替换。详见 `docs/SCOPE_ARM_CLIP_26_1_2_2026_09_02.md`：两种 PIP 下合成会覆盖手臂（看不出差别），真缺口在经典整屏变焦路径。**追加（用户裁定）：低倍镜不裁** —— 闸门再加倍率下限
-          （`ScopePipMinMagnification` 默认 4×），组合镜按当前档位；枪身/配件不受影响（那是把镜片挖透）|
+          （`ScopePipMinMagnification` 默认 4×），组合镜按当前档位；**枪身/配件一并豁免**（`clipForViewmodel` + mesh GPU 批次）：镜片本体在 AIM_CLIP_START
+          后已移出可见 body，这一刀与手/火光同性质 = 给镜内画面让位，非挖透镜片 |
 
 ### 本线判定为不适用 / 观望的（不占 M 号，理由见 `SYNC_ROUNDUP_2612_20260902.md` §2.2-§2.3）
 

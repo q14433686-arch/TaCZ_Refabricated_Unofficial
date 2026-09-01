@@ -25,6 +25,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeDepthCopyState;
 import com.tacz.guns.client.render.scope.ScopePipRenderState;
+import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.render.scope.ScopePipRerender;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.fabricmc.api.EnvType;
@@ -899,9 +900,14 @@ public final class PolyMeshGpuRenderer {
         // 【目镜裁剪】仅手部表（!worldPass）且本帧确有完整目镜掩码周期时，lit 批次换用
         // 孔外剔除变体并绑定两份实时深度拷贝；其余（世界表/GUI/无镜/掩码失效）一律普通
         // 管线 —— 失败语义 = 与今日完全相同的未裁剪外观，不会更糟。
+        //
+        // 【低倍镜不裁】再加一条倍率下限，与 viewmodel 路径的枪身/配件/火光/手臂同一条线
+        // （ScopeRenderTypes#magnificationSupportsLensClip，ScopePipMinMagnification 默认 4×）：
+        // 低倍镜（含组合镜低倍档）没有镜内放大画面可让位，裁掉的是枪身自己 = 枪上破洞。
         boolean apertureClip = false;
         RenderPipeline pipeline;
-        if (lit && !worldPass && ScopeDepthCopyState.hasMaskCycleThisFrame()) {
+        if (lit && !worldPass && ScopeDepthCopyState.hasMaskCycleThisFrame()
+                && ScopeRenderTypes.magnificationSupportsLensClip()) {
             pipeline = LIT_PIPELINE_CLIP;
             apertureClip = true;
         } else {
