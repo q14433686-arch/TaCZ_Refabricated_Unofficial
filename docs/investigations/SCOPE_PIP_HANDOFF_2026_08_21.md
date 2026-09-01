@@ -589,6 +589,13 @@ Sodium 地形、Voxy、帧图导入全都要调这个方法。
 
 ## 3. 配置键（全部在 `config/tacz-client.toml` 的 `[render]` 下）
 
+> **2026-09-02 补注**：下表键名以 TOML 为准，但其中面向玩家的项**现在都在游戏内
+> 配置界面里**（Mod Menu → Timeless and Classics Guns → 齿轮 → 客户端 → 渲染），
+> 保存后立即生效并写回 TOML；仅 `ScopePipShadowScale` 需重启或切换维度。
+> 仍只能在 TOML 里改的是 `ScopePipDebug*`、`ScopePipMinAimingProgress`、
+> `ScopePipReleaseIdlePipeline` / `ScopePipIdleReleaseDelayFrames` 与
+> `AimingSwayIntensity`。给玩家的说明见 `README.md` §4.2。
+
 | 键 | 默认 | 说明 |
 |---|---|---|
 | `ScopePipEnable` | `false` | PIP 总开关 |

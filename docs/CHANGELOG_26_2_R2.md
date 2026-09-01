@@ -14,8 +14,9 @@ metadata，不能写成 `1.1.8-R2`。
 
 **构建元数据：`1.1.8+fabric.26.2.R3`**
 
-R2-hotfix2 之后的主线增量，全部经维护者实机验证 PASS（A 卡 + Iris 环境；
-NV 卡未实测，征测点见 Release 说明）：
+R2-hotfix2 之后的主线增量。除下列条目各自标注「**待实测**」的两项（开镜距离补偿、
+二次渲染下的镜内高模枪修复）与「光影下世界枪照明待实测」外，其余均经维护者实机
+验证 PASS（A 卡 + Iris 环境；NV 卡未实测，征测点见 Release 说明）：
 
 - **内置 TacZ Mesh Loader（TML）**：VellEagle 的 mesh 高模附属内置移植
   （GPL-3.0，`provides: taczmeshloader`），含本仓原创的第一人称 GPU 静态烘焙

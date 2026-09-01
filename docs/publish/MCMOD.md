@@ -117,6 +117,10 @@ Sh1roCu 的 TACZ-Refabricated 项目，对应上游 1.1.8-hotfix 版本，
           开发者：TACZ Dev Team
   移植来源：Sh1roCu / TACZ-Refabricated
   对应上游版本：1.1.8-hotfix
+  内置第三方代码：TacZ Mesh Loader（作者 VellEagle，GPL-3.0，
+                  本仓移植至目标版本并另写了 GPU 烘焙等部分）
+                  LRTactical（作者 LesRaisins，GPL-3.0，部分移植）
+                  Mayday Animation Engine 1.1.1（MIT，作为运行库随包）
   本项目源码：[[ 填你的 GitHub 仓库地址 ]]
 
   原模组代码采用 GPL-3.0 开源许可，该许可允许移植与再分发，
@@ -143,6 +147,17 @@ Sh1roCu 的 TACZ-Refabricated 项目，对应上游 1.1.8-hotfix 版本，
 
   4. 枪包兼容性修复，使包括旧版本在内的第三方枪包能够继续加载。
 
+  5. 内置高模（mesh）渲染支持
+     社区附属 TacZ Mesh Loader 的渲染能力已内置，
+     使用该格式（model_type: "mesh"）的枪包无需另装附属；
+     顶点变换改为 GPU 烘焙，第一人称与他人手持 / 掉落物 /
+     展示台同样适用，多人场景不再被逐顶点 CPU 变换拖慢。
+
+  6. 游戏内配置保存修复
+     配置界面里改的设置现在会真正写回 config/tacz-client.toml；
+     此前受 Forge Config API Port 26.x 影响，保存只改内存，
+     重启后配置会被重置。
+
 ──────────────────────────────
 
 四、当前状态
@@ -159,6 +174,17 @@ Sh1roCu 的 TACZ-Refabricated 项目，对应上游 1.1.8-hotfix 版本，
 
   具体的 Minecraft 版本与依赖版本以各下载文件的标注为准。
   本移植版仅支持 Fabric，无 Forge / NeoForge 版本。
+
+  配置方式：绝大多数选项都在游戏内配置界面里 ——
+  安装 Mod Menu 后，进入「模组列表 → Timeless and Classics Guns →
+  齿轮图标 → 客户端 → 渲染」等分类修改，保存后立即生效，
+  并会写回 .minecraft/config/tacz-client.toml。
+  一般不需要手动编辑该文件；只有少数诊断项与空闲释放策略项
+  没有界面入口，需要改文件并在重启后生效。
+
+  其中「瞄具画中画（PIP）」是实验性的镜内世界渲染开关，
+  默认关闭，同样在上述「渲染」页开启（用光影时另需打开
+  「允许在光影下开启 PIP」）；关闭后即完全回到默认渲染路径。
 
 ──────────────────────────────
 
@@ -252,17 +278,25 @@ Sh1roCu 的 TACZ-Refabricated 项目，对应上游 1.1.8-hotfix 版本，
 
 九、许可说明
 
-  本项目涉及两套相互独立的许可：
+  本项目并非由单一许可覆盖，至少包含以下几部分：
 
-    代码部分　　：GPL-3.0（继承自原模组）
+    代码（本移植与原模组代码）：GPL-3.0
                   修改与再分发须同样以 GPL-3.0 开源
 
-    默认枪包资源：CC BY-NC-ND 4.0
+    移植的第三方代码：GPL-3.0（各自沿用上游项目许可）
+                  TacZ Mesh Loader（VellEagle）
+                  LRTactical（LesRaisins）
+
+    随包运行库　　：MIT
+                  Mayday Animation Engine 1.1.1
+
+    默认枪包资源　：CC BY-NC-ND 4.0
                   署名 - 非商业性使用 - 禁止演绎
 
   代码为 copyleft 许可，要求衍生作品开源；
   枪包资源为禁止演绎许可，不允许修改后再分发。
   制作自定义枪包时应另建独立枪包，而非修改默认枪包。
+  代码许可不会自动覆盖美术资源；完整许可声明见源码仓库的 LICENSES.md。
 
 ──────────────────────────────
 

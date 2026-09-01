@@ -86,6 +86,15 @@
    the original and you cannot copy the description of the original project."*
    → 文案里的「What was changed / 相较原版的改动」一节是**规则要求的**，不能删。
 
+4. **配置项的措辞必须以游戏内界面为准。**
+   绝大多数选项（含全部 `ScopePip*` 玩家项）都在 Mod Menu 的配置界面里，
+   保存后立即生效且会写回 TOML；**不要**再把「编辑 `tacz-client.toml` 并重启」
+   写成唯一路径 —— 该说法在 R3 之后是错的，会让玩家白折腾一遍。
+   只有诊断项（`ScopePipDebug*` 等）、`ScopePipMinAimingProgress`、
+   `ScopePipReleaseIdlePipeline` / `ScopePipIdleReleaseDelayFrames` 与
+   `AimingSwayIntensity` 仍只能在 TOML 里改。
+   （权威清单：`src/main/java/com/tacz/guns/compat/cloth/client/RenderClothConfig.java`。）
+
 ---
 
 ## 各站独有的坑
@@ -128,8 +137,12 @@
 | Java | `>=25` |
 | 硬依赖 | `forgeconfigapiport >=26.2.1` |
 | modid | `tacz`（**不可更改**，枪包依赖此 ID） |
-| 代码许可 | GPL-3.0 |
+| 代码许可 | GPL-3.0（移植的第三方代码各自沿用上游 GPL-3.0） |
+| 随包运行库许可 | MIT（Mayday Animation Engine 1.1.1） |
 | 默认枪包资源许可 | CC BY-NC-ND 4.0 |
+| 内置附属 | TacZ Mesh Loader [TML]，作者 **VellEagle**，来源 `1.21.1_fabric` v0.1.7（`provides: taczmeshloader`） |
+| 配置入口 | Mod Menu → Timeless and Classics Guns → 齿轮 → 客户端 → 渲染（**不是**只能改 TOML） |
+| PIP 状态 | 已实现、**实验性、默认关闭**，游戏内开关；不要写成「暂停开发 / 尚未实现」 |
 
 三份文案都包含「需要 TacZ:Arcana 的加密枪包无法加载」一节 ——
 该问题症状是紫黑块、极易被误判为本移植版的 bug，
