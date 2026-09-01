@@ -110,8 +110,9 @@ CI 模板位于 `docs/publish/ci/consistency.yml`，需由仓库所有者复制�
 
 - **不要跨分支复制文件后不做适配。** 三条分支的 Java 版本、混淆状态、依赖版本、
   瞄具实现（26.x 是掩码/stencil 路径，1.21.11 是深度孔径路径）都不同。
-- `docs/README_26_1_2.md` 与 `docs/README_1_21_11.md` 是**对应分支根 README 的替换版**，
-  改动 `26.2(main)` 的 README 结构时，这两份也要同步。
+- `docs/README_26_1_2.md` 是 **26.1.2 分支根 README 的替换版**，
+  改动 `26.2(main)` 的 README 结构时也要同步它。
+  （1.21.11 的对应蓝本在该分支自己的仓内维护，本分支没有副本。）
 - 1.21.11 是混淆版本：mixin 目标**不得**使用 `lambda$xxx$N` 这类 javac 合成名，
   必须用 intermediary 的 `method_NNNNN`。该分支提供了校验脚本：
   ```bash

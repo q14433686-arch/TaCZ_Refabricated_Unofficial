@@ -10,6 +10,19 @@ Unless otherwise stated, the source code in this repository follows the license 
 
 - TaCZ / Timeless & Classics Guns: Zero code: GPL-3.0, according to the upstream project license.
 - LRTactical / LesRaisins Tactical Equipements code portions: GPL-3.0, according to the upstream project license.
+- TacZ Mesh Loader [TML] code portions (package `cn.sh1rocu.tacz.compat.meshloader`): GPL-3.0,
+  ported from VellEagle/TacZMeshLoader `1.21.1_fabric` v0.1.7
+  (https://github.com/VellEagle/TacZMeshLoader), author VellEagle.
+  The port includes substantial adaptation to the 26.2 rendering API plus
+  additions original to this repository — first-person GPU static baking,
+  world-context GPU baking (per-gun persistent VBOs shared by third-person /
+  dropped-item / item-frame renders, quantized-lighting LRU cache and per-frame
+  bake budget), vertex-budget gates, near-distance full-detail exemption,
+  sight-distance compensation for the baked detail gates, and the scope
+  picture-in-picture pass adaptations (per-pass submit/draw bookkeeping so the
+  in-lens re-render pass bakes like the main pass); those additions
+  are likewise GPL-3.0 as derivative work of the same module.
+  See `docs/MESH_LOADER.md` for the exact scope of the ported versus original parts.
 - Porting changes made in this repository are provided under the same license as the corresponding code they modify.
 - Mayday Animation Engine (MAE) 1.1.1 is bundled as a runtime library under the MIT License
   (`com.maydaymemory:mae`, https://github.com/286799714/MaydayAnimationEngine).

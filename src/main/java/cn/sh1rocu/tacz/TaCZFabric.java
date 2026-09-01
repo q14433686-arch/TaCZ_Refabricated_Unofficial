@@ -61,6 +61,13 @@ public class TaCZFabric implements ModInitializer {
         // 确保配置文件加载，这个阶段将比标准的forge配置文件加载早
         PreLoadConfig.init();
 
+        // 【时序硬约束】Fabric 上 FCAP 的 CLIENT/COMMON 配置在 register 里【当场加载】
+        // （ConfigTracker.registerConfig 直接 openConfig，26.2.x 源码 :96 实读），
+        // loading 回调必须先挂好 —— 挂晚了初次 loading 事件收不到，
+        // ConfigPersist 就记不到 ModConfig 实例（保存断桥修复随之失效）。
+        ModConfigEvents.loading(GunMod.MOD_ID).register(LoadingConfigEvent::onLoadingConfig);
+        ModConfigEvents.reloading(GunMod.MOD_ID).register(LoadingConfigEvent::onReloadingConfig);
+
         ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.COMMON, CommonConfig.init());
         ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.SERVER, ServerConfig.init());
         ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.CLIENT, ClientConfig.init());
@@ -89,6 +96,10 @@ public class TaCZFabric implements ModInitializer {
         // 材料格空白且无法合成。
         CustomIngredientSerializer.register(PartialNBTIngredient.Serializer.INSTANCE);
         CustomIngredientSerializer.register(StrictNBTIngredient.Serializer.INSTANCE);
+        // 上游 1.21.1+ 的 tacz:nbt（partial 布尔二合一）。社区枪包升级工具
+        // TaCZPackUpgrader 把旧包的 forge:nbt/forge:partial_nbt 批量转换成它 ——
+        // 经它升级过的附属包（跨包合成 bug 的实机日志所示）没有这行就整条配方失败。
+        CustomIngredientSerializer.register(cn.sh1rocu.tacz.util.forge.TaczNbtIngredient.Serializer.INSTANCE);
 
         Class<? extends EnumArgument<?>> enumArgumentClass = (Class<? extends EnumArgument<?>>) (Class) EnumArgument.class;
         ArgumentTypeRegistry.registerArgumentType(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "enum_argument"), enumArgumentClass,
@@ -122,8 +133,7 @@ public class TaCZFabric implements ModInitializer {
 
         LivingKnockBackEvent.CALLBACK.register(KnockbackChange::onKnockback);
 
-        ModConfigEvents.loading(GunMod.MOD_ID).register(LoadingConfigEvent::onLoadingConfig);
-        ModConfigEvents.reloading(GunMod.MOD_ID).register(LoadingConfigEvent::onReloadingConfig);
+        // （loading/reloading 回调已在 ConfigRegistry.register 之前挂好，见上方时序注释。）
 
         ServerPlayerEvents.AFTER_RESPAWN.register(PlayerRespawnEvent::onPlayerRespawn);
 

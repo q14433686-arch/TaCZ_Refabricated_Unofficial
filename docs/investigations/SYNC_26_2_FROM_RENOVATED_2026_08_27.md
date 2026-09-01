@@ -157,8 +157,8 @@ AnimationStateMachine#trigger → Lua` 上**没有任何 catch**（逐文件确�
   `cn.sh1rocu.tacz.api.extension.IMoveDistTracker` + `mixin/common/EntityMixin`，已接线。
 - **tooltip 自定义描述**（0.4.3 契约：灰色 / 宽 300 / >3 行折叠 / Shift 展开）：
   本仓 `AbstractClientItemTooltip` 已实现，本轮不动代码。
-- **`Item#getName` 专服崩溃修复**：本仓 `docs/DEDICATED_SERVER_GETNAME_AUDIT_2026_08_21.md`
-  与 `docs/PORT_GETNAME_FIX_TO_1211_AND_2612_2026_08_22.md` 已覆盖。
+- **`Item#getName` 专服崩溃修复**：本仓 `docs/investigations/DEDICATED_SERVER_GETNAME_AUDIT_2026_08_21.md`
+  与 `docs/lineage/superseded/PORT_GETNAME_FIX_TO_1211_AND_2612_2026_08_22.md` 已覆盖。
 
 ## 4. 与姊妹仓保持的刻意差异（同语义、不同实现）
 

@@ -87,15 +87,20 @@ third-party gun packs — including older ones — still load.
 | Original mod | **Timeless and Classics Guns: Zero**, by the **TACZ Dev Team** |
 | Upstream Fabric port | [`Sh1roCu/TACZ-Refabricated`](https://github.com/Sh1roCu/TACZ-Refabricated) |
 | Baseline | upstream **1.1.8-hotfix** |
+| Bundled mesh renderer | **TacZ Mesh Loader [TML]** by **VellEagle** — ported into this build and extended here (GPL-3.0) |
 | Source of this port | [[ 填你的 GitHub 仓库地址 ]] |
 
 The original mod is licensed **GPL-3.0**, which permits this port; this project is
 released under GPL-3.0 as well.
 
-**Note:** the bundled default gun pack's *assets* are licensed
+**Note:** the repository is not covered by one license. Ported third-party code
+(TacZ Mesh Loader by VellEagle, LRTactical by LesRaisins) stays **GPL-3.0** under
+each upstream project's license, the bundled Mayday Animation Engine runtime is
+**MIT**, and the bundled default gun pack's *assets* are licensed
 **CC BY-NC-ND 4.0** (NonCommercial, NoDerivatives) — separate from the code
-license. Don't sell them, and don't modify-then-redistribute them. To make your
-own pack, create a separate pack instead of editing the default.
+license. Don't sell those assets, and don't modify-then-redistribute them. To make
+your own pack, create a separate pack instead of editing the default. A full
+notice lives in `LICENSES.md` in the source repository.
 
 ## What was changed from the original
 
@@ -108,10 +113,35 @@ a recompile:
 - **Networking** migrated to the current packet/codec system.
 - **Resource and data-pack loading** updated for the new formats.
 - **Gun pack compatibility fixes** so older third-party packs keep loading.
+- **High-poly `mesh` guns render out of the box.** The community *TacZ Mesh Loader*
+  addon (by VellEagle, GPL-3.0) is built in, so packs using that format no longer
+  need it installed separately. Vertex work is baked on the GPU, both in first
+  person and for guns held by other players or dropped on the ground.
+- **In-game config saves again.** Settings changed in the config screen are written
+  back to `config/tacz-client.toml`; a Forge Config API Port 26.x regression had
+  made saves in-memory only, so every setting reset on restart.
+
+## Configuring
+
+Almost every option is available **in game**: open the mod list (Mod Menu), pick
+**Timeless and Classics Guns**, then the gear icon, and pick the **Render**
+category (the screen is one searchable list; the other categories are alongside). Saving there takes effect immediately and is written back to
+`config/tacz-client.toml`, so hand-editing that file is normally unnecessary — it
+is only needed for the handful of debug keys with no in-game entry, and it requires
+a game restart.
+
+One notable option is **Scope Picture-in-Picture (PIP)**, an experimental in-lens
+world renderer for high-magnification scopes. It is **off by default** and is
+turned on in that same Render page (plus "Allow PIP with Shader Packs" if you use
+Iris). Only `ScopePipShadowScale` needs a restart or a dimension change; everything
+else applies live. Turning the option back off returns the game to the default
+rendering path.
 
 ## Before you download — important
 
-**This is an Alpha 2 test build. It is playable, but expect bugs.**
+**This is a test build, not a polished release. It is playable, but expect bugs.**
+The exact build identity is in each file's name and version field — check the
+release notes there for what that build contains.
 
 Requirements: **Fabric**, **Fabric API**, **Forge Config API Port**, and
 **Java 25+**. Exact game and dependency versions are listed per file.
@@ -219,8 +249,8 @@ world corruption, crashes, data loss and mod conflicts. Non-commercial project.
 
 | 字段 | 填什么 |
 |---|---|
-| **Version name** | `1.1.8+fabric.26.2.R1` |
-| **Version number** | `1.1.8+fabric.26.2.R1` |
+| **Version name** | `1.1.8+fabric.26.2.R3` |
+| **Version number** | `1.1.8+fabric.26.2.R3` |
 | **Release channel** | **Release** |
 | **Loaders** | `Fabric` |
 | **Game versions** | `26.2` |
@@ -292,9 +322,19 @@ based on TACZ `1.1.8-hotfix`.
 
 ```
 
+> **⚠️ 上面这块是已发布原文（留档勿动），但其中一条已经过时**：
+> `PIP / second-world scope rendering is not enabled by default and remains paused.`
+> —— PIP 早已实现，只是**默认关闭**、且现在是**游戏内配置界面里的开关**
+> （Mod Menu → Timeless and Classics Guns → 齿轮 →「渲染」分类）。
+> 下次发布**不要**把这句抄进新 changelog，用下面 ⑤-ter 的措辞。
+
 ---
 
 ## ⑤-bis 次回发布用 Changelog 草稿（案例⑧ 正式修复 · 2026-08-12）
+
+> **2026-08-31 注**：版本号已前进到 R3（GitHub/CurseForge 线上已到 R2-hotfix2）。
+> 实际发布时以 `docs/CHANGELOG_26_2_R2.md` 的 R3 段为准重写本块；
+> 下方 R1 草稿保留为当时的行文范式参考。
 
 > R1 发布时用本块替换线上 changelog；§⑤ 里的 Beta 3 Hotfix 块是已发布原文，留档勿动。
 
@@ -334,6 +374,66 @@ R1 – first release build of this Fabric port.
   stale pose until the camera view is toggled; a prone cycle is required to
   trigger it, standing gun-switches alone do not. Cause not established —
   recorded as phenomenon only.
+```
+
+---
+
+## ⑤-ter 次回发布用 Changelog 草稿（R3 · 2026-09-02）
+
+> 依据 `docs/CHANGELOG_26_2_R2.md` 的 R3 段撰写，替换 ⑤-bis 的 R1 草稿。
+> 标 *(Pending in-game verification)* 的两项**尚未实机验证**，发布前若已验证请
+> 按 `AGENTS.md` §2 的措辞纪律改写或删掉；不要把它们写成已验证。
+
+```markdown
+R3 – test build of this Fabric port.
+
+### Highlights
+- **High-poly `mesh` guns now render in the world, not just in hand.** Guns from
+  packs using the TacZ Mesh Loader format are baked on the GPU when held by other
+  players, dropped, or displayed on item frames and pedestals, with a quantized
+  lighting cache and a per-frame bake budget, so multiplayer scenes stop paying a
+  per-vertex CPU transform cost. The baked detail gates are now scaled by the
+  current aiming magnification, so a zoomed sight no longer drops a nearby mesh gun
+  to a bare cube. *(Pending in-game verification; turning `MeshGpuWorld` off in the
+  config screen returns to the previous behaviour.)*
+- **In-game config saves again.** Settings changed in the config screen are written
+  back to `config/tacz-client.toml`; a Forge Config API Port 26.x regression had
+  left saves in memory only, so every setting reset on restart. Values already
+  written into an older TOML file need to be changed and saved once to refresh.
+- **Cross-pack crafting recipes load again.** Recipes converted to the newer
+  `tacz:nbt` ingredient form (as produced by the community pack upgrader) were
+  dropped outright, which showed up as "the addon pack's recipes neither appear nor
+  craft". A dedicated ingredient type plus JSON normalisation fixes them, including
+  the legacy `{item, nbt}` form whose NBT was silently discarded.
+- **In-lens clipping now covers the arm, scope-mounted text and the crosshair**
+  under shader packs, so mounted readouts (e.g. the MK5HD ammo counter) stay inside
+  the ocular instead of drawing over the scope body.
+- **Scope text content fixed:** packs that inline the display string into
+  `text_key` (e.g. `%ammo_count%`) no longer show a `Format error:` prefix.
+- **Inspect animations are interruptible again while aiming** (firing or reloading
+  cancels them as expected).
+
+### Notes
+- Requires Java 25 and Forge Config API Port.
+- Nearly every option lives in the in-game config screen (Mod Menu → Timeless and
+  Classics Guns → gear icon). Only the debug keys and a few idle-release settings
+  are TOML-only; `ScopePipShadowScale` additionally needs a restart or a dimension
+  change, everything else applies on save.
+- Gun packs requiring TacZ:Arcana (encrypted assets) will show missing textures.
+
+### Known issues
+- The optional **Scope PIP** in-lens renderer is **experimental and off by
+  default**. It is switched on in the in-game config screen — not by editing files —
+  and switching it off returns the game to the default rendering path.
+- With `ScopePipRerender` on plus an active shader pack, expect roughly half the
+  frame rate: the in-lens pass renders the world a second time.
+- Mesh guns whose textures live in a `uv/` subfolder show a missing-texture sprite
+  in the world (first person is unaffected). Known, not yet fixed; turning
+  `MeshGpuWorld` off avoids it.
+- Under active Iris shader packs the in-lens masking stays in its safe fallback
+  (scope tube interior visible inside the ocular).
+- LRTactical is partially integrated; flash shield and some add-on systems are
+  incomplete.
 ```
 
 ---

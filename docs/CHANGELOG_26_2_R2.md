@@ -10,7 +10,105 @@
 本 release 保持 `1.1.8` 为 SemVer 核心；`+fabric.26.2.R2` 是不参与版本谓词排序的 build
 metadata，不能写成 `1.1.8-R2`。
 
-## R2-hotfix2（源码状态，尚未发布）
+## R3（源码状态，2026-08-31 起）
+
+**构建元数据：`1.1.8+fabric.26.2.R3`**
+
+R2-hotfix2 之后的主线增量。除下列条目各自标注「**待实测**」的两项（开镜距离补偿、
+二次渲染下的镜内高模枪修复）与「光影下世界枪照明待实测」外，其余均经维护者实机
+验证 PASS（A 卡 + Iris 环境；NV 卡未实测，征测点见 Release 说明）：
+
+- **内置 TacZ Mesh Loader（TML）**：VellEagle 的 mesh 高模附属内置移植
+  （GPL-3.0，`provides: taczmeshloader`），含本仓原创的第一人称 GPU 静态烘焙
+  （逐骨骼常驻 VBO、光照 4 级量化烘焙、光影下走 vanilla RenderType 管道、
+  光影开关翻转触发重烘、GPU 失败自动回退 collector）、世界语境顶点预算门
+  与 16 格近距全模豁免。文档：[MESH_LOADER.md](MESH_LOADER.md)。
+- **世界语境 GPU 烘焙（多人高模枪帧数保卫战）**：其他玩家第三人称手持、
+  掉落物、展示框、展示台雕像共用常驻 VBO，每枪每帧只传 O(骨骼) 矩阵；
+  光照按量化档 LRU 缓存（`MeshGpuLightCacheSize`）+ 每帧烘焙额度
+  （`MeshGpuBakeBudgetPerFrame`）防逐出-重烘打摆 + 逐出 VBO 延迟一帧释放。
+  两轮实机返修已含：世界消费点钉在 `PreparedFrame.executeSolid` RETURN
+  （MV 栈顶=viewRotation，字节码取证）、Iris 法线矩阵取自绘制时刻 MV 栈
+  （弹栈时机后移）。**光影下世界枪照明待实测**，异常时游戏内关
+  `MeshGpuWorld` 即回到 R3 前行为。
+- **姊妹分支审查回合（A1-A10）**：吸收 1.21.11 分支对本仓 GPU 层的静态审查
+  ——异常降级分表化（世界失败不连坐手部）+ 不再从渲染线程回写配置文件 +
+  `LinkageError` 也接住（跨版本兼容问题回退而非崩溃）+ 渲染目标 override
+  防御 + 顶点格式 stride 哨兵 + 烘焙额度独立旋钮；`PolyMesh` 退化面不再写
+  零法线（光影下 NaN 随机高光）。诊断开关三件
+  （`MeshPolyMirrorReverseWinding`/`MeshPolyInvertNormals`/
+  `MeshPolyPreferPackNormals`）与 `IlluminatedRealSky` **默认全关**——
+  绕序反转与 RealSky 均被姊妹分支实机否证为默认值（详见
+  MESH_LOADER.md §5.2-ter），保留为按包诊断项。A4/A9 两条以
+  Iris 26.2 源码证据驳回，证据链在代码注释里。
+- **镜内裁剪三件套**：光影下开镜时第一人称手臂、瞄具挂载文字（如 MK5HD
+  弹药计数）与准星一致地裁剪在目镜圆孔内。
+- **瞄具文字 `Format error:` 前缀修复**：26.2 的 `I18n.get` 是格式化接口，
+  枪包把显示串内联进 `text_key`（含 `%` 字符）时触发格式化异常；改用
+  `Language.getInstance().getOrDefault` 纯查表，等价上游 1.20.1 语义。
+- **检视动画修复**：开镜时触发检视不再不可打断（`stopAnimation` 漏掉
+  transition 中的 runner + 同触发器后继动画被误停，两案连修）。
+- **跨包合成修复（`tacz:nbt` 材料类型补齐）**：上游 1.21.1+ 把
+  `forge:nbt`/`forge:partial_nbt` 合并成新的 `tacz:nbt`（带 `partial` 布尔），
+  社区枪包升级工具 TaCZPackUpgrader 批量把旧包配方转成该形态（且 `items`
+  写单字符串非数组）——本仓移植自 1.20.1 线从不认识它，Fabric 的材料
+  CODEC 分发失败，整条材料作废：表现为「附属包要默认包的枪就显示不出
+  也合不了，要自己包的枪就正常」（新旧两代配方文件混在同一包里，坏的
+  是被升级过的那批，与命名空间无关）。新增 `TaczNbtIngredient`
+  （partial=true 子集匹配 / false 严格全等）+ JSON 归一化（items 字符串
+  →数组、`fabric:type` 判别键）；另修 no-type `{item+nbt}` 旧写法的 nbt
+  被静默丢弃问题。NeoForge 家族继承上游新代码故无此病。
+- **开镜距离补偿（mesh 闸门）**：`MeshMaxRenderDistance`/
+  `MeshWorldFullDetailDistance` 原按裸眼距离判定，开镜放大 Z 倍后镜内
+  掉落物/第三人称 mesh 枪几乎必然退化为立方体；现阈值乘以当前开镜
+  放大系数（随开镜进度渐变），角尺寸语义一致，整屏变焦与 PIP 皆适用。
+- **「二次渲染时视野内高模枪在镜内不烘焙」修复（与姊妹线同因同修）**：
+  开着 `ScopePipRerender` 时，视野里别人的/掉落的/展示台的高模 mesh 枪在镜内
+  是未烘焙的立方体，关掉二次渲染或退镜就恢复，有无光影都复现。根因与
+  1.21.11（`237dc153`）/ 26.1.2（`db360639`）一致：26.2 的 extract 阶段产出的
+  是**提交节点**（`SubmitNodeStorage`），而「把节点画出来」那一步在**每一遍**
+  `LevelRenderer#render` 里各跑一次，枪模的 submit 就在那一步里 ——
+  `shouldSubmitGpuWorld()` 里那条 `isInsideScopeLevelRender()` 拒收把镜内那遍
+  打回 collector + 顶点预算 ⇒ 超过 `MeshWorldMaxVertices` 的高模枪在镜内退化
+  成裸立方体，主画面那遍照常 GPU 烘焙。修法：删掉该拒收 +
+  `renderWorldAfterSolid()` 镜内那遍画完即清表（两遍各自提交、各自消费），
+  `worldDrawnThisFrame` 仍只在主遍置位。
+  **本项含一次已记录的错判**：首次裁定（09-01）认为 26.2「提交每帧一次、
+  镜内那遍只重画节点」因而不适用，被**本仓自己加的哨兵日志在用户实机
+  latest.log 里打印出来**推翻 —— 错在把「extract 产出提交节点」读成
+  「extract 完成模型提交」。完整证据表与错判记录见
+  `MESH_LOADER.md` §5.2-bis 第 13 项。附带两条常驻 log-once（镜内首次
+  登记+绘制、镜内也有提交），把「镜内有没有走 GPU 烘焙」从靠帧率反推
+  变成日志事实。**根因已由实机日志证明，修复效果待实测。**
+- **mesh 枪身目镜裁剪修复（此前从未生效）**：高模枪身在镜内不按孔径裁剪
+  （枪管穿进镜片画面）。根因是**时序**：启用判据 `maskReadyForViewmodel()` 问的是
+  `ScopeMaskGeometry` 的当场状态，而 `ScopeMaskRenderer.renderAtPhaseBoundary()`
+  在 `finally` 里无条件清空它（防掩码粘住），清空点在 `executeSolid` 之前、
+  mesh 手部表的绘制点在其之后 ⇒ 绘制期判定**恒 false**，自实装起从未裁过
+  （立方体枪身/手臂/火光在 submit 期判定，一直正常，所以只有 mesh 缺裁）。
+  维护者报的「只在开二次渲染时被高倍镜裁切」是**假象**：二次渲染的镜内画面
+  本来就不含视模，枪身在镜内「消失」看着像被裁了。修法：`ScopeMaskRenderer`
+  在掩码画成、清空几何之前记一份帧快照 `viewmodelClipMaskThisFrame`；
+  `ScopeBodyRenderTypes` 增绘制期变体 `maskReadyForViewmodelAtDraw()` /
+  `clipForViewmodelAtDraw()`（其余闸门逐条保留，与立方体同开同关）；
+  `PolyMeshGpuRenderer` 两处绘制期判据换用变体，并在裁剪首次生效时打一行
+  log-once `GPU hand mesh pass: ocular clip ACTIVE`。与 26.2 Neo 姊妹线
+  （`99253c5`）同因同修。**根因为静态闭环（时序穷举），修复效果待实测**；
+  记录：`investigations/BUG_MESHGUNBODY_SCOPE_CLIP_RERENDER_2026_09_02.md`。
+- **配置持久化修复（FCAP 26.x 保存断桥）**：Cloth 界面保存只改内存、
+  从不写回 TOML（`ConfigValue.set` 不落盘 + `ForgeConfigSpec.save()` 在
+  新架构下恒 no-op），重启即「配置重置」；现于保存流程末尾显式调 FCAP
+  自己的 `LoadedConfig.save()`。实机 PASS。旧文件里钉着的旧值需改一次
+  并保存才刷新。
+- **PIP 修复与新配置**：倍率下限闸门 `ScopePipMinMagnification`（默认 4.0）、
+  `ScopePipRerenderInterval`、`ScopePipShadowScale` 热应用、镜内那遍跳过
+  poly 顶点提交；新配置均接入游戏内 Cloth Config 界面（中英文条目齐备）。
+- 元数据：`fabric.mod.json` 新增 `contributors`（TACZ Dev Team / LesRaisins /
+  VellEagle）；`LICENSES.md` 的 TML 条目钉死到来源版本 `1.21.1_fabric` v0.1.7。
+
+---
+
+## R2-hotfix2（已发布）
 
 **构建元数据：`1.1.8+fabric.26.2.R2-hotfix2`**（hotfix 序号直接接在 `hotfix` 后面，
 中间不放 `.` / `-` / `_` —— TaCZTweaks 按版本号字符串识别本项目，规矩记在
@@ -24,7 +122,7 @@ metadata，不能写成 `1.1.8-R2`。
   移动输入只驱动近战（修静止拉栓抖动）、`display_offset` / `entity_transform`、
   消耗品 Bedrock/Lua 渲染通道；并补上本仓一直缺失的
   `CombatProperties#getActionCount`（自带 Lua 一直在调它，运行期 `LuaError`、编译期无感）。
-  刻意**不**同步的条目与理由见 [SYNC_26_2_FROM_RENOVATED_2026_08_27.md](SYNC_26_2_FROM_RENOVATED_2026_08_27.md)。
+  刻意**不**同步的条目与理由见 [SYNC_26_2_FROM_RENOVATED_2026_08_27.md](investigations/SYNC_26_2_FROM_RENOVATED_2026_08_27.md)。
 - **低倍镜准星恢复目镜约束**：`BedrockAttachmentModel` 把掩码的两个消费者
   （准星反向裁剪 / 镜身+视模裁剪）拆成 `reticleMaskable` 与 `bodyMaskable`。
   此前案例⑨ 第二轮的 `ScopeSightClipFix` 用同一个开关把「建掩码」和「准星裁剪」
@@ -42,7 +140,7 @@ metadata，不能写成 `1.1.8-R2`。
   先后由 mixin config 注册顺序决定；tacz 在前时是坏行（mode 被 Iris 重绑程序写回 0）。
   本仓用户**未**报过镜内裁切失效、当前也**未**发作，本次只消除这个顺序依赖，
   **不**声称修好了任何用户反馈的现象。详细取证与「当前落在哪一行」的实机回填位见
-  [SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md](SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md)。
+  [SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md](investigations/SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md)。
   （均为源码级，**未实机验证**：本执行环境无 JDK，未编译、未跑游戏。）
 - **光影 PBR 下第一人称枪身闪烁修复（在体 A/B 验证 PASS）**：
   Iris 26.x 的 `HandRenderer` 一帧跑两遍手部 pass（实心 + 半透明），Iris 对实心物品的
@@ -53,7 +151,7 @@ metadata，不能写成 `1.1.8-R2`。
   仅第一人称、仅 PBR 开启时出现）。新增开关 `IrisHandPhaseSplitFix`（`[FIX]`，
   **默认开**）：视模只提交实心遍，复刻 Iris 对普通实心物品的语义；`false` 秒回退。
   2026-08-29 用户回报 **PASS**。证据链与验证记录见
-  [IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md](IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md)。
+  [IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md](investigations/IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md)。
 
 > 说明：本节只列本轮**亲手改过并核对过**的内容。相对 tag `26.2_R2_HOTFIX`
 > 的完整差异是 67 个文件（含此前已合并的 scope PIP / 兼容层等工作），

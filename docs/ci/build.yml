@@ -1,0 +1,101 @@
+name: build
+
+# 全量构建 + 产物上传（2026-08-31 新增）：
+# compile-check 只跑 compileJava，测不出 processResources / remapJar 阶段的失败，
+# 也不产 jar。本流程跑 ./gradlew build 并把 jar 上传为 Actions artifact（留 14 天）——
+# 直接用途：给 NV 卡征测者一个下载链接；每轮改动随手有可实测的构建。
+# 顺手跑三个便宜的静态校验（mixin 配置完整性 / 中英语言键齐平 / 版本一致性）。
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - 'arena/**'
+      - '26.2(main)'
+      - '26.1.2'
+      - '1.21.11'
+    paths-ignore:
+      - 'build-reports/**'
+      - 'docs/**'
+      - '*.md'
+  pull_request:
+    paths-ignore:
+      - 'build-reports/**'
+      - 'docs/**'
+      - '*.md'
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mixin config integrity (json 里列的类必须真实存在)
+        run: |
+          python3 - <<'EOF'
+          import json, glob, os, sys
+          bad = []
+          for cfg in glob.glob('src/main/resources/*mixins*.json'):
+              d = json.load(open(cfg))
+              pkg = d.get('package', '').replace('.', '/')
+              for section in ('mixins', 'client', 'server'):
+                  for m in d.get(section, []):
+                      p = 'src/main/java/' + pkg + '/' + m.replace('.', '/') + '.java'
+                      if not os.path.exists(p):
+                          bad.append(f'{cfg}: {m} -> {p} 不存在')
+          for b in bad:
+              print('::error::' + b)
+          sys.exit(1 if bad else 0)
+          EOF
+
+      - name: Lang key parity (en_us 与 zh_cn 键集合必须一致)
+        run: |
+          python3 - <<'EOF'
+          import json, sys
+          bad = []
+          for ns in ('tacz', 'lrtactical'):
+              base = f'src/main/resources/assets/{ns}/lang/'
+              en = set(json.load(open(base + 'en_us.json')))
+              zh = set(json.load(open(base + 'zh_cn.json')))
+              for k in sorted(en - zh):
+                  bad.append(f'{ns}: {k} 只在 en_us')
+              for k in sorted(zh - en):
+                  bad.append(f'{ns}: {k} 只在 zh_cn')
+          for b in bad:
+              print('::error::' + b)
+          sys.exit(1 if bad else 0)
+          EOF
+
+      - name: Version consistency (与 consistency.yml 同一脚本，arena 分支也守门)
+        run: bash scripts/check_release_consistency.sh
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Full build
+        run: ./gradlew build --console=plain --stacktrace --no-daemon
+
+      - name: Upload jars
+        uses: actions/upload-artifact@v4
+        with:
+          # 注意:artifact 名不能含 '/' 等字符,所以这里不能用 github.ref_name
+          # (arena/xxx 带斜杠,首跑 2026-08-31 就是这样失败的)。分支名在 run
+          # 页面本来就有,名字里只放 sha 前缀即可。
+          name: TACZ-Refabricated-${{ github.sha }}
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
+          retention-days: 14
+          if-no-files-found: error

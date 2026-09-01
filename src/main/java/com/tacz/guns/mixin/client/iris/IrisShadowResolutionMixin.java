@@ -54,6 +54,11 @@ public abstract class IrisShadowResolutionMixin {
         if (!IrisScopePipelineCompat.isBuildingScopePipeline()) {
             return;
         }
+        // 【生死回执】告诉兼容层「构造窗口里确实拦到了 getResolution()」。
+        // 本注入是 require=0 的软注入，Iris 内部挪个类它就静默失效 ——
+        // 兼容层靠这个回执在真构建后核验，把静默失效变成一行明确告警。
+        // 放在 scale 判断之前：即便 scale=1.0 不改返回值，「钩子活着」这个事实照样上报。
+        IrisScopePipelineCompat.noteShadowResolutionIntercepted();
         float scale = RenderConfig.SCOPE_PIP_SHADOW_SCALE == null
                 ? 1.0f
                 : RenderConfig.SCOPE_PIP_SHADOW_SCALE.get().floatValue();

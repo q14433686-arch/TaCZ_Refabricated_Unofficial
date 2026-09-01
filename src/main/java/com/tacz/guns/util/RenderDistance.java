@@ -27,7 +27,15 @@ public final class RenderDistance {
         GUI_RENDER_TIMESTAMP = System.currentTimeMillis();
     }
 
-    private static boolean isGuiRender() {
+    /**
+     * 最近 100ms 内是否有 GUI（枪匠桌等）标记过渲染时间戳。
+     *
+     * <p>公开给 meshloader 的近距离全模豁免用：FIXED/HEAD 语境既出现在
+     * 世界（展示台雕像、物品展示框、背枪）也出现在 GUI 预览（枪匠桌界面），
+     * 只有非 GUI 的那一侧才允许按相机距离豁免顶点预算——否则高模会被
+     * 全量画进 GUI 图标。</p>
+     */
+    public static boolean isGuiRender() {
         return System.currentTimeMillis() - GUI_RENDER_TIMESTAMP < 100;
     }
 }

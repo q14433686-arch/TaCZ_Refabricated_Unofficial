@@ -8,7 +8,6 @@ import com.tacz.guns.inventory.tooltip.BlockItemTooltip;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
@@ -72,7 +71,12 @@ public class ClientBlockItemTooltip implements ClientTooltipComponent {
         TimelessAPI.getClientBlockIndex(blockId).ifPresent(index -> {
             @Nullable String tooltipKey = index.getTooltipKey();
             if (tooltipKey != null) {
-                String text = I18n.get(tooltipKey);
+                // 纯查表而非 I18n.get —— 与 PapiManager 的 Format error 修复（ec51f55）同病：
+                // I18n.get 是【格式化】接口，枪包把含 '%' 的显示串内联进 tooltip key 时
+                // （MK5HD 一族），String.format 会吃掉 '%x' 或直接抛
+                // IllegalFormatException 变成 "Format error: ..."。下游随后 split("\\n")
+                // 逐行 literal，从来不需要格式化。（05170 的 03a807e 指出本仓这两处漏网。）
+                String text = net.minecraft.locale.Language.getInstance().getOrDefault(tooltipKey);
                 String[] split = text.split("\n");
                 Arrays.stream(split).forEach(s -> components.add(Component.literal(s).withStyle(style -> style.withColor(0xAAAAAA))));
             }

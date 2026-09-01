@@ -12,7 +12,7 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R2-hotfix2`**。
+`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R3`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
@@ -31,7 +31,7 @@
 本页面对应 **26.2** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
 具体版本见下方表格与对应 Release 说明。
 
-> 仓库源码已使用 R2-hotfix2 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R3 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
 
 ---
 
@@ -42,9 +42,9 @@
 | Minecraft | **26.2** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **25+** |
-| Fabric API | 需要安装；R2-hotfix2 构建使用 **0.155.2+26.2** |
+| Fabric API | 需要安装；R3 构建使用 **0.155.2+26.2** |
 | Forge Config API Port | **26.2.1+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.2.R2-hotfix2`** |
+| 本 mod | **`1.1.8+fabric.26.2.R3`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
@@ -58,7 +58,7 @@ R2 的可选集成（并非硬依赖）如下：
 
 ---
 
-## 2. R2 新增 API 与功能
+## 2. 新增 API 与功能
 
 - [可替换弹药源 API](docs/AMMO_SOURCE_API.md)：下游可在不混入 TaCZ 内部背包代码的情况下，
   为特定实体/枪械提供只读查询和服务端消费弹药源；
@@ -73,6 +73,32 @@ R2 的可选集成（并非硬依赖）如下：
 完整发布范围、联网核验和未执行的实机矩阵见
 [26.2 R2 release notes](docs/CHANGELOG_26_2_R2.md)。R1 的移植基础和历史说明仍保留在仓库历史中。
 
+**R3**（当前源码版本）相对 R2-hotfix2 的增量（除标注「待实测」的项外均实机 PASS）：
+
+- **内置 TML**（见第 3 节与 [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）：`model_type: "mesh"`
+  高模枪渲染 + 第一人称 GPU 静态烘焙;
+- **世界语境 GPU 烘焙**：其他玩家手持、掉落物、展示框/展示台上的高模枪也走常驻 VBO 烘焙
+  （每枪每帧只传骨骼矩阵），配光照量化档 LRU 缓存与每帧烘焙额度，多人场景帧数不再被
+  逐顶点 CPU 变换吃掉（**光影下的世界枪照明仍待实测**，异常时游戏内关 `MeshGpuWorld` 即回退）;
+- **镜内裁剪三件套**：光影下开镜时，第一人称手臂、瞄具挂载文字（如 MK5HD
+  弹药计数）与准星一样被裁剪在目镜圆孔内，不再穿出镜筒;
+- **瞄具文字内容修复**：枪包把显示串直接内联在 `text_key`（如 `%ammo_count%`）
+  时不再出现 `Format error: ...` 前缀（26.2 移植期 `I18n.get` 误用回归）;
+- **检视动画修复**：开镜时触发检视不再不可打断（开火/换弹可正常打断）;
+- **跨包合成修复**：社区枪包被升级工具转成新 `tacz:nbt` 材料写法后「配方不显示也合不出来」
+  的问题修好了（`TaczNbtIngredient` + JSON 归一化）;
+- **开镜距离补偿**：开镜放大后，镜内的掉落物/第三人称高模枪不再因为「裸眼距离超阈值」
+  退化成低模立方体（阈值按当前放大系数换算，整屏变焦与 PIP 都适用）——**待实测**;
+- **二次渲染下的镜内高模枪修复**：开着 PIP 二次渲染时，视野内的高模枪在镜内也是未烘焙
+  立方体的问题已修（与 1.21.11 / 26.1.2 姊妹线同因同修）——**根因由实机日志证明，
+  修复效果待实测**;
+- **配置持久化修复**：游戏内配置界面保存后**真的写回 TOML** 了（此前 FCAP 26.x 的保存
+  断桥让保存只改内存、重启即「配置重置」）;
+- **PIP 若干修复与新配置项**（倍率下限闸门、`ScopePipRerenderInterval`、
+  `ScopePipShadowScale` 热应用等）。**全部 `ScopePip*` 玩家项现在都在游戏内配置界面里**
+  （Mod Menu → Timeless and Classics Guns → 齿轮 → 「渲染」分类，见 §4.2），
+  不再需要手动编辑 TOML。
+
 ---
 
 ## 3. 项目范围
@@ -82,6 +108,12 @@ R2 的可选集成（并非硬依赖）如下：
 - TaCZ 的 Fabric 26.2 端口及随上游带来的默认枪包；
 - 为 26.x API 改写的网络、资源加载、GUI 和渲染接线；
 - 一套内置的 **LRTactical 兼容框架**；
+- 内置的 **TacZ Mesh Loader [TML]**（`model_type: "mesh"` 高模 poly_mesh 渲染，
+  移植自 VellEagle 的 [TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader)，GPL-3.0。
+  含第一人称 GPU 静态烘焙——高模枪的逐顶点 CPU 变换成本归零，光影下同样生效；
+  世界语境有近距全模豁免与顶点预算保护。依赖外置 TML 的枪包在本 mod 下
+  视为依赖满足（`provides: ["taczmeshloader"]`）。范围、配置与已知边界见
+  [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）；
 - 若干可选模组的兼容接线。
 
 这不代表本项目是 TaCZ 或 LRTactical 的官方版本，也不代表所有第三方枪包、
@@ -144,9 +176,34 @@ Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码�
 
 #### 开启教程
 
-编辑 `.minecraft/config/tacz-client.toml` 的 `[render]` 段，改完**重启游戏**生效。
+**这些项都在游戏内配置界面里**，正常情况下不需要手动改文件。
 
-最小开启（无光影环境）：
+1. 装 [Mod Menu](https://modrinth.com/mod/modmenu)（本模组的配置入口）；
+   要在光影下开 PIP 再装 [Iris](https://modrinth.com/mod/iris)。
+2. **Mod 列表 → Timeless and Classics Guns → 齿轮（配置）→「渲染」分类**
+   （界面是一个全局列表，可直接搜条目名；没有「客户端」这一层），
+   在「瞄具画中画（PIP）」一组里改：
+
+   | 界面里的名字 | 对应 TOML 键 | 什么时候要开 |
+   |---|---|---|
+   | 瞄具画中画（PIP） | `ScopePipEnable` | 主开关，先开它 |
+   | PIP 二次渲染模式 | `ScopePipRerender` | 想「镜内真能瞄准」就开它（高倍镜强烈建议） |
+   | 允许在光影下开启 PIP | `ScopePipAllowShaderPacks` | 用光影时额外开它 |
+   | 最低倍率 / 分辨率比例 / 重渲染频率 / 共享变焦 / 锐化 / 独立管线 / 阴影缩放 | 同名 `ScopePip*` | 按需微调，不动也能用 |
+
+3. 界面里保存后**立即生效，不需要重启**；唯一的例外是 `ScopePipShadowScale`
+   （镜内阴影贴图比例）—— 它在瞄具管线构建时读取，改完需**重启游戏或切换维度**。
+4. 界面保存会**真的写回** `.minecraft/config/tacz-client.toml`（R3 修好了 FCAP 26.x
+   的保存断桥），重启后配置仍在。**注意**：修复前 TOML 里已经写死旧值的字段不会
+   自动更新，需要在界面里改一次并保存，才会被新值覆盖。
+
+不装 Mod Menu、或习惯直接改文件也可以：编辑 `.minecraft/config/tacz-client.toml`
+的 `[render]` 段，**改完重启游戏**生效。TOML 同时是**唯一**能改到「没进界面」那几项的
+地方：`ScopePipDebug*`（诊断输出）、`ScopePipMinAimingProgress`、
+`ScopePipReleaseIdlePipeline` / `ScopePipIdleReleaseDelayFrames`（空闲释放策略），
+以及与 PIP 无关的 `AimingSwayIntensity`（开镜持枪晃动倍率）。
+
+最小开启（无光影环境）等价于：
 
 ```toml
 [render]
@@ -168,19 +225,21 @@ ScopePipAllowShaderPacks = true   # 默认 false 是保守默认，不是已知�
 # ScopePipShadowScale = 0.5       # 镜内阴影贴图比例，默认值可省约 3/4 的镜内阴影开销
 ```
 
-可选微调：`ScopePipSharpness`（重投影模式镜内锐化，默认 0.5）、
-`ScopePipWorldZoomShare`（把多少倍率还给世界画面：0 = 纯 PIP、1 = 等同关闭，默认 0）、
-`AimingSwayIntensity`（开镜持枪晃动倍率，默认 1.5，高倍镜下可适当调高）。
+可选微调（前两项界面上都有）：`ScopePipSharpness`（重投影模式镜内锐化，默认 0.5）、
+`ScopePipWorldZoomShare`（把多少倍率还给世界画面：0 = 纯 PIP、1 = 等同关闭，默认 0）；
+`AimingSwayIntensity`（开镜持枪晃动倍率，默认 1.5，高倍镜下可适当调高）**只能在 TOML 里改**。
 
 注意两点：Sulkan 渲染器下目镜掩码本身会回退，PIP 随之无条件停用；若 PIP 运行中出现渲染
-故障，它会在日志报错后自动停用当次会话，把 `ScopePipEnable` 改回 `false` 即完整回到默认行为。
+故障，它会在日志报错后自动停用当次会话，在界面里关掉「瞄具画中画（PIP）」（或把 TOML 里的
+`ScopePipEnable` 改回 `false`）即完整回到默认行为。
 
 #### 实验性声明
 
 **PIP 是实验性功能，出 bug 完全正常。** 可能出现的问题包括但不限于：高倍镜画质不及预期、
 光影下镜内外色调差异、帧率大幅下降（尤其二次渲染 + 光影，帧率约减半）、以及个别渲染模组
 组合下的画面异常。遇到问题先把 `ScopePipEnable` 改回 `false` 复测，确认与 PIP 相关后再反馈，
-并附上：全部 `ScopePip*` 配置取值、光影包名称、以及 Sodium / Iris / Voxy 等渲染模组版本。
+并附上：全部 `ScopePip*` 配置取值（配置界面里能看到全部名字与当前值）、光影包名称、
+以及 Sodium / Iris / Voxy 等渲染模组版本。
 不打算尝鲜的玩家无需任何操作，默认路径不受该功能影响。
 
 ---
@@ -249,7 +308,7 @@ gunpack.meta.json
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.2.R2-hotfix2` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.26.2.R3` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容
@@ -272,6 +331,18 @@ gunpack.meta.json
 - 26.2 的现有实测记录中，Player Animation Library 在经历 TaCZ 趴姿再站起后，下一次切枪的
   短暂第三人称 crossfade 仍可能带入旧姿态；切换完成后的稳态持枪不是该问题。
 - 明确依赖 Arcana 的内容不受支持；其他枪包也不能仅凭“能被扫描到”就视为完全兼容。
+- 镜内文字裁剪对 ttf/unihex 灰度字体（第三方资源包替换默认字体时）回退 vanilla
+  管线：文字照常显示但不参与镜内裁剪，属可接受降级。
+- TML 高模（poly_mesh）：世界语境（第三人称/掉落物/展示台）在
+  `MeshWorldFullDetailDistance`（默认 16 格）内始终画全模，超出后受
+  `MeshWorldMaxVertices` 顶点预算保护（超预算只画立方体）；这是刻意的
+  远近取舍，不是渲染缺失。mesh 目镜不支持（与外置 TML 一致）。
+- TML 高模的**世界语境贴图**解析走的是枪包原始贴图路径，与第一人称的 `…/gun/uv/…`
+  变体不同源；把贴图放在 `uv/` 子目录下的枪包，世界里的高模枪会报
+  `Missing resource` 并显示缺材质贴图（第一人称正常）。**已知未修**，遇到时可游戏内
+  关 `MeshGpuWorld` 或把该枪包贴图同时放一份到不带 `uv/` 的路径。
+- 「二次渲染下的镜内高模枪」修复、「开镜距离补偿」与「高模枪身镜内裁剪」三项
+  **尚未经实机验证**，措辞与验收清单见 [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md) §5.2。
 
 提交兼容问题时请给出实际包名与版本、完整日志和最小复现环境，不要只给缺失贴图截图。
 
@@ -283,6 +354,11 @@ gunpack.meta.json
 
 - TaCZ 与本端口对应代码使用 GPL-3.0；
 - 移入的 LRTactical 代码部分沿用其 GPL-3.0；
+- 移入的 TacZ Mesh Loader（TML）代码部分沿用其 GPL-3.0，来源为
+  [VellEagle/TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader) 的
+  `1.21.1_fabric` v0.1.7（作者已在 `fabric.mod.json` 的 `contributors` 中署名）；
+  本仓在其之上另写的第一人称 / 世界语境 GPU 烘焙层、光照量化缓存与瞄具相关适配
+  为本仓原创，同样以 GPL-3.0 释出；
 - 默认枪包的 `gunpack_info.json` 声明其资源为 CC BY-NC-ND 4.0；
 - 随 jar 打包的 Mayday Animation Engine 使用 MIT；
 - 其他第三方库、资源和外部内容包可能有各自许可。

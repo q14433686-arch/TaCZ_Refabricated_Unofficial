@@ -16,6 +16,11 @@ public class MenuIntegration {
         ConfigBuilder root = ConfigBuilder.create().setTitle(Component.literal("Timeless and Classics Guns"));
         root.setGlobalized(true);
         root.setGlobalizedExpanded(false);
+        // 【FCAP 26.x 保存断桥】各 entry 的 saveConsumer 只写内存（ConfigValue.set
+        // 不落盘、ForgeConfigSpec.save() 在新架构下恒 no-op），必须在保存流程的
+        // 最后一步显式调 FCAP 自己的 LoadedConfig.save() 写回 TOML —— 否则每次
+        // 重启配置回到旧文件值（26.1.2 线先发病，同架构同病）。详见 ConfigPersist。
+        root.setSavingRunnable(com.tacz.guns.config.ConfigPersist::saveAll);
         ConfigEntryBuilder entryBuilder = root.entryBuilder();
 
         KeyClothConfig.init(root, entryBuilder);

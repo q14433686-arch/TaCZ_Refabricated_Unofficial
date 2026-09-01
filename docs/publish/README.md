@@ -39,7 +39,7 @@
 —— 前者含版本号与游戏名，后者含版本号与 filler data，**都会被驳回**。
 
 > 这同时解决了「以后移植到别的 MC 版本会很尴尬」的问题：
-> 项目名长期稳定，版本信息由**文件名**（`TACZ-Refabricated-26.2-1.1.8+fabric.26.2.R1.jar`）
+> 项目名长期稳定，版本信息由**文件名**（`TACZ-Refabricated-26.2-1.1.8+fabric.26.2.R3.jar`）
 > 和**版本号字段**承载 —— 这正是 CurseForge 规则里说的
 > "belongs in ... relevant **file tagging**"。
 
@@ -86,6 +86,15 @@
    the original and you cannot copy the description of the original project."*
    → 文案里的「What was changed / 相较原版的改动」一节是**规则要求的**，不能删。
 
+4. **配置项的措辞必须以游戏内界面为准。**
+   绝大多数选项（含全部 `ScopePip*` 玩家项）都在 Mod Menu 的配置界面里，
+   保存后立即生效且会写回 TOML；**不要**再把「编辑 `tacz-client.toml` 并重启」
+   写成唯一路径 —— 该说法在 R3 之后是错的，会让玩家白折腾一遍。
+   只有诊断项（`ScopePipDebug*` 等）、`ScopePipMinAimingProgress`、
+   `ScopePipReleaseIdlePipeline` / `ScopePipIdleReleaseDelayFrames` 与
+   `AimingSwayIntensity` 仍只能在 TOML 里改。
+   （权威清单：`src/main/java/com/tacz/guns/compat/cloth/client/RenderClothConfig.java`。）
+
 ---
 
 ## 各站独有的坑
@@ -121,15 +130,19 @@
 
 | 项 | 值 |
 |---|---|
-| 模组版本号 | `1.1.8+fabric.26.2.R1` |
+| 模组版本号 | `1.1.8+fabric.26.2.R3` |
 | Minecraft | `26.2` |
 | Fabric Loader | `>=0.19.3` |
 | Fabric API | `0.155.2+26.2` |
 | Java | `>=25` |
 | 硬依赖 | `forgeconfigapiport >=26.2.1` |
 | modid | `tacz`（**不可更改**，枪包依赖此 ID） |
-| 代码许可 | GPL-3.0 |
+| 代码许可 | GPL-3.0（移植的第三方代码各自沿用上游 GPL-3.0） |
+| 随包运行库许可 | MIT（Mayday Animation Engine 1.1.1） |
 | 默认枪包资源许可 | CC BY-NC-ND 4.0 |
+| 内置附属 | TacZ Mesh Loader [TML]，作者 **VellEagle**，来源 `1.21.1_fabric` v0.1.7（`provides: taczmeshloader`） |
+| 配置入口 | Mod Menu → Timeless and Classics Guns → 齿轮 →「渲染」分类（**不是**只能改 TOML；界面无「客户端」层级，`setGlobalized(true)`） |
+| PIP 状态 | 已实现、**实验性、默认关闭**，游戏内开关；不要写成「暂停开发 / 尚未实现」 |
 
 三份文案都包含「需要 TacZ:Arcana 的加密枪包无法加载」一节 ——
 该问题症状是紫黑块、极易被误判为本移植版的 bug，
@@ -142,4 +155,4 @@
 丢掉了数据组件"的高频问题；起因核到 REI 26.2.820 源码
 （`ClientHelperImpl#tryCheatingEntry` 的 `tagMessage` 硬编码为空，
 `TODO 24w09a` 组件化后未适配）。完整技术推导与源码引用见
-`docs/DEDICATED_SERVER_GETNAME_AUDIT_2026_08_21.md` 第 8、9 节。
+`docs/investigations/DEDICATED_SERVER_GETNAME_AUDIT_2026_08_21.md` 第 8、9 节。

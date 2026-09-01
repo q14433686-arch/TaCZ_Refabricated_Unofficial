@@ -189,6 +189,41 @@ public final class VoxyScopePipelineCompat {
      *
      * <p>查不出来时返回 {@code true}（当作已绑）：宁可不建，也不能冒险去撞那个异常。
      */
+    /**
+     * 【释放前的保险带 —— 05170 实机 ESC 崩溃 d3f0fdc 移植】这个 Iris 管线上
+     * 是否绑着一个<b>不是我们第二套栈</b>的 Voxy 管线。
+     *
+     * <p>正常情况下瞄具管线的 voxy 数据要么为空、要么绑的是我们自己建的第二套
+     * （{@code scopePipeline}）。若绑的是别的 —— 那就是 Voxy 的<b>主</b>渲染栈
+     * 在某个没被闸住的重建窗口里绑了上来（05170 实机链条：预热窗口的
+     * allChanged 漏网 ⇒ Voxy 全量重建绑到瞄具管线）。这时销毁瞄具管线 =
+     * 主画面下一帧在 Voxy 里崩 "Tried to use destroyed RenderTargets"。
+     * 判不出来时返回 true（宁可不释放，也不能销毁别人还在用的管线）。</p>
+     */
+    public static boolean isForeignVoxyBoundTo(Object irisPipeline) {
+        if (irisPipeline == null) {
+            return false;
+        }
+        try {
+            Class<?> getData = Class.forName("me.cortex.voxy.client.iris.IGetIrisVoxyPipelineData");
+            if (!getData.isInstance(irisPipeline)) {
+                return false;
+            }
+            Object data = getData.getMethod("voxy$getPipelineData").invoke(irisPipeline);
+            if (data == null) {
+                return false;
+            }
+            Object bound = data.getClass().getField("thePipeline").get(data);
+            return bound != null && bound != scopePipeline;
+        } catch (Throwable t) {
+            // Voxy 没装时 Class.forName 直接抛 —— 没有 Voxy 就没有这种绑定，放行。
+            if (!FabricLoader.getInstance().isModLoaded("voxy")) {
+                return false;
+            }
+            return true;
+        }
+    }
+
     private static boolean irisDataAlreadyBound() {
         try {
             Class<?> iris = Class.forName("net.irisshaders.iris.Iris");

@@ -89,10 +89,13 @@ public class GunSmithTableIngredient {
                         normalizeLegacy(raw)
                 ).getOrThrow();
                 this.rawItem = null;
-            } catch (RuntimeException e) {
+            } catch (RuntimeException | LinkageError e) {
                 if (!this.loggedFailure) {
                     this.loggedFailure = true;
-                    GunMod.LOGGER.error("Failed to resolve gun smith table ingredient {}", raw, e);
+                    // ERROR + 原文 + 规范化形态 + 完整异常：跨包合成排查的第一现场。
+                    // 材料格空白/配方点不动时，先在 latest.log 搜这一行。
+                    GunMod.LOGGER.error("Failed to resolve gun smith table ingredient {} "
+                            + "(normalized form: {})", raw, normalizeLegacy(raw), e);
                 }
             }
         }
@@ -175,6 +178,26 @@ public class GunSmithTableIngredient {
             }
             JsonElement item = obj.get("item");
             if (item != null && item.isJsonPrimitive() && item.getAsJsonPrimitive().isString()) {
+                // 【隐式 NBT 材料 —— 跨包合成 bug 追查轮】旧写法允许不带 "type"
+                // 直接写 {"item": "tacz:modern_kinetic_gun", "nbt": {"GunId": ...}}。
+                // 本方法此前把 "nbt" 【静默丢弃】、只留物品 id —— 后果双重：
+                //   ① 材料格显示一把没有 GunId 的裸 modern_kinetic_gun
+                //     （缺省模型/名字不对，玩家看不出要交哪把枪）；
+                //   ② 匹配退化成「任意一把同物品枪都行」，语义悄悄放宽。
+                // 带 nbt 的对象改写成 partial_nbt 语义（宽松子集匹配 ——
+                // 枪械物品必然带着弹药数/开火模式等额外字段，strict 永远不可能
+                // 命中一把用过的枪，partial 是唯一可用语义，与 wiki 建议一致）。
+                if (obj.has("nbt") && obj.get("nbt").isJsonObject()) {
+                    JsonObject out = new JsonObject();
+                    out.add("fabric:type", new JsonPrimitive("forge:partial_nbt"));
+                    JsonArray items = new JsonArray(1);
+                    items.add(new JsonPrimitive(item.getAsString()));
+                    out.add("items", items);
+                    out.add("nbt", obj.get("nbt"));
+                    GunMod.LOGGER.info("Rewrote a legacy no-type NBT ingredient (item={} + nbt) to forge:partial_nbt "
+                            + "semantics; previously the nbt was silently dropped.", item.getAsString());
+                    return out;
+                }
                 return new JsonPrimitive(item.getAsString());
             }
             return raw;
@@ -201,7 +224,7 @@ public class GunSmithTableIngredient {
      * 也不要「猜」一个近似语义悄悄改变配方要求。
      */
     private static final java.util.Set<String> SUPPORTED_CUSTOM_INGREDIENTS =
-            java.util.Set.of("forge:partial_nbt", "forge:nbt");
+            java.util.Set.of("forge:partial_nbt", "forge:nbt", "tacz:nbt");
 
     /**
      * 把 Forge 写法的自定义 Ingredient 改写为 Fabric 写法。见 {@link #normalizeLegacy} 中的说明。
@@ -229,6 +252,16 @@ public class GunSmithTableIngredient {
             // 单数 item(字符串) -> 复数 items(列表)，对齐 Serializer 声明的字段。
             // 若原文已经写了 items，则原样保留，不重复包装。
             if ("item".equals(key) && !obj.has("items")) {
+                JsonArray items = new JsonArray(1);
+                items.add(entry.getValue());
+                out.add("items", items);
+                continue;
+            }
+            // 【tacz:nbt · TaCZPackUpgrader 形态】"items" 写成单个字符串而非数组
+            // （Upgrader.kt upgradeIngredient：obj.add("items", item) —— item 是
+            // JsonPrimitive）。我们的 codec 是 listOf().fieldOf("items")，只认数组，
+            // 这里把字符串包成单元素数组（实机日志的 "Not a json array" 正是这一步缺失）。
+            if ("items".equals(key) && entry.getValue().isJsonPrimitive()) {
                 JsonArray items = new JsonArray(1);
                 items.add(entry.getValue());
                 out.add("items", items);

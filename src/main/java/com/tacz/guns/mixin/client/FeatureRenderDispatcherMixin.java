@@ -1,5 +1,6 @@
 package com.tacz.guns.mixin.client;
 
+import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.render.scope.ScopePipRenderer;
@@ -161,5 +162,41 @@ public abstract class FeatureRenderDispatcherMixin {
         //
         // 往前挪掩码还没就绪，往后挪（比如手持渲染之后）准星会被 PIP 盖掉。
         ScopePipRenderer.compositeAtPhaseBoundary();
+        // 【光影后置目镜框 · 坑 B】手持投影/模型视图必须在这里（阶段边界，
+        // 与掩码同点）抓 —— submit 阶段 RenderSystem 里挂的还是世界那套矩阵，
+        // 拿去画目镜框会整个飘出画面。内部自判手部 pass + 队列非空，无光影零开销。
+        com.tacz.guns.client.render.scope.ScopeFinalOverlayState.capturePhaseBoundaryTransform();
+    }
+
+    /**
+     * <b>第一人称</b> poly_mesh GPU 绘制：必须在 executeSolid <b>之后</b>。
+     *
+     * <p>本注入点只服务手部表（HAND_DRAWS）。MV-PROBE v2 字节码取证证明
+     * renderAllFeatures 的调用者只有手部（renderItemInHand 偏移 185）与
+     * GUI 系（GuiItemAtlas / PictureInPictureRenderer / renderLevel 560 的
+     * 收尾调用）—— <b>26.2 的世界实体 pass 不经过 renderAllFeatures</b>
+     * （LevelRenderer.render 的帧图 lambda 直调 executeSolid）。
+     * 世界表（WORLD_DRAWS）的消费点因此在 {@code PreparedFrameSolidMixin}
+     * （executeSolid RETURN，调用者判据见 {@code LevelRendererWorldPassMixin}）。</p>
+     *
+     * <p>关 PR 画在 executeSolid 之前、并且用一张全局 WORLD 表，GUI/掉落物
+     * 会在世界 pass 里被画出去。这里只在手部 pass 消费 HAND_DRAWS
+     * （{@code renderAfterSolid} 内部判 {@code isInHandPass}），
+     * 其余调用者直接把手部残留清空。</p>
+     *
+     * <p>时机安全性与上面掩码同理：executeSolid 返回后不在任何 render pass 内，
+     * {@code createRenderPass} 的 isInRenderPass 断言不会触发；且立方体几何
+     * 已进深度缓冲，GPU poly 用同一张 depth view 做深度测试即可正确遮挡。</p>
+     */
+    @Inject(
+            method = "renderAllFeatures",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeSolid()V",
+                    shift = At.Shift.AFTER
+            )
+    )
+    private void tacz$polyMeshGpuAfterSolid(SubmitNodeStorage storage, CallbackInfo ci) {
+        PolyMeshGpuRenderer.renderAfterSolid();
     }
 }

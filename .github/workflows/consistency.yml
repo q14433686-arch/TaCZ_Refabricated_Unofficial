@@ -1,33 +1,35 @@
 name: Version consistency
-
 # 版本一致性守门：改了 gradle.properties 却忘了同步 README 时，PR 会红。
+# v2（2026-08-31）：补 arena/** 触发 —— 此前只在主分支跑，版本号改动都发生在
+# arena 工作分支上，守门等到合并后才叫就晚了。build.yml 虽然也跑同一脚本，
+# 但它 paths-ignore 掉了 *.md，「只改 README」的提交测不到 —— 本流程必须独立存在。
 on:
   push:
     branches:
+      - 'arena/**'
       - '26.2(main)'
       - '26.1.2'
       - '1.21.11'
     paths:
       - 'gradle.properties'
       - 'README.md'
+      - 'src/main/resources/fabric.mod.json'
       - 'scripts/check_release_consistency.sh'
   pull_request:
     paths:
       - 'gradle.properties'
       - 'README.md'
+      - 'src/main/resources/fabric.mod.json'
       - 'scripts/check_release_consistency.sh'
   workflow_dispatch:
-
 jobs:
   check:
     name: README 与 gradle.properties 版本一致性
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: 检查当前分支
         run: bash scripts/check_release_consistency.sh
-
       - name: 失败提示
         if: failure()
         run: |
