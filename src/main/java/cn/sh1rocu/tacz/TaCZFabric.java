@@ -4,6 +4,7 @@ import cn.sh1rocu.tacz.api.event.*;
 import cn.sh1rocu.tacz.util.forge.EnumArgument;
 import cn.sh1rocu.tacz.util.forge.PartialNBTIngredient;
 import cn.sh1rocu.tacz.util.forge.StrictNBTIngredient;
+import cn.sh1rocu.tacz.util.forge.TaczNbtIngredient;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
 import com.tacz.guns.GunMod;
@@ -99,6 +100,10 @@ public class TaCZFabric implements ModInitializer {
         // 材料格空白且无法合成。
         CustomIngredientSerializer.register(PartialNBTIngredient.Serializer.INSTANCE);
         CustomIngredientSerializer.register(StrictNBTIngredient.Serializer.INSTANCE);
+        // 上游 1.21.1+ 的 tacz:nbt（partial 布尔二合一）。社区枪包升级工具
+        // TaCZPackUpgrader 把旧包的 forge:nbt/forge:partial_nbt 批量转换成它 ——
+        // 经它升级过的附属包（跨包合成 bug 的实机日志所示）没有这行就整条配方失败。
+        CustomIngredientSerializer.register(TaczNbtIngredient.Serializer.INSTANCE);
 
         Class<? extends EnumArgument<?>> enumArgumentClass = (Class<? extends EnumArgument<?>>) (Class) EnumArgument.class;
         ArgumentTypeRegistry.registerArgumentType(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "enum_argument"), enumArgumentClass,

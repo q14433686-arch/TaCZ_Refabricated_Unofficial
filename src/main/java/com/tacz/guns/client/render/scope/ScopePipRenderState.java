@@ -234,6 +234,28 @@ public final class ScopePipRenderState {
         return zoom > 1.0f ? zoom : 1.0f;
     }
 
+    /**
+     * 开镜时 mesh 距离闸门的<b>角尺寸补偿</b>（对齐 26.2
+     * {@code ScopePipRenderer.currentDetailZoom()}）：{@code 1 + (magnification-1) * progress}，
+     * 随开镜进度渐变、收镜自动回 1，经典整屏变焦与 PIP 都适用。
+     *
+     * <p>由 {@code PolyRenderPolicy.detailZoom()} 消费：两道 mesh 距离闸门按裸眼调参，
+     * 但开镜把远处物体的角尺寸放大了 Z 倍，所以阈值必须乘上这个系数，否则举镜看到的
+     * 掉落物/第三人称 mesh 枪永远是未烘焙立方体。</p>
+     */
+    public static float currentDetailZoom() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null) {
+            return 1.0f;
+        }
+        float progress = currentAimingProgress(mc, mc.getDeltaTracker().getGameTimeDeltaPartialTick(false));
+        if (progress <= 0.0f) {
+            return 1.0f;
+        }
+        float magnification = Math.max(1.0f, currentZoom());
+        return 1.0f + (magnification - 1.0f) * progress;
+    }
+
     // ------------------------------------------------------------------
     // 游戏内配置读取（配置可能尚未加载，带 null 兜底）
     // ------------------------------------------------------------------

@@ -5,6 +5,49 @@
 
 ---
 
+## 与 26.2 R3 末轮同步：跨包 `tacz:nbt` 材料 + 开镜 mesh 距离闸门按角尺寸补偿（2026-09-01）
+
+维护者说 26.2 线已几近完成，要求对照两线进度并同步。逐条对照 26.2 工作线
+（`arena/01a04e96`，尖端 `08869095`）后，有两条是我们同病、且未在本线落地的真同步项，
+其余（法线弹栈、世界消费点、Voxy 空闲释放、tooltip `I18n.get`、配置落盘）当日各已在
+本线账本 L-15/L-16/L-18/L-10/L-21/L-22 落地或按世代边界判定不搬。
+
+**同步 1：`tacz:nbt` 自定义 Ingredient（26.2 `61345c58`）**
+
+- 病：社区枪包升级工具 TaCZPackUpgrader 把旧包的 `forge:nbt`/`forge:partial_nbt`
+  批量转成上游 1.21.1+ 新类型 `tacz:nbt`，并把 `items` 写成**单个字符串**。本线
+  （1.20.1 移植源）只注册了 `forge:*` 两个旧类型 ⇒ `Ingredient.CODEC` 的
+  `CustomIngredientImpl` dispatch 查不到 `tacz:nbt`，整条配方失败（材料格空白）。
+  这解释了「附属包要默认包的枪不行、要自己包的枪行」的不对称。
+- 修：新增 `cn.sh1rocu.tacz.util.forge.TaczNbtIngredient`（partial=true 走
+  `CustomData.matchedBy` 子集匹配；partial=false 走 tag 全等），在
+  `TaCZFabric` 注册；`GunSmithTableIngredient.normalizeLegacyIngredientJson`
+  把 `tacz:nbt` 纳入受支持集，并把 Upgrader 形态的 `items` 字符串包成单元素数组；
+  顺带补了旧写法 `{item + nbt}` 不带 `type` 时 nbt 被静默丢弃的洞（改写成
+  `forge:partial_nbt` 语义）。`forge:nbt` 的 strict ItemStack 归一化保留（26.2
+  末版把它折叠掉了，但本线 `StrictNBTIngredient` 仍是 `ItemStack.MAP_CODEC`，
+  不能照抄）。
+- 接口适配：26.2 目标接口是 `items()/display()/getStreamCodec()`，本线
+  Fabric API 是 `getMatchingItems()/toDisplay()/getPacketCodec()`，逐项改写。
+
+**同步 2：开镜时 mesh 两道距离闸门按当前放大倍数缩放（26.2 `08869095`）**
+
+- 病：`MeshMaxRenderDistance=48` / `MeshWorldFullDetailDistance=16` 按裸眼调参，
+  在 extract 阶段对主相机姿态只判一次；镜内那一遍复用同一批提交节点，不会重跑闸门。
+  开镜放大角尺寸 Z 倍 ⇒ 48 格 ceiling 观感 12 格、16 格豁免观感 4 格 ⇒ 举镜看到的
+  掉落物/第三人称 mesh 枪几乎必然是立方体（「镜内还是未烘焙」）。
+- 修：`ScopePipRenderState.currentDetailZoom()` =
+  `1 + (magnification-1)*progress`（与整屏变焦/PIP 的 `worldZoomAtProgress` 同式），
+  `PolyRenderPolicy` 的 `withinDistance`/`withinFullDetailDistance` 把阈值乘上它；
+  scope 线异常用 Throwable 兜底回裸眼语义，绝不连坐 mesh 闸门。
+
+- 证据级别：CI 编译门待跑（沙箱无 JDK，本地不可编译）；**未做实机验证**。
+  验收点：开 4x 镜看 20-40 格外的别人手中/掉落 mesh 枪不再呈未烘焙立方体；
+  `PolyRenderPolicy` 的阈值与补偿值可加日志佐证随开镜进度变化。26.2 侧亦为
+  实机回报而非本线实测，按 AGENTS.md §2 不写成「已验证修复」。
+
+---
+
 ## 同一桩病的第二次补刀：面板里那个「默认包覆写」开关从来没被登记进落盘表
 
 上一则把 client/common 的落盘显式化之后，「重启回默认」仍然有出口没堵住。这次是逐行读

@@ -181,11 +181,11 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 | `MeshPolyPreferPackNormals` | false | 改用枪包自带的逐顶点法线（平滑着色）而非每面一条平面法线。上游一直强制平面着色；枪包没写 `normals` 时无变化 |
 | `MeshPolyIlluminatedRealSky` | false（同日补，先提 true 又退回） | `*_illuminated` 骨骼原本恒烘 (block=15, sky=15)；光影包把 sky 读成「看得见天空」。开着时**仅在装了光影包**把 sky 换成环境真值、block 仍 15。无光影下逐字不变。这是针对早期误读写的**独立**改动，不是 §5.9 那个现象的答案 ⇒ 默认关，想验证再打开（详见 §5.8） |
 | `MeshPolyInShadow` | false | 阴影 pass 是否画 poly。它同时也是「poly 几何进不进光影包阴影图」的唯一开关 —— 曾据此怀疑「高模吃太阳光」来自这里，**实测否证**（打开无效），见 §5.9 |
-| `MeshMaxRenderDistance` | 48 | 世界 poly 距离（0=不限） |
+| `MeshMaxRenderDistance` | 48 | 世界 poly 距离（0=不限）。**开镜时按当前放大倍数缩放**（`ScopePipRenderState.currentDetailZoom()`，角尺寸语义）——否则 4x 镜下 48 格观感只剩 12 格，举镜看到的都是未烘焙立方体（26.2 `08869095` 同步） |
 | `MeshPolyInPreview` | true | GUI/FIXED/HEAD 是否画 poly |
 | `MeshGuiMaxVertices` | 65536 | GUI 顶点预算（0=不限） |
 | `MeshWorldMaxVertices` | 120000 | 第三人称/掉落物顶点预算（0=不限） |
-| `MeshWorldFullDetailDistance` | 16 | 世界语境近距全模豁免距离（0=关闭豁免） |
+| `MeshWorldFullDetailDistance` | 16 | 世界语境近距全模豁免距离（0=关闭豁免）。**开镜时按当前放大倍数缩放**（同上）；16·Z 格外才受顶点预算保护 |
 | `MeshMaxModelVertices` | 120000 | 加载时告警阈值（不影响渲染） |
 | `MeshLogStats` | true | 加载统计日志 |
 | `MeshGpuBaking` | true | 第一人称 GPU 静态烘焙（第 1 步）总闸。运行期异常**只改内存标志**（`gpuDisabledThisSession`），不回写配置文件 —— 26.2 那边是 `MeshyConfig.GPU_BAKING.set(false)`，本分支刻意不这么做（理由见 `REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A2） |
