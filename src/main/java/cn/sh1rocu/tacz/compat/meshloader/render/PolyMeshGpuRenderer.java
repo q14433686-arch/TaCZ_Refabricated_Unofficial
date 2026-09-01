@@ -878,7 +878,7 @@ public final class PolyMeshGpuRenderer {
         // 管线 —— 失败语义 = 与今日完全相同的未裁剪外观，不会更糟。
         boolean apertureClip = false;
         RenderPipeline pipeline;
-        if (lit && !worldPass && ScopeDepthCopyState.isMaskCycleValid()) {
+        if (lit && !worldPass && ScopeDepthCopyState.hasMaskCycleThisFrame()) {
             pipeline = LIT_PIPELINE_CLIP;
             apertureClip = true;
         } else {

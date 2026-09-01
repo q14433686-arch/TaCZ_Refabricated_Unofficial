@@ -109,21 +109,42 @@ public final class ScopeDepthCopyState {
     }
 
     /**
-     * 帧首失效整帧掩码周期闸（收紧 {@link #isMaskCycleValid()} 的时效边界）。
-     *
-     * <p>{@code maskValid} 只在 BACKUP/APERTURE_COPY 两处翻转：瞄具某帧不提交（未开镜）
-     * 时，它带着上一帧——往往是退镜帧、髋部镜孔位置——的真值跨帧滞留。poly_mesh 手部
-     * 管线的孔外剔除拿它当闸门，就会在腰射态按「退镜那一刻的镜孔」把枪身裁出一个洞
-     * （实机 2026-09-01：目镜初始/退出位置出现目镜形状和大小的透视面，穿透枪体与配件）。
-     * 在 GameRenderer.render 的 HEAD 处调用本方法，闸门即收紧为「本帧手部阶段确有完整
-     * 掩码周期」；当帧的 BACKUP→APERTURE_COPY 会照常把它翻回真，当帧内全部消费者
-     * （mesh 剔除、PIP 合成、终局叠加）都晚于手部阶段，不受影响。</p>
+     * 帧首推进帧计数（{@code GameRenderer.render} HEAD）。只递增 {@code frameCounter}
+     * ——<b>不</b>清 {@code maskValid}：终局叠加/reticle 的掩码绘制发生在 Iris 终局钩子
+     * （本帧手部阶段之前），那里读的正是上一帧的 {@code maskValid} 真值，清了会把光影下
+     * 的 reticle 掩码整个打回 mode 0。时效边界改由帧戳表达：BACKUP→APERTURE_COPY 成功时
+     * 盖上 {@code maskCycleFrame = frameCounter}，消费者按需选
+     * {@link #hasMaskCycleThisFrame()}（与序列同帧）或 {@link #hadMaskCycleLastFrame()}
+     * （终局钩子时点），见各方法注释。</p>
      */
     public static void onClientFrameStart() {
         RenderSystem.assertOnRenderThread();
-        maskValid = false;
-        backupValid = false;
-        maskWorldValid = false;
+        frameCounter++;
+    }
+
+    /**
+     * 本帧手部阶段是否已完成整帧掩码周期（{@code maskValid} 且周期落在当前帧）。
+     *
+     * <p>供「与目镜序列同帧」的消费者使用：poly_mesh 手部批次的孔外剔除（目镜序列先
+     * 于枪身绘制）。腰射帧没有当帧周期 —— 帧戳停在上一段开镜 —— 闸门为假，不会拿
+     * 陈旧镜孔裁枪身（实机 2026-09-01 的静态透视面病例）。</p>
+     */
+    public static boolean hasMaskCycleThisFrame() {
+        return maskValid && maskCycleFrame == frameCounter;
+    }
+
+    /**
+     * 上一帧是否完成过掩码周期。
+     *
+     * <p>供 Iris 终局钩子处的消费者（PIP 合成）使用：finalizeLevelRendering 跑在本帧
+     * 手部阶段<b>之前</b>，合成能拿到的掩码拷贝永远是上一帧的。连续开镜中「上一帧有
+     * 周期」恒真、无感；开镜第 1 帧或中断后恢复时，上一帧没有周期 —— 此时合成若照跑，
+     * 就会拿上一段开镜遗留的镜孔当掩码，把镜内画面按遗留位置贴出去（实机 2026-09-01：
+     * 开关镜时随机位置闪现一帧的「截图」贴片，随即自愈）。fail-closed：宁可一帧不画
+     * 镜内画面，不贴陈旧截图。</p>
+     */
+    public static boolean hadMaskCycleLastFrame() {
+        return maskValid && maskCycleFrame == frameCounter - 1;
     }
 
     /**
@@ -168,6 +189,12 @@ public final class ScopeDepthCopyState {
     private static @javax.annotation.Nullable DepthIdentity apertureDepthIdentity;
     private static boolean backupValid;
     private static boolean maskValid;
+    /**
+     * 帧计数（{@link #onClientFrameStart()} 递增）与最近一次成功掩码周期的帧戳。
+     * 初值 MIN_VALUE：任何「本帧/上一帧」查询在第一个周期完成前都为假（fail-closed）。
+     */
+    private static int frameCounter;
+    private static int maskCycleFrame = Integer.MIN_VALUE;
     /** Whether a usable world-depth source exists for the mask (Iris depthtex2 or the vanilla copy). */
     private static boolean maskWorldValid;
     private static boolean useIrisPreHandDepth;
@@ -248,6 +275,9 @@ public final class ScopeDepthCopyState {
                 // written depth since the world backup, so this copy isolates the ocular footprint.
                 disableScopeBranches(program);
                 maskValid = copyApertureDepth() && maskWorldValid;
+                if (maskValid) {
+                    maskCycleFrame = frameCounter;
+                }
                 yield true;
             }
             case RESTORE -> prepareRestoreDraw(program);

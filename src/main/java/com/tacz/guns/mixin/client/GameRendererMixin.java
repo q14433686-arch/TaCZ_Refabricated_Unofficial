@@ -159,8 +159,9 @@ public abstract class GameRendererMixin {
         // 必须先于 RenderTickEvent 分发：ShaderStateTracker（START 相位）会把当帧光影状态
         // 交给 PolyRenderPolicy 缓存，两者的先后要与 1211 分支一致。
         PolyMeshGpuRenderer.beginFrame();
-        // 目镜掩码周期闸按帧失效（ScopeDepthCopyState#onClientFrameStart）：瞄具本帧不
-        // 提交时，上一帧的 maskValid 真值不得跨帧供给 poly_mesh 手部剔除等帧内消费者。
+        // 目镜掩码周期的帧戳推进（ScopeDepthCopyState#onClientFrameStart）：帧计数 +1，
+        // 「本帧/上一帧有无掩码周期」的时效查询以此为基准。不清 maskValid —— 终局叠加
+        // 在本帧手部阶段之前还要用它。
         ScopeDepthCopyState.onClientFrameStart();
         RenderTickEvent.EVENT.invoker().onRenderTick(new RenderTickEvent(
                 RenderTickEvent.Phase.START,
