@@ -332,6 +332,8 @@
   "config.tacz.client.render.mesh_gpu_world_under_shaders.desc": "光影包激活时也把世界语境（第三人称手持 / 掉落物 / 展示框 / 展示台）的 mesh 枪留在常驻 VBO 路径上，照明走光影包的实体程序（自建管线经 IrisApi.assignPipeline(IrisProgram.ENTITIES) 登记，常量已对着 Iris 1.10.7 的 jar 审计过）。与手部那条同样要求已审计的 flush 钩子，失联也自动回退。与手部那条同理由，R3 定稿默认开 —— 第三人称与展示台上同样能看到亮度继承现象，介意就把两项一起关掉。",
   "config.tacz.client.render.mesh_gpu_light_cache_size": "Mesh GPU：世界光照缓存档数",
   "config.tacz.client.render.mesh_gpu_light_cache_size.desc": "每把枪模型保留多少档「量化光照」的世界 VBO（LRU，1-16）。上游 TML 按未量化光照缓存 8 档；本移植先把光照量化（方块光/天空光各 4 级步进），所以 4 档几乎覆盖所有场景。每档的显存开销与模型顶点数成正比。第一人称烘焙不受影响，它只保留单档。",
+  "config.tacz.client.render.mesh_gpu_bake_budget": "Mesh GPU 每帧烘焙额度",
+  "config.tacz.client.render.mesh_gpu_bake_budget.desc": "一帧内最多为世界枪械执行多少次烘焙。防止同屏光照档数超过缓存容量时逐帧「逐出-重烘」打摆；超出额度的枪当帧回退 CPU 路径。与光照缓存档数相互独立（缓存=显存开销，额度=每帧 CPU/上传开销）。",
   "config.tacz.client.render.mesh_world_full_detail_distance": "Mesh 世界全模距离",
   "config.tacz.client.render.mesh_world_full_detail_distance.desc": "在此距离（格）内，世界中的高模 mesh 枪械（第三人称、掉落物、展示框、展示台）始终以完整精度渲染，不受顶点预算限制。若无此豁免，未提供 LOD 低模的高模枪会在玩家眼前直接退化为纯立方体。超出该距离后顶点预算照常生效。0 = 关闭豁免。",
   "config.tacz.client.render.scope_pip_allow_shader_packs": "允许在光影下开启 PIP",

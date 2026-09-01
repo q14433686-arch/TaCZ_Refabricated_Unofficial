@@ -38,6 +38,7 @@ public final class MeshyConfig {
     public static ForgeConfigSpec.BooleanValue GPU_WORLD;
     public static ForgeConfigSpec.BooleanValue GPU_WORLD_UNDER_SHADERS;
     public static ForgeConfigSpec.IntValue GPU_LIGHT_CACHE_SIZE;
+    public static ForgeConfigSpec.IntValue GPU_BAKE_BUDGET_PER_FRAME;
     public static ForgeConfigSpec.IntValue GUI_MAX_VERTICES;
     public static ForgeConfigSpec.IntValue WORLD_MAX_VERTICES;
     public static ForgeConfigSpec.DoubleValue WORLD_FULL_DETAIL_DISTANCE;
@@ -157,6 +158,17 @@ public final class MeshyConfig {
                 "level costs GPU memory proportional to the model's vertex count.",
                 "First-person baking is unaffected (it keeps a single level).");
         GPU_LIGHT_CACHE_SIZE = builder.defineInRange("MeshGpuLightCacheSize", 4, 1, 16);
+
+        // 【额度与容量解耦 —— 同步自 26.2 线（下游审查 A6 采纳）】原先本分支的每帧烘焙额度
+        // 直接取 LRU 容量（Math.max(4, cap)）：一个旋钮当两个用，于是「为省显存把容量调到 1」
+        // 的用户额度仍被顶到 4、而想调大额度的用户得白花显存把 LRU 撑大。容量是显存语义、
+        // 额度是每帧 CPU/上传成本语义，两者独立。
+        builder.comment("How many world bakes may run in a single frame. Prevents evict-rebake",
+                "thrash when a scene spans more light levels than the cache holds - guns",
+                "beyond the budget fall back to the CPU path for that frame. Independent",
+                "of MeshGpuLightCacheSize (cache size = GPU memory; budget = per-frame",
+                "CPU/upload cost).");
+        GPU_BAKE_BUDGET_PER_FRAME = builder.defineInRange("MeshGpuBakeBudgetPerFrame", 4, 1, 64);
 
         builder.comment("Vertex budget for poly_mesh in GUI/FIXED/HEAD. Icons above this",
                 "budget render cube-only (or the pack's LOD model when present).",

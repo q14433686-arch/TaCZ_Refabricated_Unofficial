@@ -414,7 +414,7 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             return cached;
         }
         int cap = Math.max(1, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());
-        if (!PolyMeshGpuRenderer.tryReserveBake(cap)) {
+        if (!PolyMeshGpuRenderer.tryReserveBake()) {
             return null;
         }
         Map<String, PolyMeshGpuRenderer.BakedBone> bones = new HashMap<>();

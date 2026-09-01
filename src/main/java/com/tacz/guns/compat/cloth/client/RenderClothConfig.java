@@ -225,6 +225,10 @@ public class RenderClothConfig {
                 .setMin(1).setMax(16).setDefaultValue(4).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_light_cache_size.desc"))
                 .setSaveConsumer(MeshyConfig.GPU_LIGHT_CACHE_SIZE::set).build());
 
+        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.mesh_gpu_bake_budget"), MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME.get())
+                .setMin(1).setMax(64).setDefaultValue(4).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_bake_budget.desc"))
+                .setSaveConsumer(MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME::set).build());
+
         render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.mesh_world_full_detail_distance"), MeshyConfig.WORLD_FULL_DETAIL_DISTANCE.get())
                 .setMin(0.0).setMax(1024.0).setDefaultValue(16.0).setTooltip(Component.translatable("config.tacz.client.render.mesh_world_full_detail_distance.desc"))
                 .setSaveConsumer(MeshyConfig.WORLD_FULL_DETAIL_DISTANCE::set).build());

@@ -303,6 +303,8 @@ public final class PolyMeshGpuRenderer {
     /** 本帧是否已经消费（画 + 清）过世界表。镜内那一遍画但不清，所以不能复用存活证明。 */
     private static int worldConsumedFrame = Integer.MIN_VALUE;
     private static int bakesThisFrame = 0;
+    /** 「本帧烘焙额度耗尽」只记一次（同 26.2 线）。 */
+    private static boolean loggedBakeBudget = false;
     /**
      * 世界钩子连续失败计数：达到阈值只关<b>世界</b>路径，手部那条不受牵连
      * （世界 pass 的环境比手部复杂，且镜内/always-on-top 这类次级 pass 可能正卡在
@@ -548,8 +550,18 @@ public final class PolyMeshGpuRenderer {
      * 摆在明暗边界上），没有额度闸门就会每帧「逐出-重烘」打摆 —— 烘焙风暴比 collector
      * 还慢。额度用完后本帧余下的枪回退 collector，下一帧额度重置，缓存逐帧收敛到稳态。</p>
      */
-    public static boolean tryReserveBake(int cachedLevels) {
-        if (bakesThisFrame >= Math.max(4, cachedLevels)) {
+    public static boolean tryReserveBake() {
+        // 额度与 LRU 容量解耦（同步自 26.2 线，下游审查 A6 采纳）：容量是显存语义、
+        // 额度是每帧 CPU/上传成本语义，一个旋钮当两个用会让「省显存调容量到 1」的用户
+        // 额度仍被顶到 4、想调大额度的用户白花显存撑 LRU。
+        if (bakesThisFrame >= MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME.get()) {
+            if (!loggedBakeBudget) {
+                loggedBakeBudget = true;
+                LOGGER.info("[TacZMeshLoader] World bake budget ({} per frame) exhausted; overflow guns use the "
+                        + "collector path this frame and converge over the next frames. Raise "
+                        + "MeshGpuBakeBudgetPerFrame if this scene is typical for you. (logged once)",
+                        MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME.get());
+            }
             return false;
         }
         bakesThisFrame++;
