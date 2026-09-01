@@ -8,7 +8,7 @@
 
 镜内那一遍**借 Iris 自己的按维度缓存管线**拿到一套独立管线（独立 colortex/程序/整族 previous uniform），
 从而把"每份上一帧状态被推进两次"这个病根切断；阴影贴图再给它单独配小份。**首批已落地并过编译门**，
-Sodium/Voxy 那两条通道**本线不做**，改用「装了就直接硬拒」的保守替代（§4）。
+Sodium 通道**必须一起搬**（Fabric 上 Iris 硬依赖 Sodium，没它就没光影）；只有 Voxy 那条留到下一批（§3）。
 
 ## 1. 他们的形状（读补丁所得，非读文档所得）
 
@@ -31,7 +31,8 @@ Sodium/Voxy 那两条通道**本线不做**，改用「装了就直接硬拒」�
 | 阴影降采样 | 新建 `mixin/client/iris/IrisShadowResolutionMixin.java`，同上注册 | 逐字照搬；`2 的幂对齐 + 至少 256` 的规则保留 |
 | 配置 | `config/client/RenderConfig.java` 四条：`ScopePipIsolatePipeline`(默认 true)、`ScopePipShadowScale`(0.5，0.25–1.0)、`ScopePipReleaseIdlePipeline`(**默认 false**)、`ScopePipIdleReleaseDelayFrames`(120，30–1200) | 空闲释放我方**默认关**：它是"确实看到衰减才用"的杠杆，默认开会让首镜多一次编译卡顿（待实机定默认值） |
 | 接线 | `ScopePipRerender#prewarmShaderPipelineIfNeeded()`（含空闲释放计数），由 `GameRendererMixin#tacz$renderTickStart` 在 `ScopeDepthCopyState.onClientFrameStart()` 之后调；窄遍内 `scopePassIsolated` 置位 / `finally` 清零 | 预热问 Iris 走 **20 帧节流缓存** `shaderPackActiveCached()`——render HEAD 逐帧跑，不能每帧 `Class.forName`（他们那侧 `IrisCompat` 有缓存，我方没有） |
-| 硬拒改造 | `ScopePipRerender#renderScopeView`：旧 `if (IrisCompat.isUsingRenderPack()) return false;` 换成 `if (irisPass && !shaderIsolateSafe()) return false;` | 放行条件 = 隔离开关开 **且** `ScopePipAllowShaderPacks` 显式开 **且** 反射句柄可用 **且** 未装 Sodium/Embeddium/Rubidium/Voxy 族 |
+| 硬拒改造 | `ScopePipRerender#renderScopeView`：旧 `if (IrisCompat.isUsingRenderPack()) return false;` 换成 `if (irisPass && !shaderIsolateSafe()) return false;` | 放行条件 = 隔离开关开 **且** `ScopePipAllowShaderPacks` 显式开 **且** 反射句柄可用 **且** 未装 Voxy（`voxelism`） |
+| Sodium 通道 | 新建 `compat/sodium/SodiumCompat.java`（**纯反射、零版本 API**，照搬 26.1.2 的形状）：窄遍期间就地改写 Sodium 的地形投影私有快照、出窗还原；再 `prepareFrame()` 重开它「每帧只上传一次区块 uniform」的闸 | 已落地。**这两条不是优化而是前提**：不改写快照 ⇒ 镜内地形宽 FOV、实体窄 FOV，两套比例糊在一起；不重开门 ⇒ 主画面沿用镜内那遍上传的 uniform（即「镜内画面溢出到全屏」的真正病因） |
 
 **没有**照搬 `LevelRendererAllChangedScopePassMixin`：我方没有 indigo/`LevelExtractor` 相关的第二栈状态机，
 `prewarmIfNeeded()` 的稳态快速路径盯的就是"Iris 主管线换人没有"（`prewarmedAgainst`），重载光影包必然换人 ⇒
@@ -41,7 +42,11 @@ Sodium/Voxy 那两条通道**本线不做**，改用「装了就直接硬拒」�
 
 | 件 | 为何本线不搬 | 解锁条件（谁要做就按这个顺序做） |
 |---|---|---|
-| Sodium 私有投影快照同步 | 本线 Sodium 只在 `modRuntimeOnly` 条件分支里、编译期不可见 ⇒ 无法 import；且我方 `renderLevel` **本来就带投影参数**（1.21.11 有第 6 参），主体走窄矩阵没问题，风险只在"Sodium 自己的地形 pass 认它自己的快照" | 加 `mixin/client/sodium/` 包 + 自己的 `SodiumCompatMixinPlugin`（`isModLoaded("sodium")`）+ `targets=` 字符串反射式注入 `LevelRendererRenderHooks#syncPrivateProjectionSnapshotFromMain`；然后把 `shaderIsolateSafe()` 里对 sodium 族的拒绝改成"有 compat 才放行" |
+| ~~Sodium 私有投影快照同步~~ | **已随批搬进**（纯反射，既不必把 Sodium 提进编译期，也不需要新增 mixin 包） | — |
+> **本文件前一版在这里犯过一个必须留下来的错**：它把「装了 Sodium 就硬拒」写成"保守替代"。Fabric 上
+> **Iris 硬依赖 Sodium** ⇒ 该条件恒真，等于「有光影就不放行」，整条隔离永远不会进；当时给的实机清单还写着
+> 「装 Iris、不装 Sodium」——做不到的操作。教训：**拿"可选 mod"当安全闸之前，先确认它在目标加载器上
+> 究竟可选不可选**（Voxy 是真·可选，Sodium 不是）。
 | Voxy 第二渲染栈 | 本线无 `compat/voxy`，且他们自己的注释就写着"缺它时 Voxy 的镜内行为未定义"；建栈时机错误会**整局崩** | 先补 `compat/voxy` 反射层（`renderSystem()`、`isAvailable()`、`ensureBuilt()` 必须落在预热的 `buildingScopePipeline` 窗口内），再补 `swapIn` 与三道 ESC 闸，最后才放开 Voxy 侧拒绝 |
 | `ScopePipRerenderInterval`（N 帧复用） | 我方无此键；纯性能杠杆，与隔离无关 | 独立小批，别混进隔离 |
 
@@ -67,8 +72,9 @@ Sodium/Voxy 那两条通道**本线不做**，改用「装了就直接硬拒」�
 ## 5. 建议的实机判别清单（改一项测一项，别一次全开）
 
 TOML：`ScopePipEnable=true`、`ScopePipRerender=true`、`ScopePipAllowShaderPacks=true`、`ScopePipIsolatePipeline=true`。
+**Sodium 必须在场**（Iris 的前置，不是可选项）；**Voxy 必须不在场**（本线还没搬它的第二渲染栈，装了会被 `shaderIsolateSafe()` 挡掉）。
 
-1. **只看日志**（不装 Sodium/Voxy，装 Iris + 任意含 TAA/体积云的包）：应看到 `Iris pipeline-manager handles
+1. **只看日志**（Iris + Sodium 在、Voxy 不在，任意含 TAA/体积云的包）：应依次看到 `Iris pipeline-manager handles resolved`、`Scope pass is using its own Iris pipeline (tacz:scope_pip)`、`Pre-built the scope pass' Iris pipeline now`、`Sodium terrain projection is being synced for the scope pass`、`Sodium chunk uniforms will be re-uploaded for the main pass …`；阴影生效还要有 `Scope pass gets a NNNNxNNNN shadow map instead of …`。
    resolved`、`Scope pass is using its own Iris pipeline (tacz:scope_pip)`、`Pre-built the scope pass' Iris
    pipeline now`；阴影想生效还要有 `Scope pass gets a NNNNxNNNN shadow map instead of …`。
    缺哪条就说明对应件没命中，按 §4-1 处理。
@@ -82,4 +88,4 @@ TOML：`ScopePipEnable=true`、`ScopePipRerender=true`、`ScopePipAllowShaderPac
 
 ①等 §5 的 1/2 两条实机结论回来（决定 §4-2 那条取色前提要不要改）→ ②`ScopePipReleaseIdlePipeline` 的默认值裁定
 （要不要用"开镜帧率衰减"换首镜卡顿）→ ③Cloth 配置面板条目 + lang 键（现在这四条只认 TOML）→
-④Stage 2（Sodium/Voxy 两条通道，见 §3）→ ⑤`ScopePipRerenderInterval`。
+④Stage 2（**只剩 Voxy** 第二渲染栈 + 三道 ESC 闸，见 §3）→ ⑤`ScopePipRerenderInterval`。

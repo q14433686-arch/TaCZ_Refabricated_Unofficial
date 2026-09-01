@@ -5,7 +5,7 @@
 
 ---
 
-## 光影下二次渲染的时域隔离大件（`ScopePipIsolatePipeline`）：本线**首次**接线，Sodium/Voxy 通道以硬拒代替
+## 光影下二次渲染的时域隔离大件（`ScopePipIsolatePipeline`）：本线**首次**接线，Sodium 通道同批搬入、Voxy 留待下批
 
 维护者裁定「光影下二次渲染隔离大件我认为可以有」⇒ 上一批"整组不移植"的结论作废，改按
 `docs/lineage/SCOPE_PIP_SHADER_ISOLATION_PORT_2612_20260901.md` 落地。做法是**借 Iris 自己的按维度缓存管线**：
@@ -23,10 +23,19 @@ Iris 便为它单建一套 RenderTargets/程序/整族 previous uniform ⇒ 切�
   render HEAD（首镜不再卡在 shaderpack 编译），窄遍内 `scopePassIsolated` 置位、`finally` 清零。
 - **硬拒改造**：`ScopePipRerender` 里旧的 `if (isUsingRenderPack()) return false;` 换成
   `if (irisPass && !shaderIsolateSafe()) return false;`。放行 = 隔离开关开 **且** `ScopePipAllowShaderPacks` 显式开
-  **且** Iris 反射句柄可用 **且** 未装 Sodium/Embeddium/Rubidium/Voxy 族。方向一致：**宁可什么都不画，也不画出一屏时域伪影**。
-- **两处刻意不跟**（写进方案篇 §3 并给解锁条件）：①Sodium 私有投影快照同步 —— 本线 Sodium 编译期不可见，
-  且我方 `renderLevel` 本来就带投影参数，风险只在 Sodium 自己的地形 pass 认自己的快照 ⇒ 先硬拒、后补 mixin；
-  ②Voxy 第二渲染栈 —— 他们自己注明"缺它时 Voxy 镜内行为未定义"，且建栈时机错会整局崩（`Pipeline data already
+  **且** Iris 反射句柄可用 **且** 未装 Voxy（`voxelism`）。方向一致：**宁可什么都不画，也不画出一屏时域伪影**。
+- **同批必须带上 Sodium 通道（第一版在这里把功能锁死了，已自纠）**：首版把「装了 Sodium 也一并硬拒」写成
+  保守替代 —— 可 Fabric 上 **Iris 硬依赖 Sodium**，那条件恒真就等于「有光影就不放行」，隔离永远进不去；
+  当时给的实机清单还写着「装 Iris、不装 Sodium」，是做不到的操作。正解是把 26.1.2 的
+  `compat/sodium/SodiumCompat`（**纯反射、零版本 API**，不必把 Sodium 提进编译期）一起搬：窄遍期间就地改写它的
+  地形投影私有快照 + 出窗还原，再 `prepareFrame()` 重开它「每帧只上传一次区块 uniform」那道闸 ——
+  前者管「镜内地形跟不跟着放大」，后者管「主画面会不会沿用镜内那遍的 uniform」（= 「镜内画面溢出到全屏」
+  的真正病因）。两条都带一次性日志回执，命中与否看日志即可判定。
+- **仍不跟的一处**：Voxy 第二渲染栈（他们 `compat/voxy/VoxyScopePipelineCompat` 475 行深反射 + 三道 ESC 闸）。
+  这次是真的可选 mod：缺它时 Voxy 的镜内行为未定义、且建栈时机错会整局崩（`Pipeline data already bound` 被
+  Voxy 捕获后顺手 `disableIrisShaders()`）⇒ 本线在 `shaderIsolateSafe()` 里对 `voxelism` 保留硬拒，
+  解锁条件写在方案篇 §3。另**不**照搬 `LevelRendererAllChangedScopePassMixin`：那是为 `voxyStackSettled`
+  存在的，我方快速路径盯的是主管线换人，重载包自然重建。
   bound` 被 Voxy 捕获后顺手 `disableIrisShaders()`）⇒ 不搬。另**不**照搬 `LevelRendererAllChangedScopePassMixin`：
   那是为 `voxyStackSettled` 存在的，我方快速路径盯的是主管线换人，重载包自然重建。
 - **一个性能自纠**：预热挂在 render HEAD 逐帧跑，而 `IrisCompat.isUsingRenderPack()` 是**每次调用一次
@@ -40,7 +49,7 @@ Iris 便为它单建一套 RenderTargets/程序/整族 previous uniform ⇒ 切�
   `ScopePipDebug*` 整组列为「**不做** … 等 B5 一起」，并写明「要支持光影下二次渲染**必须先做 B5 离屏重定向**
   （把窄 FOV 那遍画进独立 target）」。本批按维护者"可以有"的裁定**提前接线了其中四条**（仍不做 `DebugTrace`/`DebugGpuMem`），
   但**没有**做 B5 ⇒ 光影下仍是"画进主目标再立刻拷"。承担风险的方式是三道闸全默认不触发
-  （`ScopePipRerender` 关、`ScopePipAllowShaderPacks` 关、装了 Sodium/Voxy 直接硬拒）+ 日志自检；
+  （`ScopePipRerender` 关、`ScopePipAllowShaderPacks` 关、装了 Voxy 直接硬拒（Sodium 已由 `SodiumCompat` 就地同步））+ 日志自检；
   若实机见"镜内是上一帧/黑屏"，正解就是回头补 B5，而不是再往隔离上叠补丁（方案篇 §4-2/§6-① 已写死这条判序）。
 - 复核方式：判定依据一律是我方文件的 `grep`/实读（本线此前无任何隔离键），未改 `gradle.properties` 版本号。
 
