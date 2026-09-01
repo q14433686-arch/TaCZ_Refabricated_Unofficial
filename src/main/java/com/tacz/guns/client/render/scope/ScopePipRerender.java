@@ -416,6 +416,17 @@ public final class ScopePipRerender {
 
     /** 供 {@code ScopePipRenderState#worldZoomTarget()} 查询：二次渲染下世界恒 1×。 */
     public static boolean worldZoomForcedToOne() {
-        return rerenderMode() && !failed;
+        // 【同步自 1.21.11 线 837924b —— 他们主动加固、本分支原先没有这一条】
+        // 只在「这一帧镜内那遍真的会跑」时才把世界压到 1×。原式 rerenderMode() && !failed
+        // 是条死路：镜内那遍被任何原因拒掉时（光影下 opt-in 没开、Iris 终局钩子不可用、
+        // 隔离前提不满足），世界让位了、镜内又因 rerenderMode() && !hasScene() 拒绝合成
+        // ⇒ 内外一起 1X，且不会自愈。改成这样时退路是「重投影 / 整屏 FOV 变焦」，
+        // 也就是本开关未生效时的既有形态 —— 用户看到的是可用的画面，不是一屏 1X。
+        return rerenderMode() && !failed && scopePassRunnable();
+    }
+
+    /** 镜内那一遍这一帧是否真会执行（无光影恒真；有光影要看放行闸）。 */
+    public static boolean scopePassRunnable() {
+        return !IrisCompat.isUsingRenderPack() || ScopePipRenderState.shaderRerenderAllowed();
     }
 }
