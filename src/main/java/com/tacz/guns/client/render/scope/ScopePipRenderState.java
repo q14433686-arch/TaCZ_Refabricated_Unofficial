@@ -567,6 +567,12 @@ public final class ScopePipRenderState {
         } else if (!sceneCaptured) {
             return;
         }
+        // 掩码周期时效：本合成点在手部阶段之后，深度拷贝应是本帧的。周期不落在当前帧
+        // （瞄具本帧没提交过目镜序列）时，手头的拷贝就是上一段开镜的遗留——贴片位置由
+        // 遗留镜孔决定，正是「一帧截图」的病根，宁可整帧不画镜内画面（fail-closed）。
+        if (!ScopeDepthCopyState.hasMaskCycleThisFrame()) {
+            return;
+        }
         compositeScene(mc, compositeZoom());
     }
 
@@ -593,6 +599,15 @@ public final class ScopePipRenderState {
             return;
         }
         if (!sceneCaptured) {
+            return;
+        }
+        // 一帧「截图」贴屏（实机 2026-09-01，与上面的滞留贴屏同源不同窗）：本钩子
+        // （finalizeLevelRendering）跑在本帧手部阶段之前，合成用的镜孔/世界深度拷贝
+        // 永远是上一帧的。连续开镜中两者只差一帧、无感；但开镜第 1 帧（或任何中断后
+        // 恢复）上一帧没有掩码周期，手头是上一段开镜遗留的拷贝——遗留镜孔在哪，
+        // 镜内画面就按那个位置贴出去，随机位置闪现一帧、随后掩码收敛自愈。只允许
+        // 「上一帧确有周期」时合成（hadMaskCycleLastFrame），边界帧 fail-closed。
+        if (!ScopeDepthCopyState.hadMaskCycleLastFrame()) {
             return;
         }
         if (!IrisCompat.isUsingRenderPack() || !allowShaderPacks()
