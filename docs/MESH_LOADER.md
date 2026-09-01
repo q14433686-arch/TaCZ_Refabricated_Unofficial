@@ -207,10 +207,18 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 9. 全 GPU 提交的枪（每个可见部件都走 GPU 表）贴图正常不紫黑
    （05170 实机踩坑 `2ae4c29` 的移植验证：纹理已改为 pass 外预解析）。
 
-**已知缺口（非 R3 阻塞，已立项）**：开镜时 GPU 路径画的 mesh 枪身不被目镜
-掩码裁剪（`clipForViewmodel` 只包 collector 提交）。symptom＝mesh 枪管穿进
-镜内画面。05170 有其深度孔径版实现（`ee77059`/`d6743e5`），26.2 版需按
-ScopeMaskRenderer 掩码语义重设计。
+**第 9 项（2026-09-01 已实装，待实测）**：开镜时 GPU 路径画的 mesh 枪身
+目镜裁剪。修法按本仓掩码语义（非 05170 的深度孔径架构）：无光影裸 pass 用
+新 `LIT_CLIPPED_PIPELINE`（core/scope_body + SCOPE_MASK，pass 内绑掩码）；
+光影 RenderType 路线把手部表的 entityCutout 过一遍 `clipForViewmodel`
+（与 collector 枪身同一份替换，scope_body_clipped 的 Iris 链路已被立方体
+实证）；两路共用 `maskReadyForViewmodel(true)` 判据，与立方体裁剪同开同关；
+世界表不裁。验证点：开镜 mesh 枪管不穿镜、松开右键枪身完整、低倍 sight 不啃洞。
+
+**第 10 项（2026-09-01 已实装，待实测）**：配置持久化（FCAP 保存断桥）。
+Cloth 界面改任意配置 → 保存退出 → 重启：值保留（`tacz-client.toml` mtime
+变化）。旧 TOML 里钉着的旧值需玩家改一次并保存（不追溯改写用户文件）——
+「GPU 烘焙默认开却表现为关」正是旧文件 `false` 盖住新默认的表象。
 
 ### 5.2-ter 下游 1.21.11 分支审查（A1-A10）处置记录（2026-08-31）
 

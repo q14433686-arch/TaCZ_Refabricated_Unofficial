@@ -74,6 +74,16 @@ public final class ScopeBodyRenderTypes {
     private static final BindGroupLayout MASK_SAMPLER_LAYOUT =
             BindGroupLayout.builder().withSampler(MASK_SAMPLER).build();
 
+    /** 供 meshloader 的 GPU 裁剪管线复用（同一个 layout 实例 = 同一个 sampler 名）。 */
+    public static BindGroupLayout maskSamplerLayout() {
+        return MASK_SAMPLER_LAYOUT;
+    }
+
+    /** 掩码采样器在 bind group 里的名字，供外部 pass 手动绑定时对齐。 */
+    public static String maskSamplerName() {
+        return MASK_SAMPLER;
+    }
+
     private static RenderPipeline buildPipeline(String name, boolean mask, boolean invert, boolean emissive) {
         var builder = RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
                 .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/" + name))

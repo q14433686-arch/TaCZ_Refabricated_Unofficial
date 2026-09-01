@@ -61,6 +61,13 @@ public class TaCZFabric implements ModInitializer {
         // 确保配置文件加载，这个阶段将比标准的forge配置文件加载早
         PreLoadConfig.init();
 
+        // 【时序硬约束】Fabric 上 FCAP 的 CLIENT/COMMON 配置在 register 里【当场加载】
+        // （ConfigTracker.registerConfig 直接 openConfig，26.2.x 源码 :96 实读），
+        // loading 回调必须先挂好 —— 挂晚了初次 loading 事件收不到，
+        // ConfigPersist 就记不到 ModConfig 实例（保存断桥修复随之失效）。
+        ModConfigEvents.loading(GunMod.MOD_ID).register(LoadingConfigEvent::onLoadingConfig);
+        ModConfigEvents.reloading(GunMod.MOD_ID).register(LoadingConfigEvent::onReloadingConfig);
+
         ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.COMMON, CommonConfig.init());
         ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.SERVER, ServerConfig.init());
         ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.CLIENT, ClientConfig.init());
@@ -122,8 +129,7 @@ public class TaCZFabric implements ModInitializer {
 
         LivingKnockBackEvent.CALLBACK.register(KnockbackChange::onKnockback);
 
-        ModConfigEvents.loading(GunMod.MOD_ID).register(LoadingConfigEvent::onLoadingConfig);
-        ModConfigEvents.reloading(GunMod.MOD_ID).register(LoadingConfigEvent::onReloadingConfig);
+        // （loading/reloading 回调已在 ConfigRegistry.register 之前挂好，见上方时序注释。）
 
         ServerPlayerEvents.AFTER_RESPAWN.register(PlayerRespawnEvent::onPlayerRespawn);
 

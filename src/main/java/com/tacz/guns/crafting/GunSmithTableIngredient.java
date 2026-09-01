@@ -89,10 +89,13 @@ public class GunSmithTableIngredient {
                         normalizeLegacy(raw)
                 ).getOrThrow();
                 this.rawItem = null;
-            } catch (RuntimeException e) {
+            } catch (RuntimeException | LinkageError e) {
                 if (!this.loggedFailure) {
                     this.loggedFailure = true;
-                    GunMod.LOGGER.error("Failed to resolve gun smith table ingredient {}", raw, e);
+                    // ERROR + 原文 + 规范化形态 + 完整异常：跨包合成排查的第一现场。
+                    // 材料格空白/配方点不动时，先在 latest.log 搜这一行。
+                    GunMod.LOGGER.error("Failed to resolve gun smith table ingredient {} "
+                            + "(normalized form: {})", raw, normalizeLegacy(raw), e);
                 }
             }
         }
@@ -175,6 +178,26 @@ public class GunSmithTableIngredient {
             }
             JsonElement item = obj.get("item");
             if (item != null && item.isJsonPrimitive() && item.getAsJsonPrimitive().isString()) {
+                // 【隐式 NBT 材料 —— 跨包合成 bug 追查轮】旧写法允许不带 "type"
+                // 直接写 {"item": "tacz:modern_kinetic_gun", "nbt": {"GunId": ...}}。
+                // 本方法此前把 "nbt" 【静默丢弃】、只留物品 id —— 后果双重：
+                //   ① 材料格显示一把没有 GunId 的裸 modern_kinetic_gun
+                //     （缺省模型/名字不对，玩家看不出要交哪把枪）；
+                //   ② 匹配退化成「任意一把同物品枪都行」，语义悄悄放宽。
+                // 带 nbt 的对象改写成 partial_nbt 语义（宽松子集匹配 ——
+                // 枪械物品必然带着弹药数/开火模式等额外字段，strict 永远不可能
+                // 命中一把用过的枪，partial 是唯一可用语义，与 wiki 建议一致）。
+                if (obj.has("nbt") && obj.get("nbt").isJsonObject()) {
+                    JsonObject out = new JsonObject();
+                    out.add("fabric:type", new JsonPrimitive("forge:partial_nbt"));
+                    JsonArray items = new JsonArray(1);
+                    items.add(new JsonPrimitive(item.getAsString()));
+                    out.add("items", items);
+                    out.add("nbt", obj.get("nbt"));
+                    GunMod.LOGGER.info("Rewrote a legacy no-type NBT ingredient (item={} + nbt) to forge:partial_nbt "
+                            + "semantics; previously the nbt was silently dropped.", item.getAsString());
+                    return out;
+                }
                 return new JsonPrimitive(item.getAsString());
             }
             return raw;

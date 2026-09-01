@@ -116,6 +116,46 @@ public final class PolyMeshGpuRenderer {
             .withColorTargetState(ColorTargetState.DEFAULT)
             .build();
 
+    /**
+     * 【开镜 mesh 枪身裁剪 · 5.2-bis 第 9 项】LIT_PIPELINE 的目镜掩码变体。
+     *
+     * <p>缺口（26.1.2 分支 ee77059 点名的同款）：collector 提交的枪身经
+     * {@code ScopeBodyRenderTypes.clipForViewmodel} 换成 SCOPE_MASK 管线，
+     * 开镜时孔径内的枪身像素被 discard；GPU 手部表画的 mesh 枪身走本类自己的
+     * 管线，从不经过那次替换 —— mesh 枪管会穿进镜内画面。</p>
+     *
+     * <p>修法按<b>本仓自己的掩码语义</b>（不是 26.1.2 的深度孔径架构）：
+     * {@code core/scope_body} 着色器 = vanilla entity 逐字拷贝 + SCOPE_MASK
+     * discard 段，且各 define 分支齐全 —— 给它 NO_OVERLAY + NO_CARDINAL_LIGHTING
+     * 就得到与 LIT_PIPELINE 语义一致、只多一步「孔径内 discard」的管线。
+     * 掩码纹理在 pass 内直接绑定，与镜身/火光同一张、同一帧语义。</p>
+     *
+     * <p>启用判据复用 {@code ScopeBodyRenderTypes.maskReadyForViewmodel(true)} ——
+     * 与 collector 枪身裁剪<b>同一份</b>前置（掩码开关/光影回退/低倍 sight 的
+     * reticle-only 掩码不许裁枪身/掩码 target 就绪），两条路径的裁剪行为
+     * 永远同时开关，不会出现「立方体裁了 mesh 没裁」的分叉。</p>
+     *
+     * <p>光影下不走本管线（useRenderTypeRoute 走 RenderType 路线），那一侧由
+     * clipForViewmodel 替换 renderType 覆盖（见 drawViaRenderTypeCore）。</p>
+     */
+    private static final RenderPipeline LIT_CLIPPED_PIPELINE = RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+            .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/mesh_entity_scope_clipped"))
+            .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
+            .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
+            .withShaderDefine("ALPHA_CUTOUT", 0.1F)
+            .withShaderDefine("NO_OVERLAY")
+            .withShaderDefine("NO_CARDINAL_LIGHTING")
+            .withShaderDefine("SCOPE_MASK")
+            .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
+            .withBindGroupLayout(BindGroupLayouts.SAMPLER2)
+            .withBindGroupLayout(com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.maskSamplerLayout())
+            .withCull(false)
+            .withVertexBinding(0, DefaultVertexFormat.ENTITY)
+            .withPrimitiveTopology(PrimitiveTopology.QUADS)
+            .withDepthStencilState(DepthStencilState.DEFAULT)
+            .withColorTargetState(ColorTargetState.DEFAULT)
+            .build();
+
     /** 一根骨骼烘出的常驻 VBO。顶点是骨骼本地坐标，light 已按量化档烘进 UV2。 */
     public static final class BakedBone {
         public final GpuBuffer vertexBuffer;
@@ -616,7 +656,7 @@ public final class PolyMeshGpuRenderer {
      */
     private static void drawListViaRenderType(List<DrawEntry> draws) {
         IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
-        long totalIndices = drawViaRenderTypeCore(draws);
+        long totalIndices = drawViaRenderTypeCore(draws, true);
         if (!loggedFirstIrisDraw) {
             loggedFirstIrisDraw = true;
             LOGGER.info("[TacZMeshLoader] GPU mesh pass (RenderType route, shader-pack compatible) drew {} bones "
@@ -648,7 +688,7 @@ public final class PolyMeshGpuRenderer {
      * 完全同构，两层变换定理不区分 pass。</p>
      */
     private static void drawWorldListViaRenderType(List<DrawEntry> draws) {
-        long totalIndices = drawViaRenderTypeCore(draws);
+        long totalIndices = drawViaRenderTypeCore(draws, false);
         if (!loggedFirstWorldDraw) {
             loggedFirstWorldDraw = true;
             LOGGER.info("[TacZMeshLoader] GPU world mesh pass (RenderType route) drew {} bones "
@@ -656,7 +696,11 @@ public final class PolyMeshGpuRenderer {
         }
     }
 
-    private static long drawViaRenderTypeCore(List<DrawEntry> draws) {
+    /**
+     * @param handPass 手部表才裁目镜（{@code clipForViewmodel}）；世界表不裁 ——
+     *                 世界枪本就该出现在镜内画面里，与 collector 的世界枪一致。
+     */
+    private static long drawViaRenderTypeCore(List<DrawEntry> draws, boolean handPass) {
         Matrix4fStack mvStack = RenderSystem.getModelViewStack();
 
         Map<Identifier, List<DrawEntry>> byTexture = new HashMap<>();
@@ -666,7 +710,17 @@ public final class PolyMeshGpuRenderer {
 
         long totalIndices = 0;
         for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
-            RenderType renderType = RenderTypes.entityCutout(group.getKey());
+            // 【开镜 mesh 枪身裁剪 · 光影侧】与 collector 枪身完全同一份机制：
+            // clipForViewmodel 在掩码就绪时把 entityCutout 换成 scope_body_clipped
+            // （= entityCutout 配方 + SCOPE_MASK discard，视觉逐状态一致）。
+            // 该管线已由 assignScopePipelineToHand 归入 Iris HAND program，
+            // IrisScopeMaskState 对它写 tacz_ScopeMaskMode=1 —— 立方体枪身在
+            // 光影下裁剪正确走的就是这条已实证链路，mesh 只是同车。
+            // 掩码不就绪/未开镜时原样返回 entityCutout，行为与改动前逐位相同。
+            RenderType renderType = handPass
+                    ? com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipForViewmodel(
+                            RenderTypes.entityCutout(group.getKey()), group.getKey(), true)
+                    : RenderTypes.entityCutout(group.getKey());
             for (DrawEntry entry : group.getValue()) {
                 // MV = MV_draw(栈顶) × pose_bone。压栈让 prepare() 自己取。
                 //
@@ -765,6 +819,23 @@ public final class PolyMeshGpuRenderer {
         }
 
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+
+        // 【开镜 mesh 枪身裁剪】与 collector 枪身的 clipForViewmodel 同一份判据
+        // （maskReadyForViewmodel）：掩码可用 + 允许裁视模时，手部表换用
+        // SCOPE_MASK 变体管线，孔径内的 mesh 枪身像素 discard —— 修掉
+        // 「mesh 枪管穿进镜内画面」（5.2-bis 第 9 项）。仅手部表：世界枪不裁
+        // （它们本来就该出现在镜内画面里，与 collector 的世界枪一致）。
+        // EMISSIVE 回退档不裁：lightmap 都拿不到的会话已在降级态，宁简勿繁。
+        boolean clipAgainstOcular = draws == HAND_DRAWS
+                && lightmapView != null
+                && com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.maskReadyForViewmodel(true);
+        GpuTextureView maskView = null;
+        if (clipAgainstOcular) {
+            RenderTarget maskTarget = com.tacz.guns.client.render.scope.ScopeMaskTarget.current();
+            maskView = maskTarget != null ? maskTarget.getColorTextureView() : null;
+            clipAgainstOcular = maskView != null;
+        }
+
         // 阶段边界不在任何 render pass 内（FeatureRenderDispatcherMixin 的字节码分析），
         // createRenderPass 的 isInRenderPass 断言安全。颜色 Optional.empty() = 不清屏，
         // 深度 OptionalDouble.empty() = 不清深度 —— executeSolid 画好的立方体深度要留着。
@@ -775,11 +846,17 @@ public final class PolyMeshGpuRenderer {
                 depthView,
                 OptionalDouble.empty())) {
             boolean lit = lightmapView != null;
-            pass.setPipeline(lit ? LIT_PIPELINE : EMISSIVE_PIPELINE);
+            pass.setPipeline(clipAgainstOcular ? LIT_CLIPPED_PIPELINE : (lit ? LIT_PIPELINE : EMISSIVE_PIPELINE));
             RenderSystem.bindDefaultUniforms(pass);
             if (lit) {
                 pass.bindTexture("Sampler2", lightmapView,
                         RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+            }
+            if (clipAgainstOcular) {
+                // NEAREST 与 ScopeMaskTextureHandle 的理由相同：掩码是二值数据，
+                // 线性过滤会让 > 0.5 判定在边界抖动出毛边。
+                pass.bindTexture(com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.maskSamplerName(),
+                        maskView, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             }
 
             for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
