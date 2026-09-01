@@ -35,8 +35,10 @@ public class RightHandRender implements IFunctionalSubmitter {
         int light = context.light();
         // 【镜内裁手】与枪口火光同一判据（extract 期）：瞄具的目镜序列在枪身遍历
         // 之前登记（BedrockGunModel#submit 先提交瞄具再 super.submit），此刻的闸门
-        // 就是本帧的真实状态。不满足时手臂走 vanilla entityTranslucent（现状）。
-        boolean clipToScopeExterior = ScopeRenderTypes.hasScheduledViewmodelAperture();
+        // 就是本帧的真实状态。闸门还带倍率下限（ScopePipMinMagnification，默认 4×）：
+        // 低倍镜/组合镜的低倍档不裁 —— 没有镜内画面可让位，挖洞只会像破图。
+        // 不满足时手臂走 vanilla entityTranslucent（现状）。
+        boolean clipToScopeExterior = ScopeRenderTypes.viewmodelFxClipApplies();
         context.add(collector -> {
             PoseStack taskPose = new PoseStack();
             taskPose.last().pose().set(frozenPose.last().pose());

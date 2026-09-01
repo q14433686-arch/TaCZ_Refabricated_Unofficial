@@ -290,8 +290,14 @@ public final class ScopePipRenderState {
                 : RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS.get().floatValue();
     }
 
-    /** 低于该倍率的瞄具不走 PIP，回落到旧整屏变焦。 */
-    private static float minMagnification() {
+    /**
+     * 低于该倍率的瞄具不走 PIP，回落到旧整屏变焦。
+     *
+     * <p>这里<b>刻意开放</b>：镜内裁手/裁火光也用同一条线 —— 低倍镜（配置注释举的 2×/3×）
+     * 没有「镜内画面」可让位，把手臂/火光挖个洞露出未放大的背景只会像破图，见
+     * {@link com.tacz.guns.client.render.scope.ScopeRenderTypes#viewmodelFxClipApplies()}。</p>
+     */
+    public static float minMagnification() {
         return RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION == null
                 ? 4.0f
                 : RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION.get().floatValue();

@@ -139,6 +139,31 @@ public final class ScopeRenderTypes {
     }
 
     /**
+     * 【低倍镜不裁】手臂 / 枪口火光那一类「镜内 discard」的闸门。
+     *
+     * <h2>为什么跟枪身不是一个闸门</h2>
+     * 枪身、配件用 {@link #hasScheduledViewmodelAperture()}（见 {@link #clipForViewmodel}）：
+     * 那一刀的作用是把<b>镜片本身挖透</b>（模型里那块镜片几何是不透明的），跟倍率无关，
+     * 低倍镜也要挖，否则红点/全息就是一块黑片。
+     * 而手臂、火光是在「给镜内画面让位」—— 高倍镜时镜内画的是放大后的世界，
+     * 手臂压在目镜上就必须让；<b>低倍镜没有镜内画面可让</b>（阈值以下连 PIP 都不跑），
+     * 挖出来的洞里是没放大的背景，观感就是手上/火光上破了个洞。
+     *
+     * <h2>阈值取谁的</h2>
+     * 复用 {@code ScopePipMinMagnification}（{@link ScopePipRenderState#minMagnification()}，
+     * 默认 4×）：它已经是本线对「低倍镜 vs 高倍镜」的唯一成文分界，配置注释里就写着
+     * 「低倍镜（2×/3×）…组合镜按<b>当前档位</b>判定」。倍率取
+     * {@link ScopePipRenderState#currentZoom()}（{@code IGun#getAimingZoom}），
+     * 与 PIP 判定同一个值 ⇒ 组合镜切到低倍档自动不裁、切回高倍档自动裁。
+     *
+     * <p>失败哲学照旧：任一条件不满足即不裁，回到「手臂/火光正常画」的行为。</p>
+     */
+    public static boolean viewmodelFxClipApplies() {
+        return apertureScheduledForViewmodel
+                && ScopePipRenderState.currentZoom() >= ScopePipRenderState.minMagnification();
+    }
+
+    /**
      * Wraps the plain scope-body type so its draw boundary first copies the aperture depth
      * (world depth plus only the ocular differences) into the mask texture, then draws the body.
      */
