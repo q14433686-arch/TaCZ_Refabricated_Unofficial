@@ -817,6 +817,17 @@ public final class PolyMeshGpuRenderer {
      */
     public static void renderAtHandFlush() {
         lastHandFlushFrame = frameId;
+        // 镜内那一遍（PIP 二次渲染）不画第一人称手部：光影下 Iris 把手部搬进了
+        // LevelRenderer#renderLevel 内部，镜内那遍因此也有完整的手部阶段 —— mesh 枪会被
+        // 画进镜内画面；孔外剔除只裁「孔内且比目镜远」的段，比目镜更近的枪口前端留在
+        // 画面里，合成后即「镜内枪前端残影」（实机 2026-09-01）。手部属于第一人称
+        // viewmodel，镜内画面必须是纯世界：表在此清空，主画面的手部阶段会重新提交。
+        // （世界表相反：镜内那遍照常画、不清表，见 renderAtWorldFlush 的既有裁定；
+        // 两遍的世界内容必须一致，而手部只属于主画面。）
+        if (ScopePipRerender.isInsideScopeLevelRender()) {
+            HAND_DRAWS.clear();
+            return;
+        }
         if (HAND_DRAWS.isEmpty()) {
             // 绝大多数帧走这里（没持 mesh 枪 / 光影未开实验开关）。存活证明已经记下了，
             // 其余一律不查：IrisCompat.isUsingRenderPack() 是反射桥，别在热路径上白调。
