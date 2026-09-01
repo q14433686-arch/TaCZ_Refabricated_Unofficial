@@ -595,12 +595,17 @@ Sodium 地形、Voxy、帧图导入全都要调这个方法。
 > 仍只能在 TOML 里改的是 `ScopePipDebug*`、`ScopePipMinAimingProgress`、
 > `ScopePipReleaseIdlePipeline` / `ScopePipIdleReleaseDelayFrames` 与
 > `AimingSwayIntensity`。给玩家的说明见 `README.md` §4.2。
+>
+> 另：下表是 2026-08-21 的快照，R3 又加了 `ScopePipMinMagnification` /
+> `ScopePipResolutionScale` / `ScopePipRerenderInterval` / `ScopePipShadowScale` /
+> `ScopePipIsolatePipeline`。权威清单以 `RenderConfig.java`（键与注释）与
+> `compat/cloth/client/RenderClothConfig.java`（哪些进了界面）为准。
 
 | 键 | 默认 | 说明 |
 |---|---|---|
 | `ScopePipEnable` | `false` | PIP 总开关 |
-| `ScopePipRerender` | `false` | 二次渲染（原生分辨率）。光影下自动忽略 |
-| `ScopePipAllowShaderPacks` | `false` | 允许光影下跑 PIP（目前不出图，见 §2） |
+| `ScopePipRerender` | `false` | 二次渲染（原生分辨率）。**「光影下自动忽略」已过时**：光影下同样生效（需 `ScopePipAllowShaderPacks=true`）——2026-09-02 用户实机日志（ComplementaryUnbound r5.8.1）里有 `Scope PIP second-render pass active: 2560x1417 at 4.25x`。仅 `ScopePipResolutionScale` 在光影下被强制 1.0（Iris 按原生尺寸渲染到自己的缓冲，缩它省不到东西） |
+| `ScopePipAllowShaderPacks` | `false` | 允许光影下跑 PIP。§2 记的「目前不出图」**已被后续实现推翻**：同一份实机日志里有 `Iris scope-mask bridge active (mode=1, …)` 与 `Scope pass is using its own Iris pipeline (tacz:scope_pip)`，镜内出图正常 |
 | `ScopePipSharpness` | `0.5` | 重投影模式的锐化上限（只提升主观锐度） |
 | `ScopePipWorldZoomShare` | `0.0` | 瞄具倍率里由**世界**承担的比例，用来换镜内真实分辨率。见 §2.7。`0.0` = 与改动前逐位等价；`1.0` = 等于关掉 PIP |
 | `AimingSwayIntensity` | `1.5` | 开镜时持枪晃动的强度倍数。见 §2.8。腰射永不受影响；`1.0` = 与改动前逐位一致；`0.0` = 满开镜完全不晃 |
