@@ -233,6 +233,53 @@ JEI/工作台里「附属包要另一包的枪/配件」的配方材料格应正
 物品并可合成；latest.log 不再出现 `Failed to resolve gun smith table
 ingredient`（tacz:nbt 形态）。
 
+**第 13 项（2026-09-01 裁定：姊妹线修复<b>不移植</b>，改为加观测点；实机未验）**：
+「二次渲染时视野内高模枪在镜内不烘焙」。1.21.11 的 `237dc153` 与 26.1.2 的
+`db360639` 已按同一根因修好：它们那两条线的 `LevelRenderer#renderLevel`
+**每调用一次就重新提交一遍世界几何**，于是镜内那遍会重新走一次
+`TaczPolyMeshGunModel.submit`，被 `shouldSubmitGpuWorld()` 里
+`isInsideScopeLevelRender()` 那条防御性闸门拒收 ⇒ 镜内那遍只能回
+collector + 顶点预算 ⇒ 高模枪被打成裸立方体，而主画面那遍照常 GPU 烘焙。
+它们的修法是「删闸门 + 镜内那遍画完也清表（主遍会重新提交一份）」。
+
+**本线（26.2）不成立，逐条证据：**
+
+| # | 证据 | 出处 |
+|---|---|---|
+| 1 | 26.2 的世界提交（含实体模型渲染）在**本帧 extract 阶段一次完成**，`LevelRenderer#render` 只是绘制阶段 —— 镜内那遍**复用** extract 那一批提交节点，闸门只在提交时过一次 | 本文档 `PolyRenderPolicy.detailZoom()` 的既有结论（第 11 项那次实机回报写的）；`PolyMeshGpuRenderer.renderWorldAfterSolid` javadoc |
+| 2 | 镜内那遍会把 `SubmitNodeStorage` **抽干**（`sortInto` 末尾 `clear()`），主画面那遍因此拿不到节点 —— 本仓为此专门取消那次 `clear()`。**若每一遍 render 都重新提交，这个 bug 与这个 mixin 都不会存在** | `SimpleFeatureRenderPhaseMixin` / `TranslucentFeatureRenderPhaseMixin` 头注释（字节码实读）；PR#82 帧率衰减调查 §4.5 |
+| 3 | 26.1.2 分支**没有**这两个 mixin（`git ls-tree` 核对）—— 正是因为它每遍各自提交，不存在「被抽干」问题 | `origin/arena/01a05db3-…` 的 `mixin/client/` 文件清单 |
+| 4 | `LevelRenderer#render` 的签名吃的是 `CameraRenderState`（提取产物）+ `DeltaTracker`，`SubmitNodeStorage` 是 `LevelRenderer` 上的**字段**（由 extract 填、由每遍 render 抽） | `GameRendererMixin` 的注入 target 字符串；`LevelRendererAccessor` |
+| 5 | 26.2 的 GUI 内嵌 3D（背包人偶/枪匠桌）submit 落在 **Screen 的 extract 窗口**（Fabric API 26.2 把 render 事件改名 extract）—— 模型提交属于 extract 阶段 | `ScreenRenderTracker` 头注释 |
+| 6 | 帧内顺序：`Minecraft#runTick` extract(441) → render(520)；二次渲染那一遍注入在 `renderLevel` 里 `LevelRenderer#render` 调用的 BEFORE ⇒ **在 extract 之后** | `GameRendererMixin.tacz$beginScopeFrame` / `tacz$renderScopePipView` |
+
+⇒ 本线上那条镜内闸门**在正常流程里不可达**（它自己的注释早就这么写着），
+删掉换不到任何东西；而照抄「镜内画完清表」的那半会让主画面那遍拿到**空表**
+—— 开着 `ScopePipRerender` 开镜时**镜外的世界 mesh 枪整层消失**，
+比原报告严重得多。**故不移植行为改动。**
+
+**本轮实际落地的（观测点，非行为改动）：**
+
+- `renderWorldAfterSolid`：镜内那遍首次画上世界表时 log-once
+  `GPU world mesh pass active inside the scope PIP re-render pass: drew N world
+  entries …` —— 把「镜内到底有没有走 GPU 烘焙」从**靠帧率反推**变成日志事实；
+- `shouldSubmitGpuWorld`：镜内分支加 log-once 哨兵。它一旦被打印出来，就说明
+  「提交每帧一次」这条本线前提被打破（MC 后续把提交挪回 render 阶段，或某个 mod
+  在镜内那遍里重新渲染实体），**那时**姊妹线那条修复才适用于本线；
+- `drawList` 的首画日志改为报**真实表名**（此前无论画哪张表都写 "on hand pass"），
+  并让世界表在自定义 pass 上的首画单独记一次（原来会被更早的手部首画吃掉）。
+
+**本线若仍复现「镜内是立方体」，按这个顺序查**（都不是二次渲染的锅）：
+先看上面那条 log-once 有没有出现 —— 出现了就说明镜内在走 GPU 烘焙，问题在
+**提交侧**（第 11 项的开镜距离补偿是否生效：`MeshMaxRenderDistance` 48 /
+`MeshWorldFullDetailDistance` 16 / `MeshWorldMaxVertices`），或烘焙额度/LRU
+（`MeshGpuBakeBudgetPerFrame` 默认 4、`MeshGpuLightCacheSize` 默认 4 档，
+病理场景下逐帧收敛需要几帧）；没出现则是消费侧（看有没有
+`GPU world mesh pass failed` 把世界闸整局关掉）。
+
+**证据级别**：静态读码 + 本仓既有字节码取证 + 26.1.2/1.21.11 的实机回报；
+**本线实机未验**（沙箱无 java/JDK 也无 MC 依赖源，编译走 CI 闭环）。
+
 ### 5.2-ter 下游 1.21.11 分支审查（A1-A10）处置记录（2026-08-31）
 
 下游分支对本仓 587763c 做了 10 条静态审查。逐条核实后处置如下
