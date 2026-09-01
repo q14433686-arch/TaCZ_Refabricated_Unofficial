@@ -311,7 +311,7 @@ public final class PolyMeshGpuRenderer {
      *       {@code SubmitNodeStorage} 抽干会让主画面那遍无节点可画，所以取消
      *       phase 的 {@code clear()} 把节点留给主遍）。因此本线上这条闸门<b>不可达</b>，
      *       删它换不到任何东西；而照抄姊妹线「镜内画完清表」的那半会让主画面那遍
-     *       拿到空表 ⇒ 开镜 + 二次渲染时<b>镜外的世界 mesh 枪整层消失</b>。
+     *       拿到空表 ⇒ 开镜 + 二次渲染时<b>镜外那遍的 poly 层整层不画（只剩立方体）</b>。
      *       证据链见 {@code docs/MESH_LOADER.md} §5.2-bis 第 13 项。</p></li>
      *   <li><b>不在</b>阴影 pass —— Iris 阴影遍的投影/MV 是太阳视角，
      *       登记进主视角的表必然画错；{@code MeshPolyInShadow=false} 时提交
@@ -625,7 +625,7 @@ public final class PolyMeshGpuRenderer {
      *       （{@code LevelRenderer#render} 是纯绘制阶段，本仓
      *       {@code SimpleFeatureRenderPhaseMixin} 就是为了让主遍能再取一次同一批
      *       节点而存在的）—— 在这里清表 = 主画面那遍拿到空表 = 开着二次渲染开镜时
-     *       <b>镜外的世界 mesh 枪整层消失</b>。所以本线保持「画而不清」，
+     *       <b>镜外那遍的 poly 层整层不画（只剩立方体）</b>。所以本线保持「画而不清」，
      *       并在首次发生时打一条 log-once（{@link #loggedScopeWorldDraw}）
      *       把「镜内确实在走 GPU 烘焙」变成日志事实。详见
      *       {@code docs/MESH_LOADER.md} §5.2-bis 第 13 项。</p></li>
