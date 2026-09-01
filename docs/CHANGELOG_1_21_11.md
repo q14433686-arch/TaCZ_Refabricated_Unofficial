@@ -5,6 +5,41 @@
 
 ---
 
+## 实机"镜内外均 1X"：全量对照 26.1.2 的 42 个 commit，补回"放行光影窄遍"漏掉的两道同批守卫
+
+维护者报：开 `ScopePipRerender` + 开光影后，瞄准时**镜内和镜外都是 1X**，并要我"全量对照他的 commit"。
+**怀疑成立。** 根因不是世代 API、不是光影隔离本身，而是我方 2026-09-01 那批"放行窄遍"**只搬了放行、
+漏了放行自带的两道守卫**（都在既有方法体内，方法名两侧完全相同 ⇒ cherry-pick 时静默跳过）：
+
+- `825d2c5`（drop the B1 hard-refuse 那个 commit）同批在 `ScopePipRenderState#captureSceneAfterIrisFinal`
+  加的 `if (rerenderMode()) return;`：缺了它，终局钩子那次"补一次捕获"会用**宽视场成品帧覆盖窄视场成品**
+  ⇒ 合成把 1x 主画面贴进镜孔。
+- `95590b0`（break the capture/composite feedback loop）在 `IrisFinalScopeOverlayMixin` 加的窄遍早退 +
+  `ScopeFinalOverlayState.discardPendingOverlays()`：缺了它，一帧两次的 `finalizeLevelRendering` 里**窄遍那次也照跑**
+  —— 合成画在主目标上被宽遍覆盖（白做），而紧随其后的捕获把"上一帧镜内画面 + 遮光罩"当成新镜内画面拷进去
+  ⇒ 合成回灌自身、镜内定格。窄遍期间提交的覆盖层不清还会攒到下一帧画错位置。
+- 顺带对齐 `ScopePipRenderState#shaderRerenderAllowed()`（opt-in 键 **且** `supportsFinalScopeOverlay()`）：
+  我方 `shaderIsolateSafe()` 与预热此前**只看键**，终局钩子不可用时同样是"世界让位、镜内没画面"的同型症状。
+- 审计顺手补上唯一的真实功能差：`ScopePipRerenderInterval`(1-4，默认 1) + `sceneTargetGeneration` 代次守卫
+  （复用上一帧成品前比对画布代数，窗口缩放/格式变化重建过绝不复用）。默认 1 ⇒ 现有行为不变。
+- **两条 TOML 说明文字此前已是假话**（`ScopePipRerender` 写"只实现无光影路径"、`ScopePipIsolatePipeline` 写
+  "装 Sodium 或 Voxy 就拒"），一并改正。它们的来历也记一笔：那次改注释的脚本在同一次运行里因**别处** assert
+  失败而中断，只落了部分文件 —— 一批里的多处编辑必须逐条 assert 后统一落盘、失败要显式报错。
+
+**方法论（重要，已固化成 `scripts/audit_sibling_render_line.py`）**：三层判据 —— ①他们每个 commit 新增的
+方法名/配置键在我方全树搜索；②双方**终态**代码行 diff（滤注释）按文件排行；③终态**方法清单**差集。
+本次两条漏项**层 1 完全抓不到**（方法名没变）、只有**层 2 能抓**（补完后 `IrisFinalScopeOverlayMixin`、
+`SodiumCompat`、`VoxyCompat`、`VoxyScopePipelineCompat`、`GameRendererMixin`、`LevelRendererAllChanged…`、
+全部 iris/voxy mixin 都是 **0 行 = 与终态同形**；残余 `ScopePipRenderState` 31 / `PolyMeshGpuRenderer` 149 /
+`ScopePipRerender` 168 经逐条定性全属世代改写或有意不同形，已逐处写明理由）。
+判据结论：**移植"放行/开关"型改动时，该路径上每个消费点的守卫必须一起搬，并且必须用终态 diff 复验**；
+CI 全绿只证明形状，不证明语义——本次就是全绿却功能是坏的。完整对照表与逐条定性：
+`docs/lineage/AUDIT_2612_RENDER_42COMMITS_20260901.md`。实机待复测（镜内应恢复放大、遮光罩只在宽遍出现、
+interval 调到 2-4 时镜内滞后但主画面帧率上升且缩放窗口后不出现未定义内容）。未改 `gradle.properties` 版本号。
+
+---
+
+
 ## Voxy 大件同批搬入（第二渲染栈 + 独立视口 + 只拦绘制 + 节点 tick 每帧一次）：并把"可选 mod 的 mixin"改成 @Pseudo
 
 维护者：「我说 VOXY 也搬过来」。⇒ `compat/voxy/{VoxyCompat,VoxyScopePipelineCompat}`（475 行，纯反射）+

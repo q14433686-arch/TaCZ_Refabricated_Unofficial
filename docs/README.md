@@ -33,6 +33,7 @@
 | `lineage/SYNC_CHECKLIST_1211_TO_2612_PIP_20260901.md` | 发给 26.1.2 的同步清单（本分支 → 他们）：镜内文字掩码裁剪在本世代实机 PASS 的可用结论、建议他们补的三件小事（log-once 判据 / 重载剧本 / fail-closed 失败模式）、我方三条"不必对齐"判定（重提取防护、FCAP 配置落盘世代边界、隔帧 interval）、我方请回 7 项的逐项关闭复查，以及我方反过来向他们索取的"世界 GPU 消费点四点位表"（关系我方仍未修的"反光/高光偏一侧"） |
 | `lineage/SYNC_REVIEW_2612_RENDER_LINE_20260901.md` | ★ 26.1.2 渲染线（`7562abcb`→`5c45a787`，42 个真提交）→ 1.21.11 的**逐条甄别记录**：移植 G1 mesh 目镜裁剪 / G2 掩码周期帧戳 / G3 手部坐过镜内窄遍 / G4 PIP 显示阈与重投影倍率渐变；否决 `b9f9db7`；不移植光影隔离大件（本线无 voxy/sodium 且仍 B1 硬拒）与三条"我方已等价"的；纠出对方同步文本把 `03a807e` 列为待搬的错误；回答他们 §6 的五点；含跨世代 API 改写清单与两处踩坑（阈值只搬半套会不自洽、冲突合并必须同轮跑编译门） |
 | `lineage/SCOPE_PIP_SHADER_ISOLATION_PORT_2612_20260901.md` | ★ 光影下二次渲染的**时域隔离**在本线怎么落地：`Iris#getCurrentDimension` 维度替换 → Iris 单建一套管线（切断"上一帧被推进两次"）；含他们的件↔我方落点对照表、Sodium/Voxy 两条通道为何本批不搬与解锁条件、软注入命中与否的**日志自检测别法**、首次开镜卡顿/显存/下界 fallback 三项已知取舍、实机判别清单 5 条 |
+| `lineage/AUDIT_2612_RENDER_42COMMITS_20260901.md` | ★ 全量对照 26.1.2 的 42 个 commit（实机"镜内外均 1X"复盘）：两层漏项（放行窄遍自带的 capture 覆盖守卫 + 窄遍 finalize 回灌守卫）、三层审计判据与 `scripts/audit_sibling_render_line.py`、20 个文件的终态 diff 逐条定性、以及"CI 全绿但功能是坏的"这条教训 |
 | `lineage/SYNC_CHECKLIST_1211_NEOFORGE_SISTER_20260901.md` | ★ 发给**姊妹项目 TaCZ_Renovated 的 NeoForge `1.21.11` 分支**的同步清单（2026-09-01，按对方 tip `e3d9dd5c` 逐文件读码实测）：镜内 `text_show` 两个根因在对方线上都还在（`BedrockRenderSnapshot#submitFunctionalTasks` 无调用点、`PapiManager` 用 `I18n.get`）⇒ P0-a/P0-b 施工点 + 判据；`TextShowRender` 无掩码裁剪 ⇒ P1 全套文件映射 + 本世代四个渲染 API 事实（含"必须注册壳纹理"这条与 26.1.2 的偏离）；§5 明确**别同步**的（PIP 两键、FCAP、全部 TML/mesh GPU 项、我方 CI 状态）；§6 可直接抄我方哪几个提交 |
 
 ## 3. 取证与审计（完结即归档，不再更新；引用前先看文件头状态）
