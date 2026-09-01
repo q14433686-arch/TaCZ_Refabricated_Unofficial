@@ -48,8 +48,22 @@ import java.util.Locale;
  * </ul>
  * SERVER 配置是世界生命周期所有物、面板不编辑，也不在本类范围内（保持 FCAP 自己的路径）。
  *
- * <p>调用点：Cloth 面板 {@code ConfigBuilder#setSavingRunnable} 的最后一步 + {@code /tacz config}
- * 命令改值之后。两处都是"用户明确要求保存"的时刻，不逐帧写盘。</p>
+ * <p>调用点只有一处：Cloth 面板 {@code ConfigBuilder#setSavingRunnable} 的最后一步（所有
+ * {@code setSaveConsumer} 都跑完之后）。那是"用户明确要求保存"的时刻，不逐帧写盘。</p>
+ *
+ * <h2>适用范围（刻意不覆盖的部分）</h2>
+ * 只有 <b>CLIENT 与 COMMON</b> —— 面板编辑的就是这两份。<b>SERVER</b> 配置（{@code ServerConfig.init()}
+ * 里的 {@code SyncConfig} 那一族，含 {@code /tacz config} 改的三条键）不进本类：它的落盘与"首次进世界时
+ * 拷贝到 {@code <world>/serverconfigs/}"由 FCAP 自己管，我们只钉了 client/common 两个名字，按 {@code config/}
+ * 下的路径去写会写到那份将被覆盖的副本上。所以 {@link #record} 的 {@code default} 分支什么都不做，
+ * {@code ConfigCommand} 也不"顺手"调 {@link #saveAll()}（对本命令无作用，纯假动作）。</p>
+ *
+ * <h2>为什么这个修法对两种架构都成立</h2>
+ * {@code childConfig instanceof FileConfig}（旧架构；本仓 {@code PreLoadConfig} 正是这一路）⇒ 交回
+ * {@code spec.save()}，行为与今天完全一致；只有新架构（{@code SynchronizedConfig}，此时 {@code save()}
+ * 恒 no-op）才由我们显式 {@code TomlWriter} 写回。<b>因此不需要先证明本线 FCAP 21.11.1 走的是哪一条</b>：
+ * 分岔在运行时自己判，两种情况都不会写坏文件。这也是本批与 26.1.2 的唯一形状差 —— 他们核实过
+ * v26.1.5 必为新架构，所以直接写 TomlWriter，没有这个 instanceof 分支。
  */
 public final class ConfigPersist {
 

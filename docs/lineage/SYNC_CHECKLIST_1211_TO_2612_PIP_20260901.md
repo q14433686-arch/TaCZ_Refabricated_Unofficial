@@ -119,3 +119,16 @@ vanilla/custom `RenderPipeline` 替换为 `ExtendedShader`"那一行），所以
 4. markdown 表格行内禁换行、单元格禁裸 `|`；我方每轮跑列数审计（这轮也复现并修过一次）。
 5. 配置面新增键 ⇒ 同步 TOML 默认值、`RenderClothConfig`、`lang` 的 en/zh 与描述键，
    用 `docs/check_mesh_config_parity.py` 自查；**lang 永不整文件重写**。
+
+---
+
+## 补一条（2026-09-01 晚，方向是**你→我**的订正）：FCAP 落盘那条你们写"1.21.11 无此病"，不成立
+
+`ConfigPersist` 类注释里那句「1.21.11（FCAP v21.11.1）与 26.2（v26.2.1）无此病 —— 它们还是旧架构/已修桥」
+**对 1.21.11 是错的**：本线同样出现「面板改完关游戏重开 = 回到默认」，同一条 `ConfigValue.set()` 只写内存 +
+`ForgeConfigSpec.save()` 因 `childConfig` 非 `FileConfig` 而静默 no-op 的链条在这里也成立。已按你们的修法落地
+（`config/ConfigPersist` + `mixin/client/ForgeConfigSpecAccessor` + Cloth `setSavingRunnable`），并多加一层
+`childConfig instanceof FileConfig` 分岔：旧架构交回 `spec.save()`，新架构才由我们 `TomlWriter` 写回 ——
+这样不必先证明某个 FCAP 版本走哪条架构，也不会写坏文件。**建议你们把那行括号注记改成"逐版本实测"**：
+按版本号推断"谁没这病"，对三个分支里两个判错了方向。26.2 与 NeoForge 全族经维护者确认无此病。
+

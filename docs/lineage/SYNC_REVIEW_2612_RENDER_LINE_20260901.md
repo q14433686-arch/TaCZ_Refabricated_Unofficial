@@ -19,7 +19,7 @@
 | G5 光影下二次渲染隔离大件 | `3e8b22e` `1c2c5b5` `825d2c5` `95590b0` `82b3262` `c42b047` `2027261` `7b4a9a2` `3d8432f` `d3f0fdc` | Iris scope-pipeline 隔离（dimension id + 预热）、`ScopePipIsolatePipeline` 配置、ShadowScale、idle release 熔断、Voxy 第二渲染栈 + reload 钩子、Sodium 私有投影快照同步、ESC 崩溃三道闸 | **不移植（本世代前提不同）** | 上一版判定「不移植（写理由）」——**已被维护者裁定推翻**（"我说 VOXY 也搬过来"）：现整套落地，见 `SCOPE_PIP_SHADER_ISOLATION_PORT_2612_20260901.md` §2/§2b |
 | G6 我方已各自落地 | `93178de` `2ae4c29` | 法线压 MV 栈、纹理解析移出 pass | **非项** | 我方 `014f4b0`（逐 entry `pushMatrix/mul/finally popMatrix`）与 `99e36e2`+`26bb33c`（`viewsByTexture` 整批 pass 前解析 + per-texture log-once）内容等价、形状不同：我们的 pass 是自建的，不像他们走 `RenderType#prepare + drawFromBuffer` |
 | G7 纯查表 | `03a807e` | scope text + tooltips 的 `I18n.get` → 纯查表 | **非项（他们列错了）** | 我方 `c9b8ba1` 早做且范围更大（`PapiManager` + `ClientBlockItemTooltip` + `ClientAttachmentItemTooltip` 三处）；照他们说的"直接搬"会重复改 lang 与 PapiManager |
-| G8 配置落盘 | `58831e4` `0651171` | FCAP `save()` no-op 的显式持久化规避 | **不移植** | 账本 L-13：FCAP 21.11.1 上不存在该病（我方无一处 `save()`/`markDirty`），且这是 Fabric-only |
+| G8 配置落盘 | `58831e4` `0651171` | FCAP `save()` no-op 的显式持久化规避 | **判错了，现已移植** | 原判依据是"我方全树搜不到 `save()`/`markDirty` 调用 ⇒ 21.11.1 无该病"——**搜不到落盘调用正是病本身**，而"21.11.1 无此病"出自他们类注释里的版本推测、不是我方实读。维护者实机确认本线同样"重启后配置回默认"；修法已按他们的形状落地（`config/ConfigPersist` + `mixin/client/ForgeConfigSpecAccessor` + Cloth `setSavingRunnable`，我方另加 `instanceof FileConfig` 分岔），见账本 L-21 与 CHANGELOG 第九则 |
 | G9 世界消费点拓扑 | `99e505f` | 26.1.2 上把世界 GPU 表挂 `renderAllFeatures` RETURN 的两个后果 | **不移植（他们亦如此判）** | 我方 `renderAtWorldFlush` 已按本世代分派。L-12 更新：他们的四点位表不再是"挪前必读"，但"1.21.11 主通道那次是否世界 solid flush"仍未自证 ⇒ L-12 继续 OPEN，只是不再阻塞在对方 |
 | G10 杂项 | `ba4f720` `3cf9d0f` `4c2e983` `b9ec08c` `6f55e07` `a70ad40` `27b7292` `e3af08e` `5a9d682` 等 | `RawOutput.log` 上传/删除、CI 重触发、TEMP javap 探针系列、docs 系列 | **非项** | 探针与崩溃附件无移植价值；我方按自家规矩"TEMP 同轮删" |
 
@@ -44,7 +44,7 @@
 | ② `drawList` 结构差异（UBO/索引预热/纹理解析顺序） | 已逐行对齐：我方保留"pass 前写切片 + pass 外预热索引缓冲 + pass 外批解析纹理视图"三件，`apertureClip` 分支的 fsh/uniform 路线照他们终态并入；见坑 3 |
 | ③ 我方 `renderScopeView` 对光影的当前闸状态 | **硬拒仍在**（`ScopePipRerender:150` `isUsingRenderPack() ⇒ return false`）⇒ 我方不是"放行但无隔离"，三症状无从出现；G5 因此可安全推迟 |
 | ④ `compositeAfterIrisFinal` 的门栈全貌 | 移植后依次为：`isEnabled/failed` → `rerenderMode && !hasScene` → 当帧掩码周期时效闸 → Iris/包/终局钩子支持三闸 → `suppressesWorldFovZoom` → 同阈 `PIP_REVEAL_THRESHOLD` → `revealZoom(compositeZoom())` |
-| ⑤ FCAP 版本是否同样需要显式 save | 不需要（L-13：21.11.1 无该病，我方无 `save()`/`markDirty` 调用面） |
+| ⑤ FCAP 版本是否同样需要显式 save | **需要**。原判"不需要"作废：本线同样中招、已落 `ConfigPersist`。同时纠正你们类注释里那句"1.21.11（FCAP v21.11.1）与 26.2 无此病"——对 1.21.11 不成立；26.2 与 NeoForge 全族经维护者确认无此病 |
 
 ## 4. 验证状态（按 AGENTS §2）
 

@@ -35,9 +35,11 @@ public class ConfigCommand {
             case serverShootNetworkCheck -> SyncConfig.SERVER_SHOOT_NETWORK_V.set(state);
             case serverShootCooldownCheck -> SyncConfig.SERVER_SHOOT_COOLDOWN_V.set(state);
         }
-        // 命令改的同样是内存里的 spec 值：不显式落盘就"本会话有效、下次启动回默认"。
-        // Cloth 面板靠 setSavingRunnable 收尾，这条路径必须自己补一次。
-        ConfigPersist.saveAll();
+        // 这里**不**调 ConfigPersist.saveAll()：这三条键都在 SERVER spec 里（ServerConfig.init →
+        // SyncConfig），而 SERVER 配置的落盘与"首次进世界时拷贝到 <world>/serverconfigs/"由 FCAP 自己管。
+        // ConfigPersist 只钉了 client/common 两个文件名，此处调用看着像"顺手保存"，实际对本命令毫无作用，
+        // 而且一旦去猜 SERVER 的路径就会把副本写到错的位置 —— 所以宁可不做，也不留假动作。
+        // 面板能编辑的 client/common 那批才走 ConfigPersist（见其 javadoc 的适用范围）。
         context.getSource().sendSystemMessage(Component.translatable(key.lang + "." + (state ? "enabled" : "disabled")));
 
         return Command.SINGLE_SUCCESS;

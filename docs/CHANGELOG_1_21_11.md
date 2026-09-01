@@ -5,6 +5,38 @@
 
 ---
 
+## 重启后配置回默认（一语成谶）：照 26.1.2 的 `ConfigPersist` 把 client/common 的落盘显式化，并撤回我此前"非项"的判定
+
+维护者把我先前给 26.2 的一句话原样扔回来："哪天你发现『重启后配置回默认』，第一嫌疑人就是这条"——**它在本线发生了**。
+我上一轮（L-13）把 26.1.2 的 `58831e4`+`0651171` 判成"非项"，依据是"我方全树搜不到 `save()`/`markDirty` 调用"，
+并把他们文档里那句"1.21.11（FCAP v21.11.1）无此病"当成前提。**两个依据都是错的**：搜不到调用正是病本身
+（`ConfigValue.set()` 只写内存，没人负责写盘），而那句括号是他们基于版本号的推测、不是我方实读。
+
+- **根因链**（他们的 CI javap 探针实读，本线同构）：FCAP 把 NeoForge 新配置架构（`LoadedConfig` + 显式保存）搬进
+  Fabric，但 Forge 兼容层那半截桥没接上 —— `ConfigTracker` 把 TOML 解析进内存 `SynchronizedConfig`（老 Forge 是
+  `CommentedFileConfig` + autosave，写内存即写盘）⇒ `ForgeConfigSpec$ConfigValue.set(T)` 只改 `spec.childConfig`
+  ⇒ 而 `ForgeConfigSpec.save()` **只在 `childConfig instanceof FileConfig` 时落盘**，新架构下该判断永假
+  ⇒ **save() 是静默 no-op（不抛、不日志）** ⇒ 没有任何环节把改后的值写回 TOML ⇒ 下次启动读回旧文件 = "配置被重置"。
+  Cloth 面板的 `setSaveConsumer` 全链跑完也确实"保存成功"，只是保存在内存里。
+- **修法（`config/ConfigPersist` + `mixin/client/ForgeConfigSpecAccessor`）**：注册时用带文件名的 `register` 重载
+  把文件钉在 Forge 惯例名（`tacz-client.toml` / `tacz-common.toml`，与 FCAP 默认命名一致 ⇒ 不改变现有玩家的文件位置），
+  并把 spec 交给 ConfigPersist；Cloth 的 `ConfigBuilder#setSavingRunnable`（保存链最后一步）调 `saveAll()`：
+  用 Accessor 取 `childConfig`（`LoadedConfig.save()` 走不通——`LoadedConfig` 与 `ModConfig#loadedConfig` 都是
+  **包私有**，26.1.2 第一版修复就是栽在这里被编译门拒）后用 `TomlWriter` 显式写回。
+- **我方比他们多一层保险**：`childConfig instanceof FileConfig`（旧架构；本仓 `PreLoadConfig` 正是这一路）⇒ 交回
+  `spec.save()`，行为与今天完全一致；只有新架构才由我们写。⇒ **不必先证明本线 FCAP 21.11.1 走哪条**，分岔在
+  运行时自己判，两种情况都不会写坏文件。这处理性也覆盖了"哪天 FCAP 把桥接上"的情形（自动退回他们的路径）。
+- **明确不覆盖**：SERVER 配置（`ServerConfig.init()` 里的 `SyncConfig` 一族，含 `/tacz config` 改的三条）——它的
+  落盘与"首次进世界拷贝到 `<world>/serverconfigs/`"归 FCAP；我们只钉了 client/common，去猜 SERVER 路径会写到
+  将被覆盖的副本上。因此我先加在 `ConfigCommand` 里的那句 `ConfigPersist.saveAll()` **撤掉了**：对本命令毫无作用，
+  留着就是假动作（代码注释里写明）。
+- 注释保留这件事不用担心：`SynchronizedConfig` 是带注释解析的，`TomlWriter` 会把注释一起写回去。
+- 证据级别：CI `success`（含 mixin 注册与 accessor 的 refmap 生成）。**未做实机重启验证**——判据很简单：面板里改
+  任意一项（例如 `ScopePipRerender`）→ 关游戏 → 再开，值应保持；同时 `config/tacz-client.toml` 的时间戳与内容应随之变化。
+  若重启仍回默认，则说明本线 FCAP 连 `childConfig` 都不在 spec 里（第三种形态），那时才需要去读 21.11.1 的字节码。
+- **回给他们的一句话**（已写进对外清单）：`ConfigPersist` 类注释里"1.21.11（FCAP v21.11.1）与 26.2 无此病"这句
+  对 1.21.11 不成立——本线同样中招、同样需要显式落盘；26.2 与 NeoForge 全族由维护者确认无此病。
+
 ## 实机"镜内外均 1X"：全量对照 26.1.2 的 42 个 commit，补回"放行光影窄遍"漏掉的两道同批守卫
 
 维护者报：开 `ScopePipRerender` + 开光影后，瞄准时**镜内和镜外都是 1X**，并要我"全量对照他的 commit"。
