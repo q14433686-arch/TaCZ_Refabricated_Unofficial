@@ -95,3 +95,41 @@
 - 字体页缓存 × 资源重载的清空入口（1.21.11 §2-2）：接线点要挑、只能实机验，隐患已写进 `ScopeTextSubmitter` javadoc。
 - 光影下 `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 的默认值三方不一致
   （26.2 与本线默认**开**、1.21.11 默认**关**）：需要一次带光影环境的 A/B 才能关账，本沙箱给不出数据。
+
+
+---
+
+## PIP 二次渲染中视野内高模枪（手上的不算）不烘焙（2026-09-02，迁移自 01a05db2 / 1.21.11 `237dc153`）
+
+用户回报：开着 `ScopePipRerender`（镜内二次渲染）时，视野里别人的/掉落的/展示台的高模
+mesh 枪**在镜内**呈现未烘焙的立方体；关掉二次渲染或退镜后立刻恢复高模。有无光影都复现。
+（用户用帧率变化反推「是否吃着烘焙」。）
+
+- **根因**：`PolyMeshGpuRenderer.shouldSubmitGpuWorld()` 里有一条旧的防御性闸门
+  `if (isInsideScopeLevelRender()) return false`（沿袭「提交每帧只发生一次」的假设）。
+  26.1.2 的事实与此相反 —— `LevelRenderer#renderLevel` **每调用一次就重新提交一遍世界几何**：
+  `extractLevel` 每帧只跑一次、产出的是「逐帧状态袋」（`LevelRenderState` 里的实体/方块实体/
+  粒子…），真正写进 `SubmitNodeStorage` 的提交发生在**每一遍** render 阶段（镜内那遍跑完才会
+  重跑 `extractLevel` 补状态 —— 见 `ScopePipRerender` 中段注释与 `0bf4c482`）。
+  于是镜内那遍的提交被拒收 ⇒ 只能回 collector + 顶点预算，超过 `MeshWorldMaxVertices` 的
+  高模枪被预算打成裸立方体；主画面那遍 `isInsideScopeLevelRender()` 已为 false，照常走 GPU
+  烘焙 —— 正好是「镜内未烘焙、镜外/退镜正常」。
+- **修法**（与 1.21.11 `237dc153` 同形，26.1.2 适配）：
+  1. `shouldSubmitGpuWorld()` 移除镜内那遍的拒收；`worldSubmitBlocker()` 相应去掉这条原因。
+  2. `renderAtWorldFlush()` 镜内那遍**画完也清表**（主遍会重新提交一份；若不清，主遍会把镜内
+     旧条目再叠画一遍）。`worldConsumedFrame` 仍只在主画面那遍记录，避免主遍被镜内那遍的
+     消费证明误挡（`worldConsumedFrame == frameId` 首消费守卫）。
+  3. 新增 log-once：`[TacZMeshLoader] GPU world mesh pass active inside the scope PIP re-render
+     pass; drawing N world entries submitted by this pass.`
+- 两边机制**不完全一样**（迁移时的唯一实质差异）：1.21.11 的 `renderLevel` 每次调用自带提取；
+  26.1.2 是「extractLevel 产状态袋 + 每一遍 render 阶段各自提交」。结论一致，理由不同 ——
+  本文件按 26.1.2 的事实重写了那两处注释。
+- 证据级别：**静态读码 + 1.21.11 的实机回报**；本线**未做实机验证**（沙箱无运行环境）。
+- **残留风险（未验，未一并改）**：若某帧镜内那遍的世界 flush 钩子没跑到（例如
+  `RenderSystem.outputColorTextureOverride != null` 这类早退），镜内那遍已登记的世界条目会
+  留到主画面那遍、与主遍自己的条目叠画（重影/半透明加倍）。1.21.11 那版同样没有这道保险。
+  若要补，做法是在 `renderScopeView` 入口记 `WORLD_DRAWS.size()` 标记、出口把新增部分截断
+  （只截本遍新增的，不能整表清 —— 免得误伤提取期就登记的条目）。等你实机确认需不需要。
+
+验收：开 `ScopePipRerender` 后镜内视野中远处高模枪仍是高模（不再是立方体），且日志出现上面
+那条 info；关掉二次渲染/退镜后行为不变；有无光影各测一次。

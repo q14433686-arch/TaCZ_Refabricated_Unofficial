@@ -48,6 +48,10 @@
 | M-9 | 镜内裁手：第一人称手臂在目镜孔径内 discard | 26.2 `94179d4b` → 26.1.2（深度孔径复刻） | **已落地待实机** | 直接复用本线火光裁剪管线 `flashTranslucentClipped`（`entityTranslucent` + `MASK_OUTSIDE`，`affectsCrumbling/sortOnUpload` 本就齐备、已登记 Iris `HAND_TRANSLUCENT`）；手臂 RenderType 由 `AvatarRenderer` 内部选定 ⇒ 用 `SubmitNodeCollector` 动态代理原地替换。详见 `docs/SCOPE_ARM_CLIP_26_1_2_2026_09_02.md`：两种 PIP 下合成会覆盖手臂（看不出差别），真缺口在经典整屏变焦路径。**追加（用户裁定）：低倍镜不裁** —— 闸门再加倍率下限
           （`ScopePipMinMagnification` 默认 4×），组合镜按当前档位；**枪身/配件一并豁免**（`clipForViewmodel` + mesh GPU 批次）：镜片本体在 AIM_CLIP_START
           后已移出可见 body，这一刀与手/火光同性质 = 给镜内画面让位，非挖透镜片 |
+| M-10 | PIP 二次渲染中视野内高模枪（手上的不算）不烘焙 | 1.21.11 线 `237dc153`（分支 `arena/01a05db2`）→ 26.1.2 | **已落地待实机** |
+  `shouldSubmitGpuWorld()` 移除 `isInsideScopeLevelRender()` 拒收 + `renderAtWorldFlush()` 镜内那遍画完也清表
+  （`worldConsumedFrame` 仍只记主遍）+ log-once。**机制与 1.21.11 不同**：那边是 `renderLevel` 每次调用自带提取，
+  这边是「`extractLevel` 产状态袋 + 每一遍 render 阶段各自提交」；结论同、理由不同，注释已按 26.1.2 重写 |
 
 ### 本线判定为不适用 / 观望的（不占 M 号，理由见 `SYNC_ROUNDUP_2612_20260902.md` §2.2-§2.3）
 
