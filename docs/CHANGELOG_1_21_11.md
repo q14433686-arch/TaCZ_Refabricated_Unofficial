@@ -5,6 +5,40 @@
 
 ---
 
+## 同一桩病的第二次补刀：面板里那个「默认包覆写」开关从来没被登记进落盘表
+
+上一则把 client/common 的落盘显式化之后，「重启回默认」仍然有出口没堵住。这次是逐行读
+`ConfigPersist` + `PreLoadConfig` + `OtherClothConfig` 的对账结果，不是猜：
+
+- **真断点（代码级，可直接复述）**：`PreLoadConfig` 把自己的 spec 注册成 `tacz-pre.toml`，
+  Cloth 面板 `OtherClothConfig` 的 `DefaultPackDebug` 开关 `setSaveConsumer(PreLoadConfig.override::set)`
+  改的正是**这份** spec 的值；而 `ConfigPersist.record()` 只被 `TaCZFabric` 用 CLIENT/COMMON 调过两次
+  ⇒ `tacz-pre.toml` 从不在落盘表里 ⇒ 该开关改完，内存生效、重启归零。**面板里有一个键从来就
+  不会被保存**，与光影/渲染无关。
+- 修法：新增 `ConfigPersist.recordNamed(spec, fileName)`，`PreLoadConfig` 注册时用它同时钉文件名与
+  登记落盘条目（文件名不变 ⇒ 现有玩家的文件位置不变）。`OverwriteCommand`（`/tacz overwrite`）
+  绕过面板的 `setSavingRunnable`，因此在 `override.set(...)` 后显式调一次 `saveAll()`。
+  ——上一则撤回的 `ConfigCommand.saveAll()` **不恢复**：那三个键属 SERVER，落盘归 FCAP 的
+  `<world>/serverconfigs/` 拷贝链，我们写 `config/` 只会留一份会被覆盖的副本；这条区别在于
+  `DefaultPackDebug` 是 COMMON/pre 的键，不写就没人写。
+- **静默放弃改成点名**：`save()` 原来在 `childConfig == null`（FCAP 尚未载入该 spec）时直接 return，
+  什么都不写、日志里也什么都不留 ⇒「ConfigPersist 没接上」与「FCAP 没载 spec」两种病长得一模一样。
+  现在发一条 WARN 并点名是哪个 label。实机只需要看这一行有没有出现，就能分辨是哪种。
+- **不再截断用户文件**：原实现 `newBufferedWriter(file)` + `TomlWriter` —— 打开即截断，这一刻 JVM
+  被杀/掉电就留下空 TOML，下次启动读回「什么都没有」= **全部配置回默认且不可恢复**。现在：
+  目标已存在则先用 `CommentedFileConfig` 读入、把内存值逐项 `set(path, value)` 覆盖后存盘，
+  只有文件不存在才新建；两条路径都经同目录临时文件 + `ATOMIC_MOVE`（平台不支持时退化为普通替换）。
+  顺带把注释保住的依据从「`SynchronizedConfig` 是带注释解析的」（**未验证**：那是对 FCAP 内部
+  解析器的断言）换成「以用户原文件为底本」⇒ 原文件的注释、键顺序、我们没登记过的条目一并保留。
+- **这条不是我方搬错**：26.1.2 同版本代码里同样存在（其 `PreLoadConfig` 第 40 行注册 `tacz-pre.toml`、
+  `OtherClothConfig` 第 16 行编辑 `override`、`ConfigPersist` 只 `save(client…)`/`save(common…)`、
+  第 98 行 `!spec.isLoaded()` 静默 return、第 108 行截断写）。⇒ 他们的修法形状是对的，覆盖面少一个
+  文件；已把这段作为订正写进对外清单。
+- 证据级别：CI `success`（编译门 + mixin/refmap 生成）。**未做实机验证**，两个待看项：
+  ① 面板开「默认包覆写」→ 重启 → 仍为开且 `config/tacz-pre.toml` 里 `DefaultPackDebug = true`；
+  ② 日志中不出现 `[TACZ] Could not persist the ... config` 的 WARN。若 WARN 出现，说明本线 FCAP 在
+  面板保存时仍未把该 spec 载入（第三种形态），那时才需要动注册时序，别急着改写法。
+
 ## 重启后配置回默认（一语成谶）：照 26.1.2 的 `ConfigPersist` 把 client/common 的落盘显式化，并撤回我此前"非项"的判定
 
 维护者把我先前给 26.2 的一句话原样扔回来："哪天你发现『重启后配置回默认』，第一嫌疑人就是这条"——**它在本线发生了**。
