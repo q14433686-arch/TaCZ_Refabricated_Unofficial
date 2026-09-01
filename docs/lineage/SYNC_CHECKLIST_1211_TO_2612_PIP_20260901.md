@@ -132,3 +132,27 @@ vanilla/custom `RenderPipeline` 替换为 `ExtendedShader`"那一行），所以
 这样不必先证明某个 FCAP 版本走哪条架构，也不会写坏文件。**建议你们把那行括号注记改成"逐版本实测"**：
 按版本号推断"谁没这病"，对三个分支里两个判错了方向。26.2 与 NeoForge 全族经维护者确认无此病。
 
+---
+
+## 再补一条（2026-09-01 晚）：你们那版 `ConfigPersist` 的覆盖面少一个文件，另有两个写法风险
+
+对着你们的终版逐行读（`5c45a787`）：`ConfigPersist.java` 第 93-94 行只 `save(clientSpec…)` / `save(commonSpec…)`；
+`PreLoadConfig.java` 第 40 行把**另一份** spec 注册成 `tacz-pre.toml`；`OtherClothConfig.java` 第 16 行
+`setSaveConsumer(PreLoadConfig.override::set)` —— 面板里那个「默认包覆写」开关改的值住在**没被登记的那份**
+spec 里 ⇒ 在你们线上它同样永远不会落盘（本线实测到并修掉了，形状相同）。修法一句话：把注册处返回的
+文件名与落盘登记做成同一个来源（我方 `ConfigPersist.recordNamed(spec, "tacz-pre.toml")`，注册即登记），
+避免以后有人加配置时漏更新表。
+
+另有两条与你们文档里的断言有关，属「别把它当已验证性质写死」：
+
+1. `ConfigPersist` 类注释第 41 行「注释保留（`SynchronizedConfig` …）」是对 FCAP 内部解析器的断言，你们和
+   我们都**没有**验证过注释是否真被带进 `childConfig`。改成「以用户原文件为底本，把内存值逐项覆盖后存盘」
+   （`CommentedFileConfig.load()` → 逐路径 `set` → `save()`）就不依赖该断言，顺带保住键顺序与我们没登记过的条目。
+2. 第 108 行 `Files.newBufferedWriter(file)` + `TomlWriter`：**打开即截断**。这一刻 JVM 被杀/掉电 ⇒ 空 TOML ⇒
+   下次启动读回「什么都没有」= 全部配置回默认且不可恢复。同目录临时文件 + `ATOMIC_MOVE` 就够，代价一次
+   rename。这条是「配置不持久化」里最难看的一种，因为它不可逆，且只在断电那一次露头、CI 永远看不见。
+3. 第 98 行 `|| !spec.isLoaded()` 的静默 return 建议改成发一条 WARN 点名 label：现在「我们的桥没接上」与
+   「FCAP 还没载 spec」在日志里长得一模一样，玩家报告无法分辨（我方实机排查就卡在这一步）。
+
+我方状态：以上三点已落地（CI `success`），实机两项待看 —— 面板开「默认包覆写」重启后仍为开且
+`config/tacz-pre.toml` 里 `DefaultPackDebug = true`；日志无 `[TACZ] Could not persist the ... config`。
