@@ -94,7 +94,7 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         // time ScopeDepthCopyState validates both depth copies and fails open to normal rendering.
         boolean clipToScopeExterior = context.displayContext() != null
                 && context.displayContext().firstPerson()
-                && ScopeRenderTypes.hasScheduledViewmodelAperture();
+                && ScopeRenderTypes.shouldClipViewmodel();
         RenderType backgroundType = clipToScopeExterior
                 ? ScopeRenderTypes.flashTranslucentClipped(muzzleFlash.getTexture())
                 : RenderTypes.entityTranslucent(muzzleFlash.getTexture());

@@ -848,12 +848,14 @@ public final class PolyMeshGpuRenderer {
 
         GpuTextureView lightmapView = resolveLightmap(mc);
         boolean lit = lightmapView != null;
-        // 【目镜裁剪】仅手部表（!worldPass）且本帧确有完整目镜掩码周期时，lit 批次换用
-        // 孔外剔除变体并绑定两份实时深度拷贝；其余（世界表/GUI/无镜/掩码失效）一律普通
-        // 管线 —— 失败语义 = 与今日完全相同的未裁剪外观，不会更糟。
+        // 【目镜裁剪】仅手部表（!worldPass）且本帧确有完整目镜掩码周期、且当前倍率
+        // 不低于低倍底线时，lit 批次换用孔外剔除变体并绑定两份实时深度拷贝；其余
+        // （世界表/GUI/无镜/掩码失效/低倍镜）一律普通管线 —— 失败语义 = 与今日完全
+        // 相同的未裁剪外观，不会更糟。
         boolean apertureClip = false;
         RenderPipeline pipeline;
-        if (lit && !worldPass && ScopeDepthCopyState.hasMaskCycleThisFrame()) {
+        if (lit && !worldPass && ScopeDepthCopyState.hasMaskCycleThisFrame()
+                && ScopePipRenderState.shouldClipViewmodelForeground()) {
             pipeline = LIT_PIPELINE_CLIP;
             apertureClip = true;
         } else {

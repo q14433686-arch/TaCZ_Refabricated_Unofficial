@@ -5,6 +5,34 @@
 
 ---
 
+## 低倍镜（含组合镜低倍档）不裁手/火光/枪身：镜内孔外剔除统一加低倍门禁（2026-09-02）
+
+上一条「镜内裁手」落地后，用户指出：**锈蚀/低倍镜（2×/3×，含组合镜当前低倍档）本来走
+经典整屏变焦，不该再对镜内做前景剔除**；火光同理，枪身若继续被裁会与手/火光自相矛盾。
+
+- 阈值：复用 `ScopePipMinMagnification`（默认 4×）。
+  `ScopePipRenderState.shouldClipViewmodelForeground()` 返回
+  `currentZoom() >= minMagnification()`；组合镜按 `IGun#getAimingZoom` 读到的**当前档位**
+  判定，切到低倍档自动回不裁剪。
+- 统一门禁：`ScopeRenderTypes.shouldClipViewmodel()` =
+  `apertureScheduledForViewmodel && ScopePipRenderState.shouldClipViewmodelForeground()`。
+  替换原来只认「本帧是否排过目镜孔径」的
+  `hasScheduledViewmodelAperture()` 在**前景裁剪消费点**的判断：
+  - `clipForViewmodel`（枪身/配件）；
+  - `MuzzleFlashRender`（火光两层的裁剪选择）；
+  - `RenderHelper.wrapForScopeClip`（手臂/袖层代理）。
+- mesh GPU 同批对齐：`PolyMeshGpuRenderer` 的 `LIT_PIPELINE_CLIP` 选择条件追加
+  `shouldClipViewmodelForeground()`，避免立方体枪身不裁而高模枪身裁的低倍不一致。
+- 说明：本线**没有**枪口枪烟这类几何层（搜到的 smoke 全是烟雾弹/粒子），用户那句
+  「没有就当我瞎说的」按无此物处理；若后续有 muzzle smoke 层，套同样的
+  `shouldClipViewmodel()` 门即可。
+- 证据级别：CI 编译门待跑（沙箱无 JDK，本地不可编译）；**未做实机验证**。验收点：
+  ~低倍镜举镜后手/火光/枪身在目镜内外都完整显示、不出现孔内整块消失；
+  ~组合镜切高倍档恢复孔外剔除、切回低倍档恢复完整显示；
+  ~4× 及以上（含 ≥ `ScopePipMinMagnification` 的高倍）行为与上一轮一致。
+
+---
+
 ## 镜内裁手：第一人称手臂/袖层补上 26.2 的 `armClipped` 等价物（2026-09-02）
 
 此前诊断确认：1.21.11 深度孔径管线能裁枪身（`clipForViewmodel`）与枪口火光

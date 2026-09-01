@@ -273,6 +273,18 @@ public final class ScopePipRenderState {
                 : RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION.get().floatValue();
     }
 
+    /**
+     * 低倍镜（含组合镜当前低倍档）是否<b>保留</b>镜内前景不裁剪。
+     *
+     * <p>与 PIP 的 {@code minMagnification()} 共用同一阈值：低于它（默认 4×）时瞄具走
+     * 经典整屏变焦，镜内孔径对枪身/火光/手臂的「孔外剔除」同样应当关闭 —— 否则低倍镜会
+     * 出现「整屏只有镜片中心一小块、而手/火光却在孔内整块消失」的违和观感。组合镜按
+     * {@code IGun#getAimingZoom} 读到的<b>当前档位</b>判定，切到低倍档自动回不裁剪。</p>
+     */
+    public static boolean shouldClipViewmodelForeground() {
+        return currentZoom() >= minMagnification();
+    }
+
     /** 开镜时世界要多放大多少倍的下限（满开镜目标）。 */
     private static float worldZoomShare() {
         return RenderConfig.SCOPE_PIP_WORLD_ZOOM_SHARE == null

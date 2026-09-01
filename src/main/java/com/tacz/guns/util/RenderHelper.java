@@ -90,7 +90,7 @@ public final class RenderHelper {
      * 不会误伤同一次提交里的其它 RenderType。</p>
      */
     private static SubmitNodeCollector wrapForScopeClip(SubmitNodeCollector real, Identifier skinTexture) {
-        if (!ScopeRenderTypes.hasScheduledViewmodelAperture()) {
+        if (!ScopeRenderTypes.shouldClipViewmodel()) {
             return real;
         }
         final RenderType vanillaArm = RenderTypes.entityTranslucent(skinTexture);

@@ -175,6 +175,21 @@ public final class ScopeRenderTypes {
     }
 
     /**
+     * @return whether the current viewmodel foreground layers (gun body, attachments, muzzle
+     *         flash, first-person arm) should be clipped out of the ocular aperture this frame.
+     *
+     * <p>This is the aperture gate used by {@link #clipForViewmodel}, the flash types and the
+     * arm-collector proxy. Besides the raw "an ocular was queued" flag it also consults
+     * {@link ScopePipRenderState#shouldClipViewmodelForeground()}: low-magnification / rusty
+     * scopes (and a combination scope while it is on its low-power stage) keep the classic
+     * whole-screen zoom and must <b>not</b> erase the hand, muzzle flash or gun body inside the
+     * small lens.</p>
+     */
+    public static boolean shouldClipViewmodel() {
+        return apertureScheduledForViewmodel && ScopePipRenderState.shouldClipViewmodelForeground();
+    }
+
+    /**
      * Wraps the plain scope-body type so its draw boundary first copies the aperture depth
      * (world depth plus only the ocular differences) into the mask texture, then draws the body.
      */
@@ -275,7 +290,7 @@ public final class ScopeRenderTypes {
      * All other contexts and failed aperture cycles retain the caller's original behavior.
      */
     public static RenderType clipForViewmodel(RenderType original, Identifier texture, boolean applies) {
-        if (!applies || !apertureScheduledForViewmodel) {
+        if (!applies || !shouldClipViewmodel()) {
             return original;
         }
         // Gun displays may opt into entityTranslucent; retain that blend/sort recipe rather than
