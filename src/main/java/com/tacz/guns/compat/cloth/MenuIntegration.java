@@ -32,6 +32,10 @@ public class MenuIntegration {
     }
 
     public static Screen getConfigScreen(@Nullable Screen parent) {
-        return MenuIntegration.getConfigBuilder().setParentScreen(parent).build();
+        // setSavingRunnable 是 Cloth 保存链的最后一步（所有 setSaveConsumer 都跑完之后）：
+        // FCAP 下那些 consumer 只写内存，必须在这里显式落盘，否则关上面板就等于没保存。
+        return MenuIntegration.getConfigBuilder().setParentScreen(parent)
+                .setSavingRunnable(com.tacz.guns.config.ConfigPersist::saveAll)
+                .build();
     }
 }

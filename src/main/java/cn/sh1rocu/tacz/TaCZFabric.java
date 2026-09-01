@@ -4,9 +4,11 @@ import cn.sh1rocu.tacz.api.event.*;
 import cn.sh1rocu.tacz.util.forge.EnumArgument;
 import cn.sh1rocu.tacz.util.forge.PartialNBTIngredient;
 import cn.sh1rocu.tacz.util.forge.StrictNBTIngredient;
+import net.minecraftforge.common.ForgeConfigSpec;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.event.server.AmmoHitBlockEvent;
+import com.tacz.guns.config.ConfigPersist;
 import com.tacz.guns.config.ClientConfig;
 import com.tacz.guns.config.CommonConfig;
 import com.tacz.guns.config.PreLoadConfig;
@@ -61,9 +63,17 @@ public class TaCZFabric implements ModInitializer {
         // 确保配置文件加载，这个阶段将比标准的forge配置文件加载早
         PreLoadConfig.init();
 
-        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.COMMON, CommonConfig.init());
+        // spec 引用交给 ConfigPersist：FCAP 新架构下 ConfigValue.set 只改内存、ForgeConfigSpec.save()
+        // 是静默 no-op（"重启后配置回默认"的根因，见该类 javadoc），所以保存流程最后一步由
+        // ConfigPersist.saveAll() 显式写回 TOML。文件名用 Forge 惯例 <modid>-<type>.toml 显式钉死
+        // ——与 FCAP 默认命名一致，因此不会改变现有玩家的文件位置。
+        ForgeConfigSpec commonSpec = CommonConfig.init();
+        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.COMMON, commonSpec,
+                ConfigPersist.record(ModConfig.Type.COMMON, commonSpec));
         ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.SERVER, ServerConfig.init());
-        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.CLIENT, ClientConfig.init());
+        ForgeConfigSpec clientSpec = ClientConfig.init();
+        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.CLIENT, clientSpec,
+                ConfigPersist.record(ModConfig.Type.CLIENT, clientSpec));
 
         GunMod.setup();
 

@@ -5,6 +5,7 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.tacz.guns.config.ConfigPersist;
 import com.tacz.guns.config.sync.SyncConfig;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -34,6 +35,9 @@ public class ConfigCommand {
             case serverShootNetworkCheck -> SyncConfig.SERVER_SHOOT_NETWORK_V.set(state);
             case serverShootCooldownCheck -> SyncConfig.SERVER_SHOOT_COOLDOWN_V.set(state);
         }
+        // 命令改的同样是内存里的 spec 值：不显式落盘就"本会话有效、下次启动回默认"。
+        // Cloth 面板靠 setSavingRunnable 收尾，这条路径必须自己补一次。
+        ConfigPersist.saveAll();
         context.getSource().sendSystemMessage(Component.translatable(key.lang + "." + (state ? "enabled" : "disabled")));
 
         return Command.SINGLE_SUCCESS;
