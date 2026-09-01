@@ -30,6 +30,12 @@
   只有文件不存在才新建；两条路径都经同目录临时文件 + `ATOMIC_MOVE`（平台不支持时退化为普通替换）。
   顺带把注释保住的依据从「`SynchronizedConfig` 是带注释解析的」（**未验证**：那是对 FCAP 内部
   解析器的断言）换成「以用户原文件为底本」⇒ 原文件的注释、键顺序、我们没登记过的条目一并保留。
+- **覆盖面这次是穷尽的，不是"看起来够"**：Cloth 面板共 10 个 `setSaveConsumer` 来源类
+  （`RenderConfig` 29 处、`MeshyConfig` 18、`AmmoConfig` 9、`GunConfig` 5、`SoundConfig` 4、`KeyConfig` 3、
+  `ZoomConfig` 2、`OtherConfig` 2、`ResourceConfig` 1、`PreLoadConfig` 1）。按 `init()` 的归属：
+  CLIENT 收 Key/Meshy/Render/Resource/Sound/Zoom，COMMON 收 Ammo/Gun/Other，pre 收 PreLoad ⇒
+  10 个类全部落在被登记的 3 份 spec 内。全仓 `ConfigRegistry.INSTANCE.register` 只有 4 处，第 4 处是
+  SERVER，其 `init()` 里只有 `SyncConfig`，面板不碰它 ⇒ 除 SERVER（刻意）外已无第四个出口。
 - **这条不是我方搬错**：26.1.2 同版本代码里同样存在（其 `PreLoadConfig` 第 40 行注册 `tacz-pre.toml`、
   `OtherClothConfig` 第 16 行编辑 `override`、`ConfigPersist` 只 `save(client…)`/`save(common…)`、
   第 98 行 `!spec.isLoaded()` 静默 return、第 108 行截断写）。⇒ 他们的修法形状是对的，覆盖面少一个
