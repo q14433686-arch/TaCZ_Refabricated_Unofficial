@@ -16,6 +16,14 @@ public class MenuIntegration {
         ConfigBuilder root = ConfigBuilder.create().setTitle(Component.literal("Timeless and Classics Guns"));
         root.setGlobalized(true);
         root.setGlobalizedExpanded(false);
+        // 【FCAP 26.x 保存断桥】各 entry 的 saveConsumer 只写内存（ConfigValue.set
+        // 不落盘、ForgeConfigSpec.save() 在新架构下恒 no-op），必须在保存流程的
+        // 最后一步显式写回 TOML —— 否则每次重启配置回到旧文件值（26.1.2 线先发病，
+        // 26.2 线同病；本线 L-21/L-22 已修，但 ModMenu 那条路径此前没接）。详见 ConfigPersist。
+        // 必须放在 getConfigBuilder() 里（而不是 getConfigScreen()），否则 ModMenu
+        // 直接走 getConfigBuilder().build() 会绕过这条保存链 —— "重启后配置回默认"的
+        // 最后一个可见出口。
+        root.setSavingRunnable(com.tacz.guns.config.ConfigPersist::saveAll);
         ConfigEntryBuilder entryBuilder = root.entryBuilder();
 
         KeyClothConfig.init(root, entryBuilder);
@@ -32,10 +40,6 @@ public class MenuIntegration {
     }
 
     public static Screen getConfigScreen(@Nullable Screen parent) {
-        // setSavingRunnable 是 Cloth 保存链的最后一步（所有 setSaveConsumer 都跑完之后）：
-        // FCAP 下那些 consumer 只写内存，必须在这里显式落盘，否则关上面板就等于没保存。
-        return MenuIntegration.getConfigBuilder().setParentScreen(parent)
-                .setSavingRunnable(com.tacz.guns.config.ConfigPersist::saveAll)
-                .build();
+        return MenuIntegration.getConfigBuilder().setParentScreen(parent).build();
     }
 }

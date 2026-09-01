@@ -5,6 +5,28 @@
 
 ---
 
+## 「重启后配置回默认」的最后一个出口：ModMenu 入口此前没接 `setSavingRunnable`（2026-09-01 与 26.2 对照时发现）
+
+上一则（L-21/L-22）把 client/common & pre 三份 spec 显式落盘后，「重启回默认」理论上已闭合，
+但对照 26.2 的 `MenuIntegration` 时发现本线有个**真出口**：26.2 把
+`root.setSavingRunnable(ConfigPersist::saveAll)` 放在 **`getConfigBuilder()` 里**，
+本线却只放在 `getConfigScreen()` 里。于是：
+
+- `ConfigKey`（游戏内按键开配置）走 `getConfigScreen()` ⇒ 接上了保存链；
+- **ModMenu**（`ModMenuApiImpl.getModConfigScreenFactory`）走
+  `MenuIntegration.getConfigBuilder().setParentScreen(parent).build()` ⇒
+  **没有 `setSavingRunnable`** ⇒ 在 ModMenu 里改配置保存 = 只改内存、不写盘，重启即回默认。
+
+这正是「重启后配置回默认」在 ModMenu 用户身上的形态，也是用户这次点名的问题。
+修法对齐 26.2：把 `setSavingRunnable` 移到 `getConfigBuilder()`，`getConfigScreen()` 只做
+`setParentScreen`。这样两个入口共用同一份 builder，保存链对所有入口生效。
+
+- 证据级别：CI 编译门待跑；**未做实机验证**。验收点：ModMenu → TaCZ 配置 → 改任意一项保存
+  → 重启 → 值保持，且 `config/tacz-client.toml` / `tacz-common.toml` / `tacz-pre.toml`
+  时间戳与内容随之变化。无 ModMenu 时用游戏内按键路径复查不受影响。
+
+---
+
 ## 与 26.2 R3 末轮同步：跨包 `tacz:nbt` 材料 + 开镜 mesh 距离闸门按角尺寸补偿（2026-09-01）
 
 维护者说 26.2 线已几近完成，要求对照两线进度并同步。逐条对照 26.2 工作线
