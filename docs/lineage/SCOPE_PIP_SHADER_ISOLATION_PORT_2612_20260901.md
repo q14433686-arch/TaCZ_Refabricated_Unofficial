@@ -8,7 +8,7 @@
 
 镜内那一遍**借 Iris 自己的按维度缓存管线**拿到一套独立管线（独立 colortex/程序/整族 previous uniform），
 从而把"每份上一帧状态被推进两次"这个病根切断；阴影贴图再给它单独配小份。**首批已落地并过编译门**，
-Sodium 通道**必须一起搬**（Fabric 上 Iris 硬依赖 Sodium，没它就没光影）；只有 Voxy 那条留到下一批（§3）。
+Sodium 通道**必须一起搬**（Fabric 上 Iris 硬依赖 Sodium，没它就没光影）；Voxy 那整套（第二渲染栈 + 三个 mixin + `allChanged` 两道闸）**也已同批搬入**（§2/§3）。
 
 ## 1. 他们的形状（读补丁所得，非读文档所得）
 
@@ -46,8 +46,20 @@ Sodium 通道**必须一起搬**（Fabric 上 Iris 硬依赖 Sodium，没它就�
 > **本文件前一版在这里犯过一个必须留下来的错**：它把「装了 Sodium 就硬拒」写成"保守替代"。Fabric 上
 > **Iris 硬依赖 Sodium** ⇒ 该条件恒真，等于「有光影就不放行」，整条隔离永远不会进；当时给的实机清单还写着
 > 「装 Iris、不装 Sodium」——做不到的操作。教训：**拿"可选 mod"当安全闸之前，先确认它在目标加载器上
+
+### 2b. Voxy 落地时撞到的编译门（记下来，这是本线独有的坑）
+
+他们的三个 Voxy mixin 在我方直接编不过：`error: Mixin target me.cortex.voxy.client.core.VoxyRenderSystem
+could not be found`。根因**不是**代码形状——26.1.2 那条线把 `loom.mixin.useLegacyMixinAp` 整块注释掉了
+（26.x 不混淆、不需要 refmap ⇒ AP 根本不校验目标类），而我方 1.21.11 是混淆的，AP 必须留着生成
+`tacz.refmap.json`。**别去照搬他们"加个 Voxy cursemaven 依赖"或"排除整个包"的写法**：
+正解是给可选-mod 的 mixin 打 `@Pseudo`（Sponge 的正规标记："目标类可能不存在"）——AP 不再报错、
+没装 Voxy 时运行时也不炸，装没装由 `VoxyCompatMixinPlugin` 决定。我方 2026-08-13 那次把 Iris 从
+"排除包"改成 `modCompileOnly` 是同一个坑的另一半（Iris 的 mixin 还要读它的类，所以值得给依赖；
+Voxy 不需要，纯反射 + `@Pseudo` 就够）。
+
 > 究竟可选不可选**（Voxy 是真·可选，Sodium 不是）。
-| Voxy 第二渲染栈 | 本线无 `compat/voxy`，且他们自己的注释就写着"缺它时 Voxy 的镜内行为未定义"；建栈时机错误会**整局崩** | 先补 `compat/voxy` 反射层（`renderSystem()`、`isAvailable()`、`ensureBuilt()` 必须落在预热的 `buildingScopePipeline` 窗口内），再补 `swapIn` 与三道 ESC 闸，最后才放开 Voxy 侧拒绝 |
+| ~~Voxy 第二渲染栈~~ | **已同批搬入**：`compat/voxy/VoxyCompat`（取 `VoxyRenderSystem` 实例）+ `compat/voxy/VoxyScopePipelineCompat`（475 行深反射：第二套栈在预热的构造窗口里 `ensureBuilt`、`swapIn`/`swapOut` 逐遍换栈、`isMainStackBoundTo` 熔断、`onRendererRebuilt` 归还）+ `mixin/client/voxy/` 三件 + `tacz.voxy.mixins.json`（`required=false` + 插件按 Voxy 在场把关，已注册进 `fabric.mod.json`） |
 | `ScopePipRerenderInterval`（N 帧复用） | 我方无此键；纯性能杠杆，与隔离无关 | 独立小批，别混进隔离 |
 
 ## 3b. 与自家 08-30 方案的顺序冲突（写在这里，免得下一个搬运者以为漏了）
@@ -74,7 +86,13 @@ Sodium 通道**必须一起搬**（Fabric 上 Iris 硬依赖 Sodium，没它就�
 TOML：`ScopePipEnable=true`、`ScopePipRerender=true`、`ScopePipAllowShaderPacks=true`、`ScopePipIsolatePipeline=true`。
 **Sodium 必须在场**（Iris 的前置，不是可选项）；**Voxy 必须不在场**（本线还没搬它的第二渲染栈，装了会被 `shaderIsolateSafe()` 挡掉）。
 
-1. **只看日志**（Iris + Sodium 在、Voxy 不在，任意含 TAA/体积云的包）：应依次看到 `Iris pipeline-manager handles resolved`、`Scope pass is using its own Iris pipeline (tacz:scope_pip)`、`Pre-built the scope pass' Iris pipeline now`、`Sodium terrain projection is being synced for the scope pass`、`Sodium chunk uniforms will be re-uploaded for the main pass …`；阴影生效还要有 `Scope pass gets a NNNNxNNNN shadow map instead of …`。
+1. **只看日志**（Iris + Sodium，任意含 TAA/体积云的包；Voxy 另测一条，见 1b）：应依次看到 `Iris pipeline-manager handles resolved`、`Scope pass is using its own Iris pipeline (tacz:scope_pip)`、`Pre-built the scope pass' Iris pipeline now`、`Sodium terrain projection is being synced for the scope pass`、`Sodium chunk uniforms will be re-uploaded for the main pass …`；阴影生效还要有 `Scope pass gets a NNNNxNNNN shadow map instead of …`。
+
+1b. **装了 Voxy 的那条路**：`isAvailable()` 为真且预热后能看到 `Voxy will render the scope pass into its own
+   viewport`（独立视口）；隔离态若第二套栈没建成，应看到 `Voxy is sitting out the scope pass…`（镜内没 LOD、
+   主画面正确，属预期降级）。**注意**：那 475 行深反射的类名/方法签名来自 Voxy 0.2.19 的布局，本 MC 线上
+   可用的 Voxy 构建若改过结构，`isAvailable()` 会安静返回 false（降级为"镜内没 LOD"，不会崩）——这条**沙箱无
+   Voxy jar，无法核**，只能实机判定。
    resolved`、`Scope pass is using its own Iris pipeline (tacz:scope_pip)`、`Pre-built the scope pass' Iris
    pipeline now`；阴影想生效还要有 `Scope pass gets a NNNNxNNNN shadow map instead of …`。
    缺哪条就说明对应件没命中，按 §4-1 处理。
@@ -88,4 +106,4 @@ TOML：`ScopePipEnable=true`、`ScopePipRerender=true`、`ScopePipAllowShaderPac
 
 ①等 §5 的 1/2 两条实机结论回来（决定 §4-2 那条取色前提要不要改）→ ②`ScopePipReleaseIdlePipeline` 的默认值裁定
 （要不要用"开镜帧率衰减"换首镜卡顿）→ ③Cloth 配置面板条目 + lang 键（现在这四条只认 TOML）→
-④Stage 2（**只剩 Voxy** 第二渲染栈 + 三道 ESC 闸，见 §3）→ ⑤`ScopePipRerenderInterval`。
+④实机回灌：Voxy 侧类名布局是否仍对得上（见 1b）+ B5 要不要补（见 §3b）→ ⑤`ScopePipRerenderInterval`。

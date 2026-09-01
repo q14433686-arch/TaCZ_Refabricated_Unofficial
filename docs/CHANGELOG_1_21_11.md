@@ -5,6 +5,41 @@
 
 ---
 
+## Voxy 大件同批搬入（第二渲染栈 + 独立视口 + 只拦绘制 + 节点 tick 每帧一次）：并把"可选 mod 的 mixin"改成 @Pseudo
+
+维护者：「我说 VOXY 也搬过来」。⇒ `compat/voxy/{VoxyCompat,VoxyScopePipelineCompat}`（475 行，纯反射）+
+`mixin/client/voxy/{VoxyScopeViewportMixin,VoxyRenderSystemMixin,VoxyNodeTickMixin,VoxyCompatMixinPlugin}` +
+`tacz.voxy.mixins.json`（`required=false`，注册进 `fabric.mod.json`）+ `LevelRendererAllChangedScopePassMixin`
+（注册进 `tacz.mixins.json`）整套落地；`shaderIsolateSafe()` 里"装了 Voxy 就硬拒"随之删除。
+
+- **Voxy 的三件各治一件事**：①镜内那遍要**自己的视口**（借 Voxy 自己的 `ViewportSelector.getOrCreate` 多视口机制，
+  与 Iris 阴影通道同一个先例）——共用视口会把主画面的 `frameId`/遮挡遍历写坏且不自愈（"第一次开镜后远景永久拉丝/
+  错块"的成因）；②隔离态下**只拦绘制**（`renderOpaque` cancel），**绝不把视口变 null**——`VoxyUniforms.getProjection()`
+  不判空，抽掉输入会让 Iris 在 `beginLevelRendering` 里 NPE、连带把 rerender 永久停用；教训写在类注释里：
+  **拦一个 mod 的功能要拦输出，不是抽它的状态对象**；③节点流式/淘汰的两个 `tick` 每帧只跑一次（`doTraversal` 照跑），
+  否则 `visibilityId` 推进两次 = 主画面可见节点被镜内那遍提前淘汰 → 镜内闪烁 + 超视距空洞。
+- **`allChanged` 两道闸**：预热的构造窗口内**取消**全量重载（Iris 首次渲染一套管线会请求一次 full reload，放行 =
+  Voxy 把自己永久绑到瞄具管线上，之后空闲释放销毁该管线，主 Voxy 栈就攥着已销毁的 RenderTargets ——
+  实机崩溃 `IllegalStateException: Tried to use destroyed RenderTargets` 的完整链条）；货真价实的重载（改区块视距/
+  F3+A/换资源包）则回调 `onLevelRendererReload()` 归还第二套栈并打破预热的稳态快速路径。释放前还有一道
+  `isMainStackBoundTo(scope)` 熔断：主栈还绑着就不销毁，宁可本次释放不执行。
+- **换栈时序**：`swapIn` 只在窄遍内、**绝不在这里建栈**（建必须发生在预热的构造窗口里，那时瞄具管线才是"当前管线"；
+  在那里建过一次 = 整局崩）；`finally` 里**先 `swapOut` 再清 `scopePassIsolated`**，中间不留交叉窗口。
+  切不过去就由 `shouldSuppressVoxyDraw()` 让 Voxy 坐过这一遍：镜内没 LOD、主画面永远正确。
+- **本线独有的编译门坑（下次遇到可选-mod mixin 直接照此办）**：三个 voxy mixin 报
+  `Mixin target me.cortex.voxy.* could not be found`。26.1.2 那条线是把 `loom.mixin.useLegacyMixinAp` **整块关掉**的
+  （不混淆、不需要 refmap ⇒ AP 不校验目标类），我方 1.21.11 混淆、`tacz.refmap.json` 必须生成 ⇒ AP 不能关。
+  正解是 **`@Pseudo`**（Sponge 标记"目标类可能不存在"），既不用为 1.21.11 猜一个 Voxy cursemaven 版本，
+  也不用排除整个包；运行时装没装由 `VoxyCompatMixinPlugin` 把关。另把 `tacz.voxy.mixins.json` 的
+  `compatibilityLevel` 从 JAVA_17 对齐成 JAVA_21。Voxy 的 mod id 认 `voxy` **和** `voxelism`（同一项目改过名，
+  认漏 = 整条兼容层静默不生效）。
+- **不可验证的部分照实说**：那 475 行深反射的类名/签名取自 Voxy 0.2.19 布局，**本 MC 线上是否有对应结构沙箱无法核**
+  （无 Voxy jar、`modCompileOnly` 也没加）；对不上时的行为是 `isAvailable()` 返回 false ⇒ 降级"镜内没 LOD"，
+  不崩。CI=`success`（`@Pseudo` 那发）；**实机全未验**。未改 `gradle.properties` 版本号。
+
+---
+
+
 ## 光影下二次渲染的时域隔离大件（`ScopePipIsolatePipeline`）：本线**首次**接线，Sodium 通道同批搬入、Voxy 留待下批
 
 维护者裁定「光影下二次渲染隔离大件我认为可以有」⇒ 上一批"整组不移植"的结论作废，改按
@@ -31,7 +66,7 @@ Iris 便为它单建一套 RenderTargets/程序/整族 previous uniform ⇒ 切�
   地形投影私有快照 + 出窗还原，再 `prepareFrame()` 重开它「每帧只上传一次区块 uniform」那道闸 ——
   前者管「镜内地形跟不跟着放大」，后者管「主画面会不会沿用镜内那遍的 uniform」（= 「镜内画面溢出到全屏」
   的真正病因）。两条都带一次性日志回执，命中与否看日志即可判定。
-- **仍不跟的一处**：Voxy 第二渲染栈（他们 `compat/voxy/VoxyScopePipelineCompat` 475 行深反射 + 三道 ESC 闸）。
+- **（此条已被上一则取代）** 当时留下的"Voxy 第二渲染栈不搬"，维护者随后裁定要搬：见本文件最上方那则，整套已在同批落地。
   这次是真的可选 mod：缺它时 Voxy 的镜内行为未定义、且建栈时机错会整局崩（`Pipeline data already bound` 被
   Voxy 捕获后顺手 `disableIrisShaders()`）⇒ 本线在 `shaderIsolateSafe()` 里对 `voxelism` 保留硬拒，
   解锁条件写在方案篇 §3。另**不**照搬 `LevelRendererAllChangedScopePassMixin`：那是为 `voxyStackSettled`
