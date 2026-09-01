@@ -47,6 +47,25 @@ NV 卡未实测，征测点见 Release 说明）：
   `Language.getInstance().getOrDefault` 纯查表，等价上游 1.20.1 语义。
 - **检视动画修复**：开镜时触发检视不再不可打断（`stopAnimation` 漏掉
   transition 中的 runner + 同触发器后继动画被误停，两案连修）。
+- **跨包合成修复（`tacz:nbt` 材料类型补齐）**：上游 1.21.1+ 把
+  `forge:nbt`/`forge:partial_nbt` 合并成新的 `tacz:nbt`（带 `partial` 布尔），
+  社区枪包升级工具 TaCZPackUpgrader 批量把旧包配方转成该形态（且 `items`
+  写单字符串非数组）——本仓移植自 1.20.1 线从不认识它，Fabric 的材料
+  CODEC 分发失败，整条材料作废：表现为「附属包要默认包的枪就显示不出
+  也合不了，要自己包的枪就正常」（新旧两代配方文件混在同一包里，坏的
+  是被升级过的那批，与命名空间无关）。新增 `TaczNbtIngredient`
+  （partial=true 子集匹配 / false 严格全等）+ JSON 归一化（items 字符串
+  →数组、`fabric:type` 判别键）；另修 no-type `{item+nbt}` 旧写法的 nbt
+  被静默丢弃问题。NeoForge 家族继承上游新代码故无此病。
+- **开镜距离补偿（mesh 闸门）**：`MeshMaxRenderDistance`/
+  `MeshWorldFullDetailDistance` 原按裸眼距离判定，开镜放大 Z 倍后镜内
+  掉落物/第三人称 mesh 枪几乎必然退化为立方体；现阈值乘以当前开镜
+  放大系数（随开镜进度渐变），角尺寸语义一致，整屏变焦与 PIP 皆适用。
+- **配置持久化修复（FCAP 26.x 保存断桥）**：Cloth 界面保存只改内存、
+  从不写回 TOML（`ConfigValue.set` 不落盘 + `ForgeConfigSpec.save()` 在
+  新架构下恒 no-op），重启即「配置重置」；现于保存流程末尾显式调 FCAP
+  自己的 `LoadedConfig.save()`。实机 PASS。旧文件里钉着的旧值需改一次
+  并保存才刷新。
 - **PIP 修复与新配置**：倍率下限闸门 `ScopePipMinMagnification`（默认 4.0）、
   `ScopePipRerenderInterval`、`ScopePipShadowScale` 热应用、镜内那遍跳过
   poly 顶点提交；新配置均接入游戏内 Cloth Config 界面（中英文条目齐备）。

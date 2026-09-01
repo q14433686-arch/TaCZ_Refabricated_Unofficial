@@ -855,6 +855,31 @@ public final class ScopePipRenderer {
         return worldZoomAtProgress(currentAimingProgress());
     }
 
+    /**
+     * 供 meshloader 的距离闸门用：当前画面把远处放大了多少倍（裸眼 = 1）。
+     *
+     * <h3>为什么距离闸门需要它（2026-09-02 实机回报）</h3>
+     * poly 层的提交发生在 extract 阶段、每帧一次，{@code MeshMaxRenderDistance}
+     * 与 {@code MeshWorldFullDetailDistance} 都按<b>主相机裸眼距离</b>判定；而
+     * 镜内那一遍复用同一批提交节点（SimpleFeatureRenderPhaseMixin 的「节点留给
+     * 主画面」机制反向同理），不会重新过闸门。于是 4x 镜下 48 格的 poly 上限
+     * 观感只有 12 格、16 格全模豁免观感只有 4 格 —— 玩家举镜看到的掉落物/
+     * 第三人称 mesh 枪几乎必然是「未烘焙」的立方体。
+     *
+     * <p>开镜时把闸门距离乘上这个系数即可：物体在镜内的<b>角尺寸</b>正是放大了
+     * 这么多倍，「多远该有细节」本就该按角尺寸算。取值随开镜进度渐变
+     * （与整屏变焦/PIP 的 {@code 1+(zoom-1)·progress} 同式），收镜自动回 1，
+     * 经典整屏变焦与 PIP 两种模式同样适用（两者都放大了世界观感）。</p>
+     */
+    public static float currentDetailZoom() {
+        float progress = currentAimingProgress();
+        if (progress <= 0.0f) {
+            return 1.0f;
+        }
+        float magnification = Math.max(1.0f, scopeMagnification());
+        return 1.0f + (magnification - 1.0f) * progress;
+    }
+
     private static float currentAimingProgress() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;

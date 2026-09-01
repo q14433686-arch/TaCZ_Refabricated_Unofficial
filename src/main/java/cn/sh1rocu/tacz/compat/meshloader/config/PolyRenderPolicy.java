@@ -50,6 +50,7 @@ public final class PolyRenderPolicy {
         if (distance <= 0 || poseStack == null) {
             return false;
         }
+        distance *= detailZoom();
         Matrix4f matrix = poseStack.last().pose();
         double dx = matrix.m30();
         double dy = matrix.m31();
@@ -62,10 +63,35 @@ public final class PolyRenderPolicy {
         if (distance <= 0 || poseStack == null) {
             return true;
         }
+        distance *= detailZoom();
         Matrix4f matrix = poseStack.last().pose();
         double dx = matrix.m30();
         double dy = matrix.m31();
         double dz = matrix.m32();
         return dx * dx + dy * dy + dz * dz < distance * distance;
+    }
+
+    /**
+     * 【开镜距离补偿 —— 2026-09-02 实机回报】两道距离闸门都按<b>裸眼</b>距离
+     * 调参，但开镜把远处物体的角尺寸放大了 Z 倍：4x 镜下 48 格的 poly 上限
+     * 观感只剩 12 格、16 格全模豁免观感只剩 4 格 —— 举镜看到的掉落物/第三人称
+     * mesh 枪几乎必然是立方体（「镜内还是未烘焙」的实机回报）。
+     *
+     * <p>「多远该有细节」本质是<b>角尺寸</b>判定：把阈值乘上当前放大倍数即恢复
+     * 语义一致。渐变随开镜进度走、收镜自动回 1；经典整屏变焦与 PIP 二次渲染
+     * 都适用（镜内那一遍复用 extract 阶段的同一批提交节点，闸门只在提交时
+     * 过一次，所以必须在提交侧补偿而不能在渲染侧）。</p>
+     *
+     * <p>成本封顶可控：Z 倍距离内的枪才会提交 poly，且世界 GPU 路径
+     * （MeshGpuWorld）已把每枪成本降到 O(骨骼)；collector 回退档在
+     * 16·Z 格外仍受顶点预算保护。</p>
+     */
+    private static double detailZoom() {
+        try {
+            return com.tacz.guns.client.render.scope.ScopePipRenderer.currentDetailZoom();
+        } catch (Throwable t) {
+            // scope 线可用性问题绝不许连坐 mesh 距离闸门：退回裸眼语义。
+            return 1.0;
+        }
     }
 }
