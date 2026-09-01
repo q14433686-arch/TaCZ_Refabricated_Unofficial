@@ -104,6 +104,24 @@ public final class IrisScopePipelineCompat {
         return shadowHookLastBuild;
     }
 
+    /**
+     * {@code IrisCompat.isUsingRenderPack()} 是「每次调用一次 Class.forName」的反射查询，
+     * 而预热挂在 render HEAD、逐帧都走 —— 所以这里按 20 帧节流缓存一份。
+     *
+     * <p>滞后的两个方向都无害：刚装包最多晚 20 帧开始预热（只是多卡一次首镜）；刚关包后
+     * 预热还会多跑 ≤20 帧，那时 Iris 的管线管理器已空，走到 {@code manager == null} 就返回。</p>
+     */
+    private static boolean packInUseCached;
+    private static int packInUseCountdown;
+
+    public static boolean shaderPackActiveCached() {
+        if (packInUseCountdown-- <= 0) {
+            packInUseCountdown = 19;
+            packInUseCached = IrisCompat.isUsingRenderPack();
+        }
+        return packInUseCached;
+    }
+
     private static double wantedShadowScale() {
         return RenderConfig.SCOPE_PIP_SHADOW_SCALE == null
                 ? 1.0d : RenderConfig.SCOPE_PIP_SHADOW_SCALE.get();
@@ -258,7 +276,7 @@ public final class IrisScopePipelineCompat {
         if (!ScopePipRerender.rerenderMode() || !isolatePipelineEnabled()) {
             return;
         }
-        if (!FabricLoader.getInstance().isModLoaded("iris") || !IrisCompat.isUsingRenderPack()) {
+        if (!FabricLoader.getInstance().isModLoaded("iris") || !shaderPackActiveCached()) {
             return;
         }
         Object id = scopeDimensionId();

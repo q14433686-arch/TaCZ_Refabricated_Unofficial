@@ -178,7 +178,7 @@ public final class ScopePipRerender {
         if (failed || !rerenderMode()) {
             return;
         }
-        if (!IrisCompat.isUsingRenderPack() || !shaderIsolateSafe()) {
+        if (!IrisScopePipelineCompat.shaderPackActiveCached() || !shaderIsolateSafe()) {
             idleReleaseFrames = 0;
             return;
         }
