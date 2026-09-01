@@ -35,8 +35,15 @@ Iris 便为它单建一套 RenderTargets/程序/整族 previous uniform ⇒ 切�
   （`handles resolved` / `using its own Iris pipeline` / `Pre-built` / shadow map 尺寸行；阴影钩子另有回执核验，
   静默失效会打 WARN）。**实机全未验**；镜内画面在光影下"窄遍后立刻从主目标拷"依赖"Iris 最终 blit 在
   `renderLevel` 之内"这一源码级推断，未实测 ⇒ 若实机见上一帧/黑屏，走方案篇 §6-①的 GL 级取色。
-- **订正**：本批之前我方 `config/client/RenderConfig.java` 里**并无**任何 `ScopePipIsolatePipeline`/`VOXY_*` 键
-  （先前账本把 26.1.2 的文件当成我方文件记成了"已接线"）⇒ 隔离能力是本批才第一次接线。未改 `gradle.properties` 版本号。
+- **与自家 08-30 方案的一处顺序偏离（必须记账）**：`docs/SCOPE_PIP_RERENDER_1211_PORT_PLAN_20260830.md`
+  把 `ScopePipIsolatePipeline`/`ScopePipShadowScale`/`ScopePipReleaseIdlePipeline`/`ScopePipIdleReleaseDelayFrames`/
+  `ScopePipDebug*` 整组列为「**不做** … 等 B5 一起」，并写明「要支持光影下二次渲染**必须先做 B5 离屏重定向**
+  （把窄 FOV 那遍画进独立 target）」。本批按维护者"可以有"的裁定**提前接线了其中四条**（仍不做 `DebugTrace`/`DebugGpuMem`），
+  但**没有**做 B5 ⇒ 光影下仍是"画进主目标再立刻拷"。承担风险的方式是三道闸全默认不触发
+  （`ScopePipRerender` 关、`ScopePipAllowShaderPacks` 关、装了 Sodium/Voxy 直接硬拒）+ 日志自检；
+  若实机见"镜内是上一帧/黑屏"，正解就是回头补 B5，而不是再往隔离上叠补丁（方案篇 §4-2/§6-① 已写死这条判序）。
+- 复核方式：判定依据一律是我方文件的 `grep`/实读（本线此前无任何隔离键），未改 `gradle.properties` 版本号。
+
 
 ---
 
