@@ -8,6 +8,8 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.compat.iris.IrisScopePipelineCompat;
 import com.tacz.guns.compat.sodium.SodiumCompat;
+import com.tacz.guns.compat.voxy.VoxyCompat;
+import com.tacz.guns.compat.voxy.VoxyScopePipelineCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.util.math.MathUtil;
 import net.fabricmc.loader.api.FabricLoader;
@@ -112,19 +114,24 @@ public final class ScopePipRerender {
         return scopePassActive;
     }
 
+    /**
+     * 镜内那一遍是否应当让 Voxy <b>坐过</b>（不画）：隔离开了、但第二套 Voxy 渲染栈没换上去
+     * （没装 Voxy 时恒 false，不影响）。Voxy 的渲染栈逐 Iris 管线绑定且终生只有一个，在第二套
+     * 管线下强画必然用错绘制目标 —— 某一侧远景永久错乱；坐过只是镜内没 LOD，主画面永远正确。
+     * 要镜内有 LOD，等预热把 Voxy 栈建好（主管线就绪后会自动建）。
+     */
+    public static boolean shouldSuppressVoxyDraw() {
+        return scopePassIsolated && !voxySwapped;
+    }
+
+    private static Object voxySystemThisPass;
+    private static boolean voxySwapped;
+
     /** 镜内那一遍是否正在用<b>自己的</b> Iris 管线（由维度替换 mixin 查询；光影隔离生效时为 true）。 */
     public static boolean isScopePassIsolated() {
         return scopePassIsolated;
     }
 
-    /**
-     * Voxy 会绕开我方的世界投影通道，而本线还没有它的第二渲染栈（他们那侧是 475 行深反射）。
-     *
-     * <p><b>Sodium 不在其列</b>：Fabric 上 Iris 硬依赖 Sodium，"装了 Sodium 就不放行"等于
-     * "有光影就不放行"——那样这条隔离永远不可能被触发。Sodium 的地形投影快照与区块 uniform
-     * 闸门由 {@link SodiumCompat} 就地同步（他们的 26.1.2 也是这么做的）。</p>
-     */
-    private static final boolean VOXY_PRESENT = FabricLoader.getInstance().isModLoaded("voxelism");
 
     /**
      * 光影下二次渲染的安全前提：隔离开关开 + 玩家显式 opt-in 光影 PIP + Iris 的管线管理器反射得动
@@ -143,17 +150,8 @@ public final class ScopePipRerender {
                 || !RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get()) {
             return false;
         }
-        if (VOXY_PRESENT) {
-            if (!loggedShaderRefusal) {
-                loggedShaderRefusal = true;
-                GunMod.LOGGER.info("[TACZ Scope] Scope re-render under a shader pack stays disabled while Voxy "
-                        + "is installed: the lens needs a second render stack for it (built inside the scope "
-                        + "pipeline's construction window), and that compat is not ported to this branch yet. "
-                        + "Sodium needs no such refusal -- its terrain projection snapshot and chunk-uniform "
-                        + "gate are synced in place, see SodiumCompat.");
-            }
-            return false;
-        }
+        // Voxy 在场不需要在这里拒绝：隔离时它要么被换到镜内那套第二渲染栈（远景 LOD 进镜内），
+        // 要么由 shouldSuppressVoxyDraw() 让这一遍坐过（镜内没 LOD，主画面永远正确）。
         if (!IrisScopePipelineCompat.handlesAvailable()
                 || IrisScopePipelineCompat.scopeDimensionId() == null) {
             if (!loggedShaderRefusal) {
@@ -291,6 +289,12 @@ public final class ScopePipRerender {
         // 就地改写成窄矩阵，出窗立刻还原，并把「本帧已上传区块 uniform」那道闸重开。
         boolean sodiumPatched = SodiumCompat.overrideProjection(NARROW_MATRIX);
         try {
+            // 【Voxy 第二套栈】只换，绝不在这里建（建栈必须发生在预热的构造窗口里，那时瞄具管线才是
+            // 「当前管线」；26.1.2 在那儿建过一次，代价是整局崩 —— "Pipeline data already bound" 被
+            // Voxy 捕获后顺手 disableIrisShaders()，主画面下一次 Voxy 绘制就 NPE）。
+            // 切不过去（没装 / 没建好 / 已失效）就由 shouldSuppressVoxyDraw() 让它这一遍坐过。
+            voxySystemThisPass = scopePassIsolated ? VoxyCompat.renderSystem() : null;
+            voxySwapped = voxySystemThisPass != null && VoxyScopePipelineCompat.swapIn(voxySystemThisPass);
             RenderSystem.setProjectionMatrix(projectionBuffer.getBuffer(NARROW_MATRIX), ProjectionType.PERSPECTIVE);
             // 镜内那遍：不画方块高亮线框（屏幕空间描边在镜内无意义）；viewMatrix/cullingMatrix
             // 保持宽视场（宽视锥裁剪 = 超集，结果正确，只稍费一点）。
@@ -312,6 +316,13 @@ public final class ScopePipRerender {
                     + "falling back to screen-space reprojection / whole-screen FOV zoom.", e);
             return false;
         } finally {
+            // 必须先换回 Voxy、再清隔离标志：swapOut 读的是「这一遍用的那个 system」，而清标志会让
+            // 其它兼容层立刻恢复常态，两者之间不该有交叉窗口（26.1.2 同序）。
+            if (voxySwapped) {
+                VoxyScopePipelineCompat.swapOut(voxySystemThisPass);
+                voxySwapped = false;
+            }
+            voxySystemThisPass = null;
             if (sodiumPatched) {
                 SodiumCompat.restoreProjection();
             }

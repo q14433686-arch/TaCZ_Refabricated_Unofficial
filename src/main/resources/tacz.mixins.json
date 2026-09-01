@@ -15,6 +15,7 @@
     "client.EntityHitboxDebugRendererMixin",
     "client.FeatureRenderDispatcherMixin",
         "client.GameRendererMixin",
+        "client.LevelRendererAllChangedScopePassMixin",
     "client.GlCommandEncoderScopeDepthCopyMixin",
     "client.ItemInHandLayerMixin",
     "client.ItemInHandRendererMixin",
