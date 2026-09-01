@@ -8,6 +8,34 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 public class ObjectAnimationRunner {
+    /**
+     * 全局出生序号发号器。见 {@link #getSpawnOrdinal()}。
+     * 挂 static 而不是挂在 controller 上：序号只用于比较先后，
+     * 跨 controller 单调递增无任何坏处，却省去把 controller 穿针引线到每个构造点。
+     */
+    private static final java.util.concurrent.atomic.AtomicLong SPAWN_COUNTER
+            = new java.util.concurrent.atomic.AtomicLong();
+
+    /**
+     * 出生序号：这是第几个被创建的 runner，构造时发号、终身不变。
+     *
+     * <p>唯一消费者是「stopAnimation 不得处决本次 trigger 刚启动的后继动画」这条
+     * 规则（见 {@code AnimationStateContext#stopAnimation} 的完整论证）：
+     * {@code AnimationStateMachine#trigger} 在进入状态转移前快照发号器读数，
+     * 转移期间新生的 runner 序号必然大于快照 —— 一次数值比较即可判定
+     * 「它是不是这次转移里刚出生的」，无需引用集合、无需生命周期管理。</p>
+     */
+    private final long spawnOrdinal = SPAWN_COUNTER.incrementAndGet();
+
+    /** 当前发号器读数（只读不发号）。供 {@code AnimationStateMachine#trigger} 做转移前快照。 */
+    public static long spawnCounter() {
+        return SPAWN_COUNTER.get();
+    }
+
+    public long getSpawnOrdinal() {
+        return spawnOrdinal;
+    }
+
     @Nonnull
     private final ObjectAnimation animation;
     protected long transitionTimeNs;

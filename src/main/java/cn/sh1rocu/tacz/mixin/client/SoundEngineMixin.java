@@ -31,8 +31,9 @@ import java.util.function.Consumer;
  * <table border="1">
  *   <tr><th>源码写的</th><th>26.2 真名</th></tr>
  *   <tr><td>{@code method_19757}</td>
- *       <td>{@code lambda$play$1(ChannelHandle,SoundBuffer)V}<br>
- *           与 {@code lambda$play$3(ChannelHandle,AudioStream)V}</td></tr>
+ *       <td>26.1.2 官方名（本地 merged jar 字节码核实，2026-09-01）：
+ *           {@code lambda$play$1(ChannelHandle,SoundBuffer)V} 与
+ *           {@code lambda$play$3(ChannelHandle,AudioStream)V} —— 与本表原 26.2 记载完全一致</td></tr>
  *   <tr><td>{@code ChannelAccessHandleMixin} 的 {@code method_19737}</td>
  *       <td>{@code lambda$execute$0(Consumer)V}</td></tr>
  * </table>
@@ -68,8 +69,10 @@ public abstract class SoundEngineMixin {
         injection.tacz$setSoundEngine((SoundEngine) (Object) this);
     }
 
-    // From Kilt
-    @ModifyArg(method = "method_19757", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/sounds/ChannelAccess$ChannelHandle;execute(Ljava/util/function/Consumer;)V"))
+    // From Kilt。26.1.2 官方名（javac 合成名，跨构建可能变号——这是本 mixin 保持不注册的
+    // 理由之一，见类头注「第 42 轮」与 1211 复核文档 §5；启用前需按当版 jar 复核这两个名字）。
+    @ModifyArg(method = {"lambda$play$1", "lambda$play$3"},
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/sounds/ChannelAccess$ChannelHandle;execute(Ljava/util/function/Consumer;)V"))
     private static Consumer<Channel> tacz$storeSourceConsumer(Consumer<Channel> consumer) {
         SoundConsumerStorage.soundConsumerChannels.add(consumer);
         return consumer;

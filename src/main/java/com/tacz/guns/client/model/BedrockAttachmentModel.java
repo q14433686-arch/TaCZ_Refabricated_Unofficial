@@ -2,14 +2,19 @@ package com.tacz.guns.client.model;
 
 import com.mojang.blaze3d.vertex.*;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
+import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.BeamRenderer;
 import com.tacz.guns.client.render.scope.IReticleRenderer;
 import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
+import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
+import com.tacz.guns.client.render.scope.ScopeLateReticleState;
 import com.tacz.guns.client.render.scope.ScopeNodeSet;
+import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
+import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.client.model.functional.TextShowRender;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
@@ -60,9 +65,23 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private static final int SCOPE_APERTURE_ORDER = -3;
     private static final int SCOPE_BODY_ORDER = -2;
     private static final int SCOPE_DEPTH_CLEANUP_ORDER = -1;
-    /** Physical ocular rim: draw after depth cleanup so the aperture cannot punch holes in it. */
-    private static final int SCOPE_OCULAR_RING_ORDER = 1;
-    private static final int SCOPE_RETICLE_ORDER = 2;
+    private static final int SCOPE_RETICLE_ORDER = 1;
+    /**
+     * Physical ocular rim: after depth cleanup so the aperture cannot punch holes in it, and
+     * <b>after the reticle</b> so the opaque rim covers any reticle fragment that spills past
+     * the ocular edge.
+     * <p>
+     * 【准星溢出镜框的修复 / 2026-08-13 实机反馈】原先 rim=1、reticle=2，准星画在镜框【之后】。
+     * 准星的镜内判据用的是 {@code APERTURE_TARGET}，而它是在 order -2（body 绘制边界）就
+     * 快照好的 —— 那时 rim 根本还没画，掩码里没有镜框的任何信息，于是压在镜框上的准星像素
+     * 通过了判据，表现为准星"漏"出目镜、贴到镜框上（有无光影都会出现，因为这与深度测试
+     * 函数、与 Iris 都无关，纯粹是绘制顺序问题）。
+     * <p>
+     * 上游 1.21.1 的顺序本来就是「先准星、后 ocular_ring」，用不透明的镜框盖住溢出部分；
+     * 移植时把两者调换了。这里改回上游顺序即可，无需调整掩码 epsilon
+     * （盲目放大 epsilon 会连镜内准星一起裁掉，是更糟的做法）。
+     */
+    private static final int SCOPE_OCULAR_RING_ORDER = 2;
 
     /**
      * 发光准星节点。凡是名字以 {@code _illuminated} 结尾的，
@@ -454,7 +473,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     if (currentAimingProgress() <= TEXT_SHOW_AIM_START) {
                         return null;
                     }
-                    return new TextShowRender(this, textShow, currentGunItem);
+                    // 瞄具上的文字需要裁进目镜掩码（26.2 9d036594 语义）：延迟覆盖层 flush 时
+                    // 走 ScopeTextSubmitter 的孔径深度裁剪管线；掩码不可用时自动回退 vanilla。
+                    return new TextShowRender(this, textShow, currentGunItem, true);
                 }));
     }
 
@@ -595,9 +616,30 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             }
         }
 
-        // Submit ordered aperture/body/reticle batches. The aperture uses an ordinary RenderPipeline depth
-        // state, so it remains inside vanilla/Iris scheduling and does not alter framebuffer attachments.
-        if (apertureActive && texture != null && !ocularSnapshots.isEmpty() && !bodySnapshot.isEmpty()) {
+        // Submit the aperture/body/cleanup sequence in HAND_SOLID. Under an active Iris shader
+        // pack, only reticle color and its physical ocular rim move to the later HAND_TRANSLUCENT
+        // boundary (or past Iris' final composite); all 3D snapshots below retain the original
+        // ADS/recoil/view-bob transform.
+        boolean orderedScopeSequence = apertureActive
+                && texture != null
+                && !ocularSnapshots.isEmpty()
+                && !bodySnapshot.isEmpty();
+        // Step 3 (real PIP lens) must sit below the reticle and physical ocular shade, otherwise the
+        // lens picture overwrites both. When the PIP composite is active this frame we therefore run
+        // the reticle/rim through the post-composite overlay even without Iris; normal vanilla stays
+        // in its established immediate solid-pass order.
+        boolean pipDefersReticle = ScopePipRenderState.shouldDeferReticleOverlay();
+        boolean deferReticleToIrisFinalOverlay = orderedScopeSequence
+                && ((IrisCompat.isRenderingSolidHandPass()
+                        && IrisCompat.supportsFinalScopeOverlay())
+                        || pipDefersReticle);
+        // Keep the R8/R9 hand-translucent path as a fallback for Iris versions whose final hook
+        // was not bytecode-audited. The verified Iris 26.1 (1.11.x) path goes past final composite.
+        boolean deferReticleToIrisTranslucent = orderedScopeSequence
+                && IrisCompat.isRenderingSolidHandPass()
+                && !deferReticleToIrisFinalOverlay;
+
+        if (orderedScopeSequence) {
             PoseStack identity = new PoseStack();
             RenderType apertureWriter = ScopeRenderTypes.depthAperture(texture);
             OrderedSubmitNodeCollector apertureCollector = collector.order(SCOPE_APERTURE_ORDER);
@@ -626,10 +668,45 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                         }
                     });
 
+            // 【镜内文字（弹药计数等）】bodySnapshot 的 capture 已把 text_show 节点的提交任务
+            // 冻结进 functionalTasks（TextShowRender.extract），但上面 write(...) 只重放几何 ——
+            // 任务若不显式 flush 就整个丢掉（这就是 26.1.2/1.21.11 镜内一直没有弹药文本的根因；
+            // 26.2 的 super.submit 路径天然带 flush，所以那边一直有）。
+            // 裁剪语义（26.2 9d036594 的移植，勿再以「镜筒深度剔除」为由收尾 —— 该论断已被
+            // 实机证伪：TextShowRender 的 vanilla 文本管线不吃 scope body 深度）：瞄具文字
+            // 构造时带 clipToScopeMask=true，任务执行时优先走 ScopeTextSubmitter 的孔径深度
+            // 掩码管线（溢出圆孔的像素被丢弃）；掩码周期未就绪时自动回退 vanilla submitText。
+            // 延迟覆盖层激活时（PIP 镜内画面 / 已审计 Iris 的 final-overlay）：文字与准星/镜框
+            // 同族推迟，否则会被镜内放大画面或光影包后处理盖掉。R8/R9 HAND_TRANSLUCENT 回退
+            // 路径保持立即提交（该回退本就服务于未审计 Iris 版本）。
+            // ocularSnapshots 的任务一并兜底：第三方镜的 text_show 节点可能挂在 ocular 子树下
+            // （那时 bodySnapshot 因 ocular 临时隐藏而拿不到它）；每份快照的任务只 flush 这一次，
+            // 不会因 aperture/cleanup 的两次几何重放而重复。
+            if (deferReticleToIrisFinalOverlay) {
+                for (IFunctionalSubmitter.SubmitTask textTask : bodySnapshot.functionalTasks()) {
+                    ScopeFinalOverlayState.queueFunctionalTask(textTask);
+                }
+                for (BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
+                    for (IFunctionalSubmitter.SubmitTask textTask : ocularSnap.functionalTasks()) {
+                        ScopeFinalOverlayState.queueFunctionalTask(textTask);
+                    }
+                }
+            } else {
+                bodySnapshot.submitFunctionalTasks(collector);
+                for (BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
+                    ocularSnap.submitFunctionalTasks(collector);
+                }
+            }
+
             // Upstream 1.21.1 renders ocular_ring with stencil disabled. In the depth fallback it
             // must be redrawn after cleanup: drawing it in the body batch lets the invisible ocular
             // kill its inner pixels, while drawing it before cleanup would lose its depth again.
-            if (ocularRingSnapshot != null && !ocularRingSnapshot.isEmpty()) {
+            // Without Iris deferral, keep the established order: reticle(1) then opaque rim(2).
+            // With deferral, hold the rim until we know a reticle snapshot was actually queued;
+            // it will then follow that snapshot in HAND_TRANSLUCENT / after the final composite
+            // and still cover edge spill there (queued rim draws strictly after queued reticles).
+            if (!deferReticleToIrisTranslucent && !deferReticleToIrisFinalOverlay
+                    && ocularRingSnapshot != null && !ocularRingSnapshot.isEmpty()) {
                 collector.order(SCOPE_OCULAR_RING_ORDER).submitCustomGeometry(identity, renderType,
                         (entryPose, consumer) -> ocularRingSnapshot.write(consumer));
             }
@@ -637,30 +714,78 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             PoseStack identity = new PoseStack();
             collector.submitCustomGeometry(identity, renderType,
                     (entryPose, consumer) -> bodySnapshot.write(consumer));
+            // 非镜内序列（腰射 / 非第一人称 / 无孔径贴图）：同样不能丢任务。文字工厂在
+            // 未开镜时返回 null，所以这里通常为空；带文字但无 ocular 骨骼的第三方瞄具靠它兜底。
+            bodySnapshot.submitFunctionalTasks(collector);
         }
 
-        // Render Reticle
+        // Render Reticle. Iris HAND_SOLID freezes only immutable snapshots here. The audited
+        // Iris 26.1 (1.11.x) final-overlay path submits them after all shader-pack composites;
+        // other Iris versions retain the R8/R9 HAND_TRANSLUCENT fallback. Vanilla remains immediate.
+        int lateReticlesBefore = ScopeLateReticleState.pendingReticleCount();
+        int finalReticlesBefore = ScopeFinalOverlayState.pendingReticleCount();
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
             ScopeNodeSet active = filterReticleByActiveView(reticleNodes);
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
             if (reticle != null && !active.isEmpty()) {
                 boolean etchedOnly = active.hasEtched() && !active.hasIlluminated() && texture != null;
-                RenderType baseReticleType = etchedOnly
-                        ? ScopeRenderTypes.etchedReticle(texture)
-                        : renderType;
-                RenderType baseIlluminatedType = texture == null
-                        ? renderType
-                        : ScopeRenderTypes.visibleReticle(texture);
+                RenderType baseReticleType;
+                if (etchedOnly) {
+                    if (deferReticleToIrisFinalOverlay) {
+                        baseReticleType = ScopeRenderTypes.finalEtchedReticle(texture);
+                    } else if (deferReticleToIrisTranslucent) {
+                        baseReticleType = ScopeRenderTypes.lateEtchedReticle(texture);
+                    } else {
+                        baseReticleType = ScopeRenderTypes.etchedReticle(texture);
+                    }
+                } else {
+                    baseReticleType = renderType;
+                }
+                RenderType baseIlluminatedType;
+                if (texture == null) {
+                    baseIlluminatedType = renderType;
+                } else if (deferReticleToIrisFinalOverlay) {
+                    baseIlluminatedType = ScopeRenderTypes.finalVisibleReticle(texture);
+                } else if (deferReticleToIrisTranslucent) {
+                    baseIlluminatedType = ScopeRenderTypes.lateVisibleReticle(texture);
+                } else {
+                    baseIlluminatedType = ScopeRenderTypes.visibleReticle(texture);
+                }
 
                 // Pure etched trees are CPU-filtered to retain thin marks and discard large blackout panels.
-                // Both etched and illuminated reticles render after the exact world-depth restore, sample the
-                // world-depth backup and the ocular aperture copy per pixel, and only keep fragments where
-                // ocularDepth < worldDepth - epsilon — the true screen-space ocular mask. Surviving pixels
-                // still write near hand depth so later water/fog/particle passes cannot cover them.
+                // Both renderers sample world/aperture depth per pixel and only retain the ocular interior.
                 reticle.submitReticle(new IReticleRenderer.Context(
                         poseStack, collector.order(SCOPE_RETICLE_ORDER),
                         transformType, baseReticleType, baseIlluminatedType,
-                        light, overlay, currentAimingProgress(), etchedOnly), active);
+                        light, overlay, currentAimingProgress(), etchedOnly,
+                        deferReticleToIrisTranslucent, deferReticleToIrisFinalOverlay), active);
+            }
+        }
+
+        if ((deferReticleToIrisTranslucent || deferReticleToIrisFinalOverlay)
+                && ocularRingSnapshot != null && !ocularRingSnapshot.isEmpty()) {
+            boolean queuedFinal = deferReticleToIrisFinalOverlay
+                    && ScopeFinalOverlayState.pendingReticleCount() > finalReticlesBefore;
+            boolean queuedLate = deferReticleToIrisTranslucent
+                    && ScopeLateReticleState.pendingReticleCount() > lateReticlesBefore;
+            if (queuedFinal) {
+                // The final rim is deliberately after final reticle geometry, preserving physical
+                // lens-edge occlusion without giving Complementary another fog/composite pass.
+                ScopeFinalOverlayState.queueOcularRing(
+                        ocularRingSnapshot, ScopeRenderTypes.finalOcularRing(texture));
+            } else if (queuedLate) {
+                ScopeLateReticleState.queueOcularRing(
+                        ocularRingSnapshot, ScopeRenderTypes.lateOcularRing(texture));
+            } else if (pipDefersReticle) {
+                // PIP lens paints at the hand-pass end no matter whether a reticle was queued, so a
+                // bare physical shade must also be re-drawn after it (otherwise the lens covers it).
+                ScopeFinalOverlayState.queueOcularRing(
+                        ocularRingSnapshot, ScopeRenderTypes.finalOcularRing(texture));
+            } else {
+                // No visible reticle this frame (for example during fade-in): preserve the normal
+                // solid-pass rim rather than forcing an otherwise unnecessary deferred pass.
+                collector.order(SCOPE_OCULAR_RING_ORDER).submitCustomGeometry(new PoseStack(), renderType,
+                        (entryPose, consumer) -> ocularRingSnapshot.write(consumer));
             }
         }
 

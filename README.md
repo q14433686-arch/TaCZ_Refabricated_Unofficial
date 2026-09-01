@@ -13,7 +13,7 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.1.2 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.1.2.R2-hotfix2`**。
+`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.1.2.R3`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
@@ -21,7 +21,7 @@
 · [直接上游](https://github.com/Sh1roCu/TACZ-Refabricated/tree/1.21.1)
 · [原始 TaCZ 项目](https://github.com/MCModderAnchor/TACZ)
 
-> 仓库源码已使用 R2-hotfix2 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R3 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
 
 ### 选择你的 Minecraft 版本 / Pick your Minecraft version
 
@@ -42,9 +42,9 @@
 | Minecraft | **26.1.2** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **25+** |
-| Fabric API | **0.155.2+**；R2-hotfix2 构建使用 **0.155.2+26.1.2** |
+| Fabric API | **0.155.2+**；R3 构建使用 **0.155.2+26.1.2** |
 | Forge Config API Port | **26.1.5+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.1.2.R2-hotfix2`** |
+| 本 mod | **`1.1.8+fabric.26.1.2.R3`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
@@ -57,6 +57,15 @@
 - TaCZ 的 Fabric 26.1.2 端口及随上游带来的默认枪包；
 - 为 26.x API 改写的网络、资源加载、GUI 和渲染接线；
 - 一套内置的 **LRTactical 兼容框架**；
+- 一个内置的 **Mesh 加载器（TML）**：枪包可在 geo.json 骨骼上携带 `poly_mesh`
+  网格（`"model_type": "mesh"`），由本 mod 直接解析渲染，并带第一人称 /
+  世界语境的 GPU 静态烘焙；详见
+  [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md) 与其 §8「枪包怎么用」。
+  配置位于 `tacz-client.toml` 的 `[mesh_loader]` 段（18 项，全部接进局内
+  「渲染」页）；把 `MeshEnable` 关掉即回退到纯立方体外观，行为等价于未装。
+  光影下两条 GPU 开关默认关闭（1211 侧实机结论，照明语义尚不等价）；
+  运行期行为在 26.1.2 上**尚未实机验证**，问题请按 MESH_LOADER.md 的
+  复测矩阵反馈；
 - 若干可选模组的兼容接线。
 
 这不代表本项目是 TaCZ 或 LRTactical 的官方版本，也不代表所有第三方枪包、
@@ -167,7 +176,7 @@ gunpack.meta.json
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.1.2.R2-hotfix2` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.26.1.2.R3` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容

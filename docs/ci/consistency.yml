@@ -1,0 +1,50 @@
+name: Version consistency
+
+# ---------------------------------------------------------------------------
+# 【26.1.2 线副本（2026-09-02 同步自 26.2 线 docs/ci/）】
+# 本文件是按 26.2 线的正式件镜像过来的，差异只有：
+#   - 触发分支表保持原样（已含 26.1.2）；
+#   - Java 25（26.x 构建目标，与 26.1.2 的 build.gradle targetJavaVersion 一致）；
+#   - 本分支无 Loom remap，可选依赖走 cursemaven/modrinth（Actions 出网可达）。
+# 维护者在网页端上线后，本目录的副本即正式件的镜像，下次改动继续在这里迭代。
+# ---------------------------------------------------------------------------
+# 版本一致性守门：改了 gradle.properties 却忘了同步 README 时，PR 会红。
+# v2（2026-08-31）：补 arena/** 触发 —— 此前只在主分支跑，版本号改动都发生在
+# arena 工作分支上，守门等到合并后才叫就晚了。build.yml 虽然也跑同一脚本，
+# 但它 paths-ignore 掉了 *.md，「只改 README」的提交测不到 —— 本流程必须独立存在。
+on:
+  push:
+    branches:
+      - 'arena/**'
+      - '26.2(main)'
+      - '26.1.2'
+      - '1.21.11'
+    paths:
+      - 'gradle.properties'
+      - 'README.md'
+      - 'src/main/resources/fabric.mod.json'
+      - 'scripts/check_release_consistency.sh'
+  pull_request:
+    paths:
+      - 'gradle.properties'
+      - 'README.md'
+      - 'src/main/resources/fabric.mod.json'
+      - 'scripts/check_release_consistency.sh'
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: README 与 gradle.properties 版本一致性
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 检查当前分支
+        run: bash scripts/check_release_consistency.sh
+
+      - name: 失败提示
+        if: failure()
+        run: |
+          echo "::error::README.md 与 gradle.properties 的版本号不一致。"
+          echo "::error::请参考 AGENTS.md §1 与 docs/publish/RELEASE_CHECKLIST.md 同步以下位置："
+          echo "::error::顶部版本句 / 「已使用 R? 版本号」提示行 / 支持环境表 / 导航表 tag 链接 / SemVer 说明段"

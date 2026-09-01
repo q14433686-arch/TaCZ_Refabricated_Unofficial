@@ -3,6 +3,7 @@ package com.tacz.guns.mixin.client;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
+import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
 import com.tacz.guns.api.client.event.BeforeRenderHandEvent;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
@@ -46,6 +47,31 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
     @Inject(method = "renderHandsWithItems", at = @At("HEAD"))
     public void beforeHandRender(float pPartialTicks, PoseStack pMatrixStack, net.minecraft.client.renderer.SubmitNodeCollector pCollector, LocalPlayer pPlayerEntity, int pCombinedLight, CallbackInfo ci) {
         BeforeRenderHandEvent.CALLBACK.invoker().post(new BeforeRenderHandEvent(pMatrixStack));
+    }
+
+    /**
+     * poly_mesh GPU 路径的绘制点：<b>本方法自己的收尾 flush 之后</b>（{@code require=0}）。
+     *
+     * <p><b>26.1.2 字节码实测（本地 merged jar，2026-09-01）</b>：与 1.21.11 同构 ——
+     * {@code renderHandsWithItems(float, PoseStack, SubmitNodeCollector, LocalPlayer, int)}
+     * 尾部就是 {@code mc.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures()}
+     * （@281）+ {@code mc.renderBuffers().bufferSource().endBatch()}（@294），
+     * 两调用之后才返回。所以本注入点必然在 flush 之后：无光影时 ModelView/Projection/
+     * 输出目标覆写都还是「刚被手部批次用过」的那一份；光影时 Iris 26.1 的
+     * {@code MixinItemInHandRenderer}（源码核实，Iris 26.1 分支）用
+     * {@code @WrapWithCondition}/{@code @WrapOperation} 把这两个调用换成
+     * {@code HandRenderer#endRender()}（内部 = renderAllFeatures + endBatch），而它从
+     * {@code iris$renderHandsWithCustomRenderer} → <b>同一个</b> {@code renderHandsWithItems}
+     * 进来，所以本钩子天然落在 Iris 的手部阶段内、gbuffer 还绑着。
+     * 消费逻辑见 {@code PolyMeshGpuRenderer#renderAtHandFlush}。</p>
+     *
+     * <p>{@code require = 0}：映射漂移到最坏是这个钩子不注入，提交侧的存活证明
+     * （{@code lastHandFlushFrame} 帧号比对）随即失败，mesh 枪自动回 collector ——
+     * 不是丢几何、也不是崩。</p>
+     */
+    @Inject(method = "renderHandsWithItems", at = @At(value = "RETURN"), require = 0)
+    private void tacz$drawMeshGpuAfterHandFeatureFlush(CallbackInfo ci) {
+        PolyMeshGpuRenderer.renderAtHandFlush();
     }
 
     /**

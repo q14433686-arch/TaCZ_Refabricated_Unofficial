@@ -138,16 +138,11 @@ public final class IlluminatedReticleRenderer implements IReticleRenderer {
             }
         }
 
-        // 与 BedrockModel#submit 保持同一套提交惯例：
-        // 快照里的矩阵已含完整入参 pose，因此必须从【单位矩阵】提交，否则根变换会被叠加两次。
-        if (!snapshot.isEmpty()) {
-            PoseStack identity = new PoseStack();
-            ctx.collector().submitCustomGeometry(
-                    identity, ctx.illuminatedRenderType(),
-                    // 发光子树照样可能藏遮光板（scope_vudu 的 division_illuminated 实测含
-                    // 100x250 整版），与蚀刻路径共用 ReticleMarkFilter 逐 cube 剔除。
-                    (entryPose, consumer) -> snapshot.writeFiltered(
-                            consumer, ReticleMarkFilter::isThinMark));
-        }
+        // 与 BedrockModel#submit 保持同一套提交惯例：快照里的矩阵已含完整入参 pose，
+        // 因此必须从【单位矩阵】提交，否则根变换会被叠加两次。Iris solid pass 下仅
+        // 冻结它，ScopeLateReticleState 会在较晚的 HAND_TRANSLUCENT / final composite
+        // 之后提交。发光子树照样可能藏遮光板（scope_vudu 的 division_illuminated 实测含
+        // 100x250 整版），与蚀刻路径共用 ReticleMarkFilter 逐 cube 剔除。
+        ScopeLateReticleState.submitReticle(ctx, snapshot, ctx.illuminatedRenderType());
     }
 }

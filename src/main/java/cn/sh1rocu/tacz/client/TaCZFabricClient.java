@@ -57,6 +57,12 @@ public class TaCZFabricClient implements ClientModInitializer {
         SelectItemModelProperties.ID_MAPPER.put(AmmoBoxStatueProperty.ID, AmmoBoxStatueProperty.TYPE);
         NetworkHandler.registerS2CPackets();
         ClientSetupEvent.init();
+        // 内置 TacZ Mesh Loader：注册 model_type=mesh 枪模构造器、geo 解析缓存失效监听器，
+        // 以及 ScreenRenderTracker / ShaderStateTracker 两个状态追踪基建。
+        // 必须在任何枪 display 资源加载（ClientAssetsManager 的 reload listener 触发）之前
+        // 把 model_type=mesh 构造器注册进 GunModelTypeManager，否则 checkTextureAndModel
+        // 会落到默认 BedrockGunModel 构造器，mesh 枪退回纯立方体。
+        cn.sh1rocu.tacz.compat.meshloader.TaczMeshyIntegration.onClientSetup();
         ModContainerScreen.registerScreens();
         ModEntitiesRender.registerEntityRenderers();
         // 附属模块 LRTactical 的实体渲染器。

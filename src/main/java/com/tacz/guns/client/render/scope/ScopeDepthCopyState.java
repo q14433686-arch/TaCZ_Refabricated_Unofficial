@@ -50,6 +50,8 @@ public final class ScopeDepthCopyState {
 
     /** Enables the reticle screen-space mask branch. 0 keeps every ordinary shader dormant. */
     public static final String MASK_MODE_UNIFORM = "tacz_ScopeMaskMode";
+    /** Marks the no-fog post-composite shader, which must use our private world-depth copy. */
+    public static final String FINAL_OVERLAY_UNIFORM = "tacz_ScopeFinalOverlay";
     /** Vanilla mask shaders read the pre-ocular world-depth backup from this sampler. */
     public static final String MASK_WORLD_SAMPLER_UNIFORM = "tacz_WorldDepthSampler";
     /** All mask implementations read the post-ocular aperture depth from this sampler. */
@@ -65,6 +67,92 @@ public final class ScopeDepthCopyState {
     private static final DepthTextureTarget APERTURE_TARGET = new DepthTextureTarget();
     /** Depth after the body draw; differs from APERTURE_TARGET where visible scope geometry survived. */
     private static final DepthTextureTarget POST_BODY_TARGET = new DepthTextureTarget();
+
+    /**
+     * Read-only snapshot of the exact pre-ocular world-depth copy, intended for the depth-based
+     * PIP composite phase.
+     *
+     * <p><b>Accessor-only (Step 1).</b> This method creates no resources and never mutates the
+     * copy; it currently only lets the PIP/composite code observe the raw GL depth texture and
+     * its dimensions/format. The actual {@link com.mojang.blaze3d.textures.GpuTextureView}
+     * binding path is still an open/verified-by-runtime item (see the handoff doc).</p>
+     *
+     * @return immutable handle; {@link DepthHandle#available()} is false before the first BACKUP
+     *         / APERTURE_COPY cycle has allocated or blitted into the target.
+     */
+    public static DepthHandle worldDepthTarget() {
+        return WORLD_TARGET.snapshot();
+    }
+
+    /**
+     * Read-only snapshot of the aperture depth copy (world + ocular near-depth, copied at the
+     * boundary between the invisible ocular draw and the scope-body draw).
+     *
+     * <p><b>Accessor-only (Step 1).</b> Same lifetime/reentrancy contract as
+     * {@link #worldDepthTarget()}: this is a value snapshot, not the live target.</p>
+     */
+    public static DepthHandle apertureDepthTarget() {
+        return APERTURE_TARGET.snapshot();
+    }
+
+    /**
+     * Whether the current frame completed a full mask cycle (world backup + aperture copy),
+     * i.e. the depth textures {@code prepareMaskDraw} binds are this frame's live data.
+     *
+     * <p>Scope text uses this as its "mask available" gate (26.2's
+     * {@code ScopeTextSubmitter} checked its own target sync the same way): when this returns
+     * false the deferred text submission falls back to vanilla {@code submitText} instead of
+     * sampling a stale aperture copy that would clip at last frame's lens position.</p>
+     */
+    public static boolean isMaskCycleValid() {
+        return maskValid;
+    }
+
+    /**
+     * 帧首推进帧计数（{@code GameRenderer.render} HEAD）。只递增 {@code frameCounter}
+     * ——<b>不</b>清 {@code maskValid}：终局叠加/reticle 的掩码绘制发生在 Iris 终局钩子
+     * （本帧手部阶段之前），那里读的正是上一帧的 {@code maskValid} 真值，清了会把光影下
+     * 的 reticle 掩码整个打回 mode 0。时效边界改由帧戳表达：BACKUP→APERTURE_COPY 成功时
+     * 盖上 {@code maskCycleFrame = frameCounter}；消费者经
+     * {@link #hasMaskCycleThisFrame()} 查询「周期是否落在当前帧」。</p>
+     */
+    public static void onClientFrameStart() {
+        RenderSystem.assertOnRenderThread();
+        frameCounter++;
+    }
+
+    /**
+     * 本帧手部阶段是否已完成整帧掩码周期（{@code maskValid} 且周期落在当前帧）。
+     *
+     * <p>供「与目镜序列同帧」的消费者使用：poly_mesh 手部批次的孔外剔除（目镜序列先
+     * 于枪身绘制）、Iris 终局钩子处的 PIP 合成（Iris 26.1 把手部搬进了
+     * LevelRenderer#renderLevel 内部，finalizeLevelRendering 跑在同一遍的手部阶段之后，
+     * 拷贝是本帧的）。没有当帧周期的帧（腰射，或当帧周期被身份守卫否决）闸门为假：
+     * 前者不拿陈旧镜孔裁枪身（实机 2026-09-01 的静态透视面病例），后者不拿遗留拷贝
+     * 贴镜内画面（同日的一帧「截图」贴屏病例）—— 都 fail-closed。</p>
+     */
+    public static boolean hasMaskCycleThisFrame() {
+        return maskValid && maskCycleFrame == frameCounter;
+    }
+
+
+    /**
+     * 非 RenderType 绘制路径（poly_mesh GPU 手部批次）的 MASK_OUTSIDE 准备。
+     *
+     * <p>与 vanilla 的 {@code DepthCopyRenderType} 完全同构：{@link #begin} 记录操作，
+     * {@link #beforeDraw()} 在「当前已绑定的 program」上跑 {@code prepareMaskDraw(mode 2)}
+     * —— 身份守卫、绑定 aperture 拷贝单元、置 {@code tacz_ScopeMaskMode=2}。Iris 下这
+     * 正是打补丁的 hand ExtendedShader（IrisDepthRestoreShaderMixin 注入的休眠分支），
+     * world 深度按既有路线取 depthtex2；掩码失效或 program 无该 uniform 时 mode 恒 0
+     * = 不裁剪（fail-open），与 vanilla 语义一致。调用方绘制完成后必须配对
+     * {@link #end()} 归还被占用的纹理单元。</p>
+     */
+    public static void beginExternalMaskOutsideDraw() {
+        RenderSystem.assertOnRenderThread();
+        begin(Operation.MASK_OUTSIDE);
+        beforeDraw();
+
+    }
 
     private static int backupSourceFbo;
     /** FBO bound while the ocular aperture drew; retained for diagnostics only. */
@@ -90,6 +178,12 @@ public final class ScopeDepthCopyState {
     private static @javax.annotation.Nullable DepthIdentity apertureDepthIdentity;
     private static boolean backupValid;
     private static boolean maskValid;
+    /**
+     * 帧计数（{@link #onClientFrameStart()} 递增）与最近一次成功掩码周期的帧戳。
+     * 初值 MIN_VALUE：任何「本帧/上一帧」查询在第一个周期完成前都为假（fail-closed）。
+     */
+    private static int frameCounter;
+    private static int maskCycleFrame = Integer.MIN_VALUE;
     /** Whether a usable world-depth source exists for the mask (Iris depthtex2 or the vanilla copy). */
     private static boolean maskWorldValid;
     private static boolean useIrisPreHandDepth;
@@ -98,6 +192,7 @@ public final class ScopeDepthCopyState {
     private static boolean loggedSelectiveRestoreActive;
     private static boolean loggedMaskActiveIris;
     private static boolean loggedMaskActiveVanilla;
+    private static boolean loggedMaskActiveFinal;
 
     private static final List<OverriddenUnit> OVERRIDDEN_UNITS = new ArrayList<>(3);
     private static boolean loggedActive;
@@ -139,6 +234,21 @@ public final class ScopeDepthCopyState {
                     useIrisPreHandDepth = true;
                     backupValid = true;
                     maskWorldValid = true;
+                    // R11 final-overlay shaders intentionally run after Iris has stopped binding
+                    // depthtex2. When a frozen final reticle exists, take one private copy now;
+                    // it is the same pre-ocular world depth but remains sampleable after final
+                    // composite. Ordinary Iris paths keep using depthtex2 without this blit.
+                    // The PIP path also needs it: the lens composite runs after finalizeLevelRendering,
+                    // so a bare-rim frame (or any frame where the reticle was not queued) must still
+                    // force the private copy or the composite has no world depth to mask against.
+                    if (ScopeFinalOverlayState.hasPendingReticles()
+                            || ScopePipRenderState.needsIrisWorldDepthCopy()) {
+                        boolean copied = copyCurrentDepth(WORLD_TARGET, "final-overlay world depth");
+                        worldDepthIdentity = copied ? captureDepthIdentity() : null;
+                        if (!copied) {
+                            maskWorldValid = false;
+                        }
+                    }
                     if (!loggedIrisPreHandDepth) {
                         loggedIrisPreHandDepth = true;
                         GunMod.LOGGER.info("[TACZ Scope] Using Iris depthtex2 as exact pre-hand depth backup.");
@@ -154,6 +264,9 @@ public final class ScopeDepthCopyState {
                 // written depth since the world backup, so this copy isolates the ocular footprint.
                 disableScopeBranches(program);
                 maskValid = copyApertureDepth() && maskWorldValid;
+                if (maskValid) {
+                    maskCycleFrame = frameCounter;
+                }
                 yield true;
             }
             case RESTORE -> prepareRestoreDraw(program);
@@ -184,6 +297,7 @@ public final class ScopeDepthCopyState {
         }
         zeroUniform(program, MODE_UNIFORM);
         zeroUniform(program, MASK_MODE_UNIFORM);
+        zeroUniform(program, FINAL_OVERLAY_UNIFORM);
     }
 
     private static void zeroUniform(int program, String name) {
@@ -365,25 +479,36 @@ public final class ScopeDepthCopyState {
             // The active program has no mask branch (not a reticle shader); draw it untouched.
             return true;
         }
+        int finalOverlayLocation = GL20.glGetUniformLocation(program, FINAL_OVERLAY_UNIFORM);
+        boolean finalOverlay = finalOverlayLocation >= 0;
         // The mask and restore branches share Iris' HAND shader; never let the restore flag bleed
         // into the reticle draw.
         zeroUniform(program, MODE_UNIFORM);
         if (!maskValid) {
             GL20.glUniform1i(maskLocation, 0);
+            if (finalOverlay) {
+                GL20.glUniform1i(finalOverlayLocation, 0);
+            }
             return true;
         }
 
-        DepthInfo destination = inspectDepthAttachment();
-        DepthIdentity currentDepth = captureDepthIdentity();
-        if (destination == null
-                || destination.width() != APERTURE_TARGET.width()
-                || destination.height() != APERTURE_TARGET.height()
-                || destination.internalFormat() != APERTURE_TARGET.internalFormat()
-                || apertureDepthIdentity == null || !apertureDepthIdentity.equals(currentDepth)) {
-            GL20.glUniform1i(maskLocation, 0);
-            logFailure("scope mask target does not match the aperture copy surface (depth "
-                    + currentDepth + " vs copied " + apertureDepthIdentity + ")");
-            return true;
+        // Final-overlay geometry samples only the two immutable private depth copies. It does not
+        // use or write the destination depth attachment, which may be a post-composite main target
+        // rather than Iris' original hand FBO. Ordinary MASK draws retain the strict identity
+        // guard that prevents stale copies from leaking into unrelated render targets.
+        if (!finalOverlay) {
+            DepthInfo destination = inspectDepthAttachment();
+            DepthIdentity currentDepth = captureDepthIdentity();
+            if (destination == null
+                    || destination.width() != APERTURE_TARGET.width()
+                    || destination.height() != APERTURE_TARGET.height()
+                    || destination.internalFormat() != APERTURE_TARGET.internalFormat()
+                    || apertureDepthIdentity == null || !apertureDepthIdentity.equals(currentDepth)) {
+                GL20.glUniform1i(maskLocation, 0);
+                logFailure("scope mask target does not match the aperture copy surface (depth "
+                        + currentDepth + " vs copied " + apertureDepthIdentity + ")");
+                return true;
+            }
         }
 
         int apertureLocation = GL20.glGetUniformLocation(program, APERTURE_SAMPLER_UNIFORM);
@@ -395,9 +520,9 @@ public final class ScopeDepthCopyState {
             logFailure("reticle shader has no ocular aperture sampler");
             return true;
         }
-        boolean irisWorld = useIrisPreHandDepth && irisWorldLocation >= 0;
-        // The vanilla branch may only bind a world-depth sampler when this cycle actually blitted
-        // the backup; otherwise texture 0 would discard every reticle pixel.
+        boolean irisWorld = !finalOverlay && useIrisPreHandDepth && irisWorldLocation >= 0;
+        // The vanilla branch and final overlay may only bind a world-depth sampler when this cycle
+        // actually owns a private copy; otherwise texture 0 would discard every reticle pixel.
         if (!irisWorld && (worldLocation < 0 || WORLD_TARGET.texture() == 0)) {
             GL20.glUniform1i(maskLocation, 0);
             logFailure("reticle shader has no usable world-depth source for the ocular mask");
@@ -414,9 +539,17 @@ public final class ScopeDepthCopyState {
         }
         // 1 keeps the ocular interior (reticles); 2 discards it (muzzle flash/viewmodel FX).
         GL20.glUniform1i(maskLocation, maskMode);
+        if (finalOverlay) {
+            GL20.glUniform1i(finalOverlayLocation, 1);
+        }
         // Log each mask flavour once: toggling a shader pack switches between them mid-session,
-        // and a single boolean would hide the Iris path ever becoming active.
-        if (irisWorld ? !loggedMaskActiveIris : !loggedMaskActiveVanilla) {
+        // and a single boolean would hide the Iris/final path ever becoming active.
+        if (finalOverlay) {
+            if (!loggedMaskActiveFinal) {
+                loggedMaskActiveFinal = true;
+                GunMod.LOGGER.info("[TACZ Scope] Final overlay masked by private world/aperture depth copies.");
+            }
+        } else if (irisWorld ? !loggedMaskActiveIris : !loggedMaskActiveVanilla) {
             if (irisWorld) {
                 loggedMaskActiveIris = true;
             } else {
@@ -569,6 +702,30 @@ public final class ScopeDepthCopyState {
     private record OverriddenUnit(int unit, int previousBinding) {
     }
 
+    /**
+     * Immutable, accessor-only view of one of {@code ScopeDepthCopyState}'s private depth copies.
+     *
+     * <p>The composite/PIP phase must not hold the live {@link #framebuffer()} or
+     * {@link #textureId()} beyond the render thread frame in which it is consumed; the copy
+     * targets are reallocated/rebound in place on cross-frame FBO/format changes. Do not call
+     * {@code glDelete*}, {@code glFramebufferTexture}, or otherwise mutate what this handle
+     * points at — ownership stays inside {@link ScopeDepthCopyState}.</p>
+     */
+    public record DepthHandle(int textureId, int framebuffer, int width, int height,
+                              int internalFormat, boolean available) {
+
+        public DepthHandle {
+            // Normalize hidden invalid states: zero texture + zero framebuffer is "no copy yet".
+            if (textureId == 0 && framebuffer == 0 && (width != 0 || height != 0 || internalFormat != 0)) {
+                throw new IllegalArgumentException("inconsistent depth handle: zero GL ids with nonzero size");
+            }
+        }
+
+        public boolean available() {
+            return available && textureId != 0;
+        }
+    }
+
     /** A private sampleable depth texture plus the depth-only FBO wrapped around it. */
     private static final class DepthTextureTarget {
         private int framebuffer;
@@ -595,6 +752,17 @@ public final class ScopeDepthCopyState {
 
         int internalFormat() {
             return this.internalFormat;
+        }
+
+        DepthHandle snapshot() {
+            return new DepthHandle(
+                    this.texture,
+                    this.framebuffer,
+                    this.width,
+                    this.height,
+                    this.internalFormat,
+                    this.texture != 0 && this.width > 0 && this.height > 0
+            );
         }
 
         boolean ensure(DepthInfo depth) {

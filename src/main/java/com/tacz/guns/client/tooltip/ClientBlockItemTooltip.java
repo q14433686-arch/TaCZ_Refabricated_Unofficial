@@ -8,7 +8,7 @@ import com.tacz.guns.inventory.tooltip.BlockItemTooltip;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.client.resources.language.I18n;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
@@ -72,7 +72,11 @@ public class ClientBlockItemTooltip implements ClientTooltipComponent {
         TimelessAPI.getClientBlockIndex(blockId).ifPresent(index -> {
             @Nullable String tooltipKey = index.getTooltipKey();
             if (tooltipKey != null) {
-                String text = I18n.get(tooltipKey);
+                // 纯查表，不能走 I18n.get：tooltipKey 允许是枪包内联的显示串（含 % 就被
+                // String.format 当格式说明符解析 → "Format error: ..."），而下面立刻按行
+                // Component.literal(...)，本来就不需要任何格式化。（同一形的问题 26.2 在
+                // ec51f556 只修了 text_show 那一处；这里对齐 1.21.11 的 c9b8ba1 三处一起收。）
+                String text = Language.getInstance().getOrDefault(tooltipKey);
                 String[] split = text.split("\n");
                 Arrays.stream(split).forEach(s -> components.add(Component.literal(s).withStyle(style -> style.withColor(0xAAAAAA))));
             }

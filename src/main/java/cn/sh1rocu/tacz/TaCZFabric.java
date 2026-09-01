@@ -4,10 +4,12 @@ import cn.sh1rocu.tacz.api.event.*;
 import cn.sh1rocu.tacz.util.forge.EnumArgument;
 import cn.sh1rocu.tacz.util.forge.PartialNBTIngredient;
 import cn.sh1rocu.tacz.util.forge.StrictNBTIngredient;
+import cn.sh1rocu.tacz.util.forge.TaczNbtIngredient;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.event.server.AmmoHitBlockEvent;
 import com.tacz.guns.config.ClientConfig;
+import com.tacz.guns.config.ConfigPersist;
 import com.tacz.guns.config.CommonConfig;
 import com.tacz.guns.config.PreLoadConfig;
 import com.tacz.guns.config.ServerConfig;
@@ -35,6 +37,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.fml.config.ModConfig;
+import net.minecraftforge.common.ForgeConfigSpec;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
@@ -58,12 +61,28 @@ public class TaCZFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        // 【时序硬约束】FCAP 在 Fabric 上是在 ConfigRegistry.register 里【当场加载】配置的
+        // （ConfigTracker.registerConfig 直接 openConfig），也就是说 loading/reloading 回调
+        // 必须在任何一次 register 之前挂好，否则第一次加载事件根本没人接 ——
+        // PreLoadConfig.init() 是最先注册的那一份，晚挂就正好漏掉它。
+        // （同步自 26.2 线 7227ff9 的同款时序修正。）
+        ModConfigEvents.loading(GunMod.MOD_ID).register(LoadingConfigEvent::onLoadingConfig);
+        ModConfigEvents.reloading(GunMod.MOD_ID).register(LoadingConfigEvent::onReloadingConfig);
+
         // 确保配置文件加载，这个阶段将比标准的forge配置文件加载早
         PreLoadConfig.init();
 
-        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.COMMON, CommonConfig.init());
+        // spec 引用交给 ConfigPersist：FCAP v26.1.5 的 ConfigValue.set 只改内存、
+        // ForgeConfigSpec.save() 在新架构下是 no-op，Cloth 保存后的落盘由
+        // ConfigPersist.saveAll() 显式写回 TOML 闭合（根因见该类 javadoc）。
+        // 文件名用 Forge 惯例 <modid>-<type>.toml 显式钉死（与 FCAP 默认命名一致）。
+        ForgeConfigSpec commonSpec = CommonConfig.init();
+        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.COMMON, commonSpec,
+                ConfigPersist.record(ModConfig.Type.COMMON, commonSpec));
         ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.SERVER, ServerConfig.init());
-        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.CLIENT, ClientConfig.init());
+        ForgeConfigSpec clientSpec = ClientConfig.init();
+        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.CLIENT, clientSpec,
+                ConfigPersist.record(ModConfig.Type.CLIENT, clientSpec));
 
         GunMod.setup();
 
@@ -89,6 +108,11 @@ public class TaCZFabric implements ModInitializer {
         // 材料格空白且无法合成。
         CustomIngredientSerializer.register(PartialNBTIngredient.Serializer.INSTANCE);
         CustomIngredientSerializer.register(StrictNBTIngredient.Serializer.INSTANCE);
+        // 【上游 1.21.1+ 的 tacz:nbt —— 跨包合成 bug 的真凶】同步自 26.2 线 61345c5。
+        // 社区升级工具 TaCZPackUpgrader 把旧包批量改写成 tacz:nbt（并把 items 写成单个
+        // 字符串），本仓移植自 1.20.1 线、只认两个旧 forge:* 类型 ⇒ 被升级过的配方全灭。
+        // 语义与归一化见 TaczNbtIngredient / GunSmithTableIngredient#normalizeLegacy。
+        CustomIngredientSerializer.register(TaczNbtIngredient.Serializer.INSTANCE);
 
         Class<? extends EnumArgument<?>> enumArgumentClass = (Class<? extends EnumArgument<?>>) (Class) EnumArgument.class;
         ArgumentTypeRegistry.registerArgumentType(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "enum_argument"), enumArgumentClass,
@@ -122,8 +146,7 @@ public class TaCZFabric implements ModInitializer {
 
         LivingKnockBackEvent.CALLBACK.register(KnockbackChange::onKnockback);
 
-        ModConfigEvents.loading(GunMod.MOD_ID).register(LoadingConfigEvent::onLoadingConfig);
-        ModConfigEvents.reloading(GunMod.MOD_ID).register(LoadingConfigEvent::onReloadingConfig);
+        // （loading/reloading 回调已在本方法最开头注册，见那里的时序注释。）
 
         ServerPlayerEvents.AFTER_RESPAWN.register(PlayerRespawnEvent::onPlayerRespawn);
 

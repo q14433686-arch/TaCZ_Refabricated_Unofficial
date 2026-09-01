@@ -165,6 +165,38 @@ public final class IrisCompat {
     }
 
     /**
+     * The post-composite overlay hook ({@code IrisRenderingPipeline#finalizeLevelRendering} TAIL)
+     * and the late translucent hand pass are bytecode-audited specifically against the Iris
+     * <b>26.1 分支</b>（1.11.x，本分支审计基线 commit
+     * f4c06978f3a1c64869e40cd5cc7c8ed383085cc0，对应 MC 26.1.2）。其他 Iris 构建保持原 solid-pass
+     * 行为，而不是冒险在内部 final 时序变化时得到一颗隐形准星。
+     */
+    public static boolean supportsFinalScopeOverlay() {
+        return FabricLoader.getInstance().getModContainer(CompatRegistry.IRIS)
+                .map(container -> container.getMetadata().getVersion().getFriendlyString().startsWith("1.11"))
+                .orElse(false);
+    }
+
+    /**
+     * @return whether the active Iris hand renderer is currently extracting its solid pass.
+     *         A scope reticle is frozen only in this pass and emitted later by the Iris-only
+     *         {@code HAND_TRANSLUCENT} bridge.
+     */
+    public static boolean isRenderingSolidHandPass() {
+        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS) || !isUsingRenderPack()) {
+            return false;
+        }
+        try {
+            Class<?> handRendererClass = Class.forName("net.irisshaders.iris.pathways.HandRenderer");
+            Object instance = handRendererClass.getField("INSTANCE").get(null);
+            return (Boolean) handRendererClass.getMethod("isActive").invoke(instance)
+                    && (Boolean) handRendererClass.getMethod("isRenderingSolid").invoke(instance);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /**
      * Iris renders hands from its own solid/translucent level phases and suppresses vanilla's hand call.
      * This flag is also used by TACZ's view-bob handling.
      */
@@ -217,6 +249,61 @@ public final class IrisCompat {
             // Fail open: a broken optional Iris reflection bridge must not make the held item vanish.
             return true;
         }
+    }
+
+    /**
+     * poly_mesh GPU 路径（常驻 VBO）在手部 flush 的绘制钩子是否可用。
+     *
+     * <p>该钩子依赖 Iris 26.1 线的 {@code MixinItemInHandRenderer} 拦截架构（源码核实，
+     * Iris 26.1 分支 commit f4c0697）：{@code @WrapWithCondition} 掏掉
+     * {@code renderHandsWithItems} 里的 {@code renderAllFeatures()}，
+     * {@code @WrapOperation} 把 {@code endBatch()} 换成 {@code HandRenderer#endRender()}
+     * （内部仍是 renderAllFeatures + endBatch），并且 Iris 自己也是从
+     * {@code iris$renderHandsWithCustomRenderer} → <b>同一个</b> {@code renderHandsWithItems}
+     * 进来的 —— 所以 TACZ 的 {@code @Inject(renderHandsWithItems, RETURN)} 钩子天然落在
+     * Iris 的手部阶段内。这一架构在本仓审计基线（Iris 1.11.x + MC 26.1.2，
+     * {@code supportsFinalScopeOverlay} 同款版本门）上成立。</p>
+     *
+     * <p>版本不匹配时返回 false：{@code MeshGpuUnderShaders} 的路径整体拒收并保持
+     * collector（宁可不加速，不能画错）。</p>
+     */
+    public static boolean supportsHandFlushHook() {
+        return FabricLoader.getInstance().getModContainer(CompatRegistry.IRIS)
+                .map(container -> container.getMetadata().getVersion().getFriendlyString().startsWith("1.11"))
+                .orElse(false);
+    }
+
+    /**
+     * Classify the mesh renderer's own pipeline as Iris' hand program so the resident-VBO pass,
+     * which never goes through a vanilla {@code RenderType}, still receives shader-pack lighting.
+     *
+     * <p>{@code IrisApi.assignPipeline} maps a {@link RenderPipeline} to an Iris program; Iris'
+     * {@code ShaderKey.findBestMatch} picks {@code HAND_CUTOUT} for our pipeline because it declares
+     * {@code ALPHA_CUTOUT} and the (possibly Iris-extended) entity vertex format. Failures are
+     * swallowed the same way as the scope pipelines: without the assignment the gun still draws,
+     * just with vanilla lighting.</p>
+     */
+    public static boolean assignMeshPipelineToHand(RenderPipeline pipeline) {
+        return assignPipelineToIris(pipeline, "HAND", "mesh_entity_hand");
+    }
+
+    /**
+     * Same classification for the <b>world</b> mesh pass: the resident-VBO pipeline should be lit
+     * by the pack's entity program instead of falling back to the vanilla one.
+     *
+     * <p>常量已按 Q4 要求核实（Iris 26.1 分支源码 {@code api/v0/IrisProgram.java}）：
+     * 全量枚举为 {@code BASIC, TEXTURED, TERRAIN, TERRAIN_SOLID, TERRAIN_CUTOUT, TRANSLUCENT,
+     * SKY_BASIC, SKY_TEXTURED, ARMOR_GLINT, ENTITIES, ENTITIES_TRANSLUCENT, CLOUDS, BLOCK,
+     * BLOCK_TRANSLUCENT, HAND, HAND_TRANSLUCENT, PARTICLES, PARTICLES_TRANSLUCENT,
+     * EMISSIVE_ENTITIES, BEACON_BEAM, LINES} —— 没有 {@code ENTITY}/{@code MAIN}，
+     * 世界路径用 {@code ENTITIES}。{@code EMISSIVE_ENTITIES} 刻意<b>不</b>用于本渲染器的
+     * 无光照兜底管线：那条只跳过 lightmap 采样，不等于「恒全亮」。</p>
+     *
+     * <p>{@code MeshGpuWorldUnderShaders} 保持默认 false：组合已按源码核实，但 26.1.2 上
+     * 没有实机验证（见 MESH_LOADER.md 复测矩阵）。</p>
+     */
+    public static boolean assignMeshPipelineToEntity(RenderPipeline pipeline) {
+        return assignPipelineToIrisAny(pipeline, new String[]{"ENTITIES"}, "mesh_entity_world");
     }
 
     /** @deprecated Feature rendering owns batch flushes in 26.1.2. */

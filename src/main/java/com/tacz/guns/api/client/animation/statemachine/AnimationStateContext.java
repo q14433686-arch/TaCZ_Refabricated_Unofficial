@@ -172,12 +172,54 @@ public class AnimationStateContext {
     /**
      * 将动画停止。停止后的动画关键帧不会再影响模型。
      *
+     * <h3>过渡链上的动画何时连坐（2026-08-30 两轮修复的完整结论）</h3>
+     * {@code runAnimation} 带过渡时长启动动画时，新 runner 是挂在旧 runner 的
+     * {@code transitionTo} 上的 —— 过渡完成前（常见 0.2 秒），
+     * {@code getAnimation(track)} 返回的仍是<b>旧</b> runner。
+     * 于是「stop 该不该波及 transitionTo」出现两个方向相反的实锤案例：
+     *
+     * <p><b>案例一（必须连坐）：开镜检视不可打断。</b>脚本 {@code inspect.transition}
+     * 的「{@code aimingProgress > 0} 就 stop + 回 idle」分支，会被每 tick 的移动类
+     * 输入在检视启动后 ≤50ms 内触发 —— 必然落在过渡窗口内。此时轨道上的当前
+     * runner 是<b>早已停止的旧残骸</b>（上一个 draw/换弹的尸体），检视本体在
+     * {@code transitionTo} 上。只停当前 runner = 停了个寂寞，检视成了无主僵尸，
+     * 状态机已回 idle、所有挂在 inspect 态上的打断手段全部失联，动画播完全程。</p>
+     *
+     * <p><b>案例二（必须豁免）：检视中换弹，换弹动画被误杀。</b>
+     * {@code AnimationStateMachine#trigger} 的调用顺序是先 {@code transition()}
+     * 后 {@code exitAction()}：换弹输入先在 transition 里
+     * {@code runAnimation("reload", ..., 0.2)} —— 新 runner 恰好也挂在
+     * 检视 runner 的 {@code transitionTo} 上 —— 随后 {@code inspect.exit} 的
+     * stopAnimation 才执行。一刀切停 transitionTo 会把刚启动的换弹当场杀掉：
+     * 检视被打断了，换弹却不播（第一轮修复的回归，用户实测）。</p>
+     *
+     * <p><b>判据：出生序号。</b>{@code AnimationStateMachine#trigger} 在进入状态
+     * 转移前快照 runner 发号器（{@code getTriggerSpawnFloor}），
+     * 序号大于快照的 runner 必然是<b>本次 trigger 里刚启动的</b>后继动画 ——
+     * 正是案例二要豁免的那一个；序号不大于快照的（案例一的检视：上一次 trigger
+     * 启动的）照常连坐。两个案例由此完美分野，且不依赖「当前 runner 恰好是残骸」
+     * 这类可能被别的时序破坏的间接特征。不在 trigger 里调用时（快照 = -1）
+     * 无从区分新旧，保持连坐 —— 案例一的语义是默认语义。</p>
+     *
+     * <p>与 {@link #isStopped(int)} 的「有 transitionTo 就看 transitionTo」语义自洽：
+     * 案例一停完后 transitionTo.isStopped() = true（轨道判空闲 ✓）；
+     * 案例二停完后 transitionTo 是活的换弹（轨道判忙 ✓，
+     * {@code findIdleTrack} 不会把它当空闲轨道覆写）。</p>
+     *
      * @param track 轨道在控制器中的指针
      */
     public void stopAnimation(int track) {
         var stateMachine = checkStateMachine();
         ObjectAnimationRunner runner = stateMachine.getAnimationController().getAnimation(track);
         if (runner != null) {
+            ObjectAnimationRunner transitionTo = runner.getTransitionTo();
+            if (transitionTo != null) {
+                long floor = stateMachine.getTriggerSpawnFloor();
+                boolean bornThisTrigger = floor >= 0 && transitionTo.getSpawnOrdinal() > floor;
+                if (!bornThisTrigger) {
+                    transitionTo.stop();
+                }
+            }
             runner.stop();
         }
     }

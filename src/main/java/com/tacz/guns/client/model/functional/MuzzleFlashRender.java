@@ -90,11 +90,14 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
 
         // The depth aperture is restored before ordinary translucent FX, so both muzzle-flash
         // layers would otherwise reappear inside the scope. Select an aperture-aware type only
-        // when this same first-person gun submission actually queued an ocular sequence. At draw
-        // time ScopeDepthCopyState validates both depth copies and fails open to normal rendering.
+        // when this same first-person gun submission actually queued an ocular sequence AND the
+        // scope is at/above ScopePipMinMagnification (default 4x): low-power optics have no
+        // magnified lens picture to make room for, so punching the flash out there only reads
+        // as a hole in the flame. At draw time ScopeDepthCopyState validates both depth copies
+        // and fails open to normal rendering.
         boolean clipToScopeExterior = context.displayContext() != null
                 && context.displayContext().firstPerson()
-                && ScopeRenderTypes.hasScheduledViewmodelAperture();
+                && ScopeRenderTypes.viewmodelFxClipApplies();
         RenderType backgroundType = clipToScopeExterior
                 ? ScopeRenderTypes.flashTranslucentClipped(muzzleFlash.getTexture())
                 : RenderTypes.entityTranslucent(muzzleFlash.getTexture());
