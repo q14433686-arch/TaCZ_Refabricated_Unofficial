@@ -63,7 +63,11 @@
 - 一套内置的 **LRTactical 兼容框架**；
 - 内置的 **TacZ Mesh Loader [TML] 安全子集**（`model_type: "mesh"` poly_mesh 渲染，
   移植自 VellEagle/TacZMeshLoader，GPL-3.0；范围与已知性能边界见
-  [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）；
+  [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）。四个 mesh GPU 开关默认全开：
+  `MeshGpuBaking` / `MeshGpuWorld` / `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders`
+  （**2026-09-02 起**，含光影下常驻显存两条）；若个别 shader pack 仍出现旧的
+  「高模枪挡住太阳/月亮那部分继承天体亮度」，把 `MeshGpuUnderShaders` 与
+  `MeshGpuWorldUnderShaders` 一起关掉即回到 collector（可作 A/B，不影响其他的默认开）。
 - 若干可选模组的兼容接线。
 
 这不代表本项目是 TaCZ 或 LRTactical 的官方版本，也不代表所有第三方枪包、

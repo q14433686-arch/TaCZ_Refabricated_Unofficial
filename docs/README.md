@@ -14,8 +14,8 @@
 
 | 文件 | 内容 |
 |---|---|
-| `MESH_LOADER.md` | 内置 TML（mesh 高模加载 + GPU 静态烘焙第 0/1/2/3 步 + 光影下法线/绕序 §5.7 + 自发光部件天空光 §5.8 + 光影下「继承天体自发光」的判别与否证 §5.9/§5.10 + **§6 未修 BUG 记录：poly 绕序 × 背面剔除** （症状原话 / Complementary Unbound 环境 / 四步复现 / 三层来源 / 三个候选修法）的当前状态、18 项配置、边界、验证清单 |
-| `CHANGELOG_1_21_11.md` | 本分支相对 26.1.2 的变更记录，按交付轮次倒序；**R3 段在顶部追加**（R3 段末尾已含「第四轮」：光影下两个 GPU 开关退回默认关 + EMISSIVE 闩锁修复） |
+| `MESH_LOADER.md` | 内置 TML（mesh 高模加载 + GPU 静态烘焙第 0/1/2/3 步 + 光影下法线/绕序 §5.7 + 自发光部件天空光 §5.8 + 光影下「继承天体自发光」的判别与否证 §5.9/§5.10 + **§6 未修 BUG 记录：poly 绕序 × 背面剔除** （症状原话 / Complementary Unbound 环境 / 四步复现 / 三层来源 / 三个候选修法）的当前状态、18 项配置、边界、验证清单）。**2026-09-02 起四个 GPU 开关默认全开**（含 `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders`；旧的照明不等价结论保留为 A/B 键） |
+| `CHANGELOG_1_21_11.md` | 本分支相对 26.1.2 的变更记录，按交付轮次倒序；**R3 段在顶部追加**（R3 段末尾已含「第四轮」：光影下两个 GPU 开关退回默认关 + EMISSIVE 闩锁修复）；**2026-09-02 顶部另有一条：两开关翻回默认 true** |
 | `AMMO_SOURCE_API.md` | 下游模组替换实体弹药源的公共 API |
 | `CARRYON_COMPAT.md` | Carry On 工作台兼容 |
 | `verify_mixin_targets.py` | 校验所有 mixin 目标与 `@Inject` 处理函数签名（需要 loom 合并 jar；沙箱里会报 `Loom merged jar not found`） |
