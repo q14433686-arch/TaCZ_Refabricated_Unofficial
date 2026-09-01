@@ -63,6 +63,16 @@ cherry-pick 时那两个文件不在冲突面里，就被无声跳过了。⇒ �
 5. **两条 TOML 说明此前已是假话**，一并修：`ScopePipRerender` 还写着"本分支只实现无光影路径"；`ScopePipIsolatePipeline` 还写着"装 Sodium 或 Voxy 就拒绝"（Sodium 已就地同步、Voxy 已搬第二渲染栈）。
    根因：那次改注释的脚本在同一次运行里因别处 assert 失败而中断，只落了别的文件——**同一批里的多处编辑必须逐条 assert 后统一落盘，失败要显式报错**。
 
+## 4b. 一处**我方主动比他们多做**的加固（会在下一轮全量对照里显示为"有意不同形"）
+
+`ScopePipRerender#worldZoomForcedToOne()` 他们与我方原本是同一式子 `rerenderMode() && !failed`。
+它与 `compositeAfterIrisFinal` 的 `rerenderMode() && !hasScene()` 早退合起来是一条**死路**：只要窄遍被
+任何原因拒掉（光影下没开 opt-in、Iris 终局钩子不可用、隔离前提不满足——包括本批新加的
+`shaderRerenderAllowed()` 判假），世界就被压成 1×、镜内又拒绝合成，屏幕内外一起 1X 且不自愈。
+这正好是维护者这次看到的现象形态之一，所以把它改成"这一帧窄遍真会跑才压 1×"（新增
+`scopePassRunnable()`），拒掉时退回"重投影 / 整屏 FOV 变焦"——即开关未生效时的既有形态，可用画面优于一屏 1X。
+他们那边没这条：他们实机是在放行成功的前提下 PASS 的，没暴露这个死角。**若后续把这条同步给他们，请连理由一起给。**
+
 ## 5. 证据级别（AGENTS §2）
 
 - 上述四项 CI `success`（`2314b97e`、`ad8391a`）。
