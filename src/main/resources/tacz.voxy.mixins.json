@@ -1,0 +1,15 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.tacz.guns.mixin.client.voxy",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "com.tacz.guns.mixin.client.voxy.VoxyCompatMixinPlugin",
+  "client": [
+    "VoxyScopeViewportMixin",
+    "VoxyRenderSystemMixin",
+    "VoxyNodeTickMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

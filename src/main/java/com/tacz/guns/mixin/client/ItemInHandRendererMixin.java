@@ -2,6 +2,7 @@ package com.tacz.guns.mixin.client;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.BeforeRenderHandEvent;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
@@ -46,6 +47,32 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
     @Inject(method = "renderHandsWithItems", at = @At("HEAD"))
     public void beforeHandRender(float pPartialTicks, PoseStack pMatrixStack, net.minecraft.client.renderer.SubmitNodeCollector pCollector, LocalPlayer pPlayerEntity, int pCombinedLight, CallbackInfo ci) {
         BeforeRenderHandEvent.CALLBACK.invoker().post(new BeforeRenderHandEvent(pMatrixStack));
+    }
+
+    /**
+     * poly_mesh GPU 路径的绘制点：<b>本方法自己的收尾 flush 之后</b>。
+     *
+     * <p>1.21.11 的手部几何不是延迟到世界渲染末尾统一 flush 的 —— {@code renderHandsWithItems}
+     * 末尾就是 {@code featureRenderDispatcher.renderAllFeatures()} + {@code bufferSource.endBatch()}
+     * （Iris 也恰恰是 hook 这两个调用来接管手部绘制）。已用 CI 上 1.21.11 的真实字节码核实：
+     * 该方法共 143 行、<b>只有 1 个 return</b>，那两个 flush 调用就是倒数第二条与最后一条指令，
+     * 故本注入点必然命中且必然在 flush 之后。在这里画 GPU 骨骼的意义：</p>
+     * <ul>
+     *   <li>ModelView / Projection / 输出目标覆写都是「刚被原版手部批次用过」的那一份，
+     *       不需要在任何调用点之外偷拍矩阵；</li>
+     *   <li>光影下 Iris 正是从本方法内部（{@code iris$renderHandsWithCustomRenderer} →
+     *       {@code HandRenderer#endRender}）做那次 flush 的，所以同一个 RETURN 注入点天然落在
+     *       Iris 的手部渲染阶段内 —— gbuffer 已绑定、{@code gbuffers_hand} 生效，常驻 VBO
+     *       因此能收光影照明（第 2 步 v2，见 {@code docs/TML_GPU_STEP2_HANDFLUSH_20260831.md}）；</li>
+     *   <li>不 patch {@code RenderType#draw} 这种全局热点，也不 mixin Iris 内部类。</li>
+     * </ul>
+     *
+     * <p>{@code require = 0}：映射漂移到最坏是本钩子不注入 —— GPU submit 侧的存活证明
+     * （{@code PolyMeshGpuRenderer#handFlushAlive}）随即失败，下一帧自动回 collector。</p>
+     */
+    @Inject(method = "renderHandsWithItems", at = @At(value = "RETURN"), require = 0)
+    private void tacz$drawMeshGpuAfterHandFeatureFlush(CallbackInfo ci) {
+        PolyMeshGpuRenderer.renderAtHandFlush();
     }
 
     /**

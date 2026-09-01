@@ -1055,6 +1055,9 @@ solid BACKUP draw 发现 final reticle 已排队时，额外 blit 一份私有�
 ```text
 assets/tacz/shaders/core/scope_reticle_final.fsh  # aperture mask + 无 apply_fog
 assets/tacz/shaders/core/scope_ring_final.fsh     # 物理镜框 + 无 apply_fog
+assets/tacz/shaders/core/scope_text_final.fsh     # 镜内 text_show 文字（2026-09-01 B 落地时新增）：
+                                                  # 本 era rendertype_text.fsh 的克隆 + aperture mask
+                                                  # + 同一套无 apply_fog 与 tacz_ScopeFinalOverlay 语义
 ```
 
 ### 三、版本与回退

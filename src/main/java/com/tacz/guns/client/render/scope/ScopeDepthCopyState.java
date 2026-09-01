@@ -68,6 +68,93 @@ public final class ScopeDepthCopyState {
     /** Depth after the body draw; differs from APERTURE_TARGET where visible scope geometry survived. */
     private static final DepthTextureTarget POST_BODY_TARGET = new DepthTextureTarget();
 
+    /**
+     * Read-only snapshot of the exact pre-ocular world-depth copy, intended for the depth-based
+     * PIP composite phase.
+     *
+     * <p><b>Accessor-only (Step 1).</b> This method creates no resources and never mutates the
+     * copy; it currently only lets the PIP/composite code observe the raw GL depth texture and
+     * its dimensions/format. The actual {@link com.mojang.blaze3d.textures.GpuTextureView}
+     * binding path is still an open/verified-by-runtime item (see the handoff doc).</p>
+     *
+     * @return immutable handle; {@link DepthHandle#available()} is false before the first BACKUP
+     *         / APERTURE_COPY cycle has allocated or blitted into the target.
+     */
+    public static DepthHandle worldDepthTarget() {
+        return WORLD_TARGET.snapshot();
+    }
+
+    /**
+     * Read-only snapshot of the aperture depth copy (world + ocular near-depth, copied at the
+     * boundary between the invisible ocular draw and the scope-body draw).
+     *
+     * <p><b>Accessor-only (Step 1).</b> Same lifetime/reentrancy contract as
+     * {@link #worldDepthTarget()}: this is a value snapshot, not the live target.</p>
+     */
+    public static DepthHandle apertureDepthTarget() {
+        return APERTURE_TARGET.snapshot();
+    }
+
+    /**
+     * Whether the current frame completed a full mask cycle (world backup + aperture copy),
+     * i.e. the depth textures {@link #prepareMaskDraw} binds are this frame's live data.
+     *
+     * <p>Scope text uses this as its "mask available" gate (26.1.2's {@code e1c550ee} added the
+     * same accessor for the same reason, and 26.2's {@code ScopeTextSubmitter} checked its own
+     * target sync the same way): when this returns false the deferred text submission falls back
+     * to vanilla {@code submitText} instead of sampling a stale aperture copy, which would clip
+     * glyphs at last frame's lens position.</p>
+     */
+    public static boolean isMaskCycleValid() {
+        return maskValid;
+    }
+
+    /**
+     * 帧首推进帧计数（{@code GameRenderer.render} HEAD）。只递增 {@code frameCounter}
+     * ——<b>不</b>清 {@code maskValid}：终局叠加/reticle 的掩码绘制发生在 Iris 终局钩子
+     * （本帧手部阶段之前），那里读的正是上一帧的 {@code maskValid} 真值，清了会把光影下
+     * 的 reticle 掩码整个打回 mode 0。时效边界改由帧戳表达：BACKUP→APERTURE_COPY 成功时
+     * 盖上 {@code maskCycleFrame = frameCounter}；消费者经
+     * {@link #hasMaskCycleThisFrame()} 查询「周期是否落在当前帧」。</p>
+     */
+    public static void onClientFrameStart() {
+        RenderSystem.assertOnRenderThread();
+        frameCounter++;
+    }
+
+    /**
+     * 本帧手部阶段是否已完成整帧掩码周期（{@code maskValid} 且周期落在当前帧）。
+     *
+     * <p>供「与目镜序列同帧」的消费者使用：poly_mesh 手部批次的孔外剔除（目镜序列先
+     * 于枪身绘制）、Iris 终局钩子处的 PIP 合成（Iris 26.1 把手部搬进了
+     * LevelRenderer#renderLevel 内部，finalizeLevelRendering 跑在同一遍的手部阶段之后，
+     * 拷贝是本帧的）。没有当帧周期的帧（腰射，或当帧周期被身份守卫否决）闸门为假：
+     * 前者不拿陈旧镜孔裁枪身（实机 2026-09-01 的静态透视面病例），后者不拿遗留拷贝
+     * 贴镜内画面（同日的一帧「截图」贴屏病例）—— 都 fail-closed。</p>
+     */
+    public static boolean hasMaskCycleThisFrame() {
+        return maskValid && maskCycleFrame == frameCounter;
+    }
+
+
+    /**
+     * 非 RenderType 绘制路径（poly_mesh GPU 手部批次）的 MASK_OUTSIDE 准备。
+     *
+     * <p>与 vanilla 的 {@code DepthCopyRenderType} 完全同构：{@link #begin} 记录操作，
+     * {@link #beforeDraw()} 在「当前已绑定的 program」上跑 {@code prepareMaskDraw(mode 2)}
+     * —— 身份守卫、绑定 aperture 拷贝单元、置 {@code tacz_ScopeMaskMode=2}。Iris 下这
+     * 正是打补丁的 hand ExtendedShader（IrisDepthRestoreShaderMixin 注入的休眠分支），
+     * world 深度按既有路线取 depthtex2；掩码失效或 program 无该 uniform 时 mode 恒 0
+     * = 不裁剪（fail-open），与 vanilla 语义一致。调用方绘制完成后必须配对
+     * {@link #end()} 归还被占用的纹理单元。</p>
+     */
+    public static void beginExternalMaskOutsideDraw() {
+        RenderSystem.assertOnRenderThread();
+        begin(Operation.MASK_OUTSIDE);
+        beforeDraw();
+
+    }
+
     private static int backupSourceFbo;
     /** FBO bound while the ocular aperture drew; retained for diagnostics only. */
     private static int ocularSourceFbo;
@@ -92,6 +179,12 @@ public final class ScopeDepthCopyState {
     private static @javax.annotation.Nullable DepthIdentity apertureDepthIdentity;
     private static boolean backupValid;
     private static boolean maskValid;
+    /**
+     * 帧计数（{@link #onClientFrameStart()} 递增）与最近一次成功掩码周期的帧戳。
+     * 初值 MIN_VALUE：任何「本帧/上一帧」查询在第一个周期完成前都为假（fail-closed）。
+     */
+    private static int frameCounter;
+    private static int maskCycleFrame = Integer.MIN_VALUE;
     /** Whether a usable world-depth source exists for the mask (Iris depthtex2 or the vanilla copy). */
     private static boolean maskWorldValid;
     private static boolean useIrisPreHandDepth;
@@ -146,7 +239,11 @@ public final class ScopeDepthCopyState {
                     // depthtex2. When a frozen final reticle exists, take one private copy now;
                     // it is the same pre-ocular world depth but remains sampleable after final
                     // composite. Ordinary Iris paths keep using depthtex2 without this blit.
-                    if (ScopeFinalOverlayState.hasPendingReticles()) {
+                    // The PIP path also needs it: the lens composite runs after finalizeLevelRendering,
+                    // so a bare-rim frame (or any frame where the reticle was not queued) must still
+                    // force the private copy or the composite has no world depth to mask against.
+                    if (ScopeFinalOverlayState.hasPendingReticles()
+                            || ScopePipRenderState.needsIrisWorldDepthCopy()) {
                         boolean copied = copyCurrentDepth(WORLD_TARGET, "final-overlay world depth");
                         worldDepthIdentity = copied ? captureDepthIdentity() : null;
                         if (!copied) {
@@ -168,6 +265,9 @@ public final class ScopeDepthCopyState {
                 // written depth since the world backup, so this copy isolates the ocular footprint.
                 disableScopeBranches(program);
                 maskValid = copyApertureDepth() && maskWorldValid;
+                if (maskValid) {
+                    maskCycleFrame = frameCounter;
+                }
                 yield true;
             }
             case RESTORE -> prepareRestoreDraw(program);
@@ -600,6 +700,30 @@ public final class ScopeDepthCopyState {
     private record TextureAllocation(int externalFormat, int type) {
     }
 
+    /**
+     * Immutable, accessor-only view of one of {@code ScopeDepthCopyState}'s private depth copies.
+     *
+     * <p>The composite/PIP phase must not hold the live {@link #framebuffer()} or
+     * {@link #textureId()} beyond the render thread frame in which it is consumed; the copy
+     * targets are reallocated/rebound in place on cross-frame FBO/format changes. Do not call
+     * {@code glDelete*}, {@code glFramebufferTexture}, or otherwise mutate what this handle
+     * points at — ownership stays inside {@link ScopeDepthCopyState}.</p>
+     */
+    public record DepthHandle(int textureId, int framebuffer, int width, int height,
+                              int internalFormat, boolean available) {
+
+        public DepthHandle {
+            // Normalize hidden invalid states: zero texture + zero framebuffer is "no copy yet".
+            if (textureId == 0 && framebuffer == 0 && (width != 0 || height != 0 || internalFormat != 0)) {
+                throw new IllegalArgumentException("inconsistent depth handle: zero GL ids with nonzero size");
+            }
+        }
+
+        public boolean available() {
+            return available && textureId != 0;
+        }
+    }
+
     private record OverriddenUnit(int unit, int previousBinding) {
     }
 
@@ -629,6 +753,17 @@ public final class ScopeDepthCopyState {
 
         int internalFormat() {
             return this.internalFormat;
+        }
+
+        DepthHandle snapshot() {
+            return new DepthHandle(
+                    this.texture,
+                    this.framebuffer,
+                    this.width,
+                    this.height,
+                    this.internalFormat,
+                    this.texture != 0 && this.width > 0 && this.height > 0
+            );
         }
 
         boolean ensure(DepthInfo depth) {

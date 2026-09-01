@@ -13,7 +13,7 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 1.21.11 Fabric**（经由本仓库的 26.1.2 分支）。
-直接上游的版本号为 `0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.1.21.11.R2-hotfix2`**。
+直接上游的版本号为 `0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.1.21.11.R3`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
@@ -22,7 +22,7 @@
 · [直接上游](https://github.com/Sh1roCu/TACZ-Refabricated/tree/1.21.1)
 · [原始 TaCZ 项目](https://github.com/MCModderAnchor/TACZ)
 
-> 仓库源码已使用 R2-hotfix2 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R3 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
 
 ### 选择你的 Minecraft 版本 / Pick your Minecraft version
 
@@ -43,9 +43,9 @@
 | Minecraft | **1.21.11** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **21+**（注意：26.x 分支要求 Java 25，本分支是 21） |
-| Fabric API | **0.141.6+**；R2-hotfix2 构建使用 **0.141.6+1.21.11** |
+| Fabric API | **0.141.6+**；R3 构建使用 **0.141.6+1.21.11** |
 | Forge Config API Port | **21.11.1+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.1.21.11.R2-hotfix2`** |
+| 本 mod | **`1.1.8+fabric.1.21.11.R3`** |
 
 > 1.21.11 是**混淆**版本，构建使用 Loom 的 remap 模式（`net.fabricmc.fabric-loom-remap`）
 > 与官方 Mojang 映射；26.x 分支则是非混淆的。这个差异是本分支绝大多数移植工作的来源。
@@ -61,6 +61,13 @@
 - TaCZ 的 Fabric 1.21.11 端口及随上游带来的默认枪包；
 - 为 1.21.11 API 改写的网络、资源加载、GUI 和渲染接线；
 - 一套内置的 **LRTactical 兼容框架**；
+- 内置的 **TacZ Mesh Loader [TML] 安全子集**（`model_type: "mesh"` poly_mesh 渲染，
+  移植自 VellEagle/TacZMeshLoader，GPL-3.0；范围与已知性能边界见
+  [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）。四个 mesh GPU 开关默认全开：
+  `MeshGpuBaking` / `MeshGpuWorld` / `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders`
+  （**2026-09-02 起**，含光影下常驻显存两条）；若个别 shader pack 仍出现旧的
+  「高模枪挡住太阳/月亮那部分继承天体亮度」，把 `MeshGpuUnderShaders` 与
+  `MeshGpuWorldUnderShaders` 一起关掉即回到 collector（可作 A/B，不影响其他的默认开）。
 - 若干可选模组的兼容接线。
 
 这不代表本项目是 TaCZ 或 LRTactical 的官方版本，也不代表所有第三方枪包、
@@ -82,9 +89,9 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 
 ---
 
-## 3. 瞄具渲染：不是 PIP
+## 3. 瞄具渲染：默认路径不是 PIP，且另有可选的 PIP 二次渲染
 
-**TaCZ 直接上游的瞄具不是 Picture-in-Picture，也不会为镜片再渲染一次世界。**
+**TaCZ 直接上游 1.21.1 的瞄具不是 Picture-in-Picture，也不会为镜片再渲染一次世界。**
 
 人工核对直接上游 1.21.1 的提交
 [`d290355`](https://github.com/Sh1roCu/TACZ-Refabricated/commit/d2903554da039d2355920953a81447784a3f2be2)
@@ -93,15 +100,33 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 仍是同一次世界渲染。它没有第二台相机，也没有第二次 `renderLevel`。
 
 1.21.11 端口无法沿用上游的即时 stencil 调用与绘制时序（1.21.11 的 `RenderPipeline`
-没有模板缓冲状态），因此沿用 26.1.2 分支引入的 **深度孔径**路径：
+没有模板缓冲状态），因此沿用 26.1.2 分支引入的 **深度孔径 / 屏幕空间重投影**默认路径：
 
 1. 用不可见目镜几何写入孔径深度；
 2. 在镜身绘制前保存并复制所需的世界/孔径深度；
 3. 枪身、相关配件、枪口火光和准星按孔径关系过滤；
 4. 完成后恢复对应的世界深度。
 
-这套流程仍只使用同一次世界渲染，**不是第二份世界画面**。代码中的
-`PictureInPictureRenderer` 仅用于枪械工作台的 GUI 模型预览，与瞄具实现无关。
+这套默认路径仍然只使用同一次世界渲染，镜片画面是**已渲染成品帧的屏幕空间重投影**，
+**不是第二份世界画面**。代码中的 vanilla `PictureInPictureRenderer` 仅用于枪械工作台的
+GUI 模型预览，与瞄具实现无关。
+
+**但本分支额外提供可选的真正 PIP 二次渲染**（默认全部关闭，开启后才会出现第二台相机 /
+第二次 `renderLevel`）：
+
+- `ScopePipEnable`（默认关）：开启第一人称镜内画中画。
+- `ScopePipRerender`（默认关，实验性）：在 PIP 开启时，用窄 FOV 把世界**真画第二遍**作为
+  镜内画面（默认每帧真渲一次；`ScopePipRerenderInterval` 可改为每 N 帧一次并在中间帧复用）。
+  这个分支目前把第二遍画进主目标，所以 `ScopePipResolutionScale`（默认 0.75）是**只读未生效**
+  的配置位；真正降采样要等离屏 target 重定向（`docs/SCOPE_PIP_RERENDER_1211_PORT_PLAN`
+  的 B5），届时再按 0.75 缩放。
+- Iris 光影下需要 `ScopePipAllowShaderPacks`（默认关）先放行，再由
+  `ScopePipIsolatePipeline`（默认 true）给镜内那遍独立管线；Sodium/Voxy 由本分支就地补丁。
+- 详见 [`docs/SCOPE_PIP_RERENDER_1211_PORT_PLAN_20260830.md`](docs/SCOPE_PIP_RERENDER_1211_PORT_PLAN_20260830.md)
+  与 `RenderConfig` 中相应键的注释。
+
+所以“本端口永远只渲染一次世界”这句话只在默认路径下成立；装包后若开镜仍用屏幕空间重投影，
+就是上面两个 PIP 键都还没开。
 
 Iris 有专门的 HAND/depth 接线；其他 shader pack 没有因此自动获得兼容保证。
 
@@ -203,7 +228,7 @@ gunpack.meta.json
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.1.21.11.R2-hotfix2` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.1.21.11.R3` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容
@@ -235,6 +260,7 @@ gunpack.meta.json
 
 - TaCZ 与本端口对应代码使用 GPL-3.0；
 - 移入的 LRTactical 代码部分沿用其 GPL-3.0；
+- 移入的 TacZ Mesh Loader 代码部分沿用其 GPL-3.0（来源 VellEagle/TacZMeshLoader）；
 - 默认枪包的 `gunpack_info.json` 声明其资源为 CC BY-NC-ND 4.0；
 - 随 jar 打包的 Mayday Animation Engine 使用 MIT；
 - 其他第三方库、资源和外部内容包可能有各自许可。

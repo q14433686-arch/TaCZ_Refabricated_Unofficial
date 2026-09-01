@@ -33,6 +33,12 @@ loom {
             // The embedded default pack alone contains >80 MiB of textures, audio, and models.
             // 384 MiB consistently OOMs during its first resource reload.
             vmArg "-Xmx768m"
+            // Step 2 lens diagnostic. Enable with: gradlew runClient -PtaczScopeDebug=true
+            // (The TACZ client config file does NOT contain this switch; it is a JVM property.)
+            vmArg "-Dtacz.scope.pip.debug.paint=${providers.gradleProperty('taczScopeDebug').getOrElse('false')}"
+            // Step 3 real scope PIP. Enable with: gradlew runClient -PtaczScopePip=true
+            // (JVM property, not a config-file option; same reason as Step 2.)
+            vmArg "-Dtacz.scope.pip.enable=${providers.gradleProperty('taczScopePip').getOrElse('false')}"
         }
         server {
             vmArg "-Xmx384m"
@@ -380,4 +386,12 @@ publishing {
             url "file:///D:/github_maven/Sh1roCu_MCRepo/repository"
         }
     }
+}
+
+// The render-timing bytecode probes are in scripts/mesh_render_probe.gradle and are opt-in
+// (`-PmeshProbe`); they used to be TEMP blocks here attached with compileJava.finalizedBy, which
+// made them run on every CI build and had to be deleted before each release.
+// Why the sandbox needs them at all: docs/TML_GPU_PROBE_TOOL_20260831.md.
+if (project.hasProperty('meshProbe')) {
+    apply from: 'scripts/mesh_render_probe.gradle'
 }

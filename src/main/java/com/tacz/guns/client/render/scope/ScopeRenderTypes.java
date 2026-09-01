@@ -43,6 +43,14 @@ public final class ScopeRenderTypes {
     private static final Map<Identifier, RenderType> VIEWMODEL_CUTOUT_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_TRANSLUCENT_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_SWIRL_TYPES = new HashMap<>();
+    /**
+     * Per-player-skin masked arm types. The first-person arm's RenderType is chosen inside
+     * {@code AvatarRenderer#renderHand} (vanilla {@code entityTranslucent(skin)}), so {@code RenderHelper}
+     * swaps it to this equivalent at submit time through a {@code SubmitNodeCollector} proxy.
+     */
+    private static final Map<Identifier, RenderType> ARM_TRANSLUCENT_TYPES = new HashMap<>();
+    /** Per-font-atlas-page masked text types (key = the shell page identifier, see ScopeTextSubmitter). */
+    private static final Map<Identifier, RenderType> MASKED_TEXT_TYPES = new HashMap<>();
 
     /**
      * 1.21.11 的 {@code DepthTestFunction} 没有 {@code ALWAYS}。
@@ -121,6 +129,20 @@ public final class ScopeRenderTypes {
     private static final RenderPipeline FINAL_VISIBLE_RETICLE_PIPELINE = createFinalVisibleReticlePipeline();
     private static final RenderPipeline FINAL_OCULAR_RING_PIPELINE = createFinalOcularRingPipeline();
 
+    /**
+     * Masked <b>text</b> pipeline for in-scope glyphs (ammo counters etc.).
+     *
+     * <p>Bytecode-equivalent to vanilla {@link RenderPipelines#TEXT} (the pipeline behind
+     * {@code RenderTypes.text}) with only the fragment shader swapped for
+     * {@code core/scope_text_final} - that shader is a line-for-line clone of 1.21.11's
+     * {@code rendertype_text.fsh} plus the ocular depth mask and the final-overlay flag. This is the
+     * 1.21.11 depth-aperture counterpart of 26.2's in-scope text clipping (26.2 {@code 9d036594},
+     * ported onward to 26.1.2 as {@code e1c550ee}), rebuilt with our own {@code clonePipeline}
+     * machinery instead of a snippet rebuild - see
+     * {@code docs/lineage/SYNC_REVIEW_2612_PIP_BACKPORT_20260901.md} §2 for the era mapping table.</p>
+     */
+    private static final RenderPipeline MASKED_TEXT_PIPELINE = createMaskedTextPipeline();
+
     /** Entity cutout plus an outside-aperture mask for the gun body and non-scope attachments. */
     private static final RenderPipeline VIEWMODEL_CUTOUT_PIPELINE = createViewmodelCutoutPipeline();
 
@@ -153,6 +175,21 @@ public final class ScopeRenderTypes {
     }
 
     /**
+     * @return whether the current viewmodel foreground layers (gun body, attachments, muzzle
+     *         flash, first-person arm) should be clipped out of the ocular aperture this frame.
+     *
+     * <p>This is the aperture gate used by {@link #clipForViewmodel}, the flash types and the
+     * arm-collector proxy. Besides the raw "an ocular was queued" flag it also consults
+     * {@link ScopePipRenderState#shouldClipViewmodelForeground()}: low-magnification / rusty
+     * scopes (and a combination scope while it is on its low-power stage) keep the classic
+     * whole-screen zoom and must <b>not</b> erase the hand, muzzle flash or gun body inside the
+     * small lens.</p>
+     */
+    public static boolean shouldClipViewmodel() {
+        return apertureScheduledForViewmodel && ScopePipRenderState.shouldClipViewmodelForeground();
+    }
+
+    /**
      * Wraps the plain scope-body type so its draw boundary first copies the aperture depth
      * (world depth plus only the ocular differences) into the mask texture, then draws the body.
      */
@@ -178,6 +215,40 @@ public final class ScopeRenderTypes {
 
     public static RenderType visibleReticle(Identifier texture) {
         return VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createVisibleReticleType);
+    }
+
+    /**
+     * Masked text type bound to one font-atlas page (see {@link ScopeTextSubmitter}, which owns the
+     * page-identifier lifecycle).
+     *
+     * <p>Setup mirrors vanilla text's ({@code Sampler0 = the glyph page, useLightmap}) plus the two
+     * placeholder depth-sampler bindings that {@link ScopeDepthCopyState} replaces with the live
+     * world/aperture copies at the draw boundary. Wrapping in {@code Operation.MASK} gives the type the
+     * exact same boundary the etched reticle uses, so glyphs only survive inside the true ocular
+     * footprint.</p>
+     */
+    public static RenderType maskedText(Identifier pageId) {
+        return MASKED_TEXT_TYPES.computeIfAbsent(pageId, ScopeRenderTypes::createMaskedTextType);
+    }
+
+    private static RenderType createMaskedTextType(Identifier pageId) {
+        RenderSetup setup = RenderSetup.builder(MASKED_TEXT_PIPELINE)
+                .withTexture("Sampler0", pageId)
+                // Placeholder bindings satisfy RenderPass validation; ScopeDepthCopyState rebinds
+                // both samplers to the live world/aperture depth copies when the mask draw runs.
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, pageId)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, pageId)
+                // Vanilla text's RenderSetup is exactly Sampler0 + useLightmap (no overlay): the
+                // lightmap sampler feeds rendertype_text.vsh's Sampler2/UV2 path, which the cloned
+                // vertex shader still expects.
+                .useLightmap()
+                .createRenderSetup();
+        RenderType base = RenderType.create("tacz_scope_masked_text_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_masked_text",
+                base,
+                ScopeDepthCopyState.Operation.MASK
+        );
     }
 
     /** Iris-only late etched reticle: writes foreground depth after world translucency. */
@@ -219,7 +290,7 @@ public final class ScopeRenderTypes {
      * All other contexts and failed aperture cycles retain the caller's original behavior.
      */
     public static RenderType clipForViewmodel(RenderType original, Identifier texture, boolean applies) {
-        if (!applies || !apertureScheduledForViewmodel) {
+        if (!applies || !shouldClipViewmodel()) {
             return original;
         }
         // Gun displays may opt into entityTranslucent; retain that blend/sort recipe rather than
@@ -238,6 +309,24 @@ public final class ScopeRenderTypes {
     /** Muzzle-flash additive glow: retain vanilla energy-swirl appearance outside the ocular. */
     public static RenderType flashSwirlClipped(Identifier texture) {
         return FLASH_SWIRL_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createFlashSwirlType);
+    }
+
+    /**
+     * First-person arm/sleeve: the "discard inside the ocular" counterpart of vanilla
+     * {@code entityTranslucent(skin)}.
+     *
+     * <p>The arm is the only viewmodel piece whose RenderType is chosen inside
+     * {@code AvatarRenderer#renderHand} (bytecode-read: {@code submitModelPart(arm, pose,
+     * RenderTypes.entityTranslucent(skin), ...)}). It cannot be swapped at the gun call site the way
+     * {@link #clipForViewmodel} swaps attachments and gun bodies. {@code RenderHelper} therefore wraps
+     * the {@code SubmitNodeCollector} in a proxy and identity-replaces that vanilla type with the type
+     * returned here. The pipeline and RenderSetup are byte-for-byte the mirrored
+     * {@code entityTranslucent} setup used by the flash quad (same blend, same sortOnUpload and
+     * affectsCrumbling), so under shaders it maps to the same Iris {@code HAND_TRANSLUCENT} program and
+     * gets the same injected mask branch.</p>
+     */
+    public static RenderType armClipped(Identifier skinTexture) {
+        return ARM_TRANSLUCENT_TYPES.computeIfAbsent(skinTexture, ScopeRenderTypes::createArmClippedType);
     }
 
     private static RenderType createApertureCopyType(RenderType base) {
@@ -447,6 +536,29 @@ public final class ScopeRenderTypes {
         RenderType base = RenderType.create("tacz_scope_flash_translucent_base", setup);
         return new DepthCopyRenderType(
                 "tacz_scope_flash_translucent",
+                base,
+                ScopeDepthCopyState.Operation.MASK_OUTSIDE
+        );
+    }
+
+    private static RenderType createArmClippedType(Identifier texture) {
+        // Same pipeline and setup recipe as createFlashTranslucentType: bytecode-equivalent to
+        // RenderTypes.entityTranslucent(texture, true) (lightmap, overlay, affectsCrumbling,
+        // sortOnUpload, outline) plus the two depth-mask samplers. Kept as its own RenderType so
+        // avatar-arm submissions are distinguishable from muzzle-flash quads in render diagnostics.
+        RenderSetup setup = RenderSetup.builder(FLASH_TRANSLUCENT_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
+                .useLightmap()
+                .useOverlay()
+                .affectsCrumbling()
+                .sortOnUpload()
+                .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
+                .createRenderSetup();
+        RenderType base = RenderType.create("tacz_scope_arm_clipped_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_arm_clipped",
                 base,
                 ScopeDepthCopyState.Operation.MASK_OUTSIDE
         );
@@ -720,6 +832,28 @@ public final class ScopeRenderTypes {
      */
     private static boolean hasBlending(RenderType type) {
         return type.pipeline().getBlendFunction().isPresent();
+    }
+
+    private static RenderPipeline createMaskedTextPipeline() {
+        // Source of truth: vanilla's text pipeline (RenderPipelines.TEXT = core/rendertype_text
+        // vsh+fsh, lightmap-carrying text quads). clonePipeline copies vertex format/mode, shader
+        // defines, uniforms and depth state verbatim; only the fragment shader and the two depth-mask
+        // samplers are ours. Depth state stays TEXT's own - the mask clips in the fragment stage,
+        // exactly like the etched reticle, and 26.2 likewise kept its WORLD_TEXT snippet untouched.
+        RenderPipeline.Builder builder = clonePipeline(
+                RenderPipelines.TEXT,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_masked_text"));
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_text_final"));
+        builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        // Classified as HAND_TRANSLUCENT (text is translucent material) so Iris maps it onto the
+        // first-person hand program instead of rejecting an unknown pipeline. Same double-safety
+        // posture as the reticle: the mask machinery still binds its own depth copies.
+        IrisCompat.assignPipelineToIris(pipeline, "HAND_TRANSLUCENT", "scope_masked_text");
+        return pipeline;
     }
 
     private static RenderPipeline.Builder clonePipeline(RenderPipeline source, Identifier location) {

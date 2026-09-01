@@ -195,6 +195,58 @@ public final class IrisCompat {
     }
 
     /**
+     * Whether the active Iris line exposes the hand-flush timing the mesh GPU path relies on.
+     *
+     * <p>The mesh GPU pass under a shader pack is drawn from {@code ItemInHandRenderer#renderHandsWithItems}
+     * immediately after the flush that Iris replaces there ({@code HandRenderer#endRender()} calls
+     * {@code FeatureRenderDispatcher#renderAllFeatures()} + {@code BufferSource#endBatch()}). That
+     * replacement pair is what was audited for Iris 1.10.x on 1.21.11; other Iris lines keep the
+     * mesh guns on the collector path. A stale assumption here would only cost a frame (the
+     * submit-side liveness proof in {@code PolyMeshGpuRenderer} falls back to the collector), but
+     * an audited version gate is the cheaper guarantee.</p>
+     */
+    public static boolean supportsHandFlushHook() {
+        return FabricLoader.getInstance().getModContainer(CompatRegistry.IRIS)
+                .map(container -> container.getMetadata().getVersion().getFriendlyString().startsWith("1.10."))
+                .orElse(false);
+    }
+
+    /**
+     * Classify the mesh renderer's own pipeline as Iris' hand program so the resident-VBO pass,
+     * which never goes through a vanilla {@code RenderType}, still receives shader-pack lighting.
+     *
+     * <p>{@code IrisApi.assignPipeline} maps a {@link RenderPipeline} to an Iris program; Iris'
+     * {@code ShaderKey.findBestMatch} picks {@code HAND_CUTOUT} for our pipeline because it declares
+     * {@code ALPHA_CUTOUT} and the (possibly Iris-extended) entity vertex format. Failures are
+     * swallowed the same way as the scope pipelines: without the assignment the gun still draws,
+     * just with vanilla lighting.</p>
+     */
+    public static boolean assignMeshPipelineToHand(RenderPipeline pipeline) {
+        return assignPipelineToIris(pipeline, "HAND", "mesh_entity_hand");
+    }
+
+    /**
+     * Same classification for the <b>world</b> mesh pass: the resident-VBO pipeline should be lit
+     * by the pack's entity program instead of falling back to the vanilla one.
+     *
+     * <p>The constant is {@code IrisProgram.ENTITIES}; the full enum of the Iris 1.10.7 jar on the
+     * 1.21.11 classpath was dumped by {@code dumpHandFlushApi}, and it exposes {@code BASIC},
+     * {@code TERRAIN*}, {@code ENTITIES}, {@code ENTITIES_TRANSLUCENT}, {@code EMISSIVE_ENTITIES},
+     * {@code HAND}, {@code HAND_TRANSLUCENT}, {@code PARTICLES*}, {@code BLOCK*}, {@code CLOUDS},
+     * {@code SKY_*}, {@code ARMOR_GLINT}, {@code BEACON_BEAM}, {@code LINES}, {@code TEXTURED},
+     * {@code TRANSLUCENT} -- there is no {@code ENTITY}/{@code MAIN}, so an earlier guess would
+     * simply have logged one warning and left the gun unlit. {@code EMISSIVE_ENTITIES} is
+     * deliberately <b>not</b> used for this renderer's unlit fallback pipeline: that pipeline only
+     * skips the lightmap texture, it does not mean "always full bright".</p>
+     *
+     * <p>{@code MeshGpuWorldUnderShaders} still defaults to false: the constant is now known, but
+     * the combination has never been run in-game.</p>
+     */
+    public static boolean assignMeshPipelineToEntity(RenderPipeline pipeline) {
+        return assignPipelineToIrisAny(pipeline, new String[]{"ENTITIES"}, "mesh_entity_world");
+    }
+
+    /**
      * @return whether the active Iris hand renderer is currently extracting its solid pass.
      *         A scope reticle is frozen only in this pass and emitted later by the Iris-only
      *         {@code HAND_TRANSLUCENT} bridge.

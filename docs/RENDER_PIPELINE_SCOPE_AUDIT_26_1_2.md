@@ -224,6 +224,16 @@ Iris 已在 `beginHand()` 把准确的 pre-hand 世界深度复制到 `depthtex2
 只重绘 ocular cleanup 几何，fragment 按 `gl_FragCoord` 采样并写 `gl_FragDepth`。因此只恢复镜孔
 像素，不会抹掉已绘制镜框的深度。
 
+### 5.11 镜内 `text_show` 文本被整段丢弃（2026-09-01 补记）
+
+有序批次把 attachment body 从 `super.submit(...)` 拆成自己重放快照之后，
+`BedrockRenderSnapshot#functionalTasks` 里那条 `submitText` 任务没有任何调用点去 flush ——
+`submitFunctionalTasks` 全仓只剩 `BedrockModel.java:381` 一处，而瞄具路径绕开了它。后果不是"位置不对"
+而是"永远不存在"，且与本仓那道 `TEXT_SHOW_AIM_START` 门禁混在一起，长期被当成设计行为。
+根因、修法（含与 26.1.2 那版补丁的两处差别）与实机四格剧本见 `docs/lineage/SCOPE_TEXT_SHOW_1211_20260901.md`；
+本节只记录它与本文的关系：**它不改 aperture / cleanup / mask 的任何顺序**，只是把丢掉的提交补回
+`order 0`，或在与准星同族的延迟覆盖层里补回。
+
 ## 6. 当前修复架构
 
 ### 6.1 有序批次
@@ -234,10 +244,13 @@ Iris 已在 `beginHand()` 把准确的 pre-hand 世界深度复制到 `depthtex2
 - order `-2`：aperture-copy 包装后的 attachment body（draw 边界先复制 ocular aperture
   depth，再正常绘制移除了活动 ocular 的镜身）；
 - order `-1`：同一 ocular 的 exact world-depth cleanup；
-- 默认 order `0`：枪身与普通配件（镜内像素走 outside-mask 丢弃）；
-- order `1`：物理 `ocular_ring` 镜框单独重画，不参与 aperture 裁剪并重新写入近处深度；
-- order `2`：illuminated reticle 与 CPU 过滤后的纯 etched reticle（两者都经
-  ocular 屏幕空间 mask 裁剪）。
+- 默认 order `0`：枪身与普通配件（镜内像素走 outside-mask 丢弃）；**2026-09-01 起**同一桶里还包含
+  瞄具本体上 `text_show` 的字体提交任务（镜内弹药计数），见 `docs/lineage/SCOPE_TEXT_SHOW_1211_20260901.md`；
+- order `1`：illuminated reticle 与 CPU 过滤后的纯 etched reticle（两者都经 ocular 屏幕空间 mask
+  裁剪）—— 常量是 `SCOPE_RETICLE_ORDER`；
+- order `2`：物理 `ocular_ring` 镜框单独重画，不参与 aperture 裁剪并重新写入近处深度 ——
+  常量是 `SCOPE_OCULAR_RING_ORDER`。（本篇上一版把 1/2 两行的内容写反了，已与
+  `BedrockAttachmentModel` 第 64-67、83 行的常量对齐。）
 
 使用 `SubmitNodeCollector.order(int)` 是必要的，因为 custom geometry 在单个 order 内按
 `HashMap<RenderType, ...>` 分组，不能依赖其偶然迭代顺序。

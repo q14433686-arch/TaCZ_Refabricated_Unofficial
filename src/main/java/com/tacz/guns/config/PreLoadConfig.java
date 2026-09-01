@@ -37,7 +37,10 @@ public class PreLoadConfig {
 
     public static void init() {
         // 注册到 ConfigRegistry (触发正常的 ModConfigEvents)
-        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.COMMON, spec, "tacz-pre.toml");
+        // 文件名交给 ConfigPersist 钉：它同时把这份 spec 记进落盘表 —— DefaultPackDebug
+        // 是 Cloth 面板 OtherClothConfig 会改的键，不记就永远写不回 tacz-pre.toml。
+        ConfigRegistry.INSTANCE.register(GunMod.MOD_ID, ModConfig.Type.COMMON, spec,
+                ConfigPersist.recordNamed(spec, "tacz-pre.toml"));
     }
 
     /**

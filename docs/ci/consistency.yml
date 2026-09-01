@@ -1,0 +1,56 @@
+name: Version consistency
+
+# 版本一致性守门：改了 gradle.properties 却忘了同步 README 时，PR 会红。
+# 从 refab 26.2 侧的 consistency.yml v2 回流（2026-08-31），差异只有分支列表。
+#
+# v2 的关键点（上游踩过的理由，原文照抄在这里以免本分支重犯）：
+# 此前只在主分支跑，而版本号改动都发生在 arena 工作分支上，守门等到合并后才叫就晚了。
+# build.yml 虽然也跑同一脚本，但它 paths-ignore 掉了 *.md，「只改 README」的提交测不到
+# —— 所以本流程必须独立存在。
+
+on:
+  push:
+    branches:
+      - 'arena/**'
+      - '1.21.11'
+      - '26.1.2'
+      - '26.2(main)'
+    paths:
+      - 'gradle.properties'
+      - 'README.md'
+      - 'src/main/resources/fabric.mod.json'
+      - 'scripts/check_release_consistency.sh'
+  pull_request:
+    paths:
+      - 'gradle.properties'
+      - 'README.md'
+      - 'src/main/resources/fabric.mod.json'
+      - 'scripts/check_release_consistency.sh'
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: README 与 gradle.properties 版本一致性
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 准备校验脚本
+        run: |
+          # AGENTS.md §1：脚本本体只需存在于默认分支；本分支没有就从默认分支取。
+          if [ ! -f scripts/check_release_consistency.sh ]; then
+            git fetch -q --depth 1 origin '26.2(main)' || true
+            mkdir -p scripts
+            git show 'FETCH_HEAD:scripts/check_release_consistency.sh' > scripts/check_release_consistency.sh || true
+          fi
+
+      - name: 检查当前分支
+        run: bash scripts/check_release_consistency.sh
+
+      - name: 失败提示
+        if: failure()
+        run: |
+          echo "::error::README.md 与 gradle.properties 的版本号不一致。"
+          echo "::error::请参考 AGENTS.md §1 与 docs/publish/ 下的发布文案，同步以下位置："
+          echo "::error::顶部版本句 / 「已使用 R? 版本号」提示行 / 支持环境表 / SemVer 说明段"
+          echo "::error::本分支导航表指向的是分支而不是 tag，所以第 5 项在本分支不适用。"
