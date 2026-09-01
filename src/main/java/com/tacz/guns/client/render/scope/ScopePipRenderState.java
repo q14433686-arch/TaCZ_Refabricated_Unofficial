@@ -89,18 +89,16 @@ public final class ScopePipRenderState {
     private static final String SCENE_SAMPLER_UNIFORM = "tacz_SceneColorSampler";
     private static final float DEFAULT_MIN_AIMING_PROGRESS = 0.05f;
     /**
-     * Iris finished-frame recomposition only paints once the aperture is essentially centred.
-     * Before this the source region can overlap the viewmodel (see compositeAfterIrisFinal).
+     * PIP 合成（二次渲染与重投影同一条）在开镜滑入中开始显示的进度阈。引擎层接管
+     * （窄遍/捕获/预热/世界 FOV 让位）在开镜瞬间（进度 &gt; 0）启动；本阈只决定贴片
+     * 何时上屏：避开开/退镜边界「镜孔骑在髋部枪身上」的那一段——那时把镜内画面
+     * 贴进镜孔，读起来就是「枪身上闪现的截图」（实机 2026-09-01）。滑入过 1/3 即显示
+     * （用户裁定：重投影也做开镜即接管，过渡期镜内无画面像 bug；2026-09-01）。
+     *
+     * <p>已知折衷：Iris 重投影在滑入中段（0.35→~0.9）采样的是含枪身的成品帧中心区，
+     * 镜缘可能出现放大的镜环残影——先按裁定放开，实机观感不行再单独处理该段。</p>
      */
-    private static final float IRIS_FULL_AIM_THRESHOLD = 0.995f;
-    /**
-     * 二次渲染合成在开镜滑入中开始显示的进度阈（远低于重投影路径的
-     * {@link #IRIS_FULL_AIM_THRESHOLD}：窄 FOV 真画没有「中心叠着 viewmodel」的约束，
-     * 只需避开开/退镜边界的枪身位置——开镜第 1 帧/退镜末帧的镜孔掩码还在髋部枪身
-     * 上，那时合成会把镜内画面贴片在枪身上闪现一下（实机 2026-09-01）。滑入途中
-     * 镜内即有画面的裁定不受影响：阈值只遮掉贴着枪身的那一小段）。
-     */
-    private static final float RERENDER_REVEAL_THRESHOLD = 0.35f;
+    private static final float PIP_REVEAL_THRESHOLD = 0.35f;
 
     private static RenderPipeline pipeline;
     private static int builtLensZoom1k = -1;
@@ -310,7 +308,9 @@ public final class ScopePipRenderState {
         }
         float progress = currentAimingProgress(mc,
                 Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
-        return progress >= IRIS_FULL_AIM_THRESHOLD;
+        // 与合成显示阈同一条（PIP_REVEAL_THRESHOLD）：低于阈值的帧合成不上屏，
+        // 但强制拷贝必须提前就绪——合成显示的第一帧就要有 world 深度可用。
+        return progress >= PIP_REVEAL_THRESHOLD;
     }
 
     /**
@@ -469,12 +469,13 @@ public final class ScopePipRenderState {
             sceneCaptured = false;
             return;
         }
-        // The finished-frame source only safely covers the lens at essentially full ADS; before
-        // that the centre region can overlap the viewmodel. Keep the capture and the composite on
-        // the same threshold so a deferred reticle/rim is not queued for a lens that will not paint.
+        // 捕获与合成必须同阈（PIP_REVEAL_THRESHOLD）：合成已按用户裁定提前接管
+        // （2026-09-01：重投影也做开镜即接管，过渡期镜内无画面像 bug），捕获若仍压在
+        // 全 ADS，显示的第一帧就没有成品帧可贴。捕获本身无害（只是拷贝），
+        // 何时上屏由合成的同一条阈决定。
         float progress = currentAimingProgress(mc,
                 Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
-        if (progress < IRIS_FULL_AIM_THRESHOLD) {
+        if (progress < PIP_REVEAL_THRESHOLD) {
             sceneCaptured = false;
             return;
         }
@@ -562,12 +563,12 @@ public final class ScopePipRenderState {
             if (!ScopePipRerender.hasScene()) {
                 return;
             }
-            // 开/退镜边界闪一下（实机 2026-09-01）：见 RERENDER_REVEAL_THRESHOLD。
+            // 开/退镜边界闪一下（实机 2026-09-01）：见 PIP_REVEAL_THRESHOLD。
             // （历史备注：被打断的会话轮曾把全 ADS 门扩大到二次渲染（b9f9db7），把
             // 「一帧截图」与「过渡期贴片」混为一谈——前者已被掩码周期帧戳闸根治，
             // 后者按用户现行裁定（开镜即接管、母版实机行为优先）只避开髋部段。）
             if (currentAimingProgress(mc, mc.getDeltaTracker()
-                    .getGameTimeDeltaPartialTick(false)) < RERENDER_REVEAL_THRESHOLD) {
+                    .getGameTimeDeltaPartialTick(false)) < PIP_REVEAL_THRESHOLD) {
                 return;
             }
         } else if (!sceneCaptured) {
@@ -633,17 +634,11 @@ public final class ScopePipRenderState {
         // too poppy, the next step is a verified dynamic-uniform pipeline, not a per-frame register.
         float progress = currentAimingProgress(mc,
                 Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
-        // 同 compositeAfterHand 的滑入显示阈：只约束二次渲染分支（重投影分支在下方
-        // 沿用 IRIS_FULL_AIM_THRESHOLD 全 ADS 门，不动）。开镜即接管（用户裁定
-        // 2026-09-01 两度确认：母版实机行为优先于其文档声明）——窄遍/捕获/预热仍
-        // 在开镜瞬间启动，滑入过 1/3 镜内即有画面。
-        if (ScopePipRerender.rerenderMode()
-                && progress < RERENDER_REVEAL_THRESHOLD) {
-            return;
-        }
-        // 全 ADS 门只属于「重投影成品帧」变体：它采样屏幕中心，滑入途中中心区还叠着
-        // viewmodel。二次渲染的镜内画面是窄 FOV 真画、合成只是等位贴回 —— 没有这个约束。
-        if (!ScopePipRerender.rerenderMode() && progress < IRIS_FULL_AIM_THRESHOLD) {
+        // 显示阈两种模式同一条（PIP_REVEAL_THRESHOLD）。用户裁定（2026-09-01）：
+        // 重投影也做开镜即接管——过渡期镜内没有画面、到全 ADS 才突然出现，读起来
+        // 就像 bug。已知折衷见字段注释（滑入中段成品帧中心含枪身，镜缘可能有放大
+        // 镜环残影）。引擎层接管（窄遍/捕获/预热/FOV 让位）自始就在开镜瞬间。
+        if (progress < PIP_REVEAL_THRESHOLD) {
             return;
         }
         // 倍率分流：重投影=整屏重投影的 lensZoom()；二次渲染（含光影）=窄 FOV 真画，
