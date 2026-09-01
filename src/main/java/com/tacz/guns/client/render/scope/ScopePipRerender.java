@@ -7,6 +7,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.compat.iris.IrisScopePipelineCompat;
+import com.tacz.guns.compat.sodium.SodiumCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.util.math.MathUtil;
 import net.fabricmc.loader.api.FabricLoader;
@@ -116,20 +117,23 @@ public final class ScopePipRerender {
         return scopePassIsolated;
     }
 
-    /** Sodium/Voxy 会在窄遍里绕过我们的投影通道：本线没有对应的 compat，装了就不放行光影窄遍。 */
-    private static final boolean THIRD_PARTY_WORLD_RENDERER_PRESENT =
-            FabricLoader.getInstance().isModLoaded("sodium")
-                    || FabricLoader.getInstance().isModLoaded("embeddium")
-                    || FabricLoader.getInstance().isModLoaded("rubidium")
-                    || FabricLoader.getInstance().isModLoaded("voxelism");
+    /**
+     * Voxy 会绕开我方的世界投影通道，而本线还没有它的第二渲染栈（他们那侧是 475 行深反射）。
+     *
+     * <p><b>Sodium 不在其列</b>：Fabric 上 Iris 硬依赖 Sodium，"装了 Sodium 就不放行"等于
+     * "有光影就不放行"——那样这条隔离永远不可能被触发。Sodium 的地形投影快照与区块 uniform
+     * 闸门由 {@link SodiumCompat} 就地同步（他们的 26.1.2 也是这么做的）。</p>
+     */
+    private static final boolean VOXY_PRESENT = FabricLoader.getInstance().isModLoaded("voxelism");
 
     /**
      * 光影下二次渲染的安全前提：隔离开关开 + 玩家显式 opt-in 光影 PIP + Iris 的管线管理器反射得动
-     * + 没装会绕道我们投影通道的世界渲染 mod。
+     * + 未装 Voxy。Sodium 在场<b>不需要</b>额外许可 —— 它那两条会绕过窄遍的通道都由 {@link SodiumCompat}
+     * 就地同步（地形投影的私有快照 + 每帧只上传一次的区块 uniform 闸）。
      *
      * <p>失败方向一律是<b>硬拒</b>（旧 B1 语义），不是「放行但没隔离」：后者正是 26.1.2 实机查明的
-     * 三症状（整屏拖影 / 体积云噪点 / 镜外发糙）的成因，而我们没有他们那套 Voxy 第二渲染栈与
-     * Sodium 投影快照同步可兜。</p>
+     * 三症状（整屏拖影 / 体积云噪点 / 镜外发糙）的成因。我方目前只缺 Voxy 的第二渲染栈，
+     * 所以闸只留这一条。</p>
      */
     public static boolean shaderIsolateSafe() {
         if (!IrisScopePipelineCompat.isolatePipelineEnabled()) {
@@ -139,14 +143,14 @@ public final class ScopePipRerender {
                 || !RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get()) {
             return false;
         }
-        if (THIRD_PARTY_WORLD_RENDERER_PRESENT) {
+        if (VOXY_PRESENT) {
             if (!loggedShaderRefusal) {
                 loggedShaderRefusal = true;
-                GunMod.LOGGER.info("[TACZ Scope] Scope re-render under a shader pack stays disabled because a "
-                        + "Sodium/Voxy-family world renderer is installed: this branch has no projection "
-                        + "snapshot sync / second render stack for it, and without those the lens would draw "
-                        + "the world at the wrong FOV. Uninstall-free fix would be to port those two compat "
-                        + "layers (see docs/lineage/SCOPE_PIP_SHADER_ISOLATION_PORT_2612_20260901.md).");
+                GunMod.LOGGER.info("[TACZ Scope] Scope re-render under a shader pack stays disabled while Voxy "
+                        + "is installed: the lens needs a second render stack for it (built inside the scope "
+                        + "pipeline's construction window), and that compat is not ported to this branch yet. "
+                        + "Sodium needs no such refusal -- its terrain projection snapshot and chunk-uniform "
+                        + "gate are synced in place, see SodiumCompat.");
             }
             return false;
         }
@@ -283,6 +287,9 @@ public final class ScopePipRerender {
         // 置位期间 IrisScopeDimensionMixin 会让 Iris 把「当前维度」答成 tacz:scope_pip，
         // 于是这一遍用的是它自己那套管线；出窗立刻清零，切世界时早已不复存在。
         scopePassIsolated = irisPass;
+        // Sodium 的地形不读 RenderSystem 的投影槽位，只认它自己抓走的那份私有快照（见 SodiumCompat）：
+        // 就地改写成窄矩阵，出窗立刻还原，并把「本帧已上传区块 uniform」那道闸重开。
+        boolean sodiumPatched = SodiumCompat.overrideProjection(NARROW_MATRIX);
         try {
             RenderSystem.setProjectionMatrix(projectionBuffer.getBuffer(NARROW_MATRIX), ProjectionType.PERSPECTIVE);
             // 镜内那遍：不画方块高亮线框（屏幕空间描边在镜内无意义）；viewMatrix/cullingMatrix
@@ -305,6 +312,11 @@ public final class ScopePipRerender {
                     + "falling back to screen-space reprojection / whole-screen FOV zoom.", e);
             return false;
         } finally {
+            if (sodiumPatched) {
+                SodiumCompat.restoreProjection();
+            }
+            // 无条件调：即便本次没改写成功，Sodium 的每帧一闸也已经关上，vanilla 那遍必须重传。
+            SodiumCompat.resetChunkUniformUpload();
             scopePassIsolated = false;
             scopePassActive = false;
             // 必须还原：留窄投影会让 vanilla 那遍的整个世界被放大 —— 正好是反过来的病。
