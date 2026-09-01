@@ -3,6 +3,7 @@ package com.tacz.guns.mixin.client.voxy;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopePipRerender;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -45,6 +46,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * 主画面完全正确。不隔离时只有一套管线，Voxy 可以照常在镜内画，
  * 那条路见 {@link VoxyScopeViewportMixin}。
  */
+/** Voxy 是可选 mod：本类的目标类在编译期与运行期都可能不存在。`@Pseudo` 是 Sponge 给这种 mixin 的正规标记——
+ * 它同时让本线的 legacy mixin AP 不再把「target could not be found」判成编译错误（他们 26.1.2 那条线是把整个 AP
+ * 关掉的，我方 1.21.11 混淆、refmap 必需，AP 不能关）。运行时是否真的应用由 VoxyCompatMixinPlugin 把关。 */
+@Pseudo
 @Mixin(targets = "me.cortex.voxy.client.core.VoxyRenderSystem", remap = false)
 public abstract class VoxyRenderSystemMixin {
 
