@@ -95,15 +95,47 @@ public final class ScopePipRenderState {
      * 贴进镜孔，读起来就是「枪身上闪现的截图」（实机 2026-09-01）。滑入过 1/3 即显示
      * （用户裁定：重投影也做开镜即接管，过渡期镜内无画面像 bug；2026-09-01）。
      *
-     * <p>已知折衷：Iris 重投影在滑入中段（0.35→~0.9）采样的是含枪身的成品帧中心区，
-     * 镜缘可能出现放大的镜环残影——先按裁定放开，实机观感不行再单独处理该段。</p>
+     * <p>滑入中段的「放大镜环残影」（实机 2026-09-01 复现：重投影采样的成品帧中心区
+     * 含滑入中的镜环）由 {@link #revealRampedReprojectionZoom} 的倍率渐变处理：
+     * 显示阈之上倍率从 1（恒等贴回 = 镜孔区域的干净 1x 世界）步进到稳态。</p>
      */
     private static final float PIP_REVEAL_THRESHOLD = 0.35f;
+    /**
+     * 重投影倍率渐变的步数。每次步进一次管线构建（常驻注册有界 ≤ 步数+1 次/每稳态
+     * 倍率），步间复用同一管线 —— 不是逐帧重建（26.2 母版的 ColorModulator 逐帧
+     * uniform 在 26.1.2 的 RenderPass API 上未经验证，见旧注释存档）。
+     */
+    private static final int REVEAL_RAMP_STEPS = 10;
 
-    private static RenderPipeline pipeline;
-    private static int builtLensZoom1k = -1;
-    private static int builtSharpness1k = -1;
-    private static boolean builtPaintLens;
+    /**
+     * 重投影滑入渐变：显示阈之上从 1（恒等贴回 = 镜孔自身区域的原画面，即透过物理镜
+     * 看到的 1x 世界——干净无残影）线性步进到稳态倍率。实机确认的「放大镜环残影」
+     * 病根是固定全倍率采样：滑入中段成品帧的中心区含正在滑入的镜环，放大后贴进镜孔。
+     * 倍率从 1 起步时采样区=整个屏幕、且贴回位置=镜孔自身，内容就是孔里原有的画面；
+     * 随滑入推进倍率爬升、采样区收缩向中心，镜环同时归位——到稳态时采样区恰在
+     * 镜孔内（稳态无残影已被实机证明）。26.2 母版实机观感的来源即此渐变。
+     */
+    private static float revealRampedReprojectionZoom(float steadyZoom, float progress) {
+        float steady = Math.max(1.0f, steadyZoom);
+        float t = (progress - PIP_REVEAL_THRESHOLD) / (1.0f - PIP_REVEAL_THRESHOLD);
+        if (t >= 1.0f) {
+            return steady;
+        }
+        if (t <= 0.0f) {
+            return 1.0f;
+        }
+        int k = Math.round(t * REVEAL_RAMP_STEPS);
+        if (k >= REVEAL_RAMP_STEPS) {
+            return steady;
+        }
+        return 1.0f + (steady - 1.0f) * (k / (float) REVEAL_RAMP_STEPS);
+    }
+
+    /**
+     * 按参数缓存的合成管线（键 = 倍率/锐度/贴镜开关）。倍率渐变会在会话内产生
+     * ≤ 步数+1 个倍率档 × 每把枪的稳态倍率，注册数有界；查表命中则零构建。
+     */
+    private static final java.util.Map<Long, RenderPipeline> PIPELINES = new java.util.HashMap<>();
     private static boolean failed;
     private static boolean sceneCaptured;
     private static boolean loggedCapture;
@@ -580,7 +612,18 @@ public final class ScopePipRenderState {
         if (!ScopeDepthCopyState.hasMaskCycleThisFrame()) {
             return;
         }
-        compositeScene(mc, compositeZoom());
+        compositeScene(mc, revealZoom(compositeZoom(), mc));
+    }
+
+    /** 合成上屏倍率：二次渲染恒 1（窄 FOV 真画，无残影问题）；重投影按滑入进度渐变
+     * （{@link #revealRampedReprojectionZoom}）。 */
+    private static float revealZoom(float steady, Minecraft mc) {
+        if (ScopePipRerender.rerenderMode()) {
+            return steady;
+        }
+        float progress = currentAimingProgress(mc,
+                mc.getDeltaTracker().getGameTimeDeltaPartialTick(false));
+        return revealRampedReprojectionZoom(steady, progress);
     }
 
     /**
@@ -623,15 +666,12 @@ public final class ScopePipRenderState {
                 || !IrisCompat.supportsFinalScopeOverlay()) {
             return;
         }
-        // Under a shader pack we capture the FINISHED frame, which includes the gun/hands. The
-        // screen-space reprojection samples the screen centre, so it must only run once the
-        // aperture is centred and the scope body has already been clipped out of it (otherwise the
-        // lens would magnify the viewmodel during the slide-in). We do NOT ramp the zoom per frame
-        // here: the zoom is baked into the pipeline as a #define, so a per-frame ramp would rebuild
-        // the pipeline (and leak) every transition frame. Our 26.1.2 RenderPass API, unlike the
-        // reference's ColorModulator uniform path, is not verified for per-frame uniform writes, so
-        // the stable full-zoom pipeline plus a full-ADS gate is the safer adaptation. If that proves
-        // too poppy, the next step is a verified dynamic-uniform pipeline, not a per-frame register.
+        // Under a shader pack the FINISHED frame includes the gun/hands; the screen-space
+        // reprojection therefore reveals via PIP_REVEAL_THRESHOLD and ramps its zoom through
+        // revealRampedReprojectionZoom (identity paste first, full zoom at steady state). The
+        // ramp is quantized to REVEAL_RAMP_STEPS pipeline builds, not per-frame rebuilds: the
+        // 26.2 reference used a per-frame ColorModulator uniform, which our 26.1.2 RenderPass
+        // API has never verified; quantized #define pipelines are the verified equivalent.
         float progress = currentAimingProgress(mc,
                 Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
         // 显示阈两种模式同一条（PIP_REVEAL_THRESHOLD）。用户裁定（2026-09-01）：
@@ -641,9 +681,13 @@ public final class ScopePipRenderState {
         if (progress < PIP_REVEAL_THRESHOLD) {
             return;
         }
-        // 倍率分流：重投影=整屏重投影的 lensZoom()；二次渲染（含光影）=窄 FOV 真画，
-        // 屏幕坐标一一对应，恒 1（compositeZoom() 内部按模式分流）。
-        compositeScene(mc, compositeZoom());
+        // 倍率分流：重投影=整屏重投影的 lensZoom() 按滑入渐变（残影修复，见
+        // revealRampedReprojectionZoom）；二次渲染（含光影）=窄 FOV 真画恒 1。
+        float steady = compositeZoom();
+        float reveal = ScopePipRerender.rerenderMode()
+                ? steady
+                : revealRampedReprojectionZoom(steady, progress);
+        compositeScene(mc, reveal);
     }
 
     /** 合成倍率：二次渲染模式下镜内画面已是窄 FOV 真画（屏幕坐标一一对应），倍率恒 1；
@@ -731,8 +775,15 @@ public final class ScopePipRenderState {
         int lensZoom1k = (int) Math.round(clampedZoom * 1000.0f);
         int sharpness1k = (int) Math.round(sharpness() * 1000.0f);
         boolean paintLens = debugPaintLens();
-        if (pipeline == null || builtLensZoom1k != lensZoom1k
-                || builtSharpness1k != sharpness1k || builtPaintLens != paintLens) {
+        long cacheKey = (lensZoom1k & 0xFFFFFL)
+                | ((sharpness1k & 0x3FFL) << 20)
+                | (paintLens ? 1L << 30 : 0L);
+        RenderPipeline cachedPipeline = PIPELINES.get(cacheKey);
+        if (cachedPipeline != null) {
+            return cachedPipeline;
+        }
+        RenderPipeline pipeline;
+        {
             RenderPipeline source = RenderPipelines.ENTITY_OUTLINE_BLIT;
             pipeline = RenderPipelines.register(
                     RenderPipeline.builder()
@@ -755,9 +806,7 @@ public final class ScopePipRenderState {
                             .withColorTargetState(new ColorTargetState(
                                     Optional.empty(), ColorTargetState.WRITE_COLOR))
                             .build());
-            builtLensZoom1k = lensZoom1k;
-            builtSharpness1k = sharpness1k;
-            builtPaintLens = paintLens;
+            PIPELINES.put(cacheKey, pipeline);
         }
         return pipeline;
     }
