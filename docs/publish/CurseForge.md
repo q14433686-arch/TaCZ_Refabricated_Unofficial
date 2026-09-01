@@ -118,8 +118,8 @@ for what that build contains.
 ## Configuring
 
 Almost every option is available **in game**: open the mod list (Mod Menu), pick
-**Timeless and Classics Guns**, then the gear icon → **Client → Render** (and the
-other categories). Saving there takes effect immediately and is written back to
+**Timeless and Classics Guns**, then the gear icon, and pick the **Render**
+category (the screen is one searchable list; the other categories are alongside). Saving there takes effect immediately and is written back to
 `config/tacz-client.toml`, so editing that file by hand is normally unnecessary —
 it is only needed for the handful of debug keys that have no in-game entry, and it
 requires a game restart.
@@ -349,7 +349,7 @@ based on TACZ `1.1.8-hotfix`.
 > **⚠️ 上面这块是已发布原文（留档勿动），但其中一条已经过时**：
 > `PIP / second-world scope rendering is not enabled by default and remains paused.`
 > —— PIP 早已实现，只是**默认关闭**、且现在是**游戏内配置界面里的开关**
-> （Mod Menu → Timeless and Classics Guns → 齿轮 → 客户端 → 渲染）。
+> （Mod Menu → Timeless and Classics Guns → 齿轮 →「渲染」分类）。
 > 下次发布**不要**把这句抄进新 changelog，用下面 ⑤-ter 的措辞。
 
 ---

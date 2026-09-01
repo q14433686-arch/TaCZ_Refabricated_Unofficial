@@ -141,7 +141,7 @@
 | 随包运行库许可 | MIT（Mayday Animation Engine 1.1.1） |
 | 默认枪包资源许可 | CC BY-NC-ND 4.0 |
 | 内置附属 | TacZ Mesh Loader [TML]，作者 **VellEagle**，来源 `1.21.1_fabric` v0.1.7（`provides: taczmeshloader`） |
-| 配置入口 | Mod Menu → Timeless and Classics Guns → 齿轮 → 客户端 → 渲染（**不是**只能改 TOML） |
+| 配置入口 | Mod Menu → Timeless and Classics Guns → 齿轮 →「渲染」分类（**不是**只能改 TOML；界面无「客户端」层级，`setGlobalized(true)`） |
 | PIP 状态 | 已实现、**实验性、默认关闭**，游戏内开关；不要写成「暂停开发 / 尚未实现」 |
 
 三份文案都包含「需要 TacZ:Arcana 的加密枪包无法加载」一节 ——

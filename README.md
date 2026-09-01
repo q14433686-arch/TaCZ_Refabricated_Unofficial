@@ -96,7 +96,8 @@ R2 的可选集成（并非硬依赖）如下：
   断桥让保存只改内存、重启即「配置重置」）;
 - **PIP 若干修复与新配置项**（倍率下限闸门、`ScopePipRerenderInterval`、
   `ScopePipShadowScale` 热应用等）。**全部 `ScopePip*` 玩家项现在都在游戏内配置界面里**
-  （Mod Menu → 客户端 → 渲染，见 §4.2），不再需要手动编辑 TOML。
+  （Mod Menu → Timeless and Classics Guns → 齿轮 → 「渲染」分类，见 §4.2），
+  不再需要手动编辑 TOML。
 
 ---
 
@@ -179,7 +180,8 @@ Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码�
 
 1. 装 [Mod Menu](https://modrinth.com/mod/modmenu)（本模组的配置入口）；
    要在光影下开 PIP 再装 [Iris](https://modrinth.com/mod/iris)。
-2. **Mod 列表 → Timeless and Classics Guns → 配置（齿轮图标）→ 客户端 → 渲染**，
+2. **Mod 列表 → Timeless and Classics Guns → 齿轮（配置）→「渲染」分类**
+   （界面是一个全局列表，可直接搜条目名；没有「客户端」这一层），
    在「瞄具画中画（PIP）」一组里改：
 
    | 界面里的名字 | 对应 TOML 键 | 什么时候要开 |

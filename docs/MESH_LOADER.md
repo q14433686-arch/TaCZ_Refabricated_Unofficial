@@ -147,7 +147,7 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 
 > 表里的键名是 `tacz-client.toml` 的写法。标了「已接 Cloth Config 界面」的项
 > **同样能在游戏内改**：Mod Menu → Timeless and Classics Guns → 齿轮 →
-> 客户端 → **渲染**，保存后立即生效并写回 TOML（无需重启）。
+> 「**渲染**」分类（没有「客户端」这一层），保存后立即生效并写回 TOML（无需重启）。
 > 例外是三个诊断开关 `MeshPolyMirrorReverseWinding` / `MeshPolyPreferPackNormals` /
 > `MeshPolyInvertNormals`——它们在构造期读取，改完需**资源重载（F3+T）**。
 
