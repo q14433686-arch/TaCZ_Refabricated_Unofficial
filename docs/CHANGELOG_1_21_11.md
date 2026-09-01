@@ -5,6 +5,41 @@
 
 ---
 
+## 镜内裁手：第一人称手臂/袖层补上 26.2 的 `armClipped` 等价物（2026-09-02）
+
+此前诊断确认：1.21.11 深度孔径管线能裁枪身（`clipForViewmodel`）与枪口火光
+（`FLASH_TRANSLUCENT_PIPELINE`/`FLASH_SWIRL_PIPELINE`），**唯独第一人称手臂没有**
+masked RenderType —— 手部提交发生在 `AvatarRenderer#renderHand` 内部，vanilla 自己挑
+`RenderTypes.entityTranslucent(skin)`，调用点无法换。26.2 的等价物是
+`ScopeBodyRenderTypes.armClipped(skin)` + `RenderHelper.wrapForScopeClip` collector 代理；
+本轮把它按本线 depth-aperture 形状落地。
+
+- **新 RenderType**：`ScopeRenderTypes.armClipped(skin)`。管线复用
+  `FLASH_TRANSLUCENT_PIPELINE`（即 vanilla `entityTranslucent` + `scope_flash_clip.fsh`
+  的 MASK_OUTSIDE 分支），RenderSetup 照抄 mirror 出来的 `entityTranslucent` 状态
+  （`useLightmap/useOverlay/affectsCrumbling/sortOnUpload/outline`），
+  `DepthCopyRenderType(Operation.MASK_OUTSIDE)` 维持「镜内 discard」语义。
+  单独建类型（不复用 flash 缓存）是为了在渲染诊断与 per-skin 缓存生命周期上区分“手臂”和“火光”。
+- **提交替换**：`RenderHelper.renderFirstPersonArm` 在调用 `AvatarRenderer#renderRightHand/
+  renderLeftHand` 前，把 collector 包成 `SubmitNodeCollector` 动态代理
+  （`wrapForScopeClip`）。代理在提交穿过时用 identity `==` 把
+  `RenderTypes.entityTranslucent(skin)` 原地换成 `armClipped(skin)` —— vanilla
+  `RenderTypes.entityTranslucent` 按贴图 memoize，同一皮肤贴图同实例，不会误伤同批其它 RenderType。
+  门禁 = `ScopeRenderTypes.hasScheduledViewmodelAperture()`（本枪镜孔已排队）；孔径掩码
+  运行时失效仍由 `ScopeDepthCopyState.prepareMaskDraw` 的 mode 0 fail-open 兜底，最坏回到
+  「镜内见手臂」，不会画错模型。
+- **覆盖矩阵**：开镜/关光影走普通深度孔径；PIP 屏幕空间重投影与 PIP 窄 FOV 二次渲染
+  的手部都只在主手部 pass（`renderItemInHand`），同一 aperture 掩码即可；光影下
+  `FLASH_TRANSLUCENT_PIPELINE` 已映射 Iris `HAND_TRANSLUCENT` + 注入 mask 分支，与火光同路径。
+- 证据级别：CI 编译门待跑（沙箱无 JDK，本地不可编译）；**未做实机验证**。验收点：
+  ① 无光影开镜，镜孔内手臂/袖层消失、镜外保留、枪身/火光不受影响；② 光影开镜同格；
+  ③ PIP（`SCOPE_PIP_ENABLE` 或 `-Dtacz.scope.pip.enable=true`）重投影格同格；
+  ④ `SCOPE_PIP_RERENDER` 窄遍格：镜内画面无手、主画面镜孔外手正常。
+  任一格若镜内仍见手且全帧日志无 mode-0 降级，需查 `AvatarRenderer#renderHand`
+  该版本实际选的 RenderType 是否仍为 `RenderTypes.entityTranslucent(skin)` 单实例。
+
+---
+
 ## 「重启后配置回默认」的最后一个出口：ModMenu 入口此前没接 `setSavingRunnable`（2026-09-01 与 26.2 对照时发现）
 
 上一则（L-21/L-22）把 client/common & pre 三份 spec 显式落盘后，「重启回默认」理论上已闭合，

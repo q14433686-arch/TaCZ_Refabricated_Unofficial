@@ -43,6 +43,12 @@ public final class ScopeRenderTypes {
     private static final Map<Identifier, RenderType> VIEWMODEL_CUTOUT_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_TRANSLUCENT_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_SWIRL_TYPES = new HashMap<>();
+    /**
+     * Per-player-skin masked arm types. The first-person arm's RenderType is chosen inside
+     * {@code AvatarRenderer#renderHand} (vanilla {@code entityTranslucent(skin)}), so {@code RenderHelper}
+     * swaps it to this equivalent at submit time through a {@code SubmitNodeCollector} proxy.
+     */
+    private static final Map<Identifier, RenderType> ARM_TRANSLUCENT_TYPES = new HashMap<>();
     /** Per-font-atlas-page masked text types (key = the shell page identifier, see ScopeTextSubmitter). */
     private static final Map<Identifier, RenderType> MASKED_TEXT_TYPES = new HashMap<>();
 
@@ -290,6 +296,24 @@ public final class ScopeRenderTypes {
         return FLASH_SWIRL_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createFlashSwirlType);
     }
 
+    /**
+     * First-person arm/sleeve: the "discard inside the ocular" counterpart of vanilla
+     * {@code entityTranslucent(skin)}.
+     *
+     * <p>The arm is the only viewmodel piece whose RenderType is chosen inside
+     * {@code AvatarRenderer#renderHand} (bytecode-read: {@code submitModelPart(arm, pose,
+     * RenderTypes.entityTranslucent(skin), ...)}). It cannot be swapped at the gun call site the way
+     * {@link #clipForViewmodel} swaps attachments and gun bodies. {@code RenderHelper} therefore wraps
+     * the {@code SubmitNodeCollector} in a proxy and identity-replaces that vanilla type with the type
+     * returned here. The pipeline and RenderSetup are byte-for-byte the mirrored
+     * {@code entityTranslucent} setup used by the flash quad (same blend, same sortOnUpload and
+     * affectsCrumbling), so under shaders it maps to the same Iris {@code HAND_TRANSLUCENT} program and
+     * gets the same injected mask branch.</p>
+     */
+    public static RenderType armClipped(Identifier skinTexture) {
+        return ARM_TRANSLUCENT_TYPES.computeIfAbsent(skinTexture, ScopeRenderTypes::createArmClippedType);
+    }
+
     private static RenderType createApertureCopyType(RenderType base) {
         return new DepthCopyRenderType(
                 "tacz_scope_body_aperture_copy",
@@ -497,6 +521,29 @@ public final class ScopeRenderTypes {
         RenderType base = RenderType.create("tacz_scope_flash_translucent_base", setup);
         return new DepthCopyRenderType(
                 "tacz_scope_flash_translucent",
+                base,
+                ScopeDepthCopyState.Operation.MASK_OUTSIDE
+        );
+    }
+
+    private static RenderType createArmClippedType(Identifier texture) {
+        // Same pipeline and setup recipe as createFlashTranslucentType: bytecode-equivalent to
+        // RenderTypes.entityTranslucent(texture, true) (lightmap, overlay, affectsCrumbling,
+        // sortOnUpload, outline) plus the two depth-mask samplers. Kept as its own RenderType so
+        // avatar-arm submissions are distinguishable from muzzle-flash quads in render diagnostics.
+        RenderSetup setup = RenderSetup.builder(FLASH_TRANSLUCENT_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
+                .useLightmap()
+                .useOverlay()
+                .affectsCrumbling()
+                .sortOnUpload()
+                .setOutline(RenderSetup.OutlineProperty.AFFECTS_OUTLINE)
+                .createRenderSetup();
+        RenderType base = RenderType.create("tacz_scope_arm_clipped_base", setup);
+        return new DepthCopyRenderType(
+                "tacz_scope_arm_clipped",
                 base,
                 ScopeDepthCopyState.Operation.MASK_OUTSIDE
         );
