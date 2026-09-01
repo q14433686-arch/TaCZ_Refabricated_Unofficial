@@ -72,6 +72,21 @@ public final class ScopeFinalOverlayState {
         handTransform = null;
     }
 
+    /**
+     * 丢掉本帧排队待绘的延迟覆盖层（reticle / 遮光罩 / 镜内文字）与手变换矩阵。
+     *
+     * <p>只给一种场合用：光影下 {@code finalizeLevelRendering} 一帧触发两次（窄遍 + 宽遍），
+     * 窄遍内既不能合成也不能画覆盖层（画了就被 {@code renderScopeView} 拷进镜内画面、回灌自身），
+     * 但覆盖层是窄遍期间提交的 —— 不清就会攒到下一帧、被宽遍的 flush 画在错误的位置与投影上。
+     * 所以窄遍里必须显式丢弃，宽遍会自己重新排队。</p>
+     */
+    public static void discardPendingOverlays() {
+        PENDING_RETICLES.clear();
+        PENDING_RINGS.clear();
+        PENDING_TEXT.clear();
+        handTransform = null;
+    }
+
     public static int pendingReticleCount() {
         return PENDING_RETICLES.size();
     }

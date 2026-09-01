@@ -304,6 +304,16 @@ public final class ScopePipRenderState {
     }
 
     /**
+     * 光影下是否具备跑镜内二次渲染的条件：玩家显式 opt-in <b>且</b> Iris 的终局钩子真在
+     * （{@code supportsFinalScopeOverlay()}）。后者不是可选项：终局钩子不可用时窄遍画出来的东西
+     * 没有合成点能上屏，结果就是"世界让位了、镜内还是 1x"——所以放行与预热都必须看这条，
+     * 不能只看配置键（本线此前只看键，已对齐）。
+     */
+    public static boolean shaderRerenderAllowed() {
+        return allowShaderPacks() && IrisCompat.supportsFinalScopeOverlay();
+    }
+
+    /**
      * Whether the post-final-composite Iris variant is active on this frame.
      *
      * <p>Used by {@code ScopeDepthCopyState} at the BACKUP draw boundary to decide whether a
@@ -458,6 +468,13 @@ public final class ScopePipRenderState {
      * for its own Iris pipeline; ours uses the same finished-frame property on 1.21.11).
      */
     public static void captureSceneAfterIrisFinal(Minecraft mc) {
+        if (ScopePipRerender.rerenderMode()) {
+            // 二次渲染模式（无光影/光影同理）：镜内画面由 ScopePipRerender 在窄遍返回后立刻拷好。
+            // 这里再拷一次会用宽视场的成品帧覆盖窄视场成品 —— 与 captureScene 的守卫同款；
+            // 而"镜内画面变成 1x 主画面"就是这个覆盖的直接表现（实机 2026-09-01：镜内外均 1X）。
+            // 刻意不清 sceneCaptured：紧随其后的 compositeAfterIrisFinal 还要拿它合成镜内画面。
+            return;
+        }
         if (!isEnabled() || failed || mc == null) {
             sceneCaptured = false;
             return;

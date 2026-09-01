@@ -146,8 +146,8 @@ public final class ScopePipRerender {
         if (!IrisScopePipelineCompat.isolatePipelineEnabled()) {
             return false;
         }
-        if (RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS == null
-                || !RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get()) {
+        if (!ScopePipRenderState.shaderRerenderAllowed()) {
+            // 不只看 opt-in 键：Iris 终局钩子不可用时镜内画面根本没法上屏（世界已让位 ⇒ 内外都 1x）
             return false;
         }
         // Voxy 在场不需要在这里拒绝：隔离时它要么被换到镜内那套第二渲染栈（远景 LOD 进镜内），
