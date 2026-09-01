@@ -263,6 +263,18 @@ public final class IrisScopePipelineCompat {
             if (scope == null) {
                 return false;
             }
+            // 【保险带 · 05170 d3f0fdc 移植】瞄具管线上若绑着一个不是我们第二套栈
+            // 的 Voxy 管线（= Voxy 主栈在某个漏网的重建窗口绑了上来），此刻销毁
+            // 它会让主画面下一帧在 Voxy 里崩 "Tried to use destroyed RenderTargets"。
+            // 拒绝释放并对本会话熔断 —— 防的是任何我们还没发现的改绑路径。
+            if (com.tacz.guns.compat.voxy.VoxyScopePipelineCompat.isForeignVoxyBoundTo(scope)) {
+                releaseFailed = true;
+                GunMod.LOGGER.warn("[TACZ Scope] Refusing to release the idle scope pipeline: Voxy's MAIN "
+                        + "render stack is bound to it (a rebind slipped past the reload gates). Destroying "
+                        + "it would crash the main view. Idle release is disabled for this session; "
+                        + "please report this log line.");
+                return false;
+            }
             scope.getClass().getMethod("destroy").invoke(scope);
             pipelines.remove(id);
             // PipelineManager.pipeline 若正指着被销毁的那套，指回主管线，

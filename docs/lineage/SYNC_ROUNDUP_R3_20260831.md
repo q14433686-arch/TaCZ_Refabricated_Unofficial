@@ -89,6 +89,32 @@ R3 期间 26.2 工作线沉淀了三个 workflow + 一套暂存区惯例，各�
 
 ---
 
+## 3-bis. 05170(26.1.2) 09-01 爆发轮的反向审查（2026-09-01 增补）
+
+26.1.2 分支在接收 TML 后的两天里做了 ~60 个非 ci-log 提交（大量实机返修）。
+逐条审查后按「同病移植 / 结构不同不适用 / 观望」处置：
+
+**已移植（3 件，均为它实机踩坑、我们同代码潜伏的雷）**：
+
+| 05170 提交 | 病 | 本仓处置 |
+|---|---|---|
+| `2ae4c29` 纹理在 render pass 内解析 | `TextureManager.getTexture` 对未加载纹理懒加载 ⇒ pass 内上传被拒 ⇒ 全 GPU 提交的枪（无 collector 兄弟先请求贴图）永远紫黑并逐帧报错。**我们的 `resolveTextureView` 与其逐字相同**，世界 GPU 路径上线后同样暴露 | `drawList` 改为 pass 开启前预解析 `viewsByTexture`；解析失败按纹理去重打日志 |
+| `d3f0fdc` 预热窗口 Voxy 改绑 ⇒ 空闲释放销毁被主栈绑定的管线 ⇒ ESC 崩溃 | 26.1 实机 RawOutput.log 钉死的链条；我们的预热/空闲释放结构同构 | 双保险带：① `allChanged` 闸门加 `isBuildingScopePipeline()` 窗口；② `releaseScopePipelineIfPresent` 销毁前查 `VoxyScopePipelineCompat.isForeignVoxyBoundTo`（绑着非我方 Voxy 管线即拒绝并熔断） |
+| `03a807e` tooltip 的 `I18n.get` Format error | 我们 ec51f55 只修了 PapiManager（镜内文字），**漏了 `ClientAttachmentItemTooltip`/`ClientBlockItemTooltip` 两处**同病位点（05170 的分布表点名） | 两处改 `Language.getInstance().getOrDefault` 纯查表 |
+
+**不适用（结构不同，明确不搬）**：
+- `99e505f/93178de`（世界消费点/法线 MV 栈）= 我们 b4cb497/83daf16 的 26.1.2 移植版，方向是从我们到它；
+- `58831e4`（FCAP v26.1.5 配置回写 no-op）：26.1.2 专属——我们用 FCAP 26.2.1，且 R3 实机全程配置改动都生效过（该 bug 存在的话早就发现了）。**观察哨**：若我们哪天出现「重启后配置回默认」，第一嫌疑人就是这条，修法直接抄 05170；
+- `7b4a9a2`（reload 钩子在 26.1.2 挂 LevelRenderer.allChanged）：拓扑差异，我们的 LevelExtractor 钩子已核实正确。
+
+**观望（26.1.2 的 PIP 是深度孔径架构，与我们的掩码/合成架构不同族，等它实测收敛后再评估）**：
+`3a62d00/2f0e81c/6f7b690`（掩码周期帧戳）、`ee77059/d6743e5`（mesh 枪身目镜裁剪——**这个功能我们缺**：
+26.2 的 `clipForViewmodel` 只包 collector 提交，GPU 手部表画的 mesh 枪身不经过它，开镜时 mesh 部件
+不被目镜裁剪。但 05170 的实现绑定其深度孔径管线，26.2 版需按我们自己的 ScopeMaskRenderer 掩码语义
+重设计 —— 已立项 §5.2-bis 追加第 9 项，非 R3 阻塞）、`5a2f280/711dab2/1ea031d`（rerender/重投影
+接管时机与涟漪修）、`c42b047/82b3262/2027261`（idle release/ShadowScale/Voxy 二栈 —— 我们本就有，
+它是从我们这边搬的）。
+
 ## 4. R3 发版检查衔接
 
 发版流程照 `docs/publish/RELEASE_CHECKLIST.md` §0-§5 走。与本文相关的两点：

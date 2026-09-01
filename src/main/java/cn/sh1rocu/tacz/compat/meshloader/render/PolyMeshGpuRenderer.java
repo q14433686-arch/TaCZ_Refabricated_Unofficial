@@ -745,6 +745,25 @@ public final class PolyMeshGpuRenderer {
             byTexture.computeIfAbsent(entry.texture(), k -> new ArrayList<>()).add(entry);
         }
 
+        // 【纹理必须在 render pass 之外解析 —— 05170 实机踩坑 2ae4c29 移植】
+        // TextureManager.getTexture 对未加载纹理是懒加载：registerAndLoad ->
+        // ReloadableTexture.apply -> CommandEncoder.writeToTexture，而«pass 开着
+        // 不许发其他命令»的约束会让这次上传直接抛异常。全 GPU 提交的枪
+        // （每个可见部件都走 GPU 表）没有 collector 兄弟先去请求贴图，
+        // 我们就是第一个请求者 —— 在 pass 里解析 = 贴图永远加载不上、
+        // 每帧报错 + 枪面全紫黑（26.1.2 duyupack kar98un 实机复现；本仓
+        // resolveTextureView 与其逐字相同，世界 GPU 路径上线后同样暴露）。
+        Map<Identifier, GpuTextureView> viewsByTexture = new HashMap<>();
+        for (Identifier texture : byTexture.keySet()) {
+            GpuTextureView view = resolveTextureView(texture);
+            if (view == null) {
+                view = resolveTextureView(MissingTextureAtlasSprite.getLocation());
+            }
+            if (view != null) {
+                viewsByTexture.put(texture, view);
+            }
+        }
+
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
         // 阶段边界不在任何 render pass 内（FeatureRenderDispatcherMixin 的字节码分析），
         // createRenderPass 的 isInRenderPass 断言安全。颜色 Optional.empty() = 不清屏，
@@ -764,10 +783,7 @@ public final class PolyMeshGpuRenderer {
             }
 
             for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
-                GpuTextureView textureView = resolveTextureView(group.getKey());
-                if (textureView == null) {
-                    textureView = resolveTextureView(MissingTextureAtlasSprite.getLocation());
-                }
+                GpuTextureView textureView = viewsByTexture.get(group.getKey());
                 if (textureView == null) {
                     continue;
                 }
@@ -798,11 +814,17 @@ public final class PolyMeshGpuRenderer {
         }
     }
 
+    /** 解析失败按纹理去重打日志（全 GPU 枪失败时逐帧重试，不去重会刷屏）。 */
+    private static final java.util.Set<Identifier> LOGGED_TEXTURE_FAILURES =
+            java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     private static GpuTextureView resolveTextureView(Identifier texture) {
         try {
             return Minecraft.getInstance().getTextureManager().getTexture(texture).getTextureView();
         } catch (Exception e) {
-            LOGGER.error("[TacZMeshLoader] Failed to resolve texture view for {}", texture, e);
+            if (LOGGED_TEXTURE_FAILURES.add(texture)) {
+                LOGGER.error("[TacZMeshLoader] Failed to resolve texture view for {} (logged once)", texture, e);
+            }
             return null;
         }
     }
