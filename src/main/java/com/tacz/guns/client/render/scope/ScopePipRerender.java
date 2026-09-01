@@ -6,8 +6,10 @@ import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.compat.iris.IrisScopePipelineCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.util.math.MathUtil;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -109,6 +111,93 @@ public final class ScopePipRerender {
         return scopePassActive;
     }
 
+    /** 镜内那一遍是否正在用<b>自己的</b> Iris 管线（由维度替换 mixin 查询；光影隔离生效时为 true）。 */
+    public static boolean isScopePassIsolated() {
+        return scopePassIsolated;
+    }
+
+    /** Sodium/Voxy 会在窄遍里绕过我们的投影通道：本线没有对应的 compat，装了就不放行光影窄遍。 */
+    private static final boolean THIRD_PARTY_WORLD_RENDERER_PRESENT =
+            FabricLoader.getInstance().isModLoaded("sodium")
+                    || FabricLoader.getInstance().isModLoaded("embeddium")
+                    || FabricLoader.getInstance().isModLoaded("rubidium")
+                    || FabricLoader.getInstance().isModLoaded("voxelism");
+
+    /**
+     * 光影下二次渲染的安全前提：隔离开关开 + 玩家显式 opt-in 光影 PIP + Iris 的管线管理器反射得动
+     * + 没装会绕道我们投影通道的世界渲染 mod。
+     *
+     * <p>失败方向一律是<b>硬拒</b>（旧 B1 语义），不是「放行但没隔离」：后者正是 26.1.2 实机查明的
+     * 三症状（整屏拖影 / 体积云噪点 / 镜外发糙）的成因，而我们没有他们那套 Voxy 第二渲染栈与
+     * Sodium 投影快照同步可兜。</p>
+     */
+    public static boolean shaderIsolateSafe() {
+        if (!IrisScopePipelineCompat.isolatePipelineEnabled()) {
+            return false;
+        }
+        if (RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS == null
+                || !RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get()) {
+            return false;
+        }
+        if (THIRD_PARTY_WORLD_RENDERER_PRESENT) {
+            if (!loggedShaderRefusal) {
+                loggedShaderRefusal = true;
+                GunMod.LOGGER.info("[TACZ Scope] Scope re-render under a shader pack stays disabled because a "
+                        + "Sodium/Voxy-family world renderer is installed: this branch has no projection "
+                        + "snapshot sync / second render stack for it, and without those the lens would draw "
+                        + "the world at the wrong FOV. Uninstall-free fix would be to port those two compat "
+                        + "layers (see docs/lineage/SCOPE_PIP_SHADER_ISOLATION_PORT_2612_20260901.md).");
+            }
+            return false;
+        }
+        if (!IrisScopePipelineCompat.handlesAvailable()
+                || IrisScopePipelineCompat.scopeDimensionId() == null) {
+            if (!loggedShaderRefusal) {
+                loggedShaderRefusal = true;
+                GunMod.LOGGER.warn("[TACZ Scope] Could not reach Iris' pipeline manager, so the scope "
+                        + "pass keeps refusing to run under a shader pack (no isolation without it).");
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean loggedShaderRefusal;
+    private static boolean scopePassIsolated;
+    private static int idleReleaseFrames;
+
+    /**
+     * 帧内世界渲染<b>之前</b>的空档（{@code GameRendererMixin} 的 render HEAD）预热瞄具管线，
+     * 并在开着空闲释放时数着帧把用不上的那套还回去。
+     *
+     * <p>判据与镜内那遍一致（二次渲染 + 光影 opt-in + 隔离前提），但<b>不看开镜进度</b> ——
+     * 预热的全部意义就是赶在第一次开镜之前把 shaderpack 编译做完。空闲释放开着时，未开镜的
+     * 那段不预热：预热会立刻重建刚释放的管线，等于白释放。</p>
+     */
+    public static void prewarmShaderPipelineIfNeeded() {
+        if (failed || !rerenderMode()) {
+            return;
+        }
+        if (!IrisCompat.isUsingRenderPack() || !shaderIsolateSafe()) {
+            idleReleaseFrames = 0;
+            return;
+        }
+        if (RenderConfig.SCOPE_PIP_RELEASE_IDLE_PIPELINE != null
+                && RenderConfig.SCOPE_PIP_RELEASE_IDLE_PIPELINE.get()) {
+            int delay = RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES == null
+                    ? 120 : RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES.get();
+            float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+            if (!ScopePipRenderState.suppressesWorldFovZoom(partialTicks)) {
+                if (++idleReleaseFrames >= delay) {
+                    IrisScopePipelineCompat.releaseScopePipelineIfPresent();
+                }
+                return;
+            }
+            idleReleaseFrames = 0;
+        }
+        IrisScopePipelineCompat.prewarmIfNeeded();
+    }
+
     /** 本帧是否有可用的镜内画面（供合成阶段与 FOV 让位查询）。 */
     public static boolean hasScene() {
         return sceneCaptured && !failed;
@@ -145,9 +234,10 @@ public final class ScopePipRerender {
         if (mc == null || mc.player == null || mc.level == null) {
             return false;
         }
-        // B1 只支持无光影路径：光影下整条世界渲染走 Iris 自己的 colortex，
-        // 主目标里没有窄 FOV 的成品可拷，这条路留到后续阶段。
-        if (IrisCompat.isUsingRenderPack()) {
+        // 光影下的窄遍要放行，整套前提必须齐备（时域隔离可用 + 未装 Sodium/Voxy，见 shaderIsolateSafe）；
+        // 任一条不满足就仍按旧 B1 语义硬拒：宁可不画，也不要画出一屏时域伪影。
+        boolean irisPass = IrisCompat.isUsingRenderPack();
+        if (irisPass && !shaderIsolateSafe()) {
             return false;
         }
         // 与重投影共用同一道「PIP 是否本帧接管镜头」的闸门（含开镜进度/倍率/掩码通道）。
@@ -190,6 +280,9 @@ public final class ScopePipRerender {
         ProjectionType savedProjectionType = RenderSystem.getProjectionType();
 
         scopePassActive = true;
+        // 置位期间 IrisScopeDimensionMixin 会让 Iris 把「当前维度」答成 tacz:scope_pip，
+        // 于是这一遍用的是它自己那套管线；出窗立刻清零，切世界时早已不复存在。
+        scopePassIsolated = irisPass;
         try {
             RenderSystem.setProjectionMatrix(projectionBuffer.getBuffer(NARROW_MATRIX), ProjectionType.PERSPECTIVE);
             // 镜内那遍：不画方块高亮线框（屏幕空间描边在镜内无意义）；viewMatrix/cullingMatrix
@@ -212,6 +305,7 @@ public final class ScopePipRerender {
                     + "falling back to screen-space reprojection / whole-screen FOV zoom.", e);
             return false;
         } finally {
+            scopePassIsolated = false;
             scopePassActive = false;
             // 必须还原：留窄投影会让 vanilla 那遍的整个世界被放大 —— 正好是反过来的病。
             RenderSystem.setProjectionMatrix(savedProjection, savedProjectionType);

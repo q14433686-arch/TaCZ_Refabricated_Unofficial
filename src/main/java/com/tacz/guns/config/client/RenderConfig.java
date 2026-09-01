@@ -80,6 +80,21 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_ALLOW_SHADER_PACKS;
     /**
+     * 光影下二次渲染是否给镜内那一遍<b>单配一套 Iris 管线</b>（时域隔离）
+     *
+     * <p>不开的话：一帧两遍完整管线，而 Iris 的「上一帧」类状态读一次推进一次 ⇒ 主画面的
+     * 历史被推进两遍，实测三种同源表现（整屏拖影、体积云噪点、开镜时镜外整屏发糙）。
+     * 代价是多一套 colortex（高分辨率下几百 MB 显存级）+ 首次开镜一次 shaderpack 编译
+     * （预热可挪到进世界后）。显存紧张就关掉，代价是上面三种伪影回来。</p>
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_ISOLATE_PIPELINE;
+    /** 镜内那一遍的阴影贴图相对 pack 自身分辨率的比例（见 IrisShadowResolutionMixin）。 */
+    public static ForgeConfigSpec.DoubleValue SCOPE_PIP_SHADOW_SCALE;
+    /** 空闲时是否整份销毁瞄具管线（GPU 状态累积导致开镜帧率衰减的处置杠杆；26.1.2 调查线）。 */
+    public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RELEASE_IDLE_PIPELINE;
+    /** 连续多少帧不在镜内才做空闲释放（避免「释放—重建」来回抖）。 */
+    public static ForgeConfigSpec.IntValue SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES;
+    /**
      * 【实验】用窄 FOV 把世界<b>二次渲染</b>一遍作为镜内画面，取代屏幕空间重投影。
      *
      * <p>重投影路径的镜内分辨率被锁死为「屏幕分辨率 ÷ 倍率」，高倍镜必然变软；
@@ -201,6 +216,47 @@ public class RenderConfig {
                                 + "so the lens is a screen-space reprojection of the finished frame (slightly softer "
                                 + "under high magnification). Turn it on to test with your pack.")
                 .define("ScopePipAllowShaderPacks", false);
+        SCOPE_PIP_ISOLATE_PIPELINE = builder.comment(
+                        "Rerender mode under a shader pack: give the scope pass its own Iris pipeline so "
+                                + "its temporal state cannot corrupt the main view. Iris advances every "
+                                + "'previous frame' value when it is READ, so rendering the world twice "
+                                + "would otherwise leave the main view reprojecting against the scope pass' "
+                                + "matrices (ghosting, shimmering clouds, grainy screen outside the scope "
+                                + "while aiming).",
+                        "",
+                        "Costs an extra set of shader buffers (up to a few hundred MB of VRAM at high "
+                                + "resolutions) and a one-time shader compile the first time you aim. "
+                                + "Turn it off if VRAM is tight, and the artifacts above come back. "
+                                + "While this is on, the scope pass is still refused if a Sodium or Voxy "
+                                + "install is detected: this branch has no projection-snapshot / second "
+                                + "render-stack compat for either, and running the pass without them draws "
+                                + "the lens world at the wrong FOV.")
+                .define("ScopePipIsolatePipeline", true);
+        SCOPE_PIP_SHADOW_SCALE = builder.comment(
+                        "Shadow map resolution for the scope pass, as a fraction of the pack's own. "
+                                + "Only used with ScopePipRerender + ScopePipIsolatePipeline + a shader pack.",
+                        "",
+                        "Iris renders shadows once per world render, so rendering the world twice doubles "
+                                + "that cost; it scales with area, so 0.5 cuts the scope pass' shadow work "
+                                + "to about 25%. Only the lens is affected. Takes effect when the scope "
+                                + "pipeline is (re)built; the pipeline is rebuilt automatically on change.")
+                .defineInRange("ScopePipShadowScale", 0.5d, 0.25d, 1.0d);
+        SCOPE_PIP_RELEASE_IDLE_PIPELINE = builder.comment(
+                        "Destroy the scope pass' Iris pipeline (and its whole set of GPU buffers) after the "
+                                + "player has not been looking through the scope for a while, instead of "
+                                + "keeping it alive between aims.",
+                        "",
+                        "26.1.2 traced a steady in-scope FPS decay from the first aim onwards -- reset by "
+                                + "rejoining the world -- to state accumulating inside the scope pipeline's "
+                                + "retained buffers. Releasing on idle clears it; the next aim rebuilds the "
+                                + "pipeline, which costs one shader compile hitch per idle period. Off by "
+                                + "default: prefer it only if you actually see the decay.")
+                .define("ScopePipReleaseIdlePipeline", false);
+        SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES = builder.comment(
+                        "How many consecutive frames outside the scope must pass before the idle release "
+                                + "above runs. Too low and the pipeline is torn down and rebuilt while you "
+                                + "are tap-scoping.")
+                .defineInRange("ScopePipIdleReleaseDelayFrames", 120, 30, 1200);
         SCOPE_PIP_RERENDER = builder.comment(
                         "Draw the scope image by rendering the world a SECOND time with a narrow FOV, "
                                 + "instead of reprojecting the already-rendered frame. The lens then has native "
