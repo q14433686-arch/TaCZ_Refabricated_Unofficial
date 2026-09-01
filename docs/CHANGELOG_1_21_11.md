@@ -5,6 +5,34 @@
 
 ---
 
+## PIP 二次渲染中视野内高模枪（手上的不算）不烘焙（2026-09-02）
+
+用户回报：开着 `ScopePipRerender`（镜内二次渲染）时，视野里别人的/掉落的/展示台的高模
+mesh 枪在镜内呈现未烘焙的立方体；关掉二次渲染或退镜后立刻恢复高模。有无光影都复现。
+（用户用帧率变化反推「是否吃着烘焙」；不用日志也能定位，这里只证明根因。）
+
+- **根因**：1.21.11 的 `LevelRenderer#renderLevel` **每次调用都自带提取**（没有 26.x 那套
+  `extractLevel → renderLevel` 分离）。镜内二次渲染会真的再跑一遍 `renderLevel`，因此世界
+  mesh 枪会在镜内那遍**重新提交一次**。而 `PolyMeshGpuRenderer.shouldSubmitGpuWorld()` 里
+  有一条旧的防御性闸门 `if (isInsideScopeLevelRender()) return false`（沿袭「提交每帧只发生
+  一次」的 26.x 假设）——于是镜内那遍世界 mesh 枪被拒收 GPU 路径，只能掉回
+  collector + 顶点预算：远处、高模（超过 `MeshWorldMaxVertices`）的枪就被预算打成裸立方体；
+  主画面那遍重新提取时 `isInsideScopeLevelRender()` 已为 false，正常走 GPU 烘焙，所以
+  「镜内未烘焙、镜外/退镜正常」。
+- **修法**：
+  1. `shouldSubmitGpuWorld()` 移除镜内那遍的拒收（允许二次渲染自己在提取时提交世界 GPU 表）；
+     `worldSubmitBlocker()` 相应去掉这条原因。
+  2. `renderAtWorldFlush()` 镜内那遍**画完也清表**（1.21.11 主遍会重新提取并重新提交；若不清，
+     主遍会把镜内旧条目再叠画一遍）。`worldConsumedFrame` 仍只在主画面那遍记录，避免主遍被
+     镜内那遍的消费证明误挡。
+  3. 新增 log-once：`[TacZMeshLoader] GPU world mesh pass active inside the scope PIP re-render
+     pass; drawing N world entries...`，供实机确认这一遍真的吃上了世界 GPU 表。
+- 证据级别：CI 编译门待跑（沙箱无 JDK，本地不可编译）；**未做实机验证**。验收点：
+  开 `ScopePipRerender` 后镜内视野中远处高模枪仍是高模（不再是立方体），且日志出现上面这条
+  info；关掉二次渲染/退镜后行为不变；有无光影各测一次。
+
+---
+
 ## 低倍镜（含组合镜低倍档）不裁手/火光/枪身：镜内孔外剔除统一加低倍门禁（2026-09-02）
 
 上一条「镜内裁手」落地后，用户指出：**锈蚀/低倍镜（2×/3×，含组合镜当前低倍档）本来走

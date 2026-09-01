@@ -277,6 +277,8 @@ public final class PolyMeshGpuRenderer {
 
     private static boolean loggedFirstDraw = false;
     private static boolean loggedFirstWorldDraw = false;
+    /** 镜内那一遍（PIP 二次渲染）首次吃上世界 GPU 表时记一条 info，供实机确认本修复生效。 */
+    private static boolean loggedScopeWorldDraw = false;
     private static boolean gpuDisabledThisSession = false;
     private static boolean loggedUnderShadersNoop = false;
     private static boolean loggedFormatMismatch = false;
@@ -306,7 +308,7 @@ public final class PolyMeshGpuRenderer {
     private static int frameId = 0;
     /** 最近一次「世界 flush 绘制钩子」真正跑过的帧号（{@link #WORLD_DRAWS} 的存活证明）。 */
     private static int lastWorldFlushFrame = Integer.MIN_VALUE;
-    /** 本帧是否已经消费（画 + 清）过世界表。镜内那一遍画但不清，所以不能复用存活证明。 */
+    /** 本帧是否已经消费（画 + 清）过<b>主画面那一遍</b>的世界表。镜内那一遍画完即清、但不记此帧号（主遍会重新提取）。 */
     private static int worldConsumedFrame = Integer.MIN_VALUE;
     private static int bakesThisFrame = 0;
     /**
@@ -370,9 +372,11 @@ public final class PolyMeshGpuRenderer {
      *       它们的 pose 带 GUI 投影，落进世界表就是「枪画进世界」事故。
      *       刻意<b>不用</b> {@code RenderDistance.isGuiRender()} 那种 100ms 时间戳窗口
      *       （开着菜单时世界提取也会命中 ⇒ 一开背包全场景 mesh 枪跌回 collector）；</li>
-     *   <li><b>不在</b>镜内那一遍（PIP 二次渲染）—— 防御性：提交只在世界提取阶段发生一次，
-     *       镜内那遍若真有 mod 补提交，pose 语义未知，宁可拒收（消费侧对镜内的处理见
-     *       {@link #renderAtWorldFlush}）；</li>
+     *   <li><b>允许</b>镜内那一遍（PIP 二次渲染）—— 1.21.11 的 {@code LevelRenderer#renderLevel}
+     *       每次调用都自带提取（没有 26.x 的先 extract 后 render 分离），镜内那遍会<b>重新</b>
+     *       提交一次世界；若在这里拒收，镜内那遍只能回 collector + 顶点预算，远处的世界 mesh
+     *       枪就会被预算打成立方体（「镜内未烘焙」），主画面那遍反而正常。消费侧（
+     *       {@link #renderAtWorldFlush}）已改为镜内那遍画完即清表，主画面会重新提取提交；</li>
      *   <li><b>不在</b>阴影 pass —— Iris 阴影遍的投影/MV 是太阳视角，登记进主视角的表必画错；</li>
      *   <li>光影下额外要求 {@code MeshGpuWorldUnderShaders}（R3 起默认开，见 {@link #worldGpuAllowed}）。</li>
      * </ul>
@@ -388,9 +392,6 @@ public final class PolyMeshGpuRenderer {
             return false;
         }
         if (ScreenRenderTracker.isRenderingScreen()) {
-            return false;
-        }
-        if (ScopePipRerender.isInsideScopeLevelRender()) {
             return false;
         }
         if (IrisCompat.isRenderShadow()) {
@@ -449,9 +450,6 @@ public final class PolyMeshGpuRenderer {
         }
         if (ScreenRenderTracker.isRenderingScreen()) {
             return "screen/GUI extraction";
-        }
-        if (ScopePipRerender.isInsideScopeLevelRender()) {
-            return "inside the scope PIP re-render pass";
         }
         if (IrisCompat.isRenderShadow()) {
             return "shadow pass";
@@ -590,9 +588,10 @@ public final class PolyMeshGpuRenderer {
      * 一处）。本钩子按语境分流：手部那次交回 {@link #renderAtHandFlush()}（它必须等
      * {@code endBatch()} 之后，见 {@code ItemInHandRendererMixin}），本方法只认世界那两次。</p>
      *
-     * <p><b>不清表的情形</b>：镜内那一遍（PIP 二次渲染）与阴影 pass —— 提交每帧只发生一次，
-     * 在这里清了主画面就没得画了（表现即「一开镜世界 mesh 枪消失」）。镜内那遍照常画一遍：
-     * collector 在镜内那遍是重放的，两遍内容必须一致（本仓 2026-08-30 的既有裁定）。</p>
+     * <p><b>镜内那一遍（PIP 二次渲染）</b>：1.21.11 的 {@code renderLevel} 每遍都自带提取，
+     * 镜内那遍会重新提交一遍世界表；这里照常画完后<b>同样清表</b>，随后的主画面那遍会重新
+     * 提取一份全新提交（镜内那一遍不清的话，主画面会再把镜内的旧条目叠画一遍，两遍内容
+     * 本应一致、但会白白重复顶点开销）。阴影 pass 仍既不清也不画（条目属于随后的主画面）。</p>
      */
     public static void renderAtWorldFlush() {
         if (inHandPass) {
@@ -631,7 +630,16 @@ public final class PolyMeshGpuRenderer {
         try {
             drawList(WORLD_DRAWS, IrisCompat.isUsingRenderPack(), true);
             worldConsecutiveFailures = 0;
-            if (!insideScope) {
+            // 镜内那一遍（insideScope=true）不记 worldConsumedFrame：它只是本遍提取出的
+            // 世界表的消费证明，主画面那一遍是另一次独立提取，必须允许再次消费。
+            if (insideScope) {
+                if (!loggedScopeWorldDraw) {
+                    loggedScopeWorldDraw = true;
+                    LOGGER.info("[TacZMeshLoader] GPU world mesh pass active inside the scope PIP "
+                            + "re-render pass; drawing {} world entries from this pass's extraction.",
+                            WORLD_DRAWS.size());
+                }
+            } else {
                 worldConsumedFrame = frameId;
             }
         } catch (Exception | LinkageError e) {
@@ -649,9 +657,8 @@ public final class PolyMeshGpuRenderer {
                         + "until it recovers ({} so far).", worldConsecutiveFailures, e);
             }
         } finally {
-            if (!insideScope) {
-                WORLD_DRAWS.clear();
-            }
+            // 镜内那一遍同样清表：1.21.11 的主遍会重新提取并重新提交（见方法注释）。
+            WORLD_DRAWS.clear();
         }
     }
 
@@ -786,8 +793,8 @@ public final class PolyMeshGpuRenderer {
         // 画进镜内画面；孔外剔除只裁「孔内且比目镜远」的段，比目镜更近的枪口前端留在
         // 画面里，合成后即「镜内枪前端残影」（实机 2026-09-01）。手部属于第一人称
         // viewmodel，镜内画面必须是纯世界：表在此清空，主画面的手部阶段会重新提交。
-        // （世界表相反：镜内那遍照常画、不清表，见 renderAtWorldFlush 的既有裁定；
-        // 两遍的世界内容必须一致，而手部只属于主画面。）
+        // （世界表在 1.21.11 也是每遍各自提取并各自清表 —— 见 renderAtWorldFlush 的
+        // 更新说明；两遍的世界内容仍必须一致，而手部只属于主画面。）
         if (ScopePipRerender.isInsideScopeLevelRender()) {
             HAND_DRAWS.clear();
             return;
