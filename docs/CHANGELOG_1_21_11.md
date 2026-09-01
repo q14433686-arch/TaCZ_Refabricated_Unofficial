@@ -5,6 +5,38 @@
 
 ---
 
+## 26.1.2 渲染线整批移植（`7562abcb`→`5c45a787`，42 个真提交逐条甄别）：mesh 目镜裁剪 + 掩码帧戳 + PIP 显示阈与渐变
+
+维护者要求："**对照其时间线的 commit 甄别后再移植**"。⇒ 不采信他们写的 `docs/SYNC_1211_RENDER_20260901.md`
+的段落结论，按 `git log` 取其真实 diff，逐条 `cherry-pick -n` 到我方分支、冲突手工按 1.21.11 API 改写。
+**判定与依据全部记在** `docs/lineage/SYNC_REVIEW_2612_RENDER_LINE_20260901.md`（含总表、坑、以及回答他们
+§6 让我方核的五点）。此处只记落地的三组 + 明确不动的：
+
+- **G1 mesh 枪身目镜裁剪**（`ee77059`+`e203984`+`d6743e5`）：新增 `core/mesh_entity_scope_clip.fsh`
+  与 `LIT_PIPELINE_CLIP`；无光影走自研 fsh + 两份私有深度拷贝绑定，光影走 `beginExternalMaskOutsideDraw()`
+  的 GL-uniform 路线，`ScopePipRenderState` 补 `worldDepthViewFor/apertureDepthViewFor` 公有访问器。
+  本世代改写：`withDepthStencilState`/`ColorTargetState`/`DefaultVertexFormat.ENTITY` **不存在**
+  ⇒ 换 `withDepthTestFunction(LEQUAL)+withDepthWrite+withColorWrite+NEW_ENTITY`。
+- **G2 掩码周期帧戳**（`752ee9e` 被 `3a62d00` 推翻，只取终态）：`frameCounter`/`maskCycleFrame` +
+  `hasMaskCycleThisFrame()`，**不清** `maskValid`。**我方刻意不跟的一处**：`ScopeTextSubmitter` 继续用
+  跨帧的 `isMaskCycleValid()` —— 镜内文字画在终局钩子（早于本帧手部阶段），换当帧闸会把光影下的
+  文字掩码打回 mode 0。已写进甄别篇 §4 尾，防止后来人"顺手统一"。
+- **G3+G4**：手部坐过镜内窄遍（`5a41777`）；`compositeAfterIrisFinal` 补 `hasScene()` 闸、两入口补
+  时效闸、显示阈统一为 `PIP_REVEAL_THRESHOLD=0.35` 且**捕获闸/`needsIrisWorldDepthCopy` 同阈联动**、
+  重投影倍率 10 档渐变 + `PIPELINES` 按参数缓存（`f3e0f9c`…`1ea031d`）。**`b9f9db7` 按其文档否决**。
+- **不移植**：G5 光影隔离大件（本线无 `compat/voxy`/`compat/sodium`，且我方 `ScopePipRerender:150`
+  仍是 B1 硬拒 ⇒ 光影下窄遍根本不跑，他们要治的三症状无从出现；放行时必须整批同批）；G6 法线/纹理
+  （我方 `014f4b0`/`99e36e2` 已等价）；G7 纯查表（**他们列错**：我方 `c9b8ba1` 早做且范围更大）；
+  G8 FCAP（L-13）；G9 `99e505f` 世界消费点拓扑（L-12 因此解除"等对方表"的阻塞，但仍 OPEN 待我方自证）。
+- **一次 CI 红**：`d6743e5` 与我的纹理预解析同函数，解决冲突时少一层右括号 + 判据日志留成两份 ⇒
+  `'try' without 'catch'` + 游离 CJK 文本；`0fcb9512` 修掉。教训写进甄别篇坑 3：本地花括号"数目相等"
+  证不了嵌套形状，**移植必须同轮跑编译门**。
+- 证据级别：他们侧的"CI 绿 + 用户实机 PASS"是我方**不可外推**的他人状态；我方=逐 commit 甄别 +
+  API 适配 + 编译门，**实机未验**（G1 光影路线还依赖 `IrisDepthRestoreShaderMixin` 在本世代 Iris 上命中，
+  沙箱无 Iris jar，未核；失败语义 fail-open=不裁剪不炸）。未改 `gradle.properties` 版本号。
+
+---
+
 ## 高模枪贴图错误：GPU pass 体内触发纹理懒加载 —— 按 26.1.2 `2ae4c29` 的实机定位同批修（2026-09-01 第五则）
 
 **维护者原话（不改写成机制描述）**：「`drawList` 把 `resolveTextureView` 放在了**打开的 render pass 里面**
