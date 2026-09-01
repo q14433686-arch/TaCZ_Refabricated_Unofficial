@@ -58,6 +58,29 @@
   （手部 RETURN，拷贝是本帧的）加 `hasMaskCycleThisFrame()`。宁可不画一帧镜内画面，
   不贴陈旧截图。
 
+## 更正与后续（同日实机反馈：光影下二次渲染失效 + 镜内枪前端残影）
+
+上一节的机制叙述有误，实机结果推翻了「终局钩子在手部之前」的前提：
+
+- **帧序更正**：Iris 26.1 把手部搬进了 `LevelRenderer#renderLevel` 内部（本仓
+  `renderAtWorldFlush` javadoc 的字节码结论早已记录）。因此 `finalizeLevelRendering` 与
+  `compositeAfterIrisFinal` 跑在**同一 Level 遍的手部阶段之后**——合成拿到的深度拷贝是
+  **本帧**的。上一节的 `hadMaskCycleLastFrame` 闸（按「上一帧周期」判）遂永假：
+  **光影下二次渲染合成整体失效**（实机症状即「二次渲染不再渲染」）。
+- **修正**（合成闸）：`compositeAfterIrisFinal` 改回 `hasMaskCycleThisFrame()`。一帧
+  「截图」贴屏的 fail-closed 性质保留：周期被身份守卫否决的帧（拷贝纹理仍是上一段开镜的
+  遗留、handle 依旧 available）合成直接跳过——不贴陈旧截图。`hadMaskCycleLastFrame`
+  已删除。
+- **镜内枪前端残影**（实机 2026-09-01，二次渲染 + 高模枪）：同一条帧序结论的另一面——
+  光影下镜内那遍也是完整的 `LevelRenderer#renderLevel`，**包含手部阶段**，mesh 枪因此被
+  画进镜内画面；孔外剔除只裁「孔内且比目镜远」的段，比目镜更近的枪口前端留在画面里，
+  合成后即残影。修法：`renderAtHandFlush` 在 `isInsideScopeLevelRender()` 时清表早退——
+  手部属于第一人称 viewmodel，镜内画面必须是纯世界；主画面的手部阶段会重新提交。
+  世界表不受影响（镜内那遍照常画、不清表的既有裁定不变）。
+- **遗留观察项**：无光影下手部阶段在 `GameRenderer#renderLevel` 尾部（Level 遍之外），
+  镜内那遍天然无手部，此修为 no-op；vanilla 手部在光影下的镜内残影（枪口前端同理）
+  未观察到报告、也未处理，若实机出现需在 HandRenderer 层做同款「坐过窄遍」。
+
 ## 实机复验清单（全部未验证）
 
 1. 光影 + 高模枪：开镜后镜内枪身被目镜裁剪（与无光影一致）；光照/阴影无回归。
