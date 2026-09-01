@@ -224,7 +224,7 @@ public class GunSmithTableIngredient {
      * 也不要「猜」一个近似语义悄悄改变配方要求。
      */
     private static final java.util.Set<String> SUPPORTED_CUSTOM_INGREDIENTS =
-            java.util.Set.of("forge:partial_nbt", "forge:nbt");
+            java.util.Set.of("forge:partial_nbt", "forge:nbt", "tacz:nbt");
 
     /**
      * 把 Forge 写法的自定义 Ingredient 改写为 Fabric 写法。见 {@link #normalizeLegacy} 中的说明。
@@ -252,6 +252,16 @@ public class GunSmithTableIngredient {
             // 单数 item(字符串) -> 复数 items(列表)，对齐 Serializer 声明的字段。
             // 若原文已经写了 items，则原样保留，不重复包装。
             if ("item".equals(key) && !obj.has("items")) {
+                JsonArray items = new JsonArray(1);
+                items.add(entry.getValue());
+                out.add("items", items);
+                continue;
+            }
+            // 【tacz:nbt · TaCZPackUpgrader 形态】"items" 写成单个字符串而非数组
+            // （Upgrader.kt upgradeIngredient：obj.add("items", item) —— item 是
+            // JsonPrimitive）。我们的 codec 是 listOf().fieldOf("items")，只认数组，
+            // 这里把字符串包成单元素数组（实机日志的 "Not a json array" 正是这一步缺失）。
+            if ("items".equals(key) && entry.getValue().isJsonPrimitive()) {
                 JsonArray items = new JsonArray(1);
                 items.add(entry.getValue());
                 out.add("items", items);
