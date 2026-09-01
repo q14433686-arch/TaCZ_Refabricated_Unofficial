@@ -5,6 +5,41 @@
 
 ---
 
+## 光影下二次渲染的时域隔离大件（`ScopePipIsolatePipeline`）：本线**首次**接线，Sodium/Voxy 通道以硬拒代替
+
+维护者裁定「光影下二次渲染隔离大件我认为可以有」⇒ 上一批"整组不移植"的结论作废，改按
+`docs/lineage/SCOPE_PIP_SHADER_ISOLATION_PORT_2612_20260901.md` 落地。做法是**借 Iris 自己的按维度缓存管线**：
+镜内那一遍期间让 `Iris#getCurrentDimension()` 答 `tacz:scope_pip`（`IrisScopeDimensionMixin`，HEAD+cancellable），
+Iris 便为它单建一套 RenderTargets/程序/整族 previous uniform ⇒ 切断"每份上一帧被推进两次"这个病根
+（整屏拖影、体积云噪点、开镜时镜外发糙三条同源）。管线生死仍归 Iris（`destroyPipeline` 遍历 map 一并回收，
+**不**自己 new 一份塞进去 —— 那样漏一次回收就是显存泄漏，26.2 早否掉）。
+
+- **落地件**：新建 `compat/iris/IrisScopePipelineCompat`（**纯反射**摸 `Iris.getPipelineManager` /
+  `PipelineManager.getPipelineNullable`/`preparePipeline`/`pipelinesPerDimension`/`destroy`；他们那侧也是反射，
+  所以照搬形状成立）+ `mixin/client/iris/IrisScopeDimensionMixin` + `IrisShadowResolutionMixin`
+  （仅构造窗口内把 `PackShadowDirectives#getResolution()` 改小 ⇒ 镜内那遍阴影只花 ~25%，主画面一点没动）；
+  四条配置 `ScopePipIsolatePipeline`(true)/`ScopePipShadowScale`(0.5)/`ScopePipReleaseIdlePipeline`(**false**)/
+  `ScopePipIdleReleaseDelayFrames`(120)；`ScopePipRerender#prewarmShaderPipelineIfNeeded()` 挂 `GameRendererMixin`
+  render HEAD（首镜不再卡在 shaderpack 编译），窄遍内 `scopePassIsolated` 置位、`finally` 清零。
+- **硬拒改造**：`ScopePipRerender` 里旧的 `if (isUsingRenderPack()) return false;` 换成
+  `if (irisPass && !shaderIsolateSafe()) return false;`。放行 = 隔离开关开 **且** `ScopePipAllowShaderPacks` 显式开
+  **且** Iris 反射句柄可用 **且** 未装 Sodium/Embeddium/Rubidium/Voxy 族。方向一致：**宁可什么都不画，也不画出一屏时域伪影**。
+- **两处刻意不跟**（写进方案篇 §3 并给解锁条件）：①Sodium 私有投影快照同步 —— 本线 Sodium 编译期不可见，
+  且我方 `renderLevel` 本来就带投影参数，风险只在 Sodium 自己的地形 pass 认自己的快照 ⇒ 先硬拒、后补 mixin；
+  ②Voxy 第二渲染栈 —— 他们自己注明"缺它时 Voxy 镜内行为未定义"，且建栈时机错会整局崩（`Pipeline data already
+  bound` 被 Voxy 捕获后顺手 `disableIrisShaders()`）⇒ 不搬。另**不**照搬 `LevelRendererAllChangedScopePassMixin`：
+  那是为 `voxyStackSettled` 存在的，我方快速路径盯的是主管线换人，重载包自然重建。
+- **一个性能自纠**：预热挂在 render HEAD 逐帧跑，而 `IrisCompat.isUsingRenderPack()` 是**每次调用一次
+  `Class.forName`** ⇒ 加 20 帧节流的 `shaderPackActiveCached()`，别把反射查询塞进每帧（他们那侧 IrisCompat 自带缓存，我方没有）。
+- **不可验证性已改成可自检**：两个 mixin 是 `require=0` 软注入、沙箱无 Iris jar ⇒ 命中与否由日志判定
+  （`handles resolved` / `using its own Iris pipeline` / `Pre-built` / shadow map 尺寸行；阴影钩子另有回执核验，
+  静默失效会打 WARN）。**实机全未验**；镜内画面在光影下"窄遍后立刻从主目标拷"依赖"Iris 最终 blit 在
+  `renderLevel` 之内"这一源码级推断，未实测 ⇒ 若实机见上一帧/黑屏，走方案篇 §6-①的 GL 级取色。
+- **订正**：本批之前我方 `config/client/RenderConfig.java` 里**并无**任何 `ScopePipIsolatePipeline`/`VOXY_*` 键
+  （先前账本把 26.1.2 的文件当成我方文件记成了"已接线"）⇒ 隔离能力是本批才第一次接线。未改 `gradle.properties` 版本号。
+
+---
+
 ## 26.1.2 渲染线整批移植（`7562abcb`→`5c45a787`，42 个真提交逐条甄别）：mesh 目镜裁剪 + 掩码帧戳 + PIP 显示阈与渐变
 
 维护者要求："**对照其时间线的 commit 甄别后再移植**"。⇒ 不采信他们写的 `docs/SYNC_1211_RENDER_20260901.md`
