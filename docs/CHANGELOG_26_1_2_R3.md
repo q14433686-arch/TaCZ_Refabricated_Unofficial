@@ -4,7 +4,7 @@
 > 本分支此前没有 changelog 文件（只有 `UPDATE_REPORT_26_1_2_R1/R2` 的发版报告），
 > 本文件从 2026-09-02 这轮跨线同步开始记，格式对齐 `docs/lineage/` 的同步体例。
 > 同步过程与处置表：`docs/lineage/SYNC_ROUNDUP_2612_20260902.md`；
-> 账本：`docs/lineage/HANDOFF_LEDGER.md` 的 M-1…M-8 行。
+> 账本：`docs/lineage/HANDOFF_LEDGER.md` 的 M-1…M-9 行。
 
 ---
 
@@ -50,26 +50,34 @@
    现在加一条 `scopePassRunnable()` 判据：拒掉时退回重投影 / 整屏 FOV 变焦 —— 用户看到的是可用画面。
    *证据：1.21.11 实机；本线=同形移植、**实机未验**。*
 
+6. **镜内裁手：第一人称手臂在目镜孔径内 discard（来自 26.2 `94179d4b`）**
+   本线此前裁了枪身 / 配件 / 火光两层 / 镜内文字 / mesh GPU 枪身，**唯独没裁手臂** ——
+   起因是 08-30 的同步指导把「裁手/裁字」一刀切判成掩码纪元专属，而本线后来自己把裁字做成了
+   （等于翻案一半），裁手没人回头翻。本轮按深度孔径语义复刻：直接复用火光那条裁剪管线。
+   注意**两种 PIP 下看不出差别**（合成是一次无深度附着的整片覆写，镜孔内一律盖掉），
+   真正在意它的是**经典整屏变焦**路径（PIP 关 / 低倍率 / 光影下未 opt-in / PIP 失败回退 / 过渡帧）。
+   详见 `docs/SCOPE_ARM_CLIP_26_1_2_2026_09_02.md`（含实机验收 6 条与未验项）。
+
 ### 调整
 
-6. **每帧烘焙额度独立于缓存容量（来自 26.2 的下游审查 A6 采纳）**
+7. **每帧烘焙额度独立于缓存容量（来自 26.2 的下游审查 A6 采纳）**
    新增 `MeshGpuBakeBudgetPerFrame`（默认 4，1-64）+ 面板条目 + 中英说明。
    原先额度直接取 LRU 容量（`Math.max(4, cap)`）：为省显存把容量调到 1 的用户额度仍被顶到 4，
    而想调大额度的用户得白花显存撑 LRU。默认值与旧行为一致，属保守改动。
 
-7. **镜内文字裁剪加一条 log-once 判据**（1.21.11 建议）
+8. **镜内文字裁剪加一条 log-once 判据**（1.21.11 建议）
    没有它，「走了掩码」与「回退 vanilla」在屏幕上长得一模一样：
    提交成功时打一次 `[TACZ Scope] In-scope text is now clipped to the ocular aperture mask (N font page group(s)).`
 
 ### 工程/CI
 
-8. `docs/ci/` 暂存区三件模板（全量 build + jar artifact 14 天、版本号守门 v2、compile-check v4），
+9. `docs/ci/` 暂存区三件模板（全量 build + jar artifact 14 天、版本号守门 v2、compile-check v4），
    以及 `scripts/check_release_consistency.sh`（从 `26.2(main)` 镜像，两个 workflow 都要跑它）。
    **需要维护者在网页端上线**：Agent 凭据无 `workflow` 权限。本分支目前只有
    `.github/workflows/compile-check-2612.yml`（v3）是活的。
    本分支工作区跑一致性脚本：通过 6 / 失败 0。
 
-9. `docs/lineage/` 目录制落地本线：家族级四份按副本引入，另建本线同步记录与账本。
+10. `docs/lineage/` 目录制落地本线：家族级四份按副本引入，另建本线同步记录与账本。
 
 ### 已知未做（登记，不含未宣布的行为变化）
 

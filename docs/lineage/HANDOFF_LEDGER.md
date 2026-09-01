@@ -45,10 +45,11 @@
 | M-6 | meshloader 两道距离闸门乘开镜倍率 | 26.2 `0886909` → 26.1.2 | **已落地待实机** | 倍率源是本线自己的 `ScopePipRenderState#currentDetailZoom()`（本线无 `ScopePipRenderer`）；失败兜底 1.0，scope 线不连坐 mesh |
 | M-7 | 每帧烘焙额度与 LRU 容量解耦（独立键 `MeshGpuBakeBudgetPerFrame`，默认 4） | 26.2（下游审查 A6 采纳）→ 26.1.2 | **已落地待实机** | 本线原为 `Math.max(4, cap)`；新默认 4 与旧行为一致，属保守改动；已同步 Cloth 条目与中英语言键 |
 | M-8 | 字体页缓存 × 资源重载的清空入口 | 1.21.11 `SYNC_CHECKLIST` §2-2 → 26.1.2 | **登记未做** | 接线点要挑、又只能靠实机验证；隐患已写进 `ScopeTextSubmitter` javadoc，不在本轮做一个未验的运行期改动 |
+| M-9 | 镜内裁手：第一人称手臂在目镜孔径内 discard | 26.2 `94179d4b` → 26.1.2（深度孔径复刻） | **已落地待实机** | 直接复用本线火光裁剪管线 `flashTranslucentClipped`（`entityTranslucent` + `MASK_OUTSIDE`，`affectsCrumbling/sortOnUpload` 本就齐备、已登记 Iris `HAND_TRANSLUCENT`）；手臂 RenderType 由 `AvatarRenderer` 内部选定 ⇒ 用 `SubmitNodeCollector` 动态代理原地替换。详见 `docs/SCOPE_ARM_CLIP_26_1_2_2026_09_02.md`：两种 PIP 下合成会覆盖手臂（看不出差别），真缺口在经典整屏变焦路径 |
 
 ### 本线判定为不适用 / 观望的（不占 M 号，理由见 `SYNC_ROUNDUP_2612_20260902.md` §2.2-§2.3）
 
-- **不适用**：26.2 的掩码纪元一族（`ScopePipRenderer` / `ScopeMask*` / `ScopeBodyRenderTypes` / `scope_text.*`）、
+- **不适用**：26.2 的掩码纪元一族（`ScopePipRenderer` / `ScopeMask*` / `ScopeBodyRenderTypes` / `scope_text.*`）、**「家族不适用 ≠ 语义不适用」：其中的『镜内裁手』本轮已复刻，见 M-9**）、
   `prepare()` 世代的三个 mixin、`RenderConfig` 里 26.2 独有的 29 个键、`99b15b2`（方向反了：26.2 从本线搬的）。
 - **观望**：`IlluminatedLights`（与本线 `MeshPolyIlluminatedRealSky` 是否同一机制的两种形态未核）；
   R3 配置默认值定稿（本线与 26.2 都是默认开，1.21.11 是默认关并要实测数据 —— 三方唯一还开着的判定分歧，本沙箱给不出数据）。
