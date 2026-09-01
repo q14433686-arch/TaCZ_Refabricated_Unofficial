@@ -35,7 +35,8 @@
    **只有 1 个 `return`**、尾部正是 `renderAllFeatures()` + `endBatch()` —— 见 §3 第 1 条。）
 4. 光影下再配 `IrisApi.assignPipeline(pipeline, IrisProgram.HAND)`（scope reticle 已实机 PASS
    过的同一机制），让常驻 VBO 收 `gbuffers_hand` 照明。
-5. 安全底线：`MeshGpuUnderShaders` **默认关**；三层门禁（配置 + Iris 1.10.x 版本审计 +
+5. 安全底线：`MeshGpuUnderShaders` 从 **2026-09-02 起默认 true**（本文档落笔时是默认关，见 §4.3
+   与 `MESH_LOADER.md` §5.10 的默认值历史）；三层门禁（配置 + Iris 1.10.x 版本审计 +
    钩子存活证明）任一不满足就回 collector，且**不可能出现**「collector 被跳过 + GPU 没画」
    的枪体消失（§2.4）。
 
@@ -227,7 +228,8 @@ ShaderKey.findBestMatch(pipeline, ProgramId.fromAPI(program)))` → `coreShaderM
 
 ### 2.4 三层回退，杜绝「枪消失」
 
-1. `MeshGpuUnderShaders` 默认 false；`MeshGpuBaking` 关掉则整体回 collector。
+1. `MeshGpuUnderShaders` 从 2026-09-02 起默认 true（本文档落笔时默认 false，见 §4.3 / §5.10 历史）；
+   `MeshGpuBaking` 关掉则整体回 collector。
 2. `IrisCompat.supportsHandFlushHook()`：非 1.10.x 直接不放行（只 `warn` 一次）。
 3. **存活证明**：`lastHandFlushFrame` 必须是本帧或上一帧。mixin 因 `require=0` 静默失效、
    或该帧根本没走到那个 RETURN → 下一帧 `shouldSubmitGpu()` 立刻 false，回 collector。
@@ -368,9 +370,10 @@ ItemInHandRenderer.renderHandsWithItems                                         
   BLOCK_TRANSLUCENT / HAND / HAND_TRANSLUCENT / PARTICLES / PARTICLES_TRANSLUCENT /
   EMISSIVE_ENTITIES / BEACON_BEAM / LINES`
   ⇒ 世界这条用 **`ENTITIES`**（**没有** `ENTITY`，也没有 `MAIN`；按候选名试探的写法只会留一条
-  WARN 并让枪不受光）。`EMISSIVE_ENTITIES` 不能挂在 `EMISSIVE_PIPELINE` 上：那条管线只是
-  「不采光照图」，不等于「恒最亮」。机制已就绪，仍**默认关**
-  （`MeshGpuWorldUnderShaders=false`）—— 理由从「常量未审计」改成「这套组合没跑过实机」。隔壁分支那边是靠
+              WARN 并让枪不受光）。`EMISSIVE_ENTITIES` 不能挂在 `EMISSIVE_PIPELINE` 上：那条管线只是
+  「不采光照图」，不等于「恒最亮」。机制已就绪，从 **2026-09-02 起默认 true**
+  （`MeshGpuWorldUnderShaders=true`；本文档落笔时是默认 false）—— 当时的理由从「常量未审计」改成
+  「这套组合没跑过实机」，随后已实机 PASS。隔壁分支那边是靠
   26.2 的 `RenderTypes.entityCutout(tex)` 现成管线走 `prepare()`，天然落在 Iris 已接管的
   `ENTITY_CUTOUT` 上，这一点两个分支不等价，别照抄。
 * **消费语境圈定**：`levelRenderActive` —— 世界表只在「正在跑一次
@@ -392,7 +395,9 @@ ItemInHandRenderer.renderHandsWithItems                                         
 >   **当时默认关**（`MeshGpuWorldUnderShaders=false`，按设计回退 collector）。
 > - 第二轮（打开该键 + 诊断）：**一遍过**。因此 R3 起两条光影开关（`MeshGpuUnderShaders` /
 >   `MeshGpuWorldUnderShaders`）默认 true。（**R3 发版前又退回默认 false**：维护者实机发现光影下常驻 VBO 的几何会「继承」太阳/月亮
->   的自发光亮度，只有关掉这两项才消失；连带修掉 EMISSIVE 一次性闩锁。见 `MESH_LOADER.md` §5.10）。
+>   的自发光亮度，只有关掉这两项才消失；连带修掉 EMISSIVE 一次性闩锁。见 `MESH_LOADER.md` §5.10。
+>   **2026-09-02 翻回默认 true**：以「开光影也保持高模枪 GPU 烘焙」为先；个别光影包若再现
+>   继承天体自发光，把这两项一起关掉即回到 collector，作为 A/B 键保留。）
 >
 > 诊断留在原位：静默回退是正确行为，但「世界路径怎么没生效」必须在日志里能答。
 > 机制是 `TaczPolyMeshGunModel#noteWorldSkip` + `PolyMeshGpuRenderer#worldSubmitBlocker`
@@ -408,15 +413,17 @@ ItemInHandRenderer.renderHandsWithItems                                         
 - [ ] 开背包 / 枪匠桌 / 热栏：世界里的枪不受影响（`ScreenRenderTracker` + 语境闸门），
       GUI 内的预览照旧 collector（不受 GPU 路径影响）。
 - [ ] 开镜（PIP 二次渲染，仅无光影）：镜内与镜外**都有** mesh 枪，且不重复计数。
-- [ ] 装 Iris：世界 mesh 枪在 `MeshGpuWorldUnderShaders=false`（**这就是当前默认**）时自动回 collector，
-      不留残影、不双份。
-- [x] 光影下 `MeshGpuWorldUnderShaders`（当时是 R3 的默认开；**现默认关**，需手工打开）：日志应有
+- [x] 装 Iris：世界 mesh 枪在 `MeshGpuWorldUnderShaders=false`（**本文档落笔时默认关**，
+      **2026-09-02 起默认 true**）时自动回 collector，不留残影、不双份。
+- [x] 光影下 `MeshGpuWorldUnderShaders`（当时是 R3 的默认开；**本文档落笔时默认关**，
+      **2026-09-02 起默认 true**，无需再手工打开）：日志应有
       `[TACZ Iris] Assigned mesh_entity_world to the Iris ENTITIES program.`，且世界里的 mesh 枪
       **受光影照明**（夜里变暗、有明暗层次），不是发白也不是全黑；
       `Mesh bake vertex format` 相关行只在切包那一帧出现。
       —— 那次 PASS 覆盖的是几何/位置与「收得到 `gbuffers_*` 照明」，**不覆盖**「自建管线在包里的
       照明语义是否与 collector 等价」；同一天晚些时候的 B 项实验发现光影下常驻 VBO 的几何会
-      「继承」太阳/月亮的自发光亮度、只有关掉这两键才消失 ⇒ 默认退回 false，
+      「继承」太阳/月亮的自发光亮度、只有关掉这两键才消失 ⇒ 当时默认退回 false；
+      **2026-09-02 又翻回默认 true**（个别包若再现该现象把这两键一起关，作 A/B），
       连带修掉 EMISSIVE 一次性闩锁，见 `MESH_LOADER.md` §5.10。
 
 ---

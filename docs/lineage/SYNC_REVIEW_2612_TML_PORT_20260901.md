@@ -221,7 +221,7 @@ printf '\n*.log\nhs_err_pid*.log\n' >> .gitignore   # 一行 *.log 就盖住 lat
 
 | 项 | 我测到的 | 判断 |
 |---|---|---|
-| 18 项配置默认值 | `MeshyConfig` 与 1211 当前版**逐字相同**（含 `MeshPolyMirrorReverseWinding=false`、`MeshPolyInvertNormals=false`、`MeshPolyPreferPackNormals=false`、`MeshPolyIlluminatedRealSky=false`、`MeshPolyInShadow=false`、`MeshGpuUnderShaders=false`、`MeshGpuWorldUnderShaders=false`） | ✅ 我们最新一轮的三次默认退回都跟到了 |
+| 18 项配置默认值 | `MeshyConfig` 与 1211 **不同**（老默认：`MeshPolyMirrorReverseWinding=false`、`MeshPolyInvertNormals=false`、`MeshPolyPreferPackNormals=false`、`MeshPolyIlluminatedRealSky=false`、`MeshPolyInShadow=false`、`MeshGpuUnderShaders=false`、`MeshGpuWorldUnderShaders=false`）；**2026-09-02 起后两项翻回 true**，与你们 `3e4eeb16` 的 ON 对齐 | ⚠️ 前 5 项默认仍一致；后 2 项以「翻回 true」为准 |
 | Cloth 配置类 | `RenderClothConfig.java` 与我们的差异 = **我们这边多的那 37 行 Scope PIP 条目**（`scope_pip_*`），你们没有 PIP 线 ⇒ **这是正确差异，别"顺手对齐"** | ✅ 除那一段外与 1211 一致 |
 | 配置↔Cloth↔语言键齐平 | 把我们的 `docs/check_mesh_config_parity.py` 直接放进你们树里跑，输出是 「toml 18 项 / 局内 18 条 / 语言键 36 个 … 齐平 ✓」 | ✅ 建议把它挂进你们 `compile-check-2612.yml` |
 | mixin 目标名 | 全仓 `grep 'lambda$'` 0 命中；mesh 包内 4 个 mixin 的目标是 `checkTextureAndModel`/`checkAmmoEntity`/`checkShell`/`checkLod`/`checkModel`，你们改过的 `GameRendererMixin` 用 `renderItemInHand`/`bobHurt`/`bobView`，`FeatureRenderDispatcherMixin` 用 `renderAllFeatures` —— 全是 Mojang 正式名 | ✅ 你们 AGENTS §3 那条（1.21.11 才需要 intermediary）没被跨分支误用；**唯一例外**是 §5 的 `SoundEngineMixin:72` 残留 `method_19757` |
@@ -271,7 +271,7 @@ printf '\n*.log\nhs_err_pid*.log\n' >> .gitignore   # 一行 *.log 就盖住 lat
 | §6 发布号与 README 同步 | `3e4eeb16` 起一致 | 关闭 |
 | §9 第 6 项 镜内文字两根因（`PapiManager` 误用 `I18n.get`） | 你们 `PapiManager` 已是 `Language.getInstance().getOrDefault(...)`，注释里还引了我方 javap | 关闭 |
 | §9 第 6 项 连带：两处 tooltip 同源 | `ClientBlockItemTooltip:79`、`ClientAttachmentItemTooltip:169` 均已纯查表 | 关闭（顺带：26.2 那边仍未改，值得三方一起收） |
-| §9 第 7 项 光影下 `MeshGpuUnderShaders`/`MeshGpuWorldUnderShaders` 默认值 | 你们 `3e4eeb16` 选择 ON，我方 B 测后维持 false | **开放** —— 把你们"开更好"的实测数据（帧时间、有无黑枪/EMISSIVE 降级）给我们，我方立刻重评 |
+| §9 第 7 项 光影下 `MeshGpuUnderShaders`/`MeshGpuWorldUnderShaders` 默认值 | 你们 `3e4eeb16` 选择 ON，我方 B 测后曾维持 false | **已关闭（2026-09-02）** —— 我方翻回默认 true，与你们对齐；§5.10 照明不等价保留作 A/B 键 |
 
 新增两条待办也写在收口里，不再在本篇追：① 我方镜内文字裁剪已 **实机 PASS**（无光影 A 格 + 重载 F 格，
 2026-09-01），细节与我们建议你们补的三件小事在 `docs/lineage/SYNC_CHECKLIST_1211_TO_2612_PIP_20260901.md` §1-§2；

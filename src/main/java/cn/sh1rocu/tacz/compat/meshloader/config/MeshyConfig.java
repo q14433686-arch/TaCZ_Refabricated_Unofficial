@@ -12,14 +12,12 @@ import net.minecraftforge.common.ForgeConfigSpec;
  * 各自在自己的 flush 处消费；GUI / 预览 / 镜内 / 阴影由<b>提交侧</b>闸门挡在表外
  * —— 关 PR #33/#69/#70/#71 的「世界 pass 泄漏」正是提交侧没闸门 + 绘制时矩阵取自
  * 错误时刻两件事叠出来的。光影下两条路（{@code MeshGpuUnderShaders} /
- * {@code MeshGpuWorldUnderShaders}）曾经自 R3 起默认开，<b>R3 发版前又改回默认关</b>：维护者实机
- * 发现「高模枪挡住太阳/月亮的那部分几何会继承天体的自发光亮度」，且只有把这两个键关掉才消失
- * （第一人称、第三人称、展示台三种语境一致）⇒ 光影下的常驻 VBO 路径与光影包的照明语义仍然不
- * 等价，代码保留、默认值退回。附带修掉一条相关缺陷：以前「拿不到 lightmap」会一次性闩锁并把
- * 整条路退化到 {@code EMISSIVE} 管线，而那条管线在光影包眼里是「自发光、不受阴影」；现在
- * 光影下拿不到 lightmap 直接退回 collector（见 {@code PolyMeshGpuRenderer#gpuMasterUsable}）。
- * 失联/异常时两条路也各自静默回 collector。详见 {@code docs/TML_GPU_STEP2_HANDFLUSH_20260831.md}
- * 与 {@code docs/MESH_LOADER.md} §5.9-§5.10。</p>
+ * {@code MeshGpuWorldUnderShaders}）经维护者 2026-09-02 裁定：<b>默认改为打开</b>。
+ * 此前 R3 曾默认开、发版前因「高模枪挡住太阳/月亮的那部分几何会继承天体的自发光亮度」退回
+ * 默认关；本轮在保留既有的「钩子失联/拿不到 lightmap ⇒ 静默回 collector」与分辨率/隔离
+ * 配套的前提下，把这两个键翻回默认 true —— 若个别光影包仍存在照明不等价，可用这两键关掉
+ * 做 A/B，而不是整体降级。详见 {@code docs/MESH_LOADER.md}（配置表、§5.9-§5.10 与
+ * 「默认值」历史段）。</p>
  */
 public final class MeshyConfig {
 
@@ -120,13 +118,14 @@ public final class MeshyConfig {
                 "and is lit by the pack's gbuffers_hand program (the pipeline is registered with",
                 "IrisApi.assignPipeline(HAND)). Needs an audited Iris 1.10.x; if the flush hook is",
                 "not live the path refuses submissions and the gun keeps the collector route.",
-                "OFF by default again: R3 turned it on after an in-game pass, but the maintainer then",
-                "saw mesh gun geometry inherit the sun/moon brightness wherever it covered them, and",
-                "only turning this (and MeshGpuWorldUnderShaders) off removed it - so under a shader",
-                "pack the resident-VBO path is not lighting-equivalent yet. The code stays for A/B",
-                "testing; see docs/MESH_LOADER.md 5.9-5.10.",
-                "See docs/TML_GPU_STEP2_HANDFLUSH_20260831.md.");
-        GPU_UNDER_SHADERS = builder.define("MeshGpuUnderShaders", false);
+                "ON by default (2026-09-02): R3 originally turned it on, then reverted it because the",
+                "maintainer saw mesh gun geometry inherit the sun/moon brightness wherever it",
+                "covered them. That is now accepted as a per-pack lighting-equivalence trade-off:",
+                "the far bigger win is keeping high-poly guns GPU-baked under shaders. If a specific",
+                "shader pack still shows the inherited-brightness artifact, turn this (and the world",
+                "variant) off for A/B instead of disabling the whole GPU path.",
+                "See docs/MESH_LOADER.md 5.9-5.10 and docs/TML_GPU_STEP2_HANDFLUSH_20260831.md.");
+        GPU_UNDER_SHADERS = builder.define("MeshGpuUnderShaders", true);
 
         builder.comment("GPU static baking for WORLD contexts too: third-person guns held by",
                 "other players, dropped items, item frames and display statues draw from the same",
@@ -145,10 +144,10 @@ public final class MeshyConfig {
                 "registered with IrisApi.assignPipeline(IrisProgram.ENTITIES) (constant audited",
                 "against the Iris 1.10.7 jar via CI javap - EMISSIVE_ENTITIES is deliberately not",
                 "used). Like the hand path it needs the audited Iris flush hook and refuses",
-                "submissions when that hook is not live. OFF by default for the same reason as",
-                "MeshGpuUnderShaders (geometry inheriting the sun/moon brightness under a shader",
-                "pack; the world contexts showed it the same way, e.g. display stands).");
-        GPU_WORLD_UNDER_SHADERS = builder.define("MeshGpuWorldUnderShaders", false);
+                "submissions when that hook is not live. ON by default (2026-09-02), matching",
+                "MeshGpuUnderShaders; if a particular pack still shows the inherited-brightness",
+                "artifact, turn this off together with MeshGpuUnderShaders for A/B.");
+        GPU_WORLD_UNDER_SHADERS = builder.define("MeshGpuWorldUnderShaders", true);
 
         builder.comment("How many quantized light levels of baked world VBOs to keep per gun model",
                 "(LRU). Upstream TML caches 8 unquantized levels; this port quantizes light first",

@@ -5,6 +5,26 @@
 
 ---
 
+## 光影下四个 GPU 开关默认值重新对齐：`MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 翻回 true（2026-09-02）
+
+- **默认值**：`MeshGpuBaking`（已默认 true）、`MeshGpuWorld`（已默认 true）、
+  `MeshGpuUnderShaders`、`MeshGpuWorldUnderShaders` —— **后两项由 false 翻回 true**。
+  与 26.2 分支 R3（`3e4eeb16`，同样把这两项改回 ON）重新对齐。
+- **动机**：维护者裁定把「开光影也保持高模枪 GPU 烘焙」的整体收益放在最前。旧的
+  §5.9/§5.10 结论（常驻 VBO 在光影下会「继承」太阳/月亮的自发光亮度）没有推翻，作为
+  已知边界保留：个别光影包若再现该照明不等价，把这两项**一起关掉**即回到 collector
+  （与旧默认行为一致），因此它们现在既是默认 ON 也是可用的 A/B 键。
+- **实现**：`MeshyConfig.GPU_UNDER_SHADERS` / `GPU_WORLD_UNDER_SHADERS` 的
+  `builder.define(...)` 默认改 `true`；`RenderClothConfig` 两个 `setDefaultValue(...)`
+  同步改为 `true`（`scripts/check_mesh_config_parity.py` 对齐 ✓）。
+- **文档**：`MESH_LOADER.md` 顶部默认值块、配置表、§5.4/§5.5/§5.6 与 §5.10 新增
+  「2026-09-02 默认值更新」注记；`TML_GPU_FEASIBILITY...` / `TML_GPU_STEP2...`
+  保留历史「当时默认关」并标注翻回日期。
+- **证据级别**：这是配置默认值决策，不构成对 §5.10「照明不等价」的复测；CI 编译门 + parity
+  script 为门禁，实机效果按 §5.4/§5.5 既有清单验证。
+
+---
+
 ## PIP 二次渲染中视野内高模枪（手上的不算）不烘焙（2026-09-02）
 
 用户回报：开着 `ScopePipRerender`（镜内二次渲染）时，视野里别人的/掉落的/展示台的高模

@@ -1,4 +1,4 @@
-# 内置 TacZ Mesh Loader [TML] —— 安全子集 + GPU 烘焙（第 0/1/2/3 步全实机 PASS；R3 曾把四项开关默认全开，光影下那两项同日退回默认关、已复测 PASS，见 §5.10；光影下退回 collector 后显形的绕序开关也已退回 false，见 §5.7）
+# 内置 TacZ Mesh Loader [TML] —— 安全子集 + GPU 烘焙（第 0/1/2/3 步全实机 PASS；**2026-09-02 起四个 GPU 开关默认全开**，含光影下两条；照明不等价的旧账与 §5.10 判别法保留供 A/B；光影下退回 collector 后显形的绕序开关仍为 false，见 §5.7）
 
 > 代码移植自 [VellEagle/TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader)
 > `1.21.1_fabric` v0.1.7，GPL-3.0。不是官方 TacZ 附属。
@@ -6,15 +6,19 @@
 > **状态：第 0/1/2 步与第 3 步（世界语境常驻 VBO `MeshGpuWorld`）全部实机 PASS。**
 > 第 3 步的两条重点验收项（他人手持的 mesh 枪必须随相机正确移动 = 26.2 分支踩到的那个坑；
 > 光影组合 `MeshGpuWorldUnderShaders=true`）由维护者 2026-08-31 **一遍过**。
-> 因此 R3 起四个 GPU 开关（`MeshGpuBaking` / `MeshGpuWorld` / `MeshGpuUnderShaders` /
-> `MeshGpuWorldUnderShaders`）默认全开 —— 但**同一天傍晚，光影下那两项又退回默认关**：
-> 维护者实机发现「高模枪挡住太阳/月亮的那部分几何会继承天体的自发光亮度」，只有把它们关掉才消失
-> ⇒ 光影下的常驻 VBO 路径与光影包的照明语义**还不等价**（判别过程 §5.9，结论与已修的连带缺陷 §5.10）。
-> 无光影那两条（`MeshGpuBaking` / `MeshGpuWorld`）保持默认开。每一项仍保留
+>
+> **默认值（2026-09-02 维护者裁定）：** 四个 GPU 开关
+> （`MeshGpuBaking` / `MeshGpuWorld` / `MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders`）
+> **全部默认打开**。R3 一度把光影下那两项（`MeshGpuUnderShaders` /
+> `MeshGpuWorldUnderShaders`）翻成 true、发版前又因「高模枪挡住太阳/月亮的那部分几何会继承
+> 天体的自发光亮度」退回 false（§5.9/§5.10）；本轮把它们翻回默认 true —— 这是把「开光影
+> 保持高模枪 GPU 烘焙」的整体收益放在前、把个别光影包仍可能出现的照明不等价作为可关的 A/B
+> 键（关闭这两项即可回到 collector，与旧行为一致）。每一项仍保留
 > 「钩子失联/异常 ⇒ 静默回退 collector」，并且被拒时按原因去重打一行 INFO（`GPU world submit refused: …`）。**
 > 按 AGENTS.md §2：以上实机 PASS 均为**维护者 2026-08-31 报告**（换弹无双影、光影下常驻 VBO
 > 收 `gbuffers_hand` 照明、世界语境含光影一遍过）；本文不替他们补任何未回报条目的结论 ——
-> §5.5 / §5.6 仍是逐条清单，未回报的条目按「未验证」对待。
+> §5.5 / §5.6 仍是逐条清单，未回报的条目按「未验证」对待。默认值翻转属于配置决策，不构成
+> 对 §5.10「照明不等价」的复测结论。
 >
 > 可行性论证与分步计划见
 > [`TML_GPU_FEASIBILITY_1211_20260831.md`](TML_GPU_FEASIBILITY_1211_20260831.md)。
@@ -80,13 +84,13 @@
   沿用了 26.2 的 `MeshyConfig.GPU_BAKING.set(false)`，理由与两处差异见
   `REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A2）。世界表另有独立标志与「连续 30 次」阈值，
   两张表互不连坐；换模型 `releaseBaked()` / `releaseWorldBaked()` 防泄漏。
-- **配置**：`MeshGpuBaking`（默认 true）、`MeshGpuUnderShaders`（光影下常驻 VBO，R3 曾默认 true、
-  现已退回 false，见 §5.10）、`MeshWorldFullDetailDistance`。R3 起 **18 项 TML 配置全部**（14 项
-  第 2 步 v2 起默认 true）、`MeshWorldFullDetailDistance`。R3 起 **18 项 TML 配置全部**（14 项
-  接进局内 cloth 面板 + en/zh 语言键（TOML 能改的局内都能改，`setDefaultValue` 与
-  `MeshyConfig` 的默认值逐字对齐）。
+- **配置**：`MeshGpuBaking`（默认 true）、`MeshGpuUnderShaders`（**2026-09-02 起默认 true**，
+  此前 R3 曾默认 true、同日退回 false，见 §5.10）、`MeshGpuWorldUnderShaders`（**默认 true**，
+  历史同左）、`MeshWorldFullDetailDistance`。R3 起 **18 项 TML 配置全部**（14 项
+  第 2 步 v2 起默认 true）接进局内 cloth 面板 + en/zh 语言键（TOML 能改的局内都能改，
+  `setDefaultValue` 与 `MeshyConfig` 的默认值逐字对齐）。
 
-### 第 2 步 v2 新增（光影下的常驻 VBO；R3 实机 PASS 后曾默认开启，同日退回默认关，见 §5.10）
+### 第 2 步 v2 新增（光影下的常驻 VBO；R3 实机 PASS 后曾默认开启、同日退回、2026-09-02 又翻回默认 true，见 §5.10）
 
 - **绘制点整体搬迁**：1.21.11 的手部几何在 `ItemInHandRenderer#renderHandsWithItems` 末尾
   就 `renderAllFeatures()` + `endBatch()` flush（不是延迟到世界渲染末尾），Iris 也是 hook
@@ -119,9 +123,12 @@
   （本帧可能已有条目引用被逐出的 VBO，下一帧 `beginFrame` 才 close）。
 - **顶点预算只挡 collector**：GPU 每帧只传 O(骨骼) 个矩阵，预算对它没有保护对象；
   若照旧先过预算闸门，「16 格外高模枪整把消失」的老毛病就没解决。
-- **镜内那一遍（PIP 二次渲染）**：画但**不清表**、不占本帧消费标志（提交每帧只登记一次，
-  这里清了主画面就没得画；collector 在镜内那遍照常重放，两遍内容必须一致）。
-- **光影**（`MeshGpuWorldUnderShaders`，R3 曾默认 true、同日退回 false，见 §5.10）：世界那一次 flush 里要受光需要把自建
+- **镜内那一遍（PIP 二次渲染）**：1.21.11 的 `renderLevel` 每遍自带提取，所以镜内那遍会
+  **重新提交一份世界表**；本分支 2026-09-02 起允许镜内那遍也提交/消费世界 GPU 表，并且
+  **画完即清表**（主画面那遍会重新提取，`worldConsumedFrame` 只在主遍记）—— 修复「镜内
+  视野中高模枪不烘焙」（见 CHANGELOG「PIP 二次渲染中视野内高模枪不烘焙」）。
+- **光影**（`MeshGpuWorldUnderShaders`，**2026-09-02 起默认 true**；R3 曾默认 true、同日退回
+  false，历史见 §5.10）：世界那一次 flush 里要受光需要把自建
   管线登记进 Iris 的实体 program，常量已由 CI javap 核实为 **`IrisProgram.ENTITIES`**
   （全量枚举见 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §4.2）；这条组合已于 2026-08-31 实机 PASS。
   隔壁 26.2 分支靠 `RenderTypes.entityCutout` + `RenderType#prepare()` 天然落在 Iris 已接管的
@@ -189,9 +196,9 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 | `MeshMaxModelVertices` | 120000 | 加载时告警阈值（不影响渲染） |
 | `MeshLogStats` | true | 加载统计日志 |
 | `MeshGpuBaking` | true | 第一人称 GPU 静态烘焙（第 1 步）总闸。运行期异常**只改内存标志**（`gpuDisabledThisSession`），不回写配置文件 —— 26.2 那边是 `MeshyConfig.GPU_BAKING.set(false)`，本分支刻意不这么做（理由见 `REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A2） |
-| `MeshGpuUnderShaders` | false（R3 曾 true，同日退回） | 第 2 步 v2：光影下也走常驻 VBO，pass 开在 Iris 自己那次手部 flush 之内。需 Iris 1.10.x；钩子失联自动回 collector。几何/位置 2026-08-31 实机 PASS，但**照明不等价**（§5.10）⇒ 退回默认关，代码保留供 A/B |
+| `MeshGpuUnderShaders` | **true（2026-09-02 起；R3 曾 true、当天因照明不等价退回 false，本轮翻回）** | 第 2 步 v2：光影下也走常驻 VBO，pass 开在 Iris 自己那次手部 flush 之内。需 Iris 1.10.x；钩子失联自动回 collector。几何/位置 2026-08-31 实机 PASS；若个别光影包仍见 §5.10 的照明不等价，关掉本项（连同下一项）即回 collector 做 A/B |
 | `MeshGpuWorld` | true | 世界语境也走常驻 VBO（第 3 步）：他人手持 / 掉落物 / 展示框 / 雕像。GUI/预览/镜内/阴影在提交侧拒收；钩子失联自动回 collector |
-| `MeshGpuWorldUnderShaders` | false（R3 曾 true，同日退回） | 光影下的世界 GPU 路径（自建管线登记进 `IrisProgram.ENTITIES`，常量已审计）。2026-08-31 实机 PASS（几何）；照明不等价 ⇒ 退回默认关，见 §5.10 |
+| `MeshGpuWorldUnderShaders` | **true（2026-09-02 起；R3 曾 true、当天因照明不等价退回 false，本轮翻回）** | 光影下的世界 GPU 路径（自建管线登记进 `IrisProgram.ENTITIES`，常量已审计）。2026-08-31 实机 PASS（几何）；照旧保留 §5.10 的 A/B 键：需要时与 `MeshGpuUnderShaders` 一起关掉即回 collector |
 | `MeshGpuLightCacheSize` | 4 | 世界 GPU 每模型缓存的量化光照档数（LRU，1-16）。每档显存 ≈ 模型顶点数；上游 TML 按未量化光照缓存 8 档 |
 
 > 第 3 步之后 GPU 路径覆盖**第一人称手部 + 世界语境**（他人手持 / 掉落物 / 展示框 / 展示台）。
@@ -240,11 +247,13 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
     看第三人称/掉落物/展示框的枪；B 再把 `MeshGpuWorldUnderShaders`（必要时连
     `MeshGpuUnderShaders`）关掉；C 两步都没用就归到包侧手部 exposure 惯例。三个开关都是每帧读值，
     不用重启、不用 F3+T。**已跑完（2026-08-31）：A 无效、B 有效** ⇒ 结论与连带修复见 §5.10，
-    `MeshPolyInShadow` 保持 false，光影下那两个 GPU 键退回 false。
+    `MeshPolyInShadow` 保持 false；光影下那两个 GPU 键当时退回 false，**2026-09-02 翻回默认
+    true**（见 §5.10 顶部的默认值更新）。
 
 ### 5.3 第 1 步 GPU 烘焙（实机，无光影）
 
-1. 配置确认 `MeshGpuBaking=true`、`MeshGpuUnderShaders=false`（默认）。
+1. 配置确认 `MeshGpuBaking=true`；`MeshGpuUnderShaders` 2026-09-02 起默认 true（本节是
+   无光影基线，开光影后的行为另见 §5.4）。
 2. 无光影 + 高模 mesh 枪（36 万顶点级）第一人称：日志出现
    `GPU mesh pass drew N bones (...) in vanilla hand flush`（N > 0），且 spark 热点里
    逐顶点 collector 开销消失（`#24 蒙皮/骨骼烘焙` 相关热点下降）。
@@ -264,7 +273,8 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 
 ### 5.4 第 2 步 v2：光影下的常驻 VBO（实机，`MeshGpuUnderShaders=true`）
 
-默认关，需要手工打开；打开前请先读 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §3。
+**2026-09-02 起默认开**（维护者裁定）；若在具体光影包上遇到 §5.10 的照明不等价，
+可手工关闭做 A/B。测试前请先读 `TML_GPU_STEP2_HANDFLUSH_20260831.md` §3。
 
 1. **先看 CI 日志**：`build-reports/compile-java.log` 里 `> Task :dumpHandFlushApi`
    段确认 `ItemInHandRenderer.renderHandsWithItems` 的 flush 结构、`RenderPass` 成员、
@@ -302,7 +312,7 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 4. **不泄漏**：开背包 / 枪匠桌 / 热栏 / 开镜（F3+T 也来一次）之后，世界里不多画、
    GUI 内不少画、不崩；显存不随重载单调增长（走延迟释放池）。
 
-5. **光影组合**（需手工把 `MeshGpuWorldUnderShaders=true` 打开 —— R3 曾默认，现已退回默认关）：日志出现
+5. **光影组合**（2026-09-02 起默认开；若未开着，手工把 `MeshGpuWorldUnderShaders=true` 打开）：日志出现
    `Assigned mesh_entity_world to the Iris ENTITIES program.`，世界里的 mesh 枪**受光影照明**
    （夜里变暗、进照明块变亮），不发白也不全黑 → **2026-08-31 维护者一遍过**。
    上一轮那条「失效」回报是当时默认关所致的正常回退（详见 §5.6）。
@@ -313,7 +323,7 @@ Actions 跑 `./gradlew compileJava` → 日志 commit 回推分支 → 沙箱读
 - **光影下世界 GPU 路径**：上一轮报的「失效」经核实是**默认关**（当时
   `MeshGpuWorldUnderShaders=false` ⇒ 光影下世界语境按设计走 collector，不是缺陷）。维护者随后
   打开该键复测：2026-08-31 **一遍过**（含 `Assigned mesh_entity_world to the Iris ENTITIES
-  program.` 那条）。R3 起该键默认 true。诊断日志留在原位，它以后要服务的场景是「别的 mod 改了
+  program.` 那条）。**2026-09-02 起该键默认 true**（连同 `MeshGpuUnderShaders`）。诊断日志留在原位，它以后要服务的场景是「别的 mod 改了
   渲染结构」：`TaczPolyMeshGunModel` 被门闸拒收时按原因去重打一条 INFO
   （`GPU world submit refused: <reason>`），`PolyMeshGpuRenderer#worldSubmitBlocker` 逐条重判
   门闸给出第一条命中项；绘制侧异常本来就有带栈的 `LOGGER.error`。拿到 `refused:` 行还是那条
@@ -522,7 +532,14 @@ collector，与 GPU 主画面路径不叠加，所以代价只有「多一遍 CP
 光影包照明语义的关系上；`MeshPolyInShadow` 保持 false（不为一个无效的解释付每帧阴影遍的成本）。
 结论与连带修复见 §5.10。
 
-### 5.10 B 命中之后的结论：光影下的常驻 VBO 照明不等价（默认退回关 + 一条连带缺陷已修）
+### 5.10 B 命中之后的结论：光影下的常驻 VBO 照明不等价（默认值历史 + 一条连带缺陷已修）
+
+> **2026-09-02 默认值更新（维护者裁定）**：本节记载的「默认退回 false」是 **R3 发版前**
+> 的决定。2026-09-02 起 `MeshGpuUnderShaders` 与 `MeshGpuWorldUnderShaders` **翻回默认 true**，
+> 因为「开光影也保持高模枪 GPU 烘焙」的整体收益被列为优先；个别光影包若仍出现本节描述
+> 的「枪身盖住太阳/月亮那部分继承天体自发光」，把这两项**一起关掉**即回到 collector
+> （与旧默认行为一致），属于可做的 A/B，不再作为整体默认。本节其余诊断、连带缺陷修法与
+> 判据仍然有效。
 
 **证据**（维护者 2026-08-31，三种语境一致：第一人称 / 第三人称 / 展示台）：
 关掉 `MeshGpuUnderShaders` + `MeshGpuWorldUnderShaders` 之后，「枪身盖住太阳/月亮那一块继承天体
@@ -749,7 +766,7 @@ collector 路径写的是 `pose.normal()` 变换后的法线（`PolyMesh.java:19
 **判别法**（接手者跑这个就够）：同光影包同枪，慢慢水平转视角，看高光是否**跟着枪身表面**走；
 `MeshGpuBaking=false` 时同一段应无变化（那时走 collector，本来就没这个病灶）。
 
-**交叉引用**：§5.7（矩阵已按实机回填，第 4 格 = 现状）、§5.10（光影下两键退回 false 与那次 PASS 的边界）、
+**交叉引用**：§5.7（矩阵已按实机回填，第 4 格 = 现状）、§5.10（光影下两键的默认值历史与那次 PASS 的边界；**2026-09-02 起默认 true**）、
 `docs/REVIEW_UPSTREAM_TML_GPU_262_20260831.md` A10（上游侧已按本节缩小建议）、
 `docs/lineage/HANDOFF_LEDGER.md` L-8b、`docs/lineage/SYNC_GUIDE_1211_TO_2612_TML_GPU_20260831.md` §1.6
 （26.1.2 视角：他们还没有 TML，所以要的是「自己决定」而不是「照抄我们的规避」）。

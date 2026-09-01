@@ -220,8 +220,9 @@ pass（并把 LIT/EMISSIVE 归入 HAND）。风险高：需先字节码审计 1.
 绘制点也换到 `ItemInHandRenderer#renderHandsWithItems` 的 RETURN（那次 flush 的紧后、仍在
 Iris `HAND_SOLID` 阶段内），一个注入点同时覆盖有/无光影，且不 mixin Iris 内部类。
 §6.2 的「光影下零 CPU 变换不可行」结论**只适用于在 vanilla 手部调用点之外开 pass 的画法**，
-不再成立为原理性限制；但它在 1.21.11 上仍然没有实机 PASS 记录，因此保持
-`MeshGpuUnderShaders` 默认关闭 + 三层回退。
+不再成立为原理性限制；本文档落笔时它还没有实机 PASS 记录，所以当时保持
+`MeshGpuUnderShaders` 默认关闭 + 三层回退。**2026-08-31 实机 PASS、2026-09-02 起翻回默认
+true**（`MeshGpuWorldUnderShaders` 亦同，见 `MESH_LOADER.md` §5.10 的默认值更新）。
 
 实现依据、逐条证据与待验证清单：[`TML_GPU_STEP2_HANDFLUSH_20260831.md`](TML_GPU_STEP2_HANDFLUSH_20260831.md)。
 

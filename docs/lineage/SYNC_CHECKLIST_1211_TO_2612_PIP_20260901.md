@@ -97,7 +97,7 @@ vanilla/custom `RenderPipeline` 替换为 `ExtendedShader`"那一行），所以
 | `PapiManager` 仍把查表写成 `I18n.get` | 已是 `Language.getInstance().getOrDefault(...)`，注释还引了我方 javap | 关闭 |
 | 两处 tooltip 同源问题 | `ClientBlockItemTooltip:79`、`ClientAttachmentItemTooltip:169` 均已纯查表 | 关闭 |
 | 版本串与 README 6 处同步 | `3e4eeb16` 起一致 | 关闭 |
-| **光影下 `MeshGpuUnderShaders`/`MeshGpuWorldUnderShaders` 默认 ON** | 你们 `3e4eeb16` 改回 ON；我方 B 测后退回 false 并保留两键 | **开放** —— 请给我们你们"开更好"的实测数据（帧时间、黑枪/降级现象有无），我方据此重评默认值 |
+| **光影下 `MeshGpuUnderShaders`/`MeshGpuWorldUnderShaders` 默认 ON** | 你们 `3e4eeb16` 改回 ON；我方 B 测后曾退回 false | **已关闭（2026-09-02）** —— 我方翻回默认 true，与你们对齐；§5.10 照明不等价保留作 A/B 键，无需再要实测数据才重评 |
 
 ## 7. 我方 31 个真实提交（不含 ci-log）的剩余确认项 —— 你们不必等我们，但别按旧口径对齐
 
@@ -106,7 +106,7 @@ vanilla/custom `RenderPipeline` 替换为 `ExtendedShader`"那一行），所以
 | 镜内文字两条根因（`1cfa42b`/`cb39564`/`c9b8ba1`/`6562b59`）+ 裁剪（`d076cf5`） | 光影两格（C/D）与 PIP 格（E）是否也在本轮 PASS 内，等维护者一句话 | 代码已合、部分实机 PASS |
 | 天空自发光 `f8d19ed`（`MeshPolyIlluminatedRealSky`） | 仍记 **待实机**（L-7）；只改 poly 层 | 未验 |
 | `9c29572`/`ab11a84`（绕序默认退回 + 立项） | 规避有效；"绕序×剔除相互抵消"这个不自洽本身**不修、已立项**（L-8b） | 实机 PASS（规避）/ 未验（不自洽） |
-| `5ac0262`/`25ca08e`（EMISSIVE 永久降级修复 + 光影键默认关） | 两键仍在、每帧读、不需重启；默认值与你们相反（见 §6 末行） | 实机 PASS + javap |
+| `5ac0262`/`25ca08e`（EMISSIVE 永久降级修复 + 光影键曾默认关） | 两键仍在、每帧读、不需重启；2026-09-02 已翻回默认 true，与你们一致（见 §6 末行） | 实机 PASS + javap |
 | `0a77ef52`…`8aca7374` 评估（`18e4553`…`55ad5e2`） | A 结案（不加）；B 已落地 PASS；C 待批；`ScopePipRerender=true` 的双遍风险仍待实机 | javap + 实机 PASS（B） |
 | L-4 CI 对齐 | `.github/workflows/` 由仓库所有者动作，我方永不代改 | 静态 |
 
