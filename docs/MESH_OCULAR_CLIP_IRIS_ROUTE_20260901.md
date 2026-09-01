@@ -38,6 +38,26 @@
   `end()` 归还纹理单元（try/finally 配对，与 ScopeRenderTypes setup/clear 同构）。
   注入分支缺失或掩码失效时 mode 恒 0 = 不裁剪（fail-open）。
 
+## 补遗（同日第四笔反馈：一帧「截图」贴屏，同源不同窗）
+
+用户澄清：上一条「闪一下」实指**与 Bug B 同源的贴屏**，只是只在开/退镜边界存活一帧——
+随机位置贴上一张全视界「截图」，下一帧自愈。机制与修法：
+
+- **机制**：Iris 终局钩子（`finalizeLevelRendering`，即 `compositeAfterIrisFinal` 运行处）
+  跑在本帧手部阶段**之前**——合成用的镜孔/世界深度拷贝永远是上一帧的。连续开镜中两者只差
+  一帧、无感；开镜第 1 帧（或中断后恢复）上一帧没有掩码周期，手头是上一段开镜遗留的拷贝，
+  遗留镜孔在哪，镜内画面就按那个位置贴出去，一帧后掩码收敛自愈。
+- **帧闸重构**：`onClientFrameStart` 由「清三旗」改为「帧计数 +1」；APERTURE_COPY 成功时盖
+  帧戳 `maskCycleFrame`。原因：清旗会让 Iris 终局钩子处的 `maskValid` 恒为 false，把终局
+  叠加/reticle 掩码整体打回 mode 0（回归）。时效改为按需查询：
+  - `hasMaskCycleThisFrame()`（周期落在当前帧）：poly_mesh 手部剔除闸（问题 2 修复语义不变，
+    腰射帧帧戳停在上一段开镜 → 不裁）；
+  - `hadMaskCycleLastFrame()`（周期落在上一帧）：Iris 终局合成闸——终局钩子拿到的拷贝天然
+    是上一帧的，「上一帧确有周期」= 连续开镜中，边界帧 fail-closed。
+- **合成闸**：`compositeAfterIrisFinal` 加 `hadMaskCycleLastFrame()`；`compositeAfterHand`
+  （手部 RETURN，拷贝是本帧的）加 `hasMaskCycleThisFrame()`。宁可不画一帧镜内画面，
+  不贴陈旧截图。
+
 ## 实机复验清单（全部未验证）
 
 1. 光影 + 高模枪：开镜后镜内枪身被目镜裁剪（与无光影一致）；光照/阴影无回归。
