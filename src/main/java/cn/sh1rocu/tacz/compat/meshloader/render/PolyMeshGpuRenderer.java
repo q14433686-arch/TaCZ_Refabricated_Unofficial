@@ -1053,6 +1053,7 @@ public final class PolyMeshGpuRenderer {
                             mvStack.popMatrix();
                         }
                     }
+                }
             } finally {
                 // 与 ScopeRenderTypes 的 setup/clear 配对同构：归还被 bindDepthTexture 占用的
                 // 纹理单元并清 CURRENT（GL-uniform 路线 = beginExternalMaskOutsideDraw 那条）；
@@ -1063,27 +1064,6 @@ public final class PolyMeshGpuRenderer {
             }
         }
         // 判据日志放在 pass 关闭之后：pass 体内只留 bind/draw/scissor（见类注释那条不变量）。
-        boolean already = worldPass ? loggedFirstWorldDraw : loggedFirstDraw;
-        if (!already) {
-            if (worldPass) {
-                loggedFirstWorldDraw = true;
-            } else {
-                loggedFirstDraw = true;
-            }
-            long indexTotal = 0;
-            for (DrawEntry entry : drawable) {
-                indexTotal += entry.bone().indexCount;
-            }
-            LOGGER.info("[TacZMeshLoader] GPU mesh pass drew {} bones ({} indices) in {} {} flush:"
-                            + " lit={}, colorView={}, depthView={}, vertexFormat={}",
-                    drawable.size(), indexTotal, irisFlush ? "Iris" : "vanilla",
-                    worldPass ? "world" : "hand", lit,
-                    System.identityHashCode(colorView), System.identityHashCode(depthView),
-                    passFormat);
-        }
-    }
-
-：pass 体内只留 bind/draw/scissor（见类注释那条不变量）。
         boolean already = worldPass ? loggedFirstWorldDraw : loggedFirstDraw;
         if (!already) {
             if (worldPass) {

@@ -632,13 +632,6 @@ public final class ScopePipRenderState {
         if (!ScopeDepthCopyState.hasMaskCycleThisFrame()) {
             return;
         }
-        // 同 compositeAfterHand 的滑入显示阈：只约束二次渲染分支（重投影分支在下方
-        // 沿用 IRIS_FULL_AIM_THRESHOLD 全 ADS 门，不动）。
-        if (ScopePipRerender.rerenderMode()
-                && currentAimingProgress(mc, Minecraft.getInstance().getDeltaTracker()
-                        .getGameTimeDeltaPartialTick(false)) < RERENDER_REVEAL_THRESHOLD) {
-            return;
-        }
         if (!IrisCompat.isUsingRenderPack() || !allowShaderPacks()
                 || !IrisCompat.supportsFinalScopeOverlay()) {
             return;
