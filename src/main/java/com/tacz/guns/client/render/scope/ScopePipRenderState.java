@@ -8,6 +8,7 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.textures.TextureFormat;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
@@ -77,6 +78,14 @@ public final class ScopePipRenderState {
      * Before this the source region can overlap the viewmodel (see compositeAfterIrisFinal).
      */
     private static final float IRIS_FULL_AIM_THRESHOLD = 0.995f;
+    /**
+     * 二次渲染合成在开镜滑入中开始显示的进度阈（远低于重投影路径的
+     * {@link #IRIS_FULL_AIM_THRESHOLD}：窄 FOV 真画没有「中心叠着 viewmodel」的约束，
+     * 只需避开开/退镜边界的枪身位置——开镜第 1 帧/退镜末帧的镜孔掩码还在髋部枪身
+     * 上，那时合成会把镜内画面贴片在枪身上闪现一下（实机 2026-09-01）。滑入途中
+     * 镜内即有画面的裁定不受影响：阈值只遮掉贴着枪身的那一小段）。
+     */
+    private static final float RERENDER_REVEAL_THRESHOLD = 0.35f;
 
     private static RenderPipeline pipeline;
     private static int builtLensZoom1k = -1;
@@ -523,7 +532,21 @@ public final class ScopePipRenderState {
             if (!ScopePipRerender.hasScene()) {
                 return;
             }
+            // 开/退镜边界闪一下（实机 2026-09-01）：见 RERENDER_REVEAL_THRESHOLD。
+            // （历史备注：被打断的会话轮曾把全 ADS 门扩大到二次渲染（b9f9db7），把
+            // 「一帧截图」与「过渡期贴片」混为一谈——前者已被掩码周期帧戳闸根治，
+            // 后者按用户现行裁定（开镜即接管、母版实机行为优先）只避开髋部段。）
+            if (currentAimingProgress(mc, mc.getDeltaTracker()
+                    .getGameTimeDeltaPartialTick(false)) < RERENDER_REVEAL_THRESHOLD) {
+                return;
+            }
         } else if (!sceneCaptured) {
+            return;
+        }
+        // 掩码周期时效：本合成点在手部阶段之后，深度拷贝应是本帧的。周期不落在当前帧
+        // （瞄具本帧没提交过目镜序列）时，手头的拷贝就是上一段开镜的遗留——贴片位置由
+        // 遗留镜孔决定，正是「一帧截图」的病根，宁可整帧不画镜内画面（fail-closed）。
+        if (!ScopeDepthCopyState.hasMaskCycleThisFrame()) {
             return;
         }
         compositeScene(mc, compositeZoom());
@@ -540,7 +563,36 @@ public final class ScopePipRenderState {
      * private GL textures, so they remain sampleable after Iris has finished binding depthtex2.</p>
      */
     public static void compositeAfterIrisFinal(Minecraft mc) {
-        if (!isEnabled() || failed || !sceneCaptured || mc == null) {
+        if (!isEnabled() || failed || mc == null) {
+            return;
+        }
+        if (ScopePipRerender.rerenderMode() && !ScopePipRerender.hasScene()) {
+            // 二次渲染模式：改看每帧在 renderScopeView 顶部重置的 hasScene()。本类的
+            // sceneCaptured 在窄遍停跑后无人清回 false（与 compositeAfterHand 同一滞留问题）
+            // —— 若用它做闸门，退出开镜后会把 scene target 里上一帧的旧画面作为最上层
+            // 贴片逐帧合成（实机：开关镜触发、静止不动的「截图」贴屏，2026-09-01）。
+            // 上一轮的「开镜即接管」拆掉了全 ADS 门这道意外的护栏，此病遂显形。
+            return;
+        }
+        if (!sceneCaptured) {
+            return;
+        }
+        // 一帧「截图」贴屏（实机 2026-09-01）：掩码周期失败的帧里，深度拷贝纹理仍是
+        // 上一段开镜的遗留（handle 依旧 available），合成若照跑就把镜内画面按遗留镜孔
+        // 的位置贴出去——随机位置闪现一帧、下一帧周期恢复即自愈。只允许「本帧确有完整
+        // 周期」时合成：Iris 26.1 把手部搬进了 LevelRenderer#renderLevel 内部（本仓
+        // 世界钩子 javadoc 的字节码结论），finalizeLevelRendering 与本合成因此跑在
+        // 同一 Level 遍的手部阶段之后，拷贝是本帧的；周期失败的帧 fail-closed ——
+        // 宁可一帧不画镜内画面，不贴陈旧截图。（曾误判「终局钩子在手部之前」而用
+        // 上一帧闸 hadMaskCycleLastFrame，导致光影下合成永不放行——二次渲染整体失效。）
+        if (!ScopeDepthCopyState.hasMaskCycleThisFrame()) {
+            return;
+        }
+        // 同 compositeAfterHand 的滑入显示阈：只约束二次渲染分支（重投影分支在下方
+        // 沿用 IRIS_FULL_AIM_THRESHOLD 全 ADS 门，不动）。
+        if (ScopePipRerender.rerenderMode()
+                && currentAimingProgress(mc, Minecraft.getInstance().getDeltaTracker()
+                        .getGameTimeDeltaPartialTick(false)) < RERENDER_REVEAL_THRESHOLD) {
             return;
         }
         if (!IrisCompat.isUsingRenderPack() || !allowShaderPacks()
@@ -558,7 +610,17 @@ public final class ScopePipRenderState {
         // too poppy, the next step is a verified dynamic-uniform pipeline, not a per-frame register.
         float progress = currentAimingProgress(mc,
                 Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
-        if (progress < IRIS_FULL_AIM_THRESHOLD) {
+        // 同 compositeAfterHand 的滑入显示阈：只约束二次渲染分支（重投影分支在下方
+        // 沿用 IRIS_FULL_AIM_THRESHOLD 全 ADS 门，不动）。开镜即接管（用户裁定
+        // 2026-09-01 两度确认：母版实机行为优先于其文档声明）——窄遍/捕获/预热仍
+        // 在开镜瞬间启动，滑入过 1/3 镜内即有画面。
+        if (ScopePipRerender.rerenderMode()
+                && progress < RERENDER_REVEAL_THRESHOLD) {
+            return;
+        }
+        // 全 ADS 门只属于「重投影成品帧」变体：它采样屏幕中心，滑入途中中心区还叠着
+        // viewmodel。二次渲染的镜内画面是窄 FOV 真画、合成只是等位贴回 —— 没有这个约束。
+        if (!ScopePipRerender.rerenderMode() && progress < IRIS_FULL_AIM_THRESHOLD) {
             return;
         }
         // Iris 路径永远是「整屏重投影」，倍率走 lensZoom()；二次渲染只支持无光影路径。
@@ -685,6 +747,26 @@ public final class ScopePipRenderState {
             builtPaintLens = paintLens;
         }
         return pipeline;
+    }
+
+    /**
+     * A {@link GpuTextureView} over this frame's pre-ocular world depth copy (id-cached). For the
+     * mesh-GPU hand body's outside-aperture clip, which binds the same live copies the composite
+     * samples. Returns {@code null} when the handle is not available.
+     */
+    public static GpuTextureView worldDepthViewFor(ScopeDepthCopyState.DepthHandle handle) {
+        if (!handle.available()) {
+            return null;
+        }
+        return worldView(handle);
+    }
+
+    /** See {@link #worldDepthViewFor(ScopeDepthCopyState.DepthHandle)}. */
+    public static GpuTextureView apertureDepthViewFor(ScopeDepthCopyState.DepthHandle handle) {
+        if (!handle.available()) {
+            return null;
+        }
+        return apertureView(handle);
     }
 
     private static ImportedDepthTextureView worldView(ScopeDepthCopyState.DepthHandle handle) {

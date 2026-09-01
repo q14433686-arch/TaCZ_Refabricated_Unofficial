@@ -20,7 +20,9 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.render.scope.ScopeDepthCopyState;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.render.scope.ScopePipRerender;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -158,6 +160,43 @@ public final class PolyMeshGpuRenderer {
                     .withDepthWrite(true)
                     .withColorWrite(true)
                     .build());
+
+    /**
+     * 手部 lit 管线的「孔外掩码」变体：片元着色器换成 {@code core/mesh_entity_scope_clip}
+     * （scope_flash_clip 的 mode-2 硬编码克隆），加采本帧目镜序列的两份私有深度拷贝，
+     * 镜孔内且比目镜远的片元直接 discard —— 与 vanilla 第一人称枪身的
+     * {@code ScopeRenderTypes.clipForViewmodel} 同一语义（该包装对 mesh GPU 表从未生效，
+     * 高模枪身在镜内不被目镜裁剪，实机 2026-09-01）。仅在 {@code ScopeDepthCopyState
+     * .isMaskCycleValid()}（本帧确有完整目镜掩码周期）时由 drawList 选用，其余一切语境
+     * 仍走普通管线 —— 比 vanilla 的 uniform 失败回退更早、更便宜。
+     */
+    private static final RenderPipeline LIT_PIPELINE_CLIP = makeLitClipPipeline();
+
+    private static RenderPipeline makeLitClipPipeline() {
+        RenderPipeline pipeline = RenderPipelines.register(
+                RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+                        .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/mesh_entity_scope_clip"))
+                        .withVertexShader("core/entity")
+                        .withFragmentShader(Identifier.fromNamespaceAndPath(
+                                GunMod.MOD_ID, "core/mesh_entity_scope_clip"))
+                        .withShaderDefine("ALPHA_CUTOUT", 0.1F)
+                        .withShaderDefine("NO_OVERLAY")
+                        .withShaderDefine("NO_CARDINAL_LIGHTING")
+                        .withSampler("Sampler0")
+                        .withSampler("Sampler2")
+                        .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM)
+                        .withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM)
+                        .withCull(false)
+                        .withVertexFormat(DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS)
+                        .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
+                        .withDepthWrite(true)
+                        .withColorWrite(true)
+                        .build());
+        // 与 ScopeRenderTypes 的 viewmodel-cutout 同一机制：光影下登记进 Iris 的 hand program，
+        // 让常驻 VBO 的孔外剔除批次收 gbuffers_hand 照明。
+        IrisCompat.assignPipelineToIris(pipeline, "HAND", "mesh_entity_scope_clip");
+        return pipeline;
+    }
 
     private static final RenderPipeline EMISSIVE_PIPELINE = RenderPipelines.register(
             RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
@@ -742,6 +781,17 @@ public final class PolyMeshGpuRenderer {
      */
     public static void renderAtHandFlush() {
         lastHandFlushFrame = frameId;
+        // 镜内那一遍（PIP 二次渲染）不画第一人称手部：光影下 Iris 把手部搬进了
+        // LevelRenderer#renderLevel 内部，镜内那遍因此也有完整的手部阶段 —— mesh 枪会被
+        // 画进镜内画面；孔外剔除只裁「孔内且比目镜远」的段，比目镜更近的枪口前端留在
+        // 画面里，合成后即「镜内枪前端残影」（实机 2026-09-01）。手部属于第一人称
+        // viewmodel，镜内画面必须是纯世界：表在此清空，主画面的手部阶段会重新提交。
+        // （世界表相反：镜内那遍照常画、不清表，见 renderAtWorldFlush 的既有裁定；
+        // 两遍的世界内容必须一致，而手部只属于主画面。）
+        if (ScopePipRerender.isInsideScopeLevelRender()) {
+            HAND_DRAWS.clear();
+            return;
+        }
         if (HAND_DRAWS.isEmpty()) {
             // 绝大多数帧走这里（没持 mesh 枪 / 光影未开实验开关）。存活证明已经记下了，
             // 其余一律不查：IrisCompat.isUsingRenderPack() 是反射桥，别在热路径上白调。
@@ -798,7 +848,17 @@ public final class PolyMeshGpuRenderer {
 
         GpuTextureView lightmapView = resolveLightmap(mc);
         boolean lit = lightmapView != null;
-        RenderPipeline pipeline = lit ? LIT_PIPELINE : EMISSIVE_PIPELINE;
+        // 【目镜裁剪】仅手部表（!worldPass）且本帧确有完整目镜掩码周期时，lit 批次换用
+        // 孔外剔除变体并绑定两份实时深度拷贝；其余（世界表/GUI/无镜/掩码失效）一律普通
+        // 管线 —— 失败语义 = 与今日完全相同的未裁剪外观，不会更糟。
+        boolean apertureClip = false;
+        RenderPipeline pipeline;
+        if (lit && !worldPass && ScopeDepthCopyState.hasMaskCycleThisFrame()) {
+            pipeline = LIT_PIPELINE_CLIP;
+            apertureClip = true;
+        } else {
+            pipeline = lit ? LIT_PIPELINE : EMISSIVE_PIPELINE;
+        }
         GpuSampler linearSampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
         // lightmap 的 sampler 也在这里取好：pass 体内只留 bind/draw（见下方不变量注释）。
         GpuSampler nearestSampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
@@ -920,47 +980,110 @@ public final class PolyMeshGpuRenderer {
             if (lit) {
                 pass.bindTexture("Sampler2", lightmapView, nearestSampler);
             }
-
-            for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
-                // pass 体内只做「取已解析好的视图 + bind」，不再碰 TextureManager（见上方不变量注释）。
-                GpuTextureView textureView = viewsByTexture.get(group.getKey());
-                if (textureView == null) {
-                    continue;
-                }
-                pass.bindTexture("Sampler0", textureView, linearSampler);
-
-                for (DrawEntry entry : group.getValue()) {
-                    pass.setUniform("DynamicTransforms", transformByEntry.get(entry));
-                    pass.setVertexBuffer(0, entry.bone().vertexBuffer);
-                    pass.setIndexBuffer(indices.getBuffer(entry.bone().indexCount), indices.type());
-                    // 【法线病灶 · 26.2 的 83daf16 同源，机制对 Iris 1.10/1.11 同样成立】
-                    // 光影包里的 gl_NormalMatrix（被 Iris 改名 iris_NormalMat）**不来自**上面那份
-                    // DynamicTransforms 快照，而是 Iris 在【绘制执行那一刻】读 RenderSystem MV 栈顶
-                    // 的逆转置（Iris 源码 ExtendedShader#iris$setupState：
-                    // RenderSystem.getModelViewMatrixCopy().invert(t).transpose3x3(normalMatrix)；
-                    // 1.21.11 上的触发点是 GlCommandEncoder#executeDraw -> trySetup，每次绘制都过一遍）。
-                    // 本仓骨骼顶点法线是骨骼本地系（PolyMesh#writeRaw 裸写 setNormal），
-                    // 全部旋转都靠这一个矩阵补上：栈顶少了 pose_bone 那一层，平行光/反射就按
-                    // 本地法线算 —— 表现即「反光/高光偏一侧、与光源关系不对」。
-                    // 位置不受影响：ModelViewMat 走 DynamicTransforms 快照，上面已按 entry 写好。
-                    // 所以 pose 必须留在栈上直到 drawIndexed 真正执行完，不能像首版那样只喂
-                    // 快照就弹栈。vanilla（无光影）不受牵连：两条管线都带 NO_CARDINAL_LIGHTING，
-                    // 核心 entity shader 那条分支不读法线 ⇒ 没装光影包时这段是纯空转。
-                    // 与 26.2 的差别只在形状：他们那版走 RenderType#prepare + drawFromBuffer，
-                    // 我们把整段绘制包在 push/finally-pop 里（同本仓 ScopeFinalOverlayState 的既有手法）。
-                    mvStack.pushMatrix();
-                    try {
-                        mvStack.mul(entry.model());
-                        // 1.21.11 drawIndexed(baseVertex, firstIndex, count, instanceCount)：
-                        // 顺序索引缓冲 0..count-1，故 baseVertex=0、firstIndex=0、单实例。
-                        pass.drawIndexed(0, 0, entry.bone().indexCount, 1);
-                    } finally {
-                        mvStack.popMatrix();
+            // 【目镜裁剪 · 路线分流】无光影：自研 fsh（mesh_entity_scope_clip，即
+            // scope_flash_clip 的 mode-2 硬编码克隆）直接生效，用 RenderPass 采样器绑定
+            // 两份私有深度拷贝（2026-09-01 实机验证：枪身正确被目镜裁剪）。光影：Iris 的
+            // GlCommandEncoder#trySetup 会把管线替换成打补丁的 gbuffers_hand
+            // ExtendedShader（IrisDepthRestoreShaderMixin 注入的休眠 tacz_ScopeMaskMode
+            // 分支），自研 fsh 根本不参与绘制 —— 实机同日：光影下枪身不被裁剪。改走
+            // vanilla RenderType 同款 GL-uniform 路线（beginExternalMaskOutsideDraw =
+            // prepareMaskDraw(mode 2)：身份守卫 + 绑 aperture 拷贝单元 + 置 mode，world
+            // 深度用 Iris 的 depthtex2）；注入分支缺失/掩码失效时 mode 恒 0 = 不裁剪，
+            // 失败语义与「今日的未裁剪外观」一致。
+            boolean meshMaskRouteActive = false;
+            if (apertureClip) {
+                if (irisFlush) {
+                    ScopeDepthCopyState.beginExternalMaskOutsideDraw();
+                    meshMaskRouteActive = true;
+                } else {
+                    // 本帧目镜序列的两份私有深度拷贝（world=目镜写入前、aperture=目镜写入后）。
+                    // 片元着色器按「孔内且比目镜远 → discard」裁掉镜内枪身，与 vanilla
+                    // viewmodel 的 MASK_OUTSIDE 分支同一比较式。
+                    var worldDepth = ScopeDepthCopyState.worldDepthTarget();
+                    var apertureDepth = ScopeDepthCopyState.apertureDepthTarget();
+                    var worldView = ScopePipRenderState.worldDepthViewFor(worldDepth);
+                    var apertureView = ScopePipRenderState.apertureDepthViewFor(apertureDepth);
+                    if (worldView != null && apertureView != null) {
+                        pass.bindTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, worldView,
+                                RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                        pass.bindTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, apertureView,
+                                RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                    } else {
+                        // 视图取不到（理论不可达：maskValid 蕴含 handles 可用）→ 保底换回普通管线。
+                        pass.setPipeline(lit ? LIT_PIPELINE : EMISSIVE_PIPELINE);
                     }
+                }
+            }
+
+            try {
+                for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
+                    // pass 体内只做「取已解析好的视图 + bind」，不再碰 TextureManager（见上方不变量注释）。
+                    GpuTextureView textureView = viewsByTexture.get(group.getKey());
+                    if (textureView == null) {
+                        continue;
+                    }
+                    pass.bindTexture("Sampler0", textureView, linearSampler);
+
+                    for (DrawEntry entry : group.getValue()) {
+                        pass.setUniform("DynamicTransforms", transformByEntry.get(entry));
+                        pass.setVertexBuffer(0, entry.bone().vertexBuffer);
+                        pass.setIndexBuffer(indices.getBuffer(entry.bone().indexCount), indices.type());
+                        // 【法线病灶 · 26.2 的 83daf16 同源，机制对 Iris 1.10/1.11 同样成立】
+                        // 光影包里的 gl_NormalMatrix（被 Iris 改名 iris_NormalMat）**不来自**上面那份
+                        // DynamicTransforms 快照，而是 Iris 在【绘制执行那一刻】读 RenderSystem MV 栈顶
+                        // 的逆转置（Iris 源码 ExtendedShader#iris$setupState：
+                        // RenderSystem.getModelViewMatrixCopy().invert(t).transpose3x3(normalMatrix)；
+                        // 1.21.11 上的触发点是 GlCommandEncoder#executeDraw -> trySetup，每次绘制都过一遍）。
+                        // 本仓骨骼顶点法线是骨骼本地系（PolyMesh#writeRaw 裸写 setNormal），
+                        // 全部旋转都靠这一个矩阵补上：栈顶少了 pose_bone 那一层，平行光/反射就按
+                        // 本地法线算 —— 表现即「反光/高光偏一侧、与光源关系不对」。
+                        // 位置不受影响：ModelViewMat 走 DynamicTransforms 快照，上面已按 entry 写好。
+                        // 所以 pose 必须留在栈上直到 drawIndexed 真正执行完，不能像首版那样只喂
+                        // 快照就弹栈。vanilla（无光影）不受牵连：两条管线都带 NO_CARDINAL_LIGHTING，
+                        // 核心 entity shader 那条分支不读法线 ⇒ 没装光影包时这段是纯空转。
+                        // 与 26.2 的差别只在形状：他们那版走 RenderType#prepare + drawFromBuffer，
+                        // 我们把整段绘制包在 push/finally-pop 里（同本仓 ScopeFinalOverlayState 的既有手法）。
+                        mvStack.pushMatrix();
+                        try {
+                            mvStack.mul(entry.model());
+                            // 1.21.11 drawIndexed(baseVertex, firstIndex, count, instanceCount)：
+                            // 顺序索引缓冲 0..count-1，故 baseVertex=0、firstIndex=0、单实例。
+                            pass.drawIndexed(0, 0, entry.bone().indexCount, 1);
+                        } finally {
+                            mvStack.popMatrix();
+                        }
+                    }
+            } finally {
+                // 与 ScopeRenderTypes 的 setup/clear 配对同构：归还被 bindDepthTexture 占用的
+                // 纹理单元并清 CURRENT（GL-uniform 路线 = beginExternalMaskOutsideDraw 那条）；
+                // 无光影的自研 fsh 路线为 no-op。
+                if (meshMaskRouteActive) {
+                    ScopeDepthCopyState.end();
                 }
             }
         }
         // 判据日志放在 pass 关闭之后：pass 体内只留 bind/draw/scissor（见类注释那条不变量）。
+        boolean already = worldPass ? loggedFirstWorldDraw : loggedFirstDraw;
+        if (!already) {
+            if (worldPass) {
+                loggedFirstWorldDraw = true;
+            } else {
+                loggedFirstDraw = true;
+            }
+            long indexTotal = 0;
+            for (DrawEntry entry : drawable) {
+                indexTotal += entry.bone().indexCount;
+            }
+            LOGGER.info("[TacZMeshLoader] GPU mesh pass drew {} bones ({} indices) in {} {} flush:"
+                            + " lit={}, colorView={}, depthView={}, vertexFormat={}",
+                    drawable.size(), indexTotal, irisFlush ? "Iris" : "vanilla",
+                    worldPass ? "world" : "hand", lit,
+                    System.identityHashCode(colorView), System.identityHashCode(depthView),
+                    passFormat);
+        }
+    }
+
+：pass 体内只留 bind/draw/scissor（见类注释那条不变量）。
         boolean already = worldPass ? loggedFirstWorldDraw : loggedFirstDraw;
         if (!already) {
             if (worldPass) {

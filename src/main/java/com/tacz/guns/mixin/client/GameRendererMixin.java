@@ -9,6 +9,7 @@ import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
+import com.tacz.guns.client.render.scope.ScopeDepthCopyState;
 import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
 import com.tacz.guns.client.render.scope.ScopePipDepthDebug;
 import com.tacz.guns.client.render.scope.ScopePipRenderState;
@@ -188,6 +189,10 @@ public abstract class GameRendererMixin {
     private void tacz$renderTickStart(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
         // poly_mesh GPU：帧首归零绘制表 + 检测光影开关翻转（烘焙世代号）。
         PolyMeshGpuRenderer.beginFrame();
+        // 目镜掩码周期的帧戳推进（ScopeDepthCopyState#onClientFrameStart）：帧计数 +1，
+        // 「本帧/上一帧有无掩码周期」的时效查询以此为基准。不清 maskValid —— 终局叠加
+        // 在本帧手部阶段之前还要用它。
+        ScopeDepthCopyState.onClientFrameStart();
         RenderTickEvent.EVENT.invoker().onRenderTick(new RenderTickEvent(
                 RenderTickEvent.Phase.START,
                 deltaTracker.getGameTimeDeltaPartialTick(false)
