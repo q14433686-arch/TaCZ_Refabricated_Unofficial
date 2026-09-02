@@ -47,8 +47,11 @@
 ## `ci/` —— workflow 暂存区
 
 沙箱凭据无 workflow 权限，`.github/workflows/` 由维护者手动上线。
-**此目录是待上线副本**；与正式件不一致时以 `.github/workflows/` 为准，
-上线后应将暂存件同步为与正式件相同（或删除）。
+**此目录是本分支正式件的镜像**（2026-09-02 实测：三件全部已上线且逐字一致）；
+与正式件不一致时以 `.github/workflows/` 为准。
+`pending/` 子目录放**目标在别的分支/别的仓**的待上线件（refab 1.21.11 的两个 verify 脚本件、
+TaCZ_Renovated 三线的 build/compile-check）；六条线的逐分支手动动作清单见
+`INSTALL_MATRIX_20260902.md`。
 
 ## `archive/` —— 2026-07 移植期历史（勿动）
 

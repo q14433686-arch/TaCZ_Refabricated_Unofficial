@@ -7,16 +7,31 @@
 两边不一致时，**以 `.github/workflows/` 的正式件为准**；上线后本目录的
 副本就是正式件的镜像，下次改动继续在这里迭代。
 
-## 当前待上线清单（2026-08-31）
+## 当前状态（2026-09-02 实测刷新）
+
+三件**全部已上线**，本目录副本与 `.github/workflows/` 正式件逐字一致（只差空行）：
 
 | 文件 | 状态 | 内容 |
 |---|---|---|
-| `compile-check.yml` | ✅ 已上线（c48cf9c，2026-08-31） | 补主分支/PR 编译盲区；日志回推仍只在 arena/**；加 concurrency 取消过期 run |
-| `consistency.yml` | **待上线 v2**（正式件是 v1） | 补 arena/** 触发（版本号改动都在工作分支，合并后才守门就晚了）；paths 加 fabric.mod.json |
-| `build.yml` | **待更新 hotfix**（正式件 7f472d2 首跑失败） | 全量 `gradlew build` + jar 上传为 artifact（14 天）——NV 征测/实测直接发 Actions 链接；顺带 mixin 配置完整性、en/zh 语言键齐平、版本一致性三个静态校验。**首跑 Upload jars 步失败：artifact 名用了 `github.ref_name`，arena 分支名带 `/` 是非法字符——本目录副本已改为只用 sha，请把 Upload jars 段同步到正式件** |
+| `compile-check.yml` | ✅ 已上线（v4） | 主分支 push + PR 也编译（补合并 commit 的盲区）；日志回推只在 `arena/**`；`concurrency` 取消同分支过期 run |
+| `consistency.yml` | ✅ 已上线（v2） | 版本号↔README 守门；`arena/**` 也触发；`paths` 含 `fabric.mod.json` |
+| `build.yml` | ✅ 已上线（artifact 名已修） | 全量 `gradlew build` + jar artifact（14 天）+ 三个静态校验（mixin 配置完整性 / en-zh 语言键齐平 / 版本一致性）。artifact 名只用 sha（`github.ref_name` 在 arena 分支带 `/`，是非法字符，首跑 2026-08-31 就是这样红的） |
 
-上线动作：GitHub 网页 → 仓库 → `.github/workflows/` → 对应文件 →
-Edit（或 Add file → Create new file）→ 粘贴本目录同名文件全文 → commit 到
-`arena/01a04e96-tacz-refabricated-unofficial` 分支（或按当时工作流程提交）。
+> 旧版本文字（2026-08-31）曾把 `consistency.yml` 记为「待上线 v2」、`build.yml` 记为
+> 「待更新 hotfix」——两件后来都已由维护者上线，本表 2026-09-02 按 `gh api contents`
+> 实拉核对后刷新。
 
-三个静态校验在写入时已对当前源码树本地验证过全绿（2026-08-31）。
+## 本线之外的待上线件 → `pending/`
+
+`docs/ci/pending/` 放**目标不在本分支**的待上线件（姊妹分支 `26.1.2` / `1.21.11`
+与姊妹仓 `TaCZ_Renovated` 三线），逐分支手动动作清单见
+[`INSTALL_MATRIX_20260902.md`](INSTALL_MATRIX_20260902.md)。
+
+## 本线已知的一个待裁定项
+
+`src/main/resources/tacz.compat.acceleratedrendering.mixins.json` 是**孤儿 mixin 配置**
+（`fabric.mod.json` 没注册它 ⇒ 永不生效）。1.21.11 线在 R3 已删同名文件，本线还留着
+（AR 兼容在 26.2 是 no-op 空壳，`ARCompatImpl` 注释写着等 AR 出 26.2 版再恢复）。
+现状不影响任何流程（本线 `build.yml` 没有「注册性」检查）；
+**若将来把 1.21.11 那条注册性检查搬到本线，必须先删文件或加白名单，否则 CI 立刻红。**
+详见 `INSTALL_MATRIX_20260902.md` §B0-3。
