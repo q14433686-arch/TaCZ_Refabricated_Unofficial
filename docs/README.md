@@ -33,6 +33,7 @@
 | `FAMILY_TREE_2026_08_30.md` | 六分支谱系实测 |
 | `SYNC_GOVERNANCE_PROPOSAL.md` | 同步治理原则 |
 | `SYNC_GUIDE_REFAB_1211/2612_*.md`、`SYNC_GUIDE_RENOV_262_*.md` | 三份 08-30 同步指导（时效标注见 ROUNDUP §3） |
+| `SYNC_GUIDE_PUTAWAY_KEEP_20260902.md` | 收枪（put-away）动画 `keep()` 修复的三线移植指导：机制核对表、两份分支补丁、落码后必测项（账本 #14） |
 | `superseded/` | **08-30 之前的旧 handoff/同步件**（原 `docs/handoff/` 四件套、08-12/08-22 的移植清单等 9 份）。内容未必失效，但**状态一律以账本为准**，不要按旧件直接开工 |
 
 ## `publish/` —— 发布相关

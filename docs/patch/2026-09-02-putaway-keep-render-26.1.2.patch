@@ -1,0 +1,34 @@
+diff --git a/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerDraw.java b/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerDraw.java
+index 79887cf..a3f9371 100644
+--- a/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerDraw.java
++++ b/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerDraw.java
+@@ -3,6 +3,7 @@ package com.tacz.guns.client.gameplay;
+ import cn.sh1rocu.tacz.api.LogicalSide;
+ import cn.sh1rocu.tacz.mixin.accessor.BlockableEventLoopAccessor;
+ import com.tacz.guns.api.TimelessAPI;
++import com.tacz.guns.api.client.other.KeepingItemRenderer;
+ import com.tacz.guns.api.event.common.GunDrawEvent;
+ import com.tacz.guns.api.item.IGun;
+ import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
+@@ -81,6 +82,21 @@ public class LocalPlayerDraw {
+ 
+     private void doPutAway(ItemStack lastItem, long putAwayTime) {
+         if (BuiltinItemRendererRegistry.INSTANCE.get(lastItem.getItem()) instanceof AnimateGeoItemRenderer<?, ?> renderer) {
++            // Keep the old viewmodel alive in ItemInHandRenderer for the whole put-away window.
++            // Without this, the Minecraft 26.1.2 hand renderer immediately switches to the new
++            // main-hand stack, so the state machine's put_away animation has nothing to render.
++            //
++            // 为什么放在这里（而不是还原上游那两处被注释掉的调用）：
++            //   * 消费端是 ItemInHandRendererMixin 的 WrapOperation →
++            //     FirstPersonAnimationCompat#getMainRenderStack → KeepingItemRenderer#getCurrentItem，
++            //     keep 窗口内它返回旧枪，于是本帧提交的仍是旧枪视模（put_away 由
++            //     AnimationController 继续推进，stateMachine 已 exit 也不影响）；
++            //   * 窗口过期后 getCurrentItem 回落 mainHandItem（新枪），needReInit 成立 →
++            //     tryInit 触发 INPUT_DRAW，收枪→抬枪的先后次序由此恢复；
++            //   * AnimateGeoItemRenderer#tryExit / GunItemRendererWrapper#tryExit 里那两行
++            //     上游注释保持注释状态：**只能有一个调用点**，两处都开会重复调用 keep
++            //     （虽然 keep 自带时间窗守卫，但语义重复且容易让后来者误判触发时机）。
++            KeepingItemRenderer.getRenderer().keep(lastItem, putAwayTime);
+             renderer.tryExit(lastItem, putAwayTime);
+         }
+         TimelessAPI.getGunDisplay(lastItem).ifPresent(display -> {
