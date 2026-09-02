@@ -76,8 +76,11 @@ bash scripts/install-hooks.sh
 > 早期版本用 `git config core.hooksPath .githooks`，但 `.githooks/` 本身是分支内容，
 > 切到没有该目录的分支后提醒会静默失效，已弃用。
 
-CI 模板位于 `docs/publish/ci/consistency.yml`，需由仓库所有者复制到
-`.github/workflows/consistency.yml`（AI 助手的 token 通常无 `workflows` 权限，无法代劳）。
+CI 模板位于 `docs/ci/`（本分支的 build / compile-check / consistency 暂存副本）；
+跨分支与姊妹仓的待上线件在 `docs/ci/pending/`，逐分支动作见
+`docs/ci/INSTALL_MATRIX_20260902.md`。需由仓库所有者复制到目标分支的
+`.github/workflows/`（AI 助手的 token 通常无 `workflows` 权限，无法代劳）。
+旧文档中的 `docs/publish/ci/` 是 26.1.2 分支历史路径。
 
 ### 历史事故（不要重蹈覆辙）
 

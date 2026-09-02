@@ -1,15 +1,4 @@
-commit: ee65034fec4018d9e8afa57f1ca607556c32d347
-Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
-.............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
-
-Welcome to Gradle 9.5.1!
-
-Here are the highlights of this release:
- - Task provenance in reports and failure messages
- - Type-safe accessors for precompiled Kotlin Settings plugins
-
-For more details see https://docs.gradle.org/9.5.1/release-notes.html
-
+commit: 4f124ef5c660b499f7df80f1ba8df165391fcd9a
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -30,8 +19,8 @@ Cannot remap enumClass because it does not exist in any of the targets [] or the
 Cannot remap push because it does not exist in any of the targets [net/minecraft/class_287]
 Cannot remap ingredientListRenderer because it does not exist in any of the targets [] or their parents.
 Cannot remap lambda$submit$0 because it does not exist in any of the targets [net/minecraft/class_840]
-Cannot remap lambda$tick$1 because it does not exist in any of the targets [net/minecraft/class_4897]
 Cannot remap buffers because it does not exist in any of the targets [] or their parents.
+Cannot remap lambda$tick$1 because it does not exist in any of the targets [net/minecraft/class_4897]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
@@ -81,7 +70,7 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 8 warnings
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788297408702.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1788362517115.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -91,7 +80,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 36s
+BUILD SUCCESSFUL in 1m 22s
 1 actionable task: 1 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 

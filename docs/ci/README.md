@@ -26,3 +26,14 @@ Edit（或 Add file → Create new file）→ 粘贴本目录同名文件全文 
 `tacz.compat.acceleratedrendering.mixins.json` 在 1.21.11 分支上没有对应的 mixin/plugin 类、
 也没被任何 `fabric.mod.json` 注册（本分支的 AR 兼容是 `ARCompat` 空壳，理由写在该类注释里），
 属于永不生效的孤儿配置，已删。
+
+## 2026-09-02 跨线 CI 盘点
+
+六线现状与逐分支上线动作见 [`INSTALL_MATRIX_20260902.md`](INSTALL_MATRIX_20260902.md)。
+本分支相关的待办集中在 `pending/refab-1.21.11/`：
+
+- `verify-mixin-targets-portable.patch` 已应用到本分支的 `docs/verify_mixin_targets.py`，把沙箱专属的 Java/Gradle 路径改为 `JAVA_HOME`、`PATH` 与 `GRADLE_USER_HOME`。
+- `build-yml-verify-steps.md` 记录将 mixin 目标和 shader import 校验追加到 `build.yml` 的位置，以及为什么上传步骤应使用 `if: always()`。
+- 本目录的 `build.yml`、`compile-check.yml`、`consistency.yml` 仍需维护者手动复制到 `.github/workflows/`；沙箱凭据没有 `workflows` 权限，无法直接上线 workflow。
+
+`pending/TaCZ_Renovated/` 是姊妹仓 TaCZ_Renovated 三条 NeoForge 分支的代拟模板，不要复制到本仓 Fabric 分支。

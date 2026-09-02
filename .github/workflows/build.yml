@@ -1,0 +1,164 @@
+name: build
+
+# 全量构建 + 产物上传（从 refab 26.2 侧 2026-08-31 的 build.yml 回流到本分支的暂存副本）。
+# compile-check 只跑 compileJava，测不出 processResources / remapJar 阶段的失败，也不产 jar。
+# 本流程跑 ./gradlew build 并把 jar 上传为 Actions artifact（留 14 天）——
+# 直接用途：给实测者一个下载链接；每轮改动随手有可实测的构建。
+# 顺手跑三个便宜的静态校验（mixin 配置完整性 / 中英语言键齐平 / 版本一致性），
+# 三者都是纯文本级、不依赖 loom 产物，所以 60 秒内就能挡住「忘同步 README」「mixin 配置
+# 指向不存在的类」这两类真实发生过的失误。
+#
+# 与 26.2 侧的差异（本分支专属）：
+#   * java-version 是 21（26.x 分支是 25）；
+#   * 1.21.11 是混淆版本，build 会跑 remapJar —— 因此本流程比 compile-check 慢，
+#     只在有代码改动时跑（paths-ignore 掉文档）；
+#   * scripts/check_release_consistency.sh 按 AGENTS.md §1 只存在于默认分支 26.2(main)，
+#     所以这里「本地没有就从默认分支取」，取不到就跳过而不是判失败。
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - 'arena/**'
+      - '1.21.11'
+      - '26.1.2'
+      - '26.2(main)'
+    paths-ignore:
+      - 'build-reports/**'
+      - 'docs/**'
+      - '*.md'
+  pull_request:
+    paths-ignore:
+      - 'build-reports/**'
+      - 'docs/**'
+      - '*.md'
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mixin config integrity (json 里列的类必须真实存在)
+        run: |
+          python3 - <<'EOF'
+          import json, glob, os, sys
+          bad = []
+          for cfg in glob.glob('src/main/resources/*mixins*.json'):
+              d = json.load(open(cfg))
+              pkg = d.get('package', '').replace('.', '/')
+              for section in ('mixins', 'client', 'server'):
+                  for m in d.get(section, []):
+                      p = 'src/main/java/' + pkg + '/' + m.replace('.', '/') + '.java'
+                      if not os.path.exists(p):
+                          bad.append(f'{cfg}: {m} -> {p} 不存在')
+          for b in bad:
+              print('::error::' + b)
+          sys.exit(1 if bad else 0)
+          EOF
+
+      - name: Mixin configs registered (fabric.mod.json 里列的与磁盘上的一一对应)
+        run: |
+          python3 - <<'EOF'
+          import json, glob, os, sys
+          mods = glob.glob('src/main/resources/fabric.mod.json')
+          bad = []
+          declared = set()
+          for m in mods:
+              for name in json.load(open(m)).get('mixins', []):
+                  declared.add(name)
+                  if not os.path.exists('src/main/resources/' + name):
+                      bad.append(f'{m}: 声明了 {name}，但文件不存在')
+          for f in glob.glob('src/main/resources/*mixins*.json'):
+              name = os.path.basename(f)
+              if name == 'fabric.mod.json':
+                  continue
+              # 未注册 = 孤儿配置：里面的 mixin 永远不会被应用，且 @Mixin(plugin=...)
+              # 指向的类可能根本不存在（本分支曾有过一份这样的件，见 CHANGELOG R3）。
+              if name not in declared:
+                  bad.append(f'{name}: 存在但没有任何 mod json 注册它（孤儿配置，永不生效）')
+          for b in bad:
+              print('::error::' + b)
+          sys.exit(1 if bad else 0)
+          EOF
+
+      - name: Lang key parity (en_us 与 zh_cn 键集合必须一致)
+        run: |
+          python3 - <<'EOF'
+          import json, os, sys
+          bad = []
+          for ns in ('tacz', 'lrtactical'):
+              base = f'src/main/resources/assets/{ns}/lang/'
+              if not os.path.exists(base + 'en_us.json'):
+                  continue
+              en = set(json.load(open(base + 'en_us.json')))
+              if not os.path.exists(base + 'zh_cn.json'):
+                  bad.append(f'{ns}: zh_cn.json 缺失')
+                  continue
+              zh = set(json.load(open(base + 'zh_cn.json')))
+              for k in sorted(en - zh):
+                  bad.append(f'{ns}: {k} 只在 en_us')
+              for k in sorted(zh - en):
+                  bad.append(f'{ns}: {k} 只在 zh_cn')
+          for b in bad:
+              print('::error::' + b)
+          sys.exit(1 if bad else 0)
+          EOF
+
+      - name: "Mesh config parity ([mesh_loader] TOML <-> Cloth 面板 <-> en/zh)"
+        run: |
+          # R3 反光轮次起：Cloth 面板是「TOML 里能改的局内也能改」的承诺的兑现处，
+          # 而它同时读三处（define 的键名 / 字段绑定 / setDefaultValue·setMin·setMax）。
+          # 三边靠人眼对齐必然歪，所以固化成脚本；脚本随源码走，这里只做调用。
+          if [ -f docs/check_mesh_config_parity.py ]; then
+            python3 docs/check_mesh_config_parity.py
+          else
+            echo "::error::docs/check_mesh_config_parity.py 不存在（被删了？这条校验就失去意义了）"
+            exit 1
+          fi
+
+      - name: Version consistency (与 consistency.yml 同一脚本，arena 分支也守门)
+        run: |
+          SCRIPT=scripts/check_release_consistency.sh
+          if [ ! -f "$SCRIPT" ]; then
+            # AGENTS.md §1：脚本只需存在于默认分支；本分支没有就从默认分支取一份。
+            git fetch -q --depth 1 origin '26.2(main)' || true
+            git show 'FETCH_HEAD:scripts/check_release_consistency.sh' > /tmp/crs.sh 2>/dev/null || true
+            SCRIPT=/tmp/crs.sh
+          fi
+          if [ -s "$SCRIPT" ]; then
+            bash "$SCRIPT"
+          else
+            echo "::notice::拿不到 check_release_consistency.sh，跳过版本一致性校验"
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Full build
+        run: ./gradlew build --console=plain --stacktrace --no-daemon
+
+      - name: Upload jars
+        uses: actions/upload-artifact@v4
+        with:
+          # 注意:artifact 名不能含 '/' 等字符,所以这里不能用 github.ref_name
+          # (arena/xxx 带斜杠,26.2 侧首跑 2026-08-31 就是这样失败的)。分支名在 run
+          # 页面本来就有,名字里只放 sha 前缀即可。
+          name: TACZ-Refabricated-1.21.11-${{ github.sha }}
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
+          retention-days: 14
+          if-no-files-found: error

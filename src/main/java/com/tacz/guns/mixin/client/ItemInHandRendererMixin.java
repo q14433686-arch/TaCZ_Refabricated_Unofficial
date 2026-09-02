@@ -212,12 +212,22 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
     @Unique
     @Override
     public void keep(ItemStack itemStack, long timeMs) {
-        long time = System.currentTimeMillis() - tacz$KeepTimestamp;
-        if (time < tacz$KeepTimeMs) {
+        // 【2026-09-02 语义修正】原守卫是「窗口未过期就直接 return」，后果是连续快速切枪时
+        // 第二次收枪**接管不了**窗口：上一把枪的剩余窗口继续生效，第二把枪的 put_away 一帧
+        // 都画不出来，而且窗口比它需要的短。现改为**最新一次收枪接管**，只保留原守卫里良性
+        // 的那一半——同一把枪、且新请求不会延长窗口时不动它，免得把正在播放的动画截断。
+        //
+        // 「接管不会用一个静止视模顶掉正在播放的动画」由调用点保证：
+        // LocalPlayerDraw#doPutAway 只在 AnimateGeoItemRenderer#hasInitializedStateMachine
+        // 成立（旧枪确实一直在被渲染、INPUT_PUT_AWAY 确实已触发）时才调 keep。
+        long now = System.currentTimeMillis();
+        boolean sameKeptItem = tacz$KeepItem != null
+                && ItemStack.isSameItemSameComponents(tacz$KeepItem, itemStack);
+        if (sameKeptItem && now + timeMs <= tacz$KeepTimestamp + tacz$KeepTimeMs) {
             return;
         }
         this.tacz$KeepTimeMs = timeMs;
-        this.tacz$KeepTimestamp = System.currentTimeMillis();
+        this.tacz$KeepTimestamp = now;
         this.tacz$KeepItem = itemStack;
         this.mainHandItem = itemStack;
     }
