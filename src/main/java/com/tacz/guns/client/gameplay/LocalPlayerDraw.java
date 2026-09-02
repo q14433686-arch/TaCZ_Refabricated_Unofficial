@@ -96,7 +96,14 @@ public class LocalPlayerDraw {
             //   * AnimateGeoItemRenderer#tryExit / GunItemRendererWrapper#tryExit 里那两行
             //     上游注释保持注释状态：**只能有一个调用点**，两处都开会重复调用 keep
             //     （虽然 keep 自带时间窗守卫，但语义重复且容易让后来者误判触发时机）。
-            KeepingItemRenderer.getRenderer().keep(lastItem, putAwayTime);
+            //
+            // 判定条件对齐上游：只有旧枪的状态机确实初始化过（= 它此前一直在被渲染，
+            // tryExit 里的 INPUT_PUT_AWAY 真的会触发）才开窗口。否则（刚进世界、第三人称
+            // 下切枪、上一把枪的窗口未过期所以这把从没被画过）开出来的是「旧枪静止一瞬」
+            // 的空窗口 —— 上游把 keep() 写在 isInitialized() 之内正是这个意思。
+            if (renderer.hasInitializedStateMachine(lastItem)) {
+                KeepingItemRenderer.getRenderer().keep(lastItem, putAwayTime);
+            }
             renderer.tryExit(lastItem, putAwayTime);
         }
         TimelessAPI.getGunDisplay(lastItem).ifPresent(display -> {
