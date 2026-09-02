@@ -10,42 +10,45 @@
 本目录 2026-09-02 从 26.2 线（`arena/01a04e96`）镜像过来，同步记录见
 `docs/lineage/SYNC_ROUNDUP_2612_20260902.md` §2。
 
-## 当前状态（2026-09-02 按 26.2 线六线 CI 盘点刷新）
+## 当前状态（2026-09-02 实拉刷新：三件全部已上线）
 
-本线现役 **只有** `compile-check-2612.yml`（v3：仅 `arena/**` 触发、无 concurrency、
-无 PR/主分支 ⇒ 合并 commit 从没被编过）。三件待上线稿都在本目录，
-**已按本分支适配、只差维护者粘贴**：
+维护者 2026-09-02 23:07–23:12（+08）在网页端一次性完成四步上线，
+本目录副本即正式件的镜像（逐字一致）：
 
-| 文件 | 26.1.2 线状态 | 内容 |
+| 文件 | 状态 | 内容 |
 |---|---|---|
-| `compile-check.yml` | **v4 待上线**（并入替换现役 v3） | 主分支/PR 也编译（补合并 commit 盲区）、`concurrency` 取消同分支过期 run；日志回推仍只在 `arena/**`；**已并入三条静态检查**（mixin 注册 / lang 齐平 / mesh 配置 parity，来源 `docs/publish/ci/CHECKS_TO_APPEND_20260901.md`） |
-| `consistency.yml` | **待上线 v2** | 版本号五处一致守门；`arena/**` 也触发（版本号改动都在工作分支，合并后才守门就晚了）；`paths` 含 `fabric.mod.json` |
-| `build.yml` | **待上线** | 全量 `gradlew build` + jar 上传为 artifact（14 天）—— 发链接即可征测；顺带三个静态校验：mixin 配置完整性、en/zh 语言键齐平、版本一致性。artifact 名**只用 sha**（`github.ref_name` 在 arena 分支名带 `/`，是非法字符，26.2 首跑就是这样失败的） |
-| `INSTALL_MATRIX_20260902.md` | 家族级**副本**（源在 26.2 线 PR #87 `fcd3b4a`） | 六线 CI 现状总表 + 逐分支手动动作（本线 = §B1）+ 首跑预期 + 复核命令。副本仅作本线参照，**不要在这里改源内容** |
-| `../scripts/check_release_consistency.sh` | **本分支已补**（2026-09-02，镜像自 `26.2(main)`） | 上面两个 workflow 都要跑它；AGENTS.md §1 说它可以只存在于默认分支（hook 会自动回落读取），但 **CI 跑在工作区，本分支必须有这份文件**。脚本本身分支无关（三条分支都能查、也能 `--branch` 指定） |
+| `compile-check.yml` | ✅ 已上线（v4，`1519ae59` 更新并改自 `compile-check-2612.yml`，旧件已除 ⇒ 无双跑） | 主分支/PR 也编译（补合并 commit 盲区）、`concurrency` 取消同分支过期 run；日志回推只在 `arena/**`。**未含三条静态检查**（上线的是并入前暂存稿，可选跟进见下） |
+| `consistency.yml` | ✅ 已上线（v2，`6016d708`） | 版本号五处一致守门；`arena/**` 也触发；`paths` 含 `fabric.mod.json` |
+| `build.yml` | ✅ 已上线（`3ac189a5`） | 全量 `gradlew build` + jar 上传为 artifact（14 天）—— 发链接即可征测；顺带三个**内联**静态校验：mixin 配置完整性、en/zh 语言键齐平、版本一致性。artifact 名只用 sha（`github.ref_name` 在 arena 分支名带 `/`，是非法字符，26.2 首跑就是这样失败的） |
+| `INSTALL_MATRIX_20260902.md` | 家族级**副本**（源在 26.2 线 PR #87 `fcd3b4a`） | 六线 CI 现状总表 + 逐分支手动动作（本线 = §B1，**已全部执行**）。副本仅作本线参照，**不要在这里改源内容** |
+| `../scripts/check_release_consistency.sh` | 本分支已有（2026-09-02，镜像自 `26.2(main)`） | 上面两个 workflow 都要跑它；CI 跑在工作区，本分支必须有这份文件。脚本本身分支无关 |
 
-## 上线动作（维护者，四步；26.2 线盘点结论见 `INSTALL_MATRIX_20260902.md` §B1）
+## 上线记录（2026-09-02，四步全完成）
 
-GitHub 网页 → 仓库 → `.github/workflows/` → 对应文件 →
-Edit（或 Add file → Create new file）→ 粘贴本目录文件全文 → commit 到本分支。
+| # | 动作 | 结果 |
+|---|---|---|
+| 1 | 新建 build | `3ac189a5` Create build.yml（逐字 = 本目录稿） |
+| 2 | 新建 consistency | `6016d708` Create consistency.yml（逐字 = 本目录稿） |
+| 3 | compile-check 升级 v4 | `1519ae59` Update and rename compile-check-2612.yml → compile-check.yml（内容 = 本目录 v4 稿） |
+| 4 | 删旧件 | 随 3 的 rename 完成，无双跑 |
 
-| # | 动作 | 源（本目录） | 目标 |
-|---|---|---|---|
-| 1 | 新建 build | `build.yml` | `.github/workflows/build.yml` |
-| 2 | 新建 consistency | `consistency.yml` | `.github/workflows/consistency.yml` |
-| 3 | 新建 compile-check v4 | `compile-check.yml` | `.github/workflows/compile-check.yml` |
-| 4 | **删掉旧件** | — | `.github/workflows/compile-check-2612.yml`（打开该文件 → 右上 `…` → Delete file） |
+上线后 CI 即转绿（`d1b8f2b0` ci-log success）。**注意**：PR 上下文
+（`pull_request` 事件）的 check run 呈 `action_required` —— 仓库对 PR run
+设了批准门槛，需维护者在 Actions 页点批准；`push` 事件 run 自动跑且绿。
 
-⚠️ **动作 3 与 4 必须一次做完**：两个文件的 `name:` 都是 `compile-check`，
-并存会每轮 push 跑两遍编译、回推两条 `ci-log`（配额翻倍 + 历史噪音）。
+## 剩余可选跟进：compile-check 的三条静态检查
 
-**首跑预期：绿。** 26.2 线盘点时已对本分支真实树预演（矩阵 §5）：mixin 全部注册且类
-存在、`tacz`+`lrtactical` 的 en_us↔zh_cn 齐平、一致性脚本已在位；2026-09-02 本会话
-又在本工作区把**三条静态检查全跑了一遍、全绿**（mixin 65/65、lang 超集+333 字面量
-键全命中、mesh parity 19/19）。其中 mesh parity 需要先修一处：M-7 面板条目的语言键名
-未跟随 toml 键蛇形（`mesh_gpu_bake_budget` → `mesh_gpu_bake_budget_per_frame`，
-6 处改名、显示文本不变），不修则首跑必红。Java 25。
-（真实 Actions 首跑尚未发生 —— 这是沙箱给不出的验证。）
+现役 compile-check 是纯 v4（不含静态检查）；`build.yml` 的三个**内联**校验
+只覆盖 mixin 配置完整性 / en-zh 语言键齐平 / 版本一致性，以下三条仍无 CI 覆盖：
+
+| 检查 | 脚本 | 现状 |
+|---|---|---|
+| mixin **注册性**（fabric.mod.json 注册 + 类存在） | `docs/check_mixin_registration.py` | 工作区实跑绿（65/65） |
+| lang 超集 + 代码字面量键存在 | `docs/check_lang_keys.py` | 工作区实跑绿（333 字面量全命中） |
+| mesh 配置三方齐平（toml↔Cloth↔语言键） | `docs/check_mesh_config_parity.py` | 工作区实跑绿（19/19，**依赖 `ca083b5d` 的键名改名**，不修必红） |
+
+启用 = 把 `docs/publish/ci/CHECKS_TO_APPEND_20260901.md` 里的三个 step
+追加进 `.github/workflows/compile-check.yml`（或改本目录暂存稿后照惯例上线）。
 
 ## 本地自检（与 CI 同一批静态校验的等价命令）
 
@@ -57,11 +60,12 @@ python3 docs/check_lang_keys.py                      # lang 键守卫
 python3 docs/check_mesh_config_parity.py             # mesh 配置 parity
 ```
 
-2026-09-02 在本分支工作区跑过 `check_release_consistency.sh`：通过 6 · 失败 0
-（唯一警告是分支名形态推导，属正常）。
+2026-09-02 在本分支工作区实跑：一致性 6 通过 / 0 失败（唯一警告是分支名
+形态推导，属正常）；三条静态检查全绿（mixin 65/65、lang 超集+333 字面量、
+mesh parity 19/19）。
 
 ## 历史遗留
 
-`docs/publish/ci/` 是本分支独有的旧暂存路径：`compile-check-2612.yml`（v3 原件，
-与现役逐字一致）+ `CHECKS_TO_APPEND_20260901.md`（三条静态检查待办，**2026-09-02
-已并入本目录 `compile-check.yml`**）。新改动一律在本目录迭代。
+`docs/publish/ci/` 是本分支独有的旧暂存路径：`compile-check-2612.yml`（v3
+原件，现役的 rename 前身）+ `CHECKS_TO_APPEND_20260901.md`（三条静态检查
+待办，**仍开放**，见上节）。新改动一律在本目录迭代。

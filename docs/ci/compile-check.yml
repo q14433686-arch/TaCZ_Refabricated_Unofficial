@@ -2,16 +2,11 @@ name: compile-check
 
 # ---------------------------------------------------------------------------
 # 【26.1.2 线副本（2026-09-02 同步自 26.2 线 docs/ci/）】
-# 本文件是按 26.2 线的正式件镜像过来的，差异：
+# 本文件是按 26.2 线的正式件镜像过来的，差异只有：
 #   - 触发分支表保持原样（已含 26.1.2）；
 #   - Java 25（26.x 构建目标，与 26.1.2 的 build.gradle targetJavaVersion 一致）；
-#   - 本分支无 Loom remap，可选依赖走 cursemaven/modrinth（Actions 出网可达）；
-#   - compileJava 之后并入三条静态检查（本线自己的待办
-#     docs/publish/ci/CHECKS_TO_APPEND_20260901.md，2026-09-02 并入；脚本零依赖，
-#     26.2 线六线盘点时已在本分支真实树预演通过：mixin 7/7 注册、lang 齐平）。
+#   - 本分支无 Loom remap，可选依赖走 cursemaven/modrinth（Actions 出网可达）。
 # 维护者在网页端上线后，本目录的副本即正式件的镜像，下次改动继续在这里迭代。
-# ⚠️ 上线时本文件（v4）与现役 compile-check-2612.yml（v3）的 name: 都是
-# compile-check —— 两者必须同一次动作里「建新 + 删旧」，并存会每轮 push 双跑。
 # ---------------------------------------------------------------------------
 # 编译验证闭环（v4）：
 # 依赖下载与编译在 GitHub Actions（外网畅通）执行；
@@ -65,18 +60,6 @@ jobs:
           mkdir -p build-reports
           echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
           ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
-
-      # 三条静态检查（2026-09-02 并入，来源 docs/publish/ci/CHECKS_TO_APPEND_20260901.md）：
-      # 全部零依赖（python3 + stdlib + 工作树），顺序不敏感，快脚本；
-      # 只在 compileJava 成功后跑，失败即红（守卫目的所在）。
-      - name: mixin registration guard
-        run: python3 docs/check_mixin_registration.py
-
-      - name: lang key guard
-        run: python3 docs/check_lang_keys.py
-
-      - name: mesh config parity
-        run: python3 docs/check_mesh_config_parity.py
 
       - name: Push compile log back via contents API
         # 只在 arena/** 的 push 上回推 —— 主分支与 PR 不产生 ci-log commit
