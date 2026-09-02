@@ -1,5 +1,12 @@
 # compile-check-2612.yml 建议追加步骤（待维护者上线；2026-09-01）
 
+> **【2026-09-02 状态更新】** 维护者当日上线的 compile-check v4 是并入前的
+> 暂存稿（纯 v4，**不含**这三条检查）⇒ 本待办仍开放。启用方式：把下面三个
+> step 追加进 `.github/workflows/compile-check.yml`（网页端，或改 `docs/ci/`
+> 暂存稿后照惯例上线）。前置依赖已修复：mesh parity 红线（M-7 面板条目的
+> 语言键名不跟随 toml 键蛇形）已在 `ca083b5d` 改名修正，修正后三条脚本在
+> 本工作区实跑全绿 —— 不修则追加后首跑必红。下文保留作来源与片段记录。
+
 来源：1211 复核 `SYNC_REVIEW_2612_TML_PORT_20260901.md` §0/§1/§2/§6 的建议
 （「把 mixin 注册检查做成 CI 第 6 步」「lang 只许增不许减」「引用键必须存在」
 「把 parity 脚本挂进 compile-check」）。`.github/workflows/**` 推送被 token
