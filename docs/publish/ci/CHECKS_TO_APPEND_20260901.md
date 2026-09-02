@@ -1,5 +1,10 @@
 # compile-check-2612.yml 建议追加步骤（待维护者上线；2026-09-01）
 
+> **【2026-09-02 已办】** 本待办已并入 `docs/ci/compile-check.yml`（v4 暂存稿，
+> 三个 step 原样追加在 compileJava 之后）。维护者按 `docs/ci/README.md`
+> 四步清单上线时，粘贴 v4 即已含这三条检查，**不要再对现役 v3 单独追加**
+> （v3 会随动作 4 删除）。下文保留作来源记录。
+
 来源：1211 复核 `SYNC_REVIEW_2612_TML_PORT_20260901.md` §0/§1/§2/§6 的建议
 （「把 mixin 注册检查做成 CI 第 6 步」「lang 只许增不许减」「引用键必须存在」
 「把 parity 脚本挂进 compile-check」）。`.github/workflows/**` 推送被 token
