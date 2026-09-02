@@ -69,8 +69,11 @@ bash scripts/check_release_consistency.sh --strict   # 发布门禁，不一致�
 git config core.hooksPath .githooks
 ```
 
-CI 模板位于 `docs/publish/ci/consistency.yml`，需由仓库所有者复制到
-`.github/workflows/consistency.yml`（AI 助手的 token 通常无 `workflows` 权限，无法代劳）。
+CI 模板位于 `docs/ci/`（26.2 线三件均已上线，该目录是正式件的镜像）；
+**其它分支/姊妹仓的待上线件在 `docs/ci/pending/`**，逐分支手动动作清单见
+`docs/ci/INSTALL_MATRIX_20260902.md`。上线需由仓库所有者在网页端复制到目标分支的
+`.github/workflows/`（AI 助手的 token 无 `workflows` 权限，无法代劳）。
+（旧文档里写过的 `docs/publish/ci/` 只存在于 26.1.2 分支，是历史遗留路径。）
 
 ### 历史事故（不要重蹈覆辙）
 

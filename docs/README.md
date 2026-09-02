@@ -24,6 +24,10 @@
 结论可能已被后续代码推翻，**引用前先看文件头的状态标注**。
 （2026-08-31 从根目录迁入 12 份；此前平铺在 `docs/` 根下。）
 
+**开 26.3 线之前先读**：`PORT_26_3_FEASIBILITY_2026_09_02.md`（账本 #16）——
+26.3 移植可行性实测评估：Fabric API 侧风险、Mojang 渲染层换代（blaze3d→renderpearl / OIT /
+`ItemInHandRenderer` 改名）、本仓暴露面计数、生态就绪度表、减损清单与移植脚本包计划。
+
 ## `lineage/` —— 跨分支/跨仓同步的**唯一现行入口**
 
 | 文件 | 内容 |
@@ -33,6 +37,7 @@
 | `FAMILY_TREE_2026_08_30.md` | 六分支谱系实测 |
 | `SYNC_GOVERNANCE_PROPOSAL.md` | 同步治理原则 |
 | `SYNC_GUIDE_REFAB_1211/2612_*.md`、`SYNC_GUIDE_RENOV_262_*.md` | 三份 08-30 同步指导（时效标注见 ROUNDUP §3） |
+| `SYNC_GUIDE_PUTAWAY_KEEP_20260902.md` | 收枪（put-away）动画 `keep()` 修复的三线移植指导：机制核对表、两份分支补丁、落码后必测项（账本 #14） |
 | `superseded/` | **08-30 之前的旧 handoff/同步件**（原 `docs/handoff/` 四件套、08-12/08-22 的移植清单等 9 份）。内容未必失效，但**状态一律以账本为准**，不要按旧件直接开工 |
 
 ## `publish/` —— 发布相关
@@ -46,8 +51,11 @@
 ## `ci/` —— workflow 暂存区
 
 沙箱凭据无 workflow 权限，`.github/workflows/` 由维护者手动上线。
-**此目录是待上线副本**；与正式件不一致时以 `.github/workflows/` 为准，
-上线后应将暂存件同步为与正式件相同（或删除）。
+**此目录是本分支正式件的镜像**（2026-09-02 实测：三件全部已上线且逐字一致）；
+与正式件不一致时以 `.github/workflows/` 为准。
+`pending/` 子目录放**目标在别的分支/别的仓**的待上线件（refab 1.21.11 的两个 verify 脚本件、
+TaCZ_Renovated 三线的 build/compile-check）；六条线的逐分支手动动作清单见
+`INSTALL_MATRIX_20260902.md`。
 
 ## `archive/` —— 2026-07 移植期历史（勿动）
 

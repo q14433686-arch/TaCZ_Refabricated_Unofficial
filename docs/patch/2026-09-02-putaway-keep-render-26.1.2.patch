@@ -1,0 +1,125 @@
+diff --git a/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerDraw.java b/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerDraw.java
+index 79887cf..3acaa6e 100644
+--- a/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerDraw.java
++++ b/src/main/java/com/tacz/guns/client/gameplay/LocalPlayerDraw.java
+@@ -3,6 +3,7 @@ package com.tacz.guns.client.gameplay;
+ import cn.sh1rocu.tacz.api.LogicalSide;
+ import cn.sh1rocu.tacz.mixin.accessor.BlockableEventLoopAccessor;
+ import com.tacz.guns.api.TimelessAPI;
++import com.tacz.guns.api.client.other.KeepingItemRenderer;
+ import com.tacz.guns.api.event.common.GunDrawEvent;
+ import com.tacz.guns.api.item.IGun;
+ import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
+@@ -81,6 +82,28 @@ public class LocalPlayerDraw {
+ 
+     private void doPutAway(ItemStack lastItem, long putAwayTime) {
+         if (BuiltinItemRendererRegistry.INSTANCE.get(lastItem.getItem()) instanceof AnimateGeoItemRenderer<?, ?> renderer) {
++            // Keep the old viewmodel alive in ItemInHandRenderer for the whole put-away window.
++            // Without this, the Minecraft 26.1.2 hand renderer immediately switches to the new
++            // main-hand stack, so the state machine's put_away animation has nothing to render.
++            //
++            // 为什么放在这里（而不是还原上游那两处被注释掉的调用）：
++            //   * 消费端是 ItemInHandRendererMixin 的 WrapOperation →
++            //     FirstPersonAnimationCompat#getMainRenderStack → KeepingItemRenderer#getCurrentItem，
++            //     keep 窗口内它返回旧枪，于是本帧提交的仍是旧枪视模（put_away 由
++            //     AnimationController 继续推进，stateMachine 已 exit 也不影响）；
++            //   * 窗口过期后 getCurrentItem 回落 mainHandItem（新枪），needReInit 成立 →
++            //     tryInit 触发 INPUT_DRAW，收枪→抬枪的先后次序由此恢复；
++            //   * AnimateGeoItemRenderer#tryExit / GunItemRendererWrapper#tryExit 里那两行
++            //     上游注释保持注释状态：**只能有一个调用点**，两处都开会重复调用 keep
++            //     （虽然 keep 自带时间窗守卫，但语义重复且容易让后来者误判触发时机）。
++            //
++            // 判定条件对齐上游：只有旧枪的状态机确实初始化过（= 它此前一直在被渲染，
++            // tryExit 里的 INPUT_PUT_AWAY 真的会触发）才开窗口。否则（刚进世界、第三人称
++            // 下切枪、上一把枪的窗口未过期所以这把从没被画过）开出来的是「旧枪静止一瞬」
++            // 的空窗口 —— 上游把 keep() 写在 isInitialized() 之内正是这个意思。
++            if (renderer.hasInitializedStateMachine(lastItem)) {
++                KeepingItemRenderer.getRenderer().keep(lastItem, putAwayTime);
++            }
+             renderer.tryExit(lastItem, putAwayTime);
+         }
+         TimelessAPI.getGunDisplay(lastItem).ifPresent(display -> {
+diff --git a/src/main/java/com/tacz/guns/client/renderer/item/AnimateGeoItemRenderer.java b/src/main/java/com/tacz/guns/client/renderer/item/AnimateGeoItemRenderer.java
+index 82da441..d5e3515 100644
+--- a/src/main/java/com/tacz/guns/client/renderer/item/AnimateGeoItemRenderer.java
++++ b/src/main/java/com/tacz/guns/client/renderer/item/AnimateGeoItemRenderer.java
+@@ -105,6 +105,22 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
+         return !stateMachine.isInitialized() && stateMachine.getExitingTime() < System.currentTimeMillis();
+     }
+ 
++    /**
++     * 收枪窗口判定：这把物品的状态机是否<b>已初始化</b> —— 也就是它此前确实在被提交渲染、
++     * {@link #tryExit} 里的 {@code INPUT_PUT_AWAY} 真的会被触发、put_away 真的有内容可播。
++     *
++     * <p>与 {@link #tryExit} 内部的 {@code stateMachine.isInitialized()} 判定<b>同源</b>，
++     * 供 {@code LocalPlayerDraw#doPutAway} 决定是否调用 {@code KeepingItemRenderer#keep}。
++     * 未初始化时开 keep 窗口（刚进世界、第三人称下切枪，或上一把枪的窗口尚未过期
++     * ⇒ 这把枪从没被画过）只会得到「旧枪静止一瞬再切新枪」的<b>空窗口</b>，比不开更糟 ——
++     * 上游把 keep() 放在 {@code isInitialized()} 之内正是这个意思，本方法把那条判定
++     * 暴露给调用点，避免在 {@code doPutAway} 里重写一遍状态机逻辑。</p>
++     */
++    public boolean hasInitializedStateMachine(ItemStack stack) {
++        var stateMachine = getStateMachine(stack);
++        return stateMachine != null && stateMachine.isInitialized();
++    }
++
+     public abstract CTX initContext(ItemStack stack, Player player, float partialTick);
+ 
+     public abstract void updateContext(CTX context, ItemStack stack, Player player, float partialTick);
+@@ -149,7 +165,10 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
+         });
+         if (stateMachine.isInitialized()) {
+             stateMachine.trigger(GunAnimationConstant.INPUT_PUT_AWAY);
+-            
++
++            // keep() 的唯一现行调用点在 LocalPlayerDraw#doPutAway（2026-09-02 起，论证与实测清单见
++            // 26.2(main) 线的 docs/lineage/SYNC_GUIDE_PUTAWAY_KEEP_20260902.md）。这行保持注释：**不要打开** ——
++            // 两处都开会重复调用 keep（守卫只让它不致错，但触发时机会被后来者误判）。
+ //            KeepingItemRenderer.getRenderer().keep(stack, putAwayTime);
+             stateMachine.exit();
+             // 需要设置的比动画稍长些，避免意外的重初始化（可能是丢精度了）
+diff --git a/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java b/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java
+index bb53746..227e063 100644
+--- a/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java
++++ b/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java
+@@ -130,6 +130,10 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
+         });
+         if (stateMachine.isInitialized()) {
+             stateMachine.trigger(GunAnimationConstant.INPUT_PUT_AWAY);
++
++            // keep() 的唯一现行调用点在 LocalPlayerDraw#doPutAway（2026-09-02 起，论证与实测清单见
++            // 26.2(main) 线的 docs/lineage/SYNC_GUIDE_PUTAWAY_KEEP_20260902.md）。这行保持注释：**不要打开** ——
++            // 两处都开会重复调用 keep（守卫只让它不致错，但触发时机会被后来者误判）。
+ //            KeepingItemRenderer.getRenderer().keep(stack, putAwayTime);
+             stateMachine.exit();
+             stateMachine.setExitingTime(putAwayTime + 50);
+diff --git a/src/main/java/com/tacz/guns/mixin/client/ItemInHandRendererMixin.java b/src/main/java/com/tacz/guns/mixin/client/ItemInHandRendererMixin.java
+index c578778..9728c62 100644
+--- a/src/main/java/com/tacz/guns/mixin/client/ItemInHandRendererMixin.java
++++ b/src/main/java/com/tacz/guns/mixin/client/ItemInHandRendererMixin.java
+@@ -211,12 +211,22 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
+     @Unique
+     @Override
+     public void keep(ItemStack itemStack, long timeMs) {
+-        long time = System.currentTimeMillis() - tacz$KeepTimestamp;
+-        if (time < tacz$KeepTimeMs) {
++        // 【2026-09-02 语义修正】原守卫是「窗口未过期就直接 return」，后果是连续快速切枪时
++        // 第二次收枪**接管不了**窗口：上一把枪的剩余窗口继续生效，第二把枪的 put_away 一帧
++        // 都画不出来，而且窗口比它需要的短。现改为**最新一次收枪接管**，只保留原守卫里良性
++        // 的那一半——同一把枪、且新请求不会延长窗口时不动它，免得把正在播放的动画截断。
++        //
++        // 「接管不会用一个静止视模顶掉正在播放的动画」由调用点保证：
++        // LocalPlayerDraw#doPutAway 只在 AnimateGeoItemRenderer#hasInitializedStateMachine
++        // 成立（旧枪确实一直在被渲染、INPUT_PUT_AWAY 确实已触发）时才调 keep。
++        long now = System.currentTimeMillis();
++        boolean sameKeptItem = tacz$KeepItem != null
++                && ItemStack.isSameItemSameComponents(tacz$KeepItem, itemStack);
++        if (sameKeptItem && now + timeMs <= tacz$KeepTimestamp + tacz$KeepTimeMs) {
+             return;
+         }
+         this.tacz$KeepTimeMs = timeMs;
+-        this.tacz$KeepTimestamp = System.currentTimeMillis();
++        this.tacz$KeepTimestamp = now;
+         this.tacz$KeepItem = itemStack;
+         this.mainHandItem = itemStack;
+     }
