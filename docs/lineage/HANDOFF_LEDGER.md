@@ -52,6 +52,7 @@
   `shouldSubmitGpuWorld()` 移除 `isInsideScopeLevelRender()` 拒收 + `renderAtWorldFlush()` 镜内那遍画完也清表
   （`worldConsumedFrame` 仍只记主遍）+ log-once。**机制与 1.21.11 不同**：那边是 `renderLevel` 每次调用自带提取，
   这边是「`extractLevel` 产状态袋 + 每一遍 render 阶段各自提交」；结论同、理由不同，注释已按 26.1.2 重写 |
+| M-11 | 收枪 put-away 动画恢复：`doPutAway` 补 `keep()`（唯一现行调用点）+ `keep()` 守卫改「最新一次收枪接管」+ isInitialized 判定暴露给调用点（`hasInitializedStateMachine`） | 26.2 线 PR #87（`arena/01a061a4`，语义移植 fork `ca2b9fc` + 维护者裁定两点加固；补丁 `docs/patch/2026-09-02-putaway-keep-render-26.1.2.patch`）→ 26.1.2 | **已落地待实机**（`6a4c21c2`） | 三线同因：tryExit 里的 keep 行是继承自上游的注释 ⇒ 没人调 keep ⇒ 旧枪视模一帧不再提交、put_away 被吞。**行为扩大**：内置 LRTactical 三族（Melee / Throwable / Consumable）一并获得 keep 窗口（都不 override tryExit）。完整论证 / 三线核对表 / 实机清单见 26.2 线 `docs/lineage/SYNC_GUIDE_PUTAWAY_KEEP_20260902.md`；1.21.11 线有对应补丁（`-1.21.11.patch`），待该线会话落地。本线 mixin 侧只改 `@Unique` 方法体，refmap / intermediary 无涉 |
 
 ### 本线判定为不适用 / 观望的（不占 M 号，理由见 `SYNC_ROUNDUP_2612_20260902.md` §2.2-§2.3）
 
