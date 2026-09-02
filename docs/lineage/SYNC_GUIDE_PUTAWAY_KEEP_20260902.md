@@ -1,7 +1,10 @@
 # 收枪（put-away）动画不渲染 · `keep()` 修复的三线移植指导（2026-09-02）
 
-> **状态**：26.2(main) 侧已落码（本分支），**未实机验证**；26.1.2 / 1.21.11 侧为 **OPEN**，
-> 补丁已备好并在**目标分支的真实 worktree** 上做过 `git apply --check` + 实落（见 §4）。
+> **状态**：26.2(main) 侧已落码，**CI `compileJava` 与全量 `./gradlew build` 均通过**
+> （commit `32af402`，[run 33623054002](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/33623054002)，
+> 2026-09-02；日志已回推 `build-reports/compile-java.log`），但**实机未验证**；
+> 26.1.2 / 1.21.11 侧为 **OPEN**，补丁已备好并在**目标分支的真实 worktree** 上做过
+> `git apply --check` + 实落（见 §4）——那两条分支要等各自 CI 编译后才算过第一关。
 > **范围**：外部提交 `ca2b9fc` 的那 5 行，**外加两点加固**（窗口守卫语义 + 调用点判定，见 §4bis）——
 > 两点加固经维护者裁定与 `ca2b9fc` 同轮落地、三线同步。
 > **性质**：这是「同代码、同机制」的移植件，不是 `FAMILY_TREE_2026_08_30.md` §1 里那种
@@ -225,8 +228,12 @@ renderer.tryExit(lastItem, putAwayTime);
 
 ## 5. 落码之后必须实测的项（三线各做一遍，**目前全部未验证**）
 
-沙箱内既没有 Minecraft 工件也没有实机，**本指导不含任何实测结论**；
+沙箱内既没有 Minecraft 工件也没有实机，**本指导不含任何实测结论**（CI 只证明能编译、能出 jar）；
 以下按「同一补丁、不同纪元后果可能不同」排序：
+
+> **可实测构建**：26.2 侧 CI 产物 `TACZ-Refabricated-32af402…`（约 57 MB，保留至 2026-09-16）
+> 在 [run 33623054002](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/33623054002)
+> 的 Artifacts 区下载，可直接丢进客户端 mods 目录征测。
 
 1. **基本项**：切枪（枪→枪、枪→徒手/普通物品、普通物品→枪）能看到旧枪的收枪动画，
    且抬枪动画在其之后开始，不是同帧抢跑。
