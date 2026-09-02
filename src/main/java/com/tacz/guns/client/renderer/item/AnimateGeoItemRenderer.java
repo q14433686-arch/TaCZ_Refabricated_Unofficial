@@ -105,6 +105,22 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         return !stateMachine.isInitialized() && stateMachine.getExitingTime() < System.currentTimeMillis();
     }
 
+    /**
+     * 收枪窗口判定：这把物品的状态机是否<b>已初始化</b> —— 也就是它此前确实在被提交渲染、
+     * {@link #tryExit} 里的 {@code INPUT_PUT_AWAY} 真的会被触发、put_away 真的有内容可播。
+     *
+     * <p>与 {@link #tryExit} 内部的 {@code stateMachine.isInitialized()} 判定<b>同源</b>，
+     * 供 {@code LocalPlayerDraw#doPutAway} 决定是否调用 {@code KeepingItemRenderer#keep}。
+     * 未初始化时开 keep 窗口（刚进世界、第三人称下切枪，或上一把枪的窗口尚未过期
+     * ⇒ 这把枪从没被画过）只会得到「旧枪静止一瞬再切新枪」的<b>空窗口</b>，比不开更糟 ——
+     * 上游把 keep() 放在 {@code isInitialized()} 之内正是这个意思，本方法把那条判定
+     * 暴露给调用点，避免在 {@code doPutAway} 里重写一遍状态机逻辑。</p>
+     */
+    public boolean hasInitializedStateMachine(ItemStack stack) {
+        var stateMachine = getStateMachine(stack);
+        return stateMachine != null && stateMachine.isInitialized();
+    }
+
     public abstract CTX initContext(ItemStack stack, Player player, float partialTick);
 
     public abstract void updateContext(CTX context, ItemStack stack, Player player, float partialTick);
@@ -149,7 +165,10 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         });
         if (stateMachine.isInitialized()) {
             stateMachine.trigger(GunAnimationConstant.INPUT_PUT_AWAY);
-            
+
+            // keep() 的唯一现行调用点在 LocalPlayerDraw#doPutAway（2026-09-02 起，论证与实测清单见
+            // 26.2(main) 线的 docs/lineage/SYNC_GUIDE_PUTAWAY_KEEP_20260902.md）。这行保持注释：**不要打开** ——
+            // 两处都开会重复调用 keep（守卫只让它不致错，但触发时机会被后来者误判）。
 //            KeepingItemRenderer.getRenderer().keep(stack, putAwayTime);
             stateMachine.exit();
             // 需要设置的比动画稍长些，避免意外的重初始化（可能是丢精度了）
