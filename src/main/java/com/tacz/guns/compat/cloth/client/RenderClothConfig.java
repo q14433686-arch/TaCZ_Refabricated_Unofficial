@@ -225,8 +225,10 @@ public class RenderClothConfig {
                 .setMin(1).setMax(16).setDefaultValue(4).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_light_cache_size.desc"))
                 .setSaveConsumer(MeshyConfig.GPU_LIGHT_CACHE_SIZE::set).build());
 
-        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.mesh_gpu_bake_budget"), MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME.get())
-                .setMin(1).setMax(64).setDefaultValue(4).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_bake_budget.desc"))
+        // 键名跟随 toml 键 MeshGpuBakeBudgetPerFrame 的蛇形（check_mesh_config_parity.py 的约定），
+        // 2026-09-02 从 mesh_gpu_bake_budget 改名，显示文本不变。
+        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.mesh_gpu_bake_budget_per_frame"), MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME.get())
+                .setMin(1).setMax(64).setDefaultValue(4).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_bake_budget_per_frame.desc"))
                 .setSaveConsumer(MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME::set).build());
 
         render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.mesh_world_full_detail_distance"), MeshyConfig.WORLD_FULL_DETAIL_DISTANCE.get())
