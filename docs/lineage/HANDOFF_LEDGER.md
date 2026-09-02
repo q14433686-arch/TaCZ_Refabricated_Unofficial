@@ -64,3 +64,5 @@
 > 本分支 R3 = 把 `-hotfix2` 后缀去掉、直接进 R3，与 26.2 侧 `5bb13af` 的做法一致
 > （规矩见 `gradle.properties` 注释与 `check_release_consistency.sh` 头部：序号直接接在
 > `R<n>` 后，`-hotfix<n>` 只在真正发补丁时用）。
+
+| L-29 | 六线 CI 上线盘点与待上线件（`docs/ci/INSTALL_MATRIX_20260902.md`、`docs/ci/pending/`） | 1.21.11 → refab 26.1.2 / 26.2 与 TaCZ_Renovated 三线 | **OPEN（待维护者手动上线）** | 本分支已应用 `verify_mixin_targets.py` 可移植化补丁，并保存 refab 1.21.11 的 build.yml 运行期校验说明；renov 三线 build/compile-check 模板仅供对应姊妹仓使用。真实 Actions 首跑仍待执行。 |

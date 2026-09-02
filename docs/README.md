@@ -60,7 +60,7 @@
 
 | 目录 | 内容 |
 |---|---|
-| `ci/` | workflow **暂存区**：沙箱 token 没有 `workflows` 权限，Agent 把改动写在这里，维护者复制到 `.github/workflows/` 同名文件。当前清单见 `ci/README.md` |
+| `ci/` | workflow **暂存区**：沙箱 token 没有 `workflows` 权限，Agent 把改动写在这里，维护者复制到 `.github/workflows/` 同名文件。当前清单见 `ci/README.md`；跨分支/姊妹仓待上线件见 `ci/pending/`，总动作表见 `ci/INSTALL_MATRIX_20260902.md` |
 | `publish/` | 三站发布文案（CurseForge / Modrinth / MC百科）与规则出处。注意其中的硬要求：**项目名不能带版本号** |
 
 ## 6. 新增文档时的规矩
