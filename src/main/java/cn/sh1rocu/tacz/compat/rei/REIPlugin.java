@@ -10,6 +10,10 @@ public class REIPlugin implements me.shedaniel.rei.api.common.plugins.REICommonP
         registry.register(REISubtype.getAmmoSubtype(), ModItems.AMMO);
         registry.register(REISubtype.getAttachmentSubtype(), ModItems.ATTACHMENT);
         registry.register(REISubtype.getAmmoBoxSubtype(), ModItems.AMMO_BOX);
+        registry.register(REISubtype.getTableSubType(), ModItems.GUN_SMITH_TABLE);
+        registry.register(REISubtype.getTableSubType(), ModItems.WORKBENCH_111);
+        registry.register(REISubtype.getTableSubType(), ModItems.WORKBENCH_121);
+        registry.register(REISubtype.getTableSubType(), ModItems.WORKBENCH_211);
         GunItemManager.getAllGunItems().forEach(item ->
                 registry.register(REISubtype.getGunSubtype(), item));
     }
