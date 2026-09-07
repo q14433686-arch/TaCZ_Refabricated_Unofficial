@@ -8,19 +8,26 @@
 
 ---
 
-## 2026-09-07 · 其他枪包工作台 JEI 无配方 / 合成无结果（**排查中，根因未定**）
+## 2026-09-07 · 其他枪包工作台 JEI 无配方 / 合成无结果（**根因已定：误删 RecipeCompat 兼容层**）
 
-> ⚠️ 维护者确认本线单人可复现，且下述改动 1 未解决症状。经 26.1.2 原版反编译源码
-> （ma4z-sys/Minecraft-26.1.2，Mojang mapping）逐类核验：**26.1.2 的
-> `PackRepository` 无 PackType 字段、无类型过滤；`Pack.readMetaAndCreate` 的元数据
-> 与当前版本同源；资源解析按查询时 type** —— 改动 1 在本线为**行为无操作**，
-> 仅作为与 26.2 的一致性卫生项保留。真实断点待复现环境日志定位。
-> 全过程记录：`docs/WORKBENCH_JEI_RECIPE_FIX_26_1_2_20260907.md`。
+1. **恢复旧枪包原版配方兼容层 `RecipeCompat`（移植 26.2，本次移植时误删）**
+   26.x 原版 `RecipeManager` 只扫单数 `data/<ns>/recipe/`（注册表常量）；
+   1.20.1 / 1.21.1 时代枪包（如 KhanPowder、duyupack）把工作台物品等原版合成配方
+   放在复数 `data/<ns>/recipes/`，另有 `loot_tables/`、`tags/blocks|items|...` 等
+   复数目录与旧式配方 JSON（`result.item`/`result.nbt`/`{"tag":...}`/`{"item":...}`）。
+   26.2 线在 PackResources 层有 `RecipeCompat` 兼容（复数→单数回退映射 + 旧 JSON
+   自动转换，仅 `minecraft:*` 类型），本线移植时当作 26.2 专用件删掉 ⇒
+   **旧布局枪包的工作台物品在原版合成台/JEI 无配方、合成不出**（维护者单人复现，
+   日志证实数据管线本身正常：5 tables / 293 recipes 同步、JEI 二次注册成功）。
+   现原样恢复 `RecipeCompat` 及 `DelegatingPackResources` / `PathPackResources`
+   的 26.2 版接入。
+   *证据：复现 latest.log（维护者上传）+ 26.2/1.21.11/26.1.2 三线原版源码对照 +
+   26.1.2 符号逐一核验；本线=与 26.2 逐文件一致、编译门待过、**实机未验**。*
 
-1. **枪包 PackType 按仓库动态设定（`CommonRegistry#onAddPackFinders`，移植 26.2 `810fb04f`）**
-   与 26.2 行为对齐。在本线（26.1.2 原版）下为行为无操作（见上注），非本 bug 的修复。
-   *证据：26.1.2 原版源码逐类核验（PackRepository / Pack / PackMetadataSection /
-   PackType / MultiPackResourceManager / WorldOpenFlows / IntegratedServer）。*
+2. **枪包 PackType 按仓库动态设定（`CommonRegistry#onAddPackFinders`，移植 26.2 `810fb04f`）**
+   与 26.2 行为对齐。经 26.1.2 原版源码核验在本线为行为无操作（`PackRepository`
+   无类型过滤、元数据同源、解析按查询时 type），仅作一致性卫生项保留。
+   *证据：26.1.2 原版源码逐类核验。*
 
 2. **`RecipeViewerReloadBridge` 资源重载回退加一次性护栏（对齐 26.2 现版本）**
    同步后刷新 JEI/REI 时，若两个 viewer 的轻量刷新钩子都不可用，整段

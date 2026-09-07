@@ -24,46 +24,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Defines a resource pack from an arbitrary Path.
- * <p>
- * This is primarily intended to support including optional resource packs inside a mod,
- * such as to have alternative textures to use along with Programmer Art, or optional
- * alternative recipes for compatibility ot to replace vanilla recipes.
- */
 public class PathPackResources extends AbstractPackResources {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final Path source;
 
-    /**
-     * Constructs a java.nio.Path-based resource pack.
-     *
-     * @param packId    the identifier of the pack.
-     *                  This identifier should be unique within the pack finder, preferably the name of the file or folder containing the resources.
-     * @param isBuiltin whether this pack resources should be considered builtin
-     * @param source    the root path of the pack. This needs to point to the folder that contains "assets" and/or "data", not the asset folder itself!
-     */
     public PathPackResources(String packId, boolean isBuiltin, final Path source) {
         super(new PackLocationInfo(packId, Component.literal(packId), PackSource.DEFAULT, Optional.empty()));
         this.source = source;
     }
 
-    /**
-     * Returns the source path containing the resource pack.
-     * This is used for error display.
-     *
-     * @return the root path of the resources.
-     */
     public Path getSource() {
         return this.source;
     }
 
-    /**
-     * Implement to return a file or folder path for the given set of path components.
-     *
-     * @param paths One or more path strings to resolve. Can include slash-separated paths.
-     * @return the resulting path, which may not exist.
-     */
     protected Path resolve(String... paths) {
         Path path = getSource();
         for (String name : paths)
@@ -83,6 +56,71 @@ public class PathPackResources extends AbstractPackResources {
 
     @Override
     public void listResources(PackType type, String namespace, String path, ResourceOutput resourceOutput) {
+        // 26.2 单复数兼容：recipe/loot_table/tags 等
+        if (type == PackType.SERVER_DATA) {
+            String legacy = cn.sh1rocu.tacz.util.RecipeCompat.getLegacyForCurrent(path);
+            boolean isRecipe = "recipe".equals(path);
+            if (isRecipe) {
+                // recipe 需要转换包装
+                ResourceOutput transformingOutput = (location, supplier) -> {
+                    var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, supplier);
+                    resourceOutput.accept(location, wrapped);
+                };
+                FileUtil.decomposePath(path).result().ifPresent(parts ->
+                        net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), parts, transformingOutput));
+                if (legacy != null) {
+                    FileUtil.decomposePath(legacy).result().ifPresent(legacyParts -> {
+                        ResourceOutput legacyOutput = (location, supplier) -> {
+                            var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
+                            try {
+                                try (var in = supplier.get()) {
+                                    byte[] bytes = in.readAllBytes();
+                                    String txt = new String(bytes, java.nio.charset.StandardCharsets.UTF_8).trim();
+                                    if (!txt.isEmpty()) {
+                                        try {
+                                            var je = com.google.gson.JsonParser.parseString(txt);
+                                            if (je.isJsonObject()) {
+                                                var obj = je.getAsJsonObject();
+                                                if (!cn.sh1rocu.tacz.util.RecipeCompat.isVanillaRecipeType(obj)) {
+                                                    return;
+                                                }
+                                            }
+                                        } catch (Exception ignore) {}
+                                    }
+                                    IoSupplier<InputStream> fixedSupplier = () -> {
+                                        try (var in2 = supplier.get()) {
+                                            return cn.sh1rocu.tacz.util.RecipeCompat.transformStreamIfNeeded(in2);
+                                        }
+                                    };
+                                    resourceOutput.accept(remapped, fixedSupplier);
+                                }
+                            } catch (Exception e) {
+                                var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(remapped, supplier);
+                                resourceOutput.accept(remapped, wrapped);
+                            }
+                        };
+                        try {
+                            net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), legacyParts, legacyOutput);
+                        } catch (Exception ignored) {}
+                    });
+                }
+                return;
+            } else if (legacy != null) {
+                // 非 recipe 的 data 路径（如 loot_table, tags/block），直接映射
+                FileUtil.decomposePath(path).result().ifPresent(parts ->
+                        net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), parts, resourceOutput));
+                FileUtil.decomposePath(legacy).result().ifPresent(legacyParts -> {
+                    ResourceOutput legacyOutput = (location, supplier) -> {
+                        var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
+                        resourceOutput.accept(remapped, supplier);
+                    };
+                    try {
+                        net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), legacyParts, legacyOutput);
+                    } catch (Exception ignored) {}
+                });
+                return;
+            }
+        }
         FileUtil.decomposePath(path).result().ifPresent(parts ->
                 net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), parts, resourceOutput));
     }
@@ -100,14 +138,13 @@ public class PathPackResources extends AbstractPackResources {
                 return walker
                         .filter(Files::isDirectory)
                         .map(root::relativize)
-                        .filter(p -> p.getNameCount() > 0) // Skip the root entry
-                        .map(p -> p.toString().replaceAll("/$", "")) // Remove the trailing slash, if present
-                        .filter(s -> !s.isEmpty()) // Filter empty strings, otherwise empty strings default to minecraft namespace in ResourceLocations
+                        .filter(p -> p.getNameCount() > 0)
+                        .map(p -> p.toString().replaceAll("/$", ""))
+                        .filter(s -> !s.isEmpty())
                         .collect(Collectors.toSet());
             }
         } catch (IOException e) {
-            if (type == PackType.SERVER_DATA) // We still have to add the resource namespace if client resources exist, as we load langs (which are in assets) on server
-            {
+            if (type == PackType.SERVER_DATA) {
                 return this.getNamespaces(PackType.CLIENT_RESOURCES);
             } else {
                 return Collections.emptySet();
@@ -117,7 +154,18 @@ public class PathPackResources extends AbstractPackResources {
 
     @Override
     public IoSupplier<InputStream> getResource(PackType type, Identifier location) {
-        return this.getRootResource(getPathFromLocation(location.getPath().startsWith("lang/") ? PackType.CLIENT_RESOURCES : type, location));
+        IoSupplier<InputStream> sup = this.getRootResource(getPathFromLocation(location.getPath().startsWith("lang/") ? PackType.CLIENT_RESOURCES : type, location));
+        if (sup == null && type == PackType.SERVER_DATA) {
+            // 尝试旧路径回退（recipe/loot_table/tags 等）
+            Identifier legacy = cn.sh1rocu.tacz.util.RecipeCompat.remapCurrentToLegacy(location);
+            if (!legacy.equals(location)) {
+                sup = this.getRootResource(getPathFromLocation(type, legacy));
+            }
+        }
+        if (sup != null && type == PackType.SERVER_DATA && cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(location)) {
+            return cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, sup);
+        }
+        return sup;
     }
 
     private static String[] getPathFromLocation(PackType type, Identifier location) {

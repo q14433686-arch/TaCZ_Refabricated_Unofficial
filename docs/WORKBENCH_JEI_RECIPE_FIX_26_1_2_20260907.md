@@ -9,7 +9,62 @@
 
 ---
 
-## 一、根因（已修复）
+## 一、根因（已定位，2026-09-07 晚 23:00 定案）
+
+**根因：26.1.2 线移植时误删了 `cn/sh1rocu/tacz/util/RecipeCompat`（旧枪包原版配方兼容层）
+及其在 `DelegatingPackResources` / `PathPackResources` 里的接入，导致旧布局枪包
+（1.20.1 / 1.21.1 时代）放在 `data/<ns>/recipes/`（复数）目录里的原版合成配方
+（工作台物品合成等）对 26.x 原版 `RecipeManager`（只扫单数 `recipe`，注册表常量）
+完全不可见 ⇒ 合成台/JEI 无配方、合成不出结果。**
+
+### 证据链（维护者复现日志 `latest.log`，2026-09-07 上传）
+
+1. 复现环境：TACZ `1.1.8+fabric.26.1.2.R3` + 单人 + 三个枪包
+   （`duyupack+1.21.1.zip`、`KhanPowder_v0.8.99_hotfix.zip`（1.20.1 布局）、
+   `tacz_default_gun`），全部正常加载，无版本检查拒绝；
+2. 数据管线正常：`[TACZ Recipe Viewer] Refreshing after gun-pack sync
+   (5 table(s), 293 recipe(s))`，JEI 二次注册成功（`tacz:jei` 107ms/27ms）——
+   即 TACZ 自有同步通道（工作台 GUI / 自定义配方分类）工作正常；
+3. 症状为 (a)：其他枪包的**工作台物品**在原版合成台/JEI 无合成配方——
+   而默认工作台（配方在 mod jar 的 `data/tacz/recipe/`，单数）正常。
+   两代旧包（1.20.1 的 KhanPowder、1.21.1 的 duyupack）的原版配方都在复数
+   `recipes/` 目录；26.1.2/26.2/1.21.11 三线的原版 `RecipeManager` 都只扫
+   单数 `recipe`（26.2/1.21.11 反编译源码 `Registries.RECIPE =
+   createRegistryKey("recipe")` + 本仓 `GunSmithTableMenu` 字节码核验注释），
+   **唯一差异是 26.2 线带 `RecipeCompat` 兼容层（PackResources 层把
+   `recipes/`→`recipe/` 回退映射 + 旧 JSON 格式自动转换：`result.item`→`result.id`、
+   `result.nbt`→`components.minecraft:custom_data`、`{"tag":...}`→`"#tag"`、
+   `{"item":...}`→id），26.1.2 移植时把它当作 26.2 专用件删掉了**；
+4. 顺带确认：日志里 duyupack 14 条 `Couldn't parse data file ... No key fabric:type`
+   是**原版 RecipeManager 的 MapCodec 通道**解析 TACZ 工作台配方（`tacz:nbt`/
+   `{"tag":...}` 旧式材料）的预期噪音——工作台 GUI/JEI 自定义分类走 TACZ 自己的
+   Gson 延迟解析通道（第 14 轮），不受影响，与工单无关（26.2 线同样存在）。
+
+### 修复（与 26.2 逐文件一致）
+
+- 新增 `src/main/java/cn/sh1rocu/tacz/util/RecipeCompat.java`（原样移植 26.2）；
+- `src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java`、
+  `PathPackResources.java` 换用 26.2 版（基类逻辑与本线旧版相同，仅增
+  RecipeCompat 接入：`listResources` 复数目录回退列出 + 重映射 + 原版配方转换；
+  `getResource` 单数未命中时回退复数）。
+- 符号核验（26.1.2 反编译源码）：`PathPackResources.listPath(String,Path,List,
+  ResourceOutput)` 公开静态存在；`PackResources.ResourceOutput` 为
+  `BiConsumer<Identifier, IoSupplier<InputStream>>`；`Identifier.fromNamespaceAndPath`
+  存在；`TableRecipeManager` 与 26.2 逐字一致（两线同形，无双重扫描回归风险）。
+- 影响面：仅枪包 PackResources（mod 自身 jar 数据不经此层）；只对
+  `minecraft:*` 类型配方做 JSON 转换，`tacz:gun_smith_table_crafting` 等自定义
+  配方原样透传；`SERVER_DATA` 侧才启用，客户端资源侧不受影响。
+
+### 已排除项（防重复劳动）
+
+- **枪包 PackType（`810fb04f`）——行为无操作**：26.1.2 原版 `PackRepository` 无
+  PackType 字段/无类型过滤；`Pack.readMetaAndCreate` 元数据与当前版本同源（恒
+  compatible）；资源解析按查询时 type。该行保留为与 26.2 的一致性卫生项。
+  （26.2 分支 `810fb04f` 注释描述的是 26.2 原版仓库行为，不能照搬。）
+- 枪包 `dependencies` 版本检查：日志证实三包全部通过（无 `Mod version mismatch`）。
+- `RecipeViewerReloadBridge` 回退护栏（对齐 26.2）：真实加固，已保留。
+
+## 二、（历史记录）初轮误判
 
 > ⚠️ **2026-09-07 晚间更正（重要）**：
 > 维护者反馈单人可复现且本修复无效。随后我逐类读取了 26.1.2 原版反编译源码

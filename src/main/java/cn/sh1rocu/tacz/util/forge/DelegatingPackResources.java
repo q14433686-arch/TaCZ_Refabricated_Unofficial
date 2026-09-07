@@ -52,8 +52,75 @@ public class DelegatingPackResources extends AbstractPackResources {
 
     @Override
     public void listResources(PackType type, String resourceNamespace, String paths, ResourceOutput resourceOutput) {
-        for (PackResources delegate : this.delegates) {
-            delegate.listResources(type, resourceNamespace, paths, resourceOutput);
+        boolean isRecipe = type == PackType.SERVER_DATA && "recipe".equals(paths);
+        String legacyPath = type == PackType.SERVER_DATA ? cn.sh1rocu.tacz.util.RecipeCompat.getLegacyForCurrent(paths) : null;
+
+        if (isRecipe) {
+            ResourceOutput transformingOutput = (location, supplier) -> {
+                var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, supplier);
+                resourceOutput.accept(location, wrapped);
+            };
+            for (PackResources delegate : this.delegates) {
+                try {
+                    delegate.listResources(type, resourceNamespace, paths, transformingOutput);
+                } catch (Exception ignored) {}
+            }
+            if (legacyPath != null) {
+                ResourceOutput legacyOutput = (location, supplier) -> {
+                    var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
+                    try {
+                        try (var in = supplier.get()) {
+                            byte[] bytes = in.readAllBytes();
+                            String txt = new String(bytes, java.nio.charset.StandardCharsets.UTF_8).trim();
+                            if (!txt.isEmpty()) {
+                                try {
+                                    var je = com.google.gson.JsonParser.parseString(txt);
+                                    if (je.isJsonObject()) {
+                                        var obj = je.getAsJsonObject();
+                                        if (!cn.sh1rocu.tacz.util.RecipeCompat.isVanillaRecipeType(obj)) {
+                                            return;
+                                        }
+                                    }
+                                } catch (Exception ignoreParse) {}
+                            }
+                            IoSupplier<InputStream> fixedSupplier = () -> {
+                                try (var in2 = supplier.get()) {
+                                    return cn.sh1rocu.tacz.util.RecipeCompat.transformStreamIfNeeded(in2);
+                                }
+                            };
+                            resourceOutput.accept(remapped, fixedSupplier);
+                        }
+                    } catch (Exception e) {
+                        var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(remapped, supplier);
+                        resourceOutput.accept(remapped, wrapped);
+                    }
+                };
+                for (PackResources delegate : this.delegates) {
+                    try {
+                        delegate.listResources(type, resourceNamespace, legacyPath, legacyOutput);
+                    } catch (Exception ignored) {}
+                }
+            }
+        } else if (legacyPath != null && type == PackType.SERVER_DATA) {
+            // 非 recipe 的兼容路径（如 loot_table, tags/block）
+            for (PackResources delegate : this.delegates) {
+                try {
+                    delegate.listResources(type, resourceNamespace, paths, resourceOutput);
+                } catch (Exception ignored) {}
+            }
+            ResourceOutput legacyOutput = (location, supplier) -> {
+                var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
+                resourceOutput.accept(remapped, supplier);
+            };
+            for (PackResources delegate : this.delegates) {
+                try {
+                    delegate.listResources(type, resourceNamespace, legacyPath, legacyOutput);
+                } catch (Exception ignored) {}
+            }
+        } else {
+            for (PackResources delegate : this.delegates) {
+                delegate.listResources(type, resourceNamespace, paths, resourceOutput);
+            }
         }
     }
 
@@ -72,7 +139,6 @@ public class DelegatingPackResources extends AbstractPackResources {
     @Nullable
     @Override
     public IoSupplier<InputStream> getRootResource(String... paths) {
-        // Root resources do not make sense here
         return null;
     }
 
@@ -81,8 +147,36 @@ public class DelegatingPackResources extends AbstractPackResources {
     public IoSupplier<InputStream> getResource(PackType type, Identifier location) {
         for (PackResources pack : getCandidatePacks(type, location)) {
             IoSupplier<InputStream> ioSupplier = pack.getResource(type, location);
-            if (ioSupplier != null)
+            if (ioSupplier != null) {
+                if (type == PackType.SERVER_DATA && cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(location)) {
+                    return cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, ioSupplier);
+                }
                 return ioSupplier;
+            }
+        }
+
+        if (type == PackType.SERVER_DATA) {
+            Identifier legacy = cn.sh1rocu.tacz.util.RecipeCompat.remapCurrentToLegacy(location);
+            if (!legacy.equals(location)) {
+                for (PackResources pack : getCandidatePacks(type, legacy)) {
+                    IoSupplier<InputStream> ioSupplier = pack.getResource(type, legacy);
+                    if (ioSupplier != null) {
+                        if (cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(location)) {
+                            return cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, ioSupplier);
+                        }
+                        return ioSupplier;
+                    }
+                }
+                for (PackResources pack : this.delegates) {
+                    IoSupplier<InputStream> ioSupplier = pack.getResource(type, legacy);
+                    if (ioSupplier != null) {
+                        if (cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(location)) {
+                            return cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, ioSupplier);
+                        }
+                        return ioSupplier;
+                    }
+                }
+            }
         }
 
         return null;
