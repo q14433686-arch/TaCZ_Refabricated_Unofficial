@@ -8,6 +8,36 @@
 
 ---
 
+## 2026-09-07 · 其他枪包工作台 JEI 无配方 / 合成无结果（**根因已定：误删 RecipeCompat 兼容层**）
+
+1. **恢复旧枪包原版配方兼容层 `RecipeCompat`（移植 26.2，本次移植时误删）**
+   26.x 原版 `RecipeManager` 只扫单数 `data/<ns>/recipe/`（注册表常量）；
+   1.20.1 / 1.21.1 时代枪包（如 KhanPowder、duyupack）把工作台物品等原版合成配方
+   放在复数 `data/<ns>/recipes/`，另有 `loot_tables/`、`tags/blocks|items|...` 等
+   复数目录与旧式配方 JSON（`result.item`/`result.nbt`/`{"tag":...}`/`{"item":...}`）。
+   26.2 线在 PackResources 层有 `RecipeCompat` 兼容（复数→单数回退映射 + 旧 JSON
+   自动转换，仅 `minecraft:*` 类型），本线移植时当作 26.2 专用件删掉 ⇒
+   **旧布局枪包的工作台物品在原版合成台/JEI 无配方、合成不出**（维护者单人复现，
+   日志证实数据管线本身正常：5 tables / 293 recipes 同步、JEI 二次注册成功）。
+   现原样恢复 `RecipeCompat` 及 `DelegatingPackResources` / `PathPackResources`
+   的 26.2 版接入。
+   *证据：复现 latest.log（维护者上传）+ 26.2/1.21.11/26.1.2 三线原版源码对照 +
+   26.1.2 符号逐一核验；本线=与 26.2 逐文件一致、编译门待过、**实机未验**。*
+
+2. **枪包 PackType 按仓库动态设定（`CommonRegistry#onAddPackFinders`，移植 26.2 `810fb04f`）**
+   与 26.2 行为对齐。经 26.1.2 原版源码核验在本线为行为无操作（`PackRepository`
+   无类型过滤、元数据同源、解析按查询时 type），仅作一致性卫生项保留。
+   *证据：26.1.2 原版源码逐类核验。*
+
+2. **`RecipeViewerReloadBridge` 资源重载回退加一次性护栏（对齐 26.2 现版本）**
+   同步后刷新 JEI/REI 时，若两个 viewer 的轻量刷新钩子都不可用，整段
+   `reloadResourcePacks()` 回退此前没有次数限制，且 `clear()` 不复位
+   `reloadInProgress`（断开时若回退仍在进行，重连后 tick 永不再进入）。
+   现补齐 `resourceFallbackUsed` 一次性护栏与 `clear()` 完整复位。
+   *证据：26.2 现版本对照；本线=同形移植、**实机未验**。*
+
+---
+
 ## 2026-09-02 · 跨线同步轮（26.2 `01698440` + 1.21.11 `f53dd13b` → 本线）
 
 ### 修复

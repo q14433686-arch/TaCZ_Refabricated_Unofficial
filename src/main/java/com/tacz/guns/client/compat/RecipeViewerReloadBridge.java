@@ -25,6 +25,7 @@ import java.lang.reflect.Modifier;
 public final class RecipeViewerReloadBridge {
     private static boolean reloadRequested;
     private static boolean reloadInProgress;
+    private static boolean resourceFallbackUsed;
 
     private RecipeViewerReloadBridge() {
     }
@@ -36,9 +37,11 @@ public final class RecipeViewerReloadBridge {
         }
     }
 
-    /** Drops a queued refresh when leaving a server before its sync has completed. */
+    /** Drops pending work when the client leaves before the synchronized cache can be used. */
     public static void clear() {
         reloadRequested = false;
+        reloadInProgress = false;
+        resourceFallbackUsed = false;
     }
 
     /** Runs on the client tick so packet ordering and initial world setup have completed first. */
@@ -62,13 +65,20 @@ public final class RecipeViewerReloadBridge {
             requiresResourceFallback = true;
         }
 
-        if (!requiresResourceFallback) {
+        // 26.2 移植：整段资源重载只允许每次连接发生一次。若资源重载完成后 tick 再次
+        // 进入（或两个 viewer 都需要回退），避免二次重载形成重载循环。
+        if (!requiresResourceFallback || resourceFallbackUsed) {
             reloadInProgress = false;
-            GunMod.LOGGER.info("[TACZ Recipe Viewer] JEI/REI refresh completed.");
+            if (requiresResourceFallback) {
+                GunMod.LOGGER.warn("[TACZ Recipe Viewer] Lightweight refresh is unavailable; the one fallback for this connection was already used.");
+            } else {
+                GunMod.LOGGER.info("[TACZ Recipe Viewer] JEI/REI refresh completed.");
+            }
             return;
         }
 
-        GunMod.LOGGER.warn("[TACZ Recipe Viewer] Viewer reload hook unavailable; falling back to a client resource reload.");
+        resourceFallbackUsed = true;
+        GunMod.LOGGER.warn("[TACZ Recipe Viewer] Viewer reload hook unavailable; falling back once to a client resource reload.");
         try {
             client.reloadResourcePacks().whenComplete((unused, throwable) -> client.execute(() -> {
                 reloadInProgress = false;
