@@ -11,7 +11,37 @@
 
 ## 一、根因（已修复）
 
-### 1. 枪包 `PackType` 在单人模式下被写死为 `CLIENT_RESOURCES`（主修）
+> ⚠️ **2026-09-07 晚间更正（重要）**：
+> 维护者反馈单人可复现且本修复无效。随后我逐类读取了 26.1.2 原版反编译源码
+> （`ma4z-sys/Minecraft-26.1.2`，Mojang mapping）验证 `PackType` 机制，**结论：
+> 本线的 packType 一行在 26.1.2 原版下是行为无操作（no-op）**，不是本 bug 的修复：
+>
+> 1. 26.1.2 `PackRepository` **根本没有 `PackType` 字段**，`discoverAvailable()`
+>    对 source 返回的 Pack 不做任何类型过滤（与 26.2 的仓库结构不同）；
+> 2. `Pack.readMetaAndCreate(location, resources, packType, config)` 里
+>    `currentPackVersion` 与 `readPackMetadata` 的 metadata 请求**用同一个
+>    `packType` 参数**，`PackMetadataSection.forPackType` 两种类型的 section 名
+>    都是 `"pack"`（mod 的 `DelegatingPackResources#getMetadataSection` 按名匹配，
+>    两种类型都返回同一份 `packMeta`），`supported_formats` 范围与“当前版本”同源
+>    ⇒ `PackCompatibility` 恒为 compatible，Pack 创建永远成功；
+> 3. mod 自有的 `DelegatingPackResources` / `PathPackResources`（Forge 移植件，
+>    与 26.1.2 原版 `AbstractPackResources` 体系一致）按**查询时传入的 type**
+>    解析 `<pack>/<type.getDirectory()>/<ns>/<path>`（`assets`/`data`），与 Pack
+>    存储类型无关；
+> 4. 集成服务器走 `WorldOpenFlows → ServerPacksSource.createPackRepository`
+>    （我们的 `ServerPacksSourceMixin` 命中）→ `MinecraftServer.configurePackRepository`
+>    → `reload()`；枪包 `PackSelectionConfig(required=true)` 恒入选。
+>    服务端重载监听 mixin（`ReloadableResourcesMixin` → `lambda$loadResources$2`，
+>    6 参 `SimpleReloadInstance.create`）与 26.2 逐字相同、目标存在。
+>
+> 也就是说：**单人 26.1.2 的「枪包 → 服务端数据仓库 → 数据扫描 → 同步」链路在
+> 代码/原版层面与 26.2 对齐，静态层面找不到与工单症状对应的 26.1.2 独有缺陷**。
+> 真实断点需要复现环境的运行期日志才能定位（见 §三 末尾的追问清单）。
+> 两处改动仍保留：packType 一行与 26.2 对齐（卫生项，行为无操作）；
+> bridge 护栏是真实加固。
+>
+
+### 1. 枪包 `PackType` 按仓库动态设定（卫生对齐 26.2 `810fb04f`，**本线下为 no-op**）
 
 **断点**：`GunMod#onInitialize` 第 23 行
 ```java
@@ -91,25 +121,42 @@ public static void onAddPackFinders(AddPackFindersEvent event) {
 
 ---
 
-## 三、实机验证清单（本沙箱无 JDK，未编译未实机）
+## 三、待定位：复现环境信息需求（2026-09-07 追加，单人复现确认）
+
+静态排查（含 26.1.2 原版反编译源码逐类核验）未找到与症状对应的 26.1.2 独有缺陷，
+下一步需要复现环境的运行期证据。请提供：
+
+1. **症状二选一（关键）**：
+   - (a) 其他枪包的**工作台物品**：在原版合成台/JEI 里**没有合成配方**、合成不出该工作台；
+     而**默认 TACZ 工作台（gun_smith_table）能正常合成**？
+     → 若是：指向该枪包的 `data/<ns>/recipe/`（工作台物品原版配方）或服务端
+       `RecipeManager` 读不到该枪包数据（选择性故障，大概率枪包级：版本检查/目录结构）。
+   - (b) 工作台**物品能合成出来**，但**打开工作台后**配方列表为空/合成不出东西、
+     JEI 无该工作台的自定义配方分类（默认工作台正常或同样空白？）
+     → 若是：指向 `CommonAssetsManager`（block index / table recipes / tabs）数据链。
+   - 请同时说明：**默认 TACZ 工作台在你复现环境里是否正常**（正常/同样空白/未测）。
+2. **枪包身份**：装了哪个/哪些第三方枪包（名字 + 版本 + 目录还是 zip +
+   其 `gunpack.meta.json` 的 `dependencies` 原文，若方便）。
+3. **`latest.log` grep 结果**（复现进过存档的那次启动）：
+   - `Start scanning for gun packs`（含紧随的 `- <包名>, Main namespace:` 行与
+     `Found N possible gunpack(s)`）；
+   - `Mod version mismatch`（整包被版本检查拒绝）；
+   - `Missing metadata in pack` / `Failed to read pack`（26.1.2 原版
+     `Pack.readPackMetadata` 的新日志行）；
+   - `there is no corresponding data file` / `Failed to parse recipe`（数据加载器）;
+   - `[TACZ Recipe Viewer]`（`Refreshing after gun-pack sync (N table(s), M recipe(s))`
+     的 N/M 数值：为 0 = 服务端数据缓存本身就是空的）。
+4. 复现用的构建：R3 发布版，还是本 PR 分支的构建？JEI 版本号。
+
+## 四、原验证清单（对两处已保留改动）
 
 1. `./gradlew build`（CI 门）。
-2. **单人模式**（主修路径）：安装 TACZ 26.1.2 + 至少一个第三方枪包（如 LRTactical /
-   Arcana），进任意存档：
-   - 合成并放置该枪包的工作台，打开 GUI：标签页与配方应正常列出、可合成出结果；
-   - JEI（按 R）：应出现该工作台的自定义配方分类；
-   - 对照日志：服务端不再出现枪包 `data/` 相关缺失；`latest.log` grep
-     `Start scanning for gun packs` 应能看到所有枪包，且 GUI 不再空白。
-3. **专用服务器**（回归）：客户端/服务端各装同版本 + 同枪包，验证 JEI 与工作台
-   行为与修复前一致（本修复对双 JVM 场景为幂等：事件携带的类型与 setup() 写的一致）。
-4. 若专用服务器仍复现（本线代码面已排除），在**服务端** `latest.log` grep：
-   - `Mod version mismatch`（枪包 `dependencies` 不满足，整包被拒）；
-   - `Expected to find pack` / `Failed to parse`（枪包目录/元数据问题）；
-   - `there is no corresponding data file`（某枪包缺 data/）；
-   在**客户端** `latest.log` grep `[TACZ Recipe Viewer]`（刷新路径日志：
-   `Refreshing after gun-pack sync (N table(s), M recipe(s))` 里 N/M 若为 0，
-   说明同步包本身为空 → 服务端没加载到枪包；若 N/M 正常但 JEI 仍空 →
-   记录当时 JEI 版本号，对照 `RecipeViewerReloadBridge` 的 fallback 日志）。
+2. 单人 + 至少一个第三方枪包：bridge 护栏生效路径日志（`[TACZ Recipe Viewer]`
+   回退日志每连接至多一次；断线重连后刷新路径可再进入）。
+3. 专用服务器回归：packType 一行在双 JVM 场景为幂等，行为应与修复前一致。
 
-*证据级别（AGENTS §2）：断点=26.2 分支提交 810fb04f 维护者注释 + 本线符号逐一核验；
-本线=同形移植、编译门待过、**实机未验**。*
+*证据级别（AGENTS §2）：26.1.2 原版行为=ma4z-sys/Minecraft-26.1.2 反编译源码
+（Mojang mapping）逐类阅读：PackRepository / ServerPacksSource / Pack /
+PackMetadataSection / PackType / MultiPackResourceManager /
+ReloadableServerResources / MinecraftServer / WorldOpenFlows / IntegratedServer；
+本线改动=同形移植 + 符号核验，编译门待过、**实机未验**。*

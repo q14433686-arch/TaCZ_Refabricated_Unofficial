@@ -8,17 +8,19 @@
 
 ---
 
-## 2026-09-07 · 其他枪包工作台 JEI 无配方 / 合成无结果（来自 26.2 `810fb04f` + 26.2 bridge 加固）
+## 2026-09-07 · 其他枪包工作台 JEI 无配方 / 合成无结果（**排查中，根因未定**）
 
-1. **枪包 PackType 按仓库动态设定（`CommonRegistry#onAddPackFinders`，来自 26.2 `810fb04f`）**
-   此前 `GunPackLoader.INSTANCE.packType` 只在 `GunMod` 初始化时按环境写死一次。
-   单人模式（同一个 JVM 先后构造客户端 `CLIENT_RESOURCES` 与集成服务器 `SERVER_DATA`
-   两个 PackRepository）里，服务器仓库拿到的枪包类型不匹配，服务端读不到枪包的
-   `data/`（block index、table 配方、过滤配置）⇒ 其他枪包的工作台 GUI 无标签页/无配方、
-   JEI 无对应分类、工作台里合成不出结果；而工作台物品本身的原版合成配方
-   （在 mod 自身 `data/` 里）不受影响。现改为按事件携带的 `PackType` 动态设定。
-   *证据：断点与症状=26.2 分支维护者注释（810fb04f 提交说明）；本线=同形移植、
-   符号逐一核验、**实机未验**。*
+> ⚠️ 维护者确认本线单人可复现，且下述改动 1 未解决症状。经 26.1.2 原版反编译源码
+> （ma4z-sys/Minecraft-26.1.2，Mojang mapping）逐类核验：**26.1.2 的
+> `PackRepository` 无 PackType 字段、无类型过滤；`Pack.readMetaAndCreate` 的元数据
+> 与当前版本同源；资源解析按查询时 type** —— 改动 1 在本线为**行为无操作**，
+> 仅作为与 26.2 的一致性卫生项保留。真实断点待复现环境日志定位。
+> 全过程记录：`docs/WORKBENCH_JEI_RECIPE_FIX_26_1_2_20260907.md`。
+
+1. **枪包 PackType 按仓库动态设定（`CommonRegistry#onAddPackFinders`，移植 26.2 `810fb04f`）**
+   与 26.2 行为对齐。在本线（26.1.2 原版）下为行为无操作（见上注），非本 bug 的修复。
+   *证据：26.1.2 原版源码逐类核验（PackRepository / Pack / PackMetadataSection /
+   PackType / MultiPackResourceManager / WorldOpenFlows / IntegratedServer）。*
 
 2. **`RecipeViewerReloadBridge` 资源重载回退加一次性护栏（对齐 26.2 现版本）**
    同步后刷新 JEI/REI 时，若两个 viewer 的轻量刷新钩子都不可用，整段
