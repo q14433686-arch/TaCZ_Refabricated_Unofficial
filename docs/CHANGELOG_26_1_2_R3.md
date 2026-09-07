@@ -8,6 +8,27 @@
 
 ---
 
+## 2026-09-07 · 其他枪包工作台 JEI 无配方 / 合成无结果（来自 26.2 `810fb04f` + 26.2 bridge 加固）
+
+1. **枪包 PackType 按仓库动态设定（`CommonRegistry#onAddPackFinders`，来自 26.2 `810fb04f`）**
+   此前 `GunPackLoader.INSTANCE.packType` 只在 `GunMod` 初始化时按环境写死一次。
+   单人模式（同一个 JVM 先后构造客户端 `CLIENT_RESOURCES` 与集成服务器 `SERVER_DATA`
+   两个 PackRepository）里，服务器仓库拿到的枪包类型不匹配，服务端读不到枪包的
+   `data/`（block index、table 配方、过滤配置）⇒ 其他枪包的工作台 GUI 无标签页/无配方、
+   JEI 无对应分类、工作台里合成不出结果；而工作台物品本身的原版合成配方
+   （在 mod 自身 `data/` 里）不受影响。现改为按事件携带的 `PackType` 动态设定。
+   *证据：断点与症状=26.2 分支维护者注释（810fb04f 提交说明）；本线=同形移植、
+   符号逐一核验、**实机未验**。*
+
+2. **`RecipeViewerReloadBridge` 资源重载回退加一次性护栏（对齐 26.2 现版本）**
+   同步后刷新 JEI/REI 时，若两个 viewer 的轻量刷新钩子都不可用，整段
+   `reloadResourcePacks()` 回退此前没有次数限制，且 `clear()` 不复位
+   `reloadInProgress`（断开时若回退仍在进行，重连后 tick 永不再进入）。
+   现补齐 `resourceFallbackUsed` 一次性护栏与 `clear()` 完整复位。
+   *证据：26.2 现版本对照；本线=同形移植、**实机未验**。*
+
+---
+
 ## 2026-09-02 · 跨线同步轮（26.2 `01698440` + 1.21.11 `f53dd13b` → 本线）
 
 ### 修复
