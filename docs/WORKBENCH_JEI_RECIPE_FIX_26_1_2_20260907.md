@@ -9,6 +9,27 @@
 
 ---
 
+## 〇、同族四线对比审计（2026-09-07 晚，回应「其他分支有没有同样问题」）
+
+旧布局枪包（`recipes/` 复数目录 + 旧式配方 JSON）对 26.x 原版 `RecipeManager`
+（只扫单数 `recipe`）的可见性，逐线核查：
+
+| 线 | 加载器 | 原版配方目录（已核验） | 兼容层 | 状态 |
+|---|---|---|---|---|
+| `26.2(main)`（本仓，`a408eb0`） | Fabric | 单数 `recipe`（`Registries.RECIPE` 源码） | `RecipeCompat` + `DelegatingPackResources`/`PathPackResources` 双接入 | ✅ 有（本修复的移植源） |
+| `1.21.11`（本仓，`6db3af9`） | Fabric | 单数 `recipe`（`Registries.RECIPE` 源码） | `LegacyGunPackRecipeMigrator`（result 迁移 + 材料对象式改写，复用 `GunSmithTableIngredient#normalizeLegacyIngredientJson`）+ `DelegatingPackResources` 目录别名（`LEGACY_RECIPE_DIRECTORY="recipes"`，非 vanilla 类型条目不暴露给原版通道） | ✅ 有（实现不同、功能等价；注释明确记载同一问题） |
+| `26.1.2`（本线） | Fabric | 单数 `recipe`（本仓 `GunSmithTableMenu` 字节码核验注释） | **移植时误删，缺失** | ❌ 唯一有 bug 的线 → ✅ PR #91 恢复（与 26.2 逐字节一致） |
+| `TaCZ_Renovated` `26.1.2`（NeoForge 姊妹仓，默认分支） | NeoForge | 同 26.1.2 vanilla（单数） | 自研 `com.tacz.guns.crafting.RecipeCompat`（NeoForge 语义，含 result/目录/材料三件套 + `result.group` 缺省 `tacz:` 处理）+ `DelegatingPackResources` 接入（listResources 回退列出 + 重映射 + 转换、getResource 回退） | ✅ 有（与「Neo 26.1.2 无此问题」的观察一致） |
+
+补充：
+- 本线修复后与 26.2 的残留差异只剩 `PathPackResources` 是否带兼容——本线已随
+  26.2 版一起带上，两线一致。
+- 1.21.11 的兼容只在聚合层 `DelegatingPackResources`（`PathPackResources` 无）；
+  枪包管线所有包都经聚合包「tacz_resources」，主路径无碍。若将来有路径绕过聚合
+  包直接查询单包，1.21.11 会露馅——供知悉，非本 PR 范围。
+- `GunPackLoader` / `PackConvertor` 两线逐字一致（已 diff 确认），移植遗漏仅限
+  本次恢复的 3 个文件，无其他缺件。
+
 ## 一、根因（已定位，2026-09-07 晚 23:00 定案）
 
 **根因：26.1.2 线移植时误删了 `cn/sh1rocu/tacz/util/RecipeCompat`（旧枪包原版配方兼容层）
