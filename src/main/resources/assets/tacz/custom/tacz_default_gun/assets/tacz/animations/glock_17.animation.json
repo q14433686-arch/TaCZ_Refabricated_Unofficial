@@ -242,11 +242,6 @@
 						}
 					}
 				}
-			},
-			"sound_effects": {
-				"0.0": {
-					"effect": "p24_pi_golf17_stockskel_raise"
-				}
 			}
 		},
 		"put_away": {

@@ -18,6 +18,40 @@ R2-hotfix2 之后的主线增量。除下列条目各自标注「**待实测**�
 二次渲染下的镜内高模枪修复）与「光影下世界枪照明待实测」外，其余均经维护者实机
 验证 PASS（A 卡 + Iris 环境；NV 卡未实测，征测点见 Release 说明）：
 
+### R3 发布后源码增量（2026-09-08 起，未随 26.2_R3 jar 发布）
+
+来源：玩家日志 `mclo.gs/39JqB2p`（macOS 26.2 / Apple M4 / Sodium 0.9.1 + Iris 1.11.2，
+反映「开光影世界全透明」）。日志里没有任何与该症状对应的报错；下列为日志中**能被
+源码证实**的可见问题，先修这些，透明症状的归因另行跟进（玩家侧排查文案已给出）。
+**全部为静态修复，未经实机验证。**
+
+- **`interact_key/whitelist` 实体标签在 26.2 上整个加载失败（交互键白名单全灭）**：
+  `data/tacz/tags/entity_type/interact_key/whitelist.json` 里仍写着 1.21.1 时代的
+  `minecraft:boat` / `minecraft:chest_boat`，26.2 已拆成逐木种实体，26.2 的 `TagLoader`
+  对缺失引用的处理是**丢弃整条标签**（日志：`Couldn't load tag tacz:interact_key/whitelist
+  as it is missing following references`），而 `SyncConfig` 里的白名单列表默认为空 ⇒ 村民、
+  矿车、展示框、骆驼……所有靠该标签放行的实体交互全部失效。改为 `#minecraft:boat` +
+  十种 `*_chest_boat` / `bamboo_chest_raft`（后者标 `required: false`，日后再拆也不连坐）。
+  与 1.21.11 分支 `1d8174db` 同源；26.1.2 分支有同样的陈旧条目，待随下次发布同步。
+- **枪械工作台配方的原版 WARN 刷屏**：26.2 `RecipeManager#finalizeRecipeLoading` 对
+  `placementInfo().isImpossibleToPlace()` 的非 special 配方逐条打
+  `Recipe … can't be placed due to empty ingredients`，默认枪包 + LRTactical 共约 250 行。
+  `GunSmithTableRecipe` 补 `isSpecial() = true`（同 1.21.11 分支）；工作台自身的材料校验
+  不走 `placementInfo`，行为不变。
+- **格洛克 17 举枪动画的幽灵音效**：`glock_17.animation.json` raise 段引用了不存在的
+  `p24_pi_golf17_stockskel_raise`（上游 TACZ 与 Sh1roCu 1.21.1 同样带着这行，属上游手误），
+  每次切到该枪都会打一行 `Missing gun sound resource`。删掉该 `sound_effects` 段。
+- **Iris 手部 pass 的六行 `Found perfect program match … HAND_CUTOUT`**：来源是
+  `IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()` 试图把六条 vanilla 实体/物品管线
+  `assignPipeline` 到 HAND。对照 Iris 26.2 源码，这些管线早已在 `IrisPipelines` 静态表里
+  按「绘制时刻是否在手部」逐 draw 分派，`assignPipeline` 对已注册管线直接抛
+  `Shader already assigned`（被我们吞掉）—— 该调用在 1.11.2 上从未生效，只会在 Iris 未预注册
+  的版本上把管线钉死成常量 HAND 程序（全局风险）。连同三处调用点一起删除；证据留在
+  `IrisCompat` 的原位注释里。
+- **`Mask enabled but no ocular geometry was registered` 误报收窄**：原先只要进了手部 pass、
+  掩码功能开着、当帧没收到目镜几何就打（玩家空手进世界一秒就出现），现加前置条件
+  「主手是装了瞄具的枪」，空手/裸枪不再报。
+
 - **内置 TacZ Mesh Loader（TML）**：VellEagle 的 mesh 高模附属内置移植
   （GPL-3.0，`provides: taczmeshloader`），含本仓原创的第一人称 GPU 静态烘焙
   （逐骨骼常驻 VBO、光照 4 级量化烘焙、光影下走 vanilla RenderType 管道、

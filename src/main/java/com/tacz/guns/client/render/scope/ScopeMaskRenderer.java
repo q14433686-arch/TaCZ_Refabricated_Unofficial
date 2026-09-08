@@ -15,7 +15,10 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.PrimitiveTopology;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
+import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.model.bedrock.BedrockCube;
 import com.tacz.guns.client.model.bedrock.BedrockCubeBox;
 import com.tacz.guns.compat.iris.IrisCompat;
@@ -27,6 +30,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -358,11 +362,18 @@ public final class ScopeMaskRenderer {
         // 【诊断】上一版实测「预览全黑 + 日志一行都没有」，原因是几何一个都没登记，
         // isEmpty() 直接 return，于是连个说法都没有。静默失败最难查，
         // 所以这里补一条：开着调试却收不到任何目镜几何时，明确说出来（只说一次）。
+        //
+        // 【2026-09-08 收窄】这条 WARN 原先在「手部 pass + 功能开着 + 清单为空」时就打，
+        // 而清单为空的常态是【玩家根本没拿装了瞄具的枪】——实机日志里它在进世界后
+        // 一秒、手里还是空的时候就出现了，玩家把它当成光影异常的线索。现在只在
+        // 主手确实装着瞄具、按理该收到目镜几何却一个都没有时才说话；空手/无镜是正常态，
+        // 不值得一行 WARN。
         if (activeHandPass && RenderConfig.SCOPE_MASK_ENABLE.get()
-                && ScopeMaskGeometry.isEmpty() && !loggedEmpty) {
+                && ScopeMaskGeometry.isEmpty() && !loggedEmpty && isHoldingGunWithScope()) {
             loggedEmpty = true;
-            GunMod.LOGGER.warn("[TACZ Scope] Mask enabled but no ocular geometry was registered this frame. "
-                    + "Either no scope is equipped/aimed, or ocular collection is broken.");
+            GunMod.LOGGER.warn("[TACZ Scope] Mask enabled and a scope is equipped, but no ocular geometry "
+                    + "was registered this frame. Either the scope is not being aimed, or ocular collection "
+                    + "is broken for this scope model.");
         }
         if (!activeHandPass) {
             // 世界渲染那次直接跳过，且【不清空】清单 ——
@@ -546,6 +557,26 @@ public final class ScopeMaskRenderer {
         return Mth.clamp(IClientPlayerGunOperator.fromLocalPlayer(player)
                 .getClientAimingProgress(Minecraft.getInstance().getDeltaTracker()
                         .getGameTimeDeltaPartialTick(false)), 0.0f, 1.0f);
+    }
+
+    /**
+     * 主手是否是一把装了瞄具（外挂或内置）的枪。只给上面那条「没收到目镜几何」的
+     * 一次性诊断做前置判定，避免空手/裸枪时误报。
+     */
+    private static boolean isHoldingGunWithScope() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) {
+            return false;
+        }
+        ItemStack stack = player.getMainHandItem();
+        if (!(stack.getItem() instanceof IGun iGun)) {
+            return false;
+        }
+        Identifier scopeId = iGun.getAttachmentId(stack, AttachmentType.SCOPE);
+        if (DefaultAssets.isEmptyAttachmentId(scopeId)) {
+            scopeId = iGun.getBuiltInAttachmentId(stack, AttachmentType.SCOPE);
+        }
+        return !DefaultAssets.isEmptyAttachmentId(scopeId);
     }
 
     /** 没有几何时也要把 target 刷黑，否则会残留上一帧的形状。 */

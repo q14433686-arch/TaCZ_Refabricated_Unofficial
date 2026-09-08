@@ -1,0 +1,125 @@
+diff --git a/src/main/java/com/tacz/guns/client/GunModClient.java b/src/main/java/com/tacz/guns/client/GunModClient.java
+index 0ba9aea..5893f78 100644
+--- a/src/main/java/com/tacz/guns/client/GunModClient.java
++++ b/src/main/java/com/tacz/guns/client/GunModClient.java
+@@ -40,7 +40,6 @@ public class GunModClient {
+             com.tacz.guns.client.init.ClientSetupEvent.registerItemRenderers();
+             // WP-LR2：LR 物品渲染器登记——必须在 enqueueWork 内（r29：构造期字段未填充会静默跳过）。
+             me.xjqsh.lrtactical.client.init.ModEntitiesRender.registerItemRenderers();
+-            com.tacz.guns.compat.shader.ShaderCompat.assignCommonEntityPipelinesToHandIfNeeded();
+             GunMod.LOGGER.info("TaCZ client setup (work package ⑥ ShaderCompat). minecraft={}",
+                     Minecraft.getInstance().getUser().getName());
+         });
+diff --git a/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java b/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java
+index a83ff80..59a8a66 100644
+--- a/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java
++++ b/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java
+@@ -269,9 +269,9 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
+             if (RefitTransform.getOpeningProgress() != 0) {
+                 gunModel.setRenderHand(false);
+             }
+-            // 第一人称手部 pass 下，预先让 Iris 把 vanilla entity/item 管线归到 hand program。
+-            // 方法内部只尝试一次，避免 shader 下每帧重复匹配刷日志。
+-            IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
++            // （已移除）此处曾调 IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()：
++            // Iris 对 vanilla ENTITY_*/ITEM_* 管线本就按「绘制时刻是否在手部 pass」逐 draw 分派，
++            // 且对已注册管线 assignPipeline 直接抛 already assigned —— 该调用从未生效，只刷日志。
+             // Reset the extraction-time aperture marker before the scope attachment and gun FX
+             // are traversed synchronously by gunModel.submit.
+             ScopeRenderTypes.beginViewmodelSubmission();
+diff --git a/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java b/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java
+index 6540214..dbfe837 100644
+--- a/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java
++++ b/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java
+@@ -3,7 +3,6 @@ package com.tacz.guns.compat.iris;
+ import com.mojang.blaze3d.pipeline.RenderPipeline;
+ import com.tacz.guns.GunMod;
+ import com.tacz.guns.init.CompatRegistry;
+-import net.minecraft.client.renderer.RenderPipelines;
+ import net.minecraft.client.renderer.SubmitNodeCollector;
+ import net.minecraft.world.item.ItemStack;
+ import net.neoforged.fml.ModList;
+@@ -188,14 +187,19 @@ public final class IrisCompat {
+     }
+ 
+ 
+-    public static synchronized void assignCommonEntityPipelinesToHandIfNeeded() {
+-        if (!ModList.get().isLoaded(CompatRegistry.IRIS)) {
+-            return;
+-        }
+-        assignPipelineToIris(RenderPipelines.ENTITY_CUTOUT, "HAND", "entity_cutout");
+-        assignPipelineToIris(RenderPipelines.ENTITY_TRANSLUCENT, "HAND_TRANSLUCENT", "entity_translucent");
+-        assignPipelineToIris(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE, "HAND_TRANSLUCENT", "entity_translucent_emissive");
+-    }
++
++    // 【已移除】assignCommonEntityPipelinesToHandIfNeeded()：
++    // 曾把 vanilla ENTITY_* / ITEM_* 管线经 IrisApi.assignPipeline(…, HAND*) 归到手部 program。
++    // 对照 Iris 源码（1.21.11 / 26.1 / 26.2 三条分支的 IrisPipelines.java 一致）：
++    //   1. 这些管线全部已在 IrisPipelines 静态表里预注册为 getCutout(p)/getTranslucent(p)，
++    //      两者【逐 draw 求值】—— HandRenderer.INSTANCE.isActive() 时返回 HAND_*，否则 ENTITIES_*；
++    //      手部 pass 里的抛壳/火光/枪体本来就走 gbuffers_hand，无需我们再 assign；
++    //   2. IrisPipelines.assignPipeline 对已注册管线直接抛 IllegalStateException("Shader already
++    //      assigned")，被我们当成功吞掉 —— 该调用从未生效，唯一可见效果是 ShaderKey.findBestMatch
++    //      在抛异常前打的几行 "Found perfect program match for minecraft:pipeline/…: HAND_CUTOUT" WARN；
++    //   3. 若某 Iris 版本恰好没预注册（put 成功），后果是把 vanilla 管线钉死成常量 HAND 程序，
++    //      世界里所有实体/物品都用错程序 —— 收益为零、风险为全局。
++    // assignPipeline 只保留给 tacz:pipeline/scope_* 等我们自己的管线。
+ 
+     public static boolean isHandRendererActive() {
+         if (!ModList.get().isLoaded(CompatRegistry.IRIS) || !isUsingRenderPack()) {
+diff --git a/src/main/java/com/tacz/guns/compat/shader/ShaderCompat.java b/src/main/java/com/tacz/guns/compat/shader/ShaderCompat.java
+index 32ecd10..da10c20 100644
+--- a/src/main/java/com/tacz/guns/compat/shader/ShaderCompat.java
++++ b/src/main/java/com/tacz/guns/compat/shader/ShaderCompat.java
+@@ -31,10 +31,6 @@ public final class ShaderCompat {
+         return IrisCompat.assignPipelineToIris(pipeline, program, debugName);
+     }
+ 
+-    public static void assignCommonEntityPipelinesToHandIfNeeded() {
+-        IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
+-    }
+-
+     public static boolean shouldRenderInCurrentHandPhase(ItemStack stack) {
+         return IrisCompat.shouldRenderInCurrentHandPhase(stack);
+     }
+diff --git a/src/main/java/com/tacz/guns/crafting/GunSmithTableRecipe.java b/src/main/java/com/tacz/guns/crafting/GunSmithTableRecipe.java
+index af302c1..1b8d522 100644
+--- a/src/main/java/com/tacz/guns/crafting/GunSmithTableRecipe.java
++++ b/src/main/java/com/tacz/guns/crafting/GunSmithTableRecipe.java
+@@ -44,6 +44,20 @@ public class GunSmithTableRecipe implements Recipe<SingleRecipeInput> {
+         return false;
+     }
+ 
++    /**
++     * 枪械工作台配方只由 GunSmithTableMenu 消费，不进原版 3×3 合成格。
++     * 1.21.11+ 的 {@code RecipeManager#finalizeRecipeLoading} 对每条配方做
++     * {@code !recipe.isSpecial() && recipe.placementInfo().isImpossibleToPlace()} 判定，
++     * 命中即打一行 {@code "Recipe … can't be placed due to empty ingredients"} WARN ——
++     * 本类返回 {@link PlacementInfo#NOT_PLACEABLE}，所以此前每条 tacz:/lrtactical: 配方
++     * 都会刷一行（默认枪包约 250 行）。标成 special 后 RecipeManager 跳过这条 placement
++     * 检查；工作台自己的材料校验与合成不经过 placementInfo，行为不变。
++     */
++    @Override
++    public boolean isSpecial() {
++        return true;
++    }
++
+     @Override
+     public String group() {
+         return "";
+diff --git a/src/main/resources/assets/tacz/custom/tacz_default_gun/assets/tacz/animations/glock_17.animation.json b/src/main/resources/assets/tacz/custom/tacz_default_gun/assets/tacz/animations/glock_17.animation.json
+index 82de964..f0f7ca1 100644
+--- a/src/main/resources/assets/tacz/custom/tacz_default_gun/assets/tacz/animations/glock_17.animation.json
++++ b/src/main/resources/assets/tacz/custom/tacz_default_gun/assets/tacz/animations/glock_17.animation.json
+@@ -242,11 +242,6 @@
+ 						}
+ 					}
+ 				}
+-			},
+-			"sound_effects": {
+-				"0.0": {
+-					"effect": "p24_pi_golf17_stockskel_raise"
+-				}
+ 			}
+ 		},
+ 		"put_away": {

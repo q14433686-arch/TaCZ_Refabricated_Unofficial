@@ -164,10 +164,12 @@ public class ShellRender implements IFunctionalSubmitter {
         if (IrisCompat.isRenderShadow() || !isSelf || !shellContextMatchesCamera(context.displayContext())) {
             return;
         }
-        // 光影手部兼容：把实体管线显式归到 HAND，避免在 Iris hand pass 中不渲染/位置错
-        if (IrisCompat.isHandRendererActive()) {
-            IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
-        }
+        // 这里曾在 Iris 手部 pass 里调 IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()，
+        // 试图把 vanilla ENTITY_* 管线归入 HAND program。Iris 26.2 的 IrisPipelines 静态表
+        // 已按「绘制时刻 HandRenderer 是否活跃」逐 draw 分派这些管线（手部 → gbuffers_hand），
+        // 且对已注册管线的 assignPipeline 直接抛 "Shader already assigned" —— 那次调用
+        // 从来没有生效过，只会在日志里留下六行 "Found perfect program match … HAND_CUTOUT"。
+        // 详见 IrisCompat#assignCommonEntityPipelinesToHandIfNeeded 的说明。
         ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();
         IGun iGun = IGun.getIGunOrNull(currentGunItem);
         if (iGun == null) {
