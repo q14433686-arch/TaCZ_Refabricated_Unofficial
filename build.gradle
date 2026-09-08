@@ -321,6 +321,31 @@ tasks.withType(JavaCompile).configureEach {
     }
 }
 
+// Dependency-free regression for the mesh/Iris render-pass boundary. Compile the actual policy
+// with a standalone harness; no client, OpenGL context, or additional test library is required.
+def meshPassTestClasses = layout.buildDirectory.dir("classes/meshRenderPassTest")
+tasks.register("compileMeshRenderPassTest", JavaCompile) {
+    source files(
+            "src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/MeshRenderPassBatches.java",
+            "tests/mesh-render-pass/MeshRenderPassBatchesTest.java")
+    classpath = files()
+    destinationDirectory = meshPassTestClasses
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+tasks.register("meshRenderPassTest", JavaExec) {
+    dependsOn "compileMeshRenderPassTest"
+    classpath = files(meshPassTestClasses)
+    mainClass = "cn.sh1rocu.tacz.compat.meshloader.render.MeshRenderPassBatchesTest"
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+tasks.named("check") {
+    dependsOn "meshRenderPassTest"
+}
+
 // Source selection for integrations whose APIs genuinely have no 26.1.2 equivalent.
 // PAL, Controllable, Shoulder Surfing and Iris are compiled above and guarded at runtime;
 // only obsolete KosmX/OptiFine/KubeJS-Fabric/Accelerated Rendering implementations remain excluded.
