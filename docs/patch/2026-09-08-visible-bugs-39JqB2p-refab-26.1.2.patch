@@ -1,0 +1,143 @@
+diff --git a/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java b/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java
+index 227e063..bd7d924 100644
+--- a/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java
++++ b/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java
+@@ -269,9 +269,9 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
+             if (RefitTransform.getOpeningProgress() != 0) {
+                 gunModel.setRenderHand(false);
+             }
+-            // 第一人称手部 pass 下，预先让 Iris 把 vanilla entity/item 管线归到 hand program。
+-            // 方法内部只尝试一次，避免 shader 下每帧重复匹配刷日志。
+-            IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
++            // （已移除）此处曾调 IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()：
++            // Iris 对 vanilla ENTITY_*/ITEM_* 管线本就按「绘制时刻是否在手部 pass」逐 draw 分派，
++            // 且对已注册管线 assignPipeline 直接抛 already assigned —— 该调用从未生效，只刷日志。
+             // Reset the extraction-time aperture marker before the scope attachment and gun FX
+             // are traversed synchronously by gunModel.submit.
+             ScopeRenderTypes.beginViewmodelSubmission();
+diff --git a/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java b/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java
+index d320a2c..70d86f6 100644
+--- a/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java
++++ b/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java
+@@ -8,7 +8,6 @@ import com.tacz.guns.init.CompatRegistry;
+ import net.fabricmc.loader.api.FabricLoader;
+ import net.fabricmc.loader.api.Version;
+ import net.fabricmc.loader.api.VersionParsingException;
+-import net.minecraft.client.renderer.RenderPipelines;
+ import net.minecraft.client.renderer.SubmitNodeCollector;
+ import net.minecraft.world.item.ItemStack;
+ 
+@@ -31,8 +30,6 @@ public final class IrisCompat {
+     private static Supplier<Boolean> isRenderingShadow = () -> false;
+     private static final Set<RenderPipeline> ASSIGNED_SCOPE_PIPELINES = new HashSet<>();
+     private static boolean loggedScopePipelineFailure;
+-    private static boolean commonEntityPipelinesAssigned = false;
+-    private static boolean commonEntityPipelinesAssignAttempted = false;
+ 
+     private IrisCompat() {
+     }
+@@ -131,38 +128,19 @@ public final class IrisCompat {
+         return false;
+     }
+ 
+-    /**
+-     * Assign vanilla entity/item pipelines used inside the first-person hand pass to Iris' hand
+-     * programs. Some Iris versions otherwise rediscover the same "perfect program match" every
+-     * frame. Try this once per client session only, even if a subset fails.
+-     */
+-    public static synchronized void assignCommonEntityPipelinesToHandIfNeeded() {
+-        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
+-            return;
+-        }
+-        if (commonEntityPipelinesAssigned || commonEntityPipelinesAssignAttempted) {
+-            return;
+-        }
+-        commonEntityPipelinesAssignAttempted = true;
+-
+-        boolean ok = true;
+-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT,
+-                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout");
+-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT_CULL,
+-                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout_cull");
+-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT,
+-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent");
+-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_CULL,
+-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_cull");
+-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE,
+-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_emissive");
+-        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_CUTOUT,
+-                new String[]{"HAND_CUTOUT", "HAND"}, "item_cutout");
+-        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_TRANSLUCENT,
+-                new String[]{"HAND_TRANSLUCENT"}, "item_translucent");
+ 
+-        commonEntityPipelinesAssigned = ok;
+-    }
++    // 【已移除】assignCommonEntityPipelinesToHandIfNeeded()：
++    // 曾把 vanilla ENTITY_* / ITEM_* 管线经 IrisApi.assignPipeline(…, HAND*) 归到手部 program。
++    // 对照 Iris 源码（1.21.11 / 26.1 / 26.2 三条分支的 IrisPipelines.java 一致）：
++    //   1. 这些管线全部已在 IrisPipelines 静态表里预注册为 getCutout(p)/getTranslucent(p)，
++    //      两者【逐 draw 求值】—— HandRenderer.INSTANCE.isActive() 时返回 HAND_*，否则 ENTITIES_*；
++    //      手部 pass 里的抛壳/火光/枪体本来就走 gbuffers_hand，无需我们再 assign；
++    //   2. IrisPipelines.assignPipeline 对已注册管线直接抛 IllegalStateException("Shader already
++    //      assigned")，被我们当成功吞掉 —— 该调用从未生效，唯一可见效果是 ShaderKey.findBestMatch
++    //      在抛异常前打的几行 "Found perfect program match for minecraft:pipeline/…: HAND_CUTOUT" WARN；
++    //   3. 若某 Iris 版本恰好没预注册（put 成功），后果是把 vanilla 管线钉死成常量 HAND 程序，
++    //      世界里所有实体/物品都用错程序 —— 收益为零、风险为全局。
++    // assignPipeline 只保留给 tacz:pipeline/scope_* 等我们自己的管线。
+ 
+     /**
+      * The post-composite overlay hook ({@code IrisRenderingPipeline#finalizeLevelRendering} TAIL)
+diff --git a/src/main/java/com/tacz/guns/crafting/GunSmithTableRecipe.java b/src/main/java/com/tacz/guns/crafting/GunSmithTableRecipe.java
+index 3f12504..1b3fb07 100644
+--- a/src/main/java/com/tacz/guns/crafting/GunSmithTableRecipe.java
++++ b/src/main/java/com/tacz/guns/crafting/GunSmithTableRecipe.java
+@@ -45,6 +45,20 @@ public class GunSmithTableRecipe implements Recipe<SingleRecipeInput> {
+         return false;
+     }
+ 
++    /**
++     * 枪械工作台配方只由 GunSmithTableMenu 消费，不进原版 3×3 合成格。
++     * 1.21.11+ 的 {@code RecipeManager#finalizeRecipeLoading} 对每条配方做
++     * {@code !recipe.isSpecial() && recipe.placementInfo().isImpossibleToPlace()} 判定，
++     * 命中即打一行 {@code "Recipe … can't be placed due to empty ingredients"} WARN ——
++     * 本类返回 {@link PlacementInfo#NOT_PLACEABLE}，所以此前每条 tacz:/lrtactical: 配方
++     * 都会刷一行（默认枪包约 250 行）。标成 special 后 RecipeManager 跳过这条 placement
++     * 检查；工作台自己的材料校验与合成不经过 placementInfo，行为不变。
++     */
++    @Override
++    public boolean isSpecial() {
++        return true;
++    }
++
+     @Override
+     public String group() {
+         return "";
+diff --git a/src/main/resources/data/tacz/tags/entity_type/interact_key/whitelist.json b/src/main/resources/data/tacz/tags/entity_type/interact_key/whitelist.json
+index 4df191b..51e0583 100644
+--- a/src/main/resources/data/tacz/tags/entity_type/interact_key/whitelist.json
++++ b/src/main/resources/data/tacz/tags/entity_type/interact_key/whitelist.json
+@@ -7,11 +7,20 @@
+     "minecraft:item_frame",
+     "minecraft:glow_item_frame",
+     "minecraft:interaction",
+-    "minecraft:boat",
+-    "minecraft:chest_boat",
++    "#minecraft:boat",
++    {"id": "minecraft:oak_chest_boat", "required": false},
++    {"id": "minecraft:spruce_chest_boat", "required": false},
++    {"id": "minecraft:birch_chest_boat", "required": false},
++    {"id": "minecraft:jungle_chest_boat", "required": false},
++    {"id": "minecraft:acacia_chest_boat", "required": false},
++    {"id": "minecraft:cherry_chest_boat", "required": false},
++    {"id": "minecraft:dark_oak_chest_boat", "required": false},
++    {"id": "minecraft:pale_oak_chest_boat", "required": false},
++    {"id": "minecraft:mangrove_chest_boat", "required": false},
++    {"id": "minecraft:bamboo_chest_raft", "required": false},
+     "minecraft:mule",
+     "minecraft:villager",
+     "minecraft:wandering_trader",
+     "minecraft:horse"
+   ]
+-}
+\ No newline at end of file
++}

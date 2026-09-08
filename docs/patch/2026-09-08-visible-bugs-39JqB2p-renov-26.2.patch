@@ -1,0 +1,253 @@
+diff --git a/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java b/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java
+index c619f34..a0d91cd 100644
+--- a/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java
++++ b/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java
+@@ -369,9 +369,9 @@ public final class PolyMeshGpuRenderer {
+         }
+         // 光影下 GPU 路径默认【走 vanilla RenderType 管道】而非自定义 pass：
+         // RenderType.prepare() + PreparedRenderType.drawFromBuffer() 用的是
+-        // entityCutout 的 RenderPipeline —— 该管线已由
+-        // IrisCompat.assignCommonEntityPipelinesToHandIfNeeded() 归入 Iris HAND
+-        // program（抛壳/火光同一条兼容链路），Iris 按管线拦截，枪体因此拿到
++        // entityCutout 的 RenderPipeline —— Iris 的 IrisPipelines 静态表已内置该管线的
++        // 映射，且按「绘制时刻 HandRenderer 是否活跃」逐 draw 分派（手部 pass →
++        // gbuffers_hand，否则 → gbuffers_entities），Iris 按管线拦截，枪体因此拿到
+         // 光影光照。顶点常驻 VBO 不变，每帧仍只写 O(骨骼) 个 DynamicTransforms。
+         // MeshGpuUnderShaders=true 时改走自定义 pass（绕开光影管线，无光影光照，
+         // 但绘制语义与无光影路径逐位一致 —— 留作排查光影兼容问题的对照组）。
+@@ -721,11 +721,11 @@ public final class PolyMeshGpuRenderer {
+      * 【光影路径】vanilla RenderType 管道变体：常驻 VBO + 官方 prepare()/drawFromBuffer。
+      *
+      * <h2>为什么这条路在 Iris 下能拿到光影光照</h2>
+-     * Iris 按 {@code RenderPipeline} 对象拦截绘制（本仓证据链：抛壳/火光用 vanilla
+-     * ENTITY_CUTOUT 提交，经 {@code assignCommonEntityPipelinesToHandIfNeeded()}
+-     * 归入 HAND program 后光影下渲染正确）。这里用 {@code RenderTypes.entityCutout}
+-     * —— 管线正是那条链路已注册的 ENTITY_CUTOUT，Iris 对它的接管方式与 vanilla
+-     * 立方体/collector poly 完全一致。
++     * Iris 按 {@code RenderPipeline} 对象拦截绘制：vanilla ENTITY_CUTOUT 在 Iris 的
++     * {@code IrisPipelines} 静态表里预注册为 {@code getCutout(p)}，手部 pass 内逐 draw
++     * 分派到 gbuffers_hand（抛壳/火光用同一条管线提交，光影下渲染正确）。这里用
++     * {@code RenderTypes.entityCutout} —— 管线正是那条 ENTITY_CUTOUT，Iris 对它的接管
++     * 方式与 vanilla 立方体/collector poly 完全一致。
+      *
+      * <h2>每骨骼矩阵怎么进去（字节码依据：RenderType.prepare() 偏移 55-58）</h2>
+      * prepare() 内部 {@code getModelViewMatrixCopy() -> writeDynamicTransforms(mv)}
+@@ -743,7 +743,9 @@ public final class PolyMeshGpuRenderer {
+      * UV2=量化光照，语义同 collector 写入。
+      */
+     private static void drawListViaRenderType(List<DrawEntry> draws) {
+-        IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
++        // 不再调 IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()：ENTITY_CUTOUT 在 Iris
++        // 静态表里本就按「绘制时刻是否在手部 pass」分派到 gbuffers_hand，那次 assign 对已注册
++        // 管线是 no-op（抛 already assigned 被吞），见 IrisCompat 里的说明。
+         long totalIndices = drawViaRenderTypeCore(draws, true);
+         if (!loggedFirstIrisDraw) {
+             loggedFirstIrisDraw = true;
+@@ -767,13 +769,9 @@ public final class PolyMeshGpuRenderer {
+      * 消费（HandRenderer 非活跃）⇒ 必然落 entities 程序。（源码依据：
+      * IrisPipelines.java 26.2 分支 assignToMain/getCutout/assignPipeline 三段。）
+      *
+-     * <p>与手部变体唯一的语义差异：<b>不调</b>
+-     * {@code assignCommonEntityPipelinesToHandIfNeeded()} —— 那是手部 pass 的
+-     * 专项修复（把抛壳用的 vanilla 管线归入 Iris HAND program）。世界 pass 里
+-     * ENTITY_CUTOUT 就是 vanilla 世界实体在用的管线，Iris 对它的默认接管
+-     * （gbuffers_entities 链路）正是我们想要的；这里主动去动管线归属反而可能
+-     * 干扰别的实体。绘制机制（prepare() 压栈取 MV × drawFromBuffer）与手部
+-     * 完全同构，两层变换定理不区分 pass。</p>
++     * <p>世界 pass 里 ENTITY_CUTOUT 就是 vanilla 世界实体在用的管线，Iris 对它的
++     * 默认接管（gbuffers_entities 链路）正是我们想要的。绘制机制（prepare() 压栈取
++     * MV × drawFromBuffer）与手部变体完全同构，两层变换定理不区分 pass。</p>
+      */
+     private static void drawWorldListViaRenderType(List<DrawEntry> draws) {
+         long totalIndices = drawViaRenderTypeCore(draws, false);
+diff --git a/src/main/java/com/tacz/guns/client/GunModClient.java b/src/main/java/com/tacz/guns/client/GunModClient.java
+index 961ddf7..24cfcab 100644
+--- a/src/main/java/com/tacz/guns/client/GunModClient.java
++++ b/src/main/java/com/tacz/guns/client/GunModClient.java
+@@ -33,7 +33,6 @@ public class GunModClient {
+             com.tacz.guns.client.init.ClientSetupEvent.registerItemRenderers();
+             // Deferred LR items are available here; registering earlier silently skips renderers.
+             me.xjqsh.lrtactical.client.init.ModEntitiesRender.registerItemRenderers();
+-            com.tacz.guns.compat.shader.ShaderCompat.assignCommonEntityPipelinesToHandIfNeeded();
+             GunMod.LOGGER.info("TaCZ client setup (work package ⑥ ShaderCompat). minecraft={}",
+                     Minecraft.getInstance().getUser().getName());
+         });
+diff --git a/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java b/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java
+index e743e85..c56703a 100644
+--- a/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java
++++ b/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java
+@@ -14,7 +14,10 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+ import com.mojang.blaze3d.vertex.MeshData;
+ import com.mojang.blaze3d.PrimitiveTopology;
+ import com.tacz.guns.GunMod;
++import com.tacz.guns.api.DefaultAssets;
+ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
++import com.tacz.guns.api.item.IGun;
++import com.tacz.guns.api.item.attachment.AttachmentType;
+ import com.tacz.guns.client.model.bedrock.BedrockCube;
+ import com.tacz.guns.client.model.bedrock.BedrockCubeBox;
+ import com.tacz.guns.compat.iris.IrisCompat;
+@@ -24,6 +27,7 @@ import net.minecraft.client.player.LocalPlayer;
+ import net.minecraft.client.renderer.RenderPipelines;
+ import net.minecraft.resources.Identifier;
+ import net.minecraft.util.Mth;
++import net.minecraft.world.item.ItemStack;
+ import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
+ import org.joml.Matrix4f;
+ import org.joml.Vector4f;
+@@ -351,11 +355,15 @@ public final class ScopeMaskRenderer {
+         // 【诊断】上一版实测「预览全黑 + 日志一行都没有」，原因是几何一个都没登记，
+         // isEmpty() 直接 return，于是连个说法都没有。静默失败最难查，
+         // 所以这里补一条：开着调试却收不到任何目镜几何时，明确说出来（只说一次）。
++        // 【收窄】这条 WARN 原先在「手部 pass + 功能开着 + 清单为空」时就打，而清单为空的常态是
++        // 玩家根本没拿装了瞄具的枪（实机日志里它在进世界后一秒、空手时就出现）。现在只在主手
++        // 确实装着瞄具、按理该收到目镜几何却一个都没有时才说话。
+         if (activeHandPass && RenderConfig.SCOPE_MASK_ENABLE.get()
+-                && ScopeMaskGeometry.isEmpty() && !loggedEmpty) {
++                && ScopeMaskGeometry.isEmpty() && !loggedEmpty && isHoldingGunWithScope()) {
+             loggedEmpty = true;
+-            GunMod.LOGGER.warn("[TACZ Scope] Mask enabled but no ocular geometry was registered this frame. "
+-                    + "Either no scope is equipped/aimed, or ocular collection is broken.");
++            GunMod.LOGGER.warn("[TACZ Scope] Mask enabled and a scope is equipped, but no ocular geometry "
++                    + "was registered this frame. Either the scope is not being aimed, or ocular collection "
++                    + "is broken for this scope model.");
+         }
+         if (!activeHandPass) {
+             // 世界渲染那次直接跳过，且【不清空】清单 ——
+@@ -498,6 +506,23 @@ public final class ScopeMaskRenderer {
+                         .getGameTimeDeltaPartialTick(false)), 0.0f, 1.0f);
+     }
+ 
++    /** 主手是否是一把装了瞄具（外挂或内置）的枪；只给上面那条一次性诊断做前置判定。 */
++    private static boolean isHoldingGunWithScope() {
++        LocalPlayer player = Minecraft.getInstance().player;
++        if (player == null) {
++            return false;
++        }
++        ItemStack stack = player.getMainHandItem();
++        if (!(stack.getItem() instanceof IGun iGun)) {
++            return false;
++        }
++        Identifier scopeId = iGun.getAttachmentId(stack, AttachmentType.SCOPE);
++        if (DefaultAssets.isEmptyAttachmentId(scopeId)) {
++            scopeId = iGun.getBuiltInAttachmentId(stack, AttachmentType.SCOPE);
++        }
++        return !DefaultAssets.isEmptyAttachmentId(scopeId);
++    }
++
+     /** 没有几何时也要把 target 刷黑，否则会残留上一帧的形状。 */
+     private static void clearOnly(TextureTarget target) {
+         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+diff --git a/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java b/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java
+index 9cae7a7..e77ffd7 100644
+--- a/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java
++++ b/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java
+@@ -268,9 +268,9 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
+             if (RefitTransform.getOpeningProgress() != 0) {
+                 gunModel.setRenderHand(false);
+             }
+-            // 第一人称手部 pass 下，预先让 Iris 把 vanilla entity/item 管线归到 hand program。
+-            // 方法内部只尝试一次，避免 shader 下每帧重复匹配刷日志。
+-            IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
++            // （已移除）此处曾调 IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()：
++            // Iris 对 vanilla ENTITY_*/ITEM_* 管线本就按「绘制时刻是否在手部 pass」逐 draw 分派，
++            // 且对已注册管线 assignPipeline 直接抛 already assigned —— 该调用从未生效，只刷日志。
+             // 调用枪械模型渲染
+             RenderType renderType = display.enablesTransparency()
+                     ? RenderTypes.entityTranslucent(display.getModelTexture())
+diff --git a/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java b/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java
+index ff52209..9401374 100644
+--- a/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java
++++ b/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java
+@@ -3,7 +3,6 @@ package com.tacz.guns.compat.iris;
+ import com.mojang.blaze3d.pipeline.RenderPipeline;
+ import com.tacz.guns.GunMod;
+ import com.tacz.guns.init.CompatRegistry;
+-import net.minecraft.client.renderer.RenderPipelines;
+ import net.minecraft.client.renderer.SubmitNodeCollector;
+ import net.minecraft.world.item.ItemStack;
+ import net.neoforged.fml.ModList;
+@@ -110,14 +109,19 @@ public final class IrisCompat {
+         return ModList.get().isLoaded("sulkan");
+     }
+ 
+-    public static synchronized void assignCommonEntityPipelinesToHandIfNeeded() {
+-        if (!ModList.get().isLoaded(CompatRegistry.IRIS)) {
+-            return;
+-        }
+-        assignPipelineToIris(RenderPipelines.ENTITY_CUTOUT, "HAND", "entity_cutout");
+-        assignPipelineToIris(RenderPipelines.ENTITY_TRANSLUCENT, "HAND_TRANSLUCENT", "entity_translucent");
+-        assignPipelineToIris(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE, "HAND_TRANSLUCENT", "entity_translucent_emissive");
+-    }
++
++    // 【已移除】assignCommonEntityPipelinesToHandIfNeeded()：
++    // 曾把 vanilla ENTITY_* / ITEM_* 管线经 IrisApi.assignPipeline(…, HAND*) 归到手部 program。
++    // 对照 Iris 源码（1.21.11 / 26.1 / 26.2 三条分支的 IrisPipelines.java 一致）：
++    //   1. 这些管线全部已在 IrisPipelines 静态表里预注册为 getCutout(p)/getTranslucent(p)，
++    //      两者【逐 draw 求值】—— HandRenderer.INSTANCE.isActive() 时返回 HAND_*，否则 ENTITIES_*；
++    //      手部 pass 里的抛壳/火光/枪体本来就走 gbuffers_hand，无需我们再 assign；
++    //   2. IrisPipelines.assignPipeline 对已注册管线直接抛 IllegalStateException("Shader already
++    //      assigned")，被我们当成功吞掉 —— 该调用从未生效，唯一可见效果是 ShaderKey.findBestMatch
++    //      在抛异常前打的几行 "Found perfect program match for minecraft:pipeline/…: HAND_CUTOUT" WARN；
++    //   3. 若某 Iris 版本恰好没预注册（put 成功），后果是把 vanilla 管线钉死成常量 HAND 程序，
++    //      世界里所有实体/物品都用错程序 —— 收益为零、风险为全局。
++    // assignPipeline 只保留给 tacz:pipeline/scope_* 等我们自己的管线。
+ 
+     public static boolean isHandRendererActive() {
+         if (!ModList.get().isLoaded(CompatRegistry.IRIS) || !isUsingRenderPack()) {
+diff --git a/src/main/java/com/tacz/guns/compat/shader/ShaderCompat.java b/src/main/java/com/tacz/guns/compat/shader/ShaderCompat.java
+index 70a3068..b906b3e 100644
+--- a/src/main/java/com/tacz/guns/compat/shader/ShaderCompat.java
++++ b/src/main/java/com/tacz/guns/compat/shader/ShaderCompat.java
+@@ -32,10 +32,6 @@ public final class ShaderCompat {
+         return IrisCompat.assignPipelineToIris(pipeline, program, debugName);
+     }
+ 
+-    public static void assignCommonEntityPipelinesToHandIfNeeded() {
+-        IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
+-    }
+-
+     public static boolean shouldRenderInCurrentHandPhase(ItemStack stack) {
+         return IrisCompat.shouldRenderInCurrentHandPhase(stack);
+     }
+diff --git a/src/main/java/com/tacz/guns/crafting/GunSmithTableRecipe.java b/src/main/java/com/tacz/guns/crafting/GunSmithTableRecipe.java
+index 0e22836..6e1832a 100644
+--- a/src/main/java/com/tacz/guns/crafting/GunSmithTableRecipe.java
++++ b/src/main/java/com/tacz/guns/crafting/GunSmithTableRecipe.java
+@@ -43,6 +43,20 @@ public class GunSmithTableRecipe implements Recipe<SingleRecipeInput> {
+         return false;
+     }
+ 
++    /**
++     * 枪械工作台配方只由 GunSmithTableMenu 消费，不进原版 3×3 合成格。
++     * 1.21.11+ 的 {@code RecipeManager#finalizeRecipeLoading} 对每条配方做
++     * {@code !recipe.isSpecial() && recipe.placementInfo().isImpossibleToPlace()} 判定，
++     * 命中即打一行 {@code "Recipe … can't be placed due to empty ingredients"} WARN ——
++     * 本类返回 {@link PlacementInfo#NOT_PLACEABLE}，所以此前每条 tacz:/lrtactical: 配方
++     * 都会刷一行（默认枪包约 250 行）。标成 special 后 RecipeManager 跳过这条 placement
++     * 检查；工作台自己的材料校验与合成不经过 placementInfo，行为不变。
++     */
++    @Override
++    public boolean isSpecial() {
++        return true;
++    }
++
+     @Override
+     public String group() {
+         return "";
+diff --git a/src/main/resources/assets/tacz/custom/tacz_default_gun/assets/tacz/animations/glock_17.animation.json b/src/main/resources/assets/tacz/custom/tacz_default_gun/assets/tacz/animations/glock_17.animation.json
+index 82de964..f0f7ca1 100644
+--- a/src/main/resources/assets/tacz/custom/tacz_default_gun/assets/tacz/animations/glock_17.animation.json
++++ b/src/main/resources/assets/tacz/custom/tacz_default_gun/assets/tacz/animations/glock_17.animation.json
+@@ -242,11 +242,6 @@
+ 						}
+ 					}
+ 				}
+-			},
+-			"sound_effects": {
+-				"0.0": {
+-					"effect": "p24_pi_golf17_stockskel_raise"
+-				}
+ 			}
+ 		},
+ 		"put_away": {
