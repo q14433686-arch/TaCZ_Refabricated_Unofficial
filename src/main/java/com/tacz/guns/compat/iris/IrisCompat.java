@@ -8,7 +8,6 @@ import com.tacz.guns.init.CompatRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -32,8 +31,6 @@ public final class IrisCompat {
     private static Supplier<Boolean> isRenderingShadow = () -> false;
     private static final Set<RenderPipeline> ASSIGNED_SCOPE_PIPELINES = new HashSet<>();
     private static boolean loggedScopePipelineFailure;
-    private static boolean commonEntityPipelinesAssigned = false;
-    private static boolean commonEntityPipelinesAssignAttempted = false;
 
     private IrisCompat() {
     }
@@ -130,40 +127,6 @@ public final class IrisCompat {
             }
         }
         return false;
-    }
-
-    /**
-     * Assign vanilla entity/item pipelines used inside the first-person hand pass to Iris' hand
-     * programs. Some Iris versions otherwise rediscover the same "perfect program match" every
-     * frame. Try this once per client session only, even if a subset fails.
-     */
-    public static synchronized void assignCommonEntityPipelinesToHandIfNeeded() {
-        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
-            return;
-        }
-        if (commonEntityPipelinesAssigned || commonEntityPipelinesAssignAttempted) {
-            return;
-        }
-        commonEntityPipelinesAssignAttempted = true;
-
-        boolean ok = true;
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT,
-                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout");
-        // 1.21.11 没有 ENTITY_CUTOUT_CULL；cull 与否在这一版是 ENTITY_CUTOUT(默认 cull)
-        // 与 ENTITY_CUTOUT_NO_CULL 的区别（26.1 反过来，把默认那条叫 _CULL）。
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT_NO_CULL,
-                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout_no_cull");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT,
-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent");
-
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE,
-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_emissive");
-        // 1.21.11 没有独立的 ITEM_CUTOUT / ITEM_TRANSLUCENT 管线（26.1 才拆出来），
-        // 手持物品走的就是上面的 ENTITY_* 管线；唯一额外的一条是这个：
-        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_ENTITY_TRANSLUCENT_CULL,
-                new String[]{"HAND_TRANSLUCENT"}, "item_entity_translucent_cull");
-
-        commonEntityPipelinesAssigned = ok;
     }
 
     /**

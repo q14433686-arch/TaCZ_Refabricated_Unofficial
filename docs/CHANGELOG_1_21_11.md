@@ -5,6 +5,47 @@
 
 ---
 
+## 同步 #92：mesh 光影 pass 生命周期（2026-09-08，静态修复、待实测）
+
+- 来源：26.1.2 PR #92 独立修复 `9412e08`，不是之前 B/C/D 日志修复的回退或重新归因。
+- 已按 Iris 1.21.11 固定源码核对：`trySetup` 虽逐 draw 进入，但 `!iris$isSetUp()`
+  让法线/逆 MV 上传、albedo/PBR 通知在同一 pass 仅执行一次，直到 `finishRenderPass` 清除。
+  本线逐骨骼 MV push/pop 必要但不充分，旧文档「每次绘制都重过 setupState」的判断作废。
+- `drawList` 改为光影每骨骼独立 pass，无光影仍单批次。保留资源预加载、VBO 缓存、
+  纹理分组顺序、MV finally-pop、scope 深度孔径/PIP 配对、手部/世界路径及原有回退。
+- 同步生命周期模型回归并挂入 `check` / `build`，使用本线 Java 21；覆盖旧错误、
+  同纹理不同骨骼、多材质、24 组旋转、空表/单骨骼与无光影分批。不是实机 GL 测试。
+- 不改版本、GPU 默认值、法线/绕序选项或 mixin 目标。光影 pass/setup 次数增加，性能待测。
+- 详见 `MESH_GPU_IRIS_PASS_LIFETIME_1211_20260908.md`；检视反射/PBR、scope/PIP 与世界
+  GPU 仍待实机，不宣称解决「开光影世界全透明」。
+
+---
+
+## 玩家日志 39JqB2p 可见问题回流（2026-09-08，静态修复、待实测）
+
+- **范围**：仅 refab 1.21.11 的 B/C/D；A 的 `GunSmithTableRecipe.isSpecial() = true`
+  已由 R10 实现，E 的空手掩码 WARN 在本分支不存在。不改版本号。
+- **B · 交互白名单**：保留 R10 已有的 `#minecraft:boat` 与其他实体，补齐九种
+  `*_chest_boat` 和 `bamboo_chest_raft`，全部 `required: false`。
+  本分支并非仍有旧船 ID 导致整条标签失效，而是遗漏了运输船。
+- **C · 格洛克 17 音效**：从 refab 26.2 提交 `1aca7c74f8fd14f64e6a348e235eb87dfdfa8534`
+  取回修正版 `glock_17.animation.json` 作为源码覆盖件；bundle 原文件 blob 为
+  `82de964cee92b6b5e12e612a619c91eb67f451a9`，仅删除 `draw`（拔枪）动画中引用
+  `p24_pi_golf17_stockskel_raise` 的五行 `sound_effects` 段，其余动画/音效不变。
+  不改 bundle；沿用本分支 `processResources` 自动枚举源码覆盖件并排除 bundle 同名项的机制。
+- **D · Iris 管线分类**：删除 `assignCommonEntityPipelinesToHandIfNeeded()`、两个 flag
+  及 `GunItemRendererWrapper` 的唯一调用点和过时注释，移除未使用的 `RenderPipelines` import。
+  vanilla ENTITY/ITEM 管线交由 Iris 按 draw/手部 pass 分派，不再尝试钉死到常量 HAND。
+  **分支适配**：本分支自有 scope **和 mesh** 管线仍保留显式分类，不能照搬「只剩 scope」
+  而删掉 mesh 的光影桥接。未改 `IrisShaderCreatorMixin`、shader `void main` 或 GPU 开关。
+- **静态回归**：`python3 docs/check_visible_bugs_39JqB2p.py` 校验白名单、动画仅删除无效音效、
+  旧方法/flag/调用零残留；可加 `--jar <构建产物>` 验证最终 jar 的两个源码覆盖件各只有一份且字节一致。
+- **实机未验证**：仍需在 1.21.11 开光影验证第一人称抛壳、枪口火光、高模枪体照明及不再出现
+  vanilla 管线的 `Found perfect program match … HAND_CUTOUT`；确认村民/矿车/展示框及运输船
+  交互、工作台配方/JEI/REI、格洛克 17 切枪日志。**不宣称修复「开光影世界全透明」**。
+
+---
+
 ## 光影下四个 GPU 开关默认值重新对齐：`MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 翻回 true（2026-09-02）
 
 - **默认值**：`MeshGpuBaking`（已默认 true）、`MeshGpuWorld`（已默认 true）、
@@ -448,6 +489,10 @@ pass 体内只做 `viewsByTexture.get(…)` + `bindTexture`；② lightmap 用�
 
 ## 光影下 mesh 枪「反光/高光偏一侧」：按 26.2 `83daf16` 的定案根因同批修复（2026-09-01 第四则）
 
+> **2026-09-08 更正**：以下为历史记录。逐 entry 压栈仍必要，但旧推断漏查 Iris 的
+> `isSetUp` 守卫，多骨骼共用 pass 时并不足够；本轮同步 #92 的 per-bone pass 修复，
+> 详见 `MESH_GPU_IRIS_PASS_LIFETIME_1211_20260908.md`。实机仍待验。
+
 **来源与维护者原话**（不改写成机制描述）：「26.1.2 → 1.21.11 同步 · mesh GPU 法线 · 2026-09-01 ——
 根因（26.2 `83daf16` 实锤，机制对 Iris 1.10/1.11 同样成立）：光影包 `gl_NormalMatrix` = Iris 在绘制执行时刻
 读 RenderSystem MV 栈顶的逆转置，不吃 DynamicTransforms 快照；GPU 路径顶点法线是骨骼本地系，栈顶没有 pose 层
@@ -478,8 +523,8 @@ mul(entry.model());`、`finally popMatrix()`——位置切片不动（快照已
 `assignMeshPipelineToEntity`）换成包自己的程序，法线才走 `gl_NormalMatrix` —— 正是本改动的受益路径。
 1.21.11 的逐绘制触发点为 `GlCommandEncoder#executeDraw → trySetup`（我方既有审计：
 `docs/RENDER_PIPELINE_SCOPE_AUDIT_26_1_2.md`「Iris 在 `GlCommandEncoder#trySetup` 中把 vanilla/custom
-`RenderPipeline` 替换为 `ExtendedShader`」），且我们逐 entry `setUniform` 会弄脏状态 ⇒ 每次绘制都重过 setupState
-⇒ 逐 entry 压栈在本世代成立，不是把 26.2 的 `RenderType#prepare` 形状生搬。
+`RenderPipeline` 替换为 `ExtendedShader`」）。**原先由逐 entry `setUniform` 推断每次绘制都重过
+setupState 是错误的（2026-09-08 更正）**：它不会清除 Iris 的 `isSetUp`；需关闭 pass 才会刷新。
 
 **同时更正我方文档里的两处错误归因**：① 曾把「反光/高光偏一侧」挂在 L-8b（绕序 × 剔除抵消）名下 ——
 两者是不同的病灶，绕序不自洽本身仍未修；② 曾猜它与 L-12「世界 GPU 消费点/贴视空间」同源 —— 现撤销这条旁证，

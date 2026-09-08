@@ -730,21 +730,28 @@ pass 内懒加载，两者症状与修法都不同，别互相顶替。
 **接手者需要的材料**：Iris 与光影包的版本号、上面第 4 步的镂空判别、以及若选 ①：改完之后
 第一人称 / 第三人称 / 展示框 + 一把带半透明部件的枪的截图。
 
-### 6.1 另一条已定案根因：光影包的 `gl_NormalMatrix` 读取时刻（2026-09-01，随 26.2 `83daf16` 同步）
+### 6.1 光影包的法线矩阵读取时刻与 pass 生命周期（2026-09-01；2026-09-08 更正）
+
+> **2026-09-08：旧修复不充分。** 9 月 1 日补了逐骨骼 MV push/pop，但未处理 Iris
+> `isSetUp` 直到 pass 关闭才重置的生命周期。已同步 #92：光影每根骨骼独立 pass，
+> 无光影仍单批次，让法线/逆 MV 与 albedo/PBR 每根骨骼重新 setup。**静态修复、待实测**。
+> 固定 1.21.11 源码证据、模型回归与实机清单见
+> [`MESH_GPU_IRIS_PASS_LIFETIME_1211_20260908.md`](MESH_GPU_IRIS_PASS_LIFETIME_1211_20260908.md)。
+> 下述压栈历史解释保留，但不得将「逐 draw 进入 trySetup」理解为「逐 draw 执行 setupState」。
 
 **症状**：GPU 路径画出的 mesh 枪在光影包下**反光/高光偏一侧**、与光源的相对关系不对
 （维护者 2026-09-01 从 26.1.2 线转来 26.2 的实锤，机制对 Iris 1.10/1.11 同样成立）。
 
 **机制**：光影包引用的 `gl_NormalMatrix`（Iris 经 `VanillaCoreTransformer` 改名 `iris_NormalMat`）
-**不来自** DynamicTransforms 快照，而是 Iris 在**绘制执行那一刻**读 RenderSystem 的 MV 栈顶求逆转置
-（`ExtendedShader#iris$setupState`：`RenderSystem.getModelViewMatrixCopy().invert(…).transpose3x3(…)`；
-1.21.11 的触发点是 `GlCommandEncoder#executeDraw → trySetup`，逐次绘制都会过）。
+**不来自** DynamicTransforms 快照，而是 Iris 在 **pass 内该程序第一次 setup 时**读 MV 栈顶求逆转置
+（1.21.11 `ExtendedShader#iris$setupState` 使用 `RenderSystem.getModelViewMatrix().invert(…).transpose3x3(…)`；
+`GlCommandEncoder#executeDraw → trySetup` 虽逐 draw 进入，`!iris$isSetUp()` 守卫却只在首次放行）。
 本文件的 GPU 路径把顶点**留在骨骼本地系**（`PolyMesh#writeRaw` 裸写 `setNormal`），
 法线的全部旋转就指望这一个矩阵补上 ⇒ 栈顶没有 pose 层时，平行光/反射按骨骼本地法线计算。
 **位置不受影响**：`ModelViewMat` 走 `writeTransform` 写好的 DynamicTransforms 切片，一直是错的时刻无关正确的。
 
 **我方与 26.2 的形状差别**：他们首版是「压栈 → `prepare()` → 立刻弹栈 → 再 `drawFromBuffer`」，弹早了；
-我方 `PolyMeshGpuRenderer#drawList` 则**从未压过栈**（只在 pass 外写切片、pass 内 `setUniform` 换 slice），
+我方 `PolyMeshGpuRenderer#drawList` 在 **9 月 1 日修改前从未压过栈**（只在 pass 外写切片、pass 内 `setUniform` 换 slice），
 所以病灶更彻底。同批修法：每次绘制的 `pass.drawIndexed(…)` 整段包在
 `mvStack.pushMatrix(); mvStack.mul(entry.model()); … finally { mvStack.popMatrix(); }` 里
 —— pose 必须留在栈上直到该次绘制执行完。同一个手法我方在镜内覆盖层里早已在用：`client/render/scope/ScopeFinalOverlayState.java:165-214`
