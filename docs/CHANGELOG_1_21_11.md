@@ -5,6 +5,31 @@
 
 ---
 
+## 玩家日志 39JqB2p 可见问题回流（2026-09-08，静态修复、待实测）
+
+- **范围**：仅 refab 1.21.11 的 B/C/D；A 的 `GunSmithTableRecipe.isSpecial() = true`
+  已由 R10 实现，E 的空手掩码 WARN 在本分支不存在。不改版本号。
+- **B · 交互白名单**：保留 R10 已有的 `#minecraft:boat` 与其他实体，补齐九种
+  `*_chest_boat` 和 `bamboo_chest_raft`，全部 `required: false`。
+  本分支并非仍有旧船 ID 导致整条标签失效，而是遗漏了运输船。
+- **C · 格洛克 17 音效**：从 refab 26.2 提交 `1aca7c74f8fd14f64e6a348e235eb87dfdfa8534`
+  取回修正版 `glock_17.animation.json` 作为源码覆盖件；bundle 原文件 blob 为
+  `82de964cee92b6b5e12e612a619c91eb67f451a9`，仅删除 `draw`（拔枪）动画中引用
+  `p24_pi_golf17_stockskel_raise` 的五行 `sound_effects` 段，其余动画/音效不变。
+  不改 bundle；沿用本分支 `processResources` 自动枚举源码覆盖件并排除 bundle 同名项的机制。
+- **D · Iris 管线分类**：删除 `assignCommonEntityPipelinesToHandIfNeeded()`、两个 flag
+  及 `GunItemRendererWrapper` 的唯一调用点和过时注释，移除未使用的 `RenderPipelines` import。
+  vanilla ENTITY/ITEM 管线交由 Iris 按 draw/手部 pass 分派，不再尝试钉死到常量 HAND。
+  **分支适配**：本分支自有 scope **和 mesh** 管线仍保留显式分类，不能照搬「只剩 scope」
+  而删掉 mesh 的光影桥接。未改 `IrisShaderCreatorMixin`、shader `void main` 或 GPU 开关。
+- **静态回归**：`python3 docs/check_visible_bugs_39JqB2p.py` 校验白名单、动画仅删除无效音效、
+  旧方法/flag/调用零残留；可加 `--jar <构建产物>` 验证最终 jar 的两个源码覆盖件各只有一份且字节一致。
+- **实机未验证**：仍需在 1.21.11 开光影验证第一人称抛壳、枪口火光、高模枪体照明及不再出现
+  vanilla 管线的 `Found perfect program match … HAND_CUTOUT`；确认村民/矿车/展示框及运输船
+  交互、工作台配方/JEI/REI、格洛克 17 切枪日志。**不宣称修复「开光影世界全透明」**。
+
+---
+
 ## 光影下四个 GPU 开关默认值重新对齐：`MeshGpuUnderShaders` / `MeshGpuWorldUnderShaders` 翻回 true（2026-09-02）
 
 - **默认值**：`MeshGpuBaking`（已默认 true）、`MeshGpuWorld`（已默认 true）、
