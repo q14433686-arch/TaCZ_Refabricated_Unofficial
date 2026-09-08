@@ -48,7 +48,7 @@
 - **refab 1.21.11**：实拉 HEAD `6db3af93aebf183385cce520272a5e1dd4f6cada`，同样共用 pass；
   虽也有 per-draw MV push/pop，仍受上述守卫影响。**本会话未修改、未编译此线**。
 - **refab 26.2**：对比 HEAD `457285c25b508d865189a7cb166d03f31c65a903` 的
-  `PolyMeshGpuRenderer.drawViaRenderTypes`，光影路径每根骨骼分别调用
+  `PolyMeshGpuRenderer.drawViaRenderTypeCore`，光影路径每根骨骼分别调用
   `RenderType.prepare()` / `PreparedRenderType.drawFromBuffer()`，不是本线那种
   把所有骨骼放进一个自建 pass 的结构；维护者反馈该线无此症状。
 
