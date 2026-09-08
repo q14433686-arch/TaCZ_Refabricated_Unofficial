@@ -76,8 +76,14 @@
 - [x] `python3 docs/check_mixin_registration.py`
 - [x] `python3 docs/check_lang_keys.py`
 - [x] `python3 scripts/check_visible_bug_resources.py`（前一修复的资源回归）
-- [ ] CI `compile-check`（本机无 Java，待推送后补结果）
-- [ ] CI 全量 `build`（待推送后补结果）
+- [x] 代码提交 `9412e08ec139191c91f1345679f3ad86feaad112` 的 CI
+  [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/34187214365)
+  通过；编译日志已回推并同步 `build-reports/compile-java.log`。
+- [x] 同一代码提交的 CI [全量 build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/34187214382)
+  通过（`check` 强制依赖新增的 `meshRenderPassTest`），JAR artifact 上传成功。
+  该提交的 PR compile-check / build 也均成功（runs `34187216605` / `34187216634`）。
+  本机无 Java，测试经 CI 执行；Actions 全量日志下载仍被沙箱网络 EOF 阻断，
+  以上依据为 Actions 作业成功状态、`build` 任务依赖及回推的编译日志，而非实机验证。
 
 新增无第三方测试依赖的 `./gradlew meshRenderPassTest`，挂入 `check` / `build`：
 实际调用生产用的分批策略，并用小型状态机模拟上述已审计的 Iris 一次 setup / pass-close
