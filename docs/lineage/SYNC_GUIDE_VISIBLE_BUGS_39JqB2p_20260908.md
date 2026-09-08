@@ -106,3 +106,61 @@ renov 三线的 `glock_17.animation.json` 在源码树里（同 blob），补丁
 - 版本号不动（不是发布）；若随下次发布合入，各线自行同步 README / 一致性脚本。
 - **不要**顺手把 refab 26.2 的 IrisShaderCreatorMixin 开关/`void main` 收紧带进去 —— 那两项尚未定案，
   且与本件无关。
+
+---
+
+## 6. 续（2026-09-09）：§5 纪律项已定案 —— IrisShaderCreatorMixin 三件套在本线落地
+
+§5 曾要求「不要顺手把 refab 26.2 的 IrisShaderCreatorMixin 开关 / `void main` 收紧带进去 ——
+那两项尚未定案」。现已定案，并在 refab 26.2（本分支）落码。其它五线**继续沿用 §5 纪律**
+（它们不携带 scope-mask 注入体系，是否移植由各线自行裁决，本件不代判）。
+
+### 6.1 起因
+
+玩家（Apple M4 + Sodium + Iris 1.11.2 + 任意 shaderpack）：「只留 TACZ 和 Iris，
+开光影地形/世界即透明；移除 TACZ 即恢复」。两份日志（`2mmxQlg` 最小复现、
+`39JqB2p` 全量包）共同特征：被注入的程序**全部编译通过**、无报错，
+且世界程序的 `tacz_ScopeMaskMode` 运行期永远只会被写 0（分支永不执行）——
+即注入体对世界程序零语义贡献，却改变了它们的源码文本。结合 20 处
+`isUsingRenderPack()` / 12 处 `isHandRendererActive()` 调用点的穷举审计
+（均为 RecoilDebug 日志、枪身光照/提交、瞄准门控 PiP/掩码、mesh-GPU 枪械路由，
+无一改动世界绘制），注入作用域被收紧为 HAND-only。
+
+### 6.2 改了什么（2 文件）
+
+- `mixin/client/iris/IrisShaderCreatorMixin.java`（重写注入判定，注入体 GLSL 文本逐字节不变）：
+  1. **HAND-only 作用域**：对 Iris 26.2 源码实读确认全部四条 `create*`
+     （`create / createShadow / createFallback / createFallbackShadow`）都同步
+     （同线程、无延迟）调用 `link`，且入口带 `(name, shaderKey)` —— 用两个 HEAD
+     注入（`@Coerce Object` 接收 Iris 内部类，与 `IrisGlCommandEncoderMixin`
+     同一手法）把上下文记进 ThreadLocal 单槽，`link` 的 ModifyVariable 消费后按
+     `ShaderKey` 枚举名 `HAND` 前缀判定（program 名含 hand 为第二道保险，只多注不少注）。
+     世界程序（地形/实体/天空/阴影/DH）保持与原生 Iris **逐字节一致**，
+     连 dormant 的 uniform 写入都不再有（`IrisScopeMaskState` 查不到 location 即跳过）。
+  2. **注释感知的 `void main() {` 定位**：替代 `indexOf("void main")` 首击命中。
+     单遍剔除 `//`、块注释、双引号字面量，再验证 `( [void] ) {` 完整定义形状；
+     找不到 fail-closed（原样返回 + 按 program 名一次性告警）。
+     修掉两类静默事故：声明落进注释（无声失效）、声明与分支分家
+     （未声明标识符 → 整个程序编译失败 → Iris 静默回退无光影 fallback）。
+  3. **诊断**：每 link 一条 DEBUG（`name / key / 决策`），INFO 汇总行
+     （10 秒节流：HAND 已注数 / 世界原样数 / 配置跳过 / 无 main 跳过 / fail-open 数）。
+     无上下文（未来 Iris 改签名）时 fail-open 全量注入 + 一次性告警，不静默断瞄具裁剪。
+- `config/client/RenderConfig.java`：新增 `ScopeMaskIrisInjection`（默认开）。
+  关 = 注入全停（光影下瞄具裁剪同时失效），仅用于对照实验。
+
+瞄具裁剪不受影响的依据：全部 `tacz:pipeline/scope_*_clipped` 管线都经
+`IrisCompat.assignScopePipelineToHand` 显式钉在 `IrisProgram.HAND` 上
+（Iris 侧按 ENTITY/GLYPH 格式落到 `HAND_CUTOUT* / HAND_TRANSLUCENT / HAND_TEXT*`，
+均为 `HAND_` 前缀 key）；枪身/手/世界绘制本来就只需要 mode=0（= 默认值）。
+
+### 6.3 验证状态（AGENTS.md 口径：未验证的不声称）
+
+- **静态修复、待实测**：本沙箱无 JDK，**连编译都没跑过**（只做过词法级括号配平 +
+  全 diff 人工复核；另：落码途中曾抓到编辑工具链向文件尾追加杂散 `} )/`
+  与行内 splice 缺字，均已通过 bash 原子重写消除并复验干净）。
+- 第一关：push 后看本分支 CI compile-check。
+- 实机矩阵（开光影 + TACZ，默认配置）：① 世界不再透明；② 瞄具裁剪照常
+  （镜身孔径内 discard、准星/镜内文字约束）；③ 日志出现汇总行且
+  `HAND patched > 0、world left byte-identical ≫ 0`，无 `without a TACZ create-context`
+  告警；④ 对照：`ScopeMaskIrisInjection=false` 后瞄具裁剪停止（预期内），
+  若此时透明同步消失则把 DEBUG 行连同症状上报。

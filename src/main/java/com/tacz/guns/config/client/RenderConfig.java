@@ -14,6 +14,16 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue HEAD_SHOT_DEBUG_HITBOX;
     /** 瞄准镜镜内裁剪（目镜掩码）总开关。默认<b>开启</b>。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_ENABLE;
+    /**
+     * 是否向 Iris 的 HAND 着色器程序注入默认关闭的目镜掩码裁剪分支。默认<b>开启</b>。
+     *
+     * <p>只影响 HAND 系程序（第一人称手部/枪械/瞄具）；世界程序（地形/实体/天空/阴影）
+     * 永远保持与原生 Iris 逐字节一致。关掉它 = 光影下的瞄具裁剪完全失效
+     * （镜身/准星不再 discard），仅用于「世界透明」类症状的对照实验 ——
+     * 若关闭后透明消失，请把日志里 {@code [TACZ Scope] Iris program link} 一组
+     * DEBUG 行连同该症状一起上报。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_MASK_IRIS_INJECTION;
     /** 【调试】把瞄具目镜掩码贴图画到屏幕左上角，用于排查离屏渲染链路。默认关闭。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_DEBUG;
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_HULL_FILL;
@@ -294,6 +304,11 @@ public class RenderConfig {
         SCOPE_MASK_ENABLE = builder
                 .comment("Whether to clip the scope body/reticle inside the ocular (see-through scope).")
                 .define("ScopeMaskEnable", true);
+        SCOPE_MASK_IRIS_INJECTION = builder
+                .comment("Inject the (dormant-by-default) ocular-mask clip branch into Iris HAND shader programs.",
+                        "HAND-only: world programs (terrain/entities/sky/shadow) are always left byte-identical to stock Iris.",
+                        "Turn off ONLY to bisect 'transparent world under shaders' symptoms; scope clipping under shaders stops working while off.")
+                .define("ScopeMaskIrisInjection", true);
         SCOPE_MASK_DEBUG = builder
                 .comment("Debug: draw the scope ocular mask texture at the top-left corner.")
                 .define("ScopeMaskDebug", false);
