@@ -8,7 +8,6 @@ import com.tacz.guns.init.CompatRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.world.item.ItemStack;
 
@@ -31,8 +30,6 @@ public final class IrisCompat {
     private static Supplier<Boolean> isRenderingShadow = () -> false;
     private static final Set<RenderPipeline> ASSIGNED_SCOPE_PIPELINES = new HashSet<>();
     private static boolean loggedScopePipelineFailure;
-    private static boolean commonEntityPipelinesAssigned = false;
-    private static boolean commonEntityPipelinesAssignAttempted = false;
 
     private IrisCompat() {
     }
@@ -71,7 +68,11 @@ public final class IrisCompat {
         }
     }
 
-    /** Classifies a TACZ custom pipeline through Iris' public API while keeping Iris optional. */
+    /**
+     * Classifies a TACZ custom pipeline through Iris' public API while keeping Iris optional.
+     * Vanilla entity/item pipelines are already registered by Iris and select hand programs per
+     * draw via HandRenderer.isActive(); assigning them here is redundant and risks global routing.
+     */
     public static synchronized boolean assignPipelineToIris(RenderPipeline pipeline,
                                                             String irisProgramName,
                                                             String debugName) {
@@ -129,39 +130,6 @@ public final class IrisCompat {
             }
         }
         return false;
-    }
-
-    /**
-     * Assign vanilla entity/item pipelines used inside the first-person hand pass to Iris' hand
-     * programs. Some Iris versions otherwise rediscover the same "perfect program match" every
-     * frame. Try this once per client session only, even if a subset fails.
-     */
-    public static synchronized void assignCommonEntityPipelinesToHandIfNeeded() {
-        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
-            return;
-        }
-        if (commonEntityPipelinesAssigned || commonEntityPipelinesAssignAttempted) {
-            return;
-        }
-        commonEntityPipelinesAssignAttempted = true;
-
-        boolean ok = true;
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT,
-                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_CUTOUT_CULL,
-                new String[]{"HAND_CUTOUT", "HAND"}, "entity_cutout_cull");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT,
-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_CULL,
-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_cull");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE,
-                new String[]{"HAND_TRANSLUCENT"}, "entity_translucent_emissive");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_CUTOUT,
-                new String[]{"HAND_CUTOUT", "HAND"}, "item_cutout");
-        ok &= assignPipelineToIrisAny(RenderPipelines.ITEM_TRANSLUCENT,
-                new String[]{"HAND_TRANSLUCENT"}, "item_translucent");
-
-        commonEntityPipelinesAssigned = ok;
     }
 
     /**

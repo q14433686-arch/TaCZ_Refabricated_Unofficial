@@ -60,6 +60,12 @@ public class GunSmithTableRecipe implements Recipe<SingleRecipeInput> {
         return (RecipeType) ModRecipe.GUN_SMITH_TABLE_CRAFTING;
     }
 
+    // Materials are checked by the gunsmith table, not vanilla recipe-book placement.
+    @Override
+    public boolean isSpecial() {
+        return true;
+    }
+
     @Override
     public PlacementInfo placementInfo() {
         return PlacementInfo.NOT_PLACEABLE;
