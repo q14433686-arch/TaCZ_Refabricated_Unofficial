@@ -1,5 +1,15 @@
 # Mesh GPU 法线修复（26.2 `83daf16` 同理移植）— 2026-09-01
 
+> **2026-09-08 更正：下面是历史分析，不能再作为「与 26.2 等价、修复充分」的结论。**
+> 本线以及 1.21.11 虽然每根骨骼压/弹 MV，但多个骨骼共用 RenderPass；Iris 的
+> `!iris$isSetUp()` 守卫令法线/逆 MV 和 albedo/PBR setup 在该 pass 内只执行一次，
+> `finishRenderPass` 才清除。此前漏查了这一条件，误把「每次 draw 调 trySetup」当成
+> 「每次 draw 上传法线矩阵」。压栈必要但不充分，26.1 实际 getter 也应为
+> `getModelViewMatrix()`，不是本文照搬的 26.2 方法名。
+> 现补上光影 GPU **每骨骼独立 pass**，无光影仍批处理。证据、测试及 1.21.11 待移植说明见
+> [`MESH_GPU_IRIS_PASS_LIFETIME_2612_20260908.md`](MESH_GPU_IRIS_PASS_LIFETIME_2612_20260908.md)。
+> **静态修复、待实测**；本文 §4 的旧转发文不能再宣称仅压栈即可完整解决。
+
 触发：维护者实机反馈——「1.21.11 总没解决的法线问题，26.2 也有，但早解决了」。
 自行定位到 26.2 修复：`83daf16`（meshloader: fix shader-pack normals - MV stack popped
 before Iris reads it (wrong reflections)）+ 验证矩阵记录 `9dc5cc5`。
