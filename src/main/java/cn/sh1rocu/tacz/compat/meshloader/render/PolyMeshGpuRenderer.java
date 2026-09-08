@@ -387,10 +387,10 @@ public final class PolyMeshGpuRenderer {
         }
         // 光影下 GPU 路径默认【走 vanilla RenderType 管道】而非自定义 pass：
         // RenderType.prepare() + PreparedRenderType.drawFromBuffer() 用的是
-        // entityCutout 的 RenderPipeline —— 该管线已由
-        // IrisCompat.assignCommonEntityPipelinesToHandIfNeeded() 归入 Iris HAND
-        // program（抛壳/火光同一条兼容链路），Iris 按管线拦截，枪体因此拿到
-        // 光影光照。顶点常驻 VBO 不变，每帧仍只写 O(骨骼) 个 DynamicTransforms。
+        // entityCutout 的 RenderPipeline —— Iris 26.2 的 IrisPipelines 静态表
+        // 已内置该管线的映射，且按「绘制时刻 HandRenderer 是否活跃」逐 draw 分派
+        // （手部 pass → gbuffers_hand，否则 → gbuffers_entities），Iris 按管线拦截，
+        // 枪体因此拿到光影光照。顶点常驻 VBO 不变，每帧仍只写 O(骨骼) 个 DynamicTransforms。
         // MeshGpuUnderShaders=true 时改走自定义 pass（绕开光影管线，无光影光照，
         // 但绘制语义与无光影路径逐位一致 —— 留作排查光影兼容问题的对照组）。
         return true;
@@ -739,11 +739,13 @@ public final class PolyMeshGpuRenderer {
      * 【光影路径】vanilla RenderType 管道变体：常驻 VBO + 官方 prepare()/drawFromBuffer。
      *
      * <h2>为什么这条路在 Iris 下能拿到光影光照</h2>
-     * Iris 按 {@code RenderPipeline} 对象拦截绘制（本仓证据链：抛壳/火光用 vanilla
-     * ENTITY_CUTOUT 提交，经 {@code assignCommonEntityPipelinesToHandIfNeeded()}
-     * 归入 HAND program 后光影下渲染正确）。这里用 {@code RenderTypes.entityCutout}
-     * —— 管线正是那条链路已注册的 ENTITY_CUTOUT，Iris 对它的接管方式与 vanilla
-     * 立方体/collector poly 完全一致。
+     * Iris 按 {@code RenderPipeline} 对象拦截绘制：vanilla ENTITY_CUTOUT 在 Iris 26.2
+     * 的 {@code IrisPipelines} 静态表里预注册为 {@code getCutout(p)}，手部 pass 内
+     * 逐 draw 分派到 gbuffers_hand（抛壳/火光用同一条管线提交，光影下渲染正确）。
+     * 这里用 {@code RenderTypes.entityCutout} —— 管线正是那条 ENTITY_CUTOUT，
+     * Iris 对它的接管方式与 vanilla 立方体/collector poly 完全一致。
+     * （早前这里还会先调 {@code IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()}，
+     * 对已预注册的管线那是 no-op，已移除。）
      *
      * <h2>每骨骼矩阵怎么进去（字节码依据：RenderType.prepare() 偏移 55-58）</h2>
      * prepare() 内部 {@code getModelViewMatrixCopy() -> writeDynamicTransforms(mv)}
@@ -761,7 +763,10 @@ public final class PolyMeshGpuRenderer {
      * UV2=量化光照，语义同 collector 写入。
      */
     private static void drawListViaRenderType(List<DrawEntry> draws) {
-        IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
+        // 不再调 IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()：ENTITY_CUTOUT 在
+        // Iris 26.2 静态表里本就按「绘制时刻是否在手部 pass」分派到 gbuffers_hand，
+        // 那次 assign 对已注册管线是 no-op（抛 already assigned 被吞），见下方
+        // drawWorldListViaRenderType 的 javadoc 与 IrisCompat 的说明。
         long totalIndices = drawViaRenderTypeCore(draws, true);
         if (!loggedFirstIrisDraw) {
             loggedFirstIrisDraw = true;
@@ -785,13 +790,9 @@ public final class PolyMeshGpuRenderer {
      * 消费（HandRenderer 非活跃）⇒ 必然落 entities 程序。（源码依据：
      * IrisPipelines.java 26.2 分支 assignToMain/getCutout/assignPipeline 三段。）
      *
-     * <p>与手部变体唯一的语义差异：<b>不调</b>
-     * {@code assignCommonEntityPipelinesToHandIfNeeded()} —— 那是手部 pass 的
-     * 专项修复（把抛壳用的 vanilla 管线归入 Iris HAND program）。世界 pass 里
-     * ENTITY_CUTOUT 就是 vanilla 世界实体在用的管线，Iris 对它的默认接管
-     * （gbuffers_entities 链路）正是我们想要的；这里主动去动管线归属反而可能
-     * 干扰别的实体。绘制机制（prepare() 压栈取 MV × drawFromBuffer）与手部
-     * 完全同构，两层变换定理不区分 pass。</p>
+     * <p>世界 pass 里 ENTITY_CUTOUT 就是 vanilla 世界实体在用的管线，Iris 对它的
+     * 默认接管（gbuffers_entities 链路）正是我们想要的。绘制机制（prepare() 压栈取
+     * MV × drawFromBuffer）与手部变体完全同构，两层变换定理不区分 pass。</p>
      */
     private static void drawWorldListViaRenderType(List<DrawEntry> draws) {
         long totalIndices = drawViaRenderTypeCore(draws, false);

@@ -89,9 +89,9 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         if (IrisCompat.isRenderShadow() || !isSelf) {
             return;
         }
-        if (IrisCompat.isHandRendererActive()) {
-            IrisCompat.assignCommonEntityPipelinesToHandIfNeeded();
-        }
+        // 曾在此调 IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()（vanilla 管线归 HAND）。
+        // 在 Iris 26.2 上那是 no-op（管线已预注册、assignPipeline 抛 already assigned），
+        // 只留下日志噪音；已移除，见 IrisCompat#assignCommonEntityPipelinesToHandIfNeeded。
         long time = System.currentTimeMillis() - shootTimeStamp;
         if (time < 0 || time > TIME_RANGE) {
             return;

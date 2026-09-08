@@ -48,8 +48,6 @@ public final class IrisCompat {
     private static boolean scopePipelinesAssigned = false;
     private static int scopePipelineAssignSuccesses = 0;
     private static boolean loggedScopePipelineAssign = false;
-    private static boolean commonEntityPipelinesAssigned = false;
-    private static boolean commonEntityPipelinesAssignAttempted = false;
 
     public static void initCompat() {
         // Iris 检测：在役主路径（用户实测环境 iris 1.11.2+mc26.2）。
@@ -222,53 +220,26 @@ public final class IrisCompat {
         }
     }
 
-    /**
-     * 抛壳/枪口火光在光影开启的第一人称手部 pass 中不渲染或位置错乱的兼容修复。
-     * <p>根因：TACZ 的抛壳/火光使用 vanilla {@code ENTITY_CUTOUT}/{@code ENTITY_TRANSLUCENT}/{@code ENERGY_SWIRL}
-     * 等管线，通过 {@code SubmitNodeCollector} 在 hand pass 中提交。Iris 26.x 的
-     * {@code IrisPipelines} 虽然内置了这些 vanilla 管线的映射，但 hand solid/translucent
-     * 两个 program 默认只包含部分管线，自定义提交的实体管线可能被分到 entity program 而非 hand，
-     * 导致在 hand pass 中不渲染或坐标系错乱（第三人称走 entity program 正常，复现为“光影+第一人称有问题，第三人称正常”）。
-     * <p>做法：当检测到正在 Iris hand pass 中时，显式把常用实体管线也归到 HAND，类似 scope 的处理。
-     */
-    public static void assignCommonEntityPipelinesToHandIfNeeded() {
-        if (commonEntityPipelinesAssigned || commonEntityPipelinesAssignAttempted) {
-            return;
-        }
-        if (!isHandRendererActive()) {
-            return;
-        }
-        // assignPipeline may itself emit diagnostics from Iris.  Do not retry every rendered shell:
-        // one failed/partial attempt is enough, otherwise logs can grow by megabytes per minute.
-        commonEntityPipelinesAssignAttempted = true;
-        try {
-            // 反射获取 RenderPipelines 的常用管线，避免硬依赖
-            Class<?> pipelinesClass = Class.forName("net.minecraft.client.renderer.RenderPipelines");
-            boolean ok = true;
-            ok &= assignPipelineByName(pipelinesClass, "ENTITY_CUTOUT", "shell_entity_cutout_hand");
-            ok &= assignPipelineByName(pipelinesClass, "ENTITY_TRANSLUCENT", "shell_entity_translucent_hand");
-            ok &= assignPipelineByName(pipelinesClass, "ENTITY_TRANSLUCENT_CULL", "shell_entity_translucent_cull_hand");
-            // ShellRender now uses ITEM_CUTOUT in first person to stay in the held-item pipeline,
-            // but explicitly assigning item pipelines as HAND keeps older/cached render paths safe.
-            ok &= assignPipelineByName(pipelinesClass, "ITEM_CUTOUT", "shell_item_cutout_hand");
-            ok &= assignPipelineByName(pipelinesClass, "ITEM_TRANSLUCENT", "shell_item_translucent_hand");
-            // 能量漩涡（曳光、枪口发光）也常在手部使用
-            ok &= assignPipelineByName(pipelinesClass, "ENERGY_SWIRL", "shell_energy_swirl_hand");
-            commonEntityPipelinesAssigned = ok;
-        } catch (Throwable ignored) {}
-    }
-
-    private static boolean assignPipelineByName(Class<?> pipelinesClass, String fieldName, String debugName) {
-        try {
-            var field = pipelinesClass.getField(fieldName);
-            Object pipelineObj = field.get(null);
-            if (pipelineObj instanceof com.mojang.blaze3d.pipeline.RenderPipeline rp) {
-                return assignScopePipelineToHand(rp, debugName);
-            }
-        } catch (Throwable ignored) {}
-        return false;
-    }
-
+    // 【已移除 · 2026-09-08】assignCommonEntityPipelinesToHandIfNeeded()：
+    // 曾在 Iris 手部 pass 第一次画抛壳/火光/GPU 高模时，把 vanilla ENTITY_CUTOUT /
+    // ENTITY_TRANSLUCENT / ENTITY_TRANSLUCENT_CULL / ITEM_CUTOUT / ITEM_TRANSLUCENT /
+    // ENERGY_SWIRL 六条管线经 IrisApi.assignPipeline(…, HAND) 归到 HAND program。
+    // 对照 Iris 26.2 分支源码（IrisPipelines.java，1.11.2 对应提交 20e226b14f）：
+    //   1. 这六条管线都已在 IrisPipelines 的静态表里预注册为 getCutout(p)/getTranslucent(p)，
+    //      而这两个函数是【逐 draw 求值】的 —— HandRenderer.INSTANCE.isActive() 时返回
+    //      HAND_CUTOUT_DIFFUSE / HAND_WATER_DIFFUSE，否则返回 ENTITIES_*；也就是说
+    //      手部 pass 里的抛壳/火光本来就走 gbuffers_hand，不需要我们再 assign；
+    //   2. IrisPipelines.assignPipeline 对已注册的管线直接抛
+    //      IllegalStateException("Shader already assigned")，assignScopePipelineToHand
+    //      捕到后按成功处理 —— 所以这六次调用在 1.11.2 上从未生效过，唯一的可见效果是
+    //      ShaderKey.findBestMatch 在抛异常之前打的六行
+    //      "Found perfect program match for minecraft:pipeline/entity_cutout: HAND_CUTOUT"
+    //      WARN，经常被玩家误当成光影异常的元凶；
+    //   3. 若某个 Iris 版本的静态表没有预注册（put 成功），后果是这些 vanilla 管线被钉死成
+    //      常量 HAND_CUTOUT（无 diffuse 变体、手部 uniform 约定），世界里所有实体/物品
+    //      都会用错程序 —— 收益为零、风险为全局。
+    // assignPipeline 只保留给 tacz:pipeline/scope_* 这些我们自己的管线
+    //（见 assignScopePipelineToHand 与 ScopeBodyRenderTypes）。
 
     public static boolean shouldDisableScopeMaskUnderShaderPack() {
         // Sulkan 暂无公开等价 API；同样保守回退。
