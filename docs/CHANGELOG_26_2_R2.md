@@ -57,6 +57,12 @@ metadata，不能写成 `1.1.8-R2`。
 > 本节中的 Mac 结果是用户回传的实机 PASS；Windows 结果与源码/日志证据记录在
 > `docs/lineage/SYNC_GUIDE_VISIBLE_BUGS_39JqB2p_20260908.md`。姊妹仓 NeoForge 26.2
 > 仍需独立移植和验证，不能直接继承本 hotfix 的结论。
+>
+> **适用范围说明**：本次 Mac 透明修复针对的是 26.2 的全 fragment scope-mask 注入与
+> sampler unit 0 冲突。26.1.2 和 1.21.11 使用不同的 depth-aperture 裁剪链路；两条线
+> 现有 Iris 注入也已限制在 HAND 程序，世界/地形程序不注入，且 1.21.11 使用的旧 Iris
+> 没有 26.2 的 bind-group 机制。因此目前没有证据表明这两条线存在本次同源问题，
+> 不需要为了该 Mac bug 盲目同步；这不等于宣称它们不存在其它独立的光影兼容问题。
 
 ## R3（源码状态，2026-08-31 起）
 
