@@ -1,12 +1,13 @@
 # 玩家日志 `mclo.gs/39JqB2p` 可见 bug 五件套 · 六线移植指导（2026-09-08）
 
 > **状态**：refab 26.2(main) 侧已落码（commit `1aca7c7`，CI compile-check + 全量 build 均通过，
-> 编译日志已回推 `build-reports/compile-java.log`），**实机未验证**。
+> 编译日志已回推 `build-reports/compile-java.log`），并已由 **Mac 实机换装新构建后确认世界不再透明**。
+> 这只关闭了 refab 26.2 / 当前 Fix A 的 Mac 验证，不等于所有光影/硬件矩阵都已覆盖。
 > 其余五线（refab 26.1.2 / 1.21.11，renov 26.2 / 26.1.2 / 1.21.11）为 **OPEN**：
 > 五份补丁在**各目标分支的真实 sparse worktree** 上 `git apply --check` + 实落通过（§4），
 > 但那五条线**均未经 CI 编译**，落码后必须各自跑一遍 compile-check 才算过第一关。
-> **性质**：全部是「同代码、同机制」的移植件，不涉 GPU/纪元差异；每一项都能被源码坐实，
-> 与「开光影世界全透明」的归因**无关**（那个问题另行跟进，玩家侧排查文案已给出）。
+> **性质**：A–E 五项仍是「同代码、同机制」的移植件；其中另一个「开光影世界全透明」修复
+> 已在 §6 单独闭环，renov 26.2 不能仅凭本仓 Fabric 的结果标绿，必须做 NeoForge 语义移植并单独发包实测。
 > 账本行：`HANDOFF_LEDGER.md` #17。
 
 ---
@@ -333,3 +334,44 @@ Fix A 构建，一局内两档、中间重载。
 **Mac 送测 RELEASE**：测试包必须用 Fix A（含 `b7fce25`）且 CI 为绿的提交构建；
 `11b0032`（桥版 HAND 过滤实机未生效）作废。测试文档见
 `docs/mac-shader-transparency-test.md`（第二节 2 分钟版先行）。
+
+---
+
+## 6.9 续（2026-09-09）：Mac 新构建实机 PASS；renov 26.2 单独处理
+
+用户回报：Mac 端安装最新 Fix A 构建后，原先「TACZ + Iris 开光影导致世界透明」的
+现象**直接消失**。因此本仓 Fabric 26.2 的最小验收已通过，前面 Windows 实测确认的
+机制链也有了 Mac 端结果闭环：不是继续在 Fabric 26.2 上盲改，而是进入跨加载器移植。
+
+### 对姊妹仓 `TaCZ_Renovated` 26.2 的结论
+
+不能把本仓 jar 直接给 NeoForge，也不能 cherry-pick 本仓提交（两仓无共同 git 祖先）。
+需要做**同机制、NeoForge 表皮的独立补丁**。截至 2026-09-09 远端 `26.2` HEAD
+`de0928f0`（已含 09-08 的 A/C/D/E 可见日志修复）仍保留两处透明问题的旧形态：
+
+1. `src/main/java/com/tacz/guns/mixin/client/iris/IrisShaderCreatorMixin.java`
+   仍用 `@ModifyVariable(method = "link", at = HEAD, index = 5)`，对 Iris 链接的
+   **所有 fragment** 注入；它还没有本仓 Fix A 的「在 `link` 内钩
+   `createShader`、只对 FRAGMENT 按 program name 过滤 HAND」实现。
+2. `IrisScopeMaskState.writeScopeMaskState` 仍按 `GL_MAX_TEXTURE_IMAGE_UNITS - 1`
+   选 unit，没有枚举程序已有 sampler，也没有在 `mode = 0` 时保证
+   `tacz_ScopeMaskSampler` 离开默认 unit 0；26.2 Sodium 地形的
+   `isamplerBuffer u_SectionTimeInfo` 占用 unit 0 时，仍会重现 Apple 驱动的
+   「不同类型 sampler 共用 unit 0，draw 被丢弃」风险。
+
+### 建议给 renov 26.2 的落码顺序
+
+- 将 `IrisShaderCreatorMixin` 按 NeoForge 26.2 当前 Iris 签名独立改为
+  `@ModifyArgs`（`link` 内 `createShader(String, ShaderType, String)`），按
+  `ShaderType.FRAGMENT` 守卫、按名称 `contains("hand")` 过滤，并保留 fail-closed 的
+  `void main() {` 解析与 hook 存活计数；不要回搬失效的 ThreadLocal 桥。
+- 将 `IrisScopeMaskState` 的 sampler 分配改为「枚举 active sampler → 选未占用 unit
+  → 每个 program 缓存 → 管线重建清缓存」，且**即使 mode=0 也写入非 0 unit**；没有
+  空闲 unit 时关闭该 program 的裁剪，不能硬撞别人的 sampler。
+- 保留 NeoForge 自己的事件/反射接线；只移植上述语义，不要整文件覆盖 Fabric 版本。
+- 新补丁先跑 NeoForge 26.2 的 compile-check/build，再用 NeoForge jar 在原 Mac
+  环境复测。通过前不要把 `R3` 宣称已修；版本可作为独立 `R3-hotfix`（按 renov
+  自己的版本/README/CHANGELOG 一致性流程落档）。
+
+所以当前决策是：**Fabric 26.2 结案（本环境范围内），renov 26.2 开一个独立
+Mac 透明 hotfix；其它 26.1.2 / 1.21.11 不跟着这个 26.2 bind-group 问题盲同步。**
