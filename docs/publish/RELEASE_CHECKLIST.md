@@ -7,7 +7,7 @@
 ## 0. 版本号（最容易错，先做）
 
 - [ ] `gradle.properties` 的 `mod_version` 已是目标版本
-      （形如 `1.1.8+fabric.26.2.R3`；规矩见该文件注释块——SemVer 核心
+      （形如 `1.1.8+fabric.26.2.R3-hotfix`；规矩见该文件注释块——SemVer 核心
       `1.1.8` 不能动，发布身份只放 build metadata，hotfix 序号不加分隔符）。
 - [ ] `fabric.mod.json` 的 `name` 括号里与 `description` 末尾的版本表述一致。
 - [ ] README 五处一致：顶部版本句 /「已使用 R? 版本号」提示行 / 支持环境表两行 /

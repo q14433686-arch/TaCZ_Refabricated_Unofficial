@@ -249,8 +249,8 @@ world corruption, crashes, data loss and mod conflicts. Non-commercial project.
 
 | 字段 | 填什么 |
 |---|---|
-| **Version name** | `1.1.8+fabric.26.2.R3` |
-| **Version number** | `1.1.8+fabric.26.2.R3` |
+| **Version name** | `1.1.8+fabric.26.2.R3-hotfix` |
+| **Version number** | `1.1.8+fabric.26.2.R3-hotfix` |
 | **Release channel** | **Release** |
 | **Loaders** | `Fabric` |
 | **Game versions** | `26.2` |
