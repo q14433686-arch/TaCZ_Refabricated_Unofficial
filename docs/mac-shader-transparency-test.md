@@ -2,7 +2,7 @@
 
 > 给 Mac 测试者：照着做就行，不需要懂原理。
 > 时间紧？只看第一节准备 + 第二节（2 分钟版）就够。
-> 测试版 TACZ：分支 `arena/01a08307-tacz-refabricated-unofficial`，commit `11b0032`（CI 编译通过）。
+> 测试版 TACZ：分支 `arena/01a08307-tacz-refabricated-unofficial`，commit `b7fce25`（Fix A）或更新且 CI 为绿的提交。注意：`11b0032` 的 HAND 过滤实机未生效，作废，不要用它构建测试包。
 > 维护者请把 jar 下载链接贴给测试者。
 
 ## 背景（一句话）

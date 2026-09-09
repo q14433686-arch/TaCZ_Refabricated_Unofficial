@@ -302,3 +302,34 @@ SAW_FRAGMENT 存活计数 + 完整管线 0-hand 一次性 WARN。失败只许大
 **Mac 送测 HOLD**：当前构建 fail-open = 老行为，在 Mac 上必然还透明，
 送了白送。等 Windows 重跑出现 HAND/ALL 分化（HAND 档地形程序无 tacz 项
 且 validate=OK、汇总行 HAND>0 且 world>0）后再送。
+
+---
+
+## 6.8 续（2026-09-09）：Fix A 实机验证通过 —— Mac 送测 RELEASE（HOLD 解除）
+
+重跑环境（用户回传 `latest.log`，后从分支删除，blob 见 `945090b`）：
+同上一轮（Iris 1.11.2 / Sodium 0.9.1 / ComplementaryUnbound r5.8.1），
+Fix A 构建，一局内两档、中间重载。
+
+**分化出现，§6.7 的放行标准全过：**
+
+```text
+汇总行: 9 HAND program(s) patched, 68 world program(s) left byte-identical
+        (0 config-skipped, 0 no-verifiable-main skipped, 0 legacy-ALL injected;
+        saw 77 fragment shader(s))
+地形程序 ×6（两档各 3）: 无 tacz_ScopeMaskSampler 项，validate=OK ×6
+开镜: Ocular mask drawn + bridge active (mode=1, textureUnit=31) —— 功能正常
+告警: 无（0-hand WARN 未触发，符合预期）
+```
+
+9 = HAND 键全数命中；68 + 9 = 77 = saw，账目闭合。
+
+**说明两点：**（1）本轮两档实际跑的都是 HAND_ONLY（legacy-ALL=0，
+两档地形都无 tacz）—— ALL 对照没录上。但对照 side 已由上一轮补齐：
+上一轮 fail-open 即全注入行为，地形 6/6 `validate=FAIL` + 驱动原话。
+两轮跨 session 对照完整：全注入→FAIL / HAND_ONLY→OK。
+（2）Windows 能证明的已全部证明；剩下只有 Mac 眼睛看到的 5%。
+
+**Mac 送测 RELEASE**：测试包必须用 Fix A（含 `b7fce25`）且 CI 为绿的提交构建；
+`11b0032`（桥版 HAND 过滤实机未生效）作废。测试文档见
+`docs/mac-shader-transparency-test.md`（第二节 2 分钟版先行）。
