@@ -9,9 +9,11 @@ import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL13C;
 import org.lwjgl.opengl.GL20C;
 import org.lwjgl.opengl.GL33C;
+import org.lwjgl.system.MemoryStack;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.IntBuffer;
 import java.util.Locale;
 import java.util.Map;
 
@@ -152,22 +154,25 @@ public final class IrisScopeMaskState {
         java.util.BitSet used = new java.util.BitSet(cachedMaxTextureUnits);
         int n = GL20C.glGetProgrami(program, GL20C.GL_ACTIVE_UNIFORMS);
         int maxLen = GL20C.glGetProgrami(program, GL20C.GL_ACTIVE_UNIFORM_MAX_LENGTH);
-        int[] size = new int[1];
-        int[] type = new int[1];
-        for (int i = 0; i < n; i++) {
-            String name = GL20C.glGetActiveUniform(program, i, maxLen, size, type);
-            if (name == null || !isSamplerType(type[0])) {
-                continue;
-            }
-            String base = name.endsWith("[0]") ? name.substring(0, name.length() - 3) : name;
-            if (UNIFORM_SAMPLER.equals(base)) {
-                continue;
-            }
-            int loc = GL20C.glGetUniformLocation(program, base);
-            for (int k = 0; loc >= 0 && k < size[0]; k++) {
-                int u = GL20C.glGetUniformi(program, loc + k);
-                if (u >= 0 && u < cachedMaxTextureUnits) {
-                    used.set(u);
+        // 本仓库 LWJGL 的 String 版 glGetActiveUniform 只接受 IntBuffer（无 int[] 重载）。
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer size = stack.mallocInt(1);
+            IntBuffer type = stack.mallocInt(1);
+            for (int i = 0; i < n; i++) {
+                String name = GL20C.glGetActiveUniform(program, i, maxLen, size, type);
+                if (name == null || !isSamplerType(type.get(0))) {
+                    continue;
+                }
+                String base = name.endsWith("[0]") ? name.substring(0, name.length() - 3) : name;
+                if (UNIFORM_SAMPLER.equals(base)) {
+                    continue;
+                }
+                int loc = GL20C.glGetUniformLocation(program, base);
+                for (int k = 0; loc >= 0 && k < size.get(0); k++) {
+                    int u = GL20C.glGetUniformi(program, loc + k);
+                    if (u >= 0 && u < cachedMaxTextureUnits) {
+                        used.set(u);
+                    }
                 }
             }
         }
@@ -223,20 +228,22 @@ public final class IrisScopeMaskState {
         int n = GL20C.glGetProgrami(program, GL20C.GL_ACTIVE_UNIFORMS);
         int maxLen = GL20C.glGetProgrami(program, GL20C.GL_ACTIVE_UNIFORM_MAX_LENGTH);
         StringBuilder sb = new StringBuilder();
-        int[] size = new int[1];
-        int[] type = new int[1];
-        for (int i = 0; i < n; i++) {
-            String name = GL20C.glGetActiveUniform(program, i, maxLen, size, type);
-            if (name == null || !isSamplerType(type[0])) {
-                continue;
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer size = stack.mallocInt(1);
+            IntBuffer type = stack.mallocInt(1);
+            for (int i = 0; i < n; i++) {
+                String name = GL20C.glGetActiveUniform(program, i, maxLen, size, type);
+                if (name == null || !isSamplerType(type.get(0))) {
+                    continue;
+                }
+                String base = name.endsWith("[0]") ? name.substring(0, name.length() - 3) : name;
+                int loc = GL20C.glGetUniformLocation(program, base);
+                if (loc < 0) {
+                    continue;
+                }
+                sb.append(base).append(":0x").append(Integer.toHexString(type.get(0)))
+                        .append("@u").append(GL20C.glGetUniformi(program, loc)).append("  ");
             }
-            String base = name.endsWith("[0]") ? name.substring(0, name.length() - 3) : name;
-            int loc = GL20C.glGetUniformLocation(program, base);
-            if (loc < 0) {
-                continue;
-            }
-            sb.append(base).append(":0x").append(Integer.toHexString(type[0]))
-                    .append("@u").append(GL20C.glGetUniformi(program, loc)).append("  ");
         }
         GL20C.glValidateProgram(program);
         boolean ok = GL20C.glGetProgrami(program, GL20C.GL_VALIDATE_STATUS) == 1;
