@@ -12,7 +12,7 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R3`**。
+`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R3-hotfix`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
@@ -31,7 +31,7 @@
 本页面对应 **26.2** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
 具体版本见下方表格与对应 Release 说明。
 
-> 仓库源码已使用 R3 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R3-hotfix 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
 
 ---
 
@@ -42,9 +42,9 @@
 | Minecraft | **26.2** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **25+** |
-| Fabric API | 需要安装；R3 构建使用 **0.155.2+26.2** |
+| Fabric API | 需要安装；R3-hotfix 构建使用 **0.155.2+26.2** |
 | Forge Config API Port | **26.2.1+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.2.R3`** |
+| 本 mod | **`1.1.8+fabric.26.2.R3-hotfix`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
@@ -73,7 +73,7 @@ R2 的可选集成（并非硬依赖）如下：
 完整发布范围、联网核验和未执行的实机矩阵见
 [26.2 R2 release notes](docs/CHANGELOG_26_2_R2.md)。R1 的移植基础和历史说明仍保留在仓库历史中。
 
-**R3**（当前源码版本）相对 R2-hotfix2 的增量（除标注「待实测」的项外均实机 PASS）：
+**R3-hotfix**（当前源码版本）包含 R3 主线增量及本次透明问题热修（除标注「待实测」的项外均实机 PASS）：
 
 - **内置 TML**（见第 3 节与 [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）：`model_type: "mesh"`
   高模枪渲染 + 第一人称 GPU 静态烘焙;
@@ -193,7 +193,7 @@ Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码�
 
 3. 界面里保存后**立即生效，不需要重启**；唯一的例外是 `ScopePipShadowScale`
    （镜内阴影贴图比例）—— 它在瞄具管线构建时读取，改完需**重启游戏或切换维度**。
-4. 界面保存会**真的写回** `.minecraft/config/tacz-client.toml`（R3 修好了 FCAP 26.x
+4. 界面保存会**真的写回** `.minecraft/config/tacz-client.toml`（R3-hotfix 修好了 FCAP 26.x
    的保存断桥），重启后配置仍在。**注意**：修复前 TOML 里已经写死旧值的字段不会
    自动更新，需要在界面里改一次并保存，才会被新值覆盖。
 

@@ -10,6 +10,54 @@
 本 release 保持 `1.1.8` 为 SemVer 核心；`+fabric.26.2.R2` 是不参与版本谓词排序的 build
 metadata，不能写成 `1.1.8-R2`。
 
+## R3-hotfix（2026-09-09）
+
+**构建元数据：`1.1.8+fabric.26.2.R3-hotfix`**
+
+本 hotfix 基于 R3，重点收录 Mac + Iris 光影下世界透明修复，以及玩家日志中确认的五项
+可见问题修复。R3 的 TML、PIP、镜内裁剪、配置持久化等主线内容见下方 R3 基线段；本节
+只列本次 hotfix 新增或最终确认的项目。
+
+### Mac + Iris 光影：世界/地形透明
+
+- **修复 Iris 着色器注入范围过宽**：`IrisShaderCreatorMixin` 不再向所有 fragment
+  shader 注入 TACZ 掩码代码，而是在 `link` 内的 `createShader` 调用中只处理
+  FRAGMENT，并按程序名筛选 HAND；Sodium 地形、天空、实体和阴影等世界程序保持与
+  原生 Iris 相同，避免因无实际用途的 TACZ sampler 改写 shader 源码。
+- **修复 sampler unit 冲突**：`IrisScopeMaskState` 现在枚举当前 program 已占用的
+  sampler unit，选择空闲 unit 绑定 `tacz_ScopeMaskSampler`；即使 `mode=0` 也会写入合法
+  unit，并在光影管线重建时清理 program/unit 缓存，避免与 Sodium 地形的
+  `isamplerBuffer` 共享默认 unit 0。
+- **增加可回退的注入策略与诊断**：`IrisScopeMaskInjection` 提供
+  `HAND_ONLY`（默认）、`ALL`（旧行为）和 `OFF` 三档；补充 fragment hook 存活计数、
+  HAND 过滤漏检告警以及 sampler/`glValidateProgram` 诊断。不会把诊断信息当成修复效果
+  的保证。
+- **实机验证**：Windows A 卡已确认 HAND_ONLY 下地形程序无
+  `tacz_ScopeMaskSampler` 且 validate=OK；Mac 新构建安装后确认原先的世界透明现象
+  消失。该结果不等于覆盖所有 GPU、光影包和后端组合。
+
+### 玩家日志中的五项可见问题
+
+- **枪械工作台配方警告**：`GunSmithTableRecipe` 标记为 special，停止原版
+  `RecipeManager` 对空 placement ingredients 的 WARN 刷屏；工作台自身材料校验和
+  JEI/REI 类别不变。
+- **交互实体白名单**：更新 26.2 船实体标签，使用 `#minecraft:boat` 加各木种
+  `*_chest_boat` / `bamboo_chest_raft`（后者为可选引用），避免旧的
+  `minecraft:boat` / `minecraft:chest_boat` 缺失引用导致整条 whitelist 丢失。
+- **Glock 17 幽灵音效**：删除 `glock_17.animation.json` 举枪动画中不存在的
+  `p24_pi_golf17_stockskel_raise` 音效引用，不再在切枪时输出
+  `Missing gun sound resource`。
+- **移除 Iris 常见管线重复分配**：删除
+  `assignCommonEntityPipelinesToHandIfNeeded` 及其调用点；Iris 已会按手部绘制时机
+  自动分类，避免 `Shader already assigned` / `Found perfect program match` 噪声和
+  潜在的全局管线误绑。
+- **收窄目镜掩码误报**：`Mask enabled but no ocular geometry was registered` 只在
+  主手确实拿着带瞄具的枪时触发，空手或裸枪不再误报。
+
+> 本节中的 Mac 结果是用户回传的实机 PASS；Windows 结果与源码/日志证据记录在
+> `docs/lineage/SYNC_GUIDE_VISIBLE_BUGS_39JqB2p_20260908.md`。姊妹仓 NeoForge 26.2
+> 仍需独立移植和验证，不能直接继承本 hotfix 的结论。
+
 ## R3（源码状态，2026-08-31 起）
 
 **构建元数据：`1.1.8+fabric.26.2.R3`**
