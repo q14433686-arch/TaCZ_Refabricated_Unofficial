@@ -215,6 +215,8 @@
   "config.tacz.client.render.head_shot_debug_hitbox.desc": "Whether or not to display the head shot's hitbox",
   "config.tacz.client.render.scope_mask_enable": "See-through Scope",
   "config.tacz.client.render.scope_mask_enable.desc": "Clip the scope body and reticle to the ocular while aiming, making the scope see-through.",
+  "config.tacz.client.render.iris_scope_mask_injection": "Iris Scope-Mask Injection",
+  "config.tacz.client.render.iris_scope_mask_injection.desc": "Which Iris shader programs receive the TACZ scope-mask clip branch. HAND_ONLY (default): hand/gun programs only, world programs stay identical to stock Iris. ALL: legacy behaviour, every program. OFF: never inject (no scope clipping under shader packs). Takes effect after reloading the shader pack.",
   "config.tacz.client.render.gun_hud_enable": "Gun HUD Enable",
   "config.tacz.client.render.gun_hud_enable.desc": "Whether or not to display the gun's HUD",
   "config.tacz.client.render.kill_amount_enable": "Kill Amount Enable",

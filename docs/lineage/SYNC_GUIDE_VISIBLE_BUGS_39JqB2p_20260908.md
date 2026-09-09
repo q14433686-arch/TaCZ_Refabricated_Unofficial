@@ -164,3 +164,44 @@ renov 三线的 `glock_17.animation.json` 在源码树里（同 blob），补丁
   `HAND patched > 0、world left byte-identical ≫ 0`，无 `without a TACZ create-context`
   告警；④ 对照：`ScopeMaskIrisInjection=false` 后瞄具裁剪停止（预期内），
   若此时透明同步消失则把 DEBUG 行连同症状上报。
+
+---
+
+## 6.4 续（2026-09-09 晚）：与兄弟分析对账 + 补丁对齐
+
+兄弟分析（`docs/investigations/MAC_IRIS_TERRAIN_TRANSPARENT_ROOT_CAUSE_2026_09_09.md`，
+交接文案 A/B/C/D）把机制推进了一层：TACZ 注入的 `sampler2D tacz_ScopeMaskSampler`
+平时恒为 GL 默认 unit 0，而 Sodium 地形程序的 unit 0 是 `isamplerBuffer
+u_SectionTimeInfo` —— 不同类型采样器同 unit 违反规范，Apple 丢 draw。
+该理论同时解释"只 Mac / 只地形 / 只 26.x / 日志干净 / 去 TACZ 即好"，
+与本线 §6.1 的穷举排除结论相互印证。本线已按其文案 C 补齐（替代 §6.2 的布尔开关）：
+
+- **C-4**：`RenderConfig.IRIS_SCOPE_MASK_INJECTION` 三态枚举
+  `HAND_ONLY（默认）/ ALL / OFF`（配置键 `IrisScopeMaskInjection`），
+  Cloth 界面 + 中英文案；mixin 按策略分流，OFF 全跳、ALL 全注（旧行为）。
+- **C-2**：`IrisScopeMaskState.ensureMaskUnit` —— 每个被注入程序首次 setup
+  枚举 active 采样器、选最高空闲 unit 写入，mode==0 也写（采样器永不留 0）；
+  无空闲时别名主贴图 unit 并禁用该程序裁剪；`onPipelineRebuild` 由 link 钩子
+  每次调用清空 id 缓存（防 id 复用错配）。实现用 `java.util` 容器
+  （不用 fastutil，零依赖风险），采样器类型区间取保守上延。
+- **C-3**：`bindMaskTexture` —— active 单元恢复进入时真实值（替代无条件回 0），
+  并 `glBindSampler(unit, 0)` 清残留 sampler object。未用新 @Accessor
+  （读 `GL_ACTIVE_TEXTURE` 真实值等价，少一个 mixin 文件）；未绑 NEAREST
+  sampler object（`ScopeMaskTextureHandle` 的 sampler 活在 vanilla 路上，
+  Iris 路拿不到其 GL id，纹理自身参数是安全退路）。
+- **C-5**：`SCOPE_MASK_DEBUG` 开启时每个程序首次 setup 打印采样器 unit 表 +
+  `glValidateProgram` 结果（位置在写入之前，抓的是 Iris/原版落定态）。
+
+**本线保留、兄弟方案没有的**：① HAND 判定用 `ShaderKey` 枚举名而非 link 的
+`name` 参数 —— `name` 到底是 `hand_cutout` 还是 `gbuffers_hand` 未及证实
+（Iris 26.2 的 `NewWorldRenderingPipeline` 已不在老路径，grep.app 只拿到
+`ShaderCreator.create(this, name, key, …)` 一行），key-based 对两种命名都对，
+name-based 若用 `startsWith("hand_")` 在 `gbuffers_hand` 命名下会静默零注入；
+若兄弟线坚持 name 方案，建议改 `contains("hand")`（审计过：无世界程序名含 hand）。
+② 注释感知 `void main() {` 定位（兄弟 C-1 沿用旧 `indexOf`）。
+③ fail-open 方向：无上下文时全注 + 告警（= 旧行为 + 可见），而非静默零注入。
+
+**仍未闭环**（与兄弟文案一致）：① 26.2 `setupBindGroupLayouts` 是否仍先分
+TEXEL_BUFFER（文案 A/B，任意 Windows 机可证；NeoForge primer 只确认了改名）。
+② Mac 实测（文案 D）。③ 本沙箱无 JDK，以上全部静态落码，CI 编译是第一关；
+`startEnumSelector` 本仓无先例（Cloth 标准 API，若 CI 报不存在再换）。

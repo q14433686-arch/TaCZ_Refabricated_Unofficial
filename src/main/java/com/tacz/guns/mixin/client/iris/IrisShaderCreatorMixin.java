@@ -1,6 +1,7 @@
 package com.tacz.guns.mixin.client.iris;
 
 import com.tacz.guns.GunMod;
+import com.tacz.guns.compat.iris.IrisScopeMaskState;
 import com.tacz.guns.config.client.RenderConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -48,7 +49,8 @@ import java.util.Set;
  * <p>【fail-open，不静默断功能】
  * 上下文缺失（未来 Iris 改了 create 签名、两个 HEAD 注入都没装上）→ 按老行为
  * 全量注入 + 一次性告警：宁可回到老路，也不在静默中断瞄具裁剪。
- * 配置 {@code ScopeMaskIrisInjection=false} 可彻底关闭注入做对照实验。
+ * 配置 {@code IrisScopeMaskInjection}（HAND_ONLY / ALL / OFF，默认 HAND_ONLY）控制注入范围：
+ * OFF = 彻底关闭做对照实验；ALL = 旧行为（全注，靠每程序选 unit 保证合法）。
  */
 @Mixin(targets = "net.irisshaders.iris.pipeline.programs.ShaderCreator", remap = false)
 public abstract class IrisShaderCreatorMixin {
@@ -98,18 +100,23 @@ public abstract class IrisShaderCreatorMixin {
         // 消费语义：每次 link 只用最新的一份；create 中途抛异常没走到 link 时，
         // 残留也会被下一次 create 入口覆盖，不会错配给别人的 link。
         TACZ_CREATE_CONTEXT.remove();
+        // 每次 link 都意味着 Iris 正在建（新）管线：program id 会复用，
+        // 先把 IrisScopeMaskState 里按 id 缓存的 unit/mode/诊断记忆整体清空。
+        IrisScopeMaskState.onPipelineRebuild();
         if (source == null) {
             return null;
         }
         String programName = ctx == null ? null : ctx.programName();
         String keyName = ctx == null ? null : ctx.shaderKeyName();
 
-        if (!tacz$injectionEnabled()) {
+        RenderConfig.IrisScopeMaskInjection policy = IrisScopeMaskState.injectionPolicy();
+        if (policy == RenderConfig.IrisScopeMaskInjection.OFF) {
             tacz$tally(SKIP_CONFIG);
-            tacz$logDecision(programName, keyName, "skipped (ScopeMaskIrisInjection=false)");
+            tacz$logDecision(programName, keyName, "skipped (IrisScopeMaskInjection=OFF)");
             tacz$maybeSummarize();
             return source;
         }
+        boolean legacyAll = policy == RenderConfig.IrisScopeMaskInjection.ALL;
         if (source.contains("tacz_ScopeMaskMode")) {
             // 幂等：同一份源码第二次过 link（正常流程不应发生，防未来 Iris 改流程）。
             tacz$logDecision(programName, keyName, "skipped (already contains the bridge)");
@@ -130,21 +137,24 @@ public abstract class IrisShaderCreatorMixin {
             tacz$maybeSummarize();
             return patched;
         }
-        if (!tacz$isHandProgram(keyName, programName)) {
+        if (!legacyAll && !tacz$isHandProgram(keyName, programName)) {
             tacz$tally(SKIP_WORLD);
             tacz$logDecision(programName, keyName, "skipped (not a HAND program; left byte-identical)");
             tacz$maybeSummarize();
             return source;
         }
         String patched = tacz$injectScopeMask(source, programName);
+        boolean hand = tacz$isHandProgram(keyName, programName);
         if (patched == source) {
             tacz$tally(SKIP_NO_MAIN);
-        } else {
+        } else if (!legacyAll || hand) {
             tacz$tally(INJECTED_HAND);
+        } else {
+            tacz$tally(INJECTED_ALL);
         }
         tacz$logDecision(programName, keyName, patched == source
                 ? "skipped (no verifiable 'void main() {' found; fail-closed)"
-                : "INJECTED (HAND program)");
+                : (legacyAll && !hand ? "INJECTED (ALL policy)" : "INJECTED (HAND program)"));
         tacz$maybeSummarize();
         return patched;
     }
@@ -162,23 +172,14 @@ public abstract class IrisShaderCreatorMixin {
         return programName != null && programName.toLowerCase(Locale.ROOT).contains("hand");
     }
 
-    /** 诊断总开关。配置类没就绪/读失败一律按开处理（= 当前行为，不静默断功能）。 */
-    private static boolean tacz$injectionEnabled() {
-        try {
-            return RenderConfig.SCOPE_MASK_IRIS_INJECTION == null
-                    || RenderConfig.SCOPE_MASK_IRIS_INJECTION.get();
-        } catch (Throwable t) {
-            return true;
-        }
-    }
-
     private static final int INJECTED_HAND = 0;
     private static final int SKIP_WORLD = 1;
     private static final int SKIP_CONFIG = 2;
     private static final int SKIP_NO_MAIN = 3;
     private static final int INJECTED_FALLBACK = 4;
+    private static final int INJECTED_ALL = 5;
     /** 管线构建只发生在渲染线程；计数纯诊断，近似即可。 */
-    private static final long[] TACZ_TALLY = new long[5];
+    private static final long[] TACZ_TALLY = new long[6];
     private static boolean tacz$warnedNoContext;
     private static long tacz$lastSummaryMs;
     /** 每个 program 名只告警一次（名是有限集，跨重建复用，不会无界增长）。 */
@@ -203,9 +204,11 @@ public abstract class IrisShaderCreatorMixin {
         tacz$lastSummaryMs = now;
         GunMod.LOGGER.info("[TACZ Scope] Iris scope-mask injection so far: {} HAND program(s) patched, "
                         + "{} world program(s) left byte-identical to stock Iris "
-                        + "({} config-skipped, {} no-verifiable-main skipped, {} fail-open injected without context).",
+                        + "({} config-skipped, {} no-verifiable-main skipped, {} fail-open injected without context, "
+                        + "{} legacy-ALL injected).",
                 TACZ_TALLY[INJECTED_HAND], TACZ_TALLY[SKIP_WORLD],
-                TACZ_TALLY[SKIP_CONFIG], TACZ_TALLY[SKIP_NO_MAIN], TACZ_TALLY[INJECTED_FALLBACK]);
+                TACZ_TALLY[SKIP_CONFIG], TACZ_TALLY[SKIP_NO_MAIN], TACZ_TALLY[INJECTED_FALLBACK],
+                TACZ_TALLY[INJECTED_ALL]);
     }
 
     /**
