@@ -263,3 +263,42 @@ Vineflower 1.12 反编译 + `javap -c` 字节码交叉核对）：
 - **姊妹仓 `TaCZ_Renovated`（NeoForge）三版本**：仓库不在本沙箱，待对方按同一
   清单审计（`tacz_ScopeMaskSampler` / `ShaderCreator` / 注入过滤范围）；
   两仓无共同祖先，只能语义同步，不能 cherry-pick。
+
+---
+
+## 6.7 续（2026-09-09）：Windows A 卡实测 —— 机制全胜，过滤全败，Fix A（本轮已修）
+
+实测环境（用户回传 `latest.log`，后从分支删除，blob 见 `204b83a`）：
+MC 26.2 / Fabric Loader 0.19.3 / Iris 1.11.2+mc26.2 / Sodium 0.9.1+mc26.2 /
+ComplementaryUnbound r5.8.1，一局内 ALL、HAND 两档各跑一次、中间重载光影包。
+
+**机制侧：全胜（文案 B 闭环，硬预测逐字命中）。** 6 个地形程序
+（两档各 3 个：377/380/383 与重载后的 437/440/443）全部：
+
+```text
+samplers=[u_SectionTimeInfo:0x8dd0@u0 ... tacz_ScopeMaskSampler:0x8b5e@u0]
+validate=FAIL log='the set of active program objects contains two active
+samplers of different types, but refer to the same texture image unit'
+```
+
+即：unit 0 身份（isamplerBuffer）运行时确认 + TACZ 采样器同程序 @u0 +
+驱动亲口报出预言的违规。附带：C-2 工作（`textureUnit=31`）、开镜 mode=1
+正常、composite 系（ProgramBuilder 路）无 tacz 项符合设计。
+
+**过滤侧：全败（我的桥，用户的操作无误）。**
+`0 HAND patched, 0 world skipped, 77 fail-open, 0 legacy-ALL` —— create*-HEAD
+ThreadLocal 上下文 77/77 缺席，HAND_ONLY 名存实亡，两档实际都是全注入，
+**本轮 ALL/HAND 对照 VOID**。根因未定（26.2 HEAD 源码核对：create* 签名与钩子
+一致、link 同步直调；疑实机 Iris 1.11.2 版本 skew + require=0 静默；
+1.11.2 对应源码 tag 未定位）。教训：require=0 的钩子必须自带存活计数。
+
+**Fix A（已实施，待 CI + 重跑）：** 删 ThreadLocal 桥 → `@ModifyArgs` 钩 link
+内 `createShader`（描述符与 26.1.2 先例逐字一致，26.2 HEAD 已核对 link 内
+5 次调用、fragment 为第 5 次；实现按 `ShaderType==FRAGMENT` 守卫，
+不依赖 ordinal）→ HAND 判定改大小写不敏感 `contains("hand")`
+（`hand_cutout` / `gbuffers_hand` 两系全含 hand）→ 汇总行加
+SAW_FRAGMENT 存活计数 + 完整管线 0-hand 一次性 WARN。失败只许大声。
+
+**Mac 送测 HOLD**：当前构建 fail-open = 老行为，在 Mac 上必然还透明，
+送了白送。等 Windows 重跑出现 HAND/ALL 分化（HAND 档地形程序无 tacz 项
+且 validate=OK、汇总行 HAND>0 且 world>0）后再送。
