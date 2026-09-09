@@ -75,6 +75,8 @@ R2 的可选集成（并非硬依赖）如下：
 
 **R3-hotfix**（当前源码版本）包含 R3 主线增量及本次透明问题热修（除标注「待实测」的项外均实机 PASS）：
 
+- **Mac + Iris 光影世界透明修复**：限制 scope-mask 注入到 HAND 程序，世界/地形 shader 保持原生字节内容；同时为 `tacz_ScopeMaskSampler` 选择不与 Sodium 地形 sampler 冲突的 unit。Mac 新构建已实机确认问题消失。
+- **日志、配方和交互清理**：修复枪械工作台空 ingredients WARN、26.2 船实体 whitelist 整体加载失败、Glock 17 举枪幽灵音效，并移除 Iris 常见管线重复分配及空目镜几何误报。
 - **内置 TML**（见第 3 节与 [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）：`model_type: "mesh"`
   高模枪渲染 + 第一人称 GPU 静态烘焙;
 - **世界语境 GPU 烘焙**：其他玩家手持、掉落物、展示框/展示台上的高模枪也走常驻 VBO 烘焙
