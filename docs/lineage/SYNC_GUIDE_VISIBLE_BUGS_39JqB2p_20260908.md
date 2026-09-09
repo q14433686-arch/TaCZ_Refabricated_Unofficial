@@ -240,3 +240,26 @@ Vineflower 1.12 反编译 + `javap -c` 字节码交叉核对）：
   若将来出现 Vulkan 后端 + 光影组合，Apple 端机制需另述。暂不采取行动。
 - 本分支修复方向无需改动：HAND_ONLY 拿掉地形注入、C-2 拿掉 unit-0 驻留，
   两层与被证实的机制精确对应；C-5 诊断正是为 B/D 取证准备的。
+
+---
+
+## 6.6 续（2026-09-09）：fabric 三版本审计 —— 只有 26.2 需要修（git grep 实测）
+
+- **26.2**：唯一的 GLSL 注入器是 `IrisShaderCreatorMixin`（本分支已修）；
+  本分支无 `IrisDepthRestoreShaderMixin`，不存在第二个注入点。
+- **26.1.2**：有 `IrisDepthRestoreShaderMixin`（link 内 `createShader` ordinal 4
+  的 `@ModifyArgs`），注入 `sampler2D`×2（`tacz_ApertureDepthSampler` /
+  `tacz_PostBodyDepthSampler`）+ mode ints；但 name 白名单只进手部程序
+  （`gbuffers_hand` / `hand_cutout` 两式，world/entity/water 不动）——
+  地形程序无 TACZ 采样器，本 bug（地形透明）不存在，无需 port。
+- **1.21.11**：该文件与 26.1.2 逐字一致，同 verdict；且老 Iris 1.10.7 +
+  老 MC 无 bind group，本机制三重不适用。
+- **附带证实**（26.1.2 该文件注释）：`createShader` 收到的 `name` 两式并存
+  （`hand_cutout` 与 `gbuffers_hand`）—— 26.2 用 `ShaderKey` 枚举过滤而非
+  `startsWith("hand_")` 是对的，name-based 会漏 `gbuffers_*` 式。
+- **移植备注**：26.1 与 26.2 同代 bind-group 架构（Sodium UTB@u0 同理成立）。
+  若将来 26.1.2 引入全程序注入桥，必须同时带上 HAND_ONLY 默认 +
+  `ensureMaskUnit`，否则同一 bug 在 26.1 复活。
+- **姊妹仓 `TaCZ_Renovated`（NeoForge）三版本**：仓库不在本沙箱，待对方按同一
+  清单审计（`tacz_ScopeMaskSampler` / `ShaderCreator` / 注入过滤范围）；
+  两仓无共同祖先，只能语义同步，不能 cherry-pick。
