@@ -56,6 +56,9 @@ public class RenderClothConfig {
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.scope_mask_enable"), RenderConfig.SCOPE_MASK_ENABLE.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.scope_mask_enable.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_MASK_ENABLE::set).build());
+        render.addEntry(entryBuilder.startEnumSelector(Component.translatable("config.tacz.client.render.iris_scope_mask_injection"), RenderConfig.IrisScopeMaskInjection.class, RenderConfig.IRIS_SCOPE_MASK_INJECTION.get())
+                .setDefaultValue(RenderConfig.IrisScopeMaskInjection.HAND_ONLY).setTooltip(Component.translatable("config.tacz.client.render.iris_scope_mask_injection.desc"))
+                .setSaveConsumer(RenderConfig.IRIS_SCOPE_MASK_INJECTION::set).build());
 
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.kill_amount_enable"), RenderConfig.KILL_AMOUNT_ENABLE.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.kill_amount_enable.desc"))

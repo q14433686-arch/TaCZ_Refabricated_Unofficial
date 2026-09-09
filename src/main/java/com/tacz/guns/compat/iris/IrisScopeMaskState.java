@@ -4,12 +4,16 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.render.scope.ScopeMaskTarget;
+import com.tacz.guns.config.client.RenderConfig;
 import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL13C;
 import org.lwjgl.opengl.GL20C;
+import org.lwjgl.opengl.GL33C;
+import org.lwjgl.system.MemoryStack;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.IntBuffer;
 import java.util.Locale;
 import java.util.Map;
 
@@ -92,6 +96,184 @@ public final class IrisScopeMaskState {
     /** {@code GL_MAX_TEXTURE_IMAGE_UNITS} 是驱动常量，问一次就够。 */
     private static int cachedMaxTextureUnits = -1;
 
+    /**
+     * 每个被注入程序的掩码采样器 unit 记忆（见 {@link #ensureMaskUnit}）。
+     * 按 program id 缓存；id 会复用，管线重建时由 {@link #onPipelineRebuild} 整体清空。
+     */
+    private static final java.util.Map<Integer, Integer> UNIT_BY_PROGRAM = new java.util.HashMap<>();
+    /** 实在没有空闲 unit 的程序：采样器别名到主贴图 unit，且永远不许 mode≠0。 */
+    private static final java.util.Set<Integer> NO_FREE_UNIT = new java.util.HashSet<>();
+    /** 诊断表已打过的程序（SCOPE_MASK_DEBUG 开启时每个程序只打一次）。 */
+    private static final java.util.Set<Integer> DIAG_DONE = new java.util.HashSet<>();
+
+    /**
+     * Iris 正在建（新）管线 —— 由 {@code IrisShaderCreatorMixin} 的 link 钩子每次调用。
+     * program id / GlRenderPipeline 实例都会换代，按 id/实例缓存的记忆整体清空，
+     * 下次 setup 按新状态重选（link 全部发生在 draw 之前，不存在"清掉正在用的"）。
+     */
+    public static void onPipelineRebuild() {
+        UNIT_BY_PROGRAM.clear();
+        NO_FREE_UNIT.clear();
+        MODE_BY_PIPELINE.clear();
+        DIAG_DONE.clear();
+    }
+
+    /** 注入策略（配置读失败回 HAND_ONLY = 默认行为，不静默断功能）。 */
+    public static RenderConfig.IrisScopeMaskInjection injectionPolicy() {
+        try {
+            RenderConfig.IrisScopeMaskInjection policy = RenderConfig.IRIS_SCOPE_MASK_INJECTION.get();
+            return policy == null ? RenderConfig.IrisScopeMaskInjection.HAND_ONLY : policy;
+        } catch (Throwable t) {
+            return RenderConfig.IrisScopeMaskInjection.HAND_ONLY;
+        }
+    }
+
+    /**
+     * 给被注入程序选一个没被任何其它采样器占用的 unit 并写入，一劳永逸
+     * （uniform 值按程序对象持久，Iris/原版不认识这个名字所以永远不会碰它）。
+     *
+     * <p>为什么必须做：GL 采样器默认值是 unit 0，而 unit 0 在 Sodium 地形程序里是
+     * {@code isamplerBuffer u_SectionTimeInfo} —— 不同类型采样器同 unit 是规范非法状态，
+     * Apple 会在 draw 时静默丢弃（地形全透明案的根因链；HAND_ONLY 策略下地形程序根本
+     * 不会被注入，这里是第二道保险，让 ALL 策略同样合法）。
+     *
+     * <p>必须在 Iris {@code ProgramSamplers#update()} 的 initializer 跑过之后调用 ——
+     * 调用链 {@code applyToShaderProgram ← iris$setupState RETURN} 天然满足
+     * （Iris 在 setupState 里先 _glUseProgram + samplers.update）。
+     * 注意 {@code applyToGlRenderPass} 有"无掩码早退"，但 {@code applyToShaderProgram}
+     * 没有 —— 每个程序第一次 setup 一定会经过这里，unit 一定会被落定。
+     */
+    private static int ensureMaskUnit(int program, int samplerLocation) {
+        Integer remembered = UNIT_BY_PROGRAM.get(program);
+        if (remembered != null) {
+            return remembered;
+        }
+        if (cachedMaxTextureUnits < 0) {
+            cachedMaxTextureUnits = GL11C.glGetInteger(GL20C.GL_MAX_TEXTURE_IMAGE_UNITS);
+        }
+        java.util.BitSet used = new java.util.BitSet(cachedMaxTextureUnits);
+        int n = GL20C.glGetProgrami(program, GL20C.GL_ACTIVE_UNIFORMS);
+        int maxLen = GL20C.glGetProgrami(program, GL20C.GL_ACTIVE_UNIFORM_MAX_LENGTH);
+        // 本仓库 LWJGL 的 String 版 glGetActiveUniform 只接受 IntBuffer（无 int[] 重载）。
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer size = stack.mallocInt(1);
+            IntBuffer type = stack.mallocInt(1);
+            for (int i = 0; i < n; i++) {
+                String name = GL20C.glGetActiveUniform(program, i, maxLen, size, type);
+                if (name == null || !isSamplerType(type.get(0))) {
+                    continue;
+                }
+                String base = name.endsWith("[0]") ? name.substring(0, name.length() - 3) : name;
+                if (UNIFORM_SAMPLER.equals(base)) {
+                    continue;
+                }
+                int loc = GL20C.glGetUniformLocation(program, base);
+                for (int k = 0; loc >= 0 && k < size.get(0); k++) {
+                    int u = GL20C.glGetUniformi(program, loc + k);
+                    if (u >= 0 && u < cachedMaxTextureUnits) {
+                        used.set(u);
+                    }
+                }
+            }
+        }
+        // 从高位往下找空闲 unit（Iris 动态采样器从 3 往上分配，原版占低位）。
+        int unit = -1;
+        for (int u = cachedMaxTextureUnits - 1; u >= 0; u--) {
+            if (!used.get(u)) {
+                unit = u;
+                break;
+            }
+        }
+        if (unit < 0) {
+            // 没有空闲 unit：退回主贴图所在 unit（同为 sampler2D → 合法），
+            // 但此程序不允许启用 mode≠0（否则会顶掉主贴图）。
+            int texLoc = firstLocation(program, "gtexture", "tex", "texture", "Sampler0", "u_BlockTex");
+            unit = texLoc >= 0 ? GL20C.glGetUniformi(program, texLoc) : 0;
+            NO_FREE_UNIT.add(program);
+            GunMod.LOGGER.warn("[TACZ Scope] program {} has no free texture unit for the scope mask; aliasing to unit {} and disabling clipping for it.", program, unit);
+        }
+        // 调用方保证 program 就是当前程序（两处调用点都校验过）。
+        GL20C.glUniform1i(samplerLocation, unit);
+        UNIT_BY_PROGRAM.put(program, unit);
+        return unit;
+    }
+
+    /** 是否采样器类型。区间取保守（宁可多圈进来一个非采样器、少占一个 unit，也不漏掉真采样器去撞 unit）。 */
+    private static boolean isSamplerType(int type) {
+        return (type >= 0x8B5D && type <= 0x8B6C)
+                || (type >= 0x8DC0 && type <= 0x8DD8)
+                || (type >= 0x9108 && type <= 0x910D);
+    }
+
+    private static int firstLocation(int program, String... names) {
+        for (String name : names) {
+            int loc = GL20C.glGetUniformLocation(program, name);
+            if (loc >= 0) {
+                return loc;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * SCOPE_MASK_DEBUG 开启时：每个程序第一次 setup 打印采样器 unit 表 + validate 结果。
+     * 必须在 {@code writeScopeMaskState} 之前调 —— 之后抓到的就是被修过的状态。
+     * 类型码：0x8B5E=sampler2D，0x8B62=sampler2DShadow，0x8DC2=samplerBuffer，
+     * 0x8DD0=isamplerBuffer，0x8DD8=usamplerBuffer。
+     */
+    static void diagSamplerTable(int program) {
+        if (!DIAG_DONE.add(program)) {
+            return;
+        }
+        int n = GL20C.glGetProgrami(program, GL20C.GL_ACTIVE_UNIFORMS);
+        int maxLen = GL20C.glGetProgrami(program, GL20C.GL_ACTIVE_UNIFORM_MAX_LENGTH);
+        StringBuilder sb = new StringBuilder();
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer size = stack.mallocInt(1);
+            IntBuffer type = stack.mallocInt(1);
+            for (int i = 0; i < n; i++) {
+                String name = GL20C.glGetActiveUniform(program, i, maxLen, size, type);
+                if (name == null || !isSamplerType(type.get(0))) {
+                    continue;
+                }
+                String base = name.endsWith("[0]") ? name.substring(0, name.length() - 3) : name;
+                int loc = GL20C.glGetUniformLocation(program, base);
+                if (loc < 0) {
+                    continue;
+                }
+                sb.append(base).append(":0x").append(Integer.toHexString(type.get(0)))
+                        .append("@u").append(GL20C.glGetUniformi(program, loc)).append("  ");
+            }
+        }
+        GL20C.glValidateProgram(program);
+        boolean ok = GL20C.glGetProgrami(program, GL20C.GL_VALIDATE_STATUS) == 1;
+        String log = GL20C.glGetProgramInfoLog(program).trim();
+        GunMod.LOGGER.info("[TACZ Scope][diag] program={} samplers=[{}] validate={} log='{}'", program, sb, ok ? "OK" : "FAIL", log);
+    }
+
+    /**
+     * 把掩码纹理绑到给定 unit，并把 GL 状态原样恢复。
+     *
+     * <p>老代码最后无条件 {@code glActiveTexture(GL_TEXTURE0)} —— 真实 active 变了，
+     * 而 {@code GlStateManager.activeTexture} 缓存还记着旧值，此后原版/Iris 的
+     * {@code _activeTexture(N)} 会被缓存短路、{@code _bindTexture} 绑错单元
+     * （开镜期贴图错位）。这里读写都用裸 GL，但恢复的是进入时的真实值
+     * （此前无人绕开 GlStateManager，它与缓存一致），等价于 Iris 自己的恢复手法。
+     */
+    private static void bindMaskTexture(int unit, int textureId) {
+        int prevActive = GL11C.glGetInteger(GL13C.GL_ACTIVE_TEXTURE);
+        GL13C.glActiveTexture(GL13C.GL_TEXTURE0 + unit);
+        GL11C.glBindTexture(GL11C.GL_TEXTURE_2D, textureId);
+        // sampler object 是按 unit 的全局状态：即使本程序没人用这个 unit，
+        // 也可能残留别家程序绑的 sampler（比如 shadow-compare），会覆盖纹理自身
+        // 参数甚至让采样未定义 —— 解绑，退回纹理自身参数。
+        // （掩码的 NEAREST/Clamp 采样器只活在 vanilla 管线那条路上
+        // ScopeMaskTextureHandle；Iris 路这里拿不到它的 GL id，
+        // 用纹理自身参数是安全退路。）
+        GL33C.glBindSampler(unit, 0);
+        GL13C.glActiveTexture(prevActive);
+    }
+
     private IrisScopeMaskState() {
     }
 
@@ -140,6 +322,12 @@ public final class IrisScopeMaskState {
                             programId, GL11C.glGetInteger(GL20C.GL_CURRENT_PROGRAM));
                 }
                 return;
+            }
+            if (RenderConfig.SCOPE_MASK_DEBUG != null && RenderConfig.SCOPE_MASK_DEBUG.get()) {
+                // 诊断位：在 Iris/原版落定、我们写入之前抓一张采样器 unit 表 + validate。
+                // 位置必须在 writeScopeMaskState 之前 —— 之后抓到的就是被 ensureMaskUnit
+                // 修过的状态，unit 0 上到底是谁就看不见了。
+                diagSamplerTable(programId);
             }
             // resolveMode 命中管线→mode 记忆（MODE_BY_PIPELINE），别绕开缓存层。
             writeScopeMaskState(programId, resolveMode(currentPass), currentPass);
@@ -204,46 +392,31 @@ public final class IrisScopeMaskState {
     private static void writeScopeMaskState(int programId, int mode, Object glRenderPass) {
         int modeLocation = GL20C.glGetUniformLocation(programId, UNIFORM_MODE);
         if (modeLocation < 0) {
-            // 这个程序没有被注入过 tacz 分支（绝大多数 Iris 程序都是这种），直接走人。
+            // 这个程序没有被注入过 tacz 分支（HAND_ONLY 下绝大多数 Iris 程序都是这种），直接走人。
             return;
         }
-
-        if (mode == 0) {
-            GL20C.glUniform1i(modeLocation, 0);
-            return;
-        }
-
         int samplerLocation = GL20C.glGetUniformLocation(programId, UNIFORM_SAMPLER);
-        if (samplerLocation < 0) {
+        // ↓ mode==0 也要走到这里：被注入程序的采样器【永远】不能停在 GL 默认的 unit 0。
+        // （unit 0 在 Sodium 地形程序里是 isamplerBuffer —— 不同类型同 unit 则 Apple 丢 draw。）
+        int unit = samplerLocation >= 0 ? ensureMaskUnit(programId, samplerLocation) : -1;
+        if (mode == 0 || samplerLocation < 0 || NO_FREE_UNIT.contains(programId)) {
             GL20C.glUniform1i(modeLocation, 0);
             return;
         }
-
         int textureId = resolveMaskTextureId(glRenderPass);
         if (textureId <= 0) {
             GL20C.glUniform1i(modeLocation, 0);
             return;
         }
-
-        // 驱动常量，问一次记住 —— 原来这一句也在逐 draw call 做 GL 查询。
-        if (cachedMaxTextureUnits < 0) {
-            cachedMaxTextureUnits = GL11C.glGetInteger(GL20C.GL_MAX_TEXTURE_IMAGE_UNITS);
-        }
-        int unit = Math.max(15, cachedMaxTextureUnits - 1);
         if (!loggedApply) {
             loggedApply = true;
             GunMod.LOGGER.info("[TACZ Scope] Iris scope-mask bridge active (mode={}, textureUnit={}, textureId={}).", mode, unit, textureId);
         }
-
-        // 顺序：先写 uniform，再绑纹理，最后把活跃单元还给 0 ——
-        // Iris 的 ProgramSamplers#update() 只重绑它自己那几个单元
-        // （WORLD_RESERVED_TEXTURE_UNITS = {0,1,2}，其余从 3 起顺序分配），
-        // 而它跑在我们之前，所以我们这一次绑定是本轮最后的写入者。
+        // 顺序：先写 uniform，再绑纹理（bindMaskTexture 内部负责把 active 单元恢复原状）。
+        // Iris 的 ProgramSamplers#update() 跑在我们之前且只重绑它自己那几个单元，
+        // 所以我们这一次绑定是本轮最后的写入者。
         GL20C.glUniform1i(modeLocation, mode);
-        GL20C.glUniform1i(samplerLocation, unit);
-        GL13C.glActiveTexture(GL13C.GL_TEXTURE0 + unit);
-        GL11C.glBindTexture(GL11C.GL_TEXTURE_2D, textureId);
-        GL13C.glActiveTexture(GL13C.GL_TEXTURE0);
+        bindMaskTexture(unit, textureId);
     }
 
     /**

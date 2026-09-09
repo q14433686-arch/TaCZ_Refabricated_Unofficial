@@ -41,6 +41,8 @@
   "config.tacz.client.render.first_person_bullet_tracer_enable.desc": "是否开启第一人称的曳光弹渲染",
   "config.tacz.client.render.scope_mask_enable": "瞄准镜镜内透视",
   "config.tacz.client.render.scope_mask_enable.desc": "开镜时把镜身与准星裁剪在目镜范围内，使镜内可以看到外部世界。",
+  "config.tacz.client.render.iris_scope_mask_injection": "Iris 瞄具掩码注入范围",
+  "config.tacz.client.render.iris_scope_mask_injection.desc": "哪些 Iris 着色器程序会被注入 TACZ 瞄具掩码裁剪分支。HAND_ONLY（默认）：只注入手部/枪械程序，世界程序与原生 Iris 完全一致。ALL：旧行为，注入所有程序。OFF：永不注入（光影下瞄具不裁剪）。重载光影包后生效。",
   "config.tacz.client.render.gun_hud_enable": "Gun HUD 界面",
   "config.tacz.client.render.gun_hud_enable.desc": "是否显示枪械 HUD",
   "config.tacz.client.render.gun_lod_render_distance": "低模渲染距离",

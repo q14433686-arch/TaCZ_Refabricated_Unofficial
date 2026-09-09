@@ -14,6 +14,13 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue HEAD_SHOT_DEBUG_HITBOX;
     /** 瞄准镜镜内裁剪（目镜掩码）总开关。默认<b>开启</b>。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_ENABLE;
+    /** Iris 瞄具掩码注入策略。HAND_ONLY 只碰手部/枪械程序；ALL 旧行为（全注）；OFF 全关（光影下不裁剪，仅对照实验）。默认 HAND_ONLY。 */
+    public enum IrisScopeMaskInjection {
+        HAND_ONLY,
+        ALL,
+        OFF
+    }
+    public static ForgeConfigSpec.EnumValue<IrisScopeMaskInjection> IRIS_SCOPE_MASK_INJECTION;
     /** 【调试】把瞄具目镜掩码贴图画到屏幕左上角，用于排查离屏渲染链路。默认关闭。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_DEBUG;
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_HULL_FILL;
@@ -294,6 +301,12 @@ public class RenderConfig {
         SCOPE_MASK_ENABLE = builder
                 .comment("Whether to clip the scope body/reticle inside the ocular (see-through scope).")
                 .define("ScopeMaskEnable", true);
+        IRIS_SCOPE_MASK_INJECTION = builder
+                .comment("Which Iris shader programs receive the TACZ scope-mask clip branch.",
+                        "HAND_ONLY (default): only gbuffers_hand programs; world programs stay byte-identical to stock Iris.",
+                        "ALL: legacy behaviour (every program). OFF: never inject (scope is not clipped under shader packs).",
+                        "Takes effect after the shader pipeline is rebuilt (toggle or reload the pack).")
+                .defineEnum("IrisScopeMaskInjection", IrisScopeMaskInjection.HAND_ONLY);
         SCOPE_MASK_DEBUG = builder
                 .comment("Debug: draw the scope ocular mask texture at the top-left corner.")
                 .define("ScopeMaskDebug", false);
