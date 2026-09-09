@@ -205,3 +205,38 @@ name-based 若用 `startsWith("hand_")` 在 `gbuffers_hand` 命名下会静默�
 TEXEL_BUFFER（文案 A/B，任意 Windows 机可证；NeoForge primer 只确认了改名）。
 ② Mac 实测（文案 D）。③ 本沙箱无 JDK，以上全部静态落码，CI 编译是第一关；
 `startEnumSelector` 本仓无先例（Cloth 标准 API，若 CI 报不存在再换）。
+
+---
+
+## 6.5 续（2026-09-09）：文案 A 已闭环 —— unit 0 身份升格为官方二进制实证（转述）
+
+兄弟 agent 报告（其沙箱 `/home/user/deliver/`，**本沙箱不可见，未独立复验**；
+方法可复现：Temurin JDK 25 + Mojang piston 26.2 release client.jar +
+Vineflower 1.12 反编译 + `javap -c` 字节码交叉核对）：
+
+- 26.2 `GlProgram#setupBindGroupLayouts` 与 26.1 `setupUniforms` 逐行等价：
+  UBO 与采样器是两个独立计数器，`TEXEL_BUFFER`（`Utb`）与具名 sampler
+  **共享** `nextSamplerIndex`，「先全量 uniforms、后全量 samplers」两段循环
+  在改名后原样保留，`flatten*` 纯顺序拼接不重排。
+- 代入 Sodium 地形绑定组 ⇒ `isamplerBuffer u_SectionTimeInfo` = unit 0，
+  `u_LightTex` = 1，`u_BlockTex` = 2 —— 与根因文档预期完全一致。
+
+**结论升级**（注意口径，不多声称一步）：被证实的是 **unit 0 的身份**
+（机制链唯一的承重假设 §2.4），即"地形程序里确实存在
+`isamplerBuffer@u0` + `sampler2D@u0` 的规范非法状态"。Apple 端"draw 被静默丢弃"
+仍是强推理（Apple 对该违规的 validator 原话有案可查、Metal 参数槽无法表达、
+症状与之严丝合缝、已无存活的竞争假说），最终由 Mac 实测一锤定音。
+
+- **文案 B 降级为可选**：它原本只是为了绕开"拿不到 26.2 源码"死结，
+  现死结已除。保留价值是运行时二次确证，且现在有了**硬预测**：
+  Windows 上旧版 TACZ（或本分支 `ALL` 策略 + `ScopeMaskDebug`）的地形程序
+  诊断行应为 `u_SectionTimeInfo:0x8dd0@u0` + `tacz_ScopeMaskSampler:0x8b5e@u0`
+  且 `validate=FAIL`；`HAND_ONLY` 下地形程序无 tacz 采样器且 `validate=OK`。
+  若预测落空，机制回到 open。
+- **文案 D 不变**，仍是最后一关：Mac 上 HAND_ONLY / ALL / OFF 三档行为
+  （ALL 亦应不透明 —— 这是 C-2 独立充分性的判决实验）。
+- **附带发现**（转述，未核实）：26.2 客户端 OpenGL 与 Vulkan 两套后端并存。
+  本案链路经 Iris（OpenGL-only），确认的 unit-0 逻辑属 GL 后端，结论不受影响；
+  若将来出现 Vulkan 后端 + 光影组合，Apple 端机制需另述。暂不采取行动。
+- 本分支修复方向无需改动：HAND_ONLY 拿掉地形注入、C-2 拿掉 unit-0 驻留，
+  两层与被证实的机制精确对应；C-5 诊断正是为 B/D 取证准备的。
