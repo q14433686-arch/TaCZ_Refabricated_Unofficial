@@ -5,10 +5,8 @@ import com.tacz.guns.compat.iris.IrisScopeMaskState;
 import com.tacz.guns.config.client.RenderConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Coerce;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -34,117 +32,84 @@ import java.util.Set;
  * 而枪身/手/世界绘制本来就只需要 mode=0（= 不裁剪 = uniform 默认值），
  * 注不注入结果都一样。
  *
- * <p>【HAND 判定从哪来】
- * {@code ShaderCreator.link(name, ...)} 本身只收名字不收 key；但对 Iris 26.2
- * 源码实读确认：全部四条 {@code create*(...)}（{@code create / createShadow /
- * createFallback / createFallbackShadow}）都<b>同步（同线程、无延迟）</b>调用
- * {@code link}，且入口参数里同时带 {@code name} 与 {@code shaderKey}。
- * 于是用两个 HEAD 注入把 (name, keyName) 记进 ThreadLocal 单槽，
- * link 的 ModifyVariable 把它消费掉做判定 —— 同步嵌套保证时序，
- * 不依赖任何 mixin 处理器排序约定。key 按枚举名 {@code HAND} 前缀识别
- * （Iris 各版本最稳的约定；玩家日志里 Iris 自己打的
- * {@code Found ... program match ...: HAND_CUTOUT} 即证），program 名含
- * hand（忽略大小写）作为第二道保险 —— 只会多注、不会少注。
+ * <p>【钩子点：link 内部的 createShader 调用 —— name 与 source 在同一调用里相会】
+ * 不 hook create*，不建跨方法桥：对 {@code link} 方法体内的
+ * {@code createShader(String, ShaderType, String)} 调用做 {@code @ModifyArgs}，
+ * 只处理 {@code ShaderType.FRAGMENT} 那一次（按类型守卫，不按 ordinal，
+ * 对 Iris 增删着色器阶段免疫）。name（arg 0）与 fragment 源码（arg 2）
+ * 在同一个调用里，天然同线程、无时序问题 —— 与 26.1.2 分支的
+ * {@code IrisDepthRestoreShaderMixin} 同一手法（该分支已验证）。
  *
- * <p>【fail-open，不静默断功能】
- * 上下文缺失（未来 Iris 改了 create 签名、两个 HEAD 注入都没装上）→ 按老行为
- * 全量注入 + 一次性告警：宁可回到老路，也不在静默中断瞄具裁剪。
- * 配置 {@code IrisScopeMaskInjection}（HAND_ONLY / ALL / OFF，默认 HAND_ONLY）控制注入范围：
+ * <p>【HAND 判定：name 含 hand（忽略大小写）】
+ * 已知的两种命名（{@code hand_cutout} 系与 {@code gbuffers_hand} 系）全含 hand。
+ * 误伤方向安全：多注一个世界程序只是回到老行为（且 C-2 保证 unit 合法）；
+ * 漏注 hand 程序则会被下述告警抓住。
+ *
+ * <p>【失败只许大声】
+ * hook 没装上（Iris 改名）→ 没有任何拦截计数，汇总行永远不出现；
+ * 过滤器漏掉全部 hand（命名约定变了）→ 拦截 ≥20 个 fragment 却 0 hand 注入时
+ * 一次性 WARN。没有静默的坏方向。
+ *
+ * <p>【为什么没有 ThreadLocal 桥了】
+ * 上一版用 create*-HEAD → link 的 ThreadLocal 传 key，实机（Iris 1.11.2+mc26.2）
+ * 77/77 无上下文 fail-open —— 桥一次都没接上（疑版本 skew + require=0 静默，
+ * 根因未定，见 sync guide §6.7）。教训：require=0 的钩子必须自带存活计数；
+ * 能单点取齐的判定，绝不用跨方法桥。
+ *
+ * <p>配置 {@code IrisScopeMaskInjection}（HAND_ONLY / ALL / OFF，默认 HAND_ONLY）：
  * OFF = 彻底关闭做对照实验；ALL = 旧行为（全注，靠每程序选 unit 保证合法）。
  */
 @Mixin(targets = "net.irisshaders.iris.pipeline.programs.ShaderCreator", remap = false)
 public abstract class IrisShaderCreatorMixin {
-    /** create*(...) → link(...) 的同步调用上下文桥（单槽覆盖；link 消费即清）。 */
-    private static final ThreadLocal<CreateContext> TACZ_CREATE_CONTEXT = new ThreadLocal<>();
+    // 注意：这里曾经有一座 create* → link 的 ThreadLocal 桥（传 ShaderKey 名），
+    // 实机 77/77 失灵后已删除 —— 判定只用 createShader 调用自带的参数。
 
-    private record CreateContext(String programName, String shaderKeyName) {
-    }
-
-    // create / createShadow 的前三个参数都是 (pipeline, name, shaderKey)。
-    // pipeline 与 shaderKey 是 Iris 内部类，本仓库编译时不链接 Iris，
-    // 故用 @Coerce Object 接收（与 IrisGlCommandEncoderMixin 同一手法）；
-    // name 恒为 String，直接精确匹配。require=0 兜底：未来 Iris 改签名导致
-    // 描述符对不上时静默不装，link 侧按无上下文 fail-open 处理。
-    @Inject(method = {"create", "createShadow"}, at = @At("HEAD"), require = 0)
-    private static void tacz$captureCreateContext(@Coerce Object pipeline, String name,
-                                                  @Coerce Object shaderKey, CallbackInfo ci) {
-        TACZ_CREATE_CONTEXT.set(new CreateContext(name, tacz$keyName(shaderKey)));
-    }
-
-    // createFallback / createFallbackShadow 的前两个参数是 (name, shaderKey)。
-    @Inject(method = {"createFallback", "createFallbackShadow"}, at = @At("HEAD"), require = 0)
-    private static void tacz$captureFallbackContext(String name, @Coerce Object shaderKey, CallbackInfo ci) {
-        TACZ_CREATE_CONTEXT.set(new CreateContext(name, tacz$keyName(shaderKey)));
-    }
-
-    private static String tacz$keyName(Object shaderKey) {
-        if (shaderKey == null) {
-            return null;
-        }
-        // ShaderKey 是枚举：Enum#name() 不受未来 toString() 改写影响。
-        if (shaderKey instanceof Enum<?> e) {
-            return e.name();
-        }
-        return shaderKey.toString();
-    }
-
-    @ModifyVariable(
+    // 目标描述符与 26.1.2 分支的 IrisDepthRestoreShaderMixin 逐字一致
+    // （26.2 HEAD 源码核对：link 内按 vertex/geometry/tessControl/tessEval/fragment
+    // 顺序调 createShader —— 但下面按 ShaderType 守卫，不依赖 ordinal）。
+    @ModifyArgs(
             method = "link",
-            at = @At("HEAD"),
-            argsOnly = true,
-            index = 5,
-            require = 0
-    )
-    private static String tacz$patchLinkedFragment(String source) {
-        CreateContext ctx = TACZ_CREATE_CONTEXT.get();
-        // 消费语义：每次 link 只用最新的一份；create 中途抛异常没走到 link 时，
-        // 残留也会被下一次 create 入口覆盖，不会错配给别人的 link。
-        TACZ_CREATE_CONTEXT.remove();
-        // 每次 link 都意味着 Iris 正在建（新）管线：program id 会复用，
-        // 先把 IrisScopeMaskState 里按 id 缓存的 unit/mode/诊断记忆整体清空。
-        IrisScopeMaskState.onPipelineRebuild();
-        if (source == null) {
-            return null;
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/irisshaders/iris/pipeline/programs/ShaderCreator;createShader(Ljava/lang/String;Lnet/irisshaders/iris/gl/shader/ShaderType;Ljava/lang/String;)I"),
+            require = 0)
+    private static void tacz$patchFragmentAtCreation(Args args) {
+        Object shaderType = args.get(1);
+        if (!(shaderType instanceof Enum<?> stage) || !"FRAGMENT".equals(stage.name())) {
+            return;
         }
-        String programName = ctx == null ? null : ctx.programName();
-        String keyName = ctx == null ? null : ctx.shaderKeyName();
+        tacz$tally(SAW_FRAGMENT);
+        // 每次 link（= 每个 fragment 一次）都意味着 Iris 正在建（新）管线：
+        // program id 会复用，先把按 id 缓存的 unit/mode/诊断记忆整体清空。
+        IrisScopeMaskState.onPipelineRebuild();
+        String programName = args.get(0) instanceof String s ? s : String.valueOf(args.get(0));
+        String source = args.get(2) instanceof String s ? s : null;
+        if (source == null) {
+            return;
+        }
 
         RenderConfig.IrisScopeMaskInjection policy = IrisScopeMaskState.injectionPolicy();
         if (policy == RenderConfig.IrisScopeMaskInjection.OFF) {
             tacz$tally(SKIP_CONFIG);
-            tacz$logDecision(programName, keyName, "skipped (IrisScopeMaskInjection=OFF)");
+            tacz$logDecision(programName, "skipped (IrisScopeMaskInjection=OFF)");
             tacz$maybeSummarize();
-            return source;
+            return;
         }
         boolean legacyAll = policy == RenderConfig.IrisScopeMaskInjection.ALL;
         if (source.contains("tacz_ScopeMaskMode")) {
-            // 幂等：同一份源码第二次过 link（正常流程不应发生，防未来 Iris 改流程）。
-            tacz$logDecision(programName, keyName, "skipped (already contains the bridge)");
+            // 幂等：同一份源码第二次被编译（正常流程不应发生，防未来 Iris 改流程）。
+            tacz$logDecision(programName, "skipped (already contains the bridge)");
             tacz$maybeSummarize();
-            return source;
+            return;
         }
-        if (ctx == null) {
-            // 未知调用路径：按老行为注入，保证瞄具裁剪不断；一次性告警让人来修过滤器。
-            if (!tacz$warnedNoContext) {
-                tacz$warnedNoContext = true;
-                GunMod.LOGGER.warn("[TACZ Scope] An Iris program reached link() without a TACZ create-context "
-                        + "(Iris internals changed?). Injecting unconditionally as before; if the world turns "
-                        + "transparent under shaders, please report this line.");
-            }
-            tacz$tally(INJECTED_FALLBACK);
-            tacz$logDecision(null, null, "INJECTED (no create-context; fail-open)");
-            String patched = tacz$injectScopeMask(source, null);
-            tacz$maybeSummarize();
-            return patched;
-        }
-        if (!legacyAll && !tacz$isHandProgram(keyName, programName)) {
+        boolean hand = tacz$isHandProgram(programName);
+        if (!legacyAll && !hand) {
             tacz$tally(SKIP_WORLD);
-            tacz$logDecision(programName, keyName, "skipped (not a HAND program; left byte-identical)");
+            tacz$logDecision(programName, "skipped (not a HAND program; left byte-identical)");
             tacz$maybeSummarize();
-            return source;
+            return;
         }
         String patched = tacz$injectScopeMask(source, programName);
-        boolean hand = tacz$isHandProgram(keyName, programName);
         if (patched == source) {
             tacz$tally(SKIP_NO_MAIN);
         } else if (!legacyAll || hand) {
@@ -152,23 +117,23 @@ public abstract class IrisShaderCreatorMixin {
         } else {
             tacz$tally(INJECTED_ALL);
         }
-        tacz$logDecision(programName, keyName, patched == source
+        if (patched != source) {
+            args.set(2, patched);
+        }
+        tacz$logDecision(programName, patched == source
                 ? "skipped (no verifiable 'void main() {' found; fail-closed)"
                 : (legacyAll && !hand ? "INJECTED (ALL policy)" : "INJECTED (HAND program)"));
         tacz$maybeSummarize();
-        return patched;
     }
 
     /**
-     * HAND 判定：key 枚举名 {@code HAND} 前缀为主，program 名含 hand 为保险。
+     * HAND 判定：program 名含 {@code hand}（忽略大小写）。
      *
-     * <p>第二道是保守方向：名字像 hand 就注 —— 多注一个世界程序只是回到老行为，
-     * 少注一个 hand 程序却会静默杀掉瞄具裁剪。两者取并集。
+     * <p>已知的两种命名（{@code hand_cutout} 系与 {@code gbuffers_hand} 系、
+     * 任意大小写）全含 hand。保守方向是多注：多注一个世界程序只是回到老行为
+     * （且 C-2 保证 unit 合法）；漏注则由汇总行的 0-hand 告警大声报出。
      */
-    private static boolean tacz$isHandProgram(String keyName, String programName) {
-        if (keyName != null && keyName.startsWith("HAND")) {
-            return true;
-        }
+    private static boolean tacz$isHandProgram(String programName) {
         return programName != null && programName.toLowerCase(Locale.ROOT).contains("hand");
     }
 
@@ -176,11 +141,12 @@ public abstract class IrisShaderCreatorMixin {
     private static final int SKIP_WORLD = 1;
     private static final int SKIP_CONFIG = 2;
     private static final int SKIP_NO_MAIN = 3;
-    private static final int INJECTED_FALLBACK = 4;
-    private static final int INJECTED_ALL = 5;
+    private static final int INJECTED_ALL = 4;
+    /** 拦截到的 FRAGMENT createShader 调用总数（hook 存活证明）。 */
+    private static final int SAW_FRAGMENT = 5;
     /** 管线构建只发生在渲染线程；计数纯诊断，近似即可。 */
     private static final long[] TACZ_TALLY = new long[6];
-    private static boolean tacz$warnedNoContext;
+    private static boolean tacz$warnedNoHand;
     private static long tacz$lastSummaryMs;
     /** 每个 program 名只告警一次（名是有限集，跨重建复用，不会无界增长）。 */
     private static final Set<String> TACZ_WARNED_NO_MAIN = Collections.synchronizedSet(new HashSet<>());
@@ -189,10 +155,9 @@ public abstract class IrisShaderCreatorMixin {
         TACZ_TALLY[kind]++;
     }
 
-    private static void tacz$logDecision(String programName, String keyName, String decision) {
+    private static void tacz$logDecision(String programName, String decision) {
         if (GunMod.LOGGER.isDebugEnabled()) {
-            GunMod.LOGGER.debug("[TACZ Scope] Iris program link: name={} key={} -> {}",
-                    programName, keyName, decision);
+            GunMod.LOGGER.debug("[TACZ Scope] Iris program link: name={} -> {}", programName, decision);
         }
     }
 
@@ -204,11 +169,20 @@ public abstract class IrisShaderCreatorMixin {
         tacz$lastSummaryMs = now;
         GunMod.LOGGER.info("[TACZ Scope] Iris scope-mask injection so far: {} HAND program(s) patched, "
                         + "{} world program(s) left byte-identical to stock Iris "
-                        + "({} config-skipped, {} no-verifiable-main skipped, {} fail-open injected without context, "
-                        + "{} legacy-ALL injected).",
+                        + "({} config-skipped, {} no-verifiable-main skipped, {} legacy-ALL injected; "
+                        + "saw {} fragment shader(s)).",
                 TACZ_TALLY[INJECTED_HAND], TACZ_TALLY[SKIP_WORLD],
-                TACZ_TALLY[SKIP_CONFIG], TACZ_TALLY[SKIP_NO_MAIN], TACZ_TALLY[INJECTED_FALLBACK],
-                TACZ_TALLY[INJECTED_ALL]);
+                TACZ_TALLY[SKIP_CONFIG], TACZ_TALLY[SKIP_NO_MAIN], TACZ_TALLY[INJECTED_ALL],
+                TACZ_TALLY[SAW_FRAGMENT]);
+        // HAND_CUTOUT 每局必存在（scope 管线每局都钉上去）；完整管线（≥20 程序）
+        // 却 0 hand 注入 = 命名约定变了，过滤器全漏 —— 大声报出来，别静默。
+        if (!tacz$warnedNoHand && TACZ_TALLY[SAW_FRAGMENT] >= 20 && TACZ_TALLY[INJECTED_HAND] == 0
+                && IrisScopeMaskState.injectionPolicy() == RenderConfig.IrisScopeMaskInjection.HAND_ONLY) {
+            tacz$warnedNoHand = true;
+            GunMod.LOGGER.warn("[TACZ Scope] Intercepted {} fragment shaders but patched 0 HAND programs; "
+                    + "the 'hand' name filter missed everything (Iris naming changed?). "
+                    + "Scope clipping is probably broken; please report this line.", TACZ_TALLY[SAW_FRAGMENT]);
+        }
     }
 
     /**
