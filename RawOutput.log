@@ -1,0 +1,500 @@
+	at knot//net.minecraft.class_9909.method_61910(class_9909.java:67)
+	at knot//net.minecraft.class_9909.method_61909(class_9909.java:46)
+	at knot//net.minecraft.class_279.method_1258(class_279.java:138)
+	at knot//net.minecraft.class_757.method_57796(class_757.java:256)
+	at knot//net.minecraft.class_11228.method_71291(class_11228.java:262)
+	at knot//net.minecraft.class_11228.method_70890(class_11228.java:170)
+	at knot//net.minecraft.class_757.method_3192(class_757.java:585)
+	at knot//net.minecraft.class_310.method_1523(class_310.java:1393)
+	at knot//net.minecraft.class_310.method_29970(class_310.java:2352)
+	at knot//net.minecraft.class_310.method_18096(class_310.java:2298)
+	at knot//net.minecraft.class_310.method_76795(class_310.java:2255)
+	at knot//net.minecraft.class_310.method_72099(class_310.java:2243)
+	at knot//net.minecraft.class_310.method_1519(class_310.java:1530)
+	at knot//net.minecraft.class_310.method_54580(class_310.java:1036)
+	at knot//net.minecraft.class_310.method_1514(class_310.java:990)
+	at knot//net.minecraft.client.main.Main.main(Main.java:250)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[07:08:30] [Render thread/ERROR]: Missing program minecraft:blur/1 in override list. This is likely an Iris bug!!!
+java.lang.Throwable
+	at knot//net.minecraft.class_10865.handler$bid000$iris$redirectIrisProgram(class_10865.java:569)
+	at knot//net.minecraft.class_10865.method_68381(class_10865.java)
+	at knot//net.minecraft.class_10866.setPipeline(class_10866.java:81)
+	at knot//net.minecraft.class_283.method_67884(class_283.java:98)
+	at knot//net.minecraft.class_9909.method_61910(class_9909.java:67)
+	at knot//net.minecraft.class_9909.method_61909(class_9909.java:46)
+	at knot//net.minecraft.class_279.method_1258(class_279.java:138)
+	at knot//net.minecraft.class_757.method_57796(class_757.java:256)
+	at knot//net.minecraft.class_11228.method_71291(class_11228.java:262)
+	at knot//net.minecraft.class_11228.method_70890(class_11228.java:170)
+	at knot//net.minecraft.class_757.method_3192(class_757.java:585)
+	at knot//net.minecraft.class_310.method_1523(class_310.java:1393)
+	at knot//net.minecraft.class_310.method_29970(class_310.java:2352)
+	at knot//net.minecraft.class_310.method_18096(class_310.java:2298)
+	at knot//net.minecraft.class_310.method_76795(class_310.java:2255)
+	at knot//net.minecraft.class_310.method_72099(class_310.java:2243)
+	at knot//net.minecraft.class_310.method_1519(class_310.java:1530)
+	at knot//net.minecraft.class_310.method_54580(class_310.java:1036)
+	at knot//net.minecraft.class_310.method_1514(class_310.java:990)
+	at knot//net.minecraft.client.main.Main.main(Main.java:250)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[07:08:30] [Render thread/ERROR]: Missing program minecraft:blur/2 in override list. This is likely an Iris bug!!!
+java.lang.Throwable
+	at knot//net.minecraft.class_10865.handler$bid000$iris$redirectIrisProgram(class_10865.java:569)
+	at knot//net.minecraft.class_10865.method_68381(class_10865.java)
+	at knot//net.minecraft.class_10866.setPipeline(class_10866.java:81)
+	at knot//net.minecraft.class_283.method_67884(class_283.java:98)
+	at knot//net.minecraft.class_9909.method_61910(class_9909.java:67)
+	at knot//net.minecraft.class_9909.method_61909(class_9909.java:46)
+	at knot//net.minecraft.class_279.method_1258(class_279.java:138)
+	at knot//net.minecraft.class_757.method_57796(class_757.java:256)
+	at knot//net.minecraft.class_11228.method_71291(class_11228.java:262)
+	at knot//net.minecraft.class_11228.method_70890(class_11228.java:170)
+	at knot//net.minecraft.class_757.method_3192(class_757.java:585)
+	at knot//net.minecraft.class_310.method_1523(class_310.java:1393)
+	at knot//net.minecraft.class_310.method_29970(class_310.java:2352)
+	at knot//net.minecraft.class_310.method_18096(class_310.java:2298)
+	at knot//net.minecraft.class_310.method_76795(class_310.java:2255)
+	at knot//net.minecraft.class_310.method_72099(class_310.java:2243)
+	at knot//net.minecraft.class_310.method_1519(class_310.java:1530)
+	at knot//net.minecraft.class_310.method_54580(class_310.java:1036)
+	at knot//net.minecraft.class_310.method_1514(class_310.java:990)
+	at knot//net.minecraft.client.main.Main.main(Main.java:250)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[07:08:30] [Render thread/ERROR]: Missing program minecraft:blur/3 in override list. This is likely an Iris bug!!!
+java.lang.Throwable
+	at knot//net.minecraft.class_10865.handler$bid000$iris$redirectIrisProgram(class_10865.java:569)
+	at knot//net.minecraft.class_10865.method_68381(class_10865.java)
+	at knot//net.minecraft.class_10866.setPipeline(class_10866.java:81)
+	at knot//net.minecraft.class_283.method_67884(class_283.java:98)
+	at knot//net.minecraft.class_9909.method_61910(class_9909.java:67)
+	at knot//net.minecraft.class_9909.method_61909(class_9909.java:46)
+	at knot//net.minecraft.class_279.method_1258(class_279.java:138)
+	at knot//net.minecraft.class_757.method_57796(class_757.java:256)
+	at knot//net.minecraft.class_11228.method_71291(class_11228.java:262)
+	at knot//net.minecraft.class_11228.method_70890(class_11228.java:170)
+	at knot//net.minecraft.class_757.method_3192(class_757.java:585)
+	at knot//net.minecraft.class_310.method_1523(class_310.java:1393)
+	at knot//net.minecraft.class_310.method_29970(class_310.java:2352)
+	at knot//net.minecraft.class_310.method_18096(class_310.java:2298)
+	at knot//net.minecraft.class_310.method_76795(class_310.java:2255)
+	at knot//net.minecraft.class_310.method_72099(class_310.java:2243)
+	at knot//net.minecraft.class_310.method_1519(class_310.java:1530)
+	at knot//net.minecraft.class_310.method_54580(class_310.java:1036)
+	at knot//net.minecraft.class_310.method_1514(class_310.java:990)
+	at knot//net.minecraft.client.main.Main.main(Main.java:250)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[07:08:30] [Render thread/ERROR]: Missing program minecraft:blur/4 in override list. This is likely an Iris bug!!!
+java.lang.Throwable
+	at knot//net.minecraft.class_10865.handler$bid000$iris$redirectIrisProgram(class_10865.java:569)
+	at knot//net.minecraft.class_10865.method_68381(class_10865.java)
+	at knot//net.minecraft.class_10866.setPipeline(class_10866.java:81)
+	at knot//net.minecraft.class_283.method_67884(class_283.java:98)
+	at knot//net.minecraft.class_9909.method_61910(class_9909.java:67)
+	at knot//net.minecraft.class_9909.method_61909(class_9909.java:46)
+	at knot//net.minecraft.class_279.method_1258(class_279.java:138)
+	at knot//net.minecraft.class_757.method_57796(class_757.java:256)
+	at knot//net.minecraft.class_11228.method_71291(class_11228.java:262)
+	at knot//net.minecraft.class_11228.method_70890(class_11228.java:170)
+	at knot//net.minecraft.class_757.method_3192(class_757.java:585)
+	at knot//net.minecraft.class_310.method_1523(class_310.java:1393)
+	at knot//net.minecraft.class_310.method_29970(class_310.java:2352)
+	at knot//net.minecraft.class_310.method_18096(class_310.java:2298)
+	at knot//net.minecraft.class_310.method_76795(class_310.java:2255)
+	at knot//net.minecraft.class_310.method_72099(class_310.java:2243)
+	at knot//net.minecraft.class_310.method_1519(class_310.java:1530)
+	at knot//net.minecraft.class_310.method_54580(class_310.java:1036)
+	at knot//net.minecraft.class_310.method_1514(class_310.java:990)
+	at knot//net.minecraft.client.main.Main.main(Main.java:250)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[07:08:30] [Render thread/ERROR]: Missing program minecraft:blur/5 in override list. This is likely an Iris bug!!!
+java.lang.Throwable
+	at knot//net.minecraft.class_10865.handler$bid000$iris$redirectIrisProgram(class_10865.java:569)
+	at knot//net.minecraft.class_10865.method_68381(class_10865.java)
+	at knot//net.minecraft.class_10866.setPipeline(class_10866.java:81)
+	at knot//net.minecraft.class_283.method_67884(class_283.java:98)
+	at knot//net.minecraft.class_9909.method_61910(class_9909.java:67)
+	at knot//net.minecraft.class_9909.method_61909(class_9909.java:46)
+	at knot//net.minecraft.class_279.method_1258(class_279.java:138)
+	at knot//net.minecraft.class_757.method_57796(class_757.java:256)
+	at knot//net.minecraft.class_11228.method_71291(class_11228.java:262)
+	at knot//net.minecraft.class_11228.method_70890(class_11228.java:170)
+	at knot//net.minecraft.class_757.method_3192(class_757.java:585)
+	at knot//net.minecraft.class_310.method_1523(class_310.java:1393)
+	at knot//net.minecraft.class_310.method_29970(class_310.java:2352)
+	at knot//net.minecraft.class_310.method_18096(class_310.java:2298)
+	at knot//net.minecraft.class_310.method_76795(class_310.java:2255)
+	at knot//net.minecraft.class_310.method_72099(class_310.java:2243)
+	at knot//net.minecraft.class_310.method_1519(class_310.java:1530)
+	at knot//net.minecraft.class_310.method_54580(class_310.java:1036)
+	at knot//net.minecraft.class_310.method_1514(class_310.java:990)
+	at knot//net.minecraft.client.main.Main.main(Main.java:250)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[07:08:30] [Render thread/ERROR]: Missing program minecraft:pipeline/gui_textured in override list. This is likely an Iris bug!!!
+java.lang.Throwable
+	at knot//net.minecraft.class_10865.handler$bid000$iris$redirectIrisProgram(class_10865.java:569)
+	at knot//net.minecraft.class_10865.method_68381(class_10865.java)
+	at knot//net.minecraft.class_10866.setPipeline(class_10866.java:81)
+	at knot//net.minecraft.class_11228.method_70886(class_11228.java:582)
+	at knot//net.minecraft.class_11228.method_71289(class_11228.java:274)
+	at knot//net.minecraft.class_11228.method_71291(class_11228.java:264)
+	at knot//net.minecraft.class_11228.method_70890(class_11228.java:170)
+	at knot//net.minecraft.class_757.method_3192(class_757.java:585)
+	at knot//net.minecraft.class_310.method_1523(class_310.java:1393)
+	at knot//net.minecraft.class_310.method_29970(class_310.java:2352)
+	at knot//net.minecraft.class_310.method_18096(class_310.java:2298)
+	at knot//net.minecraft.class_310.method_76795(class_310.java:2255)
+	at knot//net.minecraft.class_310.method_72099(class_310.java:2243)
+	at knot//net.minecraft.class_310.method_1519(class_310.java:1530)
+	at knot//net.minecraft.class_310.method_54580(class_310.java:1036)
+	at knot//net.minecraft.class_310.method_1514(class_310.java:990)
+	at knot//net.minecraft.client.main.Main.main(Main.java:250)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[07:08:30] [Render thread/ERROR]: Missing program minecraft:pipeline/gui in override list. This is likely an Iris bug!!!
+java.lang.Throwable
+	at knot//net.minecraft.class_10865.handler$bid000$iris$redirectIrisProgram(class_10865.java:569)
+	at knot//net.minecraft.class_10865.method_68381(class_10865.java)
+	at knot//net.minecraft.class_10866.setPipeline(class_10866.java:81)
+	at knot//net.minecraft.class_11228.method_70886(class_11228.java:582)
+	at knot//net.minecraft.class_11228.method_71289(class_11228.java:274)
+	at knot//net.minecraft.class_11228.method_71291(class_11228.java:264)
+	at knot//net.minecraft.class_11228.method_70890(class_11228.java:170)
+	at knot//net.minecraft.class_757.method_3192(class_757.java:585)
+	at knot//net.minecraft.class_310.method_1523(class_310.java:1393)
+	at knot//net.minecraft.class_310.method_29970(class_310.java:2352)
+	at knot//net.minecraft.class_310.method_18096(class_310.java:2298)
+	at knot//net.minecraft.class_310.method_76795(class_310.java:2255)
+	at knot//net.minecraft.class_310.method_72099(class_310.java:2243)
+	at knot//net.minecraft.class_310.method_1519(class_310.java:1530)
+	at knot//net.minecraft.class_310.method_54580(class_310.java:1036)
+	at knot//net.minecraft.class_310.method_1514(class_310.java:990)
+	at knot//net.minecraft.client.main.Main.main(Main.java:250)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[07:08:30] [Render thread/ERROR]: Missing program minecraft:pipeline/gui_text in override list. This is likely an Iris bug!!!
+java.lang.Throwable
+	at knot//net.minecraft.class_10865.handler$bid000$iris$redirectIrisProgram(class_10865.java:569)
+	at knot//net.minecraft.class_10865.method_68381(class_10865.java)
+	at knot//net.minecraft.class_10866.setPipeline(class_10866.java:81)
+	at knot//net.minecraft.class_11228.method_70886(class_11228.java:582)
+	at knot//net.minecraft.class_11228.method_71289(class_11228.java:274)
+	at knot//net.minecraft.class_11228.method_71291(class_11228.java:264)
+	at knot//net.minecraft.class_11228.method_70890(class_11228.java:170)
+	at knot//net.minecraft.class_757.method_3192(class_757.java:585)
+	at knot//net.minecraft.class_310.method_1523(class_310.java:1393)
+	at knot//net.minecraft.class_310.method_29970(class_310.java:2352)
+	at knot//net.minecraft.class_310.method_18096(class_310.java:2298)
+	at knot//net.minecraft.class_310.method_76795(class_310.java:2255)
+	at knot//net.minecraft.class_310.method_72099(class_310.java:2243)
+	at knot//net.minecraft.class_310.method_1519(class_310.java:1530)
+	at knot//net.minecraft.class_310.method_54580(class_310.java:1036)
+	at knot//net.minecraft.class_310.method_1514(class_310.java:990)
+	at knot//net.minecraft.client.main.Main.main(Main.java:250)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[07:08:30] [Render thread/INFO]: Stopping worker threads
+---- Minecraft Crash Report ----
+// Hey, that tickles! Hehehe!
+
+Time: 2026-09-12 07:08:31
+Description: Unexpected error
+
+org.luaj.vm2.LuaError: tacz_default_state_machine:74 bad argument: attempt to compare __le on nil and number
+	at knot//org.luaj.vm2.LuaValue.error(LuaValue.java:1209)
+	at knot//org.luaj.vm2.LuaValue.comparemt(LuaValue.java:3437)
+	at knot//org.luaj.vm2.LuaValue.lteq_b(LuaValue.java:3179)
+	at knot//org.luaj.vm2.LuaClosure.execute(LuaClosure.java:402)
+	at knot//org.luaj.vm2.LuaClosure.call(LuaClosure.java:171)
+	at knot//org.luaj.vm2.LuaClosure.execute(LuaClosure.java:445)
+	at knot//org.luaj.vm2.LuaClosure.call(LuaClosure.java:184)
+	at knot//org.luaj.vm2.LuaClosure.execute(LuaClosure.java:436)
+	at knot//org.luaj.vm2.LuaClosure.call(LuaClosure.java:184)
+	at knot//com.tacz.guns.api.client.animation.statemachine.LuaAnimationState.entryAction(LuaAnimationState.java:42)
+	at knot//com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine.lambda$initialize$2(AnimationStateMachine.java:140)
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+	at knot//com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine.lambda$initialize$3(AnimationStateMachine.java:138)
+	at java.base/java.util.Optional.ifPresent(Optional.java:178)
+	at knot//com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine.initialize(AnimationStateMachine.java:138)
+	at knot//com.tacz.guns.api.client.animation.statemachine.LuaAnimationStateMachine.initialize(LuaAnimationStateMachine.java:24)
+	at knot//com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer.tryInit(AnimateGeoItemRenderer.java:150)
+	at knot//com.tacz.guns.client.renderer.item.GunItemRendererWrapper.tryInit(GunItemRendererWrapper.java:118)
+	at knot//net.minecraft.class_759.wrapOperation$cdc000$tacz$submitArmWithAnimatedItem(class_759.java:3427)
+	at knot//net.minecraft.class_759.method_22976(class_759.java:414)
+	at knot//net.minecraft.class_759.iris$renderHandsWithCustomRenderer(class_759.java:2313)
+	at knot//net.irisshaders.iris.pathways.HandRenderer.renderSolid(HandRenderer.java:116)
+	at knot//net.minecraft.class_761.handler$bhj000$iris$beginTranslucents(class_761.java:3823)
+	at knot//net.minecraft.class_761.method_62214(class_761.java:729)
+	at knot//net.minecraft.class_9909.method_61910(class_9909.java:67)
+	at knot//net.minecraft.class_761.method_22710(class_761.java:599)
+	at knot//net.minecraft.class_757.redirect$cco000$tacz$scopeRenderLevel(class_757.java:5132)
+	at knot//net.minecraft.class_757.method_3188(class_757.java:785)
+	at knot//net.minecraft.class_757.method_3192(class_757.java:497)
+	at knot//net.minecraft.class_310.method_1523(class_310.java:1393)
+	at knot//net.minecraft.class_310.method_1514(class_310.java:966)
+	at knot//net.minecraft.client.main.Main.main(Main.java:250)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at knot//org.luaj.vm2.LuaValue.error(LuaValue.java:1209)
+	at knot//org.luaj.vm2.LuaValue.comparemt(LuaValue.java:3437)
+	at knot//org.luaj.vm2.LuaValue.lteq_b(LuaValue.java:3179)
+	at knot//org.luaj.vm2.LuaClosure.execute(LuaClosure.java:402)
+	at knot//org.luaj.vm2.LuaClosure.call(LuaClosure.java:171)
+	at knot//org.luaj.vm2.LuaClosure.execute(LuaClosure.java:445)
+	at knot//org.luaj.vm2.LuaClosure.call(LuaClosure.java:184)
+	at knot//org.luaj.vm2.LuaClosure.execute(LuaClosure.java:436)
+	at knot//org.luaj.vm2.LuaClosure.call(LuaClosure.java:184)
+	at knot//com.tacz.guns.api.client.animation.statemachine.LuaAnimationState.entryAction(LuaAnimationState.java:42)
+	at knot//com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine.lambda$initialize$2(AnimationStateMachine.java:140)
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+	at knot//com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine.lambda$initialize$3(AnimationStateMachine.java:138)
+	at java.base/java.util.Optional.ifPresent(Optional.java:178)
+	at knot//com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine.initialize(AnimationStateMachine.java:138)
+	at knot//com.tacz.guns.api.client.animation.statemachine.LuaAnimationStateMachine.initialize(LuaAnimationStateMachine.java:24)
+	at knot//com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer.tryInit(AnimateGeoItemRenderer.java:150)
+	at knot//com.tacz.guns.client.renderer.item.GunItemRendererWrapper.tryInit(GunItemRendererWrapper.java:118)
+	at knot//net.minecraft.class_759.wrapOperation$cdc000$tacz$submitArmWithAnimatedItem(class_759.java:3427)
+	at knot//net.minecraft.class_759.method_22976(class_759.java:414)
+	at knot//net.minecraft.class_759.iris$renderHandsWithCustomRenderer(class_759.java:2313)
+	at knot//net.irisshaders.iris.pathways.HandRenderer.renderSolid(HandRenderer.java:116)
+	at knot//net.minecraft.class_761.handler$bhj000$iris$beginTranslucents(class_761.java:3823)
+	at knot//net.minecraft.class_761.method_62214(class_761.java:729)
+	at knot//net.minecraft.class_9909.method_61910(class_9909.java:67)
+	at knot//net.minecraft.class_761.method_22710(class_761.java:599)
+	at knot//net.minecraft.class_757.redirect$cco000$tacz$scopeRenderLevel(class_757.java:5132)
+	at knot//net.minecraft.class_757.method_3188(class_757.java:785)
+
+-- Uptime --
+Details:
+	JVM uptime: 46.548s
+	Wall uptime: 36.158s
+	High-res time: 33.863s
+	Client ticks: 343 ticks / 17.150s
+Stacktrace:
+	at knot//net.minecraft.class_310.method_1587(class_310.java:2477)
+	at knot//net.minecraft.class_310.method_54580(class_310.java:1035)
+	at knot//net.minecraft.class_310.method_1514(class_310.java:990)
+	at knot//net.minecraft.client.main.Main.main(Main.java:250)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+
+-- Affected level --
+Details:
+	All players: 1 total; class_746{name=GOOSTL, id=19, pos=(7.109964543615687, -60.0, -4.918406260710748), mode=CREATIVE, permission=permission level: OWNERS}
+	Chunk stats: 961, 637
+	Level dimension: minecraft:overworld
+	Level spawn location: World: (0,-60,0), Section: (at 0,4,0 in 0,-4,0; chunk contains blocks 0,-64,0 to 15,319,15), Region: (0,0; contains chunks 0,0 to 31,31, blocks 0,-64,0 to 511,319,511)
+	Level time: 547 game time, 547 day time
+	Server brand: fabric
+	Server type: Integrated singleplayer server
+	Tracked entity count: 83
+
+-- Last reload --
+Details:
+	Reload number: 1
+	Reload reason: initial
+	Finished: Yes
+	Packs: tacz_resources, vanilla, carryon, cloth-config, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-view-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v1, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-item-group-api-v1, fabric-key-binding-api-v1, fabric-language-kotlin, fabric-lifecycle-events-v1, fabric-loot-api-v2, fabric-loot-api-v3, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-screen-handler-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, forgeconfigapiport, holdmyitems, iris, modmenu, org_apache_commons_commons-math3, placeholder-api, player_animation_library, roughlyenoughitems, sodium, tacz, tacztweaks, yet_another_config_lib_v3, zoomify, holdmyitems:pack_test
+
+-- System Details --
+Details:
+	Minecraft Version: 1.21.11
+	Minecraft Version ID: 1.21.11
+	Operating System: Windows 11 (amd64) version 10.0
+	Java Version: 21.0.7, Microsoft
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode), Microsoft
+	Memory: 579551744 bytes (552 MiB) / 1308622848 bytes (1248 MiB) up to 8589934592 bytes (8192 MiB)
+	CPUs: 16
+	Processor Vendor: AuthenticAMD
+	Processor Name: AMD Ryzen 7 7700 8-Core Processor              
+	Identifier: AuthenticAMD Family 25 Model 97 Stepping 2
+	Microarchitecture: Zen 3
+	Frequency (GHz): 3.79
+	Number of physical packages: 1
+	Number of physical CPUs: 8
+	Number of logical CPUs: 16
+	Graphics card #0 name: AMD  Radeon RX 7800 XT
+	Graphics card #0 vendor: Advanced Micro Devices, Inc.
+	Graphics card #0 VRAM (MiB): 16368.00
+	Graphics card #0 deviceId: VideoController1
+	Graphics card #0 versionInfo: 32.0.31041.1004
+	Graphics card #1 name: AMD Radeon(TM) Graphics
+	Graphics card #1 vendor: Advanced Micro Devices, Inc.
+	Graphics card #1 VRAM (MiB): 512.00
+	Graphics card #1 deviceId: VideoController2
+	Graphics card #1 versionInfo: 32.0.21045.5002
+	Memory slot #0 capacity (MiB): 16384.00
+	Memory slot #0 clockSpeed (GHz): 4.80
+	Memory slot #0 type: DDR5
+	Memory slot #1 capacity (MiB): 16384.00
+	Memory slot #1 clockSpeed (GHz): 4.80
+	Memory slot #1 type: DDR5
+	Virtual memory max (MiB): 64605.93
+	Virtual memory used (MiB): 17955.17
+	Swap memory total (MiB): 32784.00
+	Swap memory used (MiB): 611.10
+	Space in storage for jna.tmpdir (MiB): available: 404102.03, total: 684062.94
+	Space in storage for org.lwjgl.system.SharedLibraryExtractPath (MiB): available: 404102.03, total: 684062.94
+	Space in storage for io.netty.native.workdir (MiB): available: 404102.03, total: 684062.94
+	Space in storage for java.io.tmpdir (MiB): available: 125829.99, total: 269803.38
+	Space in storage for workdir (MiB): available: 404102.03, total: 684062.94
+	JVM Flags: 12 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -XX:-OmitStackTraceInFastThrow -Xmx8192m -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:G1HeapRegionSize=32M -XX:MaxGCPauseMillis=50 -XX:+PerfDisableSharedMem -XX:MinHeapFreeRatio=25 -XX:MaxHeapFreeRatio=40
+	Debug Flags: 0 total; 
+	Fabric Mods: 
+		architectury: Architectury 19.0.1
+		carryon: Carry On 2.9.2
+		cloth-config: Cloth Config v20 21.11.153
+			cloth-basic-math: cloth-basic-math 0.6.1
+		fabric-api: Fabric API 0.141.6+1.21.11
+			fabric-api-base: Fabric API Base 1.0.5+4ebb5c083e
+			fabric-api-lookup-api-v1: Fabric API Lookup API (v1) 1.6.114+20dc27073e
+			fabric-biome-api-v1: Fabric Biome API (v1) 17.1.1+4fc5413f3e
+			fabric-block-api-v1: Fabric Block API (v1) 1.1.10+4ebb5c083e
+			fabric-block-view-api-v2: Fabric BlockView API (v2) 1.0.39+4ebb5c083e
+			fabric-command-api-v2: Fabric Command API (v2) 2.4.7+6b42a6003e
+			fabric-content-registries-v0: Fabric Content Registries (v0) 10.2.14+4fc5413f3e
+			fabric-convention-tags-v1: Fabric Convention Tags 2.1.55+7f945d5b3e
+			fabric-convention-tags-v2: Fabric Convention Tags (v2) 2.17.3+8ef948ba3e
+			fabric-crash-report-info-v1: Fabric Crash Report Info (v1) 0.3.23+4ebb5c083e
+			fabric-data-attachment-api-v1: Fabric Data Attachment API (v1) 1.8.48+eed0806f3e
+			fabric-data-generation-api-v1: Fabric Data Generation API (v1) 23.5.0+88d7da613e
+			fabric-dimensions-v1: Fabric Dimensions API (v1) 4.0.28+4fc5413f3e
+			fabric-entity-events-v1: Fabric Entity Events (v1) 3.1.1+1d0ab4303e
+			fabric-events-interaction-v0: Fabric Events Interaction (v0) 4.1.1+3b89ecf63e
+			fabric-game-rule-api-v1: Fabric Game Rule API (v1) 2.0.3+4fc5413f3e
+			fabric-item-api-v1: Fabric Item API (v1) 11.6.0+67f17bb43e
+			fabric-item-group-api-v1: Fabric Item Group API (v1) 4.2.36+4fc5413f3e
+			fabric-key-binding-api-v1: Fabric Key Binding API (v1) 1.1.7+4fc5413f3e
+			fabric-lifecycle-events-v1: Fabric Lifecycle Events (v1) 2.6.15+4ebb5c083e
+			fabric-loot-api-v2: Fabric Loot API (v2) 3.0.73+3f89f5a53e
+			fabric-loot-api-v3: Fabric Loot API (v3) 2.0.20+78c8b4663e
+			fabric-message-api-v1: Fabric Message API (v1) 6.1.12+4ebb5c083e
+			fabric-model-loading-api-v1: Fabric Model Loading API (v1) 6.0.15+4fc5413f3e
+			fabric-networking-api-v1: Fabric Networking API (v1) 5.1.6+6b6d71a53e
+			fabric-object-builder-api-v1: Fabric Object Builder API (v1) 21.1.40+4fc5413f3e
+			fabric-particles-v1: Fabric Particles (v1) 4.2.12+4fc5413f3e
+			fabric-recipe-api-v1: Fabric Recipe API (v1) 8.2.4+4ebb5c083e
+			fabric-registry-sync-v0: Fabric Registry Sync (v0) 6.2.6+1718722b3e
+			fabric-renderer-api-v1: Fabric Renderer API (v1) 8.0.3+f4ffd2e53e
+			fabric-renderer-indigo: Fabric Renderer - Indigo 5.0.3+f4ffd2e53e
+			fabric-rendering-fluids-v1: Fabric Rendering Fluids (v1) 3.1.43+4ebb5c083e
+			fabric-rendering-v1: Fabric Rendering (v1) 16.2.10+0290ad933e
+			fabric-resource-conditions-api-v1: Fabric Resource Conditions API (v1) 5.0.35+4fc5413f3e
+			fabric-resource-loader-v0: Fabric Resource Loader (v0) 3.3.4+4fc5413f3e
+			fabric-resource-loader-v1: Fabric Resource Loader (v1) 1.0.10+78c8b4663e
+			fabric-screen-api-v1: Fabric Screen API (v1) 3.1.7+4ebb5c083e
+			fabric-screen-handler-api-v1: Fabric Screen Handler API (v1) 1.3.162+4fc5413f3e
+			fabric-serialization-api-v1: Fabric Serialization API (v1) 1.0.5+4ebb5c083e
+			fabric-sound-api-v1: Fabric Sound API (v1) 1.0.51+4fc5413f3e
+			fabric-tag-api-v1: Fabric Tag API (v1) 1.3.0+88d7da613e
+			fabric-transfer-api-v1: Fabric Transfer API (v1) 6.0.25+4fc5413f3e
+			fabric-transitive-access-wideners-v1: Fabric Transitive Access Wideners (v1) 7.1.0+014c8cec3e
+		fabric-language-kotlin: Fabric Language Kotlin 1.13.13+kotlin.2.4.10
+			org_jetbrains_kotlin_kotlin-reflect: kotlin-reflect 2.4.10
+			org_jetbrains_kotlin_kotlin-stdlib: kotlin-stdlib 2.4.10
+			org_jetbrains_kotlin_kotlin-stdlib-jdk7: kotlin-stdlib-jdk7 2.4.10
+			org_jetbrains_kotlin_kotlin-stdlib-jdk8: kotlin-stdlib-jdk8 2.4.10
+			org_jetbrains_kotlinx_atomicfu-jvm: atomicfu-jvm 0.33.0
+			org_jetbrains_kotlinx_kotlinx-coroutines-core-jvm: kotlinx-coroutines-core-jvm 1.11.0
+			org_jetbrains_kotlinx_kotlinx-coroutines-jdk8: kotlinx-coroutines-jdk8 1.11.0
+			org_jetbrains_kotlinx_kotlinx-datetime-jvm: kotlinx-datetime-jvm 0.8.0
+			org_jetbrains_kotlinx_kotlinx-io-bytestring-jvm: kotlinx-io-bytestring-jvm 0.9.1
+			org_jetbrains_kotlinx_kotlinx-io-core-jvm: kotlinx-io-core-jvm 0.9.1
+			org_jetbrains_kotlinx_kotlinx-serialization-cbor-jvm: kotlinx-serialization-cbor-jvm 1.11.0
+			org_jetbrains_kotlinx_kotlinx-serialization-core-jvm: kotlinx-serialization-core-jvm 1.11.0
+			org_jetbrains_kotlinx_kotlinx-serialization-json-jvm: kotlinx-serialization-json-jvm 1.11.0
+		fabricloader: Fabric Loader 0.19.3
+			mixinextras: MixinExtras 0.5.4
+		forgeconfigapiport: Forge Config API Port 21.11.1
+			com_electronwill_night-config_core: core 3.8.3
+			com_electronwill_night-config_toml: toml 3.8.3
+		geckolib: GeckoLib 5 5.4.5
+		holdmyitems: Hold My Items 5.1
+			org_luaj_luaj-jse: luaj-jse 3.0.1
+		iris: Iris 1.10.7+mc1.21.11
+			io_github_douira_glsl-transformer: glsl-transformer 3.0.0-pre3
+			org_anarres_jcpp: jcpp 1.4.14
+			org_antlr_antlr4-runtime: antlr4-runtime 4.13.1
+		java: OpenJDK 64-Bit Server VM 21
+		minecraft: Minecraft 1.21.11
+		modmenu: Mod Menu 17.0.1-beta.1
+		placeholder-api: Placeholder API 2.8.2+1.21.10
+		player_animation_library: Player Animation Library 1.1.9+mc.1.21.11
+			com_zigythebird_mochafloats: mochafloats 4.1.5
+			org_javassist_javassist: javassist 3.30.2-GA
+		roughlyenoughitems: Roughly Enough Items 21.11.816
+			error_notifier: Error Notifier 1.0.11
+		sodium: Sodium 0.8.12+mc1.21.11
+		tacz: [UNOFFICIAL] TaCZ Refabricated (1.21.11 R3-hotfix) 1.1.8+fabric.1.21.11.R3-hotfix
+			com_github_figuramc_luaj_luaj-core: luaj-core 3.0.8-figura
+			com_github_figuramc_luaj_luaj-jse: luaj-jse 3.0.8-figura
+			com_maydaymemory_mae: mae 1.1.1
+			org_apache_bcel_bcel: bcel 6.6.1
+			org_apache_commons_commons-math3: commons-math3 3.6.1
+		tacztweaks: TaCZ Tweaks (Refabricated) 2.14.2+fabric.1.21.11.Beta-1-hotfix
+		yet_another_config_lib_v3: YetAnotherConfigLib 3.8.2+1.21.11-fabric
+			com_twelvemonkeys_common_common-image: common-image 3.12.0
+			com_twelvemonkeys_common_common-io: common-io 3.12.0
+			com_twelvemonkeys_common_common-lang: common-lang 3.12.0
+			com_twelvemonkeys_imageio_imageio-core: imageio-core 3.12.0
+			com_twelvemonkeys_imageio_imageio-metadata: imageio-metadata 3.12.0
+			com_twelvemonkeys_imageio_imageio-webp: imageio-webp 3.12.0
+			org_quiltmc_parsers_gson: gson 0.2.1
+			org_quiltmc_parsers_json: json 0.2.1
+		zoomify: Zoomify 2.15.2+1.21.11
+			com_akuleshov7_ktoml-core-jvm: ktoml-core-jvm 0.7.1
+	Loaded Shaderpack: ComplementaryUnbound_r5.8.1.zip
+		Profile: HIGH (+1 option changed by user)
+	Launched Version: 1.21.11-Fabric 0.19.3
+	Launcher name: PCL
+	Backend library: LWJGL version 3.3.3-snapshot
+	Backend API: AMD  Radeon RX 7800 XT GL version 3.3.0 Core Profile Context 26.8.1.260810, ATI Technologies Inc.
+	Window size: 2560x1417
+	GFLW Platform: win32
+	Render Extensions: GL_ARB_buffer_storage, GL_KHR_debug, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+	GL debug messages: 
+	Is Modded: Definitely; Client brand changed to 'fabric'; Server brand changed to 'fabric'
+	Universe: 400921fb54442d18
+	Type: Integrated Server (map_client.txt)
+	Transparency: regular
+	Render Distance: 12/12 chunks
+	Resource Packs: tacz_resources, vanilla, carryon (incompatible), cloth-config, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-view-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v1, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-item-group-api-v1, fabric-key-binding-api-v1, fabric-language-kotlin, fabric-lifecycle-events-v1, fabric-loot-api-v2, fabric-loot-api-v3, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-screen-handler-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, forgeconfigapiport (incompatible), holdmyitems, iris, modmenu, org_apache_commons_commons-math3, placeholder-api, player_animation_library, roughlyenoughitems, sodium, tacz, tacztweaks (incompatible), yet_another_config_lib_v3 (incompatible), zoomify, holdmyitems:pack_test
+	Current Language: zh_cn
+	Locale: zh_CN
+	System encoding: GBK
+	File encoding: UTF-8
+	CPU: 16x AMD Ryzen 7 7700 8-Core Processor 
+	Server Running: true
+	Player Count: 1 / 8; [class_3222['GOOSTL'/19, l='ServerLevel[新的世界]', x=7.11, y=-60.00, z=-4.92]]
+	Active Data Packs: vanilla, carryon (incompatible), fabric-convention-tags-v2, tacz, tacz_resources
+	Available Data Packs: carryon (incompatible), fabric-convention-tags-v2, minecart_improvements, redstone_experiments, tacz, tacz_resources, trade_rebalance, vanilla
+	Enabled Feature Flags: minecraft:vanilla
+	World Generation: Stable
+	World Seed: -4295166662679879596
+	Suppressed Exceptions: ~~NONE~~
+#@!@# Game crashed! Crash report saved to: #@!@# D:\DOWLOD\.minecraft\versions\1.21.11-Fabric 0.19.3\crash-reports\crash-2026-09-12_07.08.31-client.txt
