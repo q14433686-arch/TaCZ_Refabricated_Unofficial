@@ -16,7 +16,8 @@ org.luaj.vm2.LuaError: tacz_default_state_machine:74 bad argument: attempt to co
 > **状态（2026-09-12 更新）**：维护者已在实机验证通过 —— 与 HMI 5.1 同装时手持枪械不再崩溃，
 > 编译与启动均正常。也就是第 4 节矩阵的第 1-4 项。
 > 矩阵其余各项（逻辑脚本逐项、专用服务器、**不装 HMI 的回归**、HMI 自身脚本表现、与其他兼容层同装）
-> 尚未逐条回报，仍按未验证对待；本次改动是在无 JDK 的环境里写完的，编译验证同样来自维护者环境。
+> 尚未逐条回报，仍按未验证对待。本次改动是在无 JDK 的环境里写完的：编译验证来自 CI
+> （`build-reports/compile-java.log`，success，新增 mixin 无 AP 警告），运行验证来自维护者实机。
 
 ---
 
@@ -226,7 +227,14 @@ catch (Exception e) { return LuaValue.error("coercion error " + e); }
 
 环境：1.21.11 + TaCZ 本次改动 + `holdmyitems 5.1` + Iris（复现原崩溃的组合）。
 
-**2026-09-12 进度**：第 1-4 项已由维护者实机通过；第 5-10 项待逐条确认。
+**2026-09-12 进度**：
+
+- 第 1 项由 CI 编译覆盖：`build-reports/compile-java.log`（commit `3164deb`，`job status: success`）。
+  8 条 warning 全是既有的 Iris / vanilla mixin 提示，**新增的 luaj mixin 没有触发任何 Mixin AP 警告**
+  —— `targets` 指向包级私有库类、`@Shadow @Final private Method method`、
+  `@Inject(method = "invokeMethod")` 三处都被 AP 接受。
+- 第 2-4 项由维护者实机通过。
+- 第 5-10 项待逐条确认。
 
 | # | 操作 | 期望 |
 |---|---|---|

@@ -23,11 +23,13 @@
   由既有 `MixinPlugin` 的 modid 规则过滤：没装 HMI 不应用；装了但探针判定桥健康也不接管。
 - 不改版本号，不改判定门以外的任何渲染/逻辑路径；HMI 的沙箱对非 TaCZ 类（含 Minecraft 本体对象与
   HMI 自己的脚本）保持原样。
-- **验证进度**：2026-09-12 维护者实机通过 —— 编译、启动、与 HMI 5.1 同装手持枪械不再崩溃
-  （`HOLD_MY_ITEMS_COMPAT.md` 第 4 节矩阵的 1-4 项）。改动本身是在无 JDK、无 Loom 缓存的环境里写完的，
-  所以编译与运行验证都来自维护者环境；`docs/verify_mixin_targets.py` 仍未跑（该脚本只校验
-  `net.minecraft` / `com.mojang` 目标，会跳过这个库类目标）。矩阵 5-10 项未逐条回报，
-  其中第 8 项（不装 HMI 时行为与改动前一致、且不出现探针 WARN）是发版前应补的回归底线。
+- **验证进度**：编译由 CI 覆盖 —— `build-reports/compile-java.log`（commit `3164deb`，
+  `job status: success`，8 条 warning 全是既有的 Iris/vanilla mixin 提示，**新增的 luaj mixin 没有任何
+  Mixin AP 警告**）；运行由维护者 2026-09-12 实机通过 —— 与 HMI 5.1 同装手持枪械不再崩溃
+  （`HOLD_MY_ITEMS_COMPAT.md` 第 4 节矩阵的 1-4 项）。改动本身是在无 JDK、无 Loom 缓存的环境里写完的；
+  `docs/verify_mixin_targets.py` 仍未跑（该脚本只校验 `net.minecraft` / `com.mojang` 目标，
+  会跳过这个库类目标）。矩阵 5-10 项未逐条回报，其中第 8 项（不装 HMI 时行为与改动前一致、
+  且不出现探针 WARN）是发版前应补的回归底线。
 - 上游报告已成稿：`HMI_UPSTREAM_REPORT_20260912.md`（英文正文 + 投递入口 `thesapsapling/hmi-docs`
   Issues + 四个修复选项 + 措辞红线）。按 `AGENTS.md` §5，玩家侧仍引导回本仓库 Issues。
 - 残留边界：脚本对 `api:getItemStack()` / `api:getShooter()` 这类 Minecraft 对象做链式调用仍会被
