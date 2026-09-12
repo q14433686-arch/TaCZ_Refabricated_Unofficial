@@ -22,7 +22,8 @@
     "common.ServerPacksSourceMixin",
     "common.itemhandler.AbstractHorseMixin",
     "common.itemhandler.LivingEntityMixin",
-    "common.itemhandler.PlayerMixin"
+    "common.itemhandler.PlayerMixin",
+    "compat.holdmyitems.HoldMyItemsJavaMethodMixin"
   ],
   "client": [
     "accessor.BlockableEventLoopAccessor",
@@ -43,7 +44,7 @@
     "compat.punchy.PunchyHandRenderBobContextMixin",
     "compat.punchy.PunchyMovementStateMachineMixin"
   ],
-  "_comment": "26.1.2: obsolete RenderTargetMixin and AbstractSliderButtonAccessor targets were removed. LivingEntityRendererMixin is registered above after both injection descriptors were verified against 26.1.2. The optional Controllable mixin is gated by MixinPlugin.",
+  "_comment": "26.1.2: obsolete RenderTargetMixin and AbstractSliderButtonAccessor targets were removed. LivingEntityRendererMixin is registered above after both injection descriptors were verified against 26.1.2. The optional Controllable mixin is gated by MixinPlugin. compat.holdmyitems.HoldMyItemsJavaMethodMixin targets luaj's package-private org.luaj.vm2.lib.jse.JavaMethod (a library class, so no intermediary name applies) and is listed under common mixins because gun logic scripts also run on the server thread; MixinPlugin gates it on holdmyitems being loaded. Details: docs/HOLD_MY_ITEMS_COMPAT.md.",
   "injectors": {
     "defaultRequire": 1
   }

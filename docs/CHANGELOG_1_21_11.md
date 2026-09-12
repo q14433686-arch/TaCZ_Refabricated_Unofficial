@@ -5,6 +5,41 @@
 
 ---
 
+## Hold My Items 5.1 兼容：Lua 安全层旁路（2026-09-12，核心项实机通过 / 矩阵未跑满）
+
+- 来源：玩家报「与 Hold My Items 同装时手持枪械直接崩溃」并附 `RawOutput.log`。定位过程与证据见
+  `HOLD_MY_ITEMS_COMPAT.md`。**不是 luaj 版本混用问题**：崩溃栈四个行号（`LuaValue.error:1209`、
+  `comparemt:3437`、`lteq_b:3179`、`LuaClosure.execute:402`）全部对上 TaCZ `include` 的
+  Figura fork 3.0.8，HMI 自己 nest 的 3.0.1（1041 / 2984 / 2733）全部对不上。
+- 根因：HMI 的 `com.holdmylua.source.mixin.safety.JavaMethodMixin` 在
+  `org.luaj.vm2.lib.jse.JavaMethod#invokeMethod` 的 RETURN 处，把没有它私有 `@Safe` 注解
+  （且名字不是 `getOrDefault` / `put`）的方法返回值一律改成 `LuaValue.NIL`。Knot 全 JVM 只有一份
+  `JavaMethod`，于是 TaCZ 的 `context:xxx()` / `api:xxx()` 全部返回 nil，`nil <= 0` 直接崩。
+- 修复：新增 `cn.sh1rocu.tacz.mixin.compat.holdmyitems.HoldMyItemsJavaMethodMixin`（同一方法的 HEAD
+  接管并 cancel，抢在 RETURN 改写之前）与 `com.tacz.guns.compat.holdmyitems.LuaBridgeGuard`
+  （TaCZ/LRTactical 包名判定门 + 一次性 `AtomicInteger#get` 探针 + 与 luaj 逐行对齐的反射调用）；
+  注册进 `tacz.fabric.mixins.json` 的**通用** `mixins` 列表（HMI 的 mixin 也在通用列表且
+  `environment: "*"`，枪械逻辑脚本在 integrated server 上同样被打成 nil）。
+  由既有 `MixinPlugin` 的 modid 规则过滤：没装 HMI 不应用；装了但探针判定桥健康也不接管。
+- 不改版本号，不改判定门以外的任何渲染/逻辑路径；HMI 的沙箱对非 TaCZ 类（含 Minecraft 本体对象与
+  HMI 自己的脚本）保持原样。
+- **验证进度**：编译由 CI 覆盖 —— `build-reports/compile-java.log`（commit `3164deb`，
+  `job status: success`，8 条 warning 全是既有的 Iris/vanilla mixin 提示，**新增的 luaj mixin 没有任何
+  Mixin AP 警告**）；运行由维护者 2026-09-12 实机通过 —— 与 HMI 5.1 同装手持枪械不再崩溃
+  （`HOLD_MY_ITEMS_COMPAT.md` 第 4 节矩阵的 1-4 项）。改动本身是在无 JDK、无 Loom 缓存的环境里写完的；
+  `docs/verify_mixin_targets.py` 仍未跑（该脚本只校验 `net.minecraft` / `com.mojang` 目标，
+  会跳过这个库类目标）。矩阵 5-10 项未逐条回报，其中第 8 项（不装 HMI 时行为与改动前一致、
+  且不出现探针 WARN）是发版前应补的回归底线。
+- 上游报告已成稿：`HMI_UPSTREAM_REPORT_20260912.md`（英文正文 + 投递入口 `thesapsapling/hmi-docs`
+  Issues + 四个修复选项 + 措辞红线）。按 `AGENTS.md` §5，玩家侧仍引导回本仓库 Issues。
+- 残留边界：脚本对 `api:getItemStack()` / `api:getShooter()` 这类 Minecraft 对象做链式调用仍会被
+  HMI 打成 nil —— 刻意不替 HMI 放宽它的沙箱；默认枪包 42 个脚本经全量 grep 没有这种写法。
+  渲染侧经崩溃栈与两边源码对照判定为**不冲突**（TaCZ 的 WrapOperation 已是
+  `renderArmWithItem` 调用点最外层，且自绘 TaCZ 视图模型时不调用 `original`，HMI 的
+  `renderOverhaul` 因此对 TaCZ 枪械不生效），但同样没有实机目视验证。
+
+---
+
 ## 同步 #92：mesh 光影 pass 生命周期（2026-09-08，静态修复、待实测）
 
 - 来源：26.1.2 PR #92 独立修复 `9412e08`，不是之前 B/C/D 日志修复的回退或重新归因。
