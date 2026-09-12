@@ -249,6 +249,14 @@ gunpack.meta.json
 - 1.21.11 的瞄具裁剪是 branch-specific 的深度孔径实现，不应描述成上游 PIP，也不保证每个
   shader pack 都得到完全相同的结果。
 - 明确依赖 Arcana 的内容不受支持；其他枪包也不能仅凭“能被扫描到”就视为完全兼容。
+- 与 **Hold My Items 5.x** 同装时，HMI 给 luaj 的 `JavaMethod#invokeMethod` 挂了一个全局“Lua 安全层”，
+  把没有它私有 `@Safe` 注解的 Java 方法返回值一律改写成 `nil`；Knot 全 JVM 只有一份 `JavaMethod`，
+  于是 TaCZ 的 `context:xxx()` / `api:xxx()` 全部拿到 `nil`，手持枪械即崩
+  （`attempt to compare __le on nil and number`）。本分支已加定向旁路：只接管 TaCZ/LRTactical 自己的
+  脚本 API，且需运行时探针确认桥确实被改写才生效，HMI 自身的沙箱与其它 mod 不受影响。
+  定位证据、边界与验证矩阵见 [`docs/HOLD_MY_ITEMS_COMPAT.md`](docs/HOLD_MY_ITEMS_COMPAT.md)；
+  该修复提交时**尚未在真实环境跑完那份验证矩阵**，文档里也列出了仍未覆盖的情形
+  （例如脚本对 `api:getItemStack()` 这类 Minecraft 对象做链式调用）。
 
 提交兼容问题时请给出实际包名与版本、完整日志和最小复现环境，不要只给缺失贴图截图。
 
