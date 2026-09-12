@@ -13,9 +13,10 @@ org.luaj.vm2.LuaError: tacz_default_state_machine:74 bad argument: attempt to co
 抢在 HMI 的 `RETURN` 改写之前把真实结果交回脚本。HMI 的沙箱对其余一切（包括 HMI 自己的脚本、Minecraft
 本体对象）保持原样。
 
-> **状态**：定位与实现完成，**尚未编译、尚未运行验证** —— 本次工作环境没有 JDK，也没有 Loom 缓存
-> （`docs/verify_mixin_targets.py` 依赖 `~/.gradle` 里的 merged jar，跑不起来）。
-> 合并前必须走完第 4 节的验证矩阵。
+> **状态（2026-09-12 更新）**：维护者已在实机验证通过 —— 与 HMI 5.1 同装时手持枪械不再崩溃，
+> 编译与启动均正常。也就是第 4 节矩阵的第 1-4 项。
+> 矩阵其余各项（逻辑脚本逐项、专用服务器、**不装 HMI 的回归**、HMI 自身脚本表现、与其他兼容层同装）
+> 尚未逐条回报，仍按未验证对待；本次改动是在无 JDK 的环境里写完的，编译验证同样来自维护者环境。
 
 ---
 
@@ -206,7 +207,9 @@ catch (Exception e) { return LuaValue.error("coercion error " + e); }
 
 ## 3. 明确的边界（不承诺的部分）
 
-1. **未运行验证**。本次改动没有编译、没有启动过游戏（环境无 JDK）。第 4 节的矩阵必须先跑完。
+1. **验证覆盖不完整**。2026-09-12 维护者实机通过的是核心项（编译、启动、手持枪械不再崩溃、
+   空仓那条判断），即第 4 节矩阵的 1-4 项；5-10 项（逻辑脚本逐项、专用服务器、不装 HMI 的回归、
+   HMI 自身脚本、其他兼容层同装）**尚未逐条确认**，其中第 8 项是回归底线，发版前应当补跑。
 2. **脚本链式调用 Minecraft 对象仍然会被 HMI 打成 nil**（`api:getItemStack():getCount()` 一类）。
    这是刻意的：TaCZ 不替 HMI 决定它的沙箱该多宽。枪包作者应改用 TaCZ 自己的门面
    （`LuaNbtAccessor` / `LuaEntityAccessor`）；玩家侧的彻底解法是不装 HMI。
@@ -219,9 +222,11 @@ catch (Exception e) { return LuaValue.error("coercion error " + e); }
 
 ---
 
-## 4. 验证矩阵（合并前必须跑）
+## 4. 验证矩阵
 
 环境：1.21.11 + TaCZ 本次改动 + `holdmyitems 5.1` + Iris（复现原崩溃的组合）。
+
+**2026-09-12 进度**：第 1-4 项已由维护者实机通过；第 5-10 项待逐条确认。
 
 | # | 操作 | 期望 |
 |---|---|---|
@@ -239,6 +244,10 @@ catch (Exception e) { return LuaValue.error("coercion error " + e); }
 ---
 
 ## 5. 建议向上游反馈的内容
+
+> **已成稿**：可直接投递的英文正文、投递入口（`thesapsapling/hmi-docs`，作者名下唯一公开仓库，
+> Issues 已开启）、措辞红线与四个修复选项见
+> [`HMI_UPSTREAM_REPORT_20260912.md`](HMI_UPSTREAM_REPORT_20260912.md)。下面是要点备忘。
 
 给 HMI 作者（或在其发布页留言）时，可以直接引用以下事实：
 
@@ -270,6 +279,33 @@ catch (Exception e) { return LuaValue.error("coercion error " + e); }
    `submitArmWithItem` / `submitHandsWithItems`；移植时按各分支自己的 `ItemInHandRendererMixin`
    注入点核对一遍"TaCZ 自己渲染时不调用 `original`"这个前提即可。
 
+### 6.1 值不值得现在就移植：**不建议，按需再做**
+
+已在 `26.2(main)` 上核对过前提（本 clone 里只有 `26.2(main)` 与本分支，26.1.2 无法直接核对）：
+luaj 依赖同为 `com.github.FiguraMC.luaj:3.0.8-figura`（`include`，build.gradle 162/165 行）、
+mixin 配置同名、`MixinPlugin` 的 modid 规则一致、Lua 暴露类齐全、
+`ItemInHandRendererMixin` 的接管点是 `submitHandsWithItems` → `submitArmWithItem`
+（正是 HMI 26.2 反编译移植里被 `@Redirect` 的那个调用点）。也就是说**技术上可原样复制**。
+
+但不建议预先移植，理由是它并不是通用的"加固"：
+
+- 探针判定为健康时，这套代码**什么都不做**。没有 HMI（或同类全局沙箱）就没有任何健壮性、
+  诊断或性能收益，最多是启动日志里安静一行。
+- 代价却是实打实的：多一个打进库类的 mixin（不可静态验证的运行期面），外加每条分支都要重跑一遍
+  第 4 节矩阵。按 `AGENTS.md` §2/§6 的口径，这属于"没有证据支撑就先背上的负担"。
+- 26.x 上 HMI 目前只有第三方反编译移植（`ThinkofRain1213/HMI-26.2` 保留 modid `holdmyitems`
+  与同一段 `safety.JavaMethodMixin`；曾出现过 `ByteMe6/HMI-26.1.2` 仓库，现已 404 无法核对内容），
+  官方是否出 26.x 版本未知。
+
+**触发条件（满足任一条就移植，约 15 分钟）**：
+
+1. 26.x 玩家日志出现同一签名：TaCZ 的 lua 脚本报 `attempt to compare/index ... nil`、
+   stdout 有 `HMI Lua safety layer loaded!`、模组列表含 `holdmyitems`；
+2. 26.x 的 HMI 移植版开始被普遍使用。
+
+一个需要注意的坑：`MixinPlugin` 用包名第 6 段当 modid 过滤，所以**如果 26.x 的移植版换了 modid**，
+要么再开一个 `compat.<新modid>` 包放同一份 mixin，要么把这条规则改成显式白名单。
+
 ---
 
 ## 7. 相关文件
@@ -277,5 +313,6 @@ catch (Exception e) { return LuaValue.error("coercion error " + e); }
 - `src/main/java/com/tacz/guns/compat/holdmyitems/LuaBridgeGuard.java`
 - `src/main/java/cn/sh1rocu/tacz/mixin/compat/holdmyitems/HoldMyItemsJavaMethodMixin.java`
 - `src/main/resources/tacz.fabric.mixins.json`
+- `docs/HMI_UPSTREAM_REPORT_20260912.md`（可直接投递的上游报告草稿）
 - 参考：`docs/CARRYON_COMPAT.md`（同类兼容文档）、`src/main/java/com/tacz/guns/compat/firstperson/FirstPersonAnimationCompat.java`（单向让位契约）、
   `src/main/java/com/tacz/guns/mixin/client/ItemInHandRendererMixin.java`（第一人称接管点）

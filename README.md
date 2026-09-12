@@ -254,9 +254,10 @@ gunpack.meta.json
   于是 TaCZ 的 `context:xxx()` / `api:xxx()` 全部拿到 `nil`，手持枪械即崩
   （`attempt to compare __le on nil and number`）。本分支已加定向旁路：只接管 TaCZ/LRTactical 自己的
   脚本 API，且需运行时探针确认桥确实被改写才生效，HMI 自身的沙箱与其它 mod 不受影响。
-  定位证据、边界与验证矩阵见 [`docs/HOLD_MY_ITEMS_COMPAT.md`](docs/HOLD_MY_ITEMS_COMPAT.md)；
-  该修复提交时**尚未在真实环境跑完那份验证矩阵**，文档里也列出了仍未覆盖的情形
-  （例如脚本对 `api:getItemStack()` 这类 Minecraft 对象做链式调用）。
+  定位证据、边界与验证矩阵见 [`docs/HOLD_MY_ITEMS_COMPAT.md`](docs/HOLD_MY_ITEMS_COMPAT.md)。
+  **2026-09-12 已实机通过**（与 HMI 5.1 同装、手持枪械不再崩溃）；矩阵其余各项（逻辑脚本逐项、
+  专用服务器、不装 HMI 的回归、HMI 自身脚本表现）仍待逐条确认。刻意未覆盖的情形：脚本对
+  `api:getItemStack()` 这类 Minecraft 对象做链式调用仍会被 HMI 打成 nil。
 
 提交兼容问题时请给出实际包名与版本、完整日志和最小复现环境，不要只给缺失贴图截图。
 
