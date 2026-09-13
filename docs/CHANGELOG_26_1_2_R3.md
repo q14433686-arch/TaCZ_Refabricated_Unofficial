@@ -8,6 +8,97 @@
 
 ---
 
+## 2026-09-13 · 跨线同步轮（1.21.11 `b3a01b1` → 本线）+ 版本号改为 R3-hotfix2
+
+### 修复
+
+1. **第一人称手部错位（全枪械）：中和 vanilla 1.21.9+ 手臂的 `zRot=±0.1`**
+   同步自 1.21.11 线 `61ab4a0`，落点 `com.tacz.guns.util.RenderHelper`。
+   - **症状**：所有手枪整体偏左、手没握住枪；两把默认双管换弹时手部绑定/动画错位、
+     弹药悬浮在手上方。错位量恒定、非常有规律。1.21.1 上游无此问题，
+     26.2 / 26.1.2 / 1.21.11 **全分支复现**。
+   - **根因**：vanilla 在 1.21.1 → 1.21.9 的渲染重构里给 `AvatarRenderer#renderHand`
+     加了 `model.leftArm.zRot = -0.1F` / `model.rightArm.zRot = 0.1F`（约 ±5.7°）；
+     而 TACZ 全部枪模的 `righthand_pos` / `lefthand_pos` 都是按 1.21.1 的 `zRot=0`
+     姿态 authored 的。手臂网格绕肩部 pivot 凭空多转 ±5.7° ⇒ 手相对枪恒定偏转。
+   - **修法**：`RenderHelper#renderFirstPersonArm`（带 `clipToScopeExterior` 的那个重载，
+     即真正调用 vanilla 的那个）在每次 vanilla 手部调用之后调用新增的
+     `resetFirstPersonArmLean(renderer)`，把 `PlayerModel` 的**两条**手臂 `zRot` 清零。
+     依据是本文件此前记过的机制：`submitModelPart` 只拷贝矩阵、`ModelPart` 是活引用，
+     旋转要到 `renderHandsWithItems` 末尾的 `renderAllFeatures`（26.1.2 字节码实测 @281）
+     才被读取，所以 submit 之后、flush 之前的写入决定最终姿态。
+     两条必须一起清：vanilla 每次调用**同时**污染左右两条，双持枪连续提交两次时
+     后一次会把前一条重新污染。
+   - **为什么不影响 vanilla 物品的手臂**：本方法只在 TACZ 接管 viewmodel 时被调用
+     （`ItemInHandRendererMixin#tacz$submitArmWithAnimatedItem` 拦掉 vanilla 的
+     `renderArmWithItem` 之后），TACZ 接管的 flush 里没有 vanilla 手臂提交
+     （主手接管时副手被拦、TACZ 从不渲染副手）；纯 vanilla 的 flush 走不到这里。
+   - **与「第 5 轮：submit 之后绝不能还原 PlayerModel」不矛盾**：第 5 轮禁止的是把
+     vanilla **整备好**的 `visible`/pose 还原掉（那会重现手臂残缺）；本轮中和的是
+     vanilla **新增**的一笔写入，且只动 `zRot`。同一机制、相反方向，是刻意的。
+     两处注释互相指认，避免后来者按第 5 轮的口径把本轮改动"顺手回滚"。
+   - **本线适配点**：26.1.2 的 `renderFirstPersonArm` 比 1.21.11 多一个
+     `clipToScopeExterior` 重载（镜内裁手），清零那一步与该开关无关，
+     因此放在 6 参重载里**无条件**执行；5 参重载只加了一句指向说明。
+   - *证据级别：1.21.11 反编译源码逐行确认（`61ab4a0` 已注明 1.21.9/1.21.10/26.1.2
+     三条 vanilla 代码相同）+ 那条 commit 在 1.21.11 线过了 CI 编译门；
+     本线 = **同形移植**，编译门待 CI 回写、**实机未验**（沙箱无 JDK 与 Loom 缓存）。*
+
+   验收（实机）：第一人称下手与枪贴合、手枪不再整体偏左；两把默认双管换弹时
+   手部与弹药对齐；第三人称、vanilla 物品（含盾牌/弓/普通方块）的手臂姿态不变；
+   开关 `ScopeArmClip`（镜内裁手）两种状态下各看一次。
+
+### 版本号
+
+2. **`mod_version` → `1.1.8+fabric.26.1.2.R3-hotfix2`**
+   命名沿用 R2 那一轮的规矩（`R2` → `R2-hotfix` → `R2-hotfix2`）：hotfix 序号
+   **直接接在 `hotfix` 后面**，中间不放 `.` / `-` / `_` 任何分隔符 ——
+   TaCZTweaks 按版本号字符串识别本项目，且 SemVer 里多一个 `-` 会把后续内容拽进
+   prerelease 段、破坏「`>=1.1.8` 必须成立」这条枪包加载前提。
+   该规矩此前只写在 `26.2(main)` 的 `gradle.properties` 注释里，本轮一并补进本线。
+   - 同步位置（AGENTS.md §1）：README 顶部版本句 / 「已使用 R3-hotfix2 版本号」提示行 /
+     支持环境表「R3-hotfix2 构建使用」与「本 mod」行 / SemVer 说明段，共 5 处；
+     `fabric.mod.json` 的 `name` 与 `description`（description 里
+     「based on upstream 1.1.8-hotfix」是上游 Forge 基线，未动）；
+     `gradle.properties` 注释里三处版本号示例。
+     依赖版本未变，故支持环境表的依赖格子与可选集成表不动；
+     导航表指向分支 tree，也不动。
+   - 顺带修掉一处遗留不一致：`01f7f45d`（R3 → R3-hotfix）只改了 `mod_version` 一行，
+     `gradle.properties` 的注释仍停在 `R3`，本轮对齐到 `R3-hotfix2`。
+   - *自检：`bash scripts/check_release_consistency.sh` → 通过 6 · 失败 0 · 警告 1
+     （警告是 arena 会话分支名推不出 MC 系列，属预期）。脚本本体已支持
+     `-hotfix<n>` 后缀，无需再改。*
+
+### 已知未做（登记，不含未宣布的行为变化）
+
+3. **Hold My Items 5.x 兼容旁路：本线不移植（沿用 1.21.11 线的判断）**
+   1.21.11 线 `3164deb` 用「HEAD 接管 + cancel」抢在 HMI 的
+   `com.holdmylua.source.mixin.safety.JavaMethodMixin` 改写返回值之前，把真实结果交回
+   TaCZ 的 lua（HMI 会把没有它私有 `@Safe` 注解的方法返回值一律改成 `nil`，
+   Knot 全 JVM 只加载一份 `org.luaj.vm2.lib.jse.JavaMethod`，于是
+   `default_state_machine.lua:74` 的 `nil <= 0` 直接崩）。该修复已由维护者
+   2026-09-12 在 1.21.11 实机通过。
+   其 `docs/HOLD_MY_ITEMS_COMPAT.md` §6.1 明确判断 26.x **不预先移植**：探针健康时
+   这套代码什么都不做（零收益），代价却是多一个打进库类的 mixin（不可静态验证的
+   运行期面）+ 每条分支重跑 10 项矩阵。本线沿用该判断，**未移植**。
+   - 触发条件（满足任一条再做，约 15 分钟）：① 26.x 玩家日志出现同一签名
+     （TaCZ lua 报 `attempt to compare/index ... nil`、stdout 有
+     `HMI Lua safety layer loaded!`、模组列表含 `holdmyitems`）；② 26.x 的 HMI
+     移植版开始被普遍使用。
+   - 届时本线的前提已核对：luaj 同为 `include` 的 Figura fork、mixin 配置同名、
+     `MixinPlugin` 的 modid 规则一致（包名须保持
+     `cn.sh1rocu.tacz.mixin.compat.holdmyitems`，注册进 `tacz.fabric.mixins.json`）、
+     接管点是 `renderHandsWithItems` → `renderArmWithItem` 的 `@WrapOperation`
+     （26.2 叫 `submitHandsWithItems` → `submitArmWithItem`），TACZ 自渲染时
+     确实不调用 `original`。坑：26.x 的 HMI 只有第三方反编译移植，若它换了 modid，
+     `MixinPlugin` 的包名第 6 段过滤会失效，需要另开 `compat.<新modid>` 包或改白名单。
+4. **`RawOutput.log`（1.21.11 线 `ff9c327`，维护者网页上传）未同步**
+   那是 1.21.11 的 intermediary 崩溃日志（`class_9909` / `method_61910` 一类名字），
+   不是修复本体，映射也与本线（26.x 非混淆）不符；本线已有自己的 `latest.log`
+   与 `build-reports/`（后者由 CI 回写）。
+
+---
+
 ## 2026-09-07 · 其他枪包工作台 JEI 无配方 / 合成无结果（**根因已定：误删 RecipeCompat 兼容层**）
 
 1. **恢复旧枪包原版配方兼容层 `RecipeCompat`（移植 26.2，本次移植时误删）**

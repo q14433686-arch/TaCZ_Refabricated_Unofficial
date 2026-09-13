@@ -1,6 +1,7 @@
-> **本文件是 26.2 线账本的副本 + 26.1.2 线本轮的追加行**（2026-09-02 同步轮）。
-> 家族级 12 行（#1-#12）是 26.2 侧原文，未改写；本线这一轮的处置追加在文末
-> 「26.1.2 线追加」段，行号 M-1…M-8。哪条线改了家族级结论由那条线改，本线只改自己的 M 行。
+> **本文件是 26.2 线账本的副本 + 26.1.2 线各轮的追加行**。
+> 家族级 12 行（#1-#12）是 26.2 侧原文，未改写；本线的处置按轮次追加在文末
+> 「26.1.2 线追加」段：2026-09-02 轮 = M-1…M-12，2026-09-13 轮 = M-13…M-14。
+> 哪条线改了家族级结论由那条线改，本线只改自己的 M 行。
 
 # 跨分支/跨仓 Handoff 登记账本（refab 侧副本）
 
@@ -61,3 +62,19 @@
   `prepare()` 世代的三个 mixin、`RenderConfig` 里 26.2 独有的 29 个键、`99b15b2`（方向反了：26.2 从本线搬的）。
 - **观望**：`IlluminatedLights`（与本线 `MeshPolyIlluminatedRealSky` 是否同一机制的两种形态未核）；
   R3 配置默认值定稿（本线与 26.2 都是默认开，1.21.11 是默认关并要实测数据 —— 三方唯一还开着的判定分歧，本沙箱给不出数据）。
+
+---
+
+## 26.1.2 线追加（2026-09-13 同步轮，取货自 1.21.11 `b3a01b1`）
+
+| # | 项 | 方向 | 状态 | 备注 |
+|---|---|---|---|---|
+| M-13 | 第一人称手部错位：中和 vanilla 1.21.9+ `AvatarRenderer#renderHand` 的 `leftArm.zRot = -0.1F` / `rightArm.zRot = 0.1F`（新增 `RenderHelper#resetFirstPersonArmLean`，每次 vanilla 手部调用之后把**两条**手臂 `zRot` 清零） | 1.21.11 `61ab4a0` → 26.1.2 | **已落地待实机** | 三线同因：货源 commit 已逐行核对 1.21.9/1.21.10/26.1.2 的 vanilla 代码相同（1.21.1 的 `PlayerRenderer#renderArm` 无此两行），而 TACZ 枪模手部定位按 `zRot=0` authored ⇒ 手相对枪恒定偏转 ±5.7°。本线适配点：清零放在带 `clipToScopeExterior` 的 6 参重载（真正调 vanilla 的那个）里、**无条件**执行，与镜内裁手开关无关；5 参重载只加指向说明。**26.2(main) 同样缺这一件**（其 `RenderHelper` 无 `resetFirstPersonArmLean`），待该线自取。细节与验收清单见 `docs/CHANGELOG_26_1_2_R3.md` 的 2026-09-13 节 |
+| M-14 | Hold My Items 5.x 兼容旁路（`HoldMyItemsJavaMethodMixin` 在 luaj `JavaMethod#invokeMethod` 的 HEAD 接管 + `LuaBridgeGuard` 包名判定门/一次性探针） | 1.21.11 `3164deb`（维护者 09-12 实机通过）→ 26.1.2 | **登记未做（沿用货源线判断）** | 货源 `docs/HOLD_MY_ITEMS_COMPAT.md` §6.1 的结论对 26.x 同样成立：技术上可原样复制（本线前提已核对：luaj 同为 `include` 的 Figura fork、mixin 配置同名、`MixinPlugin` modid 规则一致、接管点是 `renderHandsWithItems` → `renderArmWithItem` 的 `@WrapOperation` 且 TACZ 自渲染时不调 `original`），但探针健康时**零收益**，代价是多一个打进库类的 mixin（不可静态验证的运行期面）+ 本线重跑 10 项矩阵 ⇒ 不预先移植。两条触发条件（26.x 玩家日志出现同一签名 / 26.x 的 HMI 移植版普及）与 modid 变更的坑见 changelog 同节 |
+
+> 本轮另有一项不占 M 号的收尾：`mod_version` → `1.1.8+fabric.26.1.2.R3-hotfix2`
+> （命名沿用 R2 那一轮 `R2-hotfix` → `R2-hotfix2` 的规矩，序号直接接在 `hotfix` 后、
+> 无分隔符），README 5 处 + `fabric.mod.json` name/description + `gradle.properties`
+> 注释同步，`scripts/check_release_consistency.sh` 通过 6 · 失败 0。
+> 1.21.11 线维护者网页上传的 `RawOutput.log`（`ff9c327`，intermediary 崩溃日志）未同步：
+> 不是修复本体，映射与本线（26.x 非混淆）也不符。
