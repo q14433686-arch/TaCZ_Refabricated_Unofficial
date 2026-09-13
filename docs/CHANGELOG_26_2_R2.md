@@ -10,6 +10,32 @@
 本 release 保持 `1.1.8` 为 SemVer 核心；`+fabric.26.2.R2` 是不参与版本谓词排序的 build
 metadata，不能写成 `1.1.8-R2`。
 
+## R3-hotfix2（2026-09-13）
+
+**构建元数据：`1.1.8+fabric.26.2.R3-hotfix2`**（hotfix 序号直接接在 `hotfix` 后面，
+中间不放 `.` / `-` / `_`，命名格式沿用 R2-hotfix2。）
+
+在 R3-hotfix 基础上同步 1.21.11 线（分支 `arena/01a09a6c` / PR #102）的第一人称
+手部错位修复；其余内容不变。
+
+### 第一人称手部错位修复（移植自 1.21.11 线 commit `61ab4a0`）
+
+- **症状**：全枪械第一人称手部相对枪身恒定偏转——手枪整体偏左、手没握住枪；
+  默认双管换弹时手部绑定/动画错位、弹药悬浮在手上方；错位量恒定、非常有规律。
+- **根因**：vanilla 在 1.21.1 → 1.21.9 的渲染重构里给 `AvatarRenderer#renderHand`
+  写入 `leftArm.zRot = -0.1F` / `rightArm.zRot = +0.1F`（约 ±5.7°），而 TACZ 全部
+  枪模的手部定位（`righthand_pos`/`lefthand_pos`）都按 1.21.1 的 `zRot=0` 姿态
+  authored。1.21.11 反编译源码逐行确认，1.21.9/1.21.10/26.1.2 同样存在这两行，
+  26.2 合并 jar 的 `AvatarRenderer` 常量池同样含这两个 ±0.1F 写入；1.21.1 的
+  `PlayerRenderer#renderArm` 没有这两行（手臂笔直渲染，上游 1.21.1 无此问题）。
+- **修复**：`RenderHelper#renderFirstPersonArm` 在每次 vanilla 手部提交后把<b>两条</b>
+  手臂 `zRot` 清零（`submitModelPart` 持 ModelPart 活引用、旋转在 flush 时才读，
+  故 submit 后清零精确还原 1.21.1 语义；vanilla 每次调用同时污染左右两条，
+  故必须两条一起清）。TACZ 接管的 flush 里无 vanilla 手臂提交，不影响 vanilla 物品。
+- **验证状态**：移植与 1.21.11 线逐字一致（仅注释内 MC 版本号差异）；所依赖 API
+  已对照 26.2 合并 jar 核验（`LivingEntityRenderer#getModel` → `PlayerModel`、
+  `ModelPart#zRot`）。CI 编译与实机验证待补（**待实测**）。
+
 ## R3-hotfix（2026-09-09）
 
 **构建元数据：`1.1.8+fabric.26.2.R3-hotfix`**
