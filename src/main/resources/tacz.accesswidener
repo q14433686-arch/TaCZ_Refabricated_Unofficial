@@ -1,12 +1,15 @@
 accessWidener v2 official
 
-# Confirmed against the Minecraft 26.2 development jar by compileJava.
-# Keep entries minimal; the remaining 1.21.1 targets must be individually revalidated.
+# Confirmed against the Minecraft 26.3 development jar by compileJava.
+# Keep entries minimal; entries added in prior drops are revalidated each Minecraft bump.
+# 26.3 bump note: FabricLoader 0.19.5 / Fabric API 0.160.6+26.3 未新增本仓需要开放的成员；
+# 若下面的方法签名在后续 drop 改名/换包，javac 会第一时间报 "cannot find symbol"。
 accessible field net/minecraft/world/entity/LivingEntity jumping Z
 accessible method net/minecraft/client/multiplayer/MultiPlayerGameMode ensureHasSentCarriedItem ()V
 accessible method net/minecraft/client/Minecraft startUseItem ()V
-# LRTactical 近战暴击判定：Player#canCriticalAttack 在 26.2 是【包级私有】
-# （字节码确认 access flags 无 public/protected）。它封装了原版全部暴击条件
+# LRTactical 近战暴击判定：Player#canCriticalAttack 在 26.3 仍是【包级私有】
+# （字节码确认 access flags 无 public/protected，经 26.2→26.3 核查未改动）。
+# 它封装了原版全部暴击条件
 # （fallDistance>0 && !onGround && !onClimbable && !isInWater
 #  && !isMobilityRestricted && !isPassenger && target instanceof LivingEntity && !isSprinting），
 # 直接复用可保证与原版【完全一致】而非行为近似，故开放访问而不是手写一遍条件。

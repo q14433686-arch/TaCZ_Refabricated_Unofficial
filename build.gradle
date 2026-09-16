@@ -16,6 +16,11 @@ fabricApi {
     }
 }
 
+// 26.3 阶段：Zoomify/REI/Shoulder Surfing/PAL 等 compileOnly 依赖暂未发布 26.3 构建，
+// 它们的 26.2 jar API 面与本仓使用的子集兼容，先忽略 Loom 的 MC 版本校验，
+// 待上游发 26.3 构建后去掉本属性并 bump 版本号（见 docs/pending_dependency_updates.md）。
+loom.ignoreDependencyLoomVersionValidation=true
+
 loom {
     accessWidenerPath = file("src/main/resources/tacz.accesswidener")
     // From Loom 1.17: mixin AP is no longer enabled by default.
@@ -28,7 +33,7 @@ loom {
     runs {
         client {
             // The embedded default pack alone contains >80 MiB of textures, audio, and models.
-            // 384 MiB consistently OOMs during its first resource reload under 26.2.
+            // 384 MiB consistently OOMs during its first resource reload under 26.x.
             vmArg "-Xmx768m"
         }
         server {
@@ -140,10 +145,10 @@ dependencies {
     annotationProcessor 'com.google.code.findbugs:jsr305:3.0.2'
 
     // ============================================================
-    // 以下依赖经 26.2 可用性核查后保留禁用；待上游发布 26.2 构建再恢复
+    // 以下依赖经 26.3 可用性核查后保留禁用；待上游发布 26.3 构建再恢复
     // ============================================================
 
-    // simplebedrockmodel — 需要确认 26.2 兼容版本
+    // simplebedrockmodel — 需要确认 26.3 兼容版本
     // implementation(include("libs:simplebedrockmodel-fabric:2.3.0.1+mc1.20.1"))
 
     // MAE (Math Expression Evaluator / animation pose API).
@@ -170,13 +175,14 @@ dependencies {
     }
 
     // ============================================================
-    // 以下为运行时/编译时 mod 依赖；无 26.2 构建的项保持注释
+    // 以下为运行时/编译时 mod 依赖；无 26.3 构建的项保持注释 / 沿用 26.2 坐标
+    // （Zoomify/REI/ShoulderSurfing 已通过 loom.ignoreDependencyLoomVersionValidation 放行）
     // ============================================================
 
-    // JEI — 26.2 (pinned to Modrinth 30.13.0.86; compile against the full Fabric jar, which includes the API)
+    // JEI — 26.3 (beta, pinned to CurseForge 31.0.0.5 for Fabric 26.3; compile against the full Fabric jar, which includes the API)
     compileOnly "maven.modrinth:jei:${jei_version}"
 
-    // Cloth Config — 26.2
+    // Cloth Config — 26.3
     implementation "me.shedaniel.cloth:cloth-config-fabric:${cloth_config_fabric}"
 
     // Embeddium
@@ -185,8 +191,8 @@ dependencies {
     // Carry On
     // compileOnly "curse.maven:carry-on-274259:${carry_on_id}"
 
-    // Player Animation Lib — 26.2：KosmX(dev.kosmx.playerAnim) 无 26.2 构建；现已将第三人称
-    // 四层动画语义迁移到 zigythebird PAL 1.2.5。PAL 运行时可选，只编译其隔离兼容实现所需 API。
+    // Player Animation Lib — 26.3：沿用 zigythebird PAL 1.2.5（API 面稳定、compileOnly 隔离）；
+    // KosmX (dev.kosmx.playerAnim) 自 26.1+ 起即无构建，第三人称四层动画语义已迁移到 PAL 实现。
     compileOnly "maven.modrinth:player-animation-library:${player_animation_lib}"
 
     // KubeJS
@@ -194,34 +200,34 @@ dependencies {
     // compileOnly "dev.latvian.mods:rhino-fabric:${rhino_version}"
     // compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
 
-    // CCA (Cardinal Components API) - 26.2: 移除，与 Mojang 映射不兼容
+    // CCA (Cardinal Components API) - 26.x: 移除，与 Mojang 映射不兼容
     // implementation(include("dev.onyxstudios.cardinal-components-api:cardinal-components-base:5.2.3"))
     // implementation(include("dev.onyxstudios.cardinal-components-api:cardinal-components-entity:5.2.3"))
 
     // MKB (Modern Keybinding)
     // implementation(include("maven.modrinth:modernkeybinding:1.20.X-1.2.0"))
 
-    // Forge Config API Port - 26.2 compatible (ForgeConfigSpec + ForgeConfigRegistry)
-    // 26.2.1 Fabric: https://github.com/Fuzss/forge-config-api-port (branch 26.2.x)
-    implementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.2.1"
-    // 备用 (如果上面 maven 仓库不可用): curse.maven:forge-config-api-port-547434:8292030
+    // Forge Config API Port - 26.3 compatible (ForgeConfigSpec + ForgeConfigRegistry)
+    // 26.3.0 Fabric: https://github.com/Fuzss/forge-config-api-port (branch 26.3.x, primary)
+    implementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.3.0"
 
-    // ModMenu — 26.2 (via Modrinth maven)
+    // ModMenu — 26.3 (v21.0.1-beta.1 via Modrinth maven; 运行期建议玩家装最新 beta/release)
     implementation "maven.modrinth:modmenu:${modmenu_version}"
 
     // Zoomify
-    // Zoomify — 26.2 (Modrinth 2.16.1+26.2)
+    // Zoomify — 26.3 构建暂未发布，沿用 26.2 坐标 2.16.1+26.2 compileOnly（LoL 校验已忽略）
     compileOnly "maven.modrinth:zoomify:${zoomify_version}"
 
     // ImmediatelyFast 1.16.x has no public batching API anymore. TACZ's 26.2
     // SubmitNodeCollector path needs no compile-time bridge; see ImmediatelyFastCompat.
 
-    // Shoulder Surfing Reloaded — 26.2 (plugin API 5.x, optional at runtime)
+    // Shoulder Surfing Reloaded — 26.3 构建暂未发布，沿用 26.2 坐标 compileOnly
+    // （plugin API 5.x 小版本二进制兼容，跨小版本通常可加载）
     compileOnly("maven.modrinth:shoulder-surfing-reloaded:${shoulder_surfing_version}") {
         transitive = false
     }
 
-    // REI — 26.2
+    // REI — 26.3 构建暂未发布，沿用 26.2 坐标 26.2.820 compileOnly
     compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
     compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
     compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
@@ -255,11 +261,11 @@ tasks.withType(JavaCompile).configureEach {
     }
 }
 
-// 26.2 兼容模块回补：原 sourceSets exclude 块已移除（违反"禁止 exclude 业务源码"约束）。
+// 26.3 兼容模块回补：原 sourceSets exclude 块已移除（违反"禁止 exclude 业务源码"约束）。
 // 所有 compat 模块现重新纳入编译，逐模块正向修复。见 AUDIT_REPORT_verified.md §7。
 //
-// 【已审批的临时排除】以下模块的目标 mod 在 26.2 Fabric 暂无构建（经 Modrinth 核实），
-// 其 API 类不存在、无法编译。用户已批准临时排除，待上游 26.2 移植后回补。
+// 【已审批的临时排除】以下模块的目标 mod 在 26.3 Fabric 暂无构建（2026-09-16 Modrinth 核实），
+// 其 API 类不存在、无法编译。待上游 26.3 移植后回补。
 // 受影响：Accelerated Rendering、Controllable、KubeJS、Modern Keybinding(随 controllable)、Optifine。
 // 注意：iris/sulkan 兼容按用户要求"两者都要兼容"，不在此排除清单内。
 sourceSets {
@@ -270,7 +276,7 @@ sourceSets {
             exclude 'com/tacz/guns/compat/ar/AcceleratedBeamRenderer.java'
             // Controllable：仅排除硬依赖 mrcrayfish 的 IMPL，保留 ControllableCompat 门面
             exclude 'com/tacz/guns/compat/controllable/ControllableInner.java'
-            // KubeJS：dev.latvian.kubejs 无 26.2 Fabric 构建，核心 KubeJSGunEventPoster/GunMod 改为禁用态门面
+            // KubeJS：dev.latvian.kubejs 无 26.3 Fabric 构建（26.x 以来均无），核心 KubeJSGunEventPoster/GunMod 改为禁用态门面
             exclude 'com/tacz/guns/compat/kubejs/**'
             // 仅排除已被 PAL 实现替代、且硬依赖 KosmX API 的旧 animation 包/资产管理器；
             // PlayerAnimatorCompat 门面与 compat/playeranimator/pal/** 均正常参与编译。
