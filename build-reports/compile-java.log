@@ -1,4 +1,4 @@
-commit: 6a5c0dfc4856c721a2382b00783d69723e90e264
+commit: 97eaa7e3629becb7e51c3078105514d1aa266754
 Fetching distribution.
 Downloading https://services.gradle.org/distributions/gradle-9.6.0-bin.zip
 .............10%.............20%..............30%.............40%..............50%.............60%.............70%..............80%.............90%..............100%
@@ -22,156 +22,860 @@ Daemon will be stopped at the end of the build
 
 > Configure project :
 Fabric Loom: 1.17.21
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1789578228823.json
 
-[Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-A problem occurred configuring root project 'TACZ-Refabricated'.
-> Could not resolve all files for configuration ':mainRuntimeDependencyResolve'.
-   > Could not find maven.modrinth:modmenu:21.0.1-beta.1.
-     Searched in the following locations:
-       - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/.gradle/loom-cache/remapped_mods/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - file:/home/runner/.gradle/caches/fabric-loom/minecraftMaven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/.gradle/loom-cache/minecraftMaven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://maven.fabricmc.net/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://libraries.minecraft.net/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://libraries.minecraft.net/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.jar
-       - https://repo.maven.apache.org/maven2/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://maven.blamejared.com/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://modmaven.k-4u.nl/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://api.modrinth.com/maven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://maven.shedaniel.me/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://dvs1.progwml6.com/files/maven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://modmaven.dev/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://maven.tterrag.com/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://maven.kosmx.dev/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://maven.ladysnake.org/releases/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://raw.githubusercontent.com/Fuzss/modresources/main/maven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://maven.terraformersmc.com/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - https://mvn.devos.one/snapshots/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - file:/home/runner/.m2/repository/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-       - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/libs/modmenu-21.0.1-beta.1.jar
-       - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/libs/modmenu.jar
-     Required by:
-         root project 'TACZ-Refabricated'
-
-* Try:
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-> Get more help at https://help.gradle.org.
-
-* Exception is:
-org.gradle.api.ProjectConfigurationException: A problem occurred configuring root project 'TACZ-Refabricated'.
-	at org.gradle.configuration.project.LifecycleProjectEvaluator.wrapException(LifecycleProjectEvaluator.java:84)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator.addConfigurationFailure(LifecycleProjectEvaluator.java:77)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator.access$500(LifecycleProjectEvaluator.java:55)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator$NotifyAfterEvaluate.run(LifecycleProjectEvaluator.java:255)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator$EvaluateProject.lambda$run$0(LifecycleProjectEvaluator.java:114)
-	at org.gradle.api.internal.project.DefaultProjectState.lambda$applyToMutableState$0(DefaultProjectState.java:226)
-	at org.gradle.api.internal.project.DefaultProjectState.lambda$fromMutableState$1(DefaultProjectState.java:233)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$runAndReleaseLocks$0(DefaultWorkerLeaseService.java:300)
-	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAndReleaseLocks(DefaultWorkerLeaseService.java:298)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocksAcquired(DefaultWorkerLeaseService.java:294)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$withReplacedLocks$4(DefaultWorkerLeaseService.java:450)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:372)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withReplacedLocks(DefaultWorkerLeaseService.java:449)
-	at org.gradle.api.internal.project.DefaultProjectState.runWithModelLock(DefaultProjectState.java:254)
-	at org.gradle.api.internal.project.DefaultProjectState.fromMutableState(DefaultProjectState.java:233)
-	at org.gradle.api.internal.project.DefaultProjectState.applyToMutableState(DefaultProjectState.java:225)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator$EvaluateProject.run(LifecycleProjectEvaluator.java:100)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator.evaluate(LifecycleProjectEvaluator.java:72)
-	at org.gradle.api.internal.project.DefaultProject.evaluateUnchecked(DefaultProject.java:828)
-	at org.gradle.api.internal.project.ProjectLifecycleController.lambda$ensureSelfConfigured$2(ProjectLifecycleController.java:96)
-	at org.gradle.internal.model.StateTransitionController.lambda$doTransition$15(StateTransitionController.java:293)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:304)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:292)
-	at org.gradle.internal.model.StateTransitionController.lambda$maybeTransitionIfNotCurrentlyTransitioning$11(StateTransitionController.java:237)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:35)
-	at org.gradle.internal.model.StateTransitionController.maybeTransitionIfNotCurrentlyTransitioning(StateTransitionController.java:233)
-	at org.gradle.api.internal.project.ProjectLifecycleController.ensureSelfConfigured(ProjectLifecycleController.java:96)
-	at org.gradle.api.internal.project.DefaultProjectState.ensureConfigured(DefaultProjectState.java:194)
-	at org.gradle.execution.TaskPathProjectEvaluator.configure(TaskPathProjectEvaluator.java:70)
-	at org.gradle.execution.TaskPathProjectEvaluator.configureHierarchy(TaskPathProjectEvaluator.java:84)
-	at org.gradle.configuration.DefaultProjectsPreparer.prepareProjects(DefaultProjectsPreparer.java:52)
-	at org.gradle.configuration.BuildTreePreparingProjectsPreparer.prepareProjects(BuildTreePreparingProjectsPreparer.java:65)
-	at org.gradle.configuration.BuildOperationFiringProjectsPreparer$ConfigureBuild.run(BuildOperationFiringProjectsPreparer.java:52)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.configuration.BuildOperationFiringProjectsPreparer.prepareProjects(BuildOperationFiringProjectsPreparer.java:40)
-	at org.gradle.initialization.VintageBuildModelController.lambda$prepareProjects$2(VintageBuildModelController.java:83)
-	at org.gradle.internal.model.StateTransitionController.lambda$doTransition$15(StateTransitionController.java:293)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:304)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:292)
-	at org.gradle.internal.model.StateTransitionController.lambda$transitionIfNotPreviously$12(StateTransitionController.java:251)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:35)
-	at org.gradle.internal.model.StateTransitionController.transitionIfNotPreviously(StateTransitionController.java:247)
-	at org.gradle.initialization.VintageBuildModelController.prepareProjects(VintageBuildModelController.java:83)
-	at org.gradle.initialization.VintageBuildModelController.prepareToScheduleTasks(VintageBuildModelController.java:70)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$prepareToScheduleTasks$7(DefaultBuildLifecycleController.java:185)
-	at org.gradle.internal.model.StateTransitionController.lambda$doTransition$15(StateTransitionController.java:293)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:304)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:292)
-	at org.gradle.internal.model.StateTransitionController.lambda$maybeTransition$10(StateTransitionController.java:228)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:35)
-	at org.gradle.internal.model.StateTransitionController.maybeTransition(StateTransitionController.java:224)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.prepareToScheduleTasks(DefaultBuildLifecycleController.java:183)
-	at org.gradle.internal.buildtree.DefaultBuildTreeWorkPreparer.scheduleRequestedTasks(DefaultBuildTreeWorkPreparer.java:35)
-	at org.gradle.internal.cc.impl.barrier.BarrierAwareBuildTreeWorkPreparer.scheduleRequestedTasks$lambda$0(BarrierAwareBuildTreeWorkPreparer.kt:34)
-	at org.gradle.internal.cc.impl.barrier.VintageConfigurationTimeActionRunner.runConfigurationTimeAction(VintageConfigurationTimeActionRunner.kt:48)
-	at org.gradle.internal.cc.impl.barrier.BarrierAwareBuildTreeWorkPreparer.scheduleRequestedTasks(BarrierAwareBuildTreeWorkPreparer.kt:33)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController$scheduleAndRunRequestedTasks$1$finalizedGraph$1.call(VintageBuildTreeWorkController.kt:37)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController$scheduleAndRunRequestedTasks$1$finalizedGraph$1.call(VintageBuildTreeWorkController.kt:37)
-	at org.gradle.internal.Try.ofFailable(Try.java:46)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController$scheduleAndRunRequestedTasks$1.apply(VintageBuildTreeWorkController.kt:37)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController$scheduleAndRunRequestedTasks$1.apply(VintageBuildTreeWorkController.kt:36)
-	at org.gradle.composite.internal.DefaultIncludedBuildTaskGraph.withNewWorkGraph(DefaultIncludedBuildTaskGraph.java:115)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController.scheduleAndRunRequestedTasks(VintageBuildTreeWorkController.kt:36)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.lambda$scheduleAndRunTasks$1(DefaultBuildTreeLifecycleController.java:76)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.lambda$runBuild$5(DefaultBuildTreeLifecycleController.java:121)
-	at org.gradle.internal.model.StateTransitionController.lambda$transition$7(StateTransitionController.java:207)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:304)
-	at org.gradle.internal.model.StateTransitionController.lambda$transition$8(StateTransitionController.java:207)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:45)
-	at org.gradle.internal.model.StateTransitionController.transition(StateTransitionController.java:207)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.runBuild(DefaultBuildTreeLifecycleController.java:118)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.scheduleAndRunTasks(DefaultBuildTreeLifecycleController.java:76)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.scheduleAndRunTasks(DefaultBuildTreeLifecycleController.java:71)
-	at org.gradle.tooling.internal.provider.ExecuteBuildActionRunner.run(ExecuteBuildActionRunner.java:31)
-	at org.gradle.launcher.exec.ChainingBuildActionRunner.run(ChainingBuildActionRunner.java:35)
-	at org.gradle.internal.buildtree.ProblemReportingBuildActionRunner.run(ProblemReportingBuildActionRunner.java:55)
-	at org.gradle.launcher.exec.BuildOutcomeReportingBuildActionRunner.run(BuildOutcomeReportingBuildActionRunner.java:83)
-	at org.gradle.tooling.internal.provider.FileSystemWatchingBuildActionRunner.run(FileSystemWatchingBuildActionRunner.java:135)
-	at org.gradle.launcher.exec.BuildCompletionNotifyingBuildActionRunner.run(BuildCompletionNotifyingBuildActionRunner.java:64)
-	at org.gradle.launcher.exec.RootBuildLifecycleBuildActionExecutor.lambda$execute$0(RootBuildLifecycleBuildActionExecutor.java:101)
-	at org.gradle.composite.internal.DefaultRootBuildState.run(DefaultRootBuildState.java:119)
-	at org.gradle.launcher.exec.RootBuildLifecycleBuildActionExecutor.execute(RootBuildLifecycleBuildActionExecutor.java:101)
-	at org.gradle.launcher.exec.DefaultBuildTreeActionExecutor.runBuildTreeLifecycle(DefaultBuildTreeActionExecutor.java:126)
-	at org.gradle.launcher.exec.DefaultBuildTreeActionExecutor.access$100(DefaultBuildTreeActionExecutor.java:52)
-	at org.gradle.launcher.exec.DefaultBuildTreeActionExecutor$2.call(DefaultBuildTreeActionExecutor.java:98)
-	at org.gradle.launcher.exec.DefaultBuildTreeActionExecutor$2.call(DefaultBuildTreeActionExecutor.java:94)
+> Task :compileJava
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/input/MeleeAttackKeys.java:15: error: package org.lwjgl.glfw does not exist
+import org.lwjgl.glfw.GLFW;
+                     ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/overlay/ScopeMaskDebugOverlay.java:5: error: package com.mojang.blaze3d.textures does not exist
+import com.mojang.blaze3d.textures.FilterMode;
+                                  ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/ForgeSlider.java:8: error: package org.lwjgl.glfw does not exist
+import org.lwjgl.glfw.GLFW;
+                     ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipResourceProbe.java:3: error: package com.mojang.blaze3d.textures does not exist
+import com.mojang.blaze3d.textures.GpuTexture;
+                                  ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipResourceProbe.java:200: error: cannot find symbol
+    private static long textureBytes(GpuTexture texture) {
+                                     ^
+  symbol:   class GpuTexture
+  location: class ScopePipResourceProbe
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeTextSubmitter.java:4: error: package com.mojang.blaze3d.textures does not exist
+import com.mojang.blaze3d.textures.FilterMode;
+                                  ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeTextSubmitter.java:5: error: package com.mojang.blaze3d.textures does not exist
+import com.mojang.blaze3d.textures.GpuTextureView;
+                                  ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeTextSubmitter.java:80: error: cannot find symbol
+    private static final Map<GpuTextureView, Identifier> PAGE_IDS = new HashMap<>();
+                             ^
+  symbol:   class GpuTextureView
+  location: class ScopeTextSubmitter
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeTextSubmitter.java:84: error: cannot find symbol
+    private static Identifier pageId(GpuTextureView view) {
+                                     ^
+  symbol:   class GpuTextureView
+  location: class ScopeTextSubmitter
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeTextSubmitter.java:67: error: cannot find symbol
+        void point(GpuTextureView view) {
+                   ^
+  symbol:   class GpuTextureView
+  location: class PageHandle
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeFinalOverlayState.java:4: error: cannot find symbol
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+                                 ^
+  symbol:   class GpuBufferSlice
+  location: package com.mojang.blaze3d.buffers
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeFinalOverlayState.java:7: error: package com.mojang.blaze3d.textures does not exist
+import com.mojang.blaze3d.textures.GpuTextureView;
+                                  ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeFinalOverlayState.java:189: error: cannot find symbol
+                                 GpuBufferSlice projection,
+                                 ^
+  symbol:   class GpuBufferSlice
+  location: class HandTransform
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java:3: error: cannot find symbol
+import com.mojang.blaze3d.buffers.GpuBuffer;
+                                 ^
+  symbol:   class GpuBuffer
+  location: package com.mojang.blaze3d.buffers
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java:4: error: cannot find symbol
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+                                 ^
+  symbol:   class GpuBufferSlice
+  location: package com.mojang.blaze3d.buffers
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java:5: error: cannot find symbol
+import com.mojang.blaze3d.GpuFormat;
+                         ^
+  symbol:   class GpuFormat
+  location: package com.mojang.blaze3d
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java:6: error: cannot find symbol
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+                                  ^
+  symbol:   class ColorTargetState
+  location: package com.mojang.blaze3d.pipeline
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java:7: error: cannot find symbol
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+                                  ^
+  symbol:   class RenderPipeline
+  location: package com.mojang.blaze3d.pipeline
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java:9: error: cannot find symbol
+import com.mojang.blaze3d.systems.CommandEncoder;
+                                 ^
+  symbol:   class CommandEncoder
+  location: package com.mojang.blaze3d.systems
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java:10: error: cannot find symbol
+import com.mojang.blaze3d.systems.RenderPass;
+                                 ^
+  symbol:   class RenderPass
+  location: package com.mojang.blaze3d.systems
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java:16: error: cannot find symbol
+import com.mojang.blaze3d.PrimitiveTopology;
+                         ^
+  symbol:   class PrimitiveTopology
+  location: package com.mojang.blaze3d
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java:110: error: cannot find symbol
+    private static final RenderPipeline MASK_PIPELINE = RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+                         ^
+  symbol:   class RenderPipeline
+  location: class ScopeMaskRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java:493: error: cannot find symbol
+    private static GpuBuffer pooledVertexBuffer;
+                   ^
+  symbol:   class GpuBuffer
+  location: class ScopeMaskRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java:511: error: cannot find symbol
+    private static GpuBuffer acquireVertexBuffer(java.nio.ByteBuffer data) {
+                   ^
+  symbol:   class GpuBuffer
+  location: class ScopeMaskRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskTarget.java:3: error: cannot find symbol
+import com.mojang.blaze3d.GpuFormat;
+                         ^
+  symbol:   class GpuFormat
+  location: package com.mojang.blaze3d
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskTextureHandle.java:4: error: package com.mojang.blaze3d.textures does not exist
+import com.mojang.blaze3d.textures.FilterMode;
+                                  ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipTarget.java:3: error: cannot find symbol
+import com.mojang.blaze3d.GpuFormat;
+                         ^
+  symbol:   class GpuFormat
+  location: package com.mojang.blaze3d
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipTarget.java:52: error: cannot find symbol
+    private static GpuFormat lastFormat = null;
+                   ^
+  symbol:   class GpuFormat
+  location: class ScopePipTarget
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipTarget.java:81: error: cannot find symbol
+    public static TextureTarget getOrCreate(int width, int height, GpuFormat format, boolean needsDepth) {
+                                                                   ^
+  symbol:   class GpuFormat
+  location: class ScopePipTarget
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeTextRenderTypes.java:3: error: cannot find symbol
+import com.mojang.blaze3d.pipeline.BindGroupLayout;
+                                  ^
+  symbol:   class BindGroupLayout
+  location: package com.mojang.blaze3d.pipeline
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeTextRenderTypes.java:4: error: cannot find symbol
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+                                  ^
+  symbol:   class RenderPipeline
+  location: package com.mojang.blaze3d.pipeline
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeTextRenderTypes.java:75: error: cannot find symbol
+    private static final BindGroupLayout MASK_SAMPLER_LAYOUT =
+                         ^
+  symbol:   class BindGroupLayout
+  location: class ScopeTextRenderTypes
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeTextRenderTypes.java:87: error: cannot find symbol
+    private static final RenderPipeline CLIPPED_TEXT_PIPELINE =
+                         ^
+  symbol:   class RenderPipeline
+  location: class ScopeTextRenderTypes
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipRenderer.java:3: error: cannot find symbol
+import com.mojang.blaze3d.GpuFormat;
+                         ^
+  symbol:   class GpuFormat
+  location: package com.mojang.blaze3d
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipRenderer.java:5: error: cannot find symbol
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+                                 ^
+  symbol:   class GpuBufferSlice
+  location: package com.mojang.blaze3d.buffers
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipRenderer.java:7: error: cannot find symbol
+import com.mojang.blaze3d.pipeline.BindGroupLayout;
+                                  ^
+  symbol:   class BindGroupLayout
+  location: package com.mojang.blaze3d.pipeline
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipRenderer.java:8: error: cannot find symbol
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+                                  ^
+  symbol:   class ColorTargetState
+  location: package com.mojang.blaze3d.pipeline
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipRenderer.java:9: error: cannot find symbol
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+                                  ^
+  symbol:   class RenderPipeline
+  location: package com.mojang.blaze3d.pipeline
+...[truncated 6661 lines total]...
+      (argument mismatch; Quaternionf cannot be converted to Transformation)
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/functional/MuzzleFlashRender.java:166: error: no suitable method found for mulPose(Quaternionf)
+            backgroundPose.mulPose(Axis.ZP.rotationDegrees(frozenRotation));
+                          ^
+    method PoseStack.mulPose(Matrix4fc) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
+    method PoseStack.mulPose(Transformation) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Transformation)
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/functional/MuzzleFlashRender.java:176: error: no suitable method found for mulPose(Quaternionf)
+            glowPose.mulPose(Axis.ZP.rotationDegrees(frozenRotation));
+                    ^
+    method PoseStack.mulPose(Matrix4fc) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
+    method PoseStack.mulPose(Transformation) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Transformation)
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/functional/LeftHandRender.java:33: error: no suitable method found for mulPose(Quaternionf)
+        frozenPose.mulPose(Axis.ZP.rotationDegrees(180f));
+                  ^
+    method PoseStack.mulPose(Matrix4fc) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
+    method PoseStack.mulPose(Transformation) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Transformation)
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/functional/LeftHandRender.java:49: error: no suitable method found for mulPose(Quaternionf)
+            poseStack.mulPose(Axis.ZP.rotationDegrees(180f));
+                     ^
+    method PoseStack.mulPose(Matrix4fc) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
+    method PoseStack.mulPose(Transformation) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Transformation)
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/AimKey.java:22: error: cannot find symbol
+            GLFW.GLFW_MOUSE_BUTTON_RIGHT,
+            ^
+  symbol:   variable GLFW
+  location: class AimKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/AimKey.java:39: error: cannot find symbol
+                if (event.getAction() == GLFW.GLFW_PRESS) {
+                                         ^
+  symbol:   variable GLFW
+  location: class AimKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/AimKey.java:42: error: cannot find symbol
+                if (KeyConfig.HOLD_TO_AIM.get() && event.getAction() == GLFW.GLFW_RELEASE) {
+                                                                        ^
+  symbol:   variable GLFW
+  location: class AimKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InspectKey.java:18: error: cannot find symbol
+            InputConstants.Type.KEYSYM,
+                               ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InspectKey.java:19: error: cannot find symbol
+            GLFW.GLFW_KEY_H,
+            ^
+  symbol:   variable GLFW
+  location: class InspectKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InspectKey.java:23: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INSPECT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                               ^
+  symbol:   variable GLFW
+  location: class InspectKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InspectKey.java:23: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INSPECT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                                                                                         ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/FireSelectKey.java:19: error: cannot find symbol
+            InputConstants.Type.KEYSYM,
+                               ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/FireSelectKey.java:20: error: cannot find symbol
+            GLFW.GLFW_KEY_G,
+            ^
+  symbol:   variable GLFW
+  location: class FireSelectKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/FireSelectKey.java:24: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && FIRE_SELECT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                               ^
+  symbol:   variable GLFW
+  location: class FireSelectKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/FireSelectKey.java:24: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && FIRE_SELECT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                                                                                             ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/FireSelectKey.java:30: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && FIRE_SELECT_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
+                                               ^
+  symbol:   variable GLFW
+  location: class FireSelectKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ZoomKey.java:20: error: cannot find symbol
+            InputConstants.Type.KEYSYM,
+                               ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ZoomKey.java:21: error: cannot find symbol
+            GLFW.GLFW_KEY_V,
+            ^
+  symbol:   variable GLFW
+  location: class ZoomKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ZoomKey.java:25: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && ZOOM_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                               ^
+  symbol:   variable GLFW
+  location: class ZoomKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ZoomKey.java:25: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && ZOOM_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                                                                                      ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ZoomKey.java:31: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && ZOOM_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
+                                               ^
+  symbol:   variable GLFW
+  location: class ZoomKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InteractKey.java:25: error: cannot find symbol
+            InputConstants.Type.KEYSYM,
+                               ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InteractKey.java:26: error: cannot find symbol
+            GLFW.GLFW_KEY_O,
+            ^
+  symbol:   variable GLFW
+  location: class InteractKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InteractKey.java:30: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                               ^
+  symbol:   variable GLFW
+  location: class InteractKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InteractKey.java:30: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                                                                                          ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InteractKey.java:36: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
+                                               ^
+  symbol:   variable GLFW
+  location: class InteractKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/RefitKey.java:19: error: cannot find symbol
+            InputConstants.Type.KEYSYM,
+                               ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/RefitKey.java:20: error: cannot find symbol
+            GLFW.GLFW_KEY_Z,
+            ^
+  symbol:   variable GLFW
+  location: class RefitKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/RefitKey.java:24: error: cannot find symbol
+        if (event.getAction() == GLFW.GLFW_PRESS && REFIT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                 ^
+  symbol:   variable GLFW
+  location: class RefitKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/RefitKey.java:24: error: cannot find symbol
+        if (event.getAction() == GLFW.GLFW_PRESS && REFIT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                                                                         ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ReloadKey.java:24: error: cannot find symbol
+            InputConstants.Type.KEYSYM,
+                               ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ReloadKey.java:25: error: cannot find symbol
+            GLFW.GLFW_KEY_R,
+            ^
+  symbol:   variable GLFW
+  location: class ReloadKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ReloadKey.java:29: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && RELOAD_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                               ^
+  symbol:   variable GLFW
+  location: class ReloadKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ReloadKey.java:29: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && RELOAD_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                                                                                        ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/CrawlKey.java:21: error: cannot find symbol
+            InputConstants.Type.KEYSYM,
+                               ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/CrawlKey.java:22: error: cannot find symbol
+            GLFW.GLFW_KEY_C,
+            ^
+  symbol:   variable GLFW
+  location: class CrawlKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/CrawlKey.java:26: error: cannot find symbol
+        if (isInGame() && CRAWL_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                                               ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/CrawlKey.java:47: error: cannot find symbol
+                if (event.getAction() == GLFW.GLFW_PRESS) {
+                                         ^
+  symbol:   variable GLFW
+  location: class CrawlKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/CrawlKey.java:50: error: cannot find symbol
+                if (KeyConfig.HOLD_TO_CRAWL.get() && event.getAction() == GLFW.GLFW_RELEASE) {
+                                                                          ^
+  symbol:   variable GLFW
+  location: class CrawlKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/MeleeKey.java:18: error: cannot find symbol
+            InputConstants.Type.KEYSYM,
+                               ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/MeleeKey.java:19: error: cannot find symbol
+            GLFW.GLFW_KEY_V,
+            ^
+  symbol:   variable GLFW
+  location: class MeleeKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/MeleeKey.java:23: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && MELEE_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                               ^
+  symbol:   variable GLFW
+  location: class MeleeKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/MeleeKey.java:23: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && MELEE_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                                                                                       ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/MeleeKey.java:29: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && MELEE_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
+                                               ^
+  symbol:   variable GLFW
+  location: class MeleeKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ConfigKey.java:27: error: cannot find symbol
+            InputConstants.Type.KEYSYM,
+                               ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ConfigKey.java:28: error: cannot find symbol
+            GLFW.GLFW_KEY_T,
+            ^
+  symbol:   variable GLFW
+  location: class ConfigKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ConfigKey.java:32: error: cannot find symbol
+        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS
+                                               ^
+  symbol:   variable GLFW
+  location: class ConfigKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ConfigKey.java:33: error: cannot find symbol
+                && OPEN_CONFIG_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+                                                              ^
+  symbol:   variable KEYSYM
+  location: class Type
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ShootKey.java:26: error: cannot find symbol
+            GLFW.GLFW_MOUSE_BUTTON_LEFT,
+            ^
+  symbol:   variable GLFW
+  location: class ShootKey
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/tooltip/ClientAttachmentItemTooltip.java:147: error: method isKeyDown in class InputConstants cannot be applied to given types;
+        return InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), InputConstants.KEY_LSHIFT)
+                             ^
+  required: int
+  found:    Window,int
+  reason: actual and formal argument lists differ in length
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/tooltip/ClientAttachmentItemTooltip.java:148: error: method isKeyDown in class InputConstants cannot be applied to given types;
+                || InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), InputConstants.KEY_RSHIFT);
+                                 ^
+  required: int
+  found:    Window,int
+  reason: actual and formal argument lists differ in length
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/network/message/ClientMessageLaserColor.java:38: error: cannot find symbol
+        this.colorMap.putAll(buf.readMap(buf1 -> buf1.readEnum(AttachmentType.class), FriendlyByteBuf::readInt));
+                                ^
+  symbol:   method readMap((buf1)->bu[...]lass),FriendlyBy[...]adInt)
+  location: variable buf of type FriendlyByteBuf
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/network/message/ClientMessageLaserColor.java:63: error: cannot find symbol
+        buf.writeMap(colorMap, FriendlyByteBuf::writeEnum, FriendlyByteBuf::writeInt);
+           ^
+  symbol:   method writeMap(Map<AttachmentType,Integer>,FriendlyBy[...]eEnum,FriendlyBy[...]teInt)
+  location: variable buf of type FriendlyByteBuf
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/network/message/ServerMessageSyncGunPack.java:29: error: cannot find symbol
+        this(buf.readMap(buf1 -> buf1.readEnum(DataType.class),
+                ^
+  symbol:   method readMap((buf1)->bu[...]lass),(buf2)->bu[...]dUtf))
+  location: variable buf of type FriendlyByteBuf
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/network/message/ServerMessageSyncGunPack.java:38: error: cannot find symbol
+        buf.writeMap(getCache(), FriendlyByteBuf::writeEnum, (buf1, map) ->
+           ^
+  symbol:   method writeMap(Map<DataType,Map<Identifier,String>>,FriendlyBy[...]eEnum,(buf1,map)[...]eUtf))
+  location: variable buf of type FriendlyByteBuf
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/network/message/ServerMessageSyncGunPack.java:29: error: recursive constructor invocation
+        this(buf.readMap(buf1 -> buf1.readEnum(DataType.class),
+        ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/network/message/ClientMessageUnloadAttachment.java:71: error: no suitable method found for drop(ItemStack,boolean)
+                    player.drop(attachmentItem, false);
+                          ^
+    method ServerPlayer.drop(ItemStack,boolean,Prediction) is not applicable
+      (actual and formal argument lists differ in length)
+    method ServerPlayer.drop(boolean) is not applicable
+      (actual and formal argument lists differ in length)
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/compat/cloth/widget/OpenGunPackDirEntry.java:18: error: cannot find symbol
+        Util.getPlatform().openUri(FabricLoader.getInstance().getGameDir().resolve("tacz").toUri());
+                          ^
+  symbol:   method openUri(URI)
+  location: class OS
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/compat/iris/IrisCompat.java:199: error: cannot find symbol
+            irisApiClass.getMethod("assignPipeline", RenderPipeline.class, irisProgramClass)
+                                                     ^
+  symbol:   class RenderPipeline
+  location: class IrisCompat
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/util/ExplodeUtil.java:44: error: invulnerableTime has private access in Entity
+                entity.invulnerableTime = 0;
+                      ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/util/RenderHelper.java:97: error: cannot find symbol
+        AvatarRenderer<?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getPlayerRenderer(player);
+                                                                                        ^
+  symbol:   method getPlayerRenderer(LocalPlayer)
+  location: class EntityRenderDispatcher
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/api/client/other/KeepingItemRenderer.java:29: error: cannot find symbol
+        return (KeepingItemRenderer) Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer();
+                                                                                        ^
+  symbol:   method getItemInHandRenderer()
+  location: class EntityRenderDispatcher
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/GunSmithTableBlockC.java:24: error: cannot find symbol
+    public static final MapCodec<GunSmithTableBlockC> CODEC = simpleCodec(GunSmithTableBlockC::new);
+                                                              ^
+  symbol:   method simpleCodec(GunSmithTa[...]::new)
+  location: class GunSmithTableBlockC
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/GunSmithTableBlockC.java:32: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/GunSmithTableBlockB.java:25: error: cannot find symbol
+    public static final MapCodec<GunSmithTableBlockB> CODEC = simpleCodec(GunSmithTableBlockB::new);
+                                                              ^
+  symbol:   method simpleCodec(GunSmithTa[...]::new)
+  location: class GunSmithTableBlockB
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/GunSmithTableBlockB.java:33: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/GunSmithTableBlockA.java:13: error: cannot find symbol
+    public static final MapCodec<GunSmithTableBlockA> CODEC = simpleCodec(GunSmithTableBlockA::new);
+                                                              ^
+  symbol:   method simpleCodec(GunSmithTa[...]::new)
+  location: class GunSmithTableBlockA
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/GunSmithTableBlockA.java:19: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:48: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:57: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:65: error: cannot find symbol
+                ResourceOutput transformingOutput = (location, supplier) -> {
+                ^
+  symbol:   class ResourceOutput
+  location: class PathPackResources
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:73: error: cannot find symbol
+                        ResourceOutput legacyOutput = (location, supplier) -> {
+                        ^
+  symbol:   class ResourceOutput
+  location: class PathPackResources
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:113: error: cannot find symbol
+                    ResourceOutput legacyOutput = (location, supplier) -> {
+                    ^
+  symbol:   class ResourceOutput
+  location: class PathPackResources
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:128: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:155: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:180: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:184: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:186: error: cannot find symbol
+        return String.format(Locale.ROOT, "%s: %s (%s)", getClass().getName(), this.packId(), getSource());
+                                                         ^
+  symbol:   method getClass()
+  location: class PathPackResources
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:186: error: cannot find symbol
+        return String.format(Locale.ROOT, "%s: %s (%s)", getClass().getName(), this.packId(), getSource());
+                                                                                   ^
+  symbol: method packId()
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/resource/GunPackLoader.java:98: error: incompatible types: <anonymous PathPackResources> cannot be converted to PackResources
+                packResources = new PathPackResources(gunPack.name, false, gunPack.path) {
+                                ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/resource/GunPackLoader.java:111: error: cannot find symbol
+                        .openPrimary(new PackLocationInfo(gunPack.name, Component.literal(gunPack.name), PackSource.DEFAULT, Optional.empty()));
+                        ^
+  symbol:   method openPrimary(PackLocationInfo)
+  location: class FileResourcesSupplier
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/resource/GunPackLoader.java:118: error: <anonymous com.tacz.guns.resource.GunPackLoader$2> is not abstract and does not override abstract method openResources(PackLocationInfo,Metadata) in ResourcesSupplier
+        Pack.ResourcesSupplier resourcesSupplier = new Pack.ResourcesSupplier() {
+                                                                                ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/resource/GunPackLoader.java:119: error: method does not override or implement a method from a supertype
+            @Override
+            ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:48: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:53: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:59: error: cannot find symbol
+            ResourceOutput transformingOutput = (location, supplier) -> {
+            ^
+  symbol:   class ResourceOutput
+  location: class DelegatingPackResources
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:69: error: cannot find symbol
+                ResourceOutput legacyOutput = (location, supplier) -> {
+                ^
+  symbol:   class ResourceOutput
+  location: class DelegatingPackResources
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:111: error: cannot find symbol
+            ResourceOutput legacyOutput = (location, supplier) -> {
+            ^
+  symbol:   class ResourceOutput
+  location: class DelegatingPackResources
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:127: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:132: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:140: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:146: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/resource/GunPackLoader.java:121: error: incompatible types: <anonymous DelegatingPackResources> cannot be converted to PackResources
+                return new DelegatingPackResources(locationInfo.id(), false, new PackMetadataSection(Component.translatable("tacz.resources.modresources"),
+                       ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/resource/GunPackLoader.java:135: error: method does not override or implement a method from a supertype
+            @Override
+            ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:100: error: cannot find symbol
+            .withColorTargetState(ColorTargetState.DEFAULT)
+                                  ^
+  symbol:   variable ColorTargetState
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:99: error: cannot find symbol
+            .withDepthStencilState(DepthStencilState.DEFAULT)
+                                   ^
+  symbol:   variable DepthStencilState
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:98: error: cannot find symbol
+            .withPrimitiveTopology(PrimitiveTopology.QUADS)
+                                   ^
+  symbol:   variable PrimitiveTopology
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:87: error: cannot find symbol
+    private static final RenderPipeline LIT_PIPELINE = RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+                                                       ^
+  symbol:   variable RenderPipeline
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:116: error: cannot find symbol
+            .withColorTargetState(ColorTargetState.DEFAULT)
+                                  ^
+  symbol:   variable ColorTargetState
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:115: error: cannot find symbol
+            .withDepthStencilState(DepthStencilState.DEFAULT)
+                                   ^
+  symbol:   variable DepthStencilState
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:114: error: cannot find symbol
+            .withPrimitiveTopology(PrimitiveTopology.QUADS)
+                                   ^
+  symbol:   variable PrimitiveTopology
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:103: error: cannot find symbol
+    private static final RenderPipeline EMISSIVE_PIPELINE = RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+                                                            ^
+  symbol:   variable RenderPipeline
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:165: error: cannot find symbol
+            .withColorTargetState(ColorTargetState.DEFAULT)
+                                  ^
+  symbol:   variable ColorTargetState
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:164: error: cannot find symbol
+            .withDepthStencilState(DepthStencilState.DEFAULT)
+                                   ^
+  symbol:   variable DepthStencilState
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:163: error: cannot find symbol
+            .withPrimitiveTopology(PrimitiveTopology.QUADS)
+                                   ^
+  symbol:   variable PrimitiveTopology
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:150: error: cannot find symbol
+    private static final RenderPipeline LIT_CLIPPED_PIPELINE = RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+                                                               ^
+  symbol:   variable RenderPipeline
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:427: error: cannot find symbol
+        BufferBuilder builder = new BufferBuilder(scratch, PrimitiveTopology.QUADS, DefaultVertexFormat.ENTITY);
+                                                           ^
+  symbol:   variable PrimitiveTopology
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:437: error: cannot find symbol
+            GpuBuffer vertexBuffer = RenderSystem.getDevice().createBuffer(
+            ^
+  symbol:   class GpuBuffer
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:438: error: cannot find symbol
+                    () -> "tacz_mesh_bone", GpuBuffer.USAGE_VERTEX, meshData.vertexBuffer());
+                                            ^
+  symbol:   variable GpuBuffer
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:580: error: cannot find symbol
+        if (RenderSystem.outputColorTextureOverride != null) {
+                        ^
+  symbol:   variable outputColorTextureOverride
+  location: class RenderSystem
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:696: error: cannot find symbol
+        if (RenderSystem.outputColorTextureOverride != null) {
+                        ^
+  symbol:   variable outputColorTextureOverride
+  location: class RenderSystem
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:868: error: cannot find symbol
+                            RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
+                                                             ^
+  symbol:   variable PrimitiveTopology
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:869: error: cannot find symbol
+                    GpuBuffer indexBuffer = indices.getBuffer(entry.bone().indexCount);
+                    ^
+  symbol:   class GpuBuffer
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:887: error: cannot find symbol
+        GpuTextureView colorView = mainTarget.getColorTextureView();
+        ^
+  symbol:   class GpuTextureView
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:888: error: cannot find symbol
+        GpuTextureView depthView = mainTarget.getDepthTextureView();
+        ^
+  symbol:   class GpuTextureView
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:892: error: cannot find symbol
+        GpuTextureView lightmapView = resolveLightmap(mc);
+        ^
+  symbol:   class GpuTextureView
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:893: error: cannot find symbol
+        GpuSampler linearSampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
+        ^
+  symbol:   class GpuSampler
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:893: error: cannot find symbol
+        GpuSampler linearSampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
+                                                                                 ^
+  symbol:   variable FilterMode
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:925: error: cannot find symbol
+        Map<Identifier, GpuTextureView> viewsByTexture = new HashMap<>();
+                        ^
+  symbol:   class GpuTextureView
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:927: error: cannot find symbol
+            GpuTextureView view = resolveTextureView(texture);
+            ^
+  symbol:   class GpuTextureView
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:936: error: cannot find symbol
+        CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+        ^
+  symbol:   class CommandEncoder
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:950: error: cannot find symbol
+        GpuTextureView maskView = null;
+        ^
+  symbol:   class GpuTextureView
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:963: error: cannot find symbol
+        try (RenderPass pass = encoder.createRenderPass(
+             ^
+  symbol:   class RenderPass
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:974: error: cannot find symbol
+                        RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                                                                      ^
+  symbol:   variable FilterMode
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:980: error: cannot find symbol
+                        maskView, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                                                                                ^
+  symbol:   variable FilterMode
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:984: error: cannot find symbol
+                GpuTextureView textureView = viewsByTexture.get(group.getKey());
+                ^
+  symbol:   class GpuTextureView
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:998: error: cannot find symbol
+                            RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
+                                                             ^
+  symbol:   variable PrimitiveTopology
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:1043: error: cannot find symbol
+            GpuTextureView view = mc.gameRenderer.levelLightmap();
+            ^
+  symbol:   class GpuTextureView
+  location: class PolyMeshGpuRenderer
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/api/IPolyMeshBone.java:57: error: no suitable method found for mulPose(Quaternionf)
+            poseStack.mulPose(Axis.ZP.rotation(getRotZ()));
+                     ^
+    method PoseStack.mulPose(Matrix4fc) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
+    method PoseStack.mulPose(Transformation) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Transformation)
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/api/IPolyMeshBone.java:60: error: no suitable method found for mulPose(Quaternionf)
+            poseStack.mulPose(Axis.YP.rotation(getRotY()));
+                     ^
+    method PoseStack.mulPose(Matrix4fc) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
+    method PoseStack.mulPose(Transformation) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Transformation)
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/api/IPolyMeshBone.java:63: error: no suitable method found for mulPose(Quaternionf)
+            poseStack.mulPose(Axis.XP.rotation(getRotX()));
+                     ^
+    method PoseStack.mulPose(Matrix4fc) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
+    method PoseStack.mulPose(Transformation) is not applicable
+      (argument mismatch; Quaternionf cannot be converted to Transformation)
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/mixin/client/KeyboardHandlerMixin.java:23: error: cannot find symbol
+            InputEvent.Key.EVENT.invoker().onKey(new InputEvent.Key(event.key(), event.scancode(), action, event.modifiers()));
+                                                                                      ^
+  symbol:   method scancode()
+  location: variable event of type KeyEvent
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/mixin/client/MinecraftMixin.java:121: error: method swing in class LivingEntity cannot be applied to given types;
+                this.player.swing(InteractionHand.MAIN_HAND);
+                           ^
+  required: InteractionHand,SwingAnimation,boolean
+  found:    InteractionHand
+  reason: actual and formal argument lists differ in length
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/mixin/client/MinecraftMixin.java:138: error: method swing in class LivingEntity cannot be applied to given types;
+                this.player.swing(InteractionHand.MAIN_HAND);
+                           ^
+  required: InteractionHand,SwingAnimation,boolean
+  found:    InteractionHand
+  reason: actual and formal argument lists differ in length
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/mixin/client/MinecraftMixin.java:155: error: method swing in class LivingEntity cannot be applied to given types;
+                this.player.swing(hand);
+                           ^
+  required: InteractionHand,SwingAnimation,boolean
+  found:    InteractionHand
+  reason: actual and formal argument lists differ in length
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+416 errors
+	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:88)
+	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:49)
+	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.delegateAndHandleErrors(NormalizingJavaCompiler.java:98)
+	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.execute(NormalizingJavaCompiler.java:52)
+	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.execute(NormalizingJavaCompiler.java:38)
+	at org.gradle.api.internal.tasks.compile.AnnotationProcessorDiscoveringCompiler.execute(AnnotationProcessorDiscoveringCompiler.java:52)
+	at org.gradle.api.internal.tasks.compile.AnnotationProcessorDiscoveringCompiler.execute(AnnotationProcessorDiscoveringCompiler.java:38)
+	at org.gradle.api.internal.tasks.compile.ModuleApplicationNameWritingCompiler.execute(ModuleApplicationNameWritingCompiler.java:46)
+	at org.gradle.api.internal.tasks.compile.ModuleApplicationNameWritingCompiler.execute(ModuleApplicationNameWritingCompiler.java:36)
+	at org.gradle.jvm.toolchain.internal.DefaultToolchainJavaCompiler.execute(DefaultToolchainJavaCompiler.java:57)
+	at org.gradle.api.tasks.compile.JavaCompile.lambda$createToolchainCompiler$3(JavaCompile.java:206)
+	at org.gradle.api.internal.tasks.compile.CleaningJavaCompiler.execute(CleaningJavaCompiler.java:53)
+	at org.gradle.api.internal.tasks.compile.incremental.IncrementalCompilerFactory.lambda$createRebuildAllCompiler$0(IncrementalCompilerFactory.java:55)
+	at org.gradle.api.internal.tasks.compile.incremental.SelectiveCompiler.execute(SelectiveCompiler.java:70)
+	at org.gradle.api.internal.tasks.compile.incremental.SelectiveCompiler.execute(SelectiveCompiler.java:44)
+	at org.gradle.api.internal.tasks.compile.incremental.IncrementalResultStoringCompiler.execute(IncrementalResultStoringCompiler.java:66)
+	at org.gradle.api.internal.tasks.compile.incremental.IncrementalResultStoringCompiler.execute(IncrementalResultStoringCompiler.java:52)
+	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler$CompileOperation.call(CompileJavaBuildOperationReportingCompiler.java:78)
+	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler$CompileOperation.call(CompileJavaBuildOperationReportingCompiler.java:52)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
@@ -179,64 +883,16 @@ org.gradle.api.ProjectConfigurationException: A problem occurred configuring roo
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.launcher.exec.DefaultBuildTreeActionExecutor.runAsBuildOperation(DefaultBuildTreeActionExecutor.java:94)
-	at org.gradle.launcher.exec.DefaultBuildTreeActionExecutor.lambda$runBuildTreeAction$0(DefaultBuildTreeActionExecutor.java:88)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$runAndReleaseLocks$0(DefaultWorkerLeaseService.java:300)
-	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAndReleaseLocks(DefaultWorkerLeaseService.java:298)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocksAcquired(DefaultWorkerLeaseService.java:294)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:286)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:130)
-	at org.gradle.launcher.exec.DefaultBuildTreeActionExecutor.runBuildTreeAction(DefaultBuildTreeActionExecutor.java:88)
-	at org.gradle.tooling.internal.provider.continuous.ContinuousBuildActionExecutor.execute(ContinuousBuildActionExecutor.java:111)
-	at org.gradle.tooling.internal.provider.SubscribableBuildActionExecutor.execute(SubscribableBuildActionExecutor.java:64)
-	at org.gradle.internal.session.DefaultBuildSessionContext.execute(DefaultBuildSessionContext.java:46)
-	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor$ActionImpl.apply(BuildSessionLifecycleBuildActionExecutor.java:106)
-	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor$ActionImpl.apply(BuildSessionLifecycleBuildActionExecutor.java:94)
-	at org.gradle.internal.session.BuildSessionState.run(BuildSessionState.java:73)
-	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor.execute(BuildSessionLifecycleBuildActionExecutor.java:67)
-	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor.execute(BuildSessionLifecycleBuildActionExecutor.java:45)
-	at org.gradle.internal.buildprocess.execution.StartParamsValidatingActionExecutor.execute(StartParamsValidatingActionExecutor.java:57)
-	at org.gradle.internal.buildprocess.execution.StartParamsValidatingActionExecutor.execute(StartParamsValidatingActionExecutor.java:32)
-	at org.gradle.internal.buildprocess.execution.SessionFailureReportingActionExecutor.execute(SessionFailureReportingActionExecutor.java:51)
-	at org.gradle.internal.buildprocess.execution.SessionFailureReportingActionExecutor.execute(SessionFailureReportingActionExecutor.java:39)
-	at org.gradle.internal.buildprocess.execution.SetupLoggingActionExecutor.execute(SetupLoggingActionExecutor.java:47)
-	at org.gradle.internal.buildprocess.execution.SetupLoggingActionExecutor.execute(SetupLoggingActionExecutor.java:31)
-	at org.gradle.launcher.daemon.server.exec.ExecuteBuild.doBuild(ExecuteBuild.java:70)
-	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.WatchForDisconnection.execute(WatchForDisconnection.java:39)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.ResetDeprecationLogger.execute(ResetDeprecationLogger.java:29)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.RequestStopIfSingleUsedDaemon.execute(RequestStopIfSingleUsedDaemon.java:35)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.ForwardClientInput.lambda$execute$0(ForwardClientInput.java:40)
-	at org.gradle.internal.daemon.clientinput.ClientInputForwarder.forwardInput(ClientInputForwarder.java:80)
-	at org.gradle.launcher.daemon.server.exec.ForwardClientInput.execute(ForwardClientInput.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.LogAndCheckHealth.execute(LogAndCheckHealth.java:53)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.ApplyClientEnvironmentVariables.doBuild(ApplyClientEnvironmentVariables.java:80)
-	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.LogToClient.doBuild(LogToClient.java:63)
-	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.EstablishBuildEnvironment.doBuild(EstablishBuildEnvironment.java:74)
-	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.StartBuildOrRespondWithBusy$1.run(StartBuildOrRespondWithBusy.java:52)
-	at org.gradle.launcher.daemon.server.DaemonStateCoordinator.lambda$runCommand$0(DaemonStateCoordinator.java:321)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-Caused by: java.lang.RuntimeException: Failed to setup Minecraft, org.gradle.api.internal.artifacts.ivyservice.TypedResolveException: Could not resolve all files for configuration ':mainRuntimeDependencyResolve'.
-	at net.fabricmc.loom.util.ExceptionUtil.createDescriptiveWrapper(ExceptionUtil.java:59)
-	at net.fabricmc.loom.configuration.CompileConfiguration.lambda$run$1(CompileConfiguration.java:135)
-	at net.fabricmc.loom.configuration.CompileConfiguration.lambda$afterEvaluationWithService$0(CompileConfiguration.java:487)
-	at net.fabricmc.loom.util.gradle.GradleUtils.lambda$afterSuccessfulEvaluation$0(GradleUtils.java:51)
-	at org.gradle.internal.code.DefaultUserCodeApplicationContext$CurrentApplication$1.execute(DefaultUserCodeApplicationContext.java:124)
-	at org.gradle.configuration.internal.DefaultListenerBuildOperationDecorator$BuildOperationEmittingAction$1.run(DefaultListenerBuildOperationDecorator.java:173)
+	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler.execute(CompileJavaBuildOperationReportingCompiler.java:49)
+	at org.gradle.api.tasks.compile.JavaCompile.performCompilation(JavaCompile.java:224)
+	at org.gradle.api.tasks.compile.JavaCompile.performIncrementalCompilation(JavaCompile.java:165)
+	at org.gradle.api.tasks.compile.JavaCompile.compile(JavaCompile.java:150)
+	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
+	at org.gradle.api.internal.project.taskfactory.IncrementalTaskAction.doExecute(IncrementalTaskAction.java:45)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)
+	at org.gradle.api.internal.project.taskfactory.IncrementalTaskAction.execute(IncrementalTaskAction.java:26)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:259)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
@@ -244,69 +900,95 @@ Caused by: java.lang.RuntimeException: Failed to setup Minecraft, org.gradle.api
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.configuration.internal.DefaultListenerBuildOperationDecorator$BuildOperationEmittingAction.execute(DefaultListenerBuildOperationDecorator.java:170)
-	at org.gradle.internal.event.BroadcastDispatch$ActionInvocationHandler.dispatch(BroadcastDispatch.java:101)
-	at org.gradle.internal.event.BroadcastDispatch$ActionInvocationHandler.dispatch(BroadcastDispatch.java:89)
-	at org.gradle.internal.event.AbstractBroadcastDispatch.dispatch(AbstractBroadcastDispatch.java:44)
-	at org.gradle.internal.event.BroadcastDispatch$SingletonDispatch.dispatch(BroadcastDispatch.java:270)
-	at org.gradle.internal.event.BroadcastDispatch$SingletonDispatch.dispatch(BroadcastDispatch.java:172)
-	at org.gradle.internal.event.AbstractBroadcastDispatch.dispatch(AbstractBroadcastDispatch.java:84)
-	at org.gradle.internal.event.AbstractBroadcastDispatch.dispatch(AbstractBroadcastDispatch.java:70)
-	at org.gradle.internal.event.BroadcastDispatch$CompositeDispatch.dispatch(BroadcastDispatch.java:382)
-	at org.gradle.internal.event.BroadcastDispatch$CompositeDispatch.dispatch(BroadcastDispatch.java:274)
-	at org.gradle.internal.event.ListenerBroadcast.dispatch(ListenerBroadcast.java:160)
-	at org.gradle.internal.event.ListenerBroadcast.dispatch(ListenerBroadcast.java:37)
-	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:88)
-	at jdk.proxy1/jdk.proxy1.$Proxy66.afterEvaluate(Unknown Source)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator$NotifyAfterEvaluate$1.execute(LifecycleProjectEvaluator.java:247)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator$NotifyAfterEvaluate$1.execute(LifecycleProjectEvaluator.java:244)
-	at org.gradle.api.internal.project.DefaultProject.stepEvaluationListener(DefaultProject.java:1562)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator$NotifyAfterEvaluate.run(LifecycleProjectEvaluator.java:253)
-	... 161 more
-Caused by: org.gradle.api.internal.artifacts.ivyservice.TypedResolveException: Could not resolve all files for configuration ':mainRuntimeDependencyResolve'.
-	at org.gradle.api.internal.artifacts.ResolveExceptionMapper.mapFailure(ResolveExceptionMapper.java:73)
-	at org.gradle.api.internal.artifacts.ResolveExceptionMapper.mapFailures(ResolveExceptionMapper.java:65)
-	at org.gradle.api.internal.artifacts.configurations.DefaultConfiguration$DefaultResolutionHost.consolidateFailures(DefaultConfiguration.java:1803)
-	at org.gradle.api.internal.artifacts.configurations.ResolutionHost.rethrowFailuresAndReportProblems(ResolutionHost.java:75)
-	at org.gradle.api.internal.artifacts.configurations.ResolutionBackedFileCollection.maybeThrowResolutionFailures(ResolutionBackedFileCollection.java:86)
-	at org.gradle.api.internal.artifacts.configurations.ResolutionBackedFileCollection.visitContents(ResolutionBackedFileCollection.java:76)
-	at org.gradle.api.internal.file.AbstractFileCollection.visitStructure(AbstractFileCollection.java:361)
-	at org.gradle.api.internal.artifacts.configurations.DefaultConfiguration.visitContents(DefaultConfiguration.java:531)
-	at org.gradle.api.internal.file.AbstractFileCollection.getFiles(AbstractFileCollection.java:124)
-	at org.gradle.api.internal.artifacts.configurations.DefaultLegacyConfiguration_Decorated.getFiles(Unknown Source)
-	at net.fabricmc.loom.configuration.processors.speccontext.DeobfSpecContext.getModsFromConfiguration(DeobfSpecContext.java:156)
-	at net.fabricmc.loom.configuration.processors.speccontext.DeobfSpecContext.create(DeobfSpecContext.java:72)
-	at net.fabricmc.loom.configuration.processors.speccontext.DeobfSpecContext.create(DeobfSpecContext.java:62)
-	at net.fabricmc.loom.configuration.processors.MinecraftJarProcessorManager.create(MinecraftJarProcessorManager.java:74)
-	at net.fabricmc.loom.configuration.CompileConfiguration.setupMinecraft(CompileConfiguration.java:203)
-	at net.fabricmc.loom.configuration.CompileConfiguration.lambda$run$1(CompileConfiguration.java:127)
-	... 190 more
-Caused by: org.gradle.internal.resolve.ModuleVersionNotFoundException: Could not find maven.modrinth:modmenu:21.0.1-beta.1.
-Searched in the following locations:
-  - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/.gradle/loom-cache/remapped_mods/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - file:/home/runner/.gradle/caches/fabric-loom/minecraftMaven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/.gradle/loom-cache/minecraftMaven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://maven.fabricmc.net/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://libraries.minecraft.net/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://libraries.minecraft.net/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.jar
-  - https://repo.maven.apache.org/maven2/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://maven.blamejared.com/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://modmaven.k-4u.nl/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://api.modrinth.com/maven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://maven.shedaniel.me/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://dvs1.progwml6.com/files/maven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://modmaven.dev/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://maven.tterrag.com/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://maven.kosmx.dev/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://maven.ladysnake.org/releases/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://raw.githubusercontent.com/Fuzss/modresources/main/maven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://maven.terraformersmc.com/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - https://mvn.devos.one/snapshots/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - file:/home/runner/.m2/repository/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
-  - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/libs/modmenu-21.0.1-beta.1.jar
-  - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/libs/modmenu.jar
-Required by:
-    root project 'TACZ-Refabricated'
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:244)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:227)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:210)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:176)
+	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:167)
+	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:47)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:137)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:134)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:134)
+	at org.gradle.internal.execution.steps.ExecuteStep$Mutable.execute(ExecuteStep.java:80)
+	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
+	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
+	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:67)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:39)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:39)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:28)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:76)
+	at org.gradle.internal.Either$Right.fold(Either.java:176)
+	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:46)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:35)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:70)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:32)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:105)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:90)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
+	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
+	... 30 more
 
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
@@ -315,6 +997,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.6.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 33s
+BUILD FAILED in 47s
+1 actionable task: 1 executed
 
 == job status: failure ==
