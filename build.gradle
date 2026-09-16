@@ -16,11 +16,6 @@ fabricApi {
     }
 }
 
-// 26.3 阶段：Zoomify/REI/Shoulder Surfing/PAL 等 compileOnly 依赖暂未发布 26.3 构建，
-// 它们的 26.2 jar API 面与本仓使用的子集兼容，先忽略 Loom 的 MC 版本校验，
-// 待上游发 26.3 构建后去掉本属性并 bump 版本号（见 docs/pending_dependency_updates.md）。
-loom.ignoreDependencyLoomVersionValidation=true
-
 loom {
     accessWidenerPath = file("src/main/resources/tacz.accesswidener")
     // From Loom 1.17: mixin AP is no longer enabled by default.
