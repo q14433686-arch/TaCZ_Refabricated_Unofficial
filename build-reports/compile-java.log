@@ -1,4 +1,4 @@
-commit: 2aa2399b56e151f5e29d51999ab2c9f0822e2a88
+commit: 6a5c0dfc4856c721a2382b00783d69723e90e264
 Fetching distribution.
 Downloading https://services.gradle.org/distributions/gradle-9.6.0-bin.zip
 .............10%.............20%..............30%.............40%..............50%.............60%.............70%..............80%.............90%..............100%
@@ -22,16 +22,41 @@ Daemon will be stopped at the end of the build
 
 > Configure project :
 Fabric Loom: 1.17.21
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1789577982215.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1789578228823.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
 FAILURE: Build failed with an exception.
 
-* Where:
-Build file '/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build.gradle' line: 22
-
 * What went wrong:
-A problem occurred evaluating root project 'TACZ-Refabricated'.
-> Could not set unknown property 'ignoreDependencyLoomVersionValidation' for extension 'loom' of type net.fabricmc.loom.extension.LoomGradleExtensionImpl.
+A problem occurred configuring root project 'TACZ-Refabricated'.
+> Could not resolve all files for configuration ':mainRuntimeDependencyResolve'.
+   > Could not find maven.modrinth:modmenu:21.0.1-beta.1.
+     Searched in the following locations:
+       - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/.gradle/loom-cache/remapped_mods/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - file:/home/runner/.gradle/caches/fabric-loom/minecraftMaven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/.gradle/loom-cache/minecraftMaven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://maven.fabricmc.net/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://libraries.minecraft.net/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://libraries.minecraft.net/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.jar
+       - https://repo.maven.apache.org/maven2/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://maven.blamejared.com/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://modmaven.k-4u.nl/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://api.modrinth.com/maven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://maven.shedaniel.me/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://dvs1.progwml6.com/files/maven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://modmaven.dev/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://maven.tterrag.com/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://maven.kosmx.dev/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://maven.ladysnake.org/releases/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://raw.githubusercontent.com/Fuzss/modresources/main/maven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://maven.terraformersmc.com/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - https://mvn.devos.one/snapshots/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - file:/home/runner/.m2/repository/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+       - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/libs/modmenu-21.0.1-beta.1.jar
+       - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/libs/modmenu.jar
+     Required by:
+         root project 'TACZ-Refabricated'
 
 * Try:
 > Run with --info or --debug option to get more log output.
@@ -39,12 +64,11 @@ A problem occurred evaluating root project 'TACZ-Refabricated'.
 > Get more help at https://help.gradle.org.
 
 * Exception is:
-org.gradle.api.GradleScriptException: A problem occurred evaluating root project 'TACZ-Refabricated'.
-	at org.gradle.groovy.scripts.internal.DefaultScriptRunnerFactory$ScriptRunnerImpl.run(DefaultScriptRunnerFactory.java:93)
-	at org.gradle.configuration.DefaultScriptPluginFactory$ScriptPluginImpl.lambda$apply$1(DefaultScriptPluginFactory.java:141)
-	at org.gradle.configuration.ProjectScriptTarget.addConfiguration(ProjectScriptTarget.java:79)
-	at org.gradle.configuration.DefaultScriptPluginFactory$ScriptPluginImpl.apply(DefaultScriptPluginFactory.java:144)
-	at org.gradle.configuration.BuildOperationScriptPlugin$1.run(BuildOperationScriptPlugin.java:68)
+org.gradle.api.ProjectConfigurationException: A problem occurred configuring root project 'TACZ-Refabricated'.
+	at org.gradle.configuration.project.LifecycleProjectEvaluator.wrapException(LifecycleProjectEvaluator.java:84)
+	at org.gradle.configuration.project.LifecycleProjectEvaluator.addConfigurationFailure(LifecycleProjectEvaluator.java:77)
+	at org.gradle.configuration.project.LifecycleProjectEvaluator.access$500(LifecycleProjectEvaluator.java:55)
+	at org.gradle.configuration.project.LifecycleProjectEvaluator$NotifyAfterEvaluate.run(LifecycleProjectEvaluator.java:255)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
@@ -52,18 +76,7 @@ org.gradle.api.GradleScriptException: A problem occurred evaluating root project
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
 	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.configuration.BuildOperationScriptPlugin.lambda$apply$0(BuildOperationScriptPlugin.java:65)
-	at org.gradle.internal.code.DefaultUserCodeApplicationContext.apply(DefaultUserCodeApplicationContext.java:44)
-	at org.gradle.configuration.BuildOperationScriptPlugin.apply(BuildOperationScriptPlugin.java:65)
-	at org.gradle.api.internal.project.DefaultProjectState.lambda$applyToMutableState$0(DefaultProjectState.java:226)
-	at org.gradle.api.internal.project.DefaultProjectState.lambda$fromMutableState$1(DefaultProjectState.java:233)
-	at org.gradle.api.internal.project.DefaultProjectState.runWithModelLock(DefaultProjectState.java:249)
-	at org.gradle.api.internal.project.DefaultProjectState.fromMutableState(DefaultProjectState.java:233)
-	at org.gradle.api.internal.project.DefaultProjectState.applyToMutableState(DefaultProjectState.java:225)
-	at org.gradle.configuration.project.BuildScriptProcessor.execute(BuildScriptProcessor.java:46)
-	at org.gradle.configuration.project.BuildScriptProcessor.execute(BuildScriptProcessor.java:27)
-	at org.gradle.configuration.project.ConfigureActionsProjectEvaluator.evaluate(ConfigureActionsProjectEvaluator.java:35)
-	at org.gradle.configuration.project.LifecycleProjectEvaluator$EvaluateProject.lambda$run$0(LifecycleProjectEvaluator.java:109)
+	at org.gradle.configuration.project.LifecycleProjectEvaluator$EvaluateProject.lambda$run$0(LifecycleProjectEvaluator.java:114)
 	at org.gradle.api.internal.project.DefaultProjectState.lambda$applyToMutableState$0(DefaultProjectState.java:226)
 	at org.gradle.api.internal.project.DefaultProjectState.lambda$fromMutableState$1(DefaultProjectState.java:233)
 	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$runAndReleaseLocks$0(DefaultWorkerLeaseService.java:300)
@@ -217,17 +230,91 @@ org.gradle.api.GradleScriptException: A problem occurred evaluating root project
 	at org.gradle.launcher.daemon.server.DaemonStateCoordinator.lambda$runCommand$0(DaemonStateCoordinator.java:321)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-Caused by: groovy.lang.MissingPropertyException: Could not set unknown property 'ignoreDependencyLoomVersionValidation' for extension 'loom' of type net.fabricmc.loom.extension.LoomGradleExtensionImpl.
-	at org.gradle.internal.metaobject.AbstractDynamicObject.setMissingProperty(AbstractDynamicObject.java:124)
-	at org.gradle.internal.metaobject.AbstractDynamicObject.setProperty(AbstractDynamicObject.java:77)
-	at net.fabricmc.loom.extension.LoomGradleExtensionImpl_Decorated.setProperty(Unknown Source)
-	at org.gradle.internal.classpath.declarations.GroovyDynamicDispatchInterceptors.callInstrumentedSetProperty(GroovyDynamicDispatchInterceptors.java:101)
-	at org.gradle.internal.classpath.declarations.GroovyDynamicDispatchInterceptors.intercept_setProperty(GroovyDynamicDispatchInterceptors.java:88)
-	at build_1xuydquisrha81uorfjpb33xa.run(/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build.gradle:22)
-	at org.gradle.groovy.scripts.internal.DefaultScriptRunnerFactory$ScriptRunnerImpl.run(DefaultScriptRunnerFactory.java:91)
-	... 176 more
+Caused by: java.lang.RuntimeException: Failed to setup Minecraft, org.gradle.api.internal.artifacts.ivyservice.TypedResolveException: Could not resolve all files for configuration ':mainRuntimeDependencyResolve'.
+	at net.fabricmc.loom.util.ExceptionUtil.createDescriptiveWrapper(ExceptionUtil.java:59)
+	at net.fabricmc.loom.configuration.CompileConfiguration.lambda$run$1(CompileConfiguration.java:135)
+	at net.fabricmc.loom.configuration.CompileConfiguration.lambda$afterEvaluationWithService$0(CompileConfiguration.java:487)
+	at net.fabricmc.loom.util.gradle.GradleUtils.lambda$afterSuccessfulEvaluation$0(GradleUtils.java:51)
+	at org.gradle.internal.code.DefaultUserCodeApplicationContext$CurrentApplication$1.execute(DefaultUserCodeApplicationContext.java:124)
+	at org.gradle.configuration.internal.DefaultListenerBuildOperationDecorator$BuildOperationEmittingAction$1.run(DefaultListenerBuildOperationDecorator.java:173)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
+	at org.gradle.configuration.internal.DefaultListenerBuildOperationDecorator$BuildOperationEmittingAction.execute(DefaultListenerBuildOperationDecorator.java:170)
+	at org.gradle.internal.event.BroadcastDispatch$ActionInvocationHandler.dispatch(BroadcastDispatch.java:101)
+	at org.gradle.internal.event.BroadcastDispatch$ActionInvocationHandler.dispatch(BroadcastDispatch.java:89)
+	at org.gradle.internal.event.AbstractBroadcastDispatch.dispatch(AbstractBroadcastDispatch.java:44)
+	at org.gradle.internal.event.BroadcastDispatch$SingletonDispatch.dispatch(BroadcastDispatch.java:270)
+	at org.gradle.internal.event.BroadcastDispatch$SingletonDispatch.dispatch(BroadcastDispatch.java:172)
+	at org.gradle.internal.event.AbstractBroadcastDispatch.dispatch(AbstractBroadcastDispatch.java:84)
+	at org.gradle.internal.event.AbstractBroadcastDispatch.dispatch(AbstractBroadcastDispatch.java:70)
+	at org.gradle.internal.event.BroadcastDispatch$CompositeDispatch.dispatch(BroadcastDispatch.java:382)
+	at org.gradle.internal.event.BroadcastDispatch$CompositeDispatch.dispatch(BroadcastDispatch.java:274)
+	at org.gradle.internal.event.ListenerBroadcast.dispatch(ListenerBroadcast.java:160)
+	at org.gradle.internal.event.ListenerBroadcast.dispatch(ListenerBroadcast.java:37)
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:88)
+	at jdk.proxy1/jdk.proxy1.$Proxy66.afterEvaluate(Unknown Source)
+	at org.gradle.configuration.project.LifecycleProjectEvaluator$NotifyAfterEvaluate$1.execute(LifecycleProjectEvaluator.java:247)
+	at org.gradle.configuration.project.LifecycleProjectEvaluator$NotifyAfterEvaluate$1.execute(LifecycleProjectEvaluator.java:244)
+	at org.gradle.api.internal.project.DefaultProject.stepEvaluationListener(DefaultProject.java:1562)
+	at org.gradle.configuration.project.LifecycleProjectEvaluator$NotifyAfterEvaluate.run(LifecycleProjectEvaluator.java:253)
+	... 161 more
+Caused by: org.gradle.api.internal.artifacts.ivyservice.TypedResolveException: Could not resolve all files for configuration ':mainRuntimeDependencyResolve'.
+	at org.gradle.api.internal.artifacts.ResolveExceptionMapper.mapFailure(ResolveExceptionMapper.java:73)
+	at org.gradle.api.internal.artifacts.ResolveExceptionMapper.mapFailures(ResolveExceptionMapper.java:65)
+	at org.gradle.api.internal.artifacts.configurations.DefaultConfiguration$DefaultResolutionHost.consolidateFailures(DefaultConfiguration.java:1803)
+	at org.gradle.api.internal.artifacts.configurations.ResolutionHost.rethrowFailuresAndReportProblems(ResolutionHost.java:75)
+	at org.gradle.api.internal.artifacts.configurations.ResolutionBackedFileCollection.maybeThrowResolutionFailures(ResolutionBackedFileCollection.java:86)
+	at org.gradle.api.internal.artifacts.configurations.ResolutionBackedFileCollection.visitContents(ResolutionBackedFileCollection.java:76)
+	at org.gradle.api.internal.file.AbstractFileCollection.visitStructure(AbstractFileCollection.java:361)
+	at org.gradle.api.internal.artifacts.configurations.DefaultConfiguration.visitContents(DefaultConfiguration.java:531)
+	at org.gradle.api.internal.file.AbstractFileCollection.getFiles(AbstractFileCollection.java:124)
+	at org.gradle.api.internal.artifacts.configurations.DefaultLegacyConfiguration_Decorated.getFiles(Unknown Source)
+	at net.fabricmc.loom.configuration.processors.speccontext.DeobfSpecContext.getModsFromConfiguration(DeobfSpecContext.java:156)
+	at net.fabricmc.loom.configuration.processors.speccontext.DeobfSpecContext.create(DeobfSpecContext.java:72)
+	at net.fabricmc.loom.configuration.processors.speccontext.DeobfSpecContext.create(DeobfSpecContext.java:62)
+	at net.fabricmc.loom.configuration.processors.MinecraftJarProcessorManager.create(MinecraftJarProcessorManager.java:74)
+	at net.fabricmc.loom.configuration.CompileConfiguration.setupMinecraft(CompileConfiguration.java:203)
+	at net.fabricmc.loom.configuration.CompileConfiguration.lambda$run$1(CompileConfiguration.java:127)
+	... 190 more
+Caused by: org.gradle.internal.resolve.ModuleVersionNotFoundException: Could not find maven.modrinth:modmenu:21.0.1-beta.1.
+Searched in the following locations:
+  - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/.gradle/loom-cache/remapped_mods/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - file:/home/runner/.gradle/caches/fabric-loom/minecraftMaven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/.gradle/loom-cache/minecraftMaven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://maven.fabricmc.net/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://libraries.minecraft.net/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://libraries.minecraft.net/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.jar
+  - https://repo.maven.apache.org/maven2/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://maven.blamejared.com/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://modmaven.k-4u.nl/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://api.modrinth.com/maven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://maven.shedaniel.me/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://dvs1.progwml6.com/files/maven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://modmaven.dev/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://maven.tterrag.com/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://maven.kosmx.dev/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://maven.ladysnake.org/releases/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://raw.githubusercontent.com/Fuzss/modresources/main/maven/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://maven.terraformersmc.com/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - https://mvn.devos.one/snapshots/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - file:/home/runner/.m2/repository/maven/modrinth/modmenu/21.0.1-beta.1/modmenu-21.0.1-beta.1.pom
+  - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/libs/modmenu-21.0.1-beta.1.jar
+  - file:/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/libs/modmenu.jar
+Required by:
+    root project 'TACZ-Refabricated'
 
 
-BUILD FAILED in 19s
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.6.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 33s
 
 == job status: failure ==
