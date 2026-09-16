@@ -206,8 +206,9 @@ dependencies {
     // 26.3.0 Fabric: https://github.com/Fuzss/forge-config-api-port (branch 26.3.x, primary)
     implementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.3.0"
 
-    // ModMenu — 26.3 (v21.0.1-beta.1 via Modrinth maven; 运行期建议玩家装最新 beta/release)
-    implementation "maven.modrinth:modmenu:${modmenu_version}"
+    // ModMenu — 26.3 (v21.0.0-beta.1 via Terraformers maven; 运行期建议玩家装最新 beta/release)
+    // 注：Mod Menu 官方 maven group 自 26.x 起是 com.terraformersmc:modmenu，不是 maven.modrinth
+    implementation "com.terraformersmc:modmenu:${modmenu_version}"
 
     // Zoomify
     // Zoomify — 26.3 构建暂未发布，沿用 26.2 坐标 2.16.1+26.2 compileOnly（LoL 校验已忽略）
