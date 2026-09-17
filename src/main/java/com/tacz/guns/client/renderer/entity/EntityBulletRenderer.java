@@ -88,8 +88,8 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             BedrockAmmoModel ammoEntityModel = ammoIndex.getAmmoEntityModel();
             Identifier textureLocation = ammoIndex.getAmmoEntityTextureLocation();
             if (ammoEntityModel != null && textureLocation != null) {
-                poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, bullet.yRotO, bullet.getYRot()) - 180.0F));
-                poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, bullet.xRotO, bullet.getXRot())));
+                poseStack.rotate(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, bullet.yRotO, bullet.getYRot()) - 180.0F));
+                poseStack.rotate(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, bullet.xRotO, bullet.getXRot())));
                 poseStack.pushPose();
                 poseStack.translate(0, 1.5, 0);
                 poseStack.scale(-1, -1, 1);
@@ -211,8 +211,8 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 // 提起为本地变量并写进诊断日志，用于核对「条带朝向 == 速度反向」。
                 float bulletLerpYRot = Mth.lerp(partialTicks, bullet.yRotO, bullet.getYRot());
                 float bulletLerpXRot = Mth.lerp(partialTicks, bullet.xRotO, bullet.getXRot());
-                poseStack.mulPose(Axis.YP.rotationDegrees(bulletLerpYRot - 180.0F));
-                poseStack.mulPose(Axis.XP.rotationDegrees(bulletLerpXRot));
+                poseStack.rotate(Axis.YP.rotationDegrees(bulletLerpYRot - 180.0F));
+                poseStack.rotate(Axis.XP.rotationDegrees(bulletLerpXRot));
                 poseStack.translate(0, isFirstPerson ? 0 : -0.2, trailLength / 2.0);
                 poseStack.scale(width, width, (float) trailLength);
                 double bulletDistance = bulletPosition.distanceTo(shooter.getEyePosition());

@@ -41,7 +41,8 @@ public class ExplodeUtil {
                 float impact = (float) (1.0 - dist / (radius * 2.0));
                 if (impact <= 0) continue;
                 // 取消无敌帧，确保自定义伤害生效（与 tacAttackEntity 相同手法）
-                entity.invulnerableTime = 0;
+                // 26.3: invulnerableTime 变成私有字段，改走新增的 public setter。
+                entity.setInvulnerableTime(0);
                 entity.hurt(source, damage * impact);
             }
         }

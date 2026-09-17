@@ -6,6 +6,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.player.LocalPlayer;
+import cn.sh1rocu.tacz.util.BufMapCodec;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -35,15 +36,16 @@ public class ServerMessageSyncLrPack implements CustomPacketPayload {
     }
 
     public ServerMessageSyncLrPack(FriendlyByteBuf buf) {
-        this(buf.readMap(FriendlyByteBuf::readIdentifier, FriendlyByteBuf::readUtf),
-                buf.readMap(FriendlyByteBuf::readIdentifier, FriendlyByteBuf::readUtf),
-                buf.readMap(FriendlyByteBuf::readIdentifier, FriendlyByteBuf::readUtf));
+        // 26.3: FriendlyByteBuf#readMap/writeMap 已移除，改走 BufMapCodec（线格式不变）。
+        this(BufMapCodec.readMap(buf, FriendlyByteBuf::readIdentifier, FriendlyByteBuf::readUtf),
+                BufMapCodec.readMap(buf, FriendlyByteBuf::readIdentifier, FriendlyByteBuf::readUtf),
+                BufMapCodec.readMap(buf, FriendlyByteBuf::readIdentifier, FriendlyByteBuf::readUtf));
     }
 
     public void write(FriendlyByteBuf buf) {
-        buf.writeMap(this.throwableIndex, FriendlyByteBuf::writeIdentifier, FriendlyByteBuf::writeUtf);
-        buf.writeMap(this.meleeIndex, FriendlyByteBuf::writeIdentifier, FriendlyByteBuf::writeUtf);
-        buf.writeMap(this.consumableIndex, FriendlyByteBuf::writeIdentifier, FriendlyByteBuf::writeUtf);
+        BufMapCodec.writeMap(buf, this.throwableIndex, FriendlyByteBuf::writeIdentifier, FriendlyByteBuf::writeUtf);
+        BufMapCodec.writeMap(buf, this.meleeIndex, FriendlyByteBuf::writeIdentifier, FriendlyByteBuf::writeUtf);
+        BufMapCodec.writeMap(buf, this.consumableIndex, FriendlyByteBuf::writeIdentifier, FriendlyByteBuf::writeUtf);
     }
 
     @Override

@@ -156,7 +156,7 @@ public class HumanoidOffhandRender {
         poseStack.scale(-scale.x(), -scale.y(), scale.z());
         Quaternionf rotation = new Quaternionf();
         MathUtil.toQuaternion((float) Math.toRadians(rotate.x), (float) Math.toRadians(rotate.y), (float) Math.toRadians(rotate.z), rotation);
-        poseStack.mulPose(rotation);
+        poseStack.rotate(rotation);
 
         // 26.2 等价于旧的 ItemRenderer#renderStatic(..., ItemDisplayContext.FIXED, ...)。
         // seed 混入 seedSalt，避免同一实体上多把枪共用 seed。

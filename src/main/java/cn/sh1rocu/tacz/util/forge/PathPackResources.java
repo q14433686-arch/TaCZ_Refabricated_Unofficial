@@ -4,7 +4,8 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FileUtil;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.AbstractPackResources;
+import net.minecraft.server.packs.AbstractPackMetadataResources;
+import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.PackLocationInfo;
@@ -24,7 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class PathPackResources extends AbstractPackResources {
+public class PathPackResources extends AbstractPackMetadataResources implements PackResources {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final Path source;
 
@@ -55,14 +56,14 @@ public class PathPackResources extends AbstractPackResources {
     }
 
     @Override
-    public void listResources(PackType type, String namespace, String path, ResourceOutput resourceOutput) {
+    public void listResources(PackType type, String namespace, String path, PackResources.ResourceOutput resourceOutput) {
         // 26.2 单复数兼容：recipe/loot_table/tags 等
         if (type == PackType.SERVER_DATA) {
             String legacy = cn.sh1rocu.tacz.util.RecipeCompat.getLegacyForCurrent(path);
             boolean isRecipe = "recipe".equals(path);
             if (isRecipe) {
                 // recipe 需要转换包装
-                ResourceOutput transformingOutput = (location, supplier) -> {
+                PackResources.ResourceOutput transformingOutput = (location, supplier) -> {
                     var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, supplier);
                     resourceOutput.accept(location, wrapped);
                 };
@@ -70,7 +71,7 @@ public class PathPackResources extends AbstractPackResources {
                         net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), parts, transformingOutput));
                 if (legacy != null) {
                     FileUtil.decomposePath(legacy).result().ifPresent(legacyParts -> {
-                        ResourceOutput legacyOutput = (location, supplier) -> {
+                        PackResources.ResourceOutput legacyOutput = (location, supplier) -> {
                             var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
                             try {
                                 try (var in = supplier.get()) {
@@ -110,7 +111,7 @@ public class PathPackResources extends AbstractPackResources {
                 FileUtil.decomposePath(path).result().ifPresent(parts ->
                         net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), parts, resourceOutput));
                 FileUtil.decomposePath(legacy).result().ifPresent(legacyParts -> {
-                    ResourceOutput legacyOutput = (location, supplier) -> {
+                    PackResources.ResourceOutput legacyOutput = (location, supplier) -> {
                         var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
                         resourceOutput.accept(remapped, supplier);
                     };

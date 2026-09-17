@@ -35,7 +35,13 @@ public class ClientMessageLaserColor implements CustomPacketPayload {
     }
 
     public ClientMessageLaserColor(FriendlyByteBuf buf) {
-        this.colorMap.putAll(buf.readMap(buf1 -> buf1.readEnum(AttachmentType.class), FriendlyByteBuf::readInt));
+        // 26.3: FriendlyByteBuf#readMap/writeMap 已移除，手写「varint 长度 + 逐条」循环，
+        // 线格式与 26.2 的 readMap/writeMap 一致。
+        int colorCount = buf.readVarInt();
+        for (int i = 0; i < colorCount; i++) {
+            AttachmentType type = buf.readEnum(AttachmentType.class);
+            this.colorMap.put(type, buf.readInt());
+        }
         this.applyGunColor = buf.readBoolean();
         this.gunColor = buf.readInt();
         this.gunSlotIndex = buf.readInt();
@@ -59,8 +65,12 @@ public class ClientMessageLaserColor implements CustomPacketPayload {
         }
     }
 
-        public void write(FriendlyByteBuf buf) {
-        buf.writeMap(colorMap, FriendlyByteBuf::writeEnum, FriendlyByteBuf::writeInt);
+    public void write(FriendlyByteBuf buf) {
+        buf.writeVarInt(colorMap.size());
+        for (Map.Entry<AttachmentType, Integer> entry : colorMap.entrySet()) {
+            buf.writeEnum(entry.getKey());
+            buf.writeInt(entry.getValue());
+        }
         buf.writeBoolean(applyGunColor);
         buf.writeInt(gunColor);
         buf.writeInt(gunSlotIndex);

@@ -83,15 +83,15 @@ public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, Ta
 
             poseStack.pushPose();
             poseStack.translate(0.5, 0.225, 0.5);
-            poseStack.mulPose(Axis.YN.rotationDegrees(state.facing.get2DDataValue() * 90));
-            poseStack.mulPose(Axis.ZN.rotationDegrees(180));
+            poseStack.rotate(Axis.YN.rotationDegrees(state.facing.get2DDataValue() * 90));
+            poseStack.rotate(Axis.ZN.rotationDegrees(180));
             poseStack.translate(0, -1.275, 0.0125);
             RenderType renderType = RenderTypes.entityTranslucent(InternalAssetLoader.TARGET_TEXTURE_LOCATION);
             model.submit(poseStack, ItemDisplayContext.NONE, collector, renderType, combinedLightIn, combinedOverlayIn);
 
             if (state.hasOwner && state.skinTexture != null) {
                 poseStack.translate(0, 1.25, 0);
-                poseStack.mulPose(Axis.XP.rotationDegrees(deg));
+                poseStack.rotate(Axis.XP.rotationDegrees(deg));
                 headModel.visible = true;
                 RenderType skullRenderType = RenderTypes.entityCutout(state.skinTexture);
                 // Use submitCustomGeometry to render the head part with a VertexConsumer

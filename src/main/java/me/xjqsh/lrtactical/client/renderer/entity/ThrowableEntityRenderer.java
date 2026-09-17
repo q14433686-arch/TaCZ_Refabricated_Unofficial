@@ -124,15 +124,15 @@ public class ThrowableEntityRenderer
             // 原版图标相反。姊妹仓的提交信息把整批 0.4.3 改动标为「未实机验证」，
             // 本仓同样没有实机条件，故原样同步而不擅自改符号 —— 若日后实机发现
             // 飞行朝向反了，改的应当是这里的 YP/YN，两仓要一起改。
-            poseStack.mulPose(Axis.YP.rotationDegrees(state.yRot));
-            poseStack.mulPose(Axis.XP.rotationDegrees(state.xRot));
+            poseStack.rotate(Axis.YP.rotationDegrees(state.yRot));
+            poseStack.rotate(Axis.XP.rotationDegrees(state.xRot));
             state.entityTransform.apply(poseStack);
         } else {
             // 没装内容包：与上游一致的占位姿态 —— 先抬一点，再按飞行朝向旋转，
             // 最后微调到手雷本体中心。保持原样，避免原版图标沉到地里。
             poseStack.translate(0, 0.15, 0);
-            poseStack.mulPose(Axis.YN.rotationDegrees(state.yRot));
-            poseStack.mulPose(Axis.XP.rotationDegrees(state.xRot));
+            poseStack.rotate(Axis.YN.rotationDegrees(state.yRot));
+            poseStack.rotate(Axis.XP.rotationDegrees(state.xRot));
             poseStack.translate(0, 0.35, -0.15);
         }
 

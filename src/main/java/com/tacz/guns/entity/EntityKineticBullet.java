@@ -464,7 +464,7 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         // 爆炸逻辑
         if (this.explosion) {
             // 取消无敌时间
-            parts.core().invulnerableTime = 0;
+            parts.core().setInvulnerableTime(0);
             ExplodeUtil.createExplosion(this.getOwner(), this, this.explosionDamage, this.explosionRadius, this.explosionKnockback, this.explosionDestroyBlock, result.getLocation());
         }
         // 只对 LivingEntity 执行击杀判定
@@ -593,11 +593,11 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         float armorDamagePercent = Mth.clamp(this.armorIgnore, 0.0F, 1.0F);
         float normalDamagePercent = 1 - armorDamagePercent;
         // 取消无敌时间
-        parts.core().invulnerableTime = 0;
+        parts.core().setInvulnerableTime(0);
         // 普通伤害
         parts.hitPart().hurt(source1, damage * normalDamagePercent);
         // 取消无敌时间
-        parts.core().invulnerableTime = 0;
+        parts.core().setInvulnerableTime(0);
         // 穿甲伤害
         parts.hitPart().hurt(source2, damage * armorDamagePercent);
     }

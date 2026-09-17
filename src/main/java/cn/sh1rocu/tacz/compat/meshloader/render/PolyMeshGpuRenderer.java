@@ -26,6 +26,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.StagedVertexBuffer;
 import net.minecraft.client.renderer.rendertype.PreparedRenderType;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -577,15 +578,14 @@ public final class PolyMeshGpuRenderer {
         if (HAND_DRAWS.isEmpty()) {
             return;
         }
-        if (RenderSystem.outputColorTextureOverride != null) {
-            // 【A1 · 渲染目标覆盖防御】26.2 字节码：override 只在
-            // addAlwaysOnTopPass 的 lambda 里设置（世界帧图，且随后复位），
-            // vanilla 手部 renderAllFeatures 收尾处不应有 override —— 但别的
-            // mod 可以在任何时刻设置它。带着 override 画 = 枪画进未知离屏
-            // target。跳过并清表（下一帧手部 pass 会重新 submit）。
-            HAND_DRAWS.clear();
-            return;
-        }
+        // 【A1 · 渲染目标覆盖防御 —— 26.3 已无对应物，故删除】
+        // 26.2 这里检查 RenderSystem.outputColorTextureOverride：那是个全局量，
+        // 别的 mod 设上它就能把后续绘制重定向到未知离屏 target，我们带着它画
+        // 等于把枪画丢。26.3 把 output{Color,Depth}TextureOverride 整对移除，
+        // 改成「谁绘制谁开 RenderPass，并在 createRenderPass 时显式指定附件」
+        // —— 我们的 drawList 正是这么做的（附件取自 mainRenderTarget），
+        // 不存在被全局量悄悄改向的通道，这道闸门也就没有可表达的形式了。
+        // 这是【该防御在新架构下不再需要】，不是把它绕过去：重定向的机制本身没了。
         if (drawnThisFrame) {
             // Iris 第二次手部 pass（renderTranslucent）的重复 submit：跳过。
             HAND_DRAWS.clear();
@@ -693,12 +693,9 @@ public final class PolyMeshGpuRenderer {
         if (WORLD_DRAWS.isEmpty()) {
             return;
         }
-        if (RenderSystem.outputColorTextureOverride != null) {
-            // 【A1】带 override 的 executeSolid（26.2 里 vanilla 不存在这种组合，
-            // 防的是 mod 注入的离屏遍）：跳过且【不清表】—— 条目属于其后
-            // 真正的主世界遍。
-            return;
-        }
+        // 【A1 · 同上，26.3 无对应物】26.2 这里检查 outputColorTextureOverride
+        // 以躲开「别的 mod 注入的离屏遍」。26.3 移除了这对全局量（附件改为
+        // createRenderPass 显式传入），离屏重定向这条通道不复存在。
         boolean inScopePass = com.tacz.guns.client.render.scope.ScopePipRenderer.isInsideScopeLevelRender();
         if (!inScopePass && worldDrawnThisFrame) {
             // 主世界重复消费（防御性；正常一帧只有一次主世界帧图）。
@@ -753,9 +750,14 @@ public final class PolyMeshGpuRenderer {
      * prepare() → 弹栈，每骨骼得到一份独立的 DynamicTransforms 切片，
      * 顶点仍留在骨骼本地系的常驻 VBO 里，零 CPU 变换。
      *
-     * <p>{@code drawFromBuffer(vb, ib, type, 0, 0, indexCount)} 的参数序按其字节码
-     * {@code drawIndexed(arg6, 1, arg5, arg4, 0)} 与已实测正确的
-     * {@code drawIndexed(indexCount, 1, 0, 0, 0)} 对齐：arg6=indexCount，其余置 0。</p>
+     * <p><b>26.3 的参数形态</b>：{@code drawFromBuffer} 由「六个散参」改为
+     * {@code drawFromBuffer(StagedVertexBuffer.ExecuteInfo, RenderPass)}，
+     * 且<b>不再自己开 render pass</b>（调用方给）。ExecuteInfo 是 public record
+     * {@code (vertexBuffer, customIndexBuffer, indexType, baseVertex, firstIndex,
+     * indexCount, topology)} —— 与旧散参逐个对应，语义不变；我们显式传
+     * {@code customIndexBuffer = indices.getBuffer(indexCount)} 而不是留 null，
+     * 因为 record 的 {@code indexBuffer()} 回退分支调的是无参
+     * {@code getBuffer()}，不会为我们的索引数扩容。</p>
      *
      * <h2>视觉对齐</h2>
      * entityCutout = PER_FACE_LIGHTING + overlay + lightmap，与 collector 路径
@@ -815,6 +817,23 @@ public final class PolyMeshGpuRenderer {
             byTexture.computeIfAbsent(entry.texture(), k -> new ArrayList<>()).add(entry);
         }
 
+        // 【26.3 改形 · 两阶段】PreparedRenderType.drawFromBuffer 不再自己开
+        // render pass，改成由调用方传入（vanilla RenderTypeFeatureRenderer 就是
+        // prepareGroup 在 pass 外、executeGroup 在 pass 内）。我们照抄这个切分：
+        //   阶段一（pass 外）：逐骨骼 prepare() —— prepare 内部会解析纹理，
+        //       而«pass 开着不许发其他命令»，懒加载上传必须发生在 pass 之前
+        //       （drawList 那一路的同款踩坑注释见下方 resolveTextureView 段）。
+        //   阶段二（pass 内）：逐骨骼 drawFromBuffer。
+        // 两个阶段都要在 push(MV_draw × pose_bone) 的作用域内执行，理由不同：
+        //   prepare 期 —— prepare() 自己从 MV 栈顶取矩阵写 DynamicTransforms；
+        //   draw   期 —— Iris ExtendedShader 在绘制执行那一刻读 MV 栈顶算
+        //                iris_NormalMat（26.3 的 ExtendedShader:220-223 与 26.2
+        //                逐字相同，法线病灶依旧存在）。
+        // 所以两阶段各自 push/pop 同一个矩阵，而不是「prepare 完就把栈还原」。
+        record PreparedDraw(PreparedRenderType prepared, StagedVertexBuffer.ExecuteInfo info, Matrix4f model) {
+        }
+        List<PreparedDraw> preparedDraws = new ArrayList<>();
+
         long totalIndices = 0;
         for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
             // 【开镜 mesh 枪身裁剪 · 光影侧】与 collector 枪身完全同一份机制：
@@ -867,12 +886,53 @@ public final class PolyMeshGpuRenderer {
                     RenderSystem.AutoStorageIndexBuffer indices =
                             RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
                     GpuBuffer indexBuffer = indices.getBuffer(entry.bone().indexCount);
-                    prepared.drawFromBuffer(entry.bone().vertexBuffer, indexBuffer, indices.type(),
-                            0, 0, entry.bone().indexCount);
+                    // 参数与 26.2 的六散参逐个对应：baseVertex=0、firstIndex=0、
+                    // indexCount=骨骼索引数；topology 与烘焙时的 QUADS 一致。
+                    StagedVertexBuffer.ExecuteInfo info = new StagedVertexBuffer.ExecuteInfo(
+                            entry.bone().vertexBuffer, indexBuffer, indices.type(),
+                            0, 0, entry.bone().indexCount, PrimitiveTopology.QUADS);
+                    preparedDraws.add(new PreparedDraw(prepared, info, entry.model()));
                 } finally {
                     mvStack.popMatrix();
                 }
                 totalIndices += entry.bone().indexCount;
+            }
+        }
+
+        if (preparedDraws.isEmpty()) {
+            return 0;
+        }
+
+        Minecraft mc = Minecraft.getInstance();
+        RenderTarget mainTarget = mc.gameRenderer.mainRenderTarget();
+        if (mainTarget == null) {
+            return 0;
+        }
+        GpuTextureView colorView = mainTarget.getColorTextureView();
+        GpuTextureView depthView = mainTarget.getDepthTextureView();
+        if (colorView == null || depthView == null) {
+            return 0;
+        }
+
+        // 附件取 mainRenderTarget 的颜色/深度，且两个 Optional 都 empty ——
+        // 不清屏、不清深度，与 drawList 那一路完全同款（此前立方体/地形画进去的
+        // 深度必须留着，GPU poly 才能被正确遮挡）。Iris 在 26.3 自己的
+        // HandRenderer:128 / MixinLevelRenderer:265 也是这一模一样的五参写法，
+        // 说明光影激活时按此开 pass 是受支持的用法。
+        try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
+                () -> "tacz_mesh_gpu_rendertype",
+                colorView,
+                Optional.empty(),
+                depthView,
+                OptionalDouble.empty())) {
+            for (PreparedDraw draw : preparedDraws) {
+                mvStack.pushMatrix();
+                mvStack.mul(draw.model());
+                try {
+                    draw.prepared().drawFromBuffer(draw.info(), pass);
+                } finally {
+                    mvStack.popMatrix();
+                }
             }
         }
         return totalIndices;
@@ -967,16 +1027,19 @@ public final class PolyMeshGpuRenderer {
                 depthView,
                 OptionalDouble.empty())) {
             boolean lit = lightmapView != null;
-            pass.setPipeline(clipAgainstOcular ? LIT_CLIPPED_PIPELINE : (lit ? LIT_PIPELINE : EMISSIVE_PIPELINE));
+            // 26.3: setPipeline 收 CompiledRenderPipeline；三元表达式先选出 RenderPipeline 再编译，
+            // 免得两个分支各自被推导成不同类型。
+            pass.setPipeline(RenderSystem.getCompiledPipeline(
+                    clipAgainstOcular ? LIT_CLIPPED_PIPELINE : (lit ? LIT_PIPELINE : EMISSIVE_PIPELINE)));
             RenderSystem.bindDefaultUniforms(pass);
             if (lit) {
-                pass.bindTexture("Sampler2", lightmapView,
+                pass.setUniform("Sampler2", lightmapView,
                         RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             }
             if (clipAgainstOcular) {
                 // NEAREST 与 ScopeMaskTextureHandle 的理由相同：掩码是二值数据，
                 // 线性过滤会让 > 0.5 判定在边界抖动出毛边。
-                pass.bindTexture(com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.maskSamplerName(),
+                pass.setUniform(com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.maskSamplerName(),
                         maskView, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             }
 
@@ -985,7 +1048,7 @@ public final class PolyMeshGpuRenderer {
                 if (textureView == null) {
                     continue;
                 }
-                pass.bindTexture("Sampler0", textureView, linearSampler);
+                pass.setUniform("Sampler0", textureView, linearSampler);
 
                 for (DrawEntry entry : group.getValue()) {
                     // ModelViewMat = MV_draw * pose_submit（乘序同 vanilla：顶点先套

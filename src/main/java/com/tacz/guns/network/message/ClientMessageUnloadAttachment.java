@@ -13,6 +13,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.util.Prediction;
 
 public class ClientMessageUnloadAttachment implements CustomPacketPayload {
     public static final Identifier PACKET_ID = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "c2s_unload_attachment");
@@ -68,7 +69,12 @@ public class ClientMessageUnloadAttachment implements CustomPacketPayload {
                 }
                 if (!inventory.add(attachmentItem)) {
                     // 背包放不下 -> 掉在地上，不能让配件蒸发
-                    player.drop(attachmentItem, false);
+                    // 26.3: drop(ItemStack, boolean) 已删，第三参 Prediction 必填。
+                    // 这里是服务端处理 C2S 包的路径，客户端并未预测这次掉落，
+                    // 故用 SERVER_ONLY（与 vanilla AbstractContainerMenu:616 的
+                    // 服务端善后掉落同档；PREDICTED 是给「客户端已自行演算过」的
+                    // 操作用的，用错会让 LivingEntity#drop 少发一次挥手同步）。
+                    player.drop(attachmentItem, false, Prediction.SERVER_ONLY);
                 }
                 // 刷新配件数据
                 AttachmentPropertyManager.postChangeEvent(player, gunItem);

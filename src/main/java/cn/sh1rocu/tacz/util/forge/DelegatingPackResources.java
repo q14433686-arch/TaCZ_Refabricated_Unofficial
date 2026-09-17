@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.network.chat.Component;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.AbstractPackResources;
+import net.minecraft.server.packs.AbstractPackMetadataResources;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackSource;
@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-public class DelegatingPackResources extends AbstractPackResources {
+public class DelegatingPackResources extends AbstractPackMetadataResources implements PackResources {
     private final PackMetadataSection packMeta;
     private final List<PackResources> delegates;
     private final Map<String, List<PackResources>> namespacesAssets;
@@ -51,12 +51,12 @@ public class DelegatingPackResources extends AbstractPackResources {
     }
 
     @Override
-    public void listResources(PackType type, String resourceNamespace, String paths, ResourceOutput resourceOutput) {
+    public void listResources(PackType type, String resourceNamespace, String paths, PackResources.ResourceOutput resourceOutput) {
         boolean isRecipe = type == PackType.SERVER_DATA && "recipe".equals(paths);
         String legacyPath = type == PackType.SERVER_DATA ? cn.sh1rocu.tacz.util.RecipeCompat.getLegacyForCurrent(paths) : null;
 
         if (isRecipe) {
-            ResourceOutput transformingOutput = (location, supplier) -> {
+            PackResources.ResourceOutput transformingOutput = (location, supplier) -> {
                 var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, supplier);
                 resourceOutput.accept(location, wrapped);
             };
@@ -66,7 +66,7 @@ public class DelegatingPackResources extends AbstractPackResources {
                 } catch (Exception ignored) {}
             }
             if (legacyPath != null) {
-                ResourceOutput legacyOutput = (location, supplier) -> {
+                PackResources.ResourceOutput legacyOutput = (location, supplier) -> {
                     var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
                     try {
                         try (var in = supplier.get()) {
@@ -108,7 +108,7 @@ public class DelegatingPackResources extends AbstractPackResources {
                     delegate.listResources(type, resourceNamespace, paths, resourceOutput);
                 } catch (Exception ignored) {}
             }
-            ResourceOutput legacyOutput = (location, supplier) -> {
+            PackResources.ResourceOutput legacyOutput = (location, supplier) -> {
                 var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
                 resourceOutput.accept(remapped, supplier);
             };

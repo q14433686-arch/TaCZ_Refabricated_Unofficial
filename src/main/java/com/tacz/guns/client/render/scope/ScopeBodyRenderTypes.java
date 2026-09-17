@@ -1,6 +1,7 @@
 package com.tacz.guns.client.render.scope;
 
 import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
+import com.mojang.renderpearl.api.pipeline.UniformType;
 import com.mojang.renderpearl.api.pipeline.BlendFunction;
 import com.mojang.renderpearl.api.pipeline.ColorTargetState;
 import com.mojang.renderpearl.api.pipeline.DepthStencilState;
@@ -72,7 +73,11 @@ public final class ScopeBodyRenderTypes {
 
     /** 掩码采样器的 bind group layout。仿 vanilla DISSOLVE_MASK_SAMPLER 的做法自建。 */
     private static final BindGroupLayout MASK_SAMPLER_LAYOUT =
-            BindGroupLayout.builder().withSampler(MASK_SAMPLER).build();
+            BindGroupLayout.builder()
+                    // 26.3: withSampler(name) 没了，采样器统一并入 withUniform，
+                    // 由 UniformType.COMBINED_IMAGE_SAMPLER 表达「图像+采样器」组合。
+                    .withUniform(MASK_SAMPLER, UniformType.COMBINED_IMAGE_SAMPLER)
+                    .build();
 
     /** 供 meshloader 的 GPU 裁剪管线复用（同一个 layout 实例 = 同一个 sampler 名）。 */
     public static BindGroupLayout maskSamplerLayout() {
@@ -245,7 +250,7 @@ public final class ScopeBodyRenderTypes {
                     .withBindGroupLayout(BindGroupLayouts.SAMPLER1)
                     .withCull(false)
                     .withDepthStencilState(new DepthStencilState(
-                            com.mojang.blaze3d.platform.CompareOp.ALWAYS_PASS, false))
+                            com.mojang.renderpearl.api.pipeline.CompareOp.ALWAYS_PASS, false))
                     .build();
 
     /**

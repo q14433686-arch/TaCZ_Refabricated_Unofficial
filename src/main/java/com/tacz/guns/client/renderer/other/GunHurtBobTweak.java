@@ -26,9 +26,9 @@ public class GunHurtBobTweak {
         yRot = yRot * lastTweakMultiplier;
         zRot = zRot * lastTweakMultiplier;
 
-        matrixStack.mulPose(Axis.YP.rotationDegrees(-yRot));
-        matrixStack.mulPose(Axis.XP.rotationDegrees(-zRot * 14.0F));
-        matrixStack.mulPose(Axis.YP.rotationDegrees(yRot));
+        matrixStack.rotate(Axis.YP.rotationDegrees(-yRot));
+        matrixStack.rotate(Axis.XP.rotationDegrees(-zRot * 14.0F));
+        matrixStack.rotate(Axis.YP.rotationDegrees(yRot));
         return true;
     }
 

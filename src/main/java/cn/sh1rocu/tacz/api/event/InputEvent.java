@@ -61,14 +61,21 @@ public abstract class InputEvent extends BaseEvent {
         });
 
         private final int key;
-        private final int scanCode;
+        private final int keycode;
         private final int action;
         private final int modifiers;
 
+        /**
+         * @param key     26.3 起是 <b>SDL scancode</b>（物理键位），可直接喂给
+         *                {@code InputConstants.Type.KEYBOARD.getOrCreate(...)}；
+         *                26.2 及以前是 GLFW keysym。
+         * @param keycode 26.3 起是 <b>SDL keycode</b>（按当前键盘布局解析出的字符），
+         *                取代了旧的 GLFW scancode 形参。
+         */
         @ApiStatus.Internal
-        public Key(int key, int scanCode, int action, int modifiers) {
+        public Key(int key, int keycode, int action, int modifiers) {
             this.key = key;
-            this.scanCode = scanCode;
+            this.keycode = keycode;
             this.action = action;
             this.modifiers = modifiers;
         }
@@ -77,8 +84,19 @@ public abstract class InputEvent extends BaseEvent {
             return this.key;
         }
 
+        /**
+         * 26.3 起返回 SDL keycode（布局相关）。
+         *
+         * @deprecated 名字来自 GLFW 时代的 scancode，语义已变。新代码请用 {@link #getKeycode()}。
+         */
+        @Deprecated
         public int getScanCode() {
-            return this.scanCode;
+            return this.keycode;
+        }
+
+        /** 26.3 的 SDL keycode（按当前键盘布局解析出的字符码）。 */
+        public int getKeycode() {
+            return this.keycode;
         }
 
         public int getAction() {

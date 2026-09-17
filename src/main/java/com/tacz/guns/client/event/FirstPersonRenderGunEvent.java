@@ -517,9 +517,9 @@ public class FirstPersonRenderGunEvent {
         inverseRotation.mul(rotationICA.x() - 1, rotationICA.y() - 1, rotationICA.z() - 1);
         // 约束旋转
         poseStack.translate(animatedTranslation.x(), animatedTranslation.y() + 1.5f, animatedTranslation.z());
-        poseStack.mulPose(Axis.XP.rotation(inverseRotation.x() * weight));
-        poseStack.mulPose(Axis.YP.rotation(inverseRotation.y() * weight));
-        poseStack.mulPose(Axis.ZP.rotation(inverseRotation.z() * weight));
+        poseStack.rotate(Axis.XP.rotation(inverseRotation.x() * weight));
+        poseStack.rotate(Axis.YP.rotation(inverseRotation.y() * weight));
+        poseStack.rotate(Axis.ZP.rotation(inverseRotation.z() * weight));
         poseStack.translate(-animatedTranslation.x(), -animatedTranslation.y() - 1.5f, -animatedTranslation.z());
         // 约束位移
         Matrix4f poseMatrix = poseStack.last().pose();

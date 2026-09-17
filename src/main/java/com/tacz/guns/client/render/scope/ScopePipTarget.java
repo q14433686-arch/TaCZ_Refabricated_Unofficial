@@ -93,7 +93,12 @@ public final class ScopePipTarget {
                 }
                 // 重投影模式存的是一张已完成的二维图像，不需要深度；
                 // 二次渲染模式跑的是完整的世界渲染，没有深度附件就没有遮挡关系。
-                target = new TextureTarget("tacz_scope_pip", w, h, needsDepth, format);
+                // 26.3: 形参改为 (label,w,h,colorFormat,depthFormat)，
+                // 「要不要深度」由 depthFormat 是否为 null 表达。
+                // 深度格式取 vanilla 主目标同款 D32_FLOAT，保证镜内那一遍的
+                // 深度精度与主画面一致。
+                target = new TextureTarget("tacz_scope_pip", w, h, format,
+                        needsDepth ? GpuFormat.D32_FLOAT : null);
                 generation++;
                 lastWidth = w;
                 lastHeight = h;

@@ -54,8 +54,8 @@ public class GunPreviewRenderer extends PictureInPictureRenderer<GunPreviewRende
         // 必须在下面的翻转之前做，否则 y 的符号会反。
         poseStack.translate(state.offsetX() / state.scale(), state.offsetY() / state.scale(), 0.0F);
         poseStack.scale(1.0F, -1.0F, -1.0F);
-        poseStack.mulPose(Axis.XP.rotationDegrees(state.pitch()));
-        poseStack.mulPose(Axis.YP.rotationDegrees(state.yaw()));
+        poseStack.rotate(Axis.XP.rotationDegrees(state.pitch()));
+        poseStack.rotate(Axis.YP.rotationDegrees(state.yaw()));
         state.item().submit(poseStack, collector, 15728880, OverlayTexture.NO_OVERLAY, 0);
     }
 

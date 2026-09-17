@@ -15,25 +15,24 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import org.lwjgl.glfw.GLFW;
 
 import static com.tacz.guns.util.InputExtraCheck.isInGame;
 
 @Environment(EnvType.CLIENT)
 public class InteractKey {
     public static final KeyMapping INTERACT_KEY = new KeyMapping("key.tacz.interact.desc",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_O,
+            InputConstants.Type.KEYBOARD,
+            InputConstants.KEY_O,
             TaCZKeyCategory.TACZ);
 
     public static void onInteractKeyPress(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+        if (isInGame() && event.getAction() == InputConstants.PRESS && INTERACT_KEY.matches(InputConstants.Type.KEYBOARD.getOrCreate(event.getKey()))) {
             doInteractLogic();
         }
     }
 
     public static void onInteractMousePress(InputEvent.MouseButton.Post event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
+        if (isInGame() && event.getAction() == InputConstants.PRESS && INTERACT_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
             doInteractLogic();
         }
     }

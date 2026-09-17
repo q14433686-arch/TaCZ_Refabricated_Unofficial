@@ -1,6 +1,5 @@
 package com.tacz.guns.block;
 
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -21,17 +20,11 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
  * 双方块的枪械工作台，1x2x1
  */
 public class GunSmithTableBlockC extends AbstractGunSmithTableBlock {
-    public static final MapCodec<GunSmithTableBlockC> CODEC = simpleCodec(GunSmithTableBlockC::new);
     public static final EnumProperty<TableHalf> HALF = EnumProperty.create("half", TableHalf.class);
 
     public GunSmithTableBlockC(Properties props) {
         super(props);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(HALF, TableHalf.LOWER));
-    }
-
-    @Override
-    protected MapCodec<? extends GunSmithTableBlockC> codec() {
-        return CODEC;
     }
 
 

@@ -1,6 +1,5 @@
 package com.tacz.guns.block;
 
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -10,15 +9,8 @@ import net.minecraft.world.level.block.state.BlockState;
  * 单方块的枪械工作台
  */
 public class GunSmithTableBlockA extends AbstractGunSmithTableBlock {
-    public static final MapCodec<GunSmithTableBlockA> CODEC = simpleCodec(GunSmithTableBlockA::new);
-
     public GunSmithTableBlockA(Properties props) {
         super(props);
-    }
-
-    @Override
-    protected MapCodec<? extends GunSmithTableBlockA> codec() {
-        return CODEC;
     }
 
     @Override

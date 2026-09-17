@@ -110,8 +110,8 @@ public class TargetMinecartRenderer extends AbstractMinecartRenderer<TargetMinec
             // 局部变换与上游逐行一致（父类已处理世界位置与朝向）。
             stack.translate(0.5, 1.875, 0.5);
             stack.scale(1.5f, 1.5f, 1.5f);
-            stack.mulPose(Axis.ZN.rotationDegrees(180));
-            stack.mulPose(Axis.YN.rotationDegrees(90));
+            stack.rotate(Axis.ZN.rotationDegrees(180));
+            stack.rotate(Axis.YN.rotationDegrees(90));
 
             RenderType renderType = RenderTypes.entityTranslucent(InternalAssetLoader.TARGET_MINECART_TEXTURE_LOCATION);
             model.submit(stack, ItemDisplayContext.NONE, collector, renderType, packedLight, OverlayTexture.NO_OVERLAY);

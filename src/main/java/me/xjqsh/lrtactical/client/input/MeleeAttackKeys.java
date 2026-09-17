@@ -1,5 +1,6 @@
 package me.xjqsh.lrtactical.client.input;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import cn.sh1rocu.tacz.api.event.InputEvent;
 import me.xjqsh.lrtactical.api.item.IMeleeWeapon;
 import me.xjqsh.lrtactical.api.melee.MeleeAction;
@@ -12,7 +13,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
 
 import static com.tacz.guns.util.InputExtraCheck.isInGame;
 
@@ -58,7 +58,7 @@ public final class MeleeAttackKeys {
 
     /** 鼠标按下时触发（左键=轻击，右键=重击）。 */
     public static void onMousePress(InputEvent.MouseButton.Post event) {
-        if (event.getAction() != GLFW.GLFW_PRESS) {
+        if (event.getAction() != InputConstants.PRESS) {
             return;
         }
         // 必须用本仓库既有的 isInGame()，不能自己写 mc.screen != null ——
@@ -70,9 +70,9 @@ public final class MeleeAttackKeys {
             return;
         }
         int button = event.getButton();
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (button == InputConstants.MOUSE_BUTTON_LEFT) {
             tryAttack(MeleeAction.LEFT);
-        } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+        } else if (button == InputConstants.MOUSE_BUTTON_RIGHT) {
             tryAttack(MeleeAction.RIGHT);
         }
     }
@@ -120,7 +120,13 @@ public final class MeleeAttackKeys {
         // 通知服务端做权威结算
         ClientPlayNetworking.send(new ClientMessagePrepareMeleeAttack(action, origin, direction));
         // 挥手动画（纯表现）
-        player.swing(InteractionHand.MAIN_HAND);
+        // 26.3: swing(hand) 单参重载已删，签名变为 swing(hand, SwingAnimation, boolean)。
+        // 这里是近战物品的表现性挥手，取主手物品自己的攻击动画（与 vanilla
+        // Minecraft#startAttack 的取法一致）；第三参 sendToSwingingEntity=false
+        // 同 vanilla 客户端侧的一贯传法 —— 本调用在客户端，服务端的权威结算由
+        // 上一行的 ClientMessagePrepareMeleeAttack 负责，不靠这次挥手同步。
+        player.swing(InteractionHand.MAIN_HAND,
+                player.getItemInHand(InteractionHand.MAIN_HAND).getAttackAnimation(), false);
     }
 
     private static void triggerAttackAnimation(ItemStack stack, MeleeAction action) {

@@ -94,8 +94,8 @@ public class GunSmithTableRenderer implements BlockEntityRenderer<GunSmithTableB
 
         poseStack.pushPose();
         poseStack.translate(0.5, 1.5, 0.5);
-        poseStack.mulPose(Axis.ZN.rotationDegrees(180));
-        poseStack.mulPose(Axis.YN.rotationDegrees(state.rotation));
+        poseStack.rotate(Axis.ZN.rotationDegrees(180));
+        poseStack.rotate(Axis.YN.rotationDegrees(state.rotation));
         RenderType renderType = RenderConfig.BLOCK_ENTITY_TRANSLUCENT.get() ?
                 RenderTypes.entityTranslucent(texture) :
                 RenderTypes.entityCutout(texture);

@@ -154,8 +154,8 @@ public class MeleeItemRenderer extends AnimateGeoItemRenderer<CustomBedrockModel
         float yRotOffset = Mth.lerp(partialTick, player.yBobO, player.yBob);
         float xRot = player.getViewXRot(partialTick) - xRotOffset;
         float yRot = player.getViewYRot(partialTick) - yRotOffset;
-        poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F));
+        poseStack.rotate(Axis.XP.rotationDegrees(xRot * -0.1F));
+        poseStack.rotate(Axis.YP.rotationDegrees(yRot * -0.1F));
         BedrockPart rootNode = model.getRootNode();
         if (rootNode != null) {
             xRot = (float) Math.tanh(xRot / 25) * 25;
@@ -169,7 +169,7 @@ public class MeleeItemRenderer extends AnimateGeoItemRenderer<CustomBedrockModel
         // 从渲染原点 (0, 24, 0) 移动到模型原点 (0, 0, 0)
         poseStack.translate(0, 1.5f, 0);
         // 基岩版模型是上下颠倒的，需要翻转过来
-        poseStack.mulPose(Axis.ZP.rotationDegrees(180f));
+        poseStack.rotate(Axis.ZP.rotationDegrees(180f));
         doExtraTransforms(poseStack, model, stack);
 
         // 只有第一人称才显示 1p_effect 组
@@ -242,7 +242,7 @@ public class MeleeItemRenderer extends AnimateGeoItemRenderer<CustomBedrockModel
 
         // 从渲染原点移动到模型原点，并翻转基岩版模型
         poseStack.translate(0.5, 1.5f, 0.5);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(180f));
+        poseStack.rotate(Axis.ZP.rotationDegrees(180f));
 
         RenderType renderType = RenderTypes.entityCutout(display.getTexture());
         model.submit(poseStack, ctx, collector, renderType, light, overlay);
@@ -258,7 +258,7 @@ public class MeleeItemRenderer extends AnimateGeoItemRenderer<CustomBedrockModel
                                           int light, int overlay, Identifier texture) {
         poseStack.pushPose();
         poseStack.translate(0.5, 1.5, 0.5);
-        poseStack.mulPose(Axis.ZN.rotationDegrees(180));
+        poseStack.rotate(Axis.ZN.rotationDegrees(180));
         collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucent(texture), (pose, buffer) -> {
             PoseStack snapshot = new PoseStack();
             snapshot.last().pose().set(pose.pose());

@@ -45,9 +45,9 @@ public class AmmoItemRenderer implements BuiltinItemRendererRegistry.DynamicItem
         poseStack.translate(0, 1.5, 0);
         for (int i = nodePath.size() - 1; i >= 0; i--) {
             BedrockPart t = nodePath.get(i);
-            poseStack.mulPose(Axis.XN.rotation(t.xRot));
-            poseStack.mulPose(Axis.YN.rotation(t.yRot));
-            poseStack.mulPose(Axis.ZN.rotation(t.zRot));
+            poseStack.rotate(Axis.XN.rotation(t.xRot));
+            poseStack.rotate(Axis.YN.rotation(t.yRot));
+            poseStack.rotate(Axis.ZN.rotation(t.zRot));
             if (t.getParent() != null) {
                 poseStack.translate(-t.x * scale.x() / 16.0F, -t.y * scale.y() / 16.0F, -t.z * scale.z() / 16.0F);
             } else {
@@ -75,7 +75,7 @@ public class AmmoItemRenderer implements BuiltinItemRendererRegistry.DynamicItem
             // GUI 特殊渲染
             if (transformType == GUI || ammoModel == null || modelTexture == null) {
                 poseStack.translate(0.5, 1.5, 0.5);
-                poseStack.mulPose(Axis.ZN.rotationDegrees(180));
+                poseStack.rotate(Axis.ZN.rotationDegrees(180));
                 collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucent(ammoIndex.getSlotTextureLocation()), (pose, buffer) -> {
                     // 26.2: 必须使用回调参数 pose（= 提交那一刻 poseStack.last().copy() 的快照），
                     // 而不是外层 poseStack —— 回调执行时它早已被 popPose/复用，
@@ -102,7 +102,7 @@ public class AmmoItemRenderer implements BuiltinItemRendererRegistry.DynamicItem
         }, () -> {
             // 没有这个 ammoID，渲染个错误材质提醒别人
             poseStack.translate(0.5, 1.5, 0.5);
-            poseStack.mulPose(Axis.ZN.rotationDegrees(180));
+            poseStack.rotate(Axis.ZN.rotationDegrees(180));
             collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucent(MissingTextureAtlasSprite.getLocation()), (pose, buffer) -> {
                 // 26.2: 必须使用回调参数 pose（= 提交那一刻 poseStack.last().copy() 的快照），
                 // 而不是外层 poseStack —— 回调执行时它早已被 popPose/复用，

@@ -11,7 +11,6 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import org.lwjgl.glfw.GLFW;
 
 import static com.tacz.guns.util.InputExtraCheck.isInGame;
 
@@ -19,7 +18,7 @@ import static com.tacz.guns.util.InputExtraCheck.isInGame;
 public class AimKey {
     public static final KeyMapping AIM_KEY = new KeyMapping("key.tacz.aim.desc",
             InputConstants.Type.MOUSE,
-            GLFW.GLFW_MOUSE_BUTTON_RIGHT,
+            InputConstants.MOUSE_BUTTON_RIGHT,
             TaCZKeyCategory.TACZ);
 
     public static void onAimPress(InputEvent.MouseButton.Post event) {
@@ -36,10 +35,10 @@ public class AimKey {
                 if (!KeyConfig.HOLD_TO_AIM.get()) {
                     action = !operator.isAim();
                 }
-                if (event.getAction() == GLFW.GLFW_PRESS) {
+                if (event.getAction() == InputConstants.PRESS) {
                     IClientPlayerGunOperator.fromLocalPlayer(player).aim(action);
                 }
-                if (KeyConfig.HOLD_TO_AIM.get() && event.getAction() == GLFW.GLFW_RELEASE) {
+                if (KeyConfig.HOLD_TO_AIM.get() && event.getAction() == InputConstants.RELEASE) {
                     IClientPlayerGunOperator.fromLocalPlayer(player).aim(false);
                 }
             }

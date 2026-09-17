@@ -5,6 +5,7 @@ import com.mojang.blaze3d.ProjectionType;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
+import com.mojang.renderpearl.api.pipeline.UniformType;
 import com.mojang.renderpearl.api.pipeline.ColorTargetState;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
@@ -194,7 +195,9 @@ public final class ScopePipRenderer {
 
     private static RenderPipeline compositePipeline() {
         if (compositePipeline == null) {
-            BindGroupLayout maskLayout = BindGroupLayout.builder().withSampler(MASK_SAMPLER).build();
+            // 26.3: withSampler(name) 并入 withUniform(name, COMBINED_IMAGE_SAMPLER)。
+            BindGroupLayout maskLayout = BindGroupLayout.builder()
+                    .withUniform(MASK_SAMPLER, UniformType.COMBINED_IMAGE_SAMPLER).build();
             compositePipeline = RenderPipeline.builder(RenderPipelines.POST_PROCESSING_SNIPPET)
                     .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_pip_composite"))
                     .withVertexShader("core/screenquad")
@@ -1141,16 +1144,27 @@ public final class ScopePipRenderer {
             // 再取一次同样的实体/方块实体/名牌。详见 SimpleFeatureRenderPhaseMixin。
             insideScopeLevelRender = true;
             try {
+                // 26.3 签名变更：LevelRenderer#render 去掉了 DeltaTracker 与
+                // Matrix4fc(viewRotation) 两个形参（前者不再需要，后者改由方法内部
+                // 从 cameraState.viewRotationMatrix 取 —— LR263:199-200 的
+                // pushMatrix/mul 用的就是它，与我们原先显式传的是同一个对象），
+                // 末尾新增 consistentDepthRequired。
+                //
+                // consistentDepthRequired 传 false：该参只在「有后处理 post chain
+                // 生效」时为 true（vanilla GameRenderer:667 取
+                // !appliedPostEffects.isEmpty()），作用是把 always-on-top 特性画到
+                // 一张独立深度图再回积分到主深度。镜内这一遍不接任何 post chain、
+                // 也不需要 always-on-top 的深度一致性，传 false 即走「直接用主深度」
+                // 的那条分支（LR263:489），与 26.2 那边根本没有这一步的行为一致。
                 mc.levelRenderer.render(
                         allocator,
-                        deltaTracker,
                         // 方块高亮线框：镜内不画，屏幕空间的描边在镜内没有意义。
                         false,
                         camera,
-                        camera.viewRotationMatrix,
                         fogRenderer.getBuffer(FogRenderer.FogMode.WORLD),
                         camera.fogData.color,
-                        renderSky);
+                        renderSky,
+                        false);
             } finally {
                 // 必须最先清：从这里往后（主画面那一遍）各 phase 要恢复
                 // 「取完就清空」的原样，否则节点会一直堆到下一帧去。
@@ -1407,7 +1421,8 @@ public final class ScopePipRenderer {
                     () -> "tacz_scope_pip_composite",
                     main.getColorTextureView(),
                     Optional.empty())) {
-                pass.setPipeline(compositePipeline());
+                // 26.3: setPipeline 收 CompiledRenderPipeline。
+                pass.setPipeline(RenderSystem.getCompiledPipeline(compositePipeline()));
                 // 【硬件剪裁 —— 越界的最后一道闸】
                 //
                 // 着色器里的「掩码为假就 discard」是【软】约束：掩码纹理一旦有任何问题
@@ -1429,11 +1444,11 @@ public final class ScopePipRenderer {
                                 new Vector4f(magnification, sharpness(), paintLensFlag(), 1.0f)));
                 // 场景拷贝：LINEAR。着色器里的 Catmull-Rom 重建正是用一组
                 // 硬件双线性抽头拼出来的，所以这里必须是 LINEAR 而非 NEAREST。
-                pass.bindTexture("InSampler", scene.getColorTextureView(),
+                pass.setUniform("InSampler", scene.getColorTextureView(),
                         RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
                 // 掩码：NEAREST。二值数据，线性过滤会在边缘产生 0.5 附近的中间值，
                 // 让 `> 0.5` 判定抖动成一圈毛边 —— 与 ScopeMaskTextureHandle 同一理由。
-                pass.bindTexture(MASK_SAMPLER, mask.getColorTextureView(),
+                pass.setUniform(MASK_SAMPLER, mask.getColorTextureView(),
                         RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
                 // 无顶点缓冲的全屏三角形：core/screenquad.vsh 用 gl_VertexID 造顶点。
                 // 参数顺序照 RenderTarget#blitAndBlendToTexture 抄：draw(3, 1, 0, 0)。

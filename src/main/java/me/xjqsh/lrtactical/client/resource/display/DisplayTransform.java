@@ -122,7 +122,7 @@ public final class DisplayTransform {
         /** 按 1.20.1 {@code ItemTransform#apply(false, pose)} 的顺序施加：平移 → 旋转 → 缩放。 */
         public void apply(PoseStack poseStack) {
             poseStack.translate(translation.x(), translation.y(), translation.z());
-            poseStack.mulPose(new Quaternionf().rotationXYZ(
+            poseStack.rotate(new Quaternionf().rotationXYZ(
                     rotation.x() * Mth.DEG_TO_RAD,
                     rotation.y() * Mth.DEG_TO_RAD,
                     rotation.z() * Mth.DEG_TO_RAD));

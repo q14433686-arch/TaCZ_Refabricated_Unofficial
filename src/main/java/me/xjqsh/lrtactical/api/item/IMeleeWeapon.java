@@ -245,7 +245,8 @@ public interface IMeleeWeapon extends ICustomItem {
 
         // 清无敌帧：近战连招的间隔常常短于原版 10 tick 的无敌时间，
         // 不清的话第二段会被静默吞掉。与本仓库 ExplodeUtil 的处理同源。
-        target.invulnerableTime = 0;
+        // 26.3: invulnerableTime 变成私有字段，改走新增的 public setter。
+        target.setInvulnerableTime(0);
 
         // 26.2: Entity#hurt 返回 void，服务端判定入口是 hurtServer -> boolean（字节码确认）
         boolean hurt = target.hurtServer(level, source, damage);

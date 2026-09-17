@@ -16,6 +16,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class ServerMessageSyncGunPack implements CustomPacketPayload {
@@ -26,17 +27,46 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
     private final Map<DataType, Map<Identifier, String>> cache;
 
     public ServerMessageSyncGunPack(FriendlyByteBuf buf) {
-        this(buf.readMap(buf1 -> buf1.readEnum(DataType.class),
-                buf2 -> buf2.readMap(FriendlyByteBuf::readIdentifier, FriendlyByteBuf::readUtf)));
+        this(readCache(buf));
     }
 
     public ServerMessageSyncGunPack(Map<DataType, Map<Identifier, String>> cache) {
         this.cache = cache;
     }
 
-        public void write(FriendlyByteBuf buf) {
-        buf.writeMap(getCache(), FriendlyByteBuf::writeEnum, (buf1, map) ->
-                buf1.writeMap(map, FriendlyByteBuf::writeIdentifier, FriendlyByteBuf::writeUtf));
+    /**
+     * 26.3: {@code FriendlyByteBuf#readMap/writeMap} 已被移除，改为手写「先长度后条目」的循环。
+     * 线格式与 26.2 的 readMap/writeMap 完全一致（varint 长度 + 逐条 key/value），
+     * 所以不影响与旧客户端以外的任何东西 —— 本包本来就要求两端同版本。
+     */
+    private static Map<DataType, Map<Identifier, String>> readCache(FriendlyByteBuf buf) {
+        int typeCount = buf.readVarInt();
+        Map<DataType, Map<Identifier, String>> cache = new HashMap<>(Math.max(16, typeCount));
+        for (int i = 0; i < typeCount; i++) {
+            DataType dataType = buf.readEnum(DataType.class);
+            int entryCount = buf.readVarInt();
+            Map<Identifier, String> entries = new HashMap<>(Math.max(16, entryCount));
+            for (int j = 0; j < entryCount; j++) {
+                Identifier id = buf.readIdentifier();
+                entries.put(id, buf.readUtf());
+            }
+            cache.put(dataType, entries);
+        }
+        return cache;
+    }
+
+    public void write(FriendlyByteBuf buf) {
+        Map<DataType, Map<Identifier, String>> cache = getCache();
+        buf.writeVarInt(cache.size());
+        for (Map.Entry<DataType, Map<Identifier, String>> typeEntry : cache.entrySet()) {
+            buf.writeEnum(typeEntry.getKey());
+            Map<Identifier, String> entries = typeEntry.getValue();
+            buf.writeVarInt(entries.size());
+            for (Map.Entry<Identifier, String> entry : entries.entrySet()) {
+                buf.writeIdentifier(entry.getKey());
+                buf.writeUtf(entry.getValue());
+            }
+        }
     }
 
     @Override

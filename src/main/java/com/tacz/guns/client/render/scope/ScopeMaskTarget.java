@@ -84,9 +84,13 @@ public final class ScopeMaskTarget {
                 if (target != null) {
                     target.destroyBuffers();
                 }
-                // useDepth=false：掩码只关心「这个像素有没有被目镜盖到」，
-                // 不需要深度。少一张深度纹理也省显存。
-                target = new TextureTarget("tacz_scope_mask", w, h, false, GpuFormat.RGBA8_UNORM);
+                // 掩码只关心「这个像素有没有被目镜盖到」，不需要深度。
+                // 少一张深度纹理也省显存。
+                // 26.3: TextureTarget 的形参从 (label,w,h,boolean useDepth,GpuFormat colorFormat)
+                // 变成 (label,w,h,GpuFormat colorFormat,GpuFormat depthFormat)——
+                // 顺序对调，且「不要深度」由 depthFormat=null 表达（对齐 vanilla MainTarget
+                // 的 super("Main", RGBA8_UNORM, D32_FLOAT) 写法）。
+                target = new TextureTarget("tacz_scope_mask", w, h, GpuFormat.RGBA8_UNORM, null);
                 lastWidth = w;
                 lastHeight = h;
             }
