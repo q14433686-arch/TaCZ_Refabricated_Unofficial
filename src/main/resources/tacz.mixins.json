@@ -15,6 +15,7 @@
     "client.FeatureRenderDispatcherMixin",
     "client.GameRendererMixin",
     "client.LevelExtractorScopePassMixin",
+    "client.GameRendererProjectionAccessor",
     "client.LevelRendererAccessor",
     "client.SkyRendererMixin",
     "client.ItemInHandLayerMixin",

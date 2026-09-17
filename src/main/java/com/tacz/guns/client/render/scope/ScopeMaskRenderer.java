@@ -1,7 +1,6 @@
 package com.tacz.guns.client.render.scope;
 
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
-import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.pipeline.ColorTargetState;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
@@ -648,22 +647,30 @@ public final class ScopeMaskRenderer {
      */
     private static boolean writeHullFill(BufferBuilder builder, Matrix4f pose, java.util.List<BedrockCube> cubes) {
         java.util.List<float[]> pts = new java.util.ArrayList<>();
-        // 【26.2 取证】RenderSystem 已没有 getProjectionMatrix()——投影矩阵只以
-        // GpuBufferSlice（UBO）形式躺在 GPU 侧（字段投影 PROJECTION_MATRIX_UBO_SIZE，
-        // 布局即一个 std140 mat4：列主序 16 个 float）。CPU 侧做凸包就必须把它
-        // 读回来：slice.map(read, write) 拿到 MappedView.data()，读 64 字节。
-        // 关键在同源：掩码 pass 稍后 bindDefaultUniforms 用的就是
-        // RenderSystem.getProjectionMatrixBuffer() 这同一个 slice，所以这里读到的
-        // 与着色器实际消费的是【同一份字节】，凸包与画面严丝合缝。
-        // 成本是每帧至多一次 64B 的读回；UBO 是本帧刚上传的 ring 段，不是重同步。
-        // 读失败（驱动/Iris 怪异状态）一次 warn，本帧该条目回退逐立方体描摹。
+        // 【背景】RenderSystem 没有 getProjectionMatrix()——投影矩阵只以
+        // GpuBufferSlice（UBO）形式躺在 GPU 侧。CPU 侧要做凸包就得另找同源来源。
+        // 取不到时一次 warn，本帧该条目回退逐立方体描摹。
+        // 【26.3 改道】原先从 RenderSystem.getProjectionMatrixBuffer() 把 UBO 读回来。
+        // 26.3 起那个 buffer 没有 READ 用途标记，map(true, false) 直接抛
+        // "Buffer is not readable"（GlBuffer$Direct.map），于是每帧都回退到逐立方体
+        // 描摹、掩码形状退化 —— 高倍镜裁剪边缘不准即源于此（2026-09-18 日志）。
+        //
+        // 改为直接取 CPU 侧的 Projection 对象。同源性不但没丢反而更直接：
+        // GameRenderer:683 正是把这同一个 hudProjection 交给 ProjectionMatrixBuffer
+        // 编码进 UBO 的，所以 getMatrix() 拿到的与着色器消费的是同一份数据。
+        // 必须用 hudProjection 而非 cameraState.projectionMatrix —— 手部 pass 在
+        // 绘制前把投影换成了 hudFov 那一套（GameRenderer:679-683），用世界那个会错位。
         Matrix4f proj = new Matrix4f();
-        try (GpuBufferSlice.MappedView view = RenderSystem.getProjectionMatrixBuffer().map(true, false)) {
-            proj.set(view.data());
+        try {
+            // 经 Object 中转：mixin 接口在编译期与 GameRenderer 没有继承关系，
+            // 直接转型 javac 会判 inconvertible types（运行期由 mixin 注入实现）。
+            var accessor = (com.tacz.guns.mixin.client.GameRendererProjectionAccessor)
+                    (Object) Minecraft.getInstance().gameRenderer;
+            accessor.tacz$getHudProjection().getMatrix(proj);
         } catch (Exception e) {
             if (!loggedProjReadFailure) {
                 loggedProjReadFailure = true;
-                GunMod.LOGGER.warn("[TACZ Scope] Hull-fill: could not read back the projection UBO; this entry falls back to legacy per-cube tracing.", e);
+                GunMod.LOGGER.warn("[TACZ Scope] Hull-fill: could not obtain the hand-pass projection matrix; this entry falls back to legacy per-cube tracing.", e);
             }
             return false;
         }
@@ -758,17 +765,26 @@ public final class ScopeMaskRenderer {
     /**
      * 算出本帧全部目镜几何在 NDC 里的包围盒。
      *
-     * <p>投影矩阵的取法与 {@link #writeHullFill} 完全同源（读同一份投影 UBO），
+     * <p>投影矩阵的取法与 {@link #writeHullFill} 完全同源（同一个 hudProjection），
      * 所以盒子与掩码画出来的形状严格在同一个坐标系里，不会错位。
-     * 读不到投影就不设包围盒 —— 合成阶段随之跳过剪裁，退回纯掩码约束（= 旧行为）。
+     * 取不到投影就不设包围盒 —— 合成阶段随之跳过剪裁，退回纯掩码约束（= 旧行为）。
+     *
+     * <p>【26.3】与 writeHullFill 同因同修：投影 UBO 不再可读回
+     * （"Buffer is not readable"），改取 CPU 侧的 hudProjection。
+     * 此处原先是<b>静默</b> return —— 失败时包围盒缺失、PIP 合成少一层剪裁，
+     * 日志里一个字都不会留，比 writeHullFill 那个至少还有 warn 更隐蔽。</p>
      */
     private static void computeMaskBounds() {
         if (ScopeMaskGeometry.isEmpty()) {
             return;
         }
         Matrix4f proj = new Matrix4f();
-        try (GpuBufferSlice.MappedView view = RenderSystem.getProjectionMatrixBuffer().map(true, false)) {
-            proj.set(view.data());
+        try {
+            // 经 Object 中转：mixin 接口在编译期与 GameRenderer 没有继承关系，
+            // 直接转型 javac 会判 inconvertible types（运行期由 mixin 注入实现）。
+            var accessor = (com.tacz.guns.mixin.client.GameRendererProjectionAccessor)
+                    (Object) Minecraft.getInstance().gameRenderer;
+            accessor.tacz$getHudProjection().getMatrix(proj);
         } catch (Exception e) {
             return;
         }
