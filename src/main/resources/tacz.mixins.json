@@ -18,7 +18,8 @@
     "client.LevelRendererAccessor",
     "client.SkyRendererMixin",
     "client.ItemInHandLayerMixin",
-    "client.ItemInHandRendererMixin",
+    "client.FirstPersonHandsAndItemsMixin",
+    "client.FirstPersonHandsAndItemsRendererMixin",
     "client.LanguageMixin",
     "client.LocalPlayerMixin",
     "client.LevelRendererWorldPassMixin",
@@ -31,7 +32,7 @@
     "client.SoundManagerPreparationsMixin",
     "client.StairBlockAccessor"
   ],
-  "_comment": "26.2: ItemInHandRendererMixin owns the submitHandsWithItems call site for TACZ viewmodels, so generic first-person hand transforms yield without affecting ordinary items. PlayerModelMixin applies TACZ/PAL third-person poses from AvatarRenderState.",
+  "_comment": "26.3: vanilla split ItemInHandRenderer into the state class FirstPersonHandsAndItems (holds mainHandItem, drives tick) and the renderer FirstPersonHandsAndItemsRenderer (submitHandsWithItems/submitArmWithItem), so the old ItemInHandRendererMixin is split accordingly: FirstPersonHandsAndItemsMixin carries KeepingItemRenderer, FirstPersonHandsAndItemsRendererMixin owns the submitArmWithItem call site for TACZ viewmodels so generic first-person hand transforms yield without affecting ordinary items. PlayerModelMixin applies TACZ/PAL third-person poses from AvatarRenderState.",
   "injectors": {
     "defaultRequire": 1
   }

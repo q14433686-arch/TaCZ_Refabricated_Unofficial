@@ -1,18 +1,23 @@
-# [UNOFFICIAL] TaCZ Refabricated — Minecraft 26.2 / Fabric
+# [UNOFFICIAL] TaCZ Refabricated — Minecraft 26.3 / Fabric
 
 [![CurseForge Downloads](https://cf.way2muchnoise.eu/full_1627909_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
 [![CurseForge Versions](https://cf.way2muchnoise.eu/versions/1627909.svg)](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated/files)
 [![GitHub Downloads](https://img.shields.io/github/downloads/q14433686-arch/TaCZ_Refabricated_Unofficial/total?logo=github&label=GitHub%20Downloads)](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 
-> **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero) for Minecraft 26.2,
-> 26.1.2 and 1.21.11, with an LRTactical compatibility framework. Not an official TaCZ
-> release; not reviewed or endorsed by the TACZ Dev Team. GPL-3.0.**
+> **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero) for Minecraft 26.3,
+> 26.2, 26.1.2 and 1.21.11, with an LRTactical compatibility framework. Not an official
+> TaCZ release; not reviewed or endorsed by the TACZ Dev Team. GPL-3.0.**
 
 > **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
-的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R3-hotfix2`**。
+的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.3 Fabric**。直接上游的版本号为
+`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.3.R1`**。
+
+> **本分支是 26.3 线的移植进行中版本，尚无任何可下载构建。** 26.3 的适配工作以能否
+> 通过编译与 CI 为当前目标，**没有做过任何游戏内验证**；下方各节中描述的功能与实测
+> 结论全部继承自 26.2 线，在 26.3 上一律视为**未经验证**。想要能玩的版本请用
+> `26.2(main)` 分支及其 Release。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
@@ -24,37 +29,47 @@
 
 | Minecraft | 源码分支 |
 |---|---|
+| **26.3**（移植中，无构建） | [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3) |
 | **26.2** | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) |
 | **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) |
 | **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) |
 
-本页面对应 **26.2** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
+本页面对应 **26.3** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
 具体版本见下方表格与对应 Release 说明。
 
-> 仓库源码已使用 R3-hotfix2 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R1 版本号；26.3 线尚未发布，实际可下载版本及其发布日期以
+> Releases 页面为准。
 
 ---
 
 ## 1. 支持环境
 
-| 项目 | 26.2 分支要求 |
+| 项目 | 26.3 分支要求 |
 |---|---|
-| Minecraft | **26.2** |
-| 加载器 | **Fabric Loader 0.19.3+** |
+| Minecraft | **26.3** |
+| 加载器 | **Fabric Loader 0.19.5+** |
 | Java | **25+** |
-| Fabric API | 需要安装；R3-hotfix2 构建使用 **0.155.2+26.2** |
-| Forge Config API Port | **26.2.1+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.2.R3-hotfix2`** |
+| Fabric API | 需要安装；R1 构建使用 **0.160.7+26.3** |
+| Forge Config API Port | **26.3.0+，硬依赖** |
+| 本 mod | **`1.1.8+fabric.26.3.R1`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
-R2 的可选集成（并非硬依赖）如下：
+R1 的可选集成（并非硬依赖）如下。**所有条目均只表示编译期接线存在，26.3 上未做运行验证**：
 
-| 可选 mod | R2 核验/建议版本 | 用途 |
+| 可选 mod | R1 编译 pin / 建议版本 | 用途 |
 |---|---|---|
-| JEI | 编译 pin **30.13.0.86** | 内置 Ammo Query 与工作台类别 |
-| REI | 编译 pin **26.2.820** | 内置 Ammo Query 与工作台类别 |
+| JEI | 编译 pin **31.0.0.5**（beta） | 内置 Ammo Query 与工作台类别 |
 | Carry On | 建议 **>=2.11.0** | A/B/C 多格工作台的搬运兼容 |
+
+26.2 线支持、但**在 26.3 上已从本分支摘除**的可选集成（截至 2026-09-17 上游均无 26.3 构件，
+无法编译；接线代码与坐标保留在源码注释中，等上游更新后可回补）：
+
+| 可选 mod | 26.2 线状态 | 26.3 线现状 |
+|---|---|---|
+| REI | 编译 pin 26.2.820，内置 Ammo Query | **摘除**：REI/Architectury 无 26.3 构件 |
+| Zoomify | 开镜时让出缩放控制 | **摘除**：无 26.3 构件 |
+| Shoulder Surfing Reloaded | 第三人称肩视兼容 | **摘除**：无 26.3 构件 |
 
 ---
 
@@ -252,10 +267,13 @@ ScopePipAllowShaderPacks = true   # 默认 false 是保守默认，不是已知�
 
 ## 5. 安装
 
-1. 安装 Minecraft 26.2、Fabric Loader 0.19.3+ 与 Java 25+；
-2. 安装 Fabric API 和 Forge Config API Port 26.2.1+；
+> **26.3 线目前没有可下载构建**，以下步骤是该线发布后的预期流程。现在想安装请改用
+> `26.2(main)` 分支的 Release。
+
+1. 安装 Minecraft 26.3、Fabric Loader 0.19.5+ 与 Java 25+；
+2. 安装 Fabric API 和 Forge Config API Port 26.3.0+；
 3. 从 [Releases](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
-   下载明确标注为 **26.2 / Fabric** 的构建；
+   下载明确标注为 **26.3 / Fabric** 的构建；
 4. 把三个 mod 的 `.jar` 放入 `.minecraft/mods/`；
 5. 启动游戏。第三方枪包按下一节安装。
 
@@ -314,7 +332,7 @@ gunpack.meta.json
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.2.R3-hotfix2` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.26.3.R1` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容

@@ -1,6 +1,6 @@
 package com.tacz.guns.mixin.client.iris;
 
-import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
 import com.tacz.guns.compat.iris.IrisScopeMaskState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

@@ -24,7 +24,7 @@ import java.util.Collection;
  *       RETURN handlers the mixin application order happens to run last.</li>
  * </ul>
  */
-@Mixin(targets = "com.mojang.blaze3d.opengl.GlCommandEncoder")
+@Mixin(targets = "com.mojang.renderpearl.backend.opengl.GlCommandEncoder")
 public abstract class IrisGlCommandEncoderMixin {
     @Inject(method = "trySetup", at = @At("HEAD"), require = 0)
     private void tacz$captureScopeRenderPass(@Coerce Object glRenderPass,

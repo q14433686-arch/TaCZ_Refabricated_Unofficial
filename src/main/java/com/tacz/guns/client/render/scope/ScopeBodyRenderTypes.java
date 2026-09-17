@@ -1,10 +1,10 @@
 package com.tacz.guns.client.render.scope;
 
-import com.mojang.blaze3d.pipeline.BindGroupLayout;
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.ColorTargetState;
-import com.mojang.blaze3d.pipeline.DepthStencilState;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
+import com.mojang.renderpearl.api.pipeline.DepthStencilState;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.fabricmc.api.EnvType;
@@ -200,7 +200,7 @@ public final class ScopeBodyRenderTypes {
                     .withColorTargetState(new ColorTargetState(BlendFunction.ADDITIVE))
                     .withCull(false)
                     .withVertexBinding(0, com.mojang.blaze3d.vertex.DefaultVertexFormat.ENTITY)
-                    .withPrimitiveTopology(com.mojang.blaze3d.PrimitiveTopology.QUADS)
+                    .withPrimitiveTopology(com.mojang.renderpearl.api.pipeline.PrimitiveTopology.QUADS)
                     .withDepthStencilState(DepthStencilState.DEFAULT)
                     .build();
 

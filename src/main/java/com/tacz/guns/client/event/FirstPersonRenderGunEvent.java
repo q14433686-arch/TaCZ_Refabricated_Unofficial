@@ -79,7 +79,7 @@ public class FirstPersonRenderGunEvent {
         if (mc.player == null) {
             return;
         }
-        ItemStack itemStack = KeepingItemRenderer.getRenderer().getCurrentItem();
+        ItemStack itemStack = KeepingItemRenderer.getCurrentRenderItem();
         if (IGun.getIGunOrNull(itemStack) != null) {
             event.setCanceled(true);
         }

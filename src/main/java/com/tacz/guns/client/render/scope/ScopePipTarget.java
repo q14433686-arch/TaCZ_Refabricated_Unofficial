@@ -1,6 +1,6 @@
 package com.tacz.guns.client.render.scope;
 
-import com.mojang.blaze3d.GpuFormat;
+import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.tacz.guns.GunMod;
 import net.fabricmc.api.EnvType;

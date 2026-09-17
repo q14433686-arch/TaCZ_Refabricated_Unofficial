@@ -1,6 +1,6 @@
 package com.tacz.guns.client.render.scope;
 
-import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.renderpearl.api.textures.GpuTexture;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisScopePipelineCompat;
 import com.tacz.guns.config.client.RenderConfig;

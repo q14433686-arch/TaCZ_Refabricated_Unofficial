@@ -2,7 +2,7 @@ package com.tacz.guns.client.gui.overlay;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.renderpearl.api.textures.FilterMode;
 import com.tacz.guns.client.render.scope.ScopeMaskTarget;
 import com.tacz.guns.config.client.RenderConfig;
 import net.fabricmc.api.EnvType;

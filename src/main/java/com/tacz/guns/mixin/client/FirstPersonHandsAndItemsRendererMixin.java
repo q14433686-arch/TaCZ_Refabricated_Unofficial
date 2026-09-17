@@ -4,48 +4,64 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.BeforeRenderHandEvent;
-import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat;
 import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.ItemInHandRenderer;
+import net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.state.level.FirstPersonHandsAndItemsRenderState;
+import net.minecraft.client.renderer.state.level.PlayerRenderState;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ItemInHandRenderer.class)
-public class ItemInHandRendererMixin implements KeepingItemRenderer {
-    @Shadow
-    private float mainHandHeight;
-    @Shadow
-    private float oMainHandHeight;
-    @Shadow
-    private ItemStack mainHandItem;
-    @Unique
-    private ItemStack tacz$KeepItem;
-    @Unique
-    private long tacz$KeepTimeMs;
-    @Unique
-    private long tacz$KeepTimestamp;
+/**
+ * 第一人称枪械渲染的接管点（26.3 拆分后的<b>渲染侧</b>）。
+ *
+ * <p>26.3 把 {@code ItemInHandRenderer} 拆成了状态类
+ * {@code net.minecraft.client.player.FirstPersonHandsAndItems} 与渲染类
+ * {@code net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer}。
+ * 收枪保持（{@code KeepingItemRenderer}）随 {@code mainHandItem} 字段留在
+ * {@link FirstPersonHandsAndItemsMixin}；本类只负责 submit 系列。</p>
+ *
+ * <h2>26.3 签名变化（已对照 vanilla 反编译源码核实）</h2>
+ * <pre>
+ * 26.2: submitHandsWithItems(float, PoseStack, SubmitNodeCollector, LocalPlayer, int)
+ * 26.3: submitHandsWithItems(float, PoseStack, SubmitNodeCollector,
+ *                            PlayerRenderState, FirstPersonHandsAndItemsRenderState)
+ *
+ * 26.2: submitArmWithItem(AbstractClientPlayer, float, float, InteractionHand, float,
+ *                         ItemStack, float, PoseStack, SubmitNodeCollector, int)
+ * 26.3: submitArmWithItem(PlayerRenderState, FirstPersonHandsAndItemsRenderState, float, float,
+ *                         InteractionHand, float, ItemStack, float, PoseStack,
+ *                         SubmitNodeCollector, int)
+ * </pre>
+ *
+ * <p><b>玩家实体不再作为参数传入</b>：26.3 走渲染状态对象。TACZ 的渲染链路
+ * （{@code AnimateGeoItemRenderer#renderFirstPerson}、状态机、动画事件）仍以
+ * {@code LocalPlayer} 为输入，且第一人称本来就只可能是本地玩家，因此这里从
+ * {@code Minecraft.getInstance().player} 取回；取不到就原样放行给 vanilla。</p>
+ */
+@Mixin(FirstPersonHandsAndItemsRenderer.class)
+public class FirstPersonHandsAndItemsRendererMixin {
 
     /**
      * 26.2 迁移: renderHandsWithItems → submitHandsWithItems
-     * 新签名 (26.2): submitHandsWithItems(float, PoseStack, SubmitNodeCollector, LocalPlayer, int)
+     * 26.3 迁移: 尾部两参由 (LocalPlayer, int) 变为
+     * (PlayerRenderState, FirstPersonHandsAndItemsRenderState)。
      */
     @Inject(method = "submitHandsWithItems", at = @At("HEAD"))
-    public void beforeHandRender(float pPartialTicks, PoseStack pMatrixStack, net.minecraft.client.renderer.SubmitNodeCollector pCollector, LocalPlayer pPlayerEntity, int pCombinedLight, CallbackInfo ci) {
+    public void beforeHandRender(float pPartialTicks, PoseStack pMatrixStack, SubmitNodeCollector pCollector,
+                                 PlayerRenderState pPlayerState, FirstPersonHandsAndItemsRenderState pHandState,
+                                 CallbackInfo ci) {
         BeforeRenderHandEvent.CALLBACK.invoker().post(new BeforeRenderHandEvent(pMatrixStack));
     }
 
@@ -76,19 +92,25 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
      * {@code submitArmWithItem} 的覆盖或手部变换抢走。</p>
      *
      * <p>注意：{@code submitHandsWithItems} 里的
-     * {@code mulPose(XP(viewXRot - xBob) * 0.1)} / {@code mulPose(YP(viewYRot - yBob) * 0.1)}
+     * {@code rotateDegrees(XP, (viewXRot - xBob) * 0.1)} /
+     * {@code rotateDegrees(YP, (viewYRot - yBob) * 0.1)}
      * 视角回摆<b>仍然保留</b>（它在本方法之前执行），这正是
      * {@code GunItemRendererWrapper#renderFirstPerson} 开头那段"逆转原版延滞效果"所预期的输入。</p>
+     *
+     * <p><b>26.3 待实测</b>：{@code submitArmWithItem} 在 26.3 是 {@code private}。
+     * {@code @WrapOperation} 包裹的是 {@code submitHandsWithItems} 内部的 {@code INVOKE}
+     * 指令，私有不影响 wrap（调用点仍在字节码里），但这一点只有运行期能确证。</p>
      */
     @WrapOperation(
             method = "submitHandsWithItems",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;submitArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V"
+                    target = "Lnet/minecraft/client/renderer/FirstPersonHandsAndItemsRenderer;submitArmWithItem(Lnet/minecraft/client/renderer/state/level/PlayerRenderState;Lnet/minecraft/client/renderer/state/level/FirstPersonHandsAndItemsRenderState;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V"
             )
     )
-    private void tacz$submitArmWithAnimatedItem(ItemInHandRenderer instance,
-                                                AbstractClientPlayer player,
+    private void tacz$submitArmWithAnimatedItem(FirstPersonHandsAndItemsRenderer instance,
+                                                PlayerRenderState playerState,
+                                                FirstPersonHandsAndItemsRenderState handState,
                                                 float frameInterp,
                                                 float xRot,
                                                 InteractionHand hand,
@@ -99,9 +121,12 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
                                                 SubmitNodeCollector collector,
                                                 int lightCoords,
                                                 Operation<Void> original) {
-        if (!(player instanceof LocalPlayer localPlayer)
+        // 26.3: 玩家实体不再随参数传入。第一人称渲染的对象只可能是本地玩家；
+        // 取不到（例如渲染线程早于玩家就绪）就原样放行，绝不吞掉 vanilla 的调用。
+        LocalPlayer localPlayer = Minecraft.getInstance().player;
+        if (localPlayer == null
                 || !Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
-            original.call(instance, player, frameInterp, xRot, hand, attack, itemStack,
+            original.call(instance, playerState, handState, frameInterp, xRot, hand, attack, itemStack,
                     inverseArmHeight, poseStack, collector, lightCoords);
             return;
         }
@@ -125,7 +150,7 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
                 .get(renderStack.getItem());
         if (!(renderer instanceof AnimateGeoItemRenderer<?, ?> geoRenderer)
                 || geoRenderer.getModel(renderStack) == null) {
-            original.call(instance, player, frameInterp, xRot, hand, attack, itemStack,
+            original.call(instance, playerState, handState, frameInterp, xRot, hand, attack, itemStack,
                     inverseArmHeight, poseStack, collector, lightCoords);
             return;
         }
@@ -153,7 +178,7 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
             return;
         }
 
-        ItemDisplayContext context = player.getMainArm() == HumanoidArm.RIGHT
+        ItemDisplayContext context = localPlayer.getMainArm() == HumanoidArm.RIGHT
                 ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 : ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
         if (geoRenderer.needReInit(renderStack)) {
@@ -163,85 +188,5 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
         geoRenderer.renderFirstPerson(localPlayer, renderStack, context, poseStack,
                 collector, lightCoords, frameInterp);
         poseStack.popPose();
-    }
-
-    /**
-     * <b>刻意留空</b> —— 与上游 1.21.1 完全一致。
-     *
-     * <h2>为什么这里必须什么都不做</h2>
-     * 上游同名注入点整段是<b>注释掉</b>的（{@code ItemInHandRendererMixin} 第 38-59 行，
-     * 逐行核对过），也就是说 TACZ 从来不干预 vanilla 的装备进度。
-     * 移植时这段被「还原」成了可执行代码，反而制造了切枪动画的 bug。
-     *
-     * <h2>它为什么会打断/加速切枪动画</h2>
-     * {@code mainHandHeight} / {@code oMainHandHeight} 正是 vanilla
-     * {@code ItemInHandRenderer#tick} 用来推进<b>换手动画</b>的状态量：
-     * <pre>
-     * // vanilla tick(): 每 tick 朝目标值逼近，产生"落下-抬起"的过渡
-     * this.oMainHandHeight = this.mainHandHeight;
-     * this.mainHandHeight += Mth.clamp(target - this.mainHandHeight, -0.4F, 0.4F);
-     * </pre>
-     * 而 {@code mainHandItem} 决定"现在该画哪把枪"、何时切换到新枪。
-     *
-     * <p>原先的实现在 HEAD 把这三个量<b>每 tick 强制写死</b>
-     * （高度恒为 1.0、物品恒为当前主手物）：
-     * <ul>
-     *   <li>高度被钉死 → vanilla 的过渡插值失去意义，动画表现为<b>被打断或瞬间完成</b>；</li>
-     *   <li>{@code mainHandItem} 被立刻改写成新枪 → 旧枪的收枪动画还没播完就被换掉，
-     *       表现为<b>不显示动画</b>；</li>
-     *   <li>连续快速切换两把枪时，{@code tacz$KeepItem} 的时间窗与这里的强制写入互相打架
-     *       （keep 窗口内写 keepItem、窗口外立刻写新物品），于是出现<b>异常加速</b>。</li>
-     * </ul>
-     * 这与用户实测「不断切换两把不同的枪时会打断/异常加速甚至不显示动画」完全吻合。
-     *
-     * <p>TACZ 自己的切枪动画由状态机负责（{@code LocalPlayerDraw#doPutAway} →
-     * {@code AnimateGeoItemRenderer#tryExit} 触发 {@code INPUT_PUT_AWAY}，
-     * 再由 {@code TickAnimationEvent}/{@code needReInit} 驱动 {@code INPUT_DRAW}），
-     * <b>不需要也不应该</b>去改 vanilla 的装备进度。
-     *
-     * <p>保留这个空注入点而不是整个删掉，是为了留住上面这段说明 ——
-     * 避免后来者再次「看到空方法就顺手实现它」。
-     */
-    @Inject(method = "tick", at = @At("HEAD"))
-    public void cancelEquippedProgress(CallbackInfo ci) {
-    }
-
-    @Unique
-    @Override
-    public void keep(ItemStack itemStack, long timeMs) {
-        // 【2026-09-02 语义修正】原守卫是「窗口未过期就直接 return」，后果是连续快速切枪时
-        // 第二次收枪**接管不了**窗口：上一把枪的剩余窗口继续生效，第二把枪的 put_away 一帧
-        // 都画不出来，而且窗口比它需要的短。现改为**最新一次收枪接管**，只保留原守卫里良性
-        // 的那一半——同一把枪、且新请求不会延长窗口时不动它，免得把正在播放的动画截断。
-        //
-        // 「接管不会用一个静止视模顶掉正在播放的动画」由调用点保证：
-        // LocalPlayerDraw#doPutAway 只在 AnimateGeoItemRenderer#hasInitializedStateMachine
-        // 成立（旧枪确实一直在被渲染、INPUT_PUT_AWAY 确实已触发）时才调 keep。
-        long now = System.currentTimeMillis();
-        boolean sameKeptItem = tacz$KeepItem != null
-                && ItemStack.isSameItemSameComponents(tacz$KeepItem, itemStack);
-        if (sameKeptItem && now + timeMs <= tacz$KeepTimestamp + tacz$KeepTimeMs) {
-            return;
-        }
-        this.tacz$KeepTimeMs = timeMs;
-        this.tacz$KeepTimestamp = now;
-        this.tacz$KeepItem = itemStack;
-        this.mainHandItem = itemStack;
-    }
-
-    @Override
-    public ItemStack getCurrentItem() {
-        if (Minecraft.getInstance().player == null) {
-            return mainHandItem;
-        }
-        if (tacz$KeepItem != null) {
-            long time = System.currentTimeMillis() - tacz$KeepTimestamp;
-            if (time < tacz$KeepTimeMs) {
-                return tacz$KeepItem;
-            } else {
-                tacz$KeepItem = null;
-            }
-        }
-        return mainHandItem;
     }
 }
