@@ -24,7 +24,6 @@
     "client.LocalPlayerMixin",
     "client.LevelRendererWorldPassMixin",
     "client.PreparedFrameAccessor",
-    "client.PreparedFrameSolidMixin",
     "client.SimpleFeatureRenderPhaseMixin",
     "client.TranslucentFeatureRenderPhaseMixin",
     "client.MouseHandlerMixin",

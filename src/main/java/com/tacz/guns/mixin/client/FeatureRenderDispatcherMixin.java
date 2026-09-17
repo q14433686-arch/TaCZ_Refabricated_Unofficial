@@ -1,6 +1,5 @@
 package com.tacz.guns.mixin.client;
 
-import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.render.scope.ScopePipRenderer;
@@ -139,20 +138,37 @@ public abstract class FeatureRenderDispatcherMixin {
         ScopePipRenderer.setCurrentPreparingStorage(null);
     }
 
-    @Inject(
-            method = "renderAllFeatures",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeSolid(Lcom/mojang/renderpearl/api/commands/RenderPass;)V",
-                    shift = At.Shift.BEFORE
-            )
-    )
-    // 26.3: renderAllFeatures 由实例方法 (SubmitNodeStorage) 改为
-    // static (RenderPass, PreparedFrame)，内部 executeSolid 等阶段方法也都改收
-    // RenderPass —— @At 的 target 描述符必须同步。
-    // 处理器用「空形参」形式（只声明 CallbackInfo）以免再被签名漂移打中；
-    // 但 static 是硬要求：目标方法为 static 时处理器也必须 static。
-    private static void tacz$scopeMaskAtPhaseBoundary(CallbackInfo ci) {
+    /**
+     * <h2>26.3：注入点从「阶段边界」搬到 prepareFrame 之后</h2>
+     *
+     * <p>26.2 的 {@code renderAllFeatures} 自己不开 pass，各 {@code executeXxx}
+     * 内部各开各的，所以阶段之间是「无 pass 状态」，我们可以在那里插一个
+     * 自己的 pass 画掩码。<b>26.3 把 pass 的归属整个倒过来了</b>：
+     * {@code GameRenderer#renderItemInHand}（GR:399-408）先
+     * {@code createRenderPass("Item in hand")}，再把这个 pass 当参数一路传进
+     * {@code renderAllFeatures(renderPass, frame)} → {@code executeSolid(renderPass)}。
+     * {@code FeatureRenderDispatcher} 内部<b>一个 pass 都不开</b>。
+     *
+     * <p>于是原来的阶段边界已经身处 vanilla 的 pass 之内，再调
+     * {@code createRenderPass} 必然撞上：
+     * <pre>Close the existing render pass before creating a new one!</pre>
+     * （2026-09-18 实机日志：掩码整条被禁用，随后镜身管线拿不到掩码而崩。）
+     *
+     * <p>新锚点选 {@code prepareFrame} 的 RETURN，它同时满足三个约束：
+     * <ul>
+     *   <li>在 {@code prepareFrameWithContext} 的 {@code stagedVertexBuffer.upload()}
+     *       <b>之后</b> —— 掩码几何要的顶点数据已经上传（这是原注释里
+     *       「必须在 upload 之后」那条约束，依旧成立）；</li>
+     *   <li>在 vanilla {@code createRenderPass("Item in hand")} <b>之前</b> ——
+     *       try-with-resources 的资源按书写顺序初始化，{@code prepareFrame} 是
+     *       第一个，pass 是第二个（GR:399-405），所以此刻确实还没有 pass 开着；</li>
+     *   <li>仍在 {@code executeSolid} 之前 —— 镜身在 solid 阶段采样掩码，
+     *       掩码必须先就绪。</li>
+     * </ul>
+     */
+    @Inject(method = "prepareFrame", at = @At("RETURN"))
+    private void tacz$scopeMaskAtPhaseBoundary(SubmitNodeStorage storage,
+                                               CallbackInfoReturnable<FeatureRenderDispatcher.PreparedFrame> cir) {
         // 【Step 2】画真正的目镜掩码。
         //
         // 上一轮的空 pass 探针已证明这个时机安全（实测预览块变绿），
@@ -181,7 +197,7 @@ public abstract class FeatureRenderDispatcherMixin {
      * GUI 系（GuiItemAtlas / PictureInPictureRenderer / renderLevel 560 的
      * 收尾调用）—— <b>26.2 的世界实体 pass 不经过 renderAllFeatures</b>
      * （LevelRenderer.render 的帧图 lambda 直调 executeSolid）。
-     * 世界表（WORLD_DRAWS）的消费点因此在 {@code PreparedFrameSolidMixin}
+     * 世界表（WORLD_DRAWS）的消费点因此在 {@code LevelRendererWorldPassMixin}
      * （executeSolid RETURN，调用者判据见 {@code LevelRendererWorldPassMixin}）。</p>
      *
      * <p>关 PR 画在 executeSolid 之前、并且用一张全局 WORLD 表，GUI/掉落物
@@ -193,15 +209,21 @@ public abstract class FeatureRenderDispatcherMixin {
      * {@code createRenderPass} 的 isInRenderPass 断言不会触发；且立方体几何
      * 已进深度缓冲，GPU poly 用同一张 depth view 做深度测试即可正确遮挡。</p>
      */
-    @Inject(
-            method = "renderAllFeatures",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeSolid(Lcom/mojang/renderpearl/api/commands/RenderPass;)V",
-                    shift = At.Shift.AFTER
-            )
-    )
-    private static void tacz$polyMeshGpuAfterSolid(CallbackInfo ci) {
-        PolyMeshGpuRenderer.renderAfterSolid();
-    }
+    /**
+     * <h2>26.3：同样被迫离开阶段边界</h2>
+     *
+     * <p>理由与上面的掩码注入点完全相同 —— {@code executeSolid} 之后仍在
+     * vanilla 那个 "Item in hand" pass 内部，{@code PolyMeshGpuRenderer}
+     * 要自开 pass 就会撞 isInRenderPass 断言。
+     *
+     * <p>这里改用 {@code renderAllFeatures} 的 RETURN：整个
+     * {@code renderAllFeatures} 跑完后控制权回到 {@code renderItemInHand}，
+     * 但 try-with-resources 尚未结束 —— 不过 mixin 的 RETURN 注入发生在
+     * 方法返回指令处，此时 pass 仍未 close。因此<b>不能</b>在这里开 pass。
+     *
+     * <p>真正安全的位置是 vanilla 那个 try 块整体结束之后，也就是
+     * {@code renderItemInHand} 的 RETURN —— 见
+     * {@code GameRendererMixin#tacz$polyMeshAfterHandPass}。
+     * 本注入点因此<b>整个移走</b>，不在此处保留空壳。</p>
+     */
 }

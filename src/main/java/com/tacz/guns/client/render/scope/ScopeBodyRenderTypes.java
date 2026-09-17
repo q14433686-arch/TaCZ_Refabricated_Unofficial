@@ -96,7 +96,15 @@ public final class ScopeBodyRenderTypes {
                 .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
                 .withShaderDefine("ALPHA_CUTOUT", 0.1F)
                 .withBindGroupLayout(BindGroupLayouts.SAMPLER1)
-                .withCull(false);
+                .withCull(false)
+                // 26.3 硬性要求：管线的 color target 数必须与 RenderPass 的颜色附件数
+                // 一致，否则 FrontendRenderPass#setPipeline 抛
+                // "Render pass color attachment count must match pipeline color
+                // target state count."（2026-09-18 实机日志）。26.2 可以不写、
+                // 由引擎兜底，26.3 不再兜底 —— vanilla ENTITY_CUTOUT 自己也显式写了
+                // .withColorTargetState(ColorTargetState.DEFAULT)（RenderPipelines:508）。
+                // 本管线是 ENTITY_CUTOUT 的抄本，故取同一个 DEFAULT（不透明，无混合）。
+                .withColorTargetState(ColorTargetState.DEFAULT);
         if (emissive) {
             // 发光准星不应受面法线/方向光影响；否则会随玩家朝向变亮变暗。
             builder = builder.withShaderDefine("EMISSIVE")
@@ -251,6 +259,9 @@ public final class ScopeBodyRenderTypes {
                     .withCull(false)
                     .withDepthStencilState(new DepthStencilState(
                             com.mojang.renderpearl.api.pipeline.CompareOp.ALWAYS_PASS, false))
+                    // 26.3 必须显式声明 color target（理由同 buildPipeline）。
+                    // 这条同样是 ENTITY_CUTOUT 抄本，只改了深度状态，故仍用 DEFAULT。
+                    .withColorTargetState(ColorTargetState.DEFAULT)
                     .build();
 
     /**

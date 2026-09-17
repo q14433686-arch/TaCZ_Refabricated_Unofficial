@@ -2,6 +2,7 @@ package cn.sh1rocu.tacz.compat.meshloader.render;
 
 import cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMesh;
+import javax.annotation.Nullable;
 import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.pipeline.ColorTargetState;
@@ -571,7 +572,7 @@ public final class PolyMeshGpuRenderer {
             // 单位阵 MV = 丢相机旋转层 = 「枪固定在视角空间」（实测症状，
             // 与第一人称 0ea0fb6 丢 MV_draw 是同一个病）。
             // 世界的正确消费点在 renderWorldAfterSolid
-            // （PreparedFrameSolidMixin，executeSolid RETURN，MV 栈顶=viewRotation）。
+            // （LevelRendererWorldPassMixin 的 LevelRenderer#executeSolid RETURN，MV 栈顶=viewRotation）。
             HAND_DRAWS.clear();
             return;
         }
@@ -593,9 +594,9 @@ public final class PolyMeshGpuRenderer {
         }
         try {
             if (useRenderTypeRoute()) {
-                drawListViaRenderType(HAND_DRAWS);
+                drawListViaRenderType(HAND_DRAWS, null);
             } else {
-                drawList(HAND_DRAWS);
+                drawList(HAND_DRAWS, null);
             }
             drawnThisFrame = true;
         } catch (Exception | LinkageError e) {
@@ -624,7 +625,7 @@ public final class PolyMeshGpuRenderer {
 
     /**
      * 世界 poly_mesh GPU 表的消费点。挂在 {@code PreparedFrame.executeSolid}
-     * 的 RETURN（{@code PreparedFrameSolidMixin}）。
+     * 的 RETURN（{@code LevelRendererWorldPassMixin}）。
      *
      * <h2>为什么是这里（MV-PROBE v2 字节码取证，minecraft-merged-26.2）</h2>
      * <ul>
@@ -678,7 +679,11 @@ public final class PolyMeshGpuRenderer {
      * RETURN 处不在任何 pass 内，createRenderPass 断言安全；
      * 立方体/地形深度已就绪，GPU poly 同一张 depth view 深度测试即正确遮挡。</p>
      */
-    public static void renderWorldAfterSolid() {
+    /**
+     * @param externalPass 26.3 起由调用方（{@code LevelRenderer#executeSolid}）
+     *                     传入它正在录制的那个 pass；绘制直接录进去，不再自开。
+     */
+    public static void renderWorldAfterSolid(@Nullable RenderPass externalPass) {
         if (!insideLevelRender) {
             return;
         }
@@ -704,9 +709,9 @@ public final class PolyMeshGpuRenderer {
         }
         try {
             if (useRenderTypeRoute()) {
-                drawWorldListViaRenderType(WORLD_DRAWS);
+                drawWorldListViaRenderType(WORLD_DRAWS, externalPass);
             } else {
-                drawList(WORLD_DRAWS);
+                drawList(WORLD_DRAWS, externalPass);
             }
             if (!inScopePass) {
                 worldDrawnThisFrame = true;
@@ -764,12 +769,12 @@ public final class PolyMeshGpuRenderer {
      * 同一 RenderType —— 无光影时两条路视觉逐位一致；顶点里 UV1=NO_OVERLAY、
      * UV2=量化光照，语义同 collector 写入。
      */
-    private static void drawListViaRenderType(List<DrawEntry> draws) {
+    private static void drawListViaRenderType(List<DrawEntry> draws, @Nullable RenderPass externalPass) {
         // 不再调 IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()：ENTITY_CUTOUT 在
         // Iris 26.2 静态表里本就按「绘制时刻是否在手部 pass」分派到 gbuffers_hand，
         // 那次 assign 对已注册管线是 no-op（抛 already assigned 被吞），见下方
         // drawWorldListViaRenderType 的 javadoc 与 IrisCompat 的说明。
-        long totalIndices = drawViaRenderTypeCore(draws, true);
+        long totalIndices = drawViaRenderTypeCore(draws, true, externalPass);
         if (!loggedFirstIrisDraw) {
             loggedFirstIrisDraw = true;
             LOGGER.info("[TacZMeshLoader] GPU mesh pass (RenderType route, shader-pack compatible) drew {} bones "
@@ -796,8 +801,8 @@ public final class PolyMeshGpuRenderer {
      * 默认接管（gbuffers_entities 链路）正是我们想要的。绘制机制（prepare() 压栈取
      * MV × drawFromBuffer）与手部变体完全同构，两层变换定理不区分 pass。</p>
      */
-    private static void drawWorldListViaRenderType(List<DrawEntry> draws) {
-        long totalIndices = drawViaRenderTypeCore(draws, false);
+    private static void drawWorldListViaRenderType(List<DrawEntry> draws, @Nullable RenderPass externalPass) {
+        long totalIndices = drawViaRenderTypeCore(draws, false, externalPass);
         if (!loggedFirstWorldDraw) {
             loggedFirstWorldDraw = true;
             LOGGER.info("[TacZMeshLoader] GPU world mesh pass (RenderType route) drew {} bones "
@@ -809,7 +814,8 @@ public final class PolyMeshGpuRenderer {
      * @param handPass 手部表才裁目镜（{@code clipForViewmodel}）；世界表不裁 ——
      *                 世界枪本就该出现在镜内画面里，与 collector 的世界枪一致。
      */
-    private static long drawViaRenderTypeCore(List<DrawEntry> draws, boolean handPass) {
+    private static long drawViaRenderTypeCore(List<DrawEntry> draws, boolean handPass,
+                                              @Nullable RenderPass externalPass) {
         Matrix4fStack mvStack = RenderSystem.getModelViewStack();
 
         Map<Identifier, List<DrawEntry>> byTexture = new HashMap<>();
@@ -919,6 +925,26 @@ public final class PolyMeshGpuRenderer {
         // 深度必须留着，GPU poly 才能被正确遮挡）。Iris 在 26.3 自己的
         // HandRenderer:128 / MixinLevelRenderer:265 也是这一模一样的五参写法，
         // 说明光影激活时按此开 pass 是受支持的用法。
+        // 【26.3】externalPass != null 时直接复用调用方那个 pass。
+        // 26.3 把 pass 的归属倒置：世界/手部的绘制都发生在 vanilla 已经开好的
+        // pass 内部（LevelRenderer:443 的 "Solid"、GameRenderer:401 的
+        // "Item in hand"），此时再 createRenderPass 会撞
+        // "Close the existing render pass before creating a new one!"。
+        // 复用而非另开，附件自然与 vanilla 一致（就是主 target 的颜色+深度），
+        // 也省掉一次 pass 切换。
+        if (externalPass != null) {
+            for (PreparedDraw draw : preparedDraws) {
+                mvStack.pushMatrix();
+                mvStack.mul(draw.model());
+                try {
+                    draw.prepared().drawFromBuffer(draw.info(), externalPass);
+                } finally {
+                    mvStack.popMatrix();
+                }
+            }
+            return totalIndices;
+        }
+
         try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
                 () -> "tacz_mesh_gpu_rendertype",
                 colorView,
@@ -938,7 +964,7 @@ public final class PolyMeshGpuRenderer {
         return totalIndices;
     }
 
-    private static void drawList(List<DrawEntry> draws) {
+    private static void drawList(List<DrawEntry> draws, @Nullable RenderPass externalPass) {
         Minecraft mc = Minecraft.getInstance();
         RenderTarget mainTarget = mc.gameRenderer.mainRenderTarget();
         if (mainTarget == null) {
@@ -1020,66 +1046,93 @@ public final class PolyMeshGpuRenderer {
         // 阶段边界不在任何 render pass 内（FeatureRenderDispatcherMixin 的字节码分析），
         // createRenderPass 的 isInRenderPass 断言安全。颜色 Optional.empty() = 不清屏，
         // 深度 OptionalDouble.empty() = 不清深度 —— executeSolid 画好的立方体深度要留着。
+        // 26.3: 调用方若已在 pass 内（vanilla 的 "Solid" / "Item in hand"），
+        // 必须复用它 —— 再开一个会撞 isInRenderPass 断言。
+        if (externalPass != null) {
+            drawListInto(externalPass, byTexture, viewsByTexture, draws,
+                    lightmapView, linearSampler, drawModelView, clipAgainstOcular, maskView);
+            return;
+        }
         try (RenderPass pass = encoder.createRenderPass(
                 () -> "tacz_mesh_gpu",
                 colorView,
                 Optional.empty(),
                 depthView,
                 OptionalDouble.empty())) {
-            boolean lit = lightmapView != null;
-            // 26.3: setPipeline 收 CompiledRenderPipeline；三元表达式先选出 RenderPipeline 再编译，
-            // 免得两个分支各自被推导成不同类型。
-            pass.setPipeline(RenderSystem.getCompiledPipeline(
-                    clipAgainstOcular ? LIT_CLIPPED_PIPELINE : (lit ? LIT_PIPELINE : EMISSIVE_PIPELINE)));
-            RenderSystem.bindDefaultUniforms(pass);
-            if (lit) {
-                pass.setUniform("Sampler2", lightmapView,
-                        RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-            }
-            if (clipAgainstOcular) {
-                // NEAREST 与 ScopeMaskTextureHandle 的理由相同：掩码是二值数据，
-                // 线性过滤会让 > 0.5 判定在边界抖动出毛边。
-                pass.setUniform(com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.maskSamplerName(),
-                        maskView, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-            }
+            drawListInto(pass, byTexture, viewsByTexture, draws,
+                    lightmapView, linearSampler, drawModelView, clipAgainstOcular, maskView);
+        }
+    }
 
-            for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
-                GpuTextureView textureView = viewsByTexture.get(group.getKey());
-                if (textureView == null) {
-                    continue;
-                }
-                pass.setUniform("Sampler0", textureView, linearSampler);
+    /**
+     * 把一组 mesh 绘制录进<b>给定</b>的 render pass。
+     *
+     * <p>从原 {@code drawList} 的 try(pass) 块原样抽出，一行未改 ——
+     * 抽出的唯一目的，是让「自己开 pass」与「复用 vanilla 的 pass」两条路
+     * 共享同一段绘制逻辑。26.3 起后者是常态（见 drawList 里的 externalPass 分支）。</p>
+     */
+    private static void drawListInto(RenderPass pass,
+                                     Map<Identifier, List<DrawEntry>> byTexture,
+                                     Map<Identifier, GpuTextureView> viewsByTexture,
+                                     List<DrawEntry> draws,
+                                     @Nullable GpuTextureView lightmapView,
+                                     GpuSampler linearSampler,
+                                     Matrix4f drawModelView,
+                                     boolean clipAgainstOcular,
+                                     @Nullable GpuTextureView maskView) {
+        boolean lit = lightmapView != null;
+        // 26.3: setPipeline 收 CompiledRenderPipeline；三元表达式先选出 RenderPipeline 再编译，
+        // 免得两个分支各自被推导成不同类型。
+        pass.setPipeline(RenderSystem.getCompiledPipeline(
+                clipAgainstOcular ? LIT_CLIPPED_PIPELINE : (lit ? LIT_PIPELINE : EMISSIVE_PIPELINE)));
+        RenderSystem.bindDefaultUniforms(pass);
+        if (lit) {
+            pass.setUniform("Sampler2", lightmapView,
+                    RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+        }
+        if (clipAgainstOcular) {
+            // NEAREST 与 ScopeMaskTextureHandle 的理由相同：掩码是二值数据，
+            // 线性过滤会让 > 0.5 判定在边界抖动出毛边。
+            pass.setUniform(com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.maskSamplerName(),
+                    maskView, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+        }
 
-                for (DrawEntry entry : group.getValue()) {
-                    // ModelViewMat = MV_draw * pose_submit（乘序同 vanilla：顶点先套
-                    // pose 再进相机系）。scratch 每骨骼重算，不污染 entry.model()。
-                    Matrix4f mv = new Matrix4f(drawModelView).mul(entry.model());
-                    pass.setUniform("DynamicTransforms",
-                            RenderSystem.getDynamicUniforms().writeTransform(mv, WHITE));
-                    pass.setVertexBuffer(0, entry.bone().vertexBuffer.slice());
-                    RenderSystem.AutoStorageIndexBuffer indices =
-                            RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
-                    pass.setIndexBuffer(indices.getBuffer(entry.bone().indexCount), indices.type());
-                    pass.drawIndexed(entry.bone().indexCount, 1, 0, 0, 0);
-                }
+        for (Map.Entry<Identifier, List<DrawEntry>> group : byTexture.entrySet()) {
+            GpuTextureView textureView = viewsByTexture.get(group.getKey());
+            if (textureView == null) {
+                continue;
             }
-            // 两张表各记一次首画：世界表在自定义 pass 上的首画是「世界 mesh 枪
-            // 确实走了 GPU 烘焙」的证据之一，与手部共用一个标志会被手部抢先吃掉
-            // （手部 pass 一帧内更早）。光影 RenderType 路线另有 loggedFirstWorldDraw。
-            boolean handTable = draws == HAND_DRAWS;
-            if (handTable ? !loggedFirstDraw : !loggedFirstWorldDrawCustomPass) {
-                if (handTable) {
-                    loggedFirstDraw = true;
-                } else {
-                    loggedFirstWorldDrawCustomPass = true;
-                }
-                long indices = 0;
-                for (DrawEntry entry : draws) {
-                    indices += entry.bone().indexCount;
-                }
-                LOGGER.info("[TacZMeshLoader] GPU mesh pass drew {} bones ({} indices) on the {} pass, lit={}",
-                        draws.size(), indices, handTable ? "hand" : "world", lit);
+            pass.setUniform("Sampler0", textureView, linearSampler);
+
+            for (DrawEntry entry : group.getValue()) {
+                // ModelViewMat = MV_draw * pose_submit（乘序同 vanilla：顶点先套
+                // pose 再进相机系）。scratch 每骨骼重算，不污染 entry.model()。
+                Matrix4f mv = new Matrix4f(drawModelView).mul(entry.model());
+                pass.setUniform("DynamicTransforms",
+                        RenderSystem.getDynamicUniforms().writeTransform(mv, WHITE));
+                pass.setVertexBuffer(0, entry.bone().vertexBuffer.slice());
+                RenderSystem.AutoStorageIndexBuffer indices =
+                        RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
+                pass.setIndexBuffer(indices.getBuffer(entry.bone().indexCount), indices.type());
+                pass.drawIndexed(entry.bone().indexCount, 1, 0, 0, 0);
             }
+        }
+        // 两张表各记一次首画：世界表在自定义 pass 上的首画是「世界 mesh 枪
+        // 确实走了 GPU 烘焙」的证据之一，与手部共用一个标志会被手部抢先吃掉
+        // （手部 pass 一帧内更早）。光影 RenderType 路线另有 loggedFirstWorldDraw。
+        boolean handTable = draws == HAND_DRAWS;
+        if (handTable ? !loggedFirstDraw : !loggedFirstWorldDrawCustomPass) {
+            if (handTable) {
+                loggedFirstDraw = true;
+            } else {
+                loggedFirstWorldDrawCustomPass = true;
+            }
+            long indices = 0;
+            for (DrawEntry entry : draws) {
+                indices += entry.bone().indexCount;
+            }
+            LOGGER.info("[TacZMeshLoader] GPU mesh pass drew {} bones ({} indices) on the {} pass, lit={}",
+                    draws.size(), indices, handTable ? "hand" : "world", lit);
         }
     }
 

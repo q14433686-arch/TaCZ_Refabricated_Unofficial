@@ -1,6 +1,8 @@
 package com.tacz.guns.client.render.scope;
 
 import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
 import com.mojang.renderpearl.api.pipeline.UniformType;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.tacz.guns.GunMod;
@@ -96,6 +98,12 @@ public final class ScopeTextRenderTypes {
                     .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_text"))
                     .withShaderDefine("SCOPE_MASK")
                     .withBindGroupLayout(MASK_SAMPLER_LAYOUT)
+                    // 26.3 必须显式声明 color target，否则 setPipeline 抛
+                    // "color attachment count must match ... target state count"。
+                    // 母本 vanilla TEXT 用的是 TRANSLUCENT 混合
+                    // （RenderPipelines:818），文字要靠 alpha 混合才不会带黑底，
+                    // 这里必须跟着用 TRANSLUCENT，不能用 DEFAULT。
+                    .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                     .build();
 
     private static boolean irisAssignmentAttempted = false;
