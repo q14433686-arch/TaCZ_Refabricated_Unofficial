@@ -60,6 +60,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(FeatureRenderDispatcher.PreparedFrame.class)
 public abstract class PreparedFrameSolidMixin {
 
+    // 26.3: PreparedFrame#executeSolid 改收 RenderPass。这里用 mixin 的
+    // 「空形参」注入形式（只声明 CallbackInfo，不复述目标形参）——
+    // 该形式对目标签名变化天然免疫，本注入点也确实不需要那个 RenderPass。
     @Inject(method = "executeSolid", at = @At("RETURN"))
     private void tacz$worldPolyMeshAfterSolid(CallbackInfo ci) {
         PolyMeshGpuRenderer.renderWorldAfterSolid();

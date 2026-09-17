@@ -20,7 +20,6 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.client.renderer.state.GameRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import org.joml.Matrix4fc;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -48,11 +47,14 @@ public abstract class GameRendererMixin {
     @Unique
     private boolean tacz$renderingItemInHand;
 
+    // 26.3: renderItemInHand 的形参由 (CameraRenderState, float, Matrix4fc)
+    // 变为 (CameraRenderState, PlayerRenderState, GpuTextureView)。
+    // 2026-09-18 实机日志 line 108 就是这里崩的：处理器若声明了形参，就必须与
+    // 目标逐个对上，否则 mixin APPLY 阶段抛 InvalidInjectionException。
+    // 本注入只要「进/出手部 pass」这个时机，一个参数都不读 —— 改用 mixin 的
+    // 「空形参」形式（只声明 CallbackInfo），对目标签名漂移天然免疫。
     @Inject(method = "renderItemInHand", at = @At("HEAD"))
-    private void tacz$beginHandPass(CameraRenderState cameraState,
-                                    float partialTick,
-                                    Matrix4fc projection,
-                                    CallbackInfo ci) {
+    private void tacz$beginHandPass(CallbackInfo ci) {
         this.tacz$renderingItemInHand = true;
         // renderAllFeatures 每帧被调用多次（世界一次、手持一次），
         // 瞄具只存在于手持那次。掩码必须只在那次绘制，否则世界那次会先把
@@ -61,10 +63,7 @@ public abstract class GameRendererMixin {
     }
 
     @Inject(method = "renderItemInHand", at = @At("RETURN"))
-    private void tacz$endHandPass(CameraRenderState cameraState,
-                                  float partialTick,
-                                  Matrix4fc projection,
-                                  CallbackInfo ci) {
+    private void tacz$endHandPass(CallbackInfo ci) {
         this.tacz$renderingItemInHand = false;
         ScopeMaskRenderer.setInHandPass(false);
     }
@@ -266,19 +265,24 @@ public abstract class GameRendererMixin {
         ScopePipTrace.beginFrame();
     }
 
+    // 26.3: GameRenderer#render() 变成无参（原 (DeltaTracker, boolean) 两个形参
+    // 都改由 GameRenderer 自己从 minecraft/gameRenderState 内部取，见 GR:465）。
+    // 注入处理器形参必须与之一致，否则 mixin APPLY 阶段抛 InvalidInjectionException。
+    // partialTick 改向 Minecraft 的 DeltaTracker 现取 —— 与原先由 vanilla 传进来的
+    // 是同一帧同一个对象，取值相同。
     @Inject(method = "render", at = @At("HEAD"))
-    private void tacz$renderTickStart(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
+    private void tacz$renderTickStart(CallbackInfo ci) {
         RenderTickEvent.EVENT.invoker().onRenderTick(new RenderTickEvent(
                 RenderTickEvent.Phase.START,
-                deltaTracker.getGameTimeDeltaPartialTick(false)
+                this.minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false)
         ));
     }
 
     @Inject(method = "render", at = @At("RETURN"))
-    private void tacz$renderTickEnd(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
+    private void tacz$renderTickEnd(CallbackInfo ci) {
         RenderTickEvent.EVENT.invoker().onRenderTick(new RenderTickEvent(
                 RenderTickEvent.Phase.END,
-                deltaTracker.getGameTimeDeltaPartialTick(false)
+                this.minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false)
         ));
     }
 }

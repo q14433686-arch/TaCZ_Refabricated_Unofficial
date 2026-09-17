@@ -143,11 +143,16 @@ public abstract class FeatureRenderDispatcherMixin {
             method = "renderAllFeatures",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeSolid()V",
+                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeSolid(Lcom/mojang/renderpearl/api/commands/RenderPass;)V",
                     shift = At.Shift.BEFORE
             )
     )
-    private void tacz$scopeMaskAtPhaseBoundary(SubmitNodeStorage storage, CallbackInfo ci) {
+    // 26.3: renderAllFeatures 由实例方法 (SubmitNodeStorage) 改为
+    // static (RenderPass, PreparedFrame)，内部 executeSolid 等阶段方法也都改收
+    // RenderPass —— @At 的 target 描述符必须同步。
+    // 处理器用「空形参」形式（只声明 CallbackInfo）以免再被签名漂移打中；
+    // 但 static 是硬要求：目标方法为 static 时处理器也必须 static。
+    private static void tacz$scopeMaskAtPhaseBoundary(CallbackInfo ci) {
         // 【Step 2】画真正的目镜掩码。
         //
         // 上一轮的空 pass 探针已证明这个时机安全（实测预览块变绿），
@@ -192,11 +197,11 @@ public abstract class FeatureRenderDispatcherMixin {
             method = "renderAllFeatures",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeSolid()V",
+                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeSolid(Lcom/mojang/renderpearl/api/commands/RenderPass;)V",
                     shift = At.Shift.AFTER
             )
     )
-    private void tacz$polyMeshGpuAfterSolid(SubmitNodeStorage storage, CallbackInfo ci) {
+    private static void tacz$polyMeshGpuAfterSolid(CallbackInfo ci) {
         PolyMeshGpuRenderer.renderAfterSolid();
     }
 }
