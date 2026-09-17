@@ -48,6 +48,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
+import com.mojang.blaze3d.Blaze3D;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
@@ -64,6 +65,8 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3x2fStack;
 
 import javax.annotation.Nullable;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 
 public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMenu> {
@@ -408,12 +411,22 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                 }
                 String url = packInfo.getUrl();
                 if (StringUtils.isNotBlank(url) && minecraft != null) {
+                    // 26.3: ConfirmLinkScreen 只收 URI；开链接改走 Blaze3D#openUri。
+                    // 这个 URL 来自枪包作者填写的 pack info（真正的不可信输入），
+                    // 所以必须过 parseAndValidateUntrustedUri 的协议白名单 ——
+                    // 解析失败就当没这个链接，不弹窗也不抛异常。
+                    final URI uri;
+                    try {
+                        uri = Util.parseAndValidateUntrustedUri(url);
+                    } catch (URISyntaxException e) {
+                        return;
+                    }
                     minecraft.setScreenAndShow(new ConfirmLinkScreen(yes -> {
                         if (yes) {
-                            Util.getPlatform().openUri(url);
+                            Blaze3D.openUri(uri);
                         }
                         minecraft.setScreenAndShow(this);
-                    }, url, false));
+                    }, uri, false));
                 }
             }
         }));

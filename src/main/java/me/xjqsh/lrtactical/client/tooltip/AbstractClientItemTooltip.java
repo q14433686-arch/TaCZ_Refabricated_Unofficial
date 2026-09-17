@@ -79,8 +79,9 @@ public abstract class AbstractClientItemTooltip implements ClientTooltipComponen
 
     private static boolean isShiftDown() {
         Minecraft minecraft = Minecraft.getInstance();
-        return InputConstants.isKeyDown(minecraft.getWindow(), InputConstants.KEY_LSHIFT)
-                || InputConstants.isKeyDown(minecraft.getWindow(), InputConstants.KEY_RSHIFT);
+        // 26.3: isKeyDown 变成单参（SDL 化后不再需要 window 句柄）。
+        return InputConstants.isKeyDown(InputConstants.KEY_LSHIFT)
+                || InputConstants.isKeyDown(InputConstants.KEY_RSHIFT);
     }
 
     @Override

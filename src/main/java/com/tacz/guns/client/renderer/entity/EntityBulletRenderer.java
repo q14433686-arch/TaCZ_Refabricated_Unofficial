@@ -376,8 +376,13 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
         return 15;
     }
 
+    // 26.3: EntityRenderer#shouldRender 尾部新增 float partialTicks
+    // （基类用它调 getBoundingBoxForCulling(entity, partialTicks)）。
+    // 本覆写沿用子弹自己的 getBoundingBox()，不需要这个参数，但签名必须对上
+    // 才算覆写 —— 否则只是个同名重载，基类那份会照跑，子弹的剔除放宽就失效了。
     @Override
-    public boolean shouldRender(EntityKineticBullet bullet, Frustum camera, double pCamX, double pCamY, double pCamZ) {
+    public boolean shouldRender(EntityKineticBullet bullet, Frustum camera, double pCamX, double pCamY, double pCamZ,
+                                float partialTicks) {
         AABB aabb = bullet.getBoundingBox().inflate(0.5);
         if (aabb.hasNaN() || aabb.getSize() == 0) {
             aabb = new AABB(bullet.getX() - 2.0, bullet.getY() - 2.0, bullet.getZ() - 2.0, bullet.getX() + 2.0, bullet.getY() + 2.0, bullet.getZ() + 2.0);
