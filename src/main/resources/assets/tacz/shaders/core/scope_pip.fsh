@@ -1,4 +1,5 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
 // 瞄准镜「镜内画中画」合成片元着色器。
 //
@@ -12,8 +13,8 @@
 // 也没被 PIP 贴的裂缝。下面那一段就是从 scope_body.fsh 原样搬来的，
 // 改动它时两个文件必须一起改。
 
-#moj_import <minecraft:globals.glsl>
-#moj_import <minecraft:dynamictransforms.glsl>
+#include <minecraft:globals.glsl>
+#include <minecraft:dynamictransforms.glsl>
 
 // 本帧世界画面的拷贝（未含枪与手 —— 拷贝卡在世界画完、视模开画之前）。
 // 名字沿用 vanilla blit 系列的 InSampler，好直接复用 BindGroupLayouts.IN_SAMPLER。
@@ -23,9 +24,12 @@ uniform sampler2D InSampler;
 // 绿通道存开镜进度，见下方收缩逻辑。
 uniform sampler2D ScopeMaskSampler;
 
-in vec2 texCoord;
+// 26.3: 全屏 pass 的 varying 必须显式 location，且要与配对的
+// vanilla core/screenquad.vsh 对齐 —— 它是 layout(location = 0) out vec2 texCoord。
+// 约定同 vanilla blit_screen.fsh。
+layout(location = 0) in vec2 texCoord;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 // ---------------------------------------------------------------------------
 // Catmull-Rom 双三次重建（9 抽头版）

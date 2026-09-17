@@ -1,21 +1,33 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
 // 瞄具镜身片元着色器 —— 在 vanilla core/entity.fsh 之上只加一件事：
 // 被目镜盖到的像素 discard。
 //
 // 这是上游 1.21.1 那句 stencil 的等价物：
 //     scope_body: stencilFunc(GL_EQUAL, 0)   // 只在目镜【没盖到】处画镜身
-// 26.2 没有模板缓冲，改为采样一张离屏掩码纹理（ScopeMaskSampler）来做同样的二分。
+// 26.3 没有模板缓冲，改为采样一张离屏掩码纹理（ScopeMaskSampler）来做同样的二分。
 //
 // 为什么整份抄一遍 entity.fsh 而不是想办法「继承」：
 // GLSL 没有继承，而 vanilla 也不提供可插拔的片元钩子。要在 entity 的
-// 渲染语义上加一步 discard，只能复制一份再改。除下面 SCOPE_MASK 那一段外，
-// 本文件与 26.2 的 assets/minecraft/shaders/core/entity.fsh 逐行一致 ——
+// 渲染语义上加一步 discard，只能复制一份再改。除 SCOPE_MASK 那一段与
+// ScopeMaskSampler 声明外，本文件与 26.3 的
+// assets/minecraft/shaders/core/entity.fsh 逐行一致 ——
 // 如果将来 vanilla 改了 entity.fsh，这里要跟着同步。
+//
+// 【26.3 方言变更】同 scope_body.vsh：#moj_import -> #include、
+// varying 必须显式 layout(location = N)、需 GL_ARB_separate_shader_objects。
+// 编号严格照抄 vanilla entity.fsh，与 scope_body.vsh 的 out 编号一一对应。
 
-#moj_import <minecraft:fog.glsl>
-#moj_import <minecraft:dynamictransforms.glsl>
-#moj_import <minecraft:globals.glsl>
+// 26.3 vanilla entity.fsh 只在 GLINT 下引 globals.glsl；我们的 SCOPE_MASK
+// 分支要用其中的 ScreenSize，所以把条件放宽到「GLINT 或 SCOPE_MASK」。
+// globals.glsl 自带 include guard，两个宏同时成立也不会重复定义。
+#if defined(GLINT) || defined(SCOPE_MASK)
+#include <minecraft:globals.glsl>
+#endif
+#include <minecraft:fog.glsl>
+#include <minecraft:dynamictransforms.glsl>
+#include <minecraft:oit.glsl>
 
 uniform sampler2D Sampler0;
 
@@ -29,26 +41,60 @@ uniform sampler2D DissolveMaskSampler;
 uniform sampler2D ScopeMaskSampler;
 #endif
 
-in float sphericalVertexDistance;
-in float cylindricalVertexDistance;
+#ifdef GLINT
+uniform sampler2D GlintSampler;
+#endif
+
+layout(location = 0) in float sphericalVertexDistance;
+layout(location = 1) in float cylindricalVertexDistance;
 #ifdef PER_FACE_LIGHTING
-in vec4 vertexPerFaceColorBack;
-in vec4 vertexPerFaceColorFront;
+layout(location = 2) in vec4 vertexPerFaceColorBack;
+layout(location = 3) in vec4 vertexPerFaceColorFront;
 #else
-in vec4 vertexColor;
+layout(location = 2) in vec4 vertexColor;
 #endif
 
 #ifndef EMISSIVE
-in vec4 lightMapColor;
+layout(location = 4) in vec4 lightMapColor;
 #endif
 
 #ifndef NO_OVERLAY
-in vec4 overlayColor;
+layout(location = 5) in vec4 overlayColor;
 #endif
 
-in vec2 texCoord0;
+layout(location = 6) in vec2 texCoord0;
+#ifdef GLINT
+layout(location = 7) in vec2 texCoordGlint;
+#endif
 
-out vec4 fragColor;
+#ifndef OIT_ALPHA_ONLY
+layout(location = 0) out vec4 fragColor;
+#endif
+
+vec4 calculateFinalColor(vec4 color) {
+    #ifndef NO_OVERLAY
+    color.rgb = mix(overlayColor.rgb, color.rgb, overlayColor.a);
+    #endif
+
+    #ifndef EMISSIVE
+    color *= lightMapColor;
+    #endif
+
+    #ifdef GLINT
+    vec4 glintColor = GlintAlpha * texture(GlintSampler, texCoordGlint);
+    // Matches BlendFuntion.GLINT
+    color.rgb += glintColor.rgb * glintColor.rgb;
+    #endif
+
+    #ifdef OIT_ACCUMULATE
+    color = sampleColorForAccumulation(color);
+    vec4 fogColor = vec4(FogColor.rgb * color.a, FogColor.a);
+    #else
+    vec4 fogColor = FogColor;
+    #endif
+
+    return apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, fogColor);
+}
 
 void main() {
 #ifdef SCOPE_MASK
@@ -122,35 +168,41 @@ void main() {
     }
   #endif
 #endif
-
     vec4 color = texture(Sampler0, texCoord0);
-#ifdef ALPHA_CUTOUT
+
+    #ifdef OIT_ADDITIVE
+    color.a = min(0.99, color.a);
+    #endif
+
+    #ifdef ALPHA_CUTOUT
     if (color.a < ALPHA_CUTOUT) {
         discard;
     }
-#endif
+    #endif
 
-#ifdef PER_FACE_LIGHTING
+    #ifdef PER_FACE_LIGHTING
     vec4 faceVertexColor = gl_FrontFacing ? vertexPerFaceColorFront : vertexPerFaceColorBack;
-#else
+    #else
     vec4 faceVertexColor = vertexColor;
-#endif
+    #endif
 
-#ifdef DISSOLVE
+    #ifdef DISSOLVE
     if (faceVertexColor.a < texture(DissolveMaskSampler, texCoord0).a) {
         discard;
     }
     // The dissolve effect entirely replaces translucency
     faceVertexColor.a = 1.0;
-#endif
+    #endif
 
     color *= faceVertexColor * ColorModulator;
-#ifndef NO_OVERLAY
-    color.rgb = mix(overlayColor.rgb, color.rgb, overlayColor.a);
-#endif
-#ifndef EMISSIVE
-    color *= lightMapColor;
-#endif
 
-    fragColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
+    #ifdef GLINT
+    color.a = max(color.a, GlintAlpha);
+    #endif
+
+    #ifdef OIT_ALPHA_ONLY
+    executeAlphaOnlyPhase(gl_FragCoord.z, color.a);
+    #else
+    fragColor = calculateFinalColor(color);
+    #endif
 }
