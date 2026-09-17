@@ -1,4 +1,4 @@
-commit: c2b2e5cdad5b26e6c719ecf655ca520904a48a97
+commit: a1ccd5205bb1979d66c0ae1d7e5fc01f8d4027b0
 WARNING: A restricted method in java.lang.System has been called
 WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/home/runner/.gradle/wrapper/dists/gradle-9.5.1-bin/iq79hdu3mqx29lgffhp8bfmx/gradle-9.5.1/lib/native-platform-0.22-milestone-29.jar)
 WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
@@ -11,851 +11,241 @@ Daemon will be stopped at the end of the build
 Fabric Loom: 1.17.21
 
 > Task :compileJava
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/input/MeleeAttackKeys.java:15: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/ForgeSlider.java:8: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/AimKey.java:14: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InspectKey.java:11: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/FireSelectKey.java:12: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ZoomKey.java:13: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InteractKey.java:18: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/RefitKey.java:12: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ReloadKey.java:17: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/CrawlKey.java:14: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/MeleeKey.java:11: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ConfigKey.java:18: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ShootKey.java:18: error: package org.lwjgl.glfw does not exist
-import org.lwjgl.glfw.GLFW;
-                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:7: error: cannot find symbol
-import net.minecraft.server.packs.AbstractPackResources;
-                                 ^
-  symbol:   class AbstractPackResources
-  location: package net.minecraft.server.packs
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:27: error: cannot find symbol
-public class PathPackResources extends AbstractPackResources {
-                                       ^
-  symbol: class AbstractPackResources
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:58: error: cannot find symbol
-    public void listResources(PackType type, String namespace, String path, ResourceOutput resourceOutput) {
-                                                                            ^
-  symbol:   class ResourceOutput
-  location: class PathPackResources
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:7: error: cannot find symbol
-import net.minecraft.server.packs.AbstractPackResources;
-                                 ^
-  symbol:   class AbstractPackResources
-  location: package net.minecraft.server.packs
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:21: error: cannot find symbol
-public class DelegatingPackResources extends AbstractPackResources {
-                                             ^
-  symbol: class AbstractPackResources
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:54: error: cannot find symbol
-    public void listResources(PackType type, String resourceNamespace, String paths, ResourceOutput resourceOutput) {
-                                                                                     ^
-  symbol:   class ResourceOutput
-  location: class DelegatingPackResources
 warning: unknown enum constant Level.FULL
   reason: class file for com.google.j2objc.annotations.ReflectionSupport$Level not found
 warning: unknown enum constant Level.FULL
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/item/ThrowableItem.java:256: error: method drop in class LivingEntity cannot be applied to given types;
-                player.drop(detonator, false);
-                      ^
-  required: ItemStack,boolean,Prediction
-  found:    ItemStack,boolean
-  reason: actual and formal argument lists differ in length
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/api/item/IMeleeWeapon.java:248: error: invulnerableTime has private access in Entity
-        target.invulnerableTime = 0;
-              ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/renderer/entity/ThrowableEntityRenderer.java:127: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.YP.rotationDegrees(state.yRot));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/renderer/entity/ThrowableEntityRenderer.java:128: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.XP.rotationDegrees(state.xRot));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/renderer/entity/ThrowableEntityRenderer.java:134: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.YN.rotationDegrees(state.yRot));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/renderer/entity/ThrowableEntityRenderer.java:135: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.XP.rotationDegrees(state.xRot));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/bedrock/BedrockPart.java:86: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.ZP.rotation(this.zRot));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/bedrock/BedrockPart.java:89: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.YP.rotation(this.yRot));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/bedrock/BedrockPart.java:92: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.XP.rotation(this.xRot));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/bedrock/BedrockPart.java:94: error: no suitable method found for mulPose(Quaternionf)
-        poseStack.mulPose(additionalQuaternion);
-                 ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/resource/display/DisplayTransform.java:125: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(new Quaternionf().rotationXYZ(
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/item/AnimateGeoItemRenderer.java:351: error: no suitable method found for mulPose(Quaternionf)
-        poseStack.mulPose(quaternion);
-                 ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/item/AnimateGeoItemRenderer.java:387: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/item/AnimateGeoItemRenderer.java:388: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/item/AnimateGeoItemRenderer.java:404: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.ZP.rotationDegrees(180f));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/item/AnimateGeoItemRenderer.java:433: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.ZP.rotationDegrees(180f));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/renderer/item/ThrowableItemRendererWrapper.java:130: error: no suitable method found for mulPose(Quaternionf)
-        poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
-                 ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/renderer/item/ThrowableItemRendererWrapper.java:131: error: no suitable method found for mulPose(Quaternionf)
-        poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F));
-                 ^
-...[truncated 4326 lines total]...
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/item/GunSmithTableItemRenderer.java:72: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.ZN.rotationDegrees(180));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeFinalOverlayState.java:147: error: cannot find symbol
-        GpuTextureView previousColorOverride = RenderSystem.outputColorTextureOverride;
-                                                           ^
-  symbol:   variable outputColorTextureOverride
-  location: class RenderSystem
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeFinalOverlayState.java:148: error: cannot find symbol
-        GpuTextureView previousDepthOverride = RenderSystem.outputDepthTextureOverride;
-                                                           ^
-  symbol:   variable outputDepthTextureOverride
-  location: class RenderSystem
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeFinalOverlayState.java:153: error: cannot find symbol
-        RenderSystem.outputColorTextureOverride = main.getColorTextureView();
-                    ^
-  symbol:   variable outputColorTextureOverride
-  location: class RenderSystem
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeFinalOverlayState.java:154: error: cannot find symbol
-        RenderSystem.outputDepthTextureOverride = main.getDepthTextureView();
-                    ^
-  symbol:   variable outputDepthTextureOverride
-  location: class RenderSystem
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeFinalOverlayState.java:165: error: method renderAllFeatures in class FeatureRenderDispatcher cannot be applied to given types;
-            minecraft.gameRenderer.featureRenderDispatcher().renderAllFeatures(storage);
-                                                            ^
-  required: RenderPass,FeatureRenderDispatcher.PreparedFrame
-  found:    SubmitNodeStorage
-  reason: actual and formal argument lists differ in length
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeFinalOverlayState.java:177: error: cannot find symbol
-            RenderSystem.outputColorTextureOverride = previousColorOverride;
-                        ^
-  symbol:   variable outputColorTextureOverride
-  location: class RenderSystem
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeFinalOverlayState.java:178: error: cannot find symbol
-            RenderSystem.outputDepthTextureOverride = previousDepthOverride;
-                        ^
-  symbol:   variable outputDepthTextureOverride
-  location: class RenderSystem
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskRenderer.java:439: error: incompatible types: RenderPipeline cannot be converted to CompiledRenderPipeline
-                    pass.setPipeline(MASK_PIPELINE);
-                                     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeMaskTarget.java:89: error: incompatible types: boolean cannot be converted to GpuFormat
-                target = new TextureTarget("tacz_scope_mask", w, h, false, GpuFormat.RGBA8_UNORM);
-                                                                    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipTarget.java:96: error: incompatible types: boolean cannot be converted to GpuFormat
-                target = new TextureTarget("tacz_scope_pip", w, h, needsDepth, format);
-                                                                   ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeTextRenderTypes.java:76: error: cannot find symbol
-            BindGroupLayout.builder().withSampler(MASK_SAMPLER).build();
-                                     ^
-  symbol:   method withSampler(String)
-  location: class Builder
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipRenderer.java:197: error: cannot find symbol
-            BindGroupLayout maskLayout = BindGroupLayout.builder().withSampler(MASK_SAMPLER).build();
-                                                                  ^
-  symbol:   method withSampler(String)
-  location: class Builder
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipRenderer.java:1144: error: method render in class LevelRenderer cannot be applied to given types;
-                mc.levelRenderer.render(
-                                ^
-  required: GraphicsResourceAllocator,boolean,CameraRenderState,GpuBufferSlice,Vector4f,boolean,boolean
-  found:    GraphicsResourceAllocator,DeltaTracker,boolean,CameraRenderState,Matrix4f,GpuBufferSlice,Vector4f,boolean
-  reason: actual and formal argument lists differ in length
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipRenderer.java:1410: error: incompatible types: RenderPipeline cannot be converted to CompiledRenderPipeline
-                pass.setPipeline(compositePipeline());
-                                                  ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipRenderer.java:1432: error: cannot find symbol
-                pass.bindTexture("InSampler", scene.getColorTextureView(),
-                    ^
-  symbol:   method bindTexture(String,GpuTextureView,GpuSampler)
-  location: variable pass of type RenderPass
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopePipRenderer.java:1436: error: cannot find symbol
-                pass.bindTexture(MASK_SAMPLER, mask.getColorTextureView(),
-                    ^
-  symbol:   method bindTexture(String,GpuTextureView,GpuSampler)
-  location: variable pass of type RenderPass
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeBodyRenderTypes.java:75: error: cannot find symbol
-            BindGroupLayout.builder().withSampler(MASK_SAMPLER).build();
-                                     ^
-  symbol:   method withSampler(String)
-  location: class Builder
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/render/scope/ScopeBodyRenderTypes.java:248: error: cannot find symbol
-                            com.mojang.blaze3d.platform.CompareOp.ALWAYS_PASS, false))
-                                                       ^
-  symbol:   class CompareOp
-  location: package com.mojang.blaze3d.platform
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/sound/GunSoundInstance.java:64: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/sound/GunSoundInstance.java:66: error: cannot find symbol
-        WeighedSoundEvents events = super.resolve(manager);
-                                         ^
-  symbol: method resolve(SoundManager)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/FirstPersonRenderGunEvent.java:520: error: no suitable method found for mulPose(Quaternionf)
-        poseStack.mulPose(Axis.XP.rotation(inverseRotation.x() * weight));
-                 ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/FirstPersonRenderGunEvent.java:521: error: no suitable method found for mulPose(Quaternionf)
-        poseStack.mulPose(Axis.YP.rotation(inverseRotation.y() * weight));
-                 ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/FirstPersonRenderGunEvent.java:522: error: no suitable method found for mulPose(Quaternionf)
-        poseStack.mulPose(Axis.ZP.rotation(inverseRotation.z() * weight));
-                 ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/functional/RightHandRender.java:33: error: no suitable method found for mulPose(Quaternionf)
-        frozenPose.mulPose(Axis.ZP.rotationDegrees(180f));
-                  ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/functional/RightHandRender.java:49: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.ZP.rotationDegrees(180f));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/functional/TextShowRender.java:67: error: no suitable method found for mulPose(Quaternionf)
-        frozenPose.mulPose(Axis.ZP.rotationDegrees(180f));
-                  ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/functional/MuzzleFlashRender.java:166: error: no suitable method found for mulPose(Quaternionf)
-            backgroundPose.mulPose(Axis.ZP.rotationDegrees(frozenRotation));
-                          ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/functional/MuzzleFlashRender.java:176: error: no suitable method found for mulPose(Quaternionf)
-            glowPose.mulPose(Axis.ZP.rotationDegrees(frozenRotation));
-                    ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/functional/LeftHandRender.java:33: error: no suitable method found for mulPose(Quaternionf)
-        frozenPose.mulPose(Axis.ZP.rotationDegrees(180f));
-                  ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/model/functional/LeftHandRender.java:49: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.ZP.rotationDegrees(180f));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/AimKey.java:22: error: cannot find symbol
-            GLFW.GLFW_MOUSE_BUTTON_RIGHT,
-            ^
-  symbol:   variable GLFW
-  location: class AimKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/AimKey.java:39: error: cannot find symbol
-                if (event.getAction() == GLFW.GLFW_PRESS) {
-                                         ^
-  symbol:   variable GLFW
-  location: class AimKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/AimKey.java:42: error: cannot find symbol
-                if (KeyConfig.HOLD_TO_AIM.get() && event.getAction() == GLFW.GLFW_RELEASE) {
-                                                                        ^
-  symbol:   variable GLFW
-  location: class AimKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InspectKey.java:18: error: cannot find symbol
-            InputConstants.Type.KEYSYM,
-                               ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InspectKey.java:19: error: cannot find symbol
-            GLFW.GLFW_KEY_H,
-            ^
-  symbol:   variable GLFW
-  location: class InspectKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InspectKey.java:23: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INSPECT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                               ^
-  symbol:   variable GLFW
-  location: class InspectKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InspectKey.java:23: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INSPECT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                                                                                         ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/FireSelectKey.java:19: error: cannot find symbol
-            InputConstants.Type.KEYSYM,
-                               ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/FireSelectKey.java:20: error: cannot find symbol
-            GLFW.GLFW_KEY_G,
-            ^
-  symbol:   variable GLFW
-  location: class FireSelectKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/FireSelectKey.java:24: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && FIRE_SELECT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                               ^
-  symbol:   variable GLFW
-  location: class FireSelectKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/FireSelectKey.java:24: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && FIRE_SELECT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                                                                                             ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/FireSelectKey.java:30: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && FIRE_SELECT_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
-                                               ^
-  symbol:   variable GLFW
-  location: class FireSelectKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ZoomKey.java:20: error: cannot find symbol
-            InputConstants.Type.KEYSYM,
-                               ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ZoomKey.java:21: error: cannot find symbol
-            GLFW.GLFW_KEY_V,
-            ^
-  symbol:   variable GLFW
-  location: class ZoomKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ZoomKey.java:25: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && ZOOM_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                               ^
-  symbol:   variable GLFW
-  location: class ZoomKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ZoomKey.java:25: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && ZOOM_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                                                                                      ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ZoomKey.java:31: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && ZOOM_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
-                                               ^
-  symbol:   variable GLFW
-  location: class ZoomKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InteractKey.java:25: error: cannot find symbol
-            InputConstants.Type.KEYSYM,
-                               ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InteractKey.java:26: error: cannot find symbol
-            GLFW.GLFW_KEY_O,
-            ^
-  symbol:   variable GLFW
-  location: class InteractKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InteractKey.java:30: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                               ^
-  symbol:   variable GLFW
-  location: class InteractKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InteractKey.java:30: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                                                                                          ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/InteractKey.java:36: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
-                                               ^
-  symbol:   variable GLFW
-  location: class InteractKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/RefitKey.java:19: error: cannot find symbol
-            InputConstants.Type.KEYSYM,
-                               ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/RefitKey.java:20: error: cannot find symbol
-            GLFW.GLFW_KEY_Z,
-            ^
-  symbol:   variable GLFW
-  location: class RefitKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/RefitKey.java:24: error: cannot find symbol
-        if (event.getAction() == GLFW.GLFW_PRESS && REFIT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                 ^
-  symbol:   variable GLFW
-  location: class RefitKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/RefitKey.java:24: error: cannot find symbol
-        if (event.getAction() == GLFW.GLFW_PRESS && REFIT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                                                                         ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ReloadKey.java:24: error: cannot find symbol
-            InputConstants.Type.KEYSYM,
-                               ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ReloadKey.java:25: error: cannot find symbol
-            GLFW.GLFW_KEY_R,
-            ^
-  symbol:   variable GLFW
-  location: class ReloadKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ReloadKey.java:29: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && RELOAD_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                               ^
-  symbol:   variable GLFW
-  location: class ReloadKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ReloadKey.java:29: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && RELOAD_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                                                                                        ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/CrawlKey.java:21: error: cannot find symbol
-            InputConstants.Type.KEYSYM,
-                               ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/CrawlKey.java:22: error: cannot find symbol
-            GLFW.GLFW_KEY_C,
-            ^
-  symbol:   variable GLFW
-  location: class CrawlKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/CrawlKey.java:26: error: cannot find symbol
-        if (isInGame() && CRAWL_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                                               ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/CrawlKey.java:47: error: cannot find symbol
-                if (event.getAction() == GLFW.GLFW_PRESS) {
-                                         ^
-  symbol:   variable GLFW
-  location: class CrawlKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/CrawlKey.java:50: error: cannot find symbol
-                if (KeyConfig.HOLD_TO_CRAWL.get() && event.getAction() == GLFW.GLFW_RELEASE) {
-                                                                          ^
-  symbol:   variable GLFW
-  location: class CrawlKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/MeleeKey.java:18: error: cannot find symbol
-            InputConstants.Type.KEYSYM,
-                               ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/MeleeKey.java:19: error: cannot find symbol
-            GLFW.GLFW_KEY_V,
-            ^
-  symbol:   variable GLFW
-  location: class MeleeKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/MeleeKey.java:23: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && MELEE_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                               ^
-  symbol:   variable GLFW
-  location: class MeleeKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/MeleeKey.java:23: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && MELEE_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                                                                                       ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/MeleeKey.java:29: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && MELEE_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
-                                               ^
-  symbol:   variable GLFW
-  location: class MeleeKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ConfigKey.java:27: error: cannot find symbol
-            InputConstants.Type.KEYSYM,
-                               ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ConfigKey.java:28: error: cannot find symbol
-            GLFW.GLFW_KEY_T,
-            ^
-  symbol:   variable GLFW
-  location: class ConfigKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ConfigKey.java:32: error: cannot find symbol
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS
-                                               ^
-  symbol:   variable GLFW
-  location: class ConfigKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ConfigKey.java:33: error: cannot find symbol
-                && OPEN_CONFIG_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-                                                              ^
-  symbol:   variable KEYSYM
-  location: class Type
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/input/ShootKey.java:26: error: cannot find symbol
-            GLFW.GLFW_MOUSE_BUTTON_LEFT,
-            ^
-  symbol:   variable GLFW
-  location: class ShootKey
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/tooltip/ClientAttachmentItemTooltip.java:147: error: method isKeyDown in class InputConstants cannot be applied to given types;
-        return InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), InputConstants.KEY_LSHIFT)
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/tooltip/AbstractClientItemTooltip.java:82: error: method isKeyDown in class InputConstants cannot be applied to given types;
+        return InputConstants.isKeyDown(minecraft.getWindow(), InputConstants.KEY_LSHIFT)
                              ^
   required: int
   found:    Window,int
   reason: actual and formal argument lists differ in length
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/tooltip/ClientAttachmentItemTooltip.java:148: error: method isKeyDown in class InputConstants cannot be applied to given types;
-                || InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), InputConstants.KEY_RSHIFT);
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/tooltip/AbstractClientItemTooltip.java:83: error: method isKeyDown in class InputConstants cannot be applied to given types;
+                || InputConstants.isKeyDown(minecraft.getWindow(), InputConstants.KEY_RSHIFT);
                                  ^
   required: int
   found:    Window,int
   reason: actual and formal argument lists differ in length
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/network/message/ClientMessageLaserColor.java:38: error: cannot find symbol
-        this.colorMap.putAll(buf.readMap(buf1 -> buf1.readEnum(AttachmentType.class), FriendlyByteBuf::readInt));
-                                ^
-  symbol:   method readMap((buf1)->bu[...]lass),FriendlyBy[...]adInt)
-  location: variable buf of type FriendlyByteBuf
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/network/message/ClientMessageLaserColor.java:63: error: cannot find symbol
-        buf.writeMap(colorMap, FriendlyByteBuf::writeEnum, FriendlyByteBuf::writeInt);
-           ^
-  symbol:   method writeMap(Map<AttachmentType,Integer>,FriendlyBy[...]eEnum,FriendlyBy[...]teInt)
-  location: variable buf of type FriendlyByteBuf
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/network/message/ServerMessageSyncGunPack.java:29: error: cannot find symbol
-        this(buf.readMap(buf1 -> buf1.readEnum(DataType.class),
-                ^
-  symbol:   method readMap((buf1)->bu[...]lass),(buf2)->bu[...]dUtf))
-  location: variable buf of type FriendlyByteBuf
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/network/message/ServerMessageSyncGunPack.java:38: error: cannot find symbol
-        buf.writeMap(getCache(), FriendlyByteBuf::writeEnum, (buf1, map) ->
-           ^
-  symbol:   method writeMap(Map<DataType,Map<Identifier,String>>,FriendlyBy[...]eEnum,(buf1,map)[...]eUtf))
-  location: variable buf of type FriendlyByteBuf
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/network/message/ServerMessageSyncGunPack.java:29: error: recursive constructor invocation
-        this(buf.readMap(buf1 -> buf1.readEnum(DataType.class),
-        ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/network/message/ClientMessageUnloadAttachment.java:71: error: no suitable method found for drop(ItemStack,boolean)
-                    player.drop(attachmentItem, false);
-                          ^
-    method ServerPlayer.drop(ItemStack,boolean,Prediction) is not applicable
-      (actual and formal argument lists differ in length)
-    method ServerPlayer.drop(boolean) is not applicable
-      (actual and formal argument lists differ in length)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/compat/cloth/widget/OpenGunPackDirEntry.java:18: error: cannot find symbol
-        Util.getPlatform().openUri(FabricLoader.getInstance().getGameDir().resolve("tacz").toUri());
-                          ^
-  symbol:   method openUri(URI)
-  location: class OS
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/util/ExplodeUtil.java:44: error: invulnerableTime has private access in Entity
-                entity.invulnerableTime = 0;
-                      ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/util/RenderHelper.java:97: error: cannot find symbol
-        AvatarRenderer<?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getPlayerRenderer(player);
-                                                                                        ^
-  symbol:   method getPlayerRenderer(LocalPlayer)
-  location: class EntityRenderDispatcher
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/GunSmithTableBlockC.java:24: error: cannot find symbol
-    public static final MapCodec<GunSmithTableBlockC> CODEC = simpleCodec(GunSmithTableBlockC::new);
-                                                              ^
-  symbol:   method simpleCodec(GunSmithTa[...]::new)
-  location: class GunSmithTableBlockC
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/GunSmithTableBlockC.java:32: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/GunSmithTableBlockB.java:25: error: cannot find symbol
-    public static final MapCodec<GunSmithTableBlockB> CODEC = simpleCodec(GunSmithTableBlockB::new);
-                                                              ^
-  symbol:   method simpleCodec(GunSmithTa[...]::new)
-  location: class GunSmithTableBlockB
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/GunSmithTableBlockB.java:33: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/GunSmithTableBlockA.java:13: error: cannot find symbol
-    public static final MapCodec<GunSmithTableBlockA> CODEC = simpleCodec(GunSmithTableBlockA::new);
-                                                              ^
-  symbol:   method simpleCodec(GunSmithTa[...]::new)
-  location: class GunSmithTableBlockA
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/GunSmithTableBlockA.java:19: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:48: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:57: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:65: error: cannot find symbol
-                ResourceOutput transformingOutput = (location, supplier) -> {
-                ^
-  symbol:   class ResourceOutput
-  location: class PathPackResources
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:73: error: cannot find symbol
-                        ResourceOutput legacyOutput = (location, supplier) -> {
-                        ^
-  symbol:   class ResourceOutput
-  location: class PathPackResources
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:113: error: cannot find symbol
-                    ResourceOutput legacyOutput = (location, supplier) -> {
-                    ^
-  symbol:   class ResourceOutput
-  location: class PathPackResources
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:128: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:155: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:180: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:184: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:186: error: cannot find symbol
-        return String.format(Locale.ROOT, "%s: %s (%s)", getClass().getName(), this.packId(), getSource());
-                                                         ^
-  symbol:   method getClass()
-  location: class PathPackResources
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/PathPackResources.java:186: error: cannot find symbol
-        return String.format(Locale.ROOT, "%s: %s (%s)", getClass().getName(), this.packId(), getSource());
-                                                                                   ^
-  symbol: method packId()
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/resource/GunPackLoader.java:98: error: incompatible types: <anonymous PathPackResources> cannot be converted to PackResources
-                packResources = new PathPackResources(gunPack.name, false, gunPack.path) {
-                                ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/resource/GunPackLoader.java:111: error: cannot find symbol
-                        .openPrimary(new PackLocationInfo(gunPack.name, Component.literal(gunPack.name), PackSource.DEFAULT, Optional.empty()));
-                        ^
-  symbol:   method openPrimary(PackLocationInfo)
-  location: class FileResourcesSupplier
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/resource/GunPackLoader.java:118: error: <anonymous com.tacz.guns.resource.GunPackLoader$2> is not abstract and does not override abstract method openResources(PackLocationInfo,Metadata) in ResourcesSupplier
-        Pack.ResourcesSupplier resourcesSupplier = new Pack.ResourcesSupplier() {
-                                                                                ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/resource/GunPackLoader.java:119: error: method does not override or implement a method from a supertype
-            @Override
-            ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:48: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:53: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:59: error: cannot find symbol
-            ResourceOutput transformingOutput = (location, supplier) -> {
-            ^
-  symbol:   class ResourceOutput
-  location: class DelegatingPackResources
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:69: error: cannot find symbol
-                ResourceOutput legacyOutput = (location, supplier) -> {
-                ^
-  symbol:   class ResourceOutput
-  location: class DelegatingPackResources
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:111: error: cannot find symbol
-            ResourceOutput legacyOutput = (location, supplier) -> {
-            ^
-  symbol:   class ResourceOutput
-  location: class DelegatingPackResources
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:127: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:132: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:140: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/util/forge/DelegatingPackResources.java:146: error: method does not override or implement a method from a supertype
-    @Override
-    ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/resource/GunPackLoader.java:121: error: incompatible types: <anonymous DelegatingPackResources> cannot be converted to PackResources
-                return new DelegatingPackResources(locationInfo.id(), false, new PackMetadataSection(Component.translatable("tacz.resources.modresources"),
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/init/ModBlocks.java:33: error: cannot find symbol
+    public static Block STATUE = registerBlock("statue", new StatueBlock(BlockBehaviour.Properties.of().setId(blockKey("statue")).sound(SoundType.STONE).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.DESTROY)));
+                                                                                                                                                                                                                     ^
+  symbol:   variable DESTROY
+  location: class PushReaction
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/init/ModBlocks.java:46: error: cannot find symbol
+        return BlockBehaviour.Properties.of().setId(blockKey(name)).sound(SoundType.WOOD).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.DESTROY);
+                                                                                                                                                      ^
+  symbol:   variable DESTROY
+  location: class PushReaction
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/GunSmithTableScreen.java:416: error: incompatible types: String cannot be converted to URI
+                    }, url, false));
                        ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/resource/GunPackLoader.java:135: error: method does not override or implement a method from a supertype
-            @Override
-            ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:580: error: cannot find symbol
-        if (RenderSystem.outputColorTextureOverride != null) {
-                        ^
-  symbol:   variable outputColorTextureOverride
-  location: class RenderSystem
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:696: error: cannot find symbol
-        if (RenderSystem.outputColorTextureOverride != null) {
-                        ^
-  symbol:   variable outputColorTextureOverride
-  location: class RenderSystem
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:870: error: method drawFromBuffer in record PreparedRenderType cannot be applied to given types;
-                    prepared.drawFromBuffer(entry.bone().vertexBuffer, indexBuffer, indices.type(),
-                            ^
-  required: ExecuteInfo,RenderPass
-  found:    GpuBuffer,GpuBuffer,IndexType,int,int,int
-  reason: actual and formal argument lists differ in length
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:970: error: incompatible types: bad type in conditional expression
-            pass.setPipeline(clipAgainstOcular ? LIT_CLIPPED_PIPELINE : (lit ? LIT_PIPELINE : EMISSIVE_PIPELINE));
-                                                 ^
-    RenderPipeline cannot be converted to CompiledRenderPipeline
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:973: error: cannot find symbol
-                pass.bindTexture("Sampler2", lightmapView,
-                    ^
-  symbol:   method bindTexture(String,GpuTextureView,GpuSampler)
-  location: variable pass of type RenderPass
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:979: error: cannot find symbol
-                pass.bindTexture(com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.maskSamplerName(),
-                    ^
-  symbol:   method bindTexture(String,GpuTextureView,GpuSampler)
-  location: variable pass of type RenderPass
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/render/PolyMeshGpuRenderer.java:988: error: cannot find symbol
-                pass.bindTexture("Sampler0", textureView, linearSampler);
-                    ^
-  symbol:   method bindTexture(String,GpuTextureView,GpuSampler)
-  location: variable pass of type RenderPass
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/api/IPolyMeshBone.java:57: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.ZP.rotation(getRotZ()));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/api/IPolyMeshBone.java:60: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.YP.rotation(getRotY()));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/compat/meshloader/api/IPolyMeshBone.java:63: error: no suitable method found for mulPose(Quaternionf)
-            poseStack.mulPose(Axis.XP.rotation(getRotX()));
-                     ^
-    method PoseStack.mulPose(Matrix4fc) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Matrix4fc)
-    method PoseStack.mulPose(Transformation) is not applicable
-      (argument mismatch; Quaternionf cannot be converted to Transformation)
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/mixin/client/KeyboardHandlerMixin.java:23: error: cannot find symbol
-            InputEvent.Key.EVENT.invoker().onKey(new InputEvent.Key(event.key(), event.scancode(), action, event.modifiers()));
-                                                                                      ^
-  symbol:   method scancode()
-  location: variable event of type KeyEvent
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/mixin/client/MinecraftMixin.java:121: error: method swing in class LivingEntity cannot be applied to given types;
-                this.player.swing(InteractionHand.MAIN_HAND);
-                           ^
-  required: InteractionHand,SwingAnimation,boolean
-  found:    InteractionHand
-  reason: actual and formal argument lists differ in length
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/mixin/client/MinecraftMixin.java:138: error: method swing in class LivingEntity cannot be applied to given types;
-                this.player.swing(InteractionHand.MAIN_HAND);
-                           ^
-  required: InteractionHand,SwingAnimation,boolean
-  found:    InteractionHand
-  reason: actual and formal argument lists differ in length
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/cn/sh1rocu/tacz/mixin/client/MinecraftMixin.java:155: error: method swing in class LivingEntity cannot be applied to given types;
-                this.player.swing(hand);
-                           ^
-  required: InteractionHand,SwingAnimation,boolean
-  found:    InteractionHand
-  reason: actual and formal argument lists differ in length
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/GunSmithTableScreen.java:413: error: cannot find symbol
+                            Util.getPlatform().openUri(url);
+                                              ^
+  symbol:   method openUri(String)
+  location: class OS
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/compat/ClothConfigScreen.java:59: error: incompatible types: String cannot be converted to URI
+            }, url, true));
+               ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/compat/ClothConfigScreen.java:56: error: cannot find symbol
+                    Util.getPlatform().openUri(url);
+                                      ^
+  symbol:   method openUri(String)
+  location: class OS
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/entity/EntityBulletRenderer.java:379: error: method does not override or implement a method from a supertype
+    @Override
+    ^
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
-256 errors
+9 errors
+2 warnings
+
+> Task :compileJava FAILED
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1789659997082.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/tooltip/AbstractClientItemTooltip.java:82: error: method isKeyDown in class InputConstants cannot be applied to given types;
+          return InputConstants.isKeyDown(minecraft.getWindow(), InputConstants.KEY_LSHIFT)
+                               ^
+    required: int
+    found:    Window,int
+    reason: actual and formal argument lists differ in length
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/tooltip/AbstractClientItemTooltip.java:83: error: method isKeyDown in class InputConstants cannot be applied to given types;
+                  || InputConstants.isKeyDown(minecraft.getWindow(), InputConstants.KEY_RSHIFT);
+                                   ^
+    required: int
+    found:    Window,int
+    reason: actual and formal argument lists differ in length
+  warning: unknown enum constant Level.FULL
+    reason: class file for com.google.j2objc.annotations.ReflectionSupport$Level not found
+  warning: unknown enum constant Level.FULL
+  Note: Recompile with -Xlint:deprecation for details.
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/GunSmithTableScreen.java:416: error: incompatible types: String cannot be converted to URI
+                      }, url, false));
+                         ^
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/compat/ClothConfigScreen.java:59: error: incompatible types: String cannot be converted to URI
+              }, url, true));
+                 ^
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/init/ModBlocks.java:33: error: cannot find symbol
+      public static Block STATUE = registerBlock("statue", new StatueBlock(BlockBehaviour.Properties.of().setId(blockKey("statue")).sound(SoundType.STONE).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.DESTROY)));
+                                                                                                                                                                                                                       ^
+    symbol:   variable DESTROY
+    location: class PushReaction
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/init/ModBlocks.java:46: error: cannot find symbol
+          return BlockBehaviour.Properties.of().setId(blockKey(name)).sound(SoundType.WOOD).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.DESTROY);
+                                                                                                                                                        ^
+    symbol:   variable DESTROY
+    location: class PushReaction
+  Note: Recompile with -Xlint:unchecked for details.
+  Note: Some input files use or override a deprecated API.
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/entity/EntityBulletRenderer.java:379: error: method does not override or implement a method from a supertype
+      @Override
+      ^
+  Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+  Note: Some input files use unchecked or unsafe operations.
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/GunSmithTableScreen.java:413: error: cannot find symbol
+                              Util.getPlatform().openUri(url);
+                                                ^
+    symbol:   method openUri(String)
+    location: class OS
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/compat/ClothConfigScreen.java:56: error: cannot find symbol
+                      Util.getPlatform().openUri(url);
+                                        ^
+    symbol:   method openUri(String)
+    location: class OS
+  9 errors
+  2 warnings
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+* Exception is:
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
+	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)
+	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.DefaultNodeExecutor.executeLocalTaskNode(DefaultNodeExecutor.java:55)
+	at org.gradle.execution.plan.DefaultNodeExecutor.execute(DefaultNodeExecutor.java:34)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:355)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:343)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:328)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:146)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:131)
+	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$11(DefaultBuildLifecycleController.java:323)
+	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:304)
+	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$9(StateTransitionController.java:215)
+	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:45)
+	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:215)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:314)
+	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$runAndReleaseLocks$0(DefaultWorkerLeaseService.java:300)
+	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAndReleaseLocks(DefaultWorkerLeaseService.java:298)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocksAcquired(DefaultWorkerLeaseService.java:294)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:286)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:130)
+	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:182)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:199)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:199)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
+warning: unknown enum constant Level.FULL
+  reason: class file for com.google.j2objc.annotations.ReflectionSupport$Level not found
+warning: unknown enum constant Level.FULL
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/tooltip/AbstractClientItemTooltip.java:82: error: method isKeyDown in class InputConstants cannot be applied to given types;
+        return InputConstants.isKeyDown(minecraft.getWindow(), InputConstants.KEY_LSHIFT)
+                             ^
+  required: int
+  found:    Window,int
+  reason: actual and formal argument lists differ in length
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/me/xjqsh/lrtactical/client/tooltip/AbstractClientItemTooltip.java:83: error: method isKeyDown in class InputConstants cannot be applied to given types;
+                || InputConstants.isKeyDown(minecraft.getWindow(), InputConstants.KEY_RSHIFT);
+                                 ^
+  required: int
+  found:    Window,int
+  reason: actual and formal argument lists differ in length
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/init/ModBlocks.java:33: error: cannot find symbol
+    public static Block STATUE = registerBlock("statue", new StatueBlock(BlockBehaviour.Properties.of().setId(blockKey("statue")).sound(SoundType.STONE).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.DESTROY)));
+                                                                                                                                                                                                                     ^
+  symbol:   variable DESTROY
+  location: class PushReaction
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/init/ModBlocks.java:46: error: cannot find symbol
+        return BlockBehaviour.Properties.of().setId(blockKey(name)).sound(SoundType.WOOD).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.DESTROY);
+                                                                                                                                                      ^
+  symbol:   variable DESTROY
+  location: class PushReaction
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/GunSmithTableScreen.java:416: error: incompatible types: String cannot be converted to URI
+                    }, url, false));
+                       ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/GunSmithTableScreen.java:413: error: cannot find symbol
+                            Util.getPlatform().openUri(url);
+                                              ^
+  symbol:   method openUri(String)
+  location: class OS
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/compat/ClothConfigScreen.java:59: error: incompatible types: String cannot be converted to URI
+            }, url, true));
+               ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/gui/compat/ClothConfigScreen.java:56: error: cannot find symbol
+                    Util.getPlatform().openUri(url);
+                                      ^
+  symbol:   method openUri(String)
+  location: class OS
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/entity/EntityBulletRenderer.java:379: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+9 errors
 2 warnings
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:89)
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:50)
@@ -988,7 +378,7 @@ Note: Some messages have been simplified; recompile with -Xdiags:verbose to get 
 	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
 	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
-	... 30 more
+	... 61 more
 
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
@@ -997,7 +387,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 41s
+BUILD FAILED in 42s
 1 actionable task: 1 executed
 
 == job status: failure ==
