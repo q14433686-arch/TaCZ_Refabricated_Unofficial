@@ -1,5 +1,6 @@
 package com.tacz.guns.compat.iris;
 
+import javax.annotation.Nullable;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
@@ -60,6 +61,10 @@ public final class IrisScopeMaskState {
     private static int probeModeWritten;
     /** IrisShaderCreatorMixin 成功注入 tacz 分支的 HAND 程序数（由它上报）。 */
     private static int probeHandProgramsPatched;
+    /** 第一次解析出来的本 mod 管线路径，用于在匹配失败时暴露真实字符串。 */
+    private static volatile String probeFirstTaczPath;
+    /** 第一次见到的任意管线 label（含非 tacz），用于确认取法本身通不通。 */
+    private static volatile String probeFirstAnyLabel;
     private static boolean loggedProbe;
 
     /** 供 {@code IrisShaderCreatorMixin} 上报「源码注入确实做成了几个 HAND 程序」。 */
@@ -93,15 +98,24 @@ public final class IrisScopeMaskState {
         if (loggedProbe) {
             return;
         }
+        // 只在「链路已经跑通」或「已经攒够样本足以判定失败」时才定版。
+        // 首帧掩码画出来的那一刻，drawcall 可能还没轮到我们的管线，
+        // 此时打一行全 0 会误导（上一轮就差点据此下错结论）。
+        // modeWritten>0 = 通了，可以定版；否则等到 renderPass 累计够多再定。
+        if (probeModeWritten == 0 && probeRenderPassCalls < 10_000) {
+            return;
+        }
         loggedProbe = true;
         GunMod.LOGGER.info("[TACZ Scope][PROBE] Iris scope-mask chain after first masked frame: "
                         + "handProgramsPatched={}, shaderSetup={}, renderPass={}, nonZeroMode={}, "
-                        + "noModeUniform={}, noMaskTexture={}, modeWritten={}. "
+                        + "noModeUniform={}, noMaskTexture={}, modeWritten={}, "
+                        + "firstTaczPipeline={}, firstAnyPipelineLabel={}. "
                         + "(shaderSetup/renderPass == 0 means the corresponding Iris mixin did not apply; "
                         + "nonZeroMode == 0 means our pipelines were not recognised; "
                         + "noModeUniform > 0 means the shader-source injection did not take effect.)",
                 probeHandProgramsPatched, probeShaderSetupCalls, probeRenderPassCalls,
-                probeNonZeroMode, probeNoModeUniform, probeNoMaskTexture, probeModeWritten);
+                probeNonZeroMode, probeNoModeUniform, probeNoMaskTexture, probeModeWritten,
+                probeFirstTaczPath, probeFirstAnyLabel);
     }
 
     /**
@@ -552,22 +566,98 @@ public final class IrisScopeMaskState {
     }
 
     /** 真正去问「这套管线是不是我们的镜身/准星管线」。只在每个管线实例上跑一次。 */
-    private static int resolveModeUncached(Object glPipeline) {
+
+    /**
+     * 取出这条后端管线对应的 {@code tacz:pipeline/xxx} 路径段（不含命名空间），
+     * 取不到或不属于本 mod 时返回 {@code null}。
+     *
+     * <h2>26.3 为什么要换取法</h2>
+     * <p>26.2 走的是 {@code GlRenderPipeline#info()} → {@code RenderPipeline#getLocation()}。
+     * <b>26.3 的 {@code GlRenderPipeline} 已经没有 {@code info()} 了</b> ——
+     * 它只留下 device/program/vertexArray 等纯 GL 状态，前端的
+     * {@code RenderPipeline} 引用整个不再持有（已对照 26.3 反编译源确认）。
+     * 反射拿不到方法 → {@code invokeNoArgs} 返回 null → resolveMode 恒返回 0
+     * → 光影下 mode 永远是 0 → 不裁剪。
+     * 这正是探针 {@code nonZeroMode=0}（而 shaderSetup=80659、renderPass=447454
+     * 都在正常跳动）所指向的断点。</p>
+     *
+     * <h2>新取法的同源性</h2>
+     * <p>改读 {@code program().getDebugLabel()}。这个字符串不是调试用的花名，
+     * 而是管线 location 本身：{@code PipelineBuilder} 构造后端
+     * {@code CreateInfo} 时写的就是 {@code pipeline.getLocation().toString()}
+     * （PipelineBuilder:346-347），{@code GlPipelineRecompiler} 再把它原样传给
+     * {@code GlProgram.link(..., createInfo.name())}（GlPipelineRecompiler:314），
+     * 最终由 {@code getDebugLabel()} 返回。所以它形如
+     * {@code "tacz:pipeline/scope_body_clipped"}，与旧路径拿到的 location 等价。</p>
+     *
+     * <p>保留旧路径作为回退：26.2 没有 debugLabel 这条链，而本类同样被
+     * 26.2 分支使用；两条都试一次，谁先成功用谁。</p>
+     */
+    @Nullable
+    private static String pipelinePath(Object glPipeline) {
+        // 两条路径各自 try：invokeNoArgs 底层是 getMethod，方法不存在会抛
+        // NoSuchMethodException 而不是返回 null。不分开兜的话，26.3 下第一条
+        // 抛出后就直接掉进外层 catch，根本走不到回退路径。
+        // —— 26.3 主路径：program().getDebugLabel() ——
+        try {
+            Object program = invokeNoArgs(glPipeline, "program");
+            if (program != null) {
+                Object label = invokeNoArgs(program, "getDebugLabel");
+                if (label != null) {
+                    if (probeFirstAnyLabel == null) {
+                        probeFirstAnyLabel = String.valueOf(label);
+                    }
+                    String path = stripModNamespace(String.valueOf(label));
+                    if (path != null) {
+                        if (probeFirstTaczPath == null) {
+                            probeFirstTaczPath = path;
+                        }
+                        return path;
+                    }
+                }
+            }
+        } catch (ReflectiveOperationException ignored) {
+            // 落到下面的回退路径
+        }
+        // —— 26.2 回退路径：info().getLocation() ——
         try {
             Object renderPipeline = invokeNoArgs(glPipeline, "info");
             if (renderPipeline == null) {
-                return 0;
+                return null;
             }
             Object location = invokeNoArgs(renderPipeline, "getLocation");
             if (location == null) {
-                return 0;
+                return null;
             }
             String namespace = String.valueOf(invokeNoArgs(location, "getNamespace"));
-            String path = String.valueOf(invokeNoArgs(location, "getPath"));
             if (!GunMod.MOD_ID.equals(namespace)) {
+                return null;
+            }
+            return String.valueOf(invokeNoArgs(location, "getPath")).toLowerCase(Locale.ROOT);
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * {@code "tacz:pipeline/scope_body_clipped"} → {@code "pipeline/scope_body_clipped"}；
+     * 不是本 mod 的命名空间就返回 null。
+     */
+    @Nullable
+    private static String stripModNamespace(String label) {
+        String prefix = GunMod.MOD_ID + ":";
+        if (!label.startsWith(prefix)) {
+            return null;
+        }
+        return label.substring(prefix.length()).toLowerCase(Locale.ROOT);
+    }
+
+    private static int resolveModeUncached(Object glPipeline) {
+        try {
+            String normalized = pipelinePath(glPipeline);
+            if (normalized == null) {
                 return 0;
             }
-            String normalized = path.toLowerCase(Locale.ROOT);
             if (BODY_PIPELINE.equals(normalized)) {
                 // 【恒为 1】镜身在孔径内 discard，于是最终画面里孔径那块就是 1× 的世界。
                 //

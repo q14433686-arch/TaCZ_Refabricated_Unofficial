@@ -309,11 +309,10 @@ public final class ScopeMaskRenderer {
      * 放那儿会被第二次抹掉，见 {@link #maskDrawnThisFrame} 的注释。</p>
      */
     public static void beginFrame() {
-        if (probeAfterMaskedFrame) {
-            probeAfterMaskedFrame = false;
-            if (com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack()) {
-                com.tacz.guns.compat.iris.IrisScopeMaskState.logProbeOnce();
-            }
+        if (probeAfterMaskedFrame && com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack()) {
+            // 不清标志：logProbeOnce 内部会等链路跑通、或样本足够多才定版并自行封口。
+            // 每帧调一次，开销是一个布尔判断。
+            com.tacz.guns.compat.iris.IrisScopeMaskState.logProbeOnce();
         }
         maskDrawnLastFrame = maskDrawnThisFrame;
         maskDrawnThisFrame = false;
