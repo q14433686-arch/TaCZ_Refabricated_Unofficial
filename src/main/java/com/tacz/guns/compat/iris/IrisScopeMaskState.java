@@ -61,6 +61,83 @@ public final class IrisScopeMaskState {
     private static int probeModeWritten;
     /** IrisShaderCreatorMixin 成功注入 tacz 分支的 HAND 程序数（由它上报）。 */
     private static int probeHandProgramsPatched;
+    /**
+     * 「后端管线对象 → 管线 location 路径」登记表，由
+     * {@code FrontendRenderPassPipelineMixin} 在 {@code FrontendRenderPass#setPipeline}
+     * 处填入。
+     *
+     * <p>26.3 后端管线已经查不回前端 location（{@code GlRenderPipeline#info()} 被删），
+     * 而光影激活时后端的 {@code getDebugLabel()} 拿到的是 Iris 自己的程序名
+     * （实机探针：{@code sky_basic}），不是我们的 location。唯一还同时握着
+     * 「名字」和「后端对象」的地方就是前端那次交接，所以在那里配对记下来。</p>
+     *
+     * <p>用弱键 map：键是后端管线对象，管线销毁（切光影包/重载资源）后该条目
+     * 自动可回收，不会把已 close 的管线钉在内存里。容量很小（全局管线数量级），
+     * 但仍设上限兜底，超了就整表清空重来 —— 与 MODE_BY_PIPELINE 同一策略。</p>
+     */
+    private static final java.util.Map<Object, String> NAME_BY_BACKEND_PIPELINE =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    private static final int NAME_CACHE_LIMIT = 512;
+
+    /**
+     * 由 {@code FrontendRenderPassPipelineMixin} 调用：登记这条前端管线的名字与它的后端对象。
+     *
+     * @param frontendPipeline {@code FrontendRenderPipeline}（record，有 name() 与
+     *                         backendRenderPipeline() 两个组件）
+     */
+    public static void notePipelineBinding(Object frontendPipeline) {
+        if (frontendPipeline == null) {
+            return;
+        }
+        // 【热路径】setPipeline 每个绘制批次都会调到（与 renderPass 计数同数量级，
+        // 实机一次开镜就有数万次）。所以这里做两件事把成本压到一次 map 查询：
+        //   1. SEEN_FRONTEND_PIPELINES 记住「这个前端管线对象已经处理过」，
+        //      管线对象在一局内是复用的，真正需要反射的只有头几次；
+        //   2. name()/backendRenderPipeline() 两个 Method 对象按 class 缓存，
+        //      避免 getMethod 每次返回防御性拷贝（invokeNoArgs 的固有开销）。
+        if (SEEN_FRONTEND_PIPELINES.putIfAbsent(frontendPipeline, Boolean.TRUE) != null) {
+            return;
+        }
+        try {
+            Class<?> cls = frontendPipeline.getClass();
+            if (cls != cachedFrontendClass) {
+                cachedFrontendNameMethod = cls.getMethod("name");
+                cachedFrontendBackendMethod = cls.getMethod("backendRenderPipeline");
+                cachedFrontendNameMethod.setAccessible(true);
+                cachedFrontendBackendMethod.setAccessible(true);
+                cachedFrontendClass = cls;
+            }
+            Object name = cachedFrontendNameMethod.invoke(frontendPipeline);
+            Object backend = cachedFrontendBackendMethod.invoke(frontendPipeline);
+            if (name == null || backend == null) {
+                return;
+            }
+            String path = stripModNamespace(String.valueOf(name));
+            if (path == null) {
+                // 不是本 mod 的管线：不记，省得把表撑大。
+                return;
+            }
+            if (NAME_BY_BACKEND_PIPELINE.size() >= NAME_CACHE_LIMIT) {
+                NAME_BY_BACKEND_PIPELINE.clear();
+            }
+            NAME_BY_BACKEND_PIPELINE.put(backend, path);
+            if (probeFirstTaczPath == null) {
+                probeFirstTaczPath = path;
+            }
+        } catch (Throwable t) {
+            logOnce("record frontend pipeline binding", t);
+        }
+    }
+
+    /** 已处理过的前端管线对象；弱键，管线销毁后自动回收。见 notePipelineBinding。 */
+    private static final java.util.Map<Object, Boolean> SEEN_FRONTEND_PIPELINES =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    private static Class<?> cachedFrontendClass;
+    private static Method cachedFrontendNameMethod;
+    private static Method cachedFrontendBackendMethod;
+
     /** 第一次解析出来的本 mod 管线路径，用于在匹配失败时暴露真实字符串。 */
     private static volatile String probeFirstTaczPath;
     /** 第一次见到的任意管线 label（含非 tacz），用于确认取法本身通不通。 */
@@ -595,10 +672,17 @@ public final class IrisScopeMaskState {
      */
     @Nullable
     private static String pipelinePath(Object glPipeline) {
-        // 两条路径各自 try：invokeNoArgs 底层是 getMethod，方法不存在会抛
-        // NoSuchMethodException 而不是返回 null。不分开兜的话，26.3 下第一条
-        // 抛出后就直接掉进外层 catch，根本走不到回退路径。
-        // —— 26.3 主路径：program().getDebugLabel() ——
+        // —— 26.3 主路径：查前端登记表 ——
+        // 这是唯一在光影下也成立的取法，见 NAME_BY_BACKEND_PIPELINE 的说明。
+        String registered = NAME_BY_BACKEND_PIPELINE.get(glPipeline);
+        if (registered != null) {
+            return registered;
+        }
+        // 下面两条是历史取法，26.3 光影下都拿不到我们的 location，
+        // 仅为兼容 26.2 与「未装 Iris 时后端 label 恰好就是 location」的情形保留。
+        // 各自 try：invokeNoArgs 底层是 getMethod，方法不存在会抛
+        // NoSuchMethodException 而不是返回 null。
+        // —— 回退一：program().getDebugLabel() ——
         try {
             Object program = invokeNoArgs(glPipeline, "program");
             if (program != null) {
