@@ -704,8 +704,11 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         //      maskActive=false 时整条不画，不会是"没裁切"的样子；
         //   ③ 普通镜身几何，走 resolveBodyRenderType 的裁剪版。
         // bodyClipped 为 false 就说明镜身整体没进裁剪管线（②③ 都会失效）。
+        // 闸门必须含「本帧确实在开镜」：上一版只看第一人称，于是在还没举枪瞄准时
+        // 就打印了一条 bodyMaskable=false / bodyClipped=false，读数全无意义
+        // （2026-09-19 实机日志：那一刻 PIP gate 还报 "no scope attachment with zoom > 1"）。
         if (transformType != null && transformType.firstPerson()
-                && com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack()) {
+                && currentAimingProgress() > AIM_CLIP_START) {
             tacz$logScopeClipProbeOnce(texture, bodyMaskable, detachOcularRing,
                     resolveBodyRenderType(renderType, texture, bodyMaskable) != renderType,
                     hiddenOculars.size());
@@ -777,9 +780,13 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 ocularInfo.append(',');
             }
             BedrockPart part = e.getValue();
+            int cubeCount = tacz$countCubesRecursive(part);
             ocularInfo.append(e.getKey()).append(':').append(part.name)
-                    .append(part.cubes.isEmpty() ? "(nocube)" : "(cubes=" + part.cubes.size() + ")")
-                    .append(shouldDrawOcularBlackout(part) ? "[blackout]" : "[hidden]");
+                    .append("(cubes=").append(cubeCount).append(')')
+                    .append(shouldDrawOcularBlackout(part) ? "[blackout]" : "[hidden]")
+                    // 目镜若嵌在 ocular_ring 子树内，就会被那条【无裁剪】重画路径带走
+                    // —— 这正是目镜贴图不被裁切的成因，必须显式报出来。
+                    .append(isDescendantOfRing(part) ? "[under-ring]" : "");
         }
         com.tacz.guns.GunMod.LOGGER.info(
                 "[TACZ Scope][PROBE] scope clip paths for texture={}: bodyMaskable={}, bodyClipped={}, "
@@ -805,6 +812,31 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * @param renderType 调用点收到的<b>原始</b> RenderType（未走 {@link #resolveBodyRenderType}
      *                   的裁剪分支），即该配件的正常材质——上游 stencilFunc(ALWAYS) 的等价物。
      */
+
+    /** 递归统计子树里的 cube 数。目镜常是空壳节点、几何在子节点上，浅层统计会误报。 */
+    private static int tacz$countCubesRecursive(BedrockPart part) {
+        int n = part.cubes.size();
+        for (BedrockPart child : part.children) {
+            n += tacz$countCubesRecursive(child);
+        }
+        return n;
+    }
+
+    /**
+     * 某个目镜是否位于 {@code ocular_ring} 的子树内。
+     *
+     * <p>{@code BedrockPart#getParent()} 提供向上的父链，逐级比对即可；
+     * 模型树很浅（个位数层），不需要缓存。</p>
+     */
+    private boolean isDescendantOfRing(BedrockPart ocular) {
+        for (BedrockPart p = ocular.getParent(); p != null; p = p.getParent()) {
+            if (p == ocularRingPart) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void submitOcularRingPlain(PoseStack poseStack, SubmitNodeCollector collector,
                                        RenderType renderType, @Nullable Identifier texture,
                                        ItemDisplayContext transformType,
@@ -823,9 +855,38 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             parent.translateAndRotateAndScale(ringPose);
         }
         ocularRingPart.translateAndRotateAndScale(ringPose);
-        com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ringSnapshot =
-                com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(
-                        ocularRingPart, ringPose, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
+        // 【目镜镜片被无裁剪重画 —— 本方法的调用时序缺陷】
+        //
+        // captureSubtree 会递归收集整棵子树。而调用点 submit() 的时序是：
+        //   super.submit(裁剪版类型)          ← 目镜黑片在这里被掩码 discard（正确）
+        //   finally { ocular.visible = true } ← 把所有目镜还原成可见（防跨帧污染，必须做）
+        //   submitOcularRingPlain(...)        ← 就是这里
+        // 也就是说进到本方法时，ocularParts 已经全部恢复可见。若某个枪包把目镜
+        // 建模在 ocular_ring 的子树里（scope_aug_default 即如此），captureSubtree
+        // 就会把镜片一起收进快照，再用【未裁剪】的 renderType 画一遍 ——
+        // 盖在刚才那份被裁掉的结果之上。观感正是用户报告的
+        // 「目镜贴图开镜时没有被裁切」（镜片糊住镜内），且与光影无关。
+        //
+        // ocular_ring 的定义本来就只是「物理目镜框（实体件）」，不含镜片；
+        // 上游也是把它当实体件用 stencilFunc(ALWAYS) 单独画的。所以正确做法是
+        // 抓快照期间把目镜一并摘除 —— 与 super.submit 那侧处理 hiddenOculars
+        // 完全同构（同样是临时改 visible + finally 还原，因为 BedrockPart 跨帧共享）。
+        List<BedrockPart> ringHiddenOculars = new ArrayList<>();
+        for (BedrockPart ocular : ocularParts) {
+            if (ocular != null && ocular.visible && isDescendantOfRing(ocular)) {
+                ocular.visible = false;
+                ringHiddenOculars.add(ocular);
+            }
+        }
+        com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ringSnapshot;
+        try {
+            ringSnapshot = com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(
+                    ocularRingPart, ringPose, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
+        } finally {
+            for (BedrockPart ocular : ringHiddenOculars) {
+                ocular.visible = true;
+            }
+        }
         if (ringSnapshot.isEmpty()) {
             return;
         }
