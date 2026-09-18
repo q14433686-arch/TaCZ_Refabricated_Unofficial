@@ -294,6 +294,9 @@ public final class ScopeMaskRenderer {
         return inHandPass || IrisCompat.isHandRendererActive();
     }
 
+    /** 见 drawMask 末尾：上一帧画出了掩码，本帧开头汇总一次光影链路状态。 */
+    private static boolean probeAfterMaskedFrame;
+
     /**
      * 每帧开头调用一次，快照上一帧结果并把本帧归零。
      *
@@ -306,6 +309,12 @@ public final class ScopeMaskRenderer {
      * 放那儿会被第二次抹掉，见 {@link #maskDrawnThisFrame} 的注释。</p>
      */
     public static void beginFrame() {
+        if (probeAfterMaskedFrame) {
+            probeAfterMaskedFrame = false;
+            if (com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack()) {
+                com.tacz.guns.compat.iris.IrisScopeMaskState.logProbeOnce();
+            }
+        }
         maskDrawnLastFrame = maskDrawnThisFrame;
         maskDrawnThisFrame = false;
         compositedThisFrame = false;
@@ -485,6 +494,10 @@ public final class ScopeMaskRenderer {
                     GunMod.LOGGER.info("[TACZ Scope] Ocular mask drawn: {} indices from {} batches.",
                             draw.indexCount(), ScopeMaskGeometry.entries().size());
                 }
+                // 【光影链路探针】掩码已经画出来了 —— 此时若光影下仍不裁剪，
+                // 问题必在「掩码 -> Iris 程序」这一段。延后一帧再汇总，
+                // 好让本帧的 draw call 把各环计数填上（本方法跑在 solid 之前）。
+                probeAfterMaskedFrame = true;
             }
         }
     }

@@ -114,6 +114,9 @@ public abstract class IrisShaderCreatorMixin {
             tacz$tally(SKIP_NO_MAIN);
         } else if (!legacyAll || hand) {
             tacz$tally(INJECTED_HAND);
+            // 上报给链路探针：这一项是「源码注入成功了几个 HAND 程序」，
+            // 与下面那条被 10 秒节流的 summary 不同，探针那行一定会打出来。
+            IrisScopeMaskState.noteHandProgramPatched();
         } else {
             tacz$tally(INJECTED_ALL);
         }

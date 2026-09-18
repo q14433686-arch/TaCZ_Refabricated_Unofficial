@@ -73,9 +73,9 @@ public final class ExplodeUtil {
             if (impact <= 0) {
                 continue;
             }
-            // 清无敌帧，确保自定义伤害不被原版爆炸伤害的无敌帧吃掉
-            // （与 TACZ 侧同一手法）
-            entity.setInvulnerableTime(0);
+            // 清受击间隔，确保自定义伤害不被原版爆炸伤害的间隔吃掉
+            // （与 TACZ 侧同一手法；26.3 的闸门见 DamageCooldownUtil）
+            com.tacz.guns.util.DamageCooldownUtil.clear(entity);
             entity.hurt(source, damage * impact);
         }
     }

@@ -4,6 +4,7 @@
   "package": "com.tacz.guns.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "common.LivingEntityDamageCooldownAccessor",
     "common.LivingEntityMixin",
     "common.ServerGamePacketListenerImplMixin",
     "common.ServerPlayerMixin",

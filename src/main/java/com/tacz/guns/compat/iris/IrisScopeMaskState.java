@@ -40,6 +40,70 @@ public final class IrisScopeMaskState {
     private static boolean loggedApply;
     private static boolean loggedProgramMismatch;
 
+    // ───────────────────────── 光影链路探针 ─────────────────────────
+    // 光影下裁剪失效时，故障可能停在链路上任意一环，而其中多数环节原本是
+    // 「静默返回」——日志里一个字都没有，只能靠现象反推（已经反推了两轮）。
+    // 这组计数器把每一环的实际走向记下来，由 logProbeOnce() 在首次开镜后
+    // 汇总成一行，让下一份日志直接指出断点。
+    // 全部是普通 int/boolean，只在 Render 线程写，不加锁；开销可忽略。
+    /** applyToShaderProgram 被调用的次数（=IrisExtendedShaderMixin 装上了没有）。 */
+    private static int probeShaderSetupCalls;
+    /** applyToGlRenderPass 被调用的次数（=IrisGlCommandEncoderMixin 装上了没有）。 */
+    private static int probeRenderPassCalls;
+    /** resolveMode 返回非 0 的次数（=管线 location 认出来了没有）。 */
+    private static int probeNonZeroMode;
+    /** 因程序里找不到 tacz_ScopeMaskMode 而放弃的次数（=着色器注入成功没有）。 */
+    private static int probeNoModeUniform;
+    /** 因拿不到掩码纹理而把 mode 强写回 0 的次数。 */
+    private static int probeNoMaskTexture;
+    /** 真正把 mode!=0 写进程序的次数（=裁剪到底有没有生效）。 */
+    private static int probeModeWritten;
+    /** IrisShaderCreatorMixin 成功注入 tacz 分支的 HAND 程序数（由它上报）。 */
+    private static int probeHandProgramsPatched;
+    private static boolean loggedProbe;
+
+    /** 供 {@code IrisShaderCreatorMixin} 上报「源码注入确实做成了几个 HAND 程序」。 */
+    public static void noteHandProgramPatched() {
+        probeHandProgramsPatched++;
+    }
+
+    /**
+     * 首次开镜后汇总一次链路状态。
+     *
+     * <p>由 {@code ScopeMaskRenderer} 在确认「本帧画了掩码」之后调用；
+     * 只打一行，之后不再打扰。读这行就能定位断点：</p>
+     * <ul>
+     *   <li>{@code handProgramsPatched=0} → IrisShaderCreatorMixin 没往任何 HAND
+     *       程序里注入 tacz 分支（@ModifyArgs 是 require=0 的软注入，失败也不报错）；
+     *       此时后面几项必然全是 0，先查这一项；</li>
+     *   <li>{@code shaderSetup=0} → IrisExtendedShaderMixin 没装上
+     *       （Iris 又改了 iris$setupState 的签名/方法名）；</li>
+     *   <li>{@code renderPass=0} → IrisGlCommandEncoderMixin 没装上
+     *       （setupDraw 又改名了）；这两个都是 require=0 的软注入，不会报错；</li>
+     *   <li>{@code nonZeroMode=0} → 两个 hook 都在跑，但没认出我们的管线
+     *       （resolveMode 靠 pipeline location 字符串匹配，Iris 换了取法）；</li>
+     *   <li>{@code noModeUniform>0} → 认出来了，但 Iris 的着色器里没有
+     *       tacz_ScopeMaskMode 这个 uniform，即 IrisShaderCreatorMixin 的
+     *       源码注入没生效（它是 @ModifyArgs，失败同样静默）；</li>
+     *   <li>{@code noMaskTexture>0} → 前面都对，但掩码纹理没拿到；</li>
+     *   <li>{@code modeWritten>0} → 整条链路通了，问题在着色器逻辑本身。</li>
+     * </ul>
+     */
+    public static void logProbeOnce() {
+        if (loggedProbe) {
+            return;
+        }
+        loggedProbe = true;
+        GunMod.LOGGER.info("[TACZ Scope][PROBE] Iris scope-mask chain after first masked frame: "
+                        + "handProgramsPatched={}, shaderSetup={}, renderPass={}, nonZeroMode={}, "
+                        + "noModeUniform={}, noMaskTexture={}, modeWritten={}. "
+                        + "(shaderSetup/renderPass == 0 means the corresponding Iris mixin did not apply; "
+                        + "nonZeroMode == 0 means our pipelines were not recognised; "
+                        + "noModeUniform > 0 means the shader-source injection did not take effect.)",
+                probeHandProgramsPatched, probeShaderSetupCalls, probeRenderPassCalls,
+                probeNonZeroMode, probeNoModeUniform, probeNoMaskTexture, probeModeWritten);
+    }
+
     /**
      * 本帧当前正在 setup 的 {@code GlRenderPass}，由 {@code IrisGlCommandEncoderMixin} 在
      * {@code GlCommandEncoder#trySetup} 的 <b>HEAD</b> 记下。
@@ -306,6 +370,7 @@ public final class IrisScopeMaskState {
      * 两处谁最后跑都得到正确值 —— 与 mixin 应用顺序无关。</p>
      */
     public static void applyToShaderProgram(Object shader) {
+        probeShaderSetupCalls++;
         try {
             int programId = getProgramId(shader);
             if (programId <= 0) {
@@ -343,6 +408,7 @@ public final class IrisScopeMaskState {
      * Otherwise (gun body, attachments, hands, entities, particles), mode is set to 0.
      */
     public static void applyToGlRenderPass(Object glRenderPass) {
+        probeRenderPassCalls++;
         try {
             if (glRenderPass == null) {
                 return;
@@ -390,9 +456,17 @@ public final class IrisScopeMaskState {
      * 保证「最后跑的那个」写的是同一套状态。</p>
      */
     private static void writeScopeMaskState(int programId, int mode, Object glRenderPass) {
+        if (mode != 0) {
+            probeNonZeroMode++;
+        }
         int modeLocation = GL20C.glGetUniformLocation(programId, UNIFORM_MODE);
         if (modeLocation < 0) {
             // 这个程序没有被注入过 tacz 分支（HAND_ONLY 下绝大多数 Iris 程序都是这种），直接走人。
+            // 探针只统计「本该裁剪却找不到 uniform」的情形 —— mode==0 的程序绝大多数
+            // 本来就不该有这个 uniform，计进去会把信号淹没。
+            if (mode != 0) {
+                probeNoModeUniform++;
+            }
             return;
         }
         int samplerLocation = GL20C.glGetUniformLocation(programId, UNIFORM_SAMPLER);
@@ -405,6 +479,7 @@ public final class IrisScopeMaskState {
         }
         int textureId = resolveMaskTextureId(glRenderPass);
         if (textureId <= 0) {
+            probeNoMaskTexture++;
             GL20C.glUniform1i(modeLocation, 0);
             return;
         }
@@ -415,6 +490,7 @@ public final class IrisScopeMaskState {
         // 顺序：先写 uniform，再绑纹理（bindMaskTexture 内部负责把 active 单元恢复原状）。
         // Iris 的 ProgramSamplers#update() 跑在我们之前且只重绑它自己那几个单元，
         // 所以我们这一次绑定是本轮最后的写入者。
+        probeModeWritten++;
         GL20C.glUniform1i(modeLocation, mode);
         bindMaskTexture(unit, textureId);
     }
