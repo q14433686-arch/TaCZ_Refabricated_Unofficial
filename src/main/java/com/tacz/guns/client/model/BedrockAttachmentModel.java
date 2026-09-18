@@ -694,6 +694,22 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             submitOcularRingPlain(poseStack, collector, renderType, texture, transformType, light, overlay);
         }
 
+        // 【遮光罩排查探针】用户实测：其余部件都被裁了，唯独遮光罩没有。
+        // 遮光罩可能来自三条互斥的路径，光看源码分不出是哪条，这里一次性把
+        // 本帧实际走向打出来（每个配件只打一次，不刷屏）：
+        //   ① ocular_ring 被摘除后用【未裁剪】RenderType 重画 —— 设计如此
+        //      （它是实体目镜框，上游 stencilFunc(ALWAYS)）。若遮光罩恰好建模在
+        //      ocular_ring 节点里，就会跟着不裁；
+        //   ② division 里的大块遮光板，走 EtchedReticleRenderer + 反向裁剪；
+        //      maskActive=false 时整条不画，不会是"没裁切"的样子；
+        //   ③ 普通镜身几何，走 resolveBodyRenderType 的裁剪版。
+        // bodyClipped 为 false 就说明镜身整体没进裁剪管线（②③ 都会失效）。
+        if (transformType != null && transformType.firstPerson()
+                && com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack()) {
+            tacz$logScopeClipProbeOnce(texture, bodyMaskable, detachOcularRing,
+                    resolveBodyRenderType(renderType, texture, bodyMaskable) != renderType);
+        }
+
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
             ScopeNodeSet active = filterReticleByActiveView(reticleNodes);
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
@@ -726,6 +742,36 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 BeamRenderer.renderLaserBeam(attachmentItem, poseStack, transformType, entry, collector);
             }
         }
+    }
+
+
+    /** 遮光罩排查探针：每个贴图只打一次，记录镜身裁剪与 ocular_ring 摘除的实际走向。 */
+    private static final java.util.Set<String> TACZ_CLIP_PROBE_LOGGED =
+            java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+
+    private void tacz$logScopeClipProbeOnce(@Nullable Identifier texture,
+                                            boolean bodyMaskable,
+                                            boolean detachOcularRing,
+                                            boolean bodyClipped) {
+        String key = String.valueOf(texture);
+        if (!TACZ_CLIP_PROBE_LOGGED.add(key)) {
+            return;
+        }
+        StringBuilder reticleNames = new StringBuilder();
+        for (BedrockPart p : reticleNodes.etchedReticle()) {
+            if (reticleNames.length() > 0) {
+                reticleNames.append(',');
+            }
+            reticleNames.append(p.name);
+        }
+        com.tacz.guns.GunMod.LOGGER.info(
+                "[TACZ Scope][PROBE] scope clip paths for texture={}: bodyMaskable={}, bodyClipped={}, "
+                        + "detachOcularRing={} (ocular_ring is redrawn UNCLIPPED by design), "
+                        + "ocularRingPresent={}, etchedNodes=[{}]. "
+                        + "If the lens hood is still unclipped, it belongs to whichever of these is not "
+                        + "going through a clipped render type.",
+                key, bodyMaskable, bodyClipped, detachOcularRing,
+                ocularRingPart != null, reticleNames);
     }
 
     /**
