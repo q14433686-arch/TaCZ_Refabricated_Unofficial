@@ -707,7 +707,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         if (transformType != null && transformType.firstPerson()
                 && com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack()) {
             tacz$logScopeClipProbeOnce(texture, bodyMaskable, detachOcularRing,
-                    resolveBodyRenderType(renderType, texture, bodyMaskable) != renderType);
+                    resolveBodyRenderType(renderType, texture, bodyMaskable) != renderType,
+                    hiddenOculars.size());
         }
 
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
@@ -752,7 +753,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private void tacz$logScopeClipProbeOnce(@Nullable Identifier texture,
                                             boolean bodyMaskable,
                                             boolean detachOcularRing,
-                                            boolean bodyClipped) {
+                                            boolean bodyClipped,
+                                            int hiddenOcularCount) {
         String key = String.valueOf(texture);
         if (!TACZ_CLIP_PROBE_LOGGED.add(key)) {
             return;
@@ -764,14 +766,30 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             }
             reticleNames.append(p.name);
         }
+        // 目镜（ocular*）现状：blackout=会随镜身一起画，hidden=被临时摘除。
+        // 两者都在 super.submit 之内，共用 resolveBodyRenderType 的返回值 ——
+        // 所以 bodyClipped=true 时它本该跟着一起被裁。若实机仍未裁，
+        // 说明目镜不是走这条路出来的（例如建模在 ocular_ring 子树里，
+        // 或被别的配件模型重复绘制）。
+        StringBuilder ocularInfo = new StringBuilder();
+        for (Map.Entry<Integer, BedrockPart> e : ocularByIndex.entrySet()) {
+            if (ocularInfo.length() > 0) {
+                ocularInfo.append(',');
+            }
+            BedrockPart part = e.getValue();
+            ocularInfo.append(e.getKey()).append(':').append(part.name)
+                    .append(part.cubes.isEmpty() ? "(nocube)" : "(cubes=" + part.cubes.size() + ")")
+                    .append(shouldDrawOcularBlackout(part) ? "[blackout]" : "[hidden]");
+        }
         com.tacz.guns.GunMod.LOGGER.info(
                 "[TACZ Scope][PROBE] scope clip paths for texture={}: bodyMaskable={}, bodyClipped={}, "
                         + "detachOcularRing={} (ocular_ring is redrawn UNCLIPPED by design), "
-                        + "ocularRingPresent={}, etchedNodes=[{}]. "
-                        + "If the lens hood is still unclipped, it belongs to whichever of these is not "
-                        + "going through a clipped render type.",
+                        + "ocularRingPresent={}, hiddenOcularsThisFrame={}, oculars=[{}], etchedNodes=[{}]. "
+                        + "Oculars marked [blackout] ride the same render type as the body, so they should "
+                        + "clip whenever bodyClipped=true; if one is still unclipped it is not coming from "
+                        + "this submit path.",
                 key, bodyMaskable, bodyClipped, detachOcularRing,
-                ocularRingPart != null, reticleNames);
+                ocularRingPart != null, hiddenOcularCount, ocularInfo, reticleNames);
     }
 
     /**
