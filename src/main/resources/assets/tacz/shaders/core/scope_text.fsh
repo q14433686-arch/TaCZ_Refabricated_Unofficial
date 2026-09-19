@@ -20,10 +20,8 @@
 #endif
 
 #include <minecraft:dynamictransforms.glsl>
-#ifdef SCOPE_MASK
-// globals.glsl 提供 ScreenSize（scope_body.fsh 同款用法）。
-#include <minecraft:globals.glsl>
-#endif
+// 2026-09-19：掩码采样改用顶点 varying scopeUv，不再需要 globals 的 ScreenSize
+// （那个 UBO 在手部 pass 可能未绑定而为 0）。与 scope_body.fsh 同步。
 #include <minecraft:oit.glsl>
 
 uniform sampler2D Sampler0;
@@ -41,6 +39,7 @@ layout(location = 1) in float cylindricalVertexDistance;
 
 layout(location = 2) in vec4 vertexColor;
 layout(location = 3) in vec2 texCoord0;
+layout(location = 4) in vec2 scopeUv;
 
 #ifndef OIT_ALPHA_ONLY
 layout(location = 0) out vec4 fragColor;
@@ -67,9 +66,9 @@ vec4 calculateFinalColor(vec4 color) {
 
 void main() {
 #ifdef SCOPE_MASK
-    // 与 scope_body.fsh 完全一致的采样约定：gl_FragCoord 左下原点，
-    // 掩码 target 纹理原点也在左下，不翻 Y。
-    vec2 maskUv = gl_FragCoord.xy / ScreenSize;
+    // 与 scope_body.fsh 同步：改用顶点 varying scopeUv（NDC→[0,1]），
+    // 与掩码绘制共用 clip-space→纹素映射，绕开 gl_FragCoord 原点/ScreenSize 问题。
+    vec2 maskUv = scopeUv;
     if (texture(ScopeMaskSampler, maskUv).r <= 0.5) {
         // 目镜投影之外 —— 文字被镜筒挡住，不可见。
         // 这正是「MK5HD 弹药计数穿出目镜」一案的裁剪点。

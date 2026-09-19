@@ -33,9 +33,12 @@ layout(location = 1) out float cylindricalVertexDistance;
 
 layout(location = 2) out vec4 vertexColor;
 layout(location = 3) out vec2 texCoord0;
+// 同 scope_body.vsh：屏幕位置（NDC→[0,1]）供掩码采样，绕开 gl_FragCoord 原点/ScreenSize 问题。
+layout(location = 4) out vec2 scopeUv;
 
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
+    scopeUv = (gl_Position.xy / gl_Position.w) * 0.5 + 0.5;
 
 #if !defined(IS_GUI) && !defined(IS_SEE_THROUGH)
     sphericalVertexDistance = fog_spherical_distance(Position);
