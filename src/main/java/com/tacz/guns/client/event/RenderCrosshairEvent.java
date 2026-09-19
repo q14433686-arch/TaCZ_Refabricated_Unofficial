@@ -40,6 +40,12 @@ public class RenderCrosshairEvent {
      * 当玩家手上拿着枪时，播放特定动画、或瞄准时需要隐藏准心
      */
     public static void onRenderOverlay(GuiGraphicsExtractor guiGraphics, Window window) {
+        // 【掩码调试叠加层】ScopeMaskDebug 打开时，把掩码 target 按着色器采样方向
+        // 画到左上角。截图与镜筒一对比就能直接看出掩码是黑、是翻、还是位置错 ——
+        // 这是把不可见的 GPU 掩码变成可见像素的唯一手段。
+        if (RenderConfig.SCOPE_MASK_DEBUG != null && RenderConfig.SCOPE_MASK_DEBUG.get()) {
+            renderMaskDebug(guiGraphics, window);
+        }
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             return;
@@ -120,6 +126,29 @@ public class RenderCrosshairEvent {
         float y = height / 2f - 8;
         // 26.2: Blending now handled by RenderPipeline; color via last int param (ARGB)
         graphics.blit(RenderPipelines.GUI_TEXTURED, location, (int) x, (int) y, 0, 0, 16, 16, 16, 16, 0xE6FFFFFF);
+    }
+
+    /** 见 {@link #onRenderOverlay}：把掩码 target 画到左上角供截图诊断。 */
+    private static void renderMaskDebug(GuiGraphicsExtractor graphics, Window window) {
+        var target = com.tacz.guns.client.render.scope.ScopeMaskTarget.current();
+        if (target == null) {
+            return;
+        }
+        var view = target.getColorTextureView();
+        if (view == null) {
+            return;
+        }
+        int W = Math.max(1, window.getGuiScaledWidth());
+        int H = Math.max(1, window.getGuiScaledHeight());
+        int dw = W / 3;
+        int dh = (int) ((long) dw * H / W);
+        int dx = 2;
+        int dy = 2;
+        var sampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
+                .getClampToEdge(com.mojang.renderpearl.api.textures.FilterMode.NEAREST);
+        // v0=1 在顶、v1=0 在底：与 scope_body.fsh 的 scopeUv（NDC，y=0 在底）采样方向一致，
+        // 叠加层与「着色器认为目镜在哪」同向，直接和镜筒对比即可判断方向/位置/黑屏。
+        graphics.blit(view, sampler, dx, dy, dx + dw, dy + dh, 0f, 1f, 1f, 0f);
     }
 
     private static void renderHitMarker(GuiGraphicsExtractor graphics, Window window) {
