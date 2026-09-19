@@ -59,6 +59,14 @@ public final class IrisScopeMaskState {
     private static int probeNoMaskTexture;
     /** 真正把 mode!=0 写进程序的次数（=裁剪到底有没有生效）。 */
     private static int probeModeWritten;
+    /**
+     * 绘制期 {@code GlRenderPass.samplers} 里出现本 mod 掩码采样器的次数。
+     * 2026-09-19 实机：bindingSync=6/6 但 pathFrom={table:0} —— 证明「按后端管线
+     * 对象身份反查」在 Iris 下根本不成立（draw 时是 Iris 自建的 GlRenderPipeline）。
+     * 而 samplers 来自<b>前端 RenderType</b>，Iris 不换。若本计数远大于 modeWritten，
+     * 「按采样器存在性判 mode」就是与对象身份无关的正确修法。只统计不改渲染。
+     */
+    private static int probeSamplerPresence;
     /** IrisShaderCreatorMixin 成功注入 tacz 分支的 HAND 程序数（由它上报）。 */
     private static int probeHandProgramsPatched;
     /**
@@ -309,7 +317,7 @@ public final class IrisScopeMaskState {
                         + "noModeUniform={}, noMaskTexture={}, modeWritten={}, "
                         + "firstTaczPipeline={}, firstAnyPipelineLabel={}, "
                         + "bindingSync={}/{}, registeredPaths={}, nameTableSize={}, "
-                        + "pathFrom={table:{},debugLabel:{}}. "
+                        + "pathFrom={table:{},debugLabel:{}}, samplerPresence={}. "
                         + "(shaderSetup/renderPass == 0 means the corresponding Iris mixin did not apply; "
                         + "nonZeroMode == 0 means our pipelines were not recognised; "
                         + "noModeUniform > 0 means the shader-source injection did not take effect; "
@@ -322,7 +330,7 @@ public final class IrisScopeMaskState {
                 probeFirstTaczPath, probeFirstAnyLabel,
                 probeBindingSyncHits, probeBindingSyncAttempts,
                 String.join(",", probeRegisteredPaths), NAME_BY_BACKEND_PIPELINE.size(),
-                probeRegisteredHits, probeDebugLabelHits);
+                probeRegisteredHits, probeDebugLabelHits, probeSamplerPresence);
     }
 
     /**
@@ -651,6 +659,10 @@ public final class IrisScopeMaskState {
             if (!ScopeMaskRenderer.hasMaskThisFrame() && !ScopeMaskRenderer.hadMaskLastFrame()) {
                 return;
             }
+            // 【只统计、不改渲染】掩码采样器是否随本 draw 的前端 RenderType 一起到了后端。
+            if (hasMaskSampler(glRenderPass)) {
+                probeSamplerPresence++;
+            }
             int mode = resolveMode(glRenderPass);
 
             // 【顺序无关加固】uniform 的写入目标只能是【当前程序】——
@@ -739,6 +751,16 @@ public final class IrisScopeMaskState {
             pipelineFieldResolved = true;
         }
         return cachedPipelineField;
+    }
+
+    /** 本 draw 的前端 RenderType 是否绑了本 mod 的掩码采样器（与对象身份无关）。 */
+    private static boolean hasMaskSampler(Object glRenderPass) {
+        try {
+            Object samplersObj = readField(glRenderPass, "samplers");
+            return samplersObj instanceof java.util.Map<?, ?> m && m.containsKey("ScopeMaskSampler");
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     private static int resolveMode(Object glRenderPass) {

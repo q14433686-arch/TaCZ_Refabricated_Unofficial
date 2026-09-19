@@ -798,8 +798,12 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                                           boolean bodyClipped,
                                           boolean maskTargetReady,
                                           int hiddenOcularCount) {
+        // 键里带上「光影是否激活」：上一份日志的 tally 在【光影开】时就锁定了，
+        // 导致光影关的读数永远拿不到。两条路径的失败机制完全不同，必须分开统计。
+        String tallyKey = String.valueOf(texture)
+                + "|iris=" + com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack();
         ScopeClipProbeTally tally =
-                TACZ_CLIP_PROBE_TALLY.computeIfAbsent(String.valueOf(texture), k -> new ScopeClipProbeTally());
+                TACZ_CLIP_PROBE_TALLY.computeIfAbsent(tallyKey, k -> new ScopeClipProbeTally());
         synchronized (tally) {
             if (tally.reported) {
                 return;
@@ -867,7 +871,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                         + "all. clipped==0 with maskTargetMissing>0 is only a first-frame timing artifact; "
                         + "clipped==0 with unclippedWithMask>0 means the mask was there but the clipped render "
                         + "type was still not chosen. [under-ring] marks an ocular nested inside ocular_ring.",
-                TACZ_CLIP_PROBE_FRAMES, String.valueOf(texture), bodyMaskable,
+                TACZ_CLIP_PROBE_FRAMES, tallyKey, bodyMaskable,
                 tally.clipped, tally.frames - tally.clipped - tally.maskTargetMissing, tally.maskTargetMissing,
                 tally.maskDrawnFrames, tally.viewmodelClipFrames,
                 detachOcularRing, tally.detachOcularRingFrames,
