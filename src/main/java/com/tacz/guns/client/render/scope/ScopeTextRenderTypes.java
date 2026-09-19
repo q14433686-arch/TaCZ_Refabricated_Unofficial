@@ -91,7 +91,9 @@ public final class ScopeTextRenderTypes {
      * vanilla 管线（见 {@code ScopeTextSubmitter} 的 renderType 嗅探），
      * 属于可接受降级 —— 不为极小众场景翻倍管线数量。</p>
      */
-    private static final RenderPipeline CLIPPED_TEXT_PIPELINE =
+    // 包内可见：ScopeBodyRenderTypes#syncIrisPipelineBindings 要把它一并登记
+    // 进「后端管线对象 → 管线路径」映射（它同样映射到 mode=2）。
+    static final RenderPipeline CLIPPED_TEXT_PIPELINE =
             RenderPipeline.builder(RenderPipelines.WORLD_TEXT_SNIPPET)
                     .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_text_clipped"))
                     .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_text"))

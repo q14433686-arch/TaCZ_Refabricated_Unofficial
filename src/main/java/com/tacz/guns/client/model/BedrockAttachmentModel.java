@@ -677,9 +677,13 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         if (detachOcularRing) {
             ocularRingPart.visible = false; // 主提交摘除（finally 里必还原，anti-lock 跨帧共享对象）
         }
+        // 只解析一次：主提交与下面的探针共用同一个返回值。
+        // 早先探针里又调了一遍 resolveBodyRenderType —— 那是【第二次】调用，
+        // 与真正提交时的那次不是同一时刻，掩码 target 若在这两次之间才建好，
+        // 探针就会报出一个提交时并不成立的 bodyClipped（上一轮实机正是如此）。
+        RenderType bodyRenderType = resolveBodyRenderType(renderType, texture, bodyMaskable);
         try {
-            super.submit(poseStack, transformType, collector,
-                    resolveBodyRenderType(renderType, texture, bodyMaskable), light, overlay);
+            super.submit(poseStack, transformType, collector, bodyRenderType, light, overlay);
         } finally {
             if (detachOcularRing) {
                 ocularRingPart.visible = true;
@@ -709,8 +713,12 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // （2026-09-19 实机日志：那一刻 PIP gate 还报 "no scope attachment with zoom > 1"）。
         if (transformType != null && transformType.firstPerson()
                 && currentAimingProgress() > AIM_CLIP_START) {
-            tacz$logScopeClipProbeOnce(texture, bodyMaskable, detachOcularRing,
-                    resolveBodyRenderType(renderType, texture, bodyMaskable) != renderType,
+            tacz$tallyScopeClipProbe(texture, bodyMaskable, detachOcularRing,
+                    bodyRenderType != renderType,
+                    // 单独记「掩码 target 当时在不在」：它是 resolveBodyRenderType
+                    // 唯一一个「本帧可能还没就绪」的判据，把它和其它失败原因分开，
+                    // 才分得清「首帧时序假象」与「真的没进裁剪管线」。
+                    com.tacz.guns.client.render.scope.ScopeMaskTextureHandle.syncToMaskTarget(),
                     hiddenOculars.size());
         }
 
@@ -749,18 +757,59 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     }
 
 
-    /** 遮光罩排查探针：每个贴图只打一次，记录镜身裁剪与 ocular_ring 摘除的实际走向。 */
-    private static final java.util.Set<String> TACZ_CLIP_PROBE_LOGGED =
-            java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+    /**
+     * 遮光罩排查探针：按贴图累计「开镜帧」上的实际走向，攒够样本再打一行。
+     *
+     * <h2>为什么不再「首次即打印」</h2>
+     * <p>上一版是「每个贴图第一次进入开镜分支就打一行」。实机证明这仍然是错的：
+     * 那一帧往往<b>掩码 target 还没建好</b>，于是 {@code resolveBodyRenderType} 在
+     * {@code syncToMaskTarget()} 处提前返回，探针报出 {@code bodyClipped=false} ——
+     * 而后续帧其实是裁的。2026-09-19 日志里那一行紧跟着的就是
+     * {@code Ocular mask drawn: 48 indices}，掩码是在探针<b>之后</b>才画出来的。</p>
+     *
+     * <p>现在改成累计若干帧再汇总：只打一次，但打的是<b>稳态</b>读数。
+     * 关键是 {@code maskedFrame=clipped} 与 {@code maskTargetMissing} 两个计数分开 ——
+     * 前者为 0 而后者非 0，说明只是首帧时序；两者都为 0 才是真的没进裁剪管线。</p>
+     */
+    private static final class ScopeClipProbeTally {
+        int frames;
+        int clipped;
+        int maskTargetMissing;
+        int detachOcularRingFrames;
+        boolean reported;
+    }
 
-    private void tacz$logScopeClipProbeOnce(@Nullable Identifier texture,
-                                            boolean bodyMaskable,
-                                            boolean detachOcularRing,
-                                            boolean bodyClipped,
-                                            int hiddenOcularCount) {
-        String key = String.valueOf(texture);
-        if (!TACZ_CLIP_PROBE_LOGGED.add(key)) {
-            return;
+    private static final java.util.Map<String, ScopeClipProbeTally> TACZ_CLIP_PROBE_TALLY =
+            java.util.Collections.synchronizedMap(new java.util.HashMap<>());
+
+    /** 攒够这么多开镜帧再汇总：足够跨过首帧时序，又不至于把日志拖到很久以后。 */
+    private static final int TACZ_CLIP_PROBE_FRAMES = 30;
+
+    private void tacz$tallyScopeClipProbe(@Nullable Identifier texture,
+                                          boolean bodyMaskable,
+                                          boolean detachOcularRing,
+                                          boolean bodyClipped,
+                                          boolean maskTargetReady,
+                                          int hiddenOcularCount) {
+        ScopeClipProbeTally tally =
+                TACZ_CLIP_PROBE_TALLY.computeIfAbsent(String.valueOf(texture), k -> new ScopeClipProbeTally());
+        synchronized (tally) {
+            if (tally.reported) {
+                return;
+            }
+            tally.frames++;
+            if (bodyClipped) {
+                tally.clipped++;
+            } else if (!maskTargetReady) {
+                tally.maskTargetMissing++;
+            }
+            if (detachOcularRing) {
+                tally.detachOcularRingFrames++;
+            }
+            if (tally.frames < TACZ_CLIP_PROBE_FRAMES) {
+                return;
+            }
+            tally.reported = true;
         }
         StringBuilder reticleNames = new StringBuilder();
         for (BedrockPart p : reticleNodes.etchedReticle()) {
@@ -789,13 +838,19 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     .append(isDescendantOfRing(part) ? "[under-ring]" : "");
         }
         com.tacz.guns.GunMod.LOGGER.info(
-                "[TACZ Scope][PROBE] scope clip paths for texture={}: bodyMaskable={}, bodyClipped={}, "
-                        + "detachOcularRing={} (ocular_ring is redrawn UNCLIPPED by design), "
+                "[TACZ Scope][PROBE] scope clip paths over first {} aiming frames for texture={}: "
+                        + "bodyMaskable={}, maskedFrame=clipped:{}/unclippedWithMask:{}/maskTargetMissing:{}, "
+                        + "detachOcularRing={} ({} frames; ocular_ring is redrawn UNCLIPPED by design), "
                         + "ocularRingPresent={}, hiddenOcularsThisFrame={}, oculars=[{}], etchedNodes=[{}]. "
-                        + "Oculars marked [blackout] ride the same render type as the body, so they should "
-                        + "clip whenever bodyClipped=true; if one is still unclipped it is not coming from "
-                        + "this submit path.",
-                key, bodyMaskable, bodyClipped, detachOcularRing,
+                        + "Reading: clipped>0 means the body DOES clip in steady state (an all-false first-frame "
+                        + "reading was a timing artifact, not the real state); clipped==0 with "
+                        + "unclippedWithMask>0 means the mask texture was there but the clipped render type was "
+                        + "still not chosen. Oculars marked [blackout] ride the body render type, so they clip "
+                        + "whenever clipped>0; [under-ring] marks an ocular nested inside ocular_ring, which the "
+                        + "unclipped ring redraw would otherwise carry away.",
+                TACZ_CLIP_PROBE_FRAMES, String.valueOf(texture), bodyMaskable,
+                tally.clipped, tally.frames - tally.clipped - tally.maskTargetMissing, tally.maskTargetMissing,
+                detachOcularRing, tally.detachOcularRingFrames,
                 ocularRingPart != null, hiddenOcularCount, ocularInfo, reticleNames);
     }
 

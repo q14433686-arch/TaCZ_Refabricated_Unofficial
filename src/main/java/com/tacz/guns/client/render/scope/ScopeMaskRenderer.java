@@ -427,6 +427,12 @@ public final class ScopeMaskRenderer {
             return;
         }
         try (mesh) {
+            // 本帧确实要画掩码了 —— 趁 pass 还没开，把「后端管线对象 → 管线路径」
+            // 按 Iris 重定向之后的身份重新登记一遍。必须在这里而不是静态初始化时：
+            // Iris 只有真正跑起来之后才会重定向 getCompiledPipeline，太早登记到的
+            // 是原版后端对象，绘制时用的却是 Iris 那条，两者不是同一个对象。
+            // 见 ScopeBodyRenderTypes#syncIrisPipelineBindings 的说明。
+            ScopeBodyRenderTypes.syncIrisPipelineBindings();
             MeshData.DrawState draw = mesh.drawState();
             {
                 GpuBuffer vertexBuffer = acquireVertexBuffer(mesh.vertexBuffer());

@@ -134,6 +134,78 @@ public final class IrisScopeMaskState {
     private static final java.util.Map<Object, Boolean> SEEN_FRONTEND_PIPELINES =
             java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
 
+    /** {@link #noteCompiledBinding} 被调用的次数（每次同步 = 每条管线一次）。 */
+    private static int probeBindingSyncAttempts;
+    /** {@link #noteCompiledBinding} 真正登记成功的次数。 */
+    private static int probeBindingSyncHits;
+    /** {@link #pipelinePath} 命中前端登记表的次数。 */
+    private static int probeRegisteredHits;
+    /** {@link #pipelinePath} 退回 debugLabel 并认出本 mod 管线的次数。 */
+    private static int probeDebugLabelHits;
+
+    /**
+     * 登记一条<b>已经过 {@code RenderSystem} 编译/Iris 重定向</b>的管线。
+     *
+     * <h2>为什么不能只靠 {@link #notePipelineBinding}</h2>
+     * <p>{@code notePipelineBinding} 相信 {@code FrontendRenderPass#setPipeline} 收到的
+     * 那个对象的 {@code name()}。但光影激活时<b>这个前提不成立</b>：
+     * {@code RenderSystem#getCompiledPipeline} 被 Iris 的 {@code redirectIrisProgram}
+     * 接管（2026-09-19 实机栈：{@code RenderSystem.getCompiledPipeline:133} →
+     * {@code handler$…$iris$redirectIrisProgram:606}），凡是被
+     * {@code assignScopePipelineToHand} 映射掉的管线都会换成 Iris 自己那条
+     * {@code CompiledRenderPipeline}。日志把这件事写得明明白白：</p>
+     * <pre>
+     * Found perfect program match for tacz:pipeline/scope_body_clipped: HAND_CUTOUT
+     * </pre>
+     * <p>于是这些管线的 {@code name()} 不再是 {@code tacz:pipeline/…}，
+     * {@code stripModNamespace} 返回 null，{@link #notePipelineBinding} 直接 return ——
+     * 恰好是<b>最需要裁剪的那几条</b>一条都进不了表。反过来，
+     * {@code tacz:pipeline/scope_mask} 因为 Iris 没有 override（日志里那句
+     * "Missing program tacz:pipeline/scope_mask in override list"）而保留了本 mod 的名字，
+     * 成了唯一被登记的条目 —— 这正是上一轮探针
+     * {@code firstTaczPipeline=pipeline/scope_mask, nonZeroMode=0} 的成因：
+     * 唯一认出来的管线偏偏是掩码自己，而它的 mode 本来就该是 0。</p>
+     *
+     * <h2>做法</h2>
+     * <p>不猜名字，<b>自己走一遍同一条重定向</b>：调用方
+     * （{@code ScopeBodyRenderTypes#syncIrisPipelineBindings}）对每条 scope 管线调
+     * {@code RenderSystem#getCompiledPipelineNullable}，拿到的正是绘制时落进
+     * {@code GlRenderPass.pipeline} 的那个后端对象；名字则由调用方按管线常量直接给出，
+     * 完全不依赖 {@code name()}。这样无论 Iris 怎么替换程序，映射都成立。</p>
+     *
+     * @param compiledPipeline {@code CompiledRenderPipeline}（可为 null，表示尚未编译）
+     * @param expectedPath     不含命名空间的管线路径，如 {@code pipeline/scope_body_clipped}
+     */
+    public static void noteCompiledBinding(@Nullable Object compiledPipeline, String expectedPath) {
+        if (compiledPipeline == null || expectedPath == null) {
+            return;
+        }
+        probeBindingSyncAttempts++;
+        try {
+            // 每个掩码帧只跑 5 次（管线数是常数），不值得为此缓存 Method。
+            Object backend = invokeNoArgs(compiledPipeline, "backendRenderPipeline");
+            if (backend == null) {
+                return;
+            }
+            if (NAME_BY_BACKEND_PIPELINE.size() >= NAME_CACHE_LIMIT) {
+                NAME_BY_BACKEND_PIPELINE.clear();
+                MODE_BY_PIPELINE.clear();
+            }
+            // 后端对象可能变（重载资源/切光影包），每次都覆写，别用 putIfAbsent。
+            NAME_BY_BACKEND_PIPELINE.put(backend, expectedPath);
+            // 旧管线实例可能记着过期的 0，一并作废，让它按新映射重算。
+            MODE_BY_PIPELINE.remove(backend);
+            probeBindingSyncHits++;
+            probeRegisteredPaths.add(expectedPath);
+        } catch (Throwable t) {
+            logOnce("record compiled pipeline binding", t);
+        }
+    }
+
+    /** 已登记成功的管线路径（仅用于探针输出）。 */
+    private static final java.util.Set<String> probeRegisteredPaths =
+            java.util.Collections.synchronizedSet(new java.util.LinkedHashSet<>());
+
     private static Class<?> cachedFrontendClass;
     private static Method cachedFrontendNameMethod;
     private static Method cachedFrontendBackendMethod;
@@ -186,13 +258,22 @@ public final class IrisScopeMaskState {
         GunMod.LOGGER.info("[TACZ Scope][PROBE] Iris scope-mask chain after first masked frame: "
                         + "handProgramsPatched={}, shaderSetup={}, renderPass={}, nonZeroMode={}, "
                         + "noModeUniform={}, noMaskTexture={}, modeWritten={}, "
-                        + "firstTaczPipeline={}, firstAnyPipelineLabel={}. "
+                        + "firstTaczPipeline={}, firstAnyPipelineLabel={}, "
+                        + "bindingSync={}/{}, registeredPaths={}, nameTableSize={}, "
+                        + "pathFrom={table:{},debugLabel:{}}. "
                         + "(shaderSetup/renderPass == 0 means the corresponding Iris mixin did not apply; "
                         + "nonZeroMode == 0 means our pipelines were not recognised; "
-                        + "noModeUniform > 0 means the shader-source injection did not take effect.)",
+                        + "noModeUniform > 0 means the shader-source injection did not take effect; "
+                        + "bindingSync hits < attempts means getCompiledPipelineNullable returned null; "
+                        + "registeredPaths should list the 6 clipped scope pipelines -- if it only lists "
+                        + "pipeline/scope_mask then the FrontendRenderPass name() route was defeated by "
+                        + "Iris program redirection and only the explicit sync is working.)",
                 probeHandProgramsPatched, probeShaderSetupCalls, probeRenderPassCalls,
                 probeNonZeroMode, probeNoModeUniform, probeNoMaskTexture, probeModeWritten,
-                probeFirstTaczPath, probeFirstAnyLabel);
+                probeFirstTaczPath, probeFirstAnyLabel,
+                probeBindingSyncHits, probeBindingSyncAttempts,
+                String.join(",", probeRegisteredPaths), NAME_BY_BACKEND_PIPELINE.size(),
+                probeRegisteredHits, probeDebugLabelHits);
     }
 
     /**
@@ -676,6 +757,7 @@ public final class IrisScopeMaskState {
         // 这是唯一在光影下也成立的取法，见 NAME_BY_BACKEND_PIPELINE 的说明。
         String registered = NAME_BY_BACKEND_PIPELINE.get(glPipeline);
         if (registered != null) {
+            probeRegisteredHits++;
             return registered;
         }
         // 下面两条是历史取法，26.3 光影下都拿不到我们的 location，
@@ -693,6 +775,7 @@ public final class IrisScopeMaskState {
                     }
                     String path = stripModNamespace(String.valueOf(label));
                     if (path != null) {
+                        probeDebugLabelHits++;
                         if (probeFirstTaczPath == null) {
                             probeFirstTaczPath = path;
                         }
