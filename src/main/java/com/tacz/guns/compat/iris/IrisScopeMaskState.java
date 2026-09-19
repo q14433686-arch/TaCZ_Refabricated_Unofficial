@@ -90,13 +90,32 @@ public final class IrisScopeMaskState {
         if (frontendPipeline == null) {
             return;
         }
+        // 【无光影时整条路必须零成本 —— 2026-09-19 用户实测：关了光影开镜表现也不对】
+        //
+        // IrisCompatMixinPlugin#shouldApplyMixin 的判据只有 isModLoaded("iris")，
+        // 【不看光影包是否启用】。装了 Iris 但关着光影的玩家（正是这位用户的情形），
+        // FrontendRenderPassPipelineMixin 照样被装上，于是本方法在
+        // FrontendRenderPass#setPipeline 上【每个绘制批次】都被调一次 ——
+        // 本方法自己的注释就写着「实机一次开镜就有数万次」。
+        //
+        // 而这张表存在的唯一理由，是绕开「光影激活时 Iris 把 pack 程序换进管线、
+        // 后端 name()/debugLabel 都变成 Iris 程序名」这个障碍。光影没开就
+        // 根本没有这个障碍：getDebugLabel() 此时返回的就是我们的 location
+        // （PipelineBuilder:346 → GlPipelineRecompiler:314），回退路径本来就够用。
+        // 所以无光影时登记纯属白干活，还会把下面那次 map 查询压到热路径上。
+        //
+        // isUsingRenderPack() 每帧只算一次、之后读一个 byte 字段，
+        // 放在最前面即可把整条路的成本降到一次布尔判断。
+        if (!IrisCompat.isUsingRenderPack()) {
+            return;
+        }
         // 【热路径】setPipeline 每个绘制批次都会调到（与 renderPass 计数同数量级，
         // 实机一次开镜就有数万次）。所以这里做两件事把成本压到一次 map 查询：
         //   1. SEEN_FRONTEND_PIPELINES 记住「这个前端管线对象已经处理过」，
         //      管线对象在一局内是复用的，真正需要反射的只有头几次；
         //   2. name()/backendRenderPipeline() 两个 Method 对象按 class 缓存，
         //      避免 getMethod 每次返回防御性拷贝（invokeNoArgs 的固有开销）。
-        if (SEEN_FRONTEND_PIPELINES.putIfAbsent(frontendPipeline, Boolean.TRUE) != null) {
+        if (tacz$markSeen(frontendPipeline)) {
             return;
         }
         try {
@@ -130,9 +149,39 @@ public final class IrisScopeMaskState {
         }
     }
 
-    /** 已处理过的前端管线对象；弱键，管线销毁后自动回收。见 notePipelineBinding。 */
+    /**
+     * 已处理过的前端管线对象。见 {@link #notePipelineBinding}。
+     *
+     * <p>【2026-09-19 改】原先是 {@code Collections.synchronizedMap(new WeakHashMap<>())}，
+     * 而本方法跑在<b>每个绘制批次</b>上。那个组合在热路径上有三笔固定开销：
+     * 一次全局锁、{@code WeakHashMap} 每次 get/put 都要跑
+     * {@code expungeStaleEntries()} 清引用队列、以及
+     * {@code FrontendRenderPipeline} 作为 record 的<b>按值</b> hashCode
+     * （要对各组件逐个求哈希）。三者叠起来就是「装了 Iris、关着光影，
+     * 开镜表现也不对」的那一份 —— 而那时这张表根本用不上。</p>
+     *
+     * <p>现在：无光影时调用方直接早退（见上），光影下也换成不加锁的普通
+     * {@code HashMap} —— 本类只在 Render 线程被触碰（{@code setPipeline} 与
+     * {@code setupDraw} 都在 Render 线程），不需要锁；键改用记录本身的
+     * 按值相等（HashMap 语义不变），但少了弱引用队列与同步开销。
+     * 条目数量级是「全局管线数」（vanilla 102 条 + Iris 若干），仍设上限兜底。</p>
+     */
     private static final java.util.Map<Object, Boolean> SEEN_FRONTEND_PIPELINES =
-            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+            new java.util.HashMap<>();
+
+    private static final int SEEN_CACHE_LIMIT = 4096;
+
+    /** @return true 表示这个前端管线对象此前已经处理过，调用方应直接返回。 */
+    private static boolean tacz$markSeen(Object frontendPipeline) {
+        if (SEEN_FRONTEND_PIPELINES.containsKey(frontendPipeline)) {
+            return true;
+        }
+        if (SEEN_FRONTEND_PIPELINES.size() >= SEEN_CACHE_LIMIT) {
+            SEEN_FRONTEND_PIPELINES.clear();
+        }
+        SEEN_FRONTEND_PIPELINES.put(frontendPipeline, Boolean.TRUE);
+        return false;
+    }
 
     /** {@link #noteCompiledBinding} 被调用的次数（每次同步 = 每条管线一次）。 */
     private static int probeBindingSyncAttempts;
