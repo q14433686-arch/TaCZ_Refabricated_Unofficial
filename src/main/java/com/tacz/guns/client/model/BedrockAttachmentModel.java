@@ -776,6 +776,13 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         int clipped;
         int maskTargetMissing;
         int detachOcularRingFrames;
+        // 掩码侧事实：镜身即便选了裁剪 RenderType，掩码纹理若是黑的（本帧没画出
+        // 掩码 / 目镜几何没登记），shader 里 insideOcular 恒为 false ⇒ 一个像素
+        // 都不 discard ⇒ 观感与「完全没裁」一模一样，而且【静默】。
+        // 2026-09-19 日志里那条 "no ocular geometry was registered this frame"
+        // 就是这一路。必须与 clipped 分开计数才分得清。
+        int maskDrawnFrames;
+        int viewmodelClipFrames;
         boolean reported;
     }
 
@@ -805,6 +812,16 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             }
             if (detachOcularRing) {
                 tally.detachOcularRingFrames++;
+            }
+            // submit 期读到的是【上一帧】的掩码结果：本帧的掩码要到
+            // prepareFrame RETURN 才画（renderAtPhaseBoundary）。稳态下等价，
+            // 且这正是 shader 实际会采样到的那张 —— 记它才有意义。
+            if (com.tacz.guns.client.render.scope.ScopeMaskRenderer.hasMaskThisFrame()
+                    || com.tacz.guns.client.render.scope.ScopeMaskRenderer.hadMaskLastFrame()) {
+                tally.maskDrawnFrames++;
+            }
+            if (com.tacz.guns.client.render.scope.ScopeMaskRenderer.isViewmodelClipMaskThisFrame()) {
+                tally.viewmodelClipFrames++;
             }
             if (tally.frames < TACZ_CLIP_PROBE_FRAMES) {
                 return;
@@ -840,16 +857,19 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         com.tacz.guns.GunMod.LOGGER.info(
                 "[TACZ Scope][PROBE] scope clip paths over first {} aiming frames for texture={}: "
                         + "bodyMaskable={}, maskedFrame=clipped:{}/unclippedWithMask:{}/maskTargetMissing:{}, "
+                        + "maskSide=drawn:{}/viewmodelClip:{}, "
                         + "detachOcularRing={} ({} frames; ocular_ring is redrawn UNCLIPPED by design), "
                         + "ocularRingPresent={}, hiddenOcularsThisFrame={}, oculars=[{}], etchedNodes=[{}]. "
-                        + "Reading: clipped>0 means the body DOES clip in steady state (an all-false first-frame "
-                        + "reading was a timing artifact, not the real state); clipped==0 with "
-                        + "unclippedWithMask>0 means the mask texture was there but the clipped render type was "
-                        + "still not chosen. Oculars marked [blackout] ride the body render type, so they clip "
-                        + "whenever clipped>0; [under-ring] marks an ocular nested inside ocular_ring, which the "
-                        + "unclipped ring redraw would otherwise carry away.",
+                        + "Reading: clipped>0 AND drawn>0 means the clipped render type was chosen and the mask "
+                        + "texture really had content, so a still-unclipped image points at the shader/uniform "
+                        + "side. clipped>0 with drawn==0 means the mask texture was BLACK (nothing drawn into it "
+                        + "this frame), which silently discards nothing -- visually identical to no clipping at "
+                        + "all. clipped==0 with maskTargetMissing>0 is only a first-frame timing artifact; "
+                        + "clipped==0 with unclippedWithMask>0 means the mask was there but the clipped render "
+                        + "type was still not chosen. [under-ring] marks an ocular nested inside ocular_ring.",
                 TACZ_CLIP_PROBE_FRAMES, String.valueOf(texture), bodyMaskable,
                 tally.clipped, tally.frames - tally.clipped - tally.maskTargetMissing, tally.maskTargetMissing,
+                tally.maskDrawnFrames, tally.viewmodelClipFrames,
                 detachOcularRing, tally.detachOcularRingFrames,
                 ocularRingPart != null, hiddenOcularCount, ocularInfo, reticleNames);
     }
