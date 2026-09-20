@@ -2,28 +2,24 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "bonus_rolls": 0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        }
-      ],
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
       "entries": [
         {
           "type": "minecraft:item",
-          "conditions": [
-            {
-              "condition": "minecraft:block_state_property",
-              "block": "tacz:statue",
-              "properties": {
-                "half": "lower"
-              }
+          "condition": {
+            "type": "minecraft:match_block",
+            "blocks": "tacz:statue",
+            "state": {
+              "half": "lower"
             }
-          ],
+          },
           "name": "tacz:statue"
         }
       ],
       "rolls": 1
     }
-  ]
+  ],
+  "random_sequence": "tacz:blocks/statue"
 }

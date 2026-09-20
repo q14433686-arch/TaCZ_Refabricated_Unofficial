@@ -21,7 +21,8 @@ public record LootTableInjection(List<Identifier> lootTables, LootTable lootTabl
         // 26.2 兼容层：minecraft:set_nbt 已被移除。set_custom_data 与 set_nbt 完全等价
         // （同样接收 tag 字段），且写入 minecraft:custom_data 组件——而 TACZ 的 GunId/AmmoId
         // 本就存在该组件的 NBT 中（ItemNbtUtils），因此旧枪包的 set_nbt 迁移后枪/弹药变体可正确生成。
-        JsonElement migrated = LegacyLootCompat.migrateSetNbt(element);
+        // 26.3 兼容层：战利品表 JSON 架构整体重写（见 LegacyLootCompat#migrateSchema）。
+        JsonElement migrated = LegacyLootCompat.migrateSchema(LegacyLootCompat.migrateSetNbt(element));
         JsonObject object = GsonHelper.convertToJsonObject(migrated, "loot injection");
         List<Identifier> lootTables = readLootTables(fileId, object);
         if (!object.has("pools")) {
@@ -59,6 +60,102 @@ public record LootTableInjection(List<Identifier> lootTables, LootTable lootTabl
      * 26.2 的 set_custom_data 与旧 set_nbt 行为等价（写入 custom_data 组件）。
      */
     static final class LegacyLootCompat {
+        /**
+         * 26.3 战利品 JSON 架构迁移（对照 26.3 反编译源逐字段核对）：
+         * <ul>
+         *   <li>池/条目/表级 {@code "conditions": [..]} → {@code "condition": {..}}
+         *       （多条包成 {@code {"type":"minecraft:all_of","terms":[..]}}）；</li>
+         *   <li>{@code "functions": [..]} → {@code "modifier": ..}（{@code LootItemFunctions.DIRECT_CODEC}
+         *       接受单个对象或【内联数组】= SequenceFunction，故多条直接保留数组）；</li>
+         *   <li>函数对象里 {@code "function": id} → {@code "type": id}；条件对象里
+         *       {@code "condition": id} → {@code "type": id}（注意：条件对象的 {@code "condition"} 若是
+         *       【字符串】才是旧类型键，若是对象则已是新格式的嵌套条件）；</li>
+         *   <li>{@code minecraft:block_state_property {block, properties}} →
+         *       {@code minecraft:match_block {blocks, state}}；</li>
+         *   <li>{@code minecraft:alternative} → {@code minecraft:any_of}；</li>
+         *   <li>{@code set_count/set_damage} 等的 {@code {"min","max"}} 无 type 的裸区间 →
+         *       {@code {"type":"minecraft:uniform","min","max"}}（26.3 无类型只接受常量数字）。</li>
+         * </ul>
+         * 已是新格式的文件（无以上任一旧键）原样返回，迁移幂等。
+         */
+        static JsonElement migrateSchema(JsonElement element) {
+            if (element == null || !element.isJsonObject()) {
+                return element;
+            }
+            return migrateNode(element.getAsJsonObject().deepCopy());
+        }
+
+        private static JsonElement migrateNode(JsonElement el) {
+            if (el.isJsonArray()) {
+                JsonArray out = new JsonArray();
+                for (JsonElement e : el.getAsJsonArray()) {
+                    out.add(migrateNode(e));
+                }
+                return out;
+            }
+            if (!el.isJsonObject()) {
+                return el;
+            }
+            JsonObject o = el.getAsJsonObject();
+
+            // function / condition 对象自身的类型键
+            if (o.has("function") && o.get("function").isJsonPrimitive() && !o.has("type")) {
+                o.add("type", o.remove("function"));
+            }
+            if (o.has("condition") && o.get("condition").isJsonPrimitive() && !o.has("type")) {
+                o.add("type", o.remove("condition"));
+            }
+
+            // 列表 → 单值
+            if (o.has("conditions") && o.get("conditions").isJsonArray()) {
+                JsonArray arr = o.remove("conditions").getAsJsonArray();
+                if (arr.size() == 1) {
+                    o.add("condition", arr.get(0));
+                } else if (arr.size() > 1) {
+                    JsonObject allOf = new JsonObject();
+                    allOf.addProperty("type", "minecraft:all_of");
+                    allOf.add("terms", arr);
+                    o.add("condition", allOf);
+                }
+            }
+            if (o.has("functions") && o.get("functions").isJsonArray()) {
+                JsonArray arr = o.remove("functions").getAsJsonArray();
+                if (arr.size() == 1) {
+                    o.add("modifier", arr.get(0));
+                } else if (arr.size() > 1) {
+                    o.add("modifier", arr);
+                }
+            }
+
+            // 类型改名 / 字段改名
+            String type = o.has("type") && o.get("type").isJsonPrimitive() ? o.get("type").getAsString() : null;
+            if ("minecraft:block_state_property".equals(type)) {
+                o.addProperty("type", "minecraft:match_block");
+                if (o.has("block")) {
+                    o.add("blocks", o.remove("block"));
+                }
+                if (o.has("properties")) {
+                    o.add("state", o.remove("properties"));
+                }
+            } else if ("minecraft:alternative".equals(type)) {
+                o.addProperty("type", "minecraft:any_of");
+            }
+            // 裸 {min,max} 数值区间
+            for (String key : new String[]{"count", "damage", "levels", "amount", "chance"}) {
+                if (o.has(key) && o.get(key).isJsonObject()) {
+                    JsonObject range = o.getAsJsonObject(key);
+                    if (!range.has("type") && range.has("min") && range.has("max")) {
+                        range.addProperty("type", "minecraft:uniform");
+                    }
+                }
+            }
+
+            for (Map.Entry<String, JsonElement> en : new java.util.ArrayList<>(o.entrySet())) {
+                o.add(en.getKey(), migrateNode(en.getValue()));
+            }
+            return o;
+        }
+
         static JsonElement migrateSetNbt(JsonElement element) {
             if (element == null || element.isJsonNull()) {
                 return element;

@@ -772,3 +772,29 @@ Iris `MixinGlProgram.iris$samplerBinding` 只认识 `Sampler0/1/2/CloudFaces`
 该 API 不存在（老 JEI）时才回退旧事件并 WARN。
 未实机验证，验收判据：日志中不再出现 "Loaded N vanilla recipes from the client
 recipe registry" / "does not provide recipes to JEI"，JEI 可查 `tacz:gun_smith_table` 等配方。
+
+## 十四、附带案：方块掉落「双份 + 紫黑无名物品」（2026-09-20 深夜）
+
+**症状**：挖两格方块掉两个；挖 workbench_a/b/c 掉落物贴图紫黑、名字
+`block.tacz.workbench_x`（gun_smith_table/statue/target/target_minecart 不受影响）。
+
+**根因（对照 26.3 反编译 `LootPool`/`LootPoolEntryContainer`/`LootItemConditionTypes`/
+`LootItemFunctions` 与 `generated/data/minecraft/loot_table/blocks/*.json`）**：
+26.3 重写了战利品表 JSON 架构，而我们 6 份 `data/tacz/loot_table/blocks/*.json` 仍是旧架构。
+`RecordCodecBuilder` **忽略未知键**，所以旧文件「解析成功」但：
+- `"conditions": [...]` → 26.3 是 `"condition": {...}`（单值，多条用 `all_of`）→ 旧键被丢弃 ⇒
+  `block_state_property`（26.3 已改名 `match_block {blocks, state}`）根半边过滤失效 ⇒ 两半各掉一个；
+- `"functions": [...]` → 26.3 是 `"modifier": ...`（单对象或内联数组）；函数对象内 `"function"` → `"type"`
+  ⇒ `copy_custom_data BlockId` 被丢弃 ⇒ 掉落物无 BlockId ⇒ `GunSmithTableItem` 读到 `tacz:empty`
+  ⇒ 无模型（紫黑）、无索引名（回退 `block.tacz.workbench_x`）。
+  gun_smith_table/statue 不需要 BlockId 所以只有「双份」问题；target 只丢了 copy_name。
+- 另外 `AbstractGunSmithTableBlock#playerWillDestroy` 对「挖非根半边」手工 `popResource` 一份克隆，
+  与根半边经 `updateShape→AIR→destroyBlock(drop=true)` 的战利品表掉落叠加，也会双份。
+
+**修复**：
+1. 6 份战利品表重写为 26.3 架构（`condition`/`modifier`/`type`/`match_block`/`random_sequence`）。
+2. 删除 `playerWillDestroy` 里的手工掉落（战利品表 `match_block` 已保证只根半边掉、且拷 BlockId）。
+3. 枪包 `tacz_loot_injectors/*.json` 走 `LootTableInjection.fromJson`，新增
+   `LegacyLootCompat#migrateSchema`：`conditions/functions/function/condition/block_state_property/
+   alternative/裸{min,max}` → 26.3 写法，幂等；默认枪包的 `spawn_bonus_chest_taurus943.json`
+   （旧 `functions`+`set_nbt`）由此覆盖。未实机验证。
