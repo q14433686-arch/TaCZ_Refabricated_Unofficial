@@ -215,6 +215,16 @@ public final class ScopePipRenderer {
     /** 场景纹理里是否有一张可用的本帧镜内画面。 */
     private static boolean sceneCaptured = false;
 
+    /** PIP 合成管线预热（同 {@code ScopeBodyRenderTypes#prewarmCompiledPipelines}）。 */
+    public static void prewarmCompiledPipelines() {
+        try {
+            ScopePipelinePrewarm.touch(compositePipeline());
+        } catch (Throwable ignored) {
+            // compositePipeline 是刻意懒构建的（类注释 188 行一带）：构建失败交给
+            // 原 catch 路径自我停用，预热本身也必须哑巴。
+        }
+    }
+
     /**
      * 「{@code mainRenderTarget()} 正在被重定向」窗口，同时就是要顶上去的那个 target。
      *

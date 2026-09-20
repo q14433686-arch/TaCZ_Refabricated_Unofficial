@@ -299,6 +299,17 @@ public final class PolyMeshGpuRenderer {
     }
 
     /**
+     * poly-mesh 管线预热（同 {@code ScopeBodyRenderTypes#prewarmCompiledPipelines}，
+     * 见 {@link com.tacz.guns.client.render.scope.ScopePipelinePrewarm} 类注释
+     * 2026-09-20 光影开镜崩溃一案）。
+     */
+    public static void prewarmCompiledPipelines() {
+        com.tacz.guns.client.render.scope.ScopePipelinePrewarm.touch(LIT_PIPELINE);
+        com.tacz.guns.client.render.scope.ScopePipelinePrewarm.touch(EMISSIVE_PIPELINE);
+        com.tacz.guns.client.render.scope.ScopePipelinePrewarm.touch(LIT_CLIPPED_PIPELINE);
+    }
+
+    /**
      * 当前这次 submit 是否该走 GPU。必须同时满足：
      * <ul>
      *   <li>配置打开且本会话未因异常关闭；</li>

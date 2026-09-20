@@ -286,6 +286,11 @@ public final class ScopeMaskRenderer {
     private ScopeMaskRenderer() {
     }
 
+    /** 掩码管线预热（同 {@code ScopeBodyRenderTypes#prewarmCompiledPipelines}）。 */
+    public static void prewarmCompiledPipelines() {
+        ScopePipelinePrewarm.touch(MASK_PIPELINE);
+    }
+
     public static void setInHandPass(boolean value) {
         inHandPass = value;
     }

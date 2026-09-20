@@ -149,6 +149,11 @@ public final class ScopeTextRenderTypes {
      * @param pageId 该图集页的壳 Identifier（由 {@code ScopeTextSubmitter}
      *               的 view 登记流程生成并每帧刷新指向）
      */
+    /** 裁剪文字管线预热（同 {@code ScopeBodyRenderTypes#prewarmCompiledPipelines}）。 */
+    public static void prewarmCompiledPipelines() {
+        ScopePipelinePrewarm.touch(CLIPPED_TEXT_PIPELINE);
+    }
+
     public static RenderType clippedText(Identifier pageId) {
         ensureIrisCompatibility();
         return PAGE_CACHE.computeIfAbsent(pageId,

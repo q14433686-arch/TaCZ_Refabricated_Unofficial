@@ -103,6 +103,21 @@ public final class ScopeBodyRenderTypes {
         return MASK_SAMPLER_LAYOUT;
     }
 
+    /**
+     * 【光影开镜崩溃预热】把本类的全部自定义管线交给 {@link ScopePipelinePrewarm}
+     * 提前编进 vanilla 编译缓存（详见该类的类注释 2026-09-20 一案）。
+     * 每 tick 由预热器回调；已编译时只是几次 map 查询。
+     */
+    public static void prewarmCompiledPipelines() {
+        ScopePipelinePrewarm.touch(CLIPPED_PIPELINE);
+        ScopePipelinePrewarm.touch(RETICLE_PIPELINE);
+        ScopePipelinePrewarm.touch(RETICLE_EMISSIVE_PIPELINE);
+        ScopePipelinePrewarm.touch(EMISSIVE_PIPELINE);
+        ScopePipelinePrewarm.touch(FLASH_TRANSLUCENT_CLIPPED_PIPELINE);
+        ScopePipelinePrewarm.touch(FLASH_SWIRL_CLIPPED_PIPELINE);
+        ScopePipelinePrewarm.touch(FINAL_OCULAR_RING_PIPELINE);
+    }
+
     /** 掩码采样器在 bind group 里的名字，供外部 pass 手动绑定时对齐。 */
     public static String maskSamplerName() {
         return MASK_SAMPLER;

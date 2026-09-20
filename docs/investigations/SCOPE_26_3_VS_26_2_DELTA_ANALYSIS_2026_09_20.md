@@ -469,9 +469,11 @@ Complementary Reimagined）：
 `iris$setupState(createInfo.uniforms())` 调用点（`IrisScopeMaskState`
 的 RETURN 注入位）。
 
-**状态声明**：本修复**编译通过（CI 待跑）、实机未验证**。验证清单：光影
-开镜看镜内是否恢复 PIP 画面；低倍 sight（reticle-only 掩码）确认镜身
-不被啃洞；MK5HD 镜内文字（2026-08-30 旧案）复测。
+**状态声明（2026-09-20 二轮更新）**：编译通过（CI 绿）。首轮实机验证被
+一个**更早的崩溃**抢先拦截（开光影开镜 NPE，§9 —— 与本修复无关的
+vanilla 编译缓存冷 + Iris 不查 null），mode 采样器判别本身**尚未被实机评估**。
+§9 预热修复落地后，验证清单不变：光影开镜看 PIP 恢复；低倍 sight
+（reticle-only 掩码）确认镜身不被啃洞；MK5HD 镜内文字旧案复测。
 
 ---
 
@@ -488,3 +490,71 @@ Complementary Reimagined）：
 | ring 子树快照修复 | `BedrockAttachmentModel` | 候选 A，待复现后单独回加 |
 | `scopeUv` varying（4 个 shader） | `scope_body.*` / `scope_text.*` | 候选 B，待两态验证 |
 | `RenderCrosshairEvent#renderMaskDebug` blit 挂钩 | `RenderCrosshairEvent` | 与 HUD 元素预览重复（后者保留） |
+
+---
+
+## 9. 开光影开镜直接崩溃：根因与预热修复（2026-09-20 二轮）
+
+**实机反馈**：§8 修复构建上，**开光影开镜直接崩溃**（`RawOutput.log`）：
+`NullPointerException: Cannot invoke FrontendRenderPipeline.backendRenderPipeline()`
+位于 Iris 26.3 挂在 `RenderSystem.getCompiledPipelineNullable` RETURN 的
+`redirectIrisProgram` 处理器（RenderSystem.java:581）——**它从不检查
+`cir.getReturnValue()` 是否为 null**，连「查 override 表」都排在取旧程序之后。
+崩溃帧位于 `HandRenderer.renderSolid → renderAllFeatures →
+PreparedRenderType.drawFromBuffer` —— 我们自定义 scope 管线在某个 pass 里的
+第一次 draw。同一秒 `Worker-Main` 上有两条
+`Couldn't find source for VERTEX shader (tacz:core/scope_body)`。
+
+**根因链**：我们的 scope 管线是类加载时静态构建、**首次使用才进 vanilla
+编译缓存**（vanilla 的资源重载预编译波覆盖不到它们）。26.3 的按需编译
+不是即用的（miss/异步未完成 ⇒ `getCompiledPipelineNullable` 返回 null）。
+于是：开光影（Iris 世界管线已接管）后第一次开镜 → 第一次 scope draw 撞上
+缓存冷 → null → Iris 处理器 NPE。无光影链路没有这个处理器，永不触发。
+「couldn't find source」是【缓存为什么冷】的同帧并发证据，两者关系待
+实机复测界定（§10 有对应的观测点）。
+
+**修复（已落地）**：新类 `ScopePipelinePrewarm`（+ 各持管线类的
+`prewarmCompiledPipelines()`），在 `END_CLIENT_TICK` 对全部自定义管线
+（ScopeBodyRenderTypes 7 条、ScopeTextRenderTypes、ScopeMaskRenderer、
+ScopePipRenderer、PolyMeshGpuRenderer 3 条）逐条
+`RenderSystem.getCompiledPipeline`：缓存提前热，Iris 处理器永远拿不到
+null。三个细节：
+- 每发调用用 Iris 自己的 `ImmediateState.bypass`（public static boolean，
+  26.3 源码实读存在）包一层 —— 否则【预热调用本身】就是同款 NPE 的触发器；
+- 反射找不到该字段时降级为裸调（仅无光影安全），不炸；
+- 快照式日志：只在管线状态变化时各打一行（全 OK / 有 PENDING / FAILED），
+  失败管线进 200 tick 退避，不每 tick 重编刷屏。
+
+预期效果：崩溃消失；若某条管线连预热都编不过（「couldn't find source」
+一族复现），预热的 FAILED 日志会直接点名 —— 那将直接锁定 §10 的待决项。
+
+---
+
+## 10. 无光影、特定环境不裁剪（Nether / End / 夜 / 水下）：现状与判定协议
+
+**现象**：无光影时，白天主世界正常（§8 截图 16.16.32），但**下界、末地、
+主世界夜晚、水下**开镜不裁剪。四个条件的公共特征是**天空光弱/环境昏暗**。
+
+**已排除（静态）**：
+- 我方 Java 链路无任何环境/维度分支（亮度、流体、日夜、维度全清
+  `grep` 无命中）；掩码锚点 `FeatureRenderDispatcher#prepareFrame` RETURN、
+  `isInHandPass`、`ScopeMaskGeometry` 登记与清空时序全部环境无关。
+- 掩码管线 `core/position` 的 `apply_fog` 在 ~0.5m 视距处衰减≈0，
+  「雾把掩码颜色染暗」不成立；
+- `resolveBodyRenderType` 的 gate 链（config / IrisCompat / 几何非空 /
+  viewmodelClip / syncToMaskTarget）无环境输入。
+
+**剩余候选族**（按序）：
+- **A. 掩码目标在那些维度里根本没画上/是黑的**（draw 侧）——例如 26.3 在
+  特定维度把掩码 pass 夹进某条不同的 frame-graph 分支，或掩码 target 在
+  那些条件下被清。判定：`SCOPE_MASK_DEBUG=true` 的 HUD 预览在下界截图 —
+  黑/无内容 = 本族。
+- **B. 掩码正常，镜身采样/回退侧失效**（preview 有白色形状但不裁）——
+  区分手段仍是 doc 原 §6 的 5 分钟实验：把 `scope_body.fsh` 的
+  `gl_FragCoord.xy / ScreenSize` 换成
+  `gl_FragCoord.xy / vec2(textureSize(ScopeMaskSampler, 0))`（绕开 Globals
+  UBO）；再不裁就轮到 render-type fallback 嫌疑（B/C 分裂在此）。
+- **C. resolveBodyRenderType 回退路径被触发**（同 B 表象）——若 B 实验
+  也不裁，下版需给 fallback 补一条 debug-gated 一次性日志。
+
+**状态：待用户实机提供 A vs B 的判定截图。**
