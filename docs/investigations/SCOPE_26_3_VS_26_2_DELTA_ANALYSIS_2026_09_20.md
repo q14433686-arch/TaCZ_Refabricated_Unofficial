@@ -876,3 +876,28 @@ prepare() 的 DynamicTransforms 快照）。
 `PolyMeshGpuRenderer.isForcingPipelineRebind()` 则置 null，强制每 draw 重 bind；
 `drawViaRenderTypeCore` 的绘制段前后置/清该标志。代价：每骨骼一次 program bind（p90 111 次），
 仅光影 + GPU poly 期间。未实机验证。
+
+## 十七、专服两症状（2026-09-21 latest.log 02:10，服务端未装 JEI）
+
+**症状**：① 枪匠台配方能查到，但材料除 `#minecraft:logs` 外全是空占位 → 实际不可合成；
+② 我们数据包里的 `minecraft:crafting_*` 配方（gun_smith_table / ammo_workbench / iron_ammo_box…）JEI 查不到。单人局两者正常。
+
+**日志**：`02:10:36 Loaded 2042 vanilla recipes from the client recipe registry.` →
+`02:10:37 Failed to resolve gun smith table ingredient "#c:ingots/iron" … Missing tag: 'c:ingots/iron' in 'minecraft:item'` ×449
+（全部 `c:` 约定 tag，无一 `minecraft:` tag）→ `This fabric server does not have JEI installed. JEI is showing default recipes from your client`。
+
+**根因（同一条链，JEI 26.3 源码 `VanillaClientRecipeLoader` / `JeiStarter`）**：
+- 26.3 服务端不再向客户端发全量配方；JEI 靠 Fabric `RecipeSynchronization`（opt-in，两端都要登记同一序列化器）拿服务端配方。
+  JEI 自己只在**它的**主初始化器里把 `minecraft:*` 序列化器登记进去 ⇒ 服务端没装 JEI ⇒ `SYNCED_SERIALIZERS` 为空 ⇒ 不发 ⇒
+  `Internal.hasClientRecipes()==false` ⇒ 走 `VanillaClientRecipeLoader.getVanillaRecipes`。（⇒ 症状 ②：只有 vanilla 数据包的配方）
+- `loadVanillaRecipeRegistry` 用**仅 vanilla 包**的 `MultiPackResourceManager` 跑 `TagLoader.loadTagsForExistingRegistries`，
+  最后 `basePendingTags.forEach(PendingTags::apply)` —— **把客户端静态注册表（含 `minecraft:item`）的 allTags 整个换成
+  vanilla-only 集合**，服务端在 config 阶段同步来的 `c:*`/mod tag 全部被抹掉。`#minecraft:logs` 幸存、`#c:ingots/iron` 全灭，
+  与 449 条错误的分布逐字吻合。（⇒ 症状 ①）单人局 `hasClientRecipes` 为真、根本不走这条路，故不可复现。
+
+**修复**：`TaCZFabric#registerRecipeSync` —— 在 TACZ 主初始化器（两端）把 `minecraft:*` 与 `tacz:*` 的
+`RecipeSerializer` 全部 `RecipeSynchronization.synchronizeRecipeSerializer`。服务端只装 TACZ 也会在
+`fabric:recipe_sync` 阶段（PlayerList 里先于 `ClientboundUpdateRecipesPacket` 发出）把 vanilla 型配方发给客户端，
+客户端 JEI 走 synced 路径 ⇒ ② 直接修好，且不再触发 vanilla loader ⇒ 客户端 tag 不再被抹 ⇒ ① 随之消失。
+`SYNCED_SERIALIZERS` 是 Set，与 JEI 重复登记同一实例幂等。**服务端也必须更新到本 build**。未实机验证。
+备注：`VanillaClientRecipeLoader` 覆写客户端 tag 是 JEI 侧的副作用（任何依赖 `c:` tag 的客户端逻辑都会中招），可考虑给 mezz 提 issue。

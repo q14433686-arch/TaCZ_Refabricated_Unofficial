@@ -101,6 +101,26 @@ public class TaCZFabric implements ModInitializer {
         // 经它升级过的附属包（跨包合成 bug 的实机日志所示）没有这行就整条配方失败。
         CustomIngredientSerializer.register(cn.sh1rocu.tacz.util.forge.TaczNbtIngredient.Serializer.INSTANCE);
 
+        // 【专服 JEI · 2026-09-21 实机】把 vanilla 配方序列化器登记进 Fabric 的 opt-in
+        // 配方同步（fabric-recipe-api-v1 `RecipeSynchronization`）。
+        //
+        // 26.3 起服务端不再把配方全量发给客户端（ClientboundUpdateRecipesPacket 只剩
+        // 物品属性集 + 切石机）。JEI 的做法：它自己的 Fabric 主初始化器把所有
+        // minecraft:* 序列化器 synchronizeRecipeSerializer，服务端装了 JEI 时
+        // `fabric:recipe_sync` 载荷就带上全部 crafting_shaped/shapeless…，
+        // 客户端 JEI 用 Internal.setClientSyncedRecipes 接住。
+        // 服务端【没装】JEI（用户专服，log: "This fabric server does not have JEI installed"）
+        // ⇒ 服务端 SYNCED_SERIALIZERS 为空 ⇒ 不发 ⇒ 客户端 JEI 退回
+        // VanillaClientRecipeLoader（只读 vanilla 数据包）⇒ 我们数据包里的
+        // gun_smith_table / ammo_workbench / iron_ammo_box… 这些 minecraft:crafting_*
+        // 配方在 JEI 里一律查不到（本条症状），单人局（内存连接、JEI 两端都有）看不出来。
+        //
+        // 我们自己在两端都调用一遍（Fabric 只同步「两端都登记」的序列化器；JEI
+        // 重复登记同一实例是 Set 幂等），服务端只装 TACZ 也能把 vanilla 配方
+        // 送到客户端 JEI。仅 minecraft:* 与我们自己的枪匠台序列化器 —— 与 JEI 相同的
+        // 收敛范围，不替别的 mod 做决定。
+        registerRecipeSync();
+
         Class<? extends EnumArgument<?>> enumArgumentClass = (Class<? extends EnumArgument<?>>) (Class) EnumArgument.class;
         ArgumentTypeRegistry.registerArgumentType(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "enum_argument"), enumArgumentClass,
                 EnumArgument.Info.INSTANCE);
@@ -110,6 +130,24 @@ public class TaCZFabric implements ModInitializer {
         ServerLifecycleEvents.SERVER_STARTING.register((server) -> TaCZFabric.server = new WeakReference<>(server));
 
         subscribeEvents();
+    }
+
+    private static void registerRecipeSync() {
+        int count = 0;
+        for (var entry : net.minecraft.core.registries.BuiltInRegistries.RECIPE_SERIALIZER.entrySet()) {
+            String ns = entry.getKey().identifier().getNamespace();
+            if (!"minecraft".equals(ns) && !GunMod.MOD_ID.equals(ns)) {
+                continue;
+            }
+            try {
+                net.fabricmc.fabric.api.recipe.v1.sync.RecipeSynchronization.synchronizeRecipeSerializer(entry.getValue());
+                count++;
+            } catch (RuntimeException | LinkageError e) {
+                GunMod.LOGGER.warn("[TACZ Recipe Sync] Failed to opt {} into Fabric recipe sync", entry.getKey().identifier(), e);
+            }
+        }
+        GunMod.LOGGER.info("[TACZ Recipe Sync] Opted {} recipe serializer(s) into Fabric recipe sync "
+                + "(so dedicated servers without JEI still send vanilla-type recipes to client JEI).", count);
     }
 
     private void subscribeEvents() {
