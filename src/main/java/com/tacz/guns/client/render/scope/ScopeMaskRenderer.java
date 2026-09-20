@@ -449,6 +449,18 @@ public final class ScopeMaskRenderer {
                     // 少任何一句，shader 都会因为 uniform 缺失而画不出正确结果
                     // （症状类似 r46 的 "Unable to find shader defined uniform"）。
                     RenderSystem.bindDefaultUniforms(pass);
+                    // 【雾 · 掩码颜色被雾污染】bindDefaultUniforms 绑的 Fog 是
+                    // RenderSystem.getShaderFog() —— 手部 pass 期间它仍是 FogMode.WORLD
+                    // （GameRenderer 直到屏幕特效之后才切回 NONE）。而掩码管线用的
+                    // core/position.fsh 输出 apply_fog(ColorModulator, ...)：R=1/G=进度
+                    // 会被按顶点到相机的距离往 FogColor 混。水下（起点 -8，终点 96×
+                    // waterVision，刚入水时终点≈0 → 距离 0.1 的手部几何雾系数≈0.9）、
+                    // 失明/黑暗效果、下界/夜间开阔地等场合掩码 R 掉到 0.5 以下、G 被
+                    // 压成 0 → 镜身「不裁」或永远停在开镜进度 0，且 ScopeMaskDebug 预览
+                    // 里肉眼难辨（雾色偏暗时看起来只是"红得没那么亮"）。
+                    // 掩码是纯屏幕空间数据，不应有雾：显式换成 FogMode.NONE 的空雾 UBO
+                    // （FogColor=0、起止=MAX_VALUE ⇒ apply_fog 恒等）。
+                    bindEmptyFog(pass);
                     pass.setUniform("DynamicTransforms",
                             RenderSystem.getDynamicUniforms().writeTransform(
                                     // ScopeMaskGeometry entries are captured with the submit-time ModelView already
@@ -602,6 +614,26 @@ public final class ScopeMaskRenderer {
      *
      * @return 顶点网格；没有任何可画几何时返回 {@code null}
      */
+    private static boolean loggedFogBindFailure;
+
+    /** 用 {@code FogRenderer#getBuffer(NONE)} 覆盖默认绑定的 Fog UBO；取不到时保持默认并只警告一次。 */
+    private static void bindEmptyFog(RenderPass pass) {
+        try {
+            var accessor = (com.tacz.guns.mixin.client.GameRendererProjectionAccessor)
+                    (Object) Minecraft.getInstance().gameRenderer;
+            net.minecraft.client.renderer.fog.FogRenderer fogRenderer = accessor.tacz$getFogRenderer();
+            if (fogRenderer != null) {
+                pass.setUniform("Fog", fogRenderer.getBuffer(net.minecraft.client.renderer.fog.FogRenderer.FogMode.NONE));
+            }
+        } catch (Exception e) {
+            if (!loggedFogBindFailure) {
+                loggedFogBindFailure = true;
+                GunMod.LOGGER.warn("[TACZ Scope] Could not bind the empty fog UBO for the ocular mask pass; "
+                        + "mask colour may be fog-tinted under water / darkness / in the Nether.", e);
+            }
+        }
+    }
+
     private static MeshData buildMesh() {
         BufferBuilder builder = new BufferBuilder(SCRATCH, PrimitiveTopology.QUADS, DefaultVertexFormat.POSITION);
         boolean hullFill = RenderConfig.SCOPE_MASK_HULL_FILL.get();

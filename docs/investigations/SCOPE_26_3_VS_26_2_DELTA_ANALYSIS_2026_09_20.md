@@ -662,3 +662,88 @@ minY(-64) + 25，是原版基岩雾变暗带的上边界 —— 但「下界无�
 4. 26.2 同环境对照截图：若 26.2 也出 → 上游模型/绘制老问题，不是 26.3 新病。
 - vsh-FileNotFound 谜团：本批日志未再现（预热器落地后两轮干净），
   维持「枪包资源重建并发命中懒编译」瞬时态论，不单独投入。
+
+
+## 十二、五轮（2026-09-20 深夜）：对照 26.3 真源码定案 —— §11.1 的容错查询在 26.3 上**不可能命中**
+
+> 数据来源：GitHub `mc-dataminning/build-changes`（26.3 反编译源，
+> `src/com/mojang/renderpearl/...`）与 Iris `26.3` 分支源码，均逐字读过。
+> 沙箱无 JDK，本节改动只经 CI `compile-check` 验证，**未做实机验证**。
+
+### 12.1 §11.1 三级容错为何仍是死路
+
+26.3 `GlRenderPass` 全部实例字段（真源）：
+`encoder, device, defaultScissorState, pipeline(GlRenderPipeline), vertexBuffers[16],
+vertexBufferDirty, indexBuffer, indexType, indexBufferDirty, scissorState,
+scissorStateDirty, uniforms(ReferenceList<Object>), dirtyUniforms(BooleanList),
+anyUniformDirty, pushConstants(GpuBufferSlice), pushConstantsDirty, colorAttachmentCount`。
+
+- **没有任何 `Map` 字段**：绑定表是按 uniform **下标**存放的
+  `ReferenceList<Object>`，名字信息在后端已彻底丢失 ⇒ §11.1 的
+  「名字列表 / 首个 Map 字段」两级都不可能命中，只会走到第 3 级 WARN dump。
+- `GlRenderPipeline` 也**没有 `info()`**（26.2 老路 `resolveModeUncached`
+  按 location 反查）⇒ 恒 0。
+- 结论：26.3 上 `resolveMode` 两条路全死，`tacz_ScopeMaskMode` 永远 0，
+  与 §11.1 描述的症状链完全一致；但 §11.1 那次提交并不能修好它。
+
+### 12.2 名字信息在哪：前端 `FrontendRenderPass` / `FrontendRenderPipeline`
+
+- `FrontendRenderPass` 字段：`backend(RenderPassBackend), device,
+  boundPipeline(FrontendRenderPipeline), vertexBuffers, indexBuffer,
+  protected HashMap<String,Object> uniforms, constantsPushed`。
+  `setUniform(name, ...)` 先写这张按名字的表，再按
+  `boundPipeline.uniformIndices()` 转发到后端下标；`setPipeline` 时把整张表
+  重新按新管线下标灌一遍。
+- `FrontendRenderPipeline` 是 record：`name, backendRenderPipeline,
+  vertexFormats, uniformIndices(Object2IntMap<String>), uniforms(List<UniformDescription>), ...`。
+- **Iris 26.3 `MixinShaderManager_Overrides`** 重定向到 HAND 程序时新建的
+  `FrontendRenderPipeline` **原样沿用 `old2.uniformIndices()/uniforms()`** ⇒
+  即便管线被换成 Iris 的，「这条管线声明了 `ScopeMaskSampler` /
+  `ScopeMaskMode2Sampler`」这个事实在前端对象上仍然保留，且按 draw 精确
+  （`PreparedRenderType#draw` 每次先 `setPipeline`）。
+- 这与 §2.2 被实机否掉的「按管线**身份**（location/debugLabel/对象表）反查」
+  不同：这里查的是管线的**uniform 声明表**，Iris 换管线不会改它。
+
+### 12.3 本轮修复（三处，均有 26.2 兜底）
+
+1. `IrisFrontendRenderPassMixin`（新，`@Pseudo` + `require=0`）：在
+   `FrontendRenderPass` 构造 RETURN 处调 `IrisScopeMaskState.noteFrontendPass(this)`，
+   建立 **后端 GlRenderPass → 前端 FrontendRenderPass** 的弱键弱值表
+   （构造器首参即 `backend`；两者一对一同生同灭）。
+2. `IrisScopeMaskState.resolveMode`：在 `setupDraw(GlRenderPass)` hook 里
+   由后端找回前端 → `boundPipeline` → `uniforms()` 声明表按名判 mode
+   （含 `ScopeMaskMode2Sampler`→2，含 `ScopeMaskSampler`→1，否则 0），
+   结果按 `FrontendRenderPipeline` 实例缓存。声明表拿不到时退到前端
+   `uniforms` HashMap 按 key 查（注意：那张表在同一 pass 内跨 draw 只增不删，
+   仅作最后兜底）。`samplersMap()` 同步改为优先返回前端表，
+   `resolveMaskTextureId` 因而也能按名字拿到 `TextureViewAndSampler`
+   （`getGlTextureId` 已会 `view()` 解包），拿不到仍回退 `ScopeMaskTarget.current()`。
+3. **掩码 pass 的雾污染**（与光影无关，vanilla 亦受影响）：
+   `MASK_PIPELINE` 用 `core/position.fsh`，输出
+   `apply_fog(ColorModulator, ...)`；而 `bindDefaultUniforms` 绑的 `Fog` 是
+   `RenderSystem.getShaderFog()`，**手部 pass 期间仍是 `FogMode.WORLD`**
+   （`GameRenderer` 直到屏幕特效之后才 `setShaderFog(NONE)`，真源 l.712）。
+   于是掩码的 R=1 / G=进度会按顶点距离往 `FogColor` 混：
+   - 水下：环境雾 start=-8、end=96×waterVision，刚入水 waterVision≈0 ⇒
+     end≈0，距相机 0.1 的手部几何雾系数≈0.9 ⇒ R≈0.1 <0.5 ⇒ **不裁**；
+   - 失明/黑暗效果（雾终点只有几格）同理；
+   - 「预览看着正常」是因为雾色暗时 R 只是"红得没那么亮"，肉眼难辨。
+   修复：`ScopeMaskRenderer.drawMask` 在 `bindDefaultUniforms` 之后显式
+   `pass.setUniform("Fog", fogRenderer.getBuffer(FogMode.NONE))`（空雾 UBO：
+   FogColor=0、起止=MAX_VALUE ⇒ `apply_fog` 恒等），`FogRenderer` 经
+   `GameRendererProjectionAccessor#tacz$getFogRenderer` 取得。
+   这条**只解释水下/失明类**环境；Nether（dimension fog_start 10）与夜晚
+   开阔地手部几何距离远小于雾起点，不受此机制影响 —— §11.2 的绿棱块
+   问题仍按其判据协议独立追。
+
+### 12.4 另一个实锤：Iris 26.3 根本不会在后端绑定我们的自定义采样器
+
+Iris `MixinGlProgram.iris$samplerBinding` 只认识 `Sampler0/1/2/CloudFaces`
+（+Sodium 名），`ScopeMaskSampler` / `ScopeMaskMode2Sampler` 得到 binding -1
+⇒ 光影下走 `setUniform` 的 mask 纹理**永远不会被后端绑定**。因此光影路径
+的 mask 纹理**必须**继续由 `IrisScopeMaskState` 的 GL 直绑路径
+（`resolveMaskTextureId` → `ScopeMaskTarget.current()`）供给 —— 现状即如此，
+本节只是把「为什么 setUniform 那条路在 Iris 下无效」记成定论，勿再回头试。
+
+`Missing program tacz:pipeline/scope_mask` 是 Iris 覆盖表未命中的一次性
+提示（非致命），与裁剪无关。
