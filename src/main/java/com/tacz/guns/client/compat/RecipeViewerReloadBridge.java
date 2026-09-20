@@ -20,9 +20,10 @@ import java.lang.reflect.Modifier;
  * viewer internals, and client resources must all remain on the Minecraft client thread.</p>
  *
  * <p>The lightweight entry points are optional implementation APIs, so this class uses reflection
- * and only probes a viewer that is installed. The verified 26.2 shapes are JEI Fabric
- * {@code mezz.jei.fabric.events.JeiLifecycleEvents.AFTER_RECIPES_UPDATED} (an event whose invoker
- * is {@link Runnable}) and REI {@code me.shedaniel.rei.RoughlyEnoughItemsCoreClient#reloadPlugins}
+ * and only probes a viewer that is installed. The verified 26.3 shapes are JEI
+ * {@code mezz.jei.common.Internal#restartJei()} (with the 26.2 event
+ * {@code mezz.jei.fabric.events.JeiLifecycleEvents.AFTER_RECIPES_UPDATED} as fallback — see
+ * {@link #refreshJei()} for why the event must not be the first choice) and REI {@code me.shedaniel.rei.RoughlyEnoughItemsCoreClient#reloadPlugins}
  * with two nullable arguments. If either installed viewer has moved its entry point, one normal
  * client resource reload is used as a safe fallback for the connection; it is never retriggered by
  * the fallback itself.</p>
@@ -101,8 +102,40 @@ public final class RecipeViewerReloadBridge {
         }
     }
 
-    /** JEI Fabric 30.13.0.86 invokes its plugin-rebuild listener through this Runnable event. */
+    /**
+     * Restart JEI so it re-runs plugin registration with the freshly synced gun-pack cache.
+     *
+     * <h2>Why {@code Internal.restartJei()} and not {@code AFTER_RECIPES_UPDATED}</h2>
+     * <p>The event was the 26.2 entry point, but JEI Fabric's listener for it is
+     * (26.2 and 26.3 source, {@code ClientLifecycleHandler#registerEvents}):</p>
+     * <pre>
+     *   if (!receivedRecipeSync) Internal.clearClientRecipes();
+     *   receivedRecipeSync = false;
+     *   stopJei(); startJei();
+     * </pre>
+     * <p>The flag is only set by a real Fabric recipe-sync packet and is consumed by the
+     * first start. Firing the event by hand afterwards therefore <b>throws away the
+     * server-synced recipe map</b>; JEI then falls back to
+     * {@code VanillaClientRecipeLoader}, which loads recipes from the vanilla pack only
+     * ("Loaded N vanilla recipes from the client recipe registry" + "This fabric server does
+     * not provide recipes to JEI"). Every {@code minecraft:crafting_*} recipe shipped by a mod
+     * datapack — TACZ's own workbench/ammo-box/target recipes and any gun pack's — silently
+     * disappears from JEI, while {@code tacz:gun_smith_table_crafting} entries survive only
+     * because our plugin builds them from the gun-pack cache instead of the recipe map.</p>
+     *
+     * <p>JEI 26.3 exposes {@code mezz.jei.common.Internal#restartJei()}, which does the same
+     * stop/start <b>without</b> clearing the synced recipes. Prefer it; fall back to the event
+     * only when that API is absent (older JEI), accepting the old behaviour there.</p>
+     */
     private static boolean refreshJei() {
+        try {
+            Class<?> internal = Class.forName("mezz.jei.common.Internal");
+            Method restart = internal.getMethod("restartJei");
+            restart.invoke(null);
+            return true;
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException exception) {
+            GunMod.LOGGER.debug("[TACZ Recipe Viewer] JEI Internal.restartJei unavailable; trying the recipes-updated event.", exception);
+        }
         try {
             Class<?> lifecycleEvents = Class.forName("mezz.jei.fabric.events.JeiLifecycleEvents");
             Object event = lifecycleEvents.getField("AFTER_RECIPES_UPDATED").get(null);
@@ -110,6 +143,8 @@ public final class RecipeViewerReloadBridge {
             if (!(invoker instanceof Runnable runnable)) {
                 throw new IllegalStateException("JEI recipe-update invoker is not Runnable");
             }
+            GunMod.LOGGER.warn("[TACZ Recipe Viewer] Using JEI's AFTER_RECIPES_UPDATED event as a fallback; "
+                    + "this JEI build may drop server-synced vanilla-type recipes from its view.");
             runnable.run();
             return true;
         } catch (ReflectiveOperationException | LinkageError | RuntimeException exception) {

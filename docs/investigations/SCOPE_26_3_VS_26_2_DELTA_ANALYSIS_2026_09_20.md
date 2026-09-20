@@ -747,3 +747,28 @@ Iris `MixinGlProgram.iris$samplerBinding` 只认识 `Sampler0/1/2/CloudFaces`
 
 `Missing program tacz:pipeline/scope_mask` 是 Iris 覆盖表未命中的一次性
 提示（非致命），与裁剪无关。
+
+## 十三、附带案：原版类型配方在 JEI 中「静默消失」（2026-09-20 深夜）
+
+**症状**：`data/tacz/recipe/*.json` 与枪包里所有 `minecraft:crafting_*` 配方
+在 JEI 查不到；`tacz:gun_smith_table_crafting` 不受影响。
+
+**证据链（latest.log 18:15:47）**：
+`[TACZ Recipe Viewer] Refreshing after gun-pack sync` → `Stopping JEI` →
+`Loaded 2042 vanilla recipes from the client recipe registry` → 聊天栏
+`This fabric server does not provide recipes to JEI`。
+
+**根因（JEI 26.2/26.3 源码 `ClientLifecycleHandler#registerEvents`）**：
+`AFTER_RECIPES_UPDATED` 的监听器是
+`if (!receivedRecipeSync) Internal.clearClientRecipes(); receivedRecipeSync=false; stop; start`。
+`receivedRecipeSync` 只由 Fabric 真实的配方同步包置位、被第一次启动消费。
+我们的 `RecipeViewerReloadBridge` 在枪包缓存到达后手工触发该事件 ⇒ 第二次
+进入时标志为 false ⇒ **服务端同步的配方表被清空**，JEI 退到
+`VanillaClientRecipeLoader`（只从 vanilla pack 加载）。2042 正好是原版配方数。
+`gun_smith_table_crafting` 幸存是因为我们的 JEI 插件从枪包缓存构建，不走配方表。
+
+**修复**：`refreshJei()` 改为优先调用 JEI 26.3 的
+`mezz.jei.common.Internal#restartJei()`（同样 stop/start，但**不清**同步配方）；
+该 API 不存在（老 JEI）时才回退旧事件并 WARN。
+未实机验证，验收判据：日志中不再出现 "Loaded N vanilla recipes from the client
+recipe registry" / "does not provide recipes to JEI"，JEI 可查 `tacz:gun_smith_table` 等配方。
