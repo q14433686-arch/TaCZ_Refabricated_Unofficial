@@ -144,8 +144,10 @@ public class ClientAttachmentItemTooltip implements ClientTooltipComponent {
     }
 
     private static boolean isShiftDown() {
-        return InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), InputConstants.KEY_LSHIFT)
-                || InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), InputConstants.KEY_RSHIFT);
+        // 26.3: 输入层从 GLFW 换成 SDL，isKeyDown 直接查 SDL 的键盘状态数组，
+        // 不再需要（也不再接受）Window 句柄参数。
+        return InputConstants.isKeyDown(InputConstants.KEY_LSHIFT)
+                || InputConstants.isKeyDown(InputConstants.KEY_RSHIFT);
     }
 
     public static String rgbToHex(int rgb) {

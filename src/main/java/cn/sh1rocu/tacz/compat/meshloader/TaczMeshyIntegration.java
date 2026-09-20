@@ -42,7 +42,10 @@ public final class TaczMeshyIntegration {
             @Override
             public CompletableFuture<Void> reload(SharedState sharedState, Executor backgroundExecutor,
                                                   PreparationBarrier barrier, Executor gameExecutor) {
-                return barrier.wait(null).thenRunAsync(PolyMeshSupport::invalidateParseCache, gameExecutor);
+                return barrier.wait(null).thenRunAsync(() -> {
+                    PolyMeshSupport.invalidateParseCache();
+                    cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer.onResourceReload();
+                }, gameExecutor);
             }
         });
     }

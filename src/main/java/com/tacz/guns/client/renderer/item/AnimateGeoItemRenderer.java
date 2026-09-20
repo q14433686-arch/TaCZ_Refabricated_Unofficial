@@ -348,7 +348,7 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         if (com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG.get()) {
             debugRecoilItemCam(quaternion, multiplier, poseStack);
         }
-        poseStack.mulPose(quaternion);
+        poseStack.rotate(quaternion);
     }
 
     /**
@@ -384,8 +384,8 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
             // scale it by aiming progress: the vanilla bob is already magnified by
             // the ADS projection and applying a second ADS multiplier makes pitch and
             // roll visibly larger than upstream.
-            poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F));
+            poseStack.rotate(Axis.XP.rotationDegrees(xRot * -0.1F));
+            poseStack.rotate(Axis.YP.rotationDegrees(yRot * -0.1F));
             BedrockPart rootNode = model.getRootNode();
             if (rootNode != null) {
                 // tanh 饱和限幅保持在缩放【之前】：它的作用是防止快速转身时枪飞出画面，
@@ -401,7 +401,7 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
             // 从渲染原点 (0, 24, 0) 移动到模型原点 (0, 0, 0)
             poseStack.translate(0, 1.5f, 0);
             // 基岩版模型是上下颠倒的，需要翻转过来。
-            poseStack.mulPose(Axis.ZP.rotationDegrees(180f));
+            poseStack.rotate(Axis.ZP.rotationDegrees(180f));
             doExtraTransforms(poseStack, model, stack);
 
             var stateMachine = getStateMachine(stack);
@@ -430,7 +430,7 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
             // 从渲染原点 (0, 24, 0) 移动到模型原点 (0, 0, 0)
             poseStack.translate(0.5, 1.5f, 0.5);
             // 基岩版模型是上下颠倒的，需要翻转过来。
-            poseStack.mulPose(Axis.ZP.rotationDegrees(180f));
+            poseStack.rotate(Axis.ZP.rotationDegrees(180f));
             model.submit(poseStack, ctx, collector, RenderTypes.entityCutout(
                     getTextureLocation(stack)
             ), light, overlay);

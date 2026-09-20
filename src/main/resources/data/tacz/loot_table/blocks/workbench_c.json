@@ -2,41 +2,35 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "bonus_rolls": 0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        }
-      ],
-      "functions": [
-        {
-          "function": "minecraft:copy_custom_data",
-          "ops": [
-            {
-              "op": "replace",
-              "source": "BlockId",
-              "target": "BlockId"
-            }
-          ],
-          "source": "block_entity"
-        }
-      ],
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
       "entries": [
         {
           "type": "minecraft:item",
-          "conditions": [
-            {
-              "condition": "minecraft:block_state_property",
-              "block": "tacz:workbench_c",
-              "properties": {
-                "half": "lower"
-              }
+          "condition": {
+            "type": "minecraft:match_block",
+            "blocks": "tacz:workbench_c",
+            "state": {
+              "half": "lower"
             }
-          ],
+          },
+          "modifier": {
+            "type": "minecraft:copy_custom_data",
+            "source": "block_entity",
+            "ops": [
+              {
+                "op": "replace",
+                "source": "BlockId",
+                "target": "BlockId"
+              }
+            ]
+          },
           "name": "tacz:workbench_c"
         }
       ],
       "rolls": 1
     }
-  ]
+  ],
+  "random_sequence": "tacz:blocks/workbench_c"
 }

@@ -101,8 +101,10 @@ public class LocalPlayerDraw {
             // tryExit 里的 INPUT_PUT_AWAY 真的会触发）才开窗口。否则（刚进世界、第三人称
             // 下切枪、上一把枪的窗口未过期所以这把从没被画过）开出来的是「旧枪静止一瞬」
             // 的空窗口 —— 上游把 keep() 写在 isInitialized() 之内正是这个意思。
-            if (renderer.hasInitializedStateMachine(lastItem)) {
-                KeepingItemRenderer.getRenderer().keep(lastItem, putAwayTime);
+            // 26.3: getRenderer() 依赖本地玩家存在（实例改由 LocalPlayer 持有），可能为 null。
+            KeepingItemRenderer keepingRenderer = KeepingItemRenderer.getRenderer();
+            if (keepingRenderer != null && renderer.hasInitializedStateMachine(lastItem)) {
+                keepingRenderer.keep(lastItem, putAwayTime);
             }
             renderer.tryExit(lastItem, putAwayTime);
         }

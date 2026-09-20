@@ -5,7 +5,6 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
-import org.lwjgl.glfw.GLFW;
 
 import java.text.DecimalFormat;
 
@@ -175,8 +174,11 @@ public class ForgeSlider extends AbstractSliderButton {
     }
 
     public boolean handleKeyEvent(KeyEvent event) {
-        boolean flag = event.key() == GLFW.GLFW_KEY_LEFT;
-        if (flag || event.key() == GLFW.GLFW_KEY_RIGHT) {
+        // 26.3: KeyEvent#key() 现在是 SDL scancode；vanilla 自己的
+        // AbstractSliderButton 改用 InputWithModifiers 的 isLeft()/isRight() 默认方法，
+        // 这里沿用同一套判定，避免再写死键码常量。
+        boolean flag = event.isLeft();
+        if (flag || event.isRight()) {
             if (this.minValue > this.maxValue)
                 flag = !flag;
             float f = flag ? -1F : 1F;

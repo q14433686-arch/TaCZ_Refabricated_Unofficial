@@ -14,12 +14,14 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.SwingAnimation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin {
@@ -31,12 +33,20 @@ public abstract class LivingEntityMixin {
         return original.add(BuiltInRegistries.ATTRIBUTE.wrapAsHolder(ModAttributes.BULLET_RESISTANCE));
     }
 
-    @Inject(method = "swing(Lnet/minecraft/world/InteractionHand;Z)V", at = @At("HEAD"), cancellable = true)
-    private void tacz$swingHand(InteractionHand hand, boolean bl, CallbackInfo ci) {
+    // 26.3: swing 的签名由 (InteractionHand, boolean)V 变为
+    // (InteractionHand, SwingAnimation, boolean)Z —— 单参/双参重载均已删除，
+    // 全仓只剩这一个挥手入口，所以注入点仍是唯一且等价的。
+    // 返回值语义（LivingEntity:2031-2047 实读）：true = 挥手动画真的起了，
+    // false = swingState.startIfAble 拒绝（已在挥同一只手）。事件取消挥手时
+    // 回 false 正是「本次没有起挥手」，与取消前 void 版不执行任何动作等价。
+    @Inject(method = "swing(Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/component/SwingAnimation;Z)Z",
+            at = @At("HEAD"), cancellable = true)
+    private void tacz$swingHand(InteractionHand hand, SwingAnimation animation, boolean sendToSwingingEntity,
+                                CallbackInfoReturnable<Boolean> cir) {
         ItemStack stack = this.getItemInHand(hand);
         if (!stack.isEmpty() && stack.getItem() instanceof IItem swing) {
             if (swing.tacz$onEntitySwing(stack, (LivingEntity) (Object) this))
-                ci.cancel();
+                cir.setReturnValue(false);
         }
     }
 

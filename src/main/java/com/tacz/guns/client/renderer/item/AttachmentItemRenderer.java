@@ -44,7 +44,7 @@ public class AttachmentItemRenderer implements BuiltinItemRendererRegistry.Dynam
                 // GUI 特殊渲染
                 if (transformType == ItemDisplayContext.GUI) {
                     poseStack.translate(0.5, 1.5, 0.5);
-                    poseStack.mulPose(Axis.ZN.rotationDegrees(180));
+                    poseStack.rotate(Axis.ZN.rotationDegrees(180));
                     collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucent(attachmentIndex.getSlotTexture()), (pose, buffer) -> {
                         // 26.2: 必须使用回调参数 pose（= 提交那一刻 poseStack.last().copy() 的快照），
                         // 而不是外层 poseStack —— 回调执行时它早已被 popPose/复用，
@@ -60,13 +60,13 @@ public class AttachmentItemRenderer implements BuiltinItemRendererRegistry.Dynam
                 // 反转模型
                 poseStack.scale(-1, -1, 1);
                 if (transformType == ItemDisplayContext.FIXED) {
-                    poseStack.mulPose(Axis.YN.rotationDegrees(90f));
+                    poseStack.rotate(Axis.YN.rotationDegrees(90f));
                 }
                 this.renderDefaultAttachment(transformType, poseStack, collector, pPackedLight, pPackedOverlay, attachmentIndex);
             }, () -> {
                 // 没有这个 attachmentId，渲染黑紫材质以提醒
                 poseStack.translate(0.5, 1.5, 0.5);
-                poseStack.mulPose(Axis.ZN.rotationDegrees(180));
+                poseStack.rotate(Axis.ZN.rotationDegrees(180));
                 collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucent(MissingTextureAtlasSprite.getLocation()), (pose, buffer) -> {
                     // 26.2: 必须使用回调参数 pose（= 提交那一刻 poseStack.last().copy() 的快照），
                     // 而不是外层 poseStack —— 回调执行时它早已被 popPose/复用，
@@ -101,7 +101,7 @@ public class AttachmentItemRenderer implements BuiltinItemRendererRegistry.Dynam
             poseStack.translate(0, 0.5, 0);
             // 展示框里显示正常
             if (transformType == ItemDisplayContext.FIXED) {
-                poseStack.mulPose(Axis.YP.rotationDegrees(90));
+                poseStack.rotate(Axis.YP.rotationDegrees(90));
             }
             collector.submitCustomGeometry(poseStack, RenderTypes.entityTranslucent(attachmentIndex.getSlotTexture()), (pose, buffer) -> {
                 // 26.2: 必须使用回调参数 pose（= 提交那一刻 poseStack.last().copy() 的快照），

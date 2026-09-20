@@ -11,19 +11,18 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import org.lwjgl.glfw.GLFW;
 
 import static com.tacz.guns.util.InputExtraCheck.isInGame;
 
 @Environment(EnvType.CLIENT)
 public class CrawlKey {
     public static final KeyMapping CRAWL_KEY = new KeyMapping("key.tacz.crawl.desc",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_C,
+            InputConstants.Type.KEYBOARD,
+            InputConstants.KEY_C,
             TaCZKeyCategory.TACZ);
 
     public static void onCrawlPress(InputEvent.Key event) {
-        if (isInGame() && CRAWL_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
+        if (isInGame() && CRAWL_KEY.matches(InputConstants.Type.KEYBOARD.getOrCreate(event.getKey()))) {
             if (!SyncConfig.ENABLE_CRAWL.get()) {
                 return;
             }
@@ -44,10 +43,10 @@ public class CrawlKey {
                 if (!KeyConfig.HOLD_TO_CRAWL.get()) {
                     action = !operator.isCrawl();
                 }
-                if (event.getAction() == GLFW.GLFW_PRESS) {
+                if (event.getAction() == InputConstants.PRESS) {
                     IClientPlayerGunOperator.fromLocalPlayer(player).crawl(action);
                 }
-                if (KeyConfig.HOLD_TO_CRAWL.get() && event.getAction() == GLFW.GLFW_RELEASE) {
+                if (KeyConfig.HOLD_TO_CRAWL.get() && event.getAction() == InputConstants.RELEASE) {
                     IClientPlayerGunOperator.fromLocalPlayer(player).crawl(false);
                 }
             }

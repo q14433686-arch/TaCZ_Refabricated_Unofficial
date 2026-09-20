@@ -33,6 +33,19 @@ public final class IrisScopeMaskState {
     private static final String RETICLE_EMISSIVE_PIPELINE = "pipeline/scope_reticle_emissive_clipped";
     private static final String TEXT_PIPELINE = "pipeline/scope_text_clipped";
     private static final String MASK_SAMPLER = "ScopeMaskSampler";
+    /**
+     * 「本条 draw 是 mode 2（镜外 discard）」的标记采样器名（2026-09-20，26.3 修复）。
+     *
+     * <p>26.3 把 {@code GlRenderPass#pipeline} 字段与 {@code GlRenderPipeline#info()}
+     * 一并删掉，按管线 location 反查 mode 的路整个断了（恒 0，开镜全黑）。但
+     * {@code GlRenderPass#samplers} 这张「名字 → 纹理」的绑定表还在，而且是按 draw
+     * 带的 —— 与管线对象身份、Iris 换不换程序完全无关。于是 mode-2 渲染类型
+     * （准星/文字）在绑定掩码之外<b>多绑一个同名标记采样器</b>（绑的还是同一张掩码
+     * 纹理，着色器从不采样它），这里只查 key 存在性即可判别：
+     * 有标记 → 2；有掩码 → 1；都没有 → 走 26.2 的管线名老路（留在下面做兜底，
+     * 保证本文件在 26.2 分支上行为逐字节不变）。</p>
+     */
+    private static final String MODE2_SAMPLER = "ScopeMaskMode2Sampler";
     private static final String UNIFORM_MODE = "tacz_ScopeMaskMode";
     private static final String UNIFORM_SAMPLER = "tacz_ScopeMaskSampler";
 
@@ -338,8 +351,9 @@ public final class IrisScopeMaskState {
 
     /**
      * Updates the active Iris shader program uniforms for the current GlRenderPass draw call.
-     * If the draw call is {@code scope_body_clipped}, mode is set to 1.
-     * If the draw call is {@code scope_reticle_clipped}, mode is set to 2.
+     * Mode 判别见 {@link #resolveMode(Object)}：按本条 draw 绑定的采样器
+     * （{@code ScopeMaskSampler} → 1，标记采样器 {@code ScopeMaskMode2Sampler} → 2），
+     * 26.3 上不再依赖管线对象身份；26.2 的管线名老路仅作兜底。
      * Otherwise (gun body, attachments, hands, entities, particles), mode is set to 0.
      */
     public static void applyToGlRenderPass(Object glRenderPass) {
@@ -449,6 +463,51 @@ public final class IrisScopeMaskState {
             if (glRenderPass == null) {
                 return 0;
             }
+            // 【26.3 主路】按本条 draw 【当前绑定的前端管线声明了哪些 uniform】判断。
+            //
+            // 26.3 删了 GlRenderPipeline#info()，按管线 location 反查的老路必死（恒 0）；
+            // 后端 GlRenderPass 的绑定表也从 26.2 的 HashMap<String,...> samplers 变成
+            // 按下标的 ReferenceList<Object> uniforms（名字信息已丢失）。但前端
+            // FrontendRenderPass 持有 boundPipeline（FrontendRenderPipeline record），
+            // 它的 uniforms() 是 bind group layout 【声明】出来的 UniformDescription 列表，
+            // Iris 26.3 重定向到 HAND 程序时新建的 FrontendRenderPipeline 原样沿用
+            // old2.uniforms()（MixinShaderManager_Overrides 实读）—— 所以即使管线被换成
+            // Iris 的，「这条管线声明了 ScopeMaskSampler / ScopeMaskMode2Sampler」这个
+            // 事实仍在，且是【按 draw 精确】的（PreparedRenderType#draw 每次先 setPipeline）。
+            //
+            // 为什么不直接查前端 uniforms HashMap 的 key：那张表在同一个 pass 内
+            // 【跨 draw 累积、不清空】（setUniform 只增不删），scope 画完后紧接着的
+            // 枪身 draw 仍能查到 ScopeMaskSampler，会把枪身也裁掉。声明表没有这个问题。
+            Object frontend = frontendOf(glRenderPass);
+            if (frontend != null) {
+                Object boundPipeline = boundPipelineOf(frontend);
+                if (boundPipeline != null) {
+                    Integer remembered = MODE_BY_PIPELINE.get(boundPipeline);
+                    if (remembered != null) {
+                        return remembered;
+                    }
+                    int resolved = resolveModeFromDeclaredUniforms(boundPipeline);
+                    if (resolved >= 0) {
+                        if (MODE_BY_PIPELINE.size() >= MODE_CACHE_LIMIT) {
+                            MODE_BY_PIPELINE.clear();
+                        }
+                        MODE_BY_PIPELINE.put(boundPipeline, resolved);
+                        return resolved;
+                    }
+                }
+                // 前端在、但 boundPipeline 拿不到（字段形状变了）：退到按名字查绑定表。
+                Map<?, ?> samplers = namedUniformsOf(frontend);
+                if (samplers != null) {
+                    if (samplers.containsKey(MODE2_SAMPLER)) {
+                        return 2;
+                    }
+                    if (samplers.containsKey(MASK_SAMPLER)) {
+                        return 1;
+                    }
+                    return 0;
+                }
+            }
+            // 以下为 26.2 老路兜底（26.3 上 pipeline 字段不存在，自然短路为 0）。
             Field pipelineField = pipelineField(glRenderPass);
             if (pipelineField == null) {
                 return 0;
@@ -531,8 +590,8 @@ public final class IrisScopeMaskState {
 
     private static int resolveMaskTextureId(Object glRenderPass) {
         try {
-            Object samplersObj = readField(glRenderPass, "samplers");
-            if (samplersObj instanceof Map<?, ?> samplers) {
+            Map<?, ?> samplers = samplersMap(glRenderPass);
+            if (samplers != null) {
                 Object tvs = samplers.get(MASK_SAMPLER);
                 if (tvs != null) {
                     int id = getGlTextureId(tvs);
@@ -649,10 +708,296 @@ public final class IrisScopeMaskState {
         return 0;
     }
 
-    private static Object readField(Object target, String name) throws ReflectiveOperationException {
-        Field field = target.getClass().getDeclaredField(name);
-        field.setAccessible(true);
-        return field.get(target);
+    /** {@link #samplersMap} 的 per-class 字段解析缓存（class 运行期恒定，单值缓存即可）。 */
+    private static Class<?> cachedSamplersOwner = null;
+    private static Field cachedSamplersField = null;
+    private static boolean samplersFieldResolved = false;
+    private static boolean loggedSamplersMiss = false;
+
+    /**
+     * 拿本条 draw 的「sampler 名 → 纹理绑定」Map。
+     *
+     * <h3>26.3 实况（2026-09-20 逐字读 26.3 反编译源，非猜测）</h3>
+     * <ul>
+     *   <li>{@code renderpearl.backend.opengl.GlRenderPass}（后端，即 hook 收到的对象）
+     *       <b>没有任何 Map 字段</b>。绑定表是
+     *       {@code protected final ReferenceList<Object> uniforms}——按 uniform
+     *       <b>下标</b>存放，名字信息在这一层已经丢失（下标 → 名字的映射在前端
+     *       {@code FrontendRenderPipeline#uniformIndices}）。旧的「名字列表 →
+     *       首个 Map 字段」两级容错在这里必然双双落空，然后每条 draw 都返回
+     *       mode 0 —— 这就是「掩码正常、prewarm 13/13、diag 全 OK 却完全不裁」
+     *       的最终成因（{@code NoSuchFieldException: samplers} 只是它的第一层皮）。</li>
+     *   <li>{@code renderpearl.frontend.FrontendRenderPass}（前端）仍有
+     *       {@code protected final HashMap<String, Object> uniforms}，key 就是
+     *       {@code ScopeMaskSampler} / {@code ScopeMaskMode2Sampler} 这类名字，
+     *       value 是 {@code TextureViewAndSampler(view, sampler)} 或
+     *       {@code GpuBufferSlice}。前端 pass 每次 {@code setUniform(name, ...)}
+     *       都先写这张表再转发给后端，所以它在 draw 期<b>恒为最新</b>。</li>
+     *   <li>前端与后端是一对一的：{@code FrontendRenderPass#backend} 指向那个
+     *       {@code GlRenderPass}；vanilla 的 {@code createRenderPass} 把两者同时
+     *       创建（{@code FrontendCommandEncoder}），Iris 26.3 自己的
+     *       {@code MixinGlRenderPass} 也直接 {@code @Mixin(FrontendRenderPass.class)}
+     *       去挂 {@code setUniform(String, GpuTextureView, GpuSampler)}。</li>
+     * </ul>
+     *
+     * <p>因此 26.3 的正确取法是：后端 {@code GlRenderPass} → 对应的前端
+     * {@code FrontendRenderPass} → 它的 {@code uniforms} HashMap。前端实例由
+     * {@link com.tacz.guns.mixin.client.iris.IrisFrontendRenderPassMixin} 在构造期
+     * 登记（{@link #noteFrontendPass}），此处只做一次弱键查表。</p>
+     *
+     * <p>26.2 兼容：那一版后端 {@code GlRenderPass#samplers} 本身就是
+     * {@code HashMap<String, GpuTextureView>}，仍按名字直取，行为不变。</p>
+     */
+    @org.jetbrains.annotations.Nullable
+    private static Map<?, ?> samplersMap(Object glRenderPass) {
+        if (glRenderPass == null) {
+            return null;
+        }
+        // 【26.3 主路】后端 pass → 前端 pass → 按名字的 uniforms 表。
+        Object frontend = frontendOf(glRenderPass);
+        if (frontend != null) {
+            Map<?, ?> m = namedUniformsOf(frontend);
+            if (m != null) {
+                return m;
+            }
+        }
+        // 【26.2 老路 / 兜底】后端 pass 自己就带按名字的 Map（26.2 的 samplers）。
+        try {
+            Class<?> cls = glRenderPass.getClass();
+            if (cls != cachedSamplersOwner || !samplersFieldResolved) {
+                cachedSamplersOwner = cls;
+                cachedSamplersField = findNamedMapField(cls);
+                samplersFieldResolved = true;
+            }
+            if (cachedSamplersField == null) {
+                if (!loggedSamplersMiss && frontend == null) {
+                    loggedSamplersMiss = true;
+                    GunMod.LOGGER.warn("[TACZ Scope] No frontend render pass registered for {} and it has no "
+                            + "named sampler map; scope-mask mode resolution will stay at 0 under shaders.",
+                            cls.getName());
+                }
+                return null;
+            }
+            Object value = cachedSamplersField.get(glRenderPass);
+            return value instanceof Map<?, ?> map ? map : null;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /**
+     * 「后端 GlRenderPass → 前端 FrontendRenderPass」弱键表。
+     * 两者同生同灭（前端 close 即后端 close），弱键保证前端被回收后条目自动消失；
+     * 每帧只有个位数个 pass，表始终很小。
+     */
+    private static final Map<Object, java.lang.ref.WeakReference<Object>> FRONTEND_BY_BACKEND =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    /** 后端 pass → 前端 pass（弱值：前端强持后端，值若强持前端则弱键永不失效）。 */
+    @org.jetbrains.annotations.Nullable
+    private static Object frontendOf(Object backendPass) {
+        java.lang.ref.WeakReference<Object> ref = FRONTEND_BY_BACKEND.get(backendPass);
+        return ref == null ? null : ref.get();
+    }
+    private static Class<?> cachedFrontendClass;
+    private static Field cachedFrontendBackendField;
+    private static Field cachedFrontendUniformsField;
+    private static boolean loggedFrontendShape;
+
+    /**
+     * 由 {@code IrisFrontendRenderPassMixin} 在 {@code FrontendRenderPass} 构造完成时调用。
+     * 反射一次拿到 {@code backend} 与 {@code uniforms} 两个字段，之后按实例登记。
+     */
+    public static void noteFrontendPass(Object frontendPass) {
+        if (frontendPass == null) {
+            return;
+        }
+        try {
+            Class<?> cls = frontendPass.getClass();
+            if (cls != cachedFrontendClass) {
+                cachedFrontendClass = cls;
+                cachedFrontendBackendField = findFieldByType(cls, "backend",
+                        "com.mojang.renderpearl.backend.api.RenderPassBackend");
+                cachedFrontendUniformsField = findNamedMapField(cls);
+                if (!loggedFrontendShape) {
+                    loggedFrontendShape = true;
+                    if (cachedFrontendBackendField == null || cachedFrontendUniformsField == null) {
+                        GunMod.LOGGER.warn("[TACZ Scope] FrontendRenderPass shape unexpected: backendField={}, uniformsField={}",
+                                cachedFrontendBackendField, cachedFrontendUniformsField);
+                    } else {
+                        GunMod.LOGGER.info("[TACZ Scope] FrontendRenderPass bridge ready ({}#{} -> {}#{}).",
+                                cls.getSimpleName(), cachedFrontendBackendField.getName(),
+                                cls.getSimpleName(), cachedFrontendUniformsField.getName());
+                    }
+                }
+            }
+            if (cachedFrontendBackendField == null) {
+                return;
+            }
+            Object backend = cachedFrontendBackendField.get(frontendPass);
+            if (backend != null) {
+                FRONTEND_BY_BACKEND.put(backend, new java.lang.ref.WeakReference<>(frontendPass));
+            }
+        } catch (Throwable t) {
+            logOnce("register frontend render pass", t);
+        }
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private static Map<?, ?> namedUniformsOf(Object frontendPass) {
+        try {
+            if (cachedFrontendUniformsField == null) {
+                return null;
+            }
+            Object v = cachedFrontendUniformsField.get(frontendPass);
+            return v instanceof Map<?, ?> m ? m : null;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** 先按名字，再按类型名找实例字段。 */
+    @org.jetbrains.annotations.Nullable
+    private static Field findFieldByType(Class<?> cls, String preferredName, String typeName) {
+        for (Class<?> c = cls; c != null; c = c.getSuperclass()) {
+            try {
+                Field f = c.getDeclaredField(preferredName);
+                f.setAccessible(true);
+                return f;
+            } catch (NoSuchFieldException ignored) {
+            }
+        }
+        for (Class<?> c = cls; c != null; c = c.getSuperclass()) {
+            for (Field f : c.getDeclaredFields()) {
+                if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                    continue;
+                }
+                if (typeName.equals(f.getType().getName())
+                        || implementsInterface(f.getType(), typeName)) {
+                    f.setAccessible(true);
+                    return f;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean implementsInterface(Class<?> type, String ifaceName) {
+        for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+            for (Class<?> i : c.getInterfaces()) {
+                if (ifaceName.equals(i.getName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 找「按名字的」实例级 Map 字段：先按已知名字（26.2 {@code samplers}、26.3 前端
+     * {@code uniforms}），再退到首个实例级 Map 字段。
+     */
+    @org.jetbrains.annotations.Nullable
+    private static Field findNamedMapField(Class<?> cls) {
+        String[] names = {"samplers", "uniforms", "textures", "textureBindings", "boundTextures", "samplerBindings", "bindings"};
+        for (String name : names) {
+            for (Class<?> c = cls; c != null; c = c.getSuperclass()) {
+                try {
+                    Field f = c.getDeclaredField(name);
+                    if (Map.class.isAssignableFrom(f.getType())) {
+                        f.setAccessible(true);
+                        return f;
+                    }
+                } catch (NoSuchFieldException ignored) {
+                    // 继续往父类找
+                }
+            }
+        }
+        for (Class<?> c = cls; c != null; c = c.getSuperclass()) {
+            for (Field f : c.getDeclaredFields()) {
+                if (Map.class.isAssignableFrom(f.getType())
+                        && !java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                    f.setAccessible(true);
+                    return f;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Field cachedFrontendBoundPipelineField;
+    private static boolean frontendBoundPipelineResolved;
+    private static Method cachedPipelineUniformsAccessor;
+    private static boolean pipelineUniformsAccessorResolved;
+
+    /** 前端 pass 当前绑定的 {@code FrontendRenderPipeline}（{@code boundPipeline} 字段）。 */
+    @org.jetbrains.annotations.Nullable
+    private static Object boundPipelineOf(Object frontendPass) {
+        try {
+            if (!frontendBoundPipelineResolved) {
+                frontendBoundPipelineResolved = true;
+                cachedFrontendBoundPipelineField = findFieldByType(frontendPass.getClass(), "boundPipeline",
+                        "com.mojang.renderpearl.frontend.FrontendRenderPipeline");
+                if (cachedFrontendBoundPipelineField == null) {
+                    GunMod.LOGGER.warn("[TACZ Scope] FrontendRenderPass has no boundPipeline field; "
+                            + "falling back to name-keyed uniform table for scope-mask mode.");
+                }
+            }
+            if (cachedFrontendBoundPipelineField == null) {
+                return null;
+            }
+            return cachedFrontendBoundPipelineField.get(frontendPass);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /**
+     * 按管线【声明】的 uniform 名判 mode：含 {@code ScopeMaskMode2Sampler} → 2，
+     * 含 {@code ScopeMaskSampler} → 1，都不含 → 0；拿不到声明表 → -1（让调用方退路）。
+     *
+     * <p>{@code FrontendRenderPipeline#uniforms()} 是 record 访问器，返回
+     * {@code List<BindGroupLayout.UniformDescription>}，元素 {@code name()} 亦是 record 访问器。</p>
+     */
+    private static int resolveModeFromDeclaredUniforms(Object frontendPipeline) {
+        try {
+            if (!pipelineUniformsAccessorResolved) {
+                pipelineUniformsAccessorResolved = true;
+                try {
+                    Method m = frontendPipeline.getClass().getMethod("uniforms");
+                    m.setAccessible(true);
+                    cachedPipelineUniformsAccessor = m;
+                } catch (NoSuchMethodException e) {
+                    GunMod.LOGGER.warn("[TACZ Scope] {} has no uniforms() accessor; "
+                            + "falling back to name-keyed uniform table for scope-mask mode.",
+                            frontendPipeline.getClass().getName());
+                }
+            }
+            if (cachedPipelineUniformsAccessor == null) {
+                return -1;
+            }
+            Object list = cachedPipelineUniformsAccessor.invoke(frontendPipeline);
+            if (!(list instanceof java.util.Collection<?> descs)) {
+                return -1;
+            }
+            boolean hasMask = false;
+            for (Object d : descs) {
+                if (d == null) {
+                    continue;
+                }
+                String name = String.valueOf(invokeNoArgs(d, "name"));
+                if (MODE2_SAMPLER.equals(name)) {
+                    return 2;
+                }
+                if (MASK_SAMPLER.equals(name)) {
+                    hasMask = true;
+                }
+            }
+            return hasMask ? 1 : 0;
+        } catch (Throwable t) {
+            logOnce("read declared uniforms of bound pipeline", t);
+            return -1;
+        }
     }
 
     private static Object invokeNoArgs(Object target, String name) throws ReflectiveOperationException {

@@ -87,8 +87,8 @@ public class StatueRenderer implements BlockEntityRenderer<StatueBlockEntity, St
 
             poseStack.pushPose();
             poseStack.translate(0.5, 1.5, 0.5);
-            poseStack.mulPose(Axis.YN.rotationDegrees((state.facing.get2DDataValue() + 2) % 4 * 90));
-            poseStack.mulPose(Axis.ZN.rotationDegrees(180));
+            poseStack.rotate(Axis.YN.rotationDegrees((state.facing.get2DDataValue() + 2) % 4 * 90));
+            poseStack.rotate(Axis.ZN.rotationDegrees(180));
 
             RenderType renderType = RenderConfig.BLOCK_ENTITY_TRANSLUCENT.get() ?
                     RenderTypes.entityTranslucent(getTextureLocation()) :
@@ -97,7 +97,7 @@ public class StatueRenderer implements BlockEntityRenderer<StatueBlockEntity, St
 
             poseStack.scale(0.5f, 0.5f, 0.5f);
             poseStack.translate(0, -0.875, -1.2);
-            poseStack.mulPose(Axis.ZP.rotationDegrees(180));
+            poseStack.rotate(Axis.ZP.rotationDegrees(180));
 
             double offset = Math.sin(Util.getMillis() / 500.0) * 0.1;
             poseStack.translate(0, offset, 0);

@@ -64,7 +64,7 @@ public class TextShowRender implements IFunctionalSubmitter {
         };
 
         PoseStack frozenPose = context.poseStack();
-        frozenPose.mulPose(Axis.ZP.rotationDegrees(180f));
+        frozenPose.rotate(Axis.ZP.rotationDegrees(180f));
         frozenPose.scale(2 / 300f * scale, -2 / 300f * scale, -2 / 300f);
         var sequence = Component.literal(text).getVisualOrderText();
         boolean clip = this.clipToScopeMask;

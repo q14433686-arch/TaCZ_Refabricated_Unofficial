@@ -20,7 +20,7 @@ public class KeyboardHandlerMixin {
     @Inject(method = "keyPress", at = @At("TAIL"))
     private void tacz$onKey(long window, int action, KeyEvent event, CallbackInfo ci) {
         if (window == this.minecraft.getWindow().handle()) {
-            InputEvent.Key.EVENT.invoker().onKey(new InputEvent.Key(event.key(), event.scancode(), action, event.modifiers()));
+            InputEvent.Key.EVENT.invoker().onKey(new InputEvent.Key(event.key(), event.keycode(), action, event.modifiers()));
         }
     }
 }

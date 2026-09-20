@@ -21,6 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.Level;
+import net.minecraft.util.Prediction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -253,7 +254,9 @@ public class ThrowableItem extends Item implements IThrowable, com.tacz.guns.api
             if (stack.isEmpty()) {
                 player.setItemInHand(InteractionHand.MAIN_HAND, detonator);
             } else if (!player.getInventory().add(detonator)) {
-                player.drop(detonator, false);
+                // 26.3: drop 第三参 Prediction 必填；此分支已在 !level.isClientSide()
+                // 内，是纯服务端发放起爆器的善后掉落 ⇒ SERVER_ONLY。
+                player.drop(detonator, false, Prediction.SERVER_ONLY);
             }
         }
         return true;

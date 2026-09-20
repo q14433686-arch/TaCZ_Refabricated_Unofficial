@@ -1,16 +1,17 @@
 package com.tacz.guns.client.render.scope;
 
 import com.mojang.blaze3d.ProjectionType;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -144,16 +145,12 @@ public final class ScopeFinalOverlayState {
         GpuBufferSlice previousProjection = RenderSystem.getProjectionMatrixBuffer();
         ProjectionType previousProjectionType = RenderSystem.getProjectionType();
         Matrix4fStack modelView = RenderSystem.getModelViewStack();
-        GpuTextureView previousColorOverride = RenderSystem.outputColorTextureOverride;
-        GpuTextureView previousDepthOverride = RenderSystem.outputDepthTextureOverride;
 
         modelView.pushMatrix();
         modelView.set(transform.modelView());
         RenderSystem.setProjectionMatrix(transform.projection(), transform.projectionType());
-        RenderSystem.outputColorTextureOverride = main.getColorTextureView();
-        RenderSystem.outputDepthTextureOverride = main.getDepthTextureView();
         try {
-            // 26.2：storage 每次全新（prepareFrame 消费它，且 endFrame/clear 已被移除）；
+            // storage 每次全新（prepareFrame 消费它，且 endFrame/clear 已被移除）；
             // dispatcher 用官方共享实例 —— 此刻 LevelRenderer#render 已返回，
             // 它的 PreparedFrame 已 close，renderAllFeatures 可安全重入。
             SubmitNodeStorage storage = new SubmitNodeStorage();
@@ -162,7 +159,23 @@ public final class ScopeFinalOverlayState {
                 ringCollector.submitCustomGeometry(new PoseStack(), draw.renderType(),
                         (entryPose, consumer) -> draw.snapshot().write(consumer));
             }
-            minecraft.gameRenderer.featureRenderDispatcher().renderAllFeatures(storage);
+            // 【26.3 输出目标改由 RenderPass 显式携带】
+            // 26.2 靠两个全局量 RenderSystem.output{Color,Depth}TextureOverride 把
+            // 这一遍重定向到主目标；26.3 删掉了它们，改成"谁绘制谁自己开 RenderPass 并
+            // 在创建时指定颜色/深度附件"。renderAllFeatures 相应地从
+            // (SubmitNodeStorage) 变成 static (RenderPass, PreparedFrame)。
+            // 下面的写法对齐 Iris 26.3 HandRenderer 的同款调用序列
+            // （prepareFrame → createRenderPass(主目标的两个 view) → renderAllFeatures → frame.close）。
+            var dispatcher = minecraft.gameRenderer.featureRenderDispatcher();
+            var frame = dispatcher.prepareFrame(storage);
+            try (RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
+                    () -> "TACZ Scope Final Ocular Ring",
+                    main.getColorTextureView(), java.util.Optional.empty(),
+                    main.getDepthTextureView(), java.util.OptionalDouble.empty())) {
+                FeatureRenderDispatcher.renderAllFeatures(renderPass, frame);
+            } finally {
+                frame.close();
+            }
             if (!loggedRendered) {
                 loggedRendered = true;
                 GunMod.LOGGER.info("[TACZ Scope] Redrew ocular ring after shader-pack PIP composite.");
@@ -174,8 +187,6 @@ public final class ScopeFinalOverlayState {
                 GunMod.LOGGER.warn("[TACZ Scope] Post-composite ocular ring redraw failed; skipping.", e);
             }
         } finally {
-            RenderSystem.outputColorTextureOverride = previousColorOverride;
-            RenderSystem.outputDepthTextureOverride = previousDepthOverride;
             modelView.popMatrix();
             RenderSystem.setProjectionMatrix(previousProjection, previousProjectionType);
         }

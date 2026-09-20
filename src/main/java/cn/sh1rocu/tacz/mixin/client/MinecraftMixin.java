@@ -21,6 +21,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
@@ -118,7 +119,11 @@ public abstract class MinecraftMixin {
         eventRef.set(inputEvent);
         if (inputEvent.isCanceled()) {
             if (inputEvent.shouldSwingHand()) {
-                this.player.swing(InteractionHand.MAIN_HAND);
+                // 26.3: swing(hand) 没了，签名变成 swing(hand, SwingAnimation, boolean)。
+                // 取值对齐 vanilla 在本方法里的原生调用：主手物品的攻击动画 + 不回传
+                // （swing 的第三参 sendToSwingingEntity=false，见 Minecraft#continueAttack）。
+                this.player.swing(InteractionHand.MAIN_HAND,
+                        this.player.getItemInHand(InteractionHand.MAIN_HAND).getAttackAnimation(), false);
             }
             ci.cancel();
         }
@@ -135,14 +140,16 @@ public abstract class MinecraftMixin {
 
         if (inputEvent.get().isCanceled()) {
             if (inputEvent.get().shouldSwingHand())
-                this.player.swing(InteractionHand.MAIN_HAND);
+                // 26.3: 同 continueAttack，对齐 vanilla startAttack 里的原生调用。
+                this.player.swing(InteractionHand.MAIN_HAND,
+                        this.player.getItemInHand(InteractionHand.MAIN_HAND).getAttackAnimation(), false);
 
             cir.setReturnValue(flag);
         }
     }
 
-    @WrapWithCondition(method = "startAttack", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;swing(Lnet/minecraft/world/InteractionHand;)V"))
-    private boolean tacz$swingHandIfEventPermits(LocalPlayer instance, InteractionHand interactionHand, @Share("inputEvent") LocalRef<InputEvent.InteractionKeyMappingTriggered> inputEvent) {
+    @WrapWithCondition(method = "startAttack", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;swing(Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/component/SwingAnimation;Z)Z"))
+    private boolean tacz$swingHandIfEventPermits(LocalPlayer instance, InteractionHand interactionHand, SwingAnimation swingAnimation, boolean sendToSwingingEntity, @Share("inputEvent") LocalRef<InputEvent.InteractionKeyMappingTriggered> inputEvent) {
         return inputEvent.get() == null || inputEvent.get().shouldSwingHand();
     }
 
@@ -152,7 +159,9 @@ public abstract class MinecraftMixin {
 
         if (inputEvent.get().isCanceled()) {
             if (inputEvent.get().shouldSwingHand())
-                this.player.swing(hand);
+                // 26.3: 使用（右键）路径 vanilla 取的是 getInteractAnimation，
+                // 与攻击路径的 getAttackAnimation 不同，见 Minecraft#startUseItem。
+                this.player.swing(hand, this.player.getItemInHand(hand).getInteractAnimation(), false);
 
             ci.cancel();
         }

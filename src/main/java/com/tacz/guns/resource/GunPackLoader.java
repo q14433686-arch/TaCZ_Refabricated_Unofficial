@@ -14,14 +14,17 @@ import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
 import net.fabricmc.loader.api.metadata.version.VersionPredicate;
 import net.minecraft.SharedConstants;
+import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.FilePackResources;
 import net.minecraft.server.packs.PackLocationInfo;
+import net.minecraft.server.packs.PackMetadataResources;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.metadata.pack.PackMetadataSection;
 import net.minecraft.util.InclusiveRange;
 import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackCompatibility;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.repository.RepositorySource;
@@ -45,11 +48,20 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
+import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
 public enum GunPackLoader implements RepositorySource {
     INSTANCE;
     private static final Marker MARKER = MarkerFactory.getMarker("GunPackFinder");
+    /**
+     * 26.3 起 {@code Pack.ResourcesSupplier#openResources} 需要一个 {@link Pack.Metadata}。
+     * 枪包的 zip 走的是"直接打开主 pack"这条路，不读 pack.mcmeta、也不使用 overlay，
+     * 所以这里给一个空描述、标记为兼容、无附加 feature flag、无 overlay 的占位值。
+     * 它只影响 {@code openResources} 内部要不要再去叠加 overlay 子 pack（我们不需要）。
+     */
+    private static final Pack.Metadata EMPTY_PACK_METADATA = new Pack.Metadata(
+            Component.empty(), PackCompatibility.COMPATIBLE, FeatureFlagSet.of(), List.of());
     public PackType packType;
     private boolean firstLoad = true;
 
@@ -107,19 +119,34 @@ public enum GunPackLoader implements RepositorySource {
                     }
                 };
             } else {
+                // 26.3: Pack.ResourcesSupplier 的 openPrimary/openFull 换成了
+                // openMetadata(location) / openResources(location, metadata)，后者返回 Stream。
+                // 这里要的就是"主 pack 本体"，取 openResources 的第一个元素即可
+                // （overlay 由 metadata.overlays() 驱动，枪包不使用）。
+                PackLocationInfo zipLocation = new PackLocationInfo(gunPack.name, Component.literal(gunPack.name), PackSource.DEFAULT, Optional.empty());
                 packResources = new FilePackResources.FileResourcesSupplier(gunPack.path)
-                        .openPrimary(new PackLocationInfo(gunPack.name, Component.literal(gunPack.name), PackSource.DEFAULT, Optional.empty()));
+                        .openResources(zipLocation, EMPTY_PACK_METADATA)
+                        .findFirst()
+                        .orElse(null);
+                if (packResources == null) {
+                    GunMod.LOGGER.warn(MARKER, "Failed to open gun pack archive {}, skipped.", gunPack.path);
+                    continue;
+                }
             }
             extensionPacks.add(packResources);
         }
 
 
         PackLocationInfo location = new PackLocationInfo("tacz_resources", Component.literal("TACZ Resources"), PackSource.BUILT_IN, Optional.empty());
+        // 26.3: ResourcesSupplier 从 openPrimary/openFull 改成 openMetadata/openResources。
+        // openMetadata 只用来读 pack.mcmeta（返回 PackMetadataResources），
+        // openResources 返回真正参与资源查找的 pack 流。两者都交给同一个
+        // DelegatingPackResources 实例工厂，行为与 26.2 的 openPrimary 一致。
         Pack.ResourcesSupplier resourcesSupplier = new Pack.ResourcesSupplier() {
-            @Override
-            public PackResources openPrimary(PackLocationInfo locationInfo) {
+            private PackResources open(PackLocationInfo locationInfo) {
                 return new DelegatingPackResources(locationInfo.id(), false, new PackMetadataSection(Component.translatable("tacz.resources.modresources"),
                         new InclusiveRange<>(SharedConstants.getCurrentVersion().packVersion(packType))), extensionPacks) {
+                    @Override
                     public IoSupplier<InputStream> getRootResource(String... paths) {
                         if (paths.length == 1 && paths[0].equals("pack.png")) {
                             Path logoPath = getModIcon("tacz");
@@ -133,8 +160,13 @@ public enum GunPackLoader implements RepositorySource {
             }
 
             @Override
-            public PackResources openFull(PackLocationInfo locationInfo, Pack.Metadata metadata) {
-                return openPrimary(locationInfo);
+            public PackMetadataResources openMetadata(PackLocationInfo locationInfo) {
+                return open(locationInfo);
+            }
+
+            @Override
+            public Stream<PackResources> openResources(PackLocationInfo locationInfo, Pack.Metadata metadata) {
+                return Stream.of(open(locationInfo));
             }
         };
         return Pack.readMetaAndCreate(location, resourcesSupplier, packType, new PackSelectionConfig(true, Pack.Position.BOTTOM, false));

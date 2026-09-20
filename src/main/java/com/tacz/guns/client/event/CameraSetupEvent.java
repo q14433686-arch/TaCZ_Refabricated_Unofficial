@@ -69,7 +69,7 @@ public class CameraSetupEvent {
         if (player == null) {
             return;
         }
-        ItemStack stack = KeepingItemRenderer.getRenderer().getCurrentItem();
+        ItemStack stack = KeepingItemRenderer.getCurrentRenderItem();
         // 尝试调用物品的自定义相机动画
         if (BuiltinItemRendererRegistry.INSTANCE.get(stack.getItem()) instanceof AnimateGeoItemRenderer<?, ?> renderer) {
             renderer.applyLevelCameraAnimation(event, stack, player);
@@ -85,7 +85,7 @@ public class CameraSetupEvent {
         if (player == null) {
             return;
         }
-        ItemStack stack = KeepingItemRenderer.getRenderer().getCurrentItem();
+        ItemStack stack = KeepingItemRenderer.getCurrentRenderItem();
         // 尝试调用物品的自定义相机动画
         if (BuiltinItemRendererRegistry.INSTANCE.get(stack.getItem()) instanceof AnimateGeoItemRenderer<?, ?> renderer) {
             renderer.applyItemInHandCameraAnimation(event, stack, player);
@@ -98,7 +98,7 @@ public class CameraSetupEvent {
         }
         Entity entity = event.getCamera().entity();
         if (entity instanceof LivingEntity livingEntity) {
-            ItemStack stack = KeepingItemRenderer.getRenderer().getCurrentItem();
+            ItemStack stack = KeepingItemRenderer.getCurrentRenderItem();
             if (!(stack.getItem() instanceof IGun iGun)) {
                 float fov = WORLD_FOV_DYNAMICS.update((float) event.getFOV());
                 event.setFOV(fov);
@@ -149,7 +149,7 @@ public class CameraSetupEvent {
         }
         Entity entity = event.getCamera().entity();
         if (entity instanceof LivingEntity livingEntity) {
-            ItemStack stack = KeepingItemRenderer.getRenderer().getCurrentItem();
+            ItemStack stack = KeepingItemRenderer.getCurrentRenderItem();
             if (!(stack.getItem() instanceof IGun iGun)) {
                 float fov = ITEM_MODEL_FOV_DYNAMICS.update((float) event.getFOV());
                 event.setFOV(fov);

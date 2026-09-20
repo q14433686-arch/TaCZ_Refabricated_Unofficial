@@ -6,8 +6,8 @@
     "taczmeshloader"
   ],
   "version": "${version}",
-  "name": "[UNOFFICIAL] TaCZ Refabricated (26.2 R3-hotfix2)",
-  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. R3-hotfix2 for Minecraft 26.2 adds a built-in port of VellEagle's TacZ Mesh Loader [TML] for high-poly 'mesh' gun models with first-person GPU static baking (provides 'taczmeshloader'), in-scope clipping of arms/reticle/sight text under shaders, plus scope text, inspect-animation and PIP fixes; it also fixes the Mac/Iris world-transparency path by limiting scope-mask injection to HAND programs and assigning a non-conflicting sampler unit, and removes several recipe, whitelist, sound-resource and Iris pipeline warnings. The R3-hotfix2 release neutralizes the zRot=±0.1 rad that vanilla 1.21.9+ writes into first-person arms, restoring the authored hand-to-gun alignment for every first-person gun view. R2 previously added the stable replaceable-ammunition and named gameplay-hook surfaces, Carry On 2.11 workbench compatibility, built-in JEI/REI Ammo Query, and post-sync recipe-viewer refreshes. It is not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.2.R3-hotfix2' build metadata so existing gun-pack version requirements continue to work.",
+  "name": "[UNOFFICIAL] TaCZ Refabricated (26.3 R1)",
+  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. R1 for Minecraft 26.3 is the first build of the 26.3 line, ported from the 26.2 R3-hotfix2 source: it migrates the renderer to Mojang's RenderPearl backend (com.mojang.blaze3d.* -> com.mojang.renderpearl.*), follows vanilla's split of ItemInHandRenderer into FirstPersonHandsAndItems plus FirstPersonHandsAndItemsRenderer, and updates the scope shaders to ShaderC #include. Compatibility integrations for REI, Zoomify and Shoulder Surfing Reloaded are DISABLED in this build because those mods have no Minecraft 26.3 release yet; they are not removed and return once upstream ships 26.3 builds. R1 also reworks the Iris 26.3 scope-mask mode detection, adds pipeline prewarming, migrates block loot tables to the 26.3 schema, parses gun-smith recipe ingredients lazily so legacy gun packs no longer break world loading, and opts vanilla recipe serializers into Fabric recipe sync so client JEI works on dedicated servers without JEI. Verified in-game by the maintainer (vanilla, Iris, dedicated server) in September 2026; see docs/CHANGELOG_26_3_R1.md for what is and is not covered. It is not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.3.R1' build metadata so existing gun-pack version requirements continue to work.",
   "authors": [
     "Sh1roCu"
   ],
@@ -32,12 +32,6 @@
     ],
     "jei_mod_plugin": [
       "com.tacz.guns.compat.jei.GunModPlugin"
-    ],
-    "rei_client": [
-      "cn.sh1rocu.tacz.compat.rei.REIClientPlugin"
-    ],
-    "rei_common": [
-      "cn.sh1rocu.tacz.compat.rei.REIPlugin"
     ]
   },
   "custom": {
@@ -58,11 +52,11 @@
   ],
   "accessWidener": "tacz.accesswidener",
   "depends": {
-    "fabricloader": ">=0.19.3",
+    "fabricloader": ">=0.19.5",
     "fabric-api": "*",
-    "minecraft": "26.2",
+    "minecraft": "26.3",
     "java": ">=25",
-    "forgeconfigapiport": ">=26.2.1"
+    "forgeconfigapiport": ">=26.3.0"
   },
   "suggests": {
     "carryon": ">=2.11.0"

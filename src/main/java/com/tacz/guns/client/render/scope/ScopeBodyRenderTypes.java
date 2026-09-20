@@ -1,10 +1,11 @@
 package com.tacz.guns.client.render.scope;
 
-import com.mojang.blaze3d.pipeline.BindGroupLayout;
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.ColorTargetState;
-import com.mojang.blaze3d.pipeline.DepthStencilState;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
+import com.mojang.renderpearl.api.pipeline.UniformType;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
+import com.mojang.renderpearl.api.pipeline.DepthStencilState;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.fabricmc.api.EnvType;
@@ -72,11 +73,49 @@ public final class ScopeBodyRenderTypes {
 
     /** 掩码采样器的 bind group layout。仿 vanilla DISSOLVE_MASK_SAMPLER 的做法自建。 */
     private static final BindGroupLayout MASK_SAMPLER_LAYOUT =
-            BindGroupLayout.builder().withSampler(MASK_SAMPLER).build();
+            BindGroupLayout.builder()
+                    // 26.3: withSampler(name) 没了，采样器统一并入 withUniform，
+                    // 由 UniformType.COMBINED_IMAGE_SAMPLER 表达「图像+采样器」组合。
+                    .withUniform(MASK_SAMPLER, UniformType.COMBINED_IMAGE_SAMPLER)
+                    .build();
+
+    /**
+     * 「本条 draw 是 mode 2（镜外 discard）」的标记采样器（2026-09-20，26.3 修复）。
+     *
+     * <p>只挂在<b>反向裁剪</b>（准星一族）的管线上：声明 + 绑定同一张掩码纹理，
+     * 着色器从不采样它 —— 它的唯一用途是让 {@code GlRenderPass#samplers} 这张
+     * 按 draw 携带的绑定表多一个 key，供
+     * {@code IrisScopeMaskState#resolveMode} 在管线对象身份不可考的 26.3 上
+     * 判别「这是准星 draw（镜外 discard）还是镜身 draw（镜内 discard）」。
+     * 无光影路径完全不感知它（{@code scope_body.fsh} 靠 SCOPE_MASK_INVERT define，
+     * 绑定一个用不到的采样器对 vanilla 编译无害 —— 声明即绑定，r52 的教训反过来用）。</p>
+     */
+    private static final String MODE2_SAMPLER = "ScopeMaskMode2Sampler";
+
+    /** 标记采样器的 bind group layout，与掩码 layout 并列声明。 */
+    private static final BindGroupLayout MODE2_SAMPLER_LAYOUT =
+            BindGroupLayout.builder()
+                    .withUniform(MODE2_SAMPLER, UniformType.COMBINED_IMAGE_SAMPLER)
+                    .build();
 
     /** 供 meshloader 的 GPU 裁剪管线复用（同一个 layout 实例 = 同一个 sampler 名）。 */
     public static BindGroupLayout maskSamplerLayout() {
         return MASK_SAMPLER_LAYOUT;
+    }
+
+    /**
+     * 【光影开镜崩溃预热】把本类的全部自定义管线交给 {@link ScopePipelinePrewarm}
+     * 提前编进 vanilla 编译缓存（详见该类的类注释 2026-09-20 一案）。
+     * 每 tick 由预热器回调；已编译时只是几次 map 查询。
+     */
+    public static void prewarmCompiledPipelines() {
+        ScopePipelinePrewarm.touch(CLIPPED_PIPELINE);
+        ScopePipelinePrewarm.touch(RETICLE_PIPELINE);
+        ScopePipelinePrewarm.touch(RETICLE_EMISSIVE_PIPELINE);
+        ScopePipelinePrewarm.touch(EMISSIVE_PIPELINE);
+        ScopePipelinePrewarm.touch(FLASH_TRANSLUCENT_CLIPPED_PIPELINE);
+        ScopePipelinePrewarm.touch(FLASH_SWIRL_CLIPPED_PIPELINE);
+        ScopePipelinePrewarm.touch(FINAL_OCULAR_RING_PIPELINE);
     }
 
     /** 掩码采样器在 bind group 里的名字，供外部 pass 手动绑定时对齐。 */
@@ -91,7 +130,15 @@ public final class ScopeBodyRenderTypes {
                 .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
                 .withShaderDefine("ALPHA_CUTOUT", 0.1F)
                 .withBindGroupLayout(BindGroupLayouts.SAMPLER1)
-                .withCull(false);
+                .withCull(false)
+                // 26.3 硬性要求：管线的 color target 数必须与 RenderPass 的颜色附件数
+                // 一致，否则 FrontendRenderPass#setPipeline 抛
+                // "Render pass color attachment count must match pipeline color
+                // target state count."（2026-09-18 实机日志）。26.2 可以不写、
+                // 由引擎兜底，26.3 不再兜底 —— vanilla ENTITY_CUTOUT 自己也显式写了
+                // .withColorTargetState(ColorTargetState.DEFAULT)（RenderPipelines:508）。
+                // 本管线是 ENTITY_CUTOUT 的抄本，故取同一个 DEFAULT（不透明，无混合）。
+                .withColorTargetState(ColorTargetState.DEFAULT);
         if (emissive) {
             // 发光准星不应受面法线/方向光影响；否则会随玩家朝向变亮变暗。
             builder = builder.withShaderDefine("EMISSIVE")
@@ -105,7 +152,10 @@ public final class ScopeBodyRenderTypes {
                     .withBindGroupLayout(MASK_SAMPLER_LAYOUT);
             if (invert) {
                 // 准星版：只保留镜内（上游 stencilFunc(EQUAL, i+1)）
-                builder = builder.withShaderDefine("SCOPE_MASK_INVERT");
+                builder = builder.withShaderDefine("SCOPE_MASK_INVERT")
+                        // 反向裁剪 = mode 2：挂上标记采样器，供光影下
+                        // IrisScopeMaskState 按 draw 判别（见 MODE2_SAMPLER 注释）。
+                        .withBindGroupLayout(MODE2_SAMPLER_LAYOUT);
             }
         }
         return builder.build();
@@ -200,7 +250,7 @@ public final class ScopeBodyRenderTypes {
                     .withColorTargetState(new ColorTargetState(BlendFunction.ADDITIVE))
                     .withCull(false)
                     .withVertexBinding(0, com.mojang.blaze3d.vertex.DefaultVertexFormat.ENTITY)
-                    .withPrimitiveTopology(com.mojang.blaze3d.PrimitiveTopology.QUADS)
+                    .withPrimitiveTopology(com.mojang.renderpearl.api.pipeline.PrimitiveTopology.QUADS)
                     .withDepthStencilState(DepthStencilState.DEFAULT)
                     .build();
 
@@ -245,7 +295,10 @@ public final class ScopeBodyRenderTypes {
                     .withBindGroupLayout(BindGroupLayouts.SAMPLER1)
                     .withCull(false)
                     .withDepthStencilState(new DepthStencilState(
-                            com.mojang.blaze3d.platform.CompareOp.ALWAYS_PASS, false))
+                            com.mojang.renderpearl.api.pipeline.CompareOp.ALWAYS_PASS, false))
+                    // 26.3 必须显式声明 color target（理由同 buildPipeline）。
+                    // 这条同样是 ENTITY_CUTOUT 抄本，只改了深度状态，故仍用 DEFAULT。
+                    .withColorTargetState(ColorTargetState.DEFAULT)
                     .build();
 
     /**
@@ -351,14 +404,14 @@ public final class ScopeBodyRenderTypes {
     public static RenderType reticle(Identifier texture) {
         ensureIrisCompatibility();
         return RETICLE_CACHE.computeIfAbsent(texture,
-                tex -> create("tacz_scope_reticle_clipped", RETICLE_PIPELINE, tex, true));
+                tex -> create("tacz_scope_reticle_clipped", RETICLE_PIPELINE, tex, true, true));
     }
 
     /** 发光准星：反向裁剪 + 满亮/无方向光。 */
     public static RenderType reticleEmissive(Identifier texture) {
         ensureIrisCompatibility();
         return RETICLE_EMISSIVE_CACHE.computeIfAbsent(texture,
-                tex -> create("tacz_scope_reticle_emissive_clipped", RETICLE_EMISSIVE_PIPELINE, tex, true));
+                tex -> create("tacz_scope_reticle_emissive_clipped", RETICLE_EMISSIVE_PIPELINE, tex, true, true));
     }
 
     /** 发光准星：无裁剪回退 + 满亮/无方向光。 */
@@ -522,6 +575,10 @@ public final class ScopeBodyRenderTypes {
     }
 
     private static RenderType create(String name, RenderPipeline pipeline, Identifier tex, boolean bindMask) {
+        return create(name, pipeline, tex, bindMask, false);
+    }
+
+    private static RenderType create(String name, RenderPipeline pipeline, Identifier tex, boolean bindMask, boolean bindMode2Marker) {
         var builder = RenderSetup.builder(pipeline)
                 // Sampler0 = 瞄具自身贴图。r52 教训：管线声明的每个 sampler
                 // 都必须在这里绑定，少一个就在 drawIndexed 时抛 Missing sampler。
@@ -530,6 +587,11 @@ public final class ScopeBodyRenderTypes {
             // 掩码采样器 = 目镜掩码。指向 ScopeMaskTextureHandle 注册的那张，
             // 它每帧被刷新为当前掩码 target 的 view。
             builder = builder.withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID);
+        }
+        if (bindMode2Marker) {
+            // 标记采样器：绑的还是同一张掩码纹理，着色器从不采样它。
+            // 管线声明了就必须绑（同一条 r52 教训）。
+            builder = builder.withTexture(MODE2_SAMPLER, ScopeMaskTextureHandle.ID);
         }
         return RenderType.create(name,
                 builder

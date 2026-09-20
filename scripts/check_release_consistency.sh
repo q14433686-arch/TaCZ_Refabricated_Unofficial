@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# 三分支版本一致性自检。
+# 多分支版本一致性自检。
 #
 # 用法：
 #   bash scripts/check_release_consistency.sh              # 检查工作区所在分支
 #   bash scripts/check_release_consistency.sh --staged     # 检查暂存区内容（pre-commit 用）
-#   bash scripts/check_release_consistency.sh --all        # 检查远端全部三条分支
+#   bash scripts/check_release_consistency.sh --all        # 检查远端全部发布分支
 #   bash scripts/check_release_consistency.sh --branch X   # 只查某一条分支
 #   bash scripts/check_release_consistency.sh --links      # 附加：校验导航表链接可达性
 #   bash scripts/check_release_consistency.sh --strict      # 发布门禁：不一致即退出码 1
@@ -26,7 +26,10 @@
 set -uo pipefail
 
 BASE_URL="${TACZ_BASE_URL:-https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial}"
-IFS=',' read -r -a BRANCHES <<<"${TACZ_BRANCHES:-26.2(main),26.1.2,1.21.11}"
+# 分支清单。**第一项同时充当 DEFAULT_BRANCH**（--links 模式从它的 README 里抓
+# release tag 做可达性校验），所以新线要追加在后面，不要插到最前面 ——
+# 26.3 尚未发布、README 里没有任何 release tag。
+IFS=',' read -r -a BRANCHES <<<"${TACZ_BRANCHES:-26.2(main),26.3,26.1.2,1.21.11}"
 DEFAULT_BRANCH="${BRANCHES[0]}"
 
 # 可选的 hotfix 后缀：'R2-hotfix2' 这类发布版的身份写在 build metadata 里。

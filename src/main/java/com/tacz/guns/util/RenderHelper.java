@@ -94,7 +94,11 @@ public final class RenderHelper {
         if (player == null) {
             return;
         }
-        AvatarRenderer<?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getPlayerRenderer(player);
+        // 26.3: EntityRenderDispatcher#getPlayerRenderer(player) 没了；玩家渲染器现在按
+        // PlayerModelType 分表存放，统一走泛型的 getRenderer(entity)（内部对
+        // AbstractClientPlayer 分派到 getAvatarRenderer）。
+        AvatarRenderer<?> renderer = (AvatarRenderer<?>) Minecraft.getInstance()
+                .getEntityRenderDispatcher().getRenderer(player);
         var skinTexture = player.getSkin().body().texturePath();
         // 【镜内裁手】高倍镜掩码就绪时，把手臂提交改走「镜内 discard」管线。
         // 手臂的 RenderType 是 AvatarRenderer#renderHand 内部自己挑的

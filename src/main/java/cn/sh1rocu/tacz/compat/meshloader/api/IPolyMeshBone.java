@@ -54,13 +54,13 @@ public interface IPolyMeshBone {
     default void applyTransform(PoseStack poseStack) {
         poseStack.translate(getPivotX() / 16.0, getPivotY() / 16.0, getPivotZ() / 16.0);
         if (getRotZ() != 0f) {
-            poseStack.mulPose(Axis.ZP.rotation(getRotZ()));
+            poseStack.rotate(Axis.ZP.rotation(getRotZ()));
         }
         if (getRotY() != 0f) {
-            poseStack.mulPose(Axis.YP.rotation(getRotY()));
+            poseStack.rotate(Axis.YP.rotation(getRotY()));
         }
         if (getRotX() != 0f) {
-            poseStack.mulPose(Axis.XP.rotation(getRotX()));
+            poseStack.rotate(Axis.XP.rotation(getRotX()));
         }
         float sx = getScaleX(), sy = getScaleY(), sz = getScaleZ();
         if (sx != 1f || sy != 1f || sz != 1f) {

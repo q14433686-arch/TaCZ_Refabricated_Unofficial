@@ -333,7 +333,7 @@ Fix A 构建，一局内两档、中间重载。
 
 **Mac 送测 RELEASE**：测试包必须用 Fix A（含 `b7fce25`）且 CI 为绿的提交构建；
 `11b0032`（桥版 HAND 过滤实机未生效）作废。测试文档见
-`docs/mac-shader-transparency-test.md`（第二节 2 分钟版先行）。
+`docs/archive/mac-shader-transparency-test.md`（第二节 2 分钟版先行）。
 
 ---
 

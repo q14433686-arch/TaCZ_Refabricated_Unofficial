@@ -34,6 +34,7 @@ import com.tacz.guns.resource.pojo.data.gun.ExtraDamage.DistanceDamagePair;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.gun.Ignite;
 import com.tacz.guns.util.EntityUtil;
+import com.tacz.guns.util.DamageCooldownUtil;
 import com.tacz.guns.util.ExplodeUtil;
 import com.tacz.guns.util.TacHitResult;
 import com.tacz.guns.util.block.BlockRayTrace;
@@ -463,8 +464,8 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         }
         // 爆炸逻辑
         if (this.explosion) {
-            // 取消无敌时间
-            parts.core().invulnerableTime = 0;
+            // 取消受击间隔
+            DamageCooldownUtil.clear(parts.core());
             ExplodeUtil.createExplosion(this.getOwner(), this, this.explosionDamage, this.explosionRadius, this.explosionKnockback, this.explosionDestroyBlock, result.getLocation());
         }
         // 只对 LivingEntity 执行击杀判定
@@ -592,12 +593,13 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         // 穿甲伤害和普通伤害的比例计算
         float armorDamagePercent = Mth.clamp(this.armorIgnore, 0.0F, 1.0F);
         float normalDamagePercent = 1 - armorDamagePercent;
-        // 取消无敌时间
-        parts.core().invulnerableTime = 0;
+        // 取消受击间隔（26.3 起不止 invulnerableTime，见 DamageCooldownUtil）
+        DamageCooldownUtil.clear(parts.core());
         // 普通伤害
         parts.hitPart().hurt(source1, damage * normalDamagePercent);
-        // 取消无敌时间
-        parts.core().invulnerableTime = 0;
+        // 取消受击间隔：上一句若真打中，vanilla 已把 damageCooldownTime 重置回 20，
+        // 穿甲那一段必须重新清一次，否则会被差值闸吃掉。
+        DamageCooldownUtil.clear(parts.core());
         // 穿甲伤害
         parts.hitPart().hurt(source2, damage * armorDamagePercent);
     }

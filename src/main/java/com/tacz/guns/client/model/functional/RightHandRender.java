@@ -30,7 +30,7 @@ public class RightHandRender implements IFunctionalSubmitter {
             return;
         }
         PoseStack frozenPose = context.poseStack();
-        frozenPose.mulPose(Axis.ZP.rotationDegrees(180f));
+        frozenPose.rotate(Axis.ZP.rotationDegrees(180f));
         int light = context.light();
         context.add(collector -> {
             PoseStack taskPose = new PoseStack();
@@ -46,7 +46,7 @@ public class RightHandRender implements IFunctionalSubmitter {
             if (!bedrockGunModel.getRenderHand()) {
                 return;
             }
-            poseStack.mulPose(Axis.ZP.rotationDegrees(180f));
+            poseStack.rotate(Axis.ZP.rotationDegrees(180f));
             Matrix3f normal = new Matrix3f(poseStack.last().normal());
             Matrix4f pose = new Matrix4f(poseStack.last().pose());
             //和枪械模型共用顶点缓冲的都需要代理到渲染结束后渲染

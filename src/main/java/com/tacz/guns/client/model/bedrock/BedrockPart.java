@@ -83,15 +83,15 @@ public class BedrockPart {
         poseStack.translate(this.offsetX, this.offsetY, this.offsetZ);
         poseStack.translate((this.x / 16.0F), (this.y / 16.0F), (this.z / 16.0F));
         if (this.zRot != 0.0F) {
-            poseStack.mulPose(Axis.ZP.rotation(this.zRot));
+            poseStack.rotate(Axis.ZP.rotation(this.zRot));
         }
         if (this.yRot != 0.0F) {
-            poseStack.mulPose(Axis.YP.rotation(this.yRot));
+            poseStack.rotate(Axis.YP.rotation(this.yRot));
         }
         if (this.xRot != 0.0F) {
-            poseStack.mulPose(Axis.XP.rotation(this.xRot));
+            poseStack.rotate(Axis.XP.rotation(this.xRot));
         }
-        poseStack.mulPose(additionalQuaternion);
+        poseStack.rotate(additionalQuaternion);
         poseStack.scale(xScale, yScale, zScale);
     }
 

@@ -1,7 +1,10 @@
-# 兼容与移植过程记录（历史长文）
+# 兼容与移植过程记录（26.2 线历史长文）
+
+> 2026-09-21 自 `docs/COMPAT_AND_ROADMAP.md` 迁入 investigations/。内容为 26.2 线逐轮诊疗史；
+> 26.3 线的对应记录在 `SCOPE_26_3_VS_26_2_DELTA_ANALYSIS_2026_09_20.md`。
 
 > **当前上游对齐 / TODO / 剩余缺口结论请先看**
-> [`UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md`](investigations/UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md)。
+> [`UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md`](UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md)。
 > 本文保留逐轮诊疗史，早期章节可能被后文推翻，不宜只读局部结论。
 >
 > 本文只收录**已核对过的事实**（26.2 字节码、枪包实包、上游仓库），
@@ -1710,3 +1713,19 @@ x 分量（幅度 <0.5°、后续轮次未再复现），写入侧偶发机制�
   ONCE_UPPER 三层 fade snapshot 与播放态；用户复测**仍脏**，该实验已回退。
 - **当前状态**：按用户决定不再追查。26.2 保留 `e43a3a9d` 的既有兼容基线；
   26.1.2 已经正常，绝对不要把 26.2 失败的 GunDraw 硬复位反向移植过去。
+
+---
+
+## 26.3 暂缓适配项复查（2026-09-21，GitHub 源仓实拉；沙箱不通 Modrinth）
+
+| 依赖 | 26.3 状态（源仓证据） | 我们的适配面 | 结论 |
+|---|---|---|---|
+| **Voxy** | 分支 `263` 存在，`minecraft_version=26.3`，`mod_version=0.2.20-beta`；最新提交 2026-09-20「fix issues, not release ready」；无 GitHub Release | 3 个 `@Mixin(targets=…, remap=false)`（`AsyncNodeManager.tick`/`NodeCleaner.tick`/`VoxyRenderSystem.renderOpaque`/`ViewportSelector.getViewport`）+ `VoxyScopePipelineCompat` 反射的 9 个字段（`pipeline/viewportSelector/properties/nodeManager/nodeCleaner/traversal/modelService/geometryData` + `traversal.pipeline`）与 `frexStillHasWork`/`MDICSectionRenderer.FACTORY` —— **在 `263` 分支源码中逐一核对仍全部存在、签名未变** | **代码无需改**；作者尚未发布，等 Modrinth 出 26.3 构建后直接下载测试即可（所有注入都 `require=0`，不匹配也只是功能降级不崩） |
+| **Architectury** | 分支 `26.3` 存在，`minecraft_version=26.3`，最新提交 2026-09-18 | 仅作为 REI 依赖 | 就绪，但单独没用 |
+| **REI** | 仅 `26.1/26.2` 分支，26.2 最新提交 2026-07-29；无 26.3 | `compat/rei/**` 已从编译排除 | **继续等**；出了 26.3 后需恢复 gradle 依赖 + sourceSets + `fabric.mod.json` 入口，再按 26.3 API 变化修（JEI 那次的 recipe-sync 教训同样适用） |
+| **Carry On** | 仅 `26.1/26.2` 分支（26.2 range `>=26.2 <27`），最新提交 2026-08-04 | 3 个 `@Pseudo + targets=` mixin，无编译依赖 | 等作者；出了直接测 |
+| **Shoulder Surfing Reloaded** | 分支到 `26.1.2`，`master` 最新提交 2026-09-05；无 26.2/26.3 | `ShoulderSurfingCompatInner`/`Plugin` 已排除 | 等作者（连 26.2 都没有） |
+| **Zoomify** | 最新 release `2.16.1+26.2`（2026-06-16），`main` 自那以后无提交 | `ZoomifyCompatInner` 已排除 | 等作者，短期无迹象 |
+| **SimpleBedrockModel-Fabric** | 仅 `1.20.1/1.21.1` 分支（2.5.1，2026-08-17） | 已内置替代（`libs` 注释掉），高模路径在 26.3 已实机 PASS | 无需等 |
+
+已就位且用户实机在用（latest.log 01:06）：Fabric API 0.160.7、Iris 1.11.6、Sodium 0.9.2、JEI 31.1.0.13、Cloth 26.3.158、FCAP 26.3.0、ModMenu 21.0.0-beta.1、Jade 26.3.1。

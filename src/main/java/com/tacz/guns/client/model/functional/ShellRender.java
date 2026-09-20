@@ -127,9 +127,9 @@ public class ShellRender implements IFunctionalSubmitter {
         double xw = time * angularVelocity.x();
         double yw = time * angularVelocity.y();
         double zw = time * angularVelocity.z();
-        poseStack2.mulPose(Axis.XN.rotationDegrees((float) xw));
-        poseStack2.mulPose(Axis.YN.rotationDegrees((float) yw));
-        poseStack2.mulPose(Axis.ZP.rotationDegrees((float) zw));
+        poseStack2.rotate(Axis.XN.rotationDegrees((float) xw));
+        poseStack2.rotate(Axis.YN.rotationDegrees((float) yw));
+        poseStack2.rotate(Axis.ZP.rotationDegrees((float) zw));
         poseStack2.translate(0, -1.5, 0);
 
         model.render(poseStack2, transformType1, shellRenderType(transformType1, location), light, overlay);
@@ -222,9 +222,9 @@ public class ShellRender implements IFunctionalSubmitter {
             double y = (initialVelocity.y() + randomOffset.y()) * time + 0.5 * acceleration.y() * time * time;
             double z = (initialVelocity.z() + randomOffset.z()) * time + 0.5 * acceleration.z() * time * time;
             frozenShellPose.translate(-x, -y, z);
-            frozenShellPose.mulPose(Axis.XN.rotationDegrees((float) (time * angularVelocity.x())));
-            frozenShellPose.mulPose(Axis.YN.rotationDegrees((float) (time * angularVelocity.y())));
-            frozenShellPose.mulPose(Axis.ZP.rotationDegrees((float) (time * angularVelocity.z())));
+            frozenShellPose.rotate(Axis.XN.rotationDegrees((float) (time * angularVelocity.x())));
+            frozenShellPose.rotate(Axis.YN.rotationDegrees((float) (time * angularVelocity.y())));
+            frozenShellPose.rotate(Axis.ZP.rotationDegrees((float) (time * angularVelocity.z())));
             frozenShellPose.translate(0, -1.5, 0);
             debugShell(gunId, "submit", displayContext, data, frozenShellPose, x, y, z,
                     initialVelocity, acceleration, angularVelocity, texture, debug);

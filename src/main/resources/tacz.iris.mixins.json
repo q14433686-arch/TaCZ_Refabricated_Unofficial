@@ -10,6 +10,7 @@
   "client": [
     "IrisShaderCreatorMixin",
     "IrisGlCommandEncoderMixin",
+    "IrisFrontendRenderPassMixin",
     "IrisExtendedShaderMixin",
     "IrisScopeDimensionMixin",
     "IrisShadowResolutionMixin"

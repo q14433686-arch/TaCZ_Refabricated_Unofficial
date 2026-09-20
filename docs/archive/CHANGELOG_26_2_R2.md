@@ -136,7 +136,7 @@ R2-hotfix2 之后的主线增量。除下列条目各自标注「**待实测**�
   （GPL-3.0，`provides: taczmeshloader`），含本仓原创的第一人称 GPU 静态烘焙
   （逐骨骼常驻 VBO、光照 4 级量化烘焙、光影下走 vanilla RenderType 管道、
   光影开关翻转触发重烘、GPU 失败自动回退 collector）、世界语境顶点预算门
-  与 16 格近距全模豁免。文档：[MESH_LOADER.md](MESH_LOADER.md)。
+  与 16 格近距全模豁免。文档：[MESH_LOADER.md](../MESH_LOADER.md)。
 - **世界语境 GPU 烘焙（多人高模枪帧数保卫战）**：其他玩家第三人称手持、
   掉落物、展示框、展示台雕像共用常驻 VBO，每枪每帧只传 O(骨骼) 矩阵；
   光照按量化档 LRU 缓存（`MeshGpuLightCacheSize`）+ 每帧烘焙额度
@@ -236,12 +236,12 @@ R2-hotfix2 之后的主线增量。除下列条目各自标注「**待实测**�
   移动输入只驱动近战（修静止拉栓抖动）、`display_offset` / `entity_transform`、
   消耗品 Bedrock/Lua 渲染通道；并补上本仓一直缺失的
   `CombatProperties#getActionCount`（自带 Lua 一直在调它，运行期 `LuaError`、编译期无感）。
-  刻意**不**同步的条目与理由见 [SYNC_26_2_FROM_RENOVATED_2026_08_27.md](investigations/SYNC_26_2_FROM_RENOVATED_2026_08_27.md)。
+  刻意**不**同步的条目与理由见 [SYNC_26_2_FROM_RENOVATED_2026_08_27.md](../investigations/SYNC_26_2_FROM_RENOVATED_2026_08_27.md)。
 - **低倍镜准星恢复目镜约束**：`BedrockAttachmentModel` 把掩码的两个消费者
   （准星反向裁剪 / 镜身+视模裁剪）拆成 `reticleMaskable` 与 `bodyMaskable`。
   此前案例⑨ 第二轮的 `ScopeSightClipFix` 用同一个开关把「建掩码」和「准星裁剪」
   一起关掉，低倍/红点通道的准星因此能溢出镜片。新增开关 `ScopeSightReticleClip`
-  （默认开）可秒回退。详见 `COMPAT_AND_ROADMAP.md` 案例⑨ 第四轮。
+  （默认开）可秒回退。详见 `investigations/COMPAT_AND_ROADMAP_26_2_HISTORY.md` 案例⑨ 第四轮。
 - **镜内裁剪消除对 mixin 注册顺序的依赖（加固，非 bug 修复）**：
   `IrisGlCommandEncoderMixin` 在 `trySetup` 的 **HEAD** 记下当前 `GlRenderPass`；
   `IrisExtendedShaderMixin` 在 `iris$setupState` RETURN 由「无条件写 `tacz_ScopeMaskMode=0`」
@@ -254,7 +254,7 @@ R2-hotfix2 之后的主线增量。除下列条目各自标注「**待实测**�
   先后由 mixin config 注册顺序决定；tacz 在前时是坏行（mode 被 Iris 重绑程序写回 0）。
   本仓用户**未**报过镜内裁切失效、当前也**未**发作，本次只消除这个顺序依赖，
   **不**声称修好了任何用户反馈的现象。详细取证与「当前落在哪一行」的实机回填位见
-  [SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md](investigations/SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md)。
+  [SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md](../investigations/SCOPE_MASK_ORDER_INDEPENDENCE_2026_08_28.md)。
   （均为源码级，**未实机验证**：本执行环境无 JDK，未编译、未跑游戏。）
 - **光影 PBR 下第一人称枪身闪烁修复（在体 A/B 验证 PASS）**：
   Iris 26.x 的 `HandRenderer` 一帧跑两遍手部 pass（实心 + 半透明），Iris 对实心物品的
@@ -265,7 +265,7 @@ R2-hotfix2 之后的主线增量。除下列条目各自标注「**待实测**�
   仅第一人称、仅 PBR 开启时出现）。新增开关 `IrisHandPhaseSplitFix`（`[FIX]`，
   **默认开**）：视模只提交实心遍，复刻 Iris 对普通实心物品的语义；`false` 秒回退。
   2026-08-29 用户回报 **PASS**。证据链与验证记录见
-  [IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md](investigations/IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md)。
+  [IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md](../investigations/IRIS_HAND_PHASE_SPLIT_FLICKER_2026_08_29.md)。
 
 > 说明：本节只列本轮**亲手改过并核对过**的内容。相对 tag `26.2_R2_HOTFIX`
 > 的完整差异是 67 个文件（含此前已合并的 scope PIP / 兼容层等工作），
@@ -276,7 +276,7 @@ R2-hotfix2 之后的主线增量。除下列条目各自标注「**待实测**�
 - **可替换弹药源 API**：新增 `com.tacz.guns.api.item.ammo` 的 `AmmoSource`、
   `AmmoSourceProvider` 和 `AmmoSourceRegistry.EVENT`。provider 按注册顺序选择首个非 null
   source；没有 provider 时仍走原 `IItemHandler`。查询只读，消费结果防御性 clamp 到
-  `0..requestedAmount`，弹药箱耗尽会重置 ammo id。详见 [AMMO_SOURCE_API.md](AMMO_SOURCE_API.md)。
+  `0..requestedAmount`，弹药箱耗尽会重置 ammo id。详见 [AMMO_SOURCE_API.md](../AMMO_SOURCE_API.md)。
 - **具名 gameplay hooks**：将 P0/P1 的客户端开火、换弹、拉栓和服务端 shooter 路径公开为
   可读的受保护 hook；`GunAnimationStateContext#hasAmmoToConsumeInEntity(Entity)` 取代对
   `lambda$...` 的依赖。`LocalPlayerShoot.SHOOT_LOCKED_CONDITION` 仍是同一静态单例，身份比较
@@ -287,7 +287,7 @@ R2-hotfix2 之后的主线增量。除下列条目各自标注「**待实测**�
 - **多格工作台与 Carry On**：B/C companion 不再拥有 block entity、菜单或 `BlockId`；普通和
   Carry On `setBlockAndUpdate` 放置都会恢复 HEAD/UPPER。C 继续保存 `half=lower|upper`，但用本地
   `TableHalf` 避开 Carry On 对 vanilla `DoubleBlockHalf` 的拒绝。完整矩阵见
-  [CARRYON_COMPAT.md](CARRYON_COMPAT.md)。
+  [CARRYON_COMPAT.md](../CARRYON_COMPAT.md)。
 - **内置 JEI/REI Ammo Query**：共享 `AmmoQueryEntry` 按 `sort` 再 id 排序；每种至少被一把枪
   使用的弹药有一条查询，前 60 把枪固定显示，其他枪组成 viewer 的 overflow 轮换组。新增语言资源
   位于独立的 `assets/tacz_ammo_query/lang/` namespace，未截断既有完整语言 bundle。
@@ -315,7 +315,7 @@ R2-hotfix2 之后的主线增量。除下列条目各自标注「**待实测**�
 | 目标头 | `git fetch origin` 后 `origin/26.2(main)` 仍为 `99b472a6…`；没有目标基线之后的新提交。 |
 | JEI | `gradle.properties` 的 pin 是 **30.13.0.86**（并已纠正 `build.gradle` 的陈旧 `.80` 注释）。[Modrinth Maven metadata](https://api.modrinth.com/maven/maven/modrinth/jei/maven-metadata.xml) 和 [JEI Fabric source](https://github.com/mezz/JustEnoughItems/tree/1cb7814331c90c5e5b24b5055a0741ab65f58f58/Fabric) 核验了 `mezz.jei.fabric.events.JeiLifecycleEvents.AFTER_RECIPES_UPDATED` 为 `Event<Runnable>`；其 listener stop/start plugin lifecycle。 |
 | REI | `gradle.properties` 的 pin 是 **26.2.820**；[REI Maven metadata](https://maven.shedaniel.me/me/shedaniel/RoughlyEnoughItems-api-fabric/maven-metadata.xml) 可见该版本（更新的 26.2.821 同时存在）。[REI source](https://github.com/shedaniel/RoughlyEnoughItems/tree/2be20928abd9f1164fd9fd251268041c036b580f/runtime) 核验 `me.shedaniel.rei.RoughlyEnoughItemsCoreClient#reloadPlugins(MutableLong, ReloadStage)` 的两参数轻量入口；桥通过反射按该 descriptor 选择。 |
-| Carry On | [26.2 branch](https://github.com/Tschipp/CarryOn/tree/26.2) HEAD `e50ddbc1c7461f381c62af5f4960db9d97751d16`/2.11.1 与 [公开 Fabric 26.2 2.11.0 文件 metadata](https://api.modrinth.com/v2/project/joEfVgkn/version/EzG8eAml) 已核验。签名、`DoorBlock.HALF` value-class 检查、`setBlockAndUpdate`、`ItemStackTemplate#create()` 调用点和数据标签的详细记录在 [CARRYON_COMPAT.md](CARRYON_COMPAT.md)。建议版本因此是 `>=2.11.0`。 |
+| Carry On | [26.2 branch](https://github.com/Tschipp/CarryOn/tree/26.2) HEAD `e50ddbc1c7461f381c62af5f4960db9d97751d16`/2.11.1 与 [公开 Fabric 26.2 2.11.0 文件 metadata](https://api.modrinth.com/v2/project/joEfVgkn/version/EzG8eAml) 已核验。签名、`DoorBlock.HALF` value-class 检查、`setBlockAndUpdate`、`ItemStackTemplate#create()` 调用点和数据标签的详细记录在 [CARRYON_COMPAT.md](../CARRYON_COMPAT.md)。建议版本因此是 `>=2.11.0`。 |
 | `ItemStackTemplate` | [Fabric 26.1 migration note](https://fabricmc.net/2026/03/14/261.html) 说明其为不可变的 item/count/DataComponentPatch 模板；R2 不写模板组件，而在 Carry On 2.11 `CarriedObjectRender#drawBlock` 的 `.create()` 后修改真实 `ItemStack`，在 item-model 提交前恢复 `BlockId`。 |
 
 没有新增 Carry On、JEI 或 REI 依赖；Carry On 仅由 `suggests.carryon`、字符串 target、`@Pseudo`

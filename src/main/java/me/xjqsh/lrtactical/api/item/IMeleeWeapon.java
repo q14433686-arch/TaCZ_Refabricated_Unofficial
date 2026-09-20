@@ -243,9 +243,11 @@ public interface IMeleeWeapon extends ICustomItem {
         DamageSource source = attacker.damageSources().playerAttack(attacker);
         damage = EnchantmentHelper.modifyDamage(level, attacker.getMainHandItem(), target, source, damage);
 
-        // 清无敌帧：近战连招的间隔常常短于原版 10 tick 的无敌时间，
+        // 清受击间隔：近战连招的间隔常常短于原版 10 tick 的无敌时间，
         // 不清的话第二段会被静默吞掉。与本仓库 ExplodeUtil 的处理同源。
-        target.invulnerableTime = 0;
+        // 26.3: LivingEntity 的闸门换成 damageCooldownTime + lastHurt，
+        // 只清 invulnerableTime 对生物是空操作 —— 见 DamageCooldownUtil。
+        com.tacz.guns.util.DamageCooldownUtil.clear(target);
 
         // 26.2: Entity#hurt 返回 void，服务端判定入口是 hurtServer -> boolean（字节码确认）
         boolean hurt = target.hurtServer(level, source, damage);

@@ -15,7 +15,6 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
 
 import static com.tacz.guns.util.InputExtraCheck.isInGame;
 
@@ -23,7 +22,7 @@ import static com.tacz.guns.util.InputExtraCheck.isInGame;
 public class ShootKey {
     public static final KeyMapping SHOOT_KEY = new KeyMapping("key.tacz.shoot.desc",
             InputConstants.Type.MOUSE,
-            GLFW.GLFW_MOUSE_BUTTON_LEFT,
+            InputConstants.MOUSE_BUTTON_LEFT,
             TaCZKeyCategory.TACZ);
     private static boolean lastTimeShootSuccess = false;
     private static boolean controllerShootDown = false;

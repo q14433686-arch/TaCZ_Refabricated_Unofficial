@@ -1,21 +1,30 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
 // 瞄具镜身片元着色器 —— 在 vanilla core/entity.fsh 之上只加一件事：
 // 被目镜盖到的像素 discard。
 //
 // 这是上游 1.21.1 那句 stencil 的等价物：
 //     scope_body: stencilFunc(GL_EQUAL, 0)   // 只在目镜【没盖到】处画镜身
-// 26.2 没有模板缓冲，改为采样一张离屏掩码纹理（ScopeMaskSampler）来做同样的二分。
+// 26.3 没有模板缓冲，改为采样一张离屏掩码纹理（ScopeMaskSampler）来做同样的二分。
 //
 // 为什么整份抄一遍 entity.fsh 而不是想办法「继承」：
 // GLSL 没有继承，而 vanilla 也不提供可插拔的片元钩子。要在 entity 的
-// 渲染语义上加一步 discard，只能复制一份再改。除下面 SCOPE_MASK 那一段外，
-// 本文件与 26.2 的 assets/minecraft/shaders/core/entity.fsh 逐行一致 ——
+// 渲染语义上加一步 discard，只能复制一份再改。除 SCOPE_MASK 那一段与
+// ScopeMaskSampler 声明外，本文件与 26.3 的
+// assets/minecraft/shaders/core/entity.fsh 逐行一致 ——
 // 如果将来 vanilla 改了 entity.fsh，这里要跟着同步。
+//
+// 【26.3 方言变更】同 scope_body.vsh：#moj_import -> #include、
+// varying 必须显式 layout(location = N)、需 GL_ARB_separate_shader_objects。
+// 编号严格照抄 vanilla entity.fsh，与 scope_body.vsh 的 out 编号一一对应。
 
-#moj_import <minecraft:fog.glsl>
-#moj_import <minecraft:dynamictransforms.glsl>
-#moj_import <minecraft:globals.glsl>
+// SCOPE_MASK 需要 globals.glsl 的 ScreenSize（与 26.2 同约定），因此比 vanilla
+// entity.fsh 多引这一个 —— 26.3 vanilla 本体只在 GLINT 下引 globals。
+#include <minecraft:globals.glsl>
+#include <minecraft:fog.glsl>
+#include <minecraft:dynamictransforms.glsl>
+#include <minecraft:oit.glsl>
 
 uniform sampler2D Sampler0;
 
@@ -29,26 +38,70 @@ uniform sampler2D DissolveMaskSampler;
 uniform sampler2D ScopeMaskSampler;
 #endif
 
-in float sphericalVertexDistance;
-in float cylindricalVertexDistance;
+#if defined(SCOPE_MASK) && defined(SCOPE_MASK_INVERT)
+// mode 2 标记采样器（2026-09-20）：只在反向裁剪（准星）管线的 bind group 里声明，
+// 绑的是同一张掩码纹理，GLSL 从不采样它 —— 它存在的唯一意义是让本条 draw 的
+// GlRenderPass#samplers 多一个 key，供 Java 侧在管线对象身份不可考时判别 mode。
+// 声明必须与 bind group 严格一一对应：mode-1 管线没有这个 layout 条目，
+// 无条件声明会在 generateBackendCreateInfo 抛
+// "Unable to find shader defined uniform (ScopeMaskMode2Sampler)"（2026-09-20 二轮实机）。
+uniform sampler2D ScopeMaskMode2Sampler;
+#endif
+
+#ifdef GLINT
+uniform sampler2D GlintSampler;
+#endif
+
+layout(location = 0) in float sphericalVertexDistance;
+layout(location = 1) in float cylindricalVertexDistance;
 #ifdef PER_FACE_LIGHTING
-in vec4 vertexPerFaceColorBack;
-in vec4 vertexPerFaceColorFront;
+layout(location = 2) in vec4 vertexPerFaceColorBack;
+layout(location = 3) in vec4 vertexPerFaceColorFront;
 #else
-in vec4 vertexColor;
+layout(location = 2) in vec4 vertexColor;
 #endif
 
 #ifndef EMISSIVE
-in vec4 lightMapColor;
+layout(location = 4) in vec4 lightMapColor;
 #endif
 
 #ifndef NO_OVERLAY
-in vec4 overlayColor;
+layout(location = 5) in vec4 overlayColor;
 #endif
 
-in vec2 texCoord0;
+layout(location = 6) in vec2 texCoord0;
+#ifdef GLINT
+layout(location = 7) in vec2 texCoordGlint;
+#endif
 
-out vec4 fragColor;
+#ifndef OIT_ALPHA_ONLY
+layout(location = 0) out vec4 fragColor;
+#endif
+
+vec4 calculateFinalColor(vec4 color) {
+    #ifndef NO_OVERLAY
+    color.rgb = mix(overlayColor.rgb, color.rgb, overlayColor.a);
+    #endif
+
+    #ifndef EMISSIVE
+    color *= lightMapColor;
+    #endif
+
+    #ifdef GLINT
+    vec4 glintColor = GlintAlpha * texture(GlintSampler, texCoordGlint);
+    // Matches BlendFuntion.GLINT
+    color.rgb += glintColor.rgb * glintColor.rgb;
+    #endif
+
+    #ifdef OIT_ACCUMULATE
+    color = sampleColorForAccumulation(color);
+    vec4 fogColor = vec4(FogColor.rgb * color.a, FogColor.a);
+    #else
+    vec4 fogColor = FogColor;
+    #endif
+
+    return apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, fogColor);
+}
 
 void main() {
 #ifdef SCOPE_MASK
@@ -58,7 +111,14 @@ void main() {
     // gl_FragCoord.xy 是以【左下】为原点的窗口像素坐标，掩码 target 的
     // 纹理原点同样在左下，两者一致，所以这里【不需要】翻 Y。
     // （调试预览里要翻 V，那是因为 GUI 坐标系原点在左上 —— 两回事，别混。）
-    vec2 maskUv = gl_FragCoord.xy / ScreenSize;
+    //
+    // 【2026-09-20 三轮】分母从 ScreenSize（Globals UBO）改为
+    // textureSize(ScopeMaskSampler, 0)：与注入 Iris 的 GLSL 同款取法。
+    // 掩码 target 与主 target 同尺寸，两种算式在 UBO 健康时逐位相等；
+    // 但 Nether/End/夜晚/水下（开放空间限定，封闭空间无恙）实测
+    // mask 预览正常却不裁 —— 采样侧唯一可动的全局量就是这个 UBO。
+    // 换成对 sampler 自身求尺寸后，本分支对 Globals 绑定状态彻底零依赖。
+    vec2 maskUv = gl_FragCoord.xy / vec2(textureSize(ScopeMaskSampler, 0));
     vec2 maskSample = texture(ScopeMaskSampler, maskUv).rg;
     bool insideOcular = maskSample.r > 0.5;
 
@@ -122,35 +182,41 @@ void main() {
     }
   #endif
 #endif
-
     vec4 color = texture(Sampler0, texCoord0);
-#ifdef ALPHA_CUTOUT
+
+    #ifdef OIT_ADDITIVE
+    color.a = min(0.99, color.a);
+    #endif
+
+    #ifdef ALPHA_CUTOUT
     if (color.a < ALPHA_CUTOUT) {
         discard;
     }
-#endif
+    #endif
 
-#ifdef PER_FACE_LIGHTING
+    #ifdef PER_FACE_LIGHTING
     vec4 faceVertexColor = gl_FrontFacing ? vertexPerFaceColorFront : vertexPerFaceColorBack;
-#else
+    #else
     vec4 faceVertexColor = vertexColor;
-#endif
+    #endif
 
-#ifdef DISSOLVE
+    #ifdef DISSOLVE
     if (faceVertexColor.a < texture(DissolveMaskSampler, texCoord0).a) {
         discard;
     }
     // The dissolve effect entirely replaces translucency
     faceVertexColor.a = 1.0;
-#endif
+    #endif
 
     color *= faceVertexColor * ColorModulator;
-#ifndef NO_OVERLAY
-    color.rgb = mix(overlayColor.rgb, color.rgb, overlayColor.a);
-#endif
-#ifndef EMISSIVE
-    color *= lightMapColor;
-#endif
 
-    fragColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
+    #ifdef GLINT
+    color.a = max(color.a, GlintAlpha);
+    #endif
+
+    #ifdef OIT_ALPHA_ONLY
+    executeAlphaOnlyPhase(gl_FragCoord.z, color.a);
+    #else
+    fragColor = calculateFinalColor(color);
+    #endif
 }

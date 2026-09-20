@@ -2,28 +2,24 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "bonus_rolls": 0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        }
-      ],
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
       "entries": [
         {
           "type": "minecraft:item",
-          "conditions": [
-            {
-              "condition": "minecraft:block_state_property",
-              "block": "tacz:gun_smith_table",
-              "properties": {
-                "part": "foot"
-              }
+          "condition": {
+            "type": "minecraft:match_block",
+            "blocks": "tacz:gun_smith_table",
+            "state": {
+              "part": "foot"
             }
-          ],
+          },
           "name": "tacz:gun_smith_table"
         }
       ],
       "rolls": 1
     }
-  ]
+  ],
+  "random_sequence": "tacz:blocks/gun_smith_table"
 }

@@ -12,7 +12,7 @@
 > （用户指出：注释很多是落后/错的）。本版**每一条结论都以调用链/字节码核实为准，
 > 注释仅作线索**；核实过程中发现的错误注释已顺手在源码里更正
 > （TextShowRender、MuzzleFlashRender、BeamRenderer、IrisCompat、FeatureRenderCompat）。
-> 案例①~⑦的诊疗史见 `COMPAT_AND_ROADMAP.md`，不重复收录。
+> 案例①~⑦的诊疗史见 `investigations/COMPAT_AND_ROADMAP_26_2_HISTORY.md`，不重复收录。
 
 ## A. 玩家可见的功能缺口（按影响排序）
 
