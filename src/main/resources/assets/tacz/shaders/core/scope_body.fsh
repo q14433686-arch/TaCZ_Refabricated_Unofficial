@@ -19,13 +19,9 @@
 // varying 必须显式 layout(location = N)、需 GL_ARB_separate_shader_objects。
 // 编号严格照抄 vanilla entity.fsh，与 scope_body.vsh 的 out 编号一一对应。
 
-// 26.3 vanilla entity.fsh 只在 GLINT 下引 globals.glsl。
-// 早先为给 SCOPE_MASK 提供 ScreenSize 放宽过条件；2026-09-19 改由顶点 varying
-// scopeUv 提供屏幕位置后，SCOPE_MASK 不再需要 globals（也就不再依赖那个在手部
-// pass 可能未绑定的 Globals UBO）。恢复与 vanilla 一致的 GLINT-only。
-#ifdef GLINT
+// SCOPE_MASK 需要 globals.glsl 的 ScreenSize（与 26.2 同约定），因此比 vanilla
+// entity.fsh 多引这一个 —— 26.3 vanilla 本体只在 GLINT 下引 globals。
 #include <minecraft:globals.glsl>
-#endif
 #include <minecraft:fog.glsl>
 #include <minecraft:dynamictransforms.glsl>
 #include <minecraft:oit.glsl>
@@ -67,8 +63,6 @@ layout(location = 6) in vec2 texCoord0;
 #ifdef GLINT
 layout(location = 7) in vec2 texCoordGlint;
 #endif
-// 见 scope_body.vsh：屏幕位置（NDC→[0,1]），掩码采样改用它与原点/分辨率解耦。
-layout(location = 8) in vec2 scopeUv;
 
 #ifndef OIT_ALPHA_ONLY
 layout(location = 0) out vec4 fragColor;
@@ -101,14 +95,13 @@ vec4 calculateFinalColor(vec4 color) {
 
 void main() {
 #ifdef SCOPE_MASK
-    // 用本片元的屏幕位置（scopeUv，NDC→[0,1]）而不是 gl_FragCoord.xy/ScreenSize：
-    // 实测后者在 26.3 下静默失效（case3：裁剪类型已选、掩码有内容，目镜仍不裁）。
-    // 两个成因都被绕开：
-    //   ① 26.3 renderpearl 启用了 clip control（实机日志 GL_ARB_clip_control），
-    //      掩码 target 的纹素行序与 gl_FragCoord 的左下原点可能上下镜像，采样错位；
-    //   ② Globals 的 ScreenSize 在手部 pass 可能未绑定而为 0，gl_FragCoord/0=inf，采样恒 0。
-    // scopeUv 与掩码绘制共用同一个 clip-space→纹素映射，与原点/分辨率约定都无关。
-    vec2 maskUv = scopeUv;
+    // 用 gl_FragCoord 而不是 texCoord0：我们要问的是「屏幕上这个位置」
+    // 有没有被目镜盖住，与镜身自己的贴图 UV 无关。
+    //
+    // gl_FragCoord.xy 是以【左下】为原点的窗口像素坐标，掩码 target 的
+    // 纹理原点同样在左下，两者一致，所以这里【不需要】翻 Y。
+    // （调试预览里要翻 V，那是因为 GUI 坐标系原点在左上 —— 两回事，别混。）
+    vec2 maskUv = gl_FragCoord.xy / ScreenSize;
     vec2 maskSample = texture(ScopeMaskSampler, maskUv).rg;
     bool insideOcular = maskSample.r > 0.5;
 
@@ -143,8 +136,8 @@ void main() {
                 for (int i = 0; i < STEPS; i++) {
                     float a = 6.2831853 * float(i) / float(STEPS);
                     vec2 off = vec2(cos(a), sin(a)) * radius;
-                    // 不再用 ScreenSize 做纵横比修正（它可能为 0）：scopeUv 的 x/y
-                    // 本就是宽/高的比例，环在宽屏上略呈椭圆，对「数边缘深度」无实质影响。
+                    // 纵横比修正: UV 空间里同样的数值在 x/y 上对应不同像素数
+                    off.x *= ScreenSize.y / max(ScreenSize.x, 1.0);
                     total += 1.0;
                     inside += texture(ScopeMaskSampler, maskUv + off).r > 0.5 ? 1.0 : 0.0;
                 }

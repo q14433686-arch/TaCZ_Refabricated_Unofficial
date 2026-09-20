@@ -677,13 +677,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         if (detachOcularRing) {
             ocularRingPart.visible = false; // 主提交摘除（finally 里必还原，anti-lock 跨帧共享对象）
         }
-        // 只解析一次：主提交与下面的探针共用同一个返回值。
-        // 早先探针里又调了一遍 resolveBodyRenderType —— 那是【第二次】调用，
-        // 与真正提交时的那次不是同一时刻，掩码 target 若在这两次之间才建好，
-        // 探针就会报出一个提交时并不成立的 bodyClipped（上一轮实机正是如此）。
-        RenderType bodyRenderType = resolveBodyRenderType(renderType, texture, bodyMaskable);
         try {
-            super.submit(poseStack, transformType, collector, bodyRenderType, light, overlay);
+            super.submit(poseStack, transformType, collector,
+                    resolveBodyRenderType(renderType, texture, bodyMaskable), light, overlay);
         } finally {
             if (detachOcularRing) {
                 ocularRingPart.visible = true;
@@ -696,30 +692,6 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // 本架构按提交顺序消费，且目镜框是 opaque cutout，深度测试下顺序本来就不敏感）。
         if (detachOcularRing) {
             submitOcularRingPlain(poseStack, collector, renderType, texture, transformType, light, overlay);
-        }
-
-        // 【遮光罩排查探针】用户实测：其余部件都被裁了，唯独遮光罩没有。
-        // 遮光罩可能来自三条互斥的路径，光看源码分不出是哪条，这里一次性把
-        // 本帧实际走向打出来（每个配件只打一次，不刷屏）：
-        //   ① ocular_ring 被摘除后用【未裁剪】RenderType 重画 —— 设计如此
-        //      （它是实体目镜框，上游 stencilFunc(ALWAYS)）。若遮光罩恰好建模在
-        //      ocular_ring 节点里，就会跟着不裁；
-        //   ② division 里的大块遮光板，走 EtchedReticleRenderer + 反向裁剪；
-        //      maskActive=false 时整条不画，不会是"没裁切"的样子；
-        //   ③ 普通镜身几何，走 resolveBodyRenderType 的裁剪版。
-        // bodyClipped 为 false 就说明镜身整体没进裁剪管线（②③ 都会失效）。
-        // 闸门必须含「本帧确实在开镜」：上一版只看第一人称，于是在还没举枪瞄准时
-        // 就打印了一条 bodyMaskable=false / bodyClipped=false，读数全无意义
-        // （2026-09-19 实机日志：那一刻 PIP gate 还报 "no scope attachment with zoom > 1"）。
-        if (transformType != null && transformType.firstPerson()
-                && currentAimingProgress() > AIM_CLIP_START) {
-            tacz$tallyScopeClipProbe(texture, bodyMaskable, detachOcularRing,
-                    bodyRenderType != renderType,
-                    // 单独记「掩码 target 当时在不在」：它是 resolveBodyRenderType
-                    // 唯一一个「本帧可能还没就绪」的判据，把它和其它失败原因分开，
-                    // 才分得清「首帧时序假象」与「真的没进裁剪管线」。
-                    com.tacz.guns.client.render.scope.ScopeMaskTextureHandle.syncToMaskTarget(),
-                    hiddenOculars.size());
         }
 
         if (transformType != null && transformType.firstPerson() && !reticleNodes.isEmpty()) {
@@ -756,128 +728,6 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         }
     }
 
-
-    /**
-     * 遮光罩排查探针：按贴图累计「开镜帧」上的实际走向，攒够样本再打一行。
-     *
-     * <h2>为什么不再「首次即打印」</h2>
-     * <p>上一版是「每个贴图第一次进入开镜分支就打一行」。实机证明这仍然是错的：
-     * 那一帧往往<b>掩码 target 还没建好</b>，于是 {@code resolveBodyRenderType} 在
-     * {@code syncToMaskTarget()} 处提前返回，探针报出 {@code bodyClipped=false} ——
-     * 而后续帧其实是裁的。2026-09-19 日志里那一行紧跟着的就是
-     * {@code Ocular mask drawn: 48 indices}，掩码是在探针<b>之后</b>才画出来的。</p>
-     *
-     * <p>现在改成累计若干帧再汇总：只打一次，但打的是<b>稳态</b>读数。
-     * 关键是 {@code maskedFrame=clipped} 与 {@code maskTargetMissing} 两个计数分开 ——
-     * 前者为 0 而后者非 0，说明只是首帧时序；两者都为 0 才是真的没进裁剪管线。</p>
-     */
-    private static final class ScopeClipProbeTally {
-        int frames;
-        int clipped;
-        int maskTargetMissing;
-        int detachOcularRingFrames;
-        // 掩码侧事实：镜身即便选了裁剪 RenderType，掩码纹理若是黑的（本帧没画出
-        // 掩码 / 目镜几何没登记），shader 里 insideOcular 恒为 false ⇒ 一个像素
-        // 都不 discard ⇒ 观感与「完全没裁」一模一样，而且【静默】。
-        // 2026-09-19 日志里那条 "no ocular geometry was registered this frame"
-        // 就是这一路。必须与 clipped 分开计数才分得清。
-        int maskDrawnFrames;
-        int viewmodelClipFrames;
-        boolean reported;
-    }
-
-    private static final java.util.Map<String, ScopeClipProbeTally> TACZ_CLIP_PROBE_TALLY =
-            java.util.Collections.synchronizedMap(new java.util.HashMap<>());
-
-    /** 攒够这么多开镜帧再汇总：足够跨过首帧时序，又不至于把日志拖到很久以后。 */
-    private static final int TACZ_CLIP_PROBE_FRAMES = 30;
-
-    private void tacz$tallyScopeClipProbe(@Nullable Identifier texture,
-                                          boolean bodyMaskable,
-                                          boolean detachOcularRing,
-                                          boolean bodyClipped,
-                                          boolean maskTargetReady,
-                                          int hiddenOcularCount) {
-        // 键里带上「光影是否激活」：上一份日志的 tally 在【光影开】时就锁定了，
-        // 导致光影关的读数永远拿不到。两条路径的失败机制完全不同，必须分开统计。
-        String tallyKey = String.valueOf(texture)
-                + "|iris=" + com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack();
-        ScopeClipProbeTally tally =
-                TACZ_CLIP_PROBE_TALLY.computeIfAbsent(tallyKey, k -> new ScopeClipProbeTally());
-        synchronized (tally) {
-            if (tally.reported) {
-                return;
-            }
-            tally.frames++;
-            if (bodyClipped) {
-                tally.clipped++;
-            } else if (!maskTargetReady) {
-                tally.maskTargetMissing++;
-            }
-            if (detachOcularRing) {
-                tally.detachOcularRingFrames++;
-            }
-            // submit 期读到的是【上一帧】的掩码结果：本帧的掩码要到
-            // prepareFrame RETURN 才画（renderAtPhaseBoundary）。稳态下等价，
-            // 且这正是 shader 实际会采样到的那张 —— 记它才有意义。
-            if (com.tacz.guns.client.render.scope.ScopeMaskRenderer.hasMaskThisFrame()
-                    || com.tacz.guns.client.render.scope.ScopeMaskRenderer.hadMaskLastFrame()) {
-                tally.maskDrawnFrames++;
-            }
-            if (com.tacz.guns.client.render.scope.ScopeMaskRenderer.isViewmodelClipMaskThisFrame()) {
-                tally.viewmodelClipFrames++;
-            }
-            if (tally.frames < TACZ_CLIP_PROBE_FRAMES) {
-                return;
-            }
-            tally.reported = true;
-        }
-        StringBuilder reticleNames = new StringBuilder();
-        for (BedrockPart p : reticleNodes.etchedReticle()) {
-            if (reticleNames.length() > 0) {
-                reticleNames.append(',');
-            }
-            reticleNames.append(p.name);
-        }
-        // 目镜（ocular*）现状：blackout=会随镜身一起画，hidden=被临时摘除。
-        // 两者都在 super.submit 之内，共用 resolveBodyRenderType 的返回值 ——
-        // 所以 bodyClipped=true 时它本该跟着一起被裁。若实机仍未裁，
-        // 说明目镜不是走这条路出来的（例如建模在 ocular_ring 子树里，
-        // 或被别的配件模型重复绘制）。
-        StringBuilder ocularInfo = new StringBuilder();
-        for (Map.Entry<Integer, BedrockPart> e : ocularByIndex.entrySet()) {
-            if (ocularInfo.length() > 0) {
-                ocularInfo.append(',');
-            }
-            BedrockPart part = e.getValue();
-            int cubeCount = tacz$countCubesRecursive(part);
-            ocularInfo.append(e.getKey()).append(':').append(part.name)
-                    .append("(cubes=").append(cubeCount).append(')')
-                    .append(shouldDrawOcularBlackout(part) ? "[blackout]" : "[hidden]")
-                    // 目镜若嵌在 ocular_ring 子树内，就会被那条【无裁剪】重画路径带走
-                    // —— 这正是目镜贴图不被裁切的成因，必须显式报出来。
-                    .append(isDescendantOfRing(part) ? "[under-ring]" : "");
-        }
-        com.tacz.guns.GunMod.LOGGER.info(
-                "[TACZ Scope][PROBE] scope clip paths over first {} aiming frames for texture={}: "
-                        + "bodyMaskable={}, maskedFrame=clipped:{}/unclippedWithMask:{}/maskTargetMissing:{}, "
-                        + "maskSide=drawn:{}/viewmodelClip:{}, "
-                        + "detachOcularRing={} ({} frames; ocular_ring is redrawn UNCLIPPED by design), "
-                        + "ocularRingPresent={}, hiddenOcularsThisFrame={}, oculars=[{}], etchedNodes=[{}]. "
-                        + "Reading: clipped>0 AND drawn>0 means the clipped render type was chosen and the mask "
-                        + "texture really had content, so a still-unclipped image points at the shader/uniform "
-                        + "side. clipped>0 with drawn==0 means the mask texture was BLACK (nothing drawn into it "
-                        + "this frame), which silently discards nothing -- visually identical to no clipping at "
-                        + "all. clipped==0 with maskTargetMissing>0 is only a first-frame timing artifact; "
-                        + "clipped==0 with unclippedWithMask>0 means the mask was there but the clipped render "
-                        + "type was still not chosen. [under-ring] marks an ocular nested inside ocular_ring.",
-                TACZ_CLIP_PROBE_FRAMES, tallyKey, bodyMaskable,
-                tally.clipped, tally.frames - tally.clipped - tally.maskTargetMissing, tally.maskTargetMissing,
-                tally.maskDrawnFrames, tally.viewmodelClipFrames,
-                detachOcularRing, tally.detachOcularRingFrames,
-                ocularRingPart != null, hiddenOcularCount, ocularInfo, reticleNames);
-    }
-
     /**
      * 【案例⑨】以未裁剪的原版 RenderType 重画物理目镜框（含子树）。
      *
@@ -891,31 +741,6 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * @param renderType 调用点收到的<b>原始</b> RenderType（未走 {@link #resolveBodyRenderType}
      *                   的裁剪分支），即该配件的正常材质——上游 stencilFunc(ALWAYS) 的等价物。
      */
-
-    /** 递归统计子树里的 cube 数。目镜常是空壳节点、几何在子节点上，浅层统计会误报。 */
-    private static int tacz$countCubesRecursive(BedrockPart part) {
-        int n = part.cubes.size();
-        for (BedrockPart child : part.children) {
-            n += tacz$countCubesRecursive(child);
-        }
-        return n;
-    }
-
-    /**
-     * 某个目镜是否位于 {@code ocular_ring} 的子树内。
-     *
-     * <p>{@code BedrockPart#getParent()} 提供向上的父链，逐级比对即可；
-     * 模型树很浅（个位数层），不需要缓存。</p>
-     */
-    private boolean isDescendantOfRing(BedrockPart ocular) {
-        for (BedrockPart p = ocular.getParent(); p != null; p = p.getParent()) {
-            if (p == ocularRingPart) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void submitOcularRingPlain(PoseStack poseStack, SubmitNodeCollector collector,
                                        RenderType renderType, @Nullable Identifier texture,
                                        ItemDisplayContext transformType,
@@ -934,38 +759,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             parent.translateAndRotateAndScale(ringPose);
         }
         ocularRingPart.translateAndRotateAndScale(ringPose);
-        // 【目镜镜片被无裁剪重画 —— 本方法的调用时序缺陷】
-        //
-        // captureSubtree 会递归收集整棵子树。而调用点 submit() 的时序是：
-        //   super.submit(裁剪版类型)          ← 目镜黑片在这里被掩码 discard（正确）
-        //   finally { ocular.visible = true } ← 把所有目镜还原成可见（防跨帧污染，必须做）
-        //   submitOcularRingPlain(...)        ← 就是这里
-        // 也就是说进到本方法时，ocularParts 已经全部恢复可见。若某个枪包把目镜
-        // 建模在 ocular_ring 的子树里（scope_aug_default 即如此），captureSubtree
-        // 就会把镜片一起收进快照，再用【未裁剪】的 renderType 画一遍 ——
-        // 盖在刚才那份被裁掉的结果之上。观感正是用户报告的
-        // 「目镜贴图开镜时没有被裁切」（镜片糊住镜内），且与光影无关。
-        //
-        // ocular_ring 的定义本来就只是「物理目镜框（实体件）」，不含镜片；
-        // 上游也是把它当实体件用 stencilFunc(ALWAYS) 单独画的。所以正确做法是
-        // 抓快照期间把目镜一并摘除 —— 与 super.submit 那侧处理 hiddenOculars
-        // 完全同构（同样是临时改 visible + finally 还原，因为 BedrockPart 跨帧共享）。
-        List<BedrockPart> ringHiddenOculars = new ArrayList<>();
-        for (BedrockPart ocular : ocularParts) {
-            if (ocular != null && ocular.visible && isDescendantOfRing(ocular)) {
-                ocular.visible = false;
-                ringHiddenOculars.add(ocular);
-            }
-        }
-        com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ringSnapshot;
-        try {
-            ringSnapshot = com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(
-                    ocularRingPart, ringPose, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
-        } finally {
-            for (BedrockPart ocular : ringHiddenOculars) {
-                ocular.visible = true;
-            }
-        }
+        com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot ringSnapshot =
+                com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(
+                        ocularRingPart, ringPose, transformType, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
         if (ringSnapshot.isEmpty()) {
             return;
         }

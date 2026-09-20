@@ -294,9 +294,6 @@ public final class ScopeMaskRenderer {
         return inHandPass || IrisCompat.isHandRendererActive();
     }
 
-    /** 见 drawMask 末尾：上一帧画出了掩码，本帧开头汇总一次光影链路状态。 */
-    private static boolean probeAfterMaskedFrame;
-
     /**
      * 每帧开头调用一次，快照上一帧结果并把本帧归零。
      *
@@ -309,11 +306,6 @@ public final class ScopeMaskRenderer {
      * 放那儿会被第二次抹掉，见 {@link #maskDrawnThisFrame} 的注释。</p>
      */
     public static void beginFrame() {
-        if (probeAfterMaskedFrame && com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack()) {
-            // 不清标志：logProbeOnce 内部会等链路跑通、或样本足够多才定版并自行封口。
-            // 每帧调一次，开销是一个布尔判断。
-            com.tacz.guns.compat.iris.IrisScopeMaskState.logProbeOnce();
-        }
         maskDrawnLastFrame = maskDrawnThisFrame;
         maskDrawnThisFrame = false;
         compositedThisFrame = false;
@@ -427,12 +419,6 @@ public final class ScopeMaskRenderer {
             return;
         }
         try (mesh) {
-            // 本帧确实要画掩码了 —— 趁 pass 还没开，把「后端管线对象 → 管线路径」
-            // 按 Iris 重定向之后的身份重新登记一遍。必须在这里而不是静态初始化时：
-            // Iris 只有真正跑起来之后才会重定向 getCompiledPipeline，太早登记到的
-            // 是原版后端对象，绘制时用的却是 Iris 那条，两者不是同一个对象。
-            // 见 ScopeBodyRenderTypes#syncIrisPipelineBindings 的说明。
-            ScopeBodyRenderTypes.syncIrisPipelineBindings();
             MeshData.DrawState draw = mesh.drawState();
             {
                 GpuBuffer vertexBuffer = acquireVertexBuffer(mesh.vertexBuffer());
@@ -499,10 +485,6 @@ public final class ScopeMaskRenderer {
                     GunMod.LOGGER.info("[TACZ Scope] Ocular mask drawn: {} indices from {} batches.",
                             draw.indexCount(), ScopeMaskGeometry.entries().size());
                 }
-                // 【光影链路探针】掩码已经画出来了 —— 此时若光影下仍不裁剪，
-                // 问题必在「掩码 -> Iris 程序」这一段。延后一帧再汇总，
-                // 好让本帧的 draw call 把各环计数填上（本方法跑在 solid 之前）。
-                probeAfterMaskedFrame = true;
             }
         }
     }

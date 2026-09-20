@@ -319,67 +319,6 @@ public final class ScopeBodyRenderTypes {
     }
 
     /**
-     * 需要 {@code tacz_ScopeMaskMode != 0} 的管线，以及它们各自的 mode 路径名。
-     * 路径名必须与 {@code IrisScopeMaskState} 里的常量逐字一致（那里按字符串匹配 mode）。
-     */
-    // 必须与 IrisScopeMaskState#resolveModeUncached 里映射到非 0 mode 的
-    // 【全部】6 条一一对应（含 ScopeTextRenderTypes 的镜内文字管线，它也走 mode=2）。
-    // 少一条，那一路在光影下就静默不裁 —— 2026-08-30 的镜内文字不裁正是这个成因。
-    private static final RenderPipeline[] MASK_MODE_PIPELINES = {
-            CLIPPED_PIPELINE,
-            RETICLE_PIPELINE,
-            RETICLE_EMISSIVE_PIPELINE,
-            FLASH_TRANSLUCENT_CLIPPED_PIPELINE,
-            FLASH_SWIRL_CLIPPED_PIPELINE,
-            ScopeTextRenderTypes.CLIPPED_TEXT_PIPELINE,
-    };
-    private static final String[] MASK_MODE_PIPELINE_PATHS = {
-            "pipeline/scope_body_clipped",
-            "pipeline/scope_reticle_clipped",
-            "pipeline/scope_reticle_emissive_clipped",
-            "pipeline/scope_flash_translucent_clipped",
-            "pipeline/scope_flash_swirl_clipped",
-            "pipeline/scope_text_clipped",
-    };
-
-    /**
-     * 把「后端管线对象 → 管线路径」的映射<b>按 Iris 重定向之后的身份</b>重新登记一遍。
-     *
-     * <p>由 {@code ScopeMaskRenderer} 在每个真正画了掩码的帧上调用（即只在开镜时跑，
-     * 每次 5 次编译缓存查询，开销可忽略）。</p>
-     *
-     * <h2>为什么 {@code FrontendRenderPassPipelineMixin} 那条路不够</h2>
-     * <p>光影激活时 {@code RenderSystem#getCompiledPipeline} 被 Iris 接管
-     * （实机栈：{@code getCompiledPipeline} → {@code redirectIrisProgram}），
-     * 凡是被 {@link #ensureIrisCompatibility()} 映射到 HAND 程序的管线，绘制时用的都是
-     * <b>Iris 自己那条</b> {@code CompiledRenderPipeline}，其 {@code name()} 不再是
-     * {@code tacz:pipeline/…}。那条 mixin 靠 {@code name()} 认本 mod 管线，于是恰好把
-     * 最需要裁剪的 5 条全部漏掉 —— 2026-09-19 实机探针
-     * {@code firstTaczPipeline=pipeline/scope_mask, nonZeroMode=0, modeWritten=0}
-     * 正是这个结果（唯一进表的 scope_mask 是掩码自己，mode 本该为 0）。</p>
-     *
-     * <p>这里反过来做：不读 {@code name()}，而是自己走一遍同一条重定向 —— 用
-     * {@code getCompiledPipelineNullable} 取到<b>绘制时真正会落进
-     * {@code GlRenderPass.pipeline} 的那个后端对象</b>，名字按管线常量直接给出。
-     * 因此无论 Iris 怎么替换程序，映射都成立。用 Nullable 版本是为了不强行编译
-     * 当前没用到的管线（非 Nullable 版会触发编译，进而打出 Iris 的
-     * "Missing program … in override list" 那条无害但吵人的 ERROR）。</p>
-     *
-     * <p>不做「只跑一次」的闩锁：切光影包 / 重载资源会换掉后端管线对象，
-     * 必须允许重新登记。</p>
-     */
-    public static void syncIrisPipelineBindings() {
-        if (!IrisCompat.isUsingRenderPack()) {
-            return;
-        }
-        for (int i = 0; i < MASK_MODE_PIPELINES.length; i++) {
-            com.tacz.guns.compat.iris.IrisScopeMaskState.noteCompiledBinding(
-                    com.mojang.blaze3d.systems.RenderSystem.getCompiledPipelineNullable(MASK_MODE_PIPELINES[i]),
-                    MASK_MODE_PIPELINE_PATHS[i]);
-        }
-    }
-
-    /**
      * 按贴图缓存。
      *
      * <p>RenderType 参与批次合并，同一贴图必须复用同一实例，否则每次调用

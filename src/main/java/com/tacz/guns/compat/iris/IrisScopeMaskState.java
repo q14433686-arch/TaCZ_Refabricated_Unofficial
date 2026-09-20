@@ -1,6 +1,5 @@
 package com.tacz.guns.compat.iris;
 
-import javax.annotation.Nullable;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
@@ -40,298 +39,6 @@ public final class IrisScopeMaskState {
     private static boolean loggedFailure;
     private static boolean loggedApply;
     private static boolean loggedProgramMismatch;
-
-    // ───────────────────────── 光影链路探针 ─────────────────────────
-    // 光影下裁剪失效时，故障可能停在链路上任意一环，而其中多数环节原本是
-    // 「静默返回」——日志里一个字都没有，只能靠现象反推（已经反推了两轮）。
-    // 这组计数器把每一环的实际走向记下来，由 logProbeOnce() 在首次开镜后
-    // 汇总成一行，让下一份日志直接指出断点。
-    // 全部是普通 int/boolean，只在 Render 线程写，不加锁；开销可忽略。
-    /** applyToShaderProgram 被调用的次数（=IrisExtendedShaderMixin 装上了没有）。 */
-    private static int probeShaderSetupCalls;
-    /** applyToGlRenderPass 被调用的次数（=IrisGlCommandEncoderMixin 装上了没有）。 */
-    private static int probeRenderPassCalls;
-    /** resolveMode 返回非 0 的次数（=管线 location 认出来了没有）。 */
-    private static int probeNonZeroMode;
-    /** 因程序里找不到 tacz_ScopeMaskMode 而放弃的次数（=着色器注入成功没有）。 */
-    private static int probeNoModeUniform;
-    /** 因拿不到掩码纹理而把 mode 强写回 0 的次数。 */
-    private static int probeNoMaskTexture;
-    /** 真正把 mode!=0 写进程序的次数（=裁剪到底有没有生效）。 */
-    private static int probeModeWritten;
-    /**
-     * 绘制期 {@code GlRenderPass.samplers} 里出现本 mod 掩码采样器的次数。
-     * 2026-09-19 实机：bindingSync=6/6 但 pathFrom={table:0} —— 证明「按后端管线
-     * 对象身份反查」在 Iris 下根本不成立（draw 时是 Iris 自建的 GlRenderPipeline）。
-     * 而 samplers 来自<b>前端 RenderType</b>，Iris 不换。若本计数远大于 modeWritten，
-     * 「按采样器存在性判 mode」就是与对象身份无关的正确修法。只统计不改渲染。
-     */
-    private static int probeSamplerPresence;
-    /** IrisShaderCreatorMixin 成功注入 tacz 分支的 HAND 程序数（由它上报）。 */
-    private static int probeHandProgramsPatched;
-    /**
-     * 「后端管线对象 → 管线 location 路径」登记表，由
-     * {@code FrontendRenderPassPipelineMixin} 在 {@code FrontendRenderPass#setPipeline}
-     * 处填入。
-     *
-     * <p>26.3 后端管线已经查不回前端 location（{@code GlRenderPipeline#info()} 被删），
-     * 而光影激活时后端的 {@code getDebugLabel()} 拿到的是 Iris 自己的程序名
-     * （实机探针：{@code sky_basic}），不是我们的 location。唯一还同时握着
-     * 「名字」和「后端对象」的地方就是前端那次交接，所以在那里配对记下来。</p>
-     *
-     * <p>用弱键 map：键是后端管线对象，管线销毁（切光影包/重载资源）后该条目
-     * 自动可回收，不会把已 close 的管线钉在内存里。容量很小（全局管线数量级），
-     * 但仍设上限兜底，超了就整表清空重来 —— 与 MODE_BY_PIPELINE 同一策略。</p>
-     */
-    private static final java.util.Map<Object, String> NAME_BY_BACKEND_PIPELINE =
-            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
-
-    private static final int NAME_CACHE_LIMIT = 512;
-
-    /**
-     * 由 {@code FrontendRenderPassPipelineMixin} 调用：登记这条前端管线的名字与它的后端对象。
-     *
-     * @param frontendPipeline {@code FrontendRenderPipeline}（record，有 name() 与
-     *                         backendRenderPipeline() 两个组件）
-     */
-    public static void notePipelineBinding(Object frontendPipeline) {
-        if (frontendPipeline == null) {
-            return;
-        }
-        // 【无光影时整条路必须零成本 —— 2026-09-19 用户实测：关了光影开镜表现也不对】
-        //
-        // IrisCompatMixinPlugin#shouldApplyMixin 的判据只有 isModLoaded("iris")，
-        // 【不看光影包是否启用】。装了 Iris 但关着光影的玩家（正是这位用户的情形），
-        // FrontendRenderPassPipelineMixin 照样被装上，于是本方法在
-        // FrontendRenderPass#setPipeline 上【每个绘制批次】都被调一次 ——
-        // 本方法自己的注释就写着「实机一次开镜就有数万次」。
-        //
-        // 而这张表存在的唯一理由，是绕开「光影激活时 Iris 把 pack 程序换进管线、
-        // 后端 name()/debugLabel 都变成 Iris 程序名」这个障碍。光影没开就
-        // 根本没有这个障碍：getDebugLabel() 此时返回的就是我们的 location
-        // （PipelineBuilder:346 → GlPipelineRecompiler:314），回退路径本来就够用。
-        // 所以无光影时登记纯属白干活，还会把下面那次 map 查询压到热路径上。
-        //
-        // isUsingRenderPack() 每帧只算一次、之后读一个 byte 字段，
-        // 放在最前面即可把整条路的成本降到一次布尔判断。
-        if (!IrisCompat.isUsingRenderPack()) {
-            return;
-        }
-        // 【热路径】setPipeline 每个绘制批次都会调到（与 renderPass 计数同数量级，
-        // 实机一次开镜就有数万次）。所以这里做两件事把成本压到一次 map 查询：
-        //   1. SEEN_FRONTEND_PIPELINES 记住「这个前端管线对象已经处理过」，
-        //      管线对象在一局内是复用的，真正需要反射的只有头几次；
-        //   2. name()/backendRenderPipeline() 两个 Method 对象按 class 缓存，
-        //      避免 getMethod 每次返回防御性拷贝（invokeNoArgs 的固有开销）。
-        if (tacz$markSeen(frontendPipeline)) {
-            return;
-        }
-        try {
-            Class<?> cls = frontendPipeline.getClass();
-            if (cls != cachedFrontendClass) {
-                cachedFrontendNameMethod = cls.getMethod("name");
-                cachedFrontendBackendMethod = cls.getMethod("backendRenderPipeline");
-                cachedFrontendNameMethod.setAccessible(true);
-                cachedFrontendBackendMethod.setAccessible(true);
-                cachedFrontendClass = cls;
-            }
-            Object name = cachedFrontendNameMethod.invoke(frontendPipeline);
-            Object backend = cachedFrontendBackendMethod.invoke(frontendPipeline);
-            if (name == null || backend == null) {
-                return;
-            }
-            String path = stripModNamespace(String.valueOf(name));
-            if (path == null) {
-                // 不是本 mod 的管线：不记，省得把表撑大。
-                return;
-            }
-            if (NAME_BY_BACKEND_PIPELINE.size() >= NAME_CACHE_LIMIT) {
-                NAME_BY_BACKEND_PIPELINE.clear();
-            }
-            NAME_BY_BACKEND_PIPELINE.put(backend, path);
-            if (probeFirstTaczPath == null) {
-                probeFirstTaczPath = path;
-            }
-        } catch (Throwable t) {
-            logOnce("record frontend pipeline binding", t);
-        }
-    }
-
-    /**
-     * 已处理过的前端管线对象。见 {@link #notePipelineBinding}。
-     *
-     * <p>【2026-09-19 改】原先是 {@code Collections.synchronizedMap(new WeakHashMap<>())}，
-     * 而本方法跑在<b>每个绘制批次</b>上。那个组合在热路径上有三笔固定开销：
-     * 一次全局锁、{@code WeakHashMap} 每次 get/put 都要跑
-     * {@code expungeStaleEntries()} 清引用队列、以及
-     * {@code FrontendRenderPipeline} 作为 record 的<b>按值</b> hashCode
-     * （要对各组件逐个求哈希）。三者叠起来就是「装了 Iris、关着光影，
-     * 开镜表现也不对」的那一份 —— 而那时这张表根本用不上。</p>
-     *
-     * <p>现在：无光影时调用方直接早退（见上），光影下也换成不加锁的普通
-     * {@code HashMap} —— 本类只在 Render 线程被触碰（{@code setPipeline} 与
-     * {@code setupDraw} 都在 Render 线程），不需要锁；键改用记录本身的
-     * 按值相等（HashMap 语义不变），但少了弱引用队列与同步开销。
-     * 条目数量级是「全局管线数」（vanilla 102 条 + Iris 若干），仍设上限兜底。</p>
-     */
-    private static final java.util.Map<Object, Boolean> SEEN_FRONTEND_PIPELINES =
-            new java.util.HashMap<>();
-
-    private static final int SEEN_CACHE_LIMIT = 4096;
-
-    /** @return true 表示这个前端管线对象此前已经处理过，调用方应直接返回。 */
-    private static boolean tacz$markSeen(Object frontendPipeline) {
-        if (SEEN_FRONTEND_PIPELINES.containsKey(frontendPipeline)) {
-            return true;
-        }
-        if (SEEN_FRONTEND_PIPELINES.size() >= SEEN_CACHE_LIMIT) {
-            SEEN_FRONTEND_PIPELINES.clear();
-        }
-        SEEN_FRONTEND_PIPELINES.put(frontendPipeline, Boolean.TRUE);
-        return false;
-    }
-
-    /** {@link #noteCompiledBinding} 被调用的次数（每次同步 = 每条管线一次）。 */
-    private static int probeBindingSyncAttempts;
-    /** {@link #noteCompiledBinding} 真正登记成功的次数。 */
-    private static int probeBindingSyncHits;
-    /** {@link #pipelinePath} 命中前端登记表的次数。 */
-    private static int probeRegisteredHits;
-    /** {@link #pipelinePath} 退回 debugLabel 并认出本 mod 管线的次数。 */
-    private static int probeDebugLabelHits;
-
-    /**
-     * 登记一条<b>已经过 {@code RenderSystem} 编译/Iris 重定向</b>的管线。
-     *
-     * <h2>为什么不能只靠 {@link #notePipelineBinding}</h2>
-     * <p>{@code notePipelineBinding} 相信 {@code FrontendRenderPass#setPipeline} 收到的
-     * 那个对象的 {@code name()}。但光影激活时<b>这个前提不成立</b>：
-     * {@code RenderSystem#getCompiledPipeline} 被 Iris 的 {@code redirectIrisProgram}
-     * 接管（2026-09-19 实机栈：{@code RenderSystem.getCompiledPipeline:133} →
-     * {@code handler$…$iris$redirectIrisProgram:606}），凡是被
-     * {@code assignScopePipelineToHand} 映射掉的管线都会换成 Iris 自己那条
-     * {@code CompiledRenderPipeline}。日志把这件事写得明明白白：</p>
-     * <pre>
-     * Found perfect program match for tacz:pipeline/scope_body_clipped: HAND_CUTOUT
-     * </pre>
-     * <p>于是这些管线的 {@code name()} 不再是 {@code tacz:pipeline/…}，
-     * {@code stripModNamespace} 返回 null，{@link #notePipelineBinding} 直接 return ——
-     * 恰好是<b>最需要裁剪的那几条</b>一条都进不了表。反过来，
-     * {@code tacz:pipeline/scope_mask} 因为 Iris 没有 override（日志里那句
-     * "Missing program tacz:pipeline/scope_mask in override list"）而保留了本 mod 的名字，
-     * 成了唯一被登记的条目 —— 这正是上一轮探针
-     * {@code firstTaczPipeline=pipeline/scope_mask, nonZeroMode=0} 的成因：
-     * 唯一认出来的管线偏偏是掩码自己，而它的 mode 本来就该是 0。</p>
-     *
-     * <h2>做法</h2>
-     * <p>不猜名字，<b>自己走一遍同一条重定向</b>：调用方
-     * （{@code ScopeBodyRenderTypes#syncIrisPipelineBindings}）对每条 scope 管线调
-     * {@code RenderSystem#getCompiledPipelineNullable}，拿到的正是绘制时落进
-     * {@code GlRenderPass.pipeline} 的那个后端对象；名字则由调用方按管线常量直接给出，
-     * 完全不依赖 {@code name()}。这样无论 Iris 怎么替换程序，映射都成立。</p>
-     *
-     * @param compiledPipeline {@code CompiledRenderPipeline}（可为 null，表示尚未编译）
-     * @param expectedPath     不含命名空间的管线路径，如 {@code pipeline/scope_body_clipped}
-     */
-    public static void noteCompiledBinding(@Nullable Object compiledPipeline, String expectedPath) {
-        if (compiledPipeline == null || expectedPath == null) {
-            return;
-        }
-        probeBindingSyncAttempts++;
-        try {
-            // 每个掩码帧只跑 5 次（管线数是常数），不值得为此缓存 Method。
-            Object backend = invokeNoArgs(compiledPipeline, "backendRenderPipeline");
-            if (backend == null) {
-                return;
-            }
-            if (NAME_BY_BACKEND_PIPELINE.size() >= NAME_CACHE_LIMIT) {
-                NAME_BY_BACKEND_PIPELINE.clear();
-                MODE_BY_PIPELINE.clear();
-            }
-            // 后端对象可能变（重载资源/切光影包），每次都覆写，别用 putIfAbsent。
-            NAME_BY_BACKEND_PIPELINE.put(backend, expectedPath);
-            // 旧管线实例可能记着过期的 0，一并作废，让它按新映射重算。
-            MODE_BY_PIPELINE.remove(backend);
-            probeBindingSyncHits++;
-            probeRegisteredPaths.add(expectedPath);
-        } catch (Throwable t) {
-            logOnce("record compiled pipeline binding", t);
-        }
-    }
-
-    /** 已登记成功的管线路径（仅用于探针输出）。 */
-    private static final java.util.Set<String> probeRegisteredPaths =
-            java.util.Collections.synchronizedSet(new java.util.LinkedHashSet<>());
-
-    private static Class<?> cachedFrontendClass;
-    private static Method cachedFrontendNameMethod;
-    private static Method cachedFrontendBackendMethod;
-
-    /** 第一次解析出来的本 mod 管线路径，用于在匹配失败时暴露真实字符串。 */
-    private static volatile String probeFirstTaczPath;
-    /** 第一次见到的任意管线 label（含非 tacz），用于确认取法本身通不通。 */
-    private static volatile String probeFirstAnyLabel;
-    private static boolean loggedProbe;
-
-    /** 供 {@code IrisShaderCreatorMixin} 上报「源码注入确实做成了几个 HAND 程序」。 */
-    public static void noteHandProgramPatched() {
-        probeHandProgramsPatched++;
-    }
-
-    /**
-     * 首次开镜后汇总一次链路状态。
-     *
-     * <p>由 {@code ScopeMaskRenderer} 在确认「本帧画了掩码」之后调用；
-     * 只打一行，之后不再打扰。读这行就能定位断点：</p>
-     * <ul>
-     *   <li>{@code handProgramsPatched=0} → IrisShaderCreatorMixin 没往任何 HAND
-     *       程序里注入 tacz 分支（@ModifyArgs 是 require=0 的软注入，失败也不报错）；
-     *       此时后面几项必然全是 0，先查这一项；</li>
-     *   <li>{@code shaderSetup=0} → IrisExtendedShaderMixin 没装上
-     *       （Iris 又改了 iris$setupState 的签名/方法名）；</li>
-     *   <li>{@code renderPass=0} → IrisGlCommandEncoderMixin 没装上
-     *       （setupDraw 又改名了）；这两个都是 require=0 的软注入，不会报错；</li>
-     *   <li>{@code nonZeroMode=0} → 两个 hook 都在跑，但没认出我们的管线
-     *       （resolveMode 靠 pipeline location 字符串匹配，Iris 换了取法）；</li>
-     *   <li>{@code noModeUniform>0} → 认出来了，但 Iris 的着色器里没有
-     *       tacz_ScopeMaskMode 这个 uniform，即 IrisShaderCreatorMixin 的
-     *       源码注入没生效（它是 @ModifyArgs，失败同样静默）；</li>
-     *   <li>{@code noMaskTexture>0} → 前面都对，但掩码纹理没拿到；</li>
-     *   <li>{@code modeWritten>0} → 整条链路通了，问题在着色器逻辑本身。</li>
-     * </ul>
-     */
-    public static void logProbeOnce() {
-        if (loggedProbe) {
-            return;
-        }
-        // 只在「链路已经跑通」或「已经攒够样本足以判定失败」时才定版。
-        // 首帧掩码画出来的那一刻，drawcall 可能还没轮到我们的管线，
-        // 此时打一行全 0 会误导（上一轮就差点据此下错结论）。
-        // modeWritten>0 = 通了，可以定版；否则等到 renderPass 累计够多再定。
-        if (probeModeWritten == 0 && probeRenderPassCalls < 10_000) {
-            return;
-        }
-        loggedProbe = true;
-        GunMod.LOGGER.info("[TACZ Scope][PROBE] Iris scope-mask chain after first masked frame: "
-                        + "handProgramsPatched={}, shaderSetup={}, renderPass={}, nonZeroMode={}, "
-                        + "noModeUniform={}, noMaskTexture={}, modeWritten={}, "
-                        + "firstTaczPipeline={}, firstAnyPipelineLabel={}, "
-                        + "bindingSync={}/{}, registeredPaths={}, nameTableSize={}, "
-                        + "pathFrom={table:{},debugLabel:{}}, samplerPresence={}. "
-                        + "(shaderSetup/renderPass == 0 means the corresponding Iris mixin did not apply; "
-                        + "nonZeroMode == 0 means our pipelines were not recognised; "
-                        + "noModeUniform > 0 means the shader-source injection did not take effect; "
-                        + "bindingSync hits < attempts means getCompiledPipelineNullable returned null; "
-                        + "registeredPaths should list the 6 clipped scope pipelines -- if it only lists "
-                        + "pipeline/scope_mask then the FrontendRenderPass name() route was defeated by "
-                        + "Iris program redirection and only the explicit sync is working.)",
-                probeHandProgramsPatched, probeShaderSetupCalls, probeRenderPassCalls,
-                probeNonZeroMode, probeNoModeUniform, probeNoMaskTexture, probeModeWritten,
-                probeFirstTaczPath, probeFirstAnyLabel,
-                probeBindingSyncHits, probeBindingSyncAttempts,
-                String.join(",", probeRegisteredPaths), NAME_BY_BACKEND_PIPELINE.size(),
-                probeRegisteredHits, probeDebugLabelHits, probeSamplerPresence);
-    }
 
     /**
      * 本帧当前正在 setup 的 {@code GlRenderPass}，由 {@code IrisGlCommandEncoderMixin} 在
@@ -599,7 +306,6 @@ public final class IrisScopeMaskState {
      * 两处谁最后跑都得到正确值 —— 与 mixin 应用顺序无关。</p>
      */
     public static void applyToShaderProgram(Object shader) {
-        probeShaderSetupCalls++;
         try {
             int programId = getProgramId(shader);
             if (programId <= 0) {
@@ -637,7 +343,6 @@ public final class IrisScopeMaskState {
      * Otherwise (gun body, attachments, hands, entities, particles), mode is set to 0.
      */
     public static void applyToGlRenderPass(Object glRenderPass) {
-        probeRenderPassCalls++;
         try {
             if (glRenderPass == null) {
                 return;
@@ -658,10 +363,6 @@ public final class IrisScopeMaskState {
             // 所以这就是「没开镜时帧数也差」的那一份。
             if (!ScopeMaskRenderer.hasMaskThisFrame() && !ScopeMaskRenderer.hadMaskLastFrame()) {
                 return;
-            }
-            // 【只统计、不改渲染】掩码采样器是否随本 draw 的前端 RenderType 一起到了后端。
-            if (hasMaskSampler(glRenderPass)) {
-                probeSamplerPresence++;
             }
             int mode = resolveMode(glRenderPass);
 
@@ -689,17 +390,9 @@ public final class IrisScopeMaskState {
      * 保证「最后跑的那个」写的是同一套状态。</p>
      */
     private static void writeScopeMaskState(int programId, int mode, Object glRenderPass) {
-        if (mode != 0) {
-            probeNonZeroMode++;
-        }
         int modeLocation = GL20C.glGetUniformLocation(programId, UNIFORM_MODE);
         if (modeLocation < 0) {
             // 这个程序没有被注入过 tacz 分支（HAND_ONLY 下绝大多数 Iris 程序都是这种），直接走人。
-            // 探针只统计「本该裁剪却找不到 uniform」的情形 —— mode==0 的程序绝大多数
-            // 本来就不该有这个 uniform，计进去会把信号淹没。
-            if (mode != 0) {
-                probeNoModeUniform++;
-            }
             return;
         }
         int samplerLocation = GL20C.glGetUniformLocation(programId, UNIFORM_SAMPLER);
@@ -712,7 +405,6 @@ public final class IrisScopeMaskState {
         }
         int textureId = resolveMaskTextureId(glRenderPass);
         if (textureId <= 0) {
-            probeNoMaskTexture++;
             GL20C.glUniform1i(modeLocation, 0);
             return;
         }
@@ -723,7 +415,6 @@ public final class IrisScopeMaskState {
         // 顺序：先写 uniform，再绑纹理（bindMaskTexture 内部负责把 active 单元恢复原状）。
         // Iris 的 ProgramSamplers#update() 跑在我们之前且只重绑它自己那几个单元，
         // 所以我们这一次绑定是本轮最后的写入者。
-        probeModeWritten++;
         GL20C.glUniform1i(modeLocation, mode);
         bindMaskTexture(unit, textureId);
     }
@@ -751,16 +442,6 @@ public final class IrisScopeMaskState {
             pipelineFieldResolved = true;
         }
         return cachedPipelineField;
-    }
-
-    /** 本 draw 的前端 RenderType 是否绑了本 mod 的掩码采样器（与对象身份无关）。 */
-    private static boolean hasMaskSampler(Object glRenderPass) {
-        try {
-            Object samplersObj = readField(glRenderPass, "samplers");
-            return samplersObj instanceof java.util.Map<?, ?> m && m.containsKey("ScopeMaskSampler");
-        } catch (Throwable t) {
-            return false;
-        }
     }
 
     private static int resolveMode(Object glRenderPass) {
@@ -795,107 +476,22 @@ public final class IrisScopeMaskState {
     }
 
     /** 真正去问「这套管线是不是我们的镜身/准星管线」。只在每个管线实例上跑一次。 */
-
-    /**
-     * 取出这条后端管线对应的 {@code tacz:pipeline/xxx} 路径段（不含命名空间），
-     * 取不到或不属于本 mod 时返回 {@code null}。
-     *
-     * <h2>26.3 为什么要换取法</h2>
-     * <p>26.2 走的是 {@code GlRenderPipeline#info()} → {@code RenderPipeline#getLocation()}。
-     * <b>26.3 的 {@code GlRenderPipeline} 已经没有 {@code info()} 了</b> ——
-     * 它只留下 device/program/vertexArray 等纯 GL 状态，前端的
-     * {@code RenderPipeline} 引用整个不再持有（已对照 26.3 反编译源确认）。
-     * 反射拿不到方法 → {@code invokeNoArgs} 返回 null → resolveMode 恒返回 0
-     * → 光影下 mode 永远是 0 → 不裁剪。
-     * 这正是探针 {@code nonZeroMode=0}（而 shaderSetup=80659、renderPass=447454
-     * 都在正常跳动）所指向的断点。</p>
-     *
-     * <h2>新取法的同源性</h2>
-     * <p>改读 {@code program().getDebugLabel()}。这个字符串不是调试用的花名，
-     * 而是管线 location 本身：{@code PipelineBuilder} 构造后端
-     * {@code CreateInfo} 时写的就是 {@code pipeline.getLocation().toString()}
-     * （PipelineBuilder:346-347），{@code GlPipelineRecompiler} 再把它原样传给
-     * {@code GlProgram.link(..., createInfo.name())}（GlPipelineRecompiler:314），
-     * 最终由 {@code getDebugLabel()} 返回。所以它形如
-     * {@code "tacz:pipeline/scope_body_clipped"}，与旧路径拿到的 location 等价。</p>
-     *
-     * <p>保留旧路径作为回退：26.2 没有 debugLabel 这条链，而本类同样被
-     * 26.2 分支使用；两条都试一次，谁先成功用谁。</p>
-     */
-    @Nullable
-    private static String pipelinePath(Object glPipeline) {
-        // —— 26.3 主路径：查前端登记表 ——
-        // 这是唯一在光影下也成立的取法，见 NAME_BY_BACKEND_PIPELINE 的说明。
-        String registered = NAME_BY_BACKEND_PIPELINE.get(glPipeline);
-        if (registered != null) {
-            probeRegisteredHits++;
-            return registered;
-        }
-        // 下面两条是历史取法，26.3 光影下都拿不到我们的 location，
-        // 仅为兼容 26.2 与「未装 Iris 时后端 label 恰好就是 location」的情形保留。
-        // 各自 try：invokeNoArgs 底层是 getMethod，方法不存在会抛
-        // NoSuchMethodException 而不是返回 null。
-        // —— 回退一：program().getDebugLabel() ——
-        try {
-            Object program = invokeNoArgs(glPipeline, "program");
-            if (program != null) {
-                Object label = invokeNoArgs(program, "getDebugLabel");
-                if (label != null) {
-                    if (probeFirstAnyLabel == null) {
-                        probeFirstAnyLabel = String.valueOf(label);
-                    }
-                    String path = stripModNamespace(String.valueOf(label));
-                    if (path != null) {
-                        probeDebugLabelHits++;
-                        if (probeFirstTaczPath == null) {
-                            probeFirstTaczPath = path;
-                        }
-                        return path;
-                    }
-                }
-            }
-        } catch (ReflectiveOperationException ignored) {
-            // 落到下面的回退路径
-        }
-        // —— 26.2 回退路径：info().getLocation() ——
+    private static int resolveModeUncached(Object glPipeline) {
         try {
             Object renderPipeline = invokeNoArgs(glPipeline, "info");
             if (renderPipeline == null) {
-                return null;
+                return 0;
             }
             Object location = invokeNoArgs(renderPipeline, "getLocation");
             if (location == null) {
-                return null;
-            }
-            String namespace = String.valueOf(invokeNoArgs(location, "getNamespace"));
-            if (!GunMod.MOD_ID.equals(namespace)) {
-                return null;
-            }
-            return String.valueOf(invokeNoArgs(location, "getPath")).toLowerCase(Locale.ROOT);
-        } catch (ReflectiveOperationException ignored) {
-            return null;
-        }
-    }
-
-    /**
-     * {@code "tacz:pipeline/scope_body_clipped"} → {@code "pipeline/scope_body_clipped"}；
-     * 不是本 mod 的命名空间就返回 null。
-     */
-    @Nullable
-    private static String stripModNamespace(String label) {
-        String prefix = GunMod.MOD_ID + ":";
-        if (!label.startsWith(prefix)) {
-            return null;
-        }
-        return label.substring(prefix.length()).toLowerCase(Locale.ROOT);
-    }
-
-    private static int resolveModeUncached(Object glPipeline) {
-        try {
-            String normalized = pipelinePath(glPipeline);
-            if (normalized == null) {
                 return 0;
             }
+            String namespace = String.valueOf(invokeNoArgs(location, "getNamespace"));
+            String path = String.valueOf(invokeNoArgs(location, "getPath"));
+            if (!GunMod.MOD_ID.equals(namespace)) {
+                return 0;
+            }
+            String normalized = path.toLowerCase(Locale.ROOT);
             if (BODY_PIPELINE.equals(normalized)) {
                 // 【恒为 1】镜身在孔径内 discard，于是最终画面里孔径那块就是 1× 的世界。
                 //

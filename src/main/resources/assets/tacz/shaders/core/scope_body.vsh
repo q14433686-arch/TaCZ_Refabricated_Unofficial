@@ -62,21 +62,9 @@ layout(location = 6) out vec2 texCoord0;
 #ifdef GLINT
 layout(location = 7) out vec2 texCoordGlint;
 #endif
-// 【2026-09-19 新增，偏离 vanilla entity.vsh 的唯一一处】
-// 把本顶点的屏幕位置（NDC→[0,1]）传给片元，供掩码采样用。
-// 原先 scope_body.fsh 用 gl_FragCoord.xy/ScreenSize 现算，实测在 26.3 下静默
-// 失效（目镜不裁，case3：裁剪类型已选、掩码有内容）。两个可能成因都被这一改动
-// 绕开：① 26.3 renderpearl 用 clip control，掩码 target 的纹素原点与 gl_FragCoord
-//    的左下原点可能上下镜像；② Globals.ScreenSize 在手部 pass 可能未绑定而为 0，
-//    gl_FragCoord/0 = inf，采样恒 0。
-// NDC 坐标与掩码绘制走同一个 clip-space→纹素映射，与原点/分辨率约定都无关。
-layout(location = 8) out vec2 scopeUv;
 
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
-
-    // 屏幕位置 → [0,1]。w 除算把齐次坐标拉回 NDC；对镜身几何 w 恒正。
-    scopeUv = (gl_Position.xy / gl_Position.w) * 0.5 + 0.5;
 
     sphericalVertexDistance = fog_spherical_distance(Position);
     cylindricalVertexDistance = fog_cylindrical_distance(Position);
