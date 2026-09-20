@@ -64,22 +64,12 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "renderItemInHand", at = @At("RETURN"))
     private void tacz$endHandPass(CallbackInfo ci) {
-        // 【26.3 新增】第一人称 poly_mesh 的 GPU 绘制搬到这里。
-        //
-        // 26.2 时它挂在 renderAllFeatures 的 executeSolid 之后 —— 那时各阶段
-        // 之间不在任何 pass 内，自开 pass 是安全的。26.3 把 pass 归属倒置：
-        // renderItemInHand 先 createRenderPass("Item in hand")，再把它传进
-        // renderAllFeatures / executeSolid（GR:399-408），阶段边界因此身处
-        // pass 内部，自开 pass 会撞 "Close the existing render pass" 断言。
-        //
-        // RETURN 处 vanilla 的 try-with-resources 已经出块，pass 与 PreparedFrame
-        // 都已 close，此刻开自己的 pass 是安全的；而主 target 的颜色/深度都还在
-        // （pass 只是结束录制，不销毁附件），poly mesh 依旧能正确参与深度遮挡。
-        //
-        // 顺序上仍然晚于镜身/准星（它们在 solid 阶段画完），符合原有叠放关系。
-        // 必须放在 setInHandPass(false) 之前：renderAfterSolid 内部要靠
-        // isInHandPass() 判定本次是不是手部 pass。
-        PolyMeshGpuRenderer.renderAfterSolid();
+        // 【2026-09-21】第一人称 poly_mesh 的 GPU 绘制【不在这里】：RETURN 处
+        // modelViewStack 已 popMatrix（MV_draw 丢失 ⇒ 无光影「只有正北跟手」），
+        // 且 Iris 下手部早已在 LevelRenderer.render 内由 HandRenderer 画完，
+        // 拖到这里消费会用 vanilla stride 解读 Iris 宽格式 VBO（光影下「拉伸成片」）。
+        // 消费点现位于 FeatureRenderDispatcherMixin#tacz$polyMeshAfterHandSolid
+        // （renderAllFeatures 内 executeSolid 之后，复用传入的 pass）。
 
         this.tacz$renderingItemInHand = false;
         ScopeMaskRenderer.setInHandPass(false);

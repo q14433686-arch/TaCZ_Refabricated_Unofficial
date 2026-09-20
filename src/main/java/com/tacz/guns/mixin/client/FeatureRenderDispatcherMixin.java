@@ -1,5 +1,7 @@
 package com.tacz.guns.mixin.client;
 
+import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
+import com.mojang.renderpearl.api.commands.RenderPass;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.render.scope.ScopePipRenderer;
@@ -225,5 +227,30 @@ public abstract class FeatureRenderDispatcherMixin {
      * {@code renderItemInHand} 的 RETURN —— 见
      * {@code GameRendererMixin#tacz$polyMeshAfterHandPass}。
      * 本注入点因此<b>整个移走</b>，不在此处保留空壳。</p>
+     *
+     * <h2>2026-09-21：搬回来 —— 挂 {@code renderAllFeatures} 内 {@code executeSolid} 之后</h2>
+     * <p>上面「移到 renderItemInHand RETURN」的推理漏掉了两件事（实机两个症状各对一件）：
+     * RETURN 处 {@code modelViewStack} 已 pop（无光影只有正北跟手）；Iris 下手部根本
+     * 不走 vanilla 那段，而是 {@code HandRenderer} 在 {@code LevelRenderer.render} 内
+     * 自己调 {@code renderAllFeatures}（拖到外面画 = 顶点格式/HAND program 全错 ⇒ 拉伸成片）。
+     * 详见 {@link PolyMeshGpuRenderer#renderAfterSolid(RenderPass)}。
+     *
+     * <p>「pass 内不许再开 pass」的问题用另一种方式解决：不自开，
+     * 把 {@code renderAllFeatures} 的形参 {@code renderPass} 直接传下去录制
+     * （世界表 {@code LevelRendererWorldPassMixin} 已是同一做法）。
+     * {@code renderAllFeatures} 是静态方法，处理器随之为静态。</p>
      */
+    @Inject(
+            method = "renderAllFeatures",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;executeSolid(Lcom/mojang/renderpearl/api/commands/RenderPass;)V",
+                    shift = At.Shift.AFTER
+            )
+    )
+    private static void tacz$polyMeshAfterHandSolid(RenderPass renderPass,
+                                                    FeatureRenderDispatcher.PreparedFrame frame,
+                                                    CallbackInfo ci) {
+        PolyMeshGpuRenderer.renderAfterSolid(renderPass);
+    }
 }

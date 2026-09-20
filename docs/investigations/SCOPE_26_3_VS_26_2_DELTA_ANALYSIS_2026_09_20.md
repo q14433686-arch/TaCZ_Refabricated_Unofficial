@@ -814,3 +814,31 @@ codec 失败即整表失败、存档拒绝加载。`GunSmithTableSerializer.INGR
 **修复**：`INGREDIENT_CODEC` 的 `item` 改用 `ExtraCodecs.JSON` 读原始 JSON，交给延迟解析构造器，
 与 Gson 路径统一（解析失败只是该材料为空 + ERROR 日志，不再炸注册表）。编码方向回写解析后的
 Ingredient 或原文。未实机验证；验收：装 duyupack 能进存档，且 log 无 `Registry loading errors`。
+
+## 十六、附带案：第一人称高模（GPU 烘焙路径）两症状同源（2026-09-21）
+
+**症状**：① 无光影：mesh 枪在视界内相对漂移，只有朝正北才跟手；② 光影下：第一人称
+mesh 枪「拉伸成很多片」。第三人称/掉落物两种模式都正常（世界表消费点没动过）。
+
+**根因（单一改动）**：26.3 移植时把 `PolyMeshGpuRenderer.renderAfterSolid()` 从
+`renderAllFeatures` 内 executeSolid 之后挪到了 `GameRenderer#renderItemInHand` RETURN
+（理由：pass 内不能再开 pass）。该点两个前提同时失守：
+- 26.3 `renderItemInHand` 源码：`modelViewStack.pushMatrix().mul(viewRotationMatrix)`
+  … `renderAllFeatures` … `modelViewStack.popMatrix()` → RETURN 处 MV 栈已 pop，
+  绘制核心取到的 MV_draw = I，pose_bone 丢相机旋转层 ⇒ 枪固定在视角空间（正北
+  viewRotation 只剩俯仰故近似正常）。与 26.2 首版 0ea0fb6 / 世界表 renderLevel 560 同病。
+- Iris 26.3 `MixinGameRenderer` 把 vanilla `submitHandsWithItems` Redirect 成 no-op，
+  手部由 `HandRenderer#renderSolid/renderTranslucent` 在 `LevelRenderer.render` 内自
+  调 `renderAllFeatures`。HAND_DRAWS 在那里登记、VBO 也在那里烘焙
+  （`ImmediateState.isRenderingLevel=true` ⇒ `MixinBufferBuilder` 换成 `IrisVertexFormats.ENTITY`
+  宽 stride）；拖到 vanilla RETURN 消费时已出 render 括号，`MixinRenderType#format` 不再
+  扩展 ⇒ 用 36 字节 stride 解读宽格式 VBO ⇒ 「拉伸成片」（MESH_LOADER.md 记录过的同形态）。
+  A5 stride 哨兵测的是 `DefaultVertexFormat.ENTITY`，Iris 换的是另一个格式对象，不响。
+
+**修复**：`FeatureRenderDispatcherMixin#tacz$polyMeshAfterHandSolid` —
+`@Inject(renderAllFeatures, INVOKE PreparedFrame.executeSolid, shift AFTER)`，把形参
+`renderPass` 传进 `renderAfterSolid(RenderPass)` 复用录制（世界表同法），不再自开 pass。
+vanilla 与 Iris HandRenderer 都在各自 push/pop 之间调用 renderAllFeatures，MV 栈顶 = 手部
+MV；Iris 下仍在 render 括号内，格式与 HAND program 一致。另加 `isRenderShadow` 早退
+（Iris ShadowRenderer:603 也调 renderAllFeatures）。GameRendererMixin RETURN 处的调用删除。
+**未实机验证**；验收：无光影八朝向跟手；光影下第一人称 mesh 枪形态正常且有光影光照。

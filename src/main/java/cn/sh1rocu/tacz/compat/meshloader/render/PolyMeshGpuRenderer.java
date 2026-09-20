@@ -555,8 +555,39 @@ public final class PolyMeshGpuRenderer {
     /**
      * 在手部 {@code renderAllFeatures} 的 {@code executeSolid} <b>之后</b>绘制。
      * 世界那次直接清空残留（理论上不应有）。
+     *
+     * <h2>2026-09-21：消费点从 {@code renderItemInHand} RETURN 搬回 {@code renderAllFeatures} 内部</h2>
+     * <p>26.3 首版为了躲「pass 内不许再开 pass」的断言，把本方法挪到了
+     * {@code GameRenderer#renderItemInHand} 的 RETURN。那一点<b>两个前提同时失守</b>，
+     * 恰好对应用户回报的两个症状：</p>
+     * <ol>
+     *   <li><b>无光影「只有朝正北才跟手」</b>：renderItemInHand 源码（26.3）
+     *       {@code modelViewStack.pushMatrix().mul(viewRotationMatrix)} … renderAllFeatures …
+     *       {@code modelViewStack.popMatrix()} —— RETURN 处 MV 栈<b>已经 pop</b>，
+     *       两个绘制核心从栈顶取到的 MV_draw 是单位阵，pose_bone 里只剩「相对相机」那层
+     *       ⇒ 枪固定在视角空间（yaw=0 即正北时 viewRotation 只剩俯仰，看起来近似正常）。
+     *       与 26.2 首版 0ea0fb6 / 世界表挂错 renderLevel 560 是同一个病。</li>
+     *   <li><b>光影下第一人称「拉伸成很多片」</b>：Iris 26.3 把 vanilla
+     *       {@code submitHandsWithItems} Redirect 成 no-op，手部改由
+     *       {@code HandRenderer#renderSolid} 在 {@code LevelRenderer.render} 内部提交+绘制。
+     *       我们的 HAND_DRAWS 在那里被登记（{@code isInHandPass} 经 HandRenderer.ACTIVE 为真），
+     *       骨骼 VBO 也在那里烘焙 —— 此时 {@code ImmediateState.isRenderingLevel=true}，
+     *       {@code MixinBufferBuilder} 把 ENTITY 换成 <b>IrisVertexFormats.ENTITY</b>（更宽 stride）。
+     *       而消费却拖到 vanilla renderItemInHand RETURN：已在 LevelRenderer.render 之外，
+     *       {@code MixinRenderType#format} 不再扩展 ⇒ 管线按 vanilla 36 字节 stride 解读
+     *       Iris 宽格式 VBO ⇒ 正是 docs/MESH_LOADER.md 记录过的「错位 stride ⇒ 模型拉伸」形态；
+     *       A5 哨兵测的是 {@code DefaultVertexFormat.ENTITY.getVertexSize()}，Iris 用的是
+     *       另一个格式对象，哨兵不响。HandRenderer 也已非活跃，管线还会落到 entities 而非 hand。</li>
+     * </ol>
+     * <p>正确的点是 {@link FeatureRenderDispatcher#renderAllFeatures} 里 {@code executeSolid}
+     * 之后：vanilla 与 Iris HandRenderer 都在各自的 push/pop 之间调用它（MV 栈顶=手部 MV），
+     * Iris 下它还在 LevelRenderer.render 括号内（格式一致、HAND program 生效），
+     * 与 26.2 的注入点语义完全同构；pass 由形参传入，直接复用，不再自开。</p>
+     *
+     * @param externalPass {@code renderAllFeatures} 正在录制的 pass（vanilla "Item in hand" /
+     *                     Iris HandRenderer "Terrain"）；为 null 时自开（仅兜底）。
      */
-    public static void renderAfterSolid() {
+    public static void renderAfterSolid(@Nullable RenderPass externalPass) {
         // 【PIP 二次渲染 × 光影 —— 必须最先挡】Iris 把手部渲染搬进
         // LevelRenderer.render 内部，于是镜内那一遍也有自己的手部 pass，
         // 本方法会先于主画面那一遍被调到。不挡的话：
@@ -569,6 +600,11 @@ public final class PolyMeshGpuRenderer {
         //
         if (com.tacz.guns.client.render.scope.ScopePipRenderer.isInsideScopeLevelRender()) {
             HAND_DRAWS.clear();
+            return;
+        }
+        if (IrisCompat.isRenderShadow()) {
+            // Iris ShadowRenderer 也调 renderAllFeatures（26.3 ShadowRenderer:603）：
+            // 阴影遍不画、也不清表（与世界表同一处理）。
             return;
         }
         if (!ScopeMaskRenderer.isInHandPass()) {
@@ -605,9 +641,9 @@ public final class PolyMeshGpuRenderer {
         }
         try {
             if (useRenderTypeRoute()) {
-                drawListViaRenderType(HAND_DRAWS, null);
+                drawListViaRenderType(HAND_DRAWS, externalPass);
             } else {
-                drawList(HAND_DRAWS, null);
+                drawList(HAND_DRAWS, externalPass);
             }
             drawnThisFrame = true;
         } catch (Exception | LinkageError e) {
