@@ -544,17 +544,31 @@ null。三个细节：
 - `resolveBodyRenderType` 的 gate 链（config / IrisCompat / 几何非空 /
   viewmodelClip / syncToMaskTarget）无环境输入。
 
-**剩余候选族**（按序）：
-- **A. 掩码目标在那些维度里根本没画上/是黑的**（draw 侧）——例如 26.3 在
-  特定维度把掩码 pass 夹进某条不同的 frame-graph 分支，或掩码 target 在
-  那些条件下被清。判定：`SCOPE_MASK_DEBUG=true` 的 HUD 预览在下界截图 —
-  黑/无内容 = 本族。
-- **B. 掩码正常，镜身采样/回退侧失效**（preview 有白色形状但不裁）——
-  区分手段仍是 doc 原 §6 的 5 分钟实验：把 `scope_body.fsh` 的
-  `gl_FragCoord.xy / ScreenSize` 换成
-  `gl_FragCoord.xy / vec2(textureSize(ScopeMaskSampler, 0))`（绕开 Globals
-  UBO）；再不裁就轮到 render-type fallback 嫌疑（B/C 分裂在此）。
-- **C. resolveBodyRenderType 回退路径被触发**（同 B 表象）——若 B 实验
-  也不裁，下版需给 fallback 补一条 debug-gated 一次性日志。
+**实机判定（2026-09-20 三轮，用户）**：**B 族成立**——掩码预览正常却不裁；
+且补充关键线索：**封闭空间无恙，仅开放空间发作**。四个发作条件的公共面
+因此收窄为「开放天空、天空光弱/自定义雾」，而 B 族的采样算式里唯一可动
+的引擎全局量就是 `Globals` UBO 的 `ScreenSize`（maskUv = gl_FragCoord /
+ScreenSize）。
 
-**状态：待用户实机提供 A vs B 的判定截图。**
+**硬化已落地（同日）**：`scope_body.fsh` / `scope_text.fsh` 两处 maskUv
+分母改为 `vec2(textureSize(ScopeMaskSampler, 0))` —— 掩码 target 与主
+target 同尺寸，UBO 健康时与 `/ScreenSize` 逐位相等；UBO 一旦被写歪/未绑，
+本算式不受其影响。与注入 Iris 的 GLSL 使用的算式自此全对齐。
+若硬化后 Nether/End/夜/水下仍不裁 → 轮到 C 族（render-type 回退路径），
+届时补 debug-gated 一次性日志再定。
+
+**同轮事故记录（二轮崩溃的另一半）**：第二轮实机又报「无光影开启高倍镜
+直接崩溃」——崩溃管线是 `scope_body_clipped`，根因是 marker 采样器的
+GLSL 声明放进了共享 fsh 的 `#ifdef SCOPE_MASK` 下：mode-1 管线的 shader
+定义了 `ScopeMaskMode2Sampler` 却没有对应 bind-group 条目，
+`generateBackendCreateInfo` 校验抛
+`Unable to find shader defined uniform (ScopeMaskMode2Sampler)`。
+已移位到 `#if defined(SCOPE_MASK) && defined(SCOPE_MASK_INVERT)` ——
+声明方与 layout 方一一对应。教训与 r46（Fog 缺声明 → 编译不过）互为对偶：
+**layout 声明与 GLSL 声明必须逐管线逐名字双向配对**。
+
+**同批日志里的未决项**：两轮崩溃日志均有
+`couldn't find source/preload shader tacz:shaders/core/scope_body.vsh`
+（文件确在 jar，构建无过滤）。疑似运行时资源管理器瞬时态（枪包同步
+重建 tacz_resources 命名空间时并发命中懒编译波）。§9 预热器的
+FAILED/PENDING 日志会在实机上直接点名——若属瞬时态，退避重试自然愈合。

@@ -72,7 +72,9 @@ void main() {
 #ifdef SCOPE_MASK
     // 与 scope_body.fsh 完全一致的采样约定：gl_FragCoord 左下原点，
     // 掩码 target 纹理原点也在左下，不翻 Y。
-    vec2 maskUv = gl_FragCoord.xy / ScreenSize;
+    // 分母用 textureSize 取代 ScreenSize（2026-09-20 三轮）：与注入
+    // Iris 的 GLSL 同款，对本分支的 Globals UBO 绑定状态零依赖。
+    vec2 maskUv = gl_FragCoord.xy / vec2(textureSize(ScopeMaskSampler, 0));
     if (texture(ScopeMaskSampler, maskUv).r <= 0.5) {
         // 目镜投影之外 —— 文字被镜筒挡住，不可见。
         // 这正是「MK5HD 弹药计数穿出目镜」一案的裁剪点。

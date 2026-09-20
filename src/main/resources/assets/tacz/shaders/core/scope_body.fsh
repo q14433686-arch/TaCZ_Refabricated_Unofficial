@@ -36,9 +36,15 @@ uniform sampler2D DissolveMaskSampler;
 // 目镜掩码：白 = 该像素属于镜内（目镜投影覆盖），黑 = 镜外。
 // 由 ScopeMaskRenderer 在阶段边界渲染到离屏 target。
 uniform sampler2D ScopeMaskSampler;
+#endif
+
+#if defined(SCOPE_MASK) && defined(SCOPE_MASK_INVERT)
 // mode 2 标记采样器（2026-09-20）：只在反向裁剪（准星）管线的 bind group 里声明，
 // 绑的是同一张掩码纹理，GLSL 从不采样它 —— 它存在的唯一意义是让本条 draw 的
 // GlRenderPass#samplers 多一个 key，供 Java 侧在管线对象身份不可考时判别 mode。
+// 声明必须与 bind group 严格一一对应：mode-1 管线没有这个 layout 条目，
+// 无条件声明会在 generateBackendCreateInfo 抛
+// "Unable to find shader defined uniform (ScopeMaskMode2Sampler)"（2026-09-20 二轮实机）。
 uniform sampler2D ScopeMaskMode2Sampler;
 #endif
 
@@ -105,7 +111,14 @@ void main() {
     // gl_FragCoord.xy 是以【左下】为原点的窗口像素坐标，掩码 target 的
     // 纹理原点同样在左下，两者一致，所以这里【不需要】翻 Y。
     // （调试预览里要翻 V，那是因为 GUI 坐标系原点在左上 —— 两回事，别混。）
-    vec2 maskUv = gl_FragCoord.xy / ScreenSize;
+    //
+    // 【2026-09-20 三轮】分母从 ScreenSize（Globals UBO）改为
+    // textureSize(ScopeMaskSampler, 0)：与注入 Iris 的 GLSL 同款取法。
+    // 掩码 target 与主 target 同尺寸，两种算式在 UBO 健康时逐位相等；
+    // 但 Nether/End/夜晚/水下（开放空间限定，封闭空间无恙）实测
+    // mask 预览正常却不裁 —— 采样侧唯一可动的全局量就是这个 UBO。
+    // 换成对 sampler 自身求尺寸后，本分支对 Globals 绑定状态彻底零依赖。
+    vec2 maskUv = gl_FragCoord.xy / vec2(textureSize(ScopeMaskSampler, 0));
     vec2 maskSample = texture(ScopeMaskSampler, maskUv).rg;
     bool insideOcular = maskSample.r > 0.5;
 
