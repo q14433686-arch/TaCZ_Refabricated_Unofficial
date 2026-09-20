@@ -572,3 +572,68 @@ GLSL 声明放进了共享 fsh 的 `#ifdef SCOPE_MASK` 下：mode-1 管线的 sh
 （文件确在 jar，构建无过滤）。疑似运行时资源管理器瞬时态（枪包同步
 重建 tacz_resources 命名空间时并发命中懒编译波）。§9 预热器的
 FAILED/PENDING 日志会在实机上直接点名——若属瞬时态，退避重试自然愈合。
+
+## 十一、四轮实机（2026-09-20 晚）：shader 路径根因落地 + vanilla 问题 2 精确化
+
+### 11.1 shader 路径不裁剪 —— 根因实锤
+
+`latest.log`（18:15:48 起）抓到决定性一行：
+
+```
+WARN [TACZ Scope] Iris scope-mask bridge failed to resolve scope render pass
+  java.lang.NoSuchFieldException: samplers
+    at IrisScopeMaskState.resolveMode(...)
+  ← com.mojang.renderpearl.backend.opengl.GlCommandEncoder.setupDraw 回调栈
+```
+
+26.3 的 `GlRenderPass`（包已从 26.1 的 `blaze3d` 系挪到 `renderpearl`）
+**没有 `samplers` 字段**——renderpearl 重构把它改了名。`resolveMode`
+按单名反射 → 抛异常 → 被 catch → `logOnce` 打一次 WARN → **每条 draw
+都返回 mode 0**。注入 HAND 着色器的 `if (ScopeMaskMode == ...)` 分支全部
+走 else → 没有任何裁剪。这正是「掩码本身一切正常（预览可见、prewarm
+13/13、diag 表全 OK）却完全不裁」的完整成因链。
+
+**对照**：纹理 id 反射同样读 `samplers`，但它失败时静默回退
+`ScopeMaskTarget.current()`（本就是我们的 FBO，永远正确）——所以 mask
+采样一直健康，「死掉的只有 mode 判别」。这一次的崩溃恰好把异常打到了
+日志里才得以定位。
+
+**修复（本轮提交）**：两个调用点（`resolveMode` /
+`resolveMaskTextureId`）改为共用的容错查询 `samplersMap(pass)`：
+
+1. 名字列表直取（`samplers` 排最前 = 26.2 兼容，其余为猜测名）；
+2. 兜底：该类（含父类）第一个实例级 `Map` 字段 —— GlRenderPass 上
+   Map 字段密度极低，错拿最坏后果是 containsKey 恒 false（= 回到未修复
+   状态，不会更糟）；
+3. 再兜底：一次性 WARN dump 该类全部实例字段（名:类型）——实机日志
+   一轮即能读出 26.3 真实字段名，可再点名 hardcode。
+
+曾计划加 `vanilla-internals-dump` CI 工作流（javap loom 缓存的 26.3
+merged jar，26.1+ 无混淆故字段名真实可读），但本沙箱的 GitHub 凭据
+没有 `workflows` 权限、无法推送 `workflows/` 下的新增文件，已放弃此路。
+真实字段名改由第 3 级兜底的一次性 WARN dump 从实机日志回收 ——
+若两轮容错（名字列表/Map 扫描）任一命中，其实根本不需要真名。
+
+### 11.2 vanilla 路径问题 2 —— 用户精确化（推翻「全图不裁」框架）
+
+用户四轮反馈：**vanilla 路径从来不是全不裁**。镜身/世界的裁剪在所有
+环境都正常，**只有目镜贴图那一小块不裁**；HUD 掩码预览正常；且与
+光照强相关：白天开阔地无恙，但 **Y ≤ -39 以下的白天也发作**、下界/
+末地/夜晚/露天水下发作，封闭照明空间无恙。Y = -39 = 主世界
+minY(-64) + 25，是原版基岩雾变暗带的上边界 —— 但「下界无天空光」
+同样发作，说明机制不是雾带本身，而是**环境暗 ⇒ 目镜玻璃可见**。
+
+**当前主导假说（未验证）**：目镜的「玻璃/镜片」多边形走的是与镜身不同
+的（很可能是半透明）绘制路径，**从未被 SCOPE_MASK 裁剪**。白天/亮处
+它叠在世界之上不可见（半透明暗玻璃 vs 亮背景），暗处背景变黑、玻璃
+本身的暗色/反射就显出来了。若属实，修法与 §10 的 B/C 族都不同 ——
+不是采样坐标写歪，而是**某条绘制路径绕过了掩码**。
+
+**待办**：
+- 问用户：暗处那块的观感是「深色磨砂玻璃圆片」还是「精细蚀刻的镜片
+  纹理」？前者支持玻璃可见论，后者指向贴图采样问题；
+- 顺着 `BedrockAttachmentModel` / `resolveBodyRenderType` 半透明路由 /
+  `scope_ring`（FINAL_OCULAR_RING，ALWAYS_PASS 深度）排查哪条提交
+  路径没有 SCOPE_MASK 裁剪。
+- vsh-FileNotFound 谜团：本批日志未再现（预热器落地后两轮干净），
+  维持「枪包资源重建并发命中懒编译」瞬时态论，不单独投入。

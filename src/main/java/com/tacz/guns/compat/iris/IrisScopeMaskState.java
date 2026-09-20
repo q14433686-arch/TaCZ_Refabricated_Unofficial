@@ -465,10 +465,12 @@ public final class IrisScopeMaskState {
             }
             // 【26.3 主路】按本条 draw 实际绑定的采样器判断，不看管线对象。
             // 26.3 删了 GlRenderPass#pipeline 与 GlRenderPipeline#info()，老路在
-            // 26.3 上必死（字段反射为空 → 恒 0）；而 samplers 绑定表两个版本都在，
-            // 且不受 Iris 把程序整条换成 pack HAND 的影响。
-            Object samplersObj = readField(glRenderPass, "samplers");
-            if (samplersObj instanceof Map<?, ?> samplers) {
+            // 26.3 上必死（字段反射为空 → 恒 0）；26.2 的叫法「samplers」在
+            // 26.3 renderpearl 重构里也被改名（2026-09-20 四轮实机
+            // NoSuchFieldException: samplers 实锤）—— 用容错读法（名字列表
+            // → Map-typed 字段扫描，见 samplersMap）。
+            Map<?, ?> samplers = samplersMap(glRenderPass);
+            if (samplers != null) {
                 if (samplers.containsKey(MODE2_SAMPLER)) {
                     return 2;
                 }
@@ -559,8 +561,8 @@ public final class IrisScopeMaskState {
 
     private static int resolveMaskTextureId(Object glRenderPass) {
         try {
-            Object samplersObj = readField(glRenderPass, "samplers");
-            if (samplersObj instanceof Map<?, ?> samplers) {
+            Map<?, ?> samplers = samplersMap(glRenderPass);
+            if (samplers != null) {
                 Object tvs = samplers.get(MASK_SAMPLER);
                 if (tvs != null) {
                     int id = getGlTextureId(tvs);
@@ -677,10 +679,86 @@ public final class IrisScopeMaskState {
         return 0;
     }
 
-    private static Object readField(Object target, String name) throws ReflectiveOperationException {
-        Field field = target.getClass().getDeclaredField(name);
-        field.setAccessible(true);
-        return field.get(target);
+    /** {@link #samplersMap} 的 per-class 字段解析缓存（class 运行期恒定，单值缓存即可）。 */
+    private static Class<?> cachedSamplersOwner = null;
+    private static Field cachedSamplersField = null;
+    private static boolean samplersFieldResolved = false;
+    private static boolean loggedSamplersMiss = false;
+
+    /**
+     * 拿本条 draw 的「sampler 名 → 纹理绑定」Map —— 26.3 renderpearl 重构把它
+     * 从 26.2 的 {@code GlRenderPass#samplers} 改了名（2026-09-20 四轮实机
+     * {@code NoSuchFieldException: samplers} 实锤），具体新名等待实机 dump 确认。
+     *
+     * <p>解析顺序：
+     * <ol>
+     *   <li>按名字列表直取（samplers 排最前 = 26.2 兼容，本文件与 26.2 分支同步的要求）；</li>
+     *   <li>兜底：拿【第一个实例级 Map-typed 字段】—— 26.3 每个 GlRenderPass 上
+     *       只有一张绑定表是 Map，密度足够低，错拿概率可接受；错拿的最坏后果是
+     *       containsKey 恒 false（等于回到未修复状态，不会更糟）；</li>
+     *   <li>再兜底：把该类的全部实例字段（名字:类型）打一条 WARN ——
+     *       实机日志一次就能告诉我们 26.3 的真实字段名，补进名字列表。</li>
+     * </ol>
+     * 两处调用点（{@link #resolveMode} / {@link #resolveMaskTextureId}）共用。
+     */
+    @org.jetbrains.annotations.Nullable
+    private static Map<?, ?> samplersMap(Object glRenderPass) {
+        try {
+            Class<?> cls = glRenderPass.getClass();
+            if (cls != cachedSamplersOwner || !samplersFieldResolved) {
+                cachedSamplersOwner = cls;
+                cachedSamplersField = findSamplersField(cls);
+                samplersFieldResolved = true;
+            }
+            if (cachedSamplersField == null) {
+                return null;
+            }
+            Object value = cachedSamplersField.get(glRenderPass);
+            return value instanceof Map<?, ?> map ? map : null;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private static Field findSamplersField(Class<?> cls) {
+        String[] names = {"samplers", "textures", "textureBindings", "boundTextures", "samplerBindings", "bindings"};
+        for (String name : names) {
+            for (Class<?> c = cls; c != null; c = c.getSuperclass()) {
+                try {
+                    Field f = c.getDeclaredField(name);
+                    if (Map.class.isAssignableFrom(f.getType())) {
+                        f.setAccessible(true);
+                        return f;
+                    }
+                } catch (NoSuchFieldException ignored) {
+                    // 继续往父类找
+                }
+            }
+        }
+        // 兜底：第一个实例级 Map-typed 字段。
+        for (Class<?> c = cls; c != null; c = c.getSuperclass()) {
+            for (Field f : c.getDeclaredFields()) {
+                if (Map.class.isAssignableFrom(f.getType())
+                        && !java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                    f.setAccessible(true);
+                    return f;
+                }
+            }
+        }
+        if (!loggedSamplersMiss) {
+            loggedSamplersMiss = true;
+            StringBuilder sb = new StringBuilder(cls.getName()).append(" instance fields: ");
+            for (Class<?> c = cls; c != null; c = c.getSuperclass()) {
+                for (Field f : c.getDeclaredFields()) {
+                    if (!java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                        sb.append(f.getName()).append(':').append(f.getType().getSimpleName()).append(' ');
+                    }
+                }
+            }
+            GunMod.LOGGER.warn("[TACZ Scope] No samplers-like Map field found on GlRenderPass. {}", sb);
+        }
+        return null;
     }
 
     private static Object invokeNoArgs(Object target, String name) throws ReflectiveOperationException {
