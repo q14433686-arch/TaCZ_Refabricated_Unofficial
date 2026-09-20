@@ -1,0 +1,449 @@
+# 瞄具裁剪失效：26.2→26.3 vanilla / Iris 差异逐项分析
+
+- **日期**：2026-09-20
+- **症状**：26.3 分支上，开镜（ADS）时目镜贴图不被裁剪。
+- **本轮动作**：瞄具裁剪链路已**整体退回 26.2 基线**，只保留「无它则编译失败或
+  开镜即崩」的最小适配（提交 `a1e9f46`）。本文是配套的事后归因分析。
+- **证据级别说明**：
+  - **【实证】**：26.2/26.3 两分支逐文件 diff、Iris GitHub `26.2`/`26.3`
+    分支源码（26.3 侧锁定在 `IrisShaders-Iris-b388d57`）、本仓实机日志行。
+  - **【仓内引证】**：本仓注释/文档中对 26.3 反编译/字节码的行号引用（形如
+    `GR:399` = GameRenderer、`LR:443` = LevelRenderer），本沙箱无 JDK 无法复核，
+    但与 Iris 26.3 源码反映出的 vanilla 结构完全互洽。
+  - **【假设】**：尚无实机证据的推断，逐条标注。
+
+---
+
+## 0. TL;DR
+
+| # | 差异 | 谁改的 | 与「不裁剪」的关系 |
+|---|---|---|---|
+| V-r1 | `GlRenderPipeline#info()` 被删，后端管线不再持有前端 `RenderPipeline` 引用 | vanilla | **光影下的裁剪主死因**：26.2 靠它反查管线 location 决定 `tacz_ScopeMaskMode`，26.3 反射拿不到 → mode 恒 0 → 光影下不裁 |
+| I-r1 | Iris 程序重定向从 `GlDevice#getOrCompilePipeline` 搬到 `RenderSystem#getCompiledPipelineNullable`，新建的 `GlRenderPipeline` 是**后端专用构造**（无前端引用） | Iris | 与 V-r1 同源：26.2 重定向后 `info()` 仍能拿回我们的 location；26.3 实体里没有可拿的 |
+| I-r2 | `GlCommandEncoder#trySetup(GlRenderPass, Collection):boolean` → `setupDraw(GlRenderPass):void`，类同时搬家到 `renderpearl.backend.opengl` | vanilla/Iris | 我们的两个 hook 挂在旧名上，`require=0` 软注入**静默不装** → uniform 永不写入（已按新名适配保留） |
+| I-r3 | `ExtendedShader#iris$setupState` 形参 `(HashMap, GpuTextureView)` → `(List<BindGroupLayout.UniformDescription>)`；调用点从 `GlCommandEncoder` 挪到 `GlRenderPipeline#bind` | Iris | 旧签名的处理器在 mixin APPLY 阶段抛 `InvalidInjectionException`，**整个 hook murai丢弃并报错**（已改空形参适配保留） |
+| V-r2 | 掩码采样约定 `gl_FragCoord.xy / ScreenSize` 的两个前提在 26.3 不再显然：① renderpearl 起用 `GL_ARB_clip_control`；② `Globals` UBO（ScreenSize）在手部 pass 的绑定状态存疑 | vanilla | **无光影下的裁剪嫌疑**；前分支的 `scopeUv` 修复即冲它而来，但未证实已回滚（§5 候选 B） |
+| V-r3 | Render pass 归属倒置 + `RenderSystem.output{Color,Depth}TextureOverride` 删除 + `FrontendRenderPass#setPipeline` 附件数校验 | vanilla | 开镜**崩溃**类（不是不裁类）。适配已保留 |
+
+**一句话**：光影下（Iris）的断点是 V-r1/I-r1（管线身份不可反查）；
+无光影下的断点最可能是 V-r2（掩码采样的屏幕坐标来源），但两版都未实机定案，
+回滚后的 26.2 基线正好是验证这两条的干净起点。
+
+---
+
+## 1. 裁剪链路的两个采样约定（分析前先把话讲清）
+
+本 mod 的瞄具裁剪在 26.2 时代有两条互不相干的执行路径，它们对「26.3 哪些差异
+会弄死它」的答案完全不同：
+
+**路径甲 · 无光影（vanilla 链路）**——我们自己的 shader 全程运行：
+
+1. `ScopeMaskRenderer.renderAtPhaseBoundary()` 在手持帧图的边界处，把当帧所有
+   目镜几何画进离屏掩码纹理（白=镜内，绿通道=开镜进度）；
+2. 镜身走 `scope_body.fsh`（SCOPE_MASK）：`maskUv = gl_FragCoord.xy / ScreenSize`，
+   采样掩码，镜内 `discard`；准星/镜内文字走反相分支，镜外 `discard`。
+
+此路径的软硬前提：**(a)** 掩码纹理确实画上了形状；**(b)** `gl_FragCoord` 的原点
+方向与掩码纹理行序一致；**(c)** `Globals` UBO 里的 `ScreenSize` 在手部 pass
+有效（非 0）。
+
+**路径乙 · 光影（Iris 链路）**——我们的 shader 被整段替换，裁剪靠「注入分支
++ 逐 draw 写 uniform」：
+
+1. `assignScopePipelineToHand` 把 6 条 scope 管线映射进 Iris 的 HAND 程序表，
+   于是绘制时这些管线跑的是 **Iris/光影包的程序**，我们的 `scope_body.fsh`
+   根本不参与链接；
+2. `IrisShaderCreatorMixin` 在 HAND 程序链接前把一段
+   `if (tacz_ScopeMaskMode == 1/2) { 采样 tacz_ScopeMaskSampler 并 discard }`
+   的 dormant 分支注进它的源码；
+3. `IrisGlCommandEncoderMixin`（每次 draw setup）与 `IrisExtendedShaderMixin`
+   （Iris 每次 setup 程序状态）把 `tacz_ScopeMaskMode` 写给当前程序：
+   **mode 怎么定？看正在画的这条管线是不是我们的 scope 管线**——26.2 的取法是
+   `pass.pipeline.info().getLocation()`，匹配常量表给 1（镜身/枪口焰）或 2
+   （准星/镜内文字），其余一切给 0。
+
+此路径的软硬前提：**(a)** 源码注入成功（uniform 存在）；**(b)** 两个 hook 真的
+装上了；**(c)** 「正在画的管线是谁」能答出来。26.3 打掉的是 (b) 和 (c)。
+
+---
+
+## 2. Vanilla 26.2→26.3：逐项差异
+
+### 2.1 渲染底层重构（blaze3d → renderpearl 三分）【实证】
+
+26.3 把 `com.mojang.blaze3d` 里「管线/缓冲/纹理/命令」一层搬进了
+`com.mojang.renderpearl`：
+
+| 层 | 内容 | 26.2 | 26.3 |
+|---|---|---|---|
+| 前端 API | `RenderPipeline`、`ColorTargetState`、`BindGroupLayout`、`DepthStencilState`、`BlendFunction`、`PrimitiveTopology`、`GpuFormat`、`VertexFormat`、`IndexType`、`CompiledRenderPipeline`、`RenderPass`（接口）、`CommandEncoder`（接口）、`GpuBuffer(Slice)`、`GpuTexture(View)`、`GpuSampler`、`FilterMode` | `blaze3d.pipeline/.buffers/.textures/.systems` | `renderpearl.api.*` |
+| 后端 | `GlCommandEncoder`、`GlRenderPass`、`GlRenderPipeline`、`GlProgram`、`GlDevice`、`GlStateManager` | `blaze3d.opengl` | `renderpearl.backend.opengl` |
+| 前端执行 | `FrontendRenderPass`、`FrontendRenderPipeline`（record：`name()` + `backendRenderPipeline()` + uniforms/colorTargetStates…） | 不存在（26.2 由 `PreparedRenderType`/encoder 直接面对后端） | `renderpearl.frontend` |
+| **没搬** | `RenderSystem`、`RenderTarget`、`TextureTarget`、`PoseStack`、`VertexConsumer`、`BufferBuilder`、`DefaultVertexFormat`、`ProjectionType`、`GraphicsResourceAllocator` | `blaze3d.*` | 不变 |
+
+证据：Iris 26.3 的 import 清单（`MixinGlCommandEncoder`、`MixinShaderManager_Overrides`
+头部）与本仓 `PORT_26_3_PLAN_2026_09_17.md` §2.1 的逐行对照表一致；Fabric API 26.3
+同样从新包 import。
+
+**与症状的关系**：纯改名本身无害（机械替换即可），但它标志着下面 2.2 的
+实体结构变化。
+
+### 2.2 `GlRenderPipeline#info()` 删除 —— 光影链路的断点（V-r1）【实证】
+
+- 26.2：`GlRenderPipeline(renderPipeline, program)` 的构造里**留着前端
+  `RenderPipeline` 引用**，`info()` 返回它。Iris 26.2 的
+  `MixinGlCommandEncoder#iris$bypassSetup` 里就写着
+  `RenderPipeline pipeline = glRenderPass.pipeline.info();` 再用它查
+  depth/blend/cull 状态——**26.2 的后端管线是可反查前端的**。
+- 26.3：构造改为 `GlRenderPipeline(device, createInfo, program, vertexArray)`——
+  只剩设备、CreateInfo、GL 程序、顶点数组，**前端引用整个不在场**。Iris 26.3
+  全源码树里对 `info()` 的调用为 0（26.2 时代它在用）；其
+  `MixinGlCommandEncoder` 的 `@Shadow lastPipeline` 类型也从
+  `RenderPipeline` 变成了 `GlRenderPipeline`。
+
+连锁后果（26.2 时代我们的 `IrisScopeMaskState#resolveModeUncached`）：
+
+```
+pass.pipeline                          // 后端 GlRenderPipeline，26.2/26.3 都有
+  .info()                              // 26.2 ✔ → 前端 RenderPipeline
+                                       // 26.3 ✘ 方法不存在
+  .getLocation()                       // "tacz:pipeline/scope_body_clipped"
+  → mode = 1/2
+```
+
+26.3 下的实际行为：反射 `getMethod("info")` 抛 `NoSuchMethodException`，被
+catch 住**静默返回 0**——`tacz_ScopeMaskMode` 永远 0，注入进 HAND 程序的分支
+永不执行。日志一个字都不会有。「光影下开镜不裁剪目镜」的最直接成因。
+
+> **前分支的被否掉的尝试**：`program().getDebugLabel()` 反查（后端程序是
+> Iris 自己的程序对象，label 是 Iris 程序名），`FrontendRenderPass#setPipeline`
+> 前端 name() 登记（实机探针只登记到未参与重定向的 `scope_mask` 自己），
+> `getCompiledPipelineNullable` 重走重定向后按键对表（bindingSync=6/6 但
+> 绘制期 0 命中）。三条路 2026-09-19 实机全部证否，本轮已随回滚摘除。
+> **注意**：这不等于「问题无解」，只等于「按对象身份反查」这个思路在
+> Iris 26.3 下不可行；可行的方向见 §6。
+
+### 2.3 Render pass 归属倒置（V-r3）【实证+仓内引证】
+
+- 26.2：`GameRenderer#renderItemInHand` → `renderAllFeatures(storage)` →
+  `PreparedFrame.executeSolid()` 内部**自开自关** render pass；阶段之间是
+  「无 pass 状态」。我们的掩码绘制（`renderAtPhaseBoundary`）与
+  `PolyMeshGpuRenderer.renderWorldAfterSolid` 都是**在阶段边界自开 pass**。
+- 26.3：**调用方**先 `createRenderPass("Item in hand")` / `createRenderPass("Solid")`，
+  再把 pass 一路传进去：`FeatureRenderDispatcher.renderAllFeatures(renderPass,
+  frame)`（变静态方法）、`LevelRenderer#executeSolid(..., renderPass)`。
+  阶段边界身处 vanilla 的 pass 之内——在那里 `createRenderPass` 直接撞
+
+  ```
+  Close the existing render pass before creating a new one!
+  ```
+
+  （2026-09-18 实机日志：掩码绘制整条被这句挡死，随后镜身管线拿不到掩码纹理
+  跟着崩。**这是「开镜崩溃」的头号成因**。）
+
+- 配套删除：`RenderSystem.outputColorTextureOverride` / `outputDepthTextureOverride`
+  这两个 26.2 的全局重定向量**被删**，输出目标改由 `createRenderPass` 的
+  附件实参显式携带（`ScopeFinalOverlayState` 的目镜框后置重绘已按
+  「自己开 pass、显式指定主 target 颜色+深度」适配，方向与 Iris 26.3
+  `HandRenderer:128` 的五参写法一致）。
+- 配套新增：`FrontendRenderPass#setPipeline` 校验「pass 颜色附件数 ==
+  管线 color target state 数」，不等即抛。26.2 可不写由引擎兜底，26.3 必须
+  显式 `withColorTargetState(...)`（scope_body 抄本用 `DEFAULT`、scope_text
+  用 `TRANSLUCENT`）。**不写 = 开镜即抛**（崩溃类成因之二）。
+
+本轮保留的相应适配：`FeatureRenderDispatcherMixin` 掩码锚点搬到
+`prepareFrame` RETURN（在 upload 之后、vanilla 开 pass 之前，见该文件头注）、
+`LevelRendererWorldPassMixin` 复用 vanilla 传入的 pass、
+`GameRendererMixin` 手部 GPU 绘制挪到 `renderItemInHand` RETURN、
+各管线显式 color target。
+
+### 2.4 第一人称渲染一分为三【实证】
+
+`ItemInHandRenderer` 删除，替代为：
+
+- `net.minecraft.client.player.FirstPersonHandsAndItems`：状态/tick 侧
+  （`mainHandItem`、装备高度，`tick(LocalPlayer)`），**每 LocalPlayer 一个实例**
+  （`player.firstPersonHandsAndItems()`，`KeepingItemRenderer` 的落点）；
+- `net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer`：渲染侧，
+  `submitHandsWithItems(...)` / `submitArmWithItem(...)`，**玩家实体不再传入**，
+  改传 `PlayerRenderState` + `FirstPersonHandsAndItemsRenderState`；
+- `...state.level.FirstPersonHandsAndItemsRenderState`：渲染状态对象。
+
+证据：Fabric API 26.3 的同名 mixin；Iris 26.3 `HandRenderer.java` 里
+`gameRenderer.firstPersonHandsAndItemsRenderer.submitHandsWithItems(tickDelta,
+new PoseStack(), submitNodeCollector, playerRenderState, state)` 的实参形态。
+
+**与症状的关系**：签名适配（已完成并保留，含 `tick` 空注入点——
+`cancelEquippedProgress` 刻意留空，与上游 1.21.1 一致）。不直接导致裁剪失效，
+但它决定了 `KeepingItemRenderer.getRenderer()` 可能为 null（玩家未就绪），
+因此调用点统一走 `getCurrentRenderItem()` 空安全封装。
+
+### 2.5 `renderLevel` / `render` / `renderItemInHand` 签名漂移【仓内引证】
+
+- `GameRenderer#render(DeltaTracker, boolean)` → `render()`（无参；partial tick
+  改由 `minecraft.getDeltaTracker()` 现取，同帧同对象）；
+- `GameRenderer#renderLevel` / `LevelRenderer#render`：去掉 `DeltaTracker`
+  与 `Matrix4fc viewRotation`（后者改从 `cameraState.viewRotationMatrix` 取），
+  尾部新增 `consistentDepthRequired`（有 post chain 时 true；镜内那一遍传
+  `false` = 直接用主深度，与 26.2 无此步骤的行为一致）；
+- `GameRenderer#renderItemInHand(CameraRenderState, float, Matrix4fc)` →
+  `(CameraRenderState, PlayerRenderState, GpuTextureView)`；
+- 手部 pass 绘制前投影换成 `hudProjection`（hudFov、0.05F 近平面，
+  GR:679-683；与 Iris `HandRenderer#setupGlState` 里
+  `projection.setupPerspective(0.05F, ..., camera.hudFov, ...)` 同构）。
+
+**与症状的关系**：注入点若声明了旧形参，mixin APPLY 阶段抛
+`InvalidInjectionException`（2026-09-18 日志 line 108 即此），整条链路
+（含掩码）失效——崩溃/全失类成因。已改「空形参」注入，签名免疫，保留。
+
+### 2.6 投影矩阵 UBO 不再可读回【仓内引证+实机日志】
+
+26.2 我们在 CPU 侧做目镜投影凸包（writeHullFill / computeMaskBounds）时，
+把 `RenderSystem.getProjectionMatrixBuffer()` 的 UBO `map(true,false)` 读回来
+——与着色器消费严格同源。26.3 起该 buffer 无 READ 用途位，
+`GlBuffer$Direct.map` 直接抛 `IllegalStateException: Buffer is not readable`
+（2026-09-18 实机日志）。虽被 catch，但后果是**每帧回退逐立方体描摹、
+掩码形状退化**（高倍镜裁剪边缘不准），且 `computeMaskBounds` 失败是**完全
+静默**的——PIP 合成的剪裁包围盒随之缺失。
+
+**保留的适配**：`GameRendererProjectionAccessor` 直接取 CPU 侧
+`GameRenderer#hudProjection`（GR:683 正是把它交给 ProjectionMatrixBuffer 编码
+进 UBO 的那个 Projection，同源性不降反升；且必须是 hud 系投影而非世界的
+`cameraState.projectionMatrix`，否则掩码整体错位）。
+
+### 2.7 Shader 工具链：shaderc + SPIR-V【实证+实机日志】
+
+- `#moj_import <...>` 废除 → `#include <...>`（include callback 解析）。
+  旧写法在 26.3 下的实机表现：shaderc 把 `#moj_import` 当未知预处理指令，
+  `fog.glsl` 没被引入，报 `'fog_cylindrical_distance': no matching overloaded
+  function found`（2026-09-18 实机日志第 1 行）——**开镜即 shader 编译失败**。
+- 顶点属性与 varying 必须显式 `layout(location = N)`，且需要
+  `#extension GL_ARB_separate_shader_objects : require`（26.3 的 vanilla
+  core shader 全部如此，scope 系列是 entity/text/screenquad 的逐字抄本，
+  必须同步）。
+- vanilla 26.3 的 `entity.fsh/vsh` 新增 **GLINT**（`GlintSampler`/`texCoordGlint`/
+  `GlintAlpha`）与 **OIT**（`oit.glsl`：`OIT_ACCUMULATE`/`OIT_ALPHA_ONLY`/
+  `executeAlphaOnlyPhase`/`sampleColorForAccumulation`）两段；`text.fsh` 同样
+  重排（see-through 分支的 `ColorModulator` 乘序变化）。不跟着同步的后果：
+  管线按 define 变体（glint 附魔光效、改进半透明）编译时链接失败或画错。
+- 另：`BindGroupLayout.withSampler(name)` →
+  `withUniform(name, UniformType.COMBINED_IMAGE_SAMPLER)`；
+  `RenderPass#bindTexture` → `setUniform`；
+  `TextureTarget` 形参序 `(label,w,h,useDepth,GpuFormat)` →
+  `(label,w,h,GpuFormat colorFormat,GpuFormat depthFormat)`（不要深度传 null）。
+
+以上均为「不修则编译/链接失败或开镜崩溃」级，全部保留。
+
+### 2.8 （疑点）`gl_FragCoord` / `ScreenSize` 前提松动（V-r2）【假设】
+
+26.2 掩码采样的三个前提中，有两条在 26.3 出现裂纹：
+
+1. **clip control**：实机日志出现 `GL_ARB_clip_control`。开启后 NDC 的 z 域
+   与「纹理行序 vs 帧缓冲像素行序」的对应关系可能被改写——若掩码 target 的
+   纹素行序与 `gl_FragCoord` 的 y 向镜像，`maskUv` 采到的是上下翻转的掩码
+   （裁剪区域反了，或者全黑→全不裁/全裁）。
+2. **`Globals` UBO（`ScreenSize`）在手部 pass 的绑定状态**：vanilla 26.3 的
+   `entity.fsh` 只在 `GLINT` 下才引 `globals.glsl`——暗示引擎不保证
+   `Globals` 在所有实体类 pass 都有效。若手部 pass 该 UBO 未绑（0 值），
+   `gl_FragCoord.xy / ScreenSize` = inf/NaN，掩码采样恒落到边界外
+   → 镜身 `insideOcular` 恒 false → **一个像素都不裁**（与「不裁剪」表象一致，
+   且完全静默）。
+
+**当前状态：两条都未实机定案**。前分支的验证手段是 `scopeUv`（顶点侧算好
+NDC→[0,1] 当 varying 传进片元，绕开上面两个前提），但那是「带病的眼镜」
+——它和管线身份反查等投机修一起涌入，反而掩盖了真正的断点。本轮已退回
+`gl_FragCoord.xy / ScreenSize`（26.2 约定），**列为回滚后第一优先验证项**，
+低成本验证法见 §6。
+
+---
+
+## 3. Iris 26.2→26.3：逐项差异（GitHub 双分支实读）
+
+Iris 侧锚定：`IrisShaders/Iris` 分支 `26.2` 与 `26.3`（后者 `b388d57`）。
+
+### 3.1 程序重定向的落点与「后端管线身份」（I-r1）【实证】
+
+- **26.2** `MixinShaderManager_Overrides`：`@Mixin(GlDevice.class)`，钩
+  `getOrCompilePipeline` HEAD，命中时
+  `cir.setReturnValue(new GlRenderPipeline(renderPipeline, program))`——
+  **替换出来的后端管线仍然抱着我们的前端 RenderPipeline**，所以哪怕程序已被
+  Iris 换成 HAND，`pass.pipeline.info().getLocation()` 依旧答得出
+  `tacz:pipeline/scope_body_clipped`。这是 26.2 光影下 mode 解析成立的原因。
+- **26.3** 同名 mixin：`@Mixin(RenderSystem.class)`，钩
+  `getCompiledPipelineNullable` RETURN（`redirectIrisProgram`），命中时自建
+
+  ```java
+  BackendRenderPipeline.CreateInfo createInfo = iris$createInfo(old.getCreateInfo(), program, vertexFormats);
+  FrontendRenderPipeline replacement = new FrontendRenderPipeline(old2.name(),
+      new GlRenderPipeline(device, createInfo, program, vertexArray),
+      vertexFormats, old2.uniformIndices(), old2.uniforms(),
+      old2.colorTargetStates(), old2.wantsDepthTexture(), old2.pushConstantSize());
+  ```
+
+  后端那条只剩 GL 状态（见 §2.2），**没有 `info()` 可问**。前端 record 虽有
+  `name()` 且按 `old2.name()` 传递，但实机探针显示绘制期据此反查 0 命中
+  （§2.2 尾部），对象身份路线不可依赖。
+
+- 附带行为差异：未被 override 表覆盖的管线（我们的 `scope_mask` 正是如此）
+  在 26.3 会吃到一句 `Iris.logger.error("Missing program tacz:pipeline/... in
+  override list. This is not a critical problem...")`——**无害但吵**，属于预期噪音。
+
+### 3.2 `GlCommandEncoder`：方法与类一起改名（I-r2）【实证】
+
+| | 26.2 | 26.3 |
+|---|---|---|
+| 类 | `com.mojang.blaze3d.opengl.GlCommandEncoder` | `com.mojang.renderpearl.backend.opengl.GlCommandEncoder` |
+| draw setup | `boolean trySetup(GlRenderPass, Collection<String>)` | `void setupDraw(GlRenderPass)` |
+| per-draw 状态入口 | `iris$setupState` 注在 trySetup RETURN | **搬走**（见 3.3） |
+| custom pass 分支 | HEAD `setReturnValue(true)` + 手写状态 | `setupDraw` 内 FIELD 点 `cir.cancel()` |
+
+我们的 `IrisGlCommandEncoderMixin` 26.2 版同时钩在旧类名+旧方法名上，
+`require=0` 软注入 → 26.3 下**静默整条不装**：`applyToGlRenderPass` 从不出场，
+`resolveMode` 连跑的机会都没有（这是它自己注释里说的「第二个原因」）。
+已按新类名+新方法名适配（保留），空形参 RETURN 无条件应用——custom pass
+分支 cancel 时 RETURN 处理器同样不跑，与旧「true 分支」语义等价。
+
+### 3.3 `iris$setupState`：签名变更 + 搬家（I-r3）【实证】
+
+- 26.2：`ExtendedShader#iris$setupState(HashMap<String, TextureViewAndSampler>
+  samplers, GpuTextureView albedoTex)`，由 `MixinGlCommandEncoder` 在
+  trySetup RETURN 处调（每次 draw setup 一次）。
+- 26.3：`iris$setupState(List<BindGroupLayout.UniformDescription> samplers)`
+  （`ExtendedShader.java:208`，`FallbackShader`/`IrisProgram` 同签名），
+  调用点搬到 **`GlRenderPipeline#bind` RETURN**
+  （`MixinGlRenderPipeline#iris$bind`：每次 `setPipeline`/bind 时
+  `iris$setupBindings(createInfo.uniforms(), ...)` + `iris$setupState(createInfo.uniforms())`）。
+
+后果：26.2 版 `IrisExtendedShaderMixin` 的处理器声明了
+`(HashMap, GpuTextureView, CallbackInfo)`，mixin APPLY 阶段逐个对形参
+对不上 → `InvalidInjectionException`，**这条 hook 整个被丢弃并在日志报错**
+（2026-09-18 01:49 日志 line 189）——`applyToShaderProgram` 同样从不出场。
+已改「空形参」处理器（只要「Iris 刚 setup 完这个程序」这个时机，一个形参
+不读），保留。顺带：26.3 的调用频度从「每 draw」变成「每 bind」，语义上
+仍覆盖每次绘制（bind 先于 draw），两处谁后写谁生效的顺序无关性不变。
+
+### 3.4 `HandRenderer`：手部 pass 的 26.3 形态【实证】
+
+26.3 版（`pathways/HandRenderer.java`）关键形态：
+
+- 实体提交：`gameRenderer.firstPersonHandsAndItemsRenderer.submitHandsWithItems(
+  tickDelta, new PoseStack(), submitNodeCollector, playerRenderState, state)`——
+  用的是 **vanilla 渲染器 + Iris 自己的 `SubmitNodeStorage`**；
+- 执行：Iris **自己的** `FeatureRenderDispatcher` 实例 → `prepareFrame(storage)`
+  → `createRenderPass("Terrain", 主target颜色, 主target深度)` →
+  静态 `renderAllFeatures(renderPass, frame)`；
+- 一帧两遍（renderSolid=HAND_SOLID / renderTranslucent=HAND_TRANSLUCENT），
+  与 26.2 一致；`isHandRendererActive()`/`isHandRenderingSolid()` 的既有
+  判据仍然成立；`backup/restoreProjectionMatrix` 包住全场。
+
+**好消息**：我们的 `FeatureRenderDispatcherMixin`（prepareFrame RETURN 锚点）
+是**类级注入**，Iris 的自有 dispatcher 实例同样会触发——掩码在 Iris 手部
+帧图同样能画。`GameRenderer#renderItemInHand` 在光影下被 Iris 接管为 no-op，
+`inHandPass` 由 `IrisCompat.isHandRendererActive()` 补充判定，这一既有设计
+在 26.3 依然必要且方向正确。
+
+### 3.5 其他可供参考的同名同构用法【实证】
+
+- `MixinGlRenderPipeline` 在 26.3 还证明：`createInfo.colorTargetStates().size()`
+  是 bind 期合法属性（我们的「显式 color target」适配与引擎自检同源）；
+- Iris 26.3 `HandRenderer:128` / `MixinLevelRenderer:265` 均按
+  「`createRenderPass(名字, 主颜色view, Optional.empty(), 主深度view,
+  OptionalDouble.empty())`」开 pass——与我们 `ScopeFinalOverlayState` /
+  `PolyMeshGpuRenderer` 的保留写法逐字同构，说明该写法在光影激活下是受支持
+  的用法。
+
+---
+
+## 4. 症状 ↔ 差异的对应关系（归因）
+
+| 场景 | 断点 | 差异编号 | 本轮处置 |
+|---|---|---|---|
+| **光影 + 开镜不裁** | `tacz_ScopeMaskMode` 恒 0：管线身份不可反查（`info()` 删除 + 重定向实体不含前端引用） | V-r1 / I-r1 | 退回 26.2 的 `info()` 反射（26.3 下已知静默失效，属「干净的已知坏点」）；根治方向见 §6 |
+| **光影 + 链路全灭（连崩溃日志都有）** | 两个 hook 因改名/签名漂移装不上 | I-r2 / I-r3 | **已保留适配**（新类名/新方法名/空形参）；与回滚不冲突 |
+| **无光影 + 开镜不裁** | 掩码采样前提松动（clip control 行序 / Globals UBO 未绑） | V-r2 | 退回 26.2 采样约定；§6 给出两态验证法 |
+| **开镜即崩** | 阶段边界自开 pass 撞断言；管线缺显式 color target；mixin 旧形参 APPLY 抛异常；投影 UBO 读回抛异常 | V-r3 / §2.5 / §2.6 | **已保留全部对应的最小适配** |
+| **少数枪包目镜不裁（其余部件正常）** | 目镜建模在 `ocular_ring` 子树内，被「物理目镜框无裁剪重画」路径连带收进快照 | 非 26.3 差异，26.2 即存在 | 修复随回滚摘除，列为候选 A（§5） |
+
+## 5. 回滚摘除的两个「行为修复」候选（待实机定案后单独回加）
+
+下面两项不是 26.3 适配，是 09-19 前后的行为修复尝试。本轮一并摘除，
+但各自有独立的诊断价值，实机验证后可**单独、最小化**回加：
+
+### 候选 A：目镜嵌在 ocular_ring 子树时被无裁剪重画（强嫌疑 · 与版本无关）
+
+`BedrockAttachmentModel#submitOcularRingPlain` 用
+`BedrockRenderSnapshot.captureSubtree(ocularRingPart, ...)` 把整棵
+`ocular_ring` 子树收进快照、以**未裁剪**的原版 RenderType 重画（这是「物理
+目镜框」的设计行为，上游 `stencilFunc(ALWAYS)` 的等价物）。若枪包把**目镜
+镜片**建模在 `ocular_ring` 的子树里（默认包 `scope_aug_default` 即如此），
+镜片会跟着这份快照被无裁剪地再画一遍，盖在正确裁剪的结果之上——**观感正是
+「目镜贴图没被裁剪」，且与光影无关**。当时实现的修法（快照期间临时摘除
+“在 ring 子树内的 ocular 部件、finally 还原”）逻辑自洽、与我行我素链路正交。
+**建议：回滚基线上实机先复现 `scope_aug_default` 的不裁现象确认此路径，再
+单独回加该修复**（原实现可从摘除前的提交 `7b15f6b` 提取，约 40 行）。
+
+### 候选 B：scopeUv varying（V-r2 的对症但未经证实的药）
+
+顶点侧 `scopeUv = (gl_Position.xy / gl_Position.w) * 0.5 + 0.5` 传入片元
+替代 `gl_FragCoord.xy / ScreenSize`。优点：与原点约定、clip control、
+`Globals` UBO 绑定状态全部解耦。缺点：当时与其他投机修复捆绑进场，无独立
+实机对照（单独上 scopeUv 前后的 AB 对比不存在）。**若 §6 的两态验证证实
+V-r2 两条假设之一成立，scopeUv 可作为根治回加**（它比「修 UBO 绑定」
+更不依赖引擎内部行为）；若证伪，候选 B 永不再提。
+
+## 6. 建议的下一步（实机验证清单，按成本排序）
+
+1. **无光影 · 掩码可见性**：`RenderConfig.SCOPE_MASK_DEBUG=true` 的 HUD
+   预览（ClientSetupEvent 注册的 scope_mask_debug 元素仍在），开镜看左上
+   是否有随枪动的白色形状。
+   - 有形状但不裁 → 采样侧（V-r2）：把 `scope_body.fsh` 的 SCOPE_MASK 首行
+     暂换成 `vec2 maskUv = gl_FragCoord.xy / vec2(textureSize(ScopeMaskSampler, 0));`
+     做一次 5 分钟实验：能裁 = `Globals/ScreenSize` 假设成立（候选 B 回加）；
+     还不裁再看 y 翻转：`maskUv.y = 1.0 - maskUv.y`（clip control 假设）。
+   - 无形状 → 掩码根本没画上：查 `drawMask` 的日志行
+     （`Ocular mask drawn: N indices`）与 `ScopeMaskGeometry` 登记路径。
+2. **候选 A 复现**：默认包 `scope_aug_default` 开镜，其余部件裁而目镜不裁
+   → 实锤 ring 子树路径，回加候选 A。
+3. **光影链路**：HUD 掩码确认有形状后开光影，日志里
+   `resolve scope render pass` 的一次性 warn（`NoSuchMethodException: info`）
+   是 26.3 的**预期**坏点（V-r1），届时评估 §7 的根治方向。
+
+## 7. 光影下 mode 判定的根治方向（备选，按侵入度排序）
+
+1. **按 sampler 存在性判定**：HAND 程序绘制时 `GlRenderPass.samplers` 里
+   出现 `ScopeMaskSampler` 的条目，说明该 draw 的前端 RenderType 绑了我们的
+   掩码采样器（Iris 不换 sampler 表，只换程序）——与对象身份无关。被裁掉的
+   09-19 探针本来就为验证它埋了点（`probeSamplerPresence` 只统计不改渲染），
+   样本表明该 key 确实随 draw 到场。可进一步：samplers 里除
+   `ScopeMaskSampler` 外仍无法区分 mode=1（镜身）与 mode=2（准星）——
+   需要给两类 RenderType 各绑一个**定值区分用的小 uniform/哑纹理**。
+2. **按附件/阶段判定**：mode 只关心「这次 draw 属不属于 scope 几何」；
+   而 scope 几何只可能出现在手部 pass 且由我们的 6 条 RenderType 发出。
+   可以反过来：不设 uniform，让 `IrisShaderCreatorMixin` 注入的 dormant 分支
+   读一个**由我们每帧一处写入的全局 uniform**（如 iris 自定义 uniform 管线
+   或一张 1×1 数据纹理），Key=「本帧手 pass 内 scope 绘制进行中」，
+   由 `ScopeBodyRenderTypes` 在自定义 RenderType 的 draw 前后打括号置位。
+3. **保持 26.2 方案 + 等 vanilla 给回查口**：`FrontendRenderPipeline` 已含
+   `name()`（26.3 新事实，Iris 重定向时也传递了 `old2.name()`）。若后续版本
+   （或 Fabric API 增补）把「draw 期可取当前前端管线名」变成官方通道，
+   `info()` 方案可原位复活。目前不作为主路的唯一原因：绘制期拿不到那个
+   前端对象（GlRenderPass.pipeline 是后端对象）。
+
+> 方向 1/2 的实现量都不大，但必须在「无光影链路已验证恢复健康」之后再做，
+> 否则会重演「同时修三个断点、每个都没修死」的本轮教训。
+
+---
+
+### 附：本轮回滚的具体摘除物（存档索引）
+
+| 摘除物 | 原位置 | 摘除理由 |
+|---|---|---|
+| 探针计数器组（probe\* 15 枚）+ `logProbeOnce()` | `IrisScopeMaskState` | 诊断装置，非修复；链路未定前不留 |
+| `NAME_BY_BACKEND_PIPELINE` 弱键表 + `notePipelineBinding` / `noteCompiledBinding` / `syncIrisPipelineBindings` | `IrisScopeMaskState` / `ScopeBodyRenderTypes` | 「按对象身份反查」路线，实机证否 |
+| `pipelinePath()` 三路反查（debugLabel 回退等） | `IrisScopeMaskState` | 同上 |
+| `hasMaskSampler` / `probeSamplerPresence` | `IrisScopeMaskState` | 与 §7-1 知识点一并存档，非当前修复 |
+| `FrontendRenderPassPipelineMixin` | `mixin/client/iris/` + iris json | 前端登记装置，实机证否 |
+| `ScopeClipProbeTally` / `tacz$tallyScopeClipProbe` | `BedrockAttachmentModel` | 诊断装置 |
+| ring 子树快照修复 | `BedrockAttachmentModel` | 候选 A，待复现后单独回加 |
+| `scopeUv` varying（4 个 shader） | `scope_body.*` / `scope_text.*` | 候选 B，待两态验证 |
+| `RenderCrosshairEvent#renderMaskDebug` blit 挂钩 | `RenderCrosshairEvent` | 与 HUD 元素预览重复（后者保留） |
