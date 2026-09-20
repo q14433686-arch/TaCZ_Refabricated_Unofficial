@@ -859,3 +859,20 @@ MV；Iris 下仍在 render 括号内，格式与 HAND program 一致。另加 `i
   `clipForViewmodel`（判据与立方体枪身一致）。
 - **法线/反光**：本局实际跑的是 collector 路径（与 26.2 同码）；GPU 路径修复后走 Iris 的
   iris_NormalMat（栈顶 MV 逆转置，见 drawViaRenderTypeCore 注释）。无新证据前不动，等复测。
+
+### 十六-3 复测（01:07 log）：GPU 路径已跑通（`drew 111 bones … on hand pass`，裁剪 ACTIVE）；余：光影下高模法线
+
+**症状**：p90 平时法线/阴影关系错，开枪瞬间正确又变回；AK 相反；98k 仅拉栓时正确。仅光影。
+
+**根因（源码）**：Iris 26.3 `MixinGlRenderPipeline#iris$bind` 在 `pipeline.bind()` RETURN 调
+`ExtendedShader#iris$setupState`，在那里按当刻 MV 栈顶算 `iris_NormalMat`/`iris_ModelViewMatInverse`。
+而 `GlCommandEncoder.setupDraw` 只在 `lastPipeline != pipeline` 时 bind。GPU poly 每骨骼一次
+drawFromBuffer、共用同一 entityCutout 管线 ⇒ 只有第一根骨骼拿到自己的法线矩阵，其余沿用。
+开枪/拉栓时火光、抛壳、弹匣等其他管线插进来打断「同管线连续」⇒ 那一瞬每根骨骼各自重 bind
+⇒ 正确；动作结束又错。各枪触发动作不同 = 插入的外来绘制不同。位置不受影响（ModelViewMat 走
+prepare() 的 DynamicTransforms 快照）。
+
+**修复**：`IrisGlCommandEncoderMixin` `@Shadow lastPipeline`，在 `setupDraw` HEAD 若
+`PolyMeshGpuRenderer.isForcingPipelineRebind()` 则置 null，强制每 draw 重 bind；
+`drawViaRenderTypeCore` 的绘制段前后置/清该标志。代价：每骨骼一次 program bind（p90 111 次），
+仅光影 + GPU poly 期间。未实机验证。

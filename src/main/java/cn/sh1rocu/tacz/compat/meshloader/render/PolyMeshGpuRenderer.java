@@ -1017,36 +1017,52 @@ public final class PolyMeshGpuRenderer {
         // "Close the existing render pass before creating a new one!"。
         // 复用而非另开，附件自然与 vanilla 一致（就是主 target 的颜色+深度），
         // 也省掉一次 pass 切换。
-        if (externalPass != null) {
-            for (PreparedDraw draw : preparedDraws) {
-                mvStack.pushMatrix();
-                mvStack.mul(draw.model());
-                try {
-                    draw.prepared().drawFromBuffer(draw.info(), externalPass);
-                } finally {
-                    mvStack.popMatrix();
+        // 【法线 · 每骨骼强制重 bind】见 IrisGlCommandEncoderMixin#tacz$captureScopeRenderPass：
+        // Iris 只在管线切换时重算 iris_NormalMat，同管线连续的骨骼会沿用第一根的法线矩阵
+        // ⇒ 光影下「平时法线错、开枪/拉栓插入其他管线的瞬间才对」。绘制期间置位，
+        // 让每次 draw 都走 pipeline.bind() → Iris setupState 读到本骨骼的 MV 栈顶。
+        forcePipelineRebind = true;
+        try {
+            if (externalPass != null) {
+                for (PreparedDraw draw : preparedDraws) {
+                    mvStack.pushMatrix();
+                    mvStack.mul(draw.model());
+                    try {
+                        draw.prepared().drawFromBuffer(draw.info(), externalPass);
+                    } finally {
+                        mvStack.popMatrix();
+                    }
+                }
+                return totalIndices;
+            }
+
+            try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
+                    () -> "tacz_mesh_gpu_rendertype",
+                    colorView,
+                    Optional.empty(),
+                    depthView,
+                    OptionalDouble.empty())) {
+                for (PreparedDraw draw : preparedDraws) {
+                    mvStack.pushMatrix();
+                    mvStack.mul(draw.model());
+                    try {
+                        draw.prepared().drawFromBuffer(draw.info(), pass);
+                    } finally {
+                        mvStack.popMatrix();
+                    }
                 }
             }
             return totalIndices;
+        } finally {
+            forcePipelineRebind = false;
         }
+    }
 
-        try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
-                () -> "tacz_mesh_gpu_rendertype",
-                colorView,
-                Optional.empty(),
-                depthView,
-                OptionalDouble.empty())) {
-            for (PreparedDraw draw : preparedDraws) {
-                mvStack.pushMatrix();
-                mvStack.mul(draw.model());
-                try {
-                    draw.prepared().drawFromBuffer(draw.info(), pass);
-                } finally {
-                    mvStack.popMatrix();
-                }
-            }
-        }
-        return totalIndices;
+    /** GPU poly（RenderType 路线）逐骨骼绘制期间为 true；由 IrisGlCommandEncoderMixin 读取。 */
+    private static boolean forcePipelineRebind = false;
+
+    public static boolean isForcingPipelineRebind() {
+        return forcePipelineRebind;
     }
 
     private static void drawList(List<DrawEntry> draws, @Nullable RenderPass externalPass) {

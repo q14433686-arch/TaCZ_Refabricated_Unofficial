@@ -2,6 +2,7 @@ package com.tacz.guns.mixin.client.iris;
 
 import com.tacz.guns.compat.iris.IrisScopeMaskState;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -38,9 +39,29 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(targets = "com.mojang.renderpearl.backend.opengl.GlCommandEncoder")
 public abstract class IrisGlCommandEncoderMixin {
+    /**
+     * 上一次 bind 的管线；相同管线连续绘制时 vanilla 跳过 {@code pipeline.bind()}。
+     * Iris 的 {@code MixinGlRenderPipeline#iris$bind} 正挂在 bind 的 RETURN 上，
+     * {@code ExtendedShader#iris$setupState} 在那里按 <b>当刻</b> MV 栈顶算
+     * {@code iris_NormalMat} / {@code iris_ModelViewMatInverse}。
+     */
+    @Shadow
+    private com.mojang.renderpearl.backend.opengl.GlRenderPipeline lastPipeline;
+
     @Inject(method = "setupDraw", at = @At("HEAD"), require = 0)
     private void tacz$captureScopeRenderPass(@Coerce Object glRenderPass, CallbackInfo ci) {
         IrisScopeMaskState.setCurrentPass(glRenderPass);
+        // 【2026-09-21 高模法线「开枪时才短暂正确」】GPU poly 每根骨骼一次 drawFromBuffer，
+        // 顶点法线在骨骼本地系，全靠 Iris 在 setupState 里从 MV 栈顶算的 iris_NormalMat
+        // 补上旋转。但 setupState 只在管线【切换】时跑（lastPipeline != pipeline）——
+        // 同一把枪 111 根骨骼共用 entityCutout 管线，只有第一根拿到自己的法线矩阵，
+        // 其余全部沿用第一根的；恰好开枪/拉栓时火光、抛壳等其他管线插进来打断了
+        // 「同管线连续」，于是那一瞬间每根骨骼各自重 bind，法线正确 —— 与实机
+        // 「平时错、开枪/拉栓瞬间对、之后又错」逐字吻合（各枪触发动作不同 = 各枪
+        // 插入的外来绘制不同）。这里在 GPU poly 绘制期间强制每次 draw 都重新 bind。
+        if (cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer.isForcingPipelineRebind()) {
+            this.lastPipeline = null;
+        }
     }
 
     @Inject(method = "setupDraw", at = @At("RETURN"), require = 0)
