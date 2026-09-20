@@ -842,3 +842,20 @@ vanilla 与 Iris HandRenderer 都在各自 push/pop 之间调用 renderAllFeatur
 MV；Iris 下仍在 render 括号内，格式与 HAND program 一致。另加 `isRenderShadow` 早退
 （Iris ShadowRenderer:603 也调 renderAllFeatures）。GameRendererMixin RETURN 处的调用删除。
 **未实机验证**；验收：无光影八朝向跟手；光影下第一人称 mesh 枪形态正常且有光影光照。
+
+### 十六-2 复测回报（2026-09-21 latest.log 00:52）：位置/形态 PASS，但 GPU 烘焙首帧即回退
+
+`[TacZMeshLoader] GPU hand mesh pass failed; falling back to collector path for this session`
+`Caused by: IllegalStateException: Close the existing render pass before performing additional commands`
+栈：`RenderType.prepare → RenderSetup.prepareTextures → TextureManager.getTexture → registerAndLoad`
+← `drawViaRenderTypeCore` ← `renderAfterSolid` ← `HandRenderer.renderSolid:129`。
+
+- **烘焙没跑（帧数）**：§16 把消费点搬进 pass 内部（复用 externalPass）后，`prepare()` 的
+  贴图懒加载上传撞了「pass 内不许发其他命令」——kar98un 全 GPU 提交，没有 collector 兄弟先
+  请求贴图。首帧失败 ⇒ 整个会话 collector。修：`submitBone/submitBoneWorld` 提交时刻
+  （pass 尚未开）`touchTexture` 触发懒加载（按 id 去重，资源重载清空）。
+- **开镜不裁高模枪身**：裁剪只在 GPU 表做（`clipForViewmodelAtDraw`），回退 collector 后
+  `submitPolyMesh` 用的是裸 `entityCutout`。修：collector 首人称路径同样套
+  `clipForViewmodel`（判据与立方体枪身一致）。
+- **法线/反光**：本局实际跑的是 collector 路径（与 26.2 同码）；GPU 路径修复后走 Iris 的
+  iris_NormalMat（栈顶 MV 逆转置，见 drawViaRenderTypeCore 注释）。无新证据前不动，等复测。

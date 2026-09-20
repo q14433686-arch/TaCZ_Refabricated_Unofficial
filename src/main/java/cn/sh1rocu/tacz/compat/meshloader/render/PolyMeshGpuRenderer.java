@@ -458,10 +458,47 @@ public final class PolyMeshGpuRenderer {
         }
     }
 
+    /** 已在 pass 外触碰过（= 已完成懒加载上传）的贴图 id。资源重载时纹理对象重建，这里也一并清空。 */
+    private static final java.util.Set<Identifier> TOUCHED_TEXTURES = new java.util.HashSet<>();
+
+    /**
+     * 【2026-09-21 实机日志】在<b>提交时刻</b>（pass 尚未打开）把贴图摸一遍，触发懒加载上传。
+     *
+     * <p>26.3 起两张表的消费点都身处 vanilla/Iris 已打开的 render pass 内部（复用 externalPass），
+     * 而 {@code RenderType.prepare()} → {@code RenderSetup.prepareTextures} →
+     * {@code TextureManager.getTexture} 对未加载贴图会走 {@code registerAndLoad} →
+     * {@code writeToTexture} —— «pass 开着不许发其他命令» ⇒
+     * {@code IllegalStateException: Close the existing render pass before performing additional commands}
+     * ⇒ 首帧即 "GPU hand mesh pass failed; falling back to collector path for this session"
+     * （用户 latest.log 00:52:39，kar98un 全 GPU 提交、没有 collector 兄弟先去请求贴图）。
+     * 上一版消费点在 renderItemInHand RETURN（pass 已关）所以没暴露；drawList 那一路的
+     * resolveTextureView 早就为此写在 pass 外，但如今整个方法都在 pass 里，同样失效。
+     * 提交阶段（submitHandsWithItems / 实体 submit）在 createRenderPass 之前，是安全点。</p>
+     */
+    public static void touchTexture(Identifier texture) {
+        if (texture == null || !TOUCHED_TEXTURES.add(texture)) {
+            return;
+        }
+        try {
+            Minecraft.getInstance().getTextureManager().getTexture(texture);
+        } catch (Exception e) {
+            TOUCHED_TEXTURES.remove(texture);
+            if (LOGGED_TEXTURE_FAILURES.add(texture)) {
+                LOGGER.error("[TacZMeshLoader] Failed to preload texture {} at submit time (logged once)", texture, e);
+            }
+        }
+    }
+
+    /** 资源重载后纹理对象全部重建，触碰缓存必须失效。 */
+    public static void onResourceReload() {
+        TOUCHED_TEXTURES.clear();
+    }
+
     public static void submitBone(Matrix4f bonePose, Identifier texture, BakedBone bone) {
         if (bone == null) {
             return;
         }
+        touchTexture(texture);
         HAND_DRAWS.add(new DrawEntry(new Matrix4f(bonePose), texture, bone));
     }
 
@@ -470,6 +507,7 @@ public final class PolyMeshGpuRenderer {
         if (bone == null) {
             return;
         }
+        touchTexture(texture);
         WORLD_DRAWS.add(new DrawEntry(new Matrix4f(bonePose), texture, bone));
     }
 

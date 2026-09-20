@@ -208,7 +208,11 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
                     boneName -> baked.containsKey(boneName) && !polyMeshModel.isTranslucentBone(boneName));
             submitPolyMeshTranslucent(translucentOnly, collector, texture, overlay);
         } else {
-            submitPolyMesh(polyMeshModel.capture(poseStack, light), collector, texture, overlay);
+            // 【2026-09-21】collector 兜底路径（GPU 未启用/本会话已回退）也要吃开镜裁剪：
+            // 此前只有 GPU 表做 clipForViewmodelAtDraw，GPU 一回退 = 「开镜不裁高模枪身，
+            // 其他枪正常」（用户实机）。与 BedrockGunModel#submit 里立方体枪身同一判据。
+            submitPolyMesh(polyMeshModel.capture(poseStack, light), collector, texture, overlay,
+                    transformType != null && transformType.firstPerson());
         }
 
         submitAdditionalMagazinePoly(poseStack, collector, texture, overlay, light);
@@ -507,10 +511,19 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
 
     private void submitPolyMesh(PolyMeshSnapshot snapshot, SubmitNodeCollector collector,
                                 Identifier texture, int overlay) {
+        submitPolyMesh(snapshot, collector, texture, overlay, false);
+    }
+
+    private void submitPolyMesh(PolyMeshSnapshot snapshot, SubmitNodeCollector collector,
+                                Identifier texture, int overlay, boolean clipViewmodel) {
         if (snapshot.isEmpty()) {
             return;
         }
-        collector.submitCustomGeometry(new PoseStack(), RenderTypes.entityCutout(texture),
+        RenderType cutout = RenderTypes.entityCutout(texture);
+        if (clipViewmodel) {
+            cutout = com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipForViewmodel(cutout, texture, true);
+        }
+        collector.submitCustomGeometry(new PoseStack(), cutout,
                 (entryPose, consumer) -> snapshot.writeCutout(consumer, overlay));
         if (snapshot.hasTranslucent()) {
             collector.submitCustomGeometry(new PoseStack(), RenderTypes.entityTranslucent(texture),
