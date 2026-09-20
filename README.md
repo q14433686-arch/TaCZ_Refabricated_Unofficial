@@ -14,10 +14,10 @@
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.3 Fabric**。直接上游的版本号为
 `0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.3.R1`**。
 
-> **本分支是 26.3 线的移植进行中版本，尚无任何可下载构建。** 26.3 的适配工作以能否
-> 通过编译与 CI 为当前目标，**没有做过任何游戏内验证**；下方各节中描述的功能与实测
-> 结论全部继承自 26.2 线，在 26.3 上一律视为**未经验证**。想要能玩的版本请用
-> `26.2(main)` 分支及其 Release。
+> **本分支是 26.3 线，尚无任何可下载构建。** 26.3 R1 的适配已在维护者环境完成一轮实机验证
+> （2026-09-18 ~ 09-21：无光影、Iris 光影、专服三种环境），逐项结果与仍未验证的项见
+> [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)。下方各节继承自 26.2 线的描述，
+> 凡未在该文件标 ✅ 的，在 26.3 上仍视为**未经验证**。想要现在就能玩的版本请用 `26.2(main)` 分支及其 Release。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
@@ -55,7 +55,7 @@
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
-R1 的可选集成（并非硬依赖）如下。**所有条目均只表示编译期接线存在，26.3 上未做运行验证**：
+R1 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与专服实测；Carry On 无 26.3 构件，仅保留接线）：
 
 | 可选 mod | R1 编译 pin / 建议版本 | 用途 |
 |---|---|---|
@@ -85,14 +85,16 @@ R1 的可选集成（并非硬依赖）如下。**所有条目均只表示编译
 - 远程枪包同步完成后合并请求并刷新已安装的 recipe viewer，避免首轮注册早于网络 cache 时
   显示陈旧类别/查询数据。
 
-完整发布范围、联网核验和未执行的实机矩阵见
-[26.2 R2 release notes](docs/CHANGELOG_26_2_R2.md)。R1 的移植基础和历史说明仍保留在仓库历史中。
+**26.3 R1**（当前源码版本）的变更清单见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)：
+渲染底层 renderpearl 迁移、第一人称拆分、shaderc 着色器、Iris 26.3 裁剪判定重做、26.3 战利品表/配方 codec/
+配方同步三项行为修复，以及 REI/Zoomify/SSR 的禁用说明。以下为 26.2 线的历史 release 摘要
+（26.2 R2 详情见 [`docs/archive/CHANGELOG_26_2_R2.md`](docs/archive/CHANGELOG_26_2_R2.md)）：
 
-**R3-hotfix2**（当前源码版本）：在 R3-hotfix 基础上同步 1.21.11 线的第一人称手部错位
+**26.2 R3-hotfix2**：在 R3-hotfix 基础上同步 1.21.11 线的第一人称手部错位
 修复——中和 vanilla 1.21.9+ 写入手臂的 `zRot=±0.1`，恢复全枪械第一人称手部与枪身的
 authored 对齐（实机验证待补）；其余内容不变。
 
-**R3-hotfix**（已发布）包含 R3 主线增量及本次透明问题热修（除标注「待实测」的项外均实机 PASS）：
+**26.2 R3-hotfix**（已发布）包含 R3 主线增量及本次透明问题热修（除标注「待实测」的项外均实机 PASS）：
 
 - **Mac + Iris 光影世界透明修复**：限制 scope-mask 注入到 HAND 程序，世界/地形 shader 保持原生字节内容；同时为 `tacz_ScopeMaskSampler` 选择不与 Sodium 地形 sampler 冲突的 unit。Mac 新构建已实机确认问题消失。
 - **日志、配方和交互清理**：修复枪械工作台空 ingredients WARN、26.2 船实体 whitelist 整体加载失败、Glock 17 举枪幽灵音效，并移除 Iris 常见管线重复分配及空目镜几何误报。

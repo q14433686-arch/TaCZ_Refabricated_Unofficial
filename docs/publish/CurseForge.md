@@ -400,7 +400,7 @@ R1 – first release build of this Fabric port.
 
 ## ⑤-ter 次回发布用 Changelog 草稿（R3 · 2026-09-02）
 
-> 依据 `docs/CHANGELOG_26_2_R2.md` 的 R3 段撰写，替换 ⑤-bis 的 R1 草稿。
+> 依据 `docs/archive/CHANGELOG_26_2_R2.md` 的 R3 段撰写，替换 ⑤-bis 的 R1 草稿。
 > 标 *(Pending in-game verification)* 的两项**尚未实机验证**，发布前若已验证请
 > 按 `AGENTS.md` §2 的措辞纪律改写或删掉；不要把它们写成已验证。
 

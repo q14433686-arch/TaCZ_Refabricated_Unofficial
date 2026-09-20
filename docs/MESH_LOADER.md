@@ -4,6 +4,10 @@
 > `1.21.1_fabric` v0.1.7，作者 VellEagle，GPL-3.0。不是官方 TacZ 附属。
 > 署名与许可详情见仓库根 [`LICENSES.md`](../LICENSES.md)。
 >
+> **26.3 状态（2026-09-21）**：第一人称 GPU 烘焙在 26.3 上重新落位（消费点回到 `renderAllFeatures` 内、贴图提交时预加载、
+> 光影下每骨骼强制 rebind），无光影 / Iris 均实机 PASS；改动明细见 `investigations/SCOPE_26_3_VS_26_2_DELTA_ANALYSIS_2026_09_20.md` §十六。
+> 世界语境 GPU 烘焙在 26.3 未单独复测。以下正文为 26.2 线的原始记录。
+>
 > **状态（2026-08-31）：安全子集 + 第一人称 GPU 静态烘焙已实机 PASS（08-30）；
 > 世界语境 GPU 烘焙（第 2 步）已实装、待实机验证（验证矩阵见 §5.2-bis）。**
 > 已实测覆盖：无光影第一人称、光影下第一人称（vanilla RenderType 路线）、

@@ -1,7 +1,10 @@
-# 兼容与移植过程记录（历史长文）
+# 兼容与移植过程记录（26.2 线历史长文）
+
+> 2026-09-21 自 `docs/COMPAT_AND_ROADMAP.md` 迁入 investigations/。内容为 26.2 线逐轮诊疗史；
+> 26.3 线的对应记录在 `SCOPE_26_3_VS_26_2_DELTA_ANALYSIS_2026_09_20.md`。
 
 > **当前上游对齐 / TODO / 剩余缺口结论请先看**
-> [`UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md`](investigations/UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md)。
+> [`UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md`](UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md)。
 > 本文保留逐轮诊疗史，早期章节可能被后文推翻，不宜只读局部结论。
 >
 > 本文只收录**已核对过的事实**（26.2 字节码、枪包实包、上游仓库），

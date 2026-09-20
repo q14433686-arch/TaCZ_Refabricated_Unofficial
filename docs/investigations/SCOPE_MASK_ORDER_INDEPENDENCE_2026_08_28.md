@@ -131,7 +131,7 @@ grep -nE "\[TACZ Scope\] Iris compat mixin config loaded|iris\.refmap\.json|mixi
 - `ScopeMaskRenderer` 的凸包算法：那是另一个独立病灶，未混进本次 PR。
 - `IrisScopeMaskState` 的反射结果缓存与 `applyToGlRenderPass` 顶部的快速路径：保留，未绕开。
 - 未写「修好了用户报的镜内裁切失效」之类的 CHANGELOG 文案；CHANGELOG 条目以加固口径、
-  并标注「源码级 / 未实机验证」写入 `docs/CHANGELOG_26_2_R2.md` 的 R2-hotfix2 节。
+  并标注「源码级 / 未实机验证」写入 `docs/archive/CHANGELOG_26_2_R2.md` 的 R2-hotfix2 节。
 
 ---
 

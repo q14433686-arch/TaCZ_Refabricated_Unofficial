@@ -379,4 +379,4 @@ REI 自己的语言文件也写明该配置项的用途：
 
 > 本节已同步至玩家可读的发布文案：`docs/publish/Modrinth.md`、`docs/publish/CurseForge.md`
 > （英文 FAQ 章节）、`docs/publish/MCMOD.md`（正文第八节）与
-> `docs/CHANGELOG_26_2_R2.md`（文末 FAQ），用于减少发布后重复答疑。
+> `docs/archive/CHANGELOG_26_2_R2.md`（文末 FAQ），用于减少发布后重复答疑。
