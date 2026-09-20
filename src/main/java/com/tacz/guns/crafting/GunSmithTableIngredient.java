@@ -272,6 +272,12 @@ public class GunSmithTableIngredient {
         return out;
     }
 
+    /** 尚未解析成功时的原始 {@code item} JSON；已解析则为 {@code null}。 */
+    @Nullable
+    public JsonElement getRawItem() {
+        return this.rawItem;
+    }
+
     /** 供必须拿到非空值的场合（如网络编码）使用。 */
     public Ingredient getIngredientOrThrow() {
         Ingredient resolved = this.getIngredient();

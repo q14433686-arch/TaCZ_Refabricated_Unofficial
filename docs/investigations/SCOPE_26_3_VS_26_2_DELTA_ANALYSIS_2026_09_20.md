@@ -798,3 +798,19 @@ recipe registry" / "does not provide recipes to JEI"，JEI 可查 `tacz:gun_smit
    `LegacyLootCompat#migrateSchema`：`conditions/functions/function/condition/block_state_property/
    alternative/裸{min,max}` → 26.3 写法，幂等；默认枪包的 `spawn_bonus_chest_taurus943.json`
    （旧 `functions`+`set_nbt`）由此覆盖。未实机验证。
+
+## 十五、附带案：装任意第三方枪包即进不去存档（2026-09-21 latest.log 00:15:57）
+
+**日志**：`Registry loading errors: Errors in registry minecraft:recipe → Failed to parse
+duyupack:attachments/1p87 ... No key fabric:type in MapLike[{"type":"tacz:nbt",...}] /
+Not a string: {"tag":"c:ingots/iron"}` × 十余条 → `Failed to load registries due to errors`。
+
+**根因**：26.3 把 `minecraft:recipe` 当动态注册表加载（`RegistryDataLoader`），任一元素
+codec 失败即整表失败、存档拒绝加载。`GunSmithTableSerializer.INGREDIENT_CODEC` 直接用
+`Ingredient.CODEC.fieldOf("item")`，而枪包材料的旧写法（`{"tag":..}` / `{"type":"tacz:nbt",..}`）
+只在 `GunSmithTableIngredient#getIngredient()` 的 `normalizeLegacy` 里被改写 —— 那是 Gson
+路径（GUI/JEI）走的；注册表路径绕过了它。默认枪包材料恰好全是新写法，故此前未暴露。
+
+**修复**：`INGREDIENT_CODEC` 的 `item` 改用 `ExtraCodecs.JSON` 读原始 JSON，交给延迟解析构造器，
+与 Gson 路径统一（解析失败只是该材料为空 + ERROR 日志，不再炸注册表）。编码方向回写解析后的
+Ingredient 或原文。未实机验证；验收：装 duyupack 能进存档，且 log 无 `Registry loading errors`。

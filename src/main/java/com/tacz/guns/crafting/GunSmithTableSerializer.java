@@ -26,12 +26,44 @@ import java.util.Optional;
 
 /** 26.2 codec for the legacy TACZ gun-smith recipe JSON format. */
 public final class GunSmithTableSerializer {
+    /**
+     * 材料编解码器：{@code item} 字段以<b>原始 JSON</b> 读入，交给
+     * {@link GunSmithTableIngredient#GunSmithTableIngredient(JsonElement, int)} 延迟解析。
+     *
+     * <h2>为什么不能直接 {@code Ingredient.CODEC.fieldOf("item")}（2026-09-21 实机日志）</h2>
+     * <p>枪包里大量材料仍是旧写法：{@code {"tag":"c:ingots/iron"}}、
+     * {@code {"type":"tacz:nbt","nbt":{...},"partial":true,"items":"tacz:attachment"}}。
+     * 这些写法只有 {@link GunSmithTableIngredient#getIngredient()} 里的 {@code normalizeLegacy}
+     * 会改写成 26.3 / Fabric 认得的形态；同一份 JSON 的 Gson 路径
+     * （{@code GunSmithTableIngredientSerializer}，供 GUI/JEI）一直走那里，所以界面正常。
+     * 但本 codec 是<b>配方注册表</b>加载路径（26.3 {@code RegistryDataLoader} 把
+     * {@code minecraft:recipe} 当动态注册表加载），此前直接把原文喂给 {@code Ingredient.CODEC}：
+     * {@code No key fabric:type ... Not a string ... Not a json array}。
+     * 动态注册表任一元素解析失败 ⇒ {@code Failed to load registries due to errors} ⇒
+     * <b>整个存档进不去</b>（只装默认枪包时恰好没有旧写法材料，所以此前没暴露）。</p>
+     *
+     * <p>{@code ExtraCodecs.JSON} 把任意值原样转成 {@code JsonElement}，后续解析、
+     * 失败日志、判空语义全部与 Gson 路径统一；编码方向仍写出解析后的 Ingredient。</p>
+     */
     private static final Codec<GunSmithTableIngredient> INGREDIENT_CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
-                    Ingredient.CODEC.fieldOf("item").forGetter(GunSmithTableIngredient::getIngredientOrThrow),
+                    net.minecraft.util.ExtraCodecs.JSON.fieldOf("item").forGetter(GunSmithTableSerializer::encodeIngredient),
                     Codec.INT.optionalFieldOf("count", 1).forGetter(GunSmithTableIngredient::getCount)
             ).apply(instance, GunSmithTableIngredient::new)
     );
+
+    /** 编码方向：能解析就写解析后的 Ingredient，否则回写原文（不让一条坏材料炸掉整表编码）。 */
+    private static com.google.gson.JsonElement encodeIngredient(GunSmithTableIngredient ingredient) {
+        Ingredient resolved = ingredient.getIngredient();
+        if (resolved != null) {
+            var result = Ingredient.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, resolved).result();
+            if (result.isPresent()) {
+                return result.get();
+            }
+        }
+        com.google.gson.JsonElement raw = ingredient.getRawItem();
+        return raw != null ? raw : com.google.gson.JsonNull.INSTANCE;
+    }
 
     private static final Codec<Map<String, Identifier>> ATTACHMENTS_CODEC =
             Codec.unboundedMap(Codec.STRING, Identifier.CODEC);
