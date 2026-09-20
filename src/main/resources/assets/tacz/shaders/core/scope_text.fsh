@@ -32,6 +32,9 @@ uniform sampler2D Sampler0;
 // 目镜掩码：白 = 该像素属于镜内（目镜投影覆盖），黑 = 镜外。
 // 由 ScopeMaskRenderer 在阶段边界渲染到离屏 target。
 uniform sampler2D ScopeMaskSampler;
+// mode 2 标记采样器：同 scope_body.fsh，文字属「镜外 discard」一族，
+// 供 Java 侧按 draw 判别 mode，GLSL 从不采样。
+uniform sampler2D ScopeMaskMode2Sampler;
 #endif
 
 #if !defined(IS_GUI) && !defined(IS_SEE_THROUGH)

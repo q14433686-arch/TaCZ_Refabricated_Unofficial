@@ -79,6 +79,25 @@ public final class ScopeBodyRenderTypes {
                     .withUniform(MASK_SAMPLER, UniformType.COMBINED_IMAGE_SAMPLER)
                     .build();
 
+    /**
+     * 「本条 draw 是 mode 2（镜外 discard）」的标记采样器（2026-09-20，26.3 修复）。
+     *
+     * <p>只挂在<b>反向裁剪</b>（准星一族）的管线上：声明 + 绑定同一张掩码纹理，
+     * 着色器从不采样它 —— 它的唯一用途是让 {@code GlRenderPass#samplers} 这张
+     * 按 draw 携带的绑定表多一个 key，供
+     * {@code IrisScopeMaskState#resolveMode} 在管线对象身份不可考的 26.3 上
+     * 判别「这是准星 draw（镜外 discard）还是镜身 draw（镜内 discard）」。
+     * 无光影路径完全不感知它（{@code scope_body.fsh} 靠 SCOPE_MASK_INVERT define，
+     * 绑定一个用不到的采样器对 vanilla 编译无害 —— 声明即绑定，r52 的教训反过来用）。</p>
+     */
+    private static final String MODE2_SAMPLER = "ScopeMaskMode2Sampler";
+
+    /** 标记采样器的 bind group layout，与掩码 layout 并列声明。 */
+    private static final BindGroupLayout MODE2_SAMPLER_LAYOUT =
+            BindGroupLayout.builder()
+                    .withUniform(MODE2_SAMPLER, UniformType.COMBINED_IMAGE_SAMPLER)
+                    .build();
+
     /** 供 meshloader 的 GPU 裁剪管线复用（同一个 layout 实例 = 同一个 sampler 名）。 */
     public static BindGroupLayout maskSamplerLayout() {
         return MASK_SAMPLER_LAYOUT;
@@ -118,7 +137,10 @@ public final class ScopeBodyRenderTypes {
                     .withBindGroupLayout(MASK_SAMPLER_LAYOUT);
             if (invert) {
                 // 准星版：只保留镜内（上游 stencilFunc(EQUAL, i+1)）
-                builder = builder.withShaderDefine("SCOPE_MASK_INVERT");
+                builder = builder.withShaderDefine("SCOPE_MASK_INVERT")
+                        // 反向裁剪 = mode 2：挂上标记采样器，供光影下
+                        // IrisScopeMaskState 按 draw 判别（见 MODE2_SAMPLER 注释）。
+                        .withBindGroupLayout(MODE2_SAMPLER_LAYOUT);
             }
         }
         return builder.build();
@@ -367,14 +389,14 @@ public final class ScopeBodyRenderTypes {
     public static RenderType reticle(Identifier texture) {
         ensureIrisCompatibility();
         return RETICLE_CACHE.computeIfAbsent(texture,
-                tex -> create("tacz_scope_reticle_clipped", RETICLE_PIPELINE, tex, true));
+                tex -> create("tacz_scope_reticle_clipped", RETICLE_PIPELINE, tex, true, true));
     }
 
     /** 发光准星：反向裁剪 + 满亮/无方向光。 */
     public static RenderType reticleEmissive(Identifier texture) {
         ensureIrisCompatibility();
         return RETICLE_EMISSIVE_CACHE.computeIfAbsent(texture,
-                tex -> create("tacz_scope_reticle_emissive_clipped", RETICLE_EMISSIVE_PIPELINE, tex, true));
+                tex -> create("tacz_scope_reticle_emissive_clipped", RETICLE_EMISSIVE_PIPELINE, tex, true, true));
     }
 
     /** 发光准星：无裁剪回退 + 满亮/无方向光。 */
@@ -538,6 +560,10 @@ public final class ScopeBodyRenderTypes {
     }
 
     private static RenderType create(String name, RenderPipeline pipeline, Identifier tex, boolean bindMask) {
+        return create(name, pipeline, tex, bindMask, false);
+    }
+
+    private static RenderType create(String name, RenderPipeline pipeline, Identifier tex, boolean bindMask, boolean bindMode2Marker) {
         var builder = RenderSetup.builder(pipeline)
                 // Sampler0 = 瞄具自身贴图。r52 教训：管线声明的每个 sampler
                 // 都必须在这里绑定，少一个就在 drawIndexed 时抛 Missing sampler。
@@ -546,6 +572,11 @@ public final class ScopeBodyRenderTypes {
             // 掩码采样器 = 目镜掩码。指向 ScopeMaskTextureHandle 注册的那张，
             // 它每帧被刷新为当前掩码 target 的 view。
             builder = builder.withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID);
+        }
+        if (bindMode2Marker) {
+            // 标记采样器：绑的还是同一张掩码纹理，着色器从不采样它。
+            // 管线声明了就必须绑（同一条 r52 教训）。
+            builder = builder.withTexture(MODE2_SAMPLER, ScopeMaskTextureHandle.ID);
         }
         return RenderType.create(name,
                 builder

@@ -82,6 +82,14 @@ public final class ScopeTextRenderTypes {
                     .withUniform(MASK_SAMPLER, UniformType.COMBINED_IMAGE_SAMPLER)
                     .build();
 
+    /** 与 {@code ScopeBodyRenderTypes.MODE2_SAMPLER} 同名同义：mode 2 标记采样器（文字 = 镜外 discard 一族）。 */
+    private static final String MODE2_SAMPLER = "ScopeMaskMode2Sampler";
+
+    private static final BindGroupLayout MODE2_SAMPLER_LAYOUT =
+            BindGroupLayout.builder()
+                    .withUniform(MODE2_SAMPLER, UniformType.COMBINED_IMAGE_SAMPLER)
+                    .build();
+
     /**
      * 裁剪文字管线 = vanilla TEXT 配方 + SCOPE_MASK 三件套。
      *
@@ -98,6 +106,8 @@ public final class ScopeTextRenderTypes {
                     .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_text"))
                     .withShaderDefine("SCOPE_MASK")
                     .withBindGroupLayout(MASK_SAMPLER_LAYOUT)
+                    // 文字与准星同侧（mode 2）：标记采样器供光影下按 draw 判别。
+                    .withBindGroupLayout(MODE2_SAMPLER_LAYOUT)
                     // 26.3 必须显式声明 color target，否则 setPipeline 抛
                     // "color attachment count must match ... target state count"。
                     // 母本 vanilla TEXT 用的是 TRANSLUCENT 混合
@@ -115,11 +125,12 @@ public final class ScopeTextRenderTypes {
      * <p>【光影下的裁剪由谁执行】assignPipeline 之后 Iris 用 pack 的 HAND
      * 着色器整条替换本管线 —— 我们的 scope_text.fsh 在光影下<b>不会运行</b>，
      * SCOPE_MASK 分支形同虚设。真正生效的是 IrisShaderCreatorMixin 注入的
-     * {@code tacz_ScopeMaskMode} 分支，而它按管线 location 查 mode：
-     * {@code IrisScopeMaskState.resolveModeUncached} 里必须有
-     * {@code pipeline/scope_text_clipped → 2}（与准星同侧，镜外 discard）的
-     * 映射。2026-08-30 用户实测（MK5HD + 光影）抓到的「镜内文字不裁切」
-     * 正是该映射缺失：mode 恒 0，注入分支永不 discard。</p>
+     * {@code tacz_ScopeMaskMode} 分支。mode 的判别（2026-09-20 起）<b>不</b>再查
+     * 管线 location（26.3 把 {@code GlRenderPipeline#info()} 删了，查不到）：
+     * 本渲染类型在绑定掩码之外多挂一个标记采样器
+     * {@code ScopeMaskMode2Sampler}，{@code IrisScopeMaskState#resolveMode}
+     * 按本条 draw 的 {@code GlRenderPass#samplers} key 集合判出 mode 2
+     * （与准星同侧，镜外 discard）。</p>
      */
     private static void ensureIrisCompatibility() {
         if (irisAssignmentAttempted) {
@@ -145,6 +156,8 @@ public final class ScopeTextRenderTypes {
                         RenderSetup.builder(CLIPPED_TEXT_PIPELINE)
                                 .withTexture("Sampler0", id)
                                 .withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
+                                // 管线声明了标记采样器就必须绑（同一张掩码纹理）。
+                                .withTexture(MODE2_SAMPLER, ScopeMaskTextureHandle.ID)
                                 // useLightmap 提供 Sampler2 —— vanilla text
                                 // 的 RenderSetup（lambda$static$20 字节码实读）
                                 // 就这一项，别多也别少。

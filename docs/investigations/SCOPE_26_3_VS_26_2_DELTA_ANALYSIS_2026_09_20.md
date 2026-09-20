@@ -249,11 +249,9 @@ new PoseStack(), submitNodeCollector, playerRenderState, state)` 的实参形态
    → 镜身 `insideOcular` 恒 false → **一个像素都不裁**（与「不裁剪」表象一致，
    且完全静默）。
 
-**当前状态：两条都未实机定案**。前分支的验证手段是 `scopeUv`（顶点侧算好
-NDC→[0,1] 当 varying 传进片元，绕开上面两个前提），但那是「带病的眼镜」
-——它和管线身份反查等投机修一起涌入，反而掩盖了真正的断点。本轮已退回
-`gl_FragCoord.xy / ScreenSize`（26.2 约定），**列为回滚后第一优先验证项**，
-低成本验证法见 §6。
+**当前状态：已定案（2026-09-20 §8）——两条假设均被实机截图证伪**。
+无光影截图上裁剪与 PIP 全部正常，说明 `clip control` 与 `Globals` UBO 前提
+在 vanilla 路径依然成立；scopeUv 永久否决。本节保留作排查记录。
 
 ---
 
@@ -358,9 +356,9 @@ Iris 侧锚定：`IrisShaders/Iris` 分支 `26.2` 与 `26.3`（后者 `b388d57`�
 
 | 场景 | 断点 | 差异编号 | 本轮处置 |
 |---|---|---|---|
-| **光影 + 开镜不裁** | `tacz_ScopeMaskMode` 恒 0：管线身份不可反查（`info()` 删除 + 重定向实体不含前端引用） | V-r1 / I-r1 | 退回 26.2 的 `info()` 反射（26.3 下已知静默失效，属「干净的已知坏点」）；根治方向见 §6 |
+| **光影 + 开镜不裁** | `tacz_ScopeMaskMode` 恒 0：管线身份不可反查（`info()` 删除 + 重定向实体不含前端引用） | V-r1 / I-r1 | ~~退回 26.2 的 `info()` 反射~~ **§8 已修**：按 draw 采样器判别 mode |
 | **光影 + 链路全灭（连崩溃日志都有）** | 两个 hook 因改名/签名漂移装不上 | I-r2 / I-r3 | **已保留适配**（新类名/新方法名/空形参）；与回滚不冲突 |
-| **无光影 + 开镜不裁** | 掩码采样前提松动（clip control 行序 / Globals UBO 未绑） | V-r2 | 退回 26.2 采样约定；§6 给出两态验证法 |
+| **无光影 + 开镜不裁** | 掩码采样前提松动（clip control 行序 / Globals UBO 未绑） | V-r2 | **已证伪（§8 截图）**：vanilla 路径健康 |
 | **开镜即崩** | 阶段边界自开 pass 撞断言；管线缺显式 color target；mixin 旧形参 APPLY 抛异常；投影 UBO 读回抛异常 | V-r3 / §2.5 / §2.6 | **已保留全部对应的最小适配** |
 | **少数枪包目镜不裁（其余部件正常）** | 目镜建模在 `ocular_ring` 子树内，被「物理目镜框无裁剪重画」路径连带收进快照 | 非 26.3 差异，26.2 即存在 | 修复随回滚摘除，列为候选 A（§5） |
 
@@ -431,6 +429,49 @@ V-r2 两条假设之一成立，scopeUv 可作为根治回加**（它比「修 U
 
 > 方向 1/2 的实现量都不大，但必须在「无光影链路已验证恢复健康」之后再做，
 > 否则会重演「同时修三个断点、每个都没修死」的本轮教训。
+
+---
+
+## 8. 实机截图定案与最终修复（2026-09-20 补记）
+
+**截图定案**。回滚构建上的两张实机截图（16.16.32 无光影 / 16.16.35
+Complementary Reimagined）：
+- 无光影：掩码、裁剪准星、PIP 放大全部正常 —— **§2.8（V-r2）的两条假设
+  双双证伪**，vanilla 路径健康，「无光影链路恢复」这一前置条件达成。
+- 开光影：镜内纯黑、HUD 掩码预览与无光影时**逐像素一致** —— 掩码内容
+  正常、采样路径一致，唯一断点收束为 **`tacz_ScopeMaskMode` 恒 0**
+  （V-r1/I-r1）：注入分支存在但 body 永不 discard，黑屏 quad/镜身把 PIP
+  合成结果盖死。候选 B（scopeUv）**永久否决**，不再回加。
+
+**已落地的修复 = §7 方向 1**（前置条件已满足，允许施工）：
+- mode 判别不再依赖任何管线对象身份。`IrisScopeMaskState#resolveMode`
+  改按本条 draw 的 `GlRenderPass#samplers` key 集合判别（该绑定表按 draw
+  携带，Iris 换程序时不受影响；26.2/26.3 两版 vanilla 均存在——同文件的
+  `resolveMaskTextureId` 早就在读它）。
+- mode 1/2 的区分手段（§7-1 预留的「各绑一个哑纹理」）落地为**标记采样
+  器** `ScopeMaskMode2Sampler`：准星（reticle / reticle_emissive）与裁字
+  （scope_text_clipped）三类渲染类型的 bind group 多声明一个
+  COMBINED_IMAGE_SAMPLER，绑的还是同一张掩码纹理；GLSL 声明但从不采样
+  （`scope_body.fsh` / `scope_text.fsh` 各加两行）。key 存在→mode 2，
+  只有 `ScopeMaskSampler`→mode 1，都没有→走 26.2 的 `info()` 老路兜底
+  （26.2 分支行为逐字节不变）。
+- 涉及文件：`IrisScopeMaskState`（resolveMode 主路更换）、
+  `ScopeBodyRenderTypes` / `ScopeTextRenderTypes`（layout 声明 + 绑定）、
+  两个 fsh（uniform 声明）。注入 GLSL 零改动——注入分支的掩码 UV 本来就用
+  `textureSize(tacz_ScopeMaskSampler, 0)`，不吃 ScreenSize。
+
+**Iris 26.3 钩子链路静态复核（全 PASS，零适配改动）**：`ShaderCreator.link`
+七参签名与四处 `createShader(name, ShaderType, source)` 调用点（:186-195）
+→ `@ModifyArgs` 命中；FRAGMENT 名卫未变；`ShaderKey.HAND_*` 全家在
+（:82/96/102…）；`IrisApi#assignPipeline(RenderPipeline, IrisProgram)`
+与 `IrisProgram.HAND` 在 `common/src/api/java` 源码集原样保留；
+`MixinGlRenderPipeline.java:98` 仍是每次 bind 的
+`iris$setupState(createInfo.uniforms())` 调用点（`IrisScopeMaskState`
+的 RETURN 注入位）。
+
+**状态声明**：本修复**编译通过（CI 待跑）、实机未验证**。验证清单：光影
+开镜看镜内是否恢复 PIP 画面；低倍 sight（reticle-only 掩码）确认镜身
+不被啃洞；MK5HD 镜内文字（2026-08-30 旧案）复测。
 
 ---
 

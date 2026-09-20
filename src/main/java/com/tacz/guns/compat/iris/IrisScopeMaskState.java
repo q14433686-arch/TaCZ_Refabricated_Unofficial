@@ -33,6 +33,19 @@ public final class IrisScopeMaskState {
     private static final String RETICLE_EMISSIVE_PIPELINE = "pipeline/scope_reticle_emissive_clipped";
     private static final String TEXT_PIPELINE = "pipeline/scope_text_clipped";
     private static final String MASK_SAMPLER = "ScopeMaskSampler";
+    /**
+     * 「本条 draw 是 mode 2（镜外 discard）」的标记采样器名（2026-09-20，26.3 修复）。
+     *
+     * <p>26.3 把 {@code GlRenderPass#pipeline} 字段与 {@code GlRenderPipeline#info()}
+     * 一并删掉，按管线 location 反查 mode 的路整个断了（恒 0，开镜全黑）。但
+     * {@code GlRenderPass#samplers} 这张「名字 → 纹理」的绑定表还在，而且是按 draw
+     * 带的 —— 与管线对象身份、Iris 换不换程序完全无关。于是 mode-2 渲染类型
+     * （准星/文字）在绑定掩码之外<b>多绑一个同名标记采样器</b>（绑的还是同一张掩码
+     * 纹理，着色器从不采样它），这里只查 key 存在性即可判别：
+     * 有标记 → 2；有掩码 → 1；都没有 → 走 26.2 的管线名老路（留在下面做兜底，
+     * 保证本文件在 26.2 分支上行为逐字节不变）。</p>
+     */
+    private static final String MODE2_SAMPLER = "ScopeMaskMode2Sampler";
     private static final String UNIFORM_MODE = "tacz_ScopeMaskMode";
     private static final String UNIFORM_SAMPLER = "tacz_ScopeMaskSampler";
 
@@ -338,8 +351,9 @@ public final class IrisScopeMaskState {
 
     /**
      * Updates the active Iris shader program uniforms for the current GlRenderPass draw call.
-     * If the draw call is {@code scope_body_clipped}, mode is set to 1.
-     * If the draw call is {@code scope_reticle_clipped}, mode is set to 2.
+     * Mode 判别见 {@link #resolveMode(Object)}：按本条 draw 绑定的采样器
+     * （{@code ScopeMaskSampler} → 1，标记采样器 {@code ScopeMaskMode2Sampler} → 2），
+     * 26.3 上不再依赖管线对象身份；26.2 的管线名老路仅作兜底。
      * Otherwise (gun body, attachments, hands, entities, particles), mode is set to 0.
      */
     public static void applyToGlRenderPass(Object glRenderPass) {
@@ -449,6 +463,20 @@ public final class IrisScopeMaskState {
             if (glRenderPass == null) {
                 return 0;
             }
+            // 【26.3 主路】按本条 draw 实际绑定的采样器判断，不看管线对象。
+            // 26.3 删了 GlRenderPass#pipeline 与 GlRenderPipeline#info()，老路在
+            // 26.3 上必死（字段反射为空 → 恒 0）；而 samplers 绑定表两个版本都在，
+            // 且不受 Iris 把程序整条换成 pack HAND 的影响。
+            Object samplersObj = readField(glRenderPass, "samplers");
+            if (samplersObj instanceof Map<?, ?> samplers) {
+                if (samplers.containsKey(MODE2_SAMPLER)) {
+                    return 2;
+                }
+                if (samplers.containsKey(MASK_SAMPLER)) {
+                    return 1;
+                }
+            }
+            // 以下为 26.2 老路兜底（26.3 上 pipeline 字段不存在，自然短路为 0）。
             Field pipelineField = pipelineField(glRenderPass);
             if (pipelineField == null) {
                 return 0;

@@ -36,6 +36,10 @@ uniform sampler2D DissolveMaskSampler;
 // 目镜掩码：白 = 该像素属于镜内（目镜投影覆盖），黑 = 镜外。
 // 由 ScopeMaskRenderer 在阶段边界渲染到离屏 target。
 uniform sampler2D ScopeMaskSampler;
+// mode 2 标记采样器（2026-09-20）：只在反向裁剪（准星）管线的 bind group 里声明，
+// 绑的是同一张掩码纹理，GLSL 从不采样它 —— 它存在的唯一意义是让本条 draw 的
+// GlRenderPass#samplers 多一个 key，供 Java 侧在管线对象身份不可考时判别 mode。
+uniform sampler2D ScopeMaskMode2Sampler;
 #endif
 
 #ifdef GLINT
