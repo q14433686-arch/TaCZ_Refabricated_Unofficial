@@ -1,0 +1,636 @@
+[18:15:21] [main/INFO]: Loading Minecraft 26.3 with Fabric Loader 0.19.5
+[18:15:21] [main/INFO]: Mappings not present!
+[18:15:21] [main/WARN]: Warnings were found!
+ - 模组 'Reese's Sodium Options' (reeses-sodium-options) 2.2.4+mc26.3 建议安装 sodium-extra 的 0.4.2 及以上版本，但没有安装它！
+	 - 为了最佳体验，您应该安装 sodium-extra 的 0.4.2 及以上版本。
+[18:15:21] [main/INFO]: Loading 93 mods:
+	- architectury 22.0.1
+	- cloth-config 26.3.158
+	   \-- cloth-basic-math 0.6.1
+	- controlling 26.3.1
+	- dynamic_fps 3.11.10
+	   |-- dynamic_fps_common 3.11.10
+	   \-- net_lostluma_battery 2.1.0
+	- euphoria_patcher 1.10.5-r5.9.3-fabric
+	- fabric-api 0.160.7+26.3
+	   |-- fabric-api-base 2.0.6+fcdff87f5d
+	   |-- fabric-api-lookup-api-v1 2.0.24+3434d6d95d
+	   |-- fabric-biome-api-v1 20.0.9+74ed1ea55d
+	   |-- fabric-block-api-v1 3.1.0+0ae6f9115d
+	   |-- fabric-block-getter-api-v2 2.0.9+3434d6d95d
+	   |-- fabric-command-api-v2 3.1.2+fcdff87f5d
+	   |-- fabric-content-registries-v0 15.0.4+74ed1ea55d
+	   |-- fabric-convention-tags-v2 4.10.2+5a4e5fc65d
+	   |-- fabric-crash-report-info-v1 1.0.7+fcdff87f5d
+	   |-- fabric-creative-tab-api-v1 5.0.21+fcdff87f5d
+	   |-- fabric-data-attachment-api-v1 2.2.30+3434d6d95d
+	   |-- fabric-data-generation-api-v1 27.2.3+64902b845d
+	   |-- fabric-debug-api-v1 1.0.4+3434d6d95d
+	   |-- fabric-dimensions-v1 5.1.19+47f74c985d
+	   |-- fabric-entity-events-v1 6.0.4+3434d6d95d
+	   |-- fabric-events-interaction-v0 5.3.6+3434d6d95d
+	   |-- fabric-game-rule-api-v1 4.0.10+3434d6d95d
+	   |-- fabric-item-api-v1 14.7.0+cf6bc2db5d
+	   |-- fabric-key-mapping-api-v1 2.0.8+3434d6d95d
+	   |-- fabric-lifecycle-events-v1 4.1.9+ffef5f675d
+	   |-- fabric-loot-api-v3 4.0.8+4068fd645d
+	   |-- fabric-menu-api-v1 2.0.27+ed66f0a35d
+	   |-- fabric-message-api-v1 7.0.10+3434d6d95d
+	   |-- fabric-model-loading-api-v1 8.0.35+fcdff87f5d
+	   |-- fabric-networking-api-v1 6.3.8+fcdff87f5d
+	   |-- fabric-object-builder-api-v1 24.1.9+3434d6d95d
+	   |-- fabric-particles-v1 5.0.24+3434d6d95d
+	   |-- fabric-permission-api-v1 1.0.8+fcdff87f5d
+	   |-- fabric-recipe-api-v1 10.0.8+fcdff87f5d
+	   |-- fabric-registry-sync-v0 8.0.1+fcdff87f5d
+	   |-- fabric-renderer-api-v1 17.0.15+79385d0b5d
+	   |-- fabric-renderer-indigo 9.1.23+b9d63e335d
+	   |-- fabric-rendering-fluids-v1 6.0.6+3434d6d95d
+	   |-- fabric-rendering-v1 27.0.14+901a437c5d
+	   |-- fabric-resource-conditions-api-v1 6.1.5+3434d6d95d
+	   |-- fabric-resource-loader-v0 3.3.26+4fc5413f5d
+	   |-- fabric-resource-loader-v1 3.0.4+fcdff87f5d
+	   |-- fabric-screen-api-v1 5.2.4+48607d035d
+	   |-- fabric-serialization-api-v1 2.0.7+74ed1ea55d
+	   |-- fabric-sound-api-v1 2.0.7+3434d6d95d
+	   |-- fabric-tag-api-v1 2.1.10+fcdff87f5d
+	   |-- fabric-transfer-api-v1 8.0.25+fcdff87f5d
+	   \-- fabric-transitive-access-wideners-v1 8.1.16+52268a0e5d
+	- fabric-language-kotlin 1.14.1+kotlin.2.4.20
+	   |-- org_jetbrains_kotlin_kotlin-reflect 2.4.20
+	   |-- org_jetbrains_kotlin_kotlin-stdlib 2.4.20
+	   |-- org_jetbrains_kotlin_kotlin-stdlib-jdk7 2.4.20
+	   |-- org_jetbrains_kotlin_kotlin-stdlib-jdk8 2.4.20
+	   |-- org_jetbrains_kotlinx_atomicfu-jvm 0.33.0
+	   |-- org_jetbrains_kotlinx_kotlinx-coroutines-core-jvm 1.11.0
+	   |-- org_jetbrains_kotlinx_kotlinx-coroutines-jdk8 1.11.0
+	   |-- org_jetbrains_kotlinx_kotlinx-datetime-jvm 0.8.0
+	   |-- org_jetbrains_kotlinx_kotlinx-io-bytestring-jvm 0.9.1
+	   |-- org_jetbrains_kotlinx_kotlinx-io-core-jvm 0.9.1
+	   |-- org_jetbrains_kotlinx_kotlinx-serialization-cbor-jvm 1.11.0
+	   |-- org_jetbrains_kotlinx_kotlinx-serialization-core-jvm 1.11.0
+	   \-- org_jetbrains_kotlinx_kotlinx-serialization-json-jvm 1.11.0
+	- fabricloader 0.19.5
+	   \-- mixinextras 0.5.5
+	- forgeconfigapiport 26.3.0
+	   |-- com_electronwill_night-config_core 3.8.4
+	   \-- com_electronwill_night-config_toml 3.8.4
+	- iris 1.11.6+mc26.3
+	   |-- io_github_douira_glsl-transformer 3.0.0-pre3
+	   |-- org_anarres_jcpp 1.4.14
+	   \-- org_antlr_antlr4-runtime 4.13.1
+	- jade 26.3.1+fabric
+	- java 25
+	- jei 31.0.0.5
+	- minecraft 26.3
+	- modmenu 21.0.0-beta.1
+	- mousetweaks 2.31
+	- placeholder-api 3.2.0+26.3
+	- reeses-sodium-options 2.2.4+mc26.3
+	- searchables 1.0.2
+	- sodium 0.9.2+mc26.3
+	- tacz 1.1.8+fabric.26.3.R1
+	   |-- com_github_figuramc_luaj_luaj-core 3.0.8-figura
+	   |-- com_github_figuramc_luaj_luaj-jse 3.0.8-figura
+	   |-- com_maydaymemory_mae 1.1.1
+	   |-- org_apache_bcel_bcel 6.6.1
+	   \-- org_apache_commons_commons-math3 3.6.1
+	- xaerominimap 26.5.3
+	   \-- xaerolib 1.7.17
+[18:15:21] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/D:/DOWLOD/.minecraft/libraries/net/fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[18:15:22] [main/WARN]: Reference map 'controlling.refmap.json' for controlling.mixins.json could not be read. If this is a development environment you can ignore this message
+[18:15:22] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.json could not be read. If this is a development environment you can ignore this message
+[18:15:22] [main/WARN]: Reference map 'iris-fabric.refmap.json' for mixins.iris.fabric.json could not be read. If this is a development environment you can ignore this message
+[18:15:22] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.vertexformat.json could not be read. If this is a development environment you can ignore this message
+[18:15:22] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.bettermipmaps.json could not be read. If this is a development environment you can ignore this message
+[18:15:22] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.compat.sodium.json could not be read. If this is a development environment you can ignore this message
+[18:15:22] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.fixes.maxfpscrash.json could not be read. If this is a development environment you can ignore this message
+[18:15:22] [main/WARN]: Reference map 'reeses-sodium-options.refmap.json' for reeses-sodium-options.mixins.json could not be read. If this is a development environment you can ignore this message
+[18:15:22] [main/WARN]: Reference map 'searchables.refmap.json' for searchables.mixins.json could not be read. If this is a development environment you can ignore this message
+[18:15:22] [main/WARN]: Reference map 'searchables.refmap.json' for searchables.fabric.mixins.json could not be read. If this is a development environment you can ignore this message
+[18:15:22] [main/INFO]: Loaded configuration file for Sodium: 37 options available, 1 override(s) found
+[18:15:22] [main/INFO]: [TACZ Scope] Iris compat mixin config loaded: package=com.tacz.guns.mixin.client.iris, irisLoaded=true
+[18:15:22] [main/WARN]: Reference map 'xaerolib.refmap.json' for xaerolib.mixins.json could not be read. If this is a development environment you can ignore this message
+[18:15:22] [main/WARN]: Force-disabling mixin 'features.render.world.sky.LevelRendererMixin' as rule 'mixin.features.render.world.sky' (added by mods [iris]) disables it and children
+[18:15:22] [main/INFO]: [TACZ Scope] Iris compat mixin decision: apply=true, firstMixin=com.tacz.guns.mixin.client.iris.IrisShaderCreatorMixin, firstTarget=net.irisshaders.iris.pipeline.programs.ShaderCreator
+[18:15:22] [main/INFO]: Searching for graphics cards...
+[18:15:23] [main/INFO]: Found graphics adapter: AdapterInfo{vendor=AMD, description='AMD Radeon(TM) Graphics', adapterType=0x00002303, openglIcdFilePath='C:\Windows\System32\DriverStore\FileRepository\u0203303.inf_amd64_e5876a26758f154c\B026363\atig6pxx.dll', openglIcdVersion=32.0.21045.5002}
+[18:15:23] [main/INFO]: Found graphics adapter: AdapterInfo{vendor=AMD, description='AMD  Radeon RX 7800 XT', adapterType=0x0000230B, openglIcdFilePath='C:\Windows\System32\DriverStore\FileRepository\u0203304.inf_amd64_a6e5a337568ce3f0\B026373\atig6pxx.dll', openglIcdVersion=32.0.31041.1004}
+[18:15:23] [main/WARN]: Sodium has applied one or more workarounds to prevent crashes or other issues on your system: [AMD_GAME_OPTIMIZATION_BROKEN]
+[18:15:23] [main/WARN]: This is not necessarily an issue, but it may result in certain features or optimizations being disabled. You can sometimes fix these issues by upgrading your graphics driver.
+[18:15:23] [main/INFO]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[18:15:24] [main/INFO]: EuphoriaPatcher: [UPDATE CHECKER] The EuphoriaPatcher Mod is up to date
+[18:15:24] [main/INFO]: EuphoriaPatcher: Please breathe in...
+[18:15:24] [main/INFO]: EuphoriaPatcher: EuphoriaPatches_1.10.5 is already installed.
+[18:15:25] [Datafixer Bootstrap #0/INFO]: 307 Datafixer optimizations took 220 milliseconds
+[18:15:25] [main/WARN]: Invalid registry value type detected for PerfOS counters. Should be REG_DWORD. Ignoring: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PerfOS\Performance\Disable Performance Counters.
+[18:15:29] [Render thread/INFO]: Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]
+[18:15:29] [Render thread/INFO]: Setting user: GOOSTL
+[18:15:29] [Render thread/INFO]: Registered synced data key tacz:shoot_cool_down for minecraft:living_entity
+[18:15:29] [Render thread/INFO]: Registered synced data key tacz:melee_cool_down for minecraft:living_entity
+[18:15:29] [Render thread/INFO]: Registered synced data key tacz:reload_state for minecraft:living_entity
+[18:15:29] [Render thread/INFO]: Registered synced data key tacz:aiming_progress for minecraft:living_entity
+[18:15:29] [Render thread/INFO]: Registered synced data key tacz:draw_cool_down for minecraft:living_entity
+[18:15:29] [Render thread/INFO]: Registered synced data key tacz:is_aiming for minecraft:living_entity
+[18:15:29] [Render thread/INFO]: Registered synced data key tacz:sprint_time for minecraft:living_entity
+[18:15:29] [Render thread/INFO]: Registered synced data key tacz:is_bolting for minecraft:living_entity
+[18:15:29] [Render thread/INFO]: Registered synced data key tacz:throwable_using for minecraft:living_entity
+[18:15:30] [Render thread/INFO]: LRTactical (unofficial 26.2 port) initialized
+[18:15:30] [Render thread/INFO]: Registering S2C receiver with id architectury:spawn_entity_packet
+[18:15:30] [Render thread/INFO]: [Indigo] Different rendering plugin detected; not applying Indigo.
+[18:15:30] [Render thread/INFO]: Sending ConfigManager...
+[18:15:30] [Render thread/INFO]: Sending ConfigManager took 1.045 milliseconds
+[18:15:30] [Render thread/INFO]: Checking mod updates...
+[18:15:30] [Render thread/INFO]: [STDOUT]: [Mouse Tweaks] Main.initialize()
+[18:15:30] [Render thread/INFO]: [STDOUT]: [Mouse Tweaks] Initialized.
+[18:15:30] [Render thread/INFO]: [TACZ] Registering FeatureRenderers for 26.2...
+[18:15:30] [Render thread/INFO]: [TACZ] FeatureRenderers registered.
+[18:15:30] [Render thread/INFO]: [TacZMeshLoader] Registered TACZ gun model type: mesh
+[18:15:30] [Render thread/INFO]: Registering common data for channel xaerolib:main!
+[18:15:30] [Render thread/INFO]: Registering client data for channel xaerolib:main!
+[18:15:30] [Render thread/INFO]: Loading primary common config for channel xaerolib:main!
+[18:15:30] [Render thread/INFO]: Loading server config profiles for channel xaerolib:main!
+[18:15:30] [Render thread/INFO]: Loading primary client config for channel xaerolib:main!
+[18:15:30] [Render thread/INFO]: Loading client config profiles for channel xaerolib:main!
+[18:15:30] [Render thread/INFO]: Loading XaeroLib common 1/2!
+[18:15:30] [Render thread/INFO]: Loading XaeroLib client 1/3!
+[18:15:31] [Download-3/INFO]: Update available for 'controlling@26.3.1', (-> 26.3.3)
+[18:15:31] [Download-3/INFO]: Update available for 'fabric-api@0.160.7+26.3', (-> 0.161.0+26.3)
+[18:15:31] [Download-3/INFO]: Update available for 'architectury@22.0.1', (-> 22.0.2+fabric)
+[18:15:32] [Render thread/INFO]: No Optifine!
+[18:15:32] [Render thread/INFO]: Xaero's Minimap: No Vivecraft!
+[18:15:32] [Render thread/INFO]: Xaero's Minimap: Iris found!
+[18:15:32] [Render thread/INFO]: Registering common data for channel xaerominimap:main!
+[18:15:32] [Render thread/INFO]: Registering client data for channel xaerominimap:main!
+[18:15:32] [Render thread/INFO]: Loading primary common config for channel xaerominimap:main!
+[18:15:32] [Render thread/INFO]: Loading server config profiles for channel xaerominimap:main!
+[18:15:32] [Render thread/INFO]: Loading primary client config for channel xaerominimap:main!
+[18:15:32] [Render thread/INFO]: Loading client config profiles for channel xaerominimap:main!
+[18:15:32] [Render thread/INFO]: Loading Xaero's Minimap - Stage 1/3
+[18:15:32] [ForkJoinPool.commonPool-worker-1/WARN]: [Iris Update Check] Failed to get update info!
+javax.net.ssl.SSLHandshakeException: (certificate_unknown) PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target
+	at java.base/sun.security.ssl.Alert.createSSLException(Alert.java:130)
+	at java.base/sun.security.ssl.TransportContext.fatal(TransportContext.java:376)
+	at java.base/sun.security.ssl.TransportContext.fatal(TransportContext.java:319)
+	at java.base/sun.security.ssl.TransportContext.fatal(TransportContext.java:314)
+	at java.base/sun.security.ssl.CertificateMessage$T13CertificateConsumer.checkServerCerts(CertificateMessage.java:1295)
+	at java.base/sun.security.ssl.CertificateMessage$T13CertificateConsumer.onConsumeCertificate(CertificateMessage.java:1172)
+	at java.base/sun.security.ssl.CertificateMessage$T13CertificateConsumer.consume(CertificateMessage.java:1115)
+	at java.base/sun.security.ssl.SSLHandshake.consume(SSLHandshake.java:421)
+	at java.base/sun.security.ssl.HandshakeContext.dispatch(HandshakeContext.java:477)
+	at java.base/sun.security.ssl.HandshakeContext.dispatch(HandshakeContext.java:448)
+	at java.base/sun.security.ssl.TransportContext.dispatch(TransportContext.java:199)
+	at java.base/sun.security.ssl.SSLTransport.decode(SSLTransport.java:172)
+	at java.base/sun.security.ssl.SSLSocketImpl.decode(SSLSocketImpl.java:1506)
+	at java.base/sun.security.ssl.SSLSocketImpl.readHandshakeRecord(SSLSocketImpl.java:1421)
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:455)
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:426)
+	at java.base/sun.net.www.protocol.https.HttpsClient.afterConnect(HttpsClient.java:483)
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:187)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1377)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1302)
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getInputStream(HttpsURLConnectionImpl.java:223)
+	at java.base/java.net.URL.openStream(URL.java:1263)
+	at knot//net.irisshaders.iris.UpdateChecker.lambda$checkForUpdates$0(UpdateChecker.java:89)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1789)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.exec(CompletableFuture.java:1781)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)
+Caused by: sun.security.validator.ValidatorException: PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target
+	at java.base/sun.security.validator.PKIXValidator.doBuild(PKIXValidator.java:387)
+	at java.base/sun.security.validator.PKIXValidator.engineValidate(PKIXValidator.java:270)
+	at java.base/sun.security.validator.Validator.validate(Validator.java:256)
+	at java.base/sun.security.ssl.X509TrustManagerImpl.checkTrusted(X509TrustManagerImpl.java:230)
+	at java.base/sun.security.ssl.X509TrustManagerImpl.checkServerTrusted(X509TrustManagerImpl.java:132)
+	at java.base/sun.security.ssl.CertificateMessage$T13CertificateConsumer.checkServerCerts(CertificateMessage.java:1279)
+	... 24 more
+Caused by: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target
+	at java.base/sun.security.provider.certpath.SunCertPathBuilder.build(SunCertPathBuilder.java:148)
+	at java.base/sun.security.provider.certpath.SunCertPathBuilder.engineBuild(SunCertPathBuilder.java:129)
+	at java.base/java.security.cert.CertPathBuilder.build(CertPathBuilder.java:299)
+	at java.base/sun.security.validator.PKIXValidator.doBuild(PKIXValidator.java:382)
+	... 29 more
+[18:15:32] [Render thread/INFO]: Backend library: LWJGL version 3.4.3-snapshot
+[18:15:32] [Render thread/INFO]: SDL [SYSTEM]: App name: Minecraft
+[18:15:32] [Render thread/INFO]: SDL [SYSTEM]: App version: 26.3
+[18:15:32] [Render thread/INFO]: SDL [SYSTEM]: App ID: com.mojang.minecraft
+[18:15:32] [Render thread/INFO]: SDL [SYSTEM]: SDL revision: SDL-3.4.14-62f10da
+[18:15:34] [Render thread/INFO]: Modifying process environment to apply workarounds for the AMD graphics driver...
+[18:15:34] [Render thread/INFO]: Modifying process environment to apply workarounds for the AMD graphics driver...
+[18:15:34] [Render thread/INFO]: Debug functionality is disabled.
+[18:15:34] [Render thread/INFO]: ARB_direct_state_access detected, enabling DSA.
+[18:15:34] [Render thread/INFO]: Shaders are disabled because enableShaders is set to false in iris.properties
+[18:15:34] [Render thread/INFO]: Using graphics backend OpenGL, using drivers: 3.3.0 Core Profile Context 26.8.1.260810
+[18:15:34] [Render thread/INFO]: Using graphics device: AMD  Radeon RX 7800 XT (ATI Technologies Inc.)
+[18:15:34] [Render thread/INFO]: Using graphics device extensions: GL_ARB_multi_draw_indirect, GL_ARB_buffer_storage, GL_ARB_shader_draw_parameters, GL_ARB_base_instance, GL_KHR_debug, GL_ARB_draw_indirect, GL_ARB_clip_control, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+[18:15:34] [Render thread/INFO]: Modifying process environment to apply workarounds for the AMD graphics driver...
+[18:15:34] [Render thread/INFO]: Created window using SDL video driver: windows
+[18:15:34] [Render thread/INFO]: Start scanning for gun packs in D:\DOWLOD\.minecraft\versions\26.3-Fabric 0.19.5\tacz
+[18:15:34] [Render thread/INFO]: - tacz_default_gun, Main namespace: tacz
+[18:15:34] [Render thread/INFO]: Found 1 possible gunpack(s) and added them to resource set.
+[18:15:34] [Render thread/INFO]: Hardware information:
+[18:15:34] [Render thread/INFO]: CPU: 16x AMD Ryzen 7 7700 8-Core Processor 
+[18:15:34] [Render thread/INFO]: GPU: AMD  Radeon RX 7800 XT (Supports OpenGL 3.3.0 Core Profile Context 26.8.1.260810)
+[18:15:34] [Render thread/INFO]: OS: Windows 11 (10.0)
+[18:15:35] [Render thread/INFO]: Reloading ResourceManager: vanilla, vanilla, cloth-config, controlling, dynamic_fps, dynamic_fps_common, euphoria_patcher, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-language-kotlin, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, forgeconfigapiport, iris, jade, jei, modmenu, org_apache_commons_commons-math3, placeholder-api, reeses-sodium-options, searchables, sodium, tacz, xaerolib, xaerominimap, tacz_resources
+[18:15:35] [Worker-Main-4/INFO]: Found unifont_all_no_pua-17.0.01.hex, loading
+[18:15:35] [Worker-Main-15/INFO]: Found unifont_pua-17.0.01.hex, loading
+[18:15:35] [Worker-Main-4/INFO]: Found unifont_jp_patch-17.0.01.hex, loading
+[18:15:35] [Render thread/INFO]: Thread[#3,Render thread,5,main]
+[18:15:35] [Render thread/INFO]: OpenGL Vendor: ATI Technologies Inc.
+[18:15:35] [Render thread/INFO]: OpenGL Renderer: AMD  Radeon RX 7800 XT
+[18:15:35] [Render thread/INFO]: OpenGL Version: 3.3.0 Core Profile Context 26.8.1.260810
+[18:15:35] [Render thread/INFO]: Start loading plugin from Jade: snownee.jade.addon.core.CorePlugin
+[18:15:35] [Render thread/INFO]: Start loading plugin from Jade: snownee.jade.addon.vanilla.VanillaPlugin
+[18:15:35] [Render thread/INFO]: Start loading plugin from Jade: snownee.jade.addon.universal.UniversalPlugin
+[18:15:35] [Render thread/INFO]: Start loading plugin from Jade: snownee.jade.addon.access.AccessibilityPlugin
+[18:15:35] [Render thread/INFO]: Start loading plugin from Jade: snownee.jade.addon.debug.DebugPlugin
+[18:15:35] [Render thread/INFO]: [TACZ Zoomify] No Zoomify integration in this build (Zoomify has no Minecraft 26.3 release); scope FOV is unaffected.
+[18:15:35] [Render thread/INFO]: Loading Xaero's Minimap - Stage 2/3
+[18:15:37] [Render thread/INFO]: Registered player tracker system: minimap_synced
+[18:15:37] [Render thread/INFO]: Loading Xaero's Minimap - Stage 3/3
+[18:15:37] [Render thread/INFO]: Loading XaeroLib common 2/2!
+[18:15:37] [Render thread/INFO]: Loading XaeroLib client 2/3!
+[18:15:37] [Render thread/INFO]: Loading XaeroLib client 3/3!
+[18:15:37] [Render thread/INFO]: OpenAL initialized on device OpenAL Soft on SteelSeries Sonar - Gaming (SteelSeries Sonar Virtual Audio Device)
+[18:15:37] [Render thread/INFO]: Sound engine started
+[18:15:37] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[18:15:37] [Render thread/INFO]: Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
+[18:15:37] [Render thread/INFO]: Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[18:15:37] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[18:15:37] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[18:15:37] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[18:15:37] [Render thread/INFO]: Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas
+[18:15:37] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
+[18:15:37] [Render thread/INFO]: Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
+[18:15:37] [Render thread/INFO]: Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[18:15:37] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
+[18:15:37] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
+[18:15:38] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[18:15:44] [Render thread/INFO]: Start scanning for gun packs in D:\DOWLOD\.minecraft\versions\26.3-Fabric 0.19.5\tacz
+[18:15:44] [Render thread/INFO]: - tacz_default_gun, Main namespace: tacz
+[18:15:44] [Render thread/INFO]: Found 1 possible gunpack(s) and added them to resource set.
+[18:15:44] [Worker-Main-5/INFO]: Loaded 1866 advancements
+[18:15:44] [Render thread/INFO]: Loaded 7 throwable index(es)
+[18:15:44] [Render thread/INFO]: Loaded 1 melee index(es)
+[18:15:44] [Render thread/INFO]: Loaded 1 consumable index(es)
+[18:15:44] [Render thread/INFO]: Applied 0 biome modifications to 0 of 67 new biomes in 963.6 μs
+[18:15:44] [Server thread/INFO]: Starting integrated minecraft server version 26.3
+[18:15:44] [Server thread/INFO]: Generating keypair
+[18:15:45] [Server thread/INFO]: Loading 0 persistent chunks...
+[18:15:45] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:overworld
+[18:15:45] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_nether
+[18:15:45] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_end
+[18:15:45] [Server thread/INFO]: Loading 49 chunks for player spawn...
+[18:15:45] [Server thread/INFO]: 准备生成区域中：16%
+[18:15:45] [Server thread/INFO]: 准备生成区域中：16%
+[18:15:45] [Server thread/INFO]: Time elapsed: 823 ms
+[18:15:46] [Server thread/INFO]: GOOSTL[local:E:d024a6ad] logged in with entity id 77 at (535.608347407142, 103.83604366639196, 0.338405647224923)
+[18:15:46] [Server thread/INFO]: System chat: GOOSTL加入了游戏
+[18:15:46] [Render thread/INFO]: Minimap required item set to nothing.
+[18:15:46] [Render thread/INFO]: New Xaero hud session initialized!
+[18:15:46] [Server thread/INFO]: Changing view distance to 12, from 10
+[18:15:46] [Server thread/INFO]: Changing simulation distance to 12, from 0
+[18:15:46] [Render thread/INFO]: Started 10 worker threads
+[18:15:46] [Render thread/INFO]: [TacZMeshLoader] block poly_mesh stats for tacz:geo_models/block/gun_smith_table.json: 0 bones, 0 vertices
+[18:15:46] [Render thread/INFO]: [TacZMeshLoader] block poly_mesh stats for tacz:geo_models/block/attachment_workbench.json: 0 bones, 0 vertices
+[18:15:46] [Render thread/INFO]: [TacZMeshLoader] block poly_mesh stats for tacz:geo_models/block/ammo_workbench.json: 0 bones, 0 vertices
+[18:15:46] [Render thread/INFO]: Starting JEI...
+[18:15:46] [Render thread/INFO]: Configuring JEI...
+[18:15:46] [Render thread/INFO]: Configuring JEI took 475.3 microseconds
+[18:15:46] [Render thread/INFO]: Registering item subtypes...
+[18:15:46] [Render thread/INFO]: Registering item subtypes took 2.134 milliseconds
+[18:15:46] [Render thread/INFO]: Registering fluid subtypes...
+[18:15:46] [Render thread/INFO]: Registering fluid subtypes took 138.8 microseconds
+[18:15:46] [Render thread/INFO]: Registering ingredients...
+[18:15:46] [Render thread/INFO]: Registering ingredients: jei:minecraft took 82.25 milliseconds
+[18:15:46] [Render thread/INFO]: Registering ingredients took 82.72 milliseconds
+[18:15:46] [Render thread/INFO]: Registering extra ingredients...
+[18:15:46] [Render thread/INFO]: Registering extra ingredients took 151.0 microseconds
+[18:15:46] [Render thread/INFO]: Registering search ingredient aliases...
+[18:15:46] [Render thread/INFO]: Registering search ingredient aliases took 96.10 microseconds
+[18:15:46] [Render thread/INFO]: Registering slot display interpreters...
+[18:15:46] [Render thread/INFO]: Registering slot display interpreters took 3.368 milliseconds
+[18:15:46] [Render thread/INFO]: Registering Mod Info...
+[18:15:46] [Render thread/INFO]: Registering Mod Info took 176.5 microseconds
+[18:15:46] [Render thread/INFO]: Registering advanced search...
+[18:15:46] [Render thread/INFO]: Registering advanced search took 175.5 microseconds
+[18:15:46] [Render thread/INFO]: Registering categories...
+[18:15:46] [Render thread/INFO]: Registering categories took 13.24 milliseconds
+[18:15:46] [Render thread/INFO]: Registering vanilla category extensions...
+[18:15:46] [Render thread/INFO]: Registering vanilla category extensions took 2.011 milliseconds
+[18:15:46] [Render thread/INFO]: Registering recipe catalysts...
+[18:15:46] [Render thread/INFO]: Registering recipe catalysts took 1.812 milliseconds
+[18:15:46] [Render thread/INFO]: Building recipe registry...
+[18:15:46] [Render thread/INFO]: Building recipe registry took 5.334 milliseconds
+[18:15:46] [Render thread/INFO]: Registering advanced plugins...
+[18:15:46] [Render thread/INFO]: Added typed recipe manager plugin: class mezz.jei.library.plugins.vanilla.crafting.FireworkStarRecipeManagerPlugin
+[18:15:46] [Render thread/INFO]: Registering advanced plugins took 8.324 milliseconds
+[18:15:46] [Render thread/INFO]: Registering recipes...
+[18:15:47] [Render thread/INFO]: Registering recipes: jei:minecraft took 647.5 milliseconds
+[18:15:47] [Render thread/INFO]: Registering recipes: tacz:jei took 69.58 milliseconds
+[18:15:47] [Render thread/INFO]: Registering recipes: jei:internal took 44.27 milliseconds
+[18:15:47] [Render thread/INFO]: Registering recipes took 762.7 milliseconds
+[18:15:47] [Render thread/INFO]: Registering recipes transfer handlers...
+[18:15:47] [Render thread/INFO]: Registering recipes transfer handlers took 2.191 milliseconds
+[18:15:47] [Render thread/INFO]: Building runtime...
+[18:15:47] [Render thread/INFO]: Registering gui handlers...
+[18:15:47] [Render thread/INFO]: Registering gui handlers took 4.425 milliseconds
+[18:15:47] [Render thread/INFO]: Registering Runtime...
+[18:15:47] [Render thread/INFO]: Starting JEI GUI
+[18:15:47] [Render thread/INFO]: Building ingredient list...
+[18:15:47] [Render thread/INFO]: Building ingredient list took 20.06 milliseconds
+[18:15:47] [Render thread/INFO]: Building ingredient filter...
+[18:15:47] [Render thread/INFO]: Adding 2202 ingredients
+[18:15:47] [Render thread/INFO]: Added 2202 ingredients
+[18:15:47] [Render thread/INFO]: Building ingredient filter took 128.3 milliseconds
+[18:15:47] [Render thread/INFO]: Registering Runtime: jei:fabric_gui took 223.8 milliseconds
+[18:15:47] [Render thread/INFO]: Registering Runtime took 224.3 milliseconds
+[18:15:47] [Render thread/INFO]: Building runtime took 233.3 milliseconds
+[18:15:47] [Render thread/INFO]: Sending Runtime...
+[18:15:47] [Render thread/INFO]: Sending Runtime took 199.2 microseconds
+[18:15:47] [Render thread/INFO]: Starting JEI took 1.169 seconds
+[18:15:47] [Render thread/INFO]: Minimap updated server level id: -756211085 for world ResourceKey[minecraft:dimension / minecraft:overworld]
+[18:15:47] [Render thread/INFO]: Loaded 2 advancements
+[18:15:47] [Render thread/INFO]: Received config from the server: {}
+[18:15:47] [tacz-client-asset-preload-1/INFO]: [TacZMeshLoader] poly_mesh stats for tacz:geo_models/gun/lod/aug.json: 0 bones, 0 vertices (translucent=0, illuminated=0, mag=false, additionalMag=false)
+[18:15:47] [Render thread/INFO]: [TACZ Recipe Viewer] Refreshing after gun-pack sync (4 table(s), 182 recipe(s)).
+[18:15:47] [Render thread/INFO]: Stopping JEI
+[18:15:47] [Render thread/INFO]: Stopping JEI
+[18:15:47] [Render thread/INFO]: Sending Runtime Unavailable...
+[18:15:47] [Render thread/INFO]: Stopping JEI GUI
+[18:15:47] [Render thread/INFO]: Sending Runtime Unavailable took 278.4 microseconds
+[18:15:47] [Render thread/INFO]: Loaded 2042 vanilla recipes from the client recipe registry.
+[18:15:47] [Render thread/INFO]: Starting JEI...
+[18:15:47] [Render thread/INFO]: Configuring JEI...
+[18:15:47] [Render thread/INFO]: Configuring JEI took 217.7 microseconds
+[18:15:47] [Render thread/INFO]: Registering item subtypes...
+[18:15:47] [Render thread/INFO]: Registering item subtypes took 175.0 microseconds
+[18:15:47] [Render thread/INFO]: Registering fluid subtypes...
+[18:15:47] [Render thread/INFO]: Registering fluid subtypes took 107.4 microseconds
+[18:15:47] [Render thread/INFO]: Registering ingredients...
+[18:15:48] [Render thread/INFO]: Registering ingredients: jei:minecraft took 26.32 milliseconds
+[18:15:48] [Render thread/INFO]: Registering ingredients took 26.80 milliseconds
+[18:15:48] [Render thread/INFO]: Registering extra ingredients...
+[18:15:48] [Render thread/INFO]: Registering extra ingredients took 174.4 microseconds
+[18:15:48] [Render thread/INFO]: Registering search ingredient aliases...
+[18:15:48] [Render thread/INFO]: Registering search ingredient aliases took 136.2 microseconds
+[18:15:48] [Render thread/INFO]: Registering slot display interpreters...
+[18:15:48] [Render thread/INFO]: Registering slot display interpreters took 185.6 microseconds
+[18:15:48] [Render thread/INFO]: Registering Mod Info...
+[18:15:48] [Render thread/INFO]: Registering Mod Info took 131.0 microseconds
+[18:15:48] [Render thread/INFO]: Registering advanced search...
+[18:15:48] [Render thread/INFO]: Registering advanced search took 112.8 microseconds
+[18:15:48] [Render thread/INFO]: Registering categories...
+[18:15:48] [Render thread/INFO]: Registering categories took 865.7 microseconds
+[18:15:48] [Render thread/INFO]: Registering vanilla category extensions...
+[18:15:48] [Render thread/INFO]: Registering vanilla category extensions took 138.2 microseconds
+[18:15:48] [Render thread/INFO]: Registering recipe catalysts...
+[18:15:48] [Render thread/INFO]: Registering recipe catalysts took 174.8 microseconds
+[18:15:48] [Render thread/INFO]: Building recipe registry...
+[18:15:48] [Render thread/INFO]: Building recipe registry took 500.7 microseconds
+[18:15:48] [Render thread/INFO]: Registering advanced plugins...
+[18:15:48] [Render thread/INFO]: Added typed recipe manager plugin: class mezz.jei.library.plugins.vanilla.crafting.FireworkStarRecipeManagerPlugin
+[18:15:48] [Render thread/INFO]: Registering advanced plugins took 1.760 milliseconds
+[18:15:48] [Render thread/INFO]: Registering recipes...
+[18:15:48] [Render thread/INFO]: Registering recipes: jei:minecraft took 298.4 milliseconds
+[18:15:48] [Render thread/INFO]: Registering recipes: tacz:jei took 20.41 milliseconds
+[18:15:48] [Render thread/INFO]: Registering recipes: jei:internal took 24.06 milliseconds
+[18:15:48] [Render thread/INFO]: Registering recipes took 344.5 milliseconds
+[18:15:48] [Render thread/INFO]: Registering recipes transfer handlers...
+[18:15:48] [Render thread/INFO]: Registering recipes transfer handlers took 247.3 microseconds
+[18:15:48] [Render thread/INFO]: Building runtime...
+[18:15:48] [Render thread/INFO]: Registering gui handlers...
+[18:15:48] [Render thread/INFO]: Registering gui handlers took 178.3 microseconds
+[18:15:48] [Render thread/INFO]: Registering Runtime...
+[18:15:48] [Render thread/INFO]: Starting JEI GUI
+[18:15:48] [Render thread/INFO]: Building ingredient list...
+[18:15:48] [Render thread/INFO]: Building ingredient list took 5.897 milliseconds
+[18:15:48] [Render thread/INFO]: Building ingredient filter...
+[18:15:48] [Render thread/INFO]: Adding 2233 ingredients
+[18:15:48] [Render thread/INFO]: Added 2233 ingredients
+[18:15:48] [Render thread/INFO]: Building ingredient filter took 36.34 milliseconds
+[18:15:48] [Render thread/INFO]: Registering Runtime: jei:fabric_gui took 48.66 milliseconds
+[18:15:48] [Render thread/INFO]: Registering Runtime took 49.09 milliseconds
+[18:15:48] [Render thread/INFO]: Building runtime took 49.67 milliseconds
+[18:15:48] [Render thread/INFO]: Sending Runtime...
+[18:15:48] [Render thread/INFO]: Sending Runtime took 159.5 microseconds
+[18:15:48] [Render thread/INFO]: Starting JEI took 432.6 milliseconds
+[18:15:48] [Render thread/INFO]: [System] [CHAT] This fabric server does not provide recipes to JEI. JEI is showing default recipes from your client, which may be different on the server.
+[18:15:48] [Render thread/WARN]: This fabric server does not provide recipes to JEI. JEI is showing default recipes from your client, which may be different on the server.
+[18:15:48] [Render thread/INFO]: [TACZ Recipe Viewer] JEI/REI refresh completed.
+[18:15:48] [Render thread/INFO]: [TACZ Scope] Pipeline prewarm: all 13 custom pipelines compiled.
+[18:15:48] [Render thread/INFO]: Stopping worker threads
+[18:15:48] [Render thread/INFO]: Started 10 worker threads
+[18:15:48] [Render thread/WARN]: Requested post effect does not exist: minecraft:end_of_frame
+[18:15:48] [Render thread/INFO]: [TacZMeshLoader] attachment poly_mesh stats for tacz:geo_models/attachment/scope_aug_default_geo.json: 0 bones, 0 vertices
+[18:15:48] [Render thread/INFO]: [TACZ Case08] ConstraintCompensateMode effective=3 (config=3, irisHandActive=false)
+[18:15:48] [Render thread/WARN]: Found fine program match for tacz:pipeline/scope_body_clipped: HAND_CUTOUT
+[18:15:48] [Render thread/INFO]: [TACZ Scope] Assigned custom scope pipelines to Iris HAND program (latest: scope_body_clipped).
+[18:15:48] [Render thread/WARN]: Found fine program match for tacz:pipeline/scope_reticle_clipped: HAND_CUTOUT
+[18:15:48] [Render thread/WARN]: Found fine program match for tacz:pipeline/scope_reticle_emissive_clipped: HAND_CUTOUT
+[18:15:48] [Render thread/WARN]: Found fine program match for tacz:pipeline/scope_reticle_emissive: HAND_CUTOUT
+[18:15:48] [Render thread/WARN]: Found fine program match for tacz:pipeline/scope_flash_translucent_clipped: HAND_CUTOUT
+[18:15:48] [Render thread/WARN]: Found fine program match for tacz:pipeline/scope_flash_swirl_clipped: HAND_CUTOUT
+[18:15:48] [Render thread/INFO]: [TacZMeshLoader] ammo poly_mesh stats for tacz:geo_models/ammo/556x45.json: 0 bones, 0 vertices
+[18:15:48] [Render thread/INFO]: [TacZMeshLoader] ammo poly_mesh stats for tacz:geo_models/shell/556x45_shell.json: 0 bones, 0 vertices
+[18:15:48] [Render thread/WARN]: [TACZ Scope] Mask enabled and a scope is equipped, but no ocular geometry was registered this frame. Either the scope is not being aimed, or ocular collection is broken for this scope model.
+[18:15:48] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 2 reached during a single frame. New capacity will be 4.
+[18:15:49] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 4 reached during a single frame. New capacity will be 8.
+[18:15:49] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 8 reached during a single frame. New capacity will be 16.
+[18:15:49] [Render thread/INFO]: Reloading radar icon resources...
+[18:15:49] [Render thread/INFO]: Reloaded radar icon resources!
+[18:15:49] [Render thread/INFO]: Resized a dynamic immediate buffer to 3216!
+[18:15:49] [Render thread/INFO]: Resized a dynamic immediate buffer to 6432!
+[18:15:50] [Render thread/INFO]: [TACZ Scope] Ocular mask drawn: 48 indices from 3 batches.
+[18:15:50] [Render thread/WARN]: [TACZ Scope] Iris scope-mask bridge failed to resolve scope render pass. Scope clipping will fall back for this draw.
+java.lang.NoSuchFieldException: samplers
+	at java.base/java.lang.Class.getDeclaredField(Class.java:2382)
+	at knot//com.tacz.guns.compat.iris.IrisScopeMaskState.readField(IrisScopeMaskState.java:681)
+	at knot//com.tacz.guns.compat.iris.IrisScopeMaskState.resolveMode(IrisScopeMaskState.java:470)
+	at knot//com.tacz.guns.compat.iris.IrisScopeMaskState.applyToGlRenderPass(IrisScopeMaskState.java:381)
+	at knot//com.mojang.renderpearl.backend.opengl.GlCommandEncoder.handler$cho000$tacz$onScopeRenderPassSetup(GlCommandEncoder.java:1137)
+	at knot//com.mojang.renderpearl.backend.opengl.GlCommandEncoder.setupDraw(GlCommandEncoder.java:528)
+	at knot//com.mojang.renderpearl.backend.opengl.GlCommandEncoder.executeDraw(GlCommandEncoder.java:391)
+	at knot//com.mojang.renderpearl.backend.opengl.GlRenderPass.drawIndexed(GlRenderPass.java:155)
+	at knot//com.mojang.renderpearl.frontend.FrontendRenderPass.drawIndexed(FrontendRenderPass.java:222)
+	at knot//net.minecraft.client.renderer.rendertype.PreparedRenderType.draw$mixinextras$wrapped$28(PreparedRenderType.java:56)
+	at knot//net.minecraft.client.renderer.rendertype.PreparedRenderType.mixinextras$bridge$draw$mixinextras$wrapped$28$29(PreparedRenderType.java)
+	at knot//net.minecraft.client.renderer.rendertype.PreparedRenderType.wrapMethod$blj000$iris$wrapBuffer(PreparedRenderType.java:1024)
+	at knot//net.minecraft.client.renderer.rendertype.PreparedRenderType.draw(PreparedRenderType.java)
+	at knot//net.minecraft.client.renderer.rendertype.PreparedRenderType.drawFromBuffer(PreparedRenderType.java:29)
+	at knot//net.minecraft.client.renderer.feature.RenderTypeFeatureRenderer.executeGroup(RenderTypeFeatureRenderer.java:58)
+	at knot//net.minecraft.client.renderer.feature.FeatureRenderDispatcher$PreparedGroup.execute(FeatureRenderDispatcher.java:355)
+	at knot//net.minecraft.client.renderer.feature.FeatureRenderDispatcher$PreparedFrame.executePhase(FeatureRenderDispatcher.java:223)
+	at knot//net.minecraft.client.renderer.feature.FeatureRenderDispatcher$PreparedFrame.executePhase(FeatureRenderDispatcher.java:214)
+	at knot//net.minecraft.client.renderer.feature.FeatureRenderDispatcher$PreparedFrame.executeSolid(FeatureRenderDispatcher.java:142)
+	at knot//net.minecraft.client.renderer.feature.FeatureRenderDispatcher.renderAllFeatures(FeatureRenderDispatcher.java:110)
+	at knot//net.minecraft.client.renderer.GameRenderer.renderItemInHand(GameRenderer.java:403)
+	at knot//net.minecraft.client.renderer.GameRenderer.render3dHud(GameRenderer.java:709)
+	at knot//net.minecraft.client.renderer.GameRenderer.renderLevel(GameRenderer.java:695)
+	at knot//net.minecraft.client.renderer.GameRenderer.render(GameRenderer.java:496)
+	at knot//net.minecraft.client.Minecraft.renderFrame$mixinextras$wrapped$296(Minecraft.java:1376)
+	at knot//net.minecraft.client.Minecraft.mixinextras$bridge$renderFrame$mixinextras$wrapped$296$297(Minecraft.java)
+	at knot//net.minecraft.client.Minecraft.wrapMethod$zdf000$dynamic_fps_common$renderFrame(Minecraft.java:4217)
+	at knot//net.minecraft.client.Minecraft.renderFrame(Minecraft.java)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1274)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:967)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[18:15:52] [Render thread/INFO]: Resized a dynamic immediate buffer to 192!
+[18:15:52] [Render thread/INFO]: Resized a dynamic immediate buffer to 384!
+[18:15:52] [Render thread/INFO]: Resized a dynamic immediate buffer to 768!
+[18:15:52] [Render thread/INFO]: Resized a dynamic immediate buffer to 1536!
+[18:15:52] [Render thread/INFO]: Resized a dynamic immediate buffer to 3072!
+[18:15:52] [Render thread/INFO]: Resized a dynamic immediate buffer to 192!
+[18:15:52] [Render thread/INFO]: Resized a dynamic immediate buffer to 384!
+[18:15:52] [Render thread/INFO]: Resized a dynamic immediate buffer to 768!
+[18:15:52] [Render thread/INFO]: Resized a dynamic immediate buffer to 1536!
+[18:15:52] [Render thread/INFO]: Resized a dynamic immediate buffer to 3072!
+[18:15:52] [Render thread/INFO]: Resized a dynamic immediate buffer to 6144!
+[18:15:52] [Render thread/INFO]: Resized a dynamic immediate buffer to 6144!
+[18:15:54] [Render thread/INFO]: Destroying pipeline minecraft:overworld
+[18:15:54] [Render thread/INFO]: EuphoriaPatcher: Added Euphoria Patches defines to Iris
+[18:15:54] [Render thread/INFO]: Profile: HIGH (+0 options changed by user)
+[18:15:55] [Render thread/INFO]: Using shaderpack: ComplementaryReimagined_r5.9.3.zip
+[18:15:55] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[18:15:56] [Render thread/INFO]: [TACZ Scope] Iris scope-mask injection so far: 0 HAND program(s) patched, 1 world program(s) left byte-identical to stock Iris (0 config-skipped, 0 no-verifiable-main skipped, 0 legacy-ALL injected; saw 1 fragment shader(s)).
+[18:15:57] [Render thread/INFO]: [System] [CHAT] 光影包已切换到 ComplementaryReimagined_r5.9.3.zip！
+[18:15:57] [Render thread/INFO]: [TacZMeshLoader] Shader pack state changed (active=true); mesh bake generation -> 1
+[18:15:57] [Render thread/INFO]: Stopping worker threads
+[18:15:57] [Render thread/INFO]: Started 10 worker threads
+[18:15:57] [Render thread/WARN]: Error while parsing the block ID map entry for "block.10104":
+[18:15:57] [Render thread/WARN]: - The block minecraft:stone_slab has no property with the name variant, ignoring!
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=701 samplers=[] validate=OK log=''
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=704 samplers=[] validate=OK log=''
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=707 samplers=[tex:0x8b5e@u0  ] validate=OK log=''
+[18:15:57] [Render thread/ERROR]: Missing program tacz:pipeline/scope_mask in override list. This is not a critical problem, but it could lead to weird rendering.
+java.lang.Throwable
+	at knot//com.mojang.blaze3d.systems.RenderSystem.handler$blk000$iris$redirectIrisProgram(RenderSystem.java:606)
+	at knot//com.mojang.blaze3d.systems.RenderSystem.getCompiledPipelineNullable(RenderSystem.java:123)
+	at knot//com.mojang.blaze3d.systems.RenderSystem.getCompiledPipeline(RenderSystem.java:133)
+	at knot//com.tacz.guns.client.render.scope.ScopeMaskRenderer.drawMask(ScopeMaskRenderer.java:445)
+	at knot//com.tacz.guns.client.render.scope.ScopeMaskRenderer.renderAtPhaseBoundary(ScopeMaskRenderer.java:405)
+	at knot//net.minecraft.client.renderer.feature.FeatureRenderDispatcher.handler$cfh000$tacz$scopeMaskAtPhaseBoundary(FeatureRenderDispatcher.java:1676)
+	at knot//net.minecraft.client.renderer.feature.FeatureRenderDispatcher.prepareFrame(FeatureRenderDispatcher.java:61)
+	at knot//net.irisshaders.iris.pathways.HandRenderer.renderSolid(HandRenderer.java:127)
+	at knot//net.minecraft.client.renderer.LevelRenderer.wrapOperation$bko000$iris$beginTranslucents(LevelRenderer.java:3571)
+	at knot//net.minecraft.client.renderer.LevelRenderer.lambda$addMainPass$0(LevelRenderer.java:459)
+	at knot//com.mojang.blaze3d.framegraph.FrameGraphBuilder.execute(FrameGraphBuilder.java:67)
+	at knot//net.minecraft.client.renderer.LevelRenderer.render(LevelRenderer.java:287)
+	at knot//net.minecraft.client.renderer.GameRenderer.mixinextras$bridge$render$104(GameRenderer.java)
+	at knot//net.minecraft.client.renderer.GameRenderer.wrapOperation$blf000$iris$renderLevel(GameRenderer.java:2518)
+	at knot//net.minecraft.client.renderer.GameRenderer.renderLevel(GameRenderer.java:693)
+	at knot//net.minecraft.client.renderer.GameRenderer.render(GameRenderer.java:496)
+	at knot//net.minecraft.client.Minecraft.renderFrame$mixinextras$wrapped$296(Minecraft.java:1376)
+	at knot//net.minecraft.client.Minecraft.mixinextras$bridge$renderFrame$mixinextras$wrapped$296$297(Minecraft.java)
+	at knot//net.minecraft.client.Minecraft.wrapMethod$zdf000$dynamic_fps_common$renderFrame(Minecraft.java:4217)
+	at knot//net.minecraft.client.Minecraft.renderFrame(Minecraft.java)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1274)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:967)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=776 samplers=[iris_overlay:0x8b5e@u1  shadowtex0:0x8b62@u4  shadowtex1:0x8b62@u5  shadowcolor0:0x8b5e@u6  tacz_ScopeMaskSampler:0x8b5e@u0  tex:0x8b5e@u0  ] validate=OK log=''
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=794 samplers=[iris_overlay:0x8b5e@u1  shadowtex0:0x8b62@u4  shadowtex1:0x8b62@u5  shadowcolor0:0x8b5e@u6  tacz_ScopeMaskSampler:0x8b5e@u0  tex:0x8b5e@u0  ] validate=OK log=''
+[18:15:57] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 16 reached during a single frame. New capacity will be 32.
+[18:15:57] [Render thread/INFO]: Stopping worker threads
+[18:15:57] [Render thread/INFO]: Started 10 worker threads
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=893 samplers=[tex:0x8b5e@u0  noisetex:0x8b5e@u4  ] validate=OK log=''
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=896 samplers=[tex:0x8b5e@u0  noisetex:0x8b5e@u4  ] validate=OK log=''
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=908 samplers=[iris_overlay:0x8b5e@u1  tex:0x8b5e@u0  noisetex:0x8b5e@u4  ] validate=OK log=''
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=884 samplers=[u_SectionTimeInfo:0x8dd0@u3  shadowtex0:0x8b62@u5  shadowtex1:0x8b62@u6  shadowcolor0:0x8b5e@u7  tex:0x8b5e@u0  noisetex:0x8b5e@u4  ] validate=OK log=''
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=887 samplers=[u_SectionTimeInfo:0x8dd0@u3  shadowtex0:0x8b62@u5  shadowtex1:0x8b62@u6  shadowcolor0:0x8b5e@u7  tex:0x8b5e@u0  noisetex:0x8b5e@u4  ] validate=OK log=''
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=899 samplers=[tex:0x8b5e@u0  noisetex:0x8b5e@u4  ] validate=OK log=''
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=890 samplers=[u_SectionTimeInfo:0x8dd0@u3  shadowtex0:0x8b62@u7  shadowtex1:0x8b62@u8  shadowcolor0:0x8b5e@u9  gaux2:0x8b5e@u4  tex:0x8b5e@u0  noisetex:0x8b5e@u6  depthtex1:0x8b5e@u5  ] validate=OK log=''
+[18:15:57] [Render thread/INFO]: [TACZ Scope][diag] program=758 samplers=[iris_overlay:0x8b5e@u1  shadowtex0:0x8b62@u4  shadowtex1:0x8b62@u5  shadowcolor0:0x8b5e@u6  tex:0x8b5e@u0  ] validate=OK log=''
+[18:15:59] [Render thread/INFO]: [TACZ Scope][diag] program=836 samplers=[shadowtex0:0x8b62@u6  shadowtex1:0x8b62@u7  shadowcolor0:0x8b5e@u8  tex:0x8b5e@u0  noisetex:0x8b5e@u5  gaux2:0x8b5e@u4  ] validate=OK log=''
+[18:16:00] [Render thread/INFO]: [TACZ Scope][diag] program=770 samplers=[iris_overlay:0x8b5e@u1  tex:0x8b5e@u0  ] validate=OK log=''
+[18:16:01] [Render thread/INFO]: Resized a dynamic immediate buffer to 12864!
+[18:16:02] [Server thread/INFO]: Player GOOSTL standing on air - force-sending blocks below
+[18:16:07] [Render thread/INFO]: Destroying pipeline minecraft:overworld
+[18:16:07] [Render thread/INFO]: Shaders are disabled because enableShaders is set to false in iris.properties
+[18:16:07] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[18:16:07] [Render thread/INFO]: [System] [CHAT] 光影包已禁用！
+[18:16:07] [Render thread/INFO]: [TacZMeshLoader] Shader pack state changed (active=false); mesh bake generation -> 2
+[18:16:07] [Render thread/INFO]: Stopping worker threads
+[18:16:07] [Render thread/INFO]: Started 10 worker threads
+[18:16:10] [Render thread/INFO]: Loaded 13 advancements
+[18:16:14] [Render thread/WARN]: Unable to play empty soundEvent: minecraft:entity.tropical_fish.ambient
+[18:16:18] [Server thread/INFO]: Player GOOSTL standing on air - force-sending blocks below
+[18:16:45] [Server thread/INFO]: System chat: [GOOSTL: 已将自己的游戏模式设置为旁观模式]
+[18:16:45] [Render thread/INFO]: [System] [CHAT] 已将自己的游戏模式设置为旁观模式
+[18:16:55] [Server thread/INFO]: System chat: [GOOSTL: 已将自己的游戏模式设置为创造模式]
+[18:16:55] [Render thread/INFO]: [System] [CHAT] 已将自己的游戏模式设置为创造模式
+[18:18:18] [Server thread/INFO]: Saving and pausing game...
+[18:18:18] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:overworld
+[18:18:18] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_nether
+[18:18:18] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_end
+[18:18:24] [Render thread/INFO]: Destroying pipeline minecraft:overworld
+[18:18:24] [Render thread/INFO]: Profile: HIGH (+0 options changed by user)
+[18:18:24] [Render thread/INFO]: Using shaderpack: ComplementaryReimagined_r5.9.3.zip
+[18:18:24] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[18:18:24] [Render thread/INFO]: [TACZ Scope] Iris scope-mask injection so far: 17 HAND program(s) patched, 74 world program(s) left byte-identical to stock Iris (0 config-skipped, 0 no-verifiable-main skipped, 0 legacy-ALL injected; saw 91 fragment shader(s)).
+[18:18:25] [Render thread/INFO]: [System] [CHAT] 光影包已切换到 ComplementaryReimagined_r5.9.3.zip！
+[18:18:25] [Render thread/INFO]: [TacZMeshLoader] Shader pack state changed (active=true); mesh bake generation -> 3
+[18:18:25] [Render thread/INFO]: Stopping worker threads
+[18:18:25] [Render thread/INFO]: Started 10 worker threads
+[18:18:25] [Render thread/WARN]: Error while parsing the block ID map entry for "block.10104":
+[18:18:25] [Render thread/WARN]: - The block minecraft:stone_slab has no property with the name variant, ignoring!
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=704 samplers=[] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=710 samplers=[tex:0x8b5e@u0  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=839 samplers=[shadowtex0:0x8b62@u6  shadowtex1:0x8b62@u7  shadowcolor0:0x8b5e@u8  tex:0x8b5e@u0  noisetex:0x8b5e@u5  gaux2:0x8b5e@u4  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=797 samplers=[iris_overlay:0x8b5e@u1  shadowtex0:0x8b62@u4  shadowtex1:0x8b62@u5  shadowcolor0:0x8b5e@u6  tacz_ScopeMaskSampler:0x8b5e@u0  tex:0x8b5e@u0  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: Stopping worker threads
+[18:18:25] [Render thread/INFO]: Started 10 worker threads
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=896 samplers=[tex:0x8b5e@u0  noisetex:0x8b5e@u4  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=899 samplers=[tex:0x8b5e@u0  noisetex:0x8b5e@u4  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=911 samplers=[iris_overlay:0x8b5e@u1  tex:0x8b5e@u0  noisetex:0x8b5e@u4  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=887 samplers=[u_SectionTimeInfo:0x8dd0@u3  shadowtex0:0x8b62@u5  shadowtex1:0x8b62@u6  shadowcolor0:0x8b5e@u7  tex:0x8b5e@u0  noisetex:0x8b5e@u4  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=890 samplers=[u_SectionTimeInfo:0x8dd0@u3  shadowtex0:0x8b62@u5  shadowtex1:0x8b62@u6  shadowcolor0:0x8b5e@u7  tex:0x8b5e@u0  noisetex:0x8b5e@u4  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=902 samplers=[tex:0x8b5e@u0  noisetex:0x8b5e@u4  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=893 samplers=[u_SectionTimeInfo:0x8dd0@u3  shadowtex0:0x8b62@u7  shadowtex1:0x8b62@u8  shadowcolor0:0x8b5e@u9  gaux2:0x8b5e@u4  tex:0x8b5e@u0  noisetex:0x8b5e@u6  depthtex1:0x8b5e@u5  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=761 samplers=[iris_overlay:0x8b5e@u1  shadowtex0:0x8b62@u4  shadowtex1:0x8b62@u5  shadowcolor0:0x8b5e@u6  tex:0x8b5e@u0  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=869 samplers=[iris_overlay:0x8b5e@u1  shadowtex0:0x8b62@u4  shadowtex1:0x8b62@u5  shadowcolor0:0x8b5e@u6  tex:0x8b5e@u0  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=773 samplers=[iris_overlay:0x8b5e@u1  tex:0x8b5e@u0  ] validate=OK log=''
+[18:18:25] [Render thread/INFO]: [TACZ Scope][diag] program=779 samplers=[iris_overlay:0x8b5e@u1  shadowtex0:0x8b62@u4  shadowtex1:0x8b62@u5  shadowcolor0:0x8b5e@u6  tacz_ScopeMaskSampler:0x8b5e@u0  tex:0x8b5e@u0  ] validate=OK log=''
+[18:18:30] [Server thread/INFO]: Saving and pausing game...
+[18:18:30] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:overworld
+[18:18:30] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_nether
+[18:18:30] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_end
+[18:20:36] [Render thread/INFO]: Destroying pipeline minecraft:overworld
+[18:20:36] [Render thread/INFO]: Shaders are disabled because enableShaders is set to false in iris.properties
+[18:20:36] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[18:20:36] [Render thread/INFO]: [System] [CHAT] 光影包已禁用！
+[18:20:36] [Render thread/INFO]: [TacZMeshLoader] Shader pack state changed (active=false); mesh bake generation -> 4
+[18:20:36] [Render thread/INFO]: Stopping worker threads
+[18:20:36] [Render thread/INFO]: Started 10 worker threads
+[18:20:39] [Server thread/INFO]: System chat: [GOOSTL: 已将自己的游戏模式设置为旁观模式]
+[18:20:39] [Render thread/INFO]: [System] [CHAT] 已将自己的游戏模式设置为旁观模式
+[18:20:59] [Server thread/INFO]: System chat: [GOOSTL: 已将自己的游戏模式设置为创造模式]
+[18:20:59] [Render thread/INFO]: [System] [CHAT] 已将自己的游戏模式设置为创造模式
+[18:21:07] [Server thread/INFO]: Saving and pausing game...
+[18:21:07] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:overworld
+[18:21:07] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_nether
+[18:21:07] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_end
+[18:23:43] [Render thread/INFO]: Xaero hud session finalized.
+[18:23:43] [Server thread/INFO]: Stopping server
+[18:23:43] [Server thread/INFO]: Saving players
+[18:23:43] [Server thread/INFO]: GOOSTL lost connection: 连接中断
+[18:23:43] [Server thread/INFO]: System chat: GOOSTL退出了游戏
+[18:23:43] [Server thread/INFO]: Stopping singleplayer server as player logged out
+[18:23:43] [Server thread/INFO]: Saving worlds
+[18:23:43] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:overworld
+[18:23:43] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_nether
+[18:23:43] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_end
+[18:23:43] [Render thread/INFO]: Stopping JEI
+[18:23:43] [Render thread/INFO]: Stopping JEI
+[18:23:43] [Render thread/INFO]: Sending Runtime Unavailable...
+[18:23:43] [Render thread/INFO]: Stopping JEI GUI
+[18:23:43] [Render thread/INFO]: Sending Runtime Unavailable took 223.3 microseconds
+[18:23:43] [Render thread/INFO]: Stopping worker threads
