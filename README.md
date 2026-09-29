@@ -337,6 +337,22 @@ gunpack.meta.json
 作为 SemVer 核心，`+fabric.26.3.R1` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
+### 枪包 lang 文件写错时的表现（26.3）
+
+Minecraft 26.3 收紧了翻译加载：**任意一个**资源包里的 `assets/<ns>/lang/<code>.json` 解析失败
+（少逗号、多逗号、根不是对象等），vanilla 会放弃加载**全部**翻译，整局游戏静默退回内置英文、
+所有 mod 文本显示为 `item.xxx` 一类的原始键；没有弹窗，只在 `latest.log` 里留下一行
+`WARN ... Unable to load languages: [...] (com.google.gson.JsonSyntaxException: ...)`。
+26.2 及更早版本只会跳过那一个文件（`Skipped language file`）。本仓库把 `tacz/` 下所有枪包合并成一个
+资源包，所以一个第三方枪包的一个坏文件就能触发（已知实例：Enlisted Gun Pack v1.2.1.3 的
+`assets/ww/lang/en_us.json`）。
+
+本分支在枪包资源层加了一道保底（`GunPackLangCompat`）：合法文件原样放行；不合法的文件会被就地
+修补成合法 JSON（能救回的 `"key": "value"` 条目保留，其余丢弃），并在日志里以 `[GunPackLang]`
+开头的 WARN 指出是哪个枪包的哪个文件、原始错误是什么。这是**绕过**而非根治；截至写入时
+仅 CI 编译通过，**尚未经 26.3 实机验证**（见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md) §3）；
+请把 WARN 里的文件与错误转告枪包作者修正。
+
 ### 依赖 TacZ:Arcana 的内容
 
 本仓库不提供 Arcana，也没有实现 Arcana 的 API 或资产保护/加载流程。

@@ -117,6 +117,12 @@ public class DelegatingPackResources extends AbstractPackMetadataResources imple
                     delegate.listResources(type, resourceNamespace, legacyPath, legacyOutput);
                 } catch (Exception ignored) {}
             }
+        } else if (cn.sh1rocu.tacz.util.GunPackLangCompat.mayListLangFiles(paths)) {
+            // 语言文件：经 GunPackLangCompat 保底，见该类注释（26.3 起一个坏 lang 文件会让全局翻译加载失败）
+            for (PackResources delegate : this.delegates) {
+                delegate.listResources(type, resourceNamespace, paths,
+                        cn.sh1rocu.tacz.util.GunPackLangCompat.wrapOutput(cn.sh1rocu.tacz.util.GunPackLangCompat.describe(delegate), resourceOutput));
+            }
         } else {
             for (PackResources delegate : this.delegates) {
                 delegate.listResources(type, resourceNamespace, paths, resourceOutput);
@@ -150,6 +156,10 @@ public class DelegatingPackResources extends AbstractPackMetadataResources imple
             if (ioSupplier != null) {
                 if (type == PackType.SERVER_DATA && cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(location)) {
                     return cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, ioSupplier);
+                }
+                if (cn.sh1rocu.tacz.util.GunPackLangCompat.isLangFile(location)) {
+                    // 语言文件保底：26.3 起任一枪包的坏 lang JSON 会让 vanilla 放弃加载全部翻译
+                    return cn.sh1rocu.tacz.util.GunPackLangCompat.wrap(cn.sh1rocu.tacz.util.GunPackLangCompat.describe(pack), location, ioSupplier);
                 }
                 return ioSupplier;
             }
