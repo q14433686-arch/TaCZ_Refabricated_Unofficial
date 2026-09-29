@@ -1,14 +1,20 @@
-# TaCZ Refabricated 26.3 R1 release notes（草稿，尚未发布）
+# TaCZ Refabricated 26.3 R1-hotfix release notes（草稿，尚未发布）
 
-**构建元数据：`1.1.8+fabric.26.3.R1`**
+**构建元数据：`1.1.8+fabric.26.3.R1-hotfix`**
 
 **基线：`origin/26.2(main)` R3-hotfix2（`c7c3c55` 之前的 26.2 源码）→ 本线 `26.3`**
 
 **环境：Minecraft 26.3 · Fabric Loader 0.19.5+ · Java 25+ · Fabric API 0.160.7+26.3 · Forge Config API Port 26.3.0+**
 
-> 状态（2026-09-21）：编译/CI 全绿；下列标 ✅ 的条目已由维护者在 26.3 实机验证（2026-09-18 ~ 09-21，
-> 无光影 + Iris 光影 + 专服三种环境）；标 🔧 的仅编译通过。**尚无可下载构建。**
+> 状态（2026-09-29）：R1 基础版编译/CI 全绿；下列标 ✅ 的基础版条目已由维护者在 26.3 实机验证（2026-09-18 ~ 09-21，
+> 无光影 + Iris 光影 + 专服三种环境）；R1-hotfix 新增项标 🔧，仅 CI 编译通过，未实机验证。**尚无可下载构建。**
 > 姊妹项目（NeoForge）移植指南：[`lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md`](lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md)。
+> 版本命名沿用本仓历史：hotfix 直接追加在 `R1` 后（`R1-hotfix`，不另起 R2；无序号的首个 hotfix 不加数字）。
+
+## R1-hotfix 增量（2026-09-29）
+
+- 🔧 **枪包语言文件容错（绕过，不是根治）**：在 `26.3 R1` 基础上加入 `GunPackLangCompat`，避免 Enlisted Gun Pack v1.2.1.3 的无效 `en_us.json` 令 26.3 丢弃整组语言加载。对可恢复条目重写合法 JSON 并记录枪包/文件告警；不修改枪包，根因仍需作者修正缺失逗号。
+- ✅ GitHub Actions `build` / `compile-check` 对该变更通过（commit `81e71cf`）；**该增量尚未在 26.3 实机验证**。
 
 ---
 
