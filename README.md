@@ -12,10 +12,10 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.3 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.3.R1`**。
+`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.3.R1-hotfix`**。
 
-> **本分支是 26.3 线，尚无任何可下载构建。** 26.3 R1 的适配已在维护者环境完成一轮实机验证
-> （2026-09-18 ~ 09-21：无光影、Iris 光影、专服三种环境），逐项结果与仍未验证的项见
+> **本分支是 26.3 线，尚无任何可下载构建。** R1 基础版已在维护者环境完成一轮实机验证
+> （2026-09-18 ~ 09-21：无光影、Iris 光影、专服三种环境）；R1-hotfix 新增的枪包 lang 容错仅经 CI 编译验证，尚未实机验证。逐项结果见
 > [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)。下方各节继承自 26.2 线的描述，
 > 凡未在该文件标 ✅ 的，在 26.3 上仍视为**未经验证**。想要现在就能玩的版本请用 `26.2(main)` 分支及其 Release。
 
@@ -37,7 +37,7 @@
 本页面对应 **26.3** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
 具体版本见下方表格与对应 Release 说明。
 
-> 仓库源码已使用 R1 版本号；26.3 线尚未发布，实际可下载版本及其发布日期以
+> 仓库源码已使用 R1-hotfix 版本号；26.3 线尚未发布，实际可下载版本及其发布日期以
 > Releases 页面为准。
 
 ---
@@ -49,15 +49,15 @@
 | Minecraft | **26.3** |
 | 加载器 | **Fabric Loader 0.19.5+** |
 | Java | **25+** |
-| Fabric API | 需要安装；R1 构建使用 **0.160.7+26.3** |
+| Fabric API | 需要安装；R1-hotfix 构建使用 **0.160.7+26.3** |
 | Forge Config API Port | **26.3.0+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.3.R1`** |
+| 本 mod | **`1.1.8+fabric.26.3.R1-hotfix`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
-R1 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与专服实测；Carry On 无 26.3 构件，仅保留接线）：
+R1-hotfix 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与专服实测；Carry On 无 26.3 构件，仅保留接线）：
 
-| 可选 mod | R1 编译 pin / 建议版本 | 用途 |
+| 可选 mod | R1-hotfix 编译 pin / 建议版本 | 用途 |
 |---|---|---|
 | JEI | 编译 pin **31.0.0.5**（beta） | 内置 Ammo Query 与工作台类别 |
 | Carry On | 建议 **>=2.11.0** | A/B/C 多格工作台的搬运兼容 |
@@ -85,7 +85,7 @@ R1 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与专服�
 - 远程枪包同步完成后合并请求并刷新已安装的 recipe viewer，避免首轮注册早于网络 cache 时
   显示陈旧类别/查询数据。
 
-**26.3 R1**（当前源码版本）的变更清单见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)：
+**26.3 R1-hotfix**（当前源码版本）的变更清单见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)：
 渲染底层 renderpearl 迁移、第一人称拆分、shaderc 着色器、Iris 26.3 裁剪判定重做、26.3 战利品表/配方 codec/
 配方同步三项行为修复，以及 REI/Zoomify/SSR 的禁用说明。以下为 26.2 线的历史 release 摘要
 （26.2 R2 详情见 [`docs/archive/CHANGELOG_26_2_R2.md`](docs/archive/CHANGELOG_26_2_R2.md)）：
@@ -334,7 +334,7 @@ gunpack.meta.json
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.3.R1` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.26.3.R1-hotfix` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 枪包 lang 文件写错时的表现（26.3）
