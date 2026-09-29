@@ -106,8 +106,10 @@ public enum GunPackLoader implements RepositorySource {
 
         for (GunPack gunPack : gunPacks) {
             PackResources packResources;
+            // title 用枪包的目录名 / 文件名：GunPackLangCompat 等兼容层的日志靠它指出"是哪个包"
+            Component packTitle = Component.literal(String.valueOf(gunPack.path.getFileName()));
             if (Files.isDirectory(gunPack.path)) {
-                packResources = new PathPackResources(gunPack.name, false, gunPack.path) {
+                packResources = new PathPackResources(gunPack.name, packTitle, false, gunPack.path) {
                     @Override
                     @NotNull
                     protected Path resolve(String... paths) {
@@ -123,7 +125,7 @@ public enum GunPackLoader implements RepositorySource {
                 // openMetadata(location) / openResources(location, metadata)，后者返回 Stream。
                 // 这里要的就是"主 pack 本体"，取 openResources 的第一个元素即可
                 // （overlay 由 metadata.overlays() 驱动，枪包不使用）。
-                PackLocationInfo zipLocation = new PackLocationInfo(gunPack.name, Component.literal(gunPack.name), PackSource.DEFAULT, Optional.empty());
+                PackLocationInfo zipLocation = new PackLocationInfo(gunPack.name, packTitle, PackSource.DEFAULT, Optional.empty());
                 packResources = new FilePackResources.FileResourcesSupplier(gunPack.path)
                         .openResources(zipLocation, EMPTY_PACK_METADATA)
                         .findFirst()

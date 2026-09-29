@@ -30,7 +30,14 @@ public class PathPackResources extends AbstractPackMetadataResources implements 
     private final Path source;
 
     public PathPackResources(String packId, boolean isBuiltin, final Path source) {
-        super(new PackLocationInfo(packId, Component.literal(packId), PackSource.DEFAULT, Optional.empty()));
+        this(packId, Component.literal(packId), isBuiltin, source);
+    }
+
+    /**
+     * @param title 展示名；{@code GunPackLoader} 传入枪包目录 / 文件名，便于日志中定位是哪个枪包
+     */
+    public PathPackResources(String packId, Component title, boolean isBuiltin, final Path source) {
+        super(new PackLocationInfo(packId, title, PackSource.DEFAULT, Optional.empty()));
         this.source = source;
     }
 
