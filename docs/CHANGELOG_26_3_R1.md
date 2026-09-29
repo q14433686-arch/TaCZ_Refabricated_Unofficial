@@ -48,8 +48,7 @@
   提交时预加载贴图（修首帧回退 collector）；collector 回退路径也套镜内裁剪。
 - ✅ 专服：把 `minecraft:*` 与 `tacz:*` 配方序列化器登记进 Fabric 配方同步（`RecipeSynchronization`），
   服务端不装 JEI 时客户端 JEI 也能看到 mod 的 crafting 配方、枪匠台材料不再是空槽位。**服务端也需更新到本 build。**
-- ⚠️ **（未编译、未实机验证——由 AI 助手在无 JDK 环境中编写，维护者须先 `./gradlew build` 再实测）**
-  枪包 lang 文件保底（`GunPackLangCompat`）。玩家反馈"装了某些枪包后游戏变英文、所有文字变成 `item.xxx`"，
+- 🔧 **（CI 编译通过，未实机验证）** 枪包 lang 文件保底（`GunPackLangCompat`）。玩家反馈"装了某些枪包后游戏变英文、所有文字变成 `item.xxx`"，
   复现条件收敛为 **Enlisted Gun Pack v1.2.1.3**：其 `assets/ww/lang/en_us.json` 少一个逗号
   （`"ww.gun.p38.desc"` 行末）。26.3 起 vanilla `ClientLanguage.loadFrom` 去掉了 26.2 里逐命名空间的
   `catch (Exception)`（只剩 `appendFrom` 里的 `catch (IOException)`），任一 lang 文件的 `JsonSyntaxException`
@@ -64,10 +63,11 @@
   `"key": "value"` 条目、重新序列化为严格 JSON，并在日志里以 `[GunPackLang]` 开头的 WARN 指出是哪个枪包
   （`<namespace> (<zip/目录名>)`）的哪个文件、Gson 原始错误、保留/丢弃条目数。属于**绕过**（bypass），
   不修改枪包文件；根治仍需枪包作者补上逗号。
-  已做的验证：用 ECJ 3.39 + Gson 2.11 在沙箱里编译并运行了 `GunPackLangCompat` 单文件
+  已做的验证：GitHub Actions `build` 工作流对 commit `f52dab8` 跑完整 `./gradlew build` 成功
+  （含 mixin 配置完整性 / 中英语言键齐平 / 版本一致性三项静态校验，并产出 jar artifact），
+  `compile-check` 亦通过；另用 ECJ 3.39 + Gson 2.11 在沙箱里单独运行了 `GunPackLangCompat`
   （MC 类型用桩替代）——Enlisted 的 `en_us.json` 6 条全部救回，vanilla 同款 `new Gson().fromJson`
-  能接受输出；仓库自带 47 个 lang 文件全部走原样放行分支。改动的另外三个文件
-  （`DelegatingPackResources`/`PathPackResources`/`GunPackLoader`）只做过语法检查，未对着 26.3 类库编译。
+  能接受输出；仓库自带 47 个 lang 文件全部走原样放行分支。**没有人在 26.3 实机上跑过。**
   实机验收：放入原版 Enlisted zip 进入游戏，语言应保持中文；`latest.log` 应出现一条
   `[GunPackLang] Language file ww:lang/en_us.json of gun pack ww ([TaCZ] Enlisted Gun Pack v1.2.1.3.zip) ...`
   的 WARN，且**不再**出现 `Unable to load languages`。
