@@ -19,10 +19,11 @@
   - `GunSmithTableSerializer.STREAM_CODEC.encode` 移除 `getIngredientOrThrow()`，改为仅编码已解析且非空的 `Ingredient` 并对 `id`/`result`/`group` 做非空兜底；
   - `CommonAssetsManager#onReload(RegistryAccess, boolean)` 对 `recipe.init()` 增加逐条异常隔离，并新增 `sanitizeSyncedRecipes` 在 `TAGS_LOADED` 阶段剔除 `RecipeMapMixin.bySyncedSerializer` 中含空标签（`placementInfo().isImpossibleToPlace()` / `ing.items().findAny().isEmpty()`）或预编码失败的配方；
   - `StrictNBTIngredient` 对齐 `"items"` + `"nbt"` 格式并补齐 `display()`；`GunSmithTableIngredient#normalizeLegacy` 支持将 JSON 数组内嵌的 `#tag` 展开为物品 ID 并过滤未安装联动模组物品。
-- 🔧 **恢复 REI 26.3 兼容适配（未实机验证）**：
-  - 上游已发布 REI `26.3.823`（`me.shedaniel:RoughlyEnoughItems-*-fabric:26.3.823`）与 Architectury `22.0.3`（`dev.architectury:architectury-fabric:22.0.3`），恢复 `gradle.properties` / `build.gradle` 编译依赖、撤销 `cn/sh1rocu/tacz/compat/rei/**` 的 `sourceSets` 排除并恢复 `fabric.mod.json` 的 `rei_client` / `rei_common` 入口点；
-  - `GunSmithTableDisplay` 在调用 `EntryIngredients.ofIngredients(...)` 前过滤掉延迟解析返回 `null` 或空材料的项，防止含未解析材料的枪包配方触发 `PlatformAdapterImpl.fromIngredient` NPE；
-  - `REIClientPlugin#registerCategories` 补充 `displays.clear()` 并改用 `item.getName(icon)`（与 JEI `GunModPlugin` 对齐），`REIPlugin#registerItemComparators` 补注册 `GUN_SMITH_TABLE` 与 `WORKBENCH_111/121/211` 的 `BlockId` 比较器，`rei/entry/AttachmentQueryEntry` 改为引用 REI 自身的 `AttachmentQueryCategory.MAX_GUN_SHOW_COUNT`。
+- 🔧 **恢复 REI、Zoomify、Shoulder Surfing Reloaded 26.3 兼容适配并同步上游依赖（未实机验证）**：
+  - **REI `26.3.823` + Architectury `22.0.3`**：恢复 `gradle.properties` / `build.gradle` 编译依赖、撤销 `cn/sh1rocu/tacz/compat/rei/**` 的 `sourceSets` 排除并恢复 `fabric.mod.json` 的 `rei_client` / `rei_common` 入口点；`GunSmithTableDisplay` 过滤延迟解析返回 `null` 或空材料的项以防 NPE；`REIClientPlugin#registerCategories` 补充 `displays.clear()` 并改用 `item.getName(icon)`；`REIPlugin#registerItemComparators` 补注册 `GUN_SMITH_TABLE` 与 `WORKBENCH_111/121/211` 的 `BlockId` 比较器；`rei/entry/AttachmentQueryEntry` 改为引用 REI 自身的 `AttachmentQueryCategory.MAX_GUN_SHOW_COUNT`；
+  - **Zoomify `2.16.3+26.3`**：恢复 `maven.modrinth:zoomify:2.16.3+26.3` 编译依赖，撤销 `ZoomifyCompatInner.java` 的 `sourceSets` 排除，并在 `ZoomifyCompat` 中恢复按 `FabricLoader.isModLoaded("zoomify")` 委托 `ZoomifyCompatInner` 的逻辑；
+  - **Shoulder Surfing Reloaded `26.3-5.2.0+fabric`**：恢复 `maven.modrinth:shoulder-surfing-reloaded:26.3-5.2.0+fabric` 编译依赖，撤销 `ShoulderSurfingCompatInner.java` / `ShoulderSurfingPlugin.java` 的 `sourceSets` 排除，恢复 `ShoulderSurfingCompat` 委托实现及 `src/main/resources/shouldersurfing_plugin.json` 插件描述文件；
+  - **其余依赖版本同步**：ModMenu 升级至 26.3 正式版 `21.0.0`（原 `21.0.0-beta.1`），Cloth Config 升级至 `26.3.159`（原 `26.3.158`），JEI 升级至 `31.8.0.48`（含 `#4514` 自定义材料组件保留修复），Carry On 核实上游已发布 `26.3-2.12.0` 且与本模组 `@Pseudo` mixin / `CarryOnReflection` 签名完全兼容。
 - ✅ GitHub Actions `build` / `compile-check` 对语言文件容错变更通过（commit `81e71cf`）；**上述增量待 CI 编译并尚未在 26.3 实机验证**。
 
 ---
@@ -89,11 +90,13 @@
 
 ## 4. 兼容层变化
 
-- 🔧 **REI 26.3.823 + Architectury 22.0.3 已回补**（2026-09-30 核实上游已发布 26.3 正式构件，已恢复编译与入口点，待实机复验）。
-- 🔧 **禁用**（非修复，上游无 26.3 构件，2026-09-30 复查仍无）：Zoomify、Shoulder Surfing Reloaded。
-  门面保留、IMPL 排除，上游发布后回补。
-- 🔧 JEI 31.0.0.5、ModMenu 21.0.0-beta.1、PAL 1.2.7+26.3 均为 **beta** 通道，正式版发布后需重新钉版本。
-- Voxy / Carry On 无 26.3 构件但 mixin 走 `@Pseudo` 字符串目标，保留未验证。
+- 🔧 **26.3 移植期曾因上游无构件而禁用的三项兼容已全部回补（2026-09-30 核实并恢复编译，待实机复验）**：
+  - **REI** `26.3.823` + **Architectury** `22.0.3`（正式版）
+  - **Zoomify** `2.16.3+26.3`（正式版）
+  - **Shoulder Surfing Reloaded** `26.3-5.2.0+fabric`（正式版）
+- 🔧 **ModMenu** 已从 `21.0.0-beta.1` 升级至 26.3 正式版 `21.0.0`，**Cloth Config** 升级至 `26.3.159`；**Carry On** 上游已发布 26.3 正式版 `2.12.0`（本模组 `@Pseudo` mixin 与反射签名无需改动即可兼容）。
+- 🔧 **JEI** `31.8.0.48`、**PAL** `1.2.7+26.3` 目前仍为 **beta** 通道，正式版发布后需重新钉版本。
+- **Voxy** 暂无 26.3 构件，其 mixin 走 `@Pseudo` 字符串目标，保留未验证；26.2 线起已禁用的 KubeJS / Controllable / Accelerated Rendering 在 26.3 仍无 Fabric 构件，保持门面禁用态。
 
 ## 5. 已知未验证 / 未做
 
