@@ -1,0 +1,442 @@
+[15:01:51] [main/INFO]: Loading Minecraft 26.3 with Fabric Loader 0.19.5
+[15:01:51] [main/INFO]: Mappings not present!
+[15:01:51] [ForkJoinPool-1-worker-11/WARN]: Mod punchy uses the version 2.8a which isn't compatible with Loader's extended semantic version format (Could not parse version number component '8a'!), SemVer is recommended for reliably evaluating dependencies and prioritizing newer version
+[15:01:51] [main/WARN]: Warnings were found!
+ - 模组 'Reese's Sodium Options' (reeses-sodium-options) 2.2.4+mc26.3 建议安装 sodium-extra 的 0.4.2 及以上版本，但没有安装它！
+	 - 为了最佳体验，您应该安装 sodium-extra 的 0.4.2 及以上版本。
+[15:01:51] [main/INFO]: Loading 112 mods:
+	- architectury 22.0.1
+	- cloth-config 26.3.158
+	   \-- cloth-basic-math 0.6.1
+	- controlling 26.3.1
+	- dynamic_fps 3.11.10
+	   |-- dynamic_fps_common 3.11.10
+	   \-- net_lostluma_battery 2.1.0
+	- euphoria_patcher 1.10.5-r5.9.3-fabric
+	- fabric-api 0.160.7+26.3
+	   |-- fabric-api-base 2.0.6+fcdff87f5d
+	   |-- fabric-api-lookup-api-v1 2.0.24+3434d6d95d
+	   |-- fabric-biome-api-v1 20.0.9+74ed1ea55d
+	   |-- fabric-block-api-v1 3.1.0+0ae6f9115d
+	   |-- fabric-block-getter-api-v2 2.0.9+3434d6d95d
+	   |-- fabric-command-api-v2 3.1.2+fcdff87f5d
+	   |-- fabric-content-registries-v0 15.0.4+74ed1ea55d
+	   |-- fabric-convention-tags-v2 4.10.2+5a4e5fc65d
+	   |-- fabric-crash-report-info-v1 1.0.7+fcdff87f5d
+	   |-- fabric-creative-tab-api-v1 5.0.21+fcdff87f5d
+	   |-- fabric-data-attachment-api-v1 2.2.30+3434d6d95d
+	   |-- fabric-data-generation-api-v1 27.2.3+64902b845d
+	   |-- fabric-debug-api-v1 1.0.4+3434d6d95d
+	   |-- fabric-dimensions-v1 5.1.19+47f74c985d
+	   |-- fabric-entity-events-v1 6.0.4+3434d6d95d
+	   |-- fabric-events-interaction-v0 5.3.6+3434d6d95d
+	   |-- fabric-game-rule-api-v1 4.0.10+3434d6d95d
+	   |-- fabric-item-api-v1 14.7.0+cf6bc2db5d
+	   |-- fabric-key-mapping-api-v1 2.0.8+3434d6d95d
+	   |-- fabric-lifecycle-events-v1 4.1.9+ffef5f675d
+	   |-- fabric-loot-api-v3 4.0.8+4068fd645d
+	   |-- fabric-menu-api-v1 2.0.27+ed66f0a35d
+	   |-- fabric-message-api-v1 7.0.10+3434d6d95d
+	   |-- fabric-model-loading-api-v1 8.0.35+fcdff87f5d
+	   |-- fabric-networking-api-v1 6.3.8+fcdff87f5d
+	   |-- fabric-object-builder-api-v1 24.1.9+3434d6d95d
+	   |-- fabric-particles-v1 5.0.24+3434d6d95d
+	   |-- fabric-permission-api-v1 1.0.8+fcdff87f5d
+	   |-- fabric-recipe-api-v1 10.0.8+fcdff87f5d
+	   |-- fabric-registry-sync-v0 8.0.1+fcdff87f5d
+	   |-- fabric-renderer-api-v1 17.0.15+79385d0b5d
+	   |-- fabric-renderer-indigo 9.1.23+b9d63e335d
+	   |-- fabric-rendering-fluids-v1 6.0.6+3434d6d95d
+	   |-- fabric-rendering-v1 27.0.14+901a437c5d
+	   |-- fabric-resource-conditions-api-v1 6.1.5+3434d6d95d
+	   |-- fabric-resource-loader-v0 3.3.26+4fc5413f5d
+	   |-- fabric-resource-loader-v1 3.0.4+fcdff87f5d
+	   |-- fabric-screen-api-v1 5.2.4+48607d035d
+	   |-- fabric-serialization-api-v1 2.0.7+74ed1ea55d
+	   |-- fabric-sound-api-v1 2.0.7+3434d6d95d
+	   |-- fabric-tag-api-v1 2.1.10+fcdff87f5d
+	   |-- fabric-transfer-api-v1 8.0.25+fcdff87f5d
+	   \-- fabric-transitive-access-wideners-v1 8.1.16+52268a0e5d
+	- fabric-language-kotlin 1.14.1+kotlin.2.4.20
+	   |-- org_jetbrains_kotlin_kotlin-reflect 2.4.20
+	   |-- org_jetbrains_kotlin_kotlin-stdlib 2.4.20
+	   |-- org_jetbrains_kotlin_kotlin-stdlib-jdk7 2.4.20
+	   |-- org_jetbrains_kotlin_kotlin-stdlib-jdk8 2.4.20
+	   |-- org_jetbrains_kotlinx_atomicfu-jvm 0.33.0
+	   |-- org_jetbrains_kotlinx_kotlinx-coroutines-core-jvm 1.11.0
+	   |-- org_jetbrains_kotlinx_kotlinx-coroutines-jdk8 1.11.0
+	   |-- org_jetbrains_kotlinx_kotlinx-datetime-jvm 0.8.0
+	   |-- org_jetbrains_kotlinx_kotlinx-io-bytestring-jvm 0.9.1
+	   |-- org_jetbrains_kotlinx_kotlinx-io-core-jvm 0.9.1
+	   |-- org_jetbrains_kotlinx_kotlinx-serialization-cbor-jvm 1.11.0
+	   |-- org_jetbrains_kotlinx_kotlinx-serialization-core-jvm 1.11.0
+	   \-- org_jetbrains_kotlinx_kotlinx-serialization-json-jvm 1.11.0
+	- fabricloader 0.19.5
+	   \-- mixinextras 0.5.5
+	- forgeconfigapiport 26.3.0
+	   |-- com_electronwill_night-config_core 3.8.4
+	   \-- com_electronwill_night-config_toml 3.8.4
+	- iris 1.11.6+mc26.3
+	   |-- io_github_douira_glsl-transformer 3.0.0-pre3
+	   |-- org_anarres_jcpp 1.4.14
+	   \-- org_antlr_antlr4-runtime 4.13.1
+	- jade 26.3.1+fabric
+	- java 25
+	- mezz_config 0.6.1
+	- minecraft 26.3
+	- modmenu 21.0.0-beta.1
+	- mousetweaks 2.31
+	- placeholder-api 3.2.0+26.3
+	- player_animation_library 1.2.7+mc.26.3
+	   |-- org_redlance_common-utils_services 1.3.8
+	   |-- org_redlance_mochafloats_lexer 6.0.1
+	   |-- org_redlance_mochafloats_parser 6.0.1
+	   \-- org_redlance_mochafloats_runtime 6.0.1
+	- punchy 2.8a
+	- reeses-sodium-options 2.2.4+mc26.3
+	- roughlyenoughitems 26.3.823
+	- searchables 1.0.2
+	- shouldersurfing 5.2.0
+	- sodium 0.9.2+mc26.3
+	- tacz 1.1.8+fabric.26.3.R1-hotfix
+	   |-- com_github_figuramc_luaj_luaj-core 3.0.8-figura
+	   |-- com_github_figuramc_luaj_luaj-jse 3.0.8-figura
+	   |-- com_maydaymemory_mae 1.1.1
+	   |-- org_apache_bcel_bcel 6.6.1
+	   \-- org_apache_commons_commons-math3 3.6.1
+	- tacztweaks 2.14.2+fabric.26.3.Beta-1
+	- xaerominimap 26.5.3
+	   \-- xaerolib 1.7.17
+	- yet_another_config_lib_v3 3.9.7+26.3-fabric
+	   |-- com_twelvemonkeys_common_common-image 3.12.0
+	   |-- com_twelvemonkeys_common_common-io 3.12.0
+	   |-- com_twelvemonkeys_common_common-lang 3.12.0
+	   |-- com_twelvemonkeys_imageio_imageio-core 3.12.0
+	   |-- com_twelvemonkeys_imageio_imageio-metadata 3.12.0
+	   |-- com_twelvemonkeys_imageio_imageio-webp 3.12.0
+	   |-- org_quiltmc_parsers_gson 0.2.1
+	   \-- org_quiltmc_parsers_json 0.2.1
+	- zoomify 2.16.3+26.3
+[15:01:52] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/D:/DOWLOD/.minecraft/libraries/net/fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[15:01:52] [main/WARN]: Reference map 'controlling.refmap.json' for controlling.mixins.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'iris-fabric.refmap.json' for mixins.iris.fabric.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.vertexformat.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.bettermipmaps.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.compat.sodium.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'iris.refmap.json' for mixins.iris.fixes.maxfpscrash.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'reeses-sodium-options.refmap.json' for reeses-sodium-options.mixins.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'searchables.refmap.json' for searchables.mixins.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'searchables.refmap.json' for searchables.fabric.mixins.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'shouldersurfing.refmap.json' for shouldersurfing.common.mixins.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'shouldersurfing.refmap.json' for shouldersurfing.common.compat.mixins.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'shouldersurfing.refmap.json' for shouldersurfing.fabric.mixins.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'shouldersurfing.refmap.json' for shouldersurfing.fabric.compat.mixins.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/INFO]: Loaded configuration file for Sodium: 37 options available, 1 override(s) found
+[15:01:52] [main/INFO]: [TACZ Scope] Iris compat mixin config loaded: package=com.tacz.guns.mixin.client.iris, irisLoaded=true
+[15:01:52] [main/WARN]: Reference map 'xaerolib.refmap.json' for xaerolib.mixins.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'yet_another_config_lib_v3.refmap.json' for yacl.mixins.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Reference map 'yet_another_config_lib_v3.refmap.json' for yacl-fabric.mixins.json could not be read. If this is a development environment you can ignore this message
+[15:01:52] [main/WARN]: Error loading class: fuzs/swordblockingmechanics/common/handler/SwordBlockingHandler (java.lang.ClassNotFoundException: fuzs/swordblockingmechanics/common/handler/SwordBlockingHandler)
+[15:01:52] [main/WARN]: Error loading class: fuzs/swordblockingmechanics/common/client/handler/FirstPersonRenderingHandler (java.lang.ClassNotFoundException: fuzs/swordblockingmechanics/common/client/handler/FirstPersonRenderingHandler)
+[15:01:52] [main/WARN]: Error loading class: net/bettercombat/logic/WeaponRegistry (java.lang.ClassNotFoundException: net/bettercombat/logic/WeaponRegistry)
+[15:01:53] [main/WARN]: Force-disabling mixin 'features.render.world.sky.LevelRendererMixin' as rule 'mixin.features.render.world.sky' (added by mods [iris]) disables it and children
+[15:01:53] [main/INFO]: [TACZ Scope] Iris compat mixin decision: apply=true, firstMixin=com.tacz.guns.mixin.client.iris.IrisShaderCreatorMixin, firstTarget=net.irisshaders.iris.pipeline.programs.ShaderCreator
+[15:01:53] [main/INFO]: Searching for graphics cards...
+[15:01:53] [main/INFO]: Found graphics adapter: AdapterInfo{vendor=AMD, description='AMD Radeon(TM) Graphics', adapterType=0x00002303, openglIcdFilePath='C:\Windows\System32\DriverStore\FileRepository\u0203303.inf_amd64_e5876a26758f154c\B026363\atig6pxx.dll', openglIcdVersion=32.0.21045.5002}
+[15:01:53] [main/INFO]: Found graphics adapter: AdapterInfo{vendor=AMD, description='AMD  Radeon RX 7800 XT', adapterType=0x0000230B, openglIcdFilePath='C:\Windows\System32\DriverStore\FileRepository\u0203304.inf_amd64_a6e5a337568ce3f0\B026373\atig6pxx.dll', openglIcdVersion=32.0.31041.1004}
+[15:01:53] [main/WARN]: Sodium has applied one or more workarounds to prevent crashes or other issues on your system: [AMD_GAME_OPTIMIZATION_BROKEN]
+[15:01:53] [main/WARN]: This is not necessarily an issue, but it may result in certain features or optimizations being disabled. You can sometimes fix these issues by upgrading your graphics driver.
+[15:01:53] [main/INFO]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[15:01:55] [main/INFO]: EuphoriaPatcher: [UPDATE CHECKER] The EuphoriaPatcher Mod is up to date
+[15:01:55] [main/INFO]: EuphoriaPatcher: Making code more elegant...
+[15:01:55] [main/INFO]: EuphoriaPatcher: EuphoriaPatches_1.10.5 is already installed.
+[15:01:56] [Datafixer Bootstrap #0/INFO]: 307 Datafixer optimizations took 207 milliseconds
+[15:01:56] [main/WARN]: Invalid registry value type detected for PerfOS counters. Should be REG_DWORD. Ignoring: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PerfOS\Performance\Disable Performance Counters.
+[15:02:00] [Render thread/INFO]: Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]
+[15:02:00] [Render thread/INFO]: Setting user: GOOSTL
+[15:02:00] [Render thread/INFO]: [REI] Config loaded
+[15:02:00] [Render thread/INFO]: Registering S2C receiver with id roughlyenoughitems:request_tags_s2c
+[15:02:00] [Render thread/INFO]: Registering C2S receiver with id roughlyenoughitems:request_tags_c2s
+[15:02:00] [Render thread/INFO]: [REI] Registered plugin provider DefaultPlugin [roughlyenoughitems] for REICommonPlugin
+[15:02:00] [Render thread/INFO]: [REI] Registered plugin provider DefaultRuntimePlugin [roughlyenoughitems] for REICommonPlugin
+[15:02:00] [Render thread/INFO]: [REI] Registered plugin provider REIPlugin [tacz] for REICommonPlugin
+[15:02:00] [Render thread/INFO]: [REI] Registered plugin provider FabricFluidAPISupportPlugin for REICommonPlugin
+[15:02:00] [Render thread/INFO]: Registering C2S receiver with id roughlyenoughitems:delete_item
+[15:02:00] [Render thread/INFO]: Registering C2S receiver with id roughlyenoughitems:create_item
+[15:02:00] [Render thread/INFO]: Registering C2S receiver with id roughlyenoughitems:create_item_grab
+[15:02:00] [Render thread/INFO]: Registering C2S receiver with id roughlyenoughitems:create_item_hotbar
+[15:02:00] [Render thread/INFO]: Registering C2S receiver with id roughlyenoughitems:move_items_new
+[15:02:01] [Render thread/INFO]: Registered synced data key tacz:shoot_cool_down for minecraft:living_entity
+[15:02:01] [Render thread/INFO]: Registered synced data key tacz:melee_cool_down for minecraft:living_entity
+[15:02:01] [Render thread/INFO]: Registered synced data key tacz:reload_state for minecraft:living_entity
+[15:02:01] [Render thread/INFO]: Registered synced data key tacz:aiming_progress for minecraft:living_entity
+[15:02:01] [Render thread/INFO]: Registered synced data key tacz:draw_cool_down for minecraft:living_entity
+[15:02:01] [Render thread/INFO]: Registered synced data key tacz:is_aiming for minecraft:living_entity
+[15:02:01] [Render thread/INFO]: Registered synced data key tacz:sprint_time for minecraft:living_entity
+[15:02:01] [Render thread/INFO]: Registered synced data key tacz:is_bolting for minecraft:living_entity
+[15:02:01] [Render thread/INFO]: Registered synced data key tacz:throwable_using for minecraft:living_entity
+[15:02:01] [Render thread/INFO]: LRTactical (unofficial 26.2 port) initialized
+[15:02:01] [Render thread/INFO]: [TACZ Recipe Sync] Opted 22 vanilla recipe serializer(s) into Fabric recipe sync (so dedicated servers without JEI still send vanilla-type recipes to client JEI).
+[15:02:01] [Render thread/INFO]: Registering S2C receiver with id architectury:spawn_entity_packet
+[15:02:01] [Render thread/INFO]: [Indigo] Different rendering plugin detected; not applying Indigo.
+[15:02:01] [Render thread/INFO]: Checking mod updates...
+[15:02:01] [Render thread/INFO]: [STDOUT]: [Mouse Tweaks] Main.initialize()
+[15:02:01] [Render thread/INFO]: [STDOUT]: [Mouse Tweaks] Initialized.
+[15:02:01] [Render thread/INFO]: [REI] Registered plugin provider DefaultClientPlugin [roughlyenoughitems] for REIClientPlugin
+[15:02:01] [Render thread/INFO]: [REI] Registered plugin provider DefaultClientRuntimePlugin [roughlyenoughitems] for REIClientPlugin
+[15:02:01] [Render thread/INFO]: [REI] Registered plugin provider HideIngredientsFromTagsPlugin [roughlyenoughitems] for REIClientPlugin
+[15:02:01] [Render thread/INFO]: [REI] Registered plugin provider REIClientPlugin [tacz] for REIClientPlugin
+[15:02:01] [Render thread/INFO]: Registering S2C receiver with id roughlyenoughitems:ci_msg
+[15:02:01] [Render thread/INFO]: Registering S2C receiver with id roughlyenoughitems:og_not_enough
+[15:02:01] [Render thread/INFO]: Registering S2C receiver with id roughlyenoughitems:sync_displays
+[15:02:01] [Render thread/INFO]: [TACZ] Registering FeatureRenderers for 26.2...
+[15:02:01] [Render thread/INFO]: [TACZ] FeatureRenderers registered.
+[15:02:01] [Render thread/INFO]: [TacZMeshLoader] Registered TACZ gun model type: mesh
+[15:02:01] [Render thread/INFO]: Registering common data for channel xaerolib:main!
+[15:02:01] [Render thread/INFO]: Registering client data for channel xaerolib:main!
+[15:02:01] [Render thread/INFO]: Loading primary common config for channel xaerolib:main!
+[15:02:01] [Render thread/INFO]: Loading server config profiles for channel xaerolib:main!
+[15:02:01] [Render thread/INFO]: Loading primary client config for channel xaerolib:main!
+[15:02:01] [Render thread/INFO]: Loading client config profiles for channel xaerolib:main!
+[15:02:01] [Render thread/INFO]: Loading XaeroLib common 1/2!
+[15:02:01] [Render thread/INFO]: Loading XaeroLib client 1/3!
+[15:02:02] [Render thread/WARN]: io exception while checking patreon: Read timed out
+[15:02:02] [Render thread/INFO]: No Optifine!
+[15:02:02] [Render thread/INFO]: Xaero's Minimap: No Vivecraft!
+[15:02:02] [Render thread/INFO]: Xaero's Minimap: Iris found!
+[15:02:02] [Render thread/INFO]: Registering common data for channel xaerominimap:main!
+[15:02:02] [Render thread/INFO]: Registering client data for channel xaerominimap:main!
+[15:02:02] [Render thread/INFO]: Loading primary common config for channel xaerominimap:main!
+[15:02:02] [Render thread/INFO]: Loading server config profiles for channel xaerominimap:main!
+[15:02:02] [Render thread/INFO]: Loading primary client config for channel xaerominimap:main!
+[15:02:02] [Render thread/INFO]: Loading client config profiles for channel xaerominimap:main!
+[15:02:02] [Render thread/INFO]: Loading Xaero's Minimap - Stage 1/3
+[15:02:02] [Render thread/INFO]: Deserializing YACLConfig from 'D:\DOWLOD\.minecraft\versions\26.3-Fabric 0.19.5\config\yacl.json5'
+[15:02:03] [Download-3/INFO]: Update available for 'controlling@26.3.1', (-> 26.3.3)
+[15:02:03] [Download-3/INFO]: Update available for 'iris@1.11.6+mc26.3', (-> 1.11.7+26.3-fabric)
+[15:02:03] [Download-3/INFO]: Update available for 'reeses-sodium-options@2.2.4+mc26.3', (-> mc26.3-2.2.5+fabric)
+[15:02:03] [Download-3/INFO]: Update available for 'forgeconfigapiport@26.3.0', (-> 26.3.1)
+[15:02:03] [Download-3/INFO]: Update available for 'fabric-api@0.160.7+26.3', (-> 0.161.0+26.3)
+[15:02:03] [Download-3/INFO]: Update available for 'modmenu@21.0.0-beta.1', (-> 21.0.0)
+[15:02:03] [Download-3/INFO]: Update available for 'punchy@2.8a', (-> 2.8c)
+[15:02:03] [Download-3/INFO]: Update available for 'architectury@22.0.1', (-> 22.0.3+fabric)
+[15:02:03] [Download-3/INFO]: Update available for 'cloth-config@26.3.158', (-> 26.3.159+fabric)
+[15:02:03] [Render thread/INFO]: Backend library: LWJGL version 3.4.3-snapshot
+[15:02:03] [Render thread/INFO]: SDL [SYSTEM]: App name: Minecraft
+[15:02:03] [Render thread/INFO]: SDL [SYSTEM]: App version: 26.3
+[15:02:03] [Render thread/INFO]: SDL [SYSTEM]: App ID: com.mojang.minecraft
+[15:02:03] [Render thread/INFO]: SDL [SYSTEM]: SDL revision: SDL-3.4.14-62f10da
+[15:02:04] [Render thread/INFO]: Modifying process environment to apply workarounds for the AMD graphics driver...
+[15:02:04] [Render thread/INFO]: Modifying process environment to apply workarounds for the AMD graphics driver...
+[15:02:04] [Render thread/INFO]: Debug functionality is disabled.
+[15:02:04] [Render thread/INFO]: ARB_direct_state_access detected, enabling DSA.
+[15:02:04] [Render thread/INFO]: EuphoriaPatcher: Added Euphoria Patches defines to Iris
+[15:02:05] [Render thread/INFO]: Profile: Custom (+2 options changed by user)
+[15:02:05] [Render thread/INFO]: Using shaderpack: ComplementaryReimagined_r5.9.3.zip
+[15:02:05] [Render thread/INFO]: Using graphics backend OpenGL, using drivers: 3.3.0 Core Profile Context 26.8.1.260810
+[15:02:05] [Render thread/INFO]: Using graphics device: AMD  Radeon RX 7800 XT (ATI Technologies Inc.)
+[15:02:05] [Render thread/INFO]: Using graphics device extensions: GL_ARB_multi_draw_indirect, GL_ARB_buffer_storage, GL_ARB_shader_draw_parameters, GL_ARB_base_instance, GL_KHR_debug, GL_ARB_draw_indirect, GL_ARB_clip_control, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+[15:02:05] [Render thread/INFO]: Modifying process environment to apply workarounds for the AMD graphics driver...
+[15:02:05] [Render thread/INFO]: Created window using SDL video driver: windows
+[15:02:05] [Render thread/INFO]: Start scanning for gun packs in D:\DOWLOD\.minecraft\versions\26.3-Fabric 0.19.5\tacz
+[15:02:05] [Render thread/INFO]: - Apocalypse_v1.1.7_G.zip, Main namespace: bf1
+[15:02:05] [Render thread/INFO]: - Cold War from 1947-1991 v0.51.zip, Main namespace: rainforest
+[15:02:05] [Render thread/INFO]: - CS2 Knifes Pack v1.0.1.zip, Main namespace: cs2_wt
+[15:02:05] [Render thread/INFO]: - Delta Force-Storm Assault-v2.5.zip, Main namespace: wemql_r
+[15:02:05] [Render thread/INFO]: - duyupack+1.21.1.zip, Main namespace: duyupack
+[15:02:05] [Render thread/INFO]: - GunpowderRevolution_gunpack v1.2.7.zip, Main namespace: hamster
+[15:02:05] [Render thread/INFO]: - KhanPowder_v0.8.99_hotfix.zip, Main namespace: murasamet
+[15:02:05] [Render thread/INFO]: - Suffuse-GunSmoke-Pack1.0.7--hotfix.zip, Main namespace: suffuse
+[15:02:05] [Render thread/INFO]: - tacz_default_gun, Main namespace: tacz
+[15:02:05] [Render thread/INFO]: - [AlexKim's_gun_pack]V12.77.09_TACZ1.1.8.zip, Main namespace: newpack
+[15:02:05] [Render thread/INFO]: - [LRTactical]Warzone Tactical Ver1.1.8A.zip, Main namespace: warzone
+[15:02:05] [Render thread/INFO]: - [TaCZ1.1.5+][绝对彼方] Absolute opponent OCLE v1.11.0.zip, Main namespace: ocle
+[15:02:05] [Render thread/INFO]: - [Tacz1.1.7+]CIBR_GunsPack_v0.3_1.1.7.zip, Main namespace: cib
+[15:02:05] [Render thread/INFO]: - [TACZ1.1.8+Arcana]ClassicRCCRP 1.1.6_release_hotfix2.zip, Main namespace: ccrp
+[15:02:05] [Render thread/INFO]: - [TaCZ] Enlisted Gun Pack v1.2.1.3.zip, Main namespace: ww
+[15:02:05] [Render thread/INFO]: Found 15 possible gunpack(s) and added them to resource set.
+[15:02:05] [Render thread/INFO]: Hardware information:
+[15:02:05] [Render thread/INFO]: CPU: 16x AMD Ryzen 7 7700 8-Core Processor 
+[15:02:05] [Render thread/INFO]: GPU: AMD  Radeon RX 7800 XT (Supports OpenGL 3.3.0 Core Profile Context 26.8.1.260810)
+[15:02:05] [Render thread/INFO]: OS: Windows 11 (10.0)
+[15:02:06] [Render thread/INFO]: Reloading ResourceManager: vanilla, vanilla, cloth-config, controlling, dynamic_fps, dynamic_fps_common, euphoria_patcher, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-language-kotlin, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, forgeconfigapiport, iris, jade, mezz_config, modmenu, org_apache_commons_commons-math3, placeholder-api, player_animation_library, punchy, reeses-sodium-options, roughlyenoughitems, searchables, shouldersurfing, sodium, tacz, tacztweaks, xaerolib, xaerominimap, yet_another_config_lib_v3, zoomify, tacz_resources, punchy:punchy
+[15:02:06] [Worker-Main-15/INFO]: Found unifont_pua-17.0.01.hex, loading
+[15:02:06] [Worker-Main-14/INFO]: Found unifont_all_no_pua-17.0.01.hex, loading
+[15:02:06] [Render thread/WARN]: Invalid path in datapack: cs2_wt:textures/melee/紫色炫彩m9_uv.png, ignoring
+[15:02:06] [Worker-Main-8/WARN]: Invalid path in datapack: suffuse:tacz_sounds/shared/magpouch (1).ogg, ignoring
+[15:02:06] [Worker-Main-14/INFO]: Found unifont_jp_patch-17.0.01.hex, loading
+[15:02:06] [Render thread/WARN]: Invalid path in datapack: newpack:textures/gun/hud/ddd (2).png, ignoring
+[15:02:06] [Render thread/WARN]: Invalid path in datapack: newpack:textures/gun/uv/lee(old.png, ignoring
+[15:02:06] [Render thread/WARN]: Invalid path in datapack: wemql_r:textures/gun/uv/m7_prismatic_uv _s.png, ignoring
+[15:02:06] [Worker-Main-8/WARN]: Invalid path in datapack: newpack:tacz_sounds/m92fs/audio-editor-output (83).ogg, ignoring
+[15:02:06] [Worker-Main-8/WARN]: Invalid path in datapack: newpack:tacz_sounds/mp28/mp18_fire (3).ogg, ignoring
+[15:02:06] [Worker-Main-8/WARN]: Invalid path in datapack: newpack:tacz_sounds/mp28/mp18_fire (4).ogg, ignoring
+[15:02:06] [Worker-Main-8/WARN]: Invalid path in datapack: newpack:tacz_sounds/ppk/audiomass-output (1).ogg, ignoring
+[15:02:06] [Worker-Main-8/WARN]: Invalid path in datapack: newpack:tacz_sounds/sten/sten)_fire.ogg, ignoring
+[15:02:06] [Worker-Main-8/WARN]: File lrtactical:sounds/entity/grenade_bounce_1.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.bounce
+[15:02:06] [Worker-Main-8/WARN]: File lrtactical:sounds/entity/grenade_bounce_2.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.bounce
+[15:02:06] [Worker-Main-8/WARN]: File lrtactical:sounds/entity/grenade_bounce_3.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.bounce
+[15:02:06] [Worker-Main-8/WARN]: File lrtactical:sounds/entity/grenade_bounce_4.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.bounce
+[15:02:06] [Worker-Main-8/WARN]: File lrtactical:sounds/entity/grenade_exp_flash.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.flash.explode
+[15:02:06] [Worker-Main-8/WARN]: File lrtactical:sounds/entity/grenade_exp_m67.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.m67.explode
+[15:02:06] [Worker-Main-8/WARN]: File lrtactical:sounds/entity/grenade_exp_rgn.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.rgn.explode
+[15:02:06] [Worker-Main-8/WARN]: File lrtactical:sounds/entity/grenade_exp_smoke_start.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.smoke.start
+[15:02:06] [Worker-Main-8/WARN]: File lrtactical:sounds/entity/grenade_exp_smoke_loop.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.smoke.loop
+[15:02:06] [Worker-Main-8/WARN]: File lrtactical:sounds/entity/grenade_exp_smoke_end.ogg does not exist, cannot add it to event cs2_wt:entity.grenade.smoke.end
+[15:02:06] [Worker-Main-8/WARN]: File lrtactical:sounds/player/ring.ogg does not exist, cannot add it to event cs2_wt:player.ring
+[15:02:06] [Worker-Main-5/WARN]: Invalid path in datapack: newpack:animations/lee.animation(old).json, ignoring
+[15:02:06] [Worker-Main-5/WARN]: Invalid path in datapack: newpack:animations/m1928.animation(old)).json, ignoring
+[15:02:06] [Worker-Main-1/WARN]: Invalid path in datapack: newpack:geo_models/gun/lee(old)_geo.json, ignoring
+[15:02:06] [Worker-Main-15/WARN]: Invalid path in datapack: newpack:animations/lee.animation(old).json, ignoring
+[15:02:06] [Worker-Main-15/WARN]: Invalid path in datapack: newpack:animations/m1928.animation(old)).json, ignoring
+[15:02:07] [Render thread/INFO]: [TACZ Scope] FrontendRenderPass bridge ready (FrontendRenderPass#backend -> FrontendRenderPass#uniforms).
+[15:02:07] [Render thread/INFO]: Thread[#3,Render thread,5,main]
+[15:02:07] [Render thread/INFO]: OpenGL Vendor: ATI Technologies Inc.
+[15:02:07] [Render thread/INFO]: OpenGL Renderer: AMD  Radeon RX 7800 XT
+[15:02:07] [Render thread/INFO]: OpenGL Version: 3.3.0 Core Profile Context 26.8.1.260810
+[15:02:07] [Render thread/INFO]: Registering plugin for Shoulder Surfing Reloaded (shouldersurfing)
+[15:02:07] [Render thread/INFO]: Registering plugin for [UNOFFICIAL] TaCZ Refabricated (26.3 R1-hotfix) (tacz)
+[15:02:07] [Render thread/INFO]: Start loading plugin from Jade: snownee.jade.addon.core.CorePlugin
+[15:02:07] [Render thread/INFO]: Start loading plugin from Jade: snownee.jade.addon.vanilla.VanillaPlugin
+[15:02:07] [Render thread/INFO]: Start loading plugin from Jade: snownee.jade.addon.universal.UniversalPlugin
+[15:02:07] [Render thread/INFO]: Start loading plugin from Jade: snownee.jade.addon.access.AccessibilityPlugin
+[15:02:07] [Render thread/INFO]: Start loading plugin from Jade: snownee.jade.addon.debug.DebugPlugin
+[15:02:07] [Render thread/INFO]: Start loading plugin from Shoulder Surfing Reloaded: com.github.exopandora.shouldersurfing.integration.jade.ShoulderSurfingJadePlugin
+[15:02:07] [Render thread/INFO]: Loading Xaero's Minimap - Stage 2/3
+[15:02:07] [ForkJoinPool.commonPool-worker-1/WARN]: [Iris Update Check] This version doesn't have an update index, skipping.
+[15:02:08] [Render thread/WARN]: io exception while checking versions: Read timed out
+[15:02:08] [Render thread/INFO]: Registered player tracker system: minimap_synced
+[15:02:08] [Render thread/INFO]: Loading Xaero's Minimap - Stage 3/3
+[15:02:08] [Render thread/WARN]: Invalid path in datapack: newpack:animations/lee.animation(old).json, ignoring
+[15:02:08] [Render thread/WARN]: Invalid path in datapack: newpack:animations/m1928.animation(old)).json, ignoring
+[15:02:08] [Render thread/WARN]: Invalid path in datapack: newpack:animations/lee.animation(old).json, ignoring
+[15:02:08] [Render thread/WARN]: Invalid path in datapack: newpack:animations/m1928.animation(old)).json, ignoring
+[15:02:08] [Render thread/INFO]: Loading XaeroLib common 2/2!
+[15:02:08] [Render thread/INFO]: Loading XaeroLib client 2/3!
+[15:02:08] [Render thread/INFO]: Loading XaeroLib client 3/3!
+[15:02:09] [Render thread/WARN]: [GunPackLang] Language file ww:lang/en_us.json of gun pack ww ([TaCZ] Enlisted Gun Pack v1.2.1.3.zip) is not a valid translation file (MalformedJsonException: Unterminated object at line 8 column 4 path $.ww.gun.p38.desc). Serving a repaired copy instead: kept 6 entries, dropped 0. Without this repair Minecraft 26.3 would abort loading of ALL translations (the game silently falls back to English and shows raw keys such as item.tacz.*). Please report the broken file to the gun pack author.
+[15:02:09] [Render thread/INFO]: OpenAL initialized on device OpenAL Soft on 扬声器 (XIEBRIA S21)
+[15:02:09] [Render thread/INFO]: Sound engine started
+[15:02:09] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[15:02:09] [Render thread/INFO]: Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
+[15:02:09] [Render thread/INFO]: Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[15:02:09] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[15:02:09] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[15:02:09] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[15:02:09] [Render thread/INFO]: Created: 4096x4096x4 minecraft:textures/atlas/blocks.png-atlas
+[15:02:09] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
+[15:02:09] [Render thread/INFO]: Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
+[15:02:09] [Render thread/INFO]: Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[15:02:09] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
+[15:02:09] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
+[15:02:09] [Render thread/WARN]: Invalid path in datapack: newpack:animations/lee.animation(old).json, ignoring
+[15:02:09] [Render thread/WARN]: Invalid path in datapack: newpack:animations/m1928.animation(old)).json, ignoring
+[15:02:09] [Render thread/WARN]: Invalid path in datapack: newpack:animations/lee.animation(old).json, ignoring
+[15:02:09] [Render thread/WARN]: Invalid path in datapack: newpack:animations/m1928.animation(old)).json, ignoring
+[15:02:10] [Render thread/WARN]: Invalid path in datapack: newpack:animations/lee.animation(old).json, ignoring
+[15:02:10] [Render thread/WARN]: Invalid path in datapack: newpack:animations/m1928.animation(old)).json, ignoring
+[15:02:10] [Render thread/WARN]: Invalid path in datapack: newpack:animations/lee.animation(old).json, ignoring
+[15:02:10] [Render thread/WARN]: Invalid path in datapack: newpack:animations/m1928.animation(old)).json, ignoring
+[15:02:11] [Render thread/WARN]: Failed to read script file: ccrp:underbarrel_m16a3_state_machine
+[15:02:11] [Render thread/WARN]: Failed to read script file: ccrp:underbarrel_mk17_state_machine
+[15:02:11] [Render thread/WARN]: Failed to read script file: ccrp:underbarrel_scar_17s_state_machine
+[15:02:11] [Render thread/WARN]: Failed to read script file: ccrp:underbarrel_scar_sc_state_machine
+[15:02:11] [Render thread/INFO]: Creating pipeline for dimension minecraft:overworld
+[15:02:12] [Render thread/INFO]: [TACZ Scope] Iris scope-mask injection so far: 0 HAND program(s) patched, 1 world program(s) left byte-identical to stock Iris (0 config-skipped, 0 no-verifiable-main skipped, 0 legacy-ALL injected; saw 1 fragment shader(s)).
+[15:02:13] [Render thread/INFO]: [TacZMeshLoader] Shader pack state changed (active=true); mesh bake generation -> 1
+[15:02:13] [Render thread/INFO]: Creating pipeline for dimension tacz:scope_pip
+[15:02:13] [Render thread/INFO]: [TACZ Scope] Scope pass gets a 1024x1024 shadow map instead of 2048x2048. The shadow pass runs once per world render, so rendering twice per frame doubled it; cost scales with area, so this cuts that pass' shadow work to about 25%. Only the lens is affected.
+[15:02:13] [Render thread/INFO]: [TACZ Scope] Pre-built the scope pass' Iris pipeline now, so the first time you aim does not stall while the shader pack compiles.
+[15:02:13] [Render thread/WARN]: Invalid path in datapack: newpack:animations/lee.animation(old).json, ignoring
+[15:02:13] [Render thread/WARN]: Invalid path in datapack: newpack:animations/m1928.animation(old)).json, ignoring
+[15:02:14] [Render thread/WARN]: Invalid path in datapack: newpack:animations/lee.animation(old).json, ignoring
+[15:02:14] [Render thread/WARN]: Invalid path in datapack: newpack:animations/m1928.animation(old)).json, ignoring
+[15:02:16] [Render thread/INFO]: Start scanning for gun packs in D:\DOWLOD\.minecraft\versions\26.3-Fabric 0.19.5\tacz
+[15:02:16] [Render thread/INFO]: - Apocalypse_v1.1.7_G.zip, Main namespace: bf1
+[15:02:16] [Render thread/INFO]: - Cold War from 1947-1991 v0.51.zip, Main namespace: rainforest
+[15:02:16] [Render thread/INFO]: - CS2 Knifes Pack v1.0.1.zip, Main namespace: cs2_wt
+[15:02:16] [Render thread/INFO]: - Delta Force-Storm Assault-v2.5.zip, Main namespace: wemql_r
+[15:02:16] [Render thread/INFO]: - duyupack+1.21.1.zip, Main namespace: duyupack
+[15:02:16] [Render thread/INFO]: - GunpowderRevolution_gunpack v1.2.7.zip, Main namespace: hamster
+[15:02:16] [Render thread/INFO]: - KhanPowder_v0.8.99_hotfix.zip, Main namespace: murasamet
+[15:02:16] [Render thread/INFO]: - Suffuse-GunSmoke-Pack1.0.7--hotfix.zip, Main namespace: suffuse
+[15:02:16] [Render thread/INFO]: - tacz_default_gun, Main namespace: tacz
+[15:02:16] [Render thread/INFO]: - [AlexKim's_gun_pack]V12.77.09_TACZ1.1.8.zip, Main namespace: newpack
+[15:02:16] [Render thread/INFO]: - [LRTactical]Warzone Tactical Ver1.1.8A.zip, Main namespace: warzone
+[15:02:16] [Render thread/INFO]: - [TaCZ1.1.5+][绝对彼方] Absolute opponent OCLE v1.11.0.zip, Main namespace: ocle
+[15:02:16] [Render thread/INFO]: - [Tacz1.1.7+]CIBR_GunsPack_v0.3_1.1.7.zip, Main namespace: cib
+[15:02:16] [Render thread/INFO]: - [TACZ1.1.8+Arcana]ClassicRCCRP 1.1.6_release_hotfix2.zip, Main namespace: ccrp
+[15:02:16] [Render thread/INFO]: - [TaCZ] Enlisted Gun Pack v1.2.1.3.zip, Main namespace: ww
+[15:02:16] [Render thread/INFO]: Found 15 possible gunpack(s) and added them to resource set.
+[15:02:19] [Worker-Main-4/WARN]: Invalid path in datapack: ww:recipes/bayonet_m1930 - Copy.json, ignoring
+[15:02:19] [Worker-Main-11/ERROR]: Registry loading errors:
+> Errors in registry minecraft:recipe:
+>> Errors in element newpack:gun/1911k:
+java.lang.IllegalStateException: Failed to parse newpack:gun/1911k from pack tacz_resources
+	at knot//net.minecraft.resources.RegistryLoadTask$PendingRegistration.loadFromResource(RegistryLoadTask.java:111)
+	at knot//net.minecraft.resources.ResourceManagerRegistryLoadTask.mixinextras$bridge$loadFromResource$16(ResourceManagerRegistryLoadTask.java)
+	at knot//net.minecraft.resources.ResourceManagerRegistryLoadTask.wrapOperation$znj000$fabric-loot-api-v3$modifyLootTable(ResourceManagerRegistryLoadTask.java:1050)
+	at knot//net.minecraft.resources.ResourceManagerRegistryLoadTask.lambda$load$2(ResourceManagerRegistryLoadTask.java:46)
+	at knot//net.minecraft.util.thread.ParallelMapTransform$Container.applyOperation(ParallelMapTransform.java:89)
+	at knot//net.minecraft.util.thread.ParallelMapTransform$BatchedTaskSplitter.lambda$createTask$0(ParallelMapTransform.java:213)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1825)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.exec(CompletableFuture.java:1817)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)
+Caused by: com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Unterminated array at line 9 column 6 path $.materials[1]
+See https://github.com/google/gson/blob/main/Troubleshooting.md#malformed-json
+	at knot//com.google.gson.internal.Streams.parse(Streams.java:60)
+	at knot//com.google.gson.JsonParser.parseReader(JsonParser.java:144)
+	at knot//net.minecraft.util.StrictJsonParser.parse(StrictJsonParser.java:27)
+	at knot//net.minecraft.resources.RegistryLoadTask$PendingRegistration.loadFromResource(RegistryLoadTask.java:108)
+	... 11 more
+Caused by: com.google.gson.stream.MalformedJsonException: Unterminated array at line 9 column 6 path $.materials[1]
+See https://github.com/google/gson/blob/main/Troubleshooting.md#malformed-json
+	at knot//com.google.gson.stream.JsonReader.syntaxError(JsonReader.java:1817)
+	at knot//com.google.gson.stream.JsonReader.doPeek(JsonReader.java:598)
+	at knot//com.google.gson.stream.JsonReader.hasNext(JsonReader.java:536)
+	at knot//com.google.gson.internal.bind.JsonElementTypeAdapter.read(JsonElementTypeAdapter.java:95)
+	at knot//com.google.gson.internal.Streams.parse(Streams.java:48)
+	... 14 more
+
+[15:02:19] [Render thread/WARN]: Failed to load level data or datapacks, can't proceed with server load
+java.util.concurrent.ExecutionException: net.minecraft.ReportedException: Registry Loading
+	at java.base/java.util.concurrent.CompletableFuture.wrapInExecutionException(CompletableFuture.java:345)
+	at java.base/java.util.concurrent.CompletableFuture.reportGet(CompletableFuture.java:440)
+	at java.base/java.util.concurrent.CompletableFuture.get(CompletableFuture.java:2094)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldDataBlocking(WorldOpenFlows.java:213)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.loadWorldStem(WorldOpenFlows.java:155)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.openWorldLoadLevelStem(WorldOpenFlows.java:432)
+	at knot//net.minecraft.client.gui.screens.worldselection.WorldOpenFlows.lambda$upgradeAndOpenWorld$2(WorldOpenFlows.java:380)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1240)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:967)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+Caused by: net.minecraft.ReportedException: Registry Loading
+	at knot//net.minecraft.resources.RegistryDataLoader.createReportWithBriefInfo(RegistryDataLoader.java:329)
+	at knot//net.minecraft.resources.RegistryDataLoader.logErrors(RegistryDataLoader.java:294)
+	at knot//net.minecraft.resources.RegistryDataLoader.lambda$load$2(RegistryDataLoader.java:263)
+	at knot//net.minecraft.resources.RegistryDataLoader.md6e5d0c$fabric-registry-sync-v0$lambda$thenApplyAsync$1$1(RegistryDataLoader.java:565)
+	at java.base/jdk.internal.vm.ScopedValueContainer.callWithoutScope(ScopedValueContainer.java:162)
+	at java.base/jdk.internal.vm.ScopedValueContainer.call(ScopedValueContainer.java:147)
+	at java.base/java.lang.ScopedValue$Carrier.call(ScopedValue.java:419)
+	at knot//net.minecraft.resources.RegistryDataLoader.md6e5d0c$fabric-registry-sync-v0$lambda$thenApplyAsync$0$0(RegistryDataLoader.java:565)
+	at java.base/java.util.concurrent.CompletableFuture$UniApply.tryFire(CompletableFuture.java:667)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.exec(CompletableFuture.java:504)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)
+Caused by: java.lang.IllegalStateException: Failed to load registries due to errors
+	at knot//net.minecraft.resources.RegistryDataLoader.createReportWithBriefInfo(RegistryDataLoader.java:313)
+	... 13 more
+[15:02:30] [Render thread/INFO]: Stopping!
