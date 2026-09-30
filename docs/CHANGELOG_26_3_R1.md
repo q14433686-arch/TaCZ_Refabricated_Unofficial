@@ -11,10 +11,15 @@
 > 姊妹项目（NeoForge）移植指南：[`lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md`](lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md)。
 > 版本命名沿用本仓历史：hotfix 直接追加在 `R1` 后（`R1-hotfix`，不另起 R2；无序号的首个 hotfix 不加数字）。
 
-## R1-hotfix 增量（2026-09-29）
+## R1-hotfix 增量（2026-09-29 ~ 09-30）
 
 - 🔧 **枪包语言文件容错（绕过，不是根治）**：在 `26.3 R1` 基础上加入 `GunPackLangCompat`，避免 Enlisted Gun Pack v1.2.1.3 的无效 `en_us.json` 令 26.3 丢弃整组语言加载。对可恢复条目重写合法 JSON 并记录枪包/文件告警；不修改枪包，根因仍需作者修正缺失逗号。
-- ✅ GitHub Actions `build` / `compile-check` 对该变更通过（commit `81e71cf`）；**该增量尚未在 26.3 实机验证**。
+- 🔧 **多枪包进档 `fabric:recipe_sync` `EncoderException` 断连修复（未实机验证）**：
+  - `TaCZFabric#registerRecipeSync()` 改为仅登记 `minecraft:*` 原版配方序列化器，不再登记 `tacz:gun_smith_table_crafting`（客户端工作台/JEI 均读 `CommonAssetsManager` 自建同步通道，原版 `RecipeSynchronization` 触发 `GunSmithTableSerializer.STREAM_CODEC.encode -> getIngredientOrThrow()` 会在遇到单数 `data/<ns>/recipe/` 下未解析/空标签材料时直接抛 `EncoderException` 踢出玩家）；
+  - `GunSmithTableSerializer.STREAM_CODEC.encode` 移除 `getIngredientOrThrow()`，改为仅编码已解析且非空的 `Ingredient` 并对 `id`/`result`/`group` 做非空兜底；
+  - `CommonAssetsManager#onReload(RegistryAccess, boolean)` 对 `recipe.init()` 增加逐条异常隔离，并新增 `sanitizeSyncedRecipes` 在 `TAGS_LOADED` 阶段剔除 `RecipeMapMixin.bySyncedSerializer` 中含空标签（`placementInfo().isImpossibleToPlace()` / `ing.items().findAny().isEmpty()`）或预编码失败的配方；
+  - `StrictNBTIngredient` 对齐 `"items"` + `"nbt"` 格式并补齐 `display()`；`GunSmithTableIngredient#normalizeLegacy` 支持将 JSON 数组内嵌的 `#tag` 展开为物品 ID 并过滤未安装联动模组物品。
+- ✅ GitHub Actions `build` / `compile-check` 对语言文件容错变更通过（commit `81e71cf`）；**上述增量均尚未在 26.3 实机验证**。
 
 ---
 

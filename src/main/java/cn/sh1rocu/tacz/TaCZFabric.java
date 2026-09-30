@@ -117,8 +117,20 @@ public class TaCZFabric implements ModInitializer {
         //
         // 我们自己在两端都调用一遍（Fabric 只同步「两端都登记」的序列化器；JEI
         // 重复登记同一实例是 Set 幂等），服务端只装 TACZ 也能把 vanilla 配方
-        // 送到客户端 JEI。仅 minecraft:* 与我们自己的枪匠台序列化器 —— 与 JEI 相同的
-        // 收敛范围，不替别的 mod 做决定。
+        // 送到客户端 JEI。
+        // 【注意】这里只登记 minecraft:*，【绝不】登记 tacz:gun_smith_table_crafting：
+        //   1. 客户端（GunSmithTableScreen / GunSmithTableMenu / JEI GunModPlugin / TimelessAPI）
+        //      从来不读原版 RecipeManager 里的 GunSmithTableRecipe，工作台配方有独立的
+        //      TableRecipeManager -> ServerMessageSyncGunPack -> CommonNetworkCache 同步链路；
+        //   2. c8837d2 把 GunSmithTableSerializer.INGREDIENT_CODEC 改成了延迟解析
+        //      （ExtraCodecs.JSON），使单数 data/<ns>/recipe/ 下含未解析材料（跨包缺前置、
+        //      未绑定/空标签、forge:nbt、数组内嵌标签）的枪匠台配方也能留在 RecipeManager 中；
+        //   3. 若把 tacz:gun_smith_table_crafting 登记进 RecipeSynchronization，玩家进档时
+        //      Fabric 编码 `fabric:recipe_sync` 会对每条 GunSmithTableRecipe 调用
+        //      GunSmithTableSerializer.STREAM_CODEC.encode -> getIngredientOrThrow() /
+        //      CustomIngredientStreamCodec.encode，只要任一枪包里有 1 条无法解析或空标签的材料，
+        //      就会直接抛出 EncoderException: Failed to encode packet 'clientbound/minecraft:custom_payload' (fabric:recipe_sync)
+        //      踢出玩家（且因为是编码异常而非包体超 64MB 上限，装 PacketFixer 完全无效）。
         registerRecipeSync();
 
         Class<? extends EnumArgument<?>> enumArgumentClass = (Class<? extends EnumArgument<?>>) (Class) EnumArgument.class;
@@ -136,7 +148,7 @@ public class TaCZFabric implements ModInitializer {
         int count = 0;
         for (var entry : net.minecraft.core.registries.BuiltInRegistries.RECIPE_SERIALIZER.entrySet()) {
             String ns = entry.getKey().identifier().getNamespace();
-            if (!"minecraft".equals(ns) && !GunMod.MOD_ID.equals(ns)) {
+            if (!"minecraft".equals(ns)) {
                 continue;
             }
             try {
@@ -146,7 +158,7 @@ public class TaCZFabric implements ModInitializer {
                 GunMod.LOGGER.warn("[TACZ Recipe Sync] Failed to opt {} into Fabric recipe sync", entry.getKey().identifier(), e);
             }
         }
-        GunMod.LOGGER.info("[TACZ Recipe Sync] Opted {} recipe serializer(s) into Fabric recipe sync "
+        GunMod.LOGGER.info("[TACZ Recipe Sync] Opted {} vanilla recipe serializer(s) into Fabric recipe sync "
                 + "(so dedicated servers without JEI still send vanilla-type recipes to client JEI).", count);
     }
 

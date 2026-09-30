@@ -185,14 +185,33 @@ public final class GunSmithTableSerializer {
 
                 @Override
                 public void encode(RegistryFriendlyByteBuf buffer, GunSmithTableRecipe recipe) {
-                    buffer.writeIdentifier(recipe.getId());
-                    buffer.writeInt(recipe.getInputs().size());
+                    Identifier recipeId = recipe.getId() != null
+                            ? recipe.getId()
+                            : Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "empty");
+                    buffer.writeIdentifier(recipeId);
+                    // 仅编码可解析且非空的 Ingredient，避免延迟解析失败（getIngredient() == null）
+                    // 或空标签（CustomIngredientStreamCodec 抛 "Cannot serialize empty ingredient PacketByteBuf"）
+                    // 触发 EncoderException 导致整包断连。
+                    List<GunSmithTableIngredient> validInputs = new ArrayList<>(recipe.getInputs().size());
                     for (GunSmithTableIngredient ingredient : recipe.getInputs()) {
-                        Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, ingredient.getIngredientOrThrow());
+                        Ingredient resolved = ingredient.getIngredient();
+                        if (resolved != null && !resolved.isEmpty() && resolved.items().findAny().isPresent()) {
+                            validInputs.add(ingredient);
+                        }
+                    }
+                    buffer.writeInt(validInputs.size());
+                    for (GunSmithTableIngredient ingredient : validInputs) {
+                        Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, ingredient.getIngredient());
                         buffer.writeInt(ingredient.getCount());
                     }
-                    ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, recipe.getResult().getResult());
-                    buffer.writeIdentifier(recipe.getResult().getGroup());
+                    ItemStack resultStack = recipe.getResult() != null && recipe.getResult().getResult() != null
+                            ? recipe.getResult().getResult()
+                            : ItemStack.EMPTY;
+                    ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, resultStack);
+                    Identifier group = recipe.getResult() != null && recipe.getResult().getGroup() != null
+                            ? recipe.getResult().getGroup()
+                            : Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "empty");
+                    buffer.writeIdentifier(group);
                 }
             };
 
