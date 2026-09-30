@@ -221,11 +221,10 @@ dependencies {
     //     transitive = false
     // }
 
-    // REI — 26.3 无构建（Modrinth 最新 26.2.820，2026-09-17 核实）；architectury 亦无 26.3。
-    // compat/rei/** 已在 sourceSets 排除，fabric.mod.json 的 rei_client/rei_common 入口同步摘除。
-    // compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
-    // compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
-    // compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
+    // REI — 26.3（maven.shedaniel.me 26.3.823 + maven.architectury.dev 22.0.3，2026-09-30 核实并恢复）
+    compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
 
     // Spark
     // runtimeOnly "curse.maven:spark-361579:4738953"
@@ -262,7 +261,7 @@ tasks.withType(JavaCompile).configureEach {
 // 【已审批的临时排除】以下模块的目标 mod 在 26.3 Fabric 暂无构建（经 Modrinth 核实），
 // 其 API 类不存在、无法编译。用户已批准临时排除，待上游 26.3 移植后回补。
 // 26.2 线继承下来的：Accelerated Rendering、Controllable、KubeJS、Modern Keybinding(随 controllable)、Optifine。
-// 26.3 移植新增的（2026-09-17 逐项核实 Modrinth）：REI(+architectury)、Zoomify、Shoulder Surfing Reloaded。
+// 26.3 移植新增的（2026-09-30 复查 Modrinth）：Zoomify、Shoulder Surfing Reloaded（REI 26.3.823 + Architectury 22.0.3 已回补）。
 // 注意：iris/sulkan 兼容按用户要求"两者都要兼容"，不在此排除清单内；
 //       Voxy 与 Carry On 虽同样没有 26.3 构件，但其 mixin 全部走 @Pseudo/targets= 字符串，
 //       无编译期依赖，因此【不】排除。
@@ -285,11 +284,7 @@ sourceSets {
             // Accelerated Rendering mixin：随 AR 模块禁用
             exclude 'com/tacz/guns/mixin/client/ar/**'
 
-            // ---- 以下为 26.3 移植新增的临时排除（2026-09-17）----
-            // REI：me.shedaniel:RoughlyEnoughItems-* 与 dev.architectury 均无 26.3 构件。
-            // 整个 compat/rei 包硬依赖其 API，无法编译；fabric.mod.json 的 rei_client/rei_common
-            // 入口已同步摘除。RecipeViewerReloadBridge 用反射访问 REI，不含编译期依赖，保留参编。
-            exclude 'cn/sh1rocu/tacz/compat/rei/**'
+            // ---- 以下为 26.3 移植新增的临时排除（REI 已于 26.3.823 回补）----
             // Zoomify：dev.isxander.zoomify 无 26.3 构件。仅排除硬依赖其 API 的 IMPL，
             // ZoomifyCompat 门面保留（getFov 直接回传原值 ⇒ 禁用态），调用点无需改动。
             exclude 'com/tacz/guns/compat/zoomify/ZoomifyCompatInner.java'

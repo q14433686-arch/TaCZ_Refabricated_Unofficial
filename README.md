@@ -55,19 +55,19 @@
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
-R1-hotfix 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与专服实测；Carry On 无 26.3 构件，仅保留接线）：
+R1-hotfix 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与专服实测；REI 26.3.823 已恢复适配，待实机复验；Carry On 无 26.3 构件，仅保留接线）：
 
 | 可选 mod | R1-hotfix 编译 pin / 建议版本 | 用途 |
 |---|---|---|
 | JEI | 编译 pin **31.0.0.5**（beta） | 内置 Ammo Query 与工作台类别 |
+| REI | 编译 pin **26.3.823**（+ Architectury **22.0.3**） | 内置 Ammo Query 与工作台类别 |
 | Carry On | 建议 **>=2.11.0** | A/B/C 多格工作台的搬运兼容 |
 
-26.2 线支持、但**在 26.3 上已从本分支摘除**的可选集成（截至 2026-09-17 上游均无 26.3 构件，
+26.2 线支持、但**在 26.3 上已从本分支摘除**的可选集成（截至 2026-09-30 上游均无 26.3 构件，
 无法编译；接线代码与坐标保留在源码注释中，等上游更新后可回补）：
 
 | 可选 mod | 26.2 线状态 | 26.3 线现状 |
 |---|---|---|
-| REI | 编译 pin 26.2.820，内置 Ammo Query | **摘除**：REI/Architectury 无 26.3 构件 |
 | Zoomify | 开镜时让出缩放控制 | **摘除**：无 26.3 构件 |
 | Shoulder Surfing Reloaded | 第三人称肩视兼容 | **摘除**：无 26.3 构件 |
 
@@ -87,7 +87,7 @@ R1-hotfix 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与
 
 **26.3 R1-hotfix**（当前源码版本）的变更清单见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)：
 渲染底层 renderpearl 迁移、第一人称拆分、shaderc 着色器、Iris 26.3 裁剪判定重做、26.3 战利品表/配方 codec/
-配方同步三项行为修复，以及 REI/Zoomify/SSR 的禁用说明。以下为 26.2 线的历史 release 摘要
+配方同步三项行为修复、REI 26.3.823 适配恢复，以及 Zoomify/SSR 的禁用说明。以下为 26.2 线的历史 release 摘要
 （26.2 R2 详情见 [`docs/archive/CHANGELOG_26_2_R2.md`](docs/archive/CHANGELOG_26_2_R2.md)）：
 
 **26.2 R3-hotfix2**：在 R3-hotfix 基础上同步 1.21.11 线的第一人称手部错位

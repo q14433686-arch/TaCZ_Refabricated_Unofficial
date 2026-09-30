@@ -19,6 +19,7 @@ public class GunSmithTableDisplay extends BasicDisplay {
     public GunSmithTableDisplay(GunSmithTableRecipe recipe, Map.Entry<Identifier, CategoryIdentifier<GunSmithTableDisplay>> entry) {
         super(EntryIngredients.ofIngredients(recipe.getInputs().stream()
                         .map(com.tacz.guns.crafting.GunSmithTableIngredient::getIngredient)
+                        .filter(ingredient -> ingredient != null && !ingredient.isEmpty())
                         .collect(Collectors.toList())),
                 Collections.singletonList(EntryIngredients.of(recipe.getOutput())), Optional.ofNullable(entry.getKey()));
         this.recipe = recipe;
