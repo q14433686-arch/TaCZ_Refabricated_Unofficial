@@ -1,12 +1,12 @@
 package cn.sh1rocu.tacz.compat.rei.entry;
 
+import cn.sh1rocu.tacz.compat.rei.category.AttachmentQueryCategory;
 import com.google.common.collect.Lists;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.GunTabType;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
-import com.tacz.guns.compat.jei.category.AttachmentQueryCategory;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 

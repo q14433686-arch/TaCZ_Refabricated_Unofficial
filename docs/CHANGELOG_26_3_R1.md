@@ -11,10 +11,20 @@
 > 姊妹项目（NeoForge）移植指南：[`lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md`](lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md)。
 > 版本命名沿用本仓历史：hotfix 直接追加在 `R1` 后（`R1-hotfix`，不另起 R2；无序号的首个 hotfix 不加数字）。
 
-## R1-hotfix 增量（2026-09-29）
+## R1-hotfix 增量（2026-09-29 ~ 09-30）
 
 - 🔧 **枪包语言文件容错（绕过，不是根治）**：在 `26.3 R1` 基础上加入 `GunPackLangCompat`，避免 Enlisted Gun Pack v1.2.1.3 的无效 `en_us.json` 令 26.3 丢弃整组语言加载。对可恢复条目重写合法 JSON 并记录枪包/文件告警；不修改枪包，根因仍需作者修正缺失逗号。
-- ✅ GitHub Actions `build` / `compile-check` 对该变更通过（commit `81e71cf`）；**该增量尚未在 26.3 实机验证**。
+- 🔧 **多枪包进档 `fabric:recipe_sync` `EncoderException` 断连修复（未实机验证）**：
+  - `TaCZFabric#registerRecipeSync()` 改为仅登记 `minecraft:*` 原版配方序列化器，不再登记 `tacz:gun_smith_table_crafting`（客户端工作台/JEI 均读 `CommonAssetsManager` 自建同步通道，原版 `RecipeSynchronization` 触发 `GunSmithTableSerializer.STREAM_CODEC.encode -> getIngredientOrThrow()` 会在遇到单数 `data/<ns>/recipe/` 下未解析/空标签材料时直接抛 `EncoderException` 踢出玩家）；
+  - `GunSmithTableSerializer.STREAM_CODEC.encode` 移除 `getIngredientOrThrow()`，改为仅编码已解析且非空的 `Ingredient` 并对 `id`/`result`/`group` 做非空兜底；
+  - `CommonAssetsManager#onReload(RegistryAccess, boolean)` 对 `recipe.init()` 增加逐条异常隔离，并新增 `sanitizeSyncedRecipes` 在 `TAGS_LOADED` 阶段剔除 `RecipeMapMixin.bySyncedSerializer` 中含空标签（`placementInfo().isImpossibleToPlace()` / `ing.items().findAny().isEmpty()`）或预编码失败的配方；
+  - `StrictNBTIngredient` 对齐 `"items"` + `"nbt"` 格式并补齐 `display()`；`GunSmithTableIngredient#normalizeLegacy` 支持将 JSON 数组内嵌的 `#tag` 展开为物品 ID 并过滤未安装联动模组物品。
+- 🔧 **恢复 REI、Zoomify、Shoulder Surfing Reloaded 26.3 兼容适配并同步上游依赖（未实机验证）**：
+  - **REI `26.3.823` + Architectury `22.0.3`**：恢复 `gradle.properties` / `build.gradle` 编译依赖、撤销 `cn/sh1rocu/tacz/compat/rei/**` 的 `sourceSets` 排除并恢复 `fabric.mod.json` 的 `rei_client` / `rei_common` 入口点；`GunSmithTableDisplay` 过滤延迟解析返回 `null` 或空材料的项以防 NPE；`REIClientPlugin#registerCategories` 补充 `displays.clear()` 并改用 `item.getName(icon)`；`REIPlugin#registerItemComparators` 补注册 `GUN_SMITH_TABLE` 与 `WORKBENCH_111/121/211` 的 `BlockId` 比较器；`rei/entry/AttachmentQueryEntry` 改为引用 REI 自身的 `AttachmentQueryCategory.MAX_GUN_SHOW_COUNT`；
+  - **Zoomify `2.16.3+26.3`**：恢复 `maven.modrinth:zoomify:2.16.3+26.3` 编译依赖，撤销 `ZoomifyCompatInner.java` 的 `sourceSets` 排除，并在 `ZoomifyCompat` 中恢复按 `FabricLoader.isModLoaded("zoomify")` 委托 `ZoomifyCompatInner` 的逻辑；
+  - **Shoulder Surfing Reloaded `26.3-5.2.0+fabric`**：恢复 `maven.modrinth:shoulder-surfing-reloaded:26.3-5.2.0+fabric` 编译依赖，撤销 `ShoulderSurfingCompatInner.java` / `ShoulderSurfingPlugin.java` 的 `sourceSets` 排除，恢复 `ShoulderSurfingCompat` 委托实现及 `src/main/resources/shouldersurfing_plugin.json` 插件描述文件；
+  - **其余依赖版本同步**：ModMenu 升级至 26.3 正式版 `21.0.0`（原 `21.0.0-beta.1`），Cloth Config 升级至 `26.3.159`（原 `26.3.158`），JEI 升级至 `31.8.0.48`（含 `#4514` 自定义材料组件保留修复），Carry On 核实上游已发布 `26.3-2.12.0` 且与本模组 `@Pseudo` mixin / `CarryOnReflection` 签名完全兼容。
+- ✅ GitHub Actions `build` / `compile-check` 对语言文件容错变更通过（commit `81e71cf`）；**上述增量待 CI 编译并尚未在 26.3 实机验证**。
 
 ---
 
@@ -80,10 +90,13 @@
 
 ## 4. 兼容层变化
 
-- 🔧 **禁用**（非修复，上游无 26.3 构件，2026-09-21 复查仍无）：REI（+Architectury）、Zoomify、Shoulder Surfing Reloaded。
-  门面保留、IMPL 排除，上游发布后回补。
-- 🔧 JEI 31.0.0.5、ModMenu 21.0.0-beta.1、PAL 1.2.7+26.3 均为 **beta** 通道，正式版发布后需重新钉版本。
-- Voxy / Carry On 无 26.3 构件但 mixin 走 `@Pseudo` 字符串目标，保留未验证。
+- 🔧 **26.3 移植期曾因上游无构件而禁用的三项兼容已全部回补（2026-09-30 核实并恢复编译，待实机复验）**：
+  - **REI** `26.3.823` + **Architectury** `22.0.3`（正式版）
+  - **Zoomify** `2.16.3+26.3`（正式版）
+  - **Shoulder Surfing Reloaded** `26.3-5.2.0+fabric`（正式版）
+- 🔧 **ModMenu** 已从 `21.0.0-beta.1` 升级至 26.3 正式版 `21.0.0`，**Cloth Config** 升级至 `26.3.159`；**Carry On** 上游已发布 26.3 正式版 `2.12.0`（本模组 `@Pseudo` mixin 与反射签名无需改动即可兼容）。
+- 🔧 **JEI** `31.8.0.48`、**PAL** `1.2.7+26.3` 目前仍为 **beta** 通道，正式版发布后需重新钉版本。
+- **Voxy** 暂无 26.3 构件，其 mixin 走 `@Pseudo` 字符串目标，保留未验证；26.2 线起已禁用的 KubeJS / Controllable / Accelerated Rendering 在 26.3 仍无 Fabric 构件，保持门面禁用态。
 
 ## 5. 已知未验证 / 未做
 

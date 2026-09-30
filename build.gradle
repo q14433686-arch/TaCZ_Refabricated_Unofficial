@@ -205,27 +205,24 @@ dependencies {
     // 26.3.0 Fabric: https://github.com/Fuzss/forge-config-api-port (branch 26.3.x)
     implementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.3.0"
 
-    // ModMenu — 26.3 (via Modrinth maven, 21.0.0-beta.1)
+    // ModMenu — 26.3 (via Modrinth maven, 21.0.0 release)
     implementation "maven.modrinth:modmenu:${modmenu_version}"
 
-    // Zoomify — 26.3 无构建（Modrinth 最新 2.16.1+26.2，2026-09-17 核实）。
-    // ZoomifyCompat 已在 sourceSets 排除，门面走禁用态；上游出 26.3 后恢复本行并撤销 exclude。
-    // compileOnly "maven.modrinth:zoomify:${zoomify_version}"
+    // Zoomify — 26.3（Modrinth 2.16.3+26.3 正式版，2026-09-30 核实并恢复）
+    compileOnly "maven.modrinth:zoomify:${zoomify_version}"
 
     // ImmediatelyFast 1.16.x has no public batching API anymore. TACZ's 26.3
     // SubmitNodeCollector path needs no compile-time bridge; see ImmediatelyFastCompat.
 
-    // Shoulder Surfing Reloaded — 26.3 无构建（Modrinth 最新 26.2-5.0.7+fabric，2026-09-17 核实）。
-    // ShoulderSurfingCompatInner/ShoulderSurfingPlugin 已在 sourceSets 排除，门面走禁用态。
-    // compileOnly("maven.modrinth:shoulder-surfing-reloaded:${shoulder_surfing_version}") {
-    //     transitive = false
-    // }
+    // Shoulder Surfing Reloaded — 26.3（Modrinth 26.3-5.2.0+fabric 正式版，2026-09-30 核实并恢复）
+    compileOnly("maven.modrinth:shoulder-surfing-reloaded:${shoulder_surfing_version}") {
+        transitive = false
+    }
 
-    // REI — 26.3 无构建（Modrinth 最新 26.2.820，2026-09-17 核实）；architectury 亦无 26.3。
-    // compat/rei/** 已在 sourceSets 排除，fabric.mod.json 的 rei_client/rei_common 入口同步摘除。
-    // compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
-    // compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
-    // compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
+    // REI — 26.3（maven.shedaniel.me 26.3.823 + maven.architectury.dev 22.0.3，2026-09-30 核实并恢复）
+    compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
 
     // Spark
     // runtimeOnly "curse.maven:spark-361579:4738953"
@@ -259,12 +256,13 @@ tasks.withType(JavaCompile).configureEach {
 // 26.3 兼容模块回补：原 sourceSets exclude 块已移除（违反"禁止 exclude 业务源码"约束）。
 // 所有 compat 模块现重新纳入编译，逐模块正向修复。见 AUDIT_REPORT_verified.md §7。
 //
-// 【已审批的临时排除】以下模块的目标 mod 在 26.3 Fabric 暂无构建（经 Modrinth 核实），
-// 其 API 类不存在、无法编译。用户已批准临时排除，待上游 26.3 移植后回补。
+// 【已审批的临时排除】以下模块的目标 mod 在 26.2/26.3 Fabric 暂无构建（经 Modrinth 核实），
+// 其 API 类不存在、无法编译。用户已批准临时排除，待上游移植后回补。
 // 26.2 线继承下来的：Accelerated Rendering、Controllable、KubeJS、Modern Keybinding(随 controllable)、Optifine。
-// 26.3 移植新增的（2026-09-17 逐项核实 Modrinth）：REI(+architectury)、Zoomify、Shoulder Surfing Reloaded。
+// 26.3 移植期曾临时排除的 REI (26.3.823 + Architectury 22.0.3)、Zoomify (2.16.3+26.3)、
+// Shoulder Surfing Reloaded (26.3-5.2.0+fabric) 均已于 2026-09-30 恢复参编。
 // 注意：iris/sulkan 兼容按用户要求"两者都要兼容"，不在此排除清单内；
-//       Voxy 与 Carry On 虽同样没有 26.3 构件，但其 mixin 全部走 @Pseudo/targets= 字符串，
+//       Carry On 已发布 26.3-2.12.0，Voxy 暂无 26.3 构件，两者 mixin 全部走 @Pseudo/targets= 字符串，
 //       无编译期依赖，因此【不】排除。
 sourceSets {
     main {
@@ -274,7 +272,7 @@ sourceSets {
             exclude 'com/tacz/guns/compat/ar/AcceleratedBeamRenderer.java'
             // Controllable：仅排除硬依赖 mrcrayfish 的 IMPL，保留 ControllableCompat 门面
             exclude 'com/tacz/guns/compat/controllable/ControllableInner.java'
-            // KubeJS：dev.latvian.kubejs 无 26.2 Fabric 构建，核心 KubeJSGunEventPoster/GunMod 改为禁用态门面
+            // KubeJS：dev.latvian.kubejs 无 26.2/26.3 Fabric 构建，核心 KubeJSGunEventPoster/GunMod 改为禁用态门面
             exclude 'com/tacz/guns/compat/kubejs/**'
             // 仅排除已被 PAL 实现替代、且硬依赖 KosmX API 的旧 animation 包/资产管理器；
             // PlayerAnimatorCompat 门面与 compat/playeranimator/pal/** 均正常参与编译。
@@ -284,19 +282,6 @@ sourceSets {
             exclude 'com/tacz/guns/compat/optifine/**'
             // Accelerated Rendering mixin：随 AR 模块禁用
             exclude 'com/tacz/guns/mixin/client/ar/**'
-
-            // ---- 以下为 26.3 移植新增的临时排除（2026-09-17）----
-            // REI：me.shedaniel:RoughlyEnoughItems-* 与 dev.architectury 均无 26.3 构件。
-            // 整个 compat/rei 包硬依赖其 API，无法编译；fabric.mod.json 的 rei_client/rei_common
-            // 入口已同步摘除。RecipeViewerReloadBridge 用反射访问 REI，不含编译期依赖，保留参编。
-            exclude 'cn/sh1rocu/tacz/compat/rei/**'
-            // Zoomify：dev.isxander.zoomify 无 26.3 构件。仅排除硬依赖其 API 的 IMPL，
-            // ZoomifyCompat 门面保留（getFov 直接回传原值 ⇒ 禁用态），调用点无需改动。
-            exclude 'com/tacz/guns/compat/zoomify/ZoomifyCompatInner.java'
-            // Shoulder Surfing Reloaded：无 26.3 构件。仅排除硬依赖其 API 的 IMPL 与插件入口，
-            // ShoulderSurfingCompat 门面保留（isModLoaded 恒 false ⇒ 禁用态）。
-            exclude 'com/tacz/guns/compat/shouldersurfing/ShoulderSurfingCompatInner.java'
-            exclude 'com/tacz/guns/compat/shouldersurfing/ShoulderSurfingPlugin.java'
         }
     }
 }

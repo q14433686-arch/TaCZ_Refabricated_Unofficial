@@ -288,15 +288,113 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     public static void onReload(RegistryAccess registries, boolean client) {
         if (!client) {
             if (getInstance() != null && getInstance().recipeManager != null) {
-                List<GunSmithTableRecipe> recipes = getInstance().recipeManager.getRecipes().stream()
+                RecipeManager rm = getInstance().recipeManager;
+                List<GunSmithTableRecipe> recipes = rm.getRecipes().stream()
                         .map(net.minecraft.world.item.crafting.RecipeHolder::value)
                         .filter(recipe -> recipe.getType() == ModRecipe.GUN_SMITH_TABLE_CRAFTING)
                         .map(GunSmithTableRecipe.class::cast)
                         .toList();
                 for (GunSmithTableRecipe recipe : recipes) {
-                    recipe.init();
+                    try {
+                        recipe.init();
+                    } catch (Exception e) {
+                        com.tacz.guns.GunMod.LOGGER.warn("Failed to initialize gun smith table recipe {}", recipe.getId(), e);
+                    }
+                }
+                sanitizeSyncedRecipes(rm, registries);
+            }
+        }
+    }
+
+    /**
+     * 清理 Fabric {@code fabric:recipe_sync} 待发送列表（{@code RecipeMapMixin.bySyncedSerializer}）中
+     * 因空标签或异常材料而无法网络编码的配方。
+     *
+     * <p>26.3 中 {@code Ingredient.CODEC}（{@code ExtraCodecs.nonEmptyHolderSet}）仅校验直接列表非空，
+     * 不校验命名标签（{@code HolderSet.Named}）是否为空；当枪包或附属包带有 {@code "required": false}
+     * 的兼容标签（如未安装联动模组时的 {@code #forge:ingots/steel}）且解析出 0 个物品时，配方仍会进入
+     * {@code RecipeMap}。原版 {@code RecipeManager} 会通过 {@code placementInfo().isImpossibleToPlace()}
+     * 忽略这类配方，但 Fabric API 的 {@code RecipeMapMixin} 会将 {@code RecipeMap.values()} 全量放进
+     * {@code bySyncedSerializer}，进档发包时 {@code CustomIngredientStreamCodec.encode} 遇到空 Ingredient
+     * 直接抛 {@code EncoderException("Cannot serialize empty ingredient PacketByteBuf")}，外层包装为
+     * {@code EncoderException: Failed to encode packet 'clientbound/minecraft:custom_payload' (fabric:recipe_sync)}。
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void sanitizeSyncedRecipes(RecipeManager recipeManager, RegistryAccess registries) {
+        try {
+            Object recipeMap = null;
+            for (java.lang.reflect.Field field : RecipeManager.class.getDeclaredFields()) {
+                if (net.minecraft.world.item.crafting.RecipeMap.class.isAssignableFrom(field.getType())) {
+                    field.setAccessible(true);
+                    recipeMap = field.get(recipeManager);
+                    break;
                 }
             }
+            if (recipeMap == null) {
+                return;
+            }
+            java.lang.reflect.Field bySyncedField = null;
+            for (java.lang.reflect.Field field : recipeMap.getClass().getDeclaredFields()) {
+                if ("bySyncedSerializer".equals(field.getName()) && Map.class.isAssignableFrom(field.getType())) {
+                    field.setAccessible(true);
+                    bySyncedField = field;
+                    break;
+                }
+            }
+            if (bySyncedField == null) {
+                return;
+            }
+            Map<net.minecraft.world.item.crafting.RecipeSerializer<?>, List<net.minecraft.world.item.crafting.RecipeHolder<?>>> bySynced =
+                    (Map) bySyncedField.get(recipeMap);
+            if (bySynced == null || bySynced.isEmpty()) {
+                return;
+            }
+            io.netty.buffer.ByteBuf rawBuf = io.netty.buffer.Unpooled.buffer();
+            try {
+                net.minecraft.network.RegistryFriendlyByteBuf testBuf =
+                        new net.minecraft.network.RegistryFriendlyByteBuf(rawBuf, registries);
+                for (var entry : bySynced.entrySet()) {
+                    net.minecraft.world.item.crafting.RecipeSerializer serializer = entry.getKey();
+                    List<net.minecraft.world.item.crafting.RecipeHolder<?>> list = entry.getValue();
+                    if (list == null || list.isEmpty()) {
+                        continue;
+                    }
+                    list.removeIf(holder -> {
+                        net.minecraft.world.item.crafting.Recipe<?> recipe = holder.value();
+                        if (!recipe.isSpecial()) {
+                            var placement = recipe.placementInfo();
+                            if (placement.isImpossibleToPlace()) {
+                                com.tacz.guns.GunMod.LOGGER.warn(
+                                        "[TACZ Recipe Sync] Skipping recipe {} with empty/unplaceable ingredients from fabric:recipe_sync",
+                                        holder.id().identifier());
+                                return true;
+                            }
+                            for (net.minecraft.world.item.crafting.Ingredient ing : placement.ingredients()) {
+                                if (ing.isEmpty() || ing.items().findAny().isEmpty()) {
+                                    com.tacz.guns.GunMod.LOGGER.warn(
+                                            "[TACZ Recipe Sync] Skipping recipe {} with empty ingredient from fabric:recipe_sync",
+                                            holder.id().identifier());
+                                    return true;
+                                }
+                            }
+                        }
+                        try {
+                            rawBuf.clear();
+                            serializer.streamCodec().encode(testBuf, recipe);
+                            return false;
+                        } catch (Throwable t) {
+                            com.tacz.guns.GunMod.LOGGER.warn(
+                                    "[TACZ Recipe Sync] Skipping recipe {} that failed streamCodec().encode from fabric:recipe_sync",
+                                    holder.id().identifier(), t);
+                            return true;
+                        }
+                    });
+                }
+            } finally {
+                rawBuf.release();
+            }
+        } catch (Throwable t) {
+            com.tacz.guns.GunMod.LOGGER.debug("[TACZ Recipe Sync] Could not sanitize bySyncedSerializer map", t);
         }
     }
 

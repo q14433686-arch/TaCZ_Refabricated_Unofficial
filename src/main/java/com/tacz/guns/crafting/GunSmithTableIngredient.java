@@ -205,11 +205,41 @@ public class GunSmithTableIngredient {
         if (raw.isJsonArray()) {
             JsonArray src = raw.getAsJsonArray();
             JsonArray out = new JsonArray(src.size());
+            JsonArray resolvedItems = new JsonArray();
             boolean changed = false;
+            boolean hasTagOrMissingItem = false;
             for (JsonElement e : src) {
                 JsonElement n = normalizeLegacy(e);
                 changed |= n != e;
                 out.add(n);
+                if (n.isJsonPrimitive() && n.getAsJsonPrimitive().isString()) {
+                    String str = n.getAsString();
+                    if (str.startsWith("#")) {
+                        // HolderSetCodec 仅允许单个字符串写 "#tag"，不允许在数组内写 "#tag"
+                        // （数组分支走 Holder.CODEC.listOf()，遇到 "#" 会抛 IdentifierException）。
+                        // 因此将数组内的标签展开为已绑定物品 ID 列表。
+                        hasTagOrMissingItem = true;
+                        net.minecraft.resources.Identifier tagId = net.minecraft.resources.Identifier.tryParse(str.substring(1));
+                        if (tagId != null) {
+                            net.minecraft.tags.TagKey<net.minecraft.world.item.Item> tagKey =
+                                    net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, tagId);
+                            for (net.minecraft.core.Holder<net.minecraft.world.item.Item> holder : BuiltInRegistries.ITEM.getTagOrEmpty(tagKey)) {
+                                holder.unwrapKey().ifPresent(key -> resolvedItems.add(new JsonPrimitive(key.identifier().toString())));
+                            }
+                        }
+                    } else {
+                        net.minecraft.resources.Identifier itemId = net.minecraft.resources.Identifier.tryParse(str);
+                        if (itemId != null && BuiltInRegistries.ITEM.containsKey(itemId)
+                                && BuiltInRegistries.ITEM.getValue(itemId) != net.minecraft.world.item.Items.AIR) {
+                            resolvedItems.add(new JsonPrimitive(itemId.toString()));
+                        } else {
+                            hasTagOrMissingItem = true;
+                        }
+                    }
+                }
+            }
+            if (hasTagOrMissingItem && !resolvedItems.isEmpty()) {
+                return resolvedItems;
             }
             return changed ? out : raw;
         }

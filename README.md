@@ -55,21 +55,16 @@
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
-R1-hotfix 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与专服实测；Carry On 无 26.3 构件，仅保留接线）：
+R1-hotfix 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与专服实测；REI、Zoomify、Shoulder Surfing Reloaded、Carry On 的 26.3 适配已随上游发布恢复，待实机复验）：
 
 | 可选 mod | R1-hotfix 编译 pin / 建议版本 | 用途 |
 |---|---|---|
-| JEI | 编译 pin **31.0.0.5**（beta） | 内置 Ammo Query 与工作台类别 |
-| Carry On | 建议 **>=2.11.0** | A/B/C 多格工作台的搬运兼容 |
-
-26.2 线支持、但**在 26.3 上已从本分支摘除**的可选集成（截至 2026-09-17 上游均无 26.3 构件，
-无法编译；接线代码与坐标保留在源码注释中，等上游更新后可回补）：
-
-| 可选 mod | 26.2 线状态 | 26.3 线现状 |
-|---|---|---|
-| REI | 编译 pin 26.2.820，内置 Ammo Query | **摘除**：REI/Architectury 无 26.3 构件 |
-| Zoomify | 开镜时让出缩放控制 | **摘除**：无 26.3 构件 |
-| Shoulder Surfing Reloaded | 第三人称肩视兼容 | **摘除**：无 26.3 构件 |
+| JEI | 编译 pin **31.8.0.48**（beta） | 内置 Ammo Query 与工作台类别 |
+| REI | 编译 pin **26.3.823**（+ Architectury **22.0.3**） | 内置 Ammo Query 与工作台类别 |
+| Zoomify | 编译 pin **2.16.3+26.3** | 开镜时按缩放倍率修正 FOV |
+| Shoulder Surfing Reloaded | 编译 pin **26.3-5.2.0+fabric** | 第三人称肩视准星与举枪状态兼容 |
+| Carry On | 建议 **>=2.12.0**（26.3 正式版） | A/B/C 多格工作台的搬运兼容 |
+| Player Animation Library (PAL) | 编译 pin **1.2.7+26.3**（beta） | 第三人称四层动画兼容 |
 
 ---
 
@@ -78,8 +73,8 @@ R1-hotfix 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与
 - [可替换弹药源 API](docs/AMMO_SOURCE_API.md)：下游可在不混入 TaCZ 内部背包代码的情况下，
   为特定实体/枪械提供只读查询和服务端消费弹药源；
 - 稳定的具名 gameplay / Lua dispatch hooks，避免扩展依赖编译器生成的 `lambda$...` 名称；
-- [Carry On 2.11 工作台兼容](docs/CARRYON_COMPAT.md)：从任一半格搬运、原子放下多格结构，
-  并在 Carry On 的 26.2 `ItemStackTemplate` 渲染路径恢复枪包 `BlockId`；
+- [Carry On 2.11+ 工作台兼容](docs/CARRYON_COMPAT.md)：从任一半格搬运、原子放下多格结构，
+  并在 Carry On 的 `ItemStackTemplate` 渲染路径恢复枪包 `BlockId`；
 - 内置 JEI/REI **Ammo Query**：从每一种已被加载枪械使用的弹药反查兼容枪械，排序、前 60 项
   固定显示和 overflow 轮换在两个 viewer 中共享同一份数据；
 - 远程枪包同步完成后合并请求并刷新已安装的 recipe viewer，避免首轮注册早于网络 cache 时
@@ -87,7 +82,7 @@ R1-hotfix 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与
 
 **26.3 R1-hotfix**（当前源码版本）的变更清单见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)：
 渲染底层 renderpearl 迁移、第一人称拆分、shaderc 着色器、Iris 26.3 裁剪判定重做、26.3 战利品表/配方 codec/
-配方同步三项行为修复，以及 REI/Zoomify/SSR 的禁用说明。以下为 26.2 线的历史 release 摘要
+配方同步行为修复，以及 REI / Zoomify / Shoulder Surfing Reloaded / Carry On 26.3 兼容恢复。以下为 26.2 线的历史 release 摘要
 （26.2 R2 详情见 [`docs/archive/CHANGELOG_26_2_R2.md`](docs/archive/CHANGELOG_26_2_R2.md)）：
 
 **26.2 R3-hotfix2**：在 R3-hotfix 基础上同步 1.21.11 线的第一人称手部错位
