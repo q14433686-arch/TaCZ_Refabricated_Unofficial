@@ -34,7 +34,7 @@ final class PalRotationAdjustment implements Function<String, Optional<Adjustmen
         float bodyYaw = Mth.rotLerp(partialTick, avatar.yBodyRotO, avatar.yBodyRot);
         float headYaw = Mth.rotLerp(partialTick, avatar.yHeadRotO, avatar.yHeadRot);
         float pitchDegrees = Mth.wrapDegrees(Mth.lerp(partialTick, avatar.xRotO, avatar.getXRot()));
-        float yawDegrees = Mth.clamp(Mth.wrapDegrees(headYaw - bodyYaw), -85.0F, 85.0F);
+        float yawDegrees = Math.clamp(Mth.wrapDegrees(headYaw - bodyYaw), -85.0F, 85.0F);
         float pitch = pitchDegrees * Mth.DEG_TO_RAD;
         float yaw = yawDegrees * Mth.DEG_TO_RAD;
 

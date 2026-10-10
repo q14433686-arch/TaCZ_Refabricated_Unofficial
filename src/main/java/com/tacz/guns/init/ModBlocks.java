@@ -12,7 +12,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.sounds.BlockSoundSets;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -31,7 +31,7 @@ public class ModBlocks {
 
     public static Block TARGET = registerBlock("target", new TargetBlock(woodProps("target")));
     // 26.3: PushReaction.DESTROY 更名为 POPPED（语义不变：被活塞推动时破坏掉落）。
-    public static Block STATUE = registerBlock("statue", new StatueBlock(BlockBehaviour.Properties.of().setId(blockKey("statue")).sound(SoundType.STONE).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.POPPED)));
+    public static Block STATUE = registerBlock("statue", new StatueBlock(BlockBehaviour.Properties.of().setId(blockKey("statue")).sound(BlockSoundSets.STONE).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.POPPED)));
 
     public static BlockEntityType<GunSmithTableBlockEntity> GUN_SMITH_TABLE_BE = registerBlockEntity("gun_smith_table", GunSmithTableBlockEntity.TYPE);
     public static BlockEntityType<TargetBlockEntity> TARGET_BE = registerBlockEntity("target", TargetBlockEntity.TYPE);
@@ -44,7 +44,7 @@ public class ModBlocks {
     }
 
     private static BlockBehaviour.Properties woodProps(String name) {
-        return BlockBehaviour.Properties.of().setId(blockKey(name)).sound(SoundType.WOOD).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.POPPED);
+        return BlockBehaviour.Properties.of().setId(blockKey(name)).sound(BlockSoundSets.WOOD).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.POPPED);
     }
 
     private static Block registerBlock(String name, Block block) {

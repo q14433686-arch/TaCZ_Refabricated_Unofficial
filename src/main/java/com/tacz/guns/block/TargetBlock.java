@@ -72,7 +72,7 @@ public class TargetBlock extends BaseEntityBlock {
             distance = Math.max(y, z);
         }
         // 离开中心 0.25 单位就是最低分？
-        double percent = Mth.clamp((0.25 - distance) / 0.25, 0, 1);
+        double percent = Math.clamp((0.25 - distance) / 0.25, 0, 1);
         return Math.max(1, Mth.ceil(15 * percent));
     }
 

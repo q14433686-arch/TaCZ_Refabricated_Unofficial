@@ -325,7 +325,7 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
                 // 常见情形直接短路，省掉一次开镜进度查询。
                 return 1.0F;
             }
-            float aimingProgress = Mth.clamp(
+            float aimingProgress = Math.clamp(
                     com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator.fromLocalPlayer(player)
                             .getClientAimingProgress(partialTick), 0.0F, 1.0F);
             return Mth.lerp(aimingProgress, 1.0F, intensity);

@@ -38,7 +38,7 @@ public class AdjustmentYRotModifier implements Function<String, Optional<Adjustm
 
         float yaw = yHeadRot - yBodyRot;
         yaw = Mth.wrapDegrees(yaw);
-        yaw = Mth.clamp(yaw, -85f, 85f);
+        yaw = Math.clamp(yaw, -85f, 85f);
 
         float pitch = Mth.wrapDegrees(xRot);
 

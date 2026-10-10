@@ -75,15 +75,15 @@ public final class DisplayTransform {
         // 1.20.1 契约：JSON 写的是像素，乘 1/16 换算成方块单位。
         translation.mul(0.0625F);
         translation.set(
-                Mth.clamp(translation.x(), -MAX_TRANSLATION, MAX_TRANSLATION),
-                Mth.clamp(translation.y(), -MAX_TRANSLATION, MAX_TRANSLATION),
-                Mth.clamp(translation.z(), -MAX_TRANSLATION, MAX_TRANSLATION)
+                Math.clamp(translation.x(), -MAX_TRANSLATION, MAX_TRANSLATION),
+                Math.clamp(translation.y(), -MAX_TRANSLATION, MAX_TRANSLATION),
+                Math.clamp(translation.z(), -MAX_TRANSLATION, MAX_TRANSLATION)
         );
         Vector3f scale = getVector3f(json, "scale", DEFAULT_SCALE);
         scale.set(
-                Mth.clamp(scale.x(), -MAX_SCALE, MAX_SCALE),
-                Mth.clamp(scale.y(), -MAX_SCALE, MAX_SCALE),
-                Mth.clamp(scale.z(), -MAX_SCALE, MAX_SCALE)
+                Math.clamp(scale.x(), -MAX_SCALE, MAX_SCALE),
+                Math.clamp(scale.y(), -MAX_SCALE, MAX_SCALE),
+                Math.clamp(scale.z(), -MAX_SCALE, MAX_SCALE)
         );
         return new EntityTransform(rotation, translation, scale);
     }

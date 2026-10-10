@@ -65,7 +65,7 @@ public class FirstPersonHandsAndItemsMixin implements KeepingItemRenderer {
      * <pre>
      * // vanilla tick(): 每 tick 朝目标值逼近，产生"落下-抬起"的过渡
      * this.oMainHandHeight = this.mainHandHeight;
-     * this.mainHandHeight += Mth.clamp(target - this.mainHandHeight, -0.4F, 0.4F);
+     * this.mainHandHeight += Math.clamp(target - this.mainHandHeight, -0.4F, 0.4F);
      * </pre>
      * 而 {@code mainHandItem} 决定"现在该画哪把枪"、何时切换到新枪。
      *

@@ -7,7 +7,7 @@ import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.pipeline.ColorTargetState;
 import com.mojang.renderpearl.api.pipeline.DepthStencilState;
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
 import com.mojang.renderpearl.api.commands.RenderPass;
@@ -1243,7 +1243,7 @@ public final class PolyMeshGpuRenderer {
 
     private static GpuTextureView resolveTextureView(Identifier texture) {
         try {
-            return Minecraft.getInstance().getTextureManager().getTexture(texture).getTextureView();
+            return Minecraft.getInstance().getTextureManager().getTexture(texture).textureView();
         } catch (Exception e) {
             if (LOGGED_TEXTURE_FAILURES.add(texture)) {
                 LOGGER.error("[TacZMeshLoader] Failed to resolve texture view for {} (logged once)", texture, e);

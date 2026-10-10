@@ -34,9 +34,9 @@ public final class UsingProgressOverlay {
             int maxTicks = customItem.getMaxUsingTick(stack);
             int usingTicks = player.getTicksUsingItem();
             if (maxTicks > 0) {
-                float progress = Mth.clamp(usingTicks / (float) maxTicks, 0.0F, 1.0F);
+                float progress = Math.clamp(usingTicks / (float) maxTicks, 0.0F, 1.0F);
                 int alpha = progress >= 1.0F
-                        ? Mth.clamp((int) (80 + 80 * Math.sin(usingTicks / 2.0F)), 1, 160)
+                        ? Math.clamp((int) (80 + 80 * Math.sin(usingTicks / 2.0F)), 1, 160)
                         : 0x80;
                 boolean toggle = stack.getItem() instanceof IConsumable
                         && LrTacticalAPI.getConsumableIndex(stack)
@@ -53,7 +53,7 @@ public final class UsingProgressOverlay {
                             // Matches ThrowableItem: in-hand detonation at prepare + full lifeTime.
                             // Keep this denominator in lockstep with that threshold, or the bar
                             // will read full before (or after) the grenade actually cooks out.
-                            float cooked = Mth.clamp(
+                            float cooked = Math.clamp(
                                     (usingTicks - data.getPrepareTime()) / (float) maxCookTicks,
                                     0.0F, 1.0F);
                             graphics.fill(x, y, x + Math.round(cooked * 32), y + 4,
@@ -81,7 +81,7 @@ public final class UsingProgressOverlay {
 
         var combat = ModCapabilities.combatProperties(player);
         if (combat.getCoolDownTick() > 0 && combat.getLastMaxTick() > 0) {
-            float progress = 1.0F - Mth.clamp(
+            float progress = 1.0F - Math.clamp(
                     combat.getCoolDownTick() / (float) combat.getLastMaxTick(), 0.0F, 1.0F);
             graphics.fill(x, y, x + Math.round(progress * 32), y + 4, 0x80FFFFFF);
         }

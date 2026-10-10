@@ -1,5 +1,5 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
     id 'maven-publish'
 }
 
@@ -27,9 +27,9 @@ loom {
     // }
     runs {
         client {
-            // The embedded default pack alone contains >80 MiB of textures, audio, and models.
-            // 384 MiB consistently OOMs during its first resource reload under 26.2.
-            vmArg "-Xmx768m"
+            // The default pack plus snapshot world/chunk saving exceeds 768 MiB.
+            // Leave room for the integrated server as well as client resources.
+            vmArg "-Xmx2G"
         }
         server {
             vmArg "-Xmx384m"
@@ -134,7 +134,7 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     // No mappings needed — 26.1+ uses unobfuscated Minecraft
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     annotationProcessor 'com.google.code.findbugs:jsr305:3.0.2'
@@ -177,7 +177,7 @@ dependencies {
     compileOnly "maven.modrinth:jei:${jei_version}"
 
     // Cloth Config — 26.3
-    implementation "me.shedaniel.cloth:cloth-config-fabric:${cloth_config_fabric}"
+    compileOnly "me.shedaniel.cloth:cloth-config-fabric:${cloth_config_fabric}"
 
     // Embeddium
     // compileOnly "curse.maven:embeddium-908741:${embeddedt_id}"
@@ -206,7 +206,7 @@ dependencies {
     implementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.3.0"
 
     // ModMenu — 26.3 (via Modrinth maven, 21.0.0 release)
-    implementation "maven.modrinth:modmenu:${modmenu_version}"
+    compileOnly "maven.modrinth:modmenu:${modmenu_version}"
 
     // Zoomify — 26.3（Modrinth 2.16.3+26.3 正式版，2026-09-30 核实并恢复）
     compileOnly "maven.modrinth:zoomify:${zoomify_version}"
@@ -235,11 +235,12 @@ processResources {
     inputs.property "version", project.version
     inputs.property "minecraft_version", project.minecraft_version
     inputs.property "loader_version", project.loader_version
+    inputs.property "minecraft_dependency_version", project.minecraft_dependency_version
     filteringCharset "UTF-8"
 
     filesMatching("fabric.mod.json") {
         expand "version": project.version,
-                "minecraft_version": project.minecraft_version,
+                "minecraft_version": project.minecraft_dependency_version,
                 "loader_version": project.loader_version
     }
 }

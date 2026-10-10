@@ -169,13 +169,13 @@ public class InaccuracyModifier implements IAttachmentModifier<Map<InaccuracyTyp
         aimInaccuracy = 1f - aimInaccuracy;
         float modifiedValue = 1 - cacheProperty.<Map<InaccuracyType, Float>>getCache(InaccuracyModifier.ID).get(InaccuracyType.AIM);
 
-        aimInaccuracy = Mth.clamp(aimInaccuracy, 0f, 1f);
-        modifiedValue = Mth.clamp(modifiedValue, 0f, 1f);
+        aimInaccuracy = Math.clamp(aimInaccuracy, 0f, 1f);
+        modifiedValue = Math.clamp(modifiedValue, 0f, 1f);
 
         float inaccuracyModifier = modifiedValue - aimInaccuracy;
 
-        double aimInaccuracyPercent = Mth.clamp(aimInaccuracy, 0f, 1f);
-        double inaccuracyModifierPercent = Mth.clamp(inaccuracyModifier, 0f, 1f);
+        double aimInaccuracyPercent = Math.clamp(aimInaccuracy, 0f, 1f);
+        double inaccuracyModifierPercent = Math.clamp(inaccuracyModifier, 0f, 1f);
 
         String titleKey = "gui.tacz.gun_refit.property_diagrams.aim_inaccuracy";
         String positivelyString = String.format("%.1f%% §a(+%.1f%%)", modifiedValue * 100, inaccuracyModifier * 100);

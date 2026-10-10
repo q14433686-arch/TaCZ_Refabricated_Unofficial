@@ -7,7 +7,7 @@ import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
 import com.mojang.renderpearl.api.pipeline.UniformType;
 import com.mojang.renderpearl.api.pipeline.ColorTargetState;
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
@@ -154,7 +154,7 @@ public final class ScopePipRenderer {
      * 偏移 5367-5437 实读）与它的用法 {@code RenderTarget#blitAndBlendToTexture}：
      * <pre>
      * builder(GLOBALS_SNIPPET)
-     *     .withVertexShader("core/screenquad")   // 无顶点缓冲，靠 gl_VertexID 造三角形
+     *     .withVertexShader("core/screentriangle")   // 无顶点缓冲，靠 gl_VertexID 造三角形
      *     .withFragmentShader("core/blit_screen")
      *     .withBindGroupLayout(BindGroupLayouts.IN_SAMPLER)
      *     .withPrimitiveTopology(TRIANGLES)
@@ -200,7 +200,7 @@ public final class ScopePipRenderer {
                     .withUniform(MASK_SAMPLER, UniformType.COMBINED_IMAGE_SAMPLER).build();
             compositePipeline = RenderPipeline.builder(RenderPipelines.POST_PROCESSING_SNIPPET)
                     .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_pip_composite"))
-                    .withVertexShader("core/screenquad")
+                    .withVertexShader("core/screentriangle")
                     .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_pip"))
                     .withBindGroupLayout(BindGroupLayouts.IN_SAMPLER)
                     .withBindGroupLayout(maskLayout)
@@ -832,7 +832,7 @@ public final class ScopePipRenderer {
         if (RenderConfig.SCOPE_PIP_WORLD_ZOOM_SHARE == null) {
             return 1.0f;
         }
-        float share = Mth.clamp(RenderConfig.SCOPE_PIP_WORLD_ZOOM_SHARE.get().floatValue(), 0.0f, 1.0f);
+        float share = Math.clamp(RenderConfig.SCOPE_PIP_WORLD_ZOOM_SHARE.get().floatValue(), 0.0f, 1.0f);
         if (share <= 0.0f) {
             return 1.0f;
         }
@@ -860,7 +860,7 @@ public final class ScopePipRenderer {
      * {@code 1 + (zoom-1)·progress} 完全同式，两边必须逐帧一致，否则镜内外会打架。
      */
     public static float worldZoomAtProgress(float aimingProgress) {
-        return 1.0f + (worldZoomTarget() - 1.0f) * Mth.clamp(aimingProgress, 0.0f, 1.0f);
+        return 1.0f + (worldZoomTarget() - 1.0f) * Math.clamp(aimingProgress, 0.0f, 1.0f);
     }
 
     /** 供 {@code CameraSetupEvent} 使用：PIP 生效时世界该放大多少。 */
@@ -899,7 +899,7 @@ public final class ScopePipRenderer {
         if (player == null) {
             return 0.0f;
         }
-        return Mth.clamp(IClientPlayerGunOperator.fromLocalPlayer(player)
+        return Math.clamp(IClientPlayerGunOperator.fromLocalPlayer(player)
                 .getClientAimingProgress(mc.getDeltaTracker().getGameTimeDeltaPartialTick(false)), 0.0f, 1.0f);
     }
 
@@ -1123,7 +1123,6 @@ public final class ScopePipRenderer {
             // 不同步的话它们在镜内不放大，还叠在放大后的画面之上。见 PhysicsModCompat。
             physicsPatched = PhysicsModCompat.overrideProjection(NARROW_MATRIX);
 
-            boolean renderSky = !mc.gui.hud.getBossOverlay().shouldCreateWorldFog();
             // 【光影下不重定向】Iris 不往 mainRenderTarget() 画世界 —— 它画进自己那套
             // colortex，最后由 FinalPassRenderer.renderFinalPass() 把成品合成到主帧缓冲
             // （IrisRenderingPipeline#finalizeLevelRendering 字节码实读）。
@@ -1154,26 +1153,13 @@ public final class ScopePipRenderer {
             // 再取一次同样的实体/方块实体/名牌。详见 SimpleFeatureRenderPhaseMixin。
             insideScopeLevelRender = true;
             try {
-                // 26.3 签名变更：LevelRenderer#render 去掉了 DeltaTracker 与
-                // Matrix4fc(viewRotation) 两个形参（前者不再需要，后者改由方法内部
-                // 从 cameraState.viewRotationMatrix 取 —— LR263:199-200 的
-                // pushMatrix/mul 用的就是它，与我们原先显式传的是同一个对象），
-                // 末尾新增 consistentDepthRequired。
-                //
-                // consistentDepthRequired 传 false：该参只在「有后处理 post chain
-                // 生效」时为 true（vanilla GameRenderer:667 取
-                // !appliedPostEffects.isEmpty()），作用是把 always-on-top 特性画到
-                // 一张独立深度图再回积分到主深度。镜内这一遍不接任何 post chain、
-                // 也不需要 always-on-top 的深度一致性，传 false 即走「直接用主深度」
-                // 的那条分支（LR263:489），与 26.2 那边根本没有这一步的行为一致。
+                // 26.4 reads fog color and sky visibility from the extracted render state.
                 mc.levelRenderer.render(
                         allocator,
                         // 方块高亮线框：镜内不画，屏幕空间的描边在镜内没有意义。
                         false,
                         camera,
                         fogRenderer.getBuffer(FogRenderer.FogMode.WORLD),
-                        camera.fogData.color,
-                        renderSky,
                         false);
             } finally {
                 // 必须最先清：从这里往后（主画面那一遍）各 phase 要恢复
@@ -1460,7 +1446,7 @@ public final class ScopePipRenderer {
                 // 让 `> 0.5` 判定抖动成一圈毛边 —— 与 ScopeMaskTextureHandle 同一理由。
                 pass.setUniform(MASK_SAMPLER, mask.getColorTextureView(),
                         RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-                // 无顶点缓冲的全屏三角形：core/screenquad.vsh 用 gl_VertexID 造顶点。
+                // 无顶点缓冲的全屏三角形：core/screentriangle.vsh 用 gl_VertexID 造顶点。
                 // 参数顺序照 RenderTarget#blitAndBlendToTexture 抄：draw(3, 1, 0, 0)。
                 pass.draw(3, 1, 0, 0);
             }
@@ -1492,10 +1478,10 @@ public final class ScopePipRenderer {
         int y0 = (int) Math.floor((b[1] * 0.5f + 0.5f) * h) - 2;
         int x1 = (int) Math.ceil((b[2] * 0.5f + 0.5f) * w) + 2;
         int y1 = (int) Math.ceil((b[3] * 0.5f + 0.5f) * h) + 2;
-        x0 = Mth.clamp(x0, 0, w);
-        y0 = Mth.clamp(y0, 0, h);
-        x1 = Mth.clamp(x1, 0, w);
-        y1 = Mth.clamp(y1, 0, h);
+        x0 = Math.clamp(x0, 0, w);
+        y0 = Math.clamp(y0, 0, h);
+        x1 = Math.clamp(x1, 0, w);
+        y1 = Math.clamp(y1, 0, h);
         if (x1 <= x0 || y1 <= y0) {
             return;
         }

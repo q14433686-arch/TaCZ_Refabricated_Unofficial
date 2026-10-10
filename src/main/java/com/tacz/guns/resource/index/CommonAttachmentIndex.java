@@ -29,7 +29,7 @@ public class CommonAttachmentIndex {
         Preconditions.checkArgument(attachmentIndexPOJO != null, "index object file is empty");
         Preconditions.checkArgument(attachmentIndexPOJO.getType() != null, "attachment type must be nonnull.");
         index.type = attachmentIndexPOJO.getType();
-        index.sort = Mth.clamp(attachmentIndexPOJO.getSort(), 0, 65536);
+        index.sort = Math.clamp(attachmentIndexPOJO.getSort(), 0, 65536);
     }
 
     private static void checkData(AttachmentIndexPOJO attachmentIndexPOJO, CommonAttachmentIndex index) {

@@ -213,10 +213,13 @@ public class StickyGrenadeEntity extends GrenadeEntity {
     private void stickToBlock(BlockHitResult blockResult) {
         BlockPos resultPos = blockResult.getBlockPos();
         BlockState state = this.level().getBlockState(resultPos);
-        // 26.2: getSoundType 只剩无参版（在 BlockBehaviour 上），与基类同一处变更。
-        SoundEvent event = state.getSoundType().getStepSound();
+        // 26.4 resolves optional step sounds through the level's block sound registry.
+        SoundEvent event = state.getSounds(this.level()).stepSound()
+                        .map(net.minecraft.core.Holder::value).orElse(null);
         Vec3 loc = blockResult.getLocation();
-        this.level().playSound(null, loc.x, loc.y, loc.z, event, SoundSource.AMBIENT, 2.0F, 1.0F);
+        if (event != null) {
+            this.level().playSound(null, loc.x, loc.y, loc.z, event, SoundSource.AMBIENT, 2.0F, 1.0F);
+        }
         // 上游此处还会播 ModSounds.GRENADE_BOUNCE（原作受限音效），本移植不打包。
 
         this.entityData.set(STICKED, true);

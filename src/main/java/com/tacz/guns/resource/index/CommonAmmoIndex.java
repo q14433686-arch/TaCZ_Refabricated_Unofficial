@@ -22,7 +22,7 @@ public class CommonAmmoIndex {
     private static void checkIndex(AmmoIndexPOJO ammoIndexPOJO, CommonAmmoIndex index) {
         Preconditions.checkArgument(ammoIndexPOJO != null, "index object file is empty");
         index.stackSize = Math.max(ammoIndexPOJO.getStackSize(), 1);
-        index.sort = Mth.clamp(ammoIndexPOJO.getSort(), 0, 65536);
+        index.sort = Math.clamp(ammoIndexPOJO.getSort(), 0, 65536);
     }
 
     public int getStackSize() {

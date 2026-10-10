@@ -87,16 +87,16 @@ public final class BlockTransformParser {
         Vector3f translation = getVector3f(object, "translation", DEFAULT_TRANSLATION);
         translation.mul(0.0625F);
         translation.set(
-                Mth.clamp(translation.x, -MAX_TRANSLATION, MAX_TRANSLATION),
-                Mth.clamp(translation.y, -MAX_TRANSLATION, MAX_TRANSLATION),
-                Mth.clamp(translation.z, -MAX_TRANSLATION, MAX_TRANSLATION)
+                Math.clamp(translation.x, -MAX_TRANSLATION, MAX_TRANSLATION),
+                Math.clamp(translation.y, -MAX_TRANSLATION, MAX_TRANSLATION),
+                Math.clamp(translation.z, -MAX_TRANSLATION, MAX_TRANSLATION)
         );
 
         Vector3f scale = getVector3f(object, "scale", DEFAULT_SCALE);
         scale.set(
-                Mth.clamp(scale.x, -MAX_SCALE, MAX_SCALE),
-                Mth.clamp(scale.y, -MAX_SCALE, MAX_SCALE),
-                Mth.clamp(scale.z, -MAX_SCALE, MAX_SCALE)
+                Math.clamp(scale.x, -MAX_SCALE, MAX_SCALE),
+                Math.clamp(scale.y, -MAX_SCALE, MAX_SCALE),
+                Math.clamp(scale.z, -MAX_SCALE, MAX_SCALE)
         );
 
         return new ItemTransform(rotation, translation, scale);

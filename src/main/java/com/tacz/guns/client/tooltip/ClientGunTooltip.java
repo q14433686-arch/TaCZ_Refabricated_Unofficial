@@ -195,7 +195,7 @@ public class ClientGunTooltip implements ClientTooltipComponent {
                 double armorDamagePercent = AttachmentDataUtils.getArmorIgnoreWithAttachment(gun, gunData);
                 double headShotMultiplierPercent = AttachmentDataUtils.getHeadshotMultiplier(gun, gunData);
 
-                armorDamagePercent = Mth.clamp(armorDamagePercent, 0.0F, 1.0F);
+                armorDamagePercent = Math.clamp(armorDamagePercent, 0.0F, 1.0F);
 
                 this.armorIgnore = Component.translatable("tooltip.tacz.gun.armor_ignore", FORMAT.format(armorDamagePercent));
                 this.headShotMultiplier = Component.translatable("tooltip.tacz.gun.head_shot_multiplier", FORMAT.format(headShotMultiplierPercent));

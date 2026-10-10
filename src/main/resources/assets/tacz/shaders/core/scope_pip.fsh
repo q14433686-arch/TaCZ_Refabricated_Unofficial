@@ -3,7 +3,7 @@
 
 // 瞄准镜「镜内画中画」合成片元着色器。
 //
-// 一个全屏三角形（顶点由 vanilla core/screenquad.vsh 用 gl_VertexID 造出来），
+// 一个全屏三角形（顶点由 vanilla core/screentriangle.vsh 用 gl_VertexID 造出来），
 // 逐像素问两句：
 //   1. 这个像素属不属于目镜孔径？不属于 -> discard，主画面原样保留。
 //   2. 属于 -> 从「本帧世界画面的拷贝」里按倍率重采样，输出放大后的世界。
@@ -25,7 +25,7 @@ uniform sampler2D InSampler;
 uniform sampler2D ScopeMaskSampler;
 
 // 26.3: 全屏 pass 的 varying 必须显式 location，且要与配对的
-// vanilla core/screenquad.vsh 对齐 —— 它是 layout(location = 0) out vec2 texCoord。
+// vanilla core/screentriangle.vsh 对齐 —— 它是 layout(location = 0) out vec2 texCoord。
 // 约定同 vanilla blit_screen.fsh。
 layout(location = 0) in vec2 texCoord;
 
