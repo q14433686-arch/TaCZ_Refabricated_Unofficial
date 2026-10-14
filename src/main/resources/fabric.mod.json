@@ -6,8 +6,8 @@
     "taczmeshloader"
   ],
   "version": "${version}",
-  "name": "[UNOFFICIAL] TaCZ Refabricated (26.4 Snapshot 3 R1)",
-  "description": "Unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix and the 26.3 branch. Targets Minecraft 26.4-snapshot-3. Experimental snapshot port: basic world entry and pipeline compilation verified on macOS/Vulkan; gameplay, dedicated servers and optional integrations need further testing. Forge Config API Port 26.3.0 currently requires a Minecraft dependency override. Not affiliated with or endorsed by the TACZ Dev Team. The 1.1.8 SemVer core preserves existing gun-pack version requirements.",
+  "name": "[UNOFFICIAL] TaCZ Refabricated (26.4 Snapshot 4 R1)",
+  "description": "Unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix and the 26.3 branch. Targets Minecraft 26.4-snapshot-4. Experimental snapshot port: Snapshot 4 build and client initialization verified; the contributor confirmed world entry and stable operation; gameplay, dedicated servers and optional integrations need further testing. Forge Config API Port 26.3.0 currently requires a Minecraft dependency override. Not affiliated with or endorsed by the TACZ Dev Team. The 1.1.8 SemVer core preserves existing gun-pack version requirements.",
   "authors": [
     "Sh1roCu"
   ],
@@ -59,7 +59,7 @@
   "accessWidener": "tacz.accesswidener",
   "depends": {
     "fabricloader": ">=0.19.5",
-    "fabric-api": ">=0.162.2",
+    "fabric-api": ">=0.162.3",
     "minecraft": "${minecraft_version}",
     "java": ">=25",
     "forgeconfigapiport": ">=26.3.0"

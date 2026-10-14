@@ -6,7 +6,6 @@ import net.minecraft.client.resources.sounds.AbstractSoundInstance;
 import net.minecraft.client.resources.sounds.EntityBoundSoundInstance;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.sounds.SoundManager;
-import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
@@ -61,17 +60,17 @@ public class GunSoundInstance extends AbstractSoundInstance {
         return registryName;
     }
 
-    // 26.3: SoundInstance#resolve 更名为 getOrResolve（AbstractSoundInstance 同步改名）。
+    // Snapshot 4 selects the sound and returns success before applying the gun-pack path.
     @Override
-    public WeighedSoundEvents getOrResolve(SoundManager manager) {
-        WeighedSoundEvents events = super.getOrResolve(manager);
-        if (events != null && this.registryName != null) {
+    public boolean resolveAndSelectSound(SoundManager manager) {
+        boolean resolved = super.resolveAndSelectSound(manager);
+        if (resolved && this.registryName != null) {
             this.redirectedSound = new TaczSound(this.registryName, TACZ_SOUND_LISTER.idToFile(this.registryName), super.getSound());
             this.sound = this.redirectedSound;
         } else {
             this.redirectedSound = null;
         }
-        return events;
+        return resolved;
     }
 
     @Override

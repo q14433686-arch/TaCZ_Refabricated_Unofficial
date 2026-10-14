@@ -34,7 +34,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
 
@@ -82,11 +81,6 @@ public class TaCZFabricClient implements ClientModInitializer {
         InputEvent.MouseButton.Post.EVENT.register(
                 me.xjqsh.lrtactical.client.input.MeleeAttackKeys::onMousePress);
         ParticleFactories.registerParticles();
-        // All three blocks return RenderShape.INVISIBLE, so registration is mandatory:
-        // without these renderers, placed tables/targets/statues are functional but invisible.
-        BlockEntityRendererRegistry.register(ModBlocks.GUN_SMITH_TABLE_BE, GunSmithTableRenderer::new);
-        BlockEntityRendererRegistry.register(ModBlocks.TARGET_BE, TargetRenderer::new);
-        BlockEntityRendererRegistry.register(ModBlocks.STATUE_BE, StatueRenderer::new);
         // getCustomRenderer() 允许返回 null —— 表示「该物品走原版模型渲染」。
         // 弹药盒就是这种情况（改用 items/ammo_box.json 的 select + 9 个变体模型）。
         // 若把 null 塞进注册表，TaczSpecialRenderer 会拿到 null 渲染器而什么都不画。

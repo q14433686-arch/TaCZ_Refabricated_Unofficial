@@ -12,16 +12,15 @@ import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.TargetMinecart;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import cn.sh1rocu.tacz.client.ClientRendererRegistration;
 
 @Environment(EnvType.CLIENT)
 public class ModEntitiesRender {
     public static void registerEntityRenderers() {
-        EntityRendererRegistry.register(EntityKineticBullet.TYPE, EntityBulletRenderer::new);
-        EntityRendererRegistry.register(TargetMinecart.TYPE, TargetMinecartRenderer::new);
-        BlockEntityRenderers.register(GunSmithTableBlockEntity.TYPE, GunSmithTableRenderer::new);
-        BlockEntityRenderers.register(TargetBlockEntity.TYPE, TargetRenderer::new);
-        BlockEntityRenderers.register(StatueBlockEntity.TYPE, StatueRenderer::new);
+        ClientRendererRegistration.entity(EntityKineticBullet.TYPE, EntityBulletRenderer::new);
+        ClientRendererRegistration.entity(TargetMinecart.TYPE, TargetMinecartRenderer::new);
+        ClientRendererRegistration.blockEntity(GunSmithTableBlockEntity.TYPE, GunSmithTableRenderer::new);
+        ClientRendererRegistration.blockEntity(TargetBlockEntity.TYPE, TargetRenderer::new);
+        ClientRendererRegistration.blockEntity(StatueBlockEntity.TYPE, StatueRenderer::new);
     }
 }
