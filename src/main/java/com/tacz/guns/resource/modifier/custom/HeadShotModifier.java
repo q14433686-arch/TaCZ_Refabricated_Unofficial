@@ -85,8 +85,8 @@ public class HeadShotModifier implements IAttachmentModifier<Modifier, Float> {
         float modifiedValue = cacheProperty.<Float>getCache(HeadShotModifier.ID);
         float modifier = modifiedValue - finalBase;
 
-        double percent = Mth.clamp(finalBase / 5.0, 0, 1);
-        double modifierPercent = Mth.clamp(modifier / 5.0, 0, 1);
+        double percent = Math.clamp(finalBase / 5.0, 0, 1);
+        double modifierPercent = Math.clamp(modifier / 5.0, 0, 1);
 
         String titleKey = "gui.tacz.gun_refit.property_diagrams.head_shot";
         String positivelyString = String.format("x%.1f §a(+%.1f)", modifiedValue, modifier);

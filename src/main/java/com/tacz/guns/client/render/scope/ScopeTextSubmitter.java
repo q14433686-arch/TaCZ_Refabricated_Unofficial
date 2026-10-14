@@ -11,7 +11,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.font.TextRenderable;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.renderer.texture.TextureHandle;
+import com.mojang.renderpearl.api.textures.GpuSampler;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 
@@ -42,7 +43,7 @@ import java.util.Map;
  * 每个字形的 UV 挂在它自己那页图集上（{@code TextRenderable#textureView}）。
  * vanilla 靠 renderType 里已绑好的页纹理分批；我们按 view 分组，
  * 每组对应一个「壳 Identifier」（{@link PageHandle}，思路与
- * {@link ScopeMaskTextureHandle} 相同：AbstractTexture 空壳 + 每帧刷新指向），
+ * {@link ScopeMaskTextureHandle} 相同：TextureHandle 非持有别名 + 每帧刷新指向），
  * 组内字形共用一次 submitCustomGeometry。默认位图字体常驻页数 1-2，
  * 分组开销可忽略。
  *
@@ -57,46 +58,27 @@ public final class ScopeTextSubmitter {
 
     /**
      * 字体图集页的壳纹理（复用 {@link ScopeMaskTextureHandle} 的思路，
-     * 生命周期声明也相同：本类不拥有页纹理，close 为 no-op）。
+     * 本类不拥有页纹理，也不参与 TextureManager 的资源释放）。
      *
      * <p>sampler 抄 vanilla {@code FontTexture.<init>}（字节码实读）：
      * {@code getRepeat(FilterMode.NEAREST)} —— 字体图集就是这么绑的，
      * 换 clamp 会在字形边缘出现与 vanilla 不一致的采样。</p>
      */
-    private static final class PageHandle extends AbstractTexture {
-        void point(GpuTextureView view) {
-            this.texture = view.texture();
-            this.textureView = view;
-            this.sampler = RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST);
-        }
-
+    private record PageHandle(GpuTextureView textureView) implements TextureHandle {
         @Override
-        public void close() {
-            // 页纹理归 FontTexture 所有，勿动。
+        public GpuSampler sampler() {
+            return RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST);
         }
     }
 
-    /** view → 壳。字体图集页会随资源重载更换 view，用 identity 语义即可。 */
     private static final Map<GpuTextureView, Identifier> PAGE_IDS = new HashMap<>();
-    private static final Map<Identifier, PageHandle> PAGE_HANDLES = new HashMap<>();
     private static int nextPageOrdinal = 0;
 
     private static Identifier pageId(GpuTextureView view) {
-        Identifier id = PAGE_IDS.get(view);
-        if (id == null) {
-            // 注册名只求稳定唯一；序号一旦发出永不复用，
-            // 资源重载后旧 view 的表项残留也只是闲置壳，无害。
-            id = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "scope_text_page_" + nextPageOrdinal++);
-            PAGE_IDS.put(view, id);
-        }
-        PageHandle handle = PAGE_HANDLES.get(id);
-        if (handle == null) {
-            handle = new PageHandle();
-            PAGE_HANDLES.put(id, handle);
-            Minecraft.getInstance().getTextureManager().register(id, handle);
-        }
-        // 每帧刷新指向（幂等）：与 ScopeMaskTextureHandle 同一防悬空策略。
-        handle.point(view);
+        PAGE_IDS.keySet().removeIf(GpuTextureView::isClosed);
+        Identifier id = PAGE_IDS.computeIfAbsent(view, ignored ->
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "scope_text_page_" + nextPageOrdinal++));
+        BorrowedScopeTextures.put(id, new PageHandle(view));
         return id;
     }
 

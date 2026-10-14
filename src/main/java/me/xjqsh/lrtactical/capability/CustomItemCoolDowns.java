@@ -48,7 +48,7 @@ public class CustomItemCoolDowns {
         }
         float total = (float) (instance.endTime - instance.startTime);
         float remaining = (float) instance.endTime - ((float) this.tickCount + partialTicks);
-        return Mth.clamp(remaining / total, 0.0F, 1.0F);
+        return Math.clamp(remaining / total, 0.0F, 1.0F);
     }
 
     public void tick() {

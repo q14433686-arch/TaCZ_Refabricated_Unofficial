@@ -3,7 +3,7 @@ package me.xjqsh.lrtactical.client.init;
 import me.xjqsh.lrtactical.entity.GrenadeEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import cn.sh1rocu.tacz.client.ClientRendererRegistration;
 import me.xjqsh.lrtactical.client.renderer.entity.ThrowableEntityRenderer;
 
 /**
@@ -36,21 +36,21 @@ public final class ModEntitiesRender {
     public static void registerEntityRenderers() {
         // 【必须】每新增一种投掷物实体都要在这里加一行，否则一进视野就 NPE 崩溃。
         // 五种投掷物实体都继承 ThrowableItemEntity，故共用同一个渲染器。
-        EntityRendererRegistry.register(GrenadeEntity.TYPE, ThrowableEntityRenderer::new);
-        EntityRendererRegistry.register(
+        ClientRendererRegistration.entity(GrenadeEntity.TYPE, ThrowableEntityRenderer::new);
+        ClientRendererRegistration.entity(
                 me.xjqsh.lrtactical.entity.StickyGrenadeEntity.TYPE, ThrowableEntityRenderer::new);
-        EntityRendererRegistry.register(
+        ClientRendererRegistration.entity(
                 me.xjqsh.lrtactical.entity.SmokeGrenadeEntity.TYPE, ThrowableEntityRenderer::new);
-        EntityRendererRegistry.register(
+        ClientRendererRegistration.entity(
                 me.xjqsh.lrtactical.entity.EffectCloudGrenadeEntity.TYPE, ThrowableEntityRenderer::new);
-        EntityRendererRegistry.register(
+        ClientRendererRegistration.entity(
                 me.xjqsh.lrtactical.entity.StunGrenadeEntity.TYPE, ThrowableEntityRenderer::new);
         // 效果云本体用 NoopRenderer：云自身【不绘制任何模型】，视觉完全由粒子构成。
         // 原版 AreaEffectCloud 用的正是它（EntityRenderers 常量池确认引用了
         // NoopRenderer.<init>(EntityRendererProvider$Context)）。
         // 注意它同样【必须注册】—— 没有渲染器一进视野就 NPE 崩溃，
         // 「不需要画」和「不注册」是两回事。
-        EntityRendererRegistry.register(
+        ClientRendererRegistration.entity(
                 me.xjqsh.lrtactical.entity.sp.SpEffectCloudEntity.TYPE,
                 net.minecraft.client.renderer.entity.NoopRenderer::new);
     }

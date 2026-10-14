@@ -137,7 +137,7 @@ public class ModernKineticGunScriptAPI {
         // 子弹飞行速度
         float speed = modifyProperty(GunProperties.AMMO_SPEED, Float.class, cacheProperty.getCache(GunProperties.AMMO_SPEED));
         speed *= AmmoConfig.GLOBAL_BULLET_SPEED_MODIFIER.get();
-        float processedSpeed = Mth.clamp((speed / 20) * projectileSpeedMultiplier, 0, Float.MAX_VALUE);
+        float processedSpeed = Math.clamp((speed / 20) * projectileSpeedMultiplier, 0, Float.MAX_VALUE);
         // 弹丸数量
         int bulletAmount = modifyProperty(GunProperties.RuntimeOnly.BULLET_AMOUNT, Integer.class, Math.max(bulletData.getBulletAmount(), 1));
 
@@ -490,7 +490,7 @@ public class ModernKineticGunScriptAPI {
     }
 
     private float clampMultiplier(float multiplier) {
-        return Mth.clamp(multiplier, 0f, 256f);
+        return Math.clamp(multiplier, 0f, 256f);
     }
 
     /**

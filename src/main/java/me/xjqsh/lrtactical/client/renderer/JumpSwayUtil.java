@@ -39,7 +39,7 @@ import net.minecraft.util.Mth;
  * 时<b>完全一致</b>，同时消除 NaN 风险。（注：{@code SecondOrderDynamics#get} 内部虽有
  * NaN 兜底，但那只保护它自己的状态量，救不了本类的 {@code jumpingSwayProgress}。）
  *
- * <p>另外把上游的「只截上界」改为 {@code Mth.clamp(v, 0, 1)}：上游在
+ * <p>另外把上游的「只截上界」改为 {@code Math.clamp(v, 0, 1)}：上游在
  * 「贴地但速度向上」（走上台阶、被弹起的瞬间）时会算出<b>负的</b> progress，
  * 使模型向反方向偏移。截到 0 才符合「没有冲击就没有摆动」的语义。
  */
@@ -72,7 +72,7 @@ public class JumpSwayUtil {
             if (player.onGround()) {
                 if (!lastOnGround) {
                     // 刚落地：按下落速度决定冲击强度
-                    jumpingSwayProgress = Mth.clamp(velocityY / LANDING_VELOCITY, 0F, 1F);
+                    jumpingSwayProgress = Math.clamp(velocityY / LANDING_VELOCITY, 0F, 1F);
                     lastOnGround = true;
                 } else {
                     jumpingSwayProgress = Math.max(0F, jumpingSwayProgress - elapsed / LANDING_SWAY_TIME);
@@ -80,7 +80,7 @@ public class JumpSwayUtil {
             } else {
                 if (lastOnGround) {
                     // 刚离地：按起跳速度决定甩动强度
-                    jumpingSwayProgress = Mth.clamp(velocityY / JUMP_VELOCITY, 0F, 1F);
+                    jumpingSwayProgress = Math.clamp(velocityY / JUMP_VELOCITY, 0F, 1F);
                     lastOnGround = false;
                 } else {
                     jumpingSwayProgress = Math.max(0F, jumpingSwayProgress - elapsed / JUMPING_SWAY_TIME);

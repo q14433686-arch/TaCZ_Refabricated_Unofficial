@@ -77,8 +77,8 @@ public class KnockbackModifier implements IAttachmentModifier<Modifier, Float> {
         float modifiedValue = cacheProperty.<Float>getCache(KnockbackModifier.ID);
         float modifier = modifiedValue - finalBase;
 
-        double percent = Mth.clamp(finalBase, 0, 1);
-        double modifierPercent = Mth.clamp(modifier, 0, 1);
+        double percent = Math.clamp(finalBase, 0, 1);
+        double modifierPercent = Math.clamp(modifier, 0, 1);
 
         String titleKey = "gui.tacz.gun_refit.property_diagrams.knockback";
         String positivelyString = String.format("%.2f §a(+%.2f)", modifiedValue, modifier);

@@ -41,7 +41,7 @@ public class CommonGunIndex {
         Preconditions.checkArgument(gunIndexPOJO != null, "index object file is empty");
         Preconditions.checkArgument(StringUtils.isNoneBlank(gunIndexPOJO.getType()), "index object missing type field");
         index.type = gunIndexPOJO.getType();
-        index.sort = Mth.clamp(gunIndexPOJO.getSort(), 0, 65536);
+        index.sort = Math.clamp(gunIndexPOJO.getSort(), 0, 65536);
     }
 
     private static void checkData(GunIndexPOJO gunIndexPOJO, CommonGunIndex index) {

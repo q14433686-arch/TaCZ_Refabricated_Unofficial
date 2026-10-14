@@ -3,7 +3,7 @@ package com.tacz.guns.client.render.scope;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.pipeline.ColorTargetState;
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
 import com.mojang.renderpearl.api.commands.RenderPass;
@@ -572,7 +572,7 @@ public final class ScopeMaskRenderer {
         if (player == null) {
             return 0.0f;
         }
-        return Mth.clamp(IClientPlayerGunOperator.fromLocalPlayer(player)
+        return Math.clamp(IClientPlayerGunOperator.fromLocalPlayer(player)
                 .getClientAimingProgress(Minecraft.getInstance().getDeltaTracker()
                         .getGameTimeDeltaPartialTick(false)), 0.0f, 1.0f);
     }

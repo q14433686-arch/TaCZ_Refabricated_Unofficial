@@ -124,7 +124,7 @@ public final class GunPropertyDiagrams {
 
             // 跑射延迟
             float sprintTime = gunData.getSprintTime();
-            double sprintTimePercent = Mth.clamp(sprintTime / 0.5, 0, 1);
+            double sprintTimePercent = Math.clamp(sprintTime / 0.5, 0, 1);
             int sprintLength = (int) (barStartX + barMaxWidth * sprintTimePercent);
             String sprintValueText = String.format("%.2fs", sprintTime);
 
@@ -145,9 +145,9 @@ public final class GunPropertyDiagrams {
                 String defaultString = data.defaultString();
                 boolean positivelyBetter = data.positivelyBetter();
 
-                defaultPercent = Mth.clamp(defaultPercent, 0, 1);
+                defaultPercent = Math.clamp(defaultPercent, 0, 1);
                 int defaultLength = (int) (barStartX + barMaxWidth * defaultPercent);
-                int modifierLength = Mth.clamp(defaultLength + (int) (barMaxWidth * modifierPercent), barStartX, barEndX);
+                int modifierLength = Math.clamp(defaultLength + (int) (barMaxWidth * modifierPercent), barStartX, barEndX);
 
                 graphics.text(font, Component.translatable(titleKey), nameTextStartX, yOffset[0], fontColor, false);
                 graphics.fill(barStartX, yOffset[0] + 2, barEndX, yOffset[0] + 6, barBackgroundColor);

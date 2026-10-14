@@ -180,15 +180,15 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         float armorIgnore = modifyProperty(GunProperties.ARMOR_IGNORE, Float.class, cacheProperty.getCache(GunProperties.ARMOR_IGNORE));
         float headshot = modifyProperty(GunProperties.HEADSHOT_MULTIPLIER, Float.class, cacheProperty.getCache(GunProperties.HEADSHOT_MULTIPLIER));
         float knockback = modifyProperty(GunProperties.KNOCKBACK, Float.class, cacheProperty.getCache(GunProperties.KNOCKBACK));
-        this.armorIgnore = Mth.clamp(armorIgnore, 0f, 1f);
+        this.armorIgnore = Math.clamp(armorIgnore, 0f, 1f);
         this.headShot = Math.max(headshot, 0f);
         this.knockback = Math.max(knockback, 0f);
         this.ammoId = ammoId;
         float lifeSecond = modifyProperty(BULLET_LIFE, Float.class, bulletData.getLifeSecond());
-        this.life = Mth.clamp((int) (lifeSecond * 20), 1, Integer.MAX_VALUE);
+        this.life = Math.clamp((int) (lifeSecond * 20), 1, Integer.MAX_VALUE);
         // speed 字段是无效的，实际生效的速度是 shootOnce 里传给 doBulletSpread 的速度
-        this.gravity = Mth.clamp(modifyProperty(BULLET_GRAVITY, Float.class, bulletData.getGravity()), 0f, Float.MAX_VALUE);
-        this.friction = Mth.clamp(modifyProperty(BULLET_FRICTION, Float.class, bulletData.getFriction()), 0f, Float.MAX_VALUE);
+        this.gravity = Math.clamp(modifyProperty(BULLET_GRAVITY, Float.class, bulletData.getGravity()), 0f, Float.MAX_VALUE);
+        this.friction = Math.clamp(modifyProperty(BULLET_FRICTION, Float.class, bulletData.getFriction()), 0f, Float.MAX_VALUE);
         // 点燃
         Ignite ignite = cacheProperty.getCache(IgniteModifier.ID);
         this.igniteEntity = modifyProperty(IGNITE_ENTITY, Boolean.class, bulletData.getIgnite().isIgniteEntity() || ignite.isIgniteEntity());
@@ -197,14 +197,14 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         this.damageAmount = cacheProperty.getCache(DamageModifier.ID);
         this.distanceAmount = modifyProperty(GunProperties.EFFECTIVE_RANGE, Float.class, cacheProperty.getCache(GunProperties.EFFECTIVE_RANGE));
         int pierce = modifyProperty(GunProperties.PIERCE, Integer.class, cacheProperty.getCache(GunProperties.PIERCE));
-        this.pierce = Mth.clamp(pierce, 1, Integer.MAX_VALUE);
+        this.pierce = Math.clamp(pierce, 1, Integer.MAX_VALUE);
         ExplosionData explosionData = Objects.requireNonNullElse(cacheProperty.getCache(ExplosionModifier.ID), DEFAULT_EXPLOSION_DATA);
         this.explosion = modifyProperty(EXPLODE_ENABLED, Boolean.class, explosionData.isExplode());
         if (this.explosion) {
             var explosionDamage = modifyProperty(EXPLOSION_DAMAGE, Float.class, explosionData.getDamage());
             var explosionRadius = modifyProperty(EXPLOSION_RADIUS, Float.class, explosionData.getRadius());
-            this.explosionDamage = (float) Mth.clamp(explosionDamage * SyncConfig.DAMAGE_BASE_MULTIPLIER.get(), 0, Float.MAX_VALUE);
-            this.explosionRadius = Mth.clamp(explosionRadius, 0, Float.MAX_VALUE);
+            this.explosionDamage = (float) Math.clamp(explosionDamage * SyncConfig.DAMAGE_BASE_MULTIPLIER.get(), 0, Float.MAX_VALUE);
+            this.explosionRadius = Math.clamp(explosionRadius, 0, Float.MAX_VALUE);
             this.explosionKnockback = modifyProperty(EXPLOSION_KNOCKBACK, Boolean.class, explosionData.isKnockback());
             // 防止越界，提前判定
             int delayTickCount = (int) (modifyProperty(EXPLOSION_DELAY, Float.class, explosionData.getDelay()) * 20);
@@ -591,7 +591,7 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         var source1 = sources.getLeft();
         var source2 = sources.getRight();
         // 穿甲伤害和普通伤害的比例计算
-        float armorDamagePercent = Mth.clamp(this.armorIgnore, 0.0F, 1.0F);
+        float armorDamagePercent = Math.clamp(this.armorIgnore, 0.0F, 1.0F);
         float normalDamagePercent = 1 - armorDamagePercent;
         // 取消受击间隔（26.3 起不止 invulnerableTime，见 DamageCooldownUtil）
         DamageCooldownUtil.clear(parts.core());

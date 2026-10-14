@@ -108,7 +108,7 @@ public class ForgeSlider extends AbstractSliderButton {
      * {@code setValue(double)}，但语义完全不同 —— 它接收的是
      * <b>0~1 的比例</b>，并且内部会做两件关键的事（字节码确认）：
      * <pre>
-     * this.value = Mth.clamp(value, 0.0, 1.0);
+     * this.value = Math.clamp(value, 0.0, 1.0);
      * if (d != this.value) { this.applyValue(); }   // 值变了才回调
      * this.updateMessage();
      * </pre>
@@ -153,7 +153,7 @@ public class ForgeSlider extends AbstractSliderButton {
      * <p><b>刻意不调用 {@code super.onDrag}</b>：vanilla 的
      * {@code AbstractSliderButton#onDrag} 内部是
      * {@code setValueFromMouse(event) → setValue(double)}，
-     * 那条路径只做 {@code Mth.clamp(0,1)}、<b>不做 {@link #snapToNearest} 步进吸附</b>。
+     * 那条路径只做 {@code Math.clamp(0,1)}、<b>不做 {@link #snapToNearest} 步进吸附</b>。
      * 若先调 super 再调本类的 {@code setValueFromMouse}，等于同一次拖动里
      * 先按「无吸附」写一次、再按「有吸附」写一次 —— 两次都可能触发
      * {@code applyValue()}，既做了无谓的重复回调，也让步进语义变得不确定。
@@ -213,16 +213,16 @@ public class ForgeSlider extends AbstractSliderButton {
      */
     private double snapToNearest(double value) {
         if (stepSize <= 0D)
-            return Mth.clamp(value, 0D, 1D);
+            return Math.clamp(value, 0D, 1D);
 
-        value = Mth.lerp(Mth.clamp(value, 0D, 1D), this.minValue, this.maxValue);
+        value = Mth.lerp(Math.clamp(value, 0D, 1D), this.minValue, this.maxValue);
 
         value = (stepSize * Math.round(value / stepSize));
 
         if (this.minValue > this.maxValue) {
-            value = Mth.clamp(value, this.maxValue, this.minValue);
+            value = Math.clamp(value, this.maxValue, this.minValue);
         } else {
-            value = Mth.clamp(value, this.minValue, this.maxValue);
+            value = Math.clamp(value, this.minValue, this.maxValue);
         }
 
         return Mth.map(value, this.minValue, this.maxValue, 0D, 1D);

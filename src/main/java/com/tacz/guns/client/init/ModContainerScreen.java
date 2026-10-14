@@ -4,11 +4,11 @@ import com.tacz.guns.client.gui.GunSmithTableScreen;
 import com.tacz.guns.inventory.GunSmithTableMenu;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.screens.MenuScreens;
+import cn.sh1rocu.tacz.client.ClientRendererRegistration;
 
 @Environment(EnvType.CLIENT)
 public class ModContainerScreen {
     public static void registerScreens() {
-        MenuScreens.register(GunSmithTableMenu.TYPE, GunSmithTableScreen::new);
+        ClientRendererRegistration.menu(GunSmithTableMenu.TYPE, GunSmithTableScreen::new);
     }
 }

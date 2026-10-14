@@ -18,7 +18,6 @@
     "client.LevelExtractorScopePassMixin",
     "client.GameRendererProjectionAccessor",
     "client.LevelRendererAccessor",
-    "client.SkyRendererMixin",
     "client.ItemInHandLayerMixin",
     "client.FirstPersonHandsAndItemsMixin",
     "client.FirstPersonHandsAndItemsRendererMixin",

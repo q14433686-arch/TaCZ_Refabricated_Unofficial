@@ -92,7 +92,7 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
 
     public float getHeatProgress() {
         return gunData.getHeatData() != null ?
-                Mth.clamp(iGun.getHeatAmount(currentGunItem) / gunData.getHeatData().getHeatMax(), 0f, 1f) : 0f;
+                Math.clamp(iGun.getHeatAmount(currentGunItem) / gunData.getHeatData().getHeatMax(), 0f, 1f) : 0f;
     }
 
     /**

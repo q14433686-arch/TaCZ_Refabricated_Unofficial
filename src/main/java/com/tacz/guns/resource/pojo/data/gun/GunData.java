@@ -303,7 +303,7 @@ public class GunData {
         int rpm = this.getRoundsPerMinute(fireMode);
         AttachmentCacheProperty cacheProperty = IGunOperator.fromLivingEntity(shooter).getCacheProperty();
         if (cacheProperty != null) {
-            rpm = Mth.clamp(cacheProperty.<Integer>getCache(RpmModifier.ID), 1, 1200);
+            rpm = Math.clamp(cacheProperty.<Integer>getCache(RpmModifier.ID), 1, 1200);
         }
         IGun iGun = IGun.getIGunOrNull(gunStack);
         if (hasHeatData())

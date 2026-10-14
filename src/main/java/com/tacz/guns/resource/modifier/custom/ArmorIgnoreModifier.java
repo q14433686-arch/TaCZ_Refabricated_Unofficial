@@ -85,8 +85,8 @@ public class ArmorIgnoreModifier implements IAttachmentModifier<Modifier, Float>
         float modifiedValue = cacheProperty.<Float>getCache(ArmorIgnoreModifier.ID);
         float modifier = modifiedValue - finalBase;
 
-        double percent = Mth.clamp(finalBase, 0, 1);
-        double modifierPercent = Mth.clamp(modifier, 0, 1);
+        double percent = Math.clamp(finalBase, 0, 1);
+        double modifierPercent = Math.clamp(modifier, 0, 1);
 
         String titleKey = "gui.tacz.gun_refit.property_diagrams.armor_ignore";
         String positivelyString = String.format("%.1f%% §a(+%.1f%%)", modifiedValue * 100, modifier * 100);

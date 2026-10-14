@@ -177,12 +177,11 @@ public abstract class ThrowableItemEntity extends Projectile
                 BlockHitResult blockResult = (BlockHitResult) result;
                 BlockPos resultPos = blockResult.getBlockPos();
                 BlockState state = this.level().getBlockState(resultPos);
-                // 26.2: getSoundType 只剩 (BlockState) 一个重载（字节码确认，且已移到
-                // BlockBehaviour 上）。1.21.1 的 (state, level, pos, entity) 四参版本已移除，
-                // 意味着方块无法再按位置/实体返回不同音效 —— 对本用途无影响。
-                SoundEvent event = state.getSoundType().getStepSound();
+                // 26.4 resolves optional step sounds through the level's block sound registry.
+                SoundEvent event = state.getSounds(this.level()).stepSound()
+                        .map(net.minecraft.core.Holder::value).orElse(null);
                 double speed = this.getDeltaMovement().length();
-                if (speed > 0.1) {
+                if (speed > 0.1 && event != null) {
                     this.level().playSound(null, result.getLocation().x, result.getLocation().y, result.getLocation().z,
                             event, SoundSource.AMBIENT, 2.0F, 1.0F);
                     // 有意差异（非代码待办）：上游还会播放 GRENADE_BOUNCE；该音效

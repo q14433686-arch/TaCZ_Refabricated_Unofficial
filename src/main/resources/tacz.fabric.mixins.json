@@ -40,7 +40,8 @@
     "compat.punchy.PunchyHandRenderBobContextMixin",
     "compat.punchy.PunchyMovementStateMachineMixin",
     "client.MouseHandlerMixin",
-    "client.TextureAtlasMixin"
+    "client.TextureAtlasMixin",
+    "client.ScopeTextureManagerMixin"
   ],
   "_comment": "26.2: compatibility mixins are gated by MixinPlugin using the package segment as the target mod id; Punchy mixins route TACZ viewmodels through Punchy's supported blacklist/handoff semantics.",
   "injectors": {

@@ -65,7 +65,7 @@ public final class HitboxHelper {
     public static AABB getBoundingBox(Player entity, int ping) {
         if (PLAYER_HITBOXES.containsKey(entity)) {
             LinkedList<AABB> boxes = PLAYER_HITBOXES.get(entity);
-            int index = Mth.clamp(ping, 0, boxes.size() - 1);
+            int index = Math.clamp(ping, 0, boxes.size() - 1);
             return boxes.get(index);
         }
         return entity.getBoundingBox();
@@ -74,7 +74,7 @@ public final class HitboxHelper {
     public static Vec3 getVelocity(Player entity, int ping) {
         if (PLAYER_VELOCITY.containsKey(entity)) {
             LinkedList<Vec3> velocities = PLAYER_VELOCITY.get(entity);
-            int index = Mth.clamp(ping, 0, velocities.size() - 1);
+            int index = Math.clamp(ping, 0, velocities.size() - 1);
             return velocities.get(index);
         }
         return getPlayerVelocity(entity);
