@@ -10,6 +10,21 @@
 本 release 保持 `1.1.8` 为 SemVer 核心；`+fabric.26.2.R2` 是不参与版本谓词排序的 build
 metadata，不能写成 `1.1.8-R2`。
 
+## R3-hotfix3（当前源码，尚未发布）
+
+**构建元数据：`1.1.8+fabric.26.2.R3-hotfix3`**。
+
+- 枪包同步后的 JEI 刷新改用实际生命周期实例的安全 reload listener，不再手动触发
+  `AFTER_RECIPES_UPDATED`，避免较新 JEI 将其当作缺少服务端同步的一轮更新而清理缓存。
+  详见[调查记录](investigations/RECIPE_VIEWER_CACHE_LOSS_26_2.md)。
+- 同步姊妹仓 `TaCZ_Renovated` 26.3 的 `9e2ad58f0a97` 弹孔朝向修复：
+  把 XY 粒子四边形的 +Z 法线转换为 Direction 所需的 +Y 基，保留旧 UV 走向，
+  并沿命中面法线偏移 `0.01×quadSize`，避免贴面 z-fighting。
+  详见[移植与验收记录](investigations/BULLET_HOLE_ORIENTATION_BACKPORT_26_2.md)。
+- **验证边界**：弹孔修复已核对本地 26.2 游戏字节码并通过离线六面几何模型及源码检查；
+  本次弹孔改动未完成 Java 编译或游戏内验证。此前 JEI 修复的 CI 编译成功不覆盖这次弹孔改动。
+  未声称修复 REI 全量重载风险或证实普通工作台手摆合成失败。
+
 ## R3-hotfix2（2026-09-13）
 
 **构建元数据：`1.1.8+fabric.26.2.R3-hotfix2`**（hotfix 序号直接接在 `hotfix` 后面，

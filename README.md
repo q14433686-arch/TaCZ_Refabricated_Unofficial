@@ -12,7 +12,7 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R3-hotfix2`**。
+`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R3-hotfix3`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
@@ -31,7 +31,7 @@
 本页面对应 **26.2** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
 具体版本见下方表格与对应 Release 说明。
 
-> 仓库源码已使用 R3-hotfix2 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R3-hotfix3 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
 
 ---
 
@@ -42,9 +42,9 @@
 | Minecraft | **26.2** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **25+** |
-| Fabric API | 需要安装；R3-hotfix2 构建使用 **0.155.2+26.2** |
+| Fabric API | 需要安装；R3-hotfix3 构建使用 **0.155.2+26.2** |
 | Forge Config API Port | **26.2.1+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.2.R3-hotfix2`** |
+| 本 mod | **`1.1.8+fabric.26.2.R3-hotfix3`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
@@ -73,7 +73,13 @@ R2 的可选集成（并非硬依赖）如下：
 完整发布范围、联网核验和未执行的实机矩阵见
 [26.2 R2 release notes](docs/CHANGELOG_26_2_R2.md)。R1 的移植基础和历史说明仍保留在仓库历史中。
 
-**R3-hotfix2**（当前源码版本）：在 R3-hotfix 基础上同步 1.21.11 线的第一人称手部错位
+**R3-hotfix3**（当前源码版本）：在 R3-hotfix2 基础上调整枪包同步后的 JEI 刷新入口，
+不再伪造配方更新事件，避免触发较新 JEI 的配方缓存清理逻辑；另同步姊妹仓 26.3 的
+弹孔朝向修复，校正粒子四边形法线并沿命中面做防 z-fighting 偏移。两项游戏内验证均待补。
+详见[JEI 调查记录](docs/investigations/RECIPE_VIEWER_CACHE_LOSS_26_2.md)与
+[弹孔修复移植记录](docs/investigations/BULLET_HOLE_ORIENTATION_BACKPORT_26_2.md)。
+
+**R3-hotfix2**：在 R3-hotfix 基础上同步 1.21.11 线的第一人称手部错位
 修复——中和 vanilla 1.21.9+ 写入手臂的 `zRot=±0.1`，恢复全枪械第一人称手部与枪身的
 authored 对齐（实机验证待补）；其余内容不变。
 
@@ -314,7 +320,7 @@ gunpack.meta.json
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.2.R3-hotfix2` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.26.2.R3-hotfix3` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容
