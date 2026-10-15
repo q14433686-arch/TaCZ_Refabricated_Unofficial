@@ -2,6 +2,10 @@
 
 调查日期：2026-10-15。反馈日志：<https://mclo.gs/lGmrtNC>（2191 行）。
 
+后续补充：远端 `build-reports/compile-java.log` 已记录修复提交 `4397753` 的 `compileJava` 成功，
+但仍没有游戏内验证。另见[跨分支双向审计](RECIPE_VIEWER_CROSS_BRANCH_AUDIT_20261015.md)：
+其中发现独立的 REI 全量重载丢失服务端显示风险；本篇 JEI 修复没有修复或证明 REI 路径安全。
+
 ## 结论及边界
 
 确认发现本仓库 `RecipeViewerReloadBridge` 的兼容性缺陷：为了重新注册枪包内容，
@@ -19,7 +23,7 @@
 |---|---|---|
 | Minecraft | 26.2 | 26.2 |
 | Java | 25 | 目标 Java 25 |
-| TaCZ | `1.1.8+fabric.26.2.R3-hotfix2` | 相同 |
+| TaCZ | `1.1.8+fabric.26.2.R3-hotfix2` | `1.1.8+fabric.26.2.R3-hotfix3` |
 | Fabric Loader | 0.19.5 | 0.19.3 |
 | Fabric API | 0.161.0+26.2 | 0.155.2+26.2 |
 | Forge Config API Port | 26.2.1 | 26.2.1 |
