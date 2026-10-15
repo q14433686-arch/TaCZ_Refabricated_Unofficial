@@ -6,6 +6,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -19,21 +20,29 @@ import java.lang.reflect.Modifier;
  * Requests are deliberately coalesced and deferred to {@link #tick(Minecraft)}: packet handling,
  * viewer internals, and client resources must all remain on the Minecraft client thread.</p>
  *
- * <p>The lightweight entry points are optional implementation APIs, so this class uses reflection
- * and only probes a viewer that is installed. The verified 26.2 shapes are JEI Fabric
- * {@code mezz.jei.fabric.events.JeiLifecycleEvents.AFTER_RECIPES_UPDATED} (an event whose invoker
- * is {@link Runnable}) and REI {@code me.shedaniel.rei.RoughlyEnoughItemsCoreClient#reloadPlugins}
- * with two nullable arguments. If either installed viewer has moved its entry point, one normal
- * client resource reload is used as a safe fallback for the connection; it is never retriggered by
- * the fallback itself.</p>
+ * <p>The lightweight entry points are optional implementation APIs. This class only probes
+ * installed viewers and uses reflection for REI. JEI uses its non-destructive lifecycle reload
+ * listener, captured by an optional mixin; REI uses
+ * {@code me.shedaniel.rei.RoughlyEnoughItemsCoreClient#reloadPlugins} with two nullable arguments. Never synthesize JEI's {@code AFTER_RECIPES_UPDATED} event:
+ * newer JEI versions interpret it without a preceding recipe-sync notification as a server switch
+ * and clear the authoritative recipe map, leaving only the vanilla client fallback. If either
+ * installed viewer has moved its entry point, one normal client resource reload is used as a safe
+ * fallback for the connection; it is never retriggered by the fallback itself.</p>
  */
 @Environment(EnvType.CLIENT)
 public final class RecipeViewerReloadBridge {
+    // This listener belongs to JEI's client lifecycle, not a connection. Keep it across clear().
+    private static ResourceManagerReloadListener jeiReloadListener;
     private static boolean reloadRequested;
     private static boolean reloadInProgress;
     private static boolean resourceFallbackUsed;
 
     private RecipeViewerReloadBridge() {
+    }
+
+    /** Called by the optional JEI mixin when JEI creates its lifecycle reload listener. */
+    public static void setJeiReloadListener(ResourceManagerReloadListener listener) {
+        jeiReloadListener = listener;
     }
 
     /** Queues one coalesced reload after cache installation and index rebuilding have completed. */
@@ -65,7 +74,7 @@ public final class RecipeViewerReloadBridge {
 
         // Do not short-circuit: when both viewers are installed each receives its own refresh attempt.
         boolean requiresResourceFallback = false;
-        if (hasJei() && !refreshJei()) {
+        if (hasJei() && !refreshJei(client)) {
             requiresResourceFallback = true;
         }
         if (hasRei() && !refreshRei()) {
@@ -101,18 +110,20 @@ public final class RecipeViewerReloadBridge {
         }
     }
 
-    /** JEI Fabric 30.13.0.86 invokes its plugin-rebuild listener through this Runnable event. */
-    private static boolean refreshJei() {
+    /**
+     * JEI's own lifecycle reload listener rebuilds plugins without treating this as a new recipe
+     * packet or clearing the server recipe cache. Present in both the pinned 30.13.0.86 and newer
+     * 26.2 JEI builds. The optional mixin captures it without linking against JEI implementation
+     * classes; no synthetic recipe-sync events or private state writes are needed.
+     */
+    private static boolean refreshJei(Minecraft client) {
+        if (jeiReloadListener == null) {
+            return false;
+        }
         try {
-            Class<?> lifecycleEvents = Class.forName("mezz.jei.fabric.events.JeiLifecycleEvents");
-            Object event = lifecycleEvents.getField("AFTER_RECIPES_UPDATED").get(null);
-            Object invoker = event.getClass().getMethod("invoker").invoke(event);
-            if (!(invoker instanceof Runnable runnable)) {
-                throw new IllegalStateException("JEI recipe-update invoker is not Runnable");
-            }
-            runnable.run();
+            jeiReloadListener.onResourceManagerReload(client.getResourceManager());
             return true;
-        } catch (ReflectiveOperationException | LinkageError | RuntimeException exception) {
+        } catch (LinkageError | RuntimeException exception) {
             GunMod.LOGGER.debug("[TACZ Recipe Viewer] JEI lightweight refresh unavailable.", exception);
             return false;
         }
