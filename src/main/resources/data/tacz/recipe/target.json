@@ -9,7 +9,7 @@
     " P "
   ],
   "key": {
-    "I": "#c:ingots/iron",
+    "I": "minecraft:iron_ingot",
     "R": "minecraft:redstone",
     "P": "#minecraft:planks"
   }

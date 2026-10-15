@@ -10,7 +10,7 @@
   ],
   "key": {
     "L": "#minecraft:logs",
-    "I": "#c:ingots/iron",
+    "I": "minecraft:iron_ingot",
     "B": "minecraft:iron_block"
   }
 }

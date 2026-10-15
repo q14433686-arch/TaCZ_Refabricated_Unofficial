@@ -48,13 +48,15 @@ TACZ 的自定义工作台机制本身没问题 —— `BlockItemDataAccessor.BL
   "pattern": ["SSC", "IBI", "LLL"],
   "key": {
     "L": "#minecraft:logs",
-    "I": "#c:ingots/iron",
+    "I": "minecraft:iron_ingot",
     "B": "minecraft:iron_block",
     "S": "minecraft:stick",
     "C": "minecraft:flint"
   }
 }
 ```
+
+> **2026-10-15 起（R3-hotfix3）**：示例里的 `I` 不再写 `#c:ingots/iron`，改为具体物品 —— 见 §1.6。
 
 ### 1.4 为什么「改我们的代码」这条路基本走不通
 
@@ -109,6 +111,39 @@ vanilla `Recipe.CODEC` 解析不了，**每条报一次错**。
 > **效果**：`GunpowderRevolution v1.2.7` 的 `oldworkbench.json` 等单个原版配方现在可被识别，无需手动改包；旧布局包（`recipes/`）中的原版配方也会被自动映射到 `recipe/`。
 
 > **仍建议文档**：在 `README` 的枪包适配章节保留 1.2 差异表，引导新包直接使用新格式，避免长期依赖兼容层。
+
+### 1.6 本 mod 自带原版格式配方：去掉 `#c:` 约定标签依赖（2026-10-15，R3-hotfix3）
+
+**用户反馈（26.2 Fabric，R3-hotfix2）**：工作台 / 弹药箱 / 标靶等合成不了。
+列出的10 条 = `data/tacz/recipe/` + `data/lrtactical/recipe/smith_table.json` 下
+**全部 `minecraft:crafting_shaped` 配方**；未被点名的两条（`gunpowder.json`
+crafting_shapeless、`ammo_box_dyed.json` crafting_dye）恰是**不含 `#c:` 材料**的两条。
+
+**结论（推断，与证据一致）**：26.2 下这些配方的 `#c:` 约定标签材料在该用户环境里
+解析为空/不可用，`matches` 永不命中（配方能进 `RecipeManager`、日志无 parse 错——
+空标签集不会报错，只会永远不匹配）。依据：
+
+1. 报告损坏的配方里 8 条含 `#c:` 材料（`target` 也是 `#c:ingots/iron`）；
+   `target_minecart` 是拿不到 `tacz:target` 的连带失败；`statue` 无标签属未实测外推；
+2. 玩家实测 `/give` 的材料（桦木、铁锭、铁块、红石、黑色染色玻璃、金锭、钻石）
+   恰好覆盖含 `#c:` 材料的配方，染色玻璃还撞上 `c:glass_blocks` 标签内容不全；
+3. 26.2 原版自带 1585 条配方**一条 `#c:` 标签都不用**（字节码 + 自带 JSON 实证），
+   只用 `#minecraft:` 标签与具体物品；
+4. 本仓 `GunSmithTableIngredient` 类注的运行时实验早已记录 26.2 标签解析的脆弱面
+   （`#c:ingots/copper` → `Missing tag`）。
+
+**改（R3-hotfix3）**：
+
+- 10 条 shaped 配方的 `#c:` 材料全部改为等价具体物品
+  （`c:ingots/iron`→`minecraft:iron_ingot` 等，与本 mod 自带同名标签的 values 一致）；
+  `attachment_workbench` 的 `G` 改为玻璃方块物品数组（含全部染色玻璃）；
+  `#minecraft:logs` / `#minecraft:planks` / `#minecraft:dyes` 保留（原版标签，1585 条
+  原版配方实证安全）。
+- `data/c/tags/item/glass_blocks.json` 补全全部玻璃方块（此前只有 `minecraft:glass`，
+  枪包/附属包按标签取玻璃时同样受影响）。
+
+**验证边界**：sandbox 无 JDK/实机，修复经26.2 合并 jar 字节码与原版自带配方
+逐项对照确认格式与匹配链路等价；实机验证待回归。
 
 ---
 

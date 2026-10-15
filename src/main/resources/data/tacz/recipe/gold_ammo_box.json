@@ -14,7 +14,7 @@
     "PPP"
   ],
   "key": {
-    "I": "#c:ingots/gold",
+    "I": "minecraft:gold_ingot",
     "P": "#minecraft:planks"
   }
 }

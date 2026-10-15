@@ -14,7 +14,7 @@
     "PPP"
   ],
   "key": {
-    "I": "#c:gems/diamond",
+    "I": "minecraft:diamond",
     "P": "#minecraft:planks"
   }
 }

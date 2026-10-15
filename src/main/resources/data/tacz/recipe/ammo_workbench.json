@@ -13,8 +13,8 @@
     "IB"
   ],
   "key": {
-    "C": "#c:ingots/copper",
-    "I": "#c:ingots/iron",
+    "C": "minecraft:copper_ingot",
+    "I": "minecraft:iron_ingot",
     "B": "tacz:ammo_box"
   }
 }
