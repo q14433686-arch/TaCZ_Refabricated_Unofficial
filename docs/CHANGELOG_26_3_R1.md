@@ -1,15 +1,15 @@
-# TaCZ Refabricated 26.3 R1-hotfix release notes（草稿，尚未发布）
+# TaCZ Refabricated 26.3 R1-hotfix2 release notes（草稿，尚未发布）
 
-**构建元数据：`1.1.8+fabric.26.3.R1-hotfix`**
+**构建元数据：`1.1.8+fabric.26.3.R1-hotfix2`**
 
 **基线：`origin/26.2(main)` R3-hotfix2（`c7c3c55` 之前的 26.2 源码）→ 本线 `26.3`**
 
 **环境：Minecraft 26.3 · Fabric Loader 0.19.5+ · Java 25+ · Fabric API 0.160.7+26.3 · Forge Config API Port 26.3.0+**
 
-> 状态（2026-09-29）：R1 基础版编译/CI 全绿；下列标 ✅ 的基础版条目已由维护者在 26.3 实机验证（2026-09-18 ~ 09-21，
-> 无光影 + Iris 光影 + 专服三种环境）；R1-hotfix 新增项标 🔧，仅 CI 编译通过，未实机验证。**尚无可下载构建。**
+> 状态（2026-10-21）：R1 基础版编译/CI 全绿；下列标 ✅ 的基础版条目已由维护者在 26.3 实机验证（2026-09-18 ~ 09-21，
+> 无光影 + Iris 光影 + 专服三种环境）；`R1-hotfix` 及本次 `R1-hotfix2` 新增项标 🔧，仅 CI 编译通过，未实机验证。**尚无可下载构建。**
 > 姊妹项目（NeoForge）移植指南：[`lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md`](lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md)。
-> 版本命名沿用本仓历史：hotfix 直接追加在 `R1` 后（`R1-hotfix`，不另起 R2；无序号的首个 hotfix 不加数字）。
+> 版本命名沿用本仓历史：hotfix 序号直接追加在 `hotfix` 后、中间不加分隔符（`R1-hotfix` → `R1-hotfix2`，不另起 R2）。
 
 ## R1-hotfix 增量（2026-09-29 ~ 09-30）
 
@@ -26,7 +26,7 @@
   - **其余依赖版本同步**：ModMenu 升级至 26.3 正式版 `21.0.0`（原 `21.0.0-beta.1`），Cloth Config 升级至 `26.3.159`（原 `26.3.158`），JEI 升级至 `31.8.0.48`（含 `#4514` 自定义材料组件保留修复），Carry On 核实上游已发布 `26.3-2.12.0` 且与本模组 `@Pseudo` mixin / `CarryOnReflection` 签名完全兼容。
 - ✅ GitHub Actions `build` / `compile-check` 对语言文件容错变更通过（commit `81e71cf`）；**上述增量待 CI 编译并尚未在 26.3 实机验证**。
 
-## R1-hotfix 追加（2026-10-21：同步 26.2 线 R3-hotfix3 的两项修复）
+## R1-hotfix2 追加（2026-10-21：同步 26.2 线 R3-hotfix3 的两项修复）
 
 来源：`26.2(main)` 的 `4397753`（枪包同步后 JEI 丢配方）与 `2e9b62a`（弹孔朝向），
 逐条按 26.3 的实现与依赖适配，不是整段拷贝。差异、证据与验证边界见
@@ -62,7 +62,7 @@
 
 ---
 
-## R1-hotfix 追加（2026-10-21：YSM / Yes Steve Model 适配）
+## R1-hotfix2 追加（2026-10-21：YSM / Yes Steve Model 适配）
 
 - 🔧 **新增 `com.tacz.guns.compat.ysm.YsmCompat` 门面（未实机验证）**：把 YSM 需要的 9 个
   molang 变量（`tac_hold_gun` / `tac_gun_type` / `tac_gun_id` / `tac_is_fire` / `tac_is_aim` /
