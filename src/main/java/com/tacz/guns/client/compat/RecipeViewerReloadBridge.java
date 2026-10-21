@@ -20,13 +20,16 @@ import java.lang.reflect.Modifier;
  * viewer reload, a viewer can retain categories built before the sync and collapse a custom
  * {@code workbench_b} into whichever generic table happened to register first.
  *
- * <p>JEI's recipe-update event is NOT a safe reload hook: without a preceding genuine recipe
- * sync, JEI clears its server-synced recipe map. Instead, an optional mixin captures JEI's
- * client-lifetime resource reload listener; it restarts JEI without changing recipe-sync state.
+ * <p>In pinned JEI 27.23.0.71 the recipe-update event only stops/starts JEI and does NOT
+ * clear recipes. Later JEI 1.21.11 sources add a recipe-sync guard which can clear the server
+ * cache when an event is fired without a preceding real sync packet. An optional mixin captures
+ * JEI's own client-lifetime reload listener instead; it only stops/starts JEI and never
+ * impersonates a recipe-sync notification. This is forward-compatibility hardening, not a
+ * demonstrated recipe-loss fix for the pinned 27.23 build.
  * REI retains its reflective reload hook. If either hook is unavailable, one normal client
  * resource reload per connection is used as a fallback (never a synthetic recipe-sync event).
- * The 1.21.11 JEI ClientLifecycleHandler#getReloadListener implementation and its
- * receivedRecipeSync guard were checked against the upstream 1.21.11 source.
+ * The listener and event handlers were checked against both JEI v27.23.0 and the newer
+ * upstream 1.21.11 branch; they have different event semantics.
  */
 @Environment(EnvType.CLIENT)
 public final class RecipeViewerReloadBridge {
