@@ -62,6 +62,24 @@
 
 ---
 
+## R1-hotfix 追加（2026-10-21：YSM / Yes Steve Model 适配）
+
+- 🔧 **新增 `com.tacz.guns.compat.ysm.YsmCompat` 门面（未实机验证）**：把 YSM 需要的 9 个
+  molang 变量（`tac_hold_gun` / `tac_gun_type` / `tac_gun_id` / `tac_is_fire` / `tac_is_aim` /
+  `tac_is_reload` / `tac_is_melee` / `tac_is_draw` / `tac_fire_mode`）收敛成静态方法，语义逐条对齐
+  YSM 1.20.1 Forge 版 `TacBinding`/`TacAnimHandler`；内部改用 `instanceof IGunOperator`
+  而不是 `IGunOperator.fromLivingEntity` 的无检查转型，索引查询失败/实体未被 mixin 时返回中性值并只记一次 WARN。
+  另提供 `beginSelfFlashPass()/endSelfFlashPass()` 成对控制 `MuzzleFlashRender.isSelf`/`ShellRender.isSelf`。
+- 🔧 **第一人称渲染归属握手（可选、默认不影响任何行为）**：`YsmCompat.setExternalGunRender(true)`
+  让外部渲染器声明「这一帧的枪我自己画」，`FirstPersonHandsAndItemsRendererMixin` 的视模分支据此早退，
+  避免与 YSM 在模型定位点上 `renderStatic` 出的枪叠成两把；标志由 `END_CLIENT_TICK` 每 tick 复位，
+  YSM 漏掉 `finally` 最多多抑制一帧。新增客户端配置 `YsmCompat`（`tacz-client.toml`，默认 `true`）。
+- 📄 **YSM 侧尚未恢复 compat**：ModernYSM `port/26.3` 仍把 `rip/ysm/compat/**` 排除出编译
+  （`TacCompat.isLoaded()` 恒 false），因此**装在一起现在仍没有枪械动画**；本次只是把 TaCZ 这侧
+  的契约与门面备好，迁移清单见 [`YSM_COMPAT.md`](YSM_COMPAT.md)。**不构成「YSM 已适配完成」。**
+- ✅ `python3 scripts/verify_ysm_compat.py`（11 项）通过：核对 YSM 1.20.1 用到的每个 TaCZ 符号仍存在、
+  枪械 `ItemModel` 确实透传 `ItemDisplayContext`、握手是可选且每 tick 失效、配置项默认开。
+
 ## 1. 引擎适配（Mojang 26.3）
 
 - ✅ 渲染底层 `com.mojang.blaze3d.*` → `com.mojang.renderpearl.*` 包迁移；`PoseStack#mulPose → rotate`、

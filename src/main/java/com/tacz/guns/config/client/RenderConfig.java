@@ -112,6 +112,14 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue ENABLE_TACZ_ID_IN_TOOLTIP;
     public static ForgeConfigSpec.BooleanValue BLOCK_ENTITY_TRANSLUCENT;
     /**
+     * YSM（Yes Steve Model）适配开关。默认<b>开启</b>，只在装了 {@code yes_steve_model} 时生效。
+     *
+     * <p>控制 {@link com.tacz.guns.compat.ysm.YsmCompat} 的「外部渲染器已接手第一人称枪」握手：
+     * 关掉后 TaCZ 视模<b>永远</b>自己提交，YSM 侧若也在模型定位点上画枪就会出现双份。
+     * 它不改枪械逻辑、读状态的门面方法不受影响（YSM 的 molang 变量照常工作）。</p>
+     */
+    public static ForgeConfigSpec.BooleanValue YSM_COMPAT;
+    /**
      * 瞄准镜「镜内画中画（PIP）」总开关。默认<b>关闭</b>。
      *
      * <p>开启后世界 FOV <b>不再</b>整屏变焦（{@code CameraSetupEvent#applyScopeMagnification}
@@ -720,6 +728,14 @@ public class RenderConfig {
 
         builder.comment("Enable translucent while render block entity or not. Enable this option will result in ADDITIONAL PERFORMANCE OVERHEAD.");
         BLOCK_ENTITY_TRANSLUCENT = builder.define("EnableBlockEntityTranslucent", false);
+
+        YSM_COMPAT = builder
+                .comment("Respect Yes Steve Model's first-person gun ownership handshake (yes_steve_model).",
+                        "YSM can mark a frame as 'I render this gun myself'; TaCZ then skips its own",
+                        "first-person viewmodel submit for that frame, avoiding a duplicate gun.",
+                        "Has no effect unless YSM is installed AND it calls the handshake;",
+                        "the gun-state getters used by YSM's molang variables work either way.")
+                .define("YsmCompat", true);
 
         builder.pop();
     }

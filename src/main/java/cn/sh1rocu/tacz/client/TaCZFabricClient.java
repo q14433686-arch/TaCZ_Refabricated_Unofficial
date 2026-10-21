@@ -142,6 +142,10 @@ public class TaCZFabricClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, true));
         // Remote gun-pack sync may finish after JEI/REI's initial registration pass.
         ClientTickEvents.END_CLIENT_TICK.register(RecipeViewerReloadBridge::tick);
+        // YSM（yes_steve_model）的第一人称渲染归属握手按 tick 失效：外部渲染器漏掉
+        // setExternalGunRender(false) 时最多多抑制一帧视模，不会永久看不到枪。
+        ClientTickEvents.END_CLIENT_TICK.register(
+                client -> com.tacz.guns.compat.ysm.YsmCompat.clearExternalGunRender());
         // 瞄具自定义管线预热（2026-09-20 光影开镜 NPE 崩溃一案）：
         // 首用时按需编译会让 vanilla 缓存 miss 撞上 Iris 不做 null 检查的
         // redirectIrisProgram 处理器，因此把 compile 提前到 tick 循环里。

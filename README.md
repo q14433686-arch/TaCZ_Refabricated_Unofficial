@@ -66,6 +66,7 @@ R1-hotfix 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与
 | Shoulder Surfing Reloaded | 编译 pin **26.3-5.2.0+fabric** | 第三人称肩视准星与举枪状态兼容 |
 | Carry On | 建议 **>=2.12.0**（26.3 正式版） | A/B/C 多格工作台的搬运兼容 |
 | Player Animation Library (PAL) | 编译 pin **1.2.7+26.3**（beta） | 第三人称四层动画兼容 |
+| Yes Steve Model (YSM) | 客户端 mod id **`yes_steve_model`** | 玩家模型/动画；TaCZ 侧提供状态门面与第一人称渲染归属握手，见 [YSM_COMPAT.md](docs/YSM_COMPAT.md)（YSM 侧 compat 尚未恢复，装在一起暂无枪械动画） |
 
 ---
 
@@ -84,7 +85,8 @@ R1-hotfix 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与
 **26.3 R1-hotfix**（当前源码版本）的变更清单见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)：
 渲染底层 renderpearl 迁移、第一人称拆分、shaderc 着色器、Iris 26.3 裁剪判定重做、26.3 战利品表/配方 codec/
 配方同步行为修复、枪包同步后的 JEI 刷新改为捕获 JEI 生命周期 listener（不再伪造配方更新事件）、
-弹孔朝向修复，以及 REI / Zoomify / Shoulder Surfing Reloaded / Carry On 26.3 兼容恢复。以下为 26.2 线的历史 release 摘要
+弹孔朝向修复、YSM（Yes Steve Model）状态门面与第一人称渲染归属握手，
+以及 REI / Zoomify / Shoulder Surfing Reloaded / Carry On 26.3 兼容恢复。以下为 26.2 线的历史 release 摘要
 （26.2 R2 详情见 [`docs/archive/CHANGELOG_26_2_R2.md`](docs/archive/CHANGELOG_26_2_R2.md)）：
 
 **26.2 R3-hotfix2**：在 R3-hotfix 基础上同步 1.21.11 线的第一人称手部错位
