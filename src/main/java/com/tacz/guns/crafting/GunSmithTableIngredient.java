@@ -356,6 +356,12 @@ public class GunSmithTableIngredient {
         }
     }
 
+    /** 原始 item JSON，仅供注册表 Codec 在无法编码解析后的材料时回退。 */
+    @Nullable
+    public JsonElement getRawItem() {
+        return this.rawItem;
+    }
+
     /** 供必须拿到非空值的场合（如网络编码）使用。 */
     public Ingredient getIngredientOrThrow() {
         Ingredient resolved = this.getIngredient();
