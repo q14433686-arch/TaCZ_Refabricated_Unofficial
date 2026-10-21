@@ -15,7 +15,8 @@
 `0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.3.R1-hotfix`**。
 
 > **本分支是 26.3 线，尚无任何可下载构建。** R1 基础版已在维护者环境完成一轮实机验证
-> （2026-09-18 ~ 09-21：无光影、Iris 光影、专服三种环境）；R1-hotfix 新增的枪包 lang 容错仅经 CI 编译验证，尚未实机验证。逐项结果见
+> （2026-09-18 ~ 09-21：无光影、Iris 光影、专服三种环境）；R1-hotfix 新增的枪包 lang 容错、
+> JEI 配方刷新与弹孔朝向修复仅经 CI 编译验证，尚未实机验证。逐项结果见
 > [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)。下方各节继承自 26.2 线的描述，
 > 凡未在该文件标 ✅ 的，在 26.3 上仍视为**未经验证**。想要现在就能玩的版本请用 `26.2(main)` 分支及其 Release。
 
@@ -82,7 +83,8 @@ R1-hotfix 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与
 
 **26.3 R1-hotfix**（当前源码版本）的变更清单见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)：
 渲染底层 renderpearl 迁移、第一人称拆分、shaderc 着色器、Iris 26.3 裁剪判定重做、26.3 战利品表/配方 codec/
-配方同步行为修复，以及 REI / Zoomify / Shoulder Surfing Reloaded / Carry On 26.3 兼容恢复。以下为 26.2 线的历史 release 摘要
+配方同步行为修复、枪包同步后的 JEI 刷新改为捕获 JEI 生命周期 listener（不再伪造配方更新事件）、
+弹孔朝向修复，以及 REI / Zoomify / Shoulder Surfing Reloaded / Carry On 26.3 兼容恢复。以下为 26.2 线的历史 release 摘要
 （26.2 R2 详情见 [`docs/archive/CHANGELOG_26_2_R2.md`](docs/archive/CHANGELOG_26_2_R2.md)）：
 
 **26.2 R3-hotfix2**：在 R3-hotfix 基础上同步 1.21.11 线的第一人称手部错位

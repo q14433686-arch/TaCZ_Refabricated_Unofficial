@@ -26,6 +26,37 @@
   - **其余依赖版本同步**：ModMenu 升级至 26.3 正式版 `21.0.0`（原 `21.0.0-beta.1`），Cloth Config 升级至 `26.3.159`（原 `26.3.158`），JEI 升级至 `31.8.0.48`（含 `#4514` 自定义材料组件保留修复），Carry On 核实上游已发布 `26.3-2.12.0` 且与本模组 `@Pseudo` mixin / `CarryOnReflection` 签名完全兼容。
 - ✅ GitHub Actions `build` / `compile-check` 对语言文件容错变更通过（commit `81e71cf`）；**上述增量待 CI 编译并尚未在 26.3 实机验证**。
 
+## R1-hotfix 追加（2026-10-21：同步 26.2 线 R3-hotfix3 的两项修复）
+
+来源：`26.2(main)` 的 `4397753`（枪包同步后 JEI 丢配方）与 `2e9b62a`（弹孔朝向），
+逐条按 26.3 的实现与依赖适配，不是整段拷贝。差异、证据与验证边界见
+[`investigations/SYNC_26_2_HOTFIX3_TO_26_3_20261021.md`](investigations/SYNC_26_2_HOTFIX3_TO_26_3_20261021.md)。
+
+- 🔧 **枪包同步后 JEI 丢配方（客户端显示层，未实机验证）**：`RecipeViewerReloadBridge` 不再
+  「优先反射 `Internal.restartJei()`、失败再伪造 `AFTER_RECIPES_UPDATED`」。26.3 线原实现的回退分支
+  在 JEI 31.8 的 `ClientLifecycleHandler#registerEvents` 里会先 `if (!receivedRecipeSync) Internal.clearClientRecipes();`
+  —— 没有紧随真实配方同步包的自造事件等于「换服」，把服务端同步来的 vanilla 型配方整批清掉，只剩
+  客户端原版 fallback（`Loaded N vanilla recipes...` + `This fabric server does not provide recipes to JEI`）。
+  现改为：新增可选 Mixin `compat.jei.JeiClientLifecycleHandlerMixin`（`@Pseudo` + 字符串 target +
+  `require = 0` + `MixinPlugin` 的 `isModLoaded("jei")` 门禁），在
+  `mezz.jei.fabric.startup.ClientLifecycleHandler#getReloadListener()` 返回时捕获 JEI 自己的生命周期
+  listener；刷新时调用它，只做 JEI 的 stop/start，不伪造同步语义、不读写 JEI 私有配方表。
+  反射 `Internal.restartJei()` 的路径一并移除（handler 未初始化时它会抛 `IllegalStateException`）。
+  REI 刷新路径与「每连接一次资源重载兜底」保持不变。**REI 的全量 `reloadPlugins(null, null)` 仍可能
+  丢掉服务端已同步的显示（跨分支审计列为未修项），本次不声称修好 REI。**
+- 🔧 **弹孔朝向错误（未实机验证）**：`BulletHoleParticle#extract` 原先把 `Direction#getRotation()`
+  直接当作四边形旋转，但 vanilla `QuadParticleRenderState` 的顶点取自 XY 平面（局部 +Z 法线），
+  而 `Direction#getRotation()` 的约定是局部 +Y 法线。结果是六个命中面的弹孔贴面方向/UV 走向都不对。
+  同步 26.2 的回移实现：旋转改为 `direction.getRotation() · Rx(-90°) · Rz(180°)`，
+  原来的局部 Y 防 z-fighting 偏移改为沿命中面法线移动 `0.01 × getQuadSize(partialTick)`，
+  位置仍以显式相机相对坐标传给六参数 `extractRotatedQuad` 重载（颜色继续走 `rCol/gCol/bCol/alpha`
+  字段，`finally` 里照旧还原）。
+- 静态验证：`python3 scripts/verify_recipe_viewer_reload.py`（4 项）、
+  `python3 scripts/verify_bullet_hole_orientation.py`（5 项）、
+  `bash scripts/check_release_consistency.sh --strict` 均通过；**沙箱无 JDK，本次未执行 Java 编译，
+  也未进游戏**，编译由 GitHub Actions 复核。弹孔脚本的几何模型与源码断言沿用 26.2 版本，
+  但 26.3 的 `SingleQuadParticle` 字节码（六参数重载是否存在）本地无 jar 可核对。
+
 ---
 
 ## 1. 引擎适配（Mojang 26.3）

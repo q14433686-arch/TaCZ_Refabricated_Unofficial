@@ -35,6 +35,7 @@
     "client.LivingEntityRendererMixin",
     "client.MinecraftMixin",
     "client.MinecraftUseRestartMixin",
+    "compat.jei.JeiClientLifecycleHandlerMixin",
     "compat.punchy.PunchyArmRendererMixin",
     "compat.punchy.PunchyHandEquipStateMachineMixin",
     "compat.punchy.PunchyHandRenderBobContextMixin",
