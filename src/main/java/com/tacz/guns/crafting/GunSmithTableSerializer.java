@@ -24,14 +24,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** 26.2 codec for the legacy TACZ gun-smith recipe JSON format. */
+/** 1.21.11 codec for the legacy TACZ gun-smith recipe JSON format. */
 public final class GunSmithTableSerializer {
+    // The vanilla recipe-registry path sees raw legacy gun-pack JSON as well as our own
+    // Gson loader. Decode the item field as JSON and defer its normalized Ingredient parse
+    // until tags are available. Eager Ingredient.CODEC rejects old {tag:...}/{item:...}
+    // syntax before the custom loader has a chance to normalize it (26.3 c8837d2).
     private static final Codec<GunSmithTableIngredient> INGREDIENT_CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
-                    Ingredient.CODEC.fieldOf("item").forGetter(GunSmithTableIngredient::getIngredientOrThrow),
+                    net.minecraft.util.ExtraCodecs.JSON.fieldOf("item").forGetter(GunSmithTableSerializer::encodeIngredient),
                     Codec.INT.optionalFieldOf("count", 1).forGetter(GunSmithTableIngredient::getCount)
             ).apply(instance, GunSmithTableIngredient::new)
     );
+
+    private static com.google.gson.JsonElement encodeIngredient(GunSmithTableIngredient ingredient) {
+        Ingredient resolved = ingredient.getIngredient();
+        if (resolved != null) {
+            // Keep the codec's encode side usable for data generation as well as decoding.
+            var ops = net.minecraft.resources.RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE,
+                    net.minecraft.core.RegistryAccess.fromRegistryOfRegistries(net.minecraft.core.registries.BuiltInRegistries.REGISTRY));
+            var encoded = Ingredient.CODEC.encodeStart(ops, resolved).result();
+            if (encoded.isPresent()) {
+                return encoded.get();
+            }
+        }
+        com.google.gson.JsonElement raw = ingredient.getRawItem();
+        return raw != null ? raw : com.google.gson.JsonNull.INSTANCE;
+    }
 
     private static final Codec<Map<String, Identifier>> ATTACHMENTS_CODEC =
             Codec.unboundedMap(Codec.STRING, Identifier.CODEC);

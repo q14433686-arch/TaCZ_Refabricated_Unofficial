@@ -17,10 +17,12 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
@@ -147,9 +149,12 @@ public class BulletHoleParticle extends SingleQuadParticle {
      * 随着 {@code colorPercent} 衰减到 0，坐标也趋近摄像机原点，
      * 视觉上就是"逐渐变大后消失"，生命周期约 60 tick ≈ 3 秒 —— 与反馈逐条吻合。</p>
      *
-     * <p>正确做法：用带 Camera 的重载，让父类自己算出相机相对坐标；
+     * <p>位置必须用相机相对坐标（无偏移时可使用带 Camera 的重载）；
      * 颜色则通过 {@code rCol/gCol/bCol/alpha} 字段传递（父类 {@code extractRotatedQuad}
      * 内部用 {@code ARGB.colorFromFloat(this.alpha, this.rCol, this.gCol, this.bCol)} 取值）。</p>
+ * <p>26.3 同病回移：Direction#getRotation 将局部 +Y 对齐表面法线，但粒子四角
+ * 位于 XY 平面（局部 +Z）。右乘 Rx(-90°) 修正法线，再右乘 Rz(180°)
+ * 保留旧 XZ 四角的 UV 走向；沿表面法线偏移防止 z-fighting。</p>
      */
     @Override
     public void extract(QuadParticleRenderState state, Camera camera, float partialTicks) {
@@ -174,9 +179,14 @@ public class BulletHoleParticle extends SingleQuadParticle {
         this.bCol = baseB * colorPercent;
         this.alpha = baseA * fade;
         try {
-            // 使用方向四元数旋转四边形；位置交给带 Camera 的重载计算。
-            Quaternionf quaternion = this.direction.getRotation();
-            this.extractRotatedQuad(state, camera, quaternion, partialTicks);
+            Quaternionf quaternion = this.direction.getRotation()
+                    .mul(new Quaternionf().rotationX(-Mth.HALF_PI).rotateZ(Mth.PI));
+            float offset = 0.01F * this.getQuadSize(partialTicks);
+            Vec3 camPos = camera.position();
+            float x = (float) (Mth.lerp(partialTicks, this.xo, this.x) - camPos.x()) + this.direction.getStepX() * offset;
+            float y = (float) (Mth.lerp(partialTicks, this.yo, this.y) - camPos.y()) + this.direction.getStepY() * offset;
+            float z = (float) (Mth.lerp(partialTicks, this.zo, this.z) - camPos.z()) + this.direction.getStepZ() * offset;
+            this.extractRotatedQuad(state, quaternion, x, y, z, partialTicks);
         } finally {
             this.rCol = baseR;
             this.gCol = baseG;

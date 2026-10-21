@@ -5,6 +5,24 @@
 
 ---
 
+## R3-hotfix3 源码版本号（2026-10-22）
+
+在上述 26.3 同病项按本分支基线回移后，将构建元数据中的 `R3-hotfix2`
+递增为 `R3-hotfix3`。同步 `gradle.properties`、根 README 与 `fabric.mod.json`；
+不改 Minecraft/依赖版本、SemVer 核心 `1.1.8`，也不表示已有可下载的 R3-hotfix3 Release。
+
+---
+
+## 26.3 同病项按 1.21.11 实际基线回移（2026-10-21；CI 构建通过，待实机）
+
+- JEI：不再伪造 `AFTER_RECIPES_UPDATED`，用可选 mixin 捕获 JEI 自身的 reload listener；失败时每连接最多一次客户端资源重载。**当前固定 JEI 27.23.0.71 的事件只 stop/start，不会清缓存**；后续 JEI 1.21.11 源码才加入可能清配方的同步门禁，所以此处是前向安全加固，不宣称修复当前版本可复现的丢配方。REI 的全阶段重载风险未修。
+- 弹孔：按粒子 XY 平面的 +Z 法线修正六面旋转、UV 与偏移，保留相机相对坐标及颜色还原。
+- 旧枪包材料：配方注册表 codec 改读原始 JSON 后延迟解析，沿用本线 Gson 通道的旧材料语法归一化；不改独立的枪包同步协议。
+- 工作台上半部：移除与根半边 loot table 重复的手工掉落；**保留 1.21.11 loot JSON 格式**。
+- 这些是跨版本可复核的行为回移，不是 26.3 引擎/依赖升级；其它差异与不移植理由见 [`lineage/SYNC_REVIEW_263_TO_1211_20261021.md`](lineage/SYNC_REVIEW_263_TO_1211_20261021.md)。已在提交 `a5f1c95` 上通过 GitHub Actions `build`（包含完整 `./gradlew build`）与 `compile-check`；尚未进游戏，不声明实机修复。
+
+---
+
 ## Hold My Items 5.1 兼容：Lua 安全层旁路（2026-09-12，核心项实机通过 / 矩阵未跑满）
 
 - 来源：玩家报「与 Hold My Items 同装时手持枪械直接崩溃」并附 `RawOutput.log`。定位过程与证据见

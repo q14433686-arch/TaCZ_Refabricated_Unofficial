@@ -130,15 +130,9 @@ public abstract class AbstractGunSmithTableBlock extends BaseEntityBlock {
 
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        // 多方块工作台只有 root 方块实体保存 BlockId。生存模式破坏 head/upper
-        // 等非 root 部分时，原版 loot table 只能看到被破坏方块，无法从 root
-        // 方块实体复制自定义工作台 id；这里手动按 root 方块实体构造掉落物。
-        if (!level.isClientSide() && !player.isCreative() && !isRoot(state)) {
-            ItemStack drop = getCloneItemStack(level, pos, state, true);
-            if (!drop.isEmpty()) {
-                popResource(level, pos, drop);
-            }
-        }
+        // 26.3 同病回移：破坏非根半边时 updateShape 会使根半边也被破坏，
+        // 根半边的 loot table 已限制只从根掉落（自定义工作台还复制 BlockId）。
+        // 此处再手工 popResource 会导致生存模式挖上半部掉两个工作台。
         return super.playerWillDestroy(level, pos, state, player);
     }
 

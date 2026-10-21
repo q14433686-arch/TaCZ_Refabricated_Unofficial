@@ -6,6 +6,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -19,19 +20,31 @@ import java.lang.reflect.Modifier;
  * viewer reload, a viewer can retain categories built before the sync and collapse a custom
  * {@code workbench_b} into whichever generic table happened to register first.
  *
- * <p>Both viewers have a version-specific lightweight reload hook, but neither exposes it as a
- * stable common API. This bridge invokes those hooks reflectively only when the matching optional
- * mod is loaded. If a future viewer version moves the hook, it fails closed and falls back to one
- * normal Minecraft client-resource reload rather than leaving stale recipes behind. The normal
- * current path does <b>not</b> reload all resources (and therefore does not unnecessarily recompile
- * shader packs) on every server join.
+ * <p>In pinned JEI 27.23.0.71 the recipe-update event only stops/starts JEI and does NOT
+ * clear recipes. Later JEI 1.21.11 sources add a recipe-sync guard which can clear the server
+ * cache when an event is fired without a preceding real sync packet. An optional mixin captures
+ * JEI's own client-lifetime reload listener instead; it only stops/starts JEI and never
+ * impersonates a recipe-sync notification. This is forward-compatibility hardening, not a
+ * demonstrated recipe-loss fix for the pinned 27.23 build.
+ * REI retains its reflective reload hook. If either hook is unavailable, one normal client
+ * resource reload per connection is used as a fallback (never a synthetic recipe-sync event).
+ * The listener and event handlers were checked against both JEI v27.23.0 and the newer
+ * upstream 1.21.11 branch; they have different event semantics.
  */
 @Environment(EnvType.CLIENT)
 public final class RecipeViewerReloadBridge {
+    // Owned by JEI's client lifecycle, not by a server connection: do not clear on disconnect.
+    private static ResourceManagerReloadListener jeiReloadListener;
+    private static boolean resourceFallbackUsed;
     private static boolean reloadRequested;
     private static boolean reloadInProgress;
 
     private RecipeViewerReloadBridge() {
+    }
+
+    /** Called by the optional JEI mixin when JEI creates its own reload listener. */
+    public static void setJeiReloadListener(ResourceManagerReloadListener listener) {
+        jeiReloadListener = listener;
     }
 
     /** Called after the synchronized common gun-pack cache has been installed on the client. */
@@ -44,6 +57,8 @@ public final class RecipeViewerReloadBridge {
     /** Drops a queued refresh when leaving a server before its sync has completed. */
     public static void clear() {
         reloadRequested = false;
+        reloadInProgress = false;
+        resourceFallbackUsed = false;
     }
 
     /** Runs on the client tick so packet ordering and initial world setup have completed first. */
@@ -60,22 +75,27 @@ public final class RecipeViewerReloadBridge {
                 tableCount, recipeCount);
 
         boolean requiresResourceFallback = false;
-        if (hasJei() && !refreshJei()) {
+        if (hasJei() && !refreshJei(client)) {
             requiresResourceFallback = true;
         }
         if (hasRei() && !refreshRei()) {
             requiresResourceFallback = true;
         }
 
-        if (!requiresResourceFallback) {
+        if (!requiresResourceFallback || resourceFallbackUsed) {
             reloadInProgress = false;
-            GunMod.LOGGER.info("[TACZ Recipe Viewer] JEI/REI refresh completed.");
+            if (requiresResourceFallback) {
+                GunMod.LOGGER.warn("[TACZ Recipe Viewer] Viewer hook unavailable; resource fallback already used for this connection.");
+            } else {
+                GunMod.LOGGER.info("[TACZ Recipe Viewer] JEI/REI refresh completed.");
+            }
             return;
         }
 
         // This fallback is intentionally rare: it is only for an unrecognised optional viewer
         // version. A normal client resource reload makes both viewers rebuild their registrations.
-        GunMod.LOGGER.warn("[TACZ Recipe Viewer] Viewer reload hook unavailable; falling back to a client resource reload.");
+        resourceFallbackUsed = true;
+        GunMod.LOGGER.warn("[TACZ Recipe Viewer] Viewer reload hook unavailable; falling back once to a client resource reload.");
         try {
             client.reloadResourcePacks().whenComplete((unused, throwable) -> client.execute(() -> {
                 reloadInProgress = false;
@@ -92,18 +112,15 @@ public final class RecipeViewerReloadBridge {
         }
     }
 
-    /** JEI Fabric 1.21.11 restarts its plugin registry when this lifecycle event is invoked. */
-    private static boolean refreshJei() {
+    /** Invoke JEI's own stop/start resource listener, without faking a recipe-sync event. */
+    private static boolean refreshJei(Minecraft client) {
+        if (jeiReloadListener == null) {
+            return false;
+        }
         try {
-            Class<?> lifecycleEvents = Class.forName("mezz.jei.fabric.events.JeiLifecycleEvents");
-            Object event = lifecycleEvents.getField("AFTER_RECIPES_UPDATED").get(null);
-            Object invoker = event.getClass().getMethod("invoker").invoke(event);
-            if (!(invoker instanceof Runnable runnable)) {
-                throw new IllegalStateException("JEI recipe-update invoker is not Runnable");
-            }
-            runnable.run();
+            jeiReloadListener.onResourceManagerReload(client.getResourceManager());
             return true;
-        } catch (ReflectiveOperationException | LinkageError | RuntimeException exception) {
+        } catch (LinkageError | RuntimeException exception) {
             GunMod.LOGGER.debug("[TACZ Recipe Viewer] JEI lightweight refresh unavailable.", exception);
             return false;
         }
