@@ -51,11 +51,14 @@
   原来的局部 Y 防 z-fighting 偏移改为沿命中面法线移动 `0.01 × getQuadSize(partialTick)`，
   位置仍以显式相机相对坐标传给六参数 `extractRotatedQuad` 重载（颜色继续走 `rCol/gCol/bCol/alpha`
   字段，`finally` 里照旧还原）。
-- 静态验证：`python3 scripts/verify_recipe_viewer_reload.py`（4 项）、
+- ✅ 静态验证：`python3 scripts/verify_recipe_viewer_reload.py`（4 项）、
   `python3 scripts/verify_bullet_hole_orientation.py`（5 项）、
-  `bash scripts/check_release_consistency.sh --strict` 均通过；**沙箱无 JDK，本次未执行 Java 编译，
-  也未进游戏**，编译由 GitHub Actions 复核。弹孔脚本的几何模型与源码断言沿用 26.2 版本，
-  但 26.3 的 `SingleQuadParticle` 字节码（六参数重载是否存在）本地无 jar 可核对。
+  `bash scripts/check_release_consistency.sh --strict` 均通过。
+- ✅ GitHub Actions 在 commit `382dcb5` 上通过：`build`（mixin 配置完整性 / 语言键齐平 / 版本一致性 +
+  完整 `./gradlew build`，run `39680020522`）与 `compile-check`（run `39680020194`）。
+  这同时证实 26.3 的 `SingleQuadParticle` 仍有六参数
+  `extractRotatedQuad(state, quaternion, x, y, z, partialTick)` 重载与 `Mth.PI/HALF_PI` 常量。
+  **仍无实机验证**（JEI/REI 刷新、六面弹孔均未进游戏）。
 
 ---
 
