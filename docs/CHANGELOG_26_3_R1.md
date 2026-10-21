@@ -1,15 +1,15 @@
-# TaCZ Refabricated 26.3 R1-hotfix release notes（草稿，尚未发布）
+# TaCZ Refabricated 26.3 R1-hotfix2 release notes（草稿，尚未发布）
 
-**构建元数据：`1.1.8+fabric.26.3.R1-hotfix`**
+**构建元数据：`1.1.8+fabric.26.3.R1-hotfix2`**
 
 **基线：`origin/26.2(main)` R3-hotfix2（`c7c3c55` 之前的 26.2 源码）→ 本线 `26.3`**
 
 **环境：Minecraft 26.3 · Fabric Loader 0.19.5+ · Java 25+ · Fabric API 0.160.7+26.3 · Forge Config API Port 26.3.0+**
 
-> 状态（2026-09-29）：R1 基础版编译/CI 全绿；下列标 ✅ 的基础版条目已由维护者在 26.3 实机验证（2026-09-18 ~ 09-21，
-> 无光影 + Iris 光影 + 专服三种环境）；R1-hotfix 新增项标 🔧，仅 CI 编译通过，未实机验证。**尚无可下载构建。**
+> 状态（2026-10-21）：R1 基础版编译/CI 全绿；下列标 ✅ 的基础版条目已由维护者在 26.3 实机验证（2026-09-18 ~ 09-21，
+> 无光影 + Iris 光影 + 专服三种环境）；`R1-hotfix` 及本次 `R1-hotfix2` 新增项标 🔧，仅 CI 编译通过，未实机验证。**尚无可下载构建。**
 > 姊妹项目（NeoForge）移植指南：[`lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md`](lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md)。
-> 版本命名沿用本仓历史：hotfix 直接追加在 `R1` 后（`R1-hotfix`，不另起 R2；无序号的首个 hotfix 不加数字）。
+> 版本命名沿用本仓历史：hotfix 序号直接追加在 `hotfix` 后、中间不加分隔符（`R1-hotfix` → `R1-hotfix2`，不另起 R2）。
 
 ## R1-hotfix 增量（2026-09-29 ~ 09-30）
 
@@ -26,7 +26,61 @@
   - **其余依赖版本同步**：ModMenu 升级至 26.3 正式版 `21.0.0`（原 `21.0.0-beta.1`），Cloth Config 升级至 `26.3.159`（原 `26.3.158`），JEI 升级至 `31.8.0.48`（含 `#4514` 自定义材料组件保留修复），Carry On 核实上游已发布 `26.3-2.12.0` 且与本模组 `@Pseudo` mixin / `CarryOnReflection` 签名完全兼容。
 - ✅ GitHub Actions `build` / `compile-check` 对语言文件容错变更通过（commit `81e71cf`）；**上述增量待 CI 编译并尚未在 26.3 实机验证**。
 
+## R1-hotfix2 追加（2026-10-21：同步 26.2 线 R3-hotfix3 的两项修复）
+
+来源：`26.2(main)` 的 `4397753`（枪包同步后 JEI 丢配方）与 `2e9b62a`（弹孔朝向），
+逐条按 26.3 的实现与依赖适配，不是整段拷贝。差异、证据与验证边界见
+[`investigations/SYNC_26_2_HOTFIX3_TO_26_3_20261021.md`](investigations/SYNC_26_2_HOTFIX3_TO_26_3_20261021.md)。
+
+- 🔧 **枪包同步后 JEI 丢配方（客户端显示层，未实机验证）**：`RecipeViewerReloadBridge` 不再
+  「优先反射 `Internal.restartJei()`、失败再伪造 `AFTER_RECIPES_UPDATED`」。26.3 线原实现的回退分支
+  在 JEI 31.8 的 `ClientLifecycleHandler#registerEvents` 里会先 `if (!receivedRecipeSync) Internal.clearClientRecipes();`
+  —— 没有紧随真实配方同步包的自造事件等于「换服」，把服务端同步来的 vanilla 型配方整批清掉，只剩
+  客户端原版 fallback（`Loaded N vanilla recipes...` + `This fabric server does not provide recipes to JEI`）。
+  现改为：新增可选 Mixin `compat.jei.JeiClientLifecycleHandlerMixin`（`@Pseudo` + 字符串 target +
+  `require = 0` + `MixinPlugin` 的 `isModLoaded("jei")` 门禁），在
+  `mezz.jei.fabric.startup.ClientLifecycleHandler#getReloadListener()` 返回时捕获 JEI 自己的生命周期
+  listener；刷新时调用它，只做 JEI 的 stop/start，不伪造同步语义、不读写 JEI 私有配方表。
+  反射 `Internal.restartJei()` 的路径一并移除（handler 未初始化时它会抛 `IllegalStateException`）。
+  REI 刷新路径与「每连接一次资源重载兜底」保持不变。**REI 的全量 `reloadPlugins(null, null)` 仍可能
+  丢掉服务端已同步的显示（跨分支审计列为未修项），本次不声称修好 REI。**
+- 🔧 **弹孔朝向错误（未实机验证）**：`BulletHoleParticle#extract` 原先把 `Direction#getRotation()`
+  直接当作四边形旋转，但 vanilla `QuadParticleRenderState` 的顶点取自 XY 平面（局部 +Z 法线），
+  而 `Direction#getRotation()` 的约定是局部 +Y 法线。结果是六个命中面的弹孔贴面方向/UV 走向都不对。
+  同步 26.2 的回移实现：旋转改为 `direction.getRotation() · Rx(-90°) · Rz(180°)`，
+  原来的局部 Y 防 z-fighting 偏移改为沿命中面法线移动 `0.01 × getQuadSize(partialTick)`，
+  位置仍以显式相机相对坐标传给六参数 `extractRotatedQuad` 重载（颜色继续走 `rCol/gCol/bCol/alpha`
+  字段，`finally` 里照旧还原）。
+- ✅ 静态验证：`python3 scripts/verify_recipe_viewer_reload.py`（4 项）、
+  `python3 scripts/verify_bullet_hole_orientation.py`（5 项）、
+  `bash scripts/check_release_consistency.sh --strict` 均通过。
+- ✅ GitHub Actions 在 commit `382dcb5` 上通过：`build`（mixin 配置完整性 / 语言键齐平 / 版本一致性 +
+  完整 `./gradlew build`，run `39680020522`）与 `compile-check`（run `39680020194`）。
+  这同时证实 26.3 的 `SingleQuadParticle` 仍有六参数
+  `extractRotatedQuad(state, quaternion, x, y, z, partialTick)` 重载与 `Mth.PI/HALF_PI` 常量。
+  **仍无实机验证**（JEI/REI 刷新、六面弹孔均未进游戏）。
+
 ---
+
+## R1-hotfix2 追加（2026-10-21：YSM / Yes Steve Model 适配）
+
+- 🔧 **新增 `com.tacz.guns.compat.ysm.YsmCompat` 门面（未实机验证）**：把 YSM 需要的 9 个
+  molang 变量（`tac_hold_gun` / `tac_gun_type` / `tac_gun_id` / `tac_is_fire` / `tac_is_aim` /
+  `tac_is_reload` / `tac_is_melee` / `tac_is_draw` / `tac_fire_mode`）收敛成静态方法，语义逐条对齐
+  YSM 1.20.1 Forge 版 `TacBinding`/`TacAnimHandler`；内部改用 `instanceof IGunOperator`
+  而不是 `IGunOperator.fromLivingEntity` 的无检查转型，索引查询失败/实体未被 mixin 时返回中性值并只记一次 WARN。
+  另提供 `beginSelfFlashPass()/endSelfFlashPass()` 成对控制 `MuzzleFlashRender.isSelf`/`ShellRender.isSelf`。
+- 🔧 **第一人称渲染归属握手（可选、默认不影响任何行为）**：`YsmCompat.setExternalGunRender(true)`
+  让外部渲染器声明「这一帧的枪我自己画」，`FirstPersonHandsAndItemsRendererMixin` 的视模分支据此早退，
+  避免与 YSM 在模型定位点上 `renderStatic` 出的枪叠成两把；标志由 `END_CLIENT_TICK` 每 tick 复位，
+  YSM 漏掉 `finally` 最多多抑制一帧。新增客户端配置 `YsmCompat`（`tacz-client.toml`，默认 `true`）。
+- 📄 **YSM 侧尚未恢复 compat**：ModernYSM `port/26.3` 仍把 `rip/ysm/compat/**` 排除出编译
+  （`TacCompat.isLoaded()` 恒 false），因此**装在一起现在仍没有枪械动画**；本次只是把 TaCZ 这侧
+  的契约与门面备好，迁移清单见 [`YSM_COMPAT.md`](YSM_COMPAT.md)。**不构成「YSM 已适配完成」。**
+- ✅ `python3 scripts/verify_ysm_compat.py`（11 项）通过：核对 YSM 1.20.1 用到的每个 TaCZ 符号仍存在、
+  枪械 `ItemModel` 确实透传 `ItemDisplayContext`、握手是可选且每 tick 失效、配置项默认开。
+- ✅ GitHub Actions 对 `0a7cd08`：`build`（run `39681806932`）与 `compile-check`（run `39681806929`）成功。
+  **未实机验证**：YSM 与 TaCZ 从未一起进游戏跑过，且 YSM 侧 compat 仍是 stub。
 
 ## 1. 引擎适配（Mojang 26.3）
 

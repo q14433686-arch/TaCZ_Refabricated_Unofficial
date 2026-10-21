@@ -16,6 +16,7 @@
 | `PORTING_NOTES.md` | 26.2 移植经验总结（字节码级验证过的方法论，26.3 仍适用；26.3 具体差异见 lineage 移植指南） |
 | `AMMO_SOURCE_API.md` | 可替换弹药 API 表面 |
 | `CARRYON_COMPAT.md` | Carry On 工作台兼容（26.3 上 Carry On 尚无构件，接线保留） |
+| `YSM_COMPAT.md` | YSM（Yes Steve Model）适配：TaCZ 侧门面/握手、YSM 侧契约与迁移清单、未验证边界 |
 | `README_26_1_2.md` | **26.1.2 分支根 README 的替换蓝本**（AGENTS.md §3：改 README 结构时同步它） |
 
 ## `investigations/` —— 日期型调查/审计记录（完结即入，不再更新）
