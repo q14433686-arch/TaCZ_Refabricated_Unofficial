@@ -1,4 +1,4 @@
-commit: a5f1c95d79e1161d23aba6b91575210d4b79642a
+commit: cb1d01d2cad34a417799b163d1ed7479accd3465
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -41,26 +41,26 @@ Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets
 Cannot remap valueFormatter because it does not exist in any of the targets [] or their parents.
 
 > Task :compileJava
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisScopeDimensionMixin.java:24: warning: Mixin target net.irisshaders.iris.Iris is public and should be specified in value
+@Mixin(targets = "net.irisshaders.iris.Iris", remap = false)
+^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisFinalScopeOverlayMixin.java:26: warning: Mixin target net.irisshaders.iris.pipeline.IrisRenderingPipeline is public and should be specified in value
+@Mixin(targets = "net.irisshaders.iris.pipeline.IrisRenderingPipeline", remap = false)
+^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisHandRendererReticlePassMixin.java:22: warning: Mixin target net.irisshaders.iris.pathways.HandRenderer is public and should be specified in value
+@Mixin(targets = "net.irisshaders.iris.pathways.HandRenderer", remap = false)
+^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisDepthRestoreShaderMixin.java:23: warning: Mixin target net.irisshaders.iris.pipeline.programs.ShaderCreator is public and should be specified in value
+@Mixin(targets = "net.irisshaders.iris.pipeline.programs.ShaderCreator", remap = false)
+^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisShadowResolutionMixin.java:32: warning: Mixin target net.irisshaders.iris.shaderpack.properties.PackShadowDirectives is public and should be specified in value
+@Mixin(targets = "net.irisshaders.iris.shaderpack.properties.PackShadowDirectives", remap = false)
+^
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/SoundManagerPreparationsMixin.java:16: warning: Mixin target net.minecraft.client.sounds.SoundManager$Preparations is public and should be specified in value
 @Mixin(targets = "net.minecraft.client.sounds.SoundManager$Preparations")
 ^
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/GlCommandEncoderScopeDepthCopyMixin.java:20: warning: Mixin target com.mojang.blaze3d.opengl.GlCommandEncoder is public and should be specified in value
 @Mixin(targets = "com.mojang.blaze3d.opengl.GlCommandEncoder")
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisHandRendererReticlePassMixin.java:22: warning: Mixin target net.irisshaders.iris.pathways.HandRenderer is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.pathways.HandRenderer", remap = false)
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisShadowResolutionMixin.java:32: warning: Mixin target net.irisshaders.iris.shaderpack.properties.PackShadowDirectives is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.shaderpack.properties.PackShadowDirectives", remap = false)
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisScopeDimensionMixin.java:24: warning: Mixin target net.irisshaders.iris.Iris is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.Iris", remap = false)
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisDepthRestoreShaderMixin.java:23: warning: Mixin target net.irisshaders.iris.pipeline.programs.ShaderCreator is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.pipeline.programs.ShaderCreator", remap = false)
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisFinalScopeOverlayMixin.java:26: warning: Mixin target net.irisshaders.iris.pipeline.IrisRenderingPipeline is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.pipeline.IrisRenderingPipeline", remap = false)
 ^
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/HumanoidModelMixin.java:68: warning: Cannot find target method "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" for @Inject.method="setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" in net.minecraft.client.model.HumanoidModel
     @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At(value = "TAIL"))
@@ -70,7 +70,7 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 8 warnings
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1792620282367.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1792620444551.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -80,7 +80,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 20s
+BUILD SUCCESSFUL in 1m 8s
 1 actionable task: 1 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
