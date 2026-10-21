@@ -8,6 +8,19 @@
 
 ---
 
+## 2026-10-22 · 版本号推进至 R3-hotfix3
+
+1. **`mod_version` → `1.1.8+fabric.26.1.2.R3-hotfix3`**：按请求将 hotfix 序号从 2 加 1；不改变 SemVer 核心、Minecraft/Fabric 依赖或其他依赖版本。同步更新 `gradle.properties`、README 的源码版本/提示/支持环境/SemVer 文案，以及 `fabric.mod.json` 的展示名称和说明。hotfix 数字仍按仓库规则直接跟在 `hotfix` 后。
+   - *一致性自检：`bash scripts/check_release_consistency.sh`。*
+
+## 2026-10-21 · 26.3 修改项核对与适配性回移
+
+1. **弹孔朝向修复**：同步 26.3 线中已验证的粒子朝向/法线偏移修正。将方向旋转应用到 vanilla XY 粒子四边形时补齐局部 +Z→+Y 基变换，维持现有 UV 角序；防 z-fighting 改为沿命中面法线偏移，并显式保持相机相对坐标。新增六面几何与源码静态验证 `scripts/verify_bullet_hole_orientation.py`（5 项通过）。
+   - 详细回移范围、暂缓项与基线差异：`docs/SYNC_26_3_BACKPORT_26_1_2_20261021.md`。
+   - **验证限制**：本环境无 Java，`./gradlew compileJava` 无法启动；需 CI 编译与客户端六面实机验证。
+   - *证据级别：对照 26.3 当前树 `e1f57a2` 的实现与静态模型检查；本线编译/实机待验证。*
+2. **版本相关项不盲搬**：JEI lifecycle listener 先待确认本线 JEI 29.5.0.26 的实际目标 API；recipe-sync 清理只适用于 26.3 启用的 Fabric recipe-sync 路径；RenderPearl/Iris、YSM、REI/Zoomify、lang 与 loot schema 变更按本线实际 API/加载行为另行评估。详见同步记录。
+
 ## 2026-09-13 · 跨线同步轮（1.21.11 `b3a01b1` → 本线）+ 版本号改为 R3-hotfix2
 
 ### 修复

@@ -17,10 +17,12 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
@@ -131,7 +133,7 @@ public class BulletHoleParticle extends SingleQuadParticle {
      * this.extractRotatedQuad(state, quaternion, red, green, blue, alphaFade);
      * </pre>
      *
-     * <p>看起来像是"传旋转 + 颜色"，但 26.2 的 {@code SingleQuadParticle} 里<b>没有</b>
+     * <p>看起来像是"传旋转 + 颜色"，但 {@code SingleQuadParticle} 里<b>没有</b>
      * 接收颜色的重载（反编译确认，只有三个）：</p>
      * <pre>
      * extractRotatedQuad(QuadParticleRenderState, Camera, Quaternionf, float partialTick)
@@ -147,9 +149,15 @@ public class BulletHoleParticle extends SingleQuadParticle {
      * 随着 {@code colorPercent} 衰减到 0，坐标也趋近摄像机原点，
      * 视觉上就是"逐渐变大后消失"，生命周期约 60 tick ≈ 3 秒 —— 与反馈逐条吻合。</p>
      *
-     * <p>正确做法：用带 Camera 的重载，让父类自己算出相机相对坐标；
+     * <p>正确做法：位置必须是相机相对坐标（无额外偏移时可用带 Camera 的重载）；
      * 颜色则通过 {@code rCol/gCol/bCol/alpha} 字段传递（父类 {@code extractRotatedQuad}
      * 内部用 {@code ARGB.colorFromFloat(this.alpha, this.rCol, this.gCol, this.bCol)} 取值）。</p>
+     *
+     * <p>弹孔朝向修复：{@code Direction#getRotation()} 把局部 +Y 转到命中面法线，
+     * 但 {@code QuadParticleRenderState} 从 XY 平面四角（局部 +Z 法线）生成顶点。
+     * 因此先做 Rx(-90°) 的 +Z→+Y 基变换，末尾 Rz(180°) 保留原 XZ 四边形的 UV 走向。
+     * 原实现局部 Y 的 0.01×quadSize 防 z-fighting 偏移，改为沿命中面法线移动位置，
+     * 再把显式计算的相机相对坐标传入六参数重载，不能把颜色当成坐标。</p>
      */
     @Override
     public void extract(QuadParticleRenderState state, Camera camera, float partialTicks) {
@@ -174,9 +182,16 @@ public class BulletHoleParticle extends SingleQuadParticle {
         this.bCol = baseB * colorPercent;
         this.alpha = baseA * fade;
         try {
-            // 使用方向四元数旋转四边形；位置交给带 Camera 的重载计算。
-            Quaternionf quaternion = this.direction.getRotation();
-            this.extractRotatedQuad(state, camera, quaternion, partialTicks);
+            // Direction 的局部 +Y 法线约定 → vanilla XY 四边形的局部 +Z 法线约定。
+            // 右乘基变换；Rz(180°) 对齐原 XZ 四边形的 UV 走向。
+            Quaternionf quaternion = this.direction.getRotation()
+                    .mul(new Quaternionf().rotationX(-Mth.HALF_PI).rotateZ(Mth.PI));
+            float offset = 0.01F * this.getQuadSize(partialTicks);
+            Vec3 camPos = camera.position();
+            float x = (float) (Mth.lerp(partialTicks, this.xo, this.x) - camPos.x()) + this.direction.getStepX() * offset;
+            float y = (float) (Mth.lerp(partialTicks, this.yo, this.y) - camPos.y()) + this.direction.getStepY() * offset;
+            float z = (float) (Mth.lerp(partialTicks, this.zo, this.z) - camPos.z()) + this.direction.getStepZ() * offset;
+            this.extractRotatedQuad(state, quaternion, x, y, z, partialTicks);
         } finally {
             this.rCol = baseR;
             this.gCol = baseG;
