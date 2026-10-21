@@ -1,16 +1,16 @@
-commit: 44bb362a1cbd7460fb2f96724a5fce0d57a585d7
+commit: b2ead0796e39e881ad208f345437cab0aa564043
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
 > Configure project :
-Fabric Loom: 1.17.20
+Fabric Loom: 1.17.21
 
 > Task :compileJava
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1789299498129.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1792620715481.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
