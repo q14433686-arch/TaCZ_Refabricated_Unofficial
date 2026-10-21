@@ -5,6 +5,14 @@
 
 ---
 
+## R3-hotfix3 源码版本号（2026-10-22）
+
+在上述 26.3 同病项按本分支基线回移后，将构建元数据中的 `R3-hotfix2`
+递增为 `R3-hotfix3`。同步 `gradle.properties`、根 README 与 `fabric.mod.json`；
+不改 Minecraft/依赖版本、SemVer 核心 `1.1.8`，也不表示已有可下载的 R3-hotfix3 Release。
+
+---
+
 ## 26.3 同病项按 1.21.11 实际基线回移（2026-10-21；CI 构建通过，待实机）
 
 - JEI：不再伪造 `AFTER_RECIPES_UPDATED`，用可选 mixin 捕获 JEI 自身的 reload listener；失败时每连接最多一次客户端资源重载。**当前固定 JEI 27.23.0.71 的事件只 stop/start，不会清缓存**；后续 JEI 1.21.11 源码才加入可能清配方的同步门禁，所以此处是前向安全加固，不宣称修复当前版本可复现的丢配方。REI 的全阶段重载风险未修。

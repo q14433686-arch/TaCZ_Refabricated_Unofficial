@@ -58,7 +58,7 @@
 | 分支 | mod_version | README 一致性 |
 |---|---|---|
 | 26.2（`arena/01a04e96`） | `1.1.8+fabric.26.2.R3` | 由他们自己回填 |
-| **1.21.11（本分支）** | `1.1.8+fabric.1.21.11.R3-hotfix2` | 2026-09-13 由 R3-hotfix 改 R3-hotfix2（命名格式沿用 R2-hotfix2）：README + `gradle.properties`（mod_version 与注释）+ `fabric.mod.json` name/description 已同步。2026-09-09 由 R3 改 R3-hotfix：README 六处 + `gradle.properties` 注释 + `fabric.mod.json` name/description 已同步。`-hotfix` 后缀家族是 `check_release_consistency.sh` 的已知局限（R2-hotfix2 轮记录：恒 2 FAIL + 1 WARN，脚本在 26.2(main)），`--strict` 留合并/发布门禁 |
+| **1.21.11（本分支）** | `1.1.8+fabric.1.21.11.R3-hotfix3` | 2026-10-22 为本轮 26.3 同病项回移将 hotfix 序号从 2 提升到 3；README、gradle.properties、fabric.mod.json 已同步；尚未发布。 2026-09-13 由 R3-hotfix 改 R3-hotfix2（命名格式沿用 R2-hotfix2）：README + `gradle.properties`（mod_version 与注释）+ `fabric.mod.json` name/description 已同步。2026-09-09 由 R3 改 R3-hotfix：README 六处 + `gradle.properties` 注释 + `fabric.mod.json` name/description 已同步。R2-hotfix2 当时的 `check_release_consistency.sh` 曾有解析局限；当前 26.2(main) 脚本已支持 `-hotfix<n>`，合并/发布前以 `--strict` 检查 |
 | 26.1.2（`arena/01a05170`） | `1.1.8+fabric.26.1.2.R2-hotfix2` | 待他们 bump |
 
 > 本分支 R3 = 把 `-hotfix2` 后缀去掉、直接进 R3，与 26.2 侧 `5bb13af` 的做法一致
