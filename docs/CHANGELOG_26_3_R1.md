@@ -79,6 +79,8 @@
   的契约与门面备好，迁移清单见 [`YSM_COMPAT.md`](YSM_COMPAT.md)。**不构成「YSM 已适配完成」。**
 - ✅ `python3 scripts/verify_ysm_compat.py`（11 项）通过：核对 YSM 1.20.1 用到的每个 TaCZ 符号仍存在、
   枪械 `ItemModel` 确实透传 `ItemDisplayContext`、握手是可选且每 tick 失效、配置项默认开。
+- ✅ GitHub Actions 对 `0a7cd08`：`build`（run `39681806932`）与 `compile-check`（run `39681806929`）成功。
+  **未实机验证**：YSM 与 TaCZ 从未一起进游戏跑过，且 YSM 侧 compat 仍是 stub。
 
 ## 1. 引擎适配（Mojang 26.3）
 

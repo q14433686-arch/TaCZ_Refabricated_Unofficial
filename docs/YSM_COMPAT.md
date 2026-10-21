@@ -161,7 +161,12 @@ python3 scripts/verify_ysm_compat.py     # 11 项
 - 握手是可选、每 tick 失效，且守卫位于「普通物品放行之后、geo 提交之前」；
 - 配置项存在且默认 `true`。
 
-**这些只是源码/契约检查。** 没有编译、没有 Mixin 应用测试、没有进游戏。
+**这些只是源码/契约检查。** 没有 Mixin 应用测试，也没有进游戏。
+
+编译状态：GitHub Actions 对 commit `0a7cd08` 的 `build`（run
+[`39681806932`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/39681806932)）
+与 `compile-check`（run [`39681806929`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/39681806929)）
+均成功，即 `YsmCompat`、配置项与 mixin 守卫在 Java 25 下可编译、mixin 配置完整性检查通过。
 
 ## 7. 待实机验收的矩阵（没有任何一项跑过）
 
