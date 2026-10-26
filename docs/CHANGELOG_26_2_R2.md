@@ -10,12 +10,45 @@
 本 release 保持 `1.1.8` 为 SemVer 核心；`+fabric.26.2.R2` 是不参与版本谓词排序的 build
 metadata，不能写成 `1.1.8-R2`。
 
-## R3-hotfix5（当前源码，尚未发布）
+## R3-hotfix4（当前源码，尚未发布）
 
-**构建元数据：`1.1.8+fabric.26.2.R3-hotfix5`**。
+**构建元数据：`1.1.8+fabric.26.2.R3-hotfix4`**。
 
-本版本收掉两个 **26.2 上必现**的运行期崩溃（不是偶发、不是配置问题：只要操作复现步骤就必崩），
-外加把标靶主人这条链路整体换成**原版**的档案/皮肤机制。**全部条目均未实机验证**。
+本版本在 R3-hotfix3 的代码基础上收掉一轮**方块层的静默失效**（编译通过、运行不报错、
+数据/行为直接没了），并把两条离线守门脚本接进 CI；随后（**同一版本内二次返工**）又收掉
+两个 **26.2 上必现**的运行期崩溃，并把标靶主人这条链路整体换成**原版**的档案/皮肤机制。
+**全部条目均未实机验证**。
+
+- **修复多方块工作台「挖另一半掉两个」**：生存模式下破坏 B 工作台
+  （`gun_smith_table` / `workbench_b`）的 head、或 C 工作台（`workbench_c`）的 upper 时，
+  会同时爆出两个工作台。根因是 `AbstractGunSmithTableBlock#playerWillDestroy` 对非根半边
+  手工 `popResource` 了一份克隆，与「根半边经 `updateShape → AIR → destroyBlock(drop=true)`
+  走自己的战利品表」叠加。已移除该手工掉落，掉落全部交回战利品表（26.3 线 commit
+  `021b546` 的同源修复）。顺带修正 `GunSmithTableBlockB` 创造模式下抑制半边掉落的判据方向
+  （原判据与自身注释相反，导致创造模式挖 head 会漏出一个物品）。
+  详见[调查记录](investigations/MULTIBLOCK_DOUBLE_DROP_26_2_2026_10_26.md)。
+- **修复雕像上的枪随方块消失**：上游在 `Block#onRemove` 里掉枪，而 26.2 已删除
+  `onRemove` 且**没有任何**「方块实体移除时自动清理」的默认行为，移植时只留下一行注释
+  （`StatueBlock` 原第 160 行）。改为覆写 `BlockEntity#preRemoveSideEffects`，覆盖玩家挖掘 /
+  爆炸 / 活塞 / `/setblock` 全部移除路径，只在服务端掉落。
+- **修复标靶主人重启后丢失**（存档键对齐这部分保留；「服务端补全档案」那部分已被下方二次返工取代）：`saveAdditional` 已改写成 `owner_uuid`/`owner_name`，但
+  `loadAdditional` 的前置判据仍写着上游的 `Owner` 键（此后再无写入）⇒ 判据恒假 ⇒
+  带名字的标靶重进存档后头像信息消失。判据与写入键对齐，补名字-only 主人的还原与旧键兼容。
+  详见[调查记录](investigations/BLOCK_ENTITY_DATA_LOSS_26_2_2026_10_27.md)。
+- **修复标靶头像的「名字 → 皮肤」解析**（已被下方二次返工取代：改用原版 `PlayerSkinRenderCache`）：服务端补全档案（26.2 的
+  `MinecraftServer#services().nameToIdCache()` → `UserNameToIdResolver#get(String)`，阻塞调用放后台线程），
+  客户端渲染从只看 UUID 的 `DefaultPlayerSkin` 改为 `SkinManager#createLookup`。查询失败不再静默：
+  拼错/离线/被拒都会在服务端日志留下 WARN。26.2 档案 API 的逐条探针结果记录在调查记录 §5.2。
+- **新增离线审计** `scripts/verify_block_entity_persistence.py`：方块实体的存档键对称性、
+  判据键存在性、持有 `ItemStack` 者必须有移除钩子、禁止 `onRemove` 覆写。已用「回退到
+  修复前的两个文件」验证过它能同时抓出上述两个问题。本脚本与 `verify_block_drops.py` 已于
+  2026-10-27 以 `--strict` 加入 `.github/workflows/build.yml` 的静态校验段（`docs/ci/build.yml` 同步）。
+- **验证边界**：两项修复已通过离线审计与 26.2 CI `:compileJava`（`BUILD SUCCESSFUL`，
+  同时证明 `preRemoveSideEffects(BlockPos, BlockState)` 在 26.2 存在且签名一致），
+  但**未实机验证**；发布前须按调查记录 §6 的清单实测（破坏/爆炸/活塞三种移除路径、
+  改名标靶重进存档）。
+
+### 二次返工（同一版本内）：两处必现 NPE + 标靶档案/皮肤改走原版
 
 - **修复「放置改过名的标靶抛 NPE、且物品不被消耗」**：`TargetBlock#setPlacedBy` 里
   `new GameProfile(null, stack.getHoverName().getString())` —— authlib 9 的 `GameProfile`
@@ -44,48 +77,12 @@ metadata，不能写成 `1.1.8-R2`。
   自定义名改用 `ComponentSerialization.CODEC` 存取；早期存档把组件以 JSON 字符串写下，
   读回时会识别 `{"text":...}` 形态并重新解析，不会把 JSON 原文当成名字显示。
 - **离线守卫新增两条规则**（`scripts/verify_block_entity_persistence.py`）：
-  E 禁止 `new GameProfile(null, ...)`（本类崩溃的根因模板）；F 禁止在主源码里直接使用
+  第 5 条禁止 `new GameProfile(null, ...)`（本类崩溃的根因模板）；第 6 条禁止在主源码里直接使用
   `SkinManager`（皮肤必须走 `PlayerSkinRenderCache`）。同时把「键对称性」检查从
   `loadAdditional` 放宽到整个类，避免把抽到 `readXxx()` 辅助方法里的合法读取误判成「只写不读」。
 - **验证边界**：26.2 CI `compile-check` 与 `build`（含两条 `--strict` 守卫、版本一致性、
   全量构建）均通过；**未实机验证**，发布前须按调查记录 §6 的清单实测
   （改名标靶放置→物品是否消耗、改名标靶矿车靠近是否崩、重进存档后皮肤是否还在）。
-
-## R3-hotfix4（未单独发布，内容并入 R3-hotfix5）
-
-**构建元数据：`1.1.8+fabric.26.2.R3-hotfix4`**。
-
-本版本在 R3-hotfix3 的代码基础上收掉一轮**方块层的静默失效**（编译通过、运行不报错、
-数据/行为直接没了），并把两条离线守门脚本接进 CI。**全部条目均未实机验证**。
-
-- **修复多方块工作台「挖另一半掉两个」**：生存模式下破坏 B 工作台
-  （`gun_smith_table` / `workbench_b`）的 head、或 C 工作台（`workbench_c`）的 upper 时，
-  会同时爆出两个工作台。根因是 `AbstractGunSmithTableBlock#playerWillDestroy` 对非根半边
-  手工 `popResource` 了一份克隆，与「根半边经 `updateShape → AIR → destroyBlock(drop=true)`
-  走自己的战利品表」叠加。已移除该手工掉落，掉落全部交回战利品表（26.3 线 commit
-  `021b546` 的同源修复）。顺带修正 `GunSmithTableBlockB` 创造模式下抑制半边掉落的判据方向
-  （原判据与自身注释相反，导致创造模式挖 head 会漏出一个物品）。
-  详见[调查记录](investigations/MULTIBLOCK_DOUBLE_DROP_26_2_2026_10_26.md)。
-- **修复雕像上的枪随方块消失**：上游在 `Block#onRemove` 里掉枪，而 26.2 已删除
-  `onRemove` 且**没有任何**「方块实体移除时自动清理」的默认行为，移植时只留下一行注释
-  （`StatueBlock` 原第 160 行）。改为覆写 `BlockEntity#preRemoveSideEffects`，覆盖玩家挖掘 /
-  爆炸 / 活塞 / `/setblock` 全部移除路径，只在服务端掉落。
-- **修复标靶主人重启后丢失**：`saveAdditional` 已改写成 `owner_uuid`/`owner_name`，但
-  `loadAdditional` 的前置判据仍写着上游的 `Owner` 键（此后再无写入）⇒ 判据恒假 ⇒
-  带名字的标靶重进存档后头像信息消失。判据与写入键对齐，补名字-only 主人的还原与旧键兼容。
-  详见[调查记录](investigations/BLOCK_ENTITY_DATA_LOSS_26_2_2026_10_27.md)。
-- **修复标靶头像的「名字 → 皮肤」解析**：服务端补全档案（26.2 的
-  `MinecraftServer#services().nameToIdCache()` → `UserNameToIdResolver#get(String)`，阻塞调用放后台线程），
-  客户端渲染从只看 UUID 的 `DefaultPlayerSkin` 改为 `SkinManager#createLookup`。查询失败不再静默：
-  拼错/离线/被拒都会在服务端日志留下 WARN。26.2 档案 API 的逐条探针结果记录在调查记录 §5.2。
-- **新增离线审计** `scripts/verify_block_entity_persistence.py`：方块实体的存档键对称性、
-  判据键存在性、持有 `ItemStack` 者必须有移除钩子、禁止 `onRemove` 覆写。已用「回退到
-  修复前的两个文件」验证过它能同时抓出上述两个问题。本脚本与 `verify_block_drops.py` 已于
-  2026-10-27 以 `--strict` 加入 `.github/workflows/build.yml` 的静态校验段（`docs/ci/build.yml` 同步）。
-- **验证边界**：两项修复已通过离线审计与 26.2 CI `:compileJava`（`BUILD SUCCESSFUL`，
-  同时证明 `preRemoveSideEffects(BlockPos, BlockState)` 在 26.2 存在且签名一致），
-  但**未实机验证**；发布前须按调查记录 §6 的清单实测（破坏/爆炸/活塞三种移除路径、
-  改名标靶重进存档）。
 
 ## R3-hotfix3（未单独发布，内容并入 R3-hotfix4）
 

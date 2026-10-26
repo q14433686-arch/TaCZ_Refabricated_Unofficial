@@ -1,6 +1,6 @@
 # 26.2「代码在、行为不在」与两处必现崩溃：雕像掉枪、标靶主人、标靶头像皮肤、标靶 NPE
 
-- **日期**：2026-10-27（R3-hotfix4 首轮修复；R3-hotfix5 二次返工）
+- **日期**：2026-10-27（R3-hotfix4 首轮修复；同一版本内二次返工，版本号不变）
 - **触发**：玩家实测「破坏放着枪的雕像，枪确实会直接丢失」，并追问「还有多少这种问题」；
   随后又报出「放置改过名的标靶抛 NPE、物品还不被消耗」与「改过名的标靶矿车崩渲染线程」
 - **范围**：`src/main/java/com/tacz/guns/block/**`、`block/entity/**`（本分支全部 3 个方块实体）、
@@ -14,7 +14,7 @@
 | # | 症状 | 根因 | 状态 |
 |---|---|---|---|
 | 1 | 破坏放着枪的雕像 → 枪消失 | 26.2 删掉了 `Block#onRemove`，移植时只留注释、**没有**任何替代钩子；而 26.2 **不存在**「方块实体移除时自动清理」这种默认行为 | 已修：覆写 `BlockEntity#preRemoveSideEffects` |
-| 2 | 带名字的标靶重启后主人信息丢失（头像皮肤没了） | `saveAdditional` 已改写成扁平键 `owner_uuid`/`owner_name`，`loadAdditional` 的前置判据却仍写着上游的 `Owner`，而该键再没有任何写入 ⇒ 判据恒假 | 已修（hotfix4 对齐键名；hotfix5 整体换成原版 `profile` 键） |
+| 2 | 带名字的标靶重启后主人信息丢失（头像皮肤没了） | `saveAdditional` 已改写成扁平键 `owner_uuid`/`owner_name`，`loadAdditional` 的前置判据却仍写着上游的 `Owner`，而该键再没有任何写入 ⇒ 判据恒假 | 已修（首轮对齐键名；二次返工整体换成原版 `profile` 键） |
 | 3 | 带名字的标靶头像**永远是默认皮肤** | 服务端缺「名字 → 档案」解析（26.2 无 `SkullBlockEntity.updateGameprofile`），客户端又用只看 UUID 的 `DefaultPlayerSkin` | 已修（§5） |
 | 4 | 放置改过名的标靶 → **NPE**，标靶放下了但**物品不被消耗** | `new GameProfile(null, 名字)`；authlib 9 的 `GameProfile` 是 record，id/name/properties 全部 `requireNonNull`。NPE 抛在 `BlockItem#place` 中途，消耗语句还没执行 | 已修（§5.4）：改用原版 `ResolvableProfile` |
 | 5 | 改过名的标靶矿车 → **崩渲染线程**（每帧） | 同一个 `new GameProfile(null, 名字)`，但它在 `extractRenderState` 里被渲染线程每帧调用 | 已修（§5.4）：`getOwnerProfile()` 返回 `ResolvableProfile` |
@@ -108,7 +108,7 @@ if (!input.getStringOr(OWNER_TAG /* "Owner" */, "").isEmpty()) {   // 判的是"
   `tryGetString` 兜住「旧存档里 `Owner` 是复合标签、`getStringOr` 类型不匹配会抛异常」；
 - UUID 非法不再 `UUID.fromString` 抛异常崩方块实体，改为 `tryParseUuid` 返回 `null`。
 
-> **R3-hotfix5 返工**：上面这套「扁平键 + 服务端补全」在 hotfix5 被整体替换 —— 存档改回
+> **二次返工（同一版本内）**：上面这套「扁平键 + 服务端补全」已被整体替换 —— 存档改回
 > **原版头颅同款**的 `profile` 键 + `ResolvableProfile.CODEC`，服务端不再解析档案。
 > 扁平的 `owner_uuid`/`owner_name` 与上游的 `Owner` 只保留**读取**兼容，下次保存即迁移。
 > 理由见 §5.3/§5.4：手搓档案的代价是两处必现 NPE + 一套没必要维护的异步补全。
@@ -144,7 +144,7 @@ python3 scripts/verify_block_drops.py --strict                # 上一轮的双�
 `verify_block_entity_persistence.py` 检查六件事：
 
 1. `loadAdditional` 里当前置判据的键，必须由同一个类的 `saveAdditional` 写入；
-2. 存档键读写对称（只写不读／只读不写都报）—— 读取按**整个类**统计（R3-hotfix5 起），
+2. 存档键读写对称（只写不读／只读不写都报）—— 读取按**整个类**统计（二次返工起），
    因为取值常被抽进 `readXxx()` 辅助方法；
 3. 持有 `ItemStack` 的方块实体必须有 `preRemoveSideEffects` 或 `setRemoved`，
    确实不需要掉的用 `// tacz:no-drop-on-remove` 显式豁免；
@@ -153,7 +153,7 @@ python3 scripts/verify_block_drops.py --strict                # 上一轮的双�
    用 `ResolvableProfile.createUnresolved(String)`；
 6. 禁止在主源码里直接使用 `SkinManager`（皮肤一律走 `PlayerSkinRenderCache`）。
 
-第 5、6 条是 R3-hotfix5 加的：它们抓的不是「数据丢了」，而是**同一段错误写法换个地方再来一次**
+第 5、6 条是二次返工时加的：它们抓的不是「数据丢了」，而是**同一段错误写法换个地方再来一次**
 （比如哪天又有人给「旗帜上的图案」手搓一个 `GameProfile`）。两条规则在比对前会先**剥掉注释**，
 避免把 Javadoc 里引用的反面示例当成真实调用。
 
@@ -218,9 +218,9 @@ python3 scripts/verify_block_drops.py --strict                # 上一轮的双�
 > （一次 3 分钟，能一次确认十几个签名），而且不污染源码。前提是能写 `.github/workflows/`
 > ——本仓 2026-10-27 起已授权。
 
-### 5.3 第一轮修法（R3-hotfix4）：能跑，但把问题搬进了服务端
+### 5.3 第一轮修法（hotfix4 首轮）：能跑，但把问题搬进了服务端
 
-R3-hotfix4 的做法是：服务端把「只有名字」的档案补全成「名字 + UUID」，客户端换成
+首轮的做法是：服务端把「只有名字」的档案补全成「名字 + UUID」，客户端换成
 `SkinManager#createLookup`。它确实让头像有了真皮肤，但也带来两个后果：
 
 - **多了一整套需要维护的异步逻辑**：`Util.backgroundExecutor()` + `server.execute(...)` +
@@ -241,7 +241,7 @@ R3-hotfix4 的做法是：服务端把「只有名字」的档案补全成「名
   也就是说 `new GameProfile(null, 名字)` 是**必抛 NPE**，不是「偶尔」。上一轮只是没碰到
   那两个调用点。
 
-### 5.4 第二轮修法（R3-hotfix5）：换成原版机制，两个崩溃与静默失效一起消失
+### 5.4 第二轮修法（同一版本内二次返工）：换成原版机制，两个崩溃与静默失效一起消失
 
 #### 5.4.1 案 4：放置改过名的标靶 → NPE + 物品不被消耗
 
@@ -338,7 +338,7 @@ RenderType type = skinRenderCache.getOrDefault(profile).renderType();
 ## 6. 验证边界
 
 - ✅ `scripts/verify_block_entity_persistence.py --strict`、`scripts/verify_block_drops.py --strict`：通过
-- ✅ 26.2 CI：R3-hotfix5 分支上 `compile-check` 与 `build` 均 success（`build.yml` 的两步守卫、
+- ✅ 26.2 CI：二次返工后 `compile-check` 与 `build` 均 success（`build.yml` 的两步守卫、
   版本一致性、全量构建全绿；一次过，没有出现「探针式反复」）。hotfix4 那轮曾用 `:compileJava`
   反证 `BlockEntity#preRemoveSideEffects(BlockPos, BlockState)` 在 26.2 存在且签名一致
 - ❌ **未实机**。发布前需验：
