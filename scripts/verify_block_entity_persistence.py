@@ -33,14 +33,14 @@ C. 持有 `ItemStack` 字段的方块实体必须覆写 `preRemoveSideEffects`�
    `// tacz:no-drop-on-remove` 注释显式豁免。
 D. 不得出现 `onRemove` 覆写（26.2 已删除该 API，写了也不会被调用；
    编译期能挡住 `@Override`，这里兜住"顺手加个无注解同名方法"）。
-E. 不得出现 `new GameProfile(null, ...)` —— authlib 9 里必抛 NPE（见 docstring 第 3 条）。
+5. 不得出现 `new GameProfile(null, ...)` —— authlib 9 里必抛 NPE（见 docstring 第 3 条）。
    需要「只有名字的主人」的场合请用 `ResolvableProfile.createUnresolved(String)`。
-F. 不得直接使用 `SkinManager` —— 皮肤一律通过 `PlayerSkinRenderCache` 获取
+6. 不得直接使用 `SkinManager` —— 皮肤一律通过 `PlayerSkinRenderCache` 获取
    （异步、失败回落默认皮肤、与 HTTP 请求解耦），否则极易把阻塞查询放到渲染线程上。
 
 豁免
 ----
-`// tacz:no-drop-on-remove`：C 项豁免；`// tacz:legacy-key`：同一行上的
+`// tacz:no-drop-on-remove`：第 3 项豁免；`// tacz:legacy-key`：同一行上的
 `getString(...)`/`child(...)` 属于老存档兼容读取，不算「只读不写」。
 
 用法
@@ -122,7 +122,7 @@ def keys_in(body: str, pattern: re.Pattern[str], consts: dict[str, str]) -> set[
 
 
 def check_hand_rolled_profile(path: Path, code: str) -> None:
-    """E/F：整套「自己拼 GameProfile / 自己查皮肤」的写法都不允许再出现。"""
+    """第 5/6 条：整套「自己拼 GameProfile / 自己查皮肤」的写法都不允许再出现。"""
     name = path.stem
     for lineno, line in enumerate(code.splitlines(), start=1):
         if NULL_ID_PROFILE.search(line):
