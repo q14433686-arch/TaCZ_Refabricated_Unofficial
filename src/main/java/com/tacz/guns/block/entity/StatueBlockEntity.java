@@ -6,7 +6,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -60,15 +59,30 @@ public class StatueBlockEntity extends BlockEntity {
     }
 
     public void dropItem() {
+        this.dropItem(this.getBlockState(), true);
+    }
+
+    private void dropItem(BlockState state, boolean notify) {
         if (!gunItem.isEmpty() && level != null) {
-            Direction direction = getBlockState().getValue(FACING);
-            Block.popResource(level, worldPosition.relative(direction).above(), gunItem);
+            // 移除回调中的方块状态应使用调用方给出的旧状态，而不是世界里可能已替换的状态。
+            Direction direction = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.NORTH;
+            ItemStack dropped = this.gunItem;
             this.gunItem = ItemStack.EMPTY;
-            if (level != null) {
-                BlockState state = level.getBlockState(worldPosition);
-                level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_ALL);
+            Block.popResource(level, worldPosition.relative(direction).above(), dropped);
+            if (notify) {
+                BlockState current = level.getBlockState(worldPosition);
+                level.sendBlockUpdated(worldPosition, current, current, Block.UPDATE_ALL);
+                this.setChanged();
             }
-            this.setChanged();
+        }
+    }
+
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level != null && !level.isClientSide()) {
+            // 方块即将消失，不必向客户端发送一次内容物变化包。
+            this.dropItem(state, false);
         }
     }
 

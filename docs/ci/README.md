@@ -1,21 +1,28 @@
 # docs/ci/ —— workflow 暂存区
 
-沙箱 Agent 的凭据没有 `workflow` 权限，推不动 `.github/workflows/`。
-所以约定：**Agent 把 workflow 改动写到本目录，维护者在 GitHub 网页端
-复制到 `.github/workflows/` 同名文件**（编辑现有文件或新建，粘贴、提交即可）。
+本目录保存 `.github/workflows/` 的镜像。修改工作流时同步两边；
+部分沙箱凭据可能没有 `workflow` 权限，若推送被拒，需由维护者在 GitHub 网页端
+更新 `.github/workflows/` 同名文件。
 
-两边不一致时，**以 `.github/workflows/` 的正式件为准**；上线后本目录的
-副本就是正式件的镜像，下次改动继续在这里迭代。
+两边不一致时，**以 `.github/workflows/` 的正式件为准**；工作区的改动不等于已上线。
 
-## 当前状态（2026-09-02 实测刷新）
+## 26.3 分支增量（2026-10-27）
 
-三件**全部已上线**，本目录副本与 `.github/workflows/` 正式件逐字一致（只差空行）：
+本次移植在 `build.yml` 中加入 26.3 方块与标靶接线静态检查、守卫反向测试与隔离桩行为测试；
+三份正式工作流的 push 分支列表均包含 `26.3`，`build.yml` 和 `consistency.yml` 的版本检查
+使用 `--strict`，不一致时真正失败。本目录副本同步更新。
+会话分支推送可触发 GitHub Actions；运行状态以对应提交的 Actions 记录为准，合并到 `26.3` 前
+不代表目标分支已上线这些改动。隔离桩测试不能代替完整 Gradle 构建与游戏实测。
+
+## 之前的上线状态（2026-09-02 实测刷新）
+
+当时三件**全部已上线**，本目录副本与 `.github/workflows/` 正式件一致（只差空行）：
 
 | 文件 | 状态 | 内容 |
 |---|---|---|
-| `compile-check.yml` | ✅ 已上线（v4） | 主分支 push + PR 也编译（补合并 commit 的盲区）；日志回推只在 `arena/**`；`concurrency` 取消同分支过期 run |
-| `consistency.yml` | ✅ 已上线（v2） | 版本号↔README 守门；`arena/**` 也触发；`paths` 含 `fabric.mod.json` |
-| `build.yml` | ✅ 已上线（artifact 名已修） | 全量 `gradlew build` + jar artifact（14 天）+ 三个静态校验（mixin 配置完整性 / en-zh 语言键齐平 / 版本一致性）。artifact 名只用 sha（`github.ref_name` 在 arena 分支带 `/`，是非法字符，首跑 2026-08-31 就是这样红的） |
+| `compile-check.yml` | 基线已上线；本次增量待合并 | 主分支 push + PR 也编译；日志回推只在 `arena/**`；本次增加 `26.3` push 触发 |
+| `consistency.yml` | 基线已上线；本次增量待合并 | 版本号↔README 守门；`arena/**` 也触发；本次加 `26.3` 触发和严格退出码 |
+| `build.yml` | 基线已上线；本次增量待合并 | 全量 `gradlew build` + jar artifact（14 天）+ mixin / 语言 / 版本检查；本次另加 26.3 方块守卫与隔离桩测试。artifact 名只用 sha（`github.ref_name` 在 arena 分支带 `/`，是非法字符） |
 
 > 旧版本文字（2026-08-31）曾把 `consistency.yml` 记为「待上线 v2」、`build.yml` 记为
 > 「待更新 hotfix」——两件后来都已由维护者上线，本表 2026-09-02 按 `gh api contents`

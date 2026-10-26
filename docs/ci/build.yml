@@ -4,7 +4,7 @@ name: build
 # compile-check 只跑 compileJava，测不出 processResources / remapJar 阶段的失败，
 # 也不产 jar。本流程跑 ./gradlew build 并把 jar 上传为 Actions artifact（留 14 天）——
 # 直接用途：给 NV 卡征测者一个下载链接；每轮改动随手有可实测的构建。
-# 顺手跑三个便宜的静态校验（mixin 配置完整性 / 中英语言键齐平 / 版本一致性）。
+# 同时运行 mixin / 语言 / 版本与 26.3 方块接线检查，以及隔离桩回归测试。
 
 permissions:
   contents: read
@@ -14,6 +14,7 @@ on:
     branches:
       - 'arena/**'
       - '26.2(main)'
+      - '26.3'
       - '26.1.2'
       - '1.21.11'
     paths-ignore:
@@ -74,13 +75,24 @@ jobs:
           sys.exit(1 if bad else 0)
           EOF
 
+      - name: Block drop wiring (26.3 loot schema)
+        run: python3 scripts/verify_block_drops.py --strict
+
+      - name: Block entity persistence and target skin wiring
+        run: python3 scripts/verify_block_entity_persistence.py --strict
+
       - name: Version consistency (与 consistency.yml 同一脚本，arena 分支也守门)
-        run: bash scripts/check_release_consistency.sh
+        run: bash scripts/check_release_consistency.sh --strict
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '25'
+
+      - name: Block and target regression tests (isolated Minecraft API doubles)
+        run: |
+          python3 scripts/test_block_guards.py
+          python3 scripts/test_block_entities.py
 
       - uses: gradle/actions/setup-gradle@v4
 

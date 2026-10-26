@@ -150,8 +150,8 @@ public class StatueBlock extends BaseEntityBlock {
         return state;
     }
 
-    // 26.2: onRemove 已移除，方块实体移除时自动清理
-    // 如需掉落物品，在 StatueBlockEntity.setRemoved() 中处理
+    // 26.3 不会自动掉落方块实体的内容物；雕像上的枪由
+    // StatueBlockEntity#preRemoveSideEffects 在服务端移除方块时处理。
 
     @Override
     protected RenderShape getRenderShape(BlockState state) {
@@ -189,7 +189,8 @@ public class StatueBlock extends BaseEntityBlock {
      * {@code hasBlockEntity} 处理掉落后置空方块并回调 {@code wasExploded}）。
      * 因此这里直接调 {@code super} 即可，语义不变。</p>
      *
-     * <p>雕像的物品掉落仍由 {@code StatueBlockEntity#setRemoved()} 负责，与本方法无关。</p>
+     * <p>雕像上的枪由 {@code StatueBlockEntity#preRemoveSideEffects} 处理，
+     * 不由本爆炸回调或方块战利品表重复掉落。</p>
      */
     @Override
     protected void onExplosionHit(BlockState state, ServerLevel level, BlockPos pos, Explosion explosion,

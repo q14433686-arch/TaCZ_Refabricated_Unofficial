@@ -1,6 +1,5 @@
 package com.tacz.guns.block;
 
-import com.mojang.authlib.GameProfile;
 import com.tacz.guns.block.entity.TargetBlockEntity;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.init.ModBlocks;
@@ -182,8 +181,8 @@ public class TargetBlock extends BaseEntityBlock {
             if (stack.getCustomName() != null) {
                 BlockEntity blockentity = world.getBlockEntity(pos);
                 if (blockentity instanceof TargetBlockEntity e) {
-                    GameProfile gameprofile = new GameProfile(null, stack.getHoverName().getString());
-                    e.setOwner(gameprofile);
+                    // 26.3 的 GameProfile 不接受 null UUID；先保存可异步解析的名字。
+                    e.setOwnerName(stack.getHoverName().getString());
                     e.setCustomName(stack.getHoverName());
                     e.refresh();
                 }

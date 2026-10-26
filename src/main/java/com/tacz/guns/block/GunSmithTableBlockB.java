@@ -62,13 +62,14 @@ public class GunSmithTableBlockB extends AbstractGunSmithTableBlock {
 
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState blockState, Player player) {
-        // 用于抑制创造模式下摧毁head方块时foot的掉落
+        // 战利品表只让 FOOT 掉落。创造模式挖 HEAD 时，要先无掉落地移除 FOOT，
+        // 否则它会在邻居更新中走自己的战利品表。
         if (!level.isClientSide() && player.isCreative()) {
             BedPart bedPart = blockState.getValue(PART);
-            if (bedPart == BedPart.FOOT) {
+            if (bedPart == BedPart.HEAD) {
                 BlockPos blockpos = pos.relative(getNeighbourDirection(bedPart, blockState.getValue(FACING)));
                 BlockState blockstate = level.getBlockState(blockpos);
-                if (blockstate.is(this) && blockstate.getValue(PART) == BedPart.HEAD) {
+                if (blockstate.is(this) && blockstate.getValue(PART) == BedPart.FOOT) {
                     level.setBlock(blockpos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
                     level.levelEvent(player, LevelEvent.PARTICLES_DESTROY_BLOCK, blockpos, Block.getId(blockstate));
                 }

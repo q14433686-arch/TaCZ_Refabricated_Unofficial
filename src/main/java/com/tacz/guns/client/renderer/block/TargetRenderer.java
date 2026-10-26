@@ -1,6 +1,5 @@
 package com.tacz.guns.client.renderer.block;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.block.TargetBlock;
@@ -9,6 +8,7 @@ import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.resource.InternalAssetLoader;
 import com.tacz.guns.config.client.RenderConfig;
+import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -19,8 +19,8 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -29,8 +29,10 @@ import java.util.Optional;
 public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, TargetRenderer.TargetRenderState> {
     private static final String UPPER_NAME = "target_upper";
     private static final String HEAD_NAME = "head";
+    private final PlayerSkinRenderCache skinCache;
 
     public TargetRenderer(BlockEntityRendererProvider.Context context) {
+        this.skinCache = context.playerSkinRenderCache();
     }
 
     /** Custom render state for target block entity */
@@ -58,10 +60,15 @@ public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, Ta
         state.facing = blockState.getValue(TargetBlock.FACING);
         state.rot = blockEntity.rot;
         state.oRot = blockEntity.oRot;
-        GameProfile owner = blockEntity.getOwner();
+        ResolvableProfile owner = blockEntity.getOwnerProfile();
         if (owner != null) {
             state.hasOwner = true;
-            state.skinTexture = DefaultPlayerSkin.get(owner).body().texturePath();
+            try {
+                // 与 26.3 原版玩家头颅相同：异步解析名字/UUID 和纹理，未就绪时使用默认皮肤。
+                state.skinTexture = this.skinCache.getOrDefault(owner).playerSkin().body().texturePath();
+            } catch (RuntimeException exception) {
+                state.skinTexture = DefaultPlayerSkin.get(owner.partialProfile()).body().texturePath();
+            }
         } else {
             state.hasOwner = false;
             state.skinTexture = null;
