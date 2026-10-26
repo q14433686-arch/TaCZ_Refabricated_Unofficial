@@ -358,4 +358,57 @@ public class net.minecraft.client.renderer.entity.EntityRendererProvider$Context
          6: getstatic     #119                // Field net/minecraft/core/component/DataComponents.PROFILE:Lnet/minecraft/core/component/DataComponentType;
         10: getfield      #27                 // Field owner:Lnet/minecraft/world/item/component/ResolvableProfile;
          6: ldc           #19                 // String profile
+== ValueOutput ==
+Compiled from "ValueOutput.java"
+public interface net.minecraft.world.level.storage.ValueOutput {
+  public abstract <T> void store(java.lang.String, com.mojang.serialization.Codec<T>, T);
+  public abstract <T> void storeNullable(java.lang.String, com.mojang.serialization.Codec<T>, T);
+  public abstract <T> void store(com.mojang.serialization.MapCodec<T>, T);
+  public abstract void putBoolean(java.lang.String, boolean);
+  public abstract void putByte(java.lang.String, byte);
+  public abstract void putShort(java.lang.String, short);
+  public abstract void putInt(java.lang.String, int);
+  public abstract void putLong(java.lang.String, long);
+  public abstract void putFloat(java.lang.String, float);
+  public abstract void putDouble(java.lang.String, double);
+  public abstract void putString(java.lang.String, java.lang.String);
+  public abstract void putIntArray(java.lang.String, int[]);
+  public abstract net.minecraft.world.level.storage.ValueOutput child(java.lang.String);
+  public abstract net.minecraft.world.level.storage.ValueOutput$ValueOutputList childrenList(java.lang.String);
+  public abstract <T> net.minecraft.world.level.storage.ValueOutput$TypedOutputList<T> list(java.lang.String, com.mojang.serialization.Codec<T>);
+  public abstract void discard(java.lang.String);
+  public abstract boolean isEmpty();
+}
+== ValueInput ==
+Compiled from "ValueInput.java"
+public interface net.minecraft.world.level.storage.ValueInput {
+  public abstract <T> java.util.Optional<T> read(java.lang.String, com.mojang.serialization.Codec<T>);
+  public abstract <T> java.util.Optional<T> read(com.mojang.serialization.MapCodec<T>);
+  public abstract java.util.Optional<net.minecraft.world.level.storage.ValueInput> child(java.lang.String);
+  public abstract net.minecraft.world.level.storage.ValueInput childOrEmpty(java.lang.String);
+  public abstract java.util.Optional<net.minecraft.world.level.storage.ValueInput$ValueInputList> childrenList(java.lang.String);
+  public abstract net.minecraft.world.level.storage.ValueInput$ValueInputList childrenListOrEmpty(java.lang.String);
+  public abstract <T> java.util.Optional<net.minecraft.world.level.storage.ValueInput$TypedInputList<T>> list(java.lang.String, com.mojang.serialization.Codec<T>);
+  public abstract <T> net.minecraft.world.level.storage.ValueInput$TypedInputList<T> listOrEmpty(java.lang.String, com.mojang.serialization.Codec<T>);
+  public abstract boolean getBooleanOr(java.lang.String, boolean);
+  public abstract byte getByteOr(java.lang.String, byte);
+  public abstract int getShortOr(java.lang.String, short);
+  public abstract java.util.Optional<java.lang.Integer> getInt(java.lang.String);
+  public abstract int getIntOr(java.lang.String, int);
+  public abstract long getLongOr(java.lang.String, long);
+  public abstract java.util.Optional<java.lang.Long> getLong(java.lang.String);
+  public abstract float getFloatOr(java.lang.String, float);
+  public abstract double getDoubleOr(java.lang.String, double);
+  public abstract java.util.Optional<java.lang.String> getString(java.lang.String);
+  public abstract java.lang.String getStringOr(java.lang.String, java.lang.String);
+  public abstract java.util.Optional<int[]> getIntArray(java.lang.String);
+  public abstract net.minecraft.core.HolderLookup$Provider lookup();
+}
+== Entity: custom name ==
+public abstract class net.minecraft.world.entity.Entity implements net.minecraft.world.Nameable, net.minecraft.world.level.entity.EntityAccess, net.minecraft.world.scores.ScoreHolder, net.minecraft.network.syncher.SyncedDataHolder, net.minecraft.core.component.DataComponentGetter, net.minecraft.world.entity.ItemOwner, net.minecraft.world.entity.SlotProvider, net.minecraft.util.debug.DebugValueSource, net.minecraft.core.TypedInstance<net.minecraft.world.entity.EntityType<?>> {
+  public void setCustomName(net.minecraft.network.chat.Component);
+  public net.minecraft.network.chat.Component getCustomName();
+  public boolean hasCustomName();
+  public void setCustomNameVisible(boolean);
+  public boolean isCustomNameVisible();
 == done ==
