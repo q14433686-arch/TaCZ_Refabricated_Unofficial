@@ -12,7 +12,7 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R3-hotfix5`**。
+`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R3-hotfix4`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
@@ -31,7 +31,7 @@
 本页面对应 **26.2** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
 具体版本见下方表格与对应 Release 说明。
 
-> 仓库源码已使用 R3-hotfix5 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R3-hotfix4 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
 
 ---
 
@@ -42,9 +42,9 @@
 | Minecraft | **26.2** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **25+** |
-| Fabric API | 需要安装；R3-hotfix5 构建使用 **0.155.2+26.2** |
+| Fabric API | 需要安装；R3-hotfix4 构建使用 **0.155.2+26.2** |
 | Forge Config API Port | **26.2.1+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.2.R3-hotfix5`** |
+| 本 mod | **`1.1.8+fabric.26.2.R3-hotfix4`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
@@ -73,21 +73,18 @@ R2 的可选集成（并非硬依赖）如下：
 完整发布范围、联网核验和未执行的实机矩阵见
 [26.2 R2 release notes](docs/CHANGELOG_26_2_R2.md)。R1 的移植基础和历史说明仍保留在仓库历史中。
 
-**R3-hotfix5**（当前源码版本）：修掉两个 26.2 上**必现**的运行期崩溃——放置改过名的标靶会抛
-NPE 且**物品不被消耗**（异常抛在 `BlockItem#place` 中途）、改名过的标靶矿车在客户端**每帧**
-崩渲染线程。根因都是 `new GameProfile(null, 名字)`：authlib 9 的 `GameProfile` 是 record，
-id/name 一律 `requireNonNull`。改法与原版头颅完全一致——主人改用 `ResolvableProfile`
-（允许只有名字），皮肤由客户端经 `PlayerSkinRenderCache` 异步解析，解析不到就是默认皮肤。
-老存档的 `owner_uuid`/`owner_name`/`Owner` 写法仍可读，保存时统一迁移成原版 `profile` 键。
-离线守卫新增两条规则（禁止 `new GameProfile(null, ...)`、禁止直接用 `SkinManager`）。
-全部改动**尚未实机验证**，验收清单见
-[方块静默失效三连案](docs/investigations/BLOCK_ENTITY_DATA_LOSS_26_2_2026_10_27.md) §6。
-
-**R3-hotfix4**：修掉一轮方块层的静默失效——多格工作台挖非根半边会爆出两个、雕像上的枪随
-方块一起消失、带名字标靶的主人与头像在重启后丢失或退回默认皮肤（R3-hotfix5 已把这条链路
-换成原版 `ResolvableProfile` + `PlayerSkinRenderCache`）。同时把两条离线守卫
+**R3-hotfix4**（当前源码版本）：先修掉一轮方块层的静默失效——多格工作台挖非根半边会爆出两个、
+雕像上的枪随方块一起消失、带名字标靶的主人与头像在重启后丢失或退回默认皮肤；并把两条离线守卫
 （`scripts/verify_block_drops.py`、`scripts/verify_block_entity_persistence.py`）以 `--strict`
-接入 `build.yml`。验收清单见
+接入 `build.yml`。随后（同一版本内二次返工）再修掉两个 26.2 上**必现**的运行期崩溃——放置改过名的
+标靶会抛 NPE 且**物品不被消耗**（异常抛在 `BlockItem#place` 中途）、改名过的标靶矿车在客户端
+**每帧**崩渲染线程。崩溃根因是 `new GameProfile(null, 名字)`：authlib 9 的 `GameProfile` 是
+record，id/name 一律 `requireNonNull`。标靶主人因此整条链路改成与原版头颅一致的
+`ResolvableProfile`（允许只有名字）+ 客户端 `PlayerSkinRenderCache` 异步解析皮肤（解析不到就是
+默认皮肤），老存档的 `owner_uuid`/`owner_name`/`Owner` 写法仍可读、保存时统一迁移成原版
+`profile` 键。离线守卫新增两条规则（禁止 `new GameProfile(null, ...)`、禁止直接用 `SkinManager`）。
+全部改动**尚未实机验证**，验收清单见
+[方块静默失效三连案](docs/investigations/BLOCK_ENTITY_DATA_LOSS_26_2_2026_10_27.md) §6 与
 [工作台双掉落调查](docs/investigations/MULTIBLOCK_DOUBLE_DROP_26_2_2026_10_26.md) §5.1。
 
 **R3-hotfix3**（未单独发布，内容并入 hotfix4）：调整枪包同步后的 JEI 刷新入口，
@@ -337,7 +334,7 @@ gunpack.meta.json
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.2.R3-hotfix5` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.26.2.R3-hotfix4` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容
