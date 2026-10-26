@@ -316,6 +316,7 @@ poseStack.translate(0, -aabb.minY() * ... + 0.0625F, 0);
 | `Explosion` | 已变成**接口**，实现类是 `ServerExplosion` |
 | `AbstractMinecart` | 换包到 `world.entity.vehicle.minecart` |
 | 战利品表 | 在 **RELOADABLE 层**，须用 `MinecraftServer#reloadableRegistries().lookup()` |
+| 方块掉落（多方块） | 被连带清掉的另一半会经 `updateShape→AIR→Block#updateOrDestroy→destroyBlock(drop=true)` **自己走战利品表**（标志位无 `UPDATE_SUPPRESS_DROPS` 时）。所以：产出条件要锁在根半边（`part=foot` / `half=lower`）、**不要**在 `playerWillDestroy` 里再手工 `popResource`（会双份）、创造模式的抑制要挂在「不产出的那一半」上。2026-10-26 双掉落事故见 `investigations/MULTIBLOCK_DOUBLE_DROP_26_2_2026_10_26.md` |
 | `Item#getMaxStackSize(ItemStack)` | 不存在，只有 `getDefaultMaxStackSize()`；上限改由 `DataComponents.MAX_STACK_SIZE` 组件决定 |
 | `SharedConstants` | `getCurrentVersion().name()`（不是 `getName()`） |
 | 实体碰撞箱调试 | `Minecraft.debugEntries` + `DebugScreenEntryList#isCurrentlyEnabled(Identifier)` |

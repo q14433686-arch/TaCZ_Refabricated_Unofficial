@@ -21,9 +21,19 @@ metadata，不能写成 `1.1.8-R2`。
   把 XY 粒子四边形的 +Z 法线转换为 Direction 所需的 +Y 基，保留旧 UV 走向，
   并沿命中面法线偏移 `0.01×quadSize`，避免贴面 z-fighting。
   详见[移植与验收记录](investigations/BULLET_HOLE_ORIENTATION_BACKPORT_26_2.md)。
+- **修复多方块工作台「挖另一半掉两个」**：生存模式下破坏 B 工作台
+  （`gun_smith_table` / `workbench_b`）的 head、或 C 工作台（`workbench_c`）的 upper 时，
+  会同时爆出两个工作台。根因是 `AbstractGunSmithTableBlock#playerWillDestroy` 对非根半边
+  手工 `popResource` 了一份克隆，与「根半边经 `updateShape → AIR → destroyBlock(drop=true)`
+  走自己的战利品表」叠加。已移除该手工掉落，掉落全部交回战利品表（26.3 线 commit
+  `021b546` 的同源修复）。顺带修正 `GunSmithTableBlockB` 创造模式下抑制半边掉落的判据方向
+  （原判据与自身注释相反，导致创造模式挖 head 会漏出一个物品）。
+  详见[调查记录](investigations/MULTIBLOCK_DOUBLE_DROP_26_2_2026_10_26.md)。
 - **验证边界**：弹孔修复已核对本地 26.2 游戏字节码并通过离线六面几何模型及源码检查；
   本次弹孔改动未完成 Java 编译或游戏内验证。此前 JEI 修复的 CI 编译成功不覆盖这次弹孔改动。
   未声称修复 REI 全量重载风险或证实普通工作台手摆合成失败。
+  双掉落修复同样**未编译、未实机验证**（依据是 26.3 线已实测的同源结论与本分支同款代码路径），
+  发布前需按上述调查记录 §5.1 的验收矩阵逐项跑一遍；未声称 26.2 的战利品表 schema 已核对。
 
 ## R3-hotfix2（2026-09-13）
 

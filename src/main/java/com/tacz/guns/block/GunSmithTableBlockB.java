@@ -69,13 +69,20 @@ public class GunSmithTableBlockB extends AbstractGunSmithTableBlock {
 
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState blockState, Player player) {
-        // 用于抑制创造模式下摧毁head方块时foot的掉落
+        // 用于抑制创造模式下摧毁head方块时foot的掉落。
+        //
+        // 判据必须挂在 HEAD 上（2026-10-26 修正）：战利品表 workbench_b.json 的
+        // block_state_property 是 part=foot，即「会产出物品的是 FOOT」。挖掉 HEAD 时
+        // FOOT 经 updateShape→AIR→destroyBlock(drop=true) 自己走战利品表，创造模式下
+        // 就会多掉一个工作台；挖掉 FOOT 时 HEAD 本来就不产出，无需处理。
+        // 旧代码判的是 bedPart == FOOT（与它自己的注释相反，像是照抄原版 BedBlock 时
+        // 没跟着我们的 loot 条件翻转过来），于是创造模式挖 HEAD 会漏出一个物品。
         if (!level.isClientSide() && player.isCreative()) {
             BedPart bedPart = blockState.getValue(PART);
-            if (bedPart == BedPart.FOOT) {
+            if (bedPart == BedPart.HEAD) {
                 BlockPos blockpos = pos.relative(getNeighbourDirection(bedPart, blockState.getValue(FACING)));
                 BlockState blockstate = level.getBlockState(blockpos);
-                if (blockstate.is(this) && blockstate.getValue(PART) == BedPart.HEAD) {
+                if (blockstate.is(this) && blockstate.getValue(PART) == BedPart.FOOT) {
                     level.setBlock(blockpos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
                     level.levelEvent(player, LevelEvent.PARTICLES_DESTROY_BLOCK, blockpos, Block.getId(blockstate));
                 }

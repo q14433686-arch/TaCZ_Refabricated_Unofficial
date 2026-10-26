@@ -27,6 +27,30 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * 多方块枪械工作台的公共基类（A 单格、B 2×1×1、C 1×2×1）。
+ *
+ * <h2>掉落只由战利品表负责 —— 不要在 {@code playerWillDestroy} 里手工补掉</h2>
+ *
+ * 26.2 的 {@code Block#updateOrDestroy} 在邻居 {@code updateShape} 返回空气时调用的是
+ * {@code level.destroyBlock(pos, dropResources = true, ...)}（只要标志位里没有
+ * {@code UPDATE_SUPPRESS_DROPS}）。也就是说<b>被连带清掉的另一半自己会走它自己的战利品表</b>
+ * —— 原版高花、床正是靠这条路径做到「挖上半也只掉一份」。
+ * 我们的 {@code data/tacz/loot_table/blocks/workbench_b.json} / {@code workbench_c.json}
+ * 用 {@code block_state_property} 把产出限制在 {@code part=foot} / {@code half=lower}，
+ * 并从<b>根</b>的方块实体拷 {@code BlockId}，于是：
+ *
+ * <ul>
+ *   <li>挖根半边（foot / lower）：根自己产出 1 份；另一半被邻接更新清掉但战利品表不产出 → 合计 1 份。</li>
+ *   <li>挖非根半边（head / upper）：它自己不产出；根半边经上面的 {@code destroyBlock} 产出 1 份
+ *       （此时根的方块实体还没被删，{@code copy_custom_data} 仍能拿到 {@code BlockId}）→ 合计 1 份。</li>
+ * </ul>
+ *
+ * 旧代码曾在非根半边的 {@code playerWillDestroy} 里额外 {@code popResource} 一份
+ * {@link #getCloneItemStack} 克隆，与上面第二条叠加，导致<b>挖上半 / 头部爆出两个工作台</b>
+ * （26.2 玩家实测报告）。26.3 线先一步删掉了同一段代码（其 commit {@code 021b546}），
+ * 本分支于 2026-10-26 对齐。要验证掉落请只改战利品表，别在这里补 {@code popResource}。
+ */
 public abstract class AbstractGunSmithTableBlock extends BaseEntityBlock {
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
@@ -113,21 +137,6 @@ public abstract class AbstractGunSmithTableBlock extends BaseEntityBlock {
                 }
             }
         }
-    }
-
-    @Override
-    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        // Multi-block workbenches keep the custom BlockId on the root block entity only.
-        // Vanilla loot tables can only copy data from the block being broken, so breaking the
-        // secondary half (head/upper) would otherwise remove the structure without dropping the
-        // custom workbench item.  Drop the root's clone stack manually for survival players.
-        if (!level.isClientSide() && !player.isCreative() && !isRoot(state)) {
-            ItemStack drop = getCloneItemStack(level, pos, state, true);
-            if (!drop.isEmpty()) {
-                popResource(level, pos, drop);
-            }
-        }
-        return super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override
