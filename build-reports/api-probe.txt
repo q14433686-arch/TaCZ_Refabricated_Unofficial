@@ -1,0 +1,88 @@
+== jars ==
+/home/runner/.gradle/caches/fabric-loom/26.2/minecraft-merged.jar
+/home/runner/.gradle/caches/fabric-loom/26.2/minecraft-extracted_server.jar
+/home/runner/.gradle/caches/fabric-loom/26.2/minecraft-server.jar
+/home/runner/.gradle/caches/fabric-loom/26.2/minecraft-client.jar
+/home/runner/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-merged-deobf/26.2/minecraft-merged-deobf-26.2.jar
+== using /home/runner/.gradle/caches/fabric-loom/26.2/minecraft-merged.jar ==
+== class list (skin/profile) ==
+net/minecraft/client/gui/components/PlayerSkinWidget.class
+net/minecraft/client/gui/render/pip/GuiSkinRenderer.class
+net/minecraft/client/renderer/PlayerSkinRenderCache$1.class
+net/minecraft/client/renderer/PlayerSkinRenderCache$2.class
+net/minecraft/client/renderer/PlayerSkinRenderCache$RenderInfo.class
+net/minecraft/client/renderer/PlayerSkinRenderCache.class
+net/minecraft/client/renderer/state/gui/pip/GuiSkinRenderState.class
+net/minecraft/client/resources/DefaultPlayerSkin.class
+net/minecraft/client/resources/SkinManager$1.class
+net/minecraft/client/resources/SkinManager$2.class
+net/minecraft/client/resources/SkinManager$CacheKey.class
+net/minecraft/client/resources/SkinManager$TextureCache.class
+net/minecraft/client/resources/SkinManager.class
+net/minecraft/server/players/NameAndId.class
+net/minecraft/world/entity/player/PlayerSkin$Patch.class
+net/minecraft/world/entity/player/PlayerSkin.class
+net/minecraft/world/item/component/ResolvableProfile$Dynamic.class
+net/minecraft/world/item/component/ResolvableProfile$Partial.class
+net/minecraft/world/item/component/ResolvableProfile$Static.class
+net/minecraft/world/item/component/ResolvableProfile.class
+== javap net.minecraft.client.resources.PlayerSkinRenderCache ==
+Error: class not found: net.minecraft.client.resources.PlayerSkinRenderCache
+== javap net.minecraft.world.item.component.ResolvableProfile ==
+Compiled from "ResolvableProfile.java"
+public abstract class net.minecraft.world.item.component.ResolvableProfile implements net.minecraft.world.item.component.TooltipProvider {
+  public static final com.mojang.serialization.Codec<net.minecraft.world.item.component.ResolvableProfile> CODEC;
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, net.minecraft.world.item.component.ResolvableProfile> STREAM_CODEC;
+  protected final com.mojang.authlib.GameProfile partialProfile;
+  protected final net.minecraft.world.entity.player.PlayerSkin$Patch skinPatch;
+  public static net.minecraft.world.item.component.ResolvableProfile createResolved(com.mojang.authlib.GameProfile);
+  public static net.minecraft.world.item.component.ResolvableProfile createUnresolved(java.lang.String);
+  public static net.minecraft.world.item.component.ResolvableProfile createUnresolved(java.util.UUID);
+  protected abstract com.mojang.datafixers.util.Either<com.mojang.authlib.GameProfile, net.minecraft.world.item.component.ResolvableProfile$Partial> unpack();
+  protected net.minecraft.world.item.component.ResolvableProfile(com.mojang.authlib.GameProfile, net.minecraft.world.entity.player.PlayerSkin$Patch);
+  public abstract java.util.concurrent.CompletableFuture<com.mojang.authlib.GameProfile> resolveProfile(net.minecraft.server.players.ProfileResolver);
+  public com.mojang.authlib.GameProfile partialProfile();
+  public net.minecraft.world.entity.player.PlayerSkin$Patch skinPatch();
+  public abstract java.util.Optional<java.lang.String> name();
+  static {};
+}
+== javap net.minecraft.core.component.ProfileContents ==
+Error: class not found: net.minecraft.core.component.ProfileContents
+== javap net.minecraft.client.renderer.blockentity.SkullBlockRenderer ==
+Compiled from "SkullBlockRenderer.java"
+public class net.minecraft.client.renderer.blockentity.SkullBlockRenderer implements net.minecraft.client.renderer.blockentity.BlockEntityRenderer<net.minecraft.world.level.block.entity.SkullBlockEntity, net.minecraft.client.renderer.blockentity.state.SkullBlockRenderState> {
+  public static final net.minecraft.client.renderer.blockentity.WallAndGroundTransformations<com.mojang.math.Transformation> TRANSFORMATIONS;
+  public static net.minecraft.client.model.object.skull.SkullModelBase createModel(net.minecraft.client.model.geom.EntityModelSet, net.minecraft.world.level.block.SkullBlock$Type);
+  public net.minecraft.client.renderer.blockentity.SkullBlockRenderer(net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider$Context);
+  public net.minecraft.client.renderer.blockentity.state.SkullBlockRenderState createRenderState();
+  public void extractRenderState(net.minecraft.world.level.block.entity.SkullBlockEntity, net.minecraft.client.renderer.blockentity.state.SkullBlockRenderState, float, net.minecraft.world.phys.Vec3, net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay);
+  public void submit(net.minecraft.client.renderer.blockentity.state.SkullBlockRenderState, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.SubmitNodeCollector, net.minecraft.client.renderer.state.level.CameraRenderState);
+  public static void submitSkull(float, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.SubmitNodeCollector, int, net.minecraft.client.model.object.skull.SkullModelBase, net.minecraft.client.renderer.rendertype.RenderType, int, net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay);
+  public static net.minecraft.client.renderer.rendertype.RenderType getSkullRenderType(net.minecraft.world.level.block.SkullBlock$Type, net.minecraft.resources.Identifier);
+  public static net.minecraft.client.renderer.rendertype.RenderType getPlayerSkinRenderType(net.minecraft.resources.Identifier);
+  public void submit(net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.SubmitNodeCollector, net.minecraft.client.renderer.state.level.CameraRenderState);
+  public void extractRenderState(net.minecraft.world.level.block.entity.BlockEntity, net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState, float, net.minecraft.world.phys.Vec3, net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay);
+  public net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState createRenderState();
+  static {};
+}
+== javap net.minecraft.client.resources.SkinManager ==
+Compiled from "SkinManager.java"
+public class net.minecraft.client.resources.SkinManager {
+  public net.minecraft.client.resources.SkinManager(java.nio.file.Path, net.minecraft.server.Services, net.minecraft.client.renderer.texture.SkinTextureDownloader, java.util.concurrent.Executor);
+  public java.util.function.Supplier<net.minecraft.world.entity.player.PlayerSkin> createLookup(com.mojang.authlib.GameProfile, boolean);
+  public java.util.concurrent.CompletableFuture<java.util.Optional<net.minecraft.world.entity.player.PlayerSkin>> get(com.mojang.authlib.GameProfile);
+  static {};
+}
+== javap net.minecraft.client.resources.DefaultPlayerSkin ==
+Compiled from "DefaultPlayerSkin.java"
+public class net.minecraft.client.resources.DefaultPlayerSkin {
+  public net.minecraft.client.resources.DefaultPlayerSkin();
+  public static net.minecraft.resources.Identifier getDefaultTexture();
+  public static net.minecraft.world.entity.player.PlayerSkin getDefaultSkin();
+  public static net.minecraft.world.entity.player.PlayerSkin get(java.util.UUID);
+  public static net.minecraft.world.entity.player.PlayerSkin get(com.mojang.authlib.GameProfile);
+  static {};
+}
+== javap net.minecraft.world.item.component.ResolvableProfile$Patch ==
+Error: class not found: net.minecraft.world.item.component.ResolvableProfile$Patch
+== done ==
