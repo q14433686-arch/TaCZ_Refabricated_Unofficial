@@ -12,13 +12,14 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.3 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.3.R1-hotfix4`**。
+`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.3.R1-hotfix3`**。
 
 > **本分支是 26.3 线，尚无正式发布；CI 产物以对应 Actions 运行页面为准。** R1 基础版已在维护者环境完成一轮实机验证
 > （2026-09-18 ~ 09-21：无光影、Iris 光影、专服三种环境）；R1-hotfix2 新增的枪包 lang 容错、
 > JEI 配方刷新、弹孔朝向修复与 YSM 适配门面仅经 CI 编译/静态校验，尚未实机验证；
-> R1-hotfix3 的方块及标靶修复已通过 [CI 完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976635)；
-> R1-hotfix4 的动态皮肤档案调整已通过隔离桩测试和 [CI 完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535903)。两者均尚未实机验证。
+> R1-hotfix3 的方块及标靶修复、动态皮肤档案调整已通过先前代码提交的隔离桩测试与
+> [CI 完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535903)；
+> 恢复版本号后的 CI 结果以对应 Actions 运行为准，以上改动尚未实机验证。
 > 逐项结果见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)。下方各节继承自 26.2 线的描述，
 > 凡未在该文件标 ✅ 的，在 26.3 上仍视为**未经验证**。想要现在就能玩的版本请用 `26.2(main)` 分支及其 Release。
 
@@ -40,7 +41,7 @@
 本页面对应 **26.3** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
 具体版本见下方表格与对应 Release 说明。
 
-> 仓库源码已使用 R1-hotfix4 版本号；26.3 线尚未发布，实际可下载版本及其发布日期以
+> 仓库源码已使用 R1-hotfix3 版本号；26.3 线尚未发布，实际可下载版本及其发布日期以
 > Releases 页面为准。
 
 ---
@@ -52,15 +53,15 @@
 | Minecraft | **26.3** |
 | 加载器 | **Fabric Loader 0.19.5+** |
 | Java | **25+** |
-| Fabric API | 需要安装；R1-hotfix4 构建使用 **0.160.7+26.3** |
+| Fabric API | 需要安装；R1-hotfix3 构建使用 **0.160.7+26.3** |
 | Forge Config API Port | **26.3.0+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.3.R1-hotfix4`** |
+| 本 mod | **`1.1.8+fabric.26.3.R1-hotfix3`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
-R1-hotfix4 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与专服实测；REI、Zoomify、Shoulder Surfing Reloaded、Carry On 的 26.3 适配已随上游发布恢复，待实机复验）：
+R1-hotfix3 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与专服实测；REI、Zoomify、Shoulder Surfing Reloaded、Carry On 的 26.3 适配已随上游发布恢复，待实机复验）：
 
-| 可选 mod | R1-hotfix4 编译 pin / 建议版本 | 用途 |
+| 可选 mod | R1-hotfix3 编译 pin / 建议版本 | 用途 |
 |---|---|---|
 | JEI | 编译 pin **31.8.0.48**（beta） | 内置 Ammo Query 与工作台类别 |
 | REI | 编译 pin **26.3.823**（+ Architectury **22.0.3**） | 内置 Ammo Query 与工作台类别 |
@@ -84,10 +85,10 @@ R1-hotfix4 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人�
 - 远程枪包同步完成后合并请求并刷新已安装的 recipe viewer，避免首轮注册早于网络 cache 时
   显示陈旧类别/查询数据；
 - 同步 26.2 R3-hotfix4 的工作台、雕像与标靶方块修复，并按 26.3 的档案和皮肤 API 适配；
-  同时修正标靶矿车的同类空 UUID 和皮肤解析问题。R1-hotfix4 让查得真实 UUID 的方块档案
+  同时修正标靶矿车的同类空 UUID 和皮肤解析问题。R1-hotfix3 让查得真实 UUID 的方块档案
   继续由客户端动态解析皮肤；隔离桩回归已通过，尚未实机验证，见下方变更清单。
 
-**26.3 R1-hotfix4**（当前源码版本）的变更清单见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)：
+**26.3 R1-hotfix3**（当前源码版本）的变更清单见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)：
 渲染底层 renderpearl 迁移、第一人称拆分、shaderc 着色器、Iris 26.3 裁剪判定重做、26.3 战利品表/配方 codec/
 配方同步行为修复、枪包同步后的 JEI 刷新改为捕获 JEI 生命周期 listener（不再伪造配方更新事件）、
 弹孔朝向修复、YSM（Yes Steve Model）状态门面与第一人称渲染归属握手，
@@ -338,7 +339,7 @@ gunpack.meta.json
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.3.R1-hotfix4` 是构建元数据，不参与 Fabric 的版本先后比较。
+作为 SemVer 核心，`+fabric.26.3.R1-hotfix3` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 枪包 lang 文件写错时的表现（26.3）

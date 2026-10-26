@@ -1,6 +1,6 @@
-# TaCZ Refabricated 26.3 R1-hotfix4 release notes（草稿，尚未发布）
+# TaCZ Refabricated 26.3 R1-hotfix3 release notes（草稿，尚未发布）
 
-**构建元数据：`1.1.8+fabric.26.3.R1-hotfix4`**
+**构建元数据：`1.1.8+fabric.26.3.R1-hotfix3`**
 
 **基线：`origin/26.2(main)` R3-hotfix2（`c7c3c55` 之前的 26.2 源码）→ 本线 `26.3`**
 
@@ -8,15 +8,17 @@
 
 > 状态：R1 基础版编译/CI 全绿；下列标 ✅ 的基础版条目已由维护者在 26.3 实机验证（2026-09-18 ~ 09-21，
 > 无光影 + Iris 光影 + 专服三种环境）；`R1-hotfix` 与 `R1-hotfix2` 新增项的历史 CI 结果见对应条目，尚未实机验证。
-> `R1-hotfix3` 方块/标靶增量和 `R1-hotfix4` 动态皮肤调整均已通过 CI 构建和回归检查；
-> 两者尚未实机验证，且 **26.3 尚未正式发布**。
+> `R1-hotfix3` 方块/标靶增量与动态皮肤调整已通过先前代码提交的 CI 构建和回归检查，
+> 版本号恢复后的 CI 以对应 Actions 运行为准；这些改动尚未实机验证，且 **26.3 尚未正式发布**。
 > 姊妹项目（NeoForge）移植指南：[`lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md`](lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md)。
-> 版本命名沿用本仓历史：hotfix 序号直接追加在 `hotfix` 后、中间不加分隔符（`R1-hotfix` → `R1-hotfix2` → `R1-hotfix3` → `R1-hotfix4`，不另起 R2）。
+> 版本命名沿用本仓历史：hotfix 序号直接追加在 `hotfix` 后、中间不加分隔符（`R1-hotfix` → `R1-hotfix2` → `R1-hotfix3`，不另起 R2）。
 
-## R1-hotfix4 增量（2026-10-26 UTC：标靶皮肤动态解析与回归测试）
+## R1-hotfix3 标靶皮肤与回归测试追加（2026-10-26 UTC）
 
-- 改名标靶放置、改名矿车渲染的空 UUID 路径已在 `R1-hotfix3` 避免：分别使用名称动态档案，
-  再交给原版 `PlayerSkinRenderCache`；本轮并非首次修复这两条路径。
+根据要求，当前版本号恢复为 `R1-hotfix3`，保留后续的标靶皮肤修复；同版本的不同 CI 产物应以提交 SHA 区分。
+
+- 改名标靶放置、改名矿车渲染的空 UUID 路径已在早期提交 `13d3fff` 避免：分别使用名称动态档案，
+  再交给原版 `PlayerSkinRenderCache`；后续调整并非首次修复这两条路径。
 - 标靶方块在服务端异步查到真实 UUID 后，改为保留 UUID **动态**档案而非固化当时的纹理快照，
   让客户端皮肤缓存按 UUID 异步查询；无结果、未就绪或运行期异常时使用默认皮肤。
   查询结果为空或异常时保留原档案；过期、移除或换世界的回调不能覆盖当前主人。
@@ -26,14 +28,13 @@
   还模拟皮肤缓存待解析→默认皮肤→可用皮肤及异常回退，检查 UUID、旧存档及过期回调。
   此测试没有运行原版 `BlockItem`、真实网络、渲染设备或游戏。
 - 本地隔离桩测试、14 项守卫正反向检查及严格静态检查已通过。
-- **CI 验证**（代码提交 `faf60a4`，2026-10-26 UTC）：
+- **先前 CI 验证**（代码提交 `faf60a4`，当时临时编号为 `R1-hotfix4`，2026-10-26 UTC）：
   [`build`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535903)
   通过静态守卫、隔离桩测试和真实 `./gradlew build`；
   [`compile-check`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535916)
   成功执行 `./gradlew compileJava`；
   [`Version consistency`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410536028)
-  严格检查通过。构建 [artifact](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535903/artifacts/12693630751)
-  保留至 2026-11-09 22:13 UTC，不是正式 Release。
+  严格检查通过。该次产物使用旧临时编号，不是当前版本的构建。
 - **待实机**：改名后放置与物品消耗、专服同步、换肤、离线回退、矿车重命名与渲染、旧存档重进。
 
 ## R1-hotfix3 增量（2026-10-26 UTC：同步 26.2 R3-hotfix4 方块修复）
@@ -50,16 +51,16 @@
   副作用的更新标志仍然生效，不保证绕过这些原版限制。
 - **标靶主人与皮肤**：读取以前写入的 `owner_uuid` / `owner_name`，并兼容旧 `Owner` 复合标签的
   `Name` / `Id`；无效 UUID 不再导致读取崩溃，空 UUID 不再传给 26.3 的 `GameProfile`。
-  新存档/同步包使用 `ResolvableProfile` 保存档案及纹理，服务端在 IO 线程请求完整档案，
+  新存档/同步包使用 `ResolvableProfile` 保存档案（静态档案可含纹理），服务端在 IO 线程请求档案，
   回主线程后检查实体和主人是否已变化；客户端使用原版 `PlayerSkinRenderCache`，而非直接选默认皮肤。
-  无效玩家名仍保存在扁平键中，查询失败会记录警告并保留待解析档案；服务端返回无纹理属性时也
-  保留动态档案，让客户端有机会自行解析。
+  无效玩家名仍保存在扁平键中，查询失败会记录警告并保留待解析档案；当前实现保留动态 UUID 档案，
+  让客户端自行解析皮肤。
 - **标靶矿车（关联修正）**：发现 26.3 原有命名矿车也会创建空 UUID 档案。改为按名称创建
   动态档案，名称改变或清除时更新缓存，渲染时使用 26.3 玩家皮肤缓存与默认皮肤回退。
   该项是检查方块皮肤时发现的同类问题，不是 26.2 PR #115 的新增提交。
 - **边界**：旧 `Owner` 复合标签的历史纹理属性不被复制，只迁移名字/UUID，皮肤需重新解析；
-  若查不到或客户端无法联网则可能保持默认皮肤。`R1-hotfix3` 查得并持久化的纹理是当时的快照；
-  `R1-hotfix4` 不再为新解析结果固化快照，但不会自动转换已保存的静态档案。
+  若查不到或客户端无法联网则可能保持默认皮肤。早期提交 `13d3fff` 查得并持久化的纹理是当时的快照；
+  后续调整不再为新解析结果固化快照，但不会自动转换已保存的静态档案。
 - **离线验证**：`verify_block_drops.py --strict` 与 `verify_block_entity_persistence.py --strict`
   通过；`test_block_guards.py` 的 12 项正反向检查通过；`test_block_entities.py` 使用 Minecraft API
   隔离桩执行真实方块实体、标靶矿车和两处渲染器代码，覆盖存档回读、旧数据、异常 UUID、

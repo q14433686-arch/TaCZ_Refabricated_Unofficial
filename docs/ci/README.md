@@ -14,8 +14,9 @@
 会话分支代码提交 `13d3fff` 的 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976635)、
 [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976378) 和
 [Version consistency](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976824)
-均已通过。`R1-hotfix4` 增强了同一套隔离测试：编译真实 `TargetBlock` 并调用其放置回调，
-模拟回调后的物品消耗及皮肤缓存的待解析/回退/成功状态。代码提交 `faf60a4` 的
+均已通过。后续提交增强了同一套隔离测试：编译真实 `TargetBlock` 并调用其放置回调，
+模拟回调后的物品消耗及皮肤缓存的待解析/回退/成功状态。代码提交 `faf60a4`（当时临时编号为
+`R1-hotfix4`，现已恢复 `R1-hotfix3`）的
 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535903)、
 [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535916) 和
 [Version consistency](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410536028)
