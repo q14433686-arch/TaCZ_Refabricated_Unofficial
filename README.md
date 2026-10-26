@@ -18,7 +18,7 @@
 > （2026-09-18 ~ 09-21：无光影、Iris 光影、专服三种环境）；R1-hotfix2 新增的枪包 lang 容错、
 > JEI 配方刷新、弹孔朝向修复与 YSM 适配门面仅经 CI 编译/静态校验，尚未实机验证；
 > R1-hotfix3 的方块及标靶修复已通过 [CI 完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976635)；
-> R1-hotfix4 的动态皮肤档案调整已通过隔离桩测试，CI 状态以对应 Actions 运行为准。两者均尚未实机验证。
+> R1-hotfix4 的动态皮肤档案调整已通过隔离桩测试和 [CI 完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535903)。两者均尚未实机验证。
 > 逐项结果见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)。下方各节继承自 26.2 线的描述，
 > 凡未在该文件标 ✅ 的，在 26.3 上仍视为**未经验证**。想要现在就能玩的版本请用 `26.2(main)` 分支及其 Release。
 

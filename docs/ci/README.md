@@ -15,8 +15,11 @@
 [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976378) 和
 [Version consistency](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976824)
 均已通过。`R1-hotfix4` 增强了同一套隔离测试：编译真实 `TargetBlock` 并调用其放置回调，
-模拟回调后的物品消耗及皮肤缓存的待解析/回退/成功状态；其新提交的 CI 状态以 Actions 为准。
-合并到 `26.3` 前不代表目标分支已上线这些改动；隔离桩测试不能代替游戏实测。
+模拟回调后的物品消耗及皮肤缓存的待解析/回退/成功状态。代码提交 `faf60a4` 的
+[build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535903)、
+[compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535916) 和
+[Version consistency](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410536028)
+均已通过；构建包含 jar artifact。合并到 `26.3` 前不代表目标分支已上线这些改动；隔离桩测试不能代替游戏实测。
 
 ## 之前的上线状态（2026-09-02 实测刷新）
 

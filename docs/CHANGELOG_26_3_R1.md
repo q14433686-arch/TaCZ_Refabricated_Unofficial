@@ -8,8 +8,8 @@
 
 > 状态：R1 基础版编译/CI 全绿；下列标 ✅ 的基础版条目已由维护者在 26.3 实机验证（2026-09-18 ~ 09-21，
 > 无光影 + Iris 光影 + 专服三种环境）；`R1-hotfix` 与 `R1-hotfix2` 新增项的历史 CI 结果见对应条目，尚未实机验证。
-> `R1-hotfix3` 方块/标靶增量已通过 CI 构建和回归检查；`R1-hotfix4` 已通过隔离桩测试，
-> CI 状态以对应 Actions 运行为准。两者尚未实机验证，且 **26.3 尚未正式发布**。
+> `R1-hotfix3` 方块/标靶增量和 `R1-hotfix4` 动态皮肤调整均已通过 CI 构建和回归检查；
+> 两者尚未实机验证，且 **26.3 尚未正式发布**。
 > 姊妹项目（NeoForge）移植指南：[`lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md`](lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md)。
 > 版本命名沿用本仓历史：hotfix 序号直接追加在 `hotfix` 后、中间不加分隔符（`R1-hotfix` → `R1-hotfix2` → `R1-hotfix3` → `R1-hotfix4`，不另起 R2）。
 
@@ -25,9 +25,16 @@
   原版回调后才消耗物品的顺序，覆盖生存、创造、有效/无效/空名称、客户端和缺少方块实体；
   还模拟皮肤缓存待解析→默认皮肤→可用皮肤及异常回退，检查 UUID、旧存档及过期回调。
   此测试没有运行原版 `BlockItem`、真实网络、渲染设备或游戏。
-- 本地隔离桩测试、14 项守卫正反向检查及严格静态检查已通过；提交后的真实构建状态以
-  GitHub Actions 为准，游戏内验证仍待进行（改名后放置与物品消耗、专服同步、换肤、离线回退、
-  矿车重命名与渲染、旧存档重进）。
+- 本地隔离桩测试、14 项守卫正反向检查及严格静态检查已通过。
+- **CI 验证**（代码提交 `faf60a4`，2026-10-26 UTC）：
+  [`build`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535903)
+  通过静态守卫、隔离桩测试和真实 `./gradlew build`；
+  [`compile-check`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535916)
+  成功执行 `./gradlew compileJava`；
+  [`Version consistency`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410536028)
+  严格检查通过。构建 [artifact](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535903/artifacts/12693630751)
+  保留至 2026-11-09 22:13 UTC，不是正式 Release。
+- **待实机**：改名后放置与物品消耗、专服同步、换肤、离线回退、矿车重命名与渲染、旧存档重进。
 
 ## R1-hotfix3 增量（2026-10-26 UTC：同步 26.2 R3-hotfix4 方块修复）
 
