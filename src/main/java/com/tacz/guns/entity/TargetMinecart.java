@@ -2,7 +2,6 @@ package com.tacz.guns.entity;
 
 import cn.sh1rocu.tacz.api.LogicalSide;
 import cn.sh1rocu.tacz.api.extension.IMinecart;
-import com.mojang.authlib.GameProfile;
 import com.tacz.guns.api.entity.ITargetEntity;
 import com.tacz.guns.api.event.common.EntityHurtByGunEvent;
 import com.tacz.guns.config.client.RenderConfig;
@@ -23,6 +22,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -43,7 +43,7 @@ public class TargetMinecart extends AbstractMinecart implements ITargetEntity, I
             .clientTrackingRange(8)
             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("tacz", "target_minecart")));
 
-    private @Nullable GameProfile gameProfile = null;
+    private @Nullable ResolvableProfile resolvableProfile = null;
 
     public TargetMinecart(EntityType<TargetMinecart> type, Level world) {
         super(type, world);
@@ -133,11 +133,17 @@ public class TargetMinecart extends AbstractMinecart implements ITargetEntity, I
     }
 
     @Nullable
-    public GameProfile getGameProfile() {
-        if (this.gameProfile == null && this.getCustomName() != null) {
-            this.gameProfile = new GameProfile(null, this.getCustomName().getString());
+    public ResolvableProfile getResolvableProfile() {
+        Component customName = this.getCustomName();
+        if (customName == null) {
+            this.resolvableProfile = null;
+            return null;
         }
-        return gameProfile;
+        String name = customName.getString();
+        if (this.resolvableProfile == null || this.resolvableProfile.name().filter(name::equals).isEmpty()) {
+            this.resolvableProfile = ResolvableProfile.createUnresolved(name);
+        }
+        return this.resolvableProfile;
     }
 
     @Override

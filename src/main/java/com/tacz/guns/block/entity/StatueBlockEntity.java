@@ -60,16 +60,26 @@ public class StatueBlockEntity extends BlockEntity {
     }
 
     public void dropItem() {
-        if (!gunItem.isEmpty() && level != null) {
-            Direction direction = getBlockState().getValue(FACING);
-            Block.popResource(level, worldPosition.relative(direction).above(), gunItem);
-            this.gunItem = ItemStack.EMPTY;
-            if (level != null) {
-                BlockState state = level.getBlockState(worldPosition);
-                level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_ALL);
-            }
-            this.setChanged();
+        dropItem(getBlockState());
+    }
+
+    private void dropItem(BlockState state) {
+        if (gunItem.isEmpty() || level == null || level.isClientSide()) {
+            return;
         }
+        Direction direction = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.NORTH;
+        Block.popResource(level, worldPosition.relative(direction).above(), gunItem);
+        this.gunItem = ItemStack.EMPTY;
+        BlockState currentState = level.getBlockState(worldPosition);
+        level.sendBlockUpdated(worldPosition, currentState, currentState, Block.UPDATE_ALL);
+        this.setChanged();
+    }
+
+    /** Drop the stored gun whenever the statue block entity is removed (break, explosion, piston, etc.). */
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        dropItem(state);
     }
 
     @Override
