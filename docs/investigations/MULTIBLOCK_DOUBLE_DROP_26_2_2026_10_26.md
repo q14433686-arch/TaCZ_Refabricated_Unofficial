@@ -93,12 +93,18 @@ level.destroyBlock(pos, /* dropResources = */ (flags & UPDATE_SUPPRESS_DROPS) ==
 
 ---
 
-## 5. 验证边界（未实机）
+## 5. 验证边界
 
-沙箱内没有 JDK、没有 26.2 合并 jar，因此：
+**已通过**
 
-- 未执行 `./gradlew compileJava`；
-- 未进游戏验证；
+- 26.2 CI `:compileJava`：`BUILD SUCCESSFUL`（提交 `db62d25` 的
+  `compile-check` / `build` 两条都 success，日志见 `build-reports/compile-java.log`）。
+- 离线守卫：`python3 scripts/verify_block_drops.py --strict` 通过（并已用「故意注入一条
+  `popResource`」验证过它确实会报错）。
+
+**未做**
+
+- **未实机验证**：沙箱内没有可运行的游戏环境，掉落数量、`BlockId`、创造模式行为都需实机确认；
 - §2 中 `updateOrDestroy` 的语义依据是 26.3 线已实测的结论（其注释与调查记录
   `SCOPE_26_3_VS_26_2_DELTA_ANALYSIS_2026_09_20.md` §十四）与本分支同款代码路径，
   不是本次独立反编译所得。
