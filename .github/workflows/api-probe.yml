@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - 'arena/**'
-  workflow_dispatch
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -27,6 +27,7 @@ jobs:
 
       - name: Dump skin/profile classes
         run: |
+          set -x
           OUT=build-reports/api-probe.txt
           mkdir -p build-reports
           : > "$OUT"
