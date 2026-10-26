@@ -1,6 +1,5 @@
 package com.tacz.guns.block;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.MapCodec;
 import com.tacz.guns.block.entity.TargetBlockEntity;
 import com.tacz.guns.entity.EntityKineticBullet;
@@ -10,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -189,8 +189,8 @@ public class TargetBlock extends BaseEntityBlock {
             if (stack.getCustomName() != null) {
                 BlockEntity blockentity = world.getBlockEntity(pos);
                 if (blockentity instanceof TargetBlockEntity e) {
-                    GameProfile gameprofile = new GameProfile(null, stack.getHoverName().getString());
-                    e.setOwner(gameprofile);
+                    ResolvableProfile profile = ResolvableProfile.createUnresolved(stack.getHoverName().getString());
+                    e.setOwner(profile);
                     e.setCustomName(stack.getHoverName());
                     e.refresh();
                 }

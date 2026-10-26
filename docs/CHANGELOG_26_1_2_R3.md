@@ -8,6 +8,15 @@
 
 ---
 
+## 2026-10-27 · 版本号推进至 R3-hotfix4 + 方块与标靶热修
+
+1. **`mod_version` → `1.1.8+fabric.26.1.2.R3-hotfix4`**：将 hotfix 序号从 3 加 1；SemVer 核心、MC/Fabric 与其他依赖版本均不变。同步更新 `gradle.properties`、README 当前版本字段及 `fabric.mod.json` 展示元数据。
+2. **多方块工作台掉落修复**：移除非根半边的手工掉落，避免与战利品表重复；修正 B 工作台创造模式的半边抑制方向。
+3. **方块实体内容与自定义档案修复**：雕像移除时在服务端掉出所存枪械；标靶主人数据使用 `ResolvableProfile` codec 保存；改名标靶及标靶矿车统一走 `PlayerSkinRenderCache` 异步皮肤解析，空 UUID 不再直接构造 `GameProfile`。
+4. **验证状态**：离线掉落/持久化审计通过；GitHub Actions `build` 全量构建与版本一致性工作流均通过（提交 `df9eca5`，build run `40415520719`，consistency run `40415520716`）。未做实机验收。
+
+---
+
 ## 2026-10-22 · 版本号推进至 R3-hotfix3
 
 1. **`mod_version` → `1.1.8+fabric.26.1.2.R3-hotfix3`**：按请求将 hotfix 序号从 2 加 1；不改变 SemVer 核心、Minecraft/Fabric 依赖或其他依赖版本。同步更新 `gradle.properties`、README 的源码版本/提示/支持环境/SemVer 文案，以及 `fabric.mod.json` 的展示名称和说明。hotfix 数字仍按仓库规则直接跟在 `hotfix` 后。

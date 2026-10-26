@@ -7,8 +7,6 @@ import com.tacz.guns.init.ModBlocks;
 import com.tacz.guns.init.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -18,8 +16,8 @@ import net.minecraft.world.Nameable;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
@@ -35,11 +33,13 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
      * 标靶复位时间，暂定为 5 秒
      */
     private static final int RESET_TIME = 5 * 20;
-    private static final String OWNER_TAG = "Owner";
+    private static final String OWNER_PROFILE_TAG = "OwnerProfile";
+    private static final String OWNER_UUID_TAG = "owner_uuid";
+    private static final String OWNER_NAME_TAG = "owner_name";
     private static final String CUSTOM_NAME_TAG = "CustomName";
     public float rot = 0;
     public float oRot = 0;
-    private @Nullable GameProfile owner;
+    private @Nullable ResolvableProfile owner;
     private @Nullable Component name;
 
     public TargetBlockEntity(BlockPos pos, BlockState blockState) {
@@ -56,20 +56,31 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
     }
 
     @Nullable
-    public GameProfile getOwner() {
+    public ResolvableProfile getOwner() {
         return owner;
     }
 
-    public void setOwner(@Nullable GameProfile owner) {
+    public void setOwner(@Nullable ResolvableProfile owner) {
         this.owner = owner;
-        // 26.2: SkullBlockEntity.updateGameprofile removed. Just refresh directly.
+        // Keep the unresolved vanilla profile; clients resolve it asynchronously through PlayerSkinRenderCache.
         this.refresh();
     }
 
     @Override
     public void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
-        if (!input.getStringOr(OWNER_TAG, "").isEmpty()) {
-            this.owner = new com.mojang.authlib.GameProfile(java.util.UUID.fromString(input.getStringOr("owner_uuid","")), input.getStringOr("owner_name",""));
+        this.owner = input.read(OWNER_PROFILE_TAG, ResolvableProfile.CODEC).orElse(null);
+        if (this.owner == null) {
+            // Read the flat keys written by earlier builds as a migration fallback.
+            String ownerUuid = input.getStringOr(OWNER_UUID_TAG, "");
+            String ownerName = input.getStringOr(OWNER_NAME_TAG, "");
+            java.util.UUID id = parseOwnerUuid(ownerUuid);
+            if (!ownerName.isEmpty()) {
+                this.owner = id == null
+                        ? ResolvableProfile.createUnresolved(ownerName)
+                        : ResolvableProfile.createResolved(new GameProfile(id, ownerName));
+            } else if (id != null) {
+                this.owner = ResolvableProfile.createUnresolved(id);
+            }
         }
         if (!input.getStringOr(CUSTOM_NAME_TAG, "").isEmpty()) {
             this.name = net.minecraft.network.chat.ComponentSerialization.CODEC
@@ -78,11 +89,24 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
         }
     }
 
+    private static @Nullable java.util.UUID parseOwnerUuid(String value) {
+        if (value.isEmpty()) {
+            return null;
+        }
+        try {
+            return java.util.UUID.fromString(value);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
     @Override
     protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
-                if (owner != null) {
-            output.putString("owner_uuid", owner.id()!=null?owner.id().toString():"");
-            output.putString("owner_name", owner.name()!=null?owner.name():"");
+        if (owner != null) {
+            output.store(OWNER_PROFILE_TAG, ResolvableProfile.CODEC, owner);
+            // Keep legacy flat keys available to older builds; new builds load the full codec above.
+            output.putString(OWNER_UUID_TAG, "");
+            output.putString(OWNER_NAME_TAG, owner.name().orElse(""));
         }
         if (this.name != null) {
             output.putString(CUSTOM_NAME_TAG, net.minecraft.network.chat.ComponentSerialization.CODEC
