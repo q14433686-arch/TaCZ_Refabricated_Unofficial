@@ -27,6 +27,37 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * 多方块枪械工作台的公共基类（A 单格、B 2×1×1、C 1×2×1）。
+ *
+ * <h2>掉落只由战利品表负责 —— 不要在 {@code playerWillDestroy} 里手工补掉</h2>
+ *
+ * 1.21.11 的 {@code Block#updateOrDestroy} 在邻居 {@code updateShape} 返回空气时调用的是
+ * {@code level.destroyBlock(pos, dropResources = (flags & UPDATE_SUPPRESS_DROPS) == 0, ...)}；
+ * 而 {@code Level#setBlock} 把标志位向邻居传播时用的是 {@code flags & -34}，会<b>清掉</b>
+ * {@code UPDATE_SUPPRESS_DROPS}。也就是说<b>被连带清掉的另一半一定会走它自己的战利品表</b>
+ * —— 原版高花、床正是靠这条路径做到「挖哪一半都只掉一份」。
+ * 我们的 {@code data/tacz/loot_table/blocks/workbench_b.json} / {@code workbench_c.json}
+ * 用 {@code block_state_property} 把产出限制在 {@code part=foot} / {@code half=lower}，
+ * 并从<b>根</b>的方块实体拷 {@code BlockId}，于是：
+ *
+ * <ul>
+ *   <li>挖根半边（foot / lower）：根自己产出 1 份；另一半被邻接更新清掉但战利品表不产出 → 合计 1 份。</li>
+ *   <li>挖非根半边（head / upper）：它自己不产出；根半边经上面的 {@code destroyBlock} 产出 1 份
+ *       （此时根的方块实体还没被删，{@code copy_custom_data} 仍能拿到 {@code BlockId}）→ 合计 1 份。</li>
+ * </ul>
+ *
+ * 旧代码曾在非根半边的 {@code playerWillDestroy} 里额外 {@code popResource} 一份
+ * {@link #getCloneItemStack} 克隆，与上面第二条叠加，导致<b>挖上半 / 头部爆出两个工作台</b>。
+ * 本线已于 2026-10-21 随 26.3 同病项移除，26.2 线 2026-10-26 又独立修了同一处（其 {@code db62d25}）；
+ * 2026-10-27 把 26.2 终态（方法本身不存在 + 本说明）对齐过来。
+ * 要验证掉落请只改战利品表，别在这里补 {@code popResource}；
+ * 离线守卫见 {@code scripts/verify_block_drops.py}（CI 的 build 流程会跑）。
+ *
+ * <p>创造模式的「另一半不再掉落」由 B / C 各自的 {@code playerWillDestroy} 负责，
+ * 判据<b>必须挂在非根半边上</b>（要抑制的是会产出的根半边），见
+ * {@link GunSmithTableBlockB#playerWillDestroy}。</p>
+ */
 public abstract class AbstractGunSmithTableBlock extends BaseEntityBlock {
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
@@ -126,14 +157,6 @@ public abstract class AbstractGunSmithTableBlock extends BaseEntityBlock {
             return new ItemStack(this);
         }
         return super.getCloneItemStack(level, pos, state, false);
-    }
-
-    @Override
-    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        // 26.3 同病回移：破坏非根半边时 updateShape 会使根半边也被破坏，
-        // 根半边的 loot table 已限制只从根掉落（自定义工作台还复制 BlockId）。
-        // 此处再手工 popResource 会导致生存模式挖上半部掉两个工作台。
-        return super.playerWillDestroy(level, pos, state, player);
     }
 
     public abstract boolean isRoot(BlockState blockState);
