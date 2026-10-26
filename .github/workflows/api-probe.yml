@@ -44,13 +44,16 @@ jobs:
           echo "== class list (skin/profile) ==" >> "$OUT"
           unzip -l "$JAR" | awk '{print $4}' | grep -iE "PlayerSkin|SkinCache|SkinRender|SkinManager|ResolvableProfile|ProfileContents|GameProfileCache|NameAndId" | sort >> "$OUT"
           for C in \
-            net.minecraft.client.resources.PlayerSkinRenderCache \
-            net.minecraft.world.item.component.ResolvableProfile \
-            net.minecraft.core.component.ProfileContents \
-            net.minecraft.client.renderer.blockentity.SkullBlockRenderer \
-            net.minecraft.client.resources.SkinManager \
-            net.minecraft.client.resources.DefaultPlayerSkin \
-            net.minecraft.world.item.component.ResolvableProfile\$Patch
+            net.minecraft.client.renderer.PlayerSkinRenderCache \
+            'net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo' \
+            net.minecraft.world.entity.player.PlayerSkin \
+            'net.minecraft.world.entity.player.PlayerSkin$Patch' \
+            net.minecraft.server.players.ProfileResolver \
+            net.minecraft.world.level.block.entity.SkullBlockEntity \
+            net.minecraft.client.renderer.blockentity.state.SkullBlockRenderState \
+            'net.minecraft.world.item.component.ResolvableProfile$Partial' \
+            'net.minecraft.world.item.component.ResolvableProfile$Static' \
+            net.minecraft.world.item.component.ResolvableProfile
           do
             echo "== javap $C ==" >> "$OUT"
             javap -classpath "$JAR" "$C" >> "$OUT" 2>&1 || true
