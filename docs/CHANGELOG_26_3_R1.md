@@ -8,7 +8,7 @@
 
 > 状态：R1 基础版编译/CI 全绿；下列标 ✅ 的基础版条目已由维护者在 26.3 实机验证（2026-09-18 ~ 09-21，
 > 无光影 + Iris 光影 + 专服三种环境）；`R1-hotfix` 与 `R1-hotfix2` 新增项的历史 CI 结果见对应条目，尚未实机验证。
-> `R1-hotfix3` 方块/标靶增量尚未实机验证，CI 结果以对应 Actions 运行记录为准；**尚未正式发布**。
+> `R1-hotfix3` 方块/标靶增量已通过 CI 构建和回归检查，尚未实机验证；**尚未正式发布**。
 > 姊妹项目（NeoForge）移植指南：[`lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md`](lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md)。
 > 版本命名沿用本仓历史：hotfix 序号直接追加在 `hotfix` 后、中间不加分隔符（`R1-hotfix` → `R1-hotfix2` → `R1-hotfix3`，不另起 R2）。
 
@@ -41,8 +41,15 @@
   隔离桩执行真实方块实体、标靶矿车和两处渲染器代码，覆盖存档回读、旧数据、异常 UUID、
   异步结果过期、单次掉枪、矿车名称变化及皮肤回退。本地桩测试使用 Java 25 运行时及 Eclipse JDT
   编译器；这是桩测试，**不是针对 26.3 Minecraft 依赖的实际编译**。本次尝试 `./gradlew compileJava`，
-  Gradle 分发包下载时 TLS 握手失败，编译任务未启动。GitHub Actions 配置增加了这些检查，
-  实际 CI 结果以对应提交的运行记录为准。
+  Gradle 分发包下载时 TLS 握手失败，编译任务未启动。
+- **CI 验证**（代码提交 `13d3fff`，2026-10-27）：
+  - [`compile-check`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976378)
+    使用 Java 25 成功执行真实 `./gradlew compileJava`，编译日志回写至会话分支。
+  - [`build`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976635)
+    通过方块/标靶静态守卫、隔离桩测试和完整 `./gradlew build`，并上传 jar artifact
+    （保留 14 天；不是正式 Release）。
+  - [`Version consistency`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976824)
+    严格版本一致性检查通过。CI 成功仍不代表游戏内行为已验证。
 - **待实机**：分别挖 B/C 工作台的根/非根半边（生存、创造，含枪包 `BlockId`）；挖、炸、
   活塞及 `/setblock` 移除放枪雕像（应单次掉枪，并核对游戏规则）；使用真实和无效玩家名放置标靶，
   验证皮肤、重进存档、专服同步及断网回退；覆盖旧扁平键与 `Owner` 复合标签存档；

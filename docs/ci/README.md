@@ -11,8 +11,10 @@
 本次移植在 `build.yml` 中加入 26.3 方块与标靶接线静态检查、守卫反向测试与隔离桩行为测试；
 三份正式工作流的 push 分支列表均包含 `26.3`，`build.yml` 和 `consistency.yml` 的版本检查
 使用 `--strict`，不一致时真正失败。本目录副本同步更新。
-会话分支推送可触发 GitHub Actions；运行状态以对应提交的 Actions 记录为准，合并到 `26.3` 前
-不代表目标分支已上线这些改动。隔离桩测试不能代替完整 Gradle 构建与游戏实测。
+会话分支代码提交 `13d3fff` 的 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976635)、
+[compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976378) 和
+[Version consistency](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976824)
+均已通过。合并到 `26.3` 前不代表目标分支已上线这些改动；隔离桩测试不能代替游戏实测。
 
 ## 之前的上线状态（2026-09-02 实测刷新）
 

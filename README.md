@@ -17,8 +17,8 @@
 > **本分支是 26.3 线，尚无正式发布；CI 产物以对应 Actions 运行页面为准。** R1 基础版已在维护者环境完成一轮实机验证
 > （2026-09-18 ~ 09-21：无光影、Iris 光影、专服三种环境）；R1-hotfix2 新增的枪包 lang 容错、
 > JEI 配方刷新、弹孔朝向修复与 YSM 适配门面仅经 CI 编译/静态校验，尚未实机验证；
-> R1-hotfix3 的方块及标靶修复也尚未实机验证，CI 结果以对应 Actions 运行记录为准。逐项结果见
-> [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)。下方各节继承自 26.2 线的描述，
+> R1-hotfix3 的方块及标靶修复已通过 [CI 完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976635)，
+> 尚未实机验证。逐项结果见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)。下方各节继承自 26.2 线的描述，
 > 凡未在该文件标 ✅ 的，在 26.3 上仍视为**未经验证**。想要现在就能玩的版本请用 `26.2(main)` 分支及其 Release。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
@@ -83,8 +83,8 @@ R1-hotfix3 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人�
 - 远程枪包同步完成后合并请求并刷新已安装的 recipe viewer，避免首轮注册早于网络 cache 时
   显示陈旧类别/查询数据；
 - 同步 26.2 R3-hotfix4 的工作台、雕像与标靶方块修复，并按 26.3 的档案和皮肤 API 适配；
-  同时修正标靶矿车的同类空 UUID 和皮肤解析问题。本次增量尚未实机验证，
-  CI 结果以对应 Actions 运行记录为准，见下方变更清单。
+  同时修正标靶矿车的同类空 UUID 和皮肤解析问题。本次增量已通过 CI 构建和回归检查，
+  尚未实机验证，见下方变更清单。
 
 **26.3 R1-hotfix3**（当前源码版本）的变更清单见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)：
 渲染底层 renderpearl 迁移、第一人称拆分、shaderc 着色器、Iris 26.3 裁剪判定重做、26.3 战利品表/配方 codec/
