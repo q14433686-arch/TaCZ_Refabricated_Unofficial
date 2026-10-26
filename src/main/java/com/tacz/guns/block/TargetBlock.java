@@ -1,6 +1,5 @@
 package com.tacz.guns.block;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.MapCodec;
 import com.tacz.guns.block.entity.TargetBlockEntity;
 import com.tacz.guns.entity.EntityKineticBullet;
@@ -15,6 +14,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -180,6 +180,21 @@ public class TargetBlock extends BaseEntityBlock {
         return null;
     }
 
+    /**
+     * 带名字放置标靶时，把名字同时记成「主人档案」与「自定义名」。
+     *
+     * <h2>26.2 必现崩溃（2026-10-27 修复）</h2>
+     * <p>这里原先是 {@code new GameProfile(null, stack.getHoverName().getString())}。authlib 9 的
+     * {@code GameProfile} 是 record，构造器对 id/name/properties 全部
+     * {@code Objects.requireNonNull}，所以<b>只要物品带自定义名就必抛 NPE</b>。而它抛在
+     * {@code BlockItem#place} 的中途：方块已经放好、{@code setPlacedBy} 里的物品消耗语句却
+     * 还没执行 ⇒ <b>标靶放下了、物品不被消耗</b>，而且异常被 {@code useItemOn} 吞掉，
+     * 玩家看不到任何提示。</p>
+     * <p>现在改用原版 {@link ResolvableProfile}（允许「只有名字」，和原版头颅的
+     * {@code SkullBlockEntity} 完全一致）：服务端不再构造 {@code GameProfile}，也就不可能 NPE；
+     * 皮肤由客户端用 {@code PlayerSkinRenderCache} 异步解析，解析不到就是默认皮肤。
+     * UUID 这一层完全不需要我们操心 —— 这也是原版头颅的行为。</p>
+     */
     @Override
     public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(world, pos, state, placer, stack);
@@ -189,9 +204,14 @@ public class TargetBlock extends BaseEntityBlock {
             if (stack.getCustomName() != null) {
                 BlockEntity blockentity = world.getBlockEntity(pos);
                 if (blockentity instanceof TargetBlockEntity e) {
-                    GameProfile gameprofile = new GameProfile(null, stack.getHoverName().getString());
-                    e.setOwner(gameprofile);
-                    e.setCustomName(stack.getHoverName());
+                    Component customName = stack.getHoverName();
+                    String name = customName.getString();
+                    // 空名字（组件被清空之类）不建档案：ResolvableProfile 允许名字为空，
+                    // 但空名字解析不出任何玩家，徒增一次无意义查询。
+                    if (!name.isEmpty()) {
+                        e.setOwner(ResolvableProfile.createUnresolved(name));
+                    }
+                    e.setCustomName(customName);
                     e.refresh();
                 }
             }
@@ -204,7 +224,10 @@ public class TargetBlock extends BaseEntityBlock {
         BlockEntity blockentity = level.getBlockEntity(blockPos);
         if (blockentity instanceof TargetBlockEntity e) {
             ItemStack dropStack = new ItemStack(this);
-            dropStack.set(DataComponents.CUSTOM_NAME, e.getCustomName());
+            Component customName = e.getCustomName();
+            if (customName != null) {
+                dropStack.set(DataComponents.CUSTOM_NAME, customName);
+            }
             return dropStack;
         }
         return super.getCloneItemStack(level, pos, state, false);

@@ -1,33 +1,33 @@
 package com.tacz.guns.block.entity;
 
-import com.mojang.authlib.GameProfile;
-import com.tacz.guns.GunMod;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import com.tacz.guns.block.TargetBlock;
 import com.tacz.guns.config.common.OtherConfig;
 import com.tacz.guns.init.ModBlocks;
 import com.tacz.guns.init.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Util;
 import net.minecraft.world.Nameable;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
 
 import javax.annotation.Nullable;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,26 +41,42 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
      */
     private static final int RESET_TIME = 5 * 20;
     /**
-     * 标靶主人名（贴在标靶上的头像皮肤）。
+     * 标靶主人档案的存档键。
      *
-     * <p><b>历史坑（2026-10-27 修复）</b>：上游 1.20.1 把主人整个写成
-     * {@code Owner} 复合标签（{@code NbtUtils.writeGameProfile}），移植到 26.2 的
-     * {@code ValueOutput} 时改成拆开存 {@code owner_uuid} / {@code owner_name}，
-     * 但 {@code loadAdditional} 的<b>前置判据仍写着 {@code Owner}</b> ——
-     * 而这个键从那一刻起再没有任何地方写入。结果是判据恒为 false，
-     * 自定义名字的标靶（`/give` 带名字放置的那种）<b>重启后头像皮肤消失</b>，
-     * 且不报任何错。现在判据与实际写入的键一致，并保留旧 {@code Owner} 键的读取兼容。</p>
+     * <p>刻意与<b>原版头颅</b>（{@code SkullBlockEntity}）一模一样：同一个键
+     * {@code "profile"}、同一个 {@code ResolvableProfile.CODEC}。这样存档格式、跨版本兼容、
+     * 以及「能不能被原版工具读懂」全部跟原版对齐，我们不再维护自己的档案格式。</p>
+     *
+     * <h2>历史坑（2026-10-27 修复，第二轮）</h2>
+     * <p>第一轮修复（PR #115）把主人拆成 {@code owner_uuid} / {@code owner_name} 两个字符串存，
+     * 并保留了 {@code Owner} 键的读取兼容。那套东西本质上是在手写「档案序列化 + 服务端补全 +
+     * 客户端查皮肤」的半套协议，于是踩了两个必现的运行期崩溃与一类静默失效：</p>
+     * <ul>
+     *   <li>{@code TargetBlock#setPlacedBy} 里 {@code new GameProfile(null, 名字)} ——
+     *       authlib 9 的 {@code GameProfile} 是 record，id/name/properties 都
+     *       {@code Objects.requireNonNull}，传 null 必抛 NPE。抛在 {@code BlockItem#place}
+     *       中途，于是<b>物品不被消耗</b>、方块却已经放下去了。</li>
+     *   <li>{@code TargetMinecart#getGameProfile} 同款写法，但它在<b>客户端每帧</b>被渲染线程调用
+     *       ⇒ 改名过的标靶矿车直接把渲染线程崩掉。</li>
+     *   <li>服务端「补全 UUID」那一套（{@code nameToIdCache} + 后台线程 + 一次性标志）在离线服 /
+     *       拼错名字时只能降级成默认皮肤，还要我们自己维护日志与重试。</li>
+     * </ul>
+     * <p>现在改成原版的做法：方块实体只存一个 {@code ResolvableProfile}（可以只有名字、也可以
+     * 只有 UUID、或两者都有），<b>服务端不解析</b>；客户端通过
+     * {@code PlayerSkinRenderCache}（原版头颅用的同一个缓存）异步解析，解析期间与解析失败都
+     * 自动用默认皮肤，不需要我们做任何兜底。见 {@code TargetRenderer}。</p>
      */
-    private static final String OWNER_TAG = "Owner";
-    private static final String OWNER_UUID_TAG = "owner_uuid";
-    private static final String OWNER_NAME_TAG = "owner_name";
+    private static final String PROFILE_TAG = "profile";
+    /** 本分支 26.2 早期版本写下的扁平键（PR #115 之前）；只读，不再写。 */
+    private static final String LEGACY_OWNER_UUID_TAG = "owner_uuid";
+    private static final String LEGACY_OWNER_NAME_TAG = "owner_name";
+    /** 上游 1.20.1 写的 GameProfile 复合标签 {@code {Name:"x", Id:"uuid", Properties:{...}}}；只读，不再写。 */
+    private static final String LEGACY_OWNER_TAG = "Owner";
     private static final String CUSTOM_NAME_TAG = "CustomName";
     public float rot = 0;
     public float oRot = 0;
-    private @Nullable GameProfile owner;
+    private @Nullable ResolvableProfile owner;
     private @Nullable Component name;
-    /** 每次主人变更只尝试补全一次档案，避免区块反复加载时刷会话服务。 */
-    private boolean profileResolveAttempted;
 
     public TargetBlockEntity(BlockPos pos, BlockState blockState) {
         super(TYPE, pos, blockState);
@@ -75,148 +91,110 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
         }
     }
 
+    /**
+     * 标靶主人档案（可能只有名字，也可能只有 UUID）。
+     *
+     * <p>返回的是<b>未解析</b>的原版 {@link ResolvableProfile}：服务端不查会话服务，
+     * 客户端渲染时由 {@code PlayerSkinRenderCache} 异步解析。没有主人时返回 {@code null}。</p>
+     */
     @Nullable
-    public GameProfile getOwner() {
-        return owner;
+    public ResolvableProfile getOwnerProfile() {
+        return this.owner;
     }
 
-    public void setOwner(@Nullable GameProfile owner) {
+    /**
+     * 设置标靶主人。
+     *
+     * <p>调用方必须传 {@link ResolvableProfile}（原版允许「只有名字」），
+     * 不要再构造 {@code GameProfile}：authlib 9 的 {@code GameProfile} 不允许 null id/name，
+     * 这正是 {@code setPlacedBy} NPE 的根因。</p>
+     */
+    public void setOwner(@Nullable ResolvableProfile owner) {
         this.owner = owner;
-        this.profileResolveAttempted = false;
-        // 26.2: SkullBlockEntity.updateGameprofile 已不存在，改为走服务端 GameProfileCache
-        // 异步补全（见 resolveOwnerProfile 的类注释）；补全完成后再本地 refresh。
-        this.resolveOwnerProfile();
         this.refresh();
     }
 
-    /**
-     * 方块实体被挂到世界上时（区块加载 / 放置 / 维度切换）触发一次主人补全。
-     *
-     * <p>为什么要挂这里：{@link #loadAdditional} 执行时方块实体还没有 `level`，
-     * 而老存档里躺着的是「名字-only」的主人（上游与旧版本分支写下的都是这种），
-     * 不补全就永远是默认皮肤。</p>
-     */
     @Override
-    public void setLevel(Level level) {
-        super.setLevel(level);
-        if (level != null && !level.isClientSide()) {
-            this.resolveOwnerProfile();
+    public void loadAdditional(ValueInput input) {
+        // 主路径：与原版头颅同一个键、同一个 CODEC，兼容「只写名字」「只写 UUID」「两者都有」。
+        ResolvableProfile loaded = input.read(PROFILE_TAG, ResolvableProfile.CODEC).orElse(null);
+        if (loaded == null) {
+            // 老存档兼容：本分支早期的 owner_uuid/owner_name，以及上游 1.20.1 的 Owner 复合标签。
+            // 读到之后下一次保存就会以原版 profile 键覆盖，属于一次性迁移。
+            loaded = readLegacyOwner(input);
         }
+        this.owner = loaded;
+        this.name = readCustomName(input);
     }
 
     /**
-     * 把「只有名字、没有 UUID/皮肤属性」的主人补全成真实档案。
+     * 读老版本的主人写法。只读不写 —— 保存时统一写 {@link #PROFILE_TAG}。
      *
-     * <h2>为什么需要这一步</h2>
-     * 上游 1.20.1 在 {@code setOwner} 里调 {@code SkullBlockEntity.updateGameprofile}：
-     * 向会话服务异步查一次，把 UUID 与 {@code textures} 属性写回档案，之后客户端
-     * 才有真皮肤。26.2 里该 API 不存在，本移植此前只留下 `refresh()` ——
-     * 于是名字-only 的档案一直挂着，渲染侧只能拿到默认皮肤（**静默降级**，无日志）。
-     *
-     * <p>26.2 的等价物是服务端 {@code GameProfileCache#getAsync(name)}：命中缓存或
-     * 走会话服务，回调在服务端线程池完成后由 {@code server.execute} 切回主线程。
-     * 只在服务端、只在档案不完整时尝试，且每次档案变更只尝试一次
-     * （{@link #profileResolveAttempted}），避免每次区块加载都打一次请求。</p>
-     *
-     * <p><b>失败不再静默</b>：查不到（名字拼错 / 离线服 / 会话服务异常）时打一条
-     * WARN 并保留名字-only 档案 —— 客户端仍会用名字去 {@code SkinManager} 查，
-     * 拿到的是默认皮肤，但服务端日志里能看见原因。</p>
+     * <p>三种历史格式：</p>
+     * <ol>
+     *   <li>{@code Owner} 复合标签（上游 1.20.1，{@code NbtUtils.writeGameProfile}）；
+     *       内含 {@code Name} 与 {@code Id}。</li>
+     *   <li>{@code owner_uuid} / {@code owner_name} 两个字符串（本分支 26.2 早期，PR #115）。</li>
+     *   <li>两者都没有：没有主人。</li>
+     * </ol>
+     * <p>解析不出来（名字拼错之类）不算错误：档案仍然是合法的「未解析档案」，
+     * 客户端解析不到就退回默认皮肤，与原版头颅一致。</p>
      */
-    private void resolveOwnerProfile() {
-        if (this.profileResolveAttempted || this.owner == null || this.owner.id() != null) {
-            return;
-        }
-        String name = this.owner.name();
-        if (name == null || name.isEmpty()) {
-            return;
-        }
-        if (!(this.level instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        MinecraftServer server = serverLevel.getServer();
-        if (server == null) {
-            return;
-        }
-        this.profileResolveAttempted = true;
-
-        // 【26.2 API，已用编译探针逐条确认】
-        //   MinecraftServer#services()            -> Services
-        //   Services#nameToIdCache()              -> UserNameToIdResolver
-        //   UserNameToIdResolver#get(String)      -> Optional<NameAndId>（**阻塞**，未命中会走会话服务）
-        //   NameAndId#id() -> UUID，#name() -> String
-        // 别改成 getProfileCache() / GameProfileCache：前者在 26.2 已不是 MinecraftServer 的方法，
-        // 后者整个类已被删除（1.21.1 的写法在这里编译不过）。
-        // 这里用 var 而不是写死类型名，是因为 26.2 把这两个类型挪过包，用 var 可以跟着签名走。
-        var userNameToId = server.services().nameToIdCache();
-
-        // get() 是阻塞调用（可能要发 HTTP 请求），必须离开服务端主线程。
-        Util.backgroundExecutor().execute(() -> {
-            UUID resolvedId;
-            try {
-                var nameAndId = userNameToId.get(name).orElse(null);
-                resolvedId = nameAndId == null ? null : nameAndId.id();
-            } catch (RuntimeException e) {
-                // 网络/会话服务异常：复位标志让下次区块加载还能再试，并且**必须留日志**（不许静默）。
-                server.execute(() -> {
-                    this.profileResolveAttempted = false;
-                    GunMod.LOGGER.warn("[TaCZ] Target owner profile lookup for '{}' failed: {}",
-                            name, e.toString());
-                });
-                return;
+    private static @Nullable ResolvableProfile readLegacyOwner(ValueInput input) {
+        String name = getStringOrEmpty(input, LEGACY_OWNER_NAME_TAG);
+        String uuidText = getStringOrEmpty(input, LEGACY_OWNER_UUID_TAG);
+        Optional<ValueInput> legacyOwner = input.child(LEGACY_OWNER_TAG);
+        if (legacyOwner.isPresent()) {
+            ValueInput child = legacyOwner.get();
+            if (name.isEmpty()) {
+                name = getStringOrEmpty(child, "Name");
             }
-            if (resolvedId == null) {
-                // 查不到（名字拼错 / 离线服 / 会话服务拒绝）：不再重试，但一定要让人从日志里看见。
-                server.execute(() -> GunMod.LOGGER.warn(
-                        "[TaCZ] Could not resolve target owner profile '{}' (misspelled name, offline "
-                                + "server, or session service rejected it); the target head keeps "
-                                + "the default skin", name));
-                return;
+            if (uuidText.isEmpty()) {
+                uuidText = getStringOrEmpty(child, "Id");
             }
-            UUID resolved = resolvedId;
-            server.execute(() -> {
-                if (this.isRemoved()) {
-                    return;
-                }
-                // 名字保留玩家写下的那个（可能已被改名），UUID 用会话服务的权威值 ——
-                // 客户端 SkinManager 据此按 UUID 拉到真皮肤，不再落到默认皮肤。
-                this.owner = new GameProfile(resolved, name);
-                this.refresh();
-                GunMod.LOGGER.debug("[TaCZ] Resolved target owner '{}' -> {}", name, resolved);
-            });
-        });
+        }
+        return createLegacyProfile(name, parseUuid(uuidText));
     }
 
-    @Override
-    public void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
-        // 主路径：本分支自己写的扁平键。旧 {@code Owner} 键（上游 1.20.1 是 GameProfile
-        // 复合标签，26.2 起我们改存 UUID 字符串）作为兼容回退读取；两种都没有就不设主人。
-        String ownerUuid = input.getStringOr(OWNER_UUID_TAG, "");
-        String ownerName = input.getStringOr(OWNER_NAME_TAG, "");
-        if (ownerUuid.isEmpty()) {
-            ownerUuid = tryGetString(input, OWNER_TAG);
+    /**
+     * 把「名字 + 可选 UUID」拼成 {@link ResolvableProfile}。
+     *
+     * <p>两者都有时走 {@code ResolvableProfile.CODEC}（它接受 {@code {name, id, properties}} 形态），
+     * 这样 UUID 与名字都能保留、离线也能解析；CODEC 不认（字段缺失等）时退化成只用名字、
+     * 再退化成只用 UUID —— 全都失败返回 {@code null}，绝不抛异常。</p>
+     */
+    private static @Nullable ResolvableProfile createLegacyProfile(String name, @Nullable UUID id) {
+        if (!name.isEmpty() && id != null) {
+            JsonObject json = new JsonObject();
+            json.addProperty("name", name);
+            json.addProperty("id", id.toString());
+            Optional<ResolvableProfile> parsed = ResolvableProfile.CODEC.parse(JsonOps.INSTANCE, json).result();
+            if (parsed.isPresent()) {
+                return parsed.get();
+            }
         }
-        // 名字-only 的主人也要还原：TargetBlock#setPlacedBy 给带名字的标靶建的就是
-        // new GameProfile(null, 名字)（没有 UUID），只按 UUID 判空会把这种标靶的主人丢掉。
-        if (!ownerUuid.isEmpty() || !ownerName.isEmpty()) {
-            this.owner = new GameProfile(tryParseUuid(ownerUuid), ownerName.isEmpty() ? null : ownerName);
+        if (!name.isEmpty()) {
+            return ResolvableProfile.createUnresolved(name);
         }
-        if (!input.getStringOr(CUSTOM_NAME_TAG, "").isEmpty()) {
-            this.name = net.minecraft.network.chat.ComponentSerialization.CODEC
-                    .parse(com.mojang.serialization.JsonOps.INSTANCE, com.google.gson.JsonParser.parseString(input.getStringOr(CUSTOM_NAME_TAG, "")))
-                    .result().orElse(Component.empty());
+        if (id != null) {
+            return ResolvableProfile.createUnresolved(id);
         }
+        return null;
     }
 
-    /** {@code ValueInput#getStringOr} 在类型不匹配（旧存档里 {@code Owner} 是复合标签）时会抛异常。 */
-    private static String tryGetString(net.minecraft.world.level.storage.ValueInput input, String key) {
+    /** {@code ValueInput#getString} 遇到类型不匹配的旧存档时可能抛异常，读不到就当空串。 */
+    private static String getStringOrEmpty(ValueInput input, String key) {
         try {
-            return input.getStringOr(key, "");
+            return input.getString(key).orElse("");
         } catch (RuntimeException e) {
             return "";
         }
     }
 
-    private static @Nullable UUID tryParseUuid(String value) {
+    private static @Nullable UUID parseUuid(String value) {
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
         try {
             return UUID.fromString(value);
         } catch (IllegalArgumentException e) {
@@ -224,18 +202,42 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
         }
     }
 
+    /**
+     * 读自定义名。
+     *
+     * <p>主路径是 {@link ComponentSerialization#CODEC}（与 NBT 里的组件写法一致）。老存档是被
+     * 「把组件用 JsonOps 编码成字符串再当字符串存」写下的，读回来会变成字面量
+     * {@code {"text":"名字"}} —— 那会真的显示成一串 JSON。这里识别这种形态并重新解析，
+     * 读不到就返回 {@code null}（无自定义名），不抛异常。</p>
+     */
+    private static @Nullable Component readCustomName(ValueInput input) {
+        Optional<Component> parsed = input.read(CUSTOM_NAME_TAG, ComponentSerialization.CODEC);
+        String raw = getStringOrEmpty(input, CUSTOM_NAME_TAG);
+        if (raw.startsWith("{\"")) {
+            try {
+                Component legacy = ComponentSerialization.CODEC
+                        .parse(JsonOps.INSTANCE, JsonParser.parseString(raw))
+                        .result()
+                        .orElse(null);
+                // 只有「重解析后确实不同」才采纳：玩家真的把名字起成 {"text":"x"} 这种字面量时，
+                // 解析结果与原文一模一样，说明它本来就是一段普通文本，必须原样保留。
+                if (legacy != null && !raw.equals(legacy.getString())) {
+                    return legacy;
+                }
+            } catch (RuntimeException ignored) {
+                // 不是合法 JSON：按字面量处理，落到下面的 parsed。
+            }
+        }
+        return parsed.orElse(null);
+    }
+
     @Override
-    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
-        if (owner != null) {
-            // 写入键必须与 loadAdditional 的前置判据一致：以前只写 owner_uuid/owner_name
-            // 却拿 Owner 当判据，导致读回时整段被跳过（见 OWNER_TAG 的注释）。
-            output.putString(OWNER_UUID_TAG, owner.id() != null ? owner.id().toString() : "");
-            output.putString(OWNER_NAME_TAG, owner.name() != null ? owner.name() : "");
+    protected void saveAdditional(ValueOutput output) {
+        if (this.owner != null) {
+            output.store(PROFILE_TAG, ResolvableProfile.CODEC, this.owner);
         }
         if (this.name != null) {
-            output.putString(CUSTOM_NAME_TAG, net.minecraft.network.chat.ComponentSerialization.CODEC
-                    .encodeStart(com.mojang.serialization.JsonOps.INSTANCE, this.name)
-                    .result().map(Object::toString).orElse(""));
+            output.storeNullable(CUSTOM_NAME_TAG, ComponentSerialization.CODEC, this.name);
         }
     }
 

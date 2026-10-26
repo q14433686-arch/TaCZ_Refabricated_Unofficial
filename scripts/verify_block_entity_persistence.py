@@ -12,6 +12,12 @@
 2. **标靶主人名重启后丢失** —— `saveAdditional` 已经改写成扁平键
    `owner_uuid` / `owner_name`，但 `loadAdditional` 的前置判据还写着上游的
    `Owner` 键，而这个键再没有任何地方写入 ⇒ 判据恒 false ⇒ 整段读取被跳过。
+3. **带自定义名的标靶放置必抛 NPE、物品不被消耗**，以及**改名标靶矿车必崩渲染线程**
+   —— 两处都是 `new GameProfile(null, 名字)`。authlib 9 的 `GameProfile` 是 record，
+   id/name/properties 全部 `Objects.requireNonNull`；而 `setPlacedBy` 抛在
+   `BlockItem#place` 中途（物品还没被消耗），矿车那处更是**客户端每帧**在渲染线程上调用。
+   正确写法是原版 `ResolvableProfile`（允许只有名字）+ 客户端 `PlayerSkinRenderCache`
+   异步解析皮肤，解析不到就默认皮肤。
 
 这两类问题的共同点是：**编译器不会报错，游戏也不报错，数据直接没了**。本脚本用
 静态分析把它们钉住，能覆盖的只有「键名/钩子是否存在」这一层，不覆盖运行期语义。
@@ -20,13 +26,22 @@
 ------
 A. `loadAdditional` 里用 `getStringOr("K", "").isEmpty()` 当前置判据的键 `K`，
    必须由同一个类的 `saveAdditional`（或其 `store`/`putX` 调用）写入过。
-B. `saveAdditional` 写的键与 `loadAdditional` 读的键应当对称（只写不读＝死数据，
+B. `saveAdditional` 写的键与该类（含 `readXxx()` 辅助方法）读的键应当对称（只写不读＝死数据，
    只读不写＝永远读不到，后者正是标靶那个 bug）。
 C. 持有 `ItemStack` 字段的方块实体必须覆写 `preRemoveSideEffects`（或 `setRemoved`），
    否则内容物在方块被移除时会静默丢失。确实不需要掉的，用
    `// tacz:no-drop-on-remove` 注释显式豁免。
 D. 不得出现 `onRemove` 覆写（26.2 已删除该 API，写了也不会被调用；
    编译期能挡住 `@Override`，这里兜住"顺手加个无注解同名方法"）。
+E. 不得出现 `new GameProfile(null, ...)` —— authlib 9 里必抛 NPE（见 docstring 第 3 条）。
+   需要「只有名字的主人」的场合请用 `ResolvableProfile.createUnresolved(String)`。
+F. 不得直接使用 `SkinManager` —— 皮肤一律通过 `PlayerSkinRenderCache` 获取
+   （异步、失败回落默认皮肤、与 HTTP 请求解耦），否则极易把阻塞查询放到渲染线程上。
+
+豁免
+----
+`// tacz:no-drop-on-remove`：C 项豁免；`// tacz:legacy-key`：同一行上的
+`getString(...)`/`child(...)` 属于老存档兼容读取，不算「只读不写」。
 
 用法
 ----
@@ -45,7 +60,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/main/java"
 
 WRITE_CALL = re.compile(
-    r"\.(?:putString|putInt|putBoolean|putFloat|putLong|putDouble|putUUID|store)\(\s*([^,]+),"
+    r"\.(?:putString|putInt|putBoolean|putFloat|putLong|putDouble|putUUID|storeNullable|store)\(\s*([^,]+),"
 )
 READ_CALL = re.compile(
     r"\.(?:getStringOr|getIntOr|getBooleanOr|getFloatOr|getLongOr|getDoubleOr|read)\(\s*([^,]+),"
@@ -53,8 +68,18 @@ READ_CALL = re.compile(
 GATE = re.compile(r'(?:getStringOr|getIntOr)\(\s*([^,]+),\s*(?:""|0)\s*\)\s*(?:\.isEmpty\(\)|> 0|== 0)')
 CONST = re.compile(r'static\s+final\s+String\s+([A-Za-z0-9_]+)\s*=\s*"([^"]*)"')
 
+BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.S)
+LINE_COMMENT = re.compile(r"//[^\n]*")
+NULL_ID_PROFILE = re.compile(r"new\s+GameProfile\(\s*null\s*,")
+SKIN_MANAGER = re.compile(r"\bSkinManager\b")
+
 errors: list[str] = []
 checked: list[str] = []
+
+
+def strip_comments(text: str) -> str:
+    """去掉注释：Javadoc 里经常「引用」反面写法，不能当成真实调用。"""
+    return LINE_COMMENT.sub("", BLOCK_COMMENT.sub("", text))
 
 
 def resolve(expr: str, consts: dict[str, str]) -> str | None:
@@ -96,6 +121,23 @@ def keys_in(body: str, pattern: re.Pattern[str], consts: dict[str, str]) -> set[
     return out
 
 
+def check_hand_rolled_profile(path: Path, code: str) -> None:
+    """E/F：整套「自己拼 GameProfile / 自己查皮肤」的写法都不允许再出现。"""
+    name = path.stem
+    for lineno, line in enumerate(code.splitlines(), start=1):
+        if NULL_ID_PROFILE.search(line):
+            errors.append(
+                f"{name}:{lineno}: `new GameProfile(null, ...)` —— authlib 9 的 GameProfile 对 "
+                "id/name/properties 全部 requireNonNull，这行必定抛 NPE（放置标靶不消耗物品、"
+                "矿车崩渲染线程都是它）。请改用 ResolvableProfile.createUnresolved(...)"
+            )
+        if SKIN_MANAGER.search(line):
+            errors.append(
+                f"{name}:{lineno}: 直接使用 SkinManager —— 皮肤请走 PlayerSkinRenderCache"
+                "（异步解析、失败回落默认皮肤、不阻塞渲染线程）"
+            )
+
+
 def check_block_entity(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
     if not re.search(r"class\s+\w+\s+extends\s+(?:[\w.]*\.)?BlockEntity\b", text):
@@ -110,7 +152,9 @@ def check_block_entity(path: Path) -> None:
 
     if save is not None and load is not None:
         written = keys_in(save, WRITE_CALL, consts)
-        read = keys_in(load, READ_CALL, consts)
+        # 对称性检查看「整个类」的读取：取值往往被抽到 readXxx() 辅助方法里，
+        # 只看 loadAdditional 会把合法的键误判成「只写不读」。
+        read = keys_in(text, READ_CALL, consts)
 
         for key in sorted(keys_in(load, GATE, consts) - written):
             errors.append(
@@ -155,6 +199,8 @@ def main() -> int:
         return 1 if args.strict else 0
 
     for path in sorted(SRC.rglob("*.java")):
+        code = strip_comments(path.read_text(encoding="utf-8"))
+        check_hand_rolled_profile(path, code)
         check_block_entity(path)
 
     print(f"方块实体持久化审计：检查 {len(checked)} 个类（{', '.join(checked) or '无'}）")

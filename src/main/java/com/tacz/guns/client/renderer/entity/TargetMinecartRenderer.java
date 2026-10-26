@@ -1,16 +1,16 @@
 package com.tacz.guns.client.renderer.entity;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import com.tacz.guns.GunMod;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.resource.InternalAssetLoader;
 import com.tacz.guns.entity.TargetMinecart;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.BlockModelRenderState;
 import net.minecraft.client.renderer.entity.AbstractMinecartRenderer;
@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.component.ResolvableProfile;
 
 import java.util.Optional;
 
@@ -52,12 +53,15 @@ public class TargetMinecartRenderer extends AbstractMinecartRenderer<TargetMinec
     private static final String HEAD_NAME = "head";
     private static final String HEAD_2_NAME = "head2";
 
-    /** 缓存本帧的 GameProfile：extractRenderState 阶段取，submit 阶段用。 */
-    private static final String PROFILE_KEY = "tacz$profile";
+    /** 原版头颅用的同一个皮肤缓存：异步解析档案 → 皮肤，解析期间/失败时给默认皮肤。 */
+    private final PlayerSkinRenderCache skinRenderCache;
+    /** 皮肤解析失败只在客户端日志里报一次，避免每帧刷屏。 */
+    private boolean skinFailureLogged;
 
     public TargetMinecartRenderer(EntityRendererProvider.Context ctx) {
         super(ctx, ModelLayers.TNT_MINECART);
         this.shadowRadius = 0.25F;
+        this.skinRenderCache = ctx.getPlayerSkinRenderCache();
     }
 
     @Override
@@ -65,9 +69,9 @@ public class TargetMinecartRenderer extends AbstractMinecartRenderer<TargetMinec
         return new TargetMinecartRenderState();
     }
 
-    /** 扩展 vanilla 状态，额外携带皮肤所需的 GameProfile。 */
+    /** 扩展 vanilla 状态，额外携带皮肤所需的档案（{@code null} 表示没有自定义名）。 */
     public static class TargetMinecartRenderState extends MinecartRenderState {
-        public GameProfile gameProfile;
+        public ResolvableProfile ownerProfile;
     }
 
     @Override
@@ -75,7 +79,8 @@ public class TargetMinecartRenderer extends AbstractMinecartRenderer<TargetMinec
         // 让父类填好位置、朝向、受击摇晃、沿轨道姿态等全部 vanilla 状态。
         super.extractRenderState(entity, state, partialTicks);
         if (state instanceof TargetMinecartRenderState targetState) {
-            targetState.gameProfile = entity.getGameProfile();
+            // 只是拿一个「原版档案对象」放进渲染状态，不查皮肤、不联网、不会 NPE。
+            targetState.ownerProfile = entity.getOwnerProfile();
         }
     }
 
@@ -85,6 +90,28 @@ public class TargetMinecartRenderer extends AbstractMinecartRenderer<TargetMinec
 
     public Identifier getTextureLocation(TargetMinecart minecart) {
         return InternalAssetLoader.ENTITY_EMPTY_TEXTURE;
+    }
+
+    /**
+     * 头像皮肤的渲染类型 —— 走原版 {@link PlayerSkinRenderCache}（原版头颅用的同一个缓存）。
+     *
+     * <p>它天然是异步的：命中缓存直接返回；没命中先返回<b>默认皮肤</b>、后台按名字解析，
+     * 解析完成后下一帧自动换成真皮肤。因此这里既不会阻塞渲染线程，也不需要在渲染线程上
+     * 构造 {@code GameProfile}（那正是「改名矿车必崩渲染线程」的根因）。</p>
+     *
+     * <p>意外情况兜底到缓存自带的默认皮肤渲染类型，并留一条 WARN（只报一次）。</p>
+     */
+    private RenderType skinRenderType(ResolvableProfile profile) {
+        try {
+            return this.skinRenderCache.getOrDefault(profile).renderType();
+        } catch (RuntimeException e) {
+            if (!this.skinFailureLogged) {
+                this.skinFailureLogged = true;
+                GunMod.LOGGER.warn("[TaCZ] Failed to resolve the target minecart head skin for {}: {}, "
+                        + "falling back to the default skin", profile, e.toString());
+            }
+            return PlayerSkinRenderCache.DEFAULT_PLAYER_SKIN_RENDER_TYPE;
+        }
     }
 
     /**
@@ -116,12 +143,10 @@ public class TargetMinecartRenderer extends AbstractMinecartRenderer<TargetMinec
             RenderType renderType = RenderTypes.entityTranslucent(InternalAssetLoader.TARGET_MINECART_TEXTURE_LOCATION);
             model.submit(stack, ItemDisplayContext.NONE, collector, renderType, packedLight, OverlayTexture.NO_OVERLAY);
 
-            GameProfile gameProfile = state instanceof TargetMinecartRenderState t ? t.gameProfile : null;
-            if (gameProfile != null) {
+            ResolvableProfile ownerProfile = state instanceof TargetMinecartRenderState t ? t.ownerProfile : null;
+            if (ownerProfile != null) {
                 stack.translate(0, 1, -4.5 / 16d);
-                Minecraft minecraft = Minecraft.getInstance();
-                Identifier skin = minecraft.getSkinManager().createLookup(gameProfile, false).get().body().texturePath();
-                RenderType skullRenderType = RenderTypes.entityTranslucent(skin);
+                RenderType skullRenderType = this.skinRenderType(ownerProfile);
 
                 headModel.visible = true;
                 collector.submitCustomGeometry(stack, skullRenderType, (entryPose, consumer) -> {
