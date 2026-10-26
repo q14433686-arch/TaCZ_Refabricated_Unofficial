@@ -1,4 +1,4 @@
-commit: 72f12e1bcb76a9f30b9ec2e28c1a7e289f389842
+commit: 0909502fb01406049590c612efbdfeb87cd3e747
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -25,6 +25,7 @@ Cannot remap lambda$addMainPass$1 because it does not exist in any of the target
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
@@ -33,7 +34,6 @@ Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the tar
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
 Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
@@ -41,6 +41,12 @@ Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets
 Cannot remap valueFormatter because it does not exist in any of the targets [] or their parents.
 
 > Task :compileJava
+TACZ_PROBE authlib jars = [authlib-7.0.61.jar]
+TACZ_PROBE GameProfile isRecord=true ctors=[public com.mojang.authlib.GameProfile(java.util.UUID,java.lang.String,com.mojang.authlib.properties.PropertyMap), public com.mojang.authlib.GameProfile(java.util.UUID,java.lang.String)]
+TACZ_PROBE id=null,name=probe: THROWS java.lang.NullPointerException: Profile ID must not be null
+TACZ_PROBE id=random,name=null: THROWS java.lang.NullPointerException: Profile name must not be null
+TACZ_PROBE id=random,name=empty: OK
+TACZ_PROBE id=random,name=CJK+spaces+over-16-chars: OK
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/SoundManagerPreparationsMixin.java:16: warning: Mixin target net.minecraft.client.sounds.SoundManager$Preparations is public and should be specified in value
 @Mixin(targets = "net.minecraft.client.sounds.SoundManager$Preparations")
 ^
@@ -70,7 +76,7 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 8 warnings
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1792620827429.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1793050665260.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -80,7 +86,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 20s
+BUILD SUCCESSFUL in 1m 18s
 1 actionable task: 1 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 
