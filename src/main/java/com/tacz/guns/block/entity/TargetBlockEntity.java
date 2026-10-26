@@ -47,8 +47,9 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
      * 头像根本画不出来。现在写入与读取用同一个键，{@code scripts/verify_block_entity_persistence.py}
      * 会在 CI 里守住「判据键必须被同一个类写入、读写键对称」。</p>
      *
-     * <p>兼容：本线此前以及 26.2 线写下的存档都带 {@code owner_name}，照常读取；
-     * 同一份数据里的 {@code owner_uuid} 被忽略（UUID 由客户端按名字重新解析）。</p>
+     * <p>兼容：存档里已有的 {@code owner_name}（例如 26.2 线写出的）照常读取；
+     * 同一份数据里的 {@code owner_uuid} 被忽略（UUID 由客户端按名字重新解析）。
+     * 本线修前实际写不出主人（放置时 {@code new GameProfile(null, 名字)} 先抛了 NPE）。</p>
      */
     private static final String OWNER_NAME_TAG = "owner_name";
     private static final String CUSTOM_NAME_TAG = "CustomName";
