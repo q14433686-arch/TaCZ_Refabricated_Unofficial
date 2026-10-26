@@ -17,6 +17,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Util;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -137,7 +138,52 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
             return;
         }
         this.profileResolveAttempted = true;
-        ApiProbe.probe(server, this.owner);
+
+        // 【26.2 API，已用编译探针逐条确认】
+        //   MinecraftServer#services()            -> Services
+        //   Services#nameToIdCache()              -> UserNameToIdResolver
+        //   UserNameToIdResolver#get(String)      -> Optional<NameAndId>（**阻塞**，未命中会走会话服务）
+        //   NameAndId#id() -> UUID，#name() -> String
+        // 别改成 getProfileCache() / GameProfileCache：前者在 26.2 已不是 MinecraftServer 的方法，
+        // 后者整个类已被删除（1.21.1 的写法在这里编译不过）。
+        // 这里用 var 而不是写死类型名，是因为 26.2 把这两个类型挪过包，用 var 可以跟着签名走。
+        var userNameToId = server.services().nameToIdCache();
+
+        // get() 是阻塞调用（可能要发 HTTP 请求），必须离开服务端主线程。
+        Util.backgroundExecutor().execute(() -> {
+            UUID resolvedId;
+            try {
+                var nameAndId = userNameToId.get(name).orElse(null);
+                resolvedId = nameAndId == null ? null : nameAndId.id();
+            } catch (RuntimeException e) {
+                // 网络/会话服务异常：复位标志让下次区块加载还能再试，并且**必须留日志**（不许静默）。
+                server.execute(() -> {
+                    this.profileResolveAttempted = false;
+                    GunMod.LOGGER.warn("[TaCZ] Target owner profile lookup for '{}' failed: {}",
+                            name, e.toString());
+                });
+                return;
+            }
+            if (resolvedId == null) {
+                // 查不到（名字拼错 / 离线服 / 会话服务拒绝）：不再重试，但一定要让人从日志里看见。
+                server.execute(() -> GunMod.LOGGER.warn(
+                        "[TaCZ] Could not resolve target owner profile '{}' (misspelled name, offline "
+                                + "server, or session service rejected it); the target head keeps "
+                                + "the default skin", name));
+                return;
+            }
+            UUID resolved = resolvedId;
+            server.execute(() -> {
+                if (this.isRemoved()) {
+                    return;
+                }
+                // 名字保留玩家写下的那个（可能已被改名），UUID 用会话服务的权威值 ——
+                // 客户端 SkinManager 据此按 UUID 拉到真皮肤，不再落到默认皮肤。
+                this.owner = new GameProfile(resolved, name);
+                this.refresh();
+                GunMod.LOGGER.debug("[TaCZ] Resolved target owner '{}' -> {}", name, resolved);
+            });
+        });
     }
 
     @Override
