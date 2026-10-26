@@ -8,8 +8,8 @@
 
 > 状态：R1 基础版编译/CI 全绿；下列标 ✅ 的基础版条目已由维护者在 26.3 实机验证（2026-09-18 ~ 09-21，
 > 无光影 + Iris 光影 + 专服三种环境）；`R1-hotfix` 与 `R1-hotfix2` 新增项的历史 CI 结果见对应条目，尚未实机验证。
-> `R1-hotfix3` 方块/标靶增量与动态皮肤调整已通过先前代码提交的 CI 构建和回归检查，
-> 版本号恢复后的 CI 以对应 Actions 运行为准；这些改动尚未实机验证，且 **26.3 尚未正式发布**。
+> `R1-hotfix3` 方块/标靶增量与动态皮肤调整已通过恢复版本号后的 CI 构建和回归检查；
+> 这些改动尚未实机验证，且 **26.3 尚未正式发布**。
 > 姊妹项目（NeoForge）移植指南：[`lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md`](lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md)。
 > 版本命名沿用本仓历史：hotfix 序号直接追加在 `hotfix` 后、中间不加分隔符（`R1-hotfix` → `R1-hotfix2` → `R1-hotfix3`，不另起 R2）。
 
@@ -35,6 +35,12 @@
   成功执行 `./gradlew compileJava`；
   [`Version consistency`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410536028)
   严格检查通过。该次产物使用旧临时编号，不是当前版本的构建。
+- **恢复编号后的 CI**（提交 `fe229ff`，2026-10-26 UTC）：
+  [`build`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40417943032)、
+  [`compile-check`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40417943068) 与
+  [`Version consistency`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40417943045)
+  均通过。[CI artifact](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40417943032/artifacts/12695334768)
+  保留至 2026-11-09 23:12 UTC，不是正式 Release。
 - **待实机**：改名后放置与物品消耗、专服同步、换肤、离线回退、矿车重命名与渲染、旧存档重进。
 
 ## R1-hotfix3 增量（2026-10-26 UTC：同步 26.2 R3-hotfix4 方块修复）

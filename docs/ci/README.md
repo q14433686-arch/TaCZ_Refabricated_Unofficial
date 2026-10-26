@@ -20,7 +20,11 @@
 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535903)、
 [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535916) 和
 [Version consistency](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410536028)
-均已通过；构建包含 jar artifact。合并到 `26.3` 前不代表目标分支已上线这些改动；隔离桩测试不能代替游戏实测。
+均已通过；构建包含 jar artifact。恢复 `R1-hotfix3` 后的提交 `fe229ff` 的
+[build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40417943032)、
+[compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40417943068) 和
+[Version consistency](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40417943045)
+也均通过。合并到 `26.3` 前不代表目标分支已上线这些改动；隔离桩测试不能代替游戏实测。
 
 ## 之前的上线状态（2026-09-02 实测刷新）
 
