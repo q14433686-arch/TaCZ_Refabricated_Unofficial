@@ -1,10 +1,10 @@
 package com.tacz.guns.block;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.MapCodec;
 import com.tacz.guns.block.entity.TargetBlockEntity;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.init.ModBlocks;
+import com.tacz.guns.util.TargetOwnerProfiles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -189,8 +189,9 @@ public class TargetBlock extends BaseEntityBlock {
             if (stack.getCustomName() != null) {
                 BlockEntity blockentity = world.getBlockEntity(pos);
                 if (blockentity instanceof TargetBlockEntity e) {
-                    GameProfile gameprofile = new GameProfile(null, stack.getHoverName().getString());
-                    e.setOwner(gameprofile);
+                    // 不能再写 new GameProfile(null, 名字)：本线 authlib 7 的 GameProfile 对 null UUID 直接抛 NPE，
+                    // 放置改过名的标靶会在这里中断（见 TargetOwnerProfiles 的类注释）。
+                    e.setOwner(TargetOwnerProfiles.fromName(stack.getHoverName().getString()));
                     e.setCustomName(stack.getHoverName());
                     e.refresh();
                 }

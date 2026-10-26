@@ -30,10 +30,11 @@ class BaselineChecks(unittest.TestCase):
                                     and any(op.get('source') == 'BlockId'
                                             and op.get('target') == 'BlockId' for op in f.get('ops', []))
                                     for f in functions))
+        # 2026-10-27：对齐 26.2 终态后，AbstractGunSmithTableBlock 里不再有 playerWillDestroy 覆写，
+        # 所以不再按方法体切片（切不到会 IndexError），改成整个类去掉注释后不得出现 popResource(。
         source = (JAVA / 'block/AbstractGunSmithTableBlock.java').read_text()
-        body = source.split('BlockState playerWillDestroy(', 1)[1].split('public abstract boolean isRoot', 1)[0]
-        body = re.sub(r'/\*.*?\*/|//[^\n]*', '', body, flags=re.S)
-        self.assertNotIn('popResource(', body)
+        source = re.sub(r'/\*.*?\*/|//[^\n]*', '', source, flags=re.S)
+        self.assertNotIn('popResource(', source)
 
     def test_registry_codec_defers_legacy_ingredient_decode(self):
         codec = (JAVA / 'crafting/GunSmithTableSerializer.java').read_text()
