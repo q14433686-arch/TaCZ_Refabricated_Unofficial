@@ -64,6 +64,16 @@ jobs:
           javap -p -c -classpath "$JAR" net.minecraft.client.renderer.blockentity.SkullBlockRenderer 2>&1 | grep -iE "PlayerSkinRenderCache|ResolvableProfile|SkinManager|DefaultPlayerSkin|getOrDefault|createLookup|lookup" >> "$OUT" || true
           echo "== PlayerSkinRenderCache: private members ==" >> "$OUT"
           javap -p -classpath "$JAR" net.minecraft.client.renderer.PlayerSkinRenderCache >> "$OUT" 2>&1 || true
+          echo "== authlib GameProfile (constructor null checks) ==" >> "$OUT"
+          AJAR=$(find ~/.gradle -name "authlib-*.jar" | grep -v sources | head -1)
+          echo "authlib jar: $AJAR" >> "$OUT"
+          if [ -n "$AJAR" ]; then javap -p -c -classpath "$AJAR" com.mojang.authlib.GameProfile 2>&1 | head -80 >> "$OUT"; fi
+          echo "== BlockEntityRendererProvider\$Context ==" >> "$OUT"
+          javap -p -classpath "$JAR" 'net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider$Context' >> "$OUT" 2>&1 || true
+          echo "== EntityRendererProvider\$Context ==" >> "$OUT"
+          javap -p -classpath "$JAR" 'net.minecraft.client.renderer.entity.EntityRendererProvider$Context' >> "$OUT" 2>&1 || true
+          echo "== SkullBlockEntity: profile keys in bytecode ==" >> "$OUT"
+          javap -p -c -classpath "$JAR" net.minecraft.world.level.block.entity.SkullBlockEntity 2>&1 | grep -iE "ResolvableProfile|profile|Owner" | head -30 >> "$OUT" || true
           echo "== done ==" >> "$OUT"
 
       - name: Push probe output back via contents API
