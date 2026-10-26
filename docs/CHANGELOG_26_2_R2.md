@@ -10,7 +10,48 @@
 本 release 保持 `1.1.8` 为 SemVer 核心；`+fabric.26.2.R2` 是不参与版本谓词排序的 build
 metadata，不能写成 `1.1.8-R2`。
 
-## R3-hotfix4（当前源码，尚未发布）
+## R3-hotfix5（当前源码，尚未发布）
+
+**构建元数据：`1.1.8+fabric.26.2.R3-hotfix5`**。
+
+本版本收掉两个 **26.2 上必现**的运行期崩溃（不是偶发、不是配置问题：只要操作复现步骤就必崩），
+外加把标靶主人这条链路整体换成**原版**的档案/皮肤机制。**全部条目均未实机验证**。
+
+- **修复「放置改过名的标靶抛 NPE、且物品不被消耗」**：`TargetBlock#setPlacedBy` 里
+  `new GameProfile(null, stack.getHoverName().getString())` —— authlib 9 的 `GameProfile`
+  已是 record，构造器对 `id`/`name`/`properties` 全部 `Objects.requireNonNull`
+  （`Profile name must not be null`），传 `null` 必抛 NPE。异常抛在 `BlockItem#place`
+  的中途：方块已经放好、而消耗物品的语句还没执行 ⇒ 标靶留下了、物品没少，异常又被
+  `useItemOn` 吞掉，玩家看不到任何提示。现改为原版 `ResolvableProfile.createUnresolved(name)`
+  （原版允许「只有名字」的档案），服务端不再构造 `GameProfile`，NPE 不可能再发生。
+- **修复「改名标靶矿车崩渲染线程」**：同一个 `new GameProfile(null, 自定义名)` 写法，但它在
+  `TargetMinecartRenderer#extractRenderState` 里**客户端每帧、渲染线程上**被调用 ⇒
+  一靠近就崩。`TargetMinecart#getGameProfile()` 改为 `getOwnerProfile()`，返回
+  `ResolvableProfile`；派生结果按自定义名缓存（名字变化即失效），每帧调用不再分配对象。
+- **标靶主人改用原版 `ResolvableProfile`**：`TargetBlockEntity` 不再自己拆
+  `owner_uuid`/`owner_name`，改为与原版头颅（`SkullBlockEntity`）**同一个键、同一个 CODEC**
+  （`profile` + `ResolvableProfile.CODEC`）。随之**删除**了手写的一整套服务端补全逻辑
+  （`nameToIdCache` + 后台线程 + 「每次档案变更只试一次」标志 + 会话服务异常日志）——
+  客户端拿到的就是一个「可以未解析」的档案，UUID 补全由渲染侧的缓存按需完成。
+- **皮肤解析改走 `PlayerSkinRenderCache`**：方块标靶与矿车标靶的渲染器都用
+  `PlayerSkinRenderCache#getOrDefault(profile).renderType()`，即原版头颅用的同一个缓存——
+  命中即返回、未命中先给默认皮肤并后台解析、解析成功下一帧自动替换。此前方块标靶走
+  `SkinManager#createLookup(profile, false).get()`（在渲染线程上做阻塞查询、且失败时还会把
+  异常抛给渲染线程），矿车走同一条阻塞路径。解析异常仍会兜底到
+  `DEFAULT_PLAYER_SKIN_RENDER_TYPE` 并在客户端日志留一条 WARN（只报一次，不静默也不刷屏）。
+- **老存档兼容**：仍能读 `owner_uuid`/`owner_name`（本分支 26.2 早期写法）与上游 1.20.1 的
+  `Owner` 复合标签（`{Name, Id}`），读到时在下次保存自动迁移成原版 `profile` 键。
+  自定义名改用 `ComponentSerialization.CODEC` 存取；早期存档把组件以 JSON 字符串写下，
+  读回时会识别 `{"text":...}` 形态并重新解析，不会把 JSON 原文当成名字显示。
+- **离线守卫新增两条规则**（`scripts/verify_block_entity_persistence.py`）：
+  E 禁止 `new GameProfile(null, ...)`（本类崩溃的根因模板）；F 禁止在主源码里直接使用
+  `SkinManager`（皮肤必须走 `PlayerSkinRenderCache`）。同时把「键对称性」检查从
+  `loadAdditional` 放宽到整个类，避免把抽到 `readXxx()` 辅助方法里的合法读取误判成「只写不读」。
+- **验证边界**：26.2 CI `compile-check` 与 `build`（含两条 `--strict` 守卫、版本一致性、
+  全量构建）均通过；**未实机验证**，发布前须按调查记录 §6 的清单实测
+  （改名标靶放置→物品是否消耗、改名标靶矿车靠近是否崩、重进存档后皮肤是否还在）。
+
+## R3-hotfix4（未单独发布，内容并入 R3-hotfix5）
 
 **构建元数据：`1.1.8+fabric.26.2.R3-hotfix4`**。
 
