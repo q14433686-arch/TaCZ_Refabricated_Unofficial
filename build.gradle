@@ -420,37 +420,3 @@ publishing {
 if (project.hasProperty('meshProbe')) {
     apply from: 'scripts/mesh_render_probe.gradle'
 }
-
-// ==== TEMP PROBE (2026-10-27) —— 下一提交删除，不得留在发布件里 ====
-// 问题：本分支依赖的 authlib 的 GameProfile 是否接受 null id？
-// TargetBlock#setPlacedBy / TargetMinecart#getGameProfile 都写着 `new GameProfile(null, name)`。
-// 沙箱无 JDK/Loom 缓存，只能让 CI 的 compileJava 前置阶段反射一次，结果落在 build-reports/compile-java.log。
-tasks.named('compileJava') {
-    doFirst {
-        try {
-            def files = classpath.files
-            println "TACZ_PROBE authlib jars = ${files.findAll { it.name.toLowerCase().contains('authlib') }*.name}"
-            def cl = new URLClassLoader(files.collect { it.toURI().toURL() } as URL[], (ClassLoader) null)
-            def gp = cl.loadClass('com.mojang.authlib.GameProfile')
-            println "TACZ_PROBE GameProfile isRecord=${gp.isRecord()} ctors=${gp.declaredConstructors.collect { it.toString() }}"
-            def ctor = gp.getConstructor(UUID, String)
-            def attempt = { String label, Object id, Object name ->
-                try {
-                    ctor.newInstance([id, name] as Object[])
-                    println "TACZ_PROBE ${label}: OK"
-                } catch (java.lang.reflect.InvocationTargetException e) {
-                    println "TACZ_PROBE ${label}: THROWS ${e.cause}"
-                } catch (Throwable t) {
-                    println "TACZ_PROBE ${label}: ERR ${t}"
-                }
-            }
-            attempt('id=null,name=probe', null, 'probe')
-            attempt('id=random,name=null', UUID.randomUUID(), null)
-            attempt('id=random,name=empty', UUID.randomUUID(), '')
-            attempt('id=random,name=CJK+spaces+over-16-chars', UUID.randomUUID(), '靶子 1 with spaces and a long name')
-        } catch (Throwable t) {
-            println "TACZ_PROBE-ERR ${t}"
-        }
-    }
-}
-// ==== END TEMP PROBE ====
