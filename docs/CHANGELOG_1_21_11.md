@@ -5,9 +5,20 @@
 
 ---
 
+## R3-hotfix4 源码版本号（2026-10-27）
+
+在上述 26.2 新增项按本分支基线回移后，将构建元数据中的 `R3-hotfix3` 递增为 `R3-hotfix4`
+（与 26.2 线 `78de13b` 的序号对齐）。同步 `gradle.properties`、根 README（五处，导航表只有分支链接、
+没有 Release tag 链接）与 `fabric.mod.json`（`name`、`description`，`description` 里补了一句 hotfix4 的内容，
+并保留对 hotfix3 内容的历史描述）；`bash scripts/check_release_consistency.sh --strict` 通过。
+不改 Minecraft/依赖版本、SemVer 核心 `1.1.8`，也不表示已有可下载的 R3-hotfix4 Release
+（实际可下载版本以 Releases 页面为准）。
+
+---
+
 ## 26.2 新增项按 1.21.11 实际基线回移（2026-10-27；`compileJava` 见 CI，**未实机**）
 
-不是升级到 Minecraft 26.2，也未改版本号（仍是 R3-hotfix3）。逐项处置、与 26.2 的出入与证据见
+不是升级到 Minecraft 26.2；本节的代码提交未改版本号，版本号由上一节的独立提交升到 R3-hotfix4。逐项处置、与 26.2 的出入与证据见
 [`lineage/SYNC_REVIEW_262_TO_1211_20261027.md`](lineage/SYNC_REVIEW_262_TO_1211_20261027.md)。
 
 - **创造模式 B 工作台**（`gun_smith_table` / `workbench_b`）：抑制「另一半掉落」的判据写反，已改为守卫挂 HEAD、
