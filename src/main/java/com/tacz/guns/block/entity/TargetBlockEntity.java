@@ -130,9 +130,9 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
     }
 
     /**
-     * 在 IO 线程补全真正带 textures 的档案，回到服务器线程后再同步。
-     * 26.3 的 SkinManager 只读取已有纹理属性，单独补 UUID 不会加载玩家皮肤。
-     * 客户端也可通过原版 PlayerSkinRenderCache 解析未完成的档案。
+     * 在 IO 线程查找真实 UUID，回到服务器线程后再同步动态档案。
+     * 保持动态档案与原版玩家头颅一致，让客户端的 PlayerSkinRenderCache
+     * 异步查找皮肤；只补 UUID 并不会同步下载或固定纹理。
      */
     private void resolveOwnerProfile() {
         if (this.profileResolveAttempted || !(this.owner instanceof ResolvableProfile.Dynamic requested)
@@ -174,11 +174,8 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
                     return;
                 }
                 GameProfile complete = resolved.get();
-                if (!complete.properties().containsKey("textures")) {
-                    // 没有纹理可能是服务器离线或玩家使用默认皮肤；保留动态档案，让客户端也能尝试解析。
-                    return;
-                }
-                this.owner = ResolvableProfile.createResolved(complete);
+                // 不把服务器查询到的纹理固化：客户端仍按 UUID 异步解析，和原版玩家头颅相同。
+                this.owner = ResolvableProfile.createUnresolved(complete.id());
                 this.ownerNameHint = complete.name();
                 this.refresh();
             });

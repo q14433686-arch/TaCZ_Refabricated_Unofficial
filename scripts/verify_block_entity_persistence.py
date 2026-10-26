@@ -73,15 +73,19 @@ def check(root: Path) -> list[str]:
     current_lookup = method_body(target, "isCurrentLookup")
     if (not all(part in resolve for part in (
             "nonCriticalIoPool()", "fetchByName", "fetchById", "server.execute", "isCurrentLookup",
-            "complete.properties().containsKey(\"textures\")", "ResolvableProfile.createResolved", "GunMod.LOGGER.warn"
-        )) or "this.profileLookupGeneration == generation" not in current_lookup):
-        errors.append("TargetBlockEntity: asynchronous full-profile lookup or stale-result guard is missing")
+            "ResolvableProfile.createUnresolved(complete.id())", "GunMod.LOGGER.warn"
+        )) or "this.profileLookupGeneration == generation" not in current_lookup
+            or "ResolvableProfile.createResolved(complete)" in resolve):
+        errors.append("TargetBlockEntity: UUID lookup must remain asynchronous, stale-safe and dynamic for client skins")
     if re.search(r"new\s+GameProfile\s*\(\s*null\b", block) or "setOwnerName(" not in method_body(block, "setPlacedBy"):
         errors.append("TargetBlock: named placement must use a resolvable profile, not a null UUID")
-    if not all(part in renderer for part in (
-        "context.playerSkinRenderCache()", "getOwnerProfile()", "skinCache.getOrDefault(owner)"
-    )):
-        errors.append("TargetRenderer: not using the 26.3 player skin/profile cache")
+    block_extract = method_body(renderer, "extractRenderState")
+    if ("context.playerSkinRenderCache()" not in renderer
+            or not all(part in block_extract for part in (
+                "getOwnerProfile()", "skinCache.getOrDefault(owner)",
+                "DefaultPlayerSkin.get(owner.partialProfile())", "state.skinTexture = null"
+            ))):
+        errors.append("TargetRenderer: skin extraction must use the 26.3 cache with a safe fallback")
 
     cart_owner = method_body(minecart, "getOwnerProfile")
     cart_profile = method_body(minecart, "getGameProfile")

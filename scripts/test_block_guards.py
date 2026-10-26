@@ -80,13 +80,17 @@ class GuardTests(unittest.TestCase):
         self.replace(RENDERER, "skinCache.getOrDefault(owner)", "skinCache.getDefault(owner)")
         self.guard("verify_block_entity_persistence.py", False)
 
+    def test_missing_block_fallback_fails(self) -> None:
+        self.replace(RENDERER, "DefaultPlayerSkin.get(owner.partialProfile())", "missingFallback()")
+        self.guard("verify_block_entity_persistence.py", False)
+
     def test_stale_lookup_generation_fails(self) -> None:
         self.replace(BLOCKS / "entity/TargetBlockEntity.java", "&& this.profileLookupGeneration == generation", "")
         self.guard("verify_block_entity_persistence.py", False)
 
-    def test_incomplete_server_profile_fails(self) -> None:
-        self.replace(BLOCKS / "entity/TargetBlockEntity.java", 'complete.properties().containsKey("textures")',
-                     'complete.properties().containsKey("other")')
+    def test_server_must_not_freeze_dynamic_profile(self) -> None:
+        self.replace(BLOCKS / "entity/TargetBlockEntity.java", 'ResolvableProfile.createUnresolved(complete.id())',
+                     'ResolvableProfile.createResolved(complete)')
         self.guard("verify_block_entity_persistence.py", False)
 
     def test_minecart_null_uuid_fails(self) -> None:
@@ -100,6 +104,10 @@ class GuardTests(unittest.TestCase):
 
     def test_minecart_default_only_skin_fails(self) -> None:
         self.replace(MINECART_RENDERER, "skinCache.getOrDefault(owner)", "skinCache.getDefault(owner)")
+        self.guard("verify_block_entity_persistence.py", False)
+
+    def test_missing_minecart_fallback_fails(self) -> None:
+        self.replace(MINECART_RENDERER, "DefaultPlayerSkin.get(owner.partialProfile())", "missingFallback()")
         self.guard("verify_block_entity_persistence.py", False)
 
 

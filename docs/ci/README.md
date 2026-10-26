@@ -6,7 +6,7 @@
 
 两边不一致时，**以 `.github/workflows/` 的正式件为准**；工作区的改动不等于已上线。
 
-## 26.3 分支增量（2026-10-27）
+## 26.3 分支增量（2026-10-26 UTC）
 
 本次移植在 `build.yml` 中加入 26.3 方块与标靶接线静态检查、守卫反向测试与隔离桩行为测试；
 三份正式工作流的 push 分支列表均包含 `26.3`，`build.yml` 和 `consistency.yml` 的版本检查
@@ -14,7 +14,9 @@
 会话分支代码提交 `13d3fff` 的 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976635)、
 [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976378) 和
 [Version consistency](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976824)
-均已通过。合并到 `26.3` 前不代表目标分支已上线这些改动；隔离桩测试不能代替游戏实测。
+均已通过。`R1-hotfix4` 增强了同一套隔离测试：编译真实 `TargetBlock` 并调用其放置回调，
+模拟回调后的物品消耗及皮肤缓存的待解析/回退/成功状态；其新提交的 CI 状态以 Actions 为准。
+合并到 `26.3` 前不代表目标分支已上线这些改动；隔离桩测试不能代替游戏实测。
 
 ## 之前的上线状态（2026-09-02 实测刷新）
 
