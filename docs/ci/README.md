@@ -10,12 +10,18 @@
 permission`（整个 push 一起失败，不是只忽略那个文件）。所以下面三条**全部**只是暂存件，
 上线前 `.github/workflows/` 里跑的仍是旧版。
 
+> **2026-10-27 更新**：本次会话的凭据**已能**推送 `.github/workflows/` —— `build.yml` 的两步新增
+> （`scripts/verify_block_drops.py --strict`、`scripts/verify_block_entity_persistence.py --strict`，自 26.2 线 `c2c458f`
+> 适配，起因见 `../lineage/SYNC_REVIEW_262_TO_1211_20261027.md`）直接 push 成功，已写进
+> `.github/workflows/build.yml`，并同步回本目录的同名镜像（逐字一致）。下面 2026-08-31 的「推不动」是当时那个会话的
+> 实测结论，保留不删，仍适用于没有 `workflows` 权限的会话；两边不一致时**以 `.github/workflows/` 的正式件为准**。
+
 ## 当前清单（2026-08-31，R3）
 
 | 文件 | 状态 | 内容 |
 |---|---|---|
 | `compile-check.yml` | **待上线（替换 `.github/workflows/compile-check.yml`）** | 补主分支 `1.21.11` push + PR 触发；日志回推**只**在 arena/**；`concurrency` 取消过期 run |
-| `build.yml` | **待上线（新建 `.github/workflows/build.yml`）** | 全量 `gradlew build` + jar 上传为 artifact（14 天）；外加五个静态校验：mixin 配置完整性、mixin 配置注册性（孤儿配置）、en/zh 语言键齐平、`[mesh_loader]` 配置↔Cloth↔语言键齐平（调 `docs/check_mesh_config_parity.py`）、版本一致性。artifact 名只用 sha（arena 分支名带 `/` 是非法 artifact 字符——26.2 侧首跑就是这样红的） |
+| `build.yml` | **待上线（新建 `.github/workflows/build.yml`）** | 全量 `gradlew build` + jar 上传为 artifact（14 天）；外加五个静态校验：mixin 配置完整性、mixin 配置注册性（孤儿配置）、en/zh 语言键齐平、`[mesh_loader]` 配置↔Cloth↔语言键齐平（调 `docs/check_mesh_config_parity.py`）、版本一致性；**2026-10-27 起再加两项**：方块掉落接线（`scripts/verify_block_drops.py`）、方块实体持久化（`scripts/verify_block_entity_persistence.py`，含禁止 `new GameProfile(..., null, ...)`）。artifact 名只用 sha（arena 分支名带 `/` 是非法 artifact 字符——26.2 侧首跑就是这样红的） |
 | `consistency.yml` | **待上线（新建 `.github/workflows/consistency.yml`）** | AGENTS.md §1 的守门：只碰 `gradle.properties` / `README.md` / `fabric.mod.json` 时也触发；arena 分支一起守（等合并后再守就晚了）。脚本本体按 §1 只在默认分支，本流程自带「取不到就跳过」的回退 |
 
 上线动作：GitHub 网页 → 仓库 → `.github/workflows/` → 对应文件 →
