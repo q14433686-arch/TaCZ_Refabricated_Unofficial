@@ -159,4 +159,49 @@ public abstract class net.minecraft.world.item.component.ResolvableProfile imple
   public abstract java.util.Optional<java.lang.String> name();
   static {};
 }
+== Minecraft: skin-related members ==
+  private final java.util.concurrent.CompletableFuture<com.mojang.authlib.yggdrasil.ProfileResult> profileFuture;
+  private final net.minecraft.client.resources.SkinManager skinManager;
+  private final net.minecraft.client.multiplayer.ProfileKeyPairManager profileKeyPairManager;
+  private final net.minecraft.client.renderer.PlayerSkinRenderCache playerSkinRenderCache;
+  private final net.minecraft.util.profiling.ContinuousProfiler fpsPieProfiler;
+  private net.minecraft.util.profiling.ProfilerFiller constructProfiler(boolean, net.minecraft.util.profiling.SingleTickProfiler);
+  private void finishProfilers(boolean, net.minecraft.util.profiling.SingleTickProfiler);
+  public net.minecraft.client.multiplayer.ProfileKeyPairManager getProfileKeyPairManager();
+  public com.mojang.authlib.yggdrasil.ProfileResult getProfileResult();
+  public com.mojang.authlib.GameProfile getGameProfile();
+  public net.minecraft.client.resources.SkinManager getSkinManager();
+  public net.minecraft.client.renderer.PlayerSkinRenderCache playerSkinRenderCache();
+  private void lambda$debugClientMetricsStart$9(java.util.function.Consumer, net.minecraft.util.profiling.ProfileResults);
+  private static void lambda$debugClientMetricsStart$8(net.minecraft.util.profiling.ProfileResults);
+  private void lambda$debugClientMetricsStart$0(java.util.function.Consumer, net.minecraft.util.profiling.ProfileResults);
+  private com.mojang.authlib.yggdrasil.ProfileResult lambda$new$0();
+== SkullBlockRenderer: how it uses the cache (bytecode refs) ==
+  private final net.minecraft.client.renderer.PlayerSkinRenderCache playerSkinRenderCache;
+        11: invokevirtual #130                // Method net/minecraft/client/renderer/blockentity/BlockEntityRendererProvider$Context.playerSkinRenderCache:()Lnet/minecraft/client/renderer/PlayerSkinRenderCache;
+        14: putfield      #132                // Field playerSkinRenderCache:Lnet/minecraft/client/renderer/PlayerSkinRenderCache;
+         8: invokevirtual #324                // Method net/minecraft/world/level/block/entity/SkullBlockEntity.getOwnerProfile:()Lnet/minecraft/world/item/component/ResolvableProfile;
+        17: getfield      #132                // Field playerSkinRenderCache:Lnet/minecraft/client/renderer/PlayerSkinRenderCache;
+        21: invokevirtual #328                // Method net/minecraft/client/renderer/PlayerSkinRenderCache.getOrDefault:(Lnet/minecraft/world/item/component/ResolvableProfile;)Lnet/minecraft/client/renderer/PlayerSkinRenderCache$RenderInfo;
+        24: invokevirtual #331                // Method net/minecraft/client/renderer/PlayerSkinRenderCache$RenderInfo.renderType:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+        88: invokestatic  #481                // Method net/minecraft/client/resources/DefaultPlayerSkin.getDefaultTexture:()Lnet/minecraft/resources/Identifier;
+== PlayerSkinRenderCache: private members ==
+Compiled from "PlayerSkinRenderCache.java"
+public class net.minecraft.client.renderer.PlayerSkinRenderCache {
+  public static final net.minecraft.client.renderer.rendertype.RenderType DEFAULT_PLAYER_SKIN_RENDER_TYPE;
+  public static final java.time.Duration CACHE_DURATION;
+  private final com.google.common.cache.LoadingCache<net.minecraft.world.item.component.ResolvableProfile, java.util.concurrent.CompletableFuture<java.util.Optional<net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo>>> renderInfoCache;
+  private final com.google.common.cache.LoadingCache<net.minecraft.world.item.component.ResolvableProfile, net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo> defaultSkinCache;
+  private final net.minecraft.client.renderer.texture.TextureManager textureManager;
+  private final net.minecraft.client.resources.SkinManager skinManager;
+  private final net.minecraft.server.players.ProfileResolver profileResolver;
+  public net.minecraft.client.renderer.PlayerSkinRenderCache(net.minecraft.client.renderer.texture.TextureManager, net.minecraft.client.resources.SkinManager, net.minecraft.server.players.ProfileResolver);
+  public net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo getOrDefault(net.minecraft.world.item.component.ResolvableProfile);
+  public java.util.function.Supplier<net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo> createLookup(net.minecraft.world.item.component.ResolvableProfile);
+  public java.util.concurrent.CompletableFuture<java.util.Optional<net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo>> lookup(net.minecraft.world.item.component.ResolvableProfile);
+  private static net.minecraft.client.renderer.rendertype.RenderType playerSkinRenderType(net.minecraft.world.entity.player.PlayerSkin);
+  private static net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo lambda$createLookup$1(java.util.concurrent.CompletableFuture, net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo);
+  private static net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo lambda$createLookup$0(net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo);
+  static {};
+}
 == done ==
