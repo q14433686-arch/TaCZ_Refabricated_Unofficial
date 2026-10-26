@@ -8,6 +8,7 @@ on:
     branches:
       - 'arena/**'
       - '26.2(main)'
+      - '26.3'
       - '26.1.2'
       - '1.21.11'
     paths:
@@ -29,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: 检查当前分支
-        run: bash scripts/check_release_consistency.sh
+        run: bash scripts/check_release_consistency.sh --strict
       - name: 失败提示
         if: failure()
         run: |

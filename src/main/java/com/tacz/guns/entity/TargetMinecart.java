@@ -23,6 +23,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -43,7 +44,8 @@ public class TargetMinecart extends AbstractMinecart implements ITargetEntity, I
             .clientTrackingRange(8)
             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("tacz", "target_minecart")));
 
-    private @Nullable GameProfile gameProfile = null;
+    private @Nullable ResolvableProfile ownerProfile;
+    private @Nullable String ownerProfileName;
 
     public TargetMinecart(EntityType<TargetMinecart> type, Level world) {
         super(type, world);
@@ -132,12 +134,28 @@ public class TargetMinecart extends AbstractMinecart implements ITargetEntity, I
         return itemStack;
     }
 
+    /** Keep the public partial-profile accessor for integrations, without a null UUID. */
     @Nullable
     public GameProfile getGameProfile() {
-        if (this.gameProfile == null && this.getCustomName() != null) {
-            this.gameProfile = new GameProfile(null, this.getCustomName().getString());
+        ResolvableProfile profile = this.getOwnerProfile();
+        return profile == null ? null : profile.partialProfile();
+    }
+
+    /** A dynamic profile lets the 26.3 client resolve a name and its skin asynchronously. */
+    @Nullable
+    public ResolvableProfile getOwnerProfile() {
+        Component customName = this.getCustomName();
+        String name = customName == null ? null : customName.getString();
+        if (name == null || name.isEmpty()) {
+            this.ownerProfile = null;
+            this.ownerProfileName = null;
+            return null;
         }
-        return gameProfile;
+        if (!name.equals(this.ownerProfileName)) {
+            this.ownerProfile = ResolvableProfile.createUnresolved(name);
+            this.ownerProfileName = name;
+        }
+        return this.ownerProfile;
     }
 
     @Override

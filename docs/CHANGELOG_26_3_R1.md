@@ -1,15 +1,90 @@
-# TaCZ Refabricated 26.3 R1-hotfix2 release notes（草稿，尚未发布）
+# TaCZ Refabricated 26.3 R1-hotfix3 release notes（草稿，尚未发布）
 
-**构建元数据：`1.1.8+fabric.26.3.R1-hotfix2`**
+**构建元数据：`1.1.8+fabric.26.3.R1-hotfix3`**
 
 **基线：`origin/26.2(main)` R3-hotfix2（`c7c3c55` 之前的 26.2 源码）→ 本线 `26.3`**
 
 **环境：Minecraft 26.3 · Fabric Loader 0.19.5+ · Java 25+ · Fabric API 0.160.7+26.3 · Forge Config API Port 26.3.0+**
 
-> 状态（2026-10-21）：R1 基础版编译/CI 全绿；下列标 ✅ 的基础版条目已由维护者在 26.3 实机验证（2026-09-18 ~ 09-21，
-> 无光影 + Iris 光影 + 专服三种环境）；`R1-hotfix` 及本次 `R1-hotfix2` 新增项标 🔧，仅 CI 编译通过，未实机验证。**尚无可下载构建。**
+> 状态：R1 基础版编译/CI 全绿；下列标 ✅ 的基础版条目已由维护者在 26.3 实机验证（2026-09-18 ~ 09-21，
+> 无光影 + Iris 光影 + 专服三种环境）；`R1-hotfix` 与 `R1-hotfix2` 新增项的历史 CI 结果见对应条目，尚未实机验证。
+> `R1-hotfix3` 方块/标靶增量与动态皮肤调整已通过恢复版本号后的 CI 构建和回归检查；
+> 这些改动尚未实机验证，且 **26.3 尚未正式发布**。
 > 姊妹项目（NeoForge）移植指南：[`lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md`](lineage/PORT_GUIDE_26_3_FOR_RENOVATED_NEOFORGE_20260921.md)。
-> 版本命名沿用本仓历史：hotfix 序号直接追加在 `hotfix` 后、中间不加分隔符（`R1-hotfix` → `R1-hotfix2`，不另起 R2）。
+> 版本命名沿用本仓历史：hotfix 序号直接追加在 `hotfix` 后、中间不加分隔符（`R1-hotfix` → `R1-hotfix2` → `R1-hotfix3`，不另起 R2）。
+
+## R1-hotfix3 标靶皮肤与回归测试追加（2026-10-26 UTC）
+
+根据要求，当前版本号恢复为 `R1-hotfix3`，保留后续的标靶皮肤修复；同版本的不同 CI 产物应以提交 SHA 区分。
+
+- 改名标靶放置、改名矿车渲染的空 UUID 路径已在早期提交 `13d3fff` 避免：分别使用名称动态档案，
+  再交给原版 `PlayerSkinRenderCache`；后续调整并非首次修复这两条路径。
+- 标靶方块在服务端异步查到真实 UUID 后，改为保留 UUID **动态**档案而非固化当时的纹理快照，
+  让客户端皮肤缓存按 UUID 异步查询；无结果、未就绪或运行期异常时使用默认皮肤。
+  查询结果为空或异常时保留原档案；过期、移除或换世界的回调不能覆盖当前主人。
+  之前已保存的静态纹理档案及显式传入的完整档案仍保持静态，不会主动丢弃其纹理。
+- `test_block_entities.py` 现在直接运行真实 `TargetBlock#setPlacedBy` 源码，并用 API 桩**模拟**
+  原版回调后才消耗物品的顺序，覆盖生存、创造、有效/无效/空名称、客户端和缺少方块实体；
+  还模拟皮肤缓存待解析→默认皮肤→可用皮肤及异常回退，检查 UUID、旧存档及过期回调。
+  此测试没有运行原版 `BlockItem`、真实网络、渲染设备或游戏。
+- 本地隔离桩测试、14 项守卫正反向检查及严格静态检查已通过。
+- **先前 CI 验证**（代码提交 `faf60a4`，当时临时编号为 `R1-hotfix4`，2026-10-26 UTC）：
+  [`build`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535903)
+  通过静态守卫、隔离桩测试和真实 `./gradlew build`；
+  [`compile-check`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410535916)
+  成功执行 `./gradlew compileJava`；
+  [`Version consistency`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40410536028)
+  严格检查通过。该次产物使用旧临时编号，不是当前版本的构建。
+- **恢复编号后的 CI**（提交 `fe229ff`，2026-10-26 UTC）：
+  [`build`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40417943032)、
+  [`compile-check`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40417943068) 与
+  [`Version consistency`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40417943045)
+  均通过。[CI artifact](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40417943032/artifacts/12695334768)
+  保留至 2026-11-09 23:12 UTC，不是正式 Release。
+- **待实机**：改名后放置与物品消耗、专服同步、换肤、离线回退、矿车重命名与渲染、旧存档重进。
+
+## R1-hotfix3 增量（2026-10-26 UTC：同步 26.2 R3-hotfix4 方块修复）
+
+本增量尚未正式发布或进行 26.3 实机验证；版本号是 26.3 自己的 `R1-hotfix3`。
+代码来源为 26.2 PR #115；#116 是 26.2 的版本号更新，不复制其版本号。
+26.3 保留自己的战利品表格式。
+
+- **工作台**：26.3 已移除多方块非根半边的手工掉落；本次另外将 B 型工作台创造模式的
+  抑制判据改为挖 `head` 时先无掉落移除产出半边 `foot`。B/C 的生存掉落继续由 26.3 的
+  `match_block` 战利品表控制，枪包 `BlockId` 仍由 `copy_custom_data` 复制。
+- **雕像**：在服务端 `BlockEntity#preRemoveSideEffects` 里弹出并清空陈列的枪，使用回调给出的
+  旧方块状态确定方向；重复回调不会重复掉落。原版 `BLOCK_DROPS` 游戏规则和显式跳过方块实体
+  副作用的更新标志仍然生效，不保证绕过这些原版限制。
+- **标靶主人与皮肤**：读取以前写入的 `owner_uuid` / `owner_name`，并兼容旧 `Owner` 复合标签的
+  `Name` / `Id`；无效 UUID 不再导致读取崩溃，空 UUID 不再传给 26.3 的 `GameProfile`。
+  新存档/同步包使用 `ResolvableProfile` 保存档案（静态档案可含纹理），服务端在 IO 线程请求档案，
+  回主线程后检查实体和主人是否已变化；客户端使用原版 `PlayerSkinRenderCache`，而非直接选默认皮肤。
+  无效玩家名仍保存在扁平键中，查询失败会记录警告并保留待解析档案；当前实现保留动态 UUID 档案，
+  让客户端自行解析皮肤。
+- **标靶矿车（关联修正）**：发现 26.3 原有命名矿车也会创建空 UUID 档案。改为按名称创建
+  动态档案，名称改变或清除时更新缓存，渲染时使用 26.3 玩家皮肤缓存与默认皮肤回退。
+  该项是检查方块皮肤时发现的同类问题，不是 26.2 PR #115 的新增提交。
+- **边界**：旧 `Owner` 复合标签的历史纹理属性不被复制，只迁移名字/UUID，皮肤需重新解析；
+  若查不到或客户端无法联网则可能保持默认皮肤。早期提交 `13d3fff` 查得并持久化的纹理是当时的快照；
+  后续调整不再为新解析结果固化快照，但不会自动转换已保存的静态档案。
+- **离线验证**：`verify_block_drops.py --strict` 与 `verify_block_entity_persistence.py --strict`
+  通过；`test_block_guards.py` 的 12 项正反向检查通过；`test_block_entities.py` 使用 Minecraft API
+  隔离桩执行真实方块实体、标靶矿车和两处渲染器代码，覆盖存档回读、旧数据、异常 UUID、
+  异步结果过期、单次掉枪、矿车名称变化及皮肤回退。本地桩测试使用 Java 25 运行时及 Eclipse JDT
+  编译器；这是桩测试，**不是针对 26.3 Minecraft 依赖的实际编译**。本次尝试 `./gradlew compileJava`，
+  Gradle 分发包下载时 TLS 握手失败，编译任务未启动。
+- **CI 验证**（代码提交 `13d3fff`，2026-10-26 UTC）：
+  - [`compile-check`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976378)
+    使用 Java 25 成功执行真实 `./gradlew compileJava`，编译日志回写至会话分支。
+  - [`build`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976635)
+    通过方块/标靶静态守卫、隔离桩测试和完整 `./gradlew build`，并上传 jar artifact
+    （保留 14 天；不是正式 Release）。
+  - [`Version consistency`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40407976824)
+    严格版本一致性检查通过。CI 成功仍不代表游戏内行为已验证。
+- **待实机**：分别挖 B/C 工作台的根/非根半边（生存、创造，含枪包 `BlockId`）；挖、炸、
+  活塞及 `/setblock` 移除放枪雕像（应单次掉枪，并核对游戏规则）；使用真实和无效玩家名放置标靶，
+  验证皮肤、重进存档、专服同步及断网回退；覆盖旧扁平键与 `Owner` 复合标签存档；
+  在轨道上测试命名、重命名及取消命名的标靶矿车，核对皮肤、位置和两层头部渲染。
 
 ## R1-hotfix 增量（2026-09-29 ~ 09-30）
 

@@ -1,6 +1,5 @@
 package com.tacz.guns.block;
 
-import com.mojang.authlib.GameProfile;
 import com.tacz.guns.block.entity.TargetBlockEntity;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.init.ModBlocks;
@@ -27,7 +26,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.*;
-import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -182,8 +180,8 @@ public class TargetBlock extends BaseEntityBlock {
             if (stack.getCustomName() != null) {
                 BlockEntity blockentity = world.getBlockEntity(pos);
                 if (blockentity instanceof TargetBlockEntity e) {
-                    GameProfile gameprofile = new GameProfile(null, stack.getHoverName().getString());
-                    e.setOwner(gameprofile);
+                    // 26.3 的 GameProfile 不接受 null UUID；先保存可异步解析的名字。
+                    e.setOwnerName(stack.getHoverName().getString());
                     e.setCustomName(stack.getHoverName());
                     e.refresh();
                 }

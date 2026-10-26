@@ -1,6 +1,5 @@
 package com.tacz.guns.client.renderer.entity;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
@@ -9,8 +8,8 @@ import com.tacz.guns.client.resource.InternalAssetLoader;
 import com.tacz.guns.entity.TargetMinecart;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.BlockModelRenderState;
 import net.minecraft.client.renderer.entity.AbstractMinecartRenderer;
@@ -19,8 +18,10 @@ import net.minecraft.client.renderer.entity.state.MinecartRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.component.ResolvableProfile;
 
 import java.util.Optional;
 
@@ -52,11 +53,11 @@ public class TargetMinecartRenderer extends AbstractMinecartRenderer<TargetMinec
     private static final String HEAD_NAME = "head";
     private static final String HEAD_2_NAME = "head2";
 
-    /** 缓存本帧的 GameProfile：extractRenderState 阶段取，submit 阶段用。 */
-    private static final String PROFILE_KEY = "tacz$profile";
+    private final PlayerSkinRenderCache skinCache;
 
     public TargetMinecartRenderer(EntityRendererProvider.Context ctx) {
         super(ctx, ModelLayers.TNT_MINECART);
+        this.skinCache = ctx.getPlayerSkinRenderCache();
         this.shadowRadius = 0.25F;
     }
 
@@ -65,9 +66,9 @@ public class TargetMinecartRenderer extends AbstractMinecartRenderer<TargetMinec
         return new TargetMinecartRenderState();
     }
 
-    /** 扩展 vanilla 状态，额外携带皮肤所需的 GameProfile。 */
+    /** 皮肤在 extract 阶段解析，submit 阶段只读取本帧的纹理。 */
     public static class TargetMinecartRenderState extends MinecartRenderState {
-        public GameProfile gameProfile;
+        public Identifier skinTexture;
     }
 
     @Override
@@ -75,7 +76,16 @@ public class TargetMinecartRenderer extends AbstractMinecartRenderer<TargetMinec
         // 让父类填好位置、朝向、受击摇晃、沿轨道姿态等全部 vanilla 状态。
         super.extractRenderState(entity, state, partialTicks);
         if (state instanceof TargetMinecartRenderState targetState) {
-            targetState.gameProfile = entity.getGameProfile();
+            ResolvableProfile owner = entity.getOwnerProfile();
+            if (owner == null) {
+                targetState.skinTexture = null;
+            } else {
+                try {
+                    targetState.skinTexture = this.skinCache.getOrDefault(owner).playerSkin().body().texturePath();
+                } catch (RuntimeException exception) {
+                    targetState.skinTexture = DefaultPlayerSkin.get(owner.partialProfile()).body().texturePath();
+                }
+            }
         }
     }
 
@@ -116,11 +126,9 @@ public class TargetMinecartRenderer extends AbstractMinecartRenderer<TargetMinec
             RenderType renderType = RenderTypes.entityTranslucent(InternalAssetLoader.TARGET_MINECART_TEXTURE_LOCATION);
             model.submit(stack, ItemDisplayContext.NONE, collector, renderType, packedLight, OverlayTexture.NO_OVERLAY);
 
-            GameProfile gameProfile = state instanceof TargetMinecartRenderState t ? t.gameProfile : null;
-            if (gameProfile != null) {
+            Identifier skin = state instanceof TargetMinecartRenderState t ? t.skinTexture : null;
+            if (skin != null) {
                 stack.translate(0, 1, -4.5 / 16d);
-                Minecraft minecraft = Minecraft.getInstance();
-                Identifier skin = minecraft.getSkinManager().createLookup(gameProfile, false).get().body().texturePath();
                 RenderType skullRenderType = RenderTypes.entityTranslucent(skin);
 
                 headModel.visible = true;
