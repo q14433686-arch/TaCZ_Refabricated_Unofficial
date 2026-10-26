@@ -1,4 +1,4 @@
-commit: 93854018d0535f9ce3d120d4489381fb15be3d9e
+commit: 71b9031529fa45fad1d3bf38f9661199e9e79d32
 WARNING: A restricted method in java.lang.System has been called
 WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/home/runner/.gradle/wrapper/dists/gradle-9.5.1-bin/iq79hdu3mqx29lgffhp8bfmx/gradle-9.5.1/lib/native-platform-0.22-milestone-29.jar)
 WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
@@ -18,43 +18,33 @@ Fabric Loom: 1.17.21
   found:    MinecraftServer,GameProfile
   reason: actual and formal argument lists differ in length
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:8: error: cannot find symbol
-        a1.zzz();
+        x1.zzz();
           ^
   symbol:   method zzz()
-  location: variable a1 of type Optional<NameAndId>
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:9: error: cannot find symbol
-        var a2 = cache.resolve("Notch");
-                      ^
-  symbol:   method resolve(String)
-  location: variable cache of type UserNameToIdResolver
+  location: variable x1 of type UUID
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:10: error: cannot find symbol
+        x2.zzz();
+          ^
+  symbol:   method zzz()
+  location: variable x2 of type String
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:11: error: cannot find symbol
-        var a3 = cache.find("Notch");
-                      ^
-  symbol:   method find(String)
-  location: variable cache of type UserNameToIdResolver
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:13: error: cannot find symbol
-        var a4 = cache.lookup("Notch");
-                      ^
-  symbol:   method lookup(String)
-  location: variable cache of type UserNameToIdResolver
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:16: error: cannot find symbol
-        nameAndId.zzz();
-                 ^
+        var ex1 = net.minecraft.Util.backgroundExecutor();
+                               ^
+  symbol:   class Util
+  location: package net.minecraft
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:14: error: cannot find symbol
+        ex2.zzz();
+           ^
   symbol:   method zzz()
-  location: variable nameAndId of type NameAndId
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:18: error: cannot find symbol
-        fetched.zzz();
-               ^
-  symbol:   method zzz()
-  location: variable fetched of type ProfileResult
+  location: variable ex2 of type TracingExecutor
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
-7 errors
+5 errors
 
 > Task :compileJava FAILED
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1793047025178.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1793047203495.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -70,40 +60,30 @@ Execution failed for task ':compileJava' (registered by plugin class 'org.gradle
     found:    MinecraftServer,GameProfile
     reason: actual and formal argument lists differ in length
   Note: Recompile with -Xlint:deprecation for details.
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:11: error: cannot find symbol
+          var ex1 = net.minecraft.Util.backgroundExecutor();
+                                 ^
+    symbol:   class Util
+    location: package net.minecraft
   Note: Recompile with -Xlint:unchecked for details.
   Note: Some input files use or override a deprecated API.
   Note: Some input files use unchecked or unsafe operations.
   /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:8: error: cannot find symbol
-          a1.zzz();
+          x1.zzz();
             ^
     symbol:   method zzz()
-    location: variable a1 of type Optional<NameAndId>
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:9: error: cannot find symbol
-          var a2 = cache.resolve("Notch");
-                        ^
-    symbol:   method resolve(String)
-    location: variable cache of type UserNameToIdResolver
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:11: error: cannot find symbol
-          var a3 = cache.find("Notch");
-                        ^
-    symbol:   method find(String)
-    location: variable cache of type UserNameToIdResolver
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:13: error: cannot find symbol
-          var a4 = cache.lookup("Notch");
-                        ^
-    symbol:   method lookup(String)
-    location: variable cache of type UserNameToIdResolver
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:16: error: cannot find symbol
-          nameAndId.zzz();
-                   ^
+    location: variable x1 of type UUID
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:10: error: cannot find symbol
+          x2.zzz();
+            ^
     symbol:   method zzz()
-    location: variable nameAndId of type NameAndId
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:18: error: cannot find symbol
-          fetched.zzz();
-                 ^
+    location: variable x2 of type String
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:14: error: cannot find symbol
+          ex2.zzz();
+             ^
     symbol:   method zzz()
-    location: variable fetched of type ProfileResult
-  7 errors
+    location: variable ex2 of type TracingExecutor
+  5 errors
 
 * Try:
 > Check your code and dependencies to fix the compilation error(s)
@@ -152,40 +132,30 @@ Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Com
   found:    MinecraftServer,GameProfile
   reason: actual and formal argument lists differ in length
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:8: error: cannot find symbol
-        a1.zzz();
+        x1.zzz();
           ^
   symbol:   method zzz()
-  location: variable a1 of type Optional<NameAndId>
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:9: error: cannot find symbol
-        var a2 = cache.resolve("Notch");
-                      ^
-  symbol:   method resolve(String)
-  location: variable cache of type UserNameToIdResolver
+  location: variable x1 of type UUID
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:10: error: cannot find symbol
+        x2.zzz();
+          ^
+  symbol:   method zzz()
+  location: variable x2 of type String
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:11: error: cannot find symbol
-        var a3 = cache.find("Notch");
-                      ^
-  symbol:   method find(String)
-  location: variable cache of type UserNameToIdResolver
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:13: error: cannot find symbol
-        var a4 = cache.lookup("Notch");
-                      ^
-  symbol:   method lookup(String)
-  location: variable cache of type UserNameToIdResolver
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:16: error: cannot find symbol
-        nameAndId.zzz();
-                 ^
+        var ex1 = net.minecraft.Util.backgroundExecutor();
+                               ^
+  symbol:   class Util
+  location: package net.minecraft
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:14: error: cannot find symbol
+        ex2.zzz();
+           ^
   symbol:   method zzz()
-  location: variable nameAndId of type NameAndId
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:18: error: cannot find symbol
-        fetched.zzz();
-               ^
-  symbol:   method zzz()
-  location: variable fetched of type ProfileResult
+  location: variable ex2 of type TracingExecutor
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
-7 errors
+5 errors
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:89)
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:50)
 	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.delegateAndHandleErrors(NormalizingJavaCompiler.java:98)
@@ -326,7 +296,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 21s
+BUILD FAILED in 16s
 1 actionable task: 1 executed
 
 == job status: failure ==
