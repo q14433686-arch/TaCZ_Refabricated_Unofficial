@@ -125,7 +125,7 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
         if (this.profileResolveAttempted || this.owner == null || this.owner.id() != null) {
             return;
         }
-        String name = this.owner.getName();
+        String name = this.owner.name();
         if (name == null || name.isEmpty()) {
             return;
         }
@@ -137,37 +137,7 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
             return;
         }
         this.profileResolveAttempted = true;
-        String requestedName = name;
-        try {
-            server.getProfileCache().getAsync(requestedName).thenAccept(resolved -> server.execute(() -> {
-                if (this.isRemoved()) {
-                    return;
-                }
-                if (resolved.isPresent() && resolved.get().id() != null) {
-                    GameProfile profile = resolved.get();
-                    // 名字可能被会话服务规范化（大小写），以返回值为准；
-                    // 自定义名字（游戏内改名）优先保留，避免把显示名覆盖掉。
-                    String keepName = this.owner != null && this.owner.getName() != null
-                            ? this.owner.getName() : profile.getName();
-                    this.owner = new GameProfile(profile.id(), keepName);
-                    this.refresh();
-                    GunMod.LOGGER.debug("[TaCZ] Resolved target owner '{}' -> {}", requestedName, profile.id());
-                } else {
-                    GunMod.LOGGER.warn("[TaCZ] Could not resolve target owner profile '{}' "
-                            + "(offline server, misspelled name, or session service unavailable); "
-                            + "the target head will keep the default skin", requestedName);
-                }
-            })).exceptionally(throwable -> {
-                this.profileResolveAttempted = false;
-                GunMod.LOGGER.warn("[TaCZ] Target owner profile lookup for '{}' failed: {}",
-                        requestedName, throwable.toString());
-                return null;
-            });
-        } catch (RuntimeException e) {
-            this.profileResolveAttempted = false;
-            GunMod.LOGGER.warn("[TaCZ] Target owner profile lookup for '{}' could not be started: {}",
-                    requestedName, e.toString());
-        }
+        ApiProbe.probe(server, this.owner);
     }
 
     @Override
