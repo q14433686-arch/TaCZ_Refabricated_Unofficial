@@ -1,7 +1,11 @@
 name: api-probe
 # 临时流程（用后即删）：把 26.2 合并 jar 里与皮肤/档案相关的类 dump 出来，
 # 写回 build-reports/api-probe.txt —— 沙箱里没有可读的 26.2 jar，Actions 日志又取不回来。
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - 'arena/**'
+  workflow_dispatch
 
 permissions:
   contents: write
