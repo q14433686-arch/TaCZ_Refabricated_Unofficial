@@ -36,8 +36,9 @@ import org.jetbrains.annotations.Nullable;
  * {@code SkinManager#get} 自身不发起任何「按名字 / 按 UUID 向会话服务查人」的调用，只处理档案
  * 已经带着的 {@code textures} 属性；而那条服务端解析只会补出 UUID（没有 {@code textures}，
  * 也不会被存档或同步给客户端），所以客户端拿到后仍是默认皮肤；它的整个前提
- * （档案里可以有 {@code null} UUID）在本线也不成立。详见
- * {@code docs/lineage/SYNC_REVIEW_262_TO_1211_20261027.md}。</p>
+ * （档案里可以有 {@code null} UUID）在本线也不成立。26.2 线随后的 #117 也已放弃那条方案、改走
+ * {@code ResolvableProfile} + {@code PlayerSkinRenderCache}。详见
+ * {@code docs/lineage/SYNC_REVIEW_262_TO_1211_20261027.md}（含文末「后续」）。</p>
  */
 public final class TargetOwnerProfiles {
     private TargetOwnerProfiles() {
