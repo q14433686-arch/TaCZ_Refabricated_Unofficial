@@ -157,8 +157,9 @@ public class StatueBlock extends BaseEntityBlock {
         return state;
     }
 
-    // 26.2: onRemove 已移除，方块实体移除时自动清理
-    // 如需掉落物品，在 StatueBlockEntity.setRemoved() 中处理
+    // 1.21.11: Block#onRemove 已被移除，且**没有任何「方块实体移除时自动清理」的默认行为**。
+    // 雕像上的枪由 StatueBlockEntity#preRemoveSideEffects 掉落（见该类注释），
+    // 本类不需要额外处理 —— 但别指望「什么都不写它就会掉」。
 
     @Override
     protected RenderShape getRenderShape(BlockState state) {
@@ -196,7 +197,11 @@ public class StatueBlock extends BaseEntityBlock {
      * {@code hasBlockEntity} 处理掉落后置空方块并回调 {@code wasExploded}）。
      * 因此这里直接调 {@code super} 即可，语义不变。</p>
      *
-     * <p>雕像的物品掉落仍由 {@code StatueBlockEntity#setRemoved()} 负责，与本方法无关。</p>
+     * <p>雕像上的枪不由本方法掉落：它挂在 {@code StatueBlockEntity} 里，由
+     * {@code BlockEntity#preRemoveSideEffects} 在方块实体被移除时 {@code popResource} 出去
+     * —— 那条路径对「玩家挖掉 / 爆炸 / 活塞顶掉 / {@code /setblock} 覆盖」全都生效
+     * （爆炸路径上的 {@code onExplosionHit} 默认实现最终也是 {@code setBlock(AIR)}，同样会触发它）。
+     * 两处各管一件事，互不重叠。</p>
      */
     @Override
     protected void onExplosionHit(BlockState state, ServerLevel level, BlockPos pos, Explosion explosion,
