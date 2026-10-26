@@ -1,4 +1,4 @@
-commit: 8b1f1595cdedc76e0f0ba5fc57ee95d2483ee368
+commit: 36d35f60d07340b61c06fdbd1bb779b8b3f6c9ba
 WARNING: A restricted method in java.lang.System has been called
 WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/home/runner/.gradle/wrapper/dists/gradle-9.5.1-bin/iq79hdu3mqx29lgffhp8bfmx/gradle-9.5.1/lib/native-platform-0.22-milestone-29.jar)
 WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
@@ -11,54 +11,35 @@ Daemon will be stopped at the end of the build
 Fabric Loom: 1.17.21
 
 > Task :compileJava
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:9: error: cannot find symbol
-        Object c1 = server.getProfileCache();
-                          ^
-  symbol:   method getProfileCache()
-  location: variable server of type MinecraftServer
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:10: error: cannot find symbol
-        Object c2 = server.profileCache();
-                          ^
+        Object d3 = server.services().profileCache();
+                                     ^
   symbol:   method profileCache()
-  location: variable server of type MinecraftServer
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:12: error: cannot find symbol
-        Object c4 = server.getSessionService();
-                          ^
-  symbol:   method getSessionService()
-  location: variable server of type MinecraftServer
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:13: error: cannot find symbol
-        Object c5 = server.sessionService();
-                          ^
-  symbol:   method sessionService()
-  location: variable server of type MinecraftServer
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:14: error: cannot find symbol
-        Object c6 = server.getPlayerList().getProfileCache();
-                                          ^
-  symbol:   method getProfileCache()
-  location: class PlayerList
+  location: class Services
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:13: error: method fetchProfile in interface MinecraftSessionService cannot be applied to given types;
+        Object d6 = server.services().sessionService().fetchProfile(UUID.randomUUID(), "Notch", true);
+                                                      ^
+  required: UUID,boolean
+  found:    UUID,String,boolean
+  reason: actual and formal argument lists differ in length
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:15: error: cannot find symbol
-        Class<?> c7 = net.minecraft.server.players.GameProfileCache.class;
-                                                  ^
-  symbol:   class GameProfileCache
-  location: package net.minecraft.server.players
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:20: error: cannot find symbol
-        Object c12 = profile.getProperties();
-                            ^
-  symbol:   method getProperties()
-  location: variable profile of type GameProfile
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:21: error: cannot find symbol
-        Object c13 = net.minecraft.core.UUIDUtil.getOrCreatePlayerUUID(profile);
-                                                ^
-  symbol:   method getOrCreatePlayerUUID(GameProfile)
-  location: class UUIDUtil
+        Object d8 = server.services().profileRepository().findProfileByUUID(UUID.randomUUID());
+                                                         ^
+  symbol:   method findProfileByUUID(UUID)
+  location: interface GameProfileRepository
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:16: error: cannot find symbol
+        Object d9 = server.services().profileCache().getAsync("Notch");
+                                     ^
+  symbol:   method profileCache()
+  location: class Services
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
-8 errors
+4 errors
 
 > Task :compileJava FAILED
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1793046515615.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1793046693941.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -67,51 +48,32 @@ FAILURE: Build failed with an exception.
 * What went wrong:
 Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
 > Compilation failed; see the compiler output below.
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:13: error: method fetchProfile in interface MinecraftSessionService cannot be applied to given types;
+          Object d6 = server.services().sessionService().fetchProfile(UUID.randomUUID(), "Notch", true);
+                                                        ^
+    required: UUID,boolean
+    found:    UUID,String,boolean
+    reason: actual and formal argument lists differ in length
   Note: Recompile with -Xlint:deprecation for details.
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:15: error: cannot find symbol
-          Class<?> c7 = net.minecraft.server.players.GameProfileCache.class;
-                                                    ^
-    symbol:   class GameProfileCache
-    location: package net.minecraft.server.players
   Note: Recompile with -Xlint:unchecked for details.
   Note: Some input files use or override a deprecated API.
   Note: Some input files use unchecked or unsafe operations.
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:9: error: cannot find symbol
-          Object c1 = server.getProfileCache();
-                            ^
-    symbol:   method getProfileCache()
-    location: variable server of type MinecraftServer
   /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:10: error: cannot find symbol
-          Object c2 = server.profileCache();
-                            ^
+          Object d3 = server.services().profileCache();
+                                       ^
     symbol:   method profileCache()
-    location: variable server of type MinecraftServer
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:12: error: cannot find symbol
-          Object c4 = server.getSessionService();
-                            ^
-    symbol:   method getSessionService()
-    location: variable server of type MinecraftServer
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:13: error: cannot find symbol
-          Object c5 = server.sessionService();
-                            ^
-    symbol:   method sessionService()
-    location: variable server of type MinecraftServer
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:14: error: cannot find symbol
-          Object c6 = server.getPlayerList().getProfileCache();
-                                            ^
-    symbol:   method getProfileCache()
-    location: class PlayerList
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:20: error: cannot find symbol
-          Object c12 = profile.getProperties();
-                              ^
-    symbol:   method getProperties()
-    location: variable profile of type GameProfile
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:21: error: cannot find symbol
-          Object c13 = net.minecraft.core.UUIDUtil.getOrCreatePlayerUUID(profile);
-                                                  ^
-    symbol:   method getOrCreatePlayerUUID(GameProfile)
-    location: class UUIDUtil
-  8 errors
+    location: class Services
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:15: error: cannot find symbol
+          Object d8 = server.services().profileRepository().findProfileByUUID(UUID.randomUUID());
+                                                           ^
+    symbol:   method findProfileByUUID(UUID)
+    location: interface GameProfileRepository
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:16: error: cannot find symbol
+          Object d9 = server.services().profileCache().getAsync("Notch");
+                                       ^
+    symbol:   method profileCache()
+    location: class Services
+  4 errors
 
 * Try:
 > Check your code and dependencies to fix the compilation error(s)
@@ -153,51 +115,32 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':compile
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
 Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:9: error: cannot find symbol
-        Object c1 = server.getProfileCache();
-                          ^
-  symbol:   method getProfileCache()
-  location: variable server of type MinecraftServer
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:10: error: cannot find symbol
-        Object c2 = server.profileCache();
-                          ^
+        Object d3 = server.services().profileCache();
+                                     ^
   symbol:   method profileCache()
-  location: variable server of type MinecraftServer
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:12: error: cannot find symbol
-        Object c4 = server.getSessionService();
-                          ^
-  symbol:   method getSessionService()
-  location: variable server of type MinecraftServer
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:13: error: cannot find symbol
-        Object c5 = server.sessionService();
-                          ^
-  symbol:   method sessionService()
-  location: variable server of type MinecraftServer
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:14: error: cannot find symbol
-        Object c6 = server.getPlayerList().getProfileCache();
-                                          ^
-  symbol:   method getProfileCache()
-  location: class PlayerList
+  location: class Services
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:13: error: method fetchProfile in interface MinecraftSessionService cannot be applied to given types;
+        Object d6 = server.services().sessionService().fetchProfile(UUID.randomUUID(), "Notch", true);
+                                                      ^
+  required: UUID,boolean
+  found:    UUID,String,boolean
+  reason: actual and formal argument lists differ in length
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:15: error: cannot find symbol
-        Class<?> c7 = net.minecraft.server.players.GameProfileCache.class;
-                                                  ^
-  symbol:   class GameProfileCache
-  location: package net.minecraft.server.players
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:20: error: cannot find symbol
-        Object c12 = profile.getProperties();
-                            ^
-  symbol:   method getProperties()
-  location: variable profile of type GameProfile
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:21: error: cannot find symbol
-        Object c13 = net.minecraft.core.UUIDUtil.getOrCreatePlayerUUID(profile);
-                                                ^
-  symbol:   method getOrCreatePlayerUUID(GameProfile)
-  location: class UUIDUtil
+        Object d8 = server.services().profileRepository().findProfileByUUID(UUID.randomUUID());
+                                                         ^
+  symbol:   method findProfileByUUID(UUID)
+  location: interface GameProfileRepository
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/block/entity/ApiProbe.java:16: error: cannot find symbol
+        Object d9 = server.services().profileCache().getAsync("Notch");
+                                     ^
+  symbol:   method profileCache()
+  location: class Services
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
-8 errors
+4 errors
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:89)
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:50)
 	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.delegateAndHandleErrors(NormalizingJavaCompiler.java:98)
@@ -338,7 +281,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 27s
+BUILD FAILED in 26s
 1 actionable task: 1 executed
 
 == job status: failure ==
