@@ -1,20 +1,16 @@
 package com.tacz.guns.block.entity;
 
-/** 临时探针 4（提交后立即删除）：UserNameToIdResolver / NameAndId 的方法名与返回类型。 */
+/** 临时探针 5（提交后立即删除）：NameAndId 的访问器 + 后台执行器。 */
 public class ApiProbe {
     static void probe(net.minecraft.server.MinecraftServer server) {
-        var cache = server.services().nameToIdCache();
-        var a1 = cache.get("Notch");
-        a1.zzz();
-        var a2 = cache.resolve("Notch");
-        a2.zzz();
-        var a3 = cache.find("Notch");
-        a3.zzz();
-        var a4 = cache.lookup("Notch");
-        a4.zzz();
-        var nameAndId = server.services().profileRepository().findProfileByName("Notch").orElse(null);
-        nameAndId.zzz();
-        var fetched = server.services().sessionService().fetchProfile(java.util.UUID.randomUUID(), true);
-        fetched.zzz();
+        var nameAndId = server.services().nameToIdCache().get("Notch").orElse(null);
+        var x1 = nameAndId.id();
+        x1.zzz();
+        var x2 = nameAndId.name();
+        x2.zzz();
+        var ex1 = net.minecraft.Util.backgroundExecutor();
+        ex1.zzz();
+        var ex2 = net.minecraft.util.Util.backgroundExecutor();
+        ex2.zzz();
     }
 }
