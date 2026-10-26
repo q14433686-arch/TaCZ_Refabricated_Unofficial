@@ -2,7 +2,6 @@ package com.tacz.guns.entity;
 
 import cn.sh1rocu.tacz.api.LogicalSide;
 import cn.sh1rocu.tacz.api.extension.IMinecart;
-import com.mojang.authlib.GameProfile;
 import com.tacz.guns.api.entity.ITargetEntity;
 import com.tacz.guns.api.event.common.EntityHurtByGunEvent;
 import com.tacz.guns.config.client.RenderConfig;
@@ -12,6 +11,7 @@ import com.tacz.guns.init.ModItems;
 import com.tacz.guns.init.ModSounds;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunHurt;
+import com.tacz.guns.util.TargetOwnerProfiles;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
@@ -23,6 +23,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -43,7 +44,8 @@ public class TargetMinecart extends AbstractMinecart implements ITargetEntity, I
             .clientTrackingRange(8)
             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("tacz", "target_minecart")));
 
-    private @Nullable GameProfile gameProfile = null;
+    /** 头像档案缓存（客户端渲染用）；类型与来由见 {@link TargetOwnerProfiles}。 */
+    private @Nullable ResolvableProfile ownerProfile = null;
 
     public TargetMinecart(EntityType<TargetMinecart> type, Level world) {
         super(type, world);
@@ -132,12 +134,26 @@ public class TargetMinecart extends AbstractMinecart implements ITargetEntity, I
         return itemStack;
     }
 
+    /**
+     * 改过名的标靶矿车的头像档案；没改名返回 {@code null}（不画头像）。
+     *
+     * <p>由客户端 {@code TargetMinecartRenderer#extractRenderState} 每帧调用。以前这里是
+     * {@code new GameProfile(null, 名字)}，在本线 authlib 7 上必抛 NPE，等于一辆改过名的标靶矿车
+     * 一进渲染距离就让客户端崩溃（见 {@link TargetOwnerProfiles}）。名字变了会重建缓存。</p>
+     */
     @Nullable
-    public GameProfile getGameProfile() {
-        if (this.gameProfile == null && this.getCustomName() != null) {
-            this.gameProfile = new GameProfile(null, this.getCustomName().getString());
+    public ResolvableProfile getOwnerProfile() {
+        Component customName = this.getCustomName();
+        if (customName == null) {
+            return null;
         }
-        return gameProfile;
+        String name = customName.getString();
+        ResolvableProfile cached = this.ownerProfile;
+        if (cached == null || !cached.name().filter(name::equals).isPresent()) {
+            cached = TargetOwnerProfiles.fromName(name);
+            this.ownerProfile = cached;
+        }
+        return cached;
     }
 
     @Override

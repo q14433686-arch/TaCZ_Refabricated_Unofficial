@@ -1,12 +1,12 @@
 package com.tacz.guns.client.renderer.block;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.block.TargetBlock;
 import com.tacz.guns.block.entity.TargetBlockEntity;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
+import com.tacz.guns.client.renderer.other.TargetOwnerSkins;
 import com.tacz.guns.client.resource.InternalAssetLoader;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -16,11 +16,11 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -58,10 +58,11 @@ public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, Ta
         state.facing = blockState.getValue(TargetBlock.FACING);
         state.rot = blockEntity.rot;
         state.oRot = blockEntity.oRot;
-        GameProfile owner = blockEntity.getOwner();
+        ResolvableProfile owner = blockEntity.getOwner();
         if (owner != null) {
             state.hasOwner = true;
-            state.skinTexture = DefaultPlayerSkin.get(owner).body().texturePath();
+            // 原版头颅同款：客户端异步按名字解析皮肤，未就绪时先用默认皮肤（见 TargetOwnerSkins）。
+            state.skinTexture = TargetOwnerSkins.texture(owner);
         } else {
             state.hasOwner = false;
             state.skinTexture = null;

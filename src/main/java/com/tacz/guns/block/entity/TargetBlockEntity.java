@@ -1,10 +1,10 @@
 package com.tacz.guns.block.entity;
 
-import com.mojang.authlib.GameProfile;
 import com.tacz.guns.block.TargetBlock;
 import com.tacz.guns.config.common.OtherConfig;
 import com.tacz.guns.init.ModBlocks;
 import com.tacz.guns.init.ModSounds;
+import com.tacz.guns.util.TargetOwnerProfiles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -15,6 +15,7 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Nameable;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -35,11 +36,31 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
      * 标靶复位时间，暂定为 5 秒
      */
     private static final int RESET_TIME = 5 * 20;
-    private static final String OWNER_TAG = "Owner";
+    /**
+     * 标靶主人名（头像皮肤所属玩家）。<b>只存名字这一个键</b>。
+     *
+     * <p><b>历史坑（26.2 线 2026-10-26 发现；本线代码在修前除 {@code TYPE} 的构造写法外与之逐字等价）</b>：上游把主人整个写成
+     * {@code Owner} 复合标签；移植时 {@code saveAdditional} 改成了扁平键 {@code owner_uuid} /
+     * {@code owner_name}，{@code loadAdditional} 的前置判据却仍写着 {@code Owner} ——
+     * 这个键从那一刻起再没有任何地方写入，判据恒为假，读取整段被跳过。
+     * 又因为客户端的方块实体也是靠 {@code loadAdditional} 吃更新包的，客户端同样永远读不到主人，
+     * 头像根本画不出来。现在写入与读取用同一个键，{@code scripts/verify_block_entity_persistence.py}
+     * 会在 CI 里守住「判据键必须被同一个类写入、读写键对称」。</p>
+     *
+     * <p>兼容：旧版本写下的 {@code owner_uuid} 会被忽略（UUID 由客户端按名字重新解析），
+     * {@code owner_name} 照常读取；26.2 线存档里的 {@code owner_uuid} + {@code owner_name}
+     * 同理，本线写出的只有 {@code owner_name} 的存档在 26.2 线也读得回来（名字-only）。</p>
+     */
+    private static final String OWNER_NAME_TAG = "owner_name";
     private static final String CUSTOM_NAME_TAG = "CustomName";
     public float rot = 0;
     public float oRot = 0;
-    private @Nullable GameProfile owner;
+    /**
+     * 头像档案。类型是原版的 {@link ResolvableProfile}（可以只有名字），<b>不是</b> {@code GameProfile}：
+     * 本线的 authlib 7 里 {@code GameProfile} 不接受 {@code null} UUID，
+     * 「只有名字」的档案根本造不出来，见 {@link TargetOwnerProfiles}。
+     */
+    private @Nullable ResolvableProfile owner;
     private @Nullable Component name;
 
     public TargetBlockEntity(BlockPos pos, BlockState blockState) {
@@ -56,21 +77,20 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
     }
 
     @Nullable
-    public GameProfile getOwner() {
+    public ResolvableProfile getOwner() {
         return owner;
     }
 
-    public void setOwner(@Nullable GameProfile owner) {
+    public void setOwner(@Nullable ResolvableProfile owner) {
         this.owner = owner;
-        // 26.2: SkullBlockEntity.updateGameprofile removed. Just refresh directly.
+        // 服务端不解析：UUID 与皮肤由客户端渲染时经 PlayerSkinRenderCache 异步解析（同原版头颅）。
         this.refresh();
     }
 
     @Override
     public void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
-        if (!input.getStringOr(OWNER_TAG, "").isEmpty()) {
-            this.owner = new com.mojang.authlib.GameProfile(java.util.UUID.fromString(input.getStringOr("owner_uuid","")), input.getStringOr("owner_name",""));
-        }
+        // 与 saveAdditional 写的键保持一致；空串 → null，即没有主人（不再有「判据键从不被写入」的死分支）。
+        this.owner = TargetOwnerProfiles.fromName(input.getStringOr(OWNER_NAME_TAG, ""));
         if (!input.getStringOr(CUSTOM_NAME_TAG, "").isEmpty()) {
             this.name = net.minecraft.network.chat.ComponentSerialization.CODEC
                     .parse(com.mojang.serialization.JsonOps.INSTANCE, com.google.gson.JsonParser.parseString(input.getStringOr(CUSTOM_NAME_TAG, "")))
@@ -80,9 +100,9 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
 
     @Override
     protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
-                if (owner != null) {
-            output.putString("owner_uuid", owner.id()!=null?owner.id().toString():"");
-            output.putString("owner_name", owner.name()!=null?owner.name():"");
+        if (owner != null) {
+            // 只有「按名字创建」的档案才有名字可存（TargetOwnerProfiles 只造这一种）。
+            owner.name().ifPresent(ownerName -> output.putString(OWNER_NAME_TAG, ownerName));
         }
         if (this.name != null) {
             output.putString(CUSTOM_NAME_TAG, net.minecraft.network.chat.ComponentSerialization.CODEC
