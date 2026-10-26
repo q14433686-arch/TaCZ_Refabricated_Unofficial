@@ -17,6 +17,7 @@ renov 26.2 都实测被拒过）；②本会话的 arena 分支被固定在 26.2
 | `TaCZ_Renovated/{26.2,26.1.2,1.21.11}/compile-check.yml` | renov 三条线，替换现役 compile-check | v4 升级：补主分支 push + PR 触发、`concurrency`、日志回推只在 `arena/**` |
 | `refab-1.21.11/verify-mixin-targets-portable.patch` | refab `1.21.11` 分支的 `docs/verify_mixin_targets.py` | 把两条沙箱硬编码路径（`/usr/lib/jvm/...`、`/home/user/.gradle`）改成 `JAVA_HOME` / `GRADLE_USER_HOME` 可移植版 —— **不打这个补丁就不能挂 CI** |
 | `refab-1.21.11/build-yml-verify-steps.md` | refab `1.21.11` 分支已暂存的 `docs/ci/build.yml` | 追加两条运行期安全校验（mixin 目标 / shader import）的 YAML 片段 + 插入位置 + `Upload jars` 改 `if: always()` 的理由 |
+| `refab-26.2/verify-block-scripts.md` | refab **26.2 本线**的 `.github/workflows/build.yml` | 追加两个离线守门脚本（方块掉落接线 / 方块实体持久化）的 YAML 片段 —— 属于「凭据无 `workflow` 权限」而非「目标在别处」，2026-10-27 首次出现 |
 
 ## 已做过的验证（2026-09-02）
 

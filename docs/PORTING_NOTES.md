@@ -317,6 +317,8 @@ poseStack.translate(0, -aabb.minY() * ... + 0.0625F, 0);
 | `AbstractMinecart` | 换包到 `world.entity.vehicle.minecart` |
 | 战利品表 | 在 **RELOADABLE 层**，须用 `MinecraftServer#reloadableRegistries().lookup()` |
 | 方块掉落（多方块） | 被连带清掉的另一半会经 `updateShape→AIR→Block#updateOrDestroy→destroyBlock(drop=true)` **自己走战利品表**（标志位无 `UPDATE_SUPPRESS_DROPS` 时）。所以：产出条件要锁在根半边（`part=foot` / `half=lower`）、**不要**在 `playerWillDestroy` 里再手工 `popResource`（会双份）、创造模式的抑制要挂在「不产出的那一半」上。2026-10-26 双掉落事故见 `investigations/MULTIBLOCK_DOUBLE_DROP_26_2_2026_10_26.md` |
+| `Block#onRemove` | **已删除**，而且**没有**「方块实体移除时自动清理」的替代默认行为。带内容物的方块实体必须自己覆写 `BlockEntity#preRemoveSideEffects(BlockPos, BlockState)`（原版箱子/木桶/潜影盒都靠它），掉落放在那里、**不要再进战利品表**（会双份），并只在 `!level.isClientSide()` 时掉。别用 `getBlockState()` 取朝向：移除时缓存状态可能已是空气，取属性会抛 `Cannot get property ... from air`。2026-10-27 雕像掉枪事故见 `investigations/BLOCK_ENTITY_DATA_LOSS_26_2_2026_10_27.md` |
+| `ValueInput`/`ValueOutput` 迁移 | 判据键必须与**实际写入**的键一致。上游用复合标签（如写 `Owner` 游戏档案）时，移植常把数据拆成扁平键（`owner_uuid`/`owner_name`）却漏改 `loadAdditional` 的前置判据，于是「判据恒假 → 整段数据读不到」，编译器与日志都不会提示。机器可查：`python3 scripts/verify_block_entity_persistence.py --strict` |
 | `Item#getMaxStackSize(ItemStack)` | 不存在，只有 `getDefaultMaxStackSize()`；上限改由 `DataComponents.MAX_STACK_SIZE` 组件决定 |
 | `SharedConstants` | `getCurrentVersion().name()`（不是 `getName()`） |
 | 实体碰撞箱调试 | `Minecraft.debugEntries` + `DebugScreenEntryList#isCurrentlyEnabled(Identifier)` |
