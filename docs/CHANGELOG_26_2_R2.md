@@ -37,9 +37,14 @@ metadata，不能写成 `1.1.8-R2`。
   `loadAdditional` 的前置判据仍写着上游的 `Owner` 键（此后再无写入）⇒ 判据恒假 ⇒
   带名字的标靶重进存档后头像信息消失。判据与写入键对齐，补名字-only 主人的还原与旧键兼容。
   详见[调查记录](investigations/BLOCK_ENTITY_DATA_LOSS_26_2_2026_10_27.md)。
+- **修复标靶头像的「名字 → 皮肤」解析**：服务端补全档案（26.2 的
+  `MinecraftServer#services().nameToIdCache()` → `UserNameToIdResolver#get(String)`，阻塞调用放后台线程），
+  客户端渲染从只看 UUID 的 `DefaultPlayerSkin` 改为 `SkinManager#createLookup`。查询失败不再静默：
+  拼错/离线/被拒都会在服务端日志留下 WARN。26.2 档案 API 的逐条探针结果记录在调查记录 §5.2。
 - **新增离线审计** `scripts/verify_block_entity_persistence.py`：方块实体的存档键对称性、
   判据键存在性、持有 `ItemStack` 者必须有移除钩子、禁止 `onRemove` 覆写。已用「回退到
-  修复前的两个文件」验证过它能同时抓出上述两个问题。
+  修复前的两个文件」验证过它能同时抓出上述两个问题。本脚本与 `verify_block_drops.py` 已于
+  2026-10-27 以 `--strict` 加入 `.github/workflows/build.yml` 的静态校验段（`docs/ci/build.yml` 同步）。
 - **验证边界**：两项修复已通过离线审计与 26.2 CI `:compileJava`（`BUILD SUCCESSFUL`，
   同时证明 `preRemoveSideEffects(BlockPos, BlockState)` 在 26.2 存在且签名一致），
   但**未实机验证**；发布前须按调查记录 §6 的清单实测（破坏/爆炸/活塞三种移除路径、
