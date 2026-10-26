@@ -9,6 +9,7 @@ import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.resource.InternalAssetLoader;
 import com.tacz.guns.config.client.RenderConfig;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -61,10 +62,33 @@ public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, Ta
         GameProfile owner = blockEntity.getOwner();
         if (owner != null) {
             state.hasOwner = true;
-            state.skinTexture = DefaultPlayerSkin.get(owner).body().texturePath();
+            state.skinTexture = resolveSkin(owner);
         } else {
             state.hasOwner = false;
             state.skinTexture = null;
+        }
+    }
+
+    /**
+     * 解析标靶头像用的皮肤贴图。
+     *
+     * <p>以前这里直接用 {@link DefaultPlayerSkin#get(GameProfile)} —— 它**只按 UUID 挑默认皮肤**，
+     * 从不查会话服务。而标靶的主人绝大多数是「只有名字」的档案（`/give` 改名放置、或
+     * 上游写下的名字-only 档案），UUID 为空 ⇒ 永远是默认皮肤，且**没有任何日志**。</p>
+     *
+     * <p>26.2 的正确路径与同项目的矿车标靶（{@code TargetMinecartRenderer}）一致：
+     * {@code SkinManager#createLookup(profile, false)}。它对名字-only 的档案会按名字
+     * 异步查皮肤，未就绪时先返回默认皮肤、就绪后自动替换（原版头颅就是这个行为）。
+     * 因此服务端补全 UUID 只是让档案更完整；即使补全失败，客户端仍能按名字拿到真皮肤。</p>
+     *
+     * <p>兜底：档案非法（空名字、怪字符）时 {@code createLookup} 可能抛异常，
+     * 这里退回 {@link DefaultPlayerSkin}，绝不让渲染线程因为一个头像而崩。</p>
+     */
+    private static Identifier resolveSkin(GameProfile profile) {
+        try {
+            return Minecraft.getInstance().getSkinManager().createLookup(profile, false).get().body().texturePath();
+        } catch (RuntimeException e) {
+            return DefaultPlayerSkin.get(profile).body().texturePath();
         }
     }
 

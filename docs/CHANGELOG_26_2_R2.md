@@ -21,9 +21,41 @@ metadata，不能写成 `1.1.8-R2`。
   把 XY 粒子四边形的 +Z 法线转换为 Direction 所需的 +Y 基，保留旧 UV 走向，
   并沿命中面法线偏移 `0.01×quadSize`，避免贴面 z-fighting。
   详见[移植与验收记录](investigations/BULLET_HOLE_ORIENTATION_BACKPORT_26_2.md)。
+- **修复多方块工作台「挖另一半掉两个」**：生存模式下破坏 B 工作台
+  （`gun_smith_table` / `workbench_b`）的 head、或 C 工作台（`workbench_c`）的 upper 时，
+  会同时爆出两个工作台。根因是 `AbstractGunSmithTableBlock#playerWillDestroy` 对非根半边
+  手工 `popResource` 了一份克隆，与「根半边经 `updateShape → AIR → destroyBlock(drop=true)`
+  走自己的战利品表」叠加。已移除该手工掉落，掉落全部交回战利品表（26.3 线 commit
+  `021b546` 的同源修复）。顺带修正 `GunSmithTableBlockB` 创造模式下抑制半边掉落的判据方向
+  （原判据与自身注释相反，导致创造模式挖 head 会漏出一个物品）。
+  详见[调查记录](investigations/MULTIBLOCK_DOUBLE_DROP_26_2_2026_10_26.md)。
+- **修复雕像上的枪随方块消失**：上游在 `Block#onRemove` 里掉枪，而 26.2 已删除
+  `onRemove` 且**没有任何**「方块实体移除时自动清理」的默认行为，移植时只留下一行注释
+  （`StatueBlock` 原第 160 行）。改为覆写 `BlockEntity#preRemoveSideEffects`，覆盖玩家挖掘 /
+  爆炸 / 活塞 / `/setblock` 全部移除路径，只在服务端掉落。
+- **修复标靶主人重启后丢失**：`saveAdditional` 已改写成 `owner_uuid`/`owner_name`，但
+  `loadAdditional` 的前置判据仍写着上游的 `Owner` 键（此后再无写入）⇒ 判据恒假 ⇒
+  带名字的标靶重进存档后头像信息消失。判据与写入键对齐，补名字-only 主人的还原与旧键兼容。
+  详见[调查记录](investigations/BLOCK_ENTITY_DATA_LOSS_26_2_2026_10_27.md)。
+- **修复标靶头像的「名字 → 皮肤」解析**：服务端补全档案（26.2 的
+  `MinecraftServer#services().nameToIdCache()` → `UserNameToIdResolver#get(String)`，阻塞调用放后台线程），
+  客户端渲染从只看 UUID 的 `DefaultPlayerSkin` 改为 `SkinManager#createLookup`。查询失败不再静默：
+  拼错/离线/被拒都会在服务端日志留下 WARN。26.2 档案 API 的逐条探针结果记录在调查记录 §5.2。
+- **新增离线审计** `scripts/verify_block_entity_persistence.py`：方块实体的存档键对称性、
+  判据键存在性、持有 `ItemStack` 者必须有移除钩子、禁止 `onRemove` 覆写。已用「回退到
+  修复前的两个文件」验证过它能同时抓出上述两个问题。本脚本与 `verify_block_drops.py` 已于
+  2026-10-27 以 `--strict` 加入 `.github/workflows/build.yml` 的静态校验段（`docs/ci/build.yml` 同步）。
+- **验证边界**：两项修复已通过离线审计与 26.2 CI `:compileJava`（`BUILD SUCCESSFUL`，
+  同时证明 `preRemoveSideEffects(BlockPos, BlockState)` 在 26.2 存在且签名一致），
+  但**未实机验证**；发布前须按调查记录 §6 的清单实测（破坏/爆炸/活塞三种移除路径、
+  改名标靶重进存档）。
 - **验证边界**：弹孔修复已核对本地 26.2 游戏字节码并通过离线六面几何模型及源码检查；
   本次弹孔改动未完成 Java 编译或游戏内验证。此前 JEI 修复的 CI 编译成功不覆盖这次弹孔改动。
   未声称修复 REI 全量重载风险或证实普通工作台手摆合成失败。
+  双掉落修复已通过 26.2 的 CI `:compileJava`（`build-reports/compile-java.log`）与离线守卫
+  `scripts/verify_block_drops.py --strict`，但**未实机验证**（依据是 26.3 线已实测的同源结论与
+  本分支同款代码路径）；发布前需按上述调查记录 §5.1 的验收矩阵逐项跑一遍。
+  未声称 26.2 的战利品表 schema 已核对。
 
 ## R3-hotfix2（2026-09-13）
 
