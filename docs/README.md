@@ -36,6 +36,7 @@
 | `lineage/AUDIT_2612_RENDER_42COMMITS_20260901.md` | ★ 全量对照 26.1.2 的 42 个 commit（实机"镜内外均 1X"复盘）：两层漏项（放行窄遍自带的 capture 覆盖守卫 + 窄遍 finalize 回灌守卫）、三层审计判据与 `scripts/audit_sibling_render_line.py`、20 个文件的终态 diff 逐条定性、以及"CI 全绿但功能是坏的"这条教训 |
 | `lineage/SYNC_CHECKLIST_1211_NEOFORGE_SISTER_20260901.md` | ★ 发给**姊妹项目 TaCZ_Renovated 的 NeoForge `1.21.11` 分支**的同步清单（2026-09-01，按对方 tip `e3d9dd5c` 逐文件读码实测）：镜内 `text_show` 两个根因在对方线上都还在（`BedrockRenderSnapshot#submitFunctionalTasks` 无调用点、`PapiManager` 用 `I18n.get`）⇒ P0-a/P0-b 施工点 + 判据；`TextShowRender` 无掩码裁剪 ⇒ P1 全套文件映射 + 本世代四个渲染 API 事实（含"必须注册壳纹理"这条与 26.1.2 的偏离）；§5 明确**别同步**的（PIP 两键、FCAP、全部 TML/mesh GPU 项、我方 CI 状态）；§6 可直接抄我方哪几个提交 |
 | `lineage/REPORT_REVIEW_ZOOMIFY_SCOPE_20261022.md` | ★ 对玩家评论「1.21.11 与 Zoomify 冲突」里 AI 三点诊断的**逐条甄别**（2026-10-22，静态审查 + 离线复算，**未编译、未实机**）：① FOV 钩子「被 Zoomify 挤掉」的机理被 MixinExtras 文档与 Zoomify 源码反驳、`@Redirect` 方案不采纳，另记 `ZoomifyCompat` 与 Zoomify 自身 mixin 疑似叠加（待三步实机）；② PIP 默认就是关，开启时「世界让位但镜内没画」的失败模式与一处日志与行为不符；③ `ReticleMarkFilter` 对整块大平面的误伤**按构造成立**，默认包 `scope_vudu` 的红色十字线贴图平面就是仓内实例，且注释里的 5.804 / 8.8 与代码度量口径对不上；含 `scripts/audit_reticle_marks.py` 用法、实机步骤与未实施的修法对比 |
+| `lineage/SYNC_REVIEW_262_TO_1211_20261027.md` | ★ 26.2(main) 2026-10-26 那一批「方块 / 方块实体」新项的**逐项甄别与回移**（2026-10-27，静态推演 + CI 编译，**未实机**）：创造模式 B 工作台判据写反、雕像枪随方块消失（`preRemoveSideEffects`）、标靶主人存档键对不上，以及本线额外发现的 `new GameProfile(null, 名字)` 运行期必抛 NPE（对 authlib-7.0.61 反射实测）；26.2 的服务端名字→UUID 解析与 `SkinManager#createLookup` **不移植**并给出理由与替代做法；末尾有实机矩阵 |
 
 ## 3. 取证与审计（完结即归档，不再更新；引用前先看文件头状态）
 

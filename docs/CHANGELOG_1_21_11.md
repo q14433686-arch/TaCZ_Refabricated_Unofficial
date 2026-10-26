@@ -5,6 +5,31 @@
 
 ---
 
+## 26.2 新增项按 1.21.11 实际基线回移（2026-10-27；`compileJava` 见 CI，**未实机**）
+
+不是升级到 Minecraft 26.2，也未改版本号（仍是 R3-hotfix3）。逐项处置、与 26.2 的出入与证据见
+[`lineage/SYNC_REVIEW_262_TO_1211_20261027.md`](lineage/SYNC_REVIEW_262_TO_1211_20261027.md)。
+
+- **创造模式 B 工作台**（`gun_smith_table` / `workbench_b`）：抑制「另一半掉落」的判据写反，已改为守卫挂 HEAD、
+  静默拿掉会产出的 FOOT。按 1.21.11 反编译源码推演，修前创造模式挖任意一半都会漏出一个工作台。生存模式的
+  双掉落本线 2026-10-21 已修；本轮只把 `AbstractGunSmithTableBlock` 对齐 26.2 终态（删空覆写、补类注释）。
+- **雕像上的枪**：`Block#onRemove` 在 1.21.11 已删除，`StatueBlockEntity` 现在覆写
+  `preRemoveSideEffects` 掉枪（修前枪会随雕像静默消失）。
+- **标靶主人**：存档键对不上（读 `Owner`、写 `owner_*`）已改成只存读 `owner_name`；
+  **同时发现并修掉**一个 26.2 没改的运行期必现问题：本线 authlib-7.0.61 的 `GameProfile` 拒绝 null UUID
+  （CI 反射实测），`TargetBlock#setPlacedBy`（放置改过名的标靶）与 `TargetMinecart#getGameProfile`
+  （改过名的标靶矿车，客户端每帧调用）里的 `new GameProfile(null, 名字)` 必抛 NPE。头像档案改用原版
+  `ResolvableProfile`（`util/TargetOwnerProfiles`），皮肤由客户端经原版 `PlayerSkinRenderCache`
+  异步解析（`client/renderer/other/TargetOwnerSkins`，同原版头颅；离线 / 非玩家名 / 未就绪 = 默认皮肤）。
+- **未照搬** 26.2 的服务端「名字→UUID」解析与 `SkinManager#createLookup`：前提（null UUID 档案）在本线不成立，
+  且 1.21.11 的 `SkinManager` 自身不按名字查人，那条链不会产出真皮肤。
+- **CI 守门**：新增 `scripts/verify_block_drops.py` 与 `scripts/verify_block_entity_persistence.py`
+  （自 26.2 适配，各多一项本线新增检查：创造模式判据方向 / 禁止 `new GameProfile(..., null, ...)`）。
+  接入 `.github/workflows/build.yml` 的状态见 `docs/ci/README.md`。
+- 验证边界：脚本在修前 / 修后的源码树上各跑过；**没有进游戏**。需要实机的矩阵见同步审查文档末尾。
+
+---
+
 ## R3-hotfix3 源码版本号（2026-10-22）
 
 在上述 26.3 同病项按本分支基线回移后，将构建元数据中的 `R3-hotfix2`
