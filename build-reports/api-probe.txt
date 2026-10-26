@@ -204,4 +204,158 @@ public class net.minecraft.client.renderer.PlayerSkinRenderCache {
   private static net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo lambda$createLookup$0(net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo);
   static {};
 }
+== authlib GameProfile (constructor null checks) ==
+authlib jar: /home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/authlib/9.0.75/d61056a234d5e4b272e09d59b0713f80d6c0b6af/authlib-9.0.75.jar
+Compiled from "GameProfile.java"
+public final class com.mojang.authlib.GameProfile extends java.lang.Record {
+  private final java.util.UUID id;
+
+  private final java.lang.String name;
+
+  private final com.mojang.authlib.properties.PropertyMap properties;
+
+  public com.mojang.authlib.GameProfile(java.util.UUID, java.lang.String, com.mojang.authlib.properties.PropertyMap);
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Record."<init>":()V
+         4: aload_1
+         5: ldc           #7                  // String Profile ID must not be null
+         7: invokestatic  #9                  // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+        10: pop
+        11: aload_2
+        12: ldc           #15                 // String Profile name must not be null
+        14: invokestatic  #9                  // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+        17: pop
+        18: aload_3
+        19: ldc           #17                 // String Profile properties must not be null
+        21: invokestatic  #9                  // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+        24: pop
+        25: aload_0
+        26: aload_1
+        27: putfield      #19                 // Field id:Ljava/util/UUID;
+        30: aload_0
+        31: aload_2
+        32: putfield      #25                 // Field name:Ljava/lang/String;
+        35: aload_0
+        36: aload_3
+        37: putfield      #29                 // Field properties:Lcom/mojang/authlib/properties/PropertyMap;
+        40: return
+
+  public com.mojang.authlib.GameProfile(java.util.UUID, java.lang.String);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aload_2
+         3: getstatic     #33                 // Field com/mojang/authlib/properties/PropertyMap.EMPTY:Lcom/mojang/authlib/properties/PropertyMap;
+         6: invokespecial #38                 // Method "<init>":(Ljava/util/UUID;Ljava/lang/String;Lcom/mojang/authlib/properties/PropertyMap;)V
+         9: return
+
+  public final java.lang.String toString();
+    Code:
+         0: aload_0
+         1: invokedynamic #41,  0             // InvokeDynamic #0:toString:(Lcom/mojang/authlib/GameProfile;)Ljava/lang/String;
+         6: areturn
+
+  public final int hashCode();
+    Code:
+         0: aload_0
+         1: invokedynamic #45,  0             // InvokeDynamic #0:hashCode:(Lcom/mojang/authlib/GameProfile;)I
+         6: ireturn
+
+  public final boolean equals(java.lang.Object);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokedynamic #49,  0             // InvokeDynamic #0:equals:(Lcom/mojang/authlib/GameProfile;Ljava/lang/Object;)Z
+         7: ireturn
+
+  public java.util.UUID id();
+    Code:
+         0: aload_0
+         1: getfield      #19                 // Field id:Ljava/util/UUID;
+         4: areturn
+
+  public java.lang.String name();
+    Code:
+         0: aload_0
+         1: getfield      #25                 // Field name:Ljava/lang/String;
+         4: areturn
+
+  public com.mojang.authlib.properties.PropertyMap properties();
+    Code:
+         0: aload_0
+         1: getfield      #29                 // Field properties:Lcom/mojang/authlib/properties/PropertyMap;
+         4: areturn
+== BlockEntityRendererProvider$Context ==
+Compiled from "BlockEntityRendererProvider.java"
+public final class net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider$Context extends java.lang.Record {
+  private final net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher blockEntityRenderDispatcher;
+  private final net.minecraft.client.renderer.block.BlockModelResolver blockModelResolver;
+  private final net.minecraft.client.renderer.item.ItemModelResolver itemModelResolver;
+  private final net.minecraft.client.renderer.entity.EntityRenderDispatcher entityRenderer;
+  private final net.minecraft.client.model.geom.EntityModelSet entityModelSet;
+  private final net.minecraft.client.gui.Font font;
+  private final net.minecraft.client.resources.model.sprite.SpriteGetter sprites;
+  private final net.minecraft.client.renderer.PlayerSkinRenderCache playerSkinRenderCache;
+  public net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider$Context(net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher, net.minecraft.client.renderer.block.BlockModelResolver, net.minecraft.client.renderer.item.ItemModelResolver, net.minecraft.client.renderer.entity.EntityRenderDispatcher, net.minecraft.client.model.geom.EntityModelSet, net.minecraft.client.gui.Font, net.minecraft.client.resources.model.sprite.SpriteGetter, net.minecraft.client.renderer.PlayerSkinRenderCache);
+  public net.minecraft.client.model.geom.ModelPart bakeLayer(net.minecraft.client.model.geom.ModelLayerLocation);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher blockEntityRenderDispatcher();
+  public net.minecraft.client.renderer.block.BlockModelResolver blockModelResolver();
+  public net.minecraft.client.renderer.item.ItemModelResolver itemModelResolver();
+  public net.minecraft.client.renderer.entity.EntityRenderDispatcher entityRenderer();
+  public net.minecraft.client.model.geom.EntityModelSet entityModelSet();
+  public net.minecraft.client.gui.Font font();
+  public net.minecraft.client.resources.model.sprite.SpriteGetter sprites();
+  public net.minecraft.client.renderer.PlayerSkinRenderCache playerSkinRenderCache();
+}
+== EntityRendererProvider$Context ==
+Compiled from "EntityRendererProvider.java"
+public class net.minecraft.client.renderer.entity.EntityRendererProvider$Context {
+  private final net.minecraft.client.renderer.entity.EntityRenderDispatcher entityRenderDispatcher;
+  private final net.minecraft.client.renderer.block.BlockModelResolver blockModelResolver;
+  private final net.minecraft.client.renderer.item.ItemModelResolver itemModelResolver;
+  private final net.minecraft.client.renderer.MapRenderer mapRenderer;
+  private final net.minecraft.server.packs.resources.ResourceManager resourceManager;
+  private final net.minecraft.client.model.geom.EntityModelSet modelSet;
+  private final net.minecraft.client.resources.model.EquipmentAssetManager equipmentAssets;
+  private final net.minecraft.client.gui.Font font;
+  private final net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer equipmentRenderer;
+  private final net.minecraft.client.resources.model.sprite.AtlasManager atlasManager;
+  private final net.minecraft.client.renderer.PlayerSkinRenderCache playerSkinRenderCache;
+  public net.minecraft.client.renderer.entity.EntityRendererProvider$Context(net.minecraft.client.renderer.entity.EntityRenderDispatcher, net.minecraft.client.renderer.block.BlockModelResolver, net.minecraft.client.renderer.item.ItemModelResolver, net.minecraft.client.renderer.MapRenderer, net.minecraft.server.packs.resources.ResourceManager, net.minecraft.client.model.geom.EntityModelSet, net.minecraft.client.resources.model.EquipmentAssetManager, net.minecraft.client.resources.model.sprite.AtlasManager, net.minecraft.client.gui.Font, net.minecraft.client.renderer.PlayerSkinRenderCache);
+  public net.minecraft.client.renderer.entity.EntityRenderDispatcher getEntityRenderDispatcher();
+  public net.minecraft.client.renderer.block.BlockModelResolver getBlockModelResolver();
+  public net.minecraft.client.renderer.item.ItemModelResolver getItemModelResolver();
+  public net.minecraft.client.renderer.MapRenderer getMapRenderer();
+  public net.minecraft.server.packs.resources.ResourceManager getResourceManager();
+  public net.minecraft.client.model.geom.EntityModelSet getModelSet();
+  public net.minecraft.client.resources.model.EquipmentAssetManager getEquipmentAssets();
+  public net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer getEquipmentRenderer();
+  public net.minecraft.client.resources.model.sprite.SpriteGetter getSprites();
+  public net.minecraft.client.renderer.texture.TextureAtlas getAtlas(net.minecraft.resources.Identifier);
+  public net.minecraft.client.model.geom.ModelPart bakeLayer(net.minecraft.client.model.geom.ModelLayerLocation);
+  public net.minecraft.client.gui.Font getFont();
+  public net.minecraft.client.renderer.PlayerSkinRenderCache getPlayerSkinRenderCache();
+}
+== SkullBlockEntity: profile keys in bytecode ==
+  private static final java.lang.String TAG_PROFILE;
+  private net.minecraft.world.item.component.ResolvableProfile owner;
+         6: ldc           #19                 // String profile
+         8: getstatic     #21                 // Field net/minecraft/world/item/component/ResolvableProfile.CODEC:Lcom/mojang/serialization/Codec;
+        12: getfield      #27                 // Field owner:Lnet/minecraft/world/item/component/ResolvableProfile;
+         7: ldc           #19                 // String profile
+         9: getstatic     #21                 // Field net/minecraft/world/item/component/ResolvableProfile.CODEC:Lcom/mojang/serialization/Codec;
+        21: checkcast     #22                 // class net/minecraft/world/item/component/ResolvableProfile
+        24: putfield      #27                 // Field owner:Lnet/minecraft/world/item/component/ResolvableProfile;
+  public net.minecraft.world.item.component.ResolvableProfile getOwnerProfile();
+         1: getfield      #27                 // Field owner:Lnet/minecraft/world/item/component/ResolvableProfile;
+         7: getstatic     #119                // Field net/minecraft/core/component/DataComponents.PROFILE:Lnet/minecraft/core/component/DataComponentType;
+        15: checkcast     #22                 // class net/minecraft/world/item/component/ResolvableProfile
+        18: putfield      #27                 // Field owner:Lnet/minecraft/world/item/component/ResolvableProfile;
+         6: getstatic     #119                // Field net/minecraft/core/component/DataComponents.PROFILE:Lnet/minecraft/core/component/DataComponentType;
+        10: getfield      #27                 // Field owner:Lnet/minecraft/world/item/component/ResolvableProfile;
+         6: ldc           #19                 // String profile
 == done ==
