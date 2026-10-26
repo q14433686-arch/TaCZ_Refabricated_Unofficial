@@ -58,6 +58,12 @@ jobs:
             echo "== javap $C ==" >> "$OUT"
             javap -classpath "$JAR" "$C" >> "$OUT" 2>&1 || true
           done
+          echo "== Minecraft: skin-related members ==" >> "$OUT"
+          javap -p -classpath "$JAR" net.minecraft.client.Minecraft 2>&1 | grep -iE "skin|profile" >> "$OUT" || true
+          echo "== SkullBlockRenderer: how it uses the cache (bytecode refs) ==" >> "$OUT"
+          javap -p -c -classpath "$JAR" net.minecraft.client.renderer.blockentity.SkullBlockRenderer 2>&1 | grep -iE "PlayerSkinRenderCache|ResolvableProfile|SkinManager|DefaultPlayerSkin|getOrDefault|createLookup|lookup" >> "$OUT" || true
+          echo "== PlayerSkinRenderCache: private members ==" >> "$OUT"
+          javap -p -classpath "$JAR" net.minecraft.client.renderer.PlayerSkinRenderCache >> "$OUT" 2>&1 || true
           echo "== done ==" >> "$OUT"
 
       - name: Push probe output back via contents API
