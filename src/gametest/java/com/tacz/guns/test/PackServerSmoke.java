@@ -17,6 +17,7 @@ public class PackServerSmoke {
                     "Server data came from the wrong gun pack layer");
         }
         helper.assertTrue(TimelessAPI.getCommonGunIndex(Identifier.parse("tacz:ak47")).isPresent(), "Default gun index missing");
+        com.tacz.guns.GunMod.LOGGER.info("PORT_SMOKE_SERVER: 26.3 overlay and tacz:ak47 loaded");
         helper.succeed();
     }
 }

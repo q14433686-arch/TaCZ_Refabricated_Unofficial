@@ -91,20 +91,56 @@ jobs:
 
       - name: Block and target regression tests (isolated Minecraft API doubles)
         run: |
+          python3 scripts/verify_recipe_viewer_reload.py
           python3 scripts/test_block_guards.py
           python3 scripts/test_block_entities.py
 
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Full build
-        run: ./gradlew build --console=plain --stacktrace --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew build --console=plain --stacktrace --no-daemon 2>&1 | tee "$RUNNER_TEMP/tacz-build.log"
+
+      - name: Verify server smoke and nested MAE
+        run: |
+          grep -F 'PORT_SMOKE_SERVER: 26.3 overlay and tacz:ak47 loaded' build/run/gameTest/logs/latest.log
+          python3 - <<'PY'
+          import json, zipfile
+          from pathlib import Path
+          jar, = [p for p in Path('build/libs').glob('*.jar') if not p.name.endswith('-sources.jar')]
+          with zipfile.ZipFile(jar) as z:
+              deps = [n for n in z.namelist() if n.startswith('META-INF/jars/mae-')]
+              assert deps == ['META-INF/jars/mae-1.1.4.jar'], deps
+              assert [j['file'] for j in json.loads(z.read('fabric.mod.json'))['jars']].count(deps[0]) == 1
+              assert not any('/guns/test/' in n or n.endswith('tacz-port-smoke.zip') for n in z.namelist())
+              print('::notice::' + jar.name + ' contains one registered ' + deps[0] + '; server overlay smoke passed')
+          PY
 
       - name: Client smoke (Mesa software rendering, integrated world and held gun)
         timeout-minutes: 12
         env:
           LIBGL_ALWAYS_SOFTWARE: 'true'
           ALSOFT_DRIVERS: 'null'
-        run: xvfb-run -a ./gradlew -PtaczClientSmoke runClientGameTest --console=plain --stacktrace
+        run: |
+          set -o pipefail
+          xvfb-run -a ./gradlew -PtaczClientSmoke runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
+          test -s "$(find build/run/clientGameTest/screenshots -name '*tacz_held_default_gun.png' -print -quit)"
+
+      - name: Annotate smoke or JUnit failures (also available via Checks API)
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os, re, xml.etree.ElementTree as ET
+          from pathlib import Path
+          def message(s):
+              print('::error::' + s[:1600].strip().replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          for p in Path('build/test-results/test').glob('*.xml'):
+              for f in ET.parse(p).iter('failure'): message(f.get('message', 'JUnit failure'))
+          for p in [*Path('build/run').glob('*/logs/latest.log'), *Path(os.environ['RUNNER_TEMP']).glob('tacz-*.log')]:
+              hits = [s for s in p.read_text(errors='replace').splitlines() if re.search(r'Caused by:|Exception|Error|error:|FAILED|timed out|renderer|Failed to|Assertion', s, re.I)]
+              for s in list(dict.fromkeys(hits))[-8:]: message(p.name + ': ' + s)
+          PY
 
       - name: Upload smoke evidence
         if: always()

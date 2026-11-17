@@ -83,6 +83,18 @@ class RecipeViewerChecks(unittest.TestCase):
         # Existing MixinPlugin derives the optional mod id from this package segment.
         self.assertEqual(("cn.sh1rocu.tacz.mixin." + MIXIN_NAME).split(".")[5], "jei")
 
+    def test_legacy_and_chunked_sync_share_one_current_connection_install(self):
+        base = JAVA / "com/tacz/guns/network/message"
+        legacy = code(base / "ServerMessageSyncGunPack.java")
+        parts = code(base / "ServerMessageSyncGunPackPart.java")
+        self.assertIn("isCurrent(connection)", legacy)
+        self.assertIn("isCurrent(connection)", parts)
+        self.assertIn("ServerMessageSyncGunPack.installCache(", parts)
+        install = legacy.split("static void installCache(", 1)[1]
+        calls = [install.index(call) for call in ("CommonNetworkCache.INSTANCE.fromNetwork(",
+                 "ClientIndexManager.reload()", "RecipeViewerReloadBridge.requestReload()")]
+        self.assertEqual(calls, sorted(calls))
+
     def test_listener_is_client_lifetime_not_connection_lifetime(self):
         source = code(BRIDGE)
         clear_body = source.split("public static void clear()", 1)[1].split("}", 1)[0]
