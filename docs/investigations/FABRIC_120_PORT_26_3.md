@@ -50,3 +50,17 @@ python3 scripts/audit_upstream_120.py /tmp/tacz-upstream.git --local cc990c3
 | D 客户端 | ADS 曲线/预设、音效对象、首/三人称动画及粒子、外显模型、测距/热成像、ocular 膨胀 | 保留原 26.3 默认渲染与可选 PIP、Iris、PAL/YSM；无光影截图或光栅模拟只证明相应路径，不能当作 Iris/GPU 矩阵 |
 | E 转换器与内置包 | 1.20.1→通用包转换 + `compat_1_21_1`、平移至 26.3 对应格式；脚本/索引/模型/音效/配方一一验证 | 转换到新目录，源包不变。默认美术依原授权与署名、单独追踪来源（[许可说明](../../LICENSES.md)）；不混入旧 loader jar、不先覆盖默认枪包 |
 | F 切换基线 | 上述必选行为已消费、缺省第三方项有明确边界，再升 SemVer 与元数据 | `build`、无可选 mod 的专服启动/重载、单机/联网、渲染与旧包矩阵；README/许可/manifest 和 `--strict` 一致 |
+
+## 已落地的切片与证据
+
+阶段表是门禁，不是完成清单。以下 SHA 均为本次 **26.3 工作分支**；专服 GameTest 是 Loom 开启的真实游戏进程，不等于公网联机测试。JUnit、源码检查、进程启动、持物截图和人工画面判读分开计。
+
+| 实现 | 验证范围 |
+|---|---|
+| `f737337`：新旧包元数据、双方独立的目录/ZIP overlay、优先级与句柄所有权；保留旧 recipe/lang | [构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44199536128)，`GunPackOverlayTest`。不把版本范围匹配等同实际懂得包里的内容。 |
+| `a7d7e70`：重载后有界压缩快照/分片、旧协议协商，安装完成再重建索引和请求配方查看器刷新 | `GunPackSyncTest` 和接线检查；没有拿源码接线代替 JEI/REI 实际联机显示。 |
+| `a41b95a` / `3d836d0` / `8fe9e5a`：附属脚本修饰符和标签、后坐推力；ADS 曲线/两套预设与独立双 FOV；声音字符串/对象与每次播放取样 | [`8fe9e5a` 编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44201061900)通过。[全量工作流](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44201061777)的 `Full build` 与 `Verify server smoke and nested MAE` 步骤通过：跑过 JUnit 和专服，找到 26.3 ZIP 覆盖标记、`tacz:ak47` 及恰好一份已注册的 MAE 1.1.4。客户端步骤 **12 分钟超时**，总体为失败；Checks 可见 Render thread 启动，未证实进入世界/出帧。首次专服缺少 server.properties 不是这个超时的根因。不是实机听感或 PIP/Iris 验证。 |
+| `e870a74` / `49bc480`：虚拟 OEM 与真实物品区分；variant/slot adapter 从 data/index、协商、存档、改装到 collector 模型与瞄准取样 | 新增 `port_test:oem` 测试包。覆盖物品组件读回、转接座必需时拒绝拆下，以及客户端收到变体后用其倍率/模型；不在成品里打包测试数据。 |
+| `1a1e8b7`：`force_aim_exit_on_reload/bolt` 双侧判断；开火后与换弹结束 Fabric 事件 | 发射者本地预测不再额外接收 FIRE 通知；只有结束换弹且状态已更新时通知自身和旁观客户端。新增服务端结束转移测试；不声明 KubeJS 支持。 |
+
+仍不能用本表宣称 B–F 完成：例如主动卸弹与暂停时钟、新方块/菜单与 transfer、外显动画/热成像/测距、转换器和默认内容迁移仍各需其消费方、许可记录与回归证据。发布版本保持 `1.1.8+fabric.26.3.R1-hotfix3`。
