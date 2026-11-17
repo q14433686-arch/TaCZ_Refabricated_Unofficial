@@ -136,6 +136,10 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     annotationProcessor 'com.google.code.findbugs:jsr305:3.0.2'
 
@@ -230,6 +234,8 @@ dependencies {
     // Accelerated Rendering
     // implementation "maven.modrinth:accrelatedrendering-refabricated:1.0.8-1.20.1-alpha-fabric.1"
 }
+
+test { useJUnitPlatform() }
 
 processResources {
     inputs.property "version", project.version
