@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.tacz.guns.client.resource.pojo.display.SoundData;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.client.animation.AnimationController;
 import com.tacz.guns.api.client.animation.Animations;
@@ -78,7 +79,7 @@ public class GunDisplayInstance {
 
     private @Nullable Identifier playerAnimator3rd = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "rifle_default.player_animation");
     private boolean is3rdFixedHand = false;
-    private Map<String, Identifier> sounds = Maps.newHashMap();
+    private Map<String, SoundData> sounds = Maps.newHashMap();
     private List<Identifier> preloadSounds = Lists.newArrayList();
     private GunTransform transform = GunTransform.getDefault();
 
@@ -562,19 +563,19 @@ public class GunDisplayInstance {
     private void checkSounds(GunDisplay display) {
         sounds = Maps.newHashMap();
         preloadSounds = Lists.newArrayList();
-        Map<String, Identifier> soundMaps = display.getSounds();
+        Map<String, SoundData> soundMaps = display.getSoundData();
         if (soundMaps == null || soundMaps.isEmpty()) {
             return;
         }
         // 部分音效为默认音效，不存在则需要添加默认音效
-        soundMaps.putIfAbsent(SoundManager.DRY_FIRE_SOUND, Identifier.fromNamespaceAndPath(GunMod.MOD_ID, SoundManager.DRY_FIRE_SOUND));
-        soundMaps.putIfAbsent(SoundManager.FIRE_SELECT, Identifier.fromNamespaceAndPath(GunMod.MOD_ID, SoundManager.FIRE_SELECT));
-        soundMaps.putIfAbsent(SoundManager.HEAD_HIT_SOUND, Identifier.fromNamespaceAndPath(GunMod.MOD_ID, SoundManager.HEAD_HIT_SOUND));
-        soundMaps.putIfAbsent(SoundManager.FLESH_HIT_SOUND, Identifier.fromNamespaceAndPath(GunMod.MOD_ID, SoundManager.FLESH_HIT_SOUND));
-        soundMaps.putIfAbsent(SoundManager.KILL_SOUND, Identifier.fromNamespaceAndPath(GunMod.MOD_ID, SoundManager.KILL_SOUND));
-        soundMaps.putIfAbsent(SoundManager.MELEE_BAYONET, Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "melee_bayonet/melee_bayonet_01"));
-        soundMaps.putIfAbsent(SoundManager.MELEE_STOCK, Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "melee_stock/melee_stock_01"));
-        soundMaps.putIfAbsent(SoundManager.MELEE_PUSH, Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "melee_stock/melee_stock_02"));
+        soundMaps.putIfAbsent(SoundManager.DRY_FIRE_SOUND, SoundData.of(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, SoundManager.DRY_FIRE_SOUND)));
+        soundMaps.putIfAbsent(SoundManager.FIRE_SELECT, SoundData.of(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, SoundManager.FIRE_SELECT)));
+        soundMaps.putIfAbsent(SoundManager.HEAD_HIT_SOUND, SoundData.of(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, SoundManager.HEAD_HIT_SOUND)));
+        soundMaps.putIfAbsent(SoundManager.FLESH_HIT_SOUND, SoundData.of(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, SoundManager.FLESH_HIT_SOUND)));
+        soundMaps.putIfAbsent(SoundManager.KILL_SOUND, SoundData.of(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, SoundManager.KILL_SOUND)));
+        soundMaps.putIfAbsent(SoundManager.MELEE_BAYONET, SoundData.of(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "melee_bayonet/melee_bayonet_01")));
+        soundMaps.putIfAbsent(SoundManager.MELEE_STOCK, SoundData.of(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "melee_stock/melee_stock_01")));
+        soundMaps.putIfAbsent(SoundManager.MELEE_PUSH, SoundData.of(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "melee_stock/melee_stock_02")));
         sounds.putAll(soundMaps);
 
         Set<Identifier> preloadSet = new LinkedHashSet<>();
@@ -594,7 +595,7 @@ public class GunDisplayInstance {
         if (StringUtils.isBlank(name)) {
             return;
         }
-        Identifier soundId = sounds.get(name);
+        Identifier soundId = getSounds(name);
         if (soundId != null) {
             preloadSet.add(soundId);
         }
@@ -697,6 +698,12 @@ public class GunDisplayInstance {
 
     @Nullable
     public Identifier getSounds(String name) {
+        SoundData sound = getSoundData(name);
+        return sound == null ? null : sound.getSound();
+    }
+
+    @Nullable
+    public SoundData getSoundData(String name) {
         return sounds.get(name);
     }
 

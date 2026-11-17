@@ -2,6 +2,7 @@ package com.tacz.guns.client.resource.pojo.display.attachment;
 
 import com.google.common.collect.Maps;
 import com.google.gson.annotations.SerializedName;
+import com.tacz.guns.client.resource.pojo.display.SoundData;
 import com.tacz.guns.client.resource.pojo.display.IDisplay;
 import com.tacz.guns.client.resource.pojo.display.LaserConfig;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
@@ -65,7 +66,7 @@ public class AttachmentDisplay implements IDisplay {
     private float[] viewsFov;
 
     @SerializedName("sounds")
-    private Map<String, Identifier> sounds = Maps.newHashMap();
+    private Map<String, SoundData> sounds = Maps.newHashMap();
 
     public Identifier getSlotTextureLocation() {
         return slotTextureLocation;
@@ -133,6 +134,10 @@ public class AttachmentDisplay implements IDisplay {
     }
 
     public Map<String, Identifier> getSounds() {
+        return sounds == null ? null : Maps.transformValues(sounds, SoundData::getSound);
+    }
+
+    public Map<String, SoundData> getSoundData() {
         return sounds;
     }
 

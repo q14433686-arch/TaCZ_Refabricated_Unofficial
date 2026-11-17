@@ -17,6 +17,7 @@ import com.tacz.guns.client.resource.pojo.animation.bedrock.AnimationKeyframes;
 import com.tacz.guns.client.resource.pojo.animation.bedrock.BedrockAnimationFile;
 import com.tacz.guns.client.resource.pojo.animation.bedrock.SoundEffectKeyframes;
 import com.tacz.guns.client.resource.pojo.display.ammo.AmmoDisplay;
+import com.tacz.guns.client.resource.pojo.display.SoundData;
 import com.tacz.guns.client.resource.pojo.display.attachment.AttachmentDisplay;
 import com.tacz.guns.client.resource.pojo.display.block.BlockDisplay;
 import com.tacz.guns.client.resource.pojo.display.gun.AdsPreset;
@@ -63,6 +64,7 @@ public enum ClientAssetsManager {
     public static final Gson GSON = new GsonBuilder()
             .setStrictness(com.google.gson.Strictness.LENIENT)
             .registerTypeAdapter(Identifier.class, new IdentifierSerializer())
+            .registerTypeAdapter(SoundData.class, new SoundData.Deserializer())
             .registerTypeAdapter(CubesItem.class, new CubesItem.Deserializer())
             .registerTypeAdapter(Vector3f.class, new Vector3fSerializer())
             .registerTypeAdapter(CommonTransformObject.class, new CommonTransformObject.Serializer())

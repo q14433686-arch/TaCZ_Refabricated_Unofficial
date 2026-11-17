@@ -4,6 +4,7 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.client.resource.GunDisplayInstance;
+import com.tacz.guns.client.resource.pojo.display.SoundData;
 import com.tacz.guns.config.client.SoundConfig;
 import com.tacz.guns.config.common.GunConfig;
 import com.tacz.guns.init.ModSounds;
@@ -17,6 +18,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -47,21 +49,50 @@ public class SoundPlayManager {
 
     @Nullable
     public static GunSoundInstance playClientSound(Entity entity, @Nullable Identifier name, float volume, float pitch, int distance, boolean mono) {
-        return playClientSound(entity, name, volume, pitch, distance, mono, SoundConfig.DEFAULT_SOUND_CONCURRENCY_LIMIT.get(), true, false);
+        boolean relative = isLocalPlayer(entity) && !SoundConfig.FIRST_PERSON_ANIMATION_SOUND_TRACKING.get();
+        return playClientSound(entity, name, volume, pitch, distance, mono, SoundConfig.DEFAULT_SOUND_CONCURRENCY_LIMIT.get(), !relative, relative);
+    }
+
+    @Nullable
+    public static GunSoundInstance playClientSound(Entity entity, @Nullable SoundData sound, float volume, float pitch, int distance) {
+        return playClientSound(entity, sound, volume, pitch, distance, false);
+    }
+
+    @Nullable
+    public static GunSoundInstance playClientSound(Entity entity, @Nullable SoundData sound, float volume, float pitch, int distance, boolean mono) {
+        boolean relative = isLocalPlayer(entity) && !SoundConfig.FIRST_PERSON_ANIMATION_SOUND_TRACKING.get();
+        return playClientSound(entity, sound, volume, pitch, distance, mono, SoundConfig.DEFAULT_SOUND_CONCURRENCY_LIMIT.get(), !relative, relative);
+    }
+
+    @Nullable
+    private static GunSoundInstance playClientSound(Entity entity, @Nullable SoundData sound, float volume, float pitch, int distance, boolean mono, int concurrencyLimit, boolean trackEntity, boolean relative) {
+        if (sound == null || entity == null) {
+            return null;
+        }
+        var random = entity.level().getRandom();
+        float resolvedVolume = sound.resolveVolume(random, volume);
+        float resolvedPitch = sound.resolvePitch(random, pitch);
+        return playClientSound(entity, sound.getSound(), resolvedVolume, resolvedPitch, distance, mono, concurrencyLimit, trackEntity, relative);
     }
 
     @Nullable
     private static GunSoundInstance playClientSound(Entity entity, @Nullable Identifier name, float volume, float pitch, int distance, boolean mono, int concurrencyLimit, boolean trackEntity, boolean relative) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (name == null || !hasSoundResource(minecraft, name)) {
+        if (name == null || entity == null) {
+            return null;
+        }
+        boolean useTaczSound = hasTaczSoundResource(minecraft, name);
+        if (!useTaczSound && minecraft.getSoundManager().getSoundEvent(name) == null) {
+            warnMissingSound(name);
             return null;
         }
         if (concurrencyLimit > 0) {
             limitConcurrentGunSound(minecraft, entity.getId(), name, concurrencyLimit);
         }
+        SoundEvent soundEvent = useTaczSound ? ModSounds.GUN : SoundEvent.createVariableRangeEvent(name);
         GunSoundInstance instance = trackEntity
-                ? new EntityTrackingGunSoundInstance(ModSounds.GUN, SoundSource.PLAYERS, volume, pitch, entity, distance, name, mono)
-                : new GunSoundInstance(ModSounds.GUN, SoundSource.PLAYERS, volume, pitch, entity, distance, name, mono, relative);
+                ? new EntityTrackingGunSoundInstance(soundEvent, SoundSource.PLAYERS, volume, pitch, entity, distance, name, mono, useTaczSound)
+                : new GunSoundInstance(soundEvent, SoundSource.PLAYERS, volume, pitch, entity, distance, name, mono, relative, useTaczSound);
         minecraft.getSoundManager().play(instance);
         if (concurrencyLimit > 0) {
             trackGunSound(entity.getId(), entity.getUUID(), name, instance);
@@ -105,25 +136,25 @@ public class SoundPlayManager {
         }
         Identifier attachmentId = iAttachment.getAttachmentId(attachmentItem);
         TimelessAPI.getClientAttachmentIndex(attachmentId).ifPresent(index -> {
-            Map<String, Identifier> sounds = index.getSounds();
+            var sounds = index.getSoundData();
             if (sounds.containsKey(soundName)) {
-                Identifier resourceLocation = sounds.get(soundName);
+                SoundData resourceLocation = sounds.get(soundName);
                 SoundPlayManager.playClientSound(player, resourceLocation, 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
             }
         });
     }
 
     public static void playShootSound(LivingEntity entity, GunDisplayInstance gunIndex, GunData gunData) {
-        playClientSound(entity, gunIndex.getSounds(SoundManager.SHOOT_SOUND), 0.8f, 0.9f + entity.getRandom().nextFloat() * 0.125f, (int) (GunConfig.DEFAULT_GUN_FIRE_SOUND_DISTANCE.get() * gunData.getFireSound().getFireMultiplier()), false, SoundConfig.HIGH_FREQUENCY_SOUND_CONCURRENCY_LIMIT.get(), false, false);
+        playClientSound(entity, gunIndex.getSoundData(SoundManager.SHOOT_SOUND), 0.8f, 0.9f + entity.getRandom().nextFloat() * 0.125f, (int) (GunConfig.DEFAULT_GUN_FIRE_SOUND_DISTANCE.get() * gunData.getFireSound().getFireMultiplier()), false, SoundConfig.HIGH_FREQUENCY_SOUND_CONCURRENCY_LIMIT.get(), false, false);
     }
 
     public static void playSilenceSound(LivingEntity entity, GunDisplayInstance gunIndex, GunData gunData) {
-        playClientSound(entity, gunIndex.getSounds(SoundManager.SILENCE_SOUND), 0.6f, 0.9f + entity.getRandom().nextFloat() * 0.125f, (int) (GunConfig.DEFAULT_GUN_SILENCE_SOUND_DISTANCE.get() * gunData.getFireSound().getSilenceMultiplier()), false, SoundConfig.HIGH_FREQUENCY_SOUND_CONCURRENCY_LIMIT.get(), false, false);
+        playClientSound(entity, gunIndex.getSoundData(SoundManager.SILENCE_SOUND), 0.6f, 0.9f + entity.getRandom().nextFloat() * 0.125f, (int) (GunConfig.DEFAULT_GUN_SILENCE_SOUND_DISTANCE.get() * gunData.getFireSound().getSilenceMultiplier()), false, SoundConfig.HIGH_FREQUENCY_SOUND_CONCURRENCY_LIMIT.get(), false, false);
     }
 
     public static void playDryFireSound(LivingEntity entity, GunDisplayInstance gunIndex) {
         if (DRY_SOUND_TRACK) {
-            playClientSound(entity, gunIndex.getSounds(SoundManager.DRY_FIRE_SOUND), 1.0f, 0.9f + entity.getRandom().nextFloat() * 0.125f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+            playClientSound(entity, gunIndex.getSoundData(SoundManager.DRY_FIRE_SOUND), 1.0f, 0.9f + entity.getRandom().nextFloat() * 0.125f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
             DRY_SOUND_TRACK = false;
         }
     }
@@ -137,60 +168,60 @@ public class SoundPlayManager {
 
     public static void playReloadSound(LivingEntity entity, GunDisplayInstance display, boolean noAmmo) {
         if (noAmmo) {
-            tmpSoundInstance = playClientSound(entity, display.getSounds(SoundManager.RELOAD_EMPTY_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+            tmpSoundInstance = playClientSound(entity, display.getSoundData(SoundManager.RELOAD_EMPTY_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
         } else {
-            tmpSoundInstance = playClientSound(entity, display.getSounds(SoundManager.RELOAD_TACTICAL_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+            tmpSoundInstance = playClientSound(entity, display.getSoundData(SoundManager.RELOAD_TACTICAL_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
         }
     }
 
     public static void playInspectSound(LivingEntity entity, GunDisplayInstance display, boolean noAmmo) {
         if (noAmmo) {
-            tmpSoundInstance = playClientSound(entity, display.getSounds(SoundManager.INSPECT_EMPTY_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+            tmpSoundInstance = playClientSound(entity, display.getSoundData(SoundManager.INSPECT_EMPTY_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
         } else {
-            tmpSoundInstance = playClientSound(entity, display.getSounds(SoundManager.INSPECT_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+            tmpSoundInstance = playClientSound(entity, display.getSoundData(SoundManager.INSPECT_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
         }
     }
 
     public static void playBoltSound(LivingEntity entity, GunDisplayInstance display) {
-        tmpSoundInstance = playClientSound(entity, display.getSounds(SoundManager.BOLT_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+        tmpSoundInstance = playClientSound(entity, display.getSoundData(SoundManager.BOLT_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
     }
 
     public static void playDrawSound(LivingEntity entity, GunDisplayInstance display) {
-        tmpSoundInstance = playClientSound(entity, display.getSounds(SoundManager.DRAW_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+        tmpSoundInstance = playClientSound(entity, display.getSoundData(SoundManager.DRAW_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
     }
 
     public static void playPutAwaySound(LivingEntity entity, GunDisplayInstance display) {
-        tmpSoundInstance = playClientSound(entity, display.getSounds(SoundManager.PUT_AWAY_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+        tmpSoundInstance = playClientSound(entity, display.getSoundData(SoundManager.PUT_AWAY_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
     }
 
     public static void playFireSelectSound(LivingEntity entity, GunDisplayInstance display) {
-        playClientSound(entity, display.getSounds(SoundManager.FIRE_SELECT), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+        playClientSound(entity, display.getSoundData(SoundManager.FIRE_SELECT), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
     }
 
     public static void playMeleeBayonetSound(LivingEntity entity, GunDisplayInstance display) {
-        playClientSound(entity, display.getSounds(SoundManager.MELEE_BAYONET), 1.0f, 0.9f + entity.getRandom().nextFloat() * 0.125f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+        playClientSound(entity, display.getSoundData(SoundManager.MELEE_BAYONET), 1.0f, 0.9f + entity.getRandom().nextFloat() * 0.125f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
     }
 
     public static void playMeleePushSound(LivingEntity entity, GunDisplayInstance display) {
-        playClientSound(entity, display.getSounds(SoundManager.MELEE_PUSH), 1.0f, 0.9f + entity.getRandom().nextFloat() * 0.125f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+        playClientSound(entity, display.getSoundData(SoundManager.MELEE_PUSH), 1.0f, 0.9f + entity.getRandom().nextFloat() * 0.125f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
     }
 
     public static void playMeleeStockSound(LivingEntity entity, GunDisplayInstance display) {
-        playClientSound(entity, display.getSounds(SoundManager.MELEE_STOCK), 1.0f, 0.9f + entity.getRandom().nextFloat() * 0.125f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+        playClientSound(entity, display.getSoundData(SoundManager.MELEE_STOCK), 1.0f, 0.9f + entity.getRandom().nextFloat() * 0.125f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
     }
 
     public static void playHeadHitSound(LivingEntity entity, GunDisplayInstance display) {
         boolean relative = isLocalPlayer(entity);
-        playClientSound(entity, display.getSounds(SoundManager.HEAD_HIT_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get(), false, SoundConfig.HIT_SOUND_CONCURRENCY_LIMIT.get(), !relative, relative);
+        playClientSound(entity, display.getSoundData(SoundManager.HEAD_HIT_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get(), false, SoundConfig.HIT_SOUND_CONCURRENCY_LIMIT.get(), !relative, relative);
     }
 
     public static void playFleshHitSound(LivingEntity entity, GunDisplayInstance display) {
         boolean relative = isLocalPlayer(entity);
-        playClientSound(entity, display.getSounds(SoundManager.FLESH_HIT_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get(), false, SoundConfig.HIT_SOUND_CONCURRENCY_LIMIT.get(), !relative, relative);
+        playClientSound(entity, display.getSoundData(SoundManager.FLESH_HIT_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get(), false, SoundConfig.HIT_SOUND_CONCURRENCY_LIMIT.get(), !relative, relative);
     }
 
     public static void playKillSound(LivingEntity entity, GunDisplayInstance display) {
-        playClientSound(entity, display.getSounds(SoundManager.KILL_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+        playClientSound(entity, display.getSoundData(SoundManager.KILL_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
     }
 
     public static void playMessageSound(ServerMessageSound message) {
@@ -202,14 +233,14 @@ public class SoundPlayManager {
         Identifier gunDisplayId = message.getGunDisplayId();
         TimelessAPI.getGunDisplay(gunDisplayId, gunId).ifPresent(index -> {
             String soundName = message.getSoundName();
-            Identifier soundId = index.getSounds(soundName);
+            SoundData soundId = index.getSoundData(soundName);
             if (soundId == null) {
                 return;
             }
             if (SoundManager.SHOOT_3P_SOUND.equals(soundName) || SoundManager.SILENCE_3P_SOUND.equals(soundName)) {
                 playClientSound(livingEntity, soundId, message.getVolume(), message.getPitch(), message.getDistance(), true, SoundConfig.HIGH_FREQUENCY_SOUND_CONCURRENCY_LIMIT.get(), true, false);
             } else {
-                playClientSound(livingEntity, soundId, message.getVolume(), message.getPitch(), message.getDistance());
+                playClientSound(livingEntity, soundId, message.getVolume(), message.getPitch(), message.getDistance(), true, SoundConfig.DEFAULT_SOUND_CONCURRENCY_LIMIT.get(), true, false);
             }
         });
     }
@@ -325,16 +356,18 @@ public class SoundPlayManager {
         return entity == Minecraft.getInstance().player;
     }
 
-    private static boolean hasSoundResource(Minecraft minecraft, Identifier soundId) {
-        boolean exists = SOUND_RESOURCE_EXISTS_CACHE.computeIfAbsent(soundId, id -> {
+    private static boolean hasTaczSoundResource(Minecraft minecraft, Identifier soundId) {
+        return SOUND_RESOURCE_EXISTS_CACHE.computeIfAbsent(soundId, id -> {
             Identifier soundPath = TACZ_SOUND_LISTER.idToFile(id);
             return minecraft.getResourceManager().getResource(soundPath).isPresent();
         });
-        if (!exists && MISSING_SOUND_WARNED.add(soundId)) {
+    }
+
+    private static void warnMissingSound(Identifier soundId) {
+        if (MISSING_SOUND_WARNED.add(soundId)) {
             Identifier soundPath = TACZ_SOUND_LISTER.idToFile(soundId);
-            GunMod.LOGGER.warn("[TACZ Sound] Missing gun sound resource, skipped. sound={}, path={}", soundId, soundPath);
+            GunMod.LOGGER.warn("[TACZ Sound] Missing tacz_sounds resource and fallback sound event, skipped. sound={}, path={}", soundId, soundPath);
         }
-        return exists;
     }
 
     private record SoundKey(int entityId, Identifier soundId) {

@@ -2,6 +2,7 @@ package com.tacz.guns.client.resource.pojo.display.gun;
 
 import com.google.common.collect.Maps;
 import com.google.gson.annotations.SerializedName;
+import com.tacz.guns.client.resource.pojo.display.SoundData;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.client.resource.pojo.display.IDisplay;
 import com.tacz.guns.client.resource.pojo.display.LaserConfig;
@@ -80,7 +81,7 @@ public class GunDisplay implements IDisplay {
     private boolean playerAnimator3rdFixedHand = false;
     @Nullable
     @SerializedName("sounds")
-    private Map<String, Identifier> sounds;
+    private Map<String, SoundData> sounds;
     @Nullable
     @SerializedName("preload_sounds")
     private List<String> preloadSounds;
@@ -185,6 +186,10 @@ public class GunDisplay implements IDisplay {
 
     @Nullable
     public Map<String, Identifier> getSounds() {
+        return sounds == null ? null : Maps.transformValues(sounds, SoundData::getSound);
+    }
+
+    public Map<String, SoundData> getSoundData() {
         return sounds;
     }
 

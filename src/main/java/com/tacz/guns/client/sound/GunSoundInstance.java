@@ -21,6 +21,7 @@ public class GunSoundInstance extends AbstractSoundInstance {
 
     @Nullable
     private final Identifier registryName;
+    private final boolean useTaczSound;
     private final boolean canPlay;
     @Nullable
     private Sound redirectedSound;
@@ -30,7 +31,13 @@ public class GunSoundInstance extends AbstractSoundInstance {
     }
 
     public GunSoundInstance(SoundEvent soundEvent, SoundSource source, float volume, float pitch, Entity entity, int soundDistance, Identifier registryName, boolean mono, boolean relative) {
+        this(soundEvent, source, volume, pitch, entity, soundDistance, registryName, mono, relative, true);
+    }
+
+    public GunSoundInstance(SoundEvent soundEvent, SoundSource source, float volume, float pitch, Entity entity,
+                            int soundDistance, Identifier registryName, boolean mono, boolean relative, boolean useTaczSound) {
         super(soundEvent, source, RandomSource.create(943));
+        this.useTaczSound = useTaczSound;
         this.attenuation = Attenuation.NONE;
         this.relative = relative;
         this.registryName = registryName;
@@ -65,7 +72,7 @@ public class GunSoundInstance extends AbstractSoundInstance {
     @Override
     public WeighedSoundEvents getOrResolve(SoundManager manager) {
         WeighedSoundEvents events = super.getOrResolve(manager);
-        if (events != null && this.registryName != null) {
+        if (useTaczSound && events != null && this.registryName != null) {
             this.redirectedSound = new TaczSound(this.registryName, TACZ_SOUND_LISTER.idToFile(this.registryName), super.getSound());
             this.sound = this.redirectedSound;
         } else {
