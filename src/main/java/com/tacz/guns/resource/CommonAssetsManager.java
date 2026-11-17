@@ -12,8 +12,7 @@ import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
 import com.tacz.guns.crafting.result.GunSmithTableResult;
 import com.tacz.guns.init.ModRecipe;
-import com.tacz.guns.network.NetworkHandler;
-import com.tacz.guns.network.message.ServerMessageSyncGunPack;
+import com.tacz.guns.network.message.ServerMessageSyncGunPackPart;
 import com.tacz.guns.resource.filter.RecipeFilter;
 import com.tacz.guns.resource.index.CommonAmmoIndex;
 import com.tacz.guns.resource.index.CommonAttachmentIndex;
@@ -67,6 +66,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
             .registerTypeAdapter(TabConfig.class, new TabConfig.Deserializer())
             .create();
 
+    private ServerMessageSyncGunPackPart.Snapshot networkSnapshot;
     private final List<INetworkCacheReloadListener> listeners = new ArrayList<>();
     private CommonDataManager<GunData> gunData;
     private CommonDataManager<AttachmentData> attachmentData;
@@ -111,7 +111,10 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         register.accept((sharedState, backgroundExecutor, barrier, gameExecutor) -> {
             return barrier
                     .wait(null)
-                    .thenRunAsync(AllowAttachmentTagMatcher::resetCache, gameExecutor);
+                    .thenRunAsync(() -> {
+                        AllowAttachmentTagMatcher.resetCache();
+                        networkSnapshot = ServerMessageSyncGunPackPart.prepare(getNetworkCache());
+                    }, gameExecutor);
         });
     }
 
@@ -403,12 +406,10 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     }
 
     public static void OnDatapackSync(ServerPlayer player, boolean joined) {
-        if (getInstance() == null) {
-            return;
+        var manager = getInstance();
+        if (player != null && manager != null && manager.networkSnapshot != null) {
+            manager.networkSnapshot.send(player);
         }
-        ServerMessageSyncGunPack message = new ServerMessageSyncGunPack(getInstance().getNetworkCache());
-        NetworkHandler.sendToClientPlayer(message, player);
-
     }
 
     public static void reloadAllPack() {
