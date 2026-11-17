@@ -99,6 +99,26 @@ jobs:
       - name: Full build
         run: ./gradlew build --console=plain --stacktrace --no-daemon
 
+      - name: Client smoke (Mesa software rendering, integrated world and held gun)
+        timeout-minutes: 12
+        env:
+          LIBGL_ALWAYS_SOFTWARE: 'true'
+          ALSOFT_DRIVERS: 'null'
+        run: xvfb-run -a ./gradlew -PtaczClientSmoke runClientGameTest --console=plain --stacktrace
+
+      - name: Upload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-${{ github.sha }}
+          path: |
+            build/run/gameTest/logs/latest.log
+            build/run/clientGameTest/logs/latest.log
+            build/run/clientGameTest/screenshots/**/*.png
+            build/test-results/test/*.xml
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Upload jars
         uses: actions/upload-artifact@v4
         with:
