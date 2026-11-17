@@ -29,6 +29,11 @@ public class LocalPlayerAim {
         }
         Identifier gunId = iGun.getGunId(mainHandItem);
         TimelessAPI.getClientGunIndex(gunId).ifPresent(gunIndex -> {
+            if (isAim && shouldBlockAim(gunIndex.getGunData())) {
+                if (data.clientIsAiming) ClientPlayNetworking.send(new ClientMessagePlayerAim(false));
+                data.clientIsAiming = false;
+                return;
+            }
             data.clientIsAiming = isAim;
             // 发送切换开火模式的数据包，通知服务器
             ClientPlayNetworking.send(new ClientMessagePlayerAim(isAim));
@@ -57,12 +62,19 @@ public class LocalPlayerAim {
         }
         Identifier gunId = iGun.getGunId(mainHandItem);
         TimelessAPI.getCommonGunIndex(gunId).ifPresentOrElse(index -> {
+            if (shouldBlockAim(index.getGunData())) data.clientIsAiming = false;
             float alphaProgress = this.getAlphaProgress(index.getGunData());
             this.aimProgressCalculate(alphaProgress);
         }, () -> {
             data.clientAimingProgress = 0;
             LocalPlayerDataHolder.oldAimingProgress = 0;
         });
+    }
+
+    private boolean shouldBlockAim(GunData gun) {
+        IGunOperator operator = IGunOperator.fromLivingEntity(player);
+        return gun.blocksAim(data.clientReloadStarting || operator.getSynReloadState().getStateType().isReloading(),
+                data.isBolting || operator.getSynIsBolting());
     }
 
     private void aimProgressCalculate(float alphaProgress) {

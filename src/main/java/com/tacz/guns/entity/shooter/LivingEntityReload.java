@@ -4,7 +4,9 @@ import cn.sh1rocu.tacz.api.LogicalSide;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
+import com.tacz.guns.api.event.common.GunFinishReloadEvent;
 import com.tacz.guns.api.event.common.GunReloadEvent;
+import com.tacz.guns.network.message.event.ServerMessageGunActionPost;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunReload;
@@ -89,6 +91,8 @@ public class LivingEntityReload {
         if (!gunItem.startReload(data, currentGunItem, shooter)) {
             data.reloadStateType = ReloadState.StateType.NOT_RELOADING;
             data.reloadTimestamp = -1;
+        } else if (gunIndex.getGunData().isForceAimExitOnReload()) {
+            data.isAiming = false;
         }
     }
 
@@ -113,17 +117,18 @@ public class LivingEntityReload {
         if (data.reloadTimestamp == -1) {
             return result;
         }
-        // 调用枪械逻辑
-        if (data.currentGunItem != null) {
-            ItemStack currentGunItem = data.currentGunItem.get();
-            if (currentGunItem != null && currentGunItem.getItem() instanceof AbstractGunItem abstractGunItem) {
-                result = abstractGunItem.tickReload(data, currentGunItem, shooter);
-            }
+        ItemStack held = data.currentGunItem == null ? null : data.currentGunItem.get();
+        boolean finished = false;
+        if (held != null && held.getItem() instanceof AbstractGunItem gun && TimelessAPI.getCommonGunIndex(gun.getGunId(held)).isPresent()) {
+            boolean wasReloading = data.reloadStateType.isReloading();
+            result = gun.tickReload(data, held, shooter);
+            finished = wasReloading && !result.getStateType().isReloading();
         }
-        // 将 tick 的结果保存到 data holder
         data.reloadStateType = result.getStateType();
-        if (!result.getStateType().isReloading()) {
-            data.reloadTimestamp = -1;
+        if (!data.reloadStateType.isReloading()) data.reloadTimestamp = -1;
+        if (finished) {
+            GunFinishReloadEvent.EVENT.invoker().post(new GunFinishReloadEvent(shooter, held, LogicalSide.SERVER));
+            ServerMessageGunActionPost.notifyClients(ServerMessageGunActionPost.Kind.FINISH_RELOAD, shooter, held);
         }
         return result;
     }

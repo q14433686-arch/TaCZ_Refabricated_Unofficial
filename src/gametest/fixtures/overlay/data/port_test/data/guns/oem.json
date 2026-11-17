@@ -1,5 +1,6 @@
 {
   "ammo": "tacz:762x39",
+  "force_aim_exit_on_reload": true,
   "fire_mode": [
     "semi"
   ],

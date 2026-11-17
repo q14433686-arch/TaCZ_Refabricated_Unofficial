@@ -8,6 +8,7 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ShootResult;
 import com.tacz.guns.api.event.common.GunFireEvent;
+import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
@@ -347,6 +348,7 @@ public class LocalPlayerShoot {
             } else {
                 SoundPlayManager.playShootSound(player, display, gunData);
             }
+            GunFirePostEvent.EVENT.invoker().post(new GunFirePostEvent(player, mainHandItem, LogicalSide.CLIENT));
         }
     }
 

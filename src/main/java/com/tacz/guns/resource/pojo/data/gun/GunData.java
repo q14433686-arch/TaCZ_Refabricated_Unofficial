@@ -60,6 +60,18 @@ public class GunData {
     @SerializedName("sprint_time")
     private float sprintTime = 0.2f;
 
+    @SerializedName("force_aim_exit_on_reload")
+    private boolean forceAimExitOnReload;
+    @SerializedName("force_aim_exit_on_bolt")
+    private boolean forceAimExitOnBolt;
+
+    public boolean isForceAimExitOnReload() { return forceAimExitOnReload; }
+    public boolean isForceAimExitOnBolt() { return forceAimExitOnBolt; }
+
+    public boolean blocksAim(boolean reloading, boolean bolting) {
+        return (forceAimExitOnReload && reloading) || (forceAimExitOnBolt && bolting);
+    }
+
     @SerializedName("aim_time")
     private float aimTime = 0.2f;
 

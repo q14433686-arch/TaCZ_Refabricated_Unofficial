@@ -7,6 +7,8 @@ import com.tacz.guns.api.GunProperty;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.event.common.GunFireEvent;
+import com.tacz.guns.api.event.common.GunFirePostEvent;
+import com.tacz.guns.network.message.event.ServerMessageGunActionPost;
 import com.tacz.guns.api.item.ammo.AmmoSourceRegistry;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
@@ -198,6 +200,8 @@ public class ModernKineticGunScriptAPI {
                 String soundId = useSilenceSound ? SoundManager.SILENCE_3P_SOUND : SoundManager.SHOOT_3P_SOUND;
                 SoundManager.sendSoundToNearby(shooter, soundDistance, gunId, gunDisplayId, soundId, 0.8f, 0.9f + shooter.getRandom().nextFloat() * 0.125f);
             }
+            GunFirePostEvent.EVENT.invoker().post(new GunFirePostEvent(shooter, itemStack, LogicalSide.SERVER));
+            ServerMessageGunActionPost.notifyClients(ServerMessageGunActionPost.Kind.FIRE, shooter, itemStack);
         }
         return true;
     }

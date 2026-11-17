@@ -27,6 +27,14 @@ public class LivingEntityAim {
     }
 
     public void aim(boolean isAim) {
+        if (isAim && data.currentGunItem != null) {
+            var stack = data.currentGunItem.get();
+            if (stack != null && stack.getItem() instanceof IGun gun && TimelessAPI.getCommonGunIndex(gun.getGunId(stack))
+                    .map(index -> index.getGunData().blocksAim(data.reloadStateType.isReloading(), data.isBolting)).orElse(false)) {
+                data.isAiming = false;
+                return;
+            }
+        }
         data.isAiming = isAim;
     }
 
