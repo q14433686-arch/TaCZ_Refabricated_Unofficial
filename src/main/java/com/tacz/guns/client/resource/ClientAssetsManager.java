@@ -19,6 +19,7 @@ import com.tacz.guns.client.resource.pojo.animation.bedrock.SoundEffectKeyframes
 import com.tacz.guns.client.resource.pojo.display.ammo.AmmoDisplay;
 import com.tacz.guns.client.resource.pojo.display.attachment.AttachmentDisplay;
 import com.tacz.guns.client.resource.pojo.display.block.BlockDisplay;
+import com.tacz.guns.client.resource.pojo.display.gun.AdsPreset;
 import com.tacz.guns.client.resource.pojo.display.gun.GunDisplay;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.CubesItem;
@@ -29,6 +30,7 @@ import com.tacz.guns.client.resource.serialize.Vector3fSerializer;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.serialize.IdentifierSerializer;
 import com.tacz.guns.resource.manager.LazyJsonDataManager;
+import com.tacz.guns.resource.manager.JsonDataManager;
 import com.tacz.guns.resource.manager.ScriptManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -70,6 +72,7 @@ public enum ClientAssetsManager {
             .create();
 
     // 枪械展示数据
+    private JsonDataManager<AdsPreset> adsPresets;
     private DisplayManager<GunDisplay> gunDisplay;
     // 弹药展示数据
     private DisplayManager<AmmoDisplay> ammoDisplay;
@@ -95,6 +98,7 @@ public enum ClientAssetsManager {
     public void reloadAndRegister(Consumer<IdentifiableResourceReloadListener> register) {
         if (listeners == null) {
             listeners = new ArrayList<>();
+            adsPresets = register(new JsonDataManager<>(AdsPreset.class, GSON, "ads_presets", "AdsPresetLoader"));
             gunDisplay = register(new DisplayManager<>(GunDisplay.class, GSON, "display/guns", "GunDisplayLoader"));
             ammoDisplay = register(new DisplayManager<>(AmmoDisplay.class, GSON, "display/ammo", "AmmoDisplayLoader"));
             attachmentDisplay = register(new DisplayManager<>(AttachmentDisplay.class, GSON, "display/attachments", "AttachmentDisplayLoader"));
@@ -127,6 +131,11 @@ public enum ClientAssetsManager {
     private <T extends IdentifiableResourceReloadListener> T register(T listener) {
         listeners.add(listener);
         return listener;
+    }
+
+    @Nullable
+    public AdsPreset getAdsPreset(Identifier id) {
+        return adsPresets.getData(id);
     }
 
     @Nullable

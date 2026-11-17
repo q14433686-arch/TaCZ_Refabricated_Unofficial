@@ -92,6 +92,9 @@ public class GunDisplayInstance {
     private LayerGunShow offhandShow = new LayerGunShow();
     private @Nullable Int2ObjectArrayMap<LayerGunShow> hotbarShow;
     private float ironZoom;
+    private static final Identifier LEGACY_ADS = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "legacy");
+    private AdsPreset adsPreset;
+    private float modelFov;
     private float zoomModelFov;
     private boolean showCrosshair = false;
     private @Nullable AmmoParticle particle;
@@ -355,6 +358,12 @@ public class GunDisplayInstance {
 
     // 基础数据直接读
     private void initBase(GunDisplay display) {
+        Identifier preset = display.getAdsPreset();
+        adsPreset = ClientAssetsManager.INSTANCE.getAdsPreset(preset == null ? LEGACY_ADS : preset);
+        if (preset != null && adsPreset == null) {
+            GunMod.LOGGER.warn("Missing ADS preset {} in display {}; using {}", preset, displayId, LEGACY_ADS);
+            adsPreset = ClientAssetsManager.INSTANCE.getAdsPreset(LEGACY_ADS);
+        }
         checkSlotTexture(display);
         checkHUDTexture(display);
         checkSounds(display);
@@ -364,7 +373,8 @@ public class GunDisplayInstance {
         checkMuzzleFlash(display);
         checkLayerGunShow(display);
         checkIronZoom(display);
-        checkZoomModelFov(display);
+        modelFov = validFov(display.getModelFov());
+        zoomModelFov = validFov(display.getZoomModelFov());
         thirdPersonAnimation = StringUtils.defaultIfBlank(display.getThirdPersonAnimation(), "empty");
         if (display.getPlayerAnimator3rd() != null) {
             playerAnimator3rd = display.getPlayerAnimator3rd();
@@ -385,11 +395,9 @@ public class GunDisplayInstance {
         }
     }
 
-    private void checkZoomModelFov(GunDisplay display) {
-        zoomModelFov = display.getZoomModelFov();
-        if (zoomModelFov > 70) {
-            zoomModelFov = 70;
-        }
+    private static float validFov(float fov) {
+        // A projection outside (0,180) is not meaningful.
+        return Float.isFinite(fov) && fov > 0 && fov < 180 ? fov : 70;
     }
 
     private void checkTextShow(GunDisplay display) {
@@ -754,8 +762,25 @@ public class GunDisplayInstance {
         return ironZoom;
     }
 
+    public float getModelFov() {
+        return modelFov;
+    }
+
     public float getZoomModelFov() {
         return zoomModelFov;
+    }
+
+    public @Nullable AdsPath getAdsPath() {
+        AdsPath path = display.getAdsPath();
+        if (path == null && adsPreset != null) {
+            path = adsPreset.getPath();
+        }
+        return path != null && path.isValid() ? path : null;
+    }
+
+    public @Nullable AdsFov getAdsFov() {
+        AdsFov fov = display.getAdsFov();
+        return fov != null ? fov : adsPreset == null ? null : adsPreset.getFov();
     }
 
     public boolean isShowCrosshair() {

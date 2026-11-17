@@ -1,0 +1,5 @@
+# 1.2.0 incremental imports, verbatim unless an adaptation is specified.
+# Sh1roCu/TACZ-Refabricated 356bdf9d48f2225bac6ceb56adc5576a418517a8
+# sha256	path relative to src/main/resources
+0fdac7dd60041d117800fc79cc387e17ec90c561f8698ec0624d8a784a9e1b77	assets/tacz/custom/tacz_default_gun/assets/tacz/ads_presets/legacy.json
+20db718436956ca32278eacef6904e5e164967149cb529ad1f2f390beab5cbc7	assets/tacz/custom/tacz_default_gun/assets/tacz/ads_presets/renew.json

@@ -39,6 +39,7 @@ public class ClientAttachmentIndex {
     private @Nullable Pair<BedrockAttachmentModel, Identifier> lodModel;
     private Identifier slotTexture;
     private AttachmentData data;
+    private float idleScopeHeightAdjust;
     private float[] viewsFov;
     private float @Nullable [] zoom;
     private int[] views;
@@ -84,8 +85,9 @@ public class ClientAttachmentIndex {
         AttachmentDisplay display = ClientAssetsManager.INSTANCE.getAttachmentDisplay(pojoDisplay);
         Preconditions.checkArgument(display != null, "there is no corresponding display file");
         index.display = display;
+        index.idleScopeHeightAdjust = display.getIdleScopeHeightAdjust();
         index.viewsFov = display.getViewsFov();
-        if (index.viewsFov == null) {
+        if (index.viewsFov == null || index.viewsFov.length == 0) {
             Preconditions.checkArgument(display.getFov() > 0, "fov must > 0");
             index.viewsFov = new float[]{display.getFov()};
         } else {
@@ -102,7 +104,7 @@ public class ClientAttachmentIndex {
             }
         }
         index.views = display.getViews();
-        if (index.views == null) {
+        if (index.views == null || index.views.length == 0) {
             index.views = new int[]{1};
         } else {
             for (int i = 0; i < index.views.length; i++) {
@@ -326,6 +328,10 @@ public class ClientAttachmentIndex {
 
     public Identifier getSlotTexture() {
         return slotTexture;
+    }
+
+    public float getIdleScopeHeightAdjust() {
+        return idleScopeHeightAdjust;
     }
 
     public float[] getViewsFov() {

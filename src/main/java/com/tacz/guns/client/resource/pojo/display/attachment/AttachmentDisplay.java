@@ -54,6 +54,9 @@ public class AttachmentDisplay implements IDisplay {
     @SerializedName("sight")
     private boolean isSight = false;
 
+    @SerializedName("idle_scope_height_adjust")
+    private float idleScopeHeightAdjust;
+
     @SerializedName("fov")
     private float fov = 70;
 
@@ -114,6 +117,10 @@ public class AttachmentDisplay implements IDisplay {
 
     public boolean isSight() {
         return isSight;
+    }
+
+    public float getIdleScopeHeightAdjust() {
+        return Float.isFinite(idleScopeHeightAdjust) ? idleScopeHeightAdjust : 0;
     }
 
     public float getFov() {

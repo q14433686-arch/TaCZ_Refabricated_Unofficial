@@ -18,6 +18,7 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.tacz.guns.client.resource.pojo.display.gun.AdsPath;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.util.math.Easing;
 import com.tacz.guns.util.math.MathUtil;
@@ -152,6 +153,7 @@ public class FirstPersonRenderGunEvent {
         if (scopeId.equals(DefaultAssets.EMPTY_ATTACHMENT_ID)) {
             scopeId = iGun.getBuiltInAttachmentId(stack, AttachmentType.SCOPE);
         }
+        var scopeIndex = DefaultAssets.isEmptyAttachmentId(scopeId) ? Optional.<ClientAttachmentIndex>empty() : TimelessAPI.getClientAttachmentIndex(scopeId);
         CompoundTag scopeTag = iGun.getAttachmentTag(stack, AttachmentType.SCOPE);
         int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(scopeTag);
         int viewIndex = 1;
@@ -163,17 +165,16 @@ public class FirstPersonRenderGunEvent {
             List<BedrockPart> scopeNodePath = model.getScopePosPath();
             if (scopeNodePath != null) {
                 aimingNodePath = new ArrayList<>(scopeNodePath);
-                Optional<ClientAttachmentIndex> indexOptional = TimelessAPI.getClientAttachmentIndex(scopeId);
-                if (indexOptional.isPresent()) {
-                    BedrockAttachmentModel attachmentModel = indexOptional.get().getAttachmentModel();
-                    int[] views = indexOptional.get().getViews();
-                    viewIndex = views[zoomNumber % views.length] - 1;
+                if (scopeIndex.isPresent()) {
+                    BedrockAttachmentModel attachmentModel = scopeIndex.get().getAttachmentModel();
+                    int[] views = scopeIndex.get().getViews();
+                    viewIndex = views[Math.floorMod(zoomNumber, views.length)] - 1;
                     if (attachmentModel != null) {
                         // 【第 35 轮】把"当前用的是哪一组镜"告诉模型，供组合镜过滤准星。
                         // views[] 里 1 = 红点分系统、2 = 筒镜分系统
                         // （scope_hamr_display.json: zoom[3.25, 1.25] / views[2, 1]）。
                         // 这里是全流程唯一同时知道 zoomNumber 与 views[] 的地方。
-                        attachmentModel.setActiveViewGroup(views[zoomNumber % views.length]);
+                        attachmentModel.setActiveViewGroup(views[Math.floorMod(zoomNumber, views.length)]);
                         List<BedrockPart> scopeViewPath = attachmentModel.getScopeViewPath(currentViewIndex == -1 ? viewIndex : currentViewIndex);
                         if (scopeViewPath != null) {
                             aimingNodePath.addAll(scopeViewPath);
@@ -199,9 +200,25 @@ public class FirstPersonRenderGunEvent {
             oldViewIndex = view_interpret;
             currentViewIndex = viewIndex;
         }
+        AdsPath adsPath = TimelessAPI.getGunDisplay(stack).map(display -> display.getAdsPath()).orElse(null);
         // 应用瞄准变换
-        MathUtil.applyMatrixLerp(transformMatrix, getPositioningNodeInverse(idleNodePath), transformMatrix, (1 - refitScreenOpeningProgress));
-        MathUtil.applyMatrixLerp(transformMatrix, aimingViewMatrix, transformMatrix, (1 - refitScreenOpeningProgress) * aimingProgress);
+        float idleScopeHeightAdjust = scopeIndex.map(ClientAttachmentIndex::getIdleScopeHeightAdjust).orElse(0f) / 16.0f;
+        Matrix4f idleViewMatrix = getPositioningNodeInverse(idleNodePath);
+        MathUtil.applyMatrixLerp(transformMatrix, idleViewMatrix, transformMatrix, (1 - refitScreenOpeningProgress));
+        float positioningWeight = 1 - refitScreenOpeningProgress;
+        float pathProgress = aimingProgress;
+        float rotationProgress = adsPath == null ? aimingProgress : adsPath.rotation(pathProgress);
+        MathUtil.applyMatrixLerp(transformMatrix, aimingViewMatrix, transformMatrix, positioningWeight * rotationProgress);
+        if (adsPath != null) {
+            // 保留原有旋转插值，位移各轴按自己的时间窗口到达同一瞄准终点。
+            // 共享已有的平滑开镜进度，避免短 ADS 时间导致模型瞬间横移。
+            transformMatrix.m30(transformMatrix.m30() + (aimingViewMatrix.m30() - idleViewMatrix.m30())
+                    * (adsPath.x(pathProgress) - rotationProgress) * positioningWeight);
+            transformMatrix.m31(transformMatrix.m31() + (aimingViewMatrix.m31() - idleViewMatrix.m31())
+                    * (adsPath.y(pathProgress) - rotationProgress) * positioningWeight);
+            transformMatrix.m32(transformMatrix.m32() + (aimingViewMatrix.m32() - idleViewMatrix.m32())
+                    * (adsPath.z(pathProgress) - rotationProgress) * positioningWeight);
+        }
         // 应用改装界面开启时的定位
         float refitTransformProgress = (float) Easing.easeOutCubic(RefitTransform.getTransformProgress());
         AttachmentType oldType = RefitTransform.getOldTransformType();
@@ -210,6 +227,8 @@ public class FirstPersonRenderGunEvent {
         List<BedrockPart> toNode = model.getRefitAttachmentViewPath(currentType);
         MathUtil.applyMatrixLerp(transformMatrix, getPositioningNodeInverse(fromNode), transformMatrix, refitScreenOpeningProgress);
         MathUtil.applyMatrixLerp(transformMatrix, getPositioningNodeInverse(toNode), transformMatrix, refitScreenOpeningProgress * refitTransformProgress);
+        float heightProgress = adsPath == null ? aimingProgress : adsPath.y(aimingProgress);
+        transformMatrix.m31(transformMatrix.m31() + idleScopeHeightAdjust * (1 - heightProgress));
         // 应用变换到 PoseStack
         poseStack.translate(0, 1.5f, 0);
         poseStack.mulPose(transformMatrix);

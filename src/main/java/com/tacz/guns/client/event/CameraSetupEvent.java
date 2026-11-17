@@ -18,6 +18,8 @@ import com.tacz.guns.api.modifier.ParameterizedCachePair;
 import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import com.tacz.guns.client.resource.GunDisplayInstance;
+import com.tacz.guns.client.resource.pojo.display.gun.AdsFov;
+import com.tacz.guns.util.math.Easing;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
@@ -129,17 +131,10 @@ public class CameraSetupEvent {
                 return;
             }
             float zoom = iGun.getAimingZoom(stack);
-            if (livingEntity instanceof LocalPlayer localPlayer) {
-                IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
-                float aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
-                float fov = WORLD_FOV_DYNAMICS.update((float) MathUtil.magnificationToFov(1 + (zoom - 1) * aimingProgress, event.getFOV()));
-                event.setFOV(fov);
-            } else {
-                IGunOperator gunOperator = IGunOperator.fromLivingEntity(livingEntity);
-                float aimingProgress = gunOperator.getSynAimingProgress();
-                float fov = WORLD_FOV_DYNAMICS.update((float) MathUtil.magnificationToFov(1 + (zoom - 1) * aimingProgress, event.getFOV()));
-                event.setFOV(fov);
-            }
+            AdsFov.Channel curve = TimelessAPI.getGunDisplay(stack).map(GunDisplayInstance::getAdsFov).map(AdsFov::getWorld).orElse(null);
+            float progress = fovProgress(livingEntity, (float) event.getPartialTick(), curve);
+            float target = (float) MathUtil.magnificationToFov(1 + (zoom - 1) * progress, event.getFOV());
+            event.setFOV(applyFovCurve(WORLD_FOV_DYNAMICS, target, curve));
         }
     }
 
@@ -161,29 +156,29 @@ public class CameraSetupEvent {
             }
             CompoundTag scopeTag = iGun.getAttachmentTag(stack, AttachmentType.SCOPE);
             int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(scopeTag);
-            // 尝试使用配件fov修改，若无则尝试使用枪械本身fov修改，否则维持不变
-            float modifiedFov = TimelessAPI.getClientAttachmentIndex(scopeItemId)
-                    .map(index -> {
-                        float[] viewsFov = index.getViewsFov();
-                        return viewsFov[zoomNumber % viewsFov.length];
-                    })
-                    .orElse(
-                            TimelessAPI.getGunDisplay(stack)
-                                    .map(GunDisplayInstance::getZoomModelFov)
-                                    .orElse((float) event.getFOV())
-                    );
-            if (livingEntity instanceof LocalPlayer localPlayer) {
-                IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
-                float aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
-                float fov = ITEM_MODEL_FOV_DYNAMICS.update(Mth.lerp(aimingProgress, (float) event.getFOV(), modifiedFov));
-                event.setFOV(fov);
-            } else {
-                IGunOperator gunOperator = IGunOperator.fromLivingEntity(livingEntity);
-                float aimingProgress = gunOperator.getSynAimingProgress();
-                float fov = ITEM_MODEL_FOV_DYNAMICS.update(Mth.lerp(aimingProgress, (float) event.getFOV(), modifiedFov));
-                event.setFOV(fov);
-            }
+            var display = TimelessAPI.getGunDisplay(stack);
+            float base = display.map(GunDisplayInstance::getModelFov).orElse((float) event.getFOV());
+            float modified = TimelessAPI.getClientAttachmentIndex(scopeItemId).map(index -> {
+                float[] fov = index.getViewsFov();
+                return fov[Math.floorMod(zoomNumber, fov.length)];
+            }).orElseGet(() -> display.map(GunDisplayInstance::getZoomModelFov).orElse(base));
+            AdsFov.Channel curve = display.map(GunDisplayInstance::getAdsFov).map(AdsFov::getModel).orElse(null);
+            float progress = fovProgress(livingEntity, (float) event.getPartialTick(), curve);
+            event.setFOV(applyFovCurve(ITEM_MODEL_FOV_DYNAMICS, Mth.lerp(progress, base, modified), curve));
         }
+    }
+
+    private static float fovProgress(LivingEntity entity, float partialTick, AdsFov.Channel curve) {
+        float progress = entity instanceof LocalPlayer player
+                ? IClientPlayerGunOperator.fromLocalPlayer(player).getClientAimingProgress(partialTick)
+                : IGunOperator.fromLivingEntity(entity).getSynAimingProgress();
+        return curve == null ? (float) Easing.easeInExpo(progress) : curve.evaluate(progress);
+    }
+
+    private static float applyFovCurve(SecondOrderDynamics smoother, float target, AdsFov.Channel curve) {
+        // Even in direct mode advance the smoother so switching guns doesn't restore a stale FOV.
+        float smoothed = smoother.update(target);
+        return curve == null || curve.isSmooth() ? smoothed : target;
     }
 
     public static void initialCameraRecoil(GunFireEvent event) {
