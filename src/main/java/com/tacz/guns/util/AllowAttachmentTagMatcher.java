@@ -4,18 +4,21 @@ import com.tacz.guns.resource.CommonAssetsManager;
 import net.minecraft.resources.Identifier;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 public final class AllowAttachmentTagMatcher {
     private static final String TAG_PREFIX = "#";
-    private static final Cache CACHE = new Cache();
+    private static volatile Cache cache = new Cache();
 
     public record Cache(
-            Map<Pair<Identifier, Identifier>, Boolean> allowAttachmentCache,
-            Map<Pair<Identifier, Identifier>, Boolean> tagMatchCache
+            Map<Identifier, Set<Identifier>> allowAttachmentCache,
+            Map<Identifier, Set<Identifier>> tagMatchCache
     ) {
         public Cache() {
             this(new ConcurrentHashMap<>(), new ConcurrentHashMap<>());
@@ -23,22 +26,16 @@ public final class AllowAttachmentTagMatcher {
     }
 
     public static boolean match(Identifier gunId, Identifier attachmentId) {
-        var key = Pair.of(gunId, attachmentId);
-        return CACHE.allowAttachmentCache().computeIfAbsent(key, AllowAttachmentTagMatcher::match0);
+        return cache.allowAttachmentCache().computeIfAbsent(gunId, AllowAttachmentTagMatcher::resolveAllowed).contains(attachmentId);
     }
 
     public static boolean match0(Pair<Identifier, Identifier> record) {
-        Identifier gunId = record.getLeft();
-        Identifier attachmentId = record.getRight();
-        Set<String> allowAttachmentTags = CommonAssetsManager.get().getAllowAttachmentTags(gunId);
-        // 如果枪械对应的 allowAttachmentTags 为空，说明目前没有任何可以装的配件
-        if (allowAttachmentTags == null || allowAttachmentTags.isEmpty()) {
-            return false;
-        }
-        // 开始遍历 allowAttachmentTags，寻找配件 id
-        AtomicBoolean searchSignal = new AtomicBoolean(false);
-        treeSearch(allowAttachmentTags, attachmentId, searchSignal);
-        return searchSignal.get();
+        return resolveAllowed(record.getLeft()).contains(record.getRight());
+    }
+
+    private static Set<Identifier> resolveAllowed(Identifier gunId) {
+        var provider = CommonAssetsManager.get();
+        return expand(provider.getAllowAttachmentTags(gunId), null, provider::getAttachmentTags);
     }
 
     /**
@@ -52,49 +49,59 @@ public final class AllowAttachmentTagMatcher {
      * @since 1.1.7
      */
     public static boolean matchTag(Identifier tag, Identifier attachmentId) {
-        var key = Pair.of(tag, attachmentId);
-        return CACHE.tagMatchCache().computeIfAbsent(key, AllowAttachmentTagMatcher::matchTag0);
+        return cache.tagMatchCache().computeIfAbsent(tag, AllowAttachmentTagMatcher::resolveTag).contains(attachmentId);
     }
 
     public static boolean matchTag0(Pair<Identifier, Identifier> record) {
-        Identifier tag = record.getLeft();
-        Identifier attachmentId = record.getRight();
-        Set<String> tagContent = CommonAssetsManager.get().getAttachmentTags(tag);
-        // 如果 tag 对应的内容集为空，说明目前没有任何内容
-        if (tagContent == null || tagContent.isEmpty()) {
-            return false;
-        }
-        // 开始遍历内容集，寻找配件 id
-        AtomicBoolean searchSignal = new AtomicBoolean(false);
-        treeSearch(tagContent, attachmentId, searchSignal);
-        return searchSignal.get();
+        return resolveTag(record.getLeft()).contains(record.getRight());
     }
 
-    private static void treeSearch(Set<String> tags, Identifier attachmentId, AtomicBoolean searchSignal) {
-        // 开始遍历 tags，寻找配件 id
-        for (String tag : tags) {
-            // 如果是 tag，则去 attachment tag 寻找我们的东西
-            if (tag.startsWith(TAG_PREFIX)) {
-                Identifier tagId = Identifier.parse(tag.substring(TAG_PREFIX.length()));
-                Set<String> attachmentTags = CommonAssetsManager.get().getAttachmentTags(tagId);
-                // 如果检索的这个配件 tag 不为空，开始递归查找
-                if (attachmentTags != null && !attachmentTags.isEmpty()) {
-                    treeSearch(attachmentTags, attachmentId, searchSignal);
-                }
+    private static Set<Identifier> resolveTag(Identifier tag) {
+        var provider = CommonAssetsManager.get();
+        return expand(provider.getAttachmentTags(tag), tag, provider::getAttachmentTags);
+    }
+
+    /** Expand a complete root independently; caching partial child results is incorrect for cycles. */
+    static Set<Identifier> expand(Set<String> content, Identifier rootTag,
+                                        Function<Identifier, Set<String>> getTag) {
+        if (content == null || content.isEmpty()) {
+            return Set.of();
+        }
+        Set<Identifier> attachments = new HashSet<>();
+        Set<Identifier> visited = new HashSet<>();
+        if (rootTag != null) {
+            visited.add(rootTag);
+        }
+        var pending = new ArrayDeque<Iterator<String>>();
+        pending.push(content.iterator());
+        while (!pending.isEmpty()) {
+            Iterator<String> entries = pending.peek();
+            if (!entries.hasNext()) {
+                pending.pop();
+                continue;
             }
-            // 如果是配件 id，直接对比
-            else {
-                Identifier matchAttachmentId = Identifier.parse(tag);
-                if (attachmentId.equals(matchAttachmentId)) {
-                    searchSignal.set(true);
-                    return;
+            String entry = entries.next();
+            if (entry.startsWith(TAG_PREFIX)) {
+                Identifier tagId = Identifier.tryParse(entry.substring(TAG_PREFIX.length()));
+                if (tagId == null || !visited.add(tagId)) {
+                    continue;
+                }
+                Set<String> child = getTag.apply(tagId);
+                if (child != null && !child.isEmpty()) {
+                    pending.push(child.iterator());
+                }
+            } else {
+                Identifier id = Identifier.tryParse(entry);
+                if (id != null) {
+                    attachments.add(id);
                 }
             }
         }
+        return Set.copyOf(attachments);
     }
 
     public static void resetCache() {
-        CACHE.allowAttachmentCache().clear();
-        CACHE.tagMatchCache().clear();
+        // In-flight computations may finish in the old cache, but cannot repopulate the new one.
+        cache = new Cache();
     }
 }

@@ -277,6 +277,7 @@
   "tooltip.tacz.attachment.armor_ignore.decrease": "- 穿甲倍率",
   "tooltip.tacz.attachment.armor_ignore.increase": "+ 穿甲倍率",
   "tooltip.tacz.attachment.damage.decrease": "- 伤害",
+  "tooltip.tacz.attachment.recoil_push": "+ 后坐力推进",
   "tooltip.tacz.attachment.damage.increase": "+ 伤害",
   "tooltip.tacz.attachment.effective_range.decrease": "- 优势射程",
   "tooltip.tacz.attachment.effective_range.increase": "+ 优势射程",
