@@ -14,9 +14,19 @@ fabricApi {
     configureDataGeneration {
         client = true
     }
+    configureTests {
+        createSourceSet = true
+        modId = 'tacz_port_test'
+        enableGameTests = true
+        // The ordinary build runs the real server test. Client smoke also needs a display/Mesa.
+        enableClientGameTests = project.hasProperty('taczClientSmoke')
+    }
 }
 
 loom {
+    mods {
+        tacz { sourceSet sourceSets.main }
+    }
     accessWidenerPath = file("src/main/resources/tacz.accesswidener")
     // From Loom 1.17: mixin AP is no longer enabled by default.
     // The legacy mixin AP requires mappings, which don't exist in 26.1+.
@@ -234,6 +244,14 @@ dependencies {
     // Accelerated Rendering
     // implementation "maven.modrinth:accrelatedrendering-refabricated:1.0.8-1.20.1-alpha-fabric.1"
 }
+
+// Install the fixture as an external ZIP (not a mod resource or part of the release jar).
+def smokePack = tasks.register('zipSmokePack', Zip) {
+    from 'src/gametest/fixtures/overlay'
+    archiveFileName = 'tacz-port-smoke.zip'
+    destinationDirectory = layout.buildDirectory.dir('run/gameTest/tacz')
+}
+tasks.named('runGameTest') { dependsOn smokePack }
 
 test { useJUnitPlatform() }
 

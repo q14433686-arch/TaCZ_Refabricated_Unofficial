@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "tacz_port_test",
+  "version": "1.0.0",
+  "name": "TaCZ port smoke tests (development only)",
+  "entrypoints": {
+    "fabric-gametest": ["com.tacz.guns.test.PackServerSmoke"],
+    "fabric-client-gametest": ["com.tacz.guns.test.PackClientSmoke"]
+  },
+  "depends": { "tacz": "*" }
+}
